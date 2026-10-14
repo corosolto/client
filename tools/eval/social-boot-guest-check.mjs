@@ -12,6 +12,7 @@ if (mutant) {
     'sem-convidado': "await jornada.locator('#account-entry-dialog .account-guest').click();",
     'sem-trigger': "await jornada.locator('#hub-account-login').dispatchEvent('click');",
     'sem-readiness': "await jornada.waitForFunction(() => !!document.getElementById('hub-account-login')?.onclick);",
+    'sem-treta': "await jornada.getByRole('button', { name: 'ENTENDI. BORA JOGAR.', exact: true }).click();",
   };
   assert(removals[mutant], 'mutante desconhecido');
   const changed = source.replace(removals[mutant], '');
@@ -25,10 +26,15 @@ const body = source.slice(start, end);
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 try {
   for (const [available, delayed] of [[true, false], [true, true], [false, false]]) {
-    let modal = false, guests = 0, modes = 0, dismissed = false, consent = false, ready = false;
+    let modal = false, intro = true, guests = 0, modes = 0, dismissed = false, consent = false, ready = false;
     const jornada = {
       goto: async () => {}, waitForTimeout: async () => {},
       waitForFunction: async () => { ready = true; },
+      getByRole(role, options) {
+        assert.equal(role, 'button');
+        assert.deepEqual(options, { name: 'ENTENDI. BORA JOGAR.', exact: true });
+        return { async click() { assert(!modal && intro, 'explicação fora de ordem'); intro = false; } };
+      },
       locator(selector) {
         return {
           async dispatchEvent() {
@@ -37,11 +43,15 @@ try {
             }
             else modal = available && !delayed;
           },
-          async count() { return available ? 1 : 0; },
+          async count() { return selector === '#treta-info' ? 1 : available ? 1 : 0; },
           async isVisible() { return modal; },
           async waitFor(options) {
             if (selector === '#account-entry-dialog' && options.state === 'hidden') {
               assert.equal(modal, false, 'modal não fechou'); dismissed = true;
+            }
+            if (selector === '#treta-info') {
+              assert.equal(modal, false, 'conta intercepta explicação');
+              assert.equal(intro, options.state !== 'hidden', 'explicação TRETA não fechou');
             }
           },
           async evaluate(fn) { return fn({ classList: { contains: c => c === 'hidden' } }); },
@@ -52,6 +62,7 @@ try {
             } else {
               if (delayed && !consent) modal = true;
               assert(!modal, 'dialog account-entry intercepta menu B7'); modes++;
+              assert(!intro, 'dialog TRETA intercepta menu B7');
             }
           },
         };

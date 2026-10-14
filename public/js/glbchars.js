@@ -20,6 +20,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { buildRifle, CHAR_FX, charRimColor, upgradeCharMaterial, makeContactShadow } from './characters.js';
 import { weaponModel, preloadWeapons, ONE_HANDED, gripPoints } from './weapons.js';
+import { mountEyewear } from './eyewear.js';
 import { solveCCDIK } from './handik.js';
 
 // Character ids that have a real model under public/models/characters/<id>.glb.
@@ -167,6 +168,34 @@ const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefin
 let _clips = null;                 // { idle: AnimationClip, ... } shared fallback
 const _clipsByChar = {};           // id -> per-character retargeted clip set (fallback to _clips)
 const _base = new Map();           // id -> THREE.Object3D template scene
+const _skins = new Map(), _skinRequests = new Map();
+let _skinManifest = null;
+export async function preloadCosmeticAssets(ids = []) {
+  if (!ids.some(Boolean)) return;
+  if (!_skinManifest) _skinManifest = fetch('/models/skins/manifest.json').then(r => { if (!r.ok) throw new Error('skin_manifest'); return r.json(); }).catch(() => ({skins:{}}));
+  const manifest = await _skinManifest;
+  await Promise.all([...new Set(ids.filter(Boolean))].map(async id => {
+    const entry = manifest.skins?.[id];
+    if (!entry?.approved || !GLB_CHARS.has(entry.character) || !/^\/models\/skins\/[a-z0-9-]+\.glb$/.test(entry.model || '')) return;
+    if (_skins.has(id)) return;
+    if (_skinRequests.has(id)) return _skinRequests.get(id);
+    const request = (async () => {
+      const g = await loadGLB(entry.model); let rigged = false;
+      g.scene.traverse(o => { if (o.isSkinnedMesh && o.skeleton) rigged = true; });
+      if (!rigged) throw new Error('skin_requires_rig');
+      const clips = {};
+      for (const name of [...STATES, ...OPT_STATES]) {
+        const clip = g.animations.find(c => c.name === (entry.animationNames?.[name] || name));
+        if (clip) clips[name] = clip;
+      }
+      const compatible = entry.rigCompatibleWith === entry.character;
+      if (!compatible && !STATES.every(name => clips[name])) throw new Error('skin_requires_animations');
+      _skins.set(id, {character:entry.character, model:g.scene, clips:compatible?null:clips,gripProfile:entry.gripProfile});
+    })().catch(e => console.warn(`[skins] ${id}: ${e.message}`)).finally(() => _skinRequests.delete(id));
+    _skinRequests.set(id, request); return request;
+  }));
+}
+
 
 export function hasModel(id) { return _base.has(id); }
 // Acesso ao template já carregado (fparms.js clona daqui p/ os braços de 1ª pessoa)
@@ -368,7 +397,9 @@ const _ikTgt = new THREE.Vector3();
 // result ({ group, parts }) plus animation control (isGLB, mixer, ctrl). Returns null
 // if the character has no model loaded.
 export function buildCharacterModel(def, opts = {}) {
-  const template = _base.get(def.id);
+  const cosmetic = _skins.get(def.skinId);
+  const skin = cosmetic?.character === def.id ? cosmetic : null;
+  const template = skin?.model || _base.get(def.id);
   if (!template || !_clips) return null;
   const withWeapon = opts.weapon !== false; // menu showcase passes weapon:false
 
@@ -416,6 +447,8 @@ export function buildCharacterModel(def, opts = {}) {
   // de graça; o "sumir no ar" vem do estado de pulo, tratado no CharController.
   const shadow = CHAR_FX.shadow ? makeContactShadow() : null;
   if (shadow) group.add(shadow);
+
+  mountEyewear(model,def);
 
   // Head hitbox: an invisible (unrendered) but raycastable box tracked to the head bone
   // each frame, so headshots stay accurate through the animation.
@@ -475,10 +508,11 @@ export function buildCharacterModel(def, opts = {}) {
 
   const mixer = new THREE.AnimationMixer(model);
   const actions = {};
-  const clips = _clipsByChar[def.id] || _clips;   // clipes retargetados por personagem
+  const clips = skin?.clips || _clipsByChar[def.id] || _clips;   // clipes retargetados por personagem
   for (const name of [...STATES, ...OPT_STATES]) if (clips[name]) actions[name] = mixer.clipAction(clips[name]);
 
-  const ctrl = new CharController(mixer, actions, group, headBone, head, def.id, model);
+  // Skins assam contato no próprio clipe; offsets da base têm outro rig.
+  const ctrl = new CharController(mixer, actions, group, headBone, head, skin ? def.skinId : def.id, model);
   ctrl.shadow = shadow;   // antes do settle loop abaixo (ctrl.update já a atualiza)
   // Arma de 1 mão (pistol/deagle/revolver38/knife): usa idle1h/walk1h quando carregados.
   ctrl.oneHanded = !!(opts.weaponId && ONE_HANDED.has(opts.weaponId));
@@ -627,10 +661,12 @@ export function buildCharacterModel(def, opts = {}) {
     const CURL_MAX = { lobisomem: 0.50 };
     const tetoCurl = CURL_MAX[def.id];
     let curl = gunObj ? curlPara(gunObj) : 0.5;
+    if (skin?.gripProfile === 'mint24-curl-v1') curl = 1.4;
     if (tetoCurl != null) curl = Math.min(curl, tetoCurl);
     // fecha TODOS os ossos de curl com peso (nos 18 rigs transplantados eles vêm em par)
     for (const b of curlRs) b.rotation.x += curl;
-    if (twoHanded) for (const b of curlLs) b.rotation.x += curl;
+    const supportCurl = skin?.gripProfile === 'mint24-curl-v1' && ['lula-drip', 'senador-drip', 'zero-um-mandrake'].includes(def.skinId) ? 2.5 : curl;
+    if (twoHanded) for (const b of curlLs) b.rotation.x += supportCurl;
     // IK da mão de apoio (FASE 2): em armas de 2 mãos, o CharController trava a palma L
     // no guarda-mão depois de cada mixer.update — vale pra idle/walk dos bots E pro
     // preview da tela de seleção (mesmo ctrl.update). Posicional apenas: os clipes já
@@ -639,6 +675,7 @@ export function buildCharacterModel(def, opts = {}) {
       let lArm = null, lFore = null;
       model.traverse(o => { if (o.isBone) { if (o.name === 'LeftArm') lArm = o; if (o.name === 'LeftForeArm') lFore = o; } });
       const gp = gripPoints(opts.weaponId || 'awp');
+      if (skin?.gripProfile === 'mint24-curl-v1' && gp.fore) { gp.fore.z *= 1.35; gp.fore.y += def.skinId === 'lula-drip' ? 0.07 : 0.035; }
       if (lArm && lFore && gp.fore && gunObj && !IK_L_SKIP.has(def.id)) ctrl.ikL = { chain: [lArm, lFore], end: lhandBone, endOffset: measurePalmLocal(model, lhandBone, curlLs), gun: gunObj, fore: gp.fore.clone() };
     }
   }

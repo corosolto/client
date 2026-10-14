@@ -8,8 +8,10 @@
 # conflitava todo PR aberto e o autofix mergeava a base em cada um — 1.057 dos 2.163
 # commits da main (49%) eram do csbrasil-bot. E produção subia SEM esperar o CI.
 #
-# Agora a produção sai num TREM: o release.yml roda 2×/dia (ou por workflow_dispatch),
-# só se o pr-fast estiver verde na head da main, e só ele cria commit `chore(release):`.
+# Agora a produção sai em LOTE (14/10; no 13/10 era 2×/dia): o release.yml roda quando entra
+# na main um PR de lote (label `release` ou branch lote-*, claude/lote-*, */lote-*) ou por
+# workflow_dispatch, só se o pr-fast estiver verde na head da main, e só ele cria commit
+# `chore(release):`.
 # Este script faz a Vercel buildar produção SÓ nesse commit. Preview continua igual.
 #
 # A integração Git da Vercel continua sendo o caminho de produção (RLS6, decisão do dono
@@ -27,5 +29,5 @@ MSG="${VERCEL_GIT_COMMIT_MESSAGE:-}"
 case "$MSG" in
   "chore(release):"*) echo "vercel-ignore: commit de release — builda produção"; exit 1 ;;
 esac
-echo "vercel-ignore: merge na main sem release — produção espera o próximo trem (release.yml)"
+echo "vercel-ignore: merge na main sem release — produção espera o próximo lote (release.yml)"
 exit 0

@@ -100,7 +100,7 @@ jobs:
       # regiões diferentes e não estão.
       #
       # NO PUSH DA MAIN estes dois só rodam no commit `chore(release):` (13/10, c2ca685).
-      # Com o trem de release (#854) quem regenera os blocos é o release, 2×/dia, e não
+      # Com o trem de release (#854) quem regenera os blocos é o release, a cada lote, e não
       # mais cada merge. Dois PRs testados sobre bases diferentes mesclam limpo e deixam
       # uma contagem velha na main: o DOCS1 reprovava o push, o embarque do release.yml
       # exige pr-fast verde, e o trem, que é quem regeneraria, nunca saía. No PR eles

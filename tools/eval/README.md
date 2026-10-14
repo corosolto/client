@@ -40,6 +40,14 @@ com código 1 em falha crítica.
 
 ## 3. Verificadores de mapa, modo e UI
 
+TRETA: `npm run eval:treta-rewards` valida fila, saldo e dedup por conta com três mutações. `npm run eval:treta-skins` valida os arquivos reais, pesos, clipes e duas
+mutações. `npm run eval:treta-classic` mede o giro/reveal da moeda Saci no loader
+do jogo e duas mutações. `treta-integration-browser.mjs` roda compra/equipamento,
+recarga e SP/MP no Astro/API/Supabase locais, com contas e saldo temporários.
+Use `--backend=<lane> --env=<JSON privado> --fotos=<pasta de evidência>`; a régua
+recusa DB/site remoto e restaura catálogo/contas no finally. Aprovação no manifest
+é uma fixture explícita dessa QA; os GLBs são os reais. Não prova pagamento real.
+
 | Arquivo | O que mede |
 |---|---|
 | `map-check.mjs` | Geometria do mapa: colisores, spawns, alcançabilidade. |

@@ -1,4 +1,4 @@
-# Release automático em TREM (2×/dia + workflow_dispatch; até 13/10 era a cada push na main): o BOT é o dono do
+# Release automático em LOTE (merge de PR de lote + workflow_dispatch; 13/10 era 2×/dia, antes disso a cada push na main): o BOT é o dono do
 # bump de versão — o portão `versao-bumpada` do pr-gates.yml virou só checagem de
 # consistência, nenhum PR precisa mais bumpa à mão.
 #
@@ -24,37 +24,111 @@
 # TREM DE RELEASE (13/10/2026, autorizado pelo dono): era um release por push na main —
 # 126 releases para 130 merges em 30 dias. Cada um reescrevia README/AGENTS/ARCH/docs,
 # todo PR aberto conflitava e o autofix mergeava a base em cada um (49% dos commits da
-# main eram do bot). Agora o trem passa 2×/dia e por workflow_dispatch (hotfix:
+# main eram do bot). O trem passou a sair 2×/dia e por workflow_dispatch (hotfix:
 # `gh workflow run release.yml`). Só embarca se houver commit novo desde a última tag E o
 # pr-fast estiver VERDE na head da main. A Vercel só builda produção em commit
 # `chore(release):` (scripts/ci/vercel-ignore.sh) — então produção passa a esperar o CI.
+#
+# RELEASE EM LOTE (14/10/2026, decisão do dono): horário fixo travava o desenvolvimento —
+# o trabalho esperava a janela das 11:41/19:41 em vez de sair quando o lote fechava. Agora
+# os PRs se empilham num PR de LOTE e o trem sai quando ESSE PR entra na main: label
+# `release`, ou branch de origem `lote-*`, `claude/lote-*` ou `*/lote-*`. Merge de PR
+# comum não dispara nada. Hotfix continua sendo `gh workflow run release.yml`.
+#
+# POR QUE `push` + API e não `pull_request: [closed]`: no `pull_request` o YAML e o
+# checkout vêm do ref refs/pull/N/merge (não da main), PR de fork chega sem os secrets
+# (RELEASE_TOKEN, BACKEND_DISPATCH_TOKEN) e o payload não tem `head_commit`, que é o que
+# o anti-loop e a concurrency leem; o `pull_request_target`, que teria os secrets, é o
+# gatilho que o workflow_security_check.py existe para manter longe. No `push` roda o
+# YAML da main, com o checkout da main, e o job `lote` só pergunta à API qual PR trouxe
+# o commit (contents/pull-requests: read). O head.ref do PR é texto do autor (fork
+# inclusive): vai por env, é comparado em `case` com aspas e nunca é ecoado no log.
 name: release
 on:
-  schedule:
-    # 11:41 e 19:41 UTC (12:41 e 20:41 em Lisboa no inverno; 08:41 e 16:41 em Brasília)
-    - cron: '41 11 * * *'
-    - cron: '41 19 * * *'
+  push:
+    branches: [main]
   workflow_dispatch:
 
-# Dois merges quase juntos: o run MAIS NOVO cancela o velho no ar. Como a main é
-# fast-forward-only (ruleset), a head nova sempre contém a velha — o run velho
-# empurrando depois de a main andar é exatamente o "atomic push failed" da .152
-# (03:21 de 18/08): rebase cobre a janela evento→execução, não a janela execução→push.
-# O push do bump pelo bot não pode cancelar o run que ainda cria o Release e avisa o backend.
-concurrency:
-  group: release-main
-  cancel-in-progress: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
+# SEM concurrency no topo: com o gatilho em todo push da main, um grupo único no topo
+# deixaria o merge de um PR comum cancelar o trem de um lote que ainda espera o pr-fast.
+# O grupo mora nos jobs `embarque` e `bump-tag-release`, que só rodam quando o `lote`
+# disse que sai: run de PR comum e o push do bump pelo bot nunca entram no grupo.
 
 permissions:
   contents: write
 
 jobs:
-  # O trem só sai com a main VERDE. O pr-fast roda em todo push na main; se ainda estiver
-  # no ar, espera até 25 min. Vermelho, ausente ou lento = este trem não sai, o próximo
-  # tenta de novo. Job separado porque o teto de 30 min por job (WT2) vale para os dois.
+  # Quem dispara o trem. Anti-loop em duas camadas: o `if` abaixo descarta o commit
+  # `chore(release):` do bot ANTES de qualquer chamada (o push dele é feito com PAT e
+  # dispara `push` de verdade), e o guard do bump-tag-release continua lá embaixo.
+  lote:
+    if: github.event_name == 'workflow_dispatch' || !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      sai: ${{ steps.lote.outputs.sai }}
+    steps:
+      - name: o commit veio de um PR de lote?
+        id: lote
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENTO: ${{ github.event_name }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # Lote = label `release` OU branch de origem lote-*, claude/lote-* ou */lote-*.
+          e_lote() { [ "$1" = true ] && return 0; case "$2" in lote-*|claude/lote-*|*/lote-*) return 0 ;; esac; return 1; }
+          if [ "$EVENTO" = workflow_dispatch ]; then
+            echo "workflow_dispatch — sai"; echo "sai=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # A associação commit→PR pode chegar alguns segundos depois do push.
+          PRS=""
+          for _ in 1 2 3 4 5 6; do
+            PRS=$(gh api "repos/$REPO/commits/$SHA/pulls" \
+                    --jq '.[] | select(.merged_at != null and .base.ref == "main") | "\(.number)\t\(any(.labels[]; .name == "release"))\t\(.head.ref)"')
+            [ -n "$PRS" ] && break
+            sleep 10
+          done
+          # Sem PR associado: push direto, ou lote entrado por squash/rebase (o commit da head
+          # não é o merge do lote). Avisa alto em vez de parecer "PR comum".
+          if [ -z "$PRS" ]; then
+            echo "::warning::push $SHA na main sem PR mergeado associado — release não sai. PR de lote entra por merge commit; para soltar agora: gh workflow run release.yml"
+          fi
+          while IFS=$'\t' read -r NUM ROTULO REF; do
+            [ -n "$NUM" ] || continue
+            if e_lote "$ROTULO" "$REF"; then
+              echo "PR #$NUM é de lote — sai"; echo "sai=true" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            echo "PR #$NUM não é de lote"
+          done <<< "$PRS"
+          echo "push sem PR de lote — trem fica na estação"
+          echo "sai=false" >> "$GITHUB_OUTPUT"
+
+  # O trem só sai com a main VERDE. O pr-fast roda em todo push na main — inclusive no
+  # merge do próprio lote, que corre junto com este run; se ainda estiver no ar, espera
+  # até 25 min. Vermelho, ausente ou lento = este trem não sai; o próximo lote (ou um
+  # workflow_dispatch) tenta de novo. Job separado porque o teto de 30 min por job (WT2)
+  # vale para os dois.
   embarque:
+    needs: lote
+    if: needs.lote.outputs.sai == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Dois lotes quase juntos: o run MAIS NOVO cancela o velho no ar. Como a main é
+    # fast-forward-only (ruleset), a head nova sempre contém a velha — o run velho
+    # empurrando depois de a main andar é exatamente o "atomic push failed" da .152
+    # (03:21 de 18/08): rebase cobre a janela evento→execução, não a janela execução→push.
+    # O push do bump pelo bot não pode cancelar o run que ainda cria o Release e avisa o
+    # backend (o `lote` já o barra; a expressão fica como segunda trava).
+    # O grupo só é `release-main` quando o `lote` disse que sai: run de PR comum ganha grupo
+    # próprio e não cancela ninguém mesmo que o GitHub avalie a concurrency de job pulado.
+    concurrency:
+      group: ${{ needs.lote.outputs.sai == 'true' && 'release-main' || format('release-fora-{0}', github.run_id) }}
+      cancel-in-progress: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
     permissions:
       actions: read
       contents: read
@@ -76,7 +150,10 @@ jobs:
             case "$LINHA" in
               "completed success") echo "pr-fast verde em $SHA — embarca"; echo "sai=true" >> "$GITHUB_OUTPUT"; exit 0 ;;
               completed*) echo "::warning::pr-fast NÃO está verde em $SHA ($LINHA) — trem não sai"; echo "sai=false" >> "$GITHUB_OUTPUT"; exit 0 ;;
-              ""|"null null") echo "::warning::nenhum pr-fast de push para $SHA — trem não sai"; echo "sai=false" >> "$GITHUB_OUTPUT"; exit 0 ;;
+              ""|"null null")
+                # No push do lote o pr-fast deste SHA nasce JUNTO com este run: ainda não
+                # listado não é ausente. Dá 5 min para ele aparecer antes de desistir.
+                if [ "$i" -ge 5 ]; then echo "::warning::nenhum pr-fast de push para $SHA — trem não sai"; echo "sai=false" >> "$GITHUB_OUTPUT"; exit 0; fi ;;
             esac
             sleep 60
           done
@@ -88,6 +165,13 @@ jobs:
     if: needs.embarque.outputs.sai == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Grupo PRÓPRIO e NUNCA cancelável: o embarque de um lote novo dividindo grupo com este
+    # job cancelaria o bump velho no meio do push/tag/Release, deixando tag sem Release e o
+    # backend sem aviso. Bump em andamento termina; o próximo espera na fila, refaz o
+    # `pull --rebase` e calcula a versão sobre a main que o anterior deixou.
+    concurrency:
+      group: ${{ needs.embarque.outputs.sai == 'true' && 'release-bump' || format('release-fora-{0}', github.run_id) }}
+      cancel-in-progress: false
     steps:
       # Push do bump autenticado como csbrasil-BOT: o ruleset da main (protecao-main)
       # não permite bypass do github-actions[bot]; o guard "chore(release):" impede o loop do PAT.

@@ -29,11 +29,15 @@ critério de aceite; compare com as issues existentes antes de abrir outra.
    navegador serve módulo velho do cache e "a correção não chega" — já custou dias
    (ver `public/js/version.js`). O workflow `pr-gates.yml` reprova a divergência. O
    BUMP da versão NÃO é mais tarefa do PR: desde 08/08 o `release.yml` bumpa, taga e
-   publica o GitHub Release sozinho — em TREM, 2×/dia (desde 13/10; antes era a cada push).
-2. **Produção publica no TREM, não no merge** (13/10): a integração Git da Vercel na `main`
+   publica o GitHub Release sozinho — em LOTE (desde 14/10; 13/10 era 2×/dia, antes a cada push).
+2. **Produção publica no LOTE, não em todo merge** (14/10): a integração Git da Vercel na `main`
    continua sendo o caminho (decisão do dono em 08/08), mas o `ignoreCommand`
    (`scripts/ci/vercel-ignore.sh`) só deixa buildar produção no commit `chore(release):`.
-   O `release.yml` sai 2×/dia, e só com o `pr-fast` verde na head da `main`. Hotfix:
+   Empilhe os PRs e feche num PR de lote: o `release.yml` sai quando entra na `main` um PR
+   com a label `release` ou com branch `lote-*`, `claude/lote-*` ou `*/lote-*`, e só com o
+   `pr-fast` verde nesse merge. PR comum não dispara release. PR de lote entra por
+   **merge commit** (não squash nem rebase): o job `lote` lê o PR associado ao commit que
+   chegou na `main`, e é o merge commit que aponta para o lote. Hotfix:
    `gh workflow run release.yml`. O caminho manual por tag (`deploy-prod.yml`) continua
    de pé como fallback.
 3. **Preview de fork exige revisão humana**: o `cs-brasil-ai-bot` (`preview-bot.yml`)

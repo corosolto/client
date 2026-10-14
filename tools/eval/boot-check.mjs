@@ -302,6 +302,8 @@ try {
     const watchdogsAntes = relatorios.filter((r) => r.source === 'launch-watchdog').length;
     await page.close();
     const jornada = await context.newPage();
+    // Exercise a first guest visit even after the earlier recovery scenarios.
+    await jornada.addInitScript(() => localStorage.removeItem('cs_treta_intro'));
     await jornada.goto(`${BASE}/?nav=1&home=legacy`, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await jornada.locator('#splash-enter:not(.hidden)').waitFor({ timeout: 120000 });
     await jornada.locator('#boot-splash').dispatchEvent('pointerdown');
@@ -312,6 +314,12 @@ try {
       await jornada.locator('#hub-account-login').dispatchEvent('click');
       await jornada.locator('#account-entry-dialog .account-guest').click();
       await jornada.locator('#account-entry-dialog').waitFor({ state: 'hidden' });
+    }
+    // The first guest visit explains the quest currency before returning to play.
+    if (await jornada.locator('#treta-info').count()) {
+      await jornada.locator('#treta-info').waitFor({ state: 'visible' });
+      await jornada.getByRole('button', { name: 'ENTENDI. BORA JOGAR.', exact: true }).click();
+      await jornada.locator('#treta-info').waitFor({ state: 'hidden' });
     }
     // SINGLE PLAYER abre os modos contra bots; Mata-mata inicia a jornada padrão.
     await jornada.locator('.cs-item[data-act="single-player"]').click();

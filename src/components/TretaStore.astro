@@ -1,0 +1,34 @@
+---
+import {TRETA_ITEMS_ENABLED} from '../../public/js/treta-features.js';
+---
+<section id="hub-shop" class="hub-pane treta-store" role="tabpanel" aria-label="Loja de skins" hidden>
+  <header class="treta-heading">
+    <div><small>VISTA SUA PRÓXIMA TRETA</small><h2 id="treta-view-title">LOJA <em>DE SKINS</em></h2><p id="treta-view-description">Seu estilo entra em jogo.</p></div>
+    <button id="treta-balance" class="treta-wallet" type="button" aria-label="Ver carteira TRETA$"><span class="treta-coin-mark" aria-hidden="true">T$</span><span><small>SEU SALDO</small><b id="treta-balance-value">ENTRE NA CONTA</b></span></button>
+  </header>
+  <nav class="treta-views" role="tablist" aria-label="Seções da loja">
+    <button type="button" role="tab" data-treta-view="skins" aria-controls="treta-skins-view" aria-selected="true">SKINS E ARMÁRIO</button>
+    <button type="button" role="tab" data-treta-view="quests" aria-controls="treta-quests-view" aria-selected="false">QUESTS · GANHAR T$</button>
+    <button type="button" role="tab" hidden={!TRETA_ITEMS_ENABLED} data-treta-view="accessories" aria-controls="treta-accessories-view" aria-selected="false">ACESSÓRIOS</button>
+  </nav>
+  <div class="treta-status-line"><p id="treta-status" class="treta-status" role="status" aria-live="polite"></p><button id="treta-retry" class="treta-secondary" type="button" hidden>TENTAR DE NOVO</button></div>
+  <section id="treta-skins-view" role="tabpanel" aria-label="Skins e armário">
+    <div class="treta-toolbar"><div role="group" aria-label="Filtrar skins"><button type="button" data-treta-filter="all" aria-pressed="true">TODAS</button><button type="button" data-treta-filter="drip" aria-pressed="false">COLEÇÃO DRIP</button><button type="button" data-treta-filter="owned" aria-pressed="false">MEU ARMÁRIO</button></div><button id="treta-how" type="button">COMO GANHAR T$ ↗</button></div>
+    <div id="treta-grid" class="treta-grid" aria-busy="true"></div>
+    <section class="treta-promo">
+      <div><small>QUESTS DE LANÇAMENTO</small><h3>COMPLETE QUESTS.<br>MONTE SEU DRIP.</h3><p id="treta-promo-copy">Neste mês, seus T$ vêm das quests. A compra de moeda não está disponível.</p></div><div id="treta-rewards" class="treta-rewards"></div>
+      <div class="treta-promo-actions"><button id="treta-solo" class="treta-primary" type="button">SOLO POR T$ · EM BREVE</button><button id="treta-invite" class="treta-secondary" type="button">COPIAR MEU CONVITE ↗</button></div>
+    </section>
+    <section class="treta-mint"><header><small>CUNHADAS NA TRETA</small><h3>OURO COM HISTÓRIA</h3><p>Sete valores. Sete personagens. Uma moeda.</p></header><div id="treta-coins" class="treta-coins"></div></section>
+    <p class="treta-next">NA FILA DE NOVAS SKINS <span>Daniel Vorcaro · Donald Trump</span></p>
+  </section>
+  <section id="treta-quests-view" role="tabpanel" aria-label="Quests para ganhar TRETA$" hidden>
+    <header class="treta-section-heading"><small id="treta-quest-season">QUESTS DE LANÇAMENTO</small><h3>JOGUE. COMPLETE. GANHE.</h3><p>Neste mês, TRETA$ só pode ser ganha completando quests. O saldo fica na sua conta e pode ser usado para desbloquear skins.</p></header>
+    <p id="treta-quest-period" role="status"></p><div id="treta-quests" class="treta-quests"></div><p id="treta-quest-limit"></p>
+  </section>
+  <section id="treta-accessories-view" role="tabpanel" aria-label="Acessórios" hidden>
+    <header class="treta-section-heading"><small>ÓCULOS DA TRETA · T$ 200</small><h3>SEIS JEITOS DE VER O CORO</h3><p>Os óculos ocupam um espaço próprio no armário. Confira o encaixe nos personagens antes de comprar.</p></header>
+    <div id="treta-eyewear-grid" class="treta-grid"></div>
+    <div id="treta-accessories" class="treta-accessories"></div>
+  </section>
+</section>

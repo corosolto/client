@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import { poseCharacter, byId } from './characters.js';
 import { WEAPONS, supDeCod, anguloDeDisparo } from './game.js';
 import { frase } from './i18n.js';
+import { preloadEyewearAssets } from './eyewear.js';
+import { preloadCosmeticAssets } from './glbchars.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
 
@@ -70,11 +72,18 @@ class Netcode {
     };
     net.onSlot = this._onSlot;
     this._prevOnPersonagem = net.onPersonagem;
-    this._onPersonagem = (m) => {
+    this._cosmeticRevisions = new Map();
+    this._onPersonagem = (m, notify = true) => {
       const def = byId(m.char);
-      const alvo = m.ent === net.yourEnt && !this.espectador ? this.game.player : this._netMap.get(m.ent);
-      if (def && alvo) this.game._trocarPersonagem(alvo, def);
-      this._prevOnPersonagem?.(m);
+      const revision = (this._cosmeticRevisions.get(m.ent) || 0) + 1;
+      this._cosmeticRevisions.set(m.ent,revision);
+      const apply = (reload = false) => {
+        if (!def || this._cosmeticRevisions.get(m.ent) !== revision || net.onPersonagem !== this._onPersonagem) return;
+        const alvo = m.ent === net.yourEnt && !this.espectador ? this.game.player : this._netMap.get(m.ent);
+        if (alvo) this.game._trocarPersonagem(alvo,{...def,skinId:m.skinId || null,eyewearId:m.eyewearId || null},reload);
+      };
+      if (m.skinId || m.eyewearId) void Promise.all([preloadCosmeticAssets([m.skinId]),preloadEyewearAssets([m.eyewearId])]).then(()=>apply(true)); else apply();
+      if (notify) this._prevOnPersonagem?.(m);
     };
     net.onPersonagem = this._onPersonagem;
   }
@@ -313,10 +322,12 @@ class Netcode {
       const bot = pega(e.team, e.id);
       if (!bot) continue;
       bot._remote = e.id; bot._netId = e.id;
+      const row = (net.meta.roster || []).find(r=>r.id===e.id);
       bot.team = e.team;                      // o lado do corpo passa a ser o do servidor
       bot.name = e.bot ? `[BOT] ${e.name}` : e.name; bot._nomeServidor = e.name;
       bot.pos.set(e.x, e.y, e.z); bot.yaw = e.yaw;
       this._netMap.set(e.id, bot);
+      if (row) this._onPersonagem({...row,ent:e.id},false);
     }
     // corpos locais que sobraram (mais bots do que ents): viram fantasmas invisíveis
     for (const gb of livres) {

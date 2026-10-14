@@ -3,6 +3,8 @@ import { HOME_FAQ, HOME_FAQ_EN } from '../data/home-faq';
 import pkg from '../../package.json';
 import Community from '../components/Community.astro';
 import AccountEntry from '../components/AccountEntry.astro';
+import TretaStore from '../components/TretaStore.astro';
+import TretaDialogs from '../components/TretaDialogs.astro';
 import '../styles/career-rank.css';
 import { SITE, abs, DISCORD_URL, TELEGRAM_URL, GITHUB_URL, REDES_OFICIAIS, SUPPORT_URL_BR, SUPPORT_URL_INTL, RANKING_ON, DESC_LONG } from '../lib/site';
 import { readFileSync } from 'node:fs';
@@ -11,6 +13,7 @@ import { createHash } from 'node:crypto';
 /* Revisão do CSS pelo CONTEÚDO: a versão do pacote não muda quando só o CSS muda, e o
    WebView servia CSS velho. Hash do arquivo na URL derruba o cache sozinho. */
 const SOCIAL_CSS_REV=createHash('sha1').update(readFileSync('public/social.css')).digest('hex').slice(0,8);
+const TRETA_CSS_REV=createHash('sha1').update(readFileSync('public/treta.css')).digest('hex').slice(0,8);
 const CSS_REV = createHash('sha1').update(readFileSync('public/style.css')).digest('hex').slice(0, 8);
 
 /* ESTÁTICA de propósito: o Stateloop não publica SSR e `prerender = false` aqui
@@ -41,6 +44,7 @@ const IMPORTMAP = JSON.stringify({
 <meta charset="UTF-8">
 <script src={`/js/privacy-runtime.js?v=${JS_REV}`} is:inline></script>
 <link rel="stylesheet" href={`/social.css?v=${SOCIAL_CSS_REV}`} />
+<link rel="stylesheet" href={`/treta.css?v=${TRETA_CSS_REV}`} />
 <!-- Precisa rodar antes dos módulos para capturar falhas de boot; detalhes só com ?debug=1. -->
 <script is:inline define:vars={{ SUPPORT_URL_BR, SUPPORT_URL_INTL }}>
 /* URLs de apoio já RESOLVIDAS pelo servidor (env da Vercel pode sobrescrever).
@@ -722,6 +726,7 @@ window.__GEO_LANG__ = (function () {
       <img class="hub-logo" src="/logo.png" alt="CORO SOLTO: Treta Suprema" width="160" height="96">
       <nav class="hub-tabs" role="tablist" aria-label="Seções da home">
         <button type="button" role="tab" aria-selected="true" aria-controls="hub-play" data-hub-tab="jogar">JOGAR</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="hub-shop" data-hub-tab="loja">LOJA <span aria-hidden="true">T$</span></button>
         <button type="button" role="tab" aria-selected="false" aria-controls="hub-ranking" data-hub-tab="ranking">RANKING</button>
         <button type="button" role="tab" aria-selected="false" aria-controls="hub-community" data-hub-tab="comunidade">COMUNIDADE <span id="hub-social-unread"></span></button>
         <button type="button" role="tab" aria-selected="false" aria-controls="hub-about" data-hub-tab="sobre">SOBRE O JOGO</button>
@@ -729,6 +734,7 @@ window.__GEO_LANG__ = (function () {
         <button type="button" role="tab" aria-selected="false" aria-controls="hub-support" data-hub-tab="apoie">APOIE O JOGO</button>
       </nav>
       <div class="hub-online" aria-live="polite"><i aria-hidden="true"></i><span id="hub-online-n">-</span> ONLINE</div>
+      <button id="hub-treta-wallet" class="hub-header-action treta-header-wallet" type="button" aria-label="Ver saldo TRETA$"><span aria-hidden="true">T$</span><b id="hub-treta-total">T$ · ENTRAR</b></button>
       <button id="hub-music-toggle" class="hub-header-action hub-music-toggle" type="button" aria-pressed="true" aria-label="Desligar música do menu" title="Desligar música do menu"><span aria-hidden="true">♫</span><b>MÚSICA LIGADA</b></button>
       <button id="hub-account-login" class="hub-header-action" type="button">ENTRAR</button>
       <button id="hub-social-resume" class="hub-header-action" type="button" hidden>VOLTAR À PARTIDA ▶</button>
@@ -755,6 +761,7 @@ window.__GEO_LANG__ = (function () {
       </div>
     </section>
 
+    <TretaStore />
     <section id="hub-community" class="hub-pane hub-info" role="tabpanel" aria-label="Comunidade" hidden><Community /></section>
     <details id="account-completion" class="hub-account-nudge" hidden><summary>COMPLETE SEU PERFIL ▾</summary><p id="account-completion-copy"></p><a href="/?secao=comunidade&amp;social=settings">ADICIONAR FOTO E REDES ▸</a></details>
 
@@ -1084,6 +1091,8 @@ window.__GEO_LANG__ = (function () {
     <p id="pwa-install-help" role="status" aria-live="polite" hidden></p>
   </aside>
 </div>
+
+<TretaDialogs />
 
 <!-- Map screen (escolha de mapa em tela cheia) - abre pelo cartaz do mapa no setup.
      Lê o MESMO estado do carrossel do menu (currentMap/mapIdx): trocar aqui troca lá. -->

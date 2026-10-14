@@ -39,5 +39,17 @@ const g = bootGame('posto_treta', { textures: initTextures(), bots: 4 });
   cobra(g.playerDef.id === novo.id && g.player.def === g.playerDef && g.playerCharId === novo.id && g._tpDefId === novo.id,
     'TP3', 'jogador troca de personagem e o 3ª pessoa remonta', `playerDef ${g.playerDef.id}, 3ª pessoa ${g._tpDefId}`);
 }
+
+{
+  const original = g.playerDef, old = g.playerTP.group;
+  const mutation = process.argv.includes('--mutante=skin-cache-cega');
+  if(mutation)Object.defineProperty(g,'_tpSkinId',{get:()=>g.playerDef.skinId || null,set:()=>{}});
+  g._trocarPersonagem(g.player,{...original,skinId:'test-owned-skin'});g._ensurePlayerTP();
+  const styled = g.playerTP.group;
+  cobra(styled!==old && g.playerDef.id===original.id && g._tpSkinId==='test-owned-skin' && !original.skinId,
+    'TP5','skin do mesmo personagem remonta sem alterar a definição grátis','cache cosmético independente');
+  g._trocarPersonagem(g.player,{...original,skinId:null});g._ensurePlayerTP();
+  cobra(g.playerTP.group!==styled && g._tpSkinId===null,'TP6','remover skin remonta a malha base','sem herança de skin');
+}
 console.log(falhas.length ? `\nVERMELHO — ${falhas.join(', ')}` : '\nVERDE');
 process.exit(falhas.length ? 1 : 0);

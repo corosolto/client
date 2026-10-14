@@ -33,7 +33,7 @@ let rota = readFileSync('src/pages/api/[rota].ts', 'utf8');
 let pagina = readFileSync('public/js/clans.js', 'utf8');
 if (mut === 'clans-direto') jogo = muta(jogo, "'mp-ticket','clans'].includes(nome)", "'mp-ticket'].includes(nome)");
 if (mut === 'proxy-sem-sessao') rota = muta(rota, "'mp-ticket','clans'].includes(rota)", "'mp-ticket'].includes(rota)");
-if (mut === 'sem-rollout') rota = muta(rota, "const EM_ROLLOUT = ['social', 'social-auth', 'social-avatar', 'clans'];", "const EM_ROLLOUT = ['social', 'social-auth', 'social-avatar'];");
+if (mut === 'sem-rollout') rota = muta(rota, "const EM_ROLLOUT = ['social-auth','treta','clans'];", "const EM_ROLLOUT = ['social-auth','treta'];");
 if (mut === 'exige-convidado') pagina = muta(pagina, "  try { mine = await api({ ...(guest || {}), action: 'me' }); }", "  if (guest) try { mine = await api({ ...guest, action: 'me' }); } catch {}\n  try {}");
 
 const falhas = [];
