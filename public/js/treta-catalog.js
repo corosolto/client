@@ -13,15 +13,15 @@ export const TRETA_SKINS = [
   {id:'lula-drip',name:'Lula do Drip',character:'barbudo',color:'#e44465',series:'DRIP DO PLANALTO',description:'Streetwear vinho, tranças, grillz e anéis de ouro. O drip chegou ao Planalto.',price:800,ready:false},
   {id:'bolsonaro-drip',name:'Bolsonaro do Drip',character:'capitao',color:'#43c69b',series:'DRIP DO PLANALTO',description:'Jaqueta varsity verde e azul, cargo bege e correntes de ouro. Outra combinação, a mesma ostentação.',price:800,ready:false},
   {id:'senador-drip',name:'Senador do Drip',character:'senador',color:'#ae80ff',series:'DRIP DO PLANALTO',description:'Zero Um de preto e violeta, correntes pesadas e tênis branco. Estilo próprio no plenário.',price:800,ready:false},
-  {id:'janja',name:'Janja',character:'dama',color:'#e77f95',series:'PRIMEIRAS-DAMAS',description:'Óculos, cabelo castanho e um visual urbano vinho e creme.',price:800,ready:false},
-  {id:'michelle-bolsonaro',name:'Michelle Bolsonaro',character:'julia-zanatta',color:'#77baff',series:'PRIMEIRAS-DAMAS',description:'Um visual urbano azul e verde, com detalhes dourados.',price:800,ready:false},
+  {id:'janja',name:'Janjoca',character:'dama',color:'#e77f95',series:'PRIMEIRAS-DAMAS',description:'Óculos, cabelo castanho e um visual urbano vinho e creme.',price:800,ready:false},
+  {id:'michelle-bolsonaro',name:'Mixelle',character:'julia-zanatta',color:'#77baff',series:'PRIMEIRAS-DAMAS',description:'Um visual urbano azul e verde, com detalhes dourados.',price:800,ready:false},
   {id:'lula-na-regua',name:'Lula na Régua',character:'barbudo',color:'#718bba',series:'NA RÉGUA',description:'Degradê grisalho, barba alinhada e terno azul. O corte está em dia.',price:800,ready:false},
   {id:'lula-cyborg',name:'Lula Cyborg',character:'barbudo',color:'#ec645d',series:'PLANALTO 2500',description:'Armadura cromada, olho mecânico vermelho e faixa verde e amarela.',price:800,ready:false},
   {id:'bolsonaro-cyborg',name:'Bolsonaro Cyborg',character:'capitao',color:'#50cba6',series:'PLANALTO 2500',description:'Armadura azul e prata, energia verde e olho mecânico vermelho.',price:800,ready:false},
   {id:'aljuiz-toga-mandrake',name:'Aljuiz da Toga Mandrake',character:'juiz',color:'#b993ef',series:'MANDRAKE',description:'Toga aberta, conjunto grafitado, óculos dourados e tênis roxo.',price:800,ready:false},
   {id:'lula-mandrake',name:'Lula Mandrake',character:'barbudo',color:'#e55769',series:'MANDRAKE',description:'Boné virado, bermuda vermelha, óculos espelhados e correntes douradas.',price:800,ready:false},
   {id:'bolsonaro-mandrake',name:'Bolsonaro Mandrake',character:'capitao',color:'#80b9e8',series:'MANDRAKE',description:'Boné branco, conjunto azul claro estampado e correntes de ouro.',price:800,ready:false},
-  {id:'michelle-mandrake',name:'Michelle Bolsonaro Mandrake',character:'julia-zanatta',color:'#e96c81',series:'MANDRAKE',description:'Óculos vermelhos, camiseta bordada com rosas e correntes prateadas.',price:800,ready:false},
+  {id:'michelle-mandrake',name:'Mixelle Mandrake',character:'julia-zanatta',color:'#e96c81',series:'MANDRAKE',description:'Óculos vermelhos, camiseta bordada com rosas e correntes prateadas.',price:800,ready:false},
   {id:'zero-um-mandrake',name:'Zero Um Mandrake',character:'senador',color:'#d7ac51',series:'MANDRAKE',description:'Conjunto preto e dourado, boné virado e três correntes pesadas.',price:800,ready:false},
 ];
 export const TRETA_DEFAULT_REWARDS = {email_reward:200,referral_reward:100,sp_reward:10,mp_reward:25,daily_match_cap:250,referral_cap:10,starts_at:null,ends_at:null};
