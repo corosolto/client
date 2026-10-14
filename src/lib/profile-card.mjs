@@ -42,7 +42,7 @@ export function profileCardSvg(p,character,portrait,site,logo){
  const cells=[['PONTOS',number(p.points)],['POSIÇÃO',p.position?'#'+number(p.position):'—'],['ABATES',number(p.kills)],['MORTES',number(p.deaths)],['K/D',number(p.kd)],['HORAS ATIVAS',number(Math.round(Number(p.verified_play_seconds ?? p.play_seconds)/36)/100)]];
  const image=character&&portrait&&pngData(portrait)?`<image href="${portrait}" x="650" y="8" width="550" height="614" preserveAspectRatio="xMidYMid meet"/>`:'';
  const logoImage=logo&&pngData(logo)?`<image href="${logo}" x="56" y="34" width="${LOGO_WIDTH}" height="${LOGO_HEIGHT}" preserveAspectRatio="xMidYMid meet"/>`:'';
- const nick=nickLines([...String(p.nick).replace(/[\u0000-\u001F\u007F-\u009F\uFFFE\uFFFF]/g,'')].slice(0,24).join(''));
+ const nick=nickLines([...String(p.nick).replace(/[\u0000-\u001F\u007F-\u009F\uFFFE\uFFFF]/g,'')].slice(0,32).join(''));
  const level=p.level==null?'—':number(p.level);
  const rank=careerRank(p.points),badgeX=rank?362:300,[rankColor]=TIERS[rank?.tier]??['#d8cfae'];
  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">

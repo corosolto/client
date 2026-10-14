@@ -860,7 +860,7 @@ export class Game {
     // primary/secondary remember the last weapon of each slot for the 1/2 keys.
     const startWeapon = charWeapon(playerCharId);
     this.player = {
-      isPlayer: true, name: (nickname || '').trim().slice(0, 14) || tr('VOCÊ'), def: this.playerDef, team: playerTeam,
+      isPlayer: true, name: (nickname || '').trim().slice(0, 32) || tr('VOCÊ'), def: this.playerDef, team: playerTeam,
       pos: new THREE.Vector3(), vel: new THREE.Vector3(),
       yaw: 0, pitch: 0, hp: 100, alive: true, respawnAt: 0, crouchF: 0,
       weapon: startWeapon, scoped: false, reloadUntil: 0, nextShotAt: 0, drawUntil: 0,
@@ -4319,7 +4319,7 @@ export class Game {
       // chip = tint da cor CHEIA do time; texto = tinta PÁLIDA do time (ver _teamInk):
       // texto na cor cheia sobre o próprio tint dava 3,2-3,9:1 (ui-check.mjs, UI1)
       const c = this._teamColor(e.team);
-      return `<span class="kf-n" style="background:${c}2e;color:${this._teamInk(e.team)}">${e.isPlayer ? tr('VOCÊ') : e.name}</span>`;
+      return `<span class="kf-n${e.isPlayer ? ' kf-voce' : ''}" style="background:${c}2e;color:${this._teamInk(e.team)}">${e.isPlayer ? tr('VOCÊ') : escapeClanName(e.name)}</span>`;
     };
     row.innerHTML = attacker && attacker !== victim
       ? `${cn(attacker)}${head ? this._skullIcon() : ''}${this._killfeedWeaponIcon(weap)}${cn(victim)}`
@@ -5828,7 +5828,7 @@ export class Game {
       for (const old of Array.from(this.el.respawn.querySelectorAll?.('.death-info') || [])) old.remove();
       const d = document.createElement('div');
       d.className = 'death-info';
-      d.style.cssText = 'margin-top:10px;font:600 13px/1.55 system-ui,sans-serif;letter-spacing:.05em;color:#ffd9a0;text-shadow:0 2px 8px #000;text-align:center';
+      d.style.cssText = 'margin-top:10px;font:600 13px/1.55 system-ui,sans-serif;letter-spacing:.05em;color:#ffd9a0;text-shadow:0 2px 8px #000;text-align:center;max-width:100%;overflow-wrap:anywhere';
       this.el.respawn.appendChild(d);
       this._deathPanel = d;
     }
@@ -5836,7 +5836,7 @@ export class Game {
       this._deathShown = h.at;
       const tier = { ruim: 'PERNA DE PAU', medio: 'MEDIANO', bom: 'BOM', muitobom: 'MONSTRO' }[h.tier] || '';
       this._deathPanel.innerHTML =
-        `<div style="font-size:15px;color:#fff">MORTO POR <b>${h.name}</b>${tier ? ` <span style="opacity:.65;font-size:11px">(${tier})</span>` : ''}</div>` +
+        `<div style="font-size:15px;color:#fff">MORTO POR <b>${escapeClanName(h.name)}</b>${tier ? ` <span style="opacity:.65;font-size:11px">(${tier})</span>` : ''}</div>` +
         `<div>${h.weap} · ${h.dist.toFixed(0)} m · ${h.head ? 'NA CABEÇA' : h.dmg + ' de dano'}</div>` +
         `<div style="opacity:.75;font-size:11px">veio ${h.quad || (h.behind ? '⚠ PELAS COSTAS' : 'DA SUA FRENTE')} · ${Math.round(h.total)} de dano nesta vida</div>`;
     }

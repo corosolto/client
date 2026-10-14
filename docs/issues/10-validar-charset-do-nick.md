@@ -22,7 +22,7 @@ Consequências reais:
 1. Migration com um `check` no banco (a fonte da verdade):
    ```sql
    alter table public.players add constraint players_nick_charset
-     check (nick ~ '^[A-Za-z0-9_.\-]{2,14}$');
+     check (nick ~ '^[A-Za-z0-9_.\-]{2,32}$');
    ```
    **Cuidado:** nicks já existentes podem violar. Use
    `alter table ... add constraint ... not valid` e rode um relatório antes de

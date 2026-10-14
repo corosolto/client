@@ -104,7 +104,7 @@ for(const nick of ['ŒÆŴÓÕÂÊÔÇ@WMŒÆŴÓÕÂÊÔÇ@WM','WWWWWWWWWWWWWWW
  for(const line of lines)assert(+line['font-size']>=28,`nickname ${nick} shrank to ${line['font-size']}px; minimum 28px`);
  const shown=lines.map(l=>l.text).join('');
  assert(!/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(shown),'nickname cut inside a surrogate pair');
- assert(shown===[...nick].slice(0,24).join('')||shown.endsWith('…')&&[...nick].join('').startsWith(shown.slice(0,-1)),`nickname must be whole or a clean prefix with an ellipsis: ${shown}`);
+ assert(shown===[...nick].slice(0,32).join('')||shown.endsWith('…')&&[...nick].join('').startsWith(shown.slice(0,-1)),`nickname must be whole or a clean prefix with an ellipsis: ${shown}`);
  const px=render(card).pixels;let inside=0,past=0;
  for(let y=20;y<126;y++)for(let x=280;x<1200;x++){const i=(y*1200+x)*4;if(px[i]>200&&px[i+1]>200&&px[i+2]>180){if(x<645)inside++;else past++;}}
  assert(inside>0,`nickname ${nick} did not render`);

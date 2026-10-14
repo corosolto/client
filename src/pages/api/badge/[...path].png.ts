@@ -47,6 +47,8 @@ function badgeSvg(p: any, avatarUri: string | null, charId: string | null): stri
   const kd = p.deaths ? (p.kills / p.deaths).toFixed(2) : String(p.kills);
   const sideColor = '#ffd23f';
   const cName = charName(charId);
+  // 600 px até o avatar (x=692); o W da DejaVu Bold mede 0,96 em.
+  const nickSize = Math.min(54, 600 / Math.max(1, Array.from(String(p.nick)).length));
 
   const cells: [string, string][] = [
     ['PONTOS', String(p.points)], ['KILLS', String(p.kills)], ['K/D', kd],
@@ -75,7 +77,7 @@ function badgeSvg(p: any, avatarUri: string | null, charId: string | null): stri
   <rect width="840" height="6" fill="#e03232"/><rect y="434" width="840" height="6" fill="#1faa4d"/>
   <text x="56" y="60" font-size="22" font-weight="bold" fill="#ffd23f" font-family="DejaVu Sans" letter-spacing="5">CORO SOLTO</text>
   <text x="660" y="60" font-size="16" fill="${sideColor}" font-family="DejaVu Sans" text-anchor="end" font-weight="bold">DADOS VERIFICADOS</text>
-  <text x="56" y="132" font-size="54" font-weight="bold" fill="#f2ead8" font-family="DejaVu Sans">${esc(p.nick)}</text>
+  <text x="56" y="132" font-size="${nickSize}" font-weight="bold" fill="#f2ead8" font-family="DejaVu Sans">${esc(p.nick)}</text>
   ${p.social ? `<text x="56" y="166" font-size="18" fill="#b8d94a" font-family="DejaVu Sans">${esc(p.social)}</text>` : ''}
   ${cName ? `<text x="56" y="194" font-size="16" fill="#8a8064" font-family="DejaVu Sans">joga de ${esc(cName)}</text>` : ''}
   <rect x="46" y="212" width="748" height="1.5" fill="#3a3325"/>
@@ -116,7 +118,7 @@ const handle: APIRoute = async ({ params }) => {
   const first = parts[0] || '';
   const key = first.replace(/\.png$/, '');
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(key);
-  const nick = key.slice(0, 14);
+  const nick = key.slice(0, 32);
   const query=supabaseAdmin.from('player_points').select('*');
   const {data:score,error}=await (isUuid?query.eq('id',key):query.eq('nick',nick)).maybeSingle();
   if(error) return new Response('unavailable',{status:503,headers:{'cache-control':'no-store'}});

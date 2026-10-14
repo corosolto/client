@@ -441,7 +441,8 @@ async function cc4(cobra, { chat }) {
   cobra(chaveArmazenamento('ABCD', 'QX9W2A7B') === 'cs_chat_bloq:ABCD:QX9W2A7B', 'CC4 chaveArmazenamento é cs_chat_bloq:<convite>:<epoca>');
   cobra(rotuloDe({ h: 'K3F' }) === 'Anônimo #K3F' && rotuloDe({ h: 'K3F', nk: 'Rubao' }).startsWith('Rubao') && rotuloDe({ h: 'K3F', nk: 'Rubao' }) !== 'Rubao',
     `CC4 rotuloDe: sem nk é "Anônimo #<h>", com nk leva a marca de verificado em texto (${rotuloDe({ h: 'K3F', nk: 'Rubao' })})`);
-  cobra(rotuloDe({ h: 'K3F', nk: '<b>x</b>' }) === 'Anônimo #K3F' && rotuloDe({ h: 'K3F', nk: 'a'.repeat(15) }) === 'Anônimo #K3F',
+  cobra(rotuloDe({ h: 'K3F', nk: '<b>x</b>' }) === 'Anônimo #K3F' && rotuloDe({ h: 'K3F', nk: 'a'.repeat(33) }) === 'Anônimo #K3F'
+    && rotuloDe({ h: 'K3F', nk: 'a'.repeat(32) }).startsWith('a'.repeat(32)),
     'CC4 rotuloDe revalida o nk com a regex do ticket; nk inválido vira anônimo');
   const st = storageFalso();
   const e = new ChatEstado({ convite: 'ABCD', meta, storage: st });

@@ -42,7 +42,7 @@ export const MOTIVOS_DENUNCIA = Object.freeze(['ofensa', 'odio', 'assedio', 'spa
 export const CANAIS = Object.freeze(['sala', 'time']);
 export const CID_RE = /^[A-Za-z0-9_-]{1,12}$/;
 // a mesma regex do ticket (api/_lib/mp-ticket.mjs, NICK_TICKET_RE); o nó já revalida, aqui é cinto
-export const NICK_RE = /^[A-Za-z0-9_.\-]{2,14}$/;
+export const NICK_RE = /^[A-Za-z0-9_.\-]{2,32}$/;
 export const MARCA_VERIFICADO = '✓';
 export const PREFIXO_ARMAZENAMENTO = 'cs_chat_bloq';
 

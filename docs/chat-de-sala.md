@@ -176,7 +176,7 @@ tabela.
     e recebe `identity.player.nick` (o `select` é `'id, nick'`), mas hoje só usa `player.id`.
     Passa a mandar o nick para `emitirMpTicket`.
   - `emitirMpTicket` (`api/_lib/mp-ticket.mjs`) só grava `nk` se houver `pid` e o nick casar
-    com `NICK_TICKET_RE = /^[A-Za-z0-9_.\-]{2,14}$/`, que é a mesma regex de `NICK_RE` em
+    com `NICK_TICKET_RE = /^[A-Za-z0-9_.\-]{2,32}$/`, que é a mesma regex de `NICK_RE` em
     `api/_lib/nick.ts`. A régua `mp-ticket-check` cobra a igualdade.
   - O nó revalida o `nk` do ticket com a mesma regex ao abrir a conexão e guarda em
     `ws._chatNick`. Anônimo nunca tem `nk`, mesmo que mande `nome=`.

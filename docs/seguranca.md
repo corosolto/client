@@ -376,7 +376,7 @@ Leaflet em si é local e o mapa continua funcionando.
 `nick` e `city` entravam direto em `bindPopup`/`bindTooltip`, que montam HTML.
 
 O nick é escolhido pelo jogador em `register_player` **sem filtro de
-caracteres**. O teto de 14 caracteres torna um payload difícil, não impossível.
+caracteres**. O teto de 14 caracteres (32 desde a migration 065 do backend) torna um payload difícil, não impossível.
 Agora tudo passa por um `esc()` local antes de virar HTML. Custo: zero.
 
 O resto do site não tinha esse problema — Astro escapa expressão JSX por padrão,
@@ -387,7 +387,7 @@ e é por isso que `/ranking` e `/u/*` já estavam corretos.
 ## 7. Charset do nick — **API fechada, banco pendente**
 
 **Onde:** `register_player` valida **só o comprimento**
-(`check (char_length(nick) between 2 and 14)`). Caractere nenhum é filtrado.
+(`check (char_length(nick) between 2 and 14)`, 2 a 32 desde a migration 065 do backend). Caractere nenhum é filtrado.
 
 O que passa hoje, e o que faz:
 
@@ -411,12 +411,12 @@ o schema é privado. Este é o SQL, na ordem segura:
 --    quebrar deploy por causa de linha antiga.
 alter table public.players
   add constraint players_nick_charset
-  check (nick ~ '^[A-Za-z0-9_.\-]{2,14}$') not valid;
+  check (nick ~ '^[A-Za-z0-9_.\-]{2,32}$') not valid;
 
 -- 2. Relatório: quem já está fora da regra?
 select id, nick, char_length(nick) as chars
 from public.players
-where nick !~ '^[A-Za-z0-9_.\-]{2,14}$'
+where nick !~ '^[A-Za-z0-9_.\-]{2,32}$'
 order by nick;
 
 -- 2b. Se precisar ver QUAL caractere ofende — homoglifo cirílico e zero-width
@@ -424,7 +424,7 @@ order by nick;
 select nick, string_agg(to_hex(ascii(c)), ' ' order by i) as codepoints_hex
 from public.players,
      unnest(regexp_split_to_array(nick, '')) with ordinality as t(c, i)
-where nick !~ '^[A-Za-z0-9_.\-]{2,14}$'
+where nick !~ '^[A-Za-z0-9_.\-]{2,32}$'
 group by nick;
 
 -- 3. Só depois de decidir o que fazer com os inválidos (renomear? esconder
