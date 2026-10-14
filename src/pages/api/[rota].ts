@@ -10,7 +10,7 @@ const SEGREDO = import.meta.env.API_PROXY_SECRET || '';
 
 const MIGRADAS = new Set([
   'treta',
-  'social','social-auth','social-avatar','acquisition', 'avatar', 'clans', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
+  'social','social-auth','social-avatar','acquisition', 'avatar', 'clans', 'count', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
   'leaderboard', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
   'submit-match', 'telemetry', 'train-frames',
 ]);

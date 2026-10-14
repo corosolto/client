@@ -4,7 +4,7 @@
 /* Migradas. O portão `eval:apis` cobra que esta lista não divirja da rede de segurança 307. */
 const NO_BACKEND = new Set([
   'treta',
-  'social','social-auth','social-avatar','acquisition', 'avatar', 'clans', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
+  'social','social-auth','social-avatar','acquisition', 'avatar', 'clans', 'count', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
   'leaderboard', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
   'submit-match', 'telemetry', 'train-frames',
 ]);

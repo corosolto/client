@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import {initAccountEntry,mountProfilePreferences} from './account-entry.js';
 import {analyticsAllowed} from './privacy-preferences.js';
+import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
 import {initTretaStore,equippedTretaSkin,equippedTretaEyewear} from './treta-store.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
@@ -660,6 +661,7 @@ function dismissSplash(e) {
   dockLoadingCharacter();
   sp.classList.add('gone');
   window.__gameLaunch?.ready('entrada');
+  contagem.evento('splash_enter');
   setTimeout(() => sp.remove(), 480);
   setTimeout(focusMenu, 120);   // pós-splash: dá foco ao 1º botão pra ↑/↓ navegarem SEM precisar de Tab
   musicArmed = true;
@@ -1493,6 +1495,7 @@ if (MENU_MUSIC_REVIEW) params.set('debug', '1');
 /* `oficina` entra aqui: retrabalho é sessão de teste, senão cada volta de conserto
    viraria partida no ranking e linha de telemetria. */
 const testMode = params.get('debug') === '1' || !!inspectionScreen || oficina;
+if (testMode) contagem.desligar();
 // ?nav=1 isola transições de tela; web-assets.spec.js cobre preload e render 3D.
 const navOnly = params.get('nav') === '1';
 
@@ -1754,6 +1757,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   _matchEventSent = false;   // partida nova = um evento rico novo (feat/telemetria)
   _funnel('match_start');    // funil: começou a jogar (017)
   if (!continuaPartida) sendGameStarted();
+  if (!continuaPartida) contagem.partidaIniciada({ map: currentMap, mode: matchMode, game: sessao ? 'mp' : 'sp' });
   retryPending();
   armSwitchHook();
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
@@ -3308,6 +3312,7 @@ async function recordMatchStats(s) {
   sendTelemetry();   // ANTES do guard de nick lá embaixo: telemetria cobre quem não registrou
   sendMatchEvent(s?.won ? 'won' : 'lost');   // evento rico anônimo (feat/telemetria, 016)
   _funnel('match_end');                        // funil: terminou (017)
+  contagem.partidaTerminada({ map: game?._mapId || currentMap, mode: game?.ctf ? 'ctf' : 'rounds', game: telemetryGameContext.gameType === 'multiplayer' ? 'mp' : 'sp' });
   const st = loadStats();
   st.matches++; if (s.won) st.wins++;
   st.kills += s.kills; st.deaths += s.deaths; st.headshots += s.headshots;
@@ -4563,6 +4568,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   if (MAPS[welcome.map]) currentMap = welcome.map;
   matchMode = welcome.ctf ? 'ctf' : 'rounds';
   modoEscolhido = true;
+  contagem.entrouNoMp({ map: currentMap, mode: matchMode });
   net.onClose = () => mpDesconectou();
   net.onSlot = async (m) => {
     if (mpSessao?.net === net) mpSessao.chat?.aoMudarSlot(m);
@@ -4801,6 +4807,7 @@ if (HUB_ENABLED) {
 }
 window.__CS_MAIN_READY__ = true;
 window.__gameLaunch?.ready('boot');
+contagem.evento('game_loaded');
 // Convite de sala e perfil compartilhado (/u/<perfil>) chegam com destino: nem o convite de conta nem o da loja cobrem esse destino.
 void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || params.get('perfil')),onSession:auth=>{if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();}});
 initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || params.get('perfil')),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}});
