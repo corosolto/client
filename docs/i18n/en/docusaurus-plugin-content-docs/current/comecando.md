@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 61,909 lines in 146 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 61,910 lines in 146 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **8,487** lines | `wc -l public/js/game.js` |
 | `main.js` | 4,858 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -230,7 +230,7 @@ The maps registered today, and which mode each one opens in:
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,989 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 1,201 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 2,062 |
-| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 2,032 |
+| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 2,033 |
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,709 |
 | `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,813 |
 | `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 420 |
