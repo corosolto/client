@@ -1,0 +1,116 @@
+[
+  {
+    "id": "lobisomem",
+    "name": "Lobisomem",
+    "animated": "/img/roster-sprites/lobisomem.webp",
+    "still": "/img/roster-sprites/lobisomem-still.webp"
+  },
+  {
+    "id": "mariabonita",
+    "name": "Maria Bonita",
+    "animated": "/img/roster-sprites/mariabonita.webp",
+    "still": "/img/roster-sprites/mariabonita-still.webp"
+  },
+  {
+    "id": "lampiao",
+    "name": "Lampião",
+    "animated": "/img/roster-sprites/lampiao.webp",
+    "still": "/img/roster-sprites/lampiao-still.webp"
+  },
+  {
+    "id": "bandeirante",
+    "name": "Bandeirante",
+    "animated": "/img/roster-sprites/bandeirante.webp",
+    "still": "/img/roster-sprites/bandeirante-still.webp"
+  },
+  {
+    "id": "boto",
+    "name": "Boto Cor de Rosa",
+    "animated": "/img/roster-sprites/boto.webp",
+    "still": "/img/roster-sprites/boto-still.webp"
+  },
+  {
+    "id": "zumbi",
+    "name": "Zumbi dos Palmares",
+    "animated": "/img/roster-sprites/zumbi.webp",
+    "still": "/img/roster-sprites/zumbi-still.webp"
+  },
+  {
+    "id": "curupira",
+    "name": "Curupira",
+    "animated": "/img/roster-sprites/curupira.webp",
+    "still": "/img/roster-sprites/curupira-still.webp"
+  },
+  {
+    "id": "saci",
+    "name": "Saci-Pererê",
+    "animated": "/img/roster-sprites/saci.webp",
+    "still": "/img/roster-sprites/saci-still.webp"
+  },
+  {
+    "id": "caipora",
+    "name": "Caipora",
+    "animated": "/img/roster-sprites/caipora.webp",
+    "still": "/img/roster-sprites/caipora-still.webp"
+  },
+  {
+    "id": "barbudo",
+    "name": "Barbudo do Planalto",
+    "animated": "/img/roster-sprites/barbudo.webp",
+    "still": "/img/roster-sprites/barbudo-still.webp"
+  },
+  {
+    "id": "capitao",
+    "name": "Capitão do Cercadinho",
+    "animated": "/img/roster-sprites/capitao.webp",
+    "still": "/img/roster-sprites/capitao-still.webp"
+  },
+  {
+    "id": "dama",
+    "name": "Dama da Mandioca",
+    "animated": "/img/roster-sprites/dama.webp",
+    "still": "/img/roster-sprites/dama-still.webp"
+  },
+  {
+    "id": "professor",
+    "name": "Professor do Arcabouço",
+    "animated": "/img/roster-sprites/professor.webp",
+    "still": "/img/roster-sprites/professor-still.webp"
+  },
+  {
+    "id": "senador",
+    "name": "Zero Um",
+    "animated": "/img/roster-sprites/senador.webp",
+    "still": "/img/roster-sprites/senador-still.webp"
+  },
+  {
+    "id": "ministro",
+    "name": "Xandão da Toga",
+    "animated": "/img/roster-sprites/ministro.webp",
+    "still": "/img/roster-sprites/ministro-still.webp"
+  },
+  {
+    "id": "deputado",
+    "name": "Deputado da Peruca",
+    "animated": "/img/roster-sprites/deputado.webp",
+    "still": "/img/roster-sprites/deputado-still.webp"
+  },
+  {
+    "id": "juiz",
+    "name": "Juiz do Conje",
+    "animated": "/img/roster-sprites/juiz.webp",
+    "still": "/img/roster-sprites/juiz-still.webp"
+  },
+  {
+    "id": "julia-zanatta",
+    "name": "Deputada da Tiara",
+    "animated": "/img/roster-sprites/julia-zanatta.webp",
+    "still": "/img/roster-sprites/julia-zanatta-still.webp"
+  },
+  {
+    "id": "marina-silva",
+    "name": "Dona Floresta",
+    "animated": "/img/roster-sprites/marina-silva.webp",
+    "still": "/img/roster-sprites/marina-silva-still.webp"
+  }
+]

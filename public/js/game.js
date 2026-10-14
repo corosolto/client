@@ -243,6 +243,13 @@ const BOT_HS_MAX = 0.07;
 const BOT_HS_MUL = { rifle: 2.0, smg: 2.0, pistol: 2.0, lmg: 1.9, shotgun: 1.5, sniper: 2.5 };
 const BOT_REACT_MIN = 0.20;
 const BOT_FOCUS_MIN = 0.16;
+// Sentidos do bot contra o jogador: cone de 120°, periferia, audição de tiro/passo (PR #856).
+// ?botsentidos=0 volta ao comportamento antigo; bot×bot não muda (botsim-golden).
+const BOT_SENTIDOS = QS.get('botsentidos') !== '0';
+const BOT_FOV_HALF = 60 * Math.PI / 180;
+const BOT_PERIF = 4;
+const BOT_OUVE_TIRO = 40;
+const BOT_OUVE_PASSO = 14;
 /* ===================== 5. RAJADA E TURNO (causa-raiz medida do BOT4) =====================
    O harness (tools/eval/botdiag.mjs) imprimiu a rajada que MATA, tiro a tiro. O padrão era
    sempre o mesmo, nos 4 mapas: 4 acertos de 22-33 de dano, dos quais 3 dentro de 0,25 s —
@@ -724,6 +731,9 @@ export class Game {
     this.renderer = renderer;
     this.sfx = sfx;
     this.settings = settings;
+    /* `online` = autoridade do servidor. `_mp` é injetado pelo main.js; este arquivo nunca
+       importa rede. Single-player: `_mp` null e nada de rede roda. Ver docs/MULTIPLAYER.md. */
+    this.online = !!(mpFactory && net);
     this.testMode = testMode;
     // MOBILE (fase 1): controles de toque no lugar do pointer lock + teclado/mouse.
     this.mobile = mobile;
@@ -819,9 +829,6 @@ export class Game {
     /* Servidor dedicado: o `player` que ninguém controla fica FORA do elenco, senão vira corpo
        parado e imortal que os inimigos abatem em loop. Ver docs/MULTIPLAYER.md. */
     this.dedicated = !!dedicated;
-    /* `online` = autoridade do servidor. `_mp` é injetado pelo main.js; este arquivo nunca
-       importa rede. Single-player: `_mp` null e nada de rede roda. Ver docs/MULTIPLAYER.md. */
-    this.online = !!(mpFactory && net);
     this._mp = null;
     this._mpPend = this.online ? { mpFactory, net } : null;
 
@@ -963,7 +970,7 @@ export class Game {
        e a arma encolhia. Aqui o aspecto não mudou, então força. */
     if (this._vmFrame) this._vmFrame(true);
     this.vmScene = new THREE.Scene();
-    this.vmScene.environment = this.scene.environment;   // mesmo IBL do mapa (metais leem)
+    this.vmScene.environment = this._vmEnv || null;   // IBL só aqui: a cena do mapa fica sem (ver _buildEnv)
     this.vmScene.add(this.vm.root);
     // BUG-75: arma visível é o GLB do Coro Solto; mãos com pele/roupa do personagem.
     // Tudo-ou-nada (vmlaunch.js): sem a chave nenhum controlador nasce e tudo fica no fparms.
@@ -1024,7 +1031,7 @@ export class Game {
              ferro_velho  AKM na mão C* 8,62          |  no chão C*13,15          (0,66×)
          Ou seja: no praca_poderes a arma na mão fica DUAS VEZES mais saturada (e no matiz do
          ouro, 30-55°); no ferro velho ela fica DESSATURADA. É o MESMO defeito nos dois
-         sinais, e a causa não é o env map (o MAT2 já confere que a vmScene usa o MESMO
+         sinais, e a causa não é o env map (na época a vmScene usava o MESMO
          `scene.environment` do mapa) — é ESTE rig: as 6 cores abaixo são CONSTANTES
          enquanto o sol de cada mapa vai de #fff4e2 (praca_poderes, quase branco) a #ffc07a
          (ferro_velho, laranja de fim de tarde). O nível seguia o mapa; a COR não seguia.
@@ -1403,7 +1410,7 @@ export class Game {
   _buildEnv() {
     try {
       const mult = (() => { const v = parseFloat(new URLSearchParams(location.search).get('env')); return isFinite(v) ? v : 1.0; })();
-      if (mult <= 0) { this.scene.environment = null; return; }
+      if (mult <= 0) { this.scene.environment = null; this._vmEnv = null; return; }
       const W = 512, H = 256;
       const sun = this.world && this.world.sun;
       const sd = new THREE.Vector3(0.35, 0.75, -0.25);
@@ -1449,7 +1456,10 @@ export class Game {
       const pmrem = new THREE.PMREMGenerator(this.renderer); pmrem.compileEquirectangularShader();
       if (this._envRT) this._envRT.dispose();
       this._envRT = pmrem.fromEquirectangular(tex);
-      this.scene.environment = this._envRT.texture;
+      // IBL só no viewmodel (dono, 13/10/2026, #832): os mapas foram aprovados com o IBL preto e
+      // lavavam com ele; a arma ganha volume. A vmScene recebe a textura no construtor.
+      this.scene.environment = null;
+      this._vmEnv = this._envRT.texture;
       tex.dispose(); pmrem.dispose();
     } catch (e) { console.warn('env map', e); }
   }
@@ -1631,7 +1641,7 @@ export class Game {
        que é a tradução literal da invariante MAT1.
        KILL-SWITCH: ?vmmat=legacy volta ao clamp 0,55 + 7,60 lux desta linha para baixo, para
        o dono desfazer numa querystring se a GPU dele discordar da conta. */
-    const temEnv = !!this.scene.environment;   // _buildEnv() rodou lá em cima (mesmo frame)
+    const temEnv = !!this._vmEnv;   // _buildEnv() rodou lá em cima (mesmo frame)
     const fixVmMaterials = (obj) => obj.traverse((o) => {
       if (!o.isMesh || !o.material) return;
       if (!VM_MAT_LEGACY && temEnv) return;   // MAT1: mesmo GLB, mesmo material, nos 3 caminhos
@@ -1690,8 +1700,10 @@ export class Game {
        caía na janela bloqueante da eval:armas (ARM1/ARM3 — ver BUG-179 em KNOWN-BUGS). */
     if (semMalha.size && !NODE_RUNTIME) {
       const pendentes = [...semMalha];
+      /* Teto de 5 s: o rIC puro nunca dispara quando todo frame renderiza devagar. */
       const ocioso = (typeof requestIdleCallback === 'function')
-        ? requestIdleCallback : ((f) => setTimeout(f, 1200));
+        ? (f) => requestIdleCallback(f, { timeout: 5000 })
+        : ((f) => setTimeout(f, 1200));
       ocioso(() => {
         preloadWeapons(pendentes).then(() => {
           for (const id of pendentes) {
@@ -3652,6 +3664,7 @@ export class Game {
     a.mag--;
     p.nextShotAt = this.time + w.rate;
     p.revealedAt = this.time;
+    if (BOT_SENTIDOS) this._botOuve(p.pos, BOT_OUVE_TIRO, 3);   // tiro faz barulho
     this.vm.authored?.shoot(p.weapon);
     if (p.weapon === 'awp') setTimeout(() => this.sfx.bolt(), 420);
     this.sfx.shotWeapon(p.weapon, 0);   // 1ª pessoa = distância 0 no mix do synth
@@ -6205,7 +6218,11 @@ export class Game {
     if (moving) {
       p.stepPhase += dt * sp * 1.6;
       const prev = Math.sin(p.stepPhase - dt * sp * 1.6), now = Math.sin(p.stepPhase);
-      if (prev >= 0 && now < 0) this.sfx.step(this._footstepSurface(p.pos));
+      if (prev >= 0 && now < 0) {
+        this.sfx.step(this._footstepSurface(p.pos));
+        // passo correndo é ouvido; Shift silencioso (sfx._quiet) não
+        if (BOT_SENTIDOS && !this.sfx._quiet) this._botOuve(p.pos, BOT_OUVE_PASSO, 1.5);
+      }
     }
     // Lunetas ocultam a arma; ADS sem luneta usa foco com a cruz como referência do tiro.
     const realScope = p.scoped && !!WEAPONS[p.weapon].scope;
@@ -6595,6 +6612,8 @@ export class Game {
      regra de arma amarrada a um id de mapa e o mapa não existe mais. Nenhum mapa vivo força
      AWP-only — quem escolhe é o menu. */
   _wpnMode() {
+    // MP: as armas são da sala (o nó não tem modo de armas); o modo do menu é só do single player.
+    if (this.online) return 'all';
     // `?.` porque o HUD de loadout agora lê o modo, e há caminho (vmlab) que monta o Game
     // sem `settings`: sem a guarda o render do menu estoura e o HUD1 fica vermelho.
     return this.settings?.wpnMode || 'all';
@@ -7017,6 +7036,19 @@ export class Game {
     if (b.mesh.isGLB) b.mesh.ctrl.revive();
   }
 
+  // Som alerta (360°) e marca o ponto ouvido para investigar; adquirir alvo ainda exige visão.
+  _botOuve(pos, raio, dur) {
+    const pt = this.player && this.player.team;
+    for (const b of this.bots) {
+      if (!b.alive || b.team === pt) continue;
+      const dx = b.pos.x - pos.x, dz = b.pos.z - pos.z;
+      if (dx * dx + dz * dz > raio * raio) continue;
+      b.alertUntil = Math.max(b.alertUntil || 0, this.time + dur);
+      (b._heardPos || (b._heardPos = new THREE.Vector3())).copy(pos);
+      b._heardAt = this.time;
+    }
+  }
+
   _updateBot(b, dt) {
 
     if (b._remote) {
@@ -7093,6 +7125,11 @@ export class Game {
         // bot-vs-bot = first hit kills) — nobody roamed. 45m forces bots to close
         // in through mid-map, so the varied roam routes actually play out.
         if (d < bd && d < view) {
+          // CONE DE VISÃO (ver SENTIDOS DO BOT): alvo NOVO só dentro dos 120° da frente.
+          if (BOT_SENTIDOS && !this.__mutBot360 && e.isPlayer && e !== b.target && d > BOT_PERIF && this.time >= (b.alertUntil || 0)) {
+            const ang = Math.atan2(e.pos.x - b.pos.x, e.pos.z - b.pos.z) - b.yaw;
+            if (Math.abs(Math.atan2(Math.sin(ang), Math.cos(ang))) > BOT_FOV_HALF) continue;
+          }
           const eye = this._botEye(b);
           const teye = e.isPlayer ? this.camera.position.clone() : this._botEye(e);
           if (this._losClear(eye, teye)) { best = e; bd = d; }
@@ -7533,6 +7570,21 @@ export class Game {
             b.path = null; b.repathAt = this.time + 1.0;
             pocket = true;
           }
+        }
+        // INVESTIGAR (ver SENTIDOS DO BOT): ouviu o jogador há <4 s e está sem alvo → o destino
+        // vira o nó ALCANÇÁVEL (mesmo componente do grafo) mais perto do som, por até 6 s.
+        if (BOT_SENTIDOS && !pocket && b._heardAt && b._heardUsed !== b._heardAt && this.time - b._heardAt < 4) {
+          b._heardUsed = b._heardAt;
+          const nodes = W.waypoints.nodes, comp = this._wpComp();
+          const myComp = comp && comp.length ? comp[from] : -1;
+          let hi = -1, hd = 1e9;
+          for (let i = 0; i < nodes.length; i++) {
+            if (myComp >= 0 && comp[i] !== myComp) continue;
+            if (b._unreach && b._unreach.has(i)) continue;
+            const d = Math.hypot(nodes[i].x - b._heardPos.x, nodes[i].z - b._heardPos.z);
+            if (d < hd) { hd = d; hi = i; }
+          }
+          if (hi >= 0 && hi !== from) { b.roamIdx = hi; b.roamUntil = this.time + 6; }
         }
         if (!pocket && (this.time > (b.roamUntil || 0) || b.roamIdx === undefined)) {
           // Enemy direction derived from the spawn LAYOUT (not hardcoded — the spawn
@@ -8392,7 +8444,7 @@ export class Game {
     try { this._mp?.dispose(); } catch { /* já foi */ }
     this._mp = null;
     try { this.sfx.stopRound(); } catch {}   // vinheta não sobrevive ao fim da partida   // lazy-load de VM em voo (_ensureStaticVm) aborta no then
-    if (this._envRT) { this._envRT.dispose(); this._envRT = null; this.scene.environment = null; }   // libera o env map (IBL)
+    if (this._envRT) { this._envRT.dispose(); this._envRT = null; this._vmEnv = null; this.scene.environment = null; if (this.vmScene) this.vmScene.environment = null; }   // libera o env map (IBL)
     document.removeEventListener('keydown', this._kd);
     document.removeEventListener('keyup', this._ku);
     document.removeEventListener('mousedown', this._md);

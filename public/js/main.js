@@ -439,7 +439,12 @@ const WALLS = ['/img/wall-10.webp', '/img/wall-11.webp', '/img/wall-12.webp', '/
   '/img/wall-14.webp', '/img/wall-15.webp', '/img/wall-16.webp', '/img/wall-17.webp',
   '/img/wall-18.webp', '/img/wall-19.webp', '/img/wall-20.webp', '/img/wall-21.webp',
   '/img/wall-22.webp', '/img/wall-23.webp', '/img/wall-24.webp', '/img/wall-25.webp',
-  '/img/wall-26.webp', '/img/wall-28.webp'];
+  '/img/wall-26.webp', '/img/wall-28.webp', '/img/wall-29.webp', '/img/wall-30.webp',
+  '/img/wall-31.webp', '/img/wall-32.webp', '/img/wall-33.webp', '/img/wall-34.webp',
+  '/img/wall-35.webp', '/img/wall-36.webp', '/img/wall-37.webp', '/img/wall-38.webp',
+  '/img/wall-39.webp', '/img/wall-40.webp', '/img/wall-41.webp', '/img/wall-42.webp',
+  '/img/wall-43.webp', '/img/wall-44.webp', '/img/wall-45.webp', '/img/wall-46.webp',
+  '/img/wall-47.webp'];
 let _wallVisit = 0;
 try {
   _wallVisit = parseInt(localStorage.getItem('cs_wallK') || '-1', 10) + 1;
@@ -452,6 +457,8 @@ const wallUrl = (i) => `url('${wallPath(i)}')`;
 const wall3x2Url = (i) => `url('${wallPath(i).replace('/img/', '/img/walls-3x2/')}')`;
 let HOME_WALL = wallUrl(0), SETUP_WALL = wallUrl(1), TEAM_WALL = wallUrl(2), CHAR_WALL = wallUrl(3);
 let HOME_WALL_3X2 = wall3x2Url(0), SETUP_WALL_3X2 = wall3x2Url(1);
+// No hub o #menu-setup fica .open na home; o slot aplicado é quem diz qual arte está na tela.
+let _menuWallSlot = 0;
 // Splash e espera do mapa compartilham o lote loading-* do manifesto.
 const LOADING_WALLS = ['/img/loading-1.webp', '/img/loading-2.webp', '/img/loading-3.webp',
   '/img/loading-4.webp', '/img/loading-5.webp', '/img/loading-6.webp'];
@@ -469,25 +476,57 @@ fetch(`/img/walls.json?v=${VERSION}`)
     if (Array.isArray(manifest.walls) && manifest.walls.length) WALLS.splice(0, WALLS.length, ...manifest.walls);
     if (Array.isArray(manifest.loading) && manifest.loading.length) LOADING_WALLS.splice(0, LOADING_WALLS.length, ...manifest.loading);
     _wallK = _wallVisit % WALLS.length;
-    HOME_WALL = wallUrl(0); SETUP_WALL = wallUrl(1); TEAM_WALL = wallUrl(2); CHAR_WALL = wallUrl(3);
-    HOME_WALL_3X2 = wall3x2Url(0); SETUP_WALL_3X2 = wall3x2Url(1);
-    applyHomeWall();
-    const team = $('team-select'); if (team) team.style.setProperty('--wall', TEAM_WALL);
-    const character = $('char-select'); if (character) character.style.setProperty('--wall', CHAR_WALL);
+    refreshWallpapers();
     applySplashWallpaper();
   })
   .catch(() => {});
+function refreshWallpapers() {
+  HOME_WALL = wallUrl(0); SETUP_WALL = wallUrl(1); TEAM_WALL = wallUrl(2); CHAR_WALL = wallUrl(3);
+  HOME_WALL_3X2 = wall3x2Url(0); SETUP_WALL_3X2 = wall3x2Url(1);
+  if (_menuWallSlot) applySetupWall(); else applyHomeWall();
+  $('team-select')?.style.setProperty('--wall', TEAM_WALL);
+  $('char-select')?.style.setProperty('--wall', CHAR_WALL);
+}
 function applyHomeWall() {
+  _menuWallSlot = 0;
   const w = document.querySelector('#main-menu .cs-wallpaper');
   if (w) { w.style.setProperty('--menu-wall', HOME_WALL); w.style.setProperty('--menu-wall-3x2', HOME_WALL_3X2); }
 }
 function applySetupWall() {
+  _menuWallSlot = 1;
   const w = document.querySelector('#main-menu .cs-wallpaper');
   if (w) { w.style.setProperty('--menu-wall', SETUP_WALL); w.style.setProperty('--menu-wall-3x2', SETUP_WALL_3X2); }
 }
 applyHomeWall();
 { const t = $('team-select'); if (t) t.style.setProperty('--wall', TEAM_WALL); }
 { const c = $('char-select'); if (c) c.style.setProperty('--wall', CHAR_WALL); }
+import { startVisibleRotation } from './media-rotation.js';
+startVisibleRotation(async () => {
+  const next = (_wallK + 1) % WALLS.length;
+  const offset = !$('char-select').classList.contains('hidden') ? 3
+    : !$('team-select').classList.contains('hidden') ? 2
+    : _menuWallSlot;
+  const preload = new Image();
+  const selected = WALLS[(next + offset) % WALLS.length];
+  preload.src = offset < 2 && matchMedia('(min-aspect-ratio:37/25) and (max-aspect-ratio:38/25)').matches
+    ? selected.replace('/img/', '/img/walls-3x2/') : selected;
+  await preload.decode();
+  _wallK = next;
+  try { localStorage.setItem('cs_wallK', String(_wallK)); } catch {}
+  refreshWallpapers();
+}, () => ['main-menu', 'team-select', 'char-select'].some(id => !$(id)?.classList.contains('hidden')));
+startVisibleRotation(async () => {
+  const next = (_loadWallI + 1) % LOADING_WALLS.length;
+  const preload = new Image();
+  preload.src = LOADING_WALLS[next];
+  await preload.decode();
+  _loadWallI = next;
+  $('boot-splash')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
+  $('load-overlay')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
+}, () => ['boot-splash', 'load-overlay'].some(id => {
+  const element = $(id);
+  return element && !element.classList.contains('gone') && !element.classList.contains('hidden');
+}));
 
 // Música de menu (loop, volume baixo). Toca só nas telas de menu; some quando a partida
 // começa e volta ao voltar pro menu. Chrome bloqueia autoplay COM som até o 1º gesto do
@@ -1674,7 +1713,11 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
       if (window.__game !== meuJogo || ++tentativas > 240) { clearInterval(espera); return; }
       if (meuJogo.state !== 'live') return;
       clearInterval(espera);
-      const ocioso = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
+      /* rIC sem teto morre de fome quando todo frame renderiza em máquina lenta: o teto
+         de 5 s garante o preload das armas restantes mesmo sem folga de idle (ARM5). */
+      const ocioso = window.requestIdleCallback
+        ? (f) => window.requestIdleCallback(f, { timeout: 5000 })
+        : (f) => setTimeout(f, 1200);
       ocioso(async () => {
         try {
           await preloadWeapons();
@@ -3650,7 +3693,7 @@ function loop() {
     for (let n = 0; n < PASSO_TETO && resto > 1e-6; n++) {
       const passo = Math.min(0.05, resto);
       resto -= passo;
-      game.update(passo, resto <= 1e-6);   // só o último passo desenha (multi-render em FPS baixo seria espiral)
+      game.update(passo, resto <= 1e-6 || n === PASSO_TETO - 1);   // só o último passo desenha, inclusive ao esgotar o teto
     }
   } else if (!game) {
     menuAngle += Math.min(0.05, dtReal) * 0.07;
