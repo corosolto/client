@@ -988,6 +988,8 @@ export function enableLightBloom(renderer, opts = {}) {
 
   const liberadas = new WeakSet();
   const patched = (scene, camera) => {
+    // Pós só para cena desenhada na tela: o PMREM do IBL desenha Mesh no próprio render target.
+    if (!scene.isScene || renderer.getRenderTarget() !== null) return rawRender(scene, camera);
     if (liberadas.has(scene)) return rawRender(scene, camera);
     const cp = forScene(scene, camera);
     // EffectComposer.render() chama renderer.render internamente (quads dos passes):

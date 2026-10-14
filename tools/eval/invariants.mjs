@@ -2225,11 +2225,12 @@ function runNode(script, env = {}, args = [], timeout = 600000) {
         }
         const glob = mapas.map((m) => m.mapa.global);
         const disp = glob.length ? Math.max(...glob) / Math.min(...glob) : 1;
-        const semEnv = mapas.filter((m) => !m.env.cena || !m.env.vm || !m.env.mesmaTextura).map((m) => m.map);
-        put('MAT2', 'orçamento de luz do viewmodel dentro da faixa do mapa que ele acompanha, e o IBL é o mesmo nas duas cenas',
+        // IBL só no viewmodel (decisão do dono, 13/10/2026, #832): a vmScene tem env, o mapa não.
+        const semEnv = mapas.filter((m) => !m.env.vm || m.env.cena).map((m) => m.map);
+        put('MAT2', 'orçamento de luz do viewmodel dentro da faixa do mapa que ele acompanha, e o IBL só na vmScene',
           !fora.length && disp <= 1.6 && !semEnv.length,
           `${linhas.join(' · ')} | dispersão entre os 5 mapas ${num(disp, 2)}× (teto 1,60 = a que eles já têm) | ` +
-          `fora da faixa [0,80-1,40]: ${fora.length ? fora.join(', ') : 0} | cenas sem o env do mapa: ${semEnv.length ? semEnv.join(', ') : 0}`);
+          `fora da faixa [0,80-1,40]: ${fora.length ? fora.join(', ') : 0} | IBL fora do lugar (vm sem env ou mapa com env): ${semEnv.length ? semEnv.join(', ') : 0}`);
       }
 
       // ---- FOG1: nada que cubra a tela pode ser mais claro que o céu do mapa ----
