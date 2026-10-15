@@ -79,3 +79,62 @@ aprova o encaixe; render, deformação e revisão artística continuam necessár
 ## Inspeção dos bytes de bind e pesos
 
 `bind-inspector.mjs` lê o GLB com SHA256 esperado obrigatório e deriva fingerprints separados de bind, geometria e pesos. O hash de bind sozinho não prova correspondência dos índices de uma região. Uso, limites de leitura, mutantes e convenção numérica estão em [BIND-INSPECTOR.md](BIND-INSPECTOR.md). O digest legado `restPoseSha256` continua declarado; nenhuma migração silenciosa o converte no fingerprint novo. Contato, arte e consistência geométrica repouso/IBM continuam sem aprovação.
+
+## Experimental synthetic garment attachment
+
+The opt-in library in `garment/` demonstrates one exact synthetic body/attachment
+pair. It does not load in Game. It has no catalog registration or body masking.
+The triangles reuse `syntheticGLB()` from `example.mjs`; they are not a shirt,
+human rig or wearable fit. No donor GLB or unknown-rights artwork is included.
+
+```sh
+node tools/character-kit/garment/build-example-record.mjs --check
+node --test tools/character-kit/garment-*.test.mjs
+# Optional local preview assets; exclusive directory creation, refuses overwrite:
+node tools/character-kit/garment/build-example-record.mjs --assets
+# Only when deliberately previewing: serve repository root on localhost, then open
+# /tools/character-kit/garment/example-preview.html and click Load.
+```
+
+No new package, build step or CDN is required; use modern Node with registerHooks
+(validated on23.6) and existing vendored Three r160. Node fixture tooling maps only
+vendor-origin `three` imports to that same vendor module and deregisters the hook
+after import. The browser imports ordinary relative ESM using its import map.
+The preview is a synthetic ownership controller, not gameplay. It renders only
+on explicit load/dispose/reattach; coplanar triangles are intentional. It is not
+a benchmark, animation preview or evidence of visual quality.
+
+`garment/node.mjs` and `garment/browser-example.mjs` expose
+`prepareGarment({THREE, parseGLB, baseBytes, garmentBytes}) -> {attach}`.
+`attach(ctrl, {family, fit}) -> {mesh, dispose}` defaults to the exact example
+identity. Bytes must be Uint8Array. Both digests are checked before either parse;
+browser uses WebCrypto on a secure origin. Node additionally inspects structural
+fingerprints. Unknown top-level options (including caller trust/contract) fail.
+THREE and parseGLB are trusted integration dependencies, not an untrusted-parser
+sandbox. The record is a checked-in inspection result, not a digital signature.
+
+Attach requires a cloned model owned by group/mixer, the unique named body,
+exact geometry/weights/index and bind/hierarchy, and bones within that model.
+It refuses morphs, source animations, textured/multi materials, foreign bones
+and duplicate attachments. Geometry/material/skeleton are owned by the handle;
+dispose is idempotent and permits reattach without disposing body resources.
+The low-level core is an internal building block; direct calls do not authenticate
+asset bytes. Do not treat it as the closed trust entry.
+
+The browser entry imports ONE static `example-record.mjs`. To support a different
+pair, author a separate entry and reviewed record: inspect bytes, derive joint
+node mappings and mesh transform from the parser, verify bind and runtime recipe,
+and run ownership/domain/pose tests. Do not pass a downloaded record as trust or
+replace names/hashes to imply family compatibility. `--write` creates the example
+record exclusively; changing source deliberately requires review and regeneration.
+`--check` detects stale recipe inputs, including vendor, inspector and fixture.
+All approval flags stay false and hideTriangleIDs stays empty.
+
+Core/assert bytes originate unchanged from external experiment142. Real-profile
+browser170 used different assets and actual controller normalization; its PNGs
+are context only, not proof that this synthetic profile is equivalent or that
+fit/art/license were approved. See the [continuation](../../docs/visual-factory/GARMENT-LIBRARY-CONTINUATION.md)
+for boundaries and pending review.
+
+Capturas locais do exemplo anexado/removido e o SHA do código observado estão em
+[Preview do mecanismo](../../docs/visual-factory/evidence/garment-library/README.md).

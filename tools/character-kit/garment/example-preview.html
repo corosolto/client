@@ -1,0 +1,31 @@
+<!doctype html><meta charset="utf-8"><title>Synthetic garment attachment — dev only</title>
+<script type="importmap">{"imports":{"three":"../../../public/vendor/three.module.js","three/addons/":"../../../public/vendor/addons/"}}</script>
+<p>Synthetic triangles only. No human fit, Game integration, body hiding or art approval.</p>
+<button id="load">Load local synthetic example</button><button id="dispose" disabled>Dispose attachment</button><button id="attach" disabled>Reattach</button><pre id="status">Opt-in preview; module imports load now. No asset fetch or renderer until Load.</pre>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {clone} from 'three/addons/utils/SkeletonUtils.js';
+import {prepareGarment} from './browser-example.mjs';
+const status = document.querySelector('#status'), load = document.querySelector('#load'), dispose = document.querySelector('#dispose'), attach = document.querySelector('#attach');
+load.onclick = async () => {
+  load.disabled = true;
+  try {
+    const read = async name => {const response = await fetch('./example-assets/' + name); if (!response.ok) throw Error('Generate local assets first'); return new Uint8Array(await response.arrayBuffer());};
+    const baseBytes = await read('body.glb'), garmentBytes = await read('garment.glb');
+    const parseGLB = bytes => new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+    const kit = await prepareGarment({THREE, parseGLB, baseBytes, garmentBytes});
+    const model = clone((await parseGLB(baseBytes)).scene), group = new THREE.Group(); group.add(model);
+    const ctrl = {model, group, mixer: new THREE.AnimationMixer(model)}; // synthetic ownership fixture, not CharController
+    const scene = new THREE.Scene(); scene.background = new THREE.Color(0x303030); scene.add(group, new THREE.HemisphereLight(0xffffff, 0x777777, 3));
+    const camera = new THREE.PerspectiveCamera(40, 3 / 2, 0.01, 20); camera.position.set(0.5, 0.5, 3); camera.lookAt(0.5, 0.5, 0);
+    const renderer = new THREE.WebGLRenderer({antialias: true}); renderer.setSize(600, 400); document.body.append(renderer.domElement);
+    const draw = () => {scene.updateMatrixWorld(true); renderer.render(scene, camera);};
+    let handle = kit.attach(ctrl); draw(); dispose.disabled = false;
+    dispose.onclick = () => {handle.dispose(); draw(); dispose.disabled = true; attach.disabled = false; status.textContent = 'Disposed owned attachment; body retained.';};
+    attach.onclick = () => {handle = kit.attach(ctrl); draw(); attach.disabled = true; dispose.disabled = false; status.textContent = 'Reattached synthetic triangle; no fit claim.';};
+    addEventListener('pagehide', () => {handle.dispose(); renderer.dispose();}, {once: true});
+    status.textContent = 'Digest verified before parse; synthetic attachment only. Coplanar triangles are intentional.';
+  } catch (error) {status.textContent = 'REFUSED: ' + error.message;}
+};
+</script>

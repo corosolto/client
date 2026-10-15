@@ -173,3 +173,13 @@ executar skinning e normalização no mesmo loader do jogo e medir contato contr
 triângulos de arma em todas as fases. Depois validar luvas/roupas que cobrem mãos
 e transições de recarga/soltura. Perfil por família não autoriza herança automática
 entre armas ou proporções diferentes.
+
+
+### Experimental attachment library
+
+The separate [synthetic garment example](../../tools/character-kit/README.md#experimental-synthetic-garment-attachment)
+is opt-in developer tooling, not an extension of package validation or catalog
+activation. Its static record authenticates one synthetic byte pair; known-family
+and fit are technical draft identities. No body mask is applied, and all approval
+flags remain false. Gameplay, store, authored garments and cross-family fit remain
+outside this API experiment.
