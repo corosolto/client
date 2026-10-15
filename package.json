@@ -341,6 +341,7 @@
     "eval:vm-moving-shoulder": "node tools/eval/vm-target-tracking-check.mjs --dynamic-only --small --cam=shoulder --weapons=ak,mp5,p90",
     "eval:vm-parallax": "node tools/eval/vm-target-tracking-check.mjs --dynamic-only --stationary --small --cam=shoulder --weapons=ak --depth=2 --hit-radius=0.15",
     "eval:vm-parallax-far": "node tools/eval/vm-target-tracking-check.mjs --dynamic-only --stationary --small --cam=shoulder --weapons=ak --depth=30 --hit-radius=0.2",
+    "eval:vm-grip-contact": "node tools/eval/vm-contact-geometry-check.mjs && node tools/eval/vm-grip-contact-check.mjs && node tools/eval/vm-grip-contact-mutations.mjs",
     "eval:melee-vm": "node tools/eval/melee-vm-check.mjs && node tools/eval/melee-motion-check.mjs && node tools/eval/melee-approved-attacks-check.mjs && node tools/eval/vm-hand-continuity-check.mjs && node tools/eval/vm-hand-atlas-check.mjs && node tools/eval/melee-framing-check.mjs",
     "eval:vm-catalog": "node tools/viewmodels/validate_paid_catalog.mjs",
     "eval:vm-identity": "node tools/eval/authored-identity-check.mjs",
