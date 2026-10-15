@@ -23,7 +23,7 @@ const context={
     observe(options){assert.equal(options.buffered,false,'Historical resources must not enter a new opt-in');}
   },
   window:{dispatchEvent:e=>dispatch(winEvents,e),addEventListener:(type,fn)=>listen(winEvents,type,fn)},
-  document:{hidden:false,addEventListener:(type,fn)=>listen(docEvents,type,fn)},
+  document:{hidden:false,addEventListener:(type,fn)=>listen(docEvents,type,fn),createElement:()=>({}),head:{appendChild:()=>{}}},
 };
 context.analyticsAllowed=()=>context.window.__csPrivacy.allowed();
 vm.createContext(context);
