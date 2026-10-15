@@ -6,6 +6,13 @@ import { spawnSync } from 'node:child_process';
 
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'vm-pegas-'));
 try {
+  const control = path.join(directory, 'control.json');
+  const run = spawnSync(process.execPath, [path.join(import.meta.dirname, 'vm-grip-contact-check.mjs')], {
+    env: { ...process.env, VM_CONTACT_REPORT: control, VM_CONTACT_MUTANT: '' }, encoding: 'utf8', maxBuffer: 2 * 1024 * 1024,
+  });
+  if (run.status !== 0 || !fs.existsSync(control) || !JSON.parse(fs.readFileSync(control, 'utf8')).ok) {
+    throw Error('controle atual vermelho: mutantes não certificam a correção pendente da #991');
+  }
   for (const mutation of ['baseline', 'faca-solta', 'ombro', 'trajetoria', 'dedo-solto', 'manga']) {
     const file = path.join(directory, `${mutation}.json`);
     const args = [path.join(import.meta.dirname, 'vm-grip-contact-check.mjs'), ...(mutation === 'baseline' ? ['--baseline'] : [])];

@@ -86,7 +86,7 @@ recusa DB/site remoto e restaura catálogo/contas no finally. Aprovação no man
 | `char-probe.mjs`, `char_probe.py`, `char_sim.py` | Sondas de personagem (proporção, escala, palma). |
 | `mixamo-capture.mjs`, `mixamo-measure.mjs` | Clipes do pack Mixamo. |
 
-A régua `npm run eval:vm-grip-contact` exige `CSBRASIL_VM_ASSET_ROOT` e mede contato, penetração, punho e integridade das animações da faca e .38 nos GLBs autorados (issue #991). Inclui casos de contenção e mutantes; ausência de asset reprova. `vm-grip-capture.mjs` captura o jogo real em 3:2/16:9; `VM_QA_BASELINE=1` usa o controle `vmgrip=0`. Procedência e limites: [relatório #991](../../docs/reports/VIEWMODELS-991.md).
+A régua `npm run eval:vm-grip-contact` exige `CSBRASIL_VM_ASSET_ROOT` e mede contato, penetração, punho e integridade das animações da faca e .38 nos GLBs autorados (issue #991). Inclui casos de contenção e mutantes; ausência de asset reprova. O controle atual está vermelho na faca e na transição ADS da .38; mutantes não certificam uma correção enquanto o controle falhar. `vm-grip-capture.mjs` captura o jogo real em 3:2/16:9; `VM_QA_BASELINE=1` usa o controle `vmgrip=0`. Procedência e limites: [relatório #991](../../docs/reports/VIEWMODELS-991.md).
 
 ## 5. Referência e cor
 

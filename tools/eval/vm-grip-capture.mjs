@@ -10,7 +10,9 @@ const out = process.env.VM_QA_OUT || fs.mkdtempSync(path.join(os.tmpdir(), 'vm-p
 const baseline = process.env.VM_QA_BASELINE === '1';
 const base = process.env.VM_QA_URL || 'http://127.0.0.1:4387/';
 const framesOnly = process.env.VM_QA_FRAME_ONLY === '1';
-const ids = framesOnly ? ['deagle', 'pistol'] : ['knife', 'deagle', 'pistol', 'revolver38', 'ak'];
+const catalog = ['knife', 'deagle', 'pistol', 'revolver38', 'ak'];
+const ids = process.env.VM_QA_WEAPONS?.split(',') || (framesOnly ? ['deagle', 'pistol'] : catalog);
+if (ids.some(id => !catalog.includes(id))) throw Error('arma de QA desconhecida');
 fs.mkdirSync(out, { recursive: true });
 const report = { baseline, sources: Object.fromEntries(['vmgrip.js', 'meleevm.js', 'authoredvm.js', 'data/vmconfig.js']
   .map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(path.join(root, 'public/js', file))).digest('hex')])), captures: [], pages: [] };
@@ -73,11 +75,14 @@ try {
         document.getElementById('qa-label').textContent = `${id} · ${state} · ${view}`;
         window.__render(camera);
         return { authored: id === 'knife' ? g.vm.melee.active : g.vm.authored.active(id),
-          corrected: id === 'knife' ? Boolean(scene.userData.knifeGripCorrected) : id === 'revolver38' ? Boolean(scene.userData.revolverGripCorrected) : null,
+          corrected: id === 'revolver38' ? Boolean(scene.userData.revolverGripCorrected) : null,
+          knifeParent: id === 'knife' ? scene.getObjectByName('MELEE_KNIFE').parent.name : null,
+          sampleKind: ['hip', 'ads', 'fire'].includes(state) ? 'gameplay' : 'full-pose-clip',
           scoped: g.player.scoped, frame: entry?.frame, heapMB: performance.memory?.usedJSHeapSize / 1048576 };
       }, { id, state, view });
       if (!data.authored || data.heapMB > 350) throw Error(`caminho/heap inválido: ${JSON.stringify(data)}`);
       if (data.corrected !== null && data.corrected === baseline) throw Error('flag de pega não chegou ao consumidor');
+      if (id === 'knife' && data.knifeParent !== 'VM_KNIFE_UNITS') throw Error('hierarquia autorada da faca alterada');
       const file = `${width}x${height}-${id}-${state.replace(/[^\w-]/g, '_')}-${view}.png`;
       await page.screenshot({ path: path.join(out, file) });
       if (state === 'hip' && ['deagle', 'pistol'].includes(id)) {
@@ -121,9 +126,19 @@ try {
       }
       if (id === 'ak' || framesOnly) continue;
       await page.evaluate(() => { window.__game._scope(false, true); window.__step(90); });
-      const clips = await page.evaluate(id => id === 'knife' ? [...window.__game.vm.melee.actions.keys()]
-        : [...window.__game.vm.authored.entry(id).clips.entries()].filter(([key]) => /idle|reload|shoot|fire|inspect|ads|equip|draw/.test(key)).map(([key]) => key), id);
-      for (const clip of clips) for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
+      const selection = await page.evaluate(id => {
+        if (id === 'knife') return { clips: [...window.__game.vm.melee.actions.keys()], omitted: [] };
+        const entry = window.__game.vm.authored.entry(id);
+        const candidates = [...entry.clips.entries()].filter(([key]) => /idle|reload|shoot|fire|inspect|ads|equip|draw/.test(key));
+        const sparse = id === 'revolver38' ? new Set(['ads']) : id === 'pistol' ? new Set(['inspect']) : new Set();
+        return { clips: candidates.filter(([key]) => !sparse.has(key)).map(([key]) => key),
+          omitted: candidates.filter(([key]) => sparse.has(key)).map(([key, clip]) => ({ key, channels: clip.tracks.map(t => t.name),
+            reason: key === 'ads' ? 'camada aditiva: capturada pela ação ADS real' : 'clipe parcial sem chamada pública no Game' })) };
+
+      }, id);
+      report.omitted ||= [];
+      report.omitted.push({ id, width, height, sparseStandaloneClips: selection.omitted }); save();
+      for (const clip of selection.clips) for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
         await page.evaluate(async({ id, clip, fraction }) => {
           const T = await import('three'), g = window.__game;
           const controller = id === 'knife' ? g.vm.melee : g.vm.authored.entry(id);

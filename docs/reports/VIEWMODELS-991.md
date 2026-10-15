@@ -1,60 +1,61 @@
 # Viewmodels — issue #991
 
-Lote independente da revisão de balística. A faca K passa a adaptar as rotações do braço, punho e twist uma vez ao carregar o GLB. O cabo acompanha a cavidade da mão sem deslocar ombro ou lâmina. Somente o produto `revolver#revolver38` recebe a adaptação; fábrica, golden e retarget permanecem intactos. A .38 clona os clipes antes de ajustar três falanges do índice; outras armas preservam o cache original. A Deagle sobe 45 mm no frame de quadril. A PT-38 permanece como referência.
+**Lote incompleto, bloqueado para merge.** Duas críticas cegas reprovaram as tentativas de correção da faca. A adaptação publicada em `596ba6a` foi retirada: o runtime voltou à faca original, com seu defeito conhecido, sem reparenting ou alteração de tracks. A issue permanece aberta. CI público verde não equivale a aceite visual ou de contato.
 
-Não há alteração de GLB, pesos, vértices, dano, cadência, alcance ou trajetória da lâmina. Os tempos e a interpolação de todas as tracks são comparados; somente quatro tracks de quaternion da faca e três do índice da .38 podem mudar de valores.
+O recorte mantido sobe a Deagle 45 mm no frame de quadril e adapta três falanges do índice somente no produto `revolver#revolver38`, clonando seus clipes. A PT-38 permanece como referência. Fábrica, golden e retarget não recebem essa adaptação. A .38 melhorou nas poses já medidas, mas a nova medição da transição ADS encontrou interseções e impede considerá-la corrigida.
 
-## Antes/depois no jogo real
+Nenhum GLB, peso, vértice, dano, cadência ou alcance foi alterado. A faca preserva integralmente a hierarquia e as animações originais. Os assets privados permanecem fora do Git.
 
-A é o controle `vmgrip=0`, B é o comportamento padrão, ambos com o mesmo código e os mesmos assets autorados. Capturas em 1200×800 (3:2) e 1280×720 (16:9), qualidade baixa/SwiftShader. O capturador oculta o cenário para tornar a silhueta legível, conserva o controlador real e avança ações de gameplay e clipes em passos determinísticos. Isso é QA de poses, não playtest humano contínuo.
+## Evidência visual e tentativas rejeitadas
 
-![Faca A/B: quadril, estocadas, inspeção e vista inferior](evidence/viewmodels-991/knife-ab.jpg)
+A e B usam os mesmos assets autorados, em 1200×800 (3:2) e 1280×720 (16:9). O capturador oculta o cenário para facilitar a leitura e avança poses determinísticas; isso não substitui movimento contínuo ou playtest humano.
 
-![Armas curtas A/B: quadril, ADS e disparo](evidence/viewmodels-991/shortguns-ab.jpg)
+![Primeira tentativa da faca: A original, B IK reprovada e retirada](evidence/viewmodels-991/knife-ab.jpg)
 
-Foram capturadas 450 imagens por variante: sete clipes da faca em cinco fases e três vistas; clipes das três armas curtas, ações reais de quadril/ADS/disparo e AK de referência. Uma restrição posterior de escopo limitou a adaptação da .38 à chave K já usada nas capturas, sem mudar sua pose. Os manifestos resumidos conservam os hashes da captura, anteriores a essa restrição. Incluem hashes das fontes, ausência de erros de página e maior heap observado: [controle](evidence/viewmodels-991/baseline-full-manifest.json), [correção](evidence/viewmodels-991/after-full-manifest.json). Maior heap JS observado na correção: 227,93 MiB; esse valor não representa a memória total do navegador.
+O primeiro candidato preservava a lâmina e adaptava o braço com IK. A crítica cega reprovou a palma aberta/inflada, a leitura dos dedos e a ligação abrupta do punho. A nota anterior de RESSALVA veio de contexto que não era suficientemente cego e foi invalidada.
 
-A máscara raster da Deagle em 16:9 tinha 6,67 px CSS de margem inferior; passou a 84 px. A PT-38 usada como referência tem 68 px. Em 3:2, Deagle 69,33 → 141,33 px; PT-38 126,67 px. As [máscaras e medidas](evidence/viewmodels-991/frame-masks.json) estão versionadas; branco é arma visível, preto inclui oclusão pelas mãos. Medição converte o framebuffer de qualidade baixa (75%) para CSS. FOV, escala e ângulos permanecem iguais. ADS foi capturado separadamente e julgado centralizado pelo crítico.
+![Segunda tentativa da faca: A original, B fixação à mão reprovada e descartada](evidence/viewmodels-991/knife-parent-rejected.jpg)
 
-## Régua de contato e limites
+O segundo candidato fixava a lâmina à mão e preservava seu gesto original. Melhorou os rasgos no punho, mas deixou os dedos atrás do cabo sem envolvê-lo e tornou as estocadas quase verticais. Foi REPROVADO em QuickThrust, Stab, Slash e HeavyStab; Idle, Draw e Inspect tiveram ressalvas. O crítico examinou os sete clipes na fase central, três vistas e dois aspectos, além de fases 25/75 selecionadas; não examinou todos os quadros nem vídeo contínuo. Esse candidato não integra o runtime.
 
-`npm run eval:vm-grip-contact` lê os GLBs autorados e usa os consumidores `_accept` e `_loadFamily`; substitui apenas I/O e texturas na execução Node. O wrapper inteiro recebe `parent.updateMatrixWorld(true)` antes da medição, preservando a atualização de `bindMatrixInverse` dos SkinnedMesh.
+A skill `vm-critico-visual` exige trocar de frente ou reportar o platô depois de duas rodadas sem melhora de veredito. A investigação foi interrompida nesse ponto, sem promover o asset ou alterar VM_LAUNCH.
 
-Amostragem: 13 poses por clipe, 91 da faca e 65 da .38. [CSV por pose](evidence/viewmodels-991/contact.csv).
+![Armas curtas: A controle, B enquadramento e adaptação mantidos em revisão](evidence/viewmodels-991/shortguns-ab.jpg)
 
-| Medida | Controle | Correção |
-|---|---:|---:|
-| Maior ângulo cabo/linha entre dedos | 60,433° | 0,308° |
-| Maior número de pares palma/cabo em interseção | 427 | 0 |
-| Maior distância do terceiro dedo mais próximo ao cabo | 66,335 mm | 0,091 mm |
-| Maior razão de alongamento de aresta no punho | 11,777 | 3,167 |
-| Maior número de pares índice/metal do guarda-mato | 63 | 0 |
-| Maior distância índice/gatilho durante disparo | 3,805 mm | 4,799 mm |
+Deagle e PT-38 foram aprovadas nas figuras de gameplay. A máscara da Deagle em 16:9 passou de 6,67 para 84 px CSS de margem inferior; a PT-38 tem 68 px. Em 3:2, Deagle 69,33 → 141,33 px; PT-38 126,67 px. FOV, escala e ângulos não mudaram. [Máscaras e medidas](evidence/viewmodels-991/frame-masks.json).
 
-O limite de contato de 5 mm tolera a superfície da luva e exige proximidade real de três dedos; o gatilho usa o mesmo limite. O limite de 15° separa a pega perpendicular observada no controle da pega ao longo do cabo. São critérios operacionais deste asset e desta correção, não medidas anatômicas universais. O punho exige melhoria contra o mesmo GLB original, sem alegar deformação zero.
+Os manifestos [baseline-full](evidence/viewmodels-991/baseline-full-manifest.json) e [after-full](evidence/viewmodels-991/after-full-manifest.json) são **histórico da primeira tentativa rejeitada**, não uma captura do HEAD atual. Registram 450 imagens por variante, zero exceções de página e heap JS até 227,93 MiB. A segunda tentativa gerou 222 imagens de faca/AK, zero exceções e heap JS até 202,18 MiB. Esses valores não são a memória total do navegador.
 
-A interseção usa arestas/triângulos. Um complemento testa contenção com três raios e tolerância superficial de 0,2 mm; um fixture fechado prova que uma região inteiramente embutida, sem cruzamento de superfícies, é detectada. Recortes abertos, componentes sobrepostos e degenerações podem produzir falsos negativos, especialmente na seleção de faces do guarda-mato. Resultado zero significa ausência detectada nas poses amostradas; não prova universal de ausência de penetração.
+## Correção da instrumentação e pendências
 
-Os mutantes restauram o controle, afastam a faca, deslocam o ombro, alteram a trajetória da lâmina, afastam o índice e deformam o twist da manga. Cada execução exige falha nas cláusulas correspondentes. Ausência de asset reprova; o portão privado não é acrescentado ao CI público, que não possui esses binários.
+O capturador anterior tocava `revolver ads` isoladamente, embora seus sete canais sejam uma camada aditiva sobre idle. Também tocava `pistol inspect`, com dois canais parciais e sem chamada pública no Game. Os quadros vazios/invertidos desses dois diagnósticos não demonstram regressão de gameplay e não servem como aceite. O capturador agora exclui explicitamente essas combinações inválidas, registra canais/motivo e conserva a captura da ação ADS real. Essa revisão do capturador ainda requer nova execução completa.
 
-## Crítica independente
+A régua de contato usa os consumidores `_accept` e `_loadFamily`, substituindo somente I/O e texturas em Node. `parent.updateMatrixWorld(true)` atualiza corretamente o bindMatrixInverse dos SkinnedMesh. ADS agora usa idle mais a ação aditiva real. A varredura associa fase do idle e peso ADS: não cobre todas as combinações nem ADS sobre disparo/recarga.
 
-Revisão de pixels em resolução original e sheets, com amostras dos sete clipes e dos dois aspectos; o crítico não examinou individualmente todas as 900 imagens.
+A nova execução, com a faca original e a adaptação mantida da .38, **saiu 1**. [Resumo e pendências](evidence/viewmodels-991/pending.json), [CSV por pose](evidence/viewmodels-991/contact.csv).
 
-- Deagle: **APROVADA** nas figuras; margem melhor e ADS centralizado.
-- PT-38: **APROVADA** nas figuras; nenhum defeito novo demonstrado.
-- Faca: **RESSALVA**. Cabo atravessando a palma corrigido; contato aparente nos sete clipes. Persiste uma dobra volumosa e angular na junção luva/manga, sobretudo Idle, Inspect e HeavyStab. O punho não tem aceite visual final.
-- .38: **RESSALVA**. Gameplay, ADS, recarga e inspect íntegros nas amostras. Closes de idle encobrem/cortam parte importante do índice e guarda-mato; shoot na vista oposta mostra melhor a região, sem atravessamento claro. Falta prova visual completa desse contato.
+| Medida atual | Resultado |
+|---|---:|
+| Poses da faca / .38 | 91 / 65 |
+| Maior contagem detectada de interseções palma/faca | 516 |
+| Maior distância do terceiro dedo ao cabo | 66,335 mm |
+| Maior razão de alongamento de aresta no punho | 11,777 |
+| Maior contagem de interseções índice/metal da .38 | 10 |
+| Maior distância índice/gatilho no disparo | 4,799 mm |
 
-A issue permanece aberta. Este lote deve seguir em rascunho para staging e revisão humana de gameplay; não promover assets nem ligar VM_LAUNCH com base neste relatório.
+As interseções da .38 aparecem nos pesos ADS 0,25, 0,333 e 0,417, com contagens 4, 10 e 3. Idle, disparo, recarga e inspect não tiveram interseção detectada nessa amostra. O limite existente de 5 mm para gatilho passou; isso não compensa a falha durante ADS.
 
-## Checks do lote
+A razão cabo/linha entre metacarpos chegou perto de zero nos candidatos e ainda premiou pegas visualmente reprovadas. Seu teto de 15° não tem validade demonstrada para aprovar essa pega. Proximidade e contagem de interseções também não certificam envolvimento dos dedos. Nenhum teto foi afrouxado; o portão global permanece vermelho. A cláusula de manga exige melhoria sobre a faca original e necessariamente falha após a retirada da correção.
 
-Build, contrato de rig com assets autorizados, chave de ativação com mutantes e fixture geométrico passaram. `check:fast`: 236/249; as treze falhas também foram reproduzidas no checkout isolado da base exata, sem as mudanças deste lote. São falhas de release, mapas, áudio, grafites e insumos ausentes; nenhum teto foi afrouxado. [Resultados e reprodução na base](evidence/viewmodels-991/validation.json). As réguas de imagem das três curtas passaram em ambos os aspectos.
+Interseção por triângulos e contenção por três raios, com tolerância de 0,2 mm, têm limitações em superfícies abertas, sobrepostas ou degeneradas. Zero significa ausência detectada nas poses medidas, não prova universal. O fixture fechado passou na validação anterior. O teste de mutações agora exige um controle verde antes de certificar qualquer mutante; o estado atual impede essa certificação.
+
+## Checks e próximo aceite
+
+Build, sintaxe dos arquivos alterados e fixture geométrico passaram após a retirada. O consumidor da faca é idêntico ao da base. Rig com 25 armas e ativação com mutantes passaram anteriormente em `596ba6a`. `check:fast` registrou 236/249; as treze falhas foram reproduzidas na base exata `e8c4a2c4b41b952674e6ec7342b4bb82178ebc99`. Esses resultados são históricos, identificados como tal em [validation.json](evidence/viewmodels-991/validation.json). O CI público desse SHA passou nos checks de código; Vercel exige autorização humana de mantenedor, não concedida.
+
+Para concluir: reconstruir a relação mão/cabo sem piorar os golpes, obter nova crítica cega, corrigir a transição ADS da .38 e repetir capturas/contato/mutantes com controle verde. Depois, staging e gameplay humano. Nenhum merge, deploy ou promoção está autorizado por este relatório.
 
 ## Reprodução
-
-Os assets privados devem vir do catálogo autorizado, preservando bytes e nomes do manifesto. Nenhum binário é incluído neste PR.
 
 | GLB | Bytes | SHA-256 |
 |---|---:|---|
@@ -63,14 +64,12 @@ Os assets privados devem vir do catálogo autorizado, preservando bytes e nomes 
 | `deagle/deagle-runtime.glb` | 3443296 | `e480f69e76f892b5b7ad3d49d1a69f24fe0c8515735faa1c7cd86de7a2583c97` |
 | `pistol/pistol-runtime.glb` | 3006796 | `04c126d93148f9cf0ffa07927f4d09cde2067d9abbc9ddcd25d3b811923fa3b8` |
 
-
 ```sh
 CSBRASIL_VM_ASSET_ROOT=/caminho/viewmodels npm run eval:vm-grip-contact
-# Servidor Astro local já ativo; private-assets/viewmodels serve o catálogo autorizado.
+# Resultado atual esperado: vermelho; não considerar certificação.
+# Servidor Astro e catálogo privado autorizado necessários para capturas.
 VM_QA_URL=http://127.0.0.1:4387/ VM_QA_OUT=/tmp/vm991-after node tools/eval/vm-grip-capture.mjs
 VM_QA_BASELINE=1 VM_QA_URL=http://127.0.0.1:4387/ VM_QA_OUT=/tmp/vm991-before node tools/eval/vm-grip-capture.mjs
 ```
 
-`VM_QA_FRAME_ONLY=1` limita a captura às pistolas em quadril/ADS e produz as máscaras; a margem CSS é `alturaCSS - (últimaLinhaBranca + 1) * alturaCSS / alturaRaster`, com branco definido por R > 240.
-
-Executar um navegador ou teste pesado por vez, com heap Node limitado. `vmgrip=0` é também controle de rollback local; não altera os binários nem promove estado de prontidão.
+`VM_QA_FRAME_ONLY=1` limita a captura às pistolas em quadril/ADS e produz máscaras. `VM_QA_WEAPONS` permite um subconjunto do catálogo. Executar um navegador ou teste pesado por vez, com heap limitado. `vmgrip=0` mantém o controle local da .38 e do enquadramento, sem alterar binários.

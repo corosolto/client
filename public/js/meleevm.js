@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { applyTeamHandMaterial, refreshTeamHands } from './vmhands.js';
 import { VM_BYTES } from './data/vmbytes.js';
-import { corrigirPegaFaca } from './vmgrip.js';
 
 // Faca K (braços KINEMATION) do catálogo privado, na mesma composição da faca L aprovada
 // (receita tools/viewmodels/prep/knife-k-build.py); a versão da URL vem dos bytes (BUG-157).
@@ -77,7 +76,6 @@ export class KnifeMeleeViewModel {
   }
 
   _accept(gltf) {
-    corrigirPegaFaca(gltf);
     const scene = gltf.scene;
     let camera = null;
     scene.traverse((object) => { if (!camera && object.isCamera) camera = object; });

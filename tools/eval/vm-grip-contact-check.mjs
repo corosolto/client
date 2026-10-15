@@ -78,9 +78,9 @@ function cuffRatio(mesh, triangles) {
 }
 async function knife(root, baseline, mutation) {
   const gltf = await carregarSemTexturas(path.join(root, 'knife/knife-baked-runtime.glb'));
-  const allowed = new Set(['upperarm_r', 'lowerarm_r', 'hand_r', 'lowerarm_twist_01_r'].map(n => `${n}.quaternion`));
+  const allowed = new Set();
   const original = invariantTracks(gltf.animations, allowed);
-  const edits = baseline ? [['    corrigirPegaFaca(gltf);', '']] : [];
+  const edits = [];
   const { KnifeMeleeViewModel } = await consumer(path.join(ROOT, 'public/js/meleevm.js'), edits);
   const parent = new THREE.Group(), controller = new KnifeMeleeViewModel({ parent }); controller._accept(gltf);
   const blade = controller.scene.getObjectByName('MELEE_KNIFE');
@@ -168,18 +168,24 @@ async function revolver(root, baseline, mutation) {
   const meshes = []; entry.scene.traverse(o => { if (o.isMesh && /GEO_WEAPON/.test(o.name + o.parent.name)) meshes.push(o); });
   const glove = entry.scene.getObjectByName('GEO_FP_SK_Glove_01'), samples = [];
   for (const clip of entry.clips.values()) {
-    entry.mixer.stopAllAction(); const action = entry.mixer.clipAction(clip).reset().setEffectiveWeight(1).play();
+    entry.mixer.stopAllAction();
+    const additive = /^ads$/i.test(clip.name);
+    const base = additive ? entry.clips.get('idle') : clip;
+    entry.mixer.clipAction(base).reset().setEffectiveWeight(1).play();
+    if (additive && !entry.adsAction) throw Error('ADS sem camada aditiva do consumidor');
+    if (additive) entry.adsAction.reset().play();
     for (let sample = 0; sample <= 12; sample++) {
-      entry.mixer.setTime(Math.min(clip.duration - 1e-5, clip.duration * sample / 12)); parent.updateMatrixWorld(true);
+      if (additive) entry.adsAction.setEffectiveWeight(sample / 12);
+      entry.mixer.setTime(Math.min(base.duration - 1e-5, base.duration * sample / 12)); parent.updateMatrixWorld(true);
       const finger = meshTriangles(glove, ids => ids.some(i => jointWeight(glove, i, /^index_0._r$/) > 0.5));
       const metal = meshes.filter(m => m.material.name === 'CoroSolto_chrome').flatMap(m => meshTriangles(m,
         ids => ids.every(i => jointWeight(m, i, /^neutral_bone$/) > 0.5)));
       const trigger = meshes.flatMap(m => meshTriangles(m, ids => ids.some(i => jointWeight(m, i, /^Trigger$/) > 0.5)));
       if (!finger.length || !metal.length || !trigger.length) throw Error('régua sem índice/metal/gatilho');
-      samples.push({ clip: clip.name, sample, guardPairs: intersectionPairs(finger, metal).length + containedVertices(finger, metal),
+      samples.push({ clip: additive ? 'ads-additive' : clip.name, sample, guardPairs: intersectionPairs(finger, metal).length + containedVertices(finger, metal),
         triggerGap: gap(finger, trigger) });
     }
-    action.stop();
+    entry.mixer.stopAllAction();
   }
   return { samples, invariantTracks: original === invariantTracks([...entry.clips.values()], allowed),
     guardPairs: Math.max(...samples.map(s => s.guardPairs)),
