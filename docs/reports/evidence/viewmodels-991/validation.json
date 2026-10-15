@@ -1,87 +1,103 @@
 {
-  "base": "e8c4a2c4b41b952674e6ec7342b4bb82178ebc99",
-  "runtimeCommit": "025960670",
-  "checkFast": {
-    "passed": 236,
-    "total": 249,
-    "baselineReproducedFailures": [
-      {
-        "script": "eval:release",
-        "status": 1
-      },
-      {
-        "script": "eval:mapid",
-        "status": 1
-      },
-      {
-        "script": "audio:check",
-        "status": 1
-      },
-      {
-        "script": "eval:grafite",
-        "status": 2
-      },
-      {
-        "script": "eval:grafite:ar",
-        "status": 2
-      },
-      {
-        "script": "eval:grafite-editorial",
-        "status": 1
-      },
-      {
-        "script": "eval:audiofablocal",
-        "status": 1
-      },
-      {
-        "script": "eval:audiovoicemix",
-        "status": 1
-      },
-      {
-        "script": "eval:decal-ink",
-        "status": 1
-      },
-      {
-        "script": "eval:texture-quality-sampler",
-        "status": 1
-      },
-      {
-        "script": "eval:map-surface-upgrade",
-        "status": 1
-      },
-      {
-        "script": "eval:backendhints",
-        "status": 1
-      },
-      {
-        "script": "eval:mansao",
-        "status": 1
-      }
-    ]
+  "status": "blocked-not-ready",
+  "historicalPublished596ba6a": {
+    "base": "e8c4a2c4b41b952674e6ec7342b4bb82178ebc99",
+    "runtimeCommit": "025960670",
+    "checkFast": {
+      "passed": 236,
+      "total": 249,
+      "baselineReproducedFailures": [
+        {
+          "script": "eval:release",
+          "status": 1
+        },
+        {
+          "script": "eval:mapid",
+          "status": 1
+        },
+        {
+          "script": "audio:check",
+          "status": 1
+        },
+        {
+          "script": "eval:grafite",
+          "status": 2
+        },
+        {
+          "script": "eval:grafite:ar",
+          "status": 2
+        },
+        {
+          "script": "eval:grafite-editorial",
+          "status": 1
+        },
+        {
+          "script": "eval:audiofablocal",
+          "status": 1
+        },
+        {
+          "script": "eval:audiovoicemix",
+          "status": 1
+        },
+        {
+          "script": "eval:decal-ink",
+          "status": 1
+        },
+        {
+          "script": "eval:texture-quality-sampler",
+          "status": 1
+        },
+        {
+          "script": "eval:map-surface-upgrade",
+          "status": 1
+        },
+        {
+          "script": "eval:backendhints",
+          "status": 1
+        },
+        {
+          "script": "eval:mansao",
+          "status": 1
+        }
+      ]
+    },
+    "build": 0,
+    "vmRigWithAuthorizedAssets": 0,
+    "vmLaunchWithMutants": 0,
+    "contactGeometryFixture": 0,
+    "authoredContactPoses": 156,
+    "negativeControlsDetected": [
+      "baseline",
+      "faca-solta",
+      "ombro",
+      "trajetoria",
+      "dedo-solto",
+      "manga"
+    ],
+    "imageRulers": {
+      "weapons": [
+        "deagle",
+        "revolver38",
+        "pistol"
+      ],
+      "aspects": [
+        "3x2",
+        "16x9"
+      ],
+      "failures": 0
+    }
   },
-  "build": 0,
-  "vmRigWithAuthorizedAssets": 0,
-  "vmLaunchWithMutants": 0,
-  "contactGeometryFixture": 0,
-  "authoredContactPoses": 156,
-  "negativeControlsDetected": [
-    "baseline",
-    "faca-solta",
-    "ombro",
-    "trajetoria",
-    "dedo-solto",
-    "manga"
-  ],
-  "imageRulers": {
-    "weapons": [
-      "deagle",
-      "revolver38",
-      "pistol"
-    ],
-    "aspects": [
-      "3x2",
-      "16x9"
-    ],
-    "failures": 0
-  }
+  "currentAuthoredContact": {
+    "exitCode": 1,
+    "report": "pending.json",
+    "csv": "contact.csv"
+  },
+  "withdrawnKnifeCorrection": true,
+  "newBrowserCapture": "not run: memory pressure; old captures explicitly historical",
+  "currentPublicChecks": "recorded after push, not implied by historical checks",
+  "currentBuild": 0,
+  "currentGeometryFixture": 0,
+  "currentSyntax": 0,
+  "knifeConsumerMatchesBase": "git diff e8c4a2c4b41b952674e6ec7342b4bb82178ebc99 -- public/js/meleevm.js: empty",
+  "currentMutationGuard": "static review only: control is red, certification blocked"
 }

@@ -1,0 +1,66 @@
+{
+  "status": "blocked-not-ready",
+  "knifeRuntime": "original: rejected correction withdrawn",
+  "contactExitCode": 1,
+  "checks": {
+    "palma": false,
+    "contato": false,
+    "cabo": false,
+    "manga": false,
+    "trajetoriaOmbro": true,
+    "guardaMato": false,
+    "gatilho": true,
+    "somenteDedos": true
+  },
+  "knife": {
+    "invariantTracks": true,
+    "worstAngle": 60.433313830030805,
+    "palmPairs": 516,
+    "thirdContactGap": 0.06633476355547985,
+    "cuffRatio": 11.77745235712339
+  },
+  "revolver": {
+    "invariantTracks": true,
+    "guardPairs": 10,
+    "triggerGap": 0.004799064401809814
+  },
+  "revolverIntersectingSamples": [
+    {
+      "clip": "ads-additive",
+      "sample": 3,
+      "guardPairs": 4,
+      "triggerGap": 0.020763557412354704
+    },
+    {
+      "clip": "ads-additive",
+      "sample": 4,
+      "guardPairs": 10,
+      "triggerGap": 0.01999062069944618
+    },
+    {
+      "clip": "ads-additive",
+      "sample": 5,
+      "guardPairs": 3,
+      "triggerGap": 0.020961539638394124
+    }
+  ],
+  "visualReviews": {
+    "published596ba6a": "REPROVADA: palma aberta/inflada e punho desconectado",
+    "parentCandidate": "REPROVADA: dedos atrás do cabo sem envolver, estocadas quase verticais"
+  },
+  "captureLimitations": [
+    "old standalone revolver ads is invalid: seven-channel additive layer requires idle",
+    "old pistol inspect is partial: two channels and no public Game caller"
+  ],
+  "nextAcceptance": [
+    "new knife grip and complete attacks without visual regression",
+    "revolver ADS transition without detected intersections",
+    "new authored captures and blind critique",
+    "human staging/gameplay review"
+  ],
+  "baselineWithCorrectADS": {
+    "revolverGuardPairs": 69,
+    "triggerGapM": 0.0038045345483195044,
+    "exitCode": 1
+  }
+}
