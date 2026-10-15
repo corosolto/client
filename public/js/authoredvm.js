@@ -13,6 +13,7 @@ import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
 import { applyTeamHandMaterial, refreshTeamHands, handLayoutOfMesh } from './vmhands.js';
 import { extendSleeveOpenings, SLEEVE_MATERIAL } from './vmsleeve.js';
+import { corrigirPegaRevolver, PEGAS_ATIVAS } from './vmgrip.js';
 
 const DEG2RAD = Math.PI / 180;
 
@@ -435,6 +436,8 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
       ...(weaponFrame && typeof weaponFrame === 'object' ? weaponFrame : {}),
     };
 
+  if (weaponId === 'deagle' && !PEGAS_ATIVAS && !golden && !molde && !fabrica) frame.y = -0.1;
+
   const mount = new THREE.Group();
   mount.name = `paid_viewmodel_mount_${family}`;
   mount.add(scene);
@@ -574,10 +577,13 @@ export class AuthoredViewModels {
       // Clone do cache do módulo: o pacote é mutado (câmera removida, tint) e o
       // mesmo parse pode servir outra instância de Game depois.
       const scene = await skeletonCloneOf(gltf.scene);
-      const visual = cameraSpacePackage({ scene, animations: gltf.animations }, this.profile, this.parent, family, key);
+      const animations = key === 'revolver#revolver38' ? gltf.animations.map((clip) => clip.clone()) : gltf.animations;
+      const product = { scene, animations };
+      if (key === 'revolver#revolver38') corrigirPegaRevolver(product);
+      const visual = cameraSpacePackage(product, this.profile, this.parent, family, key);
       if (!golden) bindSharedArmTextures(visual.handMeshes, shared);
       const mixer = new THREE.AnimationMixer(visual.scene);
-      const clips = new Map(gltf.animations.map((clip) => [clipKey(clip.name), clip]));
+      const clips = new Map(animations.map((clip) => [clipKey(clip.name), clip]));
       const entry = {
         key, family, golden: key.startsWith('gold#'), ...visual, mixer, clips, action: null, queue: [], serial: 0,
         drawTime: 1, drawDuration: 0.32, muzzleLocal: null, ejectLocal: null,
