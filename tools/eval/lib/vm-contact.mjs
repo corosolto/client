@@ -1,5 +1,7 @@
 import * as THREE from '../../../public/vendor/three.module.js';
 
+export const CONTACT_EPSILON = 0.0002;
+
 export function meshTriangles(mesh, select = null) {
   const geometry = mesh.geometry, attributes = geometry.attributes;
   const vertices = Array.from({ length: attributes.position.count }, (_, i) => {
@@ -52,7 +54,7 @@ export function jointWeight(mesh, vertex, pattern) {
 }
 
 // Paridade em três direções evita confundir aresta compartilhada ou contato com interior.
-export function containedVertices(one, solid, epsilon = 0.0002) {
+export function containedVertices(one, solid, epsilon = CONTACT_EPSILON) {
   const bounds = new THREE.Box3();
   for (const t of solid) bounds.union(t.box);
   const directions = [[1, 0.371, 0.193], [0.217, 1, 0.413], [0.331, 0.173, 1]]

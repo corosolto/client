@@ -1,59 +1,57 @@
 # Viewmodels — issue #991
 
-**Lote incompleto, bloqueado para merge.** Duas críticas cegas reprovaram as tentativas de correção da faca. A adaptação publicada em `596ba6a` foi retirada: o runtime voltou à faca original, com seu defeito conhecido, sem reparenting ou alteração de tracks. A issue permanece aberta. CI público verde não equivale a aceite visual ou de contato.
+**ADS da .38 corrigido neste recorte; faca ainda bloqueada.** O produto K `revolver#revolver38` preserva a camada aditiva autorada de ADS e interpola a mão direita no referencial da arma. Os extremos hip/ADS são amostrados na mesma ação e no mesmo instante, restaurando o peso original; a pose aplicada é retirada antes da próxima atualização do mixer. Os ajustes anteriores das três falanges permanecem em clipes clonados. Fábrica, golden e retarget ficam fora dessa adaptação; `vmgrip=0` reproduz o controle.
 
-O recorte mantido sobe a Deagle 45 mm no frame de quadril e adapta três falanges do índice somente no produto `revolver#revolver38`, clonando seus clipes. A PT-38 permanece como referência. Fábrica, golden e retarget não recebem essa adaptação. A .38 melhorou nas poses já medidas, mas a nova medição da transição ADS encontrou interseções e impede considerá-la corrigida.
+A Deagle mantém o enquadramento já revisado e a PT-38 continua como referência. Não houve alteração de GLBs, pesos, vértices, cadência, dano, alcance ou balística. Após duas novas reprovações cegas, as adaptações experimentais da faca foram retiradas. `meleevm.js` e `vmgrip.js` permanecem idênticos ao commit `9e2306075`.
 
-Nenhum GLB, peso, vértice, dano, cadência ou alcance foi alterado. A faca preserva integralmente a hierarquia e as animações originais. Os assets privados permanecem fora do Git.
+## Validação do recorte mantido
 
-## Evidência visual e tentativas rejeitadas
+A régua carrega os bytes autorados pelos consumidores reais, substituindo apenas I/O e texturas em Node. Para a .38, inicia `setWeapon`, aguarda o carregamento e usa `setAim/update` no produto K. A rota de revisão é explícita. O wrapper completo recebe `parent.updateMatrixWorld(true)` para atualizar o bind dos SkinnedMesh.
 
-A e B usam os mesmos assets autorados, em 1200×800 (3:2) e 1280×720 (16:9). O capturador oculta o cenário para facilitar a leitura e avança poses determinísticas; isso não substitui movimento contínuo ou playtest humano.
+A varredura da .38 cobre 202 poses: quatro clipes completos e cinco fases de idle/disparo cruzadas com quinze pesos de ADS, incluindo os extremos e suas vizinhanças. Isso substitui a antiga associação diagonal de fase/peso e a montagem incompleta do consumidor. Resultados antigos têm outra cobertura e não são diretamente equivalentes.
 
-![Primeira tentativa da faca: A original, B IK reprovada e retirada](evidence/viewmodels-991/knife-ab.jpg)
-
-O primeiro candidato preservava a lâmina e adaptava o braço com IK. A crítica cega reprovou a palma aberta/inflada, a leitura dos dedos e a ligação abrupta do punho. A nota anterior de RESSALVA veio de contexto que não era suficientemente cego e foi invalidada.
-
-![Segunda tentativa da faca: A original, B fixação à mão reprovada e descartada](evidence/viewmodels-991/knife-parent-rejected.jpg)
-
-O segundo candidato fixava a lâmina à mão e preservava seu gesto original. Melhorou os rasgos no punho, mas deixou os dedos atrás do cabo sem envolvê-lo e tornou as estocadas quase verticais. Foi REPROVADO em QuickThrust, Stab, Slash e HeavyStab; Idle, Draw e Inspect tiveram ressalvas. O crítico examinou os sete clipes na fase central, três vistas e dois aspectos, além de fases 25/75 selecionadas; não examinou todos os quadros nem vídeo contínuo. Esse candidato não integra o runtime.
-
-A skill `vm-critico-visual` exige trocar de frente ou reportar o platô depois de duas rodadas sem melhora de veredito. A investigação foi interrompida nesse ponto, sem promover o asset ou alterar VM_LAUNCH.
-
-![Armas curtas: A controle, B enquadramento e adaptação mantidos em revisão](evidence/viewmodels-991/shortguns-ab.jpg)
-
-Deagle e PT-38 foram aprovadas nas figuras de gameplay. A máscara da Deagle em 16:9 passou de 6,67 para 84 px CSS de margem inferior; a PT-38 tem 68 px. Em 3:2, Deagle 69,33 → 141,33 px; PT-38 126,67 px. FOV, escala e ângulos não mudaram. [Máscaras e medidas](evidence/viewmodels-991/frame-masks.json).
-
-Os manifestos [baseline-full](evidence/viewmodels-991/baseline-full-manifest.json) e [after-full](evidence/viewmodels-991/after-full-manifest.json) são **histórico da primeira tentativa rejeitada**, não uma captura do HEAD atual. Registram 450 imagens por variante, zero exceções de página e heap JS até 227,93 MiB. A segunda tentativa gerou 222 imagens de faca/AK, zero exceções e heap JS até 202,18 MiB. Esses valores não são a memória total do navegador.
-
-## Correção da instrumentação e pendências
-
-O capturador anterior tocava `revolver ads` isoladamente, embora seus sete canais sejam uma camada aditiva sobre idle. Também tocava `pistol inspect`, com dois canais parciais e sem chamada pública no Game. Os quadros vazios/invertidos desses dois diagnósticos não demonstram regressão de gameplay e não servem como aceite. O capturador agora exclui explicitamente essas combinações inválidas, registra canais/motivo e conserva a captura da ação ADS real. Essa revisão do capturador ainda requer nova execução completa.
-
-A régua de contato usa os consumidores `_accept` e `_loadFamily`, substituindo somente I/O e texturas em Node. `parent.updateMatrixWorld(true)` atualiza corretamente o bindMatrixInverse dos SkinnedMesh. ADS agora usa idle mais a ação aditiva real. A varredura associa fase do idle e peso ADS: não cobre todas as combinações nem ADS sobre disparo/recarga.
-
-A nova execução, com a faca original e a adaptação mantida da .38, **saiu 1**. [Resumo e pendências](evidence/viewmodels-991/pending.json), [CSV por pose](evidence/viewmodels-991/contact.csv).
-
-| Medida atual | Resultado |
+| Medida autorada atual | Resultado |
 |---|---:|
-| Poses da faca / .38 | 91 / 65 |
-| Maior contagem detectada de interseções palma/faca | 516 |
-| Maior distância do terceiro dedo ao cabo | 66,335 mm |
-| Maior razão de alongamento de aresta no punho | 11,777 |
-| Maior contagem de interseções índice/metal da .38 | 10 |
+| Interseções detectadas índice/metal | 0 |
 | Maior distância índice/gatilho no disparo | 4,799 mm |
+| Maior deslocamento junto aos extremos ADS | 0,000634 mm |
+| Deriva de relógio e escala da mão | 0 |
 
-As interseções da .38 aparecem nos pesos ADS 0,25, 0,333 e 0,417, com contagens 4, 10 e 3. Idle, disparo, recarga e inspect não tiveram interseção detectada nessa amostra. O limite existente de 5 mm para gatilho passou; isso não compensa a falha durante ADS.
+O teto existente de gatilho permanece 5 mm; a tolerância geométrica existente de 0,2 mm também verifica as vizinhanças dos extremos. Serial, fila e tempos das ações permanecem iguais durante as amostragens `update(0)`. A suíte isolada `--revolver-only` usa os mesmos predicados da régua completa e detectou seis negativos: baseline, dedo solto, retirada da adaptação ADS, salto no extremo, avanço do relógio e alteração de escala. A régua padrão continua vermelha pela faca.
 
-A razão cabo/linha entre metacarpos chegou perto de zero nos candidatos e ainda premiou pegas visualmente reprovadas. Seu teto de 15° não tem validade demonstrada para aprovar essa pega. Proximidade e contagem de interseções também não certificam envolvimento dos dedos. Nenhum teto foi afrouxado; o portão global permanece vermelho. A cláusula de manga exige melhoria sobre a faca original e necessariamente falha após a retirada da correção.
+O crítico cego leu as dezoito folhas atuais: AK A/B **APROVADA**, .38 A/B **RESSALVA**. Não demonstrou piora material em B nem salto claro na entrada/saída ADS, inclusive sob disparo. Recarga sem abertura/inserção legível, inspeção pouco expressiva e estojo voando após tiro permanecem ressalvas em A e B. [Veredito e limites](evidence/viewmodels-991/shortgun-critics.json).
 
-Interseção por triângulos e contenção por três raios, com tolerância de 0,2 mm, têm limitações em superfícies abertas, sobrepostas ou degeneradas. Zero significa ausência detectada nas poses medidas, não prova universal. O fixture fechado passou na validação anterior. O teste de mutações agora exige um controle verde antes de certificar qualquer mutante; o estado atual impede essa certificação.
+Foram concluídas 248 capturas por variante em 1200×800 e 1280×720, com Game real, cenário oculto e avanço determinístico. Não ocorreram exceções de página; isso não significa ausência de todo aviso HTTP/console. [Procedência compacta](evidence/viewmodels-991/browser-current.json). As mesmas 300 atualizações de benchmark foram executadas em A/B para manter as fases comparáveis. Em B, `controller.update` no ADS intermediário teve P95 de 0,3/0,2 ms; não mede o frame GPU inteiro. A transição usa quatro atualizações do mixer, três com delta zero, sem alocações por frame. Heap JS máximo observado: 214,58 MiB em B, não RSS total.
 
-## Checks e próximo aceite
+![ADS real da .38: controle A e recorte B](evidence/viewmodels-991/revolver-ads-ab.jpg)
 
-Build, sintaxe dos arquivos alterados e fixture geométrico passaram após a retirada. O consumidor da faca é idêntico ao da base. Rig com 25 armas e ativação com mutantes passaram anteriormente em `596ba6a`. `check:fast` registrou 236/249; as treze falhas foram reproduzidas na base exata `e8c4a2c4b41b952674e6ec7342b4bb82178ebc99`. Esses resultados são históricos, identificados como tal em [validation.json](evidence/viewmodels-991/validation.json). O CI público desse SHA passou nos checks de código; Vercel exige autorização humana de mantenedor, não concedida.
+Deagle e PT-38 conservam as margens medidas em [frame-masks.json](evidence/viewmodels-991/frame-masks.json). FOV, escala e ângulos não mudaram neste recorte. A captura exclui explicitamente `revolver ads` isolado e `pistol inspect` parcial sem chamada pública no Game, registrando os canais e a razão.
 
-Para concluir: reconstruir a relação mão/cabo sem piorar os golpes, obter nova crítica cega, corrigir a transição ADS da .38 e repetir capturas/contato/mutantes com controle verde. Depois, staging e gameplay humano. Nenhum merge, deploy ou promoção está autorizado por este relatório.
+## Faca: tentativas retiradas
+
+A primeira abordagem nova aplicava uma transformação rígida ao braço depois do mixer, preservando a lâmina. Contato e crossfades passaram, mas o crítico cego reprovou a manga cruzando o centro em Slash/QuickThrust. Métrica verde não compensou a perda de legibilidade.
+
+![Faca: A original, B braço rígido reprovado](evidence/viewmodels-991/knife-live-rigid-rejected.jpg)
+
+A segunda abordagem apresentada ao crítico neutralizava o punho, calibrava o repouso e fazia a lâmina seguir o antebraço autorado. Melhorou contato e estiramento, mas apagou a leitura de Slash/Stab/Inspect e deixou o pesado abaixo do quadro. Também foi reprovada nos dois aspectos. Não integra o runtime.
+
+![Faca: A original, B socket fixo reprovado](evidence/viewmodels-991/knife-fixed-socket-rejected.jpg)
+
+O primeiro crítico leu dez folhas; o segundo, vinte, com sete clipes em cinco fases, três vistas e sequências quick/heavy incluindo o retorno. Ambos tinham contexto limpo e receberam apenas figuras e referências aprovadas. [Vereditos e limites](evidence/viewmodels-991/knife-critics.json).
+
+A skill [`vm-critico-visual`](../../.claude/skills/vm-critico-visual/SKILL.md) exige trocar de frente ou reportar platô após duas rodadas sem melhorar o veredito. A faca permanece sem solução aprovada. A próxima investigação deve rever braço, punho, lâmina e gestos como conjunto, incluindo o retarget de `tools/viewmodels/prep/knife-k-build.py`; apenas alinhar contato ou fixar um socket não preservou a ação.
+
+As figuras anteriores `knife-ab.jpg` e `knife-parent-rejected.jpg` também representam candidatos rejeitados. Os manifestos `baseline-full/after-full` existentes pertencem à primeira tentativa antiga; não descrevem o runtime atual.
+
+## Estado completo e limites
+
+A régua padrão cobre 143 poses da faca: sete clipes e 52 amostras de mistura de entrada/saída dos ataques reais. A faca original continua com máximo de 516 interseções palma/lâmina, 66,335 mm até o terceiro dedo e razão de aresta de punho 11,777. São falhas conhecidas preservadas, não aceite. Tracks e hierarquia são observados separadamente; não há uma certificação nova de trajetória mundial baseada em comparação da matriz consigo mesma.
+
+[Resultados atuais e pendências](evidence/viewmodels-991/pending.json), [CSV por pose](evidence/viewmodels-991/contact.csv), [validação e procedência](evidence/viewmodels-991/validation.json). A suíte completa de mutações não certifica o estado atual porque exige controle verde primeiro. Uma execução verde de onze negativos existiu para o braço rígido rejeitado; não vale para o runtime publicado.
+
+Interseções por triângulos e contenção por três raios, tolerância de 0,2 mm, têm limitações em superfícies abertas, sobrepostas ou degeneradas. Zero significa ausência detectada nas poses medidas. Não cobre todas as combinações contínuas de ADS/disparo/recarga nem substitui gameplay humano.
+
+`check:fast` anterior registrou 236/249; as treze falhas foram reproduzidas na base exata `e8c4a2c4b41b952674e6ec7342b4bb82178ebc99`. Esses resultados estão identificados como históricos. Checks locais finais, incluindo vm/kick/rig/launch/shaderbudget/modgraph/melee, transições, fixture, docs, arch e build, passaram; os códigos estão em `validation.json`. O CI deve ser consultado no SHA atual do PR; Vercel requer autorização externa de mantenedor. Manter draft, issue aberta, staging e gameplay humano pendentes. Sem merge, deploy, promoção de assets ou mudança em VM_LAUNCH.
 
 ## Reprodução
 
@@ -66,10 +64,12 @@ Para concluir: reconstruir a relação mão/cabo sem piorar os golpes, obter nov
 
 ```sh
 CSBRASIL_VM_ASSET_ROOT=/caminho/viewmodels npm run eval:vm-grip-contact
-# Resultado atual esperado: vermelho; não considerar certificação.
-# Servidor Astro e catálogo privado autorizado necessários para capturas.
-VM_QA_URL=http://127.0.0.1:4387/ VM_QA_OUT=/tmp/vm991-after node tools/eval/vm-grip-capture.mjs
-VM_QA_BASELINE=1 VM_QA_URL=http://127.0.0.1:4387/ VM_QA_OUT=/tmp/vm991-before node tools/eval/vm-grip-capture.mjs
+# Padrão completo: vermelho enquanto a faca permanecer pendente.
+CSBRASIL_VM_ASSET_ROOT=/caminho/viewmodels node tools/eval/vm-grip-contact-check.mjs --revolver-only
+CSBRASIL_VM_ASSET_ROOT=/caminho/viewmodels node tools/eval/vm-grip-contact-mutations.mjs --revolver-only
+# Servidor Astro e catálogo privado autorizado necessários; um browser por vez.
+VM_QA_WEAPONS=revolver38,deagle,pistol,ak VM_QA_OUT=/tmp/vm991-after node tools/eval/vm-grip-capture.mjs
+VM_QA_BASELINE=1 VM_QA_WEAPONS=revolver38,deagle,pistol,ak VM_QA_OUT=/tmp/vm991-before node tools/eval/vm-grip-capture.mjs
 ```
 
-`VM_QA_FRAME_ONLY=1` limita a captura às pistolas em quadril/ADS e produz máscaras. `VM_QA_WEAPONS` permite um subconjunto do catálogo. Executar um navegador ou teste pesado por vez, com heap limitado. `vmgrip=0` mantém o controle local da .38 e do enquadramento, sem alterar binários.
+`VM_QA_FRAME_ONLY=1` limita a captura ao enquadramento das pistolas. Use heap limitado e mantenha os assets privados fora do Git. Os quadros de faca dos candidatos rejeitados são evidência negativa, não proposta de promoção.

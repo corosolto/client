@@ -240,6 +240,36 @@ function adsActionOf(entry) {
   action.setEffectiveWeight(0);
   return action;
 }
+function restaurarPegaADS(entry) {
+  if (!entry.adsGrip?.applied) return;
+  const grip = entry.adsGrip;
+  grip.bone.position.copy(grip.sourceP); grip.bone.quaternion.copy(grip.sourceQ); grip.applied = false;
+}
+function prepararPegaADS(entry) {
+  if (!PEGAS_ATIVAS || entry.key !== 'revolver#revolver38' || !entry.adsAction) return null;
+  const bone = entry.scene.getObjectByName('hand_r'), gun = entry.scene.getObjectByName('neutral_bone');
+  if (!bone || !gun) return null;
+  const pose = () => ({ p: new THREE.Vector3(), q: new THREE.Quaternion(), scale: new THREE.Vector3() });
+  return { bone, gun, hip: pose(), aimed: pose(), sourceP: new THREE.Vector3(), sourceQ: new THREE.Quaternion(),
+    p: new THREE.Vector3(), q: new THREE.Quaternion(), matrix: new THREE.Matrix4(), inverseParent: new THREE.Matrix4(), scale: new THREE.Vector3(), applied: false };
+}
+function amostrarPegaADS(entry, weight, target) {
+  const grip = entry.adsGrip;
+  entry.adsAction.setEffectiveWeight(weight); entry.mixer.update(0); entry.scene.updateMatrixWorld(true);
+  grip.matrix.copy(grip.gun.matrixWorld).invert().multiply(grip.bone.matrixWorld).decompose(target.p, target.q, target.scale);
+}
+function ajustarPegaADS(entry, amount) {
+  const grip = entry.adsGrip;
+  if (!grip || amount <= 0 || amount >= 1) return;
+  // #991: os extremos são amostrados no MESMO tempo da ação; update(0) não avança clipes.
+  try { amostrarPegaADS(entry, 0, grip.hip); amostrarPegaADS(entry, 1, grip.aimed); }
+  finally { entry.adsAction.setEffectiveWeight(amount); entry.mixer.update(0); }
+  grip.sourceP.copy(grip.bone.position); grip.sourceQ.copy(grip.bone.quaternion); entry.scene.updateMatrixWorld(true);
+  grip.p.lerpVectors(grip.hip.p, grip.aimed.p, amount); grip.q.slerpQuaternions(grip.hip.q, grip.aimed.q, amount);
+  grip.matrix.compose(grip.p, grip.q, grip.hip.scale).premultiply(grip.gun.matrixWorld);
+  grip.matrix.premultiply(grip.inverseParent.copy(grip.bone.parent.matrixWorld).invert()).decompose(grip.bone.position, grip.bone.quaternion, grip.scale);
+  grip.applied = true;
+}
 const HAND_MATERIAL = /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i;
 // Moldes GoldSrc/retarget com materiais da linhagem metarig mantêm o acabamento próprio.
 const HAND_MATERIAL_AK_LINEAGE = /CoroSolto_(?:FP_Gloves|Mandrake_Sleeves)/i;
@@ -593,6 +623,7 @@ export class AuthoredViewModels {
         if (event.action === entry.action) this._continue(entry);
       });
       entry.adsAction = adsActionOf(entry);
+      entry.adsGrip = prepararPegaADS(entry);
       this._setupGeneralMotion(entry, general);
       this.entries.set(key, entry);
       this.pending.delete(key);
@@ -753,6 +784,7 @@ export class AuthoredViewModels {
       active.adsAction.setEffectiveWeight(this.adsAmount);
     }
     this._stepEntry(active, step);
+    ajustarPegaADS(active, this.adsAmount);
     this._time += step;
     // Dono único do transform do mount: base ∘ arco de draw ∘ recuo (ADS: M6).
     let drawY = 0;
@@ -1045,6 +1077,7 @@ export class AuthoredViewModels {
   _stepEntry(entry, step) {
     entry.updatingMixer = true;
     try {
+      restaurarPegaADS(entry);
       entry.mixer.update(step);
     } finally {
       entry.updatingMixer = false;
@@ -1126,6 +1159,7 @@ export class AuthoredViewModels {
         entry.mixer.clipAction(idle.weapon).reset().setLoop(THREE.LoopRepeat, Infinity).play();
         const arms = entry.mixer.clipAction(idle.arms).reset().setLoop(THREE.LoopRepeat, Infinity);
         arms.play().fadeIn(fade);
+        restaurarPegaADS(entry);
         entry.mixer.update(0);
         entry.action = arms;
         return true;
@@ -1138,6 +1172,7 @@ export class AuthoredViewModels {
       action.setEffectiveTimeScale(1);
       action.play();
       if (blend) action.crossFadeFrom(previous, fade, false);
+      restaurarPegaADS(entry);
       entry.mixer.update(0);
       entry.action = action;
       return true;
@@ -1152,6 +1187,7 @@ export class AuthoredViewModels {
       entry.mixer.stopAllAction();
       action.reset().play();
       action.paused = true;
+      restaurarPegaADS(entry);
       entry.mixer.update(0);
     }
     entry.action = action;
@@ -1175,6 +1211,7 @@ export class AuthoredViewModels {
       action.setEffectiveWeight(1);
       action.setEffectiveTimeScale(playbackRate);
       action.play();
+      restaurarPegaADS(entry);
       entry.mixer.update(0);
       entry.action = action;
       entry.serial += 1;
