@@ -1,3 +1,5 @@
+import { createHmac } from 'node:crypto';
+
 const SITE_HOST = 'www.corosolto.com.br';
 const NON_PAGE = /^\/(?:api|_astro|_vercel|vendor|js|img|audio|fonts|assets)(?:\/|$)/;
 const FILE_PATH = /\.[a-z0-9]{2,8}$/i;
@@ -50,4 +52,17 @@ export function trafficEntry(request) {
     utmSource: agentKind === 'browser' && /^[a-z0-9_.-]{1,60}$/.test(utm) ? utm : null,
     kind: agentKind,
   };
+}
+export function uniqueRegister(ip, agent, secret, day) {
+  if (!ip || !agent || !secret || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+  const digest = createHmac('sha256', secret).update(`server-unique\0${day}\0${ip}\0${agent}`).digest();
+  const hash = digest.readBigUInt64BE(0);
+  const bucket = Number(hash >> 54n);
+  let remaining = hash << 10n;
+  let rank = 1;
+  while ((remaining & (1n << 63n)) === 0n && rank < 55) {
+    rank++;
+    remaining <<= 1n;
+  }
+  return { day, bucket, rank };
 }

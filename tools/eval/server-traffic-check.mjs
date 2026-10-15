@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { trafficEntry } from '../../src/lib/server-traffic.mjs';
+import { trafficEntry, uniqueRegister } from '../../src/lib/server-traffic.mjs';
 
 describe('entradas HTML contadas no servidor', () => {
   it('guarda só host de origem e UTM curta, sem URL sensível nem identidade', () => {
@@ -35,6 +35,24 @@ describe('entradas HTML contadas no servidor', () => {
     assert.equal(trafficEntry(req('/u/123/usuario'))?.landing, '/u/:perfil');
     assert.equal(trafficEntry(req('/token/segredo'))?.landing, '/outra-rota');
   });
+
+  it('estima cliente diário com um registro HLL sem exportar IP ou hash', () => {
+    const one = uniqueRegister('198.51.100.10', 'Mozilla/5.0', 'secret', '2026-10-15');
+    assert.deepEqual(one, uniqueRegister('198.51.100.10', 'Mozilla/5.0', 'secret', '2026-10-15'));
+    assert.ok(one.bucket >= 0 && one.bucket < 1024);
+    assert.ok(one.rank >= 1 && one.rank <= 55);
+    assert.notDeepEqual(one, uniqueRegister('198.51.100.10', 'Mozilla/5.0', 'secret', '2026-10-16'));
+    assert.equal(JSON.stringify(one).includes('198.51'), false);
+    const registers = new Uint8Array(1024);
+    for (let n = 0; n < 1000; n++) {
+      const value = uniqueRegister(`203.0.${Math.floor(n / 256)}.${n % 256}`, 'Mozilla/5.0', 'secret', '2026-10-15');
+      registers[value.bucket] = Math.max(registers[value.bucket], value.rank);
+    }
+    const zeros = registers.filter((value) => value === 0).length;
+    const raw = (0.7213 / (1 + 1.079 / 1024)) * 1024 * 1024 / registers.reduce((sum, value) => sum + 2 ** -value, 0);
+    const estimate = raw <= 2560 && zeros ? 1024 * Math.log(1024 / zeros) : raw;
+    assert.ok(estimate > 900 && estimate < 1100, `estimativa de mil clientes: ${estimate}`);
+  });
 });
 
 describe('middleware de contagem', () => {
@@ -50,13 +68,16 @@ describe('middleware de contagem', () => {
     };
     try {
       const request = new Request('https://www.corosolto.com.br/?utm_source=x&token=private', {
-        headers: { accept: 'text/html', referer: 'https://t.co/path?secret=private', 'user-agent': 'Mozilla/5.0' },
+        headers: { accept: 'text/html', referer: 'https://t.co/path?secret=private', 'user-agent': 'Mozilla/5.0', 'x-real-ip': '198.51.100.10' },
       });
       const response = middleware(request, { waitUntil(promise) { pending = promise; } });
       await pending;
       assert.equal(response.status, 200);
-      assert.deepEqual(JSON.parse(captured.body), { landing: '/', referrer: 't.co', utmSource: 'x', kind: 'browser' });
+      const body = JSON.parse(captured.body);
+      assert.deepEqual({ landing: body.landing, referrer: body.referrer, utmSource: body.utmSource, kind: body.kind }, { landing: '/', referrer: 't.co', utmSource: 'x', kind: 'browser' });
+      assert.ok(body.unique?.bucket >= 0 && body.unique?.rank >= 1);
       assert.equal(captured.body.includes('private'), false);
+      assert.equal(captured.body.includes('198.51'), false);
     } finally {
       globalThis.fetch = originalFetch;
       delete process.env.API_PROXY_SECRET;
