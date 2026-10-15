@@ -5922,7 +5922,8 @@ export class Game {
     if (tp.ctrl) {
       tp.ctrl.setCrouch?.(p.crouchF > 0.5);
       tp.ctrl.aimPitch = p.pitch;
-      tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, false);
+      const back = -(p.vel.x * Math.sin(p.yaw) + p.vel.z * Math.cos(p.yaw)) < -0.25;
+      tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back);
     } else if (tp.mixer) {
       tp.mixer.update(dt);
     }
