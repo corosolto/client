@@ -1,5 +1,4 @@
 {
-  "status": "blocked-not-ready",
   "historicalPublished596ba6a": {
     "base": "e8c4a2c4b41b952674e6ec7342b4bb82178ebc99",
     "runtimeCommit": "025960670",
@@ -87,17 +86,85 @@
       "failures": 0
     }
   },
+  "status": "knife-blocked-ads-validated-with-reservations",
+  "sourceHashes": {
+    "vmgrip.js": "498b11b1abfa827592ca829bd77d4247943fc3a671ab99e8c112054b6accc846",
+    "meleevm.js": "8c1c76b540932fed5cdf9fa24b72b8ef13037062af34e8a9fcef24778a63b14a",
+    "authoredvm.js": "7eac8af5ca3bbd07099348b4e36b9c7de49e9fff62df79dfcc8190a71b9e4a0c",
+    "data/vmconfig.js": "7d32780502235142fba21798337bab2c56884e15afca5a2cd7821db6924a6cf2"
+  },
   "currentAuthoredContact": {
     "exitCode": 1,
+    "poses": 345,
     "report": "pending.json",
     "csv": "contact.csv"
   },
+  "revolverOnly": {
+    "checks": {
+      "guardaMato": true,
+      "gatilho": true,
+      "relogio": true,
+      "escalaMao": true,
+      "extremosADS": true,
+      "somenteDedos": true
+    },
+    "negativeControlsDetected": [
+      "baseline",
+      "dedo-solto",
+      "ads-grip",
+      "ads-pop",
+      "ads-time",
+      "ads-scale"
+    ],
+    "scope": "same revolver predicates as full ruler; full mutation control remains red by knife"
+  },
+  "currentLocalChecks": {
+    "contact-released-runtime": {
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "seconds": 33.08
+    },
+    "mutant-scale-released": {
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "seconds": 4.66
+    },
+    "geometry-released": {
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "seconds": 0.09
+    },
+    "gates-released": {
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "seconds": 33.27
+    },
+    "transitions-released": {
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "seconds": 0.13
+    },
+    "docs-released": {
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "seconds": 0.6
+    },
+    "arch-released": {
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "seconds": 0.22
+    },
+    "build-released": {
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "seconds": 15.65
+    }
+  },
+  "browser": "browser-current.json",
+  "blindVisualReview": "shortgun-critics.json",
   "withdrawnKnifeCorrection": true,
-  "newBrowserCapture": "not run: memory pressure; old captures explicitly historical",
-  "currentPublicChecks": "recorded after push, not implied by historical checks",
-  "currentBuild": 0,
-  "currentGeometryFixture": 0,
-  "currentSyntax": 0,
-  "knifeConsumerMatchesBase": "git diff e8c4a2c4b41b952674e6ec7342b4bb82178ebc99 -- public/js/meleevm.js: empty",
-  "currentMutationGuard": "static review only: control is red, certification blocked"
+  "knifeConsumersMatch": "9e2306075: public/js/meleevm.js and public/js/vmgrip.js unchanged",
+  "currentPublicChecks": "consult current PR SHA; historical results do not certify it",
+  "noMerge": true,
+  "humanGameplayPending": true
 }
