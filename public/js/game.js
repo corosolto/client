@@ -3668,6 +3668,7 @@ export class Game {
     p.revealedAt = this.time;
     if (BOT_SENTIDOS) this._botOuve(p.pos, BOT_OUVE_TIRO, 3);   // tiro faz barulho
     this.vm.authored?.shoot(p.weapon);
+    if (this.camView !== 'first') this.playerTP?.ctrl?.shoot?.();
     if (p.weapon === 'awp') setTimeout(() => this.sfx.bolt(), 420);
     this.sfx.shotWeapon(p.weapon, 0);   // 1ª pessoa = distância 0 no mix do synth
     // spread & direção. GUNFEEL: (a) ADS agora fecha o spread em TODAS as armas — antes só a

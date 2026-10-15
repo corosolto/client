@@ -725,12 +725,14 @@ class CharController {
     this._to('idle');
   }
 
-  _to(name, once = false) {
+  _to(name, once = false, restart = true) {
     const a = this.actions[name];
     if (!a || this.cur === a) return;
-    a.reset();
-    a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
-    a.clampWhenFinished = once;
+    if (restart) {
+      a.reset();
+      a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
+      a.clampWhenFinished = once;
+    }
     a.enabled = true; a.fadeIn(FADE); a.play();
     if (this.cur) this.cur.fadeOut(FADE);
     this.cur = a;
@@ -754,6 +756,7 @@ class CharController {
   shoot() {
     if (this.dead || this.crouch || !this.actions.shoot) return; // crouch pose already aims
     this.shooting = true;
+    this.curName = 'shoot';
     this._shootUntil = this.mixer.time + this.actions.shoot.getClip().duration;
     if (this.cur === this.actions.shoot) { this.cur.time = 0; this.cur.paused = false; return; }
     this.actions.shoot.reset();
@@ -789,13 +792,18 @@ class CharController {
   // stride, so we drive the cycle rate from how fast the body is really moving).
   update(dt, moving, hasTarget, speed = 0, back = false) {
     if (!this.dead) {
+      if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
       if (this.crouch) {
         this._to(moving > 0.05 ? 'crouchwalk' : 'crouch');
       } else if (this.shooting && moving > 0.05 && this.actions.walkfire) {
         // Atirar EM MOVIMENTO: o clipe combinado (walk+fire) mantém as pernas andando —
         // antes as pernas congelavam ~1s a cada disparo (usuário reprovou).
         this._to('walkfire');
-        if (this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
+      } else if (this.shooting && moving <= 0.05
+        && this.cur === this.actions.walkfire && this.actions.shoot) {
+        this.actions.shoot.time = this.actions.shoot.getClip().duration - (this._shootUntil - this.mixer.time);
+        this.actions.shoot.paused = false;
+        this._to('shoot', true, false);
       } else if (!this.shooting && !this.jumping) {
         if (moving <= 0.05) { this._to(this.oneHanded && this.actions.idle1h ? 'idle1h' : 'idle'); this._loco = 'idle'; }
         else if (back) {
