@@ -48,6 +48,10 @@ Revisão de pixels em resolução original e sheets, com amostras dos sete clipe
 
 A issue permanece aberta. Este lote deve seguir em rascunho para staging e revisão humana de gameplay; não promover assets nem ligar VM_LAUNCH com base neste relatório.
 
+## Checks do lote
+
+Build, contrato de rig com assets autorizados, chave de ativação com mutantes e fixture geométrico passaram. `check:fast`: 236/249; as treze falhas também foram reproduzidas no checkout isolado da base exata, sem as mudanças deste lote. São falhas de release, mapas, áudio, grafites e insumos ausentes; nenhum teto foi afrouxado. [Resultados e reprodução na base](evidence/viewmodels-991/validation.json). As réguas de imagem das três curtas passaram em ambos os aspectos.
+
 ## Reprodução
 
 Os assets privados devem vir do catálogo autorizado, preservando bytes e nomes do manifesto. Nenhum binário é incluído neste PR.
