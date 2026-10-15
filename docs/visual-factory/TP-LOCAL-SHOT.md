@@ -28,7 +28,7 @@ O fingerprint de fontes `SIM_HASH` muda porque o grafo inclui Game e o controlad
 
 **A empunhadura continua reprovada.** Na Gotinha, os clipes de tiro e caminhada apresentam a palma aberta ao lado da pistola. Acioná-los pode parecer pior que a pose anterior de espera. A mão ainda precisa de autoria de rig, forma e pose. Esta correção funcional permanece draft; não aprova contato, apoio ou qualidade global das animações.
 
-Os pés, a passada e a suavidade das transições também não estão aprovados. O salto interrompido por tiro em movimento tem uma disputa de estado já existente e continua pendente. Mira corporal, recarga e salto local não foram conectados por esta alteração. A evidência não valida o elenco inteiro, câmera de gameplay, cenário real, multiplayer humano ou desempenho.
+Os pés, a passada e a suavidade das transições também não estão aprovados. O salto interrompido é tratado na camada seguinte, [retorno após interromper o salto](TP-JUMP-OWNERSHIP.md). Mira corporal, recarga e salto local não foram conectados por esta alteração. A evidência não valida o elenco inteiro, câmera de gameplay, cenário real, multiplayer humano ou desempenho.
 
 O diagnóstico numérico anterior de igualdade CPU/browser permanece vermelho, com 128 ocorrências no Sertanejo e 71 na Gotinha. Nenhuma tolerância foi ampliada. A reconstrução exata das três superfícies observadas usa os operandos registrados no próprio browser; é uma verificação distinta de igualdade entre interpolações CPU/browser e de aprovação artística.
 

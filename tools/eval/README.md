@@ -16,6 +16,7 @@ com código 1 em falha crítica.
 
 | Arquivo | O que mede | Artefato |
 |---|---|---|
+| `tp-jump-ownership-check.mjs` | Salto interrompido: seleção real cancela ownership, recusa preserva ação e revive permite retorno; rigs reais em CPU, sem aceite visual. | `npm run eval:tpjumpownership` |
 | `ranking-home-status.mjs` | Estado real dos renderers da home: 38 casos entre loading/OFF/rede/vazio/sucesso e oito mutantes; DOM em Node, sem aceite visual. | `npm run eval:ranking-home-status` |
 | `invariants.mjs` | **O portão principal.** As invariantes permanentes: toda vez que o dono reporta um bug, ele vira uma invariante aqui e nunca mais volta. Regenera `vm_kick_sim.json` sozinho e LÊ `vm_mint_audit.json`. | `npm run eval:invariants` |
 | `vm-mint-audit.mjs` | Enquadramento do viewmodel arma por arma, nos 26 GLBs reais. Mede a seção transversal perto de cada ponta em Z pra descobrir se a arma está de ré. | `vm_mint_audit.json` (**versionado — sem ele as invariantes VM1–VM6/VM9/VM10 viram PULADAS, que é portão verde por ausência de dado**) |

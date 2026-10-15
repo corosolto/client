@@ -728,6 +728,7 @@ class CharController {
   _to(name, once = false, restart = true) {
     const a = this.actions[name];
     if (!a || this.cur === a) return;
+    if (a !== this.actions.jump) this.jumping = false;
     if (restart) {
       a.reset();
       a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
@@ -746,6 +747,7 @@ class CharController {
   jump() {
     if (this.dead || this.crouch || this.jumping || !this.actions.jump) return;
     this.jumping = true;
+    this.curName = 'jump';
     const a = this.actions.jump;
     a.reset(); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = false;
     a.enabled = true; a.fadeIn(0.08).play();
@@ -755,6 +757,7 @@ class CharController {
 
   shoot() {
     if (this.dead || this.crouch || !this.actions.shoot) return; // crouch pose already aims
+    this.jumping = false;
     this.shooting = true;
     this.curName = 'shoot';
     this._shootUntil = this.mixer.time + this.actions.shoot.getClip().duration;
@@ -779,7 +782,7 @@ class CharController {
   // character does everything on top of the fallen pose (the "walking while falling
   // backward" bug). Then start idle clean.
   revive() {
-    this.dead = false; this.shooting = false;
+    this.dead = false; this.shooting = false; this.jumping = false;
     this.mixer.stopAllAction();
     this.cur = null;
     this._to('idle');
