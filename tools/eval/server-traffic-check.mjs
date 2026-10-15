@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { trafficEntry, uniqueRegister } from '../../src/lib/server-traffic.mjs';
 
@@ -56,6 +57,10 @@ describe('entradas HTML contadas no servidor', () => {
 });
 
 describe('middleware de contagem', () => {
+  it('registra o proxy no build da Vercel', () => {
+    const config = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'));
+    assert.equal(config.proxy?.entrypoint, 'middleware.js');
+  });
   it('envia apenas o agregado mínimo e não bloqueia a página', async () => {
     process.env.API_PROXY_SECRET = 'test-only-secret-for-server-traffic-000000';
     const { default: middleware } = await import('../../middleware.js');
