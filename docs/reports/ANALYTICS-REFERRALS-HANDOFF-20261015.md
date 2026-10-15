@@ -19,4 +19,4 @@ Medir visitantes e referenciadores sem confundir requisições automatizadas com
 
 ## Estado e próximo passo
 
-Criar checkpoints sem alterações externas, abrir PRs e verificar preview. Não houve merge nem deploy de produção. A instrumentação futura não preenche os dados perdidos de 13–15/10. Para números humanos exatos por origem, instrumentar eventos de sessão e marcador explícito de callback OAuth em trabalho futuro; a tabela `acquisition` atual não suporta essa inferência retroativa.
+Checkpoints: client `38d4fd33f` (será amend para incluir o ajuste de cache); admin `1738d85`, PR draft [#25](https://github.com/rubenmarcus/csbrasil-admin/pull/25). O primeiro push do client foi barrado por SB7: o script em Layout não tinha URL com revisão. Corrigido com `__MANIFESTO_JS__` e `eval:shaderbudget` verde; repetir `check:deploy` e push, abrir PR e verificar preview. Não houve merge nem deploy de produção. A instrumentação futura não preenche os dados perdidos de 13–15/10. Para números humanos exatos por origem, instrumentar eventos de sessão e marcador explícito de callback OAuth em trabalho futuro; a tabela `acquisition` atual não suporta essa inferência retroativa.
