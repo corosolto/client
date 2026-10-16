@@ -2656,10 +2656,14 @@ export class Game {
     /* game.js:1878 — o banner tem que DECLARAR a condição de vitória do modo, senão o
        jogador não sabe pelo que está jogando. No CAPTURA a condição é bandeira, não
        relógio: dizer "primeiro a 2 bandeiras" é o que substitui o cronômetro que saiu. */
-    this._banner(frase('round', this.roundNum), this.ctf
+    // O ROUND 1 ainda declara o FORMATO (melhor de N, primeiro a X): o teto só vivia no
+    // menu/HUD e jogador achava que não existia (relato out/2026).
+    const subRound = this.ctf
       ? frase('alvoBandeiras', this.capsToWin)
       : (PACE ? frase('alvoAbates', this.killsToWin)
-        : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta'))));
+        : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta')));
+    this._banner(frase('round', this.roundNum),
+      this.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound);
     if (!this.sfx.roundNumber(this.roundNum) && !this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
   }
   _resetPositions() {

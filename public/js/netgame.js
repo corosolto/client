@@ -559,10 +559,11 @@ class Netcode {
         if (this._evOn) this.limparDropsDeRede();   // o servidor zera `drops` no _startRound sem mandar `gone`
         game._resultado = null;
         game._showScoreboard(false);
-        game._resetKillSequence();
-        game._banner(frase('round', game.roundNum), game.ctf
+        const subRound = game.ctf
           ? frase('alvoBandeiras', game.capsToWin)
-          : (game.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta')));
+          : (game.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta'));
+        game._banner(frase('round', game.roundNum),
+          game.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', game.roundsMax, game.roundsToWin)}` : subRound);
         if (!game.sfx.roundNumber(game.roundNum) && !game.sfx.csSound('roundstart')) game.sfx.vuvuzela(1.4);
       } else if (depois === 'live' && antes === 'countdown') {
         game._banner(frase('valendo'), 'A treta está liberada');

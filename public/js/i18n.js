@@ -505,6 +505,10 @@ const FRASES = {
     pt: (n) => `Primeiro time a ${n} abates leva`,
     en: (n) => `First team to ${n} kills takes it`,
   },
+  formatoMelhorDe: {
+    pt: (max, win) => `Melhor de ${max} — primeiro time a ${win} vence a partida`,
+    en: (max, win) => `Best of ${max} — first team to ${win} takes the match`,
+  },
   comeceTreta: { pt: () => 'Que comece a treta!', en: () => 'Let the fight begin!' },
   voltaTreta: { pt: () => 'De volta pra treta!', en: () => 'Back to the fight!' },
   rodadaDe: { pt: (a, b) => `RODADA ${a}/${b}`, en: (a, b) => `ROUND ${a}/${b}` },
