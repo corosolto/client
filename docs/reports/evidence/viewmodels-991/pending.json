@@ -1,0 +1,54 @@
+{
+  "status": "knife-blocked-ads-validated-with-reservations",
+  "contactExitCode": 1,
+  "checks": {
+    "palma": false,
+    "contato": false,
+    "cabo": false,
+    "manga": false,
+    "tracksProtegidos": true,
+    "hierarquia": true,
+    "trajetoriaLamina": true,
+    "relogioFaca": true,
+    "transicao": false,
+    "guardaMato": true,
+    "gatilho": true,
+    "relogio": true,
+    "escalaMao": true,
+    "extremosADS": true,
+    "somenteDedos": true
+  },
+  "knife": {
+    "invariantTracks": true,
+    "hierarchy": true,
+    "bladeError": 0,
+    "clockError": 0,
+    "statePreserved": true,
+    "worstAngle": 60.43332381243033,
+    "palmPairs": 516,
+    "thirdContactGap": 0.06633476355547985,
+    "cuffRatio": 11.77745235712339,
+    "poses": 143
+  },
+  "revolver": {
+    "invariantTracks": true,
+    "endpointJump": 6.341869608621221e-07,
+    "clockDrift": 0,
+    "scaleDrift": 0,
+    "statePreserved": true,
+    "guardPairs": 0,
+    "triggerGap": 0.004799064401809756,
+    "poses": 202
+  },
+  "knifeRuntime": "unchanged from 9e2306075; rejected attempts withdrawn",
+  "remaining": [
+    "knife grip and complete gestures",
+    "revolver reload/inspect readability and cartridge effect",
+    "human staging/gameplay review"
+  ],
+  "limits": [
+    "sampled poses, not continuous trajectory proof",
+    "zero detected intersection is limited by geometry and sampling"
+  ],
+  "latestInvestigation": "knife-retry-20261016.json"
+}

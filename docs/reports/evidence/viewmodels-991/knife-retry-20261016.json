@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-16",
+  "runtimePublishedUnchanged": true,
+  "circleCandidate": {
+    "status": "REPROVADA",
+    "method": "blind pixels only, clean context",
+    "sheetsRead": 20,
+    "variants": {
+      "knifeA": "REPROVADA",
+      "knifeB": "REPROVADA",
+      "akA": "APROVADA",
+      "akB": "APROVADA"
+    },
+    "findings": [
+      "B improves some finger/handle closeups but worsens wrist/sleeve overlap",
+      "Idle/Draw side: long glove flap; underside: sleeve cylinder over separate oval end",
+      "Stab 50 and Inspect 25/50: sharp folds, triangular fragments and overlap",
+      "quick Game ticks5/10: bulky sleeve approaches left hand and hides grip; worse than A",
+      "heavy remains distinct from quick in sampled poses; sleeve hides more of the grip"
+    ],
+    "notJudged": [
+      "continuous motion between omitted ticks",
+      "hit timing",
+      "contact with a target",
+      "human gameplay"
+    ],
+    "numericGreenDidNotApprove": true
+  },
+  "anatomicalCandidate": {
+    "status": "REJECTED_IN_TRIAGE",
+    "captures": 12,
+    "aspect": "1200x800",
+    "fullBlindReview": false,
+    "reason": "arm occupies centre in idle/quick and covers knife; no full capture or approval"
+  },
+  "diagnostic": {
+    "captures": 9,
+    "materials": "opaque solid colours by mesh",
+    "result": "wrist/sleeve defects remain without texture; not a texture-only problem"
+  },
+  "nextFront": "re-author or retarget wrist/skin/glove/cloth with complete gestures; further scalar contact optimization is insufficient",
+  "circleSourceSha256": "b189e3900f7bdad12c920f25c504021055ca7340af873a45f1a1c39b203a95b7",
+  "anatomicalSourceSha256": "c1dc15b2c5fb14d0a972faf0852e45ff272473b331ea4202a0c0f918b9261372"
+}

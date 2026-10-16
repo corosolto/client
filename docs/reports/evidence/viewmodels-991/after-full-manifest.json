@@ -1,0 +1,37 @@
+{
+  "baseline": false,
+  "sources": {
+    "vmgrip.js": "50eed588da054c4912d4a48bfeb9de9f86fb249d443b8fc072983a6011a02990",
+    "meleevm.js": "99e5d52fd31f87365667bf33dc90cd7618565c39d612cad2301da5dcac75ef7c",
+    "authoredvm.js": "f1533594334ec41678e24339abb6d71aabbfa7fb79b4e83818014e1e0d18c5e5",
+    "data/vmconfig.js": "7d32780502235142fba21798337bab2c56884e15afca5a2cd7821db6924a6cf2"
+  },
+  "count": 450,
+  "pages": [
+    {
+      "width": 1200,
+      "height": 800,
+      "offset": 0,
+      "errors": []
+    },
+    {
+      "width": 1200,
+      "height": 800,
+      "offset": 4,
+      "errors": []
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "offset": 0,
+      "errors": []
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "offset": 4,
+      "errors": []
+    }
+  ],
+  "maxHeapMB": 227.92816162109375
+}

@@ -1,0 +1,210 @@
+{
+  "historicalPublished596ba6a": {
+    "base": "e8c4a2c4b41b952674e6ec7342b4bb82178ebc99",
+    "runtimeCommit": "025960670",
+    "checkFast": {
+      "passed": 236,
+      "total": 249,
+      "baselineReproducedFailures": [
+        {
+          "script": "eval:release",
+          "status": 1
+        },
+        {
+          "script": "eval:mapid",
+          "status": 1
+        },
+        {
+          "script": "audio:check",
+          "status": 1
+        },
+        {
+          "script": "eval:grafite",
+          "status": 2
+        },
+        {
+          "script": "eval:grafite:ar",
+          "status": 2
+        },
+        {
+          "script": "eval:grafite-editorial",
+          "status": 1
+        },
+        {
+          "script": "eval:audiofablocal",
+          "status": 1
+        },
+        {
+          "script": "eval:audiovoicemix",
+          "status": 1
+        },
+        {
+          "script": "eval:decal-ink",
+          "status": 1
+        },
+        {
+          "script": "eval:texture-quality-sampler",
+          "status": 1
+        },
+        {
+          "script": "eval:map-surface-upgrade",
+          "status": 1
+        },
+        {
+          "script": "eval:backendhints",
+          "status": 1
+        },
+        {
+          "script": "eval:mansao",
+          "status": 1
+        }
+      ]
+    },
+    "build": 0,
+    "vmRigWithAuthorizedAssets": 0,
+    "vmLaunchWithMutants": 0,
+    "contactGeometryFixture": 0,
+    "authoredContactPoses": 156,
+    "negativeControlsDetected": [
+      "baseline",
+      "faca-solta",
+      "ombro",
+      "trajetoria",
+      "dedo-solto",
+      "manga"
+    ],
+    "imageRulers": {
+      "weapons": [
+        "deagle",
+        "revolver38",
+        "pistol"
+      ],
+      "aspects": [
+        "3x2",
+        "16x9"
+      ],
+      "failures": 0
+    }
+  },
+  "status": "knife-blocked-ads-validated-with-reservations",
+  "sourceHashes": {
+    "vmgrip.js": "498b11b1abfa827592ca829bd77d4247943fc3a671ab99e8c112054b6accc846",
+    "meleevm.js": "8c1c76b540932fed5cdf9fa24b72b8ef13037062af34e8a9fcef24778a63b14a",
+    "authoredvm.js": "7eac8af5ca3bbd07099348b4e36b9c7de49e9fff62df79dfcc8190a71b9e4a0c",
+    "data/vmconfig.js": "7d32780502235142fba21798337bab2c56884e15afca5a2cd7821db6924a6cf2"
+  },
+  "currentAuthoredContact": {
+    "exitCode": 1,
+    "poses": 345,
+    "report": "pending.json",
+    "csv": "contact.csv"
+  },
+  "revolverOnly": {
+    "checks": {
+      "guardaMato": true,
+      "gatilho": true,
+      "relogio": true,
+      "escalaMao": true,
+      "extremosADS": true,
+      "somenteDedos": true
+    },
+    "negativeControlsDetected": [
+      "baseline",
+      "dedo-solto",
+      "ads-grip",
+      "ads-pop",
+      "ads-time",
+      "ads-scale"
+    ],
+    "scope": "same revolver predicates as full ruler; full mutation control remains red by knife"
+  },
+  "currentLocalChecks": {
+    "contact-released-runtime": {
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "seconds": 33.08
+    },
+    "mutant-scale-released": {
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "seconds": 4.66
+    },
+    "geometry-released": {
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "seconds": 0.09
+    },
+    "gates-released": {
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "seconds": 33.27
+    },
+    "transitions-released": {
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "seconds": 0.13
+    },
+    "docs-released": {
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "seconds": 0.6
+    },
+    "arch-released": {
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "seconds": 0.22
+    },
+    "build-released": {
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "seconds": 15.65
+    }
+  },
+  "browser": "browser-current.json",
+  "blindVisualReview": "shortgun-critics.json",
+  "withdrawnKnifeCorrection": true,
+  "knifeConsumersMatch": "9e2306075: public/js/meleevm.js and public/js/vmgrip.js unchanged",
+  "currentPublicChecks": "consult current PR SHA; historical results do not certify it",
+  "noMerge": true,
+  "humanGameplayPending": true,
+  "investigation20261016": {
+    "report": "knife-retry-20261016.json",
+    "runtimeChanged": false,
+    "sourceCommit": "0463ed0a1531c78e73683a38055f5fb50f6c2d65",
+    "clauseNegatives": {
+      "withdrawn": {
+        "exitCode": 1,
+        "trajectory": true,
+        "clock": true
+      },
+      "runtime-shift": {
+        "exitCode": 1,
+        "trajectory": false,
+        "clock": true
+      },
+      "source-trajectory": {
+        "exitCode": 1,
+        "trajectory": false,
+        "clock": true
+      },
+      "runtime-clock": {
+        "exitCode": 1,
+        "trajectory": false,
+        "clock": false
+      }
+    },
+    "fullMutationSuiteCertified": false,
+    "blindVisualVerdict": "REPROVADA",
+    "serverStopped": true,
+    "privateOverlayRemoved": true,
+    "localChecks": {
+      "syntax-contact": 0,
+      "syntax-mutants": 0,
+      "geometry": 0,
+      "vm-kick": 0,
+      "docs": 0,
+      "arch": 0,
+      "build": 0
+    }
+  }
+}

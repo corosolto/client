@@ -75,7 +75,7 @@ export const VM_WEAPON = {
       linhaDeMira: { ref: 'RIG_WEAPON_SHOTGUN', alca: [0, 13.6, -5.5], massa: [0, 13.8, 21.5] } } }),
   // anchor/namedParts valem só na montagem ao vivo (eval authored-attach-check).
   deagle: W('deagle', { baked: true, runtime: 'family', timing: 'gameplay', recoilScale: 0.45,
-    frame: { x: 0.1, y: -0.1, z: -0.25, fov: 55, rotDeg: [-5, 15, -5] },
+    frame: { x: 0.1, y: -0.055, z: -0.25, fov: 55, rotDeg: [-5, 15, -5] },
     ads: { auto: true, off: [0.006, -0.024, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 },
     // Frame de curta contra a PT-38 aprovada (docs/reports/VM-INTEGRACAO-K.md).
     anchor: 'neutral_bone', namedParts: {
