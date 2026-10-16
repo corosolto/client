@@ -138,3 +138,9 @@ for boundaries and pending review.
 
 Capturas locais do exemplo anexado/removido e o SHA do código observado estão em
 [Preview do mecanismo](../../docs/visual-factory/evidence/garment-library/README.md).
+
+## Partição estática por faces registradas
+
+[Mesh parts](MESH-PARTS.md) separa uma seleção humana fixada por SHA256 em duas
+malhas, preserva atributos/transformação e entrega correspondência de faces.
+É ferramenta offline; sua validação CPU não aprova arte nem habilita runtime.
