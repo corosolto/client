@@ -14,7 +14,7 @@ try {
   if (run.status !== 0 || !fs.existsSync(control) || !JSON.parse(fs.readFileSync(control, 'utf8')).ok) {
     throw Error('controle atual vermelho: mutantes não certificam a correção pendente da #991');
   }
-  for (const mutation of (scoped ? ['baseline', 'dedo-solto', 'ads-grip', 'ads-pop', 'ads-time', 'ads-scale'] : ['baseline', 'faca-solta', 'ombro', 'trajetoria', 'dedo-solto', 'manga', 'ads-grip', 'ads-pop', 'ads-time', 'ads-scale'])) {
+  for (const mutation of (scoped ? ['baseline', 'dedo-solto', 'ads-grip', 'ads-pop', 'ads-time', 'ads-scale'] : ['baseline', 'faca-solta', 'ombro', 'trajetoria', 'faca-deslocada', 'faca-relogio', 'dedo-solto', 'manga', 'ads-grip', 'ads-pop', 'ads-time', 'ads-scale'])) {
     const file = path.join(directory, `${mutation}.json`);
     const args = [path.join(import.meta.dirname, 'vm-grip-contact-check.mjs'), ...scope, ...(mutation === 'baseline' ? ['--baseline'] : [])];
     const run = spawnSync(process.execPath, args, { env: { ...process.env, VM_CONTACT_REPORT: file,
@@ -22,7 +22,7 @@ try {
     if (run.status !== 1 || !fs.existsSync(file)) throw Error(`${mutation}: não reprovou na régua (${run.status})\n${run.stdout}\n${run.stderr?.slice(0, 500)}`);
     const report = JSON.parse(fs.readFileSync(file, 'utf8'));
     const clauses = Object.entries(report.checks).filter(([, ok]) => !ok).map(([name]) => name);
-    const expected = { baseline: scoped ? ['guardaMato'] : ['palma', 'cabo', 'guardaMato'], 'faca-solta': ['contato'], ombro: ['tracksProtegidos'], trajetoria: ['tracksProtegidos'], 'dedo-solto': ['gatilho', 'somenteDedos'], manga: ['manga'], 'ads-grip': ['guardaMato'], 'ads-pop': ['extremosADS'], 'ads-time': ['relogio'], 'ads-scale': ['escalaMao'] }[mutation];
+    const expected = { baseline: scoped ? ['guardaMato'] : ['palma', 'cabo', 'guardaMato'], 'faca-solta': ['contato'], ombro: ['tracksProtegidos'], trajetoria: ['tracksProtegidos', 'trajetoriaLamina'], 'faca-deslocada': ['trajetoriaLamina'], 'faca-relogio': ['relogioFaca'], 'dedo-solto': ['gatilho', 'somenteDedos'], manga: ['manga'], 'ads-grip': ['guardaMato'], 'ads-pop': ['extremosADS'], 'ads-time': ['relogio'], 'ads-scale': ['escalaMao'] }[mutation];
     if (report.ok || !expected.every(name => clauses.includes(name))) throw Error(`${mutation}: falhou na cláusula errada (${clauses})`);
     console.log(`PASSA mutante ${mutation}: ${clauses.join(', ')}`);
   }

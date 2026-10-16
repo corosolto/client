@@ -166,5 +166,45 @@
   "knifeConsumersMatch": "9e2306075: public/js/meleevm.js and public/js/vmgrip.js unchanged",
   "currentPublicChecks": "consult current PR SHA; historical results do not certify it",
   "noMerge": true,
-  "humanGameplayPending": true
+  "humanGameplayPending": true,
+  "investigation20261016": {
+    "report": "knife-retry-20261016.json",
+    "runtimeChanged": false,
+    "sourceCommit": "0463ed0a1531c78e73683a38055f5fb50f6c2d65",
+    "clauseNegatives": {
+      "withdrawn": {
+        "exitCode": 1,
+        "trajectory": true,
+        "clock": true
+      },
+      "runtime-shift": {
+        "exitCode": 1,
+        "trajectory": false,
+        "clock": true
+      },
+      "source-trajectory": {
+        "exitCode": 1,
+        "trajectory": false,
+        "clock": true
+      },
+      "runtime-clock": {
+        "exitCode": 1,
+        "trajectory": false,
+        "clock": false
+      }
+    },
+    "fullMutationSuiteCertified": false,
+    "blindVisualVerdict": "REPROVADA",
+    "serverStopped": true,
+    "privateOverlayRemoved": true,
+    "localChecks": {
+      "syntax-contact": 0,
+      "syntax-mutants": 0,
+      "geometry": 0,
+      "vm-kick": 0,
+      "docs": 0,
+      "arch": 0,
+      "build": 0
+    }
+  }
 }

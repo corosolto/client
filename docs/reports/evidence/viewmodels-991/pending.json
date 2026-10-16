@@ -8,6 +8,8 @@
     "manga": false,
     "tracksProtegidos": true,
     "hierarquia": true,
+    "trajetoriaLamina": true,
+    "relogioFaca": true,
     "transicao": false,
     "guardaMato": true,
     "gatilho": true,
@@ -19,6 +21,9 @@
   "knife": {
     "invariantTracks": true,
     "hierarchy": true,
+    "bladeError": 0,
+    "clockError": 0,
+    "statePreserved": true,
     "worstAngle": 60.43332381243033,
     "palmPairs": 516,
     "thirdContactGap": 0.06633476355547985,
@@ -44,5 +49,6 @@
   "limits": [
     "sampled poses, not continuous trajectory proof",
     "zero detected intersection is limited by geometry and sampling"
-  ]
+  ],
+  "latestInvestigation": "knife-retry-20261016.json"
 }

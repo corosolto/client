@@ -2,7 +2,7 @@
 
 **ADS da .38 corrigido neste recorte; faca ainda bloqueada.** O produto K `revolver#revolver38` preserva a camada aditiva autorada de ADS e interpola a mão direita no referencial da arma. Os extremos hip/ADS são amostrados na mesma ação e no mesmo instante, restaurando o peso original; a pose aplicada é retirada antes da próxima atualização do mixer. Os ajustes anteriores das três falanges permanecem em clipes clonados. Fábrica, golden e retarget ficam fora dessa adaptação; `vmgrip=0` reproduz o controle.
 
-A Deagle mantém o enquadramento já revisado e a PT-38 continua como referência. Não houve alteração de GLBs, pesos, vértices, cadência, dano, alcance ou balística. Após duas novas reprovações cegas, as adaptações experimentais da faca foram retiradas. `meleevm.js` e `vmgrip.js` permanecem idênticos ao commit `9e2306075`.
+A Deagle mantém o enquadramento já revisado e a PT-38 continua como referência. Não houve alteração de GLBs, pesos, vértices, cadência, dano, alcance ou balística. Na rodada de 15/10, após duas novas reprovações cegas, as adaptações experimentais da faca foram retiradas. `meleevm.js` e `vmgrip.js` permanecem idênticos ao commit `9e2306075`.
 
 ## Validação do recorte mantido
 
@@ -43,9 +43,25 @@ A skill [`vm-critico-visual`](../../.claude/skills/vm-critico-visual/SKILL.md) e
 
 As figuras anteriores `knife-ab.jpg` e `knife-parent-rejected.jpg` também representam candidatos rejeitados. Os manifestos `baseline-full/after-full` existentes pertencem à primeira tentativa antiga; não descrevem o runtime atual.
 
+## Nova investigação em 16/10/2026
+
+Os lotes de balística 1–3 foram liberados para revisão, sem merge. A Deagle e o ADS da .38 permanecem no recorte validado. A faca foi tentada novamente em outra frente: interseção analítica do alcance do braço com um círculo de possíveis cotovelos, mantendo a trajetória da lâmina e a relação de bind do punho. Não se repetiu a rotação rígida do braço inteiro nem a fixação da lâmina ao gesto reduzido.
+
+O protótipo passou nas 143 poses de contato e nos predicados da .38: zero interseções detectadas palma/lâmina, contato máximo de 0,0863 mm, razão de aresta do punho de 1,000031 e diferença mundial da lâmina/relógio zero nas amostras. Isso **não aprovou o produto**. Foram concluídas 268 capturas por variante, em 3:2 e 16:9, sem exceções de página; heap JS máximo de 214,58 MiB. O crítico cego leu vinte folhas e reprovou A/B: B melhora alguns closes de dedos, mas sobrepõe manga e punho e esconde mais a pega nos ticks 5/10 do rápido. A AK A/B permaneceu aprovada.
+
+![Protótipo analítico rejeitado: A controle, B candidato](evidence/viewmodels-991/knife-circle-rejected.jpg)
+
+Um diagnóstico de nove quadros com materiais opacos por malha manteve os defeitos: não são apenas textura. A segunda hipótese realinhava anatomicamente a palma em relação ao antebraço, em vez de tratar bind como neutralidade anatômica. Foi descartada na triagem de doze quadros em 3:2: o braço ocupa o centro e encobre a faca. Não recebeu captura completa nem aceite cego.
+
+![Segunda hipótese rejeitada na triagem, sem aceite](evidence/viewmodels-991/knife-anatomical-rejected.jpg)
+
+Ambos os protótipos foram retirados. `meleevm.js`, `vmgrip.js`, `authoredvm.js` e o capturador são idênticos ao HEAD anterior `0463ed0a1`; nenhuma malha privada foi promovida. [Procedência, vereditos e limites](evidence/viewmodels-991/knife-retry-20261016.json). A próxima frente deve reautorizar/retargetar a articulação e a junção de pele, luva e tecido junto dos gestos. Os checkpoints Blender citados pela receita não estão no checkout nem no cache de QA disponível; não se declara uma causa raiz definitiva apenas pelos GLBs compilados.
+
+A régua mantida acrescenta um consumidor independente do mesmo GLB, com a correção opcional desligada. Compara os oito cantos da lâmina em espaço mundial, relógio do mixer, tempos/pesos/time scale das sete actions, estado e elapsed do ataque, nos mesmos seeks e updates. Não compara a matriz consigo mesma e não afirma preservar a trajetória do braço corrigido. A tolerância mundial reutiliza os 0,2 mm existentes; a comparação temporal é exata. Os negativos de deslocamento no runtime, trajetória nos tracks e avanço do relógio reprovaram as respectivas cláusulas, mesmo com o contato global já vermelho. Sintaxe, fixture geométrico, vm/kick, docs/arch e build finais passaram. Isso não certifica a suíte completa de mutações: o runner continua recusando o controle global vermelho.
+
 ## Estado completo e limites
 
-A régua padrão cobre 143 poses da faca: sete clipes e 52 amostras de mistura de entrada/saída dos ataques reais. A faca original continua com máximo de 516 interseções palma/lâmina, 66,335 mm até o terceiro dedo e razão de aresta de punho 11,777. São falhas conhecidas preservadas, não aceite. Tracks e hierarquia são observados separadamente; não há uma certificação nova de trajetória mundial baseada em comparação da matriz consigo mesma.
+A régua padrão cobre 143 poses da faca: sete clipes e 52 amostras de mistura de entrada/saída dos ataques reais. A faca original continua com máximo de 516 interseções palma/lâmina, 66,335 mm até o terceiro dedo e razão de aresta de punho 11,777. São falhas conhecidas preservadas, não aceite. Tracks e hierarquia são observados separadamente. A nova comparação mundial da lâmina usa consumidor, GLB e mixer independentes; cobre somente as amostras e transições executadas, com a implementação atual e a correção opcional desligada como referência.
 
 [Resultados atuais e pendências](evidence/viewmodels-991/pending.json), [CSV por pose](evidence/viewmodels-991/contact.csv), [validação e procedência](evidence/viewmodels-991/validation.json). A suíte completa de mutações não certifica o estado atual porque exige controle verde primeiro. Uma execução verde de onze negativos existiu para o braço rígido rejeitado; não vale para o runtime publicado.
 

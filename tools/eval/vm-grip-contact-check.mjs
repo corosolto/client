@@ -81,9 +81,17 @@ export async function knife(root, baseline, mutation) {
   const allowed = new Set(), original = invariantTracks(gltf.animations, allowed);
   const originalParent = gltf.scene.getObjectByName('MELEE_KNIFE').parent;
   const edits = [];
+  if (mutation === 'faca-relogio') edits.push(['      this.mixer.update(dt);', '      this.mixer.update(dt + 0.01);']);
+  if (mutation === 'faca-deslocada') edits.push(['      this.mixer.update(dt);', "      this.mixer.update(dt);\n      this.scene.getObjectByName('MELEE_KNIFE').position.x += 1;"]);
   const { KnifeMeleeViewModel } = await consumer(path.join(ROOT, 'public/js/meleevm.js'), edits);
   const parent = new THREE.Group(), controller = new KnifeMeleeViewModel({ parent }); controller._accept(gltf);
+  if (baseline) { controller.grip?.restore(); controller.grip = null; }
   controller.setWeapon('knife');
+  const { KnifeMeleeViewModel: ReferenceKnife } = await consumer(path.join(ROOT, 'public/js/meleevm.js'));
+  const referenceParent = new THREE.Group(), reference = new ReferenceKnife({ parent: referenceParent });
+  reference._accept(await carregarSemTexturas(path.join(root, 'knife/knife-baked-runtime.glb'))); reference.setWeapon('knife');
+  reference.grip?.restore(); reference.grip = null;
+  const referenceBlade = reference.scene.getObjectByName('MELEE_KNIFE');
   const scene = controller.scene, blade = scene.getObjectByName('MELEE_KNIFE');
   if (mutation === 'faca-solta') { blade.geometry = blade.geometry.clone(); blade.geometry.translate(100, 0, 0); }
   for (const clip of gltf.animations) {
@@ -101,12 +109,27 @@ export async function knife(root, baseline, mutation) {
     controller.mixer.stopAllAction(); controller.mixer.uncacheRoot(scene);
     controller.actions = new Map(gltf.animations.map(clip => [clip.name, controller.mixer.clipAction(clip)]));
   }
-  const samples = [];
+  const samples = [], bladeErrors = [], clockErrors = [], poseErrors = [];
   blade.geometry.computeBoundingBox();
   const box = blade.geometry.boundingBox, cut = box.min.z + (box.max.z - box.min.z) / 3;
   const handleReference = referencialCaboFaca(blade.geometry);
+  referenceBlade.geometry.computeBoundingBox();
+  const referenceBox = referenceBlade.geometry.boundingBox;
+  const step = dt => { controller.update(dt); reference.update(dt); };
   const measure = (clip, sample, kind) => {
-    parent.updateMatrixWorld(true);
+    parent.updateMatrixWorld(true); referenceParent.updateMatrixWorld(true);
+    for (let corner = 0; corner < 8; corner++) {
+      const point = new THREE.Vector3(...['x','y','z'].map((axis,i) => box[corner & (1 << i) ? 'max' : 'min'][axis])).applyMatrix4(blade.matrixWorld);
+      const expected = new THREE.Vector3(...['x','y','z'].map((axis,i) => referenceBox[corner & (1 << i) ? 'max' : 'min'][axis])).applyMatrix4(referenceBlade.matrixWorld);
+      bladeErrors.push(point.distanceTo(expected));
+    }
+    clockErrors.push(Math.abs(controller.mixer.time - reference.mixer.time));
+    for (const [name, action] of controller.actions) {
+      const expected = reference.actions.get(name);
+      clockErrors.push(Math.abs(action.time - expected.time), Math.abs(action.getEffectiveWeight() - expected.getEffectiveWeight()),
+        Math.abs(action.getEffectiveTimeScale() - expected.getEffectiveTimeScale()));
+    }
+    if (controller.state !== reference.state || controller.attackMotion?.elapsed !== reference.attackMotion?.elapsed) poseErrors.push(clip);
     const glove = scene.getObjectByName('GEO_FP_SK_Glove_01'), all = meshTriangles(glove);
     const palm = all.filter(t => t.ids.every(i => jointWeight(glove, i, /^hand_r$/) > 0.75));
     const handle = meshTriangles(blade, ids => ids.every(i => blade.geometry.attributes.position.getZ(i) < cut));
@@ -124,24 +147,30 @@ export async function knife(root, baseline, mutation) {
   };
   for (const [name, action] of controller.actions) {
     controller.mixer.stopAllAction(); action.reset().setEffectiveWeight(1).setEffectiveTimeScale(1).play();
+    const expected = reference.actions.get(name);
+    reference.mixer.stopAllAction(); expected.reset().setEffectiveWeight(1).setEffectiveTimeScale(1).play();
     for (let sample = 0; sample <= 12; sample++) {
-      controller.mixer.setTime(Math.min(action.getClip().duration - 1e-5, action.getClip().duration * sample / 12));
-      controller.update(0); measure(name, sample, 'clip');
+      controller.grip?.restore();
+      const time = Math.min(action.getClip().duration - 1e-5, action.getClip().duration * sample / 12);
+      controller.mixer.setTime(time); reference.mixer.setTime(time);
+      step(0); measure(name, sample, 'clip');
     }
   }
   for (const kind of ['quick', 'heavy']) {
     controller.mixer.stopAllAction(); controller.current = null; controller.attackMotion = null;
-    controller._play('Idle'); controller.update(0.1); controller.attack(kind);
+    reference.mixer.stopAllAction(); reference.current = null; reference.attackMotion = null;
+    controller._play('Idle'); reference._play('Idle'); step(0.1); controller.attack(kind); reference.attack(kind);
     for (let tick = 0; tick <= 9; tick++) {
-      controller.update(tick === 0 ? 0 : 1/240); measure(`${kind}-in`, tick, 'transition');
+      step(tick === 0 ? 0 : 1/240); measure(`${kind}-in`, tick, 'transition');
     }
     const seconds = kind === 'quick' ? 0.36 : 0.62;
-    for (let elapsed = 9/240; elapsed < seconds - 0.02; elapsed += 1/240) controller.update(Math.min(1/240, seconds - 0.02 - elapsed));
+    for (let elapsed = 9/240; elapsed < seconds - 0.02; elapsed += 1/240) step(Math.min(1/240, seconds - 0.02 - elapsed));
     for (let tick = 0; tick <= 15; tick++) {
-      controller.update(tick === 0 ? 0 : 1/240); measure(`${kind}-out`, tick, 'transition');
+      step(tick === 0 ? 0 : 1/240); measure(`${kind}-out`, tick, 'transition');
     }
   }
   return { samples, invariantTracks: original === invariantTracks(gltf.animations, allowed), hierarchy: blade.parent === originalParent,
+    bladeError: Math.max(...bladeErrors), clockError: Math.max(...clockErrors), statePreserved: poseErrors.length === 0,
     worstAngle: Math.max(...samples.map(s => s.angle)), palmPairs: Math.max(...samples.map(s => s.palmPairs)),
     thirdContactGap: Math.max(...samples.map(s => s.thirdContactGap)), cuffRatio: Math.max(...samples.map(s => s.cuffRatio)) };
 }
@@ -241,6 +270,8 @@ export async function avaliar(root, { baseline = false, mutation = '' } = {}) {
     manga: knifeResult.cuffRatio > 0 && knifeResult.cuffRatio < before.cuffRatio,
     tracksProtegidos: knifeResult.invariantTracks,
     hierarquia: knifeResult.hierarchy,
+    trajetoriaLamina: Number.isFinite(knifeResult.bladeError) && knifeResult.bladeError <= CONTACT_EPSILON,
+    relogioFaca: knifeResult.clockError === 0 && knifeResult.statePreserved,
     transicao: knifeResult.samples.filter(s => s.kind === 'transition').every(s => s.palmPairs === 0 && s.thirdContactGap <= 0.005),
     ...checksRevolver(revolverResult),
   };
