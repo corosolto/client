@@ -1,0 +1,98 @@
+{
+  "status": "rejeitado; runtime preservado",
+  "date": "2026-10-16",
+  "inputs": {
+    "knife": "93028919ee74f46ed8ef77c8e34ceec314f4e76b2e069b4686b65d1cb84f0556",
+    "pistol": "04c126d93148f9cf0ffa07927f4d09cde2067d9abbc9ddcd25d3b811923fa3b8"
+  },
+  "bindPalmForearmDegrees": {
+    "knife": 129.21544328084747,
+    "pistol": 8.523545862034249,
+    "revolver": 8.523545862034249
+  },
+  "recipe": "Troca privada das malhas Hand/Glove/Cloth e inverse binds da pistola por nome de joint. G=worldRigKnife*inverse(worldRigPistol); vertices=G*p; IBM=IBMdonor*inverse(G). Rig, camera, blade e sete clips da faca preservados.",
+  "sourceInvariants": {
+    "animations": "3687b638175415c0eac71fbadb877171106c54bc966044ac6de04fddac716eed",
+    "candidateAnimations": "3687b638175415c0eac71fbadb877171106c54bc966044ac6de04fddac716eed",
+    "blade": "6c3339865cee8cd6b6b6826d7fa9bdccdbfb6202a58c16d145e4d50c3522f4e8",
+    "candidateBlade": "6c3339865cee8cd6b6b6826d7fa9bdccdbfb6202a58c16d145e4d50c3522f4e8",
+    "clips": [
+      {
+        "name": "Idle",
+        "tracks": 207
+      },
+      {
+        "name": "Draw",
+        "tracks": 207
+      },
+      {
+        "name": "Slash",
+        "tracks": 207
+      },
+      {
+        "name": "Stab",
+        "tracks": 207
+      },
+      {
+        "name": "QuickThrust",
+        "tracks": 207
+      },
+      {
+        "name": "HeavyStab",
+        "tracks": 207
+      },
+      {
+        "name": "Inspect",
+        "tracks": 207
+      }
+    ],
+    "identicalAnimations": true,
+    "identicalBlade": true
+  },
+  "candidates": [
+    {
+      "name": "pistol-pole",
+      "samples": 143,
+      "invariantTracks": true,
+      "hierarchy": true,
+      "bladeError": 0,
+      "clockError": 0,
+      "statePreserved": true,
+      "worstAngle": 8.651385715594863e-05,
+      "palmPairs": 21,
+      "thirdContactGap": 6.136122667230126e-05,
+      "cuffRatio": 4.5377896301648954,
+      "visual": "RESSALVA em triagem limitada; rapido encobre pega; closes inferiores parcialmente oclusos. Lower-elbow mostra faixa bege e degrau manga/luva."
+    },
+    {
+      "name": "lower-elbow",
+      "samples": 143,
+      "invariantTracks": true,
+      "hierarchy": true,
+      "bladeError": 0,
+      "clockError": 0,
+      "statePreserved": true,
+      "worstAngle": 0.00011015334512469153,
+      "palmPairs": 21,
+      "thirdContactGap": 6.223019194652257e-05,
+      "cuffRatio": 3.0836075521244135,
+      "visual": "RESSALVA em triagem limitada; rapido encobre pega; closes inferiores parcialmente oclusos. Lower-elbow mostra faixa bege e degrau manga/luva."
+    }
+  ],
+  "limits": [
+    "143 poses por candidato; sem certificacao continua de articulacao",
+    "Capturas de triagem somente 1200x800; nao constituem QA final 16:9",
+    "Referencia do consumidor usa GLB rebind sem correcao; equivalencia com original demonstrada separadamente por hashes de tracks e lamina",
+    "Contato mede luva/cabo; razao de aresta mede luva, nao fecha sozinha pele e tecido",
+    "Primeiras capturas sem vmfabrica=0; comparacoes finais pole/lower-elbow usam rota explicita",
+    "Critico cego em contexto limpo no primeiro conjunto; segunda triagem reutilizou critico, nao e aceite independente",
+    "Sem checkpoints Blender fonte disponiveis; sem causa raiz definitiva do bake",
+    "Sem promocao de GLB privado nem alteracao de VM_LAUNCH"
+  ],
+  "ciPriorHead": {
+    "sha": "ad36f0b9c27ab8a48eebe3fff39dd2d789dc993d",
+    "repositoryChecks": "SUCCESS",
+    "Vercel": "FAILURE; autorizacao externa"
+  },
+  "next": "Reautorizar dedos e articulacao no rig nativo junto das tres camadas, mantendo blade/clock como referencia. Resolver contato, punho e ocultacao do rapido antes de novo QA completo."
+}
