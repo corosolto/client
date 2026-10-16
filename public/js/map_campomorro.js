@@ -435,6 +435,16 @@ export function buildCampoMorro(scene, T = {}) {
     [-32.0, 10.0, Math.PI / 2], [-19.0, 23.5, 0], [13.0, 23.0, 0],
     [-23.0, -21.0, Math.PI / 2], [2.5, -24.5, 0],
   ];
+  /* CAMBLOCKERS DO VARAL: Box3 do volume do pano pro _updatePlayerTP (câmera para, bala
+     passa). Mesmo box pros dois caminhos de render; contrato em tools/eval/camera-oclusao-check.mjs. */
+  const camBlockers = VARAIS.map(([x, z, ry]) => {
+    const base = groundHeightAt(x, z);
+    const dx = Math.abs(Math.sin(ry)) > 0.5 ? 0 : 1, dz = dx ? 0 : 1;
+    return new THREE.Box3(
+      new THREE.Vector3(x - dx * 1.6 - 0.35, base + 1.2, z - dz * 1.6 - 0.35),
+      new THREE.Vector3(x + dx * 1.6 + 0.35, base + 2.2, z + dz * 1.6 + 0.35),
+    );
+   });
   VARAIS.forEach(([x, z, ry], n) => {
     const base = groundHeightAt(x, z), alturaVaral = 2.15;
     const g = new THREE.Group(); g.name = `campomorro-varal-${n}`; g.userData.molde = 'varal_roupas'; root.add(g);
@@ -452,7 +462,6 @@ export function buildCampoMorro(scene, T = {}) {
       }
     }
   });
-
   for (const [x, z] of [[-24, 12], [-16, 18], [5, 18], [27, 14], [29, 1], [16, -19], [4, -22], [-18, -18], [-29, -15]])
     addBox(1.8, 1.1, 1.4, MAT.concrete, x, groundHeightAt(x, z), z);
   addBox(0.35, 3, 7, MAT.wall, -24, groundHeightAt(-24, 10.5), 10.5);
@@ -803,7 +812,7 @@ export function buildCampoMorro(scene, T = {}) {
       {src:AMB_LOOPS.cidade,pos:[-28,4,6],radius:46,vol:.16},
       {src:AMB_LOOPS.passaros,pos:[-24,3,22],radius:26,vol:.2},
     ],bioma:'favela'},
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
+    root, colliders, occluders, camBlockers, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     /* registro de USO do casario (pavimentos, pé-direito, fachada) — a CM-M2 mede daqui
        e confere contra o colisor real; ver tools/eval/campomorro-molde-check.mjs */
     casario,
