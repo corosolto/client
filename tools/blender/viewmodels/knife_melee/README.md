@@ -60,3 +60,19 @@ o contrato runtime vigente é `tools/eval/melee-vm-check.mjs`.
 - O exportador repete o aviso de múltiplos nós de imagem do material original da faca;
   o reimport preserva as texturas empacotadas, mas a fonte da arma ainda pode ser
   simplificada em uma frente própria.
+
+## Fontes e checkpoints (canal para colaboradores)
+
+Os checkpoints Blender da linha de autoria da faca (candidatos a-d da
+astra-series), a receita `build-knife-motion-candidate.py` e a procedência dos
+ataques aprovados vivem na release privada `vm-fontes-faca-20261016` do repo:
+
+```bash
+gh release download vm-fontes-faca-20261016 -R corosolto/client -D vm-fontes-faca
+cd vm-fontes-faca && shasum -a 256 -c SHA256SUMS
+```
+
+Sem token Vercel: quem tem acesso ao repo baixa. Inputs principais já estão no
+checkout (arma, `pistol-hires.glb`, `build.py`); o que falta de fonte bruta pede
+pacote pontual ao dono numa release `vm-fontes-*` nova. O `knife_animated.glb`
+local de ritmo segue fora (sem licença de redistribuição).
