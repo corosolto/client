@@ -71,7 +71,6 @@ Cobertura: **3932 de 8488 linhas (46%)** do `game.js` têm dono declarado. O res
 | 60 | `VM_QA_CICLO` | 3 |
 | 64 | `VM_QA_ADS` | 8 |
 | 72 | `VM_MAT_LEGACY` | 4 |
-| 78 | `DROP_TTL` | 8 |
 | 82 | `RECUPERA_BOOM` | 8 |
 | 86 | `ROUNDS_MAX` | 27 |
 | 114 | `CTF_ROUNDS_TO_WIN` | 4 |
