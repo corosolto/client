@@ -2693,6 +2693,10 @@ export class Game {
     this.player.ammo.awp = { mag: WEAPONS.awp.mag, res: WEAPONS.awp.reserve };
     this.player.ammo.pistol = { mag: WEAPONS.pistol.mag, res: WEAPONS.pistol.reserve };
     this.player.smokes = 5; this.player.frags = 1; this._updateSmokeHud();   // 5 fumaças + 1 frag por round
+    // sequência de frag é da RODADA (jogador e combatentes: no nó autoritativo o
+    // _resetPositions roda pro slot remoto também). Régua: frag-restock-check.mjs
+    this.player._fragSeq = 0;
+    for (const c of this.combatants || []) c._fragSeq = 0;
     // modo de armas: aplica o loadout inicial. No modo 'all', o player entra com a arma do
     // personagem dele (a mesma da tela de seleção) em vez da AWP padrão.
     const mode = this._wpnMode();
@@ -4097,6 +4101,7 @@ export class Game {
       // TELEMETRIA DE ARMA: quando o JOGADOR mata, conta a arma usada (param `weap`
       // já vem do _damage/_tryShoot). Bot mata não conta — não há balanço a inferir.
       if (attacker.isPlayer && weap) this._wperf[weap] = (this._wperf[weap] || 0) + 1;
+      this._fragRestockStep(attacker);
       if (attacker.isPlayer) {
         this._playerKillFeedback(attacker, head);
       }
@@ -4259,6 +4264,15 @@ export class Game {
     this.mk.life = 0; this.mk.count = 0; this.mk.until = 0;
     this._updateKillSequenceHud();
     this.el.killStreak?.classList.remove('pulse');
+  }
+  // FRAG DE VOLTA POR SEQUÊNCIA (pedido de jogador, out/2026): a cada 3 abates NA RODADA,
+  // +1 frag pra quem está sem (teto 1). Régua: tools/eval/frag-restock-check.mjs.
+  _fragRestockStep(attacker) {
+    if (!attacker) return;
+    attacker._fragSeq = ((attacker._fragSeq | 0) + 1) % 3;
+    if (attacker._fragSeq !== 0 || (attacker.frags | 0) >= 1) return;
+    attacker.frags = 1;
+    if (attacker.isPlayer) this._updateSmokeHud();
   }
   _playerKillFeedback(attacker = this.player, head = false) {
     try { this.sfx.killConfirm(); } catch { /* contexto de áudio indisponível */ }

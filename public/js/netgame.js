@@ -585,6 +585,7 @@ class Netcode {
     } catch { /* ctx mudo */ }
     if (att === p && !this.espectador) {
       game._playerKillFeedback(att, head);
+      game._fragRestockStep?.(att);   // prediz a frag de sequência (o servidor roda o mesmo passo)
     } else if (att && att.team === p.team) {
       try {
         game.sfx.characterVoice(att.def?.id, 'kill', { fallbackFaction: game._voiceKey(att.team) });
