@@ -1,0 +1,74 @@
+[
+  {
+    "phase": "before",
+    "weapon": "deagle",
+    "width": 1200,
+    "height": 800,
+    "rasterHeight": 600,
+    "bottomRaster": 547,
+    "bottomMarginCSS": 69.33333333333337
+  },
+  {
+    "phase": "before",
+    "weapon": "pistol",
+    "width": 1200,
+    "height": 800,
+    "rasterHeight": 600,
+    "bottomRaster": 504,
+    "bottomMarginCSS": 126.66666666666663
+  },
+  {
+    "phase": "before",
+    "weapon": "deagle",
+    "width": 1280,
+    "height": 720,
+    "rasterHeight": 540,
+    "bottomRaster": 534,
+    "bottomMarginCSS": 6.666666666666629
+  },
+  {
+    "phase": "before",
+    "weapon": "pistol",
+    "width": 1280,
+    "height": 720,
+    "rasterHeight": 540,
+    "bottomRaster": 488,
+    "bottomMarginCSS": 68.0
+  },
+  {
+    "phase": "after",
+    "weapon": "deagle",
+    "width": 1200,
+    "height": 800,
+    "rasterHeight": 600,
+    "bottomRaster": 493,
+    "bottomMarginCSS": 141.33333333333337
+  },
+  {
+    "phase": "after",
+    "weapon": "pistol",
+    "width": 1200,
+    "height": 800,
+    "rasterHeight": 600,
+    "bottomRaster": 504,
+    "bottomMarginCSS": 126.66666666666663
+  },
+  {
+    "phase": "after",
+    "weapon": "deagle",
+    "width": 1280,
+    "height": 720,
+    "rasterHeight": 540,
+    "bottomRaster": 476,
+    "bottomMarginCSS": 84.0
+  },
+  {
+    "phase": "after",
+    "weapon": "pistol",
+    "width": 1280,
+    "height": 720,
+    "rasterHeight": 540,
+    "bottomRaster": 488,
+    "bottomMarginCSS": 68.0
+  }
+]

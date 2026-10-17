@@ -1,0 +1,25 @@
+{
+  "sheetsRead": 18,
+  "method": "blind pixels only; independent clean context",
+  "AK": {
+    "A": "APROVADA",
+    "B": "APROVADA"
+  },
+  "revolver38": {
+    "A": "RESSALVA",
+    "B": "RESSALVA"
+  },
+  "regression": "no material worsening demonstrated in B; ADS in/out and ADS-fire sequences show no clear jump in sampled ticks",
+  "reservations": [
+    "A/B reload_empty 25/50/75: no legible cylinder opening or ammunition insertion",
+    "A/B inspect: poses remain close to idle",
+    "A/B shots: flying brass case requires review",
+    "opposite diagnostic idle view is heavily occluded by sleeve/hand"
+  ],
+  "notJudged": [
+    "continuous motion between ticks",
+    "hidden contacts",
+    "functional reload timing",
+    "human gameplay"
+  ]
+}

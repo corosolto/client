@@ -1,0 +1,180 @@
+{
+  "relative-before": {
+    "baseline": true,
+    "sources": {
+      "vmgrip.js": "498b11b1abfa827592ca829bd77d4247943fc3a671ab99e8c112054b6accc846",
+      "meleevm.js": "8c1c76b540932fed5cdf9fa24b72b8ef13037062af34e8a9fcef24778a63b14a",
+      "authoredvm.js": "7eac8af5ca3bbd07099348b4e36b9c7de49e9fff62df79dfcc8190a71b9e4a0c",
+      "data/vmconfig.js": "7d32780502235142fba21798337bab2c56884e15afca5a2cd7821db6924a6cf2"
+    },
+    "captures": 248,
+    "weapons": [
+      "ak",
+      "revolver38"
+    ],
+    "pages": [
+      {
+        "width": 1200,
+        "height": 800,
+        "offset": 0,
+        "errors": []
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "offset": 0,
+        "errors": []
+      }
+    ],
+    "adsUpdateCost": [
+      {
+        "width": 1200,
+        "height": 800,
+        "samples": 300,
+        "medianMS": 0.10000000149011612,
+        "p95MS": 0.20000000298023224,
+        "maxMS": 2.3000000044703484
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "samples": 300,
+        "medianMS": 0,
+        "p95MS": 0.10000000149011612,
+        "maxMS": 0.7999999970197678
+      }
+    ],
+    "omitted": [
+      {
+        "id": "revolver38",
+        "width": 1200,
+        "height": 800,
+        "sparseStandaloneClips": [
+          {
+            "key": "ads",
+            "channels": [
+              "ik_hand_gun.position",
+              "upperarm_l.quaternion",
+              "lowerarm_l.quaternion",
+              "hand_l.quaternion",
+              "upperarm_r.quaternion",
+              "lowerarm_r.quaternion",
+              "hand_r.quaternion"
+            ],
+            "reason": "camada aditiva: capturada pela a\u00e7\u00e3o ADS real"
+          }
+        ]
+      },
+      {
+        "id": "revolver38",
+        "width": 1280,
+        "height": 720,
+        "sparseStandaloneClips": [
+          {
+            "key": "ads",
+            "channels": [
+              "ik_hand_gun.position",
+              "upperarm_l.quaternion",
+              "lowerarm_l.quaternion",
+              "hand_l.quaternion",
+              "upperarm_r.quaternion",
+              "lowerarm_r.quaternion",
+              "hand_r.quaternion"
+            ],
+            "reason": "camada aditiva: capturada pela a\u00e7\u00e3o ADS real"
+          }
+        ]
+      }
+    ],
+    "maxJSHeapMiB": 227.92816162109375
+  },
+  "relative-after": {
+    "baseline": false,
+    "sources": {
+      "vmgrip.js": "498b11b1abfa827592ca829bd77d4247943fc3a671ab99e8c112054b6accc846",
+      "meleevm.js": "8c1c76b540932fed5cdf9fa24b72b8ef13037062af34e8a9fcef24778a63b14a",
+      "authoredvm.js": "7eac8af5ca3bbd07099348b4e36b9c7de49e9fff62df79dfcc8190a71b9e4a0c",
+      "data/vmconfig.js": "7d32780502235142fba21798337bab2c56884e15afca5a2cd7821db6924a6cf2"
+    },
+    "captures": 248,
+    "weapons": [
+      "ak",
+      "revolver38"
+    ],
+    "pages": [
+      {
+        "width": 1200,
+        "height": 800,
+        "offset": 0,
+        "errors": []
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "offset": 0,
+        "errors": []
+      }
+    ],
+    "adsUpdateCost": [
+      {
+        "width": 1200,
+        "height": 800,
+        "samples": 300,
+        "medianMS": 0.10000000149011612,
+        "p95MS": 0.29999999701976776,
+        "maxMS": 1.1999999955296516
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "samples": 300,
+        "medianMS": 0.10000000149011612,
+        "p95MS": 0.20000000298023224,
+        "maxMS": 1.6999999955296516
+      }
+    ],
+    "omitted": [
+      {
+        "id": "revolver38",
+        "width": 1200,
+        "height": 800,
+        "sparseStandaloneClips": [
+          {
+            "key": "ads",
+            "channels": [
+              "ik_hand_gun.position",
+              "upperarm_l.quaternion",
+              "lowerarm_l.quaternion",
+              "hand_l.quaternion",
+              "upperarm_r.quaternion",
+              "lowerarm_r.quaternion",
+              "hand_r.quaternion"
+            ],
+            "reason": "camada aditiva: capturada pela a\u00e7\u00e3o ADS real"
+          }
+        ]
+      },
+      {
+        "id": "revolver38",
+        "width": 1280,
+        "height": 720,
+        "sparseStandaloneClips": [
+          {
+            "key": "ads",
+            "channels": [
+              "ik_hand_gun.position",
+              "upperarm_l.quaternion",
+              "lowerarm_l.quaternion",
+              "hand_l.quaternion",
+              "upperarm_r.quaternion",
+              "lowerarm_r.quaternion",
+              "hand_r.quaternion"
+            ],
+            "reason": "camada aditiva: capturada pela a\u00e7\u00e3o ADS real"
+          }
+        ]
+      }
+    ],
+    "maxJSHeapMiB": 214.57672119140625
+  }
+}

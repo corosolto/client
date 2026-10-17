@@ -1,0 +1,37 @@
+{
+  "status": "rejected-not-shipped",
+  "blindContext": true,
+  "rounds": [
+    {
+      "method": "rigid arm after mixer; original blade trajectory",
+      "sheets": 10,
+      "aspects": [
+        "3:2"
+      ],
+      "verdict": "REPROVADA",
+      "failures": [
+        "Slash 25% and QuickThrust 50%: sleeve crosses centre",
+        "quick gameplay tick10: hand and knife obscured"
+      ],
+      "image": "knife-live-rigid-rejected.jpg"
+    },
+    {
+      "method": "neutral wrist, fixed rest calibration, blade follows authored forearm",
+      "sheets": 20,
+      "aspects": [
+        "3:2",
+        "16:9"
+      ],
+      "verdict": "REPROVADA",
+      "failures": [
+        "quick ticks0/5/10/20: no clear thrust",
+        "heavy tick10: knife almost disappears below frame",
+        "Slash/Stab/Inspect lose independent blade gestures",
+        "Idle side: angular cuff seam remains"
+      ],
+      "image": "knife-fixed-socket-rejected.jpg"
+    }
+  ],
+  "scopeLimit": "sampled frames, not continuous human gameplay",
+  "runtimeKnife": "unchanged from 9e2306075; both attempts withdrawn"
+}
