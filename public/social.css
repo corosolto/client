@@ -102,3 +102,13 @@ body:has(#main-menu:not(.hidden)[data-hub-tab=comunidade]) #rotate-prompt{displa
 .social-profile-treta{display:flex;align-items:center;gap:16px;margin:-8px 0 20px}
 .social-profile-treta span{font:14px/1.4 var(--mono);color:#bfc3b6}
 .social-profile-treta strong{font:40px/1 'Bebas Neue',Impact,sans-serif;color:#f2c94c}
+.social-invite-dialog{box-sizing:border-box;width:min(560px,calc(100vw - 28px));margin:auto;padding:22px;border:1px solid #535846;border-top:4px solid #b4d92e;background:#0d1115f5;color:#f0f0ed;box-shadow:0 30px 100px #000b;font-family:var(--font)}
+.social-invite-dialog::backdrop{background:#040608b5;backdrop-filter:blur(5px)}
+.social-invite-dialog h2{margin:0 0 10px;font:400 40px/1 'Bebas Neue',Impact,sans-serif;letter-spacing:1px}
+.social-invite-dialog .social-invite-fechar{position:absolute;top:10px;right:10px;background:#1a1f24;border:1px solid #525546;color:#eee;padding:8px 12px;cursor:pointer;font:700 12px/1 var(--mono)}
+.social-invite-texto{margin:14px 0;padding:12px;background:#0b0d10;border:1px dashed #555746;color:#d3d6ce;font:13px/1.5 var(--mono);word-break:break-all}
+.social-invite-grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:16px 0 10px}
+.social-invite-grade button{display:block;width:100%;min-height:46px;background:#1a1f24;border:1px solid #525546;color:#f0f0ed;padding:10px;cursor:pointer;font:700 13px/1.2 var(--font);letter-spacing:.5px}
+.social-invite-grade button:hover{border-color:#b4d92e}
+.social-invite-aviso{min-height:20px;color:#b4d92e;font:13px/1.4 var(--font)}
+@media(max-width:700px){.social-invite-dialog{padding:16px}.social-invite-grade{grid-template-columns:1fr 1fr}}
