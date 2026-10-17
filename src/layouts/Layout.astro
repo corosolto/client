@@ -1,6 +1,10 @@
 ---
 import { SITE, BRAND, BRAND_FULL, BRAND_ALT, DESC_SHORT, ORG_ID, WEBSITE_ID, abs, RANKING_ON, DISCORD_URL, TELEGRAM_URL, GITHUB_URL } from '../lib/site';
 import { PT_EN_PAIRS } from '../lib/i18n-pairs';
+import pkg from '../../package.json';
+declare const __MANIFESTO_JS__: { revision: string };
+const V = pkg.version;
+const JS_REV = __MANIFESTO_JS__.revision;
 
 interface Props {
   title: string;
@@ -140,6 +144,8 @@ const currentLabel = h1 ?? title.split(' | ')[0];
 <!DOCTYPE html>
 <html lang={pageLang}>
 <head>
+<link rel="preload" as="script" href={`/js/privacy-runtime.js?v=${V}-${JS_REV}`} />
+<script src={`/js/privacy-runtime.js?v=${V}-${JS_REV}`} is:inline></script>
 {import.meta.env.DEV && import.meta.env.SOCIAL_LOCAL_GAME_URL && <meta name="cs-local-game" content={import.meta.env.SOCIAL_LOCAL_GAME_URL} />}
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
