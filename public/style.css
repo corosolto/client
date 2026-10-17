@@ -3345,3 +3345,8 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-header{position:r
 html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] #hub-about{position:relative;inset:auto;flex:1;width:100%;max-width:none;overflow:visible;padding:24px clamp(14px,2vw,32px) 44px}
 html[data-home-ui="hub"] #hub-about .hub-faq{max-width:none}
 html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:relative;inset:auto;margin-top:auto;padding-inline:clamp(14px,2vw,32px)}
+/* +AMIGO no placar (lane glm/amigos): discreto na célula do nome, sem quebrar a
+   leitura de K/D/SCORE. O estado do clique (ENVIADO/ENTRE NA CONTA) mora no botão. */
+#scoreboard .sb-amigo{margin-left:8px;padding:2px 7px;font:700 10px/1.4 var(--mono);letter-spacing:.5px;color:#d0ee7d;background:#1a2410;border:1px solid #556b2f;border-radius:3px;cursor:pointer}
+#scoreboard .sb-amigo:hover{background:#26350f}
+#scoreboard .sb-amigo:disabled{color:#b6b8b2;cursor:default}

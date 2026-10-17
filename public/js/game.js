@@ -8171,6 +8171,31 @@ export class Game {
     this._resultado = { titulo, sub };
     this._showScoreboard(true);
   }
+  _botaoAmigo(c) {
+    // +AMIGO no placar (lane glm/amigos): só para GENTE (pid do roster do nó);
+    // bot e convidado sem conta não têm a quem pedir. Sem sessão o clique avisa.
+    if (!this.online || c.isPlayer || !c._playerId || this._amigosPedidos?.has(c._playerId)) return '';
+    (this._amigosPedidos ||= new Set());
+    return `<button class="sb-amigo" data-amigo="${c._playerId}">+AMIGO</button>`;
+  }
+  _ligarAmigoPlacar() {
+    const cols = this.el.sbCols;
+    if (!cols || cols._amigoLigado) return;
+    cols._amigoLigado = true;
+    cols.addEventListener('click', async (ev) => {
+      const b = ev.target.closest('button.sb-amigo');
+      if (!b) return;
+      const pid = b.dataset.amigo;
+      b.disabled = true; b.textContent = '…';
+      try {
+        const r = await fetch('/api/social', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'request', target: pid }) });
+        const out = await r.json().catch(() => ({}));
+        if (r.ok) { (this._amigosPedidos ||= new Set()).add(pid); b.textContent = 'PEDIDO ENVIADO'; }
+        else b.textContent = { session_expired: 'ENTRE NA CONTA', rate_limited: 'CALMA…', blocked: 'INDISPONÍVEL', not_found: 'SEM CONTA', self_action: 'VOCÊ :-)' }[out.error] || 'NÃO DEU';
+      } catch { b.textContent = 'SEM REDE'; }
+      setTimeout(() => { b.disabled = false; }, 4000);
+    });
+  }
   _showScoreboard(v) {
     if (v) {
       const r = this._resultado;
@@ -8197,7 +8222,7 @@ export class Game {
           const ping = 12 + ((c.kills * 7 + c.deaths * 3 + i * 5) % 18);
           return (
           `<tr${c.isPlayer ? ' class="me"' : ''}>
-            <td class="sb-n">${escapeClanName(c.name, c.clanTag)}${c.isPlayer ? ' ★' : ''}</td><td>${c.kills}</td><td>${c.deaths}</td><td class="sb-points">${score}</td><td class="sb-ping">${ping}</td>${this.ctf ? `<td>${c.captures || 0}</td>` : ''}</tr>`
+            <td class="sb-n">${escapeClanName(c.name, c.clanTag)}${c.isPlayer ? ' ★' : ''}${this._botaoAmigo(c)}</td><td>${c.kills}</td><td>${c.deaths}</td><td class="sb-points">${score}</td><td class="sb-ping">${ping}</td>${this.ctf ? `<td>${c.captures || 0}</td>` : ''}</tr>`
           );
         }).join('');
         return `<div class="sb-col ${side === 'E' ? 'tp' : 'tb'}${this.ctf ? ' ctf' : ''}">
@@ -8206,6 +8231,7 @@ export class Game {
           <tbody>${linhas}</tbody></table></div>`;
       };
       document.getElementById('sb-cols').innerHTML = coluna('E') + coluna('B');
+      this._ligarAmigoPlacar();
     }
     this.el.scoreboard.classList.toggle('hidden', !v);
     /* game.js:5933 — DEFEITO DO PRINT: "TIME B LEVARAM O ROUND" atravessando POR

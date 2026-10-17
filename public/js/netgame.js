@@ -325,6 +325,7 @@ class Netcode {
       const row = (net.meta.roster || []).find(r=>r.id===e.id);
       bot.team = e.team;                      // o lado do corpo passa a ser o do servidor
       bot.name = e.bot ? `[BOT] ${e.name}` : e.name; bot._nomeServidor = e.name;
+      if (row && row.pid) bot._playerId = row.pid;   // gente no placar: alvo de PEDIR AMIZADE
       bot.pos.set(e.x, e.y, e.z); bot.yaw = e.yaw;
       this._netMap.set(e.id, bot);
       if (row) this._onPersonagem({...row,ent:e.id},false);
