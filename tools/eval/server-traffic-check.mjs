@@ -9,14 +9,17 @@ describe('entradas HTML contadas no servidor', () => {
       headers: { accept: 'text/html', referer: 'https://t.co/link?token=secret', 'user-agent': 'Mozilla/5.0' },
     });
     assert.deepEqual(trafficEntry(request), {
-      landing: '/', referrer: 't.co', utmSource: 'x', kind: 'browser',
+      landing: '/', referrer: 't.co', utmSource: 'x', kind: 'browser', agent: '',
     });
   });
 
-  it('separa bot de busca, bot de treino e ferramentas automáticas', () => {
+  it('separa busca, treino, assistentes de IA e previews sociais com agente estável', () => {
     const req = (agent) => new Request('https://www.corosolto.com.br/sobre', { headers: { accept: 'text/html', 'user-agent': agent } });
-    assert.equal(trafficEntry(req('OAI-SearchBot/1.0'))?.kind, 'search-bot');
+    assert.deepEqual(trafficEntry(req('OAI-SearchBot/1.0')), { landing: '/sobre', referrer: null, utmSource: null, kind: 'ai-search', agent: 'openai/oai-searchbot' });
+    assert.deepEqual(trafficEntry(req('Claude-User/1.0')), { landing: '/sobre', referrer: null, utmSource: null, kind: 'ai-assistant', agent: 'anthropic/claude-user' });
     assert.equal(trafficEntry(req('ClaudeBot/1.0'))?.kind, 'ai-training');
+    assert.equal(trafficEntry(req('Googlebot/2.1'))?.kind, 'search-bot');
+    assert.equal(trafficEntry(req('Twitterbot/1.0'))?.kind, 'social-preview');
     assert.equal(trafficEntry(req('curl/8.0'))?.kind, 'automation');
   });
 
@@ -79,7 +82,7 @@ describe('middleware de contagem', () => {
       await pending;
       assert.equal(response.status, 200);
       const body = JSON.parse(captured.body);
-      assert.deepEqual({ landing: body.landing, referrer: body.referrer, utmSource: body.utmSource, kind: body.kind }, { landing: '/', referrer: 't.co', utmSource: 'x', kind: 'browser' });
+      assert.deepEqual({ landing: body.landing, referrer: body.referrer, utmSource: body.utmSource, kind: body.kind, agent: body.agent }, { landing: '/', referrer: 't.co', utmSource: 'x', kind: 'browser', agent: '' });
       assert.ok(body.unique?.bucket >= 0 && body.unique?.rank >= 1);
       assert.equal(captured.body.includes('private'), false);
       assert.equal(captured.body.includes('198.51'), false);

@@ -30,13 +30,38 @@ function host(value) {
   } catch { return null; }
 }
 
-function kind(agent) {
-  const ua = (agent || '').toLowerCase();
-  if (/oai-searchbot|claude-searchbot|perplexitybot|bingbot|googlebot|applebot/.test(ua)) return 'search-bot';
-  if (/gptbot|claudebot|ccbot|google-extended|applebot-extended/.test(ua)) return 'ai-training';
-  if (/bot|crawler|spider|ahrefs|semrush/.test(ua)) return 'other-bot';
-  if (/curl|python-requests|wget|httpclient|axios|node-fetch|^$/.test(ua)) return 'automation';
-  return 'browser';
+const AGENTS = [
+  [/oai-searchbot/i, 'ai-search', 'openai/oai-searchbot'],
+  [/chatgpt-user/i, 'ai-assistant', 'openai/chatgpt-user'],
+  [/gptbot/i, 'ai-training', 'openai/gptbot'],
+  [/claude-searchbot/i, 'ai-search', 'anthropic/claude-searchbot'],
+  [/claude-user/i, 'ai-assistant', 'anthropic/claude-user'],
+  [/claudebot/i, 'ai-training', 'anthropic/claudebot'],
+  [/perplexity-user/i, 'ai-assistant', 'perplexity/perplexity-user'],
+  [/perplexitybot/i, 'ai-search', 'perplexity/perplexitybot'],
+  [/google-cloudvertexbot/i, 'ai-training', 'google/google-cloudvertexbot'],
+  [/google-extended/i, 'ai-training', 'google/google-extended'],
+  [/googlebot/i, 'search-bot', 'google/googlebot'],
+  [/bingbot/i, 'search-bot', 'microsoft/bingbot'],
+  [/applebot-extended/i, 'ai-training', 'apple/applebot-extended'],
+  [/applebot/i, 'ai-search', 'apple/applebot'],
+  [/bytespider/i, 'ai-training', 'bytedance/bytespider'],
+  [/ccbot/i, 'ai-training', 'common-crawl/ccbot'],
+  [/meta-externalfetcher/i, 'ai-assistant', 'meta/meta-externalfetcher'],
+  [/meta-externalagent/i, 'ai-training', 'meta/meta-externalagent'],
+  [/facebookbot/i, 'ai-training', 'meta/facebookbot'],
+  [/amazonbot/i, 'ai-training', 'amazon/amazonbot'],
+  [/duckassistbot/i, 'ai-assistant', 'duckduckgo/duckassistbot'],
+  [/mistralai-user/i, 'ai-assistant', 'mistral/mistralai-user'],
+  [/facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|whatsapp/i, 'social-preview', 'social/preview'],
+];
+
+function classify(agent) {
+  const ua = agent || '';
+  for (const [pattern, kind, name] of AGENTS) if (pattern.test(ua)) return { kind, agent: name };
+  if (/bot|crawler|spider|ahrefs|semrush/i.test(ua)) return { kind: 'other-bot', agent: 'other/unknown-bot' };
+  if (/curl|python-requests|wget|httpclient|axios|node-fetch/i.test(ua) || !ua) return { kind: 'automation', agent: 'automation/tool' };
+  return { kind: 'browser', agent: '' };
 }
 
 export function trafficEntry(request) {
@@ -45,12 +70,12 @@ export function trafficEntry(request) {
   if (url.hostname !== SITE_HOST || !request.headers.get('accept')?.includes('text/html')) return null;
   if (NON_PAGE.test(url.pathname) || FILE_PATH.test(url.pathname)) return null;
   const utm = url.searchParams.get('utm_source')?.trim().toLowerCase() || '';
-  const agentKind = kind(request.headers.get('user-agent'));
+  const classification = classify(request.headers.get('user-agent'));
   return {
-    landing: agentKind === 'browser' ? landing(url.pathname) : '/automacao',
-    referrer: agentKind === 'browser' ? host(request.headers.get('referer')) : null,
-    utmSource: agentKind === 'browser' && /^[a-z0-9_.-]{1,60}$/.test(utm) ? utm : null,
-    kind: agentKind,
+    landing: landing(url.pathname),
+    referrer: classification.kind === 'browser' ? host(request.headers.get('referer')) : null,
+    utmSource: classification.kind === 'browser' && /^[a-z0-9_.-]{1,60}$/.test(utm) ? utm : null,
+    ...classification,
   };
 }
 export function uniqueRegister(ip, agent, secret, day) {
