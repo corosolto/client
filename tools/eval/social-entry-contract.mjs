@@ -24,8 +24,10 @@ let helperSource=existsSync(helperPath)?read(helperPath):'';
 const mutant=process.argv.find(s=>s.startsWith('--mutant='))?.split('=')[1];
 const only=process.argv.find(s=>s.startsWith('--only='))?.split('=')[1];
 if(mutant) {
-  assert(['advertise-disabled','stale-auth-dialog','quit-social-resume','portrait-no-guard','portrait-broad-guard','handle-action','share-opt-in','copy-origin'].includes(mutant),'unknown mutation');
-  if(['handle-action','share-opt-in','copy-origin'].includes(mutant)){const pairs={'handle-action':["action('handle',null","action('settings',null"],'share-opt-in':['share.checked=p.settings.share_character===true','share.checked=true'],'copy-origin':['${root.dataset.site}${p.url}','${location.origin}${p.url}']};const [before,after]=pairs[mutant];const changed=community.replace(before,after);assert.notEqual(changed,community,'mutation did not apply');community=changed;}else if(mutant==='stale-auth-dialog') {
+  assert(['advertise-disabled','stale-auth-dialog','quit-social-resume','portrait-no-guard','portrait-broad-guard','handle-action','share-opt-in','copy-origin','guest-recovery'].includes(mutant),'unknown mutation');
+  if(['handle-action','share-opt-in','copy-origin'].includes(mutant)){const pairs={'handle-action':["action('handle',null","action('settings',null"],'share-opt-in':['share.checked=p.settings.share_character===true','share.checked=true'],'copy-origin':['${root.dataset.site}${p.url}','${location.origin}${p.url}']};const [before,after]=pairs[mutant];const changed=community.replace(before,after);assert.notEqual(changed,community,'mutation did not apply');community=changed;}else if(mutant==='guest-recovery'){
+    const changed=entrySource.replace("if(e.message==='guest_invalid'){","if(false){");assert.notEqual(changed,entrySource,'mutation did not apply');entrySource=changed;
+  }else if(mutant==='stale-auth-dialog') {
     const changed=entrySource.replace('loading=false;if(dialog.open)draw();maybePrompt();','loading=false;maybePrompt();');
     assert.notEqual(changed,entrySource,'mutation did not apply');entrySource=changed;
   }else if(mutant==='advertise-disabled'){
@@ -87,7 +89,7 @@ class Element {
 }
 const all=n=>[n,...n.children.filter(c=>typeof c==='object').flatMap(all)];
 const words=n=>[n.textContent,...n.children.map(c=>typeof c==='string'?c:words(c))].join(' ');
-async function ui(authenticated=false,{nick='Guest',bootSplash=false,runCommunity=true,authGate=null,tab='profile',profileValues={},providers=required}={}) {
+async function ui(authenticated=false,{nick='Guest',bootSplash=false,runCommunity=true,authGate=null,tab='profile',profileValues={},providers=required,guestInvalid=false}={}) {
   const ids=Object.fromEntries(['community','social-status','social-account','social-content','social-unread','hub-social-unread','account-entry-dialog','account-entry-body','account-entry-close','hub-account-login','account-completion','account-completion-copy','main-menu','social-hello','social-logout'].map(id=>[id,new Element(id==='account-completion'?'details':'div')]));
   ids['main-menu'].classList={contains:()=>false};
   if(bootSplash)ids['boot-splash']=new Element('div');
@@ -100,6 +102,7 @@ async function ui(authenticated=false,{nick='Guest',bootSplash=false,runCommunit
   Object.assign(profile,profileValues);const fetch=async(p,opts={})=> {
     const body=opts.body?JSON.parse(opts.body):null;calls.push({path:p,action:body?.action,body});if(body?.action==='handle'){profile.handle=body.handle;profile.url='/u/'+body.handle;}
     if(authGate && p.startsWith('/api/social-auth'))await authGate;
+    if(guestInvalid && body?.guest && ['start','email'].includes(body.action))return new Response(JSON.stringify({error:'guest_invalid'}),{status:403});
     if(body?.action==='logout')loggedIn=false;
     const out=p.includes('action=providers')?{providers,email:true,password:true}:p==='/api/social-auth'?{authenticated:loggedIn,profile:loggedIn?profile:null}:p.includes('action=profile')?{profile}:{profile,friends:[],notifications:[],invites:[],feed:[],blocks:[]};
     return new Response(JSON.stringify(out),{status:200});
@@ -152,6 +155,21 @@ await check('E04','early account opening hydrates available Auth methods',async(
   assert(all(u.ids['account-entry-body']).some(n=>n.tagName==='INPUT' && n.type==='email'),'email method never hydrates into already-open dialog');
   for(const provider of ['google','twitter','facebook','linkedin_oidc'])assert(all(u.ids['account-entry-body']).some(n=>n.tagName==='BUTTON' && n.dataset.provider===provider),`${provider} never hydrates`);
   for(const key of ['cs_anon','awpbr_token','awpbr_stats'])assert.equal(u.storage.get(key),u.before[key],'loading race destroys guest');
+});
+await check('E05','stale guest proof offers one explicit recovery and retries the chosen provider',async()=> {
+  const u=await ui(false,{runCommunity:false,guestInvalid:true});await u.entry.initAccountEntry();u.ids['hub-account-login'].onclick();
+  const nodes=()=>all(u.ids['account-entry-body']);
+  const google=nodes().find(n=>n.tagName==='BUTTON' && n.dataset.provider==='google');assert(google);
+  await google.onclick();await google.onclick();
+  const recover=nodes().filter(n=>n.tagName==='BUTTON' && /ENTRAR SEM VINCULAR/.test(n.textContent));
+  assert.equal(recover.length,1,'each 403 adds another recovery button');
+  await recover[0].onclick();
+  const starts=u.calls.filter(c=>c.action==='start');
+  assert.equal(starts.length,3);
+  assert(starts[0].body.guest && starts[1].body.guest,'initial attempts must retain guest proof');
+  assert.equal(starts[2].body.guest,undefined,'explicit recovery still sends invalid guest proof');
+  assert.equal(u.navigation.length,1,'recovery does not continue the selected login');
+  for(const key of ['cs_anon','awpbr_token','awpbr_stats'])assert.equal(u.storage.get(key),u.before[key],`recovery discarded ${key}`);
 });
 await check('P01','pause community and resume preserve the same game',()=> {
   const markup=menuMarkup(path.join(root,'src/pages/index.astro'));

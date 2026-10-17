@@ -40,6 +40,7 @@ const MUTANTES = {
   'sem-perfil': ['main', "onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado)", "onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala'))"],
   'sem-contagem': ['main', '  if (!continuaPartida) noteLoginPromptMatch();', ''],
   'telemetria-sem-consentimento': ['login-prompt', '  if(!analyticsAllowed())return;\n  try{track(step,data);}', '  try{track(step,data);}'],
+  'sem-recuperacao-convidado': ['login-prompt', "if(e.message==='guest_invalid'){", 'if(false){'],
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 const muta = (alvo, fonte) => {
@@ -139,6 +140,38 @@ await caso('LP8', 'telemetria só com consentimento de analytics', () => {
     if (consent) assert.deepEqual(enviados[1], ['login_prompt_provider_click', { provider: 'google' }]);
   }
   for (const nome of ['login_prompt_shown', 'login_prompt_dismissed', 'login_prompt_provider_click']) assert(fontePrompt.includes(`'${nome}'`), nome);
+});
+await caso('LP15', 'prova antiga do convidado oferece uma recuperação e mantém o progresso local', async () => {
+  class El {
+    constructor(){this.children=[];this.dataset={};this.open=false;this.textContent='';}
+    append(...children){this.children.push(...children);}
+    replaceChildren(...children){this.children=children;}
+    querySelector(){return this.children.find(c=>c instanceof El)||null;}
+    focus(){} showModal(){this.open=true;} close(){this.open=false;} addEventListener(){}
+  }
+  const ids=Object.fromEntries(['login-prompt','login-prompt-providers','login-prompt-status','login-prompt-close','login-prompt-guest','main-menu'].map(id=>[id,new El()]));
+  ids['main-menu'].classList={contains:()=>false};
+  const calls=[],navigations=[],listeners={},observers=[],proof={uid:'fixture-guest',token:'fixture-proof'},storage=new Map([['awpbr_stats','{"kills":3}']]);
+  const ctx={analyticsAllowed:()=>false,privacyChoice:()=>null,PROVIDER_ICONS:{},guestProof:()=>proof,accountError:e=>e.message,
+    socialApi:async(_path,body)=>{calls.push(body);if(body.guest)throw new Error('guest_invalid');return {url:'https://provider.example/authorize'};},
+    leaveTo:url=>navigations.push(url),localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
+    sessionStorage:{getItem:()=>null,setItem:()=>{}},location:{search:''},URLSearchParams,Date,Number,JSON,
+    MutationObserver:class{constructor(fn){observers.push(fn)}observe(){}},document:{body:new El(),activeElement:null,documentElement:{dataset:{}},createElement:()=>new El(),createTextNode:text=>text,getElementById:id=>ids[id]||null,querySelector:()=>null,addEventListener:(name,fn)=>{listeners[name]=fn}}};
+  const source=fontePrompt.replace(/^import .*$/gm,'').replace(/^export /gm,'');
+  vm.runInNewContext(`${source}\n;globalThis.__init=initLoginPrompt`,ctx);
+  ctx.__init({auth:{authenticated:false},config:CONFIG});
+  listeners['cs-match-end']({detail:{mode:'singleplayer'}});
+  for(const observer of observers)observer();
+  const google=ids['login-prompt-providers'].children.find(b=>b.dataset.provider==='google');assert(google);
+  await google.onclick();await google.onclick();
+  const recover=ids['login-prompt-providers'].children.filter(b=>b.textContent==='Entrar sem vincular o convidado');
+  assert.equal(recover.length,1,'403 repetido duplicou a recuperação');
+  await recover[0].onclick();
+  const starts=calls.filter(body=>body?.action==='start');
+  assert.equal(starts.length,3);assert(starts[0].guest && starts[1].guest);
+  assert.equal(starts[2].guest,undefined,'a recuperação ainda envia a prova antiga');
+  assert.equal(navigations.length,1,'a escolha explícita não prosseguiu ao provedor');
+  assert.equal(storage.get('awpbr_stats'),'{"kills":3}');
 });
 await caso('LP10', 'perfil compartilhado (/u/<perfil>, que é o hub, e o link antigo ?perfil=) pula o convite', () => {
   const skip = fonteMain.match(/onReady:ready=>initLoginPrompt\(\{\.\.\.ready,skip:Boolean\((.*?)\),track:/)?.[1] || '';
@@ -252,6 +285,7 @@ if (BROWSER) {
     }
     const page = await ctx.newPage();
     await page.goto(`${BASE}/${query}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.addStyleTag({ content: 'astro-dev-toolbar { display: none !important; pointer-events: none !important; }' });
     await page.waitForFunction(() => window.__CS_MAIN_READY__ === true, null, { timeout: 120000 });
     await page.locator('#splash-enter:not(.hidden)').waitFor({ timeout: 120000 }).catch(() => {});
     if (await page.locator('#boot-splash').count()) await page.locator('#boot-splash').dispatchEvent('pointerdown').catch(() => {});
@@ -337,6 +371,7 @@ if (BROWSER) {
     const a = await abre({ nick: 'Visitante', consent: true, intro: true });
     try {
       await jogaPartida(a.page);
+      assert.equal(await convite(a.page), true, `convite não abriu: ${await abertos(a.page)}`);
       await a.page.click('#login-prompt [data-provider=discord]');
       await a.page.waitForTimeout(300);
       await a.page.click('#login-prompt-close');

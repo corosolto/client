@@ -92,7 +92,15 @@ export function mountAccountEntry(container,{auth=null,config={providers:[]},ret
   choiceColumn.append(privacy,document.createTextNode(' · '),terms);
   let linkGuest=true;
   const payload=()=>{setPrivacyChoice(analytics.checked);newsletterDraft=consent.checked;return {returnTo,newsletter:consent.checked,analytics:analytics.checked,...(linkGuest && guestProof()?{guest:guestProof()}:{})};};
-  const perform=async fn=>{try{await fn();}catch(e){if(e.message==='guest_invalid'){container.append(button('ENTRAR SEM VINCULAR O CONVIDADO',async()=>{linkGuest=false;say('Seu histórico local continua neste navegador. Tente entrar de novo.');}));}throw e;}};
+  let recovery=null,retry=null;
+  const perform=async fn=>{try{await fn();}catch(e){if(e.message==='guest_invalid'){
+    retry=fn;
+    if(!recovery){recovery=button('ENTRAR SEM VINCULAR O CONVIDADO',async()=>{
+      linkGuest=false;recovery.hidden=true;
+      say('Seu histórico local continua neste navegador. Entrando sem vincular o convidado…');
+      await retry();
+    });entryColumn.append(recovery);}
+  }throw e;}};
   const providers=node('div','','account-providers');
   for(const provider of providerChoices(config))if(PROVIDER_NAMES[provider]) {
     const enabled=(config.providers || []).includes(provider);

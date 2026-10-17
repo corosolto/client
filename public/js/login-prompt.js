@@ -73,7 +73,7 @@ export function initLoginPrompt({auth=null,config=null,accountBusy=()=>false,ski
   const list=document.getElementById('login-prompt-providers'),status=document.getElementById('login-prompt-status');
   const title=document.getElementById('login-prompt-title'),kicker=dialog.querySelector('header small'),treta=document.getElementById('login-prompt-treta');
   const plain={title:title?.textContent,kicker:kicker?.textContent};
-  let previousFocus=null,ended=false,owed=false,mode='singleplayer',campaign=null,pitched=false;
+  let previousFocus=null,recovery=null,ended=false,owed=false,mode='singleplayer',campaign=null,pitched=false;
   // Fim da decisão pós-partida (mostrou e fechou, ou não era a vez): a apresentação da loja vem depois.
   const settle=()=>{if(!owed)return;owed=false;document.dispatchEvent(new CustomEvent('cs-pos-partida',{detail:{treta:pitched}}));pitched=false;};
   const drawTreta=()=>{
@@ -98,17 +98,24 @@ export function initLoginPrompt({auth=null,config=null,accountBusy=()=>false,ski
     const b=document.createElement('button');b.type='button';b.className=cls;b.dataset.provider=provider;
     if(PROVIDER_ICONS[provider]){const i=document.createElement('span');i.className='account-provider-icon';i.innerHTML=PROVIDER_ICONS[provider];b.append(i);}
     b.append(document.createTextNode(label));
-    b.onclick=async()=>{b.disabled=true;emit(track,'login_prompt_provider_click',{provider});try{await fn();}catch(e){status.textContent=accountError(e);b.disabled=false;}};
+    b.onclick=async()=>{b.disabled=true;emit(track,'login_prompt_provider_click',{provider});try{await fn(true);}catch(e){
+      status.textContent=accountError(e);b.disabled=false;
+      if(e.message==='guest_invalid'){
+        if(!recovery){recovery=document.createElement('button');recovery.type='button';recovery.className='account-button';recovery.textContent='Entrar sem vincular o convidado';list.append(recovery);}
+        recovery.onclick=async()=>{recovery.disabled=true;try{await fn(false);}catch(error){status.textContent=accountError(error);recovery.disabled=false;}};
+      }
+    }};
     return b;
   };
   const draw=()=>{
-    list.replaceChildren();status.textContent='';
+    list.replaceChildren();recovery=null;status.textContent='';
     for(const [id,name] of PROVIDERS) {
       const provider=providerId(id,config);
       if(!config.providers?.includes(provider))continue;
-      list.append(button('account-button account-provider login-prompt-provider',`Continuar com ${name}`,provider,async()=>{
+      list.append(button('account-button account-provider login-prompt-provider',`Continuar com ${name}`,provider,async linkGuest=>{
         const choice=privacyChoice();
-        const out=await socialApi('/api/social-auth',{action:'start',provider,returnTo:'game',newsletter:false,...(choice?{analytics:choice.analytics}:{}),...(guestProof()?{guest:guestProof()}:{})});
+        const proof=linkGuest?guestProof():null;
+        const out=await socialApi('/api/social-auth',{action:'start',provider,returnTo:'game',newsletter:false,...(choice?{analytics:choice.analytics}:{}),...(proof?{guest:proof}:{})});
         leaveTo(out.url);
       }));
     }
