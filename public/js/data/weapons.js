@@ -9,8 +9,10 @@ export const WEAPONS = {
   // 8×12=96 não matava nem com o cartucho inteiro no peito (TTK 0.9s, pior arma do jogo).
   // 9×14=126 = mata no contato, que é o contrato de uma pump.
   shotgun:{ name: 'M3 "CONVERSA FIADA"', short: 'M3', dmg: 14, pellets: 9, mag: 7, reserve: 32, rate: 0.9, reload: 3.0, spreadHip: 0.06, recoil: 0.045 },
-  deagle: { name: 'DEAGLE "MARTELO"', short: 'DE', dmg: 53, mag: 7, reserve: 35, rate: 0.28, reload: 2.0, spreadHip: 0.012, recoil: 0.03 },
-  pistol: { name: 'PT-38 "APITO"', short: 'PT-38', dmg: 34, mag: 12, reserve: 48, rate: 0.24, reload: 1.6, spreadHip: 0.02, recoil: 0.014, scope: false },
+  // Cadência de semi no piso do gênero (relato out/2026): PT-38 0,17 s, Deagle 0,24 s, .38 fica.
+  // TTK e ordem preservadas; régua em tools/eval/pistola-cadencia-check.mjs.
+  deagle: { name: 'DEAGLE "MARTELO"', short: 'DE', dmg: 53, mag: 7, reserve: 35, rate: 0.24, reload: 2.0, spreadHip: 0.012, recoil: 0.03 },
+  pistol: { name: 'PT-38 "APITO"', short: 'PT-38', dmg: 34, mag: 12, reserve: 48, rate: 0.17, reload: 1.6, spreadHip: 0.02, recoil: 0.014, scope: false },
   knife:  { name: 'FACA "CONVERSA FIADA"', short: 'FACA', dmg: 55, rate: 0.55, range: 2.4, reload: 0, recoil: 0.02, scope: false },
   // arsenal 2 (BR)
   m92:       { name: 'ZASTAVA M92 "IOGUSLAVO"', short: 'M92', dmg: 32, mag: 30, reserve: 90, rate: 0.1, reload: 2.5, spreadHip: 0.026, recoil: 0.009, auto: true },
