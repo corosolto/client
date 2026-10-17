@@ -610,6 +610,8 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
 /* ---------- screens ---------- */
 .screen{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
   background:linear-gradient(180deg,var(--bg-800),var(--bg-900))}
+/* Painel mais alto que a tela (ranking com top 10 cheio) rola em vez de cortar topo e VOLTAR (#822). */
+.screen:not(#map-screen){overflow-y:auto;justify-content:safe center}
 .scanlines{display:none}   /* morto na v2 */
 .screen-title{font-family:var(--aaa-font-display);font-size:var(--fs-700);font-weight:700;letter-spacing:var(--tr-6);color:var(--ink-100);
   text-transform:uppercase;position:relative;padding-bottom:var(--s-3)}

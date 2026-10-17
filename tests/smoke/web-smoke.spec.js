@@ -13,6 +13,37 @@ test.afterEach(async ({ page }, testInfo) => {
   });
 });
 
+// Top 10 sintético com o formato de produção: o CI não tem Supabase e o painel nunca cresce (#822).
+const TOP10 = Array.from({ length: 10 }, (_, i) => ({
+  id: `00000000-0000-4000-8000-00000000000${i}`, nick: `Fixture${i + 1}`, avatar_url: null, social_link: null,
+  socials: ['instagram', 'linkedin', 'github'].map((net) => ({ net, url: `https://example.com/${net}/fixture${i + 1}` })),
+  points: 50000 - i * 1000, kills: 50000 - i * 1000, kd: 40.5, account_verified: false,
+}));
+
+test('ranking com top 10 cheio mantém o VOLTAR alcançável em 1280×720', async ({ page }, testInfo) => {
+  const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
+  await page.setViewportSize({ width: 1280, height: 720 });
+  if (MUTANTE === 'semrolagem') {
+    testInfo.annotations.push({ type: 'mutação', description: 'semrolagem — tira a rolagem das telas de conteúdo; a régua DEVE reprovar' });
+    await page.route('**/style.css*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      await rota.fulfill({ status: 200, contentType: 'text/css', body: corpo.replace('.screen:not(#map-screen){overflow-y:auto;justify-content:safe center}', '') });
+    });
+  }
+  await page.route('**/api/leaderboard*', (rota) => rota.fulfill({ json: { players: TOP10 } }));
+  await page.goto(`${base}/?debug=1&nav=1&home=legacy`);
+  await page.addStyleTag({ content: 'astro-dev-toolbar{display:none!important}' });
+  await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#boot-splash')).toHaveCount(0);
+  await page.locator('.cs-item[data-act="ranking"]').click();
+  await expect(page.locator('#rank-global tbody tr')).toHaveCount(10);
+  await expect(page.locator('#ranking-panel h2')).toBeInViewport();
+  await page.locator('#ranking-back').click({ timeout: 10_000 });
+  await expect(page.locator('#main-menu')).toBeVisible();
+});
+
 test('nova home abre o ranking e volta para jogar', async ({ page }) => {
   const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
   await page.goto(`${base}/?debug=1&nav=1`);
