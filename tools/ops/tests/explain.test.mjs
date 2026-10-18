@@ -7,6 +7,7 @@ import { veredito, codigoDeSaida, renderMarkdown } from '../lib/report.mjs';
 import { classificaChamadas } from '../probes/api.mjs';
 import { classificaErro, percentil, totalDoContentRange, pareceHtml } from '../lib/http.mjs';
 import { extraiImportMap, extraiVersaoHtml, extraiScriptsModulo, extraiVersionJs } from '../probes/boot.mjs';
+import { rankingLigadoDe } from '../lib/repo.mjs';
 
 const ids = (a) => a.map((x) => x.id);
 
@@ -122,12 +123,14 @@ test('relatório: cabeçalho com os dois vereditos, achados com os quatro campos
 });
 
 test('parsers: import map, versão do stylesheet, scripts de módulo, VERSION', () => {
-  const html = `<link rel="stylesheet" href="/style.css?v=2.0.0-alpha.221"><script type="importmap">{"imports":{"three":"./vendor/three.module.js?v=1","./js/main.js":"./js/main.js?v=1-abc"}}</script><script type="module" src="/js/ops.js?v=1-abc"></script><script type="module" src="/js/main.js?v=1-abc" onload="x"></script>`;
+  const html = `<link rel="stylesheet" href="/social.css?v=596c791b"><link rel="stylesheet" href="/style.css?v=2.0.0-alpha.221-a1b2c3d4e5f6"><script type="importmap">{"imports":{"three":"./vendor/three.module.js?v=1","./js/main.js":"./js/main.js?v=1-abc"}}</script><script type="module" src="/js/ops.js?v=1-abc"></script><script type="module" src="/js/main.js?v=1-abc" onload="x"></script>`;
   assert.deepEqual(Object.keys(extraiImportMap(html)), ['three', './js/main.js']);
   assert.equal(extraiVersaoHtml(html), '2.0.0-alpha.221');
   assert.deepEqual(extraiScriptsModulo(html), ['/js/ops.js?v=1-abc', '/js/main.js?v=1-abc']);
   assert.equal(extraiImportMap('<html></html>'), null);
   assert.equal(extraiVersionJs("// x\nexport const VERSION = '2.0.0-alpha.221';"), '2.0.0-alpha.221');
+  assert.equal(rankingLigadoDe('export const RANKING_ON = true;'), true);
+  assert.equal(rankingLigadoDe("export const RANKING_ON = PUBLIC_ENV.RANKING_ON === 'true';"), null);
 });
 
 test('http: classificação de erro, percentil, content-range e detecção de HTML', () => {

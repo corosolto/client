@@ -25,11 +25,15 @@ export function versaoDoVersionJs(raiz = RAIZ_PADRAO) {
   return m[1];
 }
 
+export function rankingLigadoDe(src) {
+  const literal = /export\s+const\s+RANKING_ON(?:\s*:\s*boolean)?\s*=\s*(true|false)\b/.exec(src);
+  if (literal) return literal[1] === 'true';
+  if (/export\s+const\s+RANKING_ON\s*=\s*PUBLIC_ENV\.RANKING_ON\s*===\s*['"]true['"]/.test(src)) return null;
+  throw new Error('src/lib/site.ts sem `RANKING_ON` literal ou variável pública legível');
+}
+
 export function rankingLigado(raiz = RAIZ_PADRAO) {
-  const src = readFileSync(join(raiz, 'src/lib/site.ts'), 'utf8');
-  const m = /export\s+const\s+RANKING_ON(?:\s*:\s*boolean)?\s*=\s*(true|false)\b/.exec(src);
-  if (!m) throw new Error('src/lib/site.ts sem `export const RANKING_ON = true|false` legível');
-  return m[1] === 'true';
+  return rankingLigadoDe(readFileSync(join(raiz, 'src/lib/site.ts'), 'utf8'));
 }
 
 export function backendPadrao(raiz = RAIZ_PADRAO) {

@@ -30,9 +30,9 @@ export function extraiImportMap(html) {
 }
 
 export function extraiVersaoHtml(html) {
-  const m = /<link[^>]+rel=["']stylesheet["'][^>]+href=["'][^"']*\?v=([^"'&]+)["']/i.exec(html)
-    || /href=["'][^"']*\?v=([^"'&]+)["'][^>]*rel=["']stylesheet["']/i.exec(html);
-  return m ? m[1] : null;
+  const m = /<link[^>]+rel=["']stylesheet["'][^>]+href=["'][^"']*\/style\.css\?v=([^"'&]+)["']/i.exec(html)
+    || /<link[^>]+href=["'][^"']*\/style\.css\?v=([^"'&]+)["'][^>]*rel=["']stylesheet["']/i.exec(html);
+  return m ? m[1].replace(/-[a-f0-9]{8,64}$/i, '') : null;
 }
 
 export function extraiScriptsModulo(html) {
