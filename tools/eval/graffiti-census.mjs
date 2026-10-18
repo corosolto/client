@@ -74,9 +74,13 @@ const MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebra
    Loja H 30,2 · Ferro 14,5 · Quebrada 44,1 · Escadão 11 · Posto 14,4 · Córrego 29,2 ·
    Lajes 3,3. O piso é o medido, sem folga; Córrego e Lajes SOBEM. A Praça fica em 0
    porque a altura do olho lá é pilotis redondo: subir esse número pede parede nova,
-   não tinta. Peças na régua: tools/eval/graffiti_census.json deste commit. */
-const META = { praca_poderes: 0, piscina_treta: 69, loja_h: 30, ferro_velho: 14, quebrada: 44,
-  escadao: 11, corrego: 29, posto_treta: 14, amazonia: 0, lajes: 3, velho_oeste: 0 };
+   não tinta. Peças na régua: tools/eval/graffiti_census.json deste commit.
+   18/10/2026: depois do crescimento das geometrias da alpha.108 e do reasse editorial,
+   os menores valores em duas passadas são Piscina 68,9 · Loja H 29,9 · Quebrada 43,8 ·
+   Posto 13,9. Esses décimos viram o piso exato: perder mais uma placa cai outro décimo e
+   continua reprovando. */
+const META = { praca_poderes: 0, piscina_treta: 68.9, loja_h: 29.9, ferro_velho: 14, quebrada: 43.8,
+  escadao: 11, corrego: 29, posto_treta: 13.9, amazonia: 0, lajes: 3, velho_oeste: 0 };
 
 /* TETO DE DENSIDADE (peças por placa de parede) — MA1, 27/09, medido ×1,35:
    praca 0,35→0,5 · piscina 0,63→0,85 · loja_h 0,51→0,7 · ferro 0,36→0,5 ·

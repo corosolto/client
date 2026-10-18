@@ -1,6 +1,6 @@
 {
-  "ref": "72d559d908da7ca01b847bac8aaccf0f0019899c",
-  "sourceSha256": "80b7bc6c5867db557778895cb29ba586909ca959a3e97d3c6770569cf6730b84",
+  "ref": "issue-741-20261018",
+  "sourceSha256": "cc8944b55b3c76dcb36214a6e89d8d34bc075b214f93e65899588911b4acbf63",
   "randomCalls": 1236806,
   "canvases": 34,
   "keys": [
@@ -48,7 +48,7 @@
     "pixo": "dce556d80c8a65775eb89c558691b3338fb1ff7d761e1764fee164eca08bb07b",
     "graffiti": "e2aaacb5ec1390254c3f97fa109dbf1e3396872e0326909b68414a1c3a039f94",
     "posters": "34d3230160a2e877e04936648a359d30a1128f77fc0d914ad2619362d61a6368",
-    "posterImgs": "827cac21ebccd4091e155c39270b789e299b0df2ad625bb7de3e1d2d5b34380f",
+    "posterImgs": "3512b215ca4005879f2d19129bc8660bde5adbd89e47ed64bc8f1a3382616ed2",
     "muralEternamente": "8232fbc30ddcbcadc2382c807bddb8170bc57fd82651c36592ff1a57ad6de9c4",
     "muralLesteVive": "baed9fb1d4ceb7ac90fed82dbab9ff369b77b45df2a8a562a0b6f1bbafd0b8f2",
     "decals": "e7ab4b403e89b898259915021d93b6c6f87f6802f46e344726751b835739c267",
@@ -81,7 +81,7 @@
     "pixo": "582427d1a9af16f7cbfa0842a51dd7fb621abfb826118c287556ee94ff510657",
     "graffiti": "588236f9e3cc485c2fc7725dc8d3ebb2631d994a43fdfcf16ebb4ccc9ab7683c",
     "posters": "5173c5429a1b3967aaca26691aa4d862255e91594a1085a84227db22b282c8dd",
-    "posterImgs": "2780406196a6113ff0a629aceb6d120c42456c475ce1ed16a19c837ee3e664b8",
+    "posterImgs": "089cc71a980b2e03472c00a1ad1fdf87f0557cdd5ef86d3f911842053e865f00",
     "muralEternamente": "b2b255bf63f97ecc1b5033bdc8febbc06eb4b2e4b30e4e8c291937d716f9a762",
     "muralLesteVive": "36120f17b108f2fe29007e1bd1f0aa691930e57a0b495664472e15ac0cb6e132",
     "decals": "1e0ca98c95c94dd2934af08c608319b1997c451c4fb5caca7e09ef84813eb3a5",
@@ -102,7 +102,7 @@
     "flash": "076f00d1004041799d444f7d3dddfd8a2de14edbefb074c64f768731348aebe5",
     "sky": "90c21130592009bc9f0f58cda9cf3f757ad324969c534f388442279677e5f77c"
   },
-  "texturesDigest": "6eaf875add0da6419f22191b39ecb66c5796422f927b11ffd755571a72d801de",
+  "texturesDigest": "e708991525fb3a0914003bed1ff8e0c5b4bdedb4f7244683fecc4ba24aee48da",
   "legacyStains": {
     "seamAlpha": 0.1908628222905995,
     "stamps": 5,

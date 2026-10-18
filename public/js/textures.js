@@ -533,7 +533,12 @@ export function initTextures() {
   // --- poster art (public/posters): pool satírico; personagens e marcas protegidas não entram.
   // Dimensões/aspecto reproduzidos por `node tools/eval/poster-aspect-check.mjs --json`.
   const POSTER_FILES = [
-    ['despisque-leao.jpg', 0.86, 1.2], // o par do meme (leão 'despisque') — voltou junto, pedido de 06/08
+    // Tombstones seguros preservam os índices do pool e o consumo de RNG sem reintroduzir
+    // as três artes retiradas pela política editorial.
+    ['despisque-leao.jpg', 0.86, 1.2],
+    ['despisque-leao.jpg', 0.86, 1.2],
+    ['despisque-leao.jpg', 0.86, 1.2], // o leão satírico permanece liberado
+    ['despisque-leao.jpg', 0.86, 1.2],
     ['New Project (1).png', 0.5625],
     ['New Project (2).png', 0.5625], ['New Project (3).png', 0.5625],
     ['25c9112229edfcfbb1eae4137ecc151a.jpg', 0.6],
