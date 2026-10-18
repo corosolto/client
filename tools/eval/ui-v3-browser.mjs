@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Metade de navegador da régua Treta Pop: o que a ui-v3-check lê no fonte, aqui é medido
-   no que o Chrome desenha (fonte carregada, flag isolada) e as pranchas são capturadas.
+   no que o Chrome desenha (fonte carregada, padrão v3 e rollback legado) e as pranchas são capturadas.
      BASE=http://127.0.0.1:9417 node tools/eval/ui-v3-browser.mjs [--mutantes]
    Saída: OUT (padrão tools/eval/out/ui-v3). Um navegador por vez (with-browser-lock.sh). */
 import { execSync } from 'node:child_process';
@@ -23,11 +23,12 @@ const browser = await chromium.launch({
 async function abrir(caminho, { mutante = '', viewport = { width: 1536, height: 1024 } } = {}) {
   const page = await browser.newPage({ viewport });
   if (mutante === 'fonte-404') await page.route('**/fonts/anton-latin-400-normal.woff2', (r) => r.fulfill({ status: 404, body: '' }));
-  if (mutante === 'flag-vaza') {
+  if (mutante === 'default-opt-in') {
     await page.route((u) => u.pathname === '/' && !u.search, async (r) => {
       const res = await r.fetch();
-      const html = (await res.text()).replace('<html lang="pt-BR">', '<html lang="pt-BR" data-ui="v3">');
-      if (!html.includes('data-ui="v3"')) throw new Error('mutante flag-vaza não aplicou');
+      const antes = await res.text();
+      const html = antes.replace("if (ui === 'legacy') return;", "if (ui !== 'v3') return;");
+      if (html === antes) throw new Error('mutante default-opt-in não aplicou');
       await r.fulfill({ response: res, body: html });
     });
   }
@@ -106,24 +107,36 @@ async function medir(mutante = '') {
 
   const pad = await abrir('/', { mutante });
   await pad.waitForTimeout(2500);
-  const mp = await pad.evaluate(() => ({ ui: document.documentElement.dataset.ui || '', body: getComputedStyle(document.body).fontFamily }));
+  const mp = await pad.evaluate(() => ({
+    ui: document.documentElement.dataset.ui || '',
+    body: getComputedStyle(document.body).fontFamily,
+    peso: getComputedStyle(document.body).fontWeight,
+    hub: getComputedStyle(document.querySelector('#main-menu') || document.body).getPropertyValue('--font').trim(),
+  }));
   if (!mutante) { await pad.keyboard.press('Enter'); await pad.waitForTimeout(2000); }
   if (!mutante) await pad.screenshot({ path: `${OUT}/menu-padrao.png` });
   await pad.close();
-  add('TPB3', !mp.ui && !/Barlow Semi|Anton|JetBrains/.test(mp.body), `sem flag → data-ui="${mp.ui}", body "${mp.body.split(',')[0]}"`);
+  add('TPB3', mp.ui === 'v3' && /^"?Barlow Semi Condensed/.test(mp.body) && mp.peso === '500' && /tp-ui|Barlow Semi/.test(mp.hub),
+    `sem query → data-ui=${mp.ui}, body ${mp.body.split(',')[0]} ${mp.peso}, --font do #main-menu ${mp.hub.split(',')[0]}`);
 
   const leg = await abrir('/?ui=legacy', { mutante });
   await leg.waitForFunction(() => document.documentElement.dataset.ui === 'legacy', null, { timeout: 30000 }).catch(() => {});
-  const ml = await leg.evaluate(() => document.documentElement.dataset.ui || '');
+  const ml = await leg.evaluate(() => ({
+    ui: document.documentElement.dataset.ui || '',
+    body: getComputedStyle(document.body).fontFamily,
+    folha: [...document.styleSheets].some((s) => /\/css\/tp\//.test(s.href || '')),
+  }));
+  if (!mutante) await leg.screenshot({ path: `${OUT}/menu-legacy.png` });
   await leg.close();
-  add('TPB4', ml === 'legacy', `?ui=legacy → data-ui="${ml}"`);
+  add('TPB4', ml.ui === 'legacy' && !/Barlow Semi|Anton|JetBrains/.test(ml.body) && !ml.folha,
+    `?ui=legacy → data-ui="${ml.ui}", body "${ml.body.split(',')[0]}", folha Treta Pop ${ml.folha ? 'carregada' : 'ausente'}`);
   return { r, censoV3 };
 }
 
 mkdirSync(OUT, { recursive: true });
 let sair = 0;
 if (MUTANTES) {
-  for (const [mut, alvo] of [['fonte-404', 'TPB1'], ['flag-vaza', 'TPB3'], ['botao-baixo', 'TPB5']]) {
+  for (const [mut, alvo] of [['fonte-404', 'TPB1'], ['default-opt-in', 'TPB3'], ['botao-baixo', 'TPB5']]) {
     const { r } = await medir(mut);
     const c = r.find((x) => x.id === alvo);
     if (c.ok) sair = 1;
@@ -133,7 +146,7 @@ if (MUTANTES) {
   const { r, censoV3 } = await medir();
   for (const c of r) console.log(`${c.ok ? 'VERDE   ' : 'VERMELHO'} ${c.id}  ${c.msg}`);
   /* Linha de base para as fases 2-5: elementos do menu que ainda não estão nas três famílias. */
-  console.log('\ncenso de fontes do menu em ?ui=v3:', JSON.stringify(censoV3));
+  console.log('\ncenso de fontes do menu padrão:', JSON.stringify(censoV3));
   writeFileSync(`${OUT}/censo-v3.json`, JSON.stringify(censoV3, null, 2));
   sair = r.every((c) => c.ok) ? 0 : 1;
   console.log(`\nui-v3 navegador: ${r.filter((c) => c.ok).length}/${r.length}  (capturas em ${OUT})`);

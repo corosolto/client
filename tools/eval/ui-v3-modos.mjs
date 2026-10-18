@@ -58,7 +58,7 @@ async function abrir({ w = 1536, h = 1024, lang = 'pt', flag = true, rota = '/jo
   if (mutante) {
     const [teste, troca] = MUTANTES[mutante];
     await page.route((u) => teste.test(u.pathname), async (r) => {
-      const res = await r.fetch();
+      const res = await r.fetch().catch(() => r.fetch());
       const antes = await res.text();
       const depois = troca(antes);
       if (depois === antes) throw new Error(`mutante ${mutante} não aplicou em ${r.request().url()}`);
@@ -72,7 +72,7 @@ async function abrir({ w = 1536, h = 1024, lang = 'pt', flag = true, rota = '/jo
     localStorage.setItem('awpbr_settings', JSON.stringify(s));
     localStorage.removeItem('tp-modos-favoritos');
   }, [salvo, lang]);
-  await page.goto(`${BASE}${rota}?${flag ? 'ui=v3&' : ''}lang=${lang}`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+  await page.goto(`${BASE}${rota}?${flag ? '' : 'ui=legacy&'}lang=${lang}`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   const splash = page.locator('#boot-splash');
   if (await splash.isVisible().catch(() => false)) {
     await page.waitForFunction(() => {
@@ -103,7 +103,7 @@ async function interativo(mutante, add) {
   const card = await ev(() => { const c = document.querySelector('#hub-map-modal .tp-modos'); const b = c?.getBoundingClientRect(); return b ? [b.left, b.top, b.right, b.bottom] : []; });
   const cheia = card.length && card[0] <= 1 && card[1] <= 1 && card[2] >= raiz.vw - 1 && card[3] >= raiz.vh - 1;
   add('MO1', raiz.aberto && raiz.tem && cobre && cheia && raiz.desfoque === 'none' && /ESCOLHA A TRETA/i.test(raiz.titulo),
-    !raiz.tem ? '/jogar/mapas com ?ui=v3 não monta a tela Treta Pop' : !cheia ? `tela não ocupa a janela: ${card.map((v) => v.toFixed(0)).join(',')}` : raiz.desfoque !== 'none' ? `blur sobre o canvas: ${raiz.desfoque}` : `tela cheia, sem blur, título "${raiz.titulo.replace(/\s+/g, ' ')}"`);
+    !raiz.tem ? '/jogar/mapas sem query não monta a tela Treta Pop' : !cheia ? `tela não ocupa a janela: ${card.map((v) => v.toFixed(0)).join(',')}` : raiz.desfoque !== 'none' ? `blur sobre o canvas: ${raiz.desfoque}` : `tela cheia, sem blur, título "${raiz.titulo.replace(/\s+/g, ' ')}"`);
   if (!raiz.tem) { await p.close(); return; }
 
   /* MO2: o cartão de modo muda o modo de verdade (matchMode) e só um fica marcado. */
@@ -323,7 +323,7 @@ async function semFlag(mutante, add) {
   }
   const ruim = Object.entries(r).filter(([, v]) => v.tp || v.gancho || v.folha || !v.legado);
   add('MO16', !ruim.length, ruim.length ? ruim.map(([w, v]) => `${w}: ${v.tp ? 'tela v3 montada' : v.gancho ? 'gancho __tpModos ligado' : v.folha ? 'folha tp carregada' : 'grade de hoje sumiu'}`).join('; ')
-    : `sem a flag: grade de hoje com ${r[1536].legado} mapas, nada da Treta Pop`);
+    : `?ui=legacy: grade anterior com ${r[1536].legado} mapas, nada da Treta Pop`);
 }
 
 /* MO17: no cartão da escalação o ＋ (ou ALIADO/INIMIGO) não cobre o nome do personagem. */

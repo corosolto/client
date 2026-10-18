@@ -12,11 +12,11 @@ const OUT = process.env.OUT || 'tools/eval/out/ui-v3-hud';
 const PARTIDA = 'debug=1&auto=E,esquerdomacho&map=praca_poderes';
 const VIEWPORTS = [[1536, 1024], [1920, 1080], [1280, 720]];
 const TOQUE = [844, 390];
-/* Valores do HUD de hoje sem a flag, lidos na base origin/feat/ui-treta-pop (32e7cdf14) a 1536×1024:
+/* Valores do HUD com ?ui=legacy, lidos na base origin/feat/ui-treta-pop (32e7cdf14) a 1536×1024:
    a cláusula HU10 congela o que a tela legada tem que continuar sendo. */
 const LEGADO = { scoreE: 'rgba(0, 0, 0, 0)', hpFonte: 'Rajdhani', atalhos: 'flex', radar: '132px' };
-/* Fração dos pixels do viewmodel que um painel do HUD pode cobrir em 3:2. Medido na base sem a flag:
-   o painel de munição de hoje já cobre a ponta da arma; o teto é o dobro do legado, não um número solto. */
+/* Fração dos pixels do viewmodel que um painel do HUD pode cobrir em 3:2. Medido no legado:
+   o painel de munição anterior já cobre a ponta da arma; o teto é o dobro dele, não um número solto. */
 const VM_TETO = Number(process.env.VM_TETO || 0.06);
 const PT_VAZA = /\b(VIDA|ABATES|SEQUÊNCIA|RODADA|PLACAR|RÁDIO|CLIQUE|OLHA AQUI|marcou)\b/;
 const EN_VAZA = /\b(HEALTH|KILLS|STREAK|ROUND|SCOREBOARD|RADIO|CLICK|LOOK HERE|marked)\b/;
@@ -352,8 +352,8 @@ async function medir(mutante = '', alvo = '') {
   }
 
   if (roda('legado')) {
-  /* ---------- sem a flag a tela é a de hoje ---------- */
-  const { page: leg, fechar: fl } = await abrir(PARTIDA, { mutante });
+  /* ---------- ?ui=legacy mantém a tela anterior ---------- */
+  const { page: leg, fechar: fl } = await abrir(`ui=legacy&${PARTIDA}`, { mutante });
   const hoje = await leg.evaluate(() => ({
     tp: document.querySelectorAll('[class*="tp-hud"],[class*="tp-chat"],[class*="tp-toque"],.tp-sb-av').length,
     folha: [...document.styleSheets].some((s) => /\/css\/tp\/hud\.css/.test(s.href || '')),
@@ -365,7 +365,7 @@ async function medir(mutante = '', alvo = '') {
   await foto(leg, 'hoje-1536x1024');
   await fl();
   const difere = Object.entries(LEGADO).filter(([k, v]) => hoje[k] !== v).map(([k, v]) => `${k}=${hoje[k]} (hoje ${v})`);
-  add('HU10', !hoje.tp && !hoje.folha && !difere.length, hoje.tp || hoje.folha ? `sem ?ui=v3 aparecem ${hoje.tp} nós tp e a folha ${hoje.folha ? 'carrega' : 'não carrega'}` : difere.length ? `sem a flag o HUD mudou: ${difere.join(', ')}` : 'sem a flag o HUD é o de hoje');
+  add('HU10', !hoje.tp && !hoje.folha && !difere.length, hoje.tp || hoje.folha ? `com ?ui=legacy aparecem ${hoje.tp} nós tp e a folha ${hoje.folha ? 'carrega' : 'não carrega'}` : difere.length ? `?ui=legacy mudou o HUD: ${difere.join(', ')}` : '?ui=legacy mantém o HUD anterior');
   }
 
   if (roda('toque')) {

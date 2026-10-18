@@ -105,7 +105,7 @@ async function abrir({ w = 1536, h = 1024, flag = true, lang = 'pt', mutante = '
   await preparar(page, mutante);
   await fixture(page, conta);
   const params = new URLSearchParams({ lang });
-  if (flag) params.set('ui', 'v3');
+  if (!flag) params.set('ui', 'legacy');
   if (invite) params.set('treta', invite);
   await page.goto(`${BASE}/loja?${params}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   const splash = page.locator('#boot-splash');
@@ -332,7 +332,7 @@ async function secaoLegado(mutante, add) {
   const out = [];
   for (const [w, h] of [[1536, 1024], [844, 390]]) {
     const { page } = await abrir({ w, h, flag: false, mutante, toque: w === 844 });
-    if (!mutante) await page.screenshot({ path: `${OUT}/antes-sem-flag-${w}x${h}.png` });
+    if (!mutante) await page.screenshot({ path: `${OUT}/antes-legacy-${w}x${h}.png` });
     out.push(await page.evaluate(() => ({
       tp: document.querySelectorAll('#hub-shop .tp-loja,#hub-shop [class*="tp-"]').length,
       abas: !!document.querySelector('.treta-views')?.checkVisibility(),
@@ -341,7 +341,7 @@ async function secaoLegado(mutante, add) {
     await page.close();
   }
   const ruim = out.filter((o) => o.tp || !o.abas || !/Bebas/.test(o.fonte));
-  add('LJ11', !ruim.length, ruim.length ? `sem a flag a loja mudou: ${ruim.map((o) => `${o.tp} nós tp-, abas antigas ${o.abas ? 'visíveis' : 'sumiram'}, título ${o.fonte.split(',')[0]}`).join('; ')}` : 'sem a flag a loja é a de hoje (1536 e 844)');
+  add('LJ11', !ruim.length, ruim.length ? `?ui=legacy mudou a loja: ${ruim.map((o) => `${o.tp} nós tp-, abas antigas ${o.abas ? 'visíveis' : 'sumiram'}, título ${o.fonte.split(',')[0]}`).join('; ')}` : '?ui=legacy mantém a loja anterior (1536 e 844)');
 }
 
 const SECOES = { v3: [secaoV3, ['LJ1', 'LJ3', 'LJ4', 'LJ5', 'LJ7', 'LJ8', 'LJ12', 'LJ13', 'LJ14', 'LJ15']], modal: [secaoModal, ['LJ2']], idioma: [secaoIdioma, ['LJ10']],

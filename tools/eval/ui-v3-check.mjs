@@ -128,12 +128,15 @@ export function medir(arq) {
 
   const astro = arq['src/pages/index.astro'];
   const head = astro.slice(astro.indexOf('<head>'), astro.indexOf('</head>') > 0 ? astro.indexOf('</head>') : undefined);
-  const iFlag = head.search(/get\('ui'\)\s*[!=]==\s*'v3'[\s\S]{0,200}dataset\.ui\s*=\s*'v3'/);
+  const iLegacy = head.search(/(?:get\('ui'\)|\bui)\s*===\s*'legacy'/);
+  const iFlag = head.search(/dataset\.ui\s*=\s*'v3'/);
   const iCss = head.indexOf('/style.css?v=');
+  const optIn = /get\('ui'\)\s*!==\s*'v3'/.test(head);
   const legacy = /params\.get\('ui'\) === 'legacy'\) document\.documentElement\.dataset\.ui = 'legacy'/.test(arq['public/js/main.js']);
-  add('TP7', iFlag >= 0 && iCss > iFlag && legacy,
-    iFlag < 0 ? '?ui=v3 não liga data-ui no <head> (primeiro frame sai sem os tokens)'
-      : iCss <= iFlag ? 'a flag roda depois do style.css' : !legacy ? 'kill-switch ?ui=legacy sumiu do main.js' : '?ui=v3 liga antes do CSS; ?ui=legacy intacto');
+  add('TP7', iLegacy >= 0 && iFlag > iLegacy && iCss > iFlag && !optIn && legacy,
+    iLegacy < 0 || optIn ? 'Treta Pop continua opt-in; a home sem query não recebe data-ui=v3'
+      : iFlag <= iLegacy ? 'data-ui=v3 roda antes do kill-switch legado' : iCss <= iFlag ? 'a ativação roda depois do style.css'
+        : !legacy ? 'kill-switch ?ui=legacy sumiu do main.js' : 'home liga v3 antes do CSS; ?ui=legacy preserva o rollback');
 
   const semRegra = COMPONENTES.filter((c) => !new RegExp(`${c.replace(/[.-]/g, '\\$&')}[\\s{:,\\[>]`).test(tp));
   const kit = arq[KIT] || '';
@@ -188,7 +191,7 @@ const MUTANTES = {
   TP4: (a) => troca(a, 'public/style.css', '.tp-chip--novo{background:#e2402c', '.tp-chip--novo{background:#5b4bd6'),
   TP5: (a) => troca(a, 'public/style.css', /\.tp-card\{([^}]*)transition:transform/, '.tp-card{$1transition:box-shadow'),
   TP6: (a) => troca(a, 'public/style.css', /(:root\[data-ui="v3"\]\[data-motion="reduzido"\]\{[^}]*)--tp-mov:0/, '$1--tp-mov:1'),
-  TP7: (a) => troca(a, 'src/pages/index.astro', "dataset.ui = 'v3'", "dataset.uiv = 'v3'"),
+  TP7: (a) => troca(a, 'src/pages/index.astro', "if (ui === 'legacy') return;", "if (ui !== 'v3') return;"),
   TP8: (a) => troca(a, 'scripts/prune-dist.mjs', "'dist/client/ui-v3-kit.html',", ''),
   TP10: (a) => ({ ...a, folhas: { ...a.folhas, 'lobby.css': `${a.folhas['lobby.css']}\n.btn-big{color:#b4d92e}` } }),
   TP9: (a) => troca(a, 'public/style.css', '.tp-barra{', '// barra de progresso\n.tp-barra{'),
