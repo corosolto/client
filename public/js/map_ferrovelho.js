@@ -1422,7 +1422,9 @@ export function buildFerroVelho(scene, T) {
         [-29.5, -30], [-29.5, -22], [-29.5, -6], [-29.5, 10], [-29.5, 26], [-29.5, 33],
         [29.5, -32], [29.5, -24], [29.5, -8], [29.5, 6], [29.5, 20], [29.5, 33],
         [-26, -34], [-8, -34], [16, -34], [24, -34], [-27, 34.5], [22, 34.5],
-        [-19.5, -13], [-19.5, 15], [19.5, 1], [-13, -22], [13, -30], [27, -18],
+        // O tufo antigo [-13,-22] ficava a 1–3 m do spawn B e tapava o centro da tela (#943).
+        // ?matospawn=1 preserva a comparação visual sem reintroduzir o defeito por padrão.
+        [-19.5, -13], [-19.5, 15], [19.5, 1], QP.get('matospawn') === '1' ? [-13, -22] : [-29.5, -14], [13, -30], [27, -18],
         [-22, 8], [-27, 20], [26, 14], [-24, 28], [21, 27], [-17, 4], [17, -22],
       ];
       // BECO OESTE: o vão do cânion é barro limpo (referência do dono) — o capim alto
