@@ -102,19 +102,19 @@ const PATTERN_FRAGMENT = Object.freeze({
 });
 const THEME_FRAGMENT = Object.freeze({
   'trabalho-13': `
-    float trabalhoStripe = fract(
-      (vWeaponSkinLocal.y + 0.3798828125) * 5.4
-      + (vWeaponSkinLocal.z + 0.0927734375) * 2.2
+    float trabalhoGold = 1.0 - smoothstep(
+      0.018, 0.036, abs(vWeaponSkinLocal.y + 0.13)
     );
-    float trabalhoGold = 1.0 - smoothstep(0.08, 0.15, abs(trabalhoStripe - 0.5));
-    diffuseColor.rgb *= mix(vec3(0.48, 0.006, 0.018), vec3(0.92, 0.57, 0.05), trabalhoGold);
+    diffuseColor.rgb *= mix(vec3(0.52, 0.008, 0.020), vec3(0.94, 0.60, 0.055), trabalhoGold);
   `,
   'estrela-vermelha': `
     float estrelaVermelhaBand = 0.5 + 0.5 * sin(
       (vWeaponSkinLocal.y + vWeaponSkinLocal.z + 0.47265625) * 34.0
     );
     float estrelaVermelhaInk = smoothstep(0.58, 0.72, estrelaVermelhaBand);
-    diffuseColor.rgb *= mix(vec3(0.91, 0.88, 0.77), vec3(0.68, 0.006, 0.025), estrelaVermelhaInk);
+    vec3 estrelaVermelhaColor = mix(vec3(0.93, 0.91, 0.84), vec3(0.70, 0.008, 0.028), estrelaVermelhaInk);
+    float estrelaVermelhaSlide = smoothstep(0.075, 0.11, vWeaponSkinLocal.y);
+    diffuseColor.rgb *= mix(estrelaVermelhaColor, vec3(0.96, 0.95, 0.90), estrelaVermelhaSlide);
   `,
   'estrela-verde': `
     float estrelaVerdeBand = fract(
@@ -132,7 +132,32 @@ const THEME_FRAGMENT = Object.freeze({
     vec3 brasilColor = brasilBand < 0.46
       ? vec3(0.008, 0.38, 0.14)
       : (brasilBand < 0.76 ? vec3(0.95, 0.72, 0.04) : vec3(0.015, 0.16, 0.55));
-    diffuseColor.rgb *= brasilColor;
+    float brasilSlide = smoothstep(0.075, 0.11, vWeaponSkinLocal.y);
+    diffuseColor.rgb *= mix(brasilColor, vec3(0.012, 0.13, 0.50), brasilSlide);
+  `,
+  'brasil-cotidiano': `
+    float cotidianoGreen = 1.0 - smoothstep(0.014, 0.030, abs(vWeaponSkinLocal.y + 0.145));
+    float cotidianoWhite = 1.0 - smoothstep(0.014, 0.030, abs(vWeaponSkinLocal.y + 0.095));
+    float cotidianoBlue = 1.0 - smoothstep(0.014, 0.030, abs(vWeaponSkinLocal.y + 0.045));
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.015, 0.42, 0.18), cotidianoGreen * 0.92);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.92, 0.93, 0.90), cotidianoWhite * 0.90);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.025, 0.17, 0.57), cotidianoBlue * 0.92);
+  `,
+  'camo-selva': `
+    float camoSelvaNoise = sin(vWeaponSkinLocal.x * 31.0 + sin(vWeaponSkinLocal.z * 19.0))
+      + sin(vWeaponSkinLocal.y * 47.0 - vWeaponSkinLocal.z * 13.0);
+    vec3 camoSelvaColor = camoSelvaNoise < -0.35
+      ? vec3(0.08, 0.10, 0.07)
+      : (camoSelvaNoise < 0.55 ? vec3(0.25, 0.32, 0.18) : vec3(0.56, 0.49, 0.31));
+    diffuseColor.rgb *= camoSelvaColor;
+  `,
+  tropicalente: `
+    float tropicalTeal = 1.0 - smoothstep(0.016, 0.034, abs(vWeaponSkinLocal.y + 0.145));
+    float tropicalYellow = 1.0 - smoothstep(0.016, 0.034, abs(vWeaponSkinLocal.y + 0.085));
+    float tropicalCoral = 1.0 - smoothstep(0.020, 0.044, abs(vWeaponSkinLocal.z + 0.31));
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.00, 0.62, 0.52), tropicalTeal * 0.92);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.98, 0.73, 0.12), tropicalYellow * 0.90);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.91, 0.14, 0.20), tropicalCoral * 0.84);
   `,
   ouro: `
     float ouroBrush = 0.90 + 0.10 * sin(
@@ -169,9 +194,11 @@ const POLITICAL_LAYOUT = Object.freeze({
 });
 const SLOGAN_STYLE = Object.freeze({
   'trabalho-13': Object.freeze({ fill: '#ffd23f', stroke: '#69030d' }),
-  'estrela-vermelha': Object.freeze({ fill: '#a60920', stroke: '#fff4d5' }),
+  'estrela-vermelha': Object.freeze({ fill: '#bd102b', stroke: '#fff8e8' }),
   'estrela-verde': Object.freeze({ fill: '#fff1bd', stroke: '#075c32' }),
   'brasil-22': Object.freeze({ fill: '#ffe13b', stroke: '#082c70' }),
+  'brasil-cotidiano': Object.freeze({ fill: '#f5f6ec', stroke: '#0b4f92' }),
+  tropicalente: Object.freeze({ fill: '#ffd94a', stroke: '#006f66' }),
 });
 
 const markTextures = new Map();
@@ -197,16 +224,18 @@ export function preloadWeaponSkinCandidate(skinId) {
 function sloganTexture(skinId) {
   const definition = WEAPON_SKINS[skinId];
   if (!definition?.slogan || typeof document === 'undefined') return null;
-  const cacheKey = `${definition.theme}:${definition.slogan}`;
+  const aspect = definition.sloganAspect || 8;
+  const canvasWidth = 256 * aspect;
+  const cacheKey = `${definition.theme}:${definition.slogan}:${aspect}`;
   if (sloganTextures.has(cacheKey)) return sloganTextures.get(cacheKey);
   const canvas = document.createElement('canvas');
-  canvas.width = 2048;
+  canvas.width = canvasWidth;
   canvas.height = 256;
   const context = canvas.getContext('2d');
   const style = SLOGAN_STYLE[definition.theme] || SLOGAN_STYLE['trabalho-13'];
   let fontSize = 124;
   context.font = `900 ${fontSize}px "Arial Black", Arial, sans-serif`;
-  while (context.measureText(definition.slogan).width > 1900 && fontSize > 68) {
+  while (context.measureText(definition.slogan).width > canvasWidth - 148 && fontSize > 68) {
     fontSize -= 4;
     context.font = `900 ${fontSize}px "Arial Black", Arial, sans-serif`;
   }
@@ -216,8 +245,8 @@ function sloganTexture(skinId) {
   context.lineWidth = 12;
   context.strokeStyle = style.stroke;
   context.fillStyle = style.fill;
-  context.strokeText(definition.slogan, 1024, 132);
-  context.fillText(definition.slogan, 1024, 132);
+  context.strokeText(definition.slogan, canvasWidth / 2, 132);
+  context.fillText(definition.slogan, canvasWidth / 2, 132);
   const texture = new THREE.CanvasTexture(canvas);
   texture.name = `${definition.theme}__barrel_slogan`;
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -303,13 +332,26 @@ function attachPoliticalMarkings(model, weaponId, skinId) {
   const symbol = markTextures.get(skinId);
   const definition = WEAPON_SKINS[skinId];
   const layout = POLITICAL_LAYOUT[weaponId];
-  if (!symbol || !definition || !layout) return;
-  const symbolAspect = (symbol.image?.width || 1) / (symbol.image?.height || 1);
+  if (!definition || !layout) return;
   const slogan = sloganTexture(skinId);
-  const items = [
-    { role: 'symbol', texture: symbol, placement: layout.symbol, aspect: symbolAspect },
-    ...(slogan ? [{ role: 'slogan', texture: slogan, placement: layout.slogan, aspect: 8 }] : []),
-  ];
+  const items = [];
+  if (symbol) {
+    items.push({
+      role: 'symbol',
+      texture: symbol,
+      placement: definition.markLayout || layout.symbol,
+      aspect: (symbol.image?.width || 1) / (symbol.image?.height || 1),
+    });
+  }
+  if (slogan) {
+    items.push({
+      role: 'slogan',
+      texture: slogan,
+      placement: definition.sloganLayout || layout.slogan,
+      aspect: definition.sloganAspect || 8,
+    });
+  }
+  if (!items.length) return;
   const surfaces = fittedSideSurfaces(model, weaponId, items.map(({ placement, aspect }) => ({
     ...placement,
     width: placement.height * aspect,
@@ -359,11 +401,13 @@ function cloneMaterial(material, skinId) {
   copy.name = `${material.name || 'weapon'}__skin_${skinId}`;
   const definition = WEAPON_SKINS[skinId];
   const profile = MATERIAL_PROFILE[definition?.metalFinish] || MATERIAL_PROFILE.default;
-  copy.map = null;
-  copy.color.set(0xffffff);
-  copy.roughness = profile.roughness;
-  copy.metalness = profile.metalness;
-  copy.envMapIntensity = profile.envMapIntensity;
+  if (!definition?.preserveBase) {
+    copy.map = null;
+    copy.color.set(0xffffff);
+    copy.roughness = profile.roughness;
+    copy.metalness = profile.metalness;
+    copy.envMapIntensity = profile.envMapIntensity;
+  }
   copy.userData = { ...copy.userData, weaponSkin: skinId };
   copy.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader
@@ -371,9 +415,9 @@ function cloneMaterial(material, skinId) {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\n\tvWeaponSkinLocal = position;');
     shader.fragmentShader = shader.fragmentShader
       .replace('void main() {', 'varying vec3 vWeaponSkinLocal;\nvoid main() {')
-      .replace('#include <map_fragment>', patternFragment(skinId));
+      .replace('#include <map_fragment>', `#include <map_fragment>\n${patternFragment(skinId)}`);
   };
-  copy.customProgramCacheKey = () => `weapon-skin:${skinId}:object-space-v2`;
+  copy.customProgramCacheKey = () => `weapon-skin:${skinId}:object-space-v3`;
   copy.needsUpdate = true;
   return copy;
 }

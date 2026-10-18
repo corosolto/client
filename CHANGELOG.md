@@ -27,10 +27,10 @@
 
 ### Adicionado
 - A fábrica de wearables registra o boné procedural versionado e perfis candidatos por hash para Capitão, Esquerdomacho e Barbudo. A mesma régua importa os marcos e ajustes medidos dos óculos 33–36 para Capitão e Esquerdomacho, gera folhas frente/¾/perfil por pose e bloqueia qualquer par sem certificação humana; os itens 37/38 e a loja de acessórios continuam fechados.
-- A loja TRETA$ ganha doze skins de arma para AK e pistola: oito políticas por T$ 500, ouro por T$ 900 e prata por T$ 500. O armário equipa uma skin por arma, e a tecla `I` mostra a lateral completa durante a partida.
+- A loja TRETA$ ganha vinte skins de arma para AK e pistola: oito políticas, quatro com expressões brasileiras sobre o corpo original, duas Camo Selva, duas Tropicalente com arara e coqueiro, ouro por T$ 900 e prata por T$ 500. O armário equipa uma skin por arma, e a tecla `I` mostra a lateral completa durante a partida.
 
 ### Alterado
-- As oito skins políticas deixam de usar uma placa sobreposta: o símbolo agora é uma pintura metálica ajustada à lateral real da malha, e as frases seguem na horizontal sobre o cano ou ferrolho.
+- As oito skins políticas deixam de usar uma placa sobreposta: o símbolo agora é uma pintura metálica ajustada à lateral real da malha, e as frases seguem na horizontal sobre o cano ou ferrolho. Os textos Brasil 22 e Estrela Vermelha ficam maiores sobre áreas azul e branca; os símbolos Trabalho 13, Estrela Verde e Brasil 22 ganham escala e posição legíveis.
 - Nicks de exibição aceitam de 2 a 32 caracteres no cadastro, comunidade, chat, partida, perfil, badge e cartões compartilhados. Killfeed e painel de morte tratam o nome como texto.
 - A contagem agregada de abertura, carga, entrada, partida e sessão envia somente evento, versão e faixas. O fluxo não usa identificador, cookie ou storage e fica desligado em automação e depuração.
 

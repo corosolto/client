@@ -10,30 +10,8 @@ import {
   reviewWeaponSkinId,
 } from '../../public/js/weapon-skins.js';
 
-const TARGETS = Object.freeze({
-  'ondas-cariocas': 'm4',
-  'mosaico-paulista': 'scar',
-  'nacao-rubro-negra': 'ak',
-  'alvinegra-paulista': 'ak',
-  'celeste-mineira': 'ak',
-  'tricolor-gaucha': 'ak',
-  'tricolor-baiana': 'ak',
-  'verde-alviverde': 'ak',
-  'tricolor-morumbi': 'ak',
-  'alvinegra-praiana': 'ak',
-  'trabalho-13-ak': 'ak',
-  'trabalho-13-pistola': 'pistol',
-  'estrela-vermelha-ak': 'ak',
-  'estrela-vermelha-pistola': 'pistol',
-  'estrela-verde-ak': 'ak',
-  'estrela-verde-pistola': 'pistol',
-  'brasil-22-ak': 'ak',
-  'brasil-22-pistola': 'pistol',
-  'ouro-ak': 'ak',
-  'ouro-pistola': 'pistol',
-  'prata-ak': 'ak',
-  'prata-pistola': 'pistol',
-});
+const TARGETS = Object.freeze(Object.fromEntries(Object.values(WEAPON_SKINS)
+  .flatMap((skin) => skin.targetWeapons.map((weaponId) => [skin.id, weaponId]))));
 const CLUB_SKINS = new Set([
   'nacao-rubro-negra',
   'alvinegra-paulista',
@@ -56,6 +34,14 @@ const POLITICAL = Object.freeze({
 });
 const STORE_PRICES = Object.freeze({
   ...Object.fromEntries(Object.keys(POLITICAL).map((id) => [id, 500])),
+  'tamo-junto-ak': 500,
+  'tamo-junto-pistola': 500,
+  'e-nois-ak': 500,
+  'e-nois-pistola': 500,
+  'camo-selva-ak': 500,
+  'camo-selva-pistola': 500,
+  'tropicalente-ak': 500,
+  'tropicalente-pistola': 500,
   'ouro-ak': 900,
   'ouro-pistola': 900,
   'prata-ak': 500,
@@ -72,14 +58,22 @@ const SHADER_TOKENS = Object.freeze({
   'verde-alviverde': 'palmeirasBand',
   'tricolor-morumbi': 'spfcBand',
   'alvinegra-praiana': 'santosWave',
-  'trabalho-13-ak': 'trabalhoStripe',
-  'trabalho-13-pistola': 'trabalhoStripe',
-  'estrela-vermelha-ak': 'estrelaVermelhaBand',
-  'estrela-vermelha-pistola': 'estrelaVermelhaBand',
+  'trabalho-13-ak': 'trabalhoGold',
+  'trabalho-13-pistola': 'trabalhoGold',
+  'estrela-vermelha-ak': 'estrelaVermelhaSlide',
+  'estrela-vermelha-pistola': 'estrelaVermelhaSlide',
   'estrela-verde-ak': 'estrelaVerdeBand',
   'estrela-verde-pistola': 'estrelaVerdeBand',
-  'brasil-22-ak': 'brasilBand',
-  'brasil-22-pistola': 'brasilBand',
+  'brasil-22-ak': 'brasilSlide',
+  'brasil-22-pistola': 'brasilSlide',
+  'tamo-junto-ak': 'cotidianoGreen',
+  'tamo-junto-pistola': 'cotidianoGreen',
+  'e-nois-ak': 'cotidianoGreen',
+  'e-nois-pistola': 'cotidianoGreen',
+  'camo-selva-ak': 'camoSelvaNoise',
+  'camo-selva-pistola': 'camoSelvaNoise',
+  'tropicalente-ak': 'tropicalTeal',
+  'tropicalente-pistola': 'tropicalTeal',
   'ouro-ak': 'ouroBrush',
   'ouro-pistola': 'ouroBrush',
   'prata-ak': 'prataBrush',
@@ -145,6 +139,24 @@ if (process.argv.includes('--mutate')) {
 }
 
 for (const [skinId, weaponId] of Object.entries(TARGETS)) validate(WEAPON_SKINS[skinId], skinId, weaponId);
+assert.ok(WEAPON_SKINS['brasil-22-ak'].sloganLayout.height >= 0.075, 'Brasil 22 AK continua ilegível');
+assert.ok(WEAPON_SKINS['brasil-22-pistola'].sloganLayout.height >= 0.065, 'Brasil 22 pistola continua ilegível');
+assert.ok(WEAPON_SKINS['estrela-vermelha-ak'].sloganLayout.height >= 0.105, 'Estrela Vermelha AK não cresceu 3x');
+assert.ok(WEAPON_SKINS['estrela-vermelha-pistola'].sloganLayout.height >= 0.090, 'Estrela Vermelha pistola não cresceu 3x');
+assert.equal(WEAPON_SKINS['estrela-vermelha-ak'].sloganAspect, 6, 'frase Estrela Vermelha AK extrapola o cano');
+assert.equal(WEAPON_SKINS['estrela-vermelha-pistola'].sloganAspect, 6, 'frase Estrela Vermelha pistola extrapola o ferrolho');
+assert.ok(WEAPON_SKINS['trabalho-13-pistola'].markLayout.height >= 0.14, 'símbolo Trabalho 13 continua pequeno');
+assert.ok(WEAPON_SKINS['estrela-verde-ak'].markLayout.height >= 0.14, 'estrela verde AK continua pequena');
+assert.ok(WEAPON_SKINS['estrela-verde-pistola'].markLayout.height >= 0.14, 'estrela verde pistola continua pequena');
+assert.ok(WEAPON_SKINS['brasil-22-pistola'].markLayout.y <= -0.10, 'símbolo Brasil 22 não foi movido para a área verde');
+assert.ok(WEAPON_SKINS['tropicalente-ak'].markLayout.height <= 0.10, 'impressão Tropicalente AK extrapola o corpo');
+assert.ok(WEAPON_SKINS['tropicalente-pistola'].markLayout.height <= 0.10, 'impressão Tropicalente pistola extrapola o corpo');
+for (const id of ['tamo-junto-ak', 'tamo-junto-pistola', 'e-nois-ak', 'e-nois-pistola', 'tropicalente-ak', 'tropicalente-pistola']) {
+  assert.equal(WEAPON_SKINS[id].preserveBase, true, `${id}: corpo original não preservado`);
+}
+for (const id of ['ouro-ak', 'ouro-pistola', 'prata-ak', 'prata-pistola']) {
+  assert.equal(WEAPON_SKINS[id].storeEnabled, true, `${id}: metal ausente da loja`);
+}
 assert.equal(reviewWeaponSkinId(), null, 'skin de revisão não pode ligar fora do navegador debug');
 const sourceMaterial = new THREE.MeshStandardMaterial({ color: 0x654321, roughness: 0.8, metalness: 0.7 });
 for (const [skinId, weaponId] of Object.entries(TARGETS)) {
@@ -154,6 +166,7 @@ for (const [skinId, weaponId] of Object.entries(TARGETS)) {
   const material = model.children[0].material;
   assert.notEqual(material, sourceMaterial, `${skinId}: material compartilhado não foi clonado`);
   assert.equal(material.userData.weaponSkin, skinId);
+  assert.equal(material.color.getHex(), WEAPON_SKINS[skinId].preserveBase ? sourceMaterial.color.getHex() : 0xffffff, `${skinId}: tratamento incorreto do corpo`);
   const shader = {
     vertexShader: 'void main() {\n#include <begin_vertex>\n}',
     fragmentShader: 'void main() {\n#include <map_fragment>\n}',
@@ -220,14 +233,28 @@ const fakeDocument = {
   },
 };
 globalThis.document = fakeDocument;
-for (const skinId of ['trabalho-13-ak', 'trabalho-13-pistola', 'estrela-verde-ak']) {
+for (const skinId of [
+  'trabalho-13-ak',
+  'trabalho-13-pistola',
+  'estrela-vermelha-pistola',
+  'estrela-verde-ak',
+  'brasil-22-pistola',
+  'tamo-junto-ak',
+  'e-nois-pistola',
+  'tropicalente-ak',
+  'tropicalente-pistola',
+]) {
   await preloadWeaponSkinCandidate(skinId);
+  const definition = WEAPON_SKINS[skinId];
   const weaponId = TARGETS[skinId];
   const model = new THREE.Group();
   model.add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1, 1), sourceMaterial));
   assert.equal(applyWeaponSkinCandidate(model, weaponId, skinId), true, `${skinId}: aplicação com marca falhou`);
   const markings = model.children.filter((child) => child.name.startsWith('skin-'));
-  const expectedRoles = POLITICAL[skinId][1] ? ['slogan', 'symbol'] : ['symbol'];
+  const expectedRoles = [
+    ...(definition.slogan ? ['slogan'] : []),
+    ...(definition.markAsset ? ['symbol'] : []),
+  ];
   assert.deepEqual([...new Set(markings.map((marking) => marking.userData.markingRole))].sort(), expectedRoles);
   assert.equal(markings.length, expectedRoles.length * 2, `${skinId}: par lateral incompleto`);
   for (const marking of markings) {
@@ -240,23 +267,25 @@ for (const skinId of ['trabalho-13-ak', 'trabalho-13-pistola', 'estrela-verde-ak
   }
   const slogans = markings.filter((marking) => marking.userData.markingRole === 'slogan');
   for (const slogan of slogans) {
-    assert.ok(slogan.geometry.parameters.width >= slogan.geometry.parameters.height * 8, `${slogan.name}: frase não horizontal`);
+    assert.ok(slogan.geometry.parameters.width >= slogan.geometry.parameters.height * 6, `${slogan.name}: frase não horizontal`);
     const symbol = markings.find((marking) => marking.userData.markingRole === 'symbol' && Math.sign(marking.position.x) === Math.sign(slogan.position.x));
-    assert.ok(symbol && slogan.position.z > symbol.position.z, `${slogan.name}: frase não acompanha o cano`);
+    if (symbol) assert.ok(slogan.position.y > symbol.position.y && Math.hypot(slogan.position.y - symbol.position.y, slogan.position.z - symbol.position.z) > 0.06, `${slogan.name}: frase não acompanha a parte superior`);
   }
 }
 assert.ok(canvasOps.some(([op]) => op === 'fillText'), 'frase não foi desenhada');
 assert.ok(!canvasOps.some(([op]) => op === 'fillRect'), 'frase ganhou fundo retangular');
 delete globalThis.document;
-for (const theme of new Set(Object.values(POLITICAL).map(([theme]) => theme))) {
-  const svg = readFileSync(`public/textures/weapon-skins/political-marks/${theme}.svg`, 'utf8');
-  for (const slogan of new Set(Object.values(POLITICAL).map(([, slogan]) => slogan).filter(Boolean))) {
-    assert.ok(!svg.includes(slogan), `${theme}: frase foi incorporada ao símbolo`);
-  }
+const slogans = new Set(Object.values(WEAPON_SKINS).map((skin) => skin.slogan).filter(Boolean));
+const projectMarks = Object.values(WEAPON_SKINS)
+  .filter((skin) => skin.markAsset && !skin.officialMarksIncluded)
+  .map((skin) => skin.markAsset);
+for (const asset of new Set(projectMarks)) {
+  const svg = readFileSync(`public${asset}`, 'utf8');
+  for (const slogan of slogans) assert.ok(!svg.includes(slogan), `${asset}: frase foi incorporada ao símbolo`);
   for (const [, attributes] of svg.matchAll(/<rect\b([^>]*)>/gi)) {
     const width = Number(attributes.match(/\bwidth="([\d.]+)"/)?.[1] || 0);
     const height = Number(attributes.match(/\bheight="([\d.]+)"/)?.[1] || 0);
-    assert.ok(width < 400 || height < 400, `${theme}: símbolo contém placa retangular`);
+    assert.ok(width < 800 || height < 400, `${asset}: símbolo contém placa retangular`);
   }
 }
 

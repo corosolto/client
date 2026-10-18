@@ -97,7 +97,11 @@ const report = {
       ? 'project-authored political satire using original vector geometry; no party or campaign logo copied'
       : DEFINITION.metalFinish
         ? 'project-authored metallic finish without brand, badge or copied commercial skin'
-        : 'original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin',
+        : DEFINITION.preserveBase
+          ? 'project-authored Brazilian lettering and illustration over the original weapon finish; no copied brand or commercial skin'
+          : DEFINITION.theme === 'camo-selva'
+            ? 'project-authored procedural camouflage without copied military or commercial pattern'
+            : 'original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin',
   slogan: DEFINITION.slogan || null,
   storePrice: DEFINITION.storePrice || null,
   views: ['left-side', 'right-side', 'three-quarter'],
