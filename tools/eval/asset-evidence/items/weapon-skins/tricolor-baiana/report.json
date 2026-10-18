@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "tricolor-baiana",
+  "weaponId": "ak",
+  "status": "permission-needed",
+  "approved": false,
+  "certified": false,
+  "runtimeEnabled": false,
+  "designOrigin": "project-colorway-with-official-mark",
+  "rightsStatus": "permission-needed",
+  "officialMarksIncluded": true,
+  "markPlacement": "stock",
+  "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Esporte_Clube_Bahia_logo.svg",
+  "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "40cce2f1f4d7cd8af152addd37dc756077cfa93cadcef94e8f35a895d936f25c",
+    "side-right.png": "9677a139f4f1135dfd07923d39a01ad8f77708aa0f6be684cd3dee53e314ee3d",
+    "three-quarter.png": "9ed49ba3e80bfa1365940d0cf4be7d7e009c42e529a3eef8c443773e752eecac"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "cc0d770b0dd36d0cce4ee29834067729b0e17f809707bc9121f1d4e856342095",
+    "public/js/weapon-skins.js": "2011035f66a4a19b9b89d0212240d1d378c52c3c857c48db48b9450d5f43b02e",
+    "public/js/weapons.js": "acf5cf7bfb1b11580ad143844f9ec9eb6c811ecf55760457a1ba13d18c92f7ae",
+    "public/weapon-skin-review.html": "73893044a34e8dcc8afcefbe2db16354565eae0d18c0e3f72828117d1dcd5b57",
+    "public/textures/weapon-skins/club-marks/bahia.png": "52440b12288e4b0e5e798fc0162c7c4699ab9ec449b70633bc8bd29cc88a1a64"
+  },
+  "consoleErrors": []
+}

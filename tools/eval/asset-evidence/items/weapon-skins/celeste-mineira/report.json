@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "celeste-mineira",
+  "weaponId": "ak",
+  "status": "permission-needed",
+  "approved": false,
+  "certified": false,
+  "runtimeEnabled": false,
+  "designOrigin": "project-colorway-with-official-mark",
+  "rightsStatus": "permission-needed",
+  "officialMarksIncluded": true,
+  "markPlacement": "stock",
+  "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Cruzeiro_Esporte_Clube_(logo).svg",
+  "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "dcefda6874afda7fdd9be01c3ac630e4d08066dbc2f1c09daef17de95d826a07",
+    "side-right.png": "6caec7d28a0dffd736697329dbb44e7bf9f360ada108132aee7f3fbde722be32",
+    "three-quarter.png": "72af84636c1672b0a89053867c4fd29a9befcc3129630e6143c01db05fd4434b"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "cc0d770b0dd36d0cce4ee29834067729b0e17f809707bc9121f1d4e856342095",
+    "public/js/weapon-skins.js": "2011035f66a4a19b9b89d0212240d1d378c52c3c857c48db48b9450d5f43b02e",
+    "public/js/weapons.js": "acf5cf7bfb1b11580ad143844f9ec9eb6c811ecf55760457a1ba13d18c92f7ae",
+    "public/weapon-skin-review.html": "73893044a34e8dcc8afcefbe2db16354565eae0d18c0e3f72828117d1dcd5b57",
+    "public/textures/weapon-skins/club-marks/cruzeiro.png": "813d73defa7ed2a57e774cf14414a36732ea1f6852349d517adf8bc6d7dce49d"
+  },
+  "consoleErrors": []
+}

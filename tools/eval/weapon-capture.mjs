@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 
 const OUTSHEET = process.argv[2] || '/tmp/weapon-sheet.png';
 const BASE = process.env.BASE || 'http://localhost:8123';
+const SKIN = process.env.SKIN || '';
 const DIR = '/tmp/wt';
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
@@ -25,7 +26,7 @@ page.on('pageerror', e => console.error('[pageerror]', e.message));
 
 let list = ids;
 if (!list) {
-  await page.goto(`${BASE}/weapontest.html?w=ak`, { waitUntil: 'load' });
+  await page.goto(`${BASE}/weapontest.html?w=ak${SKIN ? `&skin=${encodeURIComponent(SKIN)}` : ''}`, { waitUntil: 'load' });
   await page.waitForFunction(() => window.WT_READY, null, { timeout: 60000 });
   list = await page.evaluate(async () => {
     const m = await import('./js/weapons.js');
@@ -35,7 +36,7 @@ if (!list) {
 console.log('weapons:', list.join(' '));
 const hints = {};
 for (const id of list) {
-  await page.goto(`${BASE}/weapontest.html?w=${encodeURIComponent(id)}`, { waitUntil: 'load' });
+  await page.goto(`${BASE}/weapontest.html?w=${encodeURIComponent(id)}${SKIN ? `&skin=${encodeURIComponent(SKIN)}` : ''}`, { waitUntil: 'load' });
   await page.waitForFunction(() => window.WT_READY, null, { timeout: 60000 });
   hints[id] = await page.evaluate(() => window.WT_HINT || null);
   await page.waitForTimeout(60);

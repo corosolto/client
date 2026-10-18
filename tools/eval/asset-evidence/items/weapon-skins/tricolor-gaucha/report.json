@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "tricolor-gaucha",
+  "weaponId": "ak",
+  "status": "permission-needed",
+  "approved": false,
+  "certified": false,
+  "runtimeEnabled": false,
+  "designOrigin": "project-colorway-with-official-mark",
+  "rightsStatus": "permission-needed",
+  "officialMarksIncluded": true,
+  "markPlacement": "stock",
+  "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Gremio_logo.svg",
+  "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "938f2e413bedb9afec4c4f613ab7f85dda6a0e748db8e3f18cfdcdf67c44e103",
+    "side-right.png": "4cf8c8f9453d04209ac304e329e02d610674c73d0e8d4e2ccb252ebfda8fb620",
+    "three-quarter.png": "5ff1ef468c64e9aeeb39a86456c8f331363a41de4fe029cf1385a541c568df90"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "cc0d770b0dd36d0cce4ee29834067729b0e17f809707bc9121f1d4e856342095",
+    "public/js/weapon-skins.js": "2011035f66a4a19b9b89d0212240d1d378c52c3c857c48db48b9450d5f43b02e",
+    "public/js/weapons.js": "acf5cf7bfb1b11580ad143844f9ec9eb6c811ecf55760457a1ba13d18c92f7ae",
+    "public/weapon-skin-review.html": "73893044a34e8dcc8afcefbe2db16354565eae0d18c0e3f72828117d1dcd5b57",
+    "public/textures/weapon-skins/club-marks/gremio.png": "72508ce99851b94c182eb8f2a0b9b1a53873294f6d81ed6add9e9c56558b4eba"
+  },
+  "consoleErrors": []
+}
