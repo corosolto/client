@@ -11,13 +11,13 @@ const baseUrl = arg('--url', 'http://127.0.0.1:4321');
 const out = arg('--out', 'artifacts/ui-regression');
 const selected = new Set((arg('--scenes', 'home-3x2,home-16x9,hub-map,settings,character,victory,hud')).split(','));
 const scenes = [
-  { name: 'home-3x2', size: [1200, 800], query: 'tela=01&map=praca_poderes', screen: 'menu', ready: '#hub-ui', keys: ['#hub-ui', '.hub-header', '#map-preview', '#btn-jogar', '#hub-change-character', '.hub-footer'] },
-  { name: 'home-16x9', size: [1280, 720], query: 'tela=01&map=praca_poderes', screen: 'menu', ready: '#hub-ui', keys: ['#hub-ui', '.hub-header', '#map-preview', '#btn-jogar', '#hub-change-character', '.hub-footer'] },
-  { name: 'hub-map', size: [1200, 800], query: 'tela=01&map=praca_poderes', screen: 'menu', ready: '#hub-ui', keys: ['#hub-map-modal', '#hub-map-filters', '#hub-map-grid', '#hub-map-close'] },
-  { name: 'settings', size: [1200, 800], query: 'tela=07', screen: 'settings', ready: '#settings-panel', keys: ['#settings-panel', '.settings-wrap', '#set-quality', '#settings-back'] },
-  { name: 'character', size: [1200, 800], query: 'tela=personagem&time=E&char=mst', screen: 'character', ready: '#char-select', keys: ['#char-select', '#char-info-name', '#char-confirm', '#char-list', '#char-preview', '#char-preview-static'] },
-  { name: 'victory', size: [1200, 800], query: 'tela=vitoria&time=E&char=mst', screen: 'victory', ready: '#match-end.win', keys: ['#match-end', '#match-title', '#match-stats', '#me-hero'] },
-  { name: 'hud', size: [1200, 800], query: 'tela=hud&vmlab=1&map=praca_poderes&time=E&char=mst', screen: 'hud', ready: '#hud', keys: ['#hud', '#hud-top', '#crosshair', '#hp-num', '#hud-bottom-right', '#weapon-hud'] },
+  { name: 'home-3x2', size: [1200, 800], query: 'ui=legacy&tela=01&map=praca_poderes', screen: 'menu', ready: '#hub-ui', keys: ['#hub-ui', '.hub-header', '#map-preview', '#btn-jogar', '#hub-change-character', '.hub-footer'] },
+  { name: 'home-16x9', size: [1280, 720], query: 'ui=legacy&tela=01&map=praca_poderes', screen: 'menu', ready: '#hub-ui', keys: ['#hub-ui', '.hub-header', '#map-preview', '#btn-jogar', '#hub-change-character', '.hub-footer'] },
+  { name: 'hub-map', size: [1200, 800], query: 'ui=legacy&tela=01&map=praca_poderes', screen: 'menu', ready: '#hub-ui', keys: ['#hub-map-modal', '#hub-map-filters', '#hub-map-grid', '#hub-map-close'] },
+  { name: 'settings', size: [1200, 800], query: 'ui=legacy&tela=07', screen: 'settings', ready: '#settings-panel', keys: ['#settings-panel', '.settings-wrap', '#set-quality', '#settings-back'] },
+  { name: 'character', size: [1200, 800], query: 'ui=legacy&tela=personagem&time=E&char=mst', screen: 'character', ready: '#char-select', keys: ['#char-select', '#char-info-name', '#char-confirm', '#char-list', '#char-preview', '#char-preview-static'] },
+  { name: 'victory', size: [1200, 800], query: 'ui=legacy&tela=vitoria&time=E&char=mst', screen: 'victory', ready: '#match-end.win', keys: ['#match-end', '#match-title', '#match-stats', '#me-hero'] },
+  { name: 'hud', size: [1200, 800], query: 'ui=legacy&tela=hud&vmlab=1&map=praca_poderes&time=E&char=mst', screen: 'hud', ready: '#hud', keys: ['#hud', '#hud-top', '#crosshair', '#hp-num', '#hud-bottom-right', '#weapon-hud'] },
 ].filter((scene) => selected.has(scene.name));
 
 await mkdir(out, { recursive: true });

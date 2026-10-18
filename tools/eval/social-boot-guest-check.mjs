@@ -20,7 +20,7 @@ if (mutant) {
   assert.notEqual(changed, source, 'mutação não aplicada');
   source = changed;
 }
-const start = source.indexOf('    await jornada.goto(`${BASE}/?nav=1&home=legacy`');
+const start = source.indexOf('    await jornada.goto(`${BASE}/?nav=1&home=legacy&ui=legacy`');
 const end = source.indexOf("    await jornada.locator('#ms-continue').click();", start);
 assert(start >= 0 && end > start, 'jornada B7 ausente');
 const body = source.slice(start, end);

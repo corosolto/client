@@ -68,7 +68,7 @@ if (MUT === 'sem-guarda') {
 
 const falhas = [];
 try {
-  await page.goto(`${BASE}/?debug=1&assetcheck=1`, { waitUntil: 'load', timeout: 180000 });
+  await page.goto(`${BASE}/?debug=1&assetcheck=1&ui=legacy`, { waitUntil: 'load', timeout: 180000 });
   await page.locator('#splash-enter').waitFor({ state: 'visible', timeout: 90000 });
   await page.waitForFunction(() => window.__CS_MAIN_READY__ === true, null, { timeout: 90000 });
   // a ordem hostil do runner lento, forçada: o foco já está no menu quando a tecla chega
