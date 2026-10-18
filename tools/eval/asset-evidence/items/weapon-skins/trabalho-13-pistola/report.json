@@ -9,7 +9,8 @@
   "designOrigin": "project-owned",
   "rightsStatus": "political-satire",
   "officialMarksIncluded": false,
-  "markPlacement": "receiver",
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": "barrel-horizontal",
   "markSourceUrl": null,
   "referenceRule": "project-authored political satire using original vector geometry; no party or campaign logo copied",
   "slogan": "FAZ O L É LULA 13",
@@ -20,16 +21,16 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "368a4975c70fa6346c2437c84f3ae0fead9449f1392bfd1fb9e57879c164a207",
-    "side-right.png": "40a652f4eff03740eab12c41a9d63a8ddf487b3aecac3385bde328da53b7a1db",
-    "three-quarter.png": "d83d75f4cdad3a0c65dbc6d04f61c66c26676155161d0507ecc27c799ad5c569"
+    "side-left.png": "3c1fcbb2ec3fded5f0fd9af2176177f866841ab286071e1825be555ac50e530b",
+    "side-right.png": "a693665f77965363cd12144069a55a4e1d6e17fe3927d42d9fcebe9d3a0590c4",
+    "three-quarter.png": "a0a5672f2f4fb34694c5f403221b7942b0c6d73dd453621fc2b6ec46b8fc650a"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
-    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
+    "public/js/data/weapon-skin-definitions.js": "b2edb4a49e132e994c0deaf282a04fe1aea9d94e163e6ac5877606c41e30107a",
+    "public/js/weapon-skins.js": "d0435f23764b419059bef3c0f92c97f4bd8ac48092e84fea9fe393c349cbef44",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
-    "public/textures/weapon-skins/political-marks/trabalho-13.svg": "edbec788f88564fc082705452e154012907b2ce64f2c8c24d335e48d6b4118e8"
+    "public/textures/weapon-skins/political-marks/trabalho-13.svg": "f8e3da91fe955e9e8a8980ff0c56af9ef665515f9261315ad371ee75e0c8b1c7"
   },
   "consoleErrors": []
 }

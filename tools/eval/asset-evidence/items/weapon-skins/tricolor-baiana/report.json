@@ -10,6 +10,7 @@
   "rightsStatus": "permission-needed",
   "officialMarksIncluded": true,
   "markPlacement": "receiver",
+  "sloganPlacement": null,
   "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Esporte_Clube_Bahia_logo.svg",
   "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
   "slogan": null,
@@ -20,13 +21,13 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "8dcdee205e097c488d0593ebee2799a27ca988927d36da114a5a4846ee434bc6",
-    "side-right.png": "1e27571b9f0b7d805758b0caab914e55f13f5c1632425ac7bd121fcbc2f6c9e7",
-    "three-quarter.png": "b55e1b2fcd5681e501bce8afb877307bfbcbad63e7ec2de69bd186d9dd859a4b"
+    "side-left.png": "c6974f3124bd375838df6014e02aedffcaa58ab33b5e0e52627368dec0c5dd8b",
+    "side-right.png": "456e09af455e4538889de0306989ed9aace76ec3b0c43d82b1902275c15b941b",
+    "three-quarter.png": "8c7a587646b8bed27ba51b29ec2c71e423a604d122927c56d0837779b350fc59"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
-    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
+    "public/js/data/weapon-skin-definitions.js": "b2edb4a49e132e994c0deaf282a04fe1aea9d94e163e6ac5877606c41e30107a",
+    "public/js/weapon-skins.js": "d0435f23764b419059bef3c0f92c97f4bd8ac48092e84fea9fe393c349cbef44",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/club-marks/bahia.png": "52440b12288e4b0e5e798fc0162c7c4699ab9ec449b70633bc8bd29cc88a1a64"

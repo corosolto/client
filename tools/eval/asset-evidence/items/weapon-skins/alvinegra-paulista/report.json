@@ -10,6 +10,7 @@
   "rightsStatus": "permission-needed",
   "officialMarksIncluded": true,
   "markPlacement": "receiver",
+  "sloganPlacement": null,
   "markSourceUrl": "https://upload.wikimedia.org/wikipedia/pt/b/b4/Corinthians_simbolo.png",
   "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
   "slogan": null,
@@ -20,13 +21,13 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "9856df594c8da0c35697a86bcfc46bd81264cf4fe8dc444b9fc98b10f1a29f39",
-    "side-right.png": "7821dd56a0d4f7ca9b8f9b6ceaa0e8cdf3ba3a8346becca3f91d7f45926246c8",
-    "three-quarter.png": "de3f9c1c2788f4b654c563d5e1b2e20bc28ca95c82b8517247c55663b177cfeb"
+    "side-left.png": "14fe6f6f716256036e1dd17a425b9a56ede31d6074e99d962a8bc9b9db9fb168",
+    "side-right.png": "0a8b633c8d5a88324d6686a5ddca289099d3efd0ac7c8e919d15d19844e28902",
+    "three-quarter.png": "d939357f7cdb7dbd769ed80ed4b18cd13e88763b16e996f6a95660dd3361668b"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
-    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
+    "public/js/data/weapon-skin-definitions.js": "b2edb4a49e132e994c0deaf282a04fe1aea9d94e163e6ac5877606c41e30107a",
+    "public/js/weapon-skins.js": "d0435f23764b419059bef3c0f92c97f4bd8ac48092e84fea9fe393c349cbef44",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/club-marks/corinthians.png": "98aded1a8a28ad7092725f24d5c4cb6cad697543a1efb349c08170e98013eb05"

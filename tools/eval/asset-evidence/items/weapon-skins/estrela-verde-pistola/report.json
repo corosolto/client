@@ -9,7 +9,8 @@
   "designOrigin": "project-owned",
   "rightsStatus": "political-satire",
   "officialMarksIncluded": false,
-  "markPlacement": "receiver",
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": null,
   "markSourceUrl": null,
   "referenceRule": "project-authored political satire using original vector geometry; no party or campaign logo copied",
   "slogan": null,
@@ -20,16 +21,16 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "e47accc9336ccf3060633b50e9341441b4e2d9555bd5883bb1d850a6b9661a72",
-    "side-right.png": "e993179322ab20f97af9bf386d4ba35e66c9969014d8f20459d2a88d08991835",
-    "three-quarter.png": "d81cd5b2dd3aa47a9e454f2ecf151afcef1f6fc9b0fd1c73d6eee1d89add0f97"
+    "side-left.png": "f033c4f85836c0678108dc5472df8cf2bdcc3cd56c939c0f8d79cb115c637e4c",
+    "side-right.png": "4f5ff2427ecd196aa4b86ca28378472b8bb70f01007db1283fc2979b6fdfac0f",
+    "three-quarter.png": "3d252d990094c17e21258db34eda62a56c5dcdc4b2a7e6f2e053a7b2ab03506f"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
-    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
+    "public/js/data/weapon-skin-definitions.js": "b2edb4a49e132e994c0deaf282a04fe1aea9d94e163e6ac5877606c41e30107a",
+    "public/js/weapon-skins.js": "d0435f23764b419059bef3c0f92c97f4bd8ac48092e84fea9fe393c349cbef44",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
-    "public/textures/weapon-skins/political-marks/estrela-verde.svg": "cf29f3a6c40966a911c34d8fd235aee46228907c6e9f2a073cb9fe950693416a"
+    "public/textures/weapon-skins/political-marks/estrela-verde.svg": "f6120e97101caf202cae3652dbf793387741687bad6547a7295c005bb2638484"
   },
   "consoleErrors": []
 }
