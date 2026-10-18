@@ -6,19 +6,23 @@
 import { execSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { TRETA_SKINS, TRETA_DEFAULT_REWARDS } from '../../public/js/treta-catalog.js';
-import { TRETA_ITEMS_ENABLED } from '../../public/js/treta-features.js';
+import { TRETA_SKINS, TRETA_WEAPON_SKINS, TRETA_GLOVES, TRETA_PACKS, TRETA_DEFAULT_REWARDS } from '../../public/js/treta-catalog.js';
 
 const BASE = process.env.BASE || 'http://127.0.0.1:9426';
 const OUT = process.env.OUT || 'tools/eval/out/ui-v3-loja';
 const VIEWPORTS = [[1536, 1024], [1920, 1080], [1280, 720], [844, 390]];
 const MANIFESTO = JSON.parse(readFileSync(new URL('../../public/models/skins/manifest.json', import.meta.url), 'utf8'));
 const APROVADAS = TRETA_SKINS.filter((s) => MANIFESTO.skins[s.id]?.approved === true);
+const CATALOGO = [...TRETA_SKINS, ...TRETA_WEAPON_SKINS, ...TRETA_GLOVES, ...TRETA_PACKS];
+const CATEGORIAS = {
+  weapons: TRETA_WEAPON_SKINS.map((s) => s.id),
+  items: [...TRETA_GLOVES.map((s) => s.id), ...APROVADAS.map((s) => s.id)],
+  packs: TRETA_PACKS.map((s) => s.id),
+};
 /* Preços e raridades fora do padrão provam que a tela lê o servidor e não o catálogo local. */
-const PRECO = { janja: 650, 'lula-cyborg': 1200, 'zero-um-mandrake': 400 };
-const RARIDADE = { 'lula-cyborg': 'epico', janja: 'raro' };
+const PRECO = { [TRETA_WEAPON_SKINS[0].id]: 975, janja: 650, 'lula-cyborg': 1200, 'zero-um-mandrake': 400 };
+const RARIDADE = { [TRETA_WEAPON_SKINS[0].id]: 'epico', 'lula-cyborg': 'epico', janja: 'raro' };
 const SALDO = 1240, GANHO_HOJE = 70, AMIGOS = 2;
-const SLOTS = ['visual', ...(TRETA_ITEMS_ENABLED ? ['oculos'] : [])];
 const PT_MINHAS = ['LOJA DA', 'ARMÁRIO', 'GANHAR MAIS', 'NO SEU ARMÁRIO', 'VISUAIS', 'EQUIPAR', 'EQUIPADO', 'Partidas hoje', 'Chame sua turma', 'Sem compra de moeda', 'COPIAR CONVITE', 'MEUS', 'VER EM 3D', 'só cosmético'];
 const EN_MINHAS = ['SHOP', 'LOCKER', 'EARN MORE', 'IN YOUR LOCKER', 'OUTFITS', 'EQUIP', 'Matches today', 'Bring your crew', 'No currency', 'COPY INVITE', 'MINE', 'VIEW IN 3D', 'cosmetic only'];
 
@@ -37,7 +41,7 @@ const MUTANTES = {
   'raridade-inventada': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("RARIDADES.has(s.raridade)?s.raridade:''", "RARIDADES.has(s.raridade)?s.raridade:'comum'")],
   'preco-local': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace('price:item(s.id)?.price ?? null', 'price:s.price')],
   'dois-primarios': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("'tp-btn tp-loja__ganhar'", "'tp-btn tp-btn--primario tp-loja__ganhar'")],
-  'slot-inventado': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("const SLOTS=['visual'", "const SLOTS=['visual','fuzil'")],
+  'slot-inventado': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("items:new Set(['character','glove','eyewear'])", "items:new Set(['weapon','character','glove','eyewear'])")],
   'grade-larga': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('.tp-loja__grade{display:grid;', '.tp-loja__grade{display:grid;min-width:1700px;')],
   'alvo-pequeno': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('@media (pointer:coarse){', '@media (pointer:none){')],
   'en-vaza': [(u) => u.pathname === '/js/i18n.js', (t) => t.replace("'GANHAR MAIS': 'EARN MORE',", '')],
@@ -66,8 +70,8 @@ function fixture(page, conta) {
     wallet: { balance: SALDO, referral_code: '00000000-0000-4000-8000-000000000001' }, inventory: conta.inventario, ledger: [],
     quests: { email: 1, referral: AMIGOS, singleplayer: 3, multiplayer: 4, dailyMatchEarned: GANHO_HOJE },
     campaign: { ...TRETA_DEFAULT_REWARDS, starts_at: new Date(Date.now() - 864e5).toISOString(), ends_at: new Date(Date.now() + 864e5).toISOString() },
-    catalog: TRETA_SKINS.map((s) => ({ id: s.id, character_id: s.character, price: PRECO[s.id] ?? 800, available: true,
-      model_path: MANIFESTO.skins[s.id]?.model, ...(RARIDADE[s.id] ? { rarity: RARIDADE[s.id] } : {}) })),
+    catalog: CATALOGO.map((s) => ({ id: s.id, character_id: s.character || null, price: PRECO[s.id] ?? s.price ?? 800, available: true,
+      slot: s.slot, weapon_id: s.weapon || null, model_path: MANIFESTO.skins[s.id]?.model || s.model || `/cosmetics/${s.id}`, ...(RARIDADE[s.id] ? { rarity: RARIDADE[s.id] } : {}) })),
   });
   return page.route('**/api/**', async (route) => {
     const url = new URL(route.request().url());
@@ -140,49 +144,31 @@ async function abas(page) {
 async function secaoV3(mutante, add) {
   const { page, conta, erros } = await abrir({ mutante });
   const a0 = await abas(page);
-  if (!mutante) { mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: `${OUT}/loja-1536x1024.png` }); }
+  if (!mutante) { mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: `${OUT}/armas-1536x1024.png` }); }
   const cabeca = await page.evaluate(() => {
     const t = document.querySelector('.tp-loja__titulo'), destaque = t?.querySelector('em');
     const v = document.querySelector('.tp-loja__saldo');
     return { fonte: t ? getComputedStyle(t).fontFamily : '', cor: destaque ? getComputedStyle(destaque).color : '', palavra: destaque?.textContent || '',
       saldo: v?.textContent || '', saldoFonte: v ? getComputedStyle(v).fontFamily : '', saldoCor: v ? getComputedStyle(v).color : '' };
   });
-  const cartoes = await page.evaluate((s) => [...document.querySelectorAll(s)].filter((e) => e.checkVisibility()).map((c) => ({
-    id: c.dataset.skin, tp: c.classList.contains('tp-card'), rar: c.dataset.raridade || '', rotRar: c.querySelector('.tp-loja__rar')?.textContent || '',
-    preco: c.querySelector('.tp-loja__preco')?.textContent || '', meu: c.querySelector('.tp-loja__meu')?.textContent || '' })), '.tp-loja__painel[data-painel=loja] .tp-loja__cartao');
+  const lerCartoes = (categoria) => page.evaluate((id) => [...document.querySelectorAll(`.tp-loja__painel[data-painel=${id}] .tp-loja__cartao`)]
+    .filter((e) => e.checkVisibility()).map((c) => ({
+      id: c.dataset.skin, tp: c.classList.contains('tp-card'), rar: c.dataset.raridade || '', rotRar: c.querySelector('.tp-loja__rar')?.textContent || '',
+      preco: c.querySelector('.tp-loja__preco')?.textContent || '', meu: c.querySelector('.tp-loja__meu')?.textContent || '',
+    })), categoria);
+  const categorias = {}, estados = [];
+  for (const id of ['weapons', 'items', 'packs']) {
+    await page.locator(`#hub-shop [role=tab][data-tp-aba=${id}]`).click();
+    await page.waitForTimeout(250);
+    categorias[id] = await lerCartoes(id);
+    estados.push(await abas(page));
+    if (!mutante) await page.screenshot({ path: `${OUT}/${id}-1536x1024.png` });
+  }
   const timers = await page.evaluate(() => document.querySelectorAll('#hub-shop .tp-chip--timer,#hub-shop [data-timer]').length);
   const primLoja = await page.evaluate(`${visivel('#hub-shop .tp-btn--primario')}.length`);
   const meta = await page.evaluate(() => [...document.querySelectorAll('.tp-loja__meta')].filter((e) => e.checkVisibility()).map((m) => ({
     txt: m.querySelector('.tp-num')?.textContent || '', p: parseFloat(getComputedStyle(m.querySelector('.tp-barra') || m).getPropertyValue('--p')) })));
-
-  /* LJ1: só o risco marca a aba, e ele anda junto quando a aba troca. */
-  await page.locator('#hub-shop [role=tab][data-tp-aba=armario]').click().catch(() => {});
-  await page.waitForTimeout(500);
-  const a1 = await abas(page);
-  /* na loja o risco é o FUNDO da aba ativa (segmento), não um sublinhado: nenhum tab sublinha sozinho */
-  const okAba = (a) => a.n >= 2 && a.sublinhados === 0 && a.riscos === 1 && a.selecionadas.length === 1 && a.dx <= 2 && a.dw <= 2;
-  add('LJ1', okAba(a0) && okAba(a1) && a1.selecionadas[0] !== a0.selecionadas[0],
-    `loja: ${a0.n} abas, ${a0.sublinhados} sublinhados na tela [${a0.quais.join(', ')}], ${a0.riscos} indicador a ${a0.dx.toFixed(0)}px/${a0.dw.toFixed(0)}px da aba ${a0.selecionadas.join('+') || '?'}; armário: ${a1.sublinhados} sublinhados [${a1.quais.join(', ')}], indicador a ${a1.dx.toFixed(0)}px da aba ${a1.selecionadas.join('+') || '?'}`);
-
-  if (!mutante) await page.screenshot({ path: `${OUT}/armario-1536x1024.png` });
-  const arm = await page.evaluate(() => {
-    const p = document.querySelector('.tp-loja__painel[data-painel=armario]');
-    const slots = [...(p?.querySelectorAll('[data-slot]') || [])].filter((e) => e.checkVisibility());
-    const itens = [...(p?.querySelectorAll('.tp-loja__item') || [])].filter((e) => e.checkVisibility());
-    return { slots: slots.map((s) => s.dataset.slot), visual: slots.find((s) => s.dataset.slot === 'visual')?.textContent || '',
-      contagem: p?.querySelector('.tp-loja__contagem')?.textContent || '', itens: itens.length };
-  });
-  const primArm = await page.evaluate(`${visivel('#hub-shop .tp-btn--primario')}.length`);
-  await page.locator('.tp-loja__painel[data-painel=armario] [data-filtro=meus]').click().catch(() => {});
-  await page.waitForTimeout(300);
-  const meus = await page.evaluate(() => [...document.querySelectorAll('.tp-loja__painel[data-painel=armario] .tp-loja__item')].filter((e) => e.checkVisibility()).map((e) => e.dataset.skin));
-  await page.locator('.tp-loja__painel[data-painel=armario] .tp-loja__item[data-skin="lula-cyborg"]').click().catch(() => {});
-  await page.waitForTimeout(200);
-  await page.locator('.tp-loja__painel[data-painel=armario] .tp-btn--primario').click().catch(() => {});
-  await page.waitForTimeout(1200);
-  const slotDepois = await page.evaluate(() => document.querySelector('.tp-loja__painel[data-painel=armario] [data-slot=visual]')?.textContent || '');
-  if (!mutante) await page.screenshot({ path: `${OUT}/armario-equipado-1536x1024.png` });
-  await page.locator('#hub-shop [role=tab][data-tp-aba=ganhar]').click().catch(() => {});
+  await page.locator('#hub-shop [role=tab][data-tp-aba=ganhar]').click();
   await page.waitForTimeout(500);
   const primQuests = await page.evaluate(`${visivel('#hub-shop .tp-btn--primario')}.length`);
   const questsIcones = await page.evaluate(() => [...document.querySelectorAll('#treta-quests [data-quest]')].filter((e) => e.checkVisibility()).map((c) => ({
@@ -192,39 +178,46 @@ async function secaoV3(mutante, add) {
   })));
   const a2 = await abas(page);
   if (!mutante) await page.screenshot({ path: `${OUT}/ganhar-1536x1024.png` });
+  const tabs = await page.locator('.tp-loja__abas [data-tp-aba]').evaluateAll((nodes) => nodes.map((node) => node.dataset.tpAba));
+  const painelArmario = await page.locator('.tp-loja__painel[data-painel=armario]').count();
   await page.close();
+
+  const okAba = (a) => a.n === 4 && a.sublinhados === 0 && a.riscos === 1 && a.selecionadas.length === 1 && a.dx <= 2 && a.dw <= 2;
+  add('LJ1', okAba(a0) && estados.every(okAba) && okAba(a2)
+    && new Set([a0, ...estados, a2].map((a) => a.selecionadas[0])).size === 4,
+    `4 abas, ${a0.sublinhados} sublinhados, ${a0.riscos} indicador; seleções ${[a0, ...estados, a2].map((a) => a.selecionadas[0]).join(' → ')}`);
 
   const amb = cabeca.cor.replace(/\s/g, '') === 'rgb(243,185,88)', ambSaldo = cabeca.saldoCor.replace(/\s/g, '') === 'rgb(243,185,88)';
   add('LJ3', /Anton/.test(cabeca.fonte) && amb && /TRETA/i.test(cabeca.palavra) && /JetBrains/.test(cabeca.saldoFonte) && ambSaldo && /1\.240/.test(cabeca.saldo),
     `título ${cabeca.fonte.split(',')[0] || 'ausente'} com "${cabeca.palavra}" em ${cabeca.cor || '?'}; saldo "${cabeca.saldo}" em ${cabeca.saldoFonte.split(',')[0] || '?'} ${cabeca.saldoCor || ''}`);
 
+  const cartoes = Object.values(categorias).flat();
   const semTp = cartoes.filter((c) => !c.tp).length;
   const rarErrada = cartoes.filter((c) => (RARIDADE[c.id] || '') !== c.rar || (!RARIDADE[c.id] && c.rotRar) || (RARIDADE[c.id] && !c.rotRar));
-  add('LJ4', cartoes.length === APROVADAS.length && !semTp && !rarErrada.length && !timers,
-    `${cartoes.length}/${APROVADAS.length} cartões, ${semTp} sem .tp-card, raridade fora do servidor: [${rarErrada.map((c) => `${c.id}=${c.rar || 'nenhuma'}`).join(', ')}], ${timers} timers`);
+  const categoriasErradas = Object.entries(CATEGORIAS).filter(([id, esperado]) => {
+    const atual = categorias[id].map((c) => c.id).sort();
+    return JSON.stringify(atual) !== JSON.stringify([...esperado].sort());
+  });
+  add('LJ4', !semTp && !rarErrada.length && !categoriasErradas.length && !timers,
+    `${cartoes.length} cartões em ARMAS/ITENS/PACKS, ${semTp} sem .tp-card, categorias erradas [${categoriasErradas.map(([id]) => id).join(', ')}], raridade errada [${rarErrada.map((c) => c.id).join(', ')}], ${timers} timers`);
 
   const fmt = (v) => `T$ ${new Intl.NumberFormat('pt-BR').format(v)}`;
   const meuIds = new Set(conta.inventario.map((s) => s.skin_id));
-  const precoErrado = cartoes.filter((c) => meuIds.has(c.id) ? (!c.meu || c.preco) : c.preco.trim() !== fmt(PRECO[c.id] ?? 800));
+  const spec = new Map(CATALOGO.map((s) => [s.id, s]));
+  const precoErrado = cartoes.filter((c) => meuIds.has(c.id) ? (!c.meu || c.preco) : c.preco.trim() !== fmt(PRECO[c.id] ?? spec.get(c.id)?.price ?? 800));
   add('LJ5', cartoes.length && !precoErrado.length,
-    precoErrado.length ? `preço que não é o do servidor: ${precoErrado.map((c) => `${c.id} "${c.preco || c.meu}" (quer ${meuIds.has(c.id) ? 'NO SEU ARMÁRIO' : fmt(PRECO[c.id] ?? 800)})`).join(', ')}` : `${cartoes.length} preços batem com o servidor; os do armário dizem que já são seus`);
+    precoErrado.length ? `preço fora do servidor: ${precoErrado.map((c) => `${c.id} "${c.preco || c.meu}"`).join(', ')}` : `${cartoes.length} preços batem com o servidor; itens do armário não repetem preço`);
 
-  add('LJ7', primLoja <= 1 && primArm === 1 && primQuests <= 1, `primários lima: loja ${primLoja}, armário ${primArm} (quer 1), ganhar ${primQuests}`);
-
-  const nomeEquipada = (id) => TRETA_SKINS.find((s) => s.id === id)?.name || id;
-  const okSlots = JSON.stringify(arm.slots) === JSON.stringify(SLOTS);
-  const okCont = new RegExp(`\\b2\\b.*\\b${APROVADAS.length}\\b`).test(arm.contagem);
-  const okMeus = meus.length === 2 && meus.every((id) => meuIds.has(id));
-  const okEquip = conta.equipou.at(-1) === 'lula-cyborg' && slotDepois.includes(nomeEquipada('lula-cyborg'));
-  add('LJ8', okSlots && arm.visual.includes(nomeEquipada('janja')) && okCont && arm.itens === APROVADAS.length && okMeus && okEquip,
-    `slots [${arm.slots.join(', ')}] (quer [${SLOTS.join(', ')}]), visual "${arm.visual.trim()}", contagem "${arm.contagem}", ${arm.itens} itens, MEUS [${meus.join(', ')}], equipar → ${conta.equipou.join(',') || 'nada'} / slot "${slotDepois.trim()}"`);
+  add('LJ7', primLoja === 0 && primQuests === 0, `primários lima: catálogo ${primLoja}, ganhar ${primQuests}`);
+  add('LJ8', JSON.stringify(tabs) === JSON.stringify(['weapons', 'items', 'packs', 'ganhar']) && painelArmario === 0 && !categoriasErradas.length,
+    `abas [${tabs.join(', ')}], painel de armário duplicado ${painelArmario}, categorias ${Object.entries(categorias).map(([id, cards]) => `${id}:${cards.length}`).join(', ')}`);
   add('LJ14', questsIcones.length >= 4 && questsIcones.every((q) => q.icone && !q.oculto && !q.duplicado)
     && new Set(questsIcones.map((q) => q.icone)).size === questsIcones.length,
-    `${questsIcones.length} quests, ${questsIcones.filter((q) => q.icone).length} com ícone, ${new Set(questsIcones.map((q) => q.icone)).size} distintos (um por quest), ${questsIcones.filter((q) => q.duplicado || q.oculto).length} mal montado(s)`);
+    `${questsIcones.length} quests, ${questsIcones.filter((q) => q.icone).length} com ícone, ${new Set(questsIcones.map((q) => q.icone)).size} distintos`);
   const okMeta = meta.length === 2 && meta[0].txt.includes(`${GANHO_HOJE}`) && meta[0].txt.includes(`${TRETA_DEFAULT_REWARDS.daily_match_cap}`)
     && Math.abs(meta[0].p - GANHO_HOJE / TRETA_DEFAULT_REWARDS.daily_match_cap) < 0.01
     && meta[1].txt.includes(`${AMIGOS}`) && Math.abs(meta[1].p - AMIGOS / TRETA_DEFAULT_REWARDS.referral_cap) < 0.01;
-  add('LJ12', okMeta, `metas: ${meta.map((m) => `"${m.txt}" p=${Number.isFinite(m.p) ? m.p.toFixed(2) : '?'}`).join('; ') || 'nenhuma'} (quer ${GANHO_HOJE}/${TRETA_DEFAULT_REWARDS.daily_match_cap} e ${AMIGOS}/${TRETA_DEFAULT_REWARDS.referral_cap})`);
+  add('LJ12', okMeta, `metas: ${meta.map((m) => `"${m.txt}" p=${Number.isFinite(m.p) ? m.p.toFixed(2) : '?'}`).join('; ') || 'nenhuma'}`);
   add('LJ13', !erros.length && a2.selecionadas.length === 1, erros.length ? `erro na página: ${erros[0]}` : `sem erro de página; aba ganhar ${a2.selecionadas.join('+')}`);
 }
 
@@ -243,10 +236,10 @@ async function secaoIdioma(mutante, add) {
     const { page } = await abrir({ lang, mutante });
     let t = await page.evaluate(() => document.querySelector('.tp-loja')?.innerText || '');
     if (lang === 'en' && !mutante) await page.screenshot({ path: `${OUT}/loja-en-1536x1024.png` });
-    await page.locator('#hub-shop [role=tab][data-tp-aba=armario]').click().catch(() => {});
+    await page.locator('#hub-shop [role=tab][data-tp-aba=items]').click();
     await page.waitForTimeout(400);
     t += '\n' + await page.evaluate(() => document.querySelector('.tp-loja')?.innerText || '');
-    if (lang === 'en' && !mutante) await page.screenshot({ path: `${OUT}/armario-en-1536x1024.png` });
+    if (lang === 'en' && !mutante) await page.screenshot({ path: `${OUT}/items-en-1536x1024.png` });
     textos[lang] = t;
     await page.close();
   }
@@ -261,8 +254,8 @@ async function secaoTelas(mutante, add) {
   for (const [w, h] of VIEWPORTS) {
     const toque = w === 844;
     const { page } = await abrir({ w, h, mutante, toque });
-    for (const aba of ['loja', 'armario']) {
-      if (aba === 'armario') { await page.locator('#hub-shop [role=tab][data-tp-aba=armario]').click().catch(() => {}); await page.waitForTimeout(400); }
+    for (const aba of ['weapons', 'items', 'packs']) {
+      await page.locator(`#hub-shop [role=tab][data-tp-aba=${aba}]`).click(); await page.waitForTimeout(300);
       const g = await page.evaluate((painel) => {
         const raiz = document.querySelector(`.tp-loja__painel[data-painel=${painel}]`);
         if (!raiz || !raiz.checkVisibility()) return null;
