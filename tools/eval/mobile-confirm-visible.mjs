@@ -19,6 +19,8 @@ try {
   });
   if (!response?.ok()) throw new Error(`Pagina: HTTP ${response?.status() ?? 'sem resposta'}`);
   await page.locator('#hub-quick:not([hidden]) #hub-quick-confirm').waitFor();
+  await page.waitForFunction(() => document.querySelectorAll('#hub-quick-summary div').length >= 5);
+  await page.waitForFunction(() => document.querySelector('#hub-quick-map-img')?.complete);
   if (mutant) await page.addStyleTag({ content: '#hub-quick-confirm{position:static!important;bottom:auto!important}' });
   if (image) {
     await page.locator('#aviso-software button').click({ timeout: 1_500 }).catch(() => {});

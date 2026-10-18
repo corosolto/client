@@ -1,6 +1,6 @@
 # Mobile — entrada jogável, Android de teste e progresso
 
-Atualizado em 18/10/2026. Branch `codex/mobile-entry-20261018`, criada de `origin/main@d8ef4b627`; checkout principal preservado. Esta lane contém uma primeira correção local, ainda sem PR, merge, deploy ou teste em aparelho.
+Atualizado em 18/10/2026. Branch `codex/mobile-entry-20261018`, criada de `origin/main@d8ef4b627` e rebaseada sobre `origin/main@8a7d45b5e`; correção no commit `7580414fc` após o rebase. Checkout principal preservado. Esta lane contém uma primeira correção local, ainda sem merge, deploy ou teste em aparelho.
 
 ## Objetivo e definição de pronto
 
@@ -16,7 +16,7 @@ Fazer uma pessoa nova conseguir abrir, entender, jogar e repetir CORO SOLTO no c
 ## Milestone local validado
 
 - CSS de `#hub-quick-confirm` fica sticky na base do card em telas touch com altura até 520 px. A ação aparece no mesmo viewport sem rolagem; o resumo continua rolável.
-- Régua de navegador real `tools/eval/mobile-confirm-visible.mjs`: **antes** y=686–734, vermelho; **depois** 915×412 y=308–356, verde; 667×375 y=274–322, verde; 390×844 y=716–764, verde. Mutante que remove `position:sticky` volta a y=686–734 e vermelho. Captura pós-correção foi inspecionada; o botão é legível. Clique no botão iniciou a partida SP em 915×412; screenshot e ausência de erro JS conferidos. Em 390×844, o jogo mostra a orientação para girar o aparelho.
+- Régua de navegador real `tools/eval/mobile-confirm-visible.mjs`: **antes** y=686–734, vermelho; **depois** 915×412 y=308–356, verde; 667×375 y=274–322, verde; 390×844 y=716–764, verde. Mutante que remove `position:sticky` volta a y=686–734 e vermelho. Após rebase, a régua espera o resumo e a imagem da partida antes de medir, evitando passar durante a hidratação parcial; nova medição deu card 755/349 px tanto na correção quanto no mutante. `npm run syntax` passou na base alpha.109. Captura pós-correção foi inspecionada; o botão é legível. Clique no botão iniciou a partida SP em 915×412; screenshot e ausência de erro JS conferidos. Em 390×844, o jogo mostra a orientação para girar o aparelho.
 - Evidência fora do Git, no volume do projeto: `csbrasil/evidence/mobile-entry-20261018/` contém `coro-mobile-confirm-before.png` (204K, SHA-256 `af99858e4fac59b55ccdcc8cc6a22a9a532b0fc22b68c14ee721974db36963cd`), `coro-mobile-confirm-after.png` (184K, `1c9da9cf0f951917698a8fde88a1f1716661df8f79520cb6ca6222996b666588`), `coro-mobile-next-landscape.png` (260K, `20f96e526c303cabc5aae14a955e39a20cfea19144ab6bb96affa580d7b5b9f3`) e `coro-mobile-next-portrait.png` (28K, `daeb975e505dbf4d18c491443766947f3655c71b63a1bb0f1a3ed0a2ca4acc3b`).
 
 ## Fila de produto
@@ -31,4 +31,4 @@ Fazer uma pessoa nova conseguir abrir, entender, jogar e repetir CORO SOLTO no c
 
 **Aceito:** defeito reproduzido no modal de confirmação e correção local com régua/figura/mutação; suporte de convidado e estatísticas locais comprovados por fonte. **Rejeitado como conclusão:** imagens do jogador consertadas, APK pronto, save sincronizado, desempenho real ou QA mobile aprovado. **Pendente:** captura do defeito original, aparelhos, build APK e acesso EAS, dados atuais de conta/loja, testes físicos e revisão visual humana.
 
-Próxima ação: rodar revisão curta de CSS/HTML e gates do cliente nesta lane; preparar PR draft desta correção. Em paralelo, atualizar o plano de 90 dias para colocar QA Android e APK de teste após a jornada web, preservando os gates de audiência e release. No teste físico, tratar o relato visual como hipótese aberta até ver a tela real.
+O plano de 90 dias foi atualizado na branch `codex/90dias-comunidade-20261018@68e6e07`: QA Android e APK de teste entraram no funil de ativação, preservando os gates de audiência e release. Próxima ação: abrir PR draft desta correção, fazer revisão independente de CSS/HTML e obter a primeira captura em Android real. No teste físico, tratar o relato visual como hipótese aberta até ver a tela real.
