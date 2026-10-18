@@ -18,14 +18,14 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "3888695e0d0185021fb6a5c9372f62edd8efaab76fcc52e550077c9cba016d32",
-    "side-right.png": "6b0c6848139eb5bb1e457a12b4ab3b87612bf4b1279b39116e4c2c577905440d",
-    "three-quarter.png": "6d16b9ac4fe2dff52ed88ea8f2751d98009da435a82b3b19ad062045c967e916"
+    "side-left.png": "0bbb16d378037dd9fe20d22e9fd4c29def2296e756ed57338522703e4f2efcb6",
+    "side-right.png": "8ebd6f412c084253dd142f94568e49226e97033a461fc00241aeabf1be1f6e38",
+    "three-quarter.png": "e5642cc58438e32af2275c77444f22c9481402d5f56729826c6e764315c50e13"
   },
   "sources": {
     "public/js/data/weapon-skin-definitions.js": "41705b1368c0dca1e425da8bcfc652694046d69de70ace213b976f03d31791a5",
     "public/js/weapon-skins.js": "343a6ed1fc3dcc1ccf45cc0191dbb3fc0594fb051bd0c66c1daad971c738e18c",
-    "public/js/weapons.js": "acf5cf7bfb1b11580ad143844f9ec9eb6c811ecf55760457a1ba13d18c92f7ae",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "73893044a34e8dcc8afcefbe2db16354565eae0d18c0e3f72828117d1dcd5b57"
   },
   "consoleErrors": []
