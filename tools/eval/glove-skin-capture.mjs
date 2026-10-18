@@ -4,8 +4,9 @@ import { mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
-import { STORE_GLOVES } from '../../public/js/data/glove-skin-definitions.js';
+import { GLOVE_SKINS, STORE_GLOVES } from '../../public/js/data/glove-skin-definitions.js';
 import { VM_WEAPON } from '../../public/js/data/vmconfig.js';
+const ALL_GLOVES=Object.values(GLOVE_SKINS);
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const BASE = process.env.BASE || 'http://127.0.0.1:9481';
@@ -127,25 +128,43 @@ for (const skin of STORE_GLOVES) {
   captures.push({ id: skin.id, png, poster: path.relative(ROOT, poster), maps: runtime.maps });
 }
 }
-await page.goto(`${BASE}/?secao=loja`, { waitUntil: 'domcontentloaded', timeout: 240000 });
+await page.goto(`${BASE}/loja/itens`, { waitUntil: 'domcontentloaded', timeout: 240000 });
 await page.addStyleTag({ content: 'astro-dev-toolbar,#crash-overlay,#boot-splash,#aviso-software,.tutorial-overlay{display:none!important}' });
-await page.waitForFunction(() => document.querySelectorAll('#treta-grid .treta-card').length >= 8, null, { timeout: 60000 });
-await page.waitForFunction(() => ![...document.querySelectorAll('#treta-grid .treta-label')].some((label) => label.textContent === 'CONSULTANDO…'), null, { timeout: 60000 });
-const storeNames = await page.locator('#treta-grid .treta-card strong').allTextContents();
+await page.waitForTimeout(3000);
+if (!await page.locator('#treta-items-grid .treta-card').count()) console.error(JSON.stringify({ url: page.url(), itemsGrid: await page.locator('#treta-items-grid').count(), tabs: await page.locator('[data-treta-view]').allTextContents(), errors }));
+await page.waitForFunction(() => document.querySelectorAll('#treta-items-grid .treta-card').length > 0, null, { timeout: 60000 });
+await page.waitForFunction(() => ![...document.querySelectorAll('#treta-items-grid .treta-label')].some((label) => label.textContent === 'CONSULTANDO…'), null, { timeout: 60000 });
+const storeNames = await page.locator('#treta-items-grid .treta-card strong').allTextContents();
 const missingInStore = STORE_GLOVES.map((skin) => skin.name).filter((name) => !storeNames.includes(name));
 if (missingInStore.length) throw new Error(`luvas ausentes na loja: ${missingInStore.join(', ')}`);
-const storeCapture = '/tmp/glove-store-8.png';
+const moldDir='/tmp/glove-molds';await rm(moldDir,{recursive:true,force:true});await mkdir(moldDir,{recursive:true});
+for(const skin of ALL_GLOVES){
+  await page.evaluate(async(id)=>{
+    window.__gloveCaptureStage?.dispose();
+    document.querySelector('#glove-capture-host')?.remove();
+    const host=document.createElement('div');host.id='glove-capture-host';host.style.cssText='position:fixed;left:50%;top:50%;translate:-50% -50%;width:960px;height:640px;z-index:99999;background:radial-gradient(circle at 50% 45%,#273126,#080a08 72%)';document.body.append(host);
+    const {GloveSkinStage}=await import('/js/glove-skin-stage.js');const stage=new GloveSkinStage(host);window.__gloveCaptureStage=stage;await stage.load(id);
+  },skin.id);
+  const shot=path.join(moldDir,`${skin.id}.png`);await page.locator('#glove-capture-host').screenshot({path:shot});
+  const poster=path.join(ROOT,'public',skin.poster.replace(/^\//,''));
+  await sharp(shot).resize(960,640,{fit:'contain',background:{r:8,g:10,b:8,alpha:1}}).webp({quality:92}).toFile(poster);
+}
+await page.evaluate(()=>{window.__gloveCaptureStage?.dispose();document.querySelector('#glove-capture-host')?.remove();delete window.__gloveCaptureStage;});
+await page.reload({waitUntil:'domcontentloaded',timeout:240000});
+await page.addStyleTag({ content: 'astro-dev-toolbar,#crash-overlay,#boot-splash,#aviso-software,.tutorial-overlay{display:none!important}' });
+await page.waitForFunction(() => document.querySelectorAll('#treta-items-grid .treta-card').length > 0, null, { timeout: 60000 });
+const storeCapture = `/tmp/glove-store-${STORE_GLOVES.length}.png`;
 await page.evaluate((names) => {
   const stage = document.createElement('section');
   stage.id = 'glove-store-capture';
   stage.style.cssText = 'position:fixed;inset:0;z-index:99999;padding:32px;background:#11140f;overflow:auto';
   const title = document.createElement('h2');
-  title.textContent = 'LUVAS DA TRETA · 8 VISUAIS';
+  title.textContent = `LUVAS DA TRETA · ${names.length} VISUAIS`;
   title.style.cssText = 'color:#d9ff42;font:48px Impact,sans-serif;margin:0 0 24px';
-  const grid = document.querySelector('#treta-grid').cloneNode(false);
+  const grid = document.querySelector('#treta-items-grid').cloneNode(false);
   grid.removeAttribute('id');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;height:auto';
-  for (const card of document.querySelectorAll('#treta-grid .treta-card')) {
+  for (const card of document.querySelectorAll('#treta-items-grid .treta-card')) {
     if (names.includes(card.querySelector('strong')?.textContent)) grid.append(card.cloneNode(true));
   }
   stage.append(title, grid);
@@ -153,8 +172,8 @@ await page.evaluate((names) => {
 }, STORE_GLOVES.map((skin) => skin.name));
 await page.locator('#glove-store-capture').screenshot({ path: storeCapture });
 await page.locator('#glove-store-capture').evaluate((element) => element.remove());
-await page.locator('#treta-grid .treta-card').filter({ hasText: STORE_GLOVES[0].name }).click();
-await page.waitForFunction(() => document.querySelector('#treta-detail')?.open && document.querySelector('#treta-buy')?.textContent === 'JÁ EQUIPADA');
+await page.locator('#treta-items-grid .treta-card').filter({ hasText: STORE_GLOVES[0].name }).click();
+await page.waitForFunction(() => document.querySelector('#treta-detail')?.open && document.querySelector('#treta-buy')?.textContent === 'JÁ EQUIPADA' && document.querySelector('#treta-detail-production')?.textContent.includes('Molde 3D isolado'));
 const detailCopy = await page.locator('#treta-detail-production').textContent();
 if (!detailCopy.includes('todas as armas')) throw new Error('detalhe da luva não explica o equipamento global');
 await page.screenshot({ path: '/tmp/glove-store-detail.png' });

@@ -26,8 +26,8 @@
     "three-quarter.png": "688ffb29e478424cf97d6d318a9bdcfe39adc8359ec968365a71dad2aaf2ca3d"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "007c8a4a7764a1851c3a3faa888e1eb096fce16a89e472db488a05d626c82c01",
-    "public/js/weapon-skins.js": "642cde116f59c937df7b606c6cff2ac4d0f4748b2164d93aeef82884881e6879",
+    "public/js/data/weapon-skin-definitions.js": "a038c6278d39e885f07c7ef95ba1ac138cd6db3941caec8e281d4528022ea212",
+    "public/js/weapon-skins.js": "78e34b23e2216c5a20ba6adc8fc24e239fc9a3c926291fa27cc4130b818d6666",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/club-marks/palmeiras.png": "0ac52419909af2018a70ee8fae56c59f6c9d58ec86ef95731a3c99dea66928b4"

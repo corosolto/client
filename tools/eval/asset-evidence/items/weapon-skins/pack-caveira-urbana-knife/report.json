@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "pack-caveira-urbana-knife",
+  "weaponId": "knife",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": null,
+  "markSourceUrl": null,
+  "referenceRule": "original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "4723dd78a2c5ecf81dff4ae8d7637db5b584272cfd01363069bebb74197b57bd",
+    "side-right.png": "3be5c3e4007f4d1b8dd6d6c8ae3f3dcf72388a1ae37306c12ff88536fd4f6538",
+    "three-quarter.png": "476ed0ef8b586a1cd0030da03781810fa0507404dad82b0d86dc800658d0fef6"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "a038c6278d39e885f07c7ef95ba1ac138cd6db3941caec8e281d4528022ea212",
+    "public/js/weapon-skins.js": "78e34b23e2216c5a20ba6adc8fc24e239fc9a3c926291fa27cc4130b818d6666",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/project-marks/caveira-urbana.svg": "7607500fdefcb212e6e0ed4f0a15a6f248b2670f2c579b7a3c4e3b96313a6625"
+  },
+  "consoleErrors": []
+}

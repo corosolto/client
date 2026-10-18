@@ -21,16 +21,16 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "02fd2411d5844d34f40abf0834cf0335c645ed15ad62dd11a4c70308d4922785",
-    "side-right.png": "d0a9d7226fb17239354ea822e6e019dc0d3213d45c71a7893ca423198e196e64",
-    "three-quarter.png": "f77001a4a624f5e2f8c2a346805c53d7af83bdd325f40c73b6c258df005f2e99"
+    "side-left.png": "4534737d9a81b126cc9cc093057797472b760152be422d7b584c552e9a8e9f0c",
+    "side-right.png": "2104f4896e932deeb85ef4e1f33a774db4af317c1c30f2596fb404cc41b45bd8",
+    "three-quarter.png": "20966a165ba47fc5c7b3de7999cc8f034b2f9e785cc6e3f9ab2e9975ed3cf4b2"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "007c8a4a7764a1851c3a3faa888e1eb096fce16a89e472db488a05d626c82c01",
-    "public/js/weapon-skins.js": "642cde116f59c937df7b606c6cff2ac4d0f4748b2164d93aeef82884881e6879",
+    "public/js/data/weapon-skin-definitions.js": "a038c6278d39e885f07c7ef95ba1ac138cd6db3941caec8e281d4528022ea212",
+    "public/js/weapon-skins.js": "78e34b23e2216c5a20ba6adc8fc24e239fc9a3c926291fa27cc4130b818d6666",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
-    "public/textures/weapon-skins/project-marks/tropicalente.svg": "c360c117c82c766d71555a5f68b60ba4d3439bac3f1d73fc3183cb1584b9eb71"
+    "public/textures/weapon-skins/project-marks/tropicalente-coqueiro.svg": "5d1c68e4218a84b38caa6d54739b0f5d9116d5a7f0e4fd60d7c77f9fbbd1673e"
   },
   "consoleErrors": []
 }

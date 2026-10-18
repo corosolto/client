@@ -206,6 +206,64 @@ export function pintar({ fields, size }, pintura, style) {
       if (cuff) { color = sleeve; if (inStar(x, (y + 0.15) * 1.4)) color = accent; }
       if (handPanel && inStar(x, (y - 0.49) * 1.1)) color = accent;
     }
+    if (!exposed && !isSleeve && style.motif === 'emo') {
+      const check = (Math.floor((x + 0.8) * 10) + Math.floor(y * 12)) & 1;
+      color = check ? glove : accent.map((c) => c * 0.72);
+      if (handPanel && (Math.abs(x) < 0.025 || Math.abs(y - 0.52) < 0.025)) color = accent;
+    }
+    if (!exposed && !isSleeve && style.motif === 'team') {
+      color = glove;
+      if (handPanel) {
+        const shield = Math.abs(x) < 0.25 - Math.max(0, y - 0.58) * 0.30 && y > 0.25 && y < 0.80;
+        const inner = Math.abs(x) < 0.20 - Math.max(0, y - 0.58) * 0.27 && y > 0.30 && y < 0.74;
+        if (shield) color = accent;
+        if (inner) color = sleeve;
+        if (inStar(x * 0.78, (y - 0.52) * 0.78)) color = accent;
+      }
+    }
+    if (!exposed && !isSleeve && style.motif === 'brasil') {
+      color = glove;
+      if (handPanel) {
+        const dy = y - 0.52;
+        if (Math.abs(x) / 0.31 + Math.abs(dy) / 0.28 < 1) color = accent;
+        if (x * x + dy * dy < 0.014) color = [0, 49, 118];
+        if (Math.abs(dy + x * 0.16) < 0.018 && x * x + dy * dy < 0.012) color = [245, 247, 239];
+      }
+    }
+    if (!exposed && !isSleeve && style.motif === 'usa') {
+      color = Math.floor(y * 14) & 1 ? accent : glove;
+      if (handPanel && x < 0.04 && y > 0.47) {
+        color = [10, 49, 97];
+        const sx = (x + 0.32) * 14, sy = (y - 0.48) * 16;
+        if (Math.hypot(sx - Math.round(sx), sy - Math.round(sy)) < 0.13) color = accent;
+      }
+    }
+    if (!exposed && !isSleeve && style.motif === 'maga') {
+      color = glove;
+      if (handPanel) {
+        const four = (x < -0.02 && Math.abs(y - 0.52) < 0.035)
+          || (Math.abs(x + 0.14) < 0.035 && y > 0.48 && y < 0.72)
+          || (Math.abs(x + 0.03) < 0.035 && y > 0.36 && y < 0.72)
+          || (Math.abs(y - x - 0.58) < 0.035 && x < -0.03);
+        const seven = (x > 0.05 && Math.abs(y - 0.69) < 0.035)
+          || (x > 0.07 && Math.abs(y + x * 0.85 - 0.68) < 0.035);
+        if (four || seven) color = accent;
+      }
+    }
+    if (!exposed && !isSleeve && style.motif === 'skull') {
+      color = glove;
+      if (handPanel) {
+        const dy = y - 0.56;
+        const head = x * x / 0.050 + dy * dy / 0.058 < 1;
+        const jaw = Math.abs(x) < 0.14 && y > 0.33 && y < 0.49;
+        if (head || jaw) color = accent;
+        const eye = ((x - 0.095) ** 2 + (dy - 0.035) ** 2 < 0.004)
+          || ((x + 0.095) ** 2 + (dy - 0.035) ** 2 < 0.004);
+        const nose = Math.abs(x) < 0.035 && y > 0.47 && y < 0.55;
+        const teeth = jaw && (Math.abs(Math.sin((x + 0.18) * 45)) < 0.22 || Math.abs(y - 0.40) < 0.012);
+        if (eye || nose || teeth) color = glove;
+      }
+    }
     // Motivos novos em volta do eixo do braço (ângulo × comprimento): no punho visto de lado o
     // plano x·y degenera e o padrão vira mancha (crítico cego, rodada 1).
     const volta = Math.atan2(z, x) * 0.3, noEixo = Math.hypot(x, z) < 0.12;

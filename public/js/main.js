@@ -6,7 +6,8 @@ import {initAccountEntry,mountProfilePreferences} from './account-entry.js';
 import {initLoginPrompt,noteLoginPromptMatch} from './login-prompt.js';
 import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
-import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,tretaVitrine} from './treta-store.js';
+import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaVitrine} from './treta-store.js';
+import {tretaPack} from './data/pack-definitions.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { preloadEyewearAssets } from './eyewear.js';
@@ -1714,10 +1715,12 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     ? sessao.net.meta.roster.find(r=>r.id===sessao.net.yourEnt)?.skinId || null
     : equippedTretaSkin(charId);
   const playerEyewearId = sessao ? sessao.net.meta.roster.find(r=>r.id===sessao.net.yourEnt)?.eyewearId || null : equippedTretaEyewear();
-  const playerGloveId = equippedTretaGlove();
+  const playerPack = tretaPack(equippedTretaPack());
+  const playerGloveId = playerPack?.gloveSkin || equippedTretaGlove();
   const playerWeaponSkins = Object.fromEntries(['ak','pistol']
-    .map((weaponId)=>[weaponId,equippedTretaWeaponSkin(weaponId)])
+    .map((weaponId)=>[weaponId,playerPack?.weaponSkins[weaponId] || equippedTretaWeaponSkin(weaponId)])
     .filter(([,skinId])=>skinId));
+  const playerKnifeSkinId = playerPack?.knifeSkin || null;
   const matchEyewear = [playerEyewearId,...matchRoster.allyDefs.map(d=>d.eyewearId),...matchRoster.enemyDefs.map(d=>d.eyewearId)];
   const matchSkins = [playerSkinId, ...matchRoster.allyDefs.map(d=>d.skinId), ...matchRoster.enemyDefs.map(d=>d.skinId)];
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
@@ -1753,7 +1756,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
         // Famílias PRONTAS do loadout + texturas de braço compartilhadas (~3 MB
         // pós-de-dup): mata o pop legado→autorado do primeiro saque (BUG-75 M4).
-        preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida)),
+        preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida, playerWeaponSkins)),
       ]);
     }
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
@@ -1769,7 +1772,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
        (o allyBots/enemyBots do save não pode vencer o teamSize da sala). */
     settings: sessao ? { ...settings, bots: tamanhoTime, allyBots: Math.max(0, tamanhoTime - 1), enemyBots: tamanhoTime } : settings,
     renderer, textures, sfx,
-    playerCharId: charId, playerSkinId, playerEyewearId, playerGloveId, playerWeaponSkins, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
+    playerCharId: charId, playerSkinId, playerEyewearId, playerGloveId, playerWeaponSkins, playerKnifeSkinId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
     /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão

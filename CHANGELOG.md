@@ -27,12 +27,14 @@
 
 ### Adicionado
 - A fábrica de wearables registra o boné procedural versionado e perfis candidatos por hash para Capitão, Esquerdomacho e Barbudo. A mesma régua importa os marcos e ajustes medidos dos óculos 33–36 para Capitão e Esquerdomacho, gera folhas frente/¾/perfil por pose e bloqueia qualquer par sem certificação humana; os itens 37/38 e a loja de acessórios continuam fechados.
-- A loja TRETA$ ganha vinte skins de arma para AK e pistola: oito políticas, quatro com expressões brasileiras sobre o corpo original, duas Camo Selva, duas Tropicalente com arara e coqueiro, ouro por T$ 900 e prata por T$ 500. O armário equipa uma skin por arma, e a tecla `I` mostra a lateral completa durante a partida.
-- A loja TRETA$ ganha oito luvas de primeira pessoa por T$ 350: Tropicalente, Camo Selva, Brasil de Rua, Ouro Preto, Gelo Azul, Pôr do Sol, Sangue Bom e Asfalto. O armário equipa uma luva para todas as armas, com captura real de cada visual dentro da partida.
+- A loja TRETA$ ganha vinte skins de arma para AK e pistola: oito políticas, quatro com expressões brasileiras sobre o corpo original, duas Camo Selva, duas Tropicalente, ouro por T$ 900 e prata por T$ 500. O armário equipa uma skin por arma; as mãos continuam visíveis segurando o modelo, e a tecla `I` mostra sua lateral completa durante a partida.
+- A loja TRETA$ ganha doze luvas de primeira pessoa por T$ 350, incluindo Emo Xadrez, Arquibancada, Bandeira do Brasil, Bandeira dos EUA e MAGA. Cada produto tem molde 3D isolado na loja e equipa a luva em todas as armas.
+- Cinco packs coordenados — Caveira Urbana, Brasil Neon, Liberdade 1776, MAGA 47 e Emo Xadrez — reúnem AK, pistola, luvas e faca por T$ 2.000 cada.
+- A loja separa o catálogo nas abas Armas, Itens e Packs. O detalhe de arma informa a tecla `I` e reproduz uma demonstração da inspeção lateral.
 
 ### Alterado
-- As oito skins políticas deixam de usar uma placa sobreposta: o símbolo agora é uma pintura metálica ajustada à lateral real da malha, e as frases seguem na horizontal sobre o cano ou ferrolho. Os textos Brasil 22 e Estrela Vermelha ficam maiores sobre áreas azul e branca; os símbolos Trabalho 13, Estrela Verde e Brasil 22 ganham escala e posição legíveis.
-- Nas pistolas políticas, as frases sobem para o ferrolho/cano e ganham escala. Tropicalente amplia texto e estampa tropical; Trabalho 13 passa a usar a geometria pública e historicamente reconhecível da foice e do martelo.
+- As oito skins políticas deixam de usar uma placa sobreposta: o símbolo agora é uma pintura metálica ajustada à lateral real da malha, e as frases seguem à esquerda ou centralizadas no cano/ferrolho. Os textos Brasil 22 e Estrela Vermelha ficam maiores sobre áreas azul e branca; os símbolos Trabalho 13, Estrela Verde e Brasil 22 ganham escala e posição legíveis.
+- Nas pistolas políticas, as frases sobem para o ferrolho/cano e ganham escala sem sair da arma. A Tropicalente usa somente um coqueiro maior sobre o ferrolho cinza; a Trabalho 13 troca foice e martelo por uma estrela amarela.
 - Nicks de exibição aceitam de 2 a 32 caracteres no cadastro, comunidade, chat, partida, perfil, badge e cartões compartilhados. Killfeed e painel de morte tratam o nome como texto.
 - A contagem agregada de abertura, carga, entrada, partida e sessão envia somente evento, versão e faixas. O fluxo não usa identificador, cookie ou storage e fica desligado em automação e depuração.
 

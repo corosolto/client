@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "pack-emo-xadrez-knife",
+  "weaponId": "knife",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": null,
+  "sloganPlacement": null,
+  "markSourceUrl": null,
+  "referenceRule": "original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "3c640c43922ac2f0fa3da22c1a494f98c9baef4f72fc21e9bb9c437d29637a61",
+    "side-right.png": "906d9729420abc4ba82963babd4c7bb6941c497ea2bf11e304f3c5b2588abe67",
+    "three-quarter.png": "5b38f7480063793616a5505a022666a607609b72f6bd29ffd77739b53bd7683f"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "a038c6278d39e885f07c7ef95ba1ac138cd6db3941caec8e281d4528022ea212",
+    "public/js/weapon-skins.js": "78e34b23e2216c5a20ba6adc8fc24e239fc9a3c926291fa27cc4130b818d6666",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
+  },
+  "consoleErrors": []
+}

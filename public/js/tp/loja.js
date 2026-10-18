@@ -12,10 +12,10 @@ const numero=(v)=>new Intl.NumberFormat(LANG==='en'?'en-US':'pt-BR').format(v);
 const moeda=(v)=>`T$ ${numero(v)}`;
 const modelo=(chave,vals)=>tr(chave).replace(/\{(\w+)\}/g,(_,k)=>vals[k]);
 
-let raiz=null,aba='loja',filtro='todos',escolhido=null,equipando=false;
+let raiz=null,aba='weapons';
 
 function botao(cls,texto,acao){const b=el('button',cls,texto);b.type='button';if(acao)b.onclick=acao;return b;}
-function vistaLegada(){return document.querySelector('[data-treta-view=quests]')?.getAttribute('aria-selected')==='true'?'quests':'skins';}
+function vistaLegada(){return document.querySelector('[data-treta-view][aria-selected=true]')?.dataset.tretaView || 'weapons';}
 function entrar(){$('hub-account-login')?.click();}
 /* Ícone por tipo de quest (pedido do dono 15/10): a placa entra pela camada tp, o card continua do treta-store. */
 const QUEST_ICONES={
@@ -61,9 +61,11 @@ function meta(rotulo,texto,p){
   m.append(topo,barra);return m;
 }
 
-function desenharLoja(painel,d){
+function desenharLoja(painel,d,categoria){
+  const slots={weapons:new Set(['weapon']),items:new Set(['character','glove','eyewear']),packs:new Set(['pack'])};
+  const itens=d.itens.filter((s)=>slots[categoria]?.has(s.slot));
   const grade=el('div','tp-loja__grade');
-  grade.append(...d.itens.map((s)=>cartao(s,d)));
+  grade.append(...itens.map((s)=>cartao(s,d)));
   const rodape=el('div','tp-loja__rodape'),ganhe=el('div','tp-painel tp-loja__ganhe');
   ganhe.append(el('span','tp-disp tp-loja__ganhe-titulo',tr('GANHE T$')));
   if(d.authenticated && d.campanha){
@@ -77,64 +79,6 @@ function desenharLoja(painel,d){
   painel.replaceChildren(grade,rodape);
 }
 
-function acaoPrimaria(sel,d){
-  const prim=botao('tp-btn tp-btn--primario tp-loja__acao','');
-  if(!d.authenticated){prim.textContent=tr('ENTRAR NA CONTA');prim.onclick=entrar;}
-  else if(!sel){prim.textContent=tr('EQUIPAR');prim.disabled=true;}
-  else if(sel.equipped){prim.textContent=`${tr('EQUIPADO')} ✓`;prim.disabled=true;prim.dataset.estado='equipado';}
-  else if(sel.owned){prim.textContent=tr('EQUIPAR');prim.disabled=equipando || !sel.available;prim.onclick=async()=>{
-    equipando=true;prim.disabled=true;
-    try{await equiparTretaSkin(sel.id);}catch{const st=$('treta-status');if(st)st.textContent=tr('Não deu para equipar agora. Tente de novo.');}finally{equipando=false;render();}
-  };}
-  else if(sel.available && sel.price!=null){prim.textContent=tr('DESBLOQUEAR VISUAL');prim.onclick=()=>abrirTretaSkin(sel.id);}
-  else {prim.textContent=tr('EM PRODUÇÃO');prim.disabled=true;}
-  return prim;
-}
-
-function desenharArmario(painel,d){
-  const itens=d.itens,meus=itens.filter((s)=>s.owned),equipada=itens.find((s)=>s.equipped);
-  if(!itens.some((s)=>s.id===escolhido))escolhido=(equipada || meus[0] || itens[0])?.id || null;
-  const sel=itens.find((s)=>s.id===escolhido);
-  const palco=el('div','tp-loja__palco');
-  if(sel){
-    const fig=el('img','tp-loja__figura');fig.src=sel.poster;fig.alt='';
-    const titulo=el('h3','tp-disp tp-loja__destaque');titulo.append(el('span','tp-ital',sel.name));
-    const rar=raridade(sel),olho=el('span','tp-rotulo tp-loja__serie',rar?`${tr(NOME_RAR[rar])} · ${sel.series}`:sel.series);
-    if(rar)olho.dataset.raridade=rar;
-    palco.append(fig,olho,titulo,botao('tp-btn tp-btn--fantasma tp-loja__3d',tr('VER EM 3D'),()=>abrirTretaSkin(sel.id)));
-  }
-  const lado=el('div','tp-loja__lado'),slots=el('div','tp-loja__slots');
-  for(const slot of SLOTS){
-    const s=el('div','tp-loja__slot');s.dataset.slot=slot;
-    const ic=el('span','tp-loja__slot-ic');
-    if(equipada){const i=el('img');i.src=equipada.poster;i.alt='';ic.append(i);}
-    const tx=el('span','tp-loja__slot-tx');tx.append(el('span','tp-rotulo',tr('VISUAL')),el('b','',equipada?.name || tr('Personagem base')));
-    s.append(ic,tx);slots.append(s);
-  }
-  const barra=el('div','tp-loja__filtros'),cont=el('h3','tp-disp tp-loja__contagem'),grupo=el('span','tp-loja__chips');
-  cont.append(el('span','tp-ital',modelo('VISUAIS · {n} DE {m}',{n:meus.length,m:itens.length})));
-  grupo.setAttribute('role','group');grupo.setAttribute('aria-label',tr('Filtrar visuais'));
-  for(const [f,rot] of [['todos','TODOS'],['meus','MEUS']]){
-    const b=botao('tp-loja__chip',tr(rot),()=>{filtro=f;render();});b.dataset.filtro=f;b.setAttribute('aria-pressed',String(filtro===f));grupo.append(b);
-  }
-  barra.append(cont,grupo);
-  const grade=el('div','tp-loja__itens');
-  for(const s of itens.filter((x)=>filtro!=='meus' || x.owned)){
-    const b=botao('tp-card tp-loja__item','',()=>{escolhido=s.id;render();});
-    b.dataset.skin=s.id;b.style.setProperty('--skin-color',s.color);b.setAttribute('aria-pressed',String(s.id===escolhido));
-    if(raridade(s))b.dataset.raridade=raridade(s);
-    if(!s.owned)b.dataset.trancado='';
-    const img=el('img');img.src=s.poster;img.alt='';img.loading='lazy';
-    b.append(img,el('span','tp-loja__item-nome tp-disp',s.name));
-    if(s.equipped)b.append(el('span','tp-loja__selo tp-loja__selo--equipado',tr('EQUIPADO')));
-    else if(!s.owned && s.available && s.price!=null)b.append(el('span','tp-loja__selo tp-num',moeda(s.price)));
-    grade.append(b);
-  }
-  const acao=el('div','tp-painel tp-loja__equipar');
-  acao.append(el('p','',tr('Visual é só cosmético: mesmo dano, velocidade e hitbox. O equipado entra com você na próxima partida.')),acaoPrimaria(sel,d));
-  lado.append(slots,barra,grade,acao);
-  painel.replaceChildren(palco,lado);
-}
 
 function posicionarRisco(){
   const nav=raiz?.querySelector('.tp-loja__abas'),sel=nav?.querySelector('[aria-selected=true]'),risco=nav?.querySelector('.tp-abas__risco');
@@ -144,17 +88,17 @@ function posicionarRisco(){
 
 function render(){
   if(!raiz)return;
-  const d=tretaLoja(),legada=vistaLegada(),atual=legada==='quests'?'ganhar':aba;
+  const d=tretaLoja(),legada=vistaLegada();if(['weapons','items','packs'].includes(legada))aba=legada;const atual=legada==='quests'?'ganhar':aba;
   raiz.querySelector('.tp-loja__saldo').textContent=d.saldo!=null?numero(d.saldo):'—';
   for(const t of raiz.querySelectorAll('.tp-loja__abas [role=tab]')){const on=t.dataset.tpAba===atual;t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;}
   for(const p of raiz.querySelectorAll('.tp-loja__painel'))p.hidden=legada==='quests' || p.dataset.painel!==aba;
-  if(legada!=='quests')(aba==='armario'?desenharArmario:desenharLoja)(raiz.querySelector(`[data-painel=${aba}]`),d);
+  if(legada!=='quests')desenharLoja(raiz.querySelector(`[data-painel=${aba}]`),d,aba);
   posicionarRisco();
 }
 
 function irPara(alvo){
   if(alvo==='ganhar')document.querySelector('[data-treta-view=quests]')?.click();
-  else{aba=alvo;if(vistaLegada()!=='skins')document.querySelector('[data-treta-view=skins]')?.click();}
+  else{aba=alvo;document.querySelector(`[data-treta-view=${alvo}]`)?.click();}
   render();
 }
 
@@ -164,7 +108,7 @@ function montar(){
   if(LANG==='en')it.append(em,` ${tr('LOJA DA')}`);else it.append(`${tr('LOJA DA')} `,em);
   titulo.append(it);
   const nav=el('nav','tp-abas tp-loja__abas');nav.setAttribute('role','tablist');nav.setAttribute('aria-label',tr('Seções da loja'));
-  for(const [id,rot] of [['loja','SKINS'],['armario','ARMÁRIO'],['ganhar','GANHAR T$']]){
+  for(const [id,rot] of [['weapons','ARMAS'],['items','ITENS'],['packs','PACKS'],['ganhar','GANHAR T$']]){
     const t=botao('tp-aba',tr(rot),()=>irPara(id));t.setAttribute('role','tab');t.dataset.tpAba=id;
     t.onkeydown=(e)=>{
       const tabs=[...nav.querySelectorAll('[role=tab]')],i=tabs.indexOf(t),n=e.key==='ArrowRight'?(i+1)%tabs.length:e.key==='ArrowLeft'?(i+tabs.length-1)%tabs.length:null;
@@ -176,10 +120,8 @@ function montar(){
   const carteira=el('div','tp-loja__carteira'),ic=el('span','tp-loja__moeda tp-disp','T$');ic.setAttribute('aria-hidden','true');
   carteira.append(ic,el('b','tp-loja__saldo tp-num','—'),botao('tp-btn tp-loja__ganhar',tr('GANHAR MAIS'),()=>irPara('ganhar')));
   topo.append(titulo,nav,carteira);
-  const pLoja=el('section','tp-loja__painel'),pArm=el('section','tp-loja__painel tp-loja__armario');
-  pLoja.dataset.painel='loja';pArm.dataset.painel='armario';
-  for(const p of [pLoja,pArm])p.setAttribute('role','tabpanel');
-  raiz.append(topo,pLoja,pArm);
+  const panels=['weapons','items','packs'].map((id)=>{const panel=el('section','tp-loja__painel');panel.dataset.painel=id;panel.setAttribute('role','tabpanel');return panel;});
+  raiz.append(topo,...panels);
   $('hub-shop').prepend(raiz);
   new ResizeObserver(posicionarRisco).observe(nav);
   document.fonts?.ready.then(posicionarRisco);

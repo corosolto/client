@@ -12,6 +12,7 @@ import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
 import { applyTeamHandMaterial, refreshTeamHands, handLayoutOfMesh } from './vmhands.js';
 import { extendSleeveOpenings, SLEEVE_MATERIAL } from './vmsleeve.js';
+import { applyWeaponSkinCandidate } from './weapon-skins.js';
 
 const DEG2RAD = Math.PI / 180;
 
@@ -212,8 +213,9 @@ export function preloadAuthoredFamilies(keys = []) {
 
 // Chaves que o boot deve esperar: as READY do loadout (arma assada tem chave
 // própria — família#arma) + granada, se aberta.
-export function authoredBootFamilies(weaponIds = []) {
-  const keys = new Set(weaponIds.map((id) => entryKeyFor(id)).filter(Boolean));
+const skinnedEntryKey = (weapon, weaponSkins) => weaponSkins?.[weapon] && GOLDEN_VER[weapon] ? `gold#${weapon}` : entryKeyFor(weapon);
+export function authoredBootFamilies(weaponIds = [], weaponSkins = null) {
+  const keys = new Set(weaponIds.map((id) => skinnedEntryKey(id, weaponSkins)).filter(Boolean));
   if (!AUTHORED_KILLED && familyReady('grenade')) keys.add('grenade');
   return [...keys];
 }
@@ -465,6 +467,13 @@ export class AuthoredViewModels {
     for (const entry of this.entries.values()) refreshTeamHands(entry.handMeshes, profile);
   }
 
+  _applyWeaponSkin(entry, weaponId) {
+    const skinId = this.profile.weaponSkins?.[weaponId];
+    const model = entry?.mint?.active;
+    if (!skinId || !model || model.userData.weaponSkin === skinId) return;
+    applyWeaponSkinCandidate(model, weaponId, skinId);
+  }
+
   async load() {
     // Famílias entram no primeiro uso; baixar as 15 no boot custaria mais de 300 MB.
     if (this.onReady) queueMicrotask(() => this.onReady(this));
@@ -535,9 +544,10 @@ export class AuthoredViewModels {
           boca: visual.scene.getObjectByName('SOCKET_FAB_BARREL') || null,
         };
       } else if (bakedWeapon) {
-        // GLB assado: a Mint já está DENTRO (offline) com sockets nomeados —
-        // nada de montagem ao vivo; só referencia os nós do contrato.
-        const mint = visual.scene.getObjectByName(`MINT_WEAPON_${bakedWeapon.toUpperCase()}`);
+        // GLB assado novo expõe MINT_WEAPON_*; nos goldens públicos antigos a
+        // primeira malha de arma é o corpo normalizado e recebe pintura e decalques.
+        const mint = visual.scene.getObjectByName(`MINT_WEAPON_${bakedWeapon.toUpperCase()}`)
+          || (golden ? visual.weaponMeshes[0] : null);
         if (mint) entry.mint = { active: mint, wraps: new Map(), weaponId: bakedWeapon };
         entry.sockets = {
           muzzle: visual.scene.getObjectByName('SOCKET_MINT_MUZZLE') || null,
@@ -550,6 +560,7 @@ export class AuthoredViewModels {
           : Object.keys(VM_WEAPON).find((id) => VM_WEAPON[id].family === family && !weaponBaked(id));
         if (owner) attachMintWeapon(entry, owner);
       }
+      this._applyWeaponSkin(entry, entry.mint?.weaponId || bakedWeapon);
       // AK golden: ADS pela alça e massa medidas na malha (sonda-golden.mjs), fora de sockets/mint
       // para boca, flash e quadril seguirem os aprovados (VM-FABRICA §8.3).
       const mira = golden && GOLDEN_ADS && VM_WEAPON[bakedWeapon]?.ads?.golden;
@@ -565,7 +576,7 @@ export class AuthoredViewModels {
         }
       }
       if (acceptsAuthoredLoad({ request, activeRequest: this._activeRequest, key,
-        activeKey: entryKeyFor(this.weapon), utility: Boolean(this.utility) })) {
+        activeKey: this._keyFor(this.weapon), utility: Boolean(this.utility) })) {
         // Chegada tardia entra SUBINDO pelo arco de draw, nunca trocando no meio do idle.
         entry.mount.visible = true;
         this.draw(this.weapon);
@@ -584,7 +595,8 @@ export class AuthoredViewModels {
     return pending;
   }
 
-  entry(id = this.weapon) { return this.entries.get(entryKeyFor(id)); }
+  _keyFor(id) { return skinnedEntryKey(id, this.profile.weaponSkins); }
+  entry(id = this.weapon) { return this.entries.get(this._keyFor(id)); }
   active(id = this.weapon) { return Boolean(this.entry(id)); }
   // Estado corrente da máquina (cs16: um de idle|draw|reload|shoot1|shoot2|shoot3).
   state(id = this.weapon) { return this.entry(id)?.state || 'idle'; }
@@ -604,7 +616,7 @@ export class AuthoredViewModels {
     this.weapon = id;
     const request = ++this._requestSerial;
     this._activeRequest = request;
-    const key = entryKeyFor(id);
+    const key = this._keyFor(id);
     for (const entry of this.entries.values()) {
       const visible = this.utility ? entry === this.utility.entry : entry.key === key;
       // Entrada que sai de cena volta ao idle: fila/pose de reload não fica presa.
@@ -619,6 +631,7 @@ export class AuthoredViewModels {
     }
     if (previous !== id) this._idle(entry);
     if (entry.family !== 'grenade' && !key.includes('#')) attachMintWeapon(entry, id);
+    this._applyWeaponSkin(entry, id);
     this._applyRecoilFamily();
     return true;
   }

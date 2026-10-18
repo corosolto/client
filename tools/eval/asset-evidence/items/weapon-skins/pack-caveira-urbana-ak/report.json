@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "pack-caveira-urbana-ak",
+  "weaponId": "ak",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": null,
+  "markSourceUrl": null,
+  "referenceRule": "original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "0c61872d9c3998d5d9b9c971e83e0717f41f7c7654575ca4f2720f57527f14a1",
+    "side-right.png": "eb4f5726c9b0294e5eedd77c2273e663909420d6333f5d9275555d1a1eebcfc7",
+    "three-quarter.png": "a83f55febfed2d56cbfd0cd00c4e57f0b833b1140e46463c47f553f69a6eb56e"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "a038c6278d39e885f07c7ef95ba1ac138cd6db3941caec8e281d4528022ea212",
+    "public/js/weapon-skins.js": "78e34b23e2216c5a20ba6adc8fc24e239fc9a3c926291fa27cc4130b818d6666",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/project-marks/caveira-urbana.svg": "7607500fdefcb212e6e0ed4f0a15a6f248b2670f2c579b7a3c4e3b96313a6625"
+  },
+  "consoleErrors": []
+}

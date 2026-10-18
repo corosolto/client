@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "pack-maga-47-pistol",
+  "weaponId": "pistol",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": null,
+  "sloganPlacement": null,
+  "markSourceUrl": null,
+  "referenceRule": "original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "2651f3ba25a92534fe326867d08b2c705414c2d511b80f2881bba20114ccfdf2",
+    "side-right.png": "d2f9285bd86919541db10df5650d3275fd996de88b0417150ab9a65c6b3e2b88",
+    "three-quarter.png": "d91c595e466d7f3a19c09717ad989e3f81df7786085124b795c74ab4e1b0d5bf"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "a038c6278d39e885f07c7ef95ba1ac138cd6db3941caec8e281d4528022ea212",
+    "public/js/weapon-skins.js": "78e34b23e2216c5a20ba6adc8fc24e239fc9a3c926291fa27cc4130b818d6666",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
+  },
+  "consoleErrors": []
+}

@@ -130,10 +130,10 @@ const THEME_FRAGMENT = Object.freeze({
       + (vWeaponSkinLocal.z + 0.0927734375) * 1.8
     );
     vec3 brasilColor = brasilBand < 0.46
-      ? vec3(0.008, 0.38, 0.14)
-      : (brasilBand < 0.76 ? vec3(0.95, 0.72, 0.04) : vec3(0.015, 0.16, 0.55));
+      ? vec3(0.00, 0.68, 0.22)
+      : (brasilBand < 0.76 ? vec3(1.00, 0.86, 0.00) : vec3(0.00, 0.24, 0.78));
     float brasilSlide = smoothstep(0.075, 0.11, vWeaponSkinLocal.y);
-    diffuseColor.rgb *= mix(brasilColor, vec3(0.012, 0.13, 0.50), brasilSlide);
+    diffuseColor.rgb = mix(diffuseColor.rgb, mix(brasilColor, vec3(0.00, 0.20, 0.72), brasilSlide), 0.94);
   `,
   'brasil-cotidiano': `
     float cotidianoGreen = 1.0 - smoothstep(0.014, 0.030, abs(vWeaponSkinLocal.y + 0.145));
@@ -155,9 +155,43 @@ const THEME_FRAGMENT = Object.freeze({
     float tropicalTeal = 1.0 - smoothstep(0.016, 0.034, abs(vWeaponSkinLocal.y + 0.145));
     float tropicalYellow = 1.0 - smoothstep(0.016, 0.034, abs(vWeaponSkinLocal.y + 0.085));
     float tropicalCoral = 1.0 - smoothstep(0.020, 0.044, abs(vWeaponSkinLocal.z + 0.31));
-    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.00, 0.62, 0.52), tropicalTeal * 0.92);
-    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.98, 0.73, 0.12), tropicalYellow * 0.90);
-    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.91, 0.14, 0.20), tropicalCoral * 0.84);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.00, 0.79, 0.65), tropicalTeal * 0.98);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.00, 0.86, 0.00), tropicalYellow * 0.98);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.96, 0.16, 0.22), tropicalCoral * 0.90);
+  `,
+  'pack-caveira': `
+    float caveiraA = step(0.5, fract((vWeaponSkinLocal.y + vWeaponSkinLocal.z) * 18.0));
+    float caveiraB = step(0.5, fract((vWeaponSkinLocal.y - vWeaponSkinLocal.z) * 18.0));
+    float caveiraCarbon = abs(caveiraA - caveiraB);
+    float caveiraBone = 1.0 - smoothstep(0.020, 0.038, abs(sin(vWeaponSkinLocal.z * 17.0) * 0.04 + vWeaponSkinLocal.y));
+    vec3 caveiraBase = mix(vec3(0.018, 0.022, 0.028), vec3(0.075, 0.082, 0.095), caveiraCarbon);
+    diffuseColor.rgb = mix(caveiraBase, vec3(0.78, 0.75, 0.66), caveiraBone * 0.72);
+  `,
+  'pack-brasil-neon': `
+    float brasilNeonBand = fract((vWeaponSkinLocal.y + 0.45) * 4.4 + vWeaponSkinLocal.z * 1.8);
+    vec3 brasilNeonColor = brasilNeonBand < 0.45
+      ? vec3(0.00, 0.84, 0.30)
+      : (brasilNeonBand < 0.74 ? vec3(1.00, 0.88, 0.00) : vec3(0.00, 0.30, 0.96));
+    diffuseColor.rgb = brasilNeonColor;
+  `,
+  'pack-liberdade': `
+    float liberdadeBand = fract((vWeaponSkinLocal.y + 0.40) * 7.0);
+    vec3 liberdadeStripe = liberdadeBand < 0.50 ? vec3(0.70, 0.018, 0.10) : vec3(0.94, 0.94, 0.91);
+    float liberdadeBlue = step(0.06, vWeaponSkinLocal.y) * step(vWeaponSkinLocal.z, 0.06);
+    diffuseColor.rgb = mix(liberdadeStripe, vec3(0.02, 0.12, 0.36), liberdadeBlue);
+  `,
+  'pack-maga': `
+    float magaRail = 1.0 - smoothstep(0.018, 0.040, abs(vWeaponSkinLocal.y + 0.08));
+    float magaCut = step(0.5, fract((vWeaponSkinLocal.z - vWeaponSkinLocal.y) * 13.0));
+    vec3 magaBase = mix(vec3(0.34, 0.002, 0.025), vec3(0.82, 0.012, 0.075), magaCut);
+    diffuseColor.rgb = mix(magaBase, vec3(0.95, 0.95, 0.92), magaRail);
+  `,
+  'pack-emo': `
+    vec2 emoCell = floor(vec2(vWeaponSkinLocal.z, vWeaponSkinLocal.y) * vec2(15.0, 15.0));
+    float emoCheck = mod(emoCell.x + emoCell.y, 2.0);
+    float emoCross = 1.0 - smoothstep(0.010, 0.028, min(abs(vWeaponSkinLocal.y - 0.02), abs(vWeaponSkinLocal.z + 0.02)));
+    vec3 emoBase = mix(vec3(0.010, 0.012, 0.018), vec3(0.38, 0.015, 0.32), emoCheck);
+    diffuseColor.rgb = mix(emoBase, vec3(0.95, 0.03, 0.62), emoCross * 0.72);
   `,
   ouro: `
     float ouroBrush = 0.90 + 0.10 * sin(
@@ -205,6 +239,11 @@ const markTextures = new Map();
 const markLoads = new Map();
 const sloganTextures = new Map();
 const fittedSurfaceCache = new Map();
+const HAND_MATERIAL = /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)|(?:Glove|Hand|Sleeve|Cloth)/i;
+const handMesh = (object) => {
+  const materials = Array.isArray(object?.material) ? object.material : [object?.material];
+  return materials.some((material) => HAND_MATERIAL.test(material?.name || ''));
+};
 
 export function preloadWeaponSkinCandidate(skinId) {
   const asset = WEAPON_SKINS[skinId]?.markAsset;
@@ -256,7 +295,7 @@ function sloganTexture(skinId) {
 }
 
 function fittedSideSurfaces(model, weaponId, placements) {
-  const cacheKey = `${weaponId}:${placements.map(({ y, z, width, height }) => `${y},${z},${width},${height}`).join('|')}`;
+  const cacheKey = `${model.uuid}:${weaponId}:${placements.map(({ y, z, width, height }) => `${y},${z},${width},${height}`).join('|')}`;
   if (fittedSurfaceCache.has(cacheKey)) return fittedSurfaceCache.get(cacheKey);
   model.updateMatrixWorld(true);
   const inverseRoot = new THREE.Matrix4().copy(model.matrixWorld).invert();
@@ -268,7 +307,7 @@ function fittedSideSurfaces(model, weaponId, placements) {
   const point = new THREE.Vector3();
   const matrix = new THREE.Matrix4();
   model.traverse((object) => {
-    const positions = object.isMesh && object.geometry?.attributes?.position;
+    const positions = object.isMesh && !handMesh(object) && object.geometry?.attributes?.position;
     if (!positions || object.name.startsWith('skin-') || object.name.startsWith('club-mark-')) return;
     matrix.multiplyMatrices(inverseRoot, object.matrixWorld);
     const step = Math.max(1, Math.ceil(positions.count / 24000));
@@ -433,11 +472,14 @@ export function applyWeaponSkinCandidate(model, weaponId, skinId) {
   const definition = WEAPON_SKINS[skinId];
   if (!definition || !definition.targetWeapons.includes(weaponId)) return false;
   if (!patternFragment(skinId)) return false;
+  const skinMaterial = (material) => HAND_MATERIAL.test(material?.name || '')
+    ? material
+    : cloneMaterial(material, skinId);
   model.traverse((object) => {
     if (!object.isMesh || !object.material) return;
     object.material = Array.isArray(object.material)
-      ? object.material.map((material) => cloneMaterial(material, skinId))
-      : cloneMaterial(object.material, skinId);
+      ? object.material.map(skinMaterial)
+      : skinMaterial(object.material);
   });
   attachSkinMark(model, weaponId, skinId);
   model.userData.weaponSkin = skinId;

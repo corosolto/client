@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "pack-maga-47-knife",
+  "weaponId": "knife",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": null,
+  "sloganPlacement": null,
+  "markSourceUrl": null,
+  "referenceRule": "original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "bcbe29acee210c5bc435e3be5849393a70015f2b6633a1ab677e31e4c3b82f1e",
+    "side-right.png": "fe275d7bef9de87943581772657a3db1763dd890bb809ab85d5944a773b3ede9",
+    "three-quarter.png": "a6ec722a415a133241c5ce513953b54f846e441fbb2a8eee160bb6ee48393bbb"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "a038c6278d39e885f07c7ef95ba1ac138cd6db3941caec8e281d4528022ea212",
+    "public/js/weapon-skins.js": "78e34b23e2216c5a20ba6adc8fc24e239fc9a3c926291fa27cc4130b818d6666",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
+  },
+  "consoleErrors": []
+}

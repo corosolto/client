@@ -1,7 +1,7 @@
 const storeSkin = ({
   id, name, weapon, theme, color, description, price, inspiration,
   slogan = null, markAsset = null, markSourceUrl = null, rightsStatus = 'original-safe', metalFinish = null,
-  preserveBase = false, markLayout = null, sloganLayout = null, sloganAspect = null, series = null,
+  preserveBase = false, markLayout = null, sloganLayout = null, sloganAspect = null, series = null, storeEnabled = true,
 }) => Object.freeze({
   id,
   name,
@@ -24,7 +24,7 @@ const storeSkin = ({
   ...(markLayout ? { markLayout: Object.freeze(markLayout) } : {}),
   ...(sloganLayout ? { sloganLayout: Object.freeze(sloganLayout) } : {}),
   ...(sloganAspect ? { sloganAspect } : {}),
-  storeEnabled: true,
+  storeEnabled,
   storePrice: price,
   storeSlot: 'weapon',
   storeWeapon: weapon,
@@ -34,7 +34,36 @@ const storeSkin = ({
   storePoster: `/img/weapon-skins/${id}.webp`,
 });
 
+const PACK_WEAPON_THEMES = Object.freeze([
+  { id: 'caveira-urbana', name: 'Caveira Urbana', theme: 'pack-caveira', color: '#d8d2c2', description: 'Carbono preto, osso marfim e caveira original.', markAsset: '/textures/weapon-skins/project-marks/caveira-urbana.svg' },
+  { id: 'brasil-neon', name: 'Brasil Neon', theme: 'pack-brasil-neon', color: '#00d65c', description: 'Verde, amarelo e azul elétricos de alta leitura.' },
+  { id: 'liberdade-1776', name: 'Liberdade 1776', theme: 'pack-liberdade', color: '#b31942', description: 'Vermelho, branco e azul em faixas de aço.' },
+  { id: 'maga-47', name: 'MAGA 47', theme: 'pack-maga', color: '#d20a2e', description: 'Vermelho de campanha, preto fosco e contraste branco.' },
+  { id: 'emo-xadrez', name: 'Emo Xadrez', theme: 'pack-emo', color: '#f02cb8', description: 'Xadrez preto e magenta com recortes violetas.' },
+]);
+const PACK_WEAPON_SKINS = Object.freeze(Object.fromEntries(PACK_WEAPON_THEMES.flatMap((pack) =>
+  ['ak', 'pistol', 'knife'].map((weapon) => {
+    const label = weapon === 'ak' ? 'AK' : weapon === 'pistol' ? 'Pistola' : 'Faca';
+    const id = `pack-${pack.id}-${weapon}`;
+    return [id, storeSkin({
+      id,
+      name: `${label} ${pack.name}`,
+      weapon,
+      theme: pack.theme,
+      color: pack.color,
+      description: pack.description,
+      markAsset: pack.markAsset || null,
+      price: 0,
+      inspiration: 'conjunto original coordenado do projeto, sem marca de produto ou reprodução de item comercial',
+      series: 'PACKS DA TRETA',
+      storeEnabled: false,
+    })];
+  })
+)));
+
+
 export const WEAPON_SKINS = Object.freeze({
+  ...PACK_WEAPON_SKINS,
   'ondas-cariocas': Object.freeze({
     id: 'ondas-cariocas',
     name: 'Ondas Cariocas',
@@ -207,7 +236,7 @@ export const WEAPON_SKINS = Object.freeze({
     markSourceUrl: 'https://commons.wikimedia.org/wiki/File:Hammer_and_sickle.svg',
     rightsStatus: 'political-satire',
     markLayout: { y: 0.045, z: -0.060, height: 0.145 },
-    sloganLayout: { y: 0.120, z: 0.155, height: 0.065 },
+    sloganLayout: { y: 0.120, z: 0.180, height: 0.060 },
   }),
   'trabalho-13-pistola': storeSkin({
     id: 'trabalho-13-pistola',
@@ -215,15 +244,14 @@ export const WEAPON_SKINS = Object.freeze({
     weapon: 'pistol',
     theme: 'trabalho-13',
     color: '#c51f32',
-    description: 'Vermelho profundo, martelo e foice clássico e a frase “FAZ O L É LULA 13”.',
+    description: 'Vermelho profundo, estrela amarela e a frase “FAZ O L É LULA 13”.',
     price: 500,
-    inspiration: 'composição política satírica original em vermelho e dourado com o símbolo público e histórico do martelo e foice',
+    inspiration: 'composição política satírica original em vermelho e dourado com estrela geométrica amarela',
     slogan: 'FAZ O L É LULA 13',
-    markAsset: '/textures/weapon-skins/political-marks/trabalho-13.svg',
-    markSourceUrl: 'https://commons.wikimedia.org/wiki/File:Hammer_and_sickle.svg',
+    markAsset: '/textures/weapon-skins/political-marks/estrela-amarela.svg',
     rightsStatus: 'political-satire',
-    markLayout: { y: -0.050, z: 0.005, height: 0.145 },
-    sloganLayout: { y: 0.245, z: -0.040, height: 0.095 },
+    markLayout: { y: 0.145, z: 0.075, height: 0.115 },
+    sloganLayout: { y: 0.255, z: 0.100, height: 0.085 },
     sloganAspect: 6,
   }),
   'estrela-vermelha-ak': storeSkin({
@@ -239,7 +267,7 @@ export const WEAPON_SKINS = Object.freeze({
     markAsset: '/textures/weapon-skins/political-marks/estrela-vermelha.svg',
     rightsStatus: 'political-satire',
     markLayout: { y: 0.040, z: -0.070, height: 0.115 },
-    sloganLayout: { y: 0.120, z: 0.125, height: 0.105 },
+    sloganLayout: { y: 0.120, z: 0.180, height: 0.055 },
     sloganAspect: 6,
   }),
   'estrela-vermelha-pistola': storeSkin({
@@ -255,7 +283,7 @@ export const WEAPON_SKINS = Object.freeze({
     markAsset: '/textures/weapon-skins/political-marks/estrela-vermelha.svg',
     rightsStatus: 'political-satire',
     markLayout: { y: -0.035, z: -0.005, height: 0.110 },
-    sloganLayout: { y: 0.245, z: -0.040, height: 0.115 },
+    sloganLayout: { y: 0.255, z: 0.100, height: 0.085 },
     sloganAspect: 6,
   }),
   'estrela-verde-ak': storeSkin({
@@ -289,7 +317,7 @@ export const WEAPON_SKINS = Object.freeze({
     name: 'AK Brasil 22',
     weapon: 'ak',
     theme: 'brasil-22',
-    color: '#0b8b48',
+    color: '#00a651',
     description: 'Verde, amarelo e azul com a bandeira e a frase “O BRASIL É 22”.',
     price: 500,
     inspiration: 'releitura vetorial original da bandeira brasileira para uma composição política satírica',
@@ -297,14 +325,14 @@ export const WEAPON_SKINS = Object.freeze({
     markAsset: '/textures/weapon-skins/political-marks/brasil-22.svg',
     rightsStatus: 'political-satire',
     markLayout: { y: 0.040, z: -0.065, height: 0.125 },
-    sloganLayout: { y: 0.120, z: 0.145, height: 0.080 },
+    sloganLayout: { y: 0.120, z: 0.180, height: 0.065 },
   }),
   'brasil-22-pistola': storeSkin({
     id: 'brasil-22-pistola',
     name: 'Pistola Brasil 22',
     weapon: 'pistol',
     theme: 'brasil-22',
-    color: '#0b8b48',
+    color: '#00a651',
     description: 'Verde, amarelo e azul com a bandeira e a frase “O BRASIL É 22”.',
     price: 500,
     inspiration: 'releitura vetorial original da bandeira brasileira para uma composição política satírica',
@@ -312,7 +340,7 @@ export const WEAPON_SKINS = Object.freeze({
     markAsset: '/textures/weapon-skins/political-marks/brasil-22.svg',
     rightsStatus: 'political-satire',
     markLayout: { y: -0.140, z: -0.030, height: 0.135 },
-    sloganLayout: { y: 0.245, z: -0.040, height: 0.105 },
+    sloganLayout: { y: 0.255, z: 0.100, height: 0.085 },
     sloganAspect: 6,
   }),
   'tamo-junto-ak': storeSkin({
@@ -326,7 +354,7 @@ export const WEAPON_SKINS = Object.freeze({
     inspiration: 'expressão brasileira cotidiana com acabamento original discreto e acentos geométricos próprios',
     slogan: 'TAMO JUNTO',
     preserveBase: true,
-    sloganLayout: { y: 0.120, z: 0.150, height: 0.075 },
+    sloganLayout: { y: 0.120, z: 0.180, height: 0.065 },
     series: 'BRASIL DE TODO DIA',
   }),
   'tamo-junto-pistola': storeSkin({
@@ -340,7 +368,7 @@ export const WEAPON_SKINS = Object.freeze({
     inspiration: 'expressão brasileira cotidiana com acabamento original discreto e acentos geométricos próprios',
     slogan: 'TAMO JUNTO',
     preserveBase: true,
-    sloganLayout: { y: 0.245, z: -0.040, height: 0.110 },
+    sloganLayout: { y: 0.255, z: 0.100, height: 0.090 },
     sloganAspect: 6,
     series: 'BRASIL DE TODO DIA',
   }),
@@ -355,7 +383,7 @@ export const WEAPON_SKINS = Object.freeze({
     inspiration: 'expressão brasileira cotidiana com acabamento original discreto e acentos geométricos próprios',
     slogan: 'É NÓIS',
     preserveBase: true,
-    sloganLayout: { y: 0.120, z: 0.150, height: 0.075 },
+    sloganLayout: { y: 0.120, z: 0.180, height: 0.065 },
     series: 'BRASIL DE TODO DIA',
   }),
   'e-nois-pistola': storeSkin({
@@ -369,7 +397,7 @@ export const WEAPON_SKINS = Object.freeze({
     inspiration: 'expressão brasileira cotidiana com acabamento original discreto e acentos geométricos próprios',
     slogan: 'É NÓIS',
     preserveBase: true,
-    sloganLayout: { y: 0.245, z: -0.040, height: 0.115 },
+    sloganLayout: { y: 0.255, z: 0.100, height: 0.090 },
     sloganAspect: 6,
     series: 'BRASIL DE TODO DIA',
   }),
@@ -400,7 +428,7 @@ export const WEAPON_SKINS = Object.freeze({
     name: 'AK Tropicalente',
     weapon: 'ak',
     theme: 'tropicalente',
-    color: '#00a98f',
+    color: '#00c9a7',
     description: 'Arma original com detalhes tropicais, arara, coqueiro e “TROPICALENTE” em destaque.',
     price: 500,
     inspiration: 'composição tropical brasileira original com arara e coqueiro desenhados pelo projeto',
@@ -408,7 +436,7 @@ export const WEAPON_SKINS = Object.freeze({
     markAsset: '/textures/weapon-skins/project-marks/tropicalente.svg',
     preserveBase: true,
     markLayout: { y: 0.045, z: -0.230, height: 0.075 },
-    sloganLayout: { y: 0.120, z: 0.155, height: 0.080 },
+    sloganLayout: { y: 0.120, z: 0.180, height: 0.065 },
     series: 'BRASIL TROPICAL',
   }),
   'tropicalente-pistola': storeSkin({
@@ -416,15 +444,15 @@ export const WEAPON_SKINS = Object.freeze({
     name: 'Pistola Tropicalente',
     weapon: 'pistol',
     theme: 'tropicalente',
-    color: '#00a98f',
-    description: 'Arma original com detalhes tropicais, arara, coqueiro e “TROPICALENTE” em destaque.',
+    color: '#00c9a7',
+    description: 'Pistola original com coqueiro tropical ampliado e “TROPICALENTE” sobre o cano.',
     price: 500,
-    inspiration: 'composição tropical brasileira original com arara e coqueiro desenhados pelo projeto',
+    inspiration: 'composição tropical brasileira original com coqueiro desenhado pelo projeto',
     slogan: 'TROPICALENTE',
-    markAsset: '/textures/weapon-skins/project-marks/tropicalente.svg',
+    markAsset: '/textures/weapon-skins/project-marks/tropicalente-coqueiro.svg',
     preserveBase: true,
-    markLayout: { y: -0.055, z: -0.015, height: 0.170 },
-    sloganLayout: { y: 0.245, z: -0.040, height: 0.120 },
+    markLayout: { y: 0.235, z: -0.100, height: 0.160 },
+    sloganLayout: { y: 0.255, z: 0.100, height: 0.085 },
     sloganAspect: 6,
     series: 'BRASIL TROPICAL',
   }),

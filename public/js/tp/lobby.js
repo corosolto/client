@@ -25,7 +25,7 @@ const ABAS = [
   { id: 'loja', rotulo: 'LOJA', ir: () => { abaDoHub('loja'); if (filtroLoja() === 'owned') document.querySelector('[data-treta-filter="all"]')?.click(); } },
   { id: 'armario', rotulo: 'ARMÁRIO', ir: () => {
     abaDoHub('loja');
-    document.querySelector('[data-treta-view="skins"]')?.click();
+    document.querySelector('[data-treta-view="items"]')?.click();
     document.querySelector('[data-treta-filter="owned"]')?.click();
   } },
   { id: 'carreira', rotulo: 'CARREIRA', ir: () => abaDoHub('ranking') },

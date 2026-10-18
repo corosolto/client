@@ -1,5 +1,6 @@
 import {WEAPON_SKINS} from './data/weapon-skin-definitions.js';
 import {STORE_GLOVES} from './data/glove-skin-definitions.js';
+import {TRETA_PACKS as PACKS} from './data/pack-definitions.js';
 
 export const TRETA_SYMBOL = 'T$';
 export const TRETA_COIN_ART = {model:'/models/treta/coin-classic-saci-82ad26210cf8.glb',poster:'/img/treta/coin-classic-saci.webp'};
@@ -26,7 +27,7 @@ export const TRETA_SKINS = [
   {id:'bolsonaro-mandrake',name:'Capitão Mandrake',character:'capitao',color:'#80b9e8',series:'MANDRAKE',description:'Boné branco, conjunto azul claro estampado e correntes de ouro.',price:800,ready:false},
   {id:'michelle-mandrake',name:'Mixelle Mandrake',character:'julia-zanatta',color:'#e96c81',series:'MANDRAKE',description:'Óculos vermelhos, camiseta bordada com rosas e correntes prateadas.',price:800,ready:false},
   {id:'zero-um-mandrake',name:'Senador Mandrake',character:'senador',color:'#d7ac51',series:'MANDRAKE',description:'Conjunto preto e dourado, boné virado e três correntes pesadas.',price:800,ready:false},
-];
+].map(item=>({...item,slot:'character'}));
 export const TRETA_WEAPON_SKINS = Object.freeze(Object.values(WEAPON_SKINS)
   .filter((skin)=>skin.storeEnabled && skin.runtimeEnabled && skin.approved && skin.certified)
   .map((skin)=>Object.freeze({
@@ -43,6 +44,7 @@ export const TRETA_WEAPON_SKINS = Object.freeze(Object.values(WEAPON_SKINS)
     ready:true,
   })));
 export const TRETA_GLOVES = STORE_GLOVES;
+export const TRETA_PACKS = PACKS;
 export const TRETA_DEFAULT_REWARDS = {email_reward:200,referral_reward:100,sp_reward:10,mp_reward:25,daily_match_cap:250,referral_cap:10,starts_at:null,ends_at:null};
 
 export function tretaChange(amount) {

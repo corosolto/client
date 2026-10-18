@@ -67,6 +67,8 @@
 .treta-detail-copy{padding:64px 32px 32px}.treta-detail-copy h2{font:400 48px/1.05 'Bebas Neue',sans-serif;margin:12px 0 24px;letter-spacing:1px}
 .treta-detail-copy p{font:400 15px/1.6 system-ui,sans-serif;color:var(--treta-muted);margin:16px 0}.treta-detail-copy>strong{display:block;font:700 32px/1.2 'Barlow Condensed',sans-serif;color:var(--treta-gold);margin:24px 0 16px}
 .treta-detail-copy .treta-primary{width:100%}.treta-detail-copy .treta-cosmetic-note{font-size:12px;border-top:1px solid var(--treta-line);padding-top:16px}
+.treta-detail-copy .treta-inspect-hint{display:flex;align-items:center;gap:12px;margin:18px 0;padding:12px 14px;border:1px solid color-mix(in srgb,var(--treta-lime) 50%,var(--treta-line));background:#0c100bd9;color:#fff;font:700 13px/1.2 'Barlow Condensed',sans-serif;letter-spacing:1px}.treta-inspect-hint[hidden]{display:none}.treta-inspect-hint kbd{display:grid;place-items:center;width:34px;height:34px;border:1px solid #fff8;border-bottom-width:3px;border-radius:5px;background:#20251b;color:var(--treta-lime);font:800 20px/1 monospace}
+.treta-inspect-video{display:block;width:100%;aspect-ratio:16/9;border:1px solid var(--treta-line);border-radius:4px;background:#080a08;object-fit:cover}.treta-inspect-video[hidden]{display:none}
 .treta-info[open],.treta-purchase[open]{display:block;width:min(700px,calc(100vw - 32px));padding:48px 32px 32px;text-align:center}
 .treta-info h2,.treta-purchase h2{font:400 48px/1.1 'Bebas Neue',sans-serif;letter-spacing:1px;margin:16px 0}
 .treta-info p,.treta-purchase p{font:400 14px/1.6 system-ui,sans-serif;color:var(--treta-muted);margin:16px 0}.treta-info>.treta-rewards{margin:24px 0;gap:16px}

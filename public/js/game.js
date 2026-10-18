@@ -8,6 +8,7 @@ import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon
 import { buildCharacterModel, hasModel, preloadCharacterAssets } from './glbchars.js';
 import { weaponModel, weaponCFG, hasWeapon, preloadWeapons, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
+import { gloveSkinStyle } from './data/glove-skin-definitions.js';
 import { VM_FRAME } from './vmattach.js';
 import { vmlabPose, VMLAB_SCOPED, VMLAB_NO_ALIGN } from './vmlab.js';
 import { buildRecoilPattern, RECOIL_PARAMS, RECOIL_PATTERN, RECOIL_CLASS, REC_DEG, REC } from './recoil.js';
@@ -720,7 +721,7 @@ export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
 const FX_CLARAO = { normal: 1, reduzido: 0.45, minimo: 0.15 };
 
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
     this._ctfOpt = ctf;
     this._matchWeapons = matchWeapons;
     this._armaN = 0;
@@ -729,6 +730,7 @@ export class Game {
     this.settings = settings;
     this.playerWeaponSkins = Object.freeze({ ...playerWeaponSkins });
     this.playerGloveId = playerGloveId;
+    this.playerKnifeSkinId = playerKnifeSkinId;
     /* `online` = autoridade do servidor. `_mp` é injetado pelo main.js; este arquivo nunca
        importa rede. Single-player: `_mp` null e nada de rede roda. Ver docs/MULTIPLAYER.md. */
     this.online = !!(mpFactory && net);
@@ -978,7 +980,7 @@ export class Game {
     const authoredPal = authoredDef?.pal || { skin: 0xd9a066, shirt: 0x27364a };
     this.vm.authored = AUTHORED_VM_ENABLED ? createAuthoredViewModels(this.vm.root, () => {
       if (!this._disposed && this.vm) this._applyVmVisibility();
-    }, { id: this.playerCharId, faction: this.playerFaction, gloveSkinId: this.playerGloveId, skin: authoredPal.skin, sleeve: authoredPal.shirt, accent: authoredPal.pants }) : null;
+    }, { id: this.playerCharId, faction: this.playerFaction, gloveSkinId: this.playerGloveId, weaponSkins: this.playerWeaponSkins, skin: authoredPal.skin, sleeve: authoredPal.shirt, accent: authoredPal.pants }) : null;
     {
       /* ORÇAMENTO DE LUZ DO VIEWMODEL — MAT2. O rig abaixo (key/fill/sky/rim/bounce+hemi)
          somava 7,60 unidades FIXAS, contra 2,60 (ferro_velho) a 3,60 (praca_poderes) dos mapas:
@@ -1168,6 +1170,7 @@ export class Game {
         sleeve: this.playerDef?.pal?.shirt,
         accent: factionColor(this.playerFaction),
       },
+      knifeSkinId: this.playerKnifeSkinId,
       onReady: () => {
         if (this._disposed) return;
         this._applyVmVisibility();
@@ -1471,12 +1474,12 @@ export class Game {
     // First-person arms inherit the selected character's skin + sleeve colors.
     const pdef = byId(this.playerCharId);
     const pal = (pdef && pdef.pal) || { skin: 0xd9a066, shirt: 0x3a4a5a };
-    // LUVA POR TIME no fallback procedural também (mãos genéricas por time — pedido do dono):
-    // P vermelho, B verde, U roxo; blend 55% (igual ao fparms) pra não virar luva plástica.
+    // Luva equipada vence a cor do time também no caminho legado usado pelas skins de arma.
     const GLOVE = { E: 0xd83232, B: 0x28c858, U: 0x8a3ffc, M: 0x9d4edd };
-    const skinMat = dark(pal.skin);
-    if (GLOVE[this.playerFaction]) skinMat.color.lerp(new THREE.Color(GLOVE[this.playerFaction]), 0.85);
-    const sleeveMat = dark(pal.shirt);
+    const cosmeticGlove = gloveSkinStyle(this.playerGloveId);
+    const skinMat = dark(cosmeticGlove ? Number.parseInt(cosmeticGlove.glove.slice(1), 16) : pal.skin);
+    if (!cosmeticGlove && GLOVE[this.playerFaction]) skinMat.color.lerp(new THREE.Color(GLOVE[this.playerFaction]), 0.85);
+    const sleeveMat = dark(cosmeticGlove ? Number.parseInt(cosmeticGlove.sleeve.slice(1), 16) : pal.shirt);
     const skin = skinMat; // legacy alias
     // A curled gripping hand built from two-segment fingers (proximal + distal phalanx),
     // a slimmer palm and an angled thumb — reads as an actual gripping hand, not a brick.
@@ -1833,8 +1836,8 @@ export class Game {
     // Braços FP vêm do personagem; se falharem, mostramos só a arma, nunca mãos genéricas.
     let arms = null;
     const _qsHands = new URLSearchParams(location.search).get('hands');
-    // SÓ-ARMA por padrão, estilo UNREAL TOURNAMENT (dono é fã de UT — arcade, só a arma no
-    // canto, sem mão). As mãos ficavam esquisitas/centralizadas. ?hands=1 liga o braço FP.
+    // SÓ-ARMA por padrão, estilo UNREAL TOURNAMENT. Skins usam as mãos do viewmodel
+    // autorado; o legado conserva as mãos procedurais apenas como fallback de carga.
     const WEAPON_ONLY = _qsHands !== '1';
     if (!FP_OFF && !WEAPON_ONLY) arms = buildFPArms({ id: this.playerCharId, team: this.playerFaction });
     if (arms) {
@@ -1850,10 +1853,11 @@ export class Game {
         if (hL) hL.visible = false;
       }
     }
-    // SÓ-ARMA: esconde as mãos procedurais (handR/handL) presas a cada modelo de arma.
-    // (A handR procedural é cápsulas calibradas pra arma-box antiga — na arma Mint cai
-    // torta. Mão boa vem do corpo real do personagem: ver os modos de 3ª pessoa (camView).)
-    if (WEAPON_ONLY) for (const k in models) models[k].traverse((o) => { if (o.name === 'handR' || o.name === 'handL') o.visible = false; });
+    // A skin que degradar ao modelo legado mantém mãos nos grips; sem skin, o modo
+    // só-arma preserva o visual arcade.
+    if (WEAPON_ONLY) for (const k in models) models[k].traverse((o) => {
+      if (o.name === 'handR' || o.name === 'handL') o.visible = Boolean(this.playerWeaponSkins[k]);
+    });
     this._weaponOnly = WEAPON_ONLY;
     // grip/ads expostos no objeto do VM (G3-R1): `grip[id]` é o PONTO DE EMPUNHADURA em
     // espaço do vm.root — contrato combinado com o agente de animação, que prende a mão nele
@@ -3289,9 +3293,8 @@ export class Game {
     /* Esta troca saiu no merge com a main e as 26 armas caíram no legado, sem
        mãos: causa, medida e régua em KNOWN-BUGS.md, BUG-156. */
     const melee = this.vm.melee?.setWeapon(w) || false;
-    const skinned = !!this.playerWeaponSkins[w];
-    const authored = melee || skinned ? false : (this.vm.authored?.setWeapon(w) || false);
-    if (melee || skinned) this.vm.authored?.setWeapon('');
+    const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
+    if (melee) this.vm.authored?.setWeapon('');
     // Uma decisão de visibilidade (vmvisibility.js): o legado continua visível enquanto o
     // autorado carrega ou falha; só some depois que o controlador confirma malha ativa.
     this._vmPresentation = { authored, melee };
@@ -3310,7 +3313,7 @@ export class Game {
         document.body.appendChild(badge);
       }
       badge.textContent = (melee ? `vm: faca autorada · ${w}` : authored
-        ? `vm: AUTORADO ${w} (${AUTHORED_VM_MODELS[w] || '?'}) · ${({ gold: 'gold', fab: 'fábrica' })[vmFonteDe(w).chave.split('#')[0]] || 'K'}` : `vm: legado · ${w}`) + ` · ${VM_RUNTIME.mode}`;
+        ? `vm: AUTORADO ${w} (${AUTHORED_VM_MODELS[w] || '?'}) · ${({ gold: 'gold', fab: 'fábrica' })[(this.vm.authored?.entry(w)?.key || vmFonteDe(w).chave).split('#')[0]] || 'K'}` : `vm: legado · ${w}`) + ` · ${VM_RUNTIME.mode}`;
       badge.style.color = authored || melee ? '#8effa9' : '#ffd27d';
       if (AUTHORED_VM_ENABLED && QS.get('vmqa') === 'precision') this._ensureVmPrecisionQa();
     }
@@ -3519,7 +3522,7 @@ export class Game {
     if (!p.alive || this.state !== 'live' || p.weapon === 'knife' || this._reloading() || this.time < p.drawUntil) return false;
     this._scope(false, true);
     this.vm.inspectAt = this.time;
-    this.vm.authored?.inspect(p.weapon);
+    if (!this.playerWeaponSkins[p.weapon]) this.vm.authored?.inspect(p.weapon);
     return true;
   }
   _cancelInspect() {
@@ -6587,11 +6590,12 @@ export class Game {
     if (inspect > 0) {
       const shortGun = PISTOLS.has(p.weapon);
       const breathe = Math.sin((this.time - this.vm.inspectAt) * Math.PI * 1.2) * 0.012 * inspect;
-      this.vm.root.position.x += -0.18 * inspect;
+      this.vm.root.position.x += (authoredActive ? -0.55 : -0.18) * inspect;
       this.vm.root.position.y += (shortGun ? 0.06 : 0.15) * inspect + breathe;
       this.vm.root.position.z -= (shortGun ? 0.18 : 0.52) * inspect;
       this.vm.root.rotation.x -= (shortGun ? 0.02 : 0.06) * inspect;
       this.vm.root.rotation.z += (shortGun ? 0.03 : 0.07) * inspect;
+      this.vm.root.rotation.y += (authoredActive ? 0.18 : -(shortGun ? 0.48 : 0.68)) * inspect;
       this.vm.root.scale.multiplyScalar(1 - (shortGun ? 0.04 : 0.26) * inspect);
     }
     /* ADS ZERA O PITCH/YAW PRÓPRIOS DA ARMA (RODADA DO GRIP + PITCH).
