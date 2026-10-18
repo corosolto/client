@@ -36,7 +36,7 @@ const regiao = (ini, fim) => {
 };
 const codigo = regiao('// FUNIL (017)', '// PERF (018)') + regiao('/* Telemetria nova (feat/telemetria)', '\nasync function startGame(');
 
-const ENTRADA = { pathname: '/', search: '?utm_source=teste&utm_medium=post&utm_campaign=lancamento-out&ref=AMIGO1' };
+const ENTRADA = { pathname: '/', search: '?utm_source=teste&utm_medium=post&utm_campaign=lancamento-out&utm_content=criativo-video&ref=AMIGO1' };
 
 function mundo({ consentido = false, testMode = false } = {}) {
   const enviados = [], gravados = [], ouvintes = {};
@@ -87,8 +87,8 @@ const cobra = (ok, msg) => { if (!ok) falhas.push(msg); };
   cobra(!!acq, 'CF2 aceitar depois da carga não envia /api/acquisition — falta ouvir cs-privacy-change; a visita vira "direto" no first-touch');
   if (acq) {
     const c = acq.corpo;
-    cobra(c.utmSource === 'teste' && c.utmMedium === 'post' && c.utmCampaign === 'lancamento-out' && c.ref === 'AMIGO1' && c.landing === '/',
-      `CF2 aquisição tardia saiu com a origem errada (${JSON.stringify(c)}) — tem de ser a URL de ENTRADA, capturada em memória na carga`);
+    cobra(c.utmSource === 'teste' && c.utmMedium === 'post' && c.utmCampaign === 'lancamento-out' && c.utmContent === 'criativo-video' && c.ref === 'AMIGO1' && c.landing === '/',
+      `CF2 aquisição tardia saiu com a origem completa errada (${JSON.stringify(c)}) — tem de ser a URL de ENTRADA, incluindo o criativo, capturada em memória na carga`);
     cobra(c.referrer === 'www.reddit.com', `CF2 referrer tem de sair só como host, saiu ${JSON.stringify(c.referrer)}`);
   }
   cobra(conta(m, '/api/funnel', 'land') === 1, `CF2 'land' tardio: ${conta(m, '/api/funnel', 'land')} envio(s), esperado 1`);

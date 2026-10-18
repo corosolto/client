@@ -43,12 +43,13 @@ cobra(link.searchParams.get('utm_source') === 'convite' && link.searchParams.get
 if (!lib) falhas.push('CO3 src/lib/convite-origem.mjs não existe — a página /sala não repassa a origem ao jogo');
 else {
   const { hrefEntrarNaSala, CHAVES_ORIGEM } = await importa('lib.mjs', lib);
-  const chegada = new URLSearchParams(`${link.search.slice(1)}&utm_campaign=lancamento&ref=AMIGO1&token=segredo&sala=US-XXXX`);
+  const chegada = new URLSearchParams(`${link.search.slice(1)}&utm_campaign=lancamento&utm_content=video-curto&ref=AMIGO1&token=segredo&sala=US-XXXX`);
   const href = new URL(hrefEntrarNaSala('BR-7K3M', chegada), 'https://x');
   cobra(href.pathname === '/' && href.searchParams.get('sala') === 'BR-7K3M', `CO3 ENTRAR NA SALA perdeu ?sala (${href})`);
   cobra(href.searchParams.get('utm_source') === 'convite' && href.searchParams.get('utm_medium') === 'sala'
-    && href.searchParams.get('utm_campaign') === 'lancamento' && href.searchParams.get('ref') === 'AMIGO1',
-  `CO3 ENTRAR NA SALA não repassa a origem (${href})`);
+    && href.searchParams.get('utm_campaign') === 'lancamento' && href.searchParams.get('utm_content') === 'video-curto'
+    && href.searchParams.get('ref') === 'AMIGO1',
+  `CO3 ENTRAR NA SALA não repassa a origem completa (${href})`);
   const longo = new URL(hrefEntrarNaSala('BR-7K3M', new URLSearchParams({ utm_campaign: 'x'.repeat(61) })), 'https://x');
   cobra(!longo.searchParams.has('utm_campaign'), 'CO3 valor de origem acima de 60 caracteres (corte do backend) foi repassado');
   cobra(!href.searchParams.has('token'), `CO3 ENTRAR NA SALA repassa parâmetro fora da lista de origem (${href})`);

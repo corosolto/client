@@ -13,6 +13,10 @@ const errors={account_required:'Entre e escolha seu nick para guardar seus T$.',
 const errorText=e=>errors[e.message] || 'A carteira está indisponível agora. Tente novamente em instantes.';
 const money=value=>`T$ ${new Intl.NumberFormat('pt-BR').format(value)}`;
 const stored=(key,value)=>{try{if(value===undefined)return localStorage.getItem(key);localStorage.setItem(key,value);}catch{return null;}};
+const storeEvent=(event,itemId='')=>{
+  if(!window.__csPrivacy?.allowed())return;
+  void socialApi('/api/treta',{action:'analytics',event,itemId}).catch(()=>{});
+};
 let state=null,manifest={skins:{}},eyeManifest={eyewear:{}},selected=null,filter='all',stage=null,purchaseStage=null,refreshPromise=null,account=null;
 let onEquip=()=>{},infoStage=null,infoVersion=0;
 let equipmentRevision='';
@@ -201,7 +205,8 @@ async function visual(host,{model,poster,coin=false,celebrate=false,count=1}) {
   let display;
   try{const {TretaStage}=await import('./treta-stage.js');display=new TretaStage(host,{coin,celebrate,count});await display.load(model);fallback.remove();display.loaded=true;return display;}catch{display?.dispose();return {loaded:false,dispose(){}};}
 }
-async function detail(skin) {
+async function detail(skin,track=true) {
+  if(track)storeEvent('preview',skin.id);
   const version=++detailVersion;
   selected=skin;stage?.dispose();stage=null;previewReady=false;previewLoading=previewable(skin.id);
   $('treta-preview-retry').hidden=true;
@@ -297,7 +302,7 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   if(code && /^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(code))stored('cs_treta_referral',code);
   $('treta-buy').onclick=()=>void buy();
   ligarCompartilhar($('treta-share'),()=>({titulo:'Loja do CORO SOLTO',texto:`Olha a skin ${$('treta-detail-name').textContent} na loja do CORO SOLTO.`,url:linkCompartilhavel('/loja','skin')}));
-  $('treta-preview-retry').onclick=()=>{if(selected)void detail(selected);};
+  $('treta-preview-retry').onclick=()=>{if(selected)void detail(selected,false);};
   for(const button of document.querySelectorAll('[data-treta-close]'))button.onclick=()=>button.closest('dialog').close();
   for(const dialog of [$('treta-detail'),$('treta-purchase')])dialog.addEventListener('close',()=>{if(dialog.id==='treta-detail'){detailVersion++;stage?.dispose();stage=null;}else{purchaseStage?.dispose();purchaseStage=null;}});
   $('treta-info').addEventListener('close',()=>{infoVersion++;infoStage?.dispose();infoStage=null;});
@@ -317,7 +322,7 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   setInterval(()=>{if(account?.authenticated && !document.hidden)void refresh();},30000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden && account?.authenticated)void refresh();});
   document.addEventListener('cs-match-end',()=>{for(const delay of [2000,12000,30000])setTimeout(()=>{if(account?.authenticated)void refresh();},delay);});
-  document.addEventListener('cs-shop-open',()=>void refresh());
+  document.addEventListener('cs-shop-open',()=>{storeEvent('visit');void refresh();});
   document.addEventListener('cs-account-change',event=>{accountEpoch++;account=event.detail;state=null;selected=null;updateTretaRewards(null);for(const id of ['treta-detail','treta-purchase'])if($(id).open)$(id).close();draw();updateBuy();notifyEquipment();void refresh();});
   // Apresentação só depois da 1ª partida, quando o convite pós-partida (login-prompt.js) já decidiu.
   document.addEventListener('cs-pos-partida',event=>{
@@ -327,7 +332,7 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
     explain();
   });
   draw();
-  const manifestsReady=()=>{draw();notifyEquipment();if(selected && $('treta-detail').open)void detail(selected);};
+  const manifestsReady=()=>{draw();notifyEquipment();if(selected && $('treta-detail').open)void detail(selected,false);};
   void fetch('/models/skins/manifest.json').then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();}).then(data=>{manifest=data;manifestsReady();}).catch(()=>{});
   if(TRETA_ITEMS_ENABLED)void fetch('/models/items/eyewear-manifest.json').then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();}).then(data=>{eyeManifest=data;manifestsReady();}).catch(()=>{});
   void loadAccount().then(auth=>{account=auth;}).catch(()=>{});

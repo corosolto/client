@@ -1376,7 +1376,7 @@ const _landingOrigem = (() => {
   return Object.freeze({
     referrer,
     utmSource: u.get('utm_source'), utmMedium: u.get('utm_medium'), utmCampaign: u.get('utm_campaign'),
-    ref: u.get('ref'), landing: location.pathname,
+    utmContent: u.get('utm_content'), ref: u.get('ref'), landing: location.pathname,
   });
 })();
 let _acqSent = false;
