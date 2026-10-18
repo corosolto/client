@@ -81,7 +81,7 @@ async function contexto(mutante, { lang = 'pt', cla = MEU_CLA, viewport = { widt
   return ctx;
 }
 
-async function abrir(ctx, query = '', flag = '?ui=v3') {
+async function abrir(ctx, query = '', flag = '') {
   const p = await ctx.newPage();
   const sep = flag ? '&' : '?';
   await p.goto(`${BASE}/${flag}${sep}home=hub&secao=comunidade&social=profile${query}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
@@ -93,7 +93,7 @@ async function abrir(ctx, query = '', flag = '?ui=v3') {
   }
   await p.evaluate(() => { for (const d of document.querySelectorAll('dialog[open]')) d.close(); });
   await p.waitForFunction(() => document.getElementById('social-content')?.getAttribute('aria-busy') === 'false' && document.querySelector('#social-content .social-card'), null, { timeout: 60000 }).catch(() => {});
-  await p.waitForSelector('.tp-perfil', { timeout: flag === '?ui=v3' ? 20000 : 3000 }).catch(() => {});
+  await p.waitForSelector('.tp-perfil', { timeout: flag === '?ui=legacy' ? 3000 : 20000 }).catch(() => {});
   await p.waitForTimeout(700);
   return p;
 }
@@ -245,18 +245,15 @@ const CENARIOS = {
     }
   },
   async semflag(mut) {
-    const r = {};
-    for (const flag of ['', '?ui=legacy']) {
-      const ctx = await contexto(mut);
-      const p = await abrir(ctx, '', flag);
-      r[flag || 'sem'] = await p.evaluate(() => ({
-        tp: !!document.querySelector('.tp-perfil, [data-tp-perfil]'), gancho: document.getElementById('community')?.tpPerfilDados !== undefined,
-        legado: !!document.querySelector('#social-content > .social-card')?.checkVisibility(), largura: document.getElementById('hub-community')?.getBoundingClientRect().width,
-      }));
-      if (!mut && !flag) await p.screenshot({ path: `${OUT}/antes-perfil-1536x1024.png` });
-      await ctx.close();
-    }
-    return r;
+    const ctx = await contexto(mut);
+    const p = await abrir(ctx, '', '?ui=legacy');
+    const r = await p.evaluate(() => ({
+      tp: !!document.querySelector('.tp-perfil, [data-tp-perfil]'), gancho: document.getElementById('community')?.tpPerfilDados !== undefined,
+      legado: !!document.querySelector('#social-content > .social-card')?.checkVisibility(), largura: document.getElementById('hub-community')?.getBoundingClientRect().width,
+    }));
+    if (!mut) await p.screenshot({ path: `${OUT}/antes-perfil-1536x1024.png` });
+    await ctx.close();
+    return { legacy: r };
   },
 };
 
@@ -326,7 +323,7 @@ async function medir(mutante = '') {
   }
   if (m.semflag) {
     const s = m.semflag, ruim = Object.entries(s).filter(([, v]) => v.tp || v.gancho || !v.legado || Math.abs(v.largura - 1180) > 1);
-    add('SF1', !ruim.length, ruim.length ? ruim.map(([k, v]) => `${k}: tp ${v.tp}, gancho ${v.gancho}, legado ${v.legado}, largura ${v.largura}`).join('; ') : 'sem flag e com ?ui=legacy o perfil é o de hoje');
+    add('SF1', !ruim.length, ruim.length ? ruim.map(([k, v]) => `${k}: tp ${v.tp}, gancho ${v.gancho}, legado ${v.legado}, largura ${v.largura}`).join('; ') : '?ui=legacy mantém o perfil anterior');
   }
   return r;
 }

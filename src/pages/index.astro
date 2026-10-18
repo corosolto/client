@@ -74,10 +74,11 @@ const IMPORTMAP = JSON.stringify({
 {import.meta.env.DEV && import.meta.env.SOCIAL_LOCAL_GAME_URL && <meta name="cs-local-game" content={import.meta.env.SOCIAL_LOCAL_GAME_URL} />}
 <meta charset="UTF-8">
 <script is:inline>
-/* ?ui=v3 liga a Treta Pop antes do primeiro paint; ?ui=legacy continua no main.js. */
+/* Treta Pop é o padrão; ?ui=legacy preserva o rollback antes do primeiro paint. */
 (function () {
   try {
-    if (new URLSearchParams(location.search).get('ui') !== 'v3') return;
+    const ui = new URLSearchParams(location.search).get('ui');
+    if (ui === 'legacy') return;
     document.documentElement.dataset.ui = 'v3';
     ['anton-latin-400-normal', 'barlow-semi-condensed-latin-700-normal', 'barlow-semi-condensed-latin-800-normal'].forEach(function (f) {
       var l = document.createElement('link');
@@ -90,7 +91,7 @@ const IMPORTMAP = JSON.stringify({
     var img = document.createElement('link');
     img.rel = 'preload'; img.as = 'image'; img.href = '/img/loading-' + n + '.webp';
     document.head.appendChild(img);
-  } catch (e) { /* URL inválida: segue na UI atual */ }
+  } catch (e) { /* URL inválida: segue no padrão Treta Pop */ }
 })();
 </script>
 <script src={`/js/privacy-runtime.js?v=${JS_REV}`} is:inline></script>

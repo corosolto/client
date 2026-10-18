@@ -68,7 +68,7 @@ async function abrirPartida(lang, flag, mutante) {
     window.__partilhas = [];
     Object.defineProperty(navigator, 'share', { configurable: true, value: async (d) => { window.__partilhas.push(d); } });
   });
-  await page.goto(`${BASE}/?${flag ? 'ui=v3&' : ''}lang=${lang}&debug=1&auto=E,esquerdomacho&map=praca_poderes`, { waitUntil: 'commit', timeout: 120000 });
+  await page.goto(`${BASE}/?${flag ? '' : 'ui=legacy&'}lang=${lang}&debug=1&auto=E,esquerdomacho&map=praca_poderes`, { waitUntil: 'commit', timeout: 120000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
   await page.addStyleTag({ content: '#launch-error,#crash-overlay,astro-dev-toolbar{display:none!important;pointer-events:none!important}' });
   await page.waitForTimeout(800);
@@ -329,7 +329,7 @@ async function medir(mutante = '') {
     const l = await ler(page);
     const tp = pedidos.filter((p) => /\/(css|js)\/tp\//.test(p));
     add('RS10', !l.existe && l.legadoVisivel && l.titulo === 'VITÓRIA' && !tp.length,
-      l.existe ? 'tela v3 montada sem ?ui=v3' : tp.length ? `arquivo da v3 pedido sem a flag: ${tp[0]}` : !l.legadoVisivel ? 'tela de hoje sumiu' : 'sem a flag a tela é a de hoje');
+      l.existe ? 'tela v3 montada com ?ui=legacy' : tp.length ? `arquivo da v3 pedido no rollback: ${tp[0]}` : !l.legadoVisivel ? 'tela anterior sumiu' : '?ui=legacy mantém a tela anterior');
     if (!mutante) for (const [w, h] of VIEWPORTS) {
       await page.setViewportSize({ width: w, height: h });
       await page.waitForTimeout(400);

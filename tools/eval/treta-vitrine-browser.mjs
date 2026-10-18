@@ -97,7 +97,7 @@ async function abrir(name,{viewport,touch=false,loja='on',caminho='/'}) {
     return route.fulfill({json:{profile:{avatar_url:'/img/chars/barbudo.webp',socials:['fixture']},rooms:[],entries:[],online:0}});
   });
   page.setDefaultTimeout(20000);
-  await page.goto(`${base}${caminho}`,{waitUntil:'commit',timeout:30000});
+  await page.goto(caminho==='/'?`${base}/?ui=legacy`:`${base}${caminho}`,{waitUntil:'commit',timeout:30000});
   if(caminho==='/'){
     await page.locator('#splash-enter:not(.hidden)').waitFor({timeout:90000});
     await page.locator('#boot-splash').dispatchEvent('pointerdown');

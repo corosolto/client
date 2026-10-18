@@ -91,6 +91,7 @@ async function preparar(page, mutante, { conta = true, registro = [] } = {}) {
   if (mutante === 'en-vaza') await reescreve(/\/js\/i18n\.js/, (t) => t.replace("'Chama a turma': 'Call the crew',", ''));
   if (mutante === 'offline-junto') await reescreve(js, (t) => t.replace('.filter((f) => f.profile?.presence?.online)', '.filter((f) => f)'));
   if (mutante === 'codigo-perdido') await reescreve(js, (t) => t.replace('window.__mpConvite?.(txt)', "window.__mpConvite?.('')"));
+  if (mutante === 'em-breve') await reescreve(js, (t) => t.replace('  vagas.append(voce);', "  vagas.append(voce);\n  for (let i = 0; i < 3; i++) vagas.append(el('li', 'tp-convidar__vaga', 'Em breve'));"));
   return registro;
 }
 
@@ -101,7 +102,7 @@ async function lobby(opcoes = {}) {
   const page = await ctx.newPage();
   page.setDefaultTimeout(6000);
   const registro = await preparar(page, mutante, { conta });
-  await page.goto(`${BASE}/?${flag ? 'ui=v3&' : ''}lang=${lang}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await page.goto(`${BASE}/?${flag ? '' : 'ui=legacy&'}lang=${lang}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.addStyleTag({ content: 'astro-dev-toolbar{display:none!important;pointer-events:none!important}' });
   if (flag) await page.waitForFunction(() => !document.getElementById('tp-splash-jogar')?.disabled, null, { timeout: 60000 }).catch(() => {});
   else await page.waitForFunction(() => !document.getElementById('splash-enter')?.classList.contains('hidden'), null, { timeout: 60000 }).catch(() => {});
@@ -126,7 +127,7 @@ const foraDaTela = (page, raiz) => page.evaluate((r) => {
   return out;
 }, raiz);
 
-/* A · sem a flag: lobby e modal de hoje, sem nada da Treta Pop. */
+/* A · ?ui=legacy: lobby e modal anteriores, sem nada da Treta Pop. */
 async function semFlag(mutante, cap) {
   const { page, ctx } = await lobby({ flag: false, mutante });
   if (cap) await page.screenshot({ path: `${OUT}/antes-lobby-1536x1024.png` });
@@ -140,7 +141,7 @@ async function semFlag(mutante, cap) {
   await ctx.close();
   const LEGADO = 'mp-modal-kicker,mp-modal-title,mp-modal-convite,mp-modal-lot,mp-modal-copy,mp-modal-entrar,mp-modal-nota';
   const ok = !r.botao && !r.gaveta && !/tp-/.test(r.cartao) && r.filhos === LEGADO;
-  return [{ id: 'SO1', ok, msg: ok ? 'sem ?ui=v3: sem botão Resenha, sem gaveta, modal da sala com a marcação de hoje' : `sem a flag vaza: botão ${r.botao}, gaveta ${r.gaveta}, cartão "${r.cartao}", filhos ${r.filhos}` }];
+  return [{ id: 'SO1', ok, msg: ok ? '?ui=legacy: sem botão Resenha, sem gaveta, modal da sala com a marcação anterior' : `rollback vaza: botão ${r.botao}, gaveta ${r.gaveta}, cartão "${r.cartao}", filhos ${r.filhos}` }];
 }
 
 /* B · 4 telas: botão no lobby, gaveta e cartão de convite cabem. */
@@ -285,6 +286,7 @@ async function fluxo(mutante, cap) {
     }
     return {
       v3: card.classList.contains('tp-convidar'), vagas: card.querySelectorAll('.tp-convidar__vaga').length, reais: card.querySelectorAll('.tp-convidar__vaga[data-real]').length,
+      mensagem: card.querySelector('.tp-convidar__sala p:not(.tp-convidar__lote)')?.textContent || '',
       link: card.querySelector('.tp-convidar__link')?.textContent || '', local, publico,
       zap: document.getElementById('mp-modal-zap')?.href || '', tele: document.getElementById('tp-convidar-telegram')?.href || '',
       discord: !!document.getElementById('tp-convidar-discord')?.checkVisibility(), limas,
@@ -294,14 +296,15 @@ async function fluxo(mutante, cap) {
   }, LIMA);
   const e8 = [];
   if (!m.v3) e8.push('cartão sem a camada Treta Pop');
-  if (m.vagas !== 4 || m.reais !== 1) e8.push(`${m.vagas} vagas e ${m.reais} reais (quer 4 e só a sua)`);
+  if (m.vagas !== 1 || m.reais !== 1) e8.push(`${m.vagas} cartões de party e ${m.reais} reais (quer só o seu cartão)`);
+  if (m.mensagem !== 'Convide pelo link. Quem abrir entra direto na sua sala.') e8.push(`instrução da sala: "${m.mensagem}"`);
   if (m.link !== new URL(m.local).host + '/sala/BR-7K3M') e8.push(`caixa do link mostra "${m.link}"`);
   if (!m.zap.includes(encodeURIComponent(m.local))) e8.push('WhatsApp sem o link da sala');
   if (!m.tele.startsWith('https://t.me/share/url?url=') || !m.tele.includes(encodeURIComponent(m.publico))) e8.push(`Telegram: ${m.tele || 'ausente'}`);
   if (!m.discord) e8.push('Discord ausente');
   if (m.limas.length !== 1) e8.push(`${m.limas.length} blocos lima no cartão (${m.limas.join(', ')}); a tela pede um`);
   if (m.blur !== 'none') e8.push(`fundo do modal com ${m.blur} sobre o canvas`);
-  r.push({ id: 'SO8', ok: !e8.length, msg: e8.length ? e8.join('; ') : '4 vagas (só a sua real), link /sala/ da rota que existe, WhatsApp, Discord e Telegram com o link, um lima, sem blur' });
+  r.push({ id: 'SO8', ok: !e8.length, msg: e8.length ? e8.join('; ') : 'só o seu cartão, instrução real do convite, link /sala/, WhatsApp, Discord e Telegram, um lima, sem blur' });
   r.push({ id: 'SO9', ok: m.bd && m.qr === m.publico, msg: !m.bd ? 'Chrome sem BarcodeDetector: QR não medido' : m.qr === m.publico ? `QR lido pelo Chrome = ${m.qr}` : `QR lido "${m.qr || 'nenhum'}", quer ${m.publico}` });
 
   const e13 = [];
@@ -410,8 +413,8 @@ async function idioma(mutante, cap) {
     textos[lang] = t;
     await ctx.close();
   }
-  const PT = /\b(AMIGOS|SALAS|CLÃ|Resenha|ENVIAR|Chama a turma|Link de convite|COPIAR|Amigo no celular|Recebeu um código|ENTRAR|Em breve|Você|Buscar|Escreva|Chame quem|Em partida|visto há|HOJE|Amigos online|CHAMAR|ENVIADO|regras|na sala|Convite de sala|sala)\b/;
-  const EN = /\b(FRIENDS|ROOMS|CLAN|Chat|SEND|Call the crew|Invite link|COPY|Friend on mobile|Got a code|JOIN|Coming soon|You|Search|Write|In a match|seen|TODAY|Friends online|CALL|SENT|rules|in the room|Room invite)\b/;
+  const PT = /\b(AMIGOS|SALAS|CLÃ|Resenha|ENVIAR|Chama a turma|Link de convite|COPIAR|Amigo no celular|Recebeu um código|ENTRAR|Você|Buscar|Escreva|Chame quem|Em partida|visto há|HOJE|Amigos online|CHAMAR|ENVIADO|regras|na sala|Convite de sala|sala)\b/;
+  const EN = /\b(FRIENDS|ROOMS|CLAN|Chat|SEND|Call the crew|Invite link|COPY|Friend on mobile|Got a code|JOIN|You|Search|Write|In a match|seen|TODAY|Friends online|CALL|SENT|rules|in the room|Room invite)\b/;
   const vazaEn = (textos.en.match(PT) || [])[0], vazaPt = (textos.pt.match(EN) || [])[0];
   return [{ id: 'SO12', ok: textos.pt && textos.en && !vazaEn && !vazaPt, msg: vazaEn || vazaPt ? `idioma misturado: "${vazaEn || vazaPt}" ${vazaEn ? 'em EN' : 'em PT'}` : 'gaveta (3 canais) e convite: PT e EN sem string do outro idioma' }];
 }
@@ -421,7 +424,7 @@ const MUT = [
   ['vaza-flag', 'SO1', 'semFlag'], ['botao-sobre', 'SO2', 'telas'], ['sem-y', 'SO3', 'fluxo'], ['gaveta-estreita', 'SO4', 'telas'],
   ['inventa', 'SO5', 'fluxo'], ['bolha-trocada', 'SO6', 'fluxo'], ['zero-visivel', 'SO7', 'semConta'], ['dois-lima', 'SO8', 'fluxo'],
   ['qr-torto', 'SO9', 'fluxo'], ['cartao-fixo', 'SO10', 'telas'], ['toque-30', 'SO11', 'toque'], ['pwa-por-cima', 'SO11', 'toque'], ['en-vaza', 'SO12', 'idioma'],
-  ['offline-junto', 'SO13', 'fluxo'], ['codigo-perdido', 'SO15', 'fluxo'],
+  ['offline-junto', 'SO13', 'fluxo'], ['codigo-perdido', 'SO15', 'fluxo'], ['em-breve', 'SO8', 'fluxo'],
 ];
 mkdirSync(OUT, { recursive: true });
 let sair = 0;

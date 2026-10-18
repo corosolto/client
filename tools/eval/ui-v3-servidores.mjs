@@ -330,10 +330,10 @@ async function servidores(mutante) {
   add('SV19', !sobre.length && !falhas.some((x) => /sem tela v3/.test(x)), sobre.join('; ') || '844×390: nada fixo por cima da tela');
   add('SV11', !toque.length && !falhas.some((x) => /sem tela v3/.test(x)), toque.length ? `alvo de toque abaixo de 44 px em 844×390: ${toque.slice(0, 5).join(', ')}${toque.length > 5 ? ` (+${toque.length - 5})` : ''}` : `844×390 com toque: todo alvo >= 44 px (o mais baixo: ${menorAlvo?.id?.slice(0, 24)} ${menorAlvo?.h?.toFixed(0)} px)`);
 
-  /* SV8: sem a flag o multiplayer é o de hoje. */
+  /* SV8: ?ui=legacy mantém o multiplayer anterior. */
   const cl = await contexto(mutante);
   const pl = await cl.newPage();
-  await entrar(pl, '/jogar/multiplayer?lang=pt');
+  await entrar(pl, '/jogar/multiplayer?ui=legacy&lang=pt');
   const l = await pl.evaluate(() => ({
     tp: [...document.querySelectorAll('#mp-panel [class*="tp-"]')].length,
     host: document.getElementById('mp-panel')?.parentElement?.id,
@@ -342,7 +342,7 @@ async function servidores(mutante) {
   }));
   if (!mutante) await pl.screenshot({ path: `${OUT}/hoje-servidores-1536x1024.png` });
   await cl.close();
-  add('SV8', !l.tp && l.host === 'hub-mp-host' && /mp-quick/.test(l.quick) && l.estado, `sem flag: ${l.tp} elemento(s) tp no painel, painel em #${l.host}, JOGO RÁPIDO "${l.quick}", chip de estado ${l.estado ? 'visível' : 'sumiu'}`);
+  add('SV8', !l.tp && l.host === 'hub-mp-host' && /mp-quick/.test(l.quick) && l.estado, `?ui=legacy: ${l.tp} elemento(s) tp no painel, painel em #${l.host}, JOGO RÁPIDO "${l.quick}", chip de estado ${l.estado ? 'visível' : 'sumiu'}`);
   return r;
 }
 
@@ -487,16 +487,16 @@ async function ajustes(mutante) {
   const baixas = [...am.abas, ...amAlvos].filter((x) => x.h < 44).map((x) => `${x.id} ${x.h.toFixed(0)}px`);
   add('AJ6', am.abas.length === 7 && amAlvos.length >= 6 && !baixas.length && am.sw <= am.vw && am.wrap <= am.vw, `844×390: ${am.abas.length} abas e ${amAlvos.length} controles, abaixo de 44 px: ${baixas.join(', ') || 'nenhum'}, largura ${am.sw}/${am.vw}`);
 
-  /* AJ7: sem a flag, quatro abas e a privacidade continua no perfil. */
+  /* AJ7: ?ui=legacy mantém quatro abas e a privacidade no perfil. */
   const cl = await contexto(mutante);
   const pl = await cl.newPage();
-  await entrar(pl, '/?lang=pt');
+  await entrar(pl, '/?ui=legacy&lang=pt');
   await abrirAjustes(pl);
   const al = await pl.evaluate(medirAjustes);
   const perfilHoje = await pl.evaluate(() => getComputedStyle(document.getElementById('profile-preferences')).display);
   if (!mutante) await pl.screenshot({ path: `${OUT}/hoje-ajustes-1536x1024.png` });
   await cl.close();
-  add('AJ7', al.abas.map((x) => x.id).join(',') === 'video,audio,gameplay,controls' && perfilHoje !== 'none', `sem flag: abas ${al.abas.map((x) => x.id).join(',')}, privacidade no perfil ${perfilHoje}`);
+  add('AJ7', al.abas.map((x) => x.id).join(',') === 'video,audio,gameplay,controls' && perfilHoje !== 'none', `?ui=legacy: abas ${al.abas.map((x) => x.id).join(',')}, privacidade no perfil ${perfilHoje}`);
   return r;
 }
 

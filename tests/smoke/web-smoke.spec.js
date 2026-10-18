@@ -32,7 +32,7 @@ test('ranking com top 10 cheio mantém o VOLTAR alcançável em 1280×720', asyn
     });
   }
   await page.route('**/api/leaderboard*', (rota) => rota.fulfill({ json: { players: TOP10 } }));
-  await page.goto(`${base}/?debug=1&nav=1&home=legacy`);
+  await page.goto(`${base}/?debug=1&nav=1&home=legacy&ui=legacy`);
   await page.addStyleTag({ content: 'astro-dev-toolbar{display:none!important}' });
   await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
   await page.keyboard.press('Enter');
@@ -44,9 +44,9 @@ test('ranking com top 10 cheio mantém o VOLTAR alcançável em 1280×720', asyn
   await expect(page.locator('#main-menu')).toBeVisible();
 });
 
-test('nova home abre o ranking e volta para jogar', async ({ page }) => {
+test('hub legado abre o ranking e volta para jogar', async ({ page }) => {
   const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
-  await page.goto(`${base}/?debug=1&nav=1`);
+  await page.goto(`${base}/?debug=1&nav=1&ui=legacy`);
   await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
   await page.keyboard.press('Enter');
   await expect(page.locator('#boot-splash')).toHaveCount(0);
@@ -87,7 +87,7 @@ test('menu, ranking, map, teams, character and initial hud boot', async ({ page 
     });
   }
 
-  await page.goto(`${base}/?debug=1&nav=1&home=legacy`);
+  await page.goto(`${base}/?debug=1&nav=1&home=legacy&ui=legacy`);
 
   await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
   await page.keyboard.press('Enter');

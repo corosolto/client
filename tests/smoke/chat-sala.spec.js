@@ -167,7 +167,7 @@ async function aplicarMutante(page, testInfo) {
 }
 
 async function bootarPartida(page) {
-  await page.goto(`${base}/?debug=1&nav=1&home=legacy`);
+  await page.goto(`${base}/?debug=1&nav=1&home=legacy&ui=legacy`);
   await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
   await page.keyboard.press('Enter');
   await expect(page.locator('#boot-splash')).toHaveCount(0);

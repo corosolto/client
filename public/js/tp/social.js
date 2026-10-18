@@ -432,14 +432,9 @@ function ligarConvidar() {
   const foto = el('img'); foto.alt = ''; foto.decoding = 'async';
   voce.append(foto, el('span', '', tr('Você')));
   vagas.append(voce);
-  for (let i = 0; i < 3; i++) {
-    const v = el('li', 'tp-convidar__vaga'); v.dataset.vazia = '';
-    v.append(el('b', '', '+'), el('span', '', tr('Em breve')));
-    vagas.append(v);
-  }
   const sala = el('div', 'tp-convidar__sala');
   lote.className = 'tp-convidar__lote tp-num';
-  sala.append(lote, el('p', '', tr('A party de 4 chega numa próxima versão. Hoje o convite traz a turma pra sua sala.')));
+  sala.append(lote, el('p', '', tr('Convide pelo link. Quem abrir entra direto na sua sala.')));
   if (nota) { nota.className = 'tp-convidar__nota'; sala.append(nota); }
   party.append(vagas, sala);
 

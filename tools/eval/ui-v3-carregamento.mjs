@@ -82,7 +82,7 @@ async function abrir(cena, mutante) {
   }, [cena.a ?? 3, cena.e ?? 4]);
   /* O GLB de personagem fica preso; os assets de fundo terminam para o boot alcançar a partida. */
   await p.route(/\/models\/characters\/.*\.glb(?:\?|$)/, () => {});
-  const flag = cena.legado ? '' : 'ui=v3&';
+  const flag = cena.legado ? 'ui=legacy&' : '';
   const url = cena.vagas ? `${BASE}/?${flag}tela=loading&lang=pt`
     : `${BASE}/?${flag}lang=${cena.lang || 'pt'}&debug=1&auto=${cena.lado === 'B' ? 'B,sertanejo' : 'E,punk'}`;
   await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
@@ -153,7 +153,7 @@ async function medir(mutante = '', soCenas = null) {
 
   if (tem(['hoje-1536x1024'])) {
     const falhas = Object.values(m).filter((x) => x.cena.legado).filter((x) => x.tem || !x.legadoVisivel.includes('.lo-box') || !x.legadoMapa);
-    add('CG1', !falhas.length, falhas.length ? `sem ?ui=v3: ${falhas.map((x) => `${x.cena.id} ${x.tem ? 'monta o carregamento novo' : 'perdeu o overlay de hoje'}`).join('; ')}` : 'sem a flag o carregamento é o de hoje (.lo-box com o mapa, nada .tp-)');
+    add('CG1', !falhas.length, falhas.length ? `com ?ui=legacy: ${falhas.map((x) => `${x.cena.id} ${x.tem ? 'monta o carregamento novo' : 'perdeu o overlay legado'}`).join('; ')}` : '?ui=legacy mantém o carregamento anterior (.lo-box com o mapa, nada .tp-)');
   }
   if (v3.length) {
     const erros = [];

@@ -48,7 +48,7 @@ async function medir(mutante = '') {
   const cru = await browser.newPage({ viewport: { width: 1536, height: 1024 } });
   await preparar(cru, mutante);
   await cru.route(/\/js\/.*\.js/, (rt) => rt.abort());
-  await cru.goto(`${BASE}/?ui=v3`, { waitUntil: 'load', timeout: 120000 });
+  await cru.goto(`${BASE}/`, { waitUntil: 'load', timeout: 120000 });
   await cru.waitForTimeout(800);
   const f0 = await cru.evaluate(() => {
     const s = document.getElementById('boot-splash');
@@ -85,7 +85,7 @@ async function medir(mutante = '') {
   for (const lang of ['pt', 'en']) {
     const p = await browser.newPage({ viewport: { width: 1536, height: 1024 } });
     await preparar(p, mutante);
-    await p.goto(`${BASE}/?ui=v3&lang=${lang}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await p.goto(`${BASE}/?lang=${lang}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await p.waitForFunction(() => !document.getElementById('tp-splash-jogar')?.disabled, null, { timeout: 60000 }).catch(() => {});
     await p.waitForTimeout(4000);
     vivo[lang] = await p.evaluate(() => {
@@ -127,7 +127,7 @@ async function medir(mutante = '') {
   for (const [w, h] of VIEWPORTS) {
     const p = await browser.newPage({ viewport: { width: w, height: h } });
     await preparar(p, mutante);
-    await p.goto(`${BASE}/?ui=v3`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await p.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await p.waitForTimeout(2500);
     const g = await p.evaluate(() => {
       const caixa = (sel) => { const e = document.querySelector(sel); if (!e || !e.checkVisibility()) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
@@ -186,13 +186,13 @@ async function medir(mutante = '') {
   add('SP12', !contraste.length && piorContraste < 99, contraste.length ? `status do carregamento abaixo de 4,5:1 no pior décimo do fundo em 844×390: ${contraste.join(', ')}` : `844×390, 6 artes: pior décimo do fundo dá ${piorContraste.toFixed(1)}:1`);
   add('SP9', !cortes.length, cortes.length ? `logo cortado: ${cortes.join('; ')}` : '6 artes × 4 telas: letras do logo inteiras');
 
-  /* SP8: sem a flag o splash novo não aparece. */
+  /* SP8: ?ui=legacy mantém o splash anterior. */
   const leg = await browser.newPage({ viewport: { width: 1536, height: 1024 } });
-  await leg.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await leg.goto(`${BASE}/?ui=legacy`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await leg.waitForTimeout(1500);
   const vazou = await leg.evaluate(() => !!document.querySelector('.tp-splash')?.checkVisibility());
   await leg.close();
-  add('SP8', !vazou, vazou ? 'splash v3 aparece sem ?ui=v3' : 'sem a flag o splash é o de hoje');
+  add('SP8', !vazou, vazou ? 'splash v3 aparece com ?ui=legacy' : '?ui=legacy mantém o splash anterior');
   return r;
 }
 

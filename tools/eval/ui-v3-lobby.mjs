@@ -64,7 +64,7 @@ async function abrir({ w = 1536, h = 1024, lang = 'pt', flag = true, toque = fal
       await r.fulfill({ response: res, body: depois });
     });
   }
-  await page.goto(`${BASE}/?${flag ? 'ui=v3&' : ''}lang=${lang}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await page.goto(`${BASE}/?${flag ? '' : 'ui=legacy&'}lang=${lang}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => !document.getElementById('splash-enter')?.classList.contains('hidden'), null, { timeout: 90000 }).catch(() => {});
   await page.waitForTimeout(1200);
   if (sairSplash) {
@@ -172,9 +172,8 @@ async function medir(mutante = '', alvo = '') {
     const esperado = a.fonteQuests.map((q) => q.id).join(',');
     const premioErrado = a.quests.filter((q) => q.premio !== a.fonteQuests.find((f) => f.id === q.id)?.premio).map((q) => q.id);
     const barraSemFracao = a.quests.filter((q) => q.barra !== null && ['singleplayer', 'multiplayer'].includes(q.id)).map((q) => q.id);
-    const ref = a.quests.find((q) => q.id === 'referral');
-    add('LB7', a.fonteQuests.length >= 1 && a.quests.map((q) => q.id).join(',') === esperado && !premioErrado.length && !barraSemFracao.length && (!ref || Math.abs(Number(ref.barra) - 1 / 3) < 0.01),
-      `${a.quests.length} quests no lobby, ${a.fonteQuests.length} na loja${premioErrado.length ? `; prêmio diverge em ${premioErrado.join(',')}` : ''}${barraSemFracao.length ? `; barra inventada em ${barraSemFracao.join(',')}` : ''}${ref ? `; indicação ${ref.barra}` : ''}`);
+    add('LB7', a.fonteQuests.length >= 1 && a.quests.map((q) => q.id).join(',') === esperado && !premioErrado.length && !barraSemFracao.length,
+      `${a.quests.length} quests no lobby, ${a.fonteQuests.length} na loja${premioErrado.length ? `; prêmio diverge em ${premioErrado.join(',')}` : ''}${barraSemFracao.length ? `; barra inventada em ${barraSemFracao.join(',')}` : ''}`);
     const inventado = (a.lobbyTxt.match(/PASSE|NÍVEL|PRIMEIRA VITÓRIA|renovam|\b\d{2}:\d{2}:\d{2}\b/) || [])[0];
     add('LB8', !inventado && a.amigosLinhas === 0 && a.amigosVazio.length > 10,
       inventado ? `número ou sistema sem backend na tela: "${inventado}"` : a.amigosLinhas ? `${a.amigosLinhas} amigo(s) listado(s) sem presença no backend` : a.amigosVazio ? 'sem passe, nível ou timer; amigos online em estado vazio' : 'painel de amigos online ausente');
@@ -365,7 +364,7 @@ async function medir(mutante = '', alvo = '') {
     add('LB12', vazou.en && vazou.pt && !em && !ep, !vazou.en ? 'lobby v3 sem texto para medir' : em || ep ? `idioma misturado: "${em || ep}" ${em ? 'em EN' : 'em PT'}` : 'PT e EN sem string do outro idioma');
   }
 
-  /* Sessão G: sem a flag o lobby é o de hoje. */
+  /* Sessão G: ?ui=legacy mantém o lobby anterior. */
   if (quer('LB13')) {
     const { page, ctx } = await abrir({ flag: false, mutante });
     await foto(page, 'hoje-1536x1024-pt');
@@ -378,7 +377,7 @@ async function medir(mutante = '', alvo = '') {
     await page.waitForTimeout(800);
     const quick = await page.evaluate(() => document.getElementById('hub-quick')?.hidden === false);
     add('LB13', !s.tp && s.abas === 7 && !/tp-btn/.test(s.jogar) && quick,
-      `sem flag: ${s.tp} nós do lobby v3, ${s.abas} abas antigas, JOGAR ${/tp-btn/.test(s.jogar) ? 'com classe v3' : 'antigo'}, confirmação ${quick ? 'abre' : 'não abre'}`);
+      `?ui=legacy: ${s.tp} nós do lobby v3, ${s.abas} abas antigas, JOGAR ${/tp-btn/.test(s.jogar) ? 'com classe v3' : 'antigo'}, confirmação ${quick ? 'abre' : 'não abre'}`);
     await ctx.close();
   }
   return r;

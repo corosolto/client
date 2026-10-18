@@ -304,7 +304,7 @@ try {
     const jornada = await context.newPage();
     // Exercise a first guest visit even after the earlier recovery scenarios.
     await jornada.addInitScript(() => localStorage.removeItem('cs_treta_intro'));
-    await jornada.goto(`${BASE}/?nav=1&home=legacy`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await jornada.goto(`${BASE}/?nav=1&home=legacy&ui=legacy`, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await jornada.locator('#splash-enter:not(.hidden)').waitFor({ timeout: 120000 });
     await jornada.locator('#boot-splash').dispatchEvent('pointerdown');
     await jornada.waitForTimeout(3100);
