@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "tropicalente-pistola",
+  "weaponId": "pistol",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": "barrel-horizontal",
+  "markSourceUrl": null,
+  "referenceRule": "project-authored Brazilian lettering and illustration over the original weapon finish; no copied brand or commercial skin",
+  "slogan": "TROPICALENTE",
+  "storePrice": 500,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "dd364f3515d753d6c25fd6b00d526a3657e1964113fedcf1b74ad446398e7532",
+    "side-right.png": "6bd8de716a11c00f40746928f5f69065c7cad7fbe8fe9b2c3aa0e2bbe8865c62",
+    "three-quarter.png": "09f9f54a0d73da551ff6023e710aa02e28971fc1c302bf32cbcd7044fbaa8ff8"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "176d876179eb0b3ba0e64bff29d6fe5bbb7ebf5eef4449e5effafdd4c3175c9d",
+    "public/js/weapon-skins.js": "642cde116f59c937df7b606c6cff2ac4d0f4748b2164d93aeef82884881e6879",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/project-marks/tropicalente.svg": "c360c117c82c766d71555a5f68b60ba4d3439bac3f1d73fc3183cb1584b9eb71"
+  },
+  "consoleErrors": []
+}

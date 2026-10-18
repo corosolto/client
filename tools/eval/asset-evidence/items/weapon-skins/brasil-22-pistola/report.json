@@ -21,13 +21,13 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "1fef26b29f9892c6a5a1dc84bcfb125eec6adebbd381173a37ec3fec4ae155b5",
-    "side-right.png": "6279357f75ae7d8a701c4c4e84c55257394e22f6d144c35cc77f416cf80c9bd6",
-    "three-quarter.png": "a0a19cfe418031e6906ed28ff89b3594ddc192d2a736517a38bb9ad4911aa3a7"
+    "side-left.png": "1daeb4d417e5dce9af58b07256f6542b2a79c93c7aa11dafdd7d05d68eff58ac",
+    "side-right.png": "1c99092a4d9cd3af57d90e0e8b581acf85b95605c95ebe213e50fca67ec269f9",
+    "three-quarter.png": "ee77740e84192c3e012f47afa6f02904e4811be4e9f9cb1d44a8bea993d26421"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "b2edb4a49e132e994c0deaf282a04fe1aea9d94e163e6ac5877606c41e30107a",
-    "public/js/weapon-skins.js": "d0435f23764b419059bef3c0f92c97f4bd8ac48092e84fea9fe393c349cbef44",
+    "public/js/data/weapon-skin-definitions.js": "176d876179eb0b3ba0e64bff29d6fe5bbb7ebf5eef4449e5effafdd4c3175c9d",
+    "public/js/weapon-skins.js": "642cde116f59c937df7b606c6cff2ac4d0f4748b2164d93aeef82884881e6879",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/political-marks/brasil-22.svg": "799ac19dc01c366ee95b5ecfe957ad3bb0462d31f0f7b08ba1f209c2c650dd12"
