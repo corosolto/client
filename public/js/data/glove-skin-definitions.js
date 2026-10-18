@@ -168,8 +168,8 @@ export const GLOVE_SKINS = Object.freeze({
     glove: '#c8102e',
     sleeve: '#580013',
     accent: '#ffffff',
-    motif: 'maga',
-    description: 'Vermelho intenso com emblema branco de campanha.',
+    motif: 'maga-flag',
+    description: 'Vermelho intenso com uma bandeira americana grande sobre cada mão.',
     storeEnabled: false,
   }),
   'pack-emo-gloves': gloveSkin({
@@ -177,9 +177,9 @@ export const GLOVE_SKINS = Object.freeze({
     name: 'Luvas Emo Xadrez',
     glove: '#090a0d',
     sleeve: '#21112f',
-    accent: '#f02cb8',
-    motif: 'emo',
-    description: 'Xadrez preto e magenta coordenado com o pack.',
+    accent: '#f4ede7',
+    motif: 'emo-skull',
+    description: 'Xadrez preto e magenta com caveira angular, olhos fundos e dentes afiados.',
     storeEnabled: false,
   }),
 });

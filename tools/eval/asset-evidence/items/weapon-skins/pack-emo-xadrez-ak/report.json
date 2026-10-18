@@ -9,7 +9,7 @@
   "designOrigin": "project-owned",
   "rightsStatus": "original-safe",
   "officialMarksIncluded": false,
-  "markPlacement": null,
+  "markPlacement": "receiver-inlay",
   "sloganPlacement": null,
   "markSourceUrl": null,
   "referenceRule": "original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin",
@@ -21,15 +21,16 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "d53c9e50cf04bc1583381d49b6c613150218d25bd332110c99e752b9e00fa92c",
-    "side-right.png": "0b606c73ca7a31ff450d67a7fdd2149110efec44cf93d2b914d11eca6984e1c3",
-    "three-quarter.png": "25c0a3ff15ea008e7a49f1f167698024f3be9d84d27adcfb77cdd033306b7036"
+    "side-left.png": "1d0d31554f418b42b5e6ee58952e300e1d1a9576c408cdea38ee60d8dc39950c",
+    "side-right.png": "97c8c668ee4cb3c30095efbbbc2ca7ffd23df8d36f3148ea4beb2b85c7751a3a",
+    "three-quarter.png": "03ccf294f5a4ee95f3fcbd36bbf6a29097799f66729be6527f81d64c3a140a9d"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "a038c6278d39e885f07c7ef95ba1ac138cd6db3941caec8e281d4528022ea212",
-    "public/js/weapon-skins.js": "78e34b23e2216c5a20ba6adc8fc24e239fc9a3c926291fa27cc4130b818d6666",
+    "public/js/data/weapon-skin-definitions.js": "4568166a31e880f3da333d5d2d2e988fb8a483f72060140785620e14bbf5ac5f",
+    "public/js/weapon-skins.js": "bfeb7329e5c93fac2ad8cc6721553998cd57123abd60e1f5eef0fbbb63aafe56",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
-    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/project-marks/emo-caveira-assustadora.svg": "bc3d8a53904a04b6e856c5cd10f9b6ea4213011788d1474f35d82b1a7b7e25a9"
   },
   "consoleErrors": []
 }

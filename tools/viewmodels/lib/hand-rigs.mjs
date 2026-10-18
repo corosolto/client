@@ -250,6 +250,33 @@ export function pintar({ fields, size }, pintura, style) {
         if (four || seven) color = accent;
       }
     }
+    if (!exposed && !isSleeve && style.motif === 'maga-flag') {
+      color = glove;
+      if (handPanel) {
+        const stripe = Math.floor((y - 0.18) * 18) & 1;
+        color = stripe ? accent : glove;
+        if (x < 0.045 && y > 0.48) {
+          color = [10, 49, 97];
+          const sx = (x + 0.30) * 17, sy = (y - 0.49) * 19;
+          if (Math.hypot(sx - Math.round(sx), sy - Math.round(sy)) < 0.16) color = accent;
+        }
+      }
+    }
+    if (!exposed && !isSleeve && style.motif === 'emo-skull') {
+      const check = (Math.floor((x + 0.8) * 9) + Math.floor(y * 11)) & 1;
+      color = check ? glove : [106, 9, 85];
+      if (handPanel) {
+        const dy = y - 0.55;
+        const crown = x * x / 0.052 + dy * dy / 0.066 < 1;
+        const cheek = Math.abs(x) < 0.17 - Math.max(0, 0.48 - y) * 0.52 && y > 0.31 && y < 0.52;
+        if (crown || cheek) color = accent;
+        const leftEye = y < 0.63 + (x + 0.09) * 0.55 && y > 0.48 - (x + 0.09) * 0.30 && x > -0.19 && x < -0.025;
+        const rightEye = y < 0.63 - (x - 0.09) * 0.55 && y > 0.48 + (x - 0.09) * 0.30 && x > 0.025 && x < 0.19;
+        const nose = Math.abs(x) < 0.038 && y > 0.43 && y < 0.53;
+        const teeth = cheek && (Math.abs(Math.sin((x + 0.19) * 52)) < 0.28 || Math.abs(y - 0.38) < 0.013);
+        if (leftEye || rightEye || nose || teeth) color = glove;
+      }
+    }
     if (!exposed && !isSleeve && style.motif === 'skull') {
       color = glove;
       if (handPanel) {

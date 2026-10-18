@@ -181,17 +181,24 @@ const THEME_FRAGMENT = Object.freeze({
     diffuseColor.rgb = mix(liberdadeStripe, vec3(0.02, 0.12, 0.36), liberdadeBlue);
   `,
   'pack-maga': `
-    float magaRail = 1.0 - smoothstep(0.018, 0.040, abs(vWeaponSkinLocal.y + 0.08));
-    float magaCut = step(0.5, fract((vWeaponSkinLocal.z - vWeaponSkinLocal.y) * 13.0));
-    vec3 magaBase = mix(vec3(0.34, 0.002, 0.025), vec3(0.82, 0.012, 0.075), magaCut);
-    diffuseColor.rgb = mix(magaBase, vec3(0.95, 0.95, 0.92), magaRail);
+    float magaStripe = step(0.50, fract((vWeaponSkinLocal.y + 0.48) * 7.0));
+    vec3 magaFlag = mix(vec3(0.70, 0.018, 0.10), vec3(0.96, 0.95, 0.91), magaStripe);
+    float magaCanton = step(0.015, vWeaponSkinLocal.y) * step(vWeaponSkinLocal.z, 0.08);
+    vec2 magaStarCell = fract(vec2(vWeaponSkinLocal.z * 22.0, vWeaponSkinLocal.y * 24.0)) - 0.5;
+    float magaStar = 1.0 - smoothstep(0.08, 0.16, length(magaStarCell));
+    vec3 magaBlue = mix(vec3(0.02, 0.08, 0.27), vec3(0.98), magaStar);
+    diffuseColor.rgb = mix(magaFlag, magaBlue, magaCanton);
   `,
   'pack-emo': `
     vec2 emoCell = floor(vec2(vWeaponSkinLocal.z, vWeaponSkinLocal.y) * vec2(15.0, 15.0));
     float emoCheck = mod(emoCell.x + emoCell.y, 2.0);
-    float emoCross = 1.0 - smoothstep(0.010, 0.028, min(abs(vWeaponSkinLocal.y - 0.02), abs(vWeaponSkinLocal.z + 0.02)));
     vec3 emoBase = mix(vec3(0.010, 0.012, 0.018), vec3(0.38, 0.015, 0.32), emoCheck);
-    diffuseColor.rgb = mix(emoBase, vec3(0.95, 0.03, 0.62), emoCross * 0.72);
+    vec2 emoFace = vec2(vWeaponSkinLocal.z + 0.02, vWeaponSkinLocal.y - 0.015);
+    float emoHead = 1.0 - smoothstep(0.115, 0.135, length(emoFace * vec2(0.82, 1.0)));
+    float emoEyes = 1.0 - smoothstep(0.018, 0.031, min(length(emoFace - vec2(-0.052, 0.025)), length(emoFace - vec2(0.052, 0.025))));
+    float emoMouth = (1.0 - smoothstep(0.010, 0.019, abs(emoFace.y + 0.063))) * step(abs(emoFace.x), 0.080);
+    diffuseColor.rgb = mix(emoBase, vec3(0.92, 0.89, 0.84), emoHead * 0.84);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.015, 0.004, 0.018), max(emoEyes, emoMouth));
   `,
   ouro: `
     float ouroBrush = 0.90 + 0.10 * sin(

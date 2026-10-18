@@ -38,8 +38,8 @@ const PACK_WEAPON_THEMES = Object.freeze([
   { id: 'caveira-urbana', name: 'Caveira Urbana', theme: 'pack-caveira', color: '#d8d2c2', description: 'Carbono preto, osso marfim e caveira original.', markAsset: '/textures/weapon-skins/project-marks/caveira-urbana.svg' },
   { id: 'brasil-neon', name: 'Brasil Neon', theme: 'pack-brasil-neon', color: '#00d65c', description: 'Verde, amarelo e azul elétricos de alta leitura.' },
   { id: 'liberdade-1776', name: 'Liberdade 1776', theme: 'pack-liberdade', color: '#b31942', description: 'Vermelho, branco e azul em faixas de aço.' },
-  { id: 'maga-47', name: 'MAGA 47', theme: 'pack-maga', color: '#d20a2e', description: 'Vermelho de campanha, preto fosco e contraste branco.' },
-  { id: 'emo-xadrez', name: 'Emo Xadrez', theme: 'pack-emo', color: '#f02cb8', description: 'Xadrez preto e magenta com recortes violetas.' },
+  { id: 'maga-47', name: 'MAGA 47', theme: 'pack-maga', color: '#d20a2e', description: 'Bandeira americana grande sobre vermelho de campanha e aço preto.', markAsset: '/textures/weapon-skins/project-marks/usa-bandeira-grande.svg', markLayouts: { ak: { y: 0.046, z: -0.040, height: 0.155 }, pistol: { y: -0.018, z: -0.012, height: 0.145 } } },
+  { id: 'emo-xadrez', name: 'Emo Xadrez', theme: 'pack-emo', color: '#f02cb8', description: 'Xadrez preto e magenta com uma caveira angular assustadora.', markAsset: '/textures/weapon-skins/project-marks/emo-caveira-assustadora.svg', markLayouts: { ak: { y: 0.046, z: -0.055, height: 0.155 }, pistol: { y: -0.018, z: -0.015, height: 0.142 } } },
 ]);
 const PACK_WEAPON_SKINS = Object.freeze(Object.fromEntries(PACK_WEAPON_THEMES.flatMap((pack) =>
   ['ak', 'pistol', 'knife'].map((weapon) => {
@@ -53,6 +53,7 @@ const PACK_WEAPON_SKINS = Object.freeze(Object.fromEntries(PACK_WEAPON_THEMES.fl
       color: pack.color,
       description: pack.description,
       markAsset: pack.markAsset || null,
+      markLayout: pack.markLayouts?.[weapon] || null,
       price: 0,
       inspiration: 'conjunto original coordenado do projeto, sem marca de produto ou reprodução de item comercial',
       series: 'PACKS DA TRETA',
