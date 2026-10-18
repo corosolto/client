@@ -17,6 +17,12 @@ const storeEvent=(event,itemId='')=>{
   if(!window.__csPrivacy?.allowed())return;
   void socialApi('/api/treta',{action:'analytics',event,itemId}).catch(()=>{});
 };
+let lastStoreVisit=0;
+const storeVisit=()=>{
+  const now=Date.now();
+  if(now-lastStoreVisit<1000)return;
+  lastStoreVisit=now;storeEvent('visit');
+};
 let state=null,manifest={skins:{}},eyeManifest={eyewear:{}},selected=null,filter='all',stage=null,purchaseStage=null,refreshPromise=null,account=null;
 let onEquip=()=>{},infoStage=null,infoVersion=0;
 let equipmentRevision='';
@@ -322,7 +328,8 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   setInterval(()=>{if(account?.authenticated && !document.hidden)void refresh();},30000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden && account?.authenticated)void refresh();});
   document.addEventListener('cs-match-end',()=>{for(const delay of [2000,12000,30000])setTimeout(()=>{if(account?.authenticated)void refresh();},delay);});
-  document.addEventListener('cs-shop-open',()=>{storeEvent('visit');void refresh();});
+  document.addEventListener('cs-shop-open',()=>{storeVisit();void refresh();});
+  if(estadoDaUrl(location.href)?.secao==='loja')storeVisit();
   document.addEventListener('cs-account-change',event=>{accountEpoch++;account=event.detail;state=null;selected=null;updateTretaRewards(null);for(const id of ['treta-detail','treta-purchase'])if($(id).open)$(id).close();draw();updateBuy();notifyEquipment();void refresh();});
   // Apresentação só depois da 1ª partida, quando o convite pós-partida (login-prompt.js) já decidiu.
   document.addEventListener('cs-pos-partida',event=>{

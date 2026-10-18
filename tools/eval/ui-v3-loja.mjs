@@ -45,6 +45,7 @@ const MUTANTES = {
   'meta-fixa': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace('d.ganhoHoje/d.tetoDiario', '0.5')],
   'quest-sem-icone': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace('${QUEST_ICONES[c.dataset.quest]||QUEST_ICONE_GERAL}', "''")],
   'icone-igual': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace('QUEST_ICONES[c.dataset.quest]||', '')],
+  'visita-so-no-evento': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace("  if(estadoDaUrl(location.href)?.secao==='loja')storeVisit();", '')],
 };
 
 const aplicados = new Set();
@@ -73,6 +74,10 @@ function fixture(page, conta) {
     const url = new URL(route.request().url());
     let dados = null; try { dados = route.request().postDataJSON(); } catch { /* GET */ }
     if (url.pathname === '/api/treta') {
+      if (dados?.action === 'analytics') {
+        conta.analytics.push(dados);
+        return route.fulfill({ json: { ok: true, stored: true } });
+      }
       if (dados?.action === 'equip') {
         conta.equipou.push(dados.skinId);
         conta.inventario = conta.inventario.map((s) => ({ ...s, equipped: s.skin_id === dados.skinId }));
@@ -85,7 +90,7 @@ function fixture(page, conta) {
 }
 
 async function abrir({ w = 1536, h = 1024, flag = true, lang = 'pt', mutante = '', intro = true, toque = false } = {}) {
-  const conta = { inventario: [{ skin_id: 'janja', equipped: true }, { skin_id: 'lula-cyborg', equipped: false }], equipou: [] };
+  const conta = { inventario: [{ skin_id: 'janja', equipped: true }, { skin_id: 'lula-cyborg', equipped: false }], equipou: [], analytics: [] };
   const page = await browser.newPage({ viewport: { width: w, height: h }, hasTouch: toque, isMobile: toque });
   const erros = [];
   page.on('pageerror', (e) => { if (!/eval-vite\/deps/.test(e.message)) erros.push(e.message.slice(0, 160)); });
@@ -93,6 +98,7 @@ async function abrir({ w = 1536, h = 1024, flag = true, lang = 'pt', mutante = '
     localStorage.setItem('awpbr_settings', JSON.stringify({ menuMusic: false, vol: 0, speech: false }));
     localStorage.setItem('cs_lang', l); localStorage.setItem('awpbr_nick', 'TESTE UI');
     if (i) localStorage.setItem('cs_treta_intro', 'v1');
+    localStorage.setItem('cs_privacy', JSON.stringify({ version: 'corosolto-analytics-v1', analytics: true, updatedAt: new Date().toISOString() }));
   }, [lang, intro]);
   await preparar(page, mutante);
   await fixture(page, conta);
@@ -221,6 +227,8 @@ async function secaoV3(mutante, add) {
   add('LJ14', questsIcones.length >= 4 && questsIcones.every((q) => q.icone && !q.oculto && !q.duplicado)
     && new Set(questsIcones.map((q) => q.icone)).size === questsIcones.length,
     `${questsIcones.length} quests, ${questsIcones.filter((q) => q.icone).length} com ícone, ${new Set(questsIcones.map((q) => q.icone)).size} distintos (um por quest), ${questsIcones.filter((q) => q.duplicado || q.oculto).length} mal montado(s)`);
+  const visitas = conta.analytics.filter((evento) => evento.event === 'visit');
+  add('LJ15', visitas.length === 1, `abertura direta por /loja registrou ${visitas.length} visita(s), esperado 1`);
   const okMeta = meta.length === 2 && meta[0].txt.includes(`${GANHO_HOJE}`) && meta[0].txt.includes(`${TRETA_DEFAULT_REWARDS.daily_match_cap}`)
     && Math.abs(meta[0].p - GANHO_HOJE / TRETA_DEFAULT_REWARDS.daily_match_cap) < 0.01
     && meta[1].txt.includes(`${AMIGOS}`) && Math.abs(meta[1].p - AMIGOS / TRETA_DEFAULT_REWARDS.referral_cap) < 0.01;
@@ -306,7 +314,7 @@ async function secaoLegado(mutante, add) {
   add('LJ11', !ruim.length, ruim.length ? `sem a flag a loja mudou: ${ruim.map((o) => `${o.tp} nós tp-, abas antigas ${o.abas ? 'visíveis' : 'sumiram'}, título ${o.fonte.split(',')[0]}`).join('; ')}` : 'sem a flag a loja é a de hoje (1536 e 844)');
 }
 
-const SECOES = { v3: [secaoV3, ['LJ1', 'LJ3', 'LJ4', 'LJ5', 'LJ7', 'LJ8', 'LJ12', 'LJ13', 'LJ14']], modal: [secaoModal, ['LJ2']], idioma: [secaoIdioma, ['LJ10']],
+const SECOES = { v3: [secaoV3, ['LJ1', 'LJ3', 'LJ4', 'LJ5', 'LJ7', 'LJ8', 'LJ12', 'LJ13', 'LJ14', 'LJ15']], modal: [secaoModal, ['LJ2']], idioma: [secaoIdioma, ['LJ10']],
   telas: [secaoTelas, ['LJ9']], legado: [secaoLegado, ['LJ11']] };
 
 async function medir(mutante = '', alvo = '') {
@@ -318,7 +326,7 @@ async function medir(mutante = '', alvo = '') {
 
 const MUT = [['risco-dobrado', 'LJ1'], ['modal-sozinho', 'LJ2'], ['titulo-sem-anton', 'LJ3'], ['raridade-inventada', 'LJ4'], ['preco-local', 'LJ5'],
   ['dois-primarios', 'LJ7'], ['slot-inventado', 'LJ8'], ['grade-larga', 'LJ9'], ['alvo-pequeno', 'LJ9'], ['en-vaza', 'LJ10'], ['sem-flag', 'LJ11'], ['meta-fixa', 'LJ12'],
-  ['quest-sem-icone', 'LJ14'], ['icone-igual', 'LJ14']];
+  ['quest-sem-icone', 'LJ14'], ['icone-igual', 'LJ14'], ['visita-so-no-evento', 'LJ15']];
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO === m)) {
