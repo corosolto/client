@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.109`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.110`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -108,6 +108,12 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.110] — 2026-10-18
+
+### Mudado
+- fix: encerra backlog operacional da alpha.108 (#1010)
+- Ativa Treta Pop por padrão e limpa convite de sala (#1018)
 
 ## [2.1.0-alpha.109] — 2026-10-18
 
