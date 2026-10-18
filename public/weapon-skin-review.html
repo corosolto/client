@@ -20,7 +20,7 @@ const query=new URLSearchParams(location.search),weapon=query.get('weapon')||'m4
 const nameElement=document.getElementById('name'),metaElement=document.getElementById('meta');
 const definition=WEAPON_SKINS[skin];
 if(!definition||!definition.targetWeapons.includes(weapon))throw new Error(`skin ${skin} incompatível com ${weapon}`);
-nameElement.textContent=definition.name;metaElement.textContent=definition.rightsStatus==='permission-needed'?`${weapon.toUpperCase()} · licença pendente · loja desligada`:`${weapon.toUpperCase()} · candidato · loja desligada`;
+nameElement.textContent=definition.name;metaElement.textContent=definition.storeEnabled?`${weapon.toUpperCase()} · loja TRETA$ · T$ ${definition.storePrice}`:definition.rightsStatus==='permission-needed'?`${weapon.toUpperCase()} · licença pendente · loja desligada`:`${weapon.toUpperCase()} · candidato · loja desligada`;
 const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(2,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.28;document.body.append(renderer.domElement);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x080a0d);
 scene.add(new THREE.HemisphereLight(0xe8f1ff,0x17120d,2.2));

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "estrela-verde-ak",
+  "weaponId": "ak",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "political-satire",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver",
+  "markSourceUrl": null,
+  "referenceRule": "project-authored political satire using original vector geometry; no party or campaign logo copied",
+  "slogan": null,
+  "storePrice": 500,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "38e39d98bfa7bcc08185bae249863fca1fa038ed0b2b7a8a19e125337062ff5b",
+    "side-right.png": "ae793a8e2bb337479420fc650ab68fd7fa3ccd2ea8e2350bff73e4c7f4c1e038",
+    "three-quarter.png": "9d607844ef555bc03f9d4324c37b0b0e20468679a92c3ca8b0bfbe4468403eb6"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
+    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/political-marks/estrela-verde.svg": "cf29f3a6c40966a911c34d8fd235aee46228907c6e9f2a073cb9fe950693416a"
+  },
+  "consoleErrors": []
+}

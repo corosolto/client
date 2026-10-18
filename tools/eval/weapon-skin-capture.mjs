@@ -8,18 +8,8 @@ import { WEAPON_SKINS } from '../../public/js/data/weapon-skin-definitions.js';
 const ROOT = path.resolve(new URL('../../', import.meta.url).pathname);
 const SKIN_ID = process.env.SKIN_ID || 'ondas-cariocas';
 const DEFINITION = WEAPON_SKINS[SKIN_ID];
-const TARGETS = Object.freeze({
-  'ondas-cariocas': 'm4',
-  'mosaico-paulista': 'scar',
-  'nacao-rubro-negra': 'ak',
-  'alvinegra-paulista': 'ak',
-  'celeste-mineira': 'ak',
-  'tricolor-gaucha': 'ak',
-  'tricolor-baiana': 'ak',
-  'verde-alviverde': 'ak',
-  'tricolor-morumbi': 'ak',
-  'alvinegra-praiana': 'ak',
-});
+const TARGETS = Object.freeze(Object.fromEntries(Object.values(WEAPON_SKINS)
+  .flatMap((skin)=>skin.targetWeapons.map((weaponId)=>[skin.id,weaponId]))));
 const WEAPON_ID = TARGETS[SKIN_ID];
 if (!WEAPON_ID) throw new Error(`skin desconhecida: ${SKIN_ID}`);
 const OUT = path.join(ROOT, 'tools/eval/asset-evidence/items/weapon-skins', SKIN_ID);
@@ -41,12 +31,12 @@ if (CHECK) {
   const report = JSON.parse(readFileSync(path.join(OUT, 'report.json')));
   if (report.schemaVersion !== 'cs-weapon-skin-evidence/1') throw new Error('schema de evidência inválido');
   if (report.skinId !== SKIN_ID || report.weaponId !== WEAPON_ID) throw new Error('alvo da evidência mudou');
-  if (report.approved !== false || report.certified !== false || report.runtimeEnabled !== false) throw new Error('skin candidata foi promovida');
+  if (report.approved !== DEFINITION.approved || report.certified !== DEFINITION.certified || report.runtimeEnabled !== DEFINITION.runtimeEnabled) throw new Error('estado de ativação da skin mudou');
   if (report.status !== DEFINITION.status || report.officialMarksIncluded !== !!DEFINITION.officialMarksIncluded) throw new Error('estado jurídico da evidência mudou');
   if (report.markPlacement !== (DEFINITION.markPlacement || null)) throw new Error('posição do escudo mudou');
   for (const file of FILES) if (report.files[file] !== sha(path.join(OUT, file))) throw new Error(`${file}: hash desatualizado`);
   for (const file of SOURCES) if (report.sources[file] !== sha(path.join(ROOT, file))) throw new Error(`${file}: fonte mudou sem recaptura`);
-  console.log(`weapon-skin check: ${SKIN_ID} ${FILES.length} views hash-pinned, approved=0, runtime=0`);
+  console.log(`weapon-skin check: ${SKIN_ID} ${FILES.length} views hash-pinned, approved=${Number(DEFINITION.approved)}, runtime=${Number(DEFINITION.runtimeEnabled)}`);
   process.exit(0);
 }
 
@@ -91,9 +81,9 @@ const report = {
   skinId: SKIN_ID,
   weaponId: WEAPON_ID,
   status: DEFINITION.status,
-  approved: false,
-  certified: false,
-  runtimeEnabled: false,
+  approved: DEFINITION.approved,
+  certified: DEFINITION.certified,
+  runtimeEnabled: DEFINITION.runtimeEnabled,
   designOrigin: DEFINITION.designOrigin,
   rightsStatus: DEFINITION.rightsStatus || 'original-safe',
   officialMarksIncluded: !!DEFINITION.officialMarksIncluded,
@@ -101,12 +91,18 @@ const report = {
   markSourceUrl: DEFINITION.markSourceUrl || null,
   referenceRule: DEFINITION.rightsStatus === 'permission-needed'
     ? 'official club mark shown only in an internal, store-off preview; written trademark clearance required before release'
-    : 'original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin',
+    : DEFINITION.rightsStatus === 'political-satire'
+      ? 'project-authored political satire using original vector geometry; no party or campaign logo copied'
+      : DEFINITION.metalFinish
+        ? 'project-authored metallic finish without brand, badge or copied commercial skin'
+        : 'original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin',
+  slogan: DEFINITION.slogan || null,
+  storePrice: DEFINITION.storePrice || null,
   views: ['left-side', 'right-side', 'three-quarter'],
   files: Object.fromEntries(FILES.map((file) => [file, sha(path.join(OUT, file))])),
   sources: Object.fromEntries(SOURCES.map((file) => [file, sha(path.join(ROOT, file))])),
   consoleErrors: errors,
 };
 writeFileSync(path.join(OUT, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
-console.log(`weapon-skin write: ${SKIN_ID} ${FILES.length} views, approved=0, runtime=0`);
+console.log(`weapon-skin write: ${SKIN_ID} ${FILES.length} views, approved=${Number(DEFINITION.approved)}, runtime=${Number(DEFINITION.runtimeEnabled)}`);
 if (CDP_URL) process.exit(0);

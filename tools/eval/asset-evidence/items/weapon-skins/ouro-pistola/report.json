@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "ouro-pistola",
+  "weaponId": "pistol",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": null,
+  "markSourceUrl": null,
+  "referenceRule": "project-authored metallic finish without brand, badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": 900,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "a8f67cde2b21d4888b6baf44a7e759e9c8a403ade775317465ef1f58ef56bbb1",
+    "side-right.png": "47044d7c56874cd616c468c1f5cb8670be13b612bc180f9e8248d187af89e577",
+    "three-quarter.png": "dffcb52bc79a961d688f3af73274e5ab09b9377bbc290d8cd2415b8c770e6f4f"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
+    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
+  },
+  "consoleErrors": []
+}

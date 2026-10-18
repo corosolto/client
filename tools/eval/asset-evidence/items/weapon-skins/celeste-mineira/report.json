@@ -12,21 +12,23 @@
   "markPlacement": "receiver",
   "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Cruzeiro_Esporte_Clube_(logo).svg",
   "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
+  "slogan": null,
+  "storePrice": null,
   "views": [
     "left-side",
     "right-side",
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "06574f678b014ec0e88406aef8afebe8d480a9833b2bfb129dff52370ef5ff5f",
-    "side-right.png": "90847cb0333961e109cc3ccf8d81a396e551e5c73a6eaf7ac1b44eb9b6edb00f",
-    "three-quarter.png": "91ce849ecc1b8161e76c0b2c4f50d197b10099ed544d8eb0b9a2ee14a479405a"
+    "side-left.png": "a9ec2faa759e03d6ad7384867df66250c0b994d8afbf23ed8daea860afdbe3b0",
+    "side-right.png": "5c9e96aeafcbee29e2cbf0dfb404747f04be4805cd646a8878d50c93110976a4",
+    "three-quarter.png": "81481ae663c56c5b9c0eb4e0ca22decfd3e01b1db79e7540ebf9e4787f6c8c41"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "41705b1368c0dca1e425da8bcfc652694046d69de70ace213b976f03d31791a5",
-    "public/js/weapon-skins.js": "343a6ed1fc3dcc1ccf45cc0191dbb3fc0594fb051bd0c66c1daad971c738e18c",
+    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
+    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
-    "public/weapon-skin-review.html": "73893044a34e8dcc8afcefbe2db16354565eae0d18c0e3f72828117d1dcd5b57",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/club-marks/cruzeiro.png": "813d73defa7ed2a57e774cf14414a36732ea1f6852349d517adf8bc6d7dce49d"
   },
   "consoleErrors": []

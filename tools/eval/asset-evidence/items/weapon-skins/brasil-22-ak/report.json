@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "brasil-22-ak",
+  "weaponId": "ak",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "political-satire",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver",
+  "markSourceUrl": null,
+  "referenceRule": "project-authored political satire using original vector geometry; no party or campaign logo copied",
+  "slogan": "O BRASIL É 22",
+  "storePrice": 500,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "6ac9fe248e443a56f4c24a828beb0a2cf0fadfecbfeed337fd772f81c287e149",
+    "side-right.png": "5a6103a377018d41db9cfd619f73954d356cf537b9cbfb6777480da30127a87b",
+    "three-quarter.png": "6c3e3742f1ed0e1829e2dbc83262111470951c58f314534601520c2d68459a12"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
+    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/political-marks/brasil-22.svg": "82929517a0a84e701c8c3fa96cc7b7cae9716bf2795404eb61e994aaa9e68b86"
+  },
+  "consoleErrors": []
+}

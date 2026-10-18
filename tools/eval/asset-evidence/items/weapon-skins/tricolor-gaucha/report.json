@@ -12,21 +12,23 @@
   "markPlacement": "receiver",
   "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Gremio_logo.svg",
   "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
+  "slogan": null,
+  "storePrice": null,
   "views": [
     "left-side",
     "right-side",
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "f6cede1117f068e6a2256ddb1ff6c38cca892341219684ecbf814d3d4ada6560",
-    "side-right.png": "a6d666c9b11152a3b0e59cbf5daf10f5ddb36452ef5c0034e7f725a3f15f0833",
-    "three-quarter.png": "4597761ed7e7abc66415ab7748a263f1f626257ce21216bb66f44c2e62eaf9f2"
+    "side-left.png": "04cc7a47a7dfdf6252b470641be31af8449b9fbc5a835c330f95b7b741e04bb6",
+    "side-right.png": "b2beba1e007c2a8606ec8a6197ba3f67f3b6ff1ff6d3b48ffde4aa183a8935c7",
+    "three-quarter.png": "fd092593ca88c616654083a59597df2d4a68fdd5a08a2e8e5a361f43c5328707"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "41705b1368c0dca1e425da8bcfc652694046d69de70ace213b976f03d31791a5",
-    "public/js/weapon-skins.js": "343a6ed1fc3dcc1ccf45cc0191dbb3fc0594fb051bd0c66c1daad971c738e18c",
+    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
+    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
-    "public/weapon-skin-review.html": "73893044a34e8dcc8afcefbe2db16354565eae0d18c0e3f72828117d1dcd5b57",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/club-marks/gremio.png": "72508ce99851b94c182eb8f2a0b9b1a53873294f6d81ed6add9e9c56558b4eba"
   },
   "consoleErrors": []

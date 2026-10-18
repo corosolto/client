@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "trabalho-13-ak",
+  "weaponId": "ak",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "political-satire",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver",
+  "markSourceUrl": null,
+  "referenceRule": "project-authored political satire using original vector geometry; no party or campaign logo copied",
+  "slogan": "FAZ O L É LULA 13",
+  "storePrice": 500,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "a7757f4f5bb0150a2f7845fbe59b7b78196824357a6a729c861426413e6e99b7",
+    "side-right.png": "972ad85cc87a494499ac5338105e0b2e73227b578fa12a84cb0b005cb76a3da3",
+    "three-quarter.png": "f398cb18a7f92ef3d22e08010ef31fca1cffec8934fa8badba4e178abe62a2d5"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
+    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/political-marks/trabalho-13.svg": "edbec788f88564fc082705452e154012907b2ce64f2c8c24d335e48d6b4118e8"
+  },
+  "consoleErrors": []
+}

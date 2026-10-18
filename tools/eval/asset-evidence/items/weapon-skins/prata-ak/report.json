@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "prata-ak",
+  "weaponId": "ak",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": null,
+  "markSourceUrl": null,
+  "referenceRule": "project-authored metallic finish without brand, badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": 500,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "331ade5da4ba436770faeea72ecd741261206dae9af6b565215194e17ea1cba1",
+    "side-right.png": "1690b61c6f80f8841d1e6902cc0579a1d1806c031fb7b766c398b6b31b866354",
+    "three-quarter.png": "903550d8bd05bbe43e301ed515e0fd79d5147edacf854331268d42ad585f596b"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
+    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
+  },
+  "consoleErrors": []
+}

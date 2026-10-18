@@ -12,6 +12,8 @@
   "markPlacement": "receiver",
   "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Clube_de_Regatas_do_Flamengo_logo.svg",
   "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
+  "slogan": null,
+  "storePrice": null,
   "views": [
     "left-side",
     "right-side",
@@ -23,10 +25,10 @@
     "three-quarter.png": "bbdb4c35a52e45c3612c6bc1ece5c5f4ee0f07862189e790945cb4600269c31a"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "41705b1368c0dca1e425da8bcfc652694046d69de70ace213b976f03d31791a5",
-    "public/js/weapon-skins.js": "343a6ed1fc3dcc1ccf45cc0191dbb3fc0594fb051bd0c66c1daad971c738e18c",
+    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
+    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
-    "public/weapon-skin-review.html": "73893044a34e8dcc8afcefbe2db16354565eae0d18c0e3f72828117d1dcd5b57",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/club-marks/flamengo.png": "7ef0bbdc5ef03ceafae933ed9ec75b4f18ed5c05aa3af98dca9781c5d8c9a36f"
   },
   "consoleErrors": []

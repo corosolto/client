@@ -16,6 +16,18 @@ const TARGETS = Object.freeze({
   'verde-alviverde': 'ak',
   'tricolor-morumbi': 'ak',
   'alvinegra-praiana': 'ak',
+  'trabalho-13-ak': 'ak',
+  'trabalho-13-pistola': 'pistol',
+  'estrela-vermelha-ak': 'ak',
+  'estrela-vermelha-pistola': 'pistol',
+  'estrela-verde-ak': 'ak',
+  'estrela-verde-pistola': 'pistol',
+  'brasil-22-ak': 'ak',
+  'brasil-22-pistola': 'pistol',
+  'ouro-ak': 'ak',
+  'ouro-pistola': 'pistol',
+  'prata-ak': 'ak',
+  'prata-pistola': 'pistol',
 });
 const CLUB_SKINS = new Set([
   'nacao-rubro-negra',
@@ -27,6 +39,23 @@ const CLUB_SKINS = new Set([
   'tricolor-morumbi',
   'alvinegra-praiana',
 ]);
+const POLITICAL = Object.freeze({
+  'trabalho-13-ak': ['trabalho-13', 'FAZ O L É LULA 13'],
+  'trabalho-13-pistola': ['trabalho-13', 'FAZ O L É LULA 13'],
+  'estrela-vermelha-ak': ['estrela-vermelha', 'O BRASIL É DOS BRASILEIROS'],
+  'estrela-vermelha-pistola': ['estrela-vermelha', 'O BRASIL É DOS BRASILEIROS'],
+  'estrela-verde-ak': ['estrela-verde', null],
+  'estrela-verde-pistola': ['estrela-verde', null],
+  'brasil-22-ak': ['brasil-22', 'O BRASIL É 22'],
+  'brasil-22-pistola': ['brasil-22', 'O BRASIL É 22'],
+});
+const STORE_PRICES = Object.freeze({
+  ...Object.fromEntries(Object.keys(POLITICAL).map((id) => [id, 500])),
+  'ouro-ak': 900,
+  'ouro-pistola': 900,
+  'prata-ak': 500,
+  'prata-pistola': 500,
+});
 const SHADER_TOKENS = Object.freeze({
   'ondas-cariocas': 'rioPhase',
   'mosaico-paulista': 'paulistaCell',
@@ -38,14 +67,27 @@ const SHADER_TOKENS = Object.freeze({
   'verde-alviverde': 'palmeirasBand',
   'tricolor-morumbi': 'spfcBand',
   'alvinegra-praiana': 'santosWave',
+  'trabalho-13-ak': 'trabalhoStripe',
+  'trabalho-13-pistola': 'trabalhoStripe',
+  'estrela-vermelha-ak': 'estrelaVermelhaBand',
+  'estrela-vermelha-pistola': 'estrelaVermelhaBand',
+  'estrela-verde-ak': 'estrelaVerdeBand',
+  'estrela-verde-pistola': 'estrelaVerdeBand',
+  'brasil-22-ak': 'brasilBand',
+  'brasil-22-pistola': 'brasilBand',
+  'ouro-ak': 'ouroBrush',
+  'ouro-pistola': 'ouroBrush',
+  'prata-ak': 'prataBrush',
+  'prata-pistola': 'prataBrush',
 });
 
 function validate(definition, expectedId, expectedWeapon) {
+  const storePrice = STORE_PRICES[expectedId] || null;
   assert.equal(definition.id, expectedId);
-  assert.equal(definition.status, CLUB_SKINS.has(expectedId) ? 'permission-needed' : 'candidate');
-  assert.equal(definition.approved, false);
-  assert.equal(definition.certified, false);
-  assert.equal(definition.runtimeEnabled, false);
+  assert.equal(definition.status, storePrice ? 'store-active' : CLUB_SKINS.has(expectedId) ? 'permission-needed' : 'candidate');
+  assert.equal(definition.approved, !!storePrice);
+  assert.equal(definition.certified, !!storePrice);
+  assert.equal(definition.runtimeEnabled, !!storePrice);
   assert.deepEqual([...definition.targetWeapons], [expectedWeapon]);
   if (CLUB_SKINS.has(expectedId)) {
     assert.equal(definition.designOrigin, 'project-colorway-with-official-mark');
@@ -60,16 +102,37 @@ function validate(definition, expectedId, expectedWeapon) {
     assert.equal(definition.designOrigin, 'project-owned');
     assert.match(definition.inspiration, /original/);
   }
+  if (storePrice) {
+    assert.equal(definition.storeEnabled, true);
+    assert.equal(definition.storePrice, storePrice);
+    assert.equal(definition.storeSlot, 'weapon');
+    assert.equal(definition.storeWeapon, expectedWeapon);
+  }
+  if (POLITICAL[expectedId]) {
+    const [theme, slogan] = POLITICAL[expectedId];
+    assert.equal(definition.theme, theme);
+    assert.equal(definition.slogan, slogan);
+    assert.equal(definition.rightsStatus, 'political-satire');
+    assert.equal(definition.officialMarksIncluded, false);
+    assert.equal(definition.markPlacement, 'receiver');
+    assert.equal(definition.markAsset, `/textures/weapon-skins/political-marks/${theme}.svg`);
+    assert.ok(existsSync(`public${definition.markAsset}`), `${expectedId}: símbolo ausente`);
+  }
 }
 
 if (process.argv.includes('--mutate')) {
+  const baseline = WEAPON_SKINS['ondas-cariocas'];
+  const political = WEAPON_SKINS['trabalho-13-ak'];
   const mutants = [
-    ['approved', { ...WEAPON_SKINS['ondas-cariocas'], approved: true }],
-    ['runtime', { ...WEAPON_SKINS['ondas-cariocas'], runtimeEnabled: true }],
-    ['universal', { ...WEAPON_SKINS['ondas-cariocas'], targetWeapons: ['m4', 'ak'] }],
-    ['borrowed', { ...WEAPON_SKINS['ondas-cariocas'], designOrigin: 'third-party-reference' }],
+    ['approved', { ...baseline, approved: true }, 'ondas-cariocas', 'm4'],
+    ['runtime', { ...baseline, runtimeEnabled: true }, 'ondas-cariocas', 'm4'],
+    ['universal', { ...baseline, targetWeapons: ['m4', 'ak'] }, 'ondas-cariocas', 'm4'],
+    ['borrowed', { ...baseline, designOrigin: 'third-party-reference' }, 'ondas-cariocas', 'm4'],
+    ['store-off', { ...political, storeEnabled: false }, 'trabalho-13-ak', 'ak'],
+    ['wrong-price', { ...political, storePrice: 900 }, 'trabalho-13-ak', 'ak'],
+    ['wrong-slogan', { ...political, slogan: 'texto diferente' }, 'trabalho-13-ak', 'ak'],
   ];
-  for (const [name, mutant] of mutants) assert.throws(() => validate(mutant, 'ondas-cariocas', 'm4'), undefined, `${name}: mutante sobreviveu`);
+  for (const [name, mutant, id, weapon] of mutants) assert.throws(() => validate(mutant, id, weapon), undefined, `${name}: mutante sobreviveu`);
   console.log(`weapon-skin mutate: ${mutants.length}/${mutants.length} killed`);
   process.exit(0);
 }
@@ -107,4 +170,4 @@ for (const weaponId of [...new Set(Object.values(TARGETS))]) {
   assert.ok(primitives.every((primitive) => primitive.getAttribute('POSITION')), `${weaponId}: sem posições completas`);
   audits.push(`${weaponId}:${primitives.length}`);
 }
-console.log(`weapon-skin check: ${Object.keys(TARGETS).length} candidates, models=${audits.join(',')}, official-marks=${CLUB_SKINS.size}, permission-needed=${CLUB_SKINS.size}, runtime=0`);
+console.log(`weapon-skin check: ${Object.keys(TARGETS).length} candidates, models=${audits.join(',')}, official-marks=${CLUB_SKINS.size}, store=${Object.keys(STORE_PRICES).length}, runtime=${Object.values(WEAPON_SKINS).filter((skin) => skin.runtimeEnabled).length}`);

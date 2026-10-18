@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="768" height="512" viewBox="0 0 768 512">
+  <rect width="768" height="512" rx="54" fill="#07833f"/>
+  <rect x="12" y="12" width="744" height="488" rx="44" fill="none" stroke="#f7d431" stroke-width="24"/>
+  <polygon points="206,58 369,256 206,454 43,256" fill="#f7d431"/>
+  <circle cx="206" cy="256" r="102" fill="#143f92"/>
+  <path d="M116 242c55-25 123-11 180 38" fill="none" stroke="#fff" stroke-width="18"/>
+  <g fill="#fff" font-family="Arial Black,Arial,sans-serif" font-weight="900" text-anchor="middle">
+    <text x="544" y="150" font-size="55">O BRASIL</text>
+    <text x="544" y="218" font-size="55">É</text>
+    <text x="544" y="370" font-size="160" fill="#f7d431">22</text>
+  </g>
+</svg>

@@ -12,21 +12,23 @@
   "markPlacement": "receiver",
   "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Santos_logo.svg",
   "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
+  "slogan": null,
+  "storePrice": null,
   "views": [
     "left-side",
     "right-side",
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "36096c3a3cfea61e9c585a1b89493a517bd4902144a110e564a7f98255cdd4fb",
-    "side-right.png": "757df92da34678b11e3f0c7ad9f46cd4f5443c0c65e3842d5b8e32fea34ea96c",
-    "three-quarter.png": "3d643aa1b58babf1a875634bde4bd90ab204bb05a3baaf38de02010f0e85a0bb"
+    "side-left.png": "9630fb0f164cf56929ef5ac01267c8ac338fb0145b909f46d2ee4b32fb53283e",
+    "side-right.png": "a1a8d9e4e76c7c5fab08ce3a9f33604a185a12f333bba26bc62f937a6325a67a",
+    "three-quarter.png": "9ec5c85d7528dd354d99dfaec6011aa0e18befb641c5eb5190df79836c34c03a"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "41705b1368c0dca1e425da8bcfc652694046d69de70ace213b976f03d31791a5",
-    "public/js/weapon-skins.js": "343a6ed1fc3dcc1ccf45cc0191dbb3fc0594fb051bd0c66c1daad971c738e18c",
+    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
+    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
-    "public/weapon-skin-review.html": "73893044a34e8dcc8afcefbe2db16354565eae0d18c0e3f72828117d1dcd5b57",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/club-marks/santos.png": "94940aef9f8260e6d9a47bbf70219e77b2f66f8a04d2422e67e6ed746bde9115"
   },
   "consoleErrors": []

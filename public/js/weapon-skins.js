@@ -100,6 +100,64 @@ const PATTERN_FRAGMENT = Object.freeze({
     diffuseColor.rgb *= mix(vec3(0.92, 0.91, 0.86), vec3(0.008, 0.010, 0.012), santosBlack);
   `,
 });
+const THEME_FRAGMENT = Object.freeze({
+  'trabalho-13': `
+    float trabalhoStripe = fract(
+      (vWeaponSkinLocal.y + 0.3798828125) * 5.4
+      + (vWeaponSkinLocal.z + 0.0927734375) * 2.2
+    );
+    float trabalhoGold = 1.0 - smoothstep(0.08, 0.15, abs(trabalhoStripe - 0.5));
+    diffuseColor.rgb *= mix(vec3(0.48, 0.006, 0.018), vec3(0.92, 0.57, 0.05), trabalhoGold);
+  `,
+  'estrela-vermelha': `
+    float estrelaVermelhaBand = 0.5 + 0.5 * sin(
+      (vWeaponSkinLocal.y + vWeaponSkinLocal.z + 0.47265625) * 34.0
+    );
+    float estrelaVermelhaInk = smoothstep(0.58, 0.72, estrelaVermelhaBand);
+    diffuseColor.rgb *= mix(vec3(0.91, 0.88, 0.77), vec3(0.68, 0.006, 0.025), estrelaVermelhaInk);
+  `,
+  'estrela-verde': `
+    float estrelaVerdeBand = fract(
+      (vWeaponSkinLocal.x + 0.4990234375) * 3.4
+      + (vWeaponSkinLocal.y + 0.3798828125) * 2.3
+    );
+    float estrelaVerdeGold = 1.0 - smoothstep(0.10, 0.18, abs(estrelaVerdeBand - 0.5));
+    diffuseColor.rgb *= mix(vec3(0.015, 0.42, 0.16), vec3(0.94, 0.72, 0.08), estrelaVerdeGold);
+  `,
+  'brasil-22': `
+    float brasilBand = fract(
+      (vWeaponSkinLocal.y + 0.3798828125) * 3.8
+      + (vWeaponSkinLocal.z + 0.0927734375) * 1.8
+    );
+    vec3 brasilColor = brasilBand < 0.46
+      ? vec3(0.008, 0.38, 0.14)
+      : (brasilBand < 0.76 ? vec3(0.95, 0.72, 0.04) : vec3(0.015, 0.16, 0.55));
+    diffuseColor.rgb *= brasilColor;
+  `,
+  ouro: `
+    float ouroBrush = 0.90 + 0.10 * sin(
+      vWeaponSkinLocal.z * 210.0 + vWeaponSkinLocal.y * 37.0
+    );
+    diffuseColor.rgb *= vec3(0.92, 0.61, 0.11) * ouroBrush;
+  `,
+  prata: `
+    float prataBrush = 0.89 + 0.11 * sin(
+      vWeaponSkinLocal.z * 240.0 + vWeaponSkinLocal.y * 31.0
+    );
+    diffuseColor.rgb *= vec3(0.72, 0.79, 0.84) * prataBrush;
+  `,
+});
+const patternFragment = (skinId) => PATTERN_FRAGMENT[skinId] || THEME_FRAGMENT[WEAPON_SKINS[skinId]?.theme];
+const MATERIAL_PROFILE = Object.freeze({
+  gold: Object.freeze({ roughness: 0.18, metalness: 0.96, envMapIntensity: 1.65 }),
+  silver: Object.freeze({ roughness: 0.16, metalness: 0.98, envMapIntensity: 1.72 }),
+  default: Object.freeze({ roughness: 0.5, metalness: 0.48, envMapIntensity: 1.15 }),
+});
+const MARK_LAYOUT = Object.freeze({
+  ak: Object.freeze({ x: 0.041, y: 0.052, z: -0.08, clubHeight: 0.09, graphicHeight: 0.12 }),
+  pistol: Object.freeze({ x: 0.096, y: 0.085, z: 0.05, clubHeight: 0.16, graphicHeight: 0.20 }),
+});
+
 const markTextures = new Map();
 const markLoads = new Map();
 
@@ -108,7 +166,7 @@ export function preloadWeaponSkinCandidate(skinId) {
   if (!asset) return Promise.resolve(null);
   if (!markLoads.has(skinId)) {
     markLoads.set(skinId, new THREE.TextureLoader().loadAsync(asset).then((texture) => {
-      texture.name = `${skinId}__official_mark_permission_needed`;
+      texture.name = `${skinId}__${WEAPON_SKINS[skinId]?.officialMarksIncluded ? 'official_mark_permission_needed' : 'project_mark'}`;
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.anisotropy = 4;
       markTextures.set(skinId, texture);
@@ -118,11 +176,13 @@ export function preloadWeaponSkinCandidate(skinId) {
   return markLoads.get(skinId);
 }
 
-function attachClubMark(model, skinId) {
+function attachSkinMark(model, weaponId, skinId) {
   const texture = markTextures.get(skinId);
-  if (!texture) return;
+  const definition = WEAPON_SKINS[skinId];
+  const layout = MARK_LAYOUT[weaponId];
+  if (!texture || !definition || !layout) return;
   const aspect = (texture.image?.width || 1) / (texture.image?.height || 1);
-  const height = 0.09;
+  const height = definition.officialMarksIncluded ? layout.clubHeight : layout.graphicHeight;
   const geometry = new THREE.PlaneGeometry(height * aspect, height);
   const material = new THREE.MeshBasicMaterial({
     map: texture,
@@ -134,31 +194,34 @@ function attachClubMark(model, skinId) {
     side: THREE.FrontSide,
     toneMapped: false,
   });
+  const prefix = definition.officialMarksIncluded ? 'club-mark' : 'skin-mark';
   const right = new THREE.Mesh(geometry, material);
-  right.name = `club-mark-${skinId}-right`;
-  right.position.set(0.041, 0.052, -0.08);
+  right.name = `${prefix}-${skinId}-right`;
+  right.position.set(layout.x, layout.y, layout.z);
   right.rotation.y = Math.PI / 2;
   right.renderOrder = 4;
-  right.userData.officialMark = true;
-  right.userData.rightsStatus = 'permission-needed';
+  right.userData.officialMark = !!definition.officialMarksIncluded;
+  right.userData.rightsStatus = definition.rightsStatus || 'original-safe';
   const left = new THREE.Mesh(geometry, material);
-  left.name = `club-mark-${skinId}-left`;
-  left.position.set(-0.041, 0.052, -0.08);
+  left.name = `${prefix}-${skinId}-left`;
+  left.position.set(-layout.x, layout.y, layout.z);
   left.rotation.y = -Math.PI / 2;
   left.renderOrder = 4;
-  left.userData.officialMark = true;
-  left.userData.rightsStatus = 'permission-needed';
+  left.userData.officialMark = !!definition.officialMarksIncluded;
+  left.userData.rightsStatus = definition.rightsStatus || 'original-safe';
   model.add(right, left);
 }
 
 function cloneMaterial(material, skinId) {
   const copy = material.clone();
   copy.name = `${material.name || 'weapon'}__skin_${skinId}`;
+  const definition = WEAPON_SKINS[skinId];
+  const profile = MATERIAL_PROFILE[definition?.metalFinish] || MATERIAL_PROFILE.default;
   copy.map = null;
   copy.color.set(0xffffff);
-  copy.roughness = 0.5;
-  copy.metalness = Math.min(0.48, copy.metalness ?? 0.35);
-  copy.envMapIntensity = 1.15;
+  copy.roughness = profile.roughness;
+  copy.metalness = profile.metalness;
+  copy.envMapIntensity = profile.envMapIntensity;
   copy.userData = { ...copy.userData, weaponSkin: skinId };
   copy.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader
@@ -166,9 +229,9 @@ function cloneMaterial(material, skinId) {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\n\tvWeaponSkinLocal = position;');
     shader.fragmentShader = shader.fragmentShader
       .replace('void main() {', 'varying vec3 vWeaponSkinLocal;\nvoid main() {')
-      .replace('#include <map_fragment>', PATTERN_FRAGMENT[skinId]);
+      .replace('#include <map_fragment>', patternFragment(skinId));
   };
-  copy.customProgramCacheKey = () => `weapon-skin:${skinId}:object-space-v1`;
+  copy.customProgramCacheKey = () => `weapon-skin:${skinId}:object-space-v2`;
   copy.needsUpdate = true;
   return copy;
 }
@@ -183,14 +246,14 @@ export function applyWeaponSkinCandidate(model, weaponId, skinId) {
   if (!skinId) return false;
   const definition = WEAPON_SKINS[skinId];
   if (!definition || !definition.targetWeapons.includes(weaponId)) return false;
-  if (!PATTERN_FRAGMENT[skinId]) return false;
+  if (!patternFragment(skinId)) return false;
   model.traverse((object) => {
     if (!object.isMesh || !object.material) return;
     object.material = Array.isArray(object.material)
       ? object.material.map((material) => cloneMaterial(material, skinId))
       : cloneMaterial(object.material, skinId);
   });
-  attachClubMark(model, skinId);
+  attachSkinMark(model, weaponId, skinId);
   model.userData.weaponSkin = skinId;
   return true;
 }

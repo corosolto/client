@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "estrela-vermelha-pistola",
+  "weaponId": "pistol",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "political-satire",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver",
+  "markSourceUrl": null,
+  "referenceRule": "project-authored political satire using original vector geometry; no party or campaign logo copied",
+  "slogan": "O BRASIL É DOS BRASILEIROS",
+  "storePrice": 500,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "c0e9800277fcf7d3b249de4df2648035aaaab26a479b241b45e9f2bc81b1b6be",
+    "side-right.png": "dc6b1029c7276b8a8fe59d1abb05436493c7fcfd78461cc227cdb4406e46e7ee",
+    "three-quarter.png": "358bc6a157a87e54cae0d23f953cad29746896a24dc6f7f8ed1952995c9aea2a"
+  },
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "4fe811a1aec6b981486c78809a5cc505dcd1a0b5f2b60777ab9beb0a3df2f051",
+    "public/js/weapon-skins.js": "6b0411ac032dece48550b175ab4e00a3e10564aabc8c6f1980836e3e0aab5841",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/political-marks/estrela-vermelha.svg": "b6132276f916bb1d07a0c12f9d70e23c3c8a41a9a6f139ec839e6c3841c36f9b"
+  },
+  "consoleErrors": []
+}
