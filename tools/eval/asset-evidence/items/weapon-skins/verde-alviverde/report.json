@@ -9,7 +9,7 @@
   "designOrigin": "project-colorway-with-official-mark",
   "rightsStatus": "permission-needed",
   "officialMarksIncluded": true,
-  "markPlacement": "stock",
+  "markPlacement": "receiver",
   "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Palmeiras_logo.svg",
   "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
   "views": [
@@ -18,13 +18,13 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "f364862eefadaaad37cad07fce02556a34fda4d93687d55f26d707c6c13abfc0",
-    "side-right.png": "f3f48c895e9af992060646a595a4c6bb998bb7f5fbee456cfd10b07ad59081c8",
-    "three-quarter.png": "a227771845f337e032b50b154cf58a4491a9e2f37d91f290e94dd5151239b448"
+    "side-left.png": "09e8f28c8be9794c3dccf51e06ca562a985084037a1fab9dd3eee9442c2e104c",
+    "side-right.png": "5d467faa0f7d266ca5c700f3131f61b2a8a0e31898e5d2f0066905dd6da6faf1",
+    "three-quarter.png": "688ffb29e478424cf97d6d318a9bdcfe39adc8359ec968365a71dad2aaf2ca3d"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "cc0d770b0dd36d0cce4ee29834067729b0e17f809707bc9121f1d4e856342095",
-    "public/js/weapon-skins.js": "2011035f66a4a19b9b89d0212240d1d378c52c3c857c48db48b9450d5f43b02e",
+    "public/js/data/weapon-skin-definitions.js": "41705b1368c0dca1e425da8bcfc652694046d69de70ace213b976f03d31791a5",
+    "public/js/weapon-skins.js": "343a6ed1fc3dcc1ccf45cc0191dbb3fc0594fb051bd0c66c1daad971c738e18c",
     "public/js/weapons.js": "acf5cf7bfb1b11580ad143844f9ec9eb6c811ecf55760457a1ba13d18c92f7ae",
     "public/weapon-skin-review.html": "73893044a34e8dcc8afcefbe2db16354565eae0d18c0e3f72828117d1dcd5b57",
     "public/textures/weapon-skins/club-marks/palmeiras.png": "0ac52419909af2018a70ee8fae56c59f6c9d58ec86ef95731a3c99dea66928b4"

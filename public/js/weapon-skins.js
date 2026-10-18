@@ -136,14 +136,14 @@ function attachClubMark(model, skinId) {
   });
   const right = new THREE.Mesh(geometry, material);
   right.name = `club-mark-${skinId}-right`;
-  right.position.set(0.041, 0.052, -0.32);
+  right.position.set(0.041, 0.052, -0.08);
   right.rotation.y = Math.PI / 2;
   right.renderOrder = 4;
   right.userData.officialMark = true;
   right.userData.rightsStatus = 'permission-needed';
   const left = new THREE.Mesh(geometry, material);
   left.name = `club-mark-${skinId}-left`;
-  left.position.set(-0.041, 0.052, -0.32);
+  left.position.set(-0.041, 0.052, -0.08);
   left.rotation.y = -Math.PI / 2;
   left.renderOrder = 4;
   left.userData.officialMark = true;

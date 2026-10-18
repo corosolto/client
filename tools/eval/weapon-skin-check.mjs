@@ -52,7 +52,7 @@ function validate(definition, expectedId, expectedWeapon) {
     assert.equal(definition.rightsStatus, 'permission-needed');
     assert.equal(definition.requiresLicenseForOfficialMarks, true);
     assert.equal(definition.officialMarksIncluded, true);
-    assert.equal(definition.markPlacement, 'stock');
+    assert.equal(definition.markPlacement, 'receiver');
     assert.ok(definition.markAsset.startsWith('/textures/weapon-skins/club-marks/'));
     assert.ok(existsSync(`public${definition.markAsset}`), `${expectedId}: escudo ausente`);
     assert.match(definition.markSourceUrl, /^https:\/\//);

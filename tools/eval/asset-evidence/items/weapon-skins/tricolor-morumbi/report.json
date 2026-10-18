@@ -9,7 +9,7 @@
   "designOrigin": "project-colorway-with-official-mark",
   "rightsStatus": "permission-needed",
   "officialMarksIncluded": true,
-  "markPlacement": "stock",
+  "markPlacement": "receiver",
   "markSourceUrl": "https://commons.wikimedia.org/wiki/File:São_Paulo_Futebol_Clube_logo_(2022).svg",
   "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
   "views": [
@@ -18,13 +18,13 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "122cd5d7c7ceac0755bfc6ef894bd94fdd7be170f12ae74cad31e2f2cb30af8d",
-    "side-right.png": "21e42d1f7a534dd3297e93132e84735cccf4577634235fdac9fda8443456fb81",
-    "three-quarter.png": "8311f673f47ed9b24db882733cd736e6c8770c1cc51af362c18cb10a630c5580"
+    "side-left.png": "a63a6b0decc6e1ac05c6353499c41c9394e026c35affeff0e333fd1b33f083d0",
+    "side-right.png": "2779f4124e28a262b9f07ee9581e463f500dfb302caa485c27f1cda652c0ef72",
+    "three-quarter.png": "760ad0ee7f16ac5ef20a1bf22d7cc2b934e7ff1c9d7974edc62ef15683e8f7b4"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "cc0d770b0dd36d0cce4ee29834067729b0e17f809707bc9121f1d4e856342095",
-    "public/js/weapon-skins.js": "2011035f66a4a19b9b89d0212240d1d378c52c3c857c48db48b9450d5f43b02e",
+    "public/js/data/weapon-skin-definitions.js": "41705b1368c0dca1e425da8bcfc652694046d69de70ace213b976f03d31791a5",
+    "public/js/weapon-skins.js": "343a6ed1fc3dcc1ccf45cc0191dbb3fc0594fb051bd0c66c1daad971c738e18c",
     "public/js/weapons.js": "acf5cf7bfb1b11580ad143844f9ec9eb6c811ecf55760457a1ba13d18c92f7ae",
     "public/weapon-skin-review.html": "73893044a34e8dcc8afcefbe2db16354565eae0d18c0e3f72828117d1dcd5b57",
     "public/textures/weapon-skins/club-marks/sao-paulo.png": "5d3647c53d24318d20dd7157f6bddcf6de55acfd040f99cf45e1b51c6a8e49f2"

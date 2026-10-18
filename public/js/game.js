@@ -1643,7 +1643,11 @@ export class Game {
     const fixVmMaterials = (obj) => obj.traverse((o) => {
       if (!o.isMesh || !o.material) return;
       if (!VM_MAT_LEGACY && temEnv) return;   // MAT1: mesmo GLB, mesmo material, nos 3 caminhos
+      const onBeforeCompile = o.material.onBeforeCompile;
+      const customProgramCacheKey = o.material.customProgramCacheKey;
       o.material = o.material.clone();
+      o.material.onBeforeCompile = onBeforeCompile;
+      o.material.customProgramCacheKey = customProgramCacheKey;
       if ('metalness' in o.material) o.material.metalness = Math.min(o.material.metalness, 0.55);
       if ('roughness' in o.material) o.material.roughness = Math.max(o.material.roughness, 0.45);
       o.material.envMapIntensity = 1.2;

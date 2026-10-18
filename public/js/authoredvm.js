@@ -72,8 +72,10 @@ async function pagoComRetry(asset, baixa, { tentativas = 3, tetoMs = 45000 } = {
 // ?vmfonte=goldsrc: viewmodel dos moldes CS 1.6 (CC0, FONTE.md) com a arma
 // Mint; ?cs16=1 é o atalho que liga todas as famílias + a fonte de uma vez.
 const _QS = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-// Fonte única: chave de lançamento tudo-ou-nada (vmlaunch.js) ou revisão `?vmauthored=1`.
-export const AUTHORED_VM_ENABLED = VM_RUNTIME.active;
+// A revisão de skin usa o modelo Mint integral: ele carrega a pintura e o brasão no receptor.
+// O viewmodel autorado tem outra topologia e esconderia justamente o brasão que está sob revisão.
+const WEAPON_SKIN_REVIEW = _QS?.get('debug') === '1' && !!_QS?.get('weaponskin');
+export const AUTHORED_VM_ENABLED = VM_RUNTIME.active && !WEAPON_SKIN_REVIEW;
 const CS16_TUDO = AUTHORED_VM_ENABLED && _QS?.get('cs16') === '1';
 // ?vmfonte=retarget (?rt=1): braços pagos sobre movimento CS 1.6 retargetado.
 // Evidência e custo da escolha: docs/reports/GOLDEN-AK-DECISION.md.

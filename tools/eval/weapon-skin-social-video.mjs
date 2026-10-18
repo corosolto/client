@@ -11,14 +11,14 @@ const SKIN_ID = process.env.SKIN_ID || 'ondas-cariocas';
 const SKINS = Object.freeze({
   'ondas-cariocas': { title: 'Ondas Cariocas', weaponId: 'm4', subtitle: 'prévia ingame' },
   'mosaico-paulista': { title: 'Mosaico Paulista', weaponId: 'scar', subtitle: 'prévia ingame' },
-  'nacao-rubro-negra': { title: 'AK Flamengo', weaponId: 'ak', subtitle: 'licença pendente' },
-  'alvinegra-paulista': { title: 'AK Corinthians', weaponId: 'ak', subtitle: 'licença pendente' },
-  'celeste-mineira': { title: 'AK Cruzeiro', weaponId: 'ak', subtitle: 'licença pendente' },
-  'tricolor-gaucha': { title: 'AK Grêmio', weaponId: 'ak', subtitle: 'licença pendente' },
-  'tricolor-baiana': { title: 'AK Bahia', weaponId: 'ak', subtitle: 'licença pendente' },
-  'verde-alviverde': { title: 'AK Palmeiras', weaponId: 'ak', subtitle: 'licença pendente' },
-  'tricolor-morumbi': { title: 'AK São Paulo', weaponId: 'ak', subtitle: 'licença pendente' },
-  'alvinegra-praiana': { title: 'AK Santos', weaponId: 'ak', subtitle: 'licença pendente' },
+  'nacao-rubro-negra': { title: 'AK Flamengo', weaponId: 'ak', subtitle: 'licença pendente', officialMark: true },
+  'alvinegra-paulista': { title: 'AK Corinthians', weaponId: 'ak', subtitle: 'licença pendente', officialMark: true },
+  'celeste-mineira': { title: 'AK Cruzeiro', weaponId: 'ak', subtitle: 'licença pendente', officialMark: true },
+  'tricolor-gaucha': { title: 'AK Grêmio', weaponId: 'ak', subtitle: 'licença pendente', officialMark: true },
+  'tricolor-baiana': { title: 'AK Bahia', weaponId: 'ak', subtitle: 'licença pendente', officialMark: true },
+  'verde-alviverde': { title: 'AK Palmeiras', weaponId: 'ak', subtitle: 'licença pendente', officialMark: true },
+  'tricolor-morumbi': { title: 'AK São Paulo', weaponId: 'ak', subtitle: 'licença pendente', officialMark: true },
+  'alvinegra-praiana': { title: 'AK Santos', weaponId: 'ak', subtitle: 'licença pendente', officialMark: true },
 });
 const SKIN = SKINS[SKIN_ID];
 if (!SKIN) throw new Error(`skin desconhecida: ${SKIN_ID}`);
@@ -90,7 +90,7 @@ for (const format of FORMATS) {
     #social-skin-title{position:fixed;z-index:9999;left:5vw;top:6vh;padding:14px 18px;border-left:5px solid #c4ff46;background:#080a0dcc;color:white;font:900 clamp(22px,4vw,48px)/.95 system-ui,sans-serif;letter-spacing:.02em;text-transform:uppercase;transition:opacity .2s}
     #social-skin-title small{display:block;margin-top:8px;color:#c4ff46;font:700 clamp(10px,1.2vw,15px)/1.1 monospace;letter-spacing:.1em}
   ` });
-  const setup = await page.evaluate(({ titleText, subtitle, weaponId }) => {
+  const setup = await page.evaluate(({ titleText, subtitle, weaponId, skinId }) => {
     const game = window.__game;
     game.player.hp = 1e9;
     game.player.alive = true;
@@ -127,9 +127,17 @@ for (const format of FORMATS) {
       },
     };
     const rw = game.vm.models[weaponId]?.getObjectByName('rw');
-    return { weapon: game.player.weapon, skin: rw?.userData?.weaponSkin || null, state: game.state };
-  }, { titleText: SKIN.title, subtitle: SKIN.subtitle, weaponId: WEAPON_ID });
-  if (setup.weapon !== WEAPON_ID || setup.skin !== SKIN_ID || setup.state !== 'live') throw new Error(`${format.id}: setup inválido ${JSON.stringify(setup)}`);
+    return {
+      weapon: game.player.weapon,
+      skin: rw?.userData?.weaponSkin || null,
+      mark: !!rw?.getObjectByName(`club-mark-${skinId}-right`),
+      state: game.state,
+      authored: !!game.vm.authored?.active(weaponId),
+    };
+  }, { titleText: SKIN.title, subtitle: SKIN.subtitle, weaponId: WEAPON_ID, skinId: SKIN_ID });
+  if (setup.weapon !== WEAPON_ID || setup.skin !== SKIN_ID || setup.state !== 'live' || setup.authored || (SKIN.officialMark && !setup.mark)) {
+    throw new Error(`${format.id}: setup inválido ${JSON.stringify(setup)}`);
+  }
   for (let frame = 0; frame < FRAMES; frame++) {
     await page.evaluate((index) => window.__skinSocial.step(index), frame);
     await page.screenshot({ path: path.join(frames, `f${String(frame).padStart(3, '0')}.png`) });
