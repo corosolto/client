@@ -61,10 +61,15 @@ export const MAPAS = [
    RECUSA rodar contra `null` em vez de deixar passar: não saber custa o mesmo que
    estar errado. */
 export const TETOS = {
-  praca_poderes: { calls: 350, tris: 740000 },
-  piscina_treta: { calls: 860, tris: 870000 },
-  loja_h: { calls: 360, tris: 1410000 },
-  ferro_velho: { calls: 620, tris: 1170000 },
+  /* Rebaseline de 18/10/2026, alpha.108, decisão da #453: a pilha visual acumulada já
+     estava aprovada e 17/17 mapas foram medidos. Mantemos 15% de folga sobre os novos
+     picos em vez de tratar custo aceito como silêncio da CENA3. Medido: Praça 451 calls;
+     Loja 531; Ferro 707; Amazônia 736; Escadão 511; Córrego 661; Lajes 921;
+     Piscina 898.305 tris; UPA 968.886 tris. */
+  praca_poderes: { calls: 520, tris: 740000 },
+  piscina_treta: { calls: 860, tris: 1040000 },
+  loja_h: { calls: 620, tris: 1410000 },
+  ferro_velho: { calls: 820, tris: 1170000 },
   /* quebrada é O FORA DA CURVA, e o teto abaixo está SEGURANDO um número ruim em vez
      de abençoá-lo. Medido em 11/08 na v2.0.0-alpha.79 (`--medir`, backend padrão):
 
@@ -106,10 +111,10 @@ export const TETOS = {
      medição de hoje veio mais barata em alguns, e baixar teto numa execução só troca portão
      por ruído. */
   mansao: { calls: 2380, tris: 2830000 },
-  amazonia: { calls: 730, tris: 1760000 },
-  escadao: { calls: 460, tris: 930000 },
-  corrego: { calls: 610, tris: 9550000 },
-  lajes: { calls: 850, tris: 1380000 },
+  amazonia: { calls: 850, tris: 1760000 },
+  escadao: { calls: 590, tris: 930000 },
+  corrego: { calls: 770, tris: 9550000 },
+  lajes: { calls: 1060, tris: 1380000 },
   /* posto_treta quase ficou sem teto: a primeira medição NÃO aconteceu. O jogador morria no
      aquecimento e `_tpDeath` lançava exceção a cada quadro (590 em 30 s) porque o fixture
      pedia o personagem 'bozo', que virou 'bonzo' numa renomeação de elenco. Corrigidos os
@@ -120,7 +125,7 @@ export const TETOS = {
      PIOR das duas mais a folga, e não da primeira: teto colado numa medição só reprova por
      sorteio, e régua que acende por sorteio é régua que o time aprende a ignorar. */
   posto_treta: { calls: 2170, tris: 2640000 },
-  upa_24h: { calls: 800, tris: 920000 },
+  upa_24h: { calls: 800, tris: 1120000 },
   obras_prefeitura: { calls: 1200, tris: 1610000 },
   atacadao_treta: { calls: 1770, tris: 1130000 },
   parque_treta: { calls: 680, tris: 870000 },
