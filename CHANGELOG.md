@@ -27,6 +27,7 @@
 
 ### Adicionado
 - A fábrica de wearables registra o boné procedural versionado e perfis candidatos por hash para Capitão, Esquerdomacho e Barbudo. A mesma régua importa os marcos e ajustes medidos dos óculos 33–36 para Capitão e Esquerdomacho, gera folhas frente/¾/perfil por pose e bloqueia qualquer par sem certificação humana; os itens 37/38 e a loja de acessórios continuam fechados.
+- A loja TRETA$ ganha doze skins de arma para AK e pistola: oito políticas por T$ 500, ouro por T$ 900 e prata por T$ 500. O armário equipa uma skin por arma, e a tecla `I` mostra a lateral completa durante a partida.
 
 ### Alterado
 - Nicks de exibição aceitam de 2 a 32 caracteres no cadastro, comunidade, chat, partida, perfil, badge e cartões compartilhados. Killfeed e painel de morte tratam o nome como texto.

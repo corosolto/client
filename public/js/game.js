@@ -720,13 +720,14 @@ export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
 const FX_CLARAO = { normal: 1, reduzido: 0.45, minimo: 0.15 };
 
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerWeaponSkins = {}, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
     this._ctfOpt = ctf;
     this._matchWeapons = matchWeapons;
     this._armaN = 0;
     this.renderer = renderer;
     this.sfx = sfx;
     this.settings = settings;
+    this.playerWeaponSkins = Object.freeze({ ...playerWeaponSkins });
     /* `online` = autoridade do servidor. `_mp` é injetado pelo main.js; este arquivo nunca
        importa rede. Single-player: `_mp` null e nada de rede roda. Ver docs/MULTIPLAYER.md. */
     this.online = !!(mpFactory && net);
@@ -1662,7 +1663,7 @@ export class Game {
       /* Sem malha propria nao monta a de outro: `weaponModel` cai na awp e o
          `alignHands` poe a mao no grip da arma PEDIDA (BUG-76). */
       if (!hasWeapon(id)) { semMalha.add(id); return null; }
-      const rw = weaponModel(id);
+      const rw = weaponModel(id, this.playerWeaponSkins[id] || null);
       if (!rw) return null;
       rw.name = 'rw';                    // espaço local: grip na origem, cano +Z (IK mira nele)
       // vmRotY (flip 180 só no FP) era um curativo pra um `rot` errado; com o rot medido
@@ -2101,6 +2102,7 @@ export class Game {
       if (e.code === 'KeyE') this._grabNearPickup();
       if (e.code === 'KeyM') { if (this.onRequestSwitch) this.onRequestSwitch(); else this._switchTeam(); }
       if (e.code === 'KeyR') this._startReload();
+      if (e.code === 'KeyI' && !e.repeat) this._inspectWeapon();
       if (VM_QA_CICLO && (e.code === 'BracketLeft' || e.code === 'BracketRight')) {
         this._qaCicloArma(e.code === 'BracketRight' ? 1 : -1);
         return;
@@ -2412,7 +2414,7 @@ export class Game {
      `beforeunload` no main.js. Régua: `tools/eval/ctrlw-check.mjs`. */
   _travaAtalhos() {
     if (this.testMode || !document.fullscreenElement) return;
-    try { navigator.keyboard?.lock?.(['KeyW', 'KeyT', 'KeyN', 'KeyR', 'Digit1', 'Digit2', 'Digit3'])?.catch?.(() => {}); } catch {}
+    try { navigator.keyboard?.lock?.(['KeyW', 'KeyT', 'KeyN', 'KeyR', 'KeyI', 'Digit1', 'Digit2', 'Digit3'])?.catch?.(() => {}); } catch {}
   }
   _soltaAtalhos() {
     try { navigator.keyboard?.unlock?.(); } catch {}
@@ -3285,8 +3287,9 @@ export class Game {
     /* Esta troca saiu no merge com a main e as 26 armas caíram no legado, sem
        mãos: causa, medida e régua em KNOWN-BUGS.md, BUG-156. */
     const melee = this.vm.melee?.setWeapon(w) || false;
-    const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
-    if (melee) this.vm.authored?.setWeapon('');
+    const skinned = !!this.playerWeaponSkins[w];
+    const authored = melee || skinned ? false : (this.vm.authored?.setWeapon(w) || false);
+    if (melee || skinned) this.vm.authored?.setWeapon('');
     // Uma decisão de visibilidade (vmvisibility.js): o legado continua visível enquanto o
     // autorado carrega ou falha; só some depois que o controlador confirma malha ativa.
     this._vmPresentation = { authored, melee };
@@ -3509,10 +3512,33 @@ export class Game {
     this._switchWeapon(slots[((i < 0 ? (dir > 0 ? -1 : 0) : i) + dir + slots.length) % slots.length]);
   }
 
+  _inspectWeapon() {
+    const p = this.player;
+    if (!p.alive || this.state !== 'live' || p.weapon === 'knife' || this._reloading() || this.time < p.drawUntil) return false;
+    this._scope(false, true);
+    this.vm.inspectAt = this.time;
+    this.vm.authored?.inspect(p.weapon);
+    return true;
+  }
+  _cancelInspect() {
+    this.vm.inspectAt = null;
+    this.vm.inspectF = 0;
+  }
+  _inspectMix() {
+    if (this.vm.inspectAt == null) return 0;
+    const age = this.time - this.vm.inspectAt;
+    const duration = 3.2;
+    if (age < 0 || age >= duration) { this._cancelInspect(); return 0; }
+    const raw = age < 0.28 ? age / 0.28 : age > 2.68 ? (duration - age) / 0.52 : 1;
+    const clamped = Math.max(0, Math.min(1, raw));
+    return clamped * clamped * (3 - 2 * clamped);
+  }
+
   _switchWeapon(w, { pickup = false } = {}) {
     const p = this.player;
     if (p.weapon === w || !p.alive || !WEAPONS[w]) return;
     if (!this._pickupAllowed(w)) return;   // #268: modo arma-única - slot proibido não equipa
+    this._cancelInspect();
     if (w !== 'knife' && !p.ammo[w]) p.ammo[w] = { mag: WEAPONS[w].mag, res: WEAPONS[w].reserve };
     // GUNFEEL: deploy por CLASSE (era 0.28 fixo p/ as 26 armas — a AWP sacava tão rápido
     // quanto a faca). Estes segundos alimentam DUAS coisas: `p.drawUntil` (trava do tiro) e
@@ -3560,6 +3586,7 @@ export class Game {
     // G2-R14A: a shotgun era bloqueada aqui ("shotgun não mira" — dono) — agora faz o
     // mesmo ADS AUG-style do rifle (zoom leve + VM desliza pra fora + crosshair fina).
     if (on && (w === 'knife' || !p.alive || this._reloading())) on = false;
+    if (on) this._cancelInspect();
     if (p.scoped === on) return;
     p.scoped = on;
     const showMask = on && !!(WEAPONS[w] && WEAPONS[w].scope);
@@ -3584,6 +3611,7 @@ export class Game {
     if (w === 'knife' || !p.alive || p.reloadUntil > 0) return;
     const a = p.ammo[w];
     if (a.mag >= WEAPONS[w].mag || a.res <= 0) return;
+    this._cancelInspect();
     this._scope(false, true);
     p.reloadUntil = this.time + WEAPONS[w].reload;
     if (this.online) this._mp?.pedirReload(w);
@@ -3671,6 +3699,7 @@ export class Game {
     if (this.espectando()) return;   // quem assiste não tem corpo: o tiro sairia do nada
     if (!p.alive || this.state !== 'live') return;
     if (this.time < p.nextShotAt || this._reloading() || this.time < p.drawUntil) return;
+    this._cancelInspect();
     if (p.weapon === 'knife') {
       this._tryKnifeAttack('quick');
       return;
@@ -6551,6 +6580,18 @@ export class Game {
       this.vm.root.scale.setScalar(1 - (1 - pose.s) * a);
     }
     this._vmTetoTela(a);
+    const inspect = this._inspectMix();
+    this.vm.inspectF = inspect;
+    if (inspect > 0) {
+      const shortGun = PISTOLS.has(p.weapon);
+      const breathe = Math.sin((this.time - this.vm.inspectAt) * Math.PI * 1.2) * 0.012 * inspect;
+      this.vm.root.position.x += -0.18 * inspect;
+      this.vm.root.position.y += (shortGun ? 0.06 : 0.15) * inspect + breathe;
+      this.vm.root.position.z -= (shortGun ? 0.18 : 0.52) * inspect;
+      this.vm.root.rotation.x -= (shortGun ? 0.02 : 0.06) * inspect;
+      this.vm.root.rotation.z += (shortGun ? 0.03 : 0.07) * inspect;
+      this.vm.root.scale.multiplyScalar(1 - (shortGun ? 0.04 : 0.26) * inspect);
+    }
     /* ADS ZERA O PITCH/YAW PRÓPRIOS DA ARMA (RODADA DO GRIP + PITCH).
        O `_adsPose` acima gira o vm.root INTEIRO (rx/ry por classe) e não enxerga a
        inclinação que o `_vmFrame` deu ao GRUPO da arma. Com pitch de ~12° e o ADS entrando,
@@ -6563,7 +6604,14 @@ export class Game {
     if (!authoredActive && !meleeActive) {
       const wg = this.vm.models && this.vm.models[p.weapon];
       const vr = this.vm.rot && this.vm.rot[p.weapon];
-      if (wg && vr && vr.ads) wg.rotation.set(vmAdsRot(vr.pitch, a), vmAdsRot(vr.yaw, a), vr.roll);
+      if (wg && vr && vr.ads) {
+        wg.rotation.set(vmAdsRot(vr.pitch, a), vmAdsRot(vr.yaw, a), vr.roll);
+        if (inspect > 0) {
+          wg.rotation.x *= 1 - inspect;
+          wg.rotation.y += (-Math.PI / 2 - wg.rotation.y) * inspect;
+          wg.rotation.z *= 1 - inspect;
+        }
+      }
     }
     // Braços reais: IK trava as mãos na arma visível DEPOIS de todos os transforms do
     // vm.root (kick/dip/ADS/sway/bob/draw) — as mãos acompanham a arma em qualquer estado.

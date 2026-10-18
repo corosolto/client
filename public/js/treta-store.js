@@ -1,12 +1,14 @@
 import {TRETA_ITEMS_ENABLED} from './treta-features.js';
 import {initTretaRewards,updateTretaRewards} from './treta-rewards.js';
-import {TRETA_SKINS,TRETA_COINS,TRETA_DEFAULT_REWARDS,TRETA_COIN_ART,TRETA_EYEWEAR} from './treta-catalog.js';
+import {TRETA_SKINS,TRETA_WEAPON_SKINS,TRETA_COINS,TRETA_DEFAULT_REWARDS,TRETA_COIN_ART,TRETA_EYEWEAR} from './treta-catalog.js';
 import {TRETA_ACCESSORY_PROPOSALS} from './treta-proposals.js';
 import {loadAccount,socialApi} from './account-entry.js';
 import {byId} from './characters.js';
 import {estadoDaUrl,urlDoEstado,ABAS_LOJA} from './rotas.js';
 import {ligarCompartilhar,linkCompartilhavel} from './compartilhar.js';
 import {eyewearFitCount,eyewearProfile,loadEyewearFitData} from './eyewear.js';
+
+const STORE_SKINS=Object.freeze([...TRETA_SKINS,...TRETA_WEAPON_SKINS]);
 
 const node=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textContent=text;e.className=cls;return e;};
 const errors={account_required:'Entre e escolha seu nick para guardar seus T$.',insufficient_balance:'Ainda faltam T$ para esta skin. Ganhe mais jogando e convidando amigos.',skin_unavailable:'Este visual ainda está em produção ou revisão.',request_reused:'Este pedido já foi usado. Atualize a carteira.',skin_not_owned:'Este visual ainda não está no seu armário.',referral_ineligible:'Este convite não é elegível para a recompensa.',rate_limited:'Espere um momento antes de tentar novamente.'};
@@ -21,17 +23,32 @@ const $=id=>document.getElementById(id);
 const owned=id=>state?.inventory?.some(s=>s.skin_id===id);
 const equipped=id=>state?.inventory?.some(s=>s.skin_id===id && s.equipped);
 const item=id=>state?.catalog?.find(s=>s.id===id);
+const product=id=>STORE_SKINS.find(s=>s.id===id) || TRETA_EYEWEAR.find(s=>s.id===id);
 const campaignActive=()=>Boolean(state?.campaign?.starts_at && Date.now()>=Date.parse(state.campaign.starts_at) && Date.now()<Date.parse(state.campaign.ends_at));
 const asset=id=>eyeManifest.eyewear[id] || manifest.skins[id];
-const available=id=>item(id)?.available===true && asset(id)?.approved===true && item(id).model_path===asset(id).model && (item(id).slot==='eyewear'?Object.keys(asset(id).profiles || {}).some(key=>eyewearProfile(asset(id),{id:key})):asset(id).character===item(id).character_id);
+const available=id=>{
+  const server=item(id),client=product(id);
+  if(!server || !client || server.available!==true)return false;
+  if(client.slot==='weapon')return server.slot==='weapon' && server.weapon_id===client.weapon && server.model_path===client.model && client.ready===true;
+  const model=asset(id);
+  return !!model && model.approved===true && server.model_path===model.model && (server.slot==='eyewear'?Object.keys(model.profiles || {}).some(key=>eyewearProfile(model,{id:key})):model.character===server.character_id);
+};
 // A vitrine pode mostrar um modelo real ainda em revisão; venda/equipamento
 // continuam dependendo do catálogo do servidor e da aprovação no manifesto.
-const previewable=id=>Boolean((asset(id)?.preview || asset(id)?.approved) && /^\/models\/(skins|items)\/[a-z0-9-]+\.glb$/.test(asset(id).model));
+const previewable=id=>{
+  const client=product(id);
+  if(client?.slot==='weapon')return client.ready===true;
+  const model=asset(id);
+  return Boolean((model?.preview || model?.approved) && /^\/models\/(skins|items)\/[a-z0-9-]+\.glb$/.test(model.model));
+};
 export function equippedTretaSkin(characterId) {
-  const skin=state?.inventory?.find(s=>s.equipped && item(s.skin_id)?.slot!=='eyewear' && available(s.skin_id));
+  const skin=state?.inventory?.find(s=>s.equipped && (item(s.skin_id)?.slot || 'character')==='character' && available(s.skin_id));
   return skin && item(skin.skin_id)?.character_id===characterId?skin.skin_id:null;
 }
-const portrait=skin=>asset(skin.id)?.poster || (skin.slot==='eyewear'?`/img/items/${skin.id}.webp`:`/img/chars/${skin.character}.webp`);
+export function equippedTretaWeaponSkin(weaponId) {
+  return state?.inventory?.find(s=>s.equipped && item(s.skin_id)?.slot==='weapon' && item(s.skin_id)?.weapon_id===weaponId && available(s.skin_id))?.skin_id || null;
+}
+const portrait=skin=>skin.poster || asset(skin.id)?.poster || (skin.slot==='eyewear'?`/img/items/${skin.id}.webp`:`/img/chars/${skin.character}.webp`);
 /* Vídeo curto da skin no card (tools/gen-skin-video.mjs). Nada de vídeo no boot: o
    <video> só nasce no primeiro hover, foco por teclado ou primeiro toque, com preload
    none. Com prefers-reduced-motion o card fica no poster estático. Um vídeo por vez. */
@@ -62,16 +79,16 @@ export function skinPreview(button,id) {
 /* Vitrine do menu (treta-vitrine.js): só skin à venda e aprovada, com arte. null com a
    loja fora do ar (TRETA_ENABLED off devolve 503) ou antes do manifesto. */
 export function tretaVitrine() {
-  if(!state?.catalog || refreshFailed || !Object.keys(manifest.skins).length)return null;
-  return TRETA_SKINS.filter(s=>available(s.id) && manifest.skins[s.id]?.poster).map(s=>({id:s.id,name:s.name,color:s.color,series:s.series,price:item(s.id).price,poster:manifest.skins[s.id].video?.poster || manifest.skins[s.id].poster,owned:owned(s.id),equipped:equipped(s.id)}));
+  if(!state?.catalog || refreshFailed)return null;
+  return STORE_SKINS.filter(s=>available(s.id) && portrait(s)).map(s=>({id:s.id,name:s.name,color:s.color,series:s.series,price:item(s.id).price,poster:asset(s.id)?.video?.poster || portrait(s),owned:owned(s.id),equipped:equipped(s.id)}));
 }
 export function abrirTretaSkin(id) {
-  const skin=TRETA_SKINS.find(s=>s.id===id);
+  const skin=STORE_SKINS.find(s=>s.id===id);
   if(skin)void detail(skin);
   return Boolean(skin);
 }
 export async function equiparTretaSkin(id) {
-  const skin=TRETA_SKINS.find(s=>s.id===id);
+  const skin=STORE_SKINS.find(s=>s.id===id);
   if(!skin || !owned(id) || !available(id))return false;
   return equip(skin);
 }
@@ -119,13 +136,14 @@ function draw() {
   $('treta-retry').hidden=!refreshFailed;
   $('treta-view-title').replaceChildren(node('span',view==='quests'?'COMPLETE ':view==='accessories'?'SEU ':'LOJA '),node('em',view==='quests'?'QUESTS':view==='accessories'?'DRIP':filter==='owned'?'E ARMÁRIO':'DE SKINS'));
   $('treta-view-description').textContent=view==='quests'?'Ganhe TRETA$ jogando e completando quests.':view==='accessories'?'Mais jeitos de vestir seu coro.':filter==='owned'?'Seus visuais, prontos para a próxima partida.':'Seu estilo entra em jogo.';
-  const skins=TRETA_SKINS.filter(s=>manifest.skins[s.id]?.approved===true).filter(s=>filter==='owned'?owned(s.id):filter==='drip'?s.id.endsWith('-drip'):true);
+  const skins=STORE_SKINS.filter(s=>s.slot==='weapon' || manifest.skins[s.id]?.approved===true).filter(s=>filter==='owned'?owned(s.id):filter==='drip'?s.id.endsWith('-drip'):true);
   $('treta-grid').replaceChildren(...skins.map(s=>{
     const button=node('button','','treta-card');button.type='button';button.style.setProperty('--skin-color',s.color);
-    const label=node('span',refreshFailed?'CONSULTA INDISPONÍVEL':loading?'CONSULTANDO…':equipped(s.id)?'EQUIPADA':owned(s.id)?'NO SEU ARMÁRIO':available(s.id)?manifest.skins[s.id]?.poster?'NOVA SKIN':'PRÉVIA 3D NO DETALHE':'EM PRODUÇÃO','treta-label');
-    const image=node('img');image.src=portrait(s);image.alt=manifest.skins[s.id]?.poster?`Skin ${s.name}`:'Personagem base usado como referência de produção';image.loading='lazy';
+    const hasPoster=Boolean(s.poster || manifest.skins[s.id]?.poster);
+    const label=node('span',refreshFailed?'CONSULTA INDISPONÍVEL':loading?'CONSULTANDO…':equipped(s.id)?'EQUIPADA':owned(s.id)?'NO SEU ARMÁRIO':available(s.id)?hasPoster?'NOVA SKIN':'PRÉVIA 3D NO DETALHE':'EM PRODUÇÃO','treta-label');
+    const image=node('img');image.src=portrait(s);image.alt=hasPoster?`Skin ${s.name}`:'Personagem base usado como referência de produção';image.loading='lazy';
     const copy=node('div','','treta-card-copy');const price=node('b',money(item(s.id)?.price ?? s.price));price.append(node('span',owned(s.id)?'VER SKIN':'VER DETALHE'));
-    copy.append(node('small',manifest.skins[s.id]?.poster?s.series:`${s.series} · PERSONAGEM BASE`),node('strong',s.name),price);
+    copy.append(node('small',hasPoster?s.series:`${s.series} · PERSONAGEM BASE`),node('strong',s.name),price);
     button.append(label,image,copy);const preview=skinPreview(button,s.id);button.onclick=()=>{if(preview.tap())return;void detail(s);};return button;
   }));
   if(!skins.length){
@@ -160,7 +178,7 @@ export function tretaLoja() {
   const c=state?.campaign || TRETA_DEFAULT_REWARDS,q=state?.quests || {};
   return {loading,failed:refreshFailed,authenticated:Boolean(state?.authenticated),saldo:state?.wallet?.balance ?? null,campanha:campaignActive(),
     ganhoHoje:q.dailyMatchEarned || 0,tetoDiario:c.daily_match_cap,amigos:q.referral || 0,tetoAmigos:c.referral_cap,porAmigo:c.referral_reward,
-    itens:TRETA_SKINS.filter(s=>manifest.skins[s.id]?.approved===true).map(s=>({id:s.id,name:s.name,series:s.series,color:s.color,poster:portrait(s),
+    itens:STORE_SKINS.filter(s=>s.slot==='weapon' || manifest.skins[s.id]?.approved===true).map(s=>({id:s.id,name:s.name,series:s.series,color:s.color,poster:portrait(s),
       price:item(s.id)?.price ?? null,raridade:item(s.id)?.rarity || '',owned:Boolean(owned(s.id)),equipped:Boolean(equipped(s.id)),available:available(s.id)}))};
 }
 function openDialog(dialog) {
@@ -194,15 +212,24 @@ async function refresh() {
   })().finally(()=>{if(refreshPromise===request)refreshPromise=null;});
   refreshPromise=request;return request;
 }
-async function visual(host,{model,poster,coin=false,celebrate=false,count=1}) {
+async function visual(host,{model,poster,coin=false,celebrate=false,count=1,weaponSkin=null}) {
   host.replaceChildren();
   const fallback=node('img');fallback.src=poster || '/img/treta/coin-classic-saci.webp';fallback.alt=coin?'Moeda dourada TRETA$':'Prévia visual da skin';host.append(fallback);
-  if(!model)return {loaded:false,dispose(){}};
+  if(!model && !weaponSkin)return {loaded:false,dispose(){}};
   let display;
-  try{const {TretaStage}=await import('./treta-stage.js');display=new TretaStage(host,{coin,celebrate,count});await display.load(model);fallback.remove();display.loaded=true;return display;}catch{display?.dispose();return {loaded:false,dispose(){}};}
+  try{
+    if(weaponSkin){
+      const {WeaponSkinStage}=await import('./weapon-skin-stage.js');
+      display=new WeaponSkinStage(host);await display.load(weaponSkin.weapon,weaponSkin.id);
+    }else{
+      const {TretaStage}=await import('./treta-stage.js');
+      display=new TretaStage(host,{coin,celebrate,count});await display.load(model);
+    }
+    fallback.remove();display.loaded=true;return display;
+  }catch{display?.dispose();return {loaded:false,dispose(){}};}
 }
 async function detail(skin) {
-  const version=++detailVersion;
+  const version=++detailVersion,isWeapon=skin.slot==='weapon';
   selected=skin;stage?.dispose();stage=null;previewReady=false;previewLoading=previewable(skin.id);
   $('treta-preview-retry').hidden=true;
   $('treta-detail-name').textContent=skin.name;$('treta-detail-series').textContent=skin.series;
@@ -211,11 +238,11 @@ async function detail(skin) {
   $('treta-detail-fit').hidden=skin.slot!=='eyewear';$('treta-detail-fit').textContent=fitCount?`Encaixa em ${fitCount} personagens certificados.`:'Encaixa em 0 personagens certificados. Os perfis candidatos ainda aguardam decisão humana.';
   $('treta-detail-production').textContent=refreshFailed?'Consulta indisponível. Feche o detalhe e tente atualizar a carteira.':previewLoading?'Carregando prévia 3D do visual…':'Em produção. A imagem abaixo é a referência do personagem base; o visual final terá roupas e acessórios novos.';
   $('treta-buy-status').textContent='';updateBuy();openDialog($('treta-detail'));
-  const loaded=await visual($('treta-stage'),{model:previewable(skin.id)?asset(skin.id).model:null,poster:portrait(skin)});
+  const loaded=await visual($('treta-stage'),{model:!isWeapon && previewable(skin.id)?asset(skin.id).model:null,poster:portrait(skin),weaponSkin:isWeapon?skin:null});
   if(version!==detailVersion || !$('treta-detail').open){loaded.dispose();return;}
-  stage=loaded;previewLoading=false;previewReady=loaded.loaded || !!asset(skin.id)?.poster;
+  stage=loaded;previewLoading=false;previewReady=loaded.loaded || Boolean(isWeapon?skin.poster:asset(skin.id)?.poster);
   if(previewable(skin.id)){
-    $('treta-detail-production').textContent=refreshFailed?'Consulta indisponível. Feche o detalhe e tente atualizar a carteira.':loaded.loaded?(available(skin.id)?(skin.slot==='eyewear'?'Prévia 3D dos óculos.':'Prévia 3D da skin.'):(skin.slot==='eyewear'?'Modelo 3D dos óculos. Venda em preparação.':'Modelo 3D da skin. Venda em preparação.')) :previewReady?'Prévia 3D indisponível. Veja a imagem da skin.':'Prévia 3D indisponível. Esta imagem é do personagem base. Tente novamente para ver a skin antes de comprar.';
+    $('treta-detail-production').textContent=refreshFailed?'Consulta indisponível. Feche o detalhe e tente atualizar a carteira.':loaded.loaded?(available(skin.id)?(isWeapon?'Prévia 3D da arma. Pressione I durante a partida para inspecionar a skin.':skin.slot==='eyewear'?'Prévia 3D dos óculos.':'Prévia 3D da skin.'):(isWeapon?'Modelo 3D da arma. Venda em preparação.':skin.slot==='eyewear'?'Modelo 3D dos óculos. Venda em preparação.':'Modelo 3D da skin. Venda em preparação.')) :previewReady?'Prévia 3D indisponível. Veja a imagem da skin.':'Prévia 3D indisponível. Esta imagem é do personagem base. Tente novamente para ver a skin antes de comprar.';
     $('treta-preview-retry').hidden=loaded.loaded;
   }
   updateBuy();
@@ -240,7 +267,8 @@ async function equip(skin) {
   if(epoch!==accountEpoch || result.accountId!==owner)return false;
   state=result;
   draw();updateBuy();notifyEquipment();
-  if(skin.slot==='eyewear')document.dispatchEvent(new CustomEvent('cs-eyewear-equipped',{detail:{eyewearId:skin.id}}));
+  if(skin.slot==='weapon')document.dispatchEvent(new CustomEvent('cs-weapon-skin-equipped',{detail:{skinId:skin.id,weaponId:skin.weapon}}));
+  else if(skin.slot==='eyewear')document.dispatchEvent(new CustomEvent('cs-eyewear-equipped',{detail:{eyewearId:skin.id}}));
   else {onEquip({...skin,model:asset(skin.id).model});document.dispatchEvent(new CustomEvent('cs-skin-equipped',{detail:{skinId:skin.id,characterId:skin.character,model:asset(skin.id).model}}));}
   return true;
 }
@@ -261,7 +289,7 @@ async function buy() {
     $('treta-purchase-equip').onclick=async()=>{const b=$('treta-purchase-equip');b.disabled=true;try{if(!await equip(skin))return;$('treta-purchase-copy').textContent='Visual equipado para a próxima partida.';$('treta-purchase').close();}catch(e){$('treta-purchase-copy').textContent=errorText(e);}finally{b.disabled=false;}};
     openDialog($('treta-purchase'));purchaseStage?.dispose();
     const display=result.purchase.owned
-      ? {model:asset(skin.id).model,poster:portrait(skin)}
+      ? skin.slot==='weapon'?{weaponSkin:skin,poster:portrait(skin)}:{model:asset(skin.id).model,poster:portrait(skin)}
       : {...TRETA_COIN_ART,coin:true,celebrate:true};
     const loaded=await visual($('treta-purchase-stage'),display);
     if(epoch!==accountEpoch || !$('treta-purchase').open)loaded.dispose();else purchaseStage=loaded;
@@ -331,5 +359,5 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   void fetch('/models/skins/manifest.json').then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();}).then(data=>{manifest=data;manifestsReady();}).catch(()=>{});
   if(TRETA_ITEMS_ENABLED)void loadEyewearFitData().then(data=>{eyeManifest=data.manifest;manifestsReady();});
   void loadAccount().then(auth=>{account=auth;}).catch(()=>{});
-  void refresh();
+  return refresh();
 }

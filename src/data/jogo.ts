@@ -303,6 +303,7 @@ export const CONTROLES: Controle[] = [
   { tecla: 'Clique esquerdo', acao: 'Atirar' },
   { tecla: 'Clique direito', acao: 'Luneta (armas com mira) / ADS' },
   { tecla: 'R', acao: 'Recarregar' },
+  { tecla: 'I', acao: 'Inspecionar a arma e ver a skin inteira' },
   { tecla: '1 / 2 / 3', acao: 'Primária / pistola / faca' },
   { tecla: 'Z / X / V', acao: 'Comandos de voz (rádio estilo CS)' },
   { tecla: 'M', acao: 'Trocar de time a qualquer momento' },
