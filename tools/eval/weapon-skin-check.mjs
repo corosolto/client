@@ -140,9 +140,9 @@ if (process.argv.includes('--mutate')) {
 
 for (const [skinId, weaponId] of Object.entries(TARGETS)) validate(WEAPON_SKINS[skinId], skinId, weaponId);
 assert.ok(WEAPON_SKINS['brasil-22-ak'].sloganLayout.height >= 0.075, 'Brasil 22 AK continua ilegível');
-assert.ok(WEAPON_SKINS['brasil-22-pistola'].sloganLayout.height >= 0.065, 'Brasil 22 pistola continua ilegível');
+assert.ok(WEAPON_SKINS['brasil-22-pistola'].sloganLayout.height >= 0.10 && WEAPON_SKINS['brasil-22-pistola'].sloganLayout.z <= 0, 'Brasil 22 pistola continua pequena ou longe do cano');
 assert.ok(WEAPON_SKINS['estrela-vermelha-ak'].sloganLayout.height >= 0.105, 'Estrela Vermelha AK não cresceu 3x');
-assert.ok(WEAPON_SKINS['estrela-vermelha-pistola'].sloganLayout.height >= 0.090, 'Estrela Vermelha pistola não cresceu 3x');
+assert.ok(WEAPON_SKINS['estrela-vermelha-pistola'].sloganLayout.height >= 0.11 && WEAPON_SKINS['estrela-vermelha-pistola'].sloganLayout.z <= 0, 'Estrela Vermelha pistola continua pequena ou longe do cano');
 assert.equal(WEAPON_SKINS['estrela-vermelha-ak'].sloganAspect, 6, 'frase Estrela Vermelha AK extrapola o cano');
 assert.equal(WEAPON_SKINS['estrela-vermelha-pistola'].sloganAspect, 6, 'frase Estrela Vermelha pistola extrapola o ferrolho');
 assert.ok(WEAPON_SKINS['trabalho-13-pistola'].markLayout.height >= 0.14, 'símbolo Trabalho 13 continua pequeno');
@@ -150,7 +150,11 @@ assert.ok(WEAPON_SKINS['estrela-verde-ak'].markLayout.height >= 0.14, 'estrela v
 assert.ok(WEAPON_SKINS['estrela-verde-pistola'].markLayout.height >= 0.14, 'estrela verde pistola continua pequena');
 assert.ok(WEAPON_SKINS['brasil-22-pistola'].markLayout.y <= -0.10, 'símbolo Brasil 22 não foi movido para a área verde');
 assert.ok(WEAPON_SKINS['tropicalente-ak'].markLayout.height <= 0.10, 'impressão Tropicalente AK extrapola o corpo');
-assert.ok(WEAPON_SKINS['tropicalente-pistola'].markLayout.height <= 0.10, 'impressão Tropicalente pistola extrapola o corpo');
+assert.ok(WEAPON_SKINS['tropicalente-pistola'].markLayout.height >= 0.16, 'impressão Tropicalente pistola continua pequena');
+assert.ok(WEAPON_SKINS['tropicalente-pistola'].sloganLayout.height >= 0.115 && WEAPON_SKINS['tropicalente-pistola'].sloganLayout.z <= 0, 'texto Tropicalente pistola continua pequeno ou longe do cano');
+for (const id of ['trabalho-13-pistola', 'tamo-junto-pistola', 'e-nois-pistola']) {
+  assert.ok(WEAPON_SKINS[id].sloganLayout.height >= 0.095 && WEAPON_SKINS[id].sloganLayout.z <= 0, `${id}: texto continua pequeno ou longe do cano`);
+}
 for (const id of ['tamo-junto-ak', 'tamo-junto-pistola', 'e-nois-ak', 'e-nois-pistola', 'tropicalente-ak', 'tropicalente-pistola']) {
   assert.equal(WEAPON_SKINS[id].preserveBase, true, `${id}: corpo original não preservado`);
 }

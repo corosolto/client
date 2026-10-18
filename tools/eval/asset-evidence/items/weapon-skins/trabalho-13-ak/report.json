@@ -11,7 +11,7 @@
   "officialMarksIncluded": false,
   "markPlacement": "receiver-inlay",
   "sloganPlacement": "barrel-horizontal",
-  "markSourceUrl": null,
+  "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Hammer_and_sickle.svg",
   "referenceRule": "project-authored political satire using original vector geometry; no party or campaign logo copied",
   "slogan": "FAZ O L É LULA 13",
   "storePrice": 500,
@@ -21,16 +21,16 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "ff3bef1b0f6eed8d0f301486a70e906d35dcecafdd89dc5d6f987e5308900fc6",
-    "side-right.png": "7be9d986119253e605008a879a021a0b272fbfc0e5a9044fe895e8e4bebd6135",
-    "three-quarter.png": "a9c2fabb0d800295006332320d4212f82ec83a0f5502f376de83246c2daa73c6"
+    "side-left.png": "c97578ac69d535aff31a76e1641cac016a3dc4bdbe26d46784f570858dc781f9",
+    "side-right.png": "ff017d72f14e4bfc2b9c8bf6ee2311f0372ed5ddf46bdee2b76b1ae83545d41d",
+    "three-quarter.png": "f1f03b13315df4ac8bf2bbffe68741aa9144216f31552e5abf5950d87e839579"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "176d876179eb0b3ba0e64bff29d6fe5bbb7ebf5eef4449e5effafdd4c3175c9d",
+    "public/js/data/weapon-skin-definitions.js": "007c8a4a7764a1851c3a3faa888e1eb096fce16a89e472db488a05d626c82c01",
     "public/js/weapon-skins.js": "642cde116f59c937df7b606c6cff2ac4d0f4748b2164d93aeef82884881e6879",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
-    "public/textures/weapon-skins/political-marks/trabalho-13.svg": "f8e3da91fe955e9e8a8980ff0c56af9ef665515f9261315ad371ee75e0c8b1c7"
+    "public/textures/weapon-skins/political-marks/trabalho-13.svg": "0cc2e18ea49434399ef3f89af2b3deb79407e433001fdd1310534db70099be34"
   },
   "consoleErrors": []
 }
