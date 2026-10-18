@@ -720,7 +720,7 @@ export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
 const FX_CLARAO = { normal: 1, reduzido: 0.45, minimo: 0.15 };
 
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerWeaponSkins = {}, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
     this._ctfOpt = ctf;
     this._matchWeapons = matchWeapons;
     this._armaN = 0;
@@ -728,6 +728,7 @@ export class Game {
     this.sfx = sfx;
     this.settings = settings;
     this.playerWeaponSkins = Object.freeze({ ...playerWeaponSkins });
+    this.playerGloveId = playerGloveId;
     /* `online` = autoridade do servidor. `_mp` é injetado pelo main.js; este arquivo nunca
        importa rede. Single-player: `_mp` null e nada de rede roda. Ver docs/MULTIPLAYER.md. */
     this.online = !!(mpFactory && net);
@@ -977,7 +978,7 @@ export class Game {
     const authoredPal = authoredDef?.pal || { skin: 0xd9a066, shirt: 0x27364a };
     this.vm.authored = AUTHORED_VM_ENABLED ? createAuthoredViewModels(this.vm.root, () => {
       if (!this._disposed && this.vm) this._applyVmVisibility();
-    }, { id: this.playerCharId, faction: this.playerFaction, skin: authoredPal.skin, sleeve: authoredPal.shirt, accent: authoredPal.pants }) : null;
+    }, { id: this.playerCharId, faction: this.playerFaction, gloveSkinId: this.playerGloveId, skin: authoredPal.skin, sleeve: authoredPal.shirt, accent: authoredPal.pants }) : null;
     {
       /* ORÇAMENTO DE LUZ DO VIEWMODEL — MAT2. O rig abaixo (key/fill/sky/rim/bounce+hemi)
          somava 7,60 unidades FIXAS, contra 2,60 (ferro_velho) a 3,60 (praca_poderes) dos mapas:
@@ -1162,6 +1163,7 @@ export class Game {
       profile: {
         id: this.playerCharId,
         faction: this.playerFaction,
+        gloveSkinId: this.playerGloveId,
         skin: this.playerDef?.pal?.skin,
         sleeve: this.playerDef?.pal?.shirt,
         accent: factionColor(this.playerFaction),
@@ -3233,7 +3235,7 @@ export class Game {
     this.playerTeam = newTeam; this.enemyTeam = oldTeam;
     this.playerFaction = this.enemyFaction;
     this.enemyFaction = oldFaction;
-    const handProfile = { id: this.playerCharId, faction: this.playerFaction,
+    const handProfile = { id: this.playerCharId, faction: this.playerFaction, gloveSkinId: this.playerGloveId,
       skin: this.playerDef?.pal?.skin, sleeve: this.playerDef?.pal?.shirt, accent: this.playerDef?.pal?.pants };
     this.vm.authored?.setProfile(handProfile);
     this.vm.melee?.setProfile(handProfile);
@@ -7125,7 +7127,7 @@ export class Game {
     if (c === this.player) {
       this.playerDef = def; this.playerCharId = def.id; c.def = def;
       if (reload) this._tpDefId = null;
-      const perfil = { id: def.id, faction: this.playerFaction, skin: def.pal?.skin, sleeve: def.pal?.shirt, accent: def.pal?.pants };
+      const perfil = { id: def.id, faction: this.playerFaction, gloveSkinId: this.playerGloveId, skin: def.pal?.skin, sleeve: def.pal?.shirt, accent: def.pal?.pants };
       this.vm?.authored?.setProfile(perfil);
       this.vm?.melee?.setProfile(perfil);
       return true;

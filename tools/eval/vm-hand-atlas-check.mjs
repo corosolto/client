@@ -4,6 +4,7 @@
 import sharp from 'sharp';
 import path from 'node:path';
 import { TEAM_HANDS } from '../../public/js/vmhands.js';
+import { GLOVE_SKINS } from '../../public/js/data/glove-skin-definitions.js';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.split('=')[1];
@@ -23,12 +24,19 @@ const landmarks = [
 ];
 const skin = [183, 137, 104];
 const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
-const chroma = c => [c[0] - c[1], c[1] - c[2]];
-const distance = (a, b) => Math.hypot(...chroma(a).map((v, i) => v - chroma(b)[i]));
+const distance = (a, b) => {
+  const bb = b.reduce((sum, value) => sum + value * value, 0) || 1;
+  const scale = Math.max(0.2, Math.min(1.05, a.reduce((sum, value, i) => sum + value * b[i], 0) / bb));
+  return Math.hypot(...a.map((value, i) => value - scale * b[i]));
+};
 const checks = [], cache = new Map();
 let mutations = 0;
-for (const faction of ['F', 'U']) for (const point of landmarks) {
-  const file = `public/models/viewmodels/coro/hands/${point.layout}/${point.role}-${TEAM_HANDS[faction].id}.webp`;
+const styles = [
+  ...['F', 'U'].map((faction) => ({ id: faction, style: TEAM_HANDS[faction] })),
+  ...Object.values(GLOVE_SKINS).map((style) => ({ id: style.id, style })),
+];
+for (const { id, style } of styles) for (const point of landmarks) {
+  const file = `public/models/viewmodels/coro/hands/${point.layout}/${point.role}-${style.id}.webp`;
   if (!cache.has(file)) cache.set(file, await sharp(path.join(root, file)).removeAlpha().raw().toBuffer({ resolveWithObject: true }));
   const { data, info } = cache.get(file);
   if (info.width !== 512 || info.height !== 512 || info.channels !== 3) throw Error(`atlas/landmark incompatível: ${file}`);
@@ -36,12 +44,13 @@ for (const faction of ['F', 'U']) for (const point of landmarks) {
   let pixel = [...data.subarray((y * info.width + x) * 3, (y * info.width + x) * 3 + 3)];
   const tip = point.part.startsWith('tip');
   if (mutant === 'punho-descoberto' && !tip) { pixel = skin; mutations++; }
-  if (mutant === 'dedos-cobertos' && tip) { pixel = rgb(TEAM_HANDS[faction].glove); mutations++; }
-  const skinDistance = distance(pixel, skin);
-  const clothDistance = Math.min(...['glove', 'sleeve', 'accent'].map(k => distance(pixel, rgb(TEAM_HANDS[faction][k]))));
-  const exposed = skinDistance < clothDistance;
-  checks.push({ name: `${faction}/${point.layout}/${point.part}: ${tip ? 'dedos expostos' : 'punho coberto'}`,
-    ok: exposed === tip, file, uv: point.uv, face: point.face, pixel, skinDistance, clothDistance });
+  if (mutant === 'dedos-cobertos' && tip && style.fingerless) { pixel = rgb(style.glove); mutations++; }
+  const skinDistance = Math.hypot(...pixel.map((value, i) => value - skin[i]));
+  const clothDistance = Math.min(...['glove', 'sleeve', 'accent'].map(k => distance(pixel, rgb(style[k]))));
+  const exposed = skinDistance < 8;
+  const expectExposed = tip && style.fingerless;
+  checks.push({ name: `${id}/${point.layout}/${point.part}: ${expectExposed ? 'dedos expostos' : 'tecido coberto'}`,
+    ok: exposed === expectExposed, file, uv: point.uv, face: point.face, pixel, skinDistance, clothDistance });
 }
 if (mutant && !mutations) throw Error('mutação não aplicada');
 const ok = checks.every(c => c.ok);

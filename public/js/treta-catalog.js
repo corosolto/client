@@ -1,4 +1,5 @@
 import {WEAPON_SKINS} from './data/weapon-skin-definitions.js';
+import {STORE_GLOVES} from './data/glove-skin-definitions.js';
 
 export const TRETA_SYMBOL = 'T$';
 export const TRETA_COIN_ART = {model:'/models/treta/coin-classic-saci-82ad26210cf8.glb',poster:'/img/treta/coin-classic-saci.webp'};
@@ -41,6 +42,7 @@ export const TRETA_WEAPON_SKINS = Object.freeze(Object.values(WEAPON_SKINS)
     model:`/models/weapons/${skin.storeWeapon}.glb`,
     ready:true,
   })));
+export const TRETA_GLOVES = STORE_GLOVES;
 export const TRETA_DEFAULT_REWARDS = {email_reward:200,referral_reward:100,sp_reward:10,mp_reward:25,daily_match_cap:250,referral_cap:10,starts_at:null,ends_at:null};
 
 export function tretaChange(amount) {

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { MeshoptDecoder } from 'meshoptimizer';
 
 export const root = path.resolve(import.meta.dirname, '../../..');
 const privado = (p) => path.join(root, 'public/private-assets/viewmodels', p);
@@ -47,7 +48,9 @@ export const HAND_RIGS = Object.freeze({
   },
 });
 
-const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+await MeshoptDecoder.ready;
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS)
+  .registerDependencies({ 'meshopt.decoder': MeshoptDecoder });
 // Cabeça do osso no espaço de bind da malha = translação da inversa da inverseBindMatrix.
 function cabeca(m) {
   const [a, b, c, , d, e, f, , g, h, i, , x, y, z] = m;
@@ -186,6 +189,17 @@ export function pintar({ fields, size }, pintura, style) {
     if (!exposed && style.motif === 'camo') {
       const n = Math.sin(x * 14 + y * 9) + Math.cos(y * 18 - z * 13) + Math.sin(z * 24 + x * 11);
       color = n > 0.8 ? accent : n < -0.9 ? [43, 47, 33] : n < -0.15 ? [90, 82, 56] : glove;
+    }
+    if (!exposed && !isSleeve && style.motif === 'tropical') {
+      const leafA = Math.sin((x + z) * 19 + y * 11);
+      const leafB = Math.cos((x - z) * 17 - y * 13);
+      const vein = Math.abs(Math.sin((Math.atan2(z, x) + y) * 24));
+      if (leafA > 0.55 || leafB > 0.68) color = accent;
+      else if (vein < 0.12) color = [16, 151, 135];
+    }
+    if (!exposed && !isSleeve && style.motif === 'sunset') {
+      const horizon = 0.5 + 0.5 * Math.sin(y * 16 + Math.atan2(z, x) * 3);
+      color = horizon > 0.66 ? accent : horizon < 0.32 ? sleeve : glove;
     }
     if (!exposed && (cuff || handPanel) && style.motif === 'checker') color = (Math.floor(x * 9) + Math.floor(y * 10)) % 2 === 0 ? accent : glove;
     if (!exposed && style.motif === 'star') {

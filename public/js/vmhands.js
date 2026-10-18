@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {gloveSkinStyle} from './data/glove-skin-definitions.js';
 
 // Três propostas para FUNKEIROS (o dono escolhe; ?vmmaosf=<opção> na revisão). docs/reports/VM-MAOS-POR-TIME.md.
 export const F_OPCOES = Object.freeze({
@@ -17,8 +18,8 @@ export const TEAM_HANDS = Object.freeze({
 });
 // Neutro = base da fábrica (braco-coro-ak.json): luva e manga Mandrake da AK aprovada, em sRGB.
 const NEUTRAL_HANDS = Object.freeze({ id: 'neutral', glove: '#242f38', sleeve: '#243c4d', accent: '#797d80', motif: 'plain', fingerless: false });
-export const teamHandStyle = (faction) => TEAM_HANDS[faction] || NEUTRAL_HANDS;
-export const HAND_ATLAS_VERSION = 'team-hands-8';
+export const teamHandStyle = (faction, gloveSkinId = null) => gloveSkinStyle(gloveSkinId) || TEAM_HANDS[faction] || NEUTRAL_HANDS;
+export const HAND_ATLAS_VERSION = 'team-hands-9';
 
 // Rig A (AK golden), L (faca), K (SK_Arms_Mono): docs/reports/VM-MAOS-POR-TIME.md.
 // O GLTFLoader tira os pontos dos nomes de osso (hand.R_metarig → handR_metarig).
@@ -37,7 +38,7 @@ export function refreshTeamHands(meshes, profile) {
     const update = (material) => {
       const current = material?.userData.teamHands;
       if (!current) return material;
-      if (current.style === teamHandStyle(profile.faction).id) return material;
+      if (current.style === teamHandStyle(profile.faction, profile.gloveSkinId).id) return material;
       const next = applyTeamHandMaterial(material, profile, current.layout);
       material.dispose(); // o material pertence ao controlador; atlas compartilhados ficam no cache
       return next;
@@ -48,7 +49,7 @@ export function refreshTeamHands(meshes, profile) {
 
 const maps = new Map();
 export function applyTeamHandMaterial(material, profile, layout) {
-  const style = teamHandStyle(profile.faction);
+  const style = teamHandStyle(profile.faction, profile.gloveSkinId);
   const role = layout === 'knife' ? 'combined' : /Cloth|Sleeves/i.test(material.name) ? 'cloth'
     : /Glove/i.test(material.name) ? 'glove' : 'skin';
   const key = `${layout}/${role}-${style.id}`;
