@@ -34,6 +34,7 @@ if (CHECK) {
   if (report.approved !== DEFINITION.approved || report.certified !== DEFINITION.certified || report.runtimeEnabled !== DEFINITION.runtimeEnabled) throw new Error('estado de ativação da skin mudou');
   if (report.status !== DEFINITION.status || report.officialMarksIncluded !== !!DEFINITION.officialMarksIncluded) throw new Error('estado jurídico da evidência mudou');
   if (report.markPlacement !== (DEFINITION.markPlacement || null)) throw new Error('posição do escudo mudou');
+  if (report.sloganPlacement !== (DEFINITION.sloganPlacement || null)) throw new Error('posição da frase mudou');
   for (const file of FILES) if (report.files[file] !== sha(path.join(OUT, file))) throw new Error(`${file}: hash desatualizado`);
   for (const file of SOURCES) if (report.sources[file] !== sha(path.join(ROOT, file))) throw new Error(`${file}: fonte mudou sem recaptura`);
   console.log(`weapon-skin check: ${SKIN_ID} ${FILES.length} views hash-pinned, approved=${Number(DEFINITION.approved)}, runtime=${Number(DEFINITION.runtimeEnabled)}`);
@@ -88,6 +89,7 @@ const report = {
   rightsStatus: DEFINITION.rightsStatus || 'original-safe',
   officialMarksIncluded: !!DEFINITION.officialMarksIncluded,
   markPlacement: DEFINITION.markPlacement || null,
+  sloganPlacement: DEFINITION.sloganPlacement || null,
   markSourceUrl: DEFINITION.markSourceUrl || null,
   referenceRule: DEFINITION.rightsStatus === 'permission-needed'
     ? 'official club mark shown only in an internal, store-off preview; written trademark clearance required before release'

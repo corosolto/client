@@ -1,17 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="512" viewBox="0 0 640 512">
-  <rect width="640" height="512" rx="54" fill="#8b0712"/>
-  <rect x="12" y="12" width="616" height="488" rx="44" fill="none" stroke="#ffd23f" stroke-width="24"/>
-  <g fill="#ffd23f" transform="translate(48 22)">
-    <path d="M220 26a146 146 0 1 0 93 259 128 128 0 1 1-93-259Z"/>
-    <g transform="rotate(-42 236 176)">
-      <rect x="219" y="76" width="34" height="228" rx="15"/>
-      <rect x="170" y="62" width="132" height="52" rx="11"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <g fill="#ffd23f">
+    <path d="M230 54a172 172 0 1 0 126 288A148 148 0 1 1 230 54Z"/>
+    <g transform="rotate(-42 278 254)">
+      <rect x="258" y="128" width="40" height="260" rx="18"/>
+      <rect x="194" y="108" width="168" height="60" rx="14"/>
     </g>
-  </g>
-  <g fill="#fff8dc" font-family="Arial Black,Arial,sans-serif" font-weight="900" text-anchor="middle">
-    <text x="462" y="122" font-size="50">FAZ O L</text>
-    <text x="462" y="184" font-size="44">É LULA</text>
-    <text x="462" y="302" font-size="132" fill="#ffd23f">13</text>
-    <text x="320" y="462" font-size="34" letter-spacing="3">ARTE POLÍTICA · CORO SOLTO</text>
   </g>
 </svg>

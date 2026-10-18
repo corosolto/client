@@ -30,6 +30,7 @@
 - A loja TRETA$ ganha doze skins de arma para AK e pistola: oito políticas por T$ 500, ouro por T$ 900 e prata por T$ 500. O armário equipa uma skin por arma, e a tecla `I` mostra a lateral completa durante a partida.
 
 ### Alterado
+- As oito skins políticas deixam de usar uma placa sobreposta: o símbolo agora é uma pintura metálica ajustada à lateral real da malha, e as frases seguem na horizontal sobre o cano ou ferrolho.
 - Nicks de exibição aceitam de 2 a 32 caracteres no cadastro, comunidade, chat, partida, perfil, badge e cartões compartilhados. Killfeed e painel de morte tratam o nome como texto.
 - A contagem agregada de abertura, carga, entrada, partida e sessão envia somente evento, versão e faixas. O fluxo não usa identificador, cookie ou storage e fica desligado em automação e depuração.
 

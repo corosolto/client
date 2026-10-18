@@ -1,9 +1,14 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import * as THREE from 'three';
-import { WEAPON_SKINS, applyWeaponSkinCandidate, reviewWeaponSkinId } from '../../public/js/weapon-skins.js';
+import {
+  WEAPON_SKINS,
+  applyWeaponSkinCandidate,
+  preloadWeaponSkinCandidate,
+  reviewWeaponSkinId,
+} from '../../public/js/weapon-skins.js';
 
 const TARGETS = Object.freeze({
   'ondas-cariocas': 'm4',
@@ -114,7 +119,8 @@ function validate(definition, expectedId, expectedWeapon) {
     assert.equal(definition.slogan, slogan);
     assert.equal(definition.rightsStatus, 'political-satire');
     assert.equal(definition.officialMarksIncluded, false);
-    assert.equal(definition.markPlacement, 'receiver');
+    assert.equal(definition.markPlacement, 'receiver-inlay');
+    assert.equal(definition.sloganPlacement, slogan ? 'barrel-horizontal' : undefined);
     assert.equal(definition.markAsset, `/textures/weapon-skins/political-marks/${theme}.svg`);
     assert.ok(existsSync(`public${definition.markAsset}`), `${expectedId}: símbolo ausente`);
   }
@@ -131,6 +137,7 @@ if (process.argv.includes('--mutate')) {
     ['store-off', { ...political, storeEnabled: false }, 'trabalho-13-ak', 'ak'],
     ['wrong-price', { ...political, storePrice: 900 }, 'trabalho-13-ak', 'ak'],
     ['wrong-slogan', { ...political, slogan: 'texto diferente' }, 'trabalho-13-ak', 'ak'],
+    ['wrong-placement', { ...political, markPlacement: 'receiver', sloganPlacement: 'receiver' }, 'trabalho-13-ak', 'ak'],
   ];
   for (const [name, mutant, id, weapon] of mutants) assert.throws(() => validate(mutant, id, weapon), undefined, `${name}: mutante sobreviveu`);
   console.log(`weapon-skin mutate: ${mutants.length}/${mutants.length} killed`);
@@ -160,6 +167,98 @@ const incompatible = new THREE.Group();
 incompatible.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), sourceMaterial));
 assert.equal(applyWeaponSkinCandidate(incompatible, 'ak', 'ondas-cariocas'), false);
 assert.equal(incompatible.children[0].material, sourceMaterial);
+
+const canvasOps = [];
+const fakeDocument = {
+  createElement(tag) {
+    assert.equal(tag, 'canvas');
+    return {
+      width: 0,
+      height: 0,
+      getContext(type) {
+        assert.equal(type, '2d');
+        return {
+          font: '',
+          fillStyle: '',
+          lineJoin: '',
+          lineWidth: 0,
+          strokeStyle: '',
+          textAlign: '',
+          textBaseline: '',
+          measureText(text) {
+            return { width: text.length * 72 };
+          },
+          fillText(text) {
+            canvasOps.push(['fillText', text]);
+          },
+          strokeText(text) {
+            canvasOps.push(['strokeText', text]);
+          },
+          fillRect() {
+            canvasOps.push(['fillRect']);
+          },
+        };
+      },
+    };
+  },
+  createElementNS(_namespace, tag) {
+    assert.equal(tag, 'img');
+    const listeners = new Map();
+    return {
+      width: 512,
+      height: 512,
+      addEventListener(type, listener) {
+        listeners.set(type, listener);
+      },
+      removeEventListener(type) {
+        listeners.delete(type);
+      },
+      set src(_value) {
+        queueMicrotask(() => listeners.get('load')?.());
+      },
+    };
+  },
+};
+globalThis.document = fakeDocument;
+for (const skinId of ['trabalho-13-ak', 'trabalho-13-pistola', 'estrela-verde-ak']) {
+  await preloadWeaponSkinCandidate(skinId);
+  const weaponId = TARGETS[skinId];
+  const model = new THREE.Group();
+  model.add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1, 1), sourceMaterial));
+  assert.equal(applyWeaponSkinCandidate(model, weaponId, skinId), true, `${skinId}: aplicação com marca falhou`);
+  const markings = model.children.filter((child) => child.name.startsWith('skin-'));
+  const expectedRoles = POLITICAL[skinId][1] ? ['slogan', 'symbol'] : ['symbol'];
+  assert.deepEqual([...new Set(markings.map((marking) => marking.userData.markingRole))].sort(), expectedRoles);
+  assert.equal(markings.length, expectedRoles.length * 2, `${skinId}: par lateral incompleto`);
+  for (const marking of markings) {
+    assert.equal(marking.userData.fittedToMesh, true);
+    assert.ok(marking.material.isMeshStandardMaterial, `${marking.name}: pintura sem resposta à luz`);
+    assert.equal(marking.material.transparent, true);
+    assert.equal(marking.material.depthWrite, false);
+    assert.ok(Math.abs(marking.position.x) > 0.05, `${marking.name}: marca enterrada na malha`);
+    assert.ok(Math.abs(Math.abs(marking.rotation.y) - Math.PI / 2) < 1e-8, `${marking.name}: marca fora da lateral`);
+  }
+  const slogans = markings.filter((marking) => marking.userData.markingRole === 'slogan');
+  for (const slogan of slogans) {
+    assert.ok(slogan.geometry.parameters.width >= slogan.geometry.parameters.height * 8, `${slogan.name}: frase não horizontal`);
+    const symbol = markings.find((marking) => marking.userData.markingRole === 'symbol' && Math.sign(marking.position.x) === Math.sign(slogan.position.x));
+    assert.ok(symbol && slogan.position.z > symbol.position.z, `${slogan.name}: frase não acompanha o cano`);
+  }
+}
+assert.ok(canvasOps.some(([op]) => op === 'fillText'), 'frase não foi desenhada');
+assert.ok(!canvasOps.some(([op]) => op === 'fillRect'), 'frase ganhou fundo retangular');
+delete globalThis.document;
+for (const theme of new Set(Object.values(POLITICAL).map(([theme]) => theme))) {
+  const svg = readFileSync(`public/textures/weapon-skins/political-marks/${theme}.svg`, 'utf8');
+  for (const slogan of new Set(Object.values(POLITICAL).map(([, slogan]) => slogan).filter(Boolean))) {
+    assert.ok(!svg.includes(slogan), `${theme}: frase foi incorporada ao símbolo`);
+  }
+  for (const [, attributes] of svg.matchAll(/<rect\b([^>]*)>/gi)) {
+    const width = Number(attributes.match(/\bwidth="([\d.]+)"/)?.[1] || 0);
+    const height = Number(attributes.match(/\bheight="([\d.]+)"/)?.[1] || 0);
+    assert.ok(width < 400 || height < 400, `${theme}: símbolo contém placa retangular`);
+  }
+}
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const audits = [];

@@ -153,20 +153,38 @@ const MATERIAL_PROFILE = Object.freeze({
   silver: Object.freeze({ roughness: 0.16, metalness: 0.98, envMapIntensity: 1.72 }),
   default: Object.freeze({ roughness: 0.5, metalness: 0.48, envMapIntensity: 1.15 }),
 });
-const MARK_LAYOUT = Object.freeze({
-  ak: Object.freeze({ x: 0.041, y: 0.052, z: -0.08, clubHeight: 0.09, graphicHeight: 0.12 }),
-  pistol: Object.freeze({ x: 0.096, y: 0.085, z: 0.05, clubHeight: 0.16, graphicHeight: 0.20 }),
+const CLUB_MARK_LAYOUT = Object.freeze({
+  ak: Object.freeze({ x: 0.041, y: 0.052, z: -0.08, height: 0.09 }),
+  pistol: Object.freeze({ x: 0.096, y: 0.085, z: 0.05, height: 0.16 }),
+});
+const POLITICAL_LAYOUT = Object.freeze({
+  ak: Object.freeze({
+    symbol: Object.freeze({ y: 0.047, z: -0.075, height: 0.085 }),
+    slogan: Object.freeze({ y: 0.120, z: 0.170, height: 0.035 }),
+  }),
+  pistol: Object.freeze({
+    symbol: Object.freeze({ y: -0.020, z: -0.015, height: 0.082 }),
+    slogan: Object.freeze({ y: 0.240, z: 0.035, height: 0.030 }),
+  }),
+});
+const SLOGAN_STYLE = Object.freeze({
+  'trabalho-13': Object.freeze({ fill: '#ffd23f', stroke: '#69030d' }),
+  'estrela-vermelha': Object.freeze({ fill: '#a60920', stroke: '#fff4d5' }),
+  'estrela-verde': Object.freeze({ fill: '#fff1bd', stroke: '#075c32' }),
+  'brasil-22': Object.freeze({ fill: '#ffe13b', stroke: '#082c70' }),
 });
 
 const markTextures = new Map();
 const markLoads = new Map();
+const sloganTextures = new Map();
+const fittedSurfaceCache = new Map();
 
 export function preloadWeaponSkinCandidate(skinId) {
   const asset = WEAPON_SKINS[skinId]?.markAsset;
   if (!asset) return Promise.resolve(null);
   if (!markLoads.has(skinId)) {
     markLoads.set(skinId, new THREE.TextureLoader().loadAsync(asset).then((texture) => {
-      texture.name = `${skinId}__${WEAPON_SKINS[skinId]?.officialMarksIncluded ? 'official_mark_permission_needed' : 'project_mark'}`;
+      texture.name = `${skinId}__${WEAPON_SKINS[skinId]?.officialMarksIncluded ? 'official_mark_permission_needed' : 'project_symbol_inlay'}`;
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.anisotropy = 4;
       markTextures.set(skinId, texture);
@@ -176,14 +194,136 @@ export function preloadWeaponSkinCandidate(skinId) {
   return markLoads.get(skinId);
 }
 
-function attachSkinMark(model, weaponId, skinId) {
+function sloganTexture(skinId) {
+  const definition = WEAPON_SKINS[skinId];
+  if (!definition?.slogan || typeof document === 'undefined') return null;
+  const cacheKey = `${definition.theme}:${definition.slogan}`;
+  if (sloganTextures.has(cacheKey)) return sloganTextures.get(cacheKey);
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048;
+  canvas.height = 256;
+  const context = canvas.getContext('2d');
+  const style = SLOGAN_STYLE[definition.theme] || SLOGAN_STYLE['trabalho-13'];
+  let fontSize = 124;
+  context.font = `900 ${fontSize}px "Arial Black", Arial, sans-serif`;
+  while (context.measureText(definition.slogan).width > 1900 && fontSize > 68) {
+    fontSize -= 4;
+    context.font = `900 ${fontSize}px "Arial Black", Arial, sans-serif`;
+  }
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.lineJoin = 'round';
+  context.lineWidth = 12;
+  context.strokeStyle = style.stroke;
+  context.fillStyle = style.fill;
+  context.strokeText(definition.slogan, 1024, 132);
+  context.fillText(definition.slogan, 1024, 132);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.name = `${definition.theme}__barrel_slogan`;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  sloganTextures.set(cacheKey, texture);
+  return texture;
+}
+
+function fittedSideSurfaces(model, weaponId, placements) {
+  const cacheKey = `${weaponId}:${placements.map(({ y, z, width, height }) => `${y},${z},${width},${height}`).join('|')}`;
+  if (fittedSurfaceCache.has(cacheKey)) return fittedSurfaceCache.get(cacheKey);
+  model.updateMatrixWorld(true);
+  const inverseRoot = new THREE.Matrix4().copy(model.matrixWorld).invert();
+  const probes = placements.map(({ y, z, width, height }) => ({
+    y, z, halfW: width * 0.56, halfH: height * 0.72, min: Infinity, max: -Infinity,
+  }));
+  let overallMin = Infinity;
+  let overallMax = -Infinity;
+  const point = new THREE.Vector3();
+  const matrix = new THREE.Matrix4();
+  model.traverse((object) => {
+    const positions = object.isMesh && object.geometry?.attributes?.position;
+    if (!positions || object.name.startsWith('skin-') || object.name.startsWith('club-mark-')) return;
+    matrix.multiplyMatrices(inverseRoot, object.matrixWorld);
+    const step = Math.max(1, Math.ceil(positions.count / 24000));
+    for (let index = 0; index < positions.count; index += step) {
+      point.fromBufferAttribute(positions, index).applyMatrix4(matrix);
+      overallMin = Math.min(overallMin, point.x);
+      overallMax = Math.max(overallMax, point.x);
+      for (const probe of probes) {
+        if (Math.abs(point.y - probe.y) > probe.halfH || Math.abs(point.z - probe.z) > probe.halfW) continue;
+        probe.min = Math.min(probe.min, point.x);
+        probe.max = Math.max(probe.max, point.x);
+      }
+    }
+  });
+  const lift = 0.0015 / Math.max(0.001, model.scale.x || 1);
+  const surfaces = probes.map((probe) => Object.freeze({
+    right: (Number.isFinite(probe.max) ? probe.max : overallMax) + lift,
+    left: (Number.isFinite(probe.min) ? probe.min : overallMin) - lift,
+  }));
+  fittedSurfaceCache.set(cacheKey, surfaces);
+  return surfaces;
+}
+function paintedMaterial(texture, skinId, role) {
+  const material = new THREE.MeshStandardMaterial({
+    map: texture,
+    transparent: true,
+    alphaTest: 0.12,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    roughness: role === 'symbol' ? 0.30 : 0.42,
+    metalness: role === 'symbol' ? 0.58 : 0.38,
+    envMapIntensity: 1.15,
+    side: THREE.FrontSide,
+  });
+  material.name = `${skinId}__${role}_paint`;
+  return material;
+}
+
+function addFittedPair(model, skinId, role, texture, placement, surfaces, aspect) {
+  const width = placement.height * aspect;
+  const geometry = new THREE.PlaneGeometry(width, placement.height);
+  const material = paintedMaterial(texture, skinId, role);
+  for (const [side, x, rotation] of [
+    ['right', surfaces.right, Math.PI / 2],
+    ['left', surfaces.left, -Math.PI / 2],
+  ]) {
+    const marking = new THREE.Mesh(geometry, material);
+    marking.name = `skin-${role}-${skinId}-${side}`;
+    marking.position.set(x, placement.y, placement.z);
+    marking.rotation.y = rotation;
+    marking.renderOrder = 3;
+    marking.userData.weaponSkin = skinId;
+    marking.userData.markingRole = role;
+    marking.userData.fittedToMesh = true;
+    model.add(marking);
+  }
+}
+
+function attachPoliticalMarkings(model, weaponId, skinId) {
+  const symbol = markTextures.get(skinId);
+  const definition = WEAPON_SKINS[skinId];
+  const layout = POLITICAL_LAYOUT[weaponId];
+  if (!symbol || !definition || !layout) return;
+  const symbolAspect = (symbol.image?.width || 1) / (symbol.image?.height || 1);
+  const slogan = sloganTexture(skinId);
+  const items = [
+    { role: 'symbol', texture: symbol, placement: layout.symbol, aspect: symbolAspect },
+    ...(slogan ? [{ role: 'slogan', texture: slogan, placement: layout.slogan, aspect: 8 }] : []),
+  ];
+  const surfaces = fittedSideSurfaces(model, weaponId, items.map(({ placement, aspect }) => ({
+    ...placement,
+    width: placement.height * aspect,
+  })));
+  items.forEach((item, index) => addFittedPair(model, skinId, item.role, item.texture, item.placement, surfaces[index], item.aspect));
+}
+
+function attachOfficialMark(model, weaponId, skinId) {
   const texture = markTextures.get(skinId);
   const definition = WEAPON_SKINS[skinId];
-  const layout = MARK_LAYOUT[weaponId];
+  const layout = CLUB_MARK_LAYOUT[weaponId];
   if (!texture || !definition || !layout) return;
   const aspect = (texture.image?.width || 1) / (texture.image?.height || 1);
-  const height = definition.officialMarksIncluded ? layout.clubHeight : layout.graphicHeight;
-  const geometry = new THREE.PlaneGeometry(height * aspect, height);
+  const geometry = new THREE.PlaneGeometry(layout.height * aspect, layout.height);
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
@@ -194,22 +334,24 @@ function attachSkinMark(model, weaponId, skinId) {
     side: THREE.FrontSide,
     toneMapped: false,
   });
-  const prefix = definition.officialMarksIncluded ? 'club-mark' : 'skin-mark';
-  const right = new THREE.Mesh(geometry, material);
-  right.name = `${prefix}-${skinId}-right`;
-  right.position.set(layout.x, layout.y, layout.z);
-  right.rotation.y = Math.PI / 2;
-  right.renderOrder = 4;
-  right.userData.officialMark = !!definition.officialMarksIncluded;
-  right.userData.rightsStatus = definition.rightsStatus || 'original-safe';
-  const left = new THREE.Mesh(geometry, material);
-  left.name = `${prefix}-${skinId}-left`;
-  left.position.set(-layout.x, layout.y, layout.z);
-  left.rotation.y = -Math.PI / 2;
-  left.renderOrder = 4;
-  left.userData.officialMark = !!definition.officialMarksIncluded;
-  left.userData.rightsStatus = definition.rightsStatus || 'original-safe';
-  model.add(right, left);
+  for (const [side, x, rotation] of [
+    ['right', layout.x, Math.PI / 2],
+    ['left', -layout.x, -Math.PI / 2],
+  ]) {
+    const marking = new THREE.Mesh(geometry, material);
+    marking.name = `club-mark-${skinId}-${side}`;
+    marking.position.set(x, layout.y, layout.z);
+    marking.rotation.y = rotation;
+    marking.renderOrder = 4;
+    marking.userData.officialMark = true;
+    marking.userData.rightsStatus = definition.rightsStatus || 'permission-needed';
+    model.add(marking);
+  }
+}
+
+function attachSkinMark(model, weaponId, skinId) {
+  if (WEAPON_SKINS[skinId]?.officialMarksIncluded) attachOfficialMark(model, weaponId, skinId);
+  else attachPoliticalMarkings(model, weaponId, skinId);
 }
 
 function cloneMaterial(material, skinId) {
