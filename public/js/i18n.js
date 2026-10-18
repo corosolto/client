@@ -670,7 +670,7 @@ const DICT = {
   'Calma: tente de novo em um minuto.': 'Easy: try again in a minute.',
 
   'Chama a turma': 'Call the crew', 'Fechar o aviso; a sala continua criada': 'Close this notice; the match stays created',
-  'Você': 'You', 'Em breve': 'Coming soon', 'A party de 4 chega numa próxima versão. Hoje o convite traz a turma pra sua sala.': 'Parties of 4 come in a later version. Today the invite brings your crew into your match.',
+  'Você': 'You', 'Convide pelo link. Quem abrir entra direto na sua sala.': 'Invite with the link. Anyone who opens it joins your match directly.',
   '{n}/{max} na sala · {nome}': '{n}/{max} in the match · {nome}', 'Link de convite': 'Invite link', 'COMPARTILHAR': 'SHARE',
   'Amigo no celular?': 'Friend on mobile?', 'Aponta a câmera: abre direto na sua sala, sem instalar nada.': 'Point the camera: it opens your match, nothing to install.',
   'ou código': 'or code', 'Recebeu um código?': 'Got a code?',

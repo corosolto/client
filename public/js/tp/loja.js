@@ -149,7 +149,7 @@ function render(){
   for(const t of raiz.querySelectorAll('.tp-loja__abas [role=tab]')){const on=t.dataset.tpAba===atual;t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;}
   for(const p of raiz.querySelectorAll('.tp-loja__painel'))p.hidden=legada==='quests' || p.dataset.painel!==aba;
   if(legada!=='quests')(aba==='armario'?desenharArmario:desenharLoja)(raiz.querySelector(`[data-painel=${aba}]`),d);
-  posicionarRisco();
+  requestAnimationFrame(posicionarRisco);
 }
 
 function irPara(alvo){
