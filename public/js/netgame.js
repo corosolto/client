@@ -310,7 +310,8 @@ class Netcode {
     /* Casa por PERSONAGEM (exato), time como rede de segurança, qualquer corpo por último —
        entidade sem corpo é boneco invisível. Ver docs/MULTIPLAYER.md. */
     const roster = (net.meta && net.meta.roster) || [];
-    const charDe = (id) => { const r = roster.find((x) => x.id === id); return r && r.char; };
+    const rosterById = new Map(roster.map((row) => [row.id, row]));
+    const charDe = (id) => rosterById.get(id)?.char;
     const pega = (team, id) => {
       const alvo = charDe(id);
       let i = alvo ? livres.findIndex((b) => b.def && b.def.id === alvo && b.team === team) : -1;
@@ -319,14 +320,20 @@ class Netcode {
       return livres.splice(i, 1)[0] || null;
     };
     for (const e of snap.ents) {
-      if (!this.espectador && e.id === net.yourEnt) { this._netMap.set(e.id, game.player); continue; }
+      const row = rosterById.get(e.id);
+      const pid = !e.bot && PLAYER_ID.test(row?.pid || '') ? row.pid : '';
+      if (!this.espectador && e.id === net.yourEnt) {
+        game.player._playerId = pid;
+        game.player._netBot = false;
+        this._netMap.set(e.id, game.player);
+        continue;
+      }
       const bot = pega(e.team, e.id);
       if (!bot) continue;
       bot._remote = e.id; bot._netId = e.id;
-      const row = (net.meta.roster || []).find(r=>r.id===e.id);
       bot.team = e.team;                      // o lado do corpo passa a ser o do servidor
       bot.name = e.bot ? `[BOT] ${e.name}` : e.name; bot._nomeServidor = e.name;
-      bot._playerId = !e.bot && PLAYER_ID.test(row?.pid || '') ? row.pid : '';
+      bot._playerId = pid;
       bot.pos.set(e.x, e.y, e.z); bot.yaw = e.yaw;
       this._netMap.set(e.id, bot);
       if (row) this._onPersonagem({...row,ent:e.id},false);
@@ -359,6 +366,10 @@ class Netcode {
     if (Number.isFinite(snap.timeLeft)) game.timeLeft = snap.timeLeft;
     if (Number.isFinite(snap.roundNum)) game.roundNum = snap.roundNum;
     if (game.roundsWon && Number.isFinite(snap.scoreE)) { game.roundsWon.E = snap.scoreE; game.roundsWon.B = snap.scoreB; }
+    if (game.roundKills && Number.isFinite(snap.roundKillsE) && Number.isFinite(snap.roundKillsB)) {
+      game.roundKills.E = snap.roundKillsE;
+      game.roundKills.B = snap.roundKillsB;
+    }
     if (game.state !== estadoAntes) this.transicaoDeEstado(estadoAntes, game.state, placarAntes);
     this.vagas = snap.livre || null;
 

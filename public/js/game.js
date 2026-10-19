@@ -53,6 +53,7 @@ export { WEAPONS };
    Motivo: as três mudam COMPORTAMENTO sentido pelo jogador; o dono precisa do A/B. */
 const QS = new URLSearchParams(location.search);
 const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
+const PLAYER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ANNOUNCER_LAB = ['kills', 'rounds', 'all'].includes(QS.get('announcerlab')) ? QS.get('announcerlab') : '';
 /* Replay cam de headshot (#364) REMOVIDA a pedido do dono: nada aqui pode voltar a mexer em
    câmera, FOV ou dt no abate. Régua do contrário: tools/eval/replaycam-check.mjs */
@@ -1464,6 +1465,18 @@ export class Game {
 
   _buildViewModels() {
     const root = new THREE.Group();
+    if (AUTHORED_VM_ENABLED) {
+      this._vmFrame = () => {};
+      this._vmMontarTardio = null;
+      this._weaponOnly = false;
+      return {
+        root, models: Object.create(null), awp: null, pistol: null, knife: null, arms: null,
+        grip: Object.create(null), ads: Object.create(null), rot: Object.create(null),
+        kick: 0, kickSide: 0, bobPhase: 0,
+        rig: new ViewModelRig({ bobGain: 0 }),
+        recoil: new RecoilAxis(11, 0.5, 0.12, 0.15),
+      };
+    }
     const dark = c => new THREE.MeshLambertMaterial({ color: c });
     // First-person arms inherit the selected character's skin + sleeve colors.
     const pdef = byId(this.playerCharId);
@@ -2059,7 +2072,7 @@ export class Game {
       || !!(typeof t.closest === 'function' && t.closest('[data-entrada-propria]')));
     this._kd = e => {
       if (this._entradaTravada || entradaPropria(e.target)) return;
-      if (e.code === 'Tab') { e.preventDefault(); this._showScoreboard(true); }
+      if (e.code === 'Tab') { e.preventDefault(); if (!e.repeat) this._showScoreboard(true); }
       /* Em pointer lock, engole os atalhos do navegador que a página PODE cancelar
          (Ctrl+S/D/A/R…). Os que ela NÃO pode — Ctrl+W à frente de todos — não passam por
          aqui: são atalhos reservados e o `preventDefault` é ignorado. Este comentário já
@@ -3277,14 +3290,12 @@ export class Game {
   // 07/08/2026 — o histórico está no git.
   _applyVmVisibility() {
     const w = this.player.weapon;
-    this._vmMontarTardio?.(w);   // GLB que chegou depois do construtor (ver _buildViewModels)
-    /* Esta troca saiu no merge com a main e as 26 armas caíram no legado, sem
-       mãos: causa, medida e régua em KNOWN-BUGS.md, BUG-156. */
+    this._vmMontarTardio?.(w);
     const melee = this.vm.melee?.setWeapon(w) || false;
     const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
     if (melee) this.vm.authored?.setWeapon('');
-    // Uma decisão de visibilidade (vmvisibility.js): o legado continua visível enquanto o
-    // autorado carrega ou falha; só some depois que o controlador confirma malha ativa.
+    // Em runtime autorado, uma carga pendente apresenta o último mount ainda válido ou
+    // um root vazio. O procedural só existe quando o renderer autorado foi desligado.
     this._vmPresentation = { authored, melee };
     this._syncVmPresentation();
     if (this.vmCamera) {
@@ -3397,6 +3408,7 @@ export class Game {
       realScope,
       scopeMask,
       meleeReady: presentation.melee,
+      authoredMode: AUTHORED_VM_ENABLED,
       authoredReady: presentation.authored,
     });
     this.vm.root.visible = state.root;
@@ -5952,6 +5964,9 @@ export class Game {
     this.camView = mode;
     this._tpOrbitYaw = 0;
     this._tpOrbitPitch = 0;
+    this._tpBoomClear = undefined;
+    this._tpBoomBlockedGrace = 0;
+    this._tpBoomLastBlocked = undefined;
     this.settings.camView = mode;
     if (mode !== 'first') this._ensurePlayerTP();
     this._syncCamViewVis();
@@ -6047,7 +6062,7 @@ export class Game {
       if (this.world.occluders?.length) {
         this.ray.set(eyePos, boom);
         this.ray.far = boomLen;
-        const hit = this.ray.intersectObjects(this.world.occluders, false)[0];
+        const hit = this.ray.intersectObjects(this.world.occluders, true)[0];
         if (hit && hit.distance < claro) claro = hit.distance;
       }
       if (this.world.camBlockers?.length) {
@@ -6059,11 +6074,24 @@ export class Game {
           }
         }
       }
-      // Nunca ultrapassa o blocker: quando não cabe boom, a câmera volta até o olho.
-      const piso = Math.max(0, claro - 0.18);   // 18 cm de folga pro near plane
+      // GLB com grupos/triângulos adjacentes pode perder um único raycast na emenda.
+      // Segura o último bloqueio por 80 ms: entra na hora, não pulsa um frame para fora.
+      const bloqueado = claro < boomLen - 1e-3;
+      let piso = bloqueado ? Math.max(0, claro - 0.18) : boomLen;
+      if (bloqueado) {
+        this._tpBoomLastBlocked = piso;
+        this._tpBoomBlockedGrace = 0.08;
+      }
+      const segurando = !bloqueado && (this._tpBoomBlockedGrace || 0) > 0 && Number.isFinite(this._tpBoomLastBlocked);
+      if (segurando) {
+        piso = Math.min(piso, this._tpBoomLastBlocked);
+        this._tpBoomBlockedGrace = Math.max(0, this._tpBoomBlockedGrace - dt);
+      }
       const atual = this._tpBoomClear ?? boomLen;
-      // 5 m/s: entra na hora, sai andando (método autocontido: réguas recompilam _updatePlayerTP fora do módulo)
-      this._tpBoomClear = piso < atual ? piso : Math.min(boomLen, atual + dt * 5);
+      // 5 m/s para acompanhar um bloqueio que recua ou recompor depois da janela estável.
+      this._tpBoomClear = bloqueado
+        ? (piso < atual ? piso : Math.min(piso, atual + dt * 5))
+        : segurando ? Math.min(atual, piso) : (piso < atual ? piso : Math.min(boomLen, atual + dt * 5));
       if (this._tpBoomClear < boomLen - 1e-3)
         cam.position.copy(eyePos).addScaledVector(boom, this._tpBoomClear);
     }
@@ -8325,8 +8353,11 @@ export class Game {
         const linhas = [...this.combatants].filter(c => c.team === side).sort(rank).map((c, i) => {
           const score = Math.max(0, c.kills * 100 + (c.captures || 0) * 250 - c.deaths * 20);
           const ping = 12 + ((c.kills * 7 + c.deaths * 3 + i * 5) % 18);
+          const pid = (c.isPlayer || c._netBot === false) && PLAYER_ID.test(c._playerId || '') ? c._playerId : '';
+          const char = /^[\w-]+$/.test(c.def?.id || '') ? c.def.id : '';
+          const avatar = pid || char;
           return (
-          `<tr data-av="${/^[\w-]+$/.test(c.def?.id || '') ? c.def.id : ''}"${c.isPlayer ? ' class="me"' : ''}>
+          `<tr data-player-id="${pid}" data-av-kind="${pid ? 'player' : 'character'}" data-av="${avatar}"${c.isPlayer ? ' class="me"' : ''}>
             <td class="sb-n">${escapeClanName(c.name, c.clanTag)}${c.isPlayer ? ' ★' : ''}${this._botaoAmigo(c)}</td><td>${c.kills}</td><td>${c.deaths}</td><td class="sb-points">${score}</td><td class="sb-ping">${ping}</td>${this.ctf ? `<td>${c.captures || 0}</td>` : ''}</tr>`
           );
         }).join('');
@@ -8379,11 +8410,16 @@ export class Game {
       const amount = slot.count != null ? `×${slot.count}` : (slot.weapon === 'knife' ? '' : (ammo ? `${ammo.mag}/${res}` : ''));
       const icon = this._wpnIcon(slot.kind === 'frag' ? 'FRAG' : slot.kind === 'smoke' ? 'NADE' : weapon?.short);
       const icon2d = slot.weapon
-        ? `<i class="weapon-mask" style="--weapon-mask:url('/img/weapons/${slot.weapon}.webp')"></i><span class="weapon-fallback">${icon}</span>`
+        ? `<img class="weapon-mask" data-weapon="${slot.weapon}" src="/img/weapons/${slot.weapon}.webp" alt=""><span class="weapon-fallback">${icon}</span>`
         : icon;
       const name = slot.name || weapon?.name || slot.weapon?.toUpperCase() || '';
       return `<div class="weapon-slot${active ? ' on' : ''}" data-slot="${slot.key}"><span class="weapon-key">${slot.key}</span><span class="weapon-icon">${icon2d}</span><span class="weapon-label">${name}</span><span class="weapon-amount">${amount}</span></div>`;
     }).join('');
+    for (const img of hud.querySelectorAll('img.weapon-mask')) {
+      const weapon = img.dataset.weapon;
+      img.onload = () => { if (img.dataset.weapon === weapon) img.parentElement?.classList.remove('art-failed'); };
+      img.onerror = () => { if (img.dataset.weapon === weapon) img.parentElement?.classList.add('art-failed'); };
+    }
     hud.classList.remove('hidden');
   }
   _updateHud() {
@@ -8403,9 +8439,19 @@ export class Game {
     }
     this._updateKillSequenceHud();
     if (this.el.ammoWeaponArt.dataset.weapon !== p.weapon) {
-      this.el.ammoWeaponArt.dataset.weapon = p.weapon;
-      this.el.ammoWeaponArt.src = `/img/weapons/${p.weapon}.webp`;
-      this.el.ammoWeaponArt.alt = weaponDef.name;
+      const art = this.el.ammoWeaponArt;
+      const weapon = p.weapon;
+      art.dataset.weapon = weapon;
+      delete art.dataset.fallback;
+      art.onerror = () => {
+        if (art.dataset.weapon !== weapon) return;
+        art.onerror = null;
+        art.dataset.fallback = '';
+        const label = String(WEAPONS[weapon]?.short || weapon || '?').slice(0, 8);
+        art.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 82"><text x="210" y="56" text-anchor="end" font-family="sans-serif" font-size="32" font-weight="800" fill="white">${label}</text></svg>`)}`;
+      };
+      art.src = `/img/weapons/${weapon}.webp`;
+      art.alt = weaponDef.name;
     }
     let mag = 0;
     if (p.weapon === 'knife') {

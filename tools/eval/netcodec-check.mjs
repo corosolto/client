@@ -1,5 +1,5 @@
-/* Snapshot binário v5: round-trip do codec real, reboque privado, quantização dos vizinhos,
-   CTF, compatibilidade v4/v3/v2, limites hostis e integração do NetClient.
+/* Snapshot binário v6: round-trip do codec real, totais autoritativos de abates por rodada,
+   reboque privado, CTF, compatibilidade v5/v4/v3/v2, limites hostis e integração do NetClient.
    O formato roda como ES module puro em public/, sem bundler nem dependência de runtime.
 
    O QUE MUDOU NA v5 (e por quê): o bloco privado — ack, pente, reserva, recarga e os dois
@@ -34,7 +34,7 @@ if (MUT === 'sem-negociacao') {
   console.log(`mutante desconhecido: ${MUT}`); process.exit(1);
 }
 
-cobra(/new WebSocket\(this\.url, SNAPSHOT_PROTOCOLS\)/.test(tpSrc), 'cliente negocia v5/v4/v3/v2 binário com fallback v1 JSON');
+cobra(/new WebSocket\(this\.url, SNAPSHOT_PROTOCOLS\)/.test(tpSrc), 'cliente negocia v6/v5/v4/v3/v2 binário com fallback v1 JSON');
 cobra(/binaryType\s*=\s*['"]arraybuffer['"]/.test(tpSrc), 'frames binários chegam como ArrayBuffer, não Blob');
 cobra(/decodeSnapshot\(dados\)/.test(netSrc), 'o caminho de produção chama o decoder real');
 cobra(/MAX_SNAPSHOT_BYTES/.test(tpSrc), 'o transporte limita frame antes de alocar/decodificar');
@@ -60,7 +60,7 @@ if (codec) {
   const sample = {
     type: 'snapshot', room: 'livre', tick: 123456, t: 87.125, state: 'live', owner: null,
     players: 1, spectators: 2, livre: { E: 4, B: 5 }, timeLeft: 72,
-    roundNum: 2, scoreE: 1, scoreB: 0,
+    roundNum: 2, scoreE: 1, scoreB: 0, roundKillsE: 7, roundKillsB: 4,
     ctf: {
       capsE: 4, capsB: 2, roundCapsE: 2, roundCapsB: 1, capsToWin: 3, matchLeft: 318.5,
       points: [
@@ -82,6 +82,8 @@ if (codec) {
   const perto = (a, b, tol) => Math.abs(a - b) <= tol;
   cobra(out.type === 'snapshot' && out.room === sample.room && out.tick === sample.tick,
     'envelope sobrevive ao round-trip');
+  cobra(out.roundKillsE === 7 && out.roundKillsB === 4,
+    'v6 preserva os totais autoritativos de abates da rodada');
   cobra(out.ents.length === 10 && out.ents.every((e, i) => e.id === ents[i].id && e.name === ents[i].name),
     'identidade das 10 entidades sobrevive');
   /* A precisão é DIFERENTE por papel, e é essa diferença que paga a banda: o vizinho é
@@ -107,9 +109,13 @@ if (codec) {
   const semPrivado = codec.decodeSnapshot(comum);
   cobra(!('ackSeq' in semPrivado.ents[0]) && !('mag' in semPrivado.ents[0]),
     'e nenhuma entidade carrega bloco privado de ninguém (era 14 bytes × N por snapshot)');
+  const outV5 = codec.decodeSnapshot(codec.encodeSnapshot(sample, 5));
+  cobra(!('roundKillsE' in outV5) && !('roundKillsB' in outV5)
+      && outV5.ents[3].fireN === 7,
+    'snapshot v5 continua decodificável sem inventar os campos exclusivos da v6');
   const v4bin = codec.encodeSnapshot(sample, 4);
   cobra(bin.byteLength < v4bin.byteLength * 0.75,
-    `v5 corta a banda do snapshot: ${bin.byteLength} contra ${v4bin.byteLength} bytes da v4 (${Math.round((1 - bin.byteLength / v4bin.byteLength) * 100)}% menos)`);
+    `v6 preserva o corte de banda da v5: ${bin.byteLength} contra ${v4bin.byteLength} bytes da v4 (${Math.round((1 - bin.byteLength / v4bin.byteLength) * 100)}% menos)`);
   const outV4 = codec.decodeSnapshot(v4bin);
   cobra(outV4.ents[0].ackSeq === 812 && near(outV4.ents[0].x, ents[0].x) && outV4.ents[3].fire === 1,
     'v4 continua byte-a-byte como era: bloco por entidade, posição em f32 e `fire` como bandeira');
@@ -129,12 +135,13 @@ if (codec) {
   const jsonBytes = Buffer.byteLength(JSON.stringify(sample));
   cobra(bin.byteLength < jsonBytes * 0.45,
     `payload binário fica abaixo de 45% do JSON (${bin.byteLength}/${jsonBytes} bytes)`);
-  cobra(codec.SNAPSHOT_PROTOCOLS[0] === 'coro-snapshot-v5'
-      && codec.SNAPSHOT_PROTOCOLS[1] === 'coro-snapshot-v4'
-      && codec.SNAPSHOT_PROTOCOLS[2] === 'coro-snapshot-v3'
-      && codec.SNAPSHOT_PROTOCOLS[3] === 'coro-snapshot-v2'
+  cobra(codec.SNAPSHOT_PROTOCOLS[0] === 'coro-snapshot-v6'
+      && codec.SNAPSHOT_PROTOCOLS[1] === 'coro-snapshot-v5'
+      && codec.SNAPSHOT_PROTOCOLS[2] === 'coro-snapshot-v4'
+      && codec.SNAPSHOT_PROTOCOLS[3] === 'coro-snapshot-v3'
+      && codec.SNAPSHOT_PROTOCOLS[4] === 'coro-snapshot-v2'
       && codec.SNAPSHOT_PROTOCOLS.includes('coro-json-v1'),
-    'ordem de negociação prefere v5 e preserva fallbacks v4/v3/v2/JSON');
+    'ordem de negociação prefere v6 e preserva fallbacks v5/v4/v3/v2/JSON');
 
   for (const ruim of [bin.slice(0, 12), new Uint8Array([0, 1, 2, 3]), new Uint8Array(codec.MAX_SNAPSHOT_BYTES + 1)]) {
     let recusou = false; try { codec.decodeSnapshot(ruim); } catch { recusou = true; }
