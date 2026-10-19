@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "pack-dourado-knife",
+  "weaponId": "knife",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": null,
+  "sloganPlacement": null,
+  "markSourceUrl": null,
+  "referenceRule": "project-authored metallic finish without brand, badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "88c996c60e96d82473fb2215107deb3e175b7b2d8ad4ab6a90fac75163c10342",
+    "side-right.png": "86f0a1d321d4a9bc30a83bbc6a972109d133a337cc36e94bb375766ed276dc33",
+    "three-quarter.png": "ce1a44f400d33b9ae14bec8e41183612dd0e2250047ac3740bbafc46b14f8316"
+  },
+  "storePoster": null,
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
+  },
+  "consoleErrors": []
+}

@@ -21,13 +21,14 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "a7af3fef99676a6b83c9d9bbbcdccf36ae4398a96b85d2d5d5a30727e5ab591c",
-    "side-right.png": "746506d6555fc8fd478cd9c18c064f44cd3d4aa7b46579dbd5a4d9169f6c6614",
-    "three-quarter.png": "b9dfcd0dcfd34b81b7fa2a05f8b5b6e93e760c54eb938c3d06685a5a9308ee75"
+    "side-left.png": "eccf02763d0897f4ab7f25506f2d10143fed9df82e68fcafa3ddd99fb23b5c08",
+    "side-right.png": "fb1c3eecb73acb160b32ad30fac15ade839a45dc0bbe999bc615bcf6fef183c9",
+    "three-quarter.png": "449cde30804c4eafa17149c420971e6150a44cd1df4ec4673afee64a6ea706ec"
   },
+  "storePoster": null,
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
-    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
   },

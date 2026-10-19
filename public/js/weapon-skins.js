@@ -1,7 +1,128 @@
 import * as THREE from 'three';
 import { WEAPON_SKINS } from './data/weapon-skin-definitions.js';
 export { WEAPON_SKINS };
+const TAMO_JUNTO_FRAGMENT = Object.freeze({
+  ak: `
+    vec2 tamoAkPanel = vec2(vWeaponSkinLocal.z + 0.34, vWeaponSkinLocal.y + 0.16);
+    float tamoAkFlow = 0.5 + 0.5 * sin(tamoAkPanel.x * 18.0 + tamoAkPanel.y * 8.0);
+    float tamoAkRibbon = fract(tamoAkPanel.x * 4.8 - tamoAkPanel.y * 2.2);
+    float tamoAkWhite = 1.0 - smoothstep(0.16, 0.23, abs(tamoAkRibbon - 0.5));
+    vec3 tamoAkGreen = mix(vec3(0.012, 0.18, 0.085), vec3(0.025, 0.48, 0.19), smoothstep(0.28, 0.72, tamoAkFlow));
+    diffuseColor.rgb = mix(tamoAkGreen, vec3(0.88, 0.91, 0.82), tamoAkWhite);
+  `,
+  pistol: `
+    vec2 tamoPistolPanel = vec2(vWeaponSkinLocal.z + 0.16, vWeaponSkinLocal.y + 0.15);
+    float tamoPistolChevron = abs(fract(
+      tamoPistolPanel.x * 8.0 + abs(tamoPistolPanel.y - 0.15) * 5.0
+    ) * 2.0 - 1.0);
+    float tamoPistolWhite = 1.0 - smoothstep(0.30, 0.43, tamoPistolChevron);
+    float tamoPistolShade = smoothstep(0.36, 0.64, 0.5 + 0.5 * sin(tamoPistolPanel.y * 19.0));
+    vec3 tamoPistolGreen = mix(vec3(0.010, 0.16, 0.075), vec3(0.030, 0.50, 0.20), tamoPistolShade);
+    diffuseColor.rgb = mix(tamoPistolGreen, vec3(0.90, 0.92, 0.84), tamoPistolWhite);
+  `,
+});
+const E_NOIS_FRAGMENT = Object.freeze({
+  ak: `
+    vec2 noisAkPanel = vec2(vWeaponSkinLocal.z + 0.34, vWeaponSkinLocal.y + 0.16);
+    float noisAkWave = 0.5 + 0.5 * sin(
+      noisAkPanel.x * 17.0 + 0.85 * sin(noisAkPanel.y * 15.0)
+    );
+    float noisAkCyan = smoothstep(0.45, 0.61, noisAkWave);
+    float noisAkCut = 1.0 - smoothstep(0.055, 0.095, abs(fract(
+      noisAkPanel.x * 3.9 - noisAkPanel.y * 1.7
+    ) - 0.5));
+    vec3 noisAkBlue = mix(vec3(0.018, 0.10, 0.30), vec3(0.025, 0.27, 0.68), noisAkCyan);
+    diffuseColor.rgb = mix(noisAkBlue, vec3(0.05, 0.74, 0.88), noisAkCut * 0.78);
+  `,
+  pistol: `
+    vec2 noisPistolPanel = vec2(vWeaponSkinLocal.z + 0.16, vWeaponSkinLocal.y + 0.15);
+    vec2 noisPistolCell = floor(noisPistolPanel / vec2(0.040, 0.052));
+    float noisPistolStep = mod(noisPistolCell.x + 2.0 * noisPistolCell.y, 4.0);
+    vec3 noisPistolColor = noisPistolStep < 1.0
+      ? vec3(0.018, 0.095, 0.29)
+      : (noisPistolStep < 2.0
+        ? vec3(0.020, 0.25, 0.66)
+        : (noisPistolStep < 3.0 ? vec3(0.04, 0.70, 0.86) : vec3(0.015, 0.16, 0.46)));
+    diffuseColor.rgb = noisPistolColor;
+  `,
+});
+const CAMO_SELVA_FRAGMENT = Object.freeze({
+  ak: `
+    vec3 camoSelvaAk = vec3(
+      vWeaponSkinLocal.x / 0.045,
+      (vWeaponSkinLocal.y + 0.16) / 0.095,
+      (vWeaponSkinLocal.z + 0.34) / 0.130
+    );
+    float camoSelvaAkField = sin(camoSelvaAk.z * 2.4 + sin(camoSelvaAk.y * 2.1 + camoSelvaAk.x * 0.7) * 1.3)
+      + 0.65 * sin(camoSelvaAk.y * 3.2 - camoSelvaAk.z * 1.35 + cos(camoSelvaAk.x * 1.9))
+      + 0.32 * sin((camoSelvaAk.z + camoSelvaAk.y - camoSelvaAk.x * 0.4) * 5.1);
+    vec3 camoSelvaAkColor = camoSelvaAkField < -0.55
+      ? vec3(0.055, 0.075, 0.045)
+      : (camoSelvaAkField < 0.45 ? vec3(0.22, 0.31, 0.15) : vec3(0.53, 0.46, 0.27));
+    diffuseColor.rgb = camoSelvaAkColor;
+  `,
+  pistol: `
+    vec3 camoSelvaPistol = vec3(
+      vWeaponSkinLocal.x / 0.032,
+      (vWeaponSkinLocal.y + 0.15) / 0.070,
+      (vWeaponSkinLocal.z + 0.16) / 0.055
+    );
+    float camoSelvaPistolField = sin(camoSelvaPistol.z * 2.4 + sin(camoSelvaPistol.y * 2.1 + camoSelvaPistol.x * 0.7) * 1.3)
+      + 0.65 * sin(camoSelvaPistol.y * 3.2 - camoSelvaPistol.z * 1.35 + cos(camoSelvaPistol.x * 1.9))
+      + 0.32 * sin((camoSelvaPistol.z + camoSelvaPistol.y - camoSelvaPistol.x * 0.4) * 5.1);
+    vec3 camoSelvaPistolColor = camoSelvaPistolField < -0.55
+      ? vec3(0.055, 0.075, 0.045)
+      : (camoSelvaPistolField < 0.45 ? vec3(0.22, 0.31, 0.15) : vec3(0.53, 0.46, 0.27));
+    diffuseColor.rgb = camoSelvaPistolColor;
+  `,
+});
+const EMO_XADREZ_FRAGMENT = Object.freeze({
+  ak: `
+    vec2 emoAkCell = floor(vec2(
+      (vWeaponSkinLocal.z + 0.31) / 0.062,
+      (vWeaponSkinLocal.y + 0.16) / 0.052
+    ));
+    float emoAkCheck = mod(emoAkCell.x + emoAkCell.y, 2.0);
+    float emoAkMagenta = emoAkCheck * step(0.5, mod(emoAkCell.x, 4.0));
+    float emoAkDark = 1.0 - emoAkCheck;
+    vec3 emoAkColor = vec3(0.13, 0.075, 0.14);
+    emoAkColor = mix(emoAkColor, vec3(0.012, 0.014, 0.022), emoAkDark);
+    emoAkColor = mix(emoAkColor, vec3(0.52, 0.018, 0.40), emoAkMagenta);
+    diffuseColor.rgb = emoAkColor;
+  `,
+  pistol: `
+    vec2 emoPistolCell = floor(vec2(
+      (vWeaponSkinLocal.z + 0.13) / 0.026,
+      (vWeaponSkinLocal.y + 0.15) / 0.032
+    ));
+    float emoPistolCheck = mod(emoPistolCell.x + emoPistolCell.y, 2.0);
+    float emoPistolMagenta = emoPistolCheck * step(0.5, mod(emoPistolCell.x, 4.0));
+    float emoPistolDark = 1.0 - emoPistolCheck;
+    vec3 emoPistolColor = vec3(0.13, 0.075, 0.14);
+    emoPistolColor = mix(emoPistolColor, vec3(0.012, 0.014, 0.022), emoPistolDark);
+    emoPistolColor = mix(emoPistolColor, vec3(0.52, 0.018, 0.40), emoPistolMagenta);
+    diffuseColor.rgb = emoPistolColor;
+  `,
+});
 const PATTERN_FRAGMENT = Object.freeze({
+  'tamo-junto-ak': TAMO_JUNTO_FRAGMENT.ak,
+  'tamo-junto-pistola': TAMO_JUNTO_FRAGMENT.pistol,
+  'e-nois-ak': E_NOIS_FRAGMENT.ak,
+  'e-nois-pistola': E_NOIS_FRAGMENT.pistol,
+  'camo-selva-ak': CAMO_SELVA_FRAGMENT.ak,
+  'camo-selva-pistola': CAMO_SELVA_FRAGMENT.pistol,
+  'pack-selva-camo-ak': CAMO_SELVA_FRAGMENT.ak,
+  'pack-selva-camo-pistol': CAMO_SELVA_FRAGMENT.pistol,
+  'pack-emo-xadrez-ak': EMO_XADREZ_FRAGMENT.ak,
+  'pack-emo-xadrez-pistol': EMO_XADREZ_FRAGMENT.pistol,
+  'pack-lula-13-knife': `
+    float lulaKnifeBand = 1.0 - smoothstep(
+      0.18, 0.42, abs(sin(vWeaponSkinLocal.z * 18.0 + vWeaponSkinLocal.y * 9.0))
+    );
+    vec3 lulaKnifeRed = vec3(0.62, 0.008, 0.020);
+    vec3 lulaKnifeGold = vec3(0.95, 0.62, 0.055);
+    diffuseColor.rgb = mix(lulaKnifeRed, lulaKnifeGold, lulaKnifeBand);
+  `,
   'ondas-cariocas': `
     float rioPhase = (vWeaponSkinLocal.y + 0.1728515625) * 8.6
       + 0.28 * sin(vWeaponSkinLocal.x * 19.5);
@@ -202,23 +323,25 @@ const THEME_FRAGMENT = Object.freeze({
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.015, 0.004, 0.018), max(emoEyes, emoMouth));
   `,
   ouro: `
-    float ouroBrush = 0.90 + 0.10 * sin(
-      vWeaponSkinLocal.z * 210.0 + vWeaponSkinLocal.y * 37.0
+    float ouroSweep = 0.5 + 0.5 * sin(
+      vWeaponSkinLocal.z * 24.0 + vWeaponSkinLocal.y * 3.6
     );
-    diffuseColor.rgb *= vec3(0.92, 0.61, 0.11) * ouroBrush;
+    float ouroBrush = mix(0.72, 1.0, smoothstep(0.18, 0.82, ouroSweep));
+    diffuseColor.rgb = vec3(0.67, 0.40, 0.065) * ouroBrush;
   `,
   prata: `
-    float prataBrush = 0.89 + 0.11 * sin(
-      vWeaponSkinLocal.z * 240.0 + vWeaponSkinLocal.y * 31.0
+    float prataSweep = 0.5 + 0.5 * sin(
+      vWeaponSkinLocal.z * 22.0 - vWeaponSkinLocal.y * 3.2
     );
-    diffuseColor.rgb *= vec3(0.72, 0.79, 0.84) * prataBrush;
+    float prataBrush = mix(0.70, 0.98, smoothstep(0.18, 0.82, prataSweep));
+    diffuseColor.rgb = vec3(0.48, 0.54, 0.58) * prataBrush;
   `,
 });
 const patternFragment = (skinId) => PATTERN_FRAGMENT[skinId] || THEME_FRAGMENT[WEAPON_SKINS[skinId]?.theme];
 const MATERIAL_PROFILE = Object.freeze({
-  gold: Object.freeze({ roughness: 0.18, metalness: 0.96, envMapIntensity: 1.65 }),
-  silver: Object.freeze({ roughness: 0.16, metalness: 0.98, envMapIntensity: 1.72 }),
-  default: Object.freeze({ roughness: 0.5, metalness: 0.48, envMapIntensity: 1.15 }),
+  gold: Object.freeze({ roughness: 0.48, metalness: 0.91, envMapIntensity: 0.72 }),
+  silver: Object.freeze({ roughness: 0.52, metalness: 0.93, envMapIntensity: 0.68 }),
+  default: Object.freeze({ roughness: 0.72, metalness: 0.16, envMapIntensity: 0.78 }),
 });
 const CLUB_MARK_LAYOUT = Object.freeze({
   ak: Object.freeze({ x: 0.041, y: 0.052, z: -0.08, height: 0.050 }),
@@ -347,9 +470,9 @@ function paintedMaterial(texture, skinId, role) {
     depthWrite: false,
     polygonOffset: true,
     polygonOffsetFactor: -1,
-    roughness: role === 'symbol' ? 0.30 : 0.42,
-    metalness: role === 'symbol' ? 0.58 : 0.38,
-    envMapIntensity: 1.15,
+    roughness: role === 'symbol' ? 0.70 : 0.76,
+    metalness: role === 'symbol' ? 0.12 : 0.08,
+    envMapIntensity: 0.74,
     side: THREE.FrontSide,
   });
   material.name = `${skinId}__${role}_paint`;
@@ -452,10 +575,10 @@ function cloneMaterial(material, skinId) {
   if (!definition?.preserveBase) {
     copy.map = null;
     copy.color.set(0xffffff);
-    copy.roughness = profile.roughness;
-    copy.metalness = profile.metalness;
-    copy.envMapIntensity = profile.envMapIntensity;
   }
+  copy.roughness = profile.roughness;
+  copy.metalness = profile.metalness;
+  copy.envMapIntensity = profile.envMapIntensity;
   copy.userData = { ...copy.userData, weaponSkin: skinId };
   copy.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader

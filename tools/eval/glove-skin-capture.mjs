@@ -7,6 +7,9 @@ import sharp from 'sharp';
 import { GLOVE_SKINS, STORE_GLOVES } from '../../public/js/data/glove-skin-definitions.js';
 import { VM_WEAPON } from '../../public/js/data/vmconfig.js';
 const ALL_GLOVES=Object.values(GLOVE_SKINS);
+const POSTER_IDS=(process.env.GLOVE_IDS || '').split(',').map((id)=>id.trim()).filter(Boolean);
+const POSTER_GLOVES=POSTER_IDS.length ? ALL_GLOVES.filter((skin)=>POSTER_IDS.includes(skin.id)) : ALL_GLOVES;
+if(POSTER_IDS.some((id)=>!POSTER_GLOVES.some((skin)=>skin.id===id)))throw new Error(`luva desconhecida em GLOVE_IDS: ${POSTER_IDS.join(', ')}`);
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const BASE = process.env.BASE || 'http://127.0.0.1:9481';
@@ -138,14 +141,28 @@ const storeNames = await page.locator('#treta-items-grid .treta-card strong').al
 const missingInStore = STORE_GLOVES.map((skin) => skin.name).filter((name) => !storeNames.includes(name));
 if (missingInStore.length) throw new Error(`luvas ausentes na loja: ${missingInStore.join(', ')}`);
 const moldDir='/tmp/glove-molds';await rm(moldDir,{recursive:true,force:true});await mkdir(moldDir,{recursive:true});
-for(const skin of ALL_GLOVES){
+for(const skin of POSTER_GLOVES){
   await page.evaluate(async(id)=>{
     window.__gloveCaptureStage?.dispose();
     document.querySelector('#glove-capture-host')?.remove();
     const host=document.createElement('div');host.id='glove-capture-host';host.style.cssText='position:fixed;left:50%;top:50%;translate:-50% -50%;width:960px;height:640px;z-index:99999;background:radial-gradient(circle at 50% 45%,#273126,#080a08 72%)';document.body.append(host);
     const {GloveSkinStage}=await import('/js/glove-skin-stage.js');const stage=new GloveSkinStage(host);window.__gloveCaptureStage=stage;await stage.load(id);
   },skin.id);
-  const shot=path.join(moldDir,`${skin.id}.png`);await page.locator('#glove-capture-host').screenshot({path:shot});
+  await page.waitForFunction((id)=>{
+    let materials=0,ready=true;
+    window.__gloveCaptureStage?.model?.traverse((object)=>{
+      if(!object.isMesh)return;
+      for(const material of Array.isArray(object.material)?object.material:[object.material]){
+        if(material?.userData?.teamHands?.style!==id)continue;
+        materials++;
+        const image=material.map?.image;
+        if(!image || image.complete===false || !(image.naturalWidth || image.width))ready=false;
+      }
+    });
+    return materials>0 && ready;
+  },skin.id,{timeout:30000});
+  const clip=await page.locator('#glove-capture-host').evaluate((element)=>{const rect=element.getBoundingClientRect();return {x:rect.x,y:rect.y,width:rect.width,height:rect.height};});
+  const shot=path.join(moldDir,`${skin.id}.png`);await page.screenshot({path:shot,clip});
   const poster=path.join(ROOT,'public',skin.poster.replace(/^\//,''));
   await sharp(shot).resize(960,640,{fit:'contain',background:{r:8,g:10,b:8,alpha:1}}).webp({quality:92}).toFile(poster);
 }

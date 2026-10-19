@@ -21,13 +21,14 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "51c56b9df28d120dc75cfb100bdd77fe348283f9fb1348152e84cfbeb1065364",
-    "side-right.png": "401c717260b7384fb6e395c469982c0816e5b7a40294b0b84070ee66152de482",
-    "three-quarter.png": "c5d8b25f511b0ed8f26a05fa20915e5ef707d864c4dd2cb679363d15ae5c1ff0"
+    "side-left.png": "ca04dd852e629f7a88488136016693b0285d0d532b6bdda1af632e0e0ca14dd8",
+    "side-right.png": "081d5f53f3621d3c619cfbfa742647366dc6580aed05a5f23f5a5c4b7893e660",
+    "three-quarter.png": "7293f07e786d8d33c7a1dbdf8032c84f67a3de5962232f412a4f17cbd23ade7b"
   },
+  "storePoster": null,
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
-    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/project-marks/emo-caveira-gravura.webp": "93a8ab848738720a5da7222011922605214ad6daad5a7d8d2b826fc5856e3309"

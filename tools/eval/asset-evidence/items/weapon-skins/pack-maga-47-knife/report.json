@@ -21,13 +21,14 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "4cabc55381b5c51ad913ab37cd3cea0a6acfe65f3dcc15779eba958ae8156299",
-    "side-right.png": "59c2e6a8607954c078c3e6fc84714dc7165ca6236c042817365481be978fbe87",
-    "three-quarter.png": "6d013a2e75bdf566f542519c6c8746f7e7f96bcda115cf0352e749d009a5cad6"
+    "side-left.png": "1f22091ab704354c3cf2fffc5e1c84ba842102310cf82ac2fea9d964f327a8d5",
+    "side-right.png": "a504926a78e17fe0f0a4f4fa8de1cd13093be38ef47789931b15fd6d8521e3e8",
+    "three-quarter.png": "7f6e764ad298053ba16db0a4128c7cb2b6db8ff316f91067ff116aca3c1f5e5c"
   },
+  "storePoster": null,
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "a52159440ce58c30e05605dcfbd0312e4bb28e175f8a920f94629f15bd935add",
-    "public/js/weapon-skins.js": "4a749691e2499d2a3590b38030d55d10a70478ddf490ed340c6f6a1435187ec7",
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/project-marks/maga-47.svg": "5dda8f61bfc71c846edc0281de0833531e9b40ad5aba70845da8744f0613cbf5"

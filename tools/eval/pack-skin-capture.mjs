@@ -20,7 +20,7 @@ for(const pack of TRETA_PACKS){
   await sharp({create:{width:960,height:640,channels:3,background:pack.color}}).composite(cells).webp({quality:92}).toFile(path.join(ROOT,'public',pack.poster.replace(/^\//,'')));
 }
 const catalog=TRETA_PACKS.map((pack)=>({id:pack.id,name:pack.name,character_id:null,price:2000,model_path:pack.model,available:true,slot:'pack',weapon_id:null}));
-const first=TRETA_PACKS[0];
+const first=TRETA_PACKS.find((pack)=>pack.id==='pack-lula-13');if(!first)throw new Error('pack-lula-13 ausente do catálogo');
 const state={authenticated:true,accountId:'pack-capture-fixture',wallet:{balance:10000},inventory:[{skin_id:first.id,slot:'pack',weapon_id:null,equipped:true}],ledger:[],quests:{},campaign:{},catalog};
 const gRoot=execSync('npm root -g').toString().trim();
 const playwright=await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);const chromium=playwright.chromium || playwright.default?.chromium;

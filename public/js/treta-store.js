@@ -143,7 +143,7 @@ function draw() {
   for(const id of ['treta-grid','treta-items-grid','treta-packs-grid'])$(id).setAttribute('aria-busy',String(loading));
   $('treta-retry').hidden=!refreshFailed;
   const heading={
-    weapons:['LOJA ','DE ARMAS','Skins para AK e pistola. Pressione I na partida para inspecionar a arma de lado.'],
+    weapons:['LOJA ','DE ARMAS','Skins para AK e pistola. Abra um detalhe para ver a pintura isolada em movimento.'],
     items:['LOJA ','DE ITENS','Personagens, luvas e acessórios para montar seu visual.'],
     packs:['PACKS ','DA TRETA','AK, pistola, luvas e faca coordenadas por T$ 2.000.'],
     quests:['COMPLETE ','QUESTS','Ganhe TRETA$ jogando e completando quests.'],
@@ -209,6 +209,46 @@ function openDialog(dialog) {
   dialog.showModal();
   dialog.addEventListener('close',()=>focus?.focus(),{once:true});
 }
+const INSPECT_WEAPON_LABELS=Object.freeze({ak:'AK',pistol:'PISTOLA'});
+function resetInspectPreview() {
+  const video=$('treta-inspect-video'),hint=$('treta-inspect-hint');
+  if(!video || !hint)return;
+  video.pause();video.onloadeddata=null;video.onended=null;video.onerror=null;
+  video.removeAttribute('src');video.replaceChildren();video.load();
+  video.loop=false;video.hidden=true;video.removeAttribute('data-detail-version');hint.hidden=true;
+}
+function playInspectPreview(skin,version) {
+  const clips=skin.slot==='weapon' && skin.previewVideo
+    ? [{weapon:skin.weapon,src:skin.previewVideo}]
+    : skin.slot==='pack'
+      ? ['ak','pistol'].map(weapon=>({weapon,src:skin.weaponPreviewVideos?.[weapon]})).filter(clip=>clip.src)
+      : [];
+  if(!clips.length)return;
+  const video=$('treta-inspect-video'),hint=$('treta-inspect-hint'),label=$('treta-inspect-label');
+  let current=0;
+  const isCurrent=src=>version===detailVersion && selected===skin && $('treta-detail').open
+    && video.dataset.detailVersion===String(version) && video.getAttribute('src')===src;
+  const selectClip=()=>{
+    if(version!==detailVersion || selected!==skin || !$('treta-detail').open)return;
+    const clip=clips[current];
+    video.pause();video.onloadeddata=null;video.onerror=null;video.hidden=true;
+    video.removeAttribute('src');video.replaceChildren();video.load();
+    video.dataset.detailVersion=String(version);
+    label.textContent=`PRÉVIA ISOLADA EM MOVIMENTO · ${INSPECT_WEAPON_LABELS[clip.weapon] || clip.weapon.toUpperCase()} · SEM MÃOS, BRAÇOS OU HUD`;
+    video.loop=clips.length===1;
+    video.onloadeddata=()=>{
+      if(!isCurrent(clip.src))return;
+      video.hidden=false;video.play().catch(()=>{});
+    };
+    video.onerror=()=>{if(isCurrent(clip.src))video.hidden=true;};
+    video.src=clip.src;video.load();
+  };
+  video.onended=clips.length>1?()=>{
+    if(version!==detailVersion || selected!==skin || video.dataset.detailVersion!==String(version))return;
+    current=(current+1)%clips.length;selectClip();
+  }:null;
+  hint.hidden=false;selectClip();
+}
 function login() { $('hub-account-login')?.click(); }
 async function refresh() {
   const epoch=accountEpoch;
@@ -255,21 +295,21 @@ async function visual(host,{model,poster,coin=false,celebrate=false,count=1,weap
 }
 async function detail(skin) {
   const version=++detailVersion,isWeapon=skin.slot==='weapon',isGlove=skin.slot==='glove',isPack=skin.slot==='pack';
+  resetInspectPreview();
   selected=skin;stage?.dispose();stage=null;previewReady=false;previewLoading=previewable(skin.id);
   $('treta-preview-retry').hidden=true;
   $('treta-detail-name').textContent=skin.name;$('treta-detail-series').textContent=skin.series;
   $('treta-detail-description').textContent=skin.description;$('treta-detail-price').textContent=money(item(skin.id)?.price ?? skin.price);
-  $('treta-inspect-hint').hidden=!isWeapon;const inspectVideo=$('treta-inspect-video');inspectVideo.hidden=!isWeapon;
   const fitCount=skin.slot==='eyewear'?eyewearFitCount(asset(skin.id)):0;
   $('treta-detail-fit').hidden=skin.slot!=='eyewear';$('treta-detail-fit').textContent=fitCount?`Encaixa em ${fitCount} personagens certificados.`:'Encaixa em 0 personagens certificados. Os perfis candidatos ainda aguardam decisão humana.';
-  $('treta-detail-production').textContent=refreshFailed?'Consulta indisponível. Feche o detalhe e tente atualizar a carteira.':isPack?'O pack equipa AK, pistola, luvas e faca coordenadas na próxima partida.':isGlove?'Carregando o molde 3D isolado das luvas…':previewLoading?'Carregando prévia 3D do visual…':'Em produção. A imagem abaixo é a referência do personagem base; o visual final terá roupas e acessórios novos.';
-  $('treta-buy-status').textContent='';updateBuy();openDialog($('treta-detail'));if(isWeapon)inspectVideo.play().catch(()=>{});else{inspectVideo.pause();inspectVideo.currentTime=0;}
+  $('treta-detail-production').textContent=refreshFailed?'Consulta indisponível. Feche o detalhe e tente atualizar a carteira.':isPack?'O pack equipa AK, pistola, luvas e faca coordenadas. A prévia alterna AK e pistola isoladas em movimento, sem mãos, braços ou HUD; não representa a empunhadura na partida.':isGlove?'Carregando o molde 3D isolado das luvas…':isWeapon?'Carregando o modelo 3D e a prévia isolada em movimento…':previewLoading?'Carregando prévia 3D do visual…':'Em produção. A imagem abaixo é a referência do personagem base; o visual final terá roupas e acessórios novos.';
+  $('treta-buy-status').textContent='';updateBuy();openDialog($('treta-detail'));playInspectPreview(skin,version);
   const model=!isWeapon && !isGlove && !isPack && previewable(skin.id)?asset(skin.id).model:null;
   const loaded=await visual($('treta-stage'),{model,poster:portrait(skin),weaponSkin:isWeapon?skin:null,gloveSkin:isGlove?skin:null});
   if(version!==detailVersion || !$('treta-detail').open){loaded.dispose();return;}
   stage=loaded;previewLoading=false;previewReady=loaded.loaded || Boolean(skin.poster || asset(skin.id)?.poster);
   if(previewable(skin.id)){
-    $('treta-detail-production').textContent=refreshFailed?'Consulta indisponível. Feche o detalhe e tente atualizar a carteira.':loaded.loaded?(available(skin.id)?(isWeapon?'Prévia 3D da arma. Use a tecla I na partida para a inspeção lateral.':isGlove?'Molde 3D isolado da luva. Ao equipar, ela aparece em todas as armas.':skin.slot==='eyewear'?'Prévia 3D dos óculos.':'Prévia 3D da skin.'):(isWeapon?'Modelo 3D da arma. Venda em preparação.':isGlove?'Molde 3D da luva. Venda em preparação.':skin.slot==='eyewear'?'Modelo 3D dos óculos. Venda em preparação.':'Modelo 3D da skin. Venda em preparação.')) :previewReady?'Prévia 3D indisponível. Veja a imagem da skin.':'Prévia 3D indisponível. Esta imagem é do personagem base. Tente novamente para ver a skin antes de comprar.';
+    $('treta-detail-production').textContent=refreshFailed?'Consulta indisponível. Feche o detalhe e tente atualizar a carteira.':loaded.loaded?(available(skin.id)?(isWeapon?'Modelo 3D da arma e prévia isolada em movimento, sem mãos, braços ou HUD; a empunhadura na partida não é representada.':isGlove?'Molde 3D isolado da luva. Ao equipar, ela aparece em todas as armas.':skin.slot==='eyewear'?'Prévia 3D dos óculos.':'Prévia 3D da skin.'):(isWeapon?'Modelo 3D da arma e prévia isolada em movimento. Venda em preparação.':isGlove?'Molde 3D da luva. Venda em preparação.':skin.slot==='eyewear'?'Modelo 3D dos óculos. Venda em preparação.':'Modelo 3D da skin. Venda em preparação.')) :previewReady?'Prévia 3D indisponível. Veja a imagem da skin.':'Prévia 3D indisponível. Esta imagem é do personagem base. Tente novamente para ver a skin antes de comprar.';
     $('treta-preview-retry').hidden=loaded.loaded;
   }
   updateBuy();
@@ -355,7 +395,7 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   ligarCompartilhar($('treta-share'),()=>({titulo:'Loja do CORO SOLTO',texto:`Olha a skin ${$('treta-detail-name').textContent} na loja do CORO SOLTO.`,url:linkCompartilhavel('/loja','skin')}));
   $('treta-preview-retry').onclick=()=>{if(selected)void detail(selected);};
   for(const button of document.querySelectorAll('[data-treta-close]'))button.onclick=()=>button.closest('dialog').close();
-  for(const dialog of [$('treta-detail'),$('treta-purchase')])dialog.addEventListener('close',()=>{if(dialog.id==='treta-detail'){detailVersion++;stage?.dispose();stage=null;$('treta-inspect-video').pause();}else{purchaseStage?.dispose();purchaseStage=null;}});
+  for(const dialog of [$('treta-detail'),$('treta-purchase')])dialog.addEventListener('close',()=>{if(dialog.id==='treta-detail'){detailVersion++;stage?.dispose();stage=null;resetInspectPreview();}else{purchaseStage?.dispose();purchaseStage=null;}});
   $('treta-info').addEventListener('close',()=>{infoVersion++;infoStage?.dispose();infoStage=null;});
   const explain=async(value=200)=>{
     const version=++infoVersion;infoStage?.dispose();infoStage=null;

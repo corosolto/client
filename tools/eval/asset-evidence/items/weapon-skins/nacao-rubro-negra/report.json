@@ -21,13 +21,14 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "85036c84bfbfd1bec3802860366566456a2eaa4cca697a4a2aa0b0d95c0eda5e",
-    "side-right.png": "203dc7a8f94e38187d6c99102156b0d204868fe868be0cb7a5762c8ba3a9ea42",
-    "three-quarter.png": "dc5d43e4de523eb0f38d19e8f23b1dcfe50dd12a2f5ff4e00f47fae1d3a9a5ce"
+    "side-left.png": "92bd2ed69bac2c1e393e43d917580234acd49d4af3f62d50785fbdbbc4f04c77",
+    "side-right.png": "ead774f9491fefc7142823f530d8d5ebf816d20f3ec356261f294c741ae29340",
+    "three-quarter.png": "bf57d088a7a2e2edb13415d6374ade1e951fb0554123bac6d2c414707296e547"
   },
+  "storePoster": null,
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
-    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/club-marks/flamengo.png": "7ef0bbdc5ef03ceafae933ed9ec75b4f18ed5c05aa3af98dca9781c5d8c9a36f"

@@ -203,6 +203,9 @@ Cobertura: **3902 de 8578 linhas (45%)** do `game.js` têm dono declarado. O res
 | 3490 | `_fxSet()` | 2 |
 | 3492 | `_qaCicloArma()` | 8 |
 | 3500 | `_cycleWeapon()` | 8 |
+| 3520 | `_inspectWeapon()` | 8 |
+| 3528 | `_cancelInspect()` | 4 |
+| 3532 | `_inspectMix()` | 10 |
 | 3508 | `_switchWeapon()` | 38 |
 | 3546 | `_deploySfx()` | 7 |
 | 3553 | `_scope()` | 17 |

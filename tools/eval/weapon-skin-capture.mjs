@@ -3,6 +3,7 @@ import { execSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
+import sharp from 'sharp';
 import { WEAPON_SKINS } from '../../public/js/data/weapon-skin-definitions.js';
 
 const ROOT = path.resolve(new URL('../../', import.meta.url).pathname);
@@ -17,6 +18,9 @@ const BASE = process.env.BASE || 'http://127.0.0.1:9478';
 const CDP_URL = process.env.CDP_URL || null;
 const CHECK = process.argv.includes('--check');
 const FILES = ['side-left.png', 'side-right.png', 'three-quarter.png'];
+const STORE_POSTER = DEFINITION.storeEnabled
+  ? path.join(ROOT, 'public', DEFINITION.storePoster.replace(/^\//, ''))
+  : null;
 const markSource = DEFINITION?.markAsset ? `public${DEFINITION.markAsset}` : null;
 const SOURCES = [
   'public/js/data/weapon-skin-definitions.js',
@@ -36,6 +40,7 @@ if (CHECK) {
   if (report.markPlacement !== (DEFINITION.markPlacement || null)) throw new Error('posição do escudo mudou');
   if (report.sloganPlacement !== (DEFINITION.sloganPlacement || null)) throw new Error('posição da frase mudou');
   for (const file of FILES) if (report.files[file] !== sha(path.join(OUT, file))) throw new Error(`${file}: hash desatualizado`);
+  if (report.storePoster !== (STORE_POSTER ? sha(STORE_POSTER) : null)) throw new Error('poster da loja desatualizado');
   for (const file of SOURCES) if (report.sources[file] !== sha(path.join(ROOT, file))) throw new Error(`${file}: fonte mudou sem recaptura`);
   console.log(`weapon-skin check: ${SKIN_ID} ${FILES.length} views hash-pinned, approved=${Number(DEFINITION.approved)}, runtime=${Number(DEFINITION.runtimeEnabled)}`);
   process.exit(0);
@@ -66,6 +71,12 @@ const open = async (view) => {
 };
 await open('side');
 await page.screenshot({ path: path.join(OUT, 'side-left.png') });
+if (STORE_POSTER) {
+  await sharp(path.join(OUT, 'side-left.png'))
+    .resize(900, 506, { fit: 'fill' })
+    .webp({ quality: 92 })
+    .toFile(STORE_POSTER);
+}
 await page.evaluate(() => { window.REVIEW_MODEL.rotation.y = Math.PI; });
 await page.waitForTimeout(100);
 await page.screenshot({ path: path.join(OUT, 'side-right.png') });
@@ -106,6 +117,7 @@ const report = {
   storePrice: DEFINITION.storePrice || null,
   views: ['left-side', 'right-side', 'three-quarter'],
   files: Object.fromEntries(FILES.map((file) => [file, sha(path.join(OUT, file))])),
+  storePoster: STORE_POSTER ? sha(STORE_POSTER) : null,
   sources: Object.fromEntries(SOURCES.map((file) => [file, sha(path.join(ROOT, file))])),
   consoleErrors: errors,
 };

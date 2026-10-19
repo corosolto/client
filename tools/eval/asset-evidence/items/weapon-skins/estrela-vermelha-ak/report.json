@@ -21,13 +21,14 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "422dd8f4dae502f24df9d68efb2c38cafeb48663adffa236a7208718063fccdf",
-    "side-right.png": "e184870cc48848d185bd30b5d525add0ea52dabf2fcb71de5ac875d51617b09f",
-    "three-quarter.png": "76f05acb627e5aad00de3ded1852f29c1f82719bff83678b707b537dd5428861"
+    "side-left.png": "fdb304e261756c8d0768feaaf9b194e04e0be277d6eb8d98555fb8483e2c6492",
+    "side-right.png": "253374e2d9dc92ad09257d8e0c0821ce05e0010de9ca827da60dfa1a0337e132",
+    "three-quarter.png": "ddb06a1188aed0e58fcdf71a18229d864ffa9ab66dd695e7f8948ab5640ba8c2"
   },
+  "storePoster": "3c8321fe38041673fef500c34a3fc47e74928a34bf703bb34d9c4a8023449544",
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
-    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/political-marks/estrela-vermelha.svg": "2ce49c0e92b113299ce6a19100b029e13eacc6cca5e1d21c4752081d13ac58df"

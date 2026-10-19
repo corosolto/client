@@ -41,6 +41,7 @@ export const TRETA_WEAPON_SKINS = Object.freeze(Object.values(WEAPON_SKINS)
     price:skin.storePrice,
     poster:skin.storePoster,
     model:`/models/weapons/${skin.storeWeapon}.glb`,
+    previewVideo:`/video/weapon-skins/${skin.id}.webm`,
     ready:true,
   })));
 export const TRETA_GLOVES = STORE_GLOVES;

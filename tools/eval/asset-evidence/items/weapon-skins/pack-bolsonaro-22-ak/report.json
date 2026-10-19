@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "pack-bolsonaro-22-ak",
+  "weaponId": "ak",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "political-satire",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": "barrel-horizontal",
+  "markSourceUrl": null,
+  "referenceRule": "project-authored political satire using original vector geometry; no party or campaign logo copied",
+  "slogan": "BOLSONARO 22",
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "13bb090f4f2ac51df635ac4d72dc6daa4707b71d695e8d6991e6c01c18bd5b82",
+    "side-right.png": "fedcfd698d9f5c6ef9c12e3d1f7b5115319b939124d0a6a43765fe5a8affd959",
+    "three-quarter.png": "009e7b89c16481e34d37063485793c1fa371d992774481e0e932992ee0a0898c"
+  },
+  "storePoster": null,
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/political-marks/brasil-22.svg": "799ac19dc01c366ee95b5ecfe957ad3bb0462d31f0f7b08ba1f209c2c650dd12"
+  },
+  "consoleErrors": []
+}

@@ -1,59 +1,106 @@
 #!/usr/bin/env node
 import {execFileSync,execSync} from 'node:child_process';
-import {mkdir,rm} from 'node:fs/promises';
+import {mkdir,rm,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {TRETA_PACKS,TRETA_WEAPON_SKINS} from '../../public/js/treta-catalog.js';
 
 const ROOT=path.resolve(import.meta.dirname,'../..');
 const BASE=process.env.BASE || 'http://127.0.0.1:9481';
-const TMP='/tmp/coro-inspect-video';
-const OUT=path.join(ROOT,'public/video/weapon-skins/inspect-side.webm');
-await rm(TMP,{recursive:true,force:true});await mkdir(TMP,{recursive:true});await mkdir(path.dirname(OUT),{recursive:true});
+const TMP='/tmp/coro-weapon-skin-videos';
+const OUTPUT_DIR=path.join(ROOT,'public/video/weapon-skins');
+const MANIFEST=path.join(OUTPUT_DIR,'manifest.json');
+const SIZE={width:960,height:540};
+const CAPTURE_MS=3600;
+const SPIN='0.16';
+
+const targets=[
+  ...TRETA_WEAPON_SKINS.map(skin=>({
+    owner:skin.id,
+    weapon:skin.weapon,
+    skinId:skin.id,
+    output:skin.previewVideo,
+  })),
+  ...TRETA_PACKS.flatMap(pack=>['ak','pistol'].map(weapon=>({
+    owner:pack.id,
+    weapon,
+    skinId:pack.weaponSkins[weapon],
+    output:pack.weaponPreviewVideos[weapon],
+  }))),
+];
+const tupleKeys=targets.map(({owner,weapon,skinId,output})=>JSON.stringify([owner,weapon,skinId,output]));
+const outputKeys=targets.map(({output})=>output);
+if(targets.length!==40 || new Set(tupleKeys).size!==40 || new Set(outputKeys).size!==40){
+  throw new Error(`catálogo de vídeos inválido: ${targets.length} linhas, ${new Set(tupleKeys).size} tuplas e ${new Set(outputKeys).size} saídas únicas`);
+}
+for(const target of targets){
+  if(target.output!==`/video/weapon-skins/${target.skinId}.webm`)throw new Error(`saída divergente para ${target.skinId}: ${target.output}`);
+}
+
+await rm(TMP,{recursive:true,force:true});
+await mkdir(TMP,{recursive:true});
+await mkdir(OUTPUT_DIR,{recursive:true});
 const gRoot=execSync('npm root -g').toString().trim();
 const playwright=await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium=playwright.chromium || playwright.default?.chromium;
-const skin={id:'trabalho-13-ak',name:'AK Trabalho 13',character_id:null,price:500,model_path:'/models/weapons/ak.glb',available:true,slot:'weapon',weapon_id:'ak'};
-const pistolSkin={id:'trabalho-13-pistola',name:'Pistola Trabalho 13',character_id:null,price:500,model_path:'/models/weapons/pistol.glb',available:true,slot:'weapon',weapon_id:'pistol'};
-const state={authenticated:true,accountId:'inspect-video-fixture',wallet:{balance:10000},inventory:[skin,pistolSkin].map((item)=>({skin_id:item.id,slot:'weapon',weapon_id:item.weapon_id,equipped:true})),ledger:[],quests:{},campaign:{},catalog:[skin,pistolSkin]};
 const browser=await chromium.launch({args:['--use-angle=swiftshader','--enable-unsafe-swiftshader','--mute-audio']});
-const context=await browser.newContext({viewport:{width:1280,height:720},recordVideo:{dir:TMP,size:{width:1280,height:720}}});
-await context.addInitScript(()=>localStorage.setItem('cs_lang','pt'));
-await context.route('**/api/treta*',(route)=>route.fulfill({json:state}));
-const page=await context.newPage();const errors=[];page.on('pageerror',(error)=>errors.push(error.message));
-const query=new URLSearchParams({debug:'1',auto:'E',map:'piscina_treta',armaslazy:'0',vmauthored:'1',vmfabrica:'1',vmqa:'precision',vmready:'rifle,pistol',vmweapon:'ak,pistol'});
-await page.goto(`${BASE}/?${query}`,{waitUntil:'domcontentloaded',timeout:240000});
-await page.addStyleTag({content:'astro-dev-toolbar,#vm-precision-qa,#crash-overlay,#boot-splash,#aviso-software,.tutorial-overlay,[data-vmqa]{display:none!important}'});
-await page.waitForFunction(()=>window.__game?.state==='live' && window.__vmPrecisionQa,null,{timeout:240000});
-await page.waitForFunction(([ak,pistol])=>window.__game.playerWeaponSkins.ak===ak && window.__game.playerWeaponSkins.pistol===pistol,[skin.id,pistolSkin.id],{timeout:30000});
-const readHands=(weapon)=>page.evaluate((id)=>{const authored=window.__game.vm.authored,entry=authored.entry(id),skinRoot=entry?.mint?.active;return {authored:authored.active(id),entryKey:entry?.key || null,hands:entry?.handMeshes?.length || 0,handsVisible:entry?.handMeshes?.filter((mesh)=>mesh.visible && mesh.parent?.visible!==false).length || 0,skin:skinRoot?.userData?.weaponSkin || null,mint:skinRoot?.name || null};},weapon);
-await page.evaluate(()=>{window.__vmPrecisionQa.equip('pistol');window.__game.player.drawUntil=0;window.__game.player.reloadUntil=0;});
-await page.waitForFunction(()=>window.__game.vm.authored?.active('pistol'),null,{timeout:120000});await page.waitForTimeout(500);
-const pistolHands=await readHands('pistol');
-if(!pistolHands.authored || pistolHands.hands<1 || pistolHands.handsVisible<1 || pistolHands.skin!==pistolSkin.id)throw new Error(`viewmodel autorado não segura pistola com skin: ${JSON.stringify(pistolHands)}`);
-await page.screenshot({path:'/tmp/pistol-skin-hands.png'});
-await page.evaluate(()=>{window.__vmPrecisionQa.equip('ak');window.__game.player.drawUntil=0;window.__game.player.reloadUntil=0;});
-await page.waitForFunction(()=>window.__game.vm.authored?.active('ak'),null,{timeout:120000});await page.waitForTimeout(800);
-const hands=await readHands('ak');
-if(!hands.authored || hands.hands<1 || hands.handsVisible<1 || hands.skin!==skin.id)throw new Error(`viewmodel autorado não segura AK com skin: ${JSON.stringify(hands)}`);
-await page.screenshot({path:'/tmp/weapon-skin-hands-before-inspect.png'});
-await page.keyboard.press('KeyI');
-await page.waitForFunction(()=>window.__game.vm.inspectF>.95,null,{timeout:3000});
-const inspect=await page.evaluate(()=>({mix:window.__game.vm.inspectF,rotationY:window.__game.vm.root.rotation.y,skin:window.__game.vm.authored.entry('ak')?.mint?.active?.userData?.weaponSkin || null}));
-await page.screenshot({path:'/tmp/weapon-skin-inspect-side.png'});
-await page.waitForTimeout(2600);
-const video=page.video();await page.close();const raw=await video.path();
-const storePage=await context.newPage();storePage.on('pageerror',(error)=>errors.push(error.message));
-await storePage.goto(`${BASE}/loja/armas`,{waitUntil:'domcontentloaded',timeout:240000});
-await storePage.addStyleTag({content:'astro-dev-toolbar,#crash-overlay,#boot-splash,#aviso-software,.tutorial-overlay{display:none!important}'});
-await storePage.waitForFunction((name)=>[...document.querySelectorAll('#treta-grid .treta-card')].some((card)=>card.textContent.includes(name)),skin.name,{timeout:60000});
-await storePage.locator('#treta-grid .treta-card').filter({hasText:skin.name}).click();
-await storePage.waitForFunction(()=>document.querySelector('#treta-detail')?.open && document.querySelector('#treta-inspect-hint')?.offsetParent!==null && document.querySelector('#treta-inspect-video')?.offsetParent!==null);
-await storePage.locator('#treta-inspect-video').evaluate(async(video)=>{await video.play();});
-await storePage.waitForFunction(()=>document.querySelector('#treta-inspect-video')?.currentTime>.1,null,{timeout:10000});
-const storeInspect=await storePage.evaluate(()=>({hint:document.querySelector('#treta-inspect-hint')?.textContent.trim(),video:document.querySelector('#treta-inspect-video')?.currentSrc,playing:!document.querySelector('#treta-inspect-video')?.paused}));
-if(!storeInspect.hint?.includes('I') || !storeInspect.video?.endsWith('/video/weapon-skins/inspect-side.webm') || !storeInspect.playing)throw new Error(`instrução de inspeção inválida: ${JSON.stringify(storeInspect)}`);
-await storePage.screenshot({path:'/tmp/weapon-skin-store-inspect.png'});await storePage.close();await context.close();await browser.close();
-execFileSync('ffmpeg',['-y','-sseof','-4.2','-i',raw,'-an','-c:v','libvpx-vp9','-crf','31','-b:v','0','-pix_fmt','yuv420p',OUT],{stdio:'ignore'});
-const unexpected=errors.filter((message)=>!message.includes('/.astro/eval-vite/deps/astro-'));
-if(unexpected.length)throw new Error(`page errors: ${unexpected.join(' | ')}`);
-console.log(JSON.stringify({hands,pistolHands,inspect,storeInspect,video:path.relative(ROOT,OUT),screenshots:['/tmp/pistol-skin-hands.png','/tmp/weapon-skin-hands-before-inspect.png','/tmp/weapon-skin-inspect-side.png','/tmp/weapon-skin-store-inspect.png']},null,2));
+const entries=[];
+
+try{
+  for(const [index,target] of targets.entries()){
+    const captureDir=path.join(TMP,String(index).padStart(2,'0'));
+    await mkdir(captureDir,{recursive:true});
+    const context=await browser.newContext({viewport:SIZE,recordVideo:{dir:captureDir,size:SIZE}});
+    const page=await context.newPage();
+    const recorded=page.video();
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    try{
+      const query=new URLSearchParams({weapon:target.weapon,skin:target.skinId,view:'three-quarter',spin:SPIN});
+      await page.goto(`${BASE}/weapon-skin-review.html?${query}`,{waitUntil:'domcontentloaded',timeout:120000});
+      await page.addStyleTag({content:'.title,.note{display:none!important}'});
+      await page.waitForFunction(()=>window.REVIEW_READY===true,null,{timeout:120000});
+      const selection=await page.evaluate(()=>{const query=new URLSearchParams(location.search);return {weapon:query.get('weapon'),skinId:query.get('skin')};});
+      if(selection.weapon!==target.weapon || selection.skinId!==target.skinId)throw new Error(`seleção divergente: ${JSON.stringify(selection)}`);
+      await page.waitForTimeout(CAPTURE_MS);
+      if(errors.length)throw new Error(`erros na página: ${errors.join(' | ')}`);
+    }finally{
+      await page.close().catch(()=>{});
+      await context.close().catch(()=>{});
+    }
+    const raw=await recorded.path();
+    const output=path.join(ROOT,'public',target.output.slice(1));
+    await mkdir(path.dirname(output),{recursive:true});
+    execFileSync('ffmpeg',[
+      '-y','-sseof','-3','-i',raw,'-t','3','-an',
+      '-vf',`scale=${SIZE.width}:${SIZE.height}:flags=lanczos,fps=30`,
+      '-c:v','libvpx-vp9','-crf','31','-b:v','0','-pix_fmt','yuv420p',
+      '-deadline','good','-cpu-used','2',output,
+    ],{stdio:'ignore'});
+    const probe=JSON.parse(execFileSync('ffprobe',[
+      '-v','error','-select_streams','v:0',
+      '-show_entries','stream=codec_name,width,height,duration:format=duration',
+      '-of','json',output,
+    ],{encoding:'utf8'}));
+    const stream=probe.streams?.[0],streamDuration=Number(stream?.duration),formatDuration=Number(probe.format?.duration);
+    const duration=Number.isFinite(streamDuration)?streamDuration:formatDuration;
+    if(stream?.codec_name!=='vp9' || stream.width!==SIZE.width || stream.height!==SIZE.height || !Number.isFinite(duration) || duration<2){
+      throw new Error(`mídia inválida para ${target.skinId}: ${JSON.stringify({stream,duration})}`);
+    }
+    entries.push({...target,duration,width:stream.width,height:stream.height,codec:stream.codec_name});
+    console.error(`[${entries.length}/${targets.length}] ${target.owner} · ${target.weapon} · ${target.skinId}`);
+  }
+}finally{
+  await browser.close();
+}
+
+const manifest={
+  version:1,
+  generatedAt:new Date().toISOString(),
+  source:'weapon-skin-review.html',
+  capture:{width:SIZE.width,height:SIZE.height,spin:Number(SPIN),durationSeconds:3},
+  count:entries.length,
+  entries,
+};
+await writeFile(MANIFEST,`${JSON.stringify(manifest,null,2)}\n`);
+console.log(JSON.stringify({...manifest,manifest:path.relative(ROOT,MANIFEST)},null,2));

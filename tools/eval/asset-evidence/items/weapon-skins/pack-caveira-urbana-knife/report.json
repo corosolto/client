@@ -21,13 +21,14 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "4723dd78a2c5ecf81dff4ae8d7637db5b584272cfd01363069bebb74197b57bd",
-    "side-right.png": "3be5c3e4007f4d1b8dd6d6c8ae3f3dcf72388a1ae37306c12ff88536fd4f6538",
-    "three-quarter.png": "476ed0ef8b586a1cd0030da03781810fa0507404dad82b0d86dc800658d0fef6"
+    "side-left.png": "6dcfeed40d2f64e5ebc1ba5b68f129a820c4baacfaa94fe0be331472f912bc5b",
+    "side-right.png": "76692b6d86a60ec206ce5a755d53fe0a258326a9c36430b6b8071111d3c86eb0",
+    "three-quarter.png": "db498a8e25e4585bd53acf5577a2b05ab038d491e0d46a3fff012166eb3272b2"
   },
+  "storePoster": null,
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "a52159440ce58c30e05605dcfbd0312e4bb28e175f8a920f94629f15bd935add",
-    "public/js/weapon-skins.js": "4a749691e2499d2a3590b38030d55d10a70478ddf490ed340c6f6a1435187ec7",
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/project-marks/caveira-urbana.svg": "a6458b9915231ec07845c3d46004692b48d4ac6368bc0f95b0ba714b42f7fb96"

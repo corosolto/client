@@ -21,13 +21,14 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "f845b49483c0c673b89e477d713c41a4eb048d3578447f08952499fd794f52d1",
-    "side-right.png": "a0f0ce3c1877e483c66678502c2b2ce550d30b1f29f2823df9d72c7d7241b58d",
-    "three-quarter.png": "9cf5567363b9afda294fe18e82b2ce3a23dbed8cac1d721b27306cb75e0741df"
+    "side-left.png": "dbf56f624a622275a1b56e1d32bd4d75984751892d0ed90b57434e98931130bd",
+    "side-right.png": "c59c5f8fb28050e9343befde48c64033f37dda96e6be472684f235a08b8472c9",
+    "three-quarter.png": "c344b7df061996ad00c98b18a79ded2e1bbe4e3087e5de51765661d1480b446f"
   },
+  "storePoster": null,
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "a52159440ce58c30e05605dcfbd0312e4bb28e175f8a920f94629f15bd935add",
-    "public/js/weapon-skins.js": "4a749691e2499d2a3590b38030d55d10a70478ddf490ed340c6f6a1435187ec7",
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/project-marks/usa-bandeira-grande.svg": "4d737fe10b093858b1eb3b5fb55ef2edd64361004d0af1dcdfefa61e39b4e7aa"

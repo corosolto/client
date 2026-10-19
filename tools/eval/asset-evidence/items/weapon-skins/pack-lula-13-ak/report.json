@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "pack-lula-13-ak",
+  "weaponId": "ak",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "political-satire",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": "barrel-horizontal",
+  "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Hammer_and_sickle.svg",
+  "referenceRule": "project-authored political satire using original vector geometry; no party or campaign logo copied",
+  "slogan": "LULA 13 PT",
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "11305697d55410666277f2291a72585e4825d897ee74beed819986f757c5f46d",
+    "side-right.png": "95605887a31e4794492ec1cb0a3b3629be2c48630821f77053e57ba1bd20735d",
+    "three-quarter.png": "68a07840721a968891690a5bd64ac129ebb9f015d41388966d9938ba5f1b301c"
+  },
+  "storePoster": null,
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/political-marks/trabalho-13.svg": "0cc2e18ea49434399ef3f89af2b3deb79407e433001fdd1310534db70099be34"
+  },
+  "consoleErrors": []
+}
