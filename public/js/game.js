@@ -3209,8 +3209,8 @@ export class Game {
         : vmFovForAspect(this.camera.aspect);
       this.vmCamera.updateProjectionMatrix();
     }
-    this.flashFx.resize(height);
-    this.puffFx.resize(height);
+    this.flashFx?.resize(height);
+    this.puffFx?.resize(height);
   }
 
   /* ================= team switch (M) ================= */
