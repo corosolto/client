@@ -418,6 +418,7 @@ export function coneDoDisparo(estado, W, rnd) {
 // cadáver). Muda o "gore" sentido pelo jogador — flag pro A/B do dono, como ?gunfeel=0.
 const BLOOD = new URLSearchParams(location.search).get('blood') !== '0';
 const D2R = Math.PI / 180;
+const MOBILE_RADAR_INTERVAL = 0.1;
 // Recoil compartilhado pelo jogo e pelas bancadas vive em recoil.js.
 // Queda de dano por distância: hoje o raycast vai a 200 m com dano constante (P90 a 40 m
 // mata igual à AWP). start/end em metros, min = multiplicador no fim. Sniper: sem falloff.
@@ -3207,7 +3208,8 @@ export class Game {
     this.scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
   }
   onResize() {
-    this.camera.aspect = innerWidth / innerHeight;
+    const width = innerWidth, height = innerHeight;
+    this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     if (this.vmCamera) {
       this.vmCamera.aspect = this.camera.aspect;
@@ -3220,6 +3222,8 @@ export class Game {
         : vmFovForAspect(this.camera.aspect);
       this.vmCamera.updateProjectionMatrix();
     }
+    this.flashFx?.resize(height);
+    this.puffFx?.resize(height);
   }
 
   /* ================= team switch (M) ================= */
@@ -4331,7 +4335,8 @@ export class Game {
     if (!root || !count) return;
     const life = Math.max(0, this.mk.life | 0);
     if (count.textContent !== String(life)) count.textContent = String(life);
-    root.classList.toggle('hidden', life === 0 || !this.player?.alive);
+    const hidden = life === 0 || !this.player?.alive;
+    if (root.classList.contains('hidden') !== hidden) root.classList.toggle('hidden', hidden);
     if (pulse && life > 0) {
       root.classList.remove('pulse');
       void root.offsetWidth;
@@ -8166,8 +8171,8 @@ export class Game {
      errado em 3 dos 4 mapas — e a escala fixa (1.42 px/m) fazia o jogador sumir do disco
      em mapa maior que ~52×92 m.
      AGORA: a planta vem do MUNDO (this.world.colliders, que já existe e é por mapa),
-     é rasterizada UMA vez num canvas offscreen (custo por frame = 1 blit) e a escala é
-     derivada dos limites reais da arena, então o mapa inteiro cabe no disco em qualquer
+     e as camadas estáticas são rasterizadas UMA vez em canvases offscreen; a escala vem
+     dos limites reais da arena, então o mapa inteiro cabe no disco em qualquer
      mapa. Kill-switch: ?radar=0 desliga a planta (fica bússola + blips, que é o mínimo
      honesto); ?radar=box volta pro retângulo antigo. */
   _radarFoot(S) {
@@ -8208,30 +8213,52 @@ export class Game {
     }
     return (this._rdFoot = { img: cv, sc, cx, cz });
   }
+  _radarStatic(S, fp) {
+    const canvas = this.radarCtx.canvas;
+    const font = canvas?.dataset?.fonte || "600 10px Rajdhani, sans-serif";
+    const cached = this._rdStatic;
+    if (cached && cached.canvas === canvas && cached.mapId === this._mapId
+      && cached.size === S && cached.foot === fp && cached.font === font) return cached;
+
+    const H = S / 2, R = H - 3;
+    const base = document.createElement('canvas'); base.width = base.height = S;
+    const g = base.getContext('2d');
+    const bg = g.createRadialGradient(H, H, 8, H, H, R);
+    bg.addColorStop(0, 'rgba(4,8,10,0.88)');
+    bg.addColorStop(1, 'rgba(0,0,0,0.74)');
+    g.fillStyle = bg;
+    g.fillRect(0, 0, S, S);
+    if (fp) g.drawImage(fp.img, 0, 0);
+    g.strokeStyle = 'rgba(120,220,220,0.12)';
+    g.beginPath();
+    g.moveTo(H, H - R); g.lineTo(H, H + R);
+    g.moveTo(H - R, H); g.lineTo(H + R, H);
+    g.stroke();
+
+    const overlay = document.createElement('canvas'); overlay.width = overlay.height = S;
+    const o = overlay.getContext('2d');
+    o.strokeStyle = 'rgba(236,235,230,0.12)'; o.lineWidth = 1;
+    o.strokeRect(0.5, 0.5, S - 1, S - 1);
+    o.font = font; o.textAlign = 'left'; o.textBaseline = 'alphabetic';
+    o.fillStyle = 'rgba(139,140,146,0.95)';
+    o.fillText((MAPS[this._mapId].name || '').toUpperCase(), 8, S - 7);
+    return (this._rdStatic = { canvas, mapId: this._mapId, size: S, foot: fp, font, base, overlay });
+  }
   _updateRadar() {
     const x = this.radarCtx;
     if (!x) return;
-    const S = x.canvas.width || 150, H = S / 2, R = H - 3;
+    if (this.mobile) {
+      if (this._radarNextAt !== undefined && this.time < this._radarNextAt) return;
+      this._radarNextAt = this.time + MOBILE_RADAR_INTERVAL;
+    }
+    const S = x.canvas.width || 150, H = S / 2;
     const fp = this._radarFoot(S);
     const sc = fp ? fp.sc : 1.42, ox = fp ? fp.cx : 0, oz = fp ? fp.cz : 0;
+    const statics = this._radarStatic(S, fp);
     x.clearRect(0, 0, S, S);
-    // fundo: painel QUADRADO escuro (tela 05 do redesign — o minimapa da referência é
-    // um bloco, não um disco). Opaco o bastante pra geometria ciano ler com céu claro atrás.
-    const bg = x.createRadialGradient(H, H, 8, H, H, R);
-    bg.addColorStop(0, 'rgba(4,8,10,0.88)');
-    bg.addColorStop(1, 'rgba(0,0,0,0.74)');
-    x.fillStyle = bg;
-    x.fillRect(0, 0, S, S);
+    x.drawImage(statics.base, 0, 0);
     x.save();
     x.beginPath(); x.rect(0, 0, S, S); x.clip();
-    // planta REAL do mapa atual (blit do offscreen; norte fixo: mundo X→tela X, Z→tela Y)
-    if (fp) x.drawImage(fp.img, 0, 0);
-    // grade de referência bem sutil
-    x.strokeStyle = 'rgba(120,220,220,0.12)';
-    x.beginPath();
-    x.moveTo(H, H - R); x.lineTo(H, H + R);
-    x.moveTo(H - R, H); x.lineTo(H + R, H);
-    x.stroke();
     // cone de visão do jogador (FOV real da câmera, com falloff radial)
     const px = H + (this.player.pos.x - ox) * sc, pz = H + (this.player.pos.z - oz) * sc;
     const fov = (this.camera.fov || 75) * Math.PI / 180;
@@ -8261,15 +8288,7 @@ export class Game {
     }
     x.shadowBlur = 0;
     x.restore();
-    // moldura + nome do mapa embaixo à esquerda (tela 05 do redesign: "BECO OESTE").
-    // Aqui é o NOME DO MAPA — região nomeada só existe no CTF, e fora dele a etiqueta
-    // tem que continuar dizendo algo verdadeiro.
-    x.strokeStyle = 'rgba(236,235,230,0.12)'; x.lineWidth = 1;
-    x.strokeRect(0.5, 0.5, S - 1, S - 1);
-    /* dataset só existe no browser (tp/hud.js seta); o arnês node usa canvas falso */
-    x.font = x.canvas?.dataset?.fonte || "600 10px Rajdhani, sans-serif"; x.textAlign = 'left'; x.textBaseline = 'alphabetic';
-    x.fillStyle = 'rgba(139,140,146,0.95)';
-    x.fillText((MAPS[this._mapId].name || '').toUpperCase(), 8, S - 7);
+    x.drawImage(statics.overlay, 0, 0);
   }
 
   /* ================= HUD ================= */
@@ -8422,16 +8441,19 @@ export class Game {
       img.onload = () => { if (img.dataset.weapon === weapon) img.parentElement?.classList.remove('art-failed'); };
       img.onerror = () => { if (img.dataset.weapon === weapon) img.parentElement?.classList.add('art-failed'); };
     }
-    hud.classList.remove('hidden');
+    if (hud.classList.contains('hidden')) hud.classList.remove('hidden');
   }
   _updateHud() {
     const p = this.player;
     const weaponDef = WEAPONS[p.weapon];
     this._updateWeaponHud();
-    this.el.hpNum.textContent = Math.max(0, Math.ceil(p.hp));
-    this.el.hpFill.style.width = Math.max(0, p.hp) + '%';
-    this.el.hpFill.classList.toggle('low', p.hp <= 35);
-    this.el.hpNum.classList.toggle('low', p.hp <= 35);
+    const hpText = String(Math.max(0, Math.ceil(p.hp)));
+    if (this.el.hpNum.textContent !== hpText) this.el.hpNum.textContent = hpText;
+    const hpWidth = Math.max(0, p.hp) + '%';
+    if (this.el.hpFill.style.width !== hpWidth) this.el.hpFill.style.width = hpWidth;
+    const hpLow = p.hp <= 35;
+    if (this.el.hpFill.classList.contains('low') !== hpLow) this.el.hpFill.classList.toggle('low', hpLow);
+    if (this.el.hpNum.classList.contains('low') !== hpLow) this.el.hpNum.classList.toggle('low', hpLow);
     /* `player.kills` (partida), não `roundKills` (time, zera na virada). Escrito só quando
        muda porque este método roda por quadro. Régua: tools/eval/abateshud-check.mjs */
     const abates = p.kills | 0;
@@ -8457,14 +8479,18 @@ export class Game {
     }
     let mag = 0;
     if (p.weapon === 'knife') {
-      this.el.ammoMag.textContent = '—'; this.el.ammoRes.textContent = '';
-      this.el.ammoMag.classList.remove('empty');
+      if (this.el.ammoMag.textContent !== '—') this.el.ammoMag.textContent = '—';
+      if (this.el.ammoRes.textContent !== '') this.el.ammoRes.textContent = '';
+      if (this.el.ammoMag.classList.contains('empty')) this.el.ammoMag.classList.remove('empty');
     } else {
       const a = p.ammo[p.weapon];
       mag = a.mag;
-      this.el.ammoMag.textContent = a.mag;
-      this.el.ammoRes.textContent = this._municaoInfinita() ? '∞' : a.res;
-      this.el.ammoMag.classList.toggle('empty', a.mag === 0);
+      const magText = String(a.mag);
+      if (this.el.ammoMag.textContent !== magText) this.el.ammoMag.textContent = magText;
+      const reserveText = String(this._municaoInfinita() ? '∞' : a.res);
+      if (this.el.ammoRes.textContent !== reserveText) this.el.ammoRes.textContent = reserveText;
+      const magEmpty = a.mag === 0;
+      if (this.el.ammoMag.classList.contains('empty') !== magEmpty) this.el.ammoMag.classList.toggle('empty', magEmpty);
     }
     const capacity = weaponDef.mag || 0;
     const segments = Math.min(5, capacity);
@@ -8496,29 +8522,44 @@ export class Game {
          jogador não vê cronômetro nenhum, que é o comportamento de CTF que ele descreve. */
       const cp = (this.roundCaps && this.roundCaps.E) || 0, cb = (this.roundCaps && this.roundCaps.B) || 0;
       const alvo = Number.isFinite(this.capsToWin) ? this.capsToWin : CTF_CAPS_TO_WIN;
-      this.el.roundTime.textContent = `${cp} × ${cb}`;
-      this.el.roundTime.classList.remove('ctf');
+      const roundText = `${cp} × ${cb}`;
+      if (this.el.roundTime.textContent !== roundText) this.el.roundTime.textContent = roundText;
+      if (this.el.roundTime.classList.contains('ctf')) this.el.roundTime.classList.remove('ctf');
       const restante = Math.max(0, Math.ceil(this.ctfMatchLeft));
       const fimProximo = restante <= CTF_CLOCK_SHOW;
-      this.el.roundTime.classList.toggle('urgente', fimProximo);
-      this.el.roundsRow.textContent =
+      if (this.el.roundTime.classList.contains('urgente') !== fimProximo) this.el.roundTime.classList.toggle('urgente', fimProximo);
+      const roundsText =
         `${frase('rodadaDe', this.roundNum, this.roundsMax)} · ${frase('alvoBandeirasHud', alvo)} · ${this._teamTag('E')} ${this.roundsWon.E} × ${this.roundsWon.B} ${this._teamTag('B')}`
         + (fimProximo ? ` · FIM DA PARTIDA EM ${Math.floor(restante / 60)}:${String(restante % 60).padStart(2, '0')}` : '');
+      if (this.el.roundsRow.textContent !== roundsText) this.el.roundsRow.textContent = roundsText;
     } else {
-      this.el.roundTime.classList.remove('ctf');
+      if (this.el.roundTime.classList.contains('ctf')) this.el.roundTime.classList.remove('ctf');
       const total = Math.max(0, Math.ceil(this.timeLeft));
-      this.el.roundTime.textContent = `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+      const roundText = `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+      if (this.el.roundTime.textContent !== roundText) this.el.roundTime.textContent = roundText;
       // linha secundária única sob o timer: rodada/teto selecionado + placar por time
-      this.el.roundsRow.textContent =
-        `${frase('rodadaDe', this.roundNum, this.roundsMax)} · ${this._teamTag('E')} ${this.roundsWon.E} × ${this.roundsWon.B} ${this._teamTag('B')}`;
+      const roundsText = `${frase('rodadaDe', this.roundNum, this.roundsMax)} · ${this._teamTag('E')} ${this.roundsWon.E} × ${this.roundsWon.B} ${this._teamTag('B')}`;
+      if (this.el.roundsRow.textContent !== roundsText) this.el.roundsRow.textContent = roundsText;
     }
     this._plaqueta('P', 'E'); this._plaqueta('B', 'B');
-    this.el.scoreP.style.color = this._teamColor('E');   // lado do jogador Tribos fica AZUL
-    this.el.scoreB.style.color = this._teamColor('B');
+    const scorePColor = this._teamColor('E');   // lado do jogador Tribos fica AZUL
+    if (this._hudScorePColor !== scorePColor) {
+      this._hudScorePColor = scorePColor;
+      this.el.scoreP.style.color = scorePColor;
+    }
+    const scoreBColor = this._teamColor('B');
+    if (this._hudScoreBColor !== scoreBColor) {
+      this._hudScoreBColor = scoreBColor;
+      this.el.scoreB.style.color = scoreBColor;
+    }
     // badge de spawn protection (issue #24)
     const protLeft = p.protUntil - this.time;
-    this.el.prot.classList.toggle('hidden', !(p.alive && protLeft > 0));
-    if (protLeft > 0) this.el.protCount.textContent = Math.ceil(protLeft);
+    const protHidden = !(p.alive && protLeft > 0);
+    if (this.el.prot.classList.contains('hidden') !== protHidden) this.el.prot.classList.toggle('hidden', protHidden);
+    if (protLeft > 0) {
+      const protText = String(Math.ceil(protLeft));
+      if (this.el.protCount.textContent !== protText) this.el.protCount.textContent = protText;
+    }
   }
 
   /* ================= main update ================= */

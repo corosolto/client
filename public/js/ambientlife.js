@@ -747,8 +747,9 @@ class FavelaAmbience {
   }
 }
 
-export function createFavelaAmbience(root, options) {
-  return new FavelaAmbience(root, options);
+export function createFavelaAmbience(root, options = {}) {
+  const low = options.low ?? Boolean(globalThis.__CS_TEXTURA_MAX__);
+  return new FavelaAmbience(root, { ...options, low });
 }
 
 /* FAUNA ESTÁTICA POSICIONÁVEL (BUG-57, região append-only): GLB sem rig, escala por

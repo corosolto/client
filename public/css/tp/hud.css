@@ -216,8 +216,9 @@
 
 /* ---------- 21 · HUD por toque ---------- */
 @media (pointer:coarse){
-  :root[data-ui="v3"] #radar{top:10px;left:10px;width:84px;height:84px;border-radius:10px}
-  :root[data-ui="v3"] #hud-top{top:8px}
+  :root[data-ui="v3"]{--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);--sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px)}
+  :root[data-ui="v3"] #radar{top:calc(10px + var(--st));left:calc(10px + var(--sl));width:84px;height:84px;border-radius:10px}
+  :root[data-ui="v3"] #hud-top{top:calc(8px + var(--st))}
   :root[data-ui="v3"] .tp-hud-retratos{display:none}
   :root[data-ui="v3"] #hud-top .team-score{width:38px;height:34px}
   :root[data-ui="v3"] #score-e{border-radius:7px 0 0 7px}
@@ -227,16 +228,16 @@
   :root[data-ui="v3"] #round-time{font-size:15px}
   :root[data-ui="v3"] #rounds-row{font-size:8px;letter-spacing:.12em;margin-top:2px}
   :root[data-ui="v3"] #mk-banner{top:52px;font-size:30px}
-  :root[data-ui="v3"] #killfeed{top:62px;right:10px;gap:3px}
+  :root[data-ui="v3"] #killfeed{top:calc(62px + var(--st));right:calc(10px + var(--sr));gap:3px}
   :root[data-ui="v3"] #killfeed .kf-row{padding:3px 7px;border-radius:4px;font-size:11px;gap:4px}
-  :root[data-ui="v3"] #hud-bottom-left{left:102px;top:12px;bottom:auto;gap:4px}
+  :root[data-ui="v3"] #hud-bottom-left{left:calc(102px + var(--sl));top:calc(12px + var(--st));bottom:auto;gap:4px}
   :root[data-ui="v3"] .tp-hud-seq{display:none}
   :root[data-ui="v3"] .tp-hud-vitais{width:110px;padding:0;gap:4px;background:none;border:0}
   :root[data-ui="v3"] #hp-row::before{display:none}
   :root[data-ui="v3"] #hp-num{font-size:26px}
   :root[data-ui="v3"] .tp-hud-vida-rotulo{font-size:10px}
   :root[data-ui="v3"] #hp-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.18)}
-  :root[data-ui="v3"] #hud-bottom-right{right:calc(256px + env(safe-area-inset-right,0px));bottom:20px;padding:0;background:none;border:0;gap:0}
+  :root[data-ui="v3"] #hud-bottom-right{right:calc(256px + var(--sr));bottom:calc(64px + var(--sb));padding:0;background:none;border:0;gap:0}
   :root[data-ui="v3"] #weapon-name,:root[data-ui="v3"] .tp-hud-dicas,:root[data-ui="v3"] #lock-hint{display:none}
   :root[data-ui="v3"] #ammo{font-size:24px;gap:4px}
   :root[data-ui="v3"] #ammo .ammo-sep,:root[data-ui="v3"] #ammo-reserve{font-size:12px;font-weight:500}
@@ -264,7 +265,7 @@
   :root[data-ui="v3"] #touch-ui .touch-ads{right:calc(128px + var(--sr));bottom:calc(28px + var(--sb));width:64px;height:64px}
   .tp-toque-pula{right:calc(40px + var(--sr));bottom:calc(128px + var(--sb));width:56px;height:56px}
   :root[data-ui="v3"] #touch-ui .touch-reload{right:calc(118px + var(--sr));bottom:calc(104px + var(--sb));width:48px;height:48px}
-  .tp-toque-ping{right:calc(170px + var(--sr));bottom:calc(104px + var(--sb));width:48px;height:48px;border-color:rgba(224,50,50,.6);color:var(--tp-esq-claro)}
+  .tp-toque-ping{right:calc(170px + var(--sr));bottom:calc(104px + var(--sb));width:48px;height:48px;border:0;color:var(--tp-tinta-1)}
   :root[data-ui="v3"] #touch-ui .touch-crouch{left:calc(176px + var(--sl));right:auto;bottom:calc(24px + var(--sb));width:52px;height:52px;
     border:0;background:rgba(9,7,4,.75);font-size:10px}
   :root[data-ui="v3"] #touch-ui .touch-pause,.tp-toque-placar{top:calc(10px + var(--st));bottom:auto;width:44px;height:44px;border-radius:10px;
@@ -273,10 +274,10 @@
   .tp-toque-placar{right:calc(60px + var(--sr))}
   :root[data-ui="v3"] #chat-toque{right:calc(110px + env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px));width:44px;height:44px;
     border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(19,20,24,.85);color:var(--tp-tinta-1);font:800 10px/1 var(--tp-ui)}
-  :root[data-ui="v3"] #touch-ui .touch-weps{left:auto;right:calc(256px + var(--sr));bottom:calc(52px + var(--sb));transform:none;gap:4px}
+  :root[data-ui="v3"] #touch-ui .touch-weps{left:auto;right:calc(256px + var(--sr));bottom:calc(6px + var(--sb));transform:none;gap:4px}
   :root[data-ui="v3"] #touch-ui .touch-wep{width:44px;height:44px;border-radius:8px;background:rgba(9,7,4,.6);border:1px solid rgba(255,255,255,.2)}
   :root[data-ui="v3"] #touch-ui .touch-wep[data-tp-ativa]{border:2px solid var(--tp-lima)}
-  .tp-toque-mira-dica{position:absolute;left:calc(50% + 48px);top:58%;font:800 10px/1 var(--tp-ui);letter-spacing:.1em;color:rgba(240,240,237,.45);
+  .tp-toque-mira-dica{position:absolute;left:calc(50% + 48px);top:66%;font:800 10px/1 var(--tp-ui);letter-spacing:.1em;color:rgba(240,240,237,.45);
     pointer-events:none;transition:opacity var(--tp-d-cena) var(--tp-ease-saida)}
   .tp-toque-mira-dica[data-sumiu]{opacity:0}
 }

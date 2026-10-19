@@ -103,7 +103,7 @@ Cobertura: **3903 de 8620 linhas (45%)** do `game.js` têm dono declarado. O res
 | 382 | `aberturaCone` | 16 |
 | 398 | `anguloDeDisparo` | 4 |
 | 402 | `coneDoDisparo` | 16 |
-| 419 | `D2R` | 4 |
+| 420 | `MOBILE_RADAR_INTERVAL` | 4 |
 | 423 | `DMG_FALLOFF` | 5 |
 | 428 | `HS_MUL` | 3 |
 | 431 | `BALL_CLASS` | 5 |
@@ -357,6 +357,7 @@ Cobertura: **3903 de 8620 linhas (45%)** do `game.js` têm dono declarado. O res
 | 8041 | `_updateBotNN()` | 73 |
 | 8114 | `_botShootNN()` | 31 |
 | 8145 | `_radarFoot()` | 38 |
+| 8188 | `_radarStatic()` | 31 |
 | 8183 | `_updateRadar()` | 65 |
 | 8248 | `_banner()` | 26 |
 | 8274 | `_resultadoDaRodada()` | 4 |

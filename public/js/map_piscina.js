@@ -307,6 +307,46 @@ export function buildPoolDay(scene, T) {
     root.userData.piscinaBatch = { meshes, batches };
     return root.userData.piscinaBatch;
   }
+  function batchAuthoredProps() {
+    let enabled = true;
+    try { enabled = new URLSearchParams(location.search).get('piscinaBatch') !== '0'; } catch { /* node */ }
+    if (!enabled) return { meshes: 0, batches: 0 };
+    root.updateMatrixWorld(true);
+    const rootInverse = root.matrixWorld.clone().invert();
+    const groups = new Map();
+    for (const child of [...root.children]) {
+      if (!/^piscina:/.test(child.name || '')) continue;
+      const meshes = [];
+      child.traverse((node) => { if (node.isMesh) meshes.push(node); });
+      if (meshes.length !== 1 || Array.isArray(meshes[0].material)) continue;
+      const mesh = meshes[0];
+      const key = `${child.name}:${mesh.geometry.uuid}:${mesh.material.uuid}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push({ child, mesh });
+    }
+    let meshes = 0, batches = 0;
+    for (const list of groups.values()) {
+      if (list.length < 2) continue;
+      const first = list[0].mesh;
+      const batch = new THREE.InstancedMesh(first.geometry, first.material, list.length);
+      batch.name = `${list[0].child.name}:batch`;
+      const matrix = new THREE.Matrix4();
+      list.forEach(({ child, mesh }, index) => {
+        mesh.updateWorldMatrix(true, false);
+        matrix.multiplyMatrices(rootInverse, mesh.matrixWorld);
+        batch.setMatrixAt(index, matrix);
+        root.remove(child);
+      });
+      batch.instanceMatrix.needsUpdate = true;
+      batch.computeBoundingBox();
+      batch.computeBoundingSphere();
+      root.add(batch);
+      meshes += list.length;
+      batches++;
+    }
+    root.userData.piscinaAuthoredBatch = { meshes, batches };
+    return root.userData.piscinaAuthoredBatch;
+  }
   function addPlane(w, h, mat, x, y, z, ry = 0, rx = 0) {
     const m = new THREE.Mesh(geoPlano(w, h, mat), mat);
     m.position.set(x, y, z); m.rotation.y = ry; m.rotation.x = rx;
@@ -1120,6 +1160,7 @@ export function buildPoolDay(scene, T) {
      coordenada. Ver `public/js/graffiti_pass.js` pro porquê de ser assado. */
   // Matrizes Float32 podem abrir microfrestas; pintura mede os triângulos
   // que permanecem na cena após o agrupamento.
+  batchAuthoredProps();
   batchStaticBoxes();
   grafitar({
     id: 'piscina_treta',

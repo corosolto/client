@@ -1367,11 +1367,28 @@ async function _pingPresenca(aguardar = false) {
  * evento) e passam a morar no NOSSO backend, lidos pelo painel admin. Mesma regra das
  * irmãs: fetch keepalive, fail-silent, anônimas por anonId (UUID de localStorage), sem IP.
  * Contrato: /api/{match,funnel,perf,acquisition} e tools/eval/telemetry-check.mjs. */
+function _clientSessionContext() {
+  const ua = navigator.userAgent || '';
+  const ipadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  const mobile = TOUCH && (/Android|iPhone|iPad|iPod|Mobile/i.test(ua) || ipadOS);
+  const deviceClass = mobile
+    ? (ipadOS || /iPad|Tablet/i.test(ua) || Math.min(screen.width, screen.height) >= 600 ? 'tablet' : 'phone')
+    : 'desktop';
+  return {
+    anonId: getAnonId(), sessionId: getSessionId(),
+    version: versaoComOrigem(VERSION), ...sinaisDeBuild(),
+    mobile, touch: TOUCH, deviceClass,
+    orientation: innerWidth >= innerHeight ? 'landscape' : 'portrait',
+    vw: innerWidth, vh: innerHeight, dpr: devicePixelRatio || null,
+    dprEfetivo: (() => { try { return renderer.getPixelRatio(); } catch { return null; } })(),
+    qualityStep: window.__escada?.escada?.degrau ?? null,
+  };
+}
 // FUNIL (017): land → menu → match_start → match_end → quit. Converte "chegou a jogar?".
 function _funnel(step) {
   if (!analyticsAllowed()) return;
   if (testMode) return;
-  sendJsonKeepalive('/api/funnel', { step, sessionId: getSessionId() });
+  sendJsonKeepalive('/api/funnel', { step, ..._clientSessionContext(), ...telemetryGameContext });
 }
 // AQUISIÇÃO (019): 1x por navegador. referrer vira host (URL inteira pode carregar query
 // sensível); UTM e ?ref= lidos da URL de entrada. first-touch-wins no servidor.
@@ -1447,15 +1464,11 @@ function _perfFinish(bootMs, frames) {
   } catch { /* GPU info é melhor-esforço */ }
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const payload = {
-    anonId: getAnonId(), version: versaoComOrigem(VERSION),
-    sessionId: getSessionId(), ...telemetryGameContext, ...sinaisDeBuild(),
+    ..._clientSessionContext(), ...telemetryGameContext,
     fps: frames, bootMs, loadMs: _perfLoadMs,
     cores: navigator.hardwareConcurrency || null,
     memoryGb: navigator.deviceMemory || null,
     renderer: rendererStr,
-    dpr: window.devicePixelRatio || null,
-    // DPR do que o jogo DESENHA (não o do aparelho) e renderer em 3 estados — BUG-157.
-    dprEfetivo: (() => { try { return renderer.getPixelRatio(); } catch { return null; } })(),
     software: window.__csWebgl?.softwareEstado || 'desconhecido',
     glTier: window.__csWebgl?.tier || null,
     vw: window.innerWidth, vh: window.innerHeight,
@@ -1559,7 +1572,7 @@ addEventListener('cs-privacy-change', _funnelLand);
 // Convite de login (login-prompt.js) no mesmo pipeline do funil; o consentimento é conferido lá.
 function _loginPromptTrack(step, data) {
   if (testMode) return;
-  sendJsonKeepalive('/api/funnel', { step, sessionId: getSessionId(), ...data });
+  sendJsonKeepalive('/api/funnel', { step, ..._clientSessionContext(), ...data });
 }
 _funnelLand();
 _sendPerf();          // perf de cliente 1x por sessão (018)

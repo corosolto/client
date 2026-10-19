@@ -105,6 +105,7 @@ export class GPUParticles {
     this._geo = geo;
     // o DepthPass (bloom.js) alimenta tDepth e migra para a camada soft quem está na lista
     (scene.userData.softs || (scene.userData.softs = [])).push(this);
+    this.resize(typeof innerHeight !== 'undefined' ? innerHeight : 600);
   }
 
   // One slot written; GPU does the rest. vel/grow default to a stationary, steady-size sprite.
@@ -123,10 +124,12 @@ export class GPUParticles {
     at.aLife.needsUpdate = true; at.aSize.needsUpdate = true; at.aGrow.needsUpdate = true;
   }
 
+  resize(height) {
+    const fov = (this.camera ? this.camera.fov : 70) * Math.PI / 180;
+    this.uniforms.uScale.value = height / (2 * Math.tan(fov / 2));
+  }
+
   update(dt) {
     this.uniforms.uTime.value += dt;
-    // keep point size proportional to viewport + fov so sprites stay world-sized
-    const fov = (this.camera ? this.camera.fov : 70) * Math.PI / 180;
-    this.uniforms.uScale.value = (typeof innerHeight !== 'undefined' ? innerHeight : 600) / (2 * Math.tan(fov / 2));
   }
 }

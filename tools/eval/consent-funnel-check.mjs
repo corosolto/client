@@ -35,7 +35,7 @@ const regiao = (ini, fim) => {
   if (a < 0 || b < 0) { console.error(`consent funnel: marcador sumiu de main.js (${ini.slice(0, 30)}…) — a régua não sabe medir`); process.exit(1); }
   return main.slice(a, b);
 };
-const codigo = regiao('// FUNIL (017)', '// PERF (018)') + regiao('/* Telemetria nova (feat/telemetria)', '\nasync function startGame(');
+const codigo = regiao('function _clientSessionContext()', '// PERF (018)') + regiao('/* Telemetria nova (feat/telemetria)', '\nasync function startGame(');
 
 const ENTRADA = { pathname: '/', search: '?utm_source=teste&utm_medium=post&utm_campaign=lancamento-out&utm_content=criativo-video&ref=AMIGO1' };
 
@@ -56,6 +56,10 @@ function mundo({ consentido = false, testMode = false, entrada = ENTRADA } = {})
     fetch: async (url, opts) => { enviados.push({ rota: url.replace('https://api.mock', ''), corpo: JSON.parse(opts.body) }); return { ok: true, json: async () => ({ ok: true, stored: true }) }; },
     _sendPerf: () => {},
     URL, URLSearchParams, Object, JSON,
+    navigator: { userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Mobile', platform: 'Linux armv8l', maxTouchPoints: 5 },
+    TOUCH: true, screen: { width: 390, height: 844 }, innerWidth: 844, innerHeight: 390, devicePixelRatio: 3,
+    renderer: { getPixelRatio: () => 0.7 }, VERSION: 'test', versaoComOrigem: (v) => v,
+    sinaisDeBuild: () => ({}), telemetryGameContext: {}, window: {},
     addEventListener: (t, fn) => { (ouvintes[t] ||= new Set()).add(fn); },
     removeEventListener: (t, fn) => ouvintes[t]?.delete(fn),
   };
@@ -93,6 +97,9 @@ const cobra = (ok, msg) => { if (!ok) falhas.push(msg); };
     cobra(c.referrer === 'www.reddit.com', `CF2 referrer tem de sair só como host, saiu ${JSON.stringify(c.referrer)}`);
   }
   cobra(conta(m, '/api/funnel', 'land') === 1, `CF2 'land' tardio: ${conta(m, '/api/funnel', 'land')} envio(s), esperado 1`);
+  const land = m.enviados.find((e) => e.rota === '/api/funnel' && e.corpo.step === 'land');
+  cobra(land?.corpo.mobile === true && land?.corpo.deviceClass === 'phone' && land?.corpo.orientation === 'landscape',
+    `CF2 sessão mobile perdeu device/orientação (${JSON.stringify(land?.corpo)})`);
   cobra(conta(m, '/api/funnel', 'menu') === 0, "CF3 o clique de antes do consentimento não pode virar 'menu'");
   m.interage(); m.interage();
   m.consente(true);
