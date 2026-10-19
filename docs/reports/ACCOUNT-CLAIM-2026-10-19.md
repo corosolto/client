@@ -16,4 +16,4 @@ Converter perfis sem conta, especialmente jogadores que voltam, com convite real
 
 ## Próximo passo
 
-Revisar PR draft #1022 e gates de CI. Backend [PR draft #142](https://github.com/corosolto/backend/pull/142) traz migration `075_treta_welcome_1000.sql`; coordenar migration/backend/client e confirmar crédito numa conta de teste antes de enviar broadcast aos inscritos elegíveis. Medir entrada e falha de carregamento em mobile e fazer QA em aparelhos físicos antes de aumentar mídia ou empacotar para lojas. Não houve merge, deploy, migration remota, gasto ou envio.
+Revisar PR draft #1022 e gates de CI. Backend [PR draft #142](https://github.com/corosolto/backend/pull/142) traz migration `076_treta_welcome_1000.sql`; coordenar migration/backend/client e confirmar crédito numa conta de teste antes de enviar broadcast aos inscritos elegíveis. Medir entrada e falha de carregamento em mobile e fazer QA em aparelhos físicos antes de aumentar mídia ou empacotar para lojas. Não houve merge, deploy, migration remota, gasto ou envio.
