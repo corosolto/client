@@ -1,5 +1,5 @@
 /* Treta Pop · 07 loja, 09 armário, 23 mobile. Carregado por tp/ligar.js só com ?ui=v3. */
-import { tretaLoja, abrirTretaSkin, equiparTretaSkin } from '../treta-store.js';
+import { tretaLoja, abrirTretaSkin, equiparTretaSkin, abrirTretaHistorico } from '../treta-store.js';
 import { tr, LANG } from '../i18n.js';
 
 /* Só os slots que o backend já guarda; fuzil, faca, spray e afins entram quando a API tiver o campo. */
@@ -119,6 +119,10 @@ function montar(){
   nav.append(el('span','tp-abas__risco'));
   const carteira=el('div','tp-loja__carteira'),ic=el('img','tp-loja__moeda');ic.src='/img/treta/coin-classic-saci.webp';ic.alt='';ic.width=30;ic.height=30;ic.setAttribute('aria-hidden','true');
   carteira.append(ic,el('b','tp-loja__saldo tp-num','—'),botao('tp-btn tp-loja__ganhar',tr('GANHAR MAIS'),()=>irPara('ganhar')));
+  const saldo=carteira.querySelector('.tp-loja__saldo');
+  saldo.tabIndex=0;saldo.setAttribute('role','button');saldo.setAttribute('aria-label',tr('HISTÓRICO DE COMPRAS'));
+  saldo.onclick=()=>abrirTretaHistorico();
+  saldo.onkeydown=(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();abrirTretaHistorico();}};
   topo.append(titulo,nav,carteira);
   const panels=['weapons','characters','gloves','packs'].map((id)=>{const panel=el('section','tp-loja__painel');panel.dataset.painel=id;panel.setAttribute('role','tabpanel');return panel;});
   raiz.append(topo,...panels);

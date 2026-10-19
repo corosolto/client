@@ -75,6 +75,19 @@
 .treta-info>button:not(.treta-close),.treta-purchase>button:not(.treta-close){margin:8px 4px}
 .treta-info-coin{height:120px;position:relative}.treta-info-coin img,.treta-info-coin canvas{height:100%;width:100%;object-fit:contain}
 .treta-purchase-stage{height:160px;position:relative}.treta-purchase-stage canvas,.treta-purchase-stage>img{height:100%;width:100%;object-fit:contain}
+
+/* Histórico de compras (dialog da carteira): linha = data, visual, gasto, saldo após. */
+.treta-history[open]{display:block;width:min(560px,calc(100vw - 32px));padding:48px 28px 28px;text-align:left}
+.treta-history h2{font:400 40px/1.1 'Bebas Neue',sans-serif;letter-spacing:1px;margin:8px 0 4px}
+.treta-history-copy>small{color:var(--treta-muted);letter-spacing:1px}
+.treta-history-balance,.treta-history #treta-history-balance{display:block;font:600 20px/1.2 'Barlow Condensed',sans-serif;color:var(--treta-lime);margin-bottom:12px}
+.treta-history-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.treta-history-row{display:grid;grid-template-columns:64px 1fr auto auto;gap:12px;align-items:baseline;padding:12px 0;border-top:1px solid var(--treta-line)}
+.treta-history-date{color:var(--treta-muted);font:600 12px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.5px;text-transform:uppercase}
+.treta-history-row strong{font:600 15px/1.3 'Barlow Condensed',sans-serif;letter-spacing:.3px}
+.treta-history-amount{font:600 14px/1 'JetBrains Mono',monospace;color:#e2b07e}
+.treta-history-after{color:var(--treta-muted);font:600 12px/1 'JetBrains Mono',monospace}
+.treta-history-empty{color:var(--treta-muted);font:400 14px/1.6 system-ui,sans-serif;margin:16px 0}
 .treta-purchase-item{display:block;width:100%;height:220px;object-fit:contain;animation:treta-item-in .6s ease-out both}
 @keyframes treta-item-in{from{opacity:0;transform:scale(.8) translateY(12px)}to{opacity:1;transform:none}}
 .treta-dialog button:focus-visible,.treta-store button:focus-visible,.hub-header button:focus-visible{outline:3px solid var(--treta-gold,#ffdb70);outline-offset:3px}

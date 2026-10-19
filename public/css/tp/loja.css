@@ -26,7 +26,8 @@
 .tp-loja__carteira{margin-left:auto;display:flex;align-items:center;gap:10px;height:48px;padding:0 6px 0 14px;border-radius:10px;
   background:var(--tp-painel);border:1px solid color-mix(in srgb,var(--tp-lima) 35%,transparent)}
 .tp-loja__moeda{display:block;width:30px;height:30px;object-fit:contain;filter:drop-shadow(0 2px 5px rgba(0,0,0,.45))}
-.tp-loja__saldo{font-size:20px;font-weight:800;color:var(--tp-ambar)}
+.tp-loja__saldo{font-size:20px;font-weight:800;color:var(--tp-ambar);cursor:pointer}
+.tp-loja__saldo:hover,.tp-loja__saldo:focus-visible{outline:2px solid var(--tp-ambar);outline-offset:3px;border-radius:4px}
 .tp-loja__ganhar{min-height:36px;padding:0 12px;border-radius:7px;font:800 13px/1 var(--tp-ui);letter-spacing:.06em}
 
 .tp-loja__grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:14px}

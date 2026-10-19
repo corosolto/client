@@ -42,7 +42,7 @@ const MUTANTES = {
   'raridade-inventada': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("RARIDADES.has(s.raridade)?s.raridade:''", "RARIDADES.has(s.raridade)?s.raridade:'comum'")],
   'preco-local': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace('price:item(s.id)?.price ?? null', 'price:s.price')],
   'dois-primarios': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("'tp-btn tp-loja__ganhar'", "'tp-btn tp-btn--primario tp-loja__ganhar'")],
-  'slot-inventado': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("characters:new Set(['character','eyewear'])", "characters:new Set(['weapon','character','eyewear'])")],
+  'historico-mudo': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace('saldo.onclick=', 'saldo.onclick=null;//')],
   'grade-larga': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('.tp-loja__grade{display:grid;', '.tp-loja__grade{display:grid;min-width:1700px;')],
   'alvo-pequeno': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('@media (pointer:coarse){', '@media (pointer:none){')],
   'en-vaza': [(u) => u.pathname === '/js/i18n.js', (t) => t.replace("'GANHAR MAIS': 'EARN MORE',", '')],
@@ -71,7 +71,11 @@ async function preparar(page, mutante) {
 function fixture(page, conta) {
   const estado = () => ({
     authenticated: true, acquisition: 'quests', topUpsEnabled: false, accountId: 'fixture-account',
-    wallet: { balance: SALDO, referral_code: '00000000-0000-4000-8000-000000000001' }, inventory: conta.inventario, ledger: [],
+    wallet: { balance: SALDO, referral_code: '00000000-0000-4000-8000-000000000001' }, inventory: conta.inventario, ledger: [
+      { id: 'l1', kind: 'purchase', amount: -500, balance_after: SALDO, skin_id: 'ouro-ak', created_at: '2026-10-19T12:00:00Z' },
+      { id: 'l2', kind: 'purchase', amount: -2000, balance_after: SALDO, skin_id: 'pack-dourado', created_at: '2026-10-18T12:00:00Z' },
+      { id: 'l3', kind: 'singleplayer', amount: 20, balance_after: SALDO, created_at: '2026-10-18T10:00:00Z' },
+    ],
     quests: { email: 1, referral: AMIGOS, singleplayer: 3, multiplayer: 4, dailyMatchEarned: GANHO_HOJE },
     campaign: { ...TRETA_DEFAULT_REWARDS, starts_at: new Date(Date.now() - 864e5).toISOString(), ends_at: new Date(Date.now() + 864e5).toISOString() },
     catalog: CATALOGO.map((s) => ({ id: s.id, character_id: s.character || null, price: PRECO[s.id] ?? s.price ?? 800, available: true,
@@ -198,6 +202,21 @@ async function secaoV3(mutante, add) {
   if (!mutante) await page.screenshot({ path: `${OUT}/ganhar-1536x1024.png` });
   const tabs = await page.locator('.tp-loja__abas [data-tp-aba]').evaluateAll((nodes) => nodes.map((node) => node.dataset.tpAba));
   const painelArmario = await page.locator('.tp-loja__painel[data-painel=armario]').count();
+  /* Histórico de compras: a carteira abre o dialog com as compras nomeadas pelo catálogo. */
+  let hist = { abriu: false, linhas: [], saldo: '' };
+  if (await page.locator('.tp-loja__saldo').count()) {
+    await page.click('.tp-loja__saldo');
+    await page.waitForTimeout(400);
+    hist = await page.evaluate(() => {
+      const dialog = document.getElementById('treta-history');
+      return { abriu: dialog?.open === true,
+        linhas: [...document.querySelectorAll('#treta-history-list .treta-history-row')].map((li) => li.innerText.replace(/\s+/g, ' ').trim()),
+        saldo: document.getElementById('treta-history-balance')?.textContent || '', vazio: document.getElementById('treta-history-empty')?.hidden };
+    });
+    if (!mutante) await page.screenshot({ path: `${OUT}/historico-1536x1024.png` });
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+  }
   await page.close();
 
   const okAba = (a) => a.n === 5 && a.sublinhados === 0 && a.riscos === 1 && a.selecionadas.length === 1 && a.dx <= 2 && a.dw <= 2;
@@ -239,6 +258,11 @@ async function secaoV3(mutante, add) {
     && meta[1].txt.includes(`${AMIGOS}`) && Math.abs(meta[1].p - AMIGOS / TRETA_DEFAULT_REWARDS.referral_cap) < 0.01;
   add('LJ12', okMeta, `metas: ${meta.map((m) => `"${m.txt}" p=${Number.isFinite(m.p) ? m.p.toFixed(2) : '?'}`).join('; ') || 'nenhuma'}`);
   add('LJ13', !erros.length && a2.selecionadas.length === 1, erros.length ? `erro na página: ${erros[0]}` : `sem erro de página; aba ganhar ${a2.selecionadas.join('+')}`);
+
+
+  add('LJ17', hist.abriu && hist.linhas.length === 2 && /AK Ouro/.test(hist.linhas[0]) && /T\$ -500/.test(hist.linhas[0])
+    && /Pack Dourado/.test(hist.linhas[1]) && /T\$ 1\.240/.test(hist.saldo) && hist.vazio === true,
+    hist.abriu ? `${hist.linhas.length} compras listadas (${hist.linhas.join(' | ')}); saldo "${hist.saldo}"` : 'a carteira não abriu o histórico');
 }
 
 async function secaoModal(mutante, add) {
@@ -338,7 +362,7 @@ async function secaoLegado(mutante, add) {
   add('LJ11', !ruim.length, ruim.length ? `?ui=legacy mudou a loja: ${ruim.map((o) => `${o.tp} nós tp-, abas antigas ${o.abas ? 'visíveis' : 'sumiram'}, título ${o.fonte.split(',')[0]}`).join('; ')}` : '?ui=legacy mantém a loja anterior (1536 e 844)');
 }
 
-const SECOES = { v3: [secaoV3, ['LJ1', 'LJ3', 'LJ4', 'LJ5', 'LJ7', 'LJ8', 'LJ12', 'LJ13', 'LJ14', 'LJ15']], modal: [secaoModal, ['LJ2']], idioma: [secaoIdioma, ['LJ10']],
+const SECOES = { v3: [secaoV3, ['LJ1', 'LJ3', 'LJ4', 'LJ5', 'LJ7', 'LJ8', 'LJ12', 'LJ13', 'LJ14', 'LJ15', 'LJ17']], modal: [secaoModal, ['LJ2']], idioma: [secaoIdioma, ['LJ10']],
   telas: [secaoTelas, ['LJ9']], convite: [secaoConvite, ['LJ16']], legado: [secaoLegado, ['LJ11']] };
 
 async function medir(mutante = '', alvo = '') {
@@ -350,7 +374,7 @@ async function medir(mutante = '', alvo = '') {
 
 const MUT = [['risco-dobrado', 'LJ1'], ['modal-sozinho', 'LJ2'], ['titulo-sem-anton', 'LJ3'], ['raridade-inventada', 'LJ4'], ['preco-local', 'LJ5'],
   ['dois-primarios', 'LJ7'], ['slot-inventado', 'LJ8'], ['grade-larga', 'LJ9'], ['alvo-pequeno', 'LJ9'], ['en-vaza', 'LJ10'], ['sem-flag', 'LJ11'], ['meta-fixa', 'LJ12'],
-  ['quest-sem-icone', 'LJ14'], ['icone-igual', 'LJ14'], ['visita-so-no-evento', 'LJ15'], ['convite-sem-chegada', 'LJ16'], ['convite-sem-consentimento', 'LJ16']];
+  ['quest-sem-icone', 'LJ14'], ['icone-igual', 'LJ14'], ['visita-so-no-evento', 'LJ15'], ['convite-sem-chegada', 'LJ16'], ['convite-sem-consentimento', 'LJ16'], ['historico-mudo', 'LJ17']];
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO === m)) {
