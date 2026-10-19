@@ -502,6 +502,7 @@ const DICT = {
   'Confirme seu email': 'Confirm your email', 'Chame sua turma': 'Call your crew',
   'Conclua uma partida solo': 'Finish a solo match', 'Conclua uma partida multiplayer': 'Finish a multiplayer match',
   'NOVIDADES': 'NEWS', 'O QUE MUDOU NA ARENA': 'WHAT CHANGED IN THE ARENA', 'VER NOVIDADES ▸': 'SEE WHAT IS NEW ▸',
+  'NOVIDADES DE SKINS': 'SKIN NEWS', 'VER LOJA ▸': 'VIEW STORE ▸',
   'Amigos online': 'Friends online', 'AMIGOS ONLINE': 'FRIENDS ONLINE', 'CONVIDAR': 'INVITE', '+ CONVIDAR': '+ INVITE',
   'Ainda não dá pra ver quem está online. Chame a turma com o link de uma sala.':
     'You cannot see who is online yet. Call your crew with a room link.',
@@ -578,6 +579,8 @@ const DICT = {
   'Filtrar visuais': 'Filter outfits', 'MEUS': 'MINE', 'DESBLOQUEAR VISUAL': 'UNLOCK OUTFIT', 'Não deu para equipar agora. Tente de novo.': 'Could not equip right now. Try again.',
   'Visual é só cosmético: mesmo dano, velocidade e hitbox. O equipado entra com você na próxima partida.':
     'Outfits are cosmetic only: same damage, speed and hitbox. The equipped one joins you in your next match.',
+  'HISTÓRICO DE COMPRAS': 'PURCHASE HISTORY', 'SUA CARTEIRA': 'YOUR WALLET', 'SALDO': 'BALANCE',
+  'Você ainda não comprou nenhum visual.': 'You have not bought any outfits yet.',
   // tp:fim-loja
 
   // tp:perfil

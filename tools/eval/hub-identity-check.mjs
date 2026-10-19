@@ -16,7 +16,7 @@ const mutation=(source,before,after)=>{assert(source.includes(before),'MUTANTE N
 const mutants={
   'sem-handle':()=>{entry=mutation(entry,"mine?.handle?'@'+mine.handle:profile.nick","profile.nick");},
   'sem-convite':()=>{entry=mutation(entry,":'Reivindique seu perfil';",":'ENTRAR';");},
-  'ver-perfil-sempre':()=>{entry=mutation(entry,'if(view)view.hidden=!profile;','if(view)view.hidden=false;');},
+  'ver-perfil-sempre':()=>{entry=mutation(entry,'if(view){view.hidden=!profile;view.href=ownProfilePath(profile,mine);}','if(view){view.hidden=false;view.href=ownProfilePath(profile,mine);view.onclick=()=>document.dispatchEvent(new CustomEvent("cs-community-open",{detail:{tab:"profile"}}));}');},
   'minha-conta':()=>{index=mutation(index,'<b id="hub-identity-name">Reivindique seu perfil</b>','<b id="hub-identity-name">Reivindique seu perfil</b></button><button class="hub-header-action" type="button">MINHA CONTA');},
   'chip-62px':()=>{social=mutation(social,'html[data-home-ui=hub] .hub-identity-wrap #hub-account-login{max-width:136px','.hub-identity{max-width:136px');},
   'convite-uma-linha':()=>{social=mutation(social,'[data-state=guest] b{max-width:64px;white-space:normal','[data-state=guest] b{max-width:64px');},
@@ -51,15 +51,15 @@ async function lobby({session,card}) {
   const api=vm.runInContext('(function(){'+entry.replace(/^import .*;\n/gm,'').replace(/export\s+/g,'')+`;return {${names.join(',')}}})()`,context,{timeout:1000});
   await api.initAccountEntry({skipPrompt:true});
   for(let i=0;i<4;i++)await new Promise(r=>setImmediate(r));
-  const view=()=>({state:ids['hub-account-login'].dataset.state,name:ids['hub-identity-name'].textContent,cta:ids['hub-identity-cta'].hidden?null:ids['hub-identity-cta'].textContent,profileLink:!ids['hub-view-profile'].hidden,label:ids['hub-account-login'].getAttribute('aria-label')});
+  const view=()=>({state:ids['hub-account-login'].dataset.state,name:ids['hub-identity-name'].textContent,cta:ids['hub-identity-cta'].hidden?null:ids['hub-identity-cta'].textContent,profileLink:!ids['hub-view-profile'].hidden,profileHref:ids['hub-view-profile'].href,profileIntercepted:typeof ids['hub-view-profile'].onclick==='function',label:ids['hub-account-login'].getAttribute('aria-label')});
   return {ids,view,events,dispatched,context};
 }
 const signedIn={authenticated:true,profile:{id:'p1',nick:'TesteDominio'},identities:['google']};
 const tests=[
   ['logado com ID público mostra @handle e Ver perfil, sem ENTRAR',async()=>{
-    const ui=await lobby({session:signedIn,card:{id:'p1',nick:'TesteDominio',handle:'rubenmarcus'}});const v=ui.view();
-    assert.equal(v.name,'@rubenmarcus','@handle ausente no topo');assert.equal(v.state,'account');assert.equal(v.cta,null,'ENTRAR aparece para quem já entrou');assert.equal(v.profileLink,true,'Ver perfil ausente para quem entrou');assert.match(v.label,/@rubenmarcus/);
-    ui.ids['hub-view-profile'].click();assert.deepEqual(ui.dispatched.filter(d=>/comunidade|community/.test(d)),['tab:comunidade','cs-community-open:profile'],'Ver perfil não abre o perfil na Comunidade');
+    const ui=await lobby({session:signedIn,card:{id:'p1',nick:'TesteDominio',handle:'rubenmarcus',url:'/u/rubenmarcus'}});const v=ui.view();
+    assert.equal(v.name,'@rubenmarcus','@handle ausente no topo');assert.equal(v.state,'account');assert.equal(v.cta,null,'ENTRAR aparece para quem já entrou');assert.equal(v.profileLink,true,'Ver perfil ausente para quem entrou');assert.equal(v.profileHref,'/u/rubenmarcus','Ver perfil sem rota canônica');assert.equal(v.profileIntercepted,false,'Ver perfil reinicia a comunidade por evento paralelo');assert.match(v.label,/@rubenmarcus/);
+    ui.ids['hub-view-profile'].click();assert.deepEqual(ui.dispatched.filter(d=>/comunidade|community/.test(d)),[],'Ver perfil disparou a comunidade em paralelo');
   }],
   ['logado sem ID público cai no nick, nunca em @undefined',async()=>{
     const v=(await lobby({session:signedIn,card:{id:'p1',nick:'TesteDominio',handle:null}})).view();assert.equal(v.name,'TesteDominio');assert.equal(v.profileLink,true);

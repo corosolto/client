@@ -22,6 +22,7 @@ const PERFIL = { id: ID, handle: HANDLE, nick: 'Abas Fixture', url: `/u/${HANDLE
   points: 10, kills: 12, deaths: 1, kd: 12, round_wins: 1, wins: 1, losses: 0, matches: 1, rounds: 1, level: 1, next_level_points: 90, position: 9,
   bio: '', socials: [], avatar_url: null, last_character: null, account_verified: false, favorites: [], history: [], play_seconds: 0,
   achievements: [{ key: 'first_kill', at: '2026-10-01T12:00:00Z' }, { key: 'ten_kills', at: '2026-10-02T12:00:00Z' }] };
+const SEM_HANDLE = { ...PERFIL, handle: null, url: `/u/${ID}/Abas-Fixture` };
 const PAGINAS = { perfil: '', conquistas: '/conquistas', partidas: '/partidas', privacidade: '/privacidade', antigo: `/../${ID}/Abas%20Fixture` };
 
 async function coletar() {
@@ -30,14 +31,17 @@ async function coletar() {
   if (!entry || !existsSync(entry)) return null;
   process.chdir(FUNC);
   const { default: handler } = await import(pathToFileURL(entry).href);
-  const real = globalThis.fetch;
-  globalThis.fetch = async (alvo, init) => (String(alvo?.url ?? alvo).includes('/api/social') ? Response.json({ profile: PERFIL }) : real(alvo, init));
+  const real = globalThis.fetch;let perfilAtual=PERFIL;
+  globalThis.fetch = async (alvo, init) => (String(alvo?.url ?? alvo).includes('/api/social') ? Response.json({ profile: perfilAtual }) : real(alvo, init));
   const out = {};
   for (const [nome, sufixo] of Object.entries(PAGINAS)) {
     const url = nome === 'antigo' ? `${SITE}/u/${ID}/Abas%20Fixture` : `${SITE}/u/${HANDLE}${sufixo}`;
     const r = await handler.fetch(new Request(url, { headers: { 'x-forwarded-for': '127.0.0.1' } }));
     out[nome] = { status: r.status, html: await r.text() };
   }
+  perfilAtual=SEM_HANDLE;
+  const semHandle=await handler.fetch(new Request(`${SITE}/u/${ID}/partidas`,{headers:{'x-forwarded-for':'127.0.0.1'}}));
+  out.semHandle={status:semHandle.status,html:await semHandle.text()};
   globalThis.fetch = real;
   process.chdir(ROOT);
   return out;
@@ -92,6 +96,14 @@ const CASOS = [
     if (/application\/ld\+json/.test(b.privacidade.html)) return 'privacidade (noindex) com JSON-LD';
     return null;
   }],
+  ['PA6 · conta sem handle mantém as abas em /u/<uuid>/<aba>', (b) => {
+    if (b.semHandle.status!==200) return `status ${b.semHandle.status}`;
+    if (canonical(b.semHandle.html)!==`${SITE}/u/${ID}/partidas`) return `canonical ${canonical(b.semHandle.html)}`;
+    const links=[...b.semHandle.html.matchAll(/<nav class="profile-tabs"[^>]*>([\s\S]*?)<\/nav>/g)].map(m=>m[1]).join('');
+    for(const slug of ['conquistas','partidas','privacidade'])if(!links.includes(`href="/u/${ID}/${slug}"`))return `sem link /u/${ID}/${slug}`;
+    if(links.includes(`/u/${ID}/Abas-Fixture/partidas`))return 'nick legado virou segmento pai da aba';
+    return null;
+  }],
 ];
 
 const rodar = (b) => CASOS.map(([nome, f]) => { let erro; try { erro = f(b); } catch (e) { erro = `exceção: ${e.message}`; } return { nome, erro }; });
@@ -107,6 +119,7 @@ if (MUTATE) {
     ['PA4', 'jogo cobre a privacidade', troca('privacidade', '</body>', "<script>frame.className='profile-game'</script></body>")],
     ['PA4', 'aba vira página à parte', troca('conquistas', 'id="main-menu"', 'id="pagina-aba"')],
     ['PA5', 'JSON-LD some', troca('perfil', 'application/ld+json', 'application/json')],
+    ['PA6', 'nick legado vira pai da aba sem handle', troca('semHandle', `${SITE}/u/${ID}/partidas"`, `${SITE}/u/${ID}/Abas-Fixture/partidas"`)],
   ];
   let cegas = 0;
   for (const [alvo, nome, aplica] of MUTANTES) {

@@ -118,6 +118,17 @@
 .tp-lobby-novidades__rodape{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px}
 .tp-lobby-novidades__versao{color:var(--tp-tinta-3);font-size:12px}
 
+/* Novidades de skins: faixa horizontal de pôsteres; o card abre o detalhe da loja. */
+.tp-lobby-skins{gap:12px}
+.tp-lobby-skins__faixa{display:flex;gap:10px;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
+.tp-lobby-skins__cartao{flex:0 0 auto;width:116px;display:flex;flex-direction:column;gap:6px;padding:0;border:1px solid rgba(255,255,255,.09);border-radius:10px;
+  background:var(--tp-elevado);color:var(--tp-tinta-1);cursor:pointer;text-align:left;transition:transform var(--tp-d-rapido) var(--tp-ease-saida)}
+.tp-lobby-skins__cartao:hover{transform:translateY(calc(-2px * var(--tp-mov)))}
+.tp-lobby-skins__cartao:focus-visible{outline:2px solid var(--tp-lima);outline-offset:2px}
+.tp-lobby-skins__poster{display:block;width:100%;height:132px;object-fit:cover;border-radius:9px 9px 0 0}
+.tp-lobby-skins__nome{padding:0 8px;font:800 12px/1.2 var(--tp-ui);letter-spacing:.02em}
+.tp-lobby-skins__preco{padding:0 8px 8px;color:var(--tp-tinta-3);font-size:11px}
+
 /* Party: o seu slot no palco e os dois de convite (fase 2 traz a party real) */
 .tp-lobby-vaga{position:fixed;bottom:210px;width:140px;height:min(420px,calc(100dvh - 400px));display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:12px;pointer-events:none}
 .tp-lobby-vaga--esq{left:calc(50% - 246px)}
@@ -154,7 +165,7 @@
 @media (max-width:1439px),(max-height:799px){
   .tp-lobby-vaga{display:none}
   .tp-lobby-party{display:flex}
-  .tp-lobby-novidades{display:none}
+  .tp-lobby-novidades,.tp-lobby-skins{display:none}
 }
 @media (max-height:799px){
   .tp-lobby-dir{display:none}

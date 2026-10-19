@@ -267,12 +267,58 @@ function montarEsquerda(play) {
   link.href = LANG === 'en' ? '/whats-new' : '/changelog';
   rodape.append(link, no('span', 'tp-num tp-lobby-novidades__versao', `v${VERSION}`));
   novidades.append(capa, rodape);
-  esq.append(quests, novidades);
+  esq.append(quests);
+  montarSkins(esq);
+  esq.appendChild(novidades);
   play.appendChild(esq);
   const redesenhar = () => desenharQuests(quests);
   document.addEventListener('cs-treta-state', redesenhar);
   const login = $('hub-account-login');
   if (login) new MutationObserver(redesenhar).observe(login, { attributes: true, attributeFilter: ['data-state'] });
+  redesenhar();
+}
+
+/* Novidades de skins: prévia dos lançamentos da loja direto no lobby. Os cards acionam o
+   mesmo detalhe da loja (treta-store); sem loja no ar, o pôster estático ainda mostra. */
+const NOVIDADES_SKINS = ['pack-dourado', 'pack-prateado', 'pack-selva-camo', 'ouro-ak', 'luvas-tropicalente', 'pack-maga-47'];
+
+function desenharSkins(painel) {
+  const faixa = painel.querySelector('.tp-lobby-skins__faixa');
+  if (!faixa) return;
+  const d = tretaLoja();
+  const itens = new Map(d.itens.map((s) => [s.id, s]));
+  const cartoes = NOVIDADES_SKINS
+    .map((id) => itens.get(id))
+    .filter((s) => s && s.poster)
+    .map((s) => {
+      const cartao = no('button', 'tp-lobby-skins__cartao');
+      cartao.type = 'button';
+      cartao.dataset.skin = s.id;
+      cartao.setAttribute('aria-label', `${s.name}${d.saldo != null && s.price != null ? ` · T$ ${s.price}` : ''}`);
+      const arte = no('img', 'tp-lobby-skins__poster');
+      arte.src = s.poster; arte.alt = ''; arte.loading = 'lazy'; arte.decoding = 'async';
+      cartao.append(arte, no('span', 'tp-lobby-skins__nome', s.name),
+        no('span', 'tp-num tp-lobby-skins__preco', s.owned ? tr('NO SEU ARMÁRIO') : s.price != null ? `T$ ${s.price}` : ''));
+      cartao.addEventListener('click', () => { abaDoHub('loja'); abrirTretaSkin(s.id); });
+      return cartao;
+    });
+  faixa.replaceChildren(...cartoes);
+}
+
+function montarSkins(esq) {
+  const painel = no('section', 'tp-lobby-painel tp-lobby-skins');
+  painel.id = 'tp-lobby-skins';
+  const cab = no('div', 'tp-lobby-painel__cab');
+  const h2 = no('h2', 'tp-disp tp-lobby-painel__titulo');
+  h2.appendChild(no('span', 'tp-ital', tr('NOVIDADES DE SKINS')));
+  const ver = no('button', 'tp-lobby-link', tr('VER LOJA ▸'));
+  ver.type = 'button';
+  ver.addEventListener('click', () => abaDoHub('loja'));
+  cab.append(h2, ver);
+  painel.append(cab, no('div', 'tp-lobby-skins__faixa'));
+  esq.appendChild(painel);
+  const redesenhar = () => desenharSkins(painel);
+  document.addEventListener('cs-treta-state', redesenhar);
   redesenhar();
 }
 

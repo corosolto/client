@@ -451,8 +451,7 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
     const loaded=await visual($('treta-info-coin'),{...TRETA_COIN_ART,coin:true});
     if(version!==infoVersion || !$('treta-info').open)loaded.dispose();else infoStage=loaded;
   };
-  $('treta-how').onclick=()=>void explain();$('treta-balance').onclick=()=>void explain();
-  $('treta-open-quests').onclick=()=>document.querySelector('[data-treta-view=quests]')?.click();
+  $('treta-how').onclick=()=>void explain();$('treta-balance').onclick=abrirTretaHistorico;
   $('treta-solo').onclick=()=>{if(!state?.authenticated){login();return;}document.dispatchEvent(new CustomEvent('cs-treta-solo'));};
   $('treta-info-login').onclick=()=>{$('treta-info').close();login();};
   const introCoin=node('img');introCoin.src=TRETA_COIN_ART.poster;introCoin.alt='Moeda TRETA$ do Saci';$('treta-info-coin').append(introCoin);
@@ -491,3 +490,20 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   void loadAccount().then(auth=>{account=auth;}).catch(()=>{});
   return refresh();
 }
+/* Histórico de compras: linhas de ledger kind='purchase' nomeadas pelo catálogo. */
+function drawHistory(){
+  const list=$('treta-history-list');if(!list)return;
+  const rows=(state?.ledger || []).filter(entry=>entry.kind==='purchase' && entry.skin_id).slice(0,20);
+  $('treta-history-balance').textContent=state?.wallet?money(state.wallet.balance):'—';
+  $('treta-history-empty').hidden=rows.length>0;
+  list.replaceChildren(...rows.map(entry=>{
+    const row=node('li','','treta-history-row');
+    const nome=item(entry.skin_id)?.name || product(entry.skin_id)?.name;
+    row.append(node('time',new Date(entry.created_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}),'treta-history-date'),
+      node('strong',nome || 'VISUAL REMOVIDO',''),
+      node('span',money(entry.amount),'treta-history-amount'),
+      node('span',`SALDO ${money(entry.balance_after)}`,'treta-history-after'));
+    return row;
+  }));
+}
+export function abrirTretaHistorico(){drawHistory();openDialog($('treta-history'));}
