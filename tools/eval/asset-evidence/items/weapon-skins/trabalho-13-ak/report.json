@@ -21,14 +21,14 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "bec963ad6ea1676d9d92542acebe6d875ffe9aa9ee20197b0352d9eb6794750e",
-    "side-right.png": "9835e073b0712a9209e91ef7aabeeab86fda91d3d2ee2ffcccd927cd86c8aa03",
-    "three-quarter.png": "ed4d29a56e35c82093584c415b5493a6acdd9b7267fe3e121ed65012b7978d29"
+    "side-left.png": "6363ed7dd93129a96aab5686cd796dfda9946480477de30d0aeef9c1bcf31ae5",
+    "side-right.png": "0c2254826c408de8294040f7422a1d18b421c6801802c7a42414b7f57e871d1c",
+    "three-quarter.png": "c8cb343a1386540fa76ec7aa1526fffdffe6a7060a25b0bef493187063a3543c"
   },
-  "storePoster": "e7f503ce9cc5bb960bd606d00c698d02f08d8dece7cb4299d086b0c0f2fe8ee3",
+  "storePoster": "7e3b95b1f5225c68dcd7d808bdb002cc8bab81dde9477b7dacafdc955c9af603",
   "sources": {
     "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
-    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/political-marks/trabalho-13.svg": "0cc2e18ea49434399ef3f89af2b3deb79407e433001fdd1310534db70099be34"

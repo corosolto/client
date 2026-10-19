@@ -21,14 +21,14 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "45ed30d76a6ba17474fe8063c7f876f4a8b400b9f0348081fb2b307af54337f0",
-    "side-right.png": "160f462376fb18d2f5ea68353d6fe307570084945bf9dc029726620098237a1c",
-    "three-quarter.png": "2094afc03b36f8d18326fbda24436a4ab157ed7844724f295647b8e303846a76"
+    "side-left.png": "c1c7d57774cc9334897c9ddcd62c39c6874c5156ada1200a9384e48de0e95e6e",
+    "side-right.png": "c357e244ec451e7b92b2f8ab678ecdf4d965d3873468b0d1950523277c54b6ea",
+    "three-quarter.png": "bdc2bba5ad740d91b8f76b37d0d2db0ba62671ccd289252f173d5c91f7bab376"
   },
   "storePoster": null,
   "sources": {
     "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
-    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/political-marks/estrela-amarela.svg": "238b9664cdafbe4e448b99a39e3d4af5095dd6cf0515be4d1308f2cc69a16c11"

@@ -404,20 +404,21 @@ function sloganTexture(skinId) {
   canvas.height = 256;
   const context = canvas.getContext('2d');
   const style = SLOGAN_STYLE[definition.theme] || SLOGAN_STYLE['trabalho-13'];
-  let fontSize = 124;
+  let fontSize = 148;
+  const maxTextWidth = canvasWidth - 96;
   context.font = `900 ${fontSize}px "Arial Black", Arial, sans-serif`;
-  while (context.measureText(definition.slogan).width > canvasWidth - 148 && fontSize > 68) {
+  while (context.measureText(definition.slogan).width > maxTextWidth && fontSize > 92) {
     fontSize -= 4;
     context.font = `900 ${fontSize}px "Arial Black", Arial, sans-serif`;
   }
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.lineJoin = 'round';
-  context.lineWidth = 12;
+  context.lineWidth = 14;
   context.strokeStyle = style.stroke;
   context.fillStyle = style.fill;
-  context.strokeText(definition.slogan, canvasWidth / 2, 132);
-  context.fillText(definition.slogan, canvasWidth / 2, 132);
+  context.strokeText(definition.slogan, canvasWidth / 2, 128, maxTextWidth);
+  context.fillText(definition.slogan, canvasWidth / 2, 128, maxTextWidth);
   const texture = new THREE.CanvasTexture(canvas);
   texture.name = `${definition.theme}__barrel_slogan`;
   texture.colorSpace = THREE.SRGBColorSpace;

@@ -36,6 +36,7 @@
 - As oito skins políticas deixam de usar uma placa sobreposta: o símbolo agora é uma pintura metálica ajustada à lateral real da malha, e as frases seguem à esquerda ou centralizadas no cano/ferrolho. Os textos Brasil 22 e Estrela Vermelha ficam maiores sobre áreas azul e branca; os símbolos Trabalho 13, Estrela Verde e Brasil 22 ganham escala e posição legíveis.
 - Nas pistolas políticas, as frases sobem para o ferrolho/cano e ganham escala sem sair da arma. A Tropicalente usa somente um coqueiro maior sobre o ferrolho cinza; a Trabalho 13 troca foice e martelo por uma estrela amarela.
 - O Gauntlet visual diferencia Tamo Junto de É Nóis sem depender do texto, normaliza a escala do Camo Selva e a paleta do Emo Xadrez entre AK e pistola, e troca o brilho plástico de ouro e prata por acabamento metálico escovado controlado.
+- As dezoito variações de AK e pistola com frases usam letras cerca de 20% maiores e margens menores, mantendo a pintura dentro do cano e do ferrolho.
 - Nicks de exibição aceitam de 2 a 32 caracteres no cadastro, comunidade, chat, partida, perfil, badge e cartões compartilhados. Killfeed e painel de morte tratam o nome como texto.
 - A contagem agregada de abertura, carga, entrada, partida e sessão envia somente evento, versão e faixas. O fluxo não usa identificador, cookie ou storage e fica desligado em automação e depuração.
 

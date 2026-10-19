@@ -21,14 +21,14 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "3d4235d655a3712a7242e0d029f32897e22fea167fb938900534716294119660",
-    "side-right.png": "27fa03c3118054d299e831b339fb2ebe0889f717cbb11af1308f97bcb965163b",
-    "three-quarter.png": "f27c8528988b035ff8ee697f222d95c909ac9ee3e181bdb87b445ba6539be99e"
+    "side-left.png": "8d6fefd7a2ff632b60cdf74164d46f32a9240b26cb6699f8930133d285236242",
+    "side-right.png": "22d43734b46a5b910bf64237eecb0b12a9b8998e7260c19c5e0c5beabb30dc50",
+    "three-quarter.png": "ba954b00599860e5d0d8fa36bad8032249835f601cd192fc8b7f0ebb785970a6"
   },
-  "storePoster": "c1ad893fb46b29aaddfc84b55e0dd1606fae0e7b5586e0048b684c88a4acad3e",
+  "storePoster": "67adc7cde09f33fd5f0e42ed96a8633bae63b2ba6d582387b12fa89a258729b8",
   "sources": {
     "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
-    "public/js/weapon-skins.js": "45b24a941a49c9bb2efd660da3f76c858b0be222bd79a162159ec4bc295bcab8",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/project-marks/tropicalente-coqueiro.svg": "5d1c68e4218a84b38caa6d54739b0f5d9116d5a7f0e4fd60d7c77f9fbbd1673e"
