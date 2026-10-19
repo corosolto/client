@@ -11,6 +11,7 @@ export const DEGRAUS = Object.freeze([
   { nome: 'sem-aa', dpr: 0.7, ssao: false, aa: false, sombra: 'alta', charmask: true, mato: 0.6 },
   { nome: 'sombra-', dpr: 0.7, ssao: false, aa: false, sombra: 'baixa', charmask: true, mato: 0.45 },
   { nome: 'minimo', dpr: 0.6, ssao: false, aa: false, sombra: 'baixa', charmask: false, mato: 0.3 },
+  { nome: 'sobrevivencia', dpr: 0.5, ssao: false, aa: false, sombra: 'baixa', charmask: false, mato: 0.2 },
 ]);
 
 /* Perfil mobile (pointer:coarse): degrau inicial sustentável + teto de textura.
