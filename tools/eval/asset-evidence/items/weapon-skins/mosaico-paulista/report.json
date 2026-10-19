@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "mosaico-paulista",
+  "weaponId": "scar",
+  "status": "candidate",
+  "approved": false,
+  "certified": false,
+  "runtimeEnabled": false,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": null,
+  "sloganPlacement": null,
+  "markSourceUrl": null,
+  "referenceRule": "original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "eccf02763d0897f4ab7f25506f2d10143fed9df82e68fcafa3ddd99fb23b5c08",
+    "side-right.png": "fb1c3eecb73acb160b32ad30fac15ade839a45dc0bbe999bc615bcf6fef183c9",
+    "three-quarter.png": "449cde30804c4eafa17149c420971e6150a44cd1df4ec4673afee64a6ea706ec"
+  },
+  "storePoster": null,
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
+  },
+  "consoleErrors": []
+}

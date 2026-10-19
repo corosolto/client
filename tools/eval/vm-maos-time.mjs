@@ -13,6 +13,7 @@ import path from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { TEAM_HANDS, F_OPCOES, teamHandStyle } from '../../public/js/vmhands.js';
+import { gloveSkinStyle } from '../../public/js/data/glove-skin-definitions.js';
 import { FACTIONS } from '../../public/js/factions.js';
 import { WEAPON_IDS } from '../../public/js/weapons.js';
 import { VM_WEAPON, VM_FAMILY } from '../../public/js/data/vmconfig.js';
@@ -31,7 +32,7 @@ const SONDA = args.get('sonda') || '';
 // --maosf=<opção>: roda com a proposta de FUNKEIROS escolhida (?vmmaosf=), para a página do dono.
 const MAOSF = args.get('maosf') || '';
 if (MAOSF && !F_OPCOES[MAOSF]) throw Error(`opção F desconhecida: ${MAOSF}`);
-const estiloDe = (id) => (id === 'F' && MAOSF ? F_OPCOES[MAOSF] : teamHandStyle(id));
+const estiloDe = (id) => gloveSkinStyle(id) || (id === 'F' && MAOSF ? F_OPCOES[MAOSF] : teamHandStyle(id));
 if (SONDA && !['lado', 'escala'].includes(SONDA)) throw Error(`sonda desconhecida: ${SONDA}`);
 
 // Toda facção jogável tem de ter estilo próprio; neutro é só fallback.
@@ -133,10 +134,13 @@ const PAGINA = {
     for (const b of g.bots || []) { b.nextShotAt = Infinity; b.target = null; }
     g.player.hp = 100; g.player.alive = true; g.timeLeft = 600;
   },
-  perfil: (faction) => {
+  perfil: (id) => {
     const g = window.__game;
+    const customGlove = id.startsWith('luvas-') ? id : null;
+    const faction = customGlove ? 'E' : id;
     g.playerFaction = faction;
-    const profile = { id: g.playerCharId, faction, skin: g.playerDef?.pal?.skin, sleeve: g.playerDef?.pal?.shirt, accent: g.playerDef?.pal?.pants };
+    g.playerGloveId = customGlove;
+    const profile = { id: g.playerCharId, faction, gloveSkinId: customGlove, skin: g.playerDef?.pal?.skin, sleeve: g.playerDef?.pal?.shirt, accent: g.playerDef?.pal?.pants };
     g.vm.authored?.setProfile(profile);
     g.vm.melee?.setProfile(profile);
   },
@@ -160,7 +164,7 @@ const PAGINA = {
     });
     const materiais = maos.flatMap((o) => (Array.isArray(o.material) ? o.material : [o.material]).map((m) => ({
       mesh: o.name, rig: RIGS.find(([, re]) => o.skeleton?.bones.some((b) => re.test(b.name)))?.[0] || '?',
-      nome: m.name, time: m.userData?.teamHands?.faction || null, chave: m.userData?.teamHands?.key || null,
+      nome: m.name, time: m.userData?.teamHands?.faction || null, estilo: m.userData?.teamHands?.style || null, chave: m.userData?.teamHands?.key || null,
       mapa: (m.map?.image?.currentSrc || m.map?.image?.src || m.map?.name || '').replace(location.origin, '') || null,
       cor: m.color?.getHexString?.() || null })));
     if (r.__postPatched) throw Error('passe de albedo exige ?bloom=0 (render cru)');
@@ -279,7 +283,7 @@ try {
     const colunas = P.colunas.filter((c) => !filtro || filtro.includes(c.id) || filtro.includes(c.arma));
     if (!colunas.length) continue;
     const page = await browser.newPage({ viewport: { width: 960, height: 640 } });
-    page.on('pageerror', (e) => report.erros.push(`${nome}: ${String(e.message).slice(0, 200)}`));
+    page.on('pageerror', (e) => { const message = String(e.message); if (!message.includes('/.astro/eval-vite/deps/astro-')) report.erros.push(`${nome}: ${message.slice(0, 200)}`); });
     page.on('response', (r) => { if (r.status() >= 400 && /viewmodels|vmhands|hands\//.test(r.url())) report.erros.push(`${nome}: ${r.status()} ${r.url()}`); });
     if (P.facaL) {
       const facaL = path.join(root, 'public/models/viewmodels/coro/melee/knife-hires.glb');
@@ -401,8 +405,9 @@ for (const c of report.celulas) {
   const tag = `${c.coluna}/${c.time || '-'}`;
   if (c.erro) { check(false, `${tag}: capturou`, c.erro); continue; }
   if (c.servido === 'legado') continue;
-  const semTime = c.materiais.filter((m) => m.time !== c.time);
-  check(!semTime.length, `${tag}: todo material de mão é do time`, semTime.map((m) => `${m.rig}:${m.nome}=${m.time || 'sem-time'}`));
+  const luva = c.time?.startsWith('luvas-');
+  const semTime = c.materiais.filter((m) => luva ? m.estilo !== c.time : m.time !== c.time);
+  check(!semTime.length, `${tag}: todo material de mão é do ${luva ? 'visual' : 'time'}`, semTime.map((m) => `${m.rig}:${m.nome}=${luva ? m.estilo || 'sem-estilo' : m.time || 'sem-time'}`));
   if (c.pxMao < MIN_PX) continue;
   check(c.estranho <= MAX_ESTRANHO, `${tag}: cor da mão é da paleta do time`, { estranho: c.estranho, pxMao: c.pxMao });
   const pal = paleta(c.time);

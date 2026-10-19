@@ -47,7 +47,7 @@ const directSettings = rota?.estado?.janela === 'configuracoes';
 const initialNetwork = rota?.estado?.partida === 'multiplayer' ? 'mp' : 'sp';
 const initialMpTab = rota?.estado?.servidor === 'privado' ? 'private' : 'public';
 const initialWindow = rota?.estado?.janela || '';
-const initialStoreView = rota?.estado?.loja === 'quests' ? 'quests' : rota?.estado?.loja === 'acessorios' ? 'accessories' : 'skins';
+const initialStoreView = { armas: 'weapons', itens: 'items', packs: 'packs', quests: 'quests' }[rota?.estado?.loja || ''] || 'weapons';
 const initialSocial = rota?.estado?.social || 'profile';
 const initialProfile = rota?.estado?.perfil || '';
 const brasaoE = `/img/brasoes/e.png?v=${BRASAO_VERSAO.e}`;
@@ -761,7 +761,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <button id="tp-splash-jogar" class="tp-btn tp-btn--primario" type="button" disabled><span class="tp-ital">JOGAR</span><kbd>ENTER</kbd></button>
       <p class="tp-splash__convidado" id="tp-splash-convidado" data-vazio>Você entra como <b>convidado</b></p>
     </div>
-    <div class="tp-splash__dica"><b>DICA</b><span>Andar com a arma no ombro (tecla F) é mais rápido do que andar mirando.</span></div>
+    <div class="tp-splash__dica"><b>DICA</b><span>Pressione I para girar a arma de lado e ver a skin inteira.</span></div>
     <div class="tp-splash__canto"><button id="tp-splash-som" type="button" data-splash-fica data-vazio aria-pressed="true" aria-label="Desligar música do menu" title="Desligar música do menu"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="speaker-body" d="M3 9v6h4l5 4V5L7 9H3Z"/><path class="speaker-wave" d="M16 9a4 4 0 0 1 0 6m2-9a8 8 0 0 1 0 12"/><path class="speaker-off" d="m16 9 5 6m0-6-5 6"/></svg></button><span class="tp-num" id="tp-splash-ver" data-vazio>v0</span></div>
   </div>
 </div>
@@ -1608,6 +1608,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <span>CLIQUE ESQ.</span><span>Atirar</span>
       <span>CLIQUE DIR.</span><span>Mira telescópica (AWP)</span>
       <span>R</span><span>Recarregar</span>
+      <span>I</span><span>Inspecionar arma / ver a skin</span>
       <span>1 / 2 / 3</span><span>AWP / Pistola / Faca</span>
       <span>RODINHA</span><span>Próxima / anterior arma</span>
       <span>Z / X / V</span><span>Comandos de voz (rádio)</span>

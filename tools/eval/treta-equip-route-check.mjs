@@ -14,7 +14,8 @@ const sides=required(characters,/export const ladosDe = .*?;\nexport const podeN
 const boot=required(main,/const routeChar = .*?const initialSide = .*?;/s,'boot');
 const tela=required(main,/const TELA = [^\n]*;\n(?:\/\/[^\n]*\n)*const ROTA_OPCOES = [^\n]*;/,'chaves de tela');
 let navigate=required(main,/function hubNavigate\(changes, replace = false\) \{.*?\n\}/s,'navegação');
-let equip=required(main,/initTretaStore\(\{skipPrompt:.*?onEquipped:skin=>\{.*?\}\}\);/s,'callback');
+let equip=required(main,/initTretaStore\(\{skipPrompt:.*?onEquipped:skin=>\{.*?\}\}\)\)?;/s,'callback');
+equip=equip.replace(/\)\);$/,');');
 const mutation=process.argv.find(a=>a.startsWith('--mutante='))?.split('=')[1];
 const mutations=[['sem-url','personagem da URL diverge'],['push-history','equip criou entrada de histórico'],['perde-query','contexto da URL alterado']];
 if(process.argv.includes('--mutations')){

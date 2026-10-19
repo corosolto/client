@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "nacao-rubro-negra",
+  "weaponId": "ak",
+  "status": "permission-needed",
+  "approved": false,
+  "certified": false,
+  "runtimeEnabled": false,
+  "designOrigin": "project-colorway-with-official-mark",
+  "rightsStatus": "permission-needed",
+  "officialMarksIncluded": true,
+  "markPlacement": "receiver",
+  "sloganPlacement": null,
+  "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Clube_de_Regatas_do_Flamengo_logo.svg",
+  "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "92bd2ed69bac2c1e393e43d917580234acd49d4af3f62d50785fbdbbc4f04c77",
+    "side-right.png": "ead774f9491fefc7142823f530d8d5ebf816d20f3ec356261f294c741ae29340",
+    "three-quarter.png": "bf57d088a7a2e2edb13415d6374ade1e951fb0554123bac6d2c414707296e547"
+  },
+  "storePoster": null,
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/club-marks/flamengo.png": "7ef0bbdc5ef03ceafae933ed9ec75b4f18ed5c05aa3af98dca9781c5d8c9a36f"
+  },
+  "consoleErrors": []
+}

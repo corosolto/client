@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "pack-emo-xadrez-knife",
+  "weaponId": "knife",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "public-domain-adaptation",
+  "rightsStatus": "public-domain",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": null,
+  "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Holden%27s_human_osteology_(1899)_-_Plt18_Fig01.png",
+  "referenceRule": "original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "ca04dd852e629f7a88488136016693b0285d0d532b6bdda1af632e0e0ca14dd8",
+    "side-right.png": "081d5f53f3621d3c619cfbfa742647366dc6580aed05a5f23f5a5c4b7893e660",
+    "three-quarter.png": "7293f07e786d8d33c7a1dbdf8032c84f67a3de5962232f412a4f17cbd23ade7b"
+  },
+  "storePoster": null,
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/project-marks/emo-caveira-gravura.webp": "93a8ab848738720a5da7222011922605214ad6daad5a7d8d2b826fc5856e3309"
+  },
+  "consoleErrors": []
+}

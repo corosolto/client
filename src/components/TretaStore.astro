@@ -1,6 +1,6 @@
 ---
 import {TRETA_ITEMS_ENABLED} from '../../public/js/treta-features.js';
-const { visible = false, initialView = 'skins' } = Astro.props;
+const { visible = false, initialView = 'weapons' } = Astro.props;
 ---
 <section id="hub-shop" class="hub-pane treta-store" role="tabpanel" aria-label="Loja de skins" hidden={!visible}>
   <header class="treta-heading">
@@ -8,27 +8,33 @@ const { visible = false, initialView = 'skins' } = Astro.props;
     <button id="treta-balance" class="treta-wallet" type="button" aria-label="Ver carteira TRETA$"><img class="treta-coin-mark" src="/img/treta/coin-classic-saci.webp" alt="" width="36" height="36" aria-hidden="true"><span><small>SEU SALDO</small><b id="treta-balance-value">ENTRE NA CONTA</b></span></button>
   </header>
   <nav class="treta-views" role="tablist" aria-label="Seções da loja">
-    <button type="button" role="tab" data-treta-view="skins" aria-controls="treta-skins-view" aria-selected={initialView === 'skins'}>SKINS E ARMÁRIO</button>
+    <button type="button" role="tab" data-treta-view="weapons" aria-controls="treta-weapons-view" aria-selected={initialView === 'weapons'}>ARMAS</button>
+    <button type="button" role="tab" data-treta-view="items" aria-controls="treta-items-view" aria-selected={initialView === 'items'}>ITENS</button>
+    <button type="button" role="tab" data-treta-view="packs" aria-controls="treta-packs-view" aria-selected={initialView === 'packs'}>PACKS</button>
     <button type="button" role="tab" data-treta-view="quests" aria-controls="treta-quests-view" aria-selected={initialView === 'quests'}>QUESTS · GANHAR T$</button>
-    <button type="button" role="tab" hidden={!TRETA_ITEMS_ENABLED} data-treta-view="accessories" aria-controls="treta-accessories-view" aria-selected={initialView === 'accessories'}>ACESSÓRIOS</button>
   </nav>
   <div class="treta-status-line"><p id="treta-status" class="treta-status" role="status" aria-live="polite"></p><button id="treta-retry" class="treta-secondary" type="button" hidden>TENTAR DE NOVO</button></div>
-  <section id="treta-skins-view" role="tabpanel" aria-label="Skins e armário" hidden={initialView !== 'skins'}>
-    <div class="treta-toolbar"><div role="group" aria-label="Filtrar skins"><button type="button" data-treta-filter="all" aria-pressed="true">TODAS</button><button type="button" data-treta-filter="drip" aria-pressed="false">COLEÇÃO DRIP</button><button type="button" data-treta-filter="owned" aria-pressed="false">MEU ARMÁRIO</button></div><button id="treta-how" type="button">COMO GANHAR T$ ↗</button></div>
+  <section id="treta-weapons-view" role="tabpanel" aria-label="Armas" hidden={initialView !== 'weapons'}>
+    <div class="treta-toolbar"><div role="group" aria-label="Filtrar armas"><button type="button" data-treta-filter="all" aria-pressed="true">TODAS</button><button type="button" data-treta-filter="owned" aria-pressed="false">MEU ARMÁRIO</button></div><button id="treta-how" type="button">COMO GANHAR T$ ↗</button></div>
+    <div id="treta-grid" class="treta-grid" aria-busy="true"></div>
+  </section>
+  <section id="treta-items-view" role="tabpanel" aria-label="Itens" hidden={initialView !== 'items'}>
+    <header class="treta-section-heading"><small>PERSONAGENS · LUVAS · ÓCULOS</small><h3>MONTE SEU VISUAL</h3><p>Itens cosméticos ocupam espaços próprios e não alteram dano, velocidade ou hitbox.</p></header>
+    <div id="treta-items-grid" class="treta-grid" aria-busy="true"></div>
     <section class="treta-promo">
       <div><small>GANHE ANTES DE ESCOLHER</small><h3>COMPLETE QUESTS.<br>MONTE SEU DRIP.</h3><p id="treta-promo-copy">Neste mês, seus T$ vêm das quests. A compra de moeda não está disponível.</p><p id="treta-invite-progress">Entre na conta para criar seu convite e acompanhar as recompensas.</p></div><div id="treta-rewards" class="treta-rewards"></div>
       <div class="treta-promo-actions"><button id="treta-solo" class="treta-primary" type="button">SOLO POR T$ · EM BREVE</button><button id="treta-invite" class="treta-secondary" type="button">ENTRAR PARA CRIAR MEU CONVITE</button><button id="treta-open-quests" class="treta-secondary" type="button">VER TODAS AS QUESTS ▸</button></div>
     </section>
-    <div id="treta-grid" class="treta-grid" aria-busy="true"></div>
     <section class="treta-mint"><header><small>CUNHADAS NA TRETA</small><h3>OURO COM HISTÓRIA</h3><p>Sete valores. Sete personagens. Uma moeda.</p></header><div id="treta-coins" class="treta-coins"></div></section>
+    <section hidden={!TRETA_ITEMS_ENABLED}><header class="treta-section-heading"><small>ÓCULOS DA TRETA · T$ 200</small><h3>SEIS JEITOS DE VER O CORO</h3><p>Confira o encaixe nos personagens antes de comprar.</p></header><div id="treta-eyewear-grid" class="treta-grid"></div><div id="treta-accessories" class="treta-accessories"></div></section>
+  </section>
+  <section id="treta-packs-view" role="tabpanel" aria-label="Packs" hidden={initialView !== 'packs'}>
+    <header class="treta-section-heading"><small>4 PEÇAS · T$ 2.000</small><h3>UM TEMA. O KIT INTEIRO.</h3><p>Cada pack equipa AK, pistola, luvas e faca coordenadas de uma vez.</p></header>
+    <div id="treta-packs-grid" class="treta-grid" aria-busy="true"></div>
   </section>
   <section id="treta-quests-view" role="tabpanel" aria-label="Quests para ganhar TRETA$" hidden={initialView !== 'quests'}>
     <header class="treta-section-heading"><small id="treta-quest-season">QUESTS DE LANÇAMENTO</small><h3>JOGUE. COMPLETE. GANHE.</h3><p>Neste mês, TRETA$ só pode ser ganha completando quests. O saldo fica na sua conta e pode ser usado para desbloquear skins.</p></header>
     <p id="treta-quest-period" role="status"></p><p id="treta-incoming-status" class="treta-incoming-status" role="status" hidden></p><div id="treta-quests" class="treta-quests"></div><p id="treta-quest-limit"></p>
   </section>
-  <section id="treta-accessories-view" role="tabpanel" aria-label="Acessórios" hidden={initialView !== 'accessories'}>
-    <header class="treta-section-heading"><small>ÓCULOS DA TRETA · T$ 200</small><h3>SEIS JEITOS DE VER O CORO</h3><p>Os óculos ocupam um espaço próprio no armário. Confira o encaixe nos personagens antes de comprar.</p></header>
-    <div id="treta-eyewear-grid" class="treta-grid"></div>
-    <div id="treta-accessories" class="treta-accessories"></div>
-  </section>
+
 </section>

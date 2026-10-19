@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "e-nois-ak",
+  "weaponId": "ak",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": null,
+  "sloganPlacement": "barrel-horizontal",
+  "markSourceUrl": null,
+  "referenceRule": "project-authored Brazilian lettering and illustration over the original weapon finish; no copied brand or commercial skin",
+  "slogan": "É NÓIS",
+  "storePrice": 500,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "c8772c9dbb1ea24ef18d61c25ff9af50771f6fef6515b0864e2e367f25ef3b75",
+    "side-right.png": "4128e9a5cf1b268dd92861ab889509fb62c203c35c15d7774e295b848db239f2",
+    "three-quarter.png": "68a7d5cf3bf0d7154d9964fdf882189d216810998db75d591969c7797beba060"
+  },
+  "storePoster": "e7c79879a6b84d8eb061ac059b09995256c68558f3769375006d45860b7e3280",
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
+  },
+  "consoleErrors": []
+}

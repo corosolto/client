@@ -90,6 +90,10 @@ recusa DB/site remoto e restaura catálogo/contas no finally. Aprovação no man
 Os perfis explícitos do arsenal e seus consumidores de dano, entrada e saque são
 verificados por `npm run eval:weapon-profiles`, com mutantes que removem cada vínculo.
 `npm run eval:weapon-matrix` reprova a matriz quando diverge do consumidor de dano.
+`npm run eval:weapon-skin-body` renderiza cada imagem lateral ligada e desligada,
+compara os pixels contra uma máscara da malha e reprova qualquer pintura fora do
+corpo da arma; o mutante `extravasar` amplia os planos 2,4× para provar WB1.
+
 
 `npm run eval:penetration-geometry` mede a travessia real em caixas rotacionadas,
 fechadas e sobrepostas, com mutantes de AABB global, validação e oclusão.

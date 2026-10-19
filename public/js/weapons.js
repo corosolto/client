@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { WORLD_VER } from './data/weaponver.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { applyWeaponSkinCandidate, preloadWeaponSkinCandidate, reviewWeaponSkinId } from './weapon-skins.js';
 
 const loader = new GLTFLoader();
 const _cache = new Map();
@@ -234,12 +235,16 @@ const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefin
 /* `ids` opcional: a partida carrega SÓ as armas que ela sorteou (ver pickMatchWeapons), e o
    resto chega em ocioso. Sem lista = elenco inteiro, que é o caminho do arnês e do menu. */
 export async function preloadWeapons(ids) {
-  await Promise.all((ids && ids.length ? ids : WEAPON_IDS).map(async (id) => {
-    const src = MODEL_ALIAS[id] || id;    // snipers reusadas carregam a malha da arma-fonte
-    if (_cache.has(src)) return;
-    try { const g = await loadGLB(`models/weapons/${src}.glb?v=${WORLD_VER[src] || 'sem-versao'}`); _cache.set(src, g.scene); }
-    catch (e) { console.warn('weapon load failed', src, e); }
-  }));
+  const skinId = reviewWeaponSkinId();
+  await Promise.all([
+    Promise.all((ids && ids.length ? ids : WEAPON_IDS).map(async (id) => {
+      const src = MODEL_ALIAS[id] || id;    // snipers reusadas carregam a malha da arma-fonte
+      if (_cache.has(src)) return;
+      try { const g = await loadGLB(`models/weapons/${src}.glb?v=${WORLD_VER[src] || 'sem-versao'}`); _cache.set(src, g.scene); }
+      catch (e) { console.warn('weapon load failed', src, e); }
+    })),
+    preloadWeaponSkinCandidate(skinId),
+  ]);
 }
 
 export function hasWeapon(id) { return _cache.has(MODEL_ALIAS[id] || id); }
@@ -314,7 +319,7 @@ export function weaponMetrics(id) { return _metrics.get(id) || null; }
 
 // Returns a THREE.Group holding the weapon, scaled to real size, barrel pointing +Z,
 // grip roughly at the group origin (so it sits in a hand placed at origin).
-export function weaponModel(id) {
+export function weaponModel(id, skinId = reviewWeaponSkinId()) {
   const requested = MODEL_ALIAS[id] || id;
   const source = _cache.has(requested) ? requested : null;
   const tpl = source ? _cache.get(source) : null;
@@ -345,9 +350,11 @@ export function weaponModel(id) {
      é box.min.y, que ninguém lê. */
   const mag = buildMag(id);
   if (mag) { mag.scale.setScalar(1 / s); wrap.add(mag); }
+  applyWeaponSkinCandidate(wrap, id, skinId);
   wrap.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.frustumCulled = false; } });
   wrap.userData.weaponSource = source;
   wrap.userData.weaponRequested = requested;
+  wrap.userData.weaponSkin = wrap.userData.weaponSkin || null;
   wrap.userData.metrics = measureGun(id, wrap);   // boca/alça/caixa medidas (ver measureGun)
   return wrap;
 }

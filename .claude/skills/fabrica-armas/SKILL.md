@@ -49,6 +49,16 @@ hashes e procedência; o jogo recebe os GLBs pela overlay privada.
 Se mudar arma, mão, animação, ADS, mira ou HUD, mantenha a edição sequencial
 na mesma lane. Não vire `ready` ou `VM_LAUNCH`; essas são decisões do dono.
 
+### Imagem pintada fica dentro do corpo
+
+Símbolo, bandeira, frase, brasão ou qualquer outra imagem aplicada à arma não pode
+ultrapassar a silhueta renderizada do corpo em nenhuma lateral. Transparência não
+autoriza uma placa maior: são os pixels opacos servidos que precisam ter arma por
+baixo. Antes de aceitar uma skin, rode `npm run eval:weapon-skin-body`; a régua
+compara a pintura ligada e desligada contra uma máscara da malha real nas duas
+laterais e prova o portão com o mutante `extravasar`. Falha de leitura da máscara
+ou imagem pequena demais para ser medida também reprova.
+
 ## 3. Plano B da recarga com segundo pente
 
 Para um chassi sem a recarga exigida, use a ficha `malhaPropria` e o

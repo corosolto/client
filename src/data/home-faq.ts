@@ -17,7 +17,7 @@ export const HOME_FAQ: [string, string][] = [
   ],
   [
     "Quais são os controles?",
-    "WASD move, mouse mira, clique esquerdo atira, clique direito abre a luneta, Ctrl (ou C) agacha e melhora a mira, Shift corre, Espaço pula, R recarrega, as teclas 1/2/3 (ou a rodinha do mouse) trocam entre primária, pistola e faca, Z/X/V abrem os comandos de voz, M troca de time e Tab mostra o placar."
+    "WASD move, mouse mira, clique esquerdo atira, clique direito abre a luneta, Ctrl (ou C) agacha e melhora a mira, Shift corre, Espaço pula, R recarrega, I inspeciona a arma de lado, as teclas 1/2/3 (ou a rodinha do mouse) trocam entre primária, pistola e faca, Z/X/V abrem os comandos de voz, M troca de time e Tab mostra o placar."
   ],
   [
     "Quais são os times e os personagens?",
@@ -47,7 +47,7 @@ export const HOME_FAQ: [string, string][] = [
 export const HOME_FAQ_EN: [string, string][] = [
   ['What is CORO SOLTO: Treta Suprema?', 'A free browser FPS inspired by classic arena shooters, set in a satirical Brazil. Pick Team E or Team B and a character, play against bots or join the multiplayer beta, and compete in rounds or Capture the Flag. Desktop uses mouse and keyboard; mobile has touch controls.'],
   ['Do I need to install or pay for anything?', 'No. The game is free and runs in your browser, with no download or account required. On mobile, you can add the web beta to your home screen when your browser offers that option.'],
-  ['What are the controls?', 'WASD moves, mouse aims, left click fires, right click scopes, Ctrl (or C) crouches, Shift sprints, Space jumps, R reloads, 1/2/3 or the mouse wheel switches weapons, Z/X/V opens voice commands, M switches teams and Tab shows the scoreboard.'],
+  ['What are the controls?', 'WASD moves, mouse aims, left click fires, right click scopes, Ctrl (or C) crouches, Shift sprints, Space jumps, R reloads, I turns the weapon sideways for inspection, 1/2/3 or the mouse wheel switches weapons, Z/X/V opens voice commands, M switches teams and Tab shows the scoreboard.'],
   ['Which teams and characters are available?', `Every match has only two teams: Team E and Team B. The ${PERSONAGENS.length} characters are organized into ${GRUPOS.length} catalogue groups; those groups are not extra teams.`],
   ['Which maps does the game have?', `There are ${MAPAS.length} playable maps: ${lista(NOMES_MAPAS, 'and')}. The menu shows the available maps and lets you choose rounds or Capture the Flag.`],
   ['How does the global ranking work?', RANKING_DESCRIPTION_EN],

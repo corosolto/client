@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "alvinegra-praiana",
+  "weaponId": "ak",
+  "status": "permission-needed",
+  "approved": false,
+  "certified": false,
+  "runtimeEnabled": false,
+  "designOrigin": "project-colorway-with-official-mark",
+  "rightsStatus": "permission-needed",
+  "officialMarksIncluded": true,
+  "markPlacement": "receiver",
+  "sloganPlacement": null,
+  "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Santos_logo.svg",
+  "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "112df7e72201af4e46bbe336f03d3cc01c1530ebc0ef5d96a1bc35e0b08bda45",
+    "side-right.png": "c22185785b6513e8ca352a8628a4a51aad2af3e1ecb2b266db72f290c1894ca5",
+    "three-quarter.png": "7a4353a9278d6fc5c36075c2a53b84d2b5b0e2e0b277e1b5a736f8c16bee6355"
+  },
+  "storePoster": null,
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/club-marks/santos.png": "94940aef9f8260e6d9a47bbf70219e77b2f66f8a04d2422e67e6ed746bde9115"
+  },
+  "consoleErrors": []
+}

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "tamo-junto-pistola",
+  "weaponId": "pistol",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": null,
+  "sloganPlacement": "barrel-horizontal",
+  "markSourceUrl": null,
+  "referenceRule": "project-authored Brazilian lettering and illustration over the original weapon finish; no copied brand or commercial skin",
+  "slogan": "TAMO JUNTO",
+  "storePrice": 500,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "f6273e554bde142dbc01e08a9d6e846d6a90bd50fd9bec04f6adcb0361d2feda",
+    "side-right.png": "2282b304d98b69a07b36278c56cfee3ddadb03159b4c3b3861c23c863dcdd5d4",
+    "three-quarter.png": "9155f69eb0729bab4a65729c0eb06d4cde1d777165f23f81f8448687c259b08e"
+  },
+  "storePoster": "0377817f987fa6cbde5a80bf5891de5cbc154bb8654ddc0aff3d3f383137a611",
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
+  },
+  "consoleErrors": []
+}
