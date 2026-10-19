@@ -17,6 +17,7 @@ import { preloadWeapons, weaponModel, WEAPON_IDS } from './js/weapons.js';
 
 const qp = new URLSearchParams(location.search);
 const W = qp.get('w') || 'ak';
+const SKIN = qp.get('skin') || null;
 const hud = document.getElementById('hud');
 
 const renderer = new THREE.WebGLRenderer({ antialias:true });
@@ -37,7 +38,7 @@ scene.add(new THREE.ArrowHelper(new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,
 scene.add(new THREE.ArrowHelper(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,0,0), 0.5, 0xff3344, 0.07, 0.04));
 
 await preloadWeapons();
-const wm = weaponModel(W);
+const wm = weaponModel(W, SKIN);
 if (!wm) { hud.textContent = 'sem modelo ' + W; throw new Error('no model '+W); }
 scene.add(wm);
 
@@ -62,7 +63,7 @@ function muzzleHint(obj){
   return { rTip: +rTip.toFixed(3), rTail: +rTail.toFixed(3), muzzleAt: rTip < rTail ? '+Z' : '-Z', ok: rTip < rTail };
 }
 window.WT_HINT = muzzleHint(wm);
-hud.textContent = `${W}  muzzleAt=${window.WT_HINT.muzzleAt} ${window.WT_HINT.ok ? 'OK' : 'INVERTIDA?'}\nverde(+Z)=cano deve apontar AQUI\nvermelho(-Z)=coronha`;
+hud.textContent = `${W}${SKIN ? ` · ${SKIN}` : ''}  muzzleAt=${window.WT_HINT.muzzleAt} ${window.WT_HINT.ok ? 'OK' : 'INVERTIDA?'}\nverde(+Z)=cano deve apontar AQUI\nvermelho(-Z)=coronha`;
 renderer.render(scene, cam);
 window.WT_READY = true;
 </script>

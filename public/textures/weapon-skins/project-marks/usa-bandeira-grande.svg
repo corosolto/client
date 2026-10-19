@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1900 1000">
+  <defs>
+    <pattern id="stripes" width="1900" height="153.846" patternUnits="userSpaceOnUse">
+      <rect width="1900" height="76.923" fill="#b31942"/>
+      <rect y="76.923" width="1900" height="76.923" fill="#fff"/>
+    </pattern>
+    <pattern id="stars" width="126" height="108" patternUnits="userSpaceOnUse">
+      <path d="M31 13l6 18h19L41 42l6 18-16-11-15 11 6-18L7 31h19z" fill="#fff"/>
+      <path d="M94 67l6 18h19l-15 11 6 18-16-11-15 11 6-18-15-11h19z" fill="#fff"/>
+    </pattern>
+  </defs>
+  <rect width="1900" height="1000" rx="34" fill="url(#stripes)"/>
+  <rect width="760" height="538" rx="20" fill="#0a3161"/>
+  <rect x="18" y="16" width="724" height="506" fill="url(#stars)"/>
+  <rect x="12" y="12" width="1876" height="976" rx="28" fill="none" stroke="#f6f3e8" stroke-width="24"/>
+</svg>

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "e-nois-pistola",
+  "weaponId": "pistol",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": null,
+  "sloganPlacement": "barrel-horizontal",
+  "markSourceUrl": null,
+  "referenceRule": "project-authored Brazilian lettering and illustration over the original weapon finish; no copied brand or commercial skin",
+  "slogan": "É NÓIS",
+  "storePrice": 500,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "1db67641c044098235efec3552bffa99706b68f35f4665be2a035b96ab505fec",
+    "side-right.png": "1c72a282ae793cb57bb5e6f4fa598e9444eca4cec01ed8a027e1fa4756ecb62a",
+    "three-quarter.png": "9550fbe78b4c1db600faea8cdc541a437c79addb2e93745993b5c3e0bf8b083d"
+  },
+  "storePoster": "8e5e0f150ff3722dc9dd03e1730360a5d0fd6e9de3e9e7349c1dca7a75e12174",
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "593acadb248e7bc7acece694f81064e62ccb491f131d622929ea7fef2eeaec93",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
+  },
+  "consoleErrors": []
+}

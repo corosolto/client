@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "trabalho-13-pistola",
+  "weaponId": "pistol",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "political-satire",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": "barrel-horizontal",
+  "markSourceUrl": null,
+  "referenceRule": "project-authored political satire using original vector geometry; no party or campaign logo copied",
+  "slogan": "FAZ O L É LULA 13",
+  "storePrice": 500,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "3313274937f91b0b582318d939cb6a77ff88cd072dc44748a20ba35f0903a8c7",
+    "side-right.png": "f7e70ee31d15187aa607b2849cc48f47fdea1b8acc722373bac00db75bdc7d6b",
+    "three-quarter.png": "9d50f035cb68477a8b1bc950652b8222cf2de5f90b8cac3fedf535f5f7d89b6f"
+  },
+  "storePoster": "672ceca504cba73f25f15219eb6e960a61fe76231e8dcec327e9ecd4e7792435",
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "593acadb248e7bc7acece694f81064e62ccb491f131d622929ea7fef2eeaec93",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/political-marks/estrela-amarela.svg": "238b9664cdafbe4e448b99a39e3d4af5095dd6cf0515be4d1308f2cc69a16c11"
+  },
+  "consoleErrors": []
+}

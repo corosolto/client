@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "estrela-verde-pistola",
+  "weaponId": "pistol",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "political-satire",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": null,
+  "markSourceUrl": null,
+  "referenceRule": "project-authored political satire using original vector geometry; no party or campaign logo copied",
+  "slogan": null,
+  "storePrice": 500,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "ea36782b1fccfa3094ee96eb35461a10779d1a34e1321318f26b475fec4f9ebf",
+    "side-right.png": "83359f164c0230e711d9b11db993e3e192c85ff8a1d85e06be086ff412fb77eb",
+    "three-quarter.png": "edcff6df07204e5aaa6ce5e6132271436655e597ed6b158fcffa50177b95a97f"
+  },
+  "storePoster": "417b7115191cb9b8fafae2bed869d4797b542e4b3ee7235312c7de419857dd98",
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "593acadb248e7bc7acece694f81064e62ccb491f131d622929ea7fef2eeaec93",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/political-marks/estrela-verde.svg": "f6120e97101caf202cae3652dbf793387741687bad6547a7295c005bb2638484"
+  },
+  "consoleErrors": []
+}

@@ -1,0 +1,414 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-19T09:21:53.428Z",
+  "source": "weapon-skin-review.html",
+  "capture": {
+    "width": 960,
+    "height": 540,
+    "spin": 0.16,
+    "durationSeconds": 3
+  },
+  "count": 40,
+  "entries": [
+    {
+      "owner": "trabalho-13-ak",
+      "weapon": "ak",
+      "skinId": "trabalho-13-ak",
+      "output": "/video/weapon-skins/trabalho-13-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "trabalho-13-pistola",
+      "weapon": "pistol",
+      "skinId": "trabalho-13-pistola",
+      "output": "/video/weapon-skins/trabalho-13-pistola.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "estrela-vermelha-ak",
+      "weapon": "ak",
+      "skinId": "estrela-vermelha-ak",
+      "output": "/video/weapon-skins/estrela-vermelha-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "estrela-vermelha-pistola",
+      "weapon": "pistol",
+      "skinId": "estrela-vermelha-pistola",
+      "output": "/video/weapon-skins/estrela-vermelha-pistola.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "estrela-verde-ak",
+      "weapon": "ak",
+      "skinId": "estrela-verde-ak",
+      "output": "/video/weapon-skins/estrela-verde-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "estrela-verde-pistola",
+      "weapon": "pistol",
+      "skinId": "estrela-verde-pistola",
+      "output": "/video/weapon-skins/estrela-verde-pistola.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "brasil-22-ak",
+      "weapon": "ak",
+      "skinId": "brasil-22-ak",
+      "output": "/video/weapon-skins/brasil-22-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "brasil-22-pistola",
+      "weapon": "pistol",
+      "skinId": "brasil-22-pistola",
+      "output": "/video/weapon-skins/brasil-22-pistola.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "tamo-junto-ak",
+      "weapon": "ak",
+      "skinId": "tamo-junto-ak",
+      "output": "/video/weapon-skins/tamo-junto-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "tamo-junto-pistola",
+      "weapon": "pistol",
+      "skinId": "tamo-junto-pistola",
+      "output": "/video/weapon-skins/tamo-junto-pistola.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "e-nois-ak",
+      "weapon": "ak",
+      "skinId": "e-nois-ak",
+      "output": "/video/weapon-skins/e-nois-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "e-nois-pistola",
+      "weapon": "pistol",
+      "skinId": "e-nois-pistola",
+      "output": "/video/weapon-skins/e-nois-pistola.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "camo-selva-ak",
+      "weapon": "ak",
+      "skinId": "camo-selva-ak",
+      "output": "/video/weapon-skins/camo-selva-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "camo-selva-pistola",
+      "weapon": "pistol",
+      "skinId": "camo-selva-pistola",
+      "output": "/video/weapon-skins/camo-selva-pistola.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "tropicalente-ak",
+      "weapon": "ak",
+      "skinId": "tropicalente-ak",
+      "output": "/video/weapon-skins/tropicalente-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "tropicalente-pistola",
+      "weapon": "pistol",
+      "skinId": "tropicalente-pistola",
+      "output": "/video/weapon-skins/tropicalente-pistola.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "ouro-ak",
+      "weapon": "ak",
+      "skinId": "ouro-ak",
+      "output": "/video/weapon-skins/ouro-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "ouro-pistola",
+      "weapon": "pistol",
+      "skinId": "ouro-pistola",
+      "output": "/video/weapon-skins/ouro-pistola.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "prata-ak",
+      "weapon": "ak",
+      "skinId": "prata-ak",
+      "output": "/video/weapon-skins/prata-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "prata-pistola",
+      "weapon": "pistol",
+      "skinId": "prata-pistola",
+      "output": "/video/weapon-skins/prata-pistola.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-caveira-urbana",
+      "weapon": "ak",
+      "skinId": "pack-caveira-urbana-ak",
+      "output": "/video/weapon-skins/pack-caveira-urbana-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-caveira-urbana",
+      "weapon": "pistol",
+      "skinId": "pack-caveira-urbana-pistol",
+      "output": "/video/weapon-skins/pack-caveira-urbana-pistol.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-brasil-neon",
+      "weapon": "ak",
+      "skinId": "pack-brasil-neon-ak",
+      "output": "/video/weapon-skins/pack-brasil-neon-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-brasil-neon",
+      "weapon": "pistol",
+      "skinId": "pack-brasil-neon-pistol",
+      "output": "/video/weapon-skins/pack-brasil-neon-pistol.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-liberdade-1776",
+      "weapon": "ak",
+      "skinId": "pack-liberdade-1776-ak",
+      "output": "/video/weapon-skins/pack-liberdade-1776-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-liberdade-1776",
+      "weapon": "pistol",
+      "skinId": "pack-liberdade-1776-pistol",
+      "output": "/video/weapon-skins/pack-liberdade-1776-pistol.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-maga-47",
+      "weapon": "ak",
+      "skinId": "pack-maga-47-ak",
+      "output": "/video/weapon-skins/pack-maga-47-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-maga-47",
+      "weapon": "pistol",
+      "skinId": "pack-maga-47-pistol",
+      "output": "/video/weapon-skins/pack-maga-47-pistol.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-emo-xadrez",
+      "weapon": "ak",
+      "skinId": "pack-emo-xadrez-ak",
+      "output": "/video/weapon-skins/pack-emo-xadrez-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-emo-xadrez",
+      "weapon": "pistol",
+      "skinId": "pack-emo-xadrez-pistol",
+      "output": "/video/weapon-skins/pack-emo-xadrez-pistol.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-lula-13",
+      "weapon": "ak",
+      "skinId": "pack-lula-13-ak",
+      "output": "/video/weapon-skins/pack-lula-13-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-lula-13",
+      "weapon": "pistol",
+      "skinId": "pack-lula-13-pistol",
+      "output": "/video/weapon-skins/pack-lula-13-pistol.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-bolsonaro-22",
+      "weapon": "ak",
+      "skinId": "pack-bolsonaro-22-ak",
+      "output": "/video/weapon-skins/pack-bolsonaro-22-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-bolsonaro-22",
+      "weapon": "pistol",
+      "skinId": "pack-bolsonaro-22-pistol",
+      "output": "/video/weapon-skins/pack-bolsonaro-22-pistol.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-selva-camo",
+      "weapon": "ak",
+      "skinId": "pack-selva-camo-ak",
+      "output": "/video/weapon-skins/pack-selva-camo-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-selva-camo",
+      "weapon": "pistol",
+      "skinId": "pack-selva-camo-pistol",
+      "output": "/video/weapon-skins/pack-selva-camo-pistol.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-dourado",
+      "weapon": "ak",
+      "skinId": "pack-dourado-ak",
+      "output": "/video/weapon-skins/pack-dourado-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-dourado",
+      "weapon": "pistol",
+      "skinId": "pack-dourado-pistol",
+      "output": "/video/weapon-skins/pack-dourado-pistol.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-prateado",
+      "weapon": "ak",
+      "skinId": "pack-prateado-ak",
+      "output": "/video/weapon-skins/pack-prateado-ak.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "pack-prateado",
+      "weapon": "pistol",
+      "skinId": "pack-prateado-pistol",
+      "output": "/video/weapon-skins/pack-prateado-pistol.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    }
+  ]
+}

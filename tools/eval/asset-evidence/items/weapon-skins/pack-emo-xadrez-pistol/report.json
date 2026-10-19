@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "pack-emo-xadrez-pistol",
+  "weaponId": "pistol",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "public-domain-adaptation",
+  "rightsStatus": "public-domain",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": null,
+  "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Holden%27s_human_osteology_(1899)_-_Plt18_Fig01.png",
+  "referenceRule": "original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "7171cdc03621ad6dd52d8fdaad29ca130e2629cb30b9aeded8cc5c48bd1630fe",
+    "side-right.png": "7bfc2e7da94d2c69449be7695afc8df3a6958567f26dab091015f9d2deaa592b",
+    "three-quarter.png": "536aa2636dc1639495ef7aab880eb872cbfc697394ec8ec860f839ad44ab7933"
+  },
+  "storePoster": null,
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "593acadb248e7bc7acece694f81064e62ccb491f131d622929ea7fef2eeaec93",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/project-marks/emo-caveira-gravura.webp": "93a8ab848738720a5da7222011922605214ad6daad5a7d8d2b826fc5856e3309"
+  },
+  "consoleErrors": []
+}

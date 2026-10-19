@@ -6,7 +6,8 @@ import {initAccountEntry,mountProfilePreferences} from './account-entry.js';
 import {initLoginPrompt,noteLoginPromptMatch} from './login-prompt.js';
 import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
-import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,tretaVitrine} from './treta-store.js';
+import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaVitrine} from './treta-store.js';
+import {tretaPack} from './data/pack-definitions.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { preloadEyewearAssets } from './eyewear.js';
@@ -18,6 +19,7 @@ import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rota
 import { MAPS, DEFAULT_MAP, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS, comMapaCarregado, defineSeedHavan } from './maps.js';
 import { PALETA } from './paleta.js';
 import { preloadWeapons, WEAPON_IDS } from './weapons.js';
+import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons, sanitizeRounds, ROUNDS_CUSTOM_MAX } from './game.js';
@@ -1032,7 +1034,7 @@ const rememberedChar = (routeChar && CHARACTERS.some((c) => c.id === routeChar) 
 const initialChar = CHARACTERS.find((c) => c.id === rememberedChar) || CHARACTERS[0];
 const ladoValido = (def, lado) => (podeNoLado(def, lado) ? lado : ladosDe(def)[0]);
 const initialSide = ladoValido(initialChar, localStorage.getItem('csbr-home-side') === 'B' ? 'B' : 'E');
-let game = null, currentTeam = initialSide, currentFaction = initialSide, currentChar = initialChar.id, selChar = null;
+let game = null, currentTeam = initialSide, currentFaction = initialSide, currentChar = initialChar.id, selChar = null, tretaStoreReady = Promise.resolve();
 function returnPreviewToSelection() {
   const box = document.querySelector('.char-preview-box');
   const marker = $('char-preview-return');
@@ -1727,10 +1729,18 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
       mapa: MAPS[currentMap].name, desc: MAP_DESC[currentMap] || '', arte: mapPreviewPoster(currentMap, VERSION) };
     window.dispatchEvent(new CustomEvent('tp:elenco', { detail: window.__tpElenco }));
   }
+  await tretaStoreReady.catch(()=>{});
+  if (lancamentoPerdeu(meuLancamento)) return;
   const playerSkinId = sessao
     ? sessao.net.meta.roster.find(r=>r.id===sessao.net.yourEnt)?.skinId || null
     : equippedTretaSkin(charId);
   const playerEyewearId = sessao ? sessao.net.meta.roster.find(r=>r.id===sessao.net.yourEnt)?.eyewearId || null : equippedTretaEyewear();
+  const playerPack = tretaPack(equippedTretaPack());
+  const playerGloveId = playerPack?.gloveSkin || equippedTretaGlove();
+  const playerWeaponSkins = Object.fromEntries(['ak','pistol']
+    .map((weaponId)=>[weaponId,playerPack?.weaponSkins[weaponId] || equippedTretaWeaponSkin(weaponId)])
+    .filter(([,skinId])=>skinId));
+  const playerKnifeSkinId = playerPack?.knifeSkin || null;
   const matchEyewear = [playerEyewearId,...matchRoster.allyDefs.map(d=>d.eyewearId),...matchRoster.enemyDefs.map(d=>d.eyewearId)];
   const matchSkins = [playerSkinId, ...matchRoster.allyDefs.map(d=>d.skinId), ...matchRoster.enemyDefs.map(d=>d.skinId)];
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
@@ -1755,6 +1765,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
         preloadCosmeticAssets(matchSkins),
         preloadEyewearAssets(matchEyewear),
+        ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
         sfx.preloadWeaponSamples(_armasDaPartida),
         preloadMapProps([...MAP_PROPS, ...(mapaPartida.props || [])]),   // + props do mapa (Havan: carros/estátua)
         /* Desktop preserva a fauna GLB do BUG-57 e os viewmodels autorados. No perfil
@@ -1763,7 +1774,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         MOBILE_AUTO ? null : preloadAmbientLife(mapaPartida.ambience || []),
         mapaPartida.preload ? mapaPartida.preload() : null,
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
-        POINTER_COARSE ? null : preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida)),
+        POINTER_COARSE ? null : preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida, playerWeaponSkins)),
       ]);
     }
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
@@ -1779,7 +1790,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
        (o allyBots/enemyBots do save não pode vencer o teamSize da sala). */
     settings: sessao ? { ...settings, bots: tamanhoTime, allyBots: Math.max(0, tamanhoTime - 1), enemyBots: tamanhoTime } : settings,
     renderer, textures, sfx,
-    playerCharId: charId, playerSkinId, playerEyewearId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
+    playerCharId: charId, playerSkinId, playerEyewearId, playerGloveId, playerWeaponSkins, playerKnifeSkinId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
     /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
@@ -4903,7 +4914,7 @@ contagem.evento('game_loaded');
 // /u/<perfil> é o hub (SSR); ?perfil= é o link antigo.
 const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location.href)?.perfil);
 void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
-initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}});
+tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
 document.addEventListener('cs-treta-inventory-change',()=>syncHomeCharacter());
 // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
 if (directRoute) document.getElementById('boot-splash')?.remove();

@@ -3,7 +3,7 @@
 /* A loja v3 desenha cabeçalho, abas e grade próprios (tp/loja.js); os da loja antiga saem. */
 :root[data-ui="v3"] .treta-store:has(.tp-loja) .treta-heading{display:none}
 :root[data-ui="v3"] .treta-store:has(.tp-loja) .treta-views{display:none}
-:root[data-ui="v3"] .treta-store:has(.tp-loja) #treta-skins-view{display:none!important}
+:root[data-ui="v3"] .treta-store:has(.tp-loja) #treta-weapons-view,:root[data-ui="v3"] .treta-store:has(.tp-loja) #treta-items-view,:root[data-ui="v3"] .treta-store:has(.tp-loja) #treta-packs-view{display:none!important}
 :root[data-ui="v3"] .treta-store{--treta-bg:var(--tp-asfalto);--treta-panel:var(--tp-painel);--treta-muted:var(--tp-tinta-3);--treta-line:var(--tp-borda);
   --treta-gold:var(--tp-ambar);--treta-lime:var(--tp-lima);padding:20px 32px 28px!important;color:var(--tp-tinta-1);font-family:var(--tp-ui);
   background:radial-gradient(900px 500px at 20% 30%,color-mix(in srgb,var(--tp-novo) 18%,transparent),transparent 70%),var(--tp-asfalto)}

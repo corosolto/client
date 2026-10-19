@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Revisão de skin de arma</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080a0d;color:#f2f0e8;font-family:system-ui,sans-serif}canvas{display:block;width:100%;height:100%}.title{position:fixed;left:32px;top:26px;z-index:2}.title b{display:block;font-size:32px;letter-spacing:.02em}.title span{display:block;margin-top:6px;color:#c4ff46;font:700 13px/1.2 monospace;letter-spacing:.08em;text-transform:uppercase}.note{position:fixed;right:28px;bottom:24px;color:#ffffff88;font:12px/1.3 monospace;text-align:right}
+</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js?h=a47c475b7bea","three/addons/":"./vendor/addons/"}}</script>
+</head>
+<body>
+<div class="title"><b id="name">Ondas Cariocas</b><span id="meta">M4 · candidato · loja desligada</span></div>
+<div class="note">modelo real do jogo · material de revisão<br>arraste para girar · roda para aproximar</div>
+<script type="module">
+import * as THREE from 'three';
+import { preloadWeapons, weaponModel } from './js/weapons.js';
+import { WEAPON_SKINS, preloadWeaponSkinCandidate } from './js/weapon-skins.js';
+const query=new URLSearchParams(location.search),weapon=query.get('weapon')||'m4',skin=query.get('skin')||'ondas-cariocas';
+const nameElement=document.getElementById('name'),metaElement=document.getElementById('meta');
+const definition=WEAPON_SKINS[skin];
+if(!definition||!definition.targetWeapons.includes(weapon))throw new Error(`skin ${skin} incompatível com ${weapon}`);
+nameElement.textContent=definition.name;metaElement.textContent=definition.storeEnabled?`${weapon.toUpperCase()} · loja TRETA$ · T$ ${definition.storePrice}`:definition.rightsStatus==='permission-needed'?`${weapon.toUpperCase()} · licença pendente · loja desligada`:`${weapon.toUpperCase()} · candidato · loja desligada`;
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(2,devicePixelRatio));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.28;document.body.append(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x080a0d);
+scene.add(new THREE.HemisphereLight(0xe8f1ff,0x17120d,2.2));
+const key=new THREE.DirectionalLight(0xffffff,5);key.position.set(3,5,4);scene.add(key);
+const rim=new THREE.DirectionalLight(0x87b7ff,3);rim.position.set(-4,2,-3);scene.add(rim);
+const warm=new THREE.DirectionalLight(0xffc58c,2);warm.position.set(2,-1,-4);scene.add(warm);
+const camera=new THREE.PerspectiveCamera(30,innerWidth/innerHeight,.01,100);
+await Promise.all([preloadWeapons([weapon]),preloadWeaponSkinCandidate(skin)]);const model=weaponModel(weapon,skin);if(!model)throw new Error(`modelo ${weapon} ausente`);scene.add(model);model.updateMatrixWorld(true);
+const box=new THREE.Box3().setFromObject(model),center=box.getCenter(new THREE.Vector3()),size=box.getSize(new THREE.Vector3()),radius=Math.max(size.x,size.y,size.z)*.68;
+model.position.sub(center);model.updateMatrixWorld(true);
+const view=query.get('view')||'side';
+if(view==='three-quarter')camera.position.set(radius*3.1,radius*1.05,radius*2.35);else camera.position.set(radius*3.55,radius*.42,0);
+camera.lookAt(0,0,0);
+let dragging=false,lastX=0,lastY=0;
+renderer.domElement.addEventListener('pointerdown',(event)=>{dragging=true;lastX=event.clientX;lastY=event.clientY;renderer.domElement.setPointerCapture(event.pointerId)});
+renderer.domElement.addEventListener('pointermove',(event)=>{if(!dragging)return;model.rotation.y+=(event.clientX-lastX)*.008;model.rotation.z+=(event.clientY-lastY)*.003;lastX=event.clientX;lastY=event.clientY});
+renderer.domElement.addEventListener('pointerup',()=>{dragging=false});
+renderer.domElement.addEventListener('wheel',(event)=>{event.preventDefault();const factor=Math.max(.82,Math.min(1.18,1+event.deltaY*.0008));const next=camera.position.length()*factor;if(next>=radius*1.8&&next<=radius*7)camera.position.multiplyScalar(factor)},{passive:false});
+let spin=Number(query.get('spin')||0);window.REVIEW_MODEL=model;window.REVIEW_READY=true;window.setReviewSpin=value=>{spin=Number(value)||0};
+function frame(time){if(spin)model.rotation.y=time*.001*spin;renderer.render(scene,camera);requestAnimationFrame(frame)}requestAnimationFrame(frame);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script>
+</body>
+</html>

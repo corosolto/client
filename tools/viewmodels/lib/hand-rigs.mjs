@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { MeshoptDecoder } from 'meshoptimizer';
 
 export const root = path.resolve(import.meta.dirname, '../../..');
 const privado = (p) => path.join(root, 'public/private-assets/viewmodels', p);
@@ -47,7 +48,9 @@ export const HAND_RIGS = Object.freeze({
   },
 });
 
-const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+await MeshoptDecoder.ready;
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS)
+  .registerDependencies({ 'meshopt.decoder': MeshoptDecoder });
 // Cabeça do osso no espaço de bind da malha = translação da inversa da inverseBindMatrix.
 function cabeca(m) {
   const [a, b, c, , d, e, f, , g, h, i, , x, y, z] = m;
@@ -187,10 +190,109 @@ export function pintar({ fields, size }, pintura, style) {
       const n = Math.sin(x * 14 + y * 9) + Math.cos(y * 18 - z * 13) + Math.sin(z * 24 + x * 11);
       color = n > 0.8 ? accent : n < -0.9 ? [43, 47, 33] : n < -0.15 ? [90, 82, 56] : glove;
     }
+    if (!exposed && !isSleeve && style.motif === 'tropical') {
+      const leafA = Math.sin((x + z) * 19 + y * 11);
+      const leafB = Math.cos((x - z) * 17 - y * 13);
+      const vein = Math.abs(Math.sin((Math.atan2(z, x) + y) * 24));
+      if (leafA > 0.55 || leafB > 0.68) color = accent;
+      else if (vein < 0.12) color = [16, 151, 135];
+    }
+    if (!exposed && !isSleeve && style.motif === 'sunset') {
+      const horizon = 0.5 + 0.5 * Math.sin(y * 16 + Math.atan2(z, x) * 3);
+      color = horizon > 0.66 ? accent : horizon < 0.32 ? sleeve : glove;
+    }
     if (!exposed && (cuff || handPanel) && style.motif === 'checker') color = (Math.floor(x * 9) + Math.floor(y * 10)) % 2 === 0 ? accent : glove;
     if (!exposed && style.motif === 'star') {
       if (cuff) { color = sleeve; if (inStar(x, (y + 0.15) * 1.4)) color = accent; }
       if (handPanel && inStar(x, (y - 0.49) * 1.1)) color = accent;
+    }
+    if (!exposed && !isSleeve && style.motif === 'emo') {
+      const check = (Math.floor((x + 0.8) * 10) + Math.floor(y * 12)) & 1;
+      color = check ? glove : accent.map((c) => c * 0.72);
+      if (handPanel && (Math.abs(x) < 0.025 || Math.abs(y - 0.52) < 0.025)) color = accent;
+    }
+    if (!exposed && !isSleeve && style.motif === 'team') {
+      color = glove;
+      if (handPanel) {
+        const shield = Math.abs(x) < 0.25 - Math.max(0, y - 0.58) * 0.30 && y > 0.25 && y < 0.80;
+        const inner = Math.abs(x) < 0.20 - Math.max(0, y - 0.58) * 0.27 && y > 0.30 && y < 0.74;
+        if (shield) color = accent;
+        if (inner) color = sleeve;
+        if (inStar(x * 0.78, (y - 0.52) * 0.78)) color = accent;
+      }
+    }
+    if (!exposed && !isSleeve && style.motif === 'brasil') {
+      color = glove;
+      if (handPanel) {
+        const dy = y - 0.52;
+        if (Math.abs(x) / 0.31 + Math.abs(dy) / 0.28 < 1) color = accent;
+        if (x * x + dy * dy < 0.014) color = [0, 49, 118];
+        if (Math.abs(dy + x * 0.16) < 0.018 && x * x + dy * dy < 0.012) color = [245, 247, 239];
+      }
+    }
+    if (!exposed && !isSleeve && style.motif === 'usa') {
+      color = Math.floor(y * 14) & 1 ? accent : glove;
+      if (handPanel && x < 0.04 && y > 0.47) {
+        color = [10, 49, 97];
+        const sx = (x + 0.32) * 14, sy = (y - 0.48) * 16;
+        if (Math.hypot(sx - Math.round(sx), sy - Math.round(sy)) < 0.13) color = accent;
+      }
+    }
+    if (!exposed && !isSleeve && style.motif === 'maga') {
+      color = glove;
+      if (handPanel) {
+        const four = (x < -0.02 && Math.abs(y - 0.52) < 0.035)
+          || (Math.abs(x + 0.14) < 0.035 && y > 0.48 && y < 0.72)
+          || (Math.abs(x + 0.03) < 0.035 && y > 0.36 && y < 0.72)
+          || (Math.abs(y - x - 0.58) < 0.035 && x < -0.03);
+        const seven = (x > 0.05 && Math.abs(y - 0.69) < 0.035)
+          || (x > 0.07 && Math.abs(y + x * 0.85 - 0.68) < 0.035);
+        if (four || seven) color = accent;
+      }
+    }
+    if (!exposed && !isSleeve && style.motif === 'maga-flag') {
+      color = glove;
+      if (handPanel) {
+        const stripe = Math.floor((y - 0.18) * 18) & 1;
+        color = stripe ? accent : glove;
+        if (x < 0.045 && y > 0.48) {
+          color = [10, 49, 97];
+          const sx = (x + 0.30) * 17, sy = (y - 0.49) * 19;
+          if (Math.hypot(sx - Math.round(sx), sy - Math.round(sy)) < 0.16) color = accent;
+        }
+      }
+    }
+    if (!exposed && !isSleeve && style.motif === 'emo-skull') {
+      const check = (Math.floor((x + 0.8) * 9) + Math.floor(y * 11)) & 1;
+      color = check ? glove : [106, 9, 85];
+      if (handPanel) {
+        const dy = y - 0.55;
+        const crown = x * x / 0.052 + dy * dy / 0.066 < 1;
+        const cheek = Math.abs(x) < 0.17 - Math.max(0, 0.48 - y) * 0.52 && y > 0.31 && y < 0.52;
+        if (crown || cheek) color = accent;
+        const leftEye = y < 0.63 + (x + 0.09) * 0.55 && y > 0.48 - (x + 0.09) * 0.30 && x > -0.19 && x < -0.025;
+        const rightEye = y < 0.63 - (x - 0.09) * 0.55 && y > 0.48 + (x - 0.09) * 0.30 && x > 0.025 && x < 0.19;
+        const nose = Math.abs(x) < 0.038 && y > 0.43 && y < 0.53;
+        const teeth = cheek && (Math.abs(Math.sin((x + 0.19) * 52)) < 0.28 || Math.abs(y - 0.38) < 0.013);
+        if (leftEye || rightEye || nose || teeth) color = glove;
+      }
+    }
+    if (!exposed && !isSleeve && style.motif === 'skull') {
+      color = glove;
+      if (handPanel) {
+        const dy = y - 0.56;
+        const boneA = Math.abs((y - 0.50) - x * 0.55) < 0.018 && Math.abs(x) < 0.29 && y > 0.34 && y < 0.68;
+        const boneB = Math.abs((y - 0.50) + x * 0.55) < 0.018 && Math.abs(x) < 0.29 && y > 0.34 && y < 0.68;
+        if (boneA || boneB) color = accent;
+        const head = x * x / 0.050 + dy * dy / 0.058 < 1;
+        const jaw = Math.abs(x) < 0.14 && y > 0.33 && y < 0.49;
+        if (head || jaw) color = accent;
+        const eye = ((x - 0.095) ** 2 + (dy - 0.035) ** 2 < 0.004)
+          || ((x + 0.095) ** 2 + (dy - 0.035) ** 2 < 0.004);
+        const nose = Math.abs(x) < 0.035 && y > 0.47 && y < 0.55;
+        const teeth = jaw && (Math.abs(Math.sin((x + 0.18) * 45)) < 0.22 || Math.abs(y - 0.40) < 0.012);
+        if (eye || nose || teeth) color = glove;
+      }
     }
     // Motivos novos em volta do eixo do braço (ângulo × comprimento): no punho visto de lado o
     // plano x·y degenera e o padrão vira mancha (crítico cego, rodada 1).

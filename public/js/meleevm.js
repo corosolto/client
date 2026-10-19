@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { applyTeamHandMaterial, refreshTeamHands } from './vmhands.js';
 import { GOLDEN_VER } from './data/goldenver.js';
+import { applyWeaponSkinCandidate } from './weapon-skins.js';
 
 // A faca pública aprovada é autossuficiente: asset privado ausente nunca pode impedir a
 // partida. A revisão vem dos bytes do GLB, como nas demais golden (BUG-157).
@@ -33,9 +34,10 @@ function approvedGloveMaterial(material, profile) {
 }
 
 export class KnifeMeleeViewModel {
-  constructor({ parent, profile = {}, onReady = () => {} }) {
+  constructor({ parent, profile = {}, knifeSkinId = null, onReady = () => {} }) {
     this.parent = parent;
     this.profile = profile;
+    this.knifeSkinId = knifeSkinId;
     this.onReady = onReady;
     this.weapon = '';
     this.scene = null;
@@ -101,6 +103,7 @@ export class KnifeMeleeViewModel {
         ? object.material.map((material) => approvedGloveMaterial(material, this.profile))
         : approvedGloveMaterial(object.material, this.profile);
     });
+    if (this.knifeSkinId) applyWeaponSkinCandidate(scene, 'knife', this.knifeSkinId);
     // A raiz recebe tracks do mixer (que restauraria a escala a cada frame):
     // o enquadramento vive no wrapper não animado, mãos e faca como unidade.
     const packageRoot = new THREE.Group();

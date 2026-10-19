@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "alvinegra-paulista",
+  "weaponId": "ak",
+  "status": "permission-needed",
+  "approved": false,
+  "certified": false,
+  "runtimeEnabled": false,
+  "designOrigin": "project-colorway-with-official-mark",
+  "rightsStatus": "permission-needed",
+  "officialMarksIncluded": true,
+  "markPlacement": "receiver",
+  "sloganPlacement": null,
+  "markSourceUrl": "https://upload.wikimedia.org/wikipedia/pt/b/b4/Corinthians_simbolo.png",
+  "referenceRule": "official club mark shown only in an internal, store-off preview; written trademark clearance required before release",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "a34e2bc1beef37893c3c01dca70f7e038c291fc9dec08940e34216314fd0d433",
+    "side-right.png": "d10cf4940d7917138cf4711ffabe843c1f830fe54f381f917284e6f5c1ac8aa8",
+    "three-quarter.png": "692534c0f65d3c9c881061bdc1dc5f438fd0549b61e08968f3ef44820be56e57"
+  },
+  "storePoster": null,
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "593acadb248e7bc7acece694f81064e62ccb491f131d622929ea7fef2eeaec93",
+    "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/club-marks/corinthians.png": "98aded1a8a28ad7092725f24d5c4cb6cad697543a1efb349c08170e98013eb05"
+  },
+  "consoleErrors": []
+}
