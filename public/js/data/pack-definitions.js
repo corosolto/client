@@ -75,9 +75,9 @@ export const TRETA_PACKS = Object.freeze([
   }),
   pack({
     id: 'pack-lula-13',
-    name: 'Pack Barbudo 13',
+    name: 'Pack 13 Lula PT',
     color: '#c51f32',
-    description: 'Vermelho e dourado em AK, pistola, luvas e faca coordenadas com o Barbudo 13.',
+    description: 'Vermelho e dourado em AK, pistola, luvas e faca coordenadas com Lula 13 PT.',
     ak: 'pack-lula-13-ak',
     pistol: 'pack-lula-13-pistol',
     glove: 'pack-lula-13-gloves',
@@ -85,9 +85,9 @@ export const TRETA_PACKS = Object.freeze([
   }),
   pack({
     id: 'pack-bolsonaro-22',
-    name: 'Pack Capitão 22',
+    name: 'Pack 22 Bolsonaro',
     color: '#00a651',
-    description: 'Verde, amarelo e azul em AK, pistola, luvas e faca coordenadas com o Capitão 22.',
+    description: 'Verde, amarelo e azul em AK, pistola, luvas e faca coordenadas com Bolsonaro 22.',
     ak: 'pack-bolsonaro-22-ak',
     pistol: 'pack-bolsonaro-22-pistol',
     glove: 'pack-bolsonaro-22-gloves',
