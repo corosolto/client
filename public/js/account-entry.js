@@ -69,7 +69,7 @@ export function mountAccountEntry(container,{auth=null,config={providers:[]},ret
       const title=dialogHead(container,'SUA CONTA',`Olá, ${auth.profile.nick}`);
       if(title)socialApi('/api/social?action=profile').then(({profile})=>{if(profile?.id===auth.profile.id && profile.handle && title.textContent===`Olá, ${auth.profile.nick}`)title.textContent=`Olá, @${profile.handle}`;}).catch(()=>{});
       const actions=node('div','','account-actions');
-      actions.append(button('VER MEU PERFIL',()=>{document.querySelector('[data-hub-tab=comunidade]')?.click();document.dispatchEvent(new CustomEvent('cs-community-open',{detail:{tab:'profile'}}));onGuest();}),quiet('Sair da conta',async()=>{try{await logoutAccount(auth);await onAuthenticated({authenticated:false});}catch(e){say(accountError(e));}}));
+      actions.append(button('VER MEU PERFIL',()=>{document.querySelector('[data-hub-tab=comunidade]')?.click();document.dispatchEvent(new CustomEvent('cs-community-open',{detail:{tab:'profile'}}));onGuest();}),button('ENVIAR FEEDBACK',()=>{const tab=document.querySelector('[data-hub-tab=feedback]');if(tab)tab.click();else document.getElementById('mf-feedback')?.click();onGuest();}),quiet('Sair da conta',async()=>{try{await logoutAccount(auth);await onAuthenticated({authenticated:false});}catch(e){say(accountError(e));}}));
       container.append(node('p','Sua conta está salva. Progresso e conquistas ficam no servidor.','social-muted account-lede'),actions);
       mountAccountIntegrations(container,auth,config,say);void mountProfilePreferences(container,{auth,message:say,fold:true});container.append(status);return;
     }

@@ -134,8 +134,10 @@ function montarMais(header) {
   const itemMusica = lista.querySelector('[data-tp-mais="musica"]');
   const syncMusica = () => {
     if (!musica) { itemMusica.hidden = true; return; }
-    itemMusica.textContent = musica.querySelector('b')?.textContent || '';
+    itemMusica.innerHTML = musica.innerHTML;
     itemMusica.setAttribute('aria-pressed', musica.getAttribute('aria-pressed') || 'true');
+    itemMusica.setAttribute('aria-label', musica.getAttribute('aria-label') || tr('Música do menu'));
+    itemMusica.title = itemMusica.getAttribute('aria-label');
   };
   if (musica) new MutationObserver(syncMusica).observe(musica, { attributes: true, childList: true, subtree: true, characterData: true });
   syncMusica();
