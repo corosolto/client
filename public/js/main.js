@@ -625,7 +625,6 @@ function syncMenuMusicToggle() {
   button.setAttribute('aria-pressed', String(enabled));
   button.setAttribute('aria-label', tr(enabled ? 'Desligar música do menu' : 'Ligar música do menu'));
   button.title = button.getAttribute('aria-label');
-  button.querySelector('b').textContent = tr(enabled ? 'MÚSICA LIGADA' : 'MÚSICA DESLIGADA');
 }
 const _menuTrackId = (url) => url.match(/([^/]+)\.\w+$/)?.[1] || 'desconhecida';
 function _ensureMusic() {
@@ -2106,6 +2105,7 @@ function openProfileStep(focusNick) {
 }
 $('btn-profile').onclick = () => openProfileStep(true);
 $('profile-back').onclick = () => { ui.back(); setSetupStep('match'); hubNavigate({ janela: null }); };
+$('profile-feedback').onclick = () => { $('profile-back').click(); if (HUB_ENABLED) document.querySelector('[data-hub-tab="feedback"]')?.click(); else $('mf-feedback').click(); };
 $('profile-ok').onclick = async () => {
   ui.click();
   const nick = nickEl.value.trim();

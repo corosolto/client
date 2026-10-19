@@ -257,20 +257,21 @@ if (BROWSER) {
   const LOGADO = { authenticated: true, profile: { nick: 'Logado' }, identities: ['google'] };
   const AGORA = Date.now();
   const CAMPANHA_ATIVA = { ...CAMPANHA, starts_at: new Date(AGORA - 2 * 864e5).toISOString(), ends_at: new Date(AGORA + 14 * 864e5).toISOString() };
-  async function abre({ auth = GUEST, nick = null, consent = null, query = '', seed = null, intro = false, treta = CAMPANHA_ATIVA, viewport = { width: 1440, height: 900 } } = {}) {
+  async function abre({ auth = GUEST, nick = null, token = null, consent = null, query = '', seed = null, intro = false, treta = CAMPANHA_ATIVA, viewport = { width: 1440, height: 900 } } = {}) {
     const ctx = await browser.newContext({ viewport, deviceScaleFactor: viewport.width < 500 ? 2 : 1 });
-    await ctx.addInitScript(({ nick, consent, seed, intro }) => {
+    await ctx.addInitScript(({ nick, token, consent, seed, intro }) => {
       try {
         if (sessionStorage.getItem('__lp_seeded')) return;
         sessionStorage.setItem('__lp_seeded', '1');
         localStorage.setItem('awpbr_settings', JSON.stringify({ menuMusic: false, vol: 0, speech: false, quality: 'low', bots: 1 }));
         localStorage.setItem('cs_aviso_software', 'ok');
         if (nick) localStorage.setItem('awpbr_nick', nick);
+        if (token) localStorage.setItem('awpbr_token', token);
         if (consent !== null) localStorage.setItem('cs_privacy', JSON.stringify({ version: 'corosolto-analytics-v1', analytics: consent, updatedAt: new Date(0).toISOString() }));
         if (seed) localStorage.setItem('cs_login_prompt', JSON.stringify(seed));
         if (intro) localStorage.setItem('cs_treta_intro', 'v1');
       } catch {}
-    }, { nick, consent, seed, intro });
+    }, { nick, token, consent, seed, intro });
     const funil = [];
     await ctx.route('**/api/social-auth**', async (rota) => {
       const url = rota.request().url();
@@ -292,13 +293,19 @@ if (BROWSER) {
     const page = await ctx.newPage();
     const runtimeErrors = [];
     page.on('pageerror', (error) => runtimeErrors.push(error.message));
-    page.on('console', (message) => { if (message.type() === 'error') runtimeErrors.push(`${message.text()} @ ${message.location().url || 'sem-url'}`); });
+    page.on('console', (message) => {
+      if (message.type() !== 'error') return;
+      const url = message.location().url || '';
+      // Os assets opcionais de áudio e decal não vêm neste checkout de teste.
+      if (/\/audio\/manifest(?:\.default)?\.json|\/img\/decals\//.test(url) && message.text().includes('404')) return;
+      runtimeErrors.push(`${message.text()} @ ${url || 'sem-url'}`);
+    });
     await page.goto(`${BASE}/${query}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.addStyleTag({ content: 'astro-dev-toolbar { display: none !important; pointer-events: none !important; }' });
     await page.waitForTimeout(1000);
     if (runtimeErrors.length) throw new Error(`erro no boot: ${runtimeErrors.join(' | ')}`);
     await page.waitForFunction(() => window.__CS_MAIN_READY__ === true, null, { timeout: 120000 });
-    await page.locator('#splash-enter:not(.hidden)').waitFor({ timeout: 120000 }).catch(() => {});
+    await page.locator('#splash-enter:not(.hidden)').waitFor({ timeout: 5000 }).catch(() => {});
     if (await page.locator('#boot-splash').count()) await page.locator('#boot-splash').dispatchEvent('pointerdown').catch(() => {});
     await page.waitForFunction(() => document.getElementById('login-prompt')?.dataset.ready === 'true' || new URLSearchParams(location.search).get('embed') === '1' || new URLSearchParams(location.search).get('perfil'), null, { timeout: 60000 }).catch(() => {});
     await page.waitForTimeout(2500);   // a sessão social e a loja já responderam: quem fosse abrir sozinho, abriu
@@ -450,6 +457,19 @@ if (BROWSER) {
       assert(alturas.every((h) => h >= 44), `alvo de toque < 44px: ${alturas}`);
       await shot(page, 'mobile-3-convite');
     } finally { await ctx.close(); }
+  });
+  await caso('LB9', 'browser: perfil local que voltou vê 1.000 T$ sem iniciar partida; sem campanha nova não vê', async () => {
+    const campanha={...CAMPANHA_ATIVA,email_reward:1000};
+    const a=await abre({nick:'JOGADOR',token:'prova-local',intro:true,treta:campanha});
+    try {
+      assert.equal(await convite(a.page),true,'perfil salvo não recebeu convite');
+      assert.match(await a.page.locator('#login-prompt-title').textContent(),/1\.000/);
+      assert.match(await a.page.locator('#login-prompt-treta-headline').textContent(),/confirmar o e-mail/);
+      await shot(a.page,'retorno-perfil-1000');
+    } finally { await a.ctx.close(); }
+    const b=await abre({nick:'JOGADOR',token:'prova-local',intro:true,treta:CAMPANHA_ATIVA});
+    try { assert.equal(await convite(b.page),false,'campanha de 200 mostrou oferta de 1.000'); }
+    finally { await b.ctx.close(); }
   });
   await browser.close();
 }

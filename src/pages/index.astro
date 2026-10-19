@@ -762,7 +762,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <p class="tp-splash__convidado" id="tp-splash-convidado" data-vazio>Você entra como <b>convidado</b></p>
     </div>
     <div class="tp-splash__dica"><b>DICA</b><span>Andar com a arma no ombro (tecla F) é mais rápido do que andar mirando.</span></div>
-    <div class="tp-splash__canto"><button id="tp-splash-som" type="button" data-splash-fica data-vazio><span aria-hidden="true">♫ </span><b>MÚSICA LIGADA</b></button><span class="tp-num" id="tp-splash-ver" data-vazio>v0</span></div>
+    <div class="tp-splash__canto"><button id="tp-splash-som" type="button" data-splash-fica data-vazio aria-pressed="true" aria-label="Desligar música do menu" title="Desligar música do menu"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="speaker-body" d="M3 9v6h4l5 4V5L7 9H3Z"/><path class="speaker-wave" d="M16 9a4 4 0 0 1 0 6m2-9a8 8 0 0 1 0 12"/><path class="speaker-off" d="m16 9 5 6m0-6-5 6"/></svg></button><span class="tp-num" id="tp-splash-ver" data-vazio>v0</span></div>
   </div>
 </div>
 
@@ -822,7 +822,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       </nav>
       <div class="hub-online" aria-live="polite"><i aria-hidden="true"></i><span id="hub-online-n">-</span> ONLINE</div>
       <button id="hub-treta-wallet" class="hub-header-action treta-header-wallet" type="button" aria-label="Ver saldo TRETA$"><img src="/img/treta/coin-classic-saci.webp" alt="" width="26" height="26" aria-hidden="true"><b id="hub-treta-total">T$ · ENTRAR</b></button>
-      <button id="hub-music-toggle" class="hub-header-action hub-music-toggle" type="button" aria-pressed="true" aria-label="Desligar música do menu" title="Desligar música do menu"><span aria-hidden="true">♫</span><b>MÚSICA LIGADA</b></button>
+      <button id="hub-music-toggle" class="hub-header-action hub-music-toggle" type="button" aria-pressed="true" aria-label="Desligar música do menu" title="Desligar música do menu"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="speaker-body" d="M3 9v6h4l5 4V5L7 9H3Z"/><path class="speaker-wave" d="M16 9a4 4 0 0 1 0 6m2-9a8 8 0 0 1 0 12"/><path class="speaker-off" d="m16 9 5 6m0-6-5 6"/></svg></button>
       <button id="hub-social-resume" class="hub-header-action" type="button" hidden>VOLTAR À PARTIDA ▶</button>
       <div class="hub-identity-wrap">
         <button id="hub-account-login" class="hub-identity" type="button" data-state="guest" aria-label="Reivindique seu perfil: entrar ou criar conta"><span id="hub-avatar" class="hub-identity-avatar" aria-hidden="true"></span><b id="hub-identity-name">Reivindique seu perfil</b><span id="hub-identity-cta" class="hub-identity-cta">ENTRAR</span></button>
@@ -1172,6 +1172,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
           <span id="avatar-note"></span>
         </div>
         <div id="profile-preferences" class="profile-preferences"></div>
+        <button id="profile-feedback" class="btn-ghost" type="button">ENVIAR FEEDBACK ▸</button>
         <p class="pc-note">É esse nome que aparece no killfeed. Escolha com carinho - a treta é pública.</p>
       </div>
       <div class="cs-setup-actions">

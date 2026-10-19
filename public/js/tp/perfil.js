@@ -197,6 +197,7 @@ export function ligar() {
       if (d.own ? texto === 'COMPARTILHAR PERFIL' : A_VISTA.includes(texto)) acoes.append(b);
       else lista.append(b);
     }
+    if (d.own) acoes.append(botao(tr('ENVIAR FEEDBACK'), '', () => document.querySelector('.hub-tabs [data-hub-tab="feedback"]')?.click()));
     if (lista.children.length) acoes.append(menu);
     s.append(id, bio, redes, acoes, saida);
     return s;

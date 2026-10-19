@@ -48,8 +48,9 @@ export function ligarSplashV3() {
     const ligada = musica?.getAttribute('aria-pressed') !== 'false';
     raiz.querySelector('[data-etapa="audio"]').hidden = !ligada;
     if (som && musica) {
-      const rotulo = musica.querySelector('b')?.textContent;
-      if (rotulo && som.querySelector('b').textContent !== rotulo) som.querySelector('b').textContent = rotulo;
+      som.setAttribute('aria-pressed', musica.getAttribute('aria-pressed') || 'true');
+      som.setAttribute('aria-label', musica.getAttribute('aria-label') || 'Música do menu');
+      som.title = som.getAttribute('aria-label');
       delete som.dataset.vazio;
     }
     const ver = $('splash-ver')?.textContent;

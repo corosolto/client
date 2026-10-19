@@ -55,6 +55,11 @@
 .tp-lobby-mais__item--fino{min-height:34px;color:var(--tp-tinta-3);font-weight:700;font-size:12px}
 .tp-lobby-mais__item:hover,.tp-lobby-mais__item:focus-visible{background:var(--tp-elevado);outline:none}
 .tp-lobby-mais__item[data-tp-mais="musica"]{border-bottom:1px solid var(--tp-borda);border-radius:6px 6px 0 0;margin-bottom:4px}
+.tp-lobby-mais__item[data-tp-mais="musica"]{justify-content:center;width:44px;padding:0}
+.tp-lobby-mais__item[data-tp-mais="musica"] svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tp-lobby-mais__item[data-tp-mais="musica"] .speaker-off{display:none}
+.tp-lobby-mais__item[data-tp-mais="musica"][aria-pressed="false"] .speaker-wave{display:none}
+.tp-lobby-mais__item[data-tp-mais="musica"][aria-pressed="false"] .speaker-off{display:block}
 .tp-lobby-mais__item[hidden],.tp-lobby-so-compacto{display:none}
 
 /* Personagem no centro: o palco 3D de sempre (#char-preview), sem GLB novo */

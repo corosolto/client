@@ -188,8 +188,9 @@ html[data-home-ui="hub"] #main-menu .cs-vignette{background:linear-gradient(90de
 .hub-header-action>span{display:grid;place-items:center;width:28px;height:28px;border:1px solid #b4d92e;font:700 11px/1 var(--font)}
 .hub-header-action>span[style*="background-image"]{background-size:cover;background-position:center}
 .hub-header-action>b{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 13px/1 var(--font)}
-.hub-music-toggle{padding-right:9px;white-space:nowrap}.hub-music-toggle>span{font-size:19px}.hub-music-toggle>b{font-size:11px;letter-spacing:.3px}
-.hub-music-toggle[aria-pressed="false"]{color:#999995}.hub-music-toggle[aria-pressed="false"]>span{border-color:#555;color:#999995}
+.hub-music-toggle{width:36px;justify-content:center;padding:0}.hub-music-toggle svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.hub-music-toggle .speaker-off{display:none}
+.hub-music-toggle[aria-pressed="false"]{color:#999995}.hub-music-toggle[aria-pressed="false"] .speaker-wave{display:none}.hub-music-toggle[aria-pressed="false"] .speaker-off{display:block}
+.hub-music-toggle[aria-pressed="true"] .speaker-off{display:none}
 .hub-settings{width:36px;justify-content:center;padding:0;font-size:23px}.hub-settings:hover{border-color:#39d6e0}
 .hub-pane{position:absolute;z-index:4;top:122px;bottom:62px;left:var(--hub-left-gutter);right:var(--hub-right-gutter);overflow:auto;pointer-events:auto;animation:hub-in .35s cubic-bezier(.2,.8,.2,1)}
 @keyframes hub-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -3521,6 +3522,12 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
 .tp-splash__canto button{height:40px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(9,7,4,.6);color:var(--tp-tinta-1);
   font:800 13px/1 var(--tp-ui);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .tp-splash__canto .tp-num{font-size:12px;color:var(--tp-tinta-3)}
+#tp-splash-som{display:grid;place-items:center;width:44px;padding:0}
+#tp-splash-som svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#tp-splash-som .speaker-off{display:none}
+#tp-splash-som[aria-pressed="false"]{color:var(--tp-tinta-3)}
+#tp-splash-som[aria-pressed="false"] .speaker-wave{display:none}
+#tp-splash-som[aria-pressed="false"] .speaker-off{display:block}
 /* Abaixo de 1180 px a dica não cabe ao lado do bloco central: sai, e o bloco ocupa a largura. */
 @media (max-width:1240px){.tp-splash__dica{display:none}.tp-splash__centro{width:min(640px,calc(100vw - 48px))}}
 @media (max-height:520px){
