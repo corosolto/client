@@ -2,6 +2,7 @@
    Cada controle novo aciona um do hub (main.js): nenhum estado novo, nada simulado. Régua: tools/eval/ui-v3-lobby.mjs. */
 import { tr, LANG } from '../i18n.js';
 import { VERSION } from '../version.js';
+import { tretaLoja, abrirTretaSkin } from '../treta-store.js';
 
 const $ = (id) => document.getElementById(id);
 function no(tag, cls = '', texto = '') {
@@ -481,6 +482,40 @@ function montar() {
   montarPartida();
   ligarJogarDireto();
   montarGire();
+  montarEquipado();
+}
+
+/* Equipado no lobby: o que a conta tem vestido aparece junto do personagem.
+   Sem nada equipado o painel some; os cards abrem o detalhe da loja. */
+function montarEquipado() {
+  const box = document.querySelector('.char-preview-box');
+  if (!box || box.querySelector('#tp-equipado')) return;
+  const painel = no('aside', 'tp-equipado');
+  painel.id = 'tp-equipado';
+  painel.hidden = true;
+  painel.setAttribute('aria-label', tr('Equipado no lobby'));
+  const cab = no('div', 'tp-equipado__cab');
+  cab.append(no('span', 'tp-disp tp-equipado__titulo', tr('EQUIPADO')));
+  painel.append(cab, no('div', 'tp-equipado__faixa'));
+  box.append(painel);
+  const redesenhar = () => {
+    const faixa = painel.querySelector('.tp-equipado__faixa');
+    const itens = tretaLoja().itens.filter((s) => s.equipped && s.poster && ['weapon', 'glove', 'pack'].includes(s.slot));
+    painel.hidden = itens.length === 0;
+    faixa.replaceChildren(...itens.map((s) => {
+      const cartao = no('button', 'tp-equipado__cartao');
+      cartao.type = 'button';
+      cartao.dataset.skin = s.id;
+      cartao.setAttribute('aria-label', `${s.name}. ${tr('EQUIPADO')}`);
+      const img = no('img', 'tp-equipado__poster');
+      img.src = s.poster; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+      cartao.append(img, no('span', 'tp-equipado__nome', s.name));
+      cartao.addEventListener('click', () => { abaDoHub('loja'); abrirTretaSkin(s.id); });
+      return cartao;
+    }));
+  };
+  document.addEventListener('cs-treta-state', redesenhar);
+  redesenhar();
 }
 
 export function ligar() {
