@@ -406,9 +406,10 @@ async function loadMenuBackdrop() {
     });
   });
 }
-// Em rota compartilhada, a tela pedida abre já: cenário 3D e props continuam no fundo.
-// Na raiz, o primeiro acesso preserva o ritual da splash até o cenário estar pronto.
-const directRoute = document.documentElement.hasAttribute('data-direct-route');
+// Rota compartilhada, inclusive na query antiga, abre já; cenário e props seguem no fundo.
+// Só a raiz preserva o ritual da splash até o cenário estar pronto.
+const directRoute = document.documentElement.hasAttribute('data-direct-route')
+  || Object.keys(estadoDaUrl(location.href) || {}).length > 0;
 const menuBackdropReady = loadMenuBackdrop();
 if (directRoute) menuBackdropReady.then(_splashSetReady).catch((error) => console.error('[menu-background]', error));
 else { await menuBackdropReady; _splashSetReady(); }
