@@ -16,9 +16,9 @@ if(root) {
   let inboxSection='quests',conversation=null,conversationBefore=null,messageDraft='',messageClientId=null,pendingSend=null;
   const routeProfile=(location.pathname || '').match(/^\/u\/([a-z][a-z0-9_]{2,23}|[0-9a-f-]{36})(?:\/|$)/i)?.[1]
     || new URLSearchParams(location.search).get('perfil') || root.dataset.profile || '';
-  let auth=null,state=null,tab=root.dataset.tab || 'profile',profileId=routeProfile,rankingScope='global',rankingQuery='',rankingOffset=0,rankingPeriod='all',rankingMode='all',rankingGameType='all',rankingTeam='all',loadVersion=0;
+  let auth=null,state=null,tab=root.dataset.tab || 'profile',profileId=routeProfile,rankingScope='global',rankingQuery='',rankingOffset=0,rankingPeriod='all',rankingMode='all',rankingGameType='all',rankingTeam='all',loadVersion=0,accountSettled=false;
   // Perfil compartilhado (/u/<perfil>, ou o link antigo com ?perfil=) chega com o perfil como destino: o painel da conta começa recolhido para o perfil ficar no topo.
-  if(routeProfile)account.closest?.('details')?.removeAttribute('open');
+  if(new URLSearchParams(location.search).get('perfil') || /^\/u\/[^/]/.test(location.pathname || ''))account.closest?.('details')?.removeAttribute('open');
   // O SSR fica visível até o perfil da comunidade ser efetivamente desenhado. Falha de conta não pode apagar conteúdo público já entregue pelo servidor.
   const errors={handle_invalid:'Use de 3 a 24 letras, números ou _. Comece com letra.',handle_taken:'Esse ID já tem dono. Escolha outro.',handle_locked:'Seu ID já foi escolhido e fica fixo para preservar os links.',nick_invalid:'Use de 2 a 32 letras, números, _ . ou -.',nick_taken:'Esse nick já está em uso. Escolha outro.',account_hidden:'Esta conta está indisponível pela moderação.',session_expired:'Sua sessão expirou. Entre de novo para continuar.',social_unavailable:'A resenha está fora do ar. Tente de novo.',social_not_configured:'A comunidade aguarda configuração do servidor.',rate_limited:'Calma, fiscal da resenha. Tente de novo em um minuto.',blocked:'Esse jogador não pode interagir com você.',room_solo:'Essa sala é solo. Entre no multiplayer para chamar amigos.',room_full:'A sala lotou. Peça outro convite.',room_closed:'Essa sala já encerrou.',room_unavailable:'O servidor da sala não respondeu.',invite_expired:'O convite venceu. Peça outro.',invite_closed:'Esse convite já foi respondido.',join_room_first:'Entre numa sala do jogo antes de convidar.',provider_unavailable:'Esse login ainda não está habilitado.',account_conflict:'Esse nick ou progresso já pertence a outra conta.',guest_invalid:'Não foi possível comprovar o convidado. Seu progresso local continua salvo.',links_invalid:'Use links HTTPS das redes indicadas.',settings_invalid:'Revise a bio e as opções de privacidade.'};
   const el=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=text;if(cls)n.className=cls;return n;};
@@ -125,9 +125,9 @@ if(root) {
   /* Visualizações (backend 064): o total só aparece quando a API manda o campo. Cada perfil
      de outra pessoa aberto aqui manda UM aviso por carregamento; o backend deduplica por
      visitante e dia. fetch direto e mudo: falha (backend sem a 064, sem conta) não mexe na sessão. */
-  const viewedProfiles=new Set();
+  const viewedProfiles=new Set(),profileViewTotals=new Map();
   const viewsText=n=>`${n.toLocaleString('pt-BR')} ${n===1?'visualização':'visualizações'}`;
-  function countProfileView(p,line){if(!p?.id || viewedProfiles.has(p.id) || auth?.profile?.id===p.id)return;viewedProfiles.add(p.id);fetch('/api/social',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({action:'profile_view',target:p.id}),signal:AbortSignal.timeout(12000)}).then(r=>r.ok?r.json():null).then(out=>{if(line && Number.isSafeInteger(out?.views) && out.views>=0)line.textContent=viewsText(out.views);}).catch(()=>{});}
+  function countProfileView(p,line){if(!accountSettled || !p?.id || viewedProfiles.has(p.id) || auth?.profile?.id===p.id)return;viewedProfiles.add(p.id);fetch('/api/social',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({action:'profile_view',target:p.id}),signal:AbortSignal.timeout(12000)}).then(r=>r.ok?r.json():null).then(out=>{if(Number.isSafeInteger(out?.views) && out.views>=0){profileViewTotals.set(p.id,out.views);if(line)line.textContent=viewsText(out.views);}}).catch(()=>{});}
   async function showProfile(id,version) {
     const {profile:p}=await api('/api/social?action=profile'+(id?`&id=${encodeURIComponent(id)}`:''));
     if(version!==loadVersion)return;
@@ -139,6 +139,7 @@ if(root) {
     if(p.avatar_url){const image=el('img','','social-avatar');image.src=p.avatar_url;image.alt=`Avatar de ${p.nick}`;image.width=76;image.height=76;image.referrerPolicy='no-referrer';identity.append(image);}
     const bio=el('div');bio.append(el('p',p.bio || 'A bio ainda está no aquecimento.'),empty(`Nível ${p.level} · faltam ${p.next_level_points} pontos para o próximo.`));const rank=careerRankBadge(p.points);if(rank)bio.append(rank,empty(careerRankTitle(p.points)));identity.append(bio);c.append(identity);if(p.handle)c.append(empty('@'+p.handle));
     const ranking=el('div','','social-profile-ranking');ranking.append(el('span','RANKING GERAL'),el('strong',p.position?`#${p.position}`:'Privada'));c.append(ranking);
+    if(profileViewTotals.has(p.id))p.views=profileViewTotals.get(p.id);
     const views=Number.isSafeInteger(p.views) && p.views>=0?el('p',viewsText(p.views),'social-profile-views'):null;if(views)c.append(views);countProfileView(p,views);
     // Saldo TRETA$ (backend #114, treta_balance): só quando a API manda o campo. Backend sem o campo não mostra nada.
     if(Number.isSafeInteger(p.treta_balance) && p.treta_balance>=0){const treta=el('div','','social-profile-treta');treta.setAttribute('aria-label',`Saldo TRETA$ de ${p.nick}`);treta.append(el('span','SALDO TRETA$'),el('strong',`T$ ${p.treta_balance.toLocaleString('pt-BR')}`));c.append(treta);}
@@ -185,12 +186,12 @@ if(root) {
     if(activityVisible)c.append(secPartidas);else c.append(empty(noActivity));
     // Abas do perfil (/u/<perfil>/<aba>) só para o dono logado. Visitante vê o perfil público inteiro, sem abas.
     viewingOther=!own;syncPrivateTabs();
-    const commit=()=>document.getElementById?.('perfil-ssr')?.remove();
-    if(!own){content.append(c);commit();return;}
+    document.getElementById?.('perfil-ssr')?.remove();
+    if(!own){content.append(c);return;}
     const nav=profileTabs(p);
-    if(profileAba==='privacidade'){content.append(nav);showSettings();commit();return;}
-    if(profileAba==='conquistas' || profileAba==='partidas'){const only=card(p.nick);only.append(profileAba==='conquistas'?secConquistas:secPartidas);content.append(nav,only);commit();return;}
-    content.append(nav,c);commit();
+    if(profileAba==='privacidade'){content.append(nav);showSettings();return;}
+    if(profileAba==='conquistas' || profileAba==='partidas'){const only=card(p.nick);only.append(profileAba==='conquistas'?secConquistas:secPartidas);content.append(nav,only);return;}
+    content.append(nav,c);
   }
   /* Abas do perfil do dono. Trocar de aba grava /u/<perfil>/<aba> (rotas.js guarda a aba) sem recarregar. */
   function profileTabs(p){
@@ -350,7 +351,7 @@ if(root) {
     c.append(el('h3','Jogadores bloqueados'));for(const b of state.blocks)c.append(empty(b.nick),button('DESBLOQUEAR',()=>action('unblock',b.id)));if(!state.blocks.length)c.append(empty('Nenhum jogador bloqueado.'));content.append(c);
   }
   async function render(){const version=++loadVersion;root.dataset.view=tab;if(tab!=='profile' || !profileId){viewingOther=false;syncPrivateTabs();}content.replaceChildren();content.setAttribute('aria-busy','true');for(const b of document.querySelectorAll('.social-tabs button')){const on=b.dataset.tab===tab;b.setAttribute('aria-selected',String(on));b.setAttribute('tabindex',on?'0':'-1');if(on)content.setAttribute('aria-labelledby',b.id);}try{if(tab==='profile'){if(profileId || auth?.profile)await showProfile(profileId || auth.profile.id,version);else content.append(empty('Entre na conta para criar seu perfil.'));}else if(tab==='friends')showFriends();else if(tab==='ranking')await showRanking(version);else if(tab==='notifications')await showCentral(version);else if(tab==='feed')showFeed();else if(tab==='settings')showSettings();}catch(e){message(errors[e.message] || 'Perfil privado ou indisponível.');content.append(empty('Não foi possível carregar esta tela.'),button('TENTAR DE NOVO',render));}finally{if(version===loadVersion)content.setAttribute('aria-busy','false');}}
-  async function boot(){message('Carregando a turma…');const accountLoads=Promise.allSettled([loadAccount(),loadAuthOptions()]);if(profileId)await render();const [accountResult,configResult]=await accountLoads;auth=accountResult.status==='fulfilled'?accountResult.value:null;state=null;if(configResult.status==='fulfilled')loginConfig=configResult.value;let accountError=accountResult.status==='rejected'?accountResult.reason:null;if(auth?.profile){acceptAccount(auth);try{await api('/api/social',{action:'presence'});}catch(e){accountError=e;}}try{await refresh();await completePendingFriend();}catch(e){accountError=e;}renderAccount();await render();message(accountError?(errors[accountError.message] || 'Sua conta não respondeu; o perfil público continua disponível.'):'');}
+  async function boot(){accountSettled=false;message('Carregando a turma…');const accountLoads=Promise.allSettled([loadAccount(),loadAuthOptions()]);if(profileId)await render();const [accountResult,configResult]=await accountLoads;accountSettled=true;auth=accountResult.status==='fulfilled'?accountResult.value:null;state=null;if(configResult.status==='fulfilled')loginConfig=configResult.value;let accountError=accountResult.status==='rejected'?accountResult.reason:null;if(auth?.profile){acceptAccount(auth);try{await api('/api/social',{action:'presence'});}catch(e){accountError=e;}}try{await refresh();await completePendingFriend();}catch(e){accountError=e;}renderAccount();await render();message(accountError?(errors[accountError.message] || 'Sua conta não respondeu; o perfil público continua disponível.'):'');}
   /* Aba da comunidade no CAMINHO (/comunidade/amigos), mesma tabela de public/js/rotas.js
      (tools/eval/rotas-check.mjs confere). Sem import: a régua do backend roda este arquivo num vm. */
   const SLUG_DA_ABA={profile:'',friends:'amigos',ranking:'ranking',notifications:'notificacoes',feed:'feed',settings:'configuracoes'};
