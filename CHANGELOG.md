@@ -23,6 +23,12 @@
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
 
+## Não lançado — 2026-10-19
+
+### Corrigido
+- Celulares entram no perfil gráfico leve desde a abertura, limitam texturas e evitam carregar música, personagem 3D e cenário escondidos antes do primeiro toque.
+- Durante a partida, o perfil móvel começa com resolução de 70%, sem sombras dinâmicas, fauna decorativa ou viewmodels pesados; a qualidade continua se ajustando se o aparelho sofrer.
+
 ## Não lançado - 2026-10-18
 
 ### Adicionado

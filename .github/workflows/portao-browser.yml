@@ -161,6 +161,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run eval:entrada
 
+      # Perfil móvel real: toque/coarse entra leve antes do primeiro GLB e continua leve
+      # dentro da partida. O mutante prova que a régua acusa quando main.js deixa de ligá-lo.
+      - name: eval:perfilmobile:browser (perfil leve desde o boot)
+        if: ${{ !cancelled() }}
+        run: npm run eval:perfilmobile:browser
+
       # A partida carrega as armas DELA e nenhum bot empunha caixa (medido no navegador).
       - name: eval:armas (preload de arma por partida)
         if: ${{ !cancelled() }}
