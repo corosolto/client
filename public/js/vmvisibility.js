@@ -6,13 +6,14 @@ export function viewmodelVisibility({
   realScope = false,
   scopeMask = 0,
   meleeReady = false,
+  authoredMode = false,
   authoredReady = false,
 } = {}) {
   const firstPersonAlive = Boolean(alive && firstPerson);
   const scopeCovered = Boolean(realScope && Number(scopeMask) > 0.55);
   const melee = Boolean(firstPersonAlive && meleeReady);
   const root = Boolean(firstPersonAlive && !melee && !scopeCovered);
-  const authored = Boolean(root && authoredReady);
-  const fallback = Boolean(root && !authoredReady);
+  const authored = Boolean(root && authoredMode && authoredReady);
+  const fallback = Boolean(root && !authoredMode);
   return Object.freeze({ root, melee, authored, fallback, scopeCovered });
 }

@@ -21,9 +21,9 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
     if (accepts({ request, activeRequest, key: 'ar#scar', activeKey: 'ar#scar', utility: false })) {
       errors.push(`${aspect} ciclo ${cycle}: promise obsoleta aceita`);
     }
-    const loading = decide({ alive: true, firstPerson: true, authoredReady: false });
+    const loading = decide({ alive: true, firstPerson: true, authoredMode: true, authoredReady: false });
     samples += 1;
-    if (!exactlyOne(loading) || !loading.fallback) errors.push(`${aspect} ciclo ${cycle}: lacuna pré-load`);
+    if (!loading.root || loading.authored || loading.fallback) errors.push(`${aspect} ciclo ${cycle}: lacuna pré-load`);
     if (!accepts({ request: activeRequest, activeRequest, key: 'ar#scar', activeKey: 'ar#scar', utility: false })) {
       errors.push(`${aspect} ciclo ${cycle}: promise atual recusada`);
     }
@@ -31,13 +31,13 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
       'reload-tactical-start', 'reload-tactical-end', 'reload-empty-start',
       'reload-empty-end', 'inspect-start', 'inspect-end', 'ads-in', 'ads-out',
       'reload-cancel-switch', 'reload-cancel-return']) {
-      const state = mutateEvent(event, decide({ alive: true, firstPerson: true, authoredReady: true }));
+      const state = mutateEvent(event, decide({ alive: true, firstPerson: true, authoredMode: true, authoredReady: true }));
       samples += 1;
       if (!exactlyOne(state) || !state.authored) errors.push(`${aspect} ciclo ${cycle}: sumiu em ${event}`);
     }
     for (const [event, state] of [
-      ['morto', decide({ alive: false, firstPerson: true, authoredReady: true })],
-      ['terceira-pessoa', decide({ alive: true, firstPerson: false, authoredReady: true })],
+      ['morto', decide({ alive: false, firstPerson: true, authoredMode: true, authoredReady: true })],
+      ['terceira-pessoa', decide({ alive: true, firstPerson: false, authoredMode: true, authoredReady: true })],
     ]) {
       samples += 1;
       if (state.root || state.authored || state.fallback || state.melee) {
@@ -56,9 +56,8 @@ check(baseline.errors.length === 0, 'SCAR atravessa lifecycle 30x em 3:2 e 16:9'
 
 const stale = matrix({ accepts: ({ key, activeKey, utility }) => key === activeKey && !utility });
 check(stale.errors.length > 0, 'mutante que aceita Promise obsoleta reprova');
-const preload = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input)
-  : { root: true, melee: false, authored: false, fallback: false, scopeCovered: false } });
-check(preload.errors.length > 0, 'mutante que cria lacuna pré-load reprova');
+const preload = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: true, scopeCovered: false } });
+check(preload.errors.length > 0, 'mutante que exibe fallback pré-load reprova');
 for (const event of ['equip-end', 'reload-empty-end', 'inspect-end', 'ads-out']) {
   const hidden = matrix({ mutateEvent: (current, state) => current === event
     ? { ...state, root: false, authored: false, fallback: false } : state });

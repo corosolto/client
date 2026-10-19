@@ -22,9 +22,9 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
       activeKey: 'svd#svd', utility: false });
     if (staleAccepted) errors.push(`${aspect} ciclo ${cycle}: promise obsoleta aceita`);
 
-    const beforeLoad = decide({ alive: true, firstPerson: true, authoredReady: false });
+    const beforeLoad = decide({ alive: true, firstPerson: true, authoredMode: true, authoredReady: false });
     samples += 1;
-    if (!exactlyOne(beforeLoad) || !beforeLoad.fallback) errors.push(`${aspect} ciclo ${cycle}: lacuna pré-load`);
+    if (!beforeLoad.root || beforeLoad.authored || beforeLoad.fallback) errors.push(`${aspect} ciclo ${cycle}: fallback legado pré-load`);
 
     const freshAccepted = accepts({ request: activeRequest, activeRequest, key: 'svd#svd',
       activeKey: 'svd#svd', utility: false });
@@ -33,14 +33,14 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
     for (const event of ['idle', 'shoot-1', 'shoot-10', 'reload-tactical-start',
       'reload-tactical-end', 'reload-empty-start', 'reload-empty-end', 'reload-cancel-switch',
       'reload-cancel-return']) {
-      const state = mutateEvent(event, decide({ alive: true, firstPerson: true, authoredReady: true }));
+      const state = mutateEvent(event, decide({ alive: true, firstPerson: true, authoredMode: true, authoredReady: true }));
       samples += 1;
       if (!exactlyOne(state) || !state.authored) errors.push(`${aspect} ciclo ${cycle}: sumiu em ${event}`);
     }
 
     for (const mask of [0, 0.54, 0.55, 0.551, 1, 0.551, 0.55, 0.54, 0]) {
       const state = decide({ alive: true, firstPerson: true, realScope: true,
-        scopeMask: mask, authoredReady: true });
+        scopeMask: mask, authoredMode: true, authoredReady: true });
       samples += 1;
       if (mask <= 0.55 && (!exactlyOne(state) || !state.authored)) {
         errors.push(`${aspect} ciclo ${cycle}: lacuna no limite ${mask}`);
@@ -51,8 +51,8 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
     }
 
     for (const [event, state] of [
-      ['morto', decide({ alive: false, firstPerson: true, authoredReady: true })],
-      ['terceira-pessoa', decide({ alive: true, firstPerson: false, authoredReady: true })],
+      ['morto', decide({ alive: false, firstPerson: true, authoredMode: true, authoredReady: true })],
+      ['terceira-pessoa', decide({ alive: true, firstPerson: false, authoredMode: true, authoredReady: true })],
     ]) {
       samples += 1;
       if (state.root || state.authored || state.fallback || state.melee) {
@@ -63,9 +63,9 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
   return { errors, samples };
 }
 
-check(AUTHORED_VM_ENABLED === false, 'ativação global segue desligada em ambiente sem opt-in');
-check(['bolt', 'svd', 'marksman'].every((family) => VM_FAMILY[family].ready === false),
-  'três famílias de precisão permanecem ready:false');
+check(AUTHORED_VM_ENABLED === true, 'ativação global permanece ligada');
+check(['bolt', 'svd', 'marksman'].every((family) => VM_FAMILY[family].ready === true),
+  'três famílias de precisão permanecem ready:true');
 check(['mosin', 'svd', 'sks'].every((weapon) => VM_WEAPON[weapon].baked === true),
   'três candidatos usam contrato baked próprio');
 
@@ -85,10 +85,8 @@ check(thresholdMutant.errors.length > 0, 'mutante de comparação assimétrica e
 const staleMutant = matrix({ accepts: ({ key, activeKey, utility }) => key === activeKey && !utility });
 check(staleMutant.errors.length > 0, 'mutante que aceita Promise obsoleta reprova');
 
-const preLoadMutant = matrix({ decide: (input) => input.authoredReady
-  ? viewmodelVisibility(input)
-  : { root: true, melee: false, authored: false, fallback: false, scopeCovered: false } });
-check(preLoadMutant.errors.length > 0, 'mutante que oculta fallback antes do load reprova');
+const preLoadMutant = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: true, scopeCovered: false } });
+check(preLoadMutant.errors.length > 0, 'mutante que exibe fallback antes do load reprova');
 
 for (const event of ['shoot-1', 'reload-tactical-end', 'reload-cancel-return']) {
   const hidden = matrix({ mutateEvent: (current, state) => current === event
