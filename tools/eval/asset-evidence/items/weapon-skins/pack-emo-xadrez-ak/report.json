@@ -6,12 +6,12 @@
   "approved": true,
   "certified": true,
   "runtimeEnabled": true,
-  "designOrigin": "project-owned",
-  "rightsStatus": "original-safe",
+  "designOrigin": "public-domain-adaptation",
+  "rightsStatus": "public-domain",
   "officialMarksIncluded": false,
   "markPlacement": "receiver-inlay",
   "sloganPlacement": null,
-  "markSourceUrl": null,
+  "markSourceUrl": "https://commons.wikimedia.org/wiki/File:Holden%27s_human_osteology_(1899)_-_Plt18_Fig01.png",
   "referenceRule": "original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin",
   "slogan": null,
   "storePrice": null,
@@ -21,16 +21,16 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "1d0d31554f418b42b5e6ee58952e300e1d1a9576c408cdea38ee60d8dc39950c",
-    "side-right.png": "97c8c668ee4cb3c30095efbbbc2ca7ffd23df8d36f3148ea4beb2b85c7751a3a",
-    "three-quarter.png": "03ccf294f5a4ee95f3fcbd36bbf6a29097799f66729be6527f81d64c3a140a9d"
+    "side-left.png": "8687b26964eb46dea1ffa8bc4d3c8ec9649c9a2a40c524972bfb346b0253f206",
+    "side-right.png": "ed28d708ac0eb3c5ca4dbbeb2e783d2551a741124f4d0c33d0cb392e66a2e858",
+    "three-quarter.png": "93b27c0637a2264335a420586173ead02f79c0ee049449dad6dfa8afc2c717c3"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "4568166a31e880f3da333d5d2d2e988fb8a483f72060140785620e14bbf5ac5f",
-    "public/js/weapon-skins.js": "bfeb7329e5c93fac2ad8cc6721553998cd57123abd60e1f5eef0fbbb63aafe56",
+    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
+    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
-    "public/textures/weapon-skins/project-marks/emo-caveira-assustadora.svg": "bc3d8a53904a04b6e856c5cd10f9b6ea4213011788d1474f35d82b1a7b7e25a9"
+    "public/textures/weapon-skins/project-marks/emo-caveira-gravura.webp": "93a8ab848738720a5da7222011922605214ad6daad5a7d8d2b826fc5856e3309"
   },
   "consoleErrors": []
 }

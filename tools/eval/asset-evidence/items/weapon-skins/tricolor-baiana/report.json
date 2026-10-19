@@ -21,13 +21,13 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "c6974f3124bd375838df6014e02aedffcaa58ab33b5e0e52627368dec0c5dd8b",
-    "side-right.png": "456e09af455e4538889de0306989ed9aace76ec3b0c43d82b1902275c15b941b",
-    "three-quarter.png": "8c7a587646b8bed27ba51b29ec2c71e423a604d122927c56d0837779b350fc59"
+    "side-left.png": "0fe31d2d340ebcb147982c3edefd98449e2c6435a14ecf82d060b84869919c53",
+    "side-right.png": "7465ebc1e15ec70601f451ea971df9f2831b8fb3c00fb495bc5848fe5380ffba",
+    "three-quarter.png": "f352dae0f8d1ff24dec2683985fcab74e9ed29cc7999a6f354a3afa848d71f5e"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "4568166a31e880f3da333d5d2d2e988fb8a483f72060140785620e14bbf5ac5f",
-    "public/js/weapon-skins.js": "bfeb7329e5c93fac2ad8cc6721553998cd57123abd60e1f5eef0fbbb63aafe56",
+    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
+    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/club-marks/bahia.png": "52440b12288e4b0e5e798fc0162c7c4699ab9ec449b70633bc8bd29cc88a1a64"

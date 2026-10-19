@@ -26,8 +26,8 @@
     "three-quarter.png": "d7200cc36403b00aa6f715328c3668bf80f53cd365ad57323b9cc2959e775ebc"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "4568166a31e880f3da333d5d2d2e988fb8a483f72060140785620e14bbf5ac5f",
-    "public/js/weapon-skins.js": "bfeb7329e5c93fac2ad8cc6721553998cd57123abd60e1f5eef0fbbb63aafe56",
+    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
+    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
   },

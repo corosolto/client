@@ -21,13 +21,13 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "36096c3a3cfea61e9c585a1b89493a517bd4902144a110e564a7f98255cdd4fb",
-    "side-right.png": "757df92da34678b11e3f0c7ad9f46cd4f5443c0c65e3842d5b8e32fea34ea96c",
-    "three-quarter.png": "3d643aa1b58babf1a875634bde4bd90ab204bb05a3baaf38de02010f0e85a0bb"
+    "side-left.png": "7477b7e2f1e38fcdd1da6aa651fe5e6ff3706df4c13a6991a31e05f87f6f48df",
+    "side-right.png": "674e960895176a6c8090fc38649e0edf10cfa94ce166326fbc25931ec1a7377f",
+    "three-quarter.png": "d7433f1718b1c1c3e396f2188ab63735038e7e4a0acbae65ff2e68acea73569d"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "4568166a31e880f3da333d5d2d2e988fb8a483f72060140785620e14bbf5ac5f",
-    "public/js/weapon-skins.js": "bfeb7329e5c93fac2ad8cc6721553998cd57123abd60e1f5eef0fbbb63aafe56",
+    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
+    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/club-marks/santos.png": "94940aef9f8260e6d9a47bbf70219e77b2f66f8a04d2422e67e6ed746bde9115"

@@ -21,13 +21,13 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "a63a6b0decc6e1ac05c6353499c41c9394e026c35affeff0e333fd1b33f083d0",
-    "side-right.png": "2779f4124e28a262b9f07ee9581e463f500dfb302caa485c27f1cda652c0ef72",
-    "three-quarter.png": "760ad0ee7f16ac5ef20a1bf22d7cc2b934e7ff1c9d7974edc62ef15683e8f7b4"
+    "side-left.png": "33b54d6b523679ed12be553104e5807526f6df8ff35cb23fda0d2599a6ddd61f",
+    "side-right.png": "9a9e358ffb6dfe7af16e8f54aa1172860f34b7f878eaf3d253723f90825b64a4",
+    "three-quarter.png": "fd2c2e553a8a25fa4bf4380592cdd4c9fae4fca5fc197fe8c81597f20489c6eb"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "4568166a31e880f3da333d5d2d2e988fb8a483f72060140785620e14bbf5ac5f",
-    "public/js/weapon-skins.js": "bfeb7329e5c93fac2ad8cc6721553998cd57123abd60e1f5eef0fbbb63aafe56",
+    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
+    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/club-marks/sao-paulo.png": "5d3647c53d24318d20dd7157f6bddcf6de55acfd040f99cf45e1b51c6a8e49f2"

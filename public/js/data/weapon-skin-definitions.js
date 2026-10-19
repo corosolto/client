@@ -1,5 +1,5 @@
 const storeSkin = ({
-  id, name, weapon, theme, color, description, price, inspiration,
+  id, name, weapon, theme, color, description, price, inspiration, designOrigin = 'project-owned',
   slogan = null, markAsset = null, markSourceUrl = null, rightsStatus = 'original-safe', metalFinish = null,
   preserveBase = false, markLayout = null, sloganLayout = null, sloganAspect = null, series = null, storeEnabled = true,
 }) => Object.freeze({
@@ -10,7 +10,7 @@ const storeSkin = ({
   certified: true,
   runtimeEnabled: true,
   targetWeapons: Object.freeze([weapon]),
-  designOrigin: 'project-owned',
+  designOrigin,
   inspiration,
   rightsStatus,
   officialMarksIncluded: false,
@@ -38,8 +38,8 @@ const PACK_WEAPON_THEMES = Object.freeze([
   { id: 'caveira-urbana', name: 'Caveira Urbana', theme: 'pack-caveira', color: '#d8d2c2', description: 'Carbono preto, osso marfim e caveira original.', markAsset: '/textures/weapon-skins/project-marks/caveira-urbana.svg' },
   { id: 'brasil-neon', name: 'Brasil Neon', theme: 'pack-brasil-neon', color: '#00d65c', description: 'Verde, amarelo e azul elétricos de alta leitura.' },
   { id: 'liberdade-1776', name: 'Liberdade 1776', theme: 'pack-liberdade', color: '#b31942', description: 'Vermelho, branco e azul em faixas de aço.' },
-  { id: 'maga-47', name: 'MAGA 47', theme: 'pack-maga', color: '#d20a2e', description: 'Bandeira americana grande sobre vermelho de campanha e aço preto.', markAsset: '/textures/weapon-skins/project-marks/usa-bandeira-grande.svg', markLayouts: { ak: { y: 0.046, z: -0.040, height: 0.155 }, pistol: { y: -0.018, z: -0.012, height: 0.145 } } },
-  { id: 'emo-xadrez', name: 'Emo Xadrez', theme: 'pack-emo', color: '#f02cb8', description: 'Xadrez preto e magenta com uma caveira angular assustadora.', markAsset: '/textures/weapon-skins/project-marks/emo-caveira-assustadora.svg', markLayouts: { ak: { y: 0.046, z: -0.055, height: 0.155 }, pistol: { y: -0.018, z: -0.015, height: 0.142 } } },
+  { id: 'maga-47', name: 'MAGA 47', theme: 'pack-maga', color: '#d20a2e', description: 'Bandeira americana contida no corpo da arma sobre vermelho de campanha e aço preto.', markAsset: '/textures/weapon-skins/project-marks/usa-bandeira-grande.svg', markLayouts: { ak: { y: 0.095, z: -0.040, height: 0.060, lift: 0.004 }, pistol: { y: -0.040, z: -0.012, height: 0.070 } } },
+  { id: 'emo-xadrez', name: 'Emo Xadrez', theme: 'pack-emo', color: '#f02cb8', description: 'Xadrez preto e magenta com uma caveira anatômica realista em traço de gravura.', markAsset: '/textures/weapon-skins/project-marks/emo-caveira-gravura.webp', markSourceUrl: 'https://commons.wikimedia.org/wiki/File:Holden%27s_human_osteology_(1899)_-_Plt18_Fig01.png', rightsStatus: 'public-domain', designOrigin: 'public-domain-adaptation', inspiration: 'adaptação monocromática do crânio anatômico de Luther Holden, publicado em 1887 e em domínio público', markLayouts: { ak: { y: 0.090, z: -0.055, height: 0.100, lift: 0.004 }, pistol: { y: -0.018, z: -0.015, height: 0.110 } } },
 ]);
 const PACK_WEAPON_SKINS = Object.freeze(Object.fromEntries(PACK_WEAPON_THEMES.flatMap((pack) =>
   ['ak', 'pistol', 'knife'].map((weapon) => {
@@ -53,9 +53,12 @@ const PACK_WEAPON_SKINS = Object.freeze(Object.fromEntries(PACK_WEAPON_THEMES.fl
       color: pack.color,
       description: pack.description,
       markAsset: pack.markAsset || null,
+      markSourceUrl: pack.markSourceUrl || null,
+      rightsStatus: pack.rightsStatus || 'original-safe',
+      designOrigin: pack.designOrigin || 'project-owned',
       markLayout: pack.markLayouts?.[weapon] || null,
       price: 0,
-      inspiration: 'conjunto original coordenado do projeto, sem marca de produto ou reprodução de item comercial',
+      inspiration: pack.inspiration || 'conjunto original coordenado do projeto, sem marca de produto ou reprodução de item comercial',
       series: 'PACKS DA TRETA',
       storeEnabled: false,
     })];
@@ -236,8 +239,8 @@ export const WEAPON_SKINS = Object.freeze({
     markAsset: '/textures/weapon-skins/political-marks/trabalho-13.svg',
     markSourceUrl: 'https://commons.wikimedia.org/wiki/File:Hammer_and_sickle.svg',
     rightsStatus: 'political-satire',
-    markLayout: { y: 0.045, z: -0.060, height: 0.145 },
-    sloganLayout: { y: 0.120, z: 0.180, height: 0.060 },
+    markLayout: { y: 0.045, z: -0.060, height: 0.065 },
+    sloganLayout: { y: 0.120, z: 0.180, height: 0.045 },
   }),
   'trabalho-13-pistola': storeSkin({
     id: 'trabalho-13-pistola',
@@ -267,7 +270,7 @@ export const WEAPON_SKINS = Object.freeze({
     slogan: 'O BRASIL É DOS BRASILEIROS',
     markAsset: '/textures/weapon-skins/political-marks/estrela-vermelha.svg',
     rightsStatus: 'political-satire',
-    markLayout: { y: 0.040, z: -0.070, height: 0.115 },
+    markLayout: { y: 0.040, z: -0.070, height: 0.090 },
     sloganLayout: { y: 0.120, z: 0.180, height: 0.055 },
     sloganAspect: 6,
   }),
@@ -298,7 +301,7 @@ export const WEAPON_SKINS = Object.freeze({
     inspiration: 'composição brasileira original com estrela verde geométrica, disco dourado e monograma BR',
     markAsset: '/textures/weapon-skins/political-marks/estrela-verde.svg',
     rightsStatus: 'political-satire',
-    markLayout: { y: 0.045, z: -0.065, height: 0.145 },
+    markLayout: { y: 0.045, z: -0.065, height: 0.088 },
   }),
   'estrela-verde-pistola': storeSkin({
     id: 'estrela-verde-pistola',
@@ -325,8 +328,8 @@ export const WEAPON_SKINS = Object.freeze({
     slogan: 'O BRASIL É 22',
     markAsset: '/textures/weapon-skins/political-marks/brasil-22.svg',
     rightsStatus: 'political-satire',
-    markLayout: { y: 0.040, z: -0.065, height: 0.125 },
-    sloganLayout: { y: 0.120, z: 0.180, height: 0.065 },
+    markLayout: { y: 0.040, z: -0.065, height: 0.085 },
+    sloganLayout: { y: 0.120, z: 0.180, height: 0.050 },
   }),
   'brasil-22-pistola': storeSkin({
     id: 'brasil-22-pistola',

@@ -21,13 +21,13 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "09e8f28c8be9794c3dccf51e06ca562a985084037a1fab9dd3eee9442c2e104c",
-    "side-right.png": "5d467faa0f7d266ca5c700f3131f61b2a8a0e31898e5d2f0066905dd6da6faf1",
-    "three-quarter.png": "688ffb29e478424cf97d6d318a9bdcfe39adc8359ec968365a71dad2aaf2ca3d"
+    "side-left.png": "16896a853eaa810ccd82de732ee87d4177be7ad31c3a7b6becc69c26cce6a5d5",
+    "side-right.png": "906a1fa409aee6a3fc79eff95fdb47c91005b501ae68c21a152a78e691ebd4b1",
+    "three-quarter.png": "0e58af7292a32ab2a00b2d85bc5fdf54074da371d0ea223b45e8c3cf33a3153e"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "4568166a31e880f3da333d5d2d2e988fb8a483f72060140785620e14bbf5ac5f",
-    "public/js/weapon-skins.js": "bfeb7329e5c93fac2ad8cc6721553998cd57123abd60e1f5eef0fbbb63aafe56",
+    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
+    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
     "public/textures/weapon-skins/club-marks/palmeiras.png": "0ac52419909af2018a70ee8fae56c59f6c9d58ec86ef95731a3c99dea66928b4"

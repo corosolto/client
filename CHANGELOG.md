@@ -29,7 +29,7 @@
 - A fábrica de wearables registra o boné procedural versionado e perfis candidatos por hash para Capitão, Esquerdomacho e Barbudo. A mesma régua importa os marcos e ajustes medidos dos óculos 33–36 para Capitão e Esquerdomacho, gera folhas frente/¾/perfil por pose e bloqueia qualquer par sem certificação humana; os itens 37/38 e a loja de acessórios continuam fechados.
 - A loja TRETA$ ganha vinte skins de arma para AK e pistola: oito políticas, quatro com expressões brasileiras sobre o corpo original, duas Camo Selva, duas Tropicalente, ouro por T$ 900 e prata por T$ 500. O armário equipa uma skin por arma; as mãos continuam visíveis segurando o modelo, e a tecla `I` mostra sua lateral completa durante a partida.
 - A loja TRETA$ ganha doze luvas de primeira pessoa por T$ 350, incluindo Emo Xadrez, Arquibancada, Bandeira do Brasil, Bandeira dos EUA e MAGA. Cada produto tem molde 3D isolado na loja e equipa a luva em todas as armas.
-- Cinco packs coordenados — Caveira Urbana, Brasil Neon, Liberdade 1776, MAGA 47 e Emo Xadrez — reúnem AK, pistola, luvas e faca por T$ 2.000 cada; o MAGA destaca uma bandeira americana grande, e o Emo usa uma caveira angular e assustadora.
+- Cinco packs coordenados — Caveira Urbana, Brasil Neon, Liberdade 1776, MAGA 47 e Emo Xadrez — reúnem AK, pistola, luvas e faca por T$ 2.000 cada; a bandeira do MAGA fica contida no corpo da arma, e o Emo usa uma caveira anatômica em traço de gravura.
 - A loja separa o catálogo nas abas Armas, Itens e Packs. O detalhe de arma informa a tecla `I` e reproduz uma demonstração da inspeção lateral.
 
 ### Alterado

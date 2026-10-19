@@ -179,7 +179,7 @@ export const GLOVE_SKINS = Object.freeze({
     sleeve: '#21112f',
     accent: '#f4ede7',
     motif: 'emo-skull',
-    description: 'Xadrez preto e magenta com caveira angular, olhos fundos e dentes afiados.',
+    description: 'Xadrez preto e magenta com caveira anatômica, órbitas profundas e dentes definidos.',
     storeEnabled: false,
   }),
 });

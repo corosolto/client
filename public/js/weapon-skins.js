@@ -220,7 +220,7 @@ const MATERIAL_PROFILE = Object.freeze({
   default: Object.freeze({ roughness: 0.5, metalness: 0.48, envMapIntensity: 1.15 }),
 });
 const CLUB_MARK_LAYOUT = Object.freeze({
-  ak: Object.freeze({ x: 0.041, y: 0.052, z: -0.08, height: 0.09 }),
+  ak: Object.freeze({ x: 0.041, y: 0.052, z: -0.08, height: 0.050 }),
   pistol: Object.freeze({ x: 0.096, y: 0.085, z: 0.05, height: 0.16 }),
 });
 const POLITICAL_LAYOUT = Object.freeze({
@@ -302,12 +302,12 @@ function sloganTexture(skinId) {
 }
 
 function fittedSideSurfaces(model, weaponId, placements) {
-  const cacheKey = `${model.uuid}:${weaponId}:${placements.map(({ y, z, width, height }) => `${y},${z},${width},${height}`).join('|')}`;
+  const cacheKey = `${model.uuid}:${weaponId}:${placements.map(({ y, z, width, height, lift }) => `${y},${z},${width},${height},${lift || 0}`).join('|')}`;
   if (fittedSurfaceCache.has(cacheKey)) return fittedSurfaceCache.get(cacheKey);
   model.updateMatrixWorld(true);
   const inverseRoot = new THREE.Matrix4().copy(model.matrixWorld).invert();
-  const probes = placements.map(({ y, z, width, height }) => ({
-    y, z, halfW: width * 0.56, halfH: height * 0.72, min: Infinity, max: -Infinity,
+  const probes = placements.map(({ y, z, width, height, lift }) => ({
+    y, z, halfW: width * 0.56, halfH: height * 0.72, lift: Math.max(0, lift || 0), min: Infinity, max: -Infinity,
   }));
   let overallMin = Infinity;
   let overallMax = -Infinity;
@@ -331,8 +331,8 @@ function fittedSideSurfaces(model, weaponId, placements) {
   });
   const lift = 0.0015 / Math.max(0.001, model.scale.x || 1);
   const surfaces = probes.map((probe) => Object.freeze({
-    right: (Number.isFinite(probe.max) ? probe.max : overallMax) + lift,
-    left: (Number.isFinite(probe.min) ? probe.min : overallMin) - lift,
+    right: (Number.isFinite(probe.max) ? probe.max : overallMax) + lift + probe.lift,
+    left: (Number.isFinite(probe.min) ? probe.min : overallMin) - lift - probe.lift,
   }));
   fittedSurfaceCache.set(cacheKey, surfaces);
   return surfaces;
