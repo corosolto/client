@@ -22,6 +22,7 @@
      node tools/eval/qualidade-adaptativa-check.mjs --mutar=sem-histerese   # limiar único
      node tools/eval/qualidade-adaptativa-check.mjs --mutar=sem-catraca
      node tools/eval/qualidade-adaptativa-check.mjs --mutar=sem-sobrevivencia
+     node tools/eval/qualidade-adaptativa-check.mjs --mutar=sem-efeitos
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -144,11 +145,22 @@ cobra(matos.every((m) => typeof m === 'number' && m > 0 && m <= 1),
 cobra(matos.every((m, i) => i === 0 || m <= matos[i - 1]) && matos[matos.length - 1] <= 0.5,
   'QA10b · e ele só encurta degrau abaixo, chegando a menos da metade no mínimo');
 
+/* QA10c · partículas, cápsulas e marcas não podem continuar com o orçamento cheio quando
+   a imagem já caiu para sobrevivência: são draw calls decorativos no pior momento. */
+const efeitos = MUTAR === 'sem-efeitos' ? DEGRAUS.map(() => 1) : DEGRAUS.map((d) => d.efeitos);
+cobra(efeitos.every((f) => typeof f === 'number' && f > 0 && f <= 1)
+  && efeitos.every((f, i) => i === 0 || f <= efeitos[i - 1]) && efeitos.at(-1) <= 0.25,
+`QA10c · o orçamento de efeitos só cai, chegando a ${Math.round(efeitos.at(-1) * 100)}% no fundo`);
+
 /* QA11 · e o corte CHEGA à tela. Lê o uso, não a declaração: uma tabela bonita com um
    `atualizaCortes` que ninguém chama é a lição do BUG-02 outra vez. */
 const props = fs.readFileSync(path.join(RAIZ, 'public/js/mapprops.js'), 'utf8');
 const game = fs.readFileSync(path.join(RAIZ, 'public/js/game.js'), 'utf8');
 const mainJs = fs.readFileSync(path.join(RAIZ, 'public/js/main.js'), 'utf8');
+const gpuParticles = fs.readFileSync(path.join(RAIZ, 'public/js/gpuparticles.js'), 'utf8');
+const mainComEfeitos = MUTAR === 'sem-efeitos'
+  ? mainJs.replace('game?.aplicarEfeitosAdaptativos?.(d.efeitos ?? 1);', '')
+  : mainJs;
 const corte = (props.match(/export function atualizaCortes[\s\S]*?\n\}/) || [''])[0];
 cobra(/corteVegetacao\(\)/.test(corte) && /im\.userData\.corte \* f/.test(corte),
   'QA11 · o corte multiplica a distância do mapa pelo fator do degrau');
@@ -156,6 +168,15 @@ cobra(/atualizaCortes\(this\.world\.root/.test(game) && game.indexOf('atualizaCo
   'QA11b · e roda uma vez por quadro DESENHADO, depois do portão de render');
 cobra(/definirCorteVegetacao\(d\.mato/.test(mainJs),
   'QA11c · quem escreve o fator é a escada, no mesmo lugar que aplica o degrau');
+cobra(/aplicarEfeitosAdaptativos\?\.\(d\.efeitos/.test(mainComEfeitos)
+  && /aplicarEfeitosAdaptativos\(fator/.test(game)
+  && /_limiteCasings/.test(game) && /_limiteDecals/.test(game) && /_limiteBloodDecals/.test(game)
+  && /setBudget\(factor/.test(gpuParticles) && /setDrawRange\(0, this\.limit\)/.test(gpuParticles),
+`QA12 · o degrau chega a partículas, cápsulas e marcas de combate`);
 
+if (MUTAR) {
+  console.log(`\n${falhas ? 'MUTANTE REPROVADO COMO DEVIA' : 'MUTAÇÃO PASSOU SEM SER VISTA'} — ${ok} ok, ${falhas} falha(s)`);
+  process.exit(falhas ? 0 : 1);
+}
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

@@ -47,6 +47,15 @@ import { makeNetcode } from './netgame.js';
 const SETTINGS_KEY = 'awpbr_settings';
 const POINTER_COARSE = matchMedia('(pointer: coarse)').matches;
 const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+const AUTO_QUALITY_KEY = 'cs_quality_auto';
+const QUALITY_MARKER = localStorage.getItem(AUTO_QUALITY_KEY);
+const QUALITY_WAS_AUTOMATIC = QUALITY_MARKER === '1';
+/* Versões anteriores gravavam `low` ao detectar celular e depois o confundiam com escolha
+   manual. No coarse, esse legado volta a ser automático; uma nova escolha grava `manual`. */
+const QUALITY_WAS_MANUAL = QUALITY_MARKER === 'manual'
+  || (savedSettings.quality !== undefined && !QUALITY_WAS_AUTOMATIC
+    && !(POINTER_COARSE && savedSettings.quality === 'low'));
+const marcarQualidadeManual = () => { try { localStorage.setItem(AUTO_QUALITY_KEY, 'manual'); } catch { /* storage bloqueado */ } };
 if (savedSettings.invertY == null && savedSettings.invY != null) savedSettings.invertY = savedSettings.invY;
 /* FORMATO LIVRE DA PARTIDA: `bots` (N×N simétrico) virou `allyBots` (bots ao SEU lado,
    sem contar você) + `enemyBots` — 1v4, solo vs 8, 5v5, o que o jogador montar.
@@ -70,7 +79,7 @@ const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify({
   quality: preferredQuality ?? settings.quality,
 }));
 // Ajustes da Treta Pop (tp/ajustes.js) gravam nas mesmas settings, senão o próximo save apagaria a escolha.
-if (document.documentElement.dataset.ui === 'v3') document.addEventListener('tp-ajuste', (e) => { settings[e.detail.chave] = e.detail.valor || undefined; saveSettings(); });
+if (document.documentElement.dataset.ui === 'v3') document.addEventListener('tp-ajuste', (e) => { settings[e.detail.chave] = e.detail.valor || undefined; if (e.detail.chave === 'quality') marcarQualidadeManual(); saveSettings(); });
 const NICK_KEY = 'awpbr_nick';
 // A coleta de jogadas exige consentimento explícito e persistente.
 const TRAIN_CONSENT_KEY = 'csbr_training_consent';
@@ -107,7 +116,7 @@ function clearTelemetryGameContext() {
 // o tom do caminho SEM pós mora no bloom.js, que é o dono da tabela de exposição/piso por mapa.
 import { applyNoPostTone, ajustaPos } from './bloom.js';
 import { criaRenderer, avisaSemWebgl, avisaSoftware } from './glcontext.js';
-import { EscadaAdaptativa, DEGRAUS, perfilInicial, tetoTextura } from './qualidade-adaptativa.js';
+import { EscadaAdaptativa, DEGRAUS, LimitadorCadencia, PERFIL_MOBILE, perfilInicial, tetoTextura } from './qualidade-adaptativa.js';
 import { definirSombraDegrau, definirCorteVegetacao, aplicaSombraSol } from './mapquality.js';
 const container = document.getElementById('game-container');
 const SAFE_MODE = new URLSearchParams(location.search).get('safe') === '1';
@@ -126,7 +135,7 @@ if (COMPAT_MODE) { preferredQuality = settings.quality; settings.quality = 'low'
 /* AUTO-PERFIL PARA MÁQUINA FRACA: cai pra 'low' por padrão só se o jogador NUNCA escolheu
    qualidade à mão (a escolha manual sempre vence). ?perfilauto=0 desliga a heurística. */
 const AUTO_PROFILE = new URLSearchParams(location.search).get('perfilauto') !== '0';
-const MOBILE_AUTO = !COMPAT_MODE && AUTO_PROFILE && savedSettings.quality === undefined && POINTER_COARSE;
+const MOBILE_AUTO = !COMPAT_MODE && AUTO_PROFILE && !QUALITY_WAS_MANUAL && POINTER_COARSE;
 const HUB_ENABLED = new URLSearchParams(location.search).get('home') !== 'legacy';
 /* A tela mora no CAMINHO (public/js/rotas.js, ADR 0008): /jogar/multiplayer, /loja,
    /comunidade/amigos... Parâmetro que não é tela (map, personagem, sala) segue na query. */
@@ -158,10 +167,11 @@ function detectaHwFraco() {
   const cores = navigator.hardwareConcurrency || 8;
   return integrada || (typeof mem === 'number' && mem <= 4) || cores <= 4;
 }
-const WEAK_HW = !COMPAT_MODE && AUTO_PROFILE && savedSettings.quality === undefined && detectaHwFraco();
+const WEAK_HW = !COMPAT_MODE && AUTO_PROFILE && !QUALITY_WAS_MANUAL && detectaHwFraco();
 const AUTO_LOW = WEAK_HW || MOBILE_AUTO;
 if (AUTO_LOW) {
   settings.quality = 'low';
+  try { localStorage.setItem(AUTO_QUALITY_KEY, '1'); } catch { /* storage bloqueado */ }
   try { console.info(`[perf] ${MOBILE_AUTO ? 'celular' : 'hardware modesto'} detectado — qualidade em BAIXA por padrão (mude em Configurações)`); } catch {}
 }
 const LEAN = COMPAT_MODE || AUTO_LOW;   // qualquer caminho leve: previews estáticos + DPR menor
@@ -3002,7 +3012,7 @@ $('settings-close').onclick = closeSettings;
 $('settings-apply').onclick = () => { ui.click(); saveSettings(); if (game) game.applySettings(); };
 $('settings-restore').onclick = () => {
   ui.click();
-  settings.quality = 'med'; settings.sens = 1; settings.invertY = false; settings.vol = 0.7; settings.menuMusic = true; settings.speech = true; settings.xhair = '#4fe8e0'; settings.camView = 'first';
+  settings.quality = 'med'; marcarQualidadeManual(); settings.sens = 1; settings.invertY = false; settings.vol = 0.7; settings.menuMusic = true; settings.speech = true; settings.xhair = '#4fe8e0'; settings.camView = 'first';
   $('set-quality').value = settings.quality; $('set-sens').value = settings.sens; $('set-vol').value = settings.vol;
   $('set-speech').checked = true; $('set-invert-y').checked = false; $('set-xhair').value = settings.xhair; $('set-camera').value = 'first';
   if (game) game.setCamView('first');
@@ -3725,7 +3735,7 @@ const updLabels = () => {
 sensEl.oninput = () => { settings.sens = +sensEl.value; updLabels(); saveSettings(); };
 invertEl.onchange = () => { settings.invertY = invertEl.checked; saveSettings(); ui.click(); };
 volEl.oninput = () => { settings.vol = +volEl.value; sfx.setVolume(settings.vol); updLabels(); saveSettings(); };
-qualEl.onchange = () => { settings.quality = qualEl.value; saveSettings(); ajustarAnisotropia(menuScene, settings.quality); if (game) game.applySettings(); };
+qualEl.onchange = () => { settings.quality = qualEl.value; try { localStorage.setItem('cs_quality_auto', 'manual'); } catch { /* storage bloqueado */ } saveSettings(); ajustarAnisotropia(menuScene, settings.quality); if (game) game.applySettings(); };
 // Clarão dos tiros (BUG-174): mesma disciplina da qualidade - persiste e aplica AO VIVO,
 // porque quem reclama do clarão está COM A ARMA NA MÃO quando procura o ajuste.
 const fxFlashEl = $('set-fxflash');
@@ -3875,9 +3885,13 @@ const PASSO_TETO = 4;
 /* ESCADA ADAPTATIVA. A detecção de máquina fraca roda uma vez no boot; mapa caro, partida
    cheia e fumaça acontecem depois. Ver docs/QUALIDADE-ADAPTATIVA.md. */
 const ADAPTATIVA = new URLSearchParams(location.search).get('adaptativa') !== '0';
-const degrauInicial = perfilInicial({ pointerCoarse: MOBILE_AUTO, software: SOFTWARE });
+let degrauMobileSalvo = null;
+if (MOBILE_AUTO) {
+  try { degrauMobileSalvo = localStorage.getItem(PERFIL_MOBILE.chaveDegrau); } catch { /* storage bloqueado */ }
+}
+const degrauInicial = perfilInicial({ pointerCoarse: MOBILE_AUTO, software: SOFTWARE, degrauSalvo: degrauMobileSalvo });
 const escada = new EscadaAdaptativa({
-  orcamentoMs: 1000 / 60,
+  orcamentoMs: 1000 / PERFIL_MOBILE.fpsJogo,
   degrau: degrauInicial,
 });
 const dprBase = MOBILE_AUTO ? 1 : renderer.getPixelRatio();
@@ -3887,15 +3901,21 @@ function aplicaDegrau(i) {
   ajustaPos({ ssao: d.ssao, aa: d.aa, charmask: d.charmask });
   definirSombraDegrau(d.sombra === 'baixa' ? 'baixa' : null);
   definirCorteVegetacao(d.mato ?? 1);
+  game?.aplicarEfeitosAdaptativos?.(d.efeitos ?? 1);
+  if (MOBILE_AUTO) {
+    try { localStorage.setItem(PERFIL_MOBILE.chaveDegrau, String(i)); } catch { /* storage bloqueado */ }
+  }
   if (game?.world?.sun) aplicaSombraSol(game.world.sun);
   try { console.info(`[perf] qualidade adaptativa → ${d.nome}`); } catch { /* console mudo */ }
 }
 if (escada.degrau) aplicaDegrau(escada.degrau);
 // mesmo precedente de `__mpConvite`: gancho de sonda/captura, nunca caminho de jogo
-window.__escada = { escada, aplicaDegrau, DEGRAUS, dprBase, renderer };
+const cadencia = new LimitadorCadencia();
+window.__escada = { escada, aplicaDegrau, DEGRAUS, dprBase, renderer, cadencia };
 
-function loop() {
+function loop(agoraMs = performance.now()) {
   requestAnimationFrame(loop);
+  if (POINTER_COARSE && !cadencia.aceita(agoraMs, game?.state === 'live' ? PERFIL_MOBILE.fpsJogo : PERFIL_MOBILE.fpsMenu)) return;
   const dtReal = clock.getDelta();
   // só mede com partida VIVA: menu e tela de carregamento têm outro custo e enganariam a escada
   if (ADAPTATIVA && game && game.state === 'live') {

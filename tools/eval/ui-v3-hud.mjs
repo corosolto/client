@@ -11,7 +11,7 @@ const BASE = process.env.BASE || 'http://127.0.0.1:9424';
 const OUT = process.env.OUT || 'tools/eval/out/ui-v3-hud';
 const PARTIDA = 'debug=1&auto=E,esquerdomacho&map=praca_poderes';
 const VIEWPORTS = [[1536, 1024], [1920, 1080], [1280, 720]];
-const TOQUE = [844, 390];
+const TOQUES = [[844, 390], [780, 360]];
 /* Valores do HUD com ?ui=legacy, lidos na base origin/feat/ui-treta-pop (32e7cdf14) a 1536×1024:
    a cláusula HU10 congela o que a tela legada tem que continuar sendo. */
 const LEGADO = { scoreE: 'rgba(0, 0, 0, 0)', hpFonte: 'Rajdhani', atalhos: 'flex', radar: '132px' };
@@ -24,6 +24,7 @@ const EN_VAZA = /\b(HEALTH|KILLS|STREAK|ROUND|SCOREBOARD|RADIO|CLICK|LOOK HERE|m
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
+const devices = pw.devices || pw.default?.devices;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   args: ['--headless=new', '--mute-audio'],
@@ -78,7 +79,10 @@ const aoVivo = async (page) => {
   await page.waitForTimeout(2500);
 };
 const abrir = async (q, { w = 1536, h = 1024, toque = false, mutante = '' } = {}) => {
-  const ctx = await browser.newContext({ viewport: { width: w, height: h }, ...(toque ? { isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : {}) });
+  const dispositivo = toque
+    ? { ...devices['Pixel 5'], viewport: { width: w, height: h }, screen: { width: w, height: h }, deviceScaleFactor: 3 }
+    : { viewport: { width: w, height: h } };
+  const ctx = await browser.newContext(dispositivo);
   const page = await ctx.newPage();
   await preparar(page, mutante);
   await page.goto(`${BASE}/?${q}`, { waitUntil: 'commit', timeout: 120000 });
@@ -369,49 +373,51 @@ async function medir(mutante = '', alvo = '') {
   }
 
   if (roda('toque')) {
-  /* ---------- 21 · HUD por toque, 844×390 ---------- */
-  const [tw, th] = TOQUE;
-  const { page: m, fechar: fm } = await abrir(`ui=v3&${PARTIDA}&lang=pt`, { w: tw, h: th, toque: true, mutante });
-  const toque = await m.evaluate(async () => {
-    const g = window.__game;
-    const vis = (e) => e && e.checkVisibility() && e.getBoundingClientRect().width > 0;
-    const alvos = { ATIRA: '.tp-toque-atira', MIRA: '.touch-ads', PULA: '.tp-toque-pula', R: '.touch-reload', AGACHA: '.touch-crouch', PING: '.tp-toque-ping',
-      PLACAR: '.tp-toque-placar', PAUSA: '.touch-pause', ARMA: '.touch-wep' };
-    const rects = {}, faltam = [], pequenos = [];
-    for (const [nome, sel] of Object.entries(alvos)) {
-      const e = document.querySelector(`#touch-ui ${sel}`);
-      if (!vis(e)) { faltam.push(nome); continue; }
-      const b = e.getBoundingClientRect();
-      rects[nome] = { l: b.left, t: b.top, r: b.right, b: b.bottom };
-      if (b.width < 44 || b.height < 44) pequenos.push(`${nome} ${b.width.toFixed(0)}×${b.height.toFixed(0)}`);
-    }
-    const nomes = Object.keys(rects), cruzam = [];
-    for (let i = 0; i < nomes.length; i++) for (const n2 of nomes.slice(i + 1)) {
-      const a = rects[nomes[i]], b = rects[n2];
-      if (a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b - 1 && b.t < a.b - 1) cruzam.push(`${nomes[i]}×${n2}`);
-    }
-    const olhar = document.querySelector('#touch-ui .touch-look')?.getBoundingClientRect();
-    const joyR = vis(document.querySelector('#touch-ui .touch-joy-r'));
-    const toca = (sel, tipo) => {
-      const e = document.querySelector(`#touch-ui ${sel}`);
-      if (!e) return;
-      const b = e.getBoundingClientRect();
-      const t = new Touch({ identifier: Date.now() % 1000, target: e, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 });
-      e.dispatchEvent(new TouchEvent(tipo, { touches: tipo === 'touchend' ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true }));
-    };
-    toca('.tp-toque-atira', 'touchstart');
-    const atira = !!g.mouseDown0;
-    toca('.tp-toque-atira', 'touchend');
-    toca('.tp-toque-pula', 'touchstart');
-    const pula = !!g.keys.Space;
-    toca('.tp-toque-pula', 'touchend');
-    return { faltam, pequenos, cruzam, olhar: olhar ? (innerWidth - olhar.left) / innerWidth : 0, joyR, atira, pula, solto: !g.keys.Space };
-  });
-  await foto(m, 'hud-21-toque-844x390');
-  await fm();
-  add('HU13', !toque.faltam.length && !toque.pequenos.length && !toque.cruzam.length && toque.olhar >= 0.45 && !toque.joyR && toque.atira && toque.pula && toque.solto,
-    toque.faltam.length ? `faltam no toque: ${toque.faltam.join(', ')}` : toque.pequenos.length ? `alvo abaixo de 44 px: ${toque.pequenos.join(', ')}`
-      : toque.cruzam.length ? `botões encostam: ${toque.cruzam.join(', ')}` : `9 alvos ≥44 px sem encosto, arraste da mira em ${(toque.olhar * 100).toFixed(0)}% da tela${toque.joyR ? ', stick direito sobrando' : ''}, ATIRA ${toque.atira ? 'atira' : 'mudo'}, PULA ${toque.pula ? 'pula' : 'mudo'}`);
+  /* ---------- 21 · HUD por toque, enquadramento atual e Galaxy A25 ---------- */
+  for (const [indice, [tw, th]] of TOQUES.entries()) {
+    const { page: m, fechar: fm } = await abrir(`ui=v3&${PARTIDA}&lang=pt`, { w: tw, h: th, toque: true, mutante });
+    const toque = await m.evaluate(async () => {
+      const g = window.__game;
+      const vis = (e) => e && e.checkVisibility() && e.getBoundingClientRect().width > 0;
+      const alvos = { ATIRA: '.tp-toque-atira', MIRA: '.touch-ads', PULA: '.tp-toque-pula', R: '.touch-reload', AGACHA: '.touch-crouch', PING: '.tp-toque-ping',
+        PLACAR: '.tp-toque-placar', PAUSA: '.touch-pause', ARMA: '.touch-wep' };
+      const rects = {}, faltam = [], pequenos = [];
+      for (const [nome, sel] of Object.entries(alvos)) {
+        const e = document.querySelector(`#touch-ui ${sel}`);
+        if (!vis(e)) { faltam.push(nome); continue; }
+        const b = e.getBoundingClientRect();
+        rects[nome] = { l: b.left, t: b.top, r: b.right, b: b.bottom };
+        if (b.width < 44 || b.height < 44) pequenos.push(`${nome} ${b.width.toFixed(0)}×${b.height.toFixed(0)}`);
+      }
+      const nomes = Object.keys(rects), cruzam = [];
+      for (let i = 0; i < nomes.length; i++) for (const n2 of nomes.slice(i + 1)) {
+        const a = rects[nomes[i]], b = rects[n2];
+        if (a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b - 1 && b.t < a.b - 1) cruzam.push(`${nomes[i]}×${n2}`);
+      }
+      const olhar = document.querySelector('#touch-ui .touch-look')?.getBoundingClientRect();
+      const joyR = vis(document.querySelector('#touch-ui .touch-joy-r'));
+      const toca = (sel, tipo) => {
+        const e = document.querySelector(`#touch-ui ${sel}`);
+        if (!e) return;
+        const b = e.getBoundingClientRect();
+        const t = new Touch({ identifier: Date.now() % 1000, target: e, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 });
+        e.dispatchEvent(new TouchEvent(tipo, { touches: tipo === 'touchend' ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true }));
+      };
+      toca('.tp-toque-atira', 'touchstart');
+      const atira = !!g.mouseDown0;
+      toca('.tp-toque-atira', 'touchend');
+      toca('.tp-toque-pula', 'touchstart');
+      const pula = !!g.keys.Space;
+      toca('.tp-toque-pula', 'touchend');
+      return { faltam, pequenos, cruzam, olhar: olhar ? (innerWidth - olhar.left) / innerWidth : 0, joyR, atira, pula, solto: !g.keys.Space };
+    });
+    await foto(m, `hud-21-toque-${tw}x${th}`);
+    await fm();
+    const id = indice ? 'HU13b' : 'HU13';
+    add(id, !toque.faltam.length && !toque.pequenos.length && !toque.cruzam.length && toque.olhar >= 0.45 && !toque.joyR && toque.atira && toque.pula && toque.solto,
+      toque.faltam.length ? `${tw}×${th}: faltam no toque: ${toque.faltam.join(', ')}` : toque.pequenos.length ? `${tw}×${th}: alvo abaixo de 44 px: ${toque.pequenos.join(', ')}`
+        : toque.cruzam.length ? `${tw}×${th}: botões encostam: ${toque.cruzam.join(', ')}` : `${tw}×${th}: 9 alvos ≥44 px sem encosto, arraste da mira em ${(toque.olhar * 100).toFixed(0)}% da tela${toque.joyR ? ', stick direito sobrando' : ''}, ATIRA ${toque.atira ? 'atira' : 'mudo'}, PULA ${toque.pula ? 'pula' : 'mudo'}`);
+  }
   }
   return r;
 }
