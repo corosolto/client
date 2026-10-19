@@ -11,6 +11,7 @@ const { readFile } = await import('node:fs/promises');
 function fixture(Runtime, golden) {
   const vm = Object.create(Runtime.prototype);
   vm.entries = new Map();
+  vm.profile = {};
   vm.weapon = 'deagle';
   vm._time = 0;
   vm.adsAmount = 0;
