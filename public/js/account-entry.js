@@ -34,15 +34,15 @@ export function loadAuthOptions() {
 export function accountError(e){return ERRORS[e.message] || 'A conta não respondeu. Tente novamente; você pode continuar como convidado.';}
 export function guestProof() {
   if(accountActive)return undefined;
-  const uid=localStorage.getItem('cs_anon'),token=localStorage.getItem('awpbr_token'),nick=localStorage.getItem('awpbr_nick');
-  return uid && token && nick?{uid,token}:undefined;
+  const uid=localStorage.getItem('cs_anon'),token=localStorage.getItem('awpbr_token');
+  return uid && token?{uid,token}:undefined;
 }
 export function acceptAccount(auth) {
   accountActive=!!auth?.authenticated;
   if(accountActive)newsletterDraft=false;
   if(!auth?.profile)return;
-  const guest=localStorage.getItem('awpbr_token');
-  if(guest && localStorage.getItem('cs_anon') && localStorage.getItem('awpbr_nick'))localStorage.setItem('cs_guest_identity',JSON.stringify({uid:localStorage.getItem('cs_anon'),token:guest,nick:localStorage.getItem('awpbr_nick')}));
+  const guest=localStorage.getItem('awpbr_token'),uid=localStorage.getItem('cs_anon'),guestNick=localStorage.getItem('awpbr_nick') || '';
+  if(guest && uid)localStorage.setItem('cs_guest_identity',JSON.stringify({uid,token:guest,nick:guestNick}));
   localStorage.setItem('awpbr_nick',auth.profile.nick);
   localStorage.removeItem('awpbr_token');
   document.dispatchEvent(new CustomEvent('cs-account-change',{detail:auth}));
@@ -79,7 +79,7 @@ export function mountAccountEntry(container,{auth=null,config={providers:[]},ret
     form.append(label,node('p','2 a 32 letras, números, ponto, hífen ou _.','social-muted'),submit);form.onsubmit=e=>{e.preventDefault();submit.click();};container.append(form);void mountProfilePreferences(container,{auth,message:say});container.append(status);return;
   }
   dialogHead(container,'A PORTA DA RESENHA','CHEGA JUNTO.');
-  container.append(node('p','Guarde suas conquistas, encontre a turma e volte pra próxima treta.','social-muted'));
+  container.append(node('p','Guarde suas conquistas, encontre a turma e volte pra próxima treta. Partidas completas e verificadas que forem elegíveis nesta campanha têm os T$ resgatados uma única vez ao vincular o convidado.','social-muted'));
   const grid=node('div','','account-entry-grid'),entryColumn=node('section','','account-login-column'),choiceColumn=node('section','','account-choice-column');
   entryColumn.append(node('h3','ENTRE OU CRIE SUA CONTA'));choiceColumn.append(node('h3','SUAS ESCOLHAS'));
   grid.append(entryColumn,choiceColumn);container.append(grid);

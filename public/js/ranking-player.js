@@ -36,13 +36,16 @@ export function profileSocialLink(social) {
 }
 export function playerProfilePath(player) {
   if(!uuid.test(player.id || ''))return null;
+  if(typeof player.url==='string' && /^\/u\/(?:[a-z][a-z0-9_]{2,23}|[0-9a-f-]{36})(?:\/|$)/i.test(player.url))return player.url;
   return /^[a-z][a-z0-9_]{2,23}$/.test(player.public_handle || player.handle || '') ? `/u/${player.public_handle || player.handle}` : `/u/${player.id}`;
 }
 export function rankingPlayerCell(player,{careerOnly=false}={}) {
   const cell=node('td'),identity=node('div','','ranking-player'),path=playerProfilePath(player);
   const avatar=node('span','','ranking-avatar');avatar.append(node('span',Array.from(player.nick || '?')[0].toUpperCase()));
-  const photo=player.avatar_url===`/api/social-avatar?id=${player.id}` && uuid.test(player.id) ? player.avatar_url : https(player.avatar_url);
-  if(photo){const image=node('img');image.src=photo;image.alt=`Avatar de ${player.nick}`;image.width=32;image.height=32;image.loading='lazy';image.referrerPolicy='no-referrer';image.onerror=()=>{image.hidden=true;};avatar.append(image);}
+  const human=uuid.test(player.id || '');
+  const botArt=!human && typeof player.avatar_url==='string' && /^\/img\/chars-hero\/[a-z0-9_-]+\.webp(?:\?.*)?$/i.test(player.avatar_url)?player.avatar_url:null;
+  const photo=human?`/api/social-avatar?id=${encodeURIComponent(player.id)}`:botArt;
+  if(photo){const image=node('img');image.src=photo;image.alt=human?`Avatar de ${player.nick}`:`Personagem de ${player.nick}`;image.width=32;image.height=32;image.loading='lazy';image.referrerPolicy='no-referrer';image.onerror=()=>{image.hidden=true;};avatar.append(image);}
   const details=node('div'),name=node(path?'a':'span',player.nick);if(path)name.href=path;details.append(name);
   const badge=accountVerifiedBadge(player.account_verified);if(badge)details.append(badge);
   const rank=careerRankBadge(Object.prototype.hasOwnProperty.call(player, 'career_points')?player.career_points:careerOnly?null:player.points);if(rank)details.append(rank);

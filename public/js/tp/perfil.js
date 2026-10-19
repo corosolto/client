@@ -12,6 +12,7 @@ const conta = (n) => (Number.isFinite(Number(n)) ? num(Number(n)) : '0');
 const decimal = (n, casas) => (Number.isFinite(Number(n)) ? Number(n).toLocaleString(local(), { maximumFractionDigits: casas }) : '0');
 const MEDALHAS = { first_kill: 'Primeiro abate', ten_kills: 'Dez abates na conta', first_win: 'Primeira vitória', one_hour: 'Uma hora de arena ativa' };
 const MODOS = { ctf: 'Captura', rounds: 'Mata-mata' };
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ERROS = {
   nick_invalid: 'Use de 2 a 14 letras, números, _ . ou -.', nick_taken: 'Esse nick já está em uso. Escolha outro.',
   links_invalid: 'Use links HTTPS das redes indicadas.', settings_invalid: 'Revise a bio e as opções de privacidade.',
@@ -223,7 +224,7 @@ export function ligar() {
     med.append(el('span', 'tp-perfil__selo-grande tp-num', String(m.length)),
       el('span', 'tp-perfil__destaque-rotulo tp-disp', tr(m.length ? 'Medalhas' : 'A primeira medalha vem do primeiro abate')));
     g.append(med);
-    const fav = p.favorites?.[0], mid = fav && idMapa(fav.map);
+    const fav = p.activity_visible === true ? p.favorites?.[0] : null, mid = fav && idMapa(fav.map);
     g.append(fav ? destaque('tp-perfil__destaque--mapa', `${tr('Arena favorita')} · ${nomeMapa(fav.map)}`, mid ? `/img/map-previews/${mid}.jpg` : null)
       : destaque('tp-perfil__destaque--vazio', tr('Arena favorita aparece com as rodadas confirmadas')));
     s.append(cabecalho('Vitrine', 'destaques do histórico'), g);
@@ -249,18 +250,18 @@ export function ligar() {
   }
 
   function atividade(d) {
-    const { p } = d;
+    const { p } = d, visivel = p.activity_visible === true;
     const s = el('section', 'tp-painel tp-perfil__bloco');
     s.setAttribute('aria-label', tr('Atividade recente'));
     const g = el('div', 'tp-perfil__atividade');
-    for (const h of (p.history || []).slice(0, 3)) {
+    for (const h of (visivel && Array.isArray(p.history) ? p.history : []).slice(0, 3)) {
       const it = el('div', 'tp-perfil__evento'), t = el('span', 'tp-perfil__evento-texto');
       t.append(el('b', '', `${nomeMapa(h.map)} · ${conta(h.kills)}/${conta(h.deaths)}`), el('small', '', [modo(h), relativo(h.started_at)].filter(Boolean).join(' · ')));
       it.append(marcaResultado(h), t);
       g.append(it);
     }
-    if (!g.children.length) g.append(el('p', 'tp-perfil__vazio', tr(d.own || p.relationship === 'friend'
-      ? 'As rodadas aparecem aqui a partir da primeira partida confirmada pelo servidor.' : 'As rodadas deste jogador aparecem só para os amigos dele.')));
+    if (!g.children.length) g.append(el('p', 'tp-perfil__vazio', tr(visivel
+      ? 'As rodadas aparecem aqui a partir da primeira partida confirmada pelo servidor.' : 'Este jogador não compartilha as rodadas com você.')));
     s.append(cabecalho('Atividade', 'rodadas confirmadas pelo servidor'), g);
     return s;
   }
@@ -317,6 +318,12 @@ export function ligar() {
       const o = el('option', '', tr(t)); o.value = v; quem.append(o);
     }
     quem.value = c.settings.profile || 'public';
+    const atividade = el('select', 'tp-perfil__input');
+    atividade.id = 'tp-pf-atividade';
+    for (const [v, t] of [['public', 'Todo mundo'], ['friends', 'Só amigos'], ['private', 'Só você']]) {
+      const o = el('option', '', tr(t)); o.value = v; atividade.append(o);
+    }
+    atividade.value = c.settings.activity || 'friends';
     const mostra = el('input');
     Object.assign(mostra, { type: 'checkbox', id: 'tp-pf-personagem', checked: c.settings.share_character === true });
     const mostraCampo = el('label', 'tp-perfil__check');
@@ -368,14 +375,14 @@ export function ligar() {
       try {
         if (nick.value.trim() !== p.nick) await api('/api/social', { action: 'nick', nick: nick.value.trim() });
         await api('/api/social', { action: 'settings', shareCharacter: mostra.checked, bio: bio.value, profile: quem.value,
-          presence: c.settings.presence, activity: c.settings.activity, links: links.map((url) => ({ url })) });
+          presence: c.settings.presence, activity: atividade.value, links: links.map((url) => ({ url })) });
         avisoGuardado = tr('Perfil salvo.');
         reabrir();
       } catch (e) { dizer(tr(ERROS[e.message] || 'Não deu certo agora. Tente de novo.')); }
       finally { salvar.disabled = false; }
     });
     s.append(campo('NICK', nick, el('span', 'tp-perfil__nota', tr('Aparece no killfeed e no placar. Seu ID público e seus links não mudam.'))),
-      foto, campo('BIO', bio, contador), campo('QUEM VÊ SEU PERFIL', quem), mostraCampo, redesCampo, fora, salvar);
+      foto, campo('BIO', bio, contador), campo('QUEM VÊ SEU PERFIL', quem), campo('QUEM VÊ SUAS RODADAS', atividade), mostraCampo, redesCampo, fora, salvar);
     return s;
   }
 
@@ -473,10 +480,11 @@ export function ligar() {
       const li = el('li', 'tp-carreira__membro'), eu = m.player_id === (cla.playerId || p.id);
       li.append(el('span', 'tp-perfil__inicial tp-carreira__membro-ini tp-disp', String(m.nick || '?').slice(0, 1)));
       const rotulo = eu ? `${m.nick} (${tr('você')})` : m.nick;
-      if (m.hidden) li.append(el('span', 'tp-carreira__membro-nick', rotulo));
+      const url = typeof m.url === 'string' && m.url ? m.url : UUID.test(m.player_id || '') ? `/u/${m.player_id}` : null;
+      if (m.hidden || !url) li.append(el('span', 'tp-carreira__membro-nick', rotulo));
       else {
         const a = el('a', 'tp-carreira__membro-nick', rotulo);
-        a.href = `/u/${encodeURIComponent(m.player_id)}/${encodeURIComponent(m.nick)}`;
+        a.href = url;
         li.append(a);
       }
       if (m.is_leader) li.append(el('span', 'tp-carreira__lider', tr('LÍDER')));

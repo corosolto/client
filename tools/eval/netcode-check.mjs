@@ -900,25 +900,6 @@ console.log('\n· killfeed online: própria morte entra, e o abate SEU sai como 
   g.dispose();
 }
 
-/* BUG-121 — "as armas sem model direito": o GLB que chega depois do construtor montava por
-   DENTRO da caixa procedural, que continuava visível (só o construtor escondia a caixa). */
-console.log('\n· GLB de arma que chega tarde esconde a caixa procedural (BUG-121)');
-{
-  unloadWeaponModel('awp');
-  cobra(!hasWeapon('awp'), 'costura: a AWP ainda não chegou quando o jogo nasce');
-  const net = fakeNet(1, 5, false, 30);
-  const g = montaJogo(net);
-  const caixa = g.vm.models.awp;
-  const malhas = () => caixa.children.filter((c) => c.isMesh);
-  cobra(!caixa.getObjectByName('rw') && malhas().length > 0 && malhas().every((m) => m.visible), `sem GLB o viewmodel da AWP é a caixa (${malhas().length} malhas visíveis)`);
-  // "chegou": um GLB sintético no cache (o arnês não tem rede nem GLTFLoader de disco)
-  const glb = new THREE.Group(); glb.add(new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 1.1), new THREE.MeshStandardMaterial()));
-  setWeaponModel('awp', glb);
-  cobra(g._vmMontarTardio('awp') === true, 'a AWP chega e monta tarde');
-  cobra(!!caixa.getObjectByName('rw') && malhas().every((m) => !m.visible), 'com o GLB montado TODAS as malhas da caixa somem');
-  unloadWeaponModel('awp');
-  g.dispose();
-}
 
 /* BUG-123 — fim de partida online: o servidor gira o mapa (`partida`), então a tela não pode
    oferecer JOGAR NOVAMENTE; ela avisa que o próximo mapa está carregando. */

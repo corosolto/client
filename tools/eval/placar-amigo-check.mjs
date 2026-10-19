@@ -27,17 +27,25 @@ let game = readFileSync('public/js/game.js', 'utf8');
 let netgame = readFileSync('public/js/netgame.js', 'utf8');
 
 if (mutante === 'sem-botao') game = game.replace('${this._botaoAmigo(c)}', '');
-else if (mutante === 'sem-pid') netgame = netgame.replace("bot._playerId = !e.bot && PLAYER_ID.test(row?.pid || '') ? row.pid : '';", "bot._playerId = '';");
+else if (mutante === 'sem-pid') netgame = netgame.replace("return !entity?.bot && PLAYER_ID.test(row?.pid || '') ? row.pid : '';", "return '';");
 else if (mutante === 'clique-mudo') game = game.replace("body: JSON.stringify({ action: 'request', target: pid })", "body: JSON.stringify({ action: 'state', target: pid })");
 else if (mutante === 'vaza-legado') game = game.replace("document.documentElement.dataset.ui !== 'v3' || ", '');
-else if (mutante === 'pid-sem-validacao') netgame = netgame.replace("!e.bot && PLAYER_ID.test(row?.pid || '') ? row.pid : ''", "row?.pid || ''");
+else if (mutante === 'pid-sem-validacao') netgame = netgame.replace("!entity?.bot && PLAYER_ID.test(row?.pid || '') ? row.pid : ''", "row?.pid || ''");
 else if (mutante) throw new Error(`mutante desconhecido: ${mutante}`);
 
 const falhas = [];
 const exige = (cond, msg) => { if (!cond) falhas.push(msg); };
 
-exige(/const PLAYER_ID = \/\^\[0-9a-f\]\{8\}/.test(netgame), 'C1: falta validar o pid do roster como UUID');
-exige(/bot\._playerId = !e\.bot && PLAYER_ID\.test\(row\?\.pid \|\| ''\) \? row\.pid : '';/.test(netgame), 'C1: netgame não separa gente de bot nem limpa pid velho');
+const helperStart = netgame.indexOf('function rosterPlayerId(');
+const helperEnd = netgame.indexOf('\n}', helperStart) + 2;
+exige(helperStart >= 0 && helperEnd > helperStart, 'C1: falta o resolvedor de pid do roster');
+if (helperStart >= 0 && helperEnd > helperStart) {
+  const resolver = new Function('PLAYER_ID', `${netgame.slice(helperStart, helperEnd)}; return rosterPlayerId;`)(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+  const pid = 'c026ab03-2aa8-4775-979c-fcb1414fa50b';
+  exige(resolver({bot:0},{pid}) === pid, 'C1: gente com UUID válido perde o pid');
+  exige(resolver({bot:1},{pid}) === '', 'C1: bot herdou pid humano');
+  exige(resolver({bot:0},{pid:'invalido'}) === '', 'C1: pid inválido atravessou');
+}
 exige(/\$\{this\._botaoAmigo\(c\)\}/.test(game), 'C2: célula do nome sem o botão');
 exige(/document\.documentElement\.dataset\.ui !== 'v3' \|\| !this\.online \|\| c\.isPlayer \|\| !c\._playerId/.test(game), 'C2: botão sem guarda da Treta Pop, online, não-você e pid');
 exige(/_amigosPedidos\?\.has\(c\._playerId\)/.test(game), 'C2: sem memo de pedido já enviado na sessão');

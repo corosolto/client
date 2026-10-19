@@ -129,6 +129,7 @@ Cobertura: **3903 de 8620 linhas (45%)** do `game.js` têm dono declarado. O res
 | 1409 | `_buildEnv()` | 57 |
 | 1466 | `_buildViewModels()` | 271 |
 | 1737 | `_vmFrame` | 141 |
+| 1750 | `_vmFrame` | 141 |
 | 1878 | `_vmMontarTardio` | 14 |
 | 1892 | `_makePuffTexture()` | 10 |
 | 1902 | `_makeBloodTex()` | 19 |

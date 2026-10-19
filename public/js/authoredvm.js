@@ -37,13 +37,13 @@ export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
 /* Resiliência dos assets pagos (#720/#736): o edge responde 522 quando a origem
    demora e a conexão do jogador morre em "Failed to fetch". Falha de DISPONIBILIDADE
    não é crash de launch: retry curto com teto por tentativa (conexão morta não segura
-   o boot) e degrade para o legado com telemetria de evento — nunca console.error,
+   o boot) e nenhuma substituição por geometria legada; telemetria de evento — nunca console.error,
    que vira linha no js_error e issue automática (crash-fix.yml). */
 const REDE_TRANSITORIA = /failed to fetch|networkerror|load failed|signal timed out|aborted|\bstall\b|responded with (?:5\d\d|429)/i;
 const atrasoRede = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 function degradouAssetPago(asset, motivo) {
   const texto = String(motivo?.message || motivo || '?');
-  console.warn(`[vm-pago] ${asset} indisponível — degrade para o viewmodel legado (${texto})`);
+  console.warn(`[vm-pago] ${asset} indisponível — sem substituição por geometria legada (${texto})`);
   // Mesmo contrato do `webgl_degradado` (glcontext.js): sinal de disponibilidade no
   // analytics, fora da cota de exceção do js_error.
   try {
@@ -574,7 +574,7 @@ export class AuthoredViewModels {
     }).catch((error) => {
       this.pending.delete(key);
       // #720: 522 do edge aqui virava `console.error` -> linha no js_error -> issue
-      // automática. Falha de disponibilidade degrada para o viewmodel legado e avisa.
+      // automática. Falha de disponibilidade mantém o viewmodel autorado oculto e avisa.
       degradouAssetPago(`família ${key}`, error);
       return null;
     });

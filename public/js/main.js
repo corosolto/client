@@ -414,9 +414,10 @@ async function loadMenuBackdrop() {
     });
   });
 }
-// Rotas compartilhadas carregam o cenário em fundo; a raiz desktop espera por ele.
+// Rotas compartilhadas, inclusive na query antiga, carregam o cenário em fundo.
 // No perfil móvel, o wallpaper 2D evita baixar e compilar uma arena coberta pelo menu.
-const directRoute = document.documentElement.hasAttribute('data-direct-route');
+const directRoute = document.documentElement.hasAttribute('data-direct-route')
+  || Object.keys(estadoDaUrl(location.href) || {}).length > 0;
 const menuBackdropReady = MOBILE_AUTO ? Promise.resolve() : loadMenuBackdrop();
 if (MOBILE_AUTO) _splashSetReady();
 else if (directRoute) menuBackdropReady.then(_splashSetReady).catch((error) => console.error('[menu-background]', error));
@@ -1283,9 +1284,9 @@ let registeredNick = ''; // nick canônico devolvido pelo registro do UID
 let rankingBloqueado = ''; // erro do register da sessão (nick de outro dono, charset…) — vira aviso claro no fim da partida
 let heartbeatOff = false;
 
-/* CONTADOR "N ONLINE" do rodapé do menu (pedido do dono, 06/08). GET /api/online lê a
-   view online_now (heartbeat < 2 min). `hidden` até ter número: rodapé nunca mostra
-   zero mentiroso quando o backend está fora/local. Atualiza a cada 60 s só no menu. */
+/* CONTADOR "N ONLINE" no topo do menu. GET /api/online lê a view online_now
+   (heartbeat < 2 min). Fica `hidden` até ter resposta autoritativa e volta a sumir
+   em qualquer falha, sem manter número velho. Atualiza a cada 60 s só no menu. */
 // o idioma por país resolve ANTES de traduzir o menu (o fetch começou no <head>)
 await resolveGeoLang();
 document.documentElement.lang = LANG === 'en' ? 'en' : 'pt-BR';
@@ -1513,13 +1514,15 @@ function sendTrainingFrames(blob) {
    Régua: `tools/eval/boot-check.mjs`. */
 
 async function _refreshOnline() {
+  const box = document.querySelector('.hub-online'), n = document.getElementById('hub-online-n');
+  const hide = () => { if (box) box.hidden = true; if (n) { n.textContent = ''; delete n.dataset.online; } };
   try {
     const r = await fetchComRetry(apiUrl('/api/online'));
     const { online } = await r.json();
-    const box = document.getElementById('mf-online'), n = document.getElementById('mf-online-n');
-    if (box && n && typeof online === 'number' && online > 0) { n.textContent = online; box.hidden = false; }
-    else if (box) box.hidden = true;
-  } catch { /* rodapé segue sem contador */ }
+    if (!r.ok || !Number.isSafeInteger(online) || online < 0) { hide(); return; }
+    if (n) { n.textContent = online.toLocaleString('pt-BR'); n.dataset.online = String(online); }
+    if (box) box.hidden = false;
+  } catch { hide(); }
 }
 const params = new URLSearchParams(location.search);
 const inspectionScreen = resolveInspectionScreen(params);
@@ -2320,9 +2323,9 @@ if (HUB_ENABLED) {
     const perfil = profile || destino.perfil;
     const tab = profile ? 'profile' : destino.social || 'profile';
     const paused = $('main-menu').dataset.socialPaused === 'true';
-    setHubTab('comunidade', false);
     if (!paused) hubNavigate({ secao: 'comunidade', social: tab, perfil: perfil || null, aba: null, janela: null, origem: null });
-    document.dispatchEvent(new CustomEvent('cs-community-open', { detail: { tab, perfil } }));
+    setHubTab('comunidade', false);
+    if (paused) document.dispatchEvent(new CustomEvent('cs-community-open', { detail: { tab, perfil } }));
   });
   const setHubNet = (net, updateRoute = true) => {
     $('main-menu').dataset.hubNet = net;
@@ -2357,10 +2360,6 @@ if (HUB_ENABLED) {
   $('hub-profile').onclick = () => { setHubTab('jogar', false); setHubNet('sp', false); openProfileStep(true); hubNavigate({ secao: 'jogar', partida: 'singleplayer', servidor: null, janela: 'perfil', origem: null }); };
   $('hub-rank-profile').onclick = () => $('hub-profile').click();
   $('hub-settings').onclick = () => { ui.click(); settingsReturn = 'main-menu'; show('settings-panel'); hubNavigate({ janela: 'configuracoes', origem: null }); };
-  const onlineCount = $('mf-online-n');
-  const syncOnline = () => { $('hub-online-n').textContent = onlineCount.textContent || '—'; };
-  new MutationObserver(syncOnline).observe(onlineCount, { childList: true, characterData: true, subtree: true });
-  syncOnline();
   const factionGrid = $('hub-factions');
   // Grupos saem do elenco jogável: grupo novo em characters.js aparece aqui sem lista à mão.
   // Políticos não têm brasão próprio e jogam pelos dois lados, então mostram os dois.
@@ -3367,12 +3366,16 @@ async function recordMatchStats(s) {
   _funnel('match_end');                        // funil: terminou (017)
   contagem.partidaTerminada({ map: game?._mapId || currentMap, mode: game?.ctf ? 'ctf' : 'rounds', game: telemetryGameContext.gameType === 'multiplayer' ? 'mp' : 'sp' });
   const st = loadStats();
+  const previousXp = playerXp(st);
   st.matches++; if (s.won) st.wins++;
   st.kills += s.kills; st.deaths += s.deaths; st.headshots += s.headshots;
   st.playSeconds = (st.playSeconds || 0) + (s.seconds || 0);
   st.rounds = (st.rounds || 0) + s.roundsP + s.roundsB;
   st.bestStreak = Math.max(st.bestStreak, s.bestStreak);
   localStorage.setItem(STATS_KEY, JSON.stringify(st));
+  const nextXp = playerXp(st);
+  const previousLevel = Math.floor(previousXp / 2000) + 1, nextLevel = Math.floor(nextXp / 2000) + 1;
+  if (nextLevel > previousLevel) showLevelUp(nextLevel);
   // espelha pro ranking global (avisa na tela se falhar)
   const nick = registeredNick || (nickEl.value || '').trim();
   if (nick && !testMode) {
@@ -3392,6 +3395,20 @@ async function recordMatchStats(s) {
    Nível/XP derivados dos MESMOS stats locais do ranking — uma fonte só de verdade.
    2.000 XP por nível: kill 100 · headshot 25 · vitória 500 · partida 50. */
 function playerXp(st) { return st.kills * 100 + st.headshots * 25 + st.wins * 500 + st.matches * 50; }
+function showLevelUp(level) {
+  document.querySelector('[data-level-up]')?.remove();
+  const popup = document.createElement('div');
+  popup.className = 'level-up-popup';
+  popup.dataset.levelUp = String(level);
+  popup.setAttribute('role', 'status');
+  popup.setAttribute('aria-live', 'polite');
+  const title = document.createElement('strong');
+  title.textContent = `${tr('NÍVEL')} ${level}`;
+  popup.append(title, document.createTextNode(tr('Novo nível alcançado')));
+  document.body.append(popup);
+  sfx.levelUp();
+  setTimeout(() => { if (popup.isConnected) popup.remove(); }, 6000);
+}
 function renderPlayerPlate() {
   const el = $('player-plate'); if (!el) return;
   const st = loadStats();
@@ -4817,7 +4834,8 @@ function mpAtualizarBarraSpec(estado) {
       const quem = document.getElementById('mp-spec-quem');
       if (quem) quem.textContent = mp?.nomeAlvo || '—';
       const be = document.getElementById('mp-spec-e'), bb = document.getElementById('mp-spec-b');
-      const nomeE = FACTION_NAME.E, nomeB = FACTION_NAME.B;
+      const meta = mpSessao?.net?.meta || {};
+      const nomeE = meta.nomeE || 'ESQUERDA', nomeB = meta.nomeB || 'DIREITA';
       if (be) { be.disabled = !(vagas && vagas.E > 0); be.textContent = `ENTRAR: ${nomeE}${vagas ? ` (${vagas.E})` : ''}`; }
       if (bb) { bb.disabled = !(vagas && vagas.B > 0); bb.textContent = `ENTRAR: ${nomeB}${vagas ? ` (${vagas.B})` : ''}`; }
     }, 400);

@@ -11,7 +11,7 @@ const SEGREDO = import.meta.env.API_PROXY_SECRET || '';
 const MIGRADAS = new Set([
   'treta',
   'social','social-auth','social-avatar','acquisition', 'avatar', 'clans', 'count', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
-  'leaderboard', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
+  'leaderboard', 'live-map', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
   'submit-match', 'telemetry', 'train-frames',
 ]);
 
@@ -19,7 +19,10 @@ const MIGRADAS = new Set([
 // clans (backend#72) ainda depende do rollout: 404 upstream vira 503.
 const EM_ROLLOUT = ['social-auth','treta','clans'];
 
-const handler: APIRoute = async ({ params, url, request, clientAddress }) => {
+const handler: APIRoute = async (context) => {
+  const { params, url, request } = context;
+  let clientAddress = '';
+  try { clientAddress = context.clientAddress; } catch { /* Vercel adapter: geo headers remain authoritative. */ }
   const rota = String(params.rota || '').replace(/\/+$/, '');
   if (!MIGRADAS.has(rota)) {
     return new Response(JSON.stringify({ error: 'not_found', path: url.pathname }), {
