@@ -21,6 +21,8 @@ const ROOT = path.resolve(import.meta.dirname, '../..');
 const arg = (name) => (process.argv.find((value) => value.startsWith(`--${name}=`)) || '').split('=')[1] || '';
 const MUTANT = arg('mutante');
 if (MUTANT && MUTANT !== 'extravasar') throw new Error(`mutante desconhecido: ${MUTANT}`);
+const PROVE_MUTANT = process.argv.includes('--provar-mutante');
+if (PROVE_MUTANT && !MUTANT) throw new Error('--provar-mutante exige --mutante=extravasar');
 const ONLY = new Set((arg('skins') || '').split(',').filter(Boolean));
 const PORT = arg('porta') || '9484';
 const REMOTE = process.env.BASE || '';
@@ -142,14 +144,14 @@ try {
         window.REVIEW_MODEL.updateMatrixWorld(true);
       }, view.rotation);
       await page.waitForTimeout(120);
-      const paintedPng = await page.screenshot({ type: 'png' });
+      const paintedPng = await page.screenshot({ type: 'png', timeout: 120000 });
       await page.evaluate(() => {
         window.REVIEW_MODEL.traverse((object) => {
           if (object.isMesh && (object.name.startsWith('skin-') || object.name.startsWith('club-mark-'))) object.visible = false;
         });
       });
       await page.waitForTimeout(80);
-      const basePng = await page.screenshot({ type: 'png' });
+      const basePng = await page.screenshot({ type: 'png', timeout: 120000 });
       await page.evaluate(() => {
         window.REVIEW_MODEL.traverse((object) => {
           if (!object.isMesh || object.name.startsWith('skin-') || object.name.startsWith('club-mark-')) return;
@@ -174,7 +176,7 @@ try {
         });
       });
       await page.waitForTimeout(120);
-      const maskPng = await page.screenshot({ type: 'png' });
+      const maskPng = await page.screenshot({ type: 'png', timeout: 120000 });
       const metrics = await measure(paintedPng, basePng, maskPng);
       const prefix = `${skin.id}-${weapon}-${view.id}`;
       await Promise.all([
@@ -216,8 +218,12 @@ const summary = {
   out: OUT,
 };
 console.log(JSON.stringify(summary, null, 2));
-if (failures.length) {
+if (PROVE_MUTANT) {
+  if (!failures.length) throw new Error('MUTANTE SOBREVIVEU: a ampliação não rompeu WB1');
+  console.log(`MUTANTE MORTO: ${failures.length} lateral(is) extravasaram após ampliar ${mutationCount} plano(s)`);
+} else if (failures.length) {
   console.error(`WB1 vermelho: ${failures.join('; ')}`);
   process.exit(1);
+} else {
+  console.log(`WB1 verde: ${results.length} laterais com todos os pixels pintados dentro do corpo da arma`);
 }
-console.log(`WB1 verde: ${results.length} laterais com todos os pixels pintados dentro do corpo da arma`);

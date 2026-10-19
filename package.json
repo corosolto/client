@@ -383,7 +383,7 @@
     "eval:melee-vm": "node tools/eval/melee-vm-check.mjs && node tools/eval/melee-motion-check.mjs && node tools/eval/melee-approved-attacks-check.mjs && node tools/eval/vm-hand-continuity-check.mjs && node tools/eval/vm-hand-atlas-check.mjs && node tools/eval/melee-framing-check.mjs",
     "eval:vm-catalog": "node tools/viewmodels/validate_paid_catalog.mjs",
     "//eval:weapon-skin-body": "WB1: toda imagem pintada fica dentro da silhueta renderizada do corpo da arma nas duas laterais; o mutante extravasar amplia os planos 2,4x e precisa reprovar.",
-    "eval:weapon-skin-body": "node tools/eval/weapon-skin-body-check.mjs && ! node tools/eval/weapon-skin-body-check.mjs --mutante=extravasar",
+    "eval:weapon-skin-body": "node tools/eval/weapon-skin-body-check.mjs && node tools/eval/weapon-skin-body-check.mjs --mutante=extravasar --provar-mutante",
     "eval:vm-identity": "node tools/eval/authored-identity-check.mjs",
     "eval:vm-ads": "node tools/eval/authored-ads-check.mjs",
     "eval:vm-serving": "node tools/eval/authored-serving-check.mjs",

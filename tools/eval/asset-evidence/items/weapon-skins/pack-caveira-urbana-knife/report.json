@@ -26,11 +26,11 @@
     "three-quarter.png": "476ed0ef8b586a1cd0030da03781810fa0507404dad82b0d86dc800658d0fef6"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
-    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
+    "public/js/data/weapon-skin-definitions.js": "a52159440ce58c30e05605dcfbd0312e4bb28e175f8a920f94629f15bd935add",
+    "public/js/weapon-skins.js": "4a749691e2499d2a3590b38030d55d10a70478ddf490ed340c6f6a1435187ec7",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
-    "public/textures/weapon-skins/project-marks/caveira-urbana.svg": "7607500fdefcb212e6e0ed4f0a15a6f248b2670f2c579b7a3c4e3b96313a6625"
+    "public/textures/weapon-skins/project-marks/caveira-urbana.svg": "a6458b9915231ec07845c3d46004692b48d4ac6368bc0f95b0ba714b42f7fb96"
   },
   "consoleErrors": []
 }

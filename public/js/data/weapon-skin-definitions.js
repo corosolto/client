@@ -35,10 +35,10 @@ const storeSkin = ({
 });
 
 const PACK_WEAPON_THEMES = Object.freeze([
-  { id: 'caveira-urbana', name: 'Caveira Urbana', theme: 'pack-caveira', color: '#d8d2c2', description: 'Carbono preto, osso marfim e caveira original.', markAsset: '/textures/weapon-skins/project-marks/caveira-urbana.svg' },
+  { id: 'caveira-urbana', name: 'Caveira Urbana', theme: 'pack-caveira', color: '#d8d2c2', description: 'Carbono preto e osso marfim com caveira e ossos cruzados.', markAsset: '/textures/weapon-skins/project-marks/caveira-urbana.svg', markLayouts: { ak: { y: 0.085, z: -0.050, height: 0.075, lift: 0.004 }, pistol: { y: -0.045, z: -0.015, height: 0.085 } } },
   { id: 'brasil-neon', name: 'Brasil Neon', theme: 'pack-brasil-neon', color: '#00d65c', description: 'Verde, amarelo e azul elétricos de alta leitura.' },
-  { id: 'liberdade-1776', name: 'Liberdade 1776', theme: 'pack-liberdade', color: '#b31942', description: 'Vermelho, branco e azul em faixas de aço.' },
-  { id: 'maga-47', name: 'MAGA 47', theme: 'pack-maga', color: '#d20a2e', description: 'Bandeira americana contida no corpo da arma sobre vermelho de campanha e aço preto.', markAsset: '/textures/weapon-skins/project-marks/usa-bandeira-grande.svg', markLayouts: { ak: { y: 0.095, z: -0.040, height: 0.060, lift: 0.004 }, pistol: { y: -0.040, z: -0.012, height: 0.070 } } },
+  { id: 'liberdade-1776', name: 'Liberdade 1776', theme: 'pack-liberdade', color: '#0a3161', description: 'Bandeira americana em vermelho, branco e azul sobre aço.', markAsset: '/textures/weapon-skins/project-marks/usa-bandeira-grande.svg', markLayouts: { ak: { y: 0.095, z: -0.040, height: 0.060, lift: 0.004 }, pistol: { y: -0.040, z: -0.012, height: 0.070 } } },
+  { id: 'maga-47', name: 'MAGA 47', theme: 'pack-maga', color: '#d20a2e', description: 'Vermelho de campanha com MAGA grande no cano e 47 no punho.', slogan: 'MAGA', markAsset: '/textures/weapon-skins/project-marks/maga-47.svg', markLayouts: { ak: { y: -0.015, z: -0.080, height: 0.034, lift: 0.004 }, pistol: { y: -0.095, z: -0.015, height: 0.085 } }, sloganLayouts: { ak: { y: 0.105, z: 0.220, height: 0.075, lift: 0.004 }, pistol: { y: 0.240, z: 0.080, height: 0.075 } }, sloganAspect: 4 },
   { id: 'emo-xadrez', name: 'Emo Xadrez', theme: 'pack-emo', color: '#f02cb8', description: 'Xadrez preto e magenta com uma caveira anatômica realista em traço de gravura.', markAsset: '/textures/weapon-skins/project-marks/emo-caveira-gravura.webp', markSourceUrl: 'https://commons.wikimedia.org/wiki/File:Holden%27s_human_osteology_(1899)_-_Plt18_Fig01.png', rightsStatus: 'public-domain', designOrigin: 'public-domain-adaptation', inspiration: 'adaptação monocromática do crânio anatômico de Luther Holden, publicado em 1887 e em domínio público', markLayouts: { ak: { y: 0.090, z: -0.055, height: 0.100, lift: 0.004 }, pistol: { y: -0.018, z: -0.015, height: 0.110 } } },
 ]);
 const PACK_WEAPON_SKINS = Object.freeze(Object.fromEntries(PACK_WEAPON_THEMES.flatMap((pack) =>
@@ -52,11 +52,14 @@ const PACK_WEAPON_SKINS = Object.freeze(Object.fromEntries(PACK_WEAPON_THEMES.fl
       theme: pack.theme,
       color: pack.color,
       description: pack.description,
+      slogan: pack.slogan || null,
       markAsset: pack.markAsset || null,
       markSourceUrl: pack.markSourceUrl || null,
       rightsStatus: pack.rightsStatus || 'original-safe',
       designOrigin: pack.designOrigin || 'project-owned',
       markLayout: pack.markLayouts?.[weapon] || null,
+      sloganLayout: pack.sloganLayouts?.[weapon] || null,
+      sloganAspect: pack.sloganAspect || null,
       price: 0,
       inspiration: pack.inspiration || 'conjunto original coordenado do projeto, sem marca de produto ou reprodução de item comercial',
       series: 'PACKS DA TRETA',

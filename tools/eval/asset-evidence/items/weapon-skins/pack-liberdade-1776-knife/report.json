@@ -9,7 +9,7 @@
   "designOrigin": "project-owned",
   "rightsStatus": "original-safe",
   "officialMarksIncluded": false,
-  "markPlacement": null,
+  "markPlacement": "receiver-inlay",
   "sloganPlacement": null,
   "markSourceUrl": null,
   "referenceRule": "original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin",
@@ -21,15 +21,16 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "8a3041752f378659e9da6a5f2aacb6d7f340a210218c7491d1f80496b8268768",
-    "side-right.png": "e106d12a455d65c0f6be9a390dcc8048093cb26b2995351d5c409793bb988d80",
-    "three-quarter.png": "24a0261c88879365b8b45fe35cc21a77dc68d34acf751ba328e0c491ab6f86b3"
+    "side-left.png": "99e0980b2c36ff5717f503199cafbb31c0fbb8accd8bb0c58b64af01bf93735a",
+    "side-right.png": "33f26dc61d0b64b76dfe0fd2777f73388a2deb70c0cc4ec894079a4831192314",
+    "three-quarter.png": "141d33eae963ebf25477bef09f6d342c889f01601dcefeee478e2286962b7cf2"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
-    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
+    "public/js/data/weapon-skin-definitions.js": "a52159440ce58c30e05605dcfbd0312e4bb28e175f8a920f94629f15bd935add",
+    "public/js/weapon-skins.js": "4a749691e2499d2a3590b38030d55d10a70478ddf490ed340c6f6a1435187ec7",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
-    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/project-marks/usa-bandeira-grande.svg": "4d737fe10b093858b1eb3b5fb55ef2edd64361004d0af1dcdfefa61e39b4e7aa"
   },
   "consoleErrors": []
 }

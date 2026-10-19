@@ -281,6 +281,9 @@ export function pintar({ fields, size }, pintura, style) {
       color = glove;
       if (handPanel) {
         const dy = y - 0.56;
+        const boneA = Math.abs((y - 0.50) - x * 0.55) < 0.018 && Math.abs(x) < 0.29 && y > 0.34 && y < 0.68;
+        const boneB = Math.abs((y - 0.50) + x * 0.55) < 0.018 && Math.abs(x) < 0.29 && y > 0.34 && y < 0.68;
+        if (boneA || boneB) color = accent;
         const head = x * x / 0.050 + dy * dy / 0.058 < 1;
         const jaw = Math.abs(x) < 0.14 && y > 0.33 && y < 0.49;
         if (head || jaw) color = accent;

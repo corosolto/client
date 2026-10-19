@@ -175,19 +175,20 @@ const THEME_FRAGMENT = Object.freeze({
     diffuseColor.rgb = brasilNeonColor;
   `,
   'pack-liberdade': `
-    float liberdadeBand = fract((vWeaponSkinLocal.y + 0.40) * 7.0);
-    vec3 liberdadeStripe = liberdadeBand < 0.50 ? vec3(0.70, 0.018, 0.10) : vec3(0.94, 0.94, 0.91);
-    float liberdadeBlue = step(0.06, vWeaponSkinLocal.y) * step(vWeaponSkinLocal.z, 0.06);
-    diffuseColor.rgb = mix(liberdadeStripe, vec3(0.02, 0.12, 0.36), liberdadeBlue);
+    float liberdadeStripe = step(0.50, fract((vWeaponSkinLocal.y + 0.48) * 7.0));
+    vec3 liberdadeFlag = mix(vec3(0.70, 0.018, 0.10), vec3(0.96, 0.95, 0.91), liberdadeStripe);
+    float liberdadeCanton = step(0.015, vWeaponSkinLocal.y) * step(vWeaponSkinLocal.z, 0.08);
+    vec2 liberdadeStarCell = fract(vec2(vWeaponSkinLocal.z * 22.0, vWeaponSkinLocal.y * 24.0)) - 0.5;
+    float liberdadeStar = 1.0 - smoothstep(0.08, 0.16, length(liberdadeStarCell));
+    vec3 liberdadeBlue = mix(vec3(0.02, 0.08, 0.27), vec3(0.98), liberdadeStar);
+    diffuseColor.rgb = mix(liberdadeFlag, liberdadeBlue, liberdadeCanton);
   `,
   'pack-maga': `
-    float magaStripe = step(0.50, fract((vWeaponSkinLocal.y + 0.48) * 7.0));
-    vec3 magaFlag = mix(vec3(0.70, 0.018, 0.10), vec3(0.96, 0.95, 0.91), magaStripe);
-    float magaCanton = step(0.015, vWeaponSkinLocal.y) * step(vWeaponSkinLocal.z, 0.08);
-    vec2 magaStarCell = fract(vec2(vWeaponSkinLocal.z * 22.0, vWeaponSkinLocal.y * 24.0)) - 0.5;
-    float magaStar = 1.0 - smoothstep(0.08, 0.16, length(magaStarCell));
-    vec3 magaBlue = mix(vec3(0.02, 0.08, 0.27), vec3(0.98), magaStar);
-    diffuseColor.rgb = mix(magaFlag, magaBlue, magaCanton);
+    float magaGrain = 0.5 + 0.5 * sin(vWeaponSkinLocal.z * 47.0 + vWeaponSkinLocal.y * 19.0);
+    float magaPanel = smoothstep(0.34, 0.82, magaGrain);
+    vec3 magaRed = mix(vec3(0.34, 0.004, 0.012), vec3(0.82, 0.012, 0.028), magaPanel);
+    float magaEdge = smoothstep(0.10, 0.34, abs(vWeaponSkinLocal.y + 0.02));
+    diffuseColor.rgb = mix(magaRed, vec3(0.58, 0.006, 0.018), magaEdge * 0.28);
   `,
   'pack-emo': `
     vec2 emoCell = floor(vec2(vWeaponSkinLocal.z, vWeaponSkinLocal.y) * vec2(15.0, 15.0));
@@ -240,6 +241,7 @@ const SLOGAN_STYLE = Object.freeze({
   'brasil-22': Object.freeze({ fill: '#ffe13b', stroke: '#082c70' }),
   'brasil-cotidiano': Object.freeze({ fill: '#f5f6ec', stroke: '#0b4f92' }),
   tropicalente: Object.freeze({ fill: '#ffd94a', stroke: '#006f66' }),
+  'pack-maga': Object.freeze({ fill: '#fff4e8', stroke: '#4d000b' }),
 });
 
 const markTextures = new Map();

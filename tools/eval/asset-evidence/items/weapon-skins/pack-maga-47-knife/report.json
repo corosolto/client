@@ -10,10 +10,10 @@
   "rightsStatus": "original-safe",
   "officialMarksIncluded": false,
   "markPlacement": "receiver-inlay",
-  "sloganPlacement": null,
+  "sloganPlacement": "barrel-horizontal",
   "markSourceUrl": null,
   "referenceRule": "original Brazilian Portuguese-pavement reinterpretation; no brand, club badge or copied commercial skin",
-  "slogan": null,
+  "slogan": "MAGA",
   "storePrice": null,
   "views": [
     "left-side",
@@ -21,16 +21,16 @@
     "three-quarter"
   ],
   "files": {
-    "side-left.png": "a81982421beb108f668bf0f18478fb447cc952d96213f174366c2e8bb9fc35f9",
-    "side-right.png": "5b7d19a6bdc31f5ae3374d1895d0c15415c60e9b29fa48f729ae16916cbc8d1a",
-    "three-quarter.png": "002f4e76cb3d1debf5477f32f4068e4c41bd1075771db72a6edff962069219a3"
+    "side-left.png": "4cabc55381b5c51ad913ab37cd3cea0a6acfe65f3dcc15779eba958ae8156299",
+    "side-right.png": "59c2e6a8607954c078c3e6fc84714dc7165ca6236c042817365481be978fbe87",
+    "three-quarter.png": "6d013a2e75bdf566f542519c6c8746f7e7f96bcda115cf0352e749d009a5cad6"
   },
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "0a75967b3bab33d835fd09602c9bdc01326a0b85d20ca0d4a717977061324350",
-    "public/js/weapon-skins.js": "29e14f0a06d0b1b5e96d06586fdcf0ddcfd6bc22502760b7acb4ec6d7f4283bc",
+    "public/js/data/weapon-skin-definitions.js": "a52159440ce58c30e05605dcfbd0312e4bb28e175f8a920f94629f15bd935add",
+    "public/js/weapon-skins.js": "4a749691e2499d2a3590b38030d55d10a70478ddf490ed340c6f6a1435187ec7",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
-    "public/textures/weapon-skins/project-marks/usa-bandeira-grande.svg": "4d737fe10b093858b1eb3b5fb55ef2edd64361004d0af1dcdfefa61e39b4e7aa"
+    "public/textures/weapon-skins/project-marks/maga-47.svg": "5dda8f61bfc71c846edc0281de0833531e9b40ad5aba70845da8744f0613cbf5"
   },
   "consoleErrors": []
 }
