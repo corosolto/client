@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "br.com.corosolto.app",
+      "sha256_cert_fingerprints": [
+        "2B:1A:78:B9:3E:BA:83:E5:F9:29:23:BC:F0:5F:E1:12:66:7E:AC:FF:11:88:C2:DD:C2:33:02:DE:FD:B8:72:51"
+      ]
+    }
+  }
+]
