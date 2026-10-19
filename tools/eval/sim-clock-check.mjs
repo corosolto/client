@@ -52,7 +52,7 @@ if (MUT === 'sem-teto') {
   if (!aplicou) { console.error('MUTANTE NÃO APLICOU (sem-teto): declaração de PASSO_TETO sumiu do main.js'); process.exit(1); }
 }
 
-const i0 = main.indexOf('function loop()');
+const i0 = main.indexOf('function loop(');
 const trecho = main.slice(i0, main.indexOf('loop();', i0));
 const falhas = [];
 

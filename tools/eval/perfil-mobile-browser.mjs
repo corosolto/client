@@ -14,6 +14,7 @@ if (MUTANTE && MUTANTE !== 'sem-perfil') throw new Error(`mutante desconhecido: 
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
+const devices = pw.devices || pw.default?.devices;
 const fonteGlcontext = readFileSync(new URL('../../public/js/glcontext.js', import.meta.url), 'utf8');
 const fonteMain = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
 const servidor = BASE_EXTERNA ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
@@ -34,11 +35,17 @@ const browser = await chromium.launch({
 const falhas = [];
 const contexto = async () => {
   const ctx = await browser.newContext({
-    viewport: { width: 390, height: 844 }, screen: { width: 390, height: 844 },
-    isMobile: true, hasTouch: true, deviceScaleFactor: 3,
+    ...devices['Pixel 5'],
+    viewport: { width: 780, height: 360 }, screen: { width: 780, height: 360 },
+    deviceScaleFactor: 3,
   });
   await ctx.addInitScript(() => {
-    localStorage.clear();
+    if (!sessionStorage.getItem('perfil-mobile-fixture')) {
+      localStorage.clear();
+      // Migração real: versões anteriores gravavam o `low` automático sem identificá-lo.
+      localStorage.setItem('awpbr_settings', '{"quality":"low"}');
+      sessionStorage.setItem('perfil-mobile-fixture', '1');
+    }
     Object.defineProperty(navigator, 'deviceMemory', { configurable: true, get: () => 8 });
     Object.defineProperty(navigator, 'hardwareConcurrency', { configurable: true, get: () => 8 });
   });
@@ -56,7 +63,7 @@ const mutar = async (page) => {
   if (MUTANTE !== 'sem-perfil') return;
   await page.route('**/js/main.js*', async (route) => {
     const changed = fonteMain.replace(
-      "const MOBILE_AUTO = !COMPAT_MODE && AUTO_PROFILE && savedSettings.quality === undefined && POINTER_COARSE;",
+      "const MOBILE_AUTO = !COMPAT_MODE && AUTO_PROFILE && !QUALITY_WAS_MANUAL && POINTER_COARSE;",
       'const MOBILE_AUTO = false;',
     );
     if (changed === fonteMain) throw new Error('mutante sem-perfil não aplicou');
@@ -86,15 +93,19 @@ const estadoMenu = await menu.evaluate(() => {
     dpr: window.__escada?.renderer?.getPixelRatio?.() || ratio,
     texturaMax: window.__CS_TEXTURA_MAX__ || 0,
     loadingReady: document.getElementById('load-character-3d')?.dataset.ready || '',
+    marcadorAutomatico: localStorage.getItem('cs_quality_auto'),
+    cadencia: window.__escada?.cadencia?.fps,
   };
 });
 if (!estadoMenu.coarse) falhas.push('PMB1 contexto de toque não expôs pointer:coarse');
-if (estadoMenu.degrau !== 5) falhas.push(`PMB2 menu começou no degrau ${estadoMenu.degrau}, queria 5`);
-if (!(estadoMenu.dpr > 0 && estadoMenu.dpr <= 0.7)) falhas.push(`PMB2 DPR móvel ${estadoMenu.dpr}, queria ≤ 0,7`);
+if (estadoMenu.degrau !== 6) falhas.push(`PMB2 menu começou no degrau ${estadoMenu.degrau}, queria 6`);
+if (!(estadoMenu.dpr > 0 && estadoMenu.dpr <= 0.6)) falhas.push(`PMB2 DPR móvel ${estadoMenu.dpr}, queria ≤ 0,6`);
 if (estadoMenu.texturaMax !== 1024) falhas.push(`PMB3 teto de textura ${estadoMenu.texturaMax}, queria 1024`);
 if (estadoMenu.loadingReady === '1') falhas.push('PMB4 carregou personagem 3D atrás da splash no celular');
 if (menuAudio.length) falhas.push(`PMB5 música baixou antes do primeiro gesto (${menuAudio.length} request)`);
 if (menuGlb.length) falhas.push(`PMB5 menu móvel baixou ${menuGlb.length} GLB escondido(s) antes do gesto`);
+if (estadoMenu.marcadorAutomatico !== '1') falhas.push('PMB8 menu não marcou a qualidade como automática para sobreviver ao próximo save');
+if (estadoMenu.cadencia !== 30) falhas.push(`PMB8 menu pediu cadência ${estadoMenu.cadencia}, queria 30 FPS`);
 await menuCtx.close();
 
 const gameCtx = await contexto();
@@ -114,13 +125,52 @@ const estadoJogo = await gamePage.evaluate(() => ({
   sombras: window.__game?.renderer?.shadowMap?.enabled,
   degrau: window.__escada?.escada?.degrau,
   texturaMax: window.__CS_TEXTURA_MAX__ || 0,
+  marcadorAutomatico: localStorage.getItem('cs_quality_auto'),
+  efeitos: window.__game?._fxAdaptativa,
+  limiteCasings: window.__game?._limiteCasings,
+  limiteDecals: window.__game?._limiteDecals,
+  limiteBlood: window.__game?._limiteBloodDecals,
+  cadencia: window.__escada?.cadencia?.fps,
 }));
 if (estadoJogo.qualidade !== 'low') falhas.push(`PMB6 partida móvel ficou em qualidade ${estadoJogo.qualidade}, queria low`);
-if (!(estadoJogo.dpr > 0 && estadoJogo.dpr <= 0.7)) falhas.push(`PMB6 partida móvel ficou em DPR ${estadoJogo.dpr}, queria ≤ 0,7`);
+if (!(estadoJogo.dpr > 0 && estadoJogo.dpr <= 0.6)) falhas.push(`PMB6 partida móvel ficou em DPR ${estadoJogo.dpr}, queria ≤ 0,6`);
 if (estadoJogo.sombras !== false) falhas.push('PMB6 sombras dinâmicas continuam ligadas no celular');
-if (estadoJogo.degrau !== 5) falhas.push(`PMB6 partida saiu do degrau inicial ${estadoJogo.degrau}, queria 5`);
+if (estadoJogo.degrau !== 6) falhas.push(`PMB6 partida saiu do degrau inicial ${estadoJogo.degrau}, queria 6`);
 if (estadoJogo.texturaMax !== 1024) falhas.push(`PMB6 partida perdeu teto de textura (${estadoJogo.texturaMax})`);
 if (gameHeavy.length) falhas.push(`PMB7 partida móvel bloqueou o início com assets pesados: ${gameHeavy.map((url) => new URL(url).pathname).join(', ')}`);
+if (estadoJogo.cadencia !== 60) falhas.push(`PMB8 partida pediu cadência ${estadoJogo.cadencia}, queria 60 FPS`);
+if (!(estadoJogo.efeitos > 0 && estadoJogo.efeitos <= 0.35)
+  || estadoJogo.limiteCasings > 8 || estadoJogo.limiteDecals > 17 || estadoJogo.limiteBlood > 22) {
+  falhas.push(`PMB8 efeitos móveis ficaram em ${estadoJogo.efeitos}; limites ${estadoJogo.limiteCasings}/${estadoJogo.limiteDecals}/${estadoJogo.limiteBlood}`);
+}
+await gamePage.evaluate(() => {
+  window.__escada.escada.degrau = 7;
+  window.__escada.aplicaDegrau(7);
+});
+await gamePage.reload({ waitUntil: 'commit', timeout: 60_000 });
+await gamePage.waitForFunction(() => window.__escada, null, { timeout: 300_000 });
+const estadoRestaurado = await gamePage.evaluate(() => ({
+  degrau: window.__escada.escada.degrau,
+  salvo: localStorage.getItem('cs_mobile_degrau_v1'),
+  marcadorAutomatico: localStorage.getItem('cs_quality_auto'),
+}));
+if (estadoRestaurado.degrau !== 7 || estadoRestaurado.salvo !== '7' || estadoRestaurado.marcadorAutomatico !== '1') {
+  falhas.push(`PMB9 reload perdeu o degrau móvel: ${JSON.stringify(estadoRestaurado)}`);
+}
+await gamePage.evaluate(() => {
+  const qualidade = document.getElementById('set-quality');
+  qualidade.value = 'med';
+  qualidade.dispatchEvent(new Event('change'));
+});
+await gamePage.reload({ waitUntil: 'commit', timeout: 60_000 });
+await gamePage.waitForFunction(() => window.__escada, null, { timeout: 300_000 });
+const estadoManual = await gamePage.evaluate(() => ({
+  degrau: window.__escada.escada.degrau,
+  marcador: localStorage.getItem('cs_quality_auto'),
+}));
+if (estadoManual.degrau !== 0 || estadoManual.marcador !== 'manual') {
+  falhas.push(`PMB10 escolha manual não venceu o automático: ${JSON.stringify(estadoManual)}`);
+}
 await gameCtx.close();
 await browser.close();
 servidor?.kill();
@@ -137,4 +187,4 @@ if (falhas.length) {
   for (const falha of falhas) console.error(`  ✗ ${falha}`);
   process.exit(1);
 }
-console.log(`perfil móvel integrado: menu ${JSON.stringify(estadoMenu)}; jogo ${JSON.stringify(estadoJogo)}; sem música/GLB ocultos antes do gesto.`);
+console.log(`perfil móvel integrado: menu ${JSON.stringify(estadoMenu)}; jogo ${JSON.stringify(estadoJogo)}; reload ${JSON.stringify(estadoRestaurado)}; manual ${JSON.stringify(estadoManual)}; sem música/GLB ocultos antes do gesto.`);

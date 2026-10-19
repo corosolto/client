@@ -4,33 +4,36 @@
 // Do mais bonito ao mais leve. `dpr` multiplica o DPR base; o resto são passes que o
 // EffectComposer liga e desliga em runtime, sem reconstruir nada.
 export const DEGRAUS = Object.freeze([
-  { nome: 'cheio', dpr: 1, ssao: true, aa: true, sombra: 'alta', charmask: true, mato: 1 },
-  { nome: 'dpr-', dpr: 0.85, ssao: true, aa: true, sombra: 'alta', charmask: true, mato: 1 },
-  { nome: 'sem-ao', dpr: 0.85, ssao: false, aa: true, sombra: 'alta', charmask: true, mato: 0.8 },
-  { nome: 'dpr--', dpr: 0.7, ssao: false, aa: true, sombra: 'alta', charmask: true, mato: 0.7 },
-  { nome: 'sem-aa', dpr: 0.7, ssao: false, aa: false, sombra: 'alta', charmask: true, mato: 0.6 },
-  { nome: 'sombra-', dpr: 0.7, ssao: false, aa: false, sombra: 'baixa', charmask: true, mato: 0.45 },
-  { nome: 'minimo', dpr: 0.6, ssao: false, aa: false, sombra: 'baixa', charmask: false, mato: 0.3 },
-  { nome: 'sobrevivencia', dpr: 0.5, ssao: false, aa: false, sombra: 'baixa', charmask: false, mato: 0.2 },
+  { nome: 'cheio', dpr: 1, ssao: true, aa: true, sombra: 'alta', charmask: true, mato: 1, efeitos: 1 },
+  { nome: 'dpr-', dpr: 0.85, ssao: true, aa: true, sombra: 'alta', charmask: true, mato: 1, efeitos: 1 },
+  { nome: 'sem-ao', dpr: 0.85, ssao: false, aa: true, sombra: 'alta', charmask: true, mato: 0.8, efeitos: 0.9 },
+  { nome: 'dpr--', dpr: 0.7, ssao: false, aa: true, sombra: 'alta', charmask: true, mato: 0.7, efeitos: 0.8 },
+  { nome: 'sem-aa', dpr: 0.7, ssao: false, aa: false, sombra: 'alta', charmask: true, mato: 0.6, efeitos: 0.7 },
+  { nome: 'sombra-', dpr: 0.7, ssao: false, aa: false, sombra: 'baixa', charmask: true, mato: 0.45, efeitos: 0.55 },
+  { nome: 'minimo', dpr: 0.6, ssao: false, aa: false, sombra: 'baixa', charmask: false, mato: 0.3, efeitos: 0.35 },
+  { nome: 'sobrevivencia', dpr: 0.5, ssao: false, aa: false, sombra: 'baixa', charmask: false, mato: 0.2, efeitos: 0.2 },
 ]);
 
-/* Perfil mobile (pointer:coarse): degrau inicial sustentável + teto de textura.
-   Fiação e detecção de pointer são do main.js; procedência no PR da lane glm/peso. */
-export const PERFIL_MOBILE = Object.freeze({ degrauInicial: 5, texturaMax: 1024 });
+/* No toque, 60 FPS sustentados valem mais que um pico de 120 Hz que aquece e degrada. */
+export const PERFIL_MOBILE = Object.freeze({
+  degrauInicial: 6, texturaMax: 1024, fpsJogo: 60, fpsMenu: 30, chaveDegrau: 'cs_mobile_degrau_v1',
+});
 
 export function tetoTextura({ pointerCoarse = false, maxTextureSize = Infinity } = {}) {
   if (!pointerCoarse) return 0;
   return Math.max(1, Math.min(PERFIL_MOBILE.texturaMax, maxTextureSize || Infinity));
 }
 
-export function perfilInicial({ pointerCoarse = false, software = false } = {}) {
+export function perfilInicial({ pointerCoarse = false, software = false, degrauSalvo = null } = {}) {
   if (software) return DEGRAUS.length - 1;
-  return pointerCoarse ? PERFIL_MOBILE.degrauInicial : 0;
+  if (!pointerCoarse) return 0;
+  const salvo = degrauSalvo === null || degrauSalvo === '' ? NaN : Number(degrauSalvo);
+  return Number.isInteger(salvo) && salvo >= 0 && salvo < DEGRAUS.length ? salvo : PERFIL_MOBILE.degrauInicial;
 }
 
 // Nenhum degrau pode mexer em JOGABILIDADE (arma no chão, alcance, inimigo legível, HUD):
 // quem perde quadro não pode perder também a informação de que precisa para jogar.
-export const CAMPOS_PERMITIDOS = Object.freeze(['nome', 'dpr', 'ssao', 'aa', 'sombra', 'charmask', 'mato']);
+export const CAMPOS_PERMITIDOS = Object.freeze(['nome', 'dpr', 'ssao', 'aa', 'sombra', 'charmask', 'mato', 'efeitos']);
 
 // Limiares da histerese: agrega por segundo, desce rápido, sobe devagar, e a faixa morta
 // entre as duas margens é o que impede o vaivém. Os porquês estão no documento.
@@ -41,6 +44,25 @@ export const MARGEM_DESCE = 1.15;
 export const MARGEM_SOBE = 0.75;
 export const CARENCIA_S = 4;
 export const VIAGENS_MAX = 2;
+export class LimitadorCadencia {
+  constructor() {
+    this.fps = 0;
+    this.proximo = 0;
+  }
+
+  aceita(agoraMs, fps) {
+    if (!(fps > 0) || !Number.isFinite(agoraMs)) return true;
+    const intervalo = 1000 / fps;
+    if (this.fps !== fps) {
+      this.fps = fps;
+      this.proximo = agoraMs;
+    }
+    if (agoraMs + 0.5 < this.proximo) return false;
+    this.proximo += intervalo;
+    if (this.proximo < agoraMs - intervalo) this.proximo = agoraMs + intervalo;
+    return true;
+  }
+}
 
 export class EscadaAdaptativa {
   constructor({ orcamentoMs = 1000 / 60, degrau = 0, teto = DEGRAUS.length - 1 } = {}) {

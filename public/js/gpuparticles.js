@@ -63,6 +63,7 @@ export class GPUParticles {
   constructor(scene, camera, { tex, additive = false, max = 256, fadeDist = 0.35, lumAlpha = false, ambiente = null } = {}) {
     this.camera = camera;
     this.max = max;
+    this.limit = max;
     this.cursor = 0;
     this.ambiente = ambiente;
     const geo = new THREE.BufferGeometry();
@@ -111,7 +112,7 @@ export class GPUParticles {
   // One slot written; GPU does the rest. vel/grow default to a stationary, steady-size sprite.
   spawn(pos, { vel = null, life = 0.4, size = 0.5, grow = 0 } = {}) {
     const i = this.cursor;
-    this.cursor = (this.cursor + 1) % this.max;
+    this.cursor = (this.cursor + 1) % this.limit;
     this.pos[i * 3] = pos.x; this.pos[i * 3 + 1] = pos.y; this.pos[i * 3 + 2] = pos.z;
     if (vel) { this.vel[i * 3] = vel.x; this.vel[i * 3 + 1] = vel.y; this.vel[i * 3 + 2] = vel.z; }
     else { this.vel[i * 3] = this.vel[i * 3 + 1] = this.vel[i * 3 + 2] = 0; }
@@ -122,6 +123,12 @@ export class GPUParticles {
     const at = this._geo.attributes;
     at.position.needsUpdate = true; at.aVel.needsUpdate = true; at.aBirth.needsUpdate = true;
     at.aLife.needsUpdate = true; at.aSize.needsUpdate = true; at.aGrow.needsUpdate = true;
+  }
+  setBudget(factor = 1) {
+    const f = Math.max(0.05, Math.min(1, Number(factor) || 1));
+    this.limit = Math.max(16, Math.round(this.max * f));
+    this.cursor %= this.limit;
+    this._geo.setDrawRange(0, this.limit);
   }
 
   resize(height) {

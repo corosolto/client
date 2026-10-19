@@ -39,7 +39,7 @@
 - O contador online voltou ao topo em desktop e celular. O rodapé móvel usa ícones quadrados com nome acessível, e a tela de privacidade preserva a foto com checkbox de 20 px.
 - A câmera em terceira pessoa considera filhos de modelos importados e segura o último bloqueio por 80 ms. Armas autoradas não reativam malhas antigas, e o HUD volta a mostrar a arte da arma equipada.
 - Celulares entram no perfil gráfico leve desde a abertura, limitam texturas e evitam carregar música, personagem 3D e cenário escondidos antes do primeiro toque.
-- Durante a partida, o perfil móvel começa com resolução de 70%, sem sombras dinâmicas, fauna decorativa ou viewmodels pesados; a qualidade continua se ajustando se o aparelho sofrer.
+- Durante a partida, o perfil móvel começa com resolução de 60%, limita a cadência a 60 FPS no jogo e 30 FPS nos menus, reduz partículas, cápsulas e marcas conforme o aparelho sofre e recupera o último degrau sustentável na sessão seguinte.
 
 ## Não lançado - 2026-10-18
 

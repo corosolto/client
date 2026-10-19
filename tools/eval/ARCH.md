@@ -202,6 +202,7 @@ Cobertura: **3822 de 8766 linhas (44%)** do `game.js` têm dono declarado. O res
 | 3481 | `_tuneGet()` | 15 |
 | 3496 | `_tune()` | 23 |
 | 3519 | `_fxSet()` | 2 |
+| 3521 | `aplicarEfeitosAdaptativos()` | 20 |
 | 3521 | `_qaCicloArma()` | 8 |
 | 3529 | `_cycleWeapon()` | 8 |
 | 3537 | `_inspectWeapon()` | 8 |

@@ -1975,7 +1975,7 @@ export class Game {
     m.renderOrder = 4;
     this.scene.add(m);
     this.bloodDecals.push(m);
-    if (this.bloodDecals.length > 64) { const old = this.bloodDecals.shift(); this.scene.remove(old); }
+    if (this.bloodDecals.length > (this._limiteBloodDecals || 64)) { const old = this.bloodDecals.shift(); this.scene.remove(old); }
     return m;
   }
   // Spray de sangue: SEMPRE vermelho em qualquer quality — não usa _tintFx de propósito
@@ -1996,6 +1996,7 @@ export class Game {
     const fx = new GPUParticles(this.scene, this.camera, { tex, additive, max: 384 });
     if (this.puffFx) { fx.uniforms.uTime = this.puffFx.uniforms.uTime; fx.uniforms.uScale = this.puffFx.uniforms.uScale; }
     fx.points.renderOrder = additive ? 7 : 6;   // por cima da fumaça de impacto
+    fx.setBudget(this._fxAdaptativa);
     return fx;
   }
   // Mancha na parede ATRÁS do alvo (na direção da bala) + gota no chão sob ele.
@@ -3517,6 +3518,25 @@ export class Game {
     }
   }
   _fxSet(p) { this._fxTune = { light: 1, flash: 1, spark: 1, ...(this._fxTune || {}), ...(p || {}) }; }
+  aplicarEfeitosAdaptativos(fator = 1) {
+    const f = Math.max(0.2, Math.min(1, Number(fator) || 1));
+    this._fxAdaptativa = f;
+    this._limiteCasings = Math.max(4, Math.round(24 * f));
+    this._limiteDecals = Math.max(10, Math.round(48 * f));
+    this._limiteBloodDecals = Math.max(12, Math.round(64 * f));
+    this.flashFx?.setBudget(f);
+    this.puffFx?.setBudget(f);
+    this._bloodFx?.setBudget(f);
+    this._bloodPop?.setBudget(f);
+    while (this.decals.length > this._limiteDecals) this.scene.remove(this.decals.shift());
+    while (this.bloodDecals.length > this._limiteBloodDecals) this.scene.remove(this.bloodDecals.shift());
+    while (this._casings.length > this._limiteCasings) {
+      const c = this._casings.shift();
+      this.scene.remove(c.m);
+      c.m.scale.setScalar(1);
+      this._casingPool.push(c);
+    }
+  }
   /* QA de viewmodel: anda pelo WEAPON_IDS. Só com `?debug=1` (`VM_QA_CICLO`). */
   _qaCicloArma(passo) {
     const atual = WEAPON_IDS.indexOf(this.player.weapon);
@@ -4087,7 +4107,7 @@ export class Game {
     fx.spawn(sp, { life: 0.30, size: head ? 1.4 : 0.95, grow: 3.2 });
     fx.spawn(sp, { life: 0.44, size: head ? 0.9 : 0.6, grow: 4.2 });
     // ~40% das gotas SAI PELA FRENTE (ferida de saída, CS 1.6). Sem BLOOD, volta ao mínimo antigo.
-    const n = ((BLOOD ? (head ? 26 : 18) : (head ? 6 : 4)) * (byPlayer ? 1 : 0.6)) | 0;   // hit alheio: mais leve
+    const n = Math.max(4, (((BLOOD ? (head ? 26 : 18) : (head ? 6 : 4)) * (byPlayer ? 1 : 0.6)) * (this._fxAdaptativa ?? 1)) | 0);
     for (let i = 0; i < n; i++) {
       const fwd = BLOOD && i % 5 < 2;
       const v = (fwd ? dir : back).clone().multiplyScalar(2.0 + Math.random() * (fwd ? 5.5 : 3.5))
@@ -4147,6 +4167,7 @@ export class Game {
     const fx = new GPUParticles(this.scene, this.camera, { tex, additive, max });
     const src = this.puffFx && this.puffFx.uniforms;
     if (src) { fx.uniforms.uTime = src.uTime; fx.uniforms.uScale = src.uScale; }
+    fx.setBudget(this._fxAdaptativa);
     return fx;
   }
   _damage(ent, dmg, attacker, weap = 'AWP', head = false, point = null) {
@@ -4595,7 +4616,7 @@ export class Game {
         const key = '_fx_' + surf;
         const fx = this[key] || (this[key] = this._tintFx(S.c, surf === 'metal' || surf === 'vidro'));
         if (fumaca) fx.spawn(p, { life: S.life, size: S.size, grow: S.grow });
-        for (let i = 0; i < S.spark; i++) {
+        for (let i = 0, n = S.spark ? Math.max(1, Math.round(S.spark * (this._fxAdaptativa ?? 1))) : 0; i < n; i++) {
           const v = (normal ? normal.clone() : new THREE.Vector3(0, 1, 0)).multiplyScalar(1.5 + Math.random() * 3)
             .add(new THREE.Vector3((Math.random() - .5) * 4, (Math.random() - .5) * 4, (Math.random() - .5) * 4));
           this.flashFx.spawn(pos, { vel: v, life: 0.09 + Math.random() * 0.09, size: 0.045, grow: -0.2 });
@@ -4611,7 +4632,7 @@ export class Game {
       m.scale.setScalar(0.7 + Math.random() * 0.6);
       this.scene.add(m);
       this.decals.push(m);
-      if (this.decals.length > 48) { const old = this.decals.shift(); this.scene.remove(old); }
+      if (this.decals.length > (this._limiteDecals || 48)) { const old = this.decals.shift(); this.scene.remove(old); }
     }
   }
   // Decal de furo TINGIDO por material (o mapa é o mesmo; só o multiplicador de cor muda).
@@ -4675,7 +4696,7 @@ export class Game {
     // faíscas 3D; no tiro do PRÓPRIO jogador a boca fica a ~0.35m da lente, então
     // velocidade/tamanho reduzidos pra não virar blob deslocado do cano (crítico R7.6).
     const sparkMul = fpCls ? 0.35 : 1;
-    for (let i = 0; i < Math.round(5 * ((this._fxTune && this._fxTune.spark) ?? 1)); i++) {
+    for (let i = 0, n = Math.max(1, Math.round(5 * ((this._fxTune && this._fxTune.spark) ?? 1) * (this._fxAdaptativa ?? 1))); i < n; i++) {
       const v = d.clone().multiplyScalar((6 + Math.random() * 7) * sparkMul).add(new THREE.Vector3((Math.random() - 0.5) * 4.5 * sparkMul, (Math.random() - 0.5) * 4.5 * sparkMul, (Math.random() - 0.5) * 4.5 * sparkMul));
       this.flashFx.spawn(pos, { vel: v, life: 0.06 + Math.random() * 0.05, size: fpCls ? 0.07 : 0.11, grow: -0.4 });
     }
@@ -4799,6 +4820,7 @@ export class Game {
 
   _ejectCasing() {
     if (this.player.weapon === 'knife') return;
+    if (this._casings.length >= (this._limiteCasings || 24)) return;
     const c = this._casingPool.pop() || { m: new THREE.Mesh(this._casingGeo, this._casingMat), v: new THREE.Vector3(), av: new THREE.Vector3(), ttl: 0 };
     c.m.position.copy(this.camera.localToWorld(new THREE.Vector3(0.28, -0.14, -0.7)));
     const q = this.camera.quaternion;
