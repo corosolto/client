@@ -15,7 +15,8 @@ const ABAS:Record<string,string>={conquistas:'Conquistas',partidas:'Partidas',pr
 const aba=Object.hasOwn(ABAS,segments[1] || '')?segments[1]:null;
 const {profile:p,status}=await publicProfile(key,Astro.request,Astro.clientAddress);
 Astro.response.status=status;
-const canonical=p?SITE+p.url+(aba && aba!=='privacidade'?`/${aba}`:''):SITE+'/';
+const profileBase=p?`/u/${encodeURIComponent(p.handle || p.id)}`:'';
+const canonical=p?SITE+(aba?(aba==='privacidade'?p.url:`${profileBase}/${aba}`):p.url):SITE+'/';
 // Rodadas só chegam para o dono e amigos, e privacidade é do dono: fora do índice.
 const noindex=!p || aba==='partidas' || aba==='privacidade';
 const image=p?`${SITE}/api/profile-card/${encodeURIComponent(p.handle || p.id)}.png`:null;
@@ -56,7 +57,7 @@ const hubRota={caminho:p?canonical.slice(SITE.length):'/',canonical:p?canonical.
     {profileSocialLinks(p).length>0 && <nav class="socials" aria-label="Redes públicas do jogador">{profileSocialLinks(p).map(s=><a href={s.url} target="_blank" rel="noopener noreferrer nofollow" title={s.label} aria-label={`${s.label} (abre em nova aba)`}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d={s.path}/></svg><span>{s.label}</span></a>)}</nav>}
     <nav class="profile-tabs" aria-label="Abas do perfil">
       <a href={p.url} aria-current={!aba?'page':undefined}>Perfil</a>
-      {Object.entries(ABAS).map(([slug,nome])=><a href={`${p.url}/${slug}`} aria-current={aba===slug?'page':undefined}>{nome}</a>)}
+      {Object.entries(ABAS).map(([slug,nome])=><a href={`${profileBase}/${slug}`} aria-current={aba===slug?'page':undefined}>{nome}</a>)}
     </nav>
     {aba==='conquistas' && <section class="profile-aba" aria-labelledby="aba-titulo"><h2 id="aba-titulo">Conquistas</h2>{(p.achievements || []).length?<ul>{p.achievements.map((a)=><li>{CONQUISTAS[a.key] || a.key}{a.at && <span> · {new Date(a.at).toLocaleDateString('pt-BR')}</span>}</li>)}</ul>:<p>A primeira conquista vem da primeira treta confirmada.</p>}</section>}
     {aba==='partidas' && <section class="profile-aba" aria-labelledby="aba-titulo"><h2 id="aba-titulo">Partidas</h2>{(p.history || []).length?<ul>{p.history.map((h)=><li>{h.map} · {h.mode} · {h.kills} abates / {h.deaths} mortes</li>)}</ul>:<p>As rodadas deste jogador aparecem para ele e para os amigos dele, dentro do jogo.</p>}</section>}

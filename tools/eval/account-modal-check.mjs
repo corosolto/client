@@ -19,6 +19,8 @@ const mutants={
   'sem-handle':()=>mutation("title.textContent=`Olá, @${profile.handle}`","title.textContent=`Olá, ${auth.profile.nick}`"),
   'sem-icone':()=>mutation("if(PROVIDER_ICONS[provider]){","if(false){"),
   'titulo-preso':()=>mutation("  dialogHead(container,'A PORTA DA RESENHA','CHEGA JUNTO.');\n  container.append(","  container.append("),
+  'perfil-pelo-hub':()=>mutation("button('VER MEU PERFIL',async()=>leaveTo(ownProfilePath(auth.profile,await loadProfileCard())))","button('VER MEU PERFIL',()=>document.dispatchEvent(new CustomEvent('cs-community-open',{detail:{tab:'profile'}})))"),
+  'cabecalho-pelo-evento':()=>mutation("if(view){view.hidden=!profile;view.href=ownProfilePath(profile,mine);}","if(view){view.hidden=!profile;view.href=ownProfilePath(profile,mine);view.onclick=()=>document.dispatchEvent(new CustomEvent('cs-community-open',{detail:{tab:'profile'}}));}"),
 };
 if(mutant){assert(mutants[mutant],'mutante desconhecido: '+mutant);mutants[mutant]();}
 
@@ -38,15 +40,28 @@ const all=n=>[n,...n.children.filter(c=>typeof c==='object').flatMap(all)];
 async function modal({auth,card,providers=['google','discord','x','linkedin_oidc'],linking=true}) {
   const dialog=new Node('dialog'),header=new Node('header'),hgroup=new Node('div'),small=new Node('small'),h2=new Node('h2'),body=new Node('div');
   small.textContent='A PORTA DA RESENHA';h2.textContent='CHEGA JUNTO.';hgroup.append(small,h2);header.append(hgroup);dialog.append(header,body);
-  const calls=[];
+  const calls=[],navigations=[],events=[];
   const fetch=async(path,opts={})=>{calls.push({path,body:opts.body?JSON.parse(opts.body):null});const out=path.includes('action=profile')?{profile:card}:{ok:true,url:'https://auth.example/link'};return new Response(JSON.stringify(out),{status:200});};
-  const context=vm.createContext({document:{createElement:t=>new Node(t),createTextNode:t=>t,querySelector:()=>null,getElementById:()=>null,dispatchEvent(){},addEventListener(){}},CustomEvent:class{constructor(t,o){this.type=t;this.detail=o?.detail;}},localStorage:{getItem:()=>null,setItem(){},removeItem(){}},location:{assign(){}},fetch,AbortSignal,Response,console,setTimeout,
+  const context=vm.createContext({document:{createElement:t=>new Node(t),createTextNode:t=>t,querySelector:()=>null,getElementById:()=>null,dispatchEvent:event=>events.push(event),addEventListener(){}},CustomEvent:class{constructor(t,o){this.type=t;this.detail=o?.detail;}},localStorage:{getItem:()=>null,setItem(){},removeItem(){}},location:{assign:url=>navigations.push(url)},fetch,AbortSignal,Response,console,setTimeout,
     analyticsAllowed:()=>false,setPrivacyChoice(){},mountPrivacyChoice:c=>{const l=new Node('label');l.className='account-consent';c.append(l);return {checked:false};},accountVerifiedBadge:v=>{if(!v)return null;const b=new Node('span');b.className='account-verified';b.textContent='✓ VERIFICADO';return b;}});
   const names=[...entry.matchAll(/export\s+(?:async\s+)?(?:function|const)\s+(\w+)/g)].map(m=>m[1]);
   const api=vm.runInContext('(function(){'+entry.replace(/^import .*;\n/gm,'').replace(/export\s+/g,'')+`;return {${names.join(',')}}})()`,context,{timeout:1000});
   const mount=async a=>{api.mountAccountEntry(body,{auth:a,config:{providers,email:true,linking},onGuest(){},onAuthenticated(){}});for(let i=0;i<6;i++)await new Promise(r=>setImmediate(r));};
   await mount(auth);
-  return {dialog,body,small,h2,calls,nodes:()=>all(body),remount:mount};
+  return {dialog,body,small,h2,calls,navigations,events,nodes:()=>all(body),remount:mount};
+}
+async function header(card){
+  const dialog=new Node('dialog'),body=new Node('div'),close=new Node('button'),open=new Node('button'),view=new Node('a'),pageBody=new Node('body'),mainMenu=new Node('div');
+  mainMenu.classList={contains:()=>false};
+  const ids={'account-entry-dialog':dialog,'account-entry-body':body,'account-entry-close':close,'hub-account-login':open,'hub-view-profile':view,'main-menu':mainMenu};
+  const auth={...signedIn,profile:{...signedIn.profile}};
+  const fetch=async path=>new Response(JSON.stringify(path.includes('action=providers')?{providers:[]}:path.includes('/api/social?action=profile')?{profile:card}:auth),{status:200});
+  const context=vm.createContext({document:{body:pageBody,activeElement:null,createElement:t=>new Node(t),createTextNode:t=>t,querySelector:()=>null,getElementById:id=>ids[id]||null,dispatchEvent(){},addEventListener(){}},CustomEvent:class{constructor(t,o){this.type=t;this.detail=o?.detail;}},MutationObserver:class{observe(){}},URLSearchParams,localStorage:{getItem:()=>null,setItem(){},removeItem(){}},location:{search:'',assign(){}},fetch,AbortSignal,Response,console,setTimeout,
+    analyticsAllowed:()=>false,setPrivacyChoice(){},mountPrivacyChoice:c=>{const l=new Node('label');c.append(l);return {checked:false};},accountVerifiedBadge:()=>null});
+  const names=[...entry.matchAll(/export\s+(?:async\s+)?(?:function|const)\s+(\w+)/g)].map(m=>m[1]);
+  const api=vm.runInContext('(function(){'+entry.replace(/^import .*;\n/gm,'').replace(/export\s+/g,'')+`;return {${names.join(',')}}})()`,context,{timeout:1000});
+  await api.initAccountEntry({skipPrompt:true});
+  return view;
 }
 const signedIn={authenticated:true,profile:{id:'p1',nick:'TesteDominio'},identities:['google'],account_verified:true,emailVerified:true,newsletter:{status:'pending'}};
 const primaries=nodes=>nodes.filter(n=>n.tagName==='BUTTON' && /\baccount-button\b/.test(n.className) && !/\baccount-(provider|guest)\b/.test(n.className));
@@ -62,6 +77,13 @@ const tests=[
     assert.deepEqual(p.map(b=>b.textContent),['VER MEU PERFIL'],'botões chapados demais: '+p.map(b=>b.textContent).join(', '));
     assert(m.nodes().some(n=>n.tagName==='BUTTON' && n.textContent==='Sair da conta'),'sair da conta sumiu');
   }],
+  ['ver meu perfil abre uma rota canônica uma vez, sem reiniciar a comunidade',async()=>{
+    const m=await modal({auth:signedIn,card:{id:'p1',handle:'rubenmarcus',url:'/u/rubenmarcus'}});
+    const view=m.nodes().find(n=>n.tagName==='BUTTON' && n.textContent==='VER MEU PERFIL');assert(view,'ação VER MEU PERFIL sumiu');
+    await view.onclick();
+    assert.deepEqual(m.navigations,['/u/rubenmarcus'],'perfil não abriu a rota própria uma vez');
+    assert.equal(m.events.filter(event=>event.type==='cs-community-open').length,0,'clique reiniciou a comunidade por evento paralelo');
+  }],
   ['login vinculado aparece como estado, os outros como ação',async()=>{
     const m=await modal({auth:signedIn,card:{id:'p1'}});const rows=m.nodes().filter(n=>n.tagName==='LI' && n.dataset.provider);
     assert.deepEqual(rows.map(r=>r.dataset.provider),['google','discord','x','linkedin_oidc']);
@@ -69,6 +91,12 @@ const tests=[
     const discord=all(rows[1]).find(n=>n.tagName==='BUTTON');assert.equal(discord?.getAttribute('aria-label'),'Vincular Discord');await discord.onclick();assert(m.calls.some(c=>c.body?.action==='link' && c.body.provider==='discord'),'Vincular não chama o link');
     const off=await modal({auth:signedIn,card:{id:'p1'},linking:false});assert(!off.nodes().some(n=>n.tagName==='BUTTON' && /Vincular/.test(n.textContent)),'vinculação desligada ainda oferece botão');
     for(const r of rows)assert(all(r).some(n=>/svg/.test(n.innerHTML)),'ícone oficial ausente em '+r.dataset.provider);
+  }],
+  ['atalho do cabeçalho aponta para a rota canônica sem evento paralelo',async()=>{
+    const view=await header({id:'p1',handle:'rubenmarcus',url:'/u/rubenmarcus'});
+    assert.equal(view.href,'/u/rubenmarcus');
+    assert.equal(view.hidden,false);
+    assert.equal(view.onclick??null,null,'atalho intercepta o link e reinicia a comunidade');
   }],
   ['preferências recolhidas e depois dos logins',async()=>{
     const m=await modal({auth:signedIn,card:{id:'p1'}});const fold=m.nodes().find(n=>n.tagName==='DETAILS' && /account-fold/.test(n.className));
