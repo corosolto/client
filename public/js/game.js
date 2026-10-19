@@ -973,9 +973,10 @@ export class Game {
     this.vmScene.add(this.vm.root);
     // BUG-75: arma visível é o GLB do Coro Solto; mãos com pele/roupa do personagem.
     // Tudo-ou-nada (vmlaunch.js): sem a chave nenhum controlador nasce e tudo fica no fparms.
+    // No toque, o legado evita dezenas de MB e compilação assíncrona no meio do tiroteio.
     const authoredDef = byId(this.playerCharId);
     const authoredPal = authoredDef?.pal || { skin: 0xd9a066, shirt: 0x27364a };
-    this.vm.authored = AUTHORED_VM_ENABLED ? createAuthoredViewModels(this.vm.root, () => {
+    this.vm.authored = AUTHORED_VM_ENABLED && !this.mobile ? createAuthoredViewModels(this.vm.root, () => {
       if (!this._disposed && this.vm) this._applyVmVisibility();
     }, { id: this.playerCharId, faction: this.playerFaction, skin: authoredPal.skin, sleeve: authoredPal.shirt, accent: authoredPal.pants }) : null;
     {

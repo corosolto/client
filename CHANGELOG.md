@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.110`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.111`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -23,7 +23,7 @@
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
 
-## Não lançado - 2026-10-19
+## Não lançado — 2026-10-19
 
 ### Adicionado
 - O mapa ao vivo mostra cidades, partidas e rounds por agregado geográfico, sem publicar nick, jogador, IP ou posição individual.
@@ -38,6 +38,8 @@
 - Perfis públicos continuam visíveis quando o bootstrap da conta falha ou a sessão expira. Links do ranking usam o handle público, o histórico do navegador restaura a lista, e perfis sem totais aparecem com zero.
 - O contador online voltou ao topo em desktop e celular. O rodapé móvel usa ícones quadrados com nome acessível, e a tela de privacidade preserva a foto com checkbox de 20 px.
 - A câmera em terceira pessoa considera filhos de modelos importados e segura o último bloqueio por 80 ms. Armas autoradas não reativam malhas antigas, e o HUD volta a mostrar a arte da arma equipada.
+- Celulares entram no perfil gráfico leve desde a abertura, limitam texturas e evitam carregar música, personagem 3D e cenário escondidos antes do primeiro toque.
+- Durante a partida, o perfil móvel começa com resolução de 70%, sem sombras dinâmicas, fauna decorativa ou viewmodels pesados; a qualidade continua se ajustando se o aparelho sofrer.
 
 ## Não lançado - 2026-10-18
 
@@ -124,6 +126,13 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.111] — 2026-10-19
+
+### Mudado
+- fix: alivia boot e partida no celular (#1019)
+- test: remove network fetch from mobile gate
+- fix: alivia boot e partida no celular
 
 ## [2.1.0-alpha.110] — 2026-10-18
 

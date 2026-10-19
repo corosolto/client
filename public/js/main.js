@@ -43,6 +43,7 @@ import { makeNetcode } from './netgame.js';
 
 /* ---------------- settings & nickname ---------------- */
 const SETTINGS_KEY = 'awpbr_settings';
+const POINTER_COARSE = matchMedia('(pointer: coarse)').matches;
 const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
 if (savedSettings.invertY == null && savedSettings.invY != null) savedSettings.invertY = savedSettings.invY;
 /* FORMATO LIVRE DA PARTIDA: `bots` (N×N simétrico) virou `allyBots` (bots ao SEU lado,
@@ -104,7 +105,7 @@ function clearTelemetryGameContext() {
 // o tom do caminho SEM pós mora no bloom.js, que é o dono da tabela de exposição/piso por mapa.
 import { applyNoPostTone, ajustaPos } from './bloom.js';
 import { criaRenderer, avisaSemWebgl, avisaSoftware } from './glcontext.js';
-import { EscadaAdaptativa, DEGRAUS } from './qualidade-adaptativa.js';
+import { EscadaAdaptativa, DEGRAUS, perfilInicial, tetoTextura } from './qualidade-adaptativa.js';
 import { definirSombraDegrau, definirCorteVegetacao, aplicaSombraSol } from './mapquality.js';
 const container = document.getElementById('game-container');
 const SAFE_MODE = new URLSearchParams(location.search).get('safe') === '1';
@@ -123,6 +124,7 @@ if (COMPAT_MODE) { preferredQuality = settings.quality; settings.quality = 'low'
 /* AUTO-PERFIL PARA MÁQUINA FRACA: cai pra 'low' por padrão só se o jogador NUNCA escolheu
    qualidade à mão (a escolha manual sempre vence). ?perfilauto=0 desliga a heurística. */
 const AUTO_PROFILE = new URLSearchParams(location.search).get('perfilauto') !== '0';
+const MOBILE_AUTO = !COMPAT_MODE && AUTO_PROFILE && savedSettings.quality === undefined && POINTER_COARSE;
 const HUB_ENABLED = new URLSearchParams(location.search).get('home') !== 'legacy';
 /* A tela mora no CAMINHO (public/js/rotas.js, ADR 0008): /jogar/multiplayer, /loja,
    /comunidade/amigos... Parâmetro que não é tela (map, personagem, sala) segue na query. */
@@ -155,8 +157,14 @@ function detectaHwFraco() {
   return integrada || (typeof mem === 'number' && mem <= 4) || cores <= 4;
 }
 const WEAK_HW = !COMPAT_MODE && AUTO_PROFILE && savedSettings.quality === undefined && detectaHwFraco();
-if (WEAK_HW) { settings.quality = 'low'; try { console.info('[perf] hardware modesto detectado — qualidade em BAIXA por padrão (mude em Configurações)'); } catch {} }
-const LEAN = COMPAT_MODE || WEAK_HW;   // qualquer caminho leve: previews estáticos + DPR menor
+const AUTO_LOW = WEAK_HW || MOBILE_AUTO;
+if (AUTO_LOW) {
+  settings.quality = 'low';
+  try { console.info(`[perf] ${MOBILE_AUTO ? 'celular' : 'hardware modesto'} detectado — qualidade em BAIXA por padrão (mude em Configurações)`); } catch {}
+}
+const LEAN = COMPAT_MODE || AUTO_LOW;   // qualquer caminho leve: previews estáticos + DPR menor
+const TEXTURE_MAX = tetoTextura({ pointerCoarse: POINTER_COARSE, maxTextureSize: renderer.capabilities.maxTextureSize });
+if (TEXTURE_MAX) globalThis.__CS_TEXTURA_MAX__ = TEXTURE_MAX;
 if (SOFTWARE) avisaSoftware(GLMETA.renderer);   // contar é o que faltava; o jogo já se rebaixou
 const ASSET_CHECK = new URLSearchParams(location.search).get('assetcheck') === '1';
 let staticPreviews = LEAN && !ASSET_CHECK;
@@ -164,7 +172,7 @@ renderer.setSize(innerWidth, innerHeight);
 // software já começa no degrau MÍNIMO: medir 8 s para descobrir o que o renderizador já disse
 // é gastar os únicos quadros que essa máquina tem. 0,5 = um quarto dos pixels de 1,0.
 renderer.setPixelRatio(SOFTWARE ? 0.5 : LEAN ? 0.75 : 1);
-renderer.shadowMap.enabled = !COMPAT_MODE;
+renderer.shadowMap.enabled = settings.quality !== 'low' && !COMPAT_MODE;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // Tonemap. Com o composer ligado three já força NoToneMapping nos materiais (só aplica
 // tonemap quando o alvo é null) e quem faz a curva é o AgX do bloom.js — deixamos
@@ -311,7 +319,7 @@ const _lo = {
   pct: document.getElementById('load-pct'), label: document.getElementById('load-label'), status: document.getElementById('load-status'),
 };
 const loadingStage = new LoadingCharacterStage(document.getElementById('load-character-3d'), { compatibility: LEAN });
-loadingStage.show('B').catch(() => {});
+if (!LEAN) loadingStage.show('B').catch(() => {});   // celular: nenhum GLB/renderer 3D escondido atrás da splash
 function dockLoadingCharacter() {
   const canvas = document.getElementById('load-character-3d');
   const stage = document.getElementById('load-character-stage');
@@ -365,7 +373,7 @@ function showLoading(label, status = 'CARREGANDO MODELOS 3D…', mapName = '') {
   }
   try { _lo.box.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI++)); } catch {}
   _lo.box.classList.remove('hidden');
-  loadingStage.show(currentFaction).catch(() => {});
+  if (!LEAN) loadingStage.show(currentFaction).catch(() => {});   // mobile mantém a tela 2D; nenhum segundo renderer/GLB durante o boot
   _giraDica();
   clearInterval(_dicaT); _dicaT = setInterval(_giraDica, 5000);
   _mkPhase(_lo.fill, _lo.pct, _lo.status);
@@ -406,12 +414,13 @@ async function loadMenuBackdrop() {
     });
   });
 }
-// Rota compartilhada, inclusive na query antiga, abre já; cenário e props seguem no fundo.
-// Só a raiz preserva o ritual da splash até o cenário estar pronto.
+// Rotas compartilhadas, inclusive na query antiga, carregam o cenário em fundo.
+// No perfil móvel, o wallpaper 2D evita baixar e compilar uma arena coberta pelo menu.
 const directRoute = document.documentElement.hasAttribute('data-direct-route')
   || Object.keys(estadoDaUrl(location.href) || {}).length > 0;
-const menuBackdropReady = loadMenuBackdrop();
-if (directRoute) menuBackdropReady.then(_splashSetReady).catch((error) => console.error('[menu-background]', error));
+const menuBackdropReady = MOBILE_AUTO ? Promise.resolve() : loadMenuBackdrop();
+if (MOBILE_AUTO) _splashSetReady();
+else if (directRoute) menuBackdropReady.then(_splashSetReady).catch((error) => console.error('[menu-background]', error));
 else { await menuBackdropReady; _splashSetReady(); }
 
 /* ---------------- screens ---------------- */
@@ -557,7 +566,7 @@ startVisibleRotation(async () => {
   _wallK = next;
   try { localStorage.setItem('cs_wallK', String(_wallK)); } catch {}
   refreshWallpapers();
-}, () => ['main-menu', 'team-select', 'char-select'].some(id => !$(id)?.classList.contains('hidden')));
+}, () => !MOBILE_AUTO && ['main-menu', 'team-select', 'char-select'].some(id => !$(id)?.classList.contains('hidden')));
 startVisibleRotation(async () => {
   const next = (_loadWallI + 1) % LOADING_WALLS.length;
   const preload = new Image();
@@ -566,7 +575,7 @@ startVisibleRotation(async () => {
   _loadWallI = next;
   $('boot-splash')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
   $('load-overlay')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
-}, () => ['boot-splash', 'load-overlay'].some(id => {
+}, () => !MOBILE_AUTO && ['boot-splash', 'load-overlay'].some(id => {
   const element = $(id);
   return element && !element.classList.contains('gone') && !element.classList.contains('hidden');
 }));
@@ -727,7 +736,7 @@ if (menuMusicToggle) menuMusicToggle.onclick = () => {
   }
 };
 syncMenuMusicToggle();
-startMenuMusic();   // boot: começa MUDA imediatamente (loop rolando antes do 1º clique)
+if (!POINTER_COARSE) startMenuMusic();   // celular baixa/decodifica a faixa só depois do primeiro gesto
 
 /* Laboratório local de curadoria (?menumusiclab=1). O jogo normal continua escolhendo uma
    faixa aleatória por visita; aqui a escolha é determinística e o veredito fica somente no
@@ -822,11 +831,11 @@ function mountMenuMusicReview() {
 }
 mountMenuMusicReview();
 
-const isMobile = matchMedia('(pointer: coarse)').matches || innerWidth < 820;
+const isMobile = POINTER_COARSE || innerWidth < 820;
 /* TOUCH = aparelho de toque DE VERDADE (dedo, sem mouse). Separado do isMobile porque este
    inclui "janela estreita" — um desktop com a janela apertada NÃO deve entrar em modo toque
    (perderia o mouse-look). Só o TOUCH liga os controles de dedo e a trava de orientação. */
-const TOUCH = matchMedia('(pointer: coarse)').matches;
+const TOUCH = POINTER_COARSE;
 let settingsReturn = 'main-menu';
 let howtoReturn = 'main-menu';   // CONTROLES aberto pelo pause volta pro pause, pelo menu volta pro menu
 
@@ -1736,15 +1745,13 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         preloadEyewearAssets(matchEyewear),
         sfx.preloadWeaponSamples(_armasDaPartida),
         preloadMapProps([...MAP_PROPS, ...(mapaPartida.props || [])]),   // + props do mapa (Havan: carros/estátua)
-        /* fauna: sem esta linha o mapa constrói, o `ambience` existe e TODO bicho cai
-           no fallback procedural sem textura — verde na régua de registro, feio na tela.
-           Foi literalmente o BUG-57. Lista vazia é tratada como "tudo" no ambientlife. */
-        preloadAmbientLife(mapaPartida.ambience || []),
+        /* Desktop preserva a fauna GLB do BUG-57 e os viewmodels autorados. No perfil
+           móvel, ambos têm fallback procedural/legado e ficam fora do caminho crítico:
+           eram dezenas de MB e compilavam enquanto o jogador já tentava mirar. */
+        MOBILE_AUTO ? null : preloadAmbientLife(mapaPartida.ambience || []),
         mapaPartida.preload ? mapaPartida.preload() : null,
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
-        // Famílias PRONTAS do loadout + texturas de braço compartilhadas (~3 MB
-        // pós-de-dup): mata o pop legado→autorado do primeiro saque (BUG-75 M4).
-        preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida)),
+        POINTER_COARSE ? null : preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida)),
       ]);
     }
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
@@ -1777,9 +1784,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   });
   window.__game = game;
   /* RÉGUA:launch-race nascimento fim */
-  /* Resto das armas em ocioso: o drop do chão e a troca no meio da partida precisam de malha
-     real, senão vira caixa procedural. Falha calada — é disponibilidade, não requisito. */
-  if (!navOnly && params.get('armaslazy') !== '0') {
+  if (ADAPTATIVA && escada.degrau) aplicaDegrau(escada.degrau);   // Game.applySettings não pode desfazer o perfil móvel
+  /* Resto das armas em ocioso no desktop usa malha real em cada drop. Mobile conserva
+     o fallback jogável porque o preload de catálogo durante a partida causava travadas. */
+  if (!navOnly && !MOBILE_AUTO && params.get('armaslazy') !== '0') {
     const meuJogo = game;
     let tentativas = 0;
     const espera = setInterval(() => {
@@ -3843,12 +3851,12 @@ const PASSO_TETO = 4;
 /* ESCADA ADAPTATIVA. A detecção de máquina fraca roda uma vez no boot; mapa caro, partida
    cheia e fumaça acontecem depois. Ver docs/QUALIDADE-ADAPTATIVA.md. */
 const ADAPTATIVA = new URLSearchParams(location.search).get('adaptativa') !== '0';
+const degrauInicial = perfilInicial({ pointerCoarse: MOBILE_AUTO, software: SOFTWARE });
 const escada = new EscadaAdaptativa({
   orcamentoMs: 1000 / 60,
-  // software já nasceu no fundo: não faz sentido oferecer a ele os degraus de cima
-  degrau: SOFTWARE ? DEGRAUS.length - 1 : 0,
+  degrau: degrauInicial,
 });
-const dprBase = renderer.getPixelRatio();
+const dprBase = MOBILE_AUTO ? 1 : renderer.getPixelRatio();
 function aplicaDegrau(i) {
   const d = DEGRAUS[i];
   renderer.setPixelRatio(dprBase * d.dpr);   // o composer acompanha (bloom.js, cp._dpr)
@@ -3858,8 +3866,9 @@ function aplicaDegrau(i) {
   if (game?.world?.sun) aplicaSombraSol(game.world.sun);
   try { console.info(`[perf] qualidade adaptativa → ${d.nome}`); } catch { /* console mudo */ }
 }
+if (escada.degrau) aplicaDegrau(escada.degrau);
 // mesmo precedente de `__mpConvite`: gancho de sonda/captura, nunca caminho de jogo
-window.__escada = { escada, aplicaDegrau, DEGRAUS, dprBase };
+window.__escada = { escada, aplicaDegrau, DEGRAUS, dprBase, renderer };
 
 function loop() {
   requestAnimationFrame(loop);
@@ -3873,6 +3882,7 @@ function loop() {
   // BUG-177: sem #char-select no DOM (extensão/tradutor que reescreve o body) o `loop`
   // lançava a cada quadro e congelava o jogo — ausente conta como fechada.
   const csOpen = $('char-select')?.classList.contains('hidden') === false;
+  const splashAtiva = (() => { const splash = $('boot-splash'); return !!splash && !splash.classList.contains('gone'); })();
   // A troca com M pausa a partida; o preview 3D visível continua animando nesse estado.
   if (game && !csOpen) {
     let resto = dtReal;
@@ -3882,20 +3892,24 @@ function loop() {
       game.update(passo, resto <= 1e-6 || n === PASSO_TETO - 1);   // só o último passo desenha, inclusive ao esgotar o teto
     }
   } else if (!game) {
-    menuAngle += Math.min(0.05, dtReal) * 0.07;
-    menuCam.position.set(Math.sin(menuAngle) * 34, 17 + Math.sin(menuAngle * 0.6) * 4, Math.cos(menuAngle) * 34);
-    menuCam.lookAt(0, 1, 0);
-    renderer.render(menuScene, menuCam);
+    if (!splashAtiva) {
+      menuAngle += Math.min(0.05, dtReal) * 0.07;
+      menuCam.position.set(Math.sin(menuAngle) * 34, 17 + Math.sin(menuAngle * 0.6) * 4, Math.cos(menuAngle) * 34);
+      menuCam.lookAt(0, 1, 0);
+      renderer.render(menuScene, menuCam);
+    }
   }
   const hubMenu = $('main-menu');
   const hubPreviewOpen = HUB_ENABLED && hubMenu?.classList.contains('hidden') === false
     && hubMenu?.dataset.hubTab === 'jogar' && hubMenu?.dataset.hubNet === 'sp';
-  if ((csOpen || hubPreviewOpen) && pv && pv.model && !previewVideoVisible()) {
-    const pvDt = Math.min(0.05, dtReal);
-    if (!pvDrag) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
-    // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
-    if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
-    pv.r.render(pv.scene, pv.cam);
+  if (!splashAtiva) {
+    if ((csOpen || hubPreviewOpen) && pv && pv.model && !previewVideoVisible()) {
+      const pvDt = Math.min(0.05, dtReal);
+      if (!pvDrag) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
+      // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
+      if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
+      pv.r.render(pv.scene, pv.cam);
+    }
   }
 }
 loop();
@@ -4679,9 +4693,9 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   await mpMontarPartida(net, welcome);
 }
 
-/* PRÓXIMO MAPA NO PLACAR: os mesmos carregadores do _startGame, em segundo plano, com os
-   ids que o nó anunciou; o _startGame da virada encontra tudo em cache. A tela de fim troca
-   "PRÓXIMO MAPA CARREGANDO…" pelo nome e pela contagem; VOLTAR AO MENU segue ao lado. */
+/* PRÓXIMO MAPA NO PLACAR: os mesmos carregadores essenciais do _startGame, em segundo
+   plano, com os ids anunciados pelo nó; o perfil móvel deixa fauna/viewmodels decorativos
+   no fallback. A tela de fim mostra nome e contagem; VOLTAR AO MENU segue ao lado. */
 let mpContagemProximo = null;
 function mpPararContagemProximo() {
   clearInterval(mpContagemProximo); mpContagemProximo = null;
@@ -4706,9 +4720,9 @@ function mpPreCarregarProximo(m) {
     plano.chars.length ? preloadCharacterAssets(plano.chars, { weapons: armas }) : null,
     sfx.preloadWeaponSamples(armas),
     mapaReady.then((mapa) => preloadMapProps([...MAP_PROPS, ...(mapa.props || [])])),
-    mapaReady.then((mapa) => preloadAmbientLife(mapa.ambience || [])),
+    MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadAmbientLife(mapa.ambience || [])),
     mapaReady.then((mapa) => mapa.preload ? mapa.preload() : null),
-    preloadAuthoredFamilies(authoredBootFamilies(armas)),
+    POINTER_COARSE ? null : preloadAuthoredFamilies(authoredBootFamilies(armas)),
   ]).catch((e) => console.warn('[mp] pré-carga do próximo mapa falhou (a virada carrega):', e && e.message));
 }
 
