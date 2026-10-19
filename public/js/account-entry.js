@@ -15,6 +15,7 @@ const dialogHead=(container,kicker,title)=>{const dialog=container.closest?.('di
    então a ida ao provedor sai do quadro. Em portal de outra origem nada muda. */
 const leaveTo=url=>{let target=location;try{if(top!==self && top.location.origin===location.origin)target=top.location;}catch{ /* topo de outra origem */ }target.assign(url);};
 export {leaveTo};   // o convite de login (login-prompt.js) sai do quadro do mesmo jeito
+const ownProfilePath=(profile,card)=>card && card.id===profile?.id && typeof card.url==='string' && card.url.startsWith('/u/')?card.url:profile?.id?`/u/${encodeURIComponent(profile.id)}`:'/comunidade';
 let accountRequest=null,configRequest=null,accountActive=false;
 let newsletterDraft=false;
 export async function socialApi(path,body) {
@@ -66,10 +67,11 @@ export function mountAccountEntry(container,{auth=null,config={providers:[]},ret
   const button=(text,fn,cls='')=>{const b=node('button',text,`account-button ${cls}`);b.type='button';b.onclick=async()=>{b.disabled=true;try{await fn();}catch(e){say(accountError(e));}finally{b.disabled=false;}};return b;};
   if(auth?.authenticated) {
     if(auth.profile) {
-      const title=dialogHead(container,'SUA CONTA',`Olá, ${auth.profile.nick}`);
-      if(title)socialApi('/api/social?action=profile').then(({profile})=>{if(profile?.id===auth.profile.id && profile.handle && title.textContent===`Olá, ${auth.profile.nick}`)title.textContent=`Olá, @${profile.handle}`;}).catch(()=>{});
+      const title=dialogHead(container,'SUA CONTA',`Olá, ${auth.profile.nick}`);let profileCard=null;
+      const loadProfileCard=async()=>{if(profileCard)return profileCard;try{const {profile}=await socialApi('/api/social?action=profile');if(profile?.id===auth.profile.id)profileCard=profile;}catch{}return profileCard;};
+      if(title)void loadProfileCard().then(profile=>{if(profile?.handle && title.textContent===`Olá, ${auth.profile.nick}`)title.textContent=`Olá, @${profile.handle}`;});
       const actions=node('div','','account-actions');
-      actions.append(button('VER MEU PERFIL',()=>{document.querySelector('[data-hub-tab=comunidade]')?.click();document.dispatchEvent(new CustomEvent('cs-community-open',{detail:{tab:'profile'}}));onGuest();}),button('ENVIAR FEEDBACK',()=>{const tab=document.querySelector('[data-hub-tab=feedback]');if(tab)tab.click();else document.getElementById('mf-feedback')?.click();onGuest();}),quiet('Sair da conta',async()=>{try{await logoutAccount(auth);await onAuthenticated({authenticated:false});}catch(e){say(accountError(e));}}));
+      actions.append(button('VER MEU PERFIL',async()=>leaveTo(ownProfilePath(auth.profile,await loadProfileCard()))),quiet('ENVIAR FEEDBACK',()=>{const tab=document.querySelector('[data-hub-tab=feedback]');if(tab)tab.click();else document.getElementById('mf-feedback')?.click();onGuest();}),quiet('Sair da conta',async()=>{try{await logoutAccount(auth);await onAuthenticated({authenticated:false});}catch(e){say(accountError(e));}}));
       container.append(node('p','Sua conta está salva. Progresso e conquistas ficam no servidor.','social-muted account-lede'),actions);
       mountAccountIntegrations(container,auth,config,say);void mountProfilePreferences(container,{auth,message:say,fold:true});container.append(status);return;
     }
@@ -192,7 +194,7 @@ export async function initAccountEntry({onSession=()=>{},onReady=()=>{},skipProm
     open.dataset.state=profile?'account':'guest';
     if(name)name.textContent=label;else open.textContent=label;
     if(cta){cta.hidden=!!profile;cta.textContent=signed?'CONTINUAR':'ENTRAR';}
-    if(view)view.hidden=!profile;
+    if(view){view.hidden=!profile;view.href=ownProfilePath(profile,mine);}
     if(avatar && mine?.avatar_url)avatar.style.backgroundImage=`url("${encodeURI(mine.avatar_url)}")`;
     open.setAttribute('aria-label',profile?`Sua conta: ${label}`:signed?'Escolha seu nick para terminar a entrada':'Reivindique seu perfil: entrar ou criar conta');
   };
@@ -201,8 +203,6 @@ export async function initAccountEntry({onSession=()=>{},onReady=()=>{},skipProm
     if(!auth?.profile)return;
     try{const {profile}=await socialApi('/api/social?action=profile');card=profile;paintIdentity();}catch{ /* sem o cartão, o nick segura o lugar do @handle */ }
   }
-  const view=document.getElementById('hub-view-profile');
-  if(view)view.onclick=event=>{event.preventDefault();document.querySelector('[data-hub-tab=comunidade]')?.click();document.dispatchEvent(new CustomEvent('cs-community-open',{detail:{tab:'profile'}}));};
   const failedReturn=new URLSearchParams(location.search).has('auth_error');
   // Só abre sozinho para quem já pediu entrada: link expirado ou conta sem nick. Visitante joga primeiro.
   const wantsPrompt=()=>failedReturn || (auth?.authenticated && !auth.profile);
