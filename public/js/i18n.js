@@ -577,6 +577,8 @@ const DICT = {
   'Filtrar visuais': 'Filter outfits', 'MEUS': 'MINE', 'DESBLOQUEAR VISUAL': 'UNLOCK OUTFIT', 'Não deu para equipar agora. Tente de novo.': 'Could not equip right now. Try again.',
   'Visual é só cosmético: mesmo dano, velocidade e hitbox. O equipado entra com você na próxima partida.':
     'Outfits are cosmetic only: same damage, speed and hitbox. The equipped one joins you in your next match.',
+  'HISTÓRICO DE COMPRAS': 'PURCHASE HISTORY', 'SUA CARTEIRA': 'YOUR WALLET', 'SALDO': 'BALANCE',
+  'Você ainda não comprou nenhum visual.': 'You have not bought any outfits yet.',
   // tp:fim-loja
 
   // tp:perfil
