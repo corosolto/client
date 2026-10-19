@@ -16,7 +16,9 @@
 :root[data-ui="v3"] #hub-ui .hub-logo-link{flex:none;display:grid;place-items:center;min-width:44px;min-height:44px;border-radius:8px}
 :root[data-ui="v3"] #hub-ui .hub-logo-link:focus-visible{outline:2px solid var(--tp-tinta-1);outline-offset:2px}
 :root[data-ui="v3"] .hub-header .hub-tabs{display:none}
-:root[data-ui="v3"] #hub-ui .hub-online,:root[data-ui="v3"] #hub-ui #hub-music-toggle{display:none}
+:root[data-ui="v3"] #hub-ui #hub-music-toggle{display:none}
+:root[data-ui="v3"] #hub-ui .hub-online{display:inline-flex;flex:none;align-items:center;gap:7px;margin-left:0;color:var(--tp-tinta-2);font:800 12px/1 var(--tp-num)}
+:root[data-ui="v3"] #hub-ui .hub-online[hidden]{display:none}
 .tp-lobby-abas{position:relative;display:flex;align-items:center;gap:30px;margin-right:auto;align-self:center}
 .tp-lobby-aba{display:inline-flex;align-items:center;justify-content:center;min-width:var(--tp-lobby-toque);min-height:var(--tp-lobby-toque);padding:0 4px;border:0;background:none;
   color:var(--tp-tinta-2);font:400 21px/1 var(--tp-display);letter-spacing:.04em;text-transform:uppercase;text-decoration:none;white-space:nowrap;cursor:pointer}
@@ -97,6 +99,11 @@
 .tp-lobby-quest__premio{flex:none;color:var(--tp-ambar);font-size:14px;font-weight:800}
 .tp-lobby-quest__barra{height:8px;border-radius:4px}
 .tp-lobby-quest__progresso{color:var(--tp-tinta-3);font-size:12px}
+.tp-lobby-amigos__lista{display:flex;flex-direction:column;gap:8px}
+.tp-lobby-amigo{display:flex;flex-direction:column;gap:3px;padding:9px 10px;border-radius:8px;background:var(--tp-fundo);color:var(--tp-tinta-1);text-decoration:none}
+.tp-lobby-amigo:hover,.tp-lobby-amigo:focus-visible{outline:2px solid var(--tp-lima);outline-offset:1px}
+.tp-lobby-amigo__nome{font:800 15px/1.15 var(--tp-ui)}
+.tp-lobby-amigo__partida{color:var(--tp-tinta-3);font:700 11px/1.25 var(--tp-ui)}
 .tp-lobby-novidades{gap:0;padding:0;overflow:hidden}
 .tp-lobby-novidades__capa{position:relative;height:150px}
 .tp-lobby-novidades__capa>img{display:block;width:100%;height:100%;object-fit:cover;object-position:70% 30%}
@@ -180,24 +187,25 @@
 @media (prefers-reduced-motion:reduce){:root[data-ui="v3"][data-home-ui="hub"] #menu-setup #btn-jogar::before{animation:none}}
 :root[data-ui="v3"][data-motion="reduzido"][data-home-ui="hub"] #menu-setup #btn-jogar::before{animation:none}
 
-/* Rodapé: online e redes em chips; os links legais foram para o MAIS */
+/* Rodapé: redes oficiais em controles quadrados; os links legais foram para o MAIS. */
 :root[data-ui="v3"] #hub-ui .hub-footer{left:var(--tp-lobby-margem);right:auto;bottom:28px;min-height:0;padding:0;gap:18px;border:0;background:none;color:var(--tp-tinta-3);font:600 14px/1 var(--tp-ui)}
 :root[data-ui="v3"] #hub-ui .hub-footer>a,:root[data-ui="v3"] #hub-ui .hub-footer>.hub-tip{display:none}
-.tp-lobby-online{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-.tp-lobby-online[hidden]{display:none}
-.tp-lobby-online__ponto{width:8px;height:8px;border-radius:50%;background:var(--tp-ganho)}
 :root[data-ui="v3"] #hub-footer-social .mf-social{flex-wrap:nowrap;gap:6px}
-:root[data-ui="v3"] #hub-footer-social .mf-social a{width:auto;height:30px;padding:0 10px;display:flex;align-items:center;border-radius:6px;border:1px solid rgba(255,255,255,.12);
+:root[data-ui="v3"] #hub-footer-social .mf-social a{width:30px;height:30px;padding:0;display:grid;place-items:center;border-radius:6px;border:1px solid rgba(255,255,255,.12);
   background:rgba(255,255,255,.07);color:var(--tp-tinta-2);text-decoration:none}
 :root[data-ui="v3"] #hub-footer-social .mf-social a:hover,:root[data-ui="v3"] #hub-footer-social .mf-social a:focus-visible{border-color:rgba(255,255,255,.28);color:var(--tp-tinta-1)}
-:root[data-ui="v3"] #hub-footer-social .mf-social a:has(.tp-lobby-chip) svg{display:none}
-.tp-lobby-chip{display:inline}
-.tp-lobby-chip{font:800 12px/1 var(--tp-ui);letter-spacing:.06em}
+:root[data-ui="v3"] #hub-footer-social .mf-social svg{display:block;width:15px;height:15px}
 
 /* Abaixo de 1440 px o cabeçalho não cabe inteiro: o nome do perfil sai, o botão de entrar fica */
 @media (max-width:1439px){
   .tp-lobby-abas{gap:20px}
   :root[data-ui="v3"] #hub-ui #hub-identity-name{display:none}
+}
+@media (max-width:1100px){
+  :root[data-ui="v3"] #hub-ui .hub-online{position:absolute;right:var(--tp-lobby-margem);top:78px;z-index:2;padding:6px 8px;border-radius:6px;background:rgba(9,7,4,.78)}
+}
+@media (max-width:600px){
+  :root[data-ui="v3"] #hub-ui .hub-online{right:12px;top:60px}
 }
 
 /* Tela 18: celular deitado */

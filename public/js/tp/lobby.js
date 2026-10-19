@@ -296,13 +296,26 @@ function montarDireita(play) {
   chamar.type = 'button';
   chamar.addEventListener('click', convidar);
   cab.append(h2, chamar);
-  /* sem presença no backend: estado vazio, nunca lista de exemplo */
-  const vazio = no('p', 'tp-lobby-vazio', tr('Ainda não dá pra ver quem está online. Chame a turma com o link de uma sala.'));
+  const lista = no('div', 'tp-lobby-amigos__lista');
+  const desenhar = (live) => {
+    lista.replaceChildren();
+    for (const p of Array.isArray(live) ? live : []) {
+      const item = no('a', 'tp-lobby-amigo');
+      item.href = `/u/${encodeURIComponent(p.id)}`;
+      item.append(no('span', 'tp-lobby-amigo__nome', p.nick), no('span', 'tp-lobby-amigo__partida',
+        `${p.mode === 'ctf' ? tr('CAPTURA') : tr('ABATE')} · ${p.map} · ${String(p.node || '').toUpperCase()}-${p.code}`));
+      lista.append(item);
+    }
+    if (!lista.children.length) lista.append(no('p', 'tp-lobby-vazio', tr('Nenhum amigo em partida agora.')));
+  };
+  painel.append(cab, lista);
   const ver = no('a', 'tp-lobby-link', tr('VER AMIGOS ▸'));
   ver.href = '/comunidade/amigos';
-  painel.append(cab, vazio, ver);
+  painel.append(ver);
   dir.appendChild(painel);
   play.appendChild(dir);
+  desenhar($('community')?.socialLive);
+  document.addEventListener('cs-social-live', (e) => desenhar(e.detail?.live));
   for (const lado of ['esq', 'dir']) {
     const vaga = no('div', `tp-lobby-vaga tp-lobby-vaga--${lado}`);
     const b = no('button', 'tp-lobby-vaga__convidar', tr('+ CONVIDAR'));
@@ -424,37 +437,6 @@ function ligarJogarDireto() {
   }, true);
 }
 
-function montarRodape() {
-  const footer = document.querySelector('#hub-ui .hub-footer');
-  if (!footer) return;
-  const online = no('span', 'tp-lobby-online');
-  online.id = 'tp-lobby-online';
-  const n = no('span', 'tp-num');
-  online.append(no('i', 'tp-lobby-online__ponto'), n, no('span', '', tr('ONLINE')));
-  footer.prepend(online);
-  const fonte = $('mf-online-n'), caixa = $('mf-online');
-  const sync = () => {
-    n.textContent = fonte?.textContent || '';
-    online.hidden = !fonte || !caixa || caixa.hidden || !(Number(fonte.textContent) > 0);
-  };
-  if (fonte) new MutationObserver(sync).observe(fonte, { childList: true, characterData: true, subtree: true });
-  if (caixa) new MutationObserver(sync).observe(caixa, { attributes: true, attributeFilter: ['hidden'] });
-  sync();
-  const NOMES = [[/discord/, 'DISCORD'], [/t\.me|telegram/, 'TELEGRAM'], [/tiktok/, 'TIKTOK'], [/instagram/, 'INSTAGRAM'],
-    [/youtube/, 'YOUTUBE'], [/linkedin/, 'LINKEDIN'], [/github/, 'GITHUB'], [/(^|\.)x\.com\/|twitter/, 'X']];
-  const rotular = () => {
-    for (const a of document.querySelectorAll('#hub-footer-social .mf-social a')) {
-      if (a.querySelector('.tp-lobby-chip')) continue;
-      let alvo = '';
-      try { const u = new URL(a.href); alvo = `${u.hostname}${u.pathname}`; } catch { /* href inválido: fica só o ícone */ }
-      const nome = NOMES.find(([re]) => re.test(alvo))?.[1];
-      if (nome) a.appendChild(no('span', 'tp-lobby-chip', nome));
-    }
-  };
-  rotular();
-  const social = $('hub-footer-social');
-  if (social) new MutationObserver(rotular).observe(social, { childList: true });
-}
 
 /* Tela 26: o #rotate-prompt de sempre ganha a arte e o texto do pacote; a CSS decide quando ele aparece. */
 function montarGire() {
@@ -496,7 +478,6 @@ function montar() {
   montarDireita(play);
   montarPartida();
   ligarJogarDireto();
-  montarRodape();
   montarGire();
 }
 

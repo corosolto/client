@@ -108,7 +108,7 @@
 .tp-perfil__foto-atual{width:52px;height:52px;box-sizing:border-box;border-radius:10px;border:2px solid var(--tp-lima);object-fit:cover;font-size:26px}
 :root[data-ui="v3"] .tp-perfil .tp-perfil__foto-mais{width:52px;height:52px;padding:0;border-radius:10px;border:1px dashed rgba(255,255,255,.35);background:none;color:var(--tp-tinta-2);font:500 22px/1 var(--tp-ui);cursor:pointer}
 .tp-perfil__check{display:flex;align-items:center;gap:10px;font:700 15px/1.25 var(--tp-ui)}
-.tp-perfil__check input{flex:none;width:20px;height:20px;accent-color:var(--tp-ambar)}
+#social-content .tp-perfil .tp-perfil__check input[type="checkbox"]{flex:none;width:20px;height:20px;min-height:20px;max-height:20px;padding:0;accent-color:var(--tp-ambar)}
 .tp-perfil__chips{display:flex;flex-wrap:wrap;gap:6px 8px}
 :root[data-ui="v3"] .tp-perfil .tp-perfil__chip{display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.08);
   border:1px solid rgba(255,255,255,.14);color:var(--tp-tinta-1);font:700 14px/1 var(--tp-ui);cursor:pointer}

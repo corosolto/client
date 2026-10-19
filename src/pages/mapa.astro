@@ -1,50 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { LIVE_MAP } from '../data/live-map.mjs';
-import { supabaseAdmin } from '../lib/supabase';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
-import { TIMES } from '../data/jogo';
 
 export const prerender = false;
 
-// Presença tolera 60 s de cache e evita repetir as consultas em cada visita.
 Astro.response.headers.set(
   'cache-control',
-  'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
+  'public, max-age=0, s-maxage=300, stale-while-revalidate=900',
 );
-
-let online: any[] = [], cities: any[] = [], configured = !!supabaseAdmin;
-let totals = { players: 0, matches: 0, kills: 0, mp: 0, mb: 0 };
-let teamSource: 'telemetry' | 'legacy' = 'telemetry';
-let teamCounts = TIMES.map(t => ({ ...t, code: t.id, matches: 0, pct: 0 }));
-if (supabaseAdmin) {
-  const { count } = await supabaseAdmin.from('player_points').select('id', { count: 'exact', head: true });
-  totals.players = count ?? 0;
-  const { data: st } = await supabaseAdmin.from('player_points').select('matches,kills,matches_p,matches_b');
-  for(const r of st ?? []) {totals.matches+=r.matches;totals.kills+=r.kills;totals.mp+=r.matches_p;totals.mb+=r.matches_b;}
-  const tq = await Promise.all(teamCounts.map(t =>
-    supabaseAdmin!.from('match_event').select('*', { count: 'exact', head: true }).eq('faction', t.code),
-  ));
-  if (tq.some(r => r.error) || !tq.some(r => (r.count ?? 0) > 0)) {
-    teamSource = 'legacy';
-    teamCounts = teamCounts.map(t => ({ ...t, matches: t.code === 'E' ? totals.mp : totals.mb }));
-  } else {
-    teamCounts = teamCounts.map((t, i) => ({ ...t, matches: tq[i].count ?? 0 }));
-  }
-  // Agrega o histórico total e a presença por cidade.
-  const { data: cd } = await supabaseAdmin.from('city_daily').select('*');
-  const agg = new Map<string, any>();
-  for (const r of cd ?? []) {
-    const cur = agg.get(r.city) || { city: r.city, country: r.country, matches: 0, rounds: 0, players: new Set<string>(), lat: null, lon: null };
-    cur.matches += r.matches; cur.rounds += r.rounds ?? 0; agg.set(r.city, cur);
-  }
-  cities = [...agg.values()].sort((a, b) => b.matches - a.matches)
-    .map(c => ({ ...c, players: [...c.players].sort() }));
-}
-Astro.response.headers.set('cache-control','no-store');
-const teamTotal = teamCounts.reduce((sum, t) => sum + t.matches, 0);
-teamCounts = teamCounts.map(t => ({ ...t, pct: teamTotal ? Math.round((t.matches / teamTotal) * 100) : 0 }));
-const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.filter(c => c.lat && c.lon) };
 ---
 <Layout
   title={`Mapa da treta - de onde a comunidade joga | ${BRAND_FULL}`}
@@ -59,16 +23,14 @@ const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.fil
   h1="Mapa da treta"
   kicker="Comunidade · histórico por cidade"
   heroImg="/img/map-previews/quebrada.jpg"
-  heroPos="40%">
+  heroPos="40%"
+>
   <Fragment slot="sub">
-    Onde a treta está acontecendo agora, cidade por cidade. A localização é aproximada e no nível
-    de cidade - nenhum IP aparece aqui.
+    De onde a comunidade joga, cidade por cidade. A localização é um centroide aproximado:
+    nenhum IP, posição individual ou nome de jogador aparece aqui.
   </Fragment>
-  <!-- Leaflet 1.9.4 (BSD-2-Clause) vendorizado em public/vendor/leaflet/ - origem:
-       https://unpkg.com/leaflet@1.9.4/dist/ . Vendorizado pelo mesmo motivo do
-       Three.js: era o ÚNICO host externo em script-src/style-src da CSP, e a
-       exceção valia pro site todo, não só pra esta página. Ao atualizar, troque
-       os arquivos e a versão aqui. -->
+
+  <!-- Leaflet 1.9.4 (BSD-2-Clause) vendorizado em public/vendor/leaflet/. -->
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" slot="head">
   <style slot="head">
     .map-tip{background:rgba(8,12,8,.88)!important;border:1px solid #4a5a2a!important;color:#d8e0b0!important;
@@ -76,76 +38,79 @@ const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.fil
     .map-tip:before{display:none}
     .map-pop .leaflet-popup-content-wrapper{background:#10130c;color:#d8e0b0;border:1px solid #4a5a2a;font-family:Consolas,monospace;font-size:12px}
     .map-pop .leaflet-popup-tip{background:#10130c;border:1px solid #4a5a2a}
-    .map-pop a{color:#b8d94a}
   </style>
-  {configured && (
-    <div class="tstat" aria-label="Histórico registrado">
-      <div><b>{totals.players}</b><span>jogadores registrados</span></div>
-      <div><b>{totals.matches}</b><span>partidas registradas</span></div>
-      <div><b>{totals.kills}</b><span>abates registrados</span></div>
-    </div>
-  )}
-  {configured && (
-    <section class="team-stats" aria-labelledby="team-title">
-      <div class="team-head">
-        <h2 id="team-title">Partidas por time</h2>
-        <span>{teamTotal} com time identificado</span>
-      </div>
-      <div class="team-grid">
-        {teamCounts.map(t => (
-          <div class="team-row">
-            <div><strong style={`color:${t.cor}`}>{t.nome}</strong><span>{t.matches} · {t.pct}%</span></div>
-            <span class="team-track"><span style={`width:${t.pct}%;background:${t.cor}`}></span></span>
-          </div>
-        ))}
-      </div>
-      <p>{teamSource === 'telemetry'
-        ? 'Contagem anônima de partidas registradas, separada do ranking de jogadores.'
-        : 'A telemetria recente ainda está indisponível; os números de Time E e Time B vêm do histórico do ranking.'}</p>
-    </section>
-  )}
-  <p>A presença pessoal fica na lista de amigos. Em amarelo, o histórico total de partidas por cidade (localização aproximada, nível cidade - sem IP).</p>
-  {/* Presença nominal cobre somente jogadores registrados. */}
-  <p style="font-size:12px;color:var(--bone-dim);margin-top:-6px">
-    Localização agregada por cidade. A presença de jogadores fica visível somente aos amigos autorizados.
-  </p>
-  {!configured && <p>Mapa ainda não configurado.</p>}
-  <div id="map" style="height:520px;border:1px solid var(--line);background:var(--panel)"></div>
+
+  <p>Em amarelo, o histórico agregado de partidas por cidade. A presença pessoal fica somente na lista de amigos autorizados.</p>
+  <div id="map" aria-label="Mapa de partidas por cidade"></div>
+  <p id="map-status" role="status">Carregando cidades...</p>
+  <section class="city-panel" aria-labelledby="city-title">
+    <h2 id="city-title">Partidas por cidade</h2>
+    <ul id="city-list"></ul>
+  </section>
+
   <script src="/vendor/leaflet/leaflet.js" is:inline></script>
-  <script is:inline define:vars={{ mapData }}>
-    // Dados do banco precisam ser escapados antes de entrar no HTML do Leaflet.
-    const esc = (s) => String(s ?? '')
+  <script is:inline>
+    const esc = (value) => String(value ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     const map = L.map('map', { scrollWheelZoom: true }).setView([-14.5, -52.5], 4);
-    // CARTO sem chave devolve tile "API KEY REQUIRED" e o OSM público bloqueia (403); Esri não exige chave.
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 16, attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin',
     }).addTo(map);
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 16,
     }).addTo(map);
-    const maxM = Math.max(1, ...mapData.cities.map(c => c.matches));
-    for (const c of mapData.cities) {
-      const m = L.circleMarker([c.lat, c.lon], {
-        radius: 6 + 18 * (c.matches / maxM), color: '#ffd23f', weight: 2,
-        fillColor: '#ffd23f', fillOpacity: 0.25,
-      }).addTo(map);
-      // Tooltip só no hover para não cobrir marcadores próximos.
-      m.bindTooltip(`${esc(c.city)} · ${c.matches}`, { direction: 'top', offset: [0, -8], className: 'map-tip' });
-      // popup do CLIQUE: cidade, totais e lista de jogadores
-      const shown = c.players.slice(0, 12).map(esc), more = c.players.length - shown.length;
-      const plist = c.players.length
-        ? `<br><b>${c.players.length} jogador${c.players.length > 1 ? 'es' : ''}:</b> ${shown.join(', ')}${more > 0 ? ` +${more}` : ''}`
-        : '';
-      m.bindPopup(`<b>${esc(c.city)}</b><br>${c.matches} partidas · ${c.rounds} rounds (histórico)${plist}`, { className: 'map-pop' });
-    }
-    for (const o of mapData.online) {
-      L.circleMarker([o.lat, o.lon], {
-        radius: 5, color: '#9dff9d', weight: 2, fillColor: '#9dff9d', fillOpacity: 0.9,
-      }).addTo(map).bindPopup(`<b>${esc(o.nick)}</b> online agora${o.city ? ' · ' + esc(o.city) : ''}`);
-    }
+
+    const status = document.getElementById('map-status');
+    const list = document.getElementById('city-list');
+    fetch('/api/live-map', { headers: { accept: 'application/json' } })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((payload) => {
+        const cities = Array.isArray(payload?.cities) ? payload.cities.flatMap((row) => {
+          const lat = typeof row?.lat === 'number' ? row.lat : Number.NaN;
+          const lon = typeof row?.lon === 'number' ? row.lon : Number.NaN;
+          const city = typeof row?.city === 'string' ? row.city.trim() : '';
+          const country = typeof row?.country === 'string' ? row.country.trim() : '';
+          if (!city || !Number.isFinite(lat) || lat < -90 || lat > 90
+            || !Number.isFinite(lon) || lon < -180 || lon > 180) return [];
+          return [{
+            city, country, lat, lon,
+            matches: Math.max(0, Math.trunc(Number(row?.matches) || 0)),
+            rounds: Math.max(0, Math.trunc(Number(row?.rounds) || 0)),
+          }];
+        }) : [];
+        const maxMatches = Math.max(1, ...cities.map((city) => city.matches));
+        for (const city of cities) {
+          const marker = L.circleMarker([city.lat, city.lon], {
+            radius: 6 + 18 * (city.matches / maxMatches),
+            color: '#ffd23f', weight: 2, fillColor: '#ffd23f', fillOpacity: 0.25,
+          }).addTo(map);
+          marker.bindTooltip(`${esc(city.city)} · ${city.matches}`, {
+            direction: 'top', offset: [0, -8], className: 'map-tip',
+          });
+          marker.bindPopup(
+            `<b>${esc(city.city)}</b><br>${city.matches} partida${city.matches === 1 ? '' : 's'} · ${city.rounds} rounds`,
+            { className: 'map-pop' },
+          );
+
+          const item = document.createElement('li');
+          const name = document.createElement('strong');
+          name.textContent = city.country ? `${city.city}, ${city.country}` : city.city;
+          const total = document.createElement('span');
+          total.textContent = `${city.matches} partida${city.matches === 1 ? '' : 's'} · ${city.rounds} rounds`;
+          item.append(name, total);
+          list.append(item);
+        }
+        status.textContent = cities.length ? `${cities.length} cidade${cities.length === 1 ? '' : 's'} no histórico.` : 'Ainda não há cidades no histórico.';
+      })
+      .catch(() => {
+        status.textContent = 'Não foi possível carregar o mapa agora.';
+      });
   </script>
+
   <section aria-labelledby="map-faq-title">
     <h2 id="map-faq-title">Entenda o mapa ao vivo</h2>
     {LIVE_MAP.faq.map(([q, a]) => <details><summary>{q}</summary><p>{a}</p></details>)}
@@ -153,12 +118,10 @@ const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.fil
 </Layout>
 
 <style>
-  .team-stats{margin:18px 0 22px;padding:18px;border:1px solid var(--tp-borda);border-radius:12px;background:var(--panel)}
-  .team-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:12px}
-  .team-head h2{margin:0;font-size:22px}.team-head>span,.team-stats>p{font:11px var(--mono);color:var(--bone-dim)}
-  .team-grid{display:grid;grid-template-columns:repeat(2,minmax(190px,1fr));gap:12px 18px}
-  .team-row>div{display:flex;justify-content:space-between;gap:10px;font:12px var(--mono)}.team-row>div span{color:var(--bone-dim)}
-  .team-track{display:block;height:8px;margin-top:7px;border-radius:999px;background:#090704;overflow:hidden}
-  .team-track>span{display:block;height:100%;min-width:0;border-radius:inherit}.team-stats>p{margin:14px 0 0}
-  @media(max-width:600px){.team-grid{grid-template-columns:1fr}}
+  #map{height:520px;border:1px solid var(--line);background:var(--panel)}
+  #map-status{font:12px var(--mono);color:var(--bone-dim)}
+  .city-panel{margin:20px 0;padding:18px;border:1px solid var(--tp-borda);border-radius:12px;background:var(--panel)}
+  .city-panel h2{margin-top:0}.city-panel ul{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:0;padding:0;list-style:none}
+  .city-panel li{display:flex;justify-content:space-between;gap:12px;padding:10px;border-bottom:1px solid var(--line);font:12px var(--mono)}
+  .city-panel li span{color:var(--bone-dim);text-align:right}
 </style>

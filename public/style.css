@@ -182,6 +182,7 @@ html[data-home-ui="hub"] #main-menu .cs-vignette{background:linear-gradient(90de
 .hub-tabs button:hover,.hub-tabs button:focus-visible{color:#fff;outline:none;box-shadow:inset 0 -2px 0 #f3b958}
 .hub-tabs button[aria-selected="true"]{color:#b4d92e;box-shadow:inset 0 -2px 0 #b4d92e}
 .hub-online{display:flex;gap:8px;align-items:center;align-self:center;margin-left:auto;white-space:nowrap;color:#a5a5a3;font:400 11px/1 var(--mono);letter-spacing:.5px}
+.hub-online[hidden]{display:none}
 .hub-online i{width:7px;height:7px;background:#46e08a;border-radius:50%;box-shadow:0 0 0 3px #46e08a33}
 .hub-header-action{display:flex;align-self:center;align-items:center;gap:8px;min-height:36px;padding:4px 10px 4px 4px;border:1px solid #34302b;background:#0d0e11d9;color:#f0f0ed;cursor:pointer;transition:border-color .16s}
 .hub-header-action:hover,.hub-header-action:focus-visible{border-color:#b4d92e;outline:none}
@@ -367,7 +368,7 @@ html[data-home-ui="hub"] #main-menu:has(#menu-setup[data-step="profile"]) .hub-c
 .hub-roster-grid span{font:700 13px/1 var(--font)}
 html[data-home-ui="hub"] #hub-mp-host #mp-salas:empty::before{content:'Aguardando a lista de salas…';display:grid;place-items:center;min-height:180px;border:1px solid #504c44;background:#0d0e11a8;color:#bcbab6;font:600 18px/1.2 var(--font)}
 html[data-home-ui="hub"] #hub-mp-host #mp-criar{background:linear-gradient(180deg,#cfe84a,#b4d92e);color:#131313;font:400 26px/1 'Bebas Neue',Impact,sans-serif;letter-spacing:1px}
-@media(max-width:1100px){.hub-header{gap:10px}.hub-logo{height:74px}.hub-tabs button{font-size:11px}.hub-online{display:none}}
+@media(max-width:1100px){.hub-header{gap:10px}.hub-logo{height:74px}.hub-tabs button{font-size:11px}}
 @media(max-width:760px){
   html[data-home-ui="hub"] #main-menu{--hub-left-gutter:14px;--hub-right-gutter:14px}
   .hub-header{min-height:92px;padding:8px 14px;flex-wrap:wrap}.hub-logo{height:50px}.hub-tabs{order:3;width:100%;align-self:auto}.hub-header-action b{display:none}.hub-header-action{margin-left:auto}.hub-settings{margin-left:0}.hub-pane{top:110px;bottom:52px}.hub-character{display:none}
@@ -673,6 +674,7 @@ html[data-ui="legacy"] .btn-cta:hover,html[data-ui="legacy"] .btn-cta:focus-visi
 .social-item select,.social-item input{font-family:var(--mono);font-size:13px;letter-spacing:1px;
   background:var(--bg-800);border:1px solid var(--line);color:var(--cs);padding:9px 10px;outline:none;width:100%}
 .social-item input.invalid{border-color:var(--red)!important;animation:shake .3s}
+#social-content .social-field>input[type=checkbox]{box-sizing:border-box;width:20px;height:20px;flex:none;padding:0;accent-color:var(--yellow)}
 .social-del{background:transparent;border:1px solid var(--line);color:var(--ink3);cursor:pointer;width:34px;height:34px;font-size:13px}
 .social-del:hover,.social-del:focus-visible{border-color:var(--red);color:var(--red)}
 #nick-input,#social-input,#social-net{font-family:var(--mono);font-size:var(--fs-300);letter-spacing:var(--tr-1);text-align:center;
@@ -2378,21 +2380,14 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .ms-arrow{width:100%;height:26px;font-size:12px;line-height:1;background:rgba(var(--bg-900-rgb),.85);
   border:1px solid var(--line-2);color:var(--am)}
 .ms-arrow:hover{background:var(--am);color:#141216}
-/* rodapé do menu: online + links de dev (substitui a frase de sátira) */
+/* rodapé do menu: links de dev e redes oficiais */
 .menu-footer{position:fixed;right:min(4vw,42px);bottom:48px;z-index:60;
   display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:flex-end;
   font-size:12px;color:var(--ink-300);text-align:right;max-width:min(70vw,760px)}
 .menu-version{position:fixed;right:min(4vw,42px);bottom:14px;z-index:60;color:var(--ink-200);
   font-size:12px;font-weight:700;letter-spacing:1px;text-align:right}
-/* Bolinha virou LOSANGO: o redesign proíbe raio, e o losango já é o sinal de
-   "isto está vivo/é você" em três outros lugares (você no radar, thumb do slider,
-   canto do card selecionado). Trocar por quadrado puro perderia essa rima. */
-.menu-footer .mf-online::before{content:"";display:inline-block;width:7px;height:7px;border-radius:0;
-  transform:rotate(45deg);background:#4ade60;margin-right:6px;box-shadow:0 0 6px rgba(74,222,96,.8);
-  vertical-align:baseline}
 .menu-footer a{color:var(--ink-200);text-decoration:none;border-bottom:0}
 .menu-footer a:hover{color:var(--am)}
-.menu-footer .mf-online{color:var(--verde,#7dc98f);font-weight:700}
 /* `flex-basis:100%` dá linha própria sem sair do flex-wrap do rodapé. */
 .menu-footer .mf-social{flex-basis:100%;display:flex;gap:10px;align-items:center;
   justify-content:inherit;margin-top:2px}
@@ -3468,6 +3463,8 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
   color:var(--tp-tinta-1);font:800 13px/1.2 var(--tp-ui);opacity:0;transform:translateY(calc(60px * var(--tp-mov)));
   transition:transform var(--tp-d-painel) var(--tp-ease-saida),opacity var(--tp-d-painel) var(--tp-ease-saida)}
 .tp-toast[data-visivel]{opacity:1;transform:none}
+.level-up-popup{position:fixed;z-index:120;left:50%;top:max(24px,env(safe-area-inset-top));display:flex;align-items:center;gap:12px;min-width:min(360px,calc(100vw - 32px));box-sizing:border-box;padding:14px 18px;border:1px solid #b4d92e;border-top-width:4px;border-radius:8px;background:linear-gradient(145deg,#1c1812f5,#090704fa);color:#f0f0ed;box-shadow:0 18px 55px #000b;transform:translateX(-50%);font:700 14px/1.25 var(--font);pointer-events:none}
+.level-up-popup strong{color:#b4d92e;font:400 30px/1 'Bebas Neue',Impact,sans-serif;letter-spacing:1px}
 /* Splash (tela 01): a arte cobre a tela no primeiro quadro, antes de qualquer módulo JS. */
 .tp-splash{display:none}
 :root[data-ui="v3"] #boot-splash{--tp-splash-ajuste:cover;background-color:var(--tp-asfalto)}

@@ -820,6 +820,8 @@ export class Sfx {
     this._beep('square', 1240, 1240, .02, .04, 0, true); return false; }
   uiBack()    { this.ensure(); this.duck(0.5, 0.1); if (this._uiAction('back', .26)) return true;
     this._beep('square', 560, 400, .06, .10, 0, true); return false; }
+  levelUp()   { this.ensure(); this.duck(0.72, 0.4);
+    [523, 659, 784, 1047].forEach((f, i) => this._beep(i < 3 ? 'triangle' : 'sine', f, f * 1.04, .18, .22, i * .09, true)); }
   scopeIn()   { const s = this._cs('scope'); if (s) { this._sample(s); return; }
     this.ensure(); this._beep('sine', 500, 900, .09, .15); }
   scopeOut()  { this.ensure(); this._beep('sine', 900, 500, .09, .12); }
