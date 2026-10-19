@@ -27,7 +27,7 @@
   },
   "storePoster": "e7c79879a6b84d8eb061ac059b09995256c68558f3769375006d45860b7e3280",
   "sources": {
-    "public/js/data/weapon-skin-definitions.js": "33d09aea35777ff7961bfb490617831e98da75632c9c1cdbbb6391572bf6b076",
+    "public/js/data/weapon-skin-definitions.js": "593acadb248e7bc7acece694f81064e62ccb491f131d622929ea7fef2eeaec93",
     "public/js/weapon-skins.js": "5654dceb7de04743181116e207206a07327f5c7df749c0637eee5e4a19f7880b",
     "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
     "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1"

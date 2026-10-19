@@ -184,7 +184,7 @@ export const GLOVE_SKINS = Object.freeze({
   }),
   'pack-lula-13-gloves': gloveSkin({
     id: 'pack-lula-13-gloves',
-    name: 'Luvas 13 Lula PT',
+    name: 'Luvas Barbudo 13',
     glove: '#a90f24',
     sleeve: '#5d0713',
     accent: '#ffd23f',
@@ -194,7 +194,7 @@ export const GLOVE_SKINS = Object.freeze({
   }),
   'pack-bolsonaro-22-gloves': gloveSkin({
     id: 'pack-bolsonaro-22-gloves',
-    name: 'Luvas 22 Bolsonaro',
+    name: 'Luvas Capitão 22',
     glove: '#082f68',
     sleeve: '#075437',
     accent: '#ffd447',
