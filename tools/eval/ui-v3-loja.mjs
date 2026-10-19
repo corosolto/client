@@ -16,7 +16,8 @@ const APROVADAS = TRETA_SKINS.filter((s) => MANIFESTO.skins[s.id]?.approved === 
 const CATALOGO = [...TRETA_SKINS, ...TRETA_WEAPON_SKINS, ...TRETA_GLOVES, ...TRETA_PACKS];
 const CATEGORIAS = {
   weapons: TRETA_WEAPON_SKINS.map((s) => s.id),
-  items: [...TRETA_GLOVES.map((s) => s.id), ...APROVADAS.map((s) => s.id)],
+  characters: APROVADAS.map((s) => s.id),
+  gloves: TRETA_GLOVES.map((s) => s.id),
   packs: TRETA_PACKS.map((s) => s.id),
 };
 /* Preços e raridades fora do padrão provam que a tela lê o servidor e não o catálogo local. */
@@ -41,7 +42,7 @@ const MUTANTES = {
   'raridade-inventada': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("RARIDADES.has(s.raridade)?s.raridade:''", "RARIDADES.has(s.raridade)?s.raridade:'comum'")],
   'preco-local': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace('price:item(s.id)?.price ?? null', 'price:s.price')],
   'dois-primarios': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("'tp-btn tp-loja__ganhar'", "'tp-btn tp-btn--primario tp-loja__ganhar'")],
-  'slot-inventado': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("items:new Set(['character','glove','eyewear'])", "items:new Set(['weapon','character','glove','eyewear'])")],
+  'slot-inventado': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("characters:new Set(['character','eyewear'])", "characters:new Set(['weapon','character','eyewear'])")],
   'grade-larga': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('.tp-loja__grade{display:grid;', '.tp-loja__grade{display:grid;min-width:1700px;')],
   'alvo-pequeno': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('@media (pointer:coarse){', '@media (pointer:none){')],
   'en-vaza': [(u) => u.pathname === '/js/i18n.js', (t) => t.replace("'GANHAR MAIS': 'EARN MORE',", '')],
@@ -174,7 +175,7 @@ async function secaoV3(mutante, add) {
       preco: c.querySelector('.tp-loja__preco')?.textContent || '', meu: c.querySelector('.tp-loja__meu')?.textContent || '',
     })), categoria);
   const categorias = {}, estados = [];
-  for (const id of ['weapons', 'items', 'packs']) {
+  for (const id of ['weapons', 'characters', 'gloves', 'packs']) {
     await page.locator(`#hub-shop [role=tab][data-tp-aba=${id}]`).click();
     await page.waitForTimeout(250);
     categorias[id] = await lerCartoes(id);
@@ -199,10 +200,10 @@ async function secaoV3(mutante, add) {
   const painelArmario = await page.locator('.tp-loja__painel[data-painel=armario]').count();
   await page.close();
 
-  const okAba = (a) => a.n === 4 && a.sublinhados === 0 && a.riscos === 1 && a.selecionadas.length === 1 && a.dx <= 2 && a.dw <= 2;
+  const okAba = (a) => a.n === 5 && a.sublinhados === 0 && a.riscos === 1 && a.selecionadas.length === 1 && a.dx <= 2 && a.dw <= 2;
   add('LJ1', okAba(a0) && estados.every(okAba) && okAba(a2)
-    && new Set([a0, ...estados, a2].map((a) => a.selecionadas[0])).size === 4,
-    `4 abas, ${a0.sublinhados} sublinhados, ${a0.riscos} indicador; seleções ${[a0, ...estados, a2].map((a) => a.selecionadas[0]).join(' → ')}`);
+    && new Set([a0, ...estados, a2].map((a) => a.selecionadas[0])).size === 5,
+    `5 abas, ${a0.sublinhados} sublinhados, ${a0.riscos} indicador; seleções ${[a0, ...estados, a2].map((a) => a.selecionadas[0]).join(' → ')}`);
 
   const amb = cabeca.cor.replace(/\s/g, '') === 'rgb(243,185,88)', ambSaldo = cabeca.saldoCor.replace(/\s/g, '') === 'rgb(243,185,88)';
   add('LJ3', /Anton/.test(cabeca.fonte) && amb && /TRETA/i.test(cabeca.palavra) && /JetBrains/.test(cabeca.saldoFonte) && ambSaldo && /1\.240/.test(cabeca.saldo),
@@ -216,7 +217,7 @@ async function secaoV3(mutante, add) {
     return JSON.stringify(atual) !== JSON.stringify([...esperado].sort());
   });
   add('LJ4', !semTp && !rarErrada.length && !categoriasErradas.length && !timers,
-    `${cartoes.length} cartões em ARMAS/ITENS/PACKS, ${semTp} sem .tp-card, categorias erradas [${categoriasErradas.map(([id]) => id).join(', ')}], raridade errada [${rarErrada.map((c) => c.id).join(', ')}], ${timers} timers`);
+    `${cartoes.length} cartões em ARMAS/PERSONAGENS/LUVAS/PACKS, ${semTp} sem .tp-card, categorias erradas [${categoriasErradas.map(([id]) => id).join(', ')}], raridade errada [${rarErrada.map((c) => c.id).join(', ')}], ${timers} timers`);
 
   const fmt = (v) => `T$ ${new Intl.NumberFormat('pt-BR').format(v)}`;
   const meuIds = new Set(conta.inventario.map((s) => s.skin_id));
@@ -226,7 +227,7 @@ async function secaoV3(mutante, add) {
     precoErrado.length ? `preço fora do servidor: ${precoErrado.map((c) => `${c.id} "${c.preco || c.meu}"`).join(', ')}` : `${cartoes.length} preços batem com o servidor; itens do armário não repetem preço`);
 
   add('LJ7', primLoja === 0 && primQuests === 0, `primários lima: catálogo ${primLoja}, ganhar ${primQuests}`);
-  add('LJ8', JSON.stringify(tabs) === JSON.stringify(['weapons', 'items', 'packs', 'ganhar']) && painelArmario === 0 && !categoriasErradas.length,
+  add('LJ8', JSON.stringify(tabs) === JSON.stringify(['weapons', 'characters', 'gloves', 'packs', 'ganhar']) && painelArmario === 0 && !categoriasErradas.length,
     `abas [${tabs.join(', ')}], painel de armário duplicado ${painelArmario}, categorias ${Object.entries(categorias).map(([id, cards]) => `${id}:${cards.length}`).join(', ')}`);
   add('LJ14', questsIcones.length >= 4 && questsIcones.every((q) => q.icone && !q.oculto && !q.duplicado)
     && new Set(questsIcones.map((q) => q.icone)).size === questsIcones.length,
@@ -255,10 +256,10 @@ async function secaoIdioma(mutante, add) {
     const { page } = await abrir({ lang, mutante });
     let t = await page.evaluate(() => document.querySelector('.tp-loja')?.innerText || '');
     if (lang === 'en' && !mutante) await page.screenshot({ path: `${OUT}/loja-en-1536x1024.png` });
-    await page.locator('#hub-shop [role=tab][data-tp-aba=items]').click();
+    await page.locator('#hub-shop [role=tab][data-tp-aba=characters]').click();
     await page.waitForTimeout(400);
     t += '\n' + await page.evaluate(() => document.querySelector('.tp-loja')?.innerText || '');
-    if (lang === 'en' && !mutante) await page.screenshot({ path: `${OUT}/items-en-1536x1024.png` });
+    if (lang === 'en' && !mutante) await page.screenshot({ path: `${OUT}/characters-en-1536x1024.png` });
     textos[lang] = t;
     await page.close();
   }
@@ -273,7 +274,7 @@ async function secaoTelas(mutante, add) {
   for (const [w, h] of VIEWPORTS) {
     const toque = w === 844;
     const { page } = await abrir({ w, h, mutante, toque });
-    for (const aba of ['weapons', 'items', 'packs']) {
+    for (const aba of ['weapons', 'characters', 'gloves', 'packs']) {
       await page.locator(`#hub-shop [role=tab][data-tp-aba=${aba}]`).click(); await page.waitForTimeout(300);
       const g = await page.evaluate((painel) => {
         const raiz = document.querySelector(`.tp-loja__painel[data-painel=${painel}]`);

@@ -131,13 +131,13 @@ for (const skin of STORE_GLOVES) {
   captures.push({ id: skin.id, png, poster: path.relative(ROOT, poster), maps: runtime.maps });
 }
 }
-await page.goto(`${BASE}/loja/itens`, { waitUntil: 'domcontentloaded', timeout: 240000 });
+await page.goto(`${BASE}/loja/luvas`, { waitUntil: 'domcontentloaded', timeout: 240000 });
 await page.addStyleTag({ content: 'astro-dev-toolbar,#crash-overlay,#boot-splash,#aviso-software,.tutorial-overlay{display:none!important}' });
 await page.waitForTimeout(3000);
-if (!await page.locator('#treta-items-grid .treta-card').count()) console.error(JSON.stringify({ url: page.url(), itemsGrid: await page.locator('#treta-items-grid').count(), tabs: await page.locator('[data-treta-view]').allTextContents(), errors }));
-await page.waitForFunction(() => document.querySelectorAll('#treta-items-grid .treta-card').length > 0, null, { timeout: 60000 });
-await page.waitForFunction(() => ![...document.querySelectorAll('#treta-items-grid .treta-label')].some((label) => label.textContent === 'CONSULTANDO…'), null, { timeout: 60000 });
-const storeNames = await page.locator('#treta-items-grid .treta-card strong').allTextContents();
+if (!await page.locator('#treta-gloves-grid .treta-card').count()) console.error(JSON.stringify({ url: page.url(), glovesGrid: await page.locator('#treta-gloves-grid').count(), tabs: await page.locator('[data-treta-view]').allTextContents(), errors }));
+await page.waitForFunction(() => document.querySelectorAll('#treta-gloves-grid .treta-card').length > 0, null, { timeout: 60000 });
+await page.waitForFunction(() => ![...document.querySelectorAll('#treta-gloves-grid .treta-label')].some((label) => label.textContent === 'CONSULTANDO…'), null, { timeout: 60000 });
+const storeNames = await page.locator('#treta-gloves-grid .treta-card strong').allTextContents();
 const missingInStore = STORE_GLOVES.map((skin) => skin.name).filter((name) => !storeNames.includes(name));
 if (missingInStore.length) throw new Error(`luvas ausentes na loja: ${missingInStore.join(', ')}`);
 const moldDir='/tmp/glove-molds';await rm(moldDir,{recursive:true,force:true});await mkdir(moldDir,{recursive:true});

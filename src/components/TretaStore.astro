@@ -1,6 +1,6 @@
 ---
 import {TRETA_ITEMS_ENABLED} from '../../public/js/treta-features.js';
-const { visible = false, initialView = 'weapons' } = Astro.props;
+const { visible = false, initialView = 'characters' } = Astro.props;
 ---
 <section id="hub-shop" class="hub-pane treta-store" role="tabpanel" aria-label="Loja de skins" hidden={!visible}>
   <header class="treta-heading">
@@ -9,7 +9,8 @@ const { visible = false, initialView = 'weapons' } = Astro.props;
   </header>
   <nav class="treta-views" role="tablist" aria-label="Seções da loja">
     <button type="button" role="tab" data-treta-view="weapons" aria-controls="treta-weapons-view" aria-selected={initialView === 'weapons'}>ARMAS</button>
-    <button type="button" role="tab" data-treta-view="items" aria-controls="treta-items-view" aria-selected={initialView === 'items'}>ITENS</button>
+    <button type="button" role="tab" data-treta-view="characters" aria-controls="treta-characters-view" aria-selected={initialView === 'characters'}>PERSONAGENS</button>
+    <button type="button" role="tab" data-treta-view="gloves" aria-controls="treta-gloves-view" aria-selected={initialView === 'gloves'}>LUVAS</button>
     <button type="button" role="tab" data-treta-view="packs" aria-controls="treta-packs-view" aria-selected={initialView === 'packs'}>PACKS</button>
     <button type="button" role="tab" data-treta-view="quests" aria-controls="treta-quests-view" aria-selected={initialView === 'quests'}>QUESTS · GANHAR T$</button>
   </nav>
@@ -18,15 +19,19 @@ const { visible = false, initialView = 'weapons' } = Astro.props;
     <div class="treta-toolbar"><div role="group" aria-label="Filtrar armas"><button type="button" data-treta-filter="all" aria-pressed="true">TODAS</button><button type="button" data-treta-filter="owned" aria-pressed="false">MEU ARMÁRIO</button></div><button id="treta-how" type="button">COMO GANHAR T$ ↗</button></div>
     <div id="treta-grid" class="treta-grid" aria-busy="true"></div>
   </section>
-  <section id="treta-items-view" role="tabpanel" aria-label="Itens" hidden={initialView !== 'items'}>
-    <header class="treta-section-heading"><small>PERSONAGENS · LUVAS · ÓCULOS</small><h3>MONTE SEU VISUAL</h3><p>Itens cosméticos ocupam espaços próprios e não alteram dano, velocidade ou hitbox.</p></header>
-    <div id="treta-items-grid" class="treta-grid" aria-busy="true"></div>
+  <section id="treta-characters-view" role="tabpanel" aria-label="Personagens" hidden={initialView !== 'characters'}>
+    <header class="treta-section-heading"><small>PERSONAGENS · ÓCULOS</small><h3>MONTE SEU VISUAL</h3><p>Personagens e acessórios ocupam espaços próprios e não alteram dano, velocidade ou hitbox.</p></header>
+    <div id="treta-characters-grid" class="treta-grid" aria-busy="true"></div>
     <section class="treta-promo">
       <div><small>GANHE ANTES DE ESCOLHER</small><h3>COMPLETE QUESTS.<br>MONTE SEU DRIP.</h3><p id="treta-promo-copy">Neste mês, seus T$ vêm das quests. A compra de moeda não está disponível.</p><p id="treta-invite-progress">Entre na conta para criar seu convite e acompanhar as recompensas.</p></div><div id="treta-rewards" class="treta-rewards"></div>
       <div class="treta-promo-actions"><button id="treta-solo" class="treta-primary" type="button">SOLO POR T$ · EM BREVE</button><button id="treta-invite" class="treta-secondary" type="button">ENTRAR PARA CRIAR MEU CONVITE</button><button id="treta-open-quests" class="treta-secondary" type="button">VER TODAS AS QUESTS ▸</button></div>
     </section>
     <section class="treta-mint"><header><small>CUNHADAS NA TRETA</small><h3>OURO COM HISTÓRIA</h3><p>Sete valores. Sete personagens. Uma moeda.</p></header><div id="treta-coins" class="treta-coins"></div></section>
     <section hidden={!TRETA_ITEMS_ENABLED}><header class="treta-section-heading"><small>ÓCULOS DA TRETA · T$ 200</small><h3>SEIS JEITOS DE VER O CORO</h3><p>Confira o encaixe nos personagens antes de comprar.</p></header><div id="treta-eyewear-grid" class="treta-grid"></div><div id="treta-accessories" class="treta-accessories"></div></section>
+  </section>
+  <section id="treta-gloves-view" role="tabpanel" aria-label="Luvas" hidden={initialView !== 'gloves'}>
+    <header class="treta-section-heading"><small>LUVAS · T$ 350</small><h3>MÃO CHEIA DE ESTILO</h3><p>Luvas valem para todas as armas e aparecem na empunhadura de cada uma.</p></header>
+    <div id="treta-gloves-grid" class="treta-grid" aria-busy="true"></div>
   </section>
   <section id="treta-packs-view" role="tabpanel" aria-label="Packs" hidden={initialView !== 'packs'}>
     <header class="treta-section-heading"><small>4 PEÇAS · T$ 2.000</small><h3>UM TEMA. O KIT INTEIRO.</h3><p>Cada pack equipa AK, pistola, luvas e faca coordenadas de uma vez.</p></header>
