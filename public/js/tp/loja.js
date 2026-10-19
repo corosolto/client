@@ -12,10 +12,10 @@ const numero=(v)=>new Intl.NumberFormat(LANG==='en'?'en-US':'pt-BR').format(v);
 const moeda=(v)=>`T$ ${numero(v)}`;
 const modelo=(chave,vals)=>tr(chave).replace(/\{(\w+)\}/g,(_,k)=>vals[k]);
 
-let raiz=null,aba='weapons';
+let raiz=null,aba='characters';
 
 function botao(cls,texto,acao){const b=el('button',cls,texto);b.type='button';if(acao)b.onclick=acao;return b;}
-function vistaLegada(){return document.querySelector('[data-treta-view][aria-selected=true]')?.dataset.tretaView || 'weapons';}
+function vistaLegada(){return document.querySelector('[data-treta-view][aria-selected=true]')?.dataset.tretaView || 'characters';}
 function entrar(){$('hub-account-login')?.click();}
 /* Ícone por tipo de quest (pedido do dono 15/10): a placa entra pela camada tp, o card continua do treta-store. */
 const QUEST_ICONES={
@@ -62,7 +62,7 @@ function meta(rotulo,texto,p){
 }
 
 function desenharLoja(painel,d,categoria){
-  const slots={weapons:new Set(['weapon']),items:new Set(['character','glove','eyewear']),packs:new Set(['pack'])};
+  const slots={weapons:new Set(['weapon']),characters:new Set(['character','eyewear']),gloves:new Set(['glove']),packs:new Set(['pack'])};
   const itens=d.itens.filter((s)=>slots[categoria]?.has(s.slot));
   const grade=el('div','tp-loja__grade');
   grade.append(...itens.map((s)=>cartao(s,d)));
@@ -88,7 +88,7 @@ function posicionarRisco(){
 
 function render(){
   if(!raiz)return;
-  const d=tretaLoja(),legada=vistaLegada();if(['weapons','items','packs'].includes(legada))aba=legada;const atual=legada==='quests'?'ganhar':aba;
+  const d=tretaLoja(),legada=vistaLegada();if(['weapons','characters','gloves','packs'].includes(legada))aba=legada;const atual=legada==='quests'?'ganhar':aba;
   raiz.querySelector('.tp-loja__saldo').textContent=d.saldo!=null?numero(d.saldo):'—';
   for(const t of raiz.querySelectorAll('.tp-loja__abas [role=tab]')){const on=t.dataset.tpAba===atual;t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;}
   for(const p of raiz.querySelectorAll('.tp-loja__painel'))p.hidden=legada==='quests' || p.dataset.painel!==aba;
@@ -108,7 +108,7 @@ function montar(){
   if(LANG==='en')it.append(em,` ${tr('LOJA DA')}`);else it.append(`${tr('LOJA DA')} `,em);
   titulo.append(it);
   const nav=el('nav','tp-abas tp-loja__abas');nav.setAttribute('role','tablist');nav.setAttribute('aria-label',tr('Seções da loja'));
-  for(const [id,rot] of [['weapons','ARMAS'],['items','ITENS'],['packs','PACKS'],['ganhar','GANHAR T$']]){
+  for(const [id,rot] of [['weapons','ARMAS'],['characters','PERSONAGENS'],['gloves','LUVAS'],['packs','PACKS'],['ganhar','GANHAR T$']]){
     const t=botao('tp-aba',tr(rot),()=>irPara(id));t.setAttribute('role','tab');t.dataset.tpAba=id;
     t.onkeydown=(e)=>{
       const tabs=[...nav.querySelectorAll('[role=tab]')],i=tabs.indexOf(t),n=e.key==='ArrowRight'?(i+1)%tabs.length:e.key==='ArrowLeft'?(i+tabs.length-1)%tabs.length:null;
@@ -120,7 +120,7 @@ function montar(){
   const carteira=el('div','tp-loja__carteira'),ic=el('img','tp-loja__moeda');ic.src='/img/treta/coin-classic-saci.webp';ic.alt='';ic.width=30;ic.height=30;ic.setAttribute('aria-hidden','true');
   carteira.append(ic,el('b','tp-loja__saldo tp-num','—'),botao('tp-btn tp-loja__ganhar',tr('GANHAR MAIS'),()=>irPara('ganhar')));
   topo.append(titulo,nav,carteira);
-  const panels=['weapons','items','packs'].map((id)=>{const panel=el('section','tp-loja__painel');panel.dataset.painel=id;panel.setAttribute('role','tabpanel');return panel;});
+  const panels=['weapons','characters','gloves','packs'].map((id)=>{const panel=el('section','tp-loja__painel');panel.dataset.painel=id;panel.setAttribute('role','tabpanel');return panel;});
   raiz.append(topo,...panels);
   $('hub-shop').prepend(raiz);
   new ResizeObserver(posicionarRisco).observe(nav);

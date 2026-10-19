@@ -103,7 +103,7 @@ teste (`debug`, `safe`, `qa`...).
 | `/jogar/perfil`, `/jogar/mapas`, `/jogar/personagens`, `/jogar/confirmar` | modais do jogar | hub, noindex |
 | `/configuracoes` | configurações | hub, noindex |
 | `/loja` | loja | hub, indexável |
-| `/loja/armas`, `/loja/itens`, `/loja/packs`, `/loja/quests` | abas da loja | hub, noindex |
+| `/loja/armas`, `/loja/personagens`, `/loja/luvas`, `/loja/packs`, `/loja/quests` | abas da loja | hub, noindex |
 | `/loja/<skin>` | página da skin | SSR indexável (fase posterior) |
 | `/ranking` | ranking | hub, indexável |
 | `/ranking/<semana>` | ranking fechado da semana | SSR indexável (fase posterior, precisa de snapshot no backend) |

@@ -11,7 +11,7 @@ const PERFIL = /^\/u\/([a-z][a-z0-9_]{2,23}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-
 /* Chaves de tela na query antiga. Saem da URL quando a tela vira caminho. */
 export const CHAVES_DE_TELA = ['secao', 'partida', 'servidor', 'janela', 'social', 'guia', 'loja'];
 /* Abas da loja: valor do estado → data-treta-view do TretaStore. */
-export const ABAS_LOJA = { armas: 'weapons', itens: 'items', packs: 'packs', quests: 'quests' };
+export const ABAS_LOJA = { armas: 'weapons', personagens: 'characters', luvas: 'gloves', packs: 'packs', quests: 'quests' };
 
 const DESC_APP = 'Jogo de tiro grátis no navegador: Time E contra Time B. Sem download.';
 
@@ -29,7 +29,8 @@ export const ROTAS_HUB = [
   { caminho: '/loja', estado: { secao: 'loja' }, titulo: 'Loja de skins', indexavel: true,
     descricao: 'Skins de personagem da CORO SOLTO. Ganhe TRETA$ jogando e vista sua próxima treta. Skin não dá vantagem na partida.' },
   { caminho: '/loja/armas', estado: { secao: 'loja', loja: 'armas' }, titulo: 'Armas da loja' },
-  { caminho: '/loja/itens', estado: { secao: 'loja', loja: 'itens' }, titulo: 'Itens da loja' },
+  { caminho: '/loja/personagens', estado: { secao: 'loja', loja: 'personagens' }, titulo: 'Personagens da loja' },
+  { caminho: '/loja/luvas', estado: { secao: 'loja', loja: 'luvas' }, titulo: 'Luvas da loja' },
   { caminho: '/loja/packs', estado: { secao: 'loja', loja: 'packs' }, titulo: 'Packs da loja' },
   { caminho: '/loja/quests', estado: { secao: 'loja', loja: 'quests' }, titulo: 'Quests: ganhe TRETA$' },
   /* /ranking indexável só com o ranking ligado: o build troca `indexavel` por RANKING_ON. */

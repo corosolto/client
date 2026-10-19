@@ -36,7 +36,7 @@ await page.waitForFunction((count)=>document.querySelectorAll('#treta-packs-grid
 const names=await page.locator('#treta-packs-grid .treta-card strong').allTextContents();
 if(TRETA_PACKS.some((pack)=>!names.includes(pack.name)))throw new Error(`packs ausentes: ${JSON.stringify(names)}`);
 const tabs=await page.locator('[data-treta-view]').allTextContents();
-for(const expected of ['ARMAS','ITENS','PACKS'])if(!tabs.includes(expected))throw new Error(`aba ${expected} ausente: ${tabs.join(', ')}`);
+for(const expected of ['ARMAS','PERSONAGENS','LUVAS','PACKS'])if(!tabs.includes(expected))throw new Error(`aba ${expected} ausente: ${tabs.join(', ')}`);
 await page.screenshot({path:'/tmp/pack-store.png'});
 await page.locator('#treta-packs-grid .treta-card').filter({hasText:first.name}).evaluate((button)=>button.click());
 await page.waitForFunction(()=>document.querySelector('#treta-detail')?.open && document.querySelector('#treta-detail-price')?.textContent==='T$ 2.000');

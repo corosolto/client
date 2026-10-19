@@ -47,7 +47,7 @@ const directSettings = rota?.estado?.janela === 'configuracoes';
 const initialNetwork = rota?.estado?.partida === 'multiplayer' ? 'mp' : 'sp';
 const initialMpTab = rota?.estado?.servidor === 'privado' ? 'private' : 'public';
 const initialWindow = rota?.estado?.janela || '';
-const initialStoreView = { armas: 'weapons', itens: 'items', packs: 'packs', quests: 'quests' }[rota?.estado?.loja || ''] || 'weapons';
+const initialStoreView = { armas: 'weapons', personagens: 'characters', luvas: 'gloves', packs: 'packs', quests: 'quests' }[rota?.estado?.loja || ''] || 'characters';
 const initialSocial = rota?.estado?.social || 'profile';
 const initialProfile = rota?.estado?.perfil || '';
 const brasaoE = `/img/brasoes/e.png?v=${BRASAO_VERSAO.e}`;

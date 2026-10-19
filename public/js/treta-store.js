@@ -33,7 +33,7 @@ const storeVisit=()=>{
 let state=null,manifest={skins:{}},eyeManifest={eyewear:{}},selected=null,filter='all',stage=null,purchaseStage=null,refreshPromise=null,account=null;
 let onEquip=()=>{},infoStage=null,infoVersion=0;
 let equipmentRevision='';
-let accountEpoch=0,refreshEpoch=-1,loading=false,refreshFailed=false,purchasePending=false,view='weapons',detailVersion=0,previewReady=false,previewLoading=false;
+let accountEpoch=0,refreshEpoch=-1,loading=false,refreshFailed=false,purchasePending=false,view='characters',detailVersion=0,previewReady=false,previewLoading=false;
 const $=id=>document.getElementById(id);
 const owned=id=>state?.inventory?.some(s=>s.skin_id===id);
 const equipped=id=>state?.inventory?.some(s=>s.skin_id===id && s.equipped);
@@ -159,20 +159,22 @@ function draw() {
     $('hub-treta-wallet').setAttribute('aria-label',refreshFailed?'Carteira TRETA$ indisponível. Abra a loja para tentar novamente.':'Consultando carteira TRETA$');
   }
   $('treta-balance-value').textContent=state?.wallet?money(state.wallet.balance):loading?'CARREGANDO…':refreshFailed?'INDISPONÍVEL':'ENTRE NA CONTA';
-  for(const id of ['treta-grid','treta-items-grid','treta-packs-grid'])$(id).setAttribute('aria-busy',String(loading));
+  for(const id of ['treta-grid','treta-characters-grid','treta-gloves-grid','treta-packs-grid'])$(id).setAttribute('aria-busy',String(loading));
   $('treta-retry').hidden=!refreshFailed;
   const heading={
     weapons:['LOJA ','DE ARMAS','Skins para AK e pistola. Abra um detalhe para ver a pintura isolada em movimento.'],
-    items:['LOJA ','DE ITENS','Personagens, luvas e acessórios para montar seu visual.'],
+    characters:['LOJA ','DE PERSONAGENS','Personagens e acessórios para montar seu visual.'],
+    gloves:['LOJA ','DE LUVAS','Luvas para todas as armas, do AK à faca.'],
     packs:['PACKS ','DA TRETA','AK, pistola, luvas e faca coordenadas por T$ 2.000.'],
     quests:['COMPLETE ','QUESTS','Ganhe TRETA$ jogando e completando quests.'],
-  }[view] || ['LOJA ','DE ARMAS','Seu estilo entra em jogo.'];
+  }[view] || ['LOJA ','DE PERSONAGENS','Seu estilo entra em jogo.'];
   $('treta-view-title').replaceChildren(node('span',heading[0]),node('em',heading[1]));
   $('treta-view-description').textContent=heading[2];
   const balance=state?.wallet?.balance;
   const groups=[
     ['treta-grid',TRETA_WEAPON_SKINS],
-    ['treta-items-grid',[...TRETA_GLOVES,...TRETA_SKINS.filter(s=>manifest.skins[s.id]?.approved===true)]],
+    ['treta-characters-grid',TRETA_SKINS.filter(s=>manifest.skins[s.id]?.approved===true)],
+    ['treta-gloves-grid',TRETA_GLOVES],
     ['treta-packs-grid',TRETA_PACKS],
   ];
   for(const [targetId,products] of groups){
@@ -406,7 +408,7 @@ function initProposals() {
     if(push && $('main-menu')?.dataset.hubTab==='loja'){const url=urlDoEstado({secao:'loja',loja:slugDaView[view]},location.href);if(url.href!==location.href)history.pushState(null,'',url);}
     for(const tab of tabs){const active=tab===button;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;$(tab.getAttribute('aria-controls')).hidden=!active;}draw();$('hub-shop').scrollTop=0;
   };
-  const seguirUrl=()=>{const rota=estadoDaUrl(location.href);const alvo=tabs.find(tab=>tab.dataset.tretaView===(rota?.secao==='loja' && ABAS_LOJA[rota.loja] || 'weapons')) || tabs[0];if(alvo && alvo.dataset.tretaView!==view)select(alvo,false);};
+  const seguirUrl=()=>{const rota=estadoDaUrl(location.href);const alvo=tabs.find(tab=>tab.dataset.tretaView===(rota?.secao==='loja' && ABAS_LOJA[rota.loja] || 'characters')) || tabs[0];if(alvo && alvo.dataset.tretaView!==view)select(alvo,false);};
   document.addEventListener('cs-shop-open',seguirUrl);seguirUrl();
   for(const tab of tabs){tab.tabIndex=tab.dataset.tretaView===view?0:-1;tab.onclick=()=>select(tab);tab.onkeydown=e=>{
     const i=tabs.indexOf(tab),next=e.key==='ArrowRight'?(i+1)%tabs.length:e.key==='ArrowLeft'?(i+tabs.length-1)%tabs.length:e.key==='Home'?0:e.key==='End'?tabs.length-1:null;
