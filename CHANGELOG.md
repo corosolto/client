@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.111`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.112`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -134,6 +134,23 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.112] — 2026-10-19
+
+### Mudado
+- Corrige o gauntlet de perfil, comunidade e multiplayer (#1020)
+- Conta: convite de 1.000 T$, feedback no perfil e ícone de música (#1022)
+- perf: melhorar hot paths e telemetria mobile (#1021)
+- perf: adicionar degrau mobile de sobrevivência e vínculo Android (#1026)
+- feat(treta): lançar skins e packs de armas (#1028)
+- test(vm): alinhar mutante ao modo de revisão
+- test(viewmodel): inicializar perfil na régua autorada
+- fix(treta): usar nomes dos personagens nos packs
+- feat(treta): lançar skins e packs de armas
+- feat: prepare app Android para links verificados
+- perf: adicione degrau de sobrevivência mobile
+- fix: tolerate resize before effects initialize
+- perf: improve mobile hot paths and telemetry
 
 ## [2.1.0-alpha.111] — 2026-10-19
 
