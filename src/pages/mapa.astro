@@ -1,7 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { LIVE_MAP } from '../data/live-map.mjs';
+import { supabaseAdmin } from '../lib/supabase';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
+import { TIMES } from '../data/jogo';
 
 export const prerender = false;
 
@@ -9,6 +11,32 @@ Astro.response.headers.set(
   'cache-control',
   'public, max-age=0, s-maxage=300, stale-while-revalidate=900',
 );
+
+let configured = Boolean(supabaseAdmin);
+let totals = { mp: 0, mb: 0 };
+let teamSource: 'telemetry' | 'legacy' = 'telemetry';
+let teamCounts = TIMES.map((t) => ({ ...t, code: t.id, matches: 0, pct: 0 }));
+if (supabaseAdmin) {
+  const { data: points } = await supabaseAdmin.from('player_points').select('matches_p,matches_b');
+  for (const row of points ?? []) {
+    totals.mp += row.matches_p ?? 0;
+    totals.mb += row.matches_b ?? 0;
+  }
+  const queries = await Promise.all(teamCounts.map((t) =>
+    supabaseAdmin.from('match_event').select('*', { count: 'exact', head: true }).eq('faction', t.code),
+  ));
+  if (queries.some((query) => query.error) || !queries.some((query) => (query.count ?? 0) > 0)) {
+    teamSource = 'legacy';
+    teamCounts = teamCounts.map((t) => ({ ...t, matches: t.code === 'E' ? totals.mp : totals.mb }));
+  } else {
+    teamCounts = teamCounts.map((t, index) => ({ ...t, matches: queries[index].count ?? 0 }));
+  }
+}
+const teamTotal = teamCounts.reduce((sum, team) => sum + team.matches, 0);
+teamCounts = teamCounts.map((team) => ({
+  ...team,
+  pct: teamTotal ? Math.round((team.matches / teamTotal) * 100) : 0,
+}));
 ---
 <Layout
   title={`Mapa da treta - de onde a comunidade joga | ${BRAND_FULL}`}
@@ -39,6 +67,26 @@ Astro.response.headers.set(
     .map-pop .leaflet-popup-content-wrapper{background:#10130c;color:#d8e0b0;border:1px solid #4a5a2a;font-family:Consolas,monospace;font-size:12px}
     .map-pop .leaflet-popup-tip{background:#10130c;border:1px solid #4a5a2a}
   </style>
+
+  {configured && (
+    <section class="team-stats" aria-labelledby="team-title">
+      <div class="team-head">
+        <h2 id="team-title">Partidas por time</h2>
+        <span>{teamTotal} com time identificado</span>
+      </div>
+      <div class="team-grid">
+        {teamCounts.map((team) => (
+          <div class="team-row">
+            <div><strong style={`color:${team.cor}`}>{team.nome}</strong><span>{team.matches} · {team.pct}%</span></div>
+            <span class="team-track"><span style={`width:${team.pct}%;background:${team.cor}`}></span></span>
+          </div>
+        ))}
+      </div>
+      <p>{teamSource === 'telemetry'
+        ? 'Contagem anônima de partidas registradas, separada do ranking de jogadores.'
+        : 'A telemetria recente ainda está indisponível; os números vêm do histórico do ranking.'}</p>
+    </section>
+  )}
 
   <p>Em amarelo, o histórico agregado de partidas por cidade. A presença pessoal fica somente na lista de amigos autorizados.</p>
   <div id="map" aria-label="Mapa de partidas por cidade"></div>
@@ -118,6 +166,14 @@ Astro.response.headers.set(
 </Layout>
 
 <style>
+  .team-stats{margin:18px 0 22px;padding:18px;border:1px solid var(--tp-borda);border-radius:12px;background:var(--panel)}
+  .team-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:12px}
+  .team-head h2{margin:0;font-size:22px}.team-head>span,.team-stats>p{font:11px var(--mono);color:var(--bone-dim)}
+  .team-grid{display:grid;grid-template-columns:repeat(2,minmax(190px,1fr));gap:12px 18px}
+  .team-row>div{display:flex;justify-content:space-between;gap:10px;font:12px var(--mono)}.team-row>div span{color:var(--bone-dim)}
+  .team-track{display:block;height:8px;margin-top:7px;border-radius:999px;background:#090704;overflow:hidden}
+  .team-track>span{display:block;height:100%;min-width:0;border-radius:inherit}.team-stats>p{margin:14px 0 0}
+  @media(max-width:600px){.team-grid{grid-template-columns:1fr}}
   #map{height:520px;border:1px solid var(--line);background:var(--panel)}
   #map-status{font:12px var(--mono);color:var(--bone-dim)}
   .city-panel{margin:20px 0;padding:18px;border:1px solid var(--tp-borda);border-radius:12px;background:var(--panel)}

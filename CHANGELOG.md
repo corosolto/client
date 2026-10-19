@@ -23,6 +23,22 @@
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
 
+## Não lançado - 2026-10-19
+
+### Adicionado
+- O mapa ao vivo mostra cidades, partidas e rounds por agregado geográfico, sem publicar nick, jogador, IP ou posição individual.
+- Visitantes que concluem uma partida multiplayer podem vincular a recompensa TRETA$ ao entrar na conta. O pagamento usa o resultado confirmado pelo nó e aceita o vínculo uma vez.
+- Mudanças de nível exibem uma chamada visual com som. O ranking ganhou filtro por Time E e Time B.
+
+### Alterado
+- O ranking público usa somente partidas verificadas e aceita exclusões auditadas. A atividade pública respeita a configuração do perfil, e a lista de amigos separa quem está online agora.
+- O multiplayer envia os abates da rodada por time no protocolo v6. O placar usa a foto social do jogador e mantém o retrato certo quando uma célula é reutilizada.
+
+### Corrigido
+- Perfis públicos continuam visíveis quando o bootstrap da conta falha ou a sessão expira. Links do ranking usam o handle público, o histórico do navegador restaura a lista, e perfis sem totais aparecem com zero.
+- O contador online voltou ao topo em desktop e celular. O rodapé móvel usa ícones quadrados com nome acessível, e a tela de privacidade preserva a foto com checkbox de 20 px.
+- A câmera em terceira pessoa considera filhos de modelos importados e segura o último bloqueio por 80 ms. Armas autoradas não reativam malhas antigas, e o HUD volta a mostrar a arte da arma equipada.
+
 ## Não lançado - 2026-10-18
 
 ### Adicionado
