@@ -21,6 +21,7 @@
      node tools/eval/qualidade-adaptativa-check.mjs
      node tools/eval/qualidade-adaptativa-check.mjs --mutar=sem-histerese   # limiar único
      node tools/eval/qualidade-adaptativa-check.mjs --mutar=sem-catraca
+     node tools/eval/qualidade-adaptativa-check.mjs --mutar=sem-sobrevivencia
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -36,7 +37,9 @@ if (MUTAR) console.log(`\n  [MUTANTE: ${MUTAR}] — a régua TEM que reprovar`);
 
 // o mutante desfaz a defesa no OBJETO, sem tocar no arquivo: a política é a mesma classe
 function escada(opts) {
-  const e = new EscadaAdaptativa(opts);
+  const e = new EscadaAdaptativa(MUTAR === 'sem-sobrevivencia'
+    ? { ...opts, teto: DEGRAUS.length - 2 }
+    : opts);
   if (MUTAR === 'sem-histerese') {
     const j = e._janela.bind(e);
     e._janela = function (mediaMs, seg) {
@@ -100,10 +103,12 @@ cobra(tarde === 0 && ev4.length <= DEGRAUS.length + 2,
    E de descer, então a máquina faz idas e voltas de verdade. A catraca converge isso — cada
    par de voltas ao mesmo degrau o transforma em piso — em vez de deixar o vaivém eterno. */
 const e5 = escada({});
-const ev5 = roda(e5, (s) => ((s % 26) < 8 ? 40 : 8), 600);
-const cedo = ev5.filter((x) => x.s <= 300).length, depois = ev5.filter((x) => x.s > 300).length;
+const janelaAssentamento = DEGRAUS.length * 60;
+const ev5 = roda(e5, (s) => ((s % 26) < 8 ? 40 : 8), janelaAssentamento + 300);
+const cedo = ev5.filter((x) => x.s <= janelaAssentamento).length;
+const depois = ev5.filter((x) => x.s > janelaAssentamento).length;
 cobra(e5.tetoSessao > 0 && depois === 0,
-  `QA5 · idas e voltas viram piso de sessão e a escada assenta (piso ${e5.tetoSessao}; ${cedo} mudanças nos 5 min iniciais contra ${depois} nos 5 seguintes)`);
+  `QA5 · idas e voltas viram piso de sessão e a escada assenta (piso ${e5.tetoSessao}; ${cedo} mudanças nos ${janelaAssentamento / 60} min iniciais contra ${depois} nos 5 seguintes)`);
 
 /* QA6 · SUBIR É MAIS LENTO QUE DESCER, e não por gosto: descer tarde custa quadros que o
    jogador sente; subir cedo custa a volta imediata. */
@@ -124,6 +129,10 @@ cobra(forasteiros.length === 0,
   `QA8 · os degraus só mexem em ${CAMPOS_PERMITIDOS.length} campos de imagem${forasteiros.length ? ` — apareceu ${forasteiros.join(', ')}` : ''}`);
 cobra(DEGRAUS[0].dpr === 1 && DEGRAUS[DEGRAUS.length - 1].dpr < 1 && DEGRAUS.every((d, i) => i === 0 || d.dpr <= DEGRAUS[i - 1].dpr),
   'QA9 · a escada é monótona: nenhum degrau mais fundo desenha MAIS pixels que o anterior');
+const e9b = escada({ degrau: DEGRAUS.length - 2 });
+roda(e9b, 40, 12);
+cobra(DEGRAUS.at(-1).dpr <= 0.5 && e9b.degrau === DEGRAUS.length - 1,
+  `QA9b · sofrimento no antigo mínimo chega ao degrau de sobrevivência em DPR ${DEGRAUS.at(-1).dpr}`);
 
 /* QA10 · O MATO. Medido no `corrego`, que é o mapa mais caro do catálogo: a grama custa
    4.142 triângulos POR TUFO e são ~1.700 tufos — 7 de cada 8 triângulos do mapa. O degrau
