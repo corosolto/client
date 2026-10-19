@@ -8331,6 +8331,7 @@ export class Game {
     });
   }
   _showScoreboard(v) {
+    if (v && this._entradaTravada) return;
     if (v) {
       const r = this._resultado;
       const totalRounds = this._inspectionTotalRounds || this.roundsMax;
