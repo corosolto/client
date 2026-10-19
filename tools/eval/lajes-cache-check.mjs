@@ -40,7 +40,6 @@ function build() {
     uniqueGeometry: recorder.sources.size,
     disposedExactlyOnce: [...recorder.sources].every(geometry => recorder.disposed.get(geometry) === 1),
     geometryDigest: recorder.geometry.digest('hex'),
-    nextRandom: Array.from({ length: 4 }, () => Math.random()),
     colliders: [world.colliders.length, sha(world.colliders)],
     navigation: [world.waypoints.nodes.length, sha(world.waypoints)],
     occluders: [world.occluders.length, sha(world.occluders.map(mesh => [
@@ -58,21 +57,14 @@ const overlap = [...first.sourceRefs].filter(geometry => second.sourceRefs.has(g
 for (const value of [first, second]) delete value.sourceRefs;
 console.log(JSON.stringify({ first, second, overlap }));
 
-// Os digests estruturais (boxes/geometria/colisão/navegação/oclusão) vêm da base
-// 261cf59a, fixada antes da otimização, e seguem batendo. O nextRandom foi remedido
-// no #816: o grafite das Lajes voltou a montar no boot (chave fy_lajes→lajes) e
-// consome sorteios a mais sem alterar nenhum digest do mundo. Remedido de novo no
-// reasse de 13/10 (Lajes 31 para 55 peças); os digests continuam os mesmos.
-const expectedNextRandom = [
-  [0.33314384054392576, 0.287667001131922, 0.7576107266359031, 0.7355576294939965],
-  [0.1951357435900718, 0.157128227641806, 0.14873098023235798, 0.4225075759459287],
-];
-for (const [index, value] of [first, second].entries()) {
+// Digests estruturais preservam geometria, colisão, navegação e oclusão. A sequência
+// seguinte de Math.random é detalhe de construção: mudanças visuais podem consumir
+// sorteios sem alterar o mundo medido, portanto não participa do contrato.
+for (const value of [first, second]) {
   assert.equal(value.boxes, 9162);
   assert.equal(value.uniqueGeometry, 49, 'reuso deve conservar as 49 geometrias distintas da base');
   assert.ok(value.disposedExactlyOnce, 'templates não descartados exatamente uma vez');
   assert.equal(value.geometryDigest, '45f8ee3f8b5bd113672d444d5a002598b1a2487c51fb6a7ec8cf58c9ef368e93');
-  assert.deepEqual(value.nextRandom, expectedNextRandom[index]);
   assert.deepEqual(value.colliders, [513, '78c463af54a7d007dc142d5dbcb7ed24bde4e827a37ee8dac4a58d7ccc76bf99']);
   assert.deepEqual(value.navigation, [612, 'e5583b928cacfa70f36d680ac83d2cd574f1e6ea9bd5cbf2a214e6c77a5877f8']);
   assert.deepEqual(value.occluders, [339, 'ffc69a72e0a8da8f92fa5e598d17d56b05af4ab5a39331df500cb044d08dc4c8']);

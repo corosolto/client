@@ -3463,8 +3463,8 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
   color:var(--tp-tinta-1);font:800 13px/1.2 var(--tp-ui);opacity:0;transform:translateY(calc(60px * var(--tp-mov)));
   transition:transform var(--tp-d-painel) var(--tp-ease-saida),opacity var(--tp-d-painel) var(--tp-ease-saida)}
 .tp-toast[data-visivel]{opacity:1;transform:none}
-.level-up-popup{position:fixed;z-index:120;left:50%;top:max(24px,env(safe-area-inset-top));display:flex;align-items:center;gap:12px;min-width:min(360px,calc(100vw - 32px));box-sizing:border-box;padding:14px 18px;border:1px solid #b4d92e;border-top-width:4px;border-radius:8px;background:linear-gradient(145deg,#1c1812f5,#090704fa);color:#f0f0ed;box-shadow:0 18px 55px #000b;transform:translateX(-50%);font:700 14px/1.25 var(--font);pointer-events:none}
-.level-up-popup strong{color:#b4d92e;font:400 30px/1 'Bebas Neue',Impact,sans-serif;letter-spacing:1px}
+.level-up-popup{position:fixed;z-index:120;left:50%;top:max(24px,env(safe-area-inset-top));display:flex;align-items:center;gap:12px;min-width:min(360px,calc(100vw - 32px));box-sizing:border-box;padding:14px 18px;border:1px solid var(--tp-lima);border-top-width:4px;border-radius:8px;background:linear-gradient(145deg,color-mix(in srgb,var(--tp-elevado) 96%,transparent),color-mix(in srgb,var(--tp-asfalto) 98%,transparent));color:var(--tp-tinta-1);box-shadow:0 18px 55px rgba(0,0,0,.73);transform:translateX(-50%);font:700 14px/1.25 var(--tp-ui);pointer-events:none}
+.level-up-popup strong{color:var(--tp-lima);font:400 30px/1 var(--tp-display);letter-spacing:1px}
 /* Splash (tela 01): a arte cobre a tela no primeiro quadro, antes de qualquer módulo JS. */
 .tp-splash{display:none}
 :root[data-ui="v3"] #boot-splash{--tp-splash-ajuste:cover;background-color:var(--tp-asfalto)}

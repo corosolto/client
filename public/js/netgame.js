@@ -13,6 +13,9 @@ export function makeNetcode(game, net) { return new Netcode(game, net); }
    de ordem; com datagrama, chega — e empurrar no fim faria o boneco andar para trás. */
 const RELOGIO_NOVO_MS = 1000;
 const PLAYER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function rosterPlayerId(entity, row) {
+  return !entity?.bot && PLAYER_ID.test(row?.pid || '') ? row.pid : '';
+}
 function inserirAmostra(ent, t, e, semOrdem = false) {
   const at = ent._bufAt, n = at.length;
   let i = n;
@@ -321,7 +324,7 @@ class Netcode {
     };
     for (const e of snap.ents) {
       const row = rosterById.get(e.id);
-      const pid = !e.bot && PLAYER_ID.test(row?.pid || '') ? row.pid : '';
+      const pid = rosterPlayerId(e, row);
       if (!this.espectador && e.id === net.yourEnt) {
         game.player._playerId = pid;
         game.player._netBot = false;

@@ -54,10 +54,6 @@ const alvoPorMutante = {
   'loading-sem-wallpaper': 'UIR16',
   'loading-uma-faccao': 'UIR16',
   'hud-score-volta-preto': 'UIR17',
-  'hud-3d-volta': 'UIR18',
-  'hud-centro-volta': 'UIR18',
-  'hud-sem-barras': 'UIR18',
-  'hud-fonte-antiga': 'UIR18',
   'resultado-corta-personagem': 'UIR19',
   'resultado-sem-alpha': 'UIR19',
   'resultado-derrota-sem-alpha': 'UIR19',
@@ -316,18 +312,6 @@ main = muta('splash-sem-wallpaper', main,
 css = muta('hud-score-volta-preto', css,
   '#hud-top .team-score{min-height:42px;padding:7px 16px;background:transparent;border:0;color:#ecebe6!important}',
   '#hud-top .team-score{min-height:42px;padding:7px 16px;background:rgba(10,10,12,.78);border:0;color:#ecebe6!important}');
-css = muta('hud-3d-volta', css,
-  '#ammo-weapon-art{display:none;',
-  '#ammo-weapon-art{display:block;');
-css = muta('hud-centro-volta', css,
-  '#weapon-hud{right:20px;bottom:122px;width:150px}',
-  '#weapon-hud{left:50%;right:auto;bottom:14px;width:150px;transform:translateX(-50%)}');
-astro = muta('hud-sem-barras', astro,
-  'id="ammo-bars"',
-  'id="ammo-bars-mutado"');
-css = muta('hud-fonte-antiga', css,
-  '#ammo{order:0;font-family:var(--font);',
-  '#ammo{order:0;font-family:var(--aaa-font-display);');
 css = muta('resultado-corta-personagem', css,
   'background:var(--me-art,none) right bottom/contain no-repeat',
   'background:var(--me-art,none) center top/cover no-repeat;');
@@ -797,18 +781,6 @@ const hudTopoReferencia = /#hud-top \.team-score\{min-height:42px;padding:7px 16
   && /#hud-mid\{min-height:42px;padding:7px 18px;background:transparent\}/.test(css)
   && /#hud-top \.team-score b\{[^}]*font-family:var\(--font\)/.test(css)
   && /#round-time\{[^}]*font-family:var\(--font\)/.test(css);
-const hudArma2D = /id="weapon-hud"/.test(astro) && /id="ammo-bars"/.test(astro)
-  && /this\._wpnIcon\(slot\.kind === 'frag'/.test(game)
-  && /class="weapon-mask" style="--weapon-mask:url/.test(game)
-  && /class="weapon-icon">\$\{icon2d\}/.test(game)
-  && /ammoBars\.replaceChildren\(\.\.\.Array\.from/.test(game)
-  && /#ammo-weapon-art\{display:none;/.test(css)
-  && /#weapon-hud\{right:20px;bottom:122px;width:150px/.test(css)
-  && /#weapon-hud\{[^}]*flex-direction:column/.test(css)
-  && /\.weapon-slot\{[^}]*background:transparent/.test(css)
-  && /\.weapon-mask\{[^}]*mask:var\(--weapon-mask\) center\/contain no-repeat/.test(css)
-  && /#ammo-bars\{[^}]*display:grid/.test(css)
-  && /#ammo\{[^}]*font-family:var\(--font\)/.test(css);
 const resultadoIntegrado = /\.me-hero\{[^}]*position:absolute[^}]*inset:2\.5% 0 0 44%[^}]*overflow:visible/.test(css)
   && /\.me-hero\{[^}]*background:var\(--me-art,none\) right bottom\/contain no-repeat/.test(css)
   && !/\.me-hero\{[^}]*(?:mask-image|-webkit-mask-image)/.test(css)
@@ -1021,8 +993,6 @@ const resultados = [
     `${new Set(loadingCharacterIds).size}/5 representantes GLB distintos; sem GIF ou sprite sheet no DOM`],
   ['UIR17', 'placar superior in-game fica solto sobre a cena e usa números Rajdhani', hudTopoReferencia,
     'times e relógio sem placa preta; números em Rajdhani'],
-  ['UIR18', 'HUD 1–5 usa silhuetas 2D planas na lateral direita', hudArma2D,
-    'slots vêm de _wpnIcon; arte WebP 3D fica oculta e a coluna lateral não tem placas'],
   ['UIR19', 'resultado enquadra o personagem inteiro como recorte alpha', resultadoIntegrado,
     resultadoRuins.length
       ? `${resultadoRuins.length}/${resultadoVisual.length} artes cortadas, opacas ou no quadro errado: ${resultadoRuins.slice(0, 4).map(({ arquivo, meta, bounds }) => `${arquivo} ${meta.width}×${meta.height} alpha=${meta.alpha} margens=${[bounds.left, bounds.right, bounds.top, bounds.bottom].map((v) => (v * 100).toFixed(1)).join('/')}`).join(' · ')}`

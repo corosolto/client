@@ -4819,7 +4819,8 @@ function mpAtualizarBarraSpec(estado) {
       const quem = document.getElementById('mp-spec-quem');
       if (quem) quem.textContent = mp?.nomeAlvo || '—';
       const be = document.getElementById('mp-spec-e'), bb = document.getElementById('mp-spec-b');
-      const nomeE = FACTION_NAME.E, nomeB = FACTION_NAME.B;
+      const meta = mpSessao?.net?.meta || {};
+      const nomeE = meta.nomeE || 'ESQUERDA', nomeB = meta.nomeB || 'DIREITA';
       if (be) { be.disabled = !(vagas && vagas.E > 0); be.textContent = `ENTRAR: ${nomeE}${vagas ? ` (${vagas.E})` : ''}`; }
       if (bb) { bb.disabled = !(vagas && vagas.B > 0); bb.textContent = `ENTRAR: ${nomeB}${vagas ? ` (${vagas.B})` : ''}`; }
     }, 400);
