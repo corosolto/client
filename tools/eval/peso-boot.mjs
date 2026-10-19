@@ -8,8 +8,8 @@
    real, cache limpo, rede e CPU controladas por CDP.
 
    O QUE MEDE (por cenário × mapa, contexto limpo a cada jornada):
-     menu   : `/?debug=1` até `__CS_MAIN_READY__` (menu pronto) e até
-              `#splash-enter:not(.hidden)` (splash clicável);
+     menu   : `/?debug=1` até `__CS_MAIN_READY__` (menu pronto) e até o botão
+              habilitado da splash Treta Pop (ou prompt visível da splash legada);
      partida: `/?debug=1&auto=P,mst&map=<id>` até `state === 'live'`
               (o fluxo ?auto remove a splash, então aqui o marco é só o live).
    Em cada marco: bytes na rede acumulados por tipo (js, glb, textura, audio,
@@ -45,7 +45,7 @@ const BASE = arg('base') || `http://127.0.0.1:${PORTA}`;
 const MAPAS = { leve: 'piscina_treta', pesado: 'velho_oeste' };
 const CENARIOS = {
   desktop: { viewport: { width: 1600, height: 900 }, rede: null, cpu: 1 },
-  '4g': { viewport: { width: 390, height: 844 }, rede: { downloadThroughput: 1_600_000 / 8, uploadThroughput: 750_000 / 8, latency: 150 }, cpu: 4 },
+  '4g': { viewport: { width: 390, height: 844 }, context: { isMobile: true, hasTouch: true, deviceScaleFactor: 3 }, rede: { downloadThroughput: 1_600_000 / 8, uploadThroughput: 750_000 / 8, latency: 150 }, cpu: 4 },
 };
 
 const tipo = (u) =>
@@ -105,7 +105,7 @@ const ehJogo = (url) => {
 
 async function jornada(nome, cenario, url, marcos, tetoS) {
   const cfg = CENARIOS[cenario];
-  const ctx = await browser.newContext({ viewport: cfg.viewport });
+  const ctx = await browser.newContext({ viewport: cfg.viewport, ...(cfg.context || {}) });
   const page = await ctx.newPage();
   const erros = [];
   page.on('pageerror', (e) => { if (erros.length < 5) erros.push(String(e?.message || e)); });
@@ -170,7 +170,11 @@ for (const cenario of listaCenarios) {
   console.log(`\n===== ${cenario} =====`);
   await jornada('menu', cenario, `${BASE}/?debug=1`, {
     menu: () => window.__CS_MAIN_READY__ === true,
-    splash: () => !!document.getElementById('splash-enter') && !document.getElementById('splash-enter').classList.contains('hidden'),
+    splash: () => {
+      const pop = document.getElementById('tp-splash-jogar');
+      const legada = document.getElementById('splash-enter');
+      return (!!pop && pop.disabled === false) || (!!legada && !legada.classList.contains('hidden'));
+    },
   }, cenario === '4g' ? 300 : 90);
   if (JSON_OUT) writeFileSync(JSON_OUT, JSON.stringify(relatorio, null, 2));
   for (const chave of listaMapas) {
