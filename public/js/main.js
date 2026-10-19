@@ -1737,7 +1737,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const playerEyewearId = sessao ? sessao.net.meta.roster.find(r=>r.id===sessao.net.yourEnt)?.eyewearId || null : equippedTretaEyewear();
   const playerPack = tretaPack(equippedTretaPack());
   const playerGloveId = playerPack?.gloveSkin || equippedTretaGlove();
-  const playerWeaponSkins = Object.fromEntries(['ak','pistol']
+  const playerWeaponSkins = Object.fromEntries(['ak','pistol','m4','scar']
     .map((weaponId)=>[weaponId,playerPack?.weaponSkins[weaponId] || equippedTretaWeaponSkin(weaponId)])
     .filter(([,skinId])=>skinId));
   const playerKnifeSkinId = playerPack?.knifeSkin || null;
