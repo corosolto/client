@@ -501,6 +501,7 @@ const DICT = {
   'Confirme seu email': 'Confirm your email', 'Chame sua turma': 'Call your crew',
   'Conclua uma partida solo': 'Finish a solo match', 'Conclua uma partida multiplayer': 'Finish a multiplayer match',
   'NOVIDADES': 'NEWS', 'O QUE MUDOU NA ARENA': 'WHAT CHANGED IN THE ARENA', 'VER NOVIDADES ▸': 'SEE WHAT IS NEW ▸',
+  'NOVIDADES DE SKINS': 'SKIN NEWS', 'VER LOJA ▸': 'VIEW STORE ▸',
   'Amigos online': 'Friends online', 'AMIGOS ONLINE': 'FRIENDS ONLINE', 'CONVIDAR': 'INVITE', '+ CONVIDAR': '+ INVITE',
   'Ainda não dá pra ver quem está online. Chame a turma com o link de uma sala.':
     'You cannot see who is online yet. Call your crew with a room link.',
