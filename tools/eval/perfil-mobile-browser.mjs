@@ -2,6 +2,7 @@
 /* Perfil móvel integrado no jogo real. O gate puro perfil-mobile-check cobre a política;
    este prova que main.js aplica a política antes do primeiro GLB e mantém o jogo nela. */
 import { execSync, spawn } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 const arg = (nome) => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=')[1] || '';
@@ -13,6 +14,8 @@ if (MUTANTE && MUTANTE !== 'sem-perfil') throw new Error(`mutante desconhecido: 
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
+const fonteGlcontext = readFileSync(new URL('../../public/js/glcontext.js', import.meta.url), 'utf8');
+const fonteMain = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
 const servidor = BASE_EXTERNA ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
 process.on('exit', () => servidor?.kill());
 if (servidor) {
@@ -45,23 +48,19 @@ const mutar = async (page) => {
   /* O runner usa SwiftShader. Para medir o perfil do CELULAR em vez do fallback de
      renderizador por software, fixamos somente os metadados da GPU como hardware. */
   await page.route('**/js/glcontext.js*', async (route) => {
-    const response = await route.fetch();
-    const source = await response.text();
-    const changed = source.replaceAll('SOFTWARE_RE.test(gpu)', 'false')
+    const changed = fonteGlcontext.replaceAll('SOFTWARE_RE.test(gpu)', 'false')
       .replace('renderer: gpu.slice(0, 120),', "renderer: 'Test Mobile GPU',");
-    if (changed === source) throw new Error('fixture de GPU hardware não aplicou');
-    await route.fulfill({ response, body: changed });
+    if (changed === fonteGlcontext) throw new Error('fixture de GPU hardware não aplicou');
+    await route.fulfill({ status: 200, contentType: 'application/javascript; charset=utf-8', body: changed });
   });
   if (MUTANTE !== 'sem-perfil') return;
   await page.route('**/js/main.js*', async (route) => {
-    const response = await route.fetch();
-    const source = await response.text();
-    const changed = source.replace(
+    const changed = fonteMain.replace(
       "const MOBILE_AUTO = !COMPAT_MODE && AUTO_PROFILE && savedSettings.quality === undefined && POINTER_COARSE;",
       'const MOBILE_AUTO = false;',
     );
-    if (changed === source) throw new Error('mutante sem-perfil não aplicou');
-    await route.fulfill({ response, body: changed });
+    if (changed === fonteMain) throw new Error('mutante sem-perfil não aplicou');
+    await route.fulfill({ status: 200, contentType: 'application/javascript; charset=utf-8', body: changed });
   });
 };
 
