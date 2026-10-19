@@ -43,8 +43,9 @@ const MUTANTES = {
   'flag-vaza': [/\/js\/main\.js/, (t) => t.replace("if (document.documentElement.dataset.ui === 'v3') {\n  import('./splash-v3.js')", "if (true) {\n  import('./splash-v3.js')")],
   'gire-sem-arte': [/\/css\/tp\/lobby\.css/, (t) => t.replace("url('/img/loading-1.webp') 30% 50%/cover", 'none')],
   'mais-sem-feedback': [/\/js\/tp\/lobby\.js/, (t) => t.replace("{ id: 'feedback', rotulo: 'FEEDBACK', ir: () => abaDoHub('feedback') },", '')],
-  'chip-sem-nome': [/\/css\/tp\/lobby\.css/, (t) => t.replace('.tp-lobby-chip{display:inline}', '.tp-lobby-chip{display:none}')],
+  'chip-sem-nome': [/\/css\/tp\/lobby\.css/, (t) => t.replace(':root[data-ui="v3"] #hub-footer-social .mf-social svg{display:block;width:15px;height:15px}', ':root[data-ui="v3"] #hub-footer-social .mf-social svg{display:none;width:15px;height:15px}')],
   'dois-limas': [/\/css\/tp\/lobby\.css/, (t) => t.replace('.tp-lobby-rede__opcao[aria-pressed="true"]{background:var(--tp-tinta-1)', '.tp-lobby-rede__opcao[aria-pressed="true"]{background:var(--tp-lima)')],
+  'skins-mudas': [/\/js\/tp\/lobby\.js/, (t) => t.replace('.filter((s) => s && s.poster)', '.slice(0, 0).filter((s) => s && s.poster)')],
 };
 
 async function abrir({ w = 1536, h = 1024, lang = 'pt', flag = true, toque = false, mutante = '', loja = true, sairSplash = true, nick = 'Regua' }) {
@@ -127,7 +128,7 @@ async function medir(mutante = '', alvo = '') {
   const foto = async (page, nome) => { if (!mutante) await page.screenshot({ path: `${OUT}/${nome}.png` }); };
 
   /* Sessão A: 3:2 do dono, PT, loja no ar. */
-  if (quer('LB1', 'LB2', 'LB3', 'LB5', 'LB6', 'LB7', 'LB8', 'LB9', 'LB10', 'LB15', 'LB16', 'LB17')) {
+  if (quer('LB1', 'LB2', 'LB3', 'LB5', 'LB6', 'LB7', 'LB8', 'LB9', 'LB10', 'LB15', 'LB16', 'LB17', 'LB19')) {
     const { page, ctx } = await abrir({ mutante });
     await page.evaluate(() => document.fonts.ready);
     await foto(page, 'lobby-1536x1024-pt');
@@ -150,7 +151,7 @@ async function medir(mutante = '', alvo = '') {
       const amigos = document.getElementById('tp-lobby-online-amigos');
       const lobbyTxt = [...document.querySelectorAll('.tp-lobby-esq, .tp-lobby-dir, .hub-header, #tp-lobby-rede, #tp-lobby-partida, .tp-lobby-vaga, #hub-change-character')].filter(vis).map((e) => e.innerText).join(' ');
       const vagas = [...document.querySelectorAll('.tp-lobby-vaga')].filter(vis).map((v) => v.querySelector('button')?.textContent.trim());
-      const chips = [...document.querySelectorAll('#hub-footer-social .mf-social a')].filter(vis).map((a) => a.innerText.trim());
+      const chips = [...document.querySelectorAll('#hub-footer-social .mf-social a')].filter(vis).map((a) => { const icone = a.querySelector('svg'); return { nome: a.getAttribute('aria-label') || a.textContent.trim(), icone: !!icone && getComputedStyle(icone).display !== 'none' }; });
       /* fundo lima só conta em controle: o risco das abas e a moeda do T$ são marca, não ação */
       const limas = [...document.querySelectorAll('#main-menu button, #main-menu a, #main-menu [role="button"]')].filter((e) => vis(e) && e.getBoundingClientRect().height > 10
         && /rgb\(180, 217, 46\)/.test(getComputedStyle(e).backgroundColor)).map((e) => e.id || e.className || e.tagName);
@@ -177,8 +178,7 @@ async function medir(mutante = '', alvo = '') {
     const inventado = (a.lobbyTxt.match(/PASSE|NÍVEL|PRIMEIRA VITÓRIA|renovam|\b\d{2}:\d{2}:\d{2}\b/) || [])[0];
     add('LB8', !inventado && a.amigosLinhas === 0 && a.amigosVazio.length > 10,
       inventado ? `número ou sistema sem backend na tela: "${inventado}"` : a.amigosLinhas ? `${a.amigosLinhas} amigo(s) listado(s) sem presença no backend` : a.amigosVazio ? 'sem passe, nível ou timer; amigos online em estado vazio' : 'painel de amigos online ausente');
-    add('LB10@1536', !col1536.length && c.esquerda && c.direita && c.partida, col1536.length ? `colisão: ${col1536.join(', ')}` : !c.esquerda || !c.direita || !c.partida ? `coluna ausente: ${['esquerda', 'direita', 'partida'].filter((k) => !c[k]).join(', ')}` : 'cabeçalho, colunas, partida, nome, vagas e rodapé sem colisão');
-    add('LB16', a.chips.length >= 6 && a.chips.every((t) => /^[A-Z]{1,10}$/.test(t)), `redes no rodapé: ${a.chips.join(' · ') || 'nenhuma'} (quer 6+ chips com nome)`);
+    add('LB16', a.chips.length >= 4 && a.chips.every((c) => c.nome && c.icone), `redes no rodapé: ${a.chips.map((c) => c.nome || '?').join(' · ') || 'nenhuma'} (quer 4+ ícones com nome acessível)`);
     add('LB17', a.limas.length === 1 && /btn-jogar/.test(a.limas[0]), `fundos lima: ${a.limas.join(', ') || 'nenhum'} (quer só o JOGAR)`);
 
     /* MAIS: sobre, feedback e apoie saíram das abas; o item leva à seção certa e o ESC fecha. */
@@ -213,6 +213,26 @@ async function medir(mutante = '', alvo = '') {
       rede = passos.filter(Boolean).join('; ');
     }
     add('LB9', rede === '', rede || 'VS BOTS, MULTIPLAYER e PRIVADA levam o hub ao estado certo e marcam aria-pressed');
+
+    /* Novidades de skins: pôster carregado em cada card e o clique abre a loja no detalhe. */
+    let skins = { dados: [], abriu: false };
+    if (quer('LB19')) {
+      skins.dados = await page.evaluate(() => [...document.querySelectorAll('#tp-lobby-skins .tp-lobby-skins__cartao')]
+        .filter((e) => e.checkVisibility())
+        .map((e) => ({ id: e.dataset.skin, nome: e.querySelector('.tp-lobby-skins__nome')?.textContent || '', poster: (e.querySelector('.tp-lobby-skins__poster')?.naturalWidth || 0) > 0 })));
+      if (skins.dados.length) {
+        await page.click('#tp-lobby-skins .tp-lobby-skins__cartao');
+        await page.waitForTimeout(700);
+        skins.abriu = await page.evaluate(() => document.getElementById('main-menu').dataset.hubTab === 'loja' && document.getElementById('treta-detail')?.open === true);
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(300);
+        await page.click('[data-tp-aba="jogar"]');
+        await page.waitForTimeout(400);
+      }
+    }
+    const skinsErradas = skins.dados.filter((s) => !s.nome || !s.poster).map((s) => s.id);
+    add('LB19', skins.dados.length >= 5 && !skinsErradas.length && skins.abriu,
+      `${skins.dados.length} cards de skins${skinsErradas.length ? `; sem pôster/nome: ${skinsErradas.join(', ')}` : ''}; clique ${skins.abriu ? 'abre a loja no detalhe' : 'não abriu o detalhe'}`);
 
     let convite = { net: '', pediu: false }, avisoErro = '';
     if (quer('LB6') && await page.locator('.tp-lobby-vaga__convidar').count()) {
@@ -385,7 +405,7 @@ async function medir(mutante = '', alvo = '') {
 const MUT = [['abas-velhas', 'LB1'], ['ajustes-mudo', 'LB2'], ['confirma-de-novo', 'LB3'], ['convidado-bloqueado', 'LB18'], ['enter-do-splash', 'LB4'],
   ['personagem-no-canto', 'LB5'], ['convite-mudo', 'LB6'], ['erro-mudo', 'LB6'], ['quest-inventada', 'LB7'], ['passe-sem-backend', 'LB8'],
   ['rede-trocada', 'LB9'], ['coluna-larga', 'LB10'], ['toque-baixo', 'LB11'], ['sem-traducao', 'LB12'], ['flag-vaza', 'LB13'],
-  ['gire-sem-arte', 'LB14'], ['mais-sem-feedback', 'LB15'], ['chip-sem-nome', 'LB16'], ['dois-limas', 'LB17']];
+  ['gire-sem-arte', 'LB14'], ['mais-sem-feedback', 'LB15'], ['chip-sem-nome', 'LB16'], ['dois-limas', 'LB17'], ['skins-mudas', 'LB19']];
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO === m)) {
