@@ -94,7 +94,7 @@ const CASOS = [
   ['PC3 · personagem compartilhado aparece sem aviso', async (b) => {
     const u = await abrir(b.community, { ...BASE, last_character: 'barbudo' }, EU);
     if (!todos(u.raiz).some((n) => String(n.className).includes('profile-character'))) return 'personagem compartilhado não aparece';
-    if (/não compartilha|Mostrar meu último/.test(u.tudo())) return 'aviso de privacidade com personagem visível';
+    if (/não compartilha o último personagem|Mostrar meu último personagem/.test(u.tudo())) return 'aviso de privacidade com personagem visível';
     return null;
   }],
   ['PC4 · SSR explica o vazio', async (b) => {
