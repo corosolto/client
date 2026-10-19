@@ -10,14 +10,14 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad, m
   for (let cycle = 0; cycle < 30; cycle += 1) {
     const aspect = cycle % 2 ? '1440x810' : '1440x960'; const request = cycle * 3 + 1; const activeRequest = request + 1;
     if (accepts({ request, activeRequest, key: 'mp5#mp5', activeKey: 'mp5#mp5', utility: false })) errors.push(`${aspect} ciclo ${cycle}: promise obsoleta aceita`);
-    const loading = decide({ alive: true, firstPerson: true, authoredReady: false }); samples += 1;
-    if (!exactlyOne(loading) || !loading.fallback) errors.push(`${aspect} ciclo ${cycle}: lacuna pré-load`);
+    const loading = decide({ alive: true, firstPerson: true, authoredMode: true, authoredReady: false }); samples += 1;
+    if (!loading.root || loading.authored || loading.fallback) errors.push(`${aspect} ciclo ${cycle}: lacuna pré-load`);
     if (!accepts({ request: activeRequest, activeRequest, key: 'mp5#mp5', activeKey: 'mp5#mp5', utility: false })) errors.push(`${aspect} ciclo ${cycle}: promise atual recusada`);
     for (const event of ['idle','draw-start','draw-end','shoot-1','shoot-10','reload-tactical-start','reload-tactical-end','reload-empty-start','reload-empty-end','inspect-start','inspect-end','ads-in','ads-out','reload-cancel-switch','reload-cancel-return']) {
-      const state = mutateEvent(event, decide({ alive: true, firstPerson: true, authoredReady: true })); samples += 1;
+      const state = mutateEvent(event, decide({ alive: true, firstPerson: true, authoredMode: true, authoredReady: true })); samples += 1;
       if (!exactlyOne(state) || !state.authored) errors.push(`${aspect} ciclo ${cycle}: sumiu em ${event}`);
     }
-    for (const [event, state] of [['morto', decide({ alive: false, firstPerson: true, authoredReady: true })], ['terceira-pessoa', decide({ alive: true, firstPerson: false, authoredReady: true })]]) {
+    for (const [event, state] of [['morto', decide({ alive: false, firstPerson: true, authoredMode: true, authoredReady: true })], ['terceira-pessoa', decide({ alive: true, firstPerson: false, authoredMode: true, authoredReady: true })]]) {
       samples += 1; if (state.root || state.authored || state.fallback || state.melee) errors.push(`${aspect} ciclo ${cycle}: primeira pessoa visível em ${event}`);
     }
   }
@@ -29,7 +29,7 @@ check(VM_WEAPON.mp5.baked === true && VM_WEAPON.mp5.runtime === 'family', 'MP5 u
 check(VM_WEAPON.mp5.ads?.auto === true && VM_WEAPON.mp5.ads?.off?.every((value) => value === 0), 'MP5 usa ADS automático pelos sockets próprios');
 const baseline = matrix(); check(baseline.errors.length === 0, 'MP5 atravessa lifecycle 30x em 3:2 e 16:9', `${baseline.samples} amostras`);
 const stale = matrix({ accepts: ({ key, activeKey, utility }) => key === activeKey && !utility }); check(stale.errors.length > 0, 'mutante que aceita Promise obsoleta reprova');
-const preload = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: false, scopeCovered: false } }); check(preload.errors.length > 0, 'mutante que cria lacuna pré-load reprova');
+const preload = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: true, scopeCovered: false } }); check(preload.errors.length > 0, 'mutante que exibe fallback pré-load reprova');
 for (const event of ['draw-end','reload-empty-end','inspect-end','ads-out']) {
   const hidden = matrix({ mutateEvent: (current, state) => current === event ? { ...state, root: false, authored: false, fallback: false } : state }); check(hidden.errors.length > 0, `mutante que oculta mount em ${event} reprova`);
 }

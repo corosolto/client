@@ -81,6 +81,7 @@ const fakeHud = () => {
       contains: (name) => classes.has(name),
     },
     get hidden() { return classes.has('hidden'); },
+    querySelectorAll: () => [],
   };
 };
 

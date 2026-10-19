@@ -223,15 +223,15 @@ async function montarChat(page, { comMeta = true } = {}) {
 }
 
 const entregar = (page, m) => page.evaluate((f) => window.__chatNet.entregar(f), m);
-/* Y/U só valem em 'live'/'countdown' sem pausa (game.js, _kd). O prazo conta no relógio do JOGO:
-   no CI a troca de rodada (7 s de jogo) passa de 30 s de parede (PASSO_TETO, #919). */
+/* Y/U continuam válidos no fim de rodada e de partida (game.js, _kd); só boot e pausa
+   bloqueiam. O prazo conta no relógio do jogo para distinguir transição de travamento. */
 async function teclaChat(page, tecla) {
   const t0 = await page.evaluate(() => window.__game?.time ?? 0);
   await page.waitForFunction((t0) => {
     const g = window.__game;
     if (!g) return false;
-    if (g.state === 'live' && !g.paused) return true;
-    if (g.time - t0 > 10) throw new Error(`o jogo andou ${(g.time - t0).toFixed(1)} s sem voltar a 'live' (state=${g.state}, paused=${g.paused})`);
+    if (['live', 'countdown', 'roundEnd', 'matchEnd'].includes(g.state) && !g.paused) return true;
+    if (g.time - t0 > 10) throw new Error(`o jogo andou ${(g.time - t0).toFixed(1)} s sem liberar o chat (state=${g.state}, paused=${g.paused})`);
     return false;
   }, t0, { timeout: 120_000 });
   await page.keyboard.press(tecla);

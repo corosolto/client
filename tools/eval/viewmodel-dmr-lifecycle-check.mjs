@@ -15,14 +15,14 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
     const aspect = cycle % 2 ? '1440x810' : '1440x960';
     const request = cycle * 3 + 1; const activeRequest = request + 1;
     if (accepts({ request, activeRequest, key, activeKey: key, utility: false })) errors.push(`${weapon}/${aspect}: Promise obsoleta aceita`);
-    const loading = decide({ alive: true, firstPerson: true, authoredReady: false }); samples += 1;
-    if (!exactlyOne(loading) || !loading.fallback) errors.push(`${weapon}/${aspect}: lacuna pré-load`);
+    const loading = decide({ alive: true, firstPerson: true, authoredMode: true, authoredReady: false }); samples += 1;
+    if (!loading.root || loading.authored || loading.fallback) errors.push(`${weapon}/${aspect}: lacuna pré-load`);
     if (!accepts({ request: activeRequest, activeRequest, key, activeKey: key, utility: false })) errors.push(`${weapon}/${aspect}: Promise atual recusada`);
     for (const event of ['idle','draw-start','draw-end','shoot-start','shoot-end','reload-start','reload-loop','reload-end','inspect-start','inspect-end','ads-in','ads-out','switch-cancel','return']) {
-      const state = mutateEvent(weapon, event, decide({ alive: true, firstPerson: true, authoredReady: true })); samples += 1;
+      const state = mutateEvent(weapon, event, decide({ alive: true, firstPerson: true, authoredMode: true, authoredReady: true })); samples += 1;
       if (!exactlyOne(state) || !state.authored) errors.push(`${weapon}/${aspect}: sumiu em ${event}`);
     }
-    for (const state of [decide({ alive: false, firstPerson: true, authoredReady: true }), decide({ alive: true, firstPerson: false, authoredReady: true })]) {
+    for (const state of [decide({ alive: false, firstPerson: true, authoredMode: true, authoredReady: true }), decide({ alive: true, firstPerson: false, authoredMode: true, authoredReady: true })]) {
       samples += 1; if (state.root || state.authored || state.fallback || state.melee) errors.push(`${weapon}/${aspect}: primeira pessoa visível fora do estado válido`);
     }
   }
@@ -34,7 +34,7 @@ check(VM_FAMILY.bolt.ready === false && VM_FAMILY.g3.ready === false, 'famílias
 check(VM_WEAPON.rem700.baked === true && VM_WEAPON.g3sg1.baked === true, 'DMRs usam candidatas baked por arma');
 const baseline = matrix(); check(baseline.errors.length === 0, 'DMRs atravessam lifecycle 30x em 3:2 e 16:9', `${baseline.samples} amostras`);
 check(matrix({ accepts: ({ key, activeKey, utility }) => key === activeKey && !utility }).errors.length > 0, 'mutante que aceita Promise obsoleta reprova');
-check(matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: false } }).errors.length > 0, 'mutante que cria lacuna pré-load reprova');
+check(matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: true } }).errors.length > 0, 'mutante que exibe fallback pré-load reprova');
 for (const event of ['draw-end','shoot-end','reload-loop','inspect-end','ads-out']) check(matrix({ mutateEvent: (_weapon, current, state) => current === event ? { ...state, root: false, authored: false, fallback: false } : state }).errors.length > 0, `mutante que oculta mount em ${event} reprova`);
 const failed = checks.filter((item) => !item.ok);
 console.log(JSON.stringify({ ok: failed.length === 0, checks: checks.length, cyclesPerWeapon: 30, samples: baseline.samples, failed: failed.map((item) => item.label) }));

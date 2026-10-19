@@ -25,10 +25,10 @@ if(mutant==='no-week-tab'){const changed=source.replace("'week','SEMANAL'","'wee
 const mainSource=readFileSync(new URL('public/js/main.js',root),'utf8');
 const importsRanking=source=>/^import\s*\{[^}]*\brankingTable\b[^}]*\}\s*from\s*['"]\.\/ranking-player\.js['"]/m.test(source);
 if(mutant==='no-import')assert(!importsRanking(source.replace(/^import[^\n]*ranking-player[^\n]*\n/m,'')),'import mutation did not apply');
-const body=source.slice(source.indexOf('  async function showRanking(version)'),source.indexOf('  function showNotifications'));
+const body=source.slice(source.indexOf('  async function showRanking(version)'),source.indexOf('  const openTretaQuests',source.indexOf('  async function showRanking(version)')));
 const content=new Element('div');
 let request='';
-const context={...helpers,document,el,content,link:(text,href)=>Object.assign(el('a',text),{href}),button:(text,onclick)=>Object.assign(el('button',text),{onclick}),empty:text=>el('p',text),field:(text,node)=>{const n=el('label',text);n.append(node);return n;},searchForm:()=>el('form'),api:async url=>{request=url;return {players:[player],total:1,week:{starts_at:'2026-10-12T03:00:00Z',ends_at:'2026-10-19T03:00:00Z',timezone:'America/Sao_Paulo'},reward_status:'not_enabled'};},rankingScope:'global',rankingQuery:'',rankingOffset:0,rankingPeriod:'all',rankingMode:'all',rankingGameType:'all',loadVersion:0,render:async()=>{}};
+const context={...helpers,document,el,content,link:(text,href)=>Object.assign(el('a',text),{href}),button:(text,onclick)=>Object.assign(el('button',text),{onclick}),empty:text=>el('p',text),field:(text,node)=>{const n=el('label',text);n.append(node);return n;},searchForm:()=>el('form'),api:async url=>{request=url;return {players:[player],total:1,week:{starts_at:'2026-10-12T03:00:00Z',ends_at:'2026-10-19T03:00:00Z',timezone:'America/Sao_Paulo'},reward_status:'not_enabled'};},rankingScope:'global',rankingQuery:'',rankingOffset:0,rankingPeriod:'all',rankingMode:'all',rankingGameType:'all',rankingTeam:'all',loadVersion:0,render:async()=>{}};
 try {
  assert(importsRanking(mutant==='no-import'?source.replace(/^import[^\n]*ranking-player[^\n]*\n/m,''):source),'community renderer has no ranking helper import');
  assert(importsRanking(mainSource),'home renderer has no ranking helper import');

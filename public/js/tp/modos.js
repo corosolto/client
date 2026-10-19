@@ -220,8 +220,8 @@ function pintar() {
   for (const b of tela.modos.querySelectorAll('.tp-modos__modo')) {
     if (b.dataset.modo === 'rounds' || b.dataset.modo === 'ctf') b.setAttribute('aria-pressed', String(b.dataset.modo === est.modo));
     if (b.dataset.modo === 'mp') {
-      const box = $('mf-online');
-      const n = box && !box.hidden ? parseInt(box.textContent, 10) || 0 : 0;
+      const count = $('hub-online-n'), box = count?.closest('.hub-online');
+      const n = box && !box.hidden ? Number(count.dataset.online) || 0 : 0;
       b.querySelector('.tp-modos__sub').textContent = n ? `${tr('Salas públicas')} · ${n} ${tr('online')}` : tr('Salas públicas');
     }
   }

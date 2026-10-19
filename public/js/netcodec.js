@@ -1,8 +1,8 @@
 import { WEAPONS } from './data/weapons.js';
 
-export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v5', 'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
+export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v6', 'coro-snapshot-v5', 'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
 export const MAX_SNAPSHOT_BYTES = 32768;
-const CURRENT_VERSION = 5;
+const CURRENT_VERSION = 6;
 const KIND_SNAPSHOT = 1;
 const MAX_ENTITIES = 64;
 const MAX_CTF_POINTS = 16;
@@ -107,7 +107,7 @@ const integer = (value, max, name) => {
 
 export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
   if (!snapshot || snapshot.type !== 'snapshot') throw new TypeError('snapshot_required');
-  if (version < 2 || version > 5) throw new TypeError('snapshot_version');
+  if (version < 2 || version > 6) throw new TypeError('snapshot_version');
   const ents = Array.isArray(snapshot.ents) ? snapshot.ents : [];
   if (ents.length > MAX_ENTITIES) throw new RangeError('too_many_entities');
   const w = new Writer();
@@ -118,6 +118,12 @@ export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
   w.u8(integer(snapshot.livre?.E, 255, 'livre_e')); w.u8(integer(snapshot.livre?.B, 255, 'livre_b'));
   w.u16(integer(snapshot.timeLeft, 65535, 'time_left')); w.u16(integer(snapshot.roundNum, 65535, 'round'));
   w.u16(integer(snapshot.scoreE, 65535, 'score_e')); w.u16(integer(snapshot.scoreB, 65535, 'score_b'));
+  /* v6 acrescenta somente os abates da rodada por lado. v2..v5 mantêm exatamente a
+     disposição anterior: depois do placar da partida vinha direto a extensão CTF. */
+  if (version >= 6) {
+    w.u16(integer(snapshot.roundKillsE, 65535, 'round_kills_e'));
+    w.u16(integer(snapshot.roundKillsB, 65535, 'round_kills_b'));
+  }
   /* v3 acrescenta somente o estado autoritativo de captura. v2 fica byte-a-byte no formato
      antigo para permitir rollout servidor-primeiro sem expulsar clientes já conectados. */
   if (version >= 3) {
@@ -188,12 +194,16 @@ export function decodeSnapshot(data) {
   const r = new Reader(data);
   if (r.u8() !== 0x43 || r.u8() !== 0x53 || r.u8() !== 0x42 || r.u8() !== 0x32) throw new TypeError('snapshot_magic');
   const version = r.u8();
-  if (version < 2 || version > 5 || r.u8() !== KIND_SNAPSHOT) throw new TypeError('snapshot_version');
+  if (version < 2 || version > 6 || r.u8() !== KIND_SNAPSHOT) throw new TypeError('snapshot_version');
   const snapshot = {
     type: 'snapshot', room: r.str(), tick: r.u32(), t: r.f64(), state: r.str(), owner: r.str() || null,
     players: r.u8(), spectators: r.u8(), livre: { E: r.u8(), B: r.u8() },
     timeLeft: r.u16(), roundNum: r.u16(), scoreE: r.u16(), scoreB: r.u16(), ents: [],
   };
+  if (version >= 6) {
+    snapshot.roundKillsE = r.u16();
+    snapshot.roundKillsB = r.u16();
+  }
   if (version >= 3 && r.u8()) {
     snapshot.ctf = {
       capsE: r.u16(), capsB: r.u16(), roundCapsE: r.u16(), roundCapsB: r.u16(),

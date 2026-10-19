@@ -93,7 +93,7 @@ async function scenario(surface,flag,kind,period='all') {
  const pane=document.getElementById(surface==='hub'?'hub-ranking':surface==='panel'?'ranking-panel':'community');
  pane.hidden=false;pane.classList.remove('hidden');
  const requests=[];
- const context={...helpers,document,URL,Date,AbortSignal,UI_V3:false,tr:x=>x,auth:null,state:null,profileId:'',tab:'ranking',loadVersion:0,rankingPeriod:period,rankingScope:'global',rankingOffset:0,rankingQuery:'',rankingMode:'all',rankingGameType:'all',registeredNick:'Renderer Fixture',loadStats:()=>({kills:4,deaths:2,wins:1,matches:2}),$:id=>document.getElementById(id),apiUrl:x=>x,fetch:async(url)=>{requests.push(url);return fetchResult(kind);},content:document.getElementById('social-content'),status:document.getElementById('social-status')};
+ const context={...helpers,document,URL,Date,AbortSignal,UI_V3:false,tr:x=>x,auth:null,state:null,profileId:'',tab:'ranking',loadVersion:0,rankingPeriod:period,rankingScope:'global',rankingOffset:0,rankingQuery:'',rankingMode:'all',rankingGameType:'all',rankingTeam:'all',registeredNick:'Renderer Fixture',loadStats:()=>({kills:4,deaths:2,wins:1,matches:2}),$:id=>document.getElementById(id),apiUrl:x=>x,fetch:async(url)=>{requests.push(url);return fetchResult(kind);},content:document.getElementById('social-content'),status:document.getElementById('social-status')};
  let body;
  if(surface==='community'){
   context.root=pane; // community.js lê root no escopo do módulo (render marca data-view)

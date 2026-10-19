@@ -17,8 +17,8 @@
      AC1 · histórico sem linha no banco ganha as conquistas que os totais exibidos provam
      AC2 · `at: null` diz "conquistada", nunca "Ainda sem atividade"
      AC3 · sem inflar: zero abates não dá conquista; hora de arena ignora o tempo antigo
-     AC4 · atividade vazia para quem não é amigo diz que é só para amigos; para a própria
-           pessoa com histórico antigo, explica que o legado guarda só totais
+     AC4 · atividade vazia respeita a decisão do backend: visitante sem acesso vê a
+           explicação de privacidade; a própria pessoa com histórico vê a origem dos totais
 
    Uso: node tools/eval/profile-achievements-check.mjs [--mutate] */
 import { readFileSync } from 'node:fs';
@@ -98,10 +98,10 @@ const CASOS = [
     return null;
   }],
   ['AC4 · atividade vazia explica o porquê', async (c) => {
-    const estranho = await abrir(c, BASE, EU);
+    const estranho = await abrir(c, { ...BASE, activity_visible: false }, EU);
     if (/Nenhuma rodada confirmada|Jogue uma rodada verificada/.test(estranho.tudo())) return 'estranho vê "nenhuma rodada" em vez de privacidade';
-    if (!/só para os amigos/.test(estranho.tudo())) return 'estranho sem explicação de privacidade';
-    const proprio = await abrir(c, { ...BASE, id: EU }, EU);
+    if (!/não compartilha as rodadas/.test(estranho.tudo())) return 'estranho sem explicação de privacidade';
+    const proprio = await abrir(c, { ...BASE, id: EU, activity_visible: true }, EU);
     if (!/histórico antigo guarda só os totais/.test(proprio.tudo())) return 'própria pessoa com legado sem explicação';
     return null;
   }],
@@ -115,7 +115,7 @@ if (MUTATE) {
     ['AC2', 'volta ao date(null)', fonte.replace("a.at?new Date(a.at).toLocaleDateString('pt-BR'):a.source==='history'?'pelo histórico preservado':'conquistada'", "a.at?new Date(a.at).toLocaleDateString('pt-BR'):'Ainda sem atividade'")],
     ['AC3', 'hora de arena com o tempo antigo', fonte.replace('active=Number(p.verified_play_seconds ?? 0) || 0', 'active=Number(p.play_seconds) || 0')],
     ['AC3', 'conquista sem prova', fonte.replace('first_kill:kills>=1', 'first_kill:true')],
-    ['AC4', 'estranho vê "nenhuma rodada"', fonte.replace("'As rodadas deste jogador aparecem só para os amigos dele.'", "'Nenhuma rodada confirmada ainda.'")],
+    ['AC4', 'estranho vê "nenhuma rodada"', fonte.replace("'Este jogador não compartilha as rodadas com você.'", "'Nenhuma rodada confirmada ainda.'")],
   ];
   let cegas = 0;
   console.log('CONQUISTAS (MUTANTES: cada um tem que FALHAR)\n');

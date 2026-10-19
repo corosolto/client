@@ -57,13 +57,13 @@ async function abrir(community, pedido, { quem = 'eu', alvo = ALVO, relacao: rel
   const localStorage = { getItem: (k) => storage[k] ?? null, setItem: (k, v) => { storage[k] = String(v); }, removeItem: (k) => { delete storage[k]; } };
   const location = { origin: 'http://localhost', pathname: caminho, get href() { return `http://localhost${this.pathname}`; }, search: '' };
   const history = { state: null, pushState: (s, t, u) => { urls.push(String(u)); location.pathname = new URL(u, 'http://localhost').pathname; }, replaceState: (s, t, u) => { urls.push(String(u)); location.pathname = new URL(u, 'http://localhost').pathname; } };
-  const perfil = (id) => ({ id, nick: id === EU ? 'Eu' : 'Kogos', url: id === EU ? '/u/eu_mesmo' : `/u/${ALVO}`, handle: id === EU ? 'eu_mesmo' : null, visibility: 'public', source: 'historical_plus_server_verified', relationship: id === EU ? null : relacao,
+  const perfil = (id) => ({ id: id === 'eu_mesmo' ? EU : id, nick: id === EU || id === 'eu_mesmo' ? 'Eu' : 'Kogos', url: id === EU || id === 'eu_mesmo' ? '/u/eu_mesmo' : `/u/${ALVO}`, handle: id === EU || id === 'eu_mesmo' ? 'eu_mesmo' : null, visibility: 'public', source: 'historical_plus_server_verified', relationship: id === EU || id === 'eu_mesmo' ? null : relacao,
     points: 2772, kills: 2763, deaths: 149, kd: 18.54, matches: 39, round_wins: 52, round_losses: 6, level: 28, next_level_points: 28, position: 13,
     bio: '', socials: [], avatar_url: null, last_character: null, account_verified: false, achievements: [{ key: 'first_kill', at: '2026-09-01T00:00:00Z' }], favorites: [], history: [], play_seconds: 0, legacy_points: 1928, verified_points: 844, settings: { share_character: false, profile: 'public', presence: 'friends', activity: 'friends' } });
   const estado = () => ({ profile: perfil(EU), friends: [], requests: [], notifications: [], blocks: [], feed: [], invites: [], inbox: { conversations: [] } });
   const sessao = () => (quem === 'eu' ? { authenticated: true, profile: { id: EU, nick: 'Eu' } } : { authenticated: false });
   const ctx = vm.createContext({
-    document: { createElement: (t) => new El(t), createTextNode: (t) => t, getElementById: (id) => ids[id] || null, querySelectorAll: (sel) => (sel === '.social-tabs button' ? abas : []), addEventListener() {}, hidden: false },
+    document: { createElement: (t) => new El(t), createTextNode: (t) => t, getElementById: (id) => ids[id] || null, querySelectorAll: (sel) => (sel === '.social-tabs button' ? abas : []), addEventListener() {}, dispatchEvent() {}, hidden: false },
     URL, URLSearchParams, console, location, history, localStorage, AbortSignal: { timeout: () => null }, setInterval: () => 1, Date,
     navigator: { clipboard: { writeText: async () => {} } }, CustomEvent: class {},
     fetch: async (url, opts = {}) => {
@@ -198,7 +198,7 @@ if (MUTATE) {
     ['FR6', 'amigo sem selo', fonte.replace("buttons.append(chip('AMIGOS ✓'));", '')],
     ['FR7', 'abas de conta no perfil alheio', fonte.replace('b.hidden=viewingOther && PRIVATE_TABS.includes(b.dataset.tab);', 'b.hidden=false;')],
     ['FR7', 'abas do perfil para visitante', fonte.replace('if(!own){content.append(c);return;}', '')],
-    ['FR7', 'rodadas para quem não é amigo', fonte.replace('if(sees)c.append(secPartidas);else c.append(empty(noActivity));', 'c.append(secPartidas);')],
+    ['FR7', 'rodadas para quem não é amigo', fonte.replace('if(activityVisible)c.append(secPartidas);else c.append(empty(noActivity));', 'c.append(secPartidas);')],
     ['FR8', 'dono sem aba de privacidade', fonte.replace("if(profileAba==='privacidade'){content.append(nav);showSettings();return;}", '')],
     ['FR8', 'aba não grava o endereço', fonte.replace("if(alvo.href!==location.href)history.pushState(null,'',alvo);", '')],
   ];

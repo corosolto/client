@@ -86,15 +86,21 @@
 :root[data-ui="v3"] #ammo-mag.empty{color:var(--tp-esq-claro)}
 :root[data-ui="v3"] #ammo .ammo-sep{font:700 26px/1 var(--tp-num);color:var(--tp-tinta-2)}
 :root[data-ui="v3"] #ammo-reserve{font:700 26px/1 var(--tp-num);font-variant-numeric:tabular-nums;color:var(--tp-tinta-2)}
-:root[data-ui="v3"] #ammo-bars,:root[data-ui="v3"] #smoke-count,:root[data-ui="v3"] #ammo-weapon-art{display:none}
+:root[data-ui="v3"] #ammo-bars,:root[data-ui="v3"] #smoke-count{display:none}
+:root[data-ui="v3"] #ammo-weapon-art{display:block;width:144px;height:52px;object-fit:contain;object-position:right center;opacity:.9}
 :root[data-ui="v3"] #reload-note{font:800 13px/1 var(--tp-ui);letter-spacing:.1em;color:var(--tp-ambar)}
-:root[data-ui="v3"] #weapon-hud{right:24px;bottom:146px;flex-direction:row;gap:8px;padding:0;background:none;border:0}
-:root[data-ui="v3"] #weapon-hud .weapon-slot{display:flex;align-items:center;justify-content:center;width:44px;height:44px;box-sizing:border-box;padding:0;
+:root[data-ui="v3"] #weapon-hud{right:24px;bottom:158px;flex-direction:row;gap:8px;padding:0;background:none;border:0}
+:root[data-ui="v3"] #weapon-hud .weapon-slot{display:flex;position:relative;align-items:center;justify-content:center;width:70px;height:44px;box-sizing:border-box;padding:3px 5px;
   border-radius:10px;background:var(--tp-vidro);border:1px solid var(--tp-vidro-borda);clip-path:none;box-shadow:none;
   font:800 13px/1 var(--tp-num);color:var(--tp-tinta-2)}
 :root[data-ui="v3"] #weapon-hud .weapon-slot.on{border-color:var(--tp-lima);color:var(--tp-ambar)}
-:root[data-ui="v3"] #weapon-hud .weapon-key{font:inherit;color:inherit}
-:root[data-ui="v3"] #weapon-hud .weapon-icon,:root[data-ui="v3"] #weapon-hud .weapon-label{display:none}
+:root[data-ui="v3"] #weapon-hud .weapon-key{position:absolute;right:4px;top:3px;font:800 9px/1 var(--tp-num);color:inherit}
+:root[data-ui="v3"] #weapon-hud .weapon-icon{display:flex;align-items:center;justify-content:center;width:54px;height:32px}
+:root[data-ui="v3"] #weapon-hud .weapon-mask{display:block;width:52px;height:30px;object-fit:contain;filter:grayscale(1) brightness(2.1) contrast(1.2)}
+:root[data-ui="v3"] #weapon-hud .weapon-fallback{display:none}
+:root[data-ui="v3"] #weapon-hud .weapon-icon.art-failed .weapon-mask{display:none}
+:root[data-ui="v3"] #weapon-hud .weapon-icon.art-failed .weapon-fallback{display:inline-flex}
+:root[data-ui="v3"] #weapon-hud .weapon-label{display:none}
 :root[data-ui="v3"] #weapon-hud .weapon-amount{display:none;font:800 9px/1 var(--tp-num);color:inherit;align-self:flex-start;margin-top:12px}
 :root[data-ui="v3"] #weapon-hud .weapon-slot[data-slot="4"] .weapon-amount,:root[data-ui="v3"] #weapon-hud .weapon-slot[data-slot="5"] .weapon-amount{display:block}
 

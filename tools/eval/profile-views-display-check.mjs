@@ -41,7 +41,7 @@ function carregar(ctx, src) {
 
 // Roda o community.js real com a API social simulada. `post` responde ao POST profile_view.
 async function noJogo(b, { perfil = PERFIL, eu = null, post = async () => ({ ok: true, json: async () => ({ counted: true }) }) } = {}) {
-  const ids = Object.fromEntries(['community', 'social-status', 'social-account', 'social-content', 'social-unread', 'hub-social-unread'].map((id) => [id, new El('div')]));
+  const ids = Object.fromEntries(['community', 'social-status', 'social-account', 'social-content', 'social-unread', 'hub-social-unread', 'social-hello', 'social-logout'].map((id) => [id, new El('div')]));
   ids.community.dataset = { profile: perfil.id, tab: 'profile' };
   const posts = [], listeners = {};
   const ctx = vm.createContext({
@@ -61,7 +61,7 @@ async function noJogo(b, { perfil = PERFIL, eu = null, post = async () => ({ ok:
   vm.runInContext(semImport(b.community), ctx, { timeout: 1000 });
   const esperar = async () => { for (let n = 0; n < 16; n++) await new Promise((r) => setImmediate(r)); };
   await esperar();
-  return { raiz: ids['social-content'], conta: ids['social-account'], posts, reabrir: async () => { listeners['cs-community-open']?.({ detail: { tab: 'profile' } }); await esperar(); } };
+  return { raiz: ids['social-content'], conta: ids['social-account'], logout: ids['social-logout'], posts, reabrir: async () => { listeners['cs-community-open']?.({ detail: { tab: 'profile' } }); await esperar(); } };
 }
 const linhaViews = (raiz) => todos(raiz).find((n) => n.className === 'social-profile-views');
 
@@ -115,9 +115,10 @@ const CASOS = [
   }],
   ['VW3 · backend sem a 064 não apaga o perfil nem a sessão', async (b) => {
     for (const post of [async () => ({ ok: false, status: 401, json: async () => ({ error: 'session_expired' }) }), async () => ({ ok: false, status: 400, json: async () => ({ error: 'bad' }) }), async () => { throw new Error('rede'); }]) {
-      const x = await noJogo(b, { post });
+      const x = await noJogo(b, { eu: EU, post });
       if (!/Views Fixture/.test(texto(x.raiz))) return 'falha do aviso apagou o perfil';
       if (/Não foi possível|indisponível/.test(texto(x.raiz))) return 'falha do aviso virou erro na tela';
+      if (x.logout.hidden) return 'falha do aviso derrubou a sessão';
     }
     return null;
   }],

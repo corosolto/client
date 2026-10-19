@@ -5,19 +5,33 @@ const DICAS_S = 60;
 const PING_MS = 4000;
 const RETRATOS = 5;
 const ID_SEGURO = /^[\w-]+$/;
+const PLAYER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SVG_HS = '<svg class="tp-hs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" role="img" aria-label="Headshot">'
   + '<circle cx="12" cy="12" r="8"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/></svg>';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
-/* Nem todo personagem tem retrato hero: cai no recorte, depois no avatar, depois num quadro vazio. */
 const VAZIO = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
-function arte(img, id) {
-  const fila = id ? [`/img/chars-hero/${id}.webp`, `/img/chars/${id}.webp`, `/img/chars/avatars/${id}.webp`] : [];
+function arte(img, fontes) {
+  const token = String((Number(img.dataset.arteToken) || 0) + 1);
+  img.dataset.arteToken = token;
+  img.onerror = null;
+  img.removeAttribute('src');
+  img.src = VAZIO;
   let i = 0;
-  img.onerror = () => { i += 1; img.src = fila[i] || VAZIO; if (!fila[i]) img.onerror = null; };
-  img.src = fila[0] || VAZIO;
+  const proxima = () => {
+    if (img.dataset.arteToken !== token) return;
+    const fonte = fontes[i++];
+    if (!fonte) { img.onerror = null; img.src = VAZIO; return; }
+    img.onerror = proxima;
+    img.src = fonte;
+  };
+  proxima();
 }
+const artePersonagem = (img, id) => arte(img, id
+  ? [`/img/chars-hero/${id}.webp`, `/img/chars/${id}.webp`, `/img/chars/avatars/${id}.webp`]
+  : []);
+const arteJogador = (img, pid) => arte(img, PLAYER_ID.test(pid || '') ? [`/api/social-avatar?id=${pid}`] : []);
 const livre = (t) => !(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || t.closest?.('[data-entrada-propria]')));
 
 let jogo = null;
@@ -108,10 +122,13 @@ function atualizarRetratos(g) {
     time.forEach((c, i) => {
       let img = fila.children[i];
       if (!img) { img = el('img', 'tp-hud-retrato'); img.width = 34; img.height = 34; img.decoding = 'async'; fila.append(img); }
+      const pid = (c.isPlayer || c._netBot === false) && PLAYER_ID.test(c._playerId || '') ? c._playerId : '';
       const id = c.def?.id && ID_SEGURO.test(c.def.id) ? c.def.id : '';
-      if (img.dataset.id !== id) {
-        img.dataset.id = id;
-        arte(img, id);
+      const identidade = pid ? `p:${pid}` : `c:${id}`;
+      if (img.dataset.identidade !== identidade) {
+        img.dataset.identidade = identidade;
+        if (pid) arteJogador(img, pid);
+        else artePersonagem(img, id);
       }
       img.toggleAttribute('data-morto', !c.alive);
       img.toggleAttribute('data-eu', !!c.isPlayer);
@@ -154,10 +171,13 @@ function observarPlacar() {
       if (tr_.querySelector('.tp-sb-hs')) continue;
       const nome = tr_.firstElementChild;
       const id = tr_.dataset.av;
-      if (nome && id && ID_SEGURO.test(id)) {
+      const jogador = tr_.dataset.avKind === 'player';
+      const idValido = jogador ? PLAYER_ID.test(id || '') : ID_SEGURO.test(id || '');
+      if (nome && idValido) {
         const av = el('img', 'tp-sb-av');
         av.alt = ''; av.width = 28; av.height = 28; av.decoding = 'async';
-        arte(av, id);
+        if (jogador) arteJogador(av, id);
+        else artePersonagem(av, id);
         nome.prepend(av);
       }
       const hsTd = el('td', 'tp-sb-hs');
