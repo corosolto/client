@@ -79,7 +79,14 @@ const browser = await chromium.launch({
 });
 
 async function abreContexto() {
-  const ctx = await browser.newContext({ ...devices['Pixel 5'] });
+  /* Deitado, e não o retrato padrão do Pixel 5: no celular o jogo trava a orientação em paisagem
+     (app.json do shell, screen.orientation.lock no main.js) e o #touch-ui só existe assim. Em
+     retrato o roteiro tocava no vazio e o relatório saía completo com zero interação — carimbo. */
+  const ctx = await browser.newContext({
+    ...devices['Pixel 5'],
+    viewport: { width: 780, height: 360 },
+    screen: { width: 780, height: 360 },
+  });
   await ctx.addInitScript(() => {
     try { localStorage.clear(); localStorage.setItem('awpbr_nick', 'QA'); } catch { /* aba anônima */ }
     Object.defineProperty(navigator, 'deviceMemory', { configurable: true, get: () => 8 });
