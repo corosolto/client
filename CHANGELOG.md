@@ -26,6 +26,8 @@
 ## Não lançado — 2026-10-19
 
 ### Adicionado
+- Quem joga pelo aplicativo passa a ver aviso de manutenção e, quando houver, o caminho alternativo para continuar jogando, sem precisar esperar uma atualização na loja.
+- O jogo agora sabe se testar sozinho no celular: uma partida curta automática mede desempenho, travadas e erros no próprio aparelho, para o problema aparecer antes do jogador reclamar.
 - O mapa ao vivo mostra cidades, partidas e rounds por agregado geográfico, sem publicar nick, jogador, IP ou posição individual.
 - Visitantes que concluem uma partida multiplayer podem vincular a recompensa TRETA$ ao entrar na conta. O pagamento usa o resultado confirmado pelo nó e aceita o vínculo uma vez.
 - Mudanças de nível exibem uma chamada visual com som. O ranking ganhou filtro por Time E e Time B.

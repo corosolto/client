@@ -4975,4 +4975,9 @@ if (inspectionScreen) {
   if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
   else entrarQuandoPuder();
 }
+/* QA MOBILE (qa-mobile.js, contrato em tools/eval/qa-mobile-check.mjs): import DINÂMICO atrás
+   do portão — sessão normal não baixa o arquivo. `__CS_QA__` é a injeção do app de loja. */
+if (params.get('qa') === 'mobile' || window.__CS_QA__) {
+  void import('./qa-mobile.js').then((m) => m.ligarQaMobile()).catch(() => { /* QA não derruba partida */ });
+}
 import {rankingTable,playerProfilePath} from './ranking-player.js';
