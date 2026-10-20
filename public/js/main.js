@@ -989,6 +989,18 @@ function snapThumb(obj, fallbackUrl) {
 }
 // Each character shows off a weapon that fits their vibe (not everyone with an AK).
 // CHAR_WEAPON/charWeapon live in characters.js, shared with game.js (initial loadout).
+/* O personagem do lobby segura a arma EQUIPADA pelo jogador, com a pintura dela (pedido do
+   dono, 20/10). Sem skin equipada vale a arma de vibe do personagem (charWeapon). */
+const ORDEM_ARMA_EQUIPADA = ['ak', 'm4', 'scar', 'pistol'];
+function armaDoPreview(charId) {
+  const pack = tretaPack(equippedTretaPack());
+  const skinDe = (weaponId) => pack?.weaponSkins?.[weaponId] || equippedTretaWeaponSkin(weaponId);
+  const daVibe = charWeapon(charId);
+  // Preferência: a arma do personagem, se ela mesma tiver pintura equipada.
+  if (skinDe(daVibe)) return { weaponId: daVibe, weaponSkinId: skinDe(daVibe) };
+  const comSkin = ORDEM_ARMA_EQUIPADA.find((weaponId) => skinDe(weaponId));
+  return comSkin ? { weaponId: comSkin, weaponSkinId: skinDe(comSkin) } : { weaponId: daVibe, weaponSkinId: null };
+}
 let pvToken = 0;
 function pvSetChar(def) {
   def = {...def, skinId:equippedTretaSkin(def.id),eyewearId:equippedTretaEyewear()};
@@ -1009,17 +1021,28 @@ function pvSetChar(def) {
   if (GLB_CHARS.has(def.id)) {
     // Keep the PREVIOUS model visible while the real GLB streams in — never flash the
     // blocky placeholder for a character that has a real model (the pop-in bug).
-    Promise.all([preloadCharacterAssets([def.id]),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId])]).then(() => {
+    const arma = armaDoPreview(def.id);
+    Promise.all([preloadCharacterAssets([def.id]),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
+      preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId)]).then(() => {
       if (my !== pvToken) return;
       // preview: porte de EXIBIÇÃO — arma atravessada no peito (estilo vitrine do CS) em
       // vez do porte funcional que aponta o cano pra câmera e esconde a silhueta da arma
       // (era o "posturas bizarras" de 05/08). Ângulos por classe em glbchars.js. No jogo,
       // nada muda.
-      const m = hasModel(def.id) ? buildCharacterModel(def, { weaponId: charWeapon(def.id), preview: true }) : null;
+      const m = hasModel(def.id) ? buildCharacterModel(def, { weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, preview: true }) : null;
       if (!m) { showBox(); return; }
       if (p.model) p.scene.remove(p.model);
-      // Somente o GLB real marca o canvas para web-assets.spec.js.
-      $('char-preview').dataset.glb = '1';
+      // Evidência do que foi montado na mão (régua LB20): os valores saem do objeto 3D,
+      // não da intenção - canvas não se lê e intenção não prova nada.
+      const cv = $('char-preview');
+      let armaNaMao = null, pinturaNaMao = '';
+      m.group.traverse((o) => {
+        if (!armaNaMao && (o.name === 'arma-glb' || o.name === 'arma-caixa')) armaNaMao = o;
+        if (!pinturaNaMao && o.userData?.weaponSkin) pinturaNaMao = o.userData.weaponSkin;
+      });
+      cv.dataset.glb = '1';
+      cv.dataset.arma = armaNaMao ? arma.weaponId : '';
+      cv.dataset.armaSkin = pinturaNaMao;
       m.group.rotation.y = -0.4;
       p.model = m.group; p.mixer = m.mixer; p.ctrl = m.ctrl;
       p.scene.add(m.group);

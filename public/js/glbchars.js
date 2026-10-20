@@ -491,7 +491,9 @@ export function buildCharacterModel(def, opts = {}) {
   if (handBone && withWeapon) {
     /* O nome é o que torna a queda em caixa MEDÍVEL: sem ele a arma procedural some calada
        dentro da cena e nenhuma régua enxerga (ARM2). */
-    const glb = weaponModel(opts.weaponId || 'awp');
+    // `weaponSkinId` é a pintura equipada: o preview do lobby mostra a arma do jogador
+    // como ela é no jogo. `null` mantém o default (pintura de revisão por ?weaponskin).
+    const glb = weaponModel(opts.weaponId || 'awp', opts.weaponSkinId ?? undefined);
     const gun = glb || buildRifle();
     gun.name = glb ? 'arma-glb' : 'arma-caixa';
     // Flip de 180° SÓ na 3ª pessoa p/ armas que ficam de costas no mount (o cano +Z da

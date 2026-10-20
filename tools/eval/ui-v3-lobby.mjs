@@ -22,7 +22,7 @@ const TRETA = {
   campaign: { starts_at: '2026-01-01T00:00:00Z', ends_at: '2099-01-01T00:00:00Z', email_reward: 50, referral_reward: 100,
     referral_cap: 3, sp_reward: 10, mp_reward: 20, daily_match_cap: 60 },
   quests: { email: 0, referral: 1, singleplayer: 2, multiplayer: 0 },
-  /* Inventário equipado exercita a faixa EQUIPADO junto do personagem (LB20). */
+  /* Skin de AK equipada: o personagem do lobby tem de segurar a AK com essa pintura (LB20). */
   inventory: [{ skin_id: 'estrela-vermelha-ak', equipped: true }, { skin_id: 'luvas-tropicalente', equipped: true }],
   catalog: [
     { id: 'estrela-vermelha-ak', available: true, slot: 'weapon', weapon_id: 'ak', price: 500, model_path: '/models/weapons/ak.glb' },
@@ -46,7 +46,7 @@ const MUTANTES = {
   'coluna-larga': [/\/css\/tp\/lobby\.css/, (t) => t.replace('--tp-lobby-coluna:380px;', '--tp-lobby-coluna:760px;')],
   'toque-baixo': [/\/css\/tp\/lobby\.css/, (t) => t.replace('--tp-lobby-toque:44px;', '--tp-lobby-toque:30px;')],
   'sem-traducao': [/\/js\/i18n\.js/, (t) => t.replace("'ARMÁRIO': 'LOCKER',", '')],
-  'equipado-mudo': [/\/js\/tp\/lobby\.js/, (t) => t.replace('painel.hidden = itens.length === 0;', 'painel.hidden = true;')],
+  'arma-sem-skin': [/\/js\/main\.js/, (t) => t.replace('weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, preview: true', 'weaponId: arma.weaponId, weaponSkinId: null, preview: true')],
   'flag-vaza': [/\/js\/main\.js/, (t) => t.replace("if (document.documentElement.dataset.ui === 'v3') {\n  import('./splash-v3.js')", "if (true) {\n  import('./splash-v3.js')")],
   'gire-sem-arte': [/\/css\/tp\/lobby\.css/, (t) => t.replace("url('/img/loading-1.webp') 30% 50%/cover", 'none')],
   'mais-sem-feedback': [/\/js\/tp\/lobby\.js/, (t) => t.replace("{ id: 'feedback', rotulo: 'FEEDBACK', ir: () => abaDoHub('feedback') },", '')],
@@ -221,25 +221,16 @@ async function medir(mutante = '', alvo = '') {
     }
     add('LB9', rede === '', rede || 'VS BOTS, MULTIPLAYER e PRIVADA levam o hub ao estado certo e marcam aria-pressed');
 
-    /* Equipado: a faixa junto do personagem mostra o que está vestido e leva à loja. */
-    let equip = { visivel: false, cards: [], abriu: false };
+    /* Arma equipada NA MÃO do personagem do lobby: o preview monta a arma que o jogador
+       equipou, com a pintura dela. O canvas 3D não se lê, então o que foi montado vira
+       dataset (main.js/pvSetChar) - é isso que esta cláusula mede. */
+    let arma = { glb: '', id: '', skin: '' };
     if (quer('LB20')) {
-      await page.waitForTimeout(600);
-      equip = await page.evaluate(() => {
-        const painel = document.getElementById('tp-equipado');
-        return { visivel: !!painel && !painel.hidden && painel.checkVisibility(),
-          cards: [...painel?.querySelectorAll('.tp-equipado__cartao') || []].map((c) => ({
-            nome: c.querySelector('.tp-equipado__nome')?.textContent || '', poster: (c.querySelector('.tp-equipado__poster')?.naturalWidth || 0) > 0 })) };
+      await page.waitForTimeout(1200);
+      arma = await page.evaluate(() => {
+        const cv = document.getElementById('char-preview');
+        return { glb: cv?.dataset.glb || '', id: cv?.dataset.arma || '', skin: cv?.dataset.armaSkin || '' };
       });
-      if (equip.visivel && equip.cards.length) {
-        await page.click('#tp-equipado .tp-equipado__cartao');
-        await page.waitForTimeout(700);
-        equip.abriu = await page.evaluate(() => document.getElementById('main-menu').dataset.hubTab === 'loja' && document.getElementById('treta-detail')?.open === true);
-        await page.keyboard.press('Escape');
-        await page.waitForTimeout(300);
-        await page.click('[data-tp-aba="jogar"]');
-        await page.waitForTimeout(400);
-      }
     }
     /* Novidades de skins: pôster carregado em cada card e o clique abre a loja no detalhe. */
     let skins = { dados: [], abriu: false };
@@ -257,9 +248,8 @@ async function medir(mutante = '', alvo = '') {
         await page.waitForTimeout(400);
       }
     }
-    const equipErras = equip.cards.filter((c) => !c.nome || !c.poster);
-    add('LB20', equip.visivel && equip.cards.length >= 2 && !equipErras.length && equip.abriu,
-      equip.visivel ? `${equip.cards.length} cards equipados${equipErras.length ? `; sem pôster/nome: ${equipErras.length}` : ''}; clique ${equip.abriu ? 'abre a loja no detalhe' : 'não abriu o detalhe'}` : 'faixa EQUIPADO não apareceu');
+    add('LB20', arma.glb === '1' && arma.id === 'ak' && arma.skin === 'estrela-vermelha-ak',
+      `preview monta arma='${arma.id || 'nenhuma'}' pintura='${arma.skin || 'nenhuma'}'${arma.glb === '1' ? '' : ' (sem GLB real)'}`);
     const skinsErradas = skins.dados.filter((s) => !s.nome || !s.poster).map((s) => s.id);
     add('LB19', skins.dados.length >= 5 && !skinsErradas.length && skins.abriu,
       `${skins.dados.length} cards de skins${skinsErradas.length ? `; sem pôster/nome: ${skinsErradas.join(', ')}` : ''}; clique ${skins.abriu ? 'abre a loja no detalhe' : 'não abriu o detalhe'}`);
@@ -435,7 +425,7 @@ async function medir(mutante = '', alvo = '') {
 const MUT = [['abas-velhas', 'LB1'], ['ajustes-mudo', 'LB2'], ['confirma-de-novo', 'LB3'], ['convidado-bloqueado', 'LB18'], ['enter-do-splash', 'LB4'],
   ['personagem-no-canto', 'LB5'], ['convite-mudo', 'LB6'], ['erro-mudo', 'LB6'], ['quest-inventada', 'LB7'], ['passe-sem-backend', 'LB8'],
   ['rede-trocada', 'LB9'], ['coluna-larga', 'LB10'], ['toque-baixo', 'LB11'], ['sem-traducao', 'LB12'], ['flag-vaza', 'LB13'],
-  ['gire-sem-arte', 'LB14'], ['mais-sem-feedback', 'LB15'], ['chip-sem-nome', 'LB16'], ['dois-limas', 'LB17'], ['skins-mudas', 'LB19'], ['equipado-mudo', 'LB20']];
+  ['gire-sem-arte', 'LB14'], ['mais-sem-feedback', 'LB15'], ['chip-sem-nome', 'LB16'], ['dois-limas', 'LB17'], ['skins-mudas', 'LB19'], ['arma-sem-skin', 'LB20']];
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO === m)) {
