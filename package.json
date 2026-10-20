@@ -113,6 +113,7 @@
     "eval:site": "node tools/eval/site-smoke.mjs",
     "eval:error-console": "node tools/eval/error-console-check.mjs",
     "eval:edgecache": "node tools/eval/edge-cache-check.mjs",
+    "eval:cspwasm": "node tools/eval/csp-wasm-check.mjs",
     "eval:webgl": "node tools/eval/webgl-compat-check.mjs",
     "eval:webglguard": "node tools/eval/webgl-guard-check.mjs",
     "eval:shaderlog": "node tools/eval/shader-log-check.mjs",
