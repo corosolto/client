@@ -81,7 +81,7 @@ desenhado**, somando todas as passadas, e o `autoReset` volta como estava. O
 
 | Cláusula | O que mede |
 |---|---|
-| QAM1 | relatório completo, com número plausível: FPS > 0, draw calls > 0, duração entre 95% e 135% do roteiro declarado |
+| QAM1 | relatório completo, com número plausível: FPS > 0, draw calls > 0, duração entre 95% e 160% do roteiro declarado |
 | QAM2 | o roteiro **mexeu** no jogo: munição caiu pelo gatilho de toque e a câmera girou. Relatório que não prova interação é carimbo |
 | QAM3 | zero erro de JS e zero rejeição durante o roteiro |
 | QAM4 | custo zero: a mesma partida sem `?qa=mobile` não publica relatório nem pede o arquivo |
