@@ -139,6 +139,20 @@
   font:800 15px/1 var(--tp-ui);letter-spacing:.06em;cursor:pointer;pointer-events:auto;transition:transform var(--tp-d-rapido) var(--tp-ease-saida)}
 .tp-lobby-vaga__convidar:active{transform:scale(calc(1 - .04 * var(--tp-mov)))}
 .tp-lobby-vaga__convidar:focus-visible{outline:2px solid var(--tp-tinta-1);outline-offset:3px}
+
+/* Equipado no lobby: faixa sobre o preview do personagem com o que está vestido. */
+.tp-equipado{position:absolute;left:8px;right:8px;bottom:8px;z-index:2;display:flex;flex-direction:column;gap:5px;padding:10px 8px 8px;border-radius:12px;
+  background:linear-gradient(180deg,rgba(9,7,4,0),rgba(9,7,4,.88) 34%);pointer-events:none}
+.tp-equipado[hidden]{display:none}
+.tp-equipado__titulo{font-size:14px;letter-spacing:.14em;color:var(--tp-tinta-3)}
+.tp-equipado__faixa{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px;pointer-events:auto}
+.tp-equipado__cartao{flex:0 0 auto;width:76px;display:flex;flex-direction:column;gap:3px;padding:0;border:1px solid rgba(255,255,255,.16);border-radius:9px;
+  background:rgba(19,20,24,.92);color:var(--tp-tinta-1);cursor:pointer;text-align:left;transition:transform var(--tp-d-rapido) var(--tp-ease-saida)}
+.tp-equipado__cartao:hover{transform:translateY(calc(-2px * var(--tp-mov)))}
+.tp-equipado__cartao:focus-visible{outline:2px solid var(--tp-lima);outline-offset:2px}
+.tp-equipado__poster{display:block;width:100%;height:64px;object-fit:cover;border-radius:8px 8px 0 0}
+.tp-equipado__nome{padding:0 6px 5px;font:800 10px/1.2 var(--tp-ui);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+:root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character .char-preview-box{position:relative}
 .tp-lobby-party{display:none;align-items:center;gap:8px;box-sizing:border-box;width:100%;min-height:var(--tp-lobby-toque);padding:6px;border-radius:10px;
   border:1px solid rgba(255,255,255,.09);background:rgba(19,20,24,.9);color:var(--tp-tinta-1);font:800 13px/1 var(--tp-ui);letter-spacing:.04em;text-align:left;cursor:pointer}
 .tp-lobby-party__eu{display:grid;place-items:center;width:32px;height:32px;box-sizing:border-box;border-radius:8px;border:2px solid var(--tp-lima);background:var(--tp-fundo)}
