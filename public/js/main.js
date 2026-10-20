@@ -4952,4 +4952,11 @@ if (inspectionScreen) {
   if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
   else entrarQuandoPuder();
 }
+/* QA MOBILE: harness de medição em aparelho (public/js/qa-mobile.js). O import é DINÂMICO e
+   fica atrás do portão — sessão normal não baixa o arquivo, que é a prova de custo zero que a
+   cláusula QAM4 de tools/eval/qa-mobile-check.mjs cobra. `?qa=mobile` é o caminho do operador;
+   `window.__CS_QA__` é o que a WebView do app de loja injeta antes da carga. */
+if (params.get('qa') === 'mobile' || window.__CS_QA__) {
+  void import('./qa-mobile.js').then((m) => m.ligarQaMobile()).catch(() => { /* QA não derruba partida */ });
+}
 import {rankingTable,playerProfilePath} from './ranking-player.js';
