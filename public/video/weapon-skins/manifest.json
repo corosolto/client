@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-19T09:21:53.428Z",
+  "generatedAt": "2026-10-20T00:02:31.509Z",
   "source": "weapon-skin-review.html",
   "capture": {
     "width": 960,
@@ -8,7 +8,7 @@
     "spin": 0.16,
     "durationSeconds": 3
   },
-  "count": 40,
+  "count": 42,
   "entries": [
     {
       "owner": "trabalho-13-ak",
@@ -405,6 +405,26 @@
       "weapon": "pistol",
       "skinId": "pack-prateado-pistol",
       "output": "/video/weapon-skins/pack-prateado-pistol.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "ondas-cariocas",
+      "weapon": "m4",
+      "skinId": "ondas-cariocas",
+      "output": "/video/weapon-skins/ondas-cariocas.webm",
+      "duration": 3,
+      "width": 960,
+      "height": 540,
+      "codec": "vp9"
+    },
+    {
+      "owner": "mosaico-paulista",
+      "weapon": "scar",
+      "skinId": "mosaico-paulista",
+      "output": "/video/weapon-skins/mosaico-paulista.webm",
       "duration": 3,
       "width": 960,
       "height": 540,

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {execFileSync,execSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
 import {mkdir,rm,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -30,12 +31,16 @@ const targets=[
 ];
 const tupleKeys=targets.map(({owner,weapon,skinId,output})=>JSON.stringify([owner,weapon,skinId,output]));
 const outputKeys=targets.map(({output})=>output);
-if(targets.length!==40 || new Set(tupleKeys).size!==40 || new Set(outputKeys).size!==40){
+if(new Set(tupleKeys).size!==targets.length || new Set(outputKeys).size!==targets.length){
   throw new Error(`catálogo de vídeos inválido: ${targets.length} linhas, ${new Set(tupleKeys).size} tuplas e ${new Set(outputKeys).size} saídas únicas`);
 }
 for(const target of targets){
   if(target.output!==`/video/weapon-skins/${target.skinId}.webm`)throw new Error(`saída divergente para ${target.skinId}: ${target.output}`);
 }
+/* --ids=<a,b> regenera só a lista pedida e mantém as demais entradas do manifesto. */
+const only=process.argv.find(arg=>arg.startsWith('--ids='))?.slice(6).split(',').filter(Boolean) || null;
+const runTargets=only?targets.filter(target=>only.includes(target.skinId)):targets;
+if(only && runTargets.length!==only.length)throw new Error(`--ids com itens fora do catálogo: ${only.join(',')}`);
 
 await rm(TMP,{recursive:true,force:true});
 await mkdir(TMP,{recursive:true});
@@ -47,7 +52,7 @@ const browser=await chromium.launch({args:['--use-angle=swiftshader','--enable-u
 const entries=[];
 
 try{
-  for(const [index,target] of targets.entries()){
+  for(const [index,target] of runTargets.entries()){
     const captureDir=path.join(TMP,String(index).padStart(2,'0'));
     await mkdir(captureDir,{recursive:true});
     const context=await browser.newContext({viewport:SIZE,recordVideo:{dir:captureDir,size:SIZE}});
@@ -94,13 +99,21 @@ try{
   await browser.close();
 }
 
+/* Execução parcial sobrepõe só o que capturou; o resto do manifesto permanece. */
+let manifestEntries=entries;
+if(only){
+  try{
+    const previous=JSON.parse(readFileSync(MANIFEST,'utf8'));
+    manifestEntries=[...previous.entries.filter(entry=>!entries.some(fresh=>fresh.output===entry.output)),...entries];
+  }catch{ /* sem manifesto anterior: primeiro run parcial cria a base */ }
+}
 const manifest={
   version:1,
   generatedAt:new Date().toISOString(),
   source:'weapon-skin-review.html',
   capture:{width:SIZE.width,height:SIZE.height,spin:Number(SPIN),durationSeconds:3},
-  count:entries.length,
-  entries,
+  count:manifestEntries.length,
+  entries:manifestEntries,
 };
 await writeFile(MANIFEST,`${JSON.stringify(manifest,null,2)}\n`);
 console.log(JSON.stringify({...manifest,manifest:path.relative(ROOT,MANIFEST)},null,2));
