@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.112`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.113`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -134,6 +134,50 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.113] — 2026-10-20
+
+### Mudado
+- feat(loja): personagens como aba inicial e luvas em categoria própria (#1030)
+- fix(mobile): manter JOGAR AGORA visível em paisagem (#1014)
+- feat(lobby): widget de novidades de skins (#1031)
+- feat(loja): histórico de compras na carteira (#1032)
+- Corrige abertura do próprio perfil e configurações (#1035)
+- Perf: sessões móveis estáveis no Galaxy A25 (#1036)
+- feat(lobby): faixa EQUIPADO junto do personagem (#1033)
+- feat(treta): lane rio em produção — arte + colorways M4/SCAR (#1034)
+- fix(vm): decoder meshopt no loader — AK invisível em primeira pessoa (#1037)
+- fix(vm): registrar decoder meshopt no loader do viewmodel autorado
+- Loja sem nome real e vídeos da lane rio
+- perf: estabiliza sessões móveis longas
+- Corrige abertura e abas do perfil
+- feat(treta): colorways M4 Ondas Cariocas e SCAR Mosaico Paulista na loja
+- feat(lobby): faixa EQUIPADO junto do personagem
+- feat(loja): histórico de compras na carteira
+- feat(lobby): widget de novidades de skins
+- feat(loja): personagens como aba inicial e luvas em categoria própria
+- feat(treta): ampliar textos das skins
+- feat(treta): ampliar packs e previews de armas
+- fix(cosmetics): align Caveira, Liberdade, and MAGA packs
+- fix(cosmetics): contain weapon decals and refine Emo skull
+- fix(cosmetics): strengthen MAGA and Emo pack art
+- docs(mobile): registrar draft e gate de entrega
+- test(mobile): aguardar modal completo na regua
+- fix(mobile): mostrar acao de jogar em paisagem
+- test(treta): cover categorized store tabs
+- feat(treta): add coordinated weapon packs
+- feat(treta): add eight first-person glove skins
+- fix(weapons): improve pistol mark placement
+- chore: refresh expanded weapon skin evidence
+- fix: refresh readable political skin previews
+- feat: expand and refine weapon skins
+- chore: refresh fitted weapon skin evidence
+- fix: fit political marks to weapon geometry
+- feat: sell and inspect weapon skins
+- feat: add weapon skin asset collection
+- chore: repin weapon skin evidence
+- fix: keep club crests visible ingame
+- feat: add regional and club weapon skin previews
 
 ## [2.1.0-alpha.112] — 2026-10-19
 
