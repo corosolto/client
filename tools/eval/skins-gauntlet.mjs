@@ -110,6 +110,10 @@ async function medir(item, baseline = false) {
       await page.evaluate(() => document.getElementById('btn-jogar')?.click());
       await page.waitForFunction(() => window.__game?._mapId, null, { timeout: 150000 }).catch(() => {});
       await page.waitForTimeout(9000);
+      // Sem ativar a mira, o viewmodel fica na pose de espera e as MÃOS saem do quadro -
+      // a captura do jogo vinha sem a luva que ela deveria mostrar.
+      await page.mouse.click(550, 420).catch(() => {});
+      await page.waitForTimeout(1500);
       if (item.weaponId) await page.evaluate((w) => window.__game?._switchWeapon?.(w), item.weaponId);
       await page.waitForTimeout(6000);
       r.jogo = await page.evaluate(() => {
