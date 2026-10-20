@@ -38,6 +38,24 @@ Não entra em automerge:
 Use a branch `staging` para validar combinações de PRs antes de produção.
 O workflow de staging deve apontar para `STAGING_URL`.
 
+## Depois do deploy
+
+Os checks acima param no merge. O app de loja é uma WebView apontada para a produção
+e recebe cada deploy na hora, sem revisão de loja — então todo deploy de produção é
+seguido de:
+
+```bash
+BASE=https://www.csbrasil.online npm run smoke:prod
+```
+
+Abre uma partida real no endereço publicado, espera ela ficar viva, assiste ~15 s e
+sai 1 se o jogo não abriu, quebrou no console ou não desenhou (`tools/eval/smoke-pos-deploy.mjs`,
+menos de 2 min). Reprovou: reverta o deploy. Se o conserto demorar, `public/mobile-config.json`
+avisa manutenção no app sem publicar app novo — ver `docs/mobile/CONFIG-REMOTO.md`.
+
+De propósito, `smoke:prod` **não** entra em `check:fast` nem em `check:deploy`: depende de
+rede externa e mede o que está no ar, não o que está no disco.
+
 ## Crash triage
 
 Issues `crash-auto` devem ser agrupadas por assinatura de erro antes de
