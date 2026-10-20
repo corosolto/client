@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { runInNewContext } from 'node:vm';
+import { assetUrl } from '../../public/js/data/asseturl.js';
 const mut=process.argv.find(a=>a.startsWith('--mutante='))?.split('=')[1];
 const expected={'sem-rig':'LA2','sem-clipe':'LA2','textura-ausente':'LA3','hash-divergente':'LA1','cache-velho':'LA4'};
 if(mut&&!expected[mut])throw Error('Mutante desconhecido');
@@ -34,16 +35,20 @@ for(const [name,count] of [['cabra',2],['galinha',1],['pintinho',3]]){
 const source=readFileSync('public/js/ambientlife.js','utf8'),start=source.indexOf('export async function preloadAmbientLife'),end=source.indexOf('\n}',start)+2;
 if(start<0||end<2)throw Error('Preloader não encontrado');
 let fn=source.slice(start,end).replace('export ','');
-if(mut==='cache-velho'){const next=fn.replace('?v=${revision}','?v=${VERSION}');if(next===fn)throw Error('Mutante não aplicado');fn=next;}
+/* A tabela de revisão escrita à mão virou o mapa gerado de data/assetver.js. O mutante
+   devolve a URL ao release: é o cache velho que LA4 existe para impedir. */
+if(mut==='cache-velho'){const next=fn.replace('assetUrl(ASSETS[id])','`${ASSETS[id]}?v=${VERSION}`');if(next===fn)throw Error('Mutante não aplicado');fn=next;}
 const urls=[],assets={sertaoGoat:'models/ambient/sertao_cabra.glb',sertaoHen:'models/ambient/sertao_galinha.glb',sertaoChick:'models/ambient/sertao_pintinho.glb'};
-const preload=runInNewContext(`(${fn})`,{ASSETS:assets,FAVELA_AMBIENCE_ASSETS:[],templates:new Map(),VERSION:'fixture',console,
+const preload=runInNewContext(`(${fn})`,{ASSETS:assets,FAVELA_AMBIENCE_ASSETS:[],templates:new Map(),VERSION:'fixture',console,assetUrl,
  loadGLB:async url=>{urls.push(url);return {scene:{traverse(){}},animations:[]}}});
 await preload(Object.keys(assets));
 const checks={
  LA1:rows.length===3&&rows.every(r=>!r.missing&&r.provenance),
  LA2:rows.every(r=>r.rigged&&r.animated&&r.footNodes.length===(r.name==='cabra'?4:2)),
  LA3:rows.every(r=>r.meshCount===1&&r.materialCount===1&&r.textured&&r.textures.length===1&&r.textures.every(t=>t.width<=1024&&t.height<=1024))&&rows.reduce((s,r)=>s+r.count*r.tris,0)<=26000,
- LA4:rows.every(r=>urls.includes(`models/ambient/sertao_${r.name}.glb?v=${registry[`sertao-${r.name}-animada`]?.processing?.finalSha256.slice(0,12)}`)),
+ /* O hash servido é o do arquivo em disco, e LA1 amarra esse arquivo ao finalSha256 do
+    registro da Mint: junto, provam que o jogador baixa o GLB aprovado e só rebaixa quando ele muda. */
+ LA4:rows.every(r=>urls.includes(`models/ambient/sertao_${r.name}.glb?v=${r.hash.slice(0,10)}`)),
 };
 const failed=Object.keys(checks).filter(k=>!checks[k]);
 console.log(JSON.stringify({checks,rows,urls,failed}));
