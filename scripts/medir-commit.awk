@@ -4,6 +4,6 @@
 # o filtro passou verde sem excluir nada (greptile, PR #207).
 # Saída: "<arquivos> <linhas>". Binário (numstat "-") não entra na conta de linhas.
 BEGIN { FS = "\t" }
-$3 ~ /^(public\/docs\/|graphify-out\/|docs\/i18n\/|package-lock\.json|CHANGELOG\.md|STATUS\.md|tools\/eval\/ARCH\.md|public\/js\/version\.js)/ { next }
+$3 ~ /^(public\/docs\/|graphify-out\/|docs\/i18n\/|package-lock\.json|CHANGELOG\.md|STATUS\.md|tools\/eval\/ARCH\.md|public\/js\/version\.js|public\/js\/data\/assetver\.js)/ { next }
 NF >= 3 { arquivos++; if ($1 != "-") linhas += $1 + $2 }
 END { print arquivos + 0, linhas + 0 }
