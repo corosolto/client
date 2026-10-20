@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
 import { authoredFrameFor, VM_FAMILY, VM_WEAPON, VM_FABRICA } from './data/vmconfig.js';
 import { VM_RUNTIME } from './vmlaunch.js';
 import { GOLDEN_VER } from './data/goldenver.js';
@@ -98,9 +99,18 @@ let skeletonClonePromise = null;
 export function acceptsAuthoredLoad({ request, activeRequest, key, activeKey, utility = false }) {
   return request === activeRequest && key === activeKey && !utility;
 }
+/* GLB pago pode vir comprimido com meshopt (ak-hires.glb, rota gold#ak): sem o decoder o parse explode e a família morre — AK invisível em 1ª pessoa. Decoder do vendor via import dinâmico. */
+let meshoptDecoderPromise = null;
+const meshoptDecoder = () => (meshoptDecoderPromise ||= import('../vendor/meshopt_decoder.module.js').then((m) => m.MeshoptDecoder).catch(() => null));
+const vmLoader = async () => {
+  const loader = new GLTFLoader();
+  const decoder = await meshoptDecoder();
+  if (decoder) loader.setMeshoptDecoder(decoder);
+  return loader;
+};
 function loadFamilyGltf(key) {
   if (!GLTF_CACHE.has(key)) {
-    GLTF_CACHE.set(key, pagoComRetry(key, () => new GLTFLoader().loadAsync(urlForKey(key))).catch((error) => {
+    GLTF_CACHE.set(key, pagoComRetry(key, () => vmLoader().then((loader) => loader.loadAsync(urlForKey(key)))).catch((error) => {
       GLTF_CACHE.delete(key);
       throw error;
     }));
@@ -171,7 +181,7 @@ function generalMotions() {
   if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve(null);
   if (!generalMotionsPromise) {
     generalMotionsPromise = pagoComRetry('shared/general-runtime.glb',
-      () => new GLTFLoader().loadAsync(sharedUrl('shared/general-runtime.glb')))
+      () => vmLoader().then((loader) => loader.loadAsync(sharedUrl('shared/general-runtime.glb'))))
       .then((gltf) => new Map(gltf.animations.map((clip) => [clip.name, clip])))
       .catch((error) => {
         degradouAssetPago('general-runtime.glb', error);
