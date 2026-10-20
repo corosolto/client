@@ -35,6 +35,7 @@
 ### Alterado
 - O ranking público usa somente partidas verificadas e aceita exclusões auditadas. A atividade pública respeita a configuração do perfil, e a lista de amigos separa quem está online agora.
 - O multiplayer envia os abates da rodada por time no protocolo v6. O placar usa a foto social do jogador e mantém o retrato certo quando uma célula é reutilizada.
+- Atualização do jogo não baixa de novo o que não mudou. Cada modelo, animação e som agora é identificado pelo próprio conteúdo, então só o que foi realmente alterado desce outra vez — no celular e no aplicativo isso corta centenas de MB por atualização, e quem já jogou entra direto.
 
 ### Corrigido
 - Perfis públicos continuam visíveis quando o bootstrap da conta falha ou a sessão expira. Links do ranking usam o handle público, o histórico do navegador restaura a lista, e perfis sem totais aparecem com zero.
