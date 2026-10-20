@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
-import { VERSION } from './version.js';
+import { assetUrl } from './data/asseturl.js';
 
 const loader = new GLTFLoader();
 const templates = new Map();
@@ -79,8 +79,9 @@ export async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {
   if (!ids || !ids.length) ids = FAVELA_AMBIENCE_ASSETS;
   await Promise.all([...new Set(ids)].filter((id) => ASSETS[id] && !templates.has(id)).map(async (id) => {
     try {
-      const revision = ({ calango: '78cc644d948d', sertaoGoat: 'a89410b7f899', sertaoHen: 'd07aa63bea9d', sertaoChick: 'a2f144c8b9de' })[id] || VERSION;
-      const gltf = await loadGLB(`${ASSETS[id]}?v=${revision}`);
+      /* a tabela de revisão escrita à mão aqui (4 bichos com hash fixo, resto na
+         VERSION) virou o mapa gerado de data/assetver.js — um hash por arquivo. */
+      const gltf = await loadGLB(assetUrl(ASSETS[id]));
       let skinned = false;
       gltf.scene.traverse((object) => {
         if (!object.isMesh) return;

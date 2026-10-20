@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createFavelaAmbience, preloadAmbientLife, cloneAmbientLifeAsset, registerFaunaTemplate } from './ambientlife.js';
 import { VERSION } from './version.js';
+import { assetUrl } from './data/asseturl.js';
 
 export const MANSAO_AMBIENCE_ASSETS = Object.freeze(['rat', 'pigeonGround', 'parrot']);
 export const MANSAO_SKY_ASSETS = Object.freeze({
@@ -20,7 +21,7 @@ export async function preloadMansaoAmbience() {
     const results = await Promise.all(Object.entries(MANSAO_SKY_ASSETS).map(async ([id, url]) => {
       if (cloneAmbientLifeAsset(id)) return null;
       try {
-        const gltf = await loader.loadAsync(`${url}?v=${VERSION}`);
+        const gltf = await loader.loadAsync(assetUrl(url));
         registerFaunaTemplate(id, gltf.scene);
         return null;
       } catch (error) {

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { assetUrl } from '../../public/js/data/asseturl.js';
 import * as THREE from '../../public/vendor/three.module.js';
 
 // Executa os consumidores reais com transporte GLB/DOM controlado; não julga imagem.
@@ -18,7 +19,7 @@ async function preload(mutant = '') {
     source = changed;
   }
   if (mutant === 'lista-ignorada') source = source.replace('async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {', 'async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) { ids = FAVELA_AMBIENCE_ASSETS;');
-  const api = vm.runInNewContext(`(() => { ${source}; return { preloadAmbientLife }; })()`, { THREE, GLTFLoader, VERSION: 'test', console });
+  const api = vm.runInNewContext(`(() => { ${source}; return { preloadAmbientLife }; })()`, { THREE, GLTFLoader, VERSION: 'test', console, assetUrl });
   await api.preloadAmbientLife();
   const defaultRequests = [...requests]; requests.length = 0;
   await api.preloadAmbientLife(['calango', 'lagarto', 'sertaoGoat', 'sertaoHen', 'sertaoChick']);

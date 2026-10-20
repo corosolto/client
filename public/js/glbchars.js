@@ -15,7 +15,7 @@
 //   ?cshadow=0    desliga a sombra de contato   |  ?charrecv=0  o char não recebe sombra
 //   tuning ao vivo: ?charfloor= ?charfloorfar= ?charceil= ?charsat= ?rimnear= ?rimfar=
 import * as THREE from 'three';
-import { VERSION } from './version.js';
+import { assetUrl } from './data/asseturl.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { buildRifle, CHAR_FX, charRimColor, upgradeCharMaterial, makeContactShadow } from './characters.js';
@@ -68,7 +68,7 @@ const qp = new URLSearchParams(location.search);
    (offset 0), nunca quebra. `?feet=0` desliga pra comparar lado a lado. */
 let _footOff = null;
 if (qp.get('feet') !== '0') {
-  fetch(`models/anims/foot-offsets.json?v=${VERSION}`)
+  fetch(assetUrl('models/anims/foot-offsets.json'))
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _footOff = (j && j.offsets) || null; })
     .catch(() => {});
@@ -87,7 +87,7 @@ export function footOffset(id, pose) { return (_footOff && _footOff[id] && _foot
 let _animIdxP = null;
 function animIndex() {
   if (!_animIdxP) {
-    _animIdxP = fetch(`models/anims/index.json?v=${VERSION}`)
+    _animIdxP = fetch(assetUrl('models/anims/index.json'))
       .then((r) => (r.ok ? r.json() : null))
       .catch(() => null);
   }
@@ -348,20 +348,20 @@ export async function preloadCharacterAssets(ids, opts = {}) {
       // experimental), o per-estado de sempre cobre o que faltou.
       (async () => {
         try {
-          const g = await loadGLB(`${ANIM_DIR}.glb?v=${VERSION}`);
+          const g = await loadGLB(assetUrl(`${ANIM_DIR}.glb`));
           for (const c of g.animations) _clips[c.name] = c;
         } catch (e) { /* fallback: per-estado abaixo */ }
         await Promise.all([
           ...STATES.filter((s) => !_clips[s]).map(async (s) => {
             try {
-              const g = await loadGLB(`${ANIM_DIR}/${s}.glb?v=${VERSION}`);
+              const g = await loadGLB(assetUrl(`${ANIM_DIR}/${s}.glb`));
               if (g.animations[0]) { g.animations[0].name = s; _clips[s] = g.animations[0]; }
             } catch (e) { console.warn('anim load failed', s, e); }
           }),
           // Opcionais (idle/walk de 1 mão p/ pistolas): ausência NÃO é erro — sem warn.
           ...OPT_STATES.filter((s) => !_clips[s]).map(async (s) => {
             try {
-              const g = await loadGLB(`${ANIM_DIR}/${s}.glb?v=${VERSION}`);
+              const g = await loadGLB(assetUrl(`${ANIM_DIR}/${s}.glb`));
               if (g.animations[0]) { g.animations[0].name = s; _clips[s] = g.animations[0]; }
             } catch (e) { /* fallback: idle/walk de 2 mãos */ }
           }),
@@ -372,7 +372,7 @@ export async function preloadCharacterAssets(ids, opts = {}) {
   const wanted = [...new Set(ids)].filter((id) => GLB_CHARS.has(id) && !_base.has(id));
   await Promise.all(wanted.map(async (id) => {
     try {
-      const g = await loadGLB(`models/characters/${id}.glb?v=${VERSION}`);
+      const g = await loadGLB(assetUrl(`models/characters/${id}.glb`));
       _base.set(id, g.scene);
     } catch (e) { console.warn('model load failed', id, e); }
     // Clipes retargetados POR PERSONAGEM (models/anims/<id>/): cada rig do Meshy tem
@@ -390,7 +390,7 @@ export async function preloadCharacterAssets(ids, opts = {}) {
     // cai no per-estado, que cai no compartilhado.
     let mesclado = null;
     if (!disponiveis || disponiveis.length) {
-      try { mesclado = (await loadGLB(`models/anims/${id}.glb?v=${VERSION}`)).animations; }
+      try { mesclado = (await loadGLB(assetUrl(`models/anims/${id}.glb`))).animations; }
       catch (e) { /* fallback: per-estado */ }
     }
     await Promise.all([...STATES, ...OPT_STATES].map(async (s) => {
@@ -401,7 +401,7 @@ export async function preloadCharacterAssets(ids, opts = {}) {
         if (disponiveis) return;  // mesclado em dia (manifesto) e sem o clipe: compartilhado
       }
       try {
-        const g = await loadGLB(`models/anims/${id}/${s}.glb?v=${VERSION}`);
+        const g = await loadGLB(assetUrl(`models/anims/${id}/${s}.glb`));
         if (g.animations[0]) { g.animations[0].name = s; set[s] = g.animations[0]; }
       } catch (e) { /* fallback: clipe compartilhado */ }
     }));

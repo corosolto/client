@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { placeProp, hasProp } from './mapprops.js';
-import { VERSION } from './version.js';
+import { assetUrl } from './data/asseturl.js';
 
 /* ids de `public/models/props/` que o mapa precisa declarar no seu `props` para o
    `preloadMapProps` baixar antes da partida (main.js:1079) */
@@ -29,7 +29,7 @@ export function preloadSkyBird() {
   _birdPromise = new Promise((resolve) => {
     // try/catch: sem document.baseURI o loader estoura SÍNCRONO e o onError nunca vem
     try {
-      _birdLoader.load(`${SKY_BIRD_ASSET}?v=${VERSION}`, (gltf) => {
+      _birdLoader.load(assetUrl(SKY_BIRD_ASSET), (gltf) => {
         gltf.scene.traverse((object) => {
           if (!object.isMesh) return;
           object.material.metalness = 0;

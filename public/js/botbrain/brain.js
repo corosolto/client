@@ -1,6 +1,6 @@
 // Inferência sem o runtime TF.js. O formato e a arquitetura precisam casar com bot-train.mjs.
 import { buildState, decodeDaim, STATE_DIM } from './features.js';
-import { VERSION } from '../version.js';
+import { assetUrl } from '../data/asseturl.js';
 
 function relu(v) { for (let i = 0; i < v.length; i++) if (v[i] < 0) v[i] = 0; return v; }
 function tanh(v) { for (let i = 0; i < v.length; i++) v[i] = Math.tanh(v[i]); return v; }
@@ -21,16 +21,16 @@ function dense(x, W, b, rows, cols) {
 export class BotBrain {
   constructor() { this.ready = false; }
 
-  // O modo neural carrega o modelo sob demanda e usa a versão do release no cache bust.
+  // O modelo é baixado sob demanda; a query é o hash dos bytes DAQUELE arquivo
+  // (data/assetver.js), não a versão do release — /models é immutable por 1 ano.
   async load(baseUrl = '/models/bot-brain') {
-    const version = encodeURIComponent(VERSION);
     const [model, norm] = await Promise.all([
-      fetch(`${baseUrl}/model.json?v=${version}`).then((r) => r.json()),
-      fetch(`${baseUrl}/norm.json?v=${version}`).then((r) => r.json()),
+      fetch(assetUrl(`${baseUrl}/model.json`)).then((r) => r.json()),
+      fetch(assetUrl(`${baseUrl}/norm.json`)).then((r) => r.json()),
     ]);
     const manifest = model.weightsManifest[0];
     const wpath = manifest.paths[0];
-    const buf = await fetch(`${baseUrl}/${wpath}?v=${version}`).then((r) => r.arrayBuffer());
+    const buf = await fetch(assetUrl(`${baseUrl}/${wpath}`)).then((r) => r.arrayBuffer());
     this.loadFromData(manifest.weights, buf, norm);
     return this;
   }

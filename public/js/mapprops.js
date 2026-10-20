@@ -3,7 +3,7 @@
 // Props are OPTIONAL — placeProp returns null if the GLB isn't loaded, so a map
 // renders fine before (or without) the Mint-generated assets exist.
 import * as THREE from 'three';
-import { VERSION } from './version.js';
+import { assetUrl } from './data/asseturl.js';
 import { corteVegetacao } from './mapquality.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -61,7 +61,7 @@ export const PROP_BATCH = _qp.get('batch') !== '0';
 export async function preloadMapProps(ids, { required = false } = {}) {
   const unique = [...new Set(ids)];
   await Promise.all(unique.filter((id) => !_base.has(id)).map(async (id) => {
-    try { const g = await loadGLB(`models/props/${id}.glb?v=${VERSION}`); _base.set(id, g.scene); }
+    try { const g = await loadGLB(assetUrl(`models/props/${id}.glb`)); _base.set(id, g.scene); }
     catch (e) { console.warn('map prop load failed', id, e); }
   }));
   if (required && unique.some(id => !_base.has(id))) throw new Error('Não foi possível carregar os objetos do mapa. Tente novamente.');
