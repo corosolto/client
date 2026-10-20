@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { assetUrl } from '../../public/js/data/asseturl.js';
 import { runInNewContext } from 'node:vm';
 const nativeFetch = globalThis.fetch;
 const baseline = process.argv.includes('--baseline');
@@ -64,10 +65,10 @@ checks.push({ id: 'CQ5', ok: maxPitch < .000001 && size.y / Math.max(size.x, siz
 checks.push({ id: 'CQ6', ok: maxSpeed <= 1.21 && idleFrames > 60 && movingFrames > 60 && ['idle', 'run', 'flee', 'recover'].every(s => states.has(s)), maxSpeed, idleFrames, movingFrames, states: [...states] });
 const source = readFileSync('public/js/ambientlife.js', 'utf8'), start = source.indexOf('export async function preloadAmbientLife'), finish = source.indexOf('\n}', start) + 2;
 let preloadSource = source.slice(start, finish).replace('export ', '');
-if (mut === 'cache-velho') { const next = preloadSource.replace('?v=${revision}', '?v=${VERSION}'); if (next === preloadSource) throw Error('Mutante não aplicou'); preloadSource = next; }
-const urls = [], preload = runInNewContext(`(${preloadSource})`, { ASSETS: { calango: faunaAssetUrl('calango') }, FAVELA_AMBIENCE_ASSETS: ['calango'], templates: new Map(), VERSION: 'fixture', console, loadGLB: async url => { urls.push(url); return { scene: { traverse() {} }, animations: [] }; } });
+if (mut === 'cache-velho') { const next = preloadSource.replace('assetUrl(ASSETS[id])', '`${ASSETS[id]}?v=${VERSION}`'); if (next === preloadSource) throw Error('Mutante não aplicou'); preloadSource = next; }
+const urls = [], preload = runInNewContext(`(${preloadSource})`, { ASSETS: { calango: faunaAssetUrl('calango') }, FAVELA_AMBIENCE_ASSETS: ['calango'], templates: new Map(), VERSION: 'fixture', console, assetUrl, loadGLB: async url => { urls.push(url); return { scene: { traverse() {} }, animations: [] }; } });
 await preload(['calango']);
-const revision = createHash('sha256').update(readFileSync('public/models/ambient/calango_quadrupede.glb')).digest('hex').slice(0, 12);
+const revision = createHash('sha256').update(readFileSync('public/models/ambient/calango_quadrupede.glb')).digest('hex').slice(0, 10);
 checks.push({ id: 'CQ7', ok: urls.includes(`models/ambient/calango_quadrupede.glb?v=${revision}`), urls, revision });
 checks.push({ id: 'CQ8', ok: movedLeg > .008 && idleLeg < .000001, movedLeg, idleLeg });
 ambience.dispose();

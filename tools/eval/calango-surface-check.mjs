@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { assetUrl } from '../../public/js/data/asseturl.js';
 import { runInNewContext } from 'node:vm';
 
 const file = 'public/models/ambient/calango.glb';
@@ -50,19 +51,21 @@ const finish = source.indexOf('\n}', start) + 2;
 if (start < 0 || finish < start) throw Error('Preloader real não encontrado');
 let preloadSource = source.slice(start, finish).replace('export ', '');
 if (mutante === 'cache-velho') {
-  const changed = preloadSource.replace('?v=${revision}', '?v=${VERSION}');
+  // A revisão por arquivo agora vem do mapa gerado; o mutante devolve a URL ao release.
+  const changed = preloadSource.replace('assetUrl(ASSETS[id])', '`${ASSETS[id]}?v=${VERSION}`');
   if (changed === preloadSource) throw Error('Mutante cache não aplicou');
   preloadSource = changed;
 }
 const urls = [];
 const preload = runInNewContext(`(${preloadSource})`, {
   ASSETS: { calango: 'models/ambient/calango_quadrupede.glb', rat: 'models/ambient/rat_animated.glb' },
-  FAVELA_AMBIENCE_ASSETS: [], templates: new Map(), VERSION: 'version-fixture', console,
+  FAVELA_AMBIENCE_ASSETS: [], templates: new Map(), VERSION: 'version-fixture', console, assetUrl,
   loadGLB: async url => { urls.push(url); return { scene: { traverse() {} }, animations: [] }; },
 });
 await preload(['calango', 'rat']);
-const expectedRevision = createHash('sha256').update(readFileSync('public/models/ambient/calango_quadrupede.glb')).digest('hex').slice(0, 12);
-const freshCache = urls.includes(`models/ambient/calango_quadrupede.glb?v=${expectedRevision}`) && urls.includes('models/ambient/rat_animated.glb?v=version-fixture');
+const expectedRevision = createHash('sha256').update(readFileSync('public/models/ambient/calango_quadrupede.glb')).digest('hex').slice(0, 10);
+const ratRevision = createHash('sha256').update(readFileSync('public/models/ambient/rat_animated.glb')).digest('hex').slice(0, 10);
+const freshCache = urls.includes(`models/ambient/calango_quadrupede.glb?v=${expectedRevision}`) && urls.includes(`models/ambient/rat_animated.glb?v=${ratRevision}`);
 const checks = [{ id: 'CS1', ok: surface, triangles: indices.length / 3, largestArea: Math.max(...areas), indicesSha }, { id: 'CS2', ok: unchanged, retainedSha, structureSha }, { id: 'CS3', ok: freshCache, urls, expectedRevision }];
 for (const check of checks) console.log(`${check.id} ${check.ok ? 'PASSA' : 'FALHA'} ${JSON.stringify(check)}`);
 const failed = checks.filter(check => !check.ok).map(check => check.id);
