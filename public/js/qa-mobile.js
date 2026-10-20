@@ -1,34 +1,5 @@
-/* ============================================================================
-   QA MOBILE — o jogo se mede sozinho no aparelho.
-   ----------------------------------------------------------------------------
-   O CASO: o app de loja (repo corosolto/mobile) é uma WebView apontada para a
-   produção, e a produção recebe vários deploys por dia sem passar por revisão de
-   loja. Até aqui "o jogo está bom no celular?" dependia de alguém pegar um
-   aparelho e jogar — não existia NENHUMA medição automatizada de gameplay nem de
-   custo gráfico em aparelho. Este arquivo é o roteiro determinístico de ~20 s que
-   anda, olha, atira, recarrega, mira, agacha e troca de arma pelos MESMOS eventos
-   de toque que o HUD de toque consome (`#touch-ui`, criado pelo game.js), e no fim
-   devolve um relatório com FPS, degrau da escada, custo de desenho e erros.
-
-   NUNCA roda em sessão de jogador. O main.js só faz o import() dinâmico quando há
-   `?qa=mobile` na URL ou `window.__CS_QA__` injetado antes da carga (é o que o app
-   nativo faz). Sem isso o arquivo nem é baixado — a cláusula QAM4 de
-   `tools/eval/qa-mobile-check.mjs` cobra exatamente esse custo zero.
-
-   DE ONDE VEM CADA NÚMERO (quase nada aqui é remedido por conta própria):
-     · FPS p50/p5, quadros travados e congelados → `window.__csbOps` (ops.js);
-     · degrau inicial e final, DPR efetivo         → `window.__escada` (main.js);
-     · draw calls e triângulos                     → `renderer.info.render`;
-     · erros e rejeições                           → contados só DURANTE o roteiro.
-
-   O ops.js só mede com consentimento de analytics (privacy-runtime.js). O harness
-   liga o consentimento para o roteiro e DEVOLVE a escolha anterior ao terminar:
-   medir em modo QA não pode virar uma decisão de privacidade tomada pelo jogo.
-
-   SAÍDA: `window.__CS_QA_RESULT__` e, quando a ponte existe,
-   `ReactNativeWebView.postMessage(JSON.stringify({source:'coro-qa', …}))` — o mesmo
-   canal que o `src/game-injection.ts` do app já usa com `coro-game-diagnostic`.
-   ============================================================================ */
+/* QA MOBILE: roteiro determinístico de ~20 s pelos eventos de toque do #touch-ui, com relatório
+   de FPS, escada, desenho e erros. Porquê, campos e cláusulas: docs/mobile/QA-MOBILE.md. */
 import { VERSION } from './version.js';
 
 const VERSAO_RELATORIO = 1;
@@ -38,11 +9,8 @@ const PRAZO_HUD_MS = 20_000;       // o #touch-ui nasce junto com a partida; 20 
 const TETO_MENSAGENS = 5;
 const CHAVE_PRIVACIDADE = 'cs_privacy';
 
-/* Os passos e a duração de cada um. A soma é o roteiro, e os prazos são ABSOLUTOS:
-   o passo i termina em t0 + soma(0..i). Num aparelho que sofre, um `setTimeout` de
-   100 ms volta em 400; com prazo relativo o atraso se somava passo a passo e o
-   roteiro de 20 s terminava em 31 s (medido no Pixel 5 emulado). Com prazo absoluto
-   o atraso de um passo é absorvido pelo seguinte. */
+/* Passo e duração. Os prazos são ABSOLUTOS (t0 + soma): com prazo relativo o atraso de cada
+   passo se somava e o roteiro de 20 s terminava em 31 s (docs/mobile/QA-MOBILE.md). */
 const ROTEIRO = [
   ['olha-direita', 1600],
   ['anda-frente', 2600],
@@ -171,14 +139,8 @@ function vigiaErros() {
   };
 }
 
-/* CUSTO DE DESENHO. Ler `renderer.info.render` num rAF qualquer devolve ZERO no
-   celular, e isso não é defeito do three: na qualidade baixa o game.js desenha o
-   mundo e DEPOIS o viewmodel numa segunda `renderer.render` (game.js, overlay sem
-   pós). Como `info.autoReset` zera no início de cada render, o que sobra ao fim do
-   quadro é só a passada do viewmodel — que num celular sem viewmodel carregado é 0.
-   Então: desliga o autoReset, deixa ACUMULAR o roteiro inteiro e divide pelos
-   quadros que o jogo realmente desenhou (`game._rafFrames`). O número publicado é
-   custo POR QUADRO DESENHADO, somando todas as passadas. */
+/* `renderer.info.render` lido num rAF devolve 0 no celular: o autoReset zera a cada render e a
+   última é a do viewmodel. Acumula e divide por quadro desenhado (docs/mobile/QA-MOBILE.md). */
 function vigiaDesenho(renderer, jogo) {
   const info = renderer?.info;
   if (!info) return { parar: () => ({ drawCalls: null, triangulos: null, quadros: null }) };
@@ -257,9 +219,8 @@ async function executaPasso(nome, fim, g, interacao, falhas) {
       return empurra(el, 0, nome === 'anda-frente' ? -48 : 48, fim);
     }
     case 'atira': {
-      /* O gatilho do HUD: botão ATIRA do Treta Pop, senão o miolo de um dos sticks
-         (a dead zone é o gatilho no HUD legado). Quatro toques, porque arma sem
-         `segurar` dá um tiro por aperto. */
+      /* Gatilho do HUD: o ATIRA do Treta Pop, senão o miolo de um stick (gatilho do legado).
+         Quatro toques, porque arma sem `segurar` dá um tiro por aperto. */
       const el = visivel(document.querySelector('#touch-ui .tp-toque-atira'))
         || noHud('.touch-joy-r') || noHud('.touch-joy-l');
       if (!el) { falhas.push('atira: nenhum gatilho de toque visível'); return dormeAte(fim); }
