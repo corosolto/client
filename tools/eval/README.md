@@ -122,6 +122,8 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `granada-porte-check.mjs` | Granada EQUIPADA: precedência sobre o pacote de faca no viewmodel e alcance do arremesso curto (botão direito) contra o cheio. `npm run eval:granada-porte` |
 | `faca-porte-check.mjs` | Porte de LÂMINA em 3ª pessoa (ponta acima do porte de cano), lido do fonte vivo. Evidência: `asset-evidence/faca-3p-20261021/faca-3p-ab.png`. `npm run eval:faca-porte` |
 | `arma-orientacao-check.mjs` | Boca × coronha das 26 armas com o `rot` da CFG aplicado — pega arma montada de costas. `npm run eval:arma-orientacao` |
+| `skin-cobertura-check.mjs` | Pintura equipada na arma INTEIRA (corpo, pente, ferrolho, peça do `splitParts`) em 1ª pessoa, e no corpo de 3ª pessoa. `npm run eval:skin-cobertura` |
+| `inspect-lado-check.mjs` | Inspeção (tecla I) vira a arma de lado em 1ª pessoa sem clipe no pack e sem sair do quadro. `npm run eval:inspect-lado` |
 
 ## 5. Referência e cor
 

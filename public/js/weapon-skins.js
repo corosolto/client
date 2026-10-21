@@ -600,7 +600,9 @@ export function reviewWeaponSkinId() {
   return query.get('debug') === '1' ? query.get('weaponskin') : null;
 }
 
-export function applyWeaponSkinCandidate(model, weaponId, skinId) {
+// `marcas:false` pinta a peça sem repetir decalque/selo — usado nas peças IRMÃS da arma
+// (pente, ferrolho), que precisam do material da pintura mas não de um segundo adesivo.
+export function applyWeaponSkinCandidate(model, weaponId, skinId, { marcas = true } = {}) {
   if (!skinId) return false;
   const definition = WEAPON_SKINS[skinId];
   if (!definition || !definition.targetWeapons.includes(weaponId)) return false;
@@ -614,7 +616,7 @@ export function applyWeaponSkinCandidate(model, weaponId, skinId) {
       ? object.material.map(skinMaterial)
       : skinMaterial(object.material);
   });
-  attachSkinMark(model, weaponId, skinId);
+  if (marcas) attachSkinMark(model, weaponId, skinId);
   model.userData.weaponSkin = skinId;
   return true;
 }

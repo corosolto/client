@@ -451,6 +451,16 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
   };
 }
 
+/* Peças que a pintura tem de alcançar: na golden `mint.active` é só o corpo e pente/
+   ferrolho são malhas irmãs; a Mint assada ainda tira o pente no `splitParts`. */
+export function pecasDaPintura(entry) {
+  const corpo = entry?.mint?.active;
+  if (!corpo) return [];
+  const irmas = [...(entry.weaponMeshes || []), ...(corpo.userData?.mintParts || [])];
+  const fora = irmas.filter((peca) => peca && peca !== corpo && !corpo.getObjectById?.(peca.id));
+  return [corpo, ...new Set(fora)];
+}
+
 export class AuthoredViewModels {
   constructor(parent, onReady = null, profile = {}) {
     this.parent = parent;
@@ -478,11 +488,17 @@ export class AuthoredViewModels {
     for (const entry of this.entries.values()) refreshTeamHands(entry.handMeshes, profile);
   }
 
+  /* A pintura alcança a arma INTEIRA (ver pecasDaPintura): o corpo leva o material e as
+     marcas; pente/ferrolho levam só o material, para o decalque não duplicar. */
   _applyWeaponSkin(entry, weaponId) {
     const skinId = this.profile.weaponSkins?.[weaponId];
-    const model = entry?.mint?.active;
-    if (!skinId || !model || model.userData.weaponSkin === skinId) return;
-    applyWeaponSkinCandidate(model, weaponId, skinId);
+    if (!skinId) return;
+    const pecas = pecasDaPintura(entry);
+    for (let i = 0; i < pecas.length; i += 1) {
+      const peca = pecas[i];
+      if (peca.userData.weaponSkin === skinId) continue;
+      applyWeaponSkinCandidate(peca, weaponId, skinId, { marcas: i === 0 });
+    }
   }
 
   async load() {

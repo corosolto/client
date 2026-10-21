@@ -6115,12 +6115,14 @@ export class Game {
   // ainda, cai no box e faz upgrade quando o asset chegar. Ver docs/RIG-PEGA-ARMA.md.
   _ensurePlayerTP() {
     const w = this.player.weapon, def = this._defNoLado(this.playerDef, this.playerTeam);
-    const weaponChanged = this.playerTP && (this._tpWeapon !== w || this._tpDefId !== def.id || this._tpSkinId !== (def.skinId || null) || this._tpEyewearId !== (def.eyewearId || null));
+    // A pintura equipada também vale em 3ª pessoa. Kill-switch: ?skin3p=0.
+    const skinTP = QS.get('skin3p') === '0' ? null : (this.playerWeaponSkins?.[w] || null);
+    const weaponChanged = this.playerTP && (this._tpWeapon !== w || this._tpDefId !== def.id || this._tpSkinId !== (def.skinId || null) || this._tpEyewearId !== (def.eyewearId || null) || this._tpArmaSkin !== skinTP);
     const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id);
     if (this.playerTP && !weaponChanged && !wantUpgrade) return;
     // Tenta o GLB (grip real). Se ainda não carregou e já temos algo, mantém o atual —
     // evita reconstruir o box a cada frame enquanto os clips não chegam.
-    const glb = buildCharacterModel(def, { weaponId: w });
+    const glb = buildCharacterModel(def, { weaponId: w, weaponSkinId: skinTP });
     if (!glb && this.playerTP && !weaponChanged) return;
     if (this.playerTP && this.playerTP.group) {
       this.scene.remove(this.playerTP.group);
@@ -6138,6 +6140,7 @@ export class Game {
     this.playerTP = tp;
     this._tpWeapon = w;
     this._tpDefId = def.id; this._tpSkinId = def.skinId || null; this._tpEyewearId = def.eyewearId || null;
+    this._tpArmaSkin = skinTP;
   }
 
   // Anima o corpo TP a partir do estado do jogador e põe a câmera atrás dele.
@@ -6707,13 +6710,22 @@ export class Game {
     if (inspect > 0) {
       const shortGun = PISTOLS.has(p.weapon);
       const breathe = Math.sin((this.time - this.vm.inspectAt) * Math.PI * 1.2) * 0.012 * inspect;
-      this.vm.root.position.x += (authoredActive ? -0.55 : -0.18) * inspect;
-      this.vm.root.position.y += (shortGun ? 0.06 : 0.15) * inspect + breathe;
-      this.vm.root.position.z -= (shortGun ? 0.18 : 0.52) * inspect;
+      /* Inspeção vira a arma de lado: os packs não trazem clipe `inspect`, então é
+         procedural. Kill-switch ?inspectlado=0. Régua: inspect-lado-check.mjs. */
+      const lado = QS.get('inspectlado') !== '0' && authoredActive;
+      // +0,06 à DIREITA: girada ~60° a coronha varre pra esquerda e encostava na borda
+      // (medido na captura de 21/10). Com o empurrão a arma inteira fica no quadro.
+      const dx = lado ? 0.06 : (authoredActive ? -0.55 : -0.18);
+      const dz = lado ? 0.20 : (shortGun ? 0.18 : 0.52);
+      const yaw = lado ? (shortGun ? 0.80 : 1.05) : (authoredActive ? 0.18 : -(shortGun ? 0.48 : 0.68));
+      const roll = lado ? 0.20 : (shortGun ? 0.03 : 0.07);
+      this.vm.root.position.x += dx * inspect;
+      this.vm.root.position.y += (shortGun ? 0.06 : 0.12) * inspect + breathe;
+      this.vm.root.position.z -= dz * inspect;
       this.vm.root.rotation.x -= (shortGun ? 0.02 : 0.06) * inspect;
-      this.vm.root.rotation.z += (shortGun ? 0.03 : 0.07) * inspect;
-      this.vm.root.rotation.y += (authoredActive ? 0.18 : -(shortGun ? 0.48 : 0.68)) * inspect;
-      this.vm.root.scale.multiplyScalar(1 - (shortGun ? 0.04 : 0.26) * inspect);
+      this.vm.root.rotation.z += roll * inspect;
+      this.vm.root.rotation.y += yaw * inspect;
+      this.vm.root.scale.multiplyScalar(1 - (lado ? 0.10 : (shortGun ? 0.04 : 0.26)) * inspect);
     }
     /* ADS ZERA O PITCH/YAW PRÓPRIOS DA ARMA (RODADA DO GRIP + PITCH).
        O `_adsPose` acima gira o vm.root INTEIRO (rx/ry por classe) e não enxerga a
