@@ -478,6 +478,7 @@ export async function preloadCharacterAssets(ids, opts = {}) {
 
 const _v = new THREE.Vector3();
 const _gq = new THREE.Quaternion(), _wq = new THREE.Quaternion(), _pq = new THREE.Quaternion(), _headUpQ = new THREE.Quaternion();
+const _qLean = new THREE.Quaternion(), _axisF = new THREE.Vector3();
 const _right = new THREE.Vector3();
 const _ikTgt = new THREE.Vector3();
 
@@ -774,6 +775,22 @@ export function buildCharacterModel(def, opts = {}) {
       if (skin?.gripProfile === 'mint24-curl-v1' && gp.fore) { gp.fore.z *= 1.35; gp.fore.y += def.skinId === 'lula-drip' ? 0.07 : 0.035; }
       if (lArm && lFore && gp.fore && gunObj && !IK_L_SKIP.has(def.id)) ctrl.ikL = { chain: [lArm, lFore], end: lhandBone, endOffset: measurePalmLocal(model, lhandBone, curlLs), gun: gunObj, fore: gp.fore.clone() };
     }
+    /* Overlay de tronco (recarga/lean): ossos Spine do rig doado + alvos da mão esquerda.
+       2 mãos: a mão vai ao PENTE (abaixo do guarda-mão). 1 mão: ao porta-carregador no
+       quadril direito. Por quê e medidas: docs/ANIM-3P.md. */
+    const spines = [];
+    model.traverse(o => { if (o.isBone && /^Spine\d*$/i.test(o.name) && spines.length < 2) spines.push(o); });
+    let lHandBone2 = null, lArm2 = null, lFore2 = null;
+    model.traverse(o => { if (o.isBone) { if (o.name === 'LeftHand' && !lHandBone2) lHandBone2 = o; if (o.name === 'LeftArm' && !lArm2) lArm2 = o; if (o.name === 'LeftForeArm' && !lFore2) lFore2 = o; } });
+    const gpR = twoHanded ? gripPoints(opts.weaponId || 'awp') : null;
+    ctrl.torso = {
+      spines,
+      lHand: lHandBone2, lArm: lArm2, lFore: lFore2,
+      gun: ctrl.ikL?.gun || null,
+      magLocal: gpR?.fore ? gpR.fore.clone().add(new THREE.Vector3(0, -0.11, -gpR.fore.z * 0.40)) : null,
+      beltLocal: new THREE.Vector3(0.16, 0.92, 0.10),
+    };
+    if (ctrl.ikL && ctrl.torso.magLocal && skin?.gripProfile === 'mint24-curl-v1') ctrl.torso.magLocal.z *= 1.35;
   }
   return { group, parts: { head }, isGLB: true, mixer, ctrl };
 }
@@ -790,6 +807,7 @@ class CharController {
     this.charId = charId; this.model = model || null;
     this._footBase = model ? model.position.y : 0;
     this.cur = null; this.dead = false; this.shooting = false; this.crouch = false; this.jumping = false;
+    this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0; this._torsoQ = [];
     this.shadow = null; this._airK = 0;   // sombra de contato + fator "está no ar" (0..1, suavizado)
     this.oneHanded = false; // arma de 1 mão: idle/walk trocam p/ idle1h/walk1h (setado em buildCharacterModel)
     this._loco = 'idle'; // current locomotion state (hysteresis memory for walk/run choice)
@@ -818,6 +836,14 @@ class CharController {
   }
 
   setCrouch(v) { this.crouch = !!v; }
+
+  /* Recarga visível em 3P: overlay procedural sobre o clipe corrente (não há clipe de
+     reload no acervo — ver docs/ANIM-3P.md). Envelope sobe e desce; a mão esquerda vai
+     ao pente pelo MESMO CCD da mão de apoio. */
+  reload(dur) {
+    if (this.dead || !(dur > 0)) return;
+    this._reloadT = 0; this._reloadDur = dur;
+  }
 
   jump() {
     if (this.dead || this.crouch || this.jumping || !this.actions.jump) return;
@@ -868,7 +894,7 @@ class CharController {
   // picks the locomotion state, and scales the leg-cycle rate to the actual ground speed
   // so the feet plant instead of ice-skating (root-motion-free clips have no built-in
   // stride, so we drive the cycle rate from how fast the body is really moving).
-  update(dt, moving, hasTarget, speed = 0, back = false) {
+  update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
     if (!this.dead) {
       if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
       if (this.crouch) {
@@ -994,6 +1020,50 @@ class CharController {
       _ikTgt.copy(ik.fore);
       ik.gun.localToWorld(_ikTgt);
       solveCCDIK(ik.chain, ik.end, _ikTgt, { iterations: 8, endOffset: ik.endOffset });
+    }
+    /* Overlays de tronco por ÚLTIMO; eixo em MUNDO via quadro do pai e undo antes do
+       mixer. As duas armadilhas estão contadas em docs/ANIM-3P.md. */
+    const torso = this.torso;
+    if (!this.dead && torso?.spines?.length) {
+      const yaw = this.group.rotation.y;
+      const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
+      // eixos de mundo do grupo: direita R̂=(cos,0,−sin), frente F̂=(−sin,0,−cos)
+      const _deltaMundo = (bone, ax, ay, az, ang) => {
+        this.group.updateMatrixWorld(true);
+        bone.parent.getWorldQuaternion(_pq).invert();
+        _axisF.set(ax, ay, az).applyQuaternion(_pq).normalize();
+        _torsoAplica(bone, _qLean.setFromAxisAngle(_axisF, ang).clone());
+      };
+      const _torsoAplica = (bone, q) => { bone.quaternion.premultiply(q); this._torsoQ.push({ bone, q }); };
+      // LEAN: peso pro lado do movimento (sem clipe de strafe). Teto 0,10 rad, 8/s.
+      const alvo = Math.max(-1, Math.min(1, (Number.isFinite(lateral) ? lateral : 0) / 4.5)) * 0.12;
+      this._leanK += (alvo - this._leanK) * Math.min(1, dt * 8);
+      this.leanK = this._leanK;
+      if (Math.abs(this._leanK) > 1e-4) {
+        _deltaMundo(torso.spines[0], -sinY, 0, -cosY, -this._leanK);
+        if (torso.spines[1]) _deltaMundo(torso.spines[1], -sinY, 0, -cosY, -this._leanK * 0.5);
+      }
+      if (this._reloadDur > 0) {
+        this._reloadT += dt;
+        if (this._reloadT >= this._reloadDur) { this._reloadT = 0; this._reloadDur = 0; }
+      }
+      this.reloadK = this._reloadDur > 0 ? Math.sin(Math.PI * Math.min(1, this._reloadT / this._reloadDur)) : 0;
+      if (this.reloadK > 0.05) {
+        const k = this.reloadK;
+        // mergulho do tronco em torno da direita do corpo: os olhos acompanham o pente
+        _deltaMundo(torso.spines[0], cosY, 0, -sinY, k * 0.20);
+        if (torso.spines[1]) _deltaMundo(torso.spines[1], cosY, 0, -sinY, k * 0.10);
+        // mão esquerda: ao pente (2 mãos, alvo no espaço da arma) ou ao coldre (1 mão)
+        if (this.ikL && torso.magLocal && torso.gun) {
+          _ikTgt.copy(this.ikL.fore).lerp(torso.magLocal, k);
+          torso.gun.localToWorld(_ikTgt);
+          solveCCDIK(this.ikL.chain, this.ikL.end, _ikTgt, { iterations: 12, endOffset: this.ikL.endOffset });
+        } else if (torso.lArm && torso.lFore && torso.lHand && this.model) {
+          _ikTgt.copy(torso.beltLocal);
+          this.model.localToWorld(_ikTgt);
+          solveCCDIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt, { iterations: 8 });
+        }
+      }
     }
   }
 }

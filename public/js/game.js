@@ -3715,6 +3715,8 @@ export class Game {
     p.sprayI = 0;   // recarregou = rajada nova (padrão de recuo do tiro 1)
     this.el.reloadNote.classList.remove('hidden');
     this.sfx.reloadStart();
+    // 3P: o corpo denuncia a recarga (overlay procedural - docs/ANIM-3P.md).
+    if (this.camView !== 'first') this.playerTP?.ctrl?.reload?.(WEAPONS[w].reload);
     this._reloadLayers(w, WEAPONS[w].reload);
   }
   // Camadas de recarga (GUNFEEL): era 1 beep na entrada e 1 na saída. Agora magOut (trava +
@@ -6187,7 +6189,9 @@ export class Game {
       tp.ctrl.setCrouch?.(p.crouchF > 0.5);
       tp.ctrl.aimPitch = p.pitch;
       const back = -(p.vel.x * Math.sin(p.yaw) + p.vel.z * Math.cos(p.yaw)) < -0.25;
-      tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back);
+      // lateral no espaco do corpo (F x up): alimenta o lean do ctrl.
+      const lateral = p.vel.x * Math.cos(p.yaw) - p.vel.z * Math.sin(p.yaw);
+      tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back, lateral);
     } else if (tp.mixer) {
       tp.mixer.update(dt);
     }
@@ -7795,7 +7799,7 @@ export class Game {
           // semi-auto: 0,3 s entre tiros de escopeta de 30 de dano também era melt.
           b.nextShotAt = this.time + Math.max(Wb.rate, (sniper ? 0.85 : (BOT_FAIR ? 0.55 : 0.3)) + Math.random() * (BOT_FAIR ? 0.6 : 0.5)) / Math.max(0.5, b.skill);
         }
-        if ((Wb.mag || 0) > 0 && b.mag <= 0) { b.reloadUntil = this.time + (Wb.reload || 2.4); b.mag = Wb.mag; b.burst = 0; }
+        if ((Wb.mag || 0) > 0 && b.mag <= 0) { b.reloadUntil = this.time + (Wb.reload || 2.4); b.mag = Wb.mag; b.burst = 0; b.mesh?.ctrl?.reload?.(Wb.reload || 2.4); }
         b.aimErr += (Wb.recoil || 0.01) * (Wb.auto ? 0.6 : 0.4);   // cada tiro tira a mira do lugar (rajada abre)
         const from = this._origemTiroBot(b);
         const teye = this._miraTiroBot(e);
@@ -8228,7 +8232,7 @@ export class Game {
         // idle/shoot (pernas estáticas) deslizando. Atrelar ao spd faz as pernas ciclarem SEMPRE
         // que o corpo transladar (>0.35 m/s), inclusive atirando em movimento (walkfire).
         const mv = spd < 0.35 ? 0 : 1;
-        b.mesh.ctrl.update(dt, mv, !!b.target, spd, fwd < -0.25);
+        b.mesh.ctrl.update(dt, mv, !!b.target, spd, fwd < -0.25, (mx * Math.cos(b.yaw) - mz * Math.sin(b.yaw)) / dtSafe);
       } else {
         b._lp = { x: b.pos.x, z: b.pos.z };
         b.mesh.ctrl.update(dt, moving, !!b.target, 0, false);
@@ -8331,7 +8335,7 @@ export class Game {
     b.mag--;
     b.revealedAt = this.time;
     b.nextShotAt = this.time + Math.max(Wb.rate || 0.1, (Wb.auto ? 0.12 : 0.4)) ;
-    if ((Wb.mag || 0) > 0 && b.mag <= 0) { b.reloadUntil = this.time + (Wb.reload || 2.4); b.mag = Wb.mag; }
+    if ((Wb.mag || 0) > 0 && b.mag <= 0) { b.reloadUntil = this.time + (Wb.reload || 2.4); b.mag = Wb.mag; b.mesh?.ctrl?.reload?.(Wb.reload || 2.4); }
     const from = this._origemTiroBot(b);
     const teye = this._miraTiroBot(e);
     // desvio de mira por skill (a rede diz "atira"; a precisão fina segue o tier do bot)
