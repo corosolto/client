@@ -420,6 +420,9 @@ export function coneDoDisparo(estado, W, rnd) {
 const BLOOD = new URLSearchParams(location.search).get('blood') !== '0';
 const D2R = Math.PI / 180;
 const MOBILE_RADAR_INTERVAL = 0.1;
+// rad/px do arrasto no toque: 0,0024 pedia 1309 px para meia-volta, 0,0078 fecha em ~403 px.
+// Medição e cláusulas em docs/mobile/CONTROLES-TOQUE.md.
+const TOUCH_LOOK_RAD_PX = 0.0078;
 // Recoil compartilhado pelo jogo e pelas bancadas vive em recoil.js.
 // Queda de dano por distância: hoje o raycast vai a 200 m com dano constante (P90 a 40 m
 // mata igual à AWP). start/end em metros, min = multiplicador no fim. Sniper: sem falloff.
@@ -2273,9 +2276,9 @@ export class Game {
       // PEGAR arma do chão: substitui a tecla E no toque. Só aparece quando há arma no alcance.
       '<button class="touch-pickup hidden" aria-label="Pegar arma">' + IC.pickup + '<span class="touch-pick-lbl"></span></button>' +
       '<div class="touch-weps">' +
-        '<button class="touch-wep" data-wep="primary" aria-label="Arma primária">' + IC.rifle + '</button>' +
-        '<button class="touch-wep" data-wep="secondary" aria-label="Pistola">' + IC.pistol + '</button>' +
-        '<button class="touch-wep" data-wep="knife" aria-label="Faca">' + IC.knife + '</button>' +
+        '<button class="touch-wep" data-wep="primary" aria-label="Arma primária"></button>' +
+        '<button class="touch-wep" data-wep="secondary" aria-label="Pistola"></button>' +
+        '<button class="touch-wep" data-wep="knife" aria-label="Faca"></button>' +
         '<button class="touch-wep" data-wep="smoke" aria-label="Fumaça">' + IC.nade + '</button>' +
         '<button class="touch-wep" data-wep="frag" aria-label="Granada">' + IC.nade + '</button>' +
       '</div>';
@@ -2283,7 +2286,7 @@ export class Game {
     this._touchUi = root;
     const q = (s) => root.querySelector(s);
 
-    // OLHAR: arraste ajusta yaw/pitch pelo delta do dedo (no lugar do movementX do mouse).
+    // OLHAR: a camada de mira e o gatilho entram pelo MESMO `_touchLook` (docs/mobile).
     const look = q('.touch-look');
     let lookId = null, lx = 0, ly = 0;
     look.addEventListener('touchstart', (e) => {
@@ -2293,12 +2296,7 @@ export class Game {
       for (const t of e.changedTouches) {
         if (t.identifier !== lookId) continue;
         const dx = t.clientX - lx, dy = t.clientY - ly; lx = t.clientX; ly = t.clientY;
-        if (!this._acceptInput()) continue;
-        const s = this.settings.sens * 0.0024 * (this.player.scoped ? Math.max(0.3, this.camera.fov / 70) : 1);
-        const invertY = this.settings.invertY ? -1 : 1;
-        this.player.yaw -= dx * s;
-        this.player.pitch -= dy * s * invertY;
-        this.player.pitch = Math.max(-1.45, Math.min(1.45, this.player.pitch));
+        this._touchLook(dx, dy);
       }
       e.preventDefault();
     }, { passive: false });
@@ -2376,6 +2374,36 @@ export class Game {
         else if (w === 'frag') this._throwFrag();
       }, { passive: false });
     });
+    this._syncTouchWeps();
+  }
+
+  /* Mira por arrasto, em um lugar só; `sensToque` é a escala do dedo, separada da do mouse.
+     Números e porquês: docs/mobile/CONTROLES-TOQUE.md. */
+  _touchLook(dx, dy) {
+    if (!this._acceptInput()) return;
+    const sens = Number(this.settings.sensToque ?? this.settings.sens) || 1;
+    const s = sens * TOUCH_LOOK_RAD_PX * (this.player.scoped ? Math.max(0.3, this.camera.fov / 70) : 1);
+    const invertY = this.settings.invertY ? -1 : 1;
+    this.player.yaw -= dx * s;
+    this.player.pitch -= dy * s * invertY;
+    this.player.pitch = Math.max(-1.45, Math.min(1.45, this.player.pitch));
+  }
+
+  /* Cada slot mostra o render de /img/weapons da arma carregada (granada segue em glifo:
+     não há render dela). Por que deixou de ser glifo: docs/mobile/CONTROLES-TOQUE.md. */
+  _syncTouchWeps() {
+    const root = this._touchUi; if (!root) return;
+    const p = this.player;
+    const arma = { primary: p.primary || 'awp', secondary: p.secondary || 'pistol', knife: 'knife' };
+    for (const b of root.querySelectorAll('.touch-wep')) {
+      const slot = b.dataset.wep, id = arma[slot];
+      if (!id) continue;
+      b.classList.toggle('ativa', p.weapon === id);
+      if (b.dataset.arte === id) continue;
+      b.dataset.arte = id;
+      b.setAttribute('aria-label', WEAPONS[id]?.name || slot);
+      b.innerHTML = `<img class="touch-wep-art" src="/img/weapons/${id}.webp" alt="" draggable="false">`;
+    }
   }
   /* AIM-ASSIST DO TOQUE (mobile): sticky aim, não auto-aim — cone apertado e ganho pequeno,
      o jogador continua no comando; só compensa a imprecisão do dedo. Só roda no mobile. */
@@ -3608,6 +3636,7 @@ export class Game {
     this._scope(false, true);
     this.el.weaponName.textContent = WEAPONS[w].name;
     this.el.reloadNote.classList.add('hidden');
+    if (this.mobile) this._syncTouchWeps();   // a barra de toque segue a arma que está na mão
     if (pickup) this.sfx.pickup('weapon');
     else if (w === 'knife') this.sfx.knifeDeploy();
     else if (!this.sfx.weaponSwitch(w, _dcls)) this._deploySfx(_dcls);

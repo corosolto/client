@@ -1,0 +1,213 @@
+#!/usr/bin/env node
+/* ============================================================================
+   toque-controles-check.mjs — O DEDO CONSEGUE JOGAR?
+   ----------------------------------------------------------------------------
+   O DONO REPROVOU, EM 21/10/2026: "ícones muito feios de armas, não tem o ícone
+   de arma mesmo" e "a jogabilidade ainda tá ruim, os controles web". Medido no
+   recorte deitado do Galaxy A25 (780×360), antes do conserto:
+
+     · os 5 slots da barra eram SVG desenhado à mão, iguais para AWP, SVD e M4,
+       enquanto /img/weapons já tinha 26 renders que o painel de munição, o
+       killfeed e o seletor de modo usam (lá o dono já tinha reprovado glifo);
+     · 300 px de arrasto giravam 41°, então a meia-volta pedia 1309 px — 3,4
+       telas. Quem levava tiro pelas costas não conseguia virar;
+     · arrastar a partir do botão ATIRA girava 0,0003 rad, ou seja, nada:
+       corrigir a mira no meio da rajada exigia soltar o gatilho.
+
+   O QUE ESTA RÉGUA COBRA (partida viva, toque de verdade, Pixel 5 deitado):
+     TQ1  cada slot de arma mostra o RENDER da arma que o jogador carrega, e a
+          imagem troca quando a arma troca;
+     TQ2  uma passada de polegar vira o jogador: ≥100° em 300 px e meia-volta em
+          ≤480 px, com `sensToque` escalando proporcionalmente;
+     TQ3  arrastar a partir do ATIRA mira E continua atirando (um dedo só);
+     TQ4  o caminho novo preserva inversão de eixo e o teto de pitch.
+
+   MUTANTES (reescrevem o arquivo SERVIDO, o disco não é tocado):
+     --mutante=glifo-cru     volta o slot para SVG                  -> TQ1
+     --mutante=mira-lenta    devolve 0,0024 rad/px                  -> TQ2
+     --mutante=gatilho-mudo  tira o arrasto do gatilho              -> TQ3
+
+   Uso: BASE=http://127.0.0.1:9321 node tools/eval/toque-controles-check.mjs
+   ============================================================================ */
+import { execSync, spawn } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
+
+const BASE_EXTERNA = process.env.BASE;
+const PORTA = process.env.PORTA || '9322';
+const BASE = BASE_EXTERNA || `http://127.0.0.1:${PORTA}`;
+const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+const ESPERADO = { 'glifo-cru': 'TQ1', 'mira-lenta': 'TQ2', 'gatilho-mudo': 'TQ3' };
+if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
+
+const PARTIDA = 'ui=v3&debug=1&auto=E,esquerdomacho&map=praca_poderes&lang=pt';
+const gRoot = execSync('npm root -g').toString().trim();
+const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+const chromium = pw.chromium || pw.default?.chromium;
+const devices = pw.devices || pw.default?.devices;
+
+const servidor = BASE_EXTERNA ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
+process.on('exit', () => servidor?.kill());
+if (servidor) {
+  let pronto = false;
+  for (let i = 0; i < 60 && !pronto; i++) {
+    try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
+    if (!pronto) await new Promise((r) => setTimeout(r, 500));
+  }
+  if (!pronto) throw new Error(`servidor não respondeu em ${BASE}`);
+}
+
+/* O serve.mjs entrega a barra de ferramentas do Astro, que falha e levanta o overlay de
+   crash por cima do jogo vivo. Mesmo stub das outras réguas de navegador. */
+const STUB = 'export default {};export const createHotContext=()=>({accept(){},dispose(){},prune(){},on(){},off(){},send(){},invalidate(){},data:{}});'
+  + 'export const updateStyle=()=>{};export const removeStyle=()=>{};export const injectQuery=(u)=>u;export class ErrorOverlay{}';
+
+const browser = await chromium.launch({
+  ...(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : { executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' }),
+  args: ['--headless=new', '--mute-audio'],
+});
+
+async function abrir() {
+  const ctx = await browser.newContext({
+    ...devices['Pixel 5'],
+    viewport: { width: 780, height: 360 }, screen: { width: 780, height: 360 }, deviceScaleFactor: 3,
+  });
+  const page = await ctx.newPage();
+  await page.route(/\.astro\/eval-vite|dev-toolbar|@vite\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: STUB }));
+  const reescreve = (teste, troca) => page.route(teste, async (r) => {
+    const res = await r.fetch();
+    const antes = await res.text();
+    const depois = troca(antes);
+    if (depois === antes) throw new Error(`mutante ${MUT} não aplicou em ${r.request().url()}`);
+    await r.fulfill({ response: res, body: depois });
+  });
+  if (MUT === 'glifo-cru') {
+    await reescreve(/\/js\/game\.js/, (t) => t.replace(
+      'b.innerHTML = `<img class="touch-wep-art" src="/img/weapons/${id}.webp" alt="" draggable="false">`;',
+      "b.innerHTML = '<svg viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M2 10h13l3-2h4v2z\"/></svg>';"));
+  }
+  if (MUT === 'mira-lenta') {
+    await reescreve(/\/js\/game\.js/, (t) => t.replace('const TOUCH_LOOK_RAD_PX = 0.0078;', 'const TOUCH_LOOK_RAD_PX = 0.0024;'));
+  }
+  if (MUT === 'gatilho-mudo') {
+    await reescreve(/\/js\/tp\/hud\.js/, (t) => t.replace('window.__game?._touchLook?.(dx, dy);', 'void dx; void dy;'));
+  }
+  await page.goto(`${BASE}/?${PARTIDA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
+  await page.waitForTimeout(2500);
+  await page.evaluate(() => document.getElementById('crash-overlay')?.remove());
+  return { page, fechar: () => ctx.close() };
+}
+
+const r = [];
+const cobra = (id, ok, msg) => r.push({ id, ok: !!ok, msg });
+
+const { page, fechar } = await abrir();
+const medido = await page.evaluate(async () => {
+  const g = window.__game;
+  const toque = (sel, tipo, x, y, id = 1) => {
+    const alvo = document.querySelector(sel);
+    if (!alvo) return false;
+    const t = new Touch({ identifier: id, target: alvo, clientX: x, clientY: y });
+    alvo.dispatchEvent(new TouchEvent(tipo, { touches: tipo === 'touchend' ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true }));
+    return true;
+  };
+  const arrasta = (sel, x0, y0, passos, dx, dy, id) => {
+    toque(sel, 'touchstart', x0, y0, id);
+    let x = x0, y = y0;
+    for (let i = 0; i < passos; i++) { x += dx; y += dy; toque(sel, 'touchmove', x, y, id); }
+    return { x, y };
+  };
+  const soltar = (sel, x, y, id) => toque(sel, 'touchend', x, y, id);
+
+  // --- TQ1: arte por slot, e ela segue a arma na mão
+  const arteDe = () => [...document.querySelectorAll('#touch-ui .touch-wep')].map((b) => ({
+    slot: b.dataset.wep,
+    src: b.querySelector('img')?.getAttribute('src') || null,
+    ativa: b.classList.contains('ativa'),
+  }));
+  const antesTroca = arteDe();
+  g.player.primary = 'ak';
+  g._syncTouchWeps();
+  const depoisTroca = arteDe();
+  const imagensOk = await Promise.all([...document.querySelectorAll('#touch-ui .touch-wep-art')].map((img) => (img.complete && img.naturalWidth > 0)
+    ? true
+    : new Promise((res) => { img.addEventListener('load', () => res(img.naturalWidth > 0), { once: true }); img.addEventListener('error', () => res(false), { once: true }); setTimeout(() => res(img.naturalWidth > 0), 2000); })));
+
+  // --- TQ2: giro por arrasto, com sensibilidade padrão e com metade dela
+  const girar = (sens) => {
+    g.settings.sensToque = sens;
+    const yaw0 = g.player.yaw;
+    const fim = arrasta('.touch-look', 620, 180, 10, -30, 0, 11);
+    soltar('.touch-look', fim.x, fim.y, 11);
+    return Math.abs(g.player.yaw - yaw0);
+  };
+  const giro300 = girar(1);
+  const giroMetade = girar(0.5);
+  g.settings.sensToque = 1;
+
+  // --- TQ3: arrastar a partir do gatilho mira e segue atirando
+  const fire = document.querySelector('.tp-toque-atira');
+  const fb = fire?.getBoundingClientRect();
+  let giroNoGatilho = 0, atirandoDurante = false;
+  if (fb) {
+    const yaw0 = g.player.yaw;
+    const cx = fb.left + fb.width / 2, cy = fb.top + fb.height / 2;
+    const fim = arrasta('.tp-toque-atira', cx, cy, 6, -25, 0, 12);
+    atirandoDurante = !!g.mouseDown0;
+    giroNoGatilho = Math.abs(g.player.yaw - yaw0);
+    soltar('.tp-toque-atira', fim.x, fim.y, 12);
+  }
+  const soltouGatilho = !g.mouseDown0;
+
+  // --- TQ4: inversão de eixo e teto de pitch no caminho novo
+  g.player.pitch = 0; g.settings.invertY = false;
+  g._touchLook(0, 40);
+  const pitchNormal = g.player.pitch;
+  g.player.pitch = 0; g.settings.invertY = true;
+  g._touchLook(0, 40);
+  const pitchInvertido = g.player.pitch;
+  g.settings.invertY = false;
+  g.player.pitch = 0;
+  g._touchLook(0, -5000);
+  const pitchTeto = g.player.pitch;
+
+  return {
+    antesTroca, depoisTroca, imagensOk,
+    giro300, grau300: giro300 * 180 / Math.PI, pxMeiaVolta: Math.PI / (giro300 / 300), giroMetade,
+    giroNoGatilho, atirandoDurante, soltouGatilho,
+    pitchNormal, pitchInvertido, pitchTeto,
+  };
+});
+await fechar();
+
+const slots = medido.depoisTroca.filter((s) => ['primary', 'secondary', 'knife'].includes(s.slot));
+const comArte = slots.filter((s) => s.src && /\/img\/weapons\/[a-z0-9_]+\.webp$/.test(s.src));
+const trocou = medido.antesTroca.find((s) => s.slot === 'primary')?.src !== medido.depoisTroca.find((s) => s.slot === 'primary')?.src
+  && medido.depoisTroca.find((s) => s.slot === 'primary')?.src === '/img/weapons/ak.webp';
+cobra('TQ1', comArte.length === 3 && medido.imagensOk.every(Boolean) && trocou,
+  comArte.length === 3
+    ? `TQ1 · ${comArte.length} slots com render real (${comArte.map((s) => s.src.split('/').pop()).join(', ')}), imagens carregadas e a primária virou ak.webp ao trocar`
+    : `TQ1 · só ${comArte.length}/3 slots com render de arma: ${slots.map((s) => `${s.slot}=${s.src || 'glifo'}`).join(' ')}`);
+
+const escala = medido.giro300 > 0 ? medido.giroMetade / medido.giro300 : 0;
+cobra('TQ2', medido.grau300 >= 100 && medido.pxMeiaVolta <= 480 && Math.abs(escala - 0.5) < 0.08,
+  `TQ2 · 300 px giram ${medido.grau300.toFixed(0)}° (piso 100°), meia-volta em ${medido.pxMeiaVolta.toFixed(0)} px (teto 480) e sensToque 0,5 entrega ${(escala * 100).toFixed(0)}% do giro`);
+
+cobra('TQ3', medido.giroNoGatilho > 0.3 && medido.atirandoDurante && medido.soltouGatilho,
+  `TQ3 · arrastar do ATIRA girou ${medido.giroNoGatilho.toFixed(2)} rad ${medido.atirandoDurante ? 'ainda atirando' : 'mas o tiro caiu'}; soltar o dedo ${medido.soltouGatilho ? 'parou o tiro' : 'deixou o tiro preso'}`);
+
+cobra('TQ4', medido.pitchNormal < 0 && medido.pitchInvertido > 0 && medido.pitchTeto <= 1.45 + 1e-9 && medido.pitchTeto >= 1.44,
+  `TQ4 · eixo normal ${medido.pitchNormal.toFixed(2)}, invertido ${medido.pitchInvertido.toFixed(2)}, teto de pitch ${medido.pitchTeto.toFixed(2)}`);
+
+for (const c of r) console.log(`  ${c.ok ? 'ok  ' : 'FALHA'} ${c.msg}`);
+const falhou = r.filter((c) => !c.ok).map((c) => c.id);
+await browser.close();
+servidor?.kill();
+
+if (MUT) {
+  const morde = falhou.length === 1 && falhou[0] === ESPERADO[MUT];
+  console.log(morde ? `\nmutante ${MUT} reprovado como devia (${ESPERADO[MUT]})` : `\nMUTAÇÃO PASSOU — ${MUT} não acendeu ${ESPERADO[MUT]} (falhas: ${falhou.join(', ') || 'nenhuma'})`);
+  process.exit(morde ? 0 : 1);
+}
+console.log(`\n${falhou.length ? 'REPROVADO' : 'APROVADO'} — controles de toque: ${r.length - falhou.length}/${r.length}`);
+process.exit(falhou.length ? 1 : 0);

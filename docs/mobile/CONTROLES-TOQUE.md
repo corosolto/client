@@ -1,0 +1,42 @@
+# Controles de toque: os números por trás das constantes
+
+O dono reprovou os controles web em 21/10/2026 ("ícones muito feios de armas, não tem o ícone
+de arma mesmo" e "a jogabilidade ainda tá ruim"). Antes de mexer, o estado foi medido numa
+partida viva no recorte deitado do Galaxy A25 (780×360, Pixel 5 emulado):
+
+| Medida | Antes | Depois | Onde mora |
+|---|---|---|---|
+| Slots com render real da arma | 0 de 3 | 3 de 3 | `game.js` `_syncTouchWeps()` |
+| Giro por arrasto de 300 px | 41° | 134° | `game.js` `TOUCH_LOOK_RAD_PX` |
+| Passada para meia-volta | 1309 px (3,4 telas) | 403 px | idem |
+| Giro arrastando a partir do ATIRA | 0,0003 rad | 1,17 rad | `tp/hud.js`, botão ATIRA |
+
+## Por que cada decisão
+
+**Render em vez de glifo.** Os cinco slots eram SVG desenhado à mão, e o de "rifle" era o mesmo
+para AWP, SVD e M4 — o jogador não sabia o que ia sacar. As imagens de `/img/weapons/*.webp` já
+existiam e já eram usadas pelo painel de munição, pelo killfeed e pelo seletor de modo de armas,
+onde o glifo havia sido reprovado antes. Granada continua em glifo porque não há render dela;
+quando houver, entra pelo mesmo caminho. A barra é reconciliada em `_switchWeapon`, então pegar
+arma do chão troca a figura.
+
+**`TOUCH_LOOK_RAD_PX = 0.0078`.** O valor anterior (0,0024 rad/px) obrigava três passadas e meia
+para virar 180°, o que na prática significa não virar para quem atira pelas costas. 0,0078 fecha
+a meia-volta em ~403 px, dentro da área útil de arrasto de uma tela de 780 px com os botões por
+cima. Não é gosto: o piso (100° em 300 px) e o teto (480 px para meia-volta) são cláusulas da
+régua `tools/eval/toque-controles-check.mjs`.
+
+**`sensToque` separado de `sens`.** Um polegar arrastando 300 px não é um mouse andando 300 px;
+misturar as duas escalas estraga uma das duas. A linha de Configurações só aparece em
+`pointer: coarse` e o `_touchLook` lê `sensToque` com queda para `sens` em save antigo.
+
+**ATIRA também mira.** O gatilho é o dedo que já está apoiado durante a rajada. Sem encaminhar o
+arrasto dele para `_touchLook`, qualquer correção de mira custava soltar o tiro. Os dois caminhos
+(camada de mira e gatilho) entram na mesma função, então inversão de eixo, teto de pitch e o
+fator de luneta valem igual nos dois.
+
+## Régua
+
+`npm run eval:toquecontroles` roda a base e três mutantes (`glifo-cru`, `mira-lenta`,
+`gatilho-mudo`), cada um acendendo exatamente uma cláusula. Ela sobe o próprio servidor quando
+`BASE` não é passado e mede toque de verdade, não a leitura do fonte.

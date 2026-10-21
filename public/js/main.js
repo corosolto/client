@@ -64,7 +64,7 @@ if (savedSettings.allyBots == null && savedSettings.enemyBots == null) {
   const n = Math.max(1, Math.min(8, Math.round(+savedSettings.bots) || 4));
   savedSettings.allyBots = n - 1; savedSettings.enemyBots = n;
 }
-const settings = Object.assign({ sens: 1, invertY: false, vol: 0.7, menuMusic: true, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, allyBots: 3, enemyBots: 4, pinnedChars: [], rounds: 5, ctfRounds: 3, difficulty: 'normal', fxFlash: 'normal', camView: 'first' }, savedSettings);
+const settings = Object.assign({ sens: 1, sensToque: 1, invertY: false, vol: 0.7, menuMusic: true, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, allyBots: 3, enemyBots: 4, pinnedChars: [], rounds: 5, ctfRounds: 3, difficulty: 'normal', fxFlash: 'normal', camView: 'first' }, savedSettings);
 if (!['first', 'third', 'shoulder'].includes(settings.camView)) settings.camView = 'first';
 /* Clamps defensivos: save antigo/corrompido não pode quebrar a composição da partida.
    allyBots 0 = SOLO (você sozinho); enemyBots 1 = 1 adversário. */
@@ -3035,8 +3035,8 @@ $('settings-close').onclick = closeSettings;
 $('settings-apply').onclick = () => { ui.click(); saveSettings(); if (game) game.applySettings(); };
 $('settings-restore').onclick = () => {
   ui.click();
-  settings.quality = 'med'; marcarQualidadeManual(); settings.sens = 1; settings.invertY = false; settings.vol = 0.7; settings.menuMusic = true; settings.speech = true; settings.xhair = '#4fe8e0'; settings.camView = 'first';
-  $('set-quality').value = settings.quality; $('set-sens').value = settings.sens; $('set-vol').value = settings.vol;
+  settings.quality = 'med'; marcarQualidadeManual(); settings.sens = 1; settings.sensToque = 1; settings.invertY = false; settings.vol = 0.7; settings.menuMusic = true; settings.speech = true; settings.xhair = '#4fe8e0'; settings.camView = 'first';
+  $('set-quality').value = settings.quality; $('set-sens').value = settings.sens; if ($('set-sens-toque')) $('set-sens-toque').value = settings.sensToque; $('set-vol').value = settings.vol;
   $('set-speech').checked = true; $('set-invert-y').checked = false; $('set-xhair').value = settings.xhair; $('set-camera').value = 'first';
   if (game) game.setCamView('first');
   sfx.speechEnabled = true; sfx.setVolume(settings.vol); applyXhair(); updLabels(); saveSettings(); syncMenuMusicToggle();
@@ -3739,8 +3739,12 @@ function selectCharacterFromAvatar(c, row, roster) {
 
 /* ---------------- settings wiring ---------------- */
 const sensEl = $('set-sens'), invertEl = $('set-invert-y'), volEl = $('set-vol'), qualEl = $('set-quality');
+/* Sensibilidade do TOQUE: escala própria (o polegar não é o mouse), linha visível só em
+   ponteiro grosso, lida pelo `_touchLook` do game.js. */
+const sensToqueEl = $('set-sens-toque');
 const cameraEl = $('set-camera');
 sensEl.value = settings.sens; volEl.value = settings.vol; qualEl.value = settings.quality;
+if (sensToqueEl) sensToqueEl.value = settings.sensToque;
 cameraEl.value = settings.camView;
 cameraEl.onchange = () => {
   if (game) game.setCamView(cameraEl.value);
@@ -3754,8 +3758,13 @@ const updLabels = () => {
   $('set-vol-val').textContent = Math.round(settings.vol * 100) + '%';
   sensEl.style.setProperty('--set-pct', `${Math.round((Number(settings.sens) - 0.2) / 2.8 * 100)}%`);
   volEl.style.setProperty('--set-pct', `${Math.round(Number(settings.vol) * 100)}%`);
+  if (sensToqueEl) {
+    $('set-sens-toque-val').textContent = Number(settings.sensToque).toFixed(1);
+    sensToqueEl.style.setProperty('--set-pct', `${Math.round((Number(settings.sensToque) - 0.4) / 2.1 * 100)}%`);
+  }
 };
 sensEl.oninput = () => { settings.sens = +sensEl.value; updLabels(); saveSettings(); };
+if (sensToqueEl) sensToqueEl.oninput = () => { settings.sensToque = +sensToqueEl.value; updLabels(); saveSettings(); };
 invertEl.onchange = () => { settings.invertY = invertEl.checked; saveSettings(); ui.click(); };
 volEl.oninput = () => { settings.vol = +volEl.value; sfx.setVolume(settings.vol); updLabels(); saveSettings(); };
 qualEl.onchange = () => { settings.quality = qualEl.value; try { localStorage.setItem('cs_quality_auto', 'manual'); } catch { /* storage bloqueado */ } saveSettings(); ajustarAnisotropia(menuScene, settings.quality); if (game) game.applySettings(); };

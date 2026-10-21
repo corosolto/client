@@ -104,6 +104,7 @@ Cobertura: **3823 de 8788 linhas (44%)** do `game.js` têm dono declarado. O res
 | 400 | `anguloDeDisparo` | 4 |
 | 404 | `coneDoDisparo` | 16 |
 | 422 | `MOBILE_RADAR_INTERVAL` | 4 |
+| 427 | `TOUCH_LOOK_RAD_PX` | 4 |
 | 426 | `DMG_FALLOFF` | 5 |
 | 431 | `HS_MUL` | 3 |
 | 434 | `BALL_CLASS` | 5 |
@@ -153,6 +154,8 @@ Cobertura: **3823 de 8788 linhas (44%)** do `game.js` têm dono declarado. O res
 | 2227 | `_blur` | 1 |
 | 2228 | `_plc` | 19 |
 | 2247 | `_touchControls()` | 135 |
+| 2389 | `_touchLook()` | 14 |
+| 2403 | `_syncTouchWeps()` | 16 |
 | 2382 | `_aimAssist()` | 28 |
 | 2410 | `_requestLock()` | 27 |
 | 2437 | `_travaAtalhos()` | 4 |

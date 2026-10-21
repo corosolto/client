@@ -2756,6 +2756,11 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 #touch-ui .touch-wep{pointer-events:auto;width:46px;height:46px;padding:0;border-radius:10px;color:#fff;
   background:rgba(16,16,20,.34);border:1px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center}
 #touch-ui .touch-wep svg{width:62%;height:62%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.65))}
+/* Render real da arma (o mesmo /img/weapons do painel de munição). O botão é quadrado e a arma
+   é deitada: `contain` evita esticar, e a sombra separa o cano do fundo escuro do HUD. */
+#touch-ui .touch-wep-art{width:88%;height:62%;object-fit:contain;pointer-events:none;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
+#touch-ui .touch-wep.ativa{border-color:#b4d92e;background:rgba(180,217,46,.22)}
 /* PEGAR arma (toque) = a tecla E. Pílula verde pulsante, centralizada acima da barra de armas;
    só aparece quando há arma útil no alcance (o game.js tira/põe a classe .hidden). */
 #touch-ui .touch-pickup{position:absolute;left:50%;bottom:calc(64px + var(--sb));transform:translateX(-50%);
@@ -2771,6 +2776,9 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 /* no mobile: esconde a engrenagem de settings, o ícone de som E os slots de armas laterais
    (1-5) do HUD — a troca de arma/bomba passou pra barra de baixo do touch UI. */
 @media (pointer:coarse){ #hud-actions,#weapon-hud{display:none!important} }
+/* Sensibilidade do toque só existe para quem joga com o dedo. */
+.set-row-toque{display:none}
+@media (pointer:coarse){ .set-row-toque{display:flex} }
 
 /* overlay "gire o celular": só em toque + retrato */
 #rotate-prompt{display:none}
