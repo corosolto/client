@@ -119,6 +119,9 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `weapon-capture.mjs` | Captura arma a arma. |
 | `char-probe.mjs`, `char_probe.py`, `char_sim.py` | Sondas de personagem (proporção, escala, palma). |
 | `mixamo-capture.mjs`, `mixamo-measure.mjs` | Clipes do pack Mixamo. |
+| `granada-porte-check.mjs` | Granada EQUIPADA: precedência sobre o pacote de faca no viewmodel e alcance do arremesso curto (botão direito) contra o cheio. `npm run eval:granada-porte` |
+| `faca-porte-check.mjs` | Porte de LÂMINA em 3ª pessoa (ponta acima do porte de cano), lido do fonte vivo. Evidência: `asset-evidence/faca-3p-20261021/faca-3p-ab.png`. `npm run eval:faca-porte` |
+| `arma-orientacao-check.mjs` | Boca × coronha das 26 armas com o `rot` da CFG aplicado — pega arma montada de costas. `npm run eval:arma-orientacao` |
 
 ## 5. Referência e cor
 

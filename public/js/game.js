@@ -2129,9 +2129,10 @@ export class Game {
         this._qaCicloArma(e.code === 'BracketRight' ? 1 : -1);
         return;
       }
-      if (e.code === 'Digit4') this._throwSmoke();   // fumaça no 4 (convenção CS)
-      if (e.code === 'Digit5') this._throwFrag();     // granada de fragmentação no 5
-      if (e.code === 'KeyG') this._throwSmoke();      // atalho legado de fumaça
+      // 4/5/G EQUIPAM a utilidade; o arremesso é o botão do mouse (esquerdo longe, direito curto).
+      if (e.code === 'Digit4') this._equipNade('smoke');
+      if (e.code === 'Digit5') this._equipNade('frag');
+      if (e.code === 'KeyG') this._equipNade('smoke');
       if (e.code === 'Space') e.preventDefault();
     };
     this._ku = e => {
@@ -2168,6 +2169,8 @@ export class Game {
       }
       if (e.button === 0) { this.mouseDown0 = true; this._tryShoot(); }
       if (e.button === 2) {
+        // Granada equipada: o direito é o lançamento CURTO (o esquerdo joga longe).
+        if (this.player.nade) { this._throwNade(this.player.nade, this.player.nade === 'frag' ? 'frags' : 'smokes', 0.45); return; }
         if (this.player.weapon === 'knife') {
           this._tryKnifeAttack('heavy');
           return;
@@ -2183,7 +2186,7 @@ export class Game {
       if (e.button === 0) this.mouseDown0 = false;
       if (e.button === 2) {
         const w = this.player.weapon;
-        if (w !== 'knife' && !(WEAPONS[w] && WEAPONS[w].scope)) this._scope(false);   // só solta o ADS das não-sniper
+        if (!this.player.nade && w !== 'knife' && !(WEAPONS[w] && WEAPONS[w].scope)) this._scope(false);   // só solta o ADS das não-sniper
       }
     };
     this._mm = e => {
@@ -2354,10 +2357,12 @@ export class Game {
     on('.touch-reload', () => { if (this._acceptInput()) this._startReload(); });
     on('.touch-ads', () => {
       if (!this._acceptInput()) return;
+      // Mesmo contrato do botão direito do mouse: com granada equipada, lançamento CURTO.
+      if (this.player.nade) { this._throwNade(this.player.nade, this.player.nade === 'frag' ? 'frags' : 'smokes', 0.45); return; }
       const w = this.player.weapon;
       if (w === 'knife') { this._tryKnifeAttack('heavy'); return; }
       if (WEAPONS[w] && WEAPONS[w].scope) this._scope(!this.player.scoped); else this._scope(true);
-    }, () => { const w = this.player.weapon; if (w !== 'knife' && !(WEAPONS[w] && WEAPONS[w].scope)) this._scope(false); });
+    }, () => { const w = this.player.weapon; if (!this.player.nade && w !== 'knife' && !(WEAPONS[w] && WEAPONS[w].scope)) this._scope(false); });
     on('.touch-crouch', () => { if (this._acceptInput()) this.keys.KeyC = true; }, () => { this.keys.KeyC = false; });
     on('.touch-pause', () => { this.setPaused(!this.paused); });
     // PEGAR (toque) = a tecla E: chama o mesmo caminho. O update() mostra/esconde o botão.
@@ -2372,8 +2377,8 @@ export class Game {
         if (w === 'primary') this._switchWeapon(p.primary || 'awp');
         else if (w === 'secondary') this._switchWeapon(p.secondary || 'pistol');
         else if (w === 'knife') this._switchWeapon('knife');
-        else if (w === 'smoke') this._throwSmoke();
-        else if (w === 'frag') this._throwFrag();
+        else if (w === 'smoke') this._equipNade('smoke');
+        else if (w === 'frag') this._equipNade('frag');
       }, { passive: false });
     });
   }
@@ -2719,6 +2724,7 @@ export class Game {
     this.player.ammo.awp = { mag: WEAPONS.awp.mag, res: WEAPONS.awp.reserve };
     this.player.ammo.pistol = { mag: WEAPONS.pistol.mag, res: WEAPONS.pistol.reserve };
     this.player.smokes = 5; this.player.frags = 1; this._updateSmokeHud();   // 5 fumaças + 1 frag por round
+    this._unequipNade();   // rodada nova começa com a arma na mão, nunca com a granada
     // sequência de frag é da RODADA (jogador e combatentes: no nó autoritativo o
     // _resetPositions roda pro slot remoto também). Régua: frag-restock-check.mjs
     this.player._fragSeq = 0;
@@ -3314,7 +3320,9 @@ export class Game {
     if (melee) this.vm.authored?.setWeapon('');
     // Em runtime autorado, uma carga pendente apresenta o último mount ainda válido ou
     // um root vazio. O procedural só existe quando o renderer autorado foi desligado.
-    this._vmPresentation = { authored, melee };
+    // Utilidade na mão tem precedência de cena, inclusive sobre o pacote de faca.
+    const utilidade = this._utilidadeNaMao();
+    this._vmPresentation = { authored, melee, utility: utilidade };
     this._syncVmPresentation();
     if (this.vmCamera) {
       this.vmCamera.fov = melee ? this.vm.melee.fov(this.vmCamera.aspect)
@@ -3419,7 +3427,7 @@ export class Game {
   }
   _syncVmPresentation(realScope = false, scopeMask = this._scopeMask || 0) {
     const w = this.player.weapon;
-    const presentation = this._vmPresentation || { authored: false, melee: false };
+    const presentation = this._vmPresentation || { authored: false, melee: false, utility: false };
     const state = viewmodelVisibility({
       alive: this.player.alive,
       firstPerson: this.camView === 'first',
@@ -3428,6 +3436,7 @@ export class Game {
       meleeReady: presentation.melee,
       authoredMode: AUTHORED_VM_ENABLED,
       authoredReady: presentation.authored,
+      utilityReady: presentation.utility,
     });
     this.vm.root.visible = state.root;
     this.vm.melee?.setSuspended(!state.melee);
@@ -3435,6 +3444,14 @@ export class Game {
     for (const k in this.vm.models) this.vm.models[k].visible = state.fallback && k === w;
     this._vmVisibility = state;
     return state;
+  }
+  /* Granada visível na mão: só quando existe pacote pago para ela. Sem o pacote o jogo
+     mantém a arma na tela (degrada, não some) — e o arremesso continua saindo. */
+  _utilidadeNaMao() {
+    const kind = this.player?.nade || this.vm?.authored?.utilityHeld?.() || null;
+    const emArremesso = Boolean(this.vm?.authored?.utility);
+    if (!kind && !emArremesso) return false;
+    return Boolean(this.vm?.authored?.utilityReady?.(kind || 'smoke'));
   }
   // ?vmlab=1 usa um viewmodel isolado e criado sob demanda.
   _vmlabEnsure(id) {
@@ -3578,6 +3595,9 @@ export class Game {
 
   _switchWeapon(w, { pickup = false } = {}) {
     const p = this.player;
+    // Trocar de arma guarda a granada — inclusive quando a arma pedida já é a da mão
+    // (apertar 1 com a fumaça na mão volta pro fuzil).
+    this._unequipNade();
     if (p.weapon === w || !p.alive || !WEAPONS[w]) return;
     if (!this._pickupAllowed(w)) return;   // #268: modo arma-única - slot proibido não equipa
     this._cancelInspect();
@@ -3740,6 +3760,12 @@ export class Game {
     const p = this.player, w = WEAPONS[p.weapon];
     if (this.espectando()) return;   // quem assiste não tem corpo: o tiro sairia do nada
     if (!p.alive || this.state !== 'live') return;
+    // Granada equipada: o gatilho ARREMESSA (longe) em vez de atirar. `continuo` é o
+    // auto-fire segurando o botão — granada não é automática.
+    if (p.nade) {
+      if (!continuo) this._throwNade(p.nade, p.nade === 'frag' ? 'frags' : 'smokes', 1);
+      return;
+    }
     if (this.time < p.nextShotAt || this._reloading() || this.time < p.drawUntil) return;
     this._cancelInspect?.();
     if (p.weapon === 'knife') {
@@ -4249,6 +4275,7 @@ export class Game {
     }
     if (ent.isPlayer) {
       this._scope(false, true);
+      this._unequipNade();
       this._resetKillSequence();
       this.el.respawn.classList.remove('hidden');
       this.sfx.death(ent.def?.id);
@@ -4982,16 +5009,19 @@ export class Game {
 
   // Spawner genérico: projétil físico com pavio; ao estourar vira fumaça OU explosão de frag.
   // Usado pelo jogador (câmera) e pelos bots (olho + direção do alvo).
-  _spawnGrenade(origin, dir, kind, owner) {
+  _spawnGrenade(origin, dir, kind, owner, forca = 1) {
     const template = this._grenTemplates[kind];
     const mesh = template
       ? template.clone(true)
       : new THREE.Mesh(this._grenGeo, kind === 'frag' ? this._fragMat : this._grenMat);
     mesh.position.copy(origin).addScaledVector(dir, 0.5);
     this.scene.add(mesh);
+    // forca 1 = arremesso cheio (botão esquerdo); 0,45 = lançamento curto (botão direito),
+    // com menos empuxo vertical para a granada cair logo à frente em vez de descrever arco.
+    const f = Math.max(0.15, Math.min(1, Number(forca) || 1));
     this._grenades.push({
       mesh, kind, owner,
-      v: dir.clone().multiplyScalar(kind === 'frag' ? 17 : 15).add(new THREE.Vector3(0, 3.2, 0)),
+      v: dir.clone().multiplyScalar((kind === 'frag' ? 17 : 15) * f).add(new THREE.Vector3(0, 3.2 * (0.45 + 0.55 * f), 0)),
       fuse: kind === 'frag' ? 1.5 : 2.2,
     });
     const spatial = this._grenadeSpatial(origin);
@@ -5001,21 +5031,52 @@ export class Game {
   /* A animação paga da granada (authoredvm.throwUtility) precede o lançamento; o
      `release` é o que o servidor (online) ou o mundo (local) recebem — foi perdido no
      rewrite do multiplayer (0e3d1cd71) e a régua eval:authored-vm acusou. */
-  _throwNade(kind, ammoKey) {
+  _throwNade(kind, ammoKey, forca = 1) {
     const p = this.player;
     if (!p.alive || (p[ammoKey] | 0) <= 0 || this.time < (p._nextNade || 0)) return;
+    /* Online o servidor lança e o pedido só carrega o TIPO (netgame.pedirNade): sem campo
+       de força no protocolo, o botão direito lança igual ao esquerdo em partida online. */
+    const f = this.online ? 1 : forca;
     p[ammoKey]--; p._nextNade = this.time + 0.6; this._updateSmokeHud();
     this.sfx.grenadePin(kind);
     const release = () => {
       if (!p.alive) return;
       if (this._mp?.pedirNade?.(kind)) return;   // online quem lança é o servidor (`nade`/`boom`)
       const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
-      this._spawnGrenade(this.camera.position, dir, kind, p);
+      this._spawnGrenade(this.camera.position, dir, kind, p, f);
     };
+    // Sem utilidade sobrando o porte acaba junto com o arremesso: a arma volta à mão.
+    if ((p[ammoKey] | 0) <= 0 && p.nade === kind) { p.nade = null; this.vm.authored?.releaseUtility(); }
     if (!this.vm.authored?.throwUtility(kind, 1.05, release)) release();
+    this._applyVmVisibility();
+    this._updateWeaponHud();
   }
-  _throwSmoke() { this._throwNade('smoke', 'smokes'); }
-  _throwFrag() { this._throwNade('frag', 'frags'); }
+  _throwSmoke(forca = 1) { this._throwNade('smoke', 'smokes', forca); }
+  _throwFrag(forca = 1) { this._throwNade('frag', 'frags', forca); }
+  // Apertar a mesma tecla guarda a utilidade de volta.
+  _equipNade(kind) {
+    const p = this.player;
+    const ammoKey = kind === 'frag' ? 'frags' : 'smokes';
+    if (!p.alive || this.state !== 'live') return false;
+    if (p.nade === kind) { this._unequipNade(); return false; }
+    if ((p[ammoKey] | 0) <= 0) return false;
+    p.nade = kind;
+    this._scope(false, true);
+    this._cancelInspect();
+    this.vm.authored?.holdUtility(kind);
+    this._applyVmVisibility();
+    this._updateWeaponHud();
+    this._deploySfx('pistol');   // saque leve: a granada sai do cinto, não é troca de arma
+    return true;
+  }
+  _unequipNade() {
+    if (!this.player.nade) return false;
+    this.player.nade = null;
+    this.vm.authored?.releaseUtility();
+    this._applyVmVisibility();
+    this._updateWeaponHud();
+    return true;
+  }
 
   // Explosão de frag: dano em área SÓ nos inimigos do dono (sem fogo amigo, arcade), com
   // falloff radial, estilhaços visuais e clarão. Tremor de tela se o jogador estiver perto.
@@ -8496,14 +8557,15 @@ export class Game {
 
     const signature = slots.map((slot) => {
       const ammo = slot.weapon && p.ammo?.[slot.weapon];
-      return [slot.key, slot.weapon || slot.kind, ammo?.mag ?? '', ammo?.res ?? '', slot.count ?? '', slot.weapon === p.weapon].join(':');
+      return [slot.key, slot.weapon || slot.kind, ammo?.mag ?? '', ammo?.res ?? '', slot.count ?? '', slot.weapon === p.weapon, slot.kind === p.nade].join(':');
     }).join('|');
     if (signature === this._weaponHudSig && !hud.classList.contains('hidden')) return;
     this._weaponHudSig = signature;
     let activeWeaponClaimed = false;
     hud.innerHTML = slots.map((slot) => {
       const weapon = slot.weapon && WEAPONS[slot.weapon];
-      const active = slot.weapon === p.weapon && !activeWeaponClaimed;
+      // Com a granada equipada o slot aceso é o DELA: a arma fica guardada.
+      const active = p.nade ? slot.kind === p.nade : (slot.weapon === p.weapon && !activeWeaponClaimed);
       if (active) activeWeaponClaimed = true;
       const ammo = slot.weapon && p.ammo?.[slot.weapon];
       // '∞' e não o número: reserva que volta a cheia toda recarga lê-se como contador travado
