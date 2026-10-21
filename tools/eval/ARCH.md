@@ -200,6 +200,7 @@ Cobertura: **3824 de 8817 linhas (43%)** do `game.js` têm dono declarado. O res
 | 3337 | `_applyVmVisibility()` | 32 |
 | 3369 | `_ensureVmPrecisionQa()` | 79 |
 | 3448 | `_syncVmPresentation()` | 20 |
+| 3478 | `_utilidadeNaMao()` | 7 |
 | 3468 | `_vmlabEnsure()` | 14 |
 | 3482 | `_vmlabFrame()` | 28 |
 | 3510 | `_tuneGet()` | 15 |
@@ -285,6 +286,8 @@ Cobertura: **3824 de 8817 linhas (43%)** do `game.js` têm dono declarado. O res
 | 5033 | `_throwNade()` | 13 |
 | 5046 | `_throwSmoke()` | 1 |
 | 5047 | `_throwFrag()` | 4 |
+| 5086 | `_equipNade()` | 15 |
+| 5101 | `_unequipNade()` | 11 |
 | 5051 | `_explodeFrag()` | 40 |
 | 5091 | `_corDaFumaca()` | 16 |
 | 5107 | `_popSmoke()` | 23 |

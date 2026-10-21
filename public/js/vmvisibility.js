@@ -8,12 +8,16 @@ export function viewmodelVisibility({
   meleeReady = false,
   authoredMode = false,
   authoredReady = false,
+  utilityReady = false,
 } = {}) {
   const firstPersonAlive = Boolean(alive && firstPerson);
   const scopeCovered = Boolean(realScope && Number(scopeMask) > 0.55);
-  const melee = Boolean(firstPersonAlive && meleeReady);
+  // Utilidade na mão vence arma E faca: sem isto o arremesso com a faca equipada
+  // acontecia fora de tela. Régua: tools/eval/granada-porte-check.mjs (GP1).
+  const utility = Boolean(firstPersonAlive && utilityReady && !scopeCovered);
+  const melee = Boolean(firstPersonAlive && meleeReady && !utility);
   const root = Boolean(firstPersonAlive && !melee && !scopeCovered);
-  const authored = Boolean(root && authoredMode && authoredReady);
-  const fallback = Boolean(root && !authoredMode);
-  return Object.freeze({ root, melee, authored, fallback, scopeCovered });
+  const authored = Boolean(root && authoredMode && authoredReady && !utility);
+  const fallback = Boolean(root && !authoredMode && !utility);
+  return Object.freeze({ root, melee, authored, fallback, scopeCovered, utility });
 }

@@ -27,8 +27,39 @@ while (chunkOffset + 8 <= bytes.length) {
 }
 const bin = chunks.get(0x004e4942);
 
+/* MESHOPT (commit 0205474ea, 14/10/2026 — "Converte os 15 viewmodels golden para meshopt").
+   Sem decodificar, esta régua lia BYTES COMPRIMIDOS como float32 e cuspia translações de
+   3e41 mm: ficou CEGA em todas as cláusulas de animação justamente quando o asset mudou.
+   O jogo decodifica com o mesmo decoder vendorizado (authoredvm.js:102-108). */
+const { MeshoptDecoder } = await import('../../public/vendor/meshopt_decoder.module.js');
+await MeshoptDecoder.ready;
+const viewCache = new Map();
+function viewBytes(viewIndex) {
+  if (viewCache.has(viewIndex)) return viewCache.get(viewIndex);
+  const view = gltf.bufferViews[viewIndex];
+  const packed = view?.extensions?.EXT_meshopt_compression;
+  let out;
+  if (packed) {
+    const source = new Uint8Array(bin.buffer, bin.byteOffset + (packed.byteOffset || 0), packed.byteLength);
+    out = Buffer.alloc(packed.count * packed.byteStride);
+    MeshoptDecoder.decodeGltfBuffer(
+      new Uint8Array(out.buffer, out.byteOffset, out.byteLength),
+      packed.count, packed.byteStride, source, packed.mode, packed.filter,
+    );
+  } else {
+    out = bin.subarray(view.byteOffset || 0, (view.byteOffset || 0) + view.byteLength);
+  }
+  viewCache.set(viewIndex, out);
+  return out;
+}
+// KHR_mesh_quantization: tracks viram int16/int8 normalizados; sem isto a rotação lida
+// é lixo inteiro e qualquer comparação de pose vira ruído.
 const componentReaders = {
-  5126: { size: 4, read: (buffer, offset) => buffer.readFloatLE(offset) },
+  5126: { size: 4, read: (b, o) => b.readFloatLE(o) },
+  5123: { size: 2, read: (b, o, n) => (n ? b.readUInt16LE(o) / 65535 : b.readUInt16LE(o)) },
+  5122: { size: 2, read: (b, o, n) => (n ? Math.max(b.readInt16LE(o) / 32767, -1) : b.readInt16LE(o)) },
+  5121: { size: 1, read: (b, o, n) => (n ? b.readUInt8(o) / 255 : b.readUInt8(o)) },
+  5120: { size: 1, read: (b, o, n) => (n ? Math.max(b.readInt8(o) / 127, -1) : b.readInt8(o)) },
 };
 const elementWidths = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 };
 function readAccessor(index) {
@@ -37,11 +68,13 @@ function readAccessor(index) {
   const component = accessor && componentReaders[accessor.componentType];
   const width = accessor && elementWidths[accessor.type];
   if (!bin || !accessor || !view || !component || !width) return [];
+  const buffer = viewBytes(accessor.bufferView);
   const stride = view.byteStride || component.size * width;
-  const base = (view.byteOffset || 0) + (accessor.byteOffset || 0);
+  const base = accessor.byteOffset || 0;
+  const norm = Boolean(accessor.normalized);
   return Array.from({ length: accessor.count }, (_, element) =>
     Array.from({ length: width }, (_, lane) =>
-      component.read(bin, base + element * stride + lane * component.size)));
+      component.read(buffer, base + element * stride + lane * component.size, norm)));
 }
 
 function animationTrack(animationName, nodeName, targetPath) {
@@ -82,7 +115,12 @@ check(Math.abs((camera?.perspective?.aspectRatio || 0) - 1.5) < 1e-4,
   `aspecto da câmera precisa ser 3:2, recebido ${camera?.perspective?.aspectRatio ?? 'ausente'}`);
 for (const action of ['Equip', 'Idle', 'Shoot', 'Reload']) check(actions.has(action), `ação ausente: ${action}`);
 check(actions.size === 4, `esperadas exatamente 4 ações, recebidas ${actions.size}: ${[...actions].join(', ')}`);
-check((gltf.skins || []).length === 1, `esperado 1 rig/skin, recebido ${(gltf.skins || []).length}`);
+/* UM rig, não UMA entrada de skin: o gltfpack/meshopt duplica o bloco `skins` por nó
+   skinado (6 nós -> 6 entradas IDÊNTICAS, mesmo nome e mesma lista de 77 joints). Contar
+   entradas reprovava um asset saudável desde 0205474ea; o que o contrato quer dizer é
+   "todas as malhas penduradas no MESMO esqueleto". */
+const rigs = new Set((gltf.skins || []).map((skin) => `${skin.name}#${(skin.joints || []).join(',')}`));
+check(rigs.size === 1, `esperado 1 rig, recebido ${rigs.size}: ${[...rigs].map((r) => r.split('#')[0]).join(', ')}`);
 
 const strongHandFingerNodes = [
   'f_index.01.R_metarig', 'f_index.02.R_metarig', 'f_index.03.R_metarig',

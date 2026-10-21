@@ -142,6 +142,14 @@ const TP_MOUNT_LIVE = qp.get('tpmountlive') !== '0';
 const _tpc = (qp.get('tpcarry') || '').split(',').map(Number);
 const TP_CARRY_PITCH = ((_tpc.length === 2 && !isNaN(_tpc[0]) ? _tpc[0] : -6)) * Math.PI / 180;  // cano levemente pro chão (porte)
 const TP_CARRY_YAW = ((_tpc.length === 2 && !isNaN(_tpc[1]) ? _tpc[1] : 4)) * Math.PI / 180;     // levemente cruzando o corpo
+/* Lâmina não é cano: com o porte de cano (−6°) a faca saía horizontal, escondida no punho.
+   Pitch negativo levanta a ponta. A/B: ?tpcarryfaca=-6,4. Régua: faca-porte-check.mjs. */
+const _tpb = (qp.get('tpcarryfaca') || '').split(',').map(Number);
+const TP_CARRY_BLADE = [
+  _tpb.length === 2 && !isNaN(_tpb[0]) ? _tpb[0] : -38,
+  _tpb.length === 2 && !isNaN(_tpb[1]) ? _tpb[1] : 20,
+];
+const BLADES = new Set(['knife']);
 const TP_CLEAR = parseFloat(qp.get('tpclear')) || 0.06;   // folga mínima entre o grip e a superfície do corpo (m)
 // O empurrão só entra quando a palma está ENTERRADA de verdade. Medido: humano típico
 // tem a palma 3-10 cm dentro do volume do quadril na pose de idle (braço encostado no
@@ -654,7 +662,11 @@ export function buildCharacterModel(def, opts = {}) {
       // medidos por vértice, probe-muzzle 05/08) com pitch pra baixo — sem isso o revólver
       // do bonzo aponta ~35° pro céu. No jogo o porte funcional fica intocado: bot mira
       // pra onde olha (funcional > identidade). A/B: scratchpad sel_now × sel_fix.
-      const cd = opts.preview ? (ONE_HANDED.has(opts.weaponId) ? [4, 26] : [-14, 40]) : null;
+      // Lâmina tem porte próprio (TP_CARRY_BLADE) tanto na vitrine quanto no jogo: com o
+      // porte de cano a faca saía apontada pra frente na horizontal.
+      const faca = BLADES.has(opts.weaponId);
+      const cd = faca ? TP_CARRY_BLADE
+        : opts.preview ? (ONE_HANDED.has(opts.weaponId) ? [4, 26] : [-14, 40]) : null;
       const carry = new THREE.Quaternion().setFromEuler(cd
         ? new THREE.Euler(cd[0] * Math.PI / 180, cd[1] * Math.PI / 180, 0, 'YXZ')
         : new THREE.Euler(TP_CARRY_PITCH, TP_CARRY_YAW, 0, 'YXZ'));

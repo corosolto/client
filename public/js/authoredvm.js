@@ -466,6 +466,7 @@ export class AuthoredViewModels {
     this.pending = new Map();
     this.weapon = '';
     this.utility = null;
+    this.held = null;
     this._utilityPrime = null;
     this._disposed = false;
     this._requestSerial = 0;
@@ -627,8 +628,9 @@ export class AuthoredViewModels {
     const request = ++this._requestSerial;
     this._activeRequest = request;
     const key = this._keyFor(id);
+    const forcado = this.utility?.entry || this.held?.entry || null;
     for (const entry of this.entries.values()) {
-      const visible = this.utility ? entry === this.utility.entry : entry.key === key;
+      const visible = forcado ? entry === forcado : entry.key === key;
       // Entrada que sai de cena volta ao idle: fila/pose de reload não fica presa.
       if (!visible && entry.mount.visible) this._idle(entry);
       entry.mount.visible = visible;
@@ -674,16 +676,19 @@ export class AuthoredViewModels {
         utility.onRelease?.();
       }
       if (utility.elapsed >= utility.duration) {
-        utility.entry.mount.visible = false;
+        // Ainda em porte (o jogador tem outra granada): o mount da utilidade continua.
+        utility.entry.mount.visible = Boolean(this.held);
         this._idle(utility.entry);
         this.utility = null;
-        const weaponEntry = this.entry();
-        if (weaponEntry) weaponEntry.mount.visible = true;
+        if (!this.held) {
+          const weaponEntry = this.entry();
+          if (weaponEntry) weaponEntry.mount.visible = true;
+        }
         if (this.onReady) this.onReady(this);
       }
       return;
     }
-    const active = this.entry();
+    const active = (this.held && !this.utility) ? this.held.entry : this.entry();
     // Estados por cadência (cs16: shoot1-3 e o draw procedural de pistola)
     // expiram pelo relógio do QC e voltam a idle — não há clipe para "terminar".
     if (active?.stateUntil && this._time >= active.stateUntil && /^(shoot|draw)/.test(active.state || '')) {
@@ -982,6 +987,41 @@ export class AuthoredViewModels {
     return true;
   }
 
+  // Granada em porte (idle), antes do arremesso: `throwUtility` segue dono do lançamento.
+  holdUtility(kind) {
+    const entry = this.entries.get('grenade');
+    const model = entry?.utilityModels.get(kind === 'frag' ? 'he' : kind);
+    if (!entry || !model) return false;
+    if (this.held?.entry === entry && this.held.kind === kind) return true;
+    for (const candidate of this.entries.values()) {
+      if (candidate !== entry && candidate.mount.visible) this._idle(candidate);
+      candidate.mount.visible = candidate === entry;
+    }
+    for (const candidate of entry.utilityModels.values()) candidate.visible = candidate === model;
+    this.held = { entry, kind };
+    if (!this.utility) this._idle(entry);
+    return true;
+  }
+
+  releaseUtility() {
+    if (!this.held) return false;
+    const { entry } = this.held;
+    this.held = null;
+    if (this.utility) return true;   // o arremesso em curso devolve a arma quando terminar
+    entry.mount.visible = false;
+    this._idle(entry);
+    const weaponEntry = this.entry();
+    if (weaponEntry) weaponEntry.mount.visible = true;
+    return true;
+  }
+
+  // Há pacote pago para esta utilidade? Sem ele o jogo mantém a arma na tela.
+  utilityReady(kind) {
+    const entry = this.entries.get('grenade');
+    return Boolean(entry?.utilityModels.get(kind === 'frag' ? 'he' : kind));
+  }
+  utilityHeld() { return this.held?.kind || null; }
+
   _sequence(entry, names, duration) {
     const total = names.reduce((sum, name) => sum + entry.clips.get(name).duration, 0);
     const timeScale = duration > 0 ? total / duration : 1;
@@ -1151,6 +1191,7 @@ export class AuthoredViewModels {
     }
     if (this.utility && !this.utility.released) this.utility.onRelease?.();
     this.utility = null;
+    this.held = null;
     for (const entry of this.entries.values()) {
       entry.mixer.stopAllAction();
       entry.mount.removeFromParent();
