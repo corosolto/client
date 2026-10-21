@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.115`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.116`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -139,6 +139,35 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.116] — 2026-10-21
+
+### Mudado
+- QA mobile: o jogo se mede sozinho no aparelho, e um smoke depois do deploy (#1042)
+- revisão de asset por arquivo: release novo para de rebaixar o acervo inteiro (#1038)
+- feat(lobby): luva equipada no personagem + gauntlet de 50 skins (#1044)
+- feat(loja): Pack Selo Ácido + conserto P0 da luva no lobby (#1046)
+- Controles de toque: a arma aparece na barra e o dedo consegue virar (#1045)
+- fix(deps): vite 8.3.5 fecha o DEP1 high do portao
+- feat(loja): Pack Selo Acido e conserto da luva no lobby
+- A barra de armas mostra a arma, e o dedo consegue virar
+- fix(regua): ativar a mira antes da captura no jogo
+- feat(lobby): luva equipada no personagem e gauntlet de skins
+- Regenera os blocos de docs com assetrev e qamobile juntos
+- As outras tres reguas da fauna leem o mapa gerado
+- LA4 passa a ler o mapa gerado, nao a tabela escrita a mao
+- catálogo da régua nova e a nota do jogador no changelog
+- régua asset-rev: AR1–AR5, três mutantes, e o mapa gerado no build
+- os consumidores de GLB pesado passam a usar assetUrl()
+- revisão de asset por arquivo: gerador, mapa e helper de URL
+- Mede o roteiro deitado, que e como o celular joga
+- Afrouxa o teto de duração do QAM1 para 1,6×
+- Tira a narrativa do código e põe em docs/mobile/QA-MOBILE.md
+- Regenera os blocos de docs com o check:fast novo
+- Documenta as duas réguas novas e quando rodar o smoke
+- Cobra o harness de QA mobile e o smoke pós-deploy
+- Publica o mobile-config.json que o app de loja lê
+- Mede o jogo no celular com um roteiro de 20 s
 
 ## [2.1.0-alpha.115] — 2026-10-20
 
