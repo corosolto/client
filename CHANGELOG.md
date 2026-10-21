@@ -43,6 +43,8 @@
 - A câmera em terceira pessoa considera filhos de modelos importados e segura o último bloqueio por 80 ms. Armas autoradas não reativam malhas antigas, e o HUD volta a mostrar a arte da arma equipada.
 - Celulares entram no perfil gráfico leve desde a abertura, limitam texturas e evitam carregar música, personagem 3D e cenário escondidos antes do primeiro toque.
 - Durante a partida, o perfil móvel começa com resolução de 60%, limita a cadência a 60 FPS no jogo e 30 FPS nos menus, reduz partículas, cápsulas e marcas conforme o aparelho sofre e recupera o último degrau sustentável na sessão seguinte.
+- No celular, a barra de armas mostra a arma de verdade em vez de um desenho genérico, e a imagem muda junto com o que está na mão.
+- No celular, virar ficou três vezes mais rápido: meia-volta cabe em uma passada de polegar, dá para mirar arrastando o próprio botão de atirar sem soltar o tiro, e Configurações ganhou um controle só para a sensibilidade do toque.
 
 ## Não lançado - 2026-10-18
 

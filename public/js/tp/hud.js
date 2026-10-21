@@ -359,12 +359,30 @@ function montarToque(raiz) {
       b.addEventListener('touchcancel', h);
     }
     raiz.append(b);
+    return b;
   };
-  botao('tp-toque-atira', tr('ATIRA'), tr('Atirar'), (g) => {
+  /* ATIRA também MIRA: o arrasto do gatilho vai para o `_touchLook` do game.js, senão
+     corrigir a mira na rajada exige soltar o tiro (docs/mobile/CONTROLES-TOQUE.md). */
+  const atira = botao('tp-toque-atira', tr('ATIRA'), tr('Atirar'), (g) => {
     if (!g._acceptInput?.()) return;
     g.mouseDown0 = true;
     g._tryShoot?.();
   }, (g) => { g.mouseDown0 = false; });
+  if (atira) {
+    let dedo = null, ax = 0, ay = 0;
+    atira.addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; dedo = t.identifier; ax = t.clientX; ay = t.clientY; }, { passive: true });
+    atira.addEventListener('touchmove', (e) => {
+      for (const t of e.changedTouches) {
+        if (t.identifier !== dedo) continue;
+        const dx = t.clientX - ax, dy = t.clientY - ay; ax = t.clientX; ay = t.clientY;
+        window.__game?._touchLook?.(dx, dy);
+      }
+      e.preventDefault();
+    }, { passive: false });
+    const solta = (e) => { for (const t of e.changedTouches) if (t.identifier === dedo) dedo = null; };
+    atira.addEventListener('touchend', solta);
+    atira.addEventListener('touchcancel', solta);
+  }
   botao('tp-toque-pula', tr('PULA'), tr('Pular'), (g) => { g.keys.Space = true; }, (g) => { g.keys.Space = false; });
   botao('tp-toque-ping', 'PING', 'Ping', () => marcarPing());
   botao('tp-toque-placar', '', tr('Placar'), (g) => g._showScoreboard?.(!!g.el?.scoreboard?.classList.contains('hidden')));
