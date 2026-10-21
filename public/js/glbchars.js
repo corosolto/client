@@ -210,7 +210,7 @@ export async function preloadCosmeticAssets(ids = []) {
 const _gloveMesh = new Map();      // charId -> SkinnedMesh template (ou null se não há pacote)
 let _gloveManifest = null;
 function gloveManifest() {
-  if (!_gloveManifest) _gloveManifest = fetch(`/data/gloves-manifest.json?v=${VERSION}`)
+  if (!_gloveManifest) _gloveManifest = fetch(assetUrl('data/gloves-manifest.json'))
     .then((r) => { if (!r.ok) throw new Error('gloves_manifest'); return r.json(); })
     .catch(() => ({ packages: [] }));
   return _gloveManifest;
@@ -231,7 +231,7 @@ export async function preloadGloveAssets(ids = []) {
     const url = glovePath(manifest, id);
     if (!url) { _gloveMesh.set(id, null); return; }
     try {
-      const g = await loadGLB(`${url}?v=${VERSION}`);
+      const g = await loadGLB(assetUrl(url.replace(/^\//, '')));
       let mesh = null;
       g.scene.traverse((o) => { if (!mesh && o.isSkinnedMesh) mesh = o; });
       _gloveMesh.set(id, mesh || null);

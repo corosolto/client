@@ -294,6 +294,21 @@ export function pintar({ fields, size }, pintura, style) {
         if (eye || nose || teeth) color = glove;
       }
     }
+    if (!exposed && !isSleeve && style.motif === 'selo-acido') {
+      color = glove;
+      // Selo circular original: anel branco grosso e cunha angular vazada no miolo preto.
+      if (handPanel) {
+        const dx = x, dy = y - 0.42, r = Math.hypot(dx, dy);
+        if (r > 0.150 && r < 0.225) color = accent;
+        if (r <= 0.150) {
+          const cunha = dy > -0.085 && Math.abs(dx) < (0.105 - dy) * 0.58;
+          const furo = dy > -0.038 && Math.abs(dx) < (0.058 - dy) * 0.58;
+          if (cunha && !furo) color = accent;
+        }
+      }
+      // Filetes no punho: o selo some quando só a manga aparece (pistola).
+      if (cuff && (Math.abs(y + 0.095) < 0.020 || Math.abs(y - 0.015) < 0.020)) color = accent;
+    }
     // Motivos novos em volta do eixo do braço (ângulo × comprimento): no punho visto de lado o
     // plano x·y degenera e o padrão vira mancha (crítico cego, rodada 1).
     const volta = Math.atan2(z, x) * 0.3, noEixo = Math.hypot(x, z) < 0.12;
