@@ -233,6 +233,25 @@ export const GLOVE_SKINS = Object.freeze({
     description: 'Grafite frio com trama prateada e punho carvão.',
     storeEnabled: false,
   }),
+  'luvas-selo-acido': gloveSkin({
+    id: 'luvas-selo-acido',
+    name: 'Luvas Selo Ácido',
+    glove: '#0b0b0b',
+    sleeve: '#141414',
+    accent: '#f5f5f5',
+    motif: 'selo-acido',
+    description: 'Preto fosco com selo circular branco no dorso e filetes no punho.',
+  }),
+  'pack-acido-gloves': gloveSkin({
+    id: 'pack-acido-gloves',
+    name: 'Luvas Selo Ácido',
+    glove: '#0b0b0b',
+    sleeve: '#141414',
+    accent: '#f5f5f5',
+    motif: 'selo-acido',
+    description: 'Preto fosco com selo circular branco no dorso e filetes no punho.',
+    storeEnabled: false,
+  }),
 });
 
 export const STORE_GLOVES = Object.freeze(Object.values(GLOVE_SKINS).filter((skin) => skin.storeEnabled));

@@ -123,6 +123,16 @@ export const TRETA_PACKS = Object.freeze([
     glove: 'pack-prateado-gloves',
     knife: 'pack-prateado-knife',
   }),
+  pack({
+    id: 'pack-acido',
+    name: 'Pack Selo Ácido',
+    color: '#f2f2f2',
+    description: 'Preto fosco com um selo circular branco de desenho próprio em AK, pistola, luvas e faca.',
+    ak: 'pack-acido-ak',
+    pistol: 'pack-acido-pistol',
+    glove: 'pack-acido-gloves',
+    knife: 'pack-acido-knife',
+  }),
 ]);
 
 const PACK_BY_ID = new Map(TRETA_PACKS.map((entry) => [entry.id, entry]));

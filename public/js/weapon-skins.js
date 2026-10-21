@@ -322,6 +322,14 @@ const THEME_FRAGMENT = Object.freeze({
     diffuseColor.rgb = mix(emoBase, vec3(0.92, 0.89, 0.84), emoHead * 0.84);
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.015, 0.004, 0.018), max(emoEyes, emoMouth));
   `,
+  'pack-acido': `
+    float acidoGrain = 0.5 + 0.5 * sin(
+      vWeaponSkinLocal.z * 173.0 + sin(vWeaponSkinLocal.y * 211.0)
+    );
+    float acidoBand = 0.5 + 0.5 * sin((vWeaponSkinLocal.y + vWeaponSkinLocal.z) * 27.0);
+    float acidoMatte = acidoGrain * 0.42 + smoothstep(0.34, 0.86, acidoBand) * 0.58;
+    diffuseColor.rgb = mix(vec3(0.043, 0.043, 0.043), vec3(0.078, 0.078, 0.078), acidoMatte);
+  `,
   ouro: `
     float ouroSweep = 0.5 + 0.5 * sin(
       vWeaponSkinLocal.z * 24.0 + vWeaponSkinLocal.y * 3.6
@@ -341,6 +349,9 @@ const patternFragment = (skinId) => PATTERN_FRAGMENT[skinId] || THEME_FRAGMENT[W
 const MATERIAL_PROFILE = Object.freeze({
   gold: Object.freeze({ roughness: 0.48, metalness: 0.91, envMapIntensity: 0.72 }),
   silver: Object.freeze({ roughness: 0.52, metalness: 0.93, envMapIntensity: 0.68 }),
+  // Preto fosco de verdade: sem este perfil o reflexo do ambiente devolve ~95 de luma e a
+  // arma lê como grafite claro, não como a pintura preta que a loja promete.
+  matte: Object.freeze({ roughness: 0.96, metalness: 0.02, envMapIntensity: 0.30 }),
   default: Object.freeze({ roughness: 0.72, metalness: 0.16, envMapIntensity: 0.78 }),
 });
 const CLUB_MARK_LAYOUT = Object.freeze({

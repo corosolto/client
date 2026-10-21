@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "pack-acido-knife",
+  "weaponId": "knife",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": null,
+  "markSourceUrl": null,
+  "referenceRule": "project-authored metallic finish without brand, badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "e5e65b8ebdc4f3d6d8f823300bc7844ceff90798990af026d0563a2f5bc3bde1",
+    "side-right.png": "6cd020ca68073d0462e888c0ecdf5ac388865bc1c2637bbbdf6b006429b4fb0e",
+    "three-quarter.png": "748c185d62dbcf040f6974c0591fbb58847697cbed03c1a6d81a903198fdcc3c"
+  },
+  "storePoster": null,
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "87a13105a03284bcd48028948f75020c8e787c660e045e0a678ae178915d0a12",
+    "public/js/weapon-skins.js": "a6ae60ccc0b322a8df7638a40c753623c6319d29cbd4ffcf9e44b5deb0670460",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/project-marks/acido-selo.svg": "69a2c1d694ae17bb02c9dc32359b86d34c6ba04a0d486d249a02d551d61dc749"
+  },
+  "consoleErrors": []
+}
