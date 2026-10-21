@@ -21,6 +21,7 @@ import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { buildRifle, CHAR_FX, charRimColor, upgradeCharMaterial, makeContactShadow } from './characters.js';
 import { weaponModel, preloadWeapons, ONE_HANDED, gripPoints } from './weapons.js';
 import { mountEyewear } from './eyewear.js';
+import { gloveSkinStyle } from './data/glove-skin-definitions.js';
 import { solveCCDIK } from './handik.js';
 
 // Character ids that have a real model under public/models/characters/<id>.glb.
@@ -194,6 +195,64 @@ export async function preloadCosmeticAssets(ids = []) {
     })().catch(e => console.warn(`[skins] ${id}: ${e.message}`)).finally(() => _skinRequests.delete(id));
     _skinRequests.set(id, request); return request;
   }));
+}
+
+/* LUVAS EM 3ª PESSOA (20/10): a fábrica já recortava a mão de cada personagem em
+   `models/gloves/3p/`; aqui o pacote é re-bindado por nome de osso e pintado. */
+const _gloveMesh = new Map();      // charId -> SkinnedMesh template (ou null se não há pacote)
+let _gloveManifest = null;
+function gloveManifest() {
+  if (!_gloveManifest) _gloveManifest = fetch(assetUrl('data/gloves-manifest.json'))
+    .then((r) => { if (!r.ok) throw new Error('gloves_manifest'); return r.json(); })
+    .catch(() => ({ packages: [] }));
+  return _gloveManifest;
+}
+function glovePath(manifest, charId) {
+  for (const pack of manifest.packages || []) {
+    if (pack.perspective !== '3p') continue;
+    const variante = (pack.sourceVariants || []).find((v) => (v.characterIds || []).includes(charId));
+    if (variante) return `/models/gloves/3p/${variante.id}-${pack.skeletonFamily.fingerprintSha256.slice(0, 12)}.glb`;
+  }
+  return null;
+}
+export async function preloadGloveAssets(ids = []) {
+  const alvos = [...new Set(ids.filter((id) => GLB_CHARS.has(id) && !_gloveMesh.has(id)))];
+  if (!alvos.length) return;
+  const manifest = await gloveManifest();
+  await Promise.all(alvos.map(async (id) => {
+    const url = glovePath(manifest, id);
+    if (!url) { _gloveMesh.set(id, null); return; }
+    try {
+      const g = await loadGLB(assetUrl(url.replace(/^\//, '')));
+      let mesh = null;
+      g.scene.traverse((o) => { if (!mesh && o.isSkinnedMesh) mesh = o; });
+      _gloveMesh.set(id, mesh || null);
+    } catch (e) { _gloveMesh.set(id, null); }
+  }));
+}
+export function hasGloveModel(id) { return !!_gloveMesh.get(id); }
+/* Anexa a luva ao personagem JÁ CLONADO. Devolve a malha anexada (ou null). */
+function attachGloves(model, charId, gloveSkinId) {
+  const estilo = gloveSkinStyle(gloveSkinId);
+  const template = _gloveMesh.get(charId);
+  if (!estilo || !template) return null;
+  let corpo = null;
+  model.traverse((o) => { if (!corpo && o.isSkinnedMesh) corpo = o; });
+  if (!corpo) return null;
+  const ossos = new Map();
+  corpo.skeleton.bones.forEach((b) => ossos.set(b.name, b));
+  const alvo = template.skeleton.bones.map((b) => ossos.get(b.name));
+  if (alvo.some((b) => !b)) return null;    // família divergente: não force o bind
+  const luva = new THREE.SkinnedMesh(template.geometry, new THREE.MeshStandardMaterial({
+    color: new THREE.Color(estilo.glove), roughness: 0.86, metalness: 0,
+  }));
+  luva.name = 'luvas-3p';
+  luva.userData.gloveSkin = estilo.id;
+  luva.bind(new THREE.Skeleton(alvo, template.skeleton.boneInverses), template.bindMatrix);
+  luva.bindMode = template.bindMode;
+  luva.frustumCulled = false;
+  corpo.parent.add(luva);
+  return luva;
 }
 
 
@@ -425,6 +484,8 @@ export function buildCharacterModel(def, opts = {}) {
   const withWeapon = opts.weapon !== false; // menu showcase passes weapon:false
 
   const model = skeletonClone(template);
+  // Luva equipada: entra ANTES do passe de materiais para herdar sombra/rim como o corpo.
+  if (opts.gloveSkinId) attachGloves(model, def.id, opts.gloveSkinId);
 
   // Normalize: scale to target height, drop feet to y=0, apply facing fix.
   // Update world matrices first so the bounding box reflects the real transforms.
