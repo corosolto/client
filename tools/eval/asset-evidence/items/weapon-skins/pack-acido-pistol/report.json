@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "cs-weapon-skin-evidence/1",
+  "skinId": "pack-acido-pistol",
+  "weaponId": "pistol",
+  "status": "store-active",
+  "approved": true,
+  "certified": true,
+  "runtimeEnabled": true,
+  "designOrigin": "project-owned",
+  "rightsStatus": "original-safe",
+  "officialMarksIncluded": false,
+  "markPlacement": "receiver-inlay",
+  "sloganPlacement": null,
+  "markSourceUrl": null,
+  "referenceRule": "project-authored metallic finish without brand, badge or copied commercial skin",
+  "slogan": null,
+  "storePrice": null,
+  "views": [
+    "left-side",
+    "right-side",
+    "three-quarter"
+  ],
+  "files": {
+    "side-left.png": "24c2f50523c7ebb9ab0aaf994fced02e49dfdd666faa0e309267ca10f9357e48",
+    "side-right.png": "6bfe64fa17642ee1e008f8a75124bbcabe63d759e24d5e6b74041b867a0e783f",
+    "three-quarter.png": "5f6e2be7a03d6a7e22880acb897ad2d6bb7674401213a74171cfb52002c4caee"
+  },
+  "storePoster": null,
+  "sources": {
+    "public/js/data/weapon-skin-definitions.js": "87a13105a03284bcd48028948f75020c8e787c660e045e0a678ae178915d0a12",
+    "public/js/weapon-skins.js": "a6ae60ccc0b322a8df7638a40c753623c6319d29cbd4ffcf9e44b5deb0670460",
+    "public/js/weapons.js": "d8f9c7b69ce49d1ba81ffc0cd515502d0174afdb2b6f7cdb825a866b6cbed182",
+    "public/weapon-skin-review.html": "285c0b451c875116dd010c023cac69409f4183b4ddc36f0878bd2a8cd3cbcbc1",
+    "public/textures/weapon-skins/project-marks/acido-selo.svg": "69a2c1d694ae17bb02c9dc32359b86d34c6ba04a0d486d249a02d551d61dc749"
+  },
+  "consoleErrors": []
+}
