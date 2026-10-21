@@ -11,7 +11,7 @@ import {tretaPack} from './data/pack-definitions.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { preloadEyewearAssets } from './eyewear.js';
-import { preloadCharacterAssets, preloadCosmeticAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
+import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps, COMMON_MAP_PROPS } from './mapprops.js';
 import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
@@ -997,11 +997,28 @@ function armaDoPreview(charId) {
   const skinDe = (weaponId) => pack?.weaponSkins?.[weaponId] || equippedTretaWeaponSkin(weaponId);
   const daVibe = charWeapon(charId);
   // Preferência: a arma do personagem, se ela mesma tiver pintura equipada.
-  if (skinDe(daVibe)) return { weaponId: daVibe, weaponSkinId: skinDe(daVibe) };
+  const luva = pack?.gloveSkin || equippedTretaGlove();
+  if (skinDe(daVibe)) return { weaponId: daVibe, weaponSkinId: skinDe(daVibe), gloveSkinId: luva };
   const comSkin = ORDEM_ARMA_EQUIPADA.find((weaponId) => skinDe(weaponId));
-  return comSkin ? { weaponId: comSkin, weaponSkinId: skinDe(comSkin) } : { weaponId: daVibe, weaponSkinId: null };
+  return comSkin ? { weaponId: comSkin, weaponSkinId: skinDe(comSkin), gloveSkinId: luva }
+    : { weaponId: daVibe, weaponSkinId: null, gloveSkinId: luva };
 }
 let pvToken = 0;
+/* Enquadramento de QA (skins-gauntlet): mão direita no quadro inteiro e idle congelado.
+   Fica atrás de ?pvcam=maos - sem a flag, nada muda para o jogador. */
+const PV_CAM_MAOS = new URLSearchParams(location.search).get('pvcam') === 'maos';
+function enquadrarMaos(p, m) {
+  let mao = null;
+  m.group.traverse((o) => { if (!mao && o.isBone && /right.?hand|hand.?r\b|rhand|r_hand/i.test(o.name)) mao = o; });
+  if (!mao) return;
+  if (p.mixer) { p.mixer.update(0); p.mixer.timeScale = 0; }
+  m.group.updateMatrixWorld(true);
+  const alvo = new THREE.Vector3().setFromMatrixPosition(mao.matrixWorld);
+  p.cam.position.set(alvo.x + 0.42, alvo.y + 0.12, alvo.z + 0.52);
+  p.cam.lookAt(alvo);
+  p.cam.updateProjectionMatrix();
+  p.travado = true;    // o loop() não devolve o giro automático nem o zoom padrão
+}
 function pvSetChar(def) {
   def = {...def, skinId:equippedTretaSkin(def.id),eyewearId:equippedTretaEyewear()};
   if (staticPreviews) { showStaticPreview(def); return; }
@@ -1023,29 +1040,35 @@ function pvSetChar(def) {
     // blocky placeholder for a character that has a real model (the pop-in bug).
     const arma = armaDoPreview(def.id);
     Promise.all([preloadCharacterAssets([def.id]),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
-      preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId)]).then(() => {
+      preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId),
+      arma.gloveSkinId ? preloadGloveAssets([def.id]) : null]).then(() => {
       if (my !== pvToken) return;
       // preview: porte de EXIBIÇÃO — arma atravessada no peito (estilo vitrine do CS) em
       // vez do porte funcional que aponta o cano pra câmera e esconde a silhueta da arma
       // (era o "posturas bizarras" de 05/08). Ângulos por classe em glbchars.js. No jogo,
       // nada muda.
-      const m = hasModel(def.id) ? buildCharacterModel(def, { weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, preview: true }) : null;
+      const m = hasModel(def.id) ? buildCharacterModel(def, { weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, gloveSkinId: arma.gloveSkinId, preview: true }) : null;
       if (!m) { showBox(); return; }
       if (p.model) p.scene.remove(p.model);
       // Evidência do que foi montado na mão (régua LB20): os valores saem do objeto 3D,
       // não da intenção - canvas não se lê e intenção não prova nada.
       const cv = $('char-preview');
-      let armaNaMao = null, pinturaNaMao = '';
+      let armaNaMao = null, pinturaNaMao = '', luvaNaMao = '';
       m.group.traverse((o) => {
         if (!armaNaMao && (o.name === 'arma-glb' || o.name === 'arma-caixa')) armaNaMao = o;
         if (!pinturaNaMao && o.userData?.weaponSkin) pinturaNaMao = o.userData.weaponSkin;
+        if (!luvaNaMao && o.userData?.gloveSkin) luvaNaMao = o.userData.gloveSkin;
       });
       cv.dataset.glb = '1';
       cv.dataset.arma = armaNaMao ? arma.weaponId : '';
       cv.dataset.armaSkin = pinturaNaMao;
+      cv.dataset.luva = luvaNaMao;
       m.group.rotation.y = -0.4;
       p.model = m.group; p.mixer = m.mixer; p.ctrl = m.ctrl;
       p.scene.add(m.group);
+      // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
+      // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.
+      if (PV_CAM_MAOS) enquadrarMaos(p, m);
     }).catch(() => { if (my === pvToken) showBox(); });
   } else {
     showBox();
@@ -3971,8 +3994,8 @@ function loop(agoraMs = performance.now()) {
     && hubMenu?.dataset.hubTab === 'jogar' && hubMenu?.dataset.hubNet === 'sp';
   if (!splashAtiva) {
     if ((csOpen || hubPreviewOpen) && pv && pv.model && !previewVideoVisible()) {
-      const pvDt = Math.min(0.05, dtReal);
-      if (!pvDrag) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
+      const pvDt = pv.travado ? 0 : Math.min(0.05, dtReal);   // ?pvcam=maos congela pose e giro
+      if (!pvDrag && !pv.travado) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
       // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
       if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
       pv.r.render(pv.scene, pv.cam);
