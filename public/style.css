@@ -3550,3 +3550,14 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
 :root[data-ui=v3] #scoreboard .sb-amigo:hover{background:#26350f}
 :root[data-ui=v3] #scoreboard .sb-amigo:focus-visible{outline:2px solid var(--tp-tinta-1);outline-offset:2px}
 :root[data-ui=v3] #scoreboard .sb-amigo:disabled{color:#b6b8b2;cursor:default}
+
+/* ---------- EMOTES no preview do personagem (lobby) --------------------------
+   A lista só aparece depois do clique em DANÇAR: é o mesmo gesto que dispara o
+   import dinâmico de `js/emotes.js`, então o boot nunca baixa coreografia. */
+.pv-emotes{position:absolute;left:50%;transform:translateX(-50%);bottom:8px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:94%;z-index:3}
+.pv-emote-btn{font:700 11px/1 var(--aaa-font-body,sans-serif);letter-spacing:.06em;text-transform:uppercase;color:#fff;background:rgba(16,20,26,.82);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:7px 11px;cursor:pointer;backdrop-filter:blur(3px)}
+.pv-emote-btn:hover,.pv-emote-btn:focus-visible{background:rgba(180,217,46,.22);border-color:#b4d92e;color:#eaffb0}
+.pv-emote-btn[aria-pressed="true"]{background:#b4d92e;border-color:#b4d92e;color:#10141a}
+.pv-emote-abrir{background:rgba(180,217,46,.9);border-color:#b4d92e;color:#10141a}
+.pv-emotes.carregando .pv-emote-abrir{opacity:.6;pointer-events:none}
+@media (max-width:640px){.pv-emote-btn{font-size:10px;padding:6px 9px}}

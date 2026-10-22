@@ -11,7 +11,7 @@ import {tretaPack} from './data/pack-definitions.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { preloadEyewearAssets } from './eyewear.js';
-import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
+import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps, COMMON_MAP_PROPS } from './mapprops.js';
 import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
@@ -1019,6 +1019,51 @@ function enquadrarMaos(p, m) {
   p.cam.updateProjectionMatrix();
   p.travado = true;    // o loop() não devolve o giro automático nem o zoom padrão
 }
+/* EMOTES do lobby: `js/emotes.js` entra por import() DINÂMICO no clique em DANÇAR —
+   boot não paga nada (régua eval:emotes, EM5). Decisões: docs/EMOTES-BR.md. */
+let emotesMod = null, emotesMontados = false;
+async function carregaEmotes() {
+  if (emotesMod) return emotesMod;
+  const m = await import('./emotes.js');
+  setEmoteDriver({ pose: m.poseEmote, duracao: m.emoteDuracao, laco: m.emoteLaco });
+  emotesMod = m;
+  return m;
+}
+function pvTocaEmote(id, botao) {
+  const ctrl = pv && pv.ctrl;
+  if (!ctrl) return;
+  const barra = document.getElementById('pv-emotes');
+  const ligado = ctrl.emoteAtual() === id;
+  barra?.querySelectorAll('.pv-emote-btn[aria-pressed]')?.forEach((b) => b.setAttribute('aria-pressed', 'false'));
+  if (ligado) { ctrl.pararEmote(); return; }        // clicar de novo no mesmo passo: para
+  ctrl.emote(id);
+  if (botao) botao.setAttribute('aria-pressed', 'true');
+}
+async function montaBarraEmotes() {
+  const barra = document.getElementById('pv-emotes');
+  if (!barra || emotesMontados) return;
+  barra.classList.add('carregando');
+  const m = await carregaEmotes();
+  emotesMontados = true;
+  barra.classList.remove('carregando');
+  barra.innerHTML = '';
+  for (const e of m.EMOTES) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pv-emote-btn';
+    b.dataset.emote = e.id;
+    b.textContent = e.nome;
+    b.title = e.origem;                // a origem da dança fica à mão de quem joga
+    b.setAttribute('aria-pressed', 'false');
+    b.onclick = () => pvTocaEmote(e.id, b);
+    barra.appendChild(b);
+  }
+  // o primeiro clique em DANÇAR já põe o boneco pra dançar: ninguém clica pra ver lista
+  const primeiro = barra.querySelector('.pv-emote-btn');
+  if (primeiro) pvTocaEmote(primeiro.dataset.emote, primeiro);
+}
+document.getElementById('pv-emote-abrir')?.addEventListener('click', montaBarraEmotes);
+
 function pvSetChar(def) {
   def = {...def, skinId:equippedTretaSkin(def.id),eyewearId:equippedTretaEyewear()};
   if (staticPreviews) { showStaticPreview(def); return; }
@@ -1064,7 +1109,11 @@ function pvSetChar(def) {
       cv.dataset.armaSkin = pinturaNaMao;
       cv.dataset.luva = luvaNaMao;
       m.group.rotation.y = -0.4;
+      const emoteAnterior = p.ctrl?.emoteAtual?.() || null;
       p.model = m.group; p.mixer = m.mixer; p.ctrl = m.ctrl;
+      // trocar de personagem com a dança ligada mantém a dança (o passo é do jogador,
+      // não do boneco) — sem isso o emote morre calado a cada clique na lista
+      if (emoteAnterior && m.ctrl) m.ctrl.emote(emoteAnterior);
       p.scene.add(m.group);
       // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
       // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.

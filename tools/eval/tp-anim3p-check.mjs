@@ -12,7 +12,7 @@
      · movimentação LATERAL tocava o run frontal: corpo parado de frente,
        deslizando de lado (não há clipe de strafe nem inclinação de peso).
 
-   O QUE ESTA RÉGUA COBRA (partida viva; AN1–AN3 tentam até 3 bots, porque o
+   O QUE ESTA RÉGUA COBRA (partida viva; AN1–AN3 tentam até 8 bots, porque o
    primeiro vivo pode ter rig menos alcançável, e a cláusula precisa é do
    CONTRATO, não de um rig sorteado):
      AN1  na janela de recarga a mão esquerda vai ao PENTE (CCD no mesmo
@@ -104,7 +104,7 @@ const m = await page.evaluate(async () => {
   const g = window.__game;
   const T = await import('/vendor/three.module.js');
   const V = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
-  const cand = (g.bots || []).filter(x => x.mesh?.ctrl?.ikL && x.mesh?.ctrl?.torso?.spines?.length && x.alive).slice(0, 3);
+  const cand = (g.bots || []).filter(x => x.mesh?.ctrl?.ikL && x.mesh?.ctrl?.torso?.spines?.length && x.alive).slice(0, 8);
   let melhor = null;
   for (const b of cand) {
     const ctrl = b.mesh.ctrl, grupo = b.mesh.group, torso = ctrl.torso;
