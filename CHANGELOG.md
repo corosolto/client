@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.116`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.117`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -147,6 +147,29 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.117] — 2026-10-22
+
+### Mudado
+- fix(granada,faca): utilitário equipável, porte de lâmina em 3P e portão da AK enxergando meshopt (#1047)
+- fix(skins,inspect): pintura na arma inteira (1P e 3P) e inspeção virando a arma de lado (#1048)
+- 3P: o corpo denuncia recarga, tiro, queda e giro (+LOD de animação) (#1049)
+- fix(inspect): calibra o giro para 0,70 rad, knob de A/B e diagnóstico da manga oca (#1050)
+- fix(viewmodel): fecha a boca da manga do pacote golden (fim do "leque" no punho) (#1051)
+- Dança no lobby: oito passos brasileiros sem asset novo (#1054)
+- Dança na partida: tecla T, roda de 8 passos e o botão do lobby que estava escondido (#1055)
+- ops(nos): um no so — us e eu saem do cliente (#1056)
+- docs: regenera a matriz de armas
+- Danca na partida: tecla T, roda de 8 passos e camera que mostra
+- Dança no lobby: 8 passos brasileiros sem asset novo
+- fix(viewmodel): fecha a boca da manga do pacote golden
+- fix(inspect): calibra o giro para 0,70 rad e expõe o knob de A/B
+- docs: regenera blocos derivados apos o rebase na main
+- 3P: flinch, recuo agachado, pose de ar, giro com quadril e LOD
+- 3P: o corpo denuncia a recarga e inclina no strafe
+- fix(skins,inspect): pintura na arma inteira e inspeção de lado em 1ª pessoa
+- chore(docs): regenera bloco derivado (autofix)
+- fix(granada,faca): utilitário equipável e porte de lâmina em 3ª pessoa
 
 ## [2.1.0-alpha.116] — 2026-10-21
 
