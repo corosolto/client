@@ -1044,7 +1044,22 @@ class CharController {
     // cano acompanha a rotação da mão do clipe e a arma sai apontando pra qualquer lado
     // fora do idle. Roda DEPOIS do mixer e depois da correção de cabeça — as duas mexem
     // em osso e a conta aqui depende da matriz de mundo já resolvida.
-    if (this.tpMount && !this.dead) {
+    /* Dançando, a arma some: o cano acompanha a mão do passo e cruza o rosto, e o mount
+       briga com a coreografia. Guarda e devolve, sem tocar no inventário. */
+    if (this.emotando !== this._armaGuardada) {
+      this._armaGuardada = this.emotando;
+      // a arma mora em lugares diferentes por personagem (mount vivo, arma-glb ou a
+      // caixa de fallback): esconder só o mount deixava fuzil flutuando em alguns.
+      if (!this._armaNos) {
+        this._armaNos = [];
+        if (this.tpMount?.mount) this._armaNos.push(this.tpMount.mount);
+        this.group?.traverse((o) => {
+          if (/^arma-(glb|caixa)$/.test(o.name) && !this._armaNos.includes(o)) this._armaNos.push(o);
+        });
+      }
+      for (const n of this._armaNos) n.visible = !this.emotando;
+    }
+    if (this.tpMount && !this.dead && !this.emotando) {
       const t = this.tpMount;
       t.handBone.updateWorldMatrix(true, false);
       t.model.getWorldQuaternion(_gq);
