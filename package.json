@@ -422,7 +422,7 @@
     "//eval:skin-cobertura": "SC1-SC6: a pintura equipada alcança a arma inteira (corpo, pente, ferrolho e peça separada pelo splitParts) em 1ª pessoa e o corpo de 3ª pessoa nasce com ela. Evidência: tools/eval/asset-evidence/skin-inspect-20261021/skin-3p-ab.jpg. Mutantes so-o-corpo e marca-em-tudo.",
     "eval:skin-cobertura": "node tools/eval/skin-cobertura-check.mjs && ! node tools/eval/skin-cobertura-check.mjs --mutante=so-o-corpo",
     "//eval:inspect-lado": "IL1-IL4: a inspeção (tecla I) vira a arma de lado em 1ª pessoa mesmo sem clipe no pack, sem jogá-la pra fora do quadro. Evidência: tools/eval/asset-evidence/skin-inspect-20261021/inspect-ak-ouro.jpg. Mutante giro-fraco.",
-    "eval:inspect-lado": "node tools/eval/inspect-lado-check.mjs && ! node tools/eval/inspect-lado-check.mjs --mutante=giro-fraco",
+    "eval:inspect-lado": "node tools/eval/inspect-lado-check.mjs && ! node tools/eval/inspect-lado-check.mjs --mutante=giro-fraco && ! node tools/eval/inspect-lado-check.mjs --mutante=giro-exagerado",
     "//eval:arma-orientacao": "AO1-AO2: com o rot da CFG aplicado, a boca de cada uma das 26 armas é mais fina que a coronha e fica na metade dianteira — pega arma montada de costas. Mutante inverte-m4.",
     "eval:arma-orientacao": "node tools/eval/arma-orientacao-check.mjs && ! node tools/eval/arma-orientacao-check.mjs --mutante=inverte-m4",
     "eval:authored-capture": "node tools/eval/authored-pose-capture-check.mjs",

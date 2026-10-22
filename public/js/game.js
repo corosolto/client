@@ -6754,19 +6754,23 @@ export class Game {
       /* Inspeção vira a arma de lado: os packs não trazem clipe `inspect`, então é
          procedural. Kill-switch ?inspectlado=0. Régua: inspect-lado-check.mjs. */
       const lado = QS.get('inspectlado') !== '0' && authoredActive;
-      // +0,06 à DIREITA: girada ~60° a coronha varre pra esquerda e encostava na borda
-      // (medido na captura de 21/10). Com o empurrão a arma inteira fica no quadro.
-      const dx = lado ? 0.06 : (authoredActive ? -0.55 : -0.18);
-      const dz = lado ? 0.20 : (shortGun ? 0.18 : 0.52);
-      const yaw = lado ? (shortGun ? 0.80 : 1.05) : (authoredActive ? 0.18 : -(shortGun ? 0.48 : 0.68));
-      const roll = lado ? 0.20 : (shortGun ? 0.03 : 0.07);
+      // 1,05 rad enquadrava a boca OCA da manga golden; 0,70 não (grade em captura).
+      // A/B sem build: ?inspecttune=dx,dy,dz,yaw,roll,encolhe.
+      const tune = (QS.get('inspecttune') || '').split(',').map(Number);
+      const T = (i, padrao) => (tune.length === 6 && Number.isFinite(tune[i]) ? tune[i] : padrao);
+      const dx = lado ? T(0, 0.03) : (authoredActive ? -0.55 : -0.18);
+      const dy = lado ? T(1, 0.06) : (shortGun ? 0.06 : 0.12);
+      const dz = lado ? T(2, 0.10) : (shortGun ? 0.18 : 0.52);
+      const yaw = lado ? T(3, shortGun ? 0.55 : 0.70) : (authoredActive ? 0.18 : -(shortGun ? 0.48 : 0.68));
+      const roll = lado ? T(4, 0.12) : (shortGun ? 0.03 : 0.07);
+      const encolhe = lado ? T(5, 0.12) : (shortGun ? 0.04 : 0.26);
       this.vm.root.position.x += dx * inspect;
-      this.vm.root.position.y += (shortGun ? 0.06 : 0.12) * inspect + breathe;
+      this.vm.root.position.y += dy * inspect + breathe;
       this.vm.root.position.z -= dz * inspect;
       this.vm.root.rotation.x -= (shortGun ? 0.02 : 0.06) * inspect;
       this.vm.root.rotation.z += roll * inspect;
       this.vm.root.rotation.y += yaw * inspect;
-      this.vm.root.scale.multiplyScalar(1 - (lado ? 0.10 : (shortGun ? 0.04 : 0.26)) * inspect);
+      this.vm.root.scale.multiplyScalar(1 - encolhe * inspect);
     }
     /* ADS ZERA O PITCH/YAW PRÓPRIOS DA ARMA (RODADA DO GRIP + PITCH).
        O `_adsPose` acima gira o vm.root INTEIRO (rx/ry por classe) e não enxerga a
