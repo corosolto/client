@@ -117,7 +117,7 @@ function clearTelemetryGameContext() {
 import { applyNoPostTone, ajustaPos } from './bloom.js';
 import { criaRenderer, avisaSemWebgl, avisaSoftware } from './glcontext.js';
 import { EscadaAdaptativa, DEGRAUS, LimitadorCadencia, PERFIL_MOBILE, perfilInicial, tetoTextura } from './qualidade-adaptativa.js';
-import { definirSombraDegrau, definirCorteVegetacao, aplicaSombraSol } from './mapquality.js';
+import { definirSombraDegrau, definirCorteVegetacao, aplicaSombraSol, aplicaSombraPalco } from './mapquality.js';
 const container = document.getElementById('game-container');
 const SAFE_MODE = new URLSearchParams(location.search).get('safe') === '1';
 const renderer = criaRenderer({}, { compatibility: SAFE_MODE });
@@ -918,10 +918,29 @@ function ensurePreview() {
   // O downscale continua dando borda limpa em qualquer tamanho de exibição.
   r.setSize(640, 640, false);
   r.toneMapping = THREE.ACESFilmicToneMapping;
+  // Sombra de contato: sem ela o personagem flutua no palco. Só a key projeta, com o mapa
+  // que aplicaSombraPalco libera e frustum colado no boneco — custo fixo por quadro.
+  r.shadowMap.enabled = true;
+  r.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
   scene.add(new THREE.HemisphereLight(0xffe6c0, 0x5a4a38, 1.1));
-  const key = new THREE.DirectionalLight(0xffe0b3, 1.8); key.position.set(2, 4, 3); scene.add(key);
-  const rim = new THREE.DirectionalLight(0x88aaff, 0.55); rim.position.set(-3, 2, -2); scene.add(rim);
+  // Key alta e quase frontal (era 2,4,3 = 42° de elevação): a 42° a sombra virava um rastro
+  // de 1,6 m que a caixa do palco cortava reto. A 64° ela fica sob os pés, como na referência.
+  const key = new THREE.DirectionalLight(0xffe0b3, 2.1); key.position.set(0.7, 6, 2.8); scene.add(key);
+  key.castShadow = true;
+  aplicaSombraPalco(key);
+  key.shadow.bias = -0.0012; key.shadow.normalBias = 0.02;
+  // Frustum maior que o plano: fora dele o mapa é amostrado na borda e a sombra ganha corte reto.
+  const sombraCam = key.shadow.camera;
+  sombraCam.left = -1.6; sombraCam.right = 1.6; sombraCam.top = 1.6; sombraCam.bottom = -1.6;
+  sombraCam.near = 4.4; sombraCam.far = 7.9; sombraCam.updateProjectionMatrix();
+  // Rim de recorte: medido na referência, a borda do ombro fica em (36,38,37) sobre fundo
+  // (26,21,10) — luz quase neutra e +17 de luminância. Era 0x88aaff a 0,55 e sumia.
+  const rim = new THREE.DirectionalLight(0xe6eeff, 1.6); rim.position.set(-2.4, 3.2, -2.6); scene.add(rim);
+  // Chão invisível: o ShadowMaterial só pinta onde a sombra cai, então o canvas segue
+  // transparente e a poça de luz lima do CSS continua aparecendo por baixo.
+  const chao = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), new THREE.ShadowMaterial({ opacity: 0.68 }));
+  chao.rotation.x = -Math.PI / 2; chao.receiveShadow = true; scene.add(chao);
   const cam = new THREE.PerspectiveCamera(34, 1, 0.1, 20);
   cam.position.set(0, 1.3, 3.2); cam.lookAt(0, 0.92, 0);
   pv = { r, scene, cam, model: null };

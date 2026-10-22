@@ -102,8 +102,7 @@ const CAIXAS = () => {
     opcoes: (() => { const s = q('#hub-sels'); return s && getComputedStyle(s).position === 'fixed' && vis(s) ? caixa(s) : null; })(),
     nome: vis(q('#hub-change-character')) ? caixa(q('#hub-change-character')) : null,
     rodape: uniao(qa('#hub-ui .hub-footer > *')),
-    vagaEsq: uniao(qa('.tp-lobby-vaga--esq > *')),
-    vagaDir: uniao(qa('.tp-lobby-vaga--dir > *')),
+    temParty: vis(document.getElementById('tp-lobby-party')),
     /* a caixa sozinha não basta: o palco 3D (ou o retrato estático) tem que estar desenhado nela */
     personagem: vis(q('.hub-character')) && (vis(q('#char-preview')) || vis(q('#char-preview-static'))) ? caixa(q('.hub-character')) : null,
     vw: innerWidth, vh: innerHeight,
@@ -111,7 +110,8 @@ const CAIXAS = () => {
 };
 
 function colisoes(c) {
-  const nomes = ['cabecalho', 'esquerda', 'direita', 'partida', 'opcoes', 'nome', 'rodape', 'vagaEsq', 'vagaDir'];
+  /* vagaEsq/vagaDir saíram com os slots vazios (22/10). */
+  const nomes = ['cabecalho', 'esquerda', 'direita', 'partida', 'opcoes', 'nome', 'rodape'];
   const out = [];
   const cruza = (a, b) => a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b - 1 && b.t < a.b - 1;
   for (const n of nomes) {
@@ -176,7 +176,9 @@ async function medir(mutante = '', alvo = '') {
     const desvio = Math.abs(a.heroiX - a.vw / 2) / a.vw;
     const col1536 = colisoes(c);
     add('LB5@1536', a.heroiX > 0 && desvio <= 0.03 && !col1536.some((x) => x.startsWith('personagem')), `personagem com centro em ${a.heroiX.toFixed(0)} px de ${a.vw} (desvio ${(desvio * 100).toFixed(1)}%)${col1536.filter((x) => x.startsWith('personagem')).map((x) => `; ${x}`).join('')}`);
-    add('LB6@1536', a.vagas.length === 2 && a.vagas.every((t) => t === '+ CONVIDAR'), `vagas da party: ${a.vagas.length ? a.vagas.join(', ') : 'nenhuma'} (quer 2 × + CONVIDAR, só o seu personagem no palco)`);
+    /* 22/10: os dois slots vazios saíram (revisão do pacote); o convite é UM botão
+       só, em toda largura. A cláusula agora cobra o inverso do que cobrava. */
+    add('LB6@1536', a.vagas.length === 0 && c.temParty, `slots vazios: ${a.vagas.length} (quer 0) · botão único de party ${c.temParty ? 'presente' : 'AUSENTE'}`);
     const esperado = a.fonteQuests.map((q) => q.id).join(',');
     const premioErrado = a.quests.filter((q) => q.premio !== a.fonteQuests.find((f) => f.id === q.id)?.premio).map((q) => q.id);
     const barraSemFracao = a.quests.filter((q) => q.barra !== null && ['singleplayer', 'multiplayer'].includes(q.id)).map((q) => q.id);
@@ -255,13 +257,13 @@ async function medir(mutante = '', alvo = '') {
       `${skins.dados.length} cards de skins${skinsErradas.length ? `; sem pôster/nome: ${skinsErradas.join(', ')}` : ''}; clique ${skins.abriu ? 'abre a loja no detalhe' : 'não abriu o detalhe'}`);
 
     let convite = { net: '', pediu: false }, avisoErro = '';
-    if (quer('LB6') && await page.locator('.tp-lobby-vaga__convidar').count()) {
+    if (quer('LB6') && await page.locator('#tp-lobby-party').count()) {
       await page.evaluate(() => {
         window.__pediuSala = false;
         document.getElementById('mp-amigos')?.addEventListener('click', (e) => { window.__pediuSala = true; e.stopImmediatePropagation(); e.preventDefault(); }, true);
         document.getElementById('mp-estado')?.removeAttribute('data-s');
       });
-      await page.locator('.tp-lobby-vaga__convidar').first().click();
+      await page.locator('#tp-lobby-party').first().click();
       await page.waitForFunction(() => window.__pediuSala || document.getElementById('mp-estado')?.dataset.s === 'erro', null, { timeout: 15000 }).catch(() => {});
       convite = await page.evaluate(() => ({ net: document.getElementById('main-menu').dataset.hubNet, pediu: window.__pediuSala, s: document.getElementById('mp-estado')?.dataset.s }));
       await page.keyboard.press('Escape');
@@ -275,7 +277,7 @@ async function medir(mutante = '', alvo = '') {
       });
       await page.evaluate(() => document.querySelector('[data-tp-aba="jogar"]')?.click());
       await page.waitForTimeout(300);
-      await page.evaluate(() => document.querySelector('.tp-lobby-vaga__convidar')?.click());
+      await page.evaluate(() => document.getElementById('tp-lobby-party')?.click());
       await page.waitForTimeout(1500);
       avisoErro = await page.evaluate(() => { clearInterval(window.__forcaErro); return window.__avisoErro || ''; });
       await page.evaluate(() => document.getElementById('hub-sp')?.click());
@@ -356,7 +358,7 @@ async function medir(mutante = '', alvo = '') {
     const col = colisoes(c);
     add(`LB5@${w}`, desvio <= 0.03 && !col.some((x) => x.startsWith('personagem')), `personagem com desvio de ${(desvio * 100).toFixed(1)}% do centro${col.filter((x) => x.startsWith('personagem')).map((x) => `; ${x}`).join('')}`);
     const largo = w >= 1440 && h >= 800;
-    add(`LB6@${w}`, largo ? m.vagas === 2 : (m.party && m.eu === 1 && !m.vagas), largo ? `${m.vagas} vagas ao lado do personagem` : `party compacta ${m.party ? 'visível' : 'ausente'} com ${m.eu} vaga preenchida e ${m.vagas} vagas grandes`);
+    add(`LB6@${w}`, m.party && m.eu === 1 && !m.vagas, `party ${m.party ? 'visível' : 'ausente'} com ${m.eu} vaga preenchida e ${m.vagas} slots vazios (quer 0)`);
     add(`LB10@${w}`, !col.length && c.partida, col.length ? `colisão em ${w}×${h}: ${col.join(', ')}` : `${w}×${h} sem colisão`);
     if (toque) add('LB11', !m.pequenos.length, m.pequenos.length ? `alvo de toque < 44 px: ${m.pequenos.slice(0, 6).map((x) => `${x.n} ${x.w.toFixed(0)}×${x.h.toFixed(0)}`).join(', ')}` : 'todo alvo de toque do lobby tem 44 px ou mais');
     if (toque) add('LB14@deitado', !m.gire, m.gire ? '"gire o celular" aparece com o celular deitado' : 'deitado, sem o aviso de girar');

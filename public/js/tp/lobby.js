@@ -365,14 +365,8 @@ function montarDireita(play) {
   play.appendChild(dir);
   desenhar($('community')?.socialLive);
   document.addEventListener('cs-social-live', (e) => desenhar(e.detail?.live));
-  for (const lado of ['esq', 'dir']) {
-    const vaga = no('div', `tp-lobby-vaga tp-lobby-vaga--${lado}`);
-    const b = no('button', 'tp-lobby-vaga__convidar', tr('+ CONVIDAR'));
-    b.type = 'button';
-    b.addEventListener('click', convidar);
-    vaga.append(no('div', 'tp-lobby-vaga__fantasma'), b);
-    play.appendChild(vaga);
-  }
+  /* Os dois slots vazios saíram (revisão de 20/10 do pacote, confirmada pelo dono em
+     22/10): sobrou o botão único de party, que já existia para telas baixas. */
 }
 
 function montarRede() {
