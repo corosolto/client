@@ -701,7 +701,7 @@ const DICT = {
   'Procurando salas…': 'Looking for rooms…', 'Nenhuma sala aberta. Crie a sua ou entre no jogo rápido.': 'No open rooms. Create yours or hit quick play.',
   'Nenhuma sala passa nesse filtro.': 'No room matches this filter.',
   'Copiar o link de convite desta sala': 'Copy this room invite link', 'ASSISTIR': 'WATCH',
-  'Brasil · São Paulo': 'Brazil · São Paulo', 'EUA · Carolina do Sul': 'USA · South Carolina', 'Europa · Madri': 'Europe · Madrid',
+  'Brasil · São Paulo': 'Brazil · São Paulo',
   'Nenhum servidor no ar agora. A lista volta quando um responder.': 'No server is up right now. The list comes back when one answers.',
   'SALA': 'ROOM',  'ESQUERDA × DIREITA': 'LEFT × RIGHT', 'CAPTURA · MAPAS SORTEADOS': 'CAPTURE · RANDOM MAPS',
   // tp:fim-servidores
