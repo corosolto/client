@@ -478,6 +478,7 @@ export async function preloadCharacterAssets(ids, opts = {}) {
 
 const _v = new THREE.Vector3();
 const _gq = new THREE.Quaternion(), _wq = new THREE.Quaternion(), _pq = new THREE.Quaternion(), _headUpQ = new THREE.Quaternion();
+const _qLean = new THREE.Quaternion(), _axisF = new THREE.Vector3();
 const _right = new THREE.Vector3();
 const _ikTgt = new THREE.Vector3();
 
@@ -774,6 +775,24 @@ export function buildCharacterModel(def, opts = {}) {
       if (skin?.gripProfile === 'mint24-curl-v1' && gp.fore) { gp.fore.z *= 1.35; gp.fore.y += def.skinId === 'lula-drip' ? 0.07 : 0.035; }
       if (lArm && lFore && gp.fore && gunObj && !IK_L_SKIP.has(def.id)) ctrl.ikL = { chain: [lArm, lFore], end: lhandBone, endOffset: measurePalmLocal(model, lhandBone, curlLs), gun: gunObj, fore: gp.fore.clone() };
     }
+    /* Overlay de tronco (recarga/lean): ossos Spine do rig doado + alvos da mão esquerda.
+       2 mãos: a mão vai ao PENTE (abaixo do guarda-mão). 1 mão: ao porta-carregador no
+       quadril direito. Por quê e medidas: docs/ANIM-3P.md. */
+    const spines = [];
+    model.traverse(o => { if (o.isBone && /^Spine\d*$/i.test(o.name) && spines.length < 2) spines.push(o); });
+    let lHandBone2 = null, lArm2 = null, lFore2 = null;
+    model.traverse(o => { if (o.isBone) { if (o.name === 'LeftHand' && !lHandBone2) lHandBone2 = o; if (o.name === 'LeftArm' && !lArm2) lArm2 = o; if (o.name === 'LeftForeArm' && !lFore2) lFore2 = o; } });
+    const gpR = twoHanded ? gripPoints(opts.weaponId || 'awp') : null;
+    let hipsBone = null;
+    model.traverse(o => { if (o.isBone && !hipsBone && /^hips$/i.test(o.name)) hipsBone = o; });
+    ctrl.torso = {
+      spines, hips: hipsBone,
+      lHand: lHandBone2, lArm: lArm2, lFore: lFore2,
+      gun: ctrl.ikL?.gun || null,
+      magLocal: gpR?.fore ? gpR.fore.clone().add(new THREE.Vector3(0, -0.11, -gpR.fore.z * 0.40)) : null,
+      beltLocal: new THREE.Vector3(0.16, 0.92, 0.10),
+    };
+    if (ctrl.ikL && ctrl.torso.magLocal && skin?.gripProfile === 'mint24-curl-v1') ctrl.torso.magLocal.z *= 1.35;
   }
   return { group, parts: { head }, isGLB: true, mixer, ctrl };
 }
@@ -790,6 +809,9 @@ class CharController {
     this.charId = charId; this.model = model || null;
     this._footBase = model ? model.position.y : 0;
     this.cur = null; this.dead = false; this.shooting = false; this.crouch = false; this.jumping = false;
+    this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0; this._torsoQ = [];
+    this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
+    this._ar = false; this._landT = 0; this._yawAtraso = null; this._deathTilt = 0; this.lod = 0;
     this.shadow = null; this._airK = 0;   // sombra de contato + fator "está no ar" (0..1, suavizado)
     this.oneHanded = false; // arma de 1 mão: idle/walk trocam p/ idle1h/walk1h (setado em buildCharacterModel)
     this._loco = 'idle'; // current locomotion state (hysteresis memory for walk/run choice)
@@ -819,6 +841,33 @@ class CharController {
 
   setCrouch(v) { this.crouch = !!v; }
 
+  /* Recarga visível em 3P: overlay procedural sobre o clipe corrente (não há clipe de
+     reload no acervo — ver docs/ANIM-3P.md). Envelope sobe e desce; a mão esquerda vai
+     ao pente pelo MESMO CCD da mão de apoio. */
+  reload(dur) {
+    if (this.dead || !(dur > 0)) return;
+    this._reloadT = 0; this._reloadDur = dur;
+  }
+
+  /* Levar tiro move o corpo: sem isso quem atira de longe não sabe se acertou.
+     `dir` é a direção do disparo em mundo; `forca` 0..1 (dano/100). */
+  flinch(dir, forca = 0.5) {
+    if (this.dead || !dir) return;
+    this._flinchDir = { x: dir.x, z: dir.z };
+    this._flinchDur = 0.18;
+    this._flinchT = 0;
+    this._flinchF = Math.max(0.25, Math.min(1, forca));
+  }
+
+  /* No ar o clipe de pulo acabava e o corpo voltava a CORRER em queda livre.
+     Segura a última pose enquanto não toca o chão e marca o amortecimento. */
+  setAr(v) {
+    const novo = !!v;
+    if (novo === this._ar) return;
+    if (this._ar && !novo) this._landT = 0.14;
+    this._ar = novo;
+  }
+
   jump() {
     if (this.dead || this.crouch || this.jumping || !this.actions.jump) return;
     this.jumping = true;
@@ -831,7 +880,10 @@ class CharController {
   }
 
   shoot() {
-    if (this.dead || this.crouch || !this.actions.shoot) return; // crouch pose already aims
+    if (this.dead) return;
+    // Agachado não troca de clipe (a pose já mira), mas ganha recuo aditivo: antes o
+    // bot agachado atirava completamente imóvel. Ver docs/ANIM-3P.md.
+    if (this.crouch || !this.actions.shoot) { this._fireDur = 0.12; this._fireT = 0; return; }
     this.jumping = false;
     this.shooting = true;
     this.curName = 'shoot';
@@ -845,9 +897,12 @@ class CharController {
     this.cur = this.actions.shoot;
   }
 
-  die() {
+  die(dir = null) {
     if (this.dead) return;
-    this.dead = true; this.shooting = false;
+    // Viés de tombo pela direção do disparo: o mesmo clipe deixa de cair sempre igual.
+    this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
+    this._deathDir = dir ? { x: dir.x, z: dir.z } : null;
+    this.dead = true; this.shooting = false; this._ar = false;
     this._to('death', true);
     if (this.actions.death) this.actions.death.timeScale = 1.8; // snappy fall, not slow-mo
   }
@@ -868,7 +923,7 @@ class CharController {
   // picks the locomotion state, and scales the leg-cycle rate to the actual ground speed
   // so the feet plant instead of ice-skating (root-motion-free clips have no built-in
   // stride, so we drive the cycle rate from how fast the body is really moving).
-  update(dt, moving, hasTarget, speed = 0, back = false) {
+  update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
     if (!this.dead) {
       if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
       if (this.crouch) {
@@ -882,6 +937,14 @@ class CharController {
         this.actions.shoot.time = this.actions.shoot.getClip().duration - (this._shootUntil - this.mixer.time);
         this.actions.shoot.paused = false;
         this._to('shoot', true, false);
+      } else if (this._ar && this.actions.jump) {
+        // no ar: segura a pose do pulo em vez de voltar a andar/correr
+        if (this.cur !== this.actions.jump) { this._to('jump'); this.jumping = false; }
+        this.actions.jump.paused = this.actions.jump.time >= this.actions.jump.getClip().duration - 0.02;
+        this.curName = 'jump';
+      } else if (this._landT > 0 && this.actions.crouch) {
+        this._landT = Math.max(0, this._landT - dt);
+        this._to('crouch');
       } else if (!this.shooting && !this.jumping) {
         if (moving <= 0.05) { this._to(this.oneHanded && this.actions.idle1h ? 'idle1h' : 'idle'); this._loco = 'idle'; }
         else if (back) {
@@ -913,7 +976,7 @@ class CharController {
     // (eixo +Z local da cabeça em mundo) e gira o osso pela DIFERENÇA pro aimPitch.
     // Só roda quando aimPitch é DEFINIDO (bots) — preview da seleção e braços FP ficam
     // com a pose natural do clipe (aplicar em todos deixava as cabeças esquisitas).
-    if (this.headBone && this.aimPitch !== undefined && !this.dead) {
+    if (this.headBone && this.aimPitch !== undefined && !this.dead && this.lod < 2) {
       const target = this.aimPitch;
       this.group.getWorldQuaternion(_gq);
       _right.set(1, 0, 0).applyQuaternion(_gq);
@@ -988,12 +1051,109 @@ class CharController {
     }
     // IK da mão de apoio (FASE 2): palma L no guarda-mão da arma montada (só 2 mãos).
     // Roda depois do mixer/pose — corrige o contato por arma sem tocar na orientação.
-    if (this.ikL && !this.dead) {
+    if (this.ikL && !this.dead && this.lod < 1) {
       const ik = this.ikL;
       ik.gun.updateWorldMatrix(true, false);
       _ikTgt.copy(ik.fore);
       ik.gun.localToWorld(_ikTgt);
       solveCCDIK(ik.chain, ik.end, _ikTgt, { iterations: 8, endOffset: ik.endOffset });
+    }
+    /* Overlays de tronco por ÚLTIMO; eixo em MUNDO via quadro do pai e undo antes do
+       mixer. As duas armadilhas estão contadas em docs/ANIM-3P.md. */
+    const torso = this.torso;
+    if (!this.dead && torso?.spines?.length) {
+      const yaw = this.group.rotation.y;
+      const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
+      // eixos de mundo do grupo: direita R̂=(cos,0,−sin), frente F̂=(−sin,0,−cos)
+      const _deltaMundo = (bone, ax, ay, az, ang) => {
+        this.group.updateMatrixWorld(true);
+        bone.parent.getWorldQuaternion(_pq).invert();
+        _axisF.set(ax, ay, az).applyQuaternion(_pq).normalize();
+        _torsoAplica(bone, _qLean.setFromAxisAngle(_axisF, ang).clone());
+      };
+      const _torsoAplica = (bone, q) => { bone.quaternion.premultiply(q); this._torsoQ.push({ bone, q }); };
+      // LEAN: peso pro lado do movimento (sem clipe de strafe). Teto 0,10 rad, 8/s.
+      const alvo = Math.max(-1, Math.min(1, (Number.isFinite(lateral) ? lateral : 0) / 4.5)) * 0.12;
+      this._leanK += (alvo - this._leanK) * Math.min(1, dt * 8);
+      this.leanK = this._leanK;
+      if (Math.abs(this._leanK) > 1e-4) {
+        _deltaMundo(torso.spines[0], -sinY, 0, -cosY, -this._leanK);
+        if (torso.spines[1]) _deltaMundo(torso.spines[1], -sinY, 0, -cosY, -this._leanK * 0.5);
+      }
+      if (this._reloadDur > 0) {
+        this._reloadT += dt;
+        if (this._reloadT >= this._reloadDur) { this._reloadT = 0; this._reloadDur = 0; }
+      }
+      this.reloadK = this._reloadDur > 0 ? Math.sin(Math.PI * Math.min(1, this._reloadT / this._reloadDur)) : 0;
+      // PITCH DISTRIBUÍDO: a coluna assume parte da mira vertical; a malha fechada da
+      // cabeça (acima) converge o resto. Antes só a cabeça inclinava, com teto de 28°.
+      if (this.aimPitch !== undefined && this.lod < 1) {
+        const pit = Math.max(-0.35, Math.min(0.35, this.aimPitch * 0.45));
+        if (Math.abs(pit) > 1e-3) _deltaMundo(torso.spines[0], cosY, 0, -sinY, -pit);
+      }
+      // ATRASO DE QUADRIL: o grupo gira junto com a mira (instantâneo); o quadril fica
+      // para trás até 35° e corre atrás, que é o que dá leitura de giro no lugar.
+      if (torso.hips && this.lod < 1) {
+        if (this._yawAtraso === null) this._yawAtraso = yaw;
+        let d = yaw - this._yawAtraso;
+        while (d > Math.PI) d -= 2 * Math.PI;
+        while (d < -Math.PI) d += 2 * Math.PI;
+        const teto = 0.61;   // 35°
+        const excesso = Math.max(0, Math.abs(d) - teto) * Math.sign(d);
+        this._yawAtraso += excesso + d * Math.min(1, dt * 3.2);
+        const lag = Math.max(-teto, Math.min(teto, yaw - this._yawAtraso));
+        this.yawLag = lag;
+        if (Math.abs(lag) > 1e-3) _deltaMundo(torso.hips, 0, 1, 0, -lag);
+      }
+      // FLINCH: o corpo cede na direção do tiro por ~0,18 s.
+      if (this._flinchDur > 0) {
+        this._flinchT += dt;
+        if (this._flinchT >= this._flinchDur) { this._flinchDur = 0; this._flinchT = 0; }
+      }
+      const fk = this._flinchDur > 0 ? Math.sin(Math.PI * Math.min(1, this._flinchT / this._flinchDur)) * (this._flinchF || 0.5) : 0;
+      this.flinchK = fk;
+      if (fk > 0.02 && this._flinchDir) {
+        const d = this._flinchDir, n = Math.hypot(d.x, d.z) || 1;
+        _deltaMundo(torso.spines[0], -d.z / n, 0, d.x / n, fk * 0.26);
+        if (torso.spines[1]) _deltaMundo(torso.spines[1], -d.z / n, 0, d.x / n, fk * 0.13);
+      }
+      // RECUO AGACHADO: tiro agachado não troca de clipe, então o recuo é aditivo.
+      if (this._fireDur > 0) {
+        this._fireT += dt;
+        if (this._fireT >= this._fireDur) { this._fireDur = 0; this._fireT = 0; }
+      }
+      const rk = this._fireDur > 0 ? 1 - this._fireT / this._fireDur : 0;
+      if (rk > 0.02) _deltaMundo(torso.spines[0], cosY, 0, -sinY, -rk * 0.09);
+      if (this.reloadK > 0.05) {
+        const k = this.reloadK;
+        // mergulho do tronco em torno da direita do corpo: os olhos acompanham o pente
+        _deltaMundo(torso.spines[0], cosY, 0, -sinY, k * 0.20);
+        if (torso.spines[1]) _deltaMundo(torso.spines[1], cosY, 0, -sinY, k * 0.10);
+        // mão esquerda: ao pente (2 mãos, alvo no espaço da arma) ou ao coldre (1 mão)
+        if (this.ikL && torso.magLocal && torso.gun) {
+          _ikTgt.copy(this.ikL.fore).lerp(torso.magLocal, k);
+          torso.gun.localToWorld(_ikTgt);
+          solveCCDIK(this.ikL.chain, this.ikL.end, _ikTgt, { iterations: 12, endOffset: this.ikL.endOffset });
+        } else if (torso.lArm && torso.lFore && torso.lHand && this.model) {
+          _ikTgt.copy(torso.beltLocal);
+          this.model.localToWorld(_ikTgt);
+          solveCCDIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt, { iterations: 8 });
+        }
+      }
+    }
+    // TOMBO DIRECIONAL: o acervo tem um clipe de morte só. O viés pela direção do disparo
+    // tira o "todo mundo cai igual" sem clipe novo. Ver docs/ANIM-3P.md.
+    if (this.dead && this._deathDir && torso?.spines?.length) {
+      const d = this._deathDir, n = Math.hypot(d.x, d.z) || 1;
+      this._deathK = Math.min(1, (this._deathK || 0) + dt * 3);
+      const _aplicaMorte = (bone, q) => { bone.quaternion.premultiply(q); this._torsoQ.push({ bone, q }); };
+      this.group.updateMatrixWorld(true);
+      bone_pai: {
+        const bone = torso.spines[0];
+        bone.parent.getWorldQuaternion(_pq).invert();
+        _axisF.set(-d.z / n, 0, d.x / n).applyQuaternion(_pq).normalize();
+        _aplicaMorte(bone, _qLean.setFromAxisAngle(_axisF, this._deathK * 0.22).clone());
+      }
     }
   }
 }
