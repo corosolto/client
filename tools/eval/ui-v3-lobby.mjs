@@ -30,6 +30,20 @@ const TRETA = {
   ],
 };
 
+/* Placar no ar só no teste: a resposta de /api/social?action=ranking que o card e a faixa do topo
+   dividem. `own` em 5º com o vizinho em 4º na mesma página; um jogador sem avatar prova o rosto de iniciais. */
+const RANKING_JOGADORES = [
+  { position: 1, nick: 'ZeDaManga', points: 3840, kills: 3840, deaths: 1200, kd: 3.2, avatar_url: '/img/chars-hero/punk.webp', url: '/u/zedamanga' },
+  { position: 2, nick: 'MinaDoGrau', points: 2990, kills: 2990, deaths: 1410, kd: 2.12, avatar_url: '/img/chars-hero/skatista.webp', url: '/u/minadograu' },
+  { position: 3, nick: 'TrapDoCorrego', points: 2410, kills: 2410, deaths: 1500, kd: 1.61, avatar_url: null, url: '/u/trapdocorrego' },
+  { position: 4, nick: 'BondeDaUPA', points: 1920, kills: 1920, deaths: 1330, kd: 1.44, avatar_url: '/img/chars-hero/bombado.webp', url: '/u/bondedaupa' },
+  { position: 5, nick: 'Regua', points: 1800, kills: 1800, deaths: 1290, kd: 1.4, avatar_url: '/img/chars-hero/canarinho.webp', url: '/u/regua' },
+  { position: 6, nick: 'PatoDaVila', points: 1640, kills: 1640, deaths: 1380, kd: 1.19, avatar_url: '/img/chars-hero/adjim.webp', url: '/u/patodavila' },
+  { position: 7, nick: 'SereiaDoTiete', points: 1180, kills: 1180, deaths: 1290, kd: 0.91, avatar_url: null, url: '/u/sereiadotiete' },
+  { position: 8, nick: 'XerifeDaQuebrada', points: 960, kills: 960, deaths: 1120, kd: 0.86, avatar_url: '/img/chars-hero/bonzo.webp', url: '/u/xerifedaquebrada' },
+];
+const RANKING = { players: RANKING_JOGADORES, total: 128, own: RANKING_JOGADORES[4], source: 'server_verified_since_cutover', period: 'all', mode: 'all' };
+
 /* Mutantes reescrevem o que o servidor entrega; cada um prova que aplicou (texto antes != depois). */
 const MUTANTES = {
   'abas-velhas': [/\/css\/tp\/lobby\.css/, (t) => t.replace(':root[data-ui="v3"] .hub-header .hub-tabs{display:none}', '')],
@@ -53,14 +67,18 @@ const MUTANTES = {
   'chip-sem-nome': [/\/css\/tp\/lobby\.css/, (t) => t.replace(':root[data-ui="v3"] #hub-footer-social .mf-social svg{display:block;width:15px;height:15px}', ':root[data-ui="v3"] #hub-footer-social .mf-social svg{display:none;width:15px;height:15px}')],
   'dois-limas': [/\/css\/tp\/lobby\.css/, (t) => t.replace('.tp-lobby-rede__opcao[aria-pressed="true"]{background:var(--tp-tinta-1)', '.tp-lobby-rede__opcao[aria-pressed="true"]{background:var(--tp-lima)')],
   'skins-mudas': [/\/js\/tp\/lobby\.js/, (t) => t.replace('.filter((s) => s && s.poster)', '.slice(0, 0).filter((s) => s && s.poster)')],
+  'faixa-sem-pausa': [/\/css\/tp\/ranking\.css/, (t) => t.replace('.tp-faixa:hover .tp-faixa__trilho,.tp-faixa:focus-within .tp-faixa__trilho{animation-play-state:paused}', '')],
 };
 
-async function abrir({ w = 1536, h = 1024, lang = 'pt', flag = true, toque = false, mutante = '', loja = true, sairSplash = true, nick = 'Regua' }) {
+async function abrir({ w = 1536, h = 1024, lang = 'pt', flag = true, toque = false, mutante = '', loja = true, placar = RANKING, sairSplash = true, nick = 'Regua' }) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: toque, isMobile: toque, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   await page.addInitScript((valor) => { try { if (valor) localStorage.setItem('awpbr_nick', valor); else localStorage.removeItem('awpbr_nick'); } catch { /* sem storage */ } }, nick);
   if (loja) await page.route('**/api/treta**', (r) => (r.request().method() === 'GET'
     ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(TRETA) }) : r.continue()));
+  /* só o ranking é servido do teste; o resto de /api/social continua indo pro servidor */
+  if (placar) await page.route((u) => u.pathname.endsWith('/api/social') && u.searchParams.get('action') === 'ranking',
+    (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(placar) }));
   if (mutante) {
     const [teste, troca] = MUTANTES[mutante];
     await page.route(teste, async (r) => {
@@ -135,7 +153,7 @@ async function medir(mutante = '', alvo = '') {
   const foto = async (page, nome) => { if (!mutante) await page.screenshot({ path: `${OUT}/${nome}.png` }); };
 
   /* Sessão A: 3:2 do dono, PT, loja no ar. */
-  if (quer('LB1', 'LB2', 'LB3', 'LB5', 'LB6', 'LB7', 'LB8', 'LB9', 'LB10', 'LB15', 'LB16', 'LB17', 'LB19', 'LB20')) {
+  if (quer('LB1', 'LB2', 'LB3', 'LB5', 'LB6', 'LB7', 'LB8', 'LB9', 'LB10', 'LB15', 'LB16', 'LB17', 'LB19', 'LB20', 'LB21')) {
     const { page, ctx } = await abrir({ mutante });
     await page.evaluate(() => document.fonts.ready);
     await foto(page, 'lobby-1536x1024-pt');
@@ -191,6 +209,51 @@ async function medir(mutante = '', alvo = '') {
       inventado ? `número ou sistema sem backend na tela: "${inventado}"` : a.amigosLinhas ? `${a.amigosLinhas} amigo(s) listado(s) sem presença no backend` : a.amigosVazio ? 'sem passe, nível ou timer; amigos online em estado vazio' : 'painel de amigos online ausente');
     add('LB16', a.chips.length >= 4 && a.chips.every((c) => c.nome && c.icone), `redes no rodapé: ${a.chips.map((c) => c.nome || '?').join(' · ') || 'nenhuma'} (quer 4+ ícones com nome acessível)`);
     add('LB17', a.limas.length === 1 && /btn-jogar/.test(a.limas[0]), `fundos lima: ${a.limas.join(', ') || 'nenhum'} (quer só o JOGAR)`);
+
+    /* LB21 · faixa do placar no topo: passa sob as abas sem cobrir coluna nenhuma, cada jogador
+       leva ao perfil, o laço para pra clicar, movimento reduzido vira lista e a partida não herda. */
+    let fx = { achou: false };
+    if (quer('LB21')) {
+      const leitura = () => {
+        const f = document.getElementById('tp-lobby-faixa');
+        if (!f || !f.checkVisibility?.({ checkOpacity: true, checkVisibilityCSS: true })) return { achou: false };
+        const b = f.getBoundingClientRect();
+        const filas = [...f.querySelectorAll('.tp-faixa__fila')];
+        const trilho = f.querySelector('.tp-faixa__trilho');
+        const cs = getComputedStyle(trilho);
+        const col = document.querySelector('.tp-lobby-dir')?.getBoundingClientRect();
+        return {
+          achou: true, l: b.left, t: b.top, r: b.right, alt: b.height, vw: innerWidth,
+          cabecalho: document.querySelector('#hub-ui .hub-header')?.getBoundingClientRect().bottom ?? -1,
+          coluna: col ? col.top : -1,
+          eu: f.querySelector('.tp-faixa__eu-link')?.textContent || '',
+          euHref: f.querySelector('.tp-faixa__eu-link')?.getAttribute('href') || '',
+          alvo: f.querySelector('.tp-faixa__alvo')?.textContent || '',
+          alvoHref: f.querySelector('.tp-faixa__alvo')?.getAttribute('href') || '',
+          itens: [...filas[0].querySelectorAll('.tp-faixa__item')].map((e) => ({
+            href: e.getAttribute('href'), pos: e.querySelector('.tp-faixa__pos')?.textContent || '',
+            nick: e.querySelector('.tp-faixa__nick')?.textContent || '', pts: e.querySelector('.tp-faixa__pts')?.textContent || '',
+            rosto: !!e.querySelector('.tp-rosto img, .tp-rosto .tp-disp'),
+          })),
+          copias: filas.length, copiaMuda: filas.length > 1 && filas[1].getAttribute('aria-hidden') === 'true' && filas[1].inert === true,
+          anima: cs.animationName, roda: cs.animationPlayState, rolagem: getComputedStyle(f.querySelector('.tp-faixa__janela')).overflowX,
+          copiaFora: filas.length > 1 ? getComputedStyle(filas[1]).display : '',
+        };
+      };
+      fx = await page.evaluate(leitura);
+      if (fx.achou) {
+        /* o item está em movimento e nunca fica "estável" pro hover do Playwright: o ponteiro vai pelo pixel */
+        await page.mouse.move(fx.vw / 2, fx.t + fx.alt / 2);
+        await page.waitForTimeout(250);
+        fx.pausado = await page.evaluate(() => getComputedStyle(document.querySelector('.tp-faixa__trilho')).animationPlayState);
+        await page.mouse.move(760, 520);
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        await page.waitForTimeout(250);
+        fx.reduzido = await page.evaluate(leitura);
+        await page.emulateMedia({ reducedMotion: null });
+        await page.waitForTimeout(150);
+      }
+    }
 
     /* MAIS: sobre, feedback e apoie saíram das abas; o item leva à seção certa e o ESC fecha. */
     let mais = { itens: [], foi: '', fechou: false };
@@ -290,13 +353,27 @@ async function medir(mutante = '', alvo = '') {
 
     /* JOGAR direto, sem o "Pronto pra treta?". */
     let jogo = {};
-    if (quer('LB3')) {
+    if (quer('LB3', 'LB21')) {
       await page.click('#btn-jogar');
       await page.waitForTimeout(2500);
       jogo = await page.evaluate(() => ({ quick: document.getElementById('hub-quick')?.hidden, menu: document.getElementById('main-menu')?.classList.contains('hidden'),
         carga: !document.getElementById('load-overlay')?.classList.contains('hidden'), jogo: !!window.__game }));
       await foto(page, 'jogar-1536x1024');
     }
+    if (quer('LB21') && fx.achou) fx.naPartida = await page.evaluate(() => !!document.getElementById('tp-lobby-faixa')?.checkVisibility?.({ checkOpacity: true, checkVisibilityCSS: true }));
+    const esperadoFx = RANKING_JOGADORES.slice(0, 8);
+    const falta = RANKING_JOGADORES[3].points - RANKING.own.points;
+    const itensOk = fx.achou && fx.itens.length >= esperadoFx.length
+      && esperadoFx.every((p, i) => fx.itens[i].href === p.url && fx.itens[i].nick === p.nick && fx.itens[i].rosto
+        && fx.itens[i].pos === `#${p.position}` && fx.itens[i].pts.startsWith(p.points.toLocaleString('pt-BR')));
+    const euOk = fx.achou && /SEU RANKING/.test(fx.eu) && fx.eu.includes(`#${RANKING.own.position}`) && fx.euHref === RANKING.own.url;
+    const alvoOk = fx.achou && fx.alvo.includes(String(falta)) && fx.alvo.includes(RANKING_JOGADORES[3].nick) && fx.alvoHref === RANKING_JOGADORES[3].url;
+    const noLugar = fx.achou && fx.l <= 0 && fx.r >= fx.vw - 1 && fx.t >= fx.cabecalho - 1 && fx.t + fx.alt <= fx.coluna + 1 && fx.alt <= 60;
+    const movOk = fx.achou && fx.anima !== 'none' && fx.roda === 'running' && fx.pausado === 'paused' && fx.copiaMuda
+      && fx.reduzido?.anima === 'none' && fx.reduzido?.rolagem === 'auto' && fx.reduzido?.copiaFora === 'none';
+    add('LB21', itensOk && euOk && alvoOk && noLugar && movOk && fx.naPartida === false,
+      !fx.achou ? 'faixa do placar ausente ou invisível no lobby'
+        : `faixa ${Math.round(fx.alt)} px entre cabeçalho (${Math.round(fx.cabecalho)}) e colunas (${Math.round(fx.coluna)})${noLugar ? '' : ' FORA DO LUGAR'}; "${fx.eu.trim()}" → ${fx.euHref || 'sem link'}${euOk ? '' : ' DIVERGE DO own'}; vizinho "${fx.alvo.trim()}"${alvoOk ? '' : ' DIVERGE'}; ${fx.itens.length} jogadores${itensOk ? ' com rosto, posição, pontos e link' : ' COM CAMPO ERRADO'}; laço ${fx.anima}/${fx.roda}, no hover ${fx.pausado}, cópia ${fx.copiaMuda ? 'muda' : 'NO CAMINHO DO LEITOR'}, reduzido ${fx.reduzido?.anima}/${fx.reduzido?.rolagem}; na partida ${fx.naPartida ? 'CONTINUA' : 'some'}`);
     add('LB3', jogo.quick === true && (jogo.menu || jogo.carga || jogo.jogo), `JOGAR: confirmação ${jogo.quick === false ? 'aberta' : 'fechada'}, partida ${jogo.menu || jogo.carga || jogo.jogo ? 'começou' : 'não começou'}`);
     await ctx.close();
   }
@@ -397,13 +474,13 @@ async function medir(mutante = '', alvo = '') {
         /* DOM montado por JS não tem nó de espaço: textContent cola "PLAYSHOPARMÁRIO…" e a régua
            não vê a palavra. O texto por elemento separa sem inventar palavra nova. */
         const texto = (n) => [...n.childNodes].map((f) => (f.nodeType === 3 ? f.textContent : texto(f))).join(' ');
-        return [...document.querySelectorAll('.tp-lobby-abas, .tp-lobby-esq, .tp-lobby-dir, .tp-lobby-vaga, #tp-lobby-rede, #tp-lobby-party, #tp-lobby-partida .tp-lobby-partida__rotulo, #tp-lobby-partida .tp-lobby-partida__trocar, #btn-jogar, #hub-settings, #tp-lobby-amigos, #tp-lobby-mais, #tp-lobby-mais-menu, #tp-lobby-online, #rotate-prompt, #hub-change-character .hub-character-change')]
+        return [...document.querySelectorAll('.tp-lobby-abas, .tp-lobby-esq, .tp-lobby-dir, .tp-lobby-vaga, #tp-lobby-faixa, #tp-lobby-rede, #tp-lobby-party, #tp-lobby-partida .tp-lobby-partida__rotulo, #tp-lobby-partida .tp-lobby-partida__trocar, #btn-jogar, #hub-settings, #tp-lobby-amigos, #tp-lobby-mais, #tp-lobby-mais-menu, #tp-lobby-online, #rotate-prompt, #hub-change-character .hub-character-change')]
           .map(texto).join(' | ');
       });
       await ctx.close();
     }
-    const PT = /(?<!\p{L})(JOGAR|LOJA|ARMÁRIO|CARREIRA|CLÃ|AMIGOS|AJUSTES|MAIS|CONVIDAR|NOVIDADES|QUESTS DA TRETA|VER TODAS|PRIVADA|TROCAR|PARTIDAS|CONCLUÍDA|Ainda não|Nenhuma|Consultando|SOBRE O JOGO|APOIE|TERMOS|EXCLUIR|MAPA AO VIVO|GIRE|PERSONAGEM|Confirme|Chame|Conclua)(?!\p{L})/u;
-    const EN = /(?<!\p{L})(PLAY|SHOP|LOCKER|CAREER|CLAN|FRIENDS|SETTINGS|MORE|INVITE|NEWS|ROTATE|CHANGE|CHARACTER|PRIVATE|MATCHES|Confirm|Finish)(?!\p{L})/u;
+    const PT = /(?<!\p{L})(JOGAR|LOJA|ARMÁRIO|CARREIRA|CLÃ|AMIGOS|AJUSTES|MAIS|CONVIDAR|NOVIDADES|QUESTS DA TRETA|VER TODAS|PRIVADA|TROCAR|PARTIDAS|CONCLUÍDA|Ainda não|Nenhuma|Consultando|SOBRE O JOGO|APOIE|TERMOS|EXCLUIR|MAPA AO VIVO|GIRE|PERSONAGEM|Confirme|Chame|Conclua|SEU RANKING|pra alcançar)(?!\p{L})/u;
+    const EN = /(?<!\p{L})(PLAY|SHOP|LOCKER|CAREER|CLAN|FRIENDS|SETTINGS|MORE|INVITE|NEWS|ROTATE|CHANGE|CHARACTER|PRIVATE|MATCHES|Confirm|Finish|YOUR RANK|to catch)(?!\p{L})/u;
     const em = (vazou.en.match(PT) || [])[0], ep = (vazou.pt.match(EN) || [])[0];
     add('LB12', vazou.en && vazou.pt && !em && !ep, !vazou.en ? 'lobby v3 sem texto para medir' : em || ep ? `idioma misturado: "${em || ep}" ${em ? 'em EN' : 'em PT'}` : 'PT e EN sem string do outro idioma');
   }
@@ -429,7 +506,8 @@ async function medir(mutante = '', alvo = '') {
 const MUT = [['abas-velhas', 'LB1'], ['ajustes-mudo', 'LB2'], ['confirma-de-novo', 'LB3'], ['convidado-bloqueado', 'LB18'], ['enter-do-splash', 'LB4'],
   ['personagem-no-canto', 'LB5'], ['convite-mudo', 'LB6'], ['erro-mudo', 'LB6'], ['quest-inventada', 'LB7'], ['passe-sem-backend', 'LB8'],
   ['rede-trocada', 'LB9'], ['coluna-larga', 'LB10'], ['toque-baixo', 'LB11'], ['sem-traducao', 'LB12'], ['flag-vaza', 'LB13'],
-  ['gire-sem-arte', 'LB14'], ['mais-sem-feedback', 'LB15'], ['chip-sem-nome', 'LB16'], ['dois-limas', 'LB17'], ['skins-mudas', 'LB19'], ['arma-sem-skin', 'LB20']];
+  ['gire-sem-arte', 'LB14'], ['mais-sem-feedback', 'LB15'], ['chip-sem-nome', 'LB16'], ['dois-limas', 'LB17'], ['skins-mudas', 'LB19'], ['arma-sem-skin', 'LB20'],
+  ['faixa-sem-pausa', 'LB21']];
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO === m)) {

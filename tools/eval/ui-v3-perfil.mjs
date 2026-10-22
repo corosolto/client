@@ -22,9 +22,13 @@ const HIST = [['praca_poderes', 'rounds', 'win', 24, 8], ['escadao', 'ctf', 'los
   .map(([map, mode, result, kills, deaths], i) => ({ started_at: new Date(Date.now() - (i + 1) * 7200e3).toISOString(), map, mode, game_type: 'multiplayer', complete: true, result, kills, deaths }));
 const DONO = { id: EU, nick: 'ZeDoAWP', handle: 'zedoawp', url: '/u/zedoawp', visibility: 'public', source: 'server_verified', bio: 'Só AWP no eixo da Praça.',
   level: 11, next_level_points: 80, points: 1020, position: 412, kills: 1284, deaths: 904, kd: 1.42, matches: 140, round_wins: 97, round_losses: 60,
-  verified_play_seconds: 90000, settings: { share_character: true }, socials: [{ url: 'https://instagram.com/zedoawp' }, { url: 'https://www.tiktok.com/@zedoawp' }],
+  verified_play_seconds: 90000, play_seconds: 99000, legacy_play_seconds: 9000,
+  settings: { share_character: true }, socials: [{ url: 'https://instagram.com/zedoawp' }, { url: 'https://www.tiktok.com/@zedoawp' }],
   achievements: [], favorites: [{ map: 'praca_poderes', mode: 'rounds', character: 'sertanejo', faction: 'B', rounds: 40 }], history: HIST,
-  last_character: 'sertanejo', presence: { online: true }, top_weapons: [{ weapon: 'awp', kills: 400 }], relationship: null };
+  last_character: 'sertanejo', presence: { online: true }, relationship: null,
+  /* fora de ordem de propósito (o backend manda no máximo 3): arma que o cliente não conhece, abate zero e número fora da faixa segura */
+  top_weapons: [{ weapon: 'ak', kills: 118 }, { weapon: 'awp', kills: 400 }, { weapon: 'bazuca_fake', kills: 1 },
+    { weapon: 'mp5', kills: 1e21 }, { weapon: 'knife', kills: 0 }] };
 const CONTA = { id: EU, handle: 'zedoawp', url: '/u/zedoawp', bio: DONO.bio, socials: DONO.socials,
   settings: { share_character: true, profile: 'public', presence: 'private', activity: 'friends' } };
 const ALHEIO = { ...DONO, id: OUTRO, nick: 'ClubberDaLaje', handle: 'clubber', url: '/u/clubber', points: 150, level: 3, kills: 40, history: [], favorites: [],
@@ -48,6 +52,11 @@ const MUT = {
   'patente-sem-tr': ['IN1', ['en'], /\/js\/i18n\.js/, (t) => t.replace("'Próxima patente': 'Next rank',", '')],
   'toque-pequeno': ['VP2', ['telas'], /\/css\/tp\/perfil\.css/, (t) => t.replace('@media (pointer:coarse){', '@media (pointer:none){')],
   'gancho-sem-flag': ['SF1', ['semflag'], /\/js\/community\.js/, (t) => t.replace("if(document.documentElement?.dataset?.ui==='v3')root.tpPerfilDados", 'root.tpPerfilDados')],
+  'horas-decimais': ['PF9', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('? tempo(seg) :', '? decimal(seg / 3600, 1) :')],
+  'horas-misturadas': ['PF9', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('const seg = Number(p.verified_play_seconds)', 'const seg = Number(p.play_seconds)')],
+  'armas-fora-de-ordem': ['PF8', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('.sort((a, b) => b.kills - a.kills)', '')],
+  'armas-sem-filtro': ['PF8', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('&& Number.isSafeInteger(w.kills) && w.kills > 0', '')],
+  'armas-zero-inventado': ['PF8', ['dono', 'alheio'], /\/js\/tp\/perfil\.js/, (t) => t.replace('const lista = armasDe(p);', "const lista = armasDe(p).length ? armasDe(p) : [{ weapon: 'ak', kills: 0 }];")],
 };
 
 async function contexto(mutante, { lang = 'pt', cla = MEU_CLA, viewport = { width: 1536, height: 1024 }, toque = false, posts = [] } = {}) {
@@ -101,6 +110,7 @@ async function abrir(ctx, query = '', flag = '') {
 const caixa = (sel) => { const e = document.querySelector(sel); if (!e || !e.checkVisibility()) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width, h: b.height }; };
 
 async function medePerfil(p) {
+  await p.waitForFunction(() => [...document.querySelectorAll('.tp-perfil__arma-img')].every((i) => i.complete), null, { timeout: 8000 }).catch(() => {});
   return p.evaluate((caixaSrc) => {
     const caixa = eval(caixaSrc);
     const nick = document.querySelector('.tp-perfil__cartao .tp-perfil__nick');
@@ -113,6 +123,14 @@ async function medePerfil(p) {
       trks: visiveis('.tp-perfil__trks .tp-perfil__trk').map((e) => [e.children[0].textContent, e.children[1].textContent]),
       bio: document.querySelector('.tp-perfil__cartao .tp-perfil__bio')?.textContent || '',
       campos: ['#tp-pf-nick', '#tp-pf-bio', '#tp-pf-quem'].map((s) => !!document.querySelector(s)), bioMax: document.querySelector('#tp-pf-bio')?.maxLength,
+      armas: visiveis('.tp-perfil__arma').map((e) => {
+        const i = e.querySelector('.tp-perfil__arma-barra > i'), t = getComputedStyle(i).transform;
+        return [e.querySelector('b').textContent, e.querySelector('.tp-perfil__arma-num').textContent,
+          Number((t === 'none' ? 1 : new DOMMatrix(t).a).toFixed(3)), (e.querySelector('img')?.naturalWidth || 0) > 0];
+      }),
+      armasBloco: !!document.querySelector('.tp-perfil__armas-bloco')?.checkVisibility(),
+      armasVazio: document.querySelector('.tp-perfil__armas-bloco .tp-perfil__vazio')?.textContent || '',
+      notaHoras: document.querySelector('.tp-perfil__trks + .tp-perfil__nota')?.textContent || '',
       texto: document.querySelector('.tp-perfil')?.innerText || '', legado: !!document.querySelector('#social-content > .social-card')?.checkVisibility(),
     };
   }, `(${caixa})`);
@@ -257,8 +275,8 @@ const CENARIOS = {
   },
 };
 
-const PT_VAZA = /\b(Próxima patente|Abates|Vitórias|Partidas|Últimas partidas|Medalhas|Editar perfil|Salvar perfil|Nível|Vitrine|Números|Atividade|Arena favorita|membros|LÍDER|Copiar convite|Carreira e clã|destaques do histórico|Capitão)\b/i;
-const EN_VAZA = /\b(Next rank|Kills|Wins|Matches|Latest matches|Medals|Edit profile|Save profile|Level|Showcase|Stats|Activity|Favorite arena|members|LEADER|Copy clan invite|Career and clan|Captain)\b/;
+const PT_VAZA = /\b(Próxima patente|Abates|Vitórias|Partidas|Últimas partidas|Medalhas|Editar perfil|Salvar perfil|Nível|Vitrine|Números|Atividade|Arena favorita|membros|LÍDER|Copiar convite|Carreira e clã|destaques do histórico|Capitão|Armas preferidas|Horas jogadas|abates confirmados|contadas à parte)\b/i;
+const EN_VAZA = /\b(Next rank|Kills|Wins|Matches|Latest matches|Medals|Edit profile|Save profile|Level|Showcase|Stats|Activity|Favorite arena|members|LEADER|Copy clan invite|Career and clan|Captain|Favorite weapons|Hours played|kills confirmed|counted separately)\b/;
 
 async function medir(mutante = '') {
   const so = mutante ? MUT[mutante][1] : Object.keys(CENARIOS);
@@ -281,11 +299,34 @@ async function medir(mutante = '') {
       !s ? 'SALVAR não mandou settings' : `nick ${n ? n.nick : 'não mandado'}; settings bio "${s.bio}", presence ${s.presence} (conta: private), activity ${s.activity}, profile ${s.profile}, ${s.links?.length} links`);
     add('PF5', pf.primarios.length === 1 && d.carreira.primarios.length === 1 && (!m.alheio || m.alheio.perfil.primarios.length === 1),
       `lima por tela: perfil [${pf.primarios}], carreira [${d.carreira.primarios}]${m.alheio ? `, perfil alheio [${m.alheio.perfil.primarios}]` : ''} (quer 1 em cada)`);
-    const esperado = [['ABATES', '1.284'], ['VITÓRIAS', '97'], ['K/D', '1,42'], ['PARTIDAS', '140'], ['RANKING', '#412'], ['HORAS ATIVAS', '25']];
+    const esperado = [['ABATES', '1.284'], ['VITÓRIAS', '97'], ['K/D', '1,42'], ['PARTIDAS', '140'], ['RANKING', '#412'], ['HORAS JOGADAS', '25 h']];
     const tem = Object.fromEntries(pf.trks.map(([k, v]) => [k.toUpperCase(), v]));
     const erra = esperado.filter(([k, v]) => tem[k] !== v).map(([k, v]) => `${k}=${tem[k] ?? 'ausente'} (backend ${v})`);
     const inventa = /headshot|\bXP\b|curtidas|coment[aá]rios|online/i.test(pf.texto + d.carreira.texto);
     add('PF6', pf.trks.length && !erra.length && !inventa, erra.length ? `número diverge do backend: ${erra.join(', ')}` : inventa ? 'mostra dado que o backend não manda (headshot, XP, curtidas, online)' : `${pf.trks.length} números iguais aos do backend, nada inventado`);
+    /* Armas preferidas: ordem e número saem do top_weapons, nunca do cliente. */
+    const armasEsperadas = [['AWP "DELIBERADOR"', '400 abates', 1, true], ['AK-47 "BATE-ESTACA"', '118 abates', 0.295, true],
+      ['BAZUCA_FAKE', '1 abate', 0.003, false]];
+    const armasErra = pf.armas.length !== armasEsperadas.length ? [`${pf.armas.length} armas (quer ${armasEsperadas.length})`]
+      : pf.armas.flatMap((a, i) => {
+        const q = armasEsperadas[i];
+        if (a[0] !== q[0] || a[1] !== q[1]) return [`${i + 1}ª "${a[0]}" ${a[1]} (quer "${q[0]}" ${q[1]})`];
+        if (Math.abs(a[2] - q[2]) > 0.01) return [`barra de ${a[0]} em ${(a[2] * 100).toFixed(1)}% (quer ${(q[2] * 100).toFixed(1)}%)`];
+        if (a[3] !== q[3]) return [`${a[0]} ${a[3] ? 'ganhou render que não existe' : 'sem render de /img/weapons'}`];
+        return [];
+      });
+    const semArma = m.alheio?.perfil;
+    if (semArma && (!semArma.armasBloco || semArma.armas.length || !/Ainda sem arma registrada/.test(semArma.armasVazio)))
+      armasErra.push(`perfil sem arma: bloco ${semArma.armasBloco ? 'à vista' : 'SUMIU'}, ${semArma.armas.length} armas desenhadas, vazio "${semArma.armasVazio.slice(0, 40)}"`);
+    add('PF8', pf.armas.length && !armasErra.length, armasErra.length ? armasErra.join('; ')
+      : `${pf.armas.length} armas em ordem de abate, com render e barra relativa; sem dado vira estado vazio`);
+    /* Horas: só o tempo confirmado vira número; o histórico antigo aparece à parte, nunca somado. */
+    const horasErra = [];
+    if (tem['HORAS JOGADAS'] !== '25 h') horasErra.push(`HORAS JOGADAS=${tem['HORAS JOGADAS'] ?? 'ausente'} (verified_play_seconds 90000 = 25 h)`);
+    if (!/2 h 30 min/.test(pf.notaHoras)) horasErra.push(`nota não separa o histórico antigo: "${pf.notaHoras.slice(0, 70)}"`);
+    if (/27 h|27,5|99\.000/.test(pf.texto)) horasErra.push('soma o tempo antigo com o confirmado (27 h 30 min)');
+    add('PF9', !horasErra.length, horasErra.length ? horasErra.join('; ')
+      : `25 h confirmadas em hora cheia, com as 2 h 30 min do histórico antigo contadas à parte`);
     const k = d.carreira;
     const col = k.eu && k.partidas && k.cla && k.eu.r <= k.partidas.l && k.partidas.r <= k.cla.l && Math.abs(k.eu.t - k.cla.t) < 4;
     const esperadas = HIST.slice(0, 5).map((h) => [h.result === 'win' ? 'V' : 'D', h.kills, h.deaths]);

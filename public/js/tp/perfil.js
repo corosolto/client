@@ -58,6 +58,19 @@ const modo = (h) => [MODOS[h.mode] ? tr(MODOS[h.mode]) : String(h.mode || '').to
   h.game_type === 'multiplayer' ? 'Multiplayer' : h.game_type === 'singleplayer' ? tr('Solo') : ''].filter(Boolean).join(' · ');
 const marcas = (r) => (r.symbol === 'star' ? '★' : '▲').repeat(r.marks);
 const retrato = (p) => PROFILE_CHARACTERS[p.last_character]?.portrait || null;
+/* O backend manda SEGUNDOS; hora decimal ("6,7 h") não é leitura de jogador. */
+function tempo(seg) {
+  const s = Math.max(0, Math.floor(Number(seg) || 0)), h = Math.floor(s / 3600), min = Math.floor((s % 3600) / 60);
+  if (!h) return `${num(min)} min`;
+  return min ? `${num(h)} h ${String(min).padStart(2, '0')} min` : `${num(h)} h`;
+}
+/* top_weapons vem do nó (abates confirmados), top 3 e sem ordem garantida: ordem e corte ficam aqui. */
+function armasDe(p) {
+  return (Array.isArray(p.top_weapons) ? p.top_weapons : [])
+    .filter((w) => typeof w?.weapon === 'string' && Number.isSafeInteger(w.kills) && w.kills > 0)
+    .sort((a, b) => b.kills - a.kills).slice(0, 3);
+}
+const nomeArma = (id) => WEAPONS[id]?.name || String(id).toUpperCase();
 
 /* Mesma regra das conquistas do community.js: o histórico preservado conta, data só quando o servidor manda. */
 function medalhas(p) {
@@ -243,10 +256,42 @@ export function ligar() {
       cab.append(v);
     }
     const g = el('div', 'tp-perfil__trks');
+    const seg = Number(p.verified_play_seconds), legado = Number(p.legacy_play_seconds) || 0;
     g.append(trk('Abates', conta(p.kills)), trk('Vitórias', conta(p.round_wins ?? p.wins)), trk('K/D', decimal(p.kd, 2)),
       trk('Partidas', conta(p.matches)), trk('Ranking', p.position ? `#${num(p.position)}` : tr('Privado')),
-      trk('Horas ativas', decimal(Number(p.verified_play_seconds ?? p.play_seconds) / 3600, 1)));
-    s.append(cab, g);
+      trk('Horas jogadas', Number.isFinite(seg) && seg > 0 ? tempo(seg) : tr('ainda sem partida confirmada'), true));
+    /* O tempo antigo NÃO entra no número de cima: ele é de outra medição e misturar inventa hora que ninguém jogou. */
+    s.append(cab, g, el('span', 'tp-perfil__nota', legado > 0
+      ? `${tr('Horas confirmadas pelo servidor. Antes da atualização:')} ${tempo(legado)}, ${tr('contadas à parte.')}`
+      : tr('Horas confirmadas pelo servidor: menu, espectador e AFK não contam.')));
+    return s;
+  }
+
+  function armas(p) {
+    const s = el('section', 'tp-painel tp-perfil__bloco tp-perfil__armas-bloco');
+    s.setAttribute('aria-label', tr('Armas preferidas'));
+    s.append(cabecalho('Armas preferidas', 'abates confirmados pelo servidor'));
+    /* Sem o campo na resposta não há lista para desenhar: o bloco fica pronto e escondido até o backend mandar top_weapons. */
+    if (!Array.isArray(p.top_weapons)) { s.hidden = true; s.dataset.esperando = 'top_weapons'; return s; }
+    const lista = armasDe(p);
+    if (!lista.length) {
+      s.append(el('p', 'tp-perfil__vazio', tr('Ainda sem arma registrada: elas entram a partir das partidas multiplayer confirmadas pelo servidor.')));
+      return s;
+    }
+    const g = el('ol', 'tp-perfil__armas'), topo = lista[0].kills;
+    for (const w of lista) {
+      const li = el('li', 'tp-perfil__arma');
+      if (WEAPONS[w.weapon]) li.append(imagem('tp-perfil__arma-img', `/img/weapons/${w.weapon}.webp`));
+      const texto = el('span', 'tp-perfil__arma-texto');
+      texto.append(el('b', '', nomeArma(w.weapon)), el('span', 'tp-num tp-perfil__arma-num', `${conta(w.kills)} ${tr(w.kills === 1 ? 'abate' : 'abates')}`));
+      const barra = el('div', 'tp-barra tp-perfil__arma-barra');
+      barra.append(el('i'));
+      barra.style.setProperty('--p', String(w.kills / topo));
+      texto.append(barra);
+      li.append(texto);
+      g.append(li);
+    }
+    s.append(g);
     return s;
   }
 
@@ -395,7 +440,7 @@ export function ligar() {
     const grade = el('div', 'tp-perfil__grade'), principal = el('div', 'tp-perfil__principal'), dupla = el('div', 'tp-perfil__dupla');
     const c = cartao(d, saida);
     dupla.append(vitrine(d.p, d.own), numeros(d));
-    principal.append(c, dupla, atividade(d));
+    principal.append(c, dupla, armas(d.p), atividade(d));
     grade.append(principal);
     if (d.own) { grade.dataset.dono = ''; grade.append(editar(d, saida, c)); }
     return grade;
@@ -426,10 +471,10 @@ export function ligar() {
     prox.append(topo, barra, el('span', 'tp-perfil__nota', tr('Cada abate soma 1 ponto; abate multiplayer confirmado soma 2.')));
 
     const trks = el('div', 'tp-carreira__trks');
-    const fav = p.favorites?.[0], arma = (p.top_weapons || []).find((w) => typeof w?.weapon === 'string' && w.kills > 0);
+    const fav = p.favorites?.[0], arma = armasDe(p)[0];
     trks.append(trk('Abates', conta(p.kills)), trk('Vitórias', conta(p.round_wins ?? p.wins)), trk('K/D', decimal(p.kd, 2)),
       trk('Partidas', conta(p.matches)), trk('Arena favorita', fav ? nomeMapa(fav.map) : tr('sem rodada confirmada'), true),
-      trk('Arma', arma ? (WEAPONS[arma.weapon]?.name || arma.weapon.toUpperCase()) : tr('sem abate no multiplayer'), true));
+      trk('Arma', arma ? nomeArma(arma.weapon) : tr('sem abate no multiplayer'), true));
     eu.append(hero, prox, trks);
     if (clicaLegado('COMPARTILHAR PERFIL')) eu.append(botao(tr('Compartilhar meu card'), 'tp-carreira__compartilhar', () => clicaLegado('COMPARTILHAR PERFIL')?.click()));
 

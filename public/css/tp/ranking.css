@@ -36,18 +36,10 @@
 @media(prefers-reduced-motion:reduce){:root[data-ui="v3"] #hub-ranking .hub-panel{animation:none}}
 :root[data-ui="v3"][data-motion="reduzido"] #hub-ranking .hub-panel{animation:none}
 
-/* Card do placar no lobby (tela 02): minha posição e o top 3 abrem a aba RANKING.
+/* Card do placar no lobby (tela 02): o top 3 abre a aba RANKING. A sua posição é da faixa do topo.
    Mora aqui, com a tela de ranking, porque é a mesma frente de retorno. */
 .tp-lobby-rank{gap:12px}
 .tp-lobby-rank__corpo{display:flex;flex-direction:column;gap:10px}
-.tp-lobby-rank__eu{display:flex;flex-direction:column;gap:6px}
-.tp-lobby-rank__eu-botao{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;box-sizing:border-box;width:100%;min-height:var(--tp-lobby-toque);
-  padding:8px 12px;border:1px solid var(--tp-borda);border-radius:10px;background:var(--tp-fundo);color:var(--tp-tinta-1);text-align:left;cursor:pointer}
-.tp-lobby-rank__eu-botao:hover{border-color:var(--tp-borda-forte)}
-.tp-lobby-rank__eu-botao:focus-visible{outline:2px solid var(--tp-lima);outline-offset:2px}
-.tp-lobby-rank__eu-rotulo{width:100%;font-size:11px}
-.tp-lobby-rank__eu-pos{color:var(--tp-lima);font:800 26px/1 var(--tp-num)}
-.tp-lobby-rank__eu-pts{color:var(--tp-tinta-2);font:700 13px/1 var(--tp-num)}
 .tp-lobby-rank__lista{display:flex;flex-direction:column;gap:6px}
 .tp-lobby-rank__linha{display:flex;align-items:center;gap:10px;box-sizing:border-box;width:100%;min-height:var(--tp-lobby-toque);padding:4px 12px;
   border:0;border-radius:8px;background:var(--tp-fundo);color:var(--tp-tinta-1);text-align:left;cursor:pointer}
@@ -55,3 +47,61 @@
 .tp-lobby-rank__lugar{flex:none;width:16px;color:var(--tp-ambar);font:800 15px/1 var(--tp-num)}
 .tp-lobby-rank__nick{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:800 15px/1.15 var(--tp-ui)}
 .tp-lobby-rank__pontos{flex:none;color:var(--tp-tinta-2);font:700 13px/1 var(--tp-num)}
+
+/* Faixa do topo (tela 02): passa sob as abas, no respiro entre o cabeçalho e as colunas — é a
+   única faixa livre, porque o rodapé já é da RESENHA, das redes e do JOGAR. */
+.tp-faixa{position:fixed;left:0;right:0;top:84px;z-index:4;display:flex;align-items:center;gap:16px;box-sizing:border-box;height:46px;
+  padding:0 var(--tp-lobby-margem);border-top:1px solid var(--tp-borda);border-bottom:1px solid var(--tp-borda);
+  background:color-mix(in srgb,var(--tp-asfalto) 88%,transparent)}
+.tp-faixa[hidden]{display:none}
+/* a faixa empurra as colunas em vez de cobri-las; sem placar no ar ela nem existe e o topo volta */
+@media (min-height:561px){:root[data-ui="v3"]:has(#tp-lobby-faixa:not([hidden])){--tp-lobby-topo:152px}}
+.tp-faixa__eu{flex:none;display:flex;align-items:center;gap:12px;min-width:0;max-width:52%}
+.tp-faixa__eu-link{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:0 10px;border:1px solid var(--tp-borda);border-radius:8px;
+  background:var(--tp-fundo);color:var(--tp-tinta-1);text-decoration:none;white-space:nowrap}
+.tp-faixa__eu-link:hover{border-color:var(--tp-borda-forte)}
+.tp-faixa__eu-link:focus-visible,.tp-faixa__alvo:focus-visible{outline:2px solid var(--tp-lima);outline-offset:2px}
+.tp-faixa__eu-rotulo{font-size:11px}
+.tp-faixa__eu-pos{color:var(--tp-lima);font:800 17px/1 var(--tp-num)}
+.tp-faixa__eu-vazio{color:var(--tp-tinta-3);font:600 13px/1 var(--tp-ui)}
+.tp-faixa__alvo{display:inline-flex;align-items:baseline;gap:5px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  color:var(--tp-tinta-2);font:600 13px/1 var(--tp-ui);text-decoration:none}
+.tp-faixa__alvo-nick{color:var(--tp-ambar);font-weight:800}
+.tp-faixa__alvo[href]:hover .tp-faixa__alvo-nick{text-decoration:underline}
+.tp-faixa__janela{flex:1;min-width:0;overflow:hidden;align-self:stretch;display:flex;align-items:center;border-left:1px solid var(--tp-borda);
+  mask-image:linear-gradient(90deg,transparent,rgba(0,0,0,1) 28px,rgba(0,0,0,1) calc(100% - 28px),transparent);
+  -webkit-mask-image:linear-gradient(90deg,transparent,rgba(0,0,0,1) 28px,rgba(0,0,0,1) calc(100% - 28px),transparent)}
+.tp-faixa__trilho{display:flex;width:max-content;animation:tp-faixa-rola 64s linear infinite}
+/* o laço para no mouse e no teclado: sem isso não dá pra clicar no link que está passando */
+.tp-faixa:hover .tp-faixa__trilho,.tp-faixa:focus-within .tp-faixa__trilho{animation-play-state:paused}
+.tp-faixa__fila{display:flex;align-items:center;margin:0;padding:0;list-style:none}
+.tp-faixa__item{display:inline-flex;align-items:center;gap:8px;padding:0 15px;color:var(--tp-tinta-2);font:700 14px/1 var(--tp-ui);
+  text-decoration:none;white-space:nowrap}
+.tp-faixa__item:hover{color:var(--tp-tinta-1)}
+.tp-faixa__item:focus-visible{outline:2px solid var(--tp-lima);outline-offset:-2px;border-radius:6px}
+.tp-faixa__pos{color:var(--tp-ambar);font:800 13px/1 var(--tp-num)}
+.tp-faixa__pts{color:var(--tp-tinta-3);font:700 12px/1 var(--tp-num)}
+/* o rosto do tp/social é de 42 px; na faixa ele cabe em 26 — a classe dobrada ganha da folha de social */
+.tp-rosto.tp-rosto--mini{width:26px;height:26px;border-radius:7px}
+.tp-rosto.tp-rosto--mini .tp-disp{font-size:11px}
+@keyframes tp-faixa-rola{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+/* movimento reduzido: nada anda, a faixa vira lista rolável e a cópia do laço some do caminho */
+@media (prefers-reduced-motion:reduce){
+  .tp-faixa__trilho{animation:none}
+  .tp-faixa__janela{overflow-x:auto}
+  .tp-faixa__fila[aria-hidden="true"]{display:none}
+}
+:root[data-ui="v3"][data-motion="reduzido"] .tp-faixa__trilho{animation:none}
+:root[data-ui="v3"][data-motion="reduzido"] .tp-faixa__janela{overflow-x:auto}
+:root[data-ui="v3"][data-motion="reduzido"] .tp-faixa__fila[aria-hidden="true"]{display:none}
+@media (max-width:1100px){
+  .tp-faixa__alvo{display:none}
+}
+@media (max-width:600px){
+  .tp-faixa{gap:10px;height:42px}
+  .tp-faixa__eu-rotulo{display:none}
+}
+/* no celular deitado o topo inteiro é do cabeçalho: a faixa sai e as colunas voltam ao lugar */
+@media (max-height:560px){
+  .tp-faixa{display:none}
+}

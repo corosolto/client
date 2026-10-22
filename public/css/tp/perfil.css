@@ -86,6 +86,15 @@
 .tp-perfil__trk{display:flex;flex-direction:column;gap:2px;min-width:0;padding:12px 14px;border-radius:10px;background:var(--tp-fundo)}
 :root[data-ui="v3"] .tp-perfil .tp-perfil__trk-num{font-size:26px;font-weight:800;white-space:nowrap}
 :root[data-ui="v3"] .tp-perfil .tp-perfil__trk-texto{font:800 18px/1.1 var(--tp-ui);overflow-wrap:anywhere}
+/* Armas preferidas: render da arma + abates reais e barra relativa à primeira colocada. */
+.tp-perfil__armas-bloco[hidden]{display:none}
+.tp-perfil__armas{display:grid;grid-template-columns:repeat(auto-fit,minmax(224px,1fr));gap:10px;margin:0;padding:0;list-style:none}
+.tp-perfil__arma{display:flex;align-items:center;gap:12px;min-width:0;padding:10px 12px;border-radius:10px;background:var(--tp-fundo)}
+.tp-perfil__arma-img{flex:none;width:84px;height:46px;object-fit:contain;object-position:50% 50%}
+.tp-perfil__arma-texto{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+:root[data-ui="v3"] .tp-perfil .tp-perfil__arma-texto b{font:800 14px/1.15 var(--tp-ui);overflow-wrap:anywhere}
+:root[data-ui="v3"] .tp-perfil .tp-perfil__arma-num{font-size:15px;font-weight:800;color:var(--tp-tinta-2)}
+.tp-perfil__arma-barra{height:6px}
 .tp-perfil__atividade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .tp-perfil__evento{display:flex;gap:12px;align-items:center;padding:12px;border-radius:10px;background:var(--tp-fundo);min-width:0}
 .tp-perfil__evento-texto{display:flex;flex-direction:column;gap:2px;line-height:1.2;min-width:0}
