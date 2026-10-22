@@ -167,6 +167,14 @@ Cobertura: **3824 de 8817 linhas (43%)** do `game.js` têm dono declarado. O res
 | 2505 | `_pauseBackdrop()` | 7 |
 | 2512 | `_radioShow()` | 6 |
 | 2518 | `_radioUi()` | 8 |
+| 2541 | `_emoteToggle()` | 9 |
+| 2550 | `_emoteMods()` | 9 |
+| 2559 | `_emoteUi()` | 20 |
+| 2579 | `_emoteClose()` | 6 |
+| 2585 | `_emotePick()` | 11 |
+| 2596 | `_emoteCtrl()` | 4 |
+| 2600 | `_emoteStop()` | 10 |
+| 2610 | `_emoteTick()` | 7 |
 | 2526 | `_radioPick()` | 20 |
 | 2546 | `_abilityNotice()` | 10 |
 | 2556 | `_resetSliceAbilities()` | 9 |

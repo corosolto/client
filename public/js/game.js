@@ -5,7 +5,7 @@ import { ajustarAnisotropia } from './textures.js';
 import { MAPS, resolveMapId } from './maps.js';
 import { atualizaCortes } from './mapprops.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon, podeNoLado } from './characters.js';
-import { buildCharacterModel, hasModel, preloadCharacterAssets } from './glbchars.js';
+import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver } from './glbchars.js';
 import { weaponModel, weaponCFG, hasWeapon, preloadWeapons, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
 import { gloveSkinStyle } from './data/glove-skin-definitions.js';
@@ -842,6 +842,7 @@ export class Game {
     // da câmera. Modos, rig, grip e pré-carga do corpo: docs/RIG-PEGA-ARMA.md.
     this.camView = ['first', 'third', 'shoulder'].includes(settings.camView) ? settings.camView : 'first';
     this.playerTP = null;
+    this.emoteOpen = false; this.emoteCam = null; this._emoteMod = null; this._emoteAtual = null;
     this._tpWeapon = null;
     this._tpDead = false;
     this._tpFwd = new THREE.Vector3();
@@ -1399,6 +1400,7 @@ export class Game {
       // NELE, não no overlay inteiro — o fundo continua clicável, e é ele que retoma
       pauseActions: document.querySelector('#pause-menu .pause-actions'),
       radioMenu: $('radio-menu'), radioLog: $('radio-log'), mkBanner: $('mk-banner'),
+      emoteWheel: $('emote-wheel'),
       lockHint: $('lock-hint'), hudSpeech: $('hud-speech'), hudSettings: $('hud-settings'),
       pickupHint: $('pickup-hint'), weaponHud: $('weapon-hud'),
     };
@@ -2118,6 +2120,12 @@ export class Game {
       if (e.code === 'KeyX') { this._radioShow('x'); return; }
       if (e.code === 'KeyV') { this._radioShow('c'); return; }
       if (e.code === 'KeyB') { this._toggleCamView(); return; }   // 1ª → 3ª → ombro
+      if (e.code === 'KeyT' && !e.repeat) { this._emoteToggle(); return; }   // roda de dança
+      if (this.emoteOpen) {
+        const n = /^Digit([1-8])$/.exec(e.code);
+        if (n) { this._emotePick(this._emoteMod?.EMOTES?.[+n[1] - 1]?.id); return; }
+        if (e.code === 'Escape') { this._emoteClose(); return; }
+      }
       // slot memory: 1 = last primary held, 2 = last sidearm held (not a hardcoded reset)
       if (e.code === 'Digit1') this._switchWeapon(this.player.primary || 'awp');
       if (e.code === 'Digit2') this._switchWeapon(this.player.secondary || 'pistol');
@@ -2527,6 +2535,84 @@ export class Game {
     m.innerHTML = `<div class="radio-title">${c.title}</div>` +
       c.items.map((it, i) => `<div class="radio-item">${i + 1}. ${it}</div>`).join('');
     m.classList.remove('hidden');
+  }
+  /* RODA DE DANÇA (tecla T). Catálogo e coreografia: public/js/emotes.js, carregado por
+     import() dinâmico no primeiro uso — o boot não paga nada. */
+  async _emoteToggle() {
+    if (this.emoteOpen) { this._emoteClose(); return; }
+    if (!this.player.alive || this.state !== 'live' || this.paused) return;
+    const mod = await this._emoteMods();
+    if (!mod) return;
+    this.emoteOpen = true;
+    this._emoteUi(mod);
+    this.sfx.uiClick();
+  }
+  async _emoteMods() {
+    if (this._emoteMod) return this._emoteMod;
+    try {
+      const mod = await import('./emotes.js');
+      setEmoteDriver({ pose: mod.poseEmote, duracao: mod.emoteDuracao, laco: mod.emoteLaco });
+      this._emoteMod = mod;
+      return mod;
+    } catch { return null; }
+  }
+  _emoteUi(mod) {
+    const m = this.el.emoteWheel;
+    if (!m) return;
+    if (!this.emoteOpen) { m.classList.add('hidden'); return; }
+    const itens = mod.EMOTES;
+    const raio = 118;
+    m.innerHTML = '<div class="emote-miolo">DANÇA<small>T fecha · 1-8</small></div>'
+      + itens.map((e, i) => {
+        const ang = (i / itens.length) * Math.PI * 2 - Math.PI / 2;
+        const x = Math.cos(ang) * raio, y = Math.sin(ang) * raio;
+        const ativo = this._emoteAtual === e.id ? ' ativo' : '';
+        return `<button type="button" class="emote-fatia${ativo}" data-emote="${e.id}" title="${e.origem}"`
+          + ` style="transform:translate(-50%,-50%) translate(${x.toFixed(0)}px,${y.toFixed(0)}px)">`
+          + `<b>${i + 1}</b>${e.nome}</button>`;
+      }).join('');
+    m.classList.remove('hidden');
+    for (const b of m.querySelectorAll('.emote-fatia')) {
+      b.onclick = () => this._emotePick(b.dataset.emote);
+    }
+  }
+  _emoteClose() {
+    this.emoteOpen = false;
+    this.el.emoteWheel?.classList.add('hidden');
+  }
+  /* Tocar: o corpo que dança é o de TERCEIRA pessoa. Em 1ª pessoa o jogador não veria
+     nada, então a câmera vai pra 3ª e volta sozinha quando a dança acaba. */
+  _emotePick(id) {
+    const ctrl = this._emoteCtrl();
+    if (!ctrl || !id) return;
+    this._emoteClose();
+    if (this._emoteAtual === id) { this._emoteStop(); return; }
+    if (this.camView === 'first') { this.emoteCam = this.camView; this.setCamView('third'); }
+    if (!this._emoteCtrl()) return;
+    this._emoteCtrl().emote(id);
+    this._emoteAtual = id;
+    this.sfx.uiClick();
+  }
+  _emoteCtrl() {
+    if (this.camView === 'first') this._ensurePlayerTP();
+    return this.playerTP?.ctrl || null;
+  }
+  _emoteStop() {
+    this.playerTP?.ctrl?.pararEmote?.();
+    this._emoteAtual = null;
+    this._emoteClose();
+    const volta = this.emoteCam;
+    this.emoteCam = null;
+    if (volta) { this.settings.camView = volta; this.setCamView(volta); }
+  }
+  /* Cancelamento: andar, atirar, trocar de arma, levar dano ou morrer derrubam a dança.
+     Dançar não pode virar vantagem nem prisão — ver docs/EMOTES-BR.md. */
+  _emoteTick(input) {
+    if (!this._emoteAtual) return;
+    const andou = Math.abs(input?.ax || 0) > 0.01 || Math.abs(input?.az || 0) > 0.01;
+    const atirou = !!this.mouseDown0 || this.player.reloadUntil > this.time;
+    if (andou || atirou || !this.player.alive || this.state !== 'live') { this._emoteStop(); return; }
+    if (!this.playerTP?.ctrl?.emoteAtual?.()) this._emoteStop();   // acabou sozinho (gesto)
   }
   _radioPick(n) {
     const cat = RADIO[this.radioOpen];
@@ -4288,6 +4374,7 @@ export class Game {
     if (ent._killT === this.time && ent._killT !== undefined) return;
     ent._killT = this.time;
     ent.alive = false; ent.hp = 0; ent.deaths++;
+    if (ent.isPlayer) this._emoteStop();   // ninguém dança morto
     ent._killedBy = attacker ? (attacker.name || null) : null;   // tela de morte do multiplayer (vai no snapshot)
     ent.respawnAt = this.time + RESPAWN_DELAY;
     /* MODO ARENA: quem morre vai pro time do assassino. A troca é aplicada no
@@ -6213,11 +6300,15 @@ export class Game {
     const ads = p.scoped ? Math.min(1, (this._tpAdsF || 0) + dt / 0.11) : Math.max(0, (this._tpAdsF || 0) - dt / 0.11);
     this._tpAdsF = ads;
     const orbitBlend = Math.min(1, Math.abs(this._tpOrbitYaw) / 0.45);
-    const TP_DIST = (shoulder ? 0.85 : 1.7) + (shoulder ? 0.30 : 0.50) * ads + (shoulder ? 0.85 : 0) * orbitBlend;
+    /* Dancando, a camera de COMBATE cola nas costas e esconde o passo: afasta e sobe
+       enquanto o emote roda (rampa pra nao dar solavanco). */
+    this._emoteCamK = (this._emoteCamK || 0) + ((this._emoteAtual ? 1 : 0) - (this._emoteCamK || 0)) * Math.min(1, dt * 5);
+    const danca = this._emoteCamK;
+    const TP_DIST = (shoulder ? 0.85 : 1.7) + (shoulder ? 0.30 : 0.50) * ads + (shoulder ? 0.85 : 0) * orbitBlend + 1.5 * danca;
     const TP_UP = shoulder ? 0.10 : 0.18;
     const TP_SIDE = (shoulder ? 0.34 : 0.28) + (shoulder ? 0.16 : 0.22) * ads;
     cam.position.set(p.pos.x, p.pos.y + eye, p.pos.z).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE);
-    cam.position.y += TP_UP - 0.45 * orbitBlend;
+    cam.position.y += TP_UP - 0.45 * orbitBlend + 0.35 * danca;
     const gy = this.world.groundHeightAt(cam.position.x, cam.position.z, cam.position.y) + 0.2;
     if (cam.position.y < gy) cam.position.y = gy;   // não atravessa o chão
     /* OCLUSÃO DO BOOM: câmera de 3ª pessoa não entra em prop atrás do jogador (relato
@@ -6506,6 +6597,7 @@ export class Game {
       shift: !!(this.keys.ShiftLeft || this.keys.ShiftRight),
       jump: !!this.keys.Space,
     };
+    this._emoteTick(_inp);   // andar/atirar/morrer derruba a danca (ver _emoteTick)
     const { sp, walking, sprint } = this._moveEntity(p, _inp, dt);
     /* O movimento acima já aconteceu na tela (predição). Aqui o netcode reconcilia e manda o
        input pro servidor, que roda esta MESMA função. */
@@ -8895,6 +8987,7 @@ export class Game {
     this.el.killfeed.innerHTML = '';
     this.el.radioLog.innerHTML = '';
     this.el.radioMenu.classList.add('hidden');
+    this.el.emoteWheel?.classList.add('hidden'); this.emoteOpen = false;
     this.el.mkBanner.classList.remove('show');
     this.el.scope.classList.remove('on');
     this.el.respawn.classList.add('hidden');

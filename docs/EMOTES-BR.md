@@ -59,9 +59,11 @@ fontes acima.
 
 ## Limites declarados (o que NÃO está entregue)
 
-1. **Lobby apenas.** O emote roda na tela de personagem. Dançar dentro da partida exige
-   evento no protocolo (não existe hoje), guardar a arma e regra de cancelamento — está
-   fora deste PR de propósito.
+1. **Dança local, não sincronizada.** Na partida a dança roda pra quem apertou (tecla `T`,
+   roda de 8 passos, câmera afasta sozinha; régua `eval:emotepartida`). Os outros jogadores
+   NÃO veem: o pacote de input do servidor é `{ax, az, crouch, shift, jump, yaw, pitch,
+   shoot, weapon}` e não tem campo de emote. Para sincronizar falta **um campo** no
+   protocolo do servidor autoritativo — mudança de backend, que é do dono.
 2. **Sem polegar.** O rig não tem osso de dedo (só `Curl_L`/`Curl_R` de fechamento de
    mão). Não existe joinha possível: o gesto entregue chama **Salve** porque é isso que o
    corpo faz. Preferimos o nome honesto ao nome bonito.
@@ -72,6 +74,14 @@ fontes acima.
 4. **Classificação indicativa.** A `sarrada no ar` é gesto de quadril. Está estilizada,
    mas é decisão do dono mantê-la no catálogo público, restringi-la ou removê-la — lojas
    de aplicativo olham isso. Basta tirar a linha do catálogo em `public/js/emotes.js`.
+
+## Como se dança
+
+| Onde | Como |
+|---|---|
+| Lobby (hub) | botão **DANÇAR** embaixo do personagem; abre os 8 passos. Só aparece quando há boneco 3D — em preview estático (hardware fraco/renderização por software) não há o que dançar e o botão some |
+| Partida | tecla **T** abre a roda; **1-8** ou clique escolhe; **T**/**ESC** fecha; a câmera sai da 1ª pessoa e afasta 1,5 m pra você se ver |
+| Sair | andar, atirar, trocar de arma, levar dano ou morrer derruba o passo na hora |
 
 ## Achado colateral
 

@@ -3554,10 +3554,24 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
 /* ---------- EMOTES no preview do personagem (lobby) --------------------------
    A lista só aparece depois do clique em DANÇAR: é o mesmo gesto que dispara o
    import dinâmico de `js/emotes.js`, então o boot nunca baixa coreografia. */
-.pv-emotes{position:absolute;left:50%;transform:translateX(-50%);bottom:8px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:94%;z-index:3}
+.pv-emotes{position:absolute;left:50%;transform:translateX(-50%);bottom:76px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:94%;z-index:12}
+.pv-emotes[hidden]{display:none}
 .pv-emote-btn{font:700 11px/1 var(--aaa-font-body,sans-serif);letter-spacing:.06em;text-transform:uppercase;color:#fff;background:rgba(16,20,26,.82);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:7px 11px;cursor:pointer;backdrop-filter:blur(3px)}
 .pv-emote-btn:hover,.pv-emote-btn:focus-visible{background:rgba(180,217,46,.22);border-color:#b4d92e;color:#eaffb0}
 .pv-emote-btn[aria-pressed="true"]{background:#b4d92e;border-color:#b4d92e;color:#10141a}
 .pv-emote-abrir{background:rgba(180,217,46,.9);border-color:#b4d92e;color:#10141a}
 .pv-emotes.carregando .pv-emote-abrir{opacity:.6;pointer-events:none}
 @media (max-width:640px){.pv-emote-btn{font-size:10px;padding:6px 9px}}
+
+/* ---------- RODA DE DANÇA (tecla T, em partida) ------------------------------
+   Mesma gramática do menu de rádio: escurece pouco, não rouba a tela inteira. */
+#emote-wheel{position:fixed;left:50%;top:50%;width:0;height:0;z-index:40;pointer-events:none}
+#emote-wheel:not(.hidden){pointer-events:auto}
+#emote-wheel .emote-miolo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;font:800 13px/1 var(--aaa-font-body,sans-serif);letter-spacing:.14em;color:#b4d92e;text-shadow:0 2px 8px #000}
+#emote-wheel .emote-miolo small{font-weight:600;font-size:10px;letter-spacing:.08em;color:#cfd6c0;opacity:.8}
+#emote-wheel .emote-fatia{position:absolute;left:50%;top:50%;min-width:104px;display:flex;align-items:center;justify-content:center;gap:6px;font:700 11px/1 var(--aaa-font-body,sans-serif);letter-spacing:.05em;text-transform:uppercase;color:#fff;background:rgba(14,18,24,.86);border:1px solid rgba(255,255,255,.26);border-radius:999px;padding:9px 12px;cursor:pointer;backdrop-filter:blur(3px)}
+#emote-wheel .emote-fatia b{font-size:10px;color:#b4d92e}
+#emote-wheel .emote-fatia:hover,#emote-wheel .emote-fatia:focus-visible{background:rgba(180,217,46,.25);border-color:#b4d92e}
+#emote-wheel .emote-fatia.ativo{background:#b4d92e;border-color:#b4d92e;color:#10141a}
+#emote-wheel .emote-fatia.ativo b{color:#10141a}
+@media (max-width:720px){#emote-wheel .emote-fatia{min-width:84px;font-size:10px;padding:7px 9px}}
