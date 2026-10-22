@@ -15,12 +15,12 @@ const root=args.find(a=>a.startsWith('--root='))?.slice(7) || args.find(a=>!a.st
 assert(args.every(a=>!a.startsWith('--') || a.startsWith('--root=') || a.startsWith('--out=') || a.startsWith('--mutant=') || a==='--mutants'),'unknown option: use --root, --out, --mutant or --mutants');
 const output=process.argv.find(x=>x.startsWith('--out='))?.slice(6);
 const mutant=process.argv.find(x=>x.startsWith('--mutant='))?.slice(9);
-assert(!mutant || ['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard'].includes(mutant),'unknown mutation');
+assert(!mutant || ['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source'].includes(mutant),'unknown mutation');
 let mutationsApplied=0;
 if(args.includes('--mutants')) {
  assert(!mutant,'--mutants and --mutant cannot be combined');
  const folder=mkdtempSync(join(tmpdir(),'ranking-home-status-'));
- const names=['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard'];
+ const names=['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source'];
  try {
   const run=(name)=>{const reportPath=join(folder,(name || 'baseline')+'.json');const child=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--root='+root,'--out='+reportPath,...(name?['--mutant='+name]:[])],{encoding:'utf8',maxBuffer:262144});assert(existsSync(reportPath),'cannot measure child '+(name || 'baseline')+': '+(child.stderr || child.error || child.stdout || '').slice(0,700));return {status:child.status,report:JSON.parse(readFileSync(reportPath,'utf8'))};};
   const baseline=run(null);assert.equal(baseline.status,0,'baseline must be green before mutation proof');
@@ -37,6 +37,8 @@ let main=source('public/js/main.js'),community=source('public/js/community.js');
 const astro=source('src/pages/index.astro');
 const hashes=Object.fromEntries(['src/pages/index.astro','public/js/main.js','public/js/community.js','public/js/ranking-player.js'].map(p=>[p,createHash('sha256').update(source(p)).digest('hex')]));
 if(mutant==='nonarray-guard'){const changed=main.replaceAll('!Array.isArray(data?.players)','!data?.players');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
+// A tela do hub só pode ler a fonte verificada: /api/leaderboard não filtra ranking_exclusion (22/10).
+if(mutant==='hub-legacy-source'){const changed=main.replace("await api('/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all')","await api('/api/leaderboard')");assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
 const helpers=await import(pathToFileURL(`${root}/public/js/ranking-player.js`).href);
 const player={id:'c026ab03-2aa8-4775-979c-fcb1414fa50b',nick:'Renderer Fixture',public_handle:'ruler_fixture',avatar_url:'/api/social-avatar?id=c026ab03-2aa8-4775-979c-fcb1414fa50b',position:1,points:25,career_points:25,kills:18,kd:9,left_points:3,right_points:10,socials:[{net:'x',url:'https://x.com/ruler_fixture'}]};
 function extract(text,name,end) {
@@ -123,6 +125,8 @@ async function scenario(surface,flag,kind,period='all') {
  try{
   check(!thrown,`renderer rejected without settling DOM: ${thrown}`);
   check(requests.length===1,'real renderer must execute one API request');
+  // A aba RANKING do hub é a tela promovida a primeira linha: só a fonte verificada serve.
+  if(surface==='hub')check(new URL(requests[0],'https://fixture.test').searchParams.get('action')==='ranking',`hub must read the verified ranking source, asked ${requests[0]}`);
   const snapshot=assertState(pane,kind,surface);
   if(surface==='panel' && kind==='success')for(const label of ['RANKING COMPLETO','MEU PERFIL','MAPA AO VIVO'])check([...pane.querySelectorAll('a')].some(a=>a.textContent.startsWith(label) && a.target==='_blank' && a.rel.includes('noopener')),`preserve game tab footer: ${label}`);
   if(surface==='community'){

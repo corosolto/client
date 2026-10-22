@@ -227,7 +227,7 @@
   :root[data-ui="v3"] #hub-ui .hub-logo{width:48px;max-height:44px;margin-right:6px}
   .tp-lobby-abas{gap:12px}
   .tp-lobby-aba{font-size:15px}
-  .tp-lobby-aba[data-tp-aba="carreira"],.tp-lobby-aba[data-tp-aba="cla"],.tp-lobby-hdr__rotulo,.tp-lobby-mais__rotulo{display:none}
+  .tp-lobby-aba[data-tp-aba="ranking"],.tp-lobby-aba[data-tp-aba="cla"],.tp-lobby-hdr__rotulo,.tp-lobby-mais__rotulo{display:none}
   :root[data-ui="v3"] #hub-ui #tp-lobby-amigos,:root[data-ui="v3"] #hub-ui #hub-settings{display:none}
   :root[data-ui="v3"] #hub-ui #hub-avatar:empty{display:none}
   :root[data-ui="v3"] #hub-ui #hub-account-login{padding:0 6px}

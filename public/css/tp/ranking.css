@@ -35,3 +35,23 @@
 }
 @media(prefers-reduced-motion:reduce){:root[data-ui="v3"] #hub-ranking .hub-panel{animation:none}}
 :root[data-ui="v3"][data-motion="reduzido"] #hub-ranking .hub-panel{animation:none}
+
+/* Card do placar no lobby (tela 02): minha posição e o top 3 abrem a aba RANKING.
+   Mora aqui, com a tela de ranking, porque é a mesma frente de retorno. */
+.tp-lobby-rank{gap:12px}
+.tp-lobby-rank__corpo{display:flex;flex-direction:column;gap:10px}
+.tp-lobby-rank__eu{display:flex;flex-direction:column;gap:6px}
+.tp-lobby-rank__eu-botao{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;box-sizing:border-box;width:100%;min-height:var(--tp-lobby-toque);
+  padding:8px 12px;border:1px solid var(--tp-borda);border-radius:10px;background:var(--tp-fundo);color:var(--tp-tinta-1);text-align:left;cursor:pointer}
+.tp-lobby-rank__eu-botao:hover{border-color:var(--tp-borda-forte)}
+.tp-lobby-rank__eu-botao:focus-visible{outline:2px solid var(--tp-lima);outline-offset:2px}
+.tp-lobby-rank__eu-rotulo{width:100%;font-size:11px}
+.tp-lobby-rank__eu-pos{color:var(--tp-lima);font:800 26px/1 var(--tp-num)}
+.tp-lobby-rank__eu-pts{color:var(--tp-tinta-2);font:700 13px/1 var(--tp-num)}
+.tp-lobby-rank__lista{display:flex;flex-direction:column;gap:6px}
+.tp-lobby-rank__linha{display:flex;align-items:center;gap:10px;box-sizing:border-box;width:100%;min-height:var(--tp-lobby-toque);padding:4px 12px;
+  border:0;border-radius:8px;background:var(--tp-fundo);color:var(--tp-tinta-1);text-align:left;cursor:pointer}
+.tp-lobby-rank__linha:hover,.tp-lobby-rank__linha:focus-visible{outline:2px solid var(--tp-lima);outline-offset:1px}
+.tp-lobby-rank__lugar{flex:none;width:16px;color:var(--tp-ambar);font:800 15px/1 var(--tp-num)}
+.tp-lobby-rank__nick{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:800 15px/1.15 var(--tp-ui)}
+.tp-lobby-rank__pontos{flex:none;color:var(--tp-tinta-2);font:700 13px/1 var(--tp-num)}

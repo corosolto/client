@@ -503,6 +503,12 @@ const DICT = {
   'NOVIDADES': 'NEWS', 'O QUE MUDOU NA ARENA': 'WHAT CHANGED IN THE ARENA', 'VER NOVIDADES ▸': 'SEE WHAT IS NEW ▸',
   'NOVIDADES DE SKINS': 'SKIN NEWS', 'VER LOJA ▸': 'VIEW STORE ▸',
   'Amigos online': 'Friends online', 'AMIGOS ONLINE': 'FRIENDS ONLINE', 'CONVIDAR': 'INVITE', '+ CONVIDAR': '+ INVITE',
+  'Placar e amigos': 'Leaderboard and friends', 'PLACAR DA RUA': 'STREET SCOREBOARD', 'VER RANKING ▸': 'VIEW LEADERBOARD ▸',
+  'SUA POSIÇÃO': 'YOUR POSITION', 'pontos': 'points', 'ENTRAR ▸': 'SIGN IN ▸',
+  'Entre pra aparecer no placar.': 'Sign in to show up on the leaderboard.',
+  'Você ainda não pontuou no placar.': 'You have not scored on the leaderboard yet.',
+  'Não deu pra consultar o placar agora.': 'Could not load the leaderboard right now.',
+  'Consultando o placar…': 'Loading the leaderboard…', 'Ainda ninguém pontuou no placar.': 'Nobody has scored on the leaderboard yet.',
   'Ainda não dá pra ver quem está online. Chame a turma com o link de uma sala.':
     'You cannot see who is online yet. Call your crew with a room link.',
   'VER AMIGOS ▸': 'SEE FRIENDS ▸', 'Tipo de partida': 'Match type', 'PRIVADA': 'PRIVATE',

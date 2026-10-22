@@ -168,7 +168,9 @@ async function medir(mutante = '', alvo = '') {
         lobbyTxt, vagas, chips, limas, net: document.getElementById('main-menu').dataset.hubNet };
     });
     const c = await page.evaluate(CAIXAS);
-    const ABAS = ['JOGAR', 'LOJA', 'ARMÁRIO', 'CARREIRA', 'CLÃ'];
+    /* 22/10: RANKING virou aba de primeira linha, em 2º, e aposentou o rótulo CARREIRA
+       (o que havia atrás dele sempre foi o placar do hub). */
+    const ABAS = ['JOGAR', 'RANKING', 'LOJA', 'ARMÁRIO', 'CLÃ'];
     add('LB1', JSON.stringify(a.abas) === JSON.stringify(ABAS) && !a.velhas,
       `abas visíveis: ${a.abas.join(' · ') || 'nenhuma'}${a.velhas ? `; ${a.velhas} abas antigas ainda visíveis` : ''} (quer ${ABAS.join(' · ')})`);
     add('LB2', /AJUSTES/.test(a.rotulo) && /^"?Barlow Semi Condensed/.test(a.fonte) && /^"?Anton/.test(a.anton) && a.fontesOk,

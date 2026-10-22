@@ -3,6 +3,7 @@
 import { tr, LANG } from '../i18n.js';
 import { VERSION } from '../version.js';
 import { tretaLoja, abrirTretaSkin } from '../treta-store.js';
+import { montarRanking } from './ranking.js';
 
 const $ = (id) => document.getElementById(id);
 function no(tag, cls = '', texto = '') {
@@ -21,15 +22,17 @@ const abaDoHub = (aba) => document.querySelector(`.hub-tabs [data-hub-tab="${aba
 const filtroLoja = () => (document.querySelector('[data-treta-filter="owned"]')?.getAttribute('aria-pressed') === 'true' ? 'owned' : 'all');
 
 /* PASSE fica fora: não há backend de passe (decisão registrada na entrega da frente). */
+/* RANKING em 2º (dono, 22/10): é a tela de retorno diário, e atrás de CARREIRA sempre
+   esteve o placar — o rótulo antigo prometia uma tela de patente que não existe. */
 const ABAS = [
   { id: 'jogar', rotulo: 'JOGAR', ir: () => abaDoHub('jogar') },
+  { id: 'ranking', rotulo: 'RANKING', ir: () => abaDoHub('ranking') },
   { id: 'loja', rotulo: 'LOJA', ir: () => { abaDoHub('loja'); if (filtroLoja() === 'owned') document.querySelector('[data-treta-filter="all"]')?.click(); } },
   { id: 'armario', rotulo: 'ARMÁRIO', ir: () => {
     abaDoHub('loja');
     document.querySelector('[data-treta-view="characters"]')?.click();
     document.querySelector('[data-treta-filter="owned"]')?.click();
   } },
-  { id: 'carreira', rotulo: 'CARREIRA', ir: () => abaDoHub('ranking') },
   { id: 'cla', rotulo: 'CLÃ', href: '/clans' },
 ];
 
@@ -37,7 +40,7 @@ function abaAtiva() {
   const t = menu()?.dataset.hubTab;
   if (t === 'jogar') return 'jogar';
   if (t === 'loja') return filtroLoja() === 'owned' ? 'armario' : 'loja';
-  if (t === 'ranking') return 'carreira';
+  if (t === 'ranking') return 'ranking';
   return '';
 }
 
@@ -100,7 +103,7 @@ function montarMais(header) {
   lista.id = 'tp-lobby-mais-menu'; lista.hidden = true;
   const musica = $('hub-music-toggle');
   const itens = [
-    { id: 'carreira', rotulo: 'CARREIRA', compacto: true, ir: () => abaDoHub('ranking') },
+    { id: 'ranking', rotulo: 'RANKING', compacto: true, ir: () => abaDoHub('ranking') },
     { id: 'cla', rotulo: 'CLÃ', compacto: true, href: '/clans' },
     { id: 'amigos', rotulo: 'AMIGOS', compacto: true, href: '/comunidade/amigos' },
     { id: 'ajustes', rotulo: 'AJUSTES', compacto: true, ir: () => $('hub-settings')?.click() },
@@ -335,7 +338,9 @@ async function convidar() {
 
 function montarDireita(play) {
   const dir = no('aside', 'tp-lobby-dir');
-  dir.setAttribute('aria-label', tr('Amigos online'));
+  dir.setAttribute('aria-label', tr('Placar e amigos'));
+  /* O placar abre a coluna: é a tela de retorno que o dono pôs em primeira linha (22/10). */
+  montarRanking(dir, () => abaDoHub('ranking'));
   const painel = no('section', 'tp-lobby-painel tp-lobby-amigos');
   painel.id = 'tp-lobby-online-amigos';
   const cab = no('div', 'tp-lobby-painel__cab');
