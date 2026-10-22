@@ -126,6 +126,7 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `arma-orientacao-check.mjs` | Boca × coronha das 26 armas com o `rot` da CFG aplicado — pega arma montada de costas. `npm run eval:arma-orientacao` |
 | `skin-cobertura-check.mjs` | Pintura equipada na arma INTEIRA (corpo, pente, ferrolho, peça do `splitParts`) em 1ª pessoa, e no corpo de 3ª pessoa. `npm run eval:skin-cobertura` |
 | `inspect-lado-check.mjs` | Inspeção (tecla I) vira a arma de lado em 1ª pessoa sem clipe no pack e sem sair do quadro. `npm run eval:inspect-lado` |
+| `manga-tampa-check.mjs` | Manga do pacote golden sem boca aberta (o "leque" que aparece ao girar a arma na inspeção); tampa no bind space, idempotente. `npm run eval:manga-tampa` |
 
 ## 5. Referência e cor
 
