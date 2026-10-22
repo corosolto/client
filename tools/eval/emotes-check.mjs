@@ -22,7 +22,10 @@
      EM4  sai limpo: ao parar, as juntas e a ALTURA voltam ao lugar;
      EM5  custo zero de boot: emotes.js não entra no grafo estático do jogo —
           chega por import() dinâmico quando o jogador pede;
-     EM6  dano e morte cancelam a dança (ninguém dança levando tiro).
+     EM6  dano e morte cancelam a dança (ninguém dança levando tiro);
+     EM7  dançando, a arma SOME e os braços se soltam do porte de fuzil — o defeito
+          relatado em 22/10 era o cano cruzando o rosto e o boneco dançando de braço
+          esticado, porque o clipe base do jogo é porte de arma.
 
    MUTANTES (reescrevem o arquivo servido; o disco não é tocado):
      --mutante=emote-mudo     zera a amplitude da coreografia     -> EM2+EM3
@@ -32,6 +35,8 @@
      --mutante=emote-grudento parar a dança não para nada          -> EM4
      --mutante=boot-ansioso   importa emotes.js estaticamente      -> EM5
      --mutante=dança-blindada dano não cancela a dança             -> EM6
+     --mutante=arma-na-mao    não guarda a arma                     -> EM7
+     --mutante=braco-preso    não solta o porte de fuzil            -> EM7
 
    Uso: BASE=http://127.0.0.1:9321 node tools/eval/emotes-check.mjs
    ============================================================================ */
@@ -43,8 +48,10 @@ const PORTA = process.env.PORTA || '9342';
 const BASE = BASE_EXTERNA || `http://127.0.0.1:${PORTA}`;
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const ESPERADO = {
-  'emote-mudo': ['EM2', 'EM3'], 'eixo-local': ['EM3'], 'emote-grudento': ['EM4'],
-  'boot-ansioso': ['EM5'], 'dança-blindada': ['EM6'],
+  // EM7 mede o braço descendo, então qualquer mutante que mate a coreografia ou a
+  // limpeza acende junto — acoplamento real, declarado.
+  'emote-mudo': ['EM2', 'EM3', 'EM7'], 'eixo-local': ['EM3', 'EM7'], 'emote-grudento': ['EM4', 'EM7'],
+  'boot-ansioso': ['EM5'], 'dança-blindada': ['EM6'], 'arma-na-mao': ['EM7'], 'braco-preso': ['EM7'],
 };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
@@ -88,6 +95,8 @@ async function abrir() {
     '        _axisF.set(ax, ay, az).normalize();'));
   if (MUT === 'emote-grudento') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('pararEmote() { this._emoteId = null; }', 'pararEmote() { /* grudou */ }'));
   if (MUT === 'boot-ansioso') await reescreve(/\/js\/main\.js/, (t) => `import * as _emotesAnsioso from './emotes.js';\nwindow.__emotesAnsioso = _emotesAnsioso;\n${t}`);
+  if (MUT === 'arma-na-mao') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('for (const n of this._armaNos) n.visible = !this.emotando;', 'void this._armaNos;'));
+  if (MUT === 'braco-preso') await reescreve(/\/js\/emotes\.js/, (t) => t.replace("['RightForeArm', 'r', 1.40 * k]", "['RightForeArm', 'r', 0 * k]"));
   if (MUT === 'dança-blindada') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace("    this._emoteId = null;   // levar tiro derruba o emote na hora", '    void 0;'));
   await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForTimeout(2500);
@@ -114,6 +123,28 @@ const corpo = await page.evaluate(async () => {
   roda(50);
   const alturaBase = ctrl.model.position.y;
   const base = {}; for (const k in alvos) base[k] = pos(alvos[k]);
+
+  // EM7: o lobby mostra o personagem ARMADO; a dança tem que guardar a arma e soltar
+  // o braço do porte. Modelo próprio, porque o de cima foi montado sem arma.
+  const armado = gc.buildCharacterModel(def, { weaponId: 'ak', preview: true });
+  const em7 = { armaDancando: false, quedaParado: 0, quedaDancando: 0, armaDepois: false };
+  if (armado) {
+    const ossosA = {};
+    armado.group.traverse((o) => { if (o.isBone) ossosA[o.name] = o; });
+    const posA = (n) => { armado.group.updateMatrixWorld(true); return ossosA[n].getWorldPosition(new T.Vector3()); };
+    const armaVisivel = () => { let v = false; armado.group.traverse((o) => { if (/^arma-(glb|caixa)$/.test(o.name) && o.visible) v = true; }); return v; };
+    for (let i = 0; i < 50; i++) armado.ctrl.update(1 / 60, 0, false, 0);
+    em7.quedaParado = (posA('RightShoulder').y - posA('RightHand').y) * 100;
+    armado.ctrl.emote('passinho');
+    for (let i = 0; i < 90; i++) {
+      armado.ctrl.update(1 / 60, 0, false, 0);
+      if (armaVisivel()) em7.armaDancando = true;
+      em7.quedaDancando = Math.max(em7.quedaDancando, (posA('RightShoulder').y - posA('RightHand').y) * 100);
+    }
+    armado.ctrl.pararEmote();
+    for (let i = 0; i < 60; i++) armado.ctrl.update(1 / 60, 0, false, 0);
+    em7.armaDepois = armaVisivel();
+  }
 
   const medidas = {};
   let voltaPior = 0, alturaPior = 0;
@@ -149,7 +180,7 @@ const corpo = await page.evaluate(async () => {
     id: e.id, nome: e.nome, origem: e.origem, dur: e.dur,
     temPasso: (() => { const l = []; em.poseEmote(e.id, e.dur * 0.3, l); return l.length; })(),
   }));
-  return { catalogo, medidas, voltaPior, alturaPior, dancava, aposDano, aposMorte };
+  return { catalogo, medidas, voltaPior, alturaPior, dancava, aposDano, aposMorte, em7 };
 });
 
 /* ---- EM3: a mesma coreografia em corpos diferentes ---- */
@@ -293,6 +324,13 @@ cobra('EM6', corpo.dancava && corpo.aposDano === null && corpo.aposMorte === nul
   `EM6 · o lobby liga a dança (${(lobby.itens || []).length} passos no botão DANÇAR) e levar tiro/morrer derruba na hora`
   + (corpo.aposDano !== null ? ` — DANO NÃO CANCELOU (${corpo.aposDano})` : '')
   + (corpo.aposMorte !== null ? ` — MORTE NÃO CANCELOU (${corpo.aposMorte})` : ''));
+
+const e7 = corpo.em7;
+cobra('EM7', !e7.armaDancando && e7.armaDepois && e7.quedaDancando >= e7.quedaParado + 12,
+  `EM7 · dançando a arma some e volta ao parar; a mão desce ${e7.quedaDancando.toFixed(0)} cm `
+  + `contra ${e7.quedaParado.toFixed(0)} cm do porte de fuzil`
+  + (e7.armaDancando ? ' — ARMA FICOU NA MÃO' : '')
+  + (e7.armaDepois ? '' : ' — ARMA NÃO VOLTOU'));
 
 const falhou = r.filter((x) => !x.ok);
 for (const x of r) console.log(`  ${x.ok ? 'ok  ' : 'FALHA'} ${x.texto}`);

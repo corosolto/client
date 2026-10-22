@@ -83,6 +83,14 @@ fontes acima.
 | Partida | tecla **T** abre a roda; **1-8** ou clique escolhe; **T**/**ESC** fecha; a câmera sai da 1ª pessoa e afasta 1,5 m pra você se ver |
 | Sair | andar, atirar, trocar de arma, levar dano ou morrer derruba o passo na hora |
 
+## Defeitos relatados pelo dono (22/10) e o que foi feito
+
+| Relato | Causa medida | Conserto |
+|---|---|---|
+| "a arma balança e entra na frente" | o clipe base do jogo e PORTE DE FUZIL: o cano seguia a mao do passo e cruzava o rosto | a arma e guardada durante o emote (cobrado por EM7) |
+| "alguns personagens da glitch" | varredura de 63 personagens x 8 dancas: nenhum membro estourado, nenhum NaN. O que havia era arma visivel em quem a pendura fora do mount (canarinho, proerd) | o esconderijo passou a cobrir `arma-glb`/`arma-caixa` alem do mount |
+| "do passinho ao quadradinho nenhuma e identificavel" | o overlay somava em cima do porte de fuzil: bracos esticados a frente e amplitude pequena | pose base ASSIMETRICA que solta os dois bracos (medido: mao direita desce 51 cm contra 31 do porte) e amplitudes maiores. Continua procedural - ver o limite 3 |
+
 ## Achado colateral
 
 `public/models/dollynho_dance.glb` (552 KB, atrás de `?dolly=1`) é um download **cru** do

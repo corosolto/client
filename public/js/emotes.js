@@ -34,149 +34,167 @@ const pulso = (t, ini, fim) => {
 /* Cada coreografia empurra pares [osso, eixo, ângulo] em `ossos` e devolve o
    agachamento em METROS por `dip` (o controlador soma na altura do modelo).
    Ângulos em radianos. Mantidos em faixa legível: braço até ~1,4; perna até ~0,8. */
+/* Portes de braço medidos a partir do idle do jogo (que é PORTE DE FUZIL, braços à
+   frente). Cada dança declara o porte inteiro — nunca uma base + correção, senão uma
+   camada cancela a outra. Números de tools/eval/emotes-check.mjs. */
+const BRACO = {
+  // mão cai 48 cm abaixo do ombro, colada ao corpo
+  solto: (o, k = 1) => o.push(
+    // ASSIMÉTRICO de propósito: no idle a direita segura o punho e a esquerda atravessa
+    // o guarda-mão, então o mesmo delta nos dois deixava um braço esticado à frente.
+    ['RightForeArm', 'r', 1.40 * k], ['RightArm', 'r', -0.60 * k], ['RightArm', 'f', -0.14 * k],
+    ['LeftForeArm', 'r', 1.80 * k], ['LeftArm', 'r', -0.05 * k], ['LeftArm', 'f', 0.10 * k]),
+  // cotovelo fechado e aberto pro lado: silhueta de "jarra" (mão na cintura)
+  cintura: (o) => o.push(
+    ['RightForeArm', 'r', 0.30], ['LeftForeArm', 'r', 0.30],
+    ['RightArm', 'r', -0.45], ['LeftArm', 'r', -0.45],
+    ['RightArm', 'f', -0.95], ['LeftArm', 'f', 0.95]),
+  // antebraços na altura do peito, abertos: samba/ginga
+  peito: (o, abre = 0) => o.push(
+    ['RightForeArm', 'r', 0.15], ['LeftForeArm', 'r', 0.15],
+    ['RightArm', 'r', -0.15], ['LeftArm', 'r', -0.15],
+    ['RightArm', 'f', -0.55 - abre], ['LeftArm', 'f', 0.55 + abre]),
+};
+
 const PASSOS = {
-  /* PASSINHO — passo-base sabará: um pé sustenta e o outro alterna FRENTE e ATRÁS,
-     rápido, com o tronco respondendo. Fonte: Red Bull/Wikifavelas (docs/EMOTES-BR.md). */
+  /* PASSINHO — sabará: um pé sustenta e o outro cruza frente/trás, rápido, tronco
+     respondendo e braço solto balançando junto ao corpo. */
   passinho(t, dur, ossos) {
     const fase = t / dur;
-    const p = tri(fase * 2);          // pés alternam duas vezes por ciclo
-    const q = tri(fase * 2 + 0.5);
+    const p = tri(fase * 2), q = tri(fase * 2 + 0.5);
+    BRACO.solto(ossos);
     ossos.push(
-      ['RightUpLeg', 'r', p * 0.62], ['RightLeg', 'r', -Math.max(0, p) * 0.60],
-      ['LeftUpLeg', 'r', q * 0.62], ['LeftLeg', 'r', -Math.max(0, q) * 0.60],
-      ['Hips', 'u', sin(fase * 2) * 0.16],
-      ['Spine01', 'u', -sin(fase * 2) * 0.20], ['Spine01', 'r', -0.08],
-      // braços soltos, contrariando a perna (o passinho é de pé, braço só acompanha)
-      ['RightArm', 'r', 0.20 - p * 0.26], ['LeftArm', 'r', 0.20 + p * 0.26],
-      ['RightArm', 'f', -0.16], ['LeftArm', 'f', 0.16],
-      ['RightForeArm', 'r', -0.70], ['LeftForeArm', 'r', -0.70],
-      ['Head', 'u', sin(fase * 2) * 0.12],
+      ['RightUpLeg', 'r', p * 1.00], ['RightLeg', 'r', -Math.max(0, p) * 0.95],
+      ['LeftUpLeg', 'r', q * 1.00], ['LeftLeg', 'r', -Math.max(0, q) * 0.95],
+      ['RightUpLeg', 'f', -0.16], ['LeftUpLeg', 'f', 0.16],
+      ['Hips', 'u', sin(fase * 2) * 0.34],
+      ['Spine01', 'u', -sin(fase * 2) * 0.34], ['Spine01', 'r', -0.12],
+      ['RightArm', 'r', -p * 0.26], ['LeftArm', 'r', p * 0.26],
+      ['RightForeArm', 'r', -p * 0.20], ['LeftForeArm', 'r', p * 0.20],
+      ['Head', 'u', sin(fase * 2) * 0.22],
     );
-    return Math.abs(sin(fase * 4)) * 0.045;
+    return (0.5 + 0.5 * sin(fase * 4)) * 0.075;
   },
-  /* SAMBA NO PÉ — joelhos alternando rápido com o quadril solto; o peso troca de pé
-     e o ombro contraria o quadril. */
+  /* SAMBA NO PÉ — joelhos picados no contratempo, quadril solto, antebraços no peito
+     abrindo e fechando contra o quadril. */
   samba(t, dur, ossos) {
     const fase = t / dur;
-    const p = sin(fase * 3), q = sin(fase * 3 + 0.5);
+    const p = tri(fase * 3), q = tri(fase * 3 + 0.5);
+    BRACO.peito(ossos, 0.25 * sin(fase * 1.5));
     ossos.push(
-      ['RightUpLeg', 'r', p * 0.40], ['RightLeg', 'r', -Math.max(0, p) * 0.75],
-      ['LeftUpLeg', 'r', q * 0.40], ['LeftLeg', 'r', -Math.max(0, q) * 0.75],
-      ['Hips', 'u', sin(fase * 3) * 0.16],
-      ['Spine01', 'f', sin(fase * 1.5) * 0.12], ['Spine01', 'u', -sin(fase * 3) * 0.14],
-      // braços na altura do peito, abrindo e fechando no contratempo
-      ['RightArm', 'r', 0.55], ['LeftArm', 'r', 0.55],
-      ['RightArm', 'f', -0.30 + sin(fase * 1.5) * 0.22], ['LeftArm', 'f', 0.30 - sin(fase * 1.5) * 0.22],
-      ['RightForeArm', 'r', -1.05], ['LeftForeArm', 'r', -1.05],
-      ['Head', 'u', sin(fase * 1.5) * 0.10],
+      ['RightUpLeg', 'r', Math.max(0, p) * 0.55], ['RightLeg', 'r', -Math.max(0, p) * 1.20],
+      ['LeftUpLeg', 'r', Math.max(0, q) * 0.55], ['LeftLeg', 'r', -Math.max(0, q) * 1.20],
+      ['Hips', 'u', sin(fase * 1.5) * 0.32], ['Hips', 'f', sin(fase * 3) * 0.16],
+      ['Spine01', 'u', -sin(fase * 1.5) * 0.28], ['Spine01', 'f', -sin(fase * 3) * 0.12],
+      ['Head', 'u', sin(fase * 1.5) * 0.18],
     );
-    return Math.abs(sin(fase * 6)) * 0.030;
+    return (0.5 + 0.5 * sin(fase * 6)) * 0.05;
   },
-  /* GINGA — base da capoeira: mão à frente do rosto com a perna do MESMO lado atrás,
-     troca no toque. Fonte: Guerreiros do Abaeté / material didático (docs/EMOTES-BR.md). */
+  /* GINGA — base larga: a perna recua fundo e a mão do mesmo lado sobe à frente do
+     rosto, trocando de lado no toque. */
   ginga(t, dur, ossos) {
     const fase = t / dur;
-    const lado = sin(fase);
+    const lado = tri(fase);
     const recuaD = Math.max(0, -lado), recuaE = Math.max(0, lado);
+    BRACO.peito(ossos, 0.15);
     ossos.push(
-      ['RightUpLeg', 'r', -recuaD * 0.48 + recuaE * 0.22], ['LeftUpLeg', 'r', -recuaE * 0.48 + recuaD * 0.22],
-      ['RightLeg', 'r', -recuaD * 0.85], ['LeftLeg', 'r', -recuaE * 0.85],
-      ['Hips', 'u', lado * 0.30],
-      ['Spine01', 'r', -0.18], ['Spine01', 'u', -lado * 0.18],
-      // guarda: a mão do lado que RECUA sobe à frente do rosto
-      ['RightArm', 'r', 0.55 + recuaD * 0.75], ['RightForeArm', 'r', -1.45],
-      ['LeftArm', 'r', 0.55 + recuaE * 0.75], ['LeftForeArm', 'r', -1.45],
-      ['RightArm', 'f', -0.25], ['LeftArm', 'f', 0.25],
-      ['Head', 'u', lado * 0.14],
+      ['RightUpLeg', 'r', -recuaD * 0.95 + recuaE * 0.45], ['LeftUpLeg', 'r', -recuaE * 0.95 + recuaD * 0.45],
+      ['RightUpLeg', 'f', -0.30], ['LeftUpLeg', 'f', 0.30],
+      ['RightLeg', 'r', -recuaD * 0.85 - 0.25], ['LeftLeg', 'r', -recuaE * 0.85 - 0.25],
+      ['Hips', 'u', lado * 0.40],
+      ['Spine01', 'r', -0.20], ['Spine01', 'u', -lado * 0.30],
+      // a guarda sobe do lado que recua
+      ['RightArm', 'r', recuaD * 0.95], ['RightForeArm', 'r', -recuaD * 0.85],
+      ['LeftArm', 'r', recuaE * 0.95], ['LeftForeArm', 'r', -recuaE * 0.85],
+      ['Head', 'u', lado * 0.20],
     );
-    return (0.5 + 0.5 * Math.cos(fase * TAU * 2)) * 0.075;
+    return (0.55 + 0.45 * Math.cos(fase * TAU * 2)) * 0.13;
   },
-  /* FREVO — frenético: agacha e levanta, perna sobe alta e um braço fica EM CIMA
-     (onde moraria a sombrinha). Fonte: IPHAN/UNESCO (docs/EMOTES-BR.md). */
+  /* FREVO — agacha fundo, joelho alto alternado e o braço da sombrinha ESTICADO
+     acima da cabeça (medido: -2,95 rad sobe 56 cm). */
   frevo(t, dur, ossos) {
     const fase = t / dur;
     const p = tri(fase * 2), alta = Math.max(0, p), outra = Math.max(0, -p);
     ossos.push(
-      ['RightUpLeg', 'r', alta * 1.20], ['RightLeg', 'r', -alta * 1.35],
-      ['LeftUpLeg', 'r', outra * 1.20], ['LeftLeg', 'r', -outra * 1.35],
-      ['Hips', 'u', p * 0.22],
-      ['Spine01', 'r', -0.16], ['Spine01', 'u', -p * 0.16],
-      // braço da sombrinha ACIMA da cabeça; o outro aberto, mais baixo
-      ['RightArm', 'f', -3.00], ['RightArm', 'r', 0.18], ['RightForeArm', 'r', -0.25],
-      ['LeftArm', 'f', 0.80 + outra * 0.25], ['LeftArm', 'r', 0.30], ['LeftForeArm', 'r', -0.75],
-      ['Head', 'r', -0.10],
+      ['RightUpLeg', 'r', alta * 1.55], ['RightLeg', 'r', -alta * 1.70],
+      ['LeftUpLeg', 'r', outra * 1.55], ['LeftLeg', 'r', -outra * 1.70],
+      ['Hips', 'u', p * 0.26],
+      ['Spine01', 'r', -0.18], ['Spine01', 'u', -p * 0.22],
+      ['RightArm', 'f', -2.95], ['RightArm', 'r', 0.10], ['RightForeArm', 'r', 0.35],
+      ['LeftArm', 'f', 1.35 + outra * 0.35], ['LeftArm', 'r', -0.20], ['LeftForeArm', 'r', 0.55],
+      ['Head', 'r', -0.14],
     );
-    return (0.35 + 0.65 * Math.abs(p)) * 0.11;
+    return (0.35 + 0.65 * Math.abs(p)) * 0.17;
   },
-  /* FORRÓ "DOIS PRA LÁ, DOIS PRA CÁ" — base lateral do xote: dois apoios pra um lado, */
+  /* FORRÓ "DOIS PRA LÁ, DOIS PRA CÁ" — base lateral do xote no porte de par: braço
+     esquerdo erguido segurando a mão de alguém, direito abraçando as costas. */
   forro(t, dur, ossos) {
     const fase = t / dur;
     const tempo = Math.floor(fase * 4) % 4;
     const dentro = (fase * 4) % 1;
-    const lado = tempo < 2 ? 1 : -1;                   // dois pra lá, dois pra cá
+    const lado = tempo < 2 ? 1 : -1;
     const passo = Math.sin(dentro * Math.PI);
     ossos.push(
-      ['RightUpLeg', 'r', lado > 0 ? passo * 0.45 : -passo * 0.15],
-      ['LeftUpLeg', 'r', lado > 0 ? -passo * 0.15 : passo * 0.45],
-      ['RightLeg', 'r', -(lado > 0 ? passo : 0) * 0.35],
-      ['LeftLeg', 'r', -(lado < 0 ? passo : 0) * 0.35],
-      ['Hips', 'u', lado * 0.12],
-      ['Spine01', 'f', lado * passo * 0.14], ['Spine01', 'r', -0.10],
-      // porte de par: braço esquerdo erguido segurando a mão de alguém, direito abraçando
-      ['LeftArm', 'r', 1.05], ['LeftArm', 'f', 0.45], ['LeftForeArm', 'r', -0.95],
-      ['RightArm', 'r', 0.75], ['RightArm', 'f', -0.15], ['RightForeArm', 'r', -1.15],
-      ['Head', 'u', lado * 0.10],
+      ['RightUpLeg', 'f', -0.18 - (lado > 0 ? passo * 0.55 : 0)],
+      ['LeftUpLeg', 'f', 0.18 + (lado < 0 ? passo * 0.55 : 0)],
+      ['RightUpLeg', 'r', lado > 0 ? passo * 0.28 : 0], ['LeftUpLeg', 'r', lado < 0 ? passo * 0.28 : 0],
+      ['RightLeg', 'r', -(lado > 0 ? passo : 0.15) * 0.45], ['LeftLeg', 'r', -(lado < 0 ? passo : 0.15) * 0.45],
+      ['Hips', 'u', lado * 0.18], ['Hips', 'f', lado * passo * 0.12],
+      ['Spine01', 'f', lado * passo * 0.22], ['Spine01', 'r', -0.10],
+      ['LeftArm', 'r', 0.55], ['LeftArm', 'f', 0.95], ['LeftForeArm', 'r', -0.15],
+      ['RightArm', 'r', 0.25], ['RightArm', 'f', -0.35], ['RightForeArm', 'r', -0.45],
+      ['Head', 'u', lado * 0.16],
     );
-    return Math.abs(passo) * 0.025;
+    return Math.abs(passo) * 0.05;
   },
-  /* QUADRADINHO — o rebolado circular virado QUADRADO: quatro arestas, uma por tempo,
-     com virada seca em cada canto. Fonte: TCC UFSC sobre dança funk. */
+  /* QUADRADINHO — pés plantados, joelhos dobrados, MÃOS NA CINTURA e o quadril
+     percorrendo um quadrado em quatro tempos, com virada seca em cada canto. */
   quadradinho(t, dur, ossos) {
     const fase = t / dur;
     const lateral = tri(fase + 0.25), frontal = tri(fase);
+    BRACO.cintura(ossos);
     ossos.push(
-      ['Hips', 'r', frontal * 0.18], ['Hips', 'f', lateral * 0.20],
-      ['Spine', 'r', -frontal * 0.12], ['Spine', 'f', -lateral * 0.14],
-      ['RightUpLeg', 'r', 0.12 + lateral * 0.10], ['LeftUpLeg', 'r', 0.12 - lateral * 0.10],
-      ['RightLeg', 'r', -0.35], ['LeftLeg', 'r', -0.35],
-      // mãos na cintura: braço pouco à frente e cotovelo bem fechado
-      ['RightArm', 'r', 0.20], ['LeftArm', 'r', 0.20],
-      ['RightArm', 'f', -0.45], ['LeftArm', 'f', 0.45],
-      ['RightForeArm', 'r', -1.35], ['LeftForeArm', 'r', -1.35],
-      ['Head', 'f', -lateral * 0.08],
+      ['Hips', 'r', frontal * 0.45], ['Hips', 'f', lateral * 0.45],
+      ['Spine', 'r', -frontal * 0.32], ['Spine', 'f', -lateral * 0.32],
+      ['Spine01', 'r', -frontal * 0.18],
+      ['RightUpLeg', 'r', 0.32], ['LeftUpLeg', 'r', 0.32],
+      ['RightUpLeg', 'f', -0.22], ['LeftUpLeg', 'f', 0.22],
+      ['RightLeg', 'r', -0.60], ['LeftLeg', 'r', -0.60],
+      ['Head', 'f', -lateral * 0.12],
     );
-    return 0.035;
+    return 0.055;
   },
-  /* SARRADA NO AR — impulso de quadril pra frente com as mãos indo à pelve, uma vez só.
-     Estilizado de propósito (ver nota de classificação em docs/EMOTES-BR.md). */
+  /* SARRADA NO AR — agacha, recolhe e joga o quadril à frente com as mãos descendo.
+     Estilizado de propósito (nota de classificação em docs/EMOTES-BR.md). */
   sarrada(t, dur, ossos) {
-    const prep = pulso(t, 0.00, 0.45), golpe = pulso(t, 0.40, 0.95);
+    const prep = pulso(t, 0.00, 0.50), golpe = pulso(t, 0.45, 1.00);
+    BRACO.solto(ossos, 0.8);
     ossos.push(
-      ['Hips', 'r', prep * 0.20 - golpe * 0.30],
-      ['Spine01', 'r', -prep * 0.25 + golpe * 0.45],   // agacha à frente e joga o tronco atrás
-      ['RightUpLeg', 'r', prep * 0.35 - golpe * 0.15],
-      ['LeftUpLeg', 'r', prep * 0.35 - golpe * 0.15],
-      ['RightLeg', 'r', -prep * 0.65], ['LeftLeg', 'r', -prep * 0.65],
-      ['RightArm', 'r', 0.35 + golpe * 0.45], ['LeftArm', 'r', 0.35 + golpe * 0.45],
-      ['RightArm', 'f', -0.30], ['LeftArm', 'f', 0.30],
-      ['RightForeArm', 'r', -0.55 - golpe * 0.85], ['LeftForeArm', 'r', -0.55 - golpe * 0.85],
-      ['Head', 'r', -golpe * 0.20],
+      ['Hips', 'r', prep * 0.30 - golpe * 0.55],
+      ['Spine01', 'r', -prep * 0.40 + golpe * 0.70],
+      ['RightUpLeg', 'r', prep * 0.55 - golpe * 0.30], ['LeftUpLeg', 'r', prep * 0.55 - golpe * 0.30],
+      ['RightUpLeg', 'f', -0.26], ['LeftUpLeg', 'f', 0.26],
+      ['RightLeg', 'r', -prep * 0.95], ['LeftLeg', 'r', -prep * 0.95],
+      ['RightArm', 'r', golpe * 0.65], ['LeftArm', 'r', golpe * 0.65],
+      ['RightForeArm', 'r', -golpe * 0.75], ['LeftForeArm', 'r', -golpe * 0.75],
+      ['Head', 'r', -golpe * 0.28],
     );
-    return prep * 0.09 - golpe * 0.02;
+    return prep * 0.14 - golpe * 0.04;
   },
-  /* SALVE — o braço sobe à frente do peito e a cabeça acena junto. A intenção era o */
+  /* SALVE — braço direito ESTICADO acima do ombro acenando; o resto do corpo
+     acompanha de leve. Sem osso de dedo no rig, o gesto é do braço. */
   salve(t, dur, ossos) {
-    const sobe = Math.min(1, t / 0.30);
-    const desce = t > dur - 0.30 ? Math.max(0, (dur - t) / 0.30) : 1;
+    const sobe = Math.min(1, t / 0.28);
+    const desce = t > dur - 0.28 ? Math.max(0, (dur - t) / 0.28) : 1;
     const k = sobe * desce;
-    const balanco = pulso(t, 0.35, 0.95);
+    const aceno = Math.sin(t * 11) * k;
+    BRACO.solto(ossos, 0.9);
     ossos.push(
-      ['RightArm', 'r', k * 0.95], ['RightArm', 'f', k * 0.55],
-      ['RightForeArm', 'r', -k * 1.50],
-      ['RightShoulder', 'f', k * 0.20],
-      ['Spine01', 'u', -k * 0.14], ['Spine01', 'r', -k * 0.08],
-      ['Head', 'r', -balanco * 0.18],      // o aceno que acompanha o joinha
-      ['LeftArm', 'r', k * 0.18],
+      ['RightArm', 'f', -k * 2.70], ['RightArm', 'r', k * 0.55 + aceno * 0.10],
+      ['RightForeArm', 'r', -k * 1.05], ['RightForeArm', 'f', -aceno * 0.40],
+      ['RightShoulder', 'f', -k * 0.22],
+      ['Spine01', 'u', -k * 0.18], ['Spine01', 'r', -k * 0.10],
+      ['Head', 'r', -k * 0.12], ['Head', 'u', aceno * 0.10],
     );
     return 0;
   },
