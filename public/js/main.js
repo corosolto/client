@@ -1029,6 +1029,17 @@ async function carregaEmotes() {
   emotesMod = m;
   return m;
 }
+function sincronizaBarraEmotes() {
+  const barra = document.getElementById('pv-emotes');
+  if (!barra) return;
+  const temBoneco = !staticPreviews && !!(pv && pv.ctrl);
+  barra.hidden = !temBoneco;
+  if (!temBoneco) { emotesMontados = false; barra.innerHTML = '<button id="pv-emote-abrir" class="pv-emote-btn pv-emote-abrir" type="button">DANÇAR</button>'; religaAbrirEmotes(); }
+}
+function religaAbrirEmotes() {
+  const b = document.getElementById('pv-emote-abrir');
+  if (b) b.onclick = montaBarraEmotes;
+}
 function pvTocaEmote(id, botao) {
   const ctrl = pv && pv.ctrl;
   if (!ctrl) return;
@@ -1062,11 +1073,11 @@ async function montaBarraEmotes() {
   const primeiro = barra.querySelector('.pv-emote-btn');
   if (primeiro) pvTocaEmote(primeiro.dataset.emote, primeiro);
 }
-document.getElementById('pv-emote-abrir')?.addEventListener('click', montaBarraEmotes);
+religaAbrirEmotes();
 
 function pvSetChar(def) {
   def = {...def, skinId:equippedTretaSkin(def.id),eyewearId:equippedTretaEyewear()};
-  if (staticPreviews) { showStaticPreview(def); return; }
+  if (staticPreviews) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
   // Swap to the real rigged GLB (idle) once loaded, if this is still the selection.
@@ -1114,6 +1125,7 @@ function pvSetChar(def) {
       // trocar de personagem com a dança ligada mantém a dança (o passo é do jogador,
       // não do boneco) — sem isso o emote morre calado a cada clique na lista
       if (emoteAnterior && m.ctrl) m.ctrl.emote(emoteAnterior);
+      sincronizaBarraEmotes();
       p.scene.add(m.group);
       // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
       // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.
