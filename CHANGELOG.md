@@ -26,6 +26,7 @@
 ## Não lançado — 2026-10-19
 
 ### Adicionado
+- O personagem agora dança no lobby: oito passos brasileiros — passinho, samba no pé, ginga, frevo, dois pra lá, quadradinho, sarrada no ar e um salve — direto na tela de escolha, sem baixar nada a mais para quem não pedir.
 - Quem joga pelo aplicativo passa a ver aviso de manutenção e, quando houver, o caminho alternativo para continuar jogando, sem precisar esperar uma atualização na loja.
 - O jogo agora sabe se testar sozinho no celular: uma partida curta automática mede desempenho, travadas e erros no próprio aparelho, para o problema aparecer antes do jogador reclamar.
 - O mapa ao vivo mostra cidades, partidas e rounds por agregado geográfico, sem publicar nick, jogador, IP ou posição individual.
