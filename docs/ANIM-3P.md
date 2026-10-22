@@ -57,6 +57,21 @@ Jogador 3P e bots clássicos alimentam; caminho NN segue sem (flag de laboratór
   esperava 9°. O delta é construído no quadro do pai a partir do eixo de mundo do grupo e
   aplicado com `premultiply` (rotação no espaço do pai, não do osso).
 
+## Segunda rodada: o que mais o corpo passou a dizer
+
+| Lacuna | O que entrou | Medido na régua |
+|---|---|---|
+| Levar tiro não movia nada | `ctrl.flinch(dir, forca)`: cede na direção do disparo por 0,18 s (AN6) | cabeça desloca 13–18 cm e volta a <0,3 cm |
+| Agachado atirando era estátua (`shoot()` saía cedo no crouch) | recuo aditivo de 0,12 s sem trocar de clipe (AN7) | 2,4 cm de recuo mantendo a pose `crouch` |
+| No ar o clipe acabava e o corpo voltava a CORRER | `setAr()` segura a pose de salto e amortece 0,14 s no pouso (AN8) | estado `jump` no ar, `crouch` no pouso |
+| Giro instantâneo (manequim girando) | quadril atrasa até 0,61 rad e alcança a ~3,2/s (AN9) | 0,48 rad de atraso após giro de 2 rad, alcança em 0,01 |
+| Mira vertical só na cabeça | coluna assume 45% do `aimPitch` (teto 0,35 rad) | cabeça percorre 9 cm com `aimPitch` 0,5 |
+| Todo mundo caía igual | `die(dir)` enviesa o tombo pela direção do tiro | tombo medido em 1,4 m de deslocamento |
+| Bot longe custava o mesmo que perto | LOD: 20 Hz acima de 25 m, 10 Hz acima de 45 m, IK e malha de cabeça desligadas (AN10) | 17 chamadas contra 120 em 2 s |
+
+O LOD é o item que paga no celular: com 8 bots, a maior parte deles passa o tempo longe da
+câmera, e cada um custava mixer + IK de mão + malha fechada de cabeça a 60 Hz.
+
 ## Fallbacks declarados (AN5)
 
 Todo personagem do manifesto tem os 8 clipes base. Os opcionais (`idle1h`, `walk1h`,

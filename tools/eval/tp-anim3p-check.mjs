@@ -43,7 +43,8 @@ const BASE_EXTERNA = process.env.BASE;
 const PORTA = process.env.PORTA || '9326';
 const BASE = BASE_EXTERNA || `http://127.0.0.1:${PORTA}`;
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const ESPERADO = { 'pega-morta': ['AN1'], 'torso-mudo': ['AN1', 'AN2'], 'lean-morto': ['AN3'], 'reload-mudo': ['AN4'], 'opcional-fantasma': ['AN5'] };
+const ESPERADO = { 'pega-morta': ['AN1'], 'torso-mudo': ['AN1', 'AN2'], 'lean-morto': ['AN3'], 'reload-mudo': ['AN4'], 'opcional-fantasma': ['AN5'],
+  'flinch-mudo': ['AN6'], 'agachado-estatua': ['AN1', 'AN7'], 'ar-correndo': ['AN8', 'AN9'], 'quadril-colado': ['AN9'], 'lod-cego': ['AN10'] };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
 const PARTIDA = 'debug=1&auto=E,esquerdomacho&map=praca_poderes';
@@ -84,6 +85,11 @@ async function abrir() {
   if (MUT === 'pega-morta') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('solveCCDIK(this.ikL.chain, this.ikL.end, _ikTgt, { iterations: 12, endOffset: this.ikL.endOffset });', 'void _ikTgt;'));
   if (MUT === 'torso-mudo') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('_deltaMundo(torso.spines[0], cosY, 0, -sinY, k * 0.20);', 'void k; void cosY; void sinY;'));
   if (MUT === 'lean-morto') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace(') * 0.12;', ') * 0;'));
+  if (MUT === 'flinch-mudo') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('this._flinchDur = 0.18;', 'this._flinchDur = 0;'));
+  if (MUT === 'agachado-estatua') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('{ this._fireDur = 0.12; this._fireT = 0; return; }', '{ return; }'));
+  if (MUT === 'ar-correndo') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('} else if (this._ar && this.actions.jump) {', '} else if (false) {'));
+  if (MUT === 'quadril-colado') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('const teto = 0.61;', 'const teto = 0;'));
+  if (MUT === 'lod-cego') await reescreve(/\/js\/game\.js/, (t) => t.replace('const passo = distCam > 45 ? 0.1 : (distCam > 25 ? 0.05 : 0);', 'const passo = 0;'));
   if (MUT === 'reload-mudo') await reescreve(/\/js\/game\.js/, (t) => t.split('b.mesh?.ctrl?.reload?.(Wb.reload || 2.4); ').join('').split(' b.mesh?.ctrl?.reload?.(Wb.reload || 2.4);').join(''));
   await page.goto(`${BASE}/?${PARTIDA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 240000 });
@@ -117,12 +123,27 @@ const m = await page.evaluate(async () => {
     const fim = { mao: pos(maoEsq), cabeca: pos(cabeca), dur: ctrl._reloadDur };
     roda(60, 3.5); const cabecaLean = pos(cabeca); const leanK = ctrl.leanK;
     roda(60, 0); const cabecaVolta = pos(cabeca);
+    roda(30);
+    const antesFlinch = pos(cabeca);
+    ctrl.flinch({ x: 1, z: 0 }, 1); roda(6);
+    const an6 = { picoCm: antesFlinch.distanceTo(pos(cabeca)) * 100 };
+    roda(45); an6.voltaCm = antesFlinch.distanceTo(pos(cabeca)) * 100;
+    ctrl.setCrouch(true); roda(12);
+    const antesTiro = pos(cabeca); ctrl.shoot(); roda(3);
+    const an7 = { recuoCm: antesTiro.distanceTo(pos(cabeca)) * 100, estado: ctrl.curName };
+    roda(20); ctrl.setCrouch(false); roda(12);
+    ctrl.setAr(true); roda(40);
+    const an8 = { noAr: ctrl.curName };
+    ctrl.setAr(false); roda(4); an8.noPouso = ctrl.curName; roda(25);
+    const yaw0 = grupo.rotation.y; grupo.rotation.y = yaw0 + 2.0; roda(2);
+    const an9 = { lagImediato: Math.abs(ctrl.yawLag || 0) };
+    roda(70); an9.lagDepois = Math.abs(ctrl.yawLag || 0); grupo.rotation.y = yaw0; roda(30);
     ctrl.die(); roda(90, 0); const morto0 = pos(cabeca); roda(30, 3.5); const mortoCom = pos(cabeca);
     const an1 = { foiCm: base.mao.distanceTo(meio.mao) * 100, aoPenteCm: meio.mao.distanceTo(magAlvo) * 100, basePenteCm: base.mao.distanceTo(magAlvo) * 100, voltouCm: fim.mao.distanceTo(base.mao) * 100, kMeio: meio.k, durFim: fim.dur };
     const an2 = { quedaCm: (base.cabeca.y - meio.cabeca.y) * 100, frenteCm: Math.abs((meio.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100, voltaCm: Math.abs((fim.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100 };
     const an3 = { leanK, deslocCm: Math.abs((cabecaLean.clone().sub(base.cabeca)).dot(direita())) * 100, voltaCm: Math.abs((cabecaVolta.clone().sub(base.cabeca)).dot(direita())) * 100, mortoDeslocCm: Math.abs((mortoCom.clone().sub(morto0)).dot(direita())) * 100 };
     const cumpre = an1.foiCm >= 8 && an1.aoPenteCm <= an1.basePenteCm - 10 && an2.frenteCm >= 5 && an3.deslocCm >= 4;
-    if (cumpre || !melhor) melhor = { charId: ctrl.charId, an1, an2, an3 };
+    if (cumpre || !melhor) melhor = { charId: ctrl.charId, an1, an2, an3, an6, an7, an8, an9 };
     if (cumpre) break;
   }
   return melhor || { erro: 'sem bot com arma de 2 mãos' };
@@ -147,7 +168,20 @@ if (MUT !== 'opcional-fantasma') {
     b.pos.set(g.player.pos.x + 2.5, g.player.pos.y, g.player.pos.z); b.think = 0;
     let botRecarregou = false;
     for (let i = 0; i < 900 && !botRecarregou; i++) { g.update(1 / 60); botRecarregou = (b.mesh?.ctrl?._reloadDur || 0) > 0; }
-    return { jogadorRecarregando, botRecarregou, armaBot: b.weapon };
+    // AN10: cadência de animação cai com a distância (bot teleportado pra longe)
+    const longe = g.bots.find(x => x.mesh?.ctrl && x.alive && x !== b) || b;
+    longe.pos.set(g.player.pos.x + 80, longe.pos.y, g.player.pos.z + 80);
+    let chamadasLonge = 0;
+    const origLonge = longe.mesh.ctrl.update.bind(longe.mesh.ctrl);
+    longe.mesh.ctrl.update = (...a) => { chamadasLonge++; return origLonge(...a); };
+    const perto = g.bots.find(x => x.mesh?.ctrl && x.alive && x !== longe) || b;
+    perto.pos.set(g.player.pos.x + 3, perto.pos.y, g.player.pos.z + 3);
+    let chamadasPerto = 0;
+    const origPerto = perto.mesh.ctrl.update.bind(perto.mesh.ctrl);
+    perto.mesh.ctrl.update = (...a) => { chamadasPerto++; return origPerto(...a); };
+    for (let i = 0; i < 120; i++) g.update(1 / 60);
+    const lodLonge = longe.mesh.ctrl.lod;
+    return { jogadorRecarregando, botRecarregou, armaBot: b.weapon, chamadasLonge, chamadasPerto, lodLonge };
   });
   await f2();
 }
@@ -178,9 +212,23 @@ if (m.erro) {
   cobra('AN3', m.an3.leanK > 0.07 && m.an3.deslocCm >= 4 && m.an3.voltaCm <= 1.5 && m.an3.mortoDeslocCm <= 0.5,
     `AN3 · lateral 3,5 m/s: cabeça deslocou ${m.an3.deslocCm.toFixed(1)} cm (leanK ${m.an3.leanK.toFixed(3)}), voltou a ${m.an3.voltaCm.toFixed(2)} cm sem lateral; morto deslocou ${m.an3.mortoDeslocCm.toFixed(2)} cm`);
 }
+if (!m.erro) {
+  cobra('AN6', m.an6.picoCm >= 3 && m.an6.voltaCm <= 1.5,
+    `AN6 · levar tiro moveu a cabeça ${m.an6.picoCm.toFixed(1)} cm no eixo do disparo e ela voltou a ${m.an6.voltaCm.toFixed(2)} cm`);
+  cobra('AN7', m.an7.recuoCm >= 0.5 && /crouch/.test(m.an7.estado || ''),
+    `AN7 · tiro agachado deu ${m.an7.recuoCm.toFixed(2)} cm de recuo mantendo a pose ${m.an7.estado}`);
+  cobra('AN8', m.an8.noAr === 'jump' && m.an8.noPouso === 'crouch',
+    `AN8 · no ar o estado é ${m.an8.noAr} (não locomoção) e o pouso amortece em ${m.an8.noPouso}`);
+  cobra('AN9', m.an9.lagImediato >= 0.25 && m.an9.lagDepois <= 0.08,
+    `AN9 · giro de 2 rad deixou o quadril ${m.an9.lagImediato.toFixed(2)} rad atrás e ele alcançou em ${m.an9.lagDepois.toFixed(3)} rad`);
+}
 if (an4.dados) {
   cobra('AN4', an4.dados.jogadorRecarregando && an4.dados.botRecarregou,
     `AN4 · jogador em 3ª pessoa ${an4.dados.jogadorRecarregando ? 'denuncia' : 'NÃO denuncia'} a recarga; bot com pente vazio ${an4.dados.botRecarregou ? 'denuncia' : 'NÃO denuncia'} (${an4.dados.armaBot})`);
+}
+if (an4.dados && an4.dados.chamadasPerto !== undefined) {
+  cobra('AN10', an4.dados.chamadasLonge > 0 && an4.dados.chamadasLonge <= an4.dados.chamadasPerto * 0.6 && an4.dados.lodLonge >= 1,
+    `AN10 · em 2 s o bot longe animou ${an4.dados.chamadasLonge}× contra ${an4.dados.chamadasPerto}× do bot perto (LOD ${an4.dados.lodLonge})`);
 }
 cobra('AN5', semBase.length === 0 && semOpcional.every((k) => OPCIONAIS_REGISTRADOS.includes(k)),
   `AN5 · ${nomes.length} personagens com os 8 clipes base${semBase.length ? ` — FALTANDO: ${semBase.join(', ')}` : ''}; sem os opcionais: ${semOpcional.length ? semOpcional.join(', ') : 'nenhum'} (registrados: ${OPCIONAIS_REGISTRADOS.join(', ') || 'nenhum'})`);

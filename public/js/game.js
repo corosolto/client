@@ -4231,6 +4231,12 @@ export class Game {
     if (!ent.alive || this.state !== 'live') return;
     if (this.time < (ent.protUntil || 0)) return;   // spawn protection: zero dano (e sem hitmarker) enquanto protegido
     ent.hp -= dmg;
+    // 3P: o corpo cede na direção do tiro — sem isso quem atira de longe não sabe se acertou.
+    if (ent.hp > 0 && attacker && attacker.pos) {
+      const _fx = ent.pos.x - attacker.pos.x, _fz = ent.pos.z - attacker.pos.z;
+      const _ctrl = ent.isPlayer ? this.playerTP?.ctrl : ent.mesh?.ctrl;
+      _ctrl?.flinch?.({ x: _fx, z: _fz }, dmg / 100);
+    }
     if (ent.isPlayer && ent.hp > 0) this._stackTrace(attacker);
     if (ent.isPlayer) {
       this.el.vignette.style.opacity = 0.9;
@@ -4252,6 +4258,7 @@ export class Game {
       this._hitmarker(ent.hp <= 0, head);   // som suprimido SÓ em kill; visual vermelho em kill OU headshot
       this._dmgNumber(point || ent.pos, dmg, head, ent.hp <= 0);
     }
+    if (attacker && attacker.pos && ent.hp <= 0) ent._matadorPos = { x: attacker.pos.x, z: attacker.pos.z };
     if (!ent.isPlayer && attacker && attacker.team !== ent.team && !ent.target && attacker.alive) {
       ent.target = attacker;   // bot caça quem o atingiu
       // ...mas SEM linha de visão: quem entra por aqui não passou por nenhum _losClear, então
@@ -6187,6 +6194,7 @@ export class Game {
     // animação: locomoção pela velocidade + agachado + mira da cabeça pelo pitch.
     if (tp.ctrl) {
       tp.ctrl.setCrouch?.(p.crouchF > 0.5);
+      tp.ctrl.setAr?.(p.grounded === false);
       tp.ctrl.aimPitch = p.pitch;
       const back = -(p.vel.x * Math.sin(p.yaw) + p.vel.z * Math.cos(p.yaw)) < -0.25;
       // lateral no espaco do corpo (F x up): alimenta o lean do ctrl.
@@ -6332,7 +6340,7 @@ export class Game {
       tp.group.visible = true;                        // mostra o corpo caindo mesmo em 1ª pessoa
       tp.group.position.copy(p.pos);
       tp.group.rotation.set(0, p.yaw + Math.PI, 0);
-      if (tp.ctrl && tp.ctrl.die) tp.ctrl.die();
+      if (tp.ctrl && tp.ctrl.die) tp.ctrl.die(p._matadorPos ? { x: p.pos.x - p._matadorPos.x, z: p.pos.z - p._matadorPos.z } : null);
     }
     if (tp.ctrl) tp.ctrl.update(dt, 0, false, 0, false);
     else if (tp.mixer) tp.mixer.update(dt);
@@ -7434,7 +7442,7 @@ export class Game {
     if (!b.alive) {
       b.deadT += dt;
       if (b.mesh.isGLB) {
-        b.mesh.ctrl.die();
+        b.mesh.ctrl.die(b._matadorPos ? { x: b.pos.x - b._matadorPos.x, z: b.pos.z - b._matadorPos.z } : null);
         b.mesh.ctrl.update(dt, 0, false);
         if (b.deadT > 1.0) g.visible = false; // fall fast, then vanish (no lingering ragdoll)
       } else {
@@ -8232,7 +8240,17 @@ export class Game {
         // idle/shoot (pernas estáticas) deslizando. Atrelar ao spd faz as pernas ciclarem SEMPRE
         // que o corpo transladar (>0.35 m/s), inclusive atirando em movimento (walkfire).
         const mv = spd < 0.35 ? 0 : 1;
-        b.mesh.ctrl.update(dt, mv, !!b.target, spd, fwd < -0.25, (mx * Math.cos(b.yaw) - mz * Math.sin(b.yaw)) / dtSafe);
+        /* LOD de animação: bot longe não precisa de 60 Hz de mixer, IK e malha fechada de
+           cabeça. Perto de 25 m cai para ~20 Hz; fora de 45 m, ~10 Hz. Ver docs/ANIM-3P.md. */
+        const distCam = Math.hypot(b.pos.x - this.camera.position.x, b.pos.z - this.camera.position.z);
+        const passo = distCam > 45 ? 0.1 : (distCam > 25 ? 0.05 : 0);
+        b.mesh.ctrl.lod = distCam > 45 ? 2 : (distCam > 25 ? 1 : 0);
+        const lat = (mx * Math.cos(b.yaw) - mz * Math.sin(b.yaw)) / dtSafe;
+        if (passo === 0) b.mesh.ctrl.update(dt, mv, !!b.target, spd, fwd < -0.25, lat);
+        else {
+          b._animAcc = (b._animAcc || 0) + dt;
+          if (b._animAcc >= passo) { b.mesh.ctrl.update(b._animAcc, mv, !!b.target, spd, fwd < -0.25, lat); b._animAcc = 0; }
+        }
       } else {
         b._lp = { x: b.pos.x, z: b.pos.z };
         b.mesh.ctrl.update(dt, moving, !!b.target, 0, false);
