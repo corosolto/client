@@ -328,6 +328,11 @@ html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] .mp-corpo>.mp-cri
   box-shadow:0 1px 4px rgba(0,0,0,.5)}
 .hub-roster-pin[aria-pressed="false"]{background:#101014;color:#b4d92e;border:1px solid #4b5531}
 .hub-roster-pin:hover{filter:brightness(1.15)}
+/* Pôster de skin é corpo inteiro (512x640): object-view-box recorta a cabeça para a célula
+   ficar no mesmo enquadramento do avatar base; sem suporte, object-position segura o topo. */
+.hub-roster-cell--skin>button{position:relative;border-color:#4b5531}
+.hub-roster-cell--skin img{object-position:50% 14%;object-view-box:inset(0 22% 70% 22%)}
+.hub-roster-cell--skin>button::after{content:'SKIN';position:absolute;left:0;top:0;padding:2px 5px;font:700 9px/1 var(--mono);letter-spacing:.5px;color:#131313;background:#b4d92e}
 .hub-roster-escalacao-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .hub-roster-escalacao-row p{margin:8px 0 0;color:#a5a5a3;font:600 13px/1.4 var(--font);flex:1;min-width:0}
 .hub-roster-escalacao-row button{flex:none;padding:8px 12px;border:1px solid #504c44;background:#0d0e11e0;
