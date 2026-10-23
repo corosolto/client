@@ -130,3 +130,48 @@ nova, não parâmetro. Armas de 2 mãos não foram tocadas.
 
 Morte segue sendo o clipe `death` a 1,8× (sem ragdoll — escolha estilística vigente).
 Strafe com clipe autoral e pitch de torso na mira continuam abertos como decisão de custo.
+
+## O contrato de postura (23/10): o padrão que personagem novo tem que cumprir
+
+Pedido do dono: "o problema não é a arma, é o personagem segurando ela — temos que revisar
+todos e por um padrão para novos personagens não quebrarem a postura e movimentos".
+
+O censo que define o padrão mediu os 63 GLB × 3 classes de arma (fuzil/pistola/faca) × 4
+estados (idle/walk/run/crouch), no caminho FUNCIONAL do jogo (`preview:false`), 120 quadros
+por medição de movimento. Arquivo: `private-assets/postura-20261023/censo-63x3x4.json`.
+
+**O que o censo achou antes de qualquer padrão existir:** 19/63 fora da faixa p05–p95 com
+fuzil, 24/63 com pistola. E os ângulos 65°/−60° da primeira versão do porte de 1 mão
+empurravam a arma ATRÁS do plano do corpo em 7 rigs — o censo pegou a regressão no mesmo
+dia, antes do merge. Isso é o padrão pagando por si.
+
+O contrato é `npm run eval:postura` (`tools/eval/postura-check.mjs`), no `check:fast`:
+
+| Cláusula | Regra | Procedência |
+|---|---|---|
+| PS1 | mão da frente a ≤9 cm (1 mão) / ≤2 cm (2 mãos) da arma | contato é segurar |
+| PS2 | arma à frente do plano do corpo (Z > −0,02 alturas) | regressão do porte 65/−60 |
+| PS3 | arma ≥3% da altura abaixo da cabeça | corpo humano; mascote: exceção |
+| PS4 | arma de 1 mão: mão esquerda ≥5 cm da arma | o defeito das "duas mãos na pistola" |
+| PS5 | cotovelo 55°..150° | faixa humana; censo p05=79,8 p95=135,8 |
+| PS6 | tremor ≤0,035 alturas/quadro correndo | quem passa mede ≤0,028; reprovados 0,039–0,075 |
+
+**Dívida, não perdão.** O elenco de hoje tem 9 personagens fora do contrato. Eles estão em
+`DIVIDA` dentro da régua, visível no veredito: personagem NOVO que quebrar reprova o CI;
+entrada da lista que for consertada e não removida também reprova ("dívida paga: tire da
+lista"). A lista encolhe, nunca cresce escondido. Exceção de CORPO (não de defeito) também
+é declarada com motivo: `dollynho`, `gotinha`, `et`, `canarinho` — mascotes.
+
+A fila de revisão, com o que cada um quebra hoje:
+
+| Personagem | Cláusula | Medida |
+|---|---|---|
+| `lobisomem` | PS6 tremor | 0,075 (2× o teto) |
+| `mariabonita` | PS6 tremor | 0,039 |
+| `lampiao` | PS6 tremor | 0,039 |
+| `adjim`, `ancap`, `bonzo`, `cadequinha`, `metaleiro` | PS3 arma na altura da cabeça | −0,001..0,017 |
+| `marina-silva` | PS4 mão na arma de 1 mão | 0,017–0,046 |
+
+Os três de tremor são os mesmos corpos que o `EMOTES-BR.md` já apontava por dependerem do
+pack de animação compartilhado: o tremor está no CLIPE, não no mount — consertar é re-autorar
+ou filtrar, e cada um desses caminhos é decisão de custo, não de parâmetro.
