@@ -52,6 +52,7 @@ const ESPERADO = {
   // limpeza acende junto — acoplamento real, declarado.
   'emote-mudo': ['EM2', 'EM3', 'EM7'], 'eixo-local': ['EM3', 'EM7'], 'emote-grudento': ['EM4', 'EM7'],
   'boot-ansioso': ['EM5'], 'dança-blindada': ['EM6'], 'arma-na-mao': ['EM7'], 'braco-preso': ['EM7'],
+  'porta-aberta': ['EM8'],
 };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
@@ -98,6 +99,8 @@ async function abrir() {
   if (MUT === 'arma-na-mao') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('for (const n of this._armaNos) n.visible = !this.emotando;', 'void this._armaNos;'));
   if (MUT === 'braco-preso') await reescreve(/\/js\/emotes\.js/, (t) => t.replace("['RightForeArm', 'r', 1.40 * k]", "['RightForeArm', 'r', 0 * k]"));
   if (MUT === 'dança-blindada') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace("    this._emoteId = null;   // levar tiro derruba o emote na hora", '    void 0;'));
+  if (MUT === 'porta-aberta') await reescreve((u) => u.pathname === '/', (t) => t.replace('<div class="pv-hints">',
+    '<div class="pv-emotes" id="pv-emotes"><button id="pv-emote-abrir" class="pv-emote-btn pv-emote-abrir" type="button">DANÇAR</button></div><div class="pv-hints">'));
   await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForTimeout(2500);
   return { page, fechar: () => ctx.close() };
@@ -256,15 +259,12 @@ const boot = await page.evaluate(async () => {
   return { modulosVarridos: visto.size, importadorEstatico: achou, janelaAnsiosa: !!window.__emotesAnsioso };
 });
 
-/* ---- EM6 (parte 2): o lobby liga a dança de verdade ---- */
-const lobby = await page.evaluate(async () => {
-  const botao = document.getElementById('pv-emote-abrir');
-  if (!botao) return { botao: false };
-  botao.click();
-  await new Promise((r) => setTimeout(r, 1200));
-  const itens = [...document.querySelectorAll('.pv-emote-btn[data-emote]')].map((b) => b.dataset.emote);
-  return { botao: true, itens };
-});
+/* ---- EM8: a PORTA. Com EMOTES_ENABLED=false (padrão de produção) o lobby não oferece
+   dança: o botão não existe no DOM e o religa do main.js não arma clique nenhum. ---- */
+const lobby = await page.evaluate(() => ({
+  botao: !!document.getElementById('pv-emote-abrir'),
+  barra: !!document.getElementById('pv-emotes'),
+}));
 
 await fechar();
 await browser.close();
@@ -320,10 +320,14 @@ cobra('EM5', !boot.importadorEstatico && !boot.janelaAnsiosa,
   `EM5 · emotes.js fora do grafo estático do boot (${boot.modulosVarridos} módulos varridos; chega por import dinâmico)`
   + (boot.importadorEstatico ? ` — IMPORTADO ESTATICAMENTE por ${boot.importadorEstatico}` : ''));
 
-cobra('EM6', corpo.dancava && corpo.aposDano === null && corpo.aposMorte === null && lobby.botao && (lobby.itens || []).length >= 8,
-  `EM6 · o lobby liga a dança (${(lobby.itens || []).length} passos no botão DANÇAR) e levar tiro/morrer derruba na hora`
+cobra('EM6', corpo.dancava && corpo.aposDano === null && corpo.aposMorte === null,
+  'EM6 · levar tiro e morrer derrubam a dança na hora'
   + (corpo.aposDano !== null ? ` — DANO NÃO CANCELOU (${corpo.aposDano})` : '')
   + (corpo.aposMorte !== null ? ` — MORTE NÃO CANCELOU (${corpo.aposMorte})` : ''));
+
+cobra('EM8', !lobby.botao && !lobby.barra,
+  'EM8 · porta fechada: com EMOTES_ENABLED=false o lobby não tem botão DANÇAR nem barra de passos'
+  + (lobby.botao ? ' — BOTÃO NO DOM' : '') + (lobby.barra ? ' — BARRA NO DOM' : ''));
 
 const e7 = corpo.em7;
 cobra('EM7', !e7.armaDancando && e7.armaDepois && e7.quedaDancando >= e7.quedaParado + 12,

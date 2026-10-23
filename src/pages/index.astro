@@ -2,6 +2,7 @@
 import { HOME_FAQ, HOME_FAQ_EN } from '../data/home-faq';
 import { MAPAS } from '../data/jogo';
 import { BRASAO_VERSAO } from '../../public/js/brasoes_versao.js';
+import { EMOTES_ENABLED } from '../../public/js/emote-features.js';
 import pkg from '../../package.json';
 import Community from '../components/Community.astro';
 import AccountEntry from '../components/AccountEntry.astro';
@@ -1339,9 +1340,11 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <img id="char-preview-static" class="hidden" alt="">
       <video id="char-preview-video" class="hidden" muted loop playsinline></video>
       <div class="pv-hints"><span>ARRASTE · GIRAR</span><span>SCROLL · ZOOM</span></div>
+      {EMOTES_ENABLED && (
       <div class="pv-emotes" id="pv-emotes">
         <button id="pv-emote-abrir" class="pv-emote-btn pv-emote-abrir" type="button">DANÇAR</button>
       </div>
+      )}
     </div>
   </div>
   <button id="char-back" class="btn btn-back">◀ VOLTAR</button>

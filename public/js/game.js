@@ -9,6 +9,7 @@ import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver }
 import { weaponModel, weaponCFG, hasWeapon, preloadWeapons, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
 import { gloveSkinStyle } from './data/glove-skin-definitions.js';
+import { EMOTES_ENABLED } from './emote-features.js';
 import { VM_FRAME } from './vmattach.js';
 import { vmlabPose, VMLAB_SCOPED, VMLAB_NO_ALIGN } from './vmlab.js';
 import { buildRecoilPattern, RECOIL_PARAMS, RECOIL_PATTERN, RECOIL_CLASS, REC_DEG, REC } from './recoil.js';
@@ -2539,6 +2540,7 @@ export class Game {
   /* RODA DE DANÇA (tecla T). Catálogo e coreografia: public/js/emotes.js, carregado por
      import() dinâmico no primeiro uso — o boot não paga nada. */
   async _emoteToggle() {
+    if (!EMOTES_ENABLED) return;
     if (this.emoteOpen) { this._emoteClose(); return; }
     if (!this.player.alive || this.state !== 'live' || this.paused) return;
     const mod = await this._emoteMods();

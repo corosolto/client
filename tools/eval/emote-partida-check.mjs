@@ -34,7 +34,7 @@ const ESPERADO = {
   // acoplamentos reais e declarados: sem roda nada toca, e sem 3a pessoa nao ha
   // distancia de camera pra medir.
   'tecla-morta': ['EP1', 'EP2', 'EP3', 'EP5'], 'camera-colada': ['EP2', 'EP5'], 'anda-dancando': ['EP3'],
-  'morto-dancando': ['EP4'], 'camera-perto': ['EP5'],
+  'morto-dancando': ['EP4'], 'camera-perto': ['EP5'], 'porta-aberta': ['EP6'],
 };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
@@ -72,6 +72,11 @@ const reescreve = (teste, troca) => page.route(teste, async (r) => {
   if (depois === antes) throw new Error(`mutante ${MUT} não aplicou em ${r.request().url()}`);
   await r.fulfill({ response: res, body: depois });
 });
+/* A mecânica só existe com a porta aberta: EP1-EP5 medem o jogo com EMOTES_ENABLED
+   ligado por reescrita do arquivo servido; EP6 mede o padrão de produção num contexto
+   limpo, mais abaixo. O mutante `porta-aberta` só mexe no contexto de EP6. */
+const LIGA_FLAG = (t) => t.replace('EMOTES_ENABLED = false', 'EMOTES_ENABLED = true');
+await reescreve(/\/js\/emote-features\.js/, LIGA_FLAG);
 if (MUT === 'tecla-morta') await reescreve(/\/js\/game\.js/, (t) => t.replace("if (e.code === 'KeyT' && !e.repeat) { this._emoteToggle(); return; }", "if (false) { return; }"));
 if (MUT === 'camera-colada') await reescreve(/\/js\/game\.js/, (t) => t.replace("if (this.camView === 'first') { this.emoteCam = this.camView; this.setCamView('third'); }", "/* colada */"));
 if (MUT === 'anda-dancando') await reescreve(/\/js\/game\.js/, (t) => t.replace('const andou = Math.abs(input?.ax || 0) > 0.01 || Math.abs(input?.az || 0) > 0.01;', 'const andou = false;'));
@@ -176,6 +181,30 @@ const morte = await page.evaluate(async () => {
 });
 
 await ctx.close();
+
+/* ---- EP6: a PORTA. Contexto limpo, sem ligar a flag: é o que o jogador recebe hoje. ---- */
+const ctxP = await browser.newContext({ viewport: { width: 1280, height: 760 } });
+const pageP = await ctxP.newPage();
+await pageP.route(/\.astro\/eval-vite|dev-toolbar|@vite\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: STUB }));
+if (MUT === 'porta-aberta') {
+  await pageP.route(/\/js\/game\.js/, async (rota) => {
+    const res = await rota.fetch();
+    const antes = await res.text();
+    const depois = antes.replace('    if (!EMOTES_ENABLED) return;\n', '');
+    if (depois === antes) throw new Error('mutante porta-aberta não aplicou em game.js');
+    await rota.fulfill({ response: res, body: depois });
+  });
+}
+await pageP.goto(`${BASE}/?${PARTIDA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await pageP.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 240000 });
+await pageP.waitForTimeout(2000);
+await pageP.keyboard.press('KeyT');
+await pageP.waitForTimeout(1200);
+const porta = await pageP.evaluate(() => ({
+  aberta: !!window.__game.emoteOpen,
+  visivel: !document.getElementById('emote-wheel')?.classList.contains('hidden'),
+}));
+await ctxP.close();
 await browser.close();
 
 /* ---------------------------- VEREDITO ---------------------------- */
@@ -199,6 +228,10 @@ cobra('EP4', morte.dancavaVivo && !morte.aposMorte && !morte.abriuMorto && !mort
 
 cobra('EP5', distancias.dancando >= distancias.parado + 0.8,
   `EP5 · câmera afasta pra mostrar o passo: ${distancias.dancando} m dançando contra ${distancias.parado} m parado`);
+
+cobra('EP6', !porta.aberta && !porta.visivel,
+  'EP6 · porta fechada: com EMOTES_ENABLED=false a tecla T não abre a roda em partida'
+  + (porta.aberta ? ' — RODA ABRIU' : '') + (porta.visivel ? ' — RODA VISÍVEL' : ''));
 
 const falhou = r.filter((x) => !x.ok);
 for (const x of r) console.log(`  ${x.ok ? 'ok  ' : 'FALHA'} ${x.texto}`);

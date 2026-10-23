@@ -83,6 +83,27 @@ fontes acima.
 | Partida | tecla **T** abre a roda; **1-8** ou clique escolhe; **T**/**ESC** fecha; a câmera sai da 1ª pessoa e afasta 1,5 m pra você se ver |
 | Sair | andar, atirar, trocar de arma, levar dano ou morrer derruba o passo na hora |
 
+## Porta fechada em produção (23/10)
+
+O dono viu o botão **DANÇAR** sobre os pés do personagem na tela de seleção e disse o que
+importa: *"as danças ainda não estão validadas"*. Enquanto não houver aceite visual dele,
+nada disso é oferecido a quem joga.
+
+A chave é `public/js/emote-features.js` → `EMOTES_ENABLED`. Com `false` (padrão):
+
+- o `<div class="pv-emotes">` **não é renderizado** pelo `src/pages/index.astro` — o botão
+  não existe no DOM, não é um `hidden` que volta com um inspetor;
+- `religaAbrirEmotes()` (`public/js/main.js`) não arma clique nenhum — segunda tranca;
+- `_emoteToggle()` (`public/js/game.js`) sai na porta: a tecla **T** não abre a roda.
+
+A mecânica continua inteira e medida. As réguas `eval:emotes` (EM8) e `eval:emotepartida`
+(EP6) cobram a porta FECHADA, com o mutante `porta-aberta` provando que mordem; as demais
+cláusulas da partida rodam com a flag ligada por reescrita do arquivo servido, para que
+desligar a porta não vire desculpa para parar de medir o que já foi construído.
+
+**Para validar:** `EMOTES_ENABLED = true` num preview, rodar as oito danças nos corpos que
+interessam e trazer a captura. O que falta para o dono aceitar são os passos, não o botão.
+
 ## Defeitos relatados pelo dono (22/10) e o que foi feito
 
 | Relato | Causa medida | Conserto |
