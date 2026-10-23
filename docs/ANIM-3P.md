@@ -79,6 +79,53 @@ Todo personagem do manifesto tem os 8 clipes base. Os opcionais (`idle1h`, `walk
 `OPT_STATES`. A régua reprova qualquer personagem novo sem base E qualquer encolhimento
 silencioso do conjunto de opcionais fora da lista registrada.
 
+
+## Porte de 1 mão (23/10): o clipe `idle1h` não é porte, é oferta
+
+O dono mandou três capturas do `esquerdomacho` na tela de seleção: os dois braços
+esticados à frente, as mãos juntas e abertas, a pistola flutuando na ponta dos dedos na
+altura do queixo. Medido no mesmo caminho do `pvSetChar`, **não é defeito de personagem**:
+o `padati`, que `select-mount.mjs` usa como referência APROVADA desde 04/08, tem a mesma
+pose. O `idle1h`/`walk1h` do acervo é assim para todo mundo — e por isso nenhuma régua
+reprovava: os tetos eram ancorados em personagens com o mesmo defeito.
+
+Trocar o clipe custa re-autoração nos 63 corpos. O que entrou é overlay de MUNDO sobre o
+clipe, o mesmo mecanismo da recarga e do emote (`glbchars.js`, bloco `PORTE DE 1 MÃO`):
+
+| Osso | Delta | Efeito |
+|---|---|---|
+| `RightArm` | +50° no eixo DIREITA do corpo | desce o braço do horizontal |
+| `RightForeArm` | −50° no mesmo eixo | fecha o cotovelo e traz a arma para o peito |
+| `LeftHand` | CCD IK no quadril −0,19/−0,06/+0,02 m | tira a mão esquerda da frente da arma |
+
+O alvo da mão esquerda sai do QUADRIL, não de uma altura absoluta: com alvo fixo o
+`cadequinha` (baixo) media a mão acima do próprio quadril. Mascote de braço-toco
+(`IK_L_SKIP`) fica de fora, pela mesma razão que já pula o guarda-mão de 2 mãos.
+A camada só entra em `idle1h`/`walk1h`; recarga e dança mandam mais que ela. `?porte1h=0`
+desliga; `?porte1h=50,-50` faz A/B.
+
+Os primeiros valores testados (65°/−60°) ficavam melhores na foto do esquerdomacho, mas o
+censo de postura (ver seção seguinte) mostrou o custo: em 7 rigs (mst, et, esbirro, padati,
+rapper, dama, deputado) a mão caía ATRÁS do plano do corpo. 50°/−50° é o ponto que zera
+esses casos mantendo a arma no peito.
+
+Medido em `esquerdomacho`/`padati`/`raul` no caminho da seleção (desligado → ligado):
+
+| Medida | Antes | Depois | O que significa |
+|---|---|---|---|
+| `frenteZ` | 0,326–0,389 | 0,215–0,266 | a arma deixou de ser oferecida à frente |
+| `maoLArma` | 0,055–0,078 | 0,200–0,304 | a mão esquerda saiu de cima da arma |
+| `palmaY` | 1,22–1,30 | 1,12–1,19 | a arma desceu, do queixo para o peito |
+
+Gate: `select-mount.mjs` ganhou `ESTICADO` (`frenteZ1hMax` 0,28) e `MÃO-L-NA-ARMA`
+(`maoLArmaMin` 0,085), ambos com os números acima como procedência, e o mutante
+`--mutate=porte1h` desliga a camada e reprova 9 dos 63. Imagens antes/depois em
+`private-assets/porte-1h-20261023/`.
+
+**Limite declarado:** 45 dos 63 rigs não têm osso de dedo, então a mão continua ABERTA
+sobre o punho da arma. Isso é geometria do rig, não pose — fechar a pegada exige malha
+nova, não parâmetro. Armas de 2 mãos não foram tocadas.
+
 ## Fora de escopo, declarado
 
 Morte segue sendo o clipe `death` a 1,8× (sem ragdoll — escolha estilística vigente).

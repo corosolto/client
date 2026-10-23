@@ -170,6 +170,13 @@ const TP_FRONT_MIN = qp.get('tpfz') === '0' ? -Infinity : (parseFloat(qp.get('tp
 // Guarda de palma (ver measurePalmLocal): teto de alavanca do mount, em antebraços.
 const PALM_GUARD = qp.get('palmguard') !== '0';
 const PALM_MAX_LEVER = parseFloat(qp.get('palmlever')) || 0.9;
+/* PORTE DE 1 MÃO: overlay de mundo que corrige o clipe `idle1h` (braço desce, cotovelo
+   fecha, mão esquerda ao lado do quadril). Medidas e limites: docs/ANIM-3P.md. */
+const _p1h = (qp.get('porte1h') || '').split(',').map(Number);
+const PORTE_1H = qp.get('porte1h') !== '0';
+const P1H_ARM = ((_p1h.length === 2 && !isNaN(_p1h[0]) ? _p1h[0] : 50)) * Math.PI / 180;
+const P1H_FORE = ((_p1h.length === 2 && !isNaN(_p1h[1]) ? _p1h[1] : -50)) * Math.PI / 180;
+const P1H_MAO_L = [-0.19, -0.06, 0.02];
 
 const loader = new GLTFLoader();
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
@@ -824,7 +831,7 @@ class CharController {
     this.charId = charId; this.model = model || null;
     this._footBase = model ? model.position.y : 0;
     this.cur = null; this.dead = false; this.shooting = false; this.crouch = false; this.jumping = false;
-    this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0;
+    this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0; this._porte1hK = 0;
     this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
     this._emoteId = null; this._emoteT = 0; this._emoteK = 0; this._emoteDip = 0;
     this.emotando = false; this._emoteOssos = [];
@@ -1167,6 +1174,27 @@ class CharController {
       if (Math.abs(this._leanK) > 1e-4) {
         _deltaMundo(torso.spines[0], -sinY, 0, -cosY, -this._leanK);
         if (torso.spines[1]) _deltaMundo(torso.spines[1], -sinY, 0, -cosY, -this._leanK * 0.5);
+      }
+      /* PORTE DE 1 MÃO: desce o braço direito, dobra o cotovelo e tira a mão esquerda da
+         frente. Só em porte parado/andando; recarga e dança mandam mais que isto. */
+      const quer1h = PORTE_1H && this.oneHanded && !this.emotando && this.lod < 1
+        && /^(idle1h|walk1h)$/.test(this.curName || '');
+      this._porte1hK += ((quer1h ? 1 : 0) - this._porte1hK) * Math.min(1, dt * 10);
+      if (this._porte1hK > 0.004 && this.reloadK <= 0.05 && this.corpo?.size) {
+        const k1 = this._porte1hK;
+        const rArm = this.corpo.get('RightArm'), rFore = this.corpo.get('RightForeArm');
+        if (rArm) _deltaMundo(rArm, cosY, 0, -sinY, P1H_ARM * k1);
+        if (rFore) _deltaMundo(rFore, cosY, 0, -sinY, P1H_FORE * k1);
+        /* Mascote de braço-toco (IK_L_SKIP) fica de fora: IK neles vira mão gigante
+           flutuando, a mesma razão por que o guarda-mão de 2 mãos já os pula. */
+        if (torso.lArm && torso.lFore && torso.lHand && torso.hips && this.model
+            && !IK_L_SKIP.has(this.charId)) {
+          _ikTgt.copy(torso.hips.getWorldPosition(_ikTgt));
+          this.model.worldToLocal(_ikTgt);
+          _ikTgt.set(_ikTgt.x + P1H_MAO_L[0], _ikTgt.y + P1H_MAO_L[1], _ikTgt.z + P1H_MAO_L[2]);
+          this.model.localToWorld(_ikTgt);
+          solveCCDIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt, { iterations: 8 });
+        }
       }
       if (this._reloadDur > 0) {
         this._reloadT += dt;
