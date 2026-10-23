@@ -207,9 +207,8 @@ if (cobrarDivida && dividaViva.size) {
 console.log('=== CONTRATO DE POSTURA — caminho funcional do jogo ===');
 console.log('cláusulas: PS1 mão na arma · PS2 arma à frente · PS3 abaixo da cabeça · PS4 apoio livre · PS5 cotovelo · PS6 tremor');
 for (const [a, [ru, to]] of Object.entries(porClasse)) console.log(`${a.padEnd(7)} ${to - ru}/${to} fora da dívida`);
-for (const l of relatorio) console.log(l);
+if (process.env.JSON === '1') writeFileSync('tools/eval/postura.json', JSON.stringify({ gerado: new Date().toISOString(), mutante: MUT || null, linhas, reprovados }, null, 1));
 if (EXCECOES.size) console.log(`exceções declaradas: ${[...EXCECOES].map(([i, m]) => `${i} (${m})`).join(' · ')}`);
-writeFileSync('tools/eval/postura.json', JSON.stringify({ gerado: new Date().toISOString(), mutante: MUT || null, linhas, reprovados }, null, 1));
 
 if (MUT) {
   const ok = reprovados > 0;
