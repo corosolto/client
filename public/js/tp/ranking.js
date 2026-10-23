@@ -1,10 +1,10 @@
-/* Treta Pop · card do placar no lobby (tela 02), faixa do topo e porta para a aba RANKING do hub.
-   Tudo vem de UMA chamada /api/social?action=ranking: sem sessão `own` é nulo e a tela convida a entrar. */
+/* Treta Pop · faixa do placar no topo do lobby (tela 02). O card da coluna saiu em 22/10: a faixa
+   já mostrava o mesmo placar. Tudo vem de UMA chamada /api/social?action=ranking. */
 import { tr, LANG } from '../i18n.js';
 import { apiUrl } from '../apibase.js';
 
 const ROTA = '/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all';
-const TOPO = 3;
+
 const TOPO_FAIXA = 10;
 const $ = (id) => document.getElementById(id);
 const local = () => (LANG === 'en' ? 'en-US' : 'pt-BR');
@@ -39,39 +39,8 @@ async function buscar() {
   return d;
 }
 
-function linha(p, ir) {
-  const b = no('button', 'tp-lobby-rank__linha');
-  b.type = 'button';
-  b.append(no('span', 'tp-num tp-lobby-rank__lugar', `${p.position}`),
-    no('span', 'tp-lobby-rank__nick', p.nick || '—'),
-    no('span', 'tp-num tp-lobby-rank__pontos', num(p.points)));
-  b.addEventListener('click', ir);
-  return b;
-}
-
-function desenhar(painel, estado, dados, ir, recarregar) {
-  const corpo = painel.querySelector('.tp-lobby-rank__corpo');
-  painel.dataset.estado = estado;
-  corpo.replaceChildren();
-  if (estado === 'lista') {
-    /* a sua posição e o convite moram na faixa do topo: repetir aqui só roubava altura da coluna */
-    const lista = no('div', 'tp-lobby-rank__lista');
-    for (const p of dados.players.slice(0, TOPO)) lista.appendChild(linha(p, ir));
-    if (!lista.children.length) lista.appendChild(no('p', 'tp-lobby-vazio', tr('Ainda ninguém pontuou no placar.')));
-    corpo.appendChild(lista);
-    return;
-  }
-  corpo.appendChild(no('p', 'tp-lobby-vazio', tr(estado === 'erro' ? 'Não deu pra consultar o placar agora.' : 'Consultando o placar…')));
-  if (estado === 'erro') {
-    const b = no('button', 'tp-lobby-link', tr('TENTAR DE NOVO'));
-    b.type = 'button';
-    b.addEventListener('click', recarregar);
-    corpo.appendChild(b);
-  }
-}
-
-/* FAIXA DO TOPO (tela 02): o placar passa sob as abas, a única faixa livre do lobby — o rodapé
-   já é da RESENHA, das redes e do JOGAR. Nunca na partida: ela mora dentro do #hub-play. */
+/* FAIXA DO TOPO (tela 02): é o PRIMEIRO elemento da janela (dono, 22/10) e o cabeçalho desce
+   abaixo dela. Nunca na partida: ela mora dentro do #hub-play. */
 /* o destaque cresce do 10º pro 1º: este grau (0 a 1) vira respiro, rosto e corpo de letra no CSS,
    um degrau contínuo da posição em vez de uma classe por lugar */
 const grau = (pos) => {
@@ -160,41 +129,28 @@ function montarFaixa() {
   /* foco num link que está passando rola a janela e desmonta o laço: no modo animado ela volta ao zero */
   janela.addEventListener('scroll', () => { if (getComputedStyle(janela).overflowX === 'hidden') janela.scrollLeft = 0; });
   faixa.appendChild(janela);
-  play.appendChild(faixa);
+  /* primeiro filho do painel: a faixa encosta no topo da janela e o cabeçalho vem abaixo dela */
+  play.prepend(faixa);
   return faixa;
 }
 
-export function montarRanking(dir, ir) {
-  const painel = no('section', 'tp-lobby-painel tp-lobby-rank');
-  painel.id = 'tp-lobby-ranking';
-  const cab = no('div', 'tp-lobby-painel__cab');
-  const h2 = no('h2', 'tp-disp tp-lobby-painel__titulo');
-  h2.appendChild(no('span', 'tp-ital', tr('PLACAR DA RUA')));
-  const ver = no('button', 'tp-lobby-link', tr('VER RANKING ▸'));
-  ver.type = 'button';
-  ver.addEventListener('click', ir);
-  cab.append(h2, ver);
-  painel.append(cab, no('div', 'tp-lobby-rank__corpo'));
-  dir.appendChild(painel);
+export function montarPlacar() {
   const faixa = montarFaixa();
-
+  if (!faixa) return null;
   let pedido = 0;
   const carregar = async () => {
     const meu = ++pedido;
-    desenhar(painel, 'carregando', null, ir, carregar);
     try {
       const d = await buscar();
       if (meu !== pedido) return;
-      desenhar(painel, 'lista', d, ir, carregar);
-      if (faixa) desenharFaixa(faixa, d);
+      desenharFaixa(faixa, d);
     } catch {
       if (meu !== pedido) return;
-      desenhar(painel, 'erro', null, ir, carregar);
-      if (faixa) desenharFaixa(faixa, null);
+      desenharFaixa(faixa, null);
     }
   };
   const login = $('hub-account-login');
   if (login) new MutationObserver(carregar).observe(login, { attributes: true, attributeFilter: ['data-state'] });
   carregar();
-  return painel;
+  return faixa;
 }

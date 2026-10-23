@@ -73,6 +73,13 @@ const MUTANTES = {
   'faixa-sem-pausa': [/\/css\/tp\/ranking\.css/, (t) => t.replace('.tp-faixa:hover .tp-faixa__trilho,.tp-faixa:focus-within .tp-faixa__trilho{animation-play-state:paused}', '')],
   'faixa-so-com-handle': [/\/js\/tp\/ranking\.js/, (t) => t.replace("const destino = typeof p.url === 'string' ? p.url.trim() : '';", "const destino = p.public_handle ? String(p.url || '').trim() : '';")],
   'faixa-sem-degrau': [/\/js\/tp\/ranking\.js/, (t) => t.replace("e.style.setProperty('--tp-faixa-grau', grau(p.position).toFixed(3));", '')],
+  'faixa-embaixo': [/\/css\/tp\/ranking\.css/, (t) => t.replace('.tp-faixa{position:fixed;left:0;right:0;top:0;', '.tp-faixa{position:fixed;left:0;right:0;top:84px;')],
+  'amigos-sempre': [/\/js\/tp\/lobby\.js/, (t) => t.replace('painel.hidden = ehGuest();', 'painel.hidden = false;')],
+  'carrossel-parado': [/\/js\/tp\/lobby\.js/, (t) => t.replace('estado.i += 1;', 'estado.i += 0;')],
+  'carrossel-sem-pausa': [/\/js\/tp\/lobby\.js/, (t) => t.replace(" || painel.matches(':hover, :focus-within')", '')],
+  'carrossel-ignora-reduzido': [/\/js\/tp\/lobby\.js/, (t) => t.replace('if (semMovimento() || ', 'if (')],
+  'carrossel-rola': [/\/css\/tp\/lobby\.css/, (t) => t.replace('.tp-lobby-skins__cartao{position:absolute;inset:0;', '.tp-lobby-skins__cartao{position:static;')],
+  'emote-no-lobby': [/\/css\/tp\/lobby\.css/, (t) => t.replace(':root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character .pv-emotes{display:none}', '')],
 };
 
 async function abrir({ w = 1536, h = 1024, lang = 'pt', flag = true, toque = false, mutante = '', loja = true, placar = RANKING, sairSplash = true, nick = 'Regua' }) {
@@ -119,6 +126,8 @@ const CAIXAS = () => {
   const qa = (s) => [...document.querySelectorAll(s)];
   return {
     cabecalho: uniao(qa('#hub-ui .hub-header > *, #hub-ui .hub-header .hub-identity-wrap > *')),
+    /* a faixa virou o primeiro elemento da janela (22/10): entra na conta de colisão como todo o resto */
+    faixa: vis(q('#tp-lobby-faixa')) ? caixa(q('#tp-lobby-faixa')) : null,
     esquerda: uniao(qa('.tp-lobby-esq > *')),
     direita: uniao(qa('.tp-lobby-dir > *')),
     partida: uniao(qa('#menu-setup .pane-match > *').filter((e) => e.id !== 'hub-sels' || getComputedStyle(e).position !== 'fixed')),
@@ -134,7 +143,7 @@ const CAIXAS = () => {
 
 function colisoes(c) {
   /* vagaEsq/vagaDir saíram com os slots vazios (22/10). */
-  const nomes = ['cabecalho', 'esquerda', 'direita', 'partida', 'opcoes', 'nome', 'rodape'];
+  const nomes = ['faixa', 'cabecalho', 'esquerda', 'direita', 'partida', 'opcoes', 'nome', 'rodape'];
   const out = [];
   const cruza = (a, b) => a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b - 1 && b.t < a.b - 1;
   for (const n of nomes) {
@@ -158,7 +167,7 @@ async function medir(mutante = '', alvo = '') {
   const foto = async (page, nome) => { if (!mutante) await page.screenshot({ path: `${OUT}/${nome}.png` }); };
 
   /* Sessão A: 3:2 do dono, PT, loja no ar. */
-  if (quer('LB1', 'LB2', 'LB3', 'LB5', 'LB6', 'LB7', 'LB8', 'LB9', 'LB10', 'LB15', 'LB16', 'LB17', 'LB19', 'LB20', 'LB21')) {
+  if (quer('LB1', 'LB2', 'LB3', 'LB5', 'LB6', 'LB7', 'LB8', 'LB9', 'LB10', 'LB15', 'LB16', 'LB17', 'LB19', 'LB20', 'LB21', 'LB22', 'LB23', 'LB24')) {
     const { page, ctx } = await abrir({ mutante });
     await page.evaluate(() => document.fonts.ready);
     await foto(page, 'lobby-1536x1024-pt');
@@ -178,7 +187,6 @@ async function medir(mutante = '', alvo = '') {
         barra: e.querySelector('.tp-lobby-quest__barra')?.dataset.p ?? null,
       }));
       const fonteQuests = [...document.querySelectorAll('#treta-quests [data-quest]')].map((e) => ({ id: e.dataset.quest, nome: e.querySelector('h4')?.textContent, premio: e.querySelector('strong')?.textContent, prog: e.querySelector('small')?.textContent }));
-      const amigos = document.getElementById('tp-lobby-online-amigos');
       const lobbyTxt = [...document.querySelectorAll('.tp-lobby-esq, .tp-lobby-dir, .hub-header, #tp-lobby-rede, #tp-lobby-partida, .tp-lobby-vaga, #hub-change-character')].filter(vis).map((e) => e.innerText).join(' ');
       const vagas = [...document.querySelectorAll('.tp-lobby-vaga')].filter(vis).map((v) => v.querySelector('button')?.textContent.trim());
       const chips = [...document.querySelectorAll('#hub-footer-social .mf-social a')].filter(vis).map((a) => { const icone = a.querySelector('svg'); return { nome: a.getAttribute('aria-label') || a.textContent.trim(), icone: !!icone && getComputedStyle(icone).display !== 'none' }; });
@@ -187,7 +195,6 @@ async function medir(mutante = '', alvo = '') {
         && /rgb\(180, 217, 46\)/.test(getComputedStyle(e).backgroundColor)).map((e) => e.id || e.className || e.tagName);
       return { abas, velhas, cab, rotulo: aj?.innerText.trim() || '', fonte, anton, fontesOk: document.fonts.check('700 15px "Barlow Semi Condensed"') && document.fonts.check('21px "Anton"'),
         heroiX: heroi ? (heroi.left + heroi.right) / 2 : -1, vw: innerWidth, quests, fonteQuests,
-        amigosLinhas: amigos ? amigos.querySelectorAll('[data-amigo], li, img').length : -1, amigosVazio: amigos?.querySelector('.tp-lobby-vazio')?.textContent || '',
         lobbyTxt, vagas, chips, limas, net: document.getElementById('main-menu').dataset.hubNet };
     });
     const c = await page.evaluate(CAIXAS);
@@ -209,15 +216,36 @@ async function medir(mutante = '', alvo = '') {
     const barraSemFracao = a.quests.filter((q) => q.barra !== null && ['singleplayer', 'multiplayer'].includes(q.id)).map((q) => q.id);
     add('LB7', a.fonteQuests.length >= 1 && a.quests.map((q) => q.id).join(',') === esperado && !premioErrado.length && !barraSemFracao.length,
       `${a.quests.length} quests no lobby, ${a.fonteQuests.length} na loja${premioErrado.length ? `; prêmio diverge em ${premioErrado.join(',')}` : ''}${barraSemFracao.length ? `; barra inventada em ${barraSemFracao.join(',')}` : ''}`);
+    /* LB22 · AMIGOS ONLINE é bloco de quem tem conta: deslogado não existe. A sessão é simulada
+       pelo MESMO sinal que o hub usa (data-state no #hub-account-login), nada de login de verdade. */
+    const lerAmigos = () => {
+      const e = document.getElementById('tp-lobby-online-amigos');
+      return { existe: !!e, vis: !!e && e.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }),
+        linhas: e ? e.querySelectorAll('.tp-lobby-amigo').length : -1,
+        vazio: e?.querySelector('.tp-lobby-vazio')?.textContent || '' };
+    };
+    const trocaSessao = (st) => { const b = document.getElementById('hub-account-login'); if (b) b.dataset.state = st; };
+    const amg = { deslogado: await page.evaluate(lerAmigos) };
+    if (quer('LB8', 'LB22')) {
+      await page.evaluate(trocaSessao, 'account');
+      await page.waitForTimeout(500);
+      amg.logado = await page.evaluate(lerAmigos);
+      await foto(page, 'lobby-1536x1024-pt-logado');
+      await page.evaluate(trocaSessao, 'guest');
+      await page.waitForTimeout(500);
+      amg.saiu = await page.evaluate(lerAmigos);
+    }
     const inventado = (a.lobbyTxt.match(/PASSE|NÍVEL|PRIMEIRA VITÓRIA|renovam|\b\d{2}:\d{2}:\d{2}\b/) || [])[0];
-    add('LB8', !inventado && a.amigosLinhas === 0 && a.amigosVazio.length > 10,
-      inventado ? `número ou sistema sem backend na tela: "${inventado}"` : a.amigosLinhas ? `${a.amigosLinhas} amigo(s) listado(s) sem presença no backend` : a.amigosVazio ? 'sem passe, nível ou timer; amigos online em estado vazio' : 'painel de amigos online ausente');
+    add('LB8', !inventado && amg.logado?.linhas === 0 && amg.logado.vazio.length > 10,
+      inventado ? `número ou sistema sem backend na tela: "${inventado}"` : amg.logado?.linhas ? `${amg.logado.linhas} amigo(s) listado(s) sem presença no backend` : amg.logado?.vazio ? 'sem passe, nível ou timer; com sessão, amigos online em estado vazio' : 'painel de amigos online ausente mesmo com sessão');
+    add('LB22', amg.deslogado?.vis === false && amg.logado?.vis === true && amg.saiu?.vis === false,
+      `AMIGOS ONLINE: deslogado ${amg.deslogado?.vis ? 'APARECE' : amg.deslogado?.existe ? 'fora da tela' : 'nem montado'}; com sessão ${amg.logado?.vis ? 'volta' : 'NÃO VOLTA'}; ao sair ${amg.saiu?.vis ? 'FICA NA TELA' : 'sai de novo'}`);
     add('LB16', a.chips.length >= 4 && a.chips.every((c) => c.nome && c.icone), `redes no rodapé: ${a.chips.map((c) => c.nome || '?').join(' · ') || 'nenhuma'} (quer 4+ ícones com nome acessível)`);
     add('LB17', a.limas.length === 1 && /btn-jogar/.test(a.limas[0]), `fundos lima: ${a.limas.join(', ') || 'nenhum'} (quer só o JOGAR)`);
 
-    /* LB21 · faixa do placar no topo: passa sob as abas sem cobrir coluna nenhuma, TODO item visível
-       leva ao perfil, o destaque cresce do 10º pro 1º, o laço para pra clicar, movimento reduzido
-       vira lista e a partida não herda. */
+    /* LB21 · faixa do placar: é o PRIMEIRO elemento da janela (22/10) — encosta no topo, o
+       cabeçalho desce abaixo dela e segue clicável, TODO item visível leva ao perfil, o destaque
+       cresce do 10º pro 1º, o laço para pra clicar, movimento reduzido vira lista, partida não herda. */
     let fx = { achou: false };
     if (quer('LB21')) {
       const leitura = () => {
@@ -231,7 +259,16 @@ async function medir(mutante = '', alvo = '') {
         const col = document.querySelector('.tp-lobby-dir')?.getBoundingClientRect();
         return {
           achou: true, l: b.left, t: b.top, r: b.right, alt: b.height, vw: innerWidth,
-          cabecalho: document.querySelector('#hub-ui .hub-header')?.getBoundingClientRect().bottom ?? -1,
+          cabT: document.querySelector('#hub-ui .hub-header')?.getBoundingClientRect().top ?? -1,
+          cabB: document.querySelector('#hub-ui .hub-header')?.getBoundingClientRect().bottom ?? -1,
+          /* clicável de verdade: o que está no pixel do meio da aba JOGAR é a própria aba */
+          abaLivre: (() => {
+            const aba = document.querySelector('[data-tp-aba="jogar"]');
+            if (!aba) return false;
+            const r = aba.getBoundingClientRect();
+            const alvo = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            return alvo === aba || aba.contains(alvo);
+          })(),
           coluna: col ? col.top : -1,
           eu: f.querySelector('.tp-faixa__eu-link')?.textContent || '',
           euHref: f.querySelector('.tp-faixa__eu-link')?.getAttribute('href') || '',
@@ -313,14 +350,53 @@ async function medir(mutante = '', alvo = '') {
         return { glb: cv?.dataset.glb || '', id: cv?.dataset.arma || '', skin: cv?.dataset.armaSkin || '' };
       });
     }
-    /* Novidades de skins: pôster carregado em cada card e o clique abre a loja no detalhe. */
-    let skins = { dados: [], abriu: false };
-    if (quer('LB19')) {
-      skins.dados = await page.evaluate(() => [...document.querySelectorAll('#tp-lobby-skins .tp-lobby-skins__cartao')]
-        .filter((e) => e.checkVisibility())
-        .map((e) => ({ id: e.dataset.skin, nome: e.querySelector('.tp-lobby-skins__nome')?.textContent || '', poster: (e.querySelector('.tp-lobby-skins__poster')?.naturalWidth || 0) > 0 })));
+    /* Novidades de skins (LB19) e o carrossel (LB23): UM pack por vez, janela que não rola,
+       giro automático que para no hover e não anda com movimento reduzido — aí quem navega é o ponto. */
+    let skins = { dados: [], abriu: false }, cr = {};
+    if (quer('LB19', 'LB23')) {
+      const lerSkins = () => {
+        const painel = document.getElementById('tp-lobby-skins');
+        const janela = painel?.querySelector('.tp-lobby-skins__janela');
+        const cartoes = [...(painel?.querySelectorAll('.tp-lobby-skins__cartao') || [])];
+        const vivo = (e) => e.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+        return {
+          dados: cartoes.map((e) => ({ id: e.dataset.skin, nome: e.querySelector('.tp-lobby-skins__nome')?.textContent || '', poster: (e.querySelector('.tp-lobby-skins__poster')?.naturalWidth || 0) > 0 })),
+          i: cartoes.findIndex((e) => e.hasAttribute('data-ativo')),
+          ativos: cartoes.filter((e) => e.hasAttribute('data-ativo')).length,
+          visiveis: cartoes.filter(vivo).length,
+          /* card que não está na vez não pode receber foco: senão o TAB cai num pack invisível */
+          soltos: cartoes.filter((e) => !e.hasAttribute('data-ativo') && e.inert !== true).length,
+          pontos: painel?.querySelectorAll('.tp-lobby-skins__ponto').length || 0,
+          rolaX: janela ? janela.scrollWidth - janela.clientWidth : -1,
+          rolaY: janela ? janela.scrollHeight - janela.clientHeight : -1,
+          overflow: janela ? getComputedStyle(janela).overflowX : '',
+        };
+      };
+      const ESPERA = 6200;
+      cr.inicio = await page.evaluate(lerSkins);
+      skins.dados = cr.inicio.dados;
       if (skins.dados.length) {
-        await page.click('#tp-lobby-skins .tp-lobby-skins__cartao');
+        await page.waitForTimeout(ESPERA);
+        cr.girou = await page.evaluate(lerSkins);
+        const cx = await page.locator('#tp-lobby-skins').boundingBox();
+        await page.mouse.move(cx.x + cx.width / 2, cx.y + cx.height / 2);
+        await page.waitForTimeout(700);
+        cr.antesHover = (await page.evaluate(lerSkins)).i;
+        await page.waitForTimeout(ESPERA);
+        cr.hover = await page.evaluate(lerSkins);
+        await page.mouse.move(760, 520);
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        await page.waitForTimeout(700);
+        cr.antesReduz = (await page.evaluate(lerSkins)).i;
+        await page.waitForTimeout(ESPERA);
+        cr.reduzido = await page.evaluate(lerSkins);
+        /* sem giro automático o ponto é a navegação: ele tem de trocar o pack mesmo assim */
+        await page.locator('#tp-lobby-skins .tp-lobby-skins__ponto').nth((cr.antesReduz + 2) % skins.dados.length).click();
+        await page.waitForTimeout(700);
+        cr.porPonto = await page.evaluate(lerSkins);
+        await page.emulateMedia({ reducedMotion: null });
+        await page.waitForTimeout(400);
+        await page.click('#tp-lobby-skins .tp-lobby-skins__cartao[data-ativo]');
         await page.waitForTimeout(700);
         skins.abriu = await page.evaluate(() => document.getElementById('main-menu').dataset.hubTab === 'loja' && document.getElementById('treta-detail')?.open === true);
         await page.keyboard.press('Escape');
@@ -333,7 +409,51 @@ async function medir(mutante = '', alvo = '') {
       `preview monta arma='${arma.id || 'nenhuma'}' pintura='${arma.skin || 'nenhuma'}'${arma.glb === '1' ? '' : ' (sem GLB real)'}`);
     const skinsErradas = skins.dados.filter((s) => !s.nome || !s.poster).map((s) => s.id);
     add('LB19', skins.dados.length >= 5 && !skinsErradas.length && skins.abriu,
-      `${skins.dados.length} cards de skins${skinsErradas.length ? `; sem pôster/nome: ${skinsErradas.join(', ')}` : ''}; clique ${skins.abriu ? 'abre a loja no detalhe' : 'não abriu o detalhe'}`);
+      `${skins.dados.length} packs no carrossel${skinsErradas.length ? `; sem pôster/nome: ${skinsErradas.join(', ')}` : ''}; clique ${skins.abriu ? 'abre a loja no detalhe' : 'não abriu o detalhe'}`);
+    const umPorVez = cr.inicio?.ativos === 1 && cr.inicio.visiveis === 1 && cr.inicio.soltos === 0 && cr.inicio.pontos === skins.dados.length;
+    const semRolagem = cr.inicio?.overflow === 'hidden' && cr.inicio.rolaX <= 1 && cr.inicio.rolaY <= 1;
+    const girou = cr.girou?.i !== cr.inicio?.i;
+    const parouNoHover = cr.hover?.i === cr.antesHover;
+    const paradoReduzido = cr.reduzido?.i === cr.antesReduz;
+    const pontoNavega = cr.porPonto?.i !== cr.antesReduz && cr.porPonto?.ativos === 1;
+    add('LB23', !!cr.inicio && umPorVez && semRolagem && girou && parouNoHover && paradoReduzido && pontoNavega,
+      !cr.inicio ? 'carrossel de skins ausente'
+        : `${cr.inicio.ativos} card na vez de ${skins.dados.length} (${cr.inicio.visiveis} visível, ${cr.inicio.soltos} fora da vez ainda tabulável, ${cr.inicio.pontos} pontos)${umPorVez ? '' : ' NÃO É UM POR VEZ'}; janela ${cr.inicio.overflow} rolando ${cr.inicio.rolaX}×${cr.inicio.rolaY} px${semRolagem ? '' : ' COM ROLAGEM'}; sozinho ${cr.inicio.i}→${cr.girou?.i}${girou ? '' : ' PARADO'}; no hover ${cr.antesHover}→${cr.hover?.i}${parouNoHover ? '' : ' CONTINUA GIRANDO'}; reduzido ${cr.antesReduz}→${cr.reduzido?.i}${paradoReduzido ? '' : ' GIRA MESMO ASSIM'}; ponto leva a ${cr.porPonto?.i}${pontoNavega ? '' : ' SEM NAVEGAÇÃO'}`);
+
+    /* LB24 · o botão DANÇAR não flutua no lobby. O #pv-emotes nasce dentro da .char-preview-box
+       (PR #1054) e viaja com ela pro palco do hub; a régua reproduz esse markup quando a árvore
+       ainda não o tem, porque o que se mede aqui é a CSS que o tira do lobby — e só do lobby. */
+    let danca = {};
+    if (quer('LB24')) {
+      danca = await page.evaluate(() => {
+        const box = document.querySelector('.char-preview-box');
+        if (!box) return { caixa: false };
+        let barra = box.querySelector('.pv-emotes');
+        const reproduzida = !barra;
+        if (!barra) {
+          barra = document.createElement('div');
+          barra.className = 'pv-emotes'; barra.id = 'pv-emotes';
+          barra.innerHTML = '<button id="pv-emote-abrir" class="pv-emote-btn pv-emote-abrir" type="button">DANÇAR</button>';
+          box.appendChild(barra);
+        }
+        const vivo = (e) => !!e && e.checkVisibility?.({ checkOpacity: true, checkVisibilityCSS: true });
+        /* a MESMA caixa volta pro lugar de origem (main.js/returnPreviewToSelection): fora do palco
+           do hub a regra do lobby não alcança e o botão continua montado — o emote não morreu. */
+        const volta = document.getElementById('char-preview-return');
+        let escolha = null;
+        if (volta?.parentElement) {
+          volta.parentElement.insertBefore(box, volta.nextSibling);
+          escolha = { dentro: !!box.closest('#char-select'), display: getComputedStyle(barra).display };
+          document.getElementById('hub-character')?.appendChild(box);
+        }
+        return { caixa: true, reproduzida, noPalco: !!box.closest('.hub-character'),
+          display: getComputedStyle(barra).display, botao: vivo(barra.querySelector('#pv-emote-abrir')), escolha };
+      });
+    }
+    add('LB24', danca.caixa && danca.noPalco && danca.display === 'none' && danca.botao === false
+      && danca.escolha?.dentro === true && danca.escolha.display !== 'none',
+      !danca.caixa ? 'caixa do preview (.char-preview-box) não está no lobby'
+        : `DANÇAR no lobby: barra ${danca.display}${danca.botao ? ', BOTÃO VISÍVEL SOB O PERSONAGEM' : ', botão fora da tela e da tabulação'}${danca.noPalco ? '' : ' (caixa fora do palco)'}; na tela de escolha de personagem a mesma barra fica ${danca.escolha?.display || '?'}${danca.escolha?.display && danca.escolha.display !== 'none' ? ' (emote intacto)' : ' — SUMIU TAMBÉM'}; markup ${danca.reproduzida ? 'reproduzido pela régua (árvore ainda sem o PR #1054)' : 'veio da árvore'}`);
 
     let convite = { net: '', pediu: false }, avisoErro = '';
     if (quer('LB6') && await page.locator('#tp-lobby-party').count()) {
@@ -391,12 +511,15 @@ async function medir(mutante = '', alvo = '') {
       && fx.altItem <= fx.alt - 2;
     const euOk = fx.achou && /SEU RANKING/.test(fx.eu) && fx.eu.includes(`#${RANKING.own.position}`) && fx.euHref === RANKING.own.url;
     const alvoOk = fx.achou && fx.alvo.includes(String(falta)) && fx.alvo.includes(RANKING_JOGADORES[3].nick) && fx.alvoHref === RANKING_JOGADORES[3].url;
-    const noLugar = fx.achou && fx.l <= 0 && fx.r >= fx.vw - 1 && fx.t >= fx.cabecalho - 1 && fx.t + fx.alt <= fx.coluna + 1 && fx.alt <= 46;
+    /* primeiro elemento da janela: encosta no topo, acaba ANTES do cabeçalho começar, e o
+       cabeçalho acaba antes das colunas — nada cobre nada e a aba segue no pixel dela */
+    const noLugar = fx.achou && fx.l <= 0 && fx.r >= fx.vw - 1 && fx.t <= 0 && fx.alt <= 46
+      && fx.t + fx.alt <= fx.cabT + 1 && fx.cabB <= fx.coluna + 1 && fx.abaLivre === true;
     const movOk = fx.achou && fx.anima !== 'none' && fx.roda === 'running' && fx.pausado === 'paused' && fx.copiaMuda
       && fx.reduzido?.anima === 'none' && fx.reduzido?.rolagem === 'auto' && fx.reduzido?.copiaFora === 'none';
     add('LB21', itensOk && linkOk && degrauOk && euOk && alvoOk && noLugar && movOk && fx.naPartida === false,
       !fx.achou ? 'faixa do placar ausente ou invisível no lobby'
-        : `faixa ${Math.round(fx.alt)} px entre cabeçalho (${Math.round(fx.cabecalho)}) e colunas (${Math.round(fx.coluna)})${noLugar ? '' : ' FORA DO LUGAR'}; "${fx.eu.trim()}" → ${fx.euHref || 'sem link'}${euOk ? '' : ' DIVERGE DO own'}; vizinho "${fx.alvo.trim()}"${alvoOk ? '' : ' DIVERGE'}; ${fx.itens.length} jogadores${itensOk ? ' com rosto, posição, pontos e link' : ' COM CAMPO ERRADO'}; ${fx.links}/${fx.todos} itens visíveis são link${linkOk ? '' : ' — ITEM SEM LINK'}; degrau #1 ${passo[0]?.larg ?? '?'}×${Math.round(fx.altItem)} px (respiro ${passo[0]?.respiro ?? '?'}, rosto ${passo[0]?.face ?? '?'}) contra #10 ${ult?.larg ?? '?'} px (respiro ${ult?.respiro ?? '?'}, rosto ${ult?.face ?? '?'})${degrauOk ? '' : ' SEM DEGRAU'}; laço ${fx.anima}/${fx.roda}, no hover ${fx.pausado}, cópia ${fx.copiaMuda ? 'muda' : 'NO CAMINHO DO LEITOR'}, reduzido ${fx.reduzido?.anima}/${fx.reduzido?.rolagem}; na partida ${fx.naPartida ? 'CONTINUA' : 'some'}`);
+        : `faixa de ${Math.round(fx.alt)} px no topo (${Math.round(fx.t)}), cabeçalho ${Math.round(fx.cabT)}–${Math.round(fx.cabB)} e colunas em ${Math.round(fx.coluna)}${noLugar ? '' : ' FORA DO LUGAR'}; aba JOGAR ${fx.abaLivre ? 'clicável' : 'COBERTA'}; "${fx.eu.trim()}" → ${fx.euHref || 'sem link'}${euOk ? '' : ' DIVERGE DO own'}; vizinho "${fx.alvo.trim()}"${alvoOk ? '' : ' DIVERGE'}; ${fx.itens.length} jogadores${itensOk ? ' com rosto, posição, pontos e link' : ' COM CAMPO ERRADO'}; ${fx.links}/${fx.todos} itens visíveis são link${linkOk ? '' : ' — ITEM SEM LINK'}; degrau #1 ${passo[0]?.larg ?? '?'}×${Math.round(fx.altItem)} px (respiro ${passo[0]?.respiro ?? '?'}, rosto ${passo[0]?.face ?? '?'}) contra #10 ${ult?.larg ?? '?'} px (respiro ${ult?.respiro ?? '?'}, rosto ${ult?.face ?? '?'})${degrauOk ? '' : ' SEM DEGRAU'}; laço ${fx.anima}/${fx.roda}, no hover ${fx.pausado}, cópia ${fx.copiaMuda ? 'muda' : 'NO CAMINHO DO LEITOR'}, reduzido ${fx.reduzido?.anima}/${fx.reduzido?.rolagem}; na partida ${fx.naPartida ? 'CONTINUA' : 'some'}`);
     add('LB3', jogo.quick === true && (jogo.menu || jogo.carga || jogo.jogo), `JOGAR: confirmação ${jogo.quick === false ? 'aberta' : 'fechada'}, partida ${jogo.menu || jogo.carga || jogo.jogo ? 'começou' : 'não começou'}`);
     await ctx.close();
   }
@@ -530,7 +653,9 @@ const MUT = [['abas-velhas', 'LB1'], ['ajustes-mudo', 'LB2'], ['confirma-de-novo
   ['personagem-no-canto', 'LB5'], ['convite-mudo', 'LB6'], ['erro-mudo', 'LB6'], ['quest-inventada', 'LB7'], ['passe-sem-backend', 'LB8'],
   ['rede-trocada', 'LB9'], ['coluna-larga', 'LB10'], ['toque-baixo', 'LB11'], ['sem-traducao', 'LB12'], ['flag-vaza', 'LB13'],
   ['gire-sem-arte', 'LB14'], ['mais-sem-feedback', 'LB15'], ['chip-sem-nome', 'LB16'], ['dois-limas', 'LB17'], ['skins-mudas', 'LB19'], ['arma-sem-skin', 'LB20'],
-  ['faixa-sem-pausa', 'LB21'], ['faixa-so-com-handle', 'LB21'], ['faixa-sem-degrau', 'LB21']];
+  ['faixa-sem-pausa', 'LB21'], ['faixa-so-com-handle', 'LB21'], ['faixa-sem-degrau', 'LB21'], ['faixa-embaixo', 'LB21'],
+  ['amigos-sempre', 'LB22'], ['carrossel-parado', 'LB23'], ['carrossel-sem-pausa', 'LB23'], ['carrossel-ignora-reduzido', 'LB23'],
+  ['carrossel-rola', 'LB23'], ['emote-no-lobby', 'LB24']];
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO === m)) {

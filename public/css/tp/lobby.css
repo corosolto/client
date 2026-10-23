@@ -1,5 +1,5 @@
 /* Treta Pop · 02 lobby, 18 mobile, 26 gire o celular. Só vale com <html data-ui="v3">: todo seletor começa em :root[data-ui="v3"] ou numa classe .tp-. */
-:root[data-ui="v3"]{--tp-lobby-coluna:380px;--tp-lobby-toque:44px;--tp-lobby-heroi:min(580px,38vw);--tp-lobby-margem:32px;--tp-lobby-topo:108px}
+:root[data-ui="v3"]{--tp-lobby-coluna:380px;--tp-lobby-toque:44px;--tp-lobby-heroi:min(580px,38vw);--tp-lobby-margem:32px;--tp-lobby-topo:108px;--tp-faixa-alt:46px;--tp-faixa-desloca:0px}
 
 /* fundo de 02-lobby.html linha 41: brasa sob o palco, musgo no canto e o asfalto embaixo */
 :root[data-ui="v3"][data-home-ui="hub"] #main-menu{background:
@@ -11,7 +11,12 @@
 :root[data-ui="v3"][data-home-ui="hub"] #main-menu>.scanlines{display:none}
 
 /* Cabeçalho */
-:root[data-ui="v3"] #hub-ui .hub-header{display:flex;height:84px;min-height:0;box-sizing:border-box;flex-wrap:nowrap;align-items:center;gap:10px;padding:0 var(--tp-lobby-margem);background:linear-gradient(180deg,rgba(9,7,4,.85),rgba(9,7,4,0))}
+:root[data-ui="v3"] #hub-ui .hub-header{display:flex;height:84px;min-height:0;box-sizing:border-box;flex-wrap:nowrap;align-items:center;gap:10px;top:var(--tp-faixa-desloca);padding:0 var(--tp-lobby-margem);background:linear-gradient(180deg,rgba(9,7,4,.85),rgba(9,7,4,0))}
+/* A faixa do placar é o primeiro elemento da janela (dono, 22/10): tudo que encostava no topo
+   desce a altura dela, e só na aba JOGAR, a única onde a faixa existe. */
+@media (min-height:561px){
+  :root[data-ui="v3"] #main-menu[data-hub-tab="jogar"]:has(#tp-lobby-faixa:not([hidden])){--tp-faixa-desloca:var(--tp-faixa-alt)}
+}
 :root[data-ui="v3"] #hub-ui .hub-logo{width:96px;height:auto;max-height:72px;max-width:none;margin-right:26px}
 :root[data-ui="v3"] #hub-ui .hub-logo-link{flex:none;display:grid;place-items:center;min-width:44px;min-height:44px;border-radius:8px}
 :root[data-ui="v3"] #hub-ui .hub-logo-link:focus-visible{outline:2px solid var(--tp-tinta-1);outline-offset:2px}
@@ -83,6 +88,9 @@
 :root[data-ui="v3"] #hub-ui .hub-character-card .hub-character-change{margin:0;color:var(--tp-tinta-2);font:700 14px/1 var(--tp-ui);letter-spacing:.08em}
 :root[data-ui="v3"] #hub-ui .hub-character-card:hover,:root[data-ui="v3"] #hub-ui .hub-character-card:focus-visible{background:none}
 :root[data-ui="v3"] #hub-ui .hub-character-card:focus-visible{outline:2px solid var(--tp-tinta-1);outline-offset:2px}
+/* DANÇAR (#pv-emotes, PR #1054) vem junto com a caixa do preview e flutuava sob o personagem:
+   no lobby ele sai da tela E da tabulação; na tela de escolha de personagem segue valendo. */
+:root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character .pv-emotes{display:none}
 
 /* Colunas */
 .tp-lobby-esq,.tp-lobby-dir{position:fixed;top:var(--tp-lobby-topo);width:var(--tp-lobby-coluna);display:flex;flex-direction:column;gap:14px}
@@ -91,6 +99,8 @@
 :root[data-ui="v3"] #main-menu[data-hub-net="mp"] .tp-lobby-esq,:root[data-ui="v3"] #main-menu[data-hub-net="mp"] .tp-lobby-dir,:root[data-ui="v3"] #main-menu[data-hub-net="mp"] .tp-lobby-vaga{display:none}
 :root[data-ui="v3"] #main-menu[data-hub-net="sp"] #hub-play>.hub-net{display:none}
 .tp-lobby-painel{display:flex;flex-direction:column;gap:14px;padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:rgba(19,20,24,.86);color:var(--tp-tinta-1)}
+/* display:flex do painel ganharia do [hidden] do navegador; sem isto o bloco escondido volta a aparecer */
+.tp-lobby-painel[hidden]{display:none}
 .tp-lobby-painel__cab{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .tp-lobby-painel__titulo{margin:0;font-size:26px}
 .tp-lobby-amigos .tp-lobby-painel__titulo{font-size:22px}
@@ -124,16 +134,28 @@
 .tp-lobby-novidades__rodape{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px}
 .tp-lobby-novidades__versao{color:var(--tp-tinta-3);font-size:12px}
 
-/* Novidades de skins: faixa horizontal de pôsteres; o card abre o detalhe da loja. */
+/* Novidades de skins: UM pack por vez numa janela sem rolagem — a régua lateral cortava os
+   cards no meio. Os pontos trocam o pack; o giro automático é decisão do JS. */
 .tp-lobby-skins{gap:12px}
-.tp-lobby-skins__faixa{display:flex;gap:10px;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
-.tp-lobby-skins__cartao{flex:0 0 auto;width:116px;display:flex;flex-direction:column;gap:6px;padding:0;border:1px solid rgba(255,255,255,.09);border-radius:10px;
-  background:var(--tp-elevado);color:var(--tp-tinta-1);cursor:pointer;text-align:left;transition:transform var(--tp-d-rapido) var(--tp-ease-saida)}
-.tp-lobby-skins__cartao:hover{transform:translateY(calc(-2px * var(--tp-mov)))}
+.tp-lobby-skins__janela{position:relative;overflow:hidden;height:130px;border-radius:10px}
+/* o card que não está na vez encolhe em vez de deslizar: escala pra dentro não abre rolagem na janela */
+.tp-lobby-skins__cartao{position:absolute;inset:0;display:block;overflow:hidden;padding:0;border:1px solid rgba(255,255,255,.09);border-radius:10px;
+  background:var(--tp-elevado);color:var(--tp-tinta-1);cursor:pointer;text-align:left;opacity:0;transform:scale(calc(1 - .03 * var(--tp-mov)));
+  transition:opacity var(--tp-d-painel) var(--tp-ease-saida),transform var(--tp-d-painel) var(--tp-ease-saida)}
+.tp-lobby-skins__cartao[data-ativo]{opacity:1;transform:none}
 .tp-lobby-skins__cartao:focus-visible{outline:2px solid var(--tp-lima);outline-offset:2px}
-.tp-lobby-skins__poster{display:block;width:100%;height:132px;object-fit:cover;border-radius:9px 9px 0 0}
-.tp-lobby-skins__nome{padding:0 8px;font:800 12px/1.2 var(--tp-ui);letter-spacing:.02em}
-.tp-lobby-skins__preco{padding:0 8px 8px;color:var(--tp-tinta-3);font-size:11px}
+.tp-lobby-skins__poster{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 35%}
+.tp-lobby-skins__legenda{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  padding:18px 12px 9px;background:linear-gradient(180deg,rgba(9,7,4,0),rgba(9,7,4,.92) 70%)}
+.tp-lobby-skins__nome{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:800 14px/1.2 var(--tp-ui);letter-spacing:.02em}
+.tp-lobby-skins__preco{flex:none;color:var(--tp-ambar);font:800 12px/1.2 var(--tp-num)}
+.tp-lobby-skins__pontos{display:flex;justify-content:center;gap:2px}
+.tp-lobby-skins__ponto{display:grid;place-items:center;width:24px;height:24px;padding:0;border:0;border-radius:6px;background:none;cursor:pointer}
+.tp-lobby-skins__ponto::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--tp-tinta-3);opacity:.45;
+  transition:transform var(--tp-d-rapido) var(--tp-ease-saida),opacity var(--tp-d-rapido) var(--tp-ease-saida)}
+.tp-lobby-skins__ponto[aria-pressed="true"]::before{background:var(--tp-lima);opacity:1}
+.tp-lobby-skins__ponto:hover::before{opacity:1}
+.tp-lobby-skins__ponto:focus-visible{outline:2px solid var(--tp-lima);outline-offset:2px}
 
 /* Party: um botão só de convite ao lado do personagem. Os dois slots vazios
    (.tp-lobby-vaga) saíram em 22/10 — cobriam o palco e repetiam o mesmo convite. */
@@ -214,10 +236,11 @@
   :root[data-ui="v3"] #hub-ui #hub-identity-name{display:none}
 }
 @media (max-width:1100px){
-  :root[data-ui="v3"] #hub-ui .hub-online{position:absolute;right:var(--tp-lobby-margem);top:78px;z-index:2;padding:6px 8px;border-radius:6px;background:rgba(9,7,4,.78)}
+  :root[data-ui="v3"] #hub-ui .hub-online{position:absolute;right:var(--tp-lobby-margem);top:calc(78px + var(--tp-faixa-desloca));z-index:2;padding:6px 8px;border-radius:6px;background:rgba(9,7,4,.78)}
 }
 @media (max-width:600px){
-  :root[data-ui="v3"] #hub-ui .hub-online{right:12px;top:60px}
+  :root[data-ui="v3"]{--tp-faixa-alt:42px}
+  :root[data-ui="v3"] #hub-ui .hub-online{right:12px;top:calc(60px + var(--tp-faixa-desloca))}
 }
 
 /* Tela 18: celular deitado */

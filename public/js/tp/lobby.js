@@ -3,7 +3,7 @@
 import { tr, LANG } from '../i18n.js';
 import { VERSION } from '../version.js';
 import { tretaLoja, abrirTretaSkin } from '../treta-store.js';
-import { montarRanking } from './ranking.js';
+import { montarPlacar } from './ranking.js';
 
 const $ = (id) => document.getElementById(id);
 function no(tag, cls = '', texto = '') {
@@ -20,6 +20,8 @@ const ICONE_GIRE = '<svg class="tp-gire__icone" viewBox="0 0 96 96" aria-hidden=
 const menu = () => $('main-menu');
 const abaDoHub = (aba) => document.querySelector(`.hub-tabs [data-hub-tab="${aba}"]`)?.click();
 const filtroLoja = () => (document.querySelector('[data-treta-filter="owned"]')?.getAttribute('aria-pressed') === 'true' ? 'owned' : 'all');
+/* mesmo sinal de sessão do resto do tp/: o hub escreve 'account' no login quando há perfil */
+const ehGuest = () => ($('hub-account-login')?.dataset.state || 'guest') === 'guest';
 
 /* PASSE fica fora: não há backend de passe (decisão registrada na entrega da frente). */
 /* RANKING em 2º (dono, 22/10): é a tela de retorno diário, e atrás de CARREIRA sempre
@@ -281,31 +283,63 @@ function montarEsquerda(play) {
   redesenhar();
 }
 
-/* Novidades de skins: prévia dos lançamentos da loja direto no lobby. Os cards acionam o
-   mesmo detalhe da loja (treta-store); sem loja no ar, o pôster estático ainda mostra. */
+/* Novidades de skins: UM pack por vez, girando sozinho. A régua de rolagem lateral cortava os
+   cards no meio (reclamação do dono, 22/10); o clique segue abrindo o detalhe da loja. */
 const NOVIDADES_SKINS = ['pack-dourado', 'pack-prateado', 'pack-selva-camo', 'ouro-ak', 'luvas-tropicalente', 'pack-maga-47'];
+const SKINS_GIRO_MS = 5000;
+/* quem pediu menos movimento não leva carrossel girando: os pontos passam a ser a única navegação */
+const semMovimento = () => document.documentElement.dataset.motion === 'reduzido'
+  || matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-function desenharSkins(painel) {
-  const faixa = painel.querySelector('.tp-lobby-skins__faixa');
-  if (!faixa) return;
+function mostrarSkin(painel, estado) {
+  const cartoes = [...painel.querySelectorAll('.tp-lobby-skins__cartao')];
+  const pontos = [...painel.querySelectorAll('.tp-lobby-skins__ponto')];
+  if (!cartoes.length) { estado.i = 0; return; }
+  estado.i = ((estado.i % cartoes.length) + cartoes.length) % cartoes.length;
+  cartoes.forEach((c, k) => {
+    const ativo = k === estado.i;
+    c.toggleAttribute('data-ativo', ativo);
+    c.setAttribute('aria-hidden', String(!ativo));
+    c.inert = !ativo;
+  });
+  pontos.forEach((p, k) => p.setAttribute('aria-pressed', String(k === estado.i)));
+}
+
+function desenharSkins(painel, estado) {
+  const janela = painel.querySelector('.tp-lobby-skins__janela');
+  const pontos = painel.querySelector('.tp-lobby-skins__pontos');
+  if (!janela) return;
   const d = tretaLoja();
   const itens = new Map(d.itens.map((s) => [s.id, s]));
-  const cartoes = NOVIDADES_SKINS
-    .map((id) => itens.get(id))
-    .filter((s) => s && s.poster)
-    .map((s) => {
-      const cartao = no('button', 'tp-lobby-skins__cartao');
-      cartao.type = 'button';
-      cartao.dataset.skin = s.id;
-      cartao.setAttribute('aria-label', `${s.name}${d.saldo != null && s.price != null ? ` · T$ ${s.price}` : ''}`);
-      const arte = no('img', 'tp-lobby-skins__poster');
-      arte.src = s.poster; arte.alt = ''; arte.loading = 'lazy'; arte.decoding = 'async';
-      cartao.append(arte, no('span', 'tp-lobby-skins__nome', s.name),
-        no('span', 'tp-num tp-lobby-skins__preco', s.owned ? tr('NO SEU ARMÁRIO') : s.price != null ? `T$ ${s.price}` : ''));
-      cartao.addEventListener('click', () => { abaDoHub('loja'); abrirTretaSkin(s.id); });
-      return cartao;
-    });
-  faixa.replaceChildren(...cartoes);
+  const packs = NOVIDADES_SKINS.map((id) => itens.get(id)).filter((s) => s && s.poster);
+  const cartoes = packs.map((s) => {
+    const cartao = no('button', 'tp-lobby-skins__cartao');
+    cartao.type = 'button';
+    cartao.dataset.skin = s.id;
+    cartao.setAttribute('aria-label', `${s.name}${d.saldo != null && s.price != null ? ` · T$ ${s.price}` : ''}`);
+    const arte = no('img', 'tp-lobby-skins__poster');
+    arte.src = s.poster; arte.alt = ''; arte.loading = 'lazy'; arte.decoding = 'async';
+    /* nome e preço por cima do pôster: num card só, a altura toda vira arte e a coluna
+       continua acima do rodapé */
+    const legenda = no('span', 'tp-lobby-skins__legenda');
+    legenda.append(no('span', 'tp-lobby-skins__nome', s.name),
+      no('span', 'tp-num tp-lobby-skins__preco', s.owned ? tr('NO SEU ARMÁRIO') : s.price != null ? `T$ ${s.price}` : ''));
+    cartao.append(arte, legenda);
+    cartao.addEventListener('click', () => { abaDoHub('loja'); abrirTretaSkin(s.id); });
+    return cartao;
+  });
+  /* o ponto leva o nome do próprio pack: rótulo que já vem da loja, sem string nova pra traduzir */
+  const bolinhas = packs.map((s, k) => {
+    const p = no('button', 'tp-lobby-skins__ponto');
+    p.type = 'button';
+    p.setAttribute('aria-label', s.name);
+    p.addEventListener('click', () => { estado.i = k; mostrarSkin(painel, estado); });
+    return p;
+  });
+  janela.replaceChildren(...cartoes);
+  pontos.replaceChildren(...bolinhas);
+  painel.hidden = !cartoes.length;
+  mostrarSkin(painel, estado);
 }
 
 function montarSkins(esq) {
@@ -318,11 +352,18 @@ function montarSkins(esq) {
   ver.type = 'button';
   ver.addEventListener('click', () => abaDoHub('loja'));
   cab.append(h2, ver);
-  painel.append(cab, no('div', 'tp-lobby-skins__faixa'));
+  painel.append(cab, no('div', 'tp-lobby-skins__janela'), no('div', 'tp-lobby-skins__pontos'));
   esq.appendChild(painel);
-  const redesenhar = () => desenharSkins(painel);
+  const estado = { i: 0 };
+  const redesenhar = () => desenharSkins(painel, estado);
   document.addEventListener('cs-treta-state', redesenhar);
   redesenhar();
+  /* o giro para no mouse e no teclado: ninguém perde o card que estava lendo ou pra clicar */
+  setInterval(() => {
+    if (semMovimento() || !painel.checkVisibility?.() || painel.matches(':hover, :focus-within')) return;
+    estado.i += 1;
+    mostrarSkin(painel, estado);
+  }, SKINS_GIRO_MS);
 }
 
 /* Convite: o mesmo do JOGAR COM AMIGOS (#mp-amigos), que cria a sala só por código e abre o #mp-modal.
@@ -338,9 +379,7 @@ async function convidar() {
 
 function montarDireita(play) {
   const dir = no('aside', 'tp-lobby-dir');
-  dir.setAttribute('aria-label', tr('Placar e amigos'));
-  /* O placar abre a coluna: é a tela de retorno que o dono pôs em primeira linha (22/10). */
-  montarRanking(dir, () => abaDoHub('ranking'));
+  dir.setAttribute('aria-label', tr('Amigos online'));
   const painel = no('section', 'tp-lobby-painel tp-lobby-amigos');
   painel.id = 'tp-lobby-online-amigos';
   const cab = no('div', 'tp-lobby-painel__cab');
@@ -370,8 +409,11 @@ function montarDireita(play) {
   play.appendChild(dir);
   desenhar($('community')?.socialLive);
   document.addEventListener('cs-social-live', (e) => desenhar(e.detail?.live));
-  /* Os dois slots vazios saíram (revisão de 20/10 do pacote, confirmada pelo dono em
-     22/10): sobrou o botão único de party, que já existia para telas baixas. */
+  /* Deslogado não há lista de amigos nem convite que leve a algo: o bloco inteiro sai (dono, 22/10). */
+  const sessao = () => { painel.hidden = ehGuest(); };
+  const login = $('hub-account-login');
+  if (login) new MutationObserver(sessao).observe(login, { attributes: true, attributeFilter: ['data-state'] });
+  sessao();
 }
 
 function montarRede() {
@@ -524,6 +566,7 @@ function montar() {
   montarCabecalho();
   montarEsquerda(play);
   montarDireita(play);
+  montarPlacar();
   montarPartida();
   ligarJogarDireto();
   montarGire();

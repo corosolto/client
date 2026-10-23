@@ -49,22 +49,10 @@
 @media(prefers-reduced-motion:reduce){:root[data-ui="v3"] #hub-ranking .hub-panel{animation:none}}
 :root[data-ui="v3"][data-motion="reduzido"] #hub-ranking .hub-panel{animation:none}
 
-/* Card do placar no lobby (tela 02): o top 3 abre a aba RANKING. A sua posição é da faixa do topo.
-   Mora aqui, com a tela de ranking, porque é a mesma frente de retorno. */
-.tp-lobby-rank{gap:12px}
-.tp-lobby-rank__corpo{display:flex;flex-direction:column;gap:10px}
-.tp-lobby-rank__lista{display:flex;flex-direction:column;gap:6px}
-.tp-lobby-rank__linha{display:flex;align-items:center;gap:10px;box-sizing:border-box;width:100%;min-height:var(--tp-lobby-toque);padding:4px 12px;
-  border:0;border-radius:8px;background:var(--tp-fundo);color:var(--tp-tinta-1);text-align:left;cursor:pointer}
-.tp-lobby-rank__linha:hover,.tp-lobby-rank__linha:focus-visible{outline:2px solid var(--tp-lima);outline-offset:1px}
-.tp-lobby-rank__lugar{flex:none;width:16px;color:var(--tp-ambar);font:800 15px/1 var(--tp-num)}
-.tp-lobby-rank__nick{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:800 15px/1.15 var(--tp-ui)}
-.tp-lobby-rank__pontos{flex:none;color:var(--tp-tinta-2);font:700 13px/1 var(--tp-num)}
-
-/* Faixa do topo (tela 02): passa sob as abas, no respiro entre o cabeçalho e as colunas — é a
-   única faixa livre, porque o rodapé já é da RESENHA, das redes e do JOGAR. */
-.tp-faixa{position:fixed;left:0;right:0;top:84px;z-index:4;display:flex;align-items:center;gap:16px;box-sizing:border-box;height:46px;
-  padding:0 var(--tp-lobby-margem);border-top:1px solid var(--tp-borda);border-bottom:1px solid var(--tp-borda);
+/* Faixa do topo (tela 02): é o PRIMEIRO elemento da janela e o cabeçalho desce abaixo dela
+   (dono, 22/10). O card do placar na coluna saiu: a faixa já mostrava o mesmo placar. */
+.tp-faixa{position:fixed;left:0;right:0;top:0;z-index:9;display:flex;align-items:center;gap:16px;box-sizing:border-box;height:var(--tp-faixa-alt);
+  padding:0 var(--tp-lobby-margem);border-bottom:1px solid var(--tp-borda);
   background:color-mix(in srgb,var(--tp-asfalto) 88%,transparent)}
 .tp-faixa[hidden]{display:none}
 /* a faixa empurra as colunas em vez de cobri-las; sem placar no ar ela nem existe e o topo volta */
@@ -115,7 +103,7 @@
   .tp-faixa__alvo{display:none}
 }
 @media (max-width:600px){
-  .tp-faixa{gap:10px;height:42px}
+  .tp-faixa{gap:10px}
   .tp-faixa__eu-rotulo{display:none}
 }
 /* no celular deitado o topo inteiro é do cabeçalho: a faixa sai e as colunas voltam ao lugar */

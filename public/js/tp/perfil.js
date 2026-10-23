@@ -140,6 +140,24 @@ function aviso() {
   a.setAttribute('role', 'status'); a.setAttribute('aria-live', 'polite');
   return a;
 }
+/* Sem conta o perfil continua na tela: o convite é esta faixa fina, e o painel inteiro da conta só abre no clique. */
+function convite() {
+  const f = el('aside', 'tp-perfil__convite');
+  f.setAttribute('aria-label', tr('Entrar ou criar conta'));
+  const t = el('div', 'tp-perfil__convite-texto');
+  t.append(el('b', '', tr('Você está sem conta')), el('span', '', tr('Este perfil fica só neste navegador. Com conta ele ganha link próprio, amigos e ranking.')));
+  f.append(t, botao(tr('ENTRAR OU CRIAR CONTA'), '', () => document.dispatchEvent(new CustomEvent('cs-conta-abrir'))));
+  return f;
+}
+/* Visitante que ainda não tem rodada confirmada: o servidor não devolve perfil, então aqui fica o vazio — sem número inventado. */
+function vistaSemPerfil() {
+  const s = el('section', 'tp-painel tp-perfil__bloco tp-perfil__sem');
+  s.setAttribute('aria-label', tr('Seu perfil'));
+  s.append(cabecalho('Seu perfil', 'ainda sem rodada confirmada'),
+    el('p', 'tp-perfil__vazio', tr('Abates, ranking e histórico aparecem aqui quando o servidor confirmar sua primeira rodada.')),
+    botao(tr('JOGAR AGORA'), 'tp-btn--primario tp-perfil__sem-jogar', () => document.querySelector('.hub-tabs [data-hub-tab="jogar"]')?.click()));
+  return s;
+}
 
 export function ligar() {
   const raiz = document.getElementById('community'), content = document.getElementById('social-content');
@@ -567,15 +585,17 @@ export function ligar() {
   /* Monta por cima do perfil que o community.js acabou de desenhar; o legado fica escondido e segue dono das ações. */
   function montar(trocouVista = false) {
     const d = raiz.tpPerfilDados, velho = content.querySelector(':scope > .tp-perfil');
-    const vale = content.getAttribute('aria-busy') === 'false' && raiz.dataset.view === 'profile' && d?.p && !d.aba
-      && [...content.querySelectorAll(':scope > .social-card > h2')].some((h) => h.firstChild?.textContent === d.p.nick);
+    /* Sem perfil (visitante sem rodada confirmada) a tela ainda é nossa: desenha o vazio em vez de devolver o legado. */
+    const vale = content.getAttribute('aria-busy') === 'false' && raiz.dataset.view === 'profile' && !d?.aba
+      && (d?.p ? [...content.querySelectorAll(':scope > .social-card > h2')].some((h) => h.firstChild?.textContent === d.p.nick) : d?.visitante === true);
     if (!vale) { velho?.remove(); delete content.dataset.tpPerfil; return; }
     if (velho && !trocouVista) return;
     if (!d.own) vista = 'perfil';
     const v = el('div', 'tp-perfil');
     v.dataset.vista = vista;
     if (d.own) v.append(abas());
-    v.append(vista === 'carreira' ? vistaCarreira(d) : vistaPerfil(d));
+    if (d.visitante) v.append(convite());
+    v.append(!d.p ? vistaSemPerfil() : vista === 'carreira' ? vistaCarreira(d) : vistaPerfil(d));
     if (velho) velho.replaceWith(v); else content.prepend(v);
     content.dataset.tpPerfil = vista;
     if (d.own) void carregaCla(d);
