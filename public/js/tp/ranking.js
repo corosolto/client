@@ -72,9 +72,20 @@ function desenhar(painel, estado, dados, ir, recarregar) {
 
 /* FAIXA DO TOPO (tela 02): o placar passa sob as abas, a única faixa livre do lobby — o rodapé
    já é da RESENHA, das redes e do JOGAR. Nunca na partida: ela mora dentro do #hub-play. */
+/* o destaque cresce do 10º pro 1º: este grau (0 a 1) vira respiro, rosto e corpo de letra no CSS,
+   um degrau contínuo da posição em vez de uma classe por lugar */
+const grau = (pos) => {
+  const n = Number(pos);
+  return Number.isFinite(n) ? Math.min(1, Math.max(0, (TOPO_FAIXA - n) / (TOPO_FAIXA - 1))) : 0;
+};
+
 function itemFaixa(p) {
-  const e = no(p.url ? 'a' : 'span', 'tp-faixa__item');
-  if (p.url) e.href = p.url;
+  /* o perfil é de todo jogador que veio com `url`: conta reivindicada e foto não entram na conta,
+     porque o placar devolve `/u/<id>` mesmo sem handle público */
+  const destino = typeof p.url === 'string' ? p.url.trim() : '';
+  const e = no(destino ? 'a' : 'span', 'tp-faixa__item');
+  if (destino) e.href = destino;
+  e.style.setProperty('--tp-faixa-grau', grau(p.position).toFixed(3));
   e.append(no('span', 'tp-num tp-faixa__pos', `#${num(p.position)}`), rosto(p.nick, p.avatar_url),
     no('span', 'tp-faixa__nick', p.nick || '—'),
     no('span', 'tp-num tp-faixa__pts', `${num(p.points)} ${tr('pontos')}`));

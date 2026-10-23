@@ -15,12 +15,12 @@ const root=args.find(a=>a.startsWith('--root='))?.slice(7) || args.find(a=>!a.st
 assert(args.every(a=>!a.startsWith('--') || a.startsWith('--root=') || a.startsWith('--out=') || a.startsWith('--mutant=') || a==='--mutants'),'unknown option: use --root, --out, --mutant or --mutants');
 const output=process.argv.find(x=>x.startsWith('--out='))?.slice(6);
 const mutant=process.argv.find(x=>x.startsWith('--mutant='))?.slice(9);
-assert(!mutant || ['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source'].includes(mutant),'unknown mutation');
+assert(!mutant || ['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source','hub-title','hub-row-link','hub-char-avatar'].includes(mutant),'unknown mutation');
 let mutationsApplied=0;
 if(args.includes('--mutants')) {
  assert(!mutant,'--mutants and --mutant cannot be combined');
  const folder=mkdtempSync(join(tmpdir(),'ranking-home-status-'));
- const names=['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source'];
+ const names=['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source','hub-title','hub-row-link','hub-char-avatar'];
  try {
   const run=(name)=>{const reportPath=join(folder,(name || 'baseline')+'.json');const child=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--root='+root,'--out='+reportPath,...(name?['--mutant='+name]:[])],{encoding:'utf8',maxBuffer:262144});assert(existsSync(reportPath),'cannot measure child '+(name || 'baseline')+': '+(child.stderr || child.error || child.stdout || '').slice(0,700));return {status:child.status,report:JSON.parse(readFileSync(reportPath,'utf8'))};};
   const baseline=run(null);assert.equal(baseline.status,0,'baseline must be green before mutation proof');
@@ -34,13 +34,21 @@ if(args.includes('--mutants')) {
 }
 const source=path=>readFileSync(`${root}/${path}`,'utf8');
 let main=source('public/js/main.js'),community=source('public/js/community.js');
-const astro=source('src/pages/index.astro');
+let astro=source('src/pages/index.astro');
 const hashes=Object.fromEntries(['src/pages/index.astro','public/js/main.js','public/js/community.js','public/js/ranking-player.js'].map(p=>[p,createHash('sha256').update(source(p)).digest('hex')]));
 if(mutant==='nonarray-guard'){const changed=main.replaceAll('!Array.isArray(data?.players)','!data?.players');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
 // A tela do hub só pode ler a fonte verificada: /api/leaderboard não filtra ranking_exclusion (22/10).
 if(mutant==='hub-legacy-source'){const changed=main.replace("await api('/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all')","await api('/api/leaderboard')");assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
+// Os três pedidos de 22/10 na aba RANKING: título, linha inteira clicável e avatar de personagem.
+if(mutant==='hub-title'){const changed=astro.replace('<h2>RANKING</h2>','<h2>PLACAR DA RUA</h2>');assert.notEqual(changed,astro,'MUTATION DID NOT APPLY');astro=changed;mutationsApplied++;}
+if(mutant==='hub-row-link'){const changed=main.replace("linha.setAttribute('role', 'link'); linha.setAttribute('tabindex', '0');","linha.dataset.mutante = '1';");assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
+if(mutant==='hub-char-avatar'){const changed=main.replace("? `/img/chars/avatars/${p.last_character}.webp` : ''","? '' : ''");assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
 const helpers=await import(pathToFileURL(`${root}/public/js/ranking-player.js`).href);
-const player={id:'c026ab03-2aa8-4775-979c-fcb1414fa50b',nick:'Renderer Fixture',public_handle:'ruler_fixture',avatar_url:'/api/social-avatar?id=c026ab03-2aa8-4775-979c-fcb1414fa50b',position:1,points:25,career_points:25,kills:18,kd:9,left_points:3,right_points:10,socials:[{net:'x',url:'https://x.com/ruler_fixture'}]};
+// renderHubRanking monta a célula do jogador sozinha, mas reaproveita os mesmos selos do produto.
+const selos={...await import(pathToFileURL(`${root}/public/js/account-verified.js`).href),...await import(pathToFileURL(`${root}/public/js/career-rank.js`).href)};
+const player={id:'c026ab03-2aa8-4775-979c-fcb1414fa50b',nick:'Renderer Fixture',public_handle:'ruler_fixture',avatar_url:'/api/social-avatar?id=c026ab03-2aa8-4775-979c-fcb1414fa50b',position:1,points:25,career_points:25,kills:18,kd:9,matches:12,left_points:3,right_points:10,socials:[{net:'x',url:'https://x.com/ruler_fixture'}]};
+// 21 dos 25 do ranking de produção não têm avatar_url: a segunda linha do hub é esse caso.
+const charPlayer={id:'7f2d4c18-9b01-4f5a-8c3d-21e6a0b4d957',nick:'Sem Foto',public_handle:'sem_foto',avatar_url:null,last_character:'ancap',position:2,points:10,kills:3,deaths:3,kd:1,matches:7,socials:[]};
 function extract(text,name,end) {
  const start=text.indexOf(name);assert(start>=0,`cannot measure: source function missing ${name}`);
  const stop=end?text.indexOf(end,start):text.indexOf('\n}',start)+2;
@@ -60,11 +68,30 @@ const loading=/carregando|só um instante/i;
 const emptyCopy=/ainda (?:não há|vazio)|nenhum jogador/i;
 const failures=[],results=[];
 function check(condition,message){if(!condition)throw new Error(message);}
-function fetchResult(kind) {
+function fetchResult(kind,surface) {
  if(kind==='network')return Promise.reject(new Error('network_unreachable'));
  if(kind==='rejection')return Promise.resolve({ok:false,status:503,json:async()=>({error:'social_unavailable'})});
- const data=kind==='disabled'?{disabled:true}:kind==='malformed'?{}:kind==='nonarray'?{players:{}}:{players:kind==='success'?[player]:[],total:kind==='success'?1:0,week:{starts_at:'2026-10-12T03:00:00Z',ends_at:'2026-10-19T03:00:00Z',timezone:'America/Sao_Paulo'}};
+ const lista=surface==='hub'?[player,charPlayer]:[player];
+ const data=kind==='disabled'?{disabled:true}:kind==='malformed'?{}:kind==='nonarray'?{players:{}}:{players:kind==='success'?lista:[],total:kind==='success'?lista.length:0,week:{starts_at:'2026-10-12T03:00:00Z',ends_at:'2026-10-19T03:00:00Z',timezone:'America/Sao_Paulo'}};
  return Promise.resolve({ok:true,status:200,json:async()=>data});
+}
+// Contrato da aba RANKING (pedidos de 22/10): colunas, linha-link e avatar que cai pro personagem.
+function assertHub(pane,rows) {
+ const colunas=[...pane.querySelectorAll('thead th')].map(th=>th.textContent.trim());
+ check(colunas.join('|')==='POS.|JOGADOR|PONTOS|KILLS|K/D|PARTIDAS',`hub columns must read KILLS and carry PARTIDAS, got ${colunas.join('|')}`);
+ const partidas=[...rows].map(linha=>linha.children[5]?.textContent.trim()).join(',');
+ check(partidas===`${player.matches},${charPlayer.matches}`,`PARTIDAS column must print the payload matches, got ${partidas}`);
+ for(const linha of rows){
+  check(linha.getAttribute('role')==='link','hub ranking row is not announced as a link');
+  check(linha.getAttribute('tabindex')==='0','hub ranking row is not reachable by keyboard');
+  check(/^Ver perfil de \S/.test(linha.getAttribute('aria-label') || ''),`hub ranking row does not say where it goes: ${linha.getAttribute('aria-label')}`);
+  check((linha.dataset.href || '').startsWith('/u/'),'hub ranking row has no profile destination');
+  check(typeof linha.onclick==='function' && typeof linha.onkeydown==='function','hub ranking row has no click/keyboard handler');
+  check(!linha.querySelector('a a'),'hub ranking row nests an anchor inside another anchor');
+ }
+ const arte=rows[1].querySelector('img');
+ check(arte?.getAttribute('src')===`/img/chars/avatars/${charPlayer.last_character}.webp`,`player without photo must fall back to the character art, got ${arte?.getAttribute('src')}`);
+ check(typeof arte.onerror==='function','character avatar has no onerror fallback to the initial');
 }
 function visibleText(node) {
  if(node.nodeType===3)return node.textContent;
@@ -75,11 +102,14 @@ function assertState(pane,kind,surface) {
  const text=visibleText(pane).replace(/\s+/g,' ').trim();
  const rows=pane.querySelectorAll('table tbody tr');
  if(kind==='success'){
-  check(rows.length===1,`expected one real rendered fixture row, got ${rows.length}`);
+  const esperadas=surface==='hub'?2:1;
+  check(rows.length===esperadas,`expected ${esperadas} real rendered fixture row(s), got ${rows.length}`);
   check(!unavailable.test(text) && !disabled.test(text),`successful rows contradict global copy: ${text}`);
   check(pane.querySelector('img')?.getAttribute('src')===player.avatar_url,'player photo missing');
   check([...pane.querySelectorAll('a')].some(a=>a.getAttribute('href')==='/u/ruler_fixture'),'canonical profile link missing');
-  check([...pane.querySelectorAll('a')].some(a=>a.getAttribute('href')==='https://x.com/ruler_fixture'),'social link missing');
+  // No hub a linha inteira é o link do perfil; as redes do jogador seguem no painel e na comunidade.
+  if(surface==='hub')assertHub(pane,rows);
+  else check([...pane.querySelectorAll('a')].some(a=>a.getAttribute('href')==='https://x.com/ruler_fixture'),'social link missing');
  }else{
   check(rows.length===0,`${kind} must not retain score rows`);
   check(!loading.test(text),`${kind} must settle loading state: ${text}`);
@@ -95,7 +125,7 @@ async function scenario(surface,flag,kind,period='all') {
  const pane=document.getElementById(surface==='hub'?'hub-ranking':surface==='panel'?'ranking-panel':'community');
  pane.hidden=false;pane.classList.remove('hidden');
  const requests=[];
- const context={...helpers,document,URL,Date,AbortSignal,UI_V3:false,tr:x=>x,auth:null,state:null,profileId:'',tab:'ranking',loadVersion:0,rankingPeriod:period,rankingScope:'global',rankingOffset:0,rankingQuery:'',rankingMode:'all',rankingGameType:'all',rankingTeam:'all',registeredNick:'Renderer Fixture',loadStats:()=>({kills:4,deaths:2,wins:1,matches:2}),$:id=>document.getElementById(id),apiUrl:x=>x,fetch:async(url)=>{requests.push(url);return fetchResult(kind);},content:document.getElementById('social-content'),status:document.getElementById('social-status')};
+ const context={...helpers,...selos,document,URL,Date,AbortSignal,UI_V3:false,tr:x=>x,auth:null,state:null,profileId:'',tab:'ranking',loadVersion:0,rankingPeriod:period,rankingScope:'global',rankingOffset:0,rankingQuery:'',rankingMode:'all',rankingGameType:'all',rankingTeam:'all',registeredNick:'Renderer Fixture',loadStats:()=>({kills:4,deaths:2,wins:1,matches:2}),$:id=>document.getElementById(id),apiUrl:x=>x,fetch:async(url)=>{requests.push(url);return fetchResult(kind,surface);},content:document.getElementById('social-content'),status:document.getElementById('social-status')};
  let body;
  if(surface==='community'){
   context.root=pane; // community.js lê root no escopo do módulo (render marca data-view)
@@ -127,6 +157,8 @@ async function scenario(surface,flag,kind,period='all') {
   check(requests.length===1,'real renderer must execute one API request');
   // A aba RANKING do hub é a tela promovida a primeira linha: só a fonte verificada serve.
   if(surface==='hub')check(new URL(requests[0],'https://fixture.test').searchParams.get('action')==='ranking',`hub must read the verified ranking source, asked ${requests[0]}`);
+  // Pedido do dono (22/10): o título desta tela é RANKING; PLACAR DA RUA ficou só na faixa do lobby.
+  if(surface==='hub')check(pane.querySelector('h2')?.textContent.trim()==='RANKING',`hub ranking title must be RANKING, got ${pane.querySelector('h2')?.textContent}`);
   const snapshot=assertState(pane,kind,surface);
   if(surface==='panel' && kind==='success')for(const label of ['RANKING COMPLETO','MEU PERFIL','MAPA AO VIVO'])check([...pane.querySelectorAll('a')].some(a=>a.textContent.startsWith(label) && a.target==='_blank' && a.rel.includes('noopener')),`preserve game tab footer: ${label}`);
   if(surface==='community'){

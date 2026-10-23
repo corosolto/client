@@ -31,18 +31,21 @@ const TRETA = {
 };
 
 /* Placar no ar só no teste: a resposta de /api/social?action=ranking que o card e a faixa do topo
-   dividem. `own` em 5º com o vizinho em 4º na mesma página; um jogador sem avatar prova o rosto de iniciais. */
+   dividem. `own` em 5º com o vizinho em 4º na mesma página; um jogador sem avatar prova o rosto de
+   iniciais e os dois últimos, sem handle nem conta verificada, provam que o perfil é link pra todos. */
 const RANKING_JOGADORES = [
-  { position: 1, nick: 'ZeDaManga', points: 3840, kills: 3840, deaths: 1200, kd: 3.2, avatar_url: '/img/chars-hero/punk.webp', url: '/u/zedamanga' },
-  { position: 2, nick: 'MinaDoGrau', points: 2990, kills: 2990, deaths: 1410, kd: 2.12, avatar_url: '/img/chars-hero/skatista.webp', url: '/u/minadograu' },
-  { position: 3, nick: 'TrapDoCorrego', points: 2410, kills: 2410, deaths: 1500, kd: 1.61, avatar_url: null, url: '/u/trapdocorrego' },
-  { position: 4, nick: 'BondeDaUPA', points: 1920, kills: 1920, deaths: 1330, kd: 1.44, avatar_url: '/img/chars-hero/bombado.webp', url: '/u/bondedaupa' },
-  { position: 5, nick: 'Regua', points: 1800, kills: 1800, deaths: 1290, kd: 1.4, avatar_url: '/img/chars-hero/canarinho.webp', url: '/u/regua' },
-  { position: 6, nick: 'PatoDaVila', points: 1640, kills: 1640, deaths: 1380, kd: 1.19, avatar_url: '/img/chars-hero/adjim.webp', url: '/u/patodavila' },
-  { position: 7, nick: 'SereiaDoTiete', points: 1180, kills: 1180, deaths: 1290, kd: 0.91, avatar_url: null, url: '/u/sereiadotiete' },
-  { position: 8, nick: 'XerifeDaQuebrada', points: 960, kills: 960, deaths: 1120, kd: 0.86, avatar_url: '/img/chars-hero/bonzo.webp', url: '/u/xerifedaquebrada' },
+  { position: 1, nick: 'ZeDaManga', points: 3840, kills: 3840, deaths: 1200, kd: 3.2, avatar_url: '/img/chars-hero/punk.webp', url: '/u/zedamanga', public_handle: 'zedamanga', account_verified: true },
+  { position: 2, nick: 'MinaDoGrau', points: 2990, kills: 2990, deaths: 1410, kd: 2.12, avatar_url: '/img/chars-hero/skatista.webp', url: '/u/minadograu', public_handle: 'minadograu', account_verified: true },
+  { position: 3, nick: 'TrapDoCorrego', points: 2410, kills: 2410, deaths: 1500, kd: 1.61, avatar_url: null, url: '/u/trapdocorrego', public_handle: 'trapdocorrego', account_verified: true },
+  { position: 4, nick: 'BondeDaUPA', points: 1920, kills: 1920, deaths: 1330, kd: 1.44, avatar_url: '/img/chars-hero/bombado.webp', url: '/u/bondedaupa', public_handle: 'bondedaupa', account_verified: true },
+  { position: 5, nick: 'Regua', points: 1800, kills: 1800, deaths: 1290, kd: 1.4, avatar_url: '/img/chars-hero/canarinho.webp', url: '/u/regua', public_handle: 'regua', account_verified: true },
+  { position: 6, nick: 'PatoDaVila', points: 1640, kills: 1640, deaths: 1380, kd: 1.19, avatar_url: '/img/chars-hero/adjim.webp', url: '/u/patodavila', public_handle: 'patodavila', account_verified: true },
+  { position: 7, nick: 'SereiaDoTiete', points: 1180, kills: 1180, deaths: 1290, kd: 0.91, avatar_url: null, url: '/u/sereiadotiete', public_handle: 'sereiadotiete', account_verified: true },
+  { position: 8, nick: 'XerifeDaQuebrada', points: 960, kills: 960, deaths: 1120, kd: 0.86, avatar_url: '/img/chars-hero/bonzo.webp', url: '/u/xerifedaquebrada', public_handle: 'xerifedaquebrada', account_verified: true },
+  { position: 9, nick: 'FogueteiroDoMorro', points: 740, kills: 740, deaths: 980, kd: 0.76, avatar_url: null, url: '/u/3f1c7a62-0e45-4f2b-9a10-5c8d7e6b4a31', public_handle: null, account_verified: false },
+  { position: 10, nick: 'DonaDaFeira', points: 520, kills: 520, deaths: 900, kd: 0.58, avatar_url: null, url: '/u/9b4e2d18-77af-4c30-8e51-2a6f0c9d3b75', public_handle: null, account_verified: false },
 ];
-const RANKING = { players: RANKING_JOGADORES, total: 128, own: RANKING_JOGADORES[4], source: 'server_verified_since_cutover', period: 'all', mode: 'all' };
+const RANKING = { players: RANKING_JOGADORES, total: 157, own: RANKING_JOGADORES[4], source: 'server_verified_since_cutover', period: 'all', mode: 'all' };
 
 /* Mutantes reescrevem o que o servidor entrega; cada um prova que aplicou (texto antes != depois). */
 const MUTANTES = {
@@ -68,6 +71,8 @@ const MUTANTES = {
   'dois-limas': [/\/css\/tp\/lobby\.css/, (t) => t.replace('.tp-lobby-rede__opcao[aria-pressed="true"]{background:var(--tp-tinta-1)', '.tp-lobby-rede__opcao[aria-pressed="true"]{background:var(--tp-lima)')],
   'skins-mudas': [/\/js\/tp\/lobby\.js/, (t) => t.replace('.filter((s) => s && s.poster)', '.slice(0, 0).filter((s) => s && s.poster)')],
   'faixa-sem-pausa': [/\/css\/tp\/ranking\.css/, (t) => t.replace('.tp-faixa:hover .tp-faixa__trilho,.tp-faixa:focus-within .tp-faixa__trilho{animation-play-state:paused}', '')],
+  'faixa-so-com-handle': [/\/js\/tp\/ranking\.js/, (t) => t.replace("const destino = typeof p.url === 'string' ? p.url.trim() : '';", "const destino = p.public_handle ? String(p.url || '').trim() : '';")],
+  'faixa-sem-degrau': [/\/js\/tp\/ranking\.js/, (t) => t.replace("e.style.setProperty('--tp-faixa-grau', grau(p.position).toFixed(3));", '')],
 };
 
 async function abrir({ w = 1536, h = 1024, lang = 'pt', flag = true, toque = false, mutante = '', loja = true, placar = RANKING, sairSplash = true, nick = 'Regua' }) {
@@ -210,8 +215,9 @@ async function medir(mutante = '', alvo = '') {
     add('LB16', a.chips.length >= 4 && a.chips.every((c) => c.nome && c.icone), `redes no rodapé: ${a.chips.map((c) => c.nome || '?').join(' · ') || 'nenhuma'} (quer 4+ ícones com nome acessível)`);
     add('LB17', a.limas.length === 1 && /btn-jogar/.test(a.limas[0]), `fundos lima: ${a.limas.join(', ') || 'nenhum'} (quer só o JOGAR)`);
 
-    /* LB21 · faixa do placar no topo: passa sob as abas sem cobrir coluna nenhuma, cada jogador
-       leva ao perfil, o laço para pra clicar, movimento reduzido vira lista e a partida não herda. */
+    /* LB21 · faixa do placar no topo: passa sob as abas sem cobrir coluna nenhuma, TODO item visível
+       leva ao perfil, o destaque cresce do 10º pro 1º, o laço para pra clicar, movimento reduzido
+       vira lista e a partida não herda. */
     let fx = { achou: false };
     if (quer('LB21')) {
       const leitura = () => {
@@ -219,6 +225,7 @@ async function medir(mutante = '', alvo = '') {
         if (!f || !f.checkVisibility?.({ checkOpacity: true, checkVisibilityCSS: true })) return { achou: false };
         const b = f.getBoundingClientRect();
         const filas = [...f.querySelectorAll('.tp-faixa__fila')];
+        const todos = [...f.querySelectorAll('.tp-faixa__item')];
         const trilho = f.querySelector('.tp-faixa__trilho');
         const cs = getComputedStyle(trilho);
         const col = document.querySelector('.tp-lobby-dir')?.getBoundingClientRect();
@@ -234,7 +241,14 @@ async function medir(mutante = '', alvo = '') {
             href: e.getAttribute('href'), pos: e.querySelector('.tp-faixa__pos')?.textContent || '',
             nick: e.querySelector('.tp-faixa__nick')?.textContent || '', pts: e.querySelector('.tp-faixa__pts')?.textContent || '',
             rosto: !!e.querySelector('.tp-rosto img, .tp-rosto .tp-disp'),
+            /* respiro, rosto e largura do degrau: nick nenhum entra na conta do padding nem do rosto */
+            respiro: parseFloat(getComputedStyle(e).paddingLeft) || 0,
+            face: Math.round((e.querySelector('.tp-rosto')?.getBoundingClientRect().height || 0) * 10) / 10,
+            larg: Math.round(e.getBoundingClientRect().width * 10) / 10,
           })),
+          todos: todos.length,
+          links: todos.filter((e) => e.tagName === 'A' && !!e.getAttribute('href')).length,
+          altItem: todos.length ? Math.max(...todos.map((e) => e.getBoundingClientRect().height)) : 0,
           copias: filas.length, copiaMuda: filas.length > 1 && filas[1].getAttribute('aria-hidden') === 'true' && filas[1].inert === true,
           anima: cs.animationName, roda: cs.animationPlayState, rolagem: getComputedStyle(f.querySelector('.tp-faixa__janela')).overflowX,
           copiaFora: filas.length > 1 ? getComputedStyle(filas[1]).display : '',
@@ -361,19 +375,28 @@ async function medir(mutante = '', alvo = '') {
       await foto(page, 'jogar-1536x1024');
     }
     if (quer('LB21') && fx.achou) fx.naPartida = await page.evaluate(() => !!document.getElementById('tp-lobby-faixa')?.checkVisibility?.({ checkOpacity: true, checkVisibilityCSS: true }));
-    const esperadoFx = RANKING_JOGADORES.slice(0, 8);
+    const esperadoFx = RANKING_JOGADORES.slice(0, 10);
     const falta = RANKING_JOGADORES[3].points - RANKING.own.points;
     const itensOk = fx.achou && fx.itens.length >= esperadoFx.length
       && esperadoFx.every((p, i) => fx.itens[i].href === p.url && fx.itens[i].nick === p.nick && fx.itens[i].rosto
         && fx.itens[i].pos === `#${p.position}` && fx.itens[i].pts.startsWith(p.points.toLocaleString('pt-BR')));
+    /* todo item visível leva ao perfil: nenhum vira texto morto, nem o de quem não reivindicou conta */
+    const linkOk = fx.achou && fx.todos > 0 && fx.links === fx.todos;
+    /* o destaque cresce do 10º pro 1º no respiro e no rosto, e o #1 não estoura a altura da faixa */
+    const passo = fx.achou && fx.itens.length >= esperadoFx.length ? esperadoFx.map((_, i) => fx.itens[i]) : [];
+    const ult = passo[passo.length - 1];
+    const degrauOk = passo.length === esperadoFx.length
+      && passo.every((it, i) => i === 0 || passo[i - 1].respiro > it.respiro + 0.5)
+      && passo[0].respiro - ult.respiro >= 10 && passo[0].face - ult.face >= 8 && passo[0].larg > ult.larg
+      && fx.altItem <= fx.alt - 2;
     const euOk = fx.achou && /SEU RANKING/.test(fx.eu) && fx.eu.includes(`#${RANKING.own.position}`) && fx.euHref === RANKING.own.url;
     const alvoOk = fx.achou && fx.alvo.includes(String(falta)) && fx.alvo.includes(RANKING_JOGADORES[3].nick) && fx.alvoHref === RANKING_JOGADORES[3].url;
-    const noLugar = fx.achou && fx.l <= 0 && fx.r >= fx.vw - 1 && fx.t >= fx.cabecalho - 1 && fx.t + fx.alt <= fx.coluna + 1 && fx.alt <= 60;
+    const noLugar = fx.achou && fx.l <= 0 && fx.r >= fx.vw - 1 && fx.t >= fx.cabecalho - 1 && fx.t + fx.alt <= fx.coluna + 1 && fx.alt <= 46;
     const movOk = fx.achou && fx.anima !== 'none' && fx.roda === 'running' && fx.pausado === 'paused' && fx.copiaMuda
       && fx.reduzido?.anima === 'none' && fx.reduzido?.rolagem === 'auto' && fx.reduzido?.copiaFora === 'none';
-    add('LB21', itensOk && euOk && alvoOk && noLugar && movOk && fx.naPartida === false,
+    add('LB21', itensOk && linkOk && degrauOk && euOk && alvoOk && noLugar && movOk && fx.naPartida === false,
       !fx.achou ? 'faixa do placar ausente ou invisível no lobby'
-        : `faixa ${Math.round(fx.alt)} px entre cabeçalho (${Math.round(fx.cabecalho)}) e colunas (${Math.round(fx.coluna)})${noLugar ? '' : ' FORA DO LUGAR'}; "${fx.eu.trim()}" → ${fx.euHref || 'sem link'}${euOk ? '' : ' DIVERGE DO own'}; vizinho "${fx.alvo.trim()}"${alvoOk ? '' : ' DIVERGE'}; ${fx.itens.length} jogadores${itensOk ? ' com rosto, posição, pontos e link' : ' COM CAMPO ERRADO'}; laço ${fx.anima}/${fx.roda}, no hover ${fx.pausado}, cópia ${fx.copiaMuda ? 'muda' : 'NO CAMINHO DO LEITOR'}, reduzido ${fx.reduzido?.anima}/${fx.reduzido?.rolagem}; na partida ${fx.naPartida ? 'CONTINUA' : 'some'}`);
+        : `faixa ${Math.round(fx.alt)} px entre cabeçalho (${Math.round(fx.cabecalho)}) e colunas (${Math.round(fx.coluna)})${noLugar ? '' : ' FORA DO LUGAR'}; "${fx.eu.trim()}" → ${fx.euHref || 'sem link'}${euOk ? '' : ' DIVERGE DO own'}; vizinho "${fx.alvo.trim()}"${alvoOk ? '' : ' DIVERGE'}; ${fx.itens.length} jogadores${itensOk ? ' com rosto, posição, pontos e link' : ' COM CAMPO ERRADO'}; ${fx.links}/${fx.todos} itens visíveis são link${linkOk ? '' : ' — ITEM SEM LINK'}; degrau #1 ${passo[0]?.larg ?? '?'}×${Math.round(fx.altItem)} px (respiro ${passo[0]?.respiro ?? '?'}, rosto ${passo[0]?.face ?? '?'}) contra #10 ${ult?.larg ?? '?'} px (respiro ${ult?.respiro ?? '?'}, rosto ${ult?.face ?? '?'})${degrauOk ? '' : ' SEM DEGRAU'}; laço ${fx.anima}/${fx.roda}, no hover ${fx.pausado}, cópia ${fx.copiaMuda ? 'muda' : 'NO CAMINHO DO LEITOR'}, reduzido ${fx.reduzido?.anima}/${fx.reduzido?.rolagem}; na partida ${fx.naPartida ? 'CONTINUA' : 'some'}`);
     add('LB3', jogo.quick === true && (jogo.menu || jogo.carga || jogo.jogo), `JOGAR: confirmação ${jogo.quick === false ? 'aberta' : 'fechada'}, partida ${jogo.menu || jogo.carga || jogo.jogo ? 'começou' : 'não começou'}`);
     await ctx.close();
   }
@@ -507,7 +530,7 @@ const MUT = [['abas-velhas', 'LB1'], ['ajustes-mudo', 'LB2'], ['confirma-de-novo
   ['personagem-no-canto', 'LB5'], ['convite-mudo', 'LB6'], ['erro-mudo', 'LB6'], ['quest-inventada', 'LB7'], ['passe-sem-backend', 'LB8'],
   ['rede-trocada', 'LB9'], ['coluna-larga', 'LB10'], ['toque-baixo', 'LB11'], ['sem-traducao', 'LB12'], ['flag-vaza', 'LB13'],
   ['gire-sem-arte', 'LB14'], ['mais-sem-feedback', 'LB15'], ['chip-sem-nome', 'LB16'], ['dois-limas', 'LB17'], ['skins-mudas', 'LB19'], ['arma-sem-skin', 'LB20'],
-  ['faixa-sem-pausa', 'LB21']];
+  ['faixa-sem-pausa', 'LB21'], ['faixa-so-com-handle', 'LB21'], ['faixa-sem-degrau', 'LB21']];
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO === m)) {

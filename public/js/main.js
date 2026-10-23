@@ -3588,6 +3588,50 @@ async function renderHubRanking() {
     const number = document.createElement('b'); number.textContent = String(value);
     card.append(number, document.createTextNode(label)); cards.appendChild(card);
   }
+  /* 21 dos 25 do ranking não têm foto (medido 22/10): sem avatar_url entra a arte do último
+     personagem jogado, e a inicial fica só pra quem não tem nem foto nem personagem. */
+  const rostoDoJogador = (p) => {
+    const caixa = document.createElement('span'); caixa.className = 'ranking-avatar';
+    const inicial = document.createElement('span');
+    inicial.textContent = (Array.from(p.nick || '?')[0] || '?').toUpperCase();
+    caixa.append(inicial);
+    const arte = /^[a-z0-9][a-z0-9_-]{0,31}$/.test(p.last_character || '') ? `/img/chars/avatars/${p.last_character}.webp` : '';
+    const fonte = (typeof p.avatar_url === 'string' && p.avatar_url) || arte;
+    if (!fonte) return caixa;
+    const img = document.createElement('img');
+    img.src = fonte; img.width = 36; img.height = 36; img.loading = 'lazy'; img.alt = '';
+    if (fonte === arte) img.dataset.arte = '1';
+    img.onerror = () => { if (arte && img.dataset.arte !== '1') { img.dataset.arte = '1'; img.src = arte; return; } img.hidden = true; };
+    caixa.append(img); return caixa;
+  };
+  /* A linha inteira leva ao perfil: role+tabindex no <tr> porque <a> não embrulha linha de
+     tabela, e aninhar link dentro de link quebra o teclado e o leitor de tela. */
+  const linhaDoJogador = (p, i) => {
+    const linha = document.createElement('tr');
+    const perfil = playerProfilePath(p) || '';
+    const posicao = document.createElement('td'); posicao.textContent = `#${p.position ?? i + 1}`;
+    const quem = document.createElement('td');
+    const dupla = document.createElement('div'); dupla.className = 'ranking-player';
+    const dados = document.createElement('div');
+    const nome = document.createElement(perfil ? 'a' : 'span');
+    nome.className = 'hub-rank-nick'; nome.textContent = p.nick || '—';
+    if (perfil) { nome.href = perfil; nome.setAttribute('tabindex', '-1'); }
+    dados.append(nome);
+    const selo = accountVerifiedBadge(p.account_verified); if (selo) dados.append(selo);
+    const patente = careerRankBadge(p.career_points ?? p.points); if (patente) dados.append(patente);
+    dupla.append(rostoDoJogador(p), dados); quem.append(dupla);
+    linha.append(posicao, quem);
+    for (const valor of [p.points, p.kills, p.kd, p.matches]) {
+      const cel = document.createElement('td'); cel.textContent = valor == null ? '—' : String(valor); linha.append(cel);
+    }
+    if (!perfil) return linha;
+    linha.setAttribute('role', 'link'); linha.setAttribute('tabindex', '0');
+    linha.dataset.href = perfil;
+    linha.setAttribute('aria-label', `${tr('Ver perfil de')} ${p.nick || ''}`.trim());
+    linha.onclick = (e) => { if (!e.target?.closest?.('a')) location.assign(perfil); };
+    linha.onkeydown = (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; e.preventDefault(); location.assign(perfil); };
+    return linha;
+  };
   const global = $('hub-rank-global');
   global.textContent = 'Carregando o ranking global…';
   /* Fonte verificada (22/10): /api/social?action=ranking é a única que filtra ranking_exclusion;
@@ -3599,7 +3643,16 @@ async function renderHubRanking() {
   }
   if (!Array.isArray(data?.players)) { global.textContent = 'Ranking global indisponível no momento.'; return; }
   if (!data.players.length) { global.textContent = 'Ainda não há jogadores no ranking.'; return; }
-  global.replaceChildren(rankingTable(data.players.slice(0,10)));
+  const tabela = document.createElement('table'); tabela.className = 'social-table';
+  const cabeca = document.createElement('thead'); const linhaCabeca = document.createElement('tr');
+  for (const rotulo of ['POS.', 'JOGADOR', 'PONTOS', 'KILLS', 'K/D', 'PARTIDAS']) {
+    const th = document.createElement('th'); th.textContent = tr(rotulo); linhaCabeca.append(th);
+  }
+  cabeca.append(linhaCabeca); tabela.append(cabeca);
+  const corpo = document.createElement('tbody');
+  for (const [i, p] of data.players.slice(0, 10).entries()) corpo.append(linhaDoJogador(p, i));
+  tabela.append(corpo);
+  global.replaceChildren(tabela);
 }
 async function renderGlobal(nick) {
   const box = $('rank-global');
@@ -5034,3 +5087,5 @@ if (params.get('qa') === 'mobile' || window.__CS_QA__) {
   void import('./qa-mobile.js').then((m) => m.ligarQaMobile()).catch(() => { /* QA não derruba partida */ });
 }
 import {rankingTable,playerProfilePath} from './ranking-player.js';
+import {accountVerifiedBadge} from './account-verified.js';
+import {careerRankBadge} from './career-rank.js';

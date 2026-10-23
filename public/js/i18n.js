@@ -368,6 +368,8 @@ const DICT = {
   'SÓ PISTOLAS': 'PISTOLS ONLY', 'SÓ FACA': 'KNIFE ONLY', 'SÓ AWP': 'AWP ONLY',
   'VOCÊ': 'YOU', 'RÁDIO': 'RADIO', 'Respawn em': 'Respawn in',   // tradução DO DONO (06/08) — não 'join this crew'
   'KILLS': 'KILLS', 'MORTES': 'DEATHS', 'JOGADOR': 'PLAYER', 'CAP.': 'CAP.', 'SOLO': 'SOLO',
+  // cabeçalho da tabela da aba RANKING (main.js, renderHubRanking) e o rótulo da linha clicável
+  'POS.': 'POS.', 'PONTOS': 'POINTS', 'Ver perfil de': 'View profile of',
   'CORO SOLTO — PLACAR': 'CORO SOLTO — SCOREBOARD',
   'A treta continua sem você. Por enquanto.': 'The fight goes on without you. For now.',
   /* --- varredura de 21/08: as sobras PT que apareciam no meio do EN (tela 04 e vizinhas).
