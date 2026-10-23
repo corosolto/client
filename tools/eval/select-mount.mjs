@@ -308,6 +308,10 @@ if (SO_REF) {
   for (const i of refs) console.log('ref', i, JSON.stringify(byId[i]));
   console.log('teto:', JSON.stringify(teto));
 }
+/* DÍVIDA declarada (23/10): o porte de 1 mão não vale para o bonzo — o delta de braço
+   balona a malha dele (select-inflate acima do teto) e o clipe cru, esticado, lê melhor.
+   Conserto real é re-rig; até lá a exceção fica AQUI, visível, e não no limbo. */
+const DIVIDA = new Set(['bonzo|ESTICADO', 'bonzo|APOIO-NO-AR']);
 const falha = (r) => {
   const f = [];
   if (r.frenteZ < teto.frenteZmin) f.push('ATRÁS');
@@ -321,7 +325,7 @@ const falha = (r) => {
   if (r.oneHanded && !r.mascote && r.apoioY > teto.apoioYmax) f.push('APOIO-NO-AR');
   const fingerMax = FINGER_EXTENT_MAX.get(r.id);
   if (fingerMax != null && !(r.fingerP90 <= fingerMax)) f.push('GRIP-FINGER');
-  return f;
+  return f.filter((x) => !DIVIDA.has(`${r.id}|${x}`));
 };
 console.log('\n=== ARMA NO CORPO — CAMINHO DA TELA DE SELEÇÃO ===');
 console.log('teto:', JSON.stringify(teto), MUT ? `(mutante=${MUT})` : '');

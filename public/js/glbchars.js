@@ -177,7 +177,9 @@ const PORTE_1H = qp.get('porte1h') !== '0';
 const P1H_ARM = ((_p1h.length === 2 && !isNaN(_p1h[0]) ? _p1h[0] : 50)) * Math.PI / 180;
 const P1H_FORE = ((_p1h.length === 2 && !isNaN(_p1h[1]) ? _p1h[1] : -50)) * Math.PI / 180;
 const P1H_MAO_L = [-0.19, -0.06, 0.02];
-
+/* Corpos onde o overlay balona a malha (select-inflate: p99 acima do teto). O delta de
+   braço soma em cima de um bind próprio; nesses rigs o clipe cru já lê melhor. */
+const P1H_SKIP = new Set(['canarinho', 'bonzo']);
 const loader = new GLTFLoader();
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 
@@ -1177,7 +1179,7 @@ class CharController {
       }
       /* PORTE DE 1 MÃO: desce o braço direito, dobra o cotovelo e tira a mão esquerda da
          frente. Só em porte parado/andando; recarga e dança mandam mais que isto. */
-      const quer1h = PORTE_1H && this.oneHanded && !this.emotando && this.lod < 1
+      const quer1h = PORTE_1H && this.oneHanded && !this.emotando && this.lod < 1 && !P1H_SKIP.has(this.charId)
         && /^(idle1h|walk1h)$/.test(this.curName || '');
       this._porte1hK += ((quer1h ? 1 : 0) - this._porte1hK) * Math.min(1, dt * 10);
       if (this._porte1hK > 0.004 && this.reloadK <= 0.05 && this.corpo?.size) {

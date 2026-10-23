@@ -109,6 +109,11 @@ censo de postura (ver seção seguinte) mostrou o custo: em 7 rigs (mst, et, esb
 rapper, dama, deputado) a mão caía ATRÁS do plano do corpo. 50°/−50° é o ponto que zera
 esses casos mantendo a arma no peito.
 
+Dois corpos ficam FORA do overlay, declarados em `P1H_SKIP` (glbchars.js): `canarinho` e
+`bonzo`. O delta de braço balona a malha deles — o select-inflate passou a reprovar com o
+overlay ligado — e o clipe cru, mesmo esticado, lê melhor. Conserto real é re-rig; a
+exceção mora no código com nome e motivo, e o porte deles segue na dívida do contrato.
+
 Medido em `esquerdomacho`/`padati`/`raul` no caminho da seleção (desligado → ligado):
 
 | Medida | Antes | Depois | O que significa |
@@ -156,21 +161,23 @@ O contrato é `npm run eval:postura` (`tools/eval/postura-check.mjs`), no `check
 | PS5 | cotovelo 55°..150° | faixa humana; censo p05=79,8 p95=135,8 |
 | PS6 | tremor ≤0,035 alturas/quadro correndo | quem passa mede ≤0,028; reprovados 0,039–0,075 |
 
-**Dívida, não perdão.** O elenco de hoje tem 9 personagens fora do contrato. Eles estão em
-`DIVIDA` dentro da régua, visível no veredito: personagem NOVO que quebrar reprova o CI;
-entrada da lista que for consertada e não removida também reprova ("dívida paga: tire da
-lista"). A lista encolhe, nunca cresce escondido. Exceção de CORPO (não de defeito) também
-é declarada com motivo: `dollynho`, `gotinha`, `et`, `canarinho` — mascotes.
+**Dívida, não perdão.** O elenco de hoje tem 11 personagens/cláusula fora do contrato. Eles
+estão em `DIVIDA` dentro da régua, visível no veredito: personagem NOVO que quebrar reprova
+o CI; entrada da lista que for consertada e não removida também reprova ("dívida paga:
+tire da lista"). A lista encolhe, nunca cresce escondido. Exceção de CORPO (não de defeito)
+também é declarada com motivo: `dollynho`, `gotinha`, `et`, `canarinho` — mascotes.
 
 A fila de revisão, com o que cada um quebra hoje:
 
-| Personagem | Cláusula | Medida |
-|---|---|---|
-| `lobisomem` | PS6 tremor | 0,075 (2× o teto) |
-| `mariabonita` | PS6 tremor | 0,039 |
-| `lampiao` | PS6 tremor | 0,039 |
-| `adjim`, `ancap`, `bonzo`, `cadequinha`, `metaleiro` | PS3 arma na altura da cabeça | −0,001..0,017 |
-| `marina-silva` | PS4 mão na arma de 1 mão | 0,017–0,046 |
+| Personagem | Cláusula | Medida | Caminho de conserto |
+|---|---|---|---|
+| `lobisomem` | PS6 tremor | 0,075 (2× o teto) | clipe compartilhado: re-autorar ou filtrar |
+| `mariabonita` | PS6 tremor | 0,039 | idem |
+| `lampiao` | PS6 tremor | 0,039 | idem |
+| `adjim`, `ancap`, `cadequinha`, `metaleiro` | PS3 arma na altura da cabeça | −0,008..0,017 | pose no rig ou clipe próprio |
+| `bonzo` | PS3 + PS5 cotovelo 42° | — | re-rig (o overlay balona a malha dele) |
+| `canarinho` | PS5 cotovelo 43° | — | mascote de braço-toco: decisão editorial |
+| `marina-silva` | PS4 mão na arma de 1 mão | 0,017–0,046 | pose no rig |
 
 Os três de tremor são os mesmos corpos que o `EMOTES-BR.md` já apontava por dependerem do
 pack de animação compartilhado: o tremor está no CLIPE, não no mount — consertar é re-autorar
