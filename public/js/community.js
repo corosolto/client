@@ -387,5 +387,7 @@ if(root) {
   const query=new URLSearchParams(location.search);if(['profile','friends','ranking','notifications','feed','settings'].includes(query.get('social')))tab=query.get('social');if(abaDoCaminho())tab=abaDoCaminho();
   document.addEventListener('cs-account-change',event=>{const changed=auth?.profile?.id!==event.detail?.profile?.id;auth=event.detail;if(changed){clearConversation();state=null;loadVersion++;content.replaceChildren();for(const id of ['social-unread','hub-social-unread'])document.getElementById(id).textContent='';renderAccount();}if(bootPromise)return;void refresh().then(()=>{renderAccount();return render();}).catch(e=>{message(errors[e.message] || 'Sua sessão está indisponível.');if(profileId)void render();});});
   document.addEventListener('cs-community-open',event=>{if(event.detail?.tab)tab=event.detail.tab;if(event.detail && Object.prototype.hasOwnProperty.call(event.detail,'perfil'))profileId=event.detail.perfil || '';profileAba=abaDaUrl();void boot();});
+  // Recolhe antes do boot: o perfil compartilhado nao pode abrir com o painel da conta por cima.
+  painelDaConta();
   void boot();
 }
