@@ -59,10 +59,23 @@ export function tretaPitch(campaign,mode,now=Date.now()) {
   const c={...TRETA_DEFAULT_REWARDS,...campaign};
   if(!(now>=Date.parse(c.starts_at) && now<Date.parse(c.ends_at)))return null;
   if(![c.mp_reward,c.sp_reward,c.email_reward,c.daily_match_cap].every(v=>Number.isSafeInteger(v) && v>0))return null;
+  // Servidor com bônus de cadastro paga na criação da conta; sem ele, vale a recompensa antiga de e-mail.
+  const boasVindas=Number.isSafeInteger(c.signup_bonus) && c.signup_bonus>0?c.signup_bonus:c.email_reward;
+  const quando=boasVindas===c.signup_bonus?'de boas-vindas, ao criar a conta':'ao confirmar o e-mail, uma vez só';
   return {
-    headline:mode==='returning'?`Seu perfil pode ganhar ${money(c.email_reward)} quando você entrar e confirmar o e-mail.`:mode==='multiplayer'?`Logado, essa partida multiplayer podia render ${money(c.mp_reward)}.`:`Essa foi de treino. Logado, cada partida solo premiada rende ${money(c.sp_reward)}.`,
-    items:[[money(c.mp_reward),'por partida multiplayer'],[money(c.sp_reward),'por partida solo premiada'],[money(c.email_reward),'ao confirmar o e-mail, uma vez só']],
+    headline:mode==='multiplayer'?`Logado, essa partida multiplayer podia render ${money(c.mp_reward)}.`:`Essa foi de treino. Logado, cada partida solo premiada rende ${money(c.sp_reward)}.`,
+    items:[[money(c.mp_reward),'por partida multiplayer'],[money(c.sp_reward),'por partida solo premiada'],[money(boasVindas),quando]],
     cap:`Até ${money(c.daily_match_cap)} por dia em partidas. Os T$ viram skin na LOJA.`,
+  };
+}
+/* Bônus de cadastro (treta_campaign.signup_bonus): pago na criação da conta, sem janela de campanha nem e-mail confirmado. */
+export function signupPitch(campaign) {
+  const bonus=campaign?.signup_bonus;
+  if(!Number.isSafeInteger(bonus) || bonus<=0)return null;
+  return {
+    headline:`Seu nick está salvo só neste aparelho. Crie sua conta e ${money(bonus)} caem na sua carteira na hora.`,
+    items:[[money(bonus),'de boas-vindas, uma vez por conta']],
+    cap:'Os T$ viram skin na LOJA. Nick, conquistas e amigos ficam salvos em qualquer aparelho.',
   };
 }
 const providerId=(id,config)=>id==='x' && config.providers?.includes('twitter') && !config.providers?.includes('x')?'twitter':id;
@@ -77,10 +90,10 @@ export function initLoginPrompt({auth=null,config=null,accountBusy=()=>false,ski
   // Fim da decisão pós-partida (mostrou e fechou, ou não era a vez): a apresentação da loja vem depois.
   const settle=()=>{if(!owed)return;owed=false;document.dispatchEvent(new CustomEvent('cs-pos-partida',{detail:{treta:pitched}}));pitched=false;};
   const drawTreta=()=>{
-    const pitch=tretaPitch(campaign,mode);
+    const pitch=mode==='returning'?signupPitch(campaign):tretaPitch(campaign,mode);
     pitched=!!pitch;
-    if(title)title.textContent=pitch?(mode==='returning'?`${money(campaign.email_reward)} para o seu perfil`:'Jogar logado rende T$'):plain.title;
-    if(kicker)kicker.textContent=pitch?(mode==='returning'?'SEU PERFIL · SUA CONTA':'FIM DE PARTIDA · SUA CONTA'):plain.kicker;
+    if(title)title.textContent=pitch?(mode==='returning'?`${money(campaign.signup_bonus)} para começar`:'Jogar logado rende T$'):plain.title;
+    if(kicker)kicker.textContent=pitch?(mode==='returning'?'SEU NICK · SUA CONTA':'FIM DE PARTIDA · SUA CONTA'):plain.kicker;
     if(!treta)return;
     treta.hidden=!pitch;
     if(!pitch)return;
@@ -145,11 +158,12 @@ export function initLoginPrompt({auth=null,config=null,accountBusy=()=>false,ski
     socialApi('/api/treta').then(out=>{campaign=out?.campaign || null;if(dialog.open)drawTreta();}).catch(()=>{});
   });
   document.addEventListener('cs-account-change',e=>{auth=e.detail;if(auth?.authenticated && dialog.open)dialog.close();});
+  // Anônimo com nick salvo: o convite do bônus de cadastro não espera partida nenhuma.
   try {
-    if(!auth?.authenticated && localStorage.getItem('awpbr_nick') && localStorage.getItem('awpbr_token')) {
+    if(!auth?.authenticated && localStorage.getItem('awpbr_nick')) {
       socialApi('/api/treta').then(out=>{
         campaign=out?.campaign || null;
-        if(campaign?.email_reward===1000 && tretaPitch(campaign,'returning')){ended=true;mode='returning';maybeShow();}
+        if(signupPitch(campaign)){ended=true;mode='returning';maybeShow();}
       }).catch(()=>{});
     }
   }catch{}
