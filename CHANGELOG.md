@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.117`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.118`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -147,6 +147,33 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.118] — 2026-10-24
+
+### Mudado
+- Dança: guarda a arma, solta os braços e abre o passo (#1057)
+- feat(lobby): skin comprada vira personagem + convite de 1.000 T$ para anônimo com nick (#1061)
+- feat(ranking): placar vira tela de topo, com card no lobby (#1058)
+- fix(deps): fecha as 5 vermelhas do DEP1 (zod e undici) (#1062)
+- feat(ui): movimento único e ambiência do palco (Treta Pop fases 2 e 3) (#1052)
+- feat(loja): adiciona treze skins míticas (#1063)
+- fix(skins): reforça visual do Mandrake Cyborg
+- feat(skins): integra quatro cyborgs adicionais
+- fix(loja): remove faixa dos cards de personagem
+- feat(loja): unifica vitrine de personagens
+- feat(skins): integra nove rigs míticos
+- fix(deps): undici 8.12.3 por override, a ultima vermelha do DEP1
+- docs: bloco gerado de scripts com as reguas novas
+- feat(convite): anonimo com nick ve o bonus de 1.000 T$ do cadastro
+- feat(lobby): skin comprada vira personagem selecionavel
+- fix(postura): skip declarado para canarinho e bonzo; dívida atualizada
+- fix(postura): JSON do gate só com JSON=1 (CS4)
+- docs: regenera blocos derivados (autofix)
+- feat(postura): contrato de postura e movimento para quem segura arma
+- fix(3p): porte de 1 mao — a pistola sai da ponta dos dedos
+- fix(dancas): porta fechada ate o dono validar os passos
+- Pipeline de danca por video: extrator, prova e o que ela nao prova
+- Danca: guarda a arma, solta os bracos e abre o passo
 
 ## [2.1.0-alpha.117] — 2026-10-22
 
