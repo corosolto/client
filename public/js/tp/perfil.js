@@ -54,8 +54,11 @@ function relativo(iso) {
 }
 const idMapa = (id) => { const r = resolveMapId(id); return MAPS[r] ? r : null; };
 const nomeMapa = (id) => MAPS[idMapa(id)]?.name || String(id || '');
-const modo = (h) => [MODOS[h.mode] ? tr(MODOS[h.mode]) : String(h.mode || '').toUpperCase(),
-  h.game_type === 'multiplayer' ? 'Multiplayer' : h.game_type === 'singleplayer' ? tr('Solo') : ''].filter(Boolean).join(' · ');
+/* Partida solo é dado do aparelho do jogador: só o campo source decide o rótulo. */
+const SOLO = 'client_solo_unverified';
+const origem = (h) => (h.source === SOLO ? tr('Solo')
+  : h.game_type === 'multiplayer' ? 'Multiplayer' : /^single_?player$/.test(h.game_type || '') ? tr('Solo') : '');
+const modo = (h) => [MODOS[h.mode] ? tr(MODOS[h.mode]) : String(h.mode || '').toUpperCase(), origem(h)].filter(Boolean).join(' · ');
 const marcas = (r) => (r.symbol === 'star' ? '★' : '▲').repeat(r.marks);
 const retrato = (p) => PROFILE_CHARACTERS[p.last_character]?.portrait || null;
 /* O backend manda SEGUNDOS; hora decimal ("6,7 h") não é leitura de jogador. */
@@ -134,6 +137,12 @@ function marcaResultado(h) {
   const m = el('span', 'tp-perfil__marca tp-disp', h.result === 'win' ? tr('Vitória').charAt(0) : h.result === 'loss' ? tr('Derrota').charAt(0) : '·');
   m.dataset.resultado = h.result || '';
   return m;
+}
+/* Solo não passa pelo nó e não vale ranking: a linha ganha selo âmbar para não se confundir com rodada verificada. */
+function selaOrigem(linha, h) {
+  if (h.source !== SOLO) return null;
+  linha.dataset.origem = 'solo';
+  return el('span', 'tp-selo-solo', tr('não vale ranking'));
 }
 function aviso() {
   const a = el('p', 'tp-perfil__aviso');
@@ -320,13 +329,15 @@ export function ligar() {
     const g = el('div', 'tp-perfil__atividade');
     for (const h of (visivel && Array.isArray(p.history) ? p.history : []).slice(0, 3)) {
       const it = el('div', 'tp-perfil__evento'), t = el('span', 'tp-perfil__evento-texto');
-      t.append(el('b', '', `${nomeMapa(h.map)} · ${conta(h.kills)}/${conta(h.deaths)}`), el('small', '', [modo(h), relativo(h.started_at)].filter(Boolean).join(' · ')));
+      const sub = el('small', '', [modo(h), relativo(h.started_at)].filter(Boolean).join(' · ')), selo = selaOrigem(it, h);
+      if (selo) sub.append(selo);
+      t.append(el('b', '', `${nomeMapa(h.map)} · ${conta(h.kills)}/${conta(h.deaths)}`), sub);
       it.append(marcaResultado(h), t);
       g.append(it);
     }
     if (!g.children.length) g.append(el('p', 'tp-perfil__vazio', tr(visivel
-      ? 'As rodadas aparecem aqui a partir da primeira partida confirmada pelo servidor.' : 'Este jogador não compartilha as rodadas com você.')));
-    s.append(cabecalho('Atividade', 'rodadas confirmadas pelo servidor'), g);
+      ? 'Ainda sem partida registrada.' : 'Este jogador não compartilha as rodadas com você.')));
+    s.append(cabecalho('Atividade', 'partida confirmada e solo não verificado'), g);
     return s;
   }
 
@@ -498,14 +509,16 @@ export function ligar() {
 
     const partidas = el('section', 'tp-painel tp-carreira__partidas');
     partidas.setAttribute('aria-label', tr('Últimas partidas'));
-    partidas.append(cabecalho('Últimas partidas', 'confirmadas pelo servidor'));
+    partidas.append(cabecalho('Últimas partidas', 'partida confirmada e solo não verificado'));
     for (const h of (p.history || []).slice(0, 5)) {
       const m = el('div', 'tp-carreira__m'), t = el('span', 'tp-perfil__evento-texto');
-      t.append(el('b', '', nomeMapa(h.map)), el('small', '', [modo(h), h.complete === false ? tr('encerrada antes do placar') : ''].filter(Boolean).join(' · ')));
+      const sub = el('small', '', [modo(h), h.complete === false ? tr('encerrada antes do placar') : ''].filter(Boolean).join(' · ')), selo = selaOrigem(m, h);
+      if (selo) sub.append(selo);
+      t.append(el('b', '', nomeMapa(h.map)), sub);
       m.append(marcaResultado(h), t, el('span', 'tp-num tp-carreira__kd', `${conta(h.kills)} / ${conta(h.deaths)}`), el('span', 'tp-carreira__quando', relativo(h.started_at)));
       partidas.append(m);
     }
-    if (!p.history?.length) partidas.append(el('p', 'tp-perfil__vazio', tr('As rodadas aparecem aqui a partir da primeira partida confirmada pelo servidor.')));
+    if (!p.history?.length) partidas.append(el('p', 'tp-perfil__vazio', tr('Ainda sem partida registrada.')));
     const med = el('div', 'tp-perfil__chips');
     for (const k of medalhas(p)) med.append(el('span', 'tp-perfil__medalha', tr(MEDALHAS[k])));
     if (!med.children.length) med.append(el('span', 'tp-perfil__nota', tr('A primeira medalha vem do primeiro abate.')));

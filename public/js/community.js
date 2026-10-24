@@ -194,11 +194,12 @@ if(root) {
     const earned=profileAchievements(p),achievements=el('ul','','social-list');for(const a of earned)achievements.append(el('li',achievementText(a)));secConquistas.append(earned.length?achievements:empty('A primeira conquista vem do primeiro abate.'));c.append(secConquistas);
     // O backend decide para este visitante se a atividade pode ser vista. Relação local nunca abre dados privados por inferência.
     const activityVisible=p.activity_visible===true;
-    const noActivity=activityVisible?(p.source==='historical_plus_server_verified'?'O histórico antigo guarda só os totais. As rodadas aparecem aqui a partir da primeira partida confirmada pelo servidor.':'Nenhuma rodada confirmada ainda.'):'Este jogador não compartilha as rodadas com você.';
+    const noActivity=activityVisible?(p.source==='historical_plus_server_verified'?'O histórico antigo guarda só os totais. As rodadas aparecem aqui a partir da primeira partida.':'Nenhuma rodada confirmada ainda.'):'Este jogador não compartilha as rodadas com você.';
     const secPartidas=el('section','','social-profile-section');secPartidas.append(el('h3','Preferências na arena'));
     const favorites=el('ul','','social-list');for(const f of activityVisible && Array.isArray(p.favorites)?p.favorites:[]){const grupo=f.faction?(GROUP_LABEL[f.faction]||f.faction):'Grupo/time não registrado';favorites.append(el('li',`${f.map} · ${f.mode} · ${f.character || 'Personagem não registrado'} · ${grupo} (${f.rounds} rodadas)`));}secPartidas.append(favorites.length?favorites:empty(noActivity));
     secPartidas.append(el('h3','Rodadas recentes'));
-    for(const h of activityVisible && Array.isArray(p.history)?p.history:[])secPartidas.append(empty(`${date(h.started_at)} · ${h.map} · ${h.mode} · ${h.kills} abates / ${h.deaths} mortes${h.complete?'':' · encerrada antes do placar'}`));
+    // Solo vem do aparelho do jogador e não é conferido pelo nó: sem o rótulo a lista passa por verificada.
+    for(const h of activityVisible && Array.isArray(p.history)?p.history:[])secPartidas.append(empty(`${date(h.started_at)} · ${h.map} · ${h.mode} · ${h.kills} abates / ${h.deaths} mortes${h.source==='client_solo_unverified'?' · Solo, não vale ranking':''}${h.complete?'':' · encerrada antes do placar'}`));
     if(!activityVisible || !p.history?.length)secPartidas.append(empty(noActivity));
     if(activityVisible)c.append(secPartidas);else c.append(empty(noActivity));
     // Abas do perfil (/u/<perfil>/<aba>) só para o dono logado. Visitante vê o perfil público inteiro, sem abas.

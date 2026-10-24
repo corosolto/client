@@ -18,8 +18,14 @@ const browser = await chromium.launch({
 
 const EU = '11111111-2222-4333-8444-555555555555', OUTRO = '22222222-3333-4444-8555-666666666666', CLA = '33333333-4444-4555-8666-777777777777';
 const CONVITE = 'Abc123_-'.repeat(5).slice(0, 43);
-const HIST = [['praca_poderes', 'rounds', 'win', 24, 8], ['escadao', 'ctf', 'loss', 11, 14], ['amazonia', 'ctf', 'win', 18, 10], ['piscina_treta', 'rounds', 'win', 20, 4], ['loja_h', 'rounds', 'loss', 9, 12], ['quebrada', 'rounds', 'win', 5, 5]]
-  .map(([map, mode, result, kills, deaths], i) => ({ started_at: new Date(Date.now() - (i + 1) * 7200e3).toISOString(), map, mode, game_type: 'multiplayer', complete: true, result, kills, deaths }));
+/* Histórico como o backend passa a mandar: verificado, solo (source novo) e item antigo SEM source, em ordem de data.
+   Cada item é uma PARTIDA (rodadas somadas), então o abate por linha chega a três dígitos — é o maior kd que a coluna precisa aguentar. */
+const SOLO = 'client_solo_unverified';
+const HIST = [['praca_poderes', 'rounds', 'win', 118, 84, 'server_verified'], ['escadao', 'rounds', 'win', 78, 12, SOLO],
+  ['amazonia', 'ctf', 'loss', 41, 56, 'server_verified'], ['piscina_treta', 'rounds', null, 7, 9, SOLO],
+  ['loja_h', 'rounds', 'loss', 9, 12, ''], ['quebrada', 'rounds', 'win', 5, 5, 'server_verified']]
+  .map(([map, mode, result, kills, deaths, source], i) => ({ started_at: new Date(Date.now() - (i + 1) * 7200e3).toISOString(), map, mode,
+    game_type: source === SOLO ? 'single_player' : 'multiplayer', complete: result !== null, result, kills, deaths, ...(source ? { source } : {}) }));
 const DONO = { id: EU, nick: 'ZeDoAWP', handle: 'zedoawp', url: '/u/zedoawp', visibility: 'public', source: 'server_verified', bio: 'Só AWP no eixo da Praça.',
   level: 11, next_level_points: 80, points: 1020, position: 412, kills: 1284, deaths: 904, kd: 1.42, matches: 140, round_wins: 97, round_losses: 60,
   verified_play_seconds: 90000, play_seconds: 99000, legacy_play_seconds: 9000,
@@ -47,10 +53,17 @@ const MUT = {
   'dois-limas': ['PF5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("'tp-carreira__compartilhar'", "'tp-btn--primario tp-carreira__compartilhar'")],
   'numero-inventado': ['PF6', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("trk('Abates', conta(p.kills))", "trk('Abates', conta(Number(p.kills) + 16))")],
   'acao-morta': ['PF7', ['alheio'], /\/js\/tp\/perfil\.js/, (t) => t.replace('() => clicaLegado(texto)?.click()', '() => {}')],
+  'kd-apertado': ['CA1', ['dono'], /\/css\/tp\/perfil\.css/, (t) => t.replace('grid-template-columns:44px minmax(0,1fr) 76px auto', 'grid-template-columns:44px minmax(0,1fr) 34px auto')],
   'carreira-empilhada': ['CA1', ['dono'], /\/css\/tp\/perfil\.css/, (t) => t.replace('.tp-carreira{display:grid', '.tp-carreira{display:block')],
   'barra-da-faixa': ['CA2', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('Math.min(1, pts / seguinte.minPoints)', 'Math.min(1, (pts - rank.minPoints) / seguinte.minPoints)')],
   'convite-sem-token': ['CA3', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('link += `#invite=${r.invite}`', "link += ''")],
   'cla-de-mentira': ['CA4', ['semcla'], /\/js\/tp\/perfil\.js/, (t) => t.replace('if (!c) {', "if (!c && false) {")],
+  'solo-sem-rotulo': ['CA5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("h.source === SOLO ? tr('Solo')", "false ? tr('Solo')")
+    .replace("/^single_?player$/.test(h.game_type || '') ? tr('Solo')", "false ? tr('Solo')")],
+  'solo-sem-selo': ['CA5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('if (h.source !== SOLO) return null;', 'if (true) return null;')],
+  'solo-engole-antigo': ['CA5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('for (const h of (p.history || []).slice(0, 5))', 'for (const h of (p.history || []).filter((x) => x.source).slice(0, 5))')],
+  'cabecalho-mentiroso': ['CA5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("cabecalho('Últimas partidas', 'partida confirmada e solo não verificado')", "cabecalho('Últimas partidas', 'confirmadas pelo servidor')")],
+  'derrota-inventada': ['CA5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("h.result === 'loss' ? tr('Derrota').charAt(0) : '·'", "tr('Derrota').charAt(0)")],
   'patente-sem-tr': ['IN1', ['en'], /\/js\/i18n\.js/, (t) => t.replace("'Próxima patente': 'Next rank',", '')],
   'toque-pequeno': ['VP2', ['telas'], /\/css\/tp\/perfil\.css/, (t) => t.replace('@media (pointer:coarse){', '@media (pointer:none){')],
   'gancho-sem-flag': ['SF1', ['semflag'], /\/js\/community\.js/, (t) => t.replace("if(document.documentElement?.dataset?.ui==='v3')root.tpPerfilDados", 'root.tpPerfilDados')],
@@ -161,7 +174,18 @@ async function medeCarreira(p) {
     const m = i ? new DOMMatrix(getComputedStyle(i).transform) : null;
     return {
       eu: caixa('.tp-carreira__eu'), partidas: caixa('.tp-carreira__partidas'), cla: caixa('.tp-carreira__cla'),
-      linhas: visiveis('.tp-carreira__m').map((e) => [e.querySelector('.tp-perfil__marca').textContent, e.querySelector('b').textContent, e.querySelector('.tp-carreira__kd').textContent]),
+      linhas: visiveis('.tp-carreira__m').map((e) => {
+        const selo = e.querySelector('.tp-selo-solo'), sub = e.querySelector('small');
+        const kdEl = e.querySelector('.tp-carreira__kd'), quandoEl = e.querySelector('.tp-carreira__quando');
+        const kdR = kdEl.getBoundingClientRect(), quandoR = quandoEl?.getBoundingClientRect();
+        return { marca: e.querySelector('.tp-perfil__marca').textContent, mapa: e.querySelector('b').textContent,
+          kd: kdEl.textContent, origem: e.dataset.origem || '',
+          sub: sub ? [...sub.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('') : '',
+          selo: selo?.textContent || '', borda: getComputedStyle(e).boxShadow,
+          kdCabe: !quandoR || kdR.right <= quandoR.left + 0.5, kdLargura: kdR.width, kdEstoura: kdEl.scrollWidth > Math.ceil(kdR.width),
+          corSelo: selo ? getComputedStyle(selo).color : '', corSub: sub ? getComputedStyle(sub).color : '' };
+      }),
+      notaPartidas: document.querySelector('.tp-carreira__partidas .tp-perfil__nota')?.textContent || '',
       prox: document.querySelector('.tp-carreira__prox-topo')?.textContent || '', escala: m ? m.a : -1,
       claTexto: document.querySelector('.tp-carreira__cla')?.innerText || '', membros: visiveis('.tp-carreira__membro').length,
       primarios: visiveis('.tp-btn--primario').map((e) => e.textContent.trim()), texto: document.querySelector('.tp-perfil')?.innerText || '',
@@ -338,8 +362,8 @@ const CENARIOS = {
   },
 };
 
-const PT_VAZA = /\b(Próxima patente|Abates|Vitórias|Partidas|Últimas partidas|Medalhas|Editar perfil|Salvar perfil|Nível|Vitrine|Números|Atividade|Arena favorita|membros|LÍDER|Copiar convite|Carreira e clã|destaques do histórico|Capitão|Armas preferidas|Horas jogadas|abates confirmados|contadas à parte)\b/i;
-const EN_VAZA = /\b(Next rank|Kills|Wins|Matches|Latest matches|Medals|Edit profile|Save profile|Level|Showcase|Stats|Activity|Favorite arena|members|LEADER|Copy clan invite|Career and clan|Captain|Favorite weapons|Hours played|kills confirmed|counted separately)\b/;
+const PT_VAZA = /\b(Próxima patente|Abates|Vitórias|Partidas|Últimas partidas|Medalhas|Editar perfil|Salvar perfil|Nível|Vitrine|Números|Atividade|Arena favorita|membros|LÍDER|Copiar convite|Carreira e clã|destaques do histórico|Capitão|Armas preferidas|Horas jogadas|abates confirmados|contadas à parte|solo não verificado|não vale ranking)\b/i;
+const EN_VAZA = /\b(Next rank|Kills|Wins|Matches|Latest matches|Medals|Edit profile|Save profile|Level|Showcase|Stats|Activity|Favorite arena|members|LEADER|Copy clan invite|Career and clan|Captain|Favorite weapons|Hours played|kills confirmed|counted separately|unverified solo|COUNT FOR RANKING)\b/;
 
 async function medir(mutante = '') {
   const so = mutante ? MUT[mutante][1] : Object.keys(CENARIOS);
@@ -392,13 +416,32 @@ async function medir(mutante = '') {
       : `25 h confirmadas em hora cheia, com as 2 h 30 min do histórico antigo contadas à parte`);
     const k = d.carreira;
     const col = k.eu && k.partidas && k.cla && k.eu.r <= k.partidas.l && k.partidas.r <= k.cla.l && Math.abs(k.eu.t - k.cla.t) < 4;
-    const esperadas = HIST.slice(0, 5).map((h) => [h.result === 'win' ? 'V' : 'D', h.kills, h.deaths]);
-    const linhasOk = k.linhas.length === 5 && k.linhas.every((l, i) => l[0] === esperadas[i][0] && l[2] === `${esperadas[i][1]} / ${esperadas[i][2]}`);
-    add('CA1', col && linhasOk, !k.eu ? 'carreira Treta Pop ausente' : `${col ? 'três colunas lado a lado' : 'colunas EMPILHADAS'}; ${k.linhas.length} partidas (quer 5) ${linhasOk ? 'com V/D e abates do backend' : `divergem: ${JSON.stringify(k.linhas.slice(0, 2))}`}`);
+    const esperadas = HIST.slice(0, 5).map((h) => [h.result === 'win' ? 'V' : h.result === 'loss' ? 'D' : '·', h.kills, h.deaths]);
+    const linhasOk = k.linhas.length === 5 && k.linhas.every((l, i) => l.marca === esperadas[i][0] && l.kd === `${esperadas[i][1]} / ${esperadas[i][2]}`);
+    /* Cada item é uma partida inteira: o abate chega a três dígitos e o kd não pode estourar a coluna nem cobrir o "quando". */
+    const kdErra = k.linhas.filter((l) => !l.kdCabe || l.kdEstoura).map((l) => `${l.kd} em ${l.kdLargura.toFixed(0)} px ${l.kdCabe ? 'cortado' : 'por cima do quando'}`);
+    add('CA1', col && linhasOk && !kdErra.length, !k.eu ? 'carreira Treta Pop ausente' : `${col ? 'três colunas lado a lado' : 'colunas EMPILHADAS'}; ${k.linhas.length} partidas (quer 5) ${linhasOk ? 'com V/D e abates do backend' : `divergem: ${JSON.stringify(k.linhas.slice(0, 2))}`}${kdErra.length ? `; kd estoura: ${kdErra.join(', ')}` : '; kd de partida inteira cabe na coluna'}`);
     add('CA2', /Major/.test(k.prox) && /1\.020\s*\/\s*1\.100/.test(k.prox) && Math.abs(k.escala - 1020 / 1100) < 0.02,
       `próxima patente "${k.prox.replace(/\s+/g, ' ')}", barra em ${(k.escala * 100).toFixed(1)}% (quer ${(1020 / 11).toFixed(1)}%)`);
     add('CA3', /Cria do Piscinão/i.test(k.claTexto) && k.membros === 3 && /LÍDER/.test(k.claTexto) && d.convites === 1 && d.copiado === `${BASE}/clans/${CLA}#invite=${CONVITE}`.replace('127.0.0.1', new URL(BASE).hostname),
       `clã ${/Cria do Piscinão/i.test(k.claTexto) ? 'com nome' : 'SEM nome'}, ${k.membros} membros (quer 3), ${d.convites} convite gerado, copiado "${d.copiado}"`);
+    /* CA5: as duas origens na mesma lista, cada uma rotulada; item sem source continua desenhado como antes. */
+    const erraOrigem = [], nota = k.notaPartidas.trim();
+    if (!/solo/i.test(nota) || /^confirmadas pelo servidor$/i.test(nota))
+      erraOrigem.push(`cabeçalho vende a lista inteira como verificada: "${nota}"`);
+    HIST.slice(0, 5).forEach((h, i) => {
+      const l = k.linhas[i], solo = h.source === SOLO;
+      if (!l) { erraOrigem.push(`${h.map}: linha ${i + 1} não foi desenhada`); return; }
+      if (l.kd !== `${h.kills} / ${h.deaths}`) erraOrigem.push(`linha ${i + 1} traz ${l.kd} no lugar de ${h.kills} / ${h.deaths} (ordem ou item fora da lista)`);
+      if (solo !== /\bSolo\b/.test(l.sub)) erraOrigem.push(`${h.map} (${h.source || 'sem source'}): "${l.sub}" ${solo ? 'não diz Solo' : 'diz Solo sem ser solo'}`);
+      if (!solo && !/Multiplayer/.test(l.sub)) erraOrigem.push(`${h.map} (${h.source || 'sem source'}) perdeu o rótulo Multiplayer: "${l.sub}"`);
+      if (solo !== (l.origem === 'solo')) erraOrigem.push(`${h.map}: marca de origem "${l.origem || 'nenhuma'}"`);
+      if (solo !== !!l.selo) erraOrigem.push(`${h.map}: selo "${l.selo || 'nenhum'}"`);
+      if (solo && (l.corSelo === l.corSub || l.borda === 'none')) erraOrigem.push(`${h.map}: selo sem destaque próprio (cor ${l.corSelo}, borda ${l.borda})`);
+      if (h.result === null && l.marca !== '·') erraOrigem.push(`${h.map} sem resultado desenhou "${l.marca}"`);
+    });
+    add('CA5', !erraOrigem.length, erraOrigem.length ? erraOrigem.join('; ')
+      : `${k.linhas.filter((l) => l.origem === 'solo').length} solo com selo próprio e ${k.linhas.filter((l) => !l.origem).length} verificadas na mesma lista, em ordem de data; cabeçalho "${nota}"`);
   }
   if (m.semcla) {
     const k = m.semcla.carreira;
