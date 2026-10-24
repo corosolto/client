@@ -33,7 +33,9 @@
 :root[data-ui="v3"] #hub-ranking .hub-rank-global .ranking-avatar img{width:36px;height:36px;border-radius:8px;object-fit:cover;object-position:50% 18%;background:none}
 :root[data-ui="v3"] #hub-ranking .hub-rank-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
 :root[data-ui="v3"] #hub-ranking .hub-rank-actions>a{display:inline-flex;align-items:center;min-height:44px;padding:0 4px;color:var(--tp-lima);font:800 13px/1.2 var(--tp-ui);letter-spacing:.04em;text-decoration:none}
-:root[data-ui="v3"] #hub-ranking .hub-rank-profile,:root[data-ui="v3"] #hub-ranking #hub-rank-share{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin:0;padding:0 18px;border:0;border-radius:8px;background:var(--tp-lima);color:var(--tp-lima-tinta);font:800 13px/1 var(--tp-ui);letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+/* `:not([hidden])`: o display declarado vence a regra do navegador, e sem isso o convite de
+   nick continuava na tela mesmo escondido pelo JS — era o botão que o dono via logado. */
+:root[data-ui="v3"] #hub-ranking .hub-rank-profile:not([hidden]),:root[data-ui="v3"] #hub-ranking #hub-rank-share:not([hidden]){display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin:0;padding:0 18px;border:0;border-radius:8px;background:var(--tp-lima);color:var(--tp-lima-tinta);font:800 13px/1 var(--tp-ui);letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
 :root[data-ui="v3"] #hub-ranking #hub-rank-share{border:1px solid var(--tp-borda-forte);background:var(--tp-elevado);color:var(--tp-tinta-1)}
 :root[data-ui="v3"] #hub-ranking .hub-rank-profile:focus-visible,
 :root[data-ui="v3"] #hub-ranking #hub-rank-share:focus-visible{outline:2px solid var(--tp-tinta-1);outline-offset:3px}

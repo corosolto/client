@@ -1457,6 +1457,8 @@ function sendGameStarted() {
 }
 let registeredNick = ''; // nick canônico devolvido pelo registro do UID
 let rankingBloqueado = ''; // erro do register da sessão (nick de outro dono, charset…) — vira aviso claro no fim da partida
+let contaNick = '';  // nick da CONTA autenticada (quem logou já participa do ranking)
+const RANKING_PAGINA = 25;   // página do servidor: api/social.ts chama social_ranking com p_limit=25
 let heartbeatOff = false;
 
 /* CONTADOR "N ONLINE" no topo do menu. GET /api/online lê a view online_now
@@ -3677,7 +3679,8 @@ function showRanking() {
 }
 async function renderHubRanking() {
   const stats = loadStats();
-  $('hub-rank-profile').hidden = Boolean(registeredNick);
+  /* Conta logada JÁ TEM nick: o convite é só para quem joga sem nick nenhum (dono, 24/10). */
+  $('hub-rank-profile').hidden = Boolean(registeredNick || contaNick);
   const cards = $('hub-rank-local');
   cards.replaceChildren();
   for (const [label, value] of [
@@ -3749,9 +3752,33 @@ async function renderHubRanking() {
   }
   cabeca.append(linhaCabeca); tabela.append(cabeca);
   const corpo = document.createElement('tbody');
-  for (const [i, p] of data.players.slice(0, 10).entries()) corpo.append(linhaDoJogador(p, i));
+  for (const [i, p] of data.players.entries()) corpo.append(linhaDoJogador(p, i));
   tabela.append(corpo);
   global.replaceChildren(tabela);
+  /* Rolagem infinita: o servidor serve 25 por página (p_limit fixo em api/social.ts), então a
+     próxima página é pedida por offset. O botão é o mecanismo REAL — o observador só o aciona
+     quando ele aparece na tela, e sem IntersectionObserver (ou sem mouse) ele continua clicável. */
+  if (data.players.length < RANKING_PAGINA) return;
+  const mais = document.createElement('button');
+  mais.type = 'button'; mais.id = 'hub-rank-mais'; mais.className = 'hub-rank-profile';
+  mais.textContent = tr('CARREGAR MAIS');
+  let carregando = false, observador = null;
+  const encerrar = () => { observador?.disconnect(); mais.remove(); };
+  const proximaPagina = async () => {
+    if (carregando) return;
+    carregando = true; mais.disabled = true; mais.textContent = tr('CARREGANDO…');
+    const pagina = await api(`/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all&offset=${corpo.children.length}`);
+    const vieram = Array.isArray(pagina?.players) ? pagina.players : null;
+    if (!vieram) { mais.disabled = false; carregando = false; mais.textContent = tr('TENTAR DE NOVO'); return; }
+    for (const [i, p] of vieram.entries()) corpo.append(linhaDoJogador(p, corpo.children.length + i));
+    if (vieram.length < RANKING_PAGINA) { encerrar(); return; }
+    carregando = false; mais.disabled = false; mais.textContent = tr('CARREGAR MAIS');
+  };
+  mais.onclick = proximaPagina;
+  global.append(mais);
+  if (typeof IntersectionObserver !== 'function') return;
+  observador = new IntersectionObserver((entradas) => { if (entradas.some((e) => e.isIntersecting)) void proximaPagina(); });
+  observador.observe(mais);
 }
 async function renderGlobal(nick) {
   const box = $('rank-global');
@@ -5159,7 +5186,9 @@ contagem.evento('game_loaded');
 // Convite de sala e perfil compartilhado (/u/<perfil>) chegam com destino: nem o convite de conta nem o da loja cobrem esse destino.
 // /u/<perfil> é o hub (SSR); ?perfil= é o link antigo.
 const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location.href)?.perfil);
-void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
+void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{contaNick=auth?.profile?.nick || '';if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
+// Logar com a aba RANKING aberta tira o convite de nick na hora, sem refazer a lista.
+document.addEventListener('cs-account-change',(e)=>{contaNick=e.detail?.profile?.nick || '';const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);});
 tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
 document.addEventListener('cs-treta-inventory-change',()=>{syncHomeCharacter();if(!$('hub-roster-modal')?.hidden)hubRosterRender?.();});
 // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
