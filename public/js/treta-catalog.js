@@ -27,6 +27,15 @@ export const TRETA_SKINS = [
   {id:'bolsonaro-mandrake',name:'Capitão Mandrake',character:'capitao',color:'#80b9e8',series:'MANDRAKE',description:'Boné branco, conjunto azul claro estampado e correntes de ouro.',price:800,ready:false},
   {id:'michelle-mandrake',name:'Mixelle Mandrake',character:'julia-zanatta',color:'#e96c81',series:'MANDRAKE',description:'Óculos vermelhos, camiseta bordada com rosas e correntes prateadas.',price:800,ready:false},
   {id:'zero-um-mandrake',name:'Senador Mandrake',character:'senador',color:'#d7ac51',series:'MANDRAKE',description:'Conjunto preto e dourado, boné virado e três correntes pesadas.',price:800,ready:false},
+  {id:'canarinho-drip',name:'Canarinho Pistola Drip',character:'canarinho',color:'#f0be35',series:'DRIP DA TRETA',description:'Camisa verde estampada, bermuda jeans, boné virado e correntes douradas.',price:800,ready:false},
+  {id:'canarinho-mandrake',name:'Canarinho Pistola Mandrake',character:'canarinho',color:'#65b67a',series:'MANDRAKE',description:'Colete verde, calça cargo azul, correntes douradas e tênis de pista.',price:800,ready:false},
+  {id:'canarinho-cyborg',name:'Canarinho Pistola Cyborg',character:'canarinho',color:'#85b86d',series:'BRASIL 2500',description:'Placas de metal fosco, olho óptico verde e faixa verde e amarela.',price:800,ready:false,metalFinish:'matte'},
+  {id:'gotinha-drip',name:'Zé da Gotinha Drip',character:'gotinha',color:'#d86473',series:'DRIP DA TRETA',description:'Jaqueta clara, calça cargo, tênis colorido e corrente com gota vermelha.',price:800,ready:false},
+  {id:'gotinha-mandrake',name:'Zé da Gotinha Mandrake',character:'gotinha',color:'#6f9ad8',series:'MANDRAKE',description:'Boné azul, óculos dourados, camiseta estampada e correntes.',price:800,ready:false},
+  {id:'gotinha-cyborg',name:'Zé da Gotinha Cyborg',character:'gotinha',color:'#ccd4dc',series:'BRASIL 2500',description:'Armadura branca e grafite, olho óptico azul e núcleo de gota vermelha.',price:800,ready:false,metalFinish:'matte'},
+  {id:'lampiao-cyborg',name:'Lampião Cyborg',character:'lampiao',color:'#a87850',series:'MITOS 2500',description:'Couro do cangaço, metal envelhecido e olho mecânico âmbar.',price:800,ready:false,metalFinish:'matte'},
+  {id:'lobisomem-cyborg',name:'Lobisomem Cyborg',character:'lobisomem',color:'#6f687a',series:'MITOS 2500',description:'Pelagem escura, couraça de metal fosco e visor âmbar.',price:800,ready:false,metalFinish:'matte'},
+  {id:'mariabonita-cyborg',name:'Maria Bonita Cyborg',character:'mariabonita',color:'#a65470',series:'MITOS 2500',description:'Roupa do cangaço em vinho, braço mecânico e olho óptico âmbar.',price:800,ready:false,metalFinish:'matte'},
 ].map(item=>({...item,slot:'character'}));
 export const TRETA_WEAPON_SKINS = Object.freeze(Object.values(WEAPON_SKINS)
   .filter((skin)=>skin.storeEnabled && skin.runtimeEnabled && skin.approved && skin.certified)

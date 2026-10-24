@@ -2432,6 +2432,86 @@
         "triangles": 4834,
         "status": "Integrado e validado localmente; revisão visual independente aprovada no escopo observado; revisão humana pendente"
       }
+    },
+    "skins_miticos_loja_20261024": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/skins/canarinho-drip-0e3d6b1eb99c.glb",
+        "public/models/skins/canarinho-mandrake-a53a6eb79924.glb",
+        "public/models/skins/canarinho-cyborg-cba697e2f8d1.glb",
+        "public/models/skins/gotinha-drip-5bdbb59e1061.glb",
+        "public/models/skins/gotinha-mandrake-97634ca0e20e.glb",
+        "public/models/skins/gotinha-cyborg-d247e5db9c73.glb",
+        "public/models/skins/lampiao-cyborg-ed4f0edfc55e.glb",
+        "public/models/skins/lobisomem-cyborg-d2f5f8e28085.glb",
+        "public/models/skins/mariabonita-cyborg-006a34d55dc0.glb"
+      ],
+      "source": {
+        "kind": "mint-model-batch",
+        "project": "CORO SOLTO Loja TRETA",
+        "assets": {
+          "canarinho-drip": {
+            "assetId": "ks7fxda72qc6dxkw0ymg086m5x8gxq9p",
+            "chatUrl": "https://mint.gg/chat/ph7cgfe80rk63yzsgy54a2z8pn8gxbfb",
+            "animationBatchId": "w57fd30s7k47236t6fwce90pds8gw7kb"
+          },
+          "canarinho-mandrake": {
+            "assetId": "ks79tnxsktd8kxk48zgf8b21hh8gw9yp",
+            "chatUrl": "https://mint.gg/chat/ph7bzgh73fm8tadfkxzgejakrh8gxxn5",
+            "animationBatchId": "w577kzxgtccbnwgv1gvsmhgdph8gwk1r"
+          },
+          "canarinho-cyborg": {
+            "assetId": "ks72b9amqc84pw2zrwjb599q918gw3r9",
+            "chatUrl": "https://mint.gg/chat/ph78b1wcypnzz2z1tfc7xv6tjn8gx22z",
+            "animationBatchId": "w579p9rgmrh7pq67qgwv6828sx8gx99x"
+          },
+          "gotinha-drip": {
+            "assetId": "ks7b6e3c6416tempnd3hk4n3ws8gwe0z",
+            "chatUrl": "https://mint.gg/chat/ph7b7asqs3cq8fszr7g21e3qtn8gwkmn",
+            "animationBatchId": "w57apv3n6xpj0w9s8r474p2twd8gxqd9"
+          },
+          "gotinha-mandrake": {
+            "assetId": "ks75qyp6vnbhkgkkf7vtr9yvjh8gx6mz",
+            "chatUrl": "https://mint.gg/chat/ph72q9aq72z180bev0ac7syyhd8gw051",
+            "animationBatchId": "w572xvaqcdfqqgdk8xzg5akhzs8gx4mv"
+          },
+          "gotinha-cyborg": {
+            "assetId": "ks7922dw2cb2dkqdbjw1sxwv498gx3rg",
+            "chatUrl": "https://mint.gg/chat/ph7eev61m3a9xms4dszq8n9zex8gxtpz",
+            "animationBatchId": "w57ekhkbbph07g5q89z5ae4pr58gxha8"
+          },
+          "lampiao-cyborg": {
+            "assetId": "ks7csy2f82cy9yx3tyy86f1g4x8gwrn4",
+            "chatUrl": "https://mint.gg/chat/ph724qfg06g7x9rk06t7cdcpb58gxy45",
+            "animationBatchId": "w574f5vwa250psnnjk06zhaqmn8gwv5s"
+          },
+          "lobisomem-cyborg": {
+            "assetId": "ks72teby5ypq17p1vncn9692ch8gx0t9",
+            "chatUrl": "https://mint.gg/chat/ph77xm6skbwyk30pfmc7a9qz4h8gxyd7",
+            "animationBatchId": "w571h8jdnqbhbj00jq5fs1cd7s8gx88n"
+          },
+          "mariabonita-cyborg": {
+            "assetId": "ks7d4b49hr89t8025yjm5crs158gw6nr",
+            "chatUrl": "https://mint.gg/chat/ph70ztprgpeb2bba86bcjkn4th8gw0ce",
+            "animationBatchId": "w574q8tp83sszq1kdd04e73cs58gxxpp"
+          }
+        },
+        "rejected": [
+          "Referência inicial do Canarinho continha arma; o upload Mint rejeitou e ela foi substituída por render sem arma.",
+          "As primeiras prévias de Lobisomem e Maria Bonita não estavam horizontais; ambas foram revisadas antes do final."
+        ]
+      },
+      "processing": {
+        "provider": "mint",
+        "project": "CORO SOLTO Loja TRETA",
+        "rig": "riggable_character t_pose empty hands",
+        "animationActionId": 613,
+        "animation": "Casual Walk inplace",
+        "mintCredits": 7051,
+        "creditsBefore": 120000,
+        "creditsAfter": 112949,
+        "status": "Modelos, rigs e vídeos integrados; postura, movimento e revisão visual aprovados"
+      }
     }
   }
 }

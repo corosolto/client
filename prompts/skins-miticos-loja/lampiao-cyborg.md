@@ -1,0 +1,5 @@
+# Lampião Cyborg
+
+Referência composta: `references/skins-miticos-loja/lampiao-cyborg/reference.webp`.
+
+Create a game-ready stylized full-body Brazilian cangaceiro cyborg in a strict symmetrical T-pose. Preserve the left reference identity and silhouette: slender man, thin moustache, round glasses, iconic brown leather half-moon cangaceiro hat with simple metal stars, neck scarf, fitted brown jacket, diagonal bandolier and leather sandals. Integrate restrained cybernetics inspired by the right reference: one amber optical eye, segmented matte graphite and aged-bronze forearms and shins, small mechanical seams through the jacket, leather remaining dominant. The cangaceiro must read before the robot. Stylized PBR, low-to-mid poly game aesthetic, matte metal and weathered leather. Empty open hands, separated fingers, straight arms, separated legs. Keep bandolier clear of wrists and shoulders. No gun, no weapon, no gore, no logo, no text, no cables between limbs, no armor bridging joints, no base, no background.

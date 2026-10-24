@@ -1,0 +1,5 @@
+# Canarinho Mandrake
+
+Referência composta: `references/skins-miticos-loja/canarinho-mandrake/reference.webp`.
+
+Create a game-ready stylized full-body 3D character in a strict symmetrical T-pose. Preserve the left reference character's exact anthropomorphic canary identity: yellow feathers, orange beak, crest, expressive eyes, feathered limbs, and long tail. Dress him in a Brazilian mandrake street style inspired by the right reference: unbranded backward green cap fitted around the crest, small gold oval glasses, green patterned short-sleeve shirt with abstract yellow and blue shapes, blue knee-length shorts, white socks, blue sneakers, and two short gold chains. Keep accessories away from joints and face. Stylized PBR, matte textiles, detailed feathers, strong clean silhouette. Empty open hands, separated fingers, straight arms, separated legs. No gun, no weapon, no logo, no readable text, no real sports badge, no chain joining neck to arm, no cloth bridging limbs, no base, no background.

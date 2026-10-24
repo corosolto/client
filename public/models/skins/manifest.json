@@ -422,6 +422,299 @@
         "width": 480,
         "height": 480
       }
+    },
+    "canarinho-drip": {
+      "character": "canarinho",
+      "model": "/models/skins/canarinho-drip-0e3d6b1eb99c.glb",
+      "poster": "/img/skins/canarinho-drip.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "sha256": "0e3d6b1eb99cc98dd34a953b5225a74cc628aa5b1169b5d82a04e554ff250efc",
+      "bytes": 1150484,
+      "sourceSha256": "2c01682b3540a832db28f2ff82dc17d27c878b0c8f898dd895b9c81f9b18fd6f",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "video": {
+        "webm": "/video/skins/canarinho-drip.webm",
+        "mp4": "/video/skins/canarinho-drip.mp4",
+        "poster": "/video/skins/canarinho-drip.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
+    },
+    "canarinho-mandrake": {
+      "character": "canarinho",
+      "model": "/models/skins/canarinho-mandrake-a53a6eb79924.glb",
+      "poster": "/img/skins/canarinho-mandrake.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "sha256": "a53a6eb79924231922fa679cd527916b5bdf3a46753c5bc3f30f1d6d150f0472",
+      "bytes": 1046112,
+      "sourceSha256": "ba93ab9d577038a7e070ca32cd9c26af3d2f19809782ad4779e83b8e1051c3ad",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "video": {
+        "webm": "/video/skins/canarinho-mandrake.webm",
+        "mp4": "/video/skins/canarinho-mandrake.mp4",
+        "poster": "/video/skins/canarinho-mandrake.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
+    },
+    "canarinho-cyborg": {
+      "character": "canarinho",
+      "model": "/models/skins/canarinho-cyborg-cba697e2f8d1.glb",
+      "poster": "/img/skins/canarinho-cyborg.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "metalFinish": "matte",
+      "sha256": "cba697e2f8d110f45bdc68bc5cb652fb6a014b4aaa15af25a98331836a77c647",
+      "bytes": 1130820,
+      "sourceSha256": "ea2a54503ac496d78840737336a18c734afb89e5c4f0caf183ee0445c6bc202e",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "video": {
+        "webm": "/video/skins/canarinho-cyborg.webm",
+        "mp4": "/video/skins/canarinho-cyborg.mp4",
+        "poster": "/video/skins/canarinho-cyborg.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
+    },
+    "gotinha-drip": {
+      "character": "gotinha",
+      "model": "/models/skins/gotinha-drip-5bdbb59e1061.glb",
+      "poster": "/img/skins/gotinha-drip.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "sha256": "5bdbb59e106116ef6ea2c5de82b509ae5d6ea3fa4585395b4dd2536bb9abb748",
+      "bytes": 1119900,
+      "sourceSha256": "032173200fba64af41f6eae34ac5eef7af6179c08568b15ad112f27be67d4470",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "video": {
+        "webm": "/video/skins/gotinha-drip.webm",
+        "mp4": "/video/skins/gotinha-drip.mp4",
+        "poster": "/video/skins/gotinha-drip.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
+    },
+    "gotinha-mandrake": {
+      "character": "gotinha",
+      "model": "/models/skins/gotinha-mandrake-97634ca0e20e.glb",
+      "poster": "/img/skins/gotinha-mandrake.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "sha256": "97634ca0e20e07f688aa11ea37218fd6101a4dc5302bbef05a392c49fee36bbf",
+      "bytes": 763656,
+      "sourceSha256": "150e09fb6d972eb464598d97f5c2c6c6050ff9aadbd3dd3eb87512a58ae0af31",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "video": {
+        "webm": "/video/skins/gotinha-mandrake.webm",
+        "mp4": "/video/skins/gotinha-mandrake.mp4",
+        "poster": "/video/skins/gotinha-mandrake.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
+    },
+    "gotinha-cyborg": {
+      "character": "gotinha",
+      "model": "/models/skins/gotinha-cyborg-d247e5db9c73.glb",
+      "poster": "/img/skins/gotinha-cyborg.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "metalFinish": "matte",
+      "sha256": "d247e5db9c7371ff390860f0d36b395669b869e5a71d08a4e2b561cac6c9ffd1",
+      "bytes": 747720,
+      "sourceSha256": "d36ea973c6a89555ddc1c305d1aa4d45a7997464441edbd3052301de6629565e",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "video": {
+        "webm": "/video/skins/gotinha-cyborg.webm",
+        "mp4": "/video/skins/gotinha-cyborg.mp4",
+        "poster": "/video/skins/gotinha-cyborg.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
+    },
+    "lampiao-cyborg": {
+      "character": "lampiao",
+      "model": "/models/skins/lampiao-cyborg-ed4f0edfc55e.glb",
+      "poster": "/img/skins/lampiao-cyborg.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "metalFinish": "matte",
+      "sha256": "ed4f0edfc55e9128bf29309cf7bac56059a1a736eb8550ce6c26ae34e7a36fec",
+      "bytes": 1084012,
+      "sourceSha256": "3dbd9b548363d65f27735107ab3611aefa2ec7418531ac6e918700c821957130",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "video": {
+        "webm": "/video/skins/lampiao-cyborg.webm",
+        "mp4": "/video/skins/lampiao-cyborg.mp4",
+        "poster": "/video/skins/lampiao-cyborg.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
+    },
+    "lobisomem-cyborg": {
+      "character": "lobisomem",
+      "model": "/models/skins/lobisomem-cyborg-d2f5f8e28085.glb",
+      "poster": "/img/skins/lobisomem-cyborg.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "metalFinish": "matte",
+      "sha256": "d2f5f8e2808522c52c41d38cd3ad996c39db51ef10edbca954078be1a5fade81",
+      "bytes": 789748,
+      "sourceSha256": "c78ab44ab8c027346bc934db8dffe46d0355f251453c239c9022567945f3aebd",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "video": {
+        "webm": "/video/skins/lobisomem-cyborg.webm",
+        "mp4": "/video/skins/lobisomem-cyborg.mp4",
+        "poster": "/video/skins/lobisomem-cyborg.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
+    },
+    "mariabonita-cyborg": {
+      "character": "mariabonita",
+      "model": "/models/skins/mariabonita-cyborg-006a34d55dc0.glb",
+      "poster": "/img/skins/mariabonita-cyborg.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "metalFinish": "matte",
+      "sha256": "006a34d55dc00590f7c86df5c413db0f9c0bf8abfd900524b3977f3b0144565d",
+      "bytes": 1137464,
+      "sourceSha256": "d4b40abc42ec73cfc20cf63ae3c046ff95fc775eed577a0c156e9b513ddbf300",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "video": {
+        "webm": "/video/skins/mariabonita-cyborg.webm",
+        "mp4": "/video/skins/mariabonita-cyborg.mp4",
+        "poster": "/video/skins/mariabonita-cyborg.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
     }
   }
 }

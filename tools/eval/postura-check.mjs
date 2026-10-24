@@ -9,8 +9,8 @@
    FUNCIONAL do jogo (preview:false), em private-assets/postura-20261023/.
 
    O QUE EXIGE (cláusulas duras — valem para qualquer corpo, humano ou não):
-     PS1  mão da frente na arma: punho direito a até 9 cm (1 mão) / 2 cm (2 mãos)
-          da arma. "Segurar" é contato, não vizinhança.
+     PS1  mão da frente na arma: centro visual da palma direita a até 9 cm (1 mão)
+          / 2 cm (2 mãos) da arma. "Segurar" é contato, não vizinhança.
      PS2  arma NA FRENTE do plano do corpo (armaZrel > -0,02 alturas).
      PS3  arma ABAIXO da cabeça: armaYrel < cabeça - 0,03 alturas. Só para corpo
           humano; mascote de cabeça baixa entra na exceção declarada.
@@ -79,7 +79,7 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 320, height: 320 } });
 page.on('pageerror', (e) => console.error('[pageerror]', e.message));
-await page.goto(`${BASE}/eval-character.html?debug=1${MUT ? `&mut=${MUT}` : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await page.goto(`${BASE}/modelviewer.html?id=canarinho&wpn=pistol${MUT ? `&mut=${MUT}` : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 
 const ids = IDS.length ? IDS : await page.evaluate(async () => {
   const C = await import('./js/characters.js');
@@ -94,11 +94,15 @@ for (const id of ids) {
       const THREE = await import('three');
       const G = await import('./js/glbchars.js');
       const C = await import('./js/characters.js');
-      const def = C.CHARACTERS.find((c) => c.id === cid);
-      await G.preloadCharacterAssets([cid]);
-      if (!G.hasModel(cid)) return null;
+      const T = await import('./js/treta-catalog.js');
+      const cosmetic = T.TRETA_SKINS.find((skin) => skin.id === cid);
+      const character = cosmetic?.character || cid;
+      const base = C.CHARACTERS.find((c) => c.id === character);
+      const def = cosmetic && base ? { ...base, skinId: cosmetic.id } : base;
+      await G.preloadCharacterAssets([character]);
+      if (cosmetic) await G.preloadCosmeticAssets([cosmetic.id]);
+      if (!G.hasModel(character)) return null;
       const m = G.buildCharacterModel(def, { weaponId: w, preview: false });
-      if (!m) return null;
       const scene = new THREE.Scene(); scene.add(m.group);
       const osso = (n) => { let b = null; m.group.traverse((o) => { if (!b && o.isBone && o.name === n) b = o; }); return b; };
       const B = { rArm: osso('RightArm'), rFore: osso('RightForeArm'), rHand: osso('RightHand'), lHand: osso('LeftHand'), hips: osso('Hips'), head: osso('Head') };
@@ -124,9 +128,10 @@ for (const id of ids) {
         const u = b.clone().sub(a).normalize(), v = c.clone().sub(b).normalize();
         const cotovelo = Math.acos(Math.max(-1, Math.min(1, u.dot(v)))) * 180 / Math.PI;
         let maoL = +gunBB.distanceToPoint(B.lHand.getWorldPosition(V())).toFixed(3);
-        let maoR = +gunBB.distanceToPoint(B.rHand.getWorldPosition(V())).toFixed(3);
+        const palmR = tp.palmLocal ? B.rHand.localToWorld(tp.palmLocal.clone()) : B.rHand.getWorldPosition(V());
+        let maoR = +gunBB.distanceToPoint(palmR).toFixed(3);
         if (mut === 'morto') maoR = maoR + 0.2;          // mão longe da arma
-        if (mut === 'solto') maoL = Math.max(0, maoL - 0.1);  // mão esquerda colada
+        if (mut === 'solto') maoL = 0;                  // mão esquerda colada
         return {
           alt: +alt.toFixed(3),
           armaYrel: +((gPos.y - hip.y) / alt).toFixed(3),
@@ -164,7 +169,7 @@ for (const id of ids) {
       };
       const mov = { walk: tremor('walk'), run: tremor('run') };
       if (mut === 'atras' && estados.idle) estados.idle.armaZrel = -0.05;
-      return { id: cid, arma: w, oneHanded: !!m.ctrl.oneHanded, estados, mov };
+      return { id: cid, character, arma: w, oneHanded: !!m.ctrl.oneHanded, estados, mov };
     }, [id, wid, MUT]);
     if (r) linhas.push(r);
   }
@@ -176,7 +181,7 @@ const cobrarDivida = !IDS.length;   // com filtro de ids, quem ficou de fora nã
 const falha = (r) => {
   const e = r.estados.idle;
   if (!e) return ['SEM-MEDIDA'];
-  const exc = EXCECOES.has(r.id);
+  const exc = EXCECOES.has(r.character || r.id);
   const f = [];
   if (r.oneHanded ? e.maoR > 0.09 : e.maoR > 0.02) f.push(`MAO-SOLTA=${e.maoR}`);
   if (e.armaZrel < -0.02) f.push(`ATRAS=${e.armaZrel}`);

@@ -19,11 +19,15 @@ const output=resolve('public/models/skins');mkdirSync(output,{recursive:true});
 const io=new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const states=['idle','walk','run','shoot','death','crouch','crouchwalk','jump','idle1h','walk1h','walkfire'];
 const original={'lula-drip':'lula-drip-idle.glb','bolsonaro-drip':'bolsonaro-drip-idle.glb','senador-drip':'senador-idle.glb',janja:'janja-idle.glb','michelle-bolsonaro':'michelle-idle.glb'};
+const batch3=new Set(['canarinho-drip','canarinho-mandrake','canarinho-cyborg','gotinha-drip','gotinha-mandrake','gotinha-cyborg','lampiao-cyborg','lobisomem-cyborg','mariabonita-cyborg']);
+const selected=new Set((process.env.TRETA_SKIN_IDS || '').split(',').map(id=>id.trim()).filter(Boolean));
+const skins=selected.size?TRETA_SKINS.filter(skin=>selected.has(skin.id)):TRETA_SKINS;
+if(selected.size!==skins.length)throw new Error(`Unknown TRETA_SKIN_IDS: ${[...selected].filter(id=>!skins.some(skin=>skin.id===id)).join(', ')}`);
 const previous=existsSync(join(output,'manifest.json'))?JSON.parse(readFileSync(join(output,'manifest.json'))).skins:{};
-const manifest={schema:1,skins:{}};
+const manifest={schema:1,skins:selected.size?{...previous}:{}};
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-for(const skin of TRETA_SKINS){
-  const source=original[skin.id]?join(root,original[skin.id]):join(root,'batch2-cyborg-mandrake/glb',`${skin.id}-idle.glb`);
+for(const skin of skins){
+  const source=original[skin.id]?join(root,original[skin.id]):batch3.has(skin.id)?join(root,'batch3-miticos-loja/glb',`${skin.id}-idle.glb`):join(root,'batch2-cyborg-mandrake/glb',`${skin.id}-idle.glb`);
   const clipsDir=join(staging,skin.id);mkdirSync(clipsDir,{recursive:true});
   const result=spawnSync(process.execPath,['tools/retarget-glb.mjs','public/models/anims/mixamo',source,clipsDir,...states],{encoding:'utf8'});
   writeFileSync(join(clipsDir,'retarget.log'),result.stdout+result.stderr);
@@ -51,7 +55,7 @@ for(const skin of TRETA_SKINS){
   await doc.transform(dedup(),textureCompress({encoder:sharp,targetFormat:'webp',resize:[1024,1024]}),prune(),unpartition());
   const bytes=await io.writeBinary(doc),hash=sha(bytes),filename=`${skin.id}-${hash.slice(0,12)}.glb`;
   writeFileSync(join(output,filename),bytes);
-  manifest.skins[skin.id]={character:skin.character,model:`/models/skins/${filename}`,poster:`/img/skins/${skin.id}.webp`,approved:previous[skin.id]?.sha256===hash && previous[skin.id]?.approved===true,preview:true,gripProfile:'mint24-curl-v1',sha256:hash,bytes:bytes.length,sourceSha256:sha(readFileSync(source)),animationNames:Object.fromEntries(states.map(s=>[s,s]))};
+  manifest.skins[skin.id]={character:skin.character,model:`/models/skins/${filename}`,poster:`/img/skins/${skin.id}.webp`,approved:previous[skin.id]?.sha256===hash && previous[skin.id]?.approved===true,preview:true,gripProfile:'mint24-curl-v1',...(skin.metalFinish?{metalFinish:skin.metalFinish}:{}),sha256:hash,bytes:bytes.length,sourceSha256:sha(readFileSync(source)),animationNames:Object.fromEntries(states.map(s=>[s,s]))};
   if(previous[skin.id]?.sha256===hash)for(const field of ['reviewScope','reviewBlocker'])if(previous[skin.id][field])manifest.skins[skin.id][field]=previous[skin.id][field];
   console.log(`${skin.id}: ${bytes.length} B; ${r.listAnimations().length} clips, ${r.listSkins()[0].listJoints().length} joints`);
 }

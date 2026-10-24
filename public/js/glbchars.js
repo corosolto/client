@@ -208,7 +208,7 @@ export async function preloadCosmeticAssets(ids = []) {
       }
       const compatible = entry.rigCompatibleWith === entry.character;
       if (!compatible && !STATES.every(name => clips[name])) throw new Error('skin_requires_animations');
-      _skins.set(id, {character:entry.character, model:g.scene, clips:compatible?null:clips,gripProfile:entry.gripProfile});
+      _skins.set(id, {character:entry.character, model:g.scene, clips:compatible?null:clips,gripProfile:entry.gripProfile,metalFinish:entry.metalFinish});
     })().catch(e => console.warn(`[skins] ${id}: ${e.message}`)).finally(() => _skinRequests.delete(id));
     _skinRequests.set(id, request); return request;
   }));
@@ -520,6 +520,11 @@ export function buildCharacterModel(def, opts = {}) {
   // 1ª pessoa — mutar o material aqui vazaria pro viewmodel já validado. Cada bot
   // ganha seu material, com a cor de rim do time dele.
   const rimCol = charRimColor(def);
+  const finishMaterial=(m)=>{
+    const next=upgradeCharMaterial(m,rimCol);
+    if(skin?.metalFinish==='matte' && 'roughness' in next){next.roughness=Math.max(next.roughness ?? 1,.82);next.needsUpdate=true;}
+    return next;
+  };
   model.traverse((o) => {
     if (!o.isMesh) return;
     o.castShadow = true;
@@ -532,8 +537,8 @@ export function buildCharacterModel(def, opts = {}) {
     o.frustumCulled = false;
     if (!CHAR_FX.mats || !o.material) return;
     o.material = Array.isArray(o.material)
-      ? o.material.map((m) => upgradeCharMaterial(m, rimCol))
-      : upgradeCharMaterial(o.material, rimCol);
+      ? o.material.map(finishMaterial)
+      : finishMaterial(o.material);
   });
 
   const group = new THREE.Group();
@@ -701,7 +706,7 @@ export function buildCharacterModel(def, opts = {}) {
          Kill-switch: ?tpmountlive=0 volta ao comportamento congelado. */
       let rArmBone = null;
       model.traverse((o) => { if (o.isBone && !rArmBone && o.name === 'RightArm') rArmBone = o; });
-      if (TP_MOUNT_LIVE) ctrl.tpMount = { mount, handBone, model, carry, palmLocal: null, rArm: rArmBone, rFore: rforeBone };
+      if (TP_MOUNT_LIVE) ctrl.tpMount = { mount, handBone, model, carry, palmLocal: null, carryPalmModel: null, rArm: rArmBone, rFore: rforeBone, stabilizeCarry:skin?.gripProfile==='mint24-curl-v1' };
       // 2) POSIÇÃO: no centro medido da PALMA, não na origem do osso (que é o PULSO).
       // É a diferença entre "a mão segura a arma" e "a arma flutua perto da mão" (C7).
       const palmLocal = measurePalmLocal(model, handBone, curlRs);
@@ -722,6 +727,11 @@ export function buildCharacterModel(def, opts = {}) {
       // A âncora da palma em espaço do OSSO: é o que o clamp de frente por-quadro
       // (CharController.update) reprojeta no espaço do modelo a cada frame.
       if (ctrl.tpMount) ctrl.tpMount.palmLocal = mount.position.clone();
+      if(ctrl.tpMount){
+        const carryPalm=mount.position.clone();
+        handBone.localToWorld(carryPalm);model.worldToLocal(carryPalm);
+        ctrl.tpMount.carryPalmModel=carryPalm;
+      }
     } else if (mount) {
       // --- caminho antigo (?tpmount=0): direção do cano pela linha antebraço->mão ---
       const dirAvg = new THREE.Vector3();
@@ -765,9 +775,9 @@ export function buildCharacterModel(def, opts = {}) {
     /* Teto de curl por personagem: a faixa do `curlPara` é calibrada em mão HUMANA e o lobo
        tem pata. Não morde hoje (shotgun já dá 0,35); varredura e porquê em BUG-149. */
     const CURL_MAX = { lobisomem: 0.50 };
+    let curl = gunObj ? curlPara(gunObj) : 0;
     const tetoCurl = CURL_MAX[def.id];
-    let curl = gunObj ? curlPara(gunObj) : 0.5;
-    if (skin?.gripProfile === 'mint24-curl-v1') curl = 1.4;
+    if (gunObj && skin?.gripProfile === 'mint24-curl-v1') curl = 1.4;
     if (tetoCurl != null) curl = Math.min(curl, tetoCurl);
     // fecha TODOS os ossos de curl com peso (nos 18 rigs transplantados eles vêm em par)
     for (const b of curlRs) b.rotation.x += curl;
@@ -1075,6 +1085,17 @@ class CharController {
       _wq.copy(_gq).multiply(t.carry);                  // orientação desejada do cano (mundo)
       t.handBone.getWorldQuaternion(_pq);
       t.mount.quaternion.copy(_pq.invert().multiply(_wq));
+      if(t.stabilizeCarry && t.carryPalmModel && t.rArm && t.rFore && /^(walk|run|walk1h|walkfire)$/.test(this.curName || '')){
+        _v.copy(t.carryPalmModel);t.model.localToWorld(_v);
+        solveCCDIK([t.rArm,t.rFore],t.handBone,_v,{iterations:12,endOffset:t.palmLocal});
+        t.handBone.updateWorldMatrix(true,false);
+        t.model.getWorldQuaternion(_gq);_wq.copy(_gq).multiply(t.carry);
+        t.handBone.getWorldQuaternion(_pq);t.mount.quaternion.copy(_pq.invert().multiply(_wq));
+        // Rigs de braço curto deixam resíduo no CCD. O mount corrige só esse resíduo,
+        // sem mover o corpo nem alocar por quadro.
+        t.mount.position.copy(t.handBone.worldToLocal(_v));
+      }
+      else if(t.palmLocal) t.mount.position.copy(t.palmLocal);
       // CLAMP DE FRENTE via IK DO BRAÇO DIREITO (ver TP_FRONT_MIN): o clipe assentado
       // deixa a palma de alguns rigs atrás do plano do corpo e a arma vai junto
       // ("arma por trás" — jozo/trapfunk/coach). Empurrar só o MOUNT foi tentado e
