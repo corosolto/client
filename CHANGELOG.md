@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.118`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.119`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -147,6 +147,14 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.119] — 2026-10-24
+
+### Mudado
+- fix(prod): limpa manifesto de skins no edge (#1066)
+- fix(ranking): logado não vê convite de nick, e a lista rola por página (#1067)
+- fix(ranking): logado nao ve convite de nick, e a lista rola por pagina
+- fix(prod): purge skin manifest after deploy
 
 ## [2.1.0-alpha.118] — 2026-10-24
 
