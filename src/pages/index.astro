@@ -87,7 +87,7 @@ const IMPORTMAP = JSON.stringify({
       l.href = '/fonts/' + f + '.woff2';
       document.head.appendChild(l);
     });
-    var n = 1 + Math.floor(Math.random() * 6);
+    var n = 1 + Math.floor(Math.random() * 19);
     document.documentElement.dataset.splashArte = String(n);
     var img = document.createElement('link');
     img.rel = 'preload'; img.as = 'image'; img.href = '/img/loading-' + n + '.webp';

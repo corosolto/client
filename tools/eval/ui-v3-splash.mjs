@@ -3,17 +3,19 @@
      BASE=http://127.0.0.1:9417 node tools/eval/ui-v3-splash.mjs [--mutantes]
    Capturas em OUT (padrão tools/eval/out/ui-v3-splash). Um navegador por vez. */
 import { execSync } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 
 const BASE = process.env.BASE || 'http://127.0.0.1:9417';
 const OUT = process.env.OUT || 'tools/eval/out/ui-v3-splash';
 const VIEWPORTS = [[1536, 1024], [1920, 1080], [1280, 720], [844, 390]];
-/* Letras do logo em cada public/img/loading-N.webp (1664×936), em fração da arte: x0..x1 e topo,
-   com meio ponto de margem. Medidas por pixel em recortes ampliados com régua de 1% (15/10/2026);
-   a primeira leitura a olho errou 3 pontos e deixou o "A" de TRETA cortado na arte 1. */
-const LOGO = { 1: [0.70, 0.94, 0.09], 2: [0.72, 0.945, 0.09], 3: [0.73, 0.945, 0.08], 4: [0.71, 0.955, 0.08], 5: [0.72, 0.95, 0.08], 6: [0.06, 0.24, 0.055] };
+/* Artes do splash = wallpapers do elenco em 16:9 (1664×936); a marca CORO SOLTO fica no canto
+   SUPERIOR ESQUERDO em todas, então uma única caixa de logo serve para as NARTES. x0..x1 e topo,
+   em fração da arte, com margem; a janela visível do cover precisa conter a caixa nas 4 telas. */
+const NARTES = JSON.parse(readFileSync('public/img/walls.json', 'utf8')).loading.length;
+const CAIXA_LOGO = [0.02, 0.15, 0.13];
+const LOGO = Object.fromEntries(Array.from({ length: NARTES }, (_, i) => [i + 1, CAIXA_LOGO]));
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
@@ -33,7 +35,7 @@ async function preparar(page, mutante) {
   });
   if (mutante === 'arte-contain') await reescreve(/\/style\.css/, (t) => t.replace('--tp-splash-ajuste:cover', '--tp-splash-ajuste:contain'));
   if (mutante === 'etapa-mentirosa') await reescreve((u) => u.pathname === '/', (t) => t.replace('data-etapa="personagem"', 'data-etapa="personagem" data-feito'));
-  if (mutante === 'foco-centrado') await reescreve(/\/style\.css/, (t) => t.replace("loading-3.webp');--tp-splash-foco:75% 25%", "loading-3.webp');--tp-splash-foco:50% 25%"));
+  if (mutante === 'foco-centrado') await reescreve(/\/style\.css/, (t) => t.replace('--tp-splash-foco,10% 24%', '--tp-splash-foco,50% 24%'));
   if (mutante === 'pelicula') await reescreve(/\/style\.css/, (t) => t.replace('#tp-splash-jogar[data-auto-foco]:focus-visible::after{opacity:0}', ''));
   if (mutante === 'salta') await reescreve(/\/style\.css/, (t) => t.replace('.tp-splash [data-vazio]{visibility:hidden}', '.tp-splash [data-vazio]{display:none}'));
   if (mutante === 'degrade-baixo') await reescreve(/\/style\.css/, (t) => t.replace('rgba(9,7,4,0) 15%,rgba(9,7,4,.82) 50%', 'rgba(9,7,4,0) 50%,rgba(9,7,4,.82) 82%'));
@@ -61,7 +63,7 @@ async function medir(mutante = '') {
       if (ch === ',' && !fundo) { camadas.push(atual); atual = ''; } else atual += ch;
     }
     camadas.push(atual);
-    const iArte = camadas.findIndex((c) => /loading-\d\.webp/.test(c));
+    const iArte = camadas.findIndex((c) => /loading-\d+\.webp/.test(c));
     const tamanhos = (cs?.backgroundSize || '').split(',').map((t) => t.trim());
     return {
       arte: iArte >= 0 ? camadas[iArte] : '', ajuste: iArte >= 0 ? (tamanhos[iArte] || '') : '',
@@ -73,8 +75,8 @@ async function medir(mutante = '') {
   mkdirSync(OUT, { recursive: true });
   if (!mutante) await cru.screenshot({ path: `${OUT}/primeiro-quadro.png` });
   await cru.close();
-  add('SP1', /loading-\d\.webp/.test(f0.arte) && f0.jogarVisivel && f0.jogarDesligado,
-    `primeiro quadro sem JS: arte ${(f0.arte.match(/loading-\d\.webp/) || ['ausente'])[0]}, JOGAR ${f0.jogarVisivel ? 'visível' : 'ausente'}${f0.jogarDesligado ? ' e desligado' : ''}`);
+  add('SP1', /loading-\d+\.webp/.test(f0.arte) && f0.jogarVisivel && f0.jogarDesligado,
+    `primeiro quadro sem JS: arte ${(f0.arte.match(/loading-\d+\.webp/) || ['ausente'])[0]}, JOGAR ${f0.jogarVisivel ? 'visível' : 'ausente'}${f0.jogarDesligado ? ' e desligado' : ''}`);
   /* Tarja: o legado desenha a arte com contain e sobra faixa nas laterais ou no topo. */
   add('SP2', f0.ajuste === 'cover', `camada da arte no primeiro quadro: ${f0.ajuste || 'sem arte'} (quer cover)`);
   add('SP3', f0.nEtapas >= 3 && !f0.feitas.length,
@@ -135,9 +137,9 @@ async function medir(mutante = '') {
     });
     if (!mutante) await p.screenshot({ path: `${OUT}/splash-${w}x${h}.png` });
     /* SP9: para cada arte, a janela visível do cover precisa conter as letras do logo. */
-    const janelas = await p.evaluate(async () => {
+    const janelas = await p.evaluate(async (NARTES) => {
       const raiz = document.documentElement, out = {};
-      for (let n = 1; n <= 6; n++) {
+      for (let n = 1; n <= NARTES; n++) {
         raiz.dataset.splashArte = String(n);
         const cs = getComputedStyle(document.getElementById('boot-splash'), '::after');
         const pos = cs.backgroundPosition.split(',').map((t) => t.trim().split(/\s+/).map(parseFloat));
@@ -147,8 +149,8 @@ async function medir(mutante = '') {
         out[n] = { x0: -ox / W, x1: (vw - ox) / W, y0: -oy / H };
       }
       return out;
-    });
-    if (w === 844) for (let n = 1; n <= 6; n++) {
+    }, NARTES);
+    if (w === 844) for (let n = 1; n <= NARTES; n++) {
       await p.evaluate((k) => { document.documentElement.dataset.splashArte = String(k); }, n);
       await p.waitForTimeout(300);
       const b = await p.locator('.tp-splash__topo').boundingBox();
@@ -166,7 +168,7 @@ async function medir(mutante = '') {
       if (p10 < 4.5) contraste.push(`arte ${n}: ${p10.toFixed(1)}:1`);
       piorContraste = Math.min(piorContraste, p10);
     }
-    if (!mutante && w === 1536) for (let n = 1; n <= 6; n++) {
+    if (!mutante && w === 1536) for (let n = 1; n <= NARTES; n++) {
       await p.evaluate((k) => { document.documentElement.dataset.splashArte = String(k); }, n);
       await p.waitForTimeout(400);
       await p.screenshot({ path: `${OUT}/arte-${n}-1536x1024.png` });
@@ -183,8 +185,8 @@ async function medir(mutante = '') {
   }
   add('SP7', !falhas.length, falhas.length ? falhas.join('; ') : `${VIEWPORTS.map(([w, h]) => `${w}×${h}`).join(', ')}: JOGAR na tela, dica livre`);
 
-  add('SP12', !contraste.length && piorContraste < 99, contraste.length ? `status do carregamento abaixo de 4,5:1 no pior décimo do fundo em 844×390: ${contraste.join(', ')}` : `844×390, 6 artes: pior décimo do fundo dá ${piorContraste.toFixed(1)}:1`);
-  add('SP9', !cortes.length, cortes.length ? `logo cortado: ${cortes.join('; ')}` : '6 artes × 4 telas: letras do logo inteiras');
+  add('SP12', !contraste.length && piorContraste < 99, contraste.length ? `status do carregamento abaixo de 4,5:1 no pior décimo do fundo em 844×390: ${contraste.join(', ')}` : `844×390, ${NARTES} artes: pior décimo do fundo dá ${piorContraste.toFixed(1)}:1`);
+  add('SP9', !cortes.length, cortes.length ? `logo cortado: ${cortes.join('; ')}` : `${NARTES} artes × 4 telas: letras do logo inteiras`);
 
   /* SP8: ?ui=legacy mantém o splash anterior. */
   const leg = await browser.newPage({ viewport: { width: 1536, height: 1024 } });

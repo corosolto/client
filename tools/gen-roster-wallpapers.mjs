@@ -11,11 +11,7 @@ const repository = path.dirname(path.resolve(execFileSync('git', ['rev-parse', '
 const masters = process.env.MASTERS || path.resolve(repository, '..', 'launch-media', '2026-10-11-wallpapers');
 mkdirSync(masters, { recursive: true });
 mkdirSync('plans', { recursive: true });
-const jobs = [{
-  id: 'loading-roster-red', aspect: '16:9', width: 2560,
-  refs: ['public/img/loading-1.webp'],
-  prompt: 'Extend this exact red clown loading illustration horizontally into a seamless 16:9 fullscreen wallpaper. Preserve the exact clown identity, costume, rifle, face, red lighting, Brazilian Congress architecture and CORO SOLTO TRETA SUPREMA logo from the reference. Recompose with the entire clown visible on the left and the exact logo in the upper right safe area, with generous breathing room. Continue the rain-wet plaza and architecture naturally all the way to BOTH edges. No blurred strips, no black borders, no rectangular patches, no duplicate figures or logos. Keep the reference illustration style. This is original game artwork, not a photograph.',
-}];
+const jobs = [];
 const wallpapers = roster.map((c, i) => ({ id: c.id, name: c.name, wall: `/img/wall-${29 + i}.webp` }));
 for (let i = 0; i < roster.length; i++) {
   const c = roster[i];
@@ -35,24 +31,19 @@ if (process.argv.includes('--import-masters')) {
     if (requested.length && !requested.includes(job.id) && !requested.includes(job.character)) continue;
     const source = path.join(masters, `${job.id}-source.png`);
     if (!existsSync(source)) throw new Error(`master ausente: ${source}`);
-    const loading = job.id === 'loading-roster-red';
-    const output = `public/img/${loading ? 'loading-1' : job.id}.webp`;
-    if (loading && !existsSync(path.join(masters, 'previous-loading-1.webp'))) copyFileSync(output, path.join(masters, 'previous-loading-1.webp'));
-    await sharp(source).resize(loading ? 1664 : 1536, loading ? 936 : 1024, { fit: 'cover', position: 'centre' }).webp({ quality: 90, smartSubsample: true }).toFile(output);
-  }
-  for (let i = 2; i <= 6 && (!requested.length || requested.includes('loading-roster-red')); i++) {
-    const output = `public/img/loading-${i}.webp`;
-    const previous = path.join(masters, `previous-loading-${i}.webp`);
-    if (!existsSync(previous)) copyFileSync(output, previous);
-    await sharp(previous).resize(1664, 936, { fit: 'cover', position: 'centre' }).webp({ quality: 90, smartSubsample: true }).toFile(output);
+    // Menu: 3:2 centralizado. Splash: a MESMA arte em 16:9 ancorada no TOPO — o cover corta a
+    // base, não a marca CORO SOLTO do canto superior esquerdo. loading-N segue wall-(N+28).
+    await sharp(source).resize(1536, 1024, { fit: 'cover', position: 'centre' }).webp({ quality: 90, smartSubsample: true }).toFile(`public/img/${job.id}.webp`);
+    const ln = Number(job.id.slice(5)) - 28;
+    await sharp(source).resize(1664, 936, { fit: 'cover', position: 'top' }).webp({ quality: 90, smartSubsample: true }).toFile(`public/img/loading-${ln}.webp`);
   }
   const styleRevision = existsSync(path.join(masters, 'gpt-style-prompts.json'));
   const masterLocation = path.relative(path.dirname(repository), masters);
   const provenance = styleRevision
     ? 'Revisão de estilo em 12/10/2026: os 19 wallpapers recebem o acabamento\ncinematográfico ilustrado de loading-1 e wall-20. Identidade, roupa e arma\nseguem o elenco; facetas e materiais plásticos do GLB não são referências de acabamento.\nPrompts efetivos: gpt-style-prompts.json; referências anteriores: previous-webp/.\n'
     : 'Referências: GLBs versionados, renders de charvideo.html, wall-20, loading-1\ne thumbnails das armas de CHAR_WEAPON. Prompts efetivos: gpt-prompts.json.\n';
-  writeFileSync('public/img/roster-wallpapers-FONTE.md', '# Wallpapers do elenco\n\nGPT integrado do Codex, autorizado pelo dono após OpenRouter HTTP 402.\n' + provenance + 'Sem foto externa. Os políticos são caricaturas do jogo.\nMasters e prompts: ' + masterLocation + '/ no workspace.\nImportação: tools/gen-roster-wallpapers.mjs --import-masters; menu 1536×1024,\nloading 1664×936. A normalização conserva proporção e não estica a arte.\nA captura 5120×2880 verifica o enquadramento por cover; não é resolução nativa.\n\n' + wallpapers.map(w => `- ${w.wall}: ${w.name} (${w.id})`).join('\n') + '\n\nloading-1: recomposição GPT do palhaço original; loading-2..6: enquadramento\n16:9 das artes existentes, importados em 11/10. A revisão de estilo muda só wallpapers.\n');
-  console.log(requested.length ? `masters importados: ${requested.join(', ')}` : `${wallpapers.length} wallpapers importados; 6 loadings normalizados`);
+  writeFileSync('public/img/roster-wallpapers-FONTE.md', '# Wallpapers do elenco\n\nGPT integrado do Codex, autorizado pelo dono após OpenRouter HTTP 402.\n' + provenance + 'Sem foto externa. Os políticos são caricaturas do jogo.\nMasters e prompts: ' + masterLocation + '/ no workspace.\nImportação: tools/gen-roster-wallpapers.mjs --import-masters; menu 1536×1024,\nloading 1664×936. A normalização conserva proporção e não estica a arte.\nA captura 5120×2880 verifica o enquadramento por cover; não é resolução nativa.\n\n' + wallpapers.map(w => `- ${w.wall}: ${w.name} (${w.id})`).join('\n') + '\n\nloading-1..19: os mesmos 19 wallpapers do elenco em 16:9 (1664×936), gerados dos\nmesmos masters e ancorados no topo para preservar a marca CORO SOLTO do canto\nsuperior esquerdo quando o cover corta a base.\n');
+  console.log(requested.length ? `masters importados: ${requested.join(', ')}` : `${wallpapers.length} wallpapers + ${wallpapers.length} loadings 16:9 importados`);
   process.exit(0);
 }
 for (const job of jobs) {
