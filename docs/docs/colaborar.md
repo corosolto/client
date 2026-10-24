@@ -243,6 +243,15 @@ conteúdo como dado do
 [`ROADMAP.md`](https://github.com/corosolto/client/blob/main/ROADMAP.md), e é a
 contribuição de maior alavancagem do projeto.
 
+:::tip O formato JSON já existe — e tem editor
+A migração "conteúdo como dado" saiu do papel: `public/js/map_json.js` carrega mapa a
+partir de um descritor JSON (rampas, plataformas, água e props por GLB inclusos), e o
+**Construtor da Treta** (`public/construtor.html`) é o editor visual dele. A régua nasce
+junto — `npm run eval:mapjson` e `npm run eval:mapjsonboot`. Passo a passo em
+[Construtor de mapas](./construtor-de-mapas.md). O caminho de código à mão abaixo continua
+valendo para relevo em camadas (mezanino sobre piso), que o formato de dado não cobre.
+:::
+
 O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 {/* BEGIN:GERADO:mapas — não edite à mão, rode `npm run docs` */}
@@ -382,9 +391,10 @@ correção do turno de duelo está no código com medição A/B; busque `BUG-03`
     próprio índice gerado. Precisa de acordo prévio sobre a partição, porque a região é
     disputada.
 
-5. **Mapas como JSON (Fase 2).** Geometria, colliders, occluders, spawns, pickups e
-    waypoints em dado, com loader único e **waypoints validados por teste**. É o que
-    transforma "PR de código arriscado" em "abre um JSON". Abra uma issue primeiro.
+5. **Mapas como JSON — já disponível.** Geometria, colliders, occluders, spawns, pickups,
+    rampas, água e props em dado, com loader único (`map_json.js`) e **waypoints validados
+    por teste**. Transforma "PR de código arriscado" em "abre um JSON". Use o editor e a
+    régua: [Construtor de mapas](./construtor-de-mapas.md).
 
 6. **Job de CI noturno com browser** para destravar PX1–PX4. Quatro invariantes de pixel
     estão puladas desde sempre.
