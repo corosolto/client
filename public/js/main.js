@@ -526,7 +526,10 @@ let HOME_WALL_3X2 = wall3x2Url(0), SETUP_WALL_3X2 = wall3x2Url(1);
 let _menuWallSlot = 0;
 // Splash e espera do mapa compartilham o lote loading-* do manifesto.
 const LOADING_WALLS = ['/img/loading-1.webp', '/img/loading-2.webp', '/img/loading-3.webp',
-  '/img/loading-4.webp', '/img/loading-5.webp', '/img/loading-6.webp'];
+  '/img/loading-4.webp', '/img/loading-5.webp', '/img/loading-6.webp', '/img/loading-7.webp',
+  '/img/loading-8.webp', '/img/loading-9.webp', '/img/loading-10.webp', '/img/loading-11.webp',
+  '/img/loading-12.webp', '/img/loading-13.webp', '/img/loading-14.webp', '/img/loading-15.webp',
+  '/img/loading-16.webp', '/img/loading-17.webp', '/img/loading-18.webp', '/img/loading-19.webp'];
 let _loadWallI = 4;
 const loadingWallUrl = (i) => `url('${LOADING_WALLS[i % LOADING_WALLS.length]}')`;
 function applySplashWallpaper() {

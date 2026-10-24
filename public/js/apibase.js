@@ -4,7 +4,7 @@
 /* Migradas. O portão `eval:apis` cobra que esta lista não divirja da rede de segurança 307. */
 const NO_BACKEND = new Set([
   'treta',
-  'social','social-auth','social-avatar','acquisition', 'avatar', 'clans', 'count', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
+  'social','social-auth','social-avatar','gameplay-upload','acquisition', 'avatar', 'clans', 'count', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
   'leaderboard', 'live-map', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
   'submit-match', 'telemetry', 'train-frames',
 ]);
@@ -28,7 +28,7 @@ const BASE = (() => {
 
 export function apiUrl(caminho) {
   const nome = String(caminho).replace(/^\/api\//, '').split(/[/?]/)[0];
-  if (['treta','social','social-auth','social-avatar','register','avatar','mp-ticket','clans'].includes(nome)) return caminho;
+  if (['treta','social','social-auth','social-avatar','gameplay-upload','register','avatar','mp-ticket','clans'].includes(nome)) return caminho;
   if (!NO_BACKEND.has(nome)) return caminho;
   if (VIA_SITE.has(nome) && !forcado) return caminho;
   return `${BASE}${caminho}`;

@@ -34,6 +34,11 @@ export function ligarSplashV3() {
   const marca = (etapa, ok) => raiz.querySelector(`[data-etapa="${etapa}"]`)?.toggleAttribute('data-feito', !!ok);
 
   const sincroniza = () => {
+    if (!raiz.isConnected) {
+      observa.disconnect();
+      window.removeEventListener('cs-musica-pronta', sincroniza);
+      return;
+    }
     const pct = $('boot-pct')?.textContent || '0%';
     escreve('tp-splash-pct', pct);
     raiz.style.setProperty('--p', String((parseInt(pct, 10) || 0) / 100));

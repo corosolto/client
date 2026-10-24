@@ -10,7 +10,7 @@ const SEGREDO = import.meta.env.API_PROXY_SECRET || '';
 
 const MIGRADAS = new Set([
   'treta',
-  'social','social-auth','social-avatar','acquisition', 'avatar', 'clans', 'count', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
+  'social','social-auth','social-avatar','gameplay-upload','acquisition', 'avatar', 'clans', 'count', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
   'leaderboard', 'live-map', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
   'submit-match', 'telemetry', 'train-frames',
 ]);
@@ -34,9 +34,9 @@ const handler: APIRoute = async (context) => {
     `${BACKEND.replace(/\/$/, '')}/api/${rota}${url.search}`,
     clientAddress,
     fetch,
-    { segredo: SEGREDO, session: ['treta','social','social-auth','social-avatar','register','avatar','mp-ticket','clans'].includes(rota) },
+    { segredo: SEGREDO, session: ['treta','social','social-auth','social-avatar','gameplay-upload','register','avatar','mp-ticket','clans'].includes(rota) },
   );
-  if (resposta.status === 404 && EM_ROLLOUT.includes(rota)) {
+  if (resposta.status === 404 && (EM_ROLLOUT.includes(rota) || rota === 'gameplay-upload')) {
     await resposta.body?.cancel().catch(() => {});
     return new Response(JSON.stringify({ error: 'upstream_unavailable' }), {
       status: 503, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
