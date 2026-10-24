@@ -6,6 +6,7 @@ import {spawnSync} from 'node:child_process';
 import * as ROTAS from '../../public/js/rotas.js';
 import * as COMPARTILHAR from '../../public/js/compartilhar.js';
 import {TRETA_SKINS,TRETA_WEAPON_SKINS,TRETA_GLOVES,TRETA_PACKS} from '../../public/js/treta-catalog.js';
+import {assetUrl} from '../../public/js/data/asseturl.js';
 const mutant=process.argv.find(x=>x.startsWith('--mutant='))?.split('=')[1];
 if(process.argv.includes('--mutations')){
  for(const id of ['enabled','preload','mount','equipped','unapproved-skin']){
@@ -46,6 +47,7 @@ const tabs=['weapons','characters','gloves','packs','quests'].map(view=>{const e
 let requests=[];
 const fixture={authenticated:true,accountId:'review-fixture',wallet:{balance:1000},inventory:[{skin_id:'metal-de-rua',equipped:true}],catalog:[{id:'metal-de-rua',slot:'eyewear',available:true,model_path:'/models/items/test.glb'}]};
 const context=vm.createContext({...ROTAS,...COMPARTILHAR,console,Intl,Date,URLSearchParams,URL,location:{search:'',origin:'http://fixture.invalid',href:'http://fixture.invalid/'},localStorage:{getItem(){return null;},setItem(){}},navigator:{},CustomEvent:class{constructor(type){this.type=type;}},MutationObserver:class{observe(){}},setInterval(){},setTimeout(){},fetch:async url=>{requests.push(url);return {ok:true,json:async()=>JSON.parse(read('public/models/skins/manifest.json'))};},loadAccount:async()=>({authenticated:false}),socialApi:async(url,body)=>{requests.push({url,body});return fixture;},initTretaRewards(){},updateTretaRewards(){},byId:id=>({id}),eyewearProfile:eye.eyewearProfile,TRETA_SKINS,TRETA_WEAPON_SKINS,TRETA_GLOVES,TRETA_PACKS,TRETA_EYEWEAR:[{id:'metal-de-rua',slot:'eyewear'}],TRETA_COINS:[],TRETA_ACCESSORY_PROPOSALS:[{name:'BONÉ'}],TRETA_DEFAULT_REWARDS:{},TRETA_COIN_ART:{poster:'/img/coin.webp'},document:{getElementById:get,createElement:()=>new Element(),querySelectorAll:selector=>selector==='[data-treta-view]'?tabs:[],querySelector(){return null;},addEventListener(){},dispatchEvent(){},body:new Element()}});
+context.assetUrl=assetUrl;
 vm.runInContext(strip(feature)+'\n'+strip(storeSource),context);
 context.initTretaStore({skipPrompt:true});
 await new Promise(r=>setImmediate(r));
@@ -59,6 +61,7 @@ assert(tabs.every(tab=>typeof tab.onclick==='function'),'All permanent store tab
 tabs[4].onkeydown({key:'ArrowRight',preventDefault(){}});
 assert.equal(tabs[0].attributes['aria-selected'],'true','OFF keyboard navigation must wrap quests to weapons');
 assert(!requests.some(r=>typeof r==='string' && r.includes('/items/')),'OFF store must not fetch items');
+assert(requests.some(r=>typeof r==='string' && /^models\/skins\/manifest\.json\?v=[0-9a-f]{10}$/.test(r)),'Store must fetch the skin manifest with its content revision');
 assert.equal(context.equippedTretaEyewear(),null,'OFF must not expose owned/equipped server items');
 vm.runInContext("eyeManifest={eyewear:{'metal-de-rua':{approved:true,model:'/models/items/test.glb',profiles:{capitao:{approved:true,width:1,height:1,depth:1}}}}};selected={id:'metal-de-rua',slot:'eyewear'};previewReady=true;",context);
 vm.runInContext('state='+JSON.stringify(fixture),context);

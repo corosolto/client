@@ -48,14 +48,15 @@ import { comMapaCarregado, resolveMapId } from './js/maps.js';
 import { initTextures } from './js/textures.js';
 import { CHARACTERS } from './js/characters.js';
 import { preloadCharacterAssets, preloadCosmeticAssets, buildCharacterModel } from './js/glbchars.js';
+import { assetUrl } from './js/data/asseturl.js';
 import { enableLightBloom } from './js/bloom.js';
 
 const qp = new URLSearchParams(location.search);
-/* ?skin=<id da loja> veste o personagem base com o GLB aprovado em
-   /models/skins/manifest.json, pelo mesmo preloadCosmeticAssets() do jogo. O id do
+/* ?skin=<id da loja> veste o personagem base com o GLB aprovado no manifesto
+   versionado por conteúdo, pelo mesmo preloadCosmeticAssets() do jogo. O id do
    personagem sai do manifesto; ?id= é ignorado nesse caso. */
 const SKIN = qp.get('skin') || '';
-const SKIN_ENTRY = SKIN ? (await (await fetch('/models/skins/manifest.json')).json()).skins?.[SKIN] : null;
+const SKIN_ENTRY = SKIN ? (await (await fetch(assetUrl('models/skins/manifest.json'))).json()).skins?.[SKIN] : null;
 if (SKIN && !SKIN_ENTRY?.approved) throw new Error('skin fora do manifesto aprovado: ' + SKIN);
 const ID = SKIN_ENTRY?.character || qp.get('id') || 'mandrake';
 const MAPID = resolveMapId(qp.get('map') || 'loja_h');

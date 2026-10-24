@@ -22,10 +22,13 @@
         (acervo de mentira em diretório temporário, com o gerador de verdade);
    AR5  asset ausente do mapa cai no fallback de VERSION — asset novo que ainda
         não passou pelo gerador PRECISA continuar carregando.
+   AR6  todo consumidor runtime do manifesto mutável de skins usa assetUrl(), cuja
+        revisão por conteúdo vence o cache immutable do navegador.
 
    MUTAÇÕES (aplicam no disco e são restauradas no finally):
      `versao-crua`    devolve um consumidor ao `?v=${VERSION}` → AR2 tem que morder;
      `rev-ignorada`   faz o helper ignorar a rev e usar sempre a versão → AR3 tem que morder;
+     `manifesto-cru` devolve a loja à URL sem revisão → AR6 tem que morder;
      `mapa-defasado`  envelhece o mapa publicado (no gerador) → AR1 tem que morder.
 
    Uso: node tools/eval/asset-rev-check.mjs [--mutante=<nome>]
@@ -54,6 +57,12 @@ const mutacoes = {
     'encodeURIComponent(rev || versao)',
     'encodeURIComponent(versao)',
     'AR3:',
+  ],
+  'manifesto-cru': [
+    'public/js/treta-store.js',
+    "fetch(assetUrl('models/skins/manifest.json'))",
+    "fetch('/models/skins/manifest.json')",
+    'AR6:',
   ],
   'mapa-defasado': [null, null, null, 'AR1:'],
 };
@@ -108,6 +117,20 @@ try {
       if (/audio\/manifest\.json/.test(linha)) return;
       falhas.push(`AR2: ${relative(ROOT, arquivo)}:${i + 1} ainda monta URL de binário pesado com a VERSION do release — ${linha.trim().slice(0, 96)}`);
     });
+  }
+
+  // ── AR6 ────────────────────────────────────────────────────────────────────
+  /* O manifesto é JSON, mas a hospedagem serve /models como immutable por um ano.
+     Purge resolve o edge; só revisão na URL vence a cópia já guardada no navegador. */
+  const manifestoSkins = 'models/skins/manifest.json';
+  const consumidoresManifesto = ['public/js/treta-store.js', 'public/js/glbchars.js', 'public/charvideo.html'];
+  for (const caminho of consumidoresManifesto) {
+    const fonte = readFileSync(join(ROOT, caminho), 'utf8');
+    const usaRevisao = fonte.includes(`assetUrl('${manifestoSkins}')`) || fonte.includes(`assetUrl("${manifestoSkins}")`);
+    const buscaCrua = /fetch\(\s*['"]\/?models\/skins\/manifest\.json['"]\s*\)/.test(fonte);
+    if (!usaRevisao || buscaCrua) {
+      falhas.push(`AR6: ${caminho} busca o manifesto de skins sem revisão por conteúdo — navegador pode guardar catálogo velho por um ano`);
+    }
   }
 
   // ── AR3 / AR5 ──────────────────────────────────────────────────────────────
@@ -193,7 +216,7 @@ try {
     process.exitCode = 1;
   } else {
     console.log(`revisão de asset confere: ${Object.keys(ASSET_REV).length} binários com hash de conteúdo, `
-      + `${consumidores.length} fontes sem \`?v=\${VERSION}\` em /models e /audio, fallback de release preservado.`);
+      + `${consumidores.length} fontes sem \`?v=\${VERSION}\` em /models e /audio, manifesto de skins versionado em ${consumidoresManifesto.length} consumidores, fallback de release preservado.`);
   }
 } finally {
   if (alvo) writeFileSync(alvo, original);

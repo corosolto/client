@@ -8,6 +8,7 @@ import {estadoDaUrl,urlDoEstado,ABAS_LOJA} from './rotas.js';
 import {ligarCompartilhar,linkCompartilhavel} from './compartilhar.js';
 import {eyewearFitCount,eyewearProfile,loadEyewearFitData} from './eyewear.js';
 import {VERSION} from './version.js';
+import {assetUrl} from './data/asseturl.js';
 
 const STORE_SKINS=Object.freeze([...TRETA_SKINS,...TRETA_WEAPON_SKINS,...TRETA_GLOVES,...TRETA_PACKS]);
 
@@ -513,7 +514,7 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   });
   draw();
   const manifestsReady=()=>{draw();notifyEquipment();if(selected && $('treta-detail').open)void detail(selected,false);};
-  void fetch('/models/skins/manifest.json').then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();}).then(data=>{manifest=data;manifestsReady();}).catch(()=>{});
+  void fetch(assetUrl('models/skins/manifest.json')).then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();}).then(data=>{manifest=data;manifestsReady();}).catch(()=>{});
   if(TRETA_ITEMS_ENABLED)void loadEyewearFitData().then(data=>{eyeManifest=data.manifest;manifestsReady();});
   void loadAccount().then(auth=>{account=auth;}).catch(()=>{});
   return refresh();

@@ -190,7 +190,7 @@ const _skins = new Map(), _skinRequests = new Map();
 let _skinManifest = null;
 export async function preloadCosmeticAssets(ids = []) {
   if (!ids.some(Boolean)) return;
-  if (!_skinManifest) _skinManifest = fetch('/models/skins/manifest.json').then(r => { if (!r.ok) throw new Error('skin_manifest'); return r.json(); }).catch(() => ({skins:{}}));
+  if (!_skinManifest) _skinManifest = fetch(assetUrl('models/skins/manifest.json')).then(r => { if (!r.ok) throw new Error('skin_manifest'); return r.json(); }).catch(() => ({skins:{}}));
   const manifest = await _skinManifest;
   await Promise.all([...new Set(ids.filter(Boolean))].map(async id => {
     const entry = manifest.skins?.[id];
