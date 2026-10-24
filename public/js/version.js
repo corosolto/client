@@ -1,3 +1,3 @@
 // Segue package.json e as tags v*; o manifesto acrescenta o hash do grafo JS publicado.
-export const VERSION = '2.1.0-alpha.116';
-export const SIM_HASH = 'cca8e732ca1336fd';
+export const VERSION = '2.1.0-alpha.117';
+export const SIM_HASH = '21e5a043aee42e1d';

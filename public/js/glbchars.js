@@ -794,8 +794,23 @@ export function buildCharacterModel(def, opts = {}) {
     };
     if (ctrl.ikL && ctrl.torso.magLocal && skin?.gripProfile === 'mint24-curl-v1') ctrl.torso.magLocal.z *= 1.35;
   }
+  /* Mapa de ossos por NOME pro overlay de emote: pernas e braços não entravam em
+     `torso` porque recarga/lean não precisavam deles. Uma travessia só. */
+  const corpo = new Map();
+  const QUERO = new Set(['Hips', 'Spine', 'Spine01', 'Spine02', 'Head', 'neck',
+    'LeftShoulder', 'RightShoulder', 'LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm',
+    'LeftUpLeg', 'RightUpLeg', 'LeftLeg', 'RightLeg', 'LeftFoot', 'RightFoot']);
+  model.traverse(o => { if (o.isBone && QUERO.has(o.name) && !corpo.has(o.name)) corpo.set(o.name, o); });
+  ctrl.corpo = corpo;
   return { group, parts: { head }, isGLB: true, mixer, ctrl };
 }
+
+/* O driver de coreografia (public/js/emotes.js) é injetado, nunca importado aqui:
+   assim ele fica FORA do grafo estático do boot e só baixa quando alguém pede dança.
+   Régua EM5 cobra exatamente isso. */
+let _emoteDriver = null;
+export function setEmoteDriver(api) { _emoteDriver = (api && api.pose) ? api : null; }
+export function temEmoteDriver() { return !!_emoteDriver; }
 
 const FADE = 0.16;
 
@@ -809,8 +824,10 @@ class CharController {
     this.charId = charId; this.model = model || null;
     this._footBase = model ? model.position.y : 0;
     this.cur = null; this.dead = false; this.shooting = false; this.crouch = false; this.jumping = false;
-    this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0; this._torsoQ = [];
+    this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0;
     this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
+    this._emoteId = null; this._emoteT = 0; this._emoteK = 0; this._emoteDip = 0;
+    this.emotando = false; this._emoteOssos = [];
     this._ar = false; this._landT = 0; this._yawAtraso = null; this._deathTilt = 0; this.lod = 0;
     this.shadow = null; this._airK = 0;   // sombra de contato + fator "está no ar" (0..1, suavizado)
     this.oneHanded = false; // arma de 1 mão: idle/walk trocam p/ idle1h/walk1h (setado em buildCharacterModel)
@@ -836,10 +853,19 @@ class CharController {
     this.cur = a;
     this.curName = name;   // nome do estado atual — o clamp de frente do mount lê daqui
     // pé no chão: o offset do clipe que ENTRA (ver footOffset)
-    if (this.model) this.model.position.y = this._footBase + footOffset(this.charId, name);
+    if (this.model) this.model.position.y = this._footBase + footOffset(this.charId, name) - (this._emoteDip || 0);
   }
 
   setCrouch(v) { this.crouch = !!v; }
+  /* EMOTE: dança por overlay de mundo (ver public/js/emotes.js). Entra e sai em rampa
+     de 0,18 s — cortar no quadro dá solavanco e o boneco "pula" de pose. */
+  emote(id) {
+    if (this.dead || !id) return false;
+    this._emoteId = id; this._emoteT = 0; this.emotando = true;
+    return true;
+  }
+  pararEmote() { this._emoteId = null; }
+  emoteAtual() { return this.emotando ? this._emoteId : null; }
 
   /* Recarga visível em 3P: overlay procedural sobre o clipe corrente (não há clipe de
      reload no acervo — ver docs/ANIM-3P.md). Envelope sobe e desce; a mão esquerda vai
@@ -852,6 +878,7 @@ class CharController {
   /* Levar tiro move o corpo: sem isso quem atira de longe não sabe se acertou.
      `dir` é a direção do disparo em mundo; `forca` 0..1 (dano/100). */
   flinch(dir, forca = 0.5) {
+    this._emoteId = null;   // levar tiro derruba o emote na hora
     if (this.dead || !dir) return;
     this._flinchDir = { x: dir.x, z: dir.z };
     this._flinchDur = 0.18;
@@ -898,6 +925,7 @@ class CharController {
   }
 
   die(dir = null) {
+    this._emoteId = null;
     if (this.dead) return;
     // Viés de tombo pela direção do disparo: o mesmo clipe deixa de cair sempre igual.
     this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
@@ -1016,7 +1044,22 @@ class CharController {
     // cano acompanha a rotação da mão do clipe e a arma sai apontando pra qualquer lado
     // fora do idle. Roda DEPOIS do mixer e depois da correção de cabeça — as duas mexem
     // em osso e a conta aqui depende da matriz de mundo já resolvida.
-    if (this.tpMount && !this.dead) {
+    /* Dançando, a arma some: o cano acompanha a mão do passo e cruza o rosto, e o mount
+       briga com a coreografia. Guarda e devolve, sem tocar no inventário. */
+    if (this.emotando !== this._armaGuardada) {
+      this._armaGuardada = this.emotando;
+      // a arma mora em lugares diferentes por personagem (mount vivo, arma-glb ou a
+      // caixa de fallback): esconder só o mount deixava fuzil flutuando em alguns.
+      if (!this._armaNos) {
+        this._armaNos = [];
+        if (this.tpMount?.mount) this._armaNos.push(this.tpMount.mount);
+        this.group?.traverse((o) => {
+          if (/^arma-(glb|caixa)$/.test(o.name) && !this._armaNos.includes(o)) this._armaNos.push(o);
+        });
+      }
+      for (const n of this._armaNos) n.visible = !this.emotando;
+    }
+    if (this.tpMount && !this.dead && !this.emotando) {
       const t = this.tpMount;
       t.handBone.updateWorldMatrix(true, false);
       t.model.getWorldQuaternion(_gq);
@@ -1051,7 +1094,7 @@ class CharController {
     }
     // IK da mão de apoio (FASE 2): palma L no guarda-mão da arma montada (só 2 mãos).
     // Roda depois do mixer/pose — corrige o contato por arma sem tocar na orientação.
-    if (this.ikL && !this.dead && this.lod < 1) {
+    if (this.ikL && !this.dead && this.lod < 1 && !this.emotando) {
       const ik = this.ikL;
       ik.gun.updateWorldMatrix(true, false);
       _ikTgt.copy(ik.fore);
@@ -1060,6 +1103,51 @@ class CharController {
     }
     /* Overlays de tronco por ÚLTIMO; eixo em MUNDO via quadro do pai e undo antes do
        mixer. As duas armadilhas estão contadas em docs/ANIM-3P.md. */
+    /* EMOTE (dança): overlay de mundo em cima do clipe base, ANTES do bloco de tronco
+       (quem vem depois manda na pose final). Não há undo a fazer: `mixer.update` do
+       quadro seguinte reescreve a rotação local de todo osso animado. */
+    const querEmote = !!this._emoteId && !this.dead;
+    this._emoteK += ((querEmote ? 1 : 0) - this._emoteK) * Math.min(1, dt / 0.18);
+    if (this._emoteK < 0.004 && !querEmote) { this._emoteK = 0; this.emotando = false; this._emoteDip = 0; }
+    if (querEmote) {
+      this._emoteT += dt;
+      this.emotando = true;
+      // emote de uma vez só se apaga sozinho no fim (laço continua até mandarem parar)
+      if (_emoteDriver && !_emoteDriver.laco(this._emoteId)
+          && this._emoteT >= _emoteDriver.duracao(this._emoteId)) this._emoteId = null;
+    }
+    if (this._emoteK > 0.004 && _emoteDriver && this.corpo?.size) {
+      const lista = this._emoteOssos;
+      lista.length = 0;
+      const dip = _emoteDriver.pose(this._emoteId || this._ultimoEmote, this._emoteT, lista) || 0;
+      if (this._emoteId) this._ultimoEmote = this._emoteId;
+      this._emoteDip = dip * this._emoteK;
+      const yawE = this.group.rotation.y;
+      const cosE = Math.cos(yawE), sinE = Math.sin(yawE);
+      this.group.updateMatrixWorld(true);
+      for (const passo of lista) {
+        const bone = this.corpo.get(passo[0]);
+        const ang = passo[2] * this._emoteK;
+        if (!bone || !bone.parent || Math.abs(ang) < 1e-4) continue;
+        const eixo = passo[1];
+        // direita R̂=(cos,0,−sin) · cima Û=(0,1,0) · frente F̂=(−sin,0,−cos)
+        const ax = eixo === 'r' ? cosE : (eixo === 'f' ? -sinE : 0);
+        const ay = eixo === 'u' ? 1 : 0;
+        const az = eixo === 'r' ? -sinE : (eixo === 'f' ? -cosE : 0);
+        bone.parent.getWorldQuaternion(_pq).invert();
+        _axisF.set(ax, ay, az).applyQuaternion(_pq).normalize();
+        const q = _qLean.setFromAxisAngle(_axisF, ang).clone();
+        bone.quaternion.premultiply(q);
+      }
+    } else if (!querEmote) this._emoteDip = 0;
+    /* O agachamento da dança vale POR QUADRO: a altura do modelo só era escrita na troca
+       de clipe, então frevo e ginga afundavam zero. Enquanto a rampa não zera, o emote
+       manda na altura; ao sair, a linha abaixo devolve a altura do clipe corrente. */
+    if (this.model && (this._emoteK > 0.004 || this._dipAtivo)) {
+      this.model.position.y = this._footBase + footOffset(this.charId, this.curName) - this._emoteDip;
+      this._dipAtivo = this._emoteK > 0.004;
+    }
+
     const torso = this.torso;
     if (!this.dead && torso?.spines?.length) {
       const yaw = this.group.rotation.y;
@@ -1071,7 +1159,7 @@ class CharController {
         _axisF.set(ax, ay, az).applyQuaternion(_pq).normalize();
         _torsoAplica(bone, _qLean.setFromAxisAngle(_axisF, ang).clone());
       };
-      const _torsoAplica = (bone, q) => { bone.quaternion.premultiply(q); this._torsoQ.push({ bone, q }); };
+      const _torsoAplica = (bone, q) => { bone.quaternion.premultiply(q); };
       // LEAN: peso pro lado do movimento (sem clipe de strafe). Teto 0,10 rad, 8/s.
       const alvo = Math.max(-1, Math.min(1, (Number.isFinite(lateral) ? lateral : 0) / 4.5)) * 0.12;
       this._leanK += (alvo - this._leanK) * Math.min(1, dt * 8);
@@ -1146,7 +1234,7 @@ class CharController {
     if (this.dead && this._deathDir && torso?.spines?.length) {
       const d = this._deathDir, n = Math.hypot(d.x, d.z) || 1;
       this._deathK = Math.min(1, (this._deathK || 0) + dt * 3);
-      const _aplicaMorte = (bone, q) => { bone.quaternion.premultiply(q); this._torsoQ.push({ bone, q }); };
+      const _aplicaMorte = (bone, q) => { bone.quaternion.premultiply(q); };
       this.group.updateMatrixWorld(true);
       bone_pai: {
         const bone = torso.spines[0];

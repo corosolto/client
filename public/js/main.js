@@ -6,12 +6,12 @@ import {initAccountEntry,mountProfilePreferences} from './account-entry.js';
 import {initLoginPrompt,noteLoginPromptMatch} from './login-prompt.js';
 import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
-import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaVitrine} from './treta-store.js';
+import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
 import {tretaPack} from './data/pack-definitions.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { preloadEyewearAssets } from './eyewear.js';
-import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
+import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps, COMMON_MAP_PROPS } from './mapprops.js';
 import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
@@ -1038,9 +1038,65 @@ function enquadrarMaos(p, m) {
   p.cam.updateProjectionMatrix();
   p.travado = true;    // o loop() não devolve o giro automático nem o zoom padrão
 }
+/* EMOTES do lobby: `js/emotes.js` entra por import() DINÂMICO no clique em DANÇAR —
+   boot não paga nada (régua eval:emotes, EM5). Decisões: docs/EMOTES-BR.md. */
+let emotesMod = null, emotesMontados = false;
+async function carregaEmotes() {
+  if (emotesMod) return emotesMod;
+  const m = await import('./emotes.js');
+  setEmoteDriver({ pose: m.poseEmote, duracao: m.emoteDuracao, laco: m.emoteLaco });
+  emotesMod = m;
+  return m;
+}
+function sincronizaBarraEmotes() {
+  const barra = document.getElementById('pv-emotes');
+  if (!barra) return;
+  const temBoneco = !staticPreviews && !!(pv && pv.ctrl);
+  barra.hidden = !temBoneco;
+  if (!temBoneco) { emotesMontados = false; barra.innerHTML = '<button id="pv-emote-abrir" class="pv-emote-btn pv-emote-abrir" type="button">DANÇAR</button>'; religaAbrirEmotes(); }
+}
+function religaAbrirEmotes() {
+  const b = document.getElementById('pv-emote-abrir');
+  if (b) b.onclick = montaBarraEmotes;
+}
+function pvTocaEmote(id, botao) {
+  const ctrl = pv && pv.ctrl;
+  if (!ctrl) return;
+  const barra = document.getElementById('pv-emotes');
+  const ligado = ctrl.emoteAtual() === id;
+  barra?.querySelectorAll('.pv-emote-btn[aria-pressed]')?.forEach((b) => b.setAttribute('aria-pressed', 'false'));
+  if (ligado) { ctrl.pararEmote(); return; }        // clicar de novo no mesmo passo: para
+  ctrl.emote(id);
+  if (botao) botao.setAttribute('aria-pressed', 'true');
+}
+async function montaBarraEmotes() {
+  const barra = document.getElementById('pv-emotes');
+  if (!barra || emotesMontados) return;
+  barra.classList.add('carregando');
+  const m = await carregaEmotes();
+  emotesMontados = true;
+  barra.classList.remove('carregando');
+  barra.innerHTML = '';
+  for (const e of m.EMOTES) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pv-emote-btn';
+    b.dataset.emote = e.id;
+    b.textContent = e.nome;
+    b.title = e.origem;                // a origem da dança fica à mão de quem joga
+    b.setAttribute('aria-pressed', 'false');
+    b.onclick = () => pvTocaEmote(e.id, b);
+    barra.appendChild(b);
+  }
+  // o primeiro clique em DANÇAR já põe o boneco pra dançar: ninguém clica pra ver lista
+  const primeiro = barra.querySelector('.pv-emote-btn');
+  if (primeiro) pvTocaEmote(primeiro.dataset.emote, primeiro);
+}
+religaAbrirEmotes();
+
 function pvSetChar(def) {
   def = {...def, skinId:equippedTretaSkin(def.id),eyewearId:equippedTretaEyewear()};
-  if (staticPreviews) { showStaticPreview(def); return; }
+  if (staticPreviews) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
   // Swap to the real rigged GLB (idle) once loaded, if this is still the selection.
@@ -1083,7 +1139,12 @@ function pvSetChar(def) {
       cv.dataset.armaSkin = pinturaNaMao;
       cv.dataset.luva = luvaNaMao;
       m.group.rotation.y = -0.4;
+      const emoteAnterior = p.ctrl?.emoteAtual?.() || null;
       p.model = m.group; p.mixer = m.mixer; p.ctrl = m.ctrl;
+      // trocar de personagem com a dança ligada mantém a dança (o passo é do jogador,
+      // não do boneco) — sem isso o emote morre calado a cada clique na lista
+      if (emoteAnterior && m.ctrl) m.ctrl.emote(emoteAnterior);
+      sincronizaBarraEmotes();
       p.scene.add(m.group);
       // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
       // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.
@@ -1170,6 +1231,9 @@ function closeHubRoster(updateRoute = true) {
   $('hub-roster-modal').hidden = true; $('hub-change-character').focus();
   if (updateRoute) hubNavigate({ janela: null });
 }
+/* A loja responde DEPOIS do boot: o modal aberto por link direto (/jogar/personagens)
+   precisa redesenhar quando o armário chega. Ponte para o listener já existente. */
+let hubRosterRender = null;
 function openHubRoster(updateRoute = true) {
   hubRosterLado = ladoValido(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);
   const temPoliticos = (lado) => CHARACTERS.some((c) => c.team === 'P' && podeNoLado(c, lado));
@@ -1199,23 +1263,37 @@ function openHubRoster(updateRoute = true) {
       button.onclick = () => { hubRosterCat = cat; render(); };
       filters.appendChild(button);
     }
+    /* Armário: skin de personagem comprada é personagem selecionável aqui (dono, 23/10).
+       Sem conta ou sem skin aprovada a lista vem vazia e a grade fica como sempre foi. */
+    const armario = tretaSkinsDoArmario();
+    const escolher = (id) => {
+      currentChar = id; currentTeam = hubRosterLado; currentFaction = hubRosterLado;
+      currentEnemyFaction = null;
+      localStorage.setItem('csbr-home-character', currentChar);
+      localStorage.setItem('csbr-home-side', currentTeam);
+      syncHomeCharacter(); closeHubRoster(false);
+      hubNavigate({ personagem: currentChar, janela: null });
+    };
     for (const def of doLado.filter((c) => !hubRosterCat || c.team === hubRosterCat)) {
+      const skinsDoChar = armario.filter((s) => s.character === def.id);
+      const equipada = skinsDoChar.find((s) => s.equipped) || null;
       /* Célula = card (escolhe SEU personagem, como sempre) + chip ＋ (trava quem entra).
          Papel do escalado: pode no seu lado = aliado, senão inimigo; montagem re-filtra. */
       const cell = document.createElement('div'); cell.className = 'hub-roster-cell';
       const button = document.createElement('button'); button.type = 'button';
-      button.setAttribute('aria-pressed', String(def.id === currentChar));
+      button.setAttribute('aria-pressed', String(def.id === currentChar && !equipada));
       const avatar = document.createElement('img'); avatar.src = `/img/chars/avatars/${def.id}.webp`;
       avatar.alt = ''; avatar.loading = 'lazy';
       const name = document.createElement('span'); name.textContent = def.name;
       button.append(avatar, name);
-      button.onclick = () => {
-        ui.click(); currentChar = def.id; currentTeam = hubRosterLado; currentFaction = hubRosterLado;
-        currentEnemyFaction = null;
-        localStorage.setItem('csbr-home-character', currentChar);
-        localStorage.setItem('csbr-home-side', currentTeam);
-        syncHomeCharacter(); closeHubRoster(false);
-        hubNavigate({ personagem: currentChar, janela: null });
+      button.onclick = async () => {
+        ui.click();
+        // Voltar ao personagem base com skin equipada TIRA a skin no servidor antes de trocar.
+        if (equipada) {
+          try { if (!await desequiparTretaSkin()) throw new Error('unequip_recusado'); }
+          catch { $('hub-roster-selected').textContent = 'Não deu para tirar a skin agora. Tente de novo em instantes.'; return; }
+        }
+        escolher(def.id);
       };
       cell.appendChild(button);
       if (def.id !== currentChar) {
@@ -1236,9 +1314,27 @@ function openHubRoster(updateRoute = true) {
         cell.appendChild(pin);
       }
       grid.appendChild(cell);
+      for (const skin of skinsDoChar) {
+        const skinCell = document.createElement('div'); skinCell.className = 'hub-roster-cell hub-roster-cell--skin';
+        const skinButton = document.createElement('button'); skinButton.type = 'button';
+        skinButton.setAttribute('aria-pressed', String(skin.equipped && def.id === currentChar));
+        const skinArt = document.createElement('img'); skinArt.src = skin.poster;
+        skinArt.alt = ''; skinArt.loading = 'lazy';
+        const skinName = document.createElement('span'); skinName.textContent = skin.name;
+        skinButton.append(skinArt, skinName);
+        skinButton.onclick = async () => {
+          ui.click();
+          try { if (!await equiparTretaSkin(skin.id)) throw new Error('equip_recusado'); }
+          catch { $('hub-roster-selected').textContent = 'Não deu para equipar esta skin agora. Tente de novo em instantes.'; return; }
+          escolher(def.id);
+        };
+        skinCell.appendChild(skinButton);
+        grid.appendChild(skinCell);
+      }
     }
     const selected = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
-    $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[ladoValido(selected, currentTeam)])} · ${selected.name}`;
+    const skinAtual = armario.find((s) => s.equipped && s.character === selected.id) || null;
+    $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[ladoValido(selected, currentTeam)])} · ${selected.name}${skinAtual ? ` · ${skinAtual.name}` : ''}`;
     /* ESCALAÇÃO travada: contagem por papel contra as VAGAS do formato escolhido —
        passar do limite não quebra nada (pickMatchRoster corta), mas o jogador vê. */
     const papelDe = (id) => { const c = CHARACTERS.find((x) => x.id === id); return c && podeNoLado(c, currentTeam) ? 'ally' : 'enemy'; };
@@ -1256,6 +1352,7 @@ function openHubRoster(updateRoute = true) {
       limpar.onclick = () => { settings.pinnedChars = []; saveSettings(); ui.click(); render(); };
     }
   };
+  hubRosterRender = render;
   render(); $('hub-roster-modal').hidden = false; $('hub-roster-close').focus();
   if (updateRoute) hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'personagens' });
 }
@@ -3588,16 +3685,71 @@ async function renderHubRanking() {
     const number = document.createElement('b'); number.textContent = String(value);
     card.append(number, document.createTextNode(label)); cards.appendChild(card);
   }
+  /* 21 dos 25 do ranking não têm foto (medido 22/10): sem avatar_url entra a arte do último
+     personagem jogado, e a inicial fica só pra quem não tem nem foto nem personagem. */
+  const rostoDoJogador = (p) => {
+    const caixa = document.createElement('span'); caixa.className = 'ranking-avatar';
+    const inicial = document.createElement('span');
+    inicial.textContent = (Array.from(p.nick || '?')[0] || '?').toUpperCase();
+    caixa.append(inicial);
+    const arte = /^[a-z0-9][a-z0-9_-]{0,31}$/.test(p.last_character || '') ? `/img/chars/avatars/${p.last_character}.webp` : '';
+    const fonte = (typeof p.avatar_url === 'string' && p.avatar_url) || arte;
+    if (!fonte) return caixa;
+    const img = document.createElement('img');
+    img.src = fonte; img.width = 36; img.height = 36; img.loading = 'lazy'; img.alt = '';
+    if (fonte === arte) img.dataset.arte = '1';
+    img.onerror = () => { if (arte && img.dataset.arte !== '1') { img.dataset.arte = '1'; img.src = arte; return; } img.hidden = true; };
+    caixa.append(img); return caixa;
+  };
+  /* A linha inteira leva ao perfil: role+tabindex no <tr> porque <a> não embrulha linha de
+     tabela, e aninhar link dentro de link quebra o teclado e o leitor de tela. */
+  const linhaDoJogador = (p, i) => {
+    const linha = document.createElement('tr');
+    const perfil = playerProfilePath(p) || '';
+    const posicao = document.createElement('td'); posicao.textContent = `#${p.position ?? i + 1}`;
+    const quem = document.createElement('td');
+    const dupla = document.createElement('div'); dupla.className = 'ranking-player';
+    const dados = document.createElement('div');
+    const nome = document.createElement(perfil ? 'a' : 'span');
+    nome.className = 'hub-rank-nick'; nome.textContent = p.nick || '—';
+    if (perfil) { nome.href = perfil; nome.setAttribute('tabindex', '-1'); }
+    dados.append(nome);
+    const selo = accountVerifiedBadge(p.account_verified); if (selo) dados.append(selo);
+    const patente = careerRankBadge(p.career_points ?? p.points); if (patente) dados.append(patente);
+    dupla.append(rostoDoJogador(p), dados); quem.append(dupla);
+    linha.append(posicao, quem);
+    for (const valor of [p.points, p.kills, p.kd, p.matches]) {
+      const cel = document.createElement('td'); cel.textContent = valor == null ? '—' : String(valor); linha.append(cel);
+    }
+    if (!perfil) return linha;
+    linha.setAttribute('role', 'link'); linha.setAttribute('tabindex', '0');
+    linha.dataset.href = perfil;
+    linha.setAttribute('aria-label', `${tr('Ver perfil de')} ${p.nick || ''}`.trim());
+    linha.onclick = (e) => { if (!e.target?.closest?.('a')) location.assign(perfil); };
+    linha.onkeydown = (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; e.preventDefault(); location.assign(perfil); };
+    return linha;
+  };
   const global = $('hub-rank-global');
   global.textContent = 'Carregando o ranking global…';
-  const data = await api('/api/leaderboard');
+  /* Fonte verificada (22/10): /api/social?action=ranking é a única que filtra ranking_exclusion;
+     /api/leaderboard devolve pontos de carreira/legado e mostrava quem foi excluído. */
+  const data = await api('/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all');
   if (data?.disabled) {
     global.textContent = 'O ranking global está desligado enquanto a pontuação competitiva não for validada pelo servidor.';
     return;
   }
   if (!Array.isArray(data?.players)) { global.textContent = 'Ranking global indisponível no momento.'; return; }
   if (!data.players.length) { global.textContent = 'Ainda não há jogadores no ranking.'; return; }
-  global.replaceChildren(rankingTable(data.players.slice(0,10)));
+  const tabela = document.createElement('table'); tabela.className = 'social-table';
+  const cabeca = document.createElement('thead'); const linhaCabeca = document.createElement('tr');
+  for (const rotulo of ['POS.', 'JOGADOR', 'PONTOS', 'KILLS', 'K/D', 'PARTIDAS']) {
+    const th = document.createElement('th'); th.textContent = tr(rotulo); linhaCabeca.append(th);
+  }
+  cabeca.append(linhaCabeca); tabela.append(cabeca);
+  const corpo = document.createElement('tbody');
+  for (const [i, p] of data.players.slice(0, 10).entries()) corpo.append(linhaDoJogador(p, i));
+  tabela.append(corpo);
+  global.replaceChildren(tabela);
 }
 async function renderGlobal(nick) {
   const box = $('rank-global');
@@ -4296,8 +4448,6 @@ async function abrirMultiplayer() {
    WebP local dos SVGs oficiais do Commons — procedência em public/img/flags/FONTE.md. */
 const MP_BANDEIRAS = {
   br: { img: 'br', pais: 'Brasil' },
-  us: { img: 'us', pais: 'Estados Unidos' },
-  eu: { img: 'es', pais: 'Espanha' },   // o nó "Europa" vive em Madri; nó novo = linha nova
 };
 function mpCartaoNoHTML(n) {
   const q = n.online ? mpQualidade(n.ping) : 'ruim';
@@ -5009,7 +5159,7 @@ contagem.evento('game_loaded');
 const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location.href)?.perfil);
 void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
 tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
-document.addEventListener('cs-treta-inventory-change',()=>syncHomeCharacter());
+document.addEventListener('cs-treta-inventory-change',()=>{syncHomeCharacter();if(!$('hub-roster-modal')?.hidden)hubRosterRender?.();});
 // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
 if (directRoute) document.getElementById('boot-splash')?.remove();
 const abrirVitrine=()=>{if(!tretaVitrine()?.length)return;document.removeEventListener('cs-treta-state',abrirVitrine);void import('./treta-vitrine.js').then(m=>m.iniciarVitrine()).catch(()=>{});};
@@ -5032,3 +5182,5 @@ if (params.get('qa') === 'mobile' || window.__CS_QA__) {
   void import('./qa-mobile.js').then((m) => m.ligarQaMobile()).catch(() => { /* QA não derruba partida */ });
 }
 import {rankingTable,playerProfilePath} from './ranking-player.js';
+import {accountVerifiedBadge} from './account-verified.js';
+import {careerRankBadge} from './career-rank.js';

@@ -855,7 +855,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
     <section id="hub-community" class="hub-pane hub-info" role="tabpanel" aria-label="Comunidade" hidden={initialHubTab !== 'comunidade'}><Community tab={initialSocial} profileId={initialProfile} /><slot name="perfil" /></section>
 
     <section id="hub-ranking" class="hub-pane hub-info" role="tabpanel" aria-label="Ranking" hidden={initialHubTab !== 'ranking'}>
-      <div class="hub-kicker">02 · ARQUIVO</div><h2>PLACAR DA RUA</h2>
+      <div class="hub-kicker">02 · ARQUIVO</div><h2>RANKING</h2>
       <p>Um placar para todas as partidas: cada abate soma um ponto. Abates multiplayer confirmados entre perfis distintos recebem um ponto extra.</p>
       <button id="hub-rank-profile" class="hub-rank-profile" type="button" hidden>{RANKING_ON ? 'CRIAR NICK PARA PARTICIPAR ▸' : 'CONFIGURAR SEU NICK ▸'}</button>
       <div id="hub-rank-local" class="hub-rank-stats"></div>
@@ -1339,6 +1339,9 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <img id="char-preview-static" class="hidden" alt="">
       <video id="char-preview-video" class="hidden" muted loop playsinline></video>
       <div class="pv-hints"><span>ARRASTE · GIRAR</span><span>SCROLL · ZOOM</span></div>
+      <div class="pv-emotes" id="pv-emotes">
+        <button id="pv-emote-abrir" class="pv-emote-btn pv-emote-abrir" type="button">DANÇAR</button>
+      </div>
     </div>
   </div>
   <button id="char-back" class="btn btn-back">◀ VOLTAR</button>
@@ -1654,6 +1657,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
   <canvas id="radar" width="150" height="150"></canvas>
   <div id="radio-log"></div>
   <div id="radio-menu" class="hidden"></div>
+  <div id="emote-wheel" class="hidden"></div>
   <div id="crosshair"><i></i><i></i><i></i><i></i><b></b></div>
   <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
   <div id="dmg-numbers"></div>

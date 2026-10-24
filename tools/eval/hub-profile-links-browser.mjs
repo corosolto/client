@@ -41,6 +41,8 @@ try {
     await route.fulfill({ response, body: changed });
   });
   const profileRequests = [];
+  // 22/10: a tabela do hub passou a ler /api/social?action=ranking (fonte que filtra exclusão);
+  // o stub do endpoint legado fica porque a tela de ranking do menu antigo ainda o usa.
   await context.route('**/api/leaderboard*', (route) => route.fulfill({ json: { players: [player] } }));
   // Convidado: sem a resposta de conta a comunidade mostra "fora do ar" e nunca desenha o perfil.
   await context.route(/\/api\/social-auth/, (route) => route.fulfill({ json: { authenticated: false, providers: [] } }));
@@ -50,6 +52,7 @@ try {
       profileRequests.push(url.searchParams.get('id'));
       return route.fulfill({ json: { profile } });
     }
+    if (url.searchParams.get('action') === 'ranking') return route.fulfill({ json: { players: [player], own: null, total: 1 } });
     return route.fulfill({ status: 401, json: { error: 'not_authenticated' } });
   });
   // A página pública /u/* não é o que se mede aqui; se o clique sair do jogo, ela aparece vazia.
@@ -80,10 +83,12 @@ try {
     else if (new URL(page.url()).pathname !== caminho) failures.push(`${label}: URL ${new URL(page.url()).pathname}, esperado a rota fixa ${caminho} (ADR 0008)`);
     else console.log(`  ok ${label}: perfil de ${player.nick} na comunidade do hub`);
   };
+  // A v3 esconde a .hub-tabs antiga e desenha a sua própria barra: abrir a seção pelo DOM vale nas duas.
+  const abrirSecao = (id) => page.evaluate((t) => (document.querySelector(`[data-tp-aba="${t}"]`) || document.querySelector(`[data-hub-tab="${t}"]`))?.click(), id);
 
   // 1. Nick no RANKING do hub (tabela global).
   await enter('');
-  await page.click('[data-hub-tab="ranking"]');
+  await abrirSecao('ranking');
   const nickLink = page.locator('#hub-rank-global a[href^="/u/"]').first();
   await nickLink.waitFor({ timeout: 20000 });
   await nickLink.click({ noWaitAfter: true });
@@ -95,7 +100,7 @@ try {
     const a = document.createElement('a'); a.href = `/?secao=comunidade&social=profile&perfil=${id}`; a.textContent = 'perfil';
     document.getElementById('hub-about').prepend(a);
   }, ID);
-  await page.click('[data-hub-tab="sobre"]');
+  await abrirSecao('sobre');
   await page.click(`#hub-about a[href*="perfil=${ID}"]`);
   await profileInHub('link ?perfil= dentro do hub', ID);
 

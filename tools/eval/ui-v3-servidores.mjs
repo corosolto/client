@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Régua de Servidores (tela 16 de design/treta-pop-2026-10-14) e de Ajustes (#settings-panel) na Treta Pop.
      BASE=http://127.0.0.1:9429 node tools/eval/ui-v3-servidores.mjs [--mutantes]
-   Os três nós são simulados por page.route (br 25 ms, us 140 ms, eu fora); nada sai para a rede real. */
+   O nó br é simulado por page.route (25 ms); us e eu são abortados, e região a mais reprova SV1. */
 import { execSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -24,13 +24,10 @@ const SALAS_BR = [
   sala({ id: 'r9', codigo: 'R9QX', convite: 'BR-R9QX', name: 'LOTADA NA PRAÇA', map: 'praca_poderes', mapNome: 'Praça dos Três Poderes', players: 10, spectators: 2, max: 10, livre: { E: 0, B: 0 } }),
   sala({ id: 'r7', codigo: 'R7KM', convite: 'BR-R7KM', name: 'SALA DO ZÉ', map: 'escadao', mapNome: 'Escadão', players: 3, max: 8, private: true, senha: true, livre: { E: 1, B: 2 } }),
 ];
-const SALAS_US = [sala({ id: 'funk-x-palhaco', codigo: 'FUNK', convite: 'US-FUNK', name: 'ESQUERDA × DIREITA', map: 'quebrada', mapNome: 'Quebrada', players: 0, max: 6, oficial: true, livre: { E: 3, B: 3 } })];
 const NOS_OK = {
   br: { ms: 25, health: { ok: true, rooms: 4, players: 17, regiao: 'br', salaConvite: true }, rooms: SALAS_BR },
-  us: { ms: 140, health: { ok: true, rooms: 1, players: 0, regiao: 'us', salaConvite: true }, rooms: SALAS_US },
-  eu: null,
 };
-const NOS_FORA = { br: null, us: null, eu: null };
+const NOS_FORA = { br: null };
 
 async function simularNos(ctx, nos) {
   await ctx.route(/^https:\/\/(br|us|eu)\.corosolto\.com\.br\//, async (rt) => {
@@ -204,15 +201,15 @@ async function servidores(mutante) {
   const add = (id, ok, msg) => r.push({ id, ok: !!ok, msg });
   mkdirSync(OUT, { recursive: true });
 
-  /* SV1-SV4, SV9, SV10: 3:2 com BR 25 ms, EUA 140 ms e Europa fora. */
+  /* SV1-SV4, SV9, SV10: 3:2 com o BR em 25 ms. */
   const ctx = await contexto(mutante);
   const p = await ctx.newPage();
   await entrar(p, '/jogar/multiplayer?ui=v3&lang=pt');
   const m = await p.evaluate(medirServidores);
   if (!mutante) await p.screenshot({ path: `${OUT}/servidores-1536x1024-pt.png` });
-  const br = m.regioes.find((x) => x.id === 'br'), us = m.regioes.find((x) => x.id === 'us'), eu = m.regioes.find((x) => x.id === 'eu');
-  add('SV1', m.regioes.length === 3 && br?.sel && !us?.sel && /^\d+ ms$/.test(br?.ms) && /^\d+ ms$/.test(us?.ms) && br.barras === 3 && eu && !/\d/.test(eu.ms) && m.regioes[0].id === 'br',
-    !m.regioes.length ? 'nenhuma região Treta Pop na tela' : `regiões ${m.regioes.map((x) => `${x.id}${x.sel ? '*' : ''}:${x.ms || '-'}`).join(' ')} (quer br escolhida e primeira, ping em ms nos vivos, eu sem número)`);
+  const br = m.regioes.find((x) => x.id === 'br');
+  add('SV1', m.regioes.length === 1 && br?.sel && /^\d+ ms$/.test(br?.ms) && br.barras === 3 && m.regioes[0].id === 'br',
+    !m.regioes.length ? 'nenhuma região Treta Pop na tela' : `regiões ${m.regioes.map((x) => `${x.id}${x.sel ? '*' : ''}:${x.ms || '-'}`).join(' ')} (quer só o br, escolhido e com ping em ms)`);
   const semImg = m.salas.filter((s) => !s.img || Math.round(s.imgW) !== 92 || Math.round(s.imgH) !== 56).map((s) => s.nome);
   const desalinhada = m.salas.filter((s) => s.cols.length !== m.cab.length || s.cols.some((x, i) => Math.abs(x - m.cab[i]) > 2)).map((s) => s.nome);
   const incompleta = m.salas.filter((s) => !s.sit || !/^\d+\/\d+$/.test(s.lot) || !/^\d+$/.test(s.ping) || !s.botoes.length).map((s) => s.nome);
@@ -245,8 +242,7 @@ async function servidores(mutante) {
   add('SV9', m.titulo && m.titulo.px === 56 && /Anton/.test(m.titulo.fam) && m.quick && Math.abs(m.quick.h - 64) <= 2 && m.quick.bg === 'rgb(180, 217, 46)' && /rgb\(19, 20, 24\)/.test(m.painel) && m.salas.every((s) => Math.abs(s.h - 76) <= 4) && br && Math.abs(br.h - 64) <= 8,
     `título ${m.titulo?.px}px ${m.titulo?.fam?.split(',')[0]}, JOGO RÁPIDO ${m.quick?.h?.toFixed(0)}px ${m.quick?.bg}, painel ${m.painel}, linhas ${m.salas.map((s) => s.h.toFixed(0)).join('/')}px, região ${br?.h?.toFixed(0)}px (pacote: 56, 64 lima, #131418, 76, 64)`);
   const nums = (m.vivo.match(/\d+/g) || []).map(Number);
-  add('SV10', nums.length === 2 && nums[0] === 17 && nums[1] === 5, `linha ao vivo "${m.vivo}" (os nós simulados somam 17 jogando em 5 salas)`);
-  const avisoParcial = m.aviso;
+  add('SV10', nums.length === 2 && nums[0] === 17 && nums[1] === 4, `linha ao vivo "${m.vivo}" (o nó simulado manda 17 jogando em 4 salas)`);
   const fo = m.fontes;
   add('SV12', fo.criar?.fam === 'Anton' && fo.criar.px === 22 && fo.rapido?.fam === 'Anton' && fo.rapido.px === 34 && fo.lado?.fam === 'Anton' && fo.lado.px === 17 && fo.ver?.fam === 'Anton',
     `CRIAR SALA ${fo.criar?.fam} ${fo.criar?.px}px, JOGO RÁPIDO ${fo.rapido?.fam} ${fo.rapido?.px}px, lado ${fo.lado?.fam} ${fo.lado?.px}px, ASSISTIR ${fo.ver?.fam} (pacote: Anton 22, 34 e 17)`);
@@ -254,14 +250,9 @@ async function servidores(mutante) {
     `fundo lima: ${m.limaFundo.join(', ') || 'nenhum'} (quer só mp-quick); borda lima fora da tela de servidores: ${m.limaBorda.join(', ') || 'nenhuma'}`);
   const numOnline = (m.online || '').match(/\d+/)?.[0];
   add('SV14', m.online == null || numOnline === String(nums[0]), `contador do cabeçalho: ${m.online ?? 'escondido'}; linha ao vivo: "${m.vivo}"`);
-  const contr = [...m.subFora, m.cheiaContraste?.ping, m.cheiaContraste?.sit];
-  add('SV17', m.subFora.length >= 1 && contr.every((x) => x >= 4.5), `"fora do ar agora" ${m.subFora.join('/')}:1, sala lotada ping ${m.cheiaContraste?.ping}:1 e situação ${m.cheiaContraste?.sit}:1 (quer >= 4,5)`);
+  const contrasteSala = [m.cheiaContraste?.ping, m.cheiaContraste?.sit];
   const vagaCasa = (x) => x.chipVaga && x.sits.some((t) => t.toLowerCase().startsWith(x.chipVaga.toLowerCase()));
 
-  /* clique numa região troca a escolhida pelo caminho do legado */
-  await p.click('.tp-srv__regiao[data-no="us"]').catch(() => {});
-  await p.waitForTimeout(900);
-  const trocou = await p.evaluate(() => document.querySelector('.tp-srv__regiao[data-no="us"]')?.getAttribute('aria-checked') === 'true' && document.querySelectorAll('.tp-srv__sala').length === 1);
   await ctx.close();
 
   /* SV5: tudo fora do ar vira UM aviso, com retentativa e treino contra bots, e nada em vermelho. */
@@ -273,8 +264,10 @@ async function servidores(mutante) {
   await cf.close();
   add('SV18', f.existe && f.limaFundo.length === 1 && /tp-srv__bots/.test(f.limaFundo[0]) && !f.regiaoLima.length && f.quickDisabled,
     `todos fora: fundo lima ${f.limaFundo.join(', ') || 'nenhum'} (quer só TREINAR CONTRA BOTS), região com borda lima ${f.regiaoLima.join(', ') || 'nenhuma'}, JOGO RÁPIDO ${f.quickDisabled ? 'desligado' : 'ativo'}`);
-  add('SV5', f.existe && f.avisos.length === 1 && /\d+ s/.test(f.aviso) && f.avisoBotoes.some((b) => /TREINAR CONTRA BOTS/i.test(b)) && f.avisoBotoes.some((b) => /TENTAR/i.test(b)) && !f.vermelhos.length && /Europa/.test(avisoParcial) && trocou,
-    `fora do ar: ${f.avisos.length} aviso(s) visíveis [${f.avisos.join(', ')}], botões [${f.avisoBotoes.join(' | ')}], vermelho: ${f.vermelhos.join(' / ') || 'nenhum'}; Europa caída avisa: ${/Europa/.test(avisoParcial) ? 'sim' : 'não'}; troca de região: ${trocou ? 'ok' : 'não troca'}`);
+  const contr = [...f.subFora, ...contrasteSala];
+  add('SV17', f.subFora.length >= 1 && contr.every((x) => x >= 4.5), `"fora do ar agora" ${f.subFora.join('/')}:1, sala lotada ping ${m.cheiaContraste?.ping}:1 e situação ${m.cheiaContraste?.sit}:1 (quer >= 4,5)`);
+  add('SV5', f.existe && f.avisos.length === 1 && /\d+ s/.test(f.aviso) && f.avisoBotoes.some((b) => /TREINAR CONTRA BOTS/i.test(b)) && f.avisoBotoes.some((b) => /TENTAR/i.test(b)) && !f.vermelhos.length,
+    `fora do ar: ${f.avisos.length} aviso(s) visíveis [${f.avisos.join(', ')}], botões [${f.avisoBotoes.join(' | ')}], vermelho: ${f.vermelhos.join(' / ') || 'nenhum'}`);
 
   /* SV6: EN sem PT, PT sem EN. */
   const ce = await contexto(mutante);

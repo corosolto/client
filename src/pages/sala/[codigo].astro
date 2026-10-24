@@ -11,8 +11,6 @@ export const prerender = false;
 // no que a outra nao conhece.
 const NOS = [
   { id: 'br', nome: 'Brasil · São Paulo', url: 'wss://br.corosolto.com.br/ws' },
-  { id: 'us', nome: 'EUA · Carolina do Sul', url: 'wss://us.corosolto.com.br/ws' },
-  { id: 'eu', nome: 'Europa · Madri', url: 'wss://eu.corosolto.com.br/ws' },
 ];
 
 const bruto = String(Astro.params.codigo || '').trim().toUpperCase();
@@ -22,8 +20,10 @@ const convite = no && casado ? `${casado[1]}-${casado[2]}` : bruto;
 
 let sala: any = null;
 let erro = '';
-if (!no || !casado) {
+if (!casado) {
   erro = 'Esse convite não tem um formato que eu reconheça. Ele parece com BR-7K3M.';
+} else if (!no) {
+  erro = 'Esse convite aponta para um servidor que não existe mais. Hoje as salas vivem no BR - peça um link novo.';
 } else {
   const http = import.meta.env.DEV && no.id==='br' && import.meta.env.SOCIAL_LOCAL_GAME_URL ? import.meta.env.SOCIAL_LOCAL_GAME_URL : no.url.replace(/^ws/, 'http').replace(/\/ws.*$/, '');
   try {

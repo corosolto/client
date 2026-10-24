@@ -5,7 +5,7 @@ import { VERSION } from '../version.js';
 import { mapPreviewPoster } from '../escadao_preview.js';
 import { previewRevision } from '../amazonia_map_preview.js';
 
-const BANDEIRA = { br: 'br', us: 'us', eu: 'es' };
+const BANDEIRA = { br: 'br' };
 const RETENTATIVA_S = 15;
 const posterDoMapa = (id) => mapPreviewPoster(id, `${VERSION}${previewRevision(id)}`);
 const qualidade = (ms) => (ms == null ? 'ruim' : ms <= 60 ? 'bom' : ms <= 120 ? 'medio' : 'ruim');

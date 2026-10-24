@@ -115,6 +115,59 @@ export function extendSleeveOpenings(mesh, { space = null, length = 0.9, pose = 
   }
 }
 
+/* Fecha a boca da manga no espaço de bind (um centro por laço + leque). A extensão acima
+   é do produto K e no golden sai pelo lado errado. Régua: manga-tampa-check.mjs. */
+export function capSleeveOpenings(mesh) {
+  const geo = mesh.geometry;
+  if (!geo?.attributes?.position || mesh.userData.sleeveCapped) return 0;
+  const { loops, representative } = sleeveOpenings(geo);
+  if (!loops.length) return 0;
+  const pos = geo.attributes.position;
+  const nomes = Object.keys(geo.attributes);
+  const antigos = geo.index ? Array.from({ length: geo.index.count }, (_, i) => geo.index.getX(i)) : null;
+  const extras = [];          // vértices novos (um centro por laço)
+  const triangulos = [];      // índices dos triângulos da tampa
+  for (const loop of loops) {
+    const borda = loop.map((w) => representative[w]);
+    const centro = pos.count + extras.length;
+    const media = {};
+    for (const nome of nomes) {
+      const attr = geo.attributes[nome];
+      const item = attr.itemSize;
+      const soma = new Array(item).fill(0);
+      for (const v of borda) for (let c = 0; c < item; c += 1) soma[c] += attr[GET[c]](v);
+      // Índice de osso não tem média: a tampa herda a pele do primeiro vértice da boca.
+      media[nome] = /skinIndex/i.test(nome)
+        ? Array.from({ length: item }, (_, c) => attr[GET[c]](borda[0]))
+        : soma.map((s) => s / borda.length);
+      if (/skinWeight/i.test(nome)) media[nome] = Array.from({ length: item }, (_, c) => attr[GET[c]](borda[0]));
+    }
+    extras.push(media);
+    // A aresta de borda corre a→b no sentido do triângulo original; a tampa corre ao contrário.
+    for (let i = 0; i < borda.length; i += 1) {
+      triangulos.push(borda[(i + 1) % borda.length], borda[i], centro);
+    }
+  }
+  for (const nome of nomes) {
+    const attr = geo.attributes[nome];
+    const item = attr.itemSize;
+    const arr = new attr.array.constructor((pos.count + extras.length) * item);
+    for (let i = 0; i < attr.count; i += 1) for (let c = 0; c < item; c += 1) arr[i * item + c] = attr[GET[c]](i);
+    extras.forEach((media, k) => {
+      for (let c = 0; c < item; c += 1) arr[(pos.count + k) * item + c] = media[nome][c];
+    });
+    const novo = new THREE.BufferAttribute(arr, item, attr.normalized);
+    geo.setAttribute(nome, novo);
+  }
+  const indices = antigos
+    ? antigos.concat(triangulos)
+    : Array.from({ length: pos.count }, (_, i) => i).concat(triangulos);
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  mesh.userData.sleeveCapped = loops.length;
+  return loops.length;
+}
+
 function extendAtCurrentPose(mesh, source, loops, representative, space, length) {
   space?.updateWorldMatrix(true, false);
   mesh.updateWorldMatrix(true, false);

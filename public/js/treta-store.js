@@ -115,6 +115,32 @@ export async function equiparTretaSkin(id) {
   if(!skin || !owned(id) || !available(id))return false;
   return equip(skin);
 }
+/* Armário do roster (main.js, openHubRoster): skin de personagem possuída vira
+   personagem selecionável. Mesma regra do available(), só que paramétrica. */
+export function skinsDeArmario(inventory,catalog,manifesto) {
+  if(!Array.isArray(inventory) || !Array.isArray(catalog))return [];
+  const armario=[];
+  for(const server of catalog){
+    const posse=inventory.find(p=>p.skin_id===server.id);
+    if(!posse || server.available!==true || (server.slot || 'character')!=='character')continue;
+    const arte=manifesto?.[server.id];
+    if(!arte || arte.approved!==true || arte.model!==server.model_path || arte.character!==server.character_id)continue;
+    armario.push({id:server.id,name:server.name,character:server.character_id,poster:arte.poster,equipped:posse.equipped===true});
+  }
+  return armario.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+}
+export function tretaSkinsDoArmario() {
+  return skinsDeArmario(state?.inventory,state?.catalog,manifest.skins);
+}
+export async function desequiparTretaSkin() {
+  const epoch=accountEpoch,owner=state?.accountId;
+  const result=await socialApi('/api/treta',{action:'unequip',slot:'character'});
+  if(epoch!==accountEpoch || result.accountId!==owner)return false;
+  state=result;
+  draw();updateBuy();notifyEquipment();
+  document.dispatchEvent(new CustomEvent('cs-skin-equipped',{detail:{skinId:null,characterId:null,model:null}}));
+  return true;
+}
 function notifyEquipment() {
   const revision=`${state?.accountId || ''}:${state?.inventory?.filter(s=>s.equipped && available(s.skin_id)).map(s=>s.skin_id).join(',') || ''}`;
   if(revision===equipmentRevision)return;
@@ -155,10 +181,12 @@ function drawQuests() {
 function draw() {
   if(!loading && !refreshFailed)updateTretaRewards(state);
   else{
-    $('hub-treta-total').textContent=refreshFailed?'T$ · ERRO':'T$ · …';
-    $('hub-treta-wallet').setAttribute('aria-label',refreshFailed?'Carteira TRETA$ indisponível. Abra a loja para tentar novamente.':'Consultando carteira TRETA$');
+    // Visitante nao tem saldo: falha de consulta vira o convite de sempre, nunca ERRO.
+    const visitante=!account?.authenticated;
+    $('hub-treta-total').textContent=visitante?'T$ · ENTRAR':refreshFailed?'T$ · ERRO':'T$ · …';
+    $('hub-treta-wallet').setAttribute('aria-label',visitante?'Entre para ver seu saldo TRETA$':refreshFailed?'Carteira TRETA$ indisponível. Abra a loja para tentar novamente.':'Consultando carteira TRETA$');
   }
-  $('treta-balance-value').textContent=state?.wallet?money(state.wallet.balance):loading?'CARREGANDO…':refreshFailed?'INDISPONÍVEL':'ENTRE NA CONTA';
+  $('treta-balance-value').textContent=state?.wallet?money(state.wallet.balance):loading?'CARREGANDO…':!account?.authenticated?'ENTRE NA CONTA':refreshFailed?'INDISPONÍVEL':'ENTRE NA CONTA';
   for(const id of ['treta-grid','treta-characters-grid','treta-gloves-grid','treta-packs-grid'])$(id).setAttribute('aria-busy',String(loading));
   $('treta-retry').hidden=!refreshFailed;
   const heading={

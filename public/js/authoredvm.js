@@ -12,7 +12,7 @@ import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js'
 import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
 import { applyTeamHandMaterial, refreshTeamHands, handLayoutOfMesh } from './vmhands.js';
-import { extendSleeveOpenings, SLEEVE_MATERIAL } from './vmsleeve.js';
+import { extendSleeveOpenings, capSleeveOpenings, SLEEVE_MATERIAL } from './vmsleeve.js';
 import { applyWeaponSkinCandidate } from './weapon-skins.js';
 
 const DEG2RAD = Math.PI / 180;
@@ -421,6 +421,9 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
       object.userData.authoredCharacterHand = profile.id || 'player';
       const mangaRuntime = !fabrica || VM_FABRICA[weaponId]?.manga !== false;
       if (!golden && !molde && mangaRuntime && materialsOf(object).some((m) => SLEEVE_MATERIAL.test(m?.name || ''))) extendSleeveOpenings(object, { space: mount, pose: { root: scene, clip: idleClip } });
+      // Golden não aceita a EXTENSÃO (sai pelo lado errado): fecha a boca no lugar.
+      // Kill-switch ?mangatampa=0. Régua: tools/eval/manga-tampa-check.mjs.
+      if (golden && _QS?.get('mangatampa') !== '0' && /sleeve|manga|cloth/i.test(`${object.name} ${materialsOf(object).map((m) => m?.name).join(' ')}`)) capSleeveOpenings(object);
     } else {
       weaponMeshes.push(object);
       if (molde && !/MAG/i.test(object.name)) {
