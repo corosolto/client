@@ -1,0 +1,77 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { BRAND_FULL, DISCORD_URL } from '../lib/site';
+import { LEGAL_CONTACT } from '../lib/legal';
+
+const assunto = encodeURIComponent('Quero jogar e criar conteúdo de CORO SOLTO');
+const contato = `mailto:${LEGAL_CONTACT}?subject=${assunto}`;
+const jogar = '/?utm_source=site&utm_medium=creator_kit&utm_campaign=criadores';
+---
+
+<Layout
+  title={`Para criadores - ${BRAND_FULL}`}
+  description="Jogue, grave e avalie CORO SOLTO com sua comunidade. Guia de sala multiplayer, captura de gameplay e contato para lives e reviews."
+  h1="JOGUE COM SUA COMUNIDADE"
+  kicker="CRIADORES · LIVES · REVIEWS"
+  heroImg="/img/map-previews/piscina_treta.jpg"
+>
+  <Fragment slot="sub">Uma partida real rende uma história melhor quando seus seguidores entram junto. O jogo abre no navegador; você escolhe o formato e mantém sua opinião sobre ele.</Fragment>
+
+  <section class="creator-page" aria-label="Kit para criadores">
+    <div class="creator-actions">
+      <a class="creator-cta" href={jogar}>TESTAR O JOGO ↗</a>
+      <a class="creator-cta secondary" href={contato}>PROPOR LIVE OU REVIEW ↗</a>
+    </div>
+
+    <div class="creator-grid">
+      <article class="creator-card">
+        <p class="creator-kicker">01 · PARTIDA</p>
+        <h2>Traga a turma para a mesma sala</h2>
+        <p>Abra MULTIPLAYER, entre numa sala pública ou crie a sua em SERVIDOR PRIVADO. O criador da sala pode copiar um link de convite. Envie esse link aos participantes pouco antes da sessão: salas criadas por jogadores deixam de existir quando ficam vazias.</p>
+        <a href="/como-jogar">PASSO A PASSO DO MULTIPLAYER ↗</a>
+      </article>
+      <article class="creator-card">
+        <p class="creator-kicker">02 · CAPTURA</p>
+        <h2>Mostre a partida como ela aconteceu</h2>
+        <p>Grave a janela ou aba em 16:9, com HUD e áudio do jogo. Se sua máquina sustentar, use 1080p e 60 fps; confira o arquivo antes de publicar. Varie mapa e personagem, e prefira lances em que o alvo, o disparo e a reação estejam visíveis.</p>
+        <p>Para uma parceria com cortes oficiais, combine antes o envio do arquivo original e os direitos de republicação. O seu review continua sendo seu.</p>
+      </article>
+      <article class="creator-card">
+        <p class="creator-kicker">03 · CONTEÚDO</p>
+        <h2>Humor de jogo, opinião livre</h2>
+        <p>Vale duelo entre personagens, revanche da comunidade, tentativa de recorde e crítica sincera ao que ainda não funciona. Identifique uma parceria remunerada quando houver. Não apresente cenas sintéticas como gameplay nem atribua falas inventadas a pessoas reais.</p>
+        <a href="/personagens">VER PERSONAGENS ↗</a>
+      </article>
+    </div>
+
+    <div class="creator-contact">
+      <div>
+        <p class="creator-kicker">VAMOS COMBINAR</p>
+        <h2>Quer organizar uma sessão?</h2>
+        <p>Escreva o nome do canal, plataforma, público, formato e horário de Brasília. Se quiser proposta paga, inclua mídia kit e valores. Combinamos sala, convidados, prazo e uso dos cortes antes de gravar.</p>
+      </div>
+      <div class="creator-contact-actions">
+        <a class="creator-cta" href={contato}>{LEGAL_CONTACT} ↗</a>
+        <a class="creator-cta secondary" href={DISCORD_URL}>COMUNIDADE NO DISCORD ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .creator-page { display:grid; gap:24px; }
+    .creator-actions,.creator-contact-actions { display:flex; flex-wrap:wrap; gap:10px; }
+    .creator-cta { display:inline-block; padding:12px 16px; background:var(--amber); color:#17150d; font-weight:800; letter-spacing:.06em; text-decoration:none; }
+    .creator-cta.secondary { background:transparent; border:1px solid var(--amber); color:var(--bone); }
+    .creator-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+    .creator-card,.creator-contact { border:1px solid var(--line); background:rgba(20,24,20,.64); padding:22px; }
+    .creator-card { border-top:3px solid var(--amber); }
+    .creator-card h2,.creator-contact h2 { color:var(--bone); margin:5px 0 10px; }
+    .creator-card p:not(.creator-kicker),.creator-contact p:not(.creator-kicker) { color:var(--bone-dim); line-height:1.65; }
+    .creator-card a:not(.creator-cta) { color:var(--amber); font-weight:700; }
+    .creator-kicker { color:var(--amber); font:700 11px/1.2 var(--mono); letter-spacing:.12em; }
+    .creator-contact { display:flex; justify-content:space-between; gap:24px; align-items:center; }
+    .creator-contact > div:first-child { max-width:620px; }
+    .creator-contact-actions { flex-direction:column; align-items:stretch; flex-shrink:0; }
+    @media (max-width:850px) { .creator-grid { grid-template-columns:1fr; } .creator-contact { flex-direction:column; align-items:stretch; } .creator-contact-actions { flex-direction:row; } }
+  </style>
+</Layout>
