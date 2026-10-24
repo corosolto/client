@@ -1,0 +1,12 @@
+:root[data-ui="v3"] #hud-record[aria-pressed="true"] { color:#ff4b48; border-color:#ff4b48; }
+#hud-record { color:#ff4b48; font-size:20px; line-height:1; }
+#hub-record { color:#ff4b48; font-size:20px; line-height:1; }
+#hub-record[aria-pressed="true"] { color:#ff4b48; border-color:#ff4b48; }
+.gameplay-recorder[hidden] { display:none!important; }
+.gameplay-recorder { position:fixed; right:20px; bottom:20px; z-index:1000; width:min(340px,calc(100vw - 40px)); box-sizing:border-box; display:grid; gap:7px; padding:13px 15px; color:#f6f1e9; background:#17191b; border:1px solid #e3b747; border-radius:10px; box-shadow:0 10px 35px #0009; font:600 13px/1.4 'Barlow Semi Condensed',sans-serif; }
+.gameplay-recorder strong { font:400 23px/1 'Anton',sans-serif; letter-spacing:.03em; color:#ffd45e; }
+.gameplay-recorder[data-recording="true"] strong { color:#ff4b48; }
+.gameplay-recorder button,.gameplay-recorder-download,.gameplay-recorder a { border:1px solid #ffd45e; border-radius:5px; padding:7px 9px; background:#ffd45e; color:#17191b; font:700 13px/1.2 'Barlow Semi Condensed',sans-serif; cursor:pointer; text-align:center; text-decoration:none; }
+.gameplay-recorder button:hover,.gameplay-recorder-download:hover,.gameplay-recorder a:hover { background:#fff2b2; }
+.gameplay-recorder label { display:flex; align-items:flex-start; gap:8px; font-size:12px; line-height:1.25; }
+.gameplay-recorder label[hidden],.gameplay-recorder button[hidden],.gameplay-recorder a[hidden] { display:none!important; }

@@ -824,6 +824,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <div class="hub-online" aria-live="polite" hidden><i aria-hidden="true"></i><span id="hub-online-n"></span> ONLINE</div>
       <button id="hub-treta-wallet" class="hub-header-action treta-header-wallet" type="button" aria-label="Ver saldo TRETA$"><img src="/img/treta/coin-classic-saci.webp" alt="" width="26" height="26" aria-hidden="true"><b id="hub-treta-total">T$ · ENTRAR</b></button>
       <button id="hub-music-toggle" class="hub-header-action hub-music-toggle" type="button" aria-pressed="true" aria-label="Desligar música do menu" title="Desligar música do menu"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="speaker-body" d="M3 9v6h4l5 4V5L7 9H3Z"/><path class="speaker-wave" d="M16 9a4 4 0 0 1 0 6m2-9a8 8 0 0 1 0 12"/><path class="speaker-off" d="m16 9 5 6m0-6-5 6"/></svg></button>
+      <button id="hub-record" class="hub-header-action" type="button" title="Gravar esta aba para cortes" aria-label="Gravar esta aba para cortes">●</button>
       <button id="hub-social-resume" class="hub-header-action" type="button" hidden>VOLTAR À PARTIDA ▶</button>
       <div class="hub-identity-wrap">
         <button id="hub-account-login" class="hub-identity" type="button" data-state="guest" aria-label="Reivindique seu perfil: entrar ou criar conta"><span id="hub-avatar" class="hub-identity-avatar" aria-hidden="true"></span><b id="hub-identity-name">Reivindique seu perfil</b><span id="hub-identity-cta" class="hub-identity-cta">ENTRAR</span></button>
@@ -1654,6 +1655,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
 <div id="hud" class="hidden">
   <div id="hud-actions">
     <button id="hud-speech" title="Liga/desliga as falas (memes)">🔊</button>
+    <button id="hud-record" type="button" title="Gravar minha partida" aria-label="Gravar minha partida">●</button>
     <!-- engrenagem SVG (emoji renderiza colorido, com métrica própria e diferente em cada SO) -->
     <button id="hud-settings" title="Configurações" aria-label="Configurações"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M6.6 0h2.8l.35 2.05 1.35.78 1.9-.83 1.4 2.42-1.55 1.37v1.56l1.55 1.37-1.4 2.42-1.9-.83-1.35.78L9.4 16H6.6l-.35-2.05-1.35-.78-1.9.83-1.4-2.42 1.55-1.37V8.65L1.6 7.28 3 4.86l1.9.83 1.35-.78zM10.6 8a2.6 2.6 0 1 0-5.2 0 2.6 2.6 0 0 0 5.2 0z"/></svg></button>
   </div>
@@ -1838,12 +1840,21 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
 </div>
 
 <div id="game-container"></div>
+<aside id="gameplay-recorder" class="gameplay-recorder" hidden aria-live="polite">
+  <strong id="gameplay-recorder-status">GRAVAÇÃO</strong>
+  <span id="gameplay-recorder-detail">Selecione esta aba e ative o áudio da aba.</span>
+  <button id="gameplay-recorder-stop" type="button">PARAR E SALVAR</button>
+  <a id="gameplay-recorder-preview" hidden target="_blank" rel="noopener">PREVISUALIZAR TAKE</a>
+  <label id="gameplay-recorder-consent" hidden><input id="gameplay-recorder-consent-input" type="checkbox" /> Autorizo enviar este take para revisão de cortes do CORO SOLTO.</label>
+  <button id="gameplay-recorder-submit" type="button" hidden>ENVIAR TAKE PARA REVISÃO</button>
+</aside>
 <div id="rotate-prompt" aria-hidden="true"><span class="rot-ico">📱</span><span>Gire o celular na horizontal pra jogar</span></div>
 
 <!-- Sinais operacionais da sessão (FPS, falhas de carga, abandono); só coleta - docs/runbooks/operacao-autonoma.md -->
 <script type="module" src={`/js/ops.js?v=${V}-${JS_REV}`} is:inline></script>
 <script type="module" src={`/js/site-links.js?v=${V}-${JS_REV}`} is:inline></script>
 <script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1;window.__CS_BOOT_SRC=this.src"></script>
+<script type="module" src={`/js/gameplay-recorder.js?v=${V}-${JS_REV}`} is:inline></script>
 <script type="module" src={`/js/pwa-install.js?v=${V}-${JS_REV}`} is:inline></script>
 </body>
 </html>
