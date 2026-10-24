@@ -112,6 +112,10 @@
 .tp-perfil__marca{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:8px;background:var(--tp-elevado);font-size:22px}
 .tp-perfil__marca[data-resultado="win"]{background:color-mix(in srgb,var(--tp-ganho) 62%,var(--tp-asfalto))}
 .tp-perfil__marca[data-resultado="loss"]{background:color-mix(in srgb,var(--tp-esq) 58%,var(--tp-asfalto))}
+/* Origem da linha: âmbar (atenção, não resultado) separa solo não verificado de rodada confirmada. */
+.tp-carreira__m[data-origem="solo"],.tp-perfil__evento[data-origem="solo"]{box-shadow:inset 3px 0 0 var(--tp-ambar)}
+.tp-selo-solo{display:inline-block;margin-left:8px;padding:1px 6px;border-radius:4px;background:var(--tp-elevado);
+  border:1px solid var(--tp-ambar);color:var(--tp-ambar);font:800 11px/1.45 var(--tp-ui);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
 
 .tp-perfil__editar{position:sticky;top:12px;display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:12px;border-color:rgba(180,217,46,.35)}
 :root[data-ui="v3"] .tp-perfil .tp-perfil__editar .tp-perfil__cab h3{font-size:30px}
