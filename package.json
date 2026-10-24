@@ -32,7 +32,7 @@
     "eval:modgraph": "node tools/eval/module-graph-check.mjs && node tools/eval/module-graph-check.mjs --mutante=06-09",
     "eval:glbpeso": "node tools/eval/glb-peso-check.mjs && node tools/eval/glb-peso-check.mjs --mutante=bruto",
     "gen:assetrev": "node tools/gen-asset-rev.mjs",
-    "eval:assetrev": "node tools/eval/asset-rev-check.mjs && node tools/eval/asset-rev-check.mjs --mutante=versao-crua && node tools/eval/asset-rev-check.mjs --mutante=rev-ignorada && node tools/eval/asset-rev-check.mjs --mutante=mapa-defasado",
+    "eval:assetrev": "node tools/eval/asset-rev-check.mjs && node tools/eval/asset-rev-check.mjs --mutante=versao-crua && node tools/eval/asset-rev-check.mjs --mutante=rev-ignorada && node tools/eval/asset-rev-check.mjs --mutante=manifesto-cru && node tools/eval/asset-rev-check.mjs --mutante=mapa-defasado",
     "eval:perfilmobile": "node tools/eval/perfil-mobile-check.mjs && node tools/eval/perfil-mobile-check.mjs --mutante=teto-frouxo && node tools/eval/perfil-mobile-check.mjs --mutante=inicio-alto && node tools/eval/perfil-mobile-check.mjs --mutante=memoria-morta && node tools/eval/perfil-mobile-check.mjs --mutante=cadencia-solta && node tools/eval/perfil-mobile-check.mjs --mutante=marcador-morto",
     "eval:perfilmobile:browser": "node tools/eval/perfil-mobile-browser.mjs && node tools/eval/perfil-mobile-browser.mjs --mutante=sem-perfil",
     "eval:mapasobdemanda": "node tools/eval/mapas-sob-demanda-check.mjs && node tools/eval/mapas-sob-demanda-check.mjs --mutante=estatico && node tools/eval/mapas-sob-demanda-check.mjs --mutante=registro && node tools/eval/mapas-sob-demanda-check.mjs --mutante=ordem",
