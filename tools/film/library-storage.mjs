@@ -18,7 +18,10 @@ const library = resolve(process.argv[3] || '../../launch-media/2026-10-24-growth
 if (action === 'setup') {
   const { data: current } = await db.storage.getBucket(bucketName);
   if (current) {
-    if (current.public || Number(current.file_size_limit) > 300 * 1024 * 1024)
+    const limit = Number(current.file_size_limit);
+    const types = current.allowed_mime_types;
+    if (current.public || !limit || limit > 300 * 1024 * 1024 ||
+      !Array.isArray(types) || !['video/webm', 'video/mp4'].every(type => types.includes(type)))
       throw new Error('Bucket existente não atende ao limite privado de 300 MB');
     process.stdout.write('Bucket privado já existe.\n');
   } else {
