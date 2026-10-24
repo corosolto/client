@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ============================================================================
-   edge-cache-check.mjs — O EDGE NÃO PODE SEGURAR /js/ POR UM MÊS (BUG-39)
+   edge-cache-check.mjs — EDGE NÃO PODE ESCONDER CÓDIGO NEM MANIFESTO MUTÁVEL
    ----------------------------------------------------------------------------
    MEDIDO EM 08/08 (incidente) e 25/08 (reincidência #443): a regra `assets_jogo`
    de scripts/cloudflare-setup.sh segurava /js/* no edge por 2.592.000 s com
@@ -19,8 +19,10 @@
          zona, que é justamente o estado sem dono que comprou o BUG-39.
    EC3 · o deploy manual (deploy-prod.yml) purga o prefixo /js/ do edge depois
          de publicar, pulando sem erro quando CF_API_TOKEN não existe — o mesmo
-         contrato do purge do crash-fix.yml. (O deploy normal via integração Git
-         da Vercel não tem hook de workflow; para ele o remédio é o EC1.)
+         contrato do purge do crash-fix.yml.
+   EC4 · deploy manual e prod-watch purgam /models/skins/manifest.json. Essa URL
+         é mutável, mas cai na regra de /models/ com TTL de um mês; sem purge a
+         release publica GLBs que a loja não consegue descobrir.
 
    Uso: node tools/eval/edge-cache-check.mjs [--mutante=<nome>]
    ============================================================================ */
@@ -32,6 +34,8 @@ const MUTANTES = {
   'js-na-midia': 'EC1',
   'sem-regra-js': 'EC2',
   'sem-purge-deploy': 'EC3',
+  'sem-manifest-deploy': 'EC4',
+  'sem-manifest-watch': 'EC4',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -43,6 +47,7 @@ const ALVO_TTL_JS = 600;
 
 let setup = readFileSync('scripts/cloudflare-setup.sh', 'utf8');
 let deployProd = readFileSync('.github/workflows/deploy-prod.yml', 'utf8');
+let prodWatch = readFileSync('.github/workflows/prod-watch.yml', 'utf8');
 
 const mutate = (texto, antes, depois, nome) => {
   const mudado = texto.replace(antes, depois);
@@ -61,6 +66,12 @@ if (MUT === 'sem-regra-js') setup = mutate(setup,
 if (MUT === 'sem-purge-deploy') deployProd = mutate(deployProd,
   /\n      - name: purge do edge[\s\S]*$/,
   '\n', 'sem-purge-deploy');
+if (MUT === 'sem-manifest-deploy') deployProd = mutate(deployProd,
+  'www.csbrasil.online/models/skins/manifest.json',
+  'www.csbrasil.online/models/skins/manifest-ausente.json', 'sem-manifest-deploy');
+if (MUT === 'sem-manifest-watch') prodWatch = mutate(prodWatch,
+  'www.csbrasil.online/models/skins/manifest.json',
+  'www.csbrasil.online/models/skins/manifest-ausente.json', 'sem-manifest-watch');
 
 const falhas = [];
 
@@ -97,11 +108,21 @@ if (!temPurge) {
   falhas.push('EC3 deploy-prod.yml publica produção sem purgar o prefixo /js/ do edge (guardado por CF_API_TOKEN)');
 }
 
+/* EC4 · todo caminho de deploy limpa o manifesto mutável preso no TTL de /models/. */
+const MANIFESTO = /www\.csbrasil\.online\/models\/skins\/manifest\.json/;
+const purgeManifestoManual = /purge_cache/.test(deployProd) && MANIFESTO.test(deployProd);
+const purgeManifestoGit = /purge_cache/.test(prodWatch) && MANIFESTO.test(prodWatch);
+if (!purgeManifestoManual || !purgeManifestoGit) {
+  const faltam = [!purgeManifestoManual && 'deploy-prod.yml', !purgeManifestoGit && 'prod-watch.yml'].filter(Boolean);
+  falhas.push(`EC4 manifesto de skins não é purgado por ${faltam.join(' e ')} — catálogo pode ficar velho por um mês`);
+}
+
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) {
   console.log(`  \x1b[32m✓\x1b[0m EC1 nenhuma cache rule segura /js/ no edge acima de ${ALVO_TTL_JS}s`);
   console.log('  \x1b[32m✓\x1b[0m EC2 /js/ continua declarado numa cache rule com cache:true');
   console.log('  \x1b[32m✓\x1b[0m EC3 deploy manual purga /js/ do edge (pulado sem CF_API_TOKEN, nunca vermelho por secret)');
+  console.log('  \x1b[32m✓\x1b[0m EC4 deploy manual e prod-watch purgam o manifesto mutável de skins');
 }
 if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);

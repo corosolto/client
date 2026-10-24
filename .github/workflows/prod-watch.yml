@@ -49,16 +49,18 @@ jobs:
         with: { node-version: 22 }
 
       # Purge pós-deploy ANTES do probe: medir o edge velho acusaria o deploy
-      # novo. Sem o secret cadastrado, pula — o probe ainda vale.
-      # (o secret mora no env DO JOB: `if` de step não enxerga env do próprio step)
-      - name: purge do edge Cloudflare (/js/* + /style.css)
+      # novo. O manifesto de skins é mutável e mora sob /models/, cujo TTL é de
+      # um mês; sem purge a release nova fica invisível apesar do GLB já existir.
+      # Sem o secret cadastrado, pula — o probe ainda vale.
+      # (O secret mora no env DO JOB: `if` de step não enxerga env do próprio step.)
+      - name: purge do edge Cloudflare (/js/* + CSS + manifesto de skins)
         if: env.CF_API_TOKEN != ''
         run: |
           ZONE_ID=$(curl -sS -H "Authorization: Bearer $CF_API_TOKEN" \
             "https://api.cloudflare.com/client/v4/zones?name=csbrasil.online" \
             | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).result[0].id))")
           curl -sS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" \
-            --data '{"prefixes":["www.csbrasil.online/js/","www.csbrasil.online/style.css"]}' \
+            --data '{"prefixes":["www.csbrasil.online/js/","www.csbrasil.online/style.css","www.csbrasil.online/models/skins/manifest.json"]}' \
             "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache"
 
       - name: probe de coerência do edge
