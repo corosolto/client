@@ -15,12 +15,12 @@ const root=args.find(a=>a.startsWith('--root='))?.slice(7) || args.find(a=>!a.st
 assert(args.every(a=>!a.startsWith('--') || a.startsWith('--root=') || a.startsWith('--out=') || a.startsWith('--mutant=') || a==='--mutants'),'unknown option: use --root, --out, --mutant or --mutants');
 const output=process.argv.find(x=>x.startsWith('--out='))?.slice(6);
 const mutant=process.argv.find(x=>x.startsWith('--mutant='))?.slice(9);
-assert(!mutant || ['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source','hub-title','hub-row-link','hub-char-avatar'].includes(mutant),'unknown mutation');
+assert(!mutant || ['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source','hub-title','hub-row-link','hub-char-avatar','hub-cta-logado','hub-sem-pagina','hub-pagina-sem-offset','hub-css-hidden'].includes(mutant),'unknown mutation');
 let mutationsApplied=0;
 if(args.includes('--mutants')) {
  assert(!mutant,'--mutants and --mutant cannot be combined');
  const folder=mkdtempSync(join(tmpdir(),'ranking-home-status-'));
- const names=['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source','hub-title','hub-row-link','hub-char-avatar'];
+ const names=['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source','hub-title','hub-row-link','hub-char-avatar','hub-cta-logado','hub-sem-pagina','hub-pagina-sem-offset','hub-css-hidden'];
  try {
   const run=(name)=>{const reportPath=join(folder,(name || 'baseline')+'.json');const child=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--root='+root,'--out='+reportPath,...(name?['--mutant='+name]:[])],{encoding:'utf8',maxBuffer:262144});assert(existsSync(reportPath),'cannot measure child '+(name || 'baseline')+': '+(child.stderr || child.error || child.stdout || '').slice(0,700));return {status:child.status,report:JSON.parse(readFileSync(reportPath,'utf8'))};};
   const baseline=run(null);assert.equal(baseline.status,0,'baseline must be green before mutation proof');
@@ -34,7 +34,7 @@ if(args.includes('--mutants')) {
 }
 const source=path=>readFileSync(`${root}/${path}`,'utf8');
 let main=source('public/js/main.js'),community=source('public/js/community.js');
-let astro=source('src/pages/index.astro');
+let astro=source('src/pages/index.astro'),peleV3=source('public/css/tp/ranking.css');
 const hashes=Object.fromEntries(['src/pages/index.astro','public/js/main.js','public/js/community.js','public/js/ranking-player.js'].map(p=>[p,createHash('sha256').update(source(p)).digest('hex')]));
 if(mutant==='nonarray-guard'){const changed=main.replaceAll('!Array.isArray(data?.players)','!data?.players');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
 // A tela do hub só pode ler a fonte verificada: /api/leaderboard não filtra ranking_exclusion (22/10).
@@ -43,6 +43,13 @@ if(mutant==='hub-legacy-source'){const changed=main.replace("await api('/api/soc
 if(mutant==='hub-title'){const changed=astro.replace('<h2>RANKING</h2>','<h2>PLACAR DA RUA</h2>');assert.notEqual(changed,astro,'MUTATION DID NOT APPLY');astro=changed;mutationsApplied++;}
 if(mutant==='hub-row-link'){const changed=main.replace("linha.setAttribute('role', 'link'); linha.setAttribute('tabindex', '0');","linha.dataset.mutante = '1';");assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
 if(mutant==='hub-char-avatar'){const changed=main.replace("? `/img/chars/avatars/${p.last_character}.webp` : ''","? '' : ''");assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
+// Pedidos de 24/10: quem já está logado não vê convite de nick, e a lista rola em páginas de 25.
+if(mutant==='hub-cta-logado'){const changed=main.replace('Boolean(registeredNick || contaNick)','Boolean(registeredNick)');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
+if(mutant==='hub-sem-pagina'){const changed=main.replace('  global.append(mais);\n','');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
+if(mutant==='hub-pagina-sem-offset'){const changed=main.replace('&offset=${corpo.children.length}','');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
+/* A pele v3 declara `display` para esses botões: sem `:not([hidden])` o atributo hidden do
+   produto não esconde nada, que foi o convite de nick aparecendo para quem já estava logado. */
+if(mutant==='hub-css-hidden'){const changed=peleV3.replaceAll(':not([hidden])','');assert.notEqual(changed,peleV3,'MUTATION DID NOT APPLY');peleV3=changed;mutationsApplied++;}
 const helpers=await import(pathToFileURL(`${root}/public/js/ranking-player.js`).href);
 // renderHubRanking monta a célula do jogador sozinha, mas reaproveita os mesmos selos do produto.
 const selos={...await import(pathToFileURL(`${root}/public/js/account-verified.js`).href),...await import(pathToFileURL(`${root}/public/js/career-rank.js`).href)};
@@ -68,9 +75,17 @@ const loading=/carregando|só um instante/i;
 const emptyCopy=/ainda (?:não há|vazio)|nenhum jogador/i;
 const failures=[],results=[];
 function check(condition,message){if(!condition)throw new Error(message);}
-function fetchResult(kind,surface) {
+/* `pagina` entrega 25 (a página do servidor) e, no offset seguinte, 3 — é assim que a
+   rolagem infinita prova que pediu a próxima página e que sabe parar na última. */
+const pagina=(inicio,quantos)=>Array.from({length:quantos},(_,i)=>({...charPlayer,id:`fixture-${inicio+i}`,nick:`Fixture ${inicio+i}`,public_handle:`fixture_${inicio+i}`,position:inicio+i+1}));
+function fetchResult(kind,surface,url) {
  if(kind==='network')return Promise.reject(new Error('network_unreachable'));
  if(kind==='rejection')return Promise.resolve({ok:false,status:503,json:async()=>({error:'social_unavailable'})});
+ if(kind==='pagina'){
+  const offset=Number(new URL(url,'https://fixture.test').searchParams.get('offset') || 0);
+  const lote=offset?pagina(offset,3):pagina(0,25);
+  return Promise.resolve({ok:true,status:200,json:async()=>({players:lote,total:28})});
+ }
  const lista=surface==='hub'?[player,charPlayer]:[player];
  const data=kind==='disabled'?{disabled:true}:kind==='malformed'?{}:kind==='nonarray'?{players:{}}:{players:kind==='success'?lista:[],total:kind==='success'?lista.length:0,week:{starts_at:'2026-10-12T03:00:00Z',ends_at:'2026-10-19T03:00:00Z',timezone:'America/Sao_Paulo'}};
  return Promise.resolve({ok:true,status:200,json:async()=>data});
@@ -101,6 +116,7 @@ function visibleText(node) {
 function assertState(pane,kind,surface) {
  const text=visibleText(pane).replace(/\s+/g,' ').trim();
  const rows=pane.querySelectorAll('table tbody tr');
+ if(kind==='pagina')return {text,rows:rows.length,photos:pane.querySelectorAll('img').length};
  if(kind==='success'){
   const esperadas=surface==='hub'?2:1;
   check(rows.length===esperadas,`expected ${esperadas} real rendered fixture row(s), got ${rows.length}`);
@@ -119,13 +135,14 @@ function assertState(pane,kind,surface) {
  }
  return {text,rows:rows.length,photos:pane.querySelectorAll('img').length};
 }
-async function scenario(surface,flag,kind,period='all') {
+async function scenario(surface,flag,kind,period='all',conta='',semNick=false) {
  const {document}=parseHTML(`<html><body>${surface==='community'?'<section id="community"><p id="social-status"></p><details class="social-account-panel" open><div id="social-account"></div></details><div id="social-content"></div></section>':ssrFragment(flag,surface)}</body></html>`);
  globalThis.document=document;
  const pane=document.getElementById(surface==='hub'?'hub-ranking':surface==='panel'?'ranking-panel':'community');
  pane.hidden=false;pane.classList.remove('hidden');
  const requests=[];
- const context={...helpers,...selos,document,URL,Date,AbortSignal,UI_V3:false,tr:x=>x,auth:null,state:null,profileId:'',tab:'ranking',loadVersion:0,rankingPeriod:period,rankingScope:'global',rankingOffset:0,rankingQuery:'',rankingMode:'all',rankingGameType:'all',rankingTeam:'all',registeredNick:'Renderer Fixture',loadStats:()=>({kills:4,deaths:2,wins:1,matches:2}),$:id=>document.getElementById(id),apiUrl:x=>x,fetch:async(url)=>{requests.push(url);return fetchResult(kind,surface);},content:document.getElementById('social-content'),status:document.getElementById('social-status'),account:document.getElementById('social-account')};
+ const nickRegistrado=(conta || semNick)?'':'Renderer Fixture';
+ const context={...helpers,...selos,document,URL,Date,AbortSignal,UI_V3:false,tr:x=>x,auth:null,state:null,profileId:'',tab:'ranking',loadVersion:0,rankingPeriod:period,rankingScope:'global',rankingOffset:0,rankingQuery:'',rankingMode:'all',rankingGameType:'all',rankingTeam:'all',registeredNick:nickRegistrado,contaNick:conta,RANKING_PAGINA:25,loadStats:()=>({kills:4,deaths:2,wins:1,matches:2}),$:id=>document.getElementById(id),apiUrl:x=>x,fetch:async(url)=>{requests.push(url);return fetchResult(kind,surface,url);},content:document.getElementById('social-content'),status:document.getElementById('social-status'),account:document.getElementById('social-account')};
  let body;
  if(surface==='community'){
   context.root=pane; // community.js lê root no escopo do módulo (render marca data-view)
@@ -152,10 +169,28 @@ async function scenario(surface,flag,kind,period='all') {
  if(mutant==='no-photo' && kind==='success')for(const image of pane.querySelectorAll('img')){image.remove();mutationsApplied++;}
  if(mutant==='no-profile' && kind==='success')for(const a of pane.querySelectorAll('a'))if(a.getAttribute('href')==='/u/ruler_fixture'){a.remove();mutationsApplied++;}
  if(mutant==='no-week-tab' && surface==='community')for(const b of pane.querySelectorAll('button'))if(b.textContent==='SEMANAL'){b.remove();mutationsApplied++;}
- const name=`${surface}/SSR=${flag}/${kind}${surface==='community'?`/${period}`:''}`;
+ const name=`${surface}/SSR=${flag}/${kind}${surface==='community'?`/${period}`:''}${conta?'/logado':''}`;
  try{
   check(!thrown,`renderer rejected without settling DOM: ${thrown}`);
   check(requests.length===1,'real renderer must execute one API request');
+  /* Pedidos de 24/10. O convite de nick é só para quem não tem nick NENHUM: conta logada já
+     participa. E a lista cresce por página — o botão é o mecanismo real da rolagem infinita,
+     então ele existe enquanto o servidor devolveu uma página cheia e some na última. */
+  if(surface==='hub'){
+   const convite=pane.querySelector('#hub-rank-profile');
+   const deveEsconder=Boolean(nickRegistrado || conta);
+   check(convite.hidden===deveEsconder,deveEsconder?`quem já tem nick (${conta?'conta':'registro'}) ainda vê o convite de participar`:'quem não tem nick nenhum ficou sem o convite de participar');
+  }
+  if(surface==='hub' && kind==='pagina'){
+   const mais=pane.querySelector('#hub-rank-mais');
+   check(!!mais && typeof mais.onclick==='function','página cheia sem o acionador de mais uma página');
+   check(pane.querySelectorAll('table tbody tr').length===25,`primeira página devia render 25 linhas, veio ${pane.querySelectorAll('table tbody tr').length}`);
+   await mais.onclick();
+   check(requests.length===2,`rolar devia pedir a página seguinte, pediu ${requests.length}`);
+   check(new URL(requests[1],'https://fixture.test').searchParams.get('offset')==='25',`segunda página sem o offset certo: ${requests[1]}`);
+   check(pane.querySelectorAll('table tbody tr').length===28,`linhas devem somar, vieram ${pane.querySelectorAll('table tbody tr').length}`);
+   check(!pane.querySelector('#hub-rank-mais'),'última página (menor que 25) devia encerrar a rolagem');
+  }
   // A aba RANKING do hub é a tela promovida a primeira linha: só a fonte verificada serve.
   if(surface==='hub')check(new URL(requests[0],'https://fixture.test').searchParams.get('action')==='ranking',`hub must read the verified ranking source, asked ${requests[0]}`);
   // Pedido do dono (22/10): o título desta tela é RANKING; PLACAR DA RUA ficou só na faixa do lobby.
@@ -170,7 +205,19 @@ async function scenario(surface,flag,kind,period='all') {
   results.push({name,pass:true,...snapshot,requests});
  }catch(e){const failure={name,pass:false,error:e.message,text:visibleText(pane).replace(/\s+/g,' ').trim(),rows:pane.querySelectorAll('table tbody tr').length,requests};failures.push(failure);results.push(failure);}
 }
+for(const regra of peleV3.split('}')){
+ if(!/#hub-ranking[^{]*(?:\.hub-rank-profile|#hub-rank-share)/.test(regra) || !/\{[^{]*display\s*:/.test(regra))continue;
+ const seletores=regra.split('{')[0].split(',').map(s=>s.trim()).filter(s=>/\.hub-rank-profile|#hub-rank-share/.test(s));
+ for(const seletor of seletores){
+  if(/:(?:hover|focus|active|focus-visible|disabled)/.test(seletor))continue;
+  if(!seletor.includes(':not([hidden])'))failures.push({name:'css/v3/hidden',pass:false,error:`pele v3 declara display sem :not([hidden]) em "${seletor}": o atributo hidden do produto não esconde o botão`,requests:[]});
+ }
+}
 for(const surface of ['hub','panel'])for(const flag of [false,true])for(const kind of ['success','disabled','rejection','network','empty','malformed','nonarray'])await scenario(surface,flag,kind);
+// Pedidos de 24/10 no renderer real: logado não vê convite, sem nick nenhum vê, lista rola por página.
+await scenario('hub',true,'success','all','rubenmarcus');
+await scenario('hub',true,'success','all','',true);
+await scenario('hub',true,'pagina');
 for(const period of ['all','week'])for(const kind of ['success','disabled','rejection','network','empty'])await scenario('community',false,kind,period);
 assert(!mutant || mutationsApplied>0,'MUTATION DID NOT APPLY');
 const report={root,nodeVersion:process.version,mutant:mutant || null,mutationsApplied,hashes,productionEvidence:false,total:results.length,passed:results.length-failures.length,failed:failures.length,results};
