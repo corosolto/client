@@ -25,7 +25,11 @@ const TOKENS = {
 };
 /* Hex fora dos tokens que a seção pode usar: paradas de gradiente das raridades
    (00-main.html:77-83), lima claro do JOGAR (17:68), NOVO (00:95), fim da barra (00:102). */
+/* Ambiência do palco (22/10): brasa e musgo do fundo vêm LITERAIS do design
+   (02-lobby.html:41, 27-personagem.html:34); vinheta e máscara são preto do asfalto. */
+const HEX_PALCO = ['#3a3016', '#1f2a12', '#000'];
 const HEX_EXTRA = new Set([
+  ...HEX_PALCO,
   '#b5bdcc', '#5e6678', '#66f0a4', '#1a8f52', '#5cc2ff', '#1460c8', '#c98bff', '#6a23b8',
   '#ffb257', '#c25a00', '#ffe766', '#c99a00', '#ff3d9a', '#cfe84a', '#e2402c', '#b6ff5c', '#fff', '#ffffff',
 ]);
@@ -101,7 +105,10 @@ export function medir(arq) {
 
   const hexes = [...tp.matchAll(/#[0-9a-f]{3,8}\b/gi)].map((m) => m[0].toLowerCase());
   const permitido = new Set([...Object.values(TOKENS).filter((v) => v.startsWith('#')), ...HEX_EXTRA]);
-  const intrusos = [...new Set(hexes.filter((h) => !permitido.has(h)))];
+  /* Vinheta e máscara do palco usam o PRÓPRIO asfalto com opacidade (#090704xx):
+     é o token, não cor nova — barrar isso obrigaria a repetir o hex em rgba(). */
+  const ehAsfaltoComAlfa = (h) => /^#090704[0-9a-f]{2}$/.test(h);
+  const intrusos = [...new Set(hexes.filter((h) => !permitido.has(h) && !ehAsfaltoComAlfa(h)))];
   const amarelo = (tp.match(/#ffd400/gi) || []).length;
   add('TP4', !intrusos.length && amarelo === 1,
     intrusos.length ? `cor fora da paleta do pacote: ${intrusos.join(', ')}`

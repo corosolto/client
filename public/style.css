@@ -3378,6 +3378,8 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
   --tp-asfalto:#090704; --tp-painel:#131418; --tp-elevado:#26221b; --tp-fundo:#0e0b07; --tp-fundo-2:#141008;
   --tp-lima:#b4d92e; --tp-lima-claro:#cfe84a; --tp-lima-tinta:#131313;
   --tp-ambar:#f3b958; --tp-ganho:#46e08a; --tp-novo:#e2402c;
+  /* cores de CENA do pacote (fundo do lobby e da tela 27), não de interface */
+  --tp-palco-brasa:#3a3016; --tp-palco-musgo:#1f2a12;
   --tp-esq:#e03232; --tp-dir:#2f55e0; --tp-esq-claro:#ff6b6b; --tp-dir-claro:#7f9cff;
   --tp-tinta-1:#f0f0ed; --tp-tinta-2:#d3d3d1; --tp-tinta-3:#a5a5a3;
   --tp-borda:rgba(255,255,255,.08); --tp-borda-forte:rgba(255,255,255,.28);
@@ -3549,6 +3551,13 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
   .tp-splash__canto{right:16px;bottom:16px}
   .tp-splash__canto .tp-num{display:none}
 }
+
+/* Tela 27 (trocar personagem): o palco ganha a mesma brasa do lobby e a poça ÂMBAR do
+   pacote. O gradiente ciano legado do canvas sai — não é cor da paleta Treta Pop. */
+:root[data-ui="v3"] #char-select .char-preview-box{background:
+  radial-gradient(44% 6% at 50% 90%,color-mix(in srgb,var(--tp-ambar) 50%,transparent) 0%,transparent 70%),
+  radial-gradient(52% 50% at 50% 56%,var(--tp-palco-brasa) 0%,transparent 72%)}
+:root[data-ui="v3"] #char-select #char-preview{background:none}
 /* END:treta-pop */
 /* +AMIGO fica só na Treta Pop; sem ?ui=v3 o placar legado não ganha controle novo. */
 :root[data-ui=v3] #scoreboard .sb-amigo{flex:none;min-height:28px;margin-left:4px;padding:4px 7px;font:700 10px/1.2 var(--tp-num);letter-spacing:.5px;color:#d0ee7d;background:#1a2410;border:1px solid #556b2f;border-radius:3px;cursor:pointer}

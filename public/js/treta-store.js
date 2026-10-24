@@ -181,10 +181,12 @@ function drawQuests() {
 function draw() {
   if(!loading && !refreshFailed)updateTretaRewards(state);
   else{
-    $('hub-treta-total').textContent=refreshFailed?'T$ · ERRO':'T$ · …';
-    $('hub-treta-wallet').setAttribute('aria-label',refreshFailed?'Carteira TRETA$ indisponível. Abra a loja para tentar novamente.':'Consultando carteira TRETA$');
+    // Visitante nao tem saldo: falha de consulta vira o convite de sempre, nunca ERRO.
+    const visitante=!account?.authenticated;
+    $('hub-treta-total').textContent=visitante?'T$ · ENTRAR':refreshFailed?'T$ · ERRO':'T$ · …';
+    $('hub-treta-wallet').setAttribute('aria-label',visitante?'Entre para ver seu saldo TRETA$':refreshFailed?'Carteira TRETA$ indisponível. Abra a loja para tentar novamente.':'Consultando carteira TRETA$');
   }
-  $('treta-balance-value').textContent=state?.wallet?money(state.wallet.balance):loading?'CARREGANDO…':refreshFailed?'INDISPONÍVEL':'ENTRE NA CONTA';
+  $('treta-balance-value').textContent=state?.wallet?money(state.wallet.balance):loading?'CARREGANDO…':!account?.authenticated?'ENTRE NA CONTA':refreshFailed?'INDISPONÍVEL':'ENTRE NA CONTA';
   for(const id of ['treta-grid','treta-characters-grid','treta-gloves-grid','treta-packs-grid'])$(id).setAttribute('aria-busy',String(loading));
   $('treta-retry').hidden=!refreshFailed;
   const heading={

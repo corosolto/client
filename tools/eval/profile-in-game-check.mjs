@@ -143,13 +143,21 @@ const CASOS = [
     if (avalia(`/u/${HANDLE}`) !== true || avalia(`/u/${ID}/conquistas`) !== true) return 'convite de conta cobre /u/<perfil>';
     if (avalia('/?secao=comunidade&social=profile&perfil=' + ID) !== true) return 'convite de conta cobre o link antigo ?perfil=';
     if (avalia('/?secao=jogar') !== false || avalia('/comunidade') !== false) return 'convite de conta sumiu da entrada comum';
-    const recolhe = b.community.match(/^\s*(if\(new URLSearchParams\(location\.search\)\.get\('perfil'\)[^\n]*)$/m)?.[1];
-    if (!recolhe) return 'painel da conta não recolhe no perfil compartilhado';
-    for (const [search, pathname] of [['?perfil=' + ID, '/'], ['', `/u/${HANDLE}`]]) {
-      const painel = { open: true, removeAttribute(k) { if (k === 'open') this.open = false; } };
-      vm.runInNewContext(recolhe, { URLSearchParams, location: { search, pathname }, account: { closest: (s) => (s === 'details' ? painel : null) } });
+    /* Desde 22/10 quem recolhe é painelDaConta(), chamada antes do boot: o visitante vê o perfil,
+       não o painel de login. Medimos a função rodando, não o texto de uma linha. */
+    const fn = b.community.match(/^\s*(function painelDaConta\(\)\{[^\n]*)$/m)?.[1];
+    if (!fn) return 'painelDaConta não existe em community.js';
+    if (!/painelDaConta\(\);\s*void boot\(\);/.test(b.community)) return 'painelDaConta não é chamada antes do boot';
+    for (const [search, pathname] of [['?perfil=' + ID, '/'], ['', `/u/${HANDLE}`], ['', '/']]) {
+      const painel = { open: true, hidden: false, removeAttribute(k) { if (k === 'open') this.open = false; } };
+      vm.runInNewContext(`${fn};painelDaConta()`, { URLSearchParams, location: { search, pathname },
+        auth: null, tab: 'profile', painelPedido: false, account: { closest: (s) => (s === 'details' ? painel : null) } });
       if (painel.open) return `painel da conta continua aberto por cima do perfil (${pathname}${search})`;
     }
+    const comConta = { open: true, hidden: false, removeAttribute() {} };
+    vm.runInNewContext(`${fn};painelDaConta()`, { URLSearchParams, location: { search: '', pathname: '/comunidade' },
+      auth: { authenticated: true, profile: { id: ID } }, tab: 'settings', painelPedido: false, account: { closest: (s) => (s === 'details' ? comConta : null) } });
+    if (!comConta.hidden) return 'painel da conta aparece para quem já tem conta';
     const troca = b.community.match(/^\s*(document\.getElementById\?\.\('perfil-ssr'\)\?\.remove\(\);)$/m)?.[1];
     if (!troca) return 'comunidade não troca o perfil SSR pelo dela (ficaria duplicado)';
     const leave = b.entry.match(/^const leaveTo=[^\n]*$/m)?.[0];
@@ -189,8 +197,10 @@ if (MUTATE) {
     ['PG4', 'privado sem a entrada ao jogo', (b) => ({ ...b, priv: { ...b.priv, html: b.priv.html.replace('location.replace(game)', 'void game') } })],
     ['PG5', 'boot suja /u com ?map=', (b) => ({ ...b, main: b.main.replace("  if (!location.pathname.startsWith('/u/')) hubNavigate(", '  hubNavigate(') })],
     ['PG6', 'convite de conta cobre /u/<perfil>', (b) => ({ ...b, main: b.main.replace(" || estadoDaUrl(location.href)?.perfil", '') })],
-    ['PG6', 'painel da conta aberto por cima do perfil em /u', (b) => ({ ...b, community: b.community.replace(" || /^\\/u\\/[^/]/.test(location.pathname || '')", '') })],
-    ['PG6', 'perfil SSR fica duplicado ao lado da comunidade', (b) => ({ ...b, community: b.community.replace("document.getElementById?.('perfil-ssr')?.remove();", '') })],
+    ['PG6', 'painel da conta aberto por cima do perfil compartilhado', (b) => ({ ...b, community: b.community.replace("if(!auth?.authenticated && tab==='profile' && !painelPedido)panel.open=false;", '') })],
+    ['PG6', 'painel só recolhe depois do boot', (b) => ({ ...b, community: b.community.replace(/painelDaConta\(\);(\s*)void boot\(\);/, 'void boot();') })],
+    ['PG6', 'painel da conta aparece para quem já tem conta', (b) => ({ ...b, community: b.community.replace('panel.hidden=!!auth?.profile;', 'panel.hidden=false;') })],
+    ['PG6', 'perfil SSR fica duplicado ao lado da comunidade', (b) => ({ ...b, community: b.community.replaceAll("document.getElementById?.('perfil-ssr')?.remove();", '') })],
     ['PG6', 'login social navega dentro do quadro', (b) => ({ ...b, entry: b.entry.replace(/^const leaveTo=[^\n]*$/m, 'const leaveTo=url=>location.assign(url);') })],
   ];
   let cegas = 0;

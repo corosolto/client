@@ -1,0 +1,46 @@
+/* Movimento da Treta Pop: só o que o kit do style.css ainda NÃO tem.
+   O kit já traz .tp-gaveta (drawer 280), .tp-toasts/.tp-toast (280) e .tp-recuado
+   (fundo que recua) — aqui entram apenas a cortina de cena e o fade de troca de
+   tela, mais o estado animável dos overlays do HUD. Durações só por token.
+   Par de public/js/ui-motion.js; mapa em design/.../telas/39-transicoes-mapa.html. */
+
+/* -------------------------------------------------------------- cortina --
+   Faixa lima inclinada: cobre a tela em 480, a troca acontece atrás dela e ela
+   sai pelo outro lado em 480. É ela que esconde o engasgo do carregamento. */
+:root[data-ui="v3"] .tp-cortina{position:fixed;inset:-20vh -30vw;z-index:9000;pointer-events:none;
+  background:linear-gradient(100deg,var(--tp-lima) 0 62%,color-mix(in srgb,var(--tp-lima) 70%,var(--tp-asfalto)) 100%);
+  transform:translateX(-130%) rotate(-14deg);will-change:transform}
+:root[data-ui="v3"] .tp-cortina--fecha{transform:translateX(0) rotate(-14deg);
+  transition:transform var(--tp-d-cena) var(--tp-ease-cena)}
+:root[data-ui="v3"] .tp-cortina--abre{transform:translateX(130%) rotate(-14deg);
+  transition:transform var(--tp-d-cena) var(--tp-ease-cena)}
+
+/* ----------------------------------------------------------------- fade --
+   Troca de tela quando não há cortina: 180 saindo, 280 entrando. */
+:root[data-ui="v3"] .tp-fade-sai{opacity:0;transform:scale(calc(1 - .02 * var(--tp-mov)));
+  transition:opacity var(--tp-d-rapido) var(--tp-ease-saida),transform var(--tp-d-rapido) var(--tp-ease-saida)}
+:root[data-ui="v3"] .tp-fade-entra{animation:tpFadeEntra var(--tp-d-painel) var(--tp-ease-saida) both}
+@keyframes tpFadeEntra{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:none}}
+/* View Transitions faz o mesmo desenho num repaint só, quando o navegador tem. */
+:root[data-ui="v3"].tp-vt-fade::view-transition-old(root){animation:tpFadeSaiVT var(--tp-d-rapido) var(--tp-ease-saida) both}
+:root[data-ui="v3"].tp-vt-fade::view-transition-new(root){animation:tpFadeEntra var(--tp-d-painel) var(--tp-ease-saida) both}
+@keyframes tpFadeSaiVT{from{opacity:1;transform:none}to{opacity:0;transform:scale(.98)}}
+
+/* ------------------------------------------- overlays do HUD (29, 30, 31, 32) --
+   Entram em 180 e saem em 280. `visibility` no lugar de `display` porque
+   `display:none` não anima; o `.hidden` que o game.js alterna continua mandando
+   em QUEM aparece — aqui só se decide COMO. */
+:root[data-ui="v3"] .tp-overlay.hidden{display:flex!important;opacity:0;visibility:hidden;
+  transition:opacity var(--tp-d-painel) var(--tp-ease-saida),visibility 0s linear var(--tp-d-painel)}
+:root[data-ui="v3"] #round-banner.tp-overlay.hidden{display:block!important}
+:root[data-ui="v3"] .tp-overlay:not(.hidden){opacity:1;visibility:visible;
+  transition:opacity var(--tp-d-rapido) var(--tp-ease-saida),visibility 0s}
+/* O placar do topo sobrevive a qualquer overlay: é regra do pacote (telas 29-32).
+   Camada explícita nos dois para a régua poder cobrar a ordem. */
+:root[data-ui="v3"] .tp-overlay{z-index:50}
+:root[data-ui="v3"] #hud-top{z-index:60}
+
+/* Movimento reduzido: sem cortina e sem deslocamento — fica o fade de 120 ms
+   que os tokens já impõem. */
+@media (prefers-reduced-motion: reduce){:root[data-ui="v3"] .tp-cortina{display:none}}
+:root[data-ui="v3"][data-motion="reduzido"] .tp-cortina{display:none}
