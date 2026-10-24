@@ -6,7 +6,7 @@ import {initAccountEntry,mountProfilePreferences} from './account-entry.js';
 import {initLoginPrompt,noteLoginPromptMatch} from './login-prompt.js';
 import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
-import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaVitrine} from './treta-store.js';
+import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
 import {tretaPack} from './data/pack-definitions.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
@@ -1212,6 +1212,9 @@ function closeHubRoster(updateRoute = true) {
   $('hub-roster-modal').hidden = true; $('hub-change-character').focus();
   if (updateRoute) hubNavigate({ janela: null });
 }
+/* A loja responde DEPOIS do boot: o modal aberto por link direto (/jogar/personagens)
+   precisa redesenhar quando o armário chega. Ponte para o listener já existente. */
+let hubRosterRender = null;
 function openHubRoster(updateRoute = true) {
   hubRosterLado = ladoValido(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);
   const temPoliticos = (lado) => CHARACTERS.some((c) => c.team === 'P' && podeNoLado(c, lado));
@@ -1241,23 +1244,37 @@ function openHubRoster(updateRoute = true) {
       button.onclick = () => { hubRosterCat = cat; render(); };
       filters.appendChild(button);
     }
+    /* Armário: skin de personagem comprada é personagem selecionável aqui (dono, 23/10).
+       Sem conta ou sem skin aprovada a lista vem vazia e a grade fica como sempre foi. */
+    const armario = tretaSkinsDoArmario();
+    const escolher = (id) => {
+      currentChar = id; currentTeam = hubRosterLado; currentFaction = hubRosterLado;
+      currentEnemyFaction = null;
+      localStorage.setItem('csbr-home-character', currentChar);
+      localStorage.setItem('csbr-home-side', currentTeam);
+      syncHomeCharacter(); closeHubRoster(false);
+      hubNavigate({ personagem: currentChar, janela: null });
+    };
     for (const def of doLado.filter((c) => !hubRosterCat || c.team === hubRosterCat)) {
+      const skinsDoChar = armario.filter((s) => s.character === def.id);
+      const equipada = skinsDoChar.find((s) => s.equipped) || null;
       /* Célula = card (escolhe SEU personagem, como sempre) + chip ＋ (trava quem entra).
          Papel do escalado: pode no seu lado = aliado, senão inimigo; montagem re-filtra. */
       const cell = document.createElement('div'); cell.className = 'hub-roster-cell';
       const button = document.createElement('button'); button.type = 'button';
-      button.setAttribute('aria-pressed', String(def.id === currentChar));
+      button.setAttribute('aria-pressed', String(def.id === currentChar && !equipada));
       const avatar = document.createElement('img'); avatar.src = `/img/chars/avatars/${def.id}.webp`;
       avatar.alt = ''; avatar.loading = 'lazy';
       const name = document.createElement('span'); name.textContent = def.name;
       button.append(avatar, name);
-      button.onclick = () => {
-        ui.click(); currentChar = def.id; currentTeam = hubRosterLado; currentFaction = hubRosterLado;
-        currentEnemyFaction = null;
-        localStorage.setItem('csbr-home-character', currentChar);
-        localStorage.setItem('csbr-home-side', currentTeam);
-        syncHomeCharacter(); closeHubRoster(false);
-        hubNavigate({ personagem: currentChar, janela: null });
+      button.onclick = async () => {
+        ui.click();
+        // Voltar ao personagem base com skin equipada TIRA a skin no servidor antes de trocar.
+        if (equipada) {
+          try { if (!await desequiparTretaSkin()) throw new Error('unequip_recusado'); }
+          catch { $('hub-roster-selected').textContent = 'Não deu para tirar a skin agora. Tente de novo em instantes.'; return; }
+        }
+        escolher(def.id);
       };
       cell.appendChild(button);
       if (def.id !== currentChar) {
@@ -1278,9 +1295,27 @@ function openHubRoster(updateRoute = true) {
         cell.appendChild(pin);
       }
       grid.appendChild(cell);
+      for (const skin of skinsDoChar) {
+        const skinCell = document.createElement('div'); skinCell.className = 'hub-roster-cell hub-roster-cell--skin';
+        const skinButton = document.createElement('button'); skinButton.type = 'button';
+        skinButton.setAttribute('aria-pressed', String(skin.equipped && def.id === currentChar));
+        const skinArt = document.createElement('img'); skinArt.src = skin.poster;
+        skinArt.alt = ''; skinArt.loading = 'lazy';
+        const skinName = document.createElement('span'); skinName.textContent = skin.name;
+        skinButton.append(skinArt, skinName);
+        skinButton.onclick = async () => {
+          ui.click();
+          try { if (!await equiparTretaSkin(skin.id)) throw new Error('equip_recusado'); }
+          catch { $('hub-roster-selected').textContent = 'Não deu para equipar esta skin agora. Tente de novo em instantes.'; return; }
+          escolher(def.id);
+        };
+        skinCell.appendChild(skinButton);
+        grid.appendChild(skinCell);
+      }
     }
     const selected = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
-    $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[ladoValido(selected, currentTeam)])} · ${selected.name}`;
+    const skinAtual = armario.find((s) => s.equipped && s.character === selected.id) || null;
+    $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[ladoValido(selected, currentTeam)])} · ${selected.name}${skinAtual ? ` · ${skinAtual.name}` : ''}`;
     /* ESCALAÇÃO travada: contagem por papel contra as VAGAS do formato escolhido —
        passar do limite não quebra nada (pickMatchRoster corta), mas o jogador vê. */
     const papelDe = (id) => { const c = CHARACTERS.find((x) => x.id === id); return c && podeNoLado(c, currentTeam) ? 'ally' : 'enemy'; };
@@ -1298,6 +1333,7 @@ function openHubRoster(updateRoute = true) {
       limpar.onclick = () => { settings.pinnedChars = []; saveSettings(); ui.click(); render(); };
     }
   };
+  hubRosterRender = render;
   render(); $('hub-roster-modal').hidden = false; $('hub-roster-close').focus();
   if (updateRoute) hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'personagens' });
 }
@@ -5049,7 +5085,7 @@ contagem.evento('game_loaded');
 const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location.href)?.perfil);
 void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
 tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
-document.addEventListener('cs-treta-inventory-change',()=>syncHomeCharacter());
+document.addEventListener('cs-treta-inventory-change',()=>{syncHomeCharacter();if(!$('hub-roster-modal')?.hidden)hubRosterRender?.();});
 // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
 if (directRoute) document.getElementById('boot-splash')?.remove();
 const abrirVitrine=()=>{if(!tretaVitrine()?.length)return;document.removeEventListener('cs-treta-state',abrirVitrine);void import('./treta-vitrine.js').then(m=>m.iniciarVitrine()).catch(()=>{});};
