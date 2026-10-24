@@ -12,9 +12,11 @@
 
    Uso:
      node tools/eval/mapjson-check.mjs
-     node tools/eval/mapjson-check.mjs --mutante=grafo    (grade partida ao meio)
-     node tools/eval/mapjson-check.mjs --mutante=aresta   (aresta sem volta)
-     node tools/eval/mapjson-check.mjs --mutante=spawn     (spawn fora dos limites)
+     node tools/eval/mapjson-check.mjs --mutante=grafo      (grade partida ao meio)
+     node tools/eval/mapjson-check.mjs --mutante=aresta     (aresta sem volta)
+     node tools/eval/mapjson-check.mjs --mutante=spawn      (spawn fora dos limites)
+     node tools/eval/mapjson-check.mjs --mutante=rampa      (rampa íngreme demais)
+     node tools/eval/mapjson-check.mjs --mutante=plataforma (plataforma sem rampa de acesso)
 
    O mutante PROVA que a régua morde: cada um corrompe um invariante e a régua tem
    que ficar VERMELHA. Régua que passa no mutante não está medindo nada.
@@ -38,6 +40,18 @@ function planMutado() {
     // spawn empurrado para fora dos limites do mapa
     const s = structuredClone(SPEC);
     s.spawns.E[0] = { x: 999, z: 999, yaw: 0 };
+    return planFromJSON(s);
+  }
+  if (MUT === 'rampa') {
+    // rampa com rise alto demais pro run: grade acima do teto → R4 vermelha
+    const s = structuredClone(SPEC);
+    s.ramps[0].rise = 5;
+    return planFromJSON(s);
+  }
+  if (MUT === 'plataforma') {
+    // tira a rampa: o topo da caixa walkable fica ilhado do piso (dy > degrau) → R1 vermelha
+    const s = structuredClone(SPEC);
+    s.ramps = [];
     return planFromJSON(s);
   }
   const plan = planFromJSON(SPEC);
