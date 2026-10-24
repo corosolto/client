@@ -134,6 +134,9 @@ const CASOS = [
     if (!u.painel.open || u.painel.hidden) return 'o login (SUA CONTA) não abriu';
     if (!/Entre na conta/.test(u.aviso()?.textContent || '')) return `sem aviso de login ao lado: "${u.aviso()?.textContent || ''}"`;
     if (u.posts.some((p) => p.action === 'request')) return 'mandou pedido sem sessão';
+    /* Desde 22/10 o visitante vê o PRÓPRIO perfil (cs_anon). Nele não cabe pedir amizade a si mesmo. */
+    const eu = await abrir(c, async () => ({ status: 200, body: { state: 'pending' } }), { quem: 'deslogado', guardado: { cs_anon: ALVO } });
+    if (eu.botao('ADICIONAR AMIGO')) return 'convidado vê ADICIONAR AMIGO no próprio perfil';
     return null;
   }],
   ['FR5 · depois do login, o pedido guardado sai uma vez e o perfil reabre', async (c) => {
@@ -214,7 +217,8 @@ if (MUTATE) {
     ['FR2', 'volta ao action() sem aviso', fonte.replace("()=>requestFriend(p)", "()=>action('request',p.id)")],
     ['FR3', 'erro só no topo', fonte.replace('if(feedback)feedback.textContent=t;', '')],
     ['FR2', 'pedido pendente sem estado', fonte.replace("buttons.append(chip('PEDIDO ENVIADO'),", 'buttons.append(')],
-    ['FR4', 'deslogado sem botão', fonte.replace("else if(!own && !noAccountTargets.has(p.id))buttons.append(button('ADICIONAR AMIGO',()=>askLoginForFriend(p)", "else if(false)buttons.append(button('ADICIONAR AMIGO',()=>askLoginForFriend(p)")],
+    ['FR4', 'deslogado sem botão', fonte.replace("else if(!own && !euConvidado && !noAccountTargets.has(p.id))buttons.append(button('ADICIONAR AMIGO',()=>askLoginForFriend(p)", "else if(false)buttons.append(button('ADICIONAR AMIGO',()=>askLoginForFriend(p)")],
+    ['FR4', 'convidado pede amizade a si mesmo', fonte.replace('!own && !euConvidado && !noAccountTargets.has(p.id)', '!own && !noAccountTargets.has(p.id)')],
     ['FR4', 'deslogado não guarda o pedido', fonte.replace("try{localStorage.setItem(PENDING_FRIEND,", 'try{void(PENDING_FRIEND,')],
     ['FR5', 'pedido guardado nunca sai', fonte.replace('await refresh();await completePendingFriend();', 'await refresh();')],
     ['FR5', 'pedido guardado não é limpo', fonte.replace('localStorage.removeItem(PENDING_FRIEND);', '')],

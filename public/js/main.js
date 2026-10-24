@@ -6,7 +6,7 @@ import {initAccountEntry,mountProfilePreferences} from './account-entry.js';
 import {initLoginPrompt,noteLoginPromptMatch} from './login-prompt.js';
 import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
-import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaVitrine} from './treta-store.js';
+import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
 import {tretaPack} from './data/pack-definitions.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
@@ -118,7 +118,7 @@ function clearTelemetryGameContext() {
 import { applyNoPostTone, ajustaPos } from './bloom.js';
 import { criaRenderer, avisaSemWebgl, avisaSoftware } from './glcontext.js';
 import { EscadaAdaptativa, DEGRAUS, LimitadorCadencia, PERFIL_MOBILE, perfilInicial, tetoTextura } from './qualidade-adaptativa.js';
-import { definirSombraDegrau, definirCorteVegetacao, aplicaSombraSol } from './mapquality.js';
+import { definirSombraDegrau, definirCorteVegetacao, aplicaSombraSol, aplicaSombraPalco } from './mapquality.js';
 const container = document.getElementById('game-container');
 const SAFE_MODE = new URLSearchParams(location.search).get('safe') === '1';
 const renderer = criaRenderer({}, { compatibility: SAFE_MODE });
@@ -919,10 +919,29 @@ function ensurePreview() {
   // O downscale continua dando borda limpa em qualquer tamanho de exibição.
   r.setSize(640, 640, false);
   r.toneMapping = THREE.ACESFilmicToneMapping;
+  // Sombra de contato: sem ela o personagem flutua no palco. Só a key projeta, com o mapa
+  // que aplicaSombraPalco libera e frustum colado no boneco — custo fixo por quadro.
+  r.shadowMap.enabled = true;
+  r.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
   scene.add(new THREE.HemisphereLight(0xffe6c0, 0x5a4a38, 1.1));
-  const key = new THREE.DirectionalLight(0xffe0b3, 1.8); key.position.set(2, 4, 3); scene.add(key);
-  const rim = new THREE.DirectionalLight(0x88aaff, 0.55); rim.position.set(-3, 2, -2); scene.add(rim);
+  // Key alta e quase frontal (era 2,4,3 = 42° de elevação): a 42° a sombra virava um rastro
+  // de 1,6 m que a caixa do palco cortava reto. A 64° ela fica sob os pés, como na referência.
+  const key = new THREE.DirectionalLight(0xffe0b3, 2.1); key.position.set(0.7, 6, 2.8); scene.add(key);
+  key.castShadow = true;
+  aplicaSombraPalco(key);
+  key.shadow.bias = -0.0012; key.shadow.normalBias = 0.02;
+  // Frustum maior que o plano: fora dele o mapa é amostrado na borda e a sombra ganha corte reto.
+  const sombraCam = key.shadow.camera;
+  sombraCam.left = -1.6; sombraCam.right = 1.6; sombraCam.top = 1.6; sombraCam.bottom = -1.6;
+  sombraCam.near = 4.4; sombraCam.far = 7.9; sombraCam.updateProjectionMatrix();
+  // Rim de recorte: medido na referência, a borda do ombro fica em (36,38,37) sobre fundo
+  // (26,21,10) — luz quase neutra e +17 de luminância. Era 0x88aaff a 0,55 e sumia.
+  const rim = new THREE.DirectionalLight(0xe6eeff, 1.6); rim.position.set(-2.4, 3.2, -2.6); scene.add(rim);
+  // Chão invisível: o ShadowMaterial só pinta onde a sombra cai, então o canvas segue
+  // transparente e a poça de luz lima do CSS continua aparecendo por baixo.
+  const chao = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), new THREE.ShadowMaterial({ opacity: 0.68 }));
+  chao.rotation.x = -Math.PI / 2; chao.receiveShadow = true; scene.add(chao);
   const cam = new THREE.PerspectiveCamera(34, 1, 0.1, 20);
   cam.position.set(0, 1.3, 3.2); cam.lookAt(0, 0.92, 0);
   pv = { r, scene, cam, model: null };
@@ -1214,6 +1233,9 @@ function closeHubRoster(updateRoute = true) {
   $('hub-roster-modal').hidden = true; $('hub-change-character').focus();
   if (updateRoute) hubNavigate({ janela: null });
 }
+/* A loja responde DEPOIS do boot: o modal aberto por link direto (/jogar/personagens)
+   precisa redesenhar quando o armário chega. Ponte para o listener já existente. */
+let hubRosterRender = null;
 function openHubRoster(updateRoute = true) {
   hubRosterLado = ladoValido(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);
   const temPoliticos = (lado) => CHARACTERS.some((c) => c.team === 'P' && podeNoLado(c, lado));
@@ -1243,23 +1265,37 @@ function openHubRoster(updateRoute = true) {
       button.onclick = () => { hubRosterCat = cat; render(); };
       filters.appendChild(button);
     }
+    /* Armário: skin de personagem comprada é personagem selecionável aqui (dono, 23/10).
+       Sem conta ou sem skin aprovada a lista vem vazia e a grade fica como sempre foi. */
+    const armario = tretaSkinsDoArmario();
+    const escolher = (id) => {
+      currentChar = id; currentTeam = hubRosterLado; currentFaction = hubRosterLado;
+      currentEnemyFaction = null;
+      localStorage.setItem('csbr-home-character', currentChar);
+      localStorage.setItem('csbr-home-side', currentTeam);
+      syncHomeCharacter(); closeHubRoster(false);
+      hubNavigate({ personagem: currentChar, janela: null });
+    };
     for (const def of doLado.filter((c) => !hubRosterCat || c.team === hubRosterCat)) {
+      const skinsDoChar = armario.filter((s) => s.character === def.id);
+      const equipada = skinsDoChar.find((s) => s.equipped) || null;
       /* Célula = card (escolhe SEU personagem, como sempre) + chip ＋ (trava quem entra).
          Papel do escalado: pode no seu lado = aliado, senão inimigo; montagem re-filtra. */
       const cell = document.createElement('div'); cell.className = 'hub-roster-cell';
       const button = document.createElement('button'); button.type = 'button';
-      button.setAttribute('aria-pressed', String(def.id === currentChar));
+      button.setAttribute('aria-pressed', String(def.id === currentChar && !equipada));
       const avatar = document.createElement('img'); avatar.src = `/img/chars/avatars/${def.id}.webp`;
       avatar.alt = ''; avatar.loading = 'lazy';
       const name = document.createElement('span'); name.textContent = def.name;
       button.append(avatar, name);
-      button.onclick = () => {
-        ui.click(); currentChar = def.id; currentTeam = hubRosterLado; currentFaction = hubRosterLado;
-        currentEnemyFaction = null;
-        localStorage.setItem('csbr-home-character', currentChar);
-        localStorage.setItem('csbr-home-side', currentTeam);
-        syncHomeCharacter(); closeHubRoster(false);
-        hubNavigate({ personagem: currentChar, janela: null });
+      button.onclick = async () => {
+        ui.click();
+        // Voltar ao personagem base com skin equipada TIRA a skin no servidor antes de trocar.
+        if (equipada) {
+          try { if (!await desequiparTretaSkin()) throw new Error('unequip_recusado'); }
+          catch { $('hub-roster-selected').textContent = 'Não deu para tirar a skin agora. Tente de novo em instantes.'; return; }
+        }
+        escolher(def.id);
       };
       cell.appendChild(button);
       if (def.id !== currentChar) {
@@ -1280,9 +1316,27 @@ function openHubRoster(updateRoute = true) {
         cell.appendChild(pin);
       }
       grid.appendChild(cell);
+      for (const skin of skinsDoChar) {
+        const skinCell = document.createElement('div'); skinCell.className = 'hub-roster-cell hub-roster-cell--skin';
+        const skinButton = document.createElement('button'); skinButton.type = 'button';
+        skinButton.setAttribute('aria-pressed', String(skin.equipped && def.id === currentChar));
+        const skinArt = document.createElement('img'); skinArt.src = skin.poster;
+        skinArt.alt = ''; skinArt.loading = 'lazy';
+        const skinName = document.createElement('span'); skinName.textContent = skin.name;
+        skinButton.append(skinArt, skinName);
+        skinButton.onclick = async () => {
+          ui.click();
+          try { if (!await equiparTretaSkin(skin.id)) throw new Error('equip_recusado'); }
+          catch { $('hub-roster-selected').textContent = 'Não deu para equipar esta skin agora. Tente de novo em instantes.'; return; }
+          escolher(def.id);
+        };
+        skinCell.appendChild(skinButton);
+        grid.appendChild(skinCell);
+      }
     }
     const selected = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
-    $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[ladoValido(selected, currentTeam)])} · ${selected.name}`;
+    const skinAtual = armario.find((s) => s.equipped && s.character === selected.id) || null;
+    $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[ladoValido(selected, currentTeam)])} · ${selected.name}${skinAtual ? ` · ${skinAtual.name}` : ''}`;
     /* ESCALAÇÃO travada: contagem por papel contra as VAGAS do formato escolhido —
        passar do limite não quebra nada (pickMatchRoster corta), mas o jogador vê. */
     const papelDe = (id) => { const c = CHARACTERS.find((x) => x.id === id); return c && podeNoLado(c, currentTeam) ? 'ally' : 'enemy'; };
@@ -1300,6 +1354,7 @@ function openHubRoster(updateRoute = true) {
       limpar.onclick = () => { settings.pinnedChars = []; saveSettings(); ui.click(); render(); };
     }
   };
+  hubRosterRender = render;
   render(); $('hub-roster-modal').hidden = false; $('hub-roster-close').focus();
   if (updateRoute) hubNavigate({ secao: 'jogar', partida: 'singleplayer', janela: 'personagens' });
 }
@@ -3632,16 +3687,71 @@ async function renderHubRanking() {
     const number = document.createElement('b'); number.textContent = String(value);
     card.append(number, document.createTextNode(label)); cards.appendChild(card);
   }
+  /* 21 dos 25 do ranking não têm foto (medido 22/10): sem avatar_url entra a arte do último
+     personagem jogado, e a inicial fica só pra quem não tem nem foto nem personagem. */
+  const rostoDoJogador = (p) => {
+    const caixa = document.createElement('span'); caixa.className = 'ranking-avatar';
+    const inicial = document.createElement('span');
+    inicial.textContent = (Array.from(p.nick || '?')[0] || '?').toUpperCase();
+    caixa.append(inicial);
+    const arte = /^[a-z0-9][a-z0-9_-]{0,31}$/.test(p.last_character || '') ? `/img/chars/avatars/${p.last_character}.webp` : '';
+    const fonte = (typeof p.avatar_url === 'string' && p.avatar_url) || arte;
+    if (!fonte) return caixa;
+    const img = document.createElement('img');
+    img.src = fonte; img.width = 36; img.height = 36; img.loading = 'lazy'; img.alt = '';
+    if (fonte === arte) img.dataset.arte = '1';
+    img.onerror = () => { if (arte && img.dataset.arte !== '1') { img.dataset.arte = '1'; img.src = arte; return; } img.hidden = true; };
+    caixa.append(img); return caixa;
+  };
+  /* A linha inteira leva ao perfil: role+tabindex no <tr> porque <a> não embrulha linha de
+     tabela, e aninhar link dentro de link quebra o teclado e o leitor de tela. */
+  const linhaDoJogador = (p, i) => {
+    const linha = document.createElement('tr');
+    const perfil = playerProfilePath(p) || '';
+    const posicao = document.createElement('td'); posicao.textContent = `#${p.position ?? i + 1}`;
+    const quem = document.createElement('td');
+    const dupla = document.createElement('div'); dupla.className = 'ranking-player';
+    const dados = document.createElement('div');
+    const nome = document.createElement(perfil ? 'a' : 'span');
+    nome.className = 'hub-rank-nick'; nome.textContent = p.nick || '—';
+    if (perfil) { nome.href = perfil; nome.setAttribute('tabindex', '-1'); }
+    dados.append(nome);
+    const selo = accountVerifiedBadge(p.account_verified); if (selo) dados.append(selo);
+    const patente = careerRankBadge(p.career_points ?? p.points); if (patente) dados.append(patente);
+    dupla.append(rostoDoJogador(p), dados); quem.append(dupla);
+    linha.append(posicao, quem);
+    for (const valor of [p.points, p.kills, p.kd, p.matches]) {
+      const cel = document.createElement('td'); cel.textContent = valor == null ? '—' : String(valor); linha.append(cel);
+    }
+    if (!perfil) return linha;
+    linha.setAttribute('role', 'link'); linha.setAttribute('tabindex', '0');
+    linha.dataset.href = perfil;
+    linha.setAttribute('aria-label', `${tr('Ver perfil de')} ${p.nick || ''}`.trim());
+    linha.onclick = (e) => { if (!e.target?.closest?.('a')) location.assign(perfil); };
+    linha.onkeydown = (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; e.preventDefault(); location.assign(perfil); };
+    return linha;
+  };
   const global = $('hub-rank-global');
   global.textContent = 'Carregando o ranking global…';
-  const data = await api('/api/leaderboard');
+  /* Fonte verificada (22/10): /api/social?action=ranking é a única que filtra ranking_exclusion;
+     /api/leaderboard devolve pontos de carreira/legado e mostrava quem foi excluído. */
+  const data = await api('/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all');
   if (data?.disabled) {
     global.textContent = 'O ranking global está desligado enquanto a pontuação competitiva não for validada pelo servidor.';
     return;
   }
   if (!Array.isArray(data?.players)) { global.textContent = 'Ranking global indisponível no momento.'; return; }
   if (!data.players.length) { global.textContent = 'Ainda não há jogadores no ranking.'; return; }
-  global.replaceChildren(rankingTable(data.players.slice(0,10)));
+  const tabela = document.createElement('table'); tabela.className = 'social-table';
+  const cabeca = document.createElement('thead'); const linhaCabeca = document.createElement('tr');
+  for (const rotulo of ['POS.', 'JOGADOR', 'PONTOS', 'KILLS', 'K/D', 'PARTIDAS']) {
+    const th = document.createElement('th'); th.textContent = tr(rotulo); linhaCabeca.append(th);
+  }
+  cabeca.append(linhaCabeca); tabela.append(cabeca);
+  const corpo = document.createElement('tbody');
+  for (const [i, p] of data.players.slice(0, 10).entries()) corpo.append(linhaDoJogador(p, i));
+  tabela.append(corpo);
+  global.replaceChildren(tabela);
 }
 async function renderGlobal(nick) {
   const box = $('rank-global');
@@ -5051,7 +5161,7 @@ contagem.evento('game_loaded');
 const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location.href)?.perfil);
 void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
 tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
-document.addEventListener('cs-treta-inventory-change',()=>syncHomeCharacter());
+document.addEventListener('cs-treta-inventory-change',()=>{syncHomeCharacter();if(!$('hub-roster-modal')?.hidden)hubRosterRender?.();});
 // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
 if (directRoute) document.getElementById('boot-splash')?.remove();
 const abrirVitrine=()=>{if(!tretaVitrine()?.length)return;document.removeEventListener('cs-treta-state',abrirVitrine);void import('./treta-vitrine.js').then(m=>m.iniciarVitrine()).catch(()=>{});};
@@ -5074,3 +5184,5 @@ if (params.get('qa') === 'mobile' || window.__CS_QA__) {
   void import('./qa-mobile.js').then((m) => m.ligarQaMobile()).catch(() => { /* QA não derruba partida */ });
 }
 import {rankingTable,playerProfilePath} from './ranking-player.js';
+import {accountVerifiedBadge} from './account-verified.js';
+import {careerRankBadge} from './career-rank.js';

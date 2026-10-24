@@ -37,3 +37,13 @@ export function aplicaSombraSol(sun, quality = qualidadeAtual()) {
   if (sun.shadow.map && sun.shadow.map.width !== n) { sun.shadow.map.dispose?.(); sun.shadow.map = null; }
   return sun;
 }
+
+// Palco do lobby (sombra de contato do GLB): um boneco a 3 m da câmera não precisa do
+// orçamento do sol do mapa — 1/4 do lado basta, e o tamanho segue morando num lugar só.
+export function aplicaSombraPalco(luz, quality = qualidadeAtual()) {
+  if (!luz || !luz.shadow) return luz;
+  const n = Math.max(256, orcamentoSombra(quality) / 4);
+  luz.shadow.mapSize.set(n, n);
+  if (luz.shadow.map && luz.shadow.map.width !== n) { luz.shadow.map.dispose?.(); luz.shadow.map = null; }
+  return luz;
+}

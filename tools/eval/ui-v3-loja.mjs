@@ -43,6 +43,7 @@ const MUTANTES = {
   'raridade-inventada': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("RARIDADES.has(s.raridade)?s.raridade:''", "RARIDADES.has(s.raridade)?s.raridade:'comum'")],
   'preco-local': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace('price:item(s.id)?.price ?? null', 'price:s.price')],
   'dois-primarios': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("'tp-btn tp-loja__ganhar'", "'tp-btn tp-btn--primario tp-loja__ganhar'")],
+  'slot-inventado': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("packs:new Set(['pack'])", "packs:new Set(['character'])")],
   'historico-mudo': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace('saldo.onclick=', 'saldo.onclick=null;//')],
   'grade-larga': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('.tp-loja__grade{display:grid;', '.tp-loja__grade{display:grid;min-width:1700px;')],
   'alvo-pequeno': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('@media (pointer:coarse){', '@media (pointer:none){')],
@@ -57,6 +58,7 @@ const MUTANTES = {
   'loja-duplicada': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('#treta-characters-view{display:none!important}', '#treta-characters-view{display:block!important}')],
   'corpo-cortado': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('.tp-loja__painel[data-painel=characters] .tp-loja__arte{height:auto;aspect-ratio:1;overflow:hidden}', '.tp-loja__painel[data-painel=characters] .tp-loja__arte{height:188px;overflow:hidden}').replace('object-fit:contain;object-position:50% 100%', 'object-fit:cover;object-position:50% 6%')],
   'hover-morto': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace('const preview=skinPreview(b,s.id);', 'const preview={tap:()=>false};')],
+  'erro-no-visitante': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace("const visitante=!account?.authenticated;", 'const visitante=false;')],
 };
 
 const aplicados = new Set();
@@ -72,7 +74,7 @@ async function preparar(page, mutante) {
   });
 }
 
-function fixture(page, conta) {
+function fixture(page, conta, { visitante = false, falha = false } = {}) {
   const estado = () => ({
     authenticated: true, acquisition: 'quests', topUpsEnabled: false, accountId: 'fixture-account',
     wallet: { balance: SALDO, referral_code: '00000000-0000-4000-8000-000000000001' }, inventory: conta.inventario, ledger: [
@@ -93,18 +95,19 @@ function fixture(page, conta) {
         conta.analytics.push(dados);
         return route.fulfill({ json: { ok: true, stored: true } });
       }
+      if (falha) return route.fulfill({ status: 500, json: { error: 'server_error' } });
       if (dados?.action === 'equip') {
         conta.equipou.push(dados.skinId);
         conta.inventario = conta.inventario.map((s) => ({ ...s, equipped: s.skin_id === dados.skinId }));
       }
-      return route.fulfill({ json: estado() });
+      return route.fulfill({ json: visitante ? { ...estado(), authenticated: false, accountId: null, wallet: null } : estado() });
     }
-    if (url.pathname === '/api/social-auth') return route.fulfill({ json: { authenticated: true, accountId: 'fixture-account', profile: { nick: 'TESTE UI', id: 'fixture-profile' }, providers: [], email: false } });
+    if (url.pathname === '/api/social-auth') return route.fulfill({ json: visitante ? { authenticated: false, profile: null, providers: [], email: false } : { authenticated: true, accountId: 'fixture-account', profile: { nick: 'TESTE UI', id: 'fixture-profile' }, providers: [], email: false } });
     return route.fulfill({ json: { profile: { avatar_url: '/img/chars/barbudo.webp', socials: ['fixture'] }, rooms: [], entries: [], online: 0 } });
   });
 }
 
-async function abrir({ w = 1536, h = 1024, flag = true, lang = 'pt', mutante = '', intro = true, toque = false, invite = '' } = {}) {
+async function abrir({ w = 1536, h = 1024, flag = true, lang = 'pt', mutante = '', intro = true, toque = false, invite = '', visitante = false, falha = false } = {}) {
   const conta = { inventario: [{ skin_id: 'janja', equipped: true }, { skin_id: 'lula-cyborg', equipped: false }], equipou: [], analytics: [] };
   const page = await browser.newPage({ viewport: { width: w, height: h }, hasTouch: toque, isMobile: toque });
   const erros = [];
@@ -116,7 +119,7 @@ async function abrir({ w = 1536, h = 1024, flag = true, lang = 'pt', mutante = '
     localStorage.setItem('cs_privacy', JSON.stringify({ version: 'corosolto-analytics-v1', analytics: true, updatedAt: new Date().toISOString() }));
   }, [lang, intro]);
   await preparar(page, mutante);
-  await fixture(page, conta);
+  await fixture(page, conta, { visitante, falha });
   const params = new URLSearchParams({ lang });
   if (!flag) params.set('ui', 'legacy');
   if (invite) params.set('treta', invite);
@@ -301,11 +304,11 @@ async function secaoV3(mutante, add) {
   add('LJ17', hist.abriu && hist.linhas.length === 2 && /AK Ouro/.test(hist.linhas[0]) && /T\$ -500/.test(hist.linhas[0])
     && /Pack Dourado/.test(hist.linhas[1]) && /T\$ 1\.240/.test(hist.saldo) && hist.vazio === true,
     hist.abriu ? `${hist.linhas.length} compras listadas (${hist.linhas.join(' | ')}); saldo "${hist.saldo}"` : 'a carteira não abriu o histórico');
-  add('LJ18', visual.superficies === 1 && !visual.legadoVisivel,
+  add('LJ19', visual.superficies === 1 && !visual.legadoVisivel,
     `${visual.superficies} superfície(s) de personagens visível(is); seção legada ${visual.legadoVisivel ? 'visível' : 'oculta'}`);
-  add('LJ19', visual.arteH >= 180 && Math.abs(visual.arteH / Math.max(1, visual.cardW) - 1) <= 0.03 && visual.fit === 'contain' && /100%/.test(visual.pos),
+  add('LJ20', visual.arteH >= 180 && Math.abs(visual.arteH / Math.max(1, visual.cardW) - 1) <= 0.03 && visual.fit === 'contain' && /100%/.test(visual.pos),
     `arte ${visual.cardW.toFixed(0)}×${visual.arteH.toFixed(0)}, object-fit ${visual.fit}, posição ${visual.pos}`);
-  add('LJ20', Boolean(hover.id) && hover.antes === 0 && hover.depois === 1 && hover.ativo && hover.parou,
+  add('LJ21', Boolean(hover.id) && hover.antes === 0 && hover.depois === 1 && hover.ativo && hover.parou,
     hover.id ? `${hover.id}: vídeo ${hover.antes} antes, ${hover.depois} após hover, ativo ${hover.ativo}, parou ${hover.parou}` : 'nenhuma skin aprovada com vídeo para medir');
 }
 
@@ -406,8 +409,28 @@ async function secaoLegado(mutante, add) {
   add('LJ11', !ruim.length, ruim.length ? `?ui=legacy mudou a loja: ${ruim.map((o) => `${o.tp} nós tp-, abas antigas ${o.abas ? 'visíveis' : 'sumiram'}, título ${o.fonte.split(',')[0]}`).join('; ')}` : '?ui=legacy mantém a loja anterior (1536 e 844)');
 }
 
-const SECOES = { v3: [secaoV3, ['LJ1', 'LJ3', 'LJ4', 'LJ5', 'LJ7', 'LJ8', 'LJ12', 'LJ13', 'LJ14', 'LJ15', 'LJ17', 'LJ18', 'LJ19', 'LJ20']], modal: [secaoModal, ['LJ2']], idioma: [secaoIdioma, ['LJ10']],
-  telas: [secaoTelas, ['LJ9']], convite: [secaoConvite, ['LJ16']], legado: [secaoLegado, ['LJ11']] };
+/* O defeito de hoje: o visitante via "T$ · ERRO" no topo. Quem não tem conta não tem saldo —
+   falha de consulta tem de virar o convite de sempre; só quem tem conta merece ver ERRO. */
+async function secaoCarteira(mutante, add) {
+  const ler = (page) => page.evaluate(() => ({
+    chip: document.getElementById('hub-treta-total')?.textContent || '',
+    rotulo: document.getElementById('hub-treta-wallet')?.getAttribute('aria-label') || '',
+  }));
+  const vis = await abrir({ mutante, visitante: true, falha: true });
+  const semConta = await ler(vis.page);
+  if (!mutante) await vis.page.screenshot({ path: `${OUT}/carteira-visitante-1536x1024.png` });
+  await vis.page.close();
+  const com = await abrir({ mutante, falha: true });
+  const comConta = await ler(com.page);
+  await com.page.close();
+  const okVisitante = semConta.chip.includes('ENTRAR') && !/ERRO/.test(semConta.chip) && !/indispon/i.test(semConta.rotulo);
+  const okConta = /ERRO/.test(comConta.chip);
+  add('LJ18', okVisitante && okConta,
+    `carteira com /api/treta em 500: visitante vê "${semConta.chip.trim()}" (${semConta.rotulo}); com conta vê "${comConta.chip.trim()}"`);
+}
+
+const SECOES = { v3: [secaoV3, ['LJ1', 'LJ3', 'LJ4', 'LJ5', 'LJ7', 'LJ8', 'LJ12', 'LJ13', 'LJ14', 'LJ15', 'LJ17', 'LJ19', 'LJ20', 'LJ21']], modal: [secaoModal, ['LJ2']], idioma: [secaoIdioma, ['LJ10']],
+  telas: [secaoTelas, ['LJ9']], convite: [secaoConvite, ['LJ16']], legado: [secaoLegado, ['LJ11']], carteira: [secaoCarteira, ['LJ18']] };
 
 async function medir(mutante = '', alvo = '') {
   const r = [];
@@ -418,8 +441,8 @@ async function medir(mutante = '', alvo = '') {
 
 const MUT = [['risco-dobrado', 'LJ1'], ['modal-sozinho', 'LJ2'], ['titulo-sem-anton', 'LJ3'], ['raridade-inventada', 'LJ4'], ['preco-local', 'LJ5'],
   ['dois-primarios', 'LJ7'], ['slot-inventado', 'LJ8'], ['grade-larga', 'LJ9'], ['alvo-pequeno', 'LJ9'], ['en-vaza', 'LJ10'], ['sem-flag', 'LJ11'], ['meta-fixa', 'LJ12'],
-  ['quest-sem-icone', 'LJ14'], ['icone-igual', 'LJ14'], ['visita-so-no-evento', 'LJ15'], ['convite-sem-chegada', 'LJ16'], ['convite-sem-consentimento', 'LJ16'], ['historico-mudo', 'LJ17'],
-  ['loja-duplicada', 'LJ18'], ['corpo-cortado', 'LJ19'], ['hover-morto', 'LJ20']];
+  ['quest-sem-icone', 'LJ14'], ['icone-igual', 'LJ14'], ['visita-so-no-evento', 'LJ15'], ['convite-sem-chegada', 'LJ16'], ['convite-sem-consentimento', 'LJ16'], ['historico-mudo', 'LJ17'], ['erro-no-visitante', 'LJ18'],
+  ['loja-duplicada', 'LJ19'], ['corpo-cortado', 'LJ20'], ['hover-morto', 'LJ21']];
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO === m)) {

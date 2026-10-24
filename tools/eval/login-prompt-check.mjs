@@ -41,6 +41,8 @@ const MUTANTES = {
   'sem-contagem': ['main', '  if (!continuaPartida) noteLoginPromptMatch();', ''],
   'telemetria-sem-consentimento': ['login-prompt', '  if(!analyticsAllowed())return;\n  try{track(step,data);}', '  try{track(step,data);}'],
   'sem-recuperacao-convidado': ['login-prompt', "if(e.message==='guest_invalid'){", 'if(false){'],
+  'bonus-fixo': ['login-prompt', '  const bonus=campaign?.signup_bonus;', '  const bonus=1000;'],
+  'convite-sem-nick': ['login-prompt', "    if(!auth?.authenticated && localStorage.getItem('awpbr_nick')) {", '    if(!auth?.authenticated) {'],
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 const muta = (alvo, fonte) => {
@@ -78,7 +80,7 @@ function carrega({ consent = null, search = '', embedded = false, menuHidden = f
     document: { documentElement: { dataset: embedded ? { embedded: 'true' } : {} }, getElementById: (id) => (id === 'main-menu' ? { classList: { contains: (c) => c === 'hidden' && menuHidden } } : null) },
     URLSearchParams, JSON, Number, Date, Intl, TRETA_DEFAULT_REWARDS, TRETA_COIN_ART,
   };
-  vm.runInNewContext(`${corpo}\n;globalThis.__api={tretaPitch,loginPromptDue,noteLoginPromptMatch,isEmbedded,inMatch,emit,readRecord,seenThisVisit,markSeen,LOGIN_PROMPT_KEY,LOGIN_PROMPT_SESSION_KEY,LOGIN_PROMPT_MATCHES,LOGIN_PROMPT_COOLDOWN_MS};`, ctx);
+  vm.runInNewContext(`${corpo}\n;globalThis.__api={tretaPitch,signupPitch,loginPromptDue,noteLoginPromptMatch,isEmbedded,inMatch,emit,readRecord,seenThisVisit,markSeen,LOGIN_PROMPT_KEY,LOGIN_PROMPT_SESSION_KEY,LOGIN_PROMPT_MATCHES,LOGIN_PROMPT_COOLDOWN_MS};`, ctx);
   return { api: ctx.__api, store, session };
 }
 const CONFIG = { providers: ['google', 'discord', 'x', 'linkedin_oidc'], email: true };
@@ -230,6 +232,10 @@ await caso('LP13', 'T$ do convite vêm da campanha do servidor e só dentro da j
   assert.equal(api.tretaPitch(CAMPANHA, 'singleplayer', Date.parse('2026-10-01T00:00:00Z')), null, 'campanha futura promete T$');
   assert.equal(api.tretaPitch(null, 'singleplayer', dentro), null, 'sem resposta do servidor promete T$');
   assert.equal(api.tretaPitch({ ...CAMPANHA, mp_reward: 0 }, 'singleplayer', dentro), null, 'valor inválido');
+  const comBonus = plano(api.tretaPitch({ ...CAMPANHA, signup_bonus: 1000 }, 'multiplayer', dentro));
+  assert.deepEqual(JSON.parse(JSON.stringify(comBonus.items.map((i) => i[0]))), ['T$ 25', 'T$ 10', 'T$ 1.000'], 'convite pós-partida ignora o bônus de cadastro');
+  assert.match(comBonus.items[2][1], /ao criar a conta/, 'promessa antiga de e-mail com bônus de cadastro ativo');
+  assert.match(sp.items[2][1], /confirmar o e-mail/, 'servidor sem bônus deixou de falar do e-mail');
   const texto = [sp, mp].flatMap((p) => [p.headline, p.cap, ...p.items.flat()]).join(' ');
   assert(!/[\u2013\u2014]/.test(texto), 'travessão na cópia');
   assert.equal(TRETA_DEFAULT_REWARDS.sp_reward, CAMPANHA.sp_reward, 'catálogo e campanha divergem');
@@ -238,6 +244,25 @@ await caso('LP14', 'convite com T$ absorve a apresentação da loja', () => {
   const pos = fonteLoja.indexOf("document.addEventListener('cs-pos-partida',event=>{");
   assert(pos > 0, 'handler cs-pos-partida sem evento');
   assert(fonteLoja.slice(pos, pos + 200).includes("if(event.detail?.treta){stored('cs_treta_intro','v1');return;}"), 'apresentação repete o que o convite mostrou');
+});
+await caso('LP16', 'bônus de cadastro vem do servidor e não depende da janela de quests', () => {
+  const { api } = carrega();
+  const plano = (p) => (p ? JSON.parse(JSON.stringify(p).replace(/\u00a0/g, ' ')) : p);
+  assert.equal(api.signupPitch(null), null, 'sem resposta do servidor promete T$');
+  assert.equal(api.signupPitch(CAMPANHA), null, 'servidor sem bônus de cadastro promete T$');
+  assert.equal(api.signupPitch({ ...CAMPANHA, signup_bonus: 0 }), null, 'bônus zerado promete T$');
+  const p = plano(api.signupPitch({ ...CAMPANHA, signup_bonus: 1000 }));
+  assert.match(p.headline, /T\$ 1\.000 caem na sua carteira/, p.headline);
+  assert.equal(p.items[0][0], 'T$ 1.000', 'valor do item não é o do servidor');
+  const outro = plano(api.signupPitch({ ...CAMPANHA, signup_bonus: 300 }));
+  assert.match(outro.headline, /T\$ 300/, 'número fixo no cliente em vez do servidor');
+  const fora = plano(api.signupPitch({ ...CAMPANHA, starts_at: '2020-01-01T00:00:00+00:00', ends_at: '2020-02-01T00:00:00+00:00', signup_bonus: 1000 }));
+  assert(fora, 'bônus de cadastro preso à janela de quests (o cadastro paga sempre)');
+});
+await caso('LP17', 'fiação: o convite do bônus só sai para anônimo com nick salvo, com o valor do servidor', () => {
+  assert(fontePrompt.includes("if(!auth?.authenticated && localStorage.getItem('awpbr_nick')) {"), 'o convite de bônus não testa o nick salvo');
+  assert(fontePrompt.includes("if(signupPitch(campaign)){ended=true;mode='returning';maybeShow();}"), 'o convite de bônus não usa o valor do servidor');
+  assert(!/email_reward===1000/.test(fontePrompt), 'o convite ainda depende da campanha de e-mail');
 });
 
 /* ---------- parte de browser ---------- */
@@ -458,17 +483,17 @@ if (BROWSER) {
       await shot(page, 'mobile-3-convite');
     } finally { await ctx.close(); }
   });
-  await caso('LB9', 'browser: perfil local que voltou vê 1.000 T$ sem iniciar partida; sem campanha nova não vê', async () => {
-    const campanha={...CAMPANHA_ATIVA,email_reward:1000};
-    const a=await abre({nick:'JOGADOR',token:'prova-local',intro:true,treta:campanha});
+  await caso('LB9', 'browser: anônimo com nick salvo vê o bônus de 1.000 T$ sem jogar; servidor sem bônus não promete', async () => {
+    const campanha={...CAMPANHA_ATIVA,signup_bonus:1000};
+    const a=await abre({nick:'JOGADOR',intro:true,treta:campanha});
     try {
-      assert.equal(await convite(a.page),true,'perfil salvo não recebeu convite');
+      assert.equal(await convite(a.page),true,'nick salvo não recebeu convite');
       assert.match(await a.page.locator('#login-prompt-title').textContent(),/1\.000/);
-      assert.match(await a.page.locator('#login-prompt-treta-headline').textContent(),/confirmar o e-mail/);
-      await shot(a.page,'retorno-perfil-1000');
+      assert.match(await a.page.locator('#login-prompt-treta-headline').textContent(),/Crie sua conta/);
+      await shot(a.page,'bonus-cadastro-1000');
     } finally { await a.ctx.close(); }
-    const b=await abre({nick:'JOGADOR',token:'prova-local',intro:true,treta:CAMPANHA_ATIVA});
-    try { assert.equal(await convite(b.page),false,'campanha de 200 mostrou oferta de 1.000'); }
+    const b=await abre({nick:'JOGADOR',intro:true,treta:CAMPANHA_ATIVA});
+    try { assert.equal(await convite(b.page),false,'servidor sem bônus de cadastro mostrou oferta de 1.000'); }
     finally { await b.ctx.close(); }
   });
   await browser.close();

@@ -17,8 +17,11 @@ if(root) {
   const routeProfile=(location.pathname || '').match(/^\/u\/([a-z][a-z0-9_]{2,23}|[0-9a-f-]{36})(?:\/|$)/i)?.[1]
     || new URLSearchParams(location.search).get('perfil') || root.dataset.profile || '';
   let auth=null,state=null,tab=root.dataset.tab || 'profile',profileId=routeProfile,rankingScope='global',rankingQuery='',rankingOffset=0,rankingPeriod='all',rankingMode='all',rankingGameType='all',rankingTeam='all',loadVersion=0,accountSettled=false,bootPromise=null;
-  // Perfil compartilhado (/u/<perfil>, ou o link antigo com ?perfil=) chega com o perfil como destino: o painel da conta começa recolhido para o perfil ficar no topo.
-  if(new URLSearchParams(location.search).get('perfil') || /^\/u\/[^/]/.test(location.pathname || ''))account.closest?.('details')?.removeAttribute('open');
+  // Na aba PERFIL quem não tem conta vê o perfil, não o painel de login: ele fica recolhido até o visitante pedir.
+  let painelPedido=false;
+  function abrirPainelConta(){painelPedido=true;const panel=account.closest?.('details');if(!panel)return;panel.hidden=false;panel.open=true;panel.scrollIntoView?.({block:'center',behavior:'smooth'});}
+  function painelDaConta(){const panel=account.closest?.('details');if(!panel)return;panel.hidden=!!auth?.profile;if(!auth?.authenticated && tab==='profile' && !painelPedido)panel.open=false;}
+  document.addEventListener('cs-conta-abrir',abrirPainelConta);
   // O SSR fica visível até o perfil da comunidade ser efetivamente desenhado. Falha de conta não pode apagar conteúdo público já entregue pelo servidor.
   const errors={handle_invalid:'Use de 3 a 24 letras, números ou _. Comece com letra.',handle_taken:'Esse ID já tem dono. Escolha outro.',handle_locked:'Seu ID já foi escolhido e fica fixo para preservar os links.',nick_invalid:'Use de 2 a 32 letras, números, _ . ou -.',nick_taken:'Esse nick já está em uso. Escolha outro.',account_hidden:'Esta conta está indisponível pela moderação.',session_expired:'Sua sessão expirou. Entre de novo para continuar.',social_unavailable:'A resenha está fora do ar. Tente de novo.',social_not_configured:'A comunidade aguarda configuração do servidor.',rate_limited:'Calma, fiscal da resenha. Tente de novo em um minuto.',blocked:'Esse jogador não pode interagir com você.',room_solo:'Essa sala é solo. Entre no multiplayer para chamar amigos.',room_full:'A sala lotou. Peça outro convite.',room_closed:'Essa sala já encerrou.',room_unavailable:'O servidor da sala não respondeu.',invite_expired:'O convite venceu. Peça outro.',invite_closed:'Esse convite já foi respondido.',join_room_first:'Entre numa sala do jogo antes de convidar.',provider_unavailable:'Esse login ainda não está habilitado.',account_conflict:'Esse nick ou progresso já pertence a outra conta.',guest_invalid:'Não foi possível comprovar o convidado. Seu progresso local continua salvo.',links_invalid:'Use links HTTPS das redes indicadas.',settings_invalid:'Revise a bio e as opções de privacidade.'};
   const el=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=text;if(cls)n.className=cls;return n;};
@@ -43,6 +46,15 @@ if(root) {
     const id=p?.id || p?.player_id || p?.actor_id;
     return UUID.test(id || '')?`/u/${id}`:null;
   }
+  /* cs_anon é o mesmo uid que o jogo registra em /api/register: o perfil público do convidado abre por ele, sem conta. */
+  const idConvidado=()=>{try{const uid=localStorage.getItem('cs_anon');return UUID.test(uid || '')?uid:'';}catch{return '';}};
+  /* Convite discreto do visitante: faixa acima do perfil. O painel inteiro da conta só aparece quando ele clica. */
+  function faixaVisitante(){
+    const f=el('section','','social-visitante');
+    f.append(el('strong','Você está sem conta.'),el('span',' Este perfil fica só neste navegador; com conta ele ganha link próprio, amigos e ranking. '));
+    const b=el('button','ENTRAR OU CRIAR CONTA');b.type='button';b.onclick=abrirPainelConta;f.append(b);
+    return f;
+  }
   /* Abas da comunidade que são da conta de quem está logado (turma, central, resenha, configurações).
      No perfil de OUTRA pessoa elas saem: o visitante vê o perfil público, não a própria conta. */
   const PRIVATE_TABS=['friends','notifications','feed','settings'];let viewingOther=false;
@@ -55,7 +67,7 @@ if(root) {
   function askLoginForFriend(p){
     try{localStorage.setItem(PENDING_FRIEND,JSON.stringify({id:p.id,url:p.url || '',at:Date.now()}));}catch{}
     profileNotice={id:p.id,text:auth?.authenticated?'Escolha seu nick em SUA CONTA. O pedido de amizade sai logo depois.':'Entre na conta em SUA CONTA. Depois do login o pedido de amizade sai sozinho.'};
-    const panel=account.closest?.('details');if(panel){panel.hidden=false;panel.open=true;panel.scrollIntoView?.({block:'center',behavior:'smooth'});}
+    abrirPainelConta();
     return render();
   }
   async function completePendingFriend(){
@@ -106,10 +118,10 @@ if(root) {
   async function action(name,target,data={}) {const out=await api('/api/social',{action:name,...(target?{target}:{}),...data});try{await refresh();}catch{}await render();return out;}
   // Saudação no topo da Comunidade; com perfil, o painel de conta some e sobra só o "Sair da conta".
   function renderGreeting() {
-    const hello=document.getElementById('social-hello'),logout=document.getElementById('social-logout'),panel=account.closest?.('details'),p=auth?.profile;
+    const hello=document.getElementById('social-hello'),logout=document.getElementById('social-logout'),p=auth?.profile;
     const handle=p && state?.profile?.id===p.id?state.profile.handle:null;
     if(hello)hello.textContent=p?`Olá, ${handle?'@'+handle:p.nick}`:'Olá';
-    if(panel)panel.hidden=!!p;
+    painelDaConta();
     if(logout){logout.hidden=!p;logout.onclick=async()=>{logout.disabled=true;try{await logoutAccount(auth);auth=null;state=null;clearConversation();await boot();}catch(e){message(errors[e.message] || 'Não deu certo agora. Tente de novo.');}finally{logout.disabled=false;}};}
   }
   function renderAccount() {
@@ -132,20 +144,22 @@ if(root) {
     const {profile:p}=await api('/api/social?action=profile'+(id?`&id=${encodeURIComponent(id)}`:''));
     if(version!==loadVersion)return;
     if(p.url && location.pathname===p.url && location.search)history.replaceState(history.state,'',p.url);
+    /* euConvidado: é o perfil do próprio convidado (cs_anon). Não vira "dono": sem conta não há edição nem configuração. */
+    const own=auth?.profile?.id===p.id,euConvidado=!auth?.authenticated && p.id===idConvidado();
     // Treta Pop (public/js/tp/perfil.js) redesenha o perfil com estes dados; sem ?ui=v3 nada muda.
-    if(document.documentElement?.dataset?.ui==='v3')root.tpPerfilDados={p,own:auth?.profile?.id===p.id,aba:profileAba,conta:state?.profile};
+    if(document.documentElement?.dataset?.ui==='v3')root.tpPerfilDados={p,own,aba:profileAba,conta:state?.profile,visitante:!auth?.authenticated};
     const c=card(p.nick),identity=el('div','','social-identity');
     const badge=accountVerifiedBadge(p.account_verified);if(badge)c.querySelector('h2').append(badge);
     if(p.avatar_url){const image=el('img','','social-avatar');image.src=p.avatar_url;image.alt=`Avatar de ${p.nick}`;image.width=76;image.height=76;image.referrerPolicy='no-referrer';identity.append(image);}
     const bio=el('div');bio.append(el('p',p.bio || 'A bio ainda está no aquecimento.'),empty(`Nível ${p.level} · faltam ${p.next_level_points} pontos para o próximo.`));const rank=careerRankBadge(p.points);if(rank)bio.append(rank,empty(careerRankTitle(p.points)));identity.append(bio);c.append(identity);if(p.handle)c.append(empty('@'+p.handle));
     const ranking=el('div','','social-profile-ranking');ranking.append(el('span','RANKING GERAL'),el('strong',p.position?`#${p.position}`:'Privada'));c.append(ranking);
     if(profileViewTotals.has(p.id))p.views=profileViewTotals.get(p.id);
-    const views=Number.isSafeInteger(p.views) && p.views>=0?el('p',viewsText(p.views),'social-profile-views'):null;if(views)c.append(views);countProfileView(p,views);
+    const views=Number.isSafeInteger(p.views) && p.views>=0?el('p',viewsText(p.views),'social-profile-views'):null;if(views)c.append(views);if(!euConvidado)countProfileView(p,views);
     // Saldo TRETA$ (backend #114, treta_balance): só quando a API manda o campo. Backend sem o campo não mostra nada.
     if(Number.isSafeInteger(p.treta_balance) && p.treta_balance>=0){const treta=el('div','','social-profile-treta');treta.setAttribute('aria-label',`Saldo TRETA$ de ${p.nick}`);treta.append(el('span','SALDO TRETA$'),el('strong',`T$ ${p.treta_balance.toLocaleString('pt-BR')}`));c.append(treta);}
     /* last_character só chega aberto quando a pessoa marcou "Mostrar meu último personagem" (share_character, padrão desligado,
        migration 048), para ela mesma e para amigos. Vazio para os outros quase sempre é escolha de privacidade, não falta de dado. */
-    const own=auth?.profile?.id===p.id,character=profileCharacterCard(p.last_character);
+    const character=profileCharacterCard(p.last_character);
     c.append(character || empty(own?'Seu último personagem aparece aqui depois da primeira rodada confirmada pelo servidor.':'Este jogador não compartilha o último personagem, ou ainda não jogou uma rodada confirmada.'));
     if(own && p.settings?.share_character===false)c.append(empty('Só você e seus amigos veem seu personagem. Para mostrar a todos, marque "Mostrar meu último personagem no perfil público" em PRIVACIDADE.'));
     const stats=el('div','','social-stats');
@@ -170,7 +184,7 @@ if(root) {
       buttons.append(button('BLOQUEAR',async()=>{await action('block',p.id);profileId='';await render();},'social-danger',notice),button('DENUNCIAR',()=>showReport(p),'',notice));
     }
     // Sem conta (ou sem nick): o pedido fica guardado, o login abre aqui e o pedido sai sozinho depois (completePendingFriend).
-    else if(!own && !noAccountTargets.has(p.id))buttons.append(button('ADICIONAR AMIGO',()=>askLoginForFriend(p),'social-primary',notice));
+    else if(!own && !euConvidado && !noAccountTargets.has(p.id))buttons.append(button('ADICIONAR AMIGO',()=>askLoginForFriend(p),'social-primary',notice));
     c.append(buttons,notice);
     if(p.socials?.length || p.social_link){const socials=profileSocialLinks(p);if(socials.length){const row=el('nav','','profile-socials');row.setAttribute('aria-label','Redes públicas');for(const s of socials)row.append(profileSocialLink(s));c.append(row);}}
     const secConquistas=el('section','','social-profile-section');secConquistas.append(el('h3','Conquistas'));
@@ -185,13 +199,21 @@ if(root) {
     if(!activityVisible || !p.history?.length)secPartidas.append(empty(noActivity));
     if(activityVisible)c.append(secPartidas);else c.append(empty(noActivity));
     // Abas do perfil (/u/<perfil>/<aba>) só para o dono logado. Visitante vê o perfil público inteiro, sem abas.
-    viewingOther=!own;syncPrivateTabs();
+    viewingOther=!own && !euConvidado;syncPrivateTabs();
     document.getElementById?.('perfil-ssr')?.remove();
     if(!own){content.append(c);return;}
     const nav=profileTabs(p);
     if(profileAba==='privacidade'){content.append(nav);showSettings(p);return;}
     if(profileAba==='conquistas' || profileAba==='partidas'){const only=card(p.nick);only.append(profileAba==='conquistas'?secConquistas:secPartidas);content.append(nav,only);return;}
     content.append(nav,c);
+  }
+  /* Sem conta e sem rodada confirmada o servidor não tem perfil para devolver (404 not_found):
+     a tela fica no estado vazio com o convite discreto, nunca com o painel de login no lugar do perfil. */
+  function semPerfil(){
+    if(document.documentElement?.dataset?.ui==='v3')root.tpPerfilDados={p:null,own:false,aba:profileAba,conta:null,visitante:!auth?.authenticated};
+    viewingOther=false;syncPrivateTabs();
+    document.getElementById?.('perfil-ssr')?.remove();
+    content.append(empty(auth?.authenticated?'Escolha seu nickname em SUA CONTA e seu perfil aparece aqui.':'Seu perfil aparece aqui depois da primeira rodada confirmada pelo servidor.'));
   }
   /* Abas do perfil do dono. Trocar de aba grava /u/<perfil>/<aba> (rotas.js guarda a aba) sem recarregar. */
   function profileTabs(p){
@@ -350,7 +372,7 @@ if(root) {
     mountAccountIntegrations(c,auth,loginConfig,message);void mountProfilePreferences(c,{auth,message});
     c.append(el('h3','Jogadores bloqueados'));const blocks=Array.isArray(state?.blocks)?state.blocks:[];for(const b of blocks)c.append(empty(b.nick),button('DESBLOQUEAR',()=>action('unblock',b.id)));if(!blocks.length)c.append(empty('Nenhum jogador bloqueado.'));content.append(c);return true;
   }
-  async function render(){const version=++loadVersion;root.dataset.view=tab;if(tab!=='profile' || !profileId){viewingOther=false;syncPrivateTabs();}content.replaceChildren();content.setAttribute('aria-busy','true');for(const b of document.querySelectorAll('.social-tabs button')){const on=b.dataset.tab===tab;b.setAttribute('aria-selected',String(on));b.setAttribute('tabindex',on?'0':'-1');if(on)content.setAttribute('aria-labelledby',b.id);}try{let shown=true;if(tab==='profile'){if(profileId || auth?.profile)await showProfile(profileId || auth.profile.id,version);else content.append(empty('Entre na conta para criar seu perfil.'));}else if(tab==='friends')showFriends();else if(tab==='ranking')await showRanking(version);else if(tab==='notifications')await showCentral(version);else if(tab==='feed')showFeed();else if(tab==='settings'){let settingsProfile=state?.profile;if(!settingsProfile && auth?.profile)try{({profile:settingsProfile}=await api(`/api/social?action=profile&id=${encodeURIComponent(auth.profile.id)}`));}catch{}shown=showSettings(settingsProfile);}return shown;}catch(e){message(errors[e.message] || 'Perfil privado ou indisponível.');content.append(empty('Não foi possível carregar esta tela.'),button('TENTAR DE NOVO',render));return false;}finally{if(version===loadVersion)content.setAttribute('aria-busy','false');}}
+  async function render(){const version=++loadVersion;root.dataset.view=tab;painelDaConta();if(tab!=='profile' || !profileId){viewingOther=false;syncPrivateTabs();}content.replaceChildren();content.setAttribute('aria-busy','true');for(const b of document.querySelectorAll('.social-tabs button')){const on=b.dataset.tab===tab;b.setAttribute('aria-selected',String(on));b.setAttribute('tabindex',on?'0':'-1');if(on)content.setAttribute('aria-labelledby',b.id);}try{let shown=true;if(tab==='profile'){const alvo=profileId || auth?.profile?.id || idConvidado();if(!auth?.authenticated)content.append(faixaVisitante());if(alvo)await showProfile(alvo,version).catch(e=>{if(profileId || auth?.profile || e.message!=='not_found')throw e;semPerfil();});else semPerfil();}else if(tab==='friends')showFriends();else if(tab==='ranking')await showRanking(version);else if(tab==='notifications')await showCentral(version);else if(tab==='feed')showFeed();else if(tab==='settings'){let settingsProfile=state?.profile;if(!settingsProfile && auth?.profile)try{({profile:settingsProfile}=await api(`/api/social?action=profile&id=${encodeURIComponent(auth.profile.id)}`));}catch{}shown=showSettings(settingsProfile);}return shown;}catch(e){message(errors[e.message] || 'Perfil privado ou indisponível.');content.append(empty('Não foi possível carregar esta tela.'),button('TENTAR DE NOVO',render));return false;}finally{if(version===loadVersion)content.setAttribute('aria-busy','false');}}
   async function bootNow(){accountSettled=false;message('Carregando a turma…');const accountLoads=Promise.allSettled([loadAccount(),loadAuthOptions()]);if(profileId)await render();const [accountResult,configResult]=await accountLoads;accountSettled=true;auth=accountResult.status==='fulfilled'?accountResult.value:null;state=null;if(configResult.status==='fulfilled')loginConfig=configResult.value;let accountError=accountResult.status==='rejected'?accountResult.reason:null;if(auth?.profile){acceptAccount(auth);try{await api('/api/social',{action:'presence'});}catch{}}try{await refresh();await completePendingFriend();}catch(e){accountError=e;}renderAccount();const shown=await render();if(shown)message(accountError && tab!=='profile'?(errors[accountError.message] || 'Sua conta não respondeu; o perfil público continua disponível.'):'');}
   async function boot(){if(!bootPromise)bootPromise=bootNow().finally(()=>{bootPromise=null;});return bootPromise;}
   /* Aba da comunidade no CAMINHO (/comunidade/amigos), mesma tabela de public/js/rotas.js
@@ -365,5 +387,7 @@ if(root) {
   const query=new URLSearchParams(location.search);if(['profile','friends','ranking','notifications','feed','settings'].includes(query.get('social')))tab=query.get('social');if(abaDoCaminho())tab=abaDoCaminho();
   document.addEventListener('cs-account-change',event=>{const changed=auth?.profile?.id!==event.detail?.profile?.id;auth=event.detail;if(changed){clearConversation();state=null;loadVersion++;content.replaceChildren();for(const id of ['social-unread','hub-social-unread'])document.getElementById(id).textContent='';renderAccount();}if(bootPromise)return;void refresh().then(()=>{renderAccount();return render();}).catch(e=>{message(errors[e.message] || 'Sua sessão está indisponível.');if(profileId)void render();});});
   document.addEventListener('cs-community-open',event=>{if(event.detail?.tab)tab=event.detail.tab;if(event.detail && Object.prototype.hasOwnProperty.call(event.detail,'perfil'))profileId=event.detail.perfil || '';profileAba=abaDaUrl();void boot();});
+  // Recolhe antes do boot: o perfil compartilhado nao pode abrir com o painel da conta por cima.
+  painelDaConta();
   void boot();
 }
