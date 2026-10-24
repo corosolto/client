@@ -1,7 +1,7 @@
 <!-- spec:time -->
 # 01 — Skins míticos da Loja da Treta
 
-> Nove variantes cosméticas dos personagens já existentes. Nenhuma altera dano, velocidade, hitbox ou arma.
+> Treze variantes cosméticas dos personagens já existentes. Nenhuma altera dano, velocidade, hitbox ou arma.
 > Fontes visuais: assets originais do próprio projeto, registrados em `references/skins-miticos-loja/*/FONTE.md`.
 > Vetos: mãos vazias na geração; sem logotipo real, texto, marca, gore ou arma incorporada; roupa e armadura não podem unir braço ao tronco.
 
@@ -76,6 +76,38 @@
 - **Arma:** mãos humanoides vazias; mangas e saia deixam ombros, punhos, quadris e joelhos livres para armas e movimento.
 - **Mecânica:** cosmético puro; saia dividida e sem malha entre as pernas, evitando travar walk, run e crouch.
 - **Nota:** Maria Bonita morreu em 1938; sem reprodução fotográfica ou símbolo contemporâneo.
+
+## 10. ET Cyborg — skin cosmética
+
+- **Visual:** mantém cabeça grande lisa, olhos amendoados escuros, pele oliva-cinza e corpo alienígena esguio; placas grafite e cerâmica verde-escura segmentam têmpora, peito, antebraços e canelas, com um olho óptico lima.
+- **Papel:** variante VARGINHA 2500; primeiro lê como ET de Varginha, depois como máquina.
+- **Arma:** mãos articuladas vazias com cinco dedos separados e punhos livres para pistola, fuzil e faca.
+- **Mecânica:** cosmético puro; placas preservam ombros, cotovelos, punhos, quadris e joelhos durante idle, walk, run e crouch.
+- **Nota:** metal fosco; sem nave, arma embutida, cabos entre membros ou texto.
+
+## 11. Mandrake Cyborg — skin cosmética
+
+- **Visual:** mantém boné inclinado, Juliet vermelha, corrente dourada, roupa branca, calça vermelha e tênis azul; próteses grafite e ouro escovado aparecem em um olho, peito, antebraços e canelas.
+- **Papel:** variante QUEBRADA 2500; a silhueta Mandrake continua dominante.
+- **Arma:** mãos humanoides abertas e vazias; corrente e manga não cruzam punhos nem ombros.
+- **Mecânica:** cosmético puro; placas segmentadas deixam livres todas as juntas cobradas pela régua de postura.
+- **Nota:** sem marca legível, logotipo, cromado espelhado ou arma incorporada.
+
+## 12. Emo Cyborg — skin cosmética
+
+- **Visual:** mantém pele clara, franja preta cobrindo um olho, corpo esguio, roupa preta em camadas e botas pesadas; placas grafite fosco e violeta discreto segmentam rosto, torso, antebraços e canelas.
+- **Papel:** variante URBANAS 2500; primeiro lê como Emo, depois como cyborg.
+- **Arma:** mãos vazias com cinco dedos separados; sem spikes ou mangas bloqueando o grip.
+- **Mecânica:** cosmético puro; cabelo, roupa e placas não unem braços ao tronco nem pernas entre si.
+- **Nota:** sem logotipo de banda, texto, cabos entre membros ou metal preto espelhado.
+
+## 13. Curupira Cyborg — skin cosmética
+
+- **Visual:** mantém cabelo de fogo laranja, pele morena, roupa verde de guardião da mata e os dois pés virados para trás; placas grafite, bronze envelhecido e verde-floresta aparecem em um olho, peito, antebraços e canelas.
+- **Papel:** variante MATA 2500; cabelo de fogo e pés invertidos continuam legíveis.
+- **Arma:** mãos humanoides vazias e punhos livres para o mount compartilhado.
+- **Mecânica:** cosmético puro; rig preserva pés invertidos e placas segmentadas durante idle, walk, run e crouch.
+- **Nota:** metal fosco; sem arma incorporada, gore, texto ou cabos entre membros.
 
 ## Fora do time (banco de reservas)
 

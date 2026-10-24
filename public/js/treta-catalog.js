@@ -36,6 +36,10 @@ export const TRETA_SKINS = [
   {id:'lampiao-cyborg',name:'Lampião Cyborg',character:'lampiao',color:'#a87850',series:'MITOS 2500',description:'Couro do cangaço, metal envelhecido e olho mecânico âmbar.',price:800,ready:false,metalFinish:'matte'},
   {id:'lobisomem-cyborg',name:'Lobisomem Cyborg',character:'lobisomem',color:'#6f687a',series:'MITOS 2500',description:'Pelagem escura, couraça de metal fosco e visor âmbar.',price:800,ready:false,metalFinish:'matte'},
   {id:'mariabonita-cyborg',name:'Maria Bonita Cyborg',character:'mariabonita',color:'#a65470',series:'MITOS 2500',description:'Roupa do cangaço em vinho, braço mecânico e olho óptico âmbar.',price:800,ready:false,metalFinish:'matte'},
+  {id:'et-cyborg',name:'ET Cyborg',character:'et',color:'#879b72',series:'BRASIL 2500',description:'Biotecnologia alienígena, placas de grafite fosco e olho óptico verde-limão.',price:800,ready:false,metalFinish:'matte'},
+  {id:'mandrake-cyborg',name:'Mandrake Cyborg',character:'mandrake',color:'#c4a35b',series:'BRASIL 2500',description:'Boné, visor vermelho e implantes de grafite com acabamento dourado.',price:800,ready:false,metalFinish:'matte'},
+  {id:'emo-cyborg',name:'Emo Cyborg',character:'emo',color:'#8c63ba',series:'BRASIL 2500',description:'Franja preta, núcleo violeta e próteses de grafite fosco.',price:800,ready:false,metalFinish:'matte'},
+  {id:'curupira-cyborg',name:'Curupira Cyborg',character:'curupira',color:'#d46b3f',series:'MITOS 2500',description:'Cabelo em chamas, couraça da mata e pés invertidos mecânicos.',price:800,ready:false,metalFinish:'matte',reverseFeet:true},
 ].map(item=>({...item,slot:'character'}));
 export const TRETA_WEAPON_SKINS = Object.freeze(Object.values(WEAPON_SKINS)
   .filter((skin)=>skin.storeEnabled && skin.runtimeEnabled && skin.approved && skin.certified)

@@ -2444,7 +2444,11 @@
         "public/models/skins/gotinha-cyborg-d247e5db9c73.glb",
         "public/models/skins/lampiao-cyborg-ed4f0edfc55e.glb",
         "public/models/skins/lobisomem-cyborg-d2f5f8e28085.glb",
-        "public/models/skins/mariabonita-cyborg-006a34d55dc0.glb"
+        "public/models/skins/mariabonita-cyborg-006a34d55dc0.glb",
+        "public/models/skins/et-cyborg-aaaaafd03215.glb",
+        "public/models/skins/mandrake-cyborg-367eb7fe7789.glb",
+        "public/models/skins/emo-cyborg-5123caa94e5c.glb",
+        "public/models/skins/curupira-cyborg-c8a973c7c01d.glb"
       ],
       "source": {
         "kind": "mint-model-batch",
@@ -2494,11 +2498,33 @@
             "assetId": "ks7d4b49hr89t8025yjm5crs158gw6nr",
             "chatUrl": "https://mint.gg/chat/ph70ztprgpeb2bba86bcjkn4th8gw0ce",
             "animationBatchId": "w574q8tp83sszq1kdd04e73cs58gxxpp"
+          },
+          "et-cyborg": {
+            "assetId": "ks7bwcmv36wv6gkvyqnqmqt49n8gwrme",
+            "chatUrl": "https://mint.gg/chat/ph75y6f8bd66bpbprt769mzyan8gxyj3",
+            "animationBatchId": "w57bjxjge0r4dywbn848nnmtxd8gw428"
+          },
+          "mandrake-cyborg": {
+            "assetId": "ks7c44qmwdwjyf1nrrhq50pz3n8gxt0v",
+            "chatUrl": "https://mint.gg/chat/ph7fvxfejdch0tp93hvyqzw6v58gwk3y",
+            "animationBatchId": "w570h6bw1gqq7154z1z43jsqnh8gxshb"
+          },
+          "emo-cyborg": {
+            "assetId": "ks7cskjhgya5n6t68mx5n502wx8gxrq2",
+            "chatUrl": "https://mint.gg/chat/ph714w6w7vfv36ds3v1g6183kx8gwtj7",
+            "animationBatchId": "w57c8jk3mt2w2y3df4k7zwjmp58gxs8k"
+          },
+          "curupira-cyborg": {
+            "assetId": "ks7dxdb9s2ph39mp3z0zk88c3d8gxanf",
+            "chatUrl": "https://mint.gg/chat/ph7fp8pgr0gx6mm1jkp483xpen8gxmyw",
+            "animationBatchId": "w572neanns353eqsf4v8jcy81n8gxzh9"
           }
         },
         "rejected": [
           "Referência inicial do Canarinho continha arma; o upload Mint rejeitou e ela foi substituída por render sem arma.",
-          "As primeiras prévias de Lobisomem e Maria Bonita não estavam horizontais; ambas foram revisadas antes do final."
+          "As primeiras prévias de Lobisomem e Maria Bonita não estavam horizontais; ambas foram revisadas antes do final.",
+          "A primeira prévia de Mandrake continha marcas legíveis; a revisão removeu texto e logotipo.",
+          "Três prévias de Curupira não materializaram os pés invertidos; a identidade foi corrigida no rig final, em bind e em todos os clipes."
         ]
       },
       "processing": {
@@ -2507,10 +2533,11 @@
         "rig": "riggable_character t_pose empty hands",
         "animationActionId": 613,
         "animation": "Casual Walk inplace",
-        "mintCredits": 7051,
+        "mintCredits": 10550,
+        "creditsAdditionalSkins": 3499,
         "creditsBefore": 120000,
-        "creditsAfter": 112949,
-        "status": "Modelos, rigs e vídeos integrados; postura, movimento e revisão visual aprovados"
+        "creditsAfter": 109450,
+        "status": "Treze modelos, rigs e vídeos integrados; postura, movimento e revisão visual aprovados"
       }
     }
   }

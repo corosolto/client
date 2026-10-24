@@ -715,6 +715,143 @@
         "width": 480,
         "height": 480
       }
+    },
+    "et-cyborg": {
+      "character": "et",
+      "model": "/models/skins/et-cyborg-aaaaafd03215.glb",
+      "poster": "/img/skins/et-cyborg.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "metalFinish": "matte",
+      "sha256": "aaaaafd032155c143e99765f82b17c8d922f5d7b22db2f47321d2309489065ff",
+      "bytes": 703560,
+      "sourceSha256": "a9fa28f5a53f314c7edcdaa10a642331a171c7b4edef06cd6d98031cc218ccc6",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "reviewScope": "visual estático e clipes do rig Mint aprovados; encaixe com arma e locomoção medidos no runtime",
+      "video": {
+        "webm": "/video/skins/et-cyborg.webm",
+        "mp4": "/video/skins/et-cyborg.mp4",
+        "poster": "/video/skins/et-cyborg.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
+    },
+    "mandrake-cyborg": {
+      "character": "mandrake",
+      "model": "/models/skins/mandrake-cyborg-367eb7fe7789.glb",
+      "poster": "/img/skins/mandrake-cyborg.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "metalFinish": "matte",
+      "sha256": "367eb7fe778907f0967eaf746f103dad5124605912c005da2424a44d386133ee",
+      "bytes": 1014940,
+      "sourceSha256": "4446cc779b0e0a5e4654b7e358a0ad34d02fdf8978b7383aab325cf1f210d68d",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "reviewScope": "visual estático e clipes do rig Mint aprovados; encaixe com arma e locomoção medidos no runtime",
+      "video": {
+        "webm": "/video/skins/mandrake-cyborg.webm",
+        "mp4": "/video/skins/mandrake-cyborg.mp4",
+        "poster": "/video/skins/mandrake-cyborg.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
+    },
+    "emo-cyborg": {
+      "character": "emo",
+      "model": "/models/skins/emo-cyborg-5123caa94e5c.glb",
+      "poster": "/img/skins/emo-cyborg.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "metalFinish": "matte",
+      "sha256": "5123caa94e5cb0f2d660d382d1d1a7746857be16e21ff51d13bbf63e3c2b69ff",
+      "bytes": 1034144,
+      "sourceSha256": "0787722a1ce6cb3645d57065ee31b7854c597201234abe73097cd7835b6aa95b",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "reviewScope": "visual estático e clipes do rig Mint aprovados; encaixe com arma e locomoção medidos no runtime",
+      "video": {
+        "webm": "/video/skins/emo-cyborg.webm",
+        "mp4": "/video/skins/emo-cyborg.mp4",
+        "poster": "/video/skins/emo-cyborg.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
+    },
+    "curupira-cyborg": {
+      "character": "curupira",
+      "model": "/models/skins/curupira-cyborg-c8a973c7c01d.glb",
+      "poster": "/img/skins/curupira-cyborg.webp",
+      "approved": true,
+      "preview": true,
+      "gripProfile": "mint24-curl-v1",
+      "metalFinish": "matte",
+      "reverseFeet": true,
+      "sha256": "c8a973c7c01d30a0e925d14e77dc1f5dabe0480422426f020dedaa0da294d8bf",
+      "bytes": 783264,
+      "sourceSha256": "3641bea55f3a587417bf176877630d4ade2504764cef2b3193b2087233a0208e",
+      "animationNames": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "shoot": "shoot",
+        "death": "death",
+        "crouch": "crouch",
+        "crouchwalk": "crouchwalk",
+        "jump": "jump",
+        "idle1h": "idle1h",
+        "walk1h": "walk1h",
+        "walkfire": "walkfire"
+      },
+      "reviewScope": "visual estático, pés invertidos e clipes do rig Mint aprovados; encaixe com arma e locomoção medidos no runtime",
+      "video": {
+        "webm": "/video/skins/curupira-cyborg.webm",
+        "mp4": "/video/skins/curupira-cyborg.mp4",
+        "poster": "/video/skins/curupira-cyborg.webp",
+        "seconds": 2.833,
+        "width": 480,
+        "height": 480
+      }
     }
   }
 }

@@ -1,0 +1,5 @@
+# Mandrake Cyborg
+
+Referência: `references/skins-miticos-loja/mandrake-cyborg/reference.webp`.
+
+Create a game-ready stylized full-body Brazilian Mandrake cyborg in a strict symmetrical T-pose. Preserve the reference identity and silhouette: young man, sideways cap, sharp red Juliet-style glasses, gold chain, white streetwear shirt, red pants and blue sneakers. Integrate segmented matte graphite and brushed-gold cybernetic panels across one cheek, chest, forearms and shins, with one red optical eye visible behind the glasses. Keep the cap, glasses, chain and streetwear silhouette dominant. Human-compatible palms with five separated fingers must remain usable for weapon grips. Stylized PBR, readable gameplay silhouette, matte metal, deformation gaps at shoulders, elbows, wrists, hips and knees. Empty open hands, straight fingers, no weapon, no gun, no blade, no readable brand, no logo, no cables between limbs, no gore, no pedestal, no environment.

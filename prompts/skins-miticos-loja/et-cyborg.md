@@ -1,0 +1,5 @@
+# ET Cyborg
+
+Referência: `references/skins-miticos-loja/et-cyborg/reference.webp`.
+
+Create a game-ready stylized full-body ET de Varginha cyborg in a strict symmetrical T-pose. Preserve the reference identity and silhouette: slender short alien body, oversized smooth head, muted olive-gray skin, huge dark almond eyes, narrow shoulders and long thin limbs. Integrate segmented matte graphite and dark-green ceramic cybernetic panels across the torso, one temple, forearms and shins, with one subtle lime optical eye and small amber status lights. Keep the alien face, head shape and thin silhouette dominant. Human-compatible articulated palms with five separated fingers must remain usable for weapon grips. Stylized PBR, readable gameplay silhouette, matte metal, deformation gaps at shoulders, elbows, wrists, hips and knees. Empty open hands, straight fingers, no weapon, no gun, no blade, no text, no logo, no cables between limbs, no gore, no pedestal, no environment.
