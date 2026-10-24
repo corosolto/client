@@ -1,0 +1,387 @@
+<!doctype html>
+<!-- CONSTRUTOR DA TRETA — editor visual de mapa no formato "mapa como dado" (map_json.js).
+     Zero-build, three vendorizado. Reusa planFromJSON/validatePlan/buildMapFromJSON: o que
+     você vê aqui é EXATAMENTE o que a régua (tools/eval/mapjson-check.mjs) confere e o que o
+     jogo constrói. Exporta um .json pronto pra registrar em maps.js (ver o snippet no painel).
+     Doc: /docs/construtor-de-mapas. -->
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Construtor da Treta — editor de mapas</title>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=a47c475b7bea", "three/addons/": "./vendor/addons/" } }
+</script>
+<style>
+  :root{--sb:320px;--amb:#c9a227;--grn:#2fbf71;--red:#e5534b}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#12151b;font-family:'ST Mono',Consolas,monospace;color:#cfe;font-size:13px}
+  #app{display:flex;height:100%}
+  #sidebar{width:var(--sb);flex:0 0 var(--sb);background:#0e1116;border-right:1px solid #2a3340;display:flex;flex-direction:column;overflow-y:auto;padding:12px;gap:12px}
+  #sidebar::-webkit-scrollbar{width:9px}#sidebar::-webkit-scrollbar-thumb{background:#2a3340;border-radius:5px}
+  #stage{flex:1;position:relative;background:#171b22}
+  canvas#c2d{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #prev{position:absolute;inset:0;display:none}
+  #prev canvas{width:100%!important;height:100%!important;display:block}
+  h1{font-size:14px;margin:0;letter-spacing:1px;color:#7fd}
+  h1 small{display:block;color:#5f6f7e;font-weight:400;font-size:11px;letter-spacing:.3px;margin-top:2px}
+  .grp{display:flex;flex-direction:column;gap:7px;background:#131820;border:1px solid #222c38;border-radius:9px;padding:10px 11px}
+  .cap{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:#7fd}
+  .tools{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  button{font-family:inherit;font-size:12px;background:#1b2029;color:#9fb;border:1px solid #2a3340;border-radius:7px;padding:8px 7px;cursor:pointer}
+  button:hover{border-color:#3a4658}
+  button.on{background:var(--grn);border-color:var(--grn);color:#042012;font-weight:700}
+  button.wide{width:100%}
+  .row{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:8px}
+  .row>span{color:#aeb9c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  input,select{font-family:inherit;font-size:12px;background:#0b0e13;color:#cfe;border:1px solid #2a3340;border-radius:6px;padding:5px 6px;width:100%}
+  input[type=color]{padding:1px;height:28px}
+  input[type=checkbox]{width:auto}
+  #valid{font-size:12px;white-space:pre-wrap;line-height:1.5}
+  #valid .ok{color:var(--grn)}#valid .bad{color:var(--red)}
+  #stat{color:#7fe;font-variant-numeric:tabular-nums}
+  textarea{width:100%;height:120px;background:#0b0e13;color:#9fb;border:1px solid #2a3340;border-radius:6px;font:11px monospace;padding:7px}
+  .hint{color:#5f6f7e;font-size:11px;line-height:1.5}
+  .mini{display:flex;gap:6px}.mini button{flex:1}
+  #help{position:absolute;left:10px;bottom:10px;color:#7f8c9b;font-size:11px;background:rgba(10,13,17,.7);border:1px solid #222c38;border-radius:7px;padding:7px 10px;pointer-events:none;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <h1>CONSTRUTOR DA TRETA<small>editor de mapa · formato mapa-como-dado</small></h1>
+
+    <div class="grp">
+      <div class="cap">Ferramenta</div>
+      <div class="tools" id="tools"></div>
+      <button class="wide" id="del">Apagar selecionado (Del)</button>
+    </div>
+
+    <div class="grp">
+      <div class="cap">Mapa</div>
+      <div class="row"><span>nome</span><input id="m-name"></div>
+      <div class="row"><span>bounds x</span><input id="m-bx" type="number" step="0.5"></div>
+      <div class="row"><span>bounds z</span><input id="m-bz" type="number" step="0.5"></div>
+      <div class="row"><span>piso</span><input id="m-floor" type="color"></div>
+      <div class="row"><span>muro</span><input id="m-wall" type="color"></div>
+      <div class="row"><span>wp passo</span><input id="m-step" type="number" step="0.2"></div>
+      <label class="row"><span>grafo</span><input id="m-showgraph" type="checkbox" checked></label>
+    </div>
+
+    <div class="grp" id="insp">
+      <div class="cap">Inspetor</div>
+      <div class="hint" id="insp-empty">Selecione um objeto ou escolha uma ferramenta e clique no mapa.</div>
+      <div id="insp-fields"></div>
+    </div>
+
+    <div class="grp">
+      <div class="cap">Validação (a mesma régua do jogo)</div>
+      <div id="stat">—</div>
+      <div id="valid"></div>
+    </div>
+
+    <div class="grp">
+      <div class="cap">Exportar / importar</div>
+      <div class="mini">
+        <button id="dl">Baixar .json</button>
+        <button id="prev-btn">Pré-ver 3D</button>
+      </div>
+      <button class="wide" id="snippet-btn">Copiar snippet de registro</button>
+      <textarea id="io" spellcheck="false" placeholder="cole um .json aqui e clique Importar"></textarea>
+      <div class="mini">
+        <button id="imp">Importar</button>
+        <button id="reset">Começar do zero</button>
+      </div>
+      <div class="hint">Registrar no menu roda o quality gate completo (map-check, botsim). Veja a doc.</div>
+    </div>
+  </div>
+
+  <div id="stage">
+    <canvas id="c2d"></canvas>
+    <div id="prev"></div>
+    <div id="help">arraste = mover · roda = zoom · botão do meio = pan · Del = apagar</div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+// OrbitControls não é vendorizado; orbit manual (spherical) abaixo, sem dependência de addons.
+import { planFromJSON, validatePlan, buildMapFromJSON, propIdsFromSpec } from './js/map_json.js';
+
+const WEAPONS = ['ak','m4','akm','g3','scar','tavor','famas','carbine','mp5','mp5','uzi','p90','shotgun','md97','awp','mosin','rem700','m400','svd','sks','g3sg1','lmg','deagle','pistol','m92','revolver38','knife'];
+const PROPS = ['bus','stall','tent','drinkstand','pilha_pneus','tires','dumpster','jersey_barrier','sandbags','concrete_roadblock','guarda_sol','mesa_guardasol','cooler','caixa_som','churrasqueira','arquibancada','fusca','kombi','moto_cg','fav_house','fachada_comercio','botijao_gas','caixa_dagua'];
+
+// ---- estado -------------------------------------------------------------------
+function specInicial(){
+  return {
+    id:'arena_treta', name:'Arena da Treta',
+    bounds:{x:20,z:16}, floor:{color:'#3a3f45'}, walls:{height:4,thickness:0.5,color:'#5b6169'},
+    boxes:[{w:3,h:2,d:3,x:-6,z:-5,color:'#7a8089'},{w:3,h:2,d:3,x:6,z:5,color:'#7a8089'},{w:2,h:1.4,d:5,x:0,z:0,color:'#6b7178'}],
+    ramps:[], slow:[], props:[],
+    spawns:{E:[{x:-16,z:-12,yaw:0},{x:-16,z:-8,yaw:0}],B:[{x:16,z:12,yaw:3.14159},{x:16,z:8,yaw:3.14159}]},
+    ctf:[{id:'E',label:'BASE A',x:-15,z:0},{id:'MID',label:'CENTRO',x:0,z:-6},{id:'B',label:'BASE B',x:15,z:0}],
+    pickups:[{weapon:'ak',x:0,z:6}],
+    waypoints:{step:3.4,inset:2},
+  };
+}
+let spec = specInicial();
+let tool = 'selecionar';
+let sel = null;            // {type, index}
+let plan = null, problemas = [];
+const view = { scale: 12, px: 0, pz: 0 };   // px/pz = pan em pixels
+let showGraph = true;
+
+const TOOLS = [
+  ['selecionar','Selecionar'],['caixa','Caixa (parede)'],['caixaw','Plataforma'],
+  ['rampa','Rampa'],['slow','Água/lama'],['prop','Prop GLB'],
+  ['spawnE','Spawn A'],['spawnB','Spawn B'],['ctf','Bandeira'],['pickup','Arma no chão'],
+];
+// cor de desenho por tipo
+const COL = { caixa:'#9aa4b0', caixaw:'#7fd1a6', rampa:'#c7a86b', slow:'#4f9fd4', prop:'#c58bd6',
+  spawnE:'#2fbf71', spawnB:'#e5534b', ctf:'#e8c84b', pickup:'#c9a227' };
+
+// ---- canvas / coordenadas -----------------------------------------------------
+const cv = document.getElementById('c2d'); const ctx = cv.getContext('2d');
+function fit(){ const r = cv.getBoundingClientRect(); cv.width = r.width; cv.height = r.height; draw(); }
+addEventListener('resize', fit);
+function cx(){ return cv.width/2 + view.px; }
+function cz(){ return cv.height/2 + view.pz; }
+function w2s(x,z){ return [cx()+x*view.scale, cz()+z*view.scale]; }
+function s2w(sx,sz){ return [(sx-cx())/view.scale, (sz-cz())/view.scale]; }
+const snap = (v)=>Math.round(v*2)/2;
+
+// ---- listas de entidades ------------------------------------------------------
+function list(type){
+  if(type==='spawnE') return spec.spawns.E;
+  if(type==='spawnB') return spec.spawns.B;
+  if(type==='caixa'||type==='caixaw') return spec.boxes;
+  return spec[({rampa:'ramps',slow:'slow',prop:'props',ctf:'ctf',pickup:'pickups'})[type]];
+}
+function novo(type,x,z){
+  const b = { x:snap(x), z:snap(z) };
+  if(type==='caixa') return {...b,w:3,h:2,d:3,color:'#7a8089'};
+  if(type==='caixaw') return {...b,w:4,h:1.2,d:4,color:'#6f7680',walkable:true};
+  if(type==='rampa') return {...b,w:4,d:4,rise:1.2,dir:'+z',color:'#6b7179'};
+  if(type==='slow') return {...b,w:4,d:4};
+  if(type==='prop') return {...b,id:'bus',yaw:0,h:3.0,solid:false};
+  if(type==='spawnE'||type==='spawnB') return {...b,yaw:type==='spawnE'?0:Math.PI};
+  if(type==='ctf') return {...b,id:String.fromCharCode(65+spec.ctf.length),label:'BANDEIRA',x:snap(x),z:snap(z)};
+  if(type==='pickup') return {...b,weapon:'ak'};
+}
+function selType(t){ return (t==='caixa'||t==='caixaw')?'box': t; }
+
+// ---- desenho 2D ---------------------------------------------------------------
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  const bx=spec.bounds.x, bz=spec.bounds.z;
+  // piso
+  const [fx,fz]=w2s(-bx,-bz); ctx.fillStyle=spec.floor.color; ctx.fillRect(fx,fz,bx*2*view.scale,bz*2*view.scale);
+  // grade
+  ctx.strokeStyle='rgba(255,255,255,.05)'; ctx.lineWidth=1;
+  for(let gx=-bx;gx<=bx;gx+=2){const[a,b]=w2s(gx,-bz),[c,d]=w2s(gx,bz);ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();}
+  for(let gz=-bz;gz<=bz;gz+=2){const[a,b]=w2s(-bx,gz),[c,d]=w2s(bx,gz);ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();}
+  // muro perimetral
+  ctx.strokeStyle=spec.walls.color; ctx.lineWidth=3; ctx.strokeRect(fx,fz,bx*2*view.scale,bz*2*view.scale);
+
+  // grafo de waypoints (o que o bot anda)
+  if(showGraph && plan){
+    ctx.strokeStyle='rgba(120,200,255,.18)'; ctx.lineWidth=1;
+    for(let i=0;i<plan.nodes.length;i++) for(const j of plan.adj[i]){ if(j<i)continue;
+      const[a,b]=w2s(plan.nodes[i].x,plan.nodes[i].z),[c,d]=w2s(plan.nodes[j].x,plan.nodes[j].z);
+      ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke(); }
+    for(const n of plan.nodes){ const[a,b]=w2s(n.x,n.z); ctx.fillStyle=n.y>0.05?'#7fd1a6':'rgba(140,210,255,.5)'; ctx.beginPath();ctx.arc(a,b,n.y>0.05?2.6:1.8,0,7);ctx.fill(); }
+  }
+
+  // slow
+  for(const s of spec.slow) rect(s,COL.slow,.28);
+  // rampas (com seta de subida)
+  for(const r of spec.ramps){ rect(r,COL.rampa,.5); arrowDir(r); }
+  // caixas
+  for(const b of spec.boxes) rect(b, b.walkable?COL.caixaw:COL.caixa, b.walkable?.5:.85, b.walkable?`${b.h}m ↥`:`${b.h}m`);
+  // props
+  for(const p of spec.props) dot(p,COL.prop,p.id);
+  // pickups
+  for(const p of spec.pickups) dot(p,COL.pickup,p.weapon);
+  // ctf
+  for(const f of spec.ctf) flag(f);
+  // spawns
+  for(const s of spec.spawns.E) spawnMark(s,COL.spawnE);
+  for(const s of spec.spawns.B) spawnMark(s,COL.spawnB);
+
+  // seleção
+  if(sel){ const o=list(sel.type)[sel.index]; if(o){ const[a,b]=w2s(o.x,o.z); ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.setLineDash([4,3]);
+    if(o.w!=null){ const[x,y]=w2s(o.x-o.w/2,o.z-o.d/2); ctx.strokeRect(x,y,o.w*view.scale,o.d*view.scale);} else { ctx.beginPath();ctx.arc(a,b,10,0,7);ctx.stroke(); }
+    ctx.setLineDash([]); } }
+}
+function rect(o,color,alpha,label){ const[x,y]=w2s(o.x-o.w/2,o.z-o.d/2); ctx.globalAlpha=alpha; ctx.fillStyle=color; ctx.fillRect(x,y,o.w*view.scale,o.d*view.scale); ctx.globalAlpha=1;
+  ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.strokeRect(x,y,o.w*view.scale,o.d*view.scale);
+  if(label){ ctx.fillStyle='#0b0e13'; ctx.font='10px monospace'; ctx.fillText(label,x+3,y+12);} }
+function arrowDir(r){ const[cxp,czp]=w2s(r.x,r.z); const d={'+x':[1,0],'-x':[-1,0],'+z':[0,1],'-z':[0,-1]}[r.dir]||[0,1];
+  const L=Math.min(r.w,r.d)*view.scale*0.4; ctx.strokeStyle='#2b1d08';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cxp-d[0]*L,czp-d[1]*L);ctx.lineTo(cxp+d[0]*L,czp+d[1]*L);ctx.stroke();
+  ctx.beginPath();ctx.arc(cxp+d[0]*L,czp+d[1]*L,3,0,7);ctx.fillStyle='#2b1d08';ctx.fill(); }
+function dot(o,color,label){ const[a,b]=w2s(o.x,o.z); ctx.fillStyle=color;ctx.beginPath();ctx.arc(a,b,5,0,7);ctx.fill();
+  ctx.fillStyle='#cfe';ctx.font='10px monospace';ctx.fillText(label||'',a+7,b+3); }
+function flag(f){ const[a,b]=w2s(f.x,f.z); ctx.strokeStyle=COL.ctf;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(a,b+8);ctx.lineTo(a,b-10);ctx.stroke();
+  ctx.fillStyle=COL.ctf;ctx.beginPath();ctx.moveTo(a,b-10);ctx.lineTo(a+11,b-7);ctx.lineTo(a,b-4);ctx.fill();
+  ctx.fillStyle='#cfe';ctx.font='10px monospace';ctx.fillText(f.label||f.id||'',a+13,b-5); }
+function spawnMark(s,color){ const[a,b]=w2s(s.x,s.z); const fx=Math.sin(s.yaw||0),fz=Math.cos(s.yaw||0);
+  ctx.fillStyle=color;ctx.beginPath();ctx.arc(a,b,6,0,7);ctx.fill();
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(a+fx*16,b+fz*16);ctx.stroke(); }
+
+// ---- picking ------------------------------------------------------------------
+function pick(x,z){
+  const types=['spawnE','spawnB','ctf','pickup','prop','rampa','slow','caixa'];
+  for(const t of types){ const arr=list(t); for(let i=arr.length-1;i>=0;i--){ const o=arr[i];
+    if(o.w!=null){ if(x>o.x-o.w/2&&x<o.x+o.w/2&&z>o.z-o.d/2&&z<o.z+o.d/2){ if(t==='caixa'&&o.walkable) continue; return {type:t,index:i}; } }
+    else { if(Math.hypot(x-o.x,z-o.z)<1.0) return {type:t,index:i}; } } }
+  // plataformas (caixas walkable) depois das paredes, pra parede ganhar o topo
+  const b=spec.boxes; for(let i=b.length-1;i>=0;i--){ const o=b[i]; if(o.walkable&&x>o.x-o.w/2&&x<o.x+o.w/2&&z>o.z-o.d/2&&z<o.z+o.d/2) return {type:'caixaw',index:i}; }
+  return null;
+}
+
+// ---- interação ----------------------------------------------------------------
+let drag=null;
+cv.addEventListener('mousedown',e=>{
+  if(e.button===1){ drag={pan:true,x:e.clientX,y:e.clientY}; return; }
+  const r=cv.getBoundingClientRect(); const [wx,wz]=s2w(e.clientX-r.left,e.clientY-r.top);
+  if(tool==='selecionar'){ sel=pick(wx,wz); if(sel){ const o=list(sel.type)[sel.index]; drag={obj:o,offx:o.x-wx,offz:o.z-wz}; } renderInsp(); draw(); return; }
+  // ferramenta de criação
+  const t = tool;
+  const arr = list(t); const o = novo(t,wx,wz); arr.push(o); sel={type:t,index:arr.length-1};
+  revalidate(); renderInsp();
+});
+addEventListener('mousemove',e=>{
+  if(!drag) return;
+  if(drag.pan){ view.px+=e.clientX-drag.x; view.pz+=e.clientY-drag.y; drag.x=e.clientX; drag.y=e.clientY; draw(); return; }
+  const r=cv.getBoundingClientRect(); const [wx,wz]=s2w(e.clientX-r.left,e.clientY-r.top);
+  drag.obj.x=snap(wx+drag.offx); drag.obj.z=snap(wz+drag.offz); revalidate(); renderInsp();
+});
+addEventListener('mouseup',()=>{ if(drag&&!drag.pan) revalidate(); drag=null; });
+cv.addEventListener('wheel',e=>{ e.preventDefault(); const f=e.deltaY<0?1.12:0.89; view.scale=Math.max(3,Math.min(60,view.scale*f)); draw(); },{passive:false});
+addEventListener('keydown',e=>{ if((e.key==='Delete'||e.key==='Backspace')&&sel){ delSel(); } });
+function delSel(){ if(!sel) return; list(sel.type).splice(sel.index,1); sel=null; revalidate(); renderInsp(); }
+document.getElementById('del').onclick=delSel;
+
+// ---- inspetor dinâmico --------------------------------------------------------
+const FIELDS = {
+  box:[['x','x',.5],['z','z',.5],['w','larg',.5],['d','prof',.5],['h','alt',.1],['color','cor','color'],['walkable','pisável','bool']],
+  rampa:[['x','x',.5],['z','z',.5],['w','larg',.5],['d','prof',.5],['rise','sobe',.1],['dir','sentido',['+x','-x','+z','-z']],['color','cor','color']],
+  slow:[['x','x',.5],['z','z',.5],['w','larg',.5],['d','prof',.5]],
+  prop:[['x','x',.5],['z','z',.5],['id','glb','prop'],['yaw','yaw',.1],['h','alt',.1],['solid','sólido','bool'],['cw','col larg',.5],['cd','col prof',.5]],
+  spawnE:[['x','x',.5],['z','z',.5],['yaw','yaw',.1]],
+  spawnB:[['x','x',.5],['z','z',.5],['yaw','yaw',.1]],
+  ctf:[['x','x',.5],['z','z',.5],['id','id','text'],['label','rótulo','text']],
+  pickup:[['x','x',.5],['z','z',.5],['weapon','arma','weapon']],
+};
+function renderInsp(){
+  const empty=document.getElementById('insp-empty'); const box=document.getElementById('insp-fields'); box.innerHTML='';
+  if(!sel){ empty.style.display='block'; return; } empty.style.display='none';
+  const o=list(sel.type)[sel.index]; if(!o){ sel=null; empty.style.display='block'; return; }
+  const kind = selType(sel.type)==='box' ? 'box' : sel.type;
+  const title=document.createElement('div'); title.className='hint'; title.textContent=`${sel.type} #${sel.index}`; box.appendChild(title);
+  for(const [key,lbl,kindf] of FIELDS[kind]){
+    const row=document.createElement('label'); row.className='row'; const sp=document.createElement('span'); sp.textContent=lbl; row.appendChild(sp);
+    let inp;
+    if(kindf==='color'){ inp=document.createElement('input'); inp.type='color'; inp.value=o[key]||'#7a8089'; }
+    else if(kindf==='bool'){ inp=document.createElement('input'); inp.type='checkbox'; inp.checked=!!o[key]; }
+    else if(kindf==='text'){ inp=document.createElement('input'); inp.value=o[key]||''; }
+    else if(Array.isArray(kindf)){ inp=document.createElement('select'); for(const op of kindf){const e=document.createElement('option');e.value=e.textContent=op;inp.appendChild(e);} inp.value=o[key]; }
+    else if(kindf==='weapon'||kindf==='prop'){ inp=document.createElement('input'); inp.setAttribute('list',kindf==='weapon'?'dl-w':'dl-p'); inp.value=o[key]||''; }
+    else { inp=document.createElement('input'); inp.type='number'; inp.step=kindf; inp.value=o[key]!=null?o[key]:0; }
+    inp.oninput=()=>{ if(kindf==='bool') o[key]=inp.checked; else if(inp.type==='number') o[key]=parseFloat(inp.value); else o[key]=inp.value; revalidate(); draw(); };
+    row.appendChild(inp); box.appendChild(row);
+  }
+}
+
+// ---- validação (régua do jogo) ------------------------------------------------
+function revalidate(){
+  try{ plan=planFromJSON(spec); problemas=validatePlan(plan); }
+  catch(e){ plan=null; problemas=['FALHA '+e.message]; }
+  const edges = plan ? plan.adj.reduce((a,l)=>a+l.length,0) : 0;
+  document.getElementById('stat').textContent = plan
+    ? `${plan.nodes.length} nós · ${edges} arestas · spawns A${spec.spawns.E.length}/B${spec.spawns.B.length} · ${spec.ctf.length} bandeiras`
+    : 'spec inválido';
+  const v=document.getElementById('valid');
+  v.innerHTML = problemas.length ? problemas.map(p=>`<div class="bad">✗ ${p}</div>`).join('')
+    : '<div class="ok">✓ válido — o grafo é conexo, as arestas voltam, os spawns estão na área jogável e as rampas sobem.</div>';
+  draw();
+}
+
+// ---- toolbar + topo -----------------------------------------------------------
+const tb=document.getElementById('tools');
+for(const [id,lbl] of TOOLS){ const b=document.createElement('button'); b.textContent=lbl; b.dataset.t=id; if(id===tool)b.classList.add('on');
+  b.onclick=()=>{ tool=id; [...tb.children].forEach(c=>c.classList.toggle('on',c.dataset.t===id)); }; tb.appendChild(b); }
+const $=id=>document.getElementById(id);
+function pushTop(){ $('m-name').value=spec.name; $('m-bx').value=spec.bounds.x; $('m-bz').value=spec.bounds.z;
+  $('m-floor').value=spec.floor.color; $('m-wall').value=spec.walls.color; $('m-step').value=spec.waypoints.step; }
+$('m-name').oninput=e=>{spec.name=e.target.value;};
+$('m-bx').oninput=e=>{spec.bounds.x=parseFloat(e.target.value)||spec.bounds.x;revalidate();};
+$('m-bz').oninput=e=>{spec.bounds.z=parseFloat(e.target.value)||spec.bounds.z;revalidate();};
+$('m-floor').oninput=e=>{spec.floor.color=e.target.value;draw();};
+$('m-wall').oninput=e=>{spec.walls.color=e.target.value;draw();};
+$('m-step').oninput=e=>{spec.waypoints.step=parseFloat(e.target.value)||3.4;revalidate();};
+$('m-showgraph').onchange=e=>{showGraph=e.target.checked;draw();};
+
+// datalists
+const dlw=document.createElement('datalist');dlw.id='dl-w';for(const w of [...new Set(WEAPONS)]){const o=document.createElement('option');o.value=w;dlw.appendChild(o);}document.body.appendChild(dlw);
+const dlp=document.createElement('datalist');dlp.id='dl-p';for(const p of PROPS){const o=document.createElement('option');o.value=p;dlp.appendChild(o);}document.body.appendChild(dlp);
+
+// ---- export / import ----------------------------------------------------------
+function clean(){ // remove campos default pra JSON enxuto
+  const s=JSON.parse(JSON.stringify(spec));
+  for(const b of s.boxes) if(!b.walkable) delete b.walkable;
+  for(const p of s.props){ if(!p.solid){ delete p.solid; delete p.cw; delete p.cd; } }
+  for(const k of ['ramps','slow','props']) if(s[k] && s[k].length===0) delete s[k];
+  return s;
+}
+$('dl').onclick=()=>{ const blob=new Blob([JSON.stringify(clean(),null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(spec.id||'mapa')+'.json'; a.click(); };
+$('snippet-btn').onclick=async()=>{ const id=spec.id||'arena'; const ids=JSON.stringify(propIdsFromSpec(spec));
+  const snip=`// public/js/map_${id}.js  — módulo-casca (3 linhas + o SPEC do .json exportado)\nimport { buildMapFromJSON, propIdsFromSpec } from './map_json.js';\nexport const ${id.toUpperCase()}_SPEC = /* cole aqui o conteúdo do ${id}.json */;\nexport const ${id.toUpperCase()}_PROPS = propIdsFromSpec(${id.toUpperCase()}_SPEC);\nexport const build${cap(id)} = (scene,T)=>buildMapFromJSON(scene,T,${id.toUpperCase()}_SPEC);\n\n// maps.js — 3 registros:\n//  MAPS.${id} = { name:'${spec.name}', ctfMode:true, props:${ids} };\n//  MODULOS.${id} = () => import('./map_${id}.js');\n//  EXPORTS.${id} = { build:'build${cap(id)}', props:'${id.toUpperCase()}_PROPS' };`;
+  try{ await navigator.clipboard.writeText(snip); $('snippet-btn').textContent='copiado ✓'; setTimeout(()=>$('snippet-btn').textContent='Copiar snippet de registro',1400);}catch{ $('io').value=snip; } };
+const cap=s=>s.replace(/(^|_)([a-z])/g,(_,a,b)=>b.toUpperCase());
+$('imp').onclick=()=>{ try{ const s=JSON.parse($('io').value); if(!s.bounds) throw new Error('sem bounds'); spec=normaliza(s); sel=null; pushTop(); revalidate(); renderInsp(); } catch(e){ alert('JSON inválido: '+e.message); } };
+$('reset').onclick=()=>{ spec=specInicial(); sel=null; pushTop(); revalidate(); renderInsp(); };
+function normaliza(s){ s.boxes=s.boxes||[];s.ramps=s.ramps||[];s.slow=s.slow||[];s.props=s.props||[];s.ctf=s.ctf||[];s.pickups=s.pickups||[];
+  s.spawns=s.spawns||{E:[],B:[]}; s.spawns.E=s.spawns.E||[]; s.spawns.B=s.spawns.B||[]; s.waypoints=s.waypoints||{step:3.4,inset:2};
+  s.floor=s.floor||{color:'#3a3f45'}; s.walls=s.walls||{height:4,thickness:0.5,color:'#5b6169'}; return s; }
+
+// ---- preview 3D ---------------------------------------------------------------
+let three=null;
+$('prev-btn').onclick=async()=>{
+  const prev=$('prev');
+  if(prev.style.display==='block'){ prev.style.display='none'; cv.style.display='block'; $('prev-btn').textContent='Pré-ver 3D'; return; }
+  if(problemas.length){ alert('Corrija a validação antes de pré-ver:\n'+problemas.join('\n')); return; }
+  prev.style.display='block'; cv.style.display='none'; $('prev-btn').textContent='Voltar ao 2D';
+  if(!three){
+    const r=prev.getBoundingClientRect();
+    const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(r.width,r.height); renderer.shadowMap.enabled=true; prev.appendChild(renderer.domElement);
+    const cam=new THREE.PerspectiveCamera(55,r.width/r.height,0.1,2000);
+    const orb={theta:0.7,phi:0.9,rad:Math.max(spec.bounds.x,spec.bounds.z)*2.2};
+    const place=()=>{ cam.position.set(orb.rad*Math.sin(orb.phi)*Math.sin(orb.theta), orb.rad*Math.cos(orb.phi), orb.rad*Math.sin(orb.phi)*Math.cos(orb.theta)); cam.lookAt(0,0,0); };
+    let od=null;
+    renderer.domElement.addEventListener('mousedown',e=>od={x:e.clientX,y:e.clientY});
+    addEventListener('mousemove',e=>{ if(!od)return; orb.theta-=(e.clientX-od.x)*0.01; orb.phi=Math.max(0.15,Math.min(1.5,orb.phi-(e.clientY-od.y)*0.01)); od={x:e.clientX,y:e.clientY}; place(); });
+    addEventListener('mouseup',()=>od=null);
+    renderer.domElement.addEventListener('wheel',e=>{ e.preventDefault(); orb.rad=Math.max(6,Math.min(400,orb.rad*(e.deltaY<0?0.9:1.11))); place(); },{passive:false});
+    place();
+    three={renderer,cam,scene:null};
+    (function loop(){ requestAnimationFrame(loop); if(three.scene) renderer.render(three.scene,cam); })();
+    addEventListener('resize',()=>{ const r=prev.getBoundingClientRect(); renderer.setSize(r.width,r.height); cam.aspect=r.width/r.height; cam.updateProjectionMatrix(); });
+  }
+  try{
+    const { initTextures } = await import('./js/textures.js');
+    const { preloadMapProps } = await import('./js/mapprops.js');
+    await preloadMapProps(propIdsFromSpec(spec)).catch(()=>{});
+    const scene=new THREE.Scene(); scene.background=new THREE.Color('#8fb7e0');
+    buildMapFromJSON(scene, initTextures(), clean());
+    scene.updateMatrixWorld(true);
+    three.scene=scene;
+  }catch(e){ alert('Falha ao construir 3D: '+e.message); prev.style.display='none'; cv.style.display='block'; $('prev-btn').textContent='Pré-ver 3D'; }
+};
+
+// ---- boot ---------------------------------------------------------------------
+pushTop(); fit(); revalidate(); renderInsp();
+</script>
+</body>
+</html>
