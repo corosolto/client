@@ -62,11 +62,11 @@ const EXCECOES = new Map([
 const DIVIDA = new Set([
   'adjim|NA-CABECA', 'ancap|NA-CABECA', 'bonzo|NA-CABECA', 'cadequinha|NA-CABECA',
   'metaleiro|NA-CABECA', 'lobisomem|TREMOR', 'mariabonita|TREMOR', 'lampiao|TREMOR',
-  'marina-silva|APOIO-NA-ARMA', 'canarinho|COTOVELO', 'bonzo|COTOVELO',
+  'marina-silva|APOIO-NA-ARMA', 'bonzo|COTOVELO',
 ]);
 
 const ESPERADO = {
-  morto: ['PS1'], atras: ['PS2'], tremor: ['PS6'], solto: ['PS4'],
+  morto: ['PS1'], atras: ['PS2'], tremor: ['PS6'], solto: ['PS4'], 'cotovelo-reto': ['PS5'],
 };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
@@ -126,12 +126,13 @@ for (const id of ids) {
         const gunBB = new THREE.Box3().setFromObject(gun);
         const a = B.rArm.getWorldPosition(V()), b = B.rFore.getWorldPosition(V()), c = B.rHand.getWorldPosition(V());
         const u = b.clone().sub(a).normalize(), v = c.clone().sub(b).normalize();
-        const cotovelo = Math.acos(Math.max(-1, Math.min(1, u.dot(v)))) * 180 / Math.PI;
+        let cotovelo = Math.acos(Math.max(-1, Math.min(1, u.dot(v)))) * 180 / Math.PI;
         let maoL = +gunBB.distanceToPoint(B.lHand.getWorldPosition(V())).toFixed(3);
         const palmR = tp.palmLocal ? B.rHand.localToWorld(tp.palmLocal.clone()) : B.rHand.getWorldPosition(V());
         let maoR = +gunBB.distanceToPoint(palmR).toFixed(3);
         if (mut === 'morto') maoR = maoR + 0.2;          // mão longe da arma
         if (mut === 'solto') maoL = 0;                  // mão esquerda colada
+        if (mut === 'cotovelo-reto') cotovelo = 20;     // braço rígido não segura arma
         return {
           alt: +alt.toFixed(3),
           armaYrel: +((gPos.y - hip.y) / alt).toFixed(3),

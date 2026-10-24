@@ -10,6 +10,7 @@ import {resolve,join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {TRETA_SKINS} from '../public/js/treta-catalog.js';
 import {addGripRig,bakeGround} from './treta-skin-rig.mjs';
+import {compactCanarinhoTail} from './canarinho-tail.mjs';
 import {readGLB,buildScene,poseWith} from './eval/tp-mount-probe.mjs';
 
 const root=process.env.TRETA_PRIVATE_ROOT;
@@ -67,6 +68,7 @@ for(const skin of skins){
     for(const s of r.listScenes())if(!beforeScenes.has(s))s.dispose();
   }
   const feet=skin.reverseFeet?reverseFeet(doc):null;
+  if(skin.character==='canarinho')compactCanarinhoTail(doc);
   await doc.transform(unpartition());
   const grip=addGripRig(doc),ground=await bakeGround(doc,io);
   writeFileSync(join(clipsDir,'rig-review.json'),JSON.stringify({grip,ground,feet},null,2)+'\n');

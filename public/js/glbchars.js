@@ -176,6 +176,8 @@ const _p1h = (qp.get('porte1h') || '').split(',').map(Number);
 const PORTE_1H = qp.get('porte1h') !== '0';
 const P1H_ARM = ((_p1h.length === 2 && !isNaN(_p1h[0]) ? _p1h[0] : 50)) * Math.PI / 180;
 const P1H_FORE = ((_p1h.length === 2 && !isNaN(_p1h[1]) ? _p1h[1] : -50)) * Math.PI / 180;
+const CANARINHO_P1H_ARM = 16 * Math.PI / 180;
+const CANARINHO_P1H_FORE = -16 * Math.PI / 180;
 const P1H_MAO_L = [-0.19, -0.06, 0.02];
 /* Corpos onde o overlay balona a malha (select-inflate: p99 acima do teto). O delta de
    braço soma em cima de um bind próprio; nesses rigs o clipe cru já lê melhor. */
@@ -490,6 +492,13 @@ const _gq = new THREE.Quaternion(), _wq = new THREE.Quaternion(), _pq = new THRE
 const _qLean = new THREE.Quaternion(), _axisF = new THREE.Vector3();
 const _right = new THREE.Vector3();
 const _ikTgt = new THREE.Vector3();
+function orientTpMount(t) {
+  t.handBone.updateWorldMatrix(true, false);
+  t.model.getWorldQuaternion(_gq);
+  _wq.copy(_gq).multiply(t.carry);
+  t.handBone.getWorldQuaternion(_pq);
+  t.mount.quaternion.copy(_pq.invert().multiply(_wq));
+}
 
 // Build a bot mesh from a loaded GLB. Returns an object shaped like buildCharacter()'s
 // result ({ group, parts }) plus animation control (isGLB, mixer, ctrl). Returns null
@@ -619,7 +628,7 @@ export function buildCharacterModel(def, opts = {}) {
   for (const name of [...STATES, ...OPT_STATES]) if (clips[name]) actions[name] = mixer.clipAction(clips[name]);
 
   // Skins assam contato no próprio clipe; offsets da base têm outro rig.
-  const ctrl = new CharController(mixer, actions, group, headBone, head, skin ? def.skinId : def.id, model);
+  const ctrl = new CharController(mixer, actions, group, headBone, head, skin ? def.skinId : def.id, model, def.id);
   ctrl.shadow = shadow;   // antes do settle loop abaixo (ctrl.update já a atualiza)
   // Arma de 1 mão (pistol/deagle/revolver38/knife): usa idle1h/walk1h quando carregados.
   ctrl.oneHanded = !!(opts.weaponId && ONE_HANDED.has(opts.weaponId));
@@ -834,13 +843,13 @@ export function temEmoteDriver() { return !!_emoteDriver; }
 const FADE = 0.16;
 
 class CharController {
-  constructor(mixer, actions, group, headBone, head, charId, model) {
+  constructor(mixer, actions, group, headBone, head, charId, model, bodyId = charId) {
     this.mixer = mixer; this.actions = actions;
     this.group = group; this.headBone = headBone; this.head = head;
     /* Base do Y vem do enquadramento da bind (`model.position.y = -bbox.min.y * s`, acima).
        A correção do clipe é somada A ELA, nunca substitui — senão o personagem perde o
        alinhamento de bind que já estava certo em todos os 44. */
-    this.charId = charId; this.model = model || null;
+    this.charId = charId; this.bodyId = bodyId; this.model = model || null;
     this._footBase = model ? model.position.y : 0;
     this.cur = null; this.dead = false; this.shooting = false; this.crouch = false; this.jumping = false;
     this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0; this._porte1hK = 0;
@@ -1080,17 +1089,11 @@ class CharController {
     }
     if (this.tpMount && !this.dead && !this.emotando) {
       const t = this.tpMount;
-      t.handBone.updateWorldMatrix(true, false);
-      t.model.getWorldQuaternion(_gq);
-      _wq.copy(_gq).multiply(t.carry);                  // orientação desejada do cano (mundo)
-      t.handBone.getWorldQuaternion(_pq);
-      t.mount.quaternion.copy(_pq.invert().multiply(_wq));
+      orientTpMount(t);
       if(t.stabilizeCarry && t.carryPalmModel && t.rArm && t.rFore && /^(walk|run|walk1h|walkfire)$/.test(this.curName || '')){
         _v.copy(t.carryPalmModel);t.model.localToWorld(_v);
         solveCCDIK([t.rArm,t.rFore],t.handBone,_v,{iterations:12,endOffset:t.palmLocal});
-        t.handBone.updateWorldMatrix(true,false);
-        t.model.getWorldQuaternion(_gq);_wq.copy(_gq).multiply(t.carry);
-        t.handBone.getWorldQuaternion(_pq);t.mount.quaternion.copy(_pq.invert().multiply(_wq));
+        orientTpMount(t);
         // Rigs de braço curto deixam resíduo no CCD. O mount corrige só esse resíduo,
         // sem mover o corpo nem alocar por quadro.
         t.mount.position.copy(t.handBone.worldToLocal(_v));
@@ -1114,11 +1117,7 @@ class CharController {
           _v.z = TP_FRONT_MIN;
           t.model.localToWorld(_v);
           solveCCDIK([t.rArm, t.rFore], t.handBone, _v, { iterations: 6, endOffset: t.palmLocal });
-          t.handBone.updateWorldMatrix(true, false);
-          t.model.getWorldQuaternion(_gq);
-          _wq.copy(_gq).multiply(t.carry);
-          t.handBone.getWorldQuaternion(_pq);
-          t.mount.quaternion.copy(_pq.invert().multiply(_wq));   // reorienta o cano pós-IK
+          orientTpMount(t);   // reorienta o cano pós-IK
         }
       }
     }
@@ -1199,19 +1198,24 @@ class CharController {
         if (torso.spines[1]) _deltaMundo(torso.spines[1], -sinY, 0, -cosY, -this._leanK * 0.5);
       }
       /* PORTE DE 1 MÃO: desce o braço direito, dobra o cotovelo e tira a mão esquerda da
-         frente. Só em porte parado/andando; recarga e dança mandam mais que isto. */
-      const quer1h = PORTE_1H && this.oneHanded && !this.emotando && this.lod < 1 && !P1H_SKIP.has(this.charId)
+         frente. Exceções anatômicas usam `bodyId`: `charId` vira o id da skin nas skins
+         Mint e fazia todas as variantes do Canarinho furarem P1H_SKIP/IK_L_SKIP. O
+         Canarinho recebe um porte curto próprio: os 50° humanos inflam a asa, mas sem
+         overlay o cotovelo fica quase reto e a pistola lê como pendurada. */
+      const canarinho1h = this.bodyId === 'canarinho';
+      const quer1h = PORTE_1H && this.oneHanded && !this.emotando && this.lod < 1
+        && (!P1H_SKIP.has(this.bodyId) || canarinho1h)
         && /^(idle1h|walk1h)$/.test(this.curName || '');
       this._porte1hK += ((quer1h ? 1 : 0) - this._porte1hK) * Math.min(1, dt * 10);
       if (this._porte1hK > 0.004 && this.reloadK <= 0.05 && this.corpo?.size) {
         const k1 = this._porte1hK;
         const rArm = this.corpo.get('RightArm'), rFore = this.corpo.get('RightForeArm');
-        if (rArm) _deltaMundo(rArm, cosY, 0, -sinY, P1H_ARM * k1);
-        if (rFore) _deltaMundo(rFore, cosY, 0, -sinY, P1H_FORE * k1);
+        if (rArm) _deltaMundo(rArm, cosY, 0, -sinY, (canarinho1h ? CANARINHO_P1H_ARM : P1H_ARM) * k1);
+        if (rFore) _deltaMundo(rFore, cosY, 0, -sinY, (canarinho1h ? CANARINHO_P1H_FORE : P1H_FORE) * k1);
         /* Mascote de braço-toco (IK_L_SKIP) fica de fora: IK neles vira mão gigante
            flutuando, a mesma razão por que o guarda-mão de 2 mãos já os pula. */
         if (torso.lArm && torso.lFore && torso.lHand && torso.hips && this.model
-            && !IK_L_SKIP.has(this.charId)) {
+            && !IK_L_SKIP.has(this.bodyId)) {
           _ikTgt.copy(torso.hips.getWorldPosition(_ikTgt));
           this.model.worldToLocal(_ikTgt);
           _ikTgt.set(_ikTgt.x + P1H_MAO_L[0], _ikTgt.y + P1H_MAO_L[1], _ikTgt.z + P1H_MAO_L[2]);
@@ -1280,6 +1284,9 @@ class CharController {
         }
       }
     }
+    /* O overlay de 1 mão roda depois do mount vivo. Refecha a malha: posição acompanha
+       o osso automaticamente; orientação volta ao porte do corpo, sem pistola torcida. */
+    if (this.tpMount && !this.dead && !this.emotando && this._porte1hK > 0.004) orientTpMount(this.tpMount);
     // TOMBO DIRECIONAL: o acervo tem um clipe de morte só. O viés pela direção do disparo
     // tira o "todo mundo cai igual" sem clipe novo. Ver docs/ANIM-3P.md.
     if (this.dead && this._deathDir && torso?.spines?.length) {
