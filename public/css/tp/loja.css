@@ -39,7 +39,7 @@
   background:linear-gradient(160deg,var(--skin-color),color-mix(in srgb,var(--skin-color) 30%,var(--tp-asfalto)))}
 .tp-loja__cartao[data-raridade] .tp-loja__arte{background:var(--rar-g)}
 .tp-loja__arte img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:50% 6%}
-.tp-loja__painel[data-painel=characters] .tp-loja__arte{height:340px;overflow:hidden}
+.tp-loja__painel[data-painel=characters] .tp-loja__arte{height:auto;aspect-ratio:1;overflow:hidden}
 .tp-loja__painel[data-painel=characters] .tp-loja__arte img,.tp-loja__painel[data-painel=characters] .tp-loja__arte .treta-card-video{object-fit:contain;object-position:50% 100%}
 .tp-loja__arte .treta-card-video{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .tp-loja__info{display:flex;flex-direction:column;gap:4px;padding:10px 14px 12px;min-width:0}

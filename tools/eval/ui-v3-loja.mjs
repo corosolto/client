@@ -55,7 +55,7 @@ const MUTANTES = {
   'convite-sem-chegada': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace('  trackInviteLanding();', '')],
   'convite-sem-consentimento': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace("const inviteEvent=async event=>{\n  if(!window.__csPrivacy?.allowed())return false;", 'const inviteEvent=async event=>{')],
   'loja-duplicada': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('#treta-characters-view{display:none!important}', '#treta-characters-view{display:block!important}')],
-  'corpo-cortado': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('height:340px;overflow:hidden', 'height:188px;overflow:hidden').replace('object-fit:contain;object-position:50% 100%', 'object-fit:cover;object-position:50% 6%')],
+  'corpo-cortado': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('.tp-loja__painel[data-painel=characters] .tp-loja__arte{height:auto;aspect-ratio:1;overflow:hidden}', '.tp-loja__painel[data-painel=characters] .tp-loja__arte{height:188px;overflow:hidden}').replace('object-fit:contain;object-position:50% 100%', 'object-fit:cover;object-position:50% 6%')],
   'hover-morto': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace('const preview=skinPreview(b,s.id);', 'const preview={tap:()=>false};')],
 };
 
@@ -250,6 +250,7 @@ async function secaoV3(mutante, add) {
     await page.waitForTimeout(250);
     hover.depois = await card.locator('video').count();
     hover.ativo = await card.evaluate((e) => e.classList.contains('treta-previewing'));
+    if (!mutante) await page.screenshot({ path: `${OUT}/characters-new-skins-1536x1024.png` });
     await page.mouse.move(0, 0);
     await page.waitForTimeout(100);
     hover.parou = !(await card.evaluate((e) => e.classList.contains('treta-previewing')));
@@ -302,7 +303,7 @@ async function secaoV3(mutante, add) {
     hist.abriu ? `${hist.linhas.length} compras listadas (${hist.linhas.join(' | ')}); saldo "${hist.saldo}"` : 'a carteira não abriu o histórico');
   add('LJ18', visual.superficies === 1 && !visual.legadoVisivel,
     `${visual.superficies} superfície(s) de personagens visível(is); seção legada ${visual.legadoVisivel ? 'visível' : 'oculta'}`);
-  add('LJ19', visual.arteH >= 300 && visual.arteH / Math.max(1, visual.cardW) >= 1.15 && visual.fit === 'contain' && /100%/.test(visual.pos),
+  add('LJ19', visual.arteH >= 180 && Math.abs(visual.arteH / Math.max(1, visual.cardW) - 1) <= 0.03 && visual.fit === 'contain' && /100%/.test(visual.pos),
     `arte ${visual.cardW.toFixed(0)}×${visual.arteH.toFixed(0)}, object-fit ${visual.fit}, posição ${visual.pos}`);
   add('LJ20', Boolean(hover.id) && hover.antes === 0 && hover.depois === 1 && hover.ativo && hover.parou,
     hover.id ? `${hover.id}: vídeo ${hover.antes} antes, ${hover.depois} após hover, ativo ${hover.ativo}, parou ${hover.parou}` : 'nenhuma skin aprovada com vídeo para medir');
