@@ -46,8 +46,10 @@ for (const decision of decisions) {
   if (decision.status !== 'approved' || decision.visualReview !== 'passed' || decision.audioReview !== 'passed') reasons.push('revisão visual/áudio pendente');
   if (decision.publicationRights !== true || !decision.approvedBy || !decision.approvedAt) reasons.push('direitos de publicação ou responsável ausentes');
   if (row.rights !== 'self' && !decision.rightsEvidence) reasons.push('prova de licença/republicação ausente');
-  if (row.kind !== 'gameplay' || !['bots', 'players', 'mixed'].includes(row.opponents)) reasons.push('tipo ou adversários não confirmados');
-  if (!decision.caption || !decision.character || !row.map || !decision.gameBuild) reasons.push('copy, personagem, mapa ou build ausente');
+  const validGameplay = row.kind === 'gameplay' && ['bots', 'players', 'mixed'].includes(row.opponents) && Boolean(row.map);
+  const validStore = row.kind === 'store' && row.opponents === 'none';
+  if (!validGameplay && !validStore) reasons.push('tipo, mapa ou adversários não confirmados');
+  if (!decision.caption || !decision.character || !decision.gameBuild) reasons.push('copy, personagem ou build ausente');
   if (!Array.isArray(decision.platforms) || !decision.platforms.length || decision.platforms.some(p => !platforms.includes(p))) reasons.push('plataformas inválidas');
   if (!decision.package) reasons.push('pacote social ausente');
   if (reasons.length) { blocked.push({ id: row.id, reasons }); continue; }
@@ -74,7 +76,7 @@ for (const decision of decisions) {
         video: pack.files[platform === 'x' ? 'landscape' : 'portrait'].file,
         caption: `${decision.caption.trim()}\n\n${clickable ? `Jogue: ${url}` : 'Jogue em corosolto.com.br · link na bio'}`,
         destinationUrl: String(url), sourceSha256: row.sha256, gameBuild: decision.gameBuild || null,
-        map: row.map, character: decision.character, opponents: row.opponents,
+        kind: row.kind, map: row.map || null, character: decision.character, opponents: row.opponents,
         rightsEvidence: decision.rightsEvidence || row.rights, state: 'draft' });
       seen.add(`${row.id}:${platform}`);
     }

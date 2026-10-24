@@ -11,7 +11,7 @@ node tools/film/library-import.mjs --source /caminho/take.mp4 --rights self --ki
 node tools/film/library-review.mjs /caminho/capture-library
 ```
 
-`opponents=players` só quando houver outros humanos confirmados. O importador deixa `review=pending`. O revisor deve assistir e ouvir o take inteiro, conferir alvo, reação, identidade, cortes, fluidez e direitos. Só então pode mudar `review` para `approved` no índice local e registrar decisão editorial separada. Não usar números de FPS ou abates como aprovação automática.
+Para a loja de skins, importar com `--kind store --opponents none`; o mapa pode ficar vazio. `opponents=players` só quando houver outros humanos confirmados. O importador deixa `review=pending`. O revisor deve assistir e ouvir o take inteiro, conferir alvo, reação, identidade, cortes, fluidez e direitos. Só então pode mudar `review` para `approved` no índice local e registrar decisão editorial separada. Não usar números de FPS ou abates como aprovação automática.
 
 ## 2. Preparar formatos
 
@@ -29,7 +29,7 @@ Crie `editorial-decisions.jsonl` **fora do Git**, uma linha JSON por corte aprov
 {"id":"ID_DO_INDICE","status":"approved","visualReview":"passed","audioReview":"passed","publicationRights":true,"approvedBy":"nome do revisor","approvedAt":"2026-10-24T12:00:00Z","caption":"Cena verificada da partida.","character":"Canarinho","gameBuild":"v2.1.0-alpha.120","platforms":["x","instagram","tiktok","youtube"],"package":"packages/ID_DO_INDICE/package.json"}
 ```
 
-Para vídeo de terceiro, `rightsEvidence` precisa apontar para a autorização de **publicação**, além do direito de importar para revisão. Mantenha essa prova privada. A fila confere `review=approved` no índice, decisão visual e de áudio, direitos, tipo de adversário, mapa/personagem/build, hash do original, hash dos derivados e duplicidade no histórico de posts.
+Para vídeo de terceiro, `rightsEvidence` precisa apontar para a autorização de **publicação**, além do direito de importar para revisão. Mantenha essa prova privada. A fila confere `review=approved` no índice, decisão visual e de áudio, direitos, contexto (gameplay com mapa e adversários confirmados, ou loja sem adversários), personagem/build, hash do original, hash dos derivados e duplicidade no histórico de posts.
 
 ```sh
 node tools/film/social-queue.mjs --library /caminho/capture-library --decisions /caminho/editorial-decisions.jsonl --published /caminho/published.jsonl --out /caminho/queue.json --campaign hora-do-coro-20261025 --limit 15

@@ -45,6 +45,14 @@ try {
   assert.equal(result.queue.filter(item => item.video.endsWith('portrait.mp4')).length, 3);
   assert(result.queue.every(item => item.sourceSha256 === sha256 && item.state === 'draft'));
 
+  await writeJsonl(join(library, 'index.jsonl'), [{ ...row, kind: 'store', opponents: 'none', map: null }]);
+  await writeJsonl(decisions, [{ ...decision, caption: 'Lula Cyborg na loja de skins.' }]);
+  result = await plan();
+  assert.equal(result.count, 4);
+  assert(result.queue.every(item => item.kind === 'store' && item.map === null && item.opponents === 'none'));
+  await writeJsonl(join(library, 'index.jsonl'), [row]);
+  await writeJsonl(decisions, [decision]);
+
   await writeJsonl(join(library, 'index.jsonl'), [{ ...row, review: 'pending' }]);
   result = await plan();
   assert.equal(result.count, 0);
@@ -75,7 +83,7 @@ try {
   result = await plan();
   assert.equal(result.count, 3);
   assert(!result.queue.some(item => item.platform === 'x'));
-  process.stdout.write('social pipeline: render 16:9/9:16, direitos, revisão, integridade e deduplicação OK\n');
+  process.stdout.write('social pipeline: render 16:9/9:16, gameplay/loja, direitos, revisão, integridade e deduplicação OK\n');
 } finally {
   await rm(root, { recursive: true, force: true });
 }
