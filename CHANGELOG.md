@@ -41,6 +41,7 @@
 - As telas de carregamento agora mostram o elenco inteiro: os 19 personagens entram em tela cheia, cada um com a sua arte e a marca CORO SOLTO no canto, no lugar do lote antigo de seis.
 
 ### Corrigido
+- Canarinho e suas três skins deixam de carregar uma cauda maior que quase metade do corpo. A pistola fica à frente do tronco, com cotovelo dobrado e montagem recalculada depois da pose de uma mão.
 - Perfis públicos continuam visíveis quando o bootstrap da conta falha ou a sessão expira. Links do ranking usam o handle público, o histórico do navegador restaura a lista, e perfis sem totais aparecem com zero.
 - O contador online voltou ao topo em desktop e celular. O rodapé móvel usa ícones quadrados com nome acessível, e a tela de privacidade preserva a foto com checkbox de 20 px.
 - A câmera em terceira pessoa considera filhos de modelos importados e segura o último bloqueio por 80 ms. Armas autoradas não reativam malhas antigas, e o HUD volta a mostrar a arte da arma equipada.

@@ -59,6 +59,7 @@ const SKIN = qp.get('skin') || '';
 const SKIN_ENTRY = SKIN ? (await (await fetch(assetUrl('models/skins/manifest.json'))).json()).skins?.[SKIN] : null;
 if (SKIN && !SKIN_ENTRY?.approved) throw new Error('skin fora do manifesto aprovado: ' + SKIN);
 const ID = SKIN_ENTRY?.character || qp.get('id') || 'mandrake';
+const WPN = qp.get('wpn') || '';
 const MAPID = resolveMapId(qp.get('map') || 'loja_h');
 const BG = (qp.get('bg') || 'cena').toLowerCase();       // 'cena' | 'alpha'
 const ALPHA = BG === 'alpha';
@@ -144,7 +145,7 @@ await preloadCharacterAssets([ID]);
 if (SKIN) await preloadCosmeticAssets([SKIN]);
 
 const def = { ...(CHARACTERS.find((c) => c.id === ID) || { id: ID, team: 'P' }), ...(SKIN ? { skinId: SKIN } : {}) };
-const built = buildCharacterModel(def, { weapon: false });
+const built = buildCharacterModel(def, WPN ? { weaponId: WPN } : { weapon: false });
 if (!built || !built.group) throw new Error('sem modelo para ' + ID);
 
 /* Mesmo ponto do charlineup: o spawn do time P do mapa é chão jogável por
@@ -215,7 +216,7 @@ for (let k = 0; k < 30; k++) avanca(1 / FPS);
 renderer.render(scene, camera);
 
 window.CHARVID = {
-  ready: true, id: ID, skin: SKIN || null, skinned: !!SKIN && built.ctrl?.charId === SKIN,
+  ready: true, id: ID, skin: SKIN || null, weapon: WPN || null, skinned: !!SKIN && built.ctrl?.charId === SKIN,
   idleSecs: ctrl?.actions?.idle?.getClip?.().duration || 0, w: W, h: H, fps: FPS, bg: BG, shot: SHOT,
   poses: ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'jump'],
   pose(s) { aplicaPose(s); },
