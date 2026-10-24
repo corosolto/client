@@ -752,15 +752,15 @@
     },
     "mandrake-cyborg": {
       "character": "mandrake",
-      "model": "/models/skins/mandrake-cyborg-367eb7fe7789.glb",
+      "model": "/models/skins/mandrake-cyborg-33840632c94d.glb",
       "poster": "/img/skins/mandrake-cyborg.webp",
       "approved": true,
       "preview": true,
       "gripProfile": "mint24-curl-v1",
       "metalFinish": "matte",
-      "sha256": "367eb7fe778907f0967eaf746f103dad5124605912c005da2424a44d386133ee",
-      "bytes": 1014940,
-      "sourceSha256": "4446cc779b0e0a5e4654b7e358a0ad34d02fdf8978b7383aab325cf1f210d68d",
+      "sha256": "33840632c94df9a72d12976ba9e465ac87a29bed393bb752a2ae7f6046e39023",
+      "bytes": 1049224,
+      "sourceSha256": "dbe2d07843625bbd497bc87aeb4000dd62532475f84f77d02c1e8561c9cf008a",
       "animationNames": {
         "idle": "idle",
         "walk": "walk",
@@ -774,7 +774,7 @@
         "walk1h": "walk1h",
         "walkfire": "walkfire"
       },
-      "reviewScope": "visual estático e clipes do rig Mint aprovados; encaixe com arma e locomoção medidos no runtime",
+      "reviewScope": "prévia Mint aprovada para boné, roupas e meia face cyborg; runtime, arma e locomoção medidos após integração",
       "video": {
         "webm": "/video/skins/mandrake-cyborg.webm",
         "mp4": "/video/skins/mandrake-cyborg.mp4",

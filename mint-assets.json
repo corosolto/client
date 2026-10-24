@@ -2505,9 +2505,9 @@
             "animationBatchId": "w57bjxjge0r4dywbn848nnmtxd8gw428"
           },
           "mandrake-cyborg": {
-            "assetId": "ks7c44qmwdwjyf1nrrhq50pz3n8gxt0v",
+            "assetId": "ks779kgppcvr1ftdjrq8z5sskx8gxpyp",
             "chatUrl": "https://mint.gg/chat/ph7fvxfejdch0tp93hvyqzw6v58gwk3y",
-            "animationBatchId": "w570h6bw1gqq7154z1z43jsqnh8gxshb"
+            "animationBatchId": "w57atyr2nge2rr84v0x7vgdnrs8gxq6y"
           },
           "emo-cyborg": {
             "assetId": "ks7cskjhgya5n6t68mx5n502wx8gxrq2",
@@ -2524,6 +2524,7 @@
           "Referência inicial do Canarinho continha arma; o upload Mint rejeitou e ela foi substituída por render sem arma.",
           "As primeiras prévias de Lobisomem e Maria Bonita não estavam horizontais; ambas foram revisadas antes do final.",
           "A primeira prévia de Mandrake continha marcas legíveis; a revisão removeu texto e logotipo.",
+          "O primeiro Mandrake final tinha boné e roupas genéricos e pouco rosto cyborg; foi substituído por boné estruturado, streetwear técnico e meia face mecânica.",
           "Três prévias de Curupira não materializaram os pés invertidos; a identidade foi corrigida no rig final, em bind e em todos os clipes."
         ]
       },
@@ -2533,11 +2534,12 @@
         "rig": "riggable_character t_pose empty hands",
         "animationActionId": 613,
         "animation": "Casual Walk inplace",
-        "mintCredits": 10550,
+        "mintCredits": 11295,
         "creditsAdditionalSkins": 3499,
+        "creditsMandrakeRevision": 745,
         "creditsBefore": 120000,
-        "creditsAfter": 109450,
-        "status": "Treze modelos, rigs e vídeos integrados; postura, movimento e revisão visual aprovados"
+        "creditsAfter": 108705,
+        "status": "Treze modelos, rigs e vídeos integrados; Mandrake revisado; postura, movimento e revisão visual aprovados"
       }
     }
   }
