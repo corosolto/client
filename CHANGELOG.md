@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.120`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.121`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -148,6 +148,20 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.121] — 2026-10-24
+
+### Mudado
+- release: lote 2026-10-24 (loading elenco, splash, creator kit, capturas) (#1074)
+- docs(changelog): anota o loading do elenco
+- feat(splash): roda as 19 artes do elenco no splash v3
+- feat(media): troca o loading pelo elenco em 16:9
+- site: follow public copy punctuation rule
+- site: add creator kit for real multiplayer sessions
+- film: verify existing capture bucket policy
+- film: proxy gameplay submissions to private backend
+- film: add opt-in gameplay capture library
+- fix: stop splash sync after DOM removal
 
 ## [2.1.0-alpha.120] — 2026-10-24
 
