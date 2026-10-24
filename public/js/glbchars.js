@@ -176,7 +176,7 @@ const _p1h = (qp.get('porte1h') || '').split(',').map(Number);
 const PORTE_1H = qp.get('porte1h') !== '0';
 const P1H_ARM = ((_p1h.length === 2 && !isNaN(_p1h[0]) ? _p1h[0] : 50)) * Math.PI / 180;
 const P1H_FORE = ((_p1h.length === 2 && !isNaN(_p1h[1]) ? _p1h[1] : -50)) * Math.PI / 180;
-const CANARINHO_P1H_ARM = 16 * Math.PI / 180;
+const CANARINHO_P1H_ARM = 32 * Math.PI / 180;
 const CANARINHO_P1H_FORE = -16 * Math.PI / 180;
 const P1H_MAO_L = [-0.19, -0.06, 0.02];
 /* Corpos onde o overlay balona a malha (select-inflate: p99 acima do teto). O delta de
