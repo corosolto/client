@@ -170,7 +170,16 @@ const TP_FRONT_MIN = qp.get('tpfz') === '0' ? -Infinity : (parseFloat(qp.get('tp
 // Guarda de palma (ver measurePalmLocal): teto de alavanca do mount, em antebraços.
 const PALM_GUARD = qp.get('palmguard') !== '0';
 const PALM_MAX_LEVER = parseFloat(qp.get('palmlever')) || 0.9;
-
+/* PORTE DE 1 MÃO: overlay de mundo que corrige o clipe `idle1h` (braço desce, cotovelo
+   fecha, mão esquerda ao lado do quadril). Medidas e limites: docs/ANIM-3P.md. */
+const _p1h = (qp.get('porte1h') || '').split(',').map(Number);
+const PORTE_1H = qp.get('porte1h') !== '0';
+const P1H_ARM = ((_p1h.length === 2 && !isNaN(_p1h[0]) ? _p1h[0] : 50)) * Math.PI / 180;
+const P1H_FORE = ((_p1h.length === 2 && !isNaN(_p1h[1]) ? _p1h[1] : -50)) * Math.PI / 180;
+const P1H_MAO_L = [-0.19, -0.06, 0.02];
+/* Corpos onde o overlay balona a malha (select-inflate: p99 acima do teto). O delta de
+   braço soma em cima de um bind próprio; nesses rigs o clipe cru já lê melhor. */
+const P1H_SKIP = new Set(['canarinho', 'bonzo']);
 const loader = new GLTFLoader();
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 
@@ -199,7 +208,7 @@ export async function preloadCosmeticAssets(ids = []) {
       }
       const compatible = entry.rigCompatibleWith === entry.character;
       if (!compatible && !STATES.every(name => clips[name])) throw new Error('skin_requires_animations');
-      _skins.set(id, {character:entry.character, model:g.scene, clips:compatible?null:clips,gripProfile:entry.gripProfile});
+      _skins.set(id, {character:entry.character, model:g.scene, clips:compatible?null:clips,gripProfile:entry.gripProfile,metalFinish:entry.metalFinish});
     })().catch(e => console.warn(`[skins] ${id}: ${e.message}`)).finally(() => _skinRequests.delete(id));
     _skinRequests.set(id, request); return request;
   }));
@@ -511,6 +520,11 @@ export function buildCharacterModel(def, opts = {}) {
   // 1ª pessoa — mutar o material aqui vazaria pro viewmodel já validado. Cada bot
   // ganha seu material, com a cor de rim do time dele.
   const rimCol = charRimColor(def);
+  const finishMaterial=(m)=>{
+    const next=upgradeCharMaterial(m,rimCol);
+    if(skin?.metalFinish==='matte' && 'roughness' in next){next.roughness=Math.max(next.roughness ?? 1,.82);next.needsUpdate=true;}
+    return next;
+  };
   model.traverse((o) => {
     if (!o.isMesh) return;
     o.castShadow = true;
@@ -523,8 +537,8 @@ export function buildCharacterModel(def, opts = {}) {
     o.frustumCulled = false;
     if (!CHAR_FX.mats || !o.material) return;
     o.material = Array.isArray(o.material)
-      ? o.material.map((m) => upgradeCharMaterial(m, rimCol))
-      : upgradeCharMaterial(o.material, rimCol);
+      ? o.material.map(finishMaterial)
+      : finishMaterial(o.material);
   });
 
   const group = new THREE.Group();
@@ -692,7 +706,7 @@ export function buildCharacterModel(def, opts = {}) {
          Kill-switch: ?tpmountlive=0 volta ao comportamento congelado. */
       let rArmBone = null;
       model.traverse((o) => { if (o.isBone && !rArmBone && o.name === 'RightArm') rArmBone = o; });
-      if (TP_MOUNT_LIVE) ctrl.tpMount = { mount, handBone, model, carry, palmLocal: null, rArm: rArmBone, rFore: rforeBone };
+      if (TP_MOUNT_LIVE) ctrl.tpMount = { mount, handBone, model, carry, palmLocal: null, carryPalmModel: null, rArm: rArmBone, rFore: rforeBone, stabilizeCarry:skin?.gripProfile==='mint24-curl-v1' };
       // 2) POSIÇÃO: no centro medido da PALMA, não na origem do osso (que é o PULSO).
       // É a diferença entre "a mão segura a arma" e "a arma flutua perto da mão" (C7).
       const palmLocal = measurePalmLocal(model, handBone, curlRs);
@@ -713,6 +727,11 @@ export function buildCharacterModel(def, opts = {}) {
       // A âncora da palma em espaço do OSSO: é o que o clamp de frente por-quadro
       // (CharController.update) reprojeta no espaço do modelo a cada frame.
       if (ctrl.tpMount) ctrl.tpMount.palmLocal = mount.position.clone();
+      if(ctrl.tpMount){
+        const carryPalm=mount.position.clone();
+        handBone.localToWorld(carryPalm);model.worldToLocal(carryPalm);
+        ctrl.tpMount.carryPalmModel=carryPalm;
+      }
     } else if (mount) {
       // --- caminho antigo (?tpmount=0): direção do cano pela linha antebraço->mão ---
       const dirAvg = new THREE.Vector3();
@@ -756,9 +775,9 @@ export function buildCharacterModel(def, opts = {}) {
     /* Teto de curl por personagem: a faixa do `curlPara` é calibrada em mão HUMANA e o lobo
        tem pata. Não morde hoje (shotgun já dá 0,35); varredura e porquê em BUG-149. */
     const CURL_MAX = { lobisomem: 0.50 };
+    let curl = gunObj ? curlPara(gunObj) : 0;
     const tetoCurl = CURL_MAX[def.id];
-    let curl = gunObj ? curlPara(gunObj) : 0.5;
-    if (skin?.gripProfile === 'mint24-curl-v1') curl = 1.4;
+    if (gunObj && skin?.gripProfile === 'mint24-curl-v1') curl = 1.4;
     if (tetoCurl != null) curl = Math.min(curl, tetoCurl);
     // fecha TODOS os ossos de curl com peso (nos 18 rigs transplantados eles vêm em par)
     for (const b of curlRs) b.rotation.x += curl;
@@ -824,7 +843,7 @@ class CharController {
     this.charId = charId; this.model = model || null;
     this._footBase = model ? model.position.y : 0;
     this.cur = null; this.dead = false; this.shooting = false; this.crouch = false; this.jumping = false;
-    this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0;
+    this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0; this._porte1hK = 0;
     this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
     this._emoteId = null; this._emoteT = 0; this._emoteK = 0; this._emoteDip = 0;
     this.emotando = false; this._emoteOssos = [];
@@ -1066,6 +1085,17 @@ class CharController {
       _wq.copy(_gq).multiply(t.carry);                  // orientação desejada do cano (mundo)
       t.handBone.getWorldQuaternion(_pq);
       t.mount.quaternion.copy(_pq.invert().multiply(_wq));
+      if(t.stabilizeCarry && t.carryPalmModel && t.rArm && t.rFore && /^(walk|run|walk1h|walkfire)$/.test(this.curName || '')){
+        _v.copy(t.carryPalmModel);t.model.localToWorld(_v);
+        solveCCDIK([t.rArm,t.rFore],t.handBone,_v,{iterations:12,endOffset:t.palmLocal});
+        t.handBone.updateWorldMatrix(true,false);
+        t.model.getWorldQuaternion(_gq);_wq.copy(_gq).multiply(t.carry);
+        t.handBone.getWorldQuaternion(_pq);t.mount.quaternion.copy(_pq.invert().multiply(_wq));
+        // Rigs de braço curto deixam resíduo no CCD. O mount corrige só esse resíduo,
+        // sem mover o corpo nem alocar por quadro.
+        t.mount.position.copy(t.handBone.worldToLocal(_v));
+      }
+      else if(t.palmLocal) t.mount.position.copy(t.palmLocal);
       // CLAMP DE FRENTE via IK DO BRAÇO DIREITO (ver TP_FRONT_MIN): o clipe assentado
       // deixa a palma de alguns rigs atrás do plano do corpo e a arma vai junto
       // ("arma por trás" — jozo/trapfunk/coach). Empurrar só o MOUNT foi tentado e
@@ -1167,6 +1197,27 @@ class CharController {
       if (Math.abs(this._leanK) > 1e-4) {
         _deltaMundo(torso.spines[0], -sinY, 0, -cosY, -this._leanK);
         if (torso.spines[1]) _deltaMundo(torso.spines[1], -sinY, 0, -cosY, -this._leanK * 0.5);
+      }
+      /* PORTE DE 1 MÃO: desce o braço direito, dobra o cotovelo e tira a mão esquerda da
+         frente. Só em porte parado/andando; recarga e dança mandam mais que isto. */
+      const quer1h = PORTE_1H && this.oneHanded && !this.emotando && this.lod < 1 && !P1H_SKIP.has(this.charId)
+        && /^(idle1h|walk1h)$/.test(this.curName || '');
+      this._porte1hK += ((quer1h ? 1 : 0) - this._porte1hK) * Math.min(1, dt * 10);
+      if (this._porte1hK > 0.004 && this.reloadK <= 0.05 && this.corpo?.size) {
+        const k1 = this._porte1hK;
+        const rArm = this.corpo.get('RightArm'), rFore = this.corpo.get('RightForeArm');
+        if (rArm) _deltaMundo(rArm, cosY, 0, -sinY, P1H_ARM * k1);
+        if (rFore) _deltaMundo(rFore, cosY, 0, -sinY, P1H_FORE * k1);
+        /* Mascote de braço-toco (IK_L_SKIP) fica de fora: IK neles vira mão gigante
+           flutuando, a mesma razão por que o guarda-mão de 2 mãos já os pula. */
+        if (torso.lArm && torso.lFore && torso.lHand && torso.hips && this.model
+            && !IK_L_SKIP.has(this.charId)) {
+          _ikTgt.copy(torso.hips.getWorldPosition(_ikTgt));
+          this.model.worldToLocal(_ikTgt);
+          _ikTgt.set(_ikTgt.x + P1H_MAO_L[0], _ikTgt.y + P1H_MAO_L[1], _ikTgt.z + P1H_MAO_L[2]);
+          this.model.localToWorld(_ikTgt);
+          solveCCDIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt, { iterations: 8 });
+        }
       }
       if (this._reloadDur > 0) {
         this._reloadT += dt;

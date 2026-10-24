@@ -1,0 +1,5 @@
+# Curupira Cyborg
+
+Referência: `references/skins-miticos-loja/curupira-cyborg/reference.webp`.
+
+Create a game-ready stylized full-body Curupira cyborg in a strict symmetrical T-pose. Preserve the reference identity and folklore silhouette: compact forest guardian, bright flame-orange hair, warm brown skin, green leaf-toned clothing and both feet visibly turned backward. Integrate segmented matte graphite, aged-bronze and forest-green cybernetic panels across one temple, chest, forearms and shins, with one amber optical eye. Keep the fire hair, green palette and backward feet unmistakable. Human-compatible palms with five separated fingers must remain usable for weapon grips. Stylized PBR, readable gameplay silhouette, matte metal, deformation gaps at shoulders, elbows, wrists, hips and knees. Empty open hands, straight fingers, no weapon, no gun, no blade, no text, no logo, no cables between limbs, no gore, no pedestal, no environment.

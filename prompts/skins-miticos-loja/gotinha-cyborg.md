@@ -1,0 +1,5 @@
+# Gotinha Cyborg
+
+Referência composta: `references/skins-miticos-loja/gotinha-cyborg/reference.webp`.
+
+Create a game-ready stylized full-body friendly cyborg mascot in a strict symmetrical T-pose. Preserve the left reference identity: white water-drop head, rounded proportions, large eyes, eyebrows and smiling face. Replace all red crosses with an original red droplet-shaped core. Add clean segmented ceramic-white and matte graphite cybernetic plates inspired by the right reference, one blue optical eye, subtle red light accents, articulated five-finger hands, and visible soft white body zones. Friendly health-tech, not horror. Stylized PBR, matte metal, clean deformation gaps at shoulders, elbows, wrists, hips and knees. Empty open hands, separated fingers, straight arms, separated legs. No weapon, cannon, blade, red cross, gore, tubes between limbs, black mirror chrome, logo, text, fused joints, base or background.

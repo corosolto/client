@@ -1,0 +1,5 @@
+# Canarinho Cyborg
+
+Referência composta: `references/skins-miticos-loja/canarinho-cyborg/reference.webp`.
+
+Create a game-ready stylized full-body cyborg character in a strict symmetrical T-pose. Preserve the left reference character first: anthropomorphic yellow canary, orange beak, feather crest, expressive eyes, feathered thighs and tail. Add segmented cybernetic armor inspired by the right reference but designed for this bird: matte graphite and brushed silver plates on chest, forearms and shins, one green optical eye, subtle green-and-yellow diagonal chest band, exposed yellow feather zones, articulated five-finger bird hands, and a free feather tail. The canary must read before the robot. Premium stylized PBR, matte metal finish, no black mirror chrome, clean deformation gaps at shoulders, elbows, wrists, hips and knees. Empty open hands, separated fingers, straight arms, separated legs. No gun, cannon, blade, logo, text, cables between limbs, fused armor across joints, base or background.

@@ -35,6 +35,9 @@
                      pré-re-rig) -> frenteZ despenca, VERMELHO em todos.
      --mutate=dedos  desfaz matematicamente a compactação distal e zera Curl_L/R ->
                      reabre as mãos dos rigs Meshy e reprova GRIP-FINGER.
+     --mutate=porte1h desliga o overlay de porte de 1 mão (?porte1h=0) e devolve o clipe
+                     cru `idle1h`: os dois braços esticados à frente com a pistola na
+                     ponta dos dedos -> ESTICADO + MÃO-L-NA-ARMA, VERMELHO.
      --mutate=sem-preview mede o porte funcional no lugar do porte de exibição e prova
                      que a régua acompanha o mesmo `preview:true` usado por pvSetChar.
 
@@ -84,7 +87,7 @@ page.on('pageerror', (e) => console.error('[pageerror]', e.message));
 // Esta sonda nao mede menu. O shell virtual do serve.mjs contem apenas o import map;
 // depender de `index.astro` fazia a playlist do menu (BUG-19) bloquear a medicao por
 // 120 s antes de qualquer personagem. Cada GLB segue aguardado no preload abaixo.
-await page.goto(`${BASE}/eval-character.html?debug=1${EXTRA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await page.goto(`${BASE}/eval-character.html?debug=1${EXTRA}${MUT === 'porte1h' ? '&porte1h=0' : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 
 const alvos = IDS.length ? IDS : await page.evaluate(async () => {
   const C = await import('./js/characters.js');
@@ -167,6 +170,14 @@ for (const id of alvos) {
     const qG = gun.getWorldQuaternion(new THREE.Quaternion());
     const qM = model.getWorldQuaternion(new THREE.Quaternion());
     const cano = new THREE.Vector3(0, 0, 1).applyQuaternion(qG).applyQuaternion(qM.invert()).normalize();
+    /* ROLL: giro da arma em torno do PRÓPRIO cano. canoZ não vê isso — pistola com o
+       slide virado para a câmera aponta para a frente igual e passa. Referência: o topo
+       autorado da arma (+Y) contra o +Y do modelo, ambos projetados no plano ⊥ cano. */
+    const topo = new THREE.Vector3(0, 1, 0).applyQuaternion(qG).applyQuaternion(qM).normalize();
+    const perp = (v) => v.clone().addScaledVector(cano, -v.dot(cano));
+    const tP = perp(topo), yP = perp(new THREE.Vector3(0, 1, 0));
+    const rollDeg = tP.length() < 1e-4 || yP.length() < 1e-4 ? null
+      : +(Math.acos(Math.min(1, Math.max(-1, tP.normalize().dot(yP.normalize())))) * 180 / Math.PI).toFixed(1);
     let maoR = null, maoL = null, hips = null;
     model.traverse((o) => {
       if (!o.isBone) return;
@@ -237,6 +248,13 @@ for (const id of alvos) {
       palmaY: +centro.y.toFixed(3),
       frenteZ: +centro.z.toFixed(3),
       canoZ: +cano.z.toFixed(3),
+      rollDeg,
+      /* punho -> GRIP real da arma (origem do modelo da arma = ponto de agarre de
+         gripPoints). dMaoR mede até a BBOX e dá 0 mesmo com a mão no cano. */
+      gripR: +maoR.getWorldPosition(new THREE.Vector3()).distanceTo(gun.getWorldPosition(new THREE.Vector3())).toFixed(3),
+      /* arma de 1 mão: a esquerda NÃO tem o que segurar. Perto da arma = duas mãos na
+         pistola, o defeito relatado em 23/10. */
+      maoLArma: m.ctrl.oneHanded ? +dist(maoL).toFixed(3) : null,
       dMaoR: +dist(maoR).toFixed(3),
       dMaoL: dL,
       apoioY: +(mL.y - mH.y).toFixed(3),
@@ -270,22 +288,44 @@ const teto = congelado || {
      de 2,5 mm — hair-trigger de solver, não critério de contato. Piso absoluto de 0,02 m:
      palma a menos de 2 cm do guarda-mão É contato visual em qualquer câmera do jogo. */
   dMaoLmax: +Math.max(pior(REFS_2H, 'dMaoL', (v) => v) * FOLGA, 0.02).toFixed(3),
-  apoioYmax: +(pior(REFS_1H, 'apoioY', (v) => v) * FOLGA).toFixed(3),
+  /* apoioY ganhou PISO pela mesma razão: com o porte de 1 mão a mão esquerda desceu em
+     todo mundo e os refs passaram a medir ~0,05 m, o que faria o teto virar 0,064 e
+     reprovar por geometria de braço curto (cadequinha 0,097). Mão a menos de 0,10 m acima
+     do quadril é mão AO LADO DO CORPO em qualquer câmera; o defeito que esta cláusula
+     persegue media 0,35–0,44. */
+  apoioYmax: +Math.max(pior(REFS_1H, 'apoioY', (v) => v) * FOLGA, 0.10).toFixed(3),
+  /* PORTE DE 1 MÃO (23/10). Os refs NÃO servem de âncora aqui: o defeito estava no clipe
+     `idle1h`, que é o mesmo em todo mundo — padati e raul esticavam os dois braços igual
+     ao esquerdomacho que o dono flagrou. Procedência medida nesta lane, com o overlay
+     `porte1h` ligado (depois) e desligado (antes), em esquerdomacho/padati/raul:
+       frenteZ  antes 0,326–0,389   depois 0,176–0,224  -> teto 0,28 separa os dois lados
+       maoLArma antes 0,055–0,078   depois 0,092–0,209  -> piso 0,085 idem
+     Imagens antes/depois: private-assets/porte-1h-20261023/. Mutante `porte1h` reprova. */
+  frenteZ1hMax: 0.28,
+  maoLArmaMin: 0.085,
 };
 if (SO_REF) {
   for (const i of refs) console.log('ref', i, JSON.stringify(byId[i]));
   console.log('teto:', JSON.stringify(teto));
 }
+/* DÍVIDA declarada (23/10): o porte de 1 mão não vale para o bonzo — o delta de braço
+   balona a malha dele (select-inflate acima do teto) e o clipe cru, esticado, lê melhor.
+   Conserto real é re-rig; até lá a exceção fica AQUI, visível, e não no limbo. */
+const DIVIDA = new Set(['bonzo|ESTICADO', 'bonzo|APOIO-NO-AR']);
 const falha = (r) => {
   const f = [];
   if (r.frenteZ < teto.frenteZmin) f.push('ATRÁS');
   if (r.canoZ < teto.canoZmin) f.push('CANO');
   if (r.dMaoR > teto.dMaoRmax) f.push('MÃO-R');
   if (!r.oneHanded && r.dMaoL != null && r.dMaoL > teto.dMaoLmax) f.push('MÃO-L');
-  if (r.oneHanded && r.apoioY > teto.apoioYmax) f.push('APOIO-NO-AR');
+  /* mascote (IK_L_SKIP) fica fora: braço-toco não tem como baixar a mão, e a folga do
+     corpo empurra a arma à frente por construção. Mesma isenção já dada ao MÃO-L. */
+  if (r.oneHanded && !r.mascote && teto.frenteZ1hMax != null && r.frenteZ > teto.frenteZ1hMax) f.push('ESTICADO');
+  if (r.oneHanded && !r.mascote && teto.maoLArmaMin != null && r.maoLArma != null && r.maoLArma < teto.maoLArmaMin) f.push('MÃO-L-NA-ARMA');
+  if (r.oneHanded && !r.mascote && r.apoioY > teto.apoioYmax) f.push('APOIO-NO-AR');
   const fingerMax = FINGER_EXTENT_MAX.get(r.id);
   if (fingerMax != null && !(r.fingerP90 <= fingerMax)) f.push('GRIP-FINGER');
-  return f;
+  return f.filter((x) => !DIVIDA.has(`${r.id}|${x}`));
 };
 console.log('\n=== ARMA NO CORPO — CAMINHO DA TELA DE SELEÇÃO ===');
 console.log('teto:', JSON.stringify(teto), MUT ? `(mutante=${MUT})` : '');

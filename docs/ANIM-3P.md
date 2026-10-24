@@ -79,7 +79,106 @@ Todo personagem do manifesto tem os 8 clipes base. Os opcionais (`idle1h`, `walk
 `OPT_STATES`. A régua reprova qualquer personagem novo sem base E qualquer encolhimento
 silencioso do conjunto de opcionais fora da lista registrada.
 
+
+## Porte de 1 mão (23/10): o clipe `idle1h` não é porte, é oferta
+
+O dono mandou três capturas do `esquerdomacho` na tela de seleção: os dois braços
+esticados à frente, as mãos juntas e abertas, a pistola flutuando na ponta dos dedos na
+altura do queixo. Medido no mesmo caminho do `pvSetChar`, **não é defeito de personagem**:
+o `padati`, que `select-mount.mjs` usa como referência APROVADA desde 04/08, tem a mesma
+pose. O `idle1h`/`walk1h` do acervo é assim para todo mundo — e por isso nenhuma régua
+reprovava: os tetos eram ancorados em personagens com o mesmo defeito.
+
+Trocar o clipe custa re-autoração nos 63 corpos. O que entrou é overlay de MUNDO sobre o
+clipe, o mesmo mecanismo da recarga e do emote (`glbchars.js`, bloco `PORTE DE 1 MÃO`):
+
+| Osso | Delta | Efeito |
+|---|---|---|
+| `RightArm` | +50° no eixo DIREITA do corpo | desce o braço do horizontal |
+| `RightForeArm` | −50° no mesmo eixo | fecha o cotovelo e traz a arma para o peito |
+| `LeftHand` | CCD IK no quadril −0,19/−0,06/+0,02 m | tira a mão esquerda da frente da arma |
+
+O alvo da mão esquerda sai do QUADRIL, não de uma altura absoluta: com alvo fixo o
+`cadequinha` (baixo) media a mão acima do próprio quadril. Mascote de braço-toco
+(`IK_L_SKIP`) fica de fora, pela mesma razão que já pula o guarda-mão de 2 mãos.
+A camada só entra em `idle1h`/`walk1h`; recarga e dança mandam mais que ela. `?porte1h=0`
+desliga; `?porte1h=50,-50` faz A/B.
+
+Os primeiros valores testados (65°/−60°) ficavam melhores na foto do esquerdomacho, mas o
+censo de postura (ver seção seguinte) mostrou o custo: em 7 rigs (mst, et, esbirro, padati,
+rapper, dama, deputado) a mão caía ATRÁS do plano do corpo. 50°/−50° é o ponto que zera
+esses casos mantendo a arma no peito.
+
+Dois corpos ficam FORA do overlay, declarados em `P1H_SKIP` (glbchars.js): `canarinho` e
+`bonzo`. O delta de braço balona a malha deles — o select-inflate passou a reprovar com o
+overlay ligado — e o clipe cru, mesmo esticado, lê melhor. Conserto real é re-rig; a
+exceção mora no código com nome e motivo, e o porte deles segue na dívida do contrato.
+
+Medido em `esquerdomacho`/`padati`/`raul` no caminho da seleção (desligado → ligado):
+
+| Medida | Antes | Depois | O que significa |
+|---|---|---|---|
+| `frenteZ` | 0,326–0,389 | 0,215–0,266 | a arma deixou de ser oferecida à frente |
+| `maoLArma` | 0,055–0,078 | 0,200–0,304 | a mão esquerda saiu de cima da arma |
+| `palmaY` | 1,22–1,30 | 1,12–1,19 | a arma desceu, do queixo para o peito |
+
+Gate: `select-mount.mjs` ganhou `ESTICADO` (`frenteZ1hMax` 0,28) e `MÃO-L-NA-ARMA`
+(`maoLArmaMin` 0,085), ambos com os números acima como procedência, e o mutante
+`--mutate=porte1h` desliga a camada e reprova 9 dos 63. Imagens antes/depois em
+`private-assets/porte-1h-20261023/`.
+
+**Limite declarado:** 45 dos 63 rigs não têm osso de dedo, então a mão continua ABERTA
+sobre o punho da arma. Isso é geometria do rig, não pose — fechar a pegada exige malha
+nova, não parâmetro. Armas de 2 mãos não foram tocadas.
+
 ## Fora de escopo, declarado
 
 Morte segue sendo o clipe `death` a 1,8× (sem ragdoll — escolha estilística vigente).
 Strafe com clipe autoral e pitch de torso na mira continuam abertos como decisão de custo.
+
+## O contrato de postura (23/10): o padrão que personagem novo tem que cumprir
+
+Pedido do dono: "o problema não é a arma, é o personagem segurando ela — temos que revisar
+todos e por um padrão para novos personagens não quebrarem a postura e movimentos".
+
+O censo que define o padrão mediu os 63 GLB × 3 classes de arma (fuzil/pistola/faca) × 4
+estados (idle/walk/run/crouch), no caminho FUNCIONAL do jogo (`preview:false`), 120 quadros
+por medição de movimento. Arquivo: `private-assets/postura-20261023/censo-63x3x4.json`.
+
+**O que o censo achou antes de qualquer padrão existir:** 19/63 fora da faixa p05–p95 com
+fuzil, 24/63 com pistola. E os ângulos 65°/−60° da primeira versão do porte de 1 mão
+empurravam a arma ATRÁS do plano do corpo em 7 rigs — o censo pegou a regressão no mesmo
+dia, antes do merge. Isso é o padrão pagando por si.
+
+O contrato é `npm run eval:postura` (`tools/eval/postura-check.mjs`), no `check:fast`:
+
+| Cláusula | Regra | Procedência |
+|---|---|---|
+| PS1 | mão da frente a ≤9 cm (1 mão) / ≤2 cm (2 mãos) da arma | contato é segurar |
+| PS2 | arma à frente do plano do corpo (Z > −0,02 alturas) | regressão do porte 65/−60 |
+| PS3 | arma ≥3% da altura abaixo da cabeça | corpo humano; mascote: exceção |
+| PS4 | arma de 1 mão: mão esquerda ≥5 cm da arma | o defeito das "duas mãos na pistola" |
+| PS5 | cotovelo 55°..150° | faixa humana; censo p05=79,8 p95=135,8 |
+| PS6 | tremor ≤0,035 alturas/quadro correndo | quem passa mede ≤0,028; reprovados 0,039–0,075 |
+
+**Dívida, não perdão.** O elenco de hoje tem 11 personagens/cláusula fora do contrato. Eles
+estão em `DIVIDA` dentro da régua, visível no veredito: personagem NOVO que quebrar reprova
+o CI; entrada da lista que for consertada e não removida também reprova ("dívida paga:
+tire da lista"). A lista encolhe, nunca cresce escondido. Exceção de CORPO (não de defeito)
+também é declarada com motivo: `dollynho`, `gotinha`, `et`, `canarinho` — mascotes.
+
+A fila de revisão, com o que cada um quebra hoje:
+
+| Personagem | Cláusula | Medida | Caminho de conserto |
+|---|---|---|---|
+| `lobisomem` | PS6 tremor | 0,075 (2× o teto) | clipe compartilhado: re-autorar ou filtrar |
+| `mariabonita` | PS6 tremor | 0,039 | idem |
+| `lampiao` | PS6 tremor | 0,039 | idem |
+| `adjim`, `ancap`, `cadequinha`, `metaleiro` | PS3 arma na altura da cabeça | −0,008..0,017 | pose no rig ou clipe próprio |
+| `bonzo` | PS3 + PS5 cotovelo 42° | — | re-rig (o overlay balona a malha dele) |
+| `canarinho` | PS5 cotovelo 43° | — | mascote de braço-toco: decisão editorial |
+| `marina-silva` | PS4 mão na arma de 1 mão | 0,017–0,046 | pose no rig |
+
+Os três de tremor são os mesmos corpos que o `EMOTES-BR.md` já apontava por dependerem do
+pack de animação compartilhado: o tremor está no CLIPE, não no mount — consertar é re-autorar
+ou filtrar, e cada um desses caminhos é decisão de custo, não de parâmetro.

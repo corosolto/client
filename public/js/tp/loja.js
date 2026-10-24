@@ -1,5 +1,5 @@
 /* Treta Pop · 07 loja, 09 armário, 23 mobile. Carregado por tp/ligar.js só com ?ui=v3. */
-import { tretaLoja, abrirTretaSkin, equiparTretaSkin, abrirTretaHistorico } from '../treta-store.js';
+import { tretaLoja, abrirTretaSkin, equiparTretaSkin, abrirTretaHistorico, skinPreview } from '../treta-store.js';
 import { tr, LANG } from '../i18n.js';
 
 /* Só os slots que o backend já guarda; fuzil, faca, spray e afins entram quando a API tiver o campo. */
@@ -37,7 +37,7 @@ function decorarQuests(){
 }
 function raridade(s){return RARIDADES.has(s.raridade)?s.raridade:'';}
 function cartao(s,d){
-  const b=botao('tp-card tp-loja__cartao','',()=>abrirTretaSkin(s.id));
+  const b=botao('tp-card tp-loja__cartao');
   b.dataset.skin=s.id;b.style.setProperty('--skin-color',s.color);
   const rar=raridade(s);
   if(rar)b.dataset.raridade=rar;
@@ -51,7 +51,10 @@ function cartao(s,d){
   else if(s.available && s.price!=null)info.append(el('span','tp-loja__preco tp-num',moeda(s.price)));
   else info.append(el('span','tp-loja__estado',tr('EM PRODUÇÃO')));
   b.setAttribute('aria-label',`${s.name}. ${info.lastChild.textContent}`);
-  b.append(arte,info);return b;
+  b.append(arte,info);
+  const preview=skinPreview(b,s.id);
+  b.onclick=()=>{if(!preview.tap())abrirTretaSkin(s.id);};
+  return b;
 }
 
 function meta(rotulo,texto,p){

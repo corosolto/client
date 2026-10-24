@@ -4,6 +4,7 @@
 :root[data-ui="v3"] .treta-store:has(.tp-loja) .treta-heading{display:none}
 :root[data-ui="v3"] .treta-store:has(.tp-loja) .treta-views{display:none}
 :root[data-ui="v3"] .treta-store:has(.tp-loja) #treta-weapons-view,:root[data-ui="v3"] .treta-store:has(.tp-loja) #treta-items-view,:root[data-ui="v3"] .treta-store:has(.tp-loja) #treta-packs-view{display:none!important}
+:root[data-ui="v3"] .treta-store:has(.tp-loja) #treta-characters-view{display:none!important}
 :root[data-ui="v3"] .treta-store{--treta-bg:var(--tp-asfalto);--treta-panel:var(--tp-painel);--treta-muted:var(--tp-tinta-3);--treta-line:var(--tp-borda);
   --treta-gold:var(--tp-ambar);--treta-lime:var(--tp-lima);padding:20px 32px 28px!important;color:var(--tp-tinta-1);font-family:var(--tp-ui);
   background:radial-gradient(900px 500px at 20% 30%,color-mix(in srgb,var(--tp-novo) 18%,transparent),transparent 70%),var(--tp-asfalto)}
@@ -38,6 +39,9 @@
   background:linear-gradient(160deg,var(--skin-color),color-mix(in srgb,var(--skin-color) 30%,var(--tp-asfalto)))}
 .tp-loja__cartao[data-raridade] .tp-loja__arte{background:var(--rar-g)}
 .tp-loja__arte img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:50% 6%}
+.tp-loja__painel[data-painel=characters] .tp-loja__arte{height:auto;aspect-ratio:1;overflow:hidden}
+.tp-loja__painel[data-painel=characters] .tp-loja__arte img,.tp-loja__painel[data-painel=characters] .tp-loja__arte .treta-card-video{object-fit:contain;object-position:50% 100%}
+.tp-loja__arte .treta-card-video{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .tp-loja__info{display:flex;flex-direction:column;gap:4px;padding:10px 14px 12px;min-width:0}
 .tp-loja__rar{font:800 12px/1 var(--tp-ui);letter-spacing:.12em;color:var(--rar-luz)}
 .tp-loja__nome{font-size:24px;line-height:1.12;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -140,7 +144,7 @@
   .tp-loja__saldo::before{content:'T$ '}
   .tp-loja__grade{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
   .tp-loja__cartao{border-radius:9px;border-width:0}
-  .tp-loja__arte{height:68px}
+  .tp-loja__arte,.tp-loja__painel[data-painel=characters] .tp-loja__arte{height:68px}
   .tp-loja__info{gap:0;padding:5px 8px}
   .tp-loja__rar{font-size:10px}
   .tp-loja__nome{font-size:14px}

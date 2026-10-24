@@ -1,0 +1,172 @@
+{
+ "gerado": "2026-10-23T22:17:14.684Z",
+ "mutante": null,
+ "linhas": [
+  {
+   "id": "esquerdomacho",
+   "arma": "ak",
+   "oneHanded": false,
+   "estados": {
+    "idle": {
+     "alt": 1.72,
+     "armaYrel": 0.092,
+     "armaZrel": 0.086,
+     "armaXrel": -0.135,
+     "abaixoCabeca": 0.268,
+     "cotovelo": 92.7,
+     "maoL": 0.052,
+     "maoR": 0
+    },
+    "walk": {
+     "alt": 1.72,
+     "armaYrel": 0.207,
+     "armaZrel": 0.247,
+     "armaXrel": -0.075,
+     "abaixoCabeca": 0.118,
+     "cotovelo": 124.9,
+     "maoL": 0.032,
+     "maoR": 0
+    },
+    "run": {
+     "alt": 1.72,
+     "armaYrel": 0.211,
+     "armaZrel": 0.249,
+     "armaXrel": -0.072,
+     "abaixoCabeca": 0.112,
+     "cotovelo": 125.5,
+     "maoL": 0.034,
+     "maoR": 0
+    },
+    "crouch": {
+     "alt": 1.72,
+     "armaYrel": 0.18,
+     "armaZrel": 0.263,
+     "armaXrel": -0.146,
+     "abaixoCabeca": 0.084,
+     "cotovelo": 119.1,
+     "maoL": 0.012,
+     "maoR": 0
+    }
+   },
+   "mov": {
+    "walk": {
+     "pior": 0.0066
+    },
+    "run": {
+     "pior": 0.0145
+    }
+   }
+  },
+  {
+   "id": "esquerdomacho",
+   "arma": "pistol",
+   "oneHanded": true,
+   "estados": {
+    "idle": {
+     "alt": 1.72,
+     "armaYrel": 0.211,
+     "armaZrel": 0.154,
+     "armaXrel": -0.216,
+     "abaixoCabeca": 0.15,
+     "cotovelo": 87.5,
+     "maoL": 0.338,
+     "maoR": 0.021
+    },
+    "walk": {
+     "alt": 1.72,
+     "armaYrel": 0.207,
+     "armaZrel": 0.247,
+     "armaXrel": -0.075,
+     "abaixoCabeca": 0.118,
+     "cotovelo": 124.9,
+     "maoL": 0.056,
+     "maoR": 0.009
+    },
+    "run": {
+     "alt": 1.72,
+     "armaYrel": 0.211,
+     "armaZrel": 0.249,
+     "armaXrel": -0.072,
+     "abaixoCabeca": 0.112,
+     "cotovelo": 125.5,
+     "maoL": 0.065,
+     "maoR": 0.009
+    },
+    "crouch": {
+     "alt": 1.72,
+     "armaYrel": 0.18,
+     "armaZrel": 0.263,
+     "armaXrel": -0.146,
+     "abaixoCabeca": 0.084,
+     "cotovelo": 119.1,
+     "maoL": 0.069,
+     "maoR": 0.005
+    }
+   },
+   "mov": {
+    "walk": {
+     "pior": 0.0066
+    },
+    "run": {
+     "pior": 0.0145
+    }
+   }
+  },
+  {
+   "id": "esquerdomacho",
+   "arma": "knife",
+   "oneHanded": true,
+   "estados": {
+    "idle": {
+     "alt": 1.72,
+     "armaYrel": 0.211,
+     "armaZrel": 0.154,
+     "armaXrel": -0.216,
+     "abaixoCabeca": 0.15,
+     "cotovelo": 87.5,
+     "maoL": 0.325,
+     "maoR": 0
+    },
+    "walk": {
+     "alt": 1.72,
+     "armaYrel": 0.207,
+     "armaZrel": 0.247,
+     "armaXrel": -0.075,
+     "abaixoCabeca": 0.118,
+     "cotovelo": 124.9,
+     "maoL": 0.091,
+     "maoR": 0
+    },
+    "run": {
+     "alt": 1.72,
+     "armaYrel": 0.211,
+     "armaZrel": 0.249,
+     "armaXrel": -0.072,
+     "abaixoCabeca": 0.112,
+     "cotovelo": 125.5,
+     "maoL": 0.098,
+     "maoR": 0
+    },
+    "crouch": {
+     "alt": 1.72,
+     "armaYrel": 0.18,
+     "armaZrel": 0.263,
+     "armaXrel": -0.146,
+     "abaixoCabeca": 0.084,
+     "cotovelo": 119.1,
+     "maoL": 0.093,
+     "maoR": 0
+    }
+   },
+   "mov": {
+    "walk": {
+     "pior": 0.0066
+    },
+    "run": {
+     "pior": 0.0145
+    }
+   }
+  }
+ ],
+ "reprovados": 0
+}

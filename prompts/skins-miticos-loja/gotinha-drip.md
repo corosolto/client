@@ -1,0 +1,5 @@
+# Gotinha do Drip
+
+Referência composta: `references/skins-miticos-loja/gotinha-drip/reference.webp`.
+
+Create a game-ready stylized full-body 3D mascot in a strict symmetrical T-pose. Preserve the left reference identity: friendly white water-drop head, rounded white body, large glossy eyes, black eyebrows and warm smile. Replace every red-cross emblem with an original simple red droplet emblem. Restyle with premium Brazilian streetwear inspired by the right reference: cropped pale-blue and red windbreaker, plain white shirt, slim white cargo pants, red-and-blue sneakers and one short chain with a fictional droplet pendant. Strong readable silhouette, polished stylized PBR, smooth pearlescent body and matte fabrics. Empty open five-finger hands, separated fingers, straight arms, separated legs. No weapon, no gun, no red cross, no protected medical emblem, no logo, no readable text, no cloth bridging armpits or legs, no floating accessories, no base, no background.

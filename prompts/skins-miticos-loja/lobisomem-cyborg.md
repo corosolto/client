@@ -1,0 +1,5 @@
+# Lobisomem Cyborg
+
+Referência composta: `references/skins-miticos-loja/lobisomem-cyborg/reference.webp`.
+
+Create a game-ready stylized full-body werewolf cyborg in a strict symmetrical T-pose. Preserve the left reference identity and silhouette: huge muscular humanoid wolf, dark purple-black fur, pointed ears, long muzzle, orange eyes, broad shoulders, digitigrade legs, clawed feet and free tail. Integrate segmented matte graphite and aged-bronze cybernetic armor inspired by the right reference across the chest, one shoulder, forearms and shins, with one amber optical eye. Keep substantial exposed fur and the wolf silhouette dominant. Short safe claws and human-compatible palms must remain usable for weapon grips. Stylized PBR, readable gameplay silhouette, matte metal, deformation gaps at shoulders, elbows, wrists, hips, knees and tail root. Empty open hands, separated fingers, straight arms, separated legs. No weapon, gun, cannon, gore, exposed organs, cables joining limbs, fused armor, base or background.

@@ -14,6 +14,7 @@ const VIEWPORTS = [[1536, 1024], [1920, 1080], [1280, 720], [844, 390]];
 const MANIFESTO = JSON.parse(readFileSync(new URL('../../public/models/skins/manifest.json', import.meta.url), 'utf8'));
 const APROVADAS = TRETA_SKINS.filter((s) => MANIFESTO.skins[s.id]?.approved === true);
 const CATALOGO = [...TRETA_SKINS, ...TRETA_WEAPON_SKINS, ...TRETA_GLOVES, ...TRETA_PACKS];
+const VIDEO_ID = APROVADAS.find((s) => s.id === 'mariabonita-cyborg' && MANIFESTO.skins[s.id]?.video?.webm)?.id || APROVADAS.find((s) => MANIFESTO.skins[s.id]?.video?.webm)?.id || '';
 const CATEGORIAS = {
   weapons: TRETA_WEAPON_SKINS.map((s) => s.id),
   characters: APROVADAS.map((s) => s.id),
@@ -42,6 +43,7 @@ const MUTANTES = {
   'raridade-inventada': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("RARIDADES.has(s.raridade)?s.raridade:''", "RARIDADES.has(s.raridade)?s.raridade:'comum'")],
   'preco-local': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace('price:item(s.id)?.price ?? null', 'price:s.price')],
   'dois-primarios': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("'tp-btn tp-loja__ganhar'", "'tp-btn tp-btn--primario tp-loja__ganhar'")],
+  'slot-inventado': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace("packs:new Set(['pack'])", "packs:new Set(['character'])")],
   'historico-mudo': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace('saldo.onclick=', 'saldo.onclick=null;//')],
   'grade-larga': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('.tp-loja__grade{display:grid;', '.tp-loja__grade{display:grid;min-width:1700px;')],
   'alvo-pequeno': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('@media (pointer:coarse){', '@media (pointer:none){')],
@@ -53,6 +55,9 @@ const MUTANTES = {
   'visita-so-no-evento': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace("  if(estadoDaUrl(location.href)?.secao==='loja')storeVisit();", '')],
   'convite-sem-chegada': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace('  trackInviteLanding();', '')],
   'convite-sem-consentimento': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace("const inviteEvent=async event=>{\n  if(!window.__csPrivacy?.allowed())return false;", 'const inviteEvent=async event=>{')],
+  'loja-duplicada': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('#treta-characters-view{display:none!important}', '#treta-characters-view{display:block!important}')],
+  'corpo-cortado': [(u) => u.pathname === '/css/tp/loja.css', (t) => t.replace('.tp-loja__painel[data-painel=characters] .tp-loja__arte{height:auto;aspect-ratio:1;overflow:hidden}', '.tp-loja__painel[data-painel=characters] .tp-loja__arte{height:188px;overflow:hidden}').replace('object-fit:contain;object-position:50% 100%', 'object-fit:cover;object-position:50% 6%')],
+  'hover-morto': [(u) => u.pathname === '/js/tp/loja.js', (t) => t.replace('const preview=skinPreview(b,s.id);', 'const preview={tap:()=>false};')],
   'erro-no-visitante': [(u) => u.pathname === '/js/treta-store.js', (t) => t.replace("const visitante=!account?.authenticated;", 'const visitante=false;')],
 };
 
@@ -219,6 +224,40 @@ async function secaoV3(mutante, add) {
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
   }
+  await page.locator('#hub-shop [role=tab][data-tp-aba=characters]').click();
+  await page.waitForTimeout(300);
+  const visual = await page.evaluate(() => {
+    const vis = (e) => Boolean(e?.checkVisibility());
+    const painelNovo = document.querySelector('.tp-loja__painel[data-painel=characters]');
+    const painelLegado = document.getElementById('treta-characters-view');
+    const card = painelNovo?.querySelector('.tp-loja__cartao');
+    const arte = card?.querySelector('.tp-loja__arte');
+    const img = arte?.querySelector('img');
+    const cs = img ? getComputedStyle(img) : null;
+    const ar = arte?.getBoundingClientRect();
+    const cr = card?.getBoundingClientRect();
+    return {
+      superficies: [painelNovo, painelLegado].filter(vis).length,
+      legadoVisivel: vis(painelLegado),
+      arteH: ar?.height || 0,
+      cardW: cr?.width || 0,
+      fit: cs?.objectFit || '',
+      pos: cs?.objectPosition || '',
+    };
+  });
+  let hover = { id: VIDEO_ID, antes: -1, depois: -1, ativo: false, parou: false };
+  if (VIDEO_ID) {
+    const card = page.locator(`.tp-loja__painel[data-painel=characters] .tp-loja__cartao[data-skin="${VIDEO_ID}"]`);
+    hover.antes = await card.locator('video').count();
+    await card.hover();
+    await page.waitForTimeout(250);
+    hover.depois = await card.locator('video').count();
+    hover.ativo = await card.evaluate((e) => e.classList.contains('treta-previewing'));
+    if (!mutante) await page.screenshot({ path: `${OUT}/characters-new-skins-1536x1024.png` });
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(100);
+    hover.parou = !(await card.evaluate((e) => e.classList.contains('treta-previewing')));
+  }
   await page.close();
 
   const okAba = (a) => a.n === 5 && a.sublinhados === 0 && a.riscos === 1 && a.selecionadas.length === 1 && a.dx <= 2 && a.dw <= 2;
@@ -265,6 +304,12 @@ async function secaoV3(mutante, add) {
   add('LJ17', hist.abriu && hist.linhas.length === 2 && /AK Ouro/.test(hist.linhas[0]) && /T\$ -500/.test(hist.linhas[0])
     && /Pack Dourado/.test(hist.linhas[1]) && /T\$ 1\.240/.test(hist.saldo) && hist.vazio === true,
     hist.abriu ? `${hist.linhas.length} compras listadas (${hist.linhas.join(' | ')}); saldo "${hist.saldo}"` : 'a carteira não abriu o histórico');
+  add('LJ19', visual.superficies === 1 && !visual.legadoVisivel,
+    `${visual.superficies} superfície(s) de personagens visível(is); seção legada ${visual.legadoVisivel ? 'visível' : 'oculta'}`);
+  add('LJ20', visual.arteH >= 180 && Math.abs(visual.arteH / Math.max(1, visual.cardW) - 1) <= 0.03 && visual.fit === 'contain' && /100%/.test(visual.pos),
+    `arte ${visual.cardW.toFixed(0)}×${visual.arteH.toFixed(0)}, object-fit ${visual.fit}, posição ${visual.pos}`);
+  add('LJ21', Boolean(hover.id) && hover.antes === 0 && hover.depois === 1 && hover.ativo && hover.parou,
+    hover.id ? `${hover.id}: vídeo ${hover.antes} antes, ${hover.depois} após hover, ativo ${hover.ativo}, parou ${hover.parou}` : 'nenhuma skin aprovada com vídeo para medir');
 }
 
 async function secaoModal(mutante, add) {
@@ -384,7 +429,7 @@ async function secaoCarteira(mutante, add) {
     `carteira com /api/treta em 500: visitante vê "${semConta.chip.trim()}" (${semConta.rotulo}); com conta vê "${comConta.chip.trim()}"`);
 }
 
-const SECOES = { v3: [secaoV3, ['LJ1', 'LJ3', 'LJ4', 'LJ5', 'LJ7', 'LJ8', 'LJ12', 'LJ13', 'LJ14', 'LJ15', 'LJ17']], modal: [secaoModal, ['LJ2']], idioma: [secaoIdioma, ['LJ10']],
+const SECOES = { v3: [secaoV3, ['LJ1', 'LJ3', 'LJ4', 'LJ5', 'LJ7', 'LJ8', 'LJ12', 'LJ13', 'LJ14', 'LJ15', 'LJ17', 'LJ19', 'LJ20', 'LJ21']], modal: [secaoModal, ['LJ2']], idioma: [secaoIdioma, ['LJ10']],
   telas: [secaoTelas, ['LJ9']], convite: [secaoConvite, ['LJ16']], legado: [secaoLegado, ['LJ11']], carteira: [secaoCarteira, ['LJ18']] };
 
 async function medir(mutante = '', alvo = '') {
@@ -396,7 +441,8 @@ async function medir(mutante = '', alvo = '') {
 
 const MUT = [['risco-dobrado', 'LJ1'], ['modal-sozinho', 'LJ2'], ['titulo-sem-anton', 'LJ3'], ['raridade-inventada', 'LJ4'], ['preco-local', 'LJ5'],
   ['dois-primarios', 'LJ7'], ['slot-inventado', 'LJ8'], ['grade-larga', 'LJ9'], ['alvo-pequeno', 'LJ9'], ['en-vaza', 'LJ10'], ['sem-flag', 'LJ11'], ['meta-fixa', 'LJ12'],
-  ['quest-sem-icone', 'LJ14'], ['icone-igual', 'LJ14'], ['visita-so-no-evento', 'LJ15'], ['convite-sem-chegada', 'LJ16'], ['convite-sem-consentimento', 'LJ16'], ['historico-mudo', 'LJ17'], ['erro-no-visitante', 'LJ18']];
+  ['quest-sem-icone', 'LJ14'], ['icone-igual', 'LJ14'], ['visita-so-no-evento', 'LJ15'], ['convite-sem-chegada', 'LJ16'], ['convite-sem-consentimento', 'LJ16'], ['historico-mudo', 'LJ17'], ['erro-no-visitante', 'LJ18'],
+  ['loja-duplicada', 'LJ19'], ['corpo-cortado', 'LJ20'], ['hover-morto', 'LJ21']];
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO === m)) {

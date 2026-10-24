@@ -1,0 +1,5 @@
+# Maria Bonita Cyborg
+
+Referência composta: `references/skins-miticos-loja/mariabonita-cyborg/reference.webp`.
+
+Create a game-ready stylized full-body Brazilian cangaceira cyborg in a strict symmetrical T-pose. Preserve the left reference identity and silhouette: confident woman, decorated brown leather half-moon cangaceiro hat, dark hair, neck scarf, diagonal leather bandolier, layered chita-inspired dress in burgundy, indigo, earth and gold, and sturdy brown boots. Add restrained cybernetics inspired by the right reference: one amber optical eye, one segmented matte graphite and aged-bronze forearm, one mechanical shin, and subtle technological seams. Cangaço fashion must remain dominant. Split skirt panels with clear leg separation for walk, run and crouch; sleeves end before wrists. Stylized PBR, matte metal, textured fabric, strong gameplay silhouette. Empty open hands, separated fingers, straight arms, separated legs. No gun, no weapon, no gore, no logo, no text, no cloth membrane between legs, no armor bridging joints, no base, no background.

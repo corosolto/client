@@ -1,0 +1,5 @@
+# Canarinho do Drip
+
+Referência composta: `references/skins-miticos-loja/canarinho-drip/reference.webp`.
+
+Create a game-ready stylized full-body 3D character in a strict symmetrical T-pose. Preserve the left reference character's exact identity: anthropomorphic yellow canary, large orange beak, sharp expressive eyes, feather crest, feathered arms and legs, and long tail. Restyle only the outfit using the right reference's premium Brazilian streetwear language: cropped green-and-yellow varsity jacket, plain yellow shirt without logos or text, blue cargo pants, blue high-top sneakers, and one short gold chain that stays clear of shoulders and wrists. Strong readable silhouette at gameplay distance, polished stylized PBR, matte fabrics, detailed feathers, no photorealism. Empty open hands with separated fingers, palms down, straight arms, separated legs. No gun, no weapon, no sports crest, no brand, no readable text, no floating accessories, no cloth bridging arm to torso, no fused legs, no base, no background.

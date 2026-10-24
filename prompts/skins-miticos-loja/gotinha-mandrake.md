@@ -1,0 +1,5 @@
+# Gotinha Mandrake
+
+Referência composta: `references/skins-miticos-loja/gotinha-mandrake/reference.webp`.
+
+Create a game-ready stylized full-body 3D mascot in a strict symmetrical T-pose. Preserve the left reference's friendly white water-drop head, round body, large glossy eyes, eyebrows and smile. Remove the red cross and use only a fictional red droplet emblem. Apply Brazilian mandrake street style inspired by the right reference: tilted blue cap shaped around the droplet tip, small gold glasses, short-sleeve shirt patterned with abstract blue and red droplets, red knee-length shorts, white socks, blue sneakers and two short gold chains. Strong uncluttered silhouette, stylized PBR, smooth pearlescent body, matte textiles. Empty open hands with separated fingers, straight arms, separated legs. No weapon, no gun, no red cross, no brand, no readable text, no chain across arms, no cloth joining limbs, no base, no background.

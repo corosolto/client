@@ -10,6 +10,7 @@ import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove
 import {tretaPack} from './data/pack-definitions.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
+import { EMOTES_ENABLED } from './emote-features.js';
 import { preloadEyewearAssets } from './eyewear.js';
 import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
@@ -1056,6 +1057,7 @@ function sincronizaBarraEmotes() {
   if (!temBoneco) { emotesMontados = false; barra.innerHTML = '<button id="pv-emote-abrir" class="pv-emote-btn pv-emote-abrir" type="button">DANÇAR</button>'; religaAbrirEmotes(); }
 }
 function religaAbrirEmotes() {
+  if (!EMOTES_ENABLED) return;
   const b = document.getElementById('pv-emote-abrir');
   if (b) b.onclick = montaBarraEmotes;
 }

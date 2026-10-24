@@ -36,6 +36,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { execFileSync } from 'node:child_process';
 import { chromium } from 'playwright';
 import sharp from 'sharp';
+import { TRETA_SKINS } from '../public/js/treta-catalog.js';
 
 const argv = process.argv.slice(2);
 const arg = (n, d = null) => { const i = argv.indexOf(`--${n}`); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
@@ -167,6 +168,8 @@ const PROMPTS = {
    "mascotes de braços-toco" —, que o repo já mantinha por outro motivo e que por
    acaso é exatamente o recorte de quem não é humano. */
 const MASCOTES = new Set(['dollynho', 'gotinha', 'et', 'canarinho']);
+const SKINS = new Map(TRETA_SKINS.map((skin) => [skin.id, skin]));
+const personagemDaArte = (id) => SKINS.get(id)?.character || id;
 
 const PROPORCAO_HUMANO = [
   'PROPORÇÃO E ROSTO — ponto mais importante:',
@@ -283,7 +286,7 @@ const comDica = (id) => {
   /* O bloco de proporção é escolhido por personagem: humano leva a trava anti-Pixar,
      mascote leva o oposto. Um prompt só para os dois casos era o defeito — o mesmo
      texto que conserta a doutora estraga o Dollynho. */
-  let p = PROMPT_BASE.replace('@PROPORCAO@', MASCOTES.has(id) ? PROPORCAO_MASCOTE : PROPORCAO_HUMANO);
+  let p = PROMPT_BASE.replace('@PROPORCAO@', MASCOTES.has(personagemDaArte(id)) ? PROPORCAO_MASCOTE : PROPORCAO_HUMANO);
   if (ARTE_OFICIAL[id]) {
     p += '\n\nDUAS REFERÊNCIAS. A PRIMEIRA imagem é o modelo 3D do jogo: dela vêm a POSE, o'
       + ' ENQUADRAMENTO e o ângulo. A SEGUNDA é a arte oficial deste personagem: dela vêm a'
@@ -314,7 +317,8 @@ for (const ID of IDS) {
   const ref = `${TMP}/${ID}-${SHOT}.png`;
   try {
     // 1. render fiel do modelo
-    await page.goto(`${BASE}/charvideo.html?id=${encodeURIComponent(ID)}&bg=alpha&shot=${SHOT}&w=512&h=512`,
+    const busca = SKINS.has(ID) ? `skin=${encodeURIComponent(ID)}` : `id=${encodeURIComponent(ID)}`;
+    await page.goto(`${BASE}/charvideo.html?${busca}&bg=alpha&shot=${SHOT}&w=512&h=512`,
       { waitUntil: 'load', timeout: 60000 });
     await page.waitForFunction(() => window.CHARVID && window.CHARVID.ready, null, { timeout: 120000 });
     const dataUrl = await page.evaluate(() => { window.CHARVID.reset(); return window.CHARVID.grab(); });

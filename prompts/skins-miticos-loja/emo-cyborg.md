@@ -1,0 +1,5 @@
+# Emo Cyborg
+
+Referência: `references/skins-miticos-loja/emo-cyborg/reference.webp`.
+
+Create a game-ready stylized full-body Emo cyborg in a strict symmetrical T-pose. Preserve the reference identity and silhouette: pale young adult, long black side-swept fringe covering one eye, slim build, black layered clothes, dark fitted pants and heavy boots. Integrate segmented matte black, graphite and muted-violet cybernetic panels across the visible cheek, torso, forearms and shins, with one restrained violet optical eye. Keep the fringe, slim silhouette and emo clothing dominant. Human-compatible palms with five separated fingers must remain usable for weapon grips. Stylized PBR, readable gameplay silhouette, matte metal, deformation gaps at shoulders, elbows, wrists, hips and knees. Empty open hands, straight fingers, no weapon, no gun, no blade, no text, no band logo, no spikes bridging joints, no cables between limbs, no gore, no pedestal, no environment.
