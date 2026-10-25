@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -67,9 +68,9 @@ def root_pattern(names):
 
 def portable(data, name, pattern):
     text = data.decode('utf-8')
-    if Path(name).suffix in {'.js', '.mjs'} and re.search(r'(?:from\s*|import\s*(?:\(\s*)?)[\x22\x27]/', text):
+    if Path(name).suffix in {'.js', '.mjs'} and re.search(r'(?:from\s*|import\s*(?:\(\s*)?)[\x22\x27`]/', text):
         raise ValueError(f'import absoluto exige adaptação explícita: {name}')
-    explicit_urls = re.finditer(r'new\s+URL\(\s*[\x22\x27]/[^\x22\x27]*[\x22\x27]', text)
+    explicit_urls = re.finditer(r'new\s+URL\s*\(\s*[\x22\x27`]/[^\x22\x27`]*[\x22\x27`]', text)
     if Path(name).suffix in {'.js', '.mjs'} and any(pattern.search(m[0]) for m in explicit_urls):
         raise ValueError(f'URL absoluta com base explícita exige revisão: {name}')
     if name == 'index.html':
@@ -159,12 +160,13 @@ def bundle(source, output, identity):
     return report
 
 
-def verify(directory):
+def verify(directory, extract_to=None):
     directory = Path(directory)
     manifest = json.loads((directory / 'manifest.json').read_text())
     report = json.loads((directory / 'report.json').read_text())
     archive = directory / 'corosolto-web.zip'
-    if digest(archive.read_bytes()) != report['archive']['sha256']:
+    archive_bytes = archive.read_bytes()
+    if digest(archive_bytes) != report['archive']['sha256']:
         raise ValueError('SHA-256 do ZIP divergiu')
     files = manifest['files']
     expected = {row['path']: row for row in files}
@@ -172,7 +174,7 @@ def verify(directory):
         raise ValueError('manifesto contém caminho duplicado')
     if REQUIRED - set(expected):
         raise ValueError('manifesto perdeu entrada obrigatória do jogo')
-    with zipfile.ZipFile(archive) as z:
+    with zipfile.ZipFile(io.BytesIO(archive_bytes)) as z:
         if sorted(z.namelist()) != sorted(expected):
             raise ValueError('ZIP diverge do manifesto de arquivos')
         for name, row in expected.items():
@@ -187,25 +189,36 @@ def verify(directory):
     if report['profiles'] != eligibility(files):
         raise ValueError('limites do relatório divergem dos bytes do ZIP')
     if (report['files_count'] != len(files) or report['extracted_bytes'] != sum(f['bytes'] for f in files)
-            or report['archive']['bytes'] != archive.stat().st_size or report['publish_ready'] is not False):
+            or report['archive']['bytes'] != len(archive_bytes) or report['publish_ready'] is not False):
         raise ValueError('metadados do candidato divergem ou alegam publicação pronta')
+    if extract_to is not None:
+        target = Path(extract_to)
+        target.mkdir(parents=True, exist_ok=False)
+        with zipfile.ZipFile(io.BytesIO(archive_bytes)) as z:
+            for name in expected:
+                file = target / name
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.write_bytes(z.read(name))
     return report
 
 
 def main():
     parser = argparse.ArgumentParser(description='Pacote candidato de portal; nunca publica.')
-    parser.add_argument('command', choices=['build', 'verify'])
+    parser.add_argument('command', choices=['build', 'verify', 'extract'])
     parser.add_argument('--source', type=Path, default=ROOT / 'dist/client')
     parser.add_argument('--output', type=Path, default=ROOT / 'dist/portal')
     parser.add_argument('--require-profile', choices=LIMITS)
+    parser.add_argument('--extract-to', type=Path)
     args = parser.parse_args()
+    if (args.command == 'extract') != bool(args.extract_to):
+        parser.error('extract exige --extract-to; outras operações não extraem')
     if args.command == 'build':
         head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
         version = json.loads((ROOT / 'package.json').read_text())['version']
         report = bundle(args.source, args.output, {'git_sha': head, 'version': version})
     else:
-        report = verify(args.output)
-    print(json.dumps({k: report[k] for k in ['identity', 'files_count', 'extracted_bytes', 'profiles', 'runtime_qa', 'publish_ready']}, ensure_ascii=False, indent=2))
+        report = verify(args.output, args.extract_to)
+    print(json.dumps({k: report[k] for k in ['identity', 'archive', 'files_count', 'extracted_bytes', 'profiles', 'runtime_qa', 'publish_ready']}, ensure_ascii=False, indent=2))
     if args.require_profile and not report['profiles'][args.require_profile]['upload_budget_pass']:
         raise SystemExit(2)
 

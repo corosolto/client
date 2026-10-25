@@ -69,6 +69,26 @@ class PackageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'base explícita'):
             self.build()
 
+    def test_mutant_template_import_rejected(self):
+        self.put('js/main.js', 'import(`/vendor/three.module.js`);')
+        with self.assertRaisesRegex(ValueError, 'import absoluto'):
+            self.build()
+
+    def test_mutant_url_whitespace_and_template_rejected(self):
+        for text in ["new URL ('/img/test.png', import.meta.url);", 'new URL \n ( `/img/test.png`, import.meta.url);']:
+            self.put('js/main.js', text)
+            with self.assertRaisesRegex(ValueError, 'base explícita'):
+                self.build(self.root / str(len(text)))
+
+    def test_extract_reads_verified_zip_not_mutable_site(self):
+        self.build()
+        (self.out / 'site/js/main.js').write_text('corrupted staging')
+        extracted = self.root / 'extracted'
+        package.verify(self.out, extracted)
+        self.assertIn("fetch('./img/test.png')", (extracted / 'js/main.js').read_text())
+        with self.assertRaises(FileExistsError):
+            package.verify(self.out, extracted)
+
     def test_mutant_symlink_rejected(self):
         (self.source / 'img/leak').symlink_to(self.root)
         with self.assertRaisesRegex(ValueError, 'symlink recusado'):
