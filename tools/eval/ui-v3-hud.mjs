@@ -10,7 +10,7 @@ import sharp from 'sharp';
 const BASE = process.env.BASE || 'http://127.0.0.1:9424';
 const OUT = process.env.OUT || 'tools/eval/out/ui-v3-hud';
 const PARTIDA = 'debug=1&auto=E,esquerdomacho&map=praca_poderes';
-const VIEWPORTS = [[1536, 1024], [1920, 1080], [1280, 720]];
+const VIEWPORTS = [[1536, 1024], [1440, 900], [1920, 1080], [1280, 720]];
 const TOQUES = [[844, 390], [780, 360]];
 /* Valores do HUD com ?ui=legacy, lidos na base origin/feat/ui-treta-pop (32e7cdf14) a 1536×1024:
    a cláusula HU10 congela o que a tela legada tem que continuar sendo. */
@@ -60,7 +60,13 @@ async function preparar(page, mutante) {
   if (mutante === 'sem-hs') await reescreve(js, (t) => t.replace("row.querySelector('.kf-skull')", "row.querySelector('.kf-nada')"));
   if (mutante === 'dica-eterna') await reescreve(js, (t) => t.replace('const DICAS_S = 60;', 'const DICAS_S = 6000;'));
   if (mutante === 'badge-solto') await reescreve(css, (t) => t.replace(':root[data-ui="v3"]:not([data-tp-debug]) #vm-debug-badge{display:none}', ''));
-  if (mutante === 'dica-na-mira') await reescreve(css, (t) => t.replace('.tp-hud-dicas{position:absolute;left:50%;bottom:24px', '.tp-hud-dicas{position:absolute;left:50%;bottom:50%'));
+  if (mutante === 'dica-na-mira') await reescreve(css, (t) => t.replace('.tp-hud-dicas{position:absolute;left:50%;bottom:clamp(16px,2.5vh,28px)', '.tp-hud-dicas{position:absolute;left:50%;bottom:50%'));
+  if (mutante === 'placar-abates') await reescreve(/\/js\/game\.js/, (t) => t.replace('this._uiV3() ? this.roundsWon[side] : this.roundKills[side]', 'this.roundKills[side]'));
+  if (mutante === 'plural-fixo') await reescreve(js, (t) => t.replace("frase('abatesRotulo', n)", "tr('ABATES')"));
+  if (mutante === 'bot-texto') await reescreve(js, (t) => t.replace("if (!n.textContent.startsWith('[BOT] ')) continue;", 'continue;'));
+  if (mutante === 'alt-surdo') await reescreve(js, (t) => t.replace("if (e.key === 'Alt') altSegurado = true;", ''));
+  if (mutante === 'chips-esquerda') await reescreve(css, (t) => t.replace('#hud-actions{top:24px;right:24px;left:auto;', '#hud-actions{top:236px;left:24px;right:auto;'));
+  if (mutante === 'slots-soltos') await reescreve(css, (t) => t.replace('.tp-hud-arma #weapon-hud{position:static;', '.tp-hud-arma #weapon-hud{position:absolute;right:0;bottom:0;'));
   if (mutante === 'dica-sem-en') await reescreve(/\/js\/i18n\.js/, (t) => t.replace("'ABATES': 'KILLS',", ''));
   if (mutante === 'legado-vazado') await reescreve(/\/style\.css/, (t) => `${t}\n#hp-num{font-family:Arial}`);
   if (mutante === 'ping-mentiroso') await reescreve(css, (t) => t.replace(':root[data-ui="v3"] #scoreboard .sb-ping{display:none}', ''));
@@ -183,6 +189,41 @@ async function medir(mutante = '', alvo = '') {
   add('HU5', feed.hs && feed.hsCor === 'rgb(180, 217, 46)' && feed.arma && feed.borda === 'rgb(180, 217, 46)' && !feed.caveira,
     `killfeed: headshot ${feed.hs ? `visível (${feed.hsCor})` : 'ausente'}${feed.caveira ? ', caveira antiga sobrou' : ''}, arma ${feed.arma ? 'sim' : 'não'}, borda do seu abate ${feed.borda}`);
 
+  /* ---------- 05 final (§2d): placar em rounds, plural, chips, bot como ícone, slots acima do painel ---------- */
+  const fim = await p.evaluate(async () => {
+    const g = window.__game;
+    const espera = (ms) => new Promise((res) => setTimeout(res, ms));
+    const salvo = { E: g.roundsWon.E, B: g.roundsWon.B, k: g.player.kills };
+    g.roundsWon.E = 2; g.roundsWon.B = 1; g.roundKills.E = 7; g.roundKills.B = 5;
+    g.player.kills = 1;
+    await espera(450);
+    const placar = [document.querySelector('#score-e b')?.textContent, document.querySelector('#score-b b')?.textContent].join('×');
+    const linha = document.getElementById('rounds-row')?.textContent || '';
+    const um = document.querySelector('#kill-counter .kc-label')?.textContent || '';
+    g.player.kills = 2;
+    await espera(450);
+    const dois = document.querySelector('#kill-counter .kc-label')?.textContent || '';
+    g.roundsWon.E = salvo.E; g.roundsWon.B = salvo.B; g.player.kills = salvo.k;
+    const bot = g.combatants.find((c) => !c.isPlayer && c.team !== g.playerTeam);
+    const nomeAntes = bot.name;
+    bot.name = `[BOT] ${bot.def?.name || 'Robô'}`;
+    g._feed(bot, g.player, 'AK', false);
+    bot.name = nomeAntes;
+    await espera(150);
+    const row = document.querySelector('#killfeed .kf-row');
+    const acoes = document.getElementById('hud-actions').getBoundingClientRect();
+    const cam = document.querySelector('#hud-actions .tp-hud-cam')?.textContent || '';
+    const slots = document.getElementById('weapon-hud').getBoundingClientRect();
+    const painel = document.getElementById('hud-bottom-right').getBoundingClientRect();
+    return { placar, linha, um, dois, botIcone: !!row?.querySelector('.tp-bot'), botTexto: /\[BOT\]/.test(row?.textContent || ''),
+      acoes: { dir: innerWidth - acoes.right, topo: acoes.top }, cam,
+      slots: { acima: slots.bottom <= painel.top + 1, dentro: slots.left >= 0 && slots.right <= innerWidth } };
+  });
+  const fimOk = fim.placar === '2×1' && !/×/.test(fim.linha) && fim.um === 'ABATE' && fim.dois === 'ABATES' && fim.botIcone && !fim.botTexto
+    && Math.abs(fim.acoes.dir - 24) <= 4 && Math.abs(fim.acoes.topo - 24) <= 4 && /PESSOA · B$/.test(fim.cam) && fim.slots.acima && fim.slots.dentro;
+  add('HU15', fimOk, `placar ${fim.placar} (quer rounds 2×1), linha "${fim.linha}", "1 ${fim.um}" / "2 ${fim.dois}", killfeed bot ${fim.botIcone ? 'com ícone' : 'sem ícone'}${fim.botTexto ? ' e com [BOT]' : ''}, `
+    + `chips a ${fim.acoes.dir.toFixed(0)}/${fim.acoes.topo.toFixed(0)} px do canto ("${fim.cam}"), slots ${fim.slots.acima ? 'acima do' : 'sobre o'} painel ${fim.slots.dentro ? 'dentro' : 'fora'} da tela`);
+
   await foto(p, 'hud-05-1536x1024');
   g0 = await p.evaluate(caixas);
   const dicas0 = await p.evaluate(() => {
@@ -211,6 +252,18 @@ async function medir(mutante = '', alvo = '') {
   await p.evaluate(() => { const g = window.__game; g.time += 61; });
   await p.waitForTimeout(1200);
   const dicas1 = await p.evaluate(() => { const d = document.querySelector('.tp-hud-dicas'); return !!d && d.checkVisibility({ opacityProperty: true }); });
+  const alt = await p.evaluate(async () => {
+    const vis = () => document.querySelector('.tp-hud-dicas').checkVisibility({ opacityProperty: true });
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'Alt', code: 'AltLeft' }));
+    await new Promise((res) => setTimeout(res, 900));
+    const comAlt = vis();
+    dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft' }));
+    await new Promise((res) => setTimeout(res, 900));
+    return { comAlt, semAlt: vis() };
+  });
+  const teclas = await p.evaluate(() => [...document.querySelectorAll('.tp-hud-dicas kbd')].map((k) => k.textContent).join(' '));
+  add('HU16', alt.comAlt && !alt.semAlt && teclas === 'E B F Z/X/V Y/U M TAB ALT',
+    `barra de comandos [${teclas}], depois de 1 min ${alt.comAlt ? 'volta' : 'não volta'} com ALT e ${alt.semAlt ? 'fica' : 'some'} ao soltar`);
   add('HU6', dicas0.n >= 3 && dicas0.vis && !dicas1, `dicas de tecla: ${dicas0.n} teclas, ${dicas0.vis ? 'visíveis' : 'escondidas'} no começo, ${dicas1 ? 'ainda visíveis' : 'somem'} depois de 1 min`);
 
   const badge = await p.evaluate(async () => {
@@ -426,7 +479,8 @@ async function medir(mutante = '', alvo = '') {
 const MUT = [['retrato-vivo', 'HU1'], ['placar-cinza', 'HU2'], ['xp-falso', 'HU3'], ['municao-proporcional', 'HU4'], ['sem-hs', 'HU5'],
   ['dica-eterna', 'HU6'], ['badge-solto', 'HU7'], ['dica-na-mira', 'HU8'], ['dica-sem-en', 'HU9'], ['legado-vazado', 'HU10'],
   ['ping-mentiroso', 'HU11'], ['hs-errado', 'HU11'], ['abas-mudas', 'HU12'], ['tab-foco', 'HU12'], ['chat-eterno', 'HU12'], ['sem-silenciar', 'HU12'],
-  ['pula-pequeno', 'HU13'], ['atira-mudo', 'HU13'], ['ping-surdo', 'HU14']];
+  ['pula-pequeno', 'HU13'], ['atira-mudo', 'HU13'], ['ping-surdo', 'HU14'], ['placar-abates', 'HU15'], ['plural-fixo', 'HU15'], ['bot-texto', 'HU15'],
+  ['chips-esquerda', 'HU15'], ['slots-soltos', 'HU15'], ['alt-surdo', 'HU16']];
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO.split(',').includes(m))) {
