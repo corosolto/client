@@ -414,16 +414,14 @@ async function loadMenuBackdrop() {
     // Monta uma vez assim que o construtor existe; props e fauna refinam a mesma arena.
     rebuildMenuBackdrop(mapa);
     const propsReady = preloadMapProps(menuProps(mapa));
-    let propsLoaded = false;
     const rebuildCurrent = () => {
       if (seq === _menuLoadSeq && id === currentMap) rebuildMenuBackdrop(mapa);
     };
-    // Fauna decorativa pode chegar depois; não segura a entrada com o cenário pronto.
-    preloadAmbientLife(mapa.ambience || [])
-      .then(() => { if (propsLoaded) rebuildCurrent(); }).catch(() => {});
+    /* Fauna pede DEPOIS dos props: em paralelo ela disputava banda (1.588 KB contra 4.083 KB)
+       com o que o portão da splash espera. O lobby final é o mesmo, só fica alcançável antes. */
     return propsReady.then(() => {
-      propsLoaded = true;
       rebuildCurrent();
+      preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});
     });
   });
 }
