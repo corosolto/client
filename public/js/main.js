@@ -3778,7 +3778,9 @@ async function renderHubRanking() {
   const corpo = document.createElement('tbody');
   for (const [i, p] of data.players.entries()) corpo.append(linhaDoJogador(p, i));
   tabela.append(corpo);
-  global.replaceChildren(tabela);
+  global.replaceChildren();
+  if (data.own) global.append(Object.assign(document.createElement('p'), { className: 'hub-rank-own', textContent: `Sua posição: #${data.own.position} · ${data.own.points} pontos.` }));
+  global.append(tabela);
   /* Rolagem infinita: o servidor serve 25 por página (p_limit fixo em api/social.ts), então a
      próxima página é pedida por offset. O botão é o mecanismo REAL — o observador só o aciona
      quando ele aparece na tela, e sem IntersectionObserver (ou sem mouse) ele continua clicável. */

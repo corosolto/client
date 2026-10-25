@@ -157,6 +157,8 @@ async function runMap(mapId, textures, seed) {
   if (process.env.SIM_MUT_YAW) g.__mutBotYaw = +process.env.SIM_MUT_YAW || 0;
   if (process.env.SIM_MUT_LANES) g.__mutBotLanes = true;
   if (process.env.SIM_MUT_DEPTH) g.__mutBotDepth = true;
+  if (process.env.SIM_MUT_MID_WANDER) g.__mutBotMidWander = true;
+  if (process.env.SIM_MUT_SIDE_COVER) g.__mutBotSideCover = true;
   g.killsToWin = Infinity;          // sem alvo de abates: a amostra tem que durar a corrida inteira
   g.start ? g.start() : g._startRound();
   /* MATRIZES DE MUNDO: sem renderer ninguém chama updateMatrixWorld, e o Raycaster do three
