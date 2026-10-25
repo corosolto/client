@@ -258,7 +258,10 @@ addEventListener('mousemove',e=>{
 });
 addEventListener('mouseup',()=>{ if(drag&&!drag.pan) revalidate(); drag=null; });
 cv.addEventListener('wheel',e=>{ e.preventDefault(); const f=e.deltaY<0?1.12:0.89; view.scale=Math.max(3,Math.min(60,view.scale*f)); draw(); },{passive:false});
-addEventListener('keydown',e=>{ if((e.key==='Delete'||e.key==='Backspace')&&sel){ delSel(); } });
+addEventListener('keydown',e=>{
+  if(e.isComposing || e.target?.isContentEditable || e.target?.closest?.('input, textarea, select')) return;
+  if((e.key==='Delete'||e.key==='Backspace')&&sel){ e.preventDefault(); delSel(); }
+});
 function delSel(){ if(!sel) return; list(sel.type).splice(sel.index,1); sel=null; revalidate(); renderInsp(); }
 document.getElementById('del').onclick=delSel;
 

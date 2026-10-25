@@ -79,10 +79,17 @@ npm run eval:mapjson        # R1 conexo · R2 bidirecional · R3 spawn jogável 
                             # (+ mutantes grafo/aresta/spawn/rampa/plataforma)
 node tools/eval/mapjson-check.mjs caminho/arena.json  # valida o JSON exportado
 npm run eval:mapjsonboot    # sobe a arena num Game REAL: relevo e bots navegando (+ mutante relevo)
+npm run eval:construtor-input # entradas inválidas falham sem travar; teclado preserva campos de texto
 ```
 
 `eval:mapjson` está no `check:fast`. O `eval:mapjsonboot` é a prova in-engine — rode ao mexer
 no loader ou num mapa com relevo.
+
+`bounds` e o passo dos waypoints precisam ser números finitos e positivos; o `inset`
+precisa ficar dentro dos limites do mapa. A validação recusa grades cujo custo estimado
+excede o orçamento de navegação antes de alocar nós. Se isso acontecer, reduza a arena
+ou ajuste o espaçamento. O erro aparece no editor e na CLI, que sai com código 1.
+Delete/Backspace só apagam o objeto selecionado quando o foco está fora de campos editáveis.
 
 ## Registrar no menu
 

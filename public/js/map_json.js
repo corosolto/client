@@ -62,6 +62,8 @@ const DEGRAU = 0.30;
 // com amostragem de 0,45 m (0,55·0,45 = 0,25 < DEGRAU). Acima, a rampa vira parede.
 const RAMPA_GRADE_MAX = 0.55;
 const DIRS = new Set(['+x', '-x', '+z', '-z']);
+// Operational ceiling for grid pairs + neighboring segment samples; see SDK-INTEGRATION-2026-10-25.md.
+const NAV_WORK_BUDGET = 2 ** 24;
 
 /* Altura da superfície de UMA rampa em (x,z) local-world, ou null fora do footprint. */
 function rampYAt(r, x, z) {
@@ -79,8 +81,21 @@ function rampYAt(r, x, z) {
    os dois medem exatamente a mesma superfície. */
 export function planFromJSON(spec) {
   if (!spec || !spec.bounds) throw new Error('spec de mapa JSON sem `bounds`');
-  const hx = num(spec.bounds.x, 0), hz = num(spec.bounds.z, 0);
-  if (hx <= 0 || hz <= 0) throw new Error('`bounds` precisa de x e z positivos');
+  const hx = spec.bounds.x, hz = spec.bounds.z;
+  if (![hx, hz, 2 * hx, 2 * hz].every(Number.isFinite) || hx <= 0 || hz <= 0)
+    throw new Error('`bounds` precisa de x e z finitos e positivos');
+  const wp = spec.waypoints || {};
+  const STEP = wp.step === undefined ? 3.4 : wp.step;
+  const inset = wp.inset === undefined ? 2 : wp.inset;
+  if (!Number.isFinite(STEP) || STEP <= 0) throw new Error('`waypoints.step` precisa ser finito e positivo');
+  if (!Number.isFinite(inset) || inset < 0 || inset > Math.min(hx, hz))
+    throw new Error('`waypoints.inset` precisa ser finito e ficar dentro dos bounds');
+  const spanX = 2 * (hx - inset), spanZ = 2 * (hz - inset);
+  const columns = Math.ceil(spanX / STEP) + 1, rows = Math.ceil(spanZ / STEP) + 1;
+  const cells = columns * rows;
+  const edgeSamples = Math.max(6, Math.ceil(Math.min(STEP * Math.SQRT2, Math.hypot(spanX, spanZ)) / 0.45));
+  if (!Number.isSafeInteger(cells) || cells * cells + cells * 8 * edgeSamples > NAV_WORK_BUDGET)
+    throw new Error('grade excede o orçamento de navegação; reduza bounds ou ajuste waypoints.step');
 
   const wall = spec.walls || {};
   const wallH = num(wall.height, 4), wallT = num(wall.thickness, 0.5);
@@ -135,17 +150,17 @@ export function planFromJSON(spec) {
   }));
 
   // grade de waypoints — bloqueio só por navColliders; altura pelo campo; continuidade ≤ DEGRAU.
-  const STEP = num(spec.waypoints && spec.waypoints.step, 3.4);
-  const inset = num(spec.waypoints && spec.waypoints.inset, 2);
   const blocked = (x, z, inflate) => {
     for (const c of navColliders)
       if (x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < 1.6 && c.maxY > 0.15) return true;
     return false;
   };
   const nodes = [], adj = [];
-  for (let gx = -hx + inset; gx <= hx - inset; gx += STEP)
-    for (let gz = -hz + inset; gz <= hz - inset; gz += STEP)
+  // Preserve the existing accumulated coordinates at collider boundaries; counters bound work.
+  for (let ix = 0, gx = -hx + inset; ix < columns && gx <= hx - inset; ix++, gx += STEP)
+    for (let iz = 0, gz = -hz + inset; iz < rows && gz <= hz - inset; iz++, gz += STEP) {
       if (!blocked(gx, gz, 0.5)) nodes.push({ x: gx, z: gz, y: heightAt(gx, gz) });
+    }
   const segClear = (a, b) => {
     const n = Math.max(6, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.45));
     let hPrev = heightAt(a.x, a.z);
