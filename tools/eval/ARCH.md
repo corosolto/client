@@ -307,6 +307,7 @@ Cobertura: **3872 de 9012 linhas (43%)** do `game.js` têm dono declarado. O res
 | 5346 | `_teamName()` | 1 |
 | 5347 | `_teamTag()` | 6 |
 | 5353 | `_plaqueta()` | 13 |
+| 5367 | `_uiV3()` | 1 |
 | 5366 | `_mirror()` | 2 |
 | 5368 | `_defNoLado()` | 3 |
 | 5371 | `_botSeparation()` | 61 |
