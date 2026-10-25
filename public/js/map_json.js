@@ -1,53 +1,5 @@
-// ============================================================================
-// map_json.js — LOADER ÚNICO: MAPA COMO DADO (JSON) EM VEZ DE CÓDIGO.
-// ----------------------------------------------------------------------------
-// POR QUE EXISTE (issue #210, "conteúdo como dado")
-// Mapa hoje é código: cada `map_*.js` é geometria à mão (os cinco maiores somam
-// ~9.400 linhas, ~40% do jogo), e cada contribuição de conteúdo vira um PR que
-// ninguém revisa de verdade. Aqui o mapa passa a ser um DESCRITOR JSON e o loader
-// devolve o MESMO contrato de world que os `build*()` entregam — colliders,
-// occluders, spawns, ctfPoints, pickups, grafo de waypoints (nodes+adj),
-// nearestWaypoint/findPath, bounds, groundHeightAt, slowAt, luzes.
-//
-// COMO SE LIGA SEM RAMO CONDICIONAL NO JOGO
-// Um mapa JSON entra no registro (maps.js) por um módulo-casca de 3 linhas que
-// exporta `build<Nome>(scene, T) = buildMapFromJSON(scene, T, SPEC)` e a lista de
-// props (`propIdsFromSpec(SPEC)`). game.js continua chamando `MAPS[id].build(scene,
-// T)` sem saber a origem. Nenhum `map_*.js` existente é tocado; os formatos convivem.
-//
-// A RÉGUA NASCE JUNTO DO FORMATO
-// `validateMapSpec`/`validatePlan` conferem o que já quebrou PR de mapa aqui: grafo
-// de waypoints conexo (R1), aresta bidirecional (R2), spawn dentro da área jogável
-// (R3) e rampa que o corpo consegue subir (R4). O `buildMapFromJSON` RECUSA spec
-// inválido em vez de subir mapa quebrado calado — falha silenciosa é a assinatura do
-// defeito mais caro deste repo. A régua roda em node puro por `tools/eval/mapjson-check.mjs`.
-//
-// RELEVO: CAMPO DE ALTURA SINGLE-VALUED
-// `groundHeightAt(x, z)` devolve UMA superfície por coluna — o máximo entre piso 0,
-// as rampas que cobrem (x,z) e o topo das caixas `walkable`. É DE PROPÓSITO que não
-// há andares sobrepostos (mezanino sobre piso no mesmo x,z): isso exige navegação em
-// camadas autorada à mão (ver `map_havan.js`) e fica fora do formato de dado. Rampa dá
-// elevação que BOT e jogador sobem; topo de caixa `walkable` é superfície só do jogador
-// (o bot contorna, como em todo mapa plano de hoje). Relevo de verdade entre andares
-// de bot é feito por RAMPA, não por escalar caixa.
-//
-// FORMATO (descritor JSON)
-//   { id, name,
-//     bounds: { x, z },                 // semi-eixos; interior [-x,x] × [-z,z]
-//     floor:  { color },
-//     walls:  { height, thickness, color },   // muro perimetral gerado (fechado)
-//     boxes:  [ { w, h, d, x, z, color, walkable } ],  // obstáculo = colisor + occluder;
-//                                                      //  walkable:true => topo é piso do jogador
-//     ramps:  [ { x, z, w, d, rise, dir, color } ],    // superfície inclinada andável
-//                                                      //  dir ∈ '+x'|'-x'|'+z'|'-z' (lado que sobe)
-//     slow:   [ { x, z, w, d } ],                      // zona lenta (água/lama): slowAt=true
-//     props:  [ { id, x, z, yaw, h, solid, cw, cd } ], // GLB decorativo (placeProp);
-//                                                      //  solid:true => colisor cw×h×cd quando carregado
-//     spawns: { E: [ { x, z, yaw } ], B: [ … ] },
-//     ctf:    [ { id, label, x, z } ],
-//     pickups:[ { weapon, x, z } ],
-//     waypoints: { step, inset } }             // parâmetros da grade do grafo
-// ============================================================================
+// Mapas JSON usam o mesmo contrato de mundo dos mapas autorados.
+// Formato, relevo e validação: docs/docs/construtor-de-mapas.md.
 import * as THREE from 'three';
 import { aplicaSombraSol } from './mapquality.js';
 import { placeProp } from './mapprops.js';
@@ -62,7 +14,7 @@ const DEGRAU = 0.30;
 // com amostragem de 0,45 m (0,55·0,45 = 0,25 < DEGRAU). Acima, a rampa vira parede.
 const RAMPA_GRADE_MAX = 0.55;
 const DIRS = new Set(['+x', '-x', '+z', '-z']);
-// Operational ceiling for grid pairs + neighboring segment samples; see SDK-INTEGRATION-2026-10-25.md.
+// Limita pares da grade e amostras vizinhas; ver SDK-INTEGRATION-2026-10-25.md.
 const NAV_WORK_BUDGET = 2 ** 24;
 
 /* Altura da superfície de UMA rampa em (x,z) local-world, ou null fora do footprint. */
@@ -76,9 +28,7 @@ function rampYAt(r, x, z) {
   return r.rise * clamp01(t);
 }
 
-/* planFromJSON — PURO (sem THREE): traduz o descritor em geometria de navegação,
-   colisão e CAMPO DE ALTURA. É o que a régua confere e o que o builder desenha, então
-   os dois medem exatamente a mesma superfície. */
+/* O plano puro é compartilhado entre a régua e o builder, incluindo o campo de altura. */
 export function planFromJSON(spec) {
   if (!spec || !spec.bounds) throw new Error('spec de mapa JSON sem `bounds`');
   const hx = spec.bounds.x, hz = spec.bounds.z;
@@ -102,9 +52,9 @@ export function planFromJSON(spec) {
   const wallColor = wall.color || '#5b6169';
   const floor = { color: (spec.floor && spec.floor.color) || '#3a3f45' };
 
-  const colliders = [];      // física do jogo: muros + TODAS as caixas (+ props sólidos em runtime)
+  const colliders = [];
   const navColliders = [];   // só o que bloqueia navegação horizontal: muros + caixas NÃO-walkable
-  const boxes = [];          // {w,h,d,x,z,color,walkable} para o builder THREE
+  const boxes = [];
   const addBox = (w, h, d, x, z, color, walkable) => {
     const c = { minX: x - w / 2, maxX: x + w / 2, minY: 0, maxY: h, minZ: z - d / 2, maxZ: z + d / 2 };
     colliders.push(c);
@@ -156,7 +106,7 @@ export function planFromJSON(spec) {
     return false;
   };
   const nodes = [], adj = [];
-  // Preserve the existing accumulated coordinates at collider boundaries; counters bound work.
+  // Preserva coordenadas acumuladas nas bordas dos colisores; contadores limitam o trabalho.
   for (let ix = 0, gx = -hx + inset; ix < columns && gx <= hx - inset; ix++, gx += STEP)
     for (let iz = 0, gz = -hz + inset; iz < rows && gz <= hz - inset; iz++, gz += STEP) {
       if (!blocked(gx, gz, 0.5)) nodes.push({ x: gx, z: gz, y: heightAt(gx, gz) });
@@ -262,12 +212,12 @@ function buildRampGeo(r) {
     ax, 0, az, bx, 0, az, bx, 0, bz, ax, 0, bz,        // 4..7 base
   ];
   const idx = [
-    0, 2, 1, 0, 3, 2,       // topo
-    4, 5, 6, 4, 6, 7,       // base
-    0, 1, 5, 0, 5, 4,       // lado az
-    1, 2, 6, 1, 6, 5,       // lado bx
-    2, 3, 7, 2, 7, 6,       // lado bz
-    3, 0, 4, 3, 4, 7,       // lado ax
+    0, 2, 1, 0, 3, 2,
+    4, 5, 6, 4, 6, 7,
+    0, 1, 5, 0, 5, 4,
+    1, 2, 6, 1, 6, 5,
+    2, 3, 7, 2, 7, 6,
+    3, 0, 4, 3, 4, 7,
   ];
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));

@@ -12,7 +12,7 @@ Integrar o pacote existente de mapas JSON/Construtor/CLI sobre a main corrente, 
 - Fonte do pacote: `codex/mapjson-file-check-20261025` em `cc8014667a7f81d588ccca9ad61bb7f7e62c6ed3`.
 - Sete cherry-picks com `-x` preservam a autoria: `5262873b9`, `922cf57f8`, `2927d6db1`, `ea168f543`, `d91518c9c`, `ecc2f430e`, `46e3cba33`.
 - As origens SDK e Loja H permaneceram intocadas. A issue #1088 continuava OPEN, atribuída a `nunreasonable`; não houve contato, atribuição ou tarefa concorrente.
-- A correção descrita abaixo está no mesmo commit deste relatório. O recibo externo `audits/2026-10-25-factory-resume/gameplay-sdk/CONTINUATION.md` registra seu SHA após o checkpoint.
+- A correção de entrada e teclado está no checkpoint `16a7af513`. O recibo externo `audits/2026-10-25-factory-resume/gameplay-sdk/CONTINUATION.md` registra seu SHA após o checkpoint.
 
 A criação pelo app foi tentada, mas respondeu “Not a git repository” para o agregador. Foi criado um worktree Git isolado sobre a base explícita. Nenhum push, merge, deploy, alteração remota ou registro permanente de mapa foi feito.
 
@@ -90,3 +90,9 @@ node /Volumes/Zenith/Projects/game/corosolto/csbrasil/audits/2026-10-25-factory-
 ```
 
 O integrador pode revisar e recuperar a candidata pelo branch/checkpoint. Continuam separados: browser real do Construtor pós-fix, preview visual/captura humana, revisão da integração e CI remoto. A exportação entrou no Game via registro em memória do probe; isso não cria importação pública no menu. Loja H mantém seus próprios gates de visual/integração. Nenhuma dessas limitações foi convertida em aprovação de produção.
+
+## Preparação do PR e gates de envio
+
+O pre-push completo encontrou SB7 sem binding nativo do Rolldown. Reinstalar pelo Node 23, com opcionais, resolveu SB1–SB7 sem mudar package/lock. A tentativa seguinte encontrou seis violações de comentário no diff (CM1/CM2). O esquema foi movido para a documentação do Construtor; comentários redundantes foram removidos e os restantes ficaram curtos/em português. Uma comparação independente dos tokens com Acorn comprovou código idêntico antes/depois dessa limpeza: 4.440 tokens, mesmo SHA256 (recibo `comments-token-equivalence.json`).
+
+O hook roda 81 etapas de `check:deploy`; `check:fast` tem 286 etapas, apesar da descrição antiga de execução em segundos. Ambos precisam terminar antes de abrir o draft conforme a política local. O ledger externo `integrated/PR-STATUS.md` registra os resultados, branch remota e URL quando houver. Nenhum gate foi desligado.

@@ -54,7 +54,32 @@ A fonte da verdade é o cabeçalho de `public/js/map_json.js`. Em resumo, o desc
 | `pickups` | arma no chão `weapon,x,z` (o `weapon` tem que existir em `WEAPONS`) |
 | `waypoints` | `step` e `inset` da grade do grafo de bots |
 
-### Relevo: uma superfície por coluna
+### Campos do descritor
+
+O arquivo exportado usa esta estrutura. Os arrays podem ser vazios; spawns de ambos os lados são necessários para passar a régua.
+
+```js
+{
+  id, name,
+  bounds: { x, z },                 // semieixos do mapa
+  floor: { color },
+  walls: { height, thickness, color },
+  boxes: [{ w, h, d, x, z, color, walkable }],
+  ramps: [{ x, z, w, d, rise, dir, color }],
+  slow: [{ x, z, w, d }],
+  props: [{ id, x, z, yaw, h, solid, cw, cd }],
+  spawns: { E: [{ x, z, yaw }], B: [{ x, z, yaw }] },
+  ctf: [{ id, label, x, z }],
+  pickups: [{ weapon, x, z }],
+  waypoints: { step, inset }
+}
+```
+
+`dir` aceita `+x`, `-x`, `+z` e `-z`, indicando o sentido de subida da rampa.
+`slow` aplica lentidão dentro do retângulo. Props com `solid: true` usam `cw × h × cd`
+como colisor quando o GLB existe; a ausência da malha também impede criar o colisor.
+
+## Relevo: uma superfície por coluna
 
 `groundHeightAt(x,z)` devolve **uma** altura por ponto — o máximo entre o piso (0), as rampas
 e os topos das caixas `walkable`. É de propósito que **não há andares sobrepostos** (mezanino
