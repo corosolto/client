@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.123`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.124`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -149,6 +149,18 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.124] — 2026-10-25
+
+### Mudado
+- fix(perfil): abrir perfil não recarrega o jogo inteiro (#1094)
+- fix: loading do jogo some com o cache antigo (URLs novas loading-20..38) (#1096)
+- feat(funil): manda o tipo da partida e não conta automação (#1095)
+- fix(regua): contagem-check acompanha a assinatura de _funnel
+- fix(splash): aponta slots e refs para loading-20..38
+- fix(media): move o loading para URLs novas (loading-20..38)
+- feat(funil): manda o tipo da partida e nao conta automacao
+- fix(perfil): abrir perfil nao recarrega o jogo inteiro
 
 ## [2.1.0-alpha.123] — 2026-10-24
 
