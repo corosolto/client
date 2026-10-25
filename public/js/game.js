@@ -7674,6 +7674,19 @@ export class Game {
       // --- combat
       const e = b.target;
       const dx = e.pos.x - b.pos.x, dz = e.pos.z - b.pos.z;
+      const dist = Math.hypot(dx, dz);
+      const hurt = !!this.__mutBotSideCover && b.hp < 40 && this.time - (b._hurtAt || -99) < 4;
+      if (hurt && this.time > (b._coverAt || 0)) {
+        b._coverAt = this.time + 1.6;
+        const te = e.isPlayer ? this.camera.position : this._botEye(e);
+        let bestA = b.yaw + Math.PI;
+        for (let i = 0; i < 4; i++) {
+          const a = b.yaw + Math.PI + (i - 1.5) * 0.6;
+          const probe = new THREE.Vector3(b.pos.x + Math.sin(a) * 3.2, b.pos.y + BOT_EYE, b.pos.z + Math.cos(a) * 3.2);
+          if (!this._losClear(probe, te)) { bestA = a; break; }
+        }
+        b._coverYaw = bestA;
+      }
       const wantYaw = Math.atan2(dx, dz);
       let dy = wantYaw - b.yaw;
       while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
@@ -7682,11 +7695,6 @@ export class Game {
       // VISÍVEL — dá pra ver o corpo girando antes do primeiro tiro, em vez de snap.
       b.yaw += dy * Math.min(1, dt * (4 + 4.2 * Math.max(0.4, b.skill)));
       b.strafeT += dt;
-      // Hold a comfortable range: advance if far, back off if close, plus a small
-      // lateral juke. Moving mostly ALONG the facing (forward/back) makes the forward
-      // walk clip read as walking, instead of the old pure sideways strafe that looked
-      // like the bot was sliding/moonwalking across the map.
-      const dist = Math.hypot(dx, dz);
       // #27: às vezes o bot PLANTA e mira (parado), em vez de sempre jogar de lado. A média/
       // longa distância (e mais ainda quem agacha) segura a posição por 1-3s — dá pra "ver o
       // bot parado mirando", como pedido, e não vira só um walk-strafe infinito.
@@ -7705,47 +7713,15 @@ export class Game {
          REPOSICIONA. Aqui, sair do eixo cancela o hold e o bot volta a andar enquanto vira. */
       if (Math.abs(dy) > 0.5) b.holdUntil = 0;
       const holding = this.time < (b.holdUntil || 0);
-      // USO DE COBERTURA: machucado (<40 HP) e ainda sob fogo, o bot QUEBRA a linha de visão —
-      // recua e procura o lado com obstáculo, em vez de morrer em pé trocando tiro. Com o
-      // regen isso vira comportamento legível: ele some, se cura e volta.
-      const hurt = b.hp < 40 && this.time - (b._hurtAt || -99) < 4;
-      if (hurt && this.time > (b._coverAt || 0)) {
-        b._coverAt = this.time + 1.6;
-        // testa 4 direções pra trás/lados e fica com a primeira que CORTA o LOS pro alvo
-        const te = e.isPlayer ? this.camera.position : this._botEye(e);
-        let bestA = b.yaw + Math.PI;
-        for (let i = 0; i < 4; i++) {
-          const a = b.yaw + Math.PI + (i - 1.5) * 0.6;
-          const probe = new THREE.Vector3(b.pos.x + Math.sin(a) * 3.2, b.pos.y + BOT_EYE, b.pos.z + Math.cos(a) * 3.2);
-          if (!this._losClear(probe, te)) { bestA = a; break; }
-        }
-        b._coverYaw = bestA;
-      }
-      // G2-R6A (dono: "bots ficam andando pro lado e pro outro"): o pêndulo senoidal
-      // contínuo (approach ±0.55 @9s + strafe ±0.18 @5.7s) lia como metrônomo robótico —
-      // avança/recua ±4.5m sem motivo. Agora são DECISÕES esparsas estilo jiggle-peek:
-      // a cada 1.1-2.4s o bot escolhe segurar (45%), avançar/recuar ou um juke lateral
-      // curto, e mantém a decisão — lê como intenção, não como zigzag.
-      if (this.time > (b._jukeAt || 0)) {
-        // CAUSA-RAIZ #2: a decisão durava 1,1-2,4 s e o lateral saía em 50% delas, com
-        // amplitude 0.4 — ou seja, o bot trocava de lado a cada ~2 s pela ETERNIDADE do
-        // combate (7,2 latFlips/min só de combate, medido). Pior: o passo lateral PURO não
-        // tem clipe de animação (o controller só tem andar/andar-de-ré), então o bot desliza
-        // de lado — que é literalmente a frase do dono. Agora: compromisso mais longo
-        // (1,9-3,6 s), lateral em 28% das decisões e com metade da amplitude, e SEMPRE
-        // acompanhado de um componente pra frente/trás maior — o movimento vira um ARCO,
-        // com a perna andando, em vez de um passinho de caranguejo.
+      /* A banda de distância é a única dona do avanço/recuo; movimento aleatório
+         no miolo voltava a cruzar seus próprios limiares. */
+      if (BOT_MOVE2 && !this.__mutBotMidWander) {
+        b._adv = 0;
+        b._lat = 0;
+      } else if (this.time > (b._jukeAt || 0)) {
         b._jukeAt = this.time + (BOT_MOVE2 ? 1.9 + Math.random() * 1.7 : 1.1 + Math.random() * 1.3);
         const r = Math.random();
         b._adv = r < 0.45 ? 0 : (r < 0.75 ? (BOT_MOVE2 ? 0.55 : 0.5) : (BOT_MOVE2 ? -0.55 : -0.5));
-        /* PASSO LATERAL: ZERO. A rodada anterior já o tinha cortado de 50% pra 28% das
-           decisões; medindo agora, ele ainda respondia por ~2 flips laterais por minuto por
-           bot — e nunca teve como ficar bom, porque o controller de personagem NÃO TEM
-           clipe de andar de lado: qualquer passo lateral é o boneco deslizando com as pernas
-           andando pra frente. É o caso exato da régua ("melhor um valor visual mais simples,
-           porém consistente"): o bot passa a só avançar, recuar ou segurar — tudo com
-           animação que casa — e a variação de ângulo vem do reposicionamento (ver o
-           cancelamento de hold acima), que também anda de frente. */
         b._lat = BOT_MOVE2 ? 0 : (Math.random() < 0.5 ? 0 : (Math.random() < 0.5 ? -0.4 : 0.4));
       }
       /* BANDA DE DISTÂNCIA COM HISTERESE. O degrau anterior era `dist>20 ? … : dist<8 ? -1`:
@@ -7779,7 +7755,7 @@ export class Game {
       const spd = BOT_SPEED * 0.55;
       b.pos.x += (fdx * approach + rdx * strafe) * spd * dt;
       b.pos.z += (fdz * approach + rdz * strafe) * spd * dt;
-      if (hurt) {   // recuo pra cobertura (mais rápido que o passo de combate: é fuga)
+      if (hurt) {   // mutante: foge de lado sem virar o corpo
         b.pos.x += Math.sin(b._coverYaw || 0) * BOT_SPEED * 0.8 * dt;
         b.pos.z += Math.cos(b._coverYaw || 0) * BOT_SPEED * 0.8 * dt;
         moving = 1;

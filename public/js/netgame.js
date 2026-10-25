@@ -719,7 +719,11 @@ class Netcode {
   tiroDeRede(ent, e) {
     const game = this.game, p = game.player;
     if (!ent || !Array.isArray(e.p) || !e.p.length) return;
-    const olho = ent.pos.clone().setY(ent.pos.y + 1.45);
+    /* O evento leva a origem usada pelo nó. A pose interpolada pode ter avançado metros até
+       o lote chegar; reconstruir o raio dela fazia o traçante cruzar a tela de lado em 3P. */
+    const olho = Array.isArray(e.o) && e.o.length === 3 && e.o.every(Number.isFinite)
+      ? new THREE.Vector3(e.o[0], e.o[1], e.o[2])
+      : ent.pos.clone().setY(ent.pos.y + 1.45);   // compatibilidade com nó anterior
     const dist = p && p.pos ? Math.hypot(ent.pos.x - p.pos.x, ent.pos.z - p.pos.z) : 0;
     const cheio = ent === p || (dist < 45 && game.settings.quality !== 'low');
     const tetos = cheio ? 4 : 1;   // shotgun não vira 9 traçantes na tela de ninguém
