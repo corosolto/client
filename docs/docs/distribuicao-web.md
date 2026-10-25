@@ -60,6 +60,9 @@ Imports de módulo absolutos são recusados para evitar resolução silenciosame
 incorreta. O código fonte do jogo não é alterado. Cada arquivo transformado tem
 hash antes/depois no relatório.
 
+O rewriter usa expressões regulares para os padrões examinados; não é um parser
+geral de JavaScript. A prova do ZIP exato continua obrigatória quando o jogo muda.
+
 Isso prepara o candidato para QA em subpasta. Não comprova partida, áudio,
 pointer lock, login ou multiplayer. Os caminhos `/api` e links de navegação do
 site continuam no código e precisam de integração própria para o portal.
