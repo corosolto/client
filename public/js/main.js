@@ -2434,6 +2434,8 @@ $('btn-jogar').onclick = async () => {
   ensureTeamPreviews();   // thumbnails 3D dos times (async, cacheia no card)
 };
 let restoreHubRoute = () => {};
+// Atribuída junto com o hub: o ranking usa a mesma porta que os links de perfil.
+let abrirPerfilNoHub = () => false;
 if (HUB_ENABLED) {
   document.documentElement.dataset.homeUi = 'hub';
   $('hub-ui').hidden = false;
@@ -2512,23 +2514,35 @@ if (HUB_ENABLED) {
     document.dispatchEvent(new CustomEvent('cs-community-open', { detail: { tab: 'friends' } }));
   };
   $('hub-social-resume').onclick = () => { sfx.uiClick(); game?.resume(); };
-  // Links de comunidade e de perfil (/u/<id>) abrem na COMUNIDADE do hub, sem sair do jogo.
-  // O "ABRIR PERFIL PÚBLICO" (data-public-profile) continua indo para a página pública.
+  /* Links de comunidade e de perfil (/u/<id>) abrem na COMUNIDADE do hub, sem sair do jogo.
+     O "ABRIR PERFIL PÚBLICO" (data-public-profile) continua indo para a página pública. */
+  abrirPerfilNoHub = (href) => {
+    const url = new URL(href, location.href);
+    if (url.origin !== location.origin) return false;
+    const perfil = url.pathname.match(/^\/u\/([a-z][a-z0-9_]{2,23}|[0-9a-f-]{36})(?:\/|$)/i)?.[1];
+    if (!perfil) return false;
+    const paused = $('main-menu').dataset.socialPaused === 'true';
+    if (!paused) hubNavigate({ secao: 'comunidade', social: 'profile', perfil, aba: null, janela: null, origem: null });
+    setHubTab('comunidade', false);
+    if (paused) document.dispatchEvent(new CustomEvent('cs-community-open', { detail: { tab: 'profile', perfil } }));
+    return true;
+  };
   document.addEventListener('click', event => {
     const anchor = event.target.closest('a[href]');
     if (!anchor || event.defaultPrevented || anchor.target === '_blank' || anchor.dataset.publicProfile === 'true' || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     const url = new URL(anchor.href, location.href);
     if (url.origin !== location.origin) return;
-    const profile = url.pathname.match(/^\/u\/([a-z][a-z0-9_]{2,23}|[0-9a-f-]{36})(?:\/|$)/i)?.[1];
-    const destino = profile ? null : estadoDaUrl(url.href);
-    if (profile ? !anchor.closest('#main-menu') : destino?.secao !== 'comunidade') return;
+    // Perfil em QUALQUER lugar do documento: a restrição ao #main-menu deixava o link da
+    // ficha SSR e o do rodapé recarregarem o jogo inteiro só para trocar de perfil.
+    if (abrirPerfilNoHub(url.href)) { event.preventDefault(); return; }
+    const destino = estadoDaUrl(url.href);
+    if (destino?.secao !== 'comunidade') return;
     event.preventDefault();
-    const perfil = profile || destino.perfil;
-    const tab = profile ? 'profile' : destino.social || 'profile';
+    const tab = destino.social || 'profile';
     const paused = $('main-menu').dataset.socialPaused === 'true';
-    if (!paused) hubNavigate({ secao: 'comunidade', social: tab, perfil: perfil || null, aba: null, janela: null, origem: null });
+    if (!paused) hubNavigate({ secao: 'comunidade', social: tab, perfil: destino.perfil || null, aba: null, janela: null, origem: null });
     setHubTab('comunidade', false);
-    if (paused) document.dispatchEvent(new CustomEvent('cs-community-open', { detail: { tab, perfil } }));
+    if (paused) document.dispatchEvent(new CustomEvent('cs-community-open', { detail: { tab, perfil: destino.perfil } }));
   });
   const setHubNet = (net, updateRoute = true) => {
     $('main-menu').dataset.hubNet = net;
@@ -3733,8 +3747,10 @@ async function renderHubRanking() {
     linha.setAttribute('role', 'link'); linha.setAttribute('tabindex', '0');
     linha.dataset.href = perfil;
     linha.setAttribute('aria-label', `${tr('Ver perfil de')} ${p.nick || ''}`.trim());
-    linha.onclick = (e) => { if (!e.target?.closest?.('a')) location.assign(perfil); };
-    linha.onkeydown = (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; e.preventDefault(); location.assign(perfil); };
+    // Sem recarregar o jogo: o perfil é tela do hub. Só cai em location.assign sem o hub.
+    const irAoPerfil = () => { if (!abrirPerfilNoHub(perfil)) location.assign(perfil); };
+    linha.onclick = (e) => { if (!e.target?.closest?.('a')) irAoPerfil(); };
+    linha.onkeydown = (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; e.preventDefault(); irAoPerfil(); };
     return linha;
   };
   const global = $('hub-rank-global');

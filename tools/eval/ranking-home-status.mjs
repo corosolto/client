@@ -15,12 +15,12 @@ const root=args.find(a=>a.startsWith('--root='))?.slice(7) || args.find(a=>!a.st
 assert(args.every(a=>!a.startsWith('--') || a.startsWith('--root=') || a.startsWith('--out=') || a.startsWith('--mutant=') || a==='--mutants'),'unknown option: use --root, --out, --mutant or --mutants');
 const output=process.argv.find(x=>x.startsWith('--out='))?.slice(6);
 const mutant=process.argv.find(x=>x.startsWith('--mutant='))?.slice(9);
-assert(!mutant || ['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source','hub-title','hub-row-link','hub-char-avatar','hub-cta-logado','hub-sem-pagina','hub-pagina-sem-offset','hub-css-hidden'].includes(mutant),'unknown mutation');
+assert(!mutant || ['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source','hub-title','hub-row-link','hub-char-avatar','hub-cta-logado','hub-sem-pagina','hub-pagina-sem-offset','hub-css-hidden','hub-perfil-recarrega','hub-link-so-no-menu'].includes(mutant),'unknown mutation');
 let mutationsApplied=0;
 if(args.includes('--mutants')) {
  assert(!mutant,'--mutants and --mutant cannot be combined');
  const folder=mkdtempSync(join(tmpdir(),'ranking-home-status-'));
- const names=['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source','hub-title','hub-row-link','hub-char-avatar','hub-cta-logado','hub-sem-pagina','hub-pagina-sem-offset','hub-css-hidden'];
+ const names=['frozen-ssr','disabled-as-network','empty-as-disabled','success-with-error','no-photo','no-profile','no-week-tab','nonarray-guard','hub-legacy-source','hub-title','hub-row-link','hub-char-avatar','hub-cta-logado','hub-sem-pagina','hub-pagina-sem-offset','hub-css-hidden','hub-perfil-recarrega','hub-link-so-no-menu'];
  try {
   const run=(name)=>{const reportPath=join(folder,(name || 'baseline')+'.json');const child=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--root='+root,'--out='+reportPath,...(name?['--mutant='+name]:[])],{encoding:'utf8',maxBuffer:262144});assert(existsSync(reportPath),'cannot measure child '+(name || 'baseline')+': '+(child.stderr || child.error || child.stdout || '').slice(0,700));return {status:child.status,report:JSON.parse(readFileSync(reportPath,'utf8'))};};
   const baseline=run(null);assert.equal(baseline.status,0,'baseline must be green before mutation proof');
@@ -49,6 +49,9 @@ if(mutant==='hub-sem-pagina'){const changed=main.replace('  global.append(mais);
 if(mutant==='hub-pagina-sem-offset'){const changed=main.replace('&offset=${corpo.children.length}','');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
 /* A pele v3 declara `display` para esses botões: sem `:not([hidden])` o atributo hidden do
    produto não esconde nada, que foi o convite de nick aparecendo para quem já estava logado. */
+/* Perfil é tela do hub: clicar num jogador não pode recarregar o jogo inteiro (dono, 24/10). */
+if(mutant==='hub-perfil-recarrega'){const changed=main.replace('const irAoPerfil = () => { if (!abrirPerfilNoHub(perfil)) location.assign(perfil); };','const irAoPerfil = () => location.assign(perfil);');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
+if(mutant==='hub-link-so-no-menu'){const changed=main.replace('    if (abrirPerfilNoHub(url.href)) { event.preventDefault(); return; }','    if (anchor.closest(\'#main-menu\') && abrirPerfilNoHub(url.href)) { event.preventDefault(); return; }');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
 if(mutant==='hub-css-hidden'){const changed=peleV3.replaceAll(':not([hidden])','');assert.notEqual(changed,peleV3,'MUTATION DID NOT APPLY');peleV3=changed;mutationsApplied++;}
 const helpers=await import(pathToFileURL(`${root}/public/js/ranking-player.js`).href);
 // renderHubRanking monta a célula do jogador sozinha, mas reaproveita os mesmos selos do produto.
@@ -142,7 +145,7 @@ async function scenario(surface,flag,kind,period='all',conta='',semNick=false) {
  pane.hidden=false;pane.classList.remove('hidden');
  const requests=[];
  const nickRegistrado=(conta || semNick)?'':'Renderer Fixture';
- const context={...helpers,...selos,document,URL,Date,AbortSignal,UI_V3:false,tr:x=>x,auth:null,state:null,profileId:'',tab:'ranking',loadVersion:0,rankingPeriod:period,rankingScope:'global',rankingOffset:0,rankingQuery:'',rankingMode:'all',rankingGameType:'all',rankingTeam:'all',registeredNick:nickRegistrado,contaNick:conta,RANKING_PAGINA:25,loadStats:()=>({kills:4,deaths:2,wins:1,matches:2}),$:id=>document.getElementById(id),apiUrl:x=>x,fetch:async(url)=>{requests.push(url);return fetchResult(kind,surface,url);},content:document.getElementById('social-content'),status:document.getElementById('social-status'),account:document.getElementById('social-account')};
+ const context={...helpers,...selos,document,URL,Date,AbortSignal,UI_V3:false,tr:x=>x,auth:null,state:null,profileId:'',tab:'ranking',loadVersion:0,rankingPeriod:period,rankingScope:'global',rankingOffset:0,rankingQuery:'',rankingMode:'all',rankingGameType:'all',rankingTeam:'all',registeredNick:nickRegistrado,contaNick:conta,RANKING_PAGINA:25,abrirPerfilNoHub:()=>true,loadStats:()=>({kills:4,deaths:2,wins:1,matches:2}),$:id=>document.getElementById(id),apiUrl:x=>x,fetch:async(url)=>{requests.push(url);return fetchResult(kind,surface,url);},content:document.getElementById('social-content'),status:document.getElementById('social-status'),account:document.getElementById('social-account')};
  let body;
  if(surface==='community'){
   context.root=pane; // community.js lê root no escopo do módulo (render marca data-view)
@@ -205,6 +208,11 @@ async function scenario(surface,flag,kind,period='all',conta='',semNick=false) {
   results.push({name,pass:true,...snapshot,requests});
  }catch(e){const failure={name,pass:false,error:e.message,text:visibleText(pane).replace(/\s+/g,' ').trim(),rows:pane.querySelectorAll('table tbody tr').length,requests};failures.push(failure);results.push(failure);}
 }
+// Navegação de perfil dentro do hub: sem documento novo, nem a partir da ficha SSR.
+if(!/const irAoPerfil = \(\) => \{ if \(!abrirPerfilNoHub\(perfil\)\) location\.assign\(perfil\); \};/.test(main))
+ failures.push({name:'hub/perfil/sem-reload',pass:false,error:'a linha do ranking manda o navegador recarregar em vez de abrir o perfil no hub',requests:[]});
+if(!main.includes('    if (abrirPerfilNoHub(url.href)) { event.preventDefault(); return; }'))
+ failures.push({name:'hub/perfil/link-fora-do-menu',pass:false,error:'link de perfil ganhou condição extra: fora do #main-menu ele volta a recarregar a página inteira',requests:[]});
 for(const regra of peleV3.split('}')){
  if(!/#hub-ranking[^{]*(?:\.hub-rank-profile|#hub-rank-share)/.test(regra) || !/\{[^{]*display\s*:/.test(regra))continue;
  const seletores=regra.split('{')[0].split(',').map(s=>s.trim()).filter(s=>/\.hub-rank-profile|#hub-rank-share/.test(s));
