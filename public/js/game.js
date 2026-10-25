@@ -5352,7 +5352,8 @@ export class Game {
      (scorePNum/crestP/siglaP) e `side` é o lado no modelo do jogo. */
   _plaqueta(slot, side) {
     const num = this.el['score' + slot + 'Num'];
-    const n = String(this.roundKills[side]);
+    /* Treta Pop (seção 2d): o número grande é round ganho; quem está vivo fica nos retratos. */
+    const n = String(this._uiV3() ? this.roundsWon[side] : this.roundKills[side]);
     if (num && num.textContent !== n) num.textContent = n;
     /* minúscula porque o seletor de atributo do CSS é SENSÍVEL A CAIXA e os arquivos
        são b/c/e/f/u.png — `data-f="U"` não casaria com `[data-f="u"]` e o brasão
@@ -5363,6 +5364,7 @@ export class Game {
     const sig = this.el['sigla' + slot], tag = this._teamTag(side);
     if (sig && sig.textContent !== tag) sig.textContent = tag;
   }
+  _uiV3() { return typeof document !== 'undefined' && document.documentElement?.dataset?.ui === 'v3'; }
   _mirror(side) { return side === this.enemyTeam && this.enemyFaction === this.playerFaction; }
   /* Rim e braçadeira saem de `def.team`; com pool misturado eles precisam da cor do LADO. */
   _defNoLado(def, side) { const f = this._factionOf(side); return !def || def.team === f ? def : { ...def, team: f }; }   // inimigo = mesma facção
@@ -8808,7 +8810,7 @@ export class Game {
       const fimProximo = restante <= CTF_CLOCK_SHOW;
       if (this.el.roundTime.classList.contains('urgente') !== fimProximo) this.el.roundTime.classList.toggle('urgente', fimProximo);
       const roundsText =
-        `${frase('rodadaDe', this.roundNum, this.roundsMax)} · ${frase('alvoBandeirasHud', alvo)} · ${this._teamTag('E')} ${this.roundsWon.E} × ${this.roundsWon.B} ${this._teamTag('B')}`
+        `${frase('rodadaDe', this.roundNum, this.roundsMax)} · ${frase('alvoBandeirasHud', alvo)}${this._uiV3() ? '' : ` · ${this._teamTag('E')} ${this.roundsWon.E} × ${this.roundsWon.B} ${this._teamTag('B')}`}`
         + (fimProximo ? ` · FIM DA PARTIDA EM ${Math.floor(restante / 60)}:${String(restante % 60).padStart(2, '0')}` : '');
       if (this.el.roundsRow.textContent !== roundsText) this.el.roundsRow.textContent = roundsText;
     } else {
@@ -8817,7 +8819,9 @@ export class Game {
       const roundText = `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
       if (this.el.roundTime.textContent !== roundText) this.el.roundTime.textContent = roundText;
       // linha secundária única sob o timer: rodada/teto selecionado + placar por time
-      const roundsText = `${frase('rodadaDe', this.roundNum, this.roundsMax)} · ${this._teamTag('E')} ${this.roundsWon.E} × ${this.roundsWon.B} ${this._teamTag('B')}`;
+      const roundsText = this._uiV3()
+        ? `${frase('rodadaDe', this.roundNum, this.roundsMax)} · ${tr('ROUNDS')}`
+        : `${frase('rodadaDe', this.roundNum, this.roundsMax)} · ${this._teamTag('E')} ${this.roundsWon.E} × ${this.roundsWon.B} ${this._teamTag('B')}`;
       if (this.el.roundsRow.textContent !== roundsText) this.el.roundsRow.textContent = roundsText;
     }
     this._plaqueta('P', 'E'); this._plaqueta('B', 'B');

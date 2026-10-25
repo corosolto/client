@@ -9,6 +9,9 @@ const PLAYER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[
 const SVG_HS = '<svg class="tp-hs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" role="img" aria-label="Headshot">'
   + '<circle cx="12" cy="12" r="8"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/></svg>';
 
+const SVG_BOT = '<svg class="tp-bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" role="img" aria-label="Bot">'
+  + '<rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01"/></svg>';
+
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 const VAZIO = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
@@ -36,6 +39,7 @@ const livre = (t) => !(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' |
 
 let jogo = null;
 let inicioAoVivo = null;
+let altSegurado = false;
 let ping = null;
 const mudos = new Set();
 
@@ -50,6 +54,9 @@ export function ligar() {
   montarChat();
   observarToque();
   addEventListener('keydown', (e) => { if (e.code === 'KeyF' && !e.repeat && livre(e.target)) marcarPing(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Alt') altSegurado = true; });
+  addEventListener('keyup', (e) => { if (e.key === 'Alt') altSegurado = false; });
+  addEventListener('blur', () => { altSegurado = false; });
   addEventListener('mousedown', (e) => { if (e.button === 1 && livre(e.target)) { e.preventDefault(); marcarPing(); } });
   setInterval(tique, 250);
 }
@@ -78,19 +85,69 @@ function montarHud(hud) {
     if (barra) vitais.append(barra);
     esq.prepend(seq, vitais);
   }
+  /* Slots acima do painel da arma, numa coluna só: um nunca invade o outro. */
+  const painel = $('hud-bottom-right'), slots = $('weapon-hud');
+  if (painel) {
+    const coluna = el('div', 'tp-hud-arma');
+    if (slots) coluna.append(slots);
+    const nome = $('weapon-name');
+    if (nome) {
+      const linha = el('div', 'tp-hud-arma-topo');
+      const recarga = el('span', 'tp-hud-recarga');
+      recarga.append(document.createTextNode(' · '), el('kbd', null, 'R'), document.createTextNode(` ${tr('RECARREGAR')}`));
+      painel.prepend(linha);
+      linha.append(nome, recarga);
+    }
+    painel.after(coluna);
+    coluna.append(painel);
+  }
+  const acoes = $('hud-actions');
+  if (acoes) acoes.prepend(el('span', 'tp-hud-cam'));
+  /* Teclas lidas do game.js (_input) e do ping deste módulo; nenhuma muda aqui. */
   const dicas = el('div', 'tp-hud-dicas');
+  dicas.title = tr('Comandos: somem em 60 s, voltam com ALT');
   const dica = (teclas, txt) => {
     const s = el('span');
-    for (const t of teclas) s.append(el('kbd', null, t));
+    s.append(el('kbd', null, teclas));
     s.append(document.createTextNode(` ${tr(txt)}`));
     dicas.append(s);
     return s;
   };
-  dica(['F'], 'ping');
-  dica(['Z', 'X', 'V'], 'rádio');
-  dica(['TAB'], 'placar');
-  dica(['Y', 'U'], 'chat').dataset.chat = '';
+  dica('E', 'pegar');
+  dica('B', 'câmera');
+  dica('F', 'ping');
+  dica('Z/X/V', 'rádio');
+  dica('Y/U', 'chat').dataset.chat = '';
+  dica('M', 'time');
+  dica('TAB', 'placar');
+  dica('ALT', 'órbita');
   hud.append(dicas);
+}
+
+const CAMERA = { first: '1ª PESSOA', third: '3ª PESSOA', shoulder: 'OMBRO' };
+function atualizarCamera(g) {
+  const chip = document.querySelector('#hud-actions .tp-hud-cam');
+  if (!chip) return;
+  const txt = `${tr(CAMERA[g.camView] || CAMERA.first)} · B`;
+  if (chip.textContent !== txt) chip.textContent = txt;
+}
+
+function atualizarAbates() {
+  const n = Number($('kill-count')?.textContent) || 0;
+  const rotulo = document.querySelector('#kill-counter .kc-label');
+  const txt = frase('abatesRotulo', n);
+  if (rotulo && rotulo.textContent !== txt) rotulo.textContent = txt;
+}
+
+/* A barra é a primeira a sair: se encostar num painel, some antes de qualquer painel encolher. */
+const cruza = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+function barraApertada(dicas) {
+  const r = dicas.getBoundingClientRect();
+  if (!r.width) return false;
+  return ['hud-bottom-left', 'hud-bottom-right', 'weapon-hud', 'pickup-hint'].some((id) => {
+    const e = $(id);
+    return e && e.offsetParent && cruza(r, e.getBoundingClientRect());
+  });
 }
 
 function tique() {
@@ -105,8 +162,12 @@ function tique() {
   if (!g || !g.combatants) return;
   if (inicioAoVivo == null && g.state === 'live') inicioAoVivo = g.time;
   atualizarRetratos(g);
-  const sumiu = inicioAoVivo != null && g.time - inicioAoVivo > DICAS_S;
+  const sumiu = inicioAoVivo != null && g.time - inicioAoVivo > DICAS_S && !altSegurado;
   for (const d of document.querySelectorAll('.tp-hud-dicas,.tp-toque-mira-dica')) d.toggleAttribute('data-sumiu', sumiu);
+  const barra = document.querySelector('.tp-hud-dicas');
+  if (barra && !sumiu) barra.toggleAttribute('data-aperto', barraApertada(barra));
+  atualizarCamera(g);
+  atualizarAbates();
   const chat = document.querySelector('.tp-hud-dicas [data-chat]');
   if (chat) chat.hidden = !!$('hud-atalho-chat')?.hidden;
   const arma = g.player?.weapon;
@@ -147,6 +208,11 @@ function observarKillfeed() {
       if (!(row instanceof HTMLElement)) continue;
       const caveira = row.querySelector('.kf-skull');
       if (caveira) caveira.outerHTML = SVG_HS;
+      for (const n of row.querySelectorAll('.kf-n')) {
+        if (!n.textContent.startsWith('[BOT] ')) continue;
+        n.textContent = n.textContent.slice(6);
+        n.insertAdjacentHTML('afterbegin', SVG_BOT);
+      }
     }
   }).observe(feed, { childList: true });
 }

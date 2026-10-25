@@ -4,10 +4,12 @@
 :root[data-ui="v3"] #hud{font-family:var(--tp-ui);color:var(--tp-tinta-1)}
 
 /* ---------- minimapa ---------- */
-:root[data-ui="v3"] #radar{top:24px;left:24px;width:200px;height:200px;opacity:1;border-radius:12px;border:1px solid var(--tp-vidro-borda);
+:root[data-ui="v3"] #radar{top:24px;left:24px;width:clamp(160px,18vh,200px);height:clamp(160px,18vh,200px);opacity:1;border-radius:12px;border:1px solid var(--tp-vidro-borda);
   background:var(--tp-vidro);box-shadow:none;clip-path:none}
-:root[data-ui="v3"] #hud-actions{top:236px;left:24px;right:auto}
-:root[data-ui="v3"] #hud-actions button{border-radius:8px;border-color:var(--tp-vidro-borda);background:var(--tp-vidro)}
+:root[data-ui="v3"] #hud-actions{top:24px;right:24px;left:auto;gap:6px;align-items:center}
+:root[data-ui="v3"] #hud-actions button{width:36px;height:36px;border-radius:10px;border-color:var(--tp-vidro-borda);background:var(--tp-vidro);color:var(--tp-tinta-1)}
+.tp-hud-cam{display:inline-flex;align-items:center;height:36px;box-sizing:border-box;padding:0 10px;border-radius:10px;background:var(--tp-vidro);
+  border:1px solid var(--tp-vidro-borda);font:800 12px/1 var(--tp-ui);letter-spacing:.08em;color:var(--tp-tinta-2);white-space:nowrap}
 
 /* ---------- topo: retratos, placar e relógio ---------- */
 :root[data-ui="v3"] #hud-top{top:18px;gap:0;align-items:center}
@@ -23,7 +25,7 @@
 :root[data-ui="v3"] #score-e{background:var(--tp-esq);border-radius:8px 0 0 8px}
 :root[data-ui="v3"] #score-b{background:var(--tp-dir);border-radius:0 8px 8px 0}
 :root[data-ui="v3"] #hud-top .team-score .ts-crest{display:none}
-:root[data-ui="v3"] #hud-top .team-score b{font:400 38px/1 var(--tp-display);color:var(--tp-tinta-1);text-shadow:none;-webkit-text-stroke:0}
+:root[data-ui="v3"] #hud-top .team-score b{font:400 var(--tp-fs-placar)/1 var(--tp-display);color:var(--tp-tinta-1);text-shadow:none;-webkit-text-stroke:0}
 :root[data-ui="v3"] #hud-mid{height:52px;box-sizing:border-box;padding:0 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:rgba(9,7,4,.8)}
 :root[data-ui="v3"] #round-time{font:800 26px/1 var(--tp-num);font-variant-numeric:tabular-nums;letter-spacing:0;color:var(--tp-tinta-1);-webkit-text-stroke:0;text-shadow:none}
@@ -31,20 +33,22 @@
 :root[data-ui="v3"] #rounds-row{margin-top:3px;font:800 11px/1 var(--tp-ui);letter-spacing:.14em;color:var(--tp-tinta-2);text-shadow:none;white-space:nowrap}
 
 /* ---------- abate múltiplo e número de dano ---------- */
-:root[data-ui="v3"] #mk-banner{top:92px;font:400 54px/1 var(--tp-display);letter-spacing:.01em;text-transform:uppercase;color:var(--tp-ambar);
+:root[data-ui="v3"] #mk-banner{top:92px;font:400 var(--tp-fs-abate)/1 var(--tp-display);letter-spacing:.01em;text-transform:uppercase;color:var(--tp-ambar);
   text-shadow:var(--tp-sombra);transform:var(--tp-skew) scale(calc(1 - .15 * var(--tp-mov)))}
 :root[data-ui="v3"] #mk-banner.show{letter-spacing:.01em;transform:var(--tp-skew)}
 :root[data-ui="v3"] .dmg-num{font-family:var(--tp-display);font-weight:400;color:var(--tp-ambar);text-shadow:var(--tp-sombra);-webkit-text-stroke:0}
 :root[data-ui="v3"] .dmg-num.kill{color:var(--tp-esq-claro)}
 
 /* ---------- killfeed ---------- */
-:root[data-ui="v3"] #killfeed{top:24px;right:24px;gap:6px;align-items:flex-end}
+:root[data-ui="v3"] #killfeed{top:70px;right:24px;gap:6px;align-items:flex-end}
 :root[data-ui="v3"] #killfeed .kf-row{gap:8px;padding:6px 10px;border-radius:6px;border:0;border-left:3px solid transparent;background:rgba(9,7,4,.6);
   clip-path:none;box-shadow:none;font:800 16px/1.2 var(--tp-ui)}
 :root[data-ui="v3"] #killfeed .kf-row.me-atk{border-left-color:var(--tp-lima);background:rgba(9,7,4,.6)}
 :root[data-ui="v3"] #killfeed .kf-row.me-vic{border-left-color:var(--tp-esq);background:rgba(9,7,4,.6)}
 :root[data-ui="v3"] #killfeed .kf-n{padding:0;background:none!important;clip-path:none;letter-spacing:0}
 .tp-hs{width:16px;height:16px;flex:none;color:var(--tp-lima)}
+.tp-bot{width:14px;height:14px;flex:none;margin-right:5px;vertical-align:-2px}
+:root[data-ui="v3"] #killfeed .kf-n:has(.tp-bot){display:inline-flex;align-items:center}
 
 /* ---------- vida e sequência ---------- */
 :root[data-ui="v3"] #hud-bottom-left{left:24px;bottom:24px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
@@ -67,7 +71,7 @@
 :root[data-ui="v3"] #hp-row{display:flex;align-items:baseline;gap:8px}
 :root[data-ui="v3"] #hp-row::before{content:'';width:22px;height:22px;flex:none;align-self:center;background:var(--tp-ganho);
   mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-8-5.3-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.7-8 11-8 11z'/%3E%3C/svg%3E") center/contain no-repeat}
-:root[data-ui="v3"] #hp-num{font:400 52px/.92 var(--tp-display);letter-spacing:.01em;color:var(--tp-tinta-1);text-shadow:var(--tp-sombra);-webkit-text-stroke:0}
+:root[data-ui="v3"] #hp-num{font:400 var(--tp-fs-vida)/.92 var(--tp-display);letter-spacing:.01em;color:var(--tp-tinta-1);text-shadow:var(--tp-sombra);-webkit-text-stroke:0}
 :root[data-ui="v3"] #hp-num::after{content:none}
 :root[data-ui="v3"] #hp-num.low{color:var(--tp-esq-claro)}
 .tp-hud-vida-rotulo{font:800 13px/1 var(--tp-ui);letter-spacing:.12em;color:var(--tp-tinta-2)}
@@ -77,42 +81,52 @@
 :root[data-ui="v3"] #prot-badge{left:24px;bottom:auto;top:284px;border-radius:6px;font:800 13px/1 var(--tp-ui);letter-spacing:.08em}
 
 /* ---------- arma, slots e munição ---------- */
-:root[data-ui="v3"] #hud-bottom-right{right:24px;bottom:24px;display:flex;flex-direction:column;align-items:flex-end;gap:4px;padding:12px 18px;
-  border-radius:10px;background:var(--tp-vidro);border:1px solid var(--tp-vidro-borda);text-align:right}
-:root[data-ui="v3"] #weapon-name{order:-1;margin:0;font:800 14px/1.2 var(--tp-ui);letter-spacing:.1em;color:var(--tp-tinta-2);text-shadow:none}
-:root[data-ui="v3"] #ammo{display:flex;align-items:baseline;gap:8px;font:800 64px/1 var(--tp-num);font-variant-numeric:tabular-nums;color:var(--tp-tinta-1);
+.tp-hud-arma{position:absolute;right:24px;bottom:24px;display:flex;flex-direction:column;align-items:flex-end;gap:10px;
+  max-width:min(520px,calc(50vw - 48px))}
+:root[data-ui="v3"] .tp-hud-arma #hud-bottom-right{position:relative;right:auto;bottom:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;
+  max-width:100%;box-sizing:border-box;padding:12px 18px;border-radius:10px;background:var(--tp-vidro);border:1px solid var(--tp-vidro-borda);text-align:right}
+.tp-hud-arma-topo{display:flex;align-items:baseline;justify-content:flex-end;gap:0;max-width:100%;white-space:nowrap;
+  font:800 14px/1.2 var(--tp-ui);letter-spacing:.1em;color:var(--tp-tinta-2)}
+:root[data-ui="v3"] #weapon-name{margin:0;overflow:hidden;text-overflow:ellipsis;font:inherit;letter-spacing:inherit;color:inherit;text-shadow:none}
+.tp-hud-recarga{flex:none;white-space:pre}
+.tp-hud-recarga kbd{font:800 14px/1 var(--tp-num);color:var(--tp-ambar)}
+:root[data-ui="v3"] #ammo{display:flex;align-items:baseline;gap:8px;padding-left:170px;font:800 var(--tp-fs-municao)/1 var(--tp-num);font-variant-numeric:tabular-nums;color:var(--tp-tinta-1);
   -webkit-text-stroke:0;text-shadow:var(--tp-sombra)}
 :root[data-ui="v3"] #ammo-mag{font-variant-numeric:tabular-nums}
 :root[data-ui="v3"] #ammo-mag.empty{color:var(--tp-esq-claro)}
 :root[data-ui="v3"] #ammo .ammo-sep{font:700 26px/1 var(--tp-num);color:var(--tp-tinta-2)}
 :root[data-ui="v3"] #ammo-reserve{font:700 26px/1 var(--tp-num);font-variant-numeric:tabular-nums;color:var(--tp-tinta-2)}
 :root[data-ui="v3"] #ammo-bars,:root[data-ui="v3"] #smoke-count{display:none}
-:root[data-ui="v3"] #ammo-weapon-art{display:block;width:144px;height:52px;object-fit:contain;object-position:right center;opacity:.9}
+:root[data-ui="v3"] #ammo-weapon-art{display:block;position:absolute;left:14px;bottom:12px;width:150px;height:clamp(40px,5.6vh,58px);object-fit:contain;object-position:left center;
+  opacity:.9;filter:drop-shadow(0 2px 6px rgba(0,0,0,.8))}
 :root[data-ui="v3"] #reload-note{font:800 13px/1 var(--tp-ui);letter-spacing:.1em;color:var(--tp-ambar)}
-:root[data-ui="v3"] #weapon-hud{right:24px;bottom:158px;flex-direction:row;gap:8px;padding:0;background:none;border:0}
-:root[data-ui="v3"] #weapon-hud .weapon-slot{display:flex;position:relative;align-items:center;justify-content:center;width:70px;height:44px;box-sizing:border-box;padding:3px 5px;
+:root[data-ui="v3"] .tp-hud-arma #weapon-hud{position:static;width:auto;flex-direction:row;align-items:flex-end;justify-content:flex-end;gap:6px;max-width:100%;padding:0;background:none;border:0}
+:root[data-ui="v3"] #weapon-hud .weapon-slot{display:flex;position:relative;flex:0 1 76px;align-items:center;justify-content:center;min-width:44px;height:48px;box-sizing:border-box;padding:3px 5px;
   border-radius:10px;background:var(--tp-vidro);border:1px solid var(--tp-vidro-borda);clip-path:none;box-shadow:none;
   font:800 13px/1 var(--tp-num);color:var(--tp-tinta-2)}
-:root[data-ui="v3"] #weapon-hud .weapon-slot.on{border-color:var(--tp-lima);color:var(--tp-ambar)}
-:root[data-ui="v3"] #weapon-hud .weapon-key{position:absolute;right:4px;top:3px;font:800 9px/1 var(--tp-num);color:inherit}
-:root[data-ui="v3"] #weapon-hud .weapon-icon{display:flex;align-items:center;justify-content:center;width:54px;height:32px}
-:root[data-ui="v3"] #weapon-hud .weapon-mask{display:block;width:52px;height:30px;object-fit:contain;filter:grayscale(1) brightness(2.1) contrast(1.2)}
+:root[data-ui="v3"] #weapon-hud .weapon-slot.on{flex-basis:92px;height:56px;border-color:var(--tp-lima);background:rgba(180,217,46,.14);color:var(--tp-ambar)}
+:root[data-ui="v3"] #weapon-hud .weapon-key{position:absolute;left:6px;right:auto;top:3px;font:800 10px/1 var(--tp-num);color:var(--tp-tinta-3)}
+:root[data-ui="v3"] #weapon-hud .weapon-slot.on .weapon-key{color:var(--tp-lima)}
+:root[data-ui="v3"] #weapon-hud .weapon-icon{display:flex;align-items:center;justify-content:center;width:100%;max-width:60px;height:24px}
+:root[data-ui="v3"] #weapon-hud .weapon-slot.on .weapon-icon{max-width:76px;height:30px}
+:root[data-ui="v3"] #weapon-hud .weapon-mask{display:block;width:100%;height:100%;object-fit:contain;background:none;-webkit-mask:none;mask:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
 :root[data-ui="v3"] #weapon-hud .weapon-fallback{display:none}
 :root[data-ui="v3"] #weapon-hud .weapon-icon.art-failed .weapon-mask{display:none}
 :root[data-ui="v3"] #weapon-hud .weapon-icon.art-failed .weapon-fallback{display:inline-flex}
 :root[data-ui="v3"] #weapon-hud .weapon-label{display:none}
-:root[data-ui="v3"] #weapon-hud .weapon-amount{display:none;font:800 9px/1 var(--tp-num);color:inherit;align-self:flex-start;margin-top:12px}
+:root[data-ui="v3"] #weapon-hud .weapon-amount{display:none;position:absolute;right:6px;bottom:3px;font:800 10px/1 var(--tp-num);color:var(--tp-ambar)}
 :root[data-ui="v3"] #weapon-hud .weapon-slot[data-slot="4"] .weapon-amount,:root[data-ui="v3"] #weapon-hud .weapon-slot[data-slot="5"] .weapon-amount{display:block}
 
 /* ---------- dicas de tecla, aviso da mira e pegar arma ---------- */
 :root[data-ui="v3"] #hud-shortcuts{display:none}
-.tp-hud-dicas{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:16px;white-space:nowrap;
-  font:700 14px/1.2 var(--tp-ui);color:rgba(244,245,250,.75);text-shadow:var(--tp-sombra);
+.tp-hud-dicas{position:absolute;left:50%;bottom:clamp(16px,2.5vh,28px);transform:translateX(-50%);display:flex;gap:10px;padding:7px 12px;white-space:nowrap;
+  border-radius:999px;background:var(--tp-vidro);border:1px solid var(--tp-vidro-borda);
+  font:700 12px/1.2 var(--tp-ui);color:rgba(240,240,237,.85);text-shadow:var(--tp-sombra);
   transition:opacity var(--tp-d-cena) var(--tp-ease-saida)}
-.tp-hud-dicas[data-sumiu]{opacity:0;visibility:hidden;transition:opacity var(--tp-d-cena) var(--tp-ease-saida),visibility 0s linear var(--tp-d-cena)}
-.tp-hud-dicas span{display:inline-flex;align-items:center;gap:5px}
+.tp-hud-dicas[data-sumiu],.tp-hud-dicas[data-aperto]{opacity:0;visibility:hidden;transition:opacity var(--tp-d-cena) var(--tp-ease-saida),visibility 0s linear var(--tp-d-cena)}
+.tp-hud-dicas span{display:inline-flex;align-items:center;gap:4px}
 .tp-hud-dicas span[hidden]{display:none}
-.tp-hud-dicas kbd{font:700 13px/1.2 var(--tp-num);padding:1px 5px;border:1px solid rgba(255,255,255,.4);border-radius:4px;color:var(--tp-tinta-1)}
+.tp-hud-dicas kbd{font:800 10px/1.3 var(--tp-num);padding:0 4px;border:1px solid rgba(255,255,255,.45);border-radius:4px;color:var(--tp-tinta-1)}
 :root[data-ui="v3"] #lock-hint{top:auto;bottom:96px;left:50%;right:auto;transform:translateX(-50%);padding:10px 16px;border-radius:10px;
   background:var(--tp-vidro);border:1px solid var(--tp-vidro-borda);white-space:nowrap}
 :root[data-ui="v3"] #lock-hint .lh-title{font:800 15px/1.2 var(--tp-ui);letter-spacing:.08em;color:var(--tp-tinta-1)}
@@ -237,7 +251,11 @@
   :root[data-ui="v3"] #hp-num{font-size:26px}
   :root[data-ui="v3"] .tp-hud-vida-rotulo{font-size:10px}
   :root[data-ui="v3"] #hp-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.18)}
-  :root[data-ui="v3"] #hud-bottom-right{right:calc(256px + var(--sr));bottom:calc(64px + var(--sb));padding:0;background:none;border:0;gap:0}
+  .tp-hud-arma{display:contents}
+  :root[data-ui="v3"] .tp-hud-cam,:root[data-ui="v3"] .tp-hud-recarga{display:none}
+  :root[data-ui="v3"] #ammo{padding-left:0}
+  :root[data-ui="v3"] #ammo-weapon-art{position:static}
+  :root[data-ui="v3"] .tp-hud-arma #hud-bottom-right{position:absolute;right:calc(256px + var(--sr));bottom:calc(64px + var(--sb));padding:0;background:none;border:0;gap:0}
   :root[data-ui="v3"] #weapon-name,:root[data-ui="v3"] .tp-hud-dicas,:root[data-ui="v3"] #lock-hint{display:none}
   :root[data-ui="v3"] #ammo{font-size:24px;gap:4px}
   :root[data-ui="v3"] #ammo .ammo-sep,:root[data-ui="v3"] #ammo-reserve{font-size:12px;font-weight:500}
