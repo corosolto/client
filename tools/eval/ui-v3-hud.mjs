@@ -156,7 +156,8 @@ async function medir(mutante = '', alvo = '') {
     return { fonte: cs?.fontFamily || '', tam: parseFloat(cs?.fontSize || '0'), rotulo: document.querySelector('.tp-hud-vida-rotulo')?.textContent || '',
       falso: (texto.match(/\bXP\b|COLETE|ARMOR|\bN[ÍI]VEL\b/i) || [])[0] || '' };
   });
-  add('HU3', /Anton/.test(vitais.fonte) && vitais.tam >= 48 && vitais.rotulo === 'VIDA' && !vitais.falso,
+  /* Faixa da vida pela escala do prompt Treta Pop §2d: clamp(34px, 4vh, 44px). */
+  add('HU3', /Anton/.test(vitais.fonte) && vitais.tam >= 34 && vitais.tam <= 44 && vitais.rotulo === 'VIDA' && !vitais.falso,
     vitais.falso ? `número sem dado no cliente aparece no HUD: "${vitais.falso}"` : `vida em ${vitais.fonte.split(',')[0]} ${vitais.tam}px, rótulo "${vitais.rotulo}"`);
 
   const mun = await p.evaluate(() => {

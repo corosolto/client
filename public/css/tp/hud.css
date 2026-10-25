@@ -23,7 +23,7 @@
 :root[data-ui="v3"] #score-e{background:var(--tp-esq);border-radius:8px 0 0 8px}
 :root[data-ui="v3"] #score-b{background:var(--tp-dir);border-radius:0 8px 8px 0}
 :root[data-ui="v3"] #hud-top .team-score .ts-crest{display:none}
-:root[data-ui="v3"] #hud-top .team-score b{font:400 38px/1 var(--tp-display);color:var(--tp-tinta-1);text-shadow:none;-webkit-text-stroke:0}
+:root[data-ui="v3"] #hud-top .team-score b{font:400 var(--tp-fs-placar)/1 var(--tp-display);color:var(--tp-tinta-1);text-shadow:none;-webkit-text-stroke:0}
 :root[data-ui="v3"] #hud-mid{height:52px;box-sizing:border-box;padding:0 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:rgba(9,7,4,.8)}
 :root[data-ui="v3"] #round-time{font:800 26px/1 var(--tp-num);font-variant-numeric:tabular-nums;letter-spacing:0;color:var(--tp-tinta-1);-webkit-text-stroke:0;text-shadow:none}
@@ -31,7 +31,7 @@
 :root[data-ui="v3"] #rounds-row{margin-top:3px;font:800 11px/1 var(--tp-ui);letter-spacing:.14em;color:var(--tp-tinta-2);text-shadow:none;white-space:nowrap}
 
 /* ---------- abate múltiplo e número de dano ---------- */
-:root[data-ui="v3"] #mk-banner{top:92px;font:400 54px/1 var(--tp-display);letter-spacing:.01em;text-transform:uppercase;color:var(--tp-ambar);
+:root[data-ui="v3"] #mk-banner{top:92px;font:400 var(--tp-fs-abate)/1 var(--tp-display);letter-spacing:.01em;text-transform:uppercase;color:var(--tp-ambar);
   text-shadow:var(--tp-sombra);transform:var(--tp-skew) scale(calc(1 - .15 * var(--tp-mov)))}
 :root[data-ui="v3"] #mk-banner.show{letter-spacing:.01em;transform:var(--tp-skew)}
 :root[data-ui="v3"] .dmg-num{font-family:var(--tp-display);font-weight:400;color:var(--tp-ambar);text-shadow:var(--tp-sombra);-webkit-text-stroke:0}
@@ -67,7 +67,7 @@
 :root[data-ui="v3"] #hp-row{display:flex;align-items:baseline;gap:8px}
 :root[data-ui="v3"] #hp-row::before{content:'';width:22px;height:22px;flex:none;align-self:center;background:var(--tp-ganho);
   mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-8-5.3-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.7-8 11-8 11z'/%3E%3C/svg%3E") center/contain no-repeat}
-:root[data-ui="v3"] #hp-num{font:400 52px/.92 var(--tp-display);letter-spacing:.01em;color:var(--tp-tinta-1);text-shadow:var(--tp-sombra);-webkit-text-stroke:0}
+:root[data-ui="v3"] #hp-num{font:400 var(--tp-fs-vida)/.92 var(--tp-display);letter-spacing:.01em;color:var(--tp-tinta-1);text-shadow:var(--tp-sombra);-webkit-text-stroke:0}
 :root[data-ui="v3"] #hp-num::after{content:none}
 :root[data-ui="v3"] #hp-num.low{color:var(--tp-esq-claro)}
 .tp-hud-vida-rotulo{font:800 13px/1 var(--tp-ui);letter-spacing:.12em;color:var(--tp-tinta-2)}

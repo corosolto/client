@@ -3398,8 +3398,17 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
   /* multiplica todo deslocamento: 0 no movimento reduzido, e a troca vira só fade */
   --tp-mov:1;
   --tp-skew:skewX(-8deg);
+  /* Escala única de texto (prompt Treta Pop §2d, 25/10): um só texto grande por tela. */
+  --tp-fs-tela:clamp(28px,2.6vw,40px); --tp-fs-painel:clamp(18px,1.5vw,22px); --tp-fs-nome:clamp(22px,2vw,30px);
+  --tp-fs-jogar:clamp(36px,4.5vh,56px); --tp-fs-nick:clamp(36px,3.5vw,56px); --tp-fs-abate:clamp(32px,4vh,44px);
+  --tp-fs-municao:clamp(40px,4.5vh,54px); --tp-fs-vida:clamp(34px,4vh,44px); --tp-fs-placar:clamp(26px,3vh,32px);
+  --tp-fs-ui:15px; --tp-fs-texto:15px; --tp-fs-rotulo:12px; --tp-fs-num:14px;
   --tp-corte:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);
 }
+/* Abaixo de 1440 px os Anton descem um degrau e a interface fica em 14 px (nunca abaixo de 13). */
+@media (max-width:1439px){:root[data-ui="v3"]{
+  --tp-fs-tela:clamp(26px,2.4vw,34px); --tp-fs-painel:clamp(17px,1.4vw,20px); --tp-fs-nome:clamp(20px,1.8vw,26px);
+  --tp-fs-jogar:clamp(34px,4.2vh,48px); --tp-fs-nick:clamp(32px,3.2vw,46px); --tp-fs-ui:14px; --tp-fs-texto:14px}}
 :root[data-ui="v3"][data-home-ui="hub"] #main-menu{--font:var(--tp-ui)}
 /* o jogo herda 600 do body; o peso de interface do pacote é 500 */
 :root[data-ui="v3"] body{font-weight:500}
