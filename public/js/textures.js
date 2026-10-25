@@ -64,6 +64,8 @@ const ROUGHS = new WeakMap();
 const BY_SOURCE = new WeakMap();
 const MAX_DETAIL = 512;
 
+/* A luminância é computada uma vez por pixel: a closure antiga refazia a conta 6x por pixel e
+   comia 3.681 ms do boot. A conta é a MESMA — tools/sonda-sobel.mjs compara byte a byte. */
 function normalFromCanvas(src, strength) {
   const w = Math.min(src.width, MAX_DETAIL), h = Math.min(src.height, MAX_DETAIL);
   const tmp = canvas(w, h); const tctx = tmp.getContext('2d');
@@ -71,13 +73,18 @@ function normalFromCanvas(src, strength) {
   const s = tctx.getImageData(0, 0, w, h).data;
   const out = canvas(w, h), octx = out.getContext('2d');
   const img = octx.createImageData(w, h), d = img.data;
-  const L = (x, y) => { x = (x + w) % w; y = (y + h) % h; const i = (y * w + x) * 4; return (s[i] * 0.299 + s[i + 1] * 0.587 + s[i + 2] * 0.114) / 255; };
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const dx = (L(x + 1, y) - L(x - 1, y)) * strength;
-    const dy = (L(x, y + 1) - L(x, y - 1)) * strength;
-    const nx = -dx, ny = dy, nz = 1, l = Math.sqrt(nx * nx + ny * ny + 1);
-    const i = (y * w + x) * 4;
-    d[i] = (nx / l * 0.5 + 0.5) * 255; d[i + 1] = (ny / l * 0.5 + 0.5) * 255; d[i + 2] = (nz / l * 0.5 + 0.5) * 255; d[i + 3] = 255;
+  const lum = new Float64Array(w * h);
+  for (let p = 0, i = 0; p < lum.length; p++, i += 4) lum[p] = (s[i] * 0.299 + s[i + 1] * 0.587 + s[i + 2] * 0.114) / 255;
+  for (let y = 0; y < h; y++) {
+    const yAcima = (y === 0 ? h - 1 : y - 1) * w, yAbaixo = (y === h - 1 ? 0 : y + 1) * w, yAqui = y * w;
+    for (let x = 0; x < w; x++) {
+      const xEsq = x === 0 ? w - 1 : x - 1, xDir = x === w - 1 ? 0 : x + 1;
+      const dx = (lum[yAqui + xDir] - lum[yAqui + xEsq]) * strength;
+      const dy = (lum[yAbaixo + x] - lum[yAcima + x]) * strength;
+      const nx = -dx, ny = dy, nz = 1, l = Math.sqrt(nx * nx + ny * ny + 1);
+      const i = (yAqui + x) * 4;
+      d[i] = (nx / l * 0.5 + 0.5) * 255; d[i + 1] = (ny / l * 0.5 + 0.5) * 255; d[i + 2] = (nz / l * 0.5 + 0.5) * 255; d[i + 3] = 255;
+    }
   }
   octx.putImageData(img, 0, 0);
   return out;
@@ -560,11 +567,24 @@ export function initTextures() {
     ['or-quebrada-vive.jpg', 0.522], ['or-show-funk.jpg', 0.644],
   ];
   const _tl = new THREE.TextureLoader();
-  T.posterImgs = POSTER_FILES.map(([f]) => {
+  const _cartaz = (f) => {
     const t = _tl.load('posters/' + f);
     t.colorSpace = THREE.SRGBColorSpace;
     t.minFilter = THREE.LinearMipmapLinearFilter;
     return t;
+  };
+  /* Sob demanda como os decals: o custo segue o uso do mapa da sessão, em vez de os 24 descerem
+     no boot. O getter se troca pela textura na 1ª leitura — spread ou .map() acorda o pacote. */
+  T.posterImgs = [];
+  POSTER_FILES.forEach(([f], i) => {
+    Object.defineProperty(T.posterImgs, i, {
+      enumerable: true, configurable: true,
+      get() {
+        const t = _cartaz(f);
+        Object.defineProperty(T.posterImgs, i, { value: t, enumerable: true, configurable: true, writable: true });
+        return t;
+      },
+    });
   });
   /* Nome do arquivo por índice — a passada de grafite guarda NOME no layout assado
      (índice desliza quando alguém mexe no POSTER_FILES, e aí o mapa cola outro
@@ -580,15 +600,19 @@ export function initTextures() {
      a regra editorial (LICENSE, /sobre) proíbe pessoa real, então o "Zoi de Gato" vira
      personagem original. O dono pode trocar o ARQUIVO mantendo o nome e a vaga segue.
      Aspecto medido: 1408×768 = 1,8333. */
-  const _mural = (f) => {
-    const t = _tl.load('posters/' + f);
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.minFilter = THREE.LinearMipmapLinearFilter;
-    return t;
-  };
-  T.muralEternamente = _mural('mural-eternamente.jpg');  // "ETERNAMENTE EM NOSSOS CORAÇÕES"
-  T.muralLesteVive = _mural('mural-leste-vive.jpg');     // "DA LESTE VIVE"
-  // T.muralBilu = _mural('bilu.jpg');  // VHS do Bilu — esperando o arquivo do dono
+  /* Mesmo adiamento dos cartazes: os dois murais (799 KB) só têm vaga na Quebrada e no Piscinão.
+     Ler a propriedade É o pedido, então `if (T.muralEternamente)` segue verdadeiro. */
+  for (const [prop, arquivo] of [['muralEternamente', 'mural-eternamente.jpg'], ['muralLesteVive', 'mural-leste-vive.jpg']]) {
+    Object.defineProperty(T, prop, {
+      enumerable: true, configurable: true,
+      get() {
+        const t = _cartaz(arquivo);
+        Object.defineProperty(T, prop, { value: t, enumerable: true, configurable: true, writable: true });
+        return t;
+      },
+    });
+  }
+  // T.muralBilu — VHS do Bilu, esperando o arquivo do dono
 
   /* --- graffiti decals (public/img/decals) — elementos recortados com fundo
      transparente por `tools/gen-graffiti-decals.mjs` a partir de `references/graffiti/`.
