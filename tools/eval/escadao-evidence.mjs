@@ -219,7 +219,7 @@ try {
     // Decodifica os dois arquivos no mesmo navegador: arquivo ausente/corrompido
     // reprova. Apenas cancelamentos dessas imagens comprovadas são recuperáveis.
     const menuImages = await page.evaluate(async () => Promise.all(
-      ['/img/loading-1.webp', '/img/walls-3x2/wall-1.webp'].map(async path => {
+      ['/img/loading-20.webp', '/img/walls-3x2/wall-1.webp'].map(async path => {
         const img = new Image(); img.src = path; await img.decode();
         return { url: img.src, width: img.naturalWidth, height: img.naturalHeight };
       })));

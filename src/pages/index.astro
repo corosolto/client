@@ -90,7 +90,8 @@ const IMPORTMAP = JSON.stringify({
     var n = 1 + Math.floor(Math.random() * 19);
     document.documentElement.dataset.splashArte = String(n);
     var img = document.createElement('link');
-    img.rel = 'preload'; img.as = 'image'; img.href = '/img/loading-' + n + '.webp';
+    // slot n (1..19) -> arquivo loading-(n+19): URLs novas, imunes ao cache de borda do antigo loading-1..19
+    img.rel = 'preload'; img.as = 'image'; img.href = '/img/loading-' + (n + 19) + '.webp';
     document.head.appendChild(img);
   } catch (e) { /* URL inválida: segue no padrão Treta Pop */ }
 })();

@@ -525,11 +525,11 @@ let HOME_WALL_3X2 = wall3x2Url(0), SETUP_WALL_3X2 = wall3x2Url(1);
 // No hub o #menu-setup fica .open na home; o slot aplicado é quem diz qual arte está na tela.
 let _menuWallSlot = 0;
 // Splash e espera do mapa compartilham o lote loading-* do manifesto.
-const LOADING_WALLS = ['/img/loading-1.webp', '/img/loading-2.webp', '/img/loading-3.webp',
-  '/img/loading-4.webp', '/img/loading-5.webp', '/img/loading-6.webp', '/img/loading-7.webp',
-  '/img/loading-8.webp', '/img/loading-9.webp', '/img/loading-10.webp', '/img/loading-11.webp',
-  '/img/loading-12.webp', '/img/loading-13.webp', '/img/loading-14.webp', '/img/loading-15.webp',
-  '/img/loading-16.webp', '/img/loading-17.webp', '/img/loading-18.webp', '/img/loading-19.webp'];
+const LOADING_WALLS = ['/img/loading-20.webp', '/img/loading-21.webp', '/img/loading-22.webp',
+  '/img/loading-23.webp', '/img/loading-24.webp', '/img/loading-25.webp', '/img/loading-26.webp',
+  '/img/loading-27.webp', '/img/loading-28.webp', '/img/loading-29.webp', '/img/loading-30.webp',
+  '/img/loading-31.webp', '/img/loading-32.webp', '/img/loading-33.webp', '/img/loading-34.webp',
+  '/img/loading-35.webp', '/img/loading-36.webp', '/img/loading-37.webp', '/img/loading-38.webp'];
 let _loadWallI = 4;
 const loadingWallUrl = (i) => `url('${LOADING_WALLS[i % LOADING_WALLS.length]}')`;
 function applySplashWallpaper() {

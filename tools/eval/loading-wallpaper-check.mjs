@@ -53,7 +53,7 @@ for (const caso of casos) {
     await page.waitForSelector(`${selector}:not(.hidden)`, { timeout: 30000 });
     await page.evaluate(({ selector }) => {
       const el = document.querySelector(selector);
-      el.style.setProperty('--loading-wall', "url('/img/loading-1.webp')");
+      el.style.setProperty('--loading-wall', "url('/img/loading-20.webp')");
     }, { selector });
     await page.waitForTimeout(250);
 

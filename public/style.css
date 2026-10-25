@@ -3488,31 +3488,31 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
 :root[data-direct-route] #boot-splash{display:none!important}
 :root[data-ui="v3"] #boot-splash::before,:root[data-ui="v3"] #boot-splash>.splash-frame,:root[data-ui="v3"] #boot-splash>.splash-ver{display:none}
 :root[data-ui="v3"] #boot-splash::after{
-  background-image:linear-gradient(180deg,rgba(9,7,4,0) 50%,rgba(9,7,4,.85) 82%,rgba(9,7,4,.97) 100%),var(--tp-splash-arte,url('/img/loading-1.webp'));
+  background-image:linear-gradient(180deg,rgba(9,7,4,0) 50%,rgba(9,7,4,.85) 82%,rgba(9,7,4,.97) 100%),var(--tp-splash-arte,url('/img/loading-20.webp'));
   background-size:cover,var(--tp-splash-ajuste);background-position:center,var(--tp-splash-foco,10% 24%)}
 /* As 19 artes do splash são os wallpapers do elenco em 16:9 (1664×936, geradas dos mesmos
    masters que os wall-29..47 3:2 do menu). Todas trazem a marca CORO SOLTO no CANTO SUPERIOR
    ESQUERDO, então um único foco à esquerda (10% 24%) mantém o logo fora do corte do cover em
    3:2 (recorta as laterais) e em 844×390 (recorta topo/base). A régua SP9 confere as 19 × 4 telas. */
-:root[data-ui="v3"][data-splash-arte="1"]{--tp-splash-arte:url('/img/loading-1.webp')}
-:root[data-ui="v3"][data-splash-arte="2"]{--tp-splash-arte:url('/img/loading-2.webp')}
-:root[data-ui="v3"][data-splash-arte="3"]{--tp-splash-arte:url('/img/loading-3.webp')}
-:root[data-ui="v3"][data-splash-arte="4"]{--tp-splash-arte:url('/img/loading-4.webp')}
-:root[data-ui="v3"][data-splash-arte="5"]{--tp-splash-arte:url('/img/loading-5.webp')}
-:root[data-ui="v3"][data-splash-arte="6"]{--tp-splash-arte:url('/img/loading-6.webp')}
-:root[data-ui="v3"][data-splash-arte="7"]{--tp-splash-arte:url('/img/loading-7.webp')}
-:root[data-ui="v3"][data-splash-arte="8"]{--tp-splash-arte:url('/img/loading-8.webp')}
-:root[data-ui="v3"][data-splash-arte="9"]{--tp-splash-arte:url('/img/loading-9.webp')}
-:root[data-ui="v3"][data-splash-arte="10"]{--tp-splash-arte:url('/img/loading-10.webp')}
-:root[data-ui="v3"][data-splash-arte="11"]{--tp-splash-arte:url('/img/loading-11.webp')}
-:root[data-ui="v3"][data-splash-arte="12"]{--tp-splash-arte:url('/img/loading-12.webp')}
-:root[data-ui="v3"][data-splash-arte="13"]{--tp-splash-arte:url('/img/loading-13.webp')}
-:root[data-ui="v3"][data-splash-arte="14"]{--tp-splash-arte:url('/img/loading-14.webp')}
-:root[data-ui="v3"][data-splash-arte="15"]{--tp-splash-arte:url('/img/loading-15.webp')}
-:root[data-ui="v3"][data-splash-arte="16"]{--tp-splash-arte:url('/img/loading-16.webp')}
-:root[data-ui="v3"][data-splash-arte="17"]{--tp-splash-arte:url('/img/loading-17.webp')}
-:root[data-ui="v3"][data-splash-arte="18"]{--tp-splash-arte:url('/img/loading-18.webp')}
-:root[data-ui="v3"][data-splash-arte="19"]{--tp-splash-arte:url('/img/loading-19.webp')}
+:root[data-ui="v3"][data-splash-arte="1"]{--tp-splash-arte:url('/img/loading-20.webp')}
+:root[data-ui="v3"][data-splash-arte="2"]{--tp-splash-arte:url('/img/loading-21.webp')}
+:root[data-ui="v3"][data-splash-arte="3"]{--tp-splash-arte:url('/img/loading-22.webp')}
+:root[data-ui="v3"][data-splash-arte="4"]{--tp-splash-arte:url('/img/loading-23.webp')}
+:root[data-ui="v3"][data-splash-arte="5"]{--tp-splash-arte:url('/img/loading-24.webp')}
+:root[data-ui="v3"][data-splash-arte="6"]{--tp-splash-arte:url('/img/loading-25.webp')}
+:root[data-ui="v3"][data-splash-arte="7"]{--tp-splash-arte:url('/img/loading-26.webp')}
+:root[data-ui="v3"][data-splash-arte="8"]{--tp-splash-arte:url('/img/loading-27.webp')}
+:root[data-ui="v3"][data-splash-arte="9"]{--tp-splash-arte:url('/img/loading-28.webp')}
+:root[data-ui="v3"][data-splash-arte="10"]{--tp-splash-arte:url('/img/loading-29.webp')}
+:root[data-ui="v3"][data-splash-arte="11"]{--tp-splash-arte:url('/img/loading-30.webp')}
+:root[data-ui="v3"][data-splash-arte="12"]{--tp-splash-arte:url('/img/loading-31.webp')}
+:root[data-ui="v3"][data-splash-arte="13"]{--tp-splash-arte:url('/img/loading-32.webp')}
+:root[data-ui="v3"][data-splash-arte="14"]{--tp-splash-arte:url('/img/loading-33.webp')}
+:root[data-ui="v3"][data-splash-arte="15"]{--tp-splash-arte:url('/img/loading-34.webp')}
+:root[data-ui="v3"][data-splash-arte="16"]{--tp-splash-arte:url('/img/loading-35.webp')}
+:root[data-ui="v3"][data-splash-arte="17"]{--tp-splash-arte:url('/img/loading-36.webp')}
+:root[data-ui="v3"][data-splash-arte="18"]{--tp-splash-arte:url('/img/loading-37.webp')}
+:root[data-ui="v3"][data-splash-arte="19"]{--tp-splash-arte:url('/img/loading-38.webp')}
 :root[data-ui="v3"] .tp-splash{display:block;position:absolute;inset:0;z-index:2;color:var(--tp-tinta-1);font-family:var(--tp-ui)}
 .tp-splash__centro{position:absolute;left:50%;bottom:64px;width:min(640px,calc(100vw - 800px));display:flex;flex-direction:column;align-items:center;gap:16px;transform:translateX(-50%)}
 .tp-splash__progresso{width:100%;display:flex;flex-direction:column;gap:8px}
@@ -3560,7 +3560,7 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
 @media (max-width:1240px){.tp-splash__dica{display:none}.tp-splash__centro{width:min(640px,calc(100vw - 48px))}}
 @media (max-height:520px){
   /* em tela baixa o bloco sobe até a metade: o escuro tem que começar antes dele */
-  :root[data-ui="v3"] #boot-splash::after{background-image:linear-gradient(180deg,rgba(9,7,4,0) 15%,rgba(9,7,4,.82) 50%,rgba(9,7,4,.96) 100%),var(--tp-splash-arte,url('/img/loading-1.webp'))}
+  :root[data-ui="v3"] #boot-splash::after{background-image:linear-gradient(180deg,rgba(9,7,4,0) 15%,rgba(9,7,4,.82) 50%,rgba(9,7,4,.96) 100%),var(--tp-splash-arte,url('/img/loading-20.webp'))}
   .tp-splash__centro{bottom:20px;gap:10px}
   #tp-splash-jogar{height:60px;padding:0 32px;font-size:38px}
   .tp-splash__canto{right:16px;bottom:16px}

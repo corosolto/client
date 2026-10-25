@@ -31,6 +31,6 @@ A captura 5120×2880 verifica o enquadramento por cover; não é resolução nat
 - /img/wall-46.webp: Deputada da Tiara (julia-zanatta)
 - /img/wall-47.webp: Dona Floresta (marina-silva)
 
-loading-1..19: os mesmos 19 wallpapers do elenco em 16:9 (1664×936), gerados dos
+loading-20..38: os mesmos 19 wallpapers do elenco em 16:9 (1664×936), gerados dos
 mesmos masters e ancorados no topo para preservar a marca CORO SOLTO do canto
-superior esquerdo quando o cover corta a base.
+superior esquerdo. URLs novas (não loading-1..19) para a troca não ficar presa no cache de borda.
