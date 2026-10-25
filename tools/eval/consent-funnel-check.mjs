@@ -58,6 +58,8 @@ function mundo({ consentido = false, testMode = false, entrada = ENTRADA } = {})
     sendJsonKeepalive: (rota, corpo) => enviados.push({ rota, corpo }),
     fetch: async (url, opts) => { enviados.push({ rota: url.replace('https://api.mock', ''), corpo: JSON.parse(opts.body) }); return { ok: true, json: async () => ({ ok: true, stored: true }) }; },
     _sendPerf: () => {},
+    // Fila de marcos de boot/lobby (083): mora acima da região medida, aqui entra como mundo.
+    _marcos: new Set(), _marcosEnviados: new Set(), _funilPronto: false,
     URL, URLSearchParams, Object, JSON,
     navigator: { userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Mobile', platform: 'Linux armv8l', maxTouchPoints: 5 },
     TOUCH: true, screen: { width: 390, height: 844 }, innerWidth: 844, innerHeight: 390, devicePixelRatio: 3,

@@ -304,6 +304,43 @@ function _mkPhase(fillEl, pctEl, statusEl) {
   };
   _lstat.phase = ph; ph.set(0); return ph;
 }
+/* Marcos do funil moram aqui porque disparam antes do testMode existir (TDZ) e antes do
+   consentimento: ficam guardados e só saem quando os dois existem. Régua: funil-lobby-check. */
+const _marcos = new Set();
+const _marcosEnviados = new Set();
+let _funilPronto = false;
+function marcoFunil(step) { _marcos.add(step); if (_funilPronto) _flushMarcos(); }
+/* Conta só tempo de aba VISÍVEL: em segundo plano mediria "deixou a aba aberta", não "ficou no
+   lobby". Saída por pagehide/visibilitychange, o único sinal que o celular garante. */
+const LOBBY_MARCOS = [[30_000, 'lobby_30s'], [120_000, 'lobby_120s']];
+// `_lobbyDesde` é null quando o relógio está parado: 0 é um instante válido de performance.now().
+let _lobbyDesde = null, _lobbyMs = 0, _lobbyTimer = 0, _noLobby = false;
+function _lobbyVisivelMs() { return _lobbyMs + (_lobbyDesde === null ? 0 : performance.now() - _lobbyDesde); }
+function _lobbyAgenda() {
+  clearTimeout(_lobbyTimer); _lobbyTimer = 0;
+  if (!_noLobby || document.hidden) return;   // relógio parado; volta no visibilitychange
+  const alvo = LOBBY_MARCOS.find(([ms]) => _lobbyVisivelMs() < ms);
+  if (!alvo) return;
+  _lobbyTimer = setTimeout(() => { marcoFunil(alvo[1]); _lobbyAgenda(); }, alvo[0] - _lobbyVisivelMs());
+}
+function _lobbyEntrou() {   // passou da splash: o lobby está de fato na tela
+  if (_noLobby) return;
+  _noLobby = true;
+  if (!document.hidden) _lobbyDesde = performance.now();
+  _lobbyAgenda();
+}
+function _lobbySaiuPraPartida() { _noLobby = false; _lobbyDesde = null; clearTimeout(_lobbyTimer); _lobbyTimer = 0; }
+function _lobbyEscondeu() {
+  if (_lobbyDesde !== null) { _lobbyMs += performance.now() - _lobbyDesde; _lobbyDesde = null; }
+  clearTimeout(_lobbyTimer); _lobbyTimer = 0;
+  if (_noLobby) marcoFunil('lobby_exit');   // `_marcos` é Set: uma saída por sessão, não por aba escondida
+}
+addEventListener('pagehide', _lobbyEscondeu);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { _lobbyEscondeu(); return; }
+  if (_noLobby && _lobbyDesde === null) { _lobbyDesde = performance.now(); _lobbyAgenda(); }
+});
+
 // fase de boot: props do cenário 3D do menu (carrega por baixo da splash)
 const _bootPhase = _mkPhase(document.getElementById('boot-bar-fill'), document.getElementById('boot-pct'));
 let _splashReady = false;
@@ -311,8 +348,13 @@ let _splashReady = false;
    vazava para o item recém-focado e o JOGAR abria o submenu sozinho (régua ENTRADA1). */
 const ENTRADA_MS = 350;
 let _entradaEm = 0;
+let _splashPorFailsafe = false;
 function _splashSetReady() {
+  // Marco do funil: `assets_ready` é o caminho dos assets (menuBackdropReady), nunca o
+  // failsafe. splash_ready SEM assets_ready = o botão saiu por tempo, com a carga em pé.
+  if (!_splashPorFailsafe) marcoFunil('assets_ready');
   if (_splashReady) return; _splashReady = true;
+  marcoFunil('splash_ready');
   _bootPhase.set(1);
   if (_lstat.phase === _bootPhase) _lstat.phase = null;
   // G2-R10: o failsafe de 20s dispara DEPOIS da splash sair do DOM (debug/?auto= e
@@ -321,7 +363,8 @@ function _splashSetReady() {
   if (bs) bs.textContent = tr('ARENA PRONTA');
   if (se) se.classList.remove('hidden');
 }
-setTimeout(_splashSetReady, 20000);   // failsafe: nunca prende o jogador na splash
+// failsafe: nunca prende o jogador na splash. A bandeira separa "assets prontos" de "deu tempo".
+setTimeout(() => { _splashPorFailsafe = true; _splashSetReady(); _splashPorFailsafe = false; }, 20000);
 if (document.documentElement.dataset.ui === 'v3') {
   import('./splash-v3.js').then((m) => m.ligarSplashV3()).catch(() => {});
   import('./tp/ligar.js').then((m) => m.ligarTelas()).catch((e) => console.error('[treta-pop]', e));
@@ -714,6 +757,8 @@ function dismissSplash(e) {
   sp.classList.add('gone');
   window.__gameLaunch?.ready('entrada');
   contagem.evento('splash_enter');
+  marcoFunil('splash_enter');   // funil (084): o lobby ficou visível de verdade
+  _lobbyEntrou();               // e o relógio de permanência no lobby começa aqui
   setTimeout(() => sp.remove(), 480);
   setTimeout(focusMenu, 120);   // pós-splash: dá foco ao 1º botão pra ↑/↓ navegarem SEM precisar de Tab
   musicArmed = true;
@@ -1751,6 +1796,17 @@ function _funnelLand() {
   _landFuneled = true;
   _sendAcquisition();   // aquisição 1x por navegador (019)
   _funnel('land');      // funil: chegou (017)
+  _flushMarcos();       // marcos de boot já atingidos saem junto com o land (083)
+}
+/* Os marcos de boot/lobby esperam DUAS coisas: a telemetria existir (o `const testMode` acima)
+   e o consentimento. Enquanto faltar uma, ficam guardados em `_marcos` e não vão para a rede. */
+function _flushMarcos() {
+  if (!_funilPronto || !analyticsAllowed()) return;
+  for (const step of _marcos) {
+    if (_marcosEnviados.has(step)) continue;
+    _marcosEnviados.add(step);
+    _funnel(step);
+  }
 }
 addEventListener('cs-privacy-change', _funnelLand);
 // Convite de login (login-prompt.js) no mesmo pipeline do funil; o consentimento é conferido lá.
@@ -1759,6 +1815,8 @@ function _loginPromptTrack(step, data) {
   sendJsonKeepalive('/api/funnel', { step, ..._clientSessionContext(), ...data });
 }
 _funnelLand();
+_funilPronto = true;
+_flushMarcos();       // marcos atingidos durante o boot, se o consentimento já existia
 _sendPerf();          // perf de cliente 1x por sessão (018)
 // funil 'menu': 1ª interação real COM consentimento — o clique que consente não conta como uso.
 let _menuFuneled = false;
@@ -2016,6 +2074,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   telemetrySent = false;   // partida nova = uma linha nova de telemetria
   _matchEventSent = false;   // partida nova = um evento rico novo (feat/telemetria)
   _funnel('match_start', _tipoDaPartida());    // funil: começou a jogar (017), separado por tipo
+  _lobbySaiuPraPartida();    // funil (084): quem entrou em partida não é mais "parado no lobby"
   if (!continuaPartida) sendGameStarted();
   if (!continuaPartida) contagem.partidaIniciada({ map: currentMap, mode: matchMode, game: sessao ? 'mp' : 'sp' });
   retryPending();
