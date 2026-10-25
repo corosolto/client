@@ -553,6 +553,8 @@ const DICT = {
 
   // tp:hud
   'ABATES': 'KILLS', 'SEQUÊNCIA': 'STREAK', 'vivo': 'alive', 'morto': 'dead',
+  'pegar': 'pick up', 'câmera': 'camera', 'time': 'team', 'órbita': 'orbit', 'RECARREGAR': 'RELOAD',
+  '1ª PESSOA': '1ST PERSON', '3ª PESSOA': '3RD PERSON', 'OMBRO': 'SHOULDER', 'Comandos: somem em 60 s, voltam com ALT': 'Controls: hide after 60 s, back with ALT',
   'rádio': 'radio', 'placar': 'scoreboard', 'Ó O CARA ALI!': 'ENEMY THERE!', 'OLHA AQUI': 'LOOK HERE',
   'Você marcou um inimigo': 'You marked an enemy', 'Você marcou um ponto': 'You marked a spot',
   'CHAT DA SALA': 'ROOM CHAT', 'Filtrar mensagens': 'Filter messages', 'envia': 'send', 'time / sala': 'team / room', 'fecha': 'close',
@@ -783,6 +785,7 @@ const FRASES = {
   comeceTreta: { pt: () => 'Que comece a treta!', en: () => 'Let the fight begin!' },
   voltaTreta: { pt: () => 'De volta pra treta!', en: () => 'Back to the fight!' },
   rodadaDe: { pt: (a, b) => `RODADA ${a}/${b}`, en: (a, b) => `ROUND ${a}/${b}` },
+  abatesRotulo: { pt: (n) => (n === 1 ? 'ABATE' : 'ABATES'), en: (n) => (n === 1 ? 'KILL' : 'KILLS') },
   respawnEm: { pt: (s) => `Respawn em ${s}`, en: (s) => `Respawn in ${s}` },
   melhorDe5: { pt: () => 'MATA-MATA · 5 ROUNDS', en: () => 'DEATHMATCH · 5 ROUNDS' },
   melhorDeN: { pt: (n) => `MATA-MATA · ${n} ROUNDS`, en: (n) => `DEATHMATCH · ${n} ROUNDS` },
