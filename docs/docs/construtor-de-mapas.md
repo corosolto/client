@@ -77,6 +77,7 @@ provam que ela morde, e há a prova **dentro do motor**:
 ```bash
 npm run eval:mapjson        # R1 conexo · R2 bidirecional · R3 spawn jogável · R4 rampa subível
                             # (+ mutantes grafo/aresta/spawn/rampa/plataforma)
+node tools/eval/mapjson-check.mjs caminho/arena.json  # valida o JSON exportado
 npm run eval:mapjsonboot    # sobe a arena num Game REAL: relevo e bots navegando (+ mutante relevo)
 ```
 

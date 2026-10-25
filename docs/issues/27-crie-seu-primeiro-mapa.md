@@ -26,12 +26,13 @@ passa na régua do formato. Não exige tocar em `public/js/*.js`.
    o que corrigir (grafo desconexo, spawn fora da área, rampa íngreme demais).
 4. **Baixar .json** e salvar o arquivo no PR (em `docs/issues/exemplos/` ou anexado à
    descrição).
-5. Rode a régua do formato no arquivo exportado e cole a saída no PR.
+5. Rode `node tools/eval/mapjson-check.mjs caminho/arena.json` no arquivo
+   exportado e cole a saída no PR.
 
 ## Critério de aceite
 
 - [ ] O `.json` exportado existe no PR
-- [ ] `node tools/eval/mapjson-check.mjs` adaptado ao seu arquivo sai **verde** (grafo
+- [ ] `node tools/eval/mapjson-check.mjs caminho/arena.json` sai **verde** (grafo
       conexo, arestas bidirecionais, spawns na área jogável, rampas subíveis)
 - [ ] A arena é simétrica e, se CTF, tem 3+ bandeiras não colineares
 - [ ] Uma captura de tela do **Pré-ver 3D** do editor

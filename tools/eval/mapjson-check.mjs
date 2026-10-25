@@ -12,6 +12,7 @@
 
    Uso:
      node tools/eval/mapjson-check.mjs
+     node tools/eval/mapjson-check.mjs caminho/arena.json
      node tools/eval/mapjson-check.mjs --mutante=grafo      (grade partida ao meio)
      node tools/eval/mapjson-check.mjs --mutante=aresta     (aresta sem volta)
      node tools/eval/mapjson-check.mjs --mutante=spawn      (spawn fora dos limites)
@@ -22,12 +23,27 @@
    que ficar VERMELHA. Régua que passa no mutante não está medindo nada.
    ============================================================================ */
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { THREE, initTextures } from './harness.mjs';
 
 const { buildMapFromJSON, planFromJSON, validatePlan } = await import('../../public/js/map_json.js');
 
-const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const SPEC = JSON.parse(readFileSync(new URL('./mapjson_fixture.json', import.meta.url), 'utf8'));
+const args = process.argv.slice(2);
+const MUT = (args.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+const arquivos = args.filter((a) => !a.startsWith('--'));
+if (arquivos.length > 1 || args.some((a) => a.startsWith('--') && !a.startsWith('--mutante=')) || (MUT && arquivos.length)) {
+  console.error('Uso: node tools/eval/mapjson-check.mjs [caminho/arena.json | --mutante=nome]');
+  process.exit(2);
+}
+const alvo = arquivos.length ? resolve(arquivos[0]) : new URL('./mapjson_fixture.json', import.meta.url);
+const nome = arquivos.length ? arquivos[0] : 'fixture';
+let SPEC;
+try {
+  SPEC = JSON.parse(readFileSync(alvo, 'utf8'));
+} catch (e) {
+  console.error(`MJ VERMELHA · não foi possível ler ${nome}: ${e.message}`);
+  process.exit(2);
+}
 
 function planMutado() {
   if (MUT === 'grafo') {
@@ -63,7 +79,13 @@ function planMutado() {
   return plan;
 }
 
-const plan = planMutado();
+let plan;
+try {
+  plan = planMutado();
+} catch (e) {
+  console.error(`MJ VERMELHA · ${nome}: ${e.message}`);
+  process.exit(1);
+}
 const problemas = validatePlan(plan);
 
 // paridade do loader: o build real tem que devolver o contrato de world completo
@@ -91,5 +113,5 @@ if (MUT) {
   console.log(`MJ VERMELHA · mutante '${MUT}' passou — a régua NÃO morde`); process.exit(1);
 }
 
-if (problemas.length || buildErro) { console.log('MJ VERMELHA · fixture reprovado'); process.exit(1); }
-console.log('MJ ok · fixture válido e loader com contrato completo');
+if (problemas.length || buildErro) { console.log(`MJ VERMELHA · ${nome} reprovado`); process.exit(1); }
+console.log(`MJ ok · ${nome} válido e loader com contrato completo`);
