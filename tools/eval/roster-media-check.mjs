@@ -12,8 +12,8 @@ const wallpapers = JSON.parse(readFileSync('public/img/roster-wallpapers.json', 
 const failures = [];
 for (const path of spritesOnly ? [] : manifest.loading) {
   const meta = await sharp(`public${path}`).metadata();
-  const width = mutant === 'palhaco-3x2' && path.endsWith('loading-1.webp') ? 1536 : meta.width;
-  const height = mutant === 'palhaco-3x2' && path.endsWith('loading-1.webp') ? 1024 : meta.height;
+  const width = mutant === 'palhaco-3x2' && path.endsWith('loading-20.webp') ? 1536 : meta.width;
+  const height = mutant === 'palhaco-3x2' && path.endsWith('loading-20.webp') ? 1024 : meta.height;
   if (width * 9 !== height * 16) failures.push(`${path}: ${width}×${height}, exige 16:9`);
 }
 for (const { id } of roster) {

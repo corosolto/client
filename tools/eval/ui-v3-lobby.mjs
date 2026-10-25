@@ -65,7 +65,7 @@ const MUTANTES = {
   'sem-traducao': [/\/js\/i18n\.js/, (t) => t.replace("'ARMÁRIO': 'LOCKER',", '')],
   'arma-sem-skin': [/\/js\/main\.js/, (t) => t.replace('weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, preview: true', 'weaponId: arma.weaponId, weaponSkinId: null, preview: true')],
   'flag-vaza': [/\/js\/main\.js/, (t) => t.replace("if (document.documentElement.dataset.ui === 'v3') {\n  import('./splash-v3.js')", "if (true) {\n  import('./splash-v3.js')")],
-  'gire-sem-arte': [/\/css\/tp\/lobby\.css/, (t) => t.replace("url('/img/loading-1.webp') 30% 50%/cover", 'none')],
+  'gire-sem-arte': [/\/css\/tp\/lobby\.css/, (t) => t.replace("url('/img/loading-20.webp') 30% 50%/cover", 'none')],
   'mais-sem-feedback': [/\/js\/tp\/lobby\.js/, (t) => t.replace("{ id: 'feedback', rotulo: 'FEEDBACK', ir: () => abaDoHub('feedback') },", '')],
   'chip-sem-nome': [/\/css\/tp\/lobby\.css/, (t) => t.replace(':root[data-ui="v3"] #hub-footer-social .mf-social svg{display:block;width:15px;height:15px}', ':root[data-ui="v3"] #hub-footer-social .mf-social svg{display:none;width:15px;height:15px}')],
   'dois-limas': [/\/css\/tp\/lobby\.css/, (t) => t.replace('.tp-lobby-rede__opcao[aria-pressed="true"]{background:var(--tp-tinta-1)', '.tp-lobby-rede__opcao[aria-pressed="true"]{background:var(--tp-lima)')],

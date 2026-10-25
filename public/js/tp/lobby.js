@@ -263,7 +263,7 @@ function montarEsquerda(play) {
   novidades.id = 'tp-lobby-novidades';
   const capa = no('div', 'tp-lobby-novidades__capa');
   const img = no('img');
-  img.src = '/img/loading-3.webp'; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+  img.src = '/img/loading-22.webp'; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
   const titulo = no('span', 'tp-disp tp-lobby-novidades__titulo');
   titulo.appendChild(no('span', 'tp-ital', tr('O QUE MUDOU NA ARENA')));
   capa.append(img, no('span', 'tp-chip tp-chip--novo', tr('NOVIDADES')), titulo);

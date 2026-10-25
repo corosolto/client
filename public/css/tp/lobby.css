@@ -300,7 +300,7 @@
 :root[data-ui="v3"] #rotate-prompt .rot-ico{display:none}
 @media (orientation:portrait) and (pointer:coarse){
   :root[data-ui="v3"] #rotate-prompt{justify-content:flex-end;gap:0;padding:0 24px 56px;color:var(--tp-tinta-1);font:600 16px/1.4 var(--tp-ui);
-    background:linear-gradient(180deg,rgba(9,7,4,.3) 0%,rgba(9,7,4,.95) 60%),linear-gradient(rgba(9,7,4,.45),rgba(9,7,4,.45)),url('/img/loading-1.webp') 30% 50%/cover var(--tp-asfalto)}
+    background:linear-gradient(180deg,rgba(9,7,4,.3) 0%,rgba(9,7,4,.95) 60%),linear-gradient(rgba(9,7,4,.45),rgba(9,7,4,.45)),url('/img/loading-20.webp') 30% 50%/cover var(--tp-asfalto)}
   /* em v3 o lobby (aba JOGAR) também pede para girar; loja e comunidade seguem usáveis em pé (treta.css, social.css) */
   :root[data-ui="v3"] body:has(#main-menu:not(.hidden)[data-hub-tab="jogar"]) #rotate-prompt{display:flex}
 }
