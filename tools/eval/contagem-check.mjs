@@ -32,7 +32,7 @@ if (mut === 'com-cookie') fonte = troca(fonte, "keepalive: true, credentials: 'o
 if (mut === 'usa-storage') fonte = troca(fonte, 'const enviarDeVerdade = (corpo) => {', "const enviarDeVerdade = (corpo) => {\n  try { sessionStorage.setItem('cs_conta', '1'); } catch {}");
 if (mut === 'retenta') fonte = troca(fonte, '}).catch(() => {});\n};', '}).catch(() => setTimeout(() => enviarDeVerdade(corpo), 1000));\n};');
 if (mut === 'sem-gate-telemetria') main = troca(main, 'function sendTelemetry() {\n  if (!analyticsAllowed()) return;', 'function sendTelemetry() {');
-if (mut === 'sem-gate-funil') main = troca(main, 'function _funnel(step) {\n  if (!analyticsAllowed()) return;', 'function _funnel(step) {');
+if (mut === 'sem-gate-funil') main = troca(main, 'function _funnel(step, gameType = null) {\n  if (!analyticsAllowed()) return;', 'function _funnel(step, gameType = null) {');
 
 const falhas = [];
 const cobra = (ok, msg) => { if (!ok) falhas.push(msg); };
@@ -186,7 +186,7 @@ async function mundo({ webdriver = false, search = '', fetchFalha = false, agora
   cobra(/'count'/.test(apibase.slice(apibase.indexOf('const NO_BACKEND'), apibase.indexOf(']);'))) && !/'count'/.test(apibase.slice(apibase.indexOf('const VIA_SITE'), apibase.indexOf('const VIA_SITE') + 200)), 'CT9 /api/count tem de ir direto ao backend (NO_BACKEND, fora do VIA_SITE)');
 }
 { // CT10: o gate de consentimento antigo continua em cada função de telemetria por navegador
-  for (const f of ['function sendTelemetry() {', 'function sendGameStarted() {', 'function _pick(kind, key) {', 'function _picks(lote) {', 'function _funnel(step) {', 'async function _sendAcquisition() {', 'function _sendPerf() {', 'function sendMatchEvent(result) {', 'function sendTrainingFrames(blob) {']) {
+  for (const f of ['function sendTelemetry() {', 'function sendGameStarted() {', 'function _pick(kind, key) {', 'function _picks(lote) {', 'function _funnel(step, gameType = null) {', 'async function _sendAcquisition() {', 'function _sendPerf() {', 'function sendMatchEvent(result) {', 'function sendTrainingFrames(blob) {']) {
     const i = main.indexOf(f);
     const corpo = i < 0 ? '' : main.slice(i, i + 300);
     cobra(i >= 0 && /^[^\n]*\{\n(?:\s*\/\/[^\n]*\n)*\s*if \(!analyticsAllowed\(\)\) return;/.test(corpo), `CT10 gate de consentimento sumiu de ${f.replace(' {', '')}`);
