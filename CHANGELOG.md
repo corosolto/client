@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.125`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.126`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -149,6 +149,17 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.126] — 2026-10-25
+
+### Mudado
+- perf(boot): Sobel 6,9x, cartaz sob demanda e fauna fora do caminho critico (#1099)
+- feat(funil): marcos de boot e lobby, rotulo de aparelho (#1098)
+- feat(hud): HUD final da tela 05 e escala de texto Treta Pop (#1100)
+- Cobre o HUD final na régua do HUD v3
+- Fecha o HUD final da tela 05
+- Mostra rounds ganhos no placar do HUD v3
+- Adiciona a escala de texto da Treta Pop
 
 ## [2.1.0-alpha.125] — 2026-10-25
 
