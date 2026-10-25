@@ -1,0 +1,77 @@
+name: distribution-web-artifact
+
+on:
+  pull_request:
+    paths:
+      - 'tools/distribution-web/**'
+      - '.github/workflows/distribution-web.yml'
+      - 'docs/docs/distribuicao-web.md'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Orçamento obrigatório; generic gera candidato mesmo acima dos limites'
+        type: choice
+        options: [generic, itch, crazygames]
+        default: generic
+
+permissions:
+  contents: read
+
+concurrency:
+  group: distribution-web-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  package-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tools/distribution-web -p 'test_*.py' -v
+      - run: node --check tools/distribution-web/smoke.mjs
+  package-web:
+    if: github.event_name == 'workflow_dispatch'
+    needs: package-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Assets públicos
+        run: |
+          bash scripts/fetch-audio.sh
+          bash scripts/fetch-decals.sh
+          npm run strip:decalbg
+          npm run assert:assets
+      - name: Build existente
+        run: npm run build
+      - name: Pacote candidato
+        run: python3 tools/distribution-web/package.py build
+      - name: Integridade e orçamento solicitado
+        env:
+          PORTAL_PROFILE: ${{ inputs.profile }}
+        run: |
+          case "$PORTAL_PROFILE" in
+            generic) python3 tools/distribution-web/package.py verify ;;
+            itch|crazygames) python3 tools/distribution-web/package.py verify --require-profile "$PORTAL_PROFILE" ;;
+            *) exit 2 ;;
+          esac
+      - name: Artefatos para revisão
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: corosolto-web-${{ github.sha }}
+          path: |
+            dist/portal/corosolto-web.zip
+            dist/portal/manifest.json
+            dist/portal/report.json
+          if-no-files-found: error
+          retention-days: 3
