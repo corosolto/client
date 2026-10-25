@@ -26,10 +26,12 @@ Com o slot único de browser livre, rode a prova de subpasta em Chrome:
 
 ```bash
 ./tools/eval/with-browser-lock.sh node tools/distribution-web/smoke.mjs \
-  --site=dist/portal/site --out=dist/portal-smoke
+  --package=dist/portal --out=dist/portal-smoke
 ```
 
-A prova usa iframe em duas origens locais, recusa a máscara de assets na raiz,
+A prova verifica e extrai o ZIP para uma pasta temporária, registra seu SHA-256 e
+serve esses bytes. A pasta `site/` de staging não determina o resultado. Usa
+iframe em duas origens locais, recusa a máscara de assets na raiz,
 bloqueia rede externa e WebSockets, espera partida solo `live` e salva captura
 1200×800 com relatório. O gate exige zero erro de página e zero HTTP de asset
 falhando; `/api` é registrado à parte. Ela usa entrada `debug/auto` e não prova

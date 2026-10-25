@@ -1,10 +1,21 @@
 import http from 'node:http';
-import { readFile, mkdir, writeFile, stat } from 'node:fs/promises';
+import { readFile, mkdir, writeFile, stat, mkdtemp, rm } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { chromium } from 'playwright';
 
 const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
-if (!args.site || !args.out) throw Error('Use --site=dist/portal/site --out=dist/portal-smoke');
+if ((!args.site && !args.package) || (args.site && args.package) || !args.out) throw Error('Use --package=dist/portal --out=dist/portal-smoke; --site somente para baseline');
+let temporary, packageProof;
+if (args.package) {
+  temporary = await mkdtemp(path.join(tmpdir(), 'corosolto-portal-'));
+  args.site = path.join(temporary, 'site');
+  const result = spawnSync('python3', [fileURLToPath(new URL('./package.py', import.meta.url)), 'extract', '--output', path.resolve(args.package), '--extract-to', args.site], { encoding: 'utf8', timeout: 60000 });
+  if (result.status !== 0) { await rm(temporary, { recursive: true, force: true }); throw Error(result.stderr || 'ZIP não verificado'); }
+  packageProof = JSON.parse(result.stdout);
+}
 const site = path.resolve(args.site), out = path.resolve(args.out), prefix = '/html/12345/';
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.wasm': 'application/wasm', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.glb': 'model/gltf-binary' };
 const gameServer = http.createServer(async (req, res) => {
@@ -26,6 +37,7 @@ const hostServer = http.createServer((req, res) => {
 const host = await listen(hostServer);
 let browser;
 const report = { site, started_at: new Date().toISOString(), viewport: { width: 1200, height: 800 }, failures: [], page_errors: [], external_requests_blocked: 0, pass: false };
+report.package = packageProof ? { identity: packageProof.identity, archive: packageProof.archive } : null;
 await mkdir(out, { recursive: true });
 try {
   report.root_asset_status = (await fetch(game + '/js/main.js')).status;
@@ -66,6 +78,7 @@ try {
   await browser?.close();
   await Promise.all([new Promise(r => gameServer.close(r)), new Promise(r => hostServer.close(r))]);
   await writeFile(path.join(out, 'result.json'), JSON.stringify(report, null, 2) + '\n');
+  if (temporary) await rm(temporary, { recursive: true, force: true });
 }
 console.log(JSON.stringify({ pass: report.pass, game: report.game, root_asset_status: report.root_asset_status, failures: report.failures.length, error: report.error }));
 if (!report.pass) process.exitCode = 1;
