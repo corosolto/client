@@ -1566,11 +1566,16 @@ function _clientSessionContext() {
   };
 }
 // FUNIL (017): land → menu → match_start → match_end → quit. Converte "chegou a jogar?".
-function _funnel(step) {
+// Automação não é jogador: headless enchia `land` e achatava a conversão (dono, 25/10).
+const _automacao = () => { try { return navigator.webdriver === true; } catch { return false; } };
+/* O tipo da partida (083) vai explícito: telemetryGameContext só marca 'multiplayer', e o
+   funil precisa saber que o resto é solo para o painel separar as duas conversões. */
+function _funnel(step, gameType = null) {
   if (!analyticsAllowed()) return;
-  if (testMode) return;
-  sendJsonKeepalive('/api/funnel', { step, ..._clientSessionContext(), ...telemetryGameContext });
+  if (testMode || _automacao()) return;
+  sendJsonKeepalive('/api/funnel', { step, ..._clientSessionContext(), ...telemetryGameContext, ...(gameType ? { gameType } : {}) });
 }
+const _tipoDaPartida = () => (telemetryGameContext.gameType === 'multiplayer' ? 'multiplayer' : 'single_player');
 // AQUISIÇÃO (019): 1x por navegador. referrer vira host (URL inteira pode carregar query
 // sensível); UTM e ?ref= lidos da URL de entrada. first-touch-wins no servidor.
 // A origem fica só em memória até o consentimento: o menu reescreve a URL antes dele.
@@ -2012,7 +2017,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   submitted = false;
   telemetrySent = false;   // partida nova = uma linha nova de telemetria
   _matchEventSent = false;   // partida nova = um evento rico novo (feat/telemetria)
-  _funnel('match_start');    // funil: começou a jogar (017)
+  _funnel('match_start', _tipoDaPartida());    // funil: começou a jogar (017), separado por tipo
   if (!continuaPartida) sendGameStarted();
   if (!continuaPartida) contagem.partidaIniciada({ map: currentMap, mode: matchMode, game: sessao ? 'mp' : 'sp' });
   retryPending();
@@ -2099,7 +2104,7 @@ function quitToMenu() {
         character: game.playerCharId, seconds: Math.round(game.time || 0),
       } });
       sendMatchEvent('quit');   // evento rico: abandonou pelo menu (feat/telemetria, 016)
-      _funnel('quit');           // funil: saiu deliberado (017)
+      _funnel('quit', _tipoDaPartida());           // funil: saiu deliberado (017)
     }
   } catch {}
   switchMode = false;   // never carry an in-match team-switch into the menu
@@ -3529,7 +3534,7 @@ function partialPayload() {
 }
 addEventListener('beforeunload', (e) => {
   sendTelemetry();   // aba fechando no meio da partida ainda conta como tempo jogado
-  if (emPartida()) { sendMatchEvent('quit'); _funnel('quit'); }   // feat/telemetria
+  if (emPartida()) { sendMatchEvent('quit'); _funnel('quit', _tipoDaPartida()); }   // feat/telemetria
   const pl = partialPayload();
   if (pl) sendJsonKeepalive('/api/submit-match', pl);
   /* SEGUNDA CAMADA CONTRA O CTRL+W (relato do Daniel Diniz: *"quando fica muito tempo com
@@ -3580,7 +3585,7 @@ async function recordMatchStats(s) {
   submitted = true;
   sendTelemetry();   // ANTES do guard de nick lá embaixo: telemetria cobre quem não registrou
   sendMatchEvent(s?.won ? 'won' : 'lost');   // evento rico anônimo (feat/telemetria, 016)
-  _funnel('match_end');                        // funil: terminou (017)
+  _funnel('match_end', _tipoDaPartida());      // funil: terminou (017), separado por tipo
   contagem.partidaTerminada({ map: game?._mapId || currentMap, mode: game?.ctf ? 'ctf' : 'rounds', game: telemetryGameContext.gameType === 'multiplayer' ? 'mp' : 'sp' });
   const st = loadStats();
   const previousXp = playerXp(st);

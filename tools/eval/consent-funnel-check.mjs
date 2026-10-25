@@ -4,7 +4,7 @@
  * não registrava origem nem 'land', e a etapa 'menu' era consumida no clique que consentia.
  * Roda o código REAL de main.js (as duas regiões entre os marcadores) num vm com rede falsa.
  * Mutantes: --mutante=sem-listener | envia-antes | acq-antes | land-consumido | menu-consumido |
- * url-tardia | grava-antes | anon-antes | treta-sem-handoff
+ * url-tardia | grava-antes | anon-antes | treta-sem-handoff | conta-automacao | sem-tipo-no-funil
  * (cada um tem de ficar VERMELHO; `--fonte=arquivo` mede outra versão de main.js). */
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
@@ -21,7 +21,10 @@ const troca = (velho, novo) => {
 };
 if (mut === 'sem-listener') troca("addEventListener('cs-privacy-change', _funnelLand);", '');
 const semGateLand = () => troca('if (_landFuneled || !analyticsAllowed()) return;', 'if (_landFuneled) return;');
-if (mut === 'envia-antes') { semGateLand(); troca('function _funnel(step) {\n  if (!analyticsAllowed()) return;', 'function _funnel(step) {'); }
+if (mut === 'envia-antes') { semGateLand(); troca('function _funnel(step, gameType = null) {\n  if (!analyticsAllowed()) return;', 'function _funnel(step, gameType = null) {'); }
+// 083: automação fora do funil, e passo de partida leva o tipo.
+if (mut === 'conta-automacao') troca('if (testMode || _automacao()) return;', 'if (testMode) return;');
+if (mut === 'sem-tipo-no-funil') troca("_funnel('match_start', _tipoDaPartida());", "_funnel('match_start');");
 if (mut === 'acq-antes') { semGateLand(); troca('async function _sendAcquisition() {\n  if (!analyticsAllowed()) return;', 'async function _sendAcquisition() {'); }
 if (mut === 'land-consumido') semGateLand();
 if (mut === 'menu-consumido') troca('if (_menuFuneled || !_landFuneled || !analyticsAllowed()) return;', 'if (_menuFuneled) return;');
@@ -143,9 +146,22 @@ const cobra = (ok, msg) => { if (!ok) falhas.push(msg); };
   cobra(m.enviados.length === 0, `CF6 testMode enviou ${m.enviados.length} evento(s) após consentimento`);
 }
 
+/* CF7 — automação não entra no funil, e partida leva o tipo (pedido do dono, 25/10). */
+{
+  const temGuarda = main.includes('  if (testMode || _automacao()) return;');
+  cobra(temGuarda, 'CF7 _funnel não barra navegador de automação — headless infla `land` e achata a conversão');
+  cobra(/const _automacao = \(\) => \{ try \{ return navigator\.webdriver === true; \}/.test(main), 'CF7 a marca de automação não é o navigator.webdriver');
+  cobra(/\.\.\.\(gameType \? \{ gameType \} : \{\}\)/.test(main), 'CF7 o tipo da partida não sai no corpo do funil');
+  for (const passo of ["_funnel('match_start', _tipoDaPartida())", "_funnel('match_end', _tipoDaPartida())", "_funnel('quit', _tipoDaPartida())"]) {
+    cobra(main.includes(passo), `CF7 passo de partida sem tipo: falta ${passo}`);
+  }
+  cobra(/_tipoDaPartida = \(\) => \(telemetryGameContext\.gameType === 'multiplayer' \? 'multiplayer' : 'single_player'\)/.test(main), 'CF7 o tipo não sai do contexto real da partida');
+  cobra(!/_funnel\('land', |_funnel\('menu', /.test(main), 'CF7 land/menu não podem carregar tipo de partida');
+}
+
 if (falhas.length) {
   console.error(`consent funnel${mut ? ` [mutante ${mut}]` : ''}: ${falhas.length} FALHA(S)`);
   for (const f of falhas) console.error(`  ✗ ${f}`);
   process.exit(1);
 }
-console.log('consent funnel: CF1–CF6 verde (nada antes do consentimento, aquisição+land no consentimento tardio, menu só depois)');
+console.log('consent funnel: CF1–CF7 verde (nada antes do consentimento; land/menu no consentimento tardio; automação fora e tipo de partida no funil)');
