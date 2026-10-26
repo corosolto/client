@@ -870,9 +870,8 @@ export class Game {
       pos: new THREE.Vector3(), vel: new THREE.Vector3(),
       yaw: 0, pitch: 0, hp: 100, alive: true, respawnAt: 0, crouchF: 0,
       weapon: startWeapon, scoped: false, reloadUntil: 0, reloadWeapon: '', nextShotAt: 0, drawUntil: 0,
-      /* Janela do ARREMESSO (ver _throwNade): enquanto a mão é da granada, gatilho e recarga
-         ficam trancados. Sem ela o auto-fire do botão segurado disparava a arma POR CIMA da
-         animação da granada (relato do dono, 26/10/2026). */
+      // Janela do arremesso: trava gatilho e recarga enquanto a mão é da granada
+      // (docs/GRANADA-RECARGA-MORTE-2026-10-26.md §1; régua GRM1).
       nadeBusyUntil: 0,
       primary: startWeapon, secondary: 'pistol',
       ammo: Object.fromEntries(Object.keys(WEAPONS).filter(w => w !== 'knife').map(w => [w, { mag: WEAPONS[w].mag, res: WEAPONS[w].reserve }])),
@@ -3813,13 +3812,8 @@ export class Game {
     if (this.camView !== 'first') this.playerTP?.ctrl?.reload?.(WEAPONS[w].reload);
     this._reloadLayers(w, WEAPONS[w].reload);
   }
-  /* RECARGA ABORTADA — relógio, som, aviso e ANIMAÇÃO caem no MESMO quadro.
-     Relato do dono (26/10/2026): "quando equipa a granada durante a animação de reload, a
-     animação para/não volta e as balas são resetadas". O pacote pago manda a arma pro idle
-     assim que a granada ocupa a cena (authoredvm `holdUtility`), mas `reloadUntil` seguia
-     correndo por baixo: a recarga terminava sozinha, sem animação nenhuma, e as camadas de
-     som do pente caíam com a granada na mão. Agora granada e morte CANCELAM a recarga, como
-     no CS — quem interrompe recomeça do zero. Régua: granada-recarga-morte-check (GRM2). */
+  /* Recarga abortada: relógio, som, aviso e animação caem no MESMO quadro.
+     Granada e morte cancelam, como no CS (docs/GRANADA-RECARGA-MORTE §2; GRM2). */
   _cancelReload() {
     const p = this.player;
     if (!(p.reloadUntil > 0)) return false;
@@ -3832,13 +3826,8 @@ export class Game {
     this.playerTP?.ctrl?.cancelReload?.();   // 3P: o corpo para de mergulhar atrás do pente
     return true;
   }
-  /* MORRER PARA TUDO. Relato do dono (26/10/2026): "quando vc morre durante o reload ou
-     quando está preste a jogar a granada você finaliza a animação quando volta para base; em
-     teoria deveria parar tudo e voltar para a base sem fazer nenhuma animação".
-     Causa medida: `_updatePlayer` sai cedo com o jogador morto, então NINGUÉM avança o mixer
-     do pacote pago nem o relógio da recarga — os dois ficam CONGELADOS e descongelam no
-     respawn (a granada chegava a nascer no spawn, 1 s depois da morte: GRM4a). A vida acaba
-     junto com eles. */
+  /* Morto, o _updatePlayer sai cedo e congela mixer e relógio, que descongelavam na
+     base. A vida acaba junto com eles (docs/GRANADA-RECARGA-MORTE §3; GRM3/GRM4). */
   _abortarArmaNaMorte() {
     const p = this.player;
     this._cancelReload();
@@ -3850,10 +3839,8 @@ export class Game {
     this._applyVmVisibility();
     this._updateWeaponHud();
   }
-  /* VOLTAR PRA BASE SEM HERANÇA: o viewmodel renasce no idle e SACA a arma, em vez de
-     retomar o quadro congelado da recarga/arremesso que a morte interrompeu. Mesma receita
-     do início de round (_resetPositions): rig zerado + saque. Vale pro respawn local e pro
-     revive do servidor (netgame), que não passa pelo _respawnPlayer. */
+  /* Renasce no idle e SACA, em vez de retomar o quadro congelado da morte. Vale pro
+     respawn local e pro revive do servidor (netgame), que não passa pelo _respawnPlayer. */
   _voltarPraBase() {
     const w = this.player.weapon;
     this.vm.authored?.abortUtility?.();
@@ -3863,10 +3850,8 @@ export class Game {
     else if (this.vm.authored?.active(w)) this.vm.authored.draw(w, 0.38);
     else this.vm.rig?.startDraw?.();
   }
-  /* Quem a recarga serve quando o relógio vence: a arma que ENTROU na recarga, com a arma da
-     mão como retaguarda (netgame e bancada de QA marcam `reloadUntil` direto). Era um laço em
-     TODAS as chaves de `p.ammo` — uma recarga servia o arsenal inteiro de graça (relato do
-     dono: "troca para secundária... a primária faz o reload junto e está recarregada"). */
+  /* A recarga serve a arma que ENTROU nela, com a da mão como retaguarda (netgame e QA
+     marcam `reloadUntil` direto). Era um laço em todo o p.ammo: §4 do doc; GRM5. */
   _armasServidasPelaRecarga() {
     const p = this.player;
     const w = p.reloadWeapon && p.ammo[p.reloadWeapon] ? p.reloadWeapon : p.weapon;
@@ -3950,10 +3935,8 @@ export class Game {
       if (!continuo) this._throwNade(p.nade, p.nade === 'frag' ? 'frags' : 'smokes', 1);
       return;
     }
-    /* ARREMESSO EM VOO: a mão ainda é da granada. O relato "equipa a granada e antes de jogar
-       dispara a arma primária e aí sim joga a granada" é a ÚLTIMA granada — o porte cai no
-       mesmo quadro do arremesso (p.nade = null no _throwNade) e o auto-fire achava a arma
-       livre: 13 tiros antes da granada sair da mão (GRM1, granada-recarga-morte-check). */
+    /* Arremesso em voo: a mão ainda é da granada, o gatilho espera
+       (docs/GRANADA-RECARGA-MORTE-2026-10-26.md §1; régua GRM1). */
     if (this.time < (p.nadeBusyUntil || 0)) return;
     if (this.time < p.nextShotAt || this._reloading() || this.time < p.drawUntil) return;
     this._cancelInspect?.();

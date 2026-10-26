@@ -154,14 +154,8 @@ export function capSleeveOpenings(mesh) {
     const item = attr.itemSize;
     const arr = new attr.array.constructor((pos.count + extras.length) * item);
     const novo = new THREE.BufferAttribute(arr, item, attr.normalized);
-    /* CÓPIA PELO ACESSOR, NUNCA PELO ARRAY CRU. Os GLB golden vêm quantizados
-       (KHR_mesh_quantization): POSITION é Int16 NORMALIZADA. `getX` DESNORMALIZA (devolve
-       -0,8818) e escrever esse float direto no Int16Array truncava pra 0 — a manga inteira
-       colapsava num ponto (bbox 2,000 × 0,395 × 0,225 -> 0,00006 × 0 × 0) e o peso de pele
-       ia a zero. Era o "quando equipa a AK-47 o braço do personagem some, apenas nesta arma"
-       (dono, 26/10/2026): a AK é a única arma golden, logo a única que passa pela tampa.
-       `setX` normaliza de volta; attributo não-normalizado (skinIndex Uint8) passa igual.
-       Régua: manga-tampa-check.mjs (MT6/MT7, malha quantizada). */
+    /* Pelo ACESSOR, nunca pelo array cru: `getX` desnormaliza e o golden é quantizado
+       (Int16 normalizada), então o float truncava pra 0. §5 do doc de 26/10; MT6/MT7. */
     for (let i = 0; i < attr.count; i += 1) for (let c = 0; c < item; c += 1) novo[SET[c]](i, attr[GET[c]](i));
     extras.forEach((media, k) => {
       for (let c = 0; c < item; c += 1) novo[SET[c]](pos.count + k, media[nome][c]);

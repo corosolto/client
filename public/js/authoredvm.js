@@ -1041,11 +1041,8 @@ export class AuthoredViewModels {
   }
   utilityHeld() { return this.held?.kind || null; }
 
-  /* ABORTAR (morte/respawn) — diferente de `releaseUtility`, que GUARDA a granada e deixa o
-     arremesso em voo terminar. Aqui o arremesso MORRE: o `onRelease` pendente é descartado
-     (quem morreu não lança; sem isto a granada nascia no spawn, 1 s depois) e a cena volta
-     pra arma no mesmo quadro. Também solta a `utility` encalhada — com ela presa o próximo
-     `throwUtility` era recusado e o jogador ficava sem granada o resto da vida. */
+  /* Abortar (morte): o `releaseUtility` GUARDA e deixa o arremesso terminar; aqui ele morre,
+     com `onRelease` descartado e a `utility` solta (docs/GRANADA-RECARGA-MORTE §3). */
   abortUtility() {
     if (!this.utility && !this.held) return false;
     const entry = this.utility?.entry || this.held?.entry || null;
