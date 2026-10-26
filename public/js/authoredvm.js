@@ -1041,6 +1041,35 @@ export class AuthoredViewModels {
   }
   utilityHeld() { return this.held?.kind || null; }
 
+  /* ABORTAR (morte/respawn) — diferente de `releaseUtility`, que GUARDA a granada e deixa o
+     arremesso em voo terminar. Aqui o arremesso MORRE: o `onRelease` pendente é descartado
+     (quem morreu não lança; sem isto a granada nascia no spawn, 1 s depois) e a cena volta
+     pra arma no mesmo quadro. Também solta a `utility` encalhada — com ela presa o próximo
+     `throwUtility` era recusado e o jogador ficava sem granada o resto da vida. */
+  abortUtility() {
+    if (!this.utility && !this.held) return false;
+    const entry = this.utility?.entry || this.held?.entry || null;
+    this.utility = null;
+    this.held = null;
+    if (entry) {
+      entry.mount.visible = false;
+      this._idle(entry);
+    }
+    const weaponEntry = this.entry();
+    if (weaponEntry) {
+      weaponEntry.mount.visible = true;
+      this._idle(weaponEntry);
+    }
+    return true;
+  }
+
+  // Ação cancelada (recarga interrompida por granada/morte): a arma volta ao idle sem
+  // esperar o clipe terminar — senão a pose fica congelada no meio da recarga.
+  idleWeapon(id = this.weapon) {
+    const entry = this.entry(id);
+    return entry ? this._idle(entry, entry.mount.visible ? 0.12 : 0) : false;
+  }
+
   _sequence(entry, names, duration) {
     const total = names.reduce((sum, name) => sum + entry.clips.get(name).duration, 0);
     const timeScale = duration > 0 ? total / duration : 1;
