@@ -6,6 +6,7 @@ export const SLEEVE_MATERIAL = /CoroSolto_FP_Cloth/i;
 const MIN_LOOP = 8;
 const RINGS = 4;
 const GET = ['getX', 'getY', 'getZ', 'getW'];
+const SET = ['setX', 'setY', 'setZ', 'setW'];
 
 function weldKey(position, index) {
   return `${Math.round(position.getX(index) * 1e4)},${Math.round(position.getY(index) * 1e4)},${Math.round(position.getZ(index) * 1e4)}`;
@@ -152,11 +153,19 @@ export function capSleeveOpenings(mesh) {
     const attr = geo.attributes[nome];
     const item = attr.itemSize;
     const arr = new attr.array.constructor((pos.count + extras.length) * item);
-    for (let i = 0; i < attr.count; i += 1) for (let c = 0; c < item; c += 1) arr[i * item + c] = attr[GET[c]](i);
-    extras.forEach((media, k) => {
-      for (let c = 0; c < item; c += 1) arr[(pos.count + k) * item + c] = media[nome][c];
-    });
     const novo = new THREE.BufferAttribute(arr, item, attr.normalized);
+    /* CÓPIA PELO ACESSOR, NUNCA PELO ARRAY CRU. Os GLB golden vêm quantizados
+       (KHR_mesh_quantization): POSITION é Int16 NORMALIZADA. `getX` DESNORMALIZA (devolve
+       -0,8818) e escrever esse float direto no Int16Array truncava pra 0 — a manga inteira
+       colapsava num ponto (bbox 2,000 × 0,395 × 0,225 -> 0,00006 × 0 × 0) e o peso de pele
+       ia a zero. Era o "quando equipa a AK-47 o braço do personagem some, apenas nesta arma"
+       (dono, 26/10/2026): a AK é a única arma golden, logo a única que passa pela tampa.
+       `setX` normaliza de volta; attributo não-normalizado (skinIndex Uint8) passa igual.
+       Régua: manga-tampa-check.mjs (MT6/MT7, malha quantizada). */
+    for (let i = 0; i < attr.count; i += 1) for (let c = 0; c < item; c += 1) novo[SET[c]](i, attr[GET[c]](i));
+    extras.forEach((media, k) => {
+      for (let c = 0; c < item; c += 1) novo[SET[c]](pos.count + k, media[nome][c]);
+    });
     geo.setAttribute(nome, novo);
   }
   const indices = antigos
