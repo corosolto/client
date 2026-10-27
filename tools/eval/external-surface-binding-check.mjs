@@ -10,15 +10,17 @@ const extract = source => {
 };
 const extractRepetido = source => source.match(/const repetido = (\(base, rx, ry\) => \{[\s\S]*?\n  \});/)?.[1] || null;
 
-function measure(body, { details, detalhe = null, roughness = .9, metalness = 0, deriva = false } = {}) {
+function measure(body, { details, detalhe = null, roughness = .9, metalness = 0, deriva = false, relevo } = {}) {
   const callbacks = [], tex = new THREE.Texture({ width: 4, height: 4 }), fallback = new THREE.Texture();
+  tex.anisotropy = 8;
   const registros = [], registerDetail = (t, img) => registros.push([t, img]);
   const oldNormal = new THREE.Texture(), oldRough = new THREE.Texture();
   const loader = { load(_url, onLoad) { callbacks.push(onLoad); return tex; } };
-  const external = new Function('loader', 'detailFor', 'THREE', 'registerDetail', 'RELEVO_WEBP', `return (${body})`)(loader, () => details, THREE, registerDetail, true);
+  const fonteRelevo = img => img;   // imagem 4x4 do teste: menor que qualquer resolução de Sobel
+  const external = new Function('loader', 'detailFor', 'THREE', 'registerDetail', 'RELEVO_WEBP', 'fonteRelevo', `return (${body})`)(loader, () => details, THREE, registerDetail, true, fonteRelevo);
   const mat = new THREE.MeshStandardMaterial({ map: fallback, normalMap: oldNormal, roughnessMap: oldRough, roughness, metalness });
   if (detalhe) mat.userData.detalhe = detalhe;
-  external(mat, '/img/textures/probe.webp', 4, 3);
+  external(mat, '/img/textures/probe.webp', 4, 3, ...(relevo ? [relevo] : []));
   const fallbackHeld = mat.map === fallback && mat.normalMap === oldNormal && mat.roughnessMap === oldRough;
   if (callbacks.length !== 1) throw Error('callback ausente ou duplicado');
   callbacks[0]();
@@ -27,7 +29,9 @@ function measure(body, { details, detalhe = null, roughness = .9, metalness = 0,
     fallbackHeld, albedo: mat.map === tex,
     normal: mat.normalMap === (ef?.normalMap || null),
     roughness: mat.roughnessMap === (ef?.roughnessMap || null),
-    mineralScale: !ef?.normalMap || roughness < .8 || metalness >= .2 || mat.normalScale.toArray().every(v => v === .4),
+    mineralScale: !ef?.normalMap || roughness < .8 || metalness >= .2 || mat.normalScale.toArray().every(v => v === (relevo?.[3] ?? .4)),
+    // relevo calibrado: normal com a mesma anisotropia do albedo, senão borra no chão rasante
+    anisotropia: !deriva || !ef?.normalMap || mat.normalMap.anisotropy === tex.anisotropy,
     sampler: tex.repeat.equals(new THREE.Vector2(4, 3)) && tex.colorSpace === THREE.SRGBColorSpace && tex.wrapS === THREE.RepeatWrapping && tex.wrapT === THREE.RepeatWrapping,
     upload: mat.version > 0,
     // webp sem detalhe registrado: o relevo tem de ser derivado da imagem que chegou
@@ -66,7 +70,8 @@ function measureClone(body, repetidoBody, { details = null, detalhe = null } = {
 
 function check(body, repetidoBody, deriva = false) {
   const variants = [null, { normalMap: new THREE.Texture(), roughnessMap: new THREE.Texture() }, { normalMap: null, roughnessMap: new THREE.Texture() }];
-  const cases = variants.map(details => measure(body, { details, deriva }));
+  const calibrado = deriva ? variants.map(details => measure(body, { details, deriva, relevo: [2.0, .66, .99, 3.2] })) : [];
+  const cases = [...variants.map(details => measure(body, { details, deriva })), ...calibrado];
   if (!repetidoBody) return { cases, clones: null };
   const clones = [
     measureClone(body, repetidoBody, { detalhe: { normalMap: new THREE.Texture(), roughnessMap: new THREE.Texture() } }),
@@ -106,6 +111,8 @@ for (const file of files) {
       cloneSamplerDaBase: repetidoBody && body.includes('c.map.repeat.copy(c.userData.baseRepeat);') ? replaceOnce(body, 'c.map.repeat.copy(c.userData.baseRepeat);', 'c.map.repeat.copy(tex.repeat);', 'cloneSamplerDaBase') : null,
       cloneDerivadoStale: repetidoBody && body.includes('c.normalMap = cd.normalMap || null;') ? replaceOnce(body, 'c.normalMap = cd.normalMap || null;', 'c.normalMap = c.normalMap;', 'cloneDerivadoStale') : null,
       semRelevo: deriva ? replaceOnce(body, /if \(RELEVO_WEBP[^\n]*\n/, '', 'semRelevo') : null,
+      escalaIgnorada: deriva ? replaceOnce(body, 'escala ??', 'undefined ??', 'escalaIgnorada') : null,
+      semAnisotropia: deriva ? replaceOnce(body, /mat\.normalMap\.anisotropy = [^;]+;/, '', 'semAnisotropia') : null,
     };
     for (const [name, mutado] of Object.entries(mutantes)) {
       if (mutado === null) continue;

@@ -252,14 +252,27 @@ export function buildEscadao(scene, T) {
     // O webp não passa pelo textures.js: sem derivar o relevo DELE, detailFor devolve null e
     // o chão perde normal+roughness quando a textura chega. ?escrelevo=0 volta ao liso.
     const RELEVO_WEBP = QP.get('escrelevo') !== '0';
+    // Sobel numa cópia reduzida: a ondulação do zinco é larga e some no Sobel de vizinho a 512.
+    const fonteRelevo = (img, res) => {
+      if (!res || !(img.width > res)) return img;
+      const c = document.createElement('canvas'); c.width = c.height = res;
+      c.getContext('2d').drawImage(img, 0, 0, res, res);
+      return c;
+    };
+    // relevo = [força Sobel, rough lo, rough hi, normalScale, resolução do Sobel]
     const external = (mat, url, rx, ry, relevo = [2.2, .6, .98]) => {
+      const [forca, lo, hi, escala, res] = relevo;
       const tex = loader.load(url, () => {
         mat.map = tex;
-        if (RELEVO_WEBP && tex.image && !detailFor(tex)) registerDetail(tex, tex.image, ...relevo);
+        if (RELEVO_WEBP && tex.image && !detailFor(tex)) registerDetail(tex, fonteRelevo(tex.image, res), forca, lo, hi);
         const det = detailFor(tex);
         mat.normalMap = det?.normalMap || null;
         mat.roughnessMap = det?.roughnessMap || null;
-        if (mat.normalMap) { const scale = mat.roughness >= .8 && mat.metalness < .2 ? .4 : .65; mat.normalScale.set(scale, scale); }
+        if (mat.normalMap) {
+          const scale = escala ?? (mat.roughness >= .8 && mat.metalness < .2 ? .4 : .65);
+          mat.normalScale.set(scale, scale);
+          mat.normalMap.anisotropy = tex.anisotropy;   // sem isso o relevo borra no chão rasante
+        }
         mat.userData?.onExternalTex?.(tex);
         mat.needsUpdate = true;
       });
@@ -268,10 +281,14 @@ export function buildEscadao(scene, T) {
       tex.repeat.set(rx, ry);
     };
     // Mesmos parâmetros do procedural de textures.js; zinco com rough perto de 1 para não lustrar.
-    external(MAT.asphalt, '/img/textures/asphalt_br.webp', 6, 6, [2.0, .66, .99]);
-    external(MAT.concrete, '/img/textures/concrete_br.webp', 4, 4, [2.4, .58, .97]);
-    external(MAT.concreteDark, '/img/textures/concrete_br.webp', 5, 5, [2.4, .60, .98]);
-    external(MAT_ZINCO, '/img/textures/tex_zinco.webp', 3, 3, [1.8, .85, 1.0]);
+    // Intensidade calibrada com sol rasante e sem grão:
+    // com .4/.65 o ganho de contraste local (sd L* 8x8) contra ?escrelevo=0 era +1 a +2 %, invisível.
+    // Escolhido o menor valor com >= +15 % em toda vista ao sol, sem pixel quase branco a mais:
+    // asfalto 3,2 (+16 a +29 %), concreto 2,4 (+18 %), zinco 1,0 com Sobel a 128 (+19 a +36 %).
+    external(MAT.asphalt, '/img/textures/asphalt_br.webp', 6, 6, [2.0, .66, .99, 3.2]);
+    external(MAT.concrete, '/img/textures/concrete_br.webp', 4, 4, [2.4, .58, .97, 2.4]);
+    external(MAT.concreteDark, '/img/textures/concrete_br.webp', 5, 5, [2.4, .60, .98, 2.4]);
+    external(MAT_ZINCO, '/img/textures/tex_zinco.webp', 3, 3, [1.8, .85, 1.0, 1.0, 128]);
 
   }
 
