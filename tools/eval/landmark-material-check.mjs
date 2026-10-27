@@ -22,6 +22,11 @@ if (process.argv.includes('--mutante=caixacubo')) {
   escadao = escadao.replace(/propAt\('caixa_dagua'[^;]+;/, '/* mutante: caixa preta procedural */');
   if (escadao === before) throw new Error('MUTANTE caixacubo não aplicou');
 }
+if (process.argv.includes('--mutante=caixapreta')) {
+  const before = escadao;
+  escadao = escadao.replace(/(propAt\('caixa_dagua'[^;]*?color: )0x[0-9a-f]{6}/i, '$10x1a1a1a');
+  if (escadao === before) throw new Error('MUTANTE caixapreta não aplicou');
+}
 const palaceBlock = src.match(/const b = placeProp\('palacio'[\s\S]*?occBox\([\s\S]*?'palacio'\);/)?.[0] || '';
 const preserva = palaceBlock.length > 0 && !/dressGLB\(b,/.test(palaceBlock);
 
@@ -34,6 +39,13 @@ const pbr = prims.length > 0 && prims.every((p) => {
 });
 const caixaRegistrada = /ESCADAO_PROPS\s*=\s*\[[\s\S]*?'caixa_dagua'/.test(escadao);
 const caixaUsada = /propAt\('caixa_dagua'\s*,\s*-12\s*,\s*-32/.test(escadao);
+/* Fallback do GLB: proxy preto (0x1a1a1a) virava um cubo de breu no mirante. Tem de ser
+   azul de polietileno: canal B dominante e luminância relativa >= 0,10. */
+const proxyHex = escadao.match(/propAt\('caixa_dagua'[^;]*?color: (0x[0-9a-f]{6})/i)?.[1];
+const proxyRgb = proxyHex ? [16, 8, 0].map((sh) => ((parseInt(proxyHex, 16) >> sh) & 255) / 255) : [0, 0, 0];
+const lin = (c) => (c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4);
+const proxyLum = .2126 * lin(proxyRgb[0]) + .7152 * lin(proxyRgb[1]) + .0722 * lin(proxyRgb[2]);
+const proxyAzul = !!proxyHex && proxyRgb[2] > proxyRgb[0] && proxyRgb[2] > proxyRgb[1] && proxyLum >= .10;
 const caixaDoc = await io.read(path.join(root, 'public/models/props/caixa_dagua.glb'));
 const caixaRoot = caixaDoc.getRoot();
 const caixaPrims = caixaRoot.listMeshes().flatMap((m) => m.listPrimitives());
@@ -53,4 +65,5 @@ console.log(`${pbr ? 'PASSA' : 'FALHA'} LANDMARK2 palacio.glb tem albedo+normal+
 console.log(`${caixaRegistrada && caixaUsada ? 'PASSA' : 'FALHA'} LANDMARK3 Escadão usa caixa_dagua GLB no lugar do cubo (${caixaRegistrada ? 'preload' : 'sem preload'}, ${caixaUsada ? 'propAt' : 'sem propAt'})`);
 console.log(`${caixaPbr ? 'PASSA' : 'FALHA'} LANDMARK4 caixa_dagua.glb preserva albedo+normal+metal/rough`);
 console.log(`${caixaBudget ? 'PASSA' : 'FALHA'} LANDMARK5 caixa d'água no orçamento (${caixaTris} tris, textura ${caixaTexMax}²; tetos 90000/1024)`);
-if (!preserva || !pbr || !caixaRegistrada || !caixaUsada || !caixaPbr || !caixaBudget) process.exitCode = 1;
+console.log(`${proxyAzul ? 'PASSA' : 'FALHA'} LANDMARK6 proxy da caixa d'água é azul, não preto (${proxyHex || 'sem cor'}, L ${proxyLum.toFixed(3)})`);
+if (!preserva || !pbr || !caixaRegistrada || !caixaUsada || !caixaPbr || !caixaBudget || !proxyAzul) process.exitCode = 1;

@@ -776,8 +776,9 @@ export function buildEscadao(scene, T) {
   /* ===================== TOPO (mirante) =====================
      Spawn B precisa de cobertura contra tiros da escada. */
   // Caixa d'água Tripo PBR: o proxy mantém o mesmo cover e é fallback se o GLB não carrega.
+  // Fallback azul de polietileno (não preto): sem GLB, ainda lê como caixa d'água.
   propAt('caixa_dagua', -12, -32, 3.0, 2.5, 2.5,
-    lam({ color: 0x1a1a1a, roughness: 0.8 }), 0, H_TOP);
+    lam({ color: 0x2f6fa8, roughness: 0.6 }), 0, H_TOP);
   /* Varais reais do acervo: roupa é silhueta leve no horizonte, nunca cover nem occluder. */
   const varal = (id, x, z, h, ry = 0, y = H_TOP) => {
     const o = GLB_ON ? placeProp(id, { x, y, z, targetH: h, ry }) : null;
