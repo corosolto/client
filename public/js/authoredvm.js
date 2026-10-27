@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-import { authoredFrameFor, VM_FAMILY, VM_WEAPON, VM_FABRICA } from './data/vmconfig.js';
+import { adsEfetivo, authoredFrameFor, VM_FAMILY, VM_WEAPON, VM_FABRICA } from './data/vmconfig.js';
 import { VM_RUNTIME } from './vmlaunch.js';
 import { GOLDEN_VER } from './data/goldenver.js';
 import { FAMILY_VER } from './data/weaponver.js';
@@ -87,6 +87,8 @@ const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
 // Revisão: ?vmgolden=ak serve a golden da arma sem mexer no `golden` do vmconfig.
 const GOLDEN_QS = new Set((_QS?.get('vmgolden') || '').split(',').filter((w) => GOLDEN_VER[w]));
 const GOLDEN_ADS = AUTHORED_VM_ENABLED && _QS?.get('vmgoldenads') !== '0';
+// ADS 1P pela linha de mira (adsEfetivo em vmconfig.js); ?ads1pfix=0 volta ao foco.
+const ADS1P_FIX = _QS?.get('ads1pfix') !== '0';
 
 // Fail-closed: sem a chave (ou revisão) tudo permanece no legado; `vmready`/`vmweapon`
 // só abrem armas numa sessão de revisão.
@@ -593,7 +595,7 @@ export class AuthoredViewModels {
       this._applyWeaponSkin(entry, entry.mint?.weaponId || bakedWeapon);
       // AK golden: ADS pela alça e massa medidas na malha (sonda-golden.mjs), fora de sockets/mint
       // para boca, flash e quadril seguirem os aprovados (VM-FABRICA §8.3).
-      const mira = golden && GOLDEN_ADS && VM_WEAPON[bakedWeapon]?.ads?.golden;
+      const mira = golden && GOLDEN_ADS && adsEfetivo(VM_WEAPON[bakedWeapon]?.ads, ADS1P_FIX)?.golden;
       if (mira) {
         const osso = visual.scene.getObjectByName(mira.osso);
         if (osso) {
@@ -756,7 +758,7 @@ export class AuthoredViewModels {
     // ADS (M6): o CANO fica colinear com o eixo óptico (rotação do mount) e só
     // então a alça MEDIDA desliza ao centro — não um ponto cruzando em diagonal.
     const ads = this.adsAmount;
-    const adsConfig = cfgArma(this.weapon)?.ads;
+    const adsConfig = adsEfetivo(cfgArma(this.weapon)?.ads, ADS1P_FIX);
     const wrap = active.mint?.active || active.adsSockets?.sight;
     if (ads > 0.001 && adsConfig && wrap) {
       if (adsConfig.auto) {
