@@ -8,7 +8,7 @@ import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';
-import { detailFor } from './textures.js';
+import { detailFor, registerDetail } from './textures.js';
 import { planoUV, metrosPorUV } from './map_uv.js';
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
@@ -249,9 +249,13 @@ export function buildEscadao(scene, T) {
   // branca em erro; trocar só no onLoad evita que falha de asset apague a superfície.
   if (typeof document !== 'undefined') {
     const loader = new THREE.TextureLoader();
-    const external = (mat, url, rx, ry) => {
+    // O webp não passa pelo textures.js: sem derivar o relevo DELE, detailFor devolve null e
+    // o chão perde normal+roughness quando a textura chega. ?escrelevo=0 volta ao liso.
+    const RELEVO_WEBP = QP.get('escrelevo') !== '0';
+    const external = (mat, url, rx, ry, relevo = [2.2, .6, .98]) => {
       const tex = loader.load(url, () => {
         mat.map = tex;
+        if (RELEVO_WEBP && tex.image && !detailFor(tex)) registerDetail(tex, tex.image, ...relevo);
         const det = detailFor(tex);
         mat.normalMap = det?.normalMap || null;
         mat.roughnessMap = det?.roughnessMap || null;
@@ -263,10 +267,11 @@ export function buildEscadao(scene, T) {
       tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
       tex.repeat.set(rx, ry);
     };
-    external(MAT.asphalt, '/img/textures/asphalt_br.webp', 6, 6);
-    external(MAT.concrete, '/img/textures/concrete_br.webp', 4, 4);
-    external(MAT.concreteDark, '/img/textures/concrete_br.webp', 5, 5);
-    external(MAT_ZINCO, '/img/textures/tex_zinco.webp', 3, 3);
+    // Mesmos parâmetros do procedural de textures.js; zinco com rough perto de 1 para não lustrar.
+    external(MAT.asphalt, '/img/textures/asphalt_br.webp', 6, 6, [2.0, .66, .99]);
+    external(MAT.concrete, '/img/textures/concrete_br.webp', 4, 4, [2.4, .58, .97]);
+    external(MAT.concreteDark, '/img/textures/concrete_br.webp', 5, 5, [2.4, .60, .98]);
+    external(MAT_ZINCO, '/img/textures/tex_zinco.webp', 3, 3, [1.8, .85, 1.0]);
 
   }
 
