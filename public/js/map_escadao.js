@@ -113,7 +113,7 @@ export function buildEscadao(scene, T) {
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
     if (solo && opts.skirt !== false) SKIRT.add(x, y, z, w, d, opts.ry || 0);
-    if (mat === MAT_AZ_LONG || mat.userData?.metricTile) {
+    if (mat.userData?.metricTile) {
       const uv = geo.attributes.uv, pos = geo.attributes.position, normal = geo.attributes.normal;
       for (let i = 0; i < uv.count; i++) {
         const axis = Math.abs(normal.getX(i)) > 0.5 ? pos.getZ(i) : pos.getX(i);
@@ -135,36 +135,7 @@ export function buildEscadao(scene, T) {
   const addFloor = (w, d, x, z, mat, y = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; };
 
   // ---- texturas procedurais ----
-  function azulejoTex(seed) {
-    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
-    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    const cores = ['#087fbd', '#20a6a1', '#f0c332', '#e56b43', '#1767a7', '#55a85a', '#f0e3a7', '#bd3f67'];
-    const az = 32;
-    for (let py = 0; py < S; py += az) for (let px = 0; px < S; px += az) {
-      x.fillStyle = cores[(rnd() * cores.length) | 0]; x.fillRect(px, py, az, az);
-      x.fillStyle = cores[(rnd() * cores.length) | 0];
-      x.beginPath(); x.arc(px + az / 2, py + az / 2, 6 + rnd() * 8, 0, 6.283); x.fill();
-      x.strokeStyle = 'rgba(255,255,255,0.55)'; x.lineWidth = 2; x.strokeRect(px, py, az, az);
-    }
-    for (let i = 0; i < 40; i++) { x.fillStyle = `rgba(60,55,45,${0.1 + rnd() * 0.2})`; x.beginPath(); x.arc(rnd() * S, rnd() * S, 2 + rnd() * 8, 0, 6.283); x.fill(); }
-    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    return lam({ map: tex });
-  }
-  const MAT_AZ_FALLBACK = azulejoTex(7019);
-  let MAT_AZ = MAT_AZ_FALLBACK, MAT_AZ_LONG;
-  if (typeof document !== 'undefined') {
-    const tex = new THREE.TextureLoader().load('/img/textures/escadao_streetart_azulejo.webp', undefined, undefined, () => {
-      MAT_AZ.map = MAT_AZ_FALLBACK.map; MAT_AZ.needsUpdate = true;
-      if (MAT_AZ_LONG) { MAT_AZ_LONG.map = MAT_AZ_FALLBACK.map; MAT_AZ_LONG.needsUpdate = true; }
-    });
-    tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    MAT_AZ = lam({ map: tex });
-  }
-  // Espelhos pontuais recebem UV em metros; pisos e muretas usam concreto.
-  const faixaAz = MAT_AZ.map.clone();
-  faixaAz.wrapS = faixaAz.wrapT = THREE.RepeatWrapping; faixaAz.repeat.set(1, 1);
-  faixaAz.needsUpdate = true;
-  MAT_AZ_LONG = lam({ map: faixaAz, emissive: 0x151006, emissiveIntensity: 0.12 });
+  // Azulejo (MAT_AZ/MAT_AZ_LONG) saiu: nenhum addBox o usava e o webp baixava à toa.
   const AZ_CAPS = [
     lam({ color: 0x657d7b, roughness: 0.95 }), lam({ color: 0xb7a16f, roughness: 0.95 }),
     lam({ color: 0xa87559, roughness: 0.95 }), lam({ color: 0xc5bca9, roughness: 0.95 }),
