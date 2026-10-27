@@ -32,7 +32,7 @@ for (let i = 0; i < files.length; i++) {
 }
 
 const usos = {
-  'map_escadao.js': ['escadao_streetart_azulejo.webp', 'sky_rj.webp'],
+  'map_escadao.js': ['sky_rj.webp'],   // azulejo saiu: material sem nenhum uso
   'map_campomorro.js': ['campomorro_streetart_baile.webp', 'sky_rj.webp'],
   'map_lajes.js': ['lajes_streetart_mural.webp'],
   'map_corrego.js': ['corrego_streetart_pixo.webp', 'sky_sp.webp'],
