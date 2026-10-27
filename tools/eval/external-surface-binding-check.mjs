@@ -2,18 +2,20 @@
 import { readFileSync } from 'node:fs';
 import * as THREE from '../../public/vendor/three.module.js';
 const files = ['map_campomorro.js', 'map_escadao.js'];
+const DERIVA = new Set(['map_escadao.js']);   // deriva normal+rough do próprio webp
 const extract = source => {
-  const body = source.match(/const external = (\(mat, url, rx, ry\) => \{[\s\S]*?\n    \});/)?.[1];
+  const body = source.match(/const external = (\(mat, url, rx, ry(?:, relevo = \[[^\]]*\])?\) => \{[\s\S]*?\n    \});/)?.[1];
   if (!body) throw Error('callback external não localizado');
   return body;
 };
 const extractRepetido = source => source.match(/const repetido = (\(base, rx, ry\) => \{[\s\S]*?\n  \});/)?.[1] || null;
 
-function measure(body, { details, detalhe = null, roughness = .9, metalness = 0 } = {}) {
-  const callbacks = [], tex = new THREE.Texture(), fallback = new THREE.Texture();
+function measure(body, { details, detalhe = null, roughness = .9, metalness = 0, deriva = false } = {}) {
+  const callbacks = [], tex = new THREE.Texture({ width: 4, height: 4 }), fallback = new THREE.Texture();
+  const registros = [], registerDetail = (t, img) => registros.push([t, img]);
   const oldNormal = new THREE.Texture(), oldRough = new THREE.Texture();
   const loader = { load(_url, onLoad) { callbacks.push(onLoad); return tex; } };
-  const external = new Function('loader', 'detailFor', 'THREE', `return (${body})`)(loader, () => details, THREE);
+  const external = new Function('loader', 'detailFor', 'THREE', 'registerDetail', 'RELEVO_WEBP', `return (${body})`)(loader, () => details, THREE, registerDetail, true);
   const mat = new THREE.MeshStandardMaterial({ map: fallback, normalMap: oldNormal, roughnessMap: oldRough, roughness, metalness });
   if (detalhe) mat.userData.detalhe = detalhe;
   external(mat, '/img/textures/probe.webp', 4, 3);
@@ -28,6 +30,8 @@ function measure(body, { details, detalhe = null, roughness = .9, metalness = 0 
     mineralScale: !ef?.normalMap || roughness < .8 || metalness >= .2 || mat.normalScale.toArray().every(v => v === .4),
     sampler: tex.repeat.equals(new THREE.Vector2(4, 3)) && tex.colorSpace === THREE.SRGBColorSpace && tex.wrapS === THREE.RepeatWrapping && tex.wrapT === THREE.RepeatWrapping,
     upload: mat.version > 0,
+    // webp sem detalhe registrado: o relevo tem de ser derivado da imagem que chegou
+    relevo: !deriva || (details ? registros.length === 0 : registros.length === 1 && registros[0][0] === tex && registros[0][1] === tex.image),
   };
 }
 
@@ -60,9 +64,9 @@ function measureClone(body, repetidoBody, { details = null, detalhe = null } = {
   };
 }
 
-function check(body, repetidoBody) {
+function check(body, repetidoBody, deriva = false) {
   const variants = [null, { normalMap: new THREE.Texture(), roughnessMap: new THREE.Texture() }, { normalMap: null, roughnessMap: new THREE.Texture() }];
-  const cases = variants.map(details => measure(body, { details }));
+  const cases = variants.map(details => measure(body, { details, deriva }));
   if (!repetidoBody) return { cases, clones: null };
   const clones = [
     measureClone(body, repetidoBody, { detalhe: { normalMap: new THREE.Texture(), roughnessMap: new THREE.Texture() } }),
@@ -84,8 +88,8 @@ const redClauses = rows => rows.flatMap(r => Object.entries(r).filter(([, v]) =>
 let failed = false;
 for (const file of files) {
   const source = readFileSync(new URL(`../../public/js/${file}`, import.meta.url), 'utf8');
-  const body = extract(source), repetidoBody = extractRepetido(source);
-  const { cases, clones } = check(body, repetidoBody);
+  const body = extract(source), repetidoBody = extractRepetido(source), deriva = DERIVA.has(file);
+  const { cases, clones } = check(body, repetidoBody, deriva);
   const rows = clones ? [...cases, ...clones] : cases;
   const pass = green(rows);
   console.log(JSON.stringify({ file, pass, cases, clones }));
@@ -101,10 +105,11 @@ for (const file of files) {
       cloneFicaNoFallback: repetidoBody && body.includes('c.map = tex.clone();') ? replaceOnce(body, 'c.map = tex.clone();', 'c.map = c.map;', 'cloneFicaNoFallback') : null,
       cloneSamplerDaBase: repetidoBody && body.includes('c.map.repeat.copy(c.userData.baseRepeat);') ? replaceOnce(body, 'c.map.repeat.copy(c.userData.baseRepeat);', 'c.map.repeat.copy(tex.repeat);', 'cloneSamplerDaBase') : null,
       cloneDerivadoStale: repetidoBody && body.includes('c.normalMap = cd.normalMap || null;') ? replaceOnce(body, 'c.normalMap = cd.normalMap || null;', 'c.normalMap = c.normalMap;', 'cloneDerivadoStale') : null,
+      semRelevo: deriva ? replaceOnce(body, /if \(RELEVO_WEBP[^\n]*\n/, '', 'semRelevo') : null,
     };
     for (const [name, mutado] of Object.entries(mutantes)) {
       if (mutado === null) continue;
-      const r = check(mutado, repetidoBody);
+      const r = check(mutado, repetidoBody, deriva);
       const rowsM = r.clones ? [...r.cases, ...r.clones] : r.cases;
       if (green(rowsM)) throw Error(`${file}: mutante cego ${name}`);
       console.log(`${file}: mutante ${name} RED <- ${[...new Set(redClauses(rowsM))].join(',')}`);
