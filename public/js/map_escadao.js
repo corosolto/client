@@ -24,9 +24,11 @@ const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settin
 export const HALF_X = 18, HALF_Z = 40;
 export const ESCADAO_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'dog', 'cockroach', 'escadaoCat', 'sertaoHen']);
 
-export const ESCADAO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fusca',
-  'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02',
-  'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas', 'samambaia', 'grama_corrego_02', 'escadao_casa_r3', 'escadao_varanda_r4', 'escadao_eletrica_r4'];
+// Só o que o mapa desenha: a lista é preload obrigatório (required) de toda partida.
+// tires, moto_cg, guarda_sol, stall, arara_roupas e escadao_casa_r3 saíram: nenhum placeProp.
+export const ESCADAO_PROPS = ['pilha_pneus', 'dumpster', 'fusca',
+  'mesa_guardasol', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02',
+  'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas', 'samambaia', 'grama_corrego_02', 'escadao_varanda_r4', 'escadao_eletrica_r4'];
 
 /* bbox dos moldes (GLB em disco): é a razão entre eixos que decide o quanto cada
    instância estica. `eval:escala-casario` relê os arquivos e reprova se derivar. */

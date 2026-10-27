@@ -49,7 +49,7 @@ export const MAPS = {
     ambience: ['rat', 'pigeonGround', 'dog', 'jacare', 'capivara', 'cat', 'chicken', 'cow', 'armadillo', 'cockroach', 'parrot', 'jacare', 'capivara', 'boto', 'onca', 'tucano', 'preguica', 'macaco', 'anta', 'arara', 'piranha', 'carcara'],
   },
   escadao: { name: 'Escadão (Morro)', ctfMode: true,
-    props: ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fusca', 'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02', 'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas', 'samambaia', 'grama_corrego_02', 'escadao_casa_r3', 'escadao_varanda_r4', 'escadao_eletrica_r4'],
+    props: ['pilha_pneus', 'dumpster', 'fusca', 'mesa_guardasol', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02', 'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas', 'samambaia', 'grama_corrego_02', 'escadao_varanda_r4', 'escadao_eletrica_r4'],
     ambience: ['rat', 'pigeonGround', 'dog', 'cockroach', 'escadaoCat', 'sertaoHen'],
     mobileAmbience: true,
   },
