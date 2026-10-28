@@ -226,6 +226,10 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 3780 | `_zoomFov()` | 5 |
 | 3785 | `_reloading()` | 1 |
 | 3786 | `_startReload()` | 28 |
+| 3823 | `_cancelReload()` | 19 |
+| 3842 | `_abortarArmaNaMorte()` | 15 |
+| 3857 | `_voltarPraBase()` | 13 |
+| 3870 | `_armasServidasPelaRecarga()` | 9 |
 | 3814 | `_reloadLayers()` | 18 |
 | 3832 | `_installRecoil()` | 33 |
 | 3865 | `_shotRecoil()` | 13 |
