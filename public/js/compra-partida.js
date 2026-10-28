@@ -40,7 +40,8 @@ export class CompraPartida {
     this.elMenu = document.createElement('div');
     this.elMenu.id = 'compra-menu';
     this.elMenu.className = 'hidden';
-    hud?.appendChild?.(this.elMenu);
+    // no body e não no #hud: o z-index 20 do #hud prende o menu atrás do #touch-ui (30)
+    document.body?.appendChild?.(this.elMenu);
   }
 
   descartar() {
