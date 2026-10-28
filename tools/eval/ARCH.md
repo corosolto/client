@@ -337,6 +337,7 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 6150 | `_noteHit()` | 17 |
 | 6167 | `_deathFeedback()` | 45 |
 | 6212 | `_toggleCamView()` | 6 |
+| 6284 | `_swapShoulder()` | 7 |
 | 6218 | `setCamView()` | 19 |
 | 6237 | `_syncCamViewVis()` | 8 |
 | 6245 | `_ensurePlayerTP()` | 32 |
