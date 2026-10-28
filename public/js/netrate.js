@@ -1,5 +1,6 @@
 // Medidor de taxa de rede por relógio DO SERVIDOR (BUG-160 / #1122).
 // Motivo, aritmética do defeito e provas: tools/eval/net-rate-check.mjs.
+
 /** Janela de medida. 1 s é o que o painel de rede sempre leu. */
 export const JANELA_MS = 1000;
 /* Piso da duração usada no divisor. Nos primeiros milissegundos da sessão a
