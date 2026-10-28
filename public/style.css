@@ -3638,6 +3638,6 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
 #compra-menu .cm-pe{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.14)}
 #compra-menu .cm-aviso{display:block;padding:2px 8px 4px;font:700 12px/1.2 inherit;color:#ff8a7a}
 #compra-menu .cm-voltar{min-height:32px;color:#cfd6c0}
-.touch-compra{position:fixed;left:calc(16px + env(safe-area-inset-left,0px));top:40%;width:52px;height:52px;font:800 22px/1 sans-serif;color:#10141a!important;background:#b4d92e!important;border-radius:50%}
+.touch-compra{position:fixed;left:calc(212px + env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));width:44px;height:44px;font:800 22px/1 sans-serif;color:#10141a!important;background:#b4d92e!important;border-radius:50%}
 .touch-compra.hidden{display:none}
-@media (max-width:720px){#compra-menu{left:12px;min-width:0;width:calc(100vw - 24px)}#compra-menu .cm-linha{min-height:44px}}
+@media (pointer:coarse),(max-height:500px){#compra-menu{left:50%;transform:translate(-50%,-50%);max-height:calc(100vh - 24px);overflow:auto}#compra-menu .cm-linha{min-height:36px}}
