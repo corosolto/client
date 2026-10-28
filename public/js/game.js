@@ -4050,6 +4050,7 @@ export class Game {
     const _boca3p = this.camView !== 'first' ? this._bocaDaArmaDoCorpo(this.playerTP?.group) : null;
     if (_boca3p) this._flash(_boca3p, this.camera.getWorldDirection(new THREE.Vector3()));
     else this._flash(this._muzzleWorld(_cls), this.camera.getWorldDirection(new THREE.Vector3()), _cls);
+    this._claraoLocalEm = this.time;   // o eco online do mesmo tiro não acende outro (netgame.tiroDeRede)
     this._ejectCasing();
     // bolt-action snipers drop the scope after each shot (CS-style); autos stay aimed
     if (p.scoped && (p.weapon === 'awp' || p.weapon === 'mosin')) this._scope(false, true);

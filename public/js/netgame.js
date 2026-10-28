@@ -758,9 +758,10 @@ class Netcode {
     const primeiro = e.p[0];
     if (primeiro) {
       const dir = new THREE.Vector3(+primeiro[0] || 0, +primeiro[1] || 0, +primeiro[2] || 0).sub(olho).normalize();
-      // O meu clarão já saiu na boca pelo _tryShoot local; o eco do nó acendia um SEGUNDO,
-      // a 35 cm do olho — no meio da tela em 1ª pessoa.
-      if (!(ent === p && boca)) {
+      // Eco do meu tiro: se o _tryShoot já acendeu na boca há <0,5 s (RTT), não acende um segundo;
+      // tiro que só o nó deu (dessincronia de cadência) ainda ganha clarão.
+      const ecoLocal = ent === p && boca && game.time - (game._claraoLocalEm ?? -Infinity) < 0.5;
+      if (!ecoLocal) {
         try { game._flash(boca ? boca.clone() : olho.clone().addScaledVector(dir, 0.35), dir); } catch { /* sem fx */ }
       }
     }
