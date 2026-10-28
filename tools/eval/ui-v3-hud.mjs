@@ -78,6 +78,7 @@ async function preparar(page, mutante) {
   if (mutante === 'pula-pequeno') await reescreve(css, (t) => t.replace('.tp-toque-pula{right:calc(40px + var(--sr));bottom:calc(128px + var(--sb));width:56px;height:56px}', '.tp-toque-pula{right:calc(40px + var(--sr));bottom:calc(128px + var(--sb));width:36px;height:36px}'));
   if (mutante === 'atira-mudo') await reescreve(js, (t) => t.replace('g.mouseDown0 = true;', ''));
   if (mutante === 'ping-surdo') await reescreve(js, (t) => t.replace("e.code === 'KeyF'", "e.code === 'KeyF9'"));
+  if (mutante === 'sem-cache-avatar') await reescreve(js, (t) => t.replace('const acerto = avatarCache.get(pid);', 'const acerto = null;'));
 }
 
 const aoVivo = async (page) => {
@@ -296,6 +297,35 @@ async function medir(mutante = '', alvo = '') {
   add('HU11', sb.n > 0 && !sb.ping && sb.av === sb.n && sb.eu === '25%' && !sb.outros && !sb.dano,
     sb.ping ? `placar mostra ${sb.ping} ping(s) inventado(s)` : `placar: ${sb.av}/${sb.n} avatares, seu HS% "${sb.eu}" (quer 25%), ${sb.outros} HS% de quem o cliente não mede${sb.dano ? ', coluna de dano sem dado' : ''}`);
 
+  /* Reabrir o placar recria as linhas, mas não pode refazer a mesma chamada de avatar.
+     A rota responde no-store para a garantia vir do HUD, não do cache do navegador. */
+  let avatarRequests = 0;
+  await p.route(/\/api\/social-avatar/, async (route) => {
+    avatarRequests++;
+    await route.fulfill({
+      status: 200,
+      headers: { 'content-type': 'image/gif', 'cache-control': 'no-store' },
+      body: Buffer.from('R0lGODlhAQABAAAAACw=', 'base64'),
+    });
+  });
+  await p.evaluate(async () => {
+    const g = window.__game;
+    const alvo = g.combatants.find((c) => !c.isPlayer);
+    const salvo = { playerId: alvo._playerId, netBot: alvo._netBot };
+    alvo._playerId = '11111111-1111-4111-8111-111111111111';
+    alvo._netBot = false;
+    for (let i = 0; i < 5; i++) {
+      g._showScoreboard(true);
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    }
+    alvo._playerId = salvo.playerId;
+    alvo._netBot = salvo.netBot;
+    g._showScoreboard(false);
+  });
+  await p.unroute(/\/api\/social-avatar/);
+  add('HU17', avatarRequests === 1,
+    `cinco reconstruções do placar fizeram ${avatarRequests} chamada(s) para o mesmo avatar (quer 1)`);
+
   /* ---------- ping ---------- */
   const ping = await p.evaluate(async () => {
     const g = window.__game;
@@ -476,11 +506,12 @@ async function medir(mutante = '', alvo = '') {
   return r;
 }
 
+const ALVO = process.argv.find((arg) => arg.startsWith('--alvo='))?.slice(7) || '';
 const MUT = [['retrato-vivo', 'HU1'], ['placar-cinza', 'HU2'], ['xp-falso', 'HU3'], ['municao-proporcional', 'HU4'], ['sem-hs', 'HU5'],
   ['dica-eterna', 'HU6'], ['badge-solto', 'HU7'], ['dica-na-mira', 'HU8'], ['dica-sem-en', 'HU9'], ['legado-vazado', 'HU10'],
   ['ping-mentiroso', 'HU11'], ['hs-errado', 'HU11'], ['abas-mudas', 'HU12'], ['tab-foco', 'HU12'], ['chat-eterno', 'HU12'], ['sem-silenciar', 'HU12'],
   ['pula-pequeno', 'HU13'], ['atira-mudo', 'HU13'], ['ping-surdo', 'HU14'], ['placar-abates', 'HU15'], ['plural-fixo', 'HU15'], ['bot-texto', 'HU15'],
-  ['chips-esquerda', 'HU15'], ['slots-soltos', 'HU15'], ['alt-surdo', 'HU16']];
+  ['chips-esquerda', 'HU15'], ['slots-soltos', 'HU15'], ['alt-surdo', 'HU16'], ['sem-cache-avatar', 'HU17']];
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO.split(',').includes(m))) {
@@ -490,10 +521,11 @@ if (process.argv.includes('--mutantes')) {
     console.log(`${c.ok ? 'CEGO  ' : 'MORDE '} ${alvo} (${mut})  ${c.msg}`);
   }
 } else {
-  const r = await medir();
-  for (const c of r.sort((a, b) => Number(a.id.slice(2)) - Number(b.id.slice(2)))) console.log(`${c.ok ? 'VERDE   ' : 'VERMELHO'} ${c.id}  ${c.msg}`);
-  sair = r.every((c) => c.ok) ? 0 : 1;
-  console.log(`\nhud v3: ${r.filter((c) => c.ok).length}/${r.length}  (capturas em ${OUT})`);
+  const r = await medir('', ALVO);
+  const selecionadas = ALVO ? r.filter((c) => c.id === ALVO) : r;
+  for (const c of selecionadas.sort((a, b) => Number(a.id.slice(2)) - Number(b.id.slice(2)))) console.log(`${c.ok ? 'VERDE   ' : 'VERMELHO'} ${c.id}  ${c.msg}`);
+  sair = selecionadas.length && selecionadas.every((c) => c.ok) ? 0 : 1;
+  console.log(`\nhud v3: ${selecionadas.filter((c) => c.ok).length}/${selecionadas.length}  (capturas em ${OUT})`);
 }
 await browser.close();
 process.exit(sair);
