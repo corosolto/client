@@ -367,6 +367,32 @@ const GUNFEEL = new URLSearchParams(location.search).get('gunfeel') !== '0';
    ~80 ms), flash/luz de boca ~30% maiores e duck do mix no tiro synth. ?punch=0 desliga. */
 const PUNCH = new URLSearchParams(location.search).get('punch') !== '0';
 const PUNCH_ZOOM = 0.014, PUNCH_DECAY = 13;
+/* Clarão e traçante saem da boca da arma NA TELA (corpo em 3P/bots/remotos, pixel do VM em
+   1P), não de um ponto do olho. ?bocacano=0 volta ao antigo; régua eval:boca-cano. */
+const BOCA_CORPO = QS.get('bocacano') !== '0';
+// Boca no espaço LOCAL da arma: GLB usa a medida do measureGun (÷ norm); a caixa procedural é
+// medida com a mesma receita (centroide dos vértices nos 2% mais avançados em +Z).
+function bocaLocalDaArma(gun) {
+  const met = gun.userData.metrics;
+  if (met?.muzzle) return met.muzzle.clone().divideScalar(met.norm || 1);
+  gun.updateWorldMatrix(true, true);
+  const inv = gun.matrixWorld.clone().invert(), m = new THREE.Matrix4(), v = new THREE.Vector3();
+  const pts = [];
+  gun.traverse((o) => {
+    const pos = o.isMesh && o.geometry?.attributes?.position;
+    if (!pos) return;
+    m.multiplyMatrices(inv, o.matrixWorld);
+    const step = Math.max(1, Math.ceil(pos.count / 30000));
+    for (let i = 0; i < pos.count; i += step) pts.push(v.fromBufferAttribute(pos, i).applyMatrix4(m).clone());
+  });
+  if (!pts.length) return null;
+  let zMin = Infinity, zMax = -Infinity;
+  for (const p of pts) { if (p.z < zMin) zMin = p.z; if (p.z > zMax) zMax = p.z; }
+  const corte = zMax - (zMax - zMin) * 0.02, c = new THREE.Vector3();
+  let n = 0;
+  for (const p of pts) if (p.z >= corte) { c.add(p); n++; }
+  return c.divideScalar(n);
+}
 // BUG-187: .0115 m / 58 ms era ~1 px por 3 quadros — o dono não via o traçado. Ver eval:smoke SMK3b.
 const TRACER_STYLE = Object.freeze({ radius: .03, speed: 180, minTravel: .06, fade: .07, segment: 5 });
 
@@ -4014,7 +4040,11 @@ export class Game {
     // concussão do PUNCH: pesada em tiro único, mais leve por bala em full-auto
     if (PUNCH) this._punchF = Math.min(1.4, (this._punchF || 0) + (w.auto ? 0.5 : 1) * (kickMul === 0.5 ? 0.7 : 1));
     const _cls = STATIC_CLASS[p.weapon] || 'rifle';
-    this._flash(this._muzzleWorld(_cls), this.camera.getWorldDirection(new THREE.Vector3()), _cls);
+    // 3ª pessoa: clarão de MUNDO na boca da arma do corpo. O de 1ª pessoa é filho do vm.root,
+    // que nem é desenhado em 3P — sobravam só faísca e luz, nascendo no viewmodel invisível.
+    const _boca3p = this.camView !== 'first' ? this._bocaDaArmaDoCorpo(this.playerTP?.group) : null;
+    if (_boca3p) this._flash(_boca3p, this.camera.getWorldDirection(new THREE.Vector3()));
+    else this._flash(this._muzzleWorld(_cls), this.camera.getWorldDirection(new THREE.Vector3()), _cls);
     this._ejectCasing();
     // bolt-action snipers drop the scope after each shot (CS-style); autos stay aimed
     if (p.scoped && (p.weapon === 'awp' || p.weapon === 'mosin')) this._scope(false, true);
@@ -4218,26 +4248,7 @@ export class Game {
       else if (Math.random() < 0.3) this.sfx.ricochet();
     }
     this.world.ambience?.onShot(from, end);
-    if (byPlayer && tracer) {
-      /* 3ª pessoa: o rastro nasce da ARMA DO CORPO (arma-glb/caixa do playerTP) e não da
-         câmera, que está atrás do personagem — sem corpo montado, cai na receita dos bots. */
-      if (this.camView !== 'first' && this.playerTP?.group) {
-        const gun = this.playerTP.group.getObjectByName('arma-glb') || this.playerTP.group.getObjectByName('arma-caixa')
-          || this.playerTP.parts?.gun || null;
-        const a = (gun ? gun.getWorldPosition(new THREE.Vector3()) : from.clone())
-          .addScaledVector(dir, gun ? 0.55 : 0.7);
-        this._tracer(a, end);
-      } else {
-        // BUG-187: nasce no raio câmera→boca (onde o cano aparece na tela). A boca autorada
-        // (bbox de malha skinned) caía 10,9 m atrás da câmera em produção: aí vale a da pose.
-        const cam = this.camera.getWorldPosition(new THREE.Vector3());
-        const rel = this._muzzleWorld(STATIC_CLASS[this.player.weapon] || 'rifle').clone().sub(cam);
-        if (rel.length() > 2 || rel.dot(this.camera.getWorldDirection(new THREE.Vector3())) < 0.2) {
-          rel.copy(this.camera.localToWorld(new THREE.Vector3(0.1, -0.06, -0.75))).sub(cam);
-        }
-        this._tracer(cam.addScaledVector(rel.normalize(), 1.5), end);
-      }
-    }
+    if (byPlayer && tracer) this._tracer(this._origemTracerJogador(from, dir), end);
     return end;
   }
   _targetFromHit(hit) {
@@ -4925,6 +4936,12 @@ export class Game {
     cam.setViewOffset(w, h, w - w * k, h - h * k, w * k, h * k);
   }
   _muzzleWorld(cls) {
+    // 3ª pessoa: a arma visível é a do CORPO. Vinha antes do viewmodel autorado de propósito —
+    // ele continua carregado (só invisível) e devolvia a boca de uma arma que não está na tela.
+    if (this.camView !== 'first') {
+      const boca = this._bocaDaArmaDoCorpo(this.playerTP?.group);
+      if (boca) return boca;
+    }
     // Caminho autorado: a boca vem da arma VISÍVEL (a legada fica oculta e o
     // _vmMuzzle dela apontaria flash/tracer para um cano que não está na tela).
     const vmPt = this.vm.authored?.muzzleVm?.(this.player?.weapon);
@@ -4950,6 +4967,40 @@ export class Game {
     const v = off.clone();
     this.vm.root.localToWorld(v);          // vmScene == espaço da câmera (vmCamera na origem)
     return this.camera.localToWorld(v);
+  }
+  _bocaLigada() { return BOCA_CORPO && this._bocaCorpo !== false; }
+  // Boca (world) da arma na mão de um corpo 3P — jogador, bot ou remoto. null = sem corpo/arma
+  // ou ?bocacano=0, e quem chama usa a receita antiga a partir do olho.
+  _bocaDaArmaDoCorpo(grp, out = new THREE.Vector3()) {
+    if (!grp || !this._bocaLigada()) return null;
+    const gun = grp.getObjectByName('arma-glb') || grp.getObjectByName('arma-caixa');
+    if (!gun) return null;
+    if (gun.userData.bocaLocal === undefined) gun.userData.bocaLocal = bocaLocalDaArma(gun);
+    if (!gun.userData.bocaLocal) return null;
+    gun.updateWorldMatrix(true, false);
+    return out.copy(gun.userData.bocaLocal).applyMatrix4(gun.matrixWorld);
+  }
+  // Origem do traçante do PRÓPRIO jogador (offline e online): em 3P sai da arma do corpo; em
+  // 1P, do raio câmera→boca do viewmodel (BUG-187), que é onde o cano aparece na tela.
+  _origemTracerJogador(from, dir) {
+    if (this.camView !== 'first' && this.playerTP?.group) {
+      const boca = this._bocaDaArmaDoCorpo(this.playerTP.group);
+      if (boca) return boca;
+      /* 3ª pessoa: o rastro nasce da ARMA DO CORPO (arma-glb/caixa do playerTP) e não da
+         câmera, que está atrás do personagem — sem corpo montado, cai na receita dos bots. */
+      const gun = this.playerTP.group.getObjectByName('arma-glb') || this.playerTP.group.getObjectByName('arma-caixa')
+        || this.playerTP.parts?.gun || null;
+      return (gun ? gun.getWorldPosition(new THREE.Vector3()) : from.clone())
+        .addScaledVector(dir, gun ? 0.55 : 0.7);
+    }
+    // BUG-187: nasce no raio câmera→boca (onde o cano aparece na tela). A boca autorada
+    // (bbox de malha skinned) caía 10,9 m atrás da câmera em produção: aí vale a da pose.
+    const cam = this.camera.getWorldPosition(new THREE.Vector3());
+    const rel = this._muzzleWorld(STATIC_CLASS[this.player.weapon] || 'rifle').clone().sub(cam);
+    if (rel.length() > 2 || rel.dot(this.camera.getWorldDirection(new THREE.Vector3())) < 0.2) {
+      rel.copy(this.camera.localToWorld(new THREE.Vector3(0.1, -0.06, -0.75))).sub(cam);
+    }
+    return cam.addScaledVector(rel.normalize(), 1.5);
   }
 
   // Origem do tiro/raycast: olho do jogador. Em 3ª pessoa a câmera está atrás — usar a
