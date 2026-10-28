@@ -16,7 +16,8 @@
      BC1 · 3ª pessoa (third e shoulder): origem do clarão e do traçante do jogador a ≤ 3 cm
            da boca da arma do corpo;
      BC2 · 1ª pessoa: clarão do viewmodel e traçante no MESMO pixel da boca do viewmodel
-           (≤ 2 px a 1280×720);
+           (≤ 2 px a 1280×720), no VM legado e (BC2b) no autorado com a boca da AK medida
+           no browser a 2,25 m da lente — o teto antigo de 2 m jogava o traçante a 40,7 px;
      BC3 · bots em combate (simulação de até 40 s): todo clarão e traçante a ≤ 3 cm da boca
            da arma de algum bot;
      BC4 · remoto (netgame.tiroDeRede): traçante e clarão a ≤ 3 cm da boca do corpo dele;
@@ -114,6 +115,24 @@ atira();
   const pF = m ? px(m.grp.getWorldPosition(new THREE.Vector3()), g.vmCamera).distanceTo(ref) : Infinity;
   const pT = tracers[0] ? px(tracers[0]).distanceTo(ref) : Infinity;
   cobra(pF <= TETO_PX && pT <= TETO_PX, 'BC2', `first (${g.player.weapon}, ${vmPt ? 'autorado' : 'legado'}): clarão e traçante no pixel da boca (teto ${TETO_PX} px)`,
+    `clarão ${pF.toFixed(1)} px · traçante ${pT.toFixed(1)} px`);
+}
+
+// ── BC2b: 1ª pessoa com viewmodel AUTORADO. O Node não carrega o VM autorado; a boca entra
+// pela mesma API (muzzleVm) no ponto MEDIDO no browser para a AK (boca-cano-prancha.mjs,
+// vmScene): (0,313; −0,145; −2,227) — 2,25 m da lente, além do teto antigo de 2 m. ──
+{
+  const authored = g.vm.authored;
+  const orig = authored?.muzzleVm;
+  const BOCA_AK = new THREE.Vector3(0.313, -0.145, -2.227);
+  if (authored) authored.muzzleVm = () => BOCA_AK.clone();
+  atira();
+  const ref = px(BOCA_AK, g.vmCamera);
+  const pT = tracers[0] ? px(tracers[0]).distanceTo(ref) : Infinity;
+  const m = g._vmMzActive.at(-1);
+  const pF = m ? px(m.grp.getWorldPosition(new THREE.Vector3()), g.vmCamera).distanceTo(ref) : Infinity;
+  if (authored) authored.muzzleVm = orig;
+  cobra(!!authored && pT <= TETO_PX && pF <= TETO_PX, 'BC2b', `first (autorado, boca da AK a 2,25 m): clarão e traçante no pixel da boca (teto ${TETO_PX} px)`,
     `clarão ${pF.toFixed(1)} px · traçante ${pT.toFixed(1)} px`);
 }
 
