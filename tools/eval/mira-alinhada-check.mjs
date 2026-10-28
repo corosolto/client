@@ -15,8 +15,10 @@
           ponto para onde o cano aponta e a cruz. 1P: ponto de fuga do cano na
           vmCamera × centro. 3P: ponto do cano à distância do alvo (20 m) × cruz do DOM.
 
-   EXIGE (MA1): 1P no ADS, cano a ≤ 1° do raio e ponto de fuga a ≤ 4 px da cruz.
-   3P e quadril só são medidos (a 3P na main não tem pose de mira; ver PR).
+   EXIGE (MA1): 1P no ADS, cano a ≤ 1° do raio e ponto de fuga a ≤ 4 px da cruz;
+   nas armas em linha de mira (adsEfetivo), também a boca a ≤ 4 px da cruz.
+   Lê os sockets alça/boca, não a malha (a malha é o ads1p-linha-check).
+   3P e quadril só são medidos: a 3P não tem pose de mira e o quadril tem toe-in aprovado.
    Mutante: --mutante=foco roda com ?ads1pfix=0 e TEM que reprovar MA1.
 
    Uso:
@@ -27,7 +29,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import net from 'node:net';
 import { chromium } from 'playwright';
+import { adsEfetivo, VM_FABRICA, VM_WEAPON } from '../../public/js/data/vmconfig.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const arg = (n, d = '') => { const h = process.argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.slice(n.length + 3) : d; };
@@ -43,9 +47,12 @@ const BASE = process.env.BASE || `http://127.0.0.1:${PORTA}`;
 // Viewport à metade do nominal (SwiftShader); px reportados na escala nominal.
 const ASPECTOS = { '16x9': { w: 960, h: 540, k: 2 }, '3x2': { w: 900, h: 600, k: 2 } };
 
+// Porta ocupada mediria a árvore de outra sessão (armadilha da 8123).
+if (!process.env.BASE) await new Promise((ok, falha) => { const s = net.createServer().once('error', () => falha(new Error(`porta ${PORTA} ocupada`))).listen(PORTA, '127.0.0.1', () => s.close(ok)); });
 const servidor = process.env.BASE ? null : spawn(process.execPath, ['tools/eval/serve.mjs', String(PORTA)], { cwd: root, stdio: 'ignore' });
 process.on('exit', () => servidor?.kill());
 let pronto = false;
+servidor?.once('exit', (c) => { if (!pronto) { console.error(`serve.mjs saiu (${c}) antes de responder`); process.exit(1); } });
 for (let i = 0; i < 120 && !pronto; i++) {
   try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
   if (!pronto) await new Promise((r) => setTimeout(r, 500));
@@ -139,8 +146,9 @@ for (const cam of CAMS) for (const ads of [false, true]) {
   const p = pior((l) => l.cam === cam && l.ads === ads);
   if (p) console.log(`PIOR ${cam} ${ads ? 'ADS' : 'quadril'}: ${p.arma} ${p.asp} ${p.ang.toFixed(1)}° ${p.px.toFixed(0)} px`);
 }
-const ma1 = ok.filter((l) => l.cam === 'first' && l.ads).filter((l) => l.ang > 1 || l.px > 4);
-for (const l of ma1) console.log(`✗ MA1 ${l.asp} ${l.arma}: cano ${l.ang.toFixed(1)}° ${l.px.toFixed(0)} px`);
+const emLinha = (arma) => adsEfetivo((VM_WEAPON[arma]?.golden ? VM_WEAPON : VM_FABRICA)[arma]?.ads, !QS.includes('ads1pfix=0'))?.estilo === 'linha';
+const ma1 = ok.filter((l) => l.cam === 'first' && l.ads).filter((l) => l.ang > 1 || l.px > 4 || (emLinha(l.arma) && l.massa > 4));
+for (const l of ma1) console.log(`✗ MA1 ${l.asp} ${l.arma}: cano ${l.ang.toFixed(1)}° ${l.px.toFixed(0)} px, boca ${l.massa.toFixed(0)} px`);
 const faltou = linhas.filter((l) => l.erro && l.cam === 'first');
 for (const l of faltou) console.log(`✗ ${l.asp} ${l.arma}: ${l.erro}`);
 if (MUT) {
