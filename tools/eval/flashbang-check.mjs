@@ -22,6 +22,8 @@ const modo = option('--modo') || 'principal';
 const { THREE, initTextures, renderer, sfx, seedRandom, CHARACTERS } =
   await import(pathToFileURL(path.join(ROOT, 'tools/eval/harness.mjs')));
 const { Game } = await import(pathToFileURL(gameFile));
+const flashArg = option('--flash-module');
+const { brancoEm, retidaEm } = await import(pathToFileURL(path.resolve(flashArg || path.join(ROOT, 'public/js/flashbang.js'))));
 
 function boot() {
   seedRandom(12345);
@@ -60,7 +62,7 @@ if (modo === 'killswitch') {
   const r = g._popFlash(new THREE.Vector3(0, 1, 0), null);
   check('?flash=0: estouro não cega ninguém', r === undefined && !g._cegoJ, { r: r ?? null });
   g._resetPositions?.();
-  check('?flash=0: rodada não dá flash', (g.player.flashes | 0) === 0 || !g._flashLiberada(), { flashes: g.player.flashes });
+  check('?flash=0: flash desligada (sem slot nem equipar) mesmo com estoque', g._flashLiberada() === false, {});
   fim('kill-switch');
 }
 if (modo === 'debug') {
@@ -162,6 +164,25 @@ check('parede zera tudo', Object.keys(M).filter((k) => k.endsWith('parede')).eve
   check('jogador de costas a 2 m: ≤ 0,5 s', c.dur <= 0.5, c);
 }
 
+/* ---------- (4c) curva da tela e reset no respawn/rodada ---------- */
+{
+  const dur = 4.43, pico = 1, ts = [0, 0.5, 1, 2, 2.5, 3, 3.5, 4, 4.4];
+  const b = ts.map((t) => r2(brancoEm(t, dur, pico)));
+  const desce = b.every((v, i) => i === 0 || v <= b[i - 1]);
+  check('branco cheio no estouro e desbota até 0', b[0] === 1 && b[3] === 1 && desce && brancoEm(dur, dur, pico) === 0, { b });
+  const ret = r2(retidaEm(dur + 0.2, dur, 0.97));
+  check('imagem retida dura além do branco', ret > 0 && retidaEm(dur + 0.7, dur, 0.97) === 0, { ret });
+  const h = boot();
+  h.state = 'live';
+  h._cegarJogador({ dur: 4, pico: 1, forca: 1 });
+  h.player.alive = false;
+  h._respawnPlayer();
+  check('renascer tira a cegueira do jogador', !h._cegoJ, { cego: h._cegoJ?.dur ?? 0 });
+  for (const b2 of h.bots) { b2.cegoAte = h.time + 4; b2.cegoTotalAte = h.time + 2; }
+  h._resetPositions();
+  check('rodada nova tira a cegueira dos bots', h.bots.every((b2) => !b2.cegoAte && !b2.cegoTotalAte), {});
+}
+
 /* ---------- (5) bot cego ---------- */
 // O bot JÁ engatou o jogador (1 s de duelo) quando a flash estoura 2 m à frente dele.
 function duelo(comFlash) {
@@ -217,7 +238,7 @@ function duelo(comFlash) {
 
 /* ---------- (7) flags de URL: processos filhos ---------- */
 const filho = (qs, args) => {
-  const r = spawnSync(process.execPath, [SELF, ...args, ...(gameArg ? [`--game-module=${gameArg}`] : [])],
+  const r = spawnSync(process.execPath, [SELF, ...args, ...(gameArg ? [`--game-module=${gameArg}`] : []), ...(flashArg ? [`--flash-module=${flashArg}`] : [])],
     { encoding: 'utf8', env: { ...process.env, SIM_QS: qs } });
   try { return JSON.parse(r.stdout.slice(r.stdout.indexOf('{'))); } catch { return { failed: ['<sem json>'], erro: r.stderr.slice(-400) }; }
 };

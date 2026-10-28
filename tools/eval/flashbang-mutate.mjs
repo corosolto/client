@@ -30,6 +30,13 @@ const trials = [
     esperadas: ['bot no branco perde o jogador de vista'] },
   { name: 'bot-mira-certeira-cego', game: sub(game, 'if (cegoResta > 0) b.aimErr = Math.max(', 'if (false) b.aimErr = Math.max('),
     esperadas: ['bot cego que re-engata mira com erro ≥ 0,5 rad'] },
+  // tela nunca fica branca; renascer mantém a cegueira
+  { name: 'branco-nunca', flash: sub(flash, 'if (t <= hold) return pico;', 'if (t <= hold) return 0;'),
+    esperadas: ['branco cheio no estouro e desbota até 0'] },
+  { name: 'respawn-cego', game: sub(game, 'this._limparCegueira();   // renasce enxergando', ';'),
+    esperadas: ['renascer tira a cegueira do jogador'] },
+  { name: 'rodada-cega', game: sub(game, 'for (const c of this.combatants || []) { c.cegoAte = 0; c.cegoTotalAte = 0; }', ';'),
+    esperadas: ['rodada nova tira a cegueira dos bots'] },
   // kill-switch morto
   { name: 'killswitch-morto', game: sub(game, "const FLASH_ON = QS.get('flash') !== '0';", 'const FLASH_ON = true;'),
     esperadas: ['?flash=0 remove a flash'] },
@@ -50,7 +57,7 @@ for (const t of trials) {
     `from '${p === './flashbang.js' ? pathToFileURL(flashFile).href : pathToFileURL(resolve(dirname(GAME), p)).href}'`);
   const gameFile = resolve(`${OUT}/${t.name}.game.mjs`);
   writeFileSync(gameFile, fixImports(t.game || game));
-  const run = spawnSync(process.execPath, ['tools/eval/flashbang-check.mjs', `--game-module=${gameFile}`], { encoding: 'utf8' });
+  const run = spawnSync(process.execPath, ['tools/eval/flashbang-check.mjs', `--game-module=${gameFile}`, `--flash-module=${flashFile}`], { encoding: 'utf8' });
   writeFileSync(`${OUT}/${t.name}.log`, run.stdout + run.stderr);
   let failed = [];
   try { failed = JSON.parse(run.stdout.slice(run.stdout.indexOf('{'))).failed; } catch { failed = ['<sem json>']; }
