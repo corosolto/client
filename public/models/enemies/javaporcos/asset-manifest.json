@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-10-28",
+  "assets": [
+    {
+      "id": "invasao-javaporcos-map-card",
+      "provider": "OpenRouter · google/gemini-3-pro-image",
+      "source": null,
+      "runtime": "public/img/map-cards/invasao-javaporcos-map-card.webp",
+      "bytes": 167170,
+      "sha256": "b12b16d00e859e27606f9a1994e5b62afc893f9dc2c9372fe6125685b6e9db59"
+    },
+    {
+      "id": "javali-jovem",
+      "provider": "Mint asset pack",
+      "source": "references/glb/javali_jovem.glb",
+      "runtime": "public/models/enemies/javaporcos/javali_jovem.glb",
+      "bytes": 258980,
+      "sha256": "64691ebc8b5ba09888601d2c566c9eabc9bfd19b7a46a236205f1151f725db13"
+    },
+    {
+      "id": "javaporco-adulto",
+      "provider": "Mint asset pack",
+      "source": "references/glb/javaporco_adulto.glb",
+      "runtime": "public/models/enemies/javaporcos/javaporco_adulto.glb",
+      "bytes": 231748,
+      "sha256": "b9721cacefe6c442c9a2d0eb2e3b1ed40be13bc511143e7fd855b702f97e8fbb"
+    },
+    {
+      "id": "matriarca-javali",
+      "provider": "Mint asset pack",
+      "source": "references/glb/matriarca_javali.glb",
+      "runtime": "public/models/enemies/javaporcos/matriarca_javali.glb",
+      "bytes": 290216,
+      "sha256": "080c489ede3316d8298cd964d315948a1f45ea058d2385ada6971c87373aca97"
+    },
+    {
+      "id": "ariete-javali",
+      "provider": "Mint asset pack",
+      "source": "references/glb/ariete_javali.glb",
+      "runtime": "public/models/enemies/javaporcos/ariete_javali.glb",
+      "bytes": 321232,
+      "sha256": "792c3dedb2ca337ab0d5425f2e8a74971a7fb3e141987d183211147589535ad9"
+    }
+  ]
+}
