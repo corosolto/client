@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { sonda, pula } from './sonda-filho.mjs';
 import { carregarMapIds } from '../audio/map-ids.mjs';
 import { extendMapSoundscapes } from '../audio/extend-map-soundscapes.mjs';
 
@@ -12,8 +12,11 @@ try {
   const maps=Object.fromEntries(carregarMapIds().filter(id=>id!=='escadao').map(id=>[id,{loops:[{src:asset,global:true,vol:.06,pos:[0,0,0],radius:240}]}]));
   const manifest={fixtureCapacity:Array(250).fill(asset),mapSoundscapes:maps},before=structuredClone(maps);
   const ledger=join(dir,'ledger.json');writeFileSync(ledger,JSON.stringify({prefixoDerivado:'audio/piloto/',raizesRuntime:[],fontes:{},derivados:[],piloto:[]}));
-  const check=()=>{writeFileSync(join(dir,'audio/manifest.json'),JSON.stringify(manifest));return spawnSync(process.execPath,['tools/eval/assets-check.mjs',`--raiz=${dir}`,`--ledger=${ledger}`,'--so=runtime-audio'],{encoding:'utf8'});};
-  const red=check();assert.notEqual(red.status,0);assert.match(red.stderr+red.stdout,/escadao/);
+  const check=()=>{writeFileSync(join(dir,'audio/manifest.json'),JSON.stringify(manifest));return sonda(['tools/eval/assets-check.mjs',`--raiz=${dir}`,`--ledger=${ledger}`,'--so=runtime-audio']);};
+  /* assets-check importa three; sem ele o filho morre e o "vermelho esperado"
+     da linha seguinte passaria sem nada ter sido medido (issue #1133). */
+  const red=check();if(!red.mediu)pula(red.causa,'escadao-audio-pack');
+  assert.notEqual(red.status,0);assert.match(red.stderr+red.stdout,/escadao/);
   assert.ok(extendMapSoundscapes(manifest));
   for(const id of Object.keys(before))assert.deepEqual(maps[id],before[id],'Preserva mapas existentes');
   assert.deepEqual(maps.escadao,before.quebrada);assert.notEqual(maps.escadao,maps.quebrada);

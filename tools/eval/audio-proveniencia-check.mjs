@@ -69,6 +69,7 @@
    Uso: node tools/eval/audio-proveniencia-check.mjs [--mutante=…]
    ============================================================================ */
 import { execFileSync } from 'node:child_process';
+import { causaNaoMedivel, pula } from './sonda-filho.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -830,7 +831,12 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
           stdio: 'pipe',
         });
         return { saida: 0, texto: out };
-      } catch (e) { return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || '') }; }
+      } catch (e) {
+        /* assets-check importa three; sem ele o catch abaixo transformaria um
+           ambiente quebrado em veredito de procedência (issue #1133). */
+        const causa = causaNaoMedivel(e); if (causa) pula(causa, 'PRV13');
+        return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || '') };
+      }
     };
 
     const a = rodar('audio/piloto/nao-catalogado.wav');
@@ -919,6 +925,7 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
         });
         return { saida: 0, texto: '' };
       } catch (e) {
+        const causa = causaNaoMedivel(e); if (causa) pula(causa, 'PRV rodarAssets');
         return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || '') };
       }
     };
