@@ -562,7 +562,7 @@
     "capture:vm-rifle-awp": "node tools/viewmodels/prep/rifles-awp-capture.mjs",
     "eval:vm-mira": "node tools/eval/vm-reguas-check.mjs --regua=mira",
     "eval:mira-alinhada": "node tools/eval/mira-alinhada-check.mjs --cams=first --armas=ak,pistol,deagle && node tools/eval/mira-alinhada-check.mjs --cams=first --armas=ak,pistol,deagle --mutante=foco",
-    "eval:ads1p-linha": "node tools/eval/ads1p-linha-check.mjs --armas=pistol,deagle && node tools/eval/ads1p-linha-check.mjs --armas=pistol,deagle --mutante=foco",
+    "eval:ads1p-linha": "node tools/eval/ads1p-linha-check.mjs && node tools/eval/ads1p-linha-check.mjs --mutante=foco",
     "eval:vm-cobertura": "node tools/eval/vm-reguas-check.mjs --regua=cobertura",
     "eval:vm-pistola-ref": "node tools/eval/vm-reguas-check.mjs --regua=pistola-ref",
     "eval:vm-maos": "node tools/eval/vm-reguas-check.mjs --regua=maos",

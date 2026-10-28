@@ -6,7 +6,8 @@
    pistola 134 px abaixo, 48 px à direita. Causa: o estilo 'foco' baixava a arma
    de propósito (off y −0,08/−0,10) e a pistola nem alinhava (auto:false).
    O conserto (`adsEfetivo` em data/vmconfig.js, kill-switch ?ads1pfix=0) leva
-   alça e massa ao eixo da câmera.
+   alça e massa ao eixo da câmera nas armas com `ads.linha` (pistol, deagle).
+   A AK golden ficou no foco aprovado (cano já a 0°; eval:vm-mira reprova a linha).
 
    COMO MEDE: refaz em Node a cadeia do runtime (authoredvm.js: câmera do GLB
    invertida, frame, pose idle, alinhamento alça→massa, rolagem, deslize da
@@ -21,7 +22,7 @@
    L3  cano sem guinada: |yaw| ≤ 0,09 rad (regra do dono: não girar para exibir)
 
    Uso:
-     node tools/eval/ads1p-linha-check.mjs                    (ak e pistol)
+     node tools/eval/ads1p-linha-check.mjs                    (pistol e deagle)
      node tools/eval/ads1p-linha-check.mjs --armas=ak,pistol,m4
      node tools/eval/ads1p-linha-check.mjs --fix=0            (mede o foco antigo)
      node tools/eval/ads1p-linha-check.mjs --mutante=foco     (tem de REPROVAR)
@@ -45,7 +46,7 @@ const arg = (n, d = '') => { const h = process.argv.find((a) => a.startsWith(`--
 const MUTANTE = arg('mutante');
 if (MUTANTE && MUTANTE !== 'foco') throw new Error(`mutante desconhecido: ${MUTANTE} (há: foco)`);
 const FIX = MUTANTE === 'foco' ? false : arg('fix', '1') !== '0';
-const ARMAS = arg('armas', 'ak,pistol').split(',').filter(Boolean);
+const ARMAS = arg('armas', 'pistol,deagle').split(',').filter(Boolean);
 const ASSET_ROOT = arg('asset-root', path.join(os.homedir(), 'csbrasil-private-assets/generated/viewmodels'));
 const FOTOS = arg('fotos') ? path.resolve(arg('fotos')) : '';
 const ASPECTOS = { '16x9': [1920, 1080], '3x2': [1800, 1200] };
