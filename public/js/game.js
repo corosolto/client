@@ -40,6 +40,8 @@ import { viewmodelVisibility } from './vmvisibility.js';
 import { urlDoBrasao } from './brasoes_versao.js';
 
 import { WEAPONS } from './data/weapons.js';
+import { economiaLigada } from './economia-partida.js';
+import { CompraPartida } from './compra-partida.js';
 import { perfilArma } from './data/weapon-profiles.js';
 export { perfilArma };
 import { saidaPenetracao, direcaoDesviada, resolverRaio } from './ballistics.js';
@@ -727,7 +729,7 @@ export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
 const FX_CLARAO = { normal: 1, reduzido: 0.45, minimo: 0.15 };
 
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null, economia = false }) {
     this._ctfOpt = ctf;
     this._matchWeapons = matchWeapons;
     this._armaN = 0;
@@ -838,6 +840,8 @@ export class Game {
     this.dedicated = !!dedicated;
     this._mp = null;
     this._mpPend = this.online ? { mpFactory, net } : null;
+    // TRETA$ da partida (docs/ECONOMIA-PARTIDA.md): só o main.js liga; arnês e nó dedicado ficam no loadout antigo.
+    this._ecoLigada = !!economia && economiaLigada({ busca: location.search, online: this.online, dedicado: this.dedicated, wpnMode: this._wpnMode() });
 
     // Câmera 3ª pessoa (tecla B): modo de VISÃO, não de combate - mira e tiro seguem saindo
     // da câmera. Modos, rig, grip e pré-carga do corpo: docs/RIG-PEGA-ARMA.md.
@@ -1358,6 +1362,8 @@ export class Game {
     this.stateUntil = 0;
 
     this._dom();
+    this._compra = this._ecoLigada ? new CompraPartida(this) : null;
+    if (this._compra) { this.player.primary = null; this.player.weapon = 'pistol'; }
     this._input();
     this._applyQuality();
     this.radarCtx = this.el.radar ? this.el.radar.getContext('2d') : null;
@@ -2128,7 +2134,9 @@ export class Game {
       if (e.code === 'KeyZ') { this._radioShow('z'); return; }
       if (e.code === 'KeyX') { this._radioShow('x'); return; }
       if (e.code === 'KeyV') { this._radioShow('c'); return; }
-      if (e.code === 'KeyB') { this._toggleCamView(); return; }   // 1ª → 3ª → ombro
+      if (this._compra?.tecla(e.code, e.repeat)) return;   // menu de compra aberto: 1-9 escolhem, 0 volta
+      // B compra no tempo e na zona de compra (CS); fora disso continua trocando a câmera
+      if (e.code === 'KeyB') { if (this._compra?.podeComprar()) this._compra.alternar(); else this._toggleCamView(); return; }
       if (e.code === 'KeyT' && !e.repeat) { this._emoteToggle(); return; }   // roda de dança
       if (this.emoteOpen) {
         const n = /^Digit([1-8])$/.exec(e.code);
@@ -2136,7 +2144,7 @@ export class Game {
         if (e.code === 'Escape') { this._emoteClose(); return; }
       }
       // slot memory: 1 = last primary held, 2 = last sidearm held (not a hardcoded reset)
-      if (e.code === 'Digit1') this._switchWeapon(this.player.primary || 'awp');
+      if (e.code === 'Digit1') this._switchWeapon(this._slotPrimaria());
       if (e.code === 'Digit2') this._switchWeapon(this.player.secondary || 'pistol');
       if (e.code === 'Digit3') this._switchWeapon('knife');
       if (e.code === 'KeyQ' && this.player.lastInv && this.player.lastInv !== this.player.weapon)
@@ -2389,7 +2397,7 @@ export class Game {
         e.preventDefault();
         if (!this._acceptInput()) return;
         const w = b.dataset.wep, p = this.player;
-        if (w === 'primary') this._switchWeapon(p.primary || 'awp');
+        if (w === 'primary') this._switchWeapon(this._slotPrimaria());
         else if (w === 'secondary') this._switchWeapon(p.secondary || 'pistol');
         else if (w === 'knife') this._switchWeapon('knife');
         else if (w === 'smoke') this._equipNade('smoke');
@@ -2416,10 +2424,12 @@ export class Game {
   _syncTouchWeps() {
     const root = this._touchUi; if (!root) return;
     const p = this.player;
-    const arma = { primary: p.primary || 'awp', secondary: p.secondary || 'pistol', knife: 'knife' };
+    const arma = { primary: this._slotPrimaria(), secondary: p.secondary || 'pistol', knife: 'knife' };
     for (const b of root.querySelectorAll('.touch-wep')) {
       const slot = b.dataset.wep, id = arma[slot];
-      if (!id) continue;
+      // classe e não o atributo `hidden`: `.touch-wep{display:flex}` vence o atributo
+      if (slot === 'primary') b.classList.toggle('hidden', !id);
+      if (!id) { delete b.dataset.arte; b.innerHTML = ''; b.classList.remove('ativa'); continue; }
       b.classList.toggle('ativa', p.weapon === id);
       if (b.dataset.arte === id) continue;
       b.dataset.arte = id;
@@ -2801,6 +2811,7 @@ export class Game {
     if (this.ctf) this._initCTF();
     this.state = 'countdown';
     this.stateUntil = this.time + 3;
+    this._compra?.abrirJanela(3);   // tempo de compra conta depois da contagem
     this._showScoreboard(false);
     // O alvo do round entra no banner: sem isso o jogador não tem como saber que existe
     // condição de vitória por abates (o HUD só mostra o placar corrido).
@@ -2867,13 +2878,18 @@ export class Game {
     } else if (mode === 'awp') {
       this.player.weapon = 'awp';
       this.player.ammo.pistol = { mag: 0, res: 0 };
+    } else if (this._compra) {
+      this._compra.rearmar(this.player);   // quem sobreviveu à rodada fica com o que comprou (CS)
+      this.player.weapon = this.player.primary || this.player.secondary;
     } else {
       this.player.weapon = cw;
     }
     if (VM_QA_WEAPON) this.player.weapon = VM_QA_WEAPON;
     // reset slot memory to the loadout (1 = primary, 2 = sidearm)
-    this.player.primary = PISTOLS.has(this.player.weapon) ? 'pistol' : (this.player.weapon === 'knife' ? cw : this.player.weapon);
-    this.player.secondary = 'pistol';
+    if (!this._compra) {
+      this.player.primary = PISTOLS.has(this.player.weapon) ? 'pistol' : (this.player.weapon === 'knife' ? cw : this.player.weapon);
+      this.player.secondary = 'pistol';
+    }
     // ROUND NOVO, LOADOUT CHEIO: quem SOBREVIVE o corte não chega sem balas (relato out/2026).
     // Mesma guarda do _respawn; história e números em tools/eval/round-municao-check.mjs.
     for (const slot of [this.player.primary, this.player.secondary]) {
@@ -2899,7 +2915,7 @@ export class Game {
       ['ak', 'm4', 'md97', 'scar', 'carbine', 'm92'],
       ['famas', 'p90', 'mp5', 'uzi', 'shotgun', 'lmg'],
       ['deagle', 'revolver38', 'pistol'],
-    ].map(row => row.filter(w => this._pickupAllowed(w)));
+    ].map(row => (this._compra ? [] : row.filter(w => this._pickupAllowed(w))));   // com loja não há armário grátis
     /* ARMÁRIO DO SPAWN — POSIÇÃO MEDIDA CONTRA A GEOMETRIA DO MAPA (P3, 01/08).
        BUG DO DONO (print 20:38, ferro_velho): "as armas não dá pra pegar, a segunda
        fileira de armas nos mapas". A versão anterior (b7495ae) botou o rack no CHÃO, mas
@@ -3123,6 +3139,7 @@ export class Game {
       else if (p > b) winner = 'E'; else if (b > p) winner = 'B';
     } else if (p > b) winner = 'E'; else if (b > p) winner = 'B';
     if (winner) this.roundsWon[winner]++;
+    this._compra?.aoFimDaRodada(winner);
     this.state = 'roundEnd';
     this.stateUntil = this.time + 4;
     this.player.scoped = false; this.el.scope.classList.remove('on');
@@ -3689,7 +3706,7 @@ export class Game {
   /* Scroll: mesmos slots das teclas 1/2/3, na mesma ordem. */
   _cycleWeapon(dir) {
     const p = this.player;
-    const slots = [p.primary || 'awp', p.secondary || 'pistol', 'knife'].filter(w => WEAPONS[w] && this._pickupAllowed(w));
+    const slots = [this._slotPrimaria(), p.secondary || 'pistol', 'knife'].filter(w => WEAPONS[w] && this._pickupAllowed(w));
     if (slots.length < 2) return;
     const i = slots.indexOf(p.weapon);
     this._switchWeapon(slots[((i < 0 ? (dir > 0 ? -1 : 0) : i) + dir + slots.length) % slots.length]);
@@ -4445,9 +4462,12 @@ export class Game {
     }
     // Drop tem prazo e teto porque a versão sem eles foi retirada por virar lixo de mapa;
     // faca não dropa (todo mundo nasce com uma). Histórico e números: tools/eval/drop-check.mjs.
-    if (ent.weapon && ent.weapon !== 'knife' && this._pickupAllowed(ent.weapon)) {
-      this._dropWeapon(ent.pos.x, ent.pos.z, ent.weapon, false, 0.01, this.time + DROP_TTL);
+    // com loja, quem morre larga a primária comprada mesmo segurando pistola ou faca (CS)
+    const largar = this._compra && ent.primary ? ent.primary : ent.weapon;
+    if (largar && largar !== 'knife' && this._pickupAllowed(largar)) {
+      this._dropWeapon(ent.pos.x, ent.pos.z, largar, false, 0.01, this.time + DROP_TTL);
     }
+    this._compra?.aoAbate(ent, attacker, weap);
     if (attacker) {
       attacker.kills++; this.roundKills[attacker.team]++;
       // TELEMETRIA DE ARMA: quando o JOGADOR mata, conta a arma usada (param `weap`
@@ -7165,6 +7185,9 @@ export class Game {
     if (mode === 'awp') return w === 'awp';
     return true; // all
   }
+  // Tecla 1: com loja, quem não comprou primária não ganha AWP de brinde.
+  _slotPrimaria() { return this.player.primary || (this._compra ? null : 'awp'); }
+  _largarArma(ent, w) { this._dropWeapon(ent.pos.x, ent.pos.z, w, false, 0.01, this.time + DROP_TTL); }
   // Pega a arma em foco (E no teclado ou botão PEGAR no toque). Extraído do handler do KeyE
   // pra o mobile chamar o MESMO caminho — nada de duplicar a lógica de consumir o drop.
   _grabNearPickup() {
@@ -7186,7 +7209,8 @@ export class Game {
       who.ammo[w].mag = WEAPONS[w].mag;
       who.ammo[w].res = WEAPONS[w].reserve;
       {
-        const oldW = who.weapon;                   // arma que estava na mão
+        // com loja larga a arma do MESMO slot, senão a primária comprada some sem cair no chão
+        const oldW = this._compra ? (PISTOLS.has(w) ? who.secondary : who.primary) : who.weapon;
         this._switchWeapon(w, { pickup: true });
         // dropa a arma antiga no chão (estilo CS) — MAS não no rack: o rack é armário, você
         // só troca de arma lá sem largar a anterior (senão o spawn vira um monte de armas).
@@ -7353,6 +7377,10 @@ export class Game {
     if (this._deathPanel) this._deathPanel.innerHTML = '';   // painel de morte não vaza pra vida nova
     p.protUntil = this.time + SPAWN_PROT;
     p.yaw = this._spawnYaw(s, p.team); p.pitch = 0;
+    if (this._compra) {
+      this._compra.rearmar(p);
+      if (this.arena) this._compra.abrirJanela();   // sem rodada, compra a cada renascimento
+    }
     // Top off the CURRENT loadout's mags (primary could be any weapon now, not just AWP).
     // #268: em modo arma-única só recarrega slot PERMITIDO pelo modo (pistola não sai de
     // 0/0 no SÓ AWP), e quem morreu com arma proibida renasce com a arma do modo.
@@ -7363,6 +7391,7 @@ export class Game {
       const volta = mode === 'awp' ? 'awp' : (p.secondary || 'pistol');
       if (WEAPONS[volta] && this._pickupAllowed(volta)) this._switchWeapon(volta);
     }
+    if (this._compra && ![p.primary, p.secondary, 'knife'].includes(p.weapon)) this._switchWeapon(p.secondary || 'pistol');
     this.camera.rotation.z = 0;
     this.el.respawn.classList.add('hidden');
     this.sfx.respawn();
@@ -8799,6 +8828,7 @@ export class Game {
     const p = this.player;
     const weaponDef = WEAPONS[p.weapon];
     this._updateWeaponHud();
+    this._compra?.tick();
     const hpText = String(Math.max(0, Math.ceil(p.hp)));
     if (this.el.hpNum.textContent !== hpText) this.el.hpNum.textContent = hpText;
     const hpWidth = Math.max(0, p.hp) + '%';
@@ -9029,6 +9059,7 @@ export class Game {
     document.removeEventListener('pointerlockchange', this._plc);
     window.removeEventListener('blur', this._blur);
     if (this._touchUi) { this._touchUi.remove(); this._touchUi = null; }   // overlay de toque some com a partida
+    this._compra?.descartar();
     this._soltaAtalhos();   // fora da partida os atalhos do navegador voltam a ser do navegador
     this.el.hud.classList.add('hidden');
     this.el.pause.classList.add('hidden');
