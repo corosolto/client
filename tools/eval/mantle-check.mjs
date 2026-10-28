@@ -555,11 +555,12 @@ function andaContra(g, b) {
   const p = g.player;
   const rec = {
     x: p.pos.x, y: p.pos.y, z: p.pos.z, vx: p.vel.x, vy: p.vel.y, vz: p.vel.z, yaw: p.yaw,
-    spaceHeld: p._spaceHeld, jumpBufferedUntil: p.jumpBufferedUntil, coyoteUntil: p.coyoteUntil,
+    spaceHeld: p._spaceHeld, mantleScanAt: p._mantleScanAt,
+    jumpBufferedUntil: p.jumpBufferedUntil, coyoteUntil: p.coyoteUntil,
   };
   /* Mantle, borda do Espaço e buffers são estado. Qualquer um vazando entre amostras faz
      a seguinte começar no meio da ação ou ignorar o primeiro toque. */
-  p.mantle = null; p.mantleF = 0; p._spaceHeld = false; p.jumpBufferedUntil = 0; p.coyoteUntil = 0;
+  p.mantle = null; p.mantleF = 0; p._spaceHeld = false; p._mantleScanAt = 0; p.jumpBufferedUntil = 0; p.coyoteUntil = 0;
   try {
     // A célula é livre; recuar às cegas pode nascer dentro do colisor atrás dela.
     p.pos.set(b.x, b.y, b.z);
@@ -586,7 +587,8 @@ function andaContra(g, b) {
     return ok;
   } finally {
     p.mantle = null; p.mantleF = 0;
-    p._spaceHeld = rec.spaceHeld; p.jumpBufferedUntil = rec.jumpBufferedUntil; p.coyoteUntil = rec.coyoteUntil;
+    p._spaceHeld = rec.spaceHeld; p._mantleScanAt = rec.mantleScanAt;
+    p.jumpBufferedUntil = rec.jumpBufferedUntil; p.coyoteUntil = rec.coyoteUntil;
     p.pos.set(rec.x, rec.y, rec.z); p.vel.set(rec.vx, rec.vy, rec.vz); p.yaw = rec.yaw;
   }
 }
