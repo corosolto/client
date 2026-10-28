@@ -4218,10 +4218,12 @@ export class Game {
       atingiuJogadorLocal: [...porAtor.keys()].some(ent => ent.isPlayer) };
   }
 
-  _rastroTiroBot(from, dir, end, resultado) {
+  _rastroTiroBot(from, dir, end, resultado, bot = null) {
+    // Com o corpo do bot na mão, o traçante sai da BOCA da arma dele (não do olho + 0,7 m).
+    const boca = this._bocaDaArmaDoCorpo(bot?.mesh?.group);
     if (resultado?.raios) {
-      for (const r of resultado.raios.slice(0, 4)) this._tracer(from.clone().addScaledVector(r.dir, .7), r.point);
-    } else this._tracer(from.clone().addScaledVector(dir, .7), end);
+      for (const r of resultado.raios.slice(0, 4)) this._tracer(boca ? boca.clone() : from.clone().addScaledVector(r.dir, .7), r.point);
+    } else this._tracer(boca || from.clone().addScaledVector(dir, .7), end);
   }
 
   _fireHitscan(shooter, from, dir, dmg, byPlayer = false, weap = 'AWP', wid = null, tracer = true) {
@@ -4979,6 +4981,10 @@ export class Game {
     if (!gun.userData.bocaLocal) return null;
     gun.updateWorldMatrix(true, false);
     return out.copy(gun.userData.bocaLocal).applyMatrix4(gun.matrixWorld);
+  }
+  // Origem do clarão/traçante de um bot: a boca da arma dele; sem corpo, a receita do olho.
+  _bocaTiroBot(bot, from, dir, avanco) {
+    return this._bocaDaArmaDoCorpo(bot?.mesh?.group) || from.clone().addScaledVector(dir, avanco);
   }
   // Origem do traçante do PRÓPRIO jogador (offline e online): em 3P sai da arma do corpo; em
   // 1P, do raio câmera→boca do viewmodel (BUG-187), que é onde o cano aparece na tela.
@@ -8059,10 +8065,10 @@ export class Game {
         const fxFull = e.isPlayer || resultado?.ent?.isPlayer || resultado?.atingiuJogadorLocal
           || (_sd < 45 && this.settings.quality !== 'low') || (fxTick % 2) === 0;
         if (fxFull) {
-          this._rastroTiroBot(from, dir, end, resultado);
+          this._rastroTiroBot(from, dir, end, resultado, b);
           this.sfx.shotWeapon(b.weapon, _sd, 0.45, _pan, Math.min(0.25, _sd / 343));   // bots MUITO mais baixos que a arma do jogador (carabina de bot estourava o mix)
         }
-        this._flash(from.clone().add(dir.clone().multiplyScalar(0.85)), dir);   // GPU-batched: 1 draw call
+        this._flash(this._bocaTiroBot(b, from, dir, 0.85), dir);   // GPU-batched: 1 draw call
         if (b.mesh.isGLB) b.mesh.ctrl.shoot();
       }
     } else if (this.ctf) {
@@ -8557,8 +8563,8 @@ export class Game {
     const resultado = this._dispararBot(b, from, dir, Wb);
     const end = resultado?.point || from.clone().addScaledVector(dir, 120);
     this.world.ambience?.onShot(from, end);
-    this._rastroTiroBot(from, dir, end, resultado);
-    this._flash(from.clone().add(dir.clone().multiplyScalar(0.85)), dir);
+    this._rastroTiroBot(from, dir, end, resultado, b);
+    this._flash(this._bocaTiroBot(b, from, dir, 0.85), dir);
     if (b.mesh.isGLB) b.mesh.ctrl.shoot();
   }
 
