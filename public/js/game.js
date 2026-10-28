@@ -4968,6 +4968,14 @@ export class Game {
     this.vm.root.updateWorldMatrix(true, false);
     const v = off.clone();
     this.vm.root.localToWorld(v);          // vmScene == espaço da câmera (vmCamera na origem)
+    if (this._bocaLigada()) {
+      // Mesmo PIXEL da boca, como no caminho autorado: a vmCamera tem FOV próprio (~48° contra
+      // 70°) e o localToWorld direto punha o traçante ~136 px ao lado do cano a 1280×720.
+      const cam = this.camera.getWorldPosition(new THREE.Vector3());
+      const ndc = v.clone().project(this.vmCamera);
+      const ray = new THREE.Vector3(ndc.x, ndc.y, 0.5).unproject(this.camera).sub(cam).normalize();
+      return cam.addScaledVector(ray, v.length());
+    }
     return this.camera.localToWorld(v);
   }
   _bocaLigada() { return BOCA_CORPO && this._bocaCorpo !== false; }
