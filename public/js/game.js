@@ -8918,7 +8918,8 @@ export class Game {
     slots.push({ key: 3, weapon: 'knife' });
     if (p.smokes > 0) slots.push({ key: 4, kind: 'smoke', name: 'FUMAÇA', count: p.smokes });
     if (p.frags > 0) slots.push({ key: 5, kind: 'frag', name: 'FRAG', count: p.frags });
-    if (FLASH_ON && p.flashes > 0) slots.push({ key: 6, kind: 'flash', name: 'FLASH', count: p.flashes });
+    // sem FLASH_ON aqui: eval:vmlabhud roda este método recortado; com ?flash=0 o estoque já é 0
+    if (p.flashes > 0) slots.push({ key: 6, kind: 'flash', name: 'FLASH', count: p.flashes });
 
     const signature = slots.map((slot) => {
       const ammo = slot.weapon && p.ammo?.[slot.weapon];
