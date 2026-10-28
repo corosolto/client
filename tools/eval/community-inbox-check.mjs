@@ -54,9 +54,15 @@ if(mutant && helperMutants[mutant]){
 }else if(mutant==='stale401-clears-current-account'){
   communitySource=mutation(communitySource,"data.error==='session_expired' && requestAuth===auth","data.error==='session_expired'");
 }else if(mutant==='feature-off-entry'){
-  const before="if(state?.messages_enabled)buttons.append(button('MANDAR MENSAGEM'";
-  assert.equal(communitySource.split(before).length-1,2,'MUTANTE NÃO APLICOU: duas entradas esperadas');
-  communitySource=communitySource.replaceAll(before,"if(true)buttons.append(button('MANDAR MENSAGEM'");
+  // Duas portas de entrada da DM: o perfil (ternário com o chip de "em preparação") e a lista de amigos.
+  const perfil="state?.messages_enabled?button('MANDAR MENSAGEM'",lista="if(state?.messages_enabled)buttons.append(button('MANDAR MENSAGEM'";
+  assert.equal(communitySource.split(perfil).length-1,1,'MUTANTE NÃO APLICOU: entrada do perfil ausente');
+  assert.equal(communitySource.split(lista).length-1,1,'MUTANTE NÃO APLICOU: entrada da lista de amigos ausente');
+  communitySource=communitySource.replace(perfil,"true?button('MANDAR MENSAGEM'").replace(lista,"if(true)buttons.append(button('MANDAR MENSAGEM'");
+}else if(mutant==='portao-mudo'){
+  communitySource=mutation(communitySource,":chip('MENSAGENS EM PREPARAÇÃO')",":el('span','')");
+}else if(mutant==='refresh-engole-render'){
+  communitySource=mutation(communitySource,'try{await refresh();}catch{}await render();\n      }finally','await refresh();await render();\n      }finally');
 }else if(mutant==='read-all-rows'){
   communitySource=mutation(communitySource,'ids:unread','ids:data.messages.map(m=>m.id)');
 }else if(mutant==='ignore-message-badge'){
@@ -151,12 +157,16 @@ async function runtime({auth=account,state=stateBase,tab='notifications',peer=nu
   const calls=[],navigation=[],events={};
   const gameTab=new Element('button');gameTab.onclick=()=>navigation.push('play');
   let liveState=copy(state);
-  let liveMessages=copy(messages),liveInbox=copy(inboxData),sendFailures=failSend;
-  const document={getElementById:id=>dom[id] || null,createElement:tag=>new Element(tag),createTextNode:text=>({textContent:String(text)}),querySelectorAll:selector=>selector==='.social-tabs button'?nav:[],querySelector:selector=>selector.includes('jogar')?gameTab:null,addEventListener:(name,fn)=>events[name]=fn,hidden:false};
-  const ctx=vm.createContext({document,questList,console,URL,URLSearchParams,Date,crypto:{randomUUID},AbortSignal:{timeout:()=>null},setInterval:()=>1,location:{origin:'https://fixture.test',href:'https://fixture.test/?social='+tab,search:'?social='+tab,assign:url=>navigation.push(String(url))},navigator:{clipboard:{writeText:async()=>{}}},fetch:async(path,options={})=>{
+  let liveMessages=copy(messages),liveInbox=copy(inboxData),sendFailures=failSend,estadoQuebrado=false;
+  const document={getElementById:id=>dom[id] || null,createElement:tag=>new Element(tag),createTextNode:text=>({textContent:String(text)}),querySelectorAll:selector=>selector==='.social-tabs button'?nav:[],querySelector:selector=>selector.includes('jogar')?gameTab:null,addEventListener:(name,fn)=>events[name]=fn,dispatchEvent:event=>{(events[event?.type]||(()=>{}))(event);return true;},hidden:false};
+// `cs-social-live` (lista de amigos em partida) entrou depois desta régua: sem CustomEvent e sem
+// document.dispatchEvent no contexto, `refresh()` morria no meio e levava junto contador e render.
+class CustomEvent{constructor(type,init={}){this.type=type;this.detail=init.detail;}}
+  const ctx=vm.createContext({document,questList,console,CustomEvent,URL,URLSearchParams,Date,crypto:{randomUUID},AbortSignal:{timeout:()=>null},setInterval:()=>1,location:{origin:'https://fixture.test',href:'https://fixture.test/?social='+tab,search:'?social='+tab,assign:url=>navigation.push(String(url))},navigator:{clipboard:{writeText:async()=>{}}},fetch:async(path,options={})=>{
     const body=options.body?JSON.parse(options.body):null;calls.push({path,body});
     const parsed=new URL(path,'https://fixture.test');
     const action=body?.action||parsed.searchParams.get('action');let data=liveState;
+    if(estadoQuebrado && !action)throw new Error('Fixture state offline');
     if(action==='profile')data={profile:peer&&parsed.searchParams.get('id')===peer.id?peer:liveState.profile};
     else if(action==='inbox')data=liveInbox;
     else if(action==='conversation')data={messages:copy(liveMessages),peer:copy(peer),has_more:false,next_before:null};
@@ -178,7 +188,7 @@ async function runtime({auth=account,state=stateBase,tab='notifications',peer=nu
   assert(ctx.__inboxTest,'Community não inicializou: fixture ou estrutura incompatível');
   await ctx.__inboxTest.boot();
   for(let i=0;i<5;i++)await new Promise(resolve=>setImmediate(resolve));
-  return {ctx,dom,nav,calls,navigation,events,document,setState:state=>liveState=copy(state),setInbox:value=>liveInbox=copy(value),nodes:()=>tree(dom['social-content'])};
+  return {ctx,dom,nav,calls,navigation,events,document,setState:state=>liveState=copy(state),setInbox:value=>liveInbox=copy(value),quebrarEstado:v=>{estadoQuebrado=v;},nodes:()=>tree(dom['social-content'])};
 }
 const matches=(nodes,pattern)=>nodes.filter(node=>['button','a'].includes(node.tagName) && pattern.test(node.textContent));
 test('central renderiza missões reais ao abrir avisos',async()=>{
@@ -208,7 +218,9 @@ test('avisos mantêm prova, texto seguro e leitura do servidor',async()=>{
   assert.equal(domText(ui.dom['social-unread']),'1','Contagem não usa avisos não lidos');
   const readButton=matches(ui.nodes(),/MARCAR COMO LIDOS/i)[0];assert(readButton,'Ação de leitura ausente');await readButton.click();
   assert(ui.calls.some(call=>call.body?.action==='read_notifications'),'Leitura não persistida via API existente');
-  const profile=ui.nodes().find(node=>node.tagName==='a' && node.href==='/u/22222222-2222-4222-8222-222222222222/perfil');assert(profile,'Aviso não oferece perfil do remetente');
+  // O link do aviso é a rota viva do perfil (/u/<id>); o sufixo com nick é a forma antiga, e a
+  // régua cobrava a antiga. O que importa é o aviso levar ao perfil de quem o gerou.
+  const profile=ui.nodes().find(node=>node.tagName==='a' && node.href==='/u/22222222-2222-4222-8222-222222222222');assert(profile,'Aviso não oferece perfil do remetente');
 });
 function domText(node){return node.textContent;}
 test('convidado recebe entrada de conta, sem progresso fictício',async()=>{
@@ -251,6 +263,21 @@ test('corpo e nome do remetente são texto literal; leitura envia apenas IDs rec
   assert(ui.nodes().some(node=>node.textContent===incoming.body),'Mensagem recebida não é texto literal');assert(ui.nodes().some(node=>node.textContent===peer.nick),'Nome do remetente não é texto literal');
   const read=matches(ui.nodes(),/^MARCAR ESTAS MENSAGENS COMO LIDAS$/)[0];assert(read,'Ação de leitura das mensagens exibidas ausente');await read.click();
   const request=ui.calls.find(call=>call.body?.action==='message_read');assert(request,'Leitura não chamou API');assert.equal(request.body.target,peerId);assert.deepEqual(request.body.ids,[incoming.id],'Leitura incluiu mensagem enviada ou não exibida');assert(!Object.hasOwn(request.body,'through'),'Cursor antigo de leitura ainda usado');
+});
+/* Relato de 28/10/2026: a mensagem sai, o servidor confirma, e a tela continua com o rascunho —
+   bastava o `refresh` seguinte falhar (estado fora do ar) para o render nunca acontecer. */
+test('estado fora do ar depois do envio não segura a tela no rascunho',async()=>{
+  const ui=await runtime({state:messageState,tab:'friends',peer,messages:[incoming]});await openPeer(ui);
+  const text=ui.nodes().find(node=>node.tagName==='textarea'),send=matches(ui.nodes(),/^ENVIAR MENSAGEM$/)[0];
+  text.value='Mensagem que o servidor aceitou';text.oninput();
+  ui.quebrarEstado(true);
+  await send.click();
+  ui.quebrarEstado(false);
+  const enviados=ui.calls.filter(call=>call.body?.action==='message_send');
+  assert.equal(enviados.length,1,'o envio tem de ter saído uma vez');
+  const atual=ui.nodes().find(node=>node.tagName==='textarea');
+  assert.equal(atual?.value,'','refresh quebrado segurou o rascunho enviado na tela');
+  assert.equal(atual?.disabled,false,'campo ficou bloqueado depois do envio confirmado');
 });
 test('falha de envio preserva rascunho e a mesma chave no retry',async()=>{
   const ui=await runtime({state:messageState,tab:'friends',peer,messages:[incoming],failSend:1});await openPeer(ui);
@@ -323,6 +350,17 @@ test('mensagens desabilitadas explicam indisponibilidade e não consultam conver
   for(const tab of ['friends','profile']){const ui=await runtime({state:{...copy(messageState),messages_enabled:false},tab,peer});assert.equal(matches(ui.nodes(),/^MANDAR MENSAGEM$/).length,0,'Feature desativada apresentou entrada de DM em '+tab);}
   const ui=await runtime({state:{...copy(messageState),messages_enabled:false},peer});const section=matches(ui.nodes(),/^MENSAGENS$/)[0];assert(section,'Central sem seção de mensagens');await section.click();
   assert(/prepara[çc][ãa]o|configura[çc][ãa]o|indispon[ií]vel/i.test(ui.dom['social-content'].textContent),'Flag desativada apresentou tela vazia');assert(!ui.calls.some(call=>new URL(call.path,'https://fixture.test').searchParams.get('action')==='conversation'),'Flag desativada consultou mensagens');assert.equal(matches(ui.nodes(),/^ENVIAR MENSAGEM$/).length,0);
+});
+/* "Não consigo mandar mensagem pra ninguém" (dono, 28/10/2026): os dois portões da DM (flag do
+   servidor e amizade aceita) sumiam calados do perfil. Agora cada um se explica na tela. */
+test('o perfil diz qual portão barrou a mensagem',async()=>{
+  const desligada=await runtime({state:{...copy(messageState),messages_enabled:false},tab:'profile',peer});
+  assert.equal(matches(desligada.nodes(),/^MANDAR MENSAGEM$/).length,0,'Flag desligada manteve o botão');
+  assert(desligada.nodes().some(node=>/^MENSAGENS EM PREPARA[ÇC][ÃA]O$/.test(node.textContent.trim())),'Flag desligada não explica no perfil do amigo');
+  const estranho={...copy(peer),relationship:null};
+  const semAmizade=await runtime({state:{...copy(messageState),friends:[],messages_enabled:true},tab:'profile',peer:estranho});
+  assert.equal(matches(semAmizade.nodes(),/^MANDAR MENSAGEM$/).length,0,'Desconhecido ganhou botão de DM');
+  assert(semAmizade.nodes().some(node=>/^MENSAGEM S[ÓO] ENTRE AMIGOS$/.test(node.textContent.trim())),'Perfil de desconhecido não explica a regra da DM');
 });
 
 let passed=0;
