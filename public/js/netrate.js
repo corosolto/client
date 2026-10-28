@@ -18,8 +18,8 @@ const COMPACTA_EM = 128;
 export class MedidorDeTaxa {
   constructor(janelaMs = JANELA_MS) {
     this.janelaMs = janelaMs > 0 ? janelaMs : JANELA_MS;
-    this.hz = 0;        // snapshots por segundo na janela
-    this.kbps = 0;      // KB/s na janela
+    this.hz = 0;
+    this.kbps = 0;
     this._tm = [];      // eixo de MEDIDA, em ms (servidor quando há; local quando não)
     this._bytes = [];
     this._i = 0;        // cabeça lógica da fila
