@@ -40,6 +40,7 @@ import { viewmodelVisibility } from './vmvisibility.js';
 import { urlDoBrasao } from './brasoes_versao.js';
 
 import { WEAPONS } from './data/weapons.js';
+import { danoComArmadura, ARMADURA_MAX } from './armadura.js';
 import { perfilArma } from './data/weapon-profiles.js';
 export { perfilArma };
 import { saidaPenetracao, direcaoDesviada, resolverRaio } from './ballistics.js';
@@ -349,6 +350,12 @@ const RACK_RETA = QS.get('rackreta') === '1';
    A simetria é parte do desenho: vale pra jogador E bots — meia regeneração faria o bot
    virar esponja. Régua: invariante REGEN de `tools/eval/regen-check.mjs`. */
 const REGEN = QS.get('regen') === '1', REGEN_DELAY = 6, REGEN_RATE = 22;
+// Colete/capacete estilo CS só na partida local (online o dano é do servidor): regra em armadura.js.
+// `?armadura=0` desliga; `?debug=1&colete=100&capacete=1` equipa jogador e bots a cada vida.
+const ARMADURA = QS.get('armadura') !== '0';
+const ARMADURA_DEBUG = QS.get('debug') === '1' && QS.has('colete')
+  ? { colete: Math.max(0, Math.min(ARMADURA_MAX, parseInt(QS.get('colete'), 10) || 0)), capacete: QS.get('capacete') === '1' }
+  : null;
 const TEAM_LABEL = { E: 'TIME E', B: 'TIME B' };
 const RADIO = {
   z: { title: 'COMANDOS', items: ['Bora, bora, bora!', 'Cobre eu!', 'Recua, recua!'] },
@@ -2834,6 +2841,7 @@ export class Game {
       const jx = s.x + (Math.random() - .5), jz = s.z + (Math.random() - .5);
       ent.pos.set(jx, this._spawnY(jx, jz), jz);
       ent.hp = 100; ent.alive = true; ent.respawnAt = 0; ent.protUntil = 0;
+      this._equiparArmadura(ent);
       return s;
     };
     const playerSpawn = place(this.player, this.playerTeam, 0);
@@ -4149,12 +4157,13 @@ export class Game {
 
   _aplicarTiroBot(bot, hit, dir, W, head, dano) {
     const alvo = hit.ent;
+    const blindado = this._armoredTarget(alvo, head);   // antes do dano: o tiro que zera o colete ainda bate nele
     this._damage(alvo, dano, bot, W.short || 'ARMA', head, hit.point);
     if (hit.atravessou) this._puff(hit.atravessou.point, hit.atravessou.face?.normal || null,
       this._surfaceOf(hit.atravessou.object), false);
     if (BLOOD) {
       if (alvo.isPlayer) this._bloodSpatter(hit.point, dir, head, alvo.pos.y);
-      else this._fleshImpact(hit.point, dir, head, alvo.pos.y, false);
+      else this._fleshImpact(hit.point, dir, head, alvo.pos.y, false, blindado);
     }
     if (alvo.isPlayer) this._noteHit(bot, W.short || 'ARMA', dano, head, hit.dist);
   }
@@ -4206,9 +4215,10 @@ export class Game {
       }
       const base = this._shotDamage(dmg, wid, hit.dist, head);
       const dano = hit.damageMul == null ? base : Math.round(base * hit.damageMul);
+      const blindado = this._armoredTarget(bot, head);
       if (!this.online) this._damage(bot, dano, shooter, weap, head, end);
       else if (byPlayer && !hit.atravessou) this._acertoPrevisto(bot, dano, head, end);
-      this._fleshImpact(end, dir, head, bot.pos.y, byPlayer, this._armoredTarget(bot));
+      this._fleshImpact(end, dir, head, bot.pos.y, byPlayer, blindado);
     } else if (hit?.object) {
       const surf = hit.sup;
       this._puff(hit.point, hit.n, surf, false);   // BUG-187: impacto de bala sem fumaça (furo, faísca e som ficam)
@@ -4284,8 +4294,21 @@ export class Game {
   }
   // Impacto em CARNE: puff vermelho curto + som próprio. Antes o único sinal de que você
   // acertou uma PESSOA era o mesmo bip de acertar uma parede (grep blood = 0 ocorrências).
-  _armoredTarget(ent) {
+  _armoredTarget(ent, head = false) {
+    if (ARMADURA && (ent?.armor || 0) > 0 && (!head || ent.helmet)) return true;
     return /colete|cota de malha|armadura|capacete/i.test(ent?.def?.blurb || '');
+  }
+  // Partida local só: online o nó roda este mesmo `_damage` sem estado de armadura (contrato no PR do colete).
+  _aplicaArmadura(ent, dmg, weap, head) {
+    if (!ARMADURA || this.online || this.dedicated || !(ent.armor > 0)) return dmg;
+    const r = danoComArmadura({ dano: dmg, cabeca: head, colete: ent.armor, capacete: ent.helmet, arma: weap });
+    ent.armor = r.colete;
+    return r.vida;
+  }
+  _equiparArmadura(ent) {
+    const d = ARMADURA && !this.online && !this.dedicated ? ARMADURA_DEBUG : null;
+    ent.armor = d ? d.colete : 0;
+    ent.helmet = !!(d && d.capacete && d.colete > 0);
   }
   _fleshImpact(pos, dir, head, footY = null, byPlayer = true, armored = false) {
     if (!GUNFEEL) return;
@@ -4371,6 +4394,7 @@ export class Game {
   _damage(ent, dmg, attacker, weap = 'AWP', head = false, point = null) {
     if (!ent.alive || this.state !== 'live') return;
     if (this.time < (ent.protUntil || 0)) return;   // spawn protection: zero dano (e sem hitmarker) enquanto protegido
+    dmg = this._aplicaArmadura(ent, dmg, weap, head);
     ent.hp -= dmg;
     // 3P: o corpo cede na direção do tiro — sem isso quem atira de longe não sabe se acertou.
     if (ent.hp > 0 && attacker && attacker.pos) {
@@ -7341,6 +7365,7 @@ export class Game {
     const s = this._pickSpawn(p.team);
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
     p.hp = 100; p.alive = true; p.crouchF = 0;
+    this._equiparArmadura(p);
     p.reloadUntil = 0; p.reloadWeapon = ''; p.nadeBusyUntil = 0; p._nextNade = 0;
     this._voltarPraBase();
     p._lifeDmg = 0;
@@ -7550,6 +7575,7 @@ export class Game {
     const g = b.mesh.group;
     const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
     b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;
+    this._equiparArmadura(b);
     /* Renascem sobrepostos de propósito: jitter no spawn foi medido e reprovado. Quem
        desempilha é a despenetração do _botSeparation. Números: docs/MULTIPLAYER.md. */
     b.protUntil = this.time + SPAWN_PROT;
