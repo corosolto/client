@@ -6398,9 +6398,8 @@ export class Game {
     if (boomLen > 1e-4) {
       boom.multiplyScalar(1 / boomLen);
       let claro = boomLen;
-      // A lente tem volume: o raio central sozinho atravessava quinas que raspavam a
-      // lateral/superior do enquadramento. Cinco probes paralelos aproximam uma esfera
-      // de 12 cm sem criar geometria, alocação ou uma segunda convenção de collider.
+      // Cinco probes paralelos dão 12 cm de volume à lente e seguram quinas que o raio
+      // central atravessava, sem criar geometria ou outra convenção de collider.
       const probeOrigin = this._tpBoomProbe || (this._tpBoomProbe = new THREE.Vector3());
       const pt = this._tpBoxPt || (this._tpBoxPt = new THREE.Vector3());
       for (let probe = 0; probe < 5; probe++) {
