@@ -553,8 +553,16 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
 
     const padroes = (leg.padroes || []).map((p) => ({ ...p, re: new RegExp(p.padrao, 'i') }));
     /* O que "cheira" a legado, independente dos padrões declarados: é a rede que
-       pega padrão que alguém esqueceu de declarar. */
-    const SUSPEITO = /cs-1-6|cs-go|counter-strike|half-life|^audio\/game\/ut-|knife_|usp_|awp|glock18|deagle|m4a1|mp5-|p90-|galil|famas|aug-|sg55|xm1014|m249|scout_|m3-1|mac10|g3sg1|sg550|generic_reload/i;
+       pega padrão que alguém esqueceu de declarar.
+
+       FURO ENCONTRADO EM 28/10/2026 (BUG-136/#1107): faltava `ak47`. O manifest
+       tinha `audio/weapons/ak47-2.wav` em 3 chaves (`ak`, `akm`, `m92`) e esta rede
+       não via nenhuma — por isso a cláusula media "45 de 62" quando o número real
+       era 48. O sentido bidirecional não salva aqui: `semPadrao` só examina o que
+       o SUSPEITO já marcou, então furo na rede é invisível para a própria rede.
+       Lição: a rede que decide o universo da medição precisa ser revisada contra
+       uma lista externa, não contra si mesma. */
+    const SUSPEITO = /cs-1-6|cs-go|counter-strike|half-life|^audio\/game\/ut-|knife_|usp_|awp|glock18|deagle|ak47|m4a1|mp5-|p90-|galil|famas|aug-|sg55|xm1014|m249|scout_|m3-1|mac10|g3sg1|sg550|generic_reload/i;
     const suspeitas = folhas.filter((f) => SUSPEITO.test(f));
     const semPadrao = suspeitas.filter((f) => !padroes.some((p) => p.re.test(f)));
     if (semPadrao.length) {
