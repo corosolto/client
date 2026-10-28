@@ -4322,7 +4322,7 @@ export class Game {
   _updateArmaduraHud(p) {
     const box = this._armorEl || (this._armorEl = document.getElementById('armor-hud'));
     if (!box) return;
-    const colete = ARMADURA ? Math.max(0, Math.ceil(p.armor || 0)) : 0;
+    const colete = ARMADURA && p.alive ? Math.max(0, Math.ceil(p.armor || 0)) : 0;   // morto não mostra o colete que sobrou
     const chave = colete > 0 ? `${colete}${p.helmet ? 'c' : ''}` : '';
     if (this._armorHudKey === chave) return;
     this._armorHudKey = chave;
@@ -6484,9 +6484,9 @@ export class Game {
       for (const item of tp.selfMeshes) item.object.visible = item.visible;
     }
     tp.selfOccluded = selfOccluded;
+    if (tp.isGLB) ocultarArmadura(tp.ctrl?.model, selfOccluded);   // colete/capacete entram depois de selfMeshes
     // Cruz no alvo do raio autoritativo a distância de combate; o tiro continua
     // saindo do olho com yaw/pitch, igual ao servidor multiplayer.
-    if (tp.isGLB) ocultarArmadura(tp.ctrl?.model, selfOccluded);   // colete/capacete entram depois de selfMeshes
     const aimPoint = this._tpAimPoint || (this._tpAimPoint = new THREE.Vector3());
     aimPoint.copy(this._eyeWorld).addScaledVector(fwd, 12 * (1 - orbitBlend));
     aimPoint.y -= 0.7 * orbitBlend;
