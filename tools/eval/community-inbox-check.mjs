@@ -254,8 +254,11 @@ test('perfil e cartão de amigo abrem a conversa da identidade escolhida',async(
     const ui=await runtime({state:messageState,tab,peer,messages:[incoming,outgoing]});await openPeer(ui);
     assert.equal(ui.ctx.__inboxTest.getTab(),'notifications');assert(matches(ui.nodes(),/^ENVIAR MENSAGEM$/).length,'Conversa não chegou ao formulário de envio');
   }
+  /* A DM deixou de exigir amizade (dono, 28/10/2026): pedido pendente, recebido ou nenhum
+     vínculo continuam abrindo a conversa. Quem barra agora é o servidor (perfil fechado,
+     bloqueio, teto de primeiro contato), e a recusa chega como texto na tela. */
   for(const relation of ['none','incoming','outgoing']){
-    const ui=await runtime({state:messageState,tab:'profile',peer:{...peer,relationship:relation}});assert.equal(matches(ui.nodes(),/^MANDAR MENSAGEM$/).length,0,'Perfil não amigo apresentou envio permitido');
+    const ui=await runtime({state:messageState,tab:'profile',peer:{...peer,relationship:relation}});assert.equal(matches(ui.nodes(),/^MANDAR MENSAGEM$/).length,1,'Perfil sem amizade perdeu a entrada de DM: '+relation);
   }
 });
 test('corpo e nome do remetente são texto literal; leitura envia apenas IDs recebidos vistos',async()=>{
@@ -351,16 +354,18 @@ test('mensagens desabilitadas explicam indisponibilidade e não consultam conver
   const ui=await runtime({state:{...copy(messageState),messages_enabled:false},peer});const section=matches(ui.nodes(),/^MENSAGENS$/)[0];assert(section,'Central sem seção de mensagens');await section.click();
   assert(/prepara[çc][ãa]o|configura[çc][ãa]o|indispon[ií]vel/i.test(ui.dom['social-content'].textContent),'Flag desativada apresentou tela vazia');assert(!ui.calls.some(call=>new URL(call.path,'https://fixture.test').searchParams.get('action')==='conversation'),'Flag desativada consultou mensagens');assert.equal(matches(ui.nodes(),/^ENVIAR MENSAGEM$/).length,0);
 });
-/* "Não consigo mandar mensagem pra ninguém" (dono, 28/10/2026): os dois portões da DM (flag do
-   servidor e amizade aceita) sumiam calados do perfil. Agora cada um se explica na tela. */
-test('o perfil diz qual portão barrou a mensagem',async()=>{
+/* "Mandar pra todo cadastrado" (dono, 28/10/2026): a DM deixou de exigir amizade, então o
+   botão vale em qualquer perfil. O portão que sobra é a flag do servidor, e ela se explica. */
+test('a mensagem vale em qualquer perfil, e a flag desligada se explica',async()=>{
   const desligada=await runtime({state:{...copy(messageState),messages_enabled:false},tab:'profile',peer});
   assert.equal(matches(desligada.nodes(),/^MANDAR MENSAGEM$/).length,0,'Flag desligada manteve o botão');
-  assert(desligada.nodes().some(node=>/^MENSAGENS EM PREPARA[ÇC][ÃA]O$/.test(node.textContent.trim())),'Flag desligada não explica no perfil do amigo');
+  assert(desligada.nodes().some(node=>/^MENSAGENS EM PREPARA[ÇC][ÃA]O$/.test(node.textContent.trim())),'Flag desligada não explica no perfil');
   const estranho={...copy(peer),relationship:null};
   const semAmizade=await runtime({state:{...copy(messageState),friends:[],messages_enabled:true},tab:'profile',peer:estranho});
-  assert.equal(matches(semAmizade.nodes(),/^MANDAR MENSAGEM$/).length,0,'Desconhecido ganhou botão de DM');
-  assert(semAmizade.nodes().some(node=>/^MENSAGEM S[ÓO] ENTRE AMIGOS$/.test(node.textContent.trim())),'Perfil de desconhecido não explica a regra da DM');
+  assert.equal(matches(semAmizade.nodes(),/^MANDAR MENSAGEM$/).length,1,'Perfil de desconhecido ficou sem entrada de DM');
+  assert.equal(matches(semAmizade.nodes(),/^ADICIONAR AMIGO$/).length,1,'O pedido de amizade sumiu do perfil de desconhecido');
+  const amigo=await runtime({state:copy(messageState),tab:'profile',peer});
+  assert.equal(matches(amigo.nodes(),/^MANDAR MENSAGEM$/).length,1,'Perfil de amigo perdeu a entrada de DM');
 });
 
 let passed=0;
