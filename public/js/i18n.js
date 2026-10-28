@@ -534,6 +534,7 @@ const DICT = {
   'Marque a estrela de um mapa para ele aparecer aqui.': 'Star a map to see it here.', 'Nenhum mapa com esse filtro.': 'No map matches this filter.',
   'Configurar partida': 'Match setup', 'Menos bots no seu time': 'Fewer bots on your team', 'Mais bots no seu time': 'More bots on your team',
   'Menos inimigos': 'Fewer enemies', 'Mais inimigos': 'More enemies', 'Menos rounds': 'Fewer rounds', 'Mais rounds': 'More rounds',
+  'PESADAS': 'HEAVY', 'SUBMETRALHADORAS': 'SMGS', 'FUZIS': 'RIFLES', 'Comprar': 'Buy',
   'PISTOLAS': 'PISTOLS', 'FACA': 'KNIFE', 'DE BOA': 'CHILL', 'TRETA': 'TOUGH', 'INSANO': 'INSANE', 'você': 'you', 'só você': 'just you',
   'Escalação': 'Lineup', 'travado, resto sorteado': 'locked, the rest drawn at random', 'travados, resto sorteado': 'locked, the rest drawn at random',
   'Escalação automática, todos sorteados': 'Automatic lineup, everyone drawn at random', 'EDITAR': 'EDIT',
@@ -850,6 +851,18 @@ const FRASES = {
   chatIndisponivel: { pt: () => 'Chat indisponível agora', en: () => 'Chat unavailable right now' },
   chatPropria: { pt: () => 'Essa mensagem é sua', en: () => 'That is your own message' },
   chatDenunciaEnviada: { pt: () => 'Denúncia enviada', en: () => 'Report sent' },
+  // TRETA$ da partida (compra-partida.js): menu de compra e dica do HUD
+  compraTitulo: { pt: () => 'COMPRAR', en: () => 'BUY' },
+  compraDica: { pt: (toque, s) => `${toque ? '$' : 'B'} COMPRAR · ${s}s`, en: (toque, s) => `${toque ? '$' : 'B'} BUY · ${s}s` },
+  compraSuaArma: { pt: () => 'SUA ARMA', en: () => 'YOUR GUN' },
+  compraVoltar: { pt: () => 'VOLTAR', en: () => 'BACK' },
+  compraFechar: { pt: () => 'FECHAR', en: () => 'CLOSE' },
+  compraRecusa: {
+    pt: (m) => ({ tempo: 'Acabou o tempo de compra', zona: 'Volte pro spawn pra comprar', saldo: 'TRETA$ insuficiente',
+      'ja-tem': 'Você já tem essa', morto: 'Morto não compra', item: 'Item indisponível' }[m] || 'Compra recusada'),
+    en: (m) => ({ tempo: 'Buy time is over', zona: 'Go back to spawn to buy', saldo: 'Not enough TRETA$',
+      'ja-tem': 'You already have it', morto: 'Dead players cannot buy', item: 'Item unavailable' }[m] || 'Purchase refused'),
+  },
 };
 export const frase = (id, ...args) => {
   const f = FRASES[id];
