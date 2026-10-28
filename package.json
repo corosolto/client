@@ -161,6 +161,8 @@
     "eval:posters": "node tools/eval/poster-aspect-check.mjs",
     "eval:ui": "node tools/eval/ui-check.mjs all",
     "eval:ui-chat": "node tools/eval/ui-check.mjs ui1c",
+    "//eval:community-inbox": "Central da conta (missões, avisos, mensagens) no community.js real: contadores, rascunho/idempotência do envio, leitura só dos ids recebidos e a DM escondida com a flag do servidor desligada. Mutantes: feature-off-entry, unsafe-text, dead-actions, retry-new-key, account-keeps-draft, stale-conversation-response, typing-during-send, failure-keeps-disabled, rerender-keeps-input-enabled, read-all-rows, ignore-message-badge, refresh-engole-render.",
+    "eval:community-inbox": "node tools/eval/community-inbox-check.mjs && ! node tools/eval/community-inbox-check.mjs --mutant=feature-off-entry && ! node tools/eval/community-inbox-check.mjs --mutant=portao-mudo && ! node tools/eval/community-inbox-check.mjs --mutant=refresh-engole-render && ! node tools/eval/community-inbox-check.mjs --mutant=unsafe-text && ! node tools/eval/community-inbox-check.mjs --mutant=read-all-rows",
     "eval:community-header": "node tools/eval/community-header-check.mjs",
     "eval:mappreview": "node tools/eval/map-preview-check.mjs",
     "eval:mappreview:browser": "node tools/eval/map-preview-browser-check.mjs",
