@@ -91,7 +91,6 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 295 | `MOVE_MUL` | 6 |
 | 302 | `MOVE2` | 4 |
 | 306 | `STEP_H` | 3 |
-| 313 | `MANTLE_APOIO` | 4 |
 | 317 | `MANTLE_GRID` | 5 |
 | 322 | `RACK_OLD` | 4 |
 | 326 | `RACK_RETA` | 25 |
@@ -331,6 +330,8 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 5987 | `_mantleAlcance()` | 50 |
 | 6037 | `_mantleAlcancavel()` | 12 |
 | 6049 | `_mantleTarget()` | 35 |
+| 6144 | `_beginMantle()` | 16 |
+| 6160 | `_stepMantle()` | 29 |
 | 6084 | `_freeSpot()` | 30 |
 | 6114 | `_retaAndavel()` | 20 |
 | 6134 | `_walkDepth()` | 16 |
