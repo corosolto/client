@@ -8,6 +8,7 @@ export { NOS, parseConvite, linkDeConvite, httpDoNo, NO_RE, ordenarNos, FAIXA_PI
 import { NOS } from './nos.js';
 import { decodeSnapshot, MAX_SNAPSHOT_BYTES, SNAPSHOT_PROTOCOLS } from './netcodec.js';
 import { TransporteWS, TransporteWT } from './transporte.js';
+import { MedidorDeTaxa } from './netrate.js';
 import * as versao from './version.js';
 const { VERSION } = versao;
 // ausente em árvore anterior ao fingerprint: degrada para comparar VERSION
@@ -176,19 +177,25 @@ export class NetClient {
     this.proximo = null; this.onProximo = null;   // próximo mapa anunciado no placar (nó antigo nunca manda)
     this.onPersonagem = null;
     this.onChat = null; this._chatFila = [];
-    // ── diagnóstico de rede (overlay do jogo) ──
+    // ── diagnóstico de rede (snapshots/s e banda) ──
+    /* `hz`/`kbps` saem do MedidorDeTaxa: janela de relógio DO SERVIDOR, não de quadros
+       de render. O medidor antigo morava aqui e contava `this._snapT.length` como taxa —
+       com o quadro travado o cliente drenava segundos de fila num carimbo só e o número
+       inflava na proporção da travada (BUG-160). Ver o cabeçalho de netrate.js. */
     this.stats = { hz: 0, kbps: 0, gapMax: 0, sinceLast: 0, ents: 0, tick: 0, ping: 0, snaps: 0, bytes: 0 };
-    this._snapT = []; this._byteT = []; this._lastSnapT = 0;
+    this._taxa = new MedidorDeTaxa();
+    this._lastSnapT = 0;
     this._rttSamples = []; this._gapSamples = [];
     this._pingTimer = null;
   }
 
   computeStats() {
-    const now = performance.now(), cut = now - 1000;
-    while (this._snapT.length && this._snapT[0] < cut) this._snapT.shift();
-    while (this._byteT.length && this._byteT[0].t < cut) this._byteT.shift();
-    this.stats.hz = this._snapT.length;
-    this.stats.kbps = this._byteT.reduce((s, x) => s + x.b, 0) / 1024;
+    const now = performance.now();
+    const taxa = this._taxa.atualizar(now);
+    this.stats.hz = taxa.hz;
+    this.stats.kbps = taxa.kbps;
+    // `sinceLast` é "há quanto tempo NÓS não vemos um pacote": é propriedade do
+    // cliente e continua no relógio local, de propósito.
     this.stats.sinceLast = this._lastSnapT ? now - this._lastSnapT : 0;
     return this.stats;
   }
@@ -312,7 +319,10 @@ export class NetClient {
             if (this._gapSamples.length > 512) this._gapSamples.shift();
           }
           this._lastSnapT = now;
-          this._snapT.push(now); this._byteT.push({ t: now, b: bytes });
+          // `m.t` é o relógio DO SERVIDOR (netcodec: f64 em segundos). É ele que dá a
+          // janela honesta: `now` aqui é quando o render liberou a thread, não quando o
+          // pacote chegou — ver netrate.js.
+          this._taxa.amostra(bytes, m.t, now);
           this.stats.snaps++; this.stats.bytes += bytes;
           this.onSnapshot?.(m);
         } else if (m.type === 'chat') {

@@ -290,6 +290,7 @@
     "eval:nosgemeos": "node tools/eval/nos-gemeos-check.mjs",
     "eval:hurtfx": "node tools/eval/hurtfx-check.mjs",
     "eval:netcode": "node tools/eval/netcode-check.mjs",
+    "eval:netrate": "node tools/eval/net-rate-check.mjs",
     "eval:chat": "node tools/eval/chat-check.mjs",
     "eval:nick": "node tools/eval/nick-limit-check.mjs",
     "eval:nick32-cards": "node tools/eval/nick32-cards.mjs",
