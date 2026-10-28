@@ -2,7 +2,7 @@
 // Regras em economia-partida.js; nada aqui lê ou escreve a carteira do menu.
 import { WEAPONS } from './data/weapons.js';
 import { charWeapon } from './characters.js';
-import { GRUPOS_COMPRA, itensDoGrupo } from './compra-catalogo.js';
+import { GRUPOS_COMPRA, itensDoGrupo, itemDaCompra } from './compra-catalogo.js';
 import {
   ECONOMIA, novaCarteira, creditar, recompensaKill, recompensaRodada, proximaSequencia,
   precoDe, distanciaAoSpawn, comprar, compraDoBot,
@@ -152,8 +152,10 @@ export class CompraPartida {
   botsCompram() {
     for (const b of this.game.bots) {
       if (b._remote) continue;
-      this._rearmarBot(b);
+      // morto que vai comprar remonta a malha uma vez só (pistola e já a comprada custaria dois clones)
+      this._rearmarBot(b, false);
       this._botCompra(b);
+      if (b._meshWeapon !== b.weapon) this._armarBot(b, b.weapon);
     }
   }
 
@@ -163,14 +165,16 @@ export class CompraPartida {
     if (this.game.arena) this._botCompra(b);
   }
 
-  _rearmarBot(b) {
+  _rearmarBot(b, malha = true) {
     if (!b._desarmado) return;
     b._desarmado = false;
-    this._armarBot(b, 'pistol');
+    if (malha) this._armarBot(b, 'pistol'); else b.weapon = 'pistol';
   }
 
   _botCompra(b) {
-    const id = compraDoBot({ saldo: b.carteira.saldo, alvo: b._armaAlvo, jaTem: b.weapon === b._armaAlvo });
+    // primária pega do chão também conta: o bot não paga para trocar uma AWP grátis por escopeta
+    const temPrimaria = b.weapon !== 'pistol' && itemDaCompra(b.weapon)?.slot !== 'secundaria';
+    const id = compraDoBot({ saldo: b.carteira.saldo, alvo: b._armaAlvo, jaTem: b.weapon === b._armaAlvo || temPrimaria });
     if (!id) return;
     b.carteira.saldo -= precoDe(id);
     this._armarBot(b, id);
