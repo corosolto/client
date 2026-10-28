@@ -1,26 +1,15 @@
-/* FLASHBANG: quanto cada observador fica cego quando a granada estoura.
+// Cegueira da flash por observador (CS: ângulo até o centro da visão, distância, oclusão).
+// Conta pura para rodar em Node; a oclusão vem do game.js (`_losClear`). Régua: eval:flashbang.
 
-   Por que um módulo próprio: a conta é a mesma para o jogador e para os bots, e
-   precisa rodar em Node para a régua (tools/eval/flashbang-check.mjs) medir sem
-   navegador. Aqui só entra geometria e tempo; quem sabe se há parede ou fumaça no
-   caminho é o game.js (`_losClear`), que passa a resposta em `ocluido`.
-
-   Modelo do CS: o que cega é a luz que chega ao CENTRO da visão.
-     · ângulo entre o olhar e o estouro: de frente (até 53°) cega tudo, de lado
-       cega pouco, de costas quase nada;
-     · distância: perto cega tudo, longe cega pouco, além do raio nada;
-     · parede ou fumaça entre o olho e o estouro: nada.
-   Teto: 4,8 s de frente e colado (o CS:GO dá ~4,87 s). */
-
-export const FLASH_MAX_S = 4.8;     // cegueira máxima, de frente e perto
-export const FLASH_RAIO = 30;       // m: além disso a luz não cega
-export const FLASH_PERTO = 1.5;     // m: até aqui a distância não atenua
-export const FLASH_FRENTE_DEG = 53; // cone que leva a cegueira inteira (CS)
-export const FLASH_LADO = 0.35;     // fator a 90°
-export const FLASH_COSTAS = 0.06;   // fator a partir de 140°: um piscar, não uma cegueira
-export const FLASH_MIN_S = 0.15;    // abaixo disso não vale tela branca
-export const FLASH_FADE_S = 2.4;    // janela de desbote; o resto da duração é branco cheio
-export const FLASH_ERRO_MIRA = 0.6; // rad: erro de mira de bot cego (a mira vale ~0,01-0,2)
+export const FLASH_MAX_S = 4.8;
+export const FLASH_RAIO = 30;
+export const FLASH_PERTO = 1.5;
+export const FLASH_FRENTE_DEG = 53;
+export const FLASH_LADO = 0.35;
+export const FLASH_COSTAS = 0.06;
+export const FLASH_MIN_S = 0.15;
+export const FLASH_FADE_S = 2.4;
+export const FLASH_ERRO_MIRA = 0.6;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 

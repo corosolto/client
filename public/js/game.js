@@ -5326,10 +5326,8 @@ export class Game {
     }
   }
 
-  /* Flash FINAL do Mint (13 cm, texturas 512 px), carregada só quando alguém tem flash: são
-     362 KB que a partida sem flash não precisa (régua PMB7 do perfil móvel). Se o GLB não vier
-     (404 em deploy sem o blob, rede), a provisória segue no lugar.
-     `?flashmodelo=provisoria` força a provisória para comparar. */
+  // Flash do Mint (362 KB) só quando alguém tem flash (PMB7); sem o GLB fica a provisória.
+  // `?flashmodelo=provisoria` força a provisória.
   _carregarFlashMint() {
     if (this._flashMintPedida || NODE_RUNTIME || !FLASH_ON || QS.get('flashmodelo') === 'provisoria') return;
     this._flashMintPedida = true;
