@@ -44,6 +44,7 @@ import { perfilArma } from './data/weapon-profiles.js';
 export { perfilArma };
 import { saidaPenetracao, direcaoDesviada, resolverRaio } from './ballistics.js';
 import { entradaCombatente, ALCANCE_TIRO, alturaDoOlho } from './hitboxes.js';
+import { cegueiraFlash, brancoEm, retidaEm, FLASH_ERRO_MIRA } from './flashbang.js';
 export { saidaPenetracao, resolverRaio };
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
 // autoritativo) e tools/eval/botdiag.mjs. Consumidor novo importa de data/weapons.js.
@@ -70,6 +71,14 @@ const VM_QA_CICLO = QS.get('debug') === '1';
 // de trackpad troca uma vez por gesto, que termina após 150 ms sem evento (scroll-arma-check).
 const WHEEL_NOTCH_PX = 50, WHEEL_IDLE_MS = 150;
 const VM_QA_ADS = QS.get('debug') === '1' && QS.get('vmads') === '1';
+/* FLASHBANG. `?flash=0` tira a granada do jogo inteira: sem tecla, sem slot, sem estoque,
+   sem efeito. O estoque normal é 0 porque a compra entra pelo PR da economia de partida;
+   até lá `?debug=1&flashes=N` (N ≤ 5) dá N por rodada para testar sem loja. */
+const FLASH_ON = QS.get('flash') !== '0';
+const FLASH_DEBUG_N = FLASH_ON && QS.get('debug') === '1'
+  ? Math.max(0, Math.min(5, parseInt(QS.get('flashes'), 10) || 0)) : 0;
+// Tipo da granada → campo de estoque no combatente. Um lugar só: eram três ternários soltos.
+const NADE_ESTOQUE = { smoke: 'smokes', frag: 'frags', flash: 'flashes' };
 /* KILL-SWITCH DA RODADA DE MATERIAL: ?vmmat=legacy devolve, de uma vez, o clamp
    `min(metalness, 0.55)` do viewmodel E o orçamento fixo de 7,60 unidades de luz da vmScene.
    Está aqui em cima, num lugar só, porque as duas coisas são UMA correção (ver o bloco do
@@ -875,7 +884,7 @@ export class Game {
       nadeBusyUntil: 0,
       primary: startWeapon, secondary: 'pistol',
       ammo: Object.fromEntries(Object.keys(WEAPONS).filter(w => w !== 'knife').map(w => [w, { mag: WEAPONS[w].mag, res: WEAPONS[w].reserve }])),
-      kills: 0, deaths: 0, headshots: 0, grounded: true, stepPhase: 0, revealedAt: -99, protUntil: 0, smokes: 5,
+      kills: 0, deaths: 0, headshots: 0, grounded: true, stepPhase: 0, revealedAt: -99, protUntil: 0, smokes: 5, flashes: 0,
     };
     if (!this.dedicated) this.combatants.push(this.player);
     // TELEMETRIA DE ARMA (feat/telemetria): conta abates por id de arma nesta
@@ -1306,13 +1315,17 @@ export class Game {
     this._grenGeo = new THREE.SphereGeometry(0.06, 8, 6);
     this._grenMat = new THREE.MeshStandardMaterial({ color: 0x38472c, metalness: 0.2, roughness: 0.8 });
     this._fragMat = new THREE.MeshStandardMaterial({ color: 0x4a2018, metalness: 0.5, roughness: 0.55 });   // HE frag (marrom-metálico)
+    this._flashMat = new THREE.MeshStandardMaterial({ color: 0xc9ccd0, metalness: 0.6, roughness: 0.35 });   // flash (alumínio)
     this._grenTemplates = {};
     if (!NODE_RUNTIME) {
       new GLTFLoader().load('/private-assets/viewmodels/grenade/grenades-world.glb?v=paid-aaa-1', (gltf) => {
         if (this._disposed) return;
         this._grenTemplates.frag = gltf.scene.getObjectByName('UTILITY_HE') || null;
         this._grenTemplates.smoke = gltf.scene.getObjectByName('UTILITY_SMOKE') || null;
-        this._grenTemplates.flash = gltf.scene.getObjectByName('UTILITY_FLASH') || null;
+        /* Flash PROVISÓRIA: casco da fumaça em alumínio com faixa amarela, para ler diferente
+           das outras no ar. O modelo final da flash vem do Mint e entra trocando só esta linha. */
+        const casco = this._grenTemplates.smoke || this._grenTemplates.frag;
+        this._grenTemplates.flash = FLASH_ON && casco ? this._flashProvisoria(casco) : null;
         for (const model of Object.values(this._grenTemplates)) model?.traverse((object) => { object.castShadow = true; });
       }, undefined, () => {});
     }
@@ -2147,6 +2160,8 @@ export class Game {
       // 4/5/G EQUIPAM a utilidade; o arremesso é o botão do mouse (esquerdo longe, direito curto).
       if (e.code === 'Digit4') this._equipNade('smoke');
       if (e.code === 'Digit5') this._equipNade('frag');
+      // 6 = flash, seguindo a fileira 4/5 (o F do CS da comunidade é o ping do Treta Pop).
+      if (e.code === 'Digit6' && FLASH_ON) this._equipNade('flash');
       if (e.code === 'KeyG') this._equipNade('smoke');
       if (e.code === 'Space') e.preventDefault();
     };
@@ -2185,7 +2200,7 @@ export class Game {
       if (e.button === 0) { this.mouseDown0 = true; this._tryShoot(); }
       if (e.button === 2) {
         // Granada equipada: o direito é o lançamento CURTO (o esquerdo joga longe).
-        if (this.player.nade) { this._throwNade(this.player.nade, this.player.nade === 'frag' ? 'frags' : 'smokes', 0.45); return; }
+        if (this.player.nade) { this._throwNade(this.player.nade, NADE_ESTOQUE[this.player.nade], 0.45); return; }
         if (this.player.weapon === 'knife') {
           this._tryKnifeAttack('heavy');
           return;
@@ -2296,6 +2311,7 @@ export class Game {
         '<button class="touch-wep" data-wep="knife" aria-label="Faca"></button>' +
         '<button class="touch-wep" data-wep="smoke" aria-label="Fumaça">' + IC.nade + '</button>' +
         '<button class="touch-wep" data-wep="frag" aria-label="Granada">' + IC.nade + '</button>' +
+        (FLASH_ON ? '<button class="touch-wep hidden" data-wep="flash" aria-label="Flash">' + IC.nade + '</button>' : '') +
       '</div>';
     document.body.appendChild(root);
     this._touchUi = root;
@@ -2368,7 +2384,7 @@ export class Game {
     on('.touch-ads', () => {
       if (!this._acceptInput()) return;
       // Mesmo contrato do botão direito do mouse: com granada equipada, lançamento CURTO.
-      if (this.player.nade) { this._throwNade(this.player.nade, this.player.nade === 'frag' ? 'frags' : 'smokes', 0.45); return; }
+      if (this.player.nade) { this._throwNade(this.player.nade, NADE_ESTOQUE[this.player.nade], 0.45); return; }
       const w = this.player.weapon;
       if (w === 'knife') { this._tryKnifeAttack('heavy'); return; }
       if (WEAPONS[w] && WEAPONS[w].scope) this._scope(!this.player.scoped); else this._scope(true);
@@ -2389,6 +2405,7 @@ export class Game {
         else if (w === 'knife') this._switchWeapon('knife');
         else if (w === 'smoke') this._equipNade('smoke');
         else if (w === 'frag') this._equipNade('frag');
+        else if (w === 'flash') this._equipNade('flash');
       }, { passive: false });
     });
     this._syncTouchWeps();
@@ -2842,12 +2859,16 @@ export class Game {
     this._resetSliceAbilities();
     this.player.ammo.awp = { mag: WEAPONS.awp.mag, res: WEAPONS.awp.reserve };
     this.player.ammo.pistol = { mag: WEAPONS.pistol.mag, res: WEAPONS.pistol.reserve };
-    this.player.smokes = 5; this.player.frags = 1; this._updateSmokeHud();   // 5 fumaças + 1 frag por round
+    this.player.smokes = 5; this.player.frags = 1;   // 5 fumaças + 1 frag por round
+    this.player.flashes = FLASH_DEBUG_N;   // flash só pela loja (PR da economia) ou ?debug=1&flashes=N
+    this._limparCegueira();
+    this._updateSmokeHud();
     this._unequipNade();   // rodada nova começa com a arma na mão, nunca com a granada
     // sequência de frag é da RODADA (jogador e combatentes: no nó autoritativo o
     // _resetPositions roda pro slot remoto também). Régua: frag-restock-check.mjs
     this.player._fragSeq = 0;
     for (const c of this.combatants || []) c._fragSeq = 0;
+    for (const c of this.combatants || []) { c.cegoAte = 0; c.cegoTotalAte = 0; }   // flash não atravessa o round
     // modo de armas: aplica o loadout inicial. No modo 'all', o player entra com a arma do
     // personagem dele (a mesma da tela de seleção) em vez da AWP padrão.
     const mode = this._wpnMode();
@@ -3932,7 +3953,7 @@ export class Game {
     // Granada equipada: o gatilho ARREMESSA (longe) em vez de atirar. `continuo` é o
     // auto-fire segurando o botão — granada não é automática.
     if (p.nade) {
-      if (!continuo) this._throwNade(p.nade, p.nade === 'frag' ? 'frags' : 'smokes', 1);
+      if (!continuo) this._throwNade(p.nade, NADE_ESTOQUE[p.nade], 1);
       return;
     }
     /* Arremesso em voo: a mão ainda é da granada, o gatilho espera
@@ -5173,7 +5194,10 @@ export class Game {
   }
 
   _updateSmokeHud() {
-    if (this.el && this.el.smokeCount) this.el.smokeCount.textContent = '💨 ' + (this.player.smokes | 0) + '   🧨 ' + (this.player.frags | 0);
+    if (this.el && this.el.smokeCount) this.el.smokeCount.textContent = '💨 ' + (this.player.smokes | 0) + '   🧨 ' + (this.player.frags | 0)
+      + (FLASH_ON && this.player.flashes > 0 ? '   ⚡ ' + (this.player.flashes | 0) : '');
+    // botão de toque da flash só aparece com flash no bolso (até a loja, quase ninguém tem)
+    this._touchUi?.querySelector('[data-wep="flash"]')?.classList.toggle('hidden', !(this.player.flashes > 0));
   }
 
   _grenadeSpatial(pos, maxDistance = 70) {
@@ -5194,7 +5218,7 @@ export class Game {
     const template = this._grenTemplates[kind];
     const mesh = template
       ? template.clone(true)
-      : new THREE.Mesh(this._grenGeo, kind === 'frag' ? this._fragMat : this._grenMat);
+      : new THREE.Mesh(this._grenGeo, kind === 'frag' ? this._fragMat : kind === 'flash' ? this._flashMat : this._grenMat);
     mesh.position.copy(origin).addScaledVector(dir, 0.5);
     this.scene.add(mesh);
     // forca 1 = arremesso cheio (botão esquerdo); 0,45 = lançamento curto (botão direito),
@@ -5202,8 +5226,9 @@ export class Game {
     const f = Math.max(0.15, Math.min(1, Number(forca) || 1));
     this._grenades.push({
       mesh, kind, owner,
-      v: dir.clone().multiplyScalar((kind === 'frag' ? 17 : 15) * f).add(new THREE.Vector3(0, 3.2 * (0.45 + 0.55 * f), 0)),
-      fuse: kind === 'frag' ? 1.5 : 2.2,
+      // flash voa e estoura como a frag (pavio 1,5 s, o mesmo do CS): é granada de entrada.
+      v: dir.clone().multiplyScalar((kind === 'smoke' ? 15 : 17) * f).add(new THREE.Vector3(0, 3.2 * (0.45 + 0.55 * f), 0)),
+      fuse: kind === 'smoke' ? 2.2 : 1.5,
     });
     const spatial = this._grenadeSpatial(origin);
     this.sfx.grenadeThrow(kind, spatial.vol, spatial.pan, spatial.delay);
@@ -5216,6 +5241,7 @@ export class Game {
     const p = this.player;
     if (!p.alive || (p[ammoKey] | 0) <= 0 || this.time < (p._nextNade || 0)) return;
     if (this.time < (p.nadeBusyUntil || 0)) return;   // uma granada por animação
+    if (kind === 'flash' && !this._flashLiberada()) return;
     /* Online o servidor lança e o pedido só carrega o TIPO (netgame.pedirNade): sem campo
        de força no protocolo, o botão direito lança igual ao esquerdo em partida online. */
     const f = this.online ? 1 : forca;
@@ -5241,11 +5267,15 @@ export class Game {
   }
   _throwSmoke(forca = 1) { this._throwNade('smoke', 'smokes', forca); }
   _throwFrag(forca = 1) { this._throwNade('frag', 'frags', forca); }
+  /* Flash online só com servidor que a conheça (`meta.flash`, ver netgame.flashOn): o
+     servidor de hoje descarta `nade: 'flash'` e o estoque sumiria sem granada nenhuma. */
+  _flashLiberada() { return FLASH_ON && (!this.online || Boolean(this._mp?.flashOn)); }
   // Apertar a mesma tecla guarda a utilidade de volta.
   _equipNade(kind) {
     const p = this.player;
-    const ammoKey = kind === 'frag' ? 'frags' : 'smokes';
-    if (!p.alive || this.state !== 'live') return false;
+    const ammoKey = NADE_ESTOQUE[kind];
+    if (!ammoKey || !p.alive || this.state !== 'live') return false;
+    if (kind === 'flash' && !this._flashLiberada()) return false;
     if (p.nade === kind) { this._unequipNade(); return false; }
     if ((p[ammoKey] | 0) <= 0) return false;
     this._cancelReload();   // granada na mão cancela a recarga (GRM2) — não a deixa correndo escondida
@@ -5290,6 +5320,105 @@ export class Game {
       this.el.vignette.style.transition = 'opacity 0.1s'; this.el.vignette.style.opacity = String(Math.min(0.85, (R * 1.6 - pd) / (R * 1.6)));
       setTimeout(() => { if (this.el.vignette) this.el.vignette.style.opacity = '0'; }, 130);
     }
+  }
+
+  // Casco provisório da flash: clona o da fumaça (cilindro M18), pinta de alumínio e põe
+  // duas faixas amarelas. Sai quando o modelo do Mint chegar.
+  _flashProvisoria(casco) {
+    const c = casco.clone(true);
+    c.name = 'flash-provisoria';
+    c.position.set(0, 0, 0); c.rotation.set(0, 0, 0);
+    c.traverse((o) => {
+      if (!o.isMesh) return;
+      o.material = Array.isArray(o.material) ? o.material.map(() => this._flashMat) : this._flashMat;
+    });
+    const faixa = new THREE.MeshStandardMaterial({ color: 0xf2c200, metalness: 0.2, roughness: 0.6 });
+    const geo = new THREE.CylinderGeometry(0.0335, 0.0335, 0.016, 20, 1, true);
+    for (const y of [0.018, -0.03]) { const m = new THREE.Mesh(geo, faixa); m.position.y = y; m.name = 'flash-provisoria-faixa'; c.add(m); }
+    return c;
+  }
+
+  /* Quanto UM observador fica cego com o estouro em `pos` (conta em flashbang.js).
+     A luz passa ou não pelo mesmo `_losClear` da visão dos bots: parede e fumaça opaca
+     tapam. O ponto sobe 15 cm para o raio não nascer dentro do chão. */
+  _cegueiraDe(olho, frente, pos) {
+    const estouro = this._flashTmp || (this._flashTmp = new THREE.Vector3());
+    estouro.set(pos.x, pos.y + 0.15, pos.z);
+    const ocluido = !this._losClear(estouro, olho);
+    return cegueiraFlash({ olho, frente, estouro, ocluido });
+  }
+
+  /* Estouro da flash: estampido + clarão no mundo, e cegueira de TODO mundo que vê,
+     inclusive o dono e o próprio time, como no CS. */
+  _popFlash(pos, owner) {
+    if (!FLASH_ON) return;
+    const spatial = this._grenadeSpatial(pos, 90);
+    this.sfx.flashPop?.(spatial.vol, spatial.pan, spatial.delay);
+    this._flash(pos.clone());
+    const resultado = [];
+    for (const b of this.bots) {
+      if (!b.alive) continue;
+      const frente = { x: Math.sin(b.yaw), y: 0, z: Math.cos(b.yaw) };
+      const c = this._cegueiraDe(this._botEye(b), frente, pos);
+      if (c.dur > 0 && this.time + c.dur > (b.cegoAte || 0)) {
+        b.cegoAte = this.time + c.dur;
+        // metade inicial (o branco cheio) = não enxerga; depois só a mira fica ruim
+        b.cegoTotalAte = this.time + Math.max(0, c.dur - 2.4);
+        // a visão some NO estouro, não no próximo `think` (até 0,22 s depois): fecha o gatilho já
+        if (b.cegoTotalAte > this.time && b.target) { b._losLost = true; b._lostAt = b._lostAt || this.time; }
+      }
+      resultado.push({ quem: b, ...c });
+    }
+    const p = this.player;
+    if (p && p.alive && !this.dedicated && !this.espectando?.()) {
+      const frente = new THREE.Vector3(); this.camera.getWorldDirection(frente);
+      const c = this._cegueiraDe(this.camera.position.clone(), frente, pos);
+      if (c.dur > 0) this._cegarJogador(c);
+      resultado.push({ quem: p, ...c });
+    }
+    this._ultimoFlash = resultado;   // lido pela régua e pelo QA no console
+    return resultado;
+  }
+
+  /* Jogador cego: tela branca + imagem retida (o último quadro, capturado logo depois do
+     render) + som abafado e zumbido. Uma flash nova só substitui a atual se cegar mais. */
+  _cegarJogador(c) {
+    const resta = this._cegoJ ? this._cegoJ.dur - (this.time - this._cegoJ.t0) : 0;
+    if (resta > c.dur) return;
+    this._cegoJ = { t0: this.time, dur: c.dur, pico: c.pico, forca: c.forca };
+    if (c.forca >= 0.25) this._flashCapturar = true;
+    this.sfx.flashSurdo?.(c.dur, c.forca);
+  }
+  _limparCegueira() {
+    this._cegoJ = null; this._flashCapturar = false;
+    if (this._flashBranco) this._flashBranco.style.opacity = '0';
+    if (this._flashRetida) this._flashRetida.style.opacity = '0';
+    this.sfx.flashSurdo?.(0, 0);
+  }
+  _tickCegueiraJogador() {
+    const cj = this._cegoJ;
+    if (!cj || NODE_RUNTIME || !this.el?.hud) return;
+    const t = this.time - cj.t0;
+    if (!this._flashBranco) {
+      const mk = (tag, css) => { const e = document.createElement(tag); e.style.cssText = css; e.setAttribute('aria-hidden', 'true'); this.el.hud.prepend(e); return e; };
+      // fica no começo do #hud: o branco cobre o mundo, o HUD continua legível por cima (CS)
+      this._flashRetida = mk('canvas', 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;filter:grayscale(.6) brightness(1.6) blur(2px)');
+      this._flashBranco = mk('div', 'position:absolute;inset:0;pointer-events:none;background:#fff;opacity:0');
+    }
+    const b = brancoEm(t, cj.dur, cj.pico), r = retidaEm(t, cj.dur, cj.forca);
+    this._flashBranco.style.opacity = b.toFixed(3);
+    this._flashRetida.style.opacity = r.toFixed(3);
+    if (b <= 0 && r <= 0 && t > 0) this._cegoJ = null;
+  }
+  // Chamado logo depois do render do quadro: o buffer WebGL ainda vale (sem preserveDrawingBuffer).
+  _capturarRetida() {
+    this._flashCapturar = false;
+    const cv = this._flashRetida, src = this.renderer?.domElement;
+    if (!cv || !src) return;
+    try {
+      cv.width = Math.max(1, (src.width / 4) | 0); cv.height = Math.max(1, (src.height / 4) | 0);
+      cv.getContext('2d').drawImage(src, 0, 0, cv.width, cv.height);
+    } catch { /* contexto perdido: fica só o branco */ }
   }
 
   /* COR DA FUMAÇA = O CÉU MEDIDO DO MAPA × ALBEDO (invariante FOG1).
@@ -5364,10 +5493,12 @@ export class Game {
       }
       if (g.fuse <= 0) {
         if (g.kind === 'frag') this._explodeFrag(g.mesh.position.clone(), g.owner);
+        else if (g.kind === 'flash') this._popFlash(g.mesh.position.clone(), g.owner);
         else this._popSmoke(g.mesh.position.clone());
         this.scene.remove(g.mesh); this._grenades.splice(i, 1);
       }
     }
+    this._tickCegueiraJogador();
     for (let i = this._smokes.length - 1; i >= 0; i--) {
       const s = this._smokes[i], age = this.time - s.born;
       if (age >= s.dur) { this.scene.remove(s.group); this._smokes.splice(i, 1); continue; }
@@ -7342,6 +7473,7 @@ export class Game {
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
     p.hp = 100; p.alive = true; p.crouchF = 0;
     p.reloadUntil = 0; p.reloadWeapon = ''; p.nadeBusyUntil = 0; p._nextNade = 0;
+    this._limparCegueira();   // renasce enxergando
     this._voltarPraBase();
     p._lifeDmg = 0;
     this._tpRevive();   // o corpo TP não pode renascer deitado (BUG-86)
@@ -7555,6 +7687,7 @@ export class Game {
     b.protUntil = this.time + SPAWN_PROT;
     b.mag = (WEAPONS[b.weapon] && WEAPONS[b.weapon].mag) || 30;
     b.aimErr = 0.2; b.burst = 0; b.alertUntil = 0; b._hurtAt = 0; b.reloadUntil = 0;
+    b.cegoAte = 0; b.cegoTotalAte = 0;   // renasce enxergando
     b.focusUntil = 0; b._spinAcc = 0; b._spinAt = 0; b._sideUntil = 0;   // estado de mira/anti-pirueta da vida anterior
     b.target = null; b.path = null; b.yaw = this._spawnYaw(s, b.team, true);
     this._posturaBot(b, false);
@@ -7650,7 +7783,10 @@ export class Game {
       const view = Math.max(W0 && (W0.scope || W0.spreadScope) ? BOT_VIEW_SNIPER : BOT_VIEW,
         this.time < (b.alertUntil || 0) ? BOT_VIEW_ALERT : 0);
       let best = null, bd = 1e9;
-      for (const e of this._enemyOf(b)) {
+      // FLASH: no branco cheio o bot não enxerga ninguém. Sem `best`, cai no ramo de alvo
+      // perdido abaixo: `_losLost` fecha o gatilho e, passado o grace, ele larga o alvo.
+      const cegoTotal = this.time < (b.cegoTotalAte || 0);
+      for (const e of (cegoTotal ? [] : this._enemyOf(b))) {
         const d = b.pos.distanceTo(e.pos);
         // BOT_VIEW < map length: with 70m+ sight on the open esplanade both teams
         // acquired from spawn and the round became a stand-still snipe loop (100 dmg
@@ -7895,6 +8031,10 @@ export class Game {
         const rate = (snip0 ? 1.2 : 2.0) * Math.max(0.4, b.skill);
         b.aimErr = floorErr + ((b.aimErr === undefined ? 0.2 : b.aimErr) - floorErr) * Math.exp(-rate * dt);
         b.aimErr = Math.max(0.002, b.aimErr + (Math.random() - 0.5) * 0.02 * dt);   // micro-tremor
+        // FLASH: enquanto durar a cegueira o erro não desce de FLASH_ERRO_MIRA (≈34°, nada
+        // acerta); no último 1 s ele solta aos poucos e a mira volta a arrastar do zero.
+        const cegoResta = (b.cegoAte || 0) - this.time;
+        if (cegoResta > 0) b.aimErr = Math.max(b.aimErr, FLASH_ERRO_MIRA * Math.min(1, cegoResta));
       }
       // FACA (w.range): bot de faca disparava hitscan a 40m como se fosse rifle — agora só
       // "ataca" no alcance real da arma; longe disso ele avança (o approach acima já faz isso).
@@ -8759,6 +8899,7 @@ export class Game {
     slots.push({ key: 3, weapon: 'knife' });
     if (p.smokes > 0) slots.push({ key: 4, kind: 'smoke', name: 'FUMAÇA', count: p.smokes });
     if (p.frags > 0) slots.push({ key: 5, kind: 'frag', name: 'FRAG', count: p.frags });
+    if (FLASH_ON && p.flashes > 0) slots.push({ key: 6, kind: 'flash', name: 'FLASH', count: p.flashes });
 
     const signature = slots.map((slot) => {
       const ammo = slot.weapon && p.ammo?.[slot.weapon];
@@ -8993,6 +9134,7 @@ export class Game {
       r.render(this.vmScene, this.vmCamera);
       r.autoClear = true;
     }
+    if (this._flashCapturar) { this._tickCegueiraJogador(); this._capturarRetida(); }
     this._tickDolly(dt);
     this.world.ambience?.update(dt, this.player.pos);
     const mapSound = this.sfx.pack?.mapSoundscapes?.[this._mapId] || this.world.sound;
