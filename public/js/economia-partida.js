@@ -1,6 +1,7 @@
 // Regras do TRETA$ da partida: vale só naquela partida e nunca toca a carteira do menu
 // (treta-store.js). Funções puras; o porquê de cada número em docs/ECONOMIA-PARTIDA.md.
 import { itemDaCompra, RECOMPENSA_FORA_DO_CATALOGO } from './compra-catalogo.js';
+import { WEAPONS } from './data/weapons.js';
 
 export const ECONOMIA = Object.freeze({
   saldoInicial: 800,
@@ -34,8 +35,13 @@ export function creditar(carteira, valor) {
   return carteira.saldo - antes;
 }
 
-export function recompensaKill(armaId, { mesmoTime = false } = {}) {
+// O `_kill` recebe o rótulo curto ('AK', 'FACA', 'M3'); aceita o id ou o rótulo.
+const ID_DO_ROTULO = Object.fromEntries(Object.entries(WEAPONS).map(([id, w]) => [w.short, id]));
+ID_DO_ROTULO.FACA = 'knife';
+
+export function recompensaKill(arma, { mesmoTime = false } = {}) {
   if (mesmoTime) return 0;
+  const armaId = WEAPONS[arma] ? arma : (ID_DO_ROTULO[arma] || arma);
   const it = itemDaCompra(armaId);
   if (it) return it.recompensaKill;
   return RECOMPENSA_FORA_DO_CATALOGO[armaId] ?? ECONOMIA.recompensaKillPadrao;
