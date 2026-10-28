@@ -1325,7 +1325,8 @@ export class Game {
         /* Flash PROVISÓRIA: casco da fumaça em alumínio com faixa amarela, para ler diferente
            das outras no ar. O modelo final da flash vem do Mint e entra trocando só esta linha. */
         const casco = this._grenTemplates.smoke || this._grenTemplates.frag;
-        this._grenTemplates.flash = FLASH_ON && casco ? this._flashProvisoria(casco) : null;
+        // a do Mint (abaixo) pode ter chegado antes: a provisória só ocupa a vaga vazia
+        if (!this._grenTemplates.flash) this._grenTemplates.flash = FLASH_ON && casco ? this._flashProvisoria(casco) : null;
         for (const model of Object.values(this._grenTemplates)) model?.traverse((object) => { object.castShadow = true; });
       }, undefined, () => {});
     }
@@ -2861,6 +2862,7 @@ export class Game {
     this.player.ammo.pistol = { mag: WEAPONS.pistol.mag, res: WEAPONS.pistol.reserve };
     this.player.smokes = 5; this.player.frags = 1;   // 5 fumaças + 1 frag por round
     this.player.flashes = FLASH_DEBUG_N;   // flash só pela loja (PR da economia) ou ?debug=1&flashes=N
+    if (this.player.flashes > 0) this._carregarFlashMint();
     this._limparCegueira();
     this._updateSmokeHud();
     this._unequipNade();   // rodada nova começa com a arma na mão, nunca com a granada
@@ -5215,6 +5217,7 @@ export class Game {
   // Spawner genérico: projétil físico com pavio; ao estourar vira fumaça OU explosão de frag.
   // Usado pelo jogador (câmera) e pelos bots (olho + direção do alvo).
   _spawnGrenade(origin, dir, kind, owner, forca = 1) {
+    if (kind === 'flash') this._carregarFlashMint();   // flash de outro (online/loja): da próxima em diante vem a do Mint
     const template = this._grenTemplates[kind];
     const mesh = template
       ? template.clone(true)
@@ -5276,6 +5279,7 @@ export class Game {
     const ammoKey = NADE_ESTOQUE[kind];
     if (!ammoKey || !p.alive || this.state !== 'live') return false;
     if (kind === 'flash' && !this._flashLiberada()) return false;
+    if (kind === 'flash') this._carregarFlashMint();
     if (p.nade === kind) { this._unequipNade(); return false; }
     if ((p[ammoKey] | 0) <= 0) return false;
     this._cancelReload();   // granada na mão cancela a recarga (GRM2) — não a deixa correndo escondida
@@ -5322,6 +5326,21 @@ export class Game {
     }
   }
 
+  /* Flash FINAL do Mint (13 cm, texturas 512 px), carregada só quando alguém tem flash: são
+     362 KB que a partida sem flash não precisa (régua PMB7 do perfil móvel). Se o GLB não vier
+     (404 em deploy sem o blob, rede), a provisória segue no lugar.
+     `?flashmodelo=provisoria` força a provisória para comparar. */
+  _carregarFlashMint() {
+    if (this._flashMintPedida || NODE_RUNTIME || !FLASH_ON || QS.get('flashmodelo') === 'provisoria') return;
+    this._flashMintPedida = true;
+    new GLTFLoader().load('/private-assets/viewmodels/grenade/flash-world.glb?v=57eddb91de', (gltf) => {
+      if (this._disposed) return;
+      const mint = gltf.scene.getObjectByName('UTILITY_FLASH_MINT');
+      if (!mint) return;
+      mint.traverse((object) => { object.castShadow = true; });
+      this._grenTemplates.flash = mint;
+    }, undefined, () => {});
+  }
   // Casco provisório da flash: clona o da fumaça (cilindro M18), pinta de alumínio e põe
   // duas faixas amarelas. Sai quando o modelo do Mint chegar.
   _flashProvisoria(casco) {
