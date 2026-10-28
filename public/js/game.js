@@ -2123,7 +2123,11 @@ export class Game {
       if (e.code === 'KeyZ') { this._radioShow('z'); return; }
       if (e.code === 'KeyX') { this._radioShow('x'); return; }
       if (e.code === 'KeyV') { this._radioShow('c'); return; }
-      if (e.code === 'KeyB') { this._toggleCamView(); return; }   // 1ª → 3ª → ombro
+      if (e.code === 'KeyB' && !e.repeat) {
+        if (e.shiftKey) this._swapShoulder();
+        else this._toggleCamView();
+        return;
+      }   // B: 1ª → 3ª → ombro · Shift+B: troca o ombro
       if (e.code === 'KeyT' && !e.repeat) { this._emoteToggle(); return; }   // roda de dança
       if (this.emoteOpen) {
         const n = /^Digit([1-8])$/.exec(e.code);
@@ -6277,6 +6281,13 @@ export class Game {
     const order = ['first', 'third', 'shoulder'];
     this.setCamView(order[(order.indexOf(this.camView) + 1) % order.length]);
   }
+  _swapShoulder() {
+    this._tpShoulderSide = -(this._tpShoulderSide || 1);
+    this._tpBoomClear = undefined;
+    this._tpBoomBlockedGrace = 0;
+    this._tpBoomLastBlocked = undefined;
+    return this._tpShoulderSide;
+  }
   setCamView(mode) {
     if (!['first', 'third', 'shoulder'].includes(mode)) return false;
     this.camView = mode;
@@ -6373,7 +6384,7 @@ export class Game {
     const TP_DIST = (shoulder ? 0.85 : 1.7) + (shoulder ? 0.30 : 0.50) * ads + (shoulder ? 0.85 : 0) * orbitBlend + 1.5 * danca;
     const TP_UP = shoulder ? 0.10 : 0.18;
     const TP_SIDE = (shoulder ? 0.34 : 0.28) + (shoulder ? 0.16 : 0.22) * ads;
-    cam.position.set(p.pos.x, p.pos.y + eye, p.pos.z).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE);
+    cam.position.set(p.pos.x, p.pos.y + eye, p.pos.z).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE * (this._tpShoulderSide || 1));
     cam.position.y += TP_UP - 0.45 * orbitBlend + 0.35 * danca;
     const gy = this.world.groundHeightAt(cam.position.x, cam.position.z, cam.position.y) + 0.2;
     if (cam.position.y < gy) cam.position.y = gy;   // não atravessa o chão
@@ -6387,18 +6398,28 @@ export class Game {
     if (boomLen > 1e-4) {
       boom.multiplyScalar(1 / boomLen);
       let claro = boomLen;
-      if (this.world.occluders?.length) {
-        this.ray.set(eyePos, boom);
+      // A lente tem volume: o raio central sozinho atravessava quinas que raspavam a
+      // lateral/superior do enquadramento. Cinco probes paralelos aproximam uma esfera
+      // de 12 cm sem criar geometria, alocação ou uma segunda convenção de collider.
+      const probeOrigin = this._tpBoomProbe || (this._tpBoomProbe = new THREE.Vector3());
+      const pt = this._tpBoxPt || (this._tpBoxPt = new THREE.Vector3());
+      for (let probe = 0; probe < 5; probe++) {
+        const lateral = probe === 1 ? 0.12 : probe === 2 ? -0.12 : 0;
+        const vertical = probe === 3 ? 0.10 : probe === 4 ? -0.10 : 0;
+        probeOrigin.copy(eyePos).addScaledVector(right, lateral);
+        probeOrigin.y += vertical;
+        this.ray.set(probeOrigin, boom);
         this.ray.far = boomLen;
-        const hit = this.ray.intersectObjects(this.world.occluders, true)[0];
-        if (hit && hit.distance < claro) claro = hit.distance;
-      }
-      if (this.world.camBlockers?.length) {
-        const pt = this._tpBoxPt || (this._tpBoxPt = new THREE.Vector3());
-        for (const box of this.world.camBlockers) {
-          if (this.ray.ray.intersectBox(box, pt)) {
-            const d = eyePos.distanceTo(pt);
-            if (d < claro) claro = d;
+        if (this.world.occluders?.length) {
+          const hit = this.ray.intersectObjects(this.world.occluders, true)[0];
+          if (hit && hit.distance < claro) claro = hit.distance;
+        }
+        if (this.world.camBlockers?.length) {
+          for (const box of this.world.camBlockers) {
+            if (this.ray.ray.intersectBox(box, pt)) {
+              const d = probeOrigin.distanceTo(pt);
+              if (d < claro) claro = d;
+            }
           }
         }
       }

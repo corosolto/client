@@ -137,6 +137,51 @@ const passo = (g, n = 1, eye = 1.62) => { for (let i = 0; i < n; i++) Game.proto
   }
 }
 
+/* ---- (3) câmera tem volume: quina lateral não pode atravessar a lente ---- */
+{
+  const g = boot({});
+  g.camView = 'third';
+  g.player.yaw = 0;
+  g.player.pitch = 0;
+  passo(g, 3);
+  const eye = eyePos(g);
+  const boom = g.camera.position.clone().sub(eye);
+  const dir = boom.clone().normalize();
+  const right = new THREE.Vector3(1, 0, 0);
+  const dQuina = Math.min(0.9, boom.length() * 0.55);
+  const centro = eye.clone().addScaledVector(dir, dQuina).addScaledVector(right, 0.12);
+  const quina = new THREE.Box3(
+    centro.clone().add(new THREE.Vector3(-0.025, -0.12, -0.025)),
+    centro.clone().add(new THREE.Vector3(0.025, 0.12, 0.025)),
+  );
+  (g.world.camBlockers ||= []).push(quina);
+  g._tpBoomClear = undefined;
+  passo(g, 1);
+  const d = g.camera.position.distanceTo(eye);
+  check('volume da câmera para antes de quina lateral', d < dQuina - 0.05,
+    { d: +d.toFixed(3), dQuina: +dQuina.toFixed(3) });
+}
+
+/* ---- (4) troca de ombro preserva modo e inverte o enquadramento ---- */
+{
+  const g = boot({});
+  g.camView = 'shoulder';
+  passo(g, 1);
+  const eye = eyePos(g);
+  const ladoAntes = g.camera.position.clone().sub(eye).dot(g._tpRight);
+  const troca = typeof g._swapShoulder === 'function';
+  check('câmera expõe troca explícita de ombro', troca, { troca });
+  if (troca) {
+    g._swapShoulder();
+    passo(g, 1);
+    const ladoDepois = g.camera.position.clone().sub(eye).dot(g._tpRight);
+    check('troca de ombro mantém a câmera de ombro', g.camView === 'shoulder', { camView: g.camView });
+    check('troca de ombro inverte o lado do enquadramento',
+      ladoAntes > 0.2 && ladoDepois < -0.2,
+      { ladoAntes: +ladoAntes.toFixed(3), ladoDepois: +ladoDepois.toFixed(3) });
+  }
+}
+
 const result = {
   passed: rows.filter((r) => r.pass).length, total: rows.length,
   failed: rows.filter((r) => !r.pass).map((r) => r.name), rows,

@@ -12,22 +12,29 @@ mkdirSync(OUT, { recursive: true });
 const source = readFileSync(SRC, 'utf8');
 const BLOCO = /    \/\* OCLUSÃO DO BOOM[\s\S]*?    tp\.selfOccluded = selfOccluded;\n/.exec(source)?.[0];
 if (!BLOCO) throw new Error('âncora da oclusão do boom não encontrada — mutante impossível');
-const CAMBLOCO = /      if \(this\.world\.camBlockers\?\.length\) \{[\s\S]*?\n      \}\n/.exec(BLOCO)?.[0];
+const CAMBLOCO = /        if \(this\.world\.camBlockers\?\.length\) \{[\s\S]*?\n        \}\n/.exec(BLOCO)?.[0];
 if (!CAMBLOCO) throw new Error('âncora do camBlockers não encontrada — mutante impossível');
 
 const trials = [
   // o bug do relato de volta: boom entra dentro do prop e da tela atrás do jogador
   ['sem-pull-in', source.replace(BLOCO, ''),
     ['câmera para ANTES do prop (pull-in)', 'ombro: câmera fica antes do prop colado',
-      'ombro: malhas próprias somem só dentro da cápsula', 'câmera não entra no varal']],
+      'ombro: malhas próprias somem só dentro da cápsula', 'câmera não entra no varal',
+      'volume da câmera para antes de quina lateral']],
   // pano do varal fora da régua da câmera: só o raycast de occluders fica
-  ['ignora-camBlockers', source.replace(CAMBLOCO, ''), ['câmera não entra no varal']],
-  // O piso antigo passava através do blocker; sem a auto-oclusão, a arma volta à near plane.
-  ['piso-antigo', source.replace('const piso = Math.max(0, claro - 0.18);',
-    'const piso = Math.max(0.35, claro - 0.18);'), ['ombro: câmera fica antes do prop colado']],
+  ['ignora-camBlockers', source.replace(CAMBLOCO, ''),
+    ['câmera não entra no varal', 'volume da câmera para antes de quina lateral']],
+  // O piso antigo atravessava blocker colado; sem auto-oclusão a arma volta à near plane.
+  ['piso-antigo', source.replace('Math.max(0, claro - 0.18)', 'Math.max(0.35, claro - 0.18)'),
+    ['ombro: câmera fica antes do prop colado']],
   ['sem-auto-oclusao', source.replace(
     'const selfOccluded = (this._tpBoomClear ?? boomLen) < 0.38 + cam.near;',
     'const selfOccluded = false;'), ['ombro: malhas próprias somem só dentro da cápsula']],
+  ['raio-sem-volume', source.replace('probe < 5', 'probe < 1'),
+    ['volume da câmera para antes de quina lateral']],
+  ['ombro-fixo', source.replace(
+    'this._tpShoulderSide = -(this._tpShoulderSide || 1);',
+    'this._tpShoulderSide = 1;'), ['troca de ombro inverte o lado do enquadramento']],
 ];
 
 const results = [];
