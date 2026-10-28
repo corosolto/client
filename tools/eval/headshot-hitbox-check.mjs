@@ -15,8 +15,8 @@ O que esta régua faz, toda em node, com o CÓDIGO REAL do tiro:
   • J2 JUSTEZA: por personagem, de frente e de perfil, cada pixel de 1 cm vira um raio
     paralelo ao olhar. cob = fração da cabeça da malha que dá headshot (≥ 0,80);
     vaz = fração do que dá headshot que NÃO é cabeça na malha (≤ 0,25 de frente, por
-    personagem; de perfil ≤ 0,15 na média e ≤ 0,55 no pior — capuz e gorro colados no
-    crânio saem da silhueta mas não cabem fora de um elipsoide);
+    personagem, 0,55 para dívida declarada; de perfil ≤ 0,15 na média e ≤ 0,40 no pior,
+    capuz e gorro colados no crânio saem da silhueta mas não cabem fora de um elipsoide);
   • J3 SIMULAÇÃO: atirador com erro de mira gaussiano (σ em graus) mirando no centro da
     cabeça e no pescoço de bots parados (de frente) e andando (de perfil, com erro de
     acompanhamento) a 10/20/40 m. Compara a taxa de headshot da hitbox com a taxa de
@@ -60,7 +60,7 @@ if (MUT && !MUTANTES.includes(MUT)) { console.error(`mutante desconhecido: ${MUT
 /* vazMax vale para CADA personagem de frente (o duelo de CS é de frente). De perfil o
    capuz/gorro colado no crânio (ancap, reggae, blackmetal, et) é cortado da silhueta mas
    não do elipsoide — sobra o vazamento médio do elenco e um teto por personagem. */
-export const TETO = { cobMin: 0.80, vazMax: 0.25, vazDeclaradoMax: Infinity, vazLadoMedio: 0.15, vazLadoMax: 0.55, simAbs: 0.04, simRel: 0.20,
+export const TETO = { cobMin: 0.80, vazMax: 0.25, vazDeclaradoMax: 0.55, vazLadoMedio: 0.15, vazLadoMax: 0.40, simAbs: 0.04, simRel: 0.20,
   acertoPescocoMin: 0.85, botAcertoMin: 0.50, botAcertoDelta: 0.10 };
 
 const medida = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8'));
@@ -240,7 +240,7 @@ clausula('J2a cobertura', !pioresCob.length,
 clausula('J2b vazamento de frente', !pioresVaz.length,
   `vaz médio ${media((l) => l.frente.vaz).toFixed(2)} (teto por personagem ${TETO.vazMax})`
   + (pioresVaz.length ? `\n      acima (${pioresVaz.length}): ${pioresVaz.slice(0, 10).map((l) => `${l.id}=${l.frente.vaz.toFixed(2)}`).join(', ')}` : '')
-  + declVaz.map((l) => `\n      ⚠ declarado ${l.id}=${l.frente.vaz.toFixed(2)}: ${DECLARADOS[l.id]}`).join(''));
+  + declVaz.map((l) => `\n      ⚠ declarado ${l.id}=${l.frente.vaz.toFixed(2)} (teto próprio ${TETO.vazDeclaradoMax}): ${DECLARADOS[l.id]}`).join(''));
 clausula('J2c vazamento de perfil', media((l) => l.lado.vaz) <= TETO.vazLadoMedio && (!ladoAlto.length || ladoAlto[0].lado.vaz <= TETO.vazLadoMax),
   `vaz médio ${media((l) => l.lado.vaz).toFixed(2)} (teto ${TETO.vazLadoMedio}; nenhum acima de ${TETO.vazLadoMax})`
   + (ladoAlto.length ? `\n      acima de ${TETO.vazMax} (capuz/gorro no crânio, ver prancha): ${ladoAlto.map((l) => `${l.id}=${l.lado.vaz.toFixed(2)}`).join(', ')}` : ''));
