@@ -137,49 +137,81 @@ const passo = (g, n = 1, eye = 1.62) => { for (let i = 0; i < n; i++) Game.proto
   }
 }
 
-/* ---- (3) câmera tem volume: quina lateral não pode atravessar a lente ---- */
+/* ---- (3) câmera tem volume nos quatro lados, inclusive com pitch alto ---- */
 {
   const g = boot({});
   g.camView = 'third';
   g.player.yaw = 0;
-  g.player.pitch = 0;
+  g.player.pitch = 1.2;
   passo(g, 3);
+  g.world.occluders.length = 0;
+  g.world.camBlockers = [];
+  const sentinel = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial());
+  sentinel.position.set(0, -100, 0);
+  sentinel.updateMatrixWorld(true);
+  g.world.occluders.push(sentinel);
   const eye = eyePos(g);
   const boom = g.camera.position.clone().sub(eye);
   const dir = boom.clone().normalize();
-  const right = new THREE.Vector3(1, 0, 0);
+  const right = g._tpRight.clone().addScaledVector(dir, -g._tpRight.dot(dir)).normalize();
+  const up = new THREE.Vector3().crossVectors(dir, right).normalize();
   const dQuina = Math.min(0.9, boom.length() * 0.55);
-  const centro = eye.clone().addScaledVector(dir, dQuina).addScaledVector(right, 0.12);
-  const quina = new THREE.Box3(
-    centro.clone().add(new THREE.Vector3(-0.025, -0.12, -0.025)),
-    centro.clone().add(new THREE.Vector3(0.025, 0.12, 0.025)),
-  );
-  (g.world.camBlockers ||= []).push(quina);
-  g._tpBoomClear = undefined;
-  passo(g, 1);
-  const d = g.camera.position.distanceTo(eye);
-  check('volume da câmera para antes de quina lateral', d < dQuina - 0.05,
-    { d: +d.toFixed(3), dQuina: +dQuina.toFixed(3) });
+  const targets = [];
+  const intersectObjects = g.ray.intersectObjects.bind(g.ray);
+  g.ray.intersectObjects = (objects, recursive, target) => {
+    targets.push(target);
+    return intersectObjects(objects, recursive, target);
+  };
+  const casos = [
+    ['direita', right, 0.12],
+    ['esquerda', right, -0.12],
+    ['topo', up, 0.10],
+    ['base', up, -0.10],
+  ];
+  for (const [nome, eixo, offset] of casos) {
+    const centro = eye.clone().addScaledVector(dir, dQuina).addScaledVector(eixo, offset);
+    const quina = new THREE.Box3(
+      centro.clone().addScalar(-0.025),
+      centro.clone().addScalar(0.025),
+    );
+    (g.world.camBlockers ||= []).push(quina);
+    g._tpBoomBlockedGrace = 0;
+    g._tpBoomLastBlocked = undefined;
+    g._tpBoomClear = undefined;
+    passo(g, 1);
+    const d = g.camera.position.distanceTo(eye);
+    check(`volume da câmera cobre ${nome}`, d < dQuina - 0.05,
+      { d: +d.toFixed(3), dQuina: +dQuina.toFixed(3), pitch: g.player.pitch });
+    g.world.camBlockers.pop();
+  }
+  check('probes reutilizam array de interseções',
+    targets.length >= 5 && targets.every((target) => target === targets[0] && Array.isArray(target)),
+    { chamadas: targets.length, mesmoArray: targets.every((target) => target === targets[0]) });
 }
 
-/* ---- (4) troca de ombro preserva modo e inverte o enquadramento ---- */
+/* ---- (4) B e Shift+B passam pela camada real de teclado ---- */
 {
   const g = boot({});
-  g.camView = 'shoulder';
+  const teclaB = ({ shiftKey = false, repeat = false } = {}) => g._kd({
+    code: 'KeyB', shiftKey, repeat, target: null, preventDefault() {},
+  });
+  g.setCamView('third');
+  teclaB();
+  check('B sem Shift alterna o modo', g.camView === 'shoulder', { camView: g.camView });
   passo(g, 1);
   const eye = eyePos(g);
   const ladoAntes = g.camera.position.clone().sub(eye).dot(g._tpRight);
-  const troca = typeof g._swapShoulder === 'function';
-  check('câmera expõe troca explícita de ombro', troca, { troca });
-  if (troca) {
-    g._swapShoulder();
-    passo(g, 1);
-    const ladoDepois = g.camera.position.clone().sub(eye).dot(g._tpRight);
-    check('troca de ombro mantém a câmera de ombro', g.camView === 'shoulder', { camView: g.camView });
-    check('troca de ombro inverte o lado do enquadramento',
-      ladoAntes > 0.2 && ladoDepois < -0.2,
-      { ladoAntes: +ladoAntes.toFixed(3), ladoDepois: +ladoDepois.toFixed(3) });
-  }
+  teclaB({ shiftKey: true });
+  passo(g, 1);
+  const ladoDepois = g.camera.position.clone().sub(eye).dot(g._tpRight);
+  check('Shift+B mantém câmera de ombro', g.camView === 'shoulder', { camView: g.camView });
+  check('Shift+B inverte lado do enquadramento',
+    ladoAntes > 0.2 && ladoDepois < -0.2,
+    { ladoAntes: +ladoAntes.toFixed(3), ladoDepois: +ladoDepois.toFixed(3) });
+  const ladoAposTroca = g._tpShoulderSide;
+  teclaB({ shiftKey: true, repeat: true });
+  check('repeat de Shift+B não troca de novo', g._tpShoulderSide === ladoAposTroca,
+    { antes: ladoAposTroca, depois: g._tpShoulderSide });
 }
 
 const result = {

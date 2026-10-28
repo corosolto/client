@@ -6401,16 +6401,22 @@ export class Game {
       // Cinco probes paralelos dão 12 cm de volume à lente e seguram quinas que o raio
       // central atravessava, sem criar geometria ou outra convenção de collider.
       const probeOrigin = this._tpBoomProbe || (this._tpBoomProbe = new THREE.Vector3());
+      const probeRight = this._tpBoomProbeRight || (this._tpBoomProbeRight = new THREE.Vector3());
+      const probeUp = this._tpBoomProbeUp || (this._tpBoomProbeUp = new THREE.Vector3());
+      probeRight.copy(right).addScaledVector(boom, -right.dot(boom)).normalize();
+      probeUp.crossVectors(boom, probeRight).normalize();
+      const hits = this._tpBoomHits || (this._tpBoomHits = []);
       const pt = this._tpBoxPt || (this._tpBoxPt = new THREE.Vector3());
       for (let probe = 0; probe < 5; probe++) {
         const lateral = probe === 1 ? 0.12 : probe === 2 ? -0.12 : 0;
         const vertical = probe === 3 ? 0.10 : probe === 4 ? -0.10 : 0;
-        probeOrigin.copy(eyePos).addScaledVector(right, lateral);
-        probeOrigin.y += vertical;
+        probeOrigin.copy(eyePos).addScaledVector(probeRight, lateral).addScaledVector(probeUp, vertical);
         this.ray.set(probeOrigin, boom);
         this.ray.far = boomLen;
         if (this.world.occluders?.length) {
-          const hit = this.ray.intersectObjects(this.world.occluders, true)[0];
+          hits.length = 0;
+          this.ray.intersectObjects(this.world.occluders, true, hits);
+          const hit = hits[0];
           if (hit && hit.distance < claro) claro = hit.distance;
         }
         if (this.world.camBlockers?.length) {
