@@ -292,10 +292,8 @@ export const VM_SIDE_CONTRACT = Object.freeze({
   profileMin: 0.02,
 });
 
-// ADS na linha de mira (crítico r4, 27/10): o 'foco' deixava a massa 64 px (AK) e 134 px
-// (pistola) abaixo da cruz. Arma de foco com `ads.linha` vira ADS automático pela alça e
-// massa: cano no eixo da câmera, sem resíduo; um objeto em `linha` sobrepõe pontos só neste
-// modo. ?ads1pfix=0 volta ao foco. Régua sem navegador: tools/eval/ads1p-linha-check.mjs.
+// Foco com `ads.linha` vira ADS automático pela alça e massa; um objeto sobrepõe os pontos.
+// ?ads1pfix=0 volta ao foco. Régua: tools/eval/ads1p-linha-check.mjs.
 export function adsEfetivo(ads, linha = true) {
   if (!linha || ads?.estilo !== 'foco' || !ads.linha) return ads;
   const { linha: extra, ...resto } = ads;
