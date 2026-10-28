@@ -375,8 +375,8 @@ const PUNCH_ZOOM = 0.014, PUNCH_DECAY = 13;
 const TRACER_STYLE = Object.freeze({ radius: .03, speed: 180, minTravel: .06, fade: .07, segment: 5 });
 const LANDING_FX_STYLE = Object.freeze({
   water: ['agua', 0x9fd0e0], agua: ['agua', 0x9fd0e0],
-  dirt: ['terra', 0x8b633d], areia: ['areia', 0xb99762],
-  gravel: ['cascalho', 0x8b8174], grass: ['grama', 0x78945a],
+  dirt: ['terra', 0xc39b68], areia: ['areia', 0xd0ad78],
+  gravel: ['cascalho', 0xb7ada0], grass: ['grama', 0x9caf78],
   wood: ['madeira', 0x8a6033], metal: ['metal', 0xbfc6cc],
   concrete: ['concreto', 0xaaa6a0], concreto: ['concreto', 0xaaa6a0],
 });
@@ -4842,7 +4842,7 @@ export class Game {
       const speed = 0.45 + k * (0.55 + Math.random() * 0.65);
       at.set(pos.x + Math.cos(angle) * 0.14, y + 0.05, pos.z + Math.sin(angle) * 0.14);
       vel.set(Math.cos(angle) * speed, 0.65 + k * (0.7 + Math.random() * 0.55), Math.sin(angle) * speed);
-      fx.spawn(at, { vel, life: 0.32 + k * 0.25, size: 0.14 + k * 0.14, grow: 0.7 + k * 0.7 });
+      fx.spawn(at, { vel, life: 0.38 + k * 0.25, size: 0.18 + k * 0.16, grow: 0.8 + k * 0.8 });
     }
     return count;
   }

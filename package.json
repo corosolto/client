@@ -304,7 +304,7 @@
     "//eval:movimento-fluidez": "MVF1 a MVF3: 90% da velocidade em 0,14 a 0,24 s, soltar dissipa 90% em 0,16 a 0,28 s e contra-strafe estabiliza em até 0,13 s. Mutante acel-dura restaura 92 m/s².",
     "eval:movimento-fluidez": "node tools/eval/movimento-fluidez-check.mjs && ! node tools/eval/movimento-fluidez-check.mjs --mutante=acel-dura",
     "//eval:landing-impact": "LND1 a LND7: _updatePlayer despacha impacto normalizado, áudio escala, partículas legíveis nascem na lâmina d'água e a troca de qualidade não mantém draw call nem contamina cache.",
-    "eval:landing-impact": "node tools/eval/landing-impact-check.mjs && ! node --loader ./tools/eval/landing-impact-loader.mjs tools/eval/landing-impact-check.mjs",
+    "eval:landing-impact": "node tools/eval/landing-impact-check.mjs && node tools/eval/landing-impact-mutate.mjs",
     "eval:botsim-golden": "node tools/eval/botsim-golden.mjs",
     "//eval:lajes-cache": "Reuso de geometrias do entorno de Lajes preserva buffers, RNG e mundo em duas builds; descarte unico e sem vazamento entre builds",
     "eval:lajes-cache": "node tools/eval/lajes-cache-check.mjs",

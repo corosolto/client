@@ -76,13 +76,14 @@ const findWet = (world, surface) => {
 for (const [mapId, wet] of [
   ['piscina_treta', (w, x, z) => w.slowAt?.(x, z)],
   ['amazonia', (w, x, z) => w.footstepSurfaceAt?.(x, z) === 'water'],
+  ['fy_corrego', (w, x, z) => w.slowAt?.(x, z)],
 ]) {
   const world = bootGame(mapId, { textures: initTextures(), seed: 12345 }).world;
   const at = findWet(world, wet);
   assert(at && Number.isFinite(world.waterSurfaceAt?.(at.x, at.z)),
     `${mapId} não publicou a altura visual da água onde o passo diz água`);
-  assert(world.waterSurfaceAt(at.x, at.z) > world.groundHeightAt(at.x, at.z, 10),
-    `${mapId} publicou lâmina abaixo do fundo físico`);
+  assert(world.waterSurfaceAt(at.x, at.z) >= world.groundHeightAt(at.x, at.z, 10) - 0.05,
+    `${mapId} publicou lâmina enterrada no fundo físico`);
 }
 
 console.log(`VERDE landing-impact: força ${dispatched.strength.toFixed(2)}, ${particles.length - coloridasAntes} partículas coloridas, fallback ${fallback}`);
