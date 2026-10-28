@@ -1,15 +1,13 @@
-// Colete e capacete no corpo 3P: modelo do Mint (private-assets/viewmodels/armadura) e, enquanto ele
+// Colete e capacete no corpo 3P: modelo do Mint (public/models/armadura) e, enquanto ele
 // não carrega ou se falhar, a peça `*-provisorio`. Presos ao osso como o eyewear.js: rig intocado.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { assetUrl } from './data/asseturl.js';
 
 const CANAIS = ['getX', 'getY', 'getZ', 'getW'];
 const COR_COLETE = 0x2f3a2c, COR_PLACA = 0x3b4636, COR_CAPACETE = 0x39432f;
-// `?v=` = 10 primeiros hex do sha256 do GLB otimizado (tools/optimize-armadura.mjs).
-const GLB = {
-  colete: '/private-assets/viewmodels/armadura/colete.glb?v=18e41d4ef5',
-  capacete: '/private-assets/viewmodels/armadura/capacete.glb?v=8c54aeff35',
-};
+// URL revisada por conteúdo (assetver.js, gerado por `npm run gen:assetrev`).
+const GLB = { colete: assetUrl('models/armadura/colete.glb'), capacete: assetUrl('models/armadura/capacete.glb') };
 const USA_GLB = typeof location === 'undefined' || new URLSearchParams(location.search).get('coleteglb') !== '0';
 let _mats = null;
 const mats = () => _mats || (_mats = {
