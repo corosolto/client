@@ -15,12 +15,13 @@
      EC6 NaN/undefined em tempo ou distância recusa (compra nunca passa por omissão)
      EC7 arma assinatura do personagem tem desconto e continua paga
      EC8 kill-switch ?economia=0, modos especiais e MP desligam a economia
+     EC10 bot compra a arma sorteada só com saldo, e não compra o que já tem
      EC9 isolamento do menu: (a) nenhum import do grafo alcança treta-store/rewards/
          catalog/account-entry nem cita /api/treta; (b) uma partida simulada de 15
          rodadas não escreve em localStorage nem chama fetch
 
    Mutantes (rodam sempre, cada um TEM de deixar a régua vermelha):
-     sem-teto, sem-tempo, sem-zona, carteira-menu (creditar grava saldo no
+     sem-teto, sem-tempo, sem-zona, bot-sem-saldo, carteira-menu (creditar grava saldo no
      localStorage do menu), import-loja (o módulo importa treta-store.js).
 
    Uso: node tools/eval/economia-check.mjs
@@ -118,6 +119,12 @@ async function medir(dir) {
     && !lig({ online: true }) && !lig({ dedicado: true }) && E.modoDeCompra({ semRodada: true }) === 'respawn'
     && E.modoDeCompra({}) === 'rodada');
 
+  const cb = (o) => E.compraDoBot(o);
+  check('EC10', 'bot compra a sorteada só com saldo',
+    cb({ saldo: 2700, alvo: 'ak' }) === 'ak' && cb({ saldo: 2699, alvo: 'ak' }) === null
+    && cb({ saldo: 9000, alvo: 'ak', jaTem: true }) === null && cb({ saldo: 9000, alvo: 'pistol' }) === null,
+    { ak2700: cb({ saldo: 2700, alvo: 'ak' }), ak2699: cb({ saldo: 2699, alvo: 'ak' }) });
+
   // EC9b: partida simulada com espiões em localStorage e fetch
   const escritas = [];
   // descritor (e não leitura direta): no Node 22+ ler globalThis.localStorage já avisa no stderr
@@ -156,6 +163,7 @@ async function medir(dir) {
 const MUTANTES = {
   'sem-teto': (s) => s.replace('Math.min(ECONOMIA.teto, antes + v)', 'antes + v'),
   'sem-tempo': (s) => s.replace("if (!(agora <= compraAte)) return 'tempo';", ''),
+  'bot-sem-saldo': (s) => s.replace('return saldo >= precoDe(alvo) ? alvo : null;', 'return alvo;'),
   'sem-zona': (s) => s.replace("if (!(distSpawn <= ECONOMIA.raioCompraM)) return 'zona';", ''),
   'carteira-menu': (s) => s.replace('  return carteira.saldo - antes;',
     "  globalThis.localStorage?.setItem('cs_treta_saldo', String(carteira.saldo));\n  return carteira.saldo - antes;"),
