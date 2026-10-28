@@ -86,25 +86,52 @@ passam normais. É o modo de validar o texto completo antes de ligar em produç�
 
 O bot nunca força: conserto que não passa nas réguas não sobe.
 
-`estado/estado.json` (gitignored) guarda o último head revisado por PR — re-revisar
-só acontece em commit novo.
+O estado (último head revisado por PR, as reviews e os payloads de dry-run) mora
+**fora do repo**: `~/.local/state/corosolto/estraga-codigo/`, ou onde `ESTADO_DIR`
+mandar. Re-revisar só acontece em commit novo. Não é frescura de arrumação: o
+código vive num volume externo e, sob launchd, o `node` leva `EPERM` ao abrir
+arquivo para escrita lá dentro — o bot revisava o mesmo PR para sempre porque
+nunca conseguia gravar o head. Ver `bots/lib/estado.mjs`.
 
 ### launchd (a cada 10 min, acorda sozinho)
 
 ```xml
-<!-- ~/Library/LaunchAgents/br.corosolto.canarinho.plist -->
+<!-- ~/Library/LaunchAgents/br.corosolto.estraga-codigo.plist -->
 <plist version="1.0"><dict>
-  <key>Label</key><string>br.corosolto.canarinho</string>
+  <key>Label</key><string>br.corosolto.estraga-codigo</string>
   <key>ProgramArguments</key><array>
-    <string>bun</string><string>/Users/ruben/game3/bots/estraga-codigo/canarinho.mjs</string>
+    <string>/opt/homebrew/bin/node</string>
+    <string>/Volumes/Zenith/…/bots/estraga-codigo/canarinho.mjs</string>
     <string>poll</string>
   </array>
-  <key>StartInterval</key><integer>600</integer>
+  <key>KeepAlive</key><true/>
   <key>EnvironmentVariables</key><dict>
+    <key>HOME</key><string>/Users/ruben</string>
     <key>GH_PAT_FALA</key><string>…</string>
+    <!-- advisory enquanto o modelo ainda produz falso positivo com confiança
+         alta; ver "modelo" abaixo. Tirar daqui é decisão medida, não palpite. -->
+    <key>GH_DRY_RUN</key><string>1</string>
   </dict>
+  <!-- StandardOutPath/StandardErrorPath TÊM que ficar no disco interno:
+       launchd não abre arquivo em /Volumes (exit 78). -->
+  <key>StandardOutPath</key><string>/Users/ruben/Library/Logs/Canarinho/canarinho.log</string>
+  <key>StandardErrorPath</key><string>/Users/ruben/Library/Logs/Canarinho/canarinho.err.log</string>
 </dict></plist>
 ```
+
+Recarregar depois de mexer no código:
+`launchctl kickstart -k gui/$(id -u)/br.corosolto.estraga-codigo`.
+
+### O modelo
+
+Padrão `minimax-m3.1-flash:cloud` pelo Ollama local (`OLLAMA_HOST`, 11434),
+reserva `qwen3.5:4b` se o cloud cair, override por `OLLAMA_MODEL`. O 4B sozinho
+foi reprovado em 28/10: no selftest da casa devolveu 2, 5 e 2 achados em três
+rodadas, com import que não existe no diff e minors de comentário que o contrato
+proíbe. O cloud acha o defeito real e cala no resto — mas ainda produz falso
+positivo com confiança **alta** (mediu-se um no PR #1103, "setX não renormaliza",
+contra um `setX` que renormaliza desde o r152). Por isso o `GH_DRY_RUN=1`
+continua no plist: o filtro de publicação não separa esse caso.
 
 Máquina desligada não perde nada: o poll revisa tudo que acumulou ao acordar.
 

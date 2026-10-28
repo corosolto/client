@@ -379,7 +379,16 @@ async function reviewPr(n, { seco = false } = {}) {
   const { diff, arquivos } = diffDoPr(n);
   const meta = await revisar({ diff, arquivos }, { rotulo: `PR ${n}` });
   console.log(corpoReview(meta.achados, { ...meta, arquivos }));
-  if (seco) { console.log('\n(replay: nada foi postado)'); return; }
+  /* O replay existe para CALIBRAR, e calibrar sem saber se aquilo iria ao ar é
+   * meio exercício: o que decide a publicação não é o achado, é o filtro de
+   * decisaoPublicacao (major + confiança alta + linha + conserto). Mostra o
+   * veredito que teria acontecido, e a ficha crua de cada achado. */
+  if (seco) {
+    const d = decisaoPublicacao(meta.achados);
+    for (const x of meta.achados) console.log(`  · ${x.severidade}/${x.confianca} L${x.linha ?? '—'} ${x.arquivo}: ${x.titulo}`);
+    console.log(`(replay: nada foi postado — a decisão real seria ${d.publicar ? 'POSTAR' : 'SILÊNCIO'}: ${d.motivo}; ${d.achados.length} bloqueador(es), ${d.silenciados} silenciado(s))`);
+    return;
+  }
   const decisao = decisaoPublicacao(meta.achados);
   if (decisao.publicar) {
     postaReview(n, pr, { ...meta, achados: decisao.achados }, arquivos);
