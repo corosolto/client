@@ -14,12 +14,18 @@
      EJ7 fim de rodada: vitória 3250, derrota 1400, sobrevivente mantém a compra
      EJ8 modos especiais e nó dedicado não abrem loja mesmo com `economia: true`
      EJ9 nada disso escreve no localStorage de chave treta nem chama /api/treta
+     EJ13 teclado: B abre, 4/5 compram, repetição não compra, fora da zona B é câmera
+     EJ14 arma do chão troca a do mesmo slot (a comprada cai)
+     EJ15 varredura: nenhum `primary || 'awp'` no game.js
 
    Mutantes (rodam sempre; cada um TEM de acender pelo menos uma cláusula):
      carteira-menu  o crédito de abate também grava o saldo numa chave treta do localStorage
      tecla1-awp     _slotPrimaria volta a cair na AWP
      sem-perda      rearmar vira no-op (morrer não custa nada)
      armario        o armário grátis volta com a loja ligada
+     sem-tecla / b-sempre-camera / repete-compra   o caminho do teclado (EJ13)
+     pickup-mao     a arma do chão larga a da mão, não a do slot (EJ14)
+     awp-na-rodinha um único `primary || 'awp'` volta na rodinha (EJ15)
 
    Uso: node tools/eval/economia-jogo-check.mjs
    ============================================================================ */
@@ -35,6 +41,7 @@ const { ECONOMIA } = await import(pathToFileURL(path.join(ROOT, 'public/js/econo
 
 console.info = () => {};   // o Game anuncia a composição dos times a cada boot
 const textures = initTextures();
+const FONTE = (await import('node:fs')).readFileSync(path.join(ROOT, 'public/js/game.js'), 'utf8');
 const PERSONAGEM = CHARACTERS.find((c) => c.team === 'E' && !['pistol', 'deagle', 'revolver38'].includes(charWeapon(c.id)));
 
 function boot({ economia = true, settings = {}, dedicated = false, mut = null } = {}) {
@@ -55,9 +62,9 @@ function boot({ economia = true, settings = {}, dedicated = false, mut = null } 
   return g;
 }
 
-const tecla = (g, code) => g._kd({ code, target: null, repeat: false, preventDefault() {} });
+const tecla = (g, code, repeat = false) => g._kd({ code, target: null, repeat, preventDefault() {} });
 const rack = (g) => g.drops.filter((d) => d.rack).length;
-const inimigo = (g) => g.bots.find((b) => b.team !== g.playerTeam);
+const inimigo = (g) => g.bots.find((b) => b.team !== g.playerTeam && b.alive);
 const aliado = (g) => g.bots.find((b) => b.team === g.playerTeam);
 const matar = (g, vit, att, weap) => { g.time += 0.05; g._kill(vit, att, weap, false); };
 const saldo = (g) => g.player.carteira?.saldo;
@@ -133,6 +140,43 @@ function medir(mut = {}) {
   }
 
   {
+    // caminho principal: B abre, 4 = fuzis, 5 = AK; segurar o 4 não compra; fora da zona B é câmera
+    const g = boot({ mut: mut.boot });
+    const p = g.player;
+    p.carteira.saldo = 3000;
+    const cam0 = g.camView;
+    tecla(g, 'KeyB'); const abriu = !!g._compra.aberto;
+    tecla(g, 'Digit4'); tecla(g, 'Digit4', true);
+    const naoComprouNaRepeticao = !p.primary;
+    tecla(g, 'Digit5');
+    const comprou = p.primary === 'ak' && !g._compra.aberto && g.camView === cam0;
+    p.pos.x += 200;
+    tecla(g, 'KeyB');
+    const camera = g.camView !== cam0 && !g._compra.aberto;
+    check('EJ13', 'teclado: B abre, 4 e 5 compram a AK, repetição não compra, fora da zona B é câmera',
+      abriu && naoComprouNaRepeticao && comprou && camera, { abriu, naoComprouNaRepeticao, comprou, primary: p.primary, cam0, cam: g.camView });
+  }
+
+  {
+    // arma do chão troca a do mesmo slot: a primária comprada cai, não some
+    const g = boot({ mut: mut.boot });
+    const p = g.player;
+    p.carteira.saldo = 5000; g._compra.comprar('m4');
+    g._switchWeapon('pistol');
+    const antes = g.drops.filter((d) => d.weapon === 'm4').length;
+    g._grabPickup({ weapon: 'ak', mesh: { position: p.pos.clone() }, rack: false }, p, true);
+    const caiu = g.drops.filter((d) => d.weapon === 'm4').length - antes;
+    check('EJ14', 'pegar AK do chão com M4 comprada larga a M4', p.primary === 'ak' && caiu === 1, { primary: p.primary, caiu });
+  }
+
+  {
+    // varre em vez de enumerar: nenhum caminho de slot pode voltar a cair na AWP de brinde
+    const src = mut.fonte ? mut.fonte(FONTE) : FONTE;
+    const furos = (src.match(/primary\s*\|\|\s*'awp'/g) || []).length;
+    check('EJ15', "game.js sem `primary || 'awp'` fora do _slotPrimaria", furos === 0, { furos });
+  }
+
+  {
     const off = boot({ economia: false, mut: mut.boot });
     check('EJ2', 'sem economia: arma do personagem e armário de hoje',
       !off._compra && off.player.weapon === charWeapon(PERSONAGEM.id) && rack(off) > 0,
@@ -179,6 +223,11 @@ const MUTANTES = {
   } },
   'tecla1-awp': { boot: (g) => { g._slotPrimaria = () => g.player.primary || 'awp'; } },
   'sem-perda': { boot: (g) => { if (g._compra) g._compra.rearmar = () => {}; } },
+  'sem-tecla': { boot: (g) => { if (g._compra) g._compra.tecla = () => false; } },
+  'b-sempre-camera': { boot: (g) => { if (g._compra) g._compra.podeComprar = () => false; } },
+  'repete-compra': { boot: (g) => { if (g._compra) { const t = g._compra.tecla.bind(g._compra); g._compra.tecla = (c) => t(c, false); } } },
+  'pickup-mao': { boot: (g) => { const r = g._grabPickup.bind(g); g._grabPickup = (pk, who, isP) => { const c = g._compra; g._compra = null; const x = r(pk, who, isP); g._compra = c; return x; }; } },
+  'awp-na-rodinha': { fonte: (s) => s.replace('const slots = [this._slotPrimaria(),', "const slots = [p.primary || 'awp',") },
   'armario': { boot: (g) => {
     if (!g._compra) return;
     const r = g._resetPositions.bind(g);
