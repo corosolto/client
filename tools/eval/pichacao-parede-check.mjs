@@ -24,6 +24,7 @@
      SIM_QS='?tintaoffset=0' node tools/eval/pichacao-parede-check.mjs   # mede o código antigo
    ============================================================================ */
 import { writeFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 const args = process.argv.slice(2);
 const opt = (k, d) => args.find((a) => a.startsWith(`--${k}=`))?.slice(k.length + 3) ?? d;
@@ -259,7 +260,7 @@ export function medirMapa(W, top = 5) {
   };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const lista = opt('maps', MAPAS_GRAFITE.join(',')).split(',');
   const { rel, falhas } = await rodar(lista, +opt('top', 5));
   if (opt('json')) writeFileSync(opt('json'), JSON.stringify(rel, null, 2));
