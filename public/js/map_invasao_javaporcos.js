@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { aplicaSombraSol } from './mapquality.js';
 import { preloadJavaporcos } from './mode_javaporcos.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const HALF_X = 56;
 const HALF_Z = 60;
@@ -142,5 +143,10 @@ export function buildInvasaoJavaporcos(scene, T) {
     mode: 'horde', root, colliders, occluders, groundHeightAt, spawns, sun, hemi, pickups,
     waypoints: { nodes, adj }, nearestWaypoint, findPath, boarEntrances, hordeObjectives,
     bounds: { minX:-55.5,maxX:55.5,minZ:-59.5,maxZ:59.5 },
+    sound: { bioma: 'rural', loops: [
+      { src: AMB_LOOPS.vento, pos: [0, 4, 12], radius: 90, vol: .24 },
+      { src: AMB_LOOPS.grilos, pos: [0, 2, 34], radius: 62, vol: .15 },
+      { src: AMB_LOOPS.cidade, pos: [0, 3, -42], radius: 44, vol: .12 },
+    ] },
   };
 }
