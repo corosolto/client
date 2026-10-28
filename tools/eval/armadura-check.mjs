@@ -19,11 +19,13 @@
      AR11 `?armadura=0` volta ao jogo antigo (sem colete, dano cheio)
      AR12 partida online/servidor dedicado: o `_damage` não aplica armadura (o servidor é
           a autoridade e não tem esse estado — contrato no corpo do PR)
+     AR13 renascer (jogador e bot) passa pelo `_equiparArmadura`: re-equipa no debug, zera fora dele
 
    Mutantes (cada um TEM que reprovar):
      --mutante=sem-armadura   o motor roda com `?armadura=0` onde a régua espera armadura
      --mutante=capacete-awp   o capacete passa a segurar a AWP
      --mutante=pen-plana      toda arma com a mesma penetração (some AWP > fuzil > SMG)
+     --mutante=sem-equipar    o respawn deixa de re-equipar (o colete da vida anterior fica)
 
    uso: node tools/eval/armadura-check.mjs [--mutante=...]
    (o motor roda em processo filho porque a querystring é lida na carga do game.js) */
@@ -60,6 +62,13 @@ if (process.argv.includes('--motor')) {
     num: document.getElementById('armor-num').textContent });
   p.armor = 50; p.helmet = true; g._updateHud(); out.hudCheio = hud();
   p.armor = 0; p.helmet = false; g._updateHud(); out.hudVazio = hud();
+  p.armor = 50; p.helmet = true; p.alive = false; g._updateHud(); out.hudMorto = hud(); p.alive = true;
+  // renascer re-equipa (debug) ou zera (sem debug): anda o caminho de respawn de verdade
+  if (process.env.ARMADURA_MUT === 'sem-equipar') g._equiparArmadura = () => {};
+  for (const x of [p, b]) { x.armor = 7; x.helmet = false; }
+  b.alive = false; g._respawnEntity(b);
+  p.alive = false; g._respawnPlayer();
+  out.renasce = { player: [p.armor, p.helmet], bot: [b.armor, b.helmet] };
   g.dedicated = true; out.dedicado = golpe(b, 100, true, 36, 'AK', false); g.dedicated = false;
   g.online = true; out.online = golpe(b, 100, true, 36, 'AK', false); g.online = false;
   process.stdout.write('\n@@' + JSON.stringify(out));
@@ -67,7 +76,7 @@ if (process.argv.includes('--motor')) {
 }
 
 const motor = (qs) => {
-  const r = spawnSync(process.execPath, [ARQ, '--motor'], { env: { ...process.env, SIM_QS: qs }, encoding: 'utf8', maxBuffer: 64 << 20 });
+  const r = spawnSync(process.execPath, [ARQ, '--motor'], { env: { ...process.env, SIM_QS: qs, ARMADURA_MUT: MUT }, encoding: 'utf8', maxBuffer: 64 << 20 });
   const i = (r.stdout || '').lastIndexOf('@@');
   if (r.status !== 0 || i < 0) { console.error(r.stderr?.slice(-2000)); throw new Error(`motor (${qs}) não subiu`); }
   return JSON.parse(r.stdout.slice(i + 2));
@@ -137,6 +146,10 @@ cobra('AR8', s.hp === 64, `sem colete o _damage mudou (hp ${s.hp}, esperado 64)`
 cobra('AR8', padrao.jogadorAk.hp > 64, `jogador com capacete levou a AK na cabeça cheia (hp ${padrao.jogadorAk.hp})`);
 cobra('AR9', !padrao.hudCheio.oculto && padrao.hudCheio.num === '50' && padrao.hudCheio.capacete, `HUD com colete 50 + capacete: ${JSON.stringify(padrao.hudCheio)}`);
 cobra('AR9', padrao.hudVazio.oculto, 'HUD não some com colete 0');
+cobra('AR9', padrao.hudMorto.oculto, 'HUD de morto ainda mostra o colete que sobrou');
+cobra('AR13', comDebug.renasce.player[0] === 100 && comDebug.renasce.bot[0] === 100 && comDebug.renasce.player[1] && comDebug.renasce.bot[1],
+  `renascer com ?debug=1&colete=100&capacete=1 não re-equipou: ${JSON.stringify(comDebug.renasce)}`);
+cobra('AR13', padrao.renasce.player[0] === 0 && padrao.renasce.bot[0] === 0, `renascer sem debug não zerou o colete: ${JSON.stringify(padrao.renasce)}`);
 const todos = (e, v) => [e.player, ...e.bots].every(([c, h]) => c === v && h === (v > 0));
 cobra('AR10', todos(comDebug.equip, 100), `?debug=1&colete=100&capacete=1 não equipou todo mundo: ${JSON.stringify(comDebug.equip)}`);
 cobra('AR10', todos(semGate.equip, 0), `sem ?debug=1 a querystring equipou: ${JSON.stringify(semGate.equip)}`);
@@ -144,4 +157,4 @@ cobra('AR11', todos(desligado.equip, 0) && desligado.akCorpoColete.hp === 64, `?
 cobra('AR12', padrao.dedicado.hp === 64 && padrao.online.hp === 64, `servidor/online aplicou armadura localmente (dedicado hp ${padrao.dedicado.hp}, online hp ${padrao.online.hp})`);
 
 if (falhas.length) { for (const f of falhas) console.error('  ✗', f); process.exit(1); }
-console.log(`  ✓ armadura: AR1-AR12 verdes${MUT ? ` (MUTANTE ${MUT} NÃO MORDEU)` : ''}`);
+console.log(`  ✓ armadura: AR1-AR13 verdes${MUT ? ` (MUTANTE ${MUT} NÃO MORDEU)` : ''}`);

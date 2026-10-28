@@ -142,7 +142,7 @@
     "eval:roundmunicao": "node tools/eval/round-municao-check.mjs",
     "eval:cameraoclusao": "node tools/eval/camera-oclusao-check.mjs",
     "eval:pistolacadencia": "node tools/eval/pistola-cadencia-check.mjs",
-    "eval:armadura": "node tools/eval/armadura-check.mjs && for m in sem-armadura capacete-awp pen-plana; do ! node tools/eval/armadura-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
+    "eval:armadura": "node tools/eval/armadura-check.mjs && for m in sem-armadura capacete-awp pen-plana sem-equipar; do ! node tools/eval/armadura-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
     "eval:fragrestock": "node tools/eval/frag-restock-check.mjs",
     "eval:formatomelhorde": "node tools/eval/formato-melhorde-check.mjs",
     "mut:formatomelhorde": "node tools/eval/formato-melhorde-mutate.mjs",
