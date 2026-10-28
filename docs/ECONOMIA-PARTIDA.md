@@ -101,12 +101,15 @@ Mesma regra do jogador, sem tabela por dificuldade (a dificuldade já mexe na mi
   tem segura a pistola, a rodada de eco do CS. Quem sorteou DEAGLE ou .38 já compra na 1ª;
 - ganham por abate e por rodada como o jogador;
 - morreu, larga a arma e volta de pistola; só recompra na rodada seguinte (no `?arena=1`,
-  a cada renascimento).
+  a cada renascimento);
+- primária pega do chão vale como compra feita: o bot não paga para trocá-la pela sorteada.
 
-Régua: `npm run eval:economia-jogo` sobe o `Game` real no arnês (EJ1 a EJ15)
-com onze mutantes: carteira do menu, tecla 1 dando AWP, morte sem perda, armário de volta,
+Régua: `npm run eval:economia-jogo` sobe o `Game` real no arnês (EJ1 a EJ16)
+com catorze mutantes: carteira do menu, tecla 1 dando AWP, morte sem perda, armário de volta,
 menu sem teclado, B sempre câmera, repetição comprando, pickup largando a arma da mão e
-um `primary || 'awp'` de volta na rodinha, bot comprando de graça e bot que não perde a arma ao morrer. O arnês não carrega CSS: a camada do menu sobre
+um `primary || 'awp'` de volta na rodinha, bot comprando de graça, bot que não perde a arma ao morrer, troca de malha depois do
+posicionamento (bot invisível), bot recomprando a cada renascimento e bot pagando para
+trocar uma primária pega do chão. O arnês não carrega CSS: a camada do menu sobre
 o `#touch-ui` foi conferida no navegador.
 
 ## O que entra depois
