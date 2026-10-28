@@ -9,8 +9,8 @@
    com Math.random semeado, e grava a pose a cada 10 ticks. `--write` grava o baseline;
    sem flag, compara contra ele e reprova em qualquer divergência acima de 1e-6.
 
-   A régua só vale se ela MORDE: `--mutar=<n>` injeta uma mudança minúscula na física
-   (accel do chão 92 -> 92+n). Com n pequeno a trajetória tem que divergir mesmo assim. */
+   A régua só vale se ela MORDE: `--mutar=<n>` injeta uma mudança na aceleração física.
+   Com n pequeno a trajetória tem que divergir mesmo assim; o baseline vigente usa 48 m/s². */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
