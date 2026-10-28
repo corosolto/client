@@ -91,15 +91,15 @@ Para ligar, o nó precisa:
 
 1. **Estado por slot**: `saldo` (TRETA$ da partida), `derrotasSeguidas` por time,
    `compraAte` (tempo do servidor) por slot. Zera a cada partida.
-2. **Crédito**: no `_kill`, `creditar(carteira, recompensaKill(arma, { mesmoTime }))`
-   para o autor; no fim de rodada, `recompensaRodada` com `proximaSequencia` por time.
+2. **Crédito**: no `_kill`, `creditar(carteira, recompensaKill(weap, { mesmoTime }))`
+   para o autor (`recompensaKill` aceita o id ou o rótulo curto que o `_kill` recebe: `'AK'`, `'FACA'`, `'FRAG'`); no fim de rodada, `recompensaRodada` com `proximaSequencia` por time.
    Nada disso pode vir do cliente.
 3. **Mensagem de pedido** (cliente → nó): `{ type: 'compra', id: '<id do catálogo>', seq }`.
    Só o id; preço, saldo, tempo e posição o nó lê do próprio estado.
 4. **Validação**: `motivoRecusa({ id, saldo, agora, compraAte, distSpawn, vivo, possui, assinatura })`
    com `distSpawn = distanciaAoSpawn(pos do slot no servidor, spawns do time)`. Recusa
    por `item`, `morto`, `tempo`, `zona`, `ja-tem` ou `saldo`.
-5. **Resposta**: aceito → concede a arma pelo caminho que já existe (`_concederArma`) e
+5. **Resposta**: aceito → concede a arma pelo caminho que o backend já tem (`_concederArma` em `game/room.js`) e
    manda `{ type: 'compra-ok', id, saldo, seq }`; recusado → `{ type: 'compra-nack', id, motivo, saldo, seq }`.
 6. **Snapshot**: o saldo do próprio jogador (`$`) e `compraAte` entram no snapshot do dono
    do slot. O saldo dos outros não viaja (no CS só o time vê).
