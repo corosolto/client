@@ -4,7 +4,7 @@
    o encaixe no corpo é medido por personagem em public/js/armadura-visual.js.
    Uso: node tools/optimize-armadura.mjs [origem] [destino]
    origem  default ~/csbrasil-private-assets/generated/mint-colete-flash-20261028
-   destino default public/private-assets/viewmodels/armadura (árvore privada, fora do Git) */
+   destino default public/models/armadura (versionado; depois rode `npm run gen:assetrev`) */
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { meshopt, prune, dedup } from '@gltf-transform/functions';
@@ -15,7 +15,7 @@ import { mkdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 const ORIGEM = process.argv[2] || path.join(process.env.HOME || '', 'csbrasil-private-assets/generated/mint-colete-flash-20261028');
-const DESTINO = process.argv[3] || 'public/private-assets/viewmodels/armadura';
+const DESTINO = process.argv[3] || 'public/models/armadura';
 await MeshoptEncoder.ready;
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS)
   .registerDependencies({ 'meshopt.encoder': MeshoptEncoder, 'meshopt.decoder': MeshoptDecoder });
