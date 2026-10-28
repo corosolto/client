@@ -4120,12 +4120,12 @@ export class Game {
     return hit;
   }
 
-  // Yaw do CORPO: bot gira o grupo em yaw; o corpo do jogador é yaw + 180° (_updatePlayerTP).
-  // Sem medida (procedural, id novo) vale a mediana do elenco, nunca a esfera velha.
+  // Yaw do CORPO: humano (local, remoto ou slot do nó) guarda o yaw da câmera, corpo = yaw + 180°
+  // (_updatePlayerTP, netgame corpoYaw). Sem medida vale a mediana do elenco, nunca a esfera velha.
   _perfilCabeca(ent) {
     if (!HS_CAIXA) return null;
     const p = CABECAS_HITBOX[ent.def?.id] || CABECA_PADRAO;
-    const yaw = ent.isPlayer ? (ent.yaw || 0) + Math.PI : (ent.mesh?.group?.rotation?.y ?? ent.yaw ?? 0);
+    const yaw = this._participanteHumano(ent) ? (ent.yaw || 0) + Math.PI : (ent.yaw ?? ent.mesh?.group?.rotation?.y ?? 0);
     return { ...p, yaw };
   }
 
