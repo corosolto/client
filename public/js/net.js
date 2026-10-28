@@ -319,9 +319,8 @@ export class NetClient {
             if (this._gapSamples.length > 512) this._gapSamples.shift();
           }
           this._lastSnapT = now;
-          // `m.t` é o relógio DO SERVIDOR (netcodec: f64 em segundos). É ele que dá a
-          // janela honesta: `now` aqui é quando o render liberou a thread, não quando o
-          // pacote chegou — ver netrate.js.
+          // `m.t` é o relógio DO SERVIDOR (netcodec, f64 s): `now` é quando o render
+          // liberou a thread, não quando o pacote chegou — ver netrate.js.
           this._taxa.amostra(bytes, m.t, now);
           this.stats.snaps++; this.stats.bytes += bytes;
           this.onSnapshot?.(m);
