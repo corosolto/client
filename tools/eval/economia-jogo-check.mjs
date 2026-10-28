@@ -18,7 +18,8 @@
           sorteada de 600/700 já sai na rodada 1, paga)
      EJ11 começo de rodada: bot com saldo compra a sorteada e paga; sem saldo fica de pistola
      EJ12 bot que morre perde a arma, renasce de pistola e só recompra na rodada seguinte;
-          bot que mata recebe pela classe da arma
+          bot que mata recebe pela classe da arma; a malha nova nasce no spawn, visível
+     EJ16 bot com primária pega do chão não compra a sorteada
      EJ13 teclado: B abre, 4/5 compram, repetição não compra, fora da zona B é câmera
      EJ14 arma do chão troca a do mesmo slot (a comprada cai)
      EJ15 varredura: nenhum `primary || 'awp'` no game.js
@@ -30,6 +31,9 @@
      armario        o armário grátis volta com a loja ligada
      bot-de-graca   o bot pega a arma sorteada sem pagar
      bot-sem-perda  bot que morre renasce com a arma comprada
+     bot-gancho-depois-do-g    a troca de malha roda depois do posicionamento (bot invisível)
+     bot-recompra-no-renascer  bot recompra a cada renascimento no modo de rodada
+     bot-troca-arma-do-chao    bot paga para trocar a primária pega do chão (EJ16)
      sem-tecla / b-sempre-camera / repete-compra   o caminho do teclado (EJ13)
      pickup-mao     a arma do chão larga a da mão, não a do slot (EJ14)
      awp-na-rodinha um único `primary || 'awp'` volta na rodinha (EJ15)
@@ -156,8 +160,9 @@ function medir(mut = {}) {
       { bots: bots.map((b) => `${b.weapon}/${b.carteira?.saldo}/${b._armaAlvo}`) });
 
     const [rico, pobre] = bots.filter((b) => b.team !== g.playerTeam);
-    rico._armaAlvo = 'ak'; rico.carteira.saldo = 3000;
-    pobre._armaAlvo = 'awp'; pobre.carteira.saldo = 1000;
+    // arma na mão forçada: com outra semente o bot sorteado de DEAGLE já viria armado da rodada 1
+    rico._armaAlvo = 'ak'; rico.carteira.saldo = 3000; rico.weapon = 'pistol';
+    pobre._armaAlvo = 'awp'; pobre.carteira.saldo = 1000; pobre.weapon = 'pistol';
     g._startRound();
     check('EJ11', 'rodada: bot com saldo compra e paga; sem saldo fica de pistola',
       rico.weapon === 'ak' && rico._meshWeapon === 'ak' && rico.carteira.saldo === 300
@@ -168,13 +173,30 @@ function medir(mut = {}) {
     const antes = g.drops.filter((d) => d.weapon === 'ak').length;
     matar(g, rico, g.player, 'PT-38');
     const caiu = g.drops.filter((d) => d.weapon === 'ak').length - antes;
+    rico.carteira.saldo = 5000;   // com saldo de sobra: só não recompra se a regra da rodada segurar
+    // morreu longe do spawn e o corpo GLB já sumiu (deadT > 1), como no jogo
+    rico.mesh.group.position.x += 40; rico.mesh.group.visible = false;
     const saldoMorto = rico.carteira.saldo;
     g._respawnEntity(rico);
+    // a malha nova tem de nascer no ponto de renascimento, visível e na cena (gancho antes do `g`)
+    const malha = rico.mesh.group;
+    const malhaOk = malha.position.distanceTo(rico.pos) < 1e-6 && malha.visible && g.scene.children.includes(malha) && rico._meshWeapon === 'pistol';
     const sPobre = pobre.carteira.saldo;
     pobre.weapon = 'pistol'; matar(g, g.player, pobre, 'PT-38');
     check('EJ12', 'bot morto larga a arma, renasce de pistola sem recomprar; bot que mata recebe',
-      caiu === 1 && rico.weapon === 'pistol' && rico.carteira.saldo === saldoMorto && pobre.carteira.saldo === sPobre + 300,
-      { caiu, renasceu: rico.weapon, saldo: rico.carteira.saldo, killer: pobre.carteira.saldo - sPobre });
+      caiu === 1 && rico.weapon === 'pistol' && rico.carteira.saldo === saldoMorto && malhaOk && pobre.carteira.saldo === sPobre + 300,
+      { caiu, renasceu: rico.weapon, saldo: rico.carteira.saldo, malhaOk, killer: pobre.carteira.saldo - sPobre });
+  }
+
+  {
+    // bot com primária pega do chão não paga para trocá-la pela sorteada
+    const g = boot({ mut: mut.boot });
+    const b = g.bots.find((x) => x.team !== g.playerTeam);
+    b._armaAlvo = 'shotgun'; b.carteira.saldo = 5000;
+    g._syncRemoteWeapon(b, 'awp');
+    g._startRound();
+    check('EJ16', 'bot com AWP do chão não compra a escopeta sorteada', b.weapon === 'awp' && b.carteira.saldo === 5000,
+      { weapon: b.weapon, saldo: b.carteira.saldo });
   }
 
   {
@@ -262,6 +284,22 @@ const MUTANTES = {
   'tecla1-awp': { boot: (g) => { g._slotPrimaria = () => g.player.primary || 'awp'; } },
   'sem-perda': { boot: (g) => { if (g._compra) g._compra.rearmar = () => {}; } },
   'bot-sem-perda': { boot: (g) => { if (g._compra) g._compra._rearmarBot = () => {}; } },
+  'bot-gancho-depois-do-g': { boot: (g) => {
+    if (!g._compra) return;
+    // troca a malha antes, mas o posicionamento cai na malha velha (o `g` capturado antes do gancho)
+    const c = g._compra, ren = c.aoRenascerBot.bind(c), r0 = g._respawnEntity.bind(g);
+    c.aoRenascerBot = () => {};
+    g._respawnEntity = (b) => { const velha = b.mesh; ren(b); const nova = b.mesh; b.mesh = velha; r0(b); b.mesh = nova; };
+  } },
+  'bot-recompra-no-renascer': { boot: (g) => {
+    if (!g._compra) return;
+    const c = g._compra; c.aoRenascerBot = (b) => { c._rearmarBot(b); c._botCompra(b); };
+  } },
+  'bot-troca-arma-do-chao': { boot: (g) => {
+    if (!g._compra) return;
+    const c = g._compra;
+    c._botCompra = (b) => { const id = b._armaAlvo; if (b.weapon === id || b.carteira.saldo < 1050) return; b.carteira.saldo -= 1050; c._armarBot(b, id); };
+  } },
   'bot-de-graca': { boot: (g) => { if (g._compra) g._compra._botCompra = (b) => g._compra._armarBot(b, b._armaAlvo); } },
   'sem-tecla': { boot: (g) => { if (g._compra) g._compra.tecla = () => false; } },
   'b-sempre-camera': { boot: (g) => { if (g._compra) g._compra.podeComprar = () => false; } },
