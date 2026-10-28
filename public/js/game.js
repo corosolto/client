@@ -2427,8 +2427,9 @@ export class Game {
     const arma = { primary: this._slotPrimaria(), secondary: p.secondary || 'pistol', knife: 'knife' };
     for (const b of root.querySelectorAll('.touch-wep')) {
       const slot = b.dataset.wep, id = arma[slot];
-      if (slot === 'primary') b.hidden = !id;
-      if (!id) continue;
+      // classe e não o atributo `hidden`: `.touch-wep{display:flex}` vence o atributo
+      if (slot === 'primary') b.classList.toggle('hidden', !id);
+      if (!id) { delete b.dataset.arte; b.innerHTML = ''; b.classList.remove('ativa'); continue; }
       b.classList.toggle('ativa', p.weapon === id);
       if (b.dataset.arte === id) continue;
       b.dataset.arte = id;
