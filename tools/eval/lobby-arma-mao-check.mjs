@@ -43,12 +43,25 @@
      --mutante=sem-pulso  carrega a página com ?pvpulso=0 (kill-switch do conserto) e
                           exige LA1 vermelha. Se continuar verde, a régua está cega.
 
-   uso: BASE=http://localhost:8511 node tools/eval/lobby-arma-mao-check.mjs [--mutante=sem-pulso] [--json]
+   uso: [BASE=http://localhost:<porta>] node tools/eval/lobby-arma-mao-check.mjs [--mutante=sem-pulso] [--json]
    Um Chrome por vez na máquina: segure a trava antes (ver preâmbulo de PR). */
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
-const BASE = process.env.BASE || 'http://localhost:8123';
+import { spawn } from 'node:child_process';
+// Sem BASE, sobe o próprio servidor (nunca a 8123 compartilhada, que pode ser de outra sessão).
+const PORTA = process.env.PORTA || '9351';
+const BASE = process.env.BASE || `http://127.0.0.1:${PORTA}`;
+const servidor = process.env.BASE ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
+process.on('exit', () => servidor?.kill());
+if (servidor) {
+  let pronto = false;
+  for (let i = 0; i < 120 && !pronto; i++) {
+    try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
+    if (!pronto) await new Promise((r) => setTimeout(r, 500));
+  }
+  if (!pronto) throw new Error(`servidor não respondeu em ${BASE}`);
+}
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const JSON_OUT = process.argv.includes('--json');
 const ESPERADO = { 'sem-pulso': ['LA1'] };
