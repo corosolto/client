@@ -262,7 +262,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `upa_24h` | UPA 24h da Treta | **captura** | `—` | — |
 | `velho_oeste` | Sertão da Treta | **captura** | `—` | — |
 
-**12 mapas no menu** — 2 abrem em rodadas e 10 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 24 arquivos `map_*.js` em `public/js/`; mapas em `MAPAS_PARADOS` ficam fora do menu.
+**12 mapas no menu** — 2 abrem em rodadas e 10 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 25 arquivos `map_*.js` em `public/js/`; mapas em `MAPAS_PARADOS` ficam fora do menu.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS menos MAPAS_PARADOS de public/js/maps.js`
 

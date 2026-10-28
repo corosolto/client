@@ -84,6 +84,7 @@ export const MAPS = {
   },
   operacao_flavio: {
     name: 'Operação Flávio',
+    objectiveMode: 'escort',
     props: [],
   },
   penitenciaria: { name: 'CARANDIRU', ctfMode: true,

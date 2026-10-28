@@ -2245,7 +2245,7 @@ const ui = {
   back()  { try { sfx.uiBack(); } catch {} },
 };
 let matchMode = 'rounds';   // 'rounds' | 'ctf' — lido em startGame (ctf)
-const modoObjetivoAtual = () => currentMap === 'operacao_flavio';
+const modoObjetivoAtual = () => MAPS[currentMap]?.objectiveMode || '';
 /* O JOGADOR JÁ DISSE QUAL MODO QUER? (defeito: "esse mapa está como CAPTURA, mas eu
    selecionei single player — e esse erro se repete em outros mapas")
    O `ctfMode` do mapa é PADRÃO, não ordem. Só que `gotoMap` reescrevia `matchMode` a cada

@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { preloadCharacterAssets } from './glbchars.js';
 import { assetUrl } from './data/asseturl.js';
+import { aplicaSombraSol } from './mapquality.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const PROP_ROOT = 'models/props/operacao_decola/';
 const PROP_FILES = {
@@ -160,7 +162,7 @@ export function buildOperacaoFlavio(scene) {
   colliderDoProp('arco_seguranca', 0, 0, -13, 3, 3, 0.8);
 
   const sun = new THREE.DirectionalLight(0xffd9a3, 2.15);
-  sun.position.set(-35, 62, -18); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+  sun.position.set(-35, 62, -18); sun.castShadow = true; aplicaSombraSol(sun);
   root.add(sun);
   const hemi = new THREE.HemisphereLight(0xaecbea, 0x514332, 1.3); root.add(hemi);
   for (const z of [-46, -34, -22, 0, 30, 42]) {
@@ -224,6 +226,10 @@ export function buildOperacaoFlavio(scene) {
     groundHeightAt: () => 0, slowAt: () => false,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -43, maxX: 43, minZ: -57, maxZ: 57 },
-    sound: { bioma: 'industrial', loops: [] },
+    sound: { bioma: 'industrial', loops: [
+      { src: AMB_LOOPS.hum, pos: [0, 3, -12], radius: 42, vol: 0.2 },
+      { src: AMB_LOOPS.cidade, pos: [0, 4, 34], radius: 70, vol: 0.14 },
+      { src: AMB_LOOPS.vento, pos: [0, 5, 48], radius: 38, vol: 0.18 },
+    ] },
   };
 }
