@@ -139,11 +139,8 @@ const TP_MOUNT_V2 = qp.get('tpmount') !== '0';
 // ?tpmountlive=0 -> mount volta a ser resolvido só uma vez, na pose de idle (ver o bloco
 // longo em buildCharacterModel). Existe pra permitir A/B do defeito, não pra uso normal.
 const TP_MOUNT_LIVE = qp.get('tpmountlive') !== '0';
-/* PREVIEW DO LOBBY: o porte de exibição (arma atravessada no peito) girava a ARMA dentro da
-   mão parada — 37,7-64,7° fora da pegada de jogo (régua eval:lobbyarmamao). Lia como "arma
-   bugada na mão": cabo encostado na palma aberta, dedos no ar (feedback do Gustavo, 28/10).
-   Agora quem gira é o PULSO: a mão mantém com a arma a MESMA relação do porte de jogo e o
-   conjunto mão+arma vai para o ângulo de vitrine. Kill-switch: ?pvpulso=0. */
+// Vitrine do lobby gira o PULSO, não a arma na mão (girar a arma deixava 37-65° fora da
+// pegada: "arma bugada na mão", 28/10). Régua eval:lobbyarmamao; ?pvpulso=0 volta ao antigo.
 const PV_PULSO = qp.get('pvpulso') !== '0';
 const _tpc = (qp.get('tpcarry') || '').split(',').map(Number);
 const TP_CARRY_PITCH = ((_tpc.length === 2 && !isNaN(_tpc[0]) ? _tpc[0] : -6)) * Math.PI / 180;  // cano levemente pro chão (porte)
@@ -503,11 +500,8 @@ function orientTpMount(t) {
   t.model.getWorldQuaternion(_gq);
   _wq.copy(_gq).multiply(t.carry);
   if (t.pegada) {
-    // Vitrine (PV_PULSO): a orientação da MÃO sai da arma, não o contrário. Absoluto, então
-    // chamar de novo no mesmo quadro (pós-IK, pós-porte 1h) não acumula giro.
-    /* O giro é em torno da PALMA, não do pulso: girar no osso empurrava a palma ~2 cm pra
-       frente e esticava o braço da pistola (select-mount ESTICADO no esquerdomacho). O CCD
-       devolve a palma ao ponto do clipe; depois a mão é reorientada no braço já resolvido. */
+    // PV_PULSO: a mão segue a arma (absoluto, não acumula). Pivô na PALMA via CCD: girar
+    // no osso empurrava a palma 2 cm e esticava o braço da pistola (select-mount ESTICADO).
     const ancora = t.palmLocal && t.rArm && t.rFore ? t.handBone.localToWorld(_ancoraPalma.copy(t.palmLocal)) : null;
     t.mount.quaternion.copy(t.pegada);
     for (let i = 0; i < (ancora ? 2 : 1); i++) {
@@ -739,9 +733,8 @@ export function buildCharacterModel(def, opts = {}) {
       let rArmBone = null;
       model.traverse((o) => { if (o.isBone && !rArmBone && o.name === 'RightArm') rArmBone = o; });
       if (TP_MOUNT_LIVE) ctrl.tpMount = { mount, handBone, model, carry, palmLocal: null, carryPalmModel: null, rArm: rArmBone, rFore: rforeBone, stabilizeCarry:skin?.gripProfile==='mint24-curl-v1' };
-      /* PEGADA DE JOGO (ver PV_PULSO): rotação arma-na-mão que o porte FUNCIONAL daria nesta
-         pose assentada. Com ela, o porte de vitrine gira o pulso e a arma continua fechada
-         nos dedos. Lâmina já usa o mesmo porte no jogo e na vitrine: fica de fora. */
+      // PV_PULSO: guarda a pegada arma-na-mão do porte de JOGO nesta pose; a vitrine gira o
+      // pulso mantendo-a. Faca fora: já tem o mesmo porte no jogo e na vitrine.
       if (PV_PULSO && opts.preview && !faca && ctrl.tpMount) {
         const funcional = new THREE.Quaternion().setFromEuler(new THREE.Euler(TP_CARRY_PITCH, TP_CARRY_YAW, 0, 'YXZ'));
         const pegada = handBone.getWorldQuaternion(new THREE.Quaternion()).invert()
