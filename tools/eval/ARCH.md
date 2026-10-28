@@ -97,7 +97,7 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 353 | `RADIO` | 5 |
 | 359 | `MK_LABELS` | 5 |
 | 364 | `GUNFEEL` | 4 |
-| 371 | `TRACER_STYLE` | 6 |
+| 373 | `LANDING_FX_STYLE` | 12 |
 | 381 | `ADS_RAMPA_S` | 3 |
 | 385 | `aberturaCone` | 16 |
 | 401 | `anguloDeDisparo` | 4 |
@@ -275,6 +275,7 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 4656 | `_killfeedWeaponIcon()` | 9 |
 | 4665 | `_wpnIcon()` | 64 |
 | 4729 | `_tracer()` | 26 |
+| 4817 | `_landingFx()` | 19 |
 | 4755 | `_puff()` | 39 |
 | 4794 | `_holeDecalMat()` | 8 |
 | 4802 | `_flash()` | 61 |

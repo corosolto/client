@@ -373,6 +373,13 @@ const PUNCH = new URLSearchParams(location.search).get('punch') !== '0';
 const PUNCH_ZOOM = 0.014, PUNCH_DECAY = 13;
 // BUG-187: .0115 m / 58 ms era ~1 px por 3 quadros — o dono não via o traçado. Ver eval:smoke SMK3b.
 const TRACER_STYLE = Object.freeze({ radius: .03, speed: 180, minTravel: .06, fade: .07, segment: 5 });
+const LANDING_FX_STYLE = Object.freeze({
+  water: ['agua', 0x9fd0e0], agua: ['agua', 0x9fd0e0],
+  dirt: ['terra', 0x8b633d], areia: ['areia', 0xb99762],
+  gravel: ['cascalho', 0x8b8174], grass: ['grama', 0x78945a],
+  wood: ['madeira', 0x8a6033], metal: ['metal', 0xbfc6cc],
+  concrete: ['concreto', 0xaaa6a0], concreto: ['concreto', 0xaaa6a0],
+});
 
 /* CONE DO DISPARO — a MESMA conta no cliente (que desenha) e no servidor (que decide o dano).
    Duas implementações separadas foi o que deixou a arma laser no multiplayer: docs/MULTIPLAYER.md. */
@@ -4811,6 +4818,25 @@ export class Game {
     this.scene.add(m);
     this.tracers.push(t);
   }
+  _landingFx(pos, strength) {
+    const k = Math.max(0, Math.min(1, strength || 0));
+    if (!k) return 0;
+    const surface = this._footstepSurface(pos);
+    const style = LANDING_FX_STYLE[surface] || LANDING_FX_STYLE.concrete;
+    const key = `_fx_land_${style[0]}`;
+    const fx = this[key] || (this[key] = this._tintFx(style[1], false, 64));
+    const count = 2 + Math.round(k * 3);
+    const at = pos.clone();
+    const vel = new THREE.Vector3();
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.35 + k * (0.45 + Math.random() * 0.55);
+      at.set(pos.x + Math.cos(angle) * 0.12, pos.y + 0.04, pos.z + Math.sin(angle) * 0.12);
+      vel.set(Math.cos(angle) * speed, 0.45 + k * (0.55 + Math.random() * 0.5), Math.sin(angle) * speed);
+      fx.spawn(at, { vel, life: 0.22 + k * 0.2, size: 0.08 + k * 0.08, grow: 0.45 + k * 0.55 });
+    }
+    return count;
+  }
   _puff(pos, normal, surf = null, fumaca = true) {
     // impact smoke: one GPU particle (batched, no allocation)
     const p = pos.clone();
@@ -6592,6 +6618,7 @@ export class Game {
   /* Física do corpo do jogador. O servidor aplica ESTA função ao slot remoto — duas
      implementações divergiriam e o jogo viveria em rubber-band. Ver docs/MULTIPLAYER.md. */
   _moveEntity(p, inp, dt) {
+    let landImpact = 0;
     // Crouch (CTRL/C) vale NO AR também, e a transição é assimétrica como no CS2.
     // Números e motivo: docs/MULTIPLAYER.md.
     const wantCrouch = !!inp.crouch;
@@ -6602,7 +6629,7 @@ export class Game {
       p._spaceHeld = !!inp.jump;
       this._stepMantle(p, dt);
       this.sfx._quiet = true;
-      return { sp: 0, walking, sprint: false, mantling: true };
+      return { sp: 0, walking, sprint: false, mantling: true, landImpact };
     }
     const slowMul = this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 0.45 : 1;  // água/lago
     // velocidade base × ARMA (MOVE_MUL) × andar × ADS × agachado × água
@@ -6672,7 +6699,7 @@ export class Game {
     if (p.mantle) {
       this._stepMantle(p, dt);
       this.sfx._quiet = true;
-      return { sp: 0, walking, sprint: false, mantling: true };
+      return { sp: 0, walking, sprint: false, mantling: true, landImpact };
     }
     const followStepDown = this.world.snapDownSteps === true && p.grounded && p.vel.y <= 0;
     p.vel.y -= 20.6 * dt;   // gravidade exagerada do CoD — arco de pulo "snappy", não flutuante
@@ -6705,10 +6732,14 @@ export class Game {
       p.pos.y = g2; p.vel.y = 0; p.grounded = true;
     }
     if (p.pos.y <= g2) {
-      if (!p.grounded && p.vel.y < -4) { this.sfx.land(); p.landDip = Math.min(1, -p.vel.y / 14); } // landing dip, sized by impact
+      if (!p.grounded && p.vel.y < -4) {
+        landImpact = Math.min(1, Math.max(0, (-p.vel.y - 4) / 10));
+        this.sfx.land(landImpact);
+        p.landDip = Math.min(1, -p.vel.y / 14);
+      }
       p.pos.y = g2; p.vel.y = 0; p.grounded = true;
     } else if (p.pos.y > g2 + 0.05) p.grounded = false;
-    return { sp, walking, sprint };
+    return { sp, walking, sprint, landImpact };
   }
 
 
@@ -6756,7 +6787,8 @@ export class Game {
       jump: !!this.keys.Space,
     };
     this._emoteTick(_inp);   // andar/atirar/morrer derruba a danca (ver _emoteTick)
-    const { sp, walking, sprint } = this._moveEntity(p, _inp, dt);
+    const { sp, walking, sprint, landImpact } = this._moveEntity(p, _inp, dt);
+    if (landImpact > 0) this._landingFx(p.pos, landImpact);
     /* O movimento acima já aconteceu na tela (predição). Aqui o netcode reconcilia e manda o
        input pro servidor, que roda esta MESMA função. */
     if (this.online) this._mp?.stepPlayer(p, _inp, dt);

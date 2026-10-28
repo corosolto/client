@@ -14,7 +14,7 @@ p.vel.set(0, -8, 0);
 p.grounded = false;
 p.crouchF = 0;
 let audio = null;
-game.sfx.land = (strength) => { audio = strength; };
+game.sfx = { ...game.sfx, land(strength) { audio = strength; } };
 if (mutante) game._landingFx = () => 0;
 
 let result = null;
