@@ -4989,7 +4989,7 @@ export class Game {
   _bocaDaArmaDoCorpo(grp, out = new THREE.Vector3()) {
     if (!grp || !this._bocaLigada()) return null;
     const gun = grp.getObjectByName('arma-glb') || grp.getObjectByName('arma-caixa');
-    if (!gun) return null;
+    if (!gun || !gun.visible) return null;   // emote esconde a arma: a boca na pose da dança não serve
     if (gun.userData.bocaLocal === undefined) gun.userData.bocaLocal = bocaLocalDaArma(gun);
     if (!gun.userData.bocaLocal) return null;
     gun.updateWorldMatrix(true, false);
