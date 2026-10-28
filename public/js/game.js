@@ -8942,7 +8942,7 @@ export class Game {
       // '∞' e não o número: reserva que volta a cheia toda recarga lê-se como contador travado
       const res = this._municaoInfinita() ? '∞' : ammo?.res;
       const amount = slot.count != null ? `×${slot.count}` : (slot.weapon === 'knife' ? '' : (ammo ? `${ammo.mag}/${res}` : ''));
-      const icon = this._wpnIcon(slot.kind === 'frag' ? 'FRAG' : slot.kind === 'smoke' ? 'NADE' : weapon?.short);
+      const icon = this._wpnIcon(slot.kind === 'frag' ? 'FRAG' : slot.kind === 'smoke' || slot.kind === 'flash' ? 'NADE' : weapon?.short);
       const icon2d = slot.weapon
         ? `<img class="weapon-mask" data-weapon="${slot.weapon}" src="/img/weapons/${slot.weapon}.webp" alt=""><span class="weapon-fallback">${icon}</span>`
         : icon;
