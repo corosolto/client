@@ -1380,6 +1380,7 @@ export const ASSET_REV = Object.freeze({
   "models/gloves/3p/titica-d2ce6ed1b5c8.glb": "a047373350",
   "models/gloves/3p/trapfunk-5bead824c62a.glb": "0b12b9d09c",
   "models/gloves/3p/zumbi-533c7549cd0d.glb": "b82d441003",
+  "models/granadas/flash-world.glb": "57eddb91de",
   "models/items/arco-orbital-5e1854c71c20.glb": "5e1854c71c",
   "models/items/eyewear-manifest.json": "9d28f8f7e8",
   "models/items/face-landmarks.json": "cf178868a1",

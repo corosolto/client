@@ -45,6 +45,7 @@ export { perfilArma };
 import { saidaPenetracao, direcaoDesviada, resolverRaio } from './ballistics.js';
 import { entradaCombatente, ALCANCE_TIRO, alturaDoOlho } from './hitboxes.js';
 import { cegueiraFlash, brancoEm, retidaEm, FLASH_ERRO_MIRA } from './flashbang.js';
+import { assetUrl } from './data/asseturl.js';
 export { saidaPenetracao, resolverRaio };
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
 // autoritativo) e tools/eval/botdiag.mjs. Consumidor novo importa de data/weapons.js.
@@ -5336,7 +5337,7 @@ export class Game {
   _carregarFlashMint() {
     if (this._flashMintPedida || NODE_RUNTIME || !FLASH_ON || QS.get('flashmodelo') === 'provisoria') return;
     this._flashMintPedida = true;
-    new GLTFLoader().load('/private-assets/viewmodels/grenade/flash-world.glb?v=57eddb91de', (gltf) => {
+    new GLTFLoader().load(assetUrl('/models/granadas/flash-world.glb'), (gltf) => {
       if (this._disposed) return;
       const mint = gltf.scene.getObjectByName('UTILITY_FLASH_MINT');
       if (!mint) return;
