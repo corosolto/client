@@ -25,6 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { criarCliente, seco } from '../lib/gh.mjs';
 import { carregarPersona, cabecalho, assinatura } from '../lib/persona.mjs';
 import { tabela, lista, alerta } from '../lib/formatacao.mjs';
+import { estadoDeBot } from '../lib/estado.mjs';
 
 const RAIZ = dirname(fileURLToPath(import.meta.url));
 const CFG = JSON.parse(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
@@ -146,7 +147,9 @@ export function digestTelegram(grupos, { semana }) {
 /* ── estado dos outros bots (vitrine da lore, sem invenção) ────────────────── */
 function personasAtuantes() {
   const atuantes = [];
-  const estadoEstraga = join(RAIZ, '..', 'estraga-codigo', 'estado', 'estado.json');
+  /* o estraga-codigo gravava em bots/estraga-codigo/estado/ e levava EPERM sob
+   * launchd; hoje mora em ~/.local/state/corosolto/ — ver bots/lib/estado.mjs */
+  const estadoEstraga = join(estadoDeBot('estraga-codigo', { legado: join(RAIZ, '..', 'estraga-codigo', 'estado') }), 'estado.json');
   if (existsSync(estadoEstraga)) {
     const prs = JSON.parse(readFileSync(estadoEstraga, 'utf8')).prs || {};
     const n = Object.keys(prs).length;

@@ -23,15 +23,22 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { perguntar } from '../lib/llm.mjs';
 import { criarCliente } from '../lib/gh.mjs';
+import { meuEstadoDir } from '../lib/estado.mjs';
 import { carregarPersona, cabecalho, assinatura, instrucaoDeTom } from '../lib/persona.mjs';
 import { alerta, barra, codigo, grafoMermaid } from '../lib/formatacao.mjs';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)));
 const CFG = JSON.parse(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
 const PERSONA = carregarPersona(RAIZ);
-const ESTADO_DIR = join(RAIZ, 'estado');
-if (!existsSync(ESTADO_DIR)) mkdirSync(ESTADO_DIR);
-if (!existsSync(join(ESTADO_DIR, 'reviews'))) mkdirSync(join(ESTADO_DIR, 'reviews'));
+/* Estado FORA do volume externo: sob launchd o node leva EPERM ao abrir para
+ * escrita qualquer coisa em /Volumes/Zenith (TCC), e sem gravar o head revisado
+ * o canarinho re-revisava o mesmo PR para sempre. ESTADO_DIR manda; o padrão é
+ * ~/.local/state/corosolto/estraga-codigo/ — ver bots/lib/estado.mjs. */
+const ESTADO_DIR = meuEstadoDir('estraga-codigo', {
+  legado: join(RAIZ, 'estado'),
+  migrar: ['estado.json', 'reviews', 'dry-run'],
+});
+if (!existsSync(join(ESTADO_DIR, 'reviews'))) mkdirSync(join(ESTADO_DIR, 'reviews'), { recursive: true });
 const ESTADO_ARQ = join(ESTADO_DIR, 'estado.json');
 const estado = existsSync(ESTADO_ARQ) ? JSON.parse(readFileSync(ESTADO_ARQ, 'utf8')) : { prs: {}, main: null };
 const salvar = () => writeFileSync(ESTADO_ARQ, JSON.stringify(estado, null, 2));

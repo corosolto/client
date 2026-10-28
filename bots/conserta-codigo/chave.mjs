@@ -30,6 +30,7 @@ import { criarCliente } from '../lib/gh.mjs';
 import { carregarPersona, cabecalho, assinatura } from '../lib/persona.mjs';
 import { carregarAcoes, picomatchLite } from '../lib/acoes.mjs';
 import { alerta } from '../lib/formatacao.mjs';
+import { estadoDeBot } from '../lib/estado.mjs';
 
 const RAIZ = dirname(fileURLToPath(import.meta.url));
 const CFG = JSON.parse(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
@@ -47,7 +48,9 @@ const ACAO_POR_CLASSE = () => {
 
 /* ── insumos ───────────────────────────────────────────────────────────────── */
 export function achadosDoEstraga(dirBots) {
-  const dir = join(dirBots, 'estraga-codigo', 'estado', 'reviews');
+  /* reviews do estraga: fora do volume externo desde a cura do EPERM sob
+   * launchd (bots/lib/estado.mjs); `dirBots` ainda serve de legado. */
+  const dir = join(estadoDeBot('estraga-codigo', { legado: join(dirBots, 'estraga-codigo', 'estado') }), 'reviews');
   if (!existsSync(dir)) return [];
   const jaFeitos = new Set(feitos().map((f) => f.origem));
   return readdirSync(dir).filter((f) => f.endsWith('.json')).flatMap((f) => {

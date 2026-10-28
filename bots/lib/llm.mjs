@@ -2,9 +2,9 @@
    ─────────────────────────────────────────────────────────────────────────────
    "opencode" (padrão): shells out pro `opencode run` configurado na máquina.
    "ollama": servidor local, host em OLLAMA_HOST (padrão 127.0.0.1:11434) e
-   modelo em OLLAMA_MODEL (padrão qwen3.5:4b). "openai": endpoint compatível
-   via LLM_BASE_URL/LLM_API_KEY/LLM_MODEL. "fixture": responde de um arquivo —
-   é o que faz os testes 100% offline dos bots (sem rede, sem modelo).
+   modelo em OLLAMA_MODEL (padrão minimax-m3.1-flash:cloud, reserva qwen3.5:4b).
+   "openai": endpoint compatível via LLM_BASE_URL/LLM_API_KEY/LLM_MODEL.
+   "fixture": responde de um arquivo — testes 100% offline (sem rede, sem modelo).
    Todas devolvem TEXTO; o chamador extrai o JSON. */
 
 import { spawnSync } from 'node:child_process';
@@ -37,25 +37,54 @@ function viaOpencode(prompt, cfg) {
   return semAnsi(r.stdout).split('\n').filter((l) => !/^>\s/.test(l) && l.trim() !== '').join('\n').trim();
 }
 
-/* Modelo: OLLAMA_MODEL > config.json > padrão. O padrão é o único modelo
- * realmente local nesta máquina (qwen3.5:4b, 3,97 GB); os `*:cloud` do
- * `/api/tags` exigem conta/rede e não servem de fallback offline.
+/* Modelo: OLLAMA_MODEL > config.json > MODELO_PADRAO. O padrão passou a ser o
+ * `minimax-m3.1-flash:cloud` porque o 4B local foi REPROVADO na prova de
+ * 28/10: replay do PR #1104 com qwen3.5:4b deu 3 achados e 3 falsos positivos
+ * (geometria que ele não conferiu no diff). O cloud roteia pelo mesmo 11434,
+ * então o host não muda; o que muda é quem pensa.
+ * RESERVA: se o cloud falhar (rede, conta, 5xx, timeout) cai no 4B local em
+ * vez de devolver rodada vazia — revisor fraco é melhor que revisor mudo.
  * Host via OLLAMA_HOST (mesma convenção do CLI do ollama, "host:porta"). */
+export const MODELO_PADRAO = 'minimax-m3.1-flash:cloud';
+export const MODELO_RESERVA = 'qwen3.5:4b';
+const TIMEOUT_MS = 240_000;
+
 const ollamaBase = () => {
   const h = (process.env.OLLAMA_HOST || '127.0.0.1:11434').trim();
   return /^https?:\/\//.test(h) ? h.replace(/\/+$/, '') : `http://${h.replace(/\/+$/, '')}`;
 };
 
+/* Uma tentativa, um modelo. Todo erro daqui CITA host, modelo e status — o
+ * log antigo dizia só "ollama 404" e não dava para saber se o servidor estava
+ * fora, se o modelo não existia ou em que host o bot batia. */
+async function geraOllama(base, model, prompt) {
+  let r;
+  try {
+    r = await fetch(`${base}/api/generate`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model, prompt, stream: false, think: false }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+  } catch (e) {
+    throw new Error(`ollama status=rede em ${base} (modelo ${model}): ${e.message}`);
+  }
+  if (!r.ok) throw new Error(`ollama status=${r.status} em ${base} (modelo ${model}): ${(await r.text().catch(() => '')).slice(0, 200)}`);
+  const texto = (await r.json()).response;
+  if (!texto || !texto.trim()) throw new Error(`ollama status=200 em ${base} (modelo ${model}): resposta vazia`);
+  return texto;
+}
+
 async function viaOllama(prompt, cfg) {
-  const base = ollamaBase(), model = process.env.OLLAMA_MODEL || cfg.modelo || 'qwen3.5:4b';
-  const r = await fetch(`${base}/api/generate`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model, prompt, stream: false, think: false }),
-  });
-  /* 404 aqui quase sempre é "modelo não baixado", não "servidor fora do ar":
-   * o erro antigo ("ollama 404") não dizia qual modelo nem em qual host. */
-  if (!r.ok) throw new Error(`ollama ${r.status} em ${base} (modelo ${model}): ${(await r.text().catch(() => '')).slice(0, 200)}`);
-  return (await r.json()).response;
+  const base = ollamaBase();
+  const principal = process.env.OLLAMA_MODEL || cfg.modelo || MODELO_PADRAO;
+  const reserva = cfg.modelo_reserva === undefined ? MODELO_RESERVA : cfg.modelo_reserva;
+  const fila = reserva && reserva !== principal ? [principal, reserva] : [principal];
+  const erros = [];
+  for (const model of fila) {
+    try { return await geraOllama(base, model, prompt); }
+    catch (e) { erros.push(e.message); }
+  }
+  throw new Error(erros.join(' | reserva: '));
 }
 
 async function viaOpenai(prompt, cfg) {
