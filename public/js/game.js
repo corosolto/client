@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { escapeClanName } from './clan-label.js';
 import { ajustarAnisotropia } from './textures.js';
 import { MAPS, resolveMapId } from './maps.js';
+import { criarInvasaoJavaporcos } from './mode_javaporcos.js';
 import { atualizaCortes } from './mapprops.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon, podeNoLado } from './characters.js';
 import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver } from './glbchars.js';
@@ -1319,7 +1320,7 @@ export class Game {
     this._smokeTex = this._makeSmokeTex();
     // modo Capture the Flag (?ctf=1): 3 pontos (2 spawns + meio); time vence o round segurando
     // os 3 ao mesmo tempo. Rounds SEM FIM (sem _endMatch). Captura = ~3s na zona sem inimigo.
-    this.ctf = !!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1');   // menu (Capture the Flag) ou ?ctf=1
+    this.ctf = this.world.mode === 'horde' ? false : (!!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1'));   // menu (Capture the Flag) ou ?ctf=1
     /* TETO DE RODADAS LIVRE (1–15, ROUNDS_CUSTOM_MAX): era whitelist [1,3,5,7] — o dono
        pediu número customizado. Fora do intervalo cai no padrão do modo. Empate em teto
        PAR (2×2 no melhor de 4) segue pro desempate por abates (já existente no _endMatch). */
@@ -1368,6 +1369,7 @@ export class Game {
       const on = this.onToggleSpeech?.();
       this.el.hudSpeech.textContent = on ? '🔊' : '🔇';
     };
+    this.objective = this.world.mode === 'horde' ? criarInvasaoJavaporcos(this) : null;
     /* O netcode nasce por ÚLTIMO: ele lê `player`, `bots` e `el`, que só existem agora.
        Construí-lo junto com o resto era pegar metade do jogo montada. */
     if (this._mpPend) { this._mp = this._mpPend.mpFactory(this, this._mpPend.net); this._mpPend = null; }
@@ -2798,6 +2800,7 @@ export class Game {
     this._roundOverPedido = false;
     this._resetKillSequence();
     this._resetPositions();
+    this.objective?.prepareRound();
     if (this.ctf) this._initCTF();
     this.state = 'countdown';
     this.stateUntil = this.time + 3;
@@ -2809,10 +2812,10 @@ export class Game {
        relógio: dizer "primeiro a 2 bandeiras" é o que substitui o cronômetro que saiu. */
     // O ROUND 1 ainda declara o FORMATO (melhor de N, primeiro a X): o teto só vivia no
     // menu/HUD e jogador achava que não existia (relato out/2026).
-    const subRound = this.ctf
+    const subRound = this.objective?.roundIntro?.() || (this.ctf
       ? frase('alvoBandeiras', this.capsToWin)
       : (PACE ? frase('alvoAbates', this.killsToWin)
-        : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta')));
+        : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta'))));
     this._banner(frase('round', this.roundNum),
       this.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound);
     if (!this.sfx.roundNumber(this.roundNum) && !this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
@@ -3110,26 +3113,28 @@ export class Game {
     }
     if (lead >= tgt) this.timeLeft = 0;   // update() enxerga timeLeft<=0 e chama _endRound
   }
-  _endRound() {
+  _endRound(forcedWinner = null) {
     const p = this.roundKills.E, b = this.roundKills.B;
-    let winner = null;
+    let winner = forcedWinner;
     /* NO CAPTURA quem leva o round é quem CAPTUROU MAIS naquele round — abate só desempata.
        Antes o modo não tinha `_endRound` nenhum (o relógio nem corria): o único jeito de um
        round acabar era dominar as 3 bandeiras ao mesmo tempo, e é por isso que o placar de
        abates do topo ia a 65 × 53 (defeito 3 do dono) — ele NUNCA era zerado. */
-    if (this.ctf) {
+    if (!winner && this.ctf) {
       const cp = this.roundCaps.E, cb = this.roundCaps.B;
       if (cp > cb) winner = 'E'; else if (cb > cp) winner = 'B';
       else if (p > b) winner = 'E'; else if (b > p) winner = 'B';
-    } else if (p > b) winner = 'E'; else if (b > p) winner = 'B';
+    } else if (!winner && p > b) winner = 'E'; else if (!winner && b > p) winner = 'B';
     if (winner) this.roundsWon[winner]++;
     this.state = 'roundEnd';
-    this.stateUntil = this.time + 4;
+    const objectiveResult = this.objective?.roundResult?.(winner);
+    this.stateUntil = this.time + (objectiveResult?.duration || 4);
     this.player.scoped = false; this.el.scope.classList.remove('on');
     this.radioOpen = null; this._radioUi();
-    this._showScoreboard(true);   // CS-style: scoreboard pops at round end
-    this._ensureDolly();          // dollynho comemora dançando no placar
-    const placar = this.ctf ? `${this.roundCaps.E} × ${this.roundCaps.B} bandeiras` : `${p} × ${b}`;
+    this._showScoreboard(!this.objective);
+    if (this.objective) this.objective.startCinematic(winner);
+    else this._ensureDolly();
+    const placar = objectiveResult?.detail || (this.ctf ? `${this.roundCaps.E} × ${this.roundCaps.B} bandeiras` : `${p} × ${b}`);
     if (!winner) {
       this._resultadoDaRodada('EMPATE NA TRETA', `${placar} — ninguém convenceu ninguém`);
       this.sfx.roundLose();
@@ -3137,11 +3142,11 @@ export class Game {
       const mine = winner === this.playerTeam;
       // fechou no ALVO de abates (antes do tempo) vs ganhou no relógio — informação diferente
       const byTarget = PACE && !this.ctf && Math.max(p, b) >= this.killsToWin;
-      this._resultadoDaRodada(`${this._teamName(winner)} LEVARAM O ROUND`, `${placar} ` + (byTarget ? '— fecharam no alvo' : mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche'));
+      this._resultadoDaRodada(objectiveResult?.title || `${this._teamName(winner)} LEVARAM O ROUND`, objectiveResult ? placar : `${placar} ` + (byTarget ? '— fecharam no alvo' : mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche'), !objectiveResult);
       this._roundWinnerVoice(winner);
       if (!this.sfx.roundSound(this._voiceKey(winner))) mine ? this.sfx.roundWin() : this.sfx.roundLose();
     }
-    if (this._fimDaPartida())
+    if (this._fimDaPartida() && !this.objective)
       this.stateUntil = this.time + 4.5; // then match end
   }
   _roundWinnerVoice(team) {
@@ -4376,6 +4381,7 @@ export class Game {
   _damage(ent, dmg, attacker, weap = 'AWP', head = false, point = null) {
     if (!ent.alive || this.state !== 'live') return;
     if (this.time < (ent.protUntil || 0)) return;   // spawn protection: zero dano (e sem hitmarker) enquanto protegido
+    this.objective?.onDamage?.(ent, dmg, attacker);
     ent.hp -= dmg;
     // 3P: o corpo cede na direção do tiro — sem isso quem atira de longe não sabe se acertou.
     if (ent.hp > 0 && attacker && attacker.pos) {
@@ -4458,6 +4464,7 @@ export class Game {
         this._playerKillFeedback(attacker, head);
       }
     }
+    this.objective?.onKill?.(ent, attacker);
     if (ent.isPlayer) {
       this._scope(false, true);
       this._abortarArmaNaMorte();   // recarga e arremesso morrem com o jogador (GRM3/GRM4)
@@ -7588,6 +7595,7 @@ export class Game {
 
   _updateBot(b, dt) {
 
+    if (this.objective?.updateBot(b, dt)) return;
     if (b._remote) {
       /* Corpo com dono: cliente interpola do snapshot; servidor cuida do ciclo de vida dele.
          O respawn é chamado AQUI porque corpo de gente não passa pela IA. Ver docs/MULTIPLAYER.md. */
@@ -8669,9 +8677,9 @@ export class Game {
      se cruzando). O #round-banner continua existindo pros avisos que NÃO coexistem com o
      placar (ROUND N, VALENDO!, MATCH POINT), e o CSS ainda garante `#hud.sb-on
      #round-banner{display:none}` pra que nenhuma futura chamada volte a cruzar o painel. */
-  _resultadoDaRodada(titulo, sub) {
+  _resultadoDaRodada(titulo, sub, mostrarPlacar = true) {
     this._resultado = { titulo, sub };
-    this._showScoreboard(true);
+    this._showScoreboard(mostrarPlacar);
   }
   _botaoAmigo(c) {
     if (document.documentElement.dataset.ui !== 'v3' || !this.online || c.isPlayer || !c._playerId || this._amigosPedidos?.has(c._playerId)) return '';
@@ -8722,7 +8730,7 @@ export class Game {
          (C/F/U/M/P), que escolhe as mãos e não o time. */
 
       const coluna = (side) => {
-        const linhas = [...this.combatants].filter(c => c.team === side).sort(rank).map((c, i) => {
+        const linhas = [...this.combatants].filter(c => c.team === side && !c._objectiveNpc).sort(rank).map((c, i) => {
           const score = Math.max(0, c.kills * 100 + (c.captures || 0) * 250 - c.deaths * 20);
           const ping = 12 + ((c.kills * 7 + c.deaths * 3 + i * 5) % 18);
           const pid = (c.isPlayer || c._netBot === false) && PLAYER_ID.test(c._playerId || '') ? c._playerId : '';
@@ -8940,7 +8948,9 @@ export class Game {
          dono viu e reclamou ("captura estava com cronometragem — isso não acontece em
          CTF"). Antes DISSO, o CAPTURA não fechava partida nenhuma. As duas coisas estão
          cobradas agora pela UI4, cada uma com a sua mutação. */
-      if (this.ctf) {
+      if (this.objective) {
+        this.objective.update(dt);
+      } else if (this.ctf) {
         this._updateCTF(dt);
         this.ctfMatchLeft -= dt;
         /* `this.state === 'live'` de novo AQUI, e não é redundância: `_updateCTF` pode ter
@@ -8969,6 +8979,7 @@ export class Game {
       if (this._recorder.count >= 300) this._flushTraining();
     }
     for (const b of this.bots) this._updateBot(b, dt);
+    this.objective?.updatePresentation(dt);
     if (this.espectando()) this._mp.cameraEspectador();   // segue o corpo interpolado a cada quadro, não a cada snapshot (BUG-117)
     this._updatePickups();
     this._updateFx(dt);
@@ -9017,6 +9028,8 @@ export class Game {
     this._announcerLabTimers = [];
     try { this._mp?.dispose(); } catch { /* já foi */ }
     this._mp = null;
+    try { this.objective?.dispose(); } catch {}
+    this.objective = null;
     try { this.sfx.stopRound(); } catch {}   // vinheta não sobrevive ao fim da partida   // lazy-load de VM em voo (_ensureStaticVm) aborta no then
     if (this._envRT) { this._envRT.dispose(); this._envRT = null; this._vmEnv = null; this.scene.environment = null; if (this.vmScene) this.vmScene.environment = null; }   // libera o env map (IBL)
     document.removeEventListener('keydown', this._kd);

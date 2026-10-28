@@ -1695,6 +1695,15 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard .sb-col td.sb-ping{padding-right:16px;color:#5c5d63;font-size:14px}
 #scoreboard .sb-col td:nth-child(3){color:#9a9ba1}
 #scoreboard tbody tr:first-of-type::before{display:none}
+#scoreboard .horde-score{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) 70px 70px 90px 90px 110px;
+  align-items:center;background:rgba(13,14,17,.92);border:1px solid #26272d;border-top:2px solid #e0762a}
+#scoreboard .horde-score>span{min-width:0;padding:13px 10px;border-bottom:1px solid #26272d;
+  color:#ecebe6;text-align:right;font:600 16px/1 var(--font)}
+#scoreboard .horde-score>.horde-name{text-align:left;padding-left:16px;font-family:var(--aaa-font-body)}
+#scoreboard .horde-score>.horde-points{color:#b4d92e;font-weight:700}
+#scoreboard .horde-score>.horde-head{padding-top:10px;padding-bottom:10px;color:#9a9ba1;
+  font:700 11px/1 var(--aaa-font-body);letter-spacing:2px}
+#scoreboard .horde-score>.horde-bonus{background:rgba(224,50,50,.14);border-bottom:0}
 #scoreboard .sb-foot{position:absolute;left:50%;right:auto;bottom:32px;transform:translateX(-50%);display:flex;gap:18px;
   font:600 12px/1 var(--font);letter-spacing:2px;color:#5c5d63}
 #scoreboard .sb-foot b{color:#9a9ba1}

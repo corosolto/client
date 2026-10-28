@@ -1892,6 +1892,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   if (sessao) team = ladoOnline(team, sessao.net);
   const charDef = CHARACTERS.find(c => c.id === charId) || {};
   if (!online && !podeNoLado(charDef, team)) team = ladosDe(charDef)[0];
+  if (!online && currentMap === 'invasao_javaporcos') team = 'E';
   let faction = charDef.team || team || 'E';
   const side = resolvePlayerSide(team, faction, online);
   if (!online) faction = side;
@@ -2032,7 +2033,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     renderer, textures, sfx,
     playerCharId: charId, playerSkinId, playerEyewearId, playerGloveId, playerWeaponSkins, playerKnifeSkinId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
-    ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
+    ctf: currentMap === 'invasao_javaporcos' ? false : matchMode === 'ctf',
     /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
        sobrariam nove corpos locais para dez entidades e um jogador ficaria invisível. */
     mpFactory: sessao ? makeNetcode : null,
@@ -2040,7 +2041,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     dedicated: !!(sessao && sessao.net.espectador),
     /* online: o teto é o da sala (meta.roundsMax do servidor; nó antigo sem o campo = padrão
        5 / 3) e o fim vem do servidor; o teto local (1–15) só vale offline. */
-    roundsMax: sessao ? (sanitizeRounds(sessao.net.meta.roundsMax) || undefined) : matchRounds(),
+    roundsMax: currentMap === 'invasao_javaporcos' ? 1 : (sessao ? (sanitizeRounds(sessao.net.meta.roundsMax) || undefined) : matchRounds()),
     onMatchEnd: recordMatchStats,
     recordTraining: trainingEnabled(),
     onTrainingFrames: sendTrainingFrames,
@@ -2729,7 +2730,7 @@ function openHubQuick(updateRoute = true) {
   const fields = [
     ['TIPO', 'SINGLEPLAYER'],
     ['MAPA', MAPS[currentMap].name],
-    ['MODO', matchMode === 'ctf' ? 'CAPTURE A BANDEIRA' : 'MATA-MATA'],
+    ['MODO', currentMap === 'invasao_javaporcos' ? 'HORDAS' : (matchMode === 'ctf' ? 'CAPTURE A BANDEIRA' : 'MATA-MATA')],
     ['ARMAS', tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS')],
     ['FORMATO', formatoPartida()],
     ['ROUNDS', String(matchRounds())],
@@ -2828,6 +2829,7 @@ function setMapThumb() {
 // ficha do cartaz e o dropdown têm que dizer a mesma coisa com as mesmas palavras.
 const WPN_MODE_LABEL = { all: 'TODAS', pistols: 'SÓ PISTOLAS', knife: 'SÓ FACA', awp: 'SÓ AWP' };
 function matchRounds() {
+  if (currentMap === 'invasao_javaporcos') return 1;
   /* 1–15 (ROUNDS_CUSTOM_MAX do game.js — uma régua só). Salvo fora do intervalo cai no
      padrão do modo; par é permitido: empate no teto vai pro desempate por abates. */
   const fallback = matchMode === 'ctf' ? 3 : 5;
@@ -2840,14 +2842,14 @@ const hubSels = [];
 function syncHubSels() { for (const s of hubSels) s.sync(); }
 function setMapMeta() {
   const el = $('map-meta'); if (!el) return;
-  const modo = frase(matchMode === 'ctf' ? 'ctfMelhorDeN' : 'melhorDeN', matchRounds());
+  const modo = currentMap === 'invasao_javaporcos' ? '8 ONDAS COOPERATIVAS' : frase(matchMode === 'ctf' ? 'ctfMelhorDeN' : 'melhorDeN', matchRounds());
   el.textContent = frase('resumoPartida', modo, 1 + settings.allyBots, settings.enemyBots, tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS'));
   syncHubSels();
 }
 function setMapMode() {
   const m = $('map-mode');
   if (m) {
-    m.textContent = matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA');
+    m.textContent = currentMap === 'invasao_javaporcos' ? 'HORDAS' : (matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA'));
     m.dataset.mode = matchMode;
   }
   const d = $('map-dots');
@@ -2867,6 +2869,7 @@ function setMapMode() {
 {
   const mm = $('map-mode');
   if (mm) mm.addEventListener('click', () => {
+    if (currentMap === 'invasao_javaporcos') return;
     matchMode = matchMode === 'ctf' ? 'rounds' : 'ctf';
     modoEscolhido = true;   // alternar no badge também é escolha do jogador
     ui.click();
@@ -2901,7 +2904,8 @@ function gotoMap(i, updateRoute = true) {
   // troca de mapa aplica o PADRÃO do mapa (Loja H/Ferro Velho abrem em CTF, o resto em rounds)
   // — mas SÓ enquanto o jogador não tiver escolhido. Ver `modoEscolhido` lá em cima: era
   // aqui que a escolha dele morria (main.js:692 na versão anterior).
-  if (!modoEscolhido) matchMode = MAPS[currentMap].ctfMode ? 'ctf' : 'rounds';
+  if (currentMap === 'invasao_javaporcos') matchMode = 'rounds';
+  else if (!modoEscolhido) matchMode = MAPS[currentMap].ctfMode ? 'ctf' : 'rounds';
   setMapMode();
   void loadMenuBackdrop();
   renderMapScreen();   // se a tela cheia estiver aberta, ela acompanha o carrossel
@@ -2934,6 +2938,7 @@ const MAP_DESC = {
   campomorro: 'Campo de várzea cercado pelo morro: oito becos, arquibancada com torcida e galpão do baile.',
   parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
   velho_oeste: 'Duelo na cidade empoeirada: saloon, banco, carroças e tumbleweeds cruzando três rotas entre casas de madeira.',
+  invasao_javaporcos: 'Cidade e lavoura na mesma linha de defesa: oito ondas saem da mata e avançam sobre o silo, o posto rural e o portão do bairro.',
   penitenciaria: 'Rebelião no pátio: celas abertas, concreto gasto, guaritas e barricadas policiais entre três rotas de confronto.',
   upa_24h: 'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.',
   obras_prefeitura: 'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.',
