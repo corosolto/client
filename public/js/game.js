@@ -5422,7 +5422,9 @@ export class Game {
     if (!cj || NODE_RUNTIME || !this.el?.hud) return;
     const t = this.time - cj.t0;
     if (!this._flashBranco) {
-      const mk = (tag, css) => { const e = document.createElement(tag); e.style.cssText = css; e.setAttribute('aria-hidden', 'true'); this.el.hud.prepend(e); return e; };
+      // o #hud sobrevive à partida: some com overlay órfão de uma partida anterior
+      for (const velho of this.el.hud.querySelectorAll('[data-flash-overlay]')) velho.remove();
+      const mk = (tag, css) => { const e = document.createElement(tag); e.style.cssText = css; e.setAttribute('aria-hidden', 'true'); e.dataset.flashOverlay = '1'; this.el.hud.prepend(e); return e; };
       // fica no começo do #hud: o branco cobre o mundo, o HUD continua legível por cima (CS)
       this._flashRetida = mk('canvas', 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;filter:grayscale(.6) brightness(1.6) blur(2px)');
       this._flashBranco = mk('div', 'position:absolute;inset:0;pointer-events:none;background:#fff;opacity:0');
@@ -9169,6 +9171,8 @@ export class Game {
   /* ================= teardown ================= */
   dispose() {
     this._disposed = true;
+    this._limparCegueira();
+    this._flashBranco?.remove(); this._flashRetida?.remove();
     clearInterval(this._vmPrecisionQaTimer); this._vmPrecisionQaTimer = null;
     document.getElementById('vm-precision-qa')?.remove();
     if (window.__vmPrecisionQa === this._vmPrecisionQa) delete window.__vmPrecisionQa;
