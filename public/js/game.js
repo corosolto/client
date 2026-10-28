@@ -2113,9 +2113,14 @@ export class Game {
       if (document.pointerLockElement) e.preventDefault();
       // Y/U abrem o chat antes do portão _acceptInput (o espectador não tem pointer lock), nunca pausado;
       // valem em roundEnd e matchEnd também: o §5 do contrato libera o fim de partida para todos
-      if ((e.code === 'KeyY' || e.code === 'KeyU') && this.onAbrirChat && !this.paused && this.state !== 'boot') {
+      if ((e.code === 'KeyY' || e.code === 'KeyU') && !this.paused && this.state !== 'boot') {
         e.preventDefault();
-        this.onAbrirChat(e.code === 'KeyY' ? 'sala' : 'time');
+        // `abrir` devolve false quando não há chat (partida local, ou nó sem MP_CHAT: o welcome
+        // vem sem `meta.chat`). Tecla morta e calada era o relato "o chat em jogo não abre".
+        const abriu = this.onAbrirChat ? this.onAbrirChat(e.code === 'KeyY' ? 'sala' : 'time') !== false : false;
+        if (!abriu) this._abilityNotice(this.online
+          ? tr('O chat desta sala está desligado no servidor.')
+          : tr('O chat é das salas online. Entre no multiplayer pra conversar.'));
         return;
       }
       this.keys[e.code] = true;

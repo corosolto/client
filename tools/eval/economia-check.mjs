@@ -20,7 +20,8 @@
          rodadas não escreve em localStorage nem chama fetch
 
    Mutantes (rodam sempre, cada um TEM de deixar a régua vermelha):
-     sem-teto, sem-tempo, sem-zona, carteira-menu (creditar grava saldo no
+     sem-teto, sem-tempo, sem-zona, raio-900, rotulo-curto (o _kill passa 'FACA' e não 'knife'),
+     import-dinamico, carteira-menu (creditar grava saldo no
      localStorage do menu), import-loja (o módulo importa treta-store.js).
 
    Uso: node tools/eval/economia-check.mjs
@@ -40,7 +41,7 @@ function grafo(arquivo, visto = new Set()) {
   if (visto.has(arquivo)) return visto;
   visto.add(arquivo);
   const src = fs.readFileSync(arquivo, 'utf8');
-  for (const m of src.matchAll(/(?:import|export)[^'"]*?from\s*['"](\.[^'"]+)['"]|import\s*['"](\.[^'"]+)['"]/g)) {
+  for (const m of src.matchAll(/(?:import|export)[^'"]*?from\s*['"](\.[^'"]+)['"]|import\s*\(?\s*['"](\.[^'"]+)['"]/g)) {
     const alvo = path.resolve(path.dirname(arquivo), m[1] || m[2]);
     if (fs.existsSync(alvo)) grafo(alvo, visto);
     else visto.add(alvo);   // import que não resolve também entra: o nome basta para reprovar
@@ -70,16 +71,26 @@ async function medir(dir) {
   }
   const { ECONOMIA } = E;
 
-  check('EC1', 'saldo inicial 800', E.novaCarteira().saldo === 800 && ECONOMIA.saldoInicial === 800,
-    { saldo: E.novaCarteira().saldo });
+  // os números do doc presos aqui: régua que mede contra a própria constante não vê ela mudar
+  const doc = { saldoInicial: 800, teto: 16000, tempoCompraS: 20, raioCompraM: 9, vitoria: 3250 };
+  const fora = Object.entries(doc).filter(([k, v]) => ECONOMIA[k] !== v).map(([k]) => `${k}=${ECONOMIA[k]}`);
+  check('EC1', 'números do doc: 800, 16000, 20 s, 9 m, 3250', E.novaCarteira().saldo === 800 && !fora.length, { fora });
+
+  const ids = C.CATALOGO_COMPRA.map((i) => i.id), grupos = C.GRUPOS_COMPRA.map((g) => g.id);
+  const ruins = C.CATALOGO_COMPRA.filter((i) => !WEAPONS[i.id] || !grupos.includes(i.grupo) || !C.SLOTS_COMPRA.includes(i.slot)
+    || !(i.preco > 0 && i.preco % 50 === 0) || !(i.recompensaKill >= 0)).map((i) => i.id);
+  check('EC1b', 'catálogo íntegro: arma existe, grupo/slot válidos, preço múltiplo de 50, sem repetição',
+    !ruins.length && new Set(ids).size === ids.length && ids.length === 19, { ruins, n: ids.length });
 
   const rk = (w) => E.recompensaKill(w);
   const semValor = Object.keys(WEAPONS).filter((w) => !C.itemDaCompra(w) && !(w in C.RECOMPENSA_FORA_DO_CATALOGO));
   check('EC2', 'kill paga por classe e toda arma tem valor',
     rk('knife') === 1500 && rk('shotgun') === 900 && rk('mp5') === 600 && rk('ak') === 300
     && rk('awp') === 100 && rk('knife') > rk('mp5') && rk('mp5') > rk('ak') && rk('ak') > rk('awp')
-    && E.recompensaKill('ak', { mesmoTime: true }) === 0 && !semValor.length,
-    { faca: rk('knife'), escopeta: rk('shotgun'), smg: rk('mp5'), fuzil: rk('ak'), awp: rk('awp'), semValor });
+    && E.recompensaKill('ak', { mesmoTime: true }) === 0 && !semValor.length
+    // o que o _kill do jogo entrega de fato é o rótulo curto
+    && rk('FACA') === 1500 && rk('M3') === 900 && rk('MP5') === 600 && rk('AK') === 300 && rk('AWP') === 100 && rk('FRAG') === 300,
+    { faca: rk('knife'), escopeta: rk('shotgun'), smg: rk('mp5'), fuzil: rk('ak'), awp: rk('awp'), rotuloFaca: rk('FACA'), rotuloM3: rk('M3'), semValor });
 
   const der = [1, 2, 3, 4, 5, 6, 9].map((n) => E.recompensaRodada('derrota', n));
   let seq = 0; const seqs = [];
@@ -105,11 +116,11 @@ async function medir(dir) {
     ok.ok && ok.preco === 2700 && ok.saldo === 1300 && todasRecusadas,
     { ok: { ok: ok.ok, saldo: ok.saldo }, recusas: Object.fromEntries(Object.entries(recusas).map(([k, r]) => [k, r.motivo || 'ACEITOU'])) });
 
-  const nan = [tenta({ agora: NaN }), tenta({ compraAte: undefined }), tenta({ distSpawn: NaN })];
+  const nan = [tenta({ agora: NaN }), tenta({ compraAte: undefined }), tenta({ distSpawn: NaN }), tenta({ vivo: undefined })];
   check('EC6', 'NaN/undefined recusa', nan.every((r) => !r.ok && r.saldo === 4000), { motivos: nan.map((r) => r.motivo || 'ACEITOU') });
 
   const pa = E.precoDe('ak', { assinatura: 'ak' }), pm = E.precoDe('m4', { assinatura: 'ak' });
-  check('EC7', 'assinatura com desconto e paga', pa > 0 && pa < 2700 && pa % 50 === 0 && pm === 2900, { ak: pa, m4: pm });
+  check('EC7', 'assinatura com desconto de 10% e paga', pa === 2450 && pm === 2900, { ak: pa, m4: pm });
 
   const lig = (o) => E.economiaLigada(o);
   check('EC8', 'kill-switch, modos especiais e MP desligam',
@@ -159,6 +170,9 @@ const MUTANTES = {
   'sem-zona': (s) => s.replace("if (!(distSpawn <= ECONOMIA.raioCompraM)) return 'zona';", ''),
   'carteira-menu': (s) => s.replace('  return carteira.saldo - antes;',
     "  globalThis.localStorage?.setItem('cs_treta_saldo', String(carteira.saldo));\n  return carteira.saldo - antes;"),
+  'import-dinamico': (s) => s.replace('  return carteira.saldo - antes;', "  import('./treta-store.js').catch(() => {});\n  return carteira.saldo - antes;"),
+  'rotulo-curto': (s) => s.replace("  const armaId = WEAPONS[arma] ? arma : (ID_DO_ROTULO[arma] || arma);", '  const armaId = arma;'),
+  'raio-900': (s) => s.replace('raioCompraM: 9,', 'raioCompraM: 900,'),
   'import-loja': (s) => s.replace("import { itemDaCompra", "import './treta-store.js';\nimport { itemDaCompra"),
 };
 
@@ -176,12 +190,15 @@ try {
     if (mut === src) throw new Error(`MUTANTE NÃO APLICOU: ${nome} — o texto de economia-partida.js mudou; atualize o mutante`);
     const dir = path.join(tmpBase, nome);
     fs.mkdirSync(path.join(dir, 'data'), { recursive: true });
+    // sem isto um Node sem detecção de ESM reprova todo mutante no parse (EC0), mordendo pelo motivo errado
+    fs.writeFileSync(path.join(dir, 'package.json'), '{"type":"module"}');
+    fs.copyFileSync(path.join(JS, 'data/weapons.js'), path.join(dir, 'data/weapons.js'));
     fs.writeFileSync(path.join(dir, 'economia-partida.js'), mut);
     fs.copyFileSync(path.join(JS, 'compra-catalogo.js'), path.join(dir, 'compra-catalogo.js'));
     const rows = await medir(dir);
     const vermelhas = rows.filter((r) => !r.pass).map((r) => r.id);
     console.log(`mutante ${nome}: ${vermelhas.length ? 'VERMELHO (' + vermelhas.join(',') + ')' : 'VERDE — régua cega'}`);
-    if (!vermelhas.length) cegos.push(nome);
+    if (!vermelhas.length || (nome !== 'import-loja' && vermelhas.join() === 'EC0')) cegos.push(nome);
   }
 } finally {
   fs.rmSync(tmpBase, { recursive: true, force: true });
