@@ -601,6 +601,7 @@
     "eval:piscina-trim": "node tools/eval/piscina-trim-check.mjs && ! node tools/eval/piscina-trim-check.mjs --mutante=coplanar",
     "eval:grafite-support": "node tools/eval/graffiti-support-check.mjs --self-test",
     "eval:grafite-support-browser": "node tools/eval/graffiti-support-browser-check.mjs",
+    "eval:pichacao-parede": "node tools/eval/pichacao-parede-check.mjs --self-test",
     "eval:grafite-area-audit": "node tools/eval/graffiti-area-audit-check.mjs",
     "eval:upa-structure": "node tools/eval/upa-structure-check.mjs --self-test",
     "eval:upa-return": "node tools/eval/upa-return-check.mjs --self-test",
