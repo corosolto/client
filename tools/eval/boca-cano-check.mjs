@@ -25,20 +25,31 @@
 
    Mutantes (cada um TEM que reprovar):
      --mutante=antigo      desliga o conserto (mesmo efeito do ?bocacano=0);
-     --mutante=centro-arma a "boca" vira a origem da arma (a mão) — pega o atalho da receita velha.
-   Uso: node tools/eval/boca-cano-check.mjs [--mutante=antigo|centro-arma]
+     --mutante=centro-arma a "boca" vira a origem da arma (a mão) — pega o atalho da receita velha;
+     --mutante=sem-norm    a boca GLB entra sem ÷norm (metros do pai como se fossem locais).
+   Também: BC4b (meu tiro ecoado online) e BC5 (ramo GLB, metrics ÷ norm, wrap sintético).
+   Uso: node tools/eval/boca-cano-check.mjs [--mutante=antigo|centro-arma|sem-norm]
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import { bootGame, initTextures, THREE } from './harness.mjs';
 import { makeNetcode } from '../../public/js/netgame.js';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (MUT && !['antigo', 'centro-arma'].includes(MUT)) throw new Error(`mutante desconhecido: ${MUT}`);
+if (MUT && !['antigo', 'centro-arma', 'sem-norm'].includes(MUT)) throw new Error(`mutante desconhecido: ${MUT}`);
 const TETO_M = 0.03, TETO_PX = 2, W = 1280, H = 720;
 
 const g = bootGame('praca_poderes', { textures: initTextures(), bots: 6 });
 g.state = 'live';
 g.camera.aspect = W / H; g.camera.updateProjectionMatrix();
 if (MUT === 'antigo') g._bocaCorpo = false;
+if (MUT === 'sem-norm') {
+  // reproduz o "esqueceu ÷norm": a boca medida em metros do pai entra como se fosse local
+  const orig = g._bocaDaArmaDoCorpo.bind(g);
+  g._bocaDaArmaDoCorpo = (grp, out) => {
+    const gun = grp && grp.getObjectByName('arma-glb');
+    if (gun?.userData.metrics) gun.userData.bocaLocal = gun.userData.metrics.muzzle.clone();
+    return orig(grp, out);
+  };
+}
 if (MUT === 'centro-arma') {
   const orig = g._bocaDaArmaDoCorpo.bind(g);
   g._bocaDaArmaDoCorpo = (grp, out) => {
@@ -176,6 +187,53 @@ for (let i = 0; i < 60 * 40 && dfl.length < 30; i++) g.update(1 / 60);
   nc.dispose?.();
   cobra(dT <= TETO_M && dF <= TETO_M && dVolta < 0.02, 'BC4', `remoto: traçante e clarão na boca do corpo; pose adiantada volta ao olho do evento`,
     `traçante ${(dT * 100).toFixed(1)} cm · clarão ${(dF * 100).toFixed(1)} cm · pose 5 m adiantada: ${(dVolta * 100).toFixed(1)} cm da receita do olho do evento`);
+}
+
+// ── BC4b: o MEU tiro ecoado pelo nó (online). Traçante na boca do corpo em 3P; clarão só se
+// o _tryShoot não acendeu um há pouco (senão seriam dois). ──
+{
+  g.setCamView('third');
+  for (let i = 0; i < 5; i++) g.update(1 / 60);
+  const cap = { t: [], f: [] };
+  const fake = {
+    player: g.player, settings: { quality: 'high' }, get time() { return g.time; }, get _claraoLocalEm() { return g._claraoLocalEm; },
+    _tracer: (a) => cap.t.push(a.clone()), _flash: (p) => cap.f.push(p.clone()), _puff() {}, _impactSfx() {},
+    _bocaDaArmaDoCorpo: (...a) => g._bocaDaArmaDoCorpo(...a), _bocaLigada: () => g._bocaLigada(),
+    _origemTracerJogador: (...a) => g._origemTracerJogador(...a),
+  };
+  const nc = makeNetcode(fake, { meta: { snapshotHz: 20 }, startPing() {}, stopPing() {}, events: [] });
+  clearInterval(nc._nsTimer);
+  const olho = g._eyeWorld.clone(), alvo = olho.clone().add(new THREE.Vector3(0, 0, -40));
+  const ev = { k: 'tiro', a: 1, w: 'ak', o: olho.toArray(), p: [alvo.toArray()], s: '-' };
+  g._claraoLocalEm = g.time;              // acabou de acender o clarão local
+  nc.tiroDeRede(g.player, ev);
+  const ref = bocaRef(g.playerTP.group);
+  const dT = cap.t[0] ? cap.t[0].distanceTo(ref) : Infinity, ecoComLocal = cap.f.length;
+  cap.f.length = 0; g._claraoLocalEm = g.time - 5;   // tiro que só o nó deu
+  nc.tiroDeRede(g.player, ev);
+  const semLocal = cap.f.length, dF = cap.f[0] ? cap.f[0].distanceTo(ref) : Infinity;
+  nc.dispose?.();
+  cobra(dT <= TETO_M && ecoComLocal === 0 && semLocal === 1 && dF <= TETO_M, 'BC4b', 'meu tiro online (3P): traçante na boca; eco não duplica o clarão local, tiro só do nó ganha clarão na boca',
+    `traçante ${(dT * 100).toFixed(1)} cm · clarões com local recente ${ecoComLocal} (quer 0) · sem local ${semLocal} (quer 1) a ${(dF * 100).toFixed(1)} cm`);
+}
+
+// ── BC5: ramo da arma GLB (metrics do measureGun em metros do PAI do wrap, ÷norm). O Node não
+// carrega GLB: wrap sintético com escala ≠ 1, montado num osso escalado e girado. ──
+{
+  const grp = new THREE.Group(), osso = new THREE.Group(), mount = new THREE.Group();
+  osso.position.set(0.3, 1.2, 0.1); osso.rotation.set(0.4, -0.7, 0.2); osso.scale.setScalar(0.01);
+  mount.scale.setScalar(100); mount.rotation.set(-0.3, 0.5, 0);
+  const wrap = new THREE.Group(); wrap.name = 'arma-glb'; wrap.scale.setScalar(0.4);
+  const corpo = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.25, 2.0), new THREE.MeshBasicMaterial());
+  corpo.position.z = 0.6; wrap.add(corpo);
+  // medida como o measureGun faz: wrap solto, escala s → muzzle em metros do pai, norm = s
+  wrap.updateMatrixWorld(true);
+  wrap.userData.metrics = { muzzle: new THREE.Vector3(0, 0, (0.6 + 1.0) * 0.4), norm: 0.4 };
+  grp.add(osso); osso.add(mount); mount.add(wrap); grp.position.set(5, 0, -3);
+  grp.updateMatrixWorld(true);
+  const b = g._bocaDaArmaDoCorpo(grp), ref = bocaRef(grp);
+  const d = b && ref ? b.distanceTo(ref) : Infinity;
+  cobra(d <= TETO_M, 'BC5', `arma GLB (metrics ÷ norm, mount escalado e girado): boca a ≤ ${TETO_M * 100} cm`, `${(d * 100).toFixed(1)} cm`);
 }
 
 console.log(falhas.length ? `\nVERMELHO — ${falhas.join(', ')}` : '\nVERDE');
