@@ -187,6 +187,7 @@ function aplicarVisibilidade(v, peca) {
 export function vestirArmadura(model, { colete = false, capacete = false } = {}) {
   if (!model) return false;
   let v = _vestido.get(model);
+  if (!v && !colete && !capacete) return false;   // ninguém vestido: não mede o corpo (partida sem colete não paga nada)
   const chave = `${colete ? 1 : 0}${capacete ? 1 : 0}${modeloPronto('colete') ? 1 : 0}${modeloPronto('capacete') ? 1 : 0}`;
   if (v?.chave === chave) return !!v.body;
   if (!v) _vestido.set(model, v = { chave, body: corpoComEsqueleto(model), oculto: false });
