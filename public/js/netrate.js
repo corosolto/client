@@ -38,12 +38,8 @@ export class MedidorDeTaxa {
     this.hz = 0; this.kbps = 0;
   }
 
-  /**
-   * Registra um snapshot que CHEGOU.
-   * @param {number} bytes      tamanho do quadro recebido
-   * @param {number|null} tServidorS  `snapshot.t` em segundos; null/NaN = protocolo sem relógio
-   * @param {number} tLocalMs   `performance.now()` da drenagem (só serve de referência de avanço)
-   */
+  /** Registra um snapshot que CHEGOU: `bytes`, `tServidorS` (snapshot.t em s, null = protocolo
+   *  antigo) e `tLocalMs` (performance.now() da drenagem, só referência de avanço). */
   amostra(bytes, tServidorS, tLocalMs) {
     const temSrv = Number.isFinite(tServidorS);
     const tm = temSrv ? tServidorS * 1000 : tLocalMs;
@@ -60,10 +56,7 @@ export class MedidorDeTaxa {
     this._ultimoTm = tm; this._ultimoLocal = tLocalMs;
   }
 
-  /**
-   * Recalcula `hz`/`kbps` da janela que termina AGORA.
-   * @param {number} tLocalMs `performance.now()` da leitura
-   */
+  /** Recalcula `hz`/`kbps` da janela que termina AGORA. `tLocalMs` = performance.now(). */
   atualizar(tLocalMs) {
     if (!this._vivo) { this.hz = 0; this.kbps = 0; return this; }
     /* O fim da janela não é o último pacote: é agora. Quem decide o avanço é o
