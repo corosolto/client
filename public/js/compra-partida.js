@@ -5,7 +5,7 @@ import { charWeapon } from './characters.js';
 import { GRUPOS_COMPRA, itensDoGrupo } from './compra-catalogo.js';
 import {
   ECONOMIA, novaCarteira, creditar, recompensaKill, recompensaRodada, proximaSequencia,
-  precoDe, distanciaAoSpawn, comprar,
+  precoDe, distanciaAoSpawn, comprar, compraDoBot,
 } from './economia-partida.js';
 import { frase, tr } from './i18n.js';
 
@@ -22,6 +22,7 @@ export class CompraPartida {
     this.aviso = '';
     this._hudTxt = '';
     game.player.carteira = novaCarteira();
+    for (const b of game.bots) b.carteira = novaCarteira();
     this._montarDom();
   }
 
@@ -118,7 +119,7 @@ export class CompraPartida {
   }
 
   aoAbate(vitima, autor, weap) {
-    if (vitima === this.game.player) vitima._desarmado = true;
+    vitima._desarmado = true;
     if (!autor?.carteira || autor === vitima) return;
     const arma = weap === 'FRAG' ? 'frag' : weap === 'FACA' ? 'knife' : autor.weapon;
     const v = creditar(autor.carteira, recompensaKill(arma, { mesmoTime: autor.team === vitima.team }));
@@ -144,6 +145,40 @@ export class CompraPartida {
     p._desarmado = false;
     p.primary = null;
     p.secondary = 'pistol';
+  }
+
+  // Começo de rodada: bot morto volta de pistola; quem tem saldo compra a arma dele.
+  botsCompram() {
+    for (const b of this.game.bots) {
+      if (b._remote) continue;
+      this._rearmarBot(b);
+      this._botCompra(b);
+    }
+  }
+
+  aoRenascerBot(b) {
+    if (b._remote) return;
+    this._rearmarBot(b);
+    if (this.game.arena) this._botCompra(b);
+  }
+
+  _rearmarBot(b) {
+    if (!b._desarmado) return;
+    b._desarmado = false;
+    this._armarBot(b, 'pistol');
+  }
+
+  _botCompra(b) {
+    const id = compraDoBot({ saldo: b.carteira.saldo, alvo: b._armaAlvo, jaTem: b.weapon === b._armaAlvo });
+    if (!id) return;
+    b.carteira.saldo -= precoDe(id);
+    this._armarBot(b, id);
+  }
+
+  _armarBot(b, w) {
+    if (b.weapon !== w || b._meshWeapon !== w) this.game._syncRemoteWeapon(b, w);
+    b.mag = WEAPONS[w]?.mag || 0;
+    b.reloadUntil = 0;
   }
 
   _ganho(txt) {
