@@ -48,6 +48,102 @@
       "runtime": "public/models/props/operacao_decola/escada_embarque.glb",
       "bytes": 430684,
       "sha256": "62d23fdea58296151804c8146f031183cc17dff6c347243191f0a055d25b73be"
+    },
+    {
+      "id": "terminal-fachada",
+      "provider": "Mint asset pack · production optimized",
+      "source": "https://mint.gg/chat/ph71hzay9vg61gh2f861mdrmex8h5b75",
+      "runtime": "public/models/props/operacao_decola/terminal_fachada.glb",
+      "bytes": 1451352,
+      "sha256": "2cb17ee5cdbc0539a10538d8d6eea067995ec75dc5f07b24f51a861057d1f899"
+    },
+    {
+      "id": "terminal-portal",
+      "provider": "Mint asset pack · production optimized",
+      "source": "https://mint.gg/chat/ph71hzay9vg61gh2f861mdrmex8h5b75",
+      "runtime": "public/models/props/operacao_decola/terminal_portal.glb",
+      "bytes": 1201928,
+      "sha256": "89f3494153110c910ce858e05c54c1875f1fbbbd0a849437f060d5462ba523e7"
+    },
+    {
+      "id": "balcao-recepcao",
+      "provider": "Mint asset pack · production optimized",
+      "source": "https://mint.gg/chat/ph71hzay9vg61gh2f861mdrmex8h5b75",
+      "runtime": "public/models/props/operacao_decola/balcao_recepcao.glb",
+      "bytes": 678452,
+      "sha256": "84c6061795186b64a0779c072b68ce7e169df96d42753f03869478714f3c5397"
+    },
+    {
+      "id": "assentos-aeroporto",
+      "provider": "Mint asset pack · production optimized",
+      "source": "https://mint.gg/chat/ph71hzay9vg61gh2f861mdrmex8h5b75",
+      "runtime": "public/models/props/operacao_decola/assentos_aeroporto.glb",
+      "bytes": 1172896,
+      "sha256": "ef42e9abc669fa8d1d5393e22ed3f968d5b6dfba0c875efcf58241a16d52cc1e"
+    },
+    {
+      "id": "scanner-bagagem",
+      "provider": "Mint asset pack · production optimized",
+      "source": "https://mint.gg/chat/ph71hzay9vg61gh2f861mdrmex8h5b75",
+      "runtime": "public/models/props/operacao_decola/scanner_bagagem.glb",
+      "bytes": 1215284,
+      "sha256": "aa3e5e50bdb10f2b4220358c3e6fd0ee94f48d6d21275b3c65030d7569a4e732"
+    },
+    {
+      "id": "carro-servico",
+      "provider": "Mint asset pack · production optimized",
+      "source": "https://mint.gg/chat/ph71hzay9vg61gh2f861mdrmex8h5b75",
+      "runtime": "public/models/props/operacao_decola/carro_servico.glb",
+      "bytes": 1090568,
+      "sha256": "21dc1604e22b514d976fede26b24c01ebb2fa2a9c3b7f3bc7b310f8f17a20421"
+    },
+    {
+      "id": "energia-solo",
+      "provider": "Mint asset pack · production optimized",
+      "source": "https://mint.gg/chat/ph71hzay9vg61gh2f861mdrmex8h5b75",
+      "runtime": "public/models/props/operacao_decola/energia_solo.glb",
+      "bytes": 1560652,
+      "sha256": "82af01bfd15e5ac7a2ef737cbcc4dfdb558e3bb2eb0bdf06a5a08a365d08c8ef"
+    },
+    {
+      "id": "torre-iluminacao",
+      "provider": "Mint asset pack · production optimized",
+      "source": "https://mint.gg/chat/ph71hzay9vg61gh2f861mdrmex8h5b75",
+      "runtime": "public/models/props/operacao_decola/torre_iluminacao.glb",
+      "bytes": 1948904,
+      "sha256": "2d68c96925d76a0607e7fce84d135d9c842006e6bbbc05df258f355a2d849d6d"
+    },
+    {
+      "id": "barreiras-aeroporto",
+      "provider": "Mint asset pack · production optimized",
+      "source": "https://mint.gg/chat/ph71hzay9vg61gh2f861mdrmex8h5b75",
+      "runtime": "public/models/props/operacao_decola/barreiras_aeroporto.glb",
+      "bytes": 1243232,
+      "sha256": "2546c41241fcf1d5d605b06f93f214ab745b372d6232cf2afd499bde2a705ea4"
+    },
+    {
+      "id": "estacao-manutencao",
+      "provider": "Mint asset pack · production optimized",
+      "source": "https://mint.gg/chat/ph71hzay9vg61gh2f861mdrmex8h5b75",
+      "runtime": "public/models/props/operacao_decola/estacao_manutencao.glb",
+      "bytes": 1666312,
+      "sha256": "f5ab35c28168e3527b06e1f59d94ed34c73344c5920e253ae636c933d039e274"
+    },
+    {
+      "id": "containers-carga",
+      "provider": "Mint asset pack · production optimized",
+      "source": "https://mint.gg/chat/ph71hzay9vg61gh2f861mdrmex8h5b75",
+      "runtime": "public/models/props/operacao_decola/containers_carga.glb",
+      "bytes": 1702532,
+      "sha256": "3db3450c3617e98c6136cfcd944ac0a5f3801f0c77050981c4a6bf18cce56dd1"
+    },
+    {
+      "id": "jardineira",
+      "provider": "Mint asset pack · production optimized",
+      "source": "https://mint.gg/chat/ph71hzay9vg61gh2f861mdrmex8h5b75",
+      "runtime": "public/models/props/operacao_decola/jardineira.glb",
+      "bytes": 1408840,
+      "sha256": "839bb29a2466a2dd0a71cb07adba5ac201835a6a8c249e4db982efeaf9d2fa37"
     }
   ]
 }

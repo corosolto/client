@@ -1485,12 +1485,57 @@ export class Game {
   _buildViewModels() {
     const root = new THREE.Group();
     if (AUTHORED_VM_ENABLED) {
+      const models = Object.create(null);
+      const rot = Object.create(null);
+      const pending = new Set();
+      const frame = (id) => {
+        const g = models[id], rw = g?.getObjectByName('rw');
+        if (!g || !rw) return;
+        const cfg = weaponCFG(id);
+        const t = VM_FRAME.cls[VM_FRAME.classOf[id] || 'rifle'];
+        const metrics = rw.userData?.metrics;
+        const scale = VM_FRAME.vmScale * (cfg.vm ?? 1);
+        const back = scale * (metrics ? Math.max(0, -metrics.box.min.z) : cfg.len * (1 - cfg.gripZ));
+        const forward = scale * (metrics ? Math.max(0.001, metrics.box.max.z) : cfg.len * cfg.gripZ);
+        let z = Math.max(back + t.clear, t.minz, forward / t.fwdTan) * (VM_FRAME.zMul[id] || 1);
+        z *= VM_KNOB.zmul ?? VM_FRAME.recuoZ;
+        const x = z * (VM_KNOB.tanh ?? t.tanH);
+        const y = -x * (VM_KNOB.tanb ?? VM_FRAME.tanBarrel);
+        g.position.set(x, y, -z);
+        g.rotation.set(t.pitch || 0, t.yaw || 0, t.roll || 0);
+        rot[id] = { pitch: g.rotation.x, yaw: g.rotation.y, roll: g.rotation.z, ads: true };
+      };
       this._vmFrame = () => {};
-      this._vmMontarTardio = null;
-      this._weaponOnly = false;
+      this._vmMontarTardio = (id) => {
+        if (models[id]) return true;
+        if (!hasWeapon(id)) {
+          if (!pending.has(id)) {
+            pending.add(id);
+            preloadWeapons([id]).then(() => {
+              pending.delete(id);
+              if (this._vmMontarTardio?.(id)) this._applyVmVisibility();
+            }).catch(() => pending.delete(id));
+          }
+          return false;
+        }
+        const rw = weaponModel(id, this.playerWeaponSkins[id] || null);
+        if (!rw) return false;
+        const holder = new THREE.Group();
+        holder.name = `fallback-${id}`;
+        rw.name = 'rw';
+        rw.rotation.y = Math.PI;
+        rw.scale.multiplyScalar(VM_FRAME.vmScale * (weaponCFG(id).vm ?? 1));
+        holder.add(rw);
+        holder.visible = false;
+        root.add(holder);
+        models[id] = holder;
+        frame(id);
+        return true;
+      };
+      this._weaponOnly = true;
       return {
-        root, models: Object.create(null), awp: null, pistol: null, knife: null, arms: null,
-        grip: Object.create(null), ads: Object.create(null), rot: Object.create(null),
+        root, models, awp: null, pistol: null, knife: null, arms: null,
+        grip: Object.create(null), ads: Object.create(null), rot,
         kick: 0, kickSide: 0, bobPhase: 0,
         rig: new ViewModelRig({ bobGain: 0 }),
         recoil: new RecoilAxis(11, 0.5, 0.12, 0.15),
@@ -3447,8 +3492,8 @@ export class Game {
     const melee = this.vm.melee?.setWeapon(w) || false;
     const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
     if (melee) this.vm.authored?.setWeapon('');
-    // Em runtime autorado, uma carga pendente apresenta o último mount ainda válido ou
-    // um root vazio. O procedural só existe quando o renderer autorado foi desligado.
+    // Enquanto o pacote autorado ainda carrega (ou falha), o modelo legado continua
+    // visível. Uma arma vazia é pior que a degradação visual e torna o modo injogável.
     // Utilidade na mão tem precedência de cena, inclusive sobre o pacote de faca.
     const utilidade = this._utilidadeNaMao();
     this._vmPresentation = { authored, melee, utility: utilidade };
@@ -7606,12 +7651,14 @@ export class Game {
       if (b._netInput) this._moveEntity(b, b._netInput, dt);
       return;
     }
+    const objectiveDestination = this.objective?.botDestination?.(b) || null;
     // `__mutBotYaw`: gancho da botsim-golden (mesmo precedente do __mutAccel) — deriva o rumo
     // do bot pra régua provar que morde. Zero em produção.
     if (this.__mutBotYaw && b.alive) b.yaw += this.__mutBotYaw * dt;
     const g = b.mesh.group;
     // Sem alvo no CTF, mantém a navegação roteirizada até o objetivo.
     if (this._botBrain && this._botBrain.ready && this.botBrainMix > 0 && b.alive && this.state === 'live'
+        && !objectiveDestination
         && (!this.ctf || b.target)
         && (!this._botBrainTeam || b.team === this._botBrainTeam)) {   // régua NN contra roteiro
       return this._updateBotNN(b, dt);
@@ -7724,6 +7771,17 @@ export class Game {
           if (b.pos.clone().addScaledVector(ab, t).distanceToSquared(s.center) <= s.radius * s.radius) { grace = 4.0; break; }
         }
         if (this.time - b._lostAt > grace) { b.target = null; b._losLost = false; b._lostAt = 0; }
+      }
+    }
+    if (objectiveDestination && b.target) {
+      const bx = b.pos.x - objectiveDestination.centerX, bz = b.pos.z - objectiveDestination.centerZ;
+      const sx = b.pos.x - objectiveDestination.x, sz = b.pos.z - objectiveDestination.z;
+      const tx = b.target.pos.x - objectiveDestination.centerX, tz = b.target.pos.z - objectiveDestination.centerZ;
+      const alvoImediato = tx * tx + tz * tz <= objectiveDestination.protectRadius * objectiveDestination.protectRadius;
+      if (bx * bx + bz * bz > objectiveDestination.leash * objectiveDestination.leash
+          || tx * tx + tz * tz > objectiveDestination.engageRadius * objectiveDestination.engageRadius
+          || (sx * sx + sz * sz > objectiveDestination.slotRadius * objectiveDestination.slotRadius && !alvoImediato)) {
+        b.target = null; b._losLost = false; b._lostAt = 0;
       }
     }
 
@@ -8038,7 +8096,7 @@ export class Game {
       // (a caminhada de escape cobre a espera, então o bot não congela).
       if ((!b.path || this.time > b.repathAt) && this.time >= (b._repathMin || 0)) {
         b._repathMin = this.time + 0.25;
-        b.repathAt = this.time + 2.5;
+        b.repathAt = this.time + (objectiveDestination?.repath || 2.5);
         const W = this.world;
         // G2-R6A: o `from` = nearestWaypoint podia estar ATRÁS de uma parede (nó (-8.4,34)
         // do piscinão fica do outro lado do muro das ilhotas) — o bot nunca alcançava
@@ -8071,7 +8129,11 @@ export class Game {
         }
         // INVESTIGAR (ver SENTIDOS DO BOT): ouviu o jogador há <4 s e está sem alvo → o destino
         // vira o nó ALCANÇÁVEL (mesmo componente do grafo) mais perto do som, por até 6 s.
-        if (BOT_SENTIDOS && !pocket && b._heardAt && b._heardUsed !== b._heardAt && this.time - b._heardAt < 4) {
+        if (!pocket && objectiveDestination) {
+          b.roamIdx = W.nearestWaypoint(objectiveDestination.x, objectiveDestination.z, b.pos.y);
+          b.roamUntil = this.time + objectiveDestination.repath;
+        }
+        if (!objectiveDestination && BOT_SENTIDOS && !pocket && b._heardAt && b._heardUsed !== b._heardAt && this.time - b._heardAt < 4) {
           b._heardUsed = b._heardAt;
           const nodes = W.waypoints.nodes, comp = this._wpComp();
           const myComp = comp && comp.length ? comp[from] : -1;
@@ -8084,7 +8146,7 @@ export class Game {
           }
           if (hi >= 0 && hi !== from) { b.roamIdx = hi; b.roamUntil = this.time + 6; }
         }
-        if (!pocket && (this.time > (b.roamUntil || 0) || b.roamIdx === undefined)) {
+        if (!objectiveDestination && !pocket && (this.time > (b.roamUntil || 0) || b.roamIdx === undefined)) {
           // Enemy direction derived from the spawn LAYOUT (not hardcoded — the spawn
           // swap P<->B would otherwise silently flip the roam side and keep bots home).
           const sP = this.world.spawns.E[0], sB = this.world.spawns.B[0];

@@ -1,9 +1,21 @@
 const ESCORT_RADIUS = 6;
 const CONTEST_RADIUS = 4;
+const THREAT_RADIUS = 14;
 const ESCORT_SPEED = 1.8;
+const COVER_SPEED = 2.5;
 const RETURN_SPEED = 0.65;
 const RETURN_DELAY = 4;
 const BOARDING_TIME = 3;
+const GUARD_LEASH = 5.5;
+const GUARD_ENGAGE_RADIUS = 7.5;
+const GUARD_SLOT_RADIUS = 1.6;
+const GUARD_PROTECT_RADIUS = 4.5;
+const GUARD_SLOTS = [
+  { right: 0, forward: 2.4 },
+  { right: -2.2, forward: 1.2 }, { right: 2.2, forward: 1.2 },
+  { right: -3.1, forward: -0.7 }, { right: 3.1, forward: -0.7 },
+  { right: -1.6, forward: -2.5 }, { right: 1.6, forward: -2.5 },
+];
 
 const d2 = (a, b) => {
   const dx = (a.x ?? a.pos?.x ?? 0) - b.x;
@@ -11,6 +23,39 @@ const d2 = (a, b) => {
   return dx * dx + dz * dz;
 };
 const vivosNoRaio = (lista, pos, raio) => lista.filter((ent) => ent.alive !== false && d2(ent.pos || ent, pos) <= raio * raio);
+export function destinoProtecaoEscolta(bot, vip, defensores = [], ameacas = [], out = null) {
+  if (!bot?.pos || !vip?.pos || bot.alive === false || bot === vip) return null;
+  let indice = -1, vivos = 0;
+  for (const ent of defensores) {
+    if (ent === vip || ent.alive === false || ent.team !== bot.team) continue;
+    if (ent === bot) indice = vivos;
+    vivos++;
+  }
+  if (indice < 0) return null;
+  const slot = GUARD_SLOTS[indice % GUARD_SLOTS.length];
+  let maisPerto = null, menorDistancia = Infinity;
+  for (const ent of ameacas) {
+    if (ent?.alive === false || !ent?.pos) continue;
+    const distancia = d2(ent.pos, vip.pos);
+    if (distancia < menorDistancia) { maisPerto = ent; menorDistancia = distancia; }
+  }
+  const yaw = maisPerto
+    ? Math.atan2(maisPerto.pos.x - vip.pos.x, maisPerto.pos.z - vip.pos.z)
+    : Number.isFinite(vip.yaw) ? vip.yaw : 0;
+  const rightX = Math.cos(yaw), rightZ = -Math.sin(yaw);
+  const forwardX = Math.sin(yaw), forwardZ = Math.cos(yaw);
+  const destino = out || {};
+  destino.x = vip.pos.x + rightX * slot.right + forwardX * slot.forward;
+  destino.z = vip.pos.z + rightZ * slot.right + forwardZ * slot.forward;
+  destino.centerX = vip.pos.x;
+  destino.centerZ = vip.pos.z;
+  destino.leash = GUARD_LEASH;
+  destino.engageRadius = GUARD_ENGAGE_RADIUS;
+  destino.slotRadius = GUARD_SLOT_RADIUS;
+  destino.protectRadius = GUARD_PROTECT_RADIUS;
+  destino.repath = 0.28;
+  return destino;
+}
 
 export function criarEstadoEscolta(caminho) {
   if (!Array.isArray(caminho) || caminho.length < 2) throw new Error('Operação Flávio exige ao menos dois checkpoints');
@@ -20,28 +65,29 @@ export function criarEstadoEscolta(caminho) {
     checkpoint: 0,
     escortCount: 0,
     contested: false,
+    threatened: false,
+    inCover: true,
     unattendedFor: 0,
     boardedFor: 0,
     winner: null,
   };
 }
 
-function moverAte(state, alvo, distancia) {
+function moverAte(state, alvo, distancia, mover = null) {
   const dx = alvo.x - state.position.x;
   const dz = alvo.z - state.position.z;
   const falta = Math.hypot(dx, dz);
-  if (falta <= distancia || falta < 1e-6) {
-    state.position.x = alvo.x;
-    state.position.z = alvo.z;
-    return true;
-  }
-  const k = distancia / falta;
-  state.position.x += dx * k;
-  state.position.z += dz * k;
-  return false;
+  const origem = { x: state.position.x, z: state.position.z };
+  const proposta = falta <= distancia || falta < 1e-6
+    ? { x: alvo.x, z: alvo.z }
+    : { x: origem.x + dx * distancia / falta, z: origem.z + dz * distancia / falta };
+  const resultado = mover?.(origem, proposta) || proposta;
+  state.position.x = resultado.x;
+  state.position.z = resultado.z;
+  return Math.hypot(alvo.x - resultado.x, alvo.z - resultado.z) < 0.12;
 }
 
-export function passoEscolta(state, contexto, dt, { mutante = '' } = {}) {
+export function passoEscolta(state, contexto, dt, { mutante = '', mover = null } = {}) {
   if (state.winner || dt <= 0) return state;
   if (!contexto.vipAlive) {
     state.winner = 'E';
@@ -49,12 +95,24 @@ export function passoEscolta(state, contexto, dt, { mutante = '' } = {}) {
   }
   const defensores = vivosNoRaio(contexto.defensores || [], state.position, ESCORT_RADIUS);
   const atacantes = vivosNoRaio(contexto.atacantes || [], state.position, CONTEST_RADIUS);
+  const ameacas = vivosNoRaio(contexto.atacantes || [], state.position, THREAT_RADIUS);
   state.escortCount = defensores.length;
   state.contested = mutante === 'sem-contestacao' ? false : atacantes.length > 0;
+  state.threatened = mutante === 'sem-contestacao' ? false : ameacas.length > 0;
   const acompanhado = defensores.length > 0 && !state.contested;
   const ultimo = state.caminho.length - 1;
 
+  if (state.threatened) {
+    state.boardedFor = 0;
+    state.unattendedFor = 0;
+    const abrigo = state.caminho[state.checkpoint];
+    const chegou = moverAte(state, abrigo, COVER_SPEED * dt, mover);
+    state.inCover = chegou || Math.hypot(state.position.x - abrigo.x, state.position.z - abrigo.z) < 0.75;
+    return state;
+  }
+
   if (state.checkpoint >= ultimo) {
+    state.inCover = true;
     state.boardedFor = acompanhado ? state.boardedFor + dt : 0;
     if (state.boardedFor >= BOARDING_TIME) state.winner = 'B';
     return state;
@@ -62,13 +120,15 @@ export function passoEscolta(state, contexto, dt, { mutante = '' } = {}) {
 
   if (acompanhado) {
     state.unattendedFor = 0;
-    const chegou = moverAte(state, state.caminho[state.checkpoint + 1], ESCORT_SPEED * dt);
-    if (chegou) state.checkpoint++;
+    state.inCover = false;
+    const chegou = moverAte(state, state.caminho[state.checkpoint + 1], ESCORT_SPEED * dt, mover);
+    if (chegou) { state.checkpoint++; state.inCover = true; }
   } else if (!state.contested) {
     state.unattendedFor += dt;
     if (state.unattendedFor > RETURN_DELAY && state.checkpoint > 0) {
-      const chegou = moverAte(state, state.caminho[state.checkpoint - 1], RETURN_SPEED * dt);
-      if (chegou) state.checkpoint--;
+      state.inCover = false;
+      const chegou = moverAte(state, state.caminho[state.checkpoint - 1], RETURN_SPEED * dt, mover);
+      if (chegou) { state.checkpoint--; state.inCover = true; }
     }
   }
   return state;
@@ -112,14 +172,17 @@ export class OperacaoFlavio {
     this.state = criarEstadoEscolta(game.world.escortPath);
     this.fontes = [];
     this.cinematic = null;
+    this.deathAnnounced = false;
+    this._vipMoveSpeed = 0;
     this.hud = null;
     if (!this.vip) return;
-    game._trocarPersonagem(this.vip, vipDef, true);
-    this.vip.name = game.online || game.dedicated ? 'Flávio Bolsonaro' : '[VIP] Flávio Bolsonaro';
-    this.vip._objectiveNpc = 'flavio';
     this.vip.weapon = 'knife';
     this.vip.primary = 'knife';
-    game._syncRemoteWeapon(this.vip, 'knife');
+    this.vip.secondary = 'knife';
+    this.vip._objectiveNpc = 'flavio';
+    game._trocarPersonagem(this.vip, vipDef, true);
+    this.vip.name = game.online || game.dedicated ? 'Flávio Bolsonaro' : '[VIP] Flávio Bolsonaro';
+    this.travarArmaVip();
     if (!game.dedicated && typeof document !== 'undefined') {
       this.hud = document.createElement('div');
       this.hud.id = 'escort-objective';
@@ -131,6 +194,20 @@ export class OperacaoFlavio {
       window.addEventListener('keydown', this._key);
     }
   }
+  travarArmaVip() {
+    if (!this.vip) return;
+    this.vip.weapon = 'knife';
+    this.vip.primary = 'knife';
+    this.vip.secondary = 'knife';
+    this.vip.target = null;
+    if (this.vip._meshWeapon !== 'knife') this.game._syncRemoteWeapon(this.vip, 'knife');
+  }
+
+  botDestination(bot) {
+    if (!this.vip?.alive || !bot?.alive || bot === this.vip || bot.team !== 'B') return null;
+    const ameacas = this.game.combatants.filter((ent) => ent.team === 'E' && ent.alive !== false);
+    return destinoProtecaoEscolta(bot, this.vip, this.game.bots, ameacas, bot._escortDestination || (bot._escortDestination = {}));
+  }
 
   prepareRound() {
     if (!this.vip) return;
@@ -140,24 +217,69 @@ export class OperacaoFlavio {
     this.vip.hp = 100;
     this.vip.respawnAt = Infinity;
     this.vip.pos.set(this.state.position.x, this.game.world.groundHeightAt(this.state.position.x, this.state.position.z), this.state.position.z);
+    this.travarArmaVip();
     this.cinematic = null;
+    this.deathAnnounced = false;
+    this._vipMoveSpeed = 0;
     if (this.game.vmScene) this.game.vmScene.visible = true;
     if (this.hud) this.hud.hidden = false;
   }
 
+  ameacaMaisPerto() {
+    if (!this.vip) return null;
+    let melhor = null, distancia = Infinity;
+    for (const ent of this.game.combatants) {
+      if (ent.team !== 'E' || ent.alive === false) continue;
+      const atual = d2(ent.pos, this.vip.pos);
+      if (atual < distancia) { melhor = ent; distancia = atual; }
+    }
+    return melhor;
+  }
+
+  moverVip(origem, proposta) {
+    const dx = proposta.x - origem.x, dz = proposta.z - origem.z;
+    const passos = Math.max(1, Math.ceil(Math.hypot(dx, dz) / 0.16));
+    this.vip.pos.x = origem.x;
+    this.vip.pos.z = origem.z;
+    for (let i = 0; i < passos; i++) {
+      this.vip.pos.x += dx / passos;
+      this.vip.pos.z += dz / passos;
+      this.game._collide(this.vip.pos, 0.46);
+    }
+    return { x: this.vip.pos.x, z: this.vip.pos.z };
+  }
+
+  anunciarMorte() {
+    if (this.deathAnnounced) return;
+    this.deathAnnounced = true;
+    this.game._banner?.('FLÁVIO FOI MORTO', 'A escolta fracassou');
+    if (this.hud) {
+      this.hud.style.background = '#3b0808ee';
+      this.hud.style.borderColor = '#ff514f';
+      this.hud.textContent = 'FLÁVIO FOI MORTO · ESCOLTA FRACASSOU';
+    }
+  }
+
   update(dt) {
     if (!this.vip || this.game.state !== 'live') return;
+    this.travarArmaVip();
     if (!this.game.online || this.game.dedicated) {
+      const antes = { x: this.vip.pos.x, z: this.vip.pos.z };
       passoEscolta(this.state, {
         defensores: this.game.combatants.filter((ent) => ent !== this.vip && ent.team === 'B'),
         atacantes: this.game.combatants.filter((ent) => ent.team === 'E'),
         vipAlive: this.vip.alive,
-      }, dt);
+      }, dt, { mover: (origem, proposta) => this.moverVip(origem, proposta) });
       this.vip.pos.x = this.state.position.x;
       this.vip.pos.z = this.state.position.z;
       this.vip.pos.y = this.game.world.groundHeightAt(this.vip.pos.x, this.vip.pos.z);
-      const proximo = this.state.caminho[Math.min(this.state.checkpoint + 1, this.state.caminho.length - 1)];
+      this._vipMoveSpeed = Math.hypot(this.vip.pos.x - antes.x, this.vip.pos.z - antes.z) / Math.max(dt, 1e-3);
+      const ameaca = this.ameacaMaisPerto();
+      const proximo = this.state.threatened && ameaca
+        ? ameaca.pos
+        : this.state.caminho[Math.min(this.state.checkpoint + 1, this.state.caminho.length - 1)];
       this.vip.yaw = Math.atan2(proximo.x - this.vip.pos.x, proximo.z - this.vip.pos.z);
+      if (!this.vip.alive) this.anunciarMorte();
       if (this.state.winner) this.game._endRound(this.state.winner);
     } else {
       let checkpoint = 0, distance = Infinity;
@@ -170,6 +292,8 @@ export class OperacaoFlavio {
       this.state.checkpoint = checkpoint;
       this.state.escortCount = vivosNoRaio(this.game.combatants.filter((ent) => ent !== this.vip && ent.team === 'B'), this.state.position, ESCORT_RADIUS).length;
       this.state.contested = vivosNoRaio(this.game.combatants.filter((ent) => ent.team === 'E'), this.state.position, CONTEST_RADIUS).length > 0;
+      this.state.threatened = vivosNoRaio(this.game.combatants.filter((ent) => ent.team === 'E'), this.state.position, THREAT_RADIUS).length > 0;
+      if (!this.vip.alive) this.anunciarMorte();
     }
     this.atualizaHud();
   }
@@ -178,8 +302,10 @@ export class OperacaoFlavio {
     if (bot !== this.vip || (this.game.online && !this.game.dedicated)) return false;
     const group = bot.mesh?.group;
     if (!group) return true;
+    bot.mesh.ctrl?.setCrouch?.(Boolean(this.state.threatened));
     if (!bot.alive) {
       bot.deadT = (bot.deadT || 0) + dt;
+      bot.mesh.ctrl?.setCrouch?.(false);
       bot.mesh.ctrl?.die?.();
       bot.mesh.ctrl?.update?.(dt, 0, false);
       if (bot.deadT > 1) group.visible = false;
@@ -188,14 +314,17 @@ export class OperacaoFlavio {
     group.visible = true;
     group.position.set(bot.pos.x, bot.pos.y, bot.pos.z);
     group.rotation.y = bot.yaw;
-    bot.mesh.ctrl?.update?.(dt, this.state.contested ? 0 : ESCORT_SPEED, false);
+    bot.mesh.ctrl?.update?.(dt, this._vipMoveSpeed > 0.2 ? 1 : 0, false, this._vipMoveSpeed);
     return true;
   }
 
   atualizaHud() {
-    if (!this.hud) return;
+    if (!this.hud || this.deathAnnounced) return;
     const total = this.state.caminho.length - 1;
-    const status = this.state.contested ? 'CONTESTADO' : this.state.escortCount ? `${this.state.escortCount} ESCOLTANDO` : 'SEM ESCOLTA';
+    const status = this.state.threatened
+      ? this.state.inCover ? 'EM COBERTURA' : 'BUSCANDO COBERTURA'
+      : this.state.contested ? 'CONTESTADO'
+      : this.state.escortCount ? `${this.state.escortCount} ESCOLTANDO` : 'SEM ESCOLTA';
     this.hud.textContent = `OPERAÇÃO FLÁVIO · ${this.state.checkpoint}/${total} · ${status} · ${Math.max(0, Math.ceil(this.game.timeLeft))}s`;
   }
 
@@ -204,10 +333,13 @@ export class OperacaoFlavio {
   }
 
   roundResult(winner) {
+    const morto = winner === 'E' && (!this.vip?.alive || this.deathAnnounced);
     return {
       duration: 9,
-      title: winner === 'B' ? 'FLÁVIO EMBARCOU' : 'A FUGA FOI INTERROMPIDA',
-      detail: winner === 'B' ? 'o avião está pronto para decolar' : 'o aeroporto foi bloqueado',
+      title: winner === 'B' ? 'FLÁVIO EMBARCOU' : morto ? 'FLÁVIO FOI MORTO' : 'A FUGA FOI INTERROMPIDA',
+      detail: winner === 'B'
+        ? 'o avião está pronto para decolar'
+        : morto ? 'a escolta fracassou antes do embarque' : 'o aeroporto foi bloqueado',
     };
   }
 
@@ -215,7 +347,9 @@ export class OperacaoFlavio {
     this.cinematic = { winner, startedAt: this.game.time };
     if (this.game.vmScene) this.game.vmScene.visible = false;
     this.fontes = marchaMilitar(this.game.sfx);
-    if (this.hud) this.hud.textContent = winner === 'B' ? 'EMBARQUE CONCLUÍDO' : 'OPERAÇÃO INTERROMPIDA';
+    if (this.hud) this.hud.textContent = winner === 'B'
+      ? 'EMBARQUE CONCLUÍDO'
+      : !this.vip?.alive || this.deathAnnounced ? 'FLÁVIO FOI MORTO · ESCOLTA FRACASSOU' : 'OPERAÇÃO INTERROMPIDA';
   }
 
   updatePresentation() {

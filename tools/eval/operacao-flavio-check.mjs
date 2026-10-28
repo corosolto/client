@@ -1,4 +1,4 @@
-import { criarEstadoEscolta, passoEscolta } from '../../public/js/mode_operacao_flavio.js';
+import { criarEstadoEscolta, destinoProtecaoEscolta, passoEscolta } from '../../public/js/mode_operacao_flavio.js';
 
 const mutante = process.argv.includes('--mutante=sem-contestacao') ? 'sem-contestacao' : '';
 let falhas = 0;
@@ -25,6 +25,24 @@ passoEscolta(contestado, {
 }, 1, { mutante });
 cobra(contestado.position.z === 0 && contestado.contested, 'atacante no raio interrompe a escolta');
 
+
+const buscandoCobertura = criarEstadoEscolta(caminho);
+passoEscolta(buscandoCobertura, { defensores: [vivo(0, 0, 'B')], atacantes: [], vipAlive: true }, 1);
+const antesDaAmeaca = buscandoCobertura.position.z;
+passoEscolta(buscandoCobertura, {
+  defensores: [vivo(0, 0, 'B')],
+  atacantes: [vivo(0, 5, 'E')],
+  vipAlive: true,
+}, 1);
+cobra(buscandoCobertura.threatened && buscandoCobertura.position.z < antesDaAmeaca
+  && buscandoCobertura.inCover, 'sob ameaça, Flávio recua e se abriga no último checkpoint seguro');
+
+const bloqueado = criarEstadoEscolta(caminho);
+passoEscolta(bloqueado, { defensores: [vivo(0, 0, 'B')], atacantes: [], vipAlive: true }, 1, {
+  mover: (origem) => origem,
+});
+cobra(bloqueado.position.z === 0 && bloqueado.checkpoint === 0,
+  'movimento físico pode bloquear Flávio sem dessincronizar o checkpoint');
 const abatido = criarEstadoEscolta(caminho);
 passoEscolta(abatido, { defensores: [], atacantes: [], vipAlive: false }, 0.1, { mutante });
 cobra(abatido.winner === 'E', 'abater Flávio entrega vitória aos atacantes');
@@ -34,6 +52,17 @@ for (let i = 0; i < 40 && !embarque.winner; i++) {
   passoEscolta(embarque, { defensores: [vivo(0, 0, 'B')], atacantes: [], vipAlive: true }, 0.1, { mutante });
 }
 cobra(embarque.winner === 'B' && embarque.boardedFor >= 3, 'três segundos na escada concluem o embarque');
+const vip = { pos: { x: 12, z: -7 }, yaw: Math.PI / 4 };
+const guardas = [0, 1, 2].map((i) => ({ pos: { x: i * 20, z: i * -20 }, team: 'B', alive: true }));
+const ameaca = vivo(12, 3, 'E'); ameaca.pos = { x: 12, z: 3 };
+const destinos = guardas.map((guarda) => destinoProtecaoEscolta(guarda, vip, guardas, [ameaca]));
+const distancias = destinos.map((destino) => Math.hypot(destino.x - vip.pos.x, destino.z - vip.pos.z));
+cobra(destinos.every(Boolean) && distancias.every((distancia) => distancia >= 2 && distancia <= 3.5)
+  && new Set(destinos.map((destino) => `${destino.x.toFixed(2)}:${destino.z.toFixed(2)}`)).size === guardas.length,
+  'bots defensores ocupam posições compactas e distintas ao redor de Flávio');
+cobra(destinos[0].z > vip.pos.z && destinos.every((destino) => destino.leash <= 5.5
+  && destino.engageRadius <= 7.5 && destino.slotRadius <= 1.6),
+  'formação gira para interpor os guardas entre Flávio e a ameaça');
 
 if (mutante) {
   const acendeu = falhas > 0;

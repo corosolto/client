@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from '../vendor/draco-r160/DRACOLoader.js';
 import { preloadCharacterAssets } from './glbchars.js';
 import { assetUrl } from './data/asseturl.js';
 import { aplicaSombraSol } from './mapquality.js';
@@ -13,14 +14,27 @@ const PROP_FILES = {
   carrinho_ferramentas: 'carrinho_ferramentas.glb',
   arco_seguranca: 'arco_seguranca.glb',
   escada_embarque: 'escada_embarque.glb',
+  terminal_fachada: 'terminal_fachada.glb',
+  terminal_portal: 'terminal_portal.glb',
+  balcao_recepcao: 'balcao_recepcao.glb',
+  assentos_aeroporto: 'assentos_aeroporto.glb',
+  scanner_bagagem: 'scanner_bagagem.glb',
+  carro_servico: 'carro_servico.glb',
+  energia_solo: 'energia_solo.glb',
+  torre_iluminacao: 'torre_iluminacao.glb',
+  barreiras_aeroporto: 'barreiras_aeroporto.glb',
+  estacao_manutencao: 'estacao_manutencao.glb',
+  containers_carga: 'containers_carga.glb',
+  jardineira: 'jardineira.glb',
 };
 const templates = new Map();
 let preloadPromise = null;
 
 const ESCORT_PATH = [
-  { x: -20, z: -48 }, { x: -14, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
-  { x: -8, z: -34 }, { x: 0, z: -28 }, { x: 0, z: -20 }, { x: 0, z: -12 },
-  { x: -4, z: 0 }, { x: 2, z: 16 }, { x: 2, z: 36 }, { x: 0, z: 52 },
+  { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
+  { x: -9, z: -31 }, { x: 0, z: -27 }, { x: 0, z: -20 }, { x: 0, z: -12 },
+  { x: -4, z: 0 }, { x: 2, z: 15 }, { x: 2, z: 31 }, { x: 5, z: 42 },
+  { x: 7.2, z: 49.2 },
 ];
 
 function texturaProcedural(base, detalhe, tipo = 'placas') {
@@ -66,10 +80,13 @@ export const OPERACAO_FLAVIO_PROPS = [];
 export function preloadOperacaoFlavio() {
   if (preloadPromise) return preloadPromise;
   const loader = new GLTFLoader();
+  const draco = new DRACOLoader();
+  draco.setDecoderPath('/vendor/draco-r160/');
+  loader.setDRACOLoader(draco);
   const assets = Object.entries(PROP_FILES).map(([id, file]) => new Promise((resolve) => {
     loader.load(assetUrl(`${PROP_ROOT}${file}`), (gltf) => { templates.set(id, gltf.scene); resolve(); }, undefined, () => resolve());
   }));
-  preloadPromise = Promise.all([preloadCharacterAssets(['senador']), ...assets]);
+  preloadPromise = Promise.all([preloadCharacterAssets(['senador']), ...assets]).finally(() => draco.dispose());
   return preloadPromise;
 }
 
@@ -182,11 +199,6 @@ export function buildOperacaoFlavio(scene, T = {}) {
     const fim = z + d / 2;
     if (cursor < fim) bloco(nome, x, 1.65, (cursor + fim) / 2, 0.28, 3.3, fim - cursor, mats.parede);
   };
-  const planta = (x, z) => {
-    cilindro('vaso-terminal', x, 0.38, z, 0.5, 0.76, mats.interno);
-    const copa = new THREE.Mesh(new THREE.IcosahedronGeometry(0.85, 1), mats.verde);
-    copa.name = 'planta-terminal'; copa.position.set(x, 1.25, z); copa.castShadow = true; root.add(copa);
-  };
   const baliza = (x, z) => {
     cilindro('baliza-apron', x, 0.16, z, 0.09, 0.32, mats.metal);
     const lampada = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), mats.baliza);
@@ -205,41 +217,22 @@ export function buildOperacaoFlavio(scene, T = {}) {
     bloco('marca-pista-distante', x, -0.07, 78, 7, 0.03, 0.34, mats.branco, false, false);
   }
 
-  // Terminal executivo: fachada azul, divisórias claras, madeira e vidro aquecem a primeira etapa.
+  // Terminal executivo aberto: os móveis PBR dão abrigo sem transformar a primeira etapa em labirinto.
   paredeX('fachada-sul', 0, -52, 58, [-20, 20]);
   paredeX('fachada-norte', 0, -16, 58, [-17, 0, 17]);
   paredeZ('lateral-oeste', -29, -34, 36, [-43, -25]);
   paredeZ('lateral-leste', 29, -34, 36, [-43, -25]);
-  paredeZ('divisoria-oeste', -10, -34, 36, [-46, -34, -22]);
-  paredeZ('divisoria-leste', 10, -34, 36, [-46, -34, -22]);
-  paredeX('anel-sul', 0, -40, 38, [-14, 0, 14]);
-  paredeX('anel-norte', 0, -28, 38, [-14, 0, 14]);
   bloco('faixa-fachada-sul', 0, 2.9, -52.18, 58, 0.58, 0.16, mats.marinho, false);
   bloco('faixa-fachada-norte', 0, 2.9, -15.82, 58, 0.58, 0.16, mats.marinho, false);
   for (const x of [-26, -18, -10, 10, 18, 26]) {
     bloco('montante-vidro-terminal', x, 1.65, -15.72, 0.18, 3.1, 0.18, mats.marinho, false);
     bloco('janela-terminal', x, 1.75, -15.69, 7.3, 1.7, 0.05, mats.vidro, false, false);
   }
-  for (const [x, z] of [[-21,-46],[-2,-46],[18,-46],[-20,-34],[0,-34],[20,-34],[-20,-22],[0,-22],[20,-22]]) {
-    bloco('base-mesa-terminal', x, 0.43, z, 2.4, 0.78, 0.9, mats.marinho);
-    bloco('tampo-mesa-terminal', x, 0.88, z, 3.3, 0.12, 1.5, mats.madeira, false);
-    bloco('monitor-terminal', x, 1.48, z - 0.18, 1.05, 0.72, 0.12, mats.preto, false);
-    bloco('tela-terminal', x, 1.48, z - 0.25, 0.84, 0.5, 0.025, mats.tela, false, false);
-    cilindro('cadeira-terminal', x, 0.45, z + 1.25, 0.42, 0.7, mats.preto);
-    bloco('encosto-cadeira-terminal', x, 1.05, z + 1.42, 0.9, 1.05, 0.18, mats.preto, false);
-  }
-  for (const x of [-6.4, 6.4]) {
-    bloco('balcao-recepcao', x, 0.64, -18.6, 7.6, 1.28, 1.15, mats.madeira);
-    bloco('frente-balcao-recepcao', x, 0.66, -19.19, 7.15, 0.82, 0.08, mats.marinho, false);
-    bloco('friso-balcao-recepcao', x, 1.08, -19.24, 7.15, 0.08, 0.04, mats.amarelo, false, false);
-  }
-  planta(-26, -18.5); planta(26, -18.5); planta(-3.2, -25); planta(3.2, -25);
   for (const z of [-47, -35, -23]) {
     bloco('perfil-teto-terminal', 0, 3.55, z, 57, 0.16, 0.3, mats.marinho, false);
     for (const x of [-20, 0, 20]) bloco('luminaria-terminal', x, 3.42, z, 8.5, 0.05, 0.26, mats.luz, false, false);
   }
-  placa('placa-recepcao', 'RECEPÇÃO', 'CREDENCIAMENTO', 0, 2.5, -19.29, 5.5, 1.35, Math.PI);
-  placa('placa-terminal', 'TERMINAL EXECUTIVO', 'OPERAÇÃO FLÁVIO', 0, 3.85, -15.62, 14, 3.5, Math.PI);
+  placa('placa-rota-patio', 'PÁTIO', 'EMBARQUE ↑', 0, 4.25, -15.62, 6.8, 1.7, Math.PI);
   // Controle de acesso: pistas baixas, scanners, guaritas envidraçadas e fila clara.
   for (const x of [-31, 31]) {
     bloco('guarita-base', x, 0.55, 1, 10, 1.1, 15, mats.marinho);
@@ -250,23 +243,13 @@ export function buildOperacaoFlavio(scene, T = {}) {
   }
   bloco('separador-seguranca-oeste', -18, 0.52, 1, 0.52, 1.04, 28, mats.marinho);
   bloco('separador-seguranca-leste', 18, 0.52, 1, 0.52, 1.04, 28, mats.marinho);
-  for (const x of [-7, 7]) {
-    bloco('scanner-seguranca', x, 0.82, -10.5, 4.3, 1.64, 2.4, mats.marinho);
-    bloco('esteira-scanner', x, 1.06, -8.65, 4.3, 0.22, 1.3, mats.preto, false);
-    bloco('tela-scanner', x + (x < 0 ? 1.45 : -1.45), 1.82, -10.5, 0.85, 0.58, 0.08, mats.tela, false, false);
-  }
   for (const z of [-5, 1, 7]) for (const x of [-5.5, 5.5]) {
     cilindro('poste-fila', x, 0.55, z, 0.11, 1.1, mats.metal);
     bloco('fita-fila', 0, 0.95, z, 11, 0.06, 0.06, mats.laranja, false, false);
   }
-  for (const [x, z] of [[-11,-1],[11,3],[-11,10],[11,14]]) {
-    bloco('carro-bagagem', x, 0.62, z, 4.4, 1.24, 2.25, mats.amarelo);
-    for (const dx of [-1.45, 1.45]) cilindro('roda-carro-bagagem', x + dx, 0.23, z + 1.12, 0.25, 0.18, mats.preto);
-  }
   bloco('portico-controle', 0, 3.9, -13, 25, 0.36, 0.7, mats.marinho, false);
   bloco('coluna-portico-oeste', -12.2, 2, -13, 0.5, 4, 0.7, mats.marinho, false);
   bloco('coluna-portico-leste', 12.2, 2, -13, 0.5, 4, 0.7, mats.marinho, false);
-  placa('placa-controle-acesso', 'CONTROLE DE ACESSO', 'PASSAGEIROS E TRIPULAÇÃO', 0, 4.08, -13.38, 13.5, 3.35, Math.PI);
 
   // Hangar aeronáutico: estrutura azul, pórticos aparentes e piso técnico amarelo.
   bloco('parede-hangar-oeste', -36, 3.6, 35, 0.5, 7.2, 28, mats.hangar);
@@ -288,23 +271,17 @@ export function buildOperacaoFlavio(scene, T = {}) {
   const coberturaDireita = bloco('cobertura-hangar-direita', 18, 8.58, 35, 36.2, 0.18, 26, mats.hangar, false);
   coberturaDireita.rotation.z = -0.1; occluders.push(coberturaDireita);
   bloco('claraboia-hangar', 0, 10.38, 35, 4.2, 0.08, 26, mats.vidro, false, false);
-  for (const [x, z] of [[-27,28],[27,28],[-26,39],[27,40]]) {
-    bloco('bancada-hangar', x, 0.82, z, 5.2, 1.64, 1.8, mats.preto);
-    bloco('tampo-bancada-hangar', x, 1.45, z, 5.4, 0.12, 2, mats.metal, false);
-    bloco('painel-ferramentas', x, 2.5, z + (z < 34 ? -1 : 1), 5.2, 1.7, 0.12, mats.laranja, false);
-  }
   for (const x of [-24, -12, 12, 24]) faixaEntre('faixa-box-hangar', { x, z: 23 }, { x, z: 47 }, 0.18, mats.amarelo);
   faixaEntre('eixo-hangar', { x: 0, z: 21 }, { x: 0, z: 50 }, 0.24, mats.amarelo);
   for (const z of [26, 34, 42]) faixaEntre('travessa-box-hangar', { x: -24, z }, { x: 24, z }, 0.18, mats.amarelo);
 
-  placa('placa-hangar', 'HANGAR 01', 'AVIAÇÃO EXECUTIVA', 0, 6.7, 21.72, 11, 2.75, Math.PI);
+  placa('placa-hangar', 'HANGAR', 'ROTA ↑', 0, 6.65, 21.72, 6, 1.4, Math.PI);
   for (let x = -40; x <= 40; x += 8) bloco('faixa-apron', x, 0.075, 51, 4.2, 0.035, 0.22, mats.amarelo, false, false);
   faixaEntre('eixo-taxiamento', { x: 0, z: 47 }, { x: 0, z: 62 }, 0.26, mats.amarelo);
   for (let z = 49; z <= 64; z += 3) { baliza(-17, z); baliza(17, z); }
-  for (const x of [-31, -23, 23, 31]) bloco('barreira-apron', x, 0.52, 52, 3.4, 1.04, 0.9, mats.branco);
   const spot = new THREE.Mesh(new THREE.RingGeometry(7.5, 7.85, 48), mats.branco);
   spot.name = 'marca-estacionamento-aeronave'; spot.rotation.x = -Math.PI / 2; spot.position.set(0, 0.075, 55); root.add(spot);
-  placa('placa-embarque', 'EMBARQUE', 'PORTÃO 01', 20, 2.9, 49.8, 8, 2, Math.PI / 2);
+  placa('placa-embarque', 'EMBARQUE 01', 'AVIÃO →', 15, 2.2, 49.8, 4.4, 1.1, -Math.PI / 2);
 
   // Volumes além do limite fecham o horizonte como um aeroporto, não como uma arena vazia.
   for (const [x, z, w, h, d] of [[-57,-32,18,7,34],[57,-28,20,9,42],[-62,28,26,10,30],[62,34,25,8,34]]) {
@@ -321,33 +298,99 @@ export function buildOperacaoFlavio(scene, T = {}) {
     bloco('luz-poste-perimetro', 45.5, 5.15, z, 0.9, 0.18, 0.4, mats.luz, false, false);
   }
 
-  for (let i = 0; i < ESCORT_PATH.length - 1; i++) faixaEntre('rota-operacao-flavio', ESCORT_PATH[i], ESCORT_PATH[i + 1], 0.16, mats.amarelo, 0.09);
 
-  const usarProp = (id, pos, scale, fallback, yaw = 0) => {
+  const usarProp = (id, pos, desiredSize, fallback, yaw = 0, fallbackSolid = true) => {
     const template = templates.get(id);
-    if (!template) return bloco(`fallback-${id}`, pos[0], fallback[1] / 2, pos[2], fallback[0], fallback[1], fallback[2], mats.metal);
+    if (!template) return bloco(`fallback-${id}`, pos[0], fallback[1] / 2, pos[2], fallback[0], fallback[1], fallback[2], mats.metal, fallbackSolid);
     const model = template.clone(true);
-    model.name = id; model.position.set(...pos); model.rotation.y = yaw; model.scale.setScalar(scale);
+    model.name = id;
+    model.rotation.y = yaw;
+    model.scale.setScalar(1);
+    model.updateMatrixWorld(true);
+    const original = new THREE.Box3().setFromObject(model);
+    const size = original.getSize(new THREE.Vector3());
+    const maior = Math.max(size.x, size.y, size.z, 0.001);
+    model.scale.setScalar(desiredSize / maior);
+    model.position.set(pos[0], 0, pos[2]);
+    model.updateMatrixWorld(true);
+    const scaled = new THREE.Box3().setFromObject(model);
+    model.position.y = pos[1] - scaled.min.y;
+    model.userData.groundY = pos[1];
+    model.updateMatrixWorld(true);
+    const placed = new THREE.Box3().setFromObject(model);
+    model.userData.groundClearance = placed.min.y - pos[1];
+    model.userData.placedHeight = placed.max.y - placed.min.y;
     model.traverse((o) => {
       if (!o.isMesh) return;
       o.castShadow = true; o.receiveShadow = true; occluders.push(o);
     });
     root.add(model); return model;
   };
-  const objectivePlane = usarProp('aviao_executivo', [0, 0, 55], 13, [18, 5, 8], Math.PI);
-  usarProp('escada_embarque', [4.2, 0, 52], 3.2, [3, 2.4, 4], -Math.PI / 2);
-  usarProp('trator_bagagem', [-20, 0, 50], 3.1, [4.2, 2, 2.4], Math.PI / 2);
-  usarProp('carrinho_ferramentas', [27, 0, 38], 2.4, [2.2, 1.4, 1.2], Math.PI / 2);
-  usarProp('arco_seguranca', [0, 0, -13], 2.9, [3, 3, 0.8], 0);
+  const objectivePlane = usarProp('aviao_executivo', [0, 0.08, 55], 18, [18, 5, 8], Math.PI);
+  usarProp('escada_embarque', [4.2, 0.08, 52], 4, [3, 2.4, 4], -Math.PI / 2);
+  usarProp('trator_bagagem', [-20, 0.08, 50], 4.2, [4.2, 2, 2.4], Math.PI / 2);
+  usarProp('carrinho_ferramentas', [27, 0.08, 38], 2.2, [2.2, 1.4, 1.2], Math.PI / 2);
+  usarProp('arco_seguranca', [0, 0.08, -13], 3, [3, 3, 0.8], 0, false);
   const colliderDoProp = (id, x, y, z, w, h, d) => {
     if (!templates.has(id)) return;
     colliders.push({ minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 });
   };
-  colliderDoProp('aviao_executivo', 0, 0, 55, 18, 4.6, 8);
+  colliderDoProp('aviao_executivo', 0, 0, 56, 3.4, 4.6, 10);
   colliderDoProp('escada_embarque', 4.2, 0, 52, 3, 2.4, 4);
   colliderDoProp('trator_bagagem', -20, 0, 50, 4.2, 2, 2.4);
   colliderDoProp('carrinho_ferramentas', 27, 0, 38, 2.2, 1.4, 1.2);
-  colliderDoProp('arco_seguranca', 0, 0, -13, 3, 3, 0.8);
+  for (const x of [-1.28, 1.28]) colliders.push({
+    minX: x - 0.24, maxX: x + 0.24, minY: 0, maxY: 3,
+    minZ: -13.45, maxZ: -12.55,
+  });
+
+  const equipamentos = [
+    ['terminal_fachada', -18, -15.82, 16, 0, 16, 5, 1, false],
+    ['terminal_fachada', 18, -15.82, 16, 0, 16, 5, 1, false],
+    ['terminal_portal', 0, -52.15, 6, Math.PI, 5, 4, 2, false],
+    ['balcao_recepcao', -6.4, -19, 7.2, 0, 7, 1.4, 2.2, true],
+    ['balcao_recepcao', 6.4, -19, 7.2, 0, 7, 1.4, 2.2, true],
+    ['assentos_aeroporto', -20, -34, 6, Math.PI / 2, 6, 1.5, 2.2, true],
+    ['assentos_aeroporto', 20, -34, 6, -Math.PI / 2, 6, 1.5, 2.2, true],
+    ['assentos_aeroporto', -24, -43, 6, 0, 6, 1.5, 2.2, true],
+    ['assentos_aeroporto', 13, -43, 6, Math.PI, 6, 1.5, 2.2, true],
+    ['jardineira', -5, -25, 2.5, 0, 2.5, 1.8, 1.4, true],
+    ['jardineira', 5, -25, 2.5, Math.PI, 2.5, 1.8, 1.4, true],
+    ['jardineira', -20, -38, 2.5, Math.PI / 2, 2.5, 1.8, 1.4, true],
+    ['jardineira', 18, -28, 2.5, -Math.PI / 2, 2.5, 1.8, 1.4, true],
+    ['scanner_bagagem', -7, -10.5, 4.5, 0, 4.3, 2.2, 2.8, true],
+    ['scanner_bagagem', 7, -10.5, 4.5, Math.PI, 4.3, 2.2, 2.8, true],
+    ['barreiras_aeroporto', -10, 4, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
+    ['barreiras_aeroporto', 10, 10, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
+    ['barreiras_aeroporto', 7, 16, 5, 0, 4.5, 1.4, 1.2, true],
+    ['barreiras_aeroporto', 8, 31, 5, 0, 4.5, 1.4, 1.2, true],
+    ['carro_servico', -16, 15, 5, Math.PI / 2, 5, 2.4, 2.4, true],
+    ['carro_servico', -18, 38, 5, Math.PI / 2, 5, 2.4, 2.4, true],
+    ['energia_solo', 15, 14, 4, -Math.PI / 2, 4, 2, 2, true],
+    ['energia_solo', 16, 35, 4, -Math.PI / 2, 4, 2, 2, true],
+    ['estacao_manutencao', -26, 29, 5, Math.PI / 2, 5, 2.4, 2.4, true],
+    ['estacao_manutencao', 26, 40, 5, -Math.PI / 2, 5, 2.4, 2.4, true],
+    ['estacao_manutencao', -20, 46, 5, Math.PI / 2, 5, 2.4, 2.4, true],
+    ['containers_carga', -13, 29, 5, Math.PI / 2, 5, 2.6, 2.5, true],
+    ['containers_carga', 14, 41, 5, -Math.PI / 2, 5, 2.6, 2.5, true],
+    ['containers_carga', -13, 42, 5, Math.PI / 2, 5, 2.6, 2.5, true],
+    ['containers_carga', 18, 28, 5, -Math.PI / 2, 5, 2.6, 2.5, true],
+    ['carrinho_ferramentas', -9, 37, 2.2, 0, 2.2, 1.4, 1.2, true],
+    ['carrinho_ferramentas', 21, 46, 2.2, Math.PI, 2.2, 1.4, 1.2, true],
+    ['jardineira', 21, -46, 2.5, 0, 2.5, 1.8, 1.4, true],
+    ['energia_solo', 24, 18, 4, Math.PI / 2, 4, 2, 2, true],
+    ['containers_carga', -28, 39, 5, Math.PI / 2, 5, 2.6, 2.5, true],
+    ['barreiras_aeroporto', -8, 49, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
+    ['torre_iluminacao', -31, 49, 8, 0, 2.2, 8, 2.2, true],
+    ['torre_iluminacao', 31, 49, 8, Math.PI, 2.2, 8, 2.2, true],
+    ['barreiras_aeroporto', -23, 53, 5, 0, 4.5, 1.4, 1.2, true],
+    ['barreiras_aeroporto', 23, 53, 5, 0, 4.5, 1.4, 1.2, true],
+    ['barreiras_aeroporto', 11, 45, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
+  ];
+  for (const [id, x, z, size, yaw, w, h, d, solid] of equipamentos) {
+    usarProp(id, [x, 0.08, z], size, [w, h, d], yaw);
+    if (solid) colliderDoProp(id, x, 0, z, w, h, d);
+  }
 
   const sun = new THREE.DirectionalLight(0xffd2a1, 2.05);
   sun.position.set(-44, 68, -28); sun.castShadow = true; aplicaSombraSol(sun); root.add(sun);
@@ -359,6 +402,15 @@ export function buildOperacaoFlavio(scene, T = {}) {
   }
 
   const blocked = (x, z, inflate = 0.55) => colliders.some((c) => x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < 1.8 && c.maxY > 0.1);
+  const segmentBlocked = (a, b, inflate = 0.55) => {
+    const distancia = Math.hypot(b.x - a.x, b.z - a.z);
+    const passos = Math.max(1, Math.ceil(distancia / 0.35));
+    for (let i = 1; i < passos; i++) {
+      const t = i / passos;
+      if (blocked(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, inflate)) return true;
+    }
+    return false;
+  };
   const nodes = [];
   const adj = [];
   const step = 3.5;
@@ -368,7 +420,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
     for (let j = 0; j < nodes.length; j++) {
       if (i === j) continue;
       const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z;
-      if (dx * dx + dz * dz <= step * step * 2.2) adj[i].push(j);
+      if (dx * dx + dz * dz <= step * step * 2.2 && !segmentBlocked(nodes[i], nodes[j])) adj[i].push(j);
     }
   }
   const nearestWaypoint = (x, z) => {
@@ -400,13 +452,13 @@ export function buildOperacaoFlavio(scene, T = {}) {
 
   const escortPath = ESCORT_PATH.map((p) => ({ ...p }));
   const spawns = {
-    B: [{ x: -24, z: -49, yaw: 0 }, { x: -17, z: -49, yaw: 0 }, { x: -10, z: -48, yaw: 0 }, { x: -3, z: -48, yaw: 0 }],
+    B: [{ x: -20, z: -48, yaw: 0 }, { x: -17.8, z: -46.5, yaw: 0 }, { x: -22.2, z: -46.5, yaw: 0 }, { x: -20, z: -50.5, yaw: 0 }],
     E: [{ x: -32, z: 13, yaw: 0 }, { x: 32, z: 13, yaw: 0 }, { x: -30, z: 45, yaw: Math.PI }, { x: 30, z: 45, yaw: Math.PI }],
   };
 
   return {
     root, colliders, occluders, decalSolids: [root], pickups, sun, hemi, spawns,
-    mode: 'escort', escortPath, objectivePlane,
+    mode: 'escort', escortPath, escortCoverPoints: escortPath.map((p) => ({ ...p })), objectivePlane,
     groundHeightAt: () => 0, slowAt: () => false,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -43, maxX: 43, minZ: -57, maxZ: 57 },
