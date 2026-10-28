@@ -1113,7 +1113,9 @@ console.log('\n· granada online: o 5 pede ao servidor e não spawna local; `nad
   g.state = 'live';
   const p = g.player; p.frags = 1; p.smokes = 1; p._nextNade = 0;
   g._kd({ code: 'Digit5', preventDefault() {} });
-  cobra(g._grenades.length === 0 && p.frags === 0, 'o 5 online NÃO spawna granada local e desconta o HUD (predição)');
+  cobra(p.nade === 'frag' && p.frags === 1, 'o 5 equipa a frag sem lançar antes do clique');
+  g._md({ button: 0, target: null, preventDefault() {} });
+  cobra(g._grenades.length === 0 && p.frags === 0, 'o clique online não spawna granada local e desconta o HUD');
   net.enviados.length = 0;
   g._mp.stepPlayer(p, { ax: 0, az: 0, crouch: false, shift: false, jump: false });
   g._mp.stepPlayer(p, { ax: 0, az: 0, crouch: false, shift: false, jump: false });

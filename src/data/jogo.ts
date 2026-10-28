@@ -194,6 +194,13 @@ export const MAPAS: Mapa[] = [
   {"id": "corrego", "nome": "Córrego (Favela de SP)", "modo": "CTF · rounds opcional", "ctf": true, "resumo": "Favela de São Paulo organizada em torno de um córrego.", "detalhe": "O córrego faz parte da paisagem e das rotas de travessia. Escolha Capture the Flag ou rounds antes da partida."},
   {"id": "posto_treta", "nome": "Posto da Treta", "modo": "CTF · rounds opcional", "ctf": true, "resumo": "Posto de gasolina de beira de estrada, com bombas, marquise e loja.", "detalhe": "Bombas, marquise e loja dividem as áreas de combate. Abre em Capture the Flag; também aceita rounds."},
   {"id": "velho_oeste", "nome": "Sertão da Treta", "modo": "CTF · rounds opcional", "ctf": true, "resumo": "Arena no sertão, com construções e paisagem da caatinga.", "detalhe": "Explore as rotas da arena do sertão. Abre em Capture the Flag; escolha o modo no menu antes de jogar."},
+  {
+    id: 'invasao_javaporcos', nome: 'Invasão dos Javaporcos', modo: 'Hordas cooperativas', ctf: false,
+    resumo: 'Oito ondas de javalis invasores avançam da mata sobre uma cidade do interior.',
+    detalhe: 'A defesa começa no campo, cruza milho, curral, silo e posto rural e termina no portão do bairro. ' +
+      'Jovens, adultos, matriarcas e um aríete têm vida, velocidade e pontuação próprias. ' +
+      'O time vence ao limpar as oito ondas antes que os três objetivos percam toda a integridade.',
+  },
 ];
 
 export interface Personagem { id: string; grupo: string; nome: string; blurb: string; }

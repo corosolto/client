@@ -1,8 +1,8 @@
 import { WEAPONS } from './data/weapons.js';
 
-export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v6', 'coro-snapshot-v5', 'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
+export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v7', 'coro-snapshot-v6', 'coro-snapshot-v5', 'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
 export const MAX_SNAPSHOT_BYTES = 32768;
-const CURRENT_VERSION = 6;
+const CURRENT_VERSION = 7;
 const KIND_SNAPSHOT = 1;
 const MAX_ENTITIES = 64;
 const MAX_CTF_POINTS = 16;
@@ -34,6 +34,12 @@ class Writer {
     this.u8(bytes.byteLength); this.ensure(bytes.byteLength);
     new Uint8Array(this.buffer, this.offset, bytes.byteLength).set(bytes); this.offset += bytes.byteLength;
   }
+  json(value) {
+    const bytes = value == null ? new Uint8Array() : encoder.encode(JSON.stringify(value));
+    if (bytes.byteLength > 8192) throw new RangeError('objective_too_large');
+    this.u16(bytes.byteLength); this.ensure(bytes.byteLength);
+    new Uint8Array(this.buffer, this.offset, bytes.byteLength).set(bytes); this.offset += bytes.byteLength;
+  }
   done() { return new Uint8Array(this.buffer.slice(0, this.offset)); }
 }
 
@@ -56,6 +62,14 @@ class Reader {
     const n = this.u8();
     if (n > MAX_STRING_BYTES) throw new RangeError('string_too_long');
     this.take(n); const value = decoder.decode(this.bytes.subarray(this.offset, this.offset + n)); this.offset += n; return value;
+  }
+  json() {
+    const n = this.u16();
+    if (n > 8192) throw new RangeError('objective_too_large');
+    this.take(n);
+    if (!n) return null;
+    const text = decoder.decode(this.bytes.subarray(this.offset, this.offset + n)); this.offset += n;
+    try { return JSON.parse(text); } catch { throw new TypeError('objective_json'); }
   }
   finish() { if (this.offset !== this.bytes.byteLength) throw new RangeError('snapshot_trailing_bytes'); }
 }
@@ -107,7 +121,7 @@ const integer = (value, max, name) => {
 
 export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
   if (!snapshot || snapshot.type !== 'snapshot') throw new TypeError('snapshot_required');
-  if (version < 2 || version > 6) throw new TypeError('snapshot_version');
+  if (version < 2 || version > 7) throw new TypeError('snapshot_version');
   const ents = Array.isArray(snapshot.ents) ? snapshot.ents : [];
   if (ents.length > MAX_ENTITIES) throw new RangeError('too_many_entities');
   const w = new Writer();
@@ -144,6 +158,7 @@ export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
       }
     }
   }
+  if (version >= 7) w.json(snapshot.objective);
   w.u8(ents.length);
   for (const ent of ents) {
     if (ent.team !== 'E' && ent.team !== 'B') throw new RangeError('team');
@@ -194,7 +209,7 @@ export function decodeSnapshot(data) {
   const r = new Reader(data);
   if (r.u8() !== 0x43 || r.u8() !== 0x53 || r.u8() !== 0x42 || r.u8() !== 0x32) throw new TypeError('snapshot_magic');
   const version = r.u8();
-  if (version < 2 || version > 6 || r.u8() !== KIND_SNAPSHOT) throw new TypeError('snapshot_version');
+  if (version < 2 || version > 7 || r.u8() !== KIND_SNAPSHOT) throw new TypeError('snapshot_version');
   const snapshot = {
     type: 'snapshot', room: r.str(), tick: r.u32(), t: r.f64(), state: r.str(), owner: r.str() || null,
     players: r.u8(), spectators: r.u8(), livre: { E: r.u8(), B: r.u8() },
@@ -220,6 +235,7 @@ export function decodeSnapshot(data) {
       });
     }
   }
+  if (version >= 7) snapshot.objective = r.json();
   const count = r.u8();
   if (count > MAX_ENTITIES) throw new RangeError('too_many_entities');
   for (let i = 0; i < count; i++) {
