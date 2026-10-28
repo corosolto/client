@@ -3621,7 +3621,7 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
 #hud-treta .ht-ganho.on{opacity:1;transform:none}
 #hud-treta .ht-dica{flex-basis:100%;font:700 11px/1.2 var(--aaa-font-body,sans-serif);letter-spacing:.08em;color:#cfd6c0}
 #hud-treta .ht-dica:empty{display:none}
-#compra-menu{position:absolute;left:24px;top:50%;transform:translateY(-50%);z-index:40;min-width:300px;max-width:min(380px,calc(100vw - 32px));padding:10px;background:var(--tp-vidro,rgba(11,17,22,.9));border:1px solid var(--tp-vidro-borda,rgba(255,255,255,.18));border-radius:10px;backdrop-filter:blur(4px);pointer-events:auto;font-family:var(--aaa-font-body,sans-serif)}
+#compra-menu{position:absolute;left:24px;top:50%;transform:translateY(-50%);z-index:40;min-width:300px;max-width:min(380px,calc(100vw - 32px));padding:10px;background:rgba(11,14,10,.92);border:1px solid var(--tp-vidro-borda,rgba(255,255,255,.18));border-radius:10px;backdrop-filter:blur(4px);pointer-events:auto;font-family:var(--aaa-font-body,sans-serif)}
 #compra-menu.hidden{display:none}
 #compra-menu .cm-cabeca{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:2px 4px 8px;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,.14);font:800 12px/1 inherit;letter-spacing:.14em;color:#cfd6c0}
 #compra-menu .cm-cabeca b{font-size:16px;letter-spacing:.04em;color:#b4d92e}
