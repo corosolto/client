@@ -775,6 +775,8 @@ class Netcode {
     const yaw = game.camera.rotation.y;
     const pan = Math.max(-1, Math.min(1, (dx * Math.cos(yaw) - dz * Math.sin(yaw)) / (sd || 1)));
     try { game.sfx.shotWeapon(ent.weapon || 'ak', sd, 0.5, pan, Math.min(0.25, sd / 343)); } catch { /* ctx mudo */ }
+    // Com `ev`, o tiroDeRede já acende na mesma boca: dois clarões sobrepostos dobravam brilho e custo.
+    if (this._evOn && game._bocaLigada?.()) return;
     // clarão na boca da arma do corpo (eval:boca-cano); sem corpo, o ponto antigo no peito
     let boca = null;
     try { boca = game._bocaDaArmaDoCorpo?.(ent.mesh?.group) || null; } catch { boca = null; }
