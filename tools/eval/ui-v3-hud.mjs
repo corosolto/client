@@ -58,7 +58,7 @@ async function preparar(page, mutante) {
   if (mutante === 'xp-falso') await reescreve(js, (t) => t.replace("seq.className = 'tp-hud-seq';", "seq.className = 'tp-hud-seq'; seq.insertAdjacentHTML('beforeend', '<b>+150 XP</b>');"));
   if (mutante === 'municao-proporcional') await reescreve(css, (t) => t.replace('#ammo-mag{font-variant-numeric:tabular-nums}', '#ammo-mag{font-variant-numeric:proportional-nums}'));
   if (mutante === 'sem-hs') await reescreve(js, (t) => t.replace("row.querySelector('.kf-skull')", "row.querySelector('.kf-nada')"));
-  if (mutante === 'dica-eterna') await reescreve(js, (t) => t.replace('const DICAS_S = 60;', 'const DICAS_S = 6000;'));
+  if (mutante === 'dica-eterna') await reescreve(js, (t) => t.replace('const DICAS_S = 15;', 'const DICAS_S = 6000;'));
   if (mutante === 'badge-solto') await reescreve(css, (t) => t.replace(':root[data-ui="v3"]:not([data-tp-debug]) #vm-debug-badge{display:none}', ''));
   if (mutante === 'dica-na-mira') await reescreve(css, (t) => t.replace('.tp-hud-dicas{position:absolute;left:50%;bottom:clamp(16px,2.5vh,28px)', '.tp-hud-dicas{position:absolute;left:50%;bottom:50%'));
   if (mutante === 'placar-abates') await reescreve(/\/js\/game\.js/, (t) => t.replace('this._uiV3() ? this.roundsWon[side] : this.roundKills[side]', 'this.roundKills[side]'));
@@ -228,7 +228,8 @@ async function medir(mutante = '', alvo = '') {
   g0 = await p.evaluate(caixas);
   const dicas0 = await p.evaluate(() => {
     const d = document.querySelector('.tp-hud-dicas');
-    return { n: d ? d.querySelectorAll('kbd').length : 0, vis: !!d && d.checkVisibility({ opacityProperty: true }) };
+    const teclas = d ? [...d.querySelectorAll('span:not([hidden]) kbd')].map((kbd) => kbd.textContent) : [];
+    return { teclas, vis: !!d && d.checkVisibility({ opacityProperty: true }) };
   });
   /* VM: diferença entre o quadro com e sem a cena do viewmodel, no mesmo instante de jogo */
   const vm = await p.evaluate(() => { const g = window.__game; g._tpCongela = g.update; g.update = () => {}; return true; });
@@ -249,22 +250,34 @@ async function medir(mutante = '', alvo = '') {
     }
     return { frac: vm && (vmPx + coberto) ? coberto / (vmPx + coberto) : 0, total: vmPx + coberto };
   })();
-  await p.evaluate(() => { const g = window.__game; g.time += 61; });
-  await p.waitForTimeout(1200);
-  const dicas1 = await p.evaluate(() => { const d = document.querySelector('.tp-hud-dicas'); return !!d && d.checkVisibility({ opacityProperty: true }); });
-  const alt = await p.evaluate(async () => {
-    const vis = () => document.querySelector('.tp-hud-dicas').checkVisibility({ opacityProperty: true });
-    dispatchEvent(new KeyboardEvent('keydown', { key: 'Alt', code: 'AltLeft' }));
-    await new Promise((res) => setTimeout(res, 900));
-    const comAlt = vis();
-    dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft' }));
-    await new Promise((res) => setTimeout(res, 900));
-    return { comAlt, semAlt: vis() };
+  const tutorial = await p.evaluate(async () => {
+    const g = window.__game;
+    const barra = document.querySelector('.tp-hud-dicas');
+    const espera = (ms = 550) => new Promise((resolve) => setTimeout(resolve, ms));
+    const teclas = () => [...barra.querySelectorAll('span:not([hidden]) kbd')].map((kbd) => kbd.textContent).join(' ');
+    const vis = () => barra.checkVisibility({ opacityProperty: true });
+    const inicial = teclas();
+    g.time += 16; await espera(1200);
+    const expirou = !vis();
+    g.time -= 16; await espera(1200);
+    g.player.pos.x += 2; await espera();
+    const depoisMover = teclas();
+    g.player.nextShotAt = Math.max(g.player.nextShotAt || 0, g.time + 1); await espera();
+    const depoisAtirar = teclas();
+    g.player.reloadUntil = Math.max(g.player.reloadUntil || 0, g.time + 1); await espera(1200);
+    const completo = !vis();
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'Alt', code: 'AltLeft' })); await espera(900);
+    const comAlt = vis(), ajuda = teclas();
+    dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft' })); await espera(1200);
+    return { inicial, expirou, depoisMover, depoisAtirar, completo, comAlt, ajuda, semAlt: vis() };
   });
-  const teclas = await p.evaluate(() => [...document.querySelectorAll('.tp-hud-dicas kbd')].map((k) => k.textContent).join(' '));
-  add('HU16', alt.comAlt && !alt.semAlt && teclas === 'E B F Z/X/V Y/U M TAB ALT',
-    `barra de comandos [${teclas}], depois de 1 min ${alt.comAlt ? 'volta' : 'não volta'} com ALT e ${alt.semAlt ? 'fica' : 'some'} ao soltar`);
-  add('HU6', dicas0.n >= 3 && dicas0.vis && !dicas1, `dicas de tecla: ${dicas0.n} teclas, ${dicas0.vis ? 'visíveis' : 'escondidas'} no começo, ${dicas1 ? 'ainda visíveis' : 'somem'} depois de 1 min`);
+  const ajudaEsperada = 'WASD MOUSE 1 R E B F Z/X/V M TAB ALT';
+  add('HU16', tutorial.comAlt && !tutorial.semAlt && tutorial.ajuda === ajudaEsperada,
+    `ALT mostra [${tutorial.ajuda}] e ${tutorial.semAlt ? 'mantém' : 'recolhe'} a ajuda ao soltar`);
+  const tutorialOk = dicas0.vis && dicas0.teclas.join(' ') === 'WASD' && tutorial.inicial === 'WASD'
+    && tutorial.expirou && tutorial.depoisMover === 'MOUSE 1' && tutorial.depoisAtirar === 'R' && tutorial.completo;
+  add('HU6', tutorialOk,
+    `tutorial ${tutorial.inicial} → ${tutorial.depoisMover} → ${tutorial.depoisAtirar}; ${tutorial.expirou ? 'expira' : 'não expira'} em 15 s e ${tutorial.completo ? 'recolhe' : 'fica'} ao recarregar`);
 
   const badge = await p.evaluate(async () => {
     const b = document.getElementById('vm-debug-badge');

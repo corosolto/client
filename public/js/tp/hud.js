@@ -1,7 +1,7 @@
 /* Treta Pop · 05 HUD, 13 HUD com chat, placar (Tab), 21 HUD por toque. Carregado por tp/ligar.js só com ?ui=v3. */
 import { tr, frase } from '../i18n.js';
 
-const DICAS_S = 60;
+const DICAS_S = 15;
 const PING_MS = 4000;
 const RETRATOS = 5;
 const ID_SEGURO = /^[\w-]+$/;
@@ -41,6 +41,7 @@ let jogo = null;
 let inicioAoVivo = null;
 let altSegurado = false;
 let ping = null;
+let tutorial = null;
 const mudos = new Set();
 
 export function ligar() {
@@ -105,14 +106,18 @@ function montarHud(hud) {
   if (acoes) acoes.prepend(el('span', 'tp-hud-cam'));
   /* Teclas lidas do game.js (_input) e do ping deste módulo; nenhuma muda aqui. */
   const dicas = el('div', 'tp-hud-dicas');
-  dicas.title = tr('Comandos: somem em 60 s, voltam com ALT');
-  const dica = (teclas, txt) => {
+  dicas.title = tr('Guia inicial: três ações, comandos completos com ALT');
+  const dica = (teclas, txt, passo = null) => {
     const s = el('span');
+    if (passo != null) s.dataset.tutorial = String(passo);
     s.append(el('kbd', null, teclas));
     s.append(document.createTextNode(` ${tr(txt)}`));
     dicas.append(s);
     return s;
   };
+  dica('WASD', 'Mover', 0);
+  dica('MOUSE 1', 'Atirar', 1);
+  dica('R', 'Recarregar', 2);
   dica('E', 'pegar');
   dica('B', 'câmera');
   dica('F', 'ping');
@@ -150,11 +155,32 @@ function barraApertada(dicas) {
   });
 }
 
+function atualizarTutorial(g, barra) {
+  if (!barra || g.state !== 'live') return false;
+  const p = g.player;
+  if (!tutorial) tutorial = {
+    x: p.pos.x, z: p.pos.z, passo: 0,
+    tiro: p.nextShotAt || 0, recarga: p.reloadUntil || 0,
+  };
+  if (tutorial.passo === 0 && Math.hypot(p.pos.x - tutorial.x, p.pos.z - tutorial.z) >= 1) tutorial.passo = 1;
+  if (tutorial.passo === 1 && (p.nextShotAt || 0) > tutorial.tiro) {
+    tutorial.passo = 2;
+    tutorial.recarga = p.reloadUntil || 0;
+  }
+  if (tutorial.passo === 2 && (p.reloadUntil || 0) > tutorial.recarga) tutorial.passo = 3;
+  for (const item of barra.children) {
+    const passo = item.dataset.tutorial;
+    item.hidden = !altSegurado && (passo == null || Number(passo) !== tutorial.passo);
+  }
+  return tutorial.passo >= 3;
+}
+
 function tique() {
   const g = window.__game;
   if (g !== jogo) {
     jogo = g;
     inicioAoVivo = null;
+    tutorial = null;
     mudos.clear();
     apagarPing();
     for (const f of document.querySelectorAll('.tp-hud-retratos')) f.replaceChildren();
@@ -162,14 +188,16 @@ function tique() {
   if (!g || !g.combatants) return;
   if (inicioAoVivo == null && g.state === 'live') inicioAoVivo = g.time;
   atualizarRetratos(g);
-  const sumiu = inicioAoVivo != null && g.time - inicioAoVivo > DICAS_S && !altSegurado;
-  for (const d of document.querySelectorAll('.tp-hud-dicas,.tp-toque-mira-dica')) d.toggleAttribute('data-sumiu', sumiu);
   const barra = document.querySelector('.tp-hud-dicas');
+  const completo = atualizarTutorial(g, barra);
+  const expirou = inicioAoVivo != null && g.time - inicioAoVivo > DICAS_S;
+  const sumiu = !altSegurado && (completo || expirou);
+  for (const d of document.querySelectorAll('.tp-hud-dicas,.tp-toque-mira-dica')) d.toggleAttribute('data-sumiu', sumiu);
   if (barra && !sumiu) barra.toggleAttribute('data-aperto', barraApertada(barra));
   atualizarCamera(g);
   atualizarAbates();
   const chat = document.querySelector('.tp-hud-dicas [data-chat]');
-  if (chat) chat.hidden = !!$('hud-atalho-chat')?.hidden;
+  if (chat) chat.hidden = !altSegurado || !!$('hud-atalho-chat')?.hidden;
   const arma = g.player?.weapon;
   const slot = arma === 'knife' ? 'knife' : arma && arma === g.player.primary ? 'primary' : arma ? 'secondary' : '';
   for (const b of document.querySelectorAll('#touch-ui .touch-wep')) b.toggleAttribute('data-tp-ativa', b.dataset.wep === slot);
