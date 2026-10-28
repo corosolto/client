@@ -1,7 +1,8 @@
 /* llm.mjs — chamada ao LLM, uma abstração, quatro provedores.
    ─────────────────────────────────────────────────────────────────────────────
    "opencode" (padrão): shells out pro `opencode run` configurado na máquina.
-   "ollama": servidor local em 127.0.0.1:11434. "openai": endpoint compatível
+   "ollama": servidor local, host em OLLAMA_HOST (padrão 127.0.0.1:11434) e
+   modelo em OLLAMA_MODEL (padrão qwen3.5:4b). "openai": endpoint compatível
    via LLM_BASE_URL/LLM_API_KEY/LLM_MODEL. "fixture": responde de um arquivo —
    é o que faz os testes 100% offline dos bots (sem rede, sem modelo).
    Todas devolvem TEXTO; o chamador extrai o JSON. */
@@ -36,12 +37,24 @@ function viaOpencode(prompt, cfg) {
   return semAnsi(r.stdout).split('\n').filter((l) => !/^>\s/.test(l) && l.trim() !== '').join('\n').trim();
 }
 
+/* Modelo: OLLAMA_MODEL > config.json > padrão. O padrão é o único modelo
+ * realmente local nesta máquina (qwen3.5:4b, 3,97 GB); os `*:cloud` do
+ * `/api/tags` exigem conta/rede e não servem de fallback offline.
+ * Host via OLLAMA_HOST (mesma convenção do CLI do ollama, "host:porta"). */
+const ollamaBase = () => {
+  const h = (process.env.OLLAMA_HOST || '127.0.0.1:11434').trim();
+  return /^https?:\/\//.test(h) ? h.replace(/\/+$/, '') : `http://${h.replace(/\/+$/, '')}`;
+};
+
 async function viaOllama(prompt, cfg) {
-  const r = await fetch('http://127.0.0.1:11434/api/generate', {
+  const base = ollamaBase(), model = process.env.OLLAMA_MODEL || cfg.modelo || 'qwen3.5:4b';
+  const r = await fetch(`${base}/api/generate`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model: cfg.modelo || 'llama3.1', prompt, stream: false }),
+    body: JSON.stringify({ model, prompt, stream: false, think: false }),
   });
-  if (!r.ok) throw new Error(`ollama ${r.status}`);
+  /* 404 aqui quase sempre é "modelo não baixado", não "servidor fora do ar":
+   * o erro antigo ("ollama 404") não dizia qual modelo nem em qual host. */
+  if (!r.ok) throw new Error(`ollama ${r.status} em ${base} (modelo ${model}): ${(await r.text().catch(() => '')).slice(0, 200)}`);
   return (await r.json()).response;
 }
 

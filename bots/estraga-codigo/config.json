@@ -4,7 +4,7 @@
   "keychain": "estraga-codigo",
   "intervalo_min": 10,
   "provedor": "ollama",
-  "modelo": "qwen3.6-16k:27b",
+  "modelo": "qwen3.5:4b",
   "max_descobertas": 6,
   "pular_drafts": true,
   "fix_max": 3,
