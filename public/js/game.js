@@ -44,6 +44,10 @@ import { perfilArma } from './data/weapon-profiles.js';
 export { perfilArma };
 import { saidaPenetracao, direcaoDesviada, resolverRaio } from './ballistics.js';
 import { entradaCombatente, ALCANCE_TIRO, alturaDoOlho } from './hitboxes.js';
+import { CABECAS_HITBOX, CABECA_PADRAO } from './data/cabecas-hitbox.js';
+// Cabeça justa à malha (régua: tools/eval/headshot-hitbox-check.mjs). ?hscaixa=0 volta à
+// esfera de 0,50 m, que o servidor de MP ainda usa.
+const HS_CAIXA = new URLSearchParams(location.search).get('hscaixa') !== '0';
 export { saidaPenetracao, resolverRaio };
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
 // autoritativo) e tools/eval/botdiag.mjs. Consumidor novo importa de data/weapons.js.
@@ -4108,12 +4112,21 @@ export class Game {
     const paredes = this.ray.intersectObjects(this.world.occluders, false);
     const atores = [...(this.bots || []), ...(this.dedicated ? [] : [this.player])];
     const alvos = atores.filter(e => e && e !== shooter && e.alive && !e._idle && e.team !== shooter.team)
-      .map(ent => ({ ent, pos: ent.pos, crouchF: ent.crouchF || 0 }));
+      .map(ent => ({ ent, pos: ent.pos, crouchF: ent.crouchF || 0, cabeca: this._perfilCabeca(ent) }));
     const hit = resolverRaio({ origem: from, direcao: dir, alvos, paredes, alcance: ALCANCE_TIRO,
       intersectar: entradaCombatente,
       atravessar: parede => this._penetrationExit(parede, dir, wid, this._surfaceOf(parede.object)) });
     if (hit?.object) hit.sup = this._surfaceOf(hit.object);
     return hit;
+  }
+
+  // Yaw do CORPO: bot gira o grupo em yaw; o corpo do jogador é yaw + 180° (_updatePlayerTP).
+  // Sem medida (procedural, id novo) vale a mediana do elenco, nunca a esfera velha.
+  _perfilCabeca(ent) {
+    if (!HS_CAIXA) return null;
+    const p = CABECAS_HITBOX[ent.def?.id] || CABECA_PADRAO;
+    const yaw = ent.isPlayer ? (ent.yaw || 0) + Math.PI : (ent.mesh?.group?.rotation?.y ?? ent.yaw ?? 0);
+    return { ...p, yaw };
   }
 
   _origemTiroBot(bot) {

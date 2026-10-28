@@ -66,6 +66,7 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 
 | Linha | Símbolo | Linhas |
 |---:|---|---:|
+| 50 | `HS_CAIXA` | 10 |
 | 59 | `ANNOUNCER_LAB` | 4 |
 | 63 | `VMLAB` | 3 |
 | 68 | `VM_QA_CICLO` | 3 |
@@ -241,6 +242,7 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 4031 | `_distanceDamage()` | 7 |
 | 4038 | `_shotDamage()` | 10 |
 | 4048 | `_consultarTiro()` | 13 |
+| 4120 | `_perfilCabeca()` | 7 |
 | 4061 | `_origemTiroBot()` | 4 |
 | 4065 | `_miraTiroBot()` | 5 |
 | 4070 | `_participanteHumano()` | 4 |
