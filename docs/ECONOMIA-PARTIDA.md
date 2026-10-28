@@ -89,6 +89,19 @@ antigas continuam medindo o mesmo jogo.
 | modo sem rodada (`?arena=1`) | a janela de compra abre a cada renascimento |
 | HUD | `TRETA$ 800` em verde-lima acima da vida, com `+300` a cada abate e a dica `B COMPRAR · 17s` |
 
+### Bots
+
+Mesma regra do jogador, sem tabela por dificuldade (a dificuldade já mexe na mira):
+
+- nascem de faca + pistola com TRETA$ 800 e guardam a arma sorteada para a partida
+  (`pickMatchWeapons`, a mesma que o `main.js` pré-carrega; comprar outra traria GLB
+  que não foi baixado);
+- no começo de cada rodada, quem tem saldo compra a sorteada (`compraDoBot`); quem não
+  tem segura a pistola, a rodada de eco do CS. Quem sorteou DEAGLE ou .38 já compra na 1ª;
+- ganham por abate e por rodada como o jogador;
+- morreu, larga a arma e volta de pistola; só recompra na rodada seguinte (no `?arena=1`,
+  a cada renascimento).
+
 Régua: `npm run eval:economia-jogo` sobe o `Game` real no arnês (EJ1 a EJ9) com quatro
 mutantes (carteira do menu, tecla 1 dando AWP, morte sem perda, armário de volta).
 
