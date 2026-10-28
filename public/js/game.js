@@ -41,6 +41,7 @@ import { urlDoBrasao } from './brasoes_versao.js';
 
 import { WEAPONS } from './data/weapons.js';
 import { danoComArmadura, ARMADURA_MAX } from './armadura.js';
+import { vestirArmadura } from './armadura-visual.js';
 import { perfilArma } from './data/weapon-profiles.js';
 export { perfilArma };
 import { saidaPenetracao, direcaoDesviada, resolverRaio } from './ballistics.js';
@@ -4322,6 +4323,13 @@ export class Game {
     box.classList.toggle('com-capacete', !!(chave && p.helmet));
     const num = this._armorNum || (this._armorNum = document.getElementById('armor-num'));
     if (num) num.textContent = String(colete);
+  }
+  // Visual provisório (armadura-visual.js) segue o estado; barato porque só monta quando a chave do modelo muda.
+  _sincronizarArmaduraVisual() {
+    if (!ARMADURA) return;
+    const vestir = (ent, model) => model && vestirArmadura(model, { colete: ent.armor > 0, capacete: !!ent.helmet && ent.armor > 0 });
+    if (this.playerTP?.isGLB) vestir(this.player, this.playerTP.ctrl?.model);
+    for (const b of this.bots) if (b.mesh?.isGLB) vestir(b, b.mesh.ctrl?.model);
   }
   _fleshImpact(pos, dir, head, footY = null, byPlayer = true, armored = false) {
     if (!GUNFEEL) return;
@@ -9018,6 +9026,7 @@ export class Game {
     // 57 operações de Canvas2D por quadro exibido a 5 FPS (régua tools/eval/passo-sim-check.mjs).
     this._updateHud();
     this._updateRadar();
+    this._sincronizarArmaduraVisual();
     // hint de pointer lock: visível só quando o jogo está ativo mas sem lock
     if (this.el.lockHint)
       this.el.lockHint.classList.toggle('hidden',
