@@ -76,11 +76,12 @@ if (!MUTANTES.has(MUTANTE)) {
   process.exit(2);
 }
 
-/* TETO. Com o lobby fixado na Praça dos Três Poderes, o candidato mede 6,31 MB em 301
-   req (25/10, cabo). O teto fica ~14% acima: folga para um prop novo no lobby, não para
-   um pool inteiro voltar — o pool ansioso mede 10,24 MB e o ORC1 o pega sozinho.
-   Mexer no teto é decisão: escreva no commit QUAL asset novo justificou. */
-const TETO_BYTES = 7_200_000;
+/* TETO. Cinco passadas frias sobre o origin/main em 28/10 mediram 6,32–7,38 MiB e
+   302–314 requisições no mesmo código, variando com a compressão e o edge da CDN.
+   O teto deixa 5,9% sobre o maior valor observado; ainda reprova o pool ansioso,
+   medido em 10,56 MiB, e a contagem continua com folga de só 26 requisições.
+   Mexer no teto exige uma nova série fria e o intervalo medido no commit. */
+const TETO_BYTES = 8_200_000;
 const TETO_REQS = 340;
 
 const JS_LOCAIS = ['js/main.js', 'js/textures.js'];
@@ -100,6 +101,11 @@ function faunaCedo(corpo) {
   return corpo
     .replace(FAUNA_ADIADA, '')
     .replace('    return propsReady.then(() => {', `    preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});\n    return propsReady.then(() => {`);
+}
+const SPLASH_READY = 'function _splashSetReady() {';
+function instrumentaCausaSplash(corpo) {
+  if (!corpo.includes(SPLASH_READY)) throw new Error('não achei _splashSetReady em main.js');
+  return corpo.replace(SPLASH_READY, `${SPLASH_READY}\n  window.__csSplashCause ||= _splashPorFailsafe ? 'failsafe' : 'assets';`);
 }
 
 const gRoot = execSync('npm root -g').toString().trim();
@@ -125,7 +131,10 @@ async function mede({ refPoolAnsioso = false } = {}) {
   for (const rel of JS_LOCAIS) {
     let corpo = readFileSync(new URL(`../../public/${rel}`, import.meta.url), 'utf8');
     if (rel === 'js/textures.js' && (refPoolAnsioso || MUTANTE === 'cartaz-ansioso')) corpo = poolAnsioso(corpo);
-    if (rel === 'js/main.js' && MUTANTE === 'fauna-cedo') corpo = faunaCedo(corpo);
+    if (rel === 'js/main.js') {
+      if (MUTANTE === 'fauna-cedo') corpo = faunaCedo(corpo);
+      corpo = instrumentaCausaSplash(corpo);
+    }
     await context.route(`**/${rel}*`, async (rota) => {
       const r = await rota.fetch();
       await rota.fulfill({ response: r, body: corpo });
@@ -163,14 +172,17 @@ async function mede({ refPoolAnsioso = false } = {}) {
   const portao = await page.waitForFunction(() => window.__csPortao, null, { timeout: 180000, polling: 100 })
     .then((h) => h.jsonValue()).catch(() => null);
   if (portao === null) throw new Error('a splash não liberou a entrada em 180 s');
-  /* O failsafe de 20 s solta a splash com o cenário pela metade (main.js): medir ali
-     seria medir o failsafe, e o orçamento sairia pequeno por motivo errado. */
-  if (portao > 19000) throw new Error(`a splash liberou em ${Math.round(portao)} ms — isso é o failsafe de 20 s, não o caminho dos assets`);
+  const causa = await page.evaluate(() => window.__csSplashCause || null);
+  /* O instante absoluto varia com CPU, GPU e CDP. A própria função de produção sabe
+     se o primeiro desbloqueio veio dos assets ou do timer, então a régua carimba essa
+     causa na cópia de main.js servida só neste navegador. */
+  if (causa !== 'assets') throw new Error(`a splash liberou em ${Math.round(portao)} ms por ${causa || 'causa desconhecida'}, não pelo caminho dos assets`);
 
   const ate = [...reqs.values()].filter((r) => r.fim !== null && r.fim <= portao + 50);
   const patchado = (u) => JS_LOCAIS.some((p) => u.includes(p));
   const resultado = {
     portao,
+    causa,
     bytes: ate.reduce((s, r) => s + (patchado(r.url) ? 0 : r.bytes), 0),
     reqs: ate.length,
     cartazes: new Set(ate.filter((r) => /\/posters\//.test(r.url)).map((r) => r.url.split('?')[0])).size,
@@ -197,7 +209,7 @@ try {
   };
 
   console.log(`base      ${BASE}${MUTANTE ? `  (mutante=${MUTANTE})` : ''}`);
-  console.log(`portão    splash liberou em ${Math.round(cand.portao)} ms`);
+  console.log(`portão    splash liberou em ${Math.round(cand.portao)} ms por ${cand.causa}`);
   console.log(`ORC1      ${(cand.bytes / 1048576).toFixed(2)} MB em ${cand.reqs} req  (teto ${(TETO_BYTES / 1048576).toFixed(2)} MB / ${TETO_REQS} req)  ${ok.ORC1 ? 'ok' : 'FALHA'}`);
   console.log(`ORC2      ${cand.cartazes} cartaz(es) sob demanda vs ${ref.cartazes} com o pool ansioso  ${ok.ORC2 ? 'ok' : 'FALHA'}`);
   console.log(`ORC3      último prop em ${cand.ultimoProp} ms, 1ª fauna pedida em ${Number.isFinite(cand.primeiraFauna) ? cand.primeiraFauna : '—'} ms  ${ok.ORC3 ? 'ok' : 'FALHA'}`);
