@@ -6,7 +6,8 @@
    pistola 134 px abaixo, 48 px à direita. Causa: o estilo 'foco' baixava a arma
    de propósito (off y −0,08/−0,10) e a pistola nem alinhava (auto:false).
    O conserto (`adsEfetivo` em data/vmconfig.js, kill-switch ?ads1pfix=0) leva
-   alça e massa ao eixo da câmera nas armas com `ads.linha` (pistol, deagle).
+   o cano ao eixo da câmera nas armas com `ads.linha`; pistol e deagle usam um
+   foco alinhado (cano reto e centrado, arma abaixo da cruz como os fuzis).
    A AK golden ficou no foco aprovado (cano já a 0°; eval:vm-mira reprova a linha).
 
    COMO MEDE: refaz em Node a cadeia do runtime (authoredvm.js: câmera do GLB
@@ -17,7 +18,8 @@
    que o ADS automático centra seria tautologia (lição do eval:vm-mira); o
    socket aparece só como informação.
 
-   L1  topo da arma na faixa central a ≤ 4 px da cruz (vertical), 16:9 e 3:2
+   L1  topo da arma na faixa central a ≤ 4 px da cruz (vertical), 16:9 e 3:2;
+       só no estilo efetivo 'linha' (o foco alinhado deixa a arma abaixo da cruz)
    L2  centro da ponta (massa) a ≤ 4 px da cruz (horizontal)
    L3  cano sem guinada: |yaw| ≤ 0,09 rad (regra do dono: não girar para exibir)
 
@@ -241,7 +243,8 @@ for (const arma of ARMAS) {
       console.log(`FALHA ${arma} ${nome} — arma fora da faixa central; ${sock}; ${ang}`);
       continue;
     }
-    const L1 = Math.abs(vista.dy) <= LIM_PX, L2 = Math.abs(vista.dx) <= LIM_PX, L3 = Math.abs(yaw) <= LIM_YAW;
+    // Foco alinhado (linha.estilo 'foco'): cano reto e centrado, arma abaixo da cruz (BUG-181).
+    const L1 = m.ads.estilo !== 'linha' || Math.abs(vista.dy) <= LIM_PX, L2 = Math.abs(vista.dx) <= LIM_PX, L3 = Math.abs(yaw) <= LIM_YAW;
     const graus = (d) => Math.atan(d / k) / D2R;
     const txt = `massa vista a (${fmt(vista.dx)}, ${fmt(vista.dy)}) px da cruz em ${w}×${h} [${fmt(graus(vista.dx), 2)}°, ${fmt(-graus(vista.dy), 2)}° no FOV ${(fov / D2R).toFixed(1)}°]; ${sock}; ${ang}`;
     if (!L1) falhas.push(`${arma} ${nome}: L1 topo ${fmt(vista.dy)} px da cruz (teto ${LIM_PX})`);
