@@ -49,6 +49,7 @@
                     `if (false) return;`                                  -> CC3 vermelha
      clique-pos-chat game.js: _md perde o `|| this._chatSeguraPausa()`   -> CC3 vermelha
      yu-so-live     game.js: Y/U voltam a exigir state live/countdown     -> CC3 vermelha
+     yu-mudo        game.js: Y/U voltam a morrer calados sem chat           -> CC3 vermelha
      stick-sem-portao game.js: o stick volta a andar com a entrada travada -> CC3 vermelha
      chat-inseguro  net.js: enviarChat manda por `enviarInseguro`      -> CC2 vermelha
      chat-sem-meta  net.js: `_chatPronto` ignora `chatLigado()`         -> CC2 vermelha
@@ -372,6 +373,19 @@ async function cc3(cobra, { GameClasse }) {
     cobra(aberturas.length === 4, `CC3c em roundEnd e matchEnd Y ainda abre o chat (${aberturas.length - 2} de 2 aberturas)`);
     g.state = 'boot'; g._kd(tecla('KeyY', alvoCanvas)); g.state = 'live';
     cobra(aberturas.length === 4, 'CC3c em boot Y não abre o chat');
+    /* 3c-bis · SEM chat (partida local, ou nó sem MP_CHAT: `abrir` devolve false) a tecla não pode
+       ficar muda — era o relato "o chat em jogo não abre", 28/10/2026. */
+    const avisos = []; g._abilityNotice = (t) => avisos.push(String(t));
+    g.onAbrirChat = null; g.online = false;
+    g._kd(tecla('KeyY', alvoCanvas));
+    cobra(avisos.length === 1 && /multiplayer/i.test(avisos[0]), `CC3f partida local: Y avisa onde o chat mora (${JSON.stringify(avisos)})`);
+    g.online = true; g.onAbrirChat = () => false;
+    g._kd(tecla('KeyU', alvoCanvas));
+    cobra(avisos.length === 2 && /servidor/i.test(avisos[1]), `CC3f sala sem chat: U avisa que o servidor desligou (${JSON.stringify(avisos)})`);
+    g.onAbrirChat = (ch) => { aberturas.push(ch); return true; };
+    g._kd(tecla('KeyY', alvoCanvas));
+    cobra(aberturas.length === 5 && avisos.length === 2, `CC3f com chat ligado a tecla abre e não avisa (${aberturas.length} aberturas, ${avisos.length} avisos)`);
+    g.online = false;
     g.keys = {};
     // 3d · travarEntrada zera tudo e desliga o portão de input
     if (typeof g.travarEntrada !== 'function') {
@@ -704,7 +718,8 @@ const MUTANTES = [
   ['trava-inerte', 'CC3', cc3, async () => ({ ...ctx, GameClasse: (await importarMutado('public/js/game.js', (s) => s.replace(/this\._entradaTravada \|\| entradaPropria\(e\.target\)/g, 'false'), 'trava-inerte')).Game })],
   ['plc-antigo', 'CC3', cc3, async () => ({ ...ctx, GameClasse: (await importarMutado('public/js/game.js', (s) => s.replace(/if \(this\._chatSeguraPausa\(\)\) return;/, 'if (false) return;'), 'plc-antigo')).Game })],
   ['clique-pos-chat', 'CC3', cc3, async () => ({ ...ctx, GameClasse: (await importarMutado('public/js/game.js', (s) => s.replace('entradaPropria(e.target) || this._chatSeguraPausa()', 'entradaPropria(e.target)'), 'clique-pos-chat')).Game })],
-  ['yu-so-live', 'CC3', cc3, async () => ({ ...ctx, GameClasse: (await importarMutado('public/js/game.js', (s) => s.replace("this.onAbrirChat && !this.paused && this.state !== 'boot')", "this.onAbrirChat && !this.paused && (this.state === 'live' || this.state === 'countdown'))"), 'yu-so-live')).Game })],
+  ['yu-so-live', 'CC3', cc3, async () => ({ ...ctx, GameClasse: (await importarMutado('public/js/game.js', (s) => s.replace("(e.code === 'KeyY' || e.code === 'KeyU') && !this.paused && this.state !== 'boot')", "(e.code === 'KeyY' || e.code === 'KeyU') && !this.paused && (this.state === 'live' || this.state === 'countdown'))"), 'yu-so-live')).Game })],
+  ['yu-mudo', 'CC3', cc3, async () => ({ ...ctx, GameClasse: (await importarMutado('public/js/game.js', (s) => s.replace(/if \(!abriu\) this\._abilityNotice\(this\.online/, 'if (false) this._abilityNotice(this.online'), 'yu-mudo')).Game })],
   ['stick-sem-portao', 'CC3', cc3, async () => ({ ...ctx, GameClasse: (await importarMutado('public/js/game.js', (s) => s.replace('(this.touchMove.x || this.touchMove.z) && !this._entradaTravada)', '(this.touchMove.x || this.touchMove.z))'), 'stick-sem-portao')).Game })],
   ['chat-inseguro', 'CC2', cc2, async () => ({ ...ctx, net: { mod: await importarMutado('public/js/net.js', (s) => s.replace(/this\.tp\.enviar\(JSON\.stringify\(\{ type: 'chat',/, "this.tp.enviarInseguro(JSON.stringify({ type: 'chat',"), 'chat-inseguro'), motivo: '' } })],
   ['chat-sem-meta', 'CC2', cc2, async () => ({ ...ctx, net: { mod: await importarMutado('public/js/net.js', (s) => s.replace(/return this\.chatLigado\(\) && !!this\.tp\?\.pronto;/, 'return !!this.tp?.pronto;'), 'chat-sem-meta'), motivo: '' } })],
