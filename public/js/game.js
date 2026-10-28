@@ -5011,7 +5011,9 @@ export class Game {
     // (bbox de malha skinned) caía 10,9 m atrás da câmera em produção: aí vale a da pose.
     const cam = this.camera.getWorldPosition(new THREE.Vector3());
     const rel = this._muzzleWorld(STATIC_CLASS[this.player.weapon] || 'rifle').clone().sub(cam);
-    if (rel.length() > 2 || rel.dot(this.camera.getWorldDirection(new THREE.Vector3())) < 0.2) {
+    // A boca autorada da AK fica a 2,25 m na vmScene: o teto de 2 m a descartava (40 px fora do cano).
+    const tetoRel = this._bocaLigada() ? 4 : 2;
+    if (rel.length() > tetoRel || rel.dot(this.camera.getWorldDirection(new THREE.Vector3())) < 0.2) {
       rel.copy(this.camera.localToWorld(new THREE.Vector3(0.1, -0.06, -0.75))).sub(cam);
     }
     return cam.addScaledVector(rel.normalize(), 1.5);
