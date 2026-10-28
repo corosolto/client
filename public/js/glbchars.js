@@ -991,7 +991,13 @@ class CharController {
   update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
     if (!this.dead) {
       if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
-      if (this.crouch) {
+      if (this._mantleF !== null && this.actions.jump) {
+        if (this.cur !== this.actions.jump) { this._to('jump'); this.jumping = false; }
+        const jump = this.actions.jump;
+        jump.paused = true;
+        jump.time = jump.getClip().duration * (0.08 + this._mantleF * 0.88);
+        this.curName = 'jump';
+      } else if (this.crouch) {
         this._to(moving > 0.05 ? 'crouchwalk' : 'crouch');
       } else if (this.shooting && moving > 0.05 && this.actions.walkfire) {
         // Atirar EM MOVIMENTO: o clipe combinado (walk+fire) mantém as pernas andando —
@@ -1003,15 +1009,9 @@ class CharController {
         this.actions.shoot.paused = false;
         this._to('shoot', true, false);
       } else if (this._ar && this.actions.jump) {
-        // Pulo livre segura a última pose; mantle amarra takeoff/alcance/pouso à travessia.
         if (this.cur !== this.actions.jump) { this._to('jump'); this.jumping = false; }
         const jump = this.actions.jump;
-        if (this._mantleF !== null) {
-          jump.paused = true;
-          jump.time = jump.getClip().duration * (0.08 + this._mantleF * 0.88);
-        } else {
-          jump.paused = jump.time >= jump.getClip().duration - 0.02;
-        }
+        jump.paused = jump.time >= jump.getClip().duration - 0.02;
         this.curName = 'jump';
       } else if (this._landT > 0 && this.actions.crouch) {
         this._landT = Math.max(0, this._landT - dt);

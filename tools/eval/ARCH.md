@@ -91,7 +91,7 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 295 | `MOVE_MUL` | 6 |
 | 302 | `MOVE2` | 4 |
 | 306 | `STEP_H` | 3 |
-| 317 | `MANTLE_GRID` | 5 |
+| 321 | `EMPTY_COLLIDERS` | 5 |
 | 322 | `RACK_OLD` | 4 |
 | 326 | `RACK_RETA` | 25 |
 | 353 | `RADIO` | 5 |
@@ -328,6 +328,7 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 5942 | `_collide()` | 23 |
 | 5965 | `_collideRot()` | 22 |
 | 5987 | `_mantleAlcance()` | 50 |
+| 6116 | `_mantleColliders()` | 10 |
 | 6037 | `_mantleAlcancavel()` | 12 |
 | 6049 | `_mantleTarget()` | 35 |
 | 6144 | `_beginMantle()` | 16 |

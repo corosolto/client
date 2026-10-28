@@ -316,6 +316,9 @@ const MANTLE_T_MAX = 0.44;
 const MANTLE_SCAN = 0.05;   // não pula apoios estreitos entre duas amostras de colisão
 /* Grade menor que o corpo impede frestas; 0,75 m aliasava rampas e o pontão amazônico. */
 const MANTLE_GRID = 0.50;
+const MANTLE_SCAN_DT = 0.05;
+const MANTLE_COLLIDER_GRID = 4;
+const EMPTY_COLLIDERS = Object.freeze([]);
 /* KILL-SWITCH DO ARMÁRIO DO SPAWN (P3, 01/08). `?rack=old` traz de volta o layout cego
    (2 fileiras fixas a 2,0/3,25 m atrás do spawn, x absoluto) E a seleção antiga (só a arma
    mais próxima em 1,9 m) — os dois juntos são o bug que o dono reportou às 20:38, e ficam
@@ -2794,6 +2797,7 @@ export class Game {
     this._roundOverPedido = false;
     this._resetKillSequence();
     this._resetPositions();
+    if (MANTLE && !this._mAlc) this._mantleAlcance();
     if (this.ctf) this._initCTF();
     this.state = 'countdown';
     this.stateUntil = this.time + 3;
@@ -6002,8 +6006,8 @@ export class Game {
      ainda não olham `ry`, `map-check`, `pickup-check`). Só quem passa pela rejeição paga
      o seno/cosseno, e os senos vêm precomputados do mapa. Medido no botsim (determinístico,
      60 s × 6 mapas): ver o commit desta correção. */
-  _collide(pos, r) {
-    for (const c of this.world.colliders) {
+  _collide(pos, r, colliders = this.world.colliders) {
+    for (const c of colliders) {
       const nx = Math.max(c.minX, Math.min(pos.x, c.maxX));
       const nz = Math.max(c.minZ, Math.min(pos.z, c.maxZ));
       const dx = pos.x - nx, dz = pos.z - nz;
@@ -6091,8 +6095,30 @@ export class Game {
         if (ok) { vis[d] = 1; fila.push(d); }
       }
     }
-    this._mAlc = { nx, nz, G, minX: B.minX, minZ: B.minZ, alt, vis };
+    const CG = MANTLE_COLLIDER_GRID;
+    const cnx = Math.max(1, Math.ceil((B.maxX - B.minX) / CG));
+    const cnz = Math.max(1, Math.ceil((B.maxZ - B.minZ) / CG));
+    const col = new Map();
+    for (const c of W.colliders) {
+      const i0 = Math.max(0, Math.floor((c.minX - 0.38 - B.minX) / CG));
+      const i1 = Math.min(cnx - 1, Math.floor((c.maxX + 0.38 - B.minX) / CG));
+      const k0 = Math.max(0, Math.floor((c.minZ - 0.38 - B.minZ) / CG));
+      const k1 = Math.min(cnz - 1, Math.floor((c.maxZ + 0.38 - B.minZ) / CG));
+      for (let i = i0; i <= i1; i++) for (let k = k0; k <= k1; k++) {
+        const key = i * cnz + k;
+        const bucket = col.get(key);
+        if (bucket) bucket.push(c); else col.set(key, [c]);
+      }
+    }
+    this._mAlc = { nx, nz, G, minX: B.minX, minZ: B.minZ, alt, vis, CG, cnx, cnz, col };
     return this._mAlc;
+  }
+  _mantleColliders(x, z) {
+    const M = this._mAlc || this._mantleAlcance();
+    const i = Math.floor((x - M.minX) / M.CG);
+    const k = Math.floor((z - M.minZ) / M.CG);
+    if (i < 0 || i >= M.cnx || k < 0 || k >= M.cnz) return EMPTY_COLLIDERS;
+    return M.col.get(i * M.cnz + k) || EMPTY_COLLIDERS;
   }
   /* O ponto (x, z) na cota `y` é chão que a caminhada já alcança? Olha a vizinhança de uma
      célula porque a grade é grossa de propósito; a cota tem que BATER (dentro do degrau),
@@ -6118,11 +6144,11 @@ export class Game {
     dx /= n; dz /= n;
     const chao = W.groundHeightAt(pos.x, pos.z, pos.y);
     const teto = chao + MANTLE_H;
-    const p = new THREE.Vector3();
+    const p = this._mantleProbe || (this._mantleProbe = new THREE.Vector3());
     for (let d = MANTLE_D0; d <= MANTLE_ALC + 1e-6; d += MANTLE_SCAN) {
       const px = pos.x + dx * d, pz = pos.z + dz * d;
       const py = W.groundHeightAt(px, pz, teto + 0.5);   // Y do teto: resolve mapa multinível
-      p.set(px, py, pz); this._collide(p, 0.38);
+      p.set(px, py, pz); this._collide(p, 0.38, this._mantleColliders(px, pz));
       if (Math.abs(p.x - px) > 1e-3 || Math.abs(p.z - pz) > 1e-3) continue;
       if (py <= chao + STEP_H) continue;   // ainda é o mesmo chão; a beirada pode estar mais adiante
       if (py > teto) return null;
@@ -6131,7 +6157,7 @@ export class Game {
       const ax = px + dx * MANTLE_APOIO, az = pz + dz * MANTLE_APOIO;
       const ay = W.groundHeightAt(ax, az, py + 0.5);
       if (Math.abs(ay - py) > STEP_H) return null;
-      p.set(ax, ay, az); this._collide(p, 0.38);
+      p.set(ax, ay, az); this._collide(p, 0.38, this._mantleColliders(ax, az));
       if (Math.abs(p.x - ax) > 1e-3 || Math.abs(p.z - az) > 1e-3) return null;
       if (!this._mantleAlcancavel(ax, az, ay)) return null;   // território novo: ver _mantleAlcance
       return { x: ax, y: ay, z: az };
@@ -6630,9 +6656,11 @@ export class Game {
     if (inp.jump && !p._spaceHeld) p.jumpBufferedUntil = this.time + 0.13;
     p._spaceHeld = !!inp.jump;
     const aceitaMovimento = this._acceptInput();
-    const target = aceitaMovimento && inp.jump && (ix || iz) && p.crouchF < 0.7
-      ? this._mantleTarget(p.pos, wx, wz)
-      : null;
+    if (!inp.jump) p._mantleScanAt = 0;
+    const podeEscanear = aceitaMovimento && inp.jump && (ix || iz) && p.crouchF < 0.7
+      && this.time >= (p._mantleScanAt || 0);
+    const target = podeEscanear ? this._mantleTarget(p.pos, wx, wz) : null;
+    if (podeEscanear) p._mantleScanAt = this.time + MANTLE_SCAN_DT;
     if (target) this._beginMantle(p, target);
     else if ((p.jumpBufferedUntil || 0) > this.time && this.time < (p.coyoteUntil || 0) && aceitaMovimento) {
       p.vel.y = this.world.jumpImpulse ?? 5.0;
@@ -7614,6 +7642,8 @@ export class Game {
     const g = b.mesh.group;
     const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
     b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;
+    b.mantle = null; b.mantleF = 0; b._spaceHeld = false; b._mantleScanAt = 0;
+    b.jumpBufferedUntil = 0; b.coyoteUntil = 0;
     /* Renascem sobrepostos de propósito: jitter no spawn foi medido e reprovado. Quem
        desempilha é a despenetração do _botSeparation. Números: docs/MULTIPLAYER.md. */
     b.protUntil = this.time + SPAWN_PROT;

@@ -129,6 +129,9 @@ const m = await page.evaluate(async () => {
     const an6 = { picoCm: antesFlinch.distanceTo(pos(cabeca)) * 100 };
     roda(45); an6.voltaCm = antesFlinch.distanceTo(pos(cabeca)) * 100;
     ctrl.setCrouch(true); roda(12);
+    ctrl.setMantle(0.5); roda(1);
+    const an11 = { estado: ctrl.curName, tempo: ctrl.actions.jump?.time || 0 };
+    ctrl.setMantle(null); roda(1);
     const antesTiro = pos(cabeca); ctrl.shoot(); roda(3);
     const an7 = { recuoCm: antesTiro.distanceTo(pos(cabeca)) * 100, estado: ctrl.curName };
     roda(20); ctrl.setCrouch(false); roda(12);
@@ -143,7 +146,7 @@ const m = await page.evaluate(async () => {
     const an2 = { quedaCm: (base.cabeca.y - meio.cabeca.y) * 100, frenteCm: Math.abs((meio.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100, voltaCm: Math.abs((fim.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100 };
     const an3 = { leanK, deslocCm: Math.abs((cabecaLean.clone().sub(base.cabeca)).dot(direita())) * 100, voltaCm: Math.abs((cabecaVolta.clone().sub(base.cabeca)).dot(direita())) * 100, mortoDeslocCm: Math.abs((mortoCom.clone().sub(morto0)).dot(direita())) * 100 };
     const cumpre = an1.foiCm >= 8 && an1.aoPenteCm <= an1.basePenteCm - 10 && an2.frenteCm >= 5 && an3.deslocCm >= 4;
-    if (cumpre || !melhor) melhor = { charId: ctrl.charId, an1, an2, an3, an6, an7, an8, an9 };
+    if (cumpre || !melhor) melhor = { charId: ctrl.charId, an1, an2, an3, an6, an7, an8, an9, an11 };
     if (cumpre) break;
   }
   return melhor || { erro: 'sem bot com arma de 2 mãos' };
@@ -221,6 +224,8 @@ if (!m.erro) {
     `AN8 · no ar o estado é ${m.an8.noAr} (não locomoção) e o pouso amortece em ${m.an8.noPouso}`);
   cobra('AN9', m.an9.lagImediato >= 0.25 && m.an9.lagDepois <= 0.08,
     `AN9 · giro de 2 rad deixou o quadril ${m.an9.lagImediato.toFixed(2)} rad atrás e ele alcançou em ${m.an9.lagDepois.toFixed(3)} rad`);
+  cobra('AN11', m.an11.estado === 'jump' && m.an11.tempo > 0,
+    `AN11 · mantle vence o agachamento na pose ${m.an11.estado}, com tempo ${m.an11.tempo.toFixed(3)} s`);
 }
 if (an4.dados) {
   cobra('AN4', an4.dados.jogadorRecarregando && an4.dados.botRecarregou,

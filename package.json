@@ -429,6 +429,8 @@
     "mut:mantle": "! node tools/eval/mantle-check.mjs corrego --mutante=beirada-baixa && ! node tools/eval/mantle-check.mjs fy_lajes --mutante=beirada-alta",
     "//eval:mantle-fluidez": "MF1 a MF5: Espaço + frente atravessa beirada aprovada em 18 a 28 quadros, sobe antes de avançar, limita deslocamento por quadro, pousa no apoio seguro e encerra o estado no chão. Mutante teleporte.",
     "eval:mantle-fluidez": "node tools/eval/mantle-fluidez-check.mjs && ! node tools/eval/mantle-fluidez-check.mjs --mutante=teleporte",
+    "//eval:mantle-network": "MN1 a MN3: respawn limpa travessia antiga, ack desloca a base absoluta e snapshot remoto anima progresso interpolado.",
+    "eval:mantle-network": "node tools/eval/mantle-network-check.mjs",
     "eval:authored-vm": "node tools/eval/authored-vm-check.mjs",
     "//eval:granada-porte": "GP1-GP5: granada equipada tem precedência sobre a faca no viewmodel (o arremesso com a faca na mão acontecia fora de tela) e o lançamento curto do botão direito cai a menos de 65% do alcance do cheio. Mutantes faca-na-frente e forca-ignorada.",
     "eval:granada-porte": "node tools/eval/granada-porte-check.mjs && ! node tools/eval/granada-porte-check.mjs --mutante=faca-na-frente && ! node tools/eval/granada-porte-check.mjs --mutante=forca-ignorada",

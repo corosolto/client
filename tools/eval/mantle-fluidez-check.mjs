@@ -11,6 +11,22 @@ const start = new THREE.Vector3(-4.1, -1.53, -27.8);
 const dir = { x: 0, z: 1 };
 const target = game._mantleTarget(start, dir.x, dir.z);
 assert(target, 'fixture perdeu a beirada escalável do canal');
+assert(game._mAlc, 'grade global de território foi adiada para o primeiro quadro jogável');
+const candidatos = game._mantleColliders(start.x, start.z);
+assert(candidatos.length < game.world.colliders.length,
+  `broadphase local não reduziu colisores (${candidatos.length}/${game.world.colliders.length})`);
+
+const sonda = player, alvoReal = game._mantleTarget.bind(game), tempoReal = game.time;
+let scans = 0;
+game._mantleTarget = () => { scans++; return null; };
+sonda._spaceHeld = false; sonda._mantleScanAt = 0; sonda.crouchF = 0; sonda.grounded = true;
+for (let frame = 0; frame < 12; frame++) {
+  game.time = tempoReal + frame / 60;
+  game._moveEntity(sonda, { ax: 0, az: -1, crouch: false, shift: false, jump: true }, 1 / 60);
+}
+game._mantleTarget = alvoReal;
+game.time = tempoReal;
+assert(scans >= 3 && scans <= 4, `Espaço segurado escaneou ${scans} vezes em 12 quadros; esperado 20 Hz`);
 
 player.pos.copy(start);
 player.vel.set(0, 0, 0);
@@ -20,6 +36,7 @@ player.crouchF = 0;
 player._spaceHeld = false;
 player.jumpBufferedUntil = 0;
 player.coyoteUntil = 0;
+player._mantleScanAt = 0;
 
 if (mutanteTeleporte) {
   game._stepMantle = (p) => {
