@@ -4310,6 +4310,19 @@ export class Game {
     ent.armor = d ? d.colete : 0;
     ent.helmet = !!(d && d.capacete && d.colete > 0);
   }
+  // Roda por quadro: só toca o DOM quando o texto muda (mesma regra do número de vida).
+  _updateArmaduraHud(p) {
+    const box = this._armorEl || (this._armorEl = document.getElementById('armor-hud'));
+    if (!box) return;
+    const colete = ARMADURA ? Math.max(0, Math.ceil(p.armor || 0)) : 0;
+    const chave = colete > 0 ? `${colete}${p.helmet ? 'c' : ''}` : '';
+    if (this._armorHudKey === chave) return;
+    this._armorHudKey = chave;
+    box.classList.toggle('hidden', !chave);
+    box.classList.toggle('com-capacete', !!(chave && p.helmet));
+    const num = this._armorNum || (this._armorNum = document.getElementById('armor-num'));
+    if (num) num.textContent = String(colete);
+  }
   _fleshImpact(pos, dir, head, footY = null, byPlayer = true, armored = false) {
     if (!GUNFEEL) return;
     // acerto alheio (parceiro levando tiro, bot×bot): só rende se perto — longe, espirra sangue invisível e come frame
@@ -8827,6 +8840,7 @@ export class Game {
     const hpLow = p.hp <= 35;
     if (this.el.hpFill.classList.contains('low') !== hpLow) this.el.hpFill.classList.toggle('low', hpLow);
     if (this.el.hpNum.classList.contains('low') !== hpLow) this.el.hpNum.classList.toggle('low', hpLow);
+    this._updateArmaduraHud(p);
     /* `player.kills` (partida), não `roundKills` (time, zera na virada). Escrito só quando
        muda porque este método roda por quadro. Régua: tools/eval/abateshud-check.mjs */
     const abates = p.kills | 0;
