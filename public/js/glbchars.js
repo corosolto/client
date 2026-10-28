@@ -497,7 +497,7 @@ const _v = new THREE.Vector3();
 const _gq = new THREE.Quaternion(), _wq = new THREE.Quaternion(), _pq = new THREE.Quaternion(), _headUpQ = new THREE.Quaternion();
 const _qLean = new THREE.Quaternion(), _axisF = new THREE.Vector3();
 const _right = new THREE.Vector3();
-const _ikTgt = new THREE.Vector3();
+const _ikTgt = new THREE.Vector3(), _ancoraPalma = new THREE.Vector3();
 function orientTpMount(t) {
   t.handBone.updateWorldMatrix(true, false);
   t.model.getWorldQuaternion(_gq);
@@ -505,10 +505,18 @@ function orientTpMount(t) {
   if (t.pegada) {
     // Vitrine (PV_PULSO): a orientação da MÃO sai da arma, não o contrário. Absoluto, então
     // chamar de novo no mesmo quadro (pós-IK, pós-porte 1h) não acumula giro.
-    t.handBone.parent.getWorldQuaternion(_pq).invert();
-    t.handBone.quaternion.copy(_pq.multiply(_wq).multiply(t.pegadaInv));
+    /* O giro é em torno da PALMA, não do pulso: girar no osso empurrava a palma ~2 cm pra
+       frente e esticava o braço da pistola (select-mount ESTICADO no esquerdomacho). O CCD
+       devolve a palma ao ponto do clipe; depois a mão é reorientada no braço já resolvido. */
+    const ancora = t.palmLocal && t.rArm && t.rFore ? t.handBone.localToWorld(_ancoraPalma.copy(t.palmLocal)) : null;
     t.mount.quaternion.copy(t.pegada);
-    t.handBone.updateWorldMatrix(false, true);
+    for (let i = 0; i < (ancora ? 2 : 1); i++) {
+      if (i) solveCCDIK([t.rArm, t.rFore], t.handBone, ancora, { iterations: 4, endOffset: t.palmLocal });
+      t.handBone.parent.updateWorldMatrix(true, false);
+      t.handBone.parent.getWorldQuaternion(_pq).invert();
+      t.handBone.quaternion.copy(_pq.multiply(_wq).multiply(t.pegadaInv));
+      t.handBone.updateWorldMatrix(false, true);
+    }
     return;
   }
   t.handBone.getWorldQuaternion(_pq);
