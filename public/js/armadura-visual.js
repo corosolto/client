@@ -167,27 +167,40 @@ function capaceteMint(body, m) {
 }
 
 function trocarPeca(v, body, m, peca, quer) {
-  const slot = v[peca] || (v[peca] = { prov: null, mint: null });
+  const slot = v[peca] || (v[peca] = { prov: null, mint: null, mintOn: false, provOn: false });
   if (quer) carregarModelo(peca);
   const medida = peca === 'colete' ? m.tronco : m.cabeca;
-  const usaMint = quer && medida && modeloPronto(peca);
+  const usaMint = !!(quer && medida && modeloPronto(peca));
   if (usaMint && !slot.mint) slot.mint = (peca === 'colete' ? coleteMint : capaceteMint)(body, m);
   if (quer && !usaMint && medida && !slot.prov) slot.prov = (peca === 'colete' ? coleteProvisorio : capaceteProvisorio)(body, m);
-  if (slot.mint) slot.mint.visible = !!usaMint;
-  if (slot.prov) slot.prov.visible = quer && !usaMint;
+  slot.mintOn = usaMint; slot.provOn = !!quer && !usaMint;
+  aplicarVisibilidade(v, peca);
+}
+function aplicarVisibilidade(v, peca) {
+  const slot = v[peca];
+  if (!slot) return;
+  if (slot.mint) slot.mint.visible = slot.mintOn && !v.oculto;
+  if (slot.prov) slot.prov.visible = slot.provOn && !v.oculto;
 }
 // Idempotente: a chave é por modelo (inclui "modelo do Mint pronto"), então o corpo reconstruído
 // (troca de arma) se veste sozinho e o provisório vira Mint quando o GLB chega.
 export function vestirArmadura(model, { colete = false, capacete = false } = {}) {
   if (!model) return false;
-  const chave = `${colete ? 1 : 0}${capacete ? 1 : 0}${modeloPronto('colete') ? 1 : 0}${modeloPronto('capacete') ? 1 : 0}`;
   let v = _vestido.get(model);
+  const chave = `${colete ? 1 : 0}${capacete ? 1 : 0}${modeloPronto('colete') ? 1 : 0}${modeloPronto('capacete') ? 1 : 0}`;
   if (v?.chave === chave) return !!v.body;
-  if (!v) _vestido.set(model, v = { chave, body: corpoComEsqueleto(model) });
+  if (!v) _vestido.set(model, v = { chave, body: corpoComEsqueleto(model), oculto: false });
   v.chave = chave;
   if (!v.body) return false;
   const m = medir(v.body);
   trocarPeca(v, v.body, m, 'colete', !!colete);
   trocarPeca(v, v.body, m, 'capacete', !!capacete);
   return true;
+}
+// Câmera 3P dentro do corpo: o game.js esconde as malhas próprias e as peças têm que sumir junto.
+export function ocultarArmadura(model, oculto) {
+  const v = model && _vestido.get(model);
+  if (!v || v.oculto === !!oculto) return;
+  v.oculto = !!oculto;
+  aplicarVisibilidade(v, 'colete'); aplicarVisibilidade(v, 'capacete');
 }

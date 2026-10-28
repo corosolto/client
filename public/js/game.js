@@ -41,7 +41,7 @@ import { urlDoBrasao } from './brasoes_versao.js';
 
 import { WEAPONS } from './data/weapons.js';
 import { danoComArmadura, ARMADURA_MAX } from './armadura.js';
-import { vestirArmadura } from './armadura-visual.js';
+import { vestirArmadura, ocultarArmadura } from './armadura-visual.js';
 import { perfilArma } from './data/weapon-profiles.js';
 export { perfilArma };
 import { saidaPenetracao, direcaoDesviada, resolverRaio } from './ballistics.js';
@@ -6484,6 +6484,7 @@ export class Game {
     tp.selfOccluded = selfOccluded;
     // Cruz no alvo do raio autoritativo a distância de combate; o tiro continua
     // saindo do olho com yaw/pitch, igual ao servidor multiplayer.
+    if (tp.isGLB) ocultarArmadura(tp.ctrl?.model, selfOccluded);   // colete/capacete entram depois de selfMeshes
     const aimPoint = this._tpAimPoint || (this._tpAimPoint = new THREE.Vector3());
     aimPoint.copy(this._eyeWorld).addScaledVector(fwd, 12 * (1 - orbitBlend));
     aimPoint.y -= 0.7 * orbitBlend;
