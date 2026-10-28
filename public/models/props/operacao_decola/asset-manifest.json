@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-10-28",
+  "assets": [
+    {
+      "id": "operacao-decola-map-card",
+      "provider": "OpenRouter · google/gemini-3-pro-image",
+      "source": null,
+      "runtime": "public/img/map-cards/operacao-decola-map-card.webp",
+      "bytes": 96888,
+      "sha256": "3c370e6d7f646a79a9e90815f110528cbad03f87fd2ce62495c5d9af0fff3f9b"
+    },
+    {
+      "id": "aviao-executivo",
+      "provider": "Mint asset pack",
+      "source": "references/glb/aviao_executivo.glb",
+      "runtime": "public/models/props/operacao_decola/aviao_executivo.glb",
+      "bytes": 367540,
+      "sha256": "73e289cc3b53e970a8fb980364f9227b7b2fcc9ad1360a82a20c6e1c505501f9"
+    },
+    {
+      "id": "trator-bagagem",
+      "provider": "Mint asset pack",
+      "source": "references/glb/trator_bagagem.glb",
+      "runtime": "public/models/props/operacao_decola/trator_bagagem.glb",
+      "bytes": 353696,
+      "sha256": "4a5e1402093213ebd33c85adf53bd1b040489d4fca8450416b51f94a716a798c"
+    },
+    {
+      "id": "carrinho-ferramentas",
+      "provider": "Mint asset pack",
+      "source": "references/glb/carrinho_ferramentas.glb",
+      "runtime": "public/models/props/operacao_decola/carrinho_ferramentas.glb",
+      "bytes": 368172,
+      "sha256": "d670c2587af214c15dba3e3715a1aae36ee2d61db1484a15a24fef4cae9872ca"
+    },
+    {
+      "id": "arco-seguranca",
+      "provider": "Mint asset pack",
+      "source": "references/glb/arco_seguranca.glb",
+      "runtime": "public/models/props/operacao_decola/arco_seguranca.glb",
+      "bytes": 288044,
+      "sha256": "bb335edaf327fca0428e6c27a53caf490a48f392f109b4b48f421de1d9397284"
+    },
+    {
+      "id": "escada-embarque",
+      "provider": "Mint asset pack",
+      "source": "references/glb/escada_embarque.glb",
+      "runtime": "public/models/props/operacao_decola/escada_embarque.glb",
+      "bytes": 430684,
+      "sha256": "62d23fdea58296151804c8146f031183cc17dff6c347243191f0a055d25b73be"
+    }
+  ]
+}
