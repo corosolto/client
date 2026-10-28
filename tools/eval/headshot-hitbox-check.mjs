@@ -23,13 +23,23 @@ O que esta régua faz, toda em node, com o CÓDIGO REAL do tiro:
     raios que de fato cruzam a cabeça da malha. Cláusula: |hitbox − malha| ≤
     max(4 pp, 20% da taxa da malha), na média do elenco.
 
-MUTANTE (tem que ficar VERMELHA):
-  --mutante=esfera   `_perfilCabeca` devolve null = exatamente o ?hscaixa=0 (esfera velha).
+  • J4 HUMANO: jogador, humano remoto e humano em slot do nó giram a cabeça pelo corpo;
+  • J5 PESCOÇO: o torso vai até a base da cabeça (mirar no pescoço acerta ≥ 85% a 10 m);
+  • J6 BOT: o bot mira pelo _miraTiroBot real; acerto total médio em 10/20/30 m a ±10 pp
+    da esfera antiga com mira no olho, e nenhum personagem abaixo de 50% a 10 m.
+  A "malha real" de J2/J3 é a silhueta da pose de idle com a cabeça nivelada, não o
+  rifle-hold em movimento.
+
+MUTANTES (cada um tem que ficar VERMELHO):
+  --mutante=esfera       `_perfilCabeca` devolve null = exatamente o ?hscaixa=0 (esfera velha).
+  --mutante=teto-antigo  torso volta a parar em 1,35 m (pescoço vira buraco)          → J5.
+  --mutante=mira-olho    bot volta a mirar no olho a 1,62 m                            → J6.
+  --mutante=yaw-humano   humano perde o +180° do corpo                                 → J4.
 
 USO
   node tools/eval/headshot-hitbox-check.mjs               # régua
   node tools/eval/headshot-hitbox-check.mjs --escrever    # regrava data/cabecas-hitbox.js do JSON
-  node tools/eval/headshot-hitbox-check.mjs --mutante=esfera
+  node tools/eval/headshot-hitbox-check.mjs --mutante=esfera   (teto-antigo, mira-olho, yaw-humano)
   node tools/eval/headshot-hitbox-check.mjs --json=saida.json   # números da simulação
 ═══════════════════════════════════════════════════════════════════════════════════ */
 import fs from 'node:fs';
@@ -44,12 +54,14 @@ const ESCREVER = args.includes('--escrever');
 const JSON_OUT = (args.find((a) => a.startsWith('--json=')) || '').split('=')[1] || null;
 const JSON_PATH = path.join(ROOT, 'tools/eval/cabecas-malha.json');
 const DATA_PATH = path.join(ROOT, 'public/js/data/cabecas-hitbox.js');
-if (MUT && MUT !== 'esfera') { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
+const MUTANTES = ['esfera', 'teto-antigo', 'mira-olho', 'yaw-humano'];
+if (MUT && !MUTANTES.includes(MUT)) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 /* vazMax vale para CADA personagem de frente (o duelo de CS é de frente). De perfil o
    capuz/gorro colado no crânio (ancap, reggae, blackmetal, et) é cortado da silhueta mas
    não do elipsoide — sobra o vazamento médio do elenco e um teto por personagem. */
-export const TETO = { cobMin: 0.80, vazMax: 0.25, vazLadoMedio: 0.15, vazLadoMax: 0.55, simAbs: 0.04, simRel: 0.20 };
+export const TETO = { cobMin: 0.80, vazMax: 0.25, vazDeclaradoMax: Infinity, vazLadoMedio: 0.15, vazLadoMax: 0.55, simAbs: 0.04, simRel: 0.20,
+  acertoPescocoMin: 0.85, botAcertoMin: 0.50, botAcertoDelta: 0.10 };
 
 const medida = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8'));
 /* Silhueta = pele de cabeça rasterizada, PREENCHIDA linha a linha entre o primeiro e o
@@ -130,7 +142,14 @@ ${linhas.join('\n')}
 
 /* ── O JOGO REAL ───────────────────────────────────────────────────────────────────── */
 const { Game, THREE, CHARACTERS } = await import('./harness.mjs');
-const { entradaCombatente } = await import('../../public/js/hitboxes.js');
+let { entradaCombatente } = await import('../../public/js/hitboxes.js');
+const { direcaoDesviada } = await import('../../public/js/ballistics.js');
+if (MUT === 'teto-antigo') {   // torso volta a terminar em 1,35 m mesmo com a cabeça justa
+  const fonte = fs.readFileSync(path.join(ROOT, 'public/js/hitboxes.js'), 'utf8');
+  const troca = ['(cabeca ? cabeca.y - cabeca.ry : ALTURA_CABECA - RAIO_CABECA)', '(ALTURA_CABECA - RAIO_CABECA)'];
+  if (!fonte.includes(troca[0])) { console.error('MUTANTE teto-antigo NÃO APLICOU'); process.exit(2); }
+  ({ entradaCombatente } = await import(`data:text/javascript;base64,${Buffer.from(fonte.replace(...troca)).toString('base64')}`));
+}
 const { GLB_CHARS } = await import('../../public/js/glbchars.js').catch(() => ({ GLB_CHARS: null }));
 const { CABECAS_HITBOX } = await import(`../../public/js/data/cabecas-hitbox.js?t=${Date.now()}`);
 const jogo = Object.create(Game.prototype);
@@ -139,6 +158,14 @@ if (MUT === 'esfera') {
   jogo._perfilCabeca = () => null;
   if (!antes) { console.error('MUTANTE esfera NÃO APLICOU: o jogo já devolvia null'); process.exit(2); }
 }
+if (MUT === 'mira-olho') jogo._miraTiroBot = function (ent) {   // o bot volta a mirar no olho a 1,62 m
+  return new THREE.Vector3(ent.pos.x, ent.pos.y + 1.62, ent.pos.z);
+};
+if (MUT === 'yaw-humano') jogo._perfilCabeca = function (ent) {   // humano sem o +180° do corpo
+  const p = Game.prototype._perfilCabeca.call(this, ent);
+  if (p && this._participanteHumano(ent)) p.yaw -= Math.PI;
+  return p;
+};
 
 let reprovas = 0;
 const clausula = (nome, ok, linha) => { if (!ok) reprovas++; console.log(`${ok ? 'OK   ' : 'FALHA'} ${nome}  ${linha}`); };
@@ -203,8 +230,8 @@ const pioresCob = linhasJ2.filter((l) => l.frente.cob < TETO.cobMin || l.lado.co
 const DECLARADOS = {
   dollynho: 'a cabeça do rig é a tampinha da garrafa: 8 cm, poucos polígonos, silhueta de 1 cm não fecha',
 };
-const pioresVaz = linhasJ2.filter((l) => l.frente.vaz > TETO.vazMax && !DECLARADOS[l.id]);
-const declVaz = linhasJ2.filter((l) => l.frente.vaz > TETO.vazMax && DECLARADOS[l.id]);
+const pioresVaz = linhasJ2.filter((l) => l.frente.vaz > (DECLARADOS[l.id] ? TETO.vazDeclaradoMax : TETO.vazMax));
+const declVaz = linhasJ2.filter((l) => l.frente.vaz > TETO.vazMax && l.frente.vaz <= TETO.vazDeclaradoMax && DECLARADOS[l.id]);
 const ladoAlto = linhasJ2.filter((l) => l.lado.vaz > TETO.vazMax).sort((a, b) => b.lado.vaz - a.lado.vaz);
 const media = (f) => linhasJ2.reduce((s, l) => s + f(l), 0) / linhasJ2.length;
 clausula('J2a cobertura', !pioresCob.length,
@@ -262,7 +289,66 @@ const fora = tabela.filter((t) => Math.abs(t.hitbox - t.malha) > Math.max(TETO.s
 clausula('J3 simulação', !fora.length, `${tabela.length - fora.length}/${tabela.length} cenários dentro de max(${TETO.simAbs * 100} pp, ${TETO.simRel * 100}%) da malha`
   + (fora.length ? `\n      piores: ${fora.sort((a, b) => Math.abs(b.hitbox - b.malha) - Math.abs(a.hitbox - a.malha)).slice(0, 4).map((t) => `${t.mov}/${t.mira}/${t.d}m/σ${t.sg}: ${(t.hitbox * 100).toFixed(0)}% vs ${(t.malha * 100).toFixed(0)}%`).join('; ')}` : ''));
 
-if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ mutante: MUT, teto: TETO, justeza: linhasJ2, simulacao: tabela }, null, 1));
+// ── J4 humano: o elipsoide do jogador, do humano remoto e do humano em slot do nó (grupo
+// parado no yaw do spawn) fica onde fica o de um bot com o mesmo corpo ──
+{
+  const centro = (p) => (p ? [Math.cos(p.yaw) * p.l + Math.sin(p.yaw) * p.f, -Math.sin(p.yaw) * p.l + Math.cos(p.yaw) * p.f] : [NaN, NaN]);
+  const erros = [];
+  for (const id of ids) for (const corpo of [0, Math.PI / 2, 2.2]) {
+    const ref = centro(jogo._perfilCabeca(alvoDe(id, corpo)));
+    const humanos = { jogador: { isPlayer: true, def: { id }, yaw: corpo - Math.PI },
+      remoto: { _remote: 'humano', def: { id }, yaw: corpo - Math.PI },
+      slotNo: { _remote: 'humano', def: { id }, yaw: corpo - Math.PI, mesh: { group: { rotation: { y: 0.7 } } } } };
+    for (const [nome, ent] of Object.entries(humanos)) {
+      const c = centro(jogo._perfilCabeca(ent));
+      if (!(Math.hypot(c[0] - ref[0], c[1] - ref[1]) <= 1e-6)) erros.push(`${id}/${nome}`);
+    }
+  }
+  clausula('J4 corpo do humano', !erros.length, `${ids.length * 9 - erros.length}/${ids.length * 9} casos com o centro da cabeça no corpo`
+    + (erros.length ? `\n      fora: ${erros.slice(0, 6).join(', ')}` : ''));
+}
+
+// ── J5 torso até o queixo: mira no pescoço tem que acertar ALGUÉM (antes era buraco) ──
+{
+  const t = tabela.find((x) => x.mov === 'parado' && x.mira === 'pescoco' && x.d === 10 && x.sg === 0.5);
+  clausula('J5 pescoço não é buraco', t.acerto >= TETO.acertoPescocoMin,
+    `acerto total mirando no pescoço, parado, 10 m, σ 0,5°: ${(t.acerto * 100).toFixed(1)}% (piso ${TETO.acertoPescocoMin * 100}%)`);
+}
+
+// ── J6 letalidade do bot: o bot mira pelo _miraTiroBot real. A esfera antiga dava acerto de
+// graça acima do ombro; o critério é a média em 10/20/30 m perto dela e nenhum personagem
+// virando escudo (cabeça baixa com a mira no ar) ──
+const botAcerto = [];
+{
+  const ERR = 0.038, NB = 400;   // piso de erro do bot skill 1 (game.js floorErr), parado
+  const gs = () => (rnd() + rnd() + rnd() - 1.5) / 1.5;
+  for (const dist of [10, 20, 30]) {
+    const por = [];
+    let base = 0, nb = 0;
+    for (const id of ids) {
+      const alvo = { isPlayer: true, def: { id }, yaw: -Math.PI, pos: v3(0, 0, -dist), crouchF: 0 };
+      const from = v3(0, 1.5, 0), mira = jogo._miraTiroBot(alvo), perfil = jogo._perfilCabeca(alvo);
+      const olho = v3(0, 1.62, -dist);
+      let a = 0;
+      for (let k = 0; k < NB; k++) {
+        const ox = gs() * ERR, oy = gs() * ERR * 0.8;
+        if (entradaCombatente(from, direcaoDesviada(from, mira, ox, oy), alvo.pos, 0, perfil)) a++;
+        if (entradaCombatente(from, direcaoDesviada(from, olho, ox, oy), alvo.pos, 0, null)) base++;
+        nb++;
+      }
+      por.push({ id, a: a / NB });
+    }
+    por.sort((x, y) => x.a - y.a);
+    botAcerto.push({ dist, media: por.reduce((s, x) => s + x.a, 0) / por.length, esfera: base / nb, pior: por[0] });
+  }
+  const m = (k) => botAcerto.reduce((s, x) => s + x[k], 0) / botAcerto.length;
+  const p10 = botAcerto[0].pior;
+  clausula('J6 letalidade do bot', Math.abs(m('media') - m('esfera')) <= TETO.botAcertoDelta && p10.a >= TETO.botAcertoMin,
+    botAcerto.map((x) => `${x.dist} m ${(x.esfera * 100).toFixed(0)}→${(x.media * 100).toFixed(0)}%`).join(', ')
+    + ` (esfera+olho → cabeça justa; média ±${TETO.botAcertoDelta * 100} pp); pior a 10 m ${p10.id} ${(p10.a * 100).toFixed(0)}% (piso ${TETO.botAcertoMin * 100}%)`);
+}
+
+if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ mutante: MUT, teto: TETO, justeza: linhasJ2, simulacao: tabela, botAcerto }, null, 1));
 if (MUT) {
   console.log(`\n[MUTANTE ${MUT}] ${reprovas ? `a régua MORDEU (${reprovas} cláusula(s) vermelha(s))` : 'a régua ficou VERDE com o defeito — ELA NÃO PRESTA'}`);
   process.exit(reprovas ? 0 : 1);
