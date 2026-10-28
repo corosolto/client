@@ -2477,8 +2477,17 @@ export class Game {
      Chromium só. Firefox e Safari caem na segunda camada — a confirmação de saída do
      `beforeunload` no main.js. Régua: `tools/eval/ctrlw-check.mjs`. */
   _travaAtalhos() {
-    if (this.testMode || !document.fullscreenElement) return;
-    try { navigator.keyboard?.lock?.(['KeyW', 'KeyT', 'KeyN', 'KeyR', 'KeyI', 'Digit1', 'Digit2', 'Digit3'])?.catch?.(() => {}); } catch {}
+    if (this.testMode) return;
+    const trava = () => {
+      this._tevemosTelaCheia = true;
+      try { navigator.keyboard?.lock?.(['KeyW', 'KeyT', 'KeyN', 'KeyR', 'KeyI', 'Digit1', 'Digit2', 'Digit3'])?.catch?.(() => {}); } catch {}
+    };
+    if (document.fullscreenElement) { trava(); return; }
+    /* Tela cheia caiu (Escape sai dela, e Escape é o menu de pausa)? Repede a que já
+       tivemos e rearma. Por que assim, e o mutante: CW5 em tools/eval/ctrlw-check.mjs. */
+    if (!this._tevemosTelaCheia) return;
+    if (this.paused || (this.state !== 'live' && this.state !== 'countdown')) return;
+    try { document.documentElement.requestFullscreen?.()?.then?.(trava, () => {}); } catch {}
   }
   _soltaAtalhos() {
     try { navigator.keyboard?.unlock?.(); } catch {}
