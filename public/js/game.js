@@ -4134,8 +4134,16 @@ export class Game {
   }
 
   _miraTiroBot(ent) {
-    return this._participanteHumano(ent) ? new THREE.Vector3(ent.pos.x, ent.pos.y + alturaDoOlho(ent.crouchF || 0), ent.pos.z)
-      : this._origemTiroBot(ent);
+    if (!this._participanteHumano(ent)) return this._origemTiroBot(ent);
+    const mira = new THREE.Vector3(ent.pos.x, ent.pos.y + alturaDoOlho(ent.crouchF || 0), ent.pos.z);
+    // Cabeça justa: mira na BASE da cabeça de cada personagem (o olho a 1,62 m é ar acima de
+    // cabeça baixa). Mantém a letalidade da esfera antiga: headshot-hitbox-check J6.
+    const p = this._perfilCabeca(ent);
+    if (p) {
+      const s = Math.sin(p.yaw), c = Math.cos(p.yaw);
+      mira.add(new THREE.Vector3(c * p.l + s * p.f, p.y - p.ry - alturaDoOlho(0), -s * p.l + c * p.f));
+    }
+    return mira;
   }
 
   _participanteHumano(ent) {
