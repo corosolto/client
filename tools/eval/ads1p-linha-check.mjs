@@ -252,8 +252,10 @@ for (const arma of ARMAS) {
 }
 
 if (MUTANTE) {
-  if (!falhas.length) { console.error(`MUTANTE ${MUTANTE} SOBREVIVEU: a régua não distingue o foco da linha de mira`); process.exit(1); }
-  console.log(`mutante ${MUTANTE} reprovado como devia (${falhas.length} falhas)`);
+  // Só L1–L3 contam como mordida: "não sei medir" (GLB ausente) não prova nada.
+  const mordidas = falhas.filter((f) => / L[123] /.test(f));
+  if (!mordidas.length) { console.error(`MUTANTE ${MUTANTE} SOBREVIVEU: a régua não distingue o foco da linha de mira`); process.exit(1); }
+  console.log(`mutante ${MUTANTE} reprovado como devia (${mordidas.length} falhas)`);
   process.exit(0);
 }
 if (falhas.length) { console.error(`\n${falhas.length} falha(s):\n- ${falhas.join('\n- ')}`); process.exit(1); }
