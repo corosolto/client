@@ -70,12 +70,12 @@ export function distanciaAoSpawn(pos, spawns) {
 }
 
 // Número que não dá para ler (NaN, undefined) recusa: compra nunca passa por omissão.
-export function motivoRecusa({ id, saldo, agora, compraAte, distSpawn, vivo = true, possui = [], assinatura = null }) {
+export function motivoRecusa({ id, saldo, agora, compraAte, distSpawn, vivo, possui, assinatura = null }) {
   if (!itemDaCompra(id)) return 'item';
-  if (!vivo) return 'morto';
+  if (vivo !== true) return 'morto';
   if (!(agora <= compraAte)) return 'tempo';
   if (!(distSpawn <= ECONOMIA.raioCompraM)) return 'zona';
-  if (possui.includes(id)) return 'ja-tem';
+  if ((possui || []).includes(id)) return 'ja-tem';
   if (!(saldo >= precoDe(id, { assinatura }))) return 'saldo';
   return null;
 }
