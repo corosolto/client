@@ -19,10 +19,10 @@ page.on('response', (response) => {
 });
 
 const views = [
-  { id: '01-escritorio', camera: [-25, 6.2, -50], target: [-3, 1.4, -34], description: 'anel do escritório, divisórias e rota inicial de Flávio' },
-  { id: '02-seguranca', camera: [-24, 6.5, -10], target: [0, 1.2, 4], description: 'transição de segurança, pátio de serviço e três rotas paralelas' },
-  { id: '03-hangar', camera: [-31, 8.5, 23], target: [3, 1.8, 37], description: 'hangar industrial, mezanino e bancadas quebrando a linha de tiro' },
-  { id: '04-apron', camera: [30, 7.5, 42], target: [0, 2, 54], description: 'avião, escada móvel, trator e zona final no apron' },
+  { id: '01-escritorio', camera: [-24, 5.8, -50], target: [-3, 1.4, -34], description: 'terminal executivo, estações de trabalho e rota inicial de Flávio' },
+  { id: '02-seguranca', camera: [0, 3.4, -24], target: [0, 1.3, 3], description: 'pórtico, scanners, guaritas e filas do controle de acesso' },
+  { id: '03-hangar', camera: [-10, 4.2, 17], target: [4, 2.2, 39], description: 'porta aberta, estrutura aeronáutica e eixo de taxiamento do hangar' },
+  { id: '04-apron', camera: [27, 5.2, 61], target: [0, 2.2, 55], description: 'avião, balizamento, escada móvel e portão final no pátio' },
 ];
 
 try {
@@ -31,7 +31,7 @@ try {
   });
   await page.goto(`${base}/?debug=1&auto=B,senador&map=operacao_flavio&perfilauto=0`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(3200);
 
   const runtime = await page.evaluate(() => {
     const g = window.__game;
@@ -49,6 +49,15 @@ try {
       nodes: g.world.waypoints.nodes.length,
       colliders: g.world.colliders.length,
       occluders: g.world.occluders.length,
+      blockedCheckpoints: (g.world.escortPath || []).slice(0, -1).flatMap((point, index) => (
+        g.world.colliders.some((c) => point.x > c.minX && point.x < c.maxX && point.z > c.minZ && point.z < c.maxZ && c.minY < 1.8 && c.maxY > 0.1)
+          ? [index] : []
+      )),
+      disconnectedRouteSegments: (g.world.escortPath || []).slice(1).flatMap((point, index) => {
+        const from = g.world.nearestWaypoint(g.world.escortPath[index].x, g.world.escortPath[index].z);
+        const to = g.world.nearestWaypoint(point.x, point.z);
+        return from !== to && g.world.findPath(from, to).length <= 1 ? [index] : [];
+      }),
       gpu: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : g.renderer.__csWebgl,
       webgl2: g.renderer.capabilities.isWebGL2,
       modeLabel: document.getElementById('map-mode')?.textContent,
@@ -64,6 +73,8 @@ try {
   assert.ok(runtime.nodes >= 500);
   assert.ok(runtime.colliders >= 35);
   assert.ok(runtime.occluders >= 35);
+  assert.deepEqual(runtime.blockedCheckpoints, [], `checkpoints dentro de colisores: ${runtime.blockedCheckpoints.join(', ')}`);
+  assert.deepEqual(runtime.disconnectedRouteSegments, [], `trechos sem navegação: ${runtime.disconnectedRouteSegments.join(', ')}`);
   assert.equal(runtime.webgl2, true);
   assert.match(runtime.gpu || '', /Apple M4 Pro|Metal/i);
   assert.match(runtime.objectiveLabel || '', /OPERAÇÃO FLÁVIO/);
