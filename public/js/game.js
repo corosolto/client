@@ -3355,6 +3355,7 @@ export class Game {
     // qualidade muda mapSize/bias, então invalida o cache pra ele reconfigurar.
     delete this.scene.userData.__sf;
     if (shadows) this.renderer.shadowMap.needsUpdate = true;
+    for (const fx of this._landingFxSystems || []) if (fx?.points) fx.points.visible = q !== 'low';
     this.scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
   }
   onResize() {
@@ -4824,16 +4825,24 @@ export class Game {
     const surface = this._footstepSurface(pos);
     const style = LANDING_FX_STYLE[surface] || LANDING_FX_STYLE.concrete;
     const key = `_fx_land_${style[0]}`;
-    const fx = this[key] || (this[key] = this._tintFx(style[1], false, 64));
-    const count = 2 + Math.round(k * 3);
+    const low = this.settings?.quality === 'low';
+    let fx = low ? this.puffFx : this[key];
+    if (!fx) {
+      fx = this._tintFx(style[1], false, 64);
+      this[key] = fx;
+      (this._landingFxSystems || (this._landingFxSystems = [])).push(fx);
+    }
+    const count = 3 + Math.round(k * 3);
+    const waterY = surface === 'water' ? this.world.waterSurfaceAt?.(pos.x, pos.z) : null;
+    const y = Number.isFinite(waterY) ? waterY : pos.y;
     const at = pos.clone();
     const vel = new THREE.Vector3();
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 0.35 + k * (0.45 + Math.random() * 0.55);
-      at.set(pos.x + Math.cos(angle) * 0.12, pos.y + 0.04, pos.z + Math.sin(angle) * 0.12);
-      vel.set(Math.cos(angle) * speed, 0.45 + k * (0.55 + Math.random() * 0.5), Math.sin(angle) * speed);
-      fx.spawn(at, { vel, life: 0.22 + k * 0.2, size: 0.08 + k * 0.08, grow: 0.45 + k * 0.55 });
+      const speed = 0.45 + k * (0.55 + Math.random() * 0.65);
+      at.set(pos.x + Math.cos(angle) * 0.14, y + 0.05, pos.z + Math.sin(angle) * 0.14);
+      vel.set(Math.cos(angle) * speed, 0.65 + k * (0.7 + Math.random() * 0.55), Math.sin(angle) * speed);
+      fx.spawn(at, { vel, life: 0.32 + k * 0.25, size: 0.14 + k * 0.14, grow: 0.7 + k * 0.7 });
     }
     return count;
   }

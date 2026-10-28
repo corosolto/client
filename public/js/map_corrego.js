@@ -1799,9 +1799,10 @@ export function buildCorrego(scene, T) {
   });
 
   const slowAt = (x, z) => Math.abs(z) >= HALF_Z - 6 && Math.abs(x) <= CORREGO_W / 2 + 2;
+  const waterSurfaceAt = (x, z) => slowAt(x, z) ? CANAL_AGUA : null;
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.corrego,pos:[0,.3,-37],radius:15,vol:.45},{src:AMB_LOOPS.corrego,pos:[0,.3,37],radius:15,vol:.45},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:70,vol:.18}],bioma:'favela'}, propEscala,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, waterSurfaceAt, spawns, sun, hemi, pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.corrego,pos:[0,.3,-37],radius:15,vol:.45},{src:AMB_LOOPS.corrego,pos:[0,.3,37],radius:15,vol:.45},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:70,vol:.18}],bioma:'favela'}, propEscala,
     skyLife,
     update(dt, time) { aguaCorrego.update(dt); skyLife.update(dt, time); },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,

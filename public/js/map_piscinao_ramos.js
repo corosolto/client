@@ -811,6 +811,7 @@ export function buildPoolDay(scene, T) {
     return -POOL.depth * Math.min(penX, penZ);
   }
   function slowAt(x, z) { return poolDepth(x, z) < -0.25; }   // vadear na água = mais devagar
+  const waterSurfaceAt = (x, z) => slowAt(x, z) ? -0.12 : null;
 
   /* ---------------- chão: areia por todo o balneário ---------------- */
   const addFloor = (w, d, x, z, mat) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat || MAT.sand); m.rotation.x = -Math.PI / 2; m.position.set(x, 0, z); m.receiveShadow = true; root.add(m); };
@@ -2171,7 +2172,7 @@ export function buildPoolDay(scene, T) {
   PROPS.build(root);
 
   return {
-    root, colliders, occluders, groundHeightAt, slowAt, spawns, sun, hemi, pickups,
+    root, colliders, occluders, groundHeightAt, slowAt, waterSurfaceAt, spawns, sun, hemi, pickups,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
   };
