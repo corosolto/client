@@ -42,6 +42,10 @@ class Netcode {
     this._alvoSpec = null;      // quem o espectador está seguindo
     this.specDist = 1.7;        // câmera do espectador: metros atrás do ombro do alvo (BUG-117)
     this._evOn = !!(net.meta && net.meta.events);   // servidor manda `ev`; sem a flag, heurística velha (BUG-90)
+    /* FLASH online: o servidor de hoje só aceita `nade` 'smoke'|'frag' e não emite `boom` da
+       flash. Até ele anunciar `meta.flash` (com `ev`), o jogo recusa equipar a flash online
+       (game._flashLiberada) em vez de gastar o estoque num pedido que o servidor descarta. */
+    this.flashOn = this._evOn && !!(net.meta && net.meta.flash);
     /* Buffer base ~2,4 snapshots; gaps repetidos ampliam até 140 ms para o remoto
        não congelar, e a rede estável volta ao atraso mínimo (BUG-87). */
     this.snapshotHz = Math.max(1, Number(net.meta?.snapshotHz) || 20);
@@ -536,7 +540,7 @@ class Netcode {
       if (i >= 0) game._sumirDrop(i);
     } else if (e.k === 'nade') {
       if (!Number.isInteger(e.i) || game._grenades.some((x) => x._nid === e.i)) return;
-      const kind = e.kind === 'smoke' ? 'smoke' : 'frag';
+      const kind = e.kind === 'smoke' || (e.kind === 'flash' && this.flashOn) ? e.kind : 'frag';
       const dono = this._netMap.get(e.o | 0) || ((e.o | 0) === meu ? p : null);
       const origem = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0), dir = new THREE.Vector3(+e.vx || 0, +e.vy || 0, +e.vz || 0);
       game._spawnGrenade(origem, dir.lengthSq() ? dir.clone().normalize() : new THREE.Vector3(0, 0, -1), kind, dono);
@@ -546,7 +550,10 @@ class Netcode {
       const i = game._grenades.findIndex((x) => x._nid === e.i);
       if (i >= 0) { game.scene.remove(game._grenades[i].mesh); game._grenades.splice(i, 1); }
       const pos = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0);
-      if (e.kind === 'smoke') game._popSmoke(pos); else game._explodeFrag(pos, this._netMap.get(e.o | 0) || null);
+      if (e.kind === 'smoke') game._popSmoke(pos);
+      // cegueira é LOCAL: cada cliente mede a do próprio olho; a dos bots quem mede é o servidor
+      else if (e.kind === 'flash' && this.flashOn) game._popFlash(pos, this._netMap.get(e.o | 0) || null);
+      else game._explodeFrag(pos, this._netMap.get(e.o | 0) || null);
     }
   }
 
