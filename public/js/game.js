@@ -1320,7 +1320,7 @@ export class Game {
     this._smokeTex = this._makeSmokeTex();
     // modo Capture the Flag (?ctf=1): 3 pontos (2 spawns + meio); time vence o round segurando
     // os 3 ao mesmo tempo. Rounds SEM FIM (sem _endMatch). Captura = ~3s na zona sem inimigo.
-    this.ctf = this.world.mode === 'horde' ? false : (!!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1'));   // menu (Capture the Flag) ou ?ctf=1
+    this.ctf = this.world.mode === 'horde' ? false : (!!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1'));   // menu de captura ou ?ctf=1
     /* TETO DE RODADAS LIVRE (1–15, ROUNDS_CUSTOM_MAX): era whitelist [1,3,5,7] — o dono
        pediu número customizado. Fora do intervalo cai no padrão do modo. Empate em teto
        PAR (2×2 no melhor de 4) segue pro desempate por abates (já existente no _endMatch). */
