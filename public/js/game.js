@@ -7209,7 +7209,8 @@ export class Game {
       who.ammo[w].mag = WEAPONS[w].mag;
       who.ammo[w].res = WEAPONS[w].reserve;
       {
-        const oldW = who.weapon;                   // arma que estava na mão
+        // com loja larga a arma do MESMO slot, senão a primária comprada some sem cair no chão
+        const oldW = this._compra ? (PISTOLS.has(w) ? who.secondary : who.primary) : who.weapon;
         this._switchWeapon(w, { pickup: true });
         // dropa a arma antiga no chão (estilo CS) — MAS não no rack: o rack é armário, você
         // só troca de arma lá sem largar a anterior (senão o spawn vira um monte de armas).
