@@ -25,16 +25,17 @@ export function criarContagem({ enviar, agora, versao = VERSION, desligado = fal
     try { enviar(JSON.stringify({ event, version: versao, ...campos })); } catch { /* contagem nunca quebra o jogo */ }
     return true;
   };
+  const modo = (valor) => valor === 'ctf' || valor === 'arena' ? valor : 'rounds';
   const partida = (campos) => ({
     map: typeof campos?.map === 'string' ? campos.map : undefined,
-    mode: campos?.mode === 'ctf' ? 'ctf' : 'rounds',
+    mode: modo(campos?.mode),
     game: campos?.game === 'mp' ? 'mp' : 'sp',
   });
   return {
     evento: (event) => manda(event),
     partidaIniciada(campos) { if (manda('match_start', partida(campos))) partidas++; },
     partidaTerminada(campos) { manda('match_end', partida(campos)); },
-    entrouNoMp(campos) { manda('mp_join', { map: typeof campos?.map === 'string' ? campos.map : undefined, mode: campos?.mode === 'ctf' ? 'ctf' : 'rounds' }); },
+    entrouNoMp(campos) { manda('mp_join', { map: typeof campos?.map === 'string' ? campos.map : undefined, mode: modo(campos?.mode) }); },
     fimDaSessao() { manda('session_end', { dur: faixaDuracao(agora()), matches: faixaPartidas(partidas) }); },
     desligar() { ligado = false; },
   };
