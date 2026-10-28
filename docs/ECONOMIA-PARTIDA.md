@@ -82,7 +82,8 @@ antigas continuam medindo o mesmo jogo.
 | arma do personagem | deixa de vir de graça; aparece no menu com selo SUA ARMA e 10% de desconto |
 | armário grátis do spawn | não monta com a loja ligada (com ele ninguém compraria) |
 | pickups de mapa e drops de morte | continuam (no CS também se pega arma do chão) |
-| compra | tecla **B** (ou botão `$` no toque) no tempo e na zona de compra; 1-9 escolhem, 0 volta, B/Esc fecham |
+| compra | tecla **B** (ou botão `$` no toque, no topo da tela) no tempo e na zona de compra; 1-9 escolhem, 0 volta, B/Esc fecham; segurar a tecla não repete a compra; com a mira travada o clique é tiro, então no desktop o menu é de teclado |
+| arma do chão | troca a do mesmo slot (primária por primária, pistola por pistola) e larga a antiga |
 | B fora do tempo ou da zona | continua trocando a câmera, como hoje |
 | morte | larga a primária comprada no chão e renasce de faca + pistola |
 | fim de rodada | quem está vivo fica com o que comprou; todo mundo recebe vitória ou derrota |
@@ -102,8 +103,11 @@ Mesma regra do jogador, sem tabela por dificuldade (a dificuldade já mexe na mi
 - morreu, larga a arma e volta de pistola; só recompra na rodada seguinte (no `?arena=1`,
   a cada renascimento).
 
-Régua: `npm run eval:economia-jogo` sobe o `Game` real no arnês (EJ1 a EJ9) com quatro
-mutantes (carteira do menu, tecla 1 dando AWP, morte sem perda, armário de volta).
+Régua: `npm run eval:economia-jogo` sobe o `Game` real no arnês (EJ1 a EJ15)
+com onze mutantes: carteira do menu, tecla 1 dando AWP, morte sem perda, armário de volta,
+menu sem teclado, B sempre câmera, repetição comprando, pickup largando a arma da mão e
+um `primary || 'awp'` de volta na rodinha, bot comprando de graça e bot que não perde a arma ao morrer. O arnês não carrega CSS: a camada do menu sobre
+o `#touch-ui` foi conferida no navegador.
 
 ## O que entra depois
 
@@ -127,15 +131,15 @@ Para ligar, o nó precisa:
 
 1. **Estado por slot**: `saldo` (TRETA$ da partida), `derrotasSeguidas` por time,
    `compraAte` (tempo do servidor) por slot. Zera a cada partida.
-2. **Crédito**: no `_kill`, `creditar(carteira, recompensaKill(arma, { mesmoTime }))`
-   para o autor; no fim de rodada, `recompensaRodada` com `proximaSequencia` por time.
+2. **Crédito**: no `_kill`, `creditar(carteira, recompensaKill(weap, { mesmoTime }))`
+   para o autor (`recompensaKill` aceita o id ou o rótulo curto que o `_kill` recebe: `'AK'`, `'FACA'`, `'FRAG'`); no fim de rodada, `recompensaRodada` com `proximaSequencia` por time.
    Nada disso pode vir do cliente.
 3. **Mensagem de pedido** (cliente → nó): `{ type: 'compra', id: '<id do catálogo>', seq }`.
    Só o id; preço, saldo, tempo e posição o nó lê do próprio estado.
 4. **Validação**: `motivoRecusa({ id, saldo, agora, compraAte, distSpawn, vivo, possui, assinatura })`
    com `distSpawn = distanciaAoSpawn(pos do slot no servidor, spawns do time)`. Recusa
    por `item`, `morto`, `tempo`, `zona`, `ja-tem` ou `saldo`.
-5. **Resposta**: aceito → concede a arma pelo caminho que já existe (`_concederArma`) e
+5. **Resposta**: aceito → concede a arma pelo caminho que o backend já tem (`_concederArma` em `game/room.js`) e
    manda `{ type: 'compra-ok', id, saldo, seq }`; recusado → `{ type: 'compra-nack', id, motivo, saldo, seq }`.
 6. **Snapshot**: o saldo do próprio jogador (`$`) e `compraAte` entram no snapshot do dono
    do slot. O saldo dos outros não viaja (no CS só o time vê).

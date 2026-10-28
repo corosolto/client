@@ -82,6 +82,10 @@ jobs:
         run: npm run eval:capturecodex
       - name: Aba da loja no hub diz só LOJA
         run: npm run eval:hub-loja
+      - name: TRETA$ da partida segue o CS e não toca a carteira do menu
+        run: npm run eval:economia
+      - name: TRETA$ da partida dentro do Game real (compra, morte, rodada)
+        run: npm run eval:economia-jogo
       # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
       # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
       - name: Todo mapa devolve o que o game.js consome

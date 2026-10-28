@@ -52,7 +52,9 @@ jobs:
   # erro de diff ou do gatilho = roda. Só `rodar=false` exato pula.
   decide:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # 15 e não 5: o checkout com histórico (filter blob:none) deste repo passou de 5 min
+    # em runner lento e o job morria em "operation was canceled" antes de medir (PR #1130).
+    timeout-minutes: 15
     outputs:
       rodar: ${{ steps.filtro.outputs.rodar }}
     steps:

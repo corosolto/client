@@ -1,6 +1,7 @@
 // Regras do TRETA$ da partida: vale só naquela partida e nunca toca a carteira do menu
 // (treta-store.js). Funções puras; o porquê de cada número em docs/ECONOMIA-PARTIDA.md.
 import { itemDaCompra, RECOMPENSA_FORA_DO_CATALOGO } from './compra-catalogo.js';
+import { WEAPONS } from './data/weapons.js';
 
 export const ECONOMIA = Object.freeze({
   saldoInicial: 800,
@@ -34,8 +35,13 @@ export function creditar(carteira, valor) {
   return carteira.saldo - antes;
 }
 
-export function recompensaKill(armaId, { mesmoTime = false } = {}) {
+// O `_kill` recebe o rótulo curto ('AK', 'FACA', 'M3'); aceita o id ou o rótulo.
+const ID_DO_ROTULO = Object.fromEntries(Object.entries(WEAPONS).map(([id, w]) => [w.short, id]));
+ID_DO_ROTULO.FACA = 'knife';
+
+export function recompensaKill(arma, { mesmoTime = false } = {}) {
   if (mesmoTime) return 0;
+  const armaId = WEAPONS[arma] ? arma : (ID_DO_ROTULO[arma] || arma);
   const it = itemDaCompra(armaId);
   if (it) return it.recompensaKill;
   return RECOMPENSA_FORA_DO_CATALOGO[armaId] ?? ECONOMIA.recompensaKillPadrao;
@@ -64,12 +70,12 @@ export function distanciaAoSpawn(pos, spawns) {
 }
 
 // Número que não dá para ler (NaN, undefined) recusa: compra nunca passa por omissão.
-export function motivoRecusa({ id, saldo, agora, compraAte, distSpawn, vivo = true, possui = [], assinatura = null }) {
+export function motivoRecusa({ id, saldo, agora, compraAte, distSpawn, vivo, possui, assinatura = null }) {
   if (!itemDaCompra(id)) return 'item';
-  if (!vivo) return 'morto';
+  if (vivo !== true) return 'morto';
   if (!(agora <= compraAte)) return 'tempo';
   if (!(distSpawn <= ECONOMIA.raioCompraM)) return 'zona';
-  if (possui.includes(id)) return 'ja-tem';
+  if ((possui || []).includes(id)) return 'ja-tem';
   if (!(saldo >= precoDe(id, { assinatura }))) return 'saldo';
   return null;
 }

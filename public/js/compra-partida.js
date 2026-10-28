@@ -41,7 +41,8 @@ export class CompraPartida {
     this.elMenu = document.createElement('div');
     this.elMenu.id = 'compra-menu';
     this.elMenu.className = 'hidden';
-    hud?.appendChild?.(this.elMenu);
+    // no body e não no #hud: o z-index 20 do #hud prende o menu atrás do #touch-ui (30)
+    document.body?.appendChild?.(this.elMenu);
   }
 
   descartar() {
@@ -78,12 +79,12 @@ export class CompraPartida {
   }
 
   // Teclado no menu aberto: 1-9 escolhem, 0 volta/fecha. Devolve true se consumiu a tecla.
-  tecla(code) {
+  tecla(code, repete = false) {
     if (!this.aberto) return false;
     if (code === 'Escape' || code === 'KeyB') { this.fechar(); return true; }
     const n = /^(?:Digit|Numpad)(\d)$/.exec(code);
     if (!n) return false;
-    this._escolher(+n[1]);
+    if (!repete) this._escolher(+n[1]);   // segurar o 4 não pode virar compra do item 4
     return true;
   }
 

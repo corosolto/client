@@ -2114,9 +2114,14 @@ export class Game {
       if (document.pointerLockElement) e.preventDefault();
       // Y/U abrem o chat antes do portão _acceptInput (o espectador não tem pointer lock), nunca pausado;
       // valem em roundEnd e matchEnd também: o §5 do contrato libera o fim de partida para todos
-      if ((e.code === 'KeyY' || e.code === 'KeyU') && this.onAbrirChat && !this.paused && this.state !== 'boot') {
+      if ((e.code === 'KeyY' || e.code === 'KeyU') && !this.paused && this.state !== 'boot') {
         e.preventDefault();
-        this.onAbrirChat(e.code === 'KeyY' ? 'sala' : 'time');
+        // `abrir` devolve false quando não há chat (partida local, ou nó sem MP_CHAT: o welcome
+        // vem sem `meta.chat`). Tecla morta e calada era o relato "o chat em jogo não abre".
+        const abriu = this.onAbrirChat ? this.onAbrirChat(e.code === 'KeyY' ? 'sala' : 'time') !== false : false;
+        if (!abriu) this._abilityNotice(this.online
+          ? tr('O chat desta sala está desligado no servidor.')
+          : tr('O chat é das salas online. Entre no multiplayer pra conversar.'));
         return;
       }
       this.keys[e.code] = true;
@@ -2130,7 +2135,7 @@ export class Game {
       if (e.code === 'KeyZ') { this._radioShow('z'); return; }
       if (e.code === 'KeyX') { this._radioShow('x'); return; }
       if (e.code === 'KeyV') { this._radioShow('c'); return; }
-      if (this._compra?.tecla(e.code)) return;   // menu de compra aberto: 1-9 escolhem, 0 volta
+      if (this._compra?.tecla(e.code, e.repeat)) return;   // menu de compra aberto: 1-9 escolhem, 0 volta
       // B compra no tempo e na zona de compra (CS); fora disso continua trocando a câmera
       if (e.code === 'KeyB') { if (this._compra?.podeComprar()) this._compra.alternar(); else this._toggleCamView(); return; }
       if (e.code === 'KeyT' && !e.repeat) { this._emoteToggle(); return; }   // roda de dança
@@ -2423,8 +2428,9 @@ export class Game {
     const arma = { primary: this._slotPrimaria(), secondary: p.secondary || 'pistol', knife: 'knife' };
     for (const b of root.querySelectorAll('.touch-wep')) {
       const slot = b.dataset.wep, id = arma[slot];
-      if (slot === 'primary') b.hidden = !id;
-      if (!id) continue;
+      // classe e não o atributo `hidden`: `.touch-wep{display:flex}` vence o atributo
+      if (slot === 'primary') b.classList.toggle('hidden', !id);
+      if (!id) { delete b.dataset.arte; b.innerHTML = ''; b.classList.remove('ativa'); continue; }
       b.classList.toggle('ativa', p.weapon === id);
       if (b.dataset.arte === id) continue;
       b.dataset.arte = id;
@@ -7205,7 +7211,8 @@ export class Game {
       who.ammo[w].mag = WEAPONS[w].mag;
       who.ammo[w].res = WEAPONS[w].reserve;
       {
-        const oldW = who.weapon;                   // arma que estava na mão
+        // com loja larga a arma do MESMO slot, senão a primária comprada some sem cair no chão
+        const oldW = this._compra ? (PISTOLS.has(w) ? who.secondary : who.primary) : who.weapon;
         this._switchWeapon(w, { pickup: true });
         // dropa a arma antiga no chão (estilo CS) — MAS não no rack: o rack é armário, você
         // só troca de arma lá sem largar a anterior (senão o spawn vira um monte de armas).
