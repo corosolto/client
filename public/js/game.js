@@ -2134,7 +2134,7 @@ export class Game {
       if (e.code === 'KeyZ') { this._radioShow('z'); return; }
       if (e.code === 'KeyX') { this._radioShow('x'); return; }
       if (e.code === 'KeyV') { this._radioShow('c'); return; }
-      if (this._compra?.tecla(e.code)) return;   // menu de compra aberto: 1-9 escolhem, 0 volta
+      if (this._compra?.tecla(e.code, e.repeat)) return;   // menu de compra aberto: 1-9 escolhem, 0 volta
       // B compra no tempo e na zona de compra (CS); fora disso continua trocando a câmera
       if (e.code === 'KeyB') { if (this._compra?.podeComprar()) this._compra.alternar(); else this._toggleCamView(); return; }
       if (e.code === 'KeyT' && !e.repeat) { this._emoteToggle(); return; }   // roda de dança
