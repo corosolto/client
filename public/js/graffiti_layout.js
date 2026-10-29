@@ -20,4 +20,8 @@ export const GRAFITE = {"praca_poderes":{"arquivos":["tags-treino-02.png"],"peca
 
 /* IMPRESSÃO DIGITAL DAS ENTRADAS (issue #82) — GERADA junto com o layout, ver
    tools/eval/graffiti-fingerprint.mjs. Cobrada por tools/eval/graffiti-layout-check.mjs. */
-export const GRAFITE_FP = {"pass":"e810bc6a7ac6ba37","maps":{"campomorro":"7b30ef5c9922a96e","escadao":"786dd0b589fefa97","praca_poderes":"81107286231f4c76","piscina_treta":"6bb8cba355a24ed4","loja_h":"c265830d83aaa22b","ferro_velho":"92b742bc88805844","quebrada":"53034b81dca1ef1d","lajes":"b284fca9ffe7a580","corrego":"19e0594d81d7ee0c","mansao":"9ec442d0909df647","upa_24h":"b580461681cd5f09","obras_prefeitura":"8d1fbcfe77d4b918","posto_treta":"93665295a575fdfd","atacadao_treta":"cffbad8150a92b5b"}};
+
+/* REASSINADO SEM REASSAR em 2026-10-28 — offset de profundidade da tinta (polygonOffsetFactor) não entra na colocação; pichacao-parede-check mede as mesmas 2641 peças antes e depois
+   A colocação não foi tocada: assar de novo não é operação fiel (duas rodadas idênticas
+   dão contagens diferentes, e árvore sem o acervo completo de decalques apaga peças). */
+export const GRAFITE_FP = {"pass":"2b89b9986b67d022","maps":{"campomorro":"7b30ef5c9922a96e","escadao":"786dd0b589fefa97","praca_poderes":"199c7c65b3407b07","piscina_treta":"7e279983ab82f968","loja_h":"cd052805cfdefa1e","ferro_velho":"472923a8dcee7730","quebrada":"0baeec834ca11497","lajes":"b284fca9ffe7a580","corrego":"19e0594d81d7ee0c","mansao":"9ec442d0909df647","upa_24h":"b580461681cd5f09","obras_prefeitura":"8d1fbcfe77d4b918","posto_treta":"93665295a575fdfd","atacadao_treta":"cffbad8150a92b5b"}};

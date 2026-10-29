@@ -10,7 +10,7 @@ import { placeProp } from './mapprops.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por direção do olhar
 import { detailFor, registerDetail } from './textures.js';   // normal+rough por Sobel (ver lam)
-import { decalIds, paredeAtras } from './map_decals.js';   // pool por NOME + raycast na MALHA
+import { decalIds, paredeAtras, offsetTinta } from './map_decals.js';   // pool por NOME + raycast na MALHA
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';             // cobertura medida, não coordenada à mão
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
@@ -1281,7 +1281,7 @@ export function buildBrasilia(scene, T) {
            arte. Tinta é lisa; quem tem relevo é a parede. */
         m = new THREE.MeshStandardMaterial({
           map: T.decals[i], transparent: true, alphaTest: 0.22, roughness: 0.95, metalness: 0,
-          polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+          ...offsetTinta(-4, -4),   // só unidades: ver map_decals.js (offsetTinta)
         });
         _dmat.set(i, m);
       }
