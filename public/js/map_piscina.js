@@ -320,7 +320,7 @@ export function buildPoolDay(scene, T) {
       child.traverse((node) => { if (node.isMesh) meshes.push(node); });
       if (meshes.length !== 1 || Array.isArray(meshes[0].material)) continue;
       const mesh = meshes[0];
-      const key = `${child.name}:${mesh.geometry.uuid}:${mesh.material.uuid}`;
+      const key = `${child.name}:${mesh.geometry.uuid}:${mesh.material.uuid}:${superficieGrafitavel(mesh) ? 1 : 0}`;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push({ child, mesh });
     }
@@ -330,6 +330,11 @@ export function buildPoolDay(scene, T) {
       const first = list[0].mesh;
       const batch = new THREE.InstancedMesh(first.geometry, first.material, list.length);
       batch.name = `${list[0].child.name}:batch`;
+      // Como no lote estático: o lote nasce na raiz, sem o grupo do prop, então leva
+      // a permissão de pintura medida antes de tirar os membros da árvore.
+      batch.userData.mapPropId = list[0].child.userData.mapPropId;
+      batch.userData.graffitiNomeDoAsset = !!list[0].child.userData.graffitiNomeDoAsset;
+      batch.userData.graffitiSupportExcluded = !superficieGrafitavel(first);
       const matrix = new THREE.Matrix4();
       list.forEach(({ child, mesh }, index) => {
         mesh.updateWorldMatrix(true, false);
