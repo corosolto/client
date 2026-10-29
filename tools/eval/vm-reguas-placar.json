@@ -1,7 +1,7 @@
 {
- "gerado": "2026-10-18",
+ "gerado": "2026-10-29",
  "aspecto": "3x2",
- "entradas": "6e1e58fdaf18261b",
+ "entradas": "84ae48128d99b7c0",
  "resultados": {
   "awp": {
    "mira": {
@@ -152,7 +152,7 @@
    "pistola-ref": {
     "estado": "VERDE",
     "valor": "1.19× pistola aprovada",
-    "msg": "tamanho 1.19× pistola aprovada, desvio 34 px, ADS 150%"
+    "msg": "tamanho 1.19× pistola aprovada, desvio 34 px, ADS 112%"
    },
    "maos": {
     "estado": "N/A",
@@ -179,7 +179,7 @@
    "pistola-ref": {
     "estado": "VERDE",
     "valor": "0.99× pistola aprovada",
-    "msg": "tamanho 0.99× pistola aprovada, desvio 36 px, ADS 76%"
+    "msg": "tamanho 0.99× pistola aprovada, desvio 36 px, ADS 53%"
    },
    "maos": {
     "estado": "N/A",
@@ -710,18 +710,11 @@
   "reguas": [
    "mira",
    "cobertura",
-   "pistola-ref",
-   "maos",
-   "carregador"
+   "pistola-ref"
   ],
   "armas": [
-   "deagle",
-   "mosin",
-   "rem700",
-   "uzi",
-   "g3sg1",
-   "sks"
+   "pistol"
   ],
-  "base": "2026-10-04"
+  "base": "2026-10-29"
  }
 }
