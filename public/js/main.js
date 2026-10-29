@@ -2033,7 +2033,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     renderer, textures, sfx,
     playerCharId: charId, playerSkinId, playerEyewearId, playerGloveId, playerWeaponSkins, playerKnifeSkinId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
-    ctf: currentMap === 'invasao_javaporcos' ? false : matchMode === 'ctf',
+    ctf: MAPS[currentMap].objectiveMode ? false : matchMode === 'ctf',
     /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
        sobrariam nove corpos locais para dez entidades e um jogador ficaria invisível. */
     mpFactory: sessao ? makeNetcode : null,
@@ -2240,6 +2240,10 @@ const ui = {
   back()  { try { sfx.uiBack(); } catch {} },
 };
 let matchMode = 'rounds';   // 'rounds' | 'ctf' — lido em startGame (ctf)
+const modoObjetivoAtual = () => MAPS[currentMap]?.objectiveMode || '';
+const rotuloObjetivoAtual = () => ({ horde: 'HORDAS', escort: 'ESCOLTA' })[modoObjetivoAtual()]
+  || modoObjetivoAtual().toUpperCase();
+const resumoObjetivoAtual = () => modoObjetivoAtual() === 'horde' ? '8 ONDAS COOPERATIVAS' : rotuloObjetivoAtual();
 /* O JOGADOR JÁ DISSE QUAL MODO QUER? (defeito: "esse mapa está como CAPTURA, mas eu
    selecionei single player — e esse erro se repete em outros mapas")
    O `ctfMode` do mapa é PADRÃO, não ordem. Só que `gotoMap` reescrevia `matchMode` a cada
@@ -2842,23 +2846,27 @@ const hubSels = [];
 function syncHubSels() { for (const s of hubSels) s.sync(); }
 function setMapMeta() {
   const el = $('map-meta'); if (!el) return;
-  const modo = currentMap === 'invasao_javaporcos' ? '8 ONDAS COOPERATIVAS' : frase(matchMode === 'ctf' ? 'ctfMelhorDeN' : 'melhorDeN', matchRounds());
+  const modo = modoObjetivoAtual() ? resumoObjetivoAtual() : frase(matchMode === 'ctf' ? 'ctfMelhorDeN' : 'melhorDeN', matchRounds());
   el.textContent = frase('resumoPartida', modo, 1 + settings.allyBots, settings.enemyBots, tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS'));
   syncHubSels();
 }
 function setMapMode() {
+  const objetivo = modoObjetivoAtual();
   const m = $('map-mode');
   if (m) {
-    m.textContent = currentMap === 'invasao_javaporcos' ? 'HORDAS' : (matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA'));
-    m.dataset.mode = matchMode;
+    m.textContent = objetivo ? rotuloObjetivoAtual() : (matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA'));
+    m.dataset.mode = objetivo || matchMode;
+    m.disabled = !!objetivo;
   }
   const d = $('map-dots');
   if (d) d.innerHTML = MAPAS_MENU.map((_, i) => `<i class="${i === mapIdx ? 'on' : ''}"></i>`).join('');
   if (HUB_ENABLED) {
-    $('hub-mode-rounds').setAttribute('aria-pressed', String(matchMode === 'rounds'));
-    $('hub-mode-ctf').setAttribute('aria-pressed', String(matchMode === 'ctf'));
-    $('hub-mode-rounds').querySelector('small').textContent = `MELHOR DE ${settings.rounds || 5}`;
-    $('hub-mode-ctf').querySelector('small').textContent = `MELHOR DE ${settings.ctfRounds || 3}`;
+    $('hub-mode-rounds').setAttribute('aria-pressed', String(!objetivo && matchMode === 'rounds'));
+    $('hub-mode-ctf').setAttribute('aria-pressed', String(!objetivo && matchMode === 'ctf'));
+    $('hub-mode-rounds').disabled = !!objetivo;
+    $('hub-mode-ctf').disabled = !!objetivo;
+    $('hub-mode-rounds').querySelector('small').textContent = objetivo ? rotuloObjetivoAtual() : `MELHOR DE ${settings.rounds || 5}`;
+    $('hub-mode-ctf').querySelector('small').textContent = objetivo ? 'INDISPONÍVEL NESTE MAPA' : `MELHOR DE ${settings.ctfRounds || 3}`;
     $('hub-rounds-value').textContent = String(matchRounds());
   }
   setMapMeta();
@@ -2869,7 +2877,7 @@ function setMapMode() {
 {
   const mm = $('map-mode');
   if (mm) mm.addEventListener('click', () => {
-    if (currentMap === 'invasao_javaporcos') return;
+    if (modoObjetivoAtual()) return;
     matchMode = matchMode === 'ctf' ? 'rounds' : 'ctf';
     modoEscolhido = true;   // alternar no badge também é escolha do jogador
     ui.click();
@@ -2883,7 +2891,7 @@ function setMapMode() {
 }
 if (HUB_ENABLED) {
   $('hub-mode-rounds').onclick = () => { if (matchMode !== 'rounds') $('map-mode').click(); };
-  $('hub-mode-ctf').onclick = () => { if (matchMode !== 'ctf') $('map-mode').click(); };
+  $('hub-mode-ctf').onclick = () => { if (!modoObjetivoAtual() && matchMode !== 'ctf') $('map-mode').click(); };
   $('hub-rounds').onclick = () => {
     /* ciclo pelos ÍMPARES de 1–15 (o "melhor de N" usual); os pares ficam pro select da
        tela de mapa. Do valor atual, salta pro próximo ímpar MAIOR (valor par vindo do
@@ -2901,11 +2909,9 @@ function gotoMap(i, updateRoute = true) {
   settings.map = currentMap; settings.mapPinned = true; saveSettings();   // escolha explícita sai da rotação
   mapNameEl.textContent = MAPS[currentMap].name;
   setMapThumb();
-  // troca de mapa aplica o PADRÃO do mapa (Loja H/Ferro Velho abrem em CTF, o resto em rounds)
-  // — mas SÓ enquanto o jogador não tiver escolhido. Ver `modoEscolhido` lá em cima: era
-  // aqui que a escolha dele morria (main.js:692 na versão anterior).
-  if (currentMap === 'invasao_javaporcos') matchMode = 'rounds';
-  else if (!modoEscolhido) matchMode = MAPS[currentMap].ctfMode ? 'ctf' : 'rounds';
+  // Mapas objetivos só substituem o modo efetivo enquanto estão ativos. A escolha explícita
+  // fica preservada para o jogador reencontrá-la ao voltar a um mapa de rounds/CTF.
+  if (!modoObjetivoAtual() && !modoEscolhido) matchMode = MAPS[currentMap].ctfMode ? 'ctf' : 'rounds';
   setMapMode();
   void loadMenuBackdrop();
   renderMapScreen();   // se a tela cheia estiver aberta, ela acompanha o carrossel

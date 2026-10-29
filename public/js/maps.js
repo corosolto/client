@@ -82,7 +82,7 @@ export const MAPS = {
     props: ['sertao_macambira', 'sertao_juazeiro', 'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'caixa_som_baile', 'casa_pedra', 'casa_geminada', 'igrejinha', 'caminhao_antigo'],
     ambience: ['rat', 'pigeonGround', 'parrot', 'calango', 'lagarto', 'sertaoGoat', 'sertaoHen', 'sertaoChick'],
   },
-  invasao_javaporcos: { name: 'Invasão dos Javaporcos', ctfMode: false,
+  invasao_javaporcos: { name: 'Invasão dos Javaporcos', ctfMode: false, objectiveMode: 'horde',
     props: [],
   },
   penitenciaria: { name: 'CARANDIRU', ctfMode: true,
