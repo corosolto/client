@@ -1485,57 +1485,12 @@ export class Game {
   _buildViewModels() {
     const root = new THREE.Group();
     if (AUTHORED_VM_ENABLED) {
-      const models = Object.create(null);
-      const rot = Object.create(null);
-      const pending = new Set();
-      const frame = (id) => {
-        const g = models[id], rw = g?.getObjectByName('rw');
-        if (!g || !rw) return;
-        const cfg = weaponCFG(id);
-        const t = VM_FRAME.cls[VM_FRAME.classOf[id] || 'rifle'];
-        const metrics = rw.userData?.metrics;
-        const scale = VM_FRAME.vmScale * (cfg.vm ?? 1);
-        const back = scale * (metrics ? Math.max(0, -metrics.box.min.z) : cfg.len * (1 - cfg.gripZ));
-        const forward = scale * (metrics ? Math.max(0.001, metrics.box.max.z) : cfg.len * cfg.gripZ);
-        let z = Math.max(back + t.clear, t.minz, forward / t.fwdTan) * (VM_FRAME.zMul[id] || 1);
-        z *= VM_KNOB.zmul ?? VM_FRAME.recuoZ;
-        const x = z * (VM_KNOB.tanh ?? t.tanH);
-        const y = -x * (VM_KNOB.tanb ?? VM_FRAME.tanBarrel);
-        g.position.set(x, y, -z);
-        g.rotation.set(t.pitch || 0, t.yaw || 0, t.roll || 0);
-        rot[id] = { pitch: g.rotation.x, yaw: g.rotation.y, roll: g.rotation.z, ads: true };
-      };
       this._vmFrame = () => {};
-      this._vmMontarTardio = (id) => {
-        if (models[id]) return true;
-        if (!hasWeapon(id)) {
-          if (!pending.has(id)) {
-            pending.add(id);
-            preloadWeapons([id]).then(() => {
-              pending.delete(id);
-              if (this._vmMontarTardio?.(id)) this._applyVmVisibility();
-            }).catch(() => pending.delete(id));
-          }
-          return false;
-        }
-        const rw = weaponModel(id, this.playerWeaponSkins[id] || null);
-        if (!rw) return false;
-        const holder = new THREE.Group();
-        holder.name = `fallback-${id}`;
-        rw.name = 'rw';
-        rw.rotation.y = Math.PI;
-        rw.scale.multiplyScalar(VM_FRAME.vmScale * (weaponCFG(id).vm ?? 1));
-        holder.add(rw);
-        holder.visible = false;
-        root.add(holder);
-        models[id] = holder;
-        frame(id);
-        return true;
-      };
-      this._weaponOnly = true;
+      this._vmMontarTardio = null;
+      this._weaponOnly = false;
       return {
-        root, models, awp: null, pistol: null, knife: null, arms: null,
-        grip: Object.create(null), ads: Object.create(null), rot,
+        root, models: Object.create(null), awp: null, pistol: null, knife: null, arms: null,
+        grip: Object.create(null), ads: Object.create(null), rot: Object.create(null),
         kick: 0, kickSide: 0, bobPhase: 0,
         rig: new ViewModelRig({ bobGain: 0 }),
         recoil: new RecoilAxis(11, 0.5, 0.12, 0.15),
@@ -3492,8 +3447,8 @@ export class Game {
     const melee = this.vm.melee?.setWeapon(w) || false;
     const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
     if (melee) this.vm.authored?.setWeapon('');
-    // Enquanto o pacote autorado ainda carrega (ou falha), o modelo legado continua
-    // visível. Uma arma vazia é pior que a degradação visual e torna o modo injogável.
+    // Em runtime autorado, uma carga pendente apresenta o último mount ainda válido ou
+    // um root vazio. O procedural só existe quando o renderer autorado foi desligado.
     // Utilidade na mão tem precedência de cena, inclusive sobre o pacote de faca.
     const utilidade = this._utilidadeNaMao();
     this._vmPresentation = { authored, melee, utility: utilidade };
