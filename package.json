@@ -221,6 +221,8 @@
     "eval:serve": "node tools/eval/serve.mjs 8123",
     "grafite": "node tools/gen-graffiti-layout.mjs",
     "eval:grafitelayout": "node tools/eval/graffiti-layout-check.mjs",
+    "//eval:grafite-fiel": "Assar o mesmo mapa duas vezes dá o mesmo grafite (#1109): G1 duas rodadas do gerador com checkpoint novo dão o layout byte a byte; G2 com um GLB derrubado o bake cancela e lista a falta, em vez de gravar outro layout. Precisa de BASE e navegador, como o gerador, por isso fica fora do check:fast. Mutantes: engole-falta.",
+    "eval:grafite-fiel": "node tools/eval/graffiti-bake-fiel-check.mjs && ! node tools/eval/graffiti-bake-fiel-check.mjs --mutante=engole-falta",
     "eval:audioalcance": "node tools/eval/audio-alcance-check.mjs",
     "eval:audioespacial": "node tools/eval/audio-espacial-check.mjs",
     "eval:audioenvelope": "node tools/eval/audio-envelope-check.mjs",
