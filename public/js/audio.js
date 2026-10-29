@@ -13,6 +13,14 @@ const GUN_VOL = (() => {
    BufferSources e cobre passos/vozes; vários bots ainda multiplicam o problema. */
 const MAX_SHOT_VOICES_PER_SAMPLE = 4;
 const MAX_SHOT_VOICES = 16;
+/* Teto do bicho: vozes simultâneas, intervalo mínimo por voz e ENERGIA somada —
+   uma horda de dezenas de javaporcos não pode virar um muro de ganho no master. */
+export const JAVAPORCO_LIMITES = Object.freeze({
+  vozes: 8,
+  ganho: 0.95,
+  minPico: 0.035,
+  gap: Object.freeze({ rosnado: 0.05, carga: 0.07, morte: 0, horda: 0.45 }),
+});
 
 export const CHARACTER_SELECT_VOICE = Object.freeze({
   gotinha: 'audio/a/cc77ec4f134a71ba.mp3',
@@ -977,4 +985,126 @@ export class Sfx {
     this.ensure(); [392, 330, 262].forEach((f, i) => this._beep('square', f, f * .9, .22, .2, i * .16)); }
   matchWin()  { const s = this._cs('roundwin'); if (s) { this._sample(s, .9); return; }
     this.ensure(); [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => this._beep('square', f, f, .18, .22, i * .14)); this.vuvuzela(1.8); }
+
+  /* Perfis das quatro vozes do javaporco. `dur` em segundos, `f0` a laringe, `glide`
+     a razão do fim, `fmt` o formante do fuço, `grao` a aspereza, `lvl` o pico pedido. */
+  static JAVAPORCO = Object.freeze({
+    rosnado: { dur: [0.24, 0.40], f0: [88, 134], glide: [0.58, 0.86], fmt: [360, 820], q: 7, ruido: 0.55, grao: [17, 33], lvl: 0.54, transiente: 0 },
+    carga: { dur: [0.13, 0.25], f0: [152, 220], glide: [1.2, 1.75], fmt: [880, 1700], q: 3.2, ruido: 1, grao: [26, 48], lvl: 0.62, transiente: 0.5 },
+    morte: { dur: [0.70, 0.93], f0: [430, 620], glide: [0.2, 0.36], fmt: [1250, 2200], q: 5.5, ruido: 0.32, grao: [7, 14], lvl: 0.68, transiente: 0.2 },
+    horda: { dur: [0.45, 0.80], f0: [78, 120], glide: [0.6, 0.9], fmt: [300, 700], q: 6, ruido: 0.6, grao: [12, 26], lvl: 0.46, transiente: 0, camadas: [4, 7], defasagem: 0.75 },
+  });
+  // Bus do bicho: limiter próprio antes do master e FORA do duckBus — o tiro não pode
+  // apagar o aviso de que tem javaporco em cima do jogador.
+  _javaporcoBus() {
+    if (this._boarBus) return this._boarBus;
+    const R = this.ctx, lim = R.createDynamicsCompressor();
+    lim.threshold.value = -8; lim.knee.value = 6; lim.ratio.value = 10;
+    lim.attack.value = 0.003; lim.release.value = 0.2;
+    this._boarBus = R.createGain();
+    this._boarBus.connect(lim); lim.connect(this.master);
+    this._send(this._boarBus, 0.1);
+    return this._boarBus;
+  }
+  /* Ruído do fuço sai de UM buffer cacheado com rate e offset sorteados. O offset
+     respeita o que a voz vai consumir (dur × rate), senão o fim do guincho sai mudo. */
+  _javaporcoRuido(dur) {
+    const R = this.ctx;
+    if (!this._boarBuf) {
+      const n = (R.sampleRate * 1.6) | 0, b = R.createBuffer(1, n, R.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      this._boarBuf = b;
+    }
+    const src = R.createBufferSource(); src.buffer = this._boarBuf;
+    const rate = 0.7 + Math.random() * 0.7;
+    src.playbackRate.value = rate;
+    const folga = Math.max(0, this._boarBuf.duration - dur * rate - 0.05);
+    return { src, offset: Math.random() * folga };
+  }
+  /* Uma voz sorteada: duração, laringe, formante e grão mudam a cada chamada — sem o
+     sorteio, vinte bichos soam como um bicho só multiplicado. Devolve a duração. */
+  _javaporcoVoz(cfg, t, pico, out) {
+    const R = this.ctx, r = (a, b) => a + (b - a) * Math.random();
+    const dur = r(cfg.dur[0], cfg.dur[1]);
+    const f0 = r(cfg.f0[0], cfg.f0[1]), glide = r(cfg.glide[0], cfg.glide[1]);
+    const fmt = r(cfg.fmt[0], cfg.fmt[1]);
+    // laringe, fuço e grão somam DENTRO do pico reservado: uma voz que estoura o
+    // próprio orçamento derruba o teto da horda inteira.
+    const voz = R.createGain();
+    this._env(voz, t, Math.min(0.018, dur * 0.1), pico * 0.8, dur);
+    voz.connect(out);
+    const o = this._osc('sawtooth', f0);
+    o.frequency.exponentialRampToValueAtTime(Math.max(24, f0 * glide), t + dur);
+    const lp = R.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.9;
+    lp.frequency.setValueAtTime(fmt * 2.4, t);
+    lp.frequency.exponentialRampToValueAtTime(Math.max(120, fmt * 0.7), t + dur);
+    const og = R.createGain(); og.gain.value = 0.55;
+    o.connect(lp); lp.connect(og); og.connect(voz);
+    o.start(t); o.stop(t + dur + 0.02);
+    const { src: n, offset } = this._javaporcoRuido(dur + 0.03);
+    const bp = R.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = cfg.q;
+    bp.frequency.setValueAtTime(fmt, t);
+    bp.frequency.exponentialRampToValueAtTime(Math.max(90, fmt * glide), t + dur);
+    const ng = R.createGain(); ng.gain.value = cfg.ruido * r(0.3, 0.45);
+    n.connect(bp); bp.connect(ng); ng.connect(voz);
+    n.start(t, offset); n.stop(t + dur + 0.03);
+    const lfo = this._osc('square', r(cfg.grao[0], cfg.grao[1]));
+    const lg = R.createGain(); lg.gain.value = pico * r(0.1, 0.2);
+    lfo.connect(lg); lg.connect(voz.gain);
+    lfo.start(t); lfo.stop(t + dur + 0.02);
+    if (cfg.transiente > 0) {
+      const { src: s, offset: off } = this._javaporcoRuido(0.1);
+      const hp = R.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1800;
+      const g = R.createGain(); this._env(g, t, 0.0015, pico * cfg.transiente, 0.03);
+      s.connect(hp); hp.connect(g); g.connect(out);
+      s.start(t, off); s.stop(t + 0.08);
+    }
+    return dur;
+  }
+  /* Teto por TEMPO (gap da voz), por CONTAGEM e por ENERGIA (soma dos picos ao
+     quadrado). O que não cabe no orçamento é descartado, não somado no master. */
+  _javaporcoSlot(kind, t, pico) {
+    this._boarVozes = (this._boarVozes || []).filter((v) => v.fim > t);
+    this._boarUltimo = this._boarUltimo || {};
+    const L = JAVAPORCO_LIMITES;
+    if (t - (this._boarUltimo[kind] ?? -999) < (L.gap[kind] ?? 0.05)) return null;
+    if (this._boarVozes.length >= L.vozes) return null;
+    const carga = this._boarVozes.reduce((s, v) => s + v.pico * v.pico, 0);
+    const concedido = Math.min(pico, Math.sqrt(Math.max(0, L.ganho * L.ganho - carga)));
+    if (concedido < L.minPico) return null;
+    const slot = { kind, pico: concedido, fim: t + 1.6 };
+    this._boarVozes.push(slot);
+    this._boarUltimo[kind] = t;
+    return slot;
+  }
+  /* Voz do bicho: 'rosnado', 'carga', 'morte' ou 'horda'. Quem calcula distância é o
+     modo — aqui chegam só `vol` (0..1), `pan` (-1..1) e `delay` em segundos. */
+  javaporco(kind = 'rosnado', vol = 1, pan = 0, delay = 0) {
+    const cfg = Sfx.JAVAPORCO[kind];
+    if (!cfg) return false;
+    this.ensure();
+    if (!this.ctx) return false;
+    const pedido = Math.max(0, Math.min(1, vol)) * cfg.lvl;
+    const t = this.ctx.currentTime + Math.max(0, delay);
+    const slot = this._javaporcoSlot(kind, t, pedido);
+    if (!slot) return false;
+    let saida = this._javaporcoBus();
+    if (pan) {
+      const pz = this.ctx.createStereoPanner();
+      pz.pan.value = Math.max(-1, Math.min(1, pan));
+      pz.connect(saida); saida = pz;
+    }
+    let fim = t;
+    if (cfg.camadas) {
+      const [a, b] = cfg.camadas;
+      const n = a + Math.floor(Math.random() * (b - a + 1));
+      // horda = grunhidos defasados num slot só; a energia do slot é dividida entre eles
+      for (let i = 0; i < n; i++) {
+        const atraso = (i / n) * cfg.defasagem + Math.random() * 0.08;
+        fim = Math.max(fim, t + atraso + this._javaporcoVoz(cfg, t + atraso, slot.pico / Math.sqrt(n), saida));
+      }
+    } else fim = t + this._javaporcoVoz(cfg, t, slot.pico, saida);
+    slot.fim = fim;
+    return true;
+  }
 }
