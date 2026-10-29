@@ -130,7 +130,7 @@ try {
       if (FOTOS) {
         fs.mkdirSync(FOTOS, { recursive: true });
         await page.addStyleTag({ content: '#crash-overlay,#aviso-software{display:none!important}' }).catch(() => {});
-        await page.screenshot({ path: path.join(FOTOS, `${nomeAsp}-${cam}-${arma}-${ads ? 'ads' : 'quad'}.png`) });
+        await page.screenshot({ path: path.join(FOTOS, `${nomeAsp}-${cam}-${arma}-${ads ? 'ads' : 'quad'}.png`), timeout: 180000 });
       }
     }
     await page.close();
