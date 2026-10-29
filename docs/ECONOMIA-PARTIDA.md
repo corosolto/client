@@ -112,13 +112,26 @@ posicionamento (bot invisível), bot recomprando a cada renascimento e bot pagan
 trocar uma primária pega do chão. O arnês não carrega CSS: a camada do menu sobre
 o `#touch-ui` foi conferida no navegador.
 
-## O que entra depois
+## Equipamento (lote de 29/10)
 
-Cada um em PR próprio, no slot `equipamento` que o catálogo já reserva:
+Grupo 6 do menu, slot `equipamento` (`compra-catalogo.js`), preços do CS2:
 
-- **colete** (CS2: 650)
-- **capacete** (CS2: colete + capacete 1000)
-- **flashbang** (CS2: 200)
+| item | preço | regra |
+|---|---|---|
+| colete | 650 | recusa com colete 100; colete gasto recarrega para 100 |
+| colete + capacete | 1000 | cobra só o que falta: 350 com colete cheio, 650 com capacete |
+| capacete | 350 | só para quem já tem colete |
+| flash | 200 | até 2 no estoque |
+
+A compra escreve o mesmo estado que o resto do jogo lê: `armor`/`helmet` (`armadura.js`,
+#1159) e `flashes` (#1163). Morrer zera os três (`CompraPartida.aoAbate`); quem sobrevive
+leva colete gasto e flash para a rodada seguinte. Bot só gasta em colete a sobra depois de
+estar com a arma dele (`equipamentoDoBot`). `?armadura=0` e `?flash=0` tiram o item da loja;
+com os dois, o grupo some.
+
+Régua: EC11/EC12 em `eval:economia` e EJ17 a EJ19 em `eval:economia-jogo`, com mutantes
+flash-sem-limite, capacete-sem-colete, loja-ignora-switch, bot-equipa-sem-arma,
+equip-sem-entrega, equip-nao-perde e rodada-zera-equip.
 
 Fumaça e frag continuam como hoje (cota grátis por rodada) até a granada entrar na loja.
 
