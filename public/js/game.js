@@ -927,7 +927,8 @@ export class Game {
     const mkBot = (def, team, i) => {
       // arma sorteada no main.js (que preloadou por ela); sem lista, sorteia aqui. Contador
       // próprio: `i` reinicia por LADO e daria a mesma arma aos dois times.
-      const wpn = this._matchWeapons?.[this._armaN++] || this._botWeapon();
+      const alvo = this._matchWeapons?.[this._armaN++] || this._botWeapon();
+      const wpn = this._ecoLigada ? 'pistol' : alvo;   // com loja o bot nasce de pistola e compra a sorteada
       const veste = this._defNoLado(def, team);
       const c = buildCharacterModel(veste, { weaponId: wpn }) || buildCharacter(veste);
       c.group.traverse(o => { o.userData.botOwner = null; });
@@ -937,7 +938,7 @@ export class Game {
         respawnAt: 0, protUntil: 0, kills: 0, deaths: 0,
         crouchF: 0,
         target: null, reactAt: 0, nextShotAt: 0, skill: rollBotSkill(this._diffMul) * (0.9 + Math.random() * 0.2), weapon: wpn,
-        _meshWeapon: wpn,
+        _meshWeapon: wpn, _armaAlvo: alvo,
         mag: (WEAPONS[wpn] && WEAPONS[wpn].mag) || 30, aimErr: 0.2, burst: 0, alertUntil: 0,
         path: null, pathIdx: 0, repathAt: 0, roamIdx: 0, phase: 0, think: Math.random() * 0.2,
         deadT: 0, strafeT: Math.random() * 10, revealedAt: -99,
@@ -2812,6 +2813,7 @@ export class Game {
     this.state = 'countdown';
     this.stateUntil = this.time + 3;
     this._compra?.abrirJanela(3);   // tempo de compra conta depois da contagem
+    this._compra?.botsCompram();
     this._showScoreboard(false);
     // O alvo do round entra no banner: sem isso o jogador não tem como saber que existe
     // condição de vitória por abates (o HUD só mostra o placar corrido).
@@ -7581,6 +7583,7 @@ export class Game {
   /* Mesmo respawn de sempre, agora chamável da IA E do slot de gente. Preso na IA, quem morria
      no multiplayer não voltava mais. Ver docs/MULTIPLAYER.md. */
   _respawnEntity(b) {
+    this._compra?.aoRenascerBot(b);   // antes do `g`: trocar a arma remonta a malha
     const g = b.mesh.group;
     const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
     b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;

@@ -2,10 +2,10 @@
 // Regras em economia-partida.js; nada aqui lê ou escreve a carteira do menu.
 import { WEAPONS } from './data/weapons.js';
 import { charWeapon } from './characters.js';
-import { GRUPOS_COMPRA, itensDoGrupo } from './compra-catalogo.js';
+import { GRUPOS_COMPRA, itensDoGrupo, itemDaCompra } from './compra-catalogo.js';
 import {
   ECONOMIA, novaCarteira, creditar, recompensaKill, recompensaRodada, proximaSequencia,
-  precoDe, distanciaAoSpawn, comprar,
+  precoDe, distanciaAoSpawn, comprar, compraDoBot,
 } from './economia-partida.js';
 import { frase, tr } from './i18n.js';
 
@@ -22,6 +22,7 @@ export class CompraPartida {
     this.aviso = '';
     this._hudTxt = '';
     game.player.carteira = novaCarteira();
+    for (const b of game.bots) b.carteira = novaCarteira();
     this._montarDom();
   }
 
@@ -119,7 +120,7 @@ export class CompraPartida {
   }
 
   aoAbate(vitima, autor, weap) {
-    if (vitima === this.game.player) vitima._desarmado = true;
+    vitima._desarmado = true;
     if (!autor?.carteira || autor === vitima) return;
     const arma = weap === 'FRAG' ? 'frag' : weap === 'FACA' ? 'knife' : autor.weapon;
     const v = creditar(autor.carteira, recompensaKill(arma, { mesmoTime: autor.team === vitima.team }));
@@ -145,6 +146,44 @@ export class CompraPartida {
     p._desarmado = false;
     p.primary = null;
     p.secondary = 'pistol';
+  }
+
+  // Começo de rodada: bot morto volta de pistola; quem tem saldo compra a arma dele.
+  botsCompram() {
+    for (const b of this.game.bots) {
+      if (b._remote) continue;
+      // morto que vai comprar remonta a malha uma vez só (pistola e já a comprada custaria dois clones)
+      this._rearmarBot(b, false);
+      this._botCompra(b);
+      if (b._meshWeapon !== b.weapon) this._armarBot(b, b.weapon);
+    }
+  }
+
+  aoRenascerBot(b) {
+    if (b._remote) return;
+    this._rearmarBot(b);
+    if (this.game.arena) this._botCompra(b);
+  }
+
+  _rearmarBot(b, malha = true) {
+    if (!b._desarmado) return;
+    b._desarmado = false;
+    if (malha) this._armarBot(b, 'pistol'); else b.weapon = 'pistol';
+  }
+
+  _botCompra(b) {
+    // primária pega do chão também conta: o bot não paga para trocar uma AWP grátis por escopeta
+    const temPrimaria = b.weapon !== 'pistol' && itemDaCompra(b.weapon)?.slot !== 'secundaria';
+    const id = compraDoBot({ saldo: b.carteira.saldo, alvo: b._armaAlvo, jaTem: b.weapon === b._armaAlvo || temPrimaria });
+    if (!id) return;
+    b.carteira.saldo -= precoDe(id);
+    this._armarBot(b, id);
+  }
+
+  _armarBot(b, w) {
+    if (b.weapon !== w || b._meshWeapon !== w) this.game._syncRemoteWeapon(b, w);
+    b.mag = WEAPONS[w]?.mag || 0;
+    b.reloadUntil = 0;
   }
 
   _ganho(txt) {
