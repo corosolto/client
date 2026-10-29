@@ -20,12 +20,15 @@
      AR12 partida online/servidor dedicado: o `_damage` não aplica armadura (o servidor é
           a autoridade e não tem esse estado — contrato no corpo do PR)
      AR13 renascer (jogador e bot) passa pelo `_equiparArmadura`: re-equipa no debug, zera fora dele
+     AR14 rajada de escopeta do bot com 1 chumbo na cabeça e o resto no peito: o colete sem
+          capacete ainda segura a parte do peito (a rajada é somada antes do `_damage`)
 
    Mutantes (cada um TEM que reprovar):
      --mutante=sem-armadura   o motor roda com `?armadura=0` onde a régua espera armadura
      --mutante=capacete-awp   o capacete passa a segurar a AWP
      --mutante=pen-plana      toda arma com a mesma penetração (some AWP > fuzil > SMG)
      --mutante=sem-equipar    o respawn deixa de re-equipar (o colete da vida anterior fica)
+     --mutante=chumbo-cabeca  `?armadurachumbo=0`: a rajada inteira passa pela regra da cabeça
 
    uso: node tools/eval/armadura-check.mjs [--mutante=...]
    (o motor roda em processo filho porque a querystring é lida na carga do game.js) */
@@ -38,7 +41,7 @@ const MUT = arg('mutante');
 
 /* ── processo filho: sobe o motor com a querystring dada e devolve medidas em JSON ── */
 if (process.argv.includes('--motor')) {
-  const { bootGame, initTextures } = await import('./harness.mjs');
+  const { bootGame, initTextures, THREE } = await import('./harness.mjs');
   const { WEAPONS } = await import('../../public/js/data/weapons.js');
   const g = bootGame('ferro_velho', { textures: initTextures(), ctf: false, seed: 4242 });
   const p = g.player, b = g.bots[0];
@@ -69,6 +72,17 @@ if (process.argv.includes('--motor')) {
   b.alive = false; g._respawnEntity(b);
   p.alive = false; g._respawnPlayer();
   out.renasce = { player: [p.armor, p.helmet], bot: [b.armor, b.helmet] };
+  // rajada de escopeta de bot, sem sorteio: o cone real, 1 chumbo na cabeça e o resto no peito
+  const rajada = (colete) => {
+    p.alive = true; p.hp = 100; p.protUntil = 0; p.armor = colete; p.helmet = false;
+    const consulta = g._consultarTiro; let n = 0;
+    g._consultarTiro = () => ({ ent: p, head: n++ === 0, point: p.pos.clone(), dist: 4 });
+    b.weapon = 'shotgun';
+    g._dispararBot(b, b.pos.clone(), new THREE.Vector3(0, 0, -1), WEAPONS.shotgun, true);
+    g._consultarTiro = consulta;
+    return +(100 - p.hp).toFixed(3);
+  };
+  out.chumbo = { sem: rajada(0), colete: rajada(100) };
   g.dedicated = true; out.dedicado = golpe(b, 100, true, 36, 'AK', false); g.dedicated = false;
   g.online = true; out.online = golpe(b, 100, true, 36, 'AK', false); g.online = false;
   process.stdout.write('\n@@' + JSON.stringify(out));
@@ -95,6 +109,7 @@ const padrao = motor(MUT === 'sem-armadura' ? 'armadura=0' : '');
 const comDebug = motor(MUT === 'sem-armadura' ? 'armadura=0&debug=1&colete=100&capacete=1' : 'debug=1&colete=100&capacete=1');
 const semGate = motor('colete=100&capacete=1');
 const desligado = motor('armadura=0&debug=1&colete=100&capacete=1');
+const chumbo = MUT === 'chumbo-cabeca' ? motor('armadurachumbo=0').chumbo : padrao.chumbo;
 
 const falhas = [];
 const cobra = (id, ok, msg) => { if (!ok) falhas.push(`${id} ${msg}`); };
@@ -156,5 +171,7 @@ cobra('AR10', todos(semGate.equip, 0), `sem ?debug=1 a querystring equipou: ${JS
 cobra('AR11', todos(desligado.equip, 0) && desligado.akCorpoColete.hp === 64, `?armadura=0 não voltou ao antigo (hp ${desligado.akCorpoColete.hp})`);
 cobra('AR12', padrao.dedicado.hp === 64 && padrao.online.hp === 64, `servidor/online aplicou armadura localmente (dedicado hp ${padrao.dedicado.hp}, online hp ${padrao.online.hp})`);
 
+cobra('AR14', chumbo.sem > 0 && chumbo.colete < chumbo.sem * 0.85,
+  `colete sem capacete não segurou a rajada com 1 chumbo na cabeça: perdeu ${chumbo.colete} com colete, ${chumbo.sem} sem`);
 if (falhas.length) { for (const f of falhas) console.error('  ✗', f); process.exit(1); }
-console.log(`  ✓ armadura: AR1-AR13 verdes${MUT ? ` (MUTANTE ${MUT} NÃO MORDEU)` : ''}`);
+console.log(`  ✓ armadura: AR1-AR14 verdes${MUT ? ` (MUTANTE ${MUT} NÃO MORDEU)` : ''}`);

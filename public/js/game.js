@@ -370,6 +370,8 @@ const REGEN = QS.get('regen') === '1', REGEN_DELAY = 6, REGEN_RATE = 22;
 // Colete/capacete estilo CS só na partida local (online o dano é do servidor): regra em armadura.js.
 // `?armadura=0` desliga; `?debug=1&colete=100&capacete=1` equipa jogador e bots a cada vida.
 const ARMADURA = QS.get('armadura') !== '0';
+// `?armadurachumbo=0` volta a rajada de chumbo do bot a passar inteira pela regra da cabeça.
+const ARMADURA_CHUMBO = QS.get('armadurachumbo') !== '0';
 const ARMADURA_DEBUG = QS.get('debug') === '1' && QS.has('colete')
   ? { colete: Math.max(0, Math.min(ARMADURA_MAX, parseInt(QS.get('colete'), 10) || 0)), capacete: QS.get('capacete') === '1' }
   : null;
@@ -4259,10 +4261,10 @@ export class Game {
     return dano * mul;
   }
 
-  _aplicarTiroBot(bot, hit, dir, W, head, dano) {
+  _aplicarTiroBot(bot, hit, dir, W, head, dano, fracCabeca = null) {
     const alvo = hit.ent;
     const blindado = this._armoredTarget(alvo, head);   // antes do dano: o tiro que zera o colete ainda bate nele
-    this._damage(alvo, dano, bot, W.short || 'ARMA', head, hit.point);
+    this._damage(alvo, dano, bot, W.short || 'ARMA', head, hit.point, fracCabeca);
     if (hit.atravessou) this._puff(hit.atravessou.point, hit.atravessou.face?.normal || null,
       this._surfaceOf(hit.atravessou.object), false);
     if (BLOOD) {
@@ -4287,14 +4289,14 @@ export class Game {
       if (!hit?.ent) continue;
       const head = !!(hit.head && permiteCabeca), dano = this._danoTiroBot(bot, hit, W, head) * peso;
       if (!(dano > 0)) continue;
-      const grupo = porAtor.get(hit.ent) || { hit, dir: direcao, dano: 0, head: false };
+      const grupo = porAtor.get(hit.ent) || { hit, dir: direcao, dano: 0, danoCabeca: 0, head: false };
       if (head && !grupo.head) { grupo.hit = hit; grupo.dir = direcao; }
-      grupo.dano += dano; grupo.head ||= head; porAtor.set(hit.ent, grupo); bruto += dano;
+      grupo.dano += dano; grupo.head ||= head; if (head) grupo.danoCabeca += dano; porAtor.set(hit.ent, grupo); bruto += dano;
     }
     const total = bruto > 0 ? Math.max(6, Math.round(bruto)) : 0;
     for (const grupo of porAtor.values()) {
       const dano = Math.min(this._participanteHumano(grupo.hit.ent) ? 100 : 130, total * grupo.dano / bruto);
-      this._aplicarTiroBot(bot, grupo.hit, grupo.dir, W, grupo.head, dano);
+      this._aplicarTiroBot(bot, grupo.hit, grupo.dir, W, grupo.head, dano, grupo.danoCabeca / grupo.dano);
     }
     const primeiro = porAtor.values().next().value?.hit || raios[0]?.hit;
     return { ...primeiro, point: primeiro?.point || raios[0]?.point, raios,
@@ -4386,8 +4388,14 @@ export class Game {
     return /colete|cota de malha|armadura|capacete/i.test(ent?.def?.blurb || '');
   }
   // Partida local só: online o nó roda este mesmo `_damage` sem estado de armadura (contrato no PR do colete).
-  _aplicaArmadura(ent, dmg, weap, head) {
+  // `fracCabeca`: rajada de chumbo somada (bot de escopeta) com parte na cabeça e parte no corpo;
+  // cada parte passa pelo colete com a sua regra, senão um chumbo na cabeça tirava o colete do peito.
+  _aplicaArmadura(ent, dmg, weap, head, fracCabeca = null) {
     if (!ARMADURA || this.online || this.dedicated || !(ent.armor > 0)) return dmg;
+    if (ARMADURA_CHUMBO && fracCabeca > 0 && fracCabeca < 1) {
+      const cab = this._aplicaArmadura(ent, dmg * fracCabeca, weap, true);
+      return cab + this._aplicaArmadura(ent, dmg * (1 - fracCabeca), weap, false);
+    }
     const r = danoComArmadura({ dano: dmg, cabeca: head, colete: ent.armor, capacete: ent.helmet, arma: weap });
     ent.armor = r.colete;
     return r.vida;
@@ -4501,10 +4509,10 @@ export class Game {
     fx.setBudget(this._fxAdaptativa);
     return fx;
   }
-  _damage(ent, dmg, attacker, weap = 'AWP', head = false, point = null) {
+  _damage(ent, dmg, attacker, weap = 'AWP', head = false, point = null, fracCabeca = null) {
     if (!ent.alive || this.state !== 'live') return;
     if (this.time < (ent.protUntil || 0)) return;   // spawn protection: zero dano (e sem hitmarker) enquanto protegido
-    dmg = this._aplicaArmadura(ent, dmg, weap, head);
+    dmg = this._aplicaArmadura(ent, dmg, weap, head, fracCabeca);
     ent.hp -= dmg;
     // 3P: o corpo cede na direção do tiro — sem isso quem atira de longe não sabe se acertou.
     if (ent.hp > 0 && attacker && attacker.pos) {
