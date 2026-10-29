@@ -58,12 +58,14 @@ const PORTA = Number(val('porta', 8202));
 const FOTO = val('foto', '/tmp/tiro-mp.png');
 const MAPA = val('mapa', 'atacadao_treta');
 const IDENTIDADE = args.includes('--identidade');
+const OBJETIVO = args.includes('--objetivo');
 const LARGURA = Number(val('largura', 1280));
 const ALTURA = Number(val('altura', 800));
 if (!Number.isInteger(LARGURA) || !Number.isInteger(ALTURA) || LARGURA < 640 || ALTURA < 320) {
   throw new Error('viewport inválido: use --largura/--altura em pixels inteiros');
 }
 const NO = process.env.NO || 'localhost:8787';
+const NO_QUERY = NO === 'localhost:8787' ? '1' : NO;
 const BASE = `http://localhost:${PORTA}`;
 const MAIN_LOCAL = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
 
@@ -172,7 +174,7 @@ try {
   /* `commit` e não `domcontentloaded`: o astro dev reinicia quando qualquer arquivo da
      árvore muda, e a navegação em curso fica sem o evento para sempre — a página carrega,
      o evento não chega. Quem diz que a página está de pé é o DOM, não o evento. */
-  await page.goto(`${BASE}/?mp=1`, { waitUntil: 'commit', timeout: 90_000 }).catch(() => {});
+  await page.goto(`${BASE}/?mp=${encodeURIComponent(NO_QUERY)}`, { waitUntil: 'commit', timeout: 90_000 }).catch(() => {});
   await page.waitForFunction(() => document.readyState !== 'loading' && !!document.getElementById('btn-jogar'), null, { timeout: 90_000, polling: 250 });
 
   // ── a tela, como o jogador usa: nick → JOGAR → MULTIPLAYER → mapa → CRIAR E ENTRAR
@@ -223,11 +225,12 @@ try {
   await page.evaluate(() => { document.querySelector('details.mp-criar')?.setAttribute('open', ''); });
   await page.evaluate(() => {
     document.getElementById('mp-nome').value = 'REGUA DO TIRO';
-    if (document.getElementById('mp-privada').checked) document.getElementById('mp-senha').value = 'regua-local';
+    const privada = document.getElementById('mp-privada');
+    privada.checked = false; privada.dispatchEvent(new Event('change', { bubbles: true }));
     const r = document.getElementById('mp-rotacao');
     r.value = 'escolher'; r.dispatchEvent(new Event('change', { bubbles: true }));
   });
-  await page.waitForSelector(`#mp-mapas-grade .mp-mapa[data-id="${MAPA}"]`, { timeout: 20_000 });
+  await page.waitForSelector(`#mp-mapas-grade .mp-mapa[data-id="${MAPA}"]`, { state: 'attached', timeout: 20_000 });
   await page.evaluate((m) => {
     document.querySelectorAll('#mp-mapas-grade .mp-mapa.on').forEach((b) => { if (b.dataset.id !== m) b.click(); });
     const alvo = document.querySelector(`#mp-mapas-grade .mp-mapa[data-id="${m}"]`);
@@ -235,11 +238,28 @@ try {
   }, MAPA);
   await clica('#mp-criar');
   await page.waitForSelector('#mp-modal-entrar', { state: 'visible', timeout: 30_000 });
-  await clica('#mp-modal-entrar');
+  await clicaAte('#mp-modal-entrar', () => !!window.__game
+    || !document.getElementById('mp-modal-entrar')?.getClientRects().length, 90_000);
 
-  await page.waitForFunction(() => {
-    const g = window.__game; return g && g._mp && g._mp.net.yourEnt != null && g.state === 'live' && g.player?.alive;
-  }, null, { timeout: 120_000, polling: 250 });
+  const entrou = await page.waitForFunction((objetivo) => {
+    const g = window.__game;
+    return g && g._mp && g._mp.net.yourEnt != null
+      && (objetivo ? !!g.objective : g.state === 'live' && g.player?.alive);
+  }, OBJETIVO, { timeout: OBJETIVO ? 30_000 : 120_000, polling: 250 }).then(() => true, () => false);
+  if (!entrou) {
+    const diagnostico = await page.evaluate(() => {
+      const g = window.__game;
+      return {
+        map: g?._mapId, state: g?.state, ent: g?._mp?.net?.yourEnt,
+        alive: g?.player?.alive, protocol: g?._mp?.net?.ws?.protocol,
+        socket: g?._mp?.net?.ws?.readyState, objective: !!g?.objective,
+        modalVisible: !!document.getElementById('mp-modal-entrar')?.getClientRects().length,
+        error: document.getElementById('mp-erro')?.textContent || '',
+        connection: document.getElementById('mp-estado')?.textContent || '',
+      };
+    });
+    throw new Error(`entrada multiplayer não ficou pronta: ${JSON.stringify(diagnostico)}${erros[0] ? ` · ${erros[0]}` : ''}`);
+  }
 
   const entrada = await page.evaluate(() => {
     const g = window.__game;
@@ -247,6 +267,26 @@ try {
   });
   cobra(entrada.mapa === MAPA, `TB1 · a sala nasceu no mapa que a tela escolheu (${entrada.mapa})`);
   cobra(entrada.ent != null, `TB2 · o jogador recebeu corpo no servidor (ent ${entrada.ent}) e a partida está viva`);
+  if (OBJETIVO) {
+    await page.waitForFunction(() => (window.__game?._mp?.net?.stats?.hz || 0) > 0,
+      null, { timeout: 15_000, polling: 250 }).catch(() => {});
+    const estadoObjetivo = await page.evaluate(() => {
+      const g = window.__game;
+      return {
+        protocolo: g._mp.net.ws?.protocol || '',
+        snapshotHz: g._mp.net.stats?.hz | 0,
+        objetivo: g.objective?.netState?.() || null,
+      };
+    });
+    cobra(estadoObjetivo.protocolo === 'coro-snapshot-v7',
+      `OBJ1 · o navegador negociou snapshots com objetivo (${estadoObjetivo.protocolo || 'nenhum'})`);
+    cobra(estadoObjetivo.snapshotHz > 0,
+      `OBJ2 · o cliente recebeu snapshots autoritativos (${estadoObjetivo.snapshotHz} Hz)`);
+    cobra(estadoObjetivo.objetivo && Object.keys(estadoObjetivo.objetivo).length > 0,
+      'OBJ3 · o estado objetivo autoritativo chegou ao modo no cliente');
+    cobra(erros.length === 0, `OBJ4 · nenhuma exceção no console durante a entrada${erros.length ? `: ${erros[0]}` : ''}`);
+    await page.screenshot({ path: FOTO });
+  } else {
   if (IDENTIDADE) {
     const entradaIdentidade = await page.evaluate(async () => {
       const net = window.__game._mp.net;
@@ -333,7 +373,7 @@ try {
      20,8 KB/s contra 13,8 KB/s. O teto é o número novo com folga — ele existe para que
      ninguém volte a mandar o bloco privado de todo mundo para todo mundo sem perceber. */
   const TETO_KBPS = 17;
-  cobra(medida.rede.protocolo === 'coro-snapshot-v5',
+  cobra(medida.rede.protocolo === 'coro-snapshot-v7',
     `TB10 · o navegador negociou o protocolo novo (${medida.rede.protocolo || 'nenhum'})`);
   cobra(medida.rede.ents <= 10 && medida.rede.kbps > 0 && medida.rede.kbps <= TETO_KBPS,
     `TB10b · ${medida.rede.kbps} KB/s com ${medida.rede.ents} entidades (teto ${TETO_KBPS}; a v4 media 20,8)`);
@@ -391,6 +431,7 @@ try {
     });
     cobra(!!retorno.esperado && retorno.exibido === retorno.esperado,
       `ID5 · ao voltar ao time, a identidade segue o novo corpo do servidor (${retorno.exibido})`);
+  }
   }
   console.log(`\n  figura: ${FOTO}`);
   if (MUTANTE && !mutou) { console.error(`✗ TB0  o mutante ${MUTANTE} não casou com o código`); falhas++; }

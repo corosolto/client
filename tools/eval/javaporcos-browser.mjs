@@ -11,6 +11,10 @@ mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
 const page = await context.newPage();
+await page.route(/\.astro\/eval-vite|dev-toolbar/, (route) => route.fulfill({
+  contentType: 'text/javascript',
+  body: 'export default {};',
+}));
 const errors = [], failed = [], glbs = [], consoleLog = [];
 page.on('pageerror', (error) => errors.push(error.message));
 page.on('console', (message) => consoleLog.push(`${message.type()}: ${message.text()}`));
@@ -42,6 +46,7 @@ try {
     await page.screenshot({ path: `${out}/00-falha-boot.png` });
     throw new Error(`partida rural não iniciou: ${JSON.stringify({ diagnostic, errors, consoleLog, failed })}`, { cause: error });
   }
+  await page.addStyleTag({ content: '#crash-overlay,astro-dev-toolbar{display:none!important}' });
   await page.evaluate(() => { window.__game.objective.state.prepLeft = 0; });
   await page.waitForFunction(() => window.__game?.bots?.some((bot) => bot._boarId && bot._boarVisual), null, { timeout: 30000 });
   await page.waitForTimeout(3200);

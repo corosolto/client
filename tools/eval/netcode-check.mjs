@@ -51,7 +51,7 @@ function montaJogo(net, { dedicated = false, teamSize = 5, ctf = false } = {}) {
 // snapshot com `yourEnt` no time E e o resto dividido 5/5, como o servidor manda
 function snapshot(t, tick, {
   yourEnt = 1, mover = 0, matarVoce = false, hpVoce = 100,
-  jogadorX = null, jogadorY = null, jogadorZ = null, ctfState = null,
+  jogadorX = null, jogadorY = null, jogadorZ = null, ctfState = null, objective = null,
   ackSeq = null, mag = null, res = null, reloadIn = null,
   weapon = 'ak', primary = null, secondary = null,
 } = {}) {
@@ -81,16 +81,17 @@ function snapshot(t, tick, {
   return {
     type: 'snapshot', room: 'r1', tick, t, state: 'live', owner: null, players: 1, spectators: 0,
     livre: { E: 4, B: 5 }, timeLeft: 77, roundNum: 3, scoreE: 2, scoreB: 1,
-    ...(ctfState ? { ctf: ctfState } : {}), ents,
+    ...(ctfState ? { ctf: ctfState } : {}), ...(objective ? { objective } : {}), ents,
   };
 }
 
 const TEX = initTextures();
-
 console.log('\n· ack e loadout autoritativos do slot (BUG-126/127)');
 {
   const net = fakeNet(1, 5, false, 30);
   const g = montaJogo(net);
+  let objetivoRecebido = null;
+  g.objective = { applyNetState: (state) => { objetivoRecebido = state; } };
   const authored = g.vm.authored;
   const active0 = authored.active, reload0 = authored.reload;
   const reloads = [];
@@ -99,8 +100,11 @@ console.log('\n· ack e loadout autoritativos do slot (BUG-126/127)');
   net.snap = snapshot(50, 1, {
     ackSeq: 0, weapon: 'm4', mag: 11, res: 47, reloadIn: 1.2,
     primary: 'm4', secondary: 'pistol', jogadorX: 0, jogadorY: 0, jogadorZ: 0,
+    objective: { wave: 5, phase: 'combat' },
   });
   g._mp.applySnapshot();
+  cobra(objetivoRecebido?.wave === 5 && objetivoRecebido?.phase === 'combat',
+    'snapshot entrega o objetivo ao modo ativo antes da apresentação local');
   cobra(g.player.weapon === 'm4' && g.player.primary === 'm4' && g.player.secondary === 'pistol',
     'snapshot v4 corrige arma atual e slots locais pela autoridade do servidor');
   cobra(g.player.ammo.m4.mag === 11 && g.player.ammo.m4.res === 47,

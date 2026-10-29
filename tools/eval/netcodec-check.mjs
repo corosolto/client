@@ -69,6 +69,7 @@ if (codec) {
         { owner: null, prog: 0.625, capTeam: 'E', contested: true },
       ],
     },
+    objective: { wave: 5, phase: 'combat', remaining: 12, objectiveHealth: [900, 600, 300] },
     ents,
   };
   const comum = codec.encodeSnapshot(sample);
@@ -84,6 +85,9 @@ if (codec) {
     'envelope sobrevive ao round-trip');
   cobra(out.roundKillsE === 7 && out.roundKillsB === 4,
     'v6 preserva os totais autoritativos de abates da rodada');
+  cobra(out.objective?.wave === 5 && out.objective?.remaining === 12
+      && out.objective?.objectiveHealth?.[2] === 300,
+    'v7 preserva o estado autoritativo do objetivo');
   cobra(out.ents.length === 10 && out.ents.every((e, i) => e.id === ents[i].id && e.name === ents[i].name),
     'identidade das 10 entidades sobrevive');
   /* A precisão é DIFERENTE por papel, e é essa diferença que paga a banda: o vizinho é
@@ -113,9 +117,12 @@ if (codec) {
   cobra(!('roundKillsE' in outV5) && !('roundKillsB' in outV5)
       && outV5.ents[3].fireN === 7,
     'snapshot v5 continua decodificável sem inventar os campos exclusivos da v6');
+  const binV6 = codec.encodeSnapshot(sample, 6);
+  const outV6 = codec.decodeSnapshot(binV6);
+  cobra(!('objective' in outV6), 'snapshot v6 continua decodificável sem inventar o objetivo exclusivo da v7');
   const v4bin = codec.encodeSnapshot(sample, 4);
-  cobra(bin.byteLength < v4bin.byteLength * 0.75,
-    `v6 preserva o corte de banda da v5: ${bin.byteLength} contra ${v4bin.byteLength} bytes da v4 (${Math.round((1 - bin.byteLength / v4bin.byteLength) * 100)}% menos)`);
+  cobra(binV6.byteLength < v4bin.byteLength * 0.75,
+    `v6 preserva o corte de banda da v5: ${binV6.byteLength} contra ${v4bin.byteLength} bytes da v4 (${Math.round((1 - binV6.byteLength / v4bin.byteLength) * 100)}% menos)`);
   const outV4 = codec.decodeSnapshot(v4bin);
   cobra(outV4.ents[0].ackSeq === 812 && near(outV4.ents[0].x, ents[0].x) && outV4.ents[3].fire === 1,
     'v4 continua byte-a-byte como era: bloco por entidade, posição em f32 e `fire` como bandeira');

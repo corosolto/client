@@ -309,10 +309,10 @@ class InvasaoJavaporcos {
       this.hud = document.createElement('div');
       this.hud.id = 'horde-objective';
       this.hud.style.cssText = 'position:fixed;left:50%;top:5.7rem;transform:translateX(-50%);z-index:12;min-width:360px;padding:.58rem .9rem;background:#1a120bdd;border:1px solid #d6a03a;color:#fff;font:700 13px/1.35 system-ui;text-align:center;letter-spacing:.035em;pointer-events:none';
-      game.el.hud?.append(this.hud);
+      game.el.hud?.append?.(this.hud);
       this.cinemaTitle = document.createElement('div');
       this.cinemaTitle.style.cssText = 'position:fixed;inset:32% 0 auto;z-index:14;text-align:center;color:#e0b347;font:900 clamp(30px,6vw,82px)/.9 Impact,sans-serif;letter-spacing:.06em;text-shadow:0 4px 0 #2a1008,0 0 28px #c42b18;opacity:0;pointer-events:none';
-      game.el.hud?.append(this.cinemaTitle);
+      game.el.hud?.append?.(this.cinemaTitle);
       this._key = (event) => {
         if (this.cinematic && game.time - this.cinematic.startedAt >= 2 && (event.code === 'Space' || event.code === 'Escape')) game.stateUntil = game.time;
       };
