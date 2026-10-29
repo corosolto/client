@@ -902,6 +902,9 @@ class CharController {
     if (this.dead || !(dur > 0)) return;
     this._reloadT = 0; this._reloadDur = dur;
   }
+  // Recarga INTERROMPIDA (granada na mão, morte): o overlay cai no mesmo quadro — senão o
+  // corpo 3P segue mergulhando atrás de um pente que ninguém está trocando.
+  cancelReload() { this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; }
 
   /* Levar tiro move o corpo: sem isso quem atira de longe não sabe se acertou.
      `dir` é a direção do disparo em mundo; `forca` 0..1 (dano/100). */
