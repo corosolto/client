@@ -2541,6 +2541,54 @@
         "creditsAfter": 108705,
         "status": "Treze modelos, rigs e vídeos integrados; Mandrake revisado; postura, movimento e revisão visual aprovados"
       }
+    },
+    "armadura_colete": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/armadura/colete.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "displayName": "Dustworn Olive Plate Carrier",
+        "original": {
+          "file": "mint-colete-flash-20261028/colete.glb",
+          "sha256": "bef1667ebc167da8f37410207ecad26020a9e4adc8a15951e05c4d874d6e490b",
+          "bytes": 3513828,
+          "pack": null
+        },
+        "notes": "Gerado pelo dono na conta Mint dele (28/10/2026); uso livre no jogo. Normalizado num cubo de ~1 m, frente +Z."
+      },
+      "processing": {
+        "chain": "Mint original→tools/optimize-armadura.mjs (textura 1024/512 JPEG, dedup, prune, meshopt); escala e encaixe medidos por corpo em armadura-visual.js",
+        "finalSha256": "18e41d4ef589328604835104785a0d17a1f13e2fb4f5fb4340fa78cf6d2994c9",
+        "bytes": 345048,
+        "triangles": 4877,
+        "status": "Integrado; prancha em docs/evidencias/feat-colete-20261028; revisão humana pendente"
+      }
+    },
+    "armadura_capacete": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/armadura/capacete.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "displayName": "Olive Highcut NVG Helmet",
+        "original": {
+          "file": "mint-colete-flash-20261028/capacete.glb",
+          "sha256": "0ca32b1181a11e850f3740de166307b038ef6d60894f1ec92fe3669d452e07d9",
+          "bytes": 2969572,
+          "pack": null
+        },
+        "notes": "Gerado pelo dono na conta Mint dele (28/10/2026); uso livre no jogo. Normalizado num cubo de ~1 m, frente +Z."
+      },
+      "processing": {
+        "chain": "Mint original→tools/optimize-armadura.mjs (textura 1024/512 JPEG, dedup, prune, meshopt); escala e encaixe medidos por corpo em armadura-visual.js",
+        "finalSha256": "8c54aeff35294bb38460c457491dc4a24d10f81bd622612b7c8ebe175366b839",
+        "bytes": 263976,
+        "triangles": 4578,
+        "status": "Integrado; prancha em docs/evidencias/feat-colete-20261028; revisão humana pendente"
+      }
     }
   }
 }

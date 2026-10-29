@@ -1451,6 +1451,13 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
   letter-spacing:var(--tr-2);color:var(--ink-200);vertical-align:baseline;
   -webkit-text-stroke:0;line-height:1.1}
 #hp-num.low{color:var(--crit)}
+/* Colete ao lado da vida (escudo + número), capacete só com .com-capacete. Some com colete 0. */
+#armor-hud{display:inline-flex;align-items:center;gap:4px;align-self:center;font-weight:700;font-size:var(--fs-600);
+  color:var(--ink-100);font-variant-numeric:tabular-nums;text-shadow:var(--sh-hud)}
+#armor-hud i{display:inline-block;width:18px;height:18px;background:currentColor;flex:none}
+#armor-hud .armor-ico{mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z'/%3E%3C/svg%3E") center/contain no-repeat}
+#armor-hud .helmet-ico{display:none;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 16a9 9 0 0 1 18 0v2H3zm-1 3h20v2H2z'/%3E%3C/svg%3E") center/contain no-repeat}
+#armor-hud.com-capacete .helmet-ico{display:inline-block}
 /* A BARRA MANTÉM FUNDO DE PROPÓSITO: barra é OBJETO GRÁFICO e a UI1 não dá crédito de
    contorno pra objeto gráfico — sem trilho próprio não existe barra. Preenchimento em
    âmbar como na referência; o vermelho continua reservado pro alarme. */

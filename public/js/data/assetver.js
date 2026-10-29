@@ -1244,6 +1244,8 @@ export const ASSET_REV = Object.freeze({
   "models/anims/zumbi/walk.glb": "f77b71c2a5",
   "models/anims/zumbi/walk1h.glb": "8e97aaefd8",
   "models/anims/zumbi/walkfire.glb": "0854b6780a",
+  "models/armadura/capacete.glb": "8c54aeff35",
+  "models/armadura/colete.glb": "18e41d4ef5",
   "models/bot-brain/model.json": "939aa427eb",
   "models/bot-brain/norm.json": "081523bb11",
   "models/bot-brain/weights.bin": "e6172adcd4",
