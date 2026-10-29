@@ -2,12 +2,49 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { assetUrl } from './data/asseturl.js';
 
-export const WAVE_COUNTS = Object.freeze([8, 12, 16, 20, 24, 28, 31, 34]);
+/* Teto de vivos MEDIDO em tools/eval/javaporcos-perf.mjs (64 vivos = 0,22 ms/quadro).
+   Subir daqui sem medir de novo é chutar o orçamento de quadro. */
+export const MAX_ALIVE = 64;
+export const WAVE_COUNTS = Object.freeze([24, 36, 48, 64, 80, 96, 120, 150]);
 export const BOAR_POINTS = Object.freeze({ jovem: 100, adulto: 180, matriarca: 300, ariete: 500 });
-const DEFAULT_MAX_ALIVE = 24;
+/* Vida baixa é o que faz horda GIGANTE ler como horda e não como esponja de bala:
+   618 bichos na partida inteira só funcionam se cada um cai em poucos tiros. */
+export const BOAR_HP = Object.freeze({ jovem: 70, adulto: 130, matriarca: 320, ariete: 760 });
+export const SPAWN_BASE = 0.18;
+/* FÚRIA — cresce com abate e com onda e mexe em três coisas medíveis: cadência de
+   spawn, velocidade e dano. `teto` existe pra não virar injogável. */
+export const FURIA = Object.freeze({
+  porAbate: 0.004, porOnda: 0.08, teto: 1.6,
+  cadencia: 1, velocidade: 0.22, dano: 0.45, raio: 0.25,
+});
+/* Agressão: o raio de perseguição era 7 m (o dono reprovou). `ouvido` é o alcance
+   com alerta de tiro/manada ligado; `contagio` é quanto tempo o vizinho fica puxado. */
+export const AGGRO = Object.freeze({
+  visao: 20, ouvido: 34, manada: 9, contagio: 3.5,
+  ataque: 1.9, comida: 1.6, objetivo: 2.4, rosnado: 26,
+});
+export const DASH = Object.freeze({ perto: 4, longe: 12, duracao: 0.55, impulso: 2.7, espera: 4.5 });
+
+const DEFAULT_MAX_ALIVE = MAX_ALIVE;
 const PREP_SECONDS = 12;
-const COMBAT_SECONDS = 35;
+const COMBAT_SECONDS = 75;
 const DEATH_SECONDS = 4;
+const MODEL_SPEEDS = Object.freeze({ jovem: 1.08, adulto: 1, matriarca: 0.88, ariete: 0.8 });
+const MODEL_HEIGHTS = Object.freeze({ jovem: 1.05, adulto: 1.3, matriarca: 1.58, ariete: 1.82 });
+/* Dano base por alvo. O multiplicador de fúria entra em danoDoJavaporco. */
+const BASE_DANO = Object.freeze({
+  jogador: { jovem: 18, adulto: 18, matriarca: 30, ariete: 42 },
+  objetivo: { jovem: 105, adulto: 105, matriarca: 170, ariete: 260 },
+  comida: { jovem: 40, adulto: 55, matriarca: 70, ariete: 95 },
+});
+const COMIDA_HP = Object.freeze({ lixo: 90, feira: 150, cacamba: 220, racao: 120 });
+/* Folga de encosto: o corpo (raio 0,38) e a quina do colisor param o bicho antes do raio. */
+const ENCOSTO = 1;
+/* Segundos sem encurtar distância pra nenhum alvo que aposentam o retardatário. */
+const PERDIDO = 14;
+/* Contorno de obstáculo: duração do deslize e o quanto ele abre do rumo do alvo. */
+const DESLIZE = 2.4;
+const DESLIZE_ANGULO = 1.45;
 
 export function poseMorteJavaporco(age, side = 1, mutant = '') {
   const elapsed = Math.max(0, Number(age) || 0);
@@ -21,8 +58,9 @@ export function poseMorteJavaporco(age, side = 1, mutant = '') {
 }
 
 function tipoDaOnda(wave, ordinal, total) {
-  if (wave === 8 && ordinal === total - 1) return 'ariete';
-  if (wave >= 5 && ordinal % 9 === 8) return 'matriarca';
+  if (wave === WAVE_COUNTS.length && ordinal === total - 1) return 'ariete';
+  if (wave >= 4 && ordinal % 24 === 23) return 'ariete';
+  if (wave >= 3 && ordinal % 9 === 8) return 'matriarca';
   if (wave >= 2 && ordinal % 3 === 2) return 'adulto';
   return 'jovem';
 }
@@ -31,10 +69,13 @@ function scoreDe(state, playerId) {
   return state.scores[playerId] ||= { points: 0, kills: 0, assists: 0, combo: 0, bestCombo: 0, damagePrevented: 0, lastKillAt: -Infinity };
 }
 
-export function criarHorda({ seed = 1, maxAlive = DEFAULT_MAX_ALIVE } = {}) {
+export function criarHorda({ seed = 1, maxAlive = DEFAULT_MAX_ALIVE, entradas = 4, mutante = '' } = {}) {
+  const magra = mutante === 'horda-magra';
   return {
     seed: seed >>> 0,
-    maxAlive: Math.max(1, Math.min(DEFAULT_MAX_ALIVE, maxAlive | 0)),
+    maxAlive: Math.max(1, Math.min(magra ? 24 : DEFAULT_MAX_ALIVE, maxAlive | 0)),
+    entrances: Math.max(1, entradas | 0),
+    mutante,
     wave: 0,
     phase: 'prep',
     prepLeft: PREP_SECONDS,
@@ -43,12 +84,47 @@ export function criarHorda({ seed = 1, maxAlive = DEFAULT_MAX_ALIVE } = {}) {
     spawnOrdinal: 0,
     spawnClock: 0,
     clock: 0,
+    fury: 0,
+    kills: 0,
     alive: [],
     objectives: [1000, 1000, 1000],
+    foodHp: {},
+    foodRevirada: 0,
     scores: {},
     teamBonus: 0,
     winner: null,
   };
+}
+
+/* Tamanho da onda: o mutante `horda-magra` devolve a horda rala que o dono reprovou. */
+export function tamanhoDaOnda(state, wave = state.wave) {
+  const total = WAVE_COUNTS[wave - 1] || 0;
+  return state.mutante === 'horda-magra' ? Math.min(8, total) : total;
+}
+
+export function recalcularFuria(state) {
+  if (state.mutante === 'sem-furia') return (state.fury = 0);
+  const crua = state.kills * FURIA.porAbate + Math.max(0, state.wave - 1) * FURIA.porOnda;
+  state.fury = state.mutante === 'furia-infinita' ? crua : Math.min(FURIA.teto, crua);
+  return state.fury;
+}
+
+export function cadenciaDeSpawn(state) {
+  return SPAWN_BASE / (1 + (state.fury || 0) * FURIA.cadencia);
+}
+
+export function velocidadeDoJavaporco(state, type) {
+  return (MODEL_SPEEDS[type] || 1) * (1 + (state.fury || 0) * FURIA.velocidade);
+}
+
+export function danoDoJavaporco(state, type, contra = 'jogador') {
+  const tabela = BASE_DANO[contra] || BASE_DANO.jogador;
+  return (tabela[type] ?? tabela.jovem) * (1 + (state.fury || 0) * FURIA.dano);
+}
+
+export function raioDeAgressao(state) {
+  if (state.mutante === 'focinho-curto') return 7;
+  return AGGRO.visao * (1 + (state.fury || 0) * FURIA.raio);
 }
 
 export function iniciarOnda(state) {
@@ -57,22 +133,23 @@ export function iniciarOnda(state) {
   state.phase = 'combat';
   state.combatLeft = COMBAT_SECONDS;
   state.prepLeft = 0;
-  state.remaining = WAVE_COUNTS[state.wave - 1];
+  state.remaining = tamanhoDaOnda(state);
   state.spawnOrdinal = 0;
   state.spawnClock = 0;
   state.alive.length = 0;
+  recalcularFuria(state);
   return true;
 }
 
 function spawnAnimal(state) {
   const ordinal = state.spawnOrdinal++;
-  const total = WAVE_COUNTS[state.wave - 1];
+  const total = tamanhoDaOnda(state);
   const type = tipoDaOnda(state.wave, ordinal, total);
   state.alive.push({
-    id: `${state.seed.toString(36)}-${state.wave}-${ordinal}`,
+    id: `${state.wave}.${ordinal}`,
     type,
-    entrance: (state.seed + state.wave + ordinal) % 4,
-    hp: type === 'ariete' ? 900 : type === 'matriarca' ? 430 : type === 'adulto' ? 250 : 140,
+    entrance: (state.seed + state.wave + ordinal) % state.entrances,
+    hp: BOAR_HP[type],
     damage: {},
   });
   state.remaining--;
@@ -102,8 +179,9 @@ export function passoHorda(state, dt) {
   if (state.phase !== 'combat') return state;
   state.combatLeft = Math.max(0, state.combatLeft - dt);
   state.spawnClock += dt;
-  while (state.remaining > 0 && state.alive.length < state.maxAlive && state.spawnClock >= 0.18) {
-    state.spawnClock -= 0.18;
+  const cadencia = cadenciaDeSpawn(state);
+  while (state.remaining > 0 && state.alive.length < state.maxAlive && state.spawnClock >= cadencia) {
+    state.spawnClock -= cadencia;
     spawnAnimal(state);
   }
   ondaLimpa(state);
@@ -131,6 +209,8 @@ export function registrarAbate(state, animalId, killerId, mutant = '') {
     const multiplier = [1, 1, 1.25, 1.5, 2][killer.combo];
     killer.points += Math.round(points * multiplier);
     killer.kills++;
+    state.kills++;
+    recalcularFuria(state);
   }
   const assistentes = Object.entries(animal.damage).filter(([id, damage]) => id !== killerId && damage > 0);
   const danoAssistente = assistentes.reduce((total, [, damage]) => total + damage, 0);
@@ -156,6 +236,121 @@ export function atingirObjetivo(state, objectiveIndex, damage) {
   return true;
 }
 
+/* Lixo/feira/caçamba: o ponto tem vida própria e some do cardápio quando é revirado. */
+export function comidaRestante(state, spot) {
+  if (!spot) return 0;
+  const atual = state.foodHp[spot.id];
+  if (atual !== undefined) return atual;
+  return Number(spot.hp) || COMIDA_HP[spot.kind] || 120;
+}
+
+export function atacarComida(state, spot, damage) {
+  if (!spot || !(damage > 0)) return 0;
+  const antes = comidaRestante(state, spot);
+  if (antes <= 0) return 0;
+  const hp = Math.max(0, antes - damage);
+  state.foodHp[spot.id] = hp;
+  if (!hp) state.foodRevirada = (state.foodRevirada || 0) + 1;
+  return hp;
+}
+
+function dentroDaCidade(world, x, z) {
+  const c = world?.cityBounds;
+  if (!c) return true;
+  return x >= c.minX && x <= c.maxX && z >= c.minZ && z <= c.maxZ;
+}
+
+const CHAVE_OBJETIVO = Object.freeze(['o:0', 'o:1', 'o:2']);
+const CHAVES_COMIDA = new Map();
+const chaveDaComida = (id) => {
+  let chave = CHAVES_COMIDA.get(id);
+  if (!chave) CHAVES_COMIDA.set(id, chave = `c:${id}`);
+  return chave;
+};
+
+/* `saida` é preenchida no lugar: com 64 bichos, um objeto de alvo por bicho por quadro
+   era ~3.800 objetos por segundo, e foi isso que o perf acusou como pausa de GC. */
+function alvoEm(saida, kind, x, z, distance, chave, ent, spot, objectiveIndex, raio) {
+  saida.kind = kind; saida.x = x; saida.z = z; saida.distance = distance; saida.chave = chave;
+  saida.ent = ent; saida.spot = spot; saida.objectiveIndex = objectiveIndex; saida.raio = raio;
+  return saida;
+}
+
+/* Alvo que o bicho já tentou e não alcançou fica de quarentena SÓ pra ele: sem isso um
+   saco de lixo atrás de um muro prende meia horda até o fim da onda (medido no mapa). */
+const evitando = (bot, chave, tempo) => (bot._boarEvitar?.get(chave) || 0) > tempo;
+
+function comidaMaisProxima(bot, world, state, tempo, saida) {
+  const spots = world?.foodSpots || [];
+  let alvo = null, melhor = Infinity;
+  for (let i = 0; i < spots.length; i++) {
+    const spot = spots[i];
+    if (comidaRestante(state, spot) <= 0 || !dentroDaCidade(world, spot.x, spot.z)) continue;
+    if (evitando(bot, chaveDaComida(spot.id), tempo)) continue;
+    const d = Math.hypot(spot.x - bot.pos.x, spot.z - bot.pos.z);
+    if (d < melhor) { melhor = d; alvo = spot; }
+  }
+  if (!alvo) return null;
+  /* `r` do mapa já é "distância do centro em que o focinho alcança" (meia-extensão do
+     colisor + 0,40), então entra cru; sem `r`, 1,6 m serve de palpite. */
+  const raio = Number(alvo.r) > 0 ? Number(alvo.r) : AGGRO.comida;
+  return alvoEm(saida, 'comida', alvo.x, alvo.z, melhor, chaveDaComida(alvo.id), null, alvo, -1, raio);
+}
+
+function objetivoMaisProximo(bot, world, state, tempo, saida) {
+  const lista = world?.hordeObjectives || [];
+  let indice = -1, melhor = Infinity;
+  for (let i = 0; i < lista.length; i++) {
+    if (!(state.objectives[i] > 0) || evitando(bot, CHAVE_OBJETIVO[i], tempo)) continue;
+    const d = Math.hypot(lista[i].x - bot.pos.x, lista[i].z - bot.pos.z);
+    if (d < melhor) { melhor = d; indice = i; }
+  }
+  if (indice < 0) return alvoEm(saida, 'vazio', bot.pos.x, bot.pos.z, 0, 'v', null, null, -1, 0);
+  const alvo = lista[indice];
+  /* `r` do objetivo (opcional) é o raio em que o bicho já alcança a parede do prédio —
+     mesma ideia do `r` da comida. Sem ele, 2,4 m, que só serve pra alvo pequeno. */
+  const raio = Number(alvo.r) > 0 ? Number(alvo.r) : AGGRO.objetivo;
+  return alvoEm(saida, 'objetivo', alvo.x, alvo.z, melhor, CHAVE_OBJETIVO[indice] || `o:${indice}`, null, null, indice, raio);
+}
+
+/* Prioridade da horda: jogador perto > lixo/comida da cidade > objetivo.
+   É a comida que faz o bando REVIRAR a cidade antes de bater no objetivo. */
+export function escolherAlvo(bot, { world, state, jogadores = [], tempo = 0 }, saida = {}) {
+  const raio = raioDeAgressao(state);
+  let ent = null, perto = Infinity;
+  for (let i = 0; i < jogadores.length; i++) {
+    const alvo = jogadores[i];
+    if (!alvo?.alive || !alvo.pos) continue;
+    const d = Math.hypot(alvo.pos.x - bot.pos.x, alvo.pos.z - bot.pos.z);
+    if (d < perto) { perto = d; ent = alvo; }
+  }
+  const puxado = state.mutante !== 'focinho-curto' && (bot._boarAlertaAte || 0) > tempo;
+  if (ent && (perto <= raio || (puxado && perto <= AGGRO.ouvido)))
+    return alvoEm(saida, 'jogador', ent.pos.x, ent.pos.z, perto, ent._chaveDeFluxo ||= `j:${ent._playerId || ent.name || 'p'}`, ent, null, -1, 0);
+  const comida = state.mutante === 'ignora-comida' ? null : comidaMaisProxima(bot, world, state, tempo, saida);
+  if (comida) return comida;
+  return objetivoMaisProximo(bot, world, state, tempo, saida);
+}
+
+/* Chão REAL: o bicho andava enterrado porque o modo assumia y=0 (relato do dono). */
+export function alturaDoChao(world, x, z, yRef) {
+  const altura = world?.groundHeightAt?.(x, z, yRef);
+  return Number.isFinite(altura) ? altura : 0;
+}
+
+/* Mesma conta de volume/pan/atraso que o game.js usa pra tiro e morte de bot. */
+export function espacializarJavaporco(ouvinte, pos, alcance = 46) {
+  const ox = ouvinte?.pos?.x ?? 0, oz = ouvinte?.pos?.z ?? 0;
+  const dx = (pos?.x ?? 0) - ox, dz = (pos?.z ?? 0) - oz;
+  const d = Math.hypot(dx, dz);
+  const rel = Math.atan2(dx, dz) - (ouvinte?.yaw || 0);
+  return {
+    vol: Math.max(0, 1 - d / alcance),
+    pan: Math.max(-.9, Math.min(.9, Math.sin(rel) * .82)),
+    delay: Math.min(.25, d / 343),
+  };
+}
+
 export function snapshotHorda(state) {
   return {
     wave: state.wave,
@@ -164,9 +359,11 @@ export function snapshotHorda(state) {
     prepLeft: Number(state.prepLeft.toFixed(3)),
     combatLeft: Number(state.combatLeft.toFixed(3)),
     remaining: state.remaining,
-    aliveIds: state.alive.map((animal) => animal.id),
+    fury: Number((state.fury || 0).toFixed(3)),
+    kills: state.kills || 0,
     alive: state.alive.map(({ id, type, entrance, hp }) => ({ id, type, entrance, hp })),
     objectiveHealth: [...state.objectives],
+    foodHealth: { ...state.foodHp },
     scoreByPlayer: structuredClone(state.scores),
     teamBonus: state.teamBonus,
     winner: state.winner,
@@ -179,8 +376,6 @@ const MODEL_PATHS = Object.freeze({
   matriarca: '/models/enemies/javaporcos/matriarca_javali.glb',
   ariete: '/models/enemies/javaporcos/ariete_javali.glb',
 });
-const MODEL_HEIGHTS = Object.freeze({ jovem: 1.05, adulto: 1.3, matriarca: 1.58, ariete: 1.82 });
-const MODEL_SPEEDS = Object.freeze({ jovem: 1.08, adulto: 1, matriarca: .88, ariete: .8 });
 const modelTemplates = new Map();
 let preloadPromise = null;
 
@@ -195,43 +390,70 @@ export function preloadJavaporcos() {
         node.castShadow = true;
         node.receiveShadow = true;
       });
-      modelTemplates.set(type, gltf.scene);
+      registrarModeloJavaporco(type, gltf.scene);
       resolve();
     }, undefined, () => resolve());
   })));
   return preloadPromise;
 }
 
+/* Entrada única do molde por tipo: o carregador escreve aqui e a régua planta um
+   molde de pivô torto pra provar que a pata encosta no chão mesmo assim. */
+export function registrarModeloJavaporco(type, objeto) {
+  if (objeto) modelTemplates.set(type, objeto);
+  else modelTemplates.delete(type);
+}
+
+/* Geometria e material do proxy ficam no módulo: com 64 vivos, criar seis geometrias
+   por spawn era pico de quadro na hora em que a onda enche. */
+const PROXY_GEO = {
+  corpo: new THREE.SphereGeometry(.72, 10, 7),
+  cabeca: new THREE.SphereGeometry(.4, 9, 6),
+  pata: new THREE.CylinderGeometry(.09, .12, .55, 6),
+};
+const PROXY_MAT = new Map();
+function materialProxy(type) {
+  let material = PROXY_MAT.get(type);
+  if (material) return material;
+  const color = type === 'ariete' ? 0x33251e : type === 'matriarca' ? 0x5a3828 : type === 'adulto' ? 0x704833 : 0x895b3f;
+  material = new THREE.MeshLambertMaterial({ color });
+  PROXY_MAT.set(type, material);
+  return material;
+}
+
 function fallbackAnimal(type) {
   const group = new THREE.Group();
-  const color = type === 'ariete' ? 0x33251e : type === 'matriarca' ? 0x5a3828 : type === 'adulto' ? 0x704833 : 0x895b3f;
-  const material = new THREE.MeshLambertMaterial({ color });
-  const body = new THREE.Mesh(new THREE.SphereGeometry(.72, 10, 7), material);
+  const material = materialProxy(type);
+  const body = new THREE.Mesh(PROXY_GEO.corpo, material);
   body.scale.set(1.35, .72, .78); body.position.y = .68; body.castShadow = true; group.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(.4, 9, 6), material);
+  const head = new THREE.Mesh(PROXY_GEO.cabeca, material);
   head.position.set(0, .65, .82); head.scale.set(.82, .76, 1.05); head.castShadow = true; group.add(head);
   for (const x of [-.42, .42]) for (const z of [-.38, .38]) {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(.09, .12, .55, 6), material);
+    const leg = new THREE.Mesh(PROXY_GEO.pata, material);
     leg.position.set(x, .28, z); leg.castShadow = true; group.add(leg);
   }
   return group;
 }
 
-function visualAnimal(type) {
+/* O modelo vai DENTRO de um grupo e o grupo é que vai pro chão: era a conta de
+   `position.y = -box.min.y` que o passo do bicho sobrescrevia e enterrava a pata. */
+function visualAnimal(type, mutante = '') {
   const template = modelTemplates.get(type);
-  if (!template) return fallbackAnimal(type);
-  const visual = template.clone(true);
-  const box = new THREE.Box3().setFromObject(visual);
-  const height = Math.max(.01, box.max.y - box.min.y);
-  const scale = MODEL_HEIGHTS[type] / height;
-  visual.scale.setScalar(scale);
-  visual.position.y = -box.min.y * scale;
-  return visual;
+  const corpo = template ? template.clone(true) : fallbackAnimal(type);
+  const box = new THREE.Box3().setFromObject(corpo);
+  const altura = Math.max(.01, box.max.y - box.min.y);
+  const escala = MODEL_HEIGHTS[type] / altura;
+  corpo.scale.multiplyScalar(escala);
+  corpo.position.y = mutante === 'pivo-solto' ? 0 : -box.min.y * escala;
+  const pivo = new THREE.Group();
+  pivo.add(corpo);
+  pivo.userData.corpo = corpo;
+  return pivo;
 }
 
 function marchaRural(sfx) {
   const ctx = sfx?.ctx;
-  if (!ctx) return [];
+  if (!ctx?.createOscillator) return [];   // sfx dublê (arnês) não tem AudioContext de verdade
   const start = ctx.currentTime + .03;
   const nodes = [];
   for (let beat = 0; beat < 48; beat++) {
@@ -251,6 +473,7 @@ function marchaRural(sfx) {
   }
   return nodes;
 }
+
 function preencherSlotsDaHorda(game, boars) {
   const template = boars[0];
   if (!template) return;
@@ -298,6 +521,33 @@ function preencherSlotsDaHorda(game, boars) {
   }
 }
 
+/* Campo de fluxo: UM percurso em largura por destino serve a horda inteira, em vez de
+   um caminho por bicho. Grafo não dirigido (`adj` simétrico); buffers reaproveitados. */
+let filaFluxo = new Int32Array(0);
+function fluxoAte(adj, destino, reuso) {
+  const total = adj.length;
+  const prox = reuso?.length === total ? reuso.fill(-1) : new Int32Array(total).fill(-1);
+  if (filaFluxo.length < total) filaFluxo = new Int32Array(total);
+  const fila = filaFluxo;
+  let fim = 0;
+  prox[destino] = destino;
+  fila[fim++] = destino;
+  for (let i = 0; i < fim; i++) {
+    const atual = fila[i], vizinhos = adj[atual];
+    for (let k = 0; k < vizinhos.length; k++) {
+      const viz = vizinhos[k];
+      if (prox[viz] !== -1) continue;
+      prox[viz] = atual;
+      fila[fim++] = viz;
+    }
+  }
+  return prox;
+}
+
+/* `az:+1` anda na direção de `yaw` (sin,cos) — o mesmo rumo que os bots do jogo usam.
+   ENTRADA_RE é só do mutante `rumo-invertido`, que devolve o bicho andando de costas. */
+const ENTRADA_FRENTE = Object.freeze({ ax: 0, az: 1, shift: false, crouch: false, jump: false });
+const ENTRADA_RE = Object.freeze({ ax: 0, az: -1, shift: false, crouch: false, jump: false });
 
 class InvasaoJavaporcos {
   constructor(game) {
@@ -305,13 +555,23 @@ class InvasaoJavaporcos {
     this.boars = game.combatants.filter((ent) => !ent.isPlayer && ent.team === 'B');
     preencherSlotsDaHorda(game, this.boars);
     this.slots = new Map();
-    this.state = criarHorda({ seed: game.matchSeed || game.seed || 1, maxAlive: Math.max(1, this.boars.length) });
+    this.state = this.novaHorda();
     this.cinematic = null;
     this.audioNodes = [];
     this.scoreShown = false;
     this.corpses = [];
     this.deathBox = new THREE.Box3();
     this.deathCenter = new THREE.Vector3();
+    this.jogadores = [];
+    this.vivos = [];
+    this.hudAte = 0;
+    this.ctx = { world: game.world, state: null, jogadores: this.jogadores, tempo: 0 };
+    this.campos = new Map();
+    this.orcamentoCampo = 1;
+    this.manadaAte = 0;
+    this.rosnadoAte = 0;
+    this.ondaAnunciada = 0;
+    this.jitter = 0;
     for (const bot of this.boars) {
       bot.vel ||= new THREE.Vector3();
       bot._objectiveNpc = 'javaporco';
@@ -334,16 +594,25 @@ class InvasaoJavaporcos {
       window.addEventListener('keydown', this._key);
     }
   }
+  novaHorda() {
+    return criarHorda({
+      seed: this.game.matchSeed || this.game.seed || 1,
+      maxAlive: Math.max(1, this.boars.length),
+      entradas: this.game.world?.boarEntrances?.length || 4,
+    });
+  }
   emitir(k, data = {}) {
     this.game._objectiveEvent?.({ k, ...data });
   }
 
 
   prepareRound() {
-    this.state = criarHorda({ seed: this.game.matchSeed || this.game.seed || 1, maxAlive: Math.max(1, this.boars.length) });
+    this.state = this.novaHorda();
     this.game.timeLeft = WAVE_COUNTS.length * (PREP_SECONDS + COMBAT_SECONDS);
     this.cinematic = null;
     this.scoreShown = false;
+    this.campos.clear();
+    this.ondaAnunciada = 0;
     if (this.game.vmScene) this.game.vmScene.visible = true;
     if (this.cinemaTitle) this.cinemaTitle.style.opacity = '0';
     this.limparCadaveres();
@@ -358,19 +627,27 @@ class InvasaoJavaporcos {
   assignar(animal) {
     const bot = this.boars.find((item) => !item._boarId);
     if (!bot) return;
-    const entrance = this.game.world.boarEntrances[animal.entrance];
+    const bocas = this.game.world.boarEntrances || [];
+    const entrance = bocas[animal.entrance % Math.max(1, bocas.length)] || { x: 0, z: 0 };
     bot._boarId = animal.id;
     bot._boarType = animal.type;
     bot._objectiveNpc = 'javaporco';
     bot.name = `[ONDA ${this.state.wave}] ${animal.type.toUpperCase()}`;
     bot.weapon = 'knife'; bot.primary = 'knife';
     bot.hp = animal.hp; bot.alive = true; bot.respawnAt = Infinity; bot.deadT = 0;
-    bot.pos.set(entrance.x, this.game.world.groundHeightAt(entrance.x, entrance.z), entrance.z);
-    bot.vel.set(0, 0, 0); bot.yaw = Math.PI; bot._boarNextPath = 0; bot._boarAttackAt = 0;
-    bot._boarVisual = visualAnimal(animal.type);
+    bot.pos.set(entrance.x, alturaDoChao(this.game.world, entrance.x, entrance.z), entrance.z);
+    bot.vel.set(0, 0, 0); bot.yaw = Math.atan2(-entrance.x, -entrance.z);
+    this.jitter = (this.jitter + .37) % 1;
+    bot._boarJitter = this.jitter;
+    bot._boarNoAte = 0; bot._boarNo = -1; bot._boarAttackAt = 0;
+    bot._boarAlertaAte = 0; bot._boarDashAte = 0; bot._boarDashLivre = this.game.time + DASH.espera * this.jitter;
+    bot._boarRosnarAte = this.game.time + 1 + this.jitter * 3;
+    bot._boarFocinhoAte = 0; bot._boarEvitar = null; bot._boarCansaco = 0; bot._boarMelhorEm = this.game.time;
+    bot._boarAlvoChave = null; bot._boarAvancoEm = 0; bot._boarDeslizeAte = 0;
+    bot._boarVisual = visualAnimal(animal.type, this.state.mutante);
     this.game.scene.add(bot._boarVisual);
-    this.slots.set(animal.id, bot);
     this.emitir('BOAR_SPAWN', { i: animal.id, type: animal.type, entrance: animal.entrance, wave: this.state.wave });
+    this.slots.set(animal.id, bot);
   }
 
   desativar(bot) {
@@ -424,19 +701,43 @@ class InvasaoJavaporcos {
     this.corpses.length = 0;
   }
 
+  /* Marca-e-varre contra `state.alive`: com 64 slots, montar um Set por quadro
+     era lixo de GC à toa. A marca é um contador, não um objeto. */
   sincronizarSlots() {
-    const aliveIds = new Set(this.state.alive.map((animal) => animal.id));
+    const vivos = this.state.alive;
+    const marca = (this.marca = (this.marca || 0) + 1);
+    for (let i = 0; i < vivos.length; i++) {
+      const bot = this.slots.get(vivos[i].id);
+      if (bot) bot._boarMarca = marca;
+    }
     for (const bot of this.boars) {
-      if (!bot._boarId || aliveIds.has(bot._boarId)) continue;
+      if (!bot._boarId || bot._boarMarca === marca) continue;
       if (this.game.state === 'live' && this.state.phase === 'combat') this.tombar(bot);
       else this.desativar(bot);
     }
-    for (const animal of this.state.alive) if (!this.slots.has(animal.id)) this.assignar(animal);
+    for (let i = 0; i < vivos.length; i++) if (!this.slots.has(vivos[i].id)) this.assignar(vivos[i]);
+  }
+
+  /* Listas reaproveitadas (sem `filter`): são dois arrays por quadro que, com a horda
+     cheia, viram pausa de GC — medido no javaporcos-perf. */
+  listarJogadores() {
+    const lista = this.jogadores;
+    lista.length = 0;
+    for (const ent of this.game.combatants) if (ent.team === 'E' && ent.alive) lista.push(ent);
+    return lista;
+  }
+
+  contexto(tempo) {
+    const ctx = this.ctx;
+    ctx.world = this.game.world; ctx.state = this.state; ctx.jogadores = this.jogadores; ctx.tempo = tempo;
+    return ctx;
   }
 
   update(dt) {
     this.atualizarCadaveres();
     if (this.game.state !== 'live') return;
+    this.orcamentoCampo = 1;
+    this.listarJogadores();
     if (!this.game.online || this.game.dedicated) {
       const phase = this.state.phase, winner = this.state.winner, wave = this.state.wave;
       passoHorda(this.state, dt);
@@ -445,26 +746,154 @@ class InvasaoJavaporcos {
       if (!winner && this.state.winner) this.emitir('HORDE_FINISHED', { winner: this.state.winner, wave: this.state.wave });
       if (this.state.winner) this.game._endRound(this.state.winner);
     }
+    this.propagarManada(this.game.time);
+    if (this.state.phase === 'combat' && this.state.wave !== this.ondaAnunciada) {
+      this.ondaAnunciada = this.state.wave;
+      this.javaporcoSfx('horda', this.game.player?.pos, 1, 110);
+    }
     this.game.timeLeft = this.state.phase === 'prep' ? this.state.prepLeft : this.state.combatLeft;
     this.atualizaHud();
   }
 
-  alvoDo(bot) {
-    const jogadores = this.game.combatants.filter((ent) => ent.team === 'E' && ent.alive);
-    let nearest = null, distance = Infinity;
-    for (const ent of jogadores) {
-      const d = Math.hypot(ent.pos.x - bot.pos.x, ent.pos.z - bot.pos.z);
-      if (d < distance) { nearest = ent; distance = d; }
+  /* Manada: quem está alertado (viu jogador, ouviu tiro ou levou tiro) puxa o vizinho.
+     Roda a cada 0,25 s — propagação não precisa de 60 Hz e é O(vivos²). */
+  propagarManada(tempo) {
+    if (tempo < this.manadaAte) return;
+    this.manadaAte = tempo + .25;
+    const vivos = this.vivos;
+    vivos.length = 0;
+    for (const bot of this.boars) if (bot._boarId && bot.alive) vivos.push(bot);
+    const raio2 = AGGRO.manada * AGGRO.manada;
+    for (let i = 0; i < vivos.length; i++) {
+      const lider = vivos[i];
+      if ((lider._boarAlertaAte || 0) <= tempo) continue;
+      for (let k = 0; k < vivos.length; k++) {
+        const vizinho = vivos[k];
+        if (vizinho === lider || (vizinho._boarAlertaAte || 0) > tempo) continue;
+        const dx = lider.pos.x - vizinho.pos.x, dz = lider.pos.z - vizinho.pos.z;
+        if (dx * dx + dz * dz <= raio2) vizinho._boarAlertaAte = tempo + AGGRO.contagio;
+      }
     }
-    if (nearest && distance < 7) return { x: nearest.pos.x, z: nearest.pos.z, ent: nearest, distance };
-    const objectives = this.game.world.hordeObjectives.filter((_, index) => this.state.objectives[index] > 0);
-    let objectiveIndex = 0;
-    for (let i = 1; i < objectives.length; i++) {
-      if (Math.hypot(objectives[i].x - bot.pos.x, objectives[i].z - bot.pos.z) < Math.hypot(objectives[objectiveIndex].x - bot.pos.x, objectives[objectiveIndex].z - bot.pos.z)) objectiveIndex = i;
+  }
+
+  /* Nó do grafo onde o bicho está. Recalcular todo quadro é varredura linear por bicho. */
+  noDoBicho(bot, tempo) {
+    const world = this.game.world;
+    if (!world.nearestWaypoint) return -1;
+    if (bot._boarNo >= 0 && tempo < bot._boarNoAte) return bot._boarNo;
+    bot._boarNo = world.nearestWaypoint(bot.pos.x, bot.pos.z, bot.pos.y);
+    bot._boarNoAte = tempo + .28 + (bot._boarJitter || 0) * .14;
+    return bot._boarNo;
+  }
+
+  campoDe(alvo) {
+    const world = this.game.world;
+    const adj = world.waypoints?.adj;
+    if (!adj?.length || !world.nearestWaypoint) return null;
+    const tempo = this.game.time;
+    let campo = this.campos.get(alvo.chave);
+    if (!campo) {
+      if (this.campos.size >= 32) this.campos.delete(this.campos.keys().next().value);
+      campo = { prox: null, destino: -1, validoAte: -1 };
+      this.campos.set(alvo.chave, campo);
     }
-    const target = objectives[objectiveIndex] || this.game.world.hordeObjectives[2];
-    const originalIndex = this.game.world.hordeObjectives.indexOf(target);
-    return { x: target.x, z: target.z, objectiveIndex: originalIndex, distance: Math.hypot(target.x - bot.pos.x, target.z - bot.pos.z) };
+    /* UM campo refeito por quadro. Com 16 pontos de comida vencendo no mesmo quadro,
+       16 buscas em largura de 5 mil nós caíam todas juntas — era o pico do perf. */
+    if (tempo >= campo.validoAte && (this.orcamentoCampo > 0 || !campo.prox)) {
+      this.orcamentoCampo--;
+      const destino = world.nearestWaypoint(alvo.x, alvo.z);
+      if (destino !== campo.destino) {
+        campo.prox = fluxoAte(adj, destino, campo.prox);
+        campo.destino = destino;
+      }
+      campo.validoAte = tempo + (alvo.kind === 'jogador' ? .45 : 6);
+    }
+    return campo.prox;
+  }
+
+  /* Y do corpo e do visual colados no chão REAL do mapa, todo passo. */
+  aterrar(bot) {
+    if (this.state.mutante === 'bicho-enterrado') return bot.pos.y;
+    const chao = alturaDoChao(this.game.world, bot.pos.x, bot.pos.z, bot.pos.y);
+    bot.pos.y = chao;
+    if (bot.vel.y < 0) bot.vel.y = 0;
+    bot.grounded = true;
+    return chao;
+  }
+
+  moverPara(bot, alvo, dt) {
+    const world = this.game.world;
+    const tempo = this.game.time;
+    let dx = alvo.x - bot.pos.x, dz = alvo.z - bot.pos.z;
+    const reta = Math.hypot(dx, dz);
+    const emDash = tempo < (bot._boarDashAte || 0);
+    if (!emDash && reta > 6) {
+      const no = this.noDoBicho(bot, tempo);
+      const campo = no >= 0 ? this.campoDe(alvo) : null;
+      const proximo = campo && no < campo.length ? campo[no] : -1;
+      const node = proximo >= 0 ? world.waypoints.nodes[proximo] : null;
+      if (node) {
+        const ndx = node.x - bot.pos.x, ndz = node.z - bot.pos.z;
+        if (Math.hypot(ndx, ndz) > .35) { dx = ndx; dz = ndz; }
+        else bot._boarNoAte = 0;
+      }
+    }
+    /* RUMO: `yaw = atan2(dx,dz)` é a convenção dos bots do jogo (game.js:5890) e é o que
+       o focinho +Z do modelo segue; com `az:+1` o _moveEntity anda nessa mesma direção. */
+    if (!emDash) this.conferirAvanco(bot, tempo);
+    if (dx || dz) bot.yaw = Math.atan2(dx, dz) + (tempo < (bot._boarDeslizeAte || 0) ? bot._boarDeslizeLado * DESLIZE_ANGULO : 0);
+    const escala = velocidadeDoJavaporco(this.state, bot._boarType) * (emDash ? DASH.impulso : 1);
+    this.game._moveEntity(bot, this.state.mutante === 'rumo-invertido' ? ENTRADA_RE : ENTRADA_FRENTE, dt * escala);
+    this.aterrar(bot);
+  }
+
+  /* Quina e muro param o corpo com o rumo certo apontando pra dentro do colisor: andou
+     menos de meio metro em 0,45 s = contorna de lado. O lado ESCOLHIDO dura 2,4 s (dá pra
+     chegar na ponta de um muro de 12 m); alternar a cada tranco só gingava no lugar. */
+  conferirAvanco(bot, tempo) {
+    if (tempo < (bot._boarAvancoEm || 0)) return;
+    if (bot._boarAvancoEm && this.state.mutante !== 'sem-contorno'
+      && Math.hypot(bot.pos.x - bot._boarAvancoX, bot.pos.z - bot._boarAvancoZ) < .55) {
+      bot._boarDeslizeLado = tempo < (bot._boarDeslizeAte || 0)
+        ? -bot._boarDeslizeLado                                  // o lado escolhido também fechou
+        : ((bot._boarJitter || 0) < .5 ? 1 : -1);
+      bot._boarDeslizeAte = tempo + DESLIZE;
+    }
+    bot._boarAvancoEm = tempo + .45;
+    bot._boarAvancoX = bot.pos.x;
+    bot._boarAvancoZ = bot.pos.z;
+  }
+
+  /* Investida do ariete: fecha a distância média num arranco curto e anuncia a carga. */
+  investir(bot, alvo, tempo) {
+    if (bot._boarType !== 'ariete' || alvo.kind !== 'jogador' || this.state.mutante === 'sem-investida') return false;
+    if (tempo < (bot._boarDashLivre || 0)) return false;
+    if (alvo.distance < DASH.perto || alvo.distance > DASH.longe) return false;
+    bot._boarDashAte = tempo + DASH.duracao;
+    bot._boarDashLivre = tempo + DASH.espera;
+    this.javaporcoSfx('carga', bot.pos, 1);
+    this.emitir('BOAR_DASH', { i: bot._boarId, d: Math.round(alvo.distance * 10) / 10 });
+    return true;
+  }
+
+  javaporcoSfx(kind, pos, forca = 1, alcance = 46) {
+    if (this.game.dedicated || !pos) return false;
+    const sfx = this.game.sfx;
+    if (!sfx?.javaporco) return false;
+    const esp = espacializarJavaporco(this.game.player, pos, alcance);
+    if (esp.vol <= 0) return false;
+    sfx.javaporco(kind, esp.vol * forca, esp.pan, esp.delay);
+    return true;
+  }
+
+  /* Rosnado por bicho perto do jogador, com orçamento global: 64 bichos rosnando
+     ao mesmo tempo viram ruído branco. Fúria alta rosna mais seguido. */
+  rosnar(bot, distancia, tempo) {
+    if (distancia > AGGRO.rosnado || tempo < (bot._boarRosnarAte || 0) || tempo < this.rosnadoAte) return;
+    const fury = this.state.fury || 0;
+    bot._boarRosnarAte = tempo + 2.6 + (bot._boarJitter || 0) * 3.4;
+    this.rosnadoAte = tempo + .5 / (1 + fury);
+    this.javaporcoSfx('rosnado', bot.pos, bot._boarType === 'ariete' ? 1 : .82);
   }
 
   updateBot(bot, dt) {
@@ -472,46 +901,133 @@ class InvasaoJavaporcos {
     if (bot.mesh?.group) bot.mesh.group.visible = false;
     if (!bot._boarId || !bot.alive) return true;
     if (this.game.online && !this.game.dedicated) {
+      this.aterrar(bot);
       this.atualizaVisual(bot);
       return true;
     }
-    const target = this.alvoDo(bot);
-    if (target.ent && target.distance < 1.7 && this.game.time >= bot._boarAttackAt) {
-      bot._boarAttackAt = this.game.time + (bot._boarType === 'ariete' ? 1.5 : 1.05);
-      this.game._damage(target.ent, bot._boarType === 'ariete' ? 42 : bot._boarType === 'matriarca' ? 30 : 18, bot, 'PRESA');
-    } else if (target.objectiveIndex >= 0 && target.distance < 2.4) {
-      const damage = bot._boarType === 'ariete' ? 260 : bot._boarType === 'matriarca' ? 170 : 105;
-      atingirObjetivo(this.state, target.objectiveIndex, damage);
-      this.emitir('OBJECTIVE_HIT', { i: bot._boarId, objective: target.objectiveIndex, damage, hp: this.state.objectives[target.objectiveIndex] });
+    const tempo = this.game.time;
+    if ((bot.alertUntil || 0) > tempo) bot._boarAlertaAte = Math.max(bot._boarAlertaAte || 0, tempo + AGGRO.contagio);
+    const alvo = escolherAlvo(bot, this.contexto(tempo), bot._boarAlvo ||= {});
+    const encostou = this.teimosia(bot, alvo, tempo);
+    if (alvo.kind !== 'jogador' && this.state.mutante !== 'sem-desistencia' && this.cansaco(bot, tempo) > PERDIDO) {
+      this.sumirNaMata(bot);
+      return true;
+    }
+    if (alvo.kind === 'jogador') {
+      bot._boarAlertaAte = Math.max(bot._boarAlertaAte || 0, tempo + AGGRO.contagio);
+      this.rosnar(bot, alvo.distance, tempo);
+      if (alvo.distance < AGGRO.ataque && tempo >= bot._boarAttackAt) {
+        bot._boarAttackAt = tempo + (bot._boarType === 'ariete' ? 1.5 : 1.05);
+        bot._boarDashAte = 0;
+        this.game._damage(alvo.ent, Math.round(danoDoJavaporco(this.state, bot._boarType, 'jogador')), bot, 'PRESA');
+        this.atualizaVisual(bot);
+        return true;
+      }
+      this.investir(bot, alvo, tempo);
+      this.moverPara(bot, alvo, dt);
+    } else if (alvo.kind === 'comida' && (alvo.distance < alvo.raio || encostou)) {
+      this.revirar(bot, alvo, tempo);
+    } else if (alvo.kind === 'objetivo' && (alvo.distance < alvo.raio || encostou)) {
+      const damage = Math.round(danoDoJavaporco(this.state, bot._boarType, 'objetivo'));
+      atingirObjetivo(this.state, alvo.objectiveIndex, damage);
+      this.emitir('OBJECTIVE_HIT', { i: bot._boarId, objective: alvo.objectiveIndex, damage, hp: this.state.objectives[alvo.objectiveIndex] });
       registrarAbate(this.state, bot._boarId, null);
       this.desativar(bot);
       return true;
     } else {
-      if (this.game.time >= (bot._boarNextPath || 0)) {
-        const from = this.game.world.nearestWaypoint(bot.pos.x, bot.pos.z);
-        const to = this.game.world.nearestWaypoint(target.x, target.z);
-        bot._boarPath = this.game.world.findPath(from, to);
-        bot._boarPathIndex = 1;
-        bot._boarNextPath = this.game.time + .7;
-      }
-      const nodeIndex = bot._boarPath?.[bot._boarPathIndex] ?? this.game.world.nearestWaypoint(target.x, target.z);
-      const node = this.game.world.waypoints.nodes[nodeIndex] || target;
-      if (Math.hypot(node.x - bot.pos.x, node.z - bot.pos.z) < 1.1) bot._boarPathIndex++;
-      const dx = node.x - bot.pos.x, dz = node.z - bot.pos.z;
-      bot.yaw = Math.atan2(-dx, dz);
-      this.game._moveEntity(bot, { ax: 0, az: -1, shift: false, crouch: false, jump: false }, dt * MODEL_SPEEDS[bot._boarType]);
+      this.moverPara(bot, alvo, dt);
     }
     this.atualizaVisual(bot);
     return true;
   }
 
+  /* RETARDATÁRIO PRESO. Geometria de cidade tem quina em que o corpo encaixa e o grafo
+     não desencaixa; sem saída, a onda nunca fecha e o jogador caça fantasma. 14 s sem
+     encurtar distância pra alvo nenhum e o bicho volta pra mata — sem pontos, sem dano. */
+  sumirNaMata(bot) {
+    const id = bot._boarId;
+    this.emitir('BOAR_LOST', { i: id, x: Math.round(bot.pos.x), z: Math.round(bot.pos.z) });
+    registrarAbate(this.state, id, null);
+    this.desativar(bot);
+  }
+
+  /* TEIMOSIA. O colisor do ponto (e a quina dele) para o corpo ANTES do raio de
+     focinhada: sem isto o bando empurrava a pilha pra sempre e a onda não fechava.
+     Devolve true quando "encostou o quanto dava"; 3,5 s sem encurtar nada = desiste. */
+  teimosia(bot, alvo, tempo) {
+    if (alvo.kind === 'jogador' || alvo.kind === 'vazio') { bot._boarAlvoChave = null; return false; }
+    if (bot._boarAlvoChave !== alvo.chave) {
+      /* O cansaço ATRAVESSA a troca de alvo: sem isso o bicho que fica pulando entre dois
+         pontos inalcançáveis zerava o relógio toda vez e nunca era dado como perdido. */
+      bot._boarCansaco = (bot._boarCansaco || 0) + Math.max(0, tempo - (bot._boarMelhorEm ?? tempo));
+      bot._boarAlvoChave = alvo.chave;
+      bot._boarMelhor = alvo.distance;
+      bot._boarMelhorEm = tempo;
+      return false;
+    }
+    if (alvo.distance < bot._boarMelhor - .35) {
+      bot._boarMelhor = alvo.distance;
+      bot._boarMelhorEm = tempo;
+      bot._boarCansaco = 0;
+      bot._boarDeslizeAte = 0;                                   // voltou a encurtar: chega de contornar
+      return false;
+    }
+    const parado = tempo - bot._boarMelhorEm;
+    const limite = (alvo.raio || AGGRO.objetivo) + ENCOSTO;
+    if (parado > 1.2 && alvo.distance <= limite) return true;
+    if (parado <= 3.5 || this.state.mutante === 'sem-desistencia') return false;
+    (bot._boarEvitar ||= new Map()).set(alvo.chave, tempo + 20);
+    bot._boarAlvoChave = null;
+    bot._boarNoAte = 0;
+    return false;
+  }
+
+  /* Quanto tempo o bicho está sem encurtar distância pra NADA. */
+  cansaco(bot, tempo) {
+    return (bot._boarCansaco || 0) + Math.max(0, tempo - (bot._boarMelhorEm ?? tempo));
+  }
+
+  /* Revirar o lixo: o bicho para, focinha e come o ponto até zerar — é o que faz a
+     cidade ser invadida de verdade, em vez de todo mundo correr pro objetivo. */
+  revirar(bot, alvo, tempo) {
+    bot.vel.set(0, 0, 0);
+    bot.yaw = Math.atan2(alvo.x - bot.pos.x, alvo.z - bot.pos.z);
+    this.aterrar(bot);
+    bot._boarFocinhoAte = tempo + .5;
+    if (tempo < (bot._boarAttackAt || 0)) return;
+    bot._boarAttackAt = tempo + .55;
+    const damage = danoDoJavaporco(this.state, bot._boarType, 'comida');
+    const restante = atacarComida(this.state, alvo.spot, damage);
+    this.marcarComida(alvo.spot, restante);
+    this.rosnar(bot, Math.hypot((this.game.player?.pos?.x ?? 0) - bot.pos.x, (this.game.player?.pos?.z ?? 0) - bot.pos.z), tempo);
+    this.emitir('FOOD_HIT', { i: bot._boarId, food: alvo.spot.id, hp: Math.round(restante) });
+  }
+
+  /* Lixo revirado tomba e afunda (o mesh é do mapa; só mexemos na pose) e o colisor
+     encolhe junto — pilha revirada não pode virar parede invisível no meio da rua. */
+  marcarComida(spot, restante) {
+    const cheio = Number(spot.hp) || COMIDA_HP[spot.kind] || 120;
+    const gasto = Math.max(0, Math.min(1, 1 - restante / cheio));
+    const mesh = this.game.world.foodMesh?.(spot.id);
+    if (mesh) {
+      mesh.rotation.z = gasto * .9;
+      mesh.position.y = (mesh.userData.foodY ??= mesh.position.y) - gasto * .18;
+    }
+    const colisor = this.game.world.foodCollider?.(spot.id);
+    if (!colisor) return;
+    const topo = (colisor.foodMaxY ??= colisor.maxY);
+    colisor.maxY = Math.max(colisor.minY + .15, topo - gasto * (topo - colisor.minY - .15));
+  }
+
   atualizaVisual(bot) {
-    if (!bot._boarVisual) return;
-    bot._boarVisual.visible = bot.alive;
-    bot._boarVisual.position.x = bot.pos.x;
-    bot._boarVisual.position.y = bot.pos.y + Math.sin(this.state.clock * 9 + bot.pos.x) * .025;
-    bot._boarVisual.position.z = bot.pos.z;
-    bot._boarVisual.rotation.y = bot.yaw;
+    const visual = bot._boarVisual;
+    if (!visual) return;
+    const tempo = this.game.time;
+    visual.visible = bot.alive;
+    const trote = Math.abs(Math.sin(this.state.clock * 9 + bot.pos.x)) * .03;
+    visual.position.set(bot.pos.x, bot.pos.y + trote, bot.pos.z);
+    visual.rotation.y = bot.yaw;
+    visual.rotation.x = tempo < (bot._boarFocinhoAte || 0) ? Math.sin(tempo * 15) * .13 - .12 : 0;
   }
 
   onDamage(ent, damage, attacker) {
@@ -520,6 +1036,7 @@ class InvasaoJavaporcos {
     registrarDano(this.state, ent._boarId, attackerId, damage);
     const animal = this.state.alive.find((item) => item.id === ent._boarId);
     if (animal) animal.hp = Math.max(0, ent.hp - damage);
+    ent._boarAlertaAte = Math.max(ent._boarAlertaAte || 0, this.game.time + AGGRO.contagio);
     this.emitir('BOAR_HIT', { i: ent._boarId, a: attackerId, damage: Math.round(damage), hp: Math.round(animal?.hp || 0) });
   }
 
@@ -527,6 +1044,7 @@ class InvasaoJavaporcos {
     if (!ent?._boarId) return;
     const animalId = ent._boarId;
     const animalType = ent._boarType;
+    if (this.state.mutante !== 'morte-muda') this.javaporcoSfx('morte', ent.pos, animalType === 'ariete' ? 1 : .9);
     this.tombar(ent, attacker);
     if (this.game.online && !this.game.dedicated) return;
     const attackerId = this.idDo(attacker);
@@ -535,12 +1053,18 @@ class InvasaoJavaporcos {
     ent.respawnAt = Infinity;
   }
 
-  atualizaHud() {
+  /* 8 Hz: o texto do HUD é concatenação e `map/join`, e a 60 Hz isso é lixo de GC
+     por um número que o olho não lê mais rápido que isso. */
+  atualizaHud(forcar = false) {
     if (!this.hud) return;
+    if (!forcar && this.game.time < this.hudAte) return;
+    this.hudAte = this.game.time + .12;
     const phase = this.state.phase === 'prep' ? `PREPARAÇÃO ${Math.ceil(this.state.prepLeft)}s` : `${this.state.remaining + this.state.alive.length} RESTANTES`;
     const hp = this.state.objectives.map((value) => Math.ceil(value / 10)).join('% · ');
     const score = this.state.scores[this.idDo(this.game.player)]?.points || 0;
-    this.hud.textContent = `INVASÃO DOS JAVAPORCOS · ONDA ${Math.max(1, this.state.wave)}/8 · ${phase} · OBJETIVOS ${hp}% · ${score} PTS`;
+    const comida = (this.game.world.foodSpots || []).length;
+    const lixo = comida ? ` · LIXO ${this.state.foodRevirada}/${comida}` : '';
+    this.hud.textContent = `INVASÃO DOS JAVAPORCOS · ONDA ${Math.max(1, this.state.wave)}/8 · ${phase} · ${this.state.alive.length} NA RUA · FÚRIA ${Math.round((this.state.fury || 0) * 100)}%${lixo} · OBJETIVOS ${hp}% · ${score} PTS`;
   }
 
   roundIntro() {
@@ -609,7 +1133,10 @@ class InvasaoJavaporcos {
     this.state.prepLeft = net.prepLeft;
     this.state.combatLeft = net.combatLeft;
     this.state.remaining = net.remaining;
+    this.state.fury = net.fury || 0;
+    this.state.kills = net.kills || 0;
     this.state.objectives = [...net.objectiveHealth];
+    this.state.foodHp = { ...(net.foodHealth || {}) };
     this.state.scores = structuredClone(net.scoreByPlayer || {});
     this.state.teamBonus = net.teamBonus || 0;
     this.state.winner = net.winner || null;

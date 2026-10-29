@@ -7124,7 +7124,8 @@ export class Game {
       if (this.time < pk.readyAt) continue;        // still taken
       // bot grab (andando por cima) — slot humano e corpo remoto não: o servidor decide (`pick`)
       for (const b of this.bots) {
-        if (!b.alive || b._remote) continue;
+        // `_objectiveNpc`: bicho de horda é bot vivo do time B e varria o armário do mapa
+        if (!b.alive || b._remote || b._objectiveNpc) continue;
         const dx = pk.x - b.pos.x, dz = pk.z - b.pos.z;
         if (dx * dx + dz * dz <= 1.7 * 1.7) { this._grabPickup(pk, b, false); break; }
       }
@@ -7137,7 +7138,7 @@ export class Game {
       if (pk.expiraEm && this.time >= pk.expiraEm) { this._sumirDrop(i); continue; }
       if (pk.rack) continue;
       for (const b of this.bots) {
-        if (!b.alive || b._remote) continue;
+        if (!b.alive || b._remote || b._objectiveNpc) continue;
         const dx = pk.x - b.pos.x, dz = pk.z - b.pos.z;
         if (dx * dx + dz * dz <= 1.7 * 1.7) { this._grabPickup(pk, b, false); this._sumirDrop(i); break; }
       }
