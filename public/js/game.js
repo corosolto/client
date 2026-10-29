@@ -44,6 +44,10 @@ import { perfilArma } from './data/weapon-profiles.js';
 export { perfilArma };
 import { saidaPenetracao, direcaoDesviada, resolverRaio } from './ballistics.js';
 import { entradaCombatente, ALCANCE_TIRO, alturaDoOlho } from './hitboxes.js';
+import { CABECAS_HITBOX, CABECA_PADRAO } from './data/cabecas-hitbox.js';
+// Cabeça justa à malha (régua: tools/eval/headshot-hitbox-check.mjs). ?hscaixa=0 volta à
+// esfera de 0,50 m, que o servidor de MP ainda usa.
+const HS_CAIXA = new URLSearchParams(location.search).get('hscaixa') !== '0';
 export { saidaPenetracao, resolverRaio };
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
 // autoritativo) e tools/eval/botdiag.mjs. Consumidor novo importa de data/weapons.js.
@@ -4108,7 +4112,7 @@ export class Game {
     const paredes = this.ray.intersectObjects(this.world.occluders, false);
     const atores = [...(this.bots || []), ...(this.dedicated ? [] : [this.player])];
     const alvos = atores.filter(e => e && e !== shooter && e.alive && !e._idle && e.team !== shooter.team)
-      .map(ent => ({ ent, pos: ent.pos, crouchF: ent.crouchF || 0 }));
+      .map(ent => ({ ent, pos: ent.pos, crouchF: ent.crouchF || 0, cabeca: this._perfilCabeca(ent) }));
     const hit = resolverRaio({ origem: from, direcao: dir, alvos, paredes, alcance: ALCANCE_TIRO,
       intersectar: entradaCombatente,
       atravessar: parede => this._penetrationExit(parede, dir, wid, this._surfaceOf(parede.object)) });
@@ -4116,13 +4120,30 @@ export class Game {
     return hit;
   }
 
+  // Yaw do CORPO: humano (local, remoto ou slot do nó) guarda o yaw da câmera, corpo = yaw + 180°
+  // (_updatePlayerTP, netgame corpoYaw). Sem medida vale a mediana do elenco, nunca a esfera velha.
+  _perfilCabeca(ent) {
+    if (!HS_CAIXA) return null;
+    const p = CABECAS_HITBOX[ent.def?.id] || CABECA_PADRAO;
+    const yaw = this._participanteHumano(ent) ? (ent.yaw || 0) + Math.PI : (ent.yaw ?? ent.mesh?.group?.rotation?.y ?? 0);
+    return { ...p, yaw };
+  }
+
   _origemTiroBot(bot) {
     return this._botEye(bot);
   }
 
   _miraTiroBot(ent) {
-    return this._participanteHumano(ent) ? new THREE.Vector3(ent.pos.x, ent.pos.y + alturaDoOlho(ent.crouchF || 0), ent.pos.z)
-      : this._origemTiroBot(ent);
+    if (!this._participanteHumano(ent)) return this._origemTiroBot(ent);
+    const mira = new THREE.Vector3(ent.pos.x, ent.pos.y + alturaDoOlho(ent.crouchF || 0), ent.pos.z);
+    // Cabeça justa: mira na BASE da cabeça de cada personagem (o olho a 1,62 m é ar acima de
+    // cabeça baixa). Mantém a letalidade da esfera antiga: headshot-hitbox-check J6.
+    const p = this._perfilCabeca(ent);
+    if (p) {
+      const s = Math.sin(p.yaw), c = Math.cos(p.yaw);
+      mira.add(new THREE.Vector3(c * p.l + s * p.f, p.y - p.ry - alturaDoOlho(0), -s * p.l + c * p.f));
+    }
+    return mira;
   }
 
   _participanteHumano(ent) {
