@@ -1,52 +1,83 @@
 <!-- spec:mapa -->
 # 02 — Invasão dos Javaporcos
 
-Modo cooperativo de sobrevivência e pontuação na borda de uma cidade do interior.
-O time segura ondas de javalis e javaporcos que saem do mato, atravessam lavoura,
-currais e galpões e tentam alcançar o bairro. Sem gore: impacto, poeira, tropeço e
-desaparecimento substituem ferimentos explícitos.
+Modo cooperativo de sobrevivência e pontuação numa cidade do interior CERCADA de mata
+fechada. O time segura ondas de javalis e javaporcos que saem de dez bocas de mata,
+entram pelas ruas, reviram o lixo e avançam sobre a feira, a mercearia e a igreja. Sem
+gore: impacto, poeira, tropeço e desaparecimento substituem ferimentos explícitos.
 
 ## Local real
 
-Composição original da transição urbano-rural do Centro-Sul: bairro de casas
-térreas e oficina na ponta sul, estrada vicinal e silo no meio, milho, pasto,
-córrego e mata ciliar ao norte. O contexto ambiental é factual: o Ibama classifica
-o javali (`Sus scrofa`) como espécie exótica invasora e regulamenta seu controle.
-O cenário não reproduz uma propriedade ou município específico.
+Composição original de cidadezinha de interior engolida pela capoeira: quatro
+quarteirões por quadrante, avenida em cruz, viela de terra, praça com feira e um
+cinturão de mata que é, ele mesmo, o limite do mapa. O contexto ambiental é factual: o
+Ibama classifica o javali (`Sus scrofa`) como espécie exótica invasora e regulamenta seu
+controle. O cenário não reproduz uma propriedade ou município específico.
 
 ## Layout
 
-- **Pegada:** 112 × 120 m; o jogador enxerga a cidade ao sul e o campo ao norte
-  desde o cruzamento central.
-- **Faixa urbana (z -58 a -24):** três ruas curtas, praça, oficina, casas e muro
-  de escola. É a última linha de defesa e contém o depósito de munição.
-- **Transição (z -24 a 18):** estrada vicinal em curva, posto rural, silo,
-  armazém e curral. Corredores largos para combate de média distância.
-- **Campo (z 18 a 58):** lavoura de milho em quatro talhões, pasto, córrego raso
-  e mata ciliar. Trilhas amassadas formam rotas, não uma parede sólida de plantas.
-- **Entradas:** quatro tocas/rasgos na mata. Cada uma liga a pelo menos duas
-  rotas até a cidade; ondas nunca nascem na visão direta do jogador.
-- **Objetivos:** proteger o silo, o posto de saúde rural e o portão do bairro.
-  Um animal que alcança um objetivo tira integridade; a partida termina quando os
-  três caem ou após oito ondas.
-- **Ondas:** 35 s de combate + 12 s de preparação. Quantidade escala de 8 para
-  34 inimigos, com teto de 24 vivos para manter CPU, draw calls e rede previsíveis.
+- **Pegada:** 116 × 116 m (`bounds` ±58). Miolo urbano em `cityBounds` ±36; cinturão de
+  mata de 22 m entre r = 36 e r = 58, com r = max(|x|, |z|).
+- **Malha urbana:** avenida em cruz de 12 m (x = 0 e z = 0) com calçada de 2 m e meio-fio
+  de 0,15 m; viela de terra de 3,5 m em |x| = 22 e |z| = 22; anel perimetral de terra
+  entre 31,5 e 36 m. A calçada PARA no cruzamento — ela não atravessa a pista.
+- **Quarteirões:** 16 blocos de 12,25 m (internos) e 7,75 m (externos). 29 edificações:
+  casa térrea de 3,00 m, sobrado de 6,00 m, 4 lojas com interior acessível (mercearia,
+  padaria, boteco, loja de ração), igrejinha com campanário de 9,8 m e torre de caixa
+  d'água de 8,5 m. 15% a 25% das massas giradas de 2° a 14°.
+- **Mata:** 1.212 árvores instanciadas (tronco + três camadas de copa achatada) e 4.924
+  peças de sub-bosque, cipó e capim. A faixa de 36 a 37,9 m é caminhável, com colisor por
+  tronco; de 37,9 m para fora é parede de colisor até a borda.
+- **Entradas:** 10 bocas de mata (3 norte, 3 sul, 2 leste, 2 oeste). Cada uma é uma
+  trilha de 3,5 m que entra na mata, DOBRA e morre numa clareira de 3,8 m de raio —
+  nenhuma delas enxerga ou alcança a borda do mapa.
+- **Relevo:** barranco de 2,6 m entre a cidade e o platô da mata, córrego de 1,4 m de
+  corte no sopé norte com duas pontes de madeira, calçada a 0,15 m e soleira de loja a
+  0,33 m. Tudo sai de UM campo de altura (ver abaixo).
+- **Objetivos:** feira (corredor da praça), mercearia (porta) e igreja (adro). Cada um
+  leva `r`, que é a distância em que o bando já encosta — objetivo no miolo do prédio
+  deixava a horda empacada na parede a 6,6 m.
+- **Lixo e comida:** 16 `foodSpots` (7 lixo, 3 caçamba, 4 feira, 2 ração), todos dentro
+  de `cityBounds`, cada um com dois estados de malha (íntegro e revirado).
+
+## Contrato do mundo
+
+`buildInvasaoJavaporcos` devolve, além de `root`/`colliders`/`occluders`/`spawns`:
+
+- `groundHeightAt(x, z)` — altura REAL do chão. É a amostra bilinear de uma grade de
+  0,5 m (233 × 233 floats, 217 kB) construída UMA vez no boot. Custo por chamada: 2
+  truncamentos, 4 leituras de `Float32Array` e 3 interpolações, sem alocação e sem ramo
+  de busca. A horda chama dezenas de vezes por quadro e NÃO precisa cachear. A malha do
+  terreno é amostrada da MESMA grade, então o chão desenhado e o chão medido são o mesmo
+  número — é o conserto do "javaporco indo por baixo da terra".
+- `cityBounds` — `{minX:-36, maxX:36, minZ:-36, maxZ:36}`.
+- `boarEntrances` — 10 clareiras `{id, lado, x, z}`.
+- `foodSpots` — `[{id, x, z, hp, kind, r}]`, `kind` em `lixo|feira|cacamba|racao`. `r` JÁ
+  é a distância do centro do ponto em que o focinho alcança (meia-extensão do colisor +
+  0,40 m): quem consome não soma folga de corpo.
+- `foodMesh(id)` e `foodCollider(id)` — o `Object3D` e o colisor VIVO daquele ponto (o
+  mesmo objeto do array `colliders`, não cópia: mexer no `maxY` muda a colisão na hora).
+- `hordeObjectives` — `[{id, x, z, hp, r}]`, três, todos em ponto alcançável.
+- `lojas` — `[{papel, eixo, sinal, porta:{x,z,dentro}, interior:[x,z]}]`.
+- `waypoints:{nodes,adj}`, `nearestWaypoint(x,z)` (índice de célula, O(1)) e
+  `findPath(a,b)` (BFS com buffers do mapa, zero alocação por chamada). Grade de 1,0 m,
+  5.595 nós e 10.014 arestas, com costura explícita na porta de cada loja e teste de
+  meio de aresta — em 1,5 m existiam arestas atravessando muro de 0,15 m.
 
 ## Cobertura (cover)
 
-- Campo: fardos, trator, taipas, pedras e valas rasas. O milho mascara movimento,
-  mas não absorve tiro.
-- Transição: pilares do armazém, caçambas, pneus e bebedouro de concreto.
-- Bairro: muros de 1,35 m, carros antigos e quiosque da praça; nenhuma porta de
-  casa vira armadilha sem saída.
+- Mata: tronco, moita e capim mascaram movimento; só o tronco absorve tiro.
+- Rua: carro parado colado na calçada (nunca no cruzamento), caçamba, poste e muro de
+  bloco de 1,80 m, 2,20 m na esquina.
+- Quarteirão: viela de 3,5 m, puxadinho e quintal com caixa d'água.
 - Corredores de 1,8 m mínimos acomodam dois animais e um jogador sem travamento.
 
 ## Linhas de visão
 
-- Mata e milho: 8–18 m, com silhueta e poeira denunciando a aproximação.
-- Pasto e estrada: 22–38 m, quebrados pelo silo e por duas curvas de nível.
-- Rua principal: 32 m máximos; o portão final nunca enxerga uma toca.
-- Cada objetivo tem três setores de ataque e pelo menos duas posições de defesa.
+- Dentro da mata: até 10 m — a parede fecha por sub-bosque, não por tronco.
+- Trilha: corredor de 3,5 m com copa cruzada por cima; a boca lê como túnel escuro.
+- Rua secundária e viela: 18 a 30 m.
+- Avenida: 72 m de ponta a ponta, quebrados por poste, fiação e carro parado.
 
 ## Pontuação e progressão
 
@@ -97,12 +128,18 @@ O cenário não reproduz uma propriedade ou município específico.
 - Ficha passa em `node tools/spec.mjs check docs/maps/invasao-javaporcos.md`.
 - Oito ondas terminam em 20/20 sementes, sem mais de 24 animais vivos.
 - Mutante que duplica o crédito de assistência reprova a soma de pontos.
-- Mutante que remove uma entrada reprova a conectividade das quatro tocas.
+- Mutante que remove uma entrada reprova a conectividade das bocas de mata.
+- Mapa passa em `node tools/eval/javaporcos-mapa-check.mjs` (MATA1 cerco, MATA2
+  densidade e bocas, CHAO1 relevo, COMIDA1 lixo na cidade, NAV1 grade limpa, TRILHA1 e
+  TRILHA2 rota até dentro da loja) e nos mutantes `mata-furada`, `chao-constante`,
+  `comida-fora` e `trilha-solta`.
+- Mapa passa no `node tools/eval/mapa-novo-gate.mjs` em ORT1, ALT1, SUP1, SUP2, JOG1 e
+  JOG2, sem entrada na dívida declarada.
 - Dois clientes com a mesma semente fecham cada onda com IDs, integridade e
   pontuação idênticos.
 - Bots defendem ao menos dois objetivos em 30–70% das sementes na dificuldade
   média; fora dessa faixa o balanceamento está trivial ou impossível.
-- Capturas obrigatórias: bairro, transição, lavoura e mata, em 3:2, com revisão
-  adversarial independente.
+- Capturas obrigatórias: cruzamento central nos quatro rumos, trilha de mata, clareira,
+  praça e interior de loja, com draw calls e FPS medidos.
 - Os quatro animais Mint e o cartaz OpenRouter são abertos e inspecionados; se o
   GLB não carregar, o inimigo usa fallback procedural com a mesma hitbox.
