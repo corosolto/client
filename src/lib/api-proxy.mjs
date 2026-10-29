@@ -53,10 +53,14 @@ export function origemDoJogador(request, clientAddress) {
   return { ip: clientAddress || '', geo, borda: 'vercel' };
 }
 
-export async function proxyApiRequest(request, target, clientAddress, fetchFn = fetch, { segredo = '', session = false } = {}) {
+export async function proxyApiRequest(request, target, clientAddress, fetchFn = fetch, { segredo = '', session = false, userAgent = false } = {}) {
   const upstreamHeaders = new Headers();
   const contentType = request.headers.get('content-type');
   if (contentType) upstreamHeaders.set('content-type', contentType);
+  if (userAgent) {
+    const value = request.headers.get('user-agent');
+    if (value) upstreamHeaders.set('user-agent', value.slice(0, 400));
+  }
   if (session) for (const name of ['cookie','origin']) {
     const value=request.headers.get(name); if(value) upstreamHeaders.set(name,value);
   }
