@@ -4388,8 +4388,7 @@ export class Game {
     return /colete|cota de malha|armadura|capacete/i.test(ent?.def?.blurb || '');
   }
   // Partida local só: online o nó roda este mesmo `_damage` sem estado de armadura (contrato no PR do colete).
-  // `fracCabeca`: rajada de chumbo somada (bot de escopeta) com parte na cabeça e parte no corpo;
-  // cada parte passa pelo colete com a sua regra, senão um chumbo na cabeça tirava o colete do peito.
+  // `fracCabeca`: rajada de chumbo somada (bot) passa cabeça e corpo cada um pela sua regra (AR14).
   _aplicaArmadura(ent, dmg, weap, head, fracCabeca = null) {
     if (!ARMADURA || this.online || this.dedicated || !(ent.armor > 0)) return dmg;
     if (ARMADURA_CHUMBO && fracCabeca > 0 && fracCabeca < 1) {
