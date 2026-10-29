@@ -154,7 +154,10 @@ export class CompraPartida {
     vitima._desarmado = true;
     // morreu, perdeu (CS): colete, capacete e flash não sobrevivem à morte
     vitima.armor = 0; vitima.helmet = false;
-    if (vitima.flashes) vitima.flashes = 0;
+    if (vitima.flashes) {
+      vitima.flashes = 0;
+      if (vitima === this.game.player) this.game._updateSmokeHud?.();   // senão o "⚡ 2" fica na tela até a rodada nova
+    }
     if (!autor?.carteira || autor === vitima) return;
     const arma = weap === 'FRAG' ? 'frag' : weap === 'FACA' ? 'knife' : autor.weapon;
     const v = creditar(autor.carteira, recompensaKill(arma, { mesmoTime: autor.team === vitima.team }));

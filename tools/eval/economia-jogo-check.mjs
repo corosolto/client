@@ -259,11 +259,13 @@ function medir(mut = {}) {
     const sobrevive = { armor: p.armor, helmet: p.helmet, flashes: p.flashes };
     g.state = 'live';
     matar(g, p, inimigo(g), 'AK');
+    // o HUD da utilidade larga o "⚡" já na morte, sem esperar a rodada nova
+    const hudFlash = /⚡/.test(g.el?.smokeCount?.textContent || '');
     g._respawnPlayer();
     g._startRound();
-    const perdeu = !(p.armor > 0) && !p.helmet && (p.flashes | 0) === 0;
+    const perdeu = !(p.armor > 0) && !p.helmet && (p.flashes | 0) === 0 && !hudFlash;
     check('EJ17', 'kit + 2 flashes; sobrevivente guarda; morto perde',
-      comprouOk && manteve && perdeu, { compra, sobrevive, morto: { armor: p.armor, helmet: p.helmet, flashes: p.flashes } });
+      comprouOk && manteve && perdeu, { compra, sobrevive, morto: { armor: p.armor, helmet: p.helmet, flashes: p.flashes, hudFlash } });
   }
 
   {
