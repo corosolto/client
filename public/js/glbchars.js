@@ -733,16 +733,6 @@ export function buildCharacterModel(def, opts = {}) {
       let rArmBone = null;
       model.traverse((o) => { if (o.isBone && !rArmBone && o.name === 'RightArm') rArmBone = o; });
       if (TP_MOUNT_LIVE) ctrl.tpMount = { mount, handBone, model, carry, palmLocal: null, carryPalmModel: null, rArm: rArmBone, rFore: rforeBone, stabilizeCarry:skin?.gripProfile==='mint24-curl-v1' };
-      // PV_PULSO: guarda a pegada arma-na-mão do porte de JOGO nesta pose; a vitrine gira o
-      // pulso mantendo-a. Faca fora: já tem o mesmo porte no jogo e na vitrine.
-      if (PV_PULSO && opts.preview && !faca && ctrl.tpMount) {
-        const funcional = new THREE.Quaternion().setFromEuler(new THREE.Euler(TP_CARRY_PITCH, TP_CARRY_YAW, 0, 'YXZ'));
-        const pegada = handBone.getWorldQuaternion(new THREE.Quaternion()).invert()
-          .multiply(model.getWorldQuaternion(new THREE.Quaternion()).multiply(funcional));
-        ctrl.tpMount.pegada = pegada;
-        ctrl.tpMount.pegadaInv = pegada.clone().invert();
-        orientTpMount(ctrl.tpMount);
-      }
       // 2) POSIÇÃO: no centro medido da PALMA, não na origem do osso (que é o PULSO).
       // É a diferença entre "a mão segura a arma" e "a arma flutua perto da mão" (C7).
       const palmLocal = measurePalmLocal(model, handBone, curlRs);
@@ -767,6 +757,16 @@ export function buildCharacterModel(def, opts = {}) {
         const carryPalm=mount.position.clone();
         handBone.localToWorld(carryPalm);model.worldToLocal(carryPalm);
         ctrl.tpMount.carryPalmModel=carryPalm;
+      }
+      // PV_PULSO: guarda a pegada de JOGO e gira o pulso. Só depois da palma/folga (antes,
+      // desviava a folga do corpo nos mascotes). Faca fora: mesmo porte no jogo e na vitrine.
+      if (PV_PULSO && opts.preview && !faca && ctrl.tpMount) {
+        const funcional = new THREE.Quaternion().setFromEuler(new THREE.Euler(TP_CARRY_PITCH, TP_CARRY_YAW, 0, 'YXZ'));
+        const pegada = handBone.getWorldQuaternion(new THREE.Quaternion()).invert()
+          .multiply(model.getWorldQuaternion(new THREE.Quaternion()).multiply(funcional));
+        ctrl.tpMount.pegada = pegada;
+        ctrl.tpMount.pegadaInv = pegada.clone().invert();
+        orientTpMount(ctrl.tpMount);
       }
     } else if (mount) {
       // --- caminho antigo (?tpmount=0): direção do cano pela linha antebraço->mão ---
