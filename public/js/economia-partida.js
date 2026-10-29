@@ -80,6 +80,12 @@ export function motivoRecusa({ id, saldo, agora, compraAte, distSpawn, vivo, pos
   return null;
 }
 
+// Bot: compra a arma sorteada para ele quando o saldo cobre; sem saldo, segura a pistola (eco).
+export function compraDoBot({ saldo, alvo, jaTem = false }) {
+  if (jaTem || !itemDaCompra(alvo)) return null;
+  return saldo >= precoDe(alvo) ? alvo : null;
+}
+
 export function comprar(carteira, pedido) {
   const motivo = motivoRecusa({ ...pedido, saldo: carteira.saldo });
   if (motivo) return { ok: false, motivo };
