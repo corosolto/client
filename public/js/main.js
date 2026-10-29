@@ -1825,7 +1825,6 @@ addEventListener('pointerdown', _menuOnce);
 addEventListener('keydown', _menuOnce);
 
 async function startGame(team, charId, enemyFaction, online = false) {
-  if (currentMap === 'operacao_flavio') matchMode = 'rounds';
   /* #241: em rede lenta o preload dos GLBs passa de 60 s COM progresso andando
      (_lstat.loaded sobe a cada arquivo do DefaultLoadingManager). O watchdog
      renova enquanto há movimento e só falha se o progresso PARAR — travamento
@@ -2038,7 +2037,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     renderer, textures, sfx,
     playerCharId: charId, playerSkinId, playerEyewearId, playerGloveId, playerWeaponSkins, playerKnifeSkinId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
-    ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
+    ctf: MAPS[currentMap].objectiveMode ? false : matchMode === 'ctf',
     /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
        sobrariam nove corpos locais para dez entidades e um jogador ficaria invisível. */
     mpFactory: sessao ? makeNetcode : null,
@@ -2854,21 +2853,22 @@ function setMapMeta() {
   syncHubSels();
 }
 function setMapMode() {
-  if (modoObjetivoAtual()) matchMode = 'rounds';
+  const objetivo = modoObjetivoAtual();
   const m = $('map-mode');
   if (m) {
-    m.textContent = modoObjetivoAtual() ? 'ESCOLTA' : (matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA'));
-    m.dataset.mode = modoObjetivoAtual() ? 'escort' : matchMode;
-    m.disabled = modoObjetivoAtual();
+    m.textContent = objetivo ? 'ESCOLTA' : (matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA'));
+    m.dataset.mode = objetivo || matchMode;
+    m.disabled = !!objetivo;
   }
   const d = $('map-dots');
   if (d) d.innerHTML = MAPAS_MENU.map((_, i) => `<i class="${i === mapIdx ? 'on' : ''}"></i>`).join('');
   if (HUB_ENABLED) {
-    $('hub-mode-rounds').setAttribute('aria-pressed', String(matchMode === 'rounds'));
-    $('hub-mode-ctf').setAttribute('aria-pressed', String(matchMode === 'ctf'));
-    $('hub-mode-ctf').disabled = modoObjetivoAtual();
-    $('hub-mode-rounds').querySelector('small').textContent = modoObjetivoAtual() ? 'ESCOLTA' : `MELHOR DE ${settings.rounds || 5}`;
-    $('hub-mode-ctf').querySelector('small').textContent = modoObjetivoAtual() ? 'INDISPONÍVEL NESTE MAPA' : `MELHOR DE ${settings.ctfRounds || 3}`;
+    $('hub-mode-rounds').setAttribute('aria-pressed', String(!objetivo && matchMode === 'rounds'));
+    $('hub-mode-ctf').setAttribute('aria-pressed', String(!objetivo && matchMode === 'ctf'));
+    $('hub-mode-rounds').disabled = !!objetivo;
+    $('hub-mode-ctf').disabled = !!objetivo;
+    $('hub-mode-rounds').querySelector('small').textContent = objetivo ? 'ESCOLTA' : `MELHOR DE ${settings.rounds || 5}`;
+    $('hub-mode-ctf').querySelector('small').textContent = objetivo ? 'INDISPONÍVEL NESTE MAPA' : `MELHOR DE ${settings.ctfRounds || 3}`;
     $('hub-rounds-value').textContent = String(matchRounds());
   }
   setMapMeta();
@@ -2911,11 +2911,9 @@ function gotoMap(i, updateRoute = true) {
   settings.map = currentMap; settings.mapPinned = true; saveSettings();   // escolha explícita sai da rotação
   mapNameEl.textContent = MAPS[currentMap].name;
   setMapThumb();
-  // troca de mapa aplica o PADRÃO do mapa (Loja H/Ferro Velho abrem em CTF, o resto em rounds)
-  // — mas SÓ enquanto o jogador não tiver escolhido. Ver `modoEscolhido` lá em cima: era
-  // aqui que a escolha dele morria (main.js:692 na versão anterior).
-  if (modoObjetivoAtual()) matchMode = 'rounds';
-  else if (!modoEscolhido) matchMode = MAPS[currentMap].ctfMode ? 'ctf' : 'rounds';
+  // Mapas objetivos só substituem o modo efetivo enquanto estão ativos. A escolha explícita
+  // fica preservada para o jogador reencontrá-la ao voltar a um mapa de rounds/CTF.
+  if (!modoObjetivoAtual() && !modoEscolhido) matchMode = MAPS[currentMap].ctfMode ? 'ctf' : 'rounds';
   setMapMode();
   void loadMenuBackdrop();
   renderMapScreen();   // se a tela cheia estiver aberta, ela acompanha o carrossel
