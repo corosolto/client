@@ -499,7 +499,8 @@ function orientTpMount(t) {
   t.handBone.updateWorldMatrix(true, false);
   t.model.getWorldQuaternion(_gq);
   _wq.copy(_gq).multiply(t.carry);
-  if (t.pegada) {
+  // Só no porte parado: em corrida/tiro (tela de carregamento) a mão volta a seguir o clipe.
+  if (t.pegada && t.pegadaAtiva) {
     // PV_PULSO: a mão segue a arma (absoluto, não acumula). Pivô na PALMA via CCD: girar
     // no osso empurrava a palma 2 cm e esticava o braço da pistola (select-mount ESTICADO).
     const ancora = t.palmLocal && t.rArm && t.rFore ? t.handBone.localToWorld(_ancoraPalma.copy(t.palmLocal)) : null;
@@ -766,6 +767,7 @@ export function buildCharacterModel(def, opts = {}) {
           .multiply(model.getWorldQuaternion(new THREE.Quaternion()).multiply(funcional));
         ctrl.tpMount.pegada = pegada;
         ctrl.tpMount.pegadaInv = pegada.clone().invert();
+        ctrl.tpMount.pegadaAtiva = true;
         orientTpMount(ctrl.tpMount);
       }
     } else if (mount) {
@@ -1119,6 +1121,7 @@ class CharController {
     }
     if (this.tpMount && !this.dead && !this.emotando) {
       const t = this.tpMount;
+      if (t.pegada) t.pegadaAtiva = /^(idle|idle1h|crouch)$/.test(this.curName || '');
       orientTpMount(t);
       if(t.stabilizeCarry && t.carryPalmModel && t.rArm && t.rFore && /^(walk|run|walk1h|walkfire)$/.test(this.curName || '')){
         _v.copy(t.carryPalmModel);t.model.localToWorld(_v);
