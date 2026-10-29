@@ -193,6 +193,8 @@ Cobertura: **3856 de 9063 linhas (43%)** do `game.js` têm dono declarado. O res
 | 3113 | `_endRound()` | 34 |
 | 3147 | `_roundWinnerVoice()` | 12 |
 | 3159 | `_fimDaPartida()` | 7 |
+| 3168 | `_modeId()` | 1 |
+| 3169 | `_teamPopulation()` | 5 |
 | 3166 | `_endMatch()` | 61 |
 | 3227 | `_ensureDolly()` | 41 |
 | 3268 | `_tickDolly()` | 23 |
