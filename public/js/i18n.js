@@ -535,6 +535,7 @@ const DICT = {
   'Configurar partida': 'Match setup', 'Menos bots no seu time': 'Fewer bots on your team', 'Mais bots no seu time': 'More bots on your team',
   'Menos inimigos': 'Fewer enemies', 'Mais inimigos': 'More enemies', 'Menos rounds': 'Fewer rounds', 'Mais rounds': 'More rounds',
   'PESADAS': 'HEAVY', 'SUBMETRALHADORAS': 'SMGS', 'FUZIS': 'RIFLES', 'Comprar': 'Buy',
+  'EQUIPAMENTO': 'GEAR', 'COLETE': 'KEVLAR', 'COLETE + CAPACETE': 'KEVLAR + HELMET', 'CAPACETE': 'HELMET',
   'PISTOLAS': 'PISTOLS', 'FACA': 'KNIFE', 'DE BOA': 'CHILL', 'TRETA': 'TOUGH', 'INSANO': 'INSANE', 'você': 'you', 'só você': 'just you',
   'Escalação': 'Lineup', 'travado, resto sorteado': 'locked, the rest drawn at random', 'travados, resto sorteado': 'locked, the rest drawn at random',
   'Escalação automática, todos sorteados': 'Automatic lineup, everyone drawn at random', 'EDITAR': 'EDIT',
@@ -859,9 +860,11 @@ const FRASES = {
   compraFechar: { pt: () => 'FECHAR', en: () => 'CLOSE' },
   compraRecusa: {
     pt: (m) => ({ tempo: 'Acabou o tempo de compra', zona: 'Volte pro spawn pra comprar', saldo: 'TRETA$ insuficiente',
-      'ja-tem': 'Você já tem essa', morto: 'Morto não compra', item: 'Item indisponível' }[m] || 'Compra recusada'),
+      'ja-tem': 'Você já tem essa', morto: 'Morto não compra', item: 'Item indisponível',
+      'sem-colete': 'Capacete só com colete', limite: 'Já está no máximo' }[m] || 'Compra recusada'),
     en: (m) => ({ tempo: 'Buy time is over', zona: 'Go back to spawn to buy', saldo: 'Not enough TRETA$',
-      'ja-tem': 'You already have it', morto: 'Dead players cannot buy', item: 'Item unavailable' }[m] || 'Purchase refused'),
+      'ja-tem': 'You already have it', morto: 'Dead players cannot buy', item: 'Item unavailable',
+      'sem-colete': 'Helmet needs kevlar', limite: 'Already at the limit' }[m] || 'Purchase refused'),
   },
 };
 export const frase = (id, ...args) => {

@@ -2919,7 +2919,8 @@ export class Game {
     this.player.ammo.awp = { mag: WEAPONS.awp.mag, res: WEAPONS.awp.reserve };
     this.player.ammo.pistol = { mag: WEAPONS.pistol.mag, res: WEAPONS.pistol.reserve };
     this.player.smokes = 5; this.player.frags = 1;   // 5 fumaças + 1 frag por round
-    this.player.flashes = FLASH_DEBUG_N;   // flash só pela loja (PR da economia) ou ?debug=1&flashes=N
+    // flash só pela loja ou ?debug=1&flashes=N; com loja, quem sobreviveu guarda a que comprou (CS)
+    this.player.flashes = this._compra && !FLASH_DEBUG_N ? (this.player.flashes | 0) : FLASH_DEBUG_N;
     if (this.player.flashes > 0) this._carregarFlashMint();
     this._limparCegueira();
     this._updateSmokeHud();
@@ -4391,8 +4392,11 @@ export class Game {
     ent.armor = r.colete;
     return r.vida;
   }
+  _armaduraLigada() { return ARMADURA && !this.online && !this.dedicated; }
   _equiparArmadura(ent) {
-    const d = ARMADURA && !this.online && !this.dedicated ? ARMADURA_DEBUG : null;
+    const d = this._armaduraLigada() ? ARMADURA_DEBUG : null;
+    // com loja o colete é comprado e só se perde morrendo (CompraPartida.aoAbate)
+    if (!d && this._compra && this._armaduraLigada()) return;
     ent.armor = d ? d.colete : 0;
     ent.helmet = !!(d && d.capacete && d.colete > 0);
   }

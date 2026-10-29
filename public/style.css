@@ -3641,6 +3641,7 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
 #compra-menu .cm-linha b{color:#b4d92e;font-size:13px}
 #compra-menu .cm-linha b s{color:#9a9ba1;font-weight:600;margin-right:6px}
 #compra-menu .cm-linha.off{opacity:.42}
+#compra-menu .cm-linha small{margin-left:6px;font-size:11px;color:#cfd6c0}
 #compra-menu .cm-linha.assinatura{border-color:rgba(180,217,46,.45)}
 #compra-menu .cm-pe{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.14)}
 #compra-menu .cm-aviso{display:block;padding:2px 8px 4px;font:700 12px/1.2 inherit;color:#ff8a7a}

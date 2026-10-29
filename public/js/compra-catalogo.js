@@ -8,10 +8,10 @@ export const GRUPOS_COMPRA = Object.freeze([
   { id: 'smg', rotulo: 'SUBMETRALHADORAS' },
   { id: 'fuzis', rotulo: 'FUZIS' },
   { id: 'precisao', rotulo: 'SNIPERS' },
+  { id: 'equipamento', rotulo: 'EQUIPAMENTO' },
 ]);
 
-// `slot` diz o que a compra substitui; 'equipamento' fica reservado para colete, capacete e
-// flashbang, que entram em PRs próprios (docs/ECONOMIA-PARTIDA.md#o-que-entra-depois).
+// `slot` diz o que a compra substitui; 'equipamento' não troca arma: soma colete, capacete ou flash.
 export const SLOTS_COMPRA = Object.freeze(['primaria', 'secundaria', 'equipamento']);
 
 const item = (id, grupo, slot, preco, recompensaKill) => Object.freeze({ id, grupo, slot, preco, recompensaKill });
@@ -38,10 +38,24 @@ export const CATALOGO_COMPRA = Object.freeze([
   item('g3sg1', 'precisao', 'primaria', 5000, 300),
 ]);
 
+// Equipamento (CS2): não é arma, não paga kill. `chave` é o kill-switch que tira o item da loja
+// (?armadura=0, ?flash=0); `limite` é o estoque máximo; capacete sozinho só para quem já tem colete.
+const equip = (id, preco, rotulo, chave, extra = {}) =>
+  Object.freeze({ id, grupo: 'equipamento', slot: 'equipamento', preco, recompensaKill: 0, rotulo, chave, ...extra });
+
+export const EQUIPAMENTO_COMPRA = Object.freeze([
+  equip('colete', 650, 'COLETE', 'armadura'),
+  equip('colete-capacete', 1000, 'COLETE + CAPACETE', 'armadura'),
+  equip('capacete', 350, 'CAPACETE', 'armadura'),
+  equip('flash', 200, 'FLASH', 'flash', { limite: 2 }),
+]);
+
 // Armas que não estão à venda mas matam (faca, pistola de nascença, pickup de mapa).
 export const RECOMPENSA_FORA_DO_CATALOGO = Object.freeze({
   knife: 1500, pistol: 300, akm: 300, g3: 300, m400: 300, rem700: 300, tavor: 300,
 });
 
-export const itemDaCompra = (id) => CATALOGO_COMPRA.find((i) => i.id === id) || null;
-export const itensDoGrupo = (grupo) => CATALOGO_COMPRA.filter((i) => i.grupo === grupo);
+export const itemDaCompra = (id) => CATALOGO_COMPRA.find((i) => i.id === id) || EQUIPAMENTO_COMPRA.find((i) => i.id === id) || null;
+// `desligados`: chaves com kill-switch ligado ('armadura', 'flash'); o item some do menu.
+export const itensDoGrupo = (grupo, { desligados = [] } = {}) =>
+  [...CATALOGO_COMPRA, ...EQUIPAMENTO_COMPRA].filter((i) => i.grupo === grupo && !desligados.includes(i.chave));

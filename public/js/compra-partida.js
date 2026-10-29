@@ -5,7 +5,7 @@ import { charWeapon } from './characters.js';
 import { GRUPOS_COMPRA, itensDoGrupo, itemDaCompra } from './compra-catalogo.js';
 import {
   ECONOMIA, novaCarteira, creditar, recompensaKill, recompensaRodada, proximaSequencia,
-  precoDe, distanciaAoSpawn, comprar, compraDoBot,
+  precoDe, distanciaAoSpawn, comprar, compraDoBot, motivoRecusa,
 } from './economia-partida.js';
 import { frase, tr } from './i18n.js';
 
@@ -23,10 +23,23 @@ export class CompraPartida {
     this._hudTxt = '';
     game.player.carteira = novaCarteira();
     for (const b of game.bots) b.carteira = novaCarteira();
+    // com loja, colete e flash são comprados: ninguém nasce com eles
+    for (const c of [game.player, ...game.bots]) { c.armor = 0; c.helmet = false; }
+    game.player.flashes = 0;
     this._montarDom();
   }
 
   get carteira() { return this.game.player.carteira; }
+  // Kill-switch tira o item da loja: ?armadura=0 (ou partida sem colete) e ?flash=0.
+  desligados() {
+    const g = this.game, d = [];
+    if (!g._armaduraLigada?.()) d.push('armadura');
+    if (!g._flashLiberada?.()) d.push('flash');
+    return d;
+  }
+  equipDe(c) { return { colete: +c.armor || 0, capacete: !!c.helmet, flashes: c.flashes | 0 }; }
+  // Grupo sem item (equipamento com os dois kill-switches) some do menu.
+  grupos() { const d = this.desligados(); return GRUPOS_COMPRA.filter((g) => itensDoGrupo(g.id, { desligados: d }).length); }
   assinatura() { return charWeapon(this.game.playerCharId); }
 
   _montarDom() {
@@ -91,11 +104,11 @@ export class CompraPartida {
   _escolher(n) {
     if (n === 0) { if (this.grupo) { this.grupo = null; this._render(); } else this.fechar(); return; }
     if (!this.grupo) {
-      const g = GRUPOS_COMPRA[n - 1];
+      const g = this.grupos()[n - 1];
       if (g) { this.grupo = g.id; this.aviso = ''; this._render(); this.game.sfx?.uiClick?.(); }
       return;
     }
-    const it = itensDoGrupo(this.grupo)[n - 1];
+    const it = itensDoGrupo(this.grupo, { desligados: this.desligados() })[n - 1];
     if (it) this.comprar(it.id);
   }
 
@@ -104,9 +117,17 @@ export class CompraPartida {
     const r = comprar(this.carteira, {
       id, agora: g.time, compraAte: this.compraAte, distSpawn: this.distSpawn(), vivo: p.alive,
       possui: [p.primary, p.secondary].filter(Boolean), assinatura: this.assinatura(),
+      equip: this.equipDe(p), desligados: this.desligados(),
     });
     if (!r.ok) {
       this.aviso = frase('compraRecusa', r.motivo);
+      if (this.aberto) this._render();
+      return r;
+    }
+    if (r.item.slot === 'equipamento') {
+      this._vestir(p, id);
+      // menu fica aberto, como no CS: dá para levar colete e as duas flashes de uma vez
+      this.aviso = '';
       if (this.aberto) this._render();
       return r;
     }
@@ -119,8 +140,21 @@ export class CompraPartida {
     return r;
   }
 
+  // Entrega o equipamento: o estado é o mesmo que armadura.js (#1159) e a flash (#1163) leem.
+  _vestir(c, id) {
+    if (id === 'colete' || id === 'colete-capacete') c.armor = 100;
+    if (id === 'capacete' || id === 'colete-capacete') c.helmet = true;
+    if (id === 'flash') {
+      c.flashes = (c.flashes | 0) + 1;
+      if (c === this.game.player) { this.game._carregarFlashMint?.(); this.game._updateSmokeHud?.(); this.game._updateWeaponHud?.(); }
+    }
+  }
+
   aoAbate(vitima, autor, weap) {
     vitima._desarmado = true;
+    // morreu, perdeu (CS): colete, capacete e flash não sobrevivem à morte
+    vitima.armor = 0; vitima.helmet = false;
+    if (vitima.flashes) vitima.flashes = 0;
     if (!autor?.carteira || autor === vitima) return;
     const arma = weap === 'FRAG' ? 'frag' : weap === 'FACA' ? 'knife' : autor.weapon;
     const v = creditar(autor.carteira, recompensaKill(arma, { mesmoTime: autor.team === vitima.team }));
@@ -226,6 +260,15 @@ export class CompraPartida {
     this._btnToque.classList.toggle('hidden', !pode);
   }
 
+  _linhaEquip(it, i, saldo, equip) {
+    const preco = precoDe(it.id, { equip });
+    const g = this.game;
+    const recusa = motivoRecusa({ id: it.id, saldo, agora: g.time, compraAte: this.compraAte, distSpawn: this.distSpawn(), vivo: g.player.alive, equip });
+    const qtd = it.limite ? ` <small>${equip.flashes}/${it.limite}</small>` : '';
+    return `<button type="button" class="cm-linha cm-item cm-equip${recusa ? ' off' : ''}" data-n="${i + 1}"><i>${i + 1}</i>`
+      + `<span>${tr(it.rotulo)}${qtd}</span><b>${fmt(preco)}</b></button>`;
+  }
+
   _render() {
     const m = this.elMenu;
     if (!m) return;
@@ -234,10 +277,12 @@ export class CompraPartida {
     const cab = `<div class="cm-cabeca"><span>${frase('compraTitulo')}</span><b>TRETA$ ${fmt(saldo)}</b></div>`;
     let corpo;
     if (!this.grupo) {
-      corpo = GRUPOS_COMPRA.map((g, i) =>
+      corpo = this.grupos().map((g, i) =>
         `<button type="button" class="cm-linha" data-n="${i + 1}"><i>${i + 1}</i><span>${tr(g.rotulo)}</span></button>`).join('');
     } else {
-      corpo = itensDoGrupo(this.grupo).map((it, i) => {
+      const desl = this.desligados(), equip = this.equipDe(p);
+      corpo = itensDoGrupo(this.grupo, { desligados: desl }).map((it, i) => {
+        if (it.slot === 'equipamento') return this._linhaEquip(it, i, saldo, equip);
         const preco = precoDe(it.id, { assinatura: assin });
         const tem = p.primary === it.id || p.secondary === it.id;
         const sem = saldo < preco;

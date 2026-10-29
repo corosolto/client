@@ -43,7 +43,7 @@ export function recompensaKill(arma, { mesmoTime = false } = {}) {
   if (mesmoTime) return 0;
   const armaId = WEAPONS[arma] ? arma : (ID_DO_ROTULO[arma] || arma);
   const it = itemDaCompra(armaId);
-  if (it) return it.recompensaKill;
+  if (it && it.slot !== 'equipamento') return it.recompensaKill;
   return RECOMPENSA_FORA_DO_CATALOGO[armaId] ?? ECONOMIA.recompensaKillPadrao;
 }
 
@@ -56,9 +56,12 @@ export function recompensaRodada(resultado, derrotasSeguidas = 1) {
 
 export const proximaSequencia = (seq, resultado) => (resultado === 'vitoria' ? 0 : (seq | 0) + 1);
 
-export function precoDe(id, { assinatura = null } = {}) {
+export function precoDe(id, { assinatura = null, equip = null } = {}) {
   const it = itemDaCompra(id);
   if (!it) return null;
+  // CS2: o kit cobra só a parte que falta (colete cheio paga o capacete; com capacete, o colete)
+  if (id === 'colete-capacete' && equip && equip.colete >= 100 && !equip.capacete) return itemDaCompra('capacete').preco;
+  if (id === 'colete-capacete' && equip && equip.capacete && equip.colete < 100) return itemDaCompra('colete').preco;
   if (assinatura !== id) return it.preco;
   return Math.round((it.preco * (1 - ECONOMIA.descontoAssinatura)) / 50) * 50;
 }
@@ -69,14 +72,29 @@ export function distanciaAoSpawn(pos, spawns) {
   return d;
 }
 
+// Equipamento: `equip` = { colete (0-100), capacete, flashes }. Sem `equip` legível não vende.
+function recusaDoEquipamento(it, equip) {
+  const colete = equip?.colete, flashes = equip?.flashes;
+  if (!Number.isFinite(colete) || !Number.isFinite(flashes)) return 'item';
+  if (it.id === 'colete') return colete >= 100 ? 'ja-tem' : null;
+  if (it.id === 'colete-capacete') return colete >= 100 && equip.capacete ? 'ja-tem' : null;
+  if (it.id === 'capacete') return equip.capacete ? 'ja-tem' : (colete > 0 ? null : 'sem-colete');
+  if (it.limite) return flashes >= it.limite ? 'limite' : null;
+  return null;
+}
+
 // Número que não dá para ler (NaN, undefined) recusa: compra nunca passa por omissão.
-export function motivoRecusa({ id, saldo, agora, compraAte, distSpawn, vivo, possui, assinatura = null }) {
-  if (!itemDaCompra(id)) return 'item';
+export function motivoRecusa({ id, saldo, agora, compraAte, distSpawn, vivo, possui, assinatura = null, equip = null, desligados = [] }) {
+  const it = itemDaCompra(id);
+  if (!it || desligados.includes(it.chave)) return 'item';
   if (vivo !== true) return 'morto';
   if (!(agora <= compraAte)) return 'tempo';
   if (!(distSpawn <= ECONOMIA.raioCompraM)) return 'zona';
-  if ((possui || []).includes(id)) return 'ja-tem';
-  if (!(saldo >= precoDe(id, { assinatura }))) return 'saldo';
+  if (it.slot === 'equipamento') {
+    const m = recusaDoEquipamento(it, equip);
+    if (m) return m;
+  } else if ((possui || []).includes(id)) return 'ja-tem';
+  if (!(saldo >= precoDe(id, { assinatura, equip }))) return 'saldo';
   return null;
 }
 

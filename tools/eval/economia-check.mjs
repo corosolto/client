@@ -16,6 +16,9 @@
      EC7 arma assinatura do personagem tem desconto e continua paga
      EC8 kill-switch ?economia=0, modos especiais e MP desligam a economia
      EC10 bot compra a arma sorteada só com saldo, e não compra o que já tem
+     EC11 equipamento (CS2): colete 650, kit 1000, capacete 350 só com colete, flash 200 até 2;
+          kit cobra só o que falta; sem estado de equipamento legível não vende;
+          ?armadura=0 / ?flash=0 tiram o item da loja
      EC9 isolamento do menu: (a) nenhum import do grafo alcança treta-store/rewards/
          catalog/account-entry nem cita /api/treta; (b) uma partida simulada de 15
          rodadas não escreve em localStorage nem chama fetch
@@ -23,7 +26,8 @@
    Mutantes (rodam sempre, cada um TEM de deixar a régua vermelha):
      sem-teto, sem-tempo, sem-zona, bot-sem-saldo, raio-900, rotulo-curto (o _kill passa 'FACA' e não 'knife'),
      import-dinamico, carteira-menu (creditar grava saldo no
-     localStorage do menu), import-loja (o módulo importa treta-store.js).
+     localStorage do menu), import-loja (o módulo importa treta-store.js),
+     flash-sem-limite, capacete-sem-colete, loja-ignora-switch.
 
    Uso: node tools/eval/economia-check.mjs
    ============================================================================ */
@@ -110,7 +114,7 @@ async function medir(dir) {
   const ok = tenta({});
   const recusas = {
     tempo: tenta({ agora: 23.01 }), zona: tenta({ distSpawn: ECONOMIA.raioCompraM + 0.01 }),
-    saldo: tenta({}, 2699), morto: tenta({ vivo: false }), 'ja-tem': tenta({ possui: ['ak'] }), item: tenta({ id: 'colete' }),
+    saldo: tenta({}, 2699), morto: tenta({ vivo: false }), 'ja-tem': tenta({ possui: ['ak'] }), item: tenta({ id: 'granada-x' }),
   };
   const todasRecusadas = Object.entries(recusas).every(([m, r]) => !r.ok && r.motivo === m && r.saldo === (m === 'saldo' ? 2699 : 4000));
   check('EC5', 'compra fora de tempo/spawn/saldo recusada sem debitar; válida debita o preço',
@@ -135,6 +139,37 @@ async function medir(dir) {
     cb({ saldo: 2700, alvo: 'ak' }) === 'ak' && cb({ saldo: 2699, alvo: 'ak' }) === null
     && cb({ saldo: 9000, alvo: 'ak', jaTem: true }) === null && cb({ saldo: 9000, alvo: 'pistol' }) === null,
     { ak2700: cb({ saldo: 2700, alvo: 'ak' }), ak2699: cb({ saldo: 2699, alvo: 'ak' }) });
+
+  {
+    const vazio = { colete: 0, capacete: false, flashes: 0 };
+    const eq = (id, equip, extra = {}, saldo0 = 4000) => tenta({ id, equip: { ...vazio, ...equip }, ...extra }, saldo0);
+    const preco = (id) => C.itemDaCompra(id)?.preco;
+    const casos = {
+      colete: eq('colete', {}), coleteCheio: eq('colete', { colete: 100 }), coleteGasto: eq('colete', { colete: 40 }),
+      capaceteSemColete: eq('capacete', {}), capacete: eq('capacete', { colete: 100 }), capaceteRepetido: eq('capacete', { colete: 60, capacete: true }),
+      kit: eq('colete-capacete', {}), kitComColete: eq('colete-capacete', { colete: 100 }), kitComCapacete: eq('colete-capacete', { colete: 50, capacete: true }),
+      kitCheio: eq('colete-capacete', { colete: 100, capacete: true }),
+      flash1: eq('flash', {}), flash2: eq('flash', { flashes: 1 }), flash3: eq('flash', { flashes: 2 }), flashPobre: eq('flash', {}, {}, 199),
+      semEquip: tenta({ id: 'flash' }), semArmadura: eq('colete', {}, { desligados: ['armadura'] }), semFlash: eq('flash', {}, { desligados: ['flash'] }),
+    };
+    const visto = Object.fromEntries(Object.entries(casos).map(([k, r]) => [k, r.ok ? `ok:${r.preco}:${r.saldo}` : `${r.motivo}:${r.saldo}`]));
+    visto.precos = [preco('colete'), preco('colete-capacete'), preco('capacete'), preco('flash'), C.itemDaCompra('flash')?.limite].join();
+    const esperado = {
+      precos: '650,1000,350,200,2', colete: 'ok:650:3350', coleteCheio: 'ja-tem:4000', coleteGasto: 'ok:650:3350',
+      capaceteSemColete: 'sem-colete:4000', capacete: 'ok:350:3650', capaceteRepetido: 'ja-tem:4000',
+      kit: 'ok:1000:3000', kitComColete: 'ok:350:3650', kitComCapacete: 'ok:650:3350', kitCheio: 'ja-tem:4000',
+      flash1: 'ok:200:3800', flash2: 'ok:200:3800', flash3: 'limite:4000', flashPobre: 'saldo:199',
+      semEquip: 'item:4000', semArmadura: 'item:4000', semFlash: 'item:4000',
+    };
+    const erradas = Object.keys(esperado).filter((k) => visto[k] !== esperado[k]);
+    const g = (d) => C.itensDoGrupo('equipamento', { desligados: d }).map((i) => i.id).join();
+    const menus = { tudo: g([]), semArmadura: g(['armadura']), semFlash: g(['flash']), nada: g(['armadura', 'flash']) };
+    const menuOk = menus.tudo === 'colete,colete-capacete,capacete,flash' && menus.semArmadura === 'flash'
+      && menus.semFlash === 'colete,colete-capacete,capacete' && menus.nada === ''
+      && C.GRUPOS_COMPRA.some((x) => x.id === 'equipamento') && E.recompensaKill('flash') === ECONOMIA.recompensaKillPadrao;
+    check('EC11', 'equipamento: preços CS2, capacete só com colete, até 2 flashes, kill-switch tira do menu',
+      !erradas.length && menuOk, { erradas: Object.fromEntries(erradas.map((k) => [k, visto[k]])), menus });
+  }
 
   // EC9b: partida simulada com espiões em localStorage e fetch
   const escritas = [];
@@ -181,6 +216,9 @@ const MUTANTES = {
   'import-dinamico': (s) => s.replace('  return carteira.saldo - antes;', "  import('./treta-store.js').catch(() => {});\n  return carteira.saldo - antes;"),
   'rotulo-curto': (s) => s.replace("  const armaId = WEAPONS[arma] ? arma : (ID_DO_ROTULO[arma] || arma);", '  const armaId = arma;'),
   'raio-900': (s) => s.replace('raioCompraM: 9,', 'raioCompraM: 900,'),
+  'flash-sem-limite': (s) => s.replace("return flashes >= it.limite ? 'limite' : null;", 'return null;'),
+  'capacete-sem-colete': (s) => s.replace("(colete > 0 ? null : 'sem-colete')", 'null'),
+  'loja-ignora-switch': (s) => s.replace("if (!it || desligados.includes(it.chave)) return 'item';", "if (!it) return 'item';"),
   'import-loja': (s) => s.replace("import { itemDaCompra", "import './treta-store.js';\nimport { itemDaCompra"),
 };
 

@@ -23,6 +23,9 @@
      EJ13 teclado: B abre, 4/5 compram, repetição não compra, fora da zona B é câmera
      EJ14 arma do chão troca a do mesmo slot (a comprada cai)
      EJ15 varredura: nenhum `primary || 'awp'` no game.js
+     EJ17 equipamento: kit 1000 dá colete 100 + capacete, 2 flashes de 200 e a 3ª recusa;
+          sobrevivente guarda colete e flash na rodada seguinte; quem morre perde os dois
+     EJ18 kill-switch: sem armadura (?armadura=0) colete some e recusa; sem flash (?flash=0) idem
 
    Mutantes (rodam sempre; cada um TEM de acender pelo menos uma cláusula):
      carteira-menu  o crédito de abate também grava o saldo numa chave treta do localStorage
@@ -37,6 +40,7 @@
      sem-tecla / b-sempre-camera / repete-compra   o caminho do teclado (EJ13)
      pickup-mao     a arma do chão larga a da mão, não a do slot (EJ14)
      awp-na-rodinha um único `primary || 'awp'` volta na rodinha (EJ15)
+     equip-sem-entrega / equip-nao-perde / rodada-zera-equip / loja-ignora-switch   (EJ17, EJ18)
 
    Uso: node tools/eval/economia-jogo-check.mjs
    ============================================================================ */
@@ -237,6 +241,44 @@ function medir(mut = {}) {
   }
 
   {
+    const g = boot({ mut: mut.boot });
+    const p = g.player;
+    p.carteira.saldo = 2000;
+    g._compra.aberto = true;
+    const kit = g._compra.comprar('colete-capacete');
+    const f1 = g._compra.comprar('flash'), f2 = g._compra.comprar('flash'), f3 = g._compra.comprar('flash');
+    const compra = { armor: p.armor, helmet: p.helmet, flashes: p.flashes, saldo: saldo(g), aberto: g._compra.aberto, f3: f3.motivo || 'ACEITOU' };
+    const comprouOk = kit.ok && f1.ok && f2.ok && f3.motivo === 'limite' && p.armor === 100 && p.helmet && p.flashes === 2
+      && saldo(g) === 2000 - 1000 - 400 && g._compra.aberto;
+    p.armor = 61;   // apanhou e sobreviveu
+    g.roundKills = { E: 3, B: 1 }; g._endRound(); g._startRound();
+    const manteve = p.armor === 61 && p.helmet === true && p.flashes === 2;
+    const sobrevive = { armor: p.armor, helmet: p.helmet, flashes: p.flashes };
+    g.state = 'live';
+    matar(g, p, inimigo(g), 'AK');
+    g._respawnPlayer();
+    g._startRound();
+    const perdeu = !(p.armor > 0) && !p.helmet && (p.flashes | 0) === 0;
+    check('EJ17', 'kit + 2 flashes; sobrevivente guarda; morto perde',
+      comprouOk && manteve && perdeu, { compra, sobrevive, morto: { armor: p.armor, helmet: p.helmet, flashes: p.flashes } });
+  }
+
+  {
+    const g = boot({ mut: mut.boot });
+    const p = g.player;
+    p.carteira.saldo = 5000;
+    g._armaduraLigada = () => false;
+    const rCol = g._compra.comprar('colete');
+    const semArmadura = g._compra.grupos().some((x) => x.id === 'equipamento');
+    g._flashLiberada = () => false;
+    const rFl = g._compra.comprar('flash');
+    const semNada = g._compra.grupos().some((x) => x.id === 'equipamento');
+    check('EJ18', '?armadura=0 e ?flash=0 tiram o item da loja',
+      rCol.motivo === 'item' && rFl.motivo === 'item' && semArmadura && !semNada && saldo(g) === 5000 && !(p.armor > 0) && !(p.flashes > 0),
+      { colete: rCol.motivo || 'ACEITOU', flash: rFl.motivo || 'ACEITOU', grupoSoFlash: semArmadura, grupoSemNada: semNada });
+  }
+
+  {
     const off = boot({ economia: false, mut: mut.boot });
     check('EJ2', 'sem economia: arma do personagem e armário de hoje',
       !off._compra && off.player.weapon === charWeapon(PERSONAGEM.id) && rack(off) > 0,
@@ -306,6 +348,14 @@ const MUTANTES = {
   'repete-compra': { boot: (g) => { if (g._compra) { const t = g._compra.tecla.bind(g._compra); g._compra.tecla = (c) => t(c, false); } } },
   'pickup-mao': { boot: (g) => { const r = g._grabPickup.bind(g); g._grabPickup = (pk, who, isP) => { const c = g._compra; g._compra = null; const x = r(pk, who, isP); g._compra = c; return x; }; } },
   'awp-na-rodinha': { fonte: (s) => s.replace('const slots = [this._slotPrimaria(),', "const slots = [p.primary || 'awp',") },
+  'equip-sem-entrega': { boot: (g) => { if (g._compra) g._compra._vestir = () => {}; } },
+  'equip-nao-perde': { boot: (g) => {
+    if (!g._compra) return;
+    const a = g._compra.aoAbate.bind(g._compra);
+    g._compra.aoAbate = (v, ...x) => { const e = [v.armor, v.helmet, v.flashes]; a(v, ...x); [v.armor, v.helmet, v.flashes] = e; };
+  } },
+  'rodada-zera-equip': { boot: (g) => { g._equiparArmadura = (ent) => { ent.armor = 0; ent.helmet = false; }; } },
+  'loja-ignora-switch': { boot: (g) => { if (g._compra) g._compra.desligados = () => []; } },
   'armario': { boot: (g) => {
     if (!g._compra) return;
     const r = g._resetPositions.bind(g);
