@@ -264,6 +264,7 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 4207 | `_surfaceOf()` | 27 |
 | 4234 | `_armoredTarget()` | 3 |
 | 4303 | `_aplicaArmadura()` | 6 |
+| 4395 | `_armaduraLigada()` | 1 |
 | 4309 | `_equiparArmadura()` | 6 |
 | 4315 | `_updateArmaduraHud()` | 13 |
 | 4328 | `_sincronizarArmaduraVisual()` | 6 |
