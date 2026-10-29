@@ -360,6 +360,8 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 7081 | `_botWeapon()` | 10 |
 | 7091 | `_municaoInfinita()` | 1 |
 | 7092 | `_pickupAllowed()` | 9 |
+| 7189 | `_slotPrimaria()` | 1 |
+| 7190 | `_largarArma()` | 3 |
 | 7101 | `_grabNearPickup()` | 10 |
 | 7111 | `_grabPickup()` | 35 |
 | 7146 | `_assentarNoChao()` | 10 |

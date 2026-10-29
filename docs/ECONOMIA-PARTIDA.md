@@ -69,6 +69,33 @@ Vitória zera a sequência de derrotas (regra do CS 1.6; o CS2 só desconta um d
 
 A PT-38 não está à venda: todo mundo nasce com faca e pistola.
 
+## No jogo (single player)
+
+`public/js/compra-partida.js` liga as regras ao `Game`. Quem decide é o `main.js`:
+`new Game({ economia })` com `economiaLigada(...)`. O `Game` sem `economia` (arnês,
+nó dedicado, `?economia=0`) fica no loadout antigo, e é por isso que as réguas
+antigas continuam medindo o mesmo jogo.
+
+| Regra | Como ficou |
+|---|---|
+| nascimento | faca + PT-38, sem primária, TRETA$ 800 |
+| arma do personagem | deixa de vir de graça; aparece no menu com selo SUA ARMA e 10% de desconto |
+| armário grátis do spawn | não monta com a loja ligada (com ele ninguém compraria) |
+| pickups de mapa e drops de morte | continuam (no CS também se pega arma do chão) |
+| compra | tecla **B** (ou botão `$` no toque, no topo da tela) no tempo e na zona de compra; 1-9 escolhem, 0 volta, B/Esc fecham; segurar a tecla não repete a compra; com a mira travada o clique é tiro, então no desktop o menu é de teclado |
+| arma do chão | troca a do mesmo slot (primária por primária, pistola por pistola) e larga a antiga |
+| B fora do tempo ou da zona | continua trocando a câmera, como hoje |
+| morte | larga a primária comprada no chão e renasce de faca + pistola |
+| fim de rodada | quem está vivo fica com o que comprou; todo mundo recebe vitória ou derrota |
+| modo sem rodada (`?arena=1`) | a janela de compra abre a cada renascimento |
+| HUD | `TRETA$ 800` em verde-lima acima da vida, com `+300` a cada abate e a dica `B COMPRAR · 17s` |
+
+Régua: `npm run eval:economia-jogo` sobe o `Game` real no arnês (EJ1 a EJ9, EJ13 a EJ15)
+com nove mutantes: carteira do menu, tecla 1 dando AWP, morte sem perda, armário de volta,
+menu sem teclado, B sempre câmera, repetição comprando, pickup largando a arma da mão e
+um `primary || 'awp'` de volta na rodinha. O arnês não carrega CSS: a camada do menu sobre
+o `#touch-ui` foi conferida no navegador.
+
 ## O que entra depois
 
 Cada um em PR próprio, no slot `equipamento` que o catálogo já reserva:
