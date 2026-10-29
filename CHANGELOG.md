@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.126`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.127`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -149,6 +149,28 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.127] — 2026-10-29
+
+### Mudado
+- fix: granada x recarga x morte, e o braco da AK (#1103)
+- fix: chat e mensagens param de falhar em silencio (#1130)
+- Envie o funil diário de jogadores únicos (#1172)
+- Preserve o contrato das rotas geográficas
+- Mantenha contagem única no proxy do site
+- Explique a atividade autenticada no funil
+- Envie o funil diário de jogadores únicos
+- ci(portao): o filtro do PR deixa de morrer no checkout
+- feat(comunidade): mandar mensagem para qualquer cadastrado
+- docs(armas): regenera a matriz com as linhas novas de game.js
+- fix(comunidade): a DM explica qual portão barrou, e a régua volta a medir
+- fix(chat): a tecla do chat para de morrer calada
+- docs(armas): regenera a matriz com as linhas novas de game.js
+- docs(bugs): a história dos cinco relatos sai do código
+- docs(arch): regenera o mapa com os métodos novos de game.js
+- chore(eval): registra as réguas dos relatos de 26/10
+- fix(gameplay): granada, recarga e morte param de se atropelar
+- fix(viewmodel): tampa da manga colapsava a malha quantizada da AK
 
 ## [2.1.0-alpha.126] — 2026-10-25
 
