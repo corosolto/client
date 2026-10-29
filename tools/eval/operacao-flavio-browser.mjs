@@ -11,6 +11,10 @@ mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
 const page = await context.newPage();
+await page.route(/\.astro\/eval-vite|dev-toolbar/, (route) => route.fulfill({
+  contentType: 'text/javascript',
+  body: 'export default {};',
+}));
 const errors = [], failed = [], glbs = [];
 page.on('pageerror', (error) => errors.push(error.message));
 page.on('response', (response) => {
@@ -32,6 +36,7 @@ try {
   await page.goto(`${base}/?debug=1&auto=B,senador&map=operacao_flavio&perfilauto=0`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
   await page.waitForTimeout(3200);
+  await page.addStyleTag({ content: '#crash-overlay,astro-dev-toolbar{display:none!important}' });
 
   const runtime = await page.evaluate(() => {
     const g = window.__game;

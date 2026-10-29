@@ -1,4 +1,4 @@
-import { criarEstadoEscolta, destinoProtecaoEscolta, passoEscolta } from '../../public/js/mode_operacao_flavio.js';
+import { aplicarSnapshotEscolta, criarEstadoEscolta, destinoProtecaoEscolta, passoEscolta, snapshotEscolta } from '../../public/js/mode_operacao_flavio.js';
 
 const mutante = process.argv.includes('--mutante=sem-contestacao') ? 'sem-contestacao' : '';
 let falhas = 0;
@@ -63,6 +63,16 @@ cobra(destinos.every(Boolean) && distancias.every((distancia) => distancia >= 2 
 cobra(destinos[0].z > vip.pos.z && destinos.every((destino) => destino.leash <= 5.5
   && destino.engageRadius <= 7.5 && destino.slotRadius <= 1.6),
   'formação gira para interpor os guardas entre Flávio e a ameaça');
+const servidor = criarEstadoEscolta(caminho);
+Object.assign(servidor, {
+  checkpoint: 1, escortCount: 3, contested: true, threatened: true, inCover: false,
+  unattendedFor: 2.5, boardedFor: 1.25, winner: null,
+});
+servidor.position = { x: 1.5, z: 6.25 };
+const cliente = criarEstadoEscolta(caminho);
+aplicarSnapshotEscolta(cliente, snapshotEscolta(servidor));
+cobra(JSON.stringify(snapshotEscolta(cliente)) === JSON.stringify(snapshotEscolta(servidor)),
+  'snapshot autoritativo replica a escolta completa entre servidor e cliente');
 
 if (mutante) {
   const acendeu = falhas > 0;

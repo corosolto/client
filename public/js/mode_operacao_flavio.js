@@ -133,6 +133,34 @@ export function passoEscolta(state, contexto, dt, { mutante = '', mover = null }
   }
   return state;
 }
+export function snapshotEscolta(state) {
+  return {
+    position: { x: state.position.x, z: state.position.z },
+    checkpoint: state.checkpoint,
+    escortCount: state.escortCount,
+    contested: state.contested,
+    threatened: state.threatened,
+    inCover: state.inCover,
+    unattendedFor: state.unattendedFor,
+    boardedFor: state.boardedFor,
+    winner: state.winner,
+  };
+}
+
+export function aplicarSnapshotEscolta(state, net) {
+  if (!net || typeof net !== 'object') return state;
+  if (Number.isFinite(net.position?.x)) state.position.x = net.position.x;
+  if (Number.isFinite(net.position?.z)) state.position.z = net.position.z;
+  if (Number.isInteger(net.checkpoint)) state.checkpoint = Math.max(0, Math.min(state.caminho.length - 1, net.checkpoint));
+  if (Number.isInteger(net.escortCount) && net.escortCount >= 0) state.escortCount = net.escortCount;
+  state.contested = net.contested === true;
+  state.threatened = net.threatened === true;
+  state.inCover = net.inCover === true;
+  if (Number.isFinite(net.unattendedFor) && net.unattendedFor >= 0) state.unattendedFor = net.unattendedFor;
+  if (Number.isFinite(net.boardedFor) && net.boardedFor >= 0) state.boardedFor = net.boardedFor;
+  state.winner = net.winner === 'E' || net.winner === 'B' ? net.winner : null;
+  return state;
+}
 
 function marchaMilitar(sfx) {
   try {
@@ -365,6 +393,15 @@ export class OperacaoFlavio {
     if (ganhou && this.game.world.objectivePlane) {
       this.game.world.objectivePlane.position.z = 55 + Math.max(0, t - 0.35) * 20;
     }
+  }
+
+  netState() {
+    return snapshotEscolta(this.state);
+  }
+
+  applyNetState(net) {
+    if (!this.game.online || this.game.dedicated) return;
+    aplicarSnapshotEscolta(this.state, net);
   }
 
   dispose() {

@@ -82,8 +82,7 @@ export const MAPS = {
     props: ['sertao_macambira', 'sertao_juazeiro', 'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'caixa_som_baile', 'casa_pedra', 'casa_geminada', 'igrejinha', 'caminhao_antigo'],
     ambience: ['rat', 'pigeonGround', 'parrot', 'calango', 'lagarto', 'sertaoGoat', 'sertaoHen', 'sertaoChick'],
   },
-  operacao_flavio: {
-    name: 'Operação Flávio',
+  operacao_flavio: { name: 'Operação Flávio',
     objectiveMode: 'escort',
     props: [],
   },

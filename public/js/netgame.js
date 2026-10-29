@@ -396,6 +396,7 @@ class Netcode {
 
     const primeiroSnap = this._tAt.length <= 1;   // no casamento inicial, alive true->false é estado herdado, não morte
     if (game.ctf && snap.ctf) this.applyCtfState(snap.ctf);
+    if (snap.objective) game.objective?.applyNetState?.(snap.objective);
     let dorDoJogador = 0;
     for (const e of snap.ents) {
       const ent = this._netMap.get(e.id);
