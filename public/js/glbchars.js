@@ -142,6 +142,7 @@ const TP_MOUNT_LIVE = qp.get('tpmountlive') !== '0';
 // Vitrine do lobby gira o PULSO, não a arma na mão (girar a arma deixava 37-65° fora da
 // pegada: "arma bugada na mão", 28/10). Régua eval:lobbyarmamao; ?pvpulso=0 volta ao antigo.
 const PV_PULSO = qp.get('pvpulso') !== '0';
+const PV_PIVO = qp.get('pvpivo') !== '0';   // ?pvpivo=0: gira no osso (sem CCD na palma), só p/ mutante
 const _tpc = (qp.get('tpcarry') || '').split(',').map(Number);
 const TP_CARRY_PITCH = ((_tpc.length === 2 && !isNaN(_tpc[0]) ? _tpc[0] : -6)) * Math.PI / 180;  // cano levemente pro chão (porte)
 const TP_CARRY_YAW = ((_tpc.length === 2 && !isNaN(_tpc[1]) ? _tpc[1] : 4)) * Math.PI / 180;     // levemente cruzando o corpo
@@ -503,7 +504,7 @@ function orientTpMount(t) {
   if (t.pegada && t.pegadaAtiva) {
     // PV_PULSO: a mão segue a arma (absoluto, não acumula). Pivô na PALMA via CCD: girar
     // no osso empurrava a palma 2 cm e esticava o braço da pistola (select-mount ESTICADO).
-    const ancora = t.palmLocal && t.rArm && t.rFore ? t.handBone.localToWorld(_ancoraPalma.copy(t.palmLocal)) : null;
+    const ancora = PV_PIVO && t.palmLocal && t.rArm && t.rFore ? t.handBone.localToWorld(_ancoraPalma.copy(t.palmLocal)) : null;
     t.mount.quaternion.copy(t.pegada);
     for (let i = 0; i < (ancora ? 2 : 1); i++) {
       if (i) solveCCDIK([t.rArm, t.rFore], t.handBone, ancora, { iterations: 4, endOffset: t.palmLocal });
