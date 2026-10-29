@@ -31,7 +31,8 @@
                  Exceção declarada: se o PORTE DE JOGO já passa do teto (sertanejo/revolver38
                  mede 0,031 m no jogo, defeito de pegada do jogo e não do lobby, anotado no
                  PR), o lobby só reprova se for PIOR que o jogo em mais de 5 mm. Assim a régua
-                 continua mordendo o lobby (mutante: 0,031 -> 0,049 reprova) sem cobrar
+                 continua mordendo o lobby (--mutante=sem-pulso leva o sertanejo a 0,049)
+                 sem cobrar
                  desta tela um conserto que é do porte de jogo.
      LA4 CANO    o cano aponta pra frente do corpo (componente Z no espaço do modelo ≥
                  0,594, o mesmo piso do select-mount) — o conserto não pode trocar a
@@ -42,6 +43,8 @@
    MUTANTE (régua que não morde não existe):
      --mutante=sem-pulso  carrega a página com ?pvpulso=0 (kill-switch do conserto) e
                           exige LA1 vermelha. Se continuar verde, a régua está cega.
+   O pivô na palma (?pvpivo=0 desliga) é guardado pelo select-mount, que mede o braço
+   esticado: EXTRA=pvpivo=0 node tools/eval/select-mount.mjs esquerdomacho -> ESTICADO.
 
    uso: [BASE=http://localhost:<porta>] node tools/eval/lobby-arma-mao-check.mjs [--mutante=sem-pulso] [--json]
    Um Chrome por vez na máquina: segure a trava antes (ver preâmbulo de PR). */
@@ -50,17 +53,21 @@ import { pathToFileURL } from 'node:url';
 
 import { spawn } from 'node:child_process';
 // Sem BASE, sobe o próprio servidor (nunca a 8123 compartilhada, que pode ser de outra sessão).
-const PORTA = process.env.PORTA || '9351';
+import { createServer } from 'node:net';
+// Porta LIVRE do sistema: porta fixa deixava a 2ª execução (mutante) cair no servidor alheio.
+const PORTA = process.env.PORTA || await new Promise((ok) => { const t = createServer().listen(0, () => { const p = t.address().port; t.close(() => ok(String(p))); }); });
 const BASE = process.env.BASE || `http://127.0.0.1:${PORTA}`;
 const servidor = process.env.BASE ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
 process.on('exit', () => servidor?.kill());
+let morreu = null;
+servidor?.on('exit', (c) => { morreu = c; });
 if (servidor) {
   let pronto = false;
-  for (let i = 0; i < 120 && !pronto; i++) {
+  for (let i = 0; i < 120 && !pronto && morreu === null; i++) {
     try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
     if (!pronto) await new Promise((r) => setTimeout(r, 500));
   }
-  if (!pronto) throw new Error(`servidor não respondeu em ${BASE}`);
+  if (!pronto || morreu !== null) throw new Error(`servidor próprio não subiu em ${BASE} (saída ${morreu})`);
 }
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const JSON_OUT = process.argv.includes('--json');
@@ -80,7 +87,14 @@ const CASOS = [
   ['esquerdomacho', 'ak', 'caveira-urbana', null],
   ['sertanejo', 'revolver38', null, null],
   ['capitao', 'md97', null, 'bolsonaro-drip'],
+  // mascotes de braço-toco (IK_L_SKIP / P1H_SKIP, folga de corpo): onde o CCD de 2 ossos é mais frágil
+  ['canarinho', 'deagle', null, null],
+  ['gotinha', 'mp5', null, null],
+  ['dollynho', 'p90', null, null],
 ];
+/* Teto de LA1 por personagem (dívida declarada, 29/10): o canarinho tem porte de 1 mão
+   PRÓPRIO (braço-toco) e fica a 16,1° da pegada de jogo; antes do conserto, 65,3°. */
+const TETO_PEGADA = { canarinho: 20 };
 const TETO = { pegadaGraus: 10, palmaM: 0.10, caixaM: 0.02, canoZmin: 0.594, derivaGraus: 2, derivaM: 0.01 };
 
 const gRoot = execSync('npm root -g').toString().trim();
@@ -159,7 +173,7 @@ for (const caso of CASOS) {
         const si = o.geometry.attributes.skinIndex, sw = o.geometry.attributes.skinWeight;
         for (let i = 0; i < si.count; i++) for (let k = 0; k < 4; k++) if (compR(si, i, k) === hi && compR(sw, i, k) >= 0.9) { o.getVertexPosition(i, vv); pr.add(vv.applyMatrix4(o.matrixWorld)); n++; }
       });
-      if (n) caixaJogo = +caixaLocal(rr.gun, pr.divideScalar(n)).toFixed(3);
+      if (n) { pr.divideScalar(n); caixaJogo = +caixaLocal(rr.gun, pr).toFixed(3); }
     }
 
     // Preview do lobby, como o pvSetChar monta e o loop do menu anima.
@@ -195,6 +209,7 @@ for (const caso of CASOS) {
         palma: +palma.distanceTo(grip).toFixed(3),
         caixa: +caixaLocal(gun, palma).toFixed(3),
         canoZ: +cano.z.toFixed(3),
+        // palma no espaço do GRUPO (metros, sem a escala do modelo) contra o porte de jogo
       });
     };
     for (let s = 0; s < 8; s++) {
@@ -218,7 +233,7 @@ for (const r of out) {
   if (r.erro) { erros++; linhas.push(`✗ ${rot.padEnd(46)} ERRO: ${r.erro}`); continue; }
   const a = r.amostras;
   const f = [];
-  if (max(a, 'pegada') > TETO.pegadaGraus) f.push('LA1');
+  if (max(a, 'pegada') > (TETO_PEGADA[cid] ?? TETO.pegadaGraus)) f.push('LA1');
   if (max(a, 'palma') > TETO.palmaM) f.push('LA2');
   if (max(a, 'caixa') > Math.max(TETO.caixaM, (r.caixaJogo ?? 0) + 0.005)) f.push('LA3');
   if (min(a, 'canoZ') < TETO.canoZmin) f.push('LA4');
