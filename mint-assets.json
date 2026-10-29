@@ -2589,6 +2589,26 @@
         "triangles": 4578,
         "status": "Integrado; prancha em docs/evidencias/feat-colete-20261028; revisão humana pendente"
       }
+    },
+    "flash-granada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/granadas/flash-world.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "displayName": "Yellowband Vent Canister (flashbang)",
+        "notes": "Gerado pelo dono na conta Mint dele (28/10/2026), uso livre no jogo; assetId/chat não vieram junto do download. Original: 1 m de altura, texturas 2048, 2,2 MB. Granada flash do mundo (PR #1163); a da mão segue o UTILITY_FLASH do pacote pago."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d",
+        "tools": [
+          "mint.gg",
+          "tools/prep-flash-world.mjs"
+        ],
+        "finalSha256": "57eddb91de4f8eaf45a68af26a50c57167f4ce6cfd8ea95275b432aca35527e9"
+      }
     }
   }
 }
