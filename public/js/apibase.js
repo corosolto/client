@@ -6,12 +6,12 @@ const NO_BACKEND = new Set([
   'treta',
   'social','social-auth','social-avatar','gameplay-upload','acquisition', 'avatar', 'clans', 'count', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
   'leaderboard', 'live-map', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
-  'submit-match', 'telemetry', 'train-frames',
+  'submit-match', 'telemetry', 'train-frames', 'unique',
 ]);
 
 /* Estas gravam país/cidade e usam o IP no rate limit: o run.app não tem borda que injete geo,
    então elas passam pelo proxy same-origin da Vercel (src/lib/api-proxy.mjs). backend#22. */
-const VIA_SITE = new Set(['heartbeat', 'perf', 'presence', 'submit-match', 'telemetry']);
+const VIA_SITE = new Set(['heartbeat', 'perf', 'presence', 'submit-match', 'telemetry', 'unique']);
 
 // Ficam no site: og, badge (imagens DO SITE) e geo-lang (lê o header da borda da Vercel).
 
