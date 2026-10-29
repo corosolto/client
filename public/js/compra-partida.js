@@ -5,7 +5,7 @@ import { charWeapon } from './characters.js';
 import { GRUPOS_COMPRA, itensDoGrupo, itemDaCompra } from './compra-catalogo.js';
 import {
   ECONOMIA, novaCarteira, creditar, recompensaKill, recompensaRodada, proximaSequencia,
-  precoDe, distanciaAoSpawn, comprar, compraDoBot, motivoRecusa,
+  precoDe, distanciaAoSpawn, comprar, compraDoBot, equipamentoDoBot, motivoRecusa,
 } from './economia-partida.js';
 import { frase, tr } from './i18n.js';
 
@@ -209,9 +209,16 @@ export class CompraPartida {
     // primária pega do chão também conta: o bot não paga para trocar uma AWP grátis por escopeta
     const temPrimaria = b.weapon !== 'pistol' && itemDaCompra(b.weapon)?.slot !== 'secundaria';
     const id = compraDoBot({ saldo: b.carteira.saldo, alvo: b._armaAlvo, jaTem: b.weapon === b._armaAlvo || temPrimaria });
-    if (!id) return;
-    b.carteira.saldo -= precoDe(id);
-    this._armarBot(b, id);
+    if (id) {
+      b.carteira.saldo -= precoDe(id);
+      this._armarBot(b, id);
+    }
+    // sobra vira colete só para quem já está com a arma dele (ou não tem o que comprar)
+    const armado = b.weapon === b._armaAlvo || temPrimaria || !itemDaCompra(b._armaAlvo);
+    const eq = equipamentoDoBot({ saldo: b.carteira.saldo, armado, colete: +b.armor || 0, capacete: !!b.helmet, desligados: this.desligados() });
+    if (!eq) return;
+    b.carteira.saldo -= precoDe(eq, { equip: this.equipDe(b) });
+    this._vestir(b, eq);
   }
 
   _armarBot(b, w) {

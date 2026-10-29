@@ -104,6 +104,16 @@ export function compraDoBot({ saldo, alvo, jaTem = false }) {
   return saldo >= precoDe(alvo) ? alvo : null;
 }
 
+// Bot já armado gasta a sobra em colete: com 1000 leva o kit, com 650 só o colete. Bot sem a
+// arma dele não gasta (guarda para comprá-la), e `desligados` respeita ?armadura=0.
+export function equipamentoDoBot({ saldo, armado, colete = 0, capacete = false, desligados = [] }) {
+  if (!armado || desligados.includes('armadura')) return null;
+  const equip = { colete, capacete };
+  if (!(colete >= 100 && capacete) && saldo >= precoDe('colete-capacete', { equip })) return 'colete-capacete';
+  if (colete < 100 && saldo >= precoDe('colete')) return 'colete';
+  return null;
+}
+
 export function comprar(carteira, pedido) {
   const motivo = motivoRecusa({ ...pedido, saldo: carteira.saldo });
   if (motivo) return { ok: false, motivo };

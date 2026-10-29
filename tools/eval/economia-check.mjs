@@ -19,6 +19,7 @@
      EC11 equipamento (CS2): colete 650, kit 1000, capacete 350 só com colete, flash 200 até 2;
           kit cobra só o que falta; sem estado de equipamento legível não vende;
           ?armadura=0 / ?flash=0 tiram o item da loja
+     EC12 bot só gasta em colete a sobra de quem já está armado
      EC9 isolamento do menu: (a) nenhum import do grafo alcança treta-store/rewards/
          catalog/account-entry nem cita /api/treta; (b) uma partida simulada de 15
          rodadas não escreve em localStorage nem chama fetch
@@ -27,7 +28,7 @@
      sem-teto, sem-tempo, sem-zona, bot-sem-saldo, raio-900, rotulo-curto (o _kill passa 'FACA' e não 'knife'),
      import-dinamico, carteira-menu (creditar grava saldo no
      localStorage do menu), import-loja (o módulo importa treta-store.js),
-     flash-sem-limite, capacete-sem-colete, loja-ignora-switch.
+     flash-sem-limite, capacete-sem-colete, loja-ignora-switch, bot-equipa-sem-arma.
 
    Uso: node tools/eval/economia-check.mjs
    ============================================================================ */
@@ -171,6 +172,18 @@ async function medir(dir) {
       !erradas.length && menuOk, { erradas: Object.fromEntries(erradas.map((k) => [k, visto[k]])), menus });
   }
 
+  {
+    const eb = (o) => E.equipamentoDoBot(o);
+    const v = {
+      kit: eb({ saldo: 1000, armado: true }), colete: eb({ saldo: 999, armado: true }), pobre: eb({ saldo: 649, armado: true }),
+      semArma: eb({ saldo: 9000, armado: false }), desligado: eb({ saldo: 9000, armado: true, desligados: ['armadura'] }),
+      cheio: eb({ saldo: 9000, armado: true, colete: 100, capacete: true }), soCapacete: eb({ saldo: 350, armado: true, colete: 100 }),
+    };
+    check('EC12', 'bot gasta a sobra em colete só armado e com saldo',
+      v.kit === 'colete-capacete' && v.colete === 'colete' && v.pobre === null && v.semArma === null
+      && v.desligado === null && v.cheio === null && v.soCapacete === 'colete-capacete', v);
+  }
+
   // EC9b: partida simulada com espiões em localStorage e fetch
   const escritas = [];
   // descritor (e não leitura direta): no Node 22+ ler globalThis.localStorage já avisa no stderr
@@ -219,6 +232,7 @@ const MUTANTES = {
   'flash-sem-limite': (s) => s.replace("return flashes >= it.limite ? 'limite' : null;", 'return null;'),
   'capacete-sem-colete': (s) => s.replace("(colete > 0 ? null : 'sem-colete')", 'null'),
   'loja-ignora-switch': (s) => s.replace("if (!it || desligados.includes(it.chave)) return 'item';", "if (!it) return 'item';"),
+  'bot-equipa-sem-arma': (s) => s.replace("if (!armado || desligados.includes('armadura')) return null;", "if (desligados.includes('armadura')) return null;"),
   'import-loja': (s) => s.replace("import { itemDaCompra", "import './treta-store.js';\nimport { itemDaCompra"),
 };
 

@@ -26,6 +26,8 @@
      EJ17 equipamento: kit 1000 dá colete 100 + capacete, 2 flashes de 200 e a 3ª recusa;
           sobrevivente guarda colete e flash na rodada seguinte; quem morre perde os dois
      EJ18 kill-switch: sem armadura (?armadura=0) colete some e recusa; sem flash (?flash=0) idem
+     EJ19 bot armado gasta a sobra em colete + capacete e chega com ele na rodada; bot que
+          guarda para a arma não gasta
 
    Mutantes (rodam sempre; cada um TEM de acender pelo menos uma cláusula):
      carteira-menu  o crédito de abate também grava o saldo numa chave treta do localStorage
@@ -40,7 +42,7 @@
      sem-tecla / b-sempre-camera / repete-compra   o caminho do teclado (EJ13)
      pickup-mao     a arma do chão larga a da mão, não a do slot (EJ14)
      awp-na-rodinha um único `primary || 'awp'` volta na rodinha (EJ15)
-     equip-sem-entrega / equip-nao-perde / rodada-zera-equip / loja-ignora-switch   (EJ17, EJ18)
+     equip-sem-entrega / equip-nao-perde / rodada-zera-equip / loja-ignora-switch   (EJ17-EJ19)
 
    Uso: node tools/eval/economia-jogo-check.mjs
    ============================================================================ */
@@ -199,7 +201,8 @@ function medir(mut = {}) {
     b._armaAlvo = 'shotgun'; b.carteira.saldo = 5000;
     g._syncRemoteWeapon(b, 'awp');
     g._startRound();
-    check('EJ16', 'bot com AWP do chão não compra a escopeta sorteada', b.weapon === 'awp' && b.carteira.saldo === 5000,
+    // armado com a AWP, a sobra vai para o kit colete + capacete (1000), nunca para a escopeta
+    check('EJ16', 'bot com AWP do chão não compra a escopeta sorteada', b.weapon === 'awp' && b.carteira.saldo === 5000 - 1000,
       { weapon: b.weapon, saldo: b.carteira.saldo });
   }
 
@@ -276,6 +279,18 @@ function medir(mut = {}) {
     check('EJ18', '?armadura=0 e ?flash=0 tiram o item da loja',
       rCol.motivo === 'item' && rFl.motivo === 'item' && semArmadura && !semNada && saldo(g) === 5000 && !(p.armor > 0) && !(p.flashes > 0),
       { colete: rCol.motivo || 'ACEITOU', flash: rFl.motivo || 'ACEITOU', grupoSoFlash: semArmadura, grupoSemNada: semNada });
+  }
+
+  {
+    const g = boot({ mut: mut.boot });
+    const [rico, pobre] = g.bots.filter((b) => b.team !== g.playerTeam);
+    rico._armaAlvo = 'ak'; rico.carteira.saldo = 3700; rico.weapon = 'pistol';
+    pobre._armaAlvo = 'awp'; pobre.carteira.saldo = 1000; pobre.weapon = 'pistol';
+    g._startRound();
+    check('EJ19', 'bot armado leva o kit com a sobra; bot que guarda para a AWP não gasta',
+      rico.weapon === 'ak' && rico.armor === 100 && rico.helmet === true && rico.carteira.saldo === 0
+      && pobre.weapon === 'pistol' && !(pobre.armor > 0) && pobre.carteira.saldo === 1000,
+      { rico: `${rico.weapon}/${rico.armor}/${rico.helmet}/${rico.carteira.saldo}`, pobre: `${pobre.weapon}/${pobre.armor}/${pobre.carteira.saldo}` });
   }
 
   {
