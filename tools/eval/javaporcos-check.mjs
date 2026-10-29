@@ -8,6 +8,7 @@ import {
   registrarAbate,
   atingirObjetivo,
   snapshotHorda,
+  poseMorteJavaporco,
 } from '../../public/js/mode_javaporcos.js';
 import { encodeSnapshot, decodeSnapshot } from '../../public/js/netcodec.js';
 
@@ -99,6 +100,19 @@ regra('três objetivos destruídos encerram a defesa', () => {
   atingirObjetivo(horda, 1, 1000);
   atingirObjetivo(horda, 2, 1000);
   assert.equal(horda.winner, 'B');
+});
+
+regra('javaporco abatido tomba e permanece visível antes de sumir', () => {
+  const inicio = poseMorteJavaporco(0, 1, mutante);
+  const queda = poseMorteJavaporco(0.28, 1, mutante);
+  const chao = poseMorteJavaporco(0.7, 1, mutante);
+  const fim = poseMorteJavaporco(4.1, 1, mutante);
+  assert.equal(inicio.tilt, 0);
+  assert.ok(queda.tilt > 0.4, `queda sem rotação visível: ${queda.tilt}`);
+  assert.ok(chao.tilt > queda.tilt, 'o corpo não concluiu o tombo');
+  assert.ok(chao.sink > 0.02, 'o corpo não assentou no chão');
+  assert.equal(chao.done, false, 'cadáver desapareceu cedo demais');
+  assert.equal(fim.done, true, 'cadáver não foi limpo depois da animação');
 });
 
 if (mutante) {

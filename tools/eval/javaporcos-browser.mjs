@@ -110,6 +110,7 @@ try {
     g.objective.state.alive = defs.map(([id, type, hp], entrance) => ({ id, type, hp, entrance, damage: {} }));
     g.objective.state.remaining = 0;
     g.objective.sincronizarSlots();
+    g.objective.limparCadaveres(); // a troca artificial da fauna não entra na prova de um abate
     const active = g.bots.filter((bot) => bot._boarId?.startsWith('prova-'));
     active.forEach((bot, index) => {
       bot.pos.set(-7.5 + index * 5, 0, 49);
@@ -123,6 +124,50 @@ try {
   });
   assert.deepEqual(new Set(fauna), new Set(['jovem', 'adulto', 'matriarca', 'ariete']));
   await page.screenshot({ path: `${out}/05-fauna-mint.png` });
+
+  const death = await page.evaluate(() => {
+    const g = window.__game;
+    const boar = g.bots.find((bot) => bot._boarId === 'prova-jovem');
+    if (!boar) return { found: false };
+    const animalId = boar._boarId;
+    const beforeDecals = g.bloodDecals.length;
+    const from = boar.pos.clone().add({ x: 0, y: .72, z: -6 });
+    const target = boar.pos.clone(); target.y += .72;
+    const dir = target.clone().sub(from).normalize();
+    g.player.pos.copy(from); g.player.pos.y = boar.pos.y;
+    boar.hp = 1;
+    const animal = g.objective.state.alive.find((item) => item.id === animalId);
+    if (animal) animal.hp = 1;
+    g._fireHitscan(g.player, from, dir, 200, true, 'AWP', 'awp', false);
+    g.time += .7;
+    g.objective.atualizarCadaveres();
+    g._updateBlood(.7);
+    g._bloodFx?.update(.7);
+    g._bloodPop?.update(.7);
+    const corpse = g.objective.corpses[0];
+    const corpseCenter = g.objective.deathBox.setFromObject(corpse.visual).getCenter(g.objective.deathCenter).clone();
+    g.camera.position.set(boar.pos.x, boar.pos.y + 2.1, boar.pos.z - 5.5);
+    g.camera.lookAt(boar.pos.x, boar.pos.y + .35, boar.pos.z);
+    g.renderer.render(g.scene, g.camera);
+    return {
+      found: true,
+      killed: !boar.alive && !g.objective.state.alive.some((item) => item.id === animalId),
+      corpses: g.objective.corpses.length,
+      tilt: Math.abs(corpse?.visual?.rotation?.z || 0),
+      bloodDecals: g.bloodDecals.length - beforeDecals,
+      corpseVisible: !!corpse?.visual?.parent,
+      corpseDistance: Math.hypot(corpseCenter.x - boar.pos.x, corpseCenter.z - boar.pos.z),
+    };
+  });
+  assert.equal(death.found, true);
+  assert.equal(death.killed, true);
+  assert.equal(death.corpses, 1);
+  assert.ok(death.tilt > 1.3, `tombo invisível: ${death.tilt}`);
+  assert.ok(death.bloodDecals >= 1, `morte sem sangue: ${death.bloodDecals}`);
+  assert.equal(death.corpseVisible, true);
+  assert.ok(death.corpseDistance < 1.2, `cadáver deslocado do abate: ${death.corpseDistance} m`);
+  await page.screenshot({ path: `${out}/06-morte-com-sangue.png` });
+
 
 
   await page.evaluate(() => {
@@ -164,7 +209,7 @@ try {
   assert.deepEqual(errors, [], `erros no browser: ${errors.join(' | ')}`);
   const featureFailed = failed.filter(([, url]) => /invasao_javaporcos|javaporcos|javali_/.test(url));
   assert.deepEqual(featureFailed, [], `assets da invasão falharam: ${JSON.stringify(featureFailed)}`);
-  const receipt = { generatedAt: new Date().toISOString(), base, runtime, fauna, cinematic, scoreboard, views, errors, failed, glbs };
+  const receipt = { generatedAt: new Date().toISOString(), base, runtime, fauna, death, cinematic, scoreboard, views, errors, failed, glbs };
   writeFileSync(`${out}/receipt.json`, `${JSON.stringify(receipt, null, 2)}\n`);
   console.log(JSON.stringify(receipt, null, 2));
 } finally {

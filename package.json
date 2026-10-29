@@ -36,7 +36,7 @@
     "eval:perfilmobile": "node tools/eval/perfil-mobile-check.mjs && node tools/eval/perfil-mobile-check.mjs --mutante=teto-frouxo && node tools/eval/perfil-mobile-check.mjs --mutante=inicio-alto && node tools/eval/perfil-mobile-check.mjs --mutante=memoria-morta && node tools/eval/perfil-mobile-check.mjs --mutante=cadencia-solta && node tools/eval/perfil-mobile-check.mjs --mutante=marcador-morto",
     "eval:perfilmobile:browser": "node tools/eval/perfil-mobile-browser.mjs && node tools/eval/perfil-mobile-browser.mjs --mutante=sem-perfil",
     "eval:mapasobdemanda": "node tools/eval/mapas-sob-demanda-check.mjs && node tools/eval/mapas-sob-demanda-check.mjs --mutante=estatico && node tools/eval/mapas-sob-demanda-check.mjs --mutante=registro && node tools/eval/mapas-sob-demanda-check.mjs --mutante=ordem",
-    "eval:javaporcos": "node tools/eval/javaporcos-check.mjs && node tools/eval/javaporcos-check.mjs --mutante=duplica-assistencia",
+    "eval:javaporcos": "node tools/eval/javaporcos-check.mjs && node tools/eval/javaporcos-check.mjs --mutante=duplica-assistencia && node tools/eval/javaporcos-check.mjs --mutante=sem-morte",
     "eval:javaporcos:browser": "node tools/eval/javaporcos-browser.mjs",
     "eval:meshoptvm": "node tools/eval/meshopt-vm-check.mjs && node tools/eval/meshopt-vm-check.mjs --mutante=troca-byte",
     "eval:convidaamigos": "node tools/eval/convida-amigos-check.mjs && node tools/eval/convida-amigos-check.mjs --mutante=sem-whatsapp && node tools/eval/convida-amigos-check.mjs --mutante=share-mudo && node tools/eval/convida-amigos-check.mjs --mutante=vaza-legado && node tools/eval/convida-amigos-check.mjs --mutante=email-estoura",

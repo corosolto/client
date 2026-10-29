@@ -7,6 +7,18 @@ export const BOAR_POINTS = Object.freeze({ jovem: 100, adulto: 180, matriarca: 3
 const DEFAULT_MAX_ALIVE = 24;
 const PREP_SECONDS = 12;
 const COMBAT_SECONDS = 35;
+const DEATH_SECONDS = 4;
+
+export function poseMorteJavaporco(age, side = 1, mutant = '') {
+  const elapsed = Math.max(0, Number(age) || 0);
+  const progress = mutant === 'sem-morte' ? 0 : Math.min(1, elapsed / .55);
+  const eased = 1 - (1 - progress) ** 3;
+  return {
+    tilt: (side < 0 ? -1 : 1) * eased * 1.42,
+    sink: eased * .04,
+    done: elapsed >= DEATH_SECONDS,
+  };
+}
 
 function tipoDaOnda(wave, ordinal, total) {
   if (wave === 8 && ordinal === total - 1) return 'ariete';
@@ -297,6 +309,9 @@ class InvasaoJavaporcos {
     this.cinematic = null;
     this.audioNodes = [];
     this.scoreShown = false;
+    this.corpses = [];
+    this.deathBox = new THREE.Box3();
+    this.deathCenter = new THREE.Vector3();
     for (const bot of this.boars) {
       bot.vel ||= new THREE.Vector3();
       bot._objectiveNpc = 'javaporco';
@@ -331,6 +346,7 @@ class InvasaoJavaporcos {
     this.scoreShown = false;
     if (this.game.vmScene) this.game.vmScene.visible = true;
     if (this.cinemaTitle) this.cinemaTitle.style.opacity = '0';
+    this.limparCadaveres();
     for (const bot of this.boars) this.desativar(bot);
     this.atualizaHud();
   }
@@ -358,22 +374,68 @@ class InvasaoJavaporcos {
   }
 
   desativar(bot) {
-    if (bot._boarVisual) {
-      this.game.scene.remove(bot._boarVisual);
-    }
+    if (bot._boarVisual) this.game.scene.remove(bot._boarVisual);
     if (bot.mesh?.group) bot.mesh.group.visible = false;
     if (bot._boarId) this.slots.delete(bot._boarId);
     bot._boarVisual = null; bot._boarId = null; bot._boarType = null;
     bot.alive = false; bot.hp = 0; bot.respawnAt = Infinity; bot.vel.set(0, 0, 0);
   }
 
+  tombar(bot, attacker = null) {
+    if (!bot?._boarId) return;
+    if (this.game.dedicated || !bot._boarVisual) {
+      this.desativar(bot);
+      return;
+    }
+    const id = bot._boarId;
+    const visual = bot._boarVisual;
+    const dx = (attacker?.pos?.x ?? bot.pos.x + 1) - bot.pos.x;
+    const dz = (attacker?.pos?.z ?? bot.pos.z) - bot.pos.z;
+    const lateral = dx * Math.cos(bot.yaw) + dz * Math.sin(bot.yaw);
+    const side = lateral < 0 ? -1 : 1;
+    visual.position.set(bot.pos.x, bot.pos.y, bot.pos.z);
+    visual.rotation.set(0, bot.yaw, 0);
+    visual.updateMatrixWorld(true);
+    this.deathBox.setFromObject(visual).getCenter(this.deathCenter);
+    const pivot = new THREE.Group();
+    pivot.position.set(this.deathCenter.x, bot.pos.y + .22, this.deathCenter.z);
+    this.game.scene.add(pivot);
+    pivot.attach(visual); // preserva a pose e tomba pelo centro no chão, sem arremessar o corpo de lado
+    this.corpses.push({ visual: pivot, startedAt: this.game.time, baseY: pivot.position.y, side });
+    this.slots.delete(id);
+    bot._boarVisual = null; bot._boarId = null; bot._boarType = null;
+    bot.alive = false; bot.hp = 0; bot.respawnAt = Infinity; bot.vel.set(0, 0, 0);
+  }
+
+  atualizarCadaveres() {
+    for (let i = this.corpses.length - 1; i >= 0; i--) {
+      const corpse = this.corpses[i];
+      const pose = poseMorteJavaporco(this.game.time - corpse.startedAt, corpse.side);
+      corpse.visual.rotation.z = pose.tilt;
+      corpse.visual.position.y = corpse.baseY - pose.sink;
+      if (!pose.done) continue;
+      this.game.scene.remove(corpse.visual);
+      this.corpses.splice(i, 1);
+    }
+  }
+
+  limparCadaveres() {
+    for (const corpse of this.corpses) this.game.scene.remove(corpse.visual);
+    this.corpses.length = 0;
+  }
+
   sincronizarSlots() {
     const aliveIds = new Set(this.state.alive.map((animal) => animal.id));
-    for (const bot of this.boars) if (bot._boarId && !aliveIds.has(bot._boarId)) this.desativar(bot);
+    for (const bot of this.boars) {
+      if (!bot._boarId || aliveIds.has(bot._boarId)) continue;
+      if (this.game.state === 'live' && this.state.phase === 'combat') this.tombar(bot);
+      else this.desativar(bot);
+    }
     for (const animal of this.state.alive) if (!this.slots.has(animal.id)) this.assignar(animal);
   }
 
   update(dt) {
+    this.atualizarCadaveres();
     if (this.game.state !== 'live') return;
     if (!this.game.online || this.game.dedicated) {
       const phase = this.state.phase, winner = this.state.winner, wave = this.state.wave;
@@ -462,10 +524,14 @@ class InvasaoJavaporcos {
   }
 
   onKill(ent, attacker) {
-    if (!ent?._boarId || (this.game.online && !this.game.dedicated)) return;
+    if (!ent?._boarId) return;
+    const animalId = ent._boarId;
+    const animalType = ent._boarType;
+    this.tombar(ent, attacker);
+    if (this.game.online && !this.game.dedicated) return;
     const attackerId = this.idDo(attacker);
-    registrarAbate(this.state, ent._boarId, attackerId);
-    this.emitir('BOAR_KILLED', { i: ent._boarId, a: attackerId, type: ent._boarType, wave: this.state.wave });
+    registrarAbate(this.state, animalId, attackerId);
+    this.emitir('BOAR_KILLED', { i: animalId, a: attackerId, type: animalType, wave: this.state.wave });
     ent.respawnAt = Infinity;
   }
 
@@ -556,6 +622,7 @@ class InvasaoJavaporcos {
     this.hud?.remove();
     this.cinemaTitle?.remove();
     for (const bot of this.boars) this.desativar(bot);
+    this.limparCadaveres();
     for (const node of this.audioNodes) { try { node.stop(); } catch {} }
   }
 }
