@@ -114,7 +114,10 @@ const chromium = _pw.chromium || _pw.default?.chromium;
 
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio', '--disable-dev-shm-usage'],
+  args: [
+    ...(process.platform === 'darwin' ? [] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']),
+    '--headless=new', '--mute-audio', '--disable-dev-shm-usage',
+  ],
 });
 
 /* `refPoolAnsioso` liga a referência do ORC2; o mutante `cartaz-ansioso` liga a MESMA
