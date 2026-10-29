@@ -11,7 +11,7 @@ const NO_BACKEND = new Set([
 
 /* Estas gravam país/cidade e usam o IP no rate limit: o run.app não tem borda que injete geo,
    então elas passam pelo proxy same-origin da Vercel (src/lib/api-proxy.mjs). backend#22. */
-const VIA_SITE = new Set(['heartbeat', 'perf', 'presence', 'submit-match', 'telemetry', 'unique']);
+const VIA_SITE = new Set(['heartbeat', 'perf', 'presence', 'submit-match', 'telemetry']);
 
 // Ficam no site: og, badge (imagens DO SITE) e geo-lang (lê o header da borda da Vercel).
 
