@@ -99,6 +99,9 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 353 | `RADIO` | 5 |
 | 359 | `MK_LABELS` | 5 |
 | 364 | `GUNFEEL` | 4 |
+| 369 | `PUNCH_ZOOM` | 8 |
+| 377 | `BOCA_CORPO` | 5 |
+| 382 | `bocaLocalDaArma` | 22 |
 | 371 | `TRACER_STYLE` | 6 |
 | 381 | `ADS_RAMPA_S` | 3 |
 | 385 | `aberturaCone` | 16 |
@@ -283,6 +286,9 @@ Cobertura: **3850 de 8992 linhas (43%)** do `game.js` têm dono declarado. O res
 | 4802 | `_flash()` | 61 |
 | 4863 | `_vmTetoTela()` | 10 |
 | 4873 | `_muzzleWorld()` | 30 |
+| 4988 | `_bocaLigada()` | 14 |
+| 5002 | `_bocaTiroBot()` | 5 |
+| 5007 | `_origemTracerJogador()` | 23 |
 | 4903 | `_aimOrigin()` | 5 |
 | 4908 | `_updateDoors()` | 10 |
 | 4918 | `_updateFx()` | 57 |
