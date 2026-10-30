@@ -54,10 +54,10 @@
    ============================================================================ */
 
 export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'beco-apagado', 'luz-presa', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
-// licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); o gol g2 também é NC
-export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2'];
+// licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
+export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
-  'chevette_sl76', 'uno_mille', '1968_volkswagen_beetle', 'old_vw_bug'];
+  'chevette_sl76', 'uno_mille', 'old_vw_bug'];
 
 const CIDADE_R = 36, AV = 6, CAL = 2, MEIA_CARRO = 0.86;
 const TX = await import('../../public/js/map_javaporcos_texturas.js');
