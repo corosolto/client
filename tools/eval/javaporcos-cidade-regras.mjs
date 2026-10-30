@@ -57,6 +57,9 @@
              peeling_painted_wall tem sdL 1,8 e na sombra o rodapé lia flat8 99,7%.
      ORC2    telhado de 4 águas não fica solto: nenhuma malha ConeGeometry de 4 lados e ≤ 3
              malhas `telhado-lote` (eram 25 chamadas; a alta-diag estava em 999 de 1.000).
+     FORRO1  o beiral visto de baixo é forro de tábua ("beiral tábua preta"): cada lote de
+             telhado tem 2 grupos, o segundo com o mapa `jp-madeira` e cor de vértice ≥ 1,4
+             (albedo L* ~50 em vez dos 40 da madeira crua), e nunca o material da telha.
 
    RODADA 4 (crítico 6/10: "rua do centro lê como pátio", sem lixo ao longo da guia):
      ORC1    o GLB saco_lixo tem ~2,7 mil triângulos e a caixa ~3,2 mil: com os montes do
@@ -78,6 +81,7 @@
      muro-escuro     muro volta ao albedo 0xc4c0b8                         -> MURO1
      barra-lisa      rodapé volta ao mapa liso, sem relevo                 -> BARRA1
      telhado-solto   um cone de telhado por casa de novo                   -> ORC2
+     beiral-preto    tampa de baixo do telhado volta à telha                -> FORRO1
      saco-ovo        tira a escala por eixo e a inclinação de todo saco      -> SACO1
      guia-limpa      some com o lixo de guia da malha de decalque             -> RUA2
      saco-longe      corte do saco volta a 38 m no fonte lido                 -> ORC1
@@ -89,7 +93,7 @@
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'beiral-preto', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -414,6 +418,23 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     exige(!soltos.length, `${soltos.length} telhado(s) de 4 águas soltos: uma chamada de desenho cada`);
     exige(lotes.length >= 1 && lotes.length <= 3, `${lotes.length} lotes de telhado (faixa 1–3)`);
     return `${lotes.length} lotes de telhado, ${lotes.reduce((n, o) => n + o.geometry.attributes.position.count, 0)} vértices`;
+  });
+
+  if (MUT === 'beiral-preto') {
+    const ls = malhas().filter((o) => o.name === 'telhado-lote'); exige(ls.length, 'MUTANTE beiral-preto NÃO APLICOU');
+    for (const l of ls) l.material = [l.material[0], l.material[0]];
+  }
+  regra('FORRO1 beiral com forro de tábua clara, não telha preta', () => {
+    const ls = malhas().filter((o) => o.name === 'telhado-lote');
+    exige(ls.length, 'sem lote de telhado');
+    for (const l of ls) {
+      const g = l.geometry.groups, m = Array.isArray(l.material) ? l.material[1] : null;
+      exige(g.length === 2 && m, `lote com ${g.length} grupo(s) e ${Array.isArray(l.material) ? l.material.length : 1} material(is): sem forro`);
+      exige(/^jp-madeira/.test(m.map?.name || ''), `forro com mapa ${m.map?.name}: telha por baixo lê tábua preta`);
+      const c = l.geometry.attributes.color, i0 = g[1].start;
+      exige(c && c.getX(i0) >= 1.4, `cor de vértice do forro ${c?.getX(i0)} (piso 1,4): madeira crua L* 40`);
+    }
+    return `${ls.length} lotes com forro jp-madeira`;
   });
 
   regra('ORC1 saco e caixa GLB somem antes de 28 m', () => {

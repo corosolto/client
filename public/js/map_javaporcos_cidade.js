@@ -824,8 +824,17 @@ function cacambas(kit, campo, ex, pontos) {
   }
 }
 
-/* Telhados de 4 águas num lote por material: eram 25 malhas, uma chamada de desenho cada. */
+/* Telhados de 4 águas num lote por material: eram 25 malhas, uma chamada de desenho cada.
+   A tampa de baixo é o forro de tábua do beiral (a telha vista por baixo lia tábua preta). */
 function telhadosEmLote(kit) {
+  const forro = kit.aoMat ? kit.aoMat(kit.MAT.madeira) : kit.MAT.madeira;
+  const parte = (g, mi, claro) => {
+    const gr = g.groups.find((x) => (x.materialIndex > 0 ? 1 : 0) === mi), p = g.clone();
+    p.setIndex(Array.from(g.index.array.slice(gr.start, gr.start + gr.count))); p.clearGroups();
+    const n = p.toNonIndexed(), pos = n.attributes.position, cor = new Float32Array(pos.count * 3).fill(claro);
+    if (mi === 1) for (let i = 0; i < pos.count; i++) n.attributes.uv.setXY(i, pos.getX(i) / 1.2, pos.getZ(i) / 1.2);
+    return n.setAttribute('color', new THREE.BufferAttribute(cor, 3));
+  };
   kit.root.updateMatrixWorld(true);
   const porMat = new Map(), base = new THREE.Matrix4().copy(kit.root.matrixWorld).invert(), m4 = new THREE.Matrix4();
   kit.root.traverse((o) => {
@@ -835,7 +844,8 @@ function telhadosEmLote(kit) {
   });
   for (const [mat, lista] of porMat) {
     const geos = lista.map((o) => o.geometry.clone().applyMatrix4(m4.multiplyMatrices(base, o.matrixWorld)));
-    const lote = new THREE.Mesh(mergeGeometries(geos, false), mat);
+    const telha = mergeGeometries(geos.map((g) => parte(g, 0, 1)), false), tabua = mergeGeometries(geos.map((g) => parte(g, 1, 1.6)), false);
+    const lote = new THREE.Mesh(mergeGeometries([telha, tabua], true), [mat, forro]);
     lote.name = 'telhado-lote'; lote.castShadow = true; lote.receiveShadow = true;
     for (const o of lista) { o.parent.remove(o); o.geometry.dispose(); const i = kit.occluders.indexOf(o); if (i >= 0) kit.occluders.splice(i, 1); }
     kit.root.add(lote); kit.occluders.push(lote);

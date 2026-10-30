@@ -220,7 +220,7 @@ export function buildInvasaoJavaporcos(scene, T) {
   };
 
   const orlaGLB = GLB_ON && typeof document !== 'undefined' && hasProp('samambaia_mata');
-  const kit = { root, colliders, occluders, MAT, caixa, piso, placa, colisor, orlaGLB };
+  const kit = { root, colliders, occluders, MAT, caixa, piso, placa, colisor, orlaGLB, aoMat: VAO_BANDS ? aoMat : null };
 
   // ── Relevo. A malha do terreno sai da MESMA grade que o groundHeightAt lê.
   const campo = new CampoDeAltura();
