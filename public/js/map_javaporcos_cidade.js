@@ -802,12 +802,30 @@ function luzDosBecos(kit, postes) {
    Medidas e o porquê dos 2,5 m: docs/maps/invasao-javaporcos-layout.md, seção "Becos". */
 export const BECO_MEIA = 1.25;
 const BECO_FUNDO = 5.2;
+// `fundo`: parede do outro lado da viela; o beco oeste dá na praça, que já é o fundo dele
 const BECOS = {
-  'LN-io': { id: 'beco-norte', nome: 'Beco do Medidor' },
-  'OS-io': { id: 'beco-sul', nome: 'Beco do Varal' },
-  'LS-oi': { id: 'beco-leste', nome: 'Beco do Botijão' },
-  'ON-oi': { id: 'beco-oeste', nome: 'Beco da Caixa' },
+  'LN-io': { id: 'beco-norte', nome: 'Beco do Medidor', fundo: true },
+  'OS-io': { id: 'beco-sul', nome: 'Beco do Varal', fundo: true },
+  'LS-oi': { id: 'beco-leste', nome: 'Beco do Botijão', fundo: true },
+  'ON-oi': { id: 'beco-oeste', nome: 'Beco da Caixa', fundo: false },
 };
+
+/* Fundo do beco do outro lado da viela, na divisa do quarteirão: reboco descascado,
+   barra de tinta, portão de aço e pichação. A rodada 2 via ali uma placa lisa (flat8 96%). */
+function fundoDoBeco(kit, campo, ex, W, dims, cm, lf, ry, dIn) {
+  const { MAT, caixa } = kit;
+  const [x, z] = W(cm, lf), [w, d] = dims(4.6, 0.2), y = campo.amostra(x, z);
+  caixa(w, 3.2, d, MAT.rebocoDesc[1], x, y, z, {});
+  caixa(w + 0.04, 1.1, d + 0.04, MAT.barra, x, y, z, { collide: false, cast: false });
+  const [gx, gz] = W(cm + 0.85, lf - dIn * 0.16);
+  if (usaGLB('porta_aco')) ex.rua.push({ id: 'porta_aco', x: gx, z: gz, y, h: 2.4, ry });
+  else porta(ex, gx, y + 1.1, gz, ry);
+  const nx = Math.sin(ry), nz = Math.cos(ry);
+  for (const [dc, alt, k, larg] of [[-1.25, 1.55, 12, 1.7], [0.9, 2.75, 13, 1.5]]) {
+    const [qx, qz] = W(cm + dc, lf);
+    ex.decal.push({ k, x: qx + nx * 0.125, y: y + alt, z: qz + nz * 0.125, w: larg, h: larg * 0.5, ry, deitado: false });
+  }
+}
 
 function novosExtras() {
   return { glb: [], medidor: [], eletroduto: [], vao: [], grade: [], arame: [], roupa: [], roupaCor: [], botijao: [], saco: [], lixeira: [], becoAreas: [],
@@ -941,6 +959,11 @@ function quarteiraoBeco(kit, campo, rnd, b, def, ex) {
   ex.fiosBeco.push([topo, beiralA(lOut + dIn * 1.0), 0.7], [topo, beiralB(lOut + dIn * 4.0), 0.5],
     [beiralA(lOut + dIn * 3.6), beiralB(lOut + dIn * 6.2), 0.35], [beiralA(lOut + dIn * 4.6, 0.3), beiralB(lOut + dIn * 7.4, 0.2), 0.3],
     [beiralA(lOut + dIn * 5.0, 0.6), beiralB(lOut + dIn * 5.4, 0.5), 0.4]);
+  if (def.fundo) {
+    const lf = lIn + dIn * (2 * VIELA + 0.1);
+    fundoDoBeco(kit, campo, ex, W, dims, cm, lf, ryPara(-dIn), dIn);
+    ex.fiosBeco.push([topo, ponto(cm - 1.6, py + 3.25, lf), 0.25]);
+  }
   const glb = (id, c, l, h) => { const [x, z] = W(c, l); ex.glb.push({ id, x, z, h, ry: rnd() * 6.283 }); };
   glb('saco_lixo', cm - BECO_MEIA + 0.45, lIn - dIn * 0.7, 0.75);
   glb('saco_lixo', cm - BECO_MEIA + 0.4, lIn - dIn * 1.5, 0.6);
@@ -986,7 +1009,7 @@ function construirExtras(kit, ex) {
   lote(ex.botijao, botijaoGeo, MAT.botijao, 'beco-botijao', { solido: true });
   if (!hasProp('saco_lixo')) lote(ex.saco, sacoGeo(), MAT.saco, 'beco-saco');
   if (!hasProp('lixeira_metal')) lote(ex.lixeira, cubo, MAT.lixeiraAmarela, 'beco-lixeira');
-  quads(kit, ex.decal.map((d) => ({ ...d, w: d.w ?? d.s, h: d.h ?? d.s, deitado: true, uv: celulaDecal(d.k) })), MAT.decal, 'decal-chao', false);
+  quads(kit, ex.decal.map((d) => ({ ...d, w: d.w ?? d.s, h: d.h ?? d.s, deitado: d.deitado ?? true, uv: celulaDecal(d.k) })), MAT.decal, 'decal-chao', false);
   quads(kit, ex.letreiro.map((l) => ({ ...l, uv: LETREIRO_UV(l.i) })), MAT.letreiro, 'letreiro-loja', true);
   if (GLB && ex.rua.length) {
     const PR = new PropBatch({ bucket: 24, cortes: { cadeira_plastico: 45 } });
@@ -1000,8 +1023,8 @@ function construirExtras(kit, ex) {
 }
 
 const celulaDecal = (k) => {
-  const u0 = (k % 4) / 4, v1 = 1 - ((k / 4) | 0) / 3;
-  return [u0 + 0.002, v1 - 1 / 3 + 0.002, u0 + 0.248, v1 - 0.002];
+  const u0 = (k % 4) / 4, v1 = 1 - ((k / 4) | 0) / 4;
+  return [u0 + 0.002, v1 - 1 / 4 + 0.002, u0 + 0.248, v1 - 0.002];
 };
 
 /* Muitos quads (decalque de chão, letreiro) numa malha só: uma chamada de desenho para

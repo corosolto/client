@@ -534,11 +534,11 @@ export function pbr(id, { repeat = 1, metros = 0 } = {}) {
   return { map: canal('color', true), normalMap: canal('normal', false), roughnessMap: canal('rough', false) };
 }
 
-/* Atlas de decalque de chão 4×3 (célula 256): poça, óleo, papel, lata, comida, folha, sacola,
-   barro, faixa branca, faixa amarela, remendo e rachadura. Rugosidade num canvas irmão. */
-export const DECAL_CELULAS = 12;
+/* Atlas de decalque 4×4 (célula 256): poça, óleo, papel, lata, comida, folha, sacola, barro,
+   faixa branca, faixa amarela, remendo, rachadura e duas pichações de parede. */
+export const DECAL_CELULAS = 14;
 export function decalAtlasTex() {
-  const W = 1024, H = 768, C = 256;
+  const W = 1024, H = 1024, C = 256;
   const cor = document.createElement('canvas'), rug = document.createElement('canvas');
   cor.width = rug.width = W; cor.height = rug.height = H;
   const x = cor.getContext('2d'), g = rug.getContext('2d'), r = lcg(0xdeca1);
@@ -620,7 +620,7 @@ export function decalAtlasTex() {
       for (let q = 0; q < 16; q++) { const a = (q / 16) * 6.283; x.lineTo(cx + Math.cos(a) * (96 + r() * 18), cy + Math.sin(a) * (90 + r() * 18)); }
       x.closePath(); x.fill();
       for (let i = 0; i < 160; i++) { x.fillStyle = r() > 0.5 ? 'rgba(30,30,30,0.5)' : 'rgba(110,108,104,0.45)'; x.fillRect(ox + 40 + r() * 176, oy + 40 + r() * 176, 2 + r() * 3, 2 + r() * 3); }
-    } else {
+    } else if (k === 11) {
       x.strokeStyle = 'rgba(26,24,22,0.85)';
       for (let i = 0; i < 3; i++) {
         let px = ox + 20 + r() * 40, py = oy + 30 + r() * 190; x.lineWidth = 2 + r() * 2;
@@ -629,6 +629,17 @@ export function decalAtlasTex() {
         x.stroke();
       }
       for (let i = 0; i < 18; i++) { x.fillStyle = r() > 0.5 ? 'rgba(84,104,48,0.9)' : 'rgba(110,120,60,0.85)'; x.fillRect(ox + 30 + r() * 196, oy + 30 + r() * 196, 2, 6 + r() * 10); }
+    } else {
+      // pichação de spray: tag com contorno, escorrido e um risco por cima (célula 2:1 na parede)
+      const [tag, tinta, borda] = k === 12 ? ['JVP', '#1d1d1f', '#c8c2b4'] : ['VILA', '#b0281e', '#1a1a1a'];
+      x.font = `italic 900 ${k === 12 ? 150 : 118}px Impact, 'Arial Black', sans-serif`;
+      x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.save(); x.translate(cx, cy); x.rotate(-0.12); x.scale(0.6, 1);
+      x.lineWidth = 9; x.strokeStyle = borda; x.strokeText(tag, 0, 0);
+      x.fillStyle = tinta; x.fillText(tag, 0, 0); x.restore();
+      x.fillStyle = tinta;
+      for (let i = 0; i < 9; i++) x.fillRect(ox + 40 + r() * 176, cy + 10 + r() * 12, 2 + r() * 2, 12 + r() * 40);
+      x.strokeStyle = tinta; x.lineWidth = 4; x.beginPath(); x.moveTo(ox + 30, cy + 48); x.quadraticCurveTo(cx, cy + 30 + r() * 30, ox + C - 30, cy + 40); x.stroke();
     }
     x.restore();
   }
