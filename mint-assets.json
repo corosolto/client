@@ -2541,6 +2541,144 @@
         "creditsAfter": 108705,
         "status": "Treze modelos, rigs e vídeos integrados; Mandrake revisado; postura, movimento e revisão visual aprovados"
       }
+    },
+    "jp-chevette-sl76": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/chevette_sl76.glb"
+      ],
+      "source": {
+        "kind": "sketchfab-model",
+        "url": "https://sketchfab.com/3d-models/chevrolet-chevette-sl-76-2322139894c545b6838000f08d853662",
+        "displayName": "Chevrolet Chevette sl 76",
+        "author": "Sketchfab: Laerte.Hubaleque",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "frente": "javaporcos-realista",
+        "classe": "carro",
+        "notes": "Invasão dos Javaporcos (rua). 37983 tris (bruto 53839), 1.61 x 1.35 x 4.12 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "0ab8a6eb9005ad148bd1682296fa6add00a1f5b3a6e0d9ab58d25c380791c952"
+      }
+    },
+    "jp-saveiro-robust": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/saveiro_robust.glb"
+      ],
+      "source": {
+        "kind": "sketchfab-model",
+        "url": "https://sketchfab.com/3d-models/2022-volkswagen-saveiro-16-robust-bd312f832dd64eb8acb01923b85283de",
+        "displayName": "2022 Volkswagen Saveiro 1.6 Robust",
+        "author": "Sketchfab: Ddiaz Design",
+        "license": "CC-BY-NC-SA-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+        "frente": "javaporcos-realista",
+        "classe": "carro",
+        "notes": "Invasão dos Javaporcos (rua). 16093 tris (bruto 290097), 1.88 x 1.51 x 4.49 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "bd216d60642665987f7a7f2ee1cd1bea42e50cdf3b3c479b19798b8902e91da5"
+      }
+    },
+    "jp-byd-dolphin": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/byd_dolphin.glb"
+      ],
+      "source": {
+        "kind": "sketchfab-model",
+        "url": "https://sketchfab.com/3d-models/2024-byd-dolphin-e8f3cf54c0e545b1b290d7a55ca77fca",
+        "displayName": "2024 BYD Dolphin",
+        "author": "Sketchfab: Ddiaz Design",
+        "license": "CC-BY-NC-SA-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+        "frente": "javaporcos-realista",
+        "classe": "carro",
+        "notes": "Invasão dos Javaporcos (rua). 19992 tris (bruto 112804), 1.99 x 1.54 x 4.29 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "9e7229c6b36e5824d34a8bd6631e5bc0ad179621d133e7bff9cb8290580ddab5"
+      }
+    },
+    "jp-carro-batido-scan-03": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/carro_batido_scan_03.glb"
+      ],
+      "source": {
+        "kind": "sketchfab-model",
+        "url": "https://sketchfab.com/3d-models/destroyed-car-03-raw-scan-483fe7f26336463fba66638ca4200c5a",
+        "displayName": "Destroyed Car 03 (Raw Scan)",
+        "author": "Sketchfab: Renafox",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "frente": "javaporcos-realista",
+        "classe": "carro",
+        "notes": "Invasão dos Javaporcos (rua/beco). 39979 tris (bruto 2499993), 2.41 x 1.22 x 4.2 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "509d754ed00baa9ae0ddece2a9858d00c058a5274b5c723bb2b89d04d33b65ef"
+      }
+    },
+    "jp-carro-batido-scan-07": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/carro_batido_scan_07.glb"
+      ],
+      "source": {
+        "kind": "sketchfab-model",
+        "url": "https://sketchfab.com/3d-models/destroyed-car-07-raw-scan-916b51c7e5644eb2a6c9b3797ebb08cf",
+        "displayName": "Destroyed Car 07 (Raw Scan)",
+        "author": "Sketchfab: Renafox",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "frente": "javaporcos-realista",
+        "classe": "carro",
+        "notes": "Invasão dos Javaporcos (rua/beco). 39995 tris (bruto 2500000), 2.97 x 1.8 x 4 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "33f11ea2dee1ffd282a3736c9c006188fb1c63bd4a203330172d7c8949f340ca"
+      }
+    },
+    "jp-perua-pichada-scan": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/perua_pichada_scan.glb"
+      ],
+      "source": {
+        "kind": "sketchfab-model",
+        "url": "https://sketchfab.com/3d-models/graffitid-toyota-wagon-raw-scan-cb1a538a5e84460e8dfeb4cfff109653",
+        "displayName": "Graffiti'd Toyota Wagon (Raw Scan)",
+        "author": "Sketchfab: Renafox",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "frente": "javaporcos-realista",
+        "classe": "carro",
+        "notes": "Invasão dos Javaporcos (rua/pasto). 39986 tris (bruto 2499862), 1.81 x 1.47 x 4.34 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "17fc3f1d7768dc5c6e3e5805f2ef89c86a14022fb86a014747b8d59ee0cafa50"
+      }
     }
   }
 }

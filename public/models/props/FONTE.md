@@ -302,3 +302,26 @@ GLBs autocontidos, normalizados antes da integração para escala runtime1.
 Estado de revisão registrado no manifesto; renders/originais/rejeições preservados
 fora do Git. A procedência confirma geração e download, não uma concessão de
 licença: termos de publicação não confirmados nesta sessão; não declarar CC0.
+
+
+## Invasão dos Javaporcos: props realistas (30/10/2026)
+
+O dono pediu o mapa "mais realista, sem lowpoly" (carros, lixo, mato, postes). Nada gerado:
+modelos da biblioteca local do dono (Sketchfab, licença no `asset.extras` de cada GLB e
+conferida na página) e do Poly Haven (CC0, baixado pela API em `references/polyhaven/`,
+gitignored). Derivados por `tools/javaporcos-realista-assets.mjs`: recorte da variante,
+Meshopt (permissivo nos scans), giro assado, pivô no chão em metros, WebP. Registro com SHA
+em `mint-assets.json` (`frente: javaporcos-realista`); a régua é `npm run eval:props-acervo`.
+Crédito CC-BY/CC-BY-NC-SA: autor e link abaixo. Os NC-SA (Ddiaz Design) proíbem uso comercial:
+o acervo já carrega o Gol G2 NC, mas com loja no jogo a decisão de mantê-los é do dono.
+
+### Carros (rua)
+
+| Arquivo | Origem | Autor | Licença | Tris (bruto) | KB | Dimensão (m) | Uso |
+|---|---|---|---|---|---|---|---|
+| `chevette_sl76.glb` | <https://sketchfab.com/3d-models/chevrolet-chevette-sl-76-2322139894c545b6838000f08d853662> | Laerte.Hubaleque | CC-BY-4.0 | 37.983 (53.839) | 1391 | 1.61 x 1.35 x 4.12 | rua |
+| `saveiro_robust.glb` | <https://sketchfab.com/3d-models/2022-volkswagen-saveiro-16-robust-bd312f832dd64eb8acb01923b85283de> | Ddiaz Design | CC-BY-NC-SA-4.0 | 16.093 (290.097) | 856 | 1.88 x 1.51 x 4.49 | rua |
+| `byd_dolphin.glb` | <https://sketchfab.com/3d-models/2024-byd-dolphin-e8f3cf54c0e545b1b290d7a55ca77fca> | Ddiaz Design | CC-BY-NC-SA-4.0 | 19.992 (112.804) | 1461 | 1.99 x 1.54 x 4.29 | rua |
+| `carro_batido_scan_03.glb` | <https://sketchfab.com/3d-models/destroyed-car-03-raw-scan-483fe7f26336463fba66638ca4200c5a> | Renafox | CC-BY-4.0 | 39.979 (2.499.993) | 1225 | 2.41 x 1.22 x 4.2 | rua/beco |
+| `carro_batido_scan_07.glb` | <https://sketchfab.com/3d-models/destroyed-car-07-raw-scan-916b51c7e5644eb2a6c9b3797ebb08cf> | Renafox | CC-BY-4.0 | 39.995 (2.500.000) | 1171 | 2.97 x 1.8 x 4 | rua/beco |
+| `perua_pichada_scan.glb` | <https://sketchfab.com/3d-models/graffitid-toyota-wagon-raw-scan-cb1a538a5e84460e8dfeb4cfff109653> | Renafox | CC-BY-4.0 | 39.986 (2.499.862) | 1201 | 1.81 x 1.47 x 4.34 | rua/pasto |
