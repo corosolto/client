@@ -51,6 +51,11 @@
              braço norte, todo junk_car repintado, ≥ 4 com C* ≥ 20 em ≥ 3 cores; caçamba a
              ≤ 12 m da faixa norte, monte de ≥ 8 sacos e mesa de bar com ≥ 2 cadeiras cada.
 
+   RODADA 5 (crítico 6/10, 30/10: "mapa escuro", rodapé bordô do beco-n chapado):
+     BARRA1  o material `barra-reboco` (rodapé e barra) usa o reboco descascado procedural
+             (`jp-reboco-desc-*`), albedo branco e relevo com normalScale ≥ 2: o
+             peeling_painted_wall tem sdL 1,8 e na sombra o rodapé lia flat8 99,7%.
+
    RODADA 4 (crítico 6/10: "rua do centro lê como pátio", sem lixo ao longo da guia):
      ORC1    o GLB saco_lixo tem ~2,7 mil triângulos e a caixa ~3,2 mil: com os montes do
              beco o beco-l passava de 2,36 M. Corte por distância de saco_lixo e caixa_papelao
@@ -69,6 +74,7 @@
      janela-preta    vidro volta ao cinza metálico 0x46525a, sem mapa    -> JANELA2
      janela-tabua    janela apagada volta a emitir 0x4a4238                -> JANELA3
      muro-escuro     muro volta ao albedo 0xc4c0b8                         -> MURO1
+     barra-lisa      rodapé volta ao mapa liso, sem relevo                 -> BARRA1
      saco-ovo        tira a escala por eixo e a inclinação de todo saco      -> SACO1
      guia-limpa      some com o lixo de guia da malha de decalque             -> RUA2
      saco-longe      corte do saco volta a 38 m no fonte lido                 -> ORC1
@@ -80,7 +86,7 @@
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -175,6 +181,11 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
   if (MUT === 'janela-tabua') { const v = porNome('beco-vidro'); exige(v, 'MUTANTE janela-tabua NÃO APLICOU'); v.material.emissive.set(0x4a4238); }
   const muroMat = () => { let m = null; W.root.traverse((o) => { if (o.isMesh && o.material?.name === 'muro-bloco') m = o.material; }); return m; };
   if (MUT === 'muro-escuro') { const m = muroMat(); exige(m, 'MUTANTE muro-escuro NÃO APLICOU'); m.color.set(0xc4c0b8); }
+  const barraMat = () => { let m = null; W.root.traverse((o) => { if (o.isMesh && o.material?.name === 'barra-reboco') m = o.material; }); return m; };
+  if (MUT === 'barra-lisa') {
+    const m = barraMat(); exige(m, 'MUTANTE barra-lisa NÃO APLICOU');
+    m.map = new THREE.Texture(); m.map.name = 'pbr-peeling_painted_wall-color'; m.normalScale.set(1, 1);
+  }
   if (MUT === 'saco-ovo') {
     const ss = W.root.userData.sacos || [];
     exige(ss.some((g) => g.esc), 'MUTANTE saco-ovo NÃO APLICOU');
@@ -336,6 +347,15 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     const y = 0.2126 * m.color.r + 0.7152 * m.color.g + 0.0722 * m.color.b;
     exige(y >= 0.7, `albedo do muro com luminância ${y.toFixed(2)} (piso 0,7): muro preto na sombra`);
     return `albedo do muro ${m.color.getHexString()}, luminância ${y.toFixed(2)}`;
+  });
+
+  regra('BARRA1 rodapé do beco com reboco descascado e relevo', () => {
+    const m = barraMat();
+    exige(m, 'sem material barra-reboco');
+    exige(/^jp-reboco-desc/.test(m.map?.name || ''), `mapa do rodapé ${m.map?.name}: sem o reboco descascado o rodapé na sombra é placa lisa`);
+    exige(m.normalScale.x >= 2, `normalScale ${m.normalScale.x} (piso 2): relevo some na sombra`);
+    exige(Math.min(m.color.r, m.color.g, m.color.b) >= 0.95, `cor ${m.color.getHexString()} escurece o albedo do mapa`);
+    return `mapa ${m.map.name}, normalScale ${m.normalScale.x}`;
   });
 
   regra('SACO1 saco do beco em monte, amassado e inclinado', () => {

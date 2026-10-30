@@ -113,7 +113,13 @@ export function buildInvasaoJavaporcos(scene, T) {
     janelaAcesa: lam({ map: TX.janelaTex(), emissiveMap: TX.janelaTex(), roughness: 0.22, emissive: 0xffb066, emissiveIntensity: 1.5 }),
     // só projeta sombra: o passe de cor não escreve nada (sombra de caixa no lugar do GLB)
     soSombra: new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }),
-    barra: comPbr('peeling_painted_wall', TX.rebocoTex('#6f6354', 9), { color: 0xb0a89a }, { metros: 2.2 }),
+    // o peeling_painted_wall tem sdL 1,8: na sombra o rodapé do beco lia placa lisa (flat8 99,7%)
+    barra: (() => {
+      const n = TX.pbr('damaged_plaster', { repeat: 3 });
+      const m = lam({ map: TX.rebocoDescascadoTex('#8c4e46', 9), roughness: 1, ...(n ? { normalMap: n.normalMap } : {}) });
+      m.normalScale.set(3, 3); m.name = 'barra-reboco';
+      return m;
+    })(),
     caixaDagua: lam({ map: TX.lataTex('#4d6f86', 6) }),
     rebocoLoja: comPbr('paintedplaster017', TX.rebocoTex(TX.COR.rebocoMenta, 5), { color: claro(TX.COR.rebocoMenta, 0.1) }, { metros: 3 }),
     rebocoIgreja: lam({ map: TX.rebocoTex('#e4dcc6', 6) }),
