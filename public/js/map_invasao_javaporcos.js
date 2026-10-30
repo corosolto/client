@@ -16,14 +16,17 @@ const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 const GLB_ON = QP.get('glb') !== '0';
 
-export const INVASAO_JAVAPORCOS_PROPS = ['arvore_mata', 'palmeira_babacu', 'grama_corrego_01', 'grama_corrego_02', 'planta_corrego_taboa',
-  'planta_corrego_taioba', 'samambaia', 'bananeira', 'heliconia', 'ixora', 'agave',
-  'fachada_comercio', 'fav_house', 'fav_brasileira', 'fav_modular', 'casa_geminada', 'igrejinha',
-  'loja_conveniencia', 'stall', 'arara_roupas', 'drinkstand', 'quiosque', 'mesa_guardasol', 'guarda_sol',
-  'banco_jardim', 'poste_jardim', 'lampiao_fachada', 'caixa_dagua', 'botijao_gas', 'varal_roupas',
-  'dumpster', 'junkyard_container', 'ilha_hortifruti', 'cooler', 'shopping_cart', 'pilha_pneus', 'tires',
-  'construction_rubble', 'fusca', 'uno_mille', 'fiat_uno', 'kombi', 'saveiro', 'opala', 'chevette',
-  'brasilia_vw', 'moto_cg', 'vw_9150', 'jersey_barrier', 'concrete_roadblock', 'sandbags'];
+/* Carros: scan e lataria de 1 a 5 primitivas (cada primitiva vira uma chamada de desenho
+   no lote); [id, comprimento, altura]. saveiro_robust e byd_dolphin ficam fora (licença NC). */
+const CARROS_GLB = [['junk_car', 4.0, 1.4], ['junk_car', 4.0, 1.4], ['carro_batido_scan_03', 4.3, 1.35], ['junk_car', 4.0, 1.4],
+  ['chevette_sl76', 4.2, 1.35], ['junk_car', 4.0, 1.4], ['perua_pichada_scan', 4.35, 1.5], ['junk_car', 4.0, 1.4], ['carro_batido_scan_07', 4.0, 1.4]];
+const SOLIDOS_GLB = new Set([...CARROS_GLB.map((c) => c[0]), 'arvore_mata', 'tronco_caido', 'toco_arvore', 'pedra_mata', 'poste_luz_praca']);
+export const INVASAO_JAVAPORCOS_PROPS = ['carro_batido_scan_03', 'perua_pichada_scan', 'junk_car', 'carro_batido_scan_07',
+  'chevette_sl76', 'arvore_mata', 'shopping_cart',
+  'capim_touceira_a', 'capim_touceira_b', 'arbusto_mata_a', 'arbusto_mata_b', 'samambaia_mata', 'calathea_mata',
+  'galhos_secos', 'toco_arvore', 'tronco_caido', 'pedra_mata', 'saco_lixo', 'caixa_papelao', 'engradado_plastico',
+  'cadeira_plastico', 'pneu_velho', 'tambor_metal', 'tampa_bueiro', 'lixeira_metal', 'lata_enferrujada',
+  'poste_luz_praca', 'caixote_madeira'];
 export { preloadJavaporcos };
 
 const PASSO_NAV = 1.0;             // grade de navegação: 1,5 m deixava aresta cruzando muro de 0,15 m
@@ -109,7 +112,7 @@ export function buildInvasaoJavaporcos(scene, T) {
     signSindicato: lam({ map: T.signSindicato }),
     truckSide: lam({ map: T.truckSide }),
     reboco: [TX.COR.rebocoOcre, TX.COR.rebocoMenta, TX.COR.rebocoRosa, TX.COR.rebocoPalha]
-      .map((c, i) => lam({ map: TX.rebocoTex(c, i + 1) })),
+      .map((c, i) => comPbr('worn_mossy_plasterwall', TX.rebocoTex(c, i + 1), { color: claro(c, 0.3) }, { metros: 3 })),
     toldo: [TX.COR.toldoA, TX.COR.toldoB, TX.COR.toldoC].map((c, i) => lam({ map: TX.toldoTex(c, i + 1) })),
   };
   /* Cartão de capim com normal para cima nas DUAS faces: o three inverte a normal no verso
@@ -189,7 +192,8 @@ export function buildInvasaoJavaporcos(scene, T) {
     return m;
   };
 
-  const kit = { root, colliders, occluders, MAT, caixa, piso, placa, colisor };
+  const orlaGLB = GLB_ON && typeof document !== 'undefined' && hasProp('samambaia_mata');
+  const kit = { root, colliders, occluders, MAT, caixa, piso, placa, colisor, orlaGLB };
 
   // ── Relevo. A malha do terreno sai da MESMA grade que o groundHeightAt lê.
   const campo = new CampoDeAltura();
@@ -212,10 +216,11 @@ export function buildInvasaoJavaporcos(scene, T) {
   const cidade = construirCidade(kit, campo, rnd);
   const mata = construirMata(kit, campo, rnd);
   const pasto = construirPasto(kit, campo, rnd);
-  carros(kit, campo, rnd);
+  const PB = GLB_ON && typeof document !== 'undefined' ? new PropBatch({ bucket: 16, cortes: { tampa_bueiro: 40, lata_enferrujada: 30, saco_lixo: 40, caixa_papelao: 40, cadeira_plastico: 45, engradado_plastico: 45, pneu_velho: 40, toco_arvore: 45, tronco_caido: 50, galhos_secos: 30, pedra_mata: 45 } }) : null;
+  carros(kit, campo, rnd, PB);
   vegetacaoUrbana(kit, campo, rnd, cidade.becoAreas);
   if (SKIRT.build) SKIRT.build(root);
-  propsOpcionais(root, occluders, campo, rnd, mata, cidade);
+  propsOpcionais(root, occluders, campo, rnd, cidade, PB);
 
   // ── Luz e céu do entardecer medido nas referências de arte.
   scene.background = new THREE.Color(0xbb8559);
@@ -317,7 +322,7 @@ function contratoHorda(cidade) {
 
 /* Carro parado é escala e cobertura de rua. Fica colado na calçada e NUNCA no
    cruzamento: a primeira versão estacionava um carro no meio da avenida central. */
-function carros(kit, campo, rnd) {
+function carros(kit, campo, rnd, PB) {
   const { MAT, caixa } = kit;
   const vagas = [];
   for (let t = -30; t <= 30; t += 7.5) {
@@ -332,6 +337,13 @@ function carros(kit, campo, rnd) {
     const cor = [0x9c9a95, 0x7d4a3c, 0x4e5d6b, 0xbfb49a, 0x53504c][(rnd() * 5) | 0];
     const cs = Math.cos(giro), sn = Math.sin(giro);
     const desloca = (ox, oz) => [x + ox * cs + oz * sn, z - ox * sn + oz * cs];
+    const glb = PB && CARROS_GLB[(n * 2 + 1) % CARROS_GLB.length];
+    if (glb && hasProp(glb[0])) {
+      kit.colisor(x, z, 0.86, 2.05, y + 0.26, y + 0.98, giro);
+      PB.add(glb[0], { x, z, y, targetLen: glb[1], targetH: glb[2], ry: giro + eixoCarro(glb[0]) + (n % 2) * Math.PI });
+      n++;
+      continue;
+    }
     caixa(1.72, 0.72, 4.1, MAT.lataria(cor), x, y + 0.26, z, { ry: giro });
     const [kx, kz] = desloca(0, -0.2);
     caixa(1.5, 0.62, 1.95, MAT.lataria(cor), kx, y + 0.98, kz, { ry: giro, collide: false });
@@ -388,30 +400,88 @@ function vegetacaoUrbana(kit, campo, rnd, becoAreas = []) {
   add(arbustos, new THREE.IcosahedronGeometry(1, 0), MAT.moita, 'cidade-arbusto');
 }
 
-/* Props GLB entram POR CIMA do procedural e só no browser: em node (onde o portão mede)
-   `hasProp` é falso e a geometria autoral é a que vale. */
-function propsOpcionais(root, occluders, campo, rnd, mata, cidade) {
-  if (!GLB_ON || typeof document === 'undefined') return 0;
-  const PB = new PropBatch({ bucket: 24, cortes: { grama_corrego_01: 46, grama_corrego_02: 46, arvore_mata: 92 } });
+/* Giro que põe o eixo longo do GLB no z local do carro procedural (medido uma vez). */
+const _eixo = new Map();
+function eixoCarro(id) {
+  if (!_eixo.has(id)) {
+    const o = placeProp(id, { targetH: 1 });
+    const b = o ? new THREE.Box3().setFromObject(o) : null;
+    _eixo.set(id, b && (b.max.x - b.min.x) > (b.max.z - b.min.z) ? Math.PI / 2 : 0);
+  }
+  return _eixo.get(id);
+}
+
+/* Props GLB entram POR CIMA do procedural e só no browser, sem colisor: em node (onde o
+   portão mede) `hasProp` é falso e a geometria autoral é a que vale. */
+function propsOpcionais(root, occluders, campo, rnd, cidade, PB) {
+  if (!PB) return 0;
+  const PV = new PropBatch({ bucket: 12, cast: false, cortes: { capim_touceira_a: 24, capim_touceira_b: 24, samambaia_mata: 32, calathea_mata: 32, arbusto_mata_a: 38, arbusto_mata_b: 38,
+    toco_arvore: 40, tronco_caido: 45, saco_lixo: 35, caixa_papelao: 35, engradado_plastico: 40, cadeira_plastico: 40, pneu_velho: 35, lata_enferrujada: 25, lixeira_metal: 40, tambor_metal: 40 } });
   let n = 0;
+  const poe = (lote, id, o) => { if (lote.add(id, { ry: rnd() * 6.283, ...o, y: o.y ?? campo.amostra(o.x, o.z) })) n++; };
+  const r = (x, z) => Math.max(Math.abs(x), Math.abs(z));
   for (const e of EIXOS) {
-    for (const s of [-1, 1]) {
-      const x = e.clareira[0] + s * 4.2, z = e.clareira[1] + s * 2.6;
-      if (PB.add('arvore_mata', { x, z, y: campo.amostra(x, z), targetH: 11 + rnd() * 4, ry: rnd() * 6.283 })) n++;
+    for (const s of [-1, 1]) poe(PB, 'arvore_mata', { x: e.clareira[0] + s * 4.2, z: e.clareira[1] + s * 2.6, targetH: 11 + rnd() * 4 });
+    const [cx, cz] = e.clareira;
+    const a0 = rnd() * 6.283;
+    poe(PB, 'tronco_caido', { x: cx + Math.cos(a0) * 2.6, z: cz + Math.sin(a0) * 2.6, targetLen: 3.6, targetH: 0.45, ry: a0 + Math.PI / 2 });
+    poe(PB, 'toco_arvore', { x: cx + Math.cos(a0 + 2.2) * 2.5, z: cz + Math.sin(a0 + 2.2) * 2.5, targetH: 0.6 });
+    poe(PB, 'pedra_mata', { x: cx + Math.cos(a0 + 4) * 2.4, z: cz + Math.sin(a0 + 4) * 2.4, targetH: 0.45 });
+    poe(PB, 'galhos_secos', { x: cx + Math.cos(a0 + 1) * 1.6, z: cz + Math.sin(a0 + 1) * 1.6, targetLen: 1.6, targetH: 0.25 });
+  }
+  /* Orla da mata virada para o pasto: samambaia, calathea e arbusto na frente da moita
+     procedural, que é o que o jogador vê da borda da cidade. */
+  const pertoDeTrilha = (x, z) => distPasto(x, z) < 2.8 || EIXOS.some((e) => Math.hypot(x - e.boca[0], z - e.boca[1]) < 3.2);
+  for (const lado of ['N', 'S', 'O', 'L']) {
+    for (let u = -MATA_R; u <= MATA_R; u += 2.4) {
+      const v = MATA_R - 0.4 + rnd() * 1.1, uu = u + (rnd() - 0.5) * 1.1;
+      const [x, z] = lado === 'N' ? [uu, -v] : lado === 'S' ? [uu, v] : lado === 'O' ? [-v, uu] : [v, uu];
+      if (pertoDeTrilha(x, z)) continue;
+      const k = rnd();
+      if (k < 0.86) poe(PV, 'samambaia_mata', { x, z, targetH: 0.8 + rnd() * 0.5 });
+      else if (k < 0.93) poe(PV, 'calathea_mata', { x, z, targetH: 0.9 + rnd() * 0.5 });
+      else poe(PV, rnd() < 0.5 ? 'arbusto_mata_a' : 'arbusto_mata_b', { x, z, targetH: 1.4 + rnd() * 0.7 });
+      if (rnd() < 0.03) poe(PV, rnd() < 0.5 ? 'toco_arvore' : 'tronco_caido', { x: x * 0.985, z: z * 0.985, targetH: 0.5, targetLen: rnd() < 0.5 ? 0 : 3 });
     }
   }
-  for (let i = 0; i < 90; i++) {
-    const x = (rnd() - 0.5) * 2 * CIDADE_R, z = (rnd() - 0.5) * 2 * CIDADE_R;
-    if (PB.add(i % 2 ? 'grama_corrego_01' : 'grama_corrego_02', { x, z, y: campo.amostra(x, z), targetH: 0.6, ry: rnd() * 6.283 })) n++;
+  // touceira realista no pasto, longe da trilha, do córrego e da linha da cerca
+  for (let i = 0, tent = 0; i < 90 && tent < 2000; tent++) {
+    const a = rnd() * 6.283, alvo = CIDADE + 1.2 + rnd() * (MATA_R - CIDADE - 1.6);
+    const esc = alvo / Math.max(Math.abs(Math.cos(a)), Math.abs(Math.sin(a)));
+    const x = Math.cos(a) * esc, z = Math.sin(a) * esc;
+    if (distPasto(x, z) < 1.8 || corteCorrego(x, z) > 0.3 || Math.abs(r(x, z) - CIDADE - 1.2) < 0.5) continue;
+    poe(PV, i % 2 ? 'capim_touceira_a' : 'capim_touceira_b', { x, z, targetH: 0.6 + rnd() * 0.45 });
+    i++;
+  }
+  // praça: postes de luz nos cantos e caixote de feira; avenida: tampa de bueiro
+  const P0 = -(20.25), P1 = -8;
+  for (const [x, z] of [[P0 + 0.7, P0 + 0.7], [P1 - 0.7, P0 + 0.7], [P1 - 0.7, P1 - 0.7]]) poe(PB, 'poste_luz_praca', { x, z, y: 0.18, targetH: 3.8, ry: 0 });
+  for (const [x, z] of [[-19.4, -12.6], [-8.9, -15.4], [-8.9, -11.2]]) poe(PB, 'caixote_madeira', { x, z, y: 0.18, targetH: 0.45 });
+  for (const [x, z] of [[-3, -15], [3, 22], [15, 3], [-24, -3], [2.5, -28], [-29, 2]]) poe(PB, 'tampa_bueiro', { x, z, y: 0.015, targetLen: 0.75, targetH: 0.06, ry: 0 });
+  // porta de loja: engradado, cadeira de plástico e tambor encostados na fachada
+  for (const l of cidade.lojas) {
+    const nx = l.eixo === 'z' ? 0 : l.sinal, nz = l.eixo === 'z' ? l.sinal : 0, lx = nz, lz = nx;
+    const em = (lat, nor) => ({ x: l.porta.x + lx * lat - nx * nor, z: l.porta.z + lz * lat - nz * nor });
+    poe(PV, 'engradado_plastico', { ...em(2.3, 0.75), targetH: 0.3 });
+    poe(PV, 'engradado_plastico', { ...em(2.3, 0.75), y: campo.amostra(em(2.3, 0.75).x, em(2.3, 0.75).z) + 0.3, targetH: 0.3 });
+    poe(PV, l.papel === 'boteco' ? 'cadeira_plastico' : 'caixa_papelao', { ...em(-2.4, 0.6), targetH: l.papel === 'boteco' ? 0.85 : 0.45 });
+    poe(PV, 'tambor_metal', { ...em(-3.4, 0.7), targetH: 0.9 });
+  }
+  // lixo de beco e de esquina, posição vinda da cidade
+  for (const g of cidade.glb || []) poe(PV, g.id, { x: g.x, z: g.z, targetH: g.h, ry: g.ry });
+  for (let i = 0; i < 14; i++) {
+    const s = rnd() < 0.5 ? -1 : 1, t = (rnd() - 0.5) * 2 * (CIDADE_R - 6), o = s * (AV + CAL - 0.35);
+    const [x, z] = rnd() < 0.5 ? [o, t] : [t, o];
+    if (Math.abs(t) < AV + CAL + 1) continue;
+    poe(PV, ['saco_lixo', 'pneu_velho', 'lata_enferrujada', 'caixa_papelao'][i % 4], { x, z, targetH: [0.6, 0.62, 0.32, 0.42][i % 4] });
   }
   for (const l of cidade.lojas) {
     const [x, z] = l.interior;
-    if (hasProp('gondola_mercado') && placeProp) { /* catálogo do mercado fica para o PropBatch */ }
-    if (PB.add('shopping_cart', { x: x + 1.4, z: z + 1.2, y: 0.33, targetH: 1.0, ry: rnd() * 6.283 })) n++;
+    poe(PB, 'shopping_cart', { x: x + 1.4, z: z + 1.2, y: 0.33, targetH: 1.0 });
   }
   PB.build(root);
-  root.traverse((o) => { if (o.isMesh && o.userData.mapPropId) occluders.push(o); });
-  void mata;
+  PV.build(root);
+  root.traverse((o) => { if (o.isMesh && SOLIDOS_GLB.has(o.userData.mapPropId)) occluders.push(o); });
   return n;
 }
 

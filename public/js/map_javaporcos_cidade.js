@@ -1,6 +1,7 @@
 /* Miolo urbano: avenidas, vielas, 16 quarteirões, 4 lojas com interior, praça com feira e
    o lixo que o javaporco revira. Medidas e paleta: docs/maps/invasao-javaporcos-visual.md. */
 import * as THREE from 'three';
+import { hasProp } from './mapprops.js';
 
 export const AV = 6;             // meia-largura da avenida (12 m de asfalto)
 export const CAL = 2;            // calçada
@@ -124,7 +125,7 @@ export function construirCidade(kit, campo, rnd) {
   pracaInfo.feira.forEach(([x, z], i) => pontos.push([`feira-${i + 1}`, 'feira', x, z]));
   for (const [id, kind, x, z] of pontos) criarFood(kit, campo, foodSpots, foodMeshes, foodColliders, id, kind, x, z);
 
-  lixoSolto(kit, campo, rnd);
+  lixoSolto(kit, campo, rnd, extras.glb);
 
   /* O objetivo mora num ponto ALCANÇÁVEL (corredor da feira, porta da loja, adro da
      igreja) e leva `r`: centro de prédio era bando empacado na parede a 6,6 m (medido). */
@@ -135,7 +136,7 @@ export function construirCidade(kit, campo, rnd) {
     { id: 'igreja', x: +igrejaInfo.frente[0].toFixed(2), z: +igrejaInfo.frente[1].toFixed(2), hp: 1200, r: 3.0 },
   ];
 
-  return { foodSpots, foodMeshes, foodColliders, portas, lojas, hordeObjectives, becos, becoAreas: extras.becoAreas, setores: setores(),
+  return { foodSpots, foodMeshes, foodColliders, portas, lojas, hordeObjectives, becos, becoAreas: extras.becoAreas, glb: extras.glb, setores: setores(),
     censo: { edificacoes, postes, calcadas: calcadas.length, becos: becos.length, colisores: colliders.length }, root };
 }
 
@@ -521,7 +522,7 @@ function criarFood(kit, campo, foodSpots, foodMeshes, foodColliders, id, kind, x
 
 /* Lixo cênico: não é foodSpot, é o estrago. Tudo em UMA InstancedMesh por família e
    marcado `nonSolidSurface` — peça solta de 0,3 m não pode virar teto na sonda do mapa. */
-function lixoSolto(kit, campo, rnd) {
+function lixoSolto(kit, campo, rnd, glb) {
   const { MAT } = kit;
   const sacos = [], caixotes = [];
   const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3();
@@ -542,8 +543,10 @@ function lixoSolto(kit, campo, rnd) {
       x = (rnd() - 0.5) * 2 * (CIDADE_R - 3); z = (rnd() - 0.5) * 2 * (CIDADE_R - 3);
     }
     const y = campo.amostra(x, z);
-    if (rnd() < 0.55) sacos.push(mtx(x, y + 0.2, z, rnd() * 6.283, 0.5 + rnd() * 0.5));
-    else caixotes.push(mtx(x, y + 0.16, z, rnd() * 6.283, 0.7 + rnd() * 0.6));
+    const saco = rnd() < 0.55, ry = rnd() * 6.283, e = saco ? 0.5 + rnd() * 0.5 : 0.7 + rnd() * 0.6;
+    const id = saco ? 'saco_lixo' : 'caixa_papelao';
+    if (hasProp(id)) { if (i % 2 === 0) glb.push({ id, x, z, h: saco ? 0.35 + e * 0.3 : 0.28 + e * 0.12, ry }); continue; }
+    (saco ? sacos : caixotes).push(mtx(x, y + (saco ? 0.2 : 0.16), z, ry, e));
   }
   const add = (lista, geo, mat, nome) => {
     if (!lista.length) return;
@@ -571,7 +574,7 @@ const BECOS = {
 };
 
 function novosExtras() {
-  return { medidor: [], eletroduto: [], vao: [], grade: [], arame: [], roupa: [], roupaCor: [], botijao: [], saco: [], lixeira: [], becoAreas: [] };
+  return { glb: [], medidor: [], eletroduto: [], vao: [], grade: [], arame: [], roupa: [], roupaCor: [], botijao: [], saco: [], lixeira: [], becoAreas: [] };
 }
 
 const _mq = new THREE.Quaternion(), _me = new THREE.Euler(), _mp = new THREE.Vector3(), _ms = new THREE.Vector3();
@@ -666,6 +669,12 @@ function quarteiraoBeco(kit, campo, rnd, b, def, ex) {
   const [lx, lz] = W(cm + BECO_MEIA - 0.42, lIn - dIn * (BECO_FUNDO + 0.6));
   ex.lixeira.push(mtx(lx, 0.27, lz, 0.55, 0.52, 0.8, rnd() * 6.283, 0, Math.PI / 2));
 
+  const glb = (id, c, l, h) => { const [x, z] = W(c, l); ex.glb.push({ id, x, z, h, ry: rnd() * 6.283 }); };
+  glb('saco_lixo', cm - BECO_MEIA + 0.45, lIn - dIn * 0.7, 0.75);
+  glb('saco_lixo', cm - BECO_MEIA + 0.4, lIn - dIn * 1.5, 0.6);
+  glb('caixa_papelao', cm - BECO_MEIA + 0.35, lIn - dIn * 2.3, 0.42);
+  glb('lata_enferrujada', cm + BECO_MEIA - 0.25, lOut + dIn * 2.0, 0.3);
+  glb('lixeira_metal', cm + BECO_MEIA - 0.42, lIn - dIn * (BECO_FUNDO + 0.6), 0.85);
   const [dx, dz] = W(cm, lOut - dIn * 0.6), [tx, tz] = W(cm, lIn + dIn * 0.6);
   return {
     casas: 2,
@@ -699,8 +708,8 @@ function construirExtras(kit, ex) {
   const botijaoGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.6, 14);
   lote(ex.botijao, botijaoGeo, MAT.botijao, 'beco-botijao', { solido: true });
   const sacoGeo = new THREE.IcosahedronGeometry(0.3, 1);
-  lote(ex.saco, sacoGeo, MAT.saco, 'beco-saco');
-  lote(ex.lixeira, cubo, MAT.lixeiraAmarela, 'beco-lixeira');
+  if (!hasProp('saco_lixo')) lote(ex.saco, sacoGeo, MAT.saco, 'beco-saco');
+  if (!hasProp('lixeira_metal')) lote(ex.lixeira, cubo, MAT.lixeiraAmarela, 'beco-lixeira');
 }
 
 /* Setores de domínio: grade 3×3 cortada no fio da calçada da avenida. O pasto fica fora:

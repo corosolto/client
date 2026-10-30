@@ -114,7 +114,8 @@ export function construirMata(kit, campo, rnd) {
       const y0 = campo.amostra(px, pz);
       let escala = 0.75 + rnd() * 1.05;
       if (vp - escala * 1.25 < MATA_R - 0.6) escala = Math.max(0.35, (vp - MATA_R + 0.6) / 1.25);
-      moitas.push(matriz(px, y0 + escala * 0.55, pz, rnd() * 6.283, escala * 1.25, escala * 0.95, escala * 1.25));
+      const ryM = rnd() * 6.283;
+      if (!(kit.orlaGLB && vp < MATA_R + 2.5)) moitas.push(matriz(px, y0 + escala * 0.55, pz, ryM, escala * 1.25, escala * 0.95, escala * 1.25));
       if (rnd() < 0.5) {
         const lado = rnd() * 6.283;
         matos.push(matriz(px + Math.cos(lado) * 0.7, y0 + 0.62, pz + Math.sin(lado) * 0.7, lado, 1.5, 1.25, 1));
@@ -192,6 +193,7 @@ export function construirMata(kit, campo, rnd) {
   const pisadaMesh = add(pisadas, pisadaGeo, MAT.terraTrilha, 'mata-trilha-pisada', false);
   for (const m of [moitaMesh, cipoMesh, matoMesh, pisadaMesh]) if (m) m.userData.nonSolidSurface = true;
   for (const m of [troncoMesh, copa1, copa2, copa3]) if (m) occluders.push(m);
+  for (const m of [copa1, copa3]) if (m) m.castShadow = false;   // a copa média já projeta a sombra da mata
   if (matoMesh) matoMesh.material.side = THREE.DoubleSide;
 
 

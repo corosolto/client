@@ -59,6 +59,9 @@
             entre 2,0 e 3,2 m; e a navegação atravessa (≤ 1,3× a reta).
      SETOR1 `world.horda.setores`: retângulos dentro de cityBounds, sem sobreposição, que
             cobrem ≥ 98% dos nós de navegação da cidade, com peso = área relativa.
+     PROPS1 CATÁLOGO: todo id de INVASAO_JAVAPORCOS_PROPS tem GLB em public/models/props,
+            nenhum é carro Mint lowpoly (~2,8 k tris, troca pedida em 30/10) nem de licença NC
+            (saveiro_robust, byd_dolphin: o dono decide), e há ≥ 3 carros realistas.
 
    MUTANTES (cada um tem de deixar a régua VERMELHA):
      mata-furada     derruba a parede de colisor do lado norte  -> MATA1, MATA3
@@ -72,6 +75,7 @@
      beco-fechado    entulho de 1 m no meio de cada beco        -> BECO1
      beco-aberto     derruba as paredes de um beco              -> BECO1
      setor-buraco    some com um setor                          -> SETOR1
+     carro-mint      põe o fusca Mint de volta no catálogo      -> PROPS1
 
    Uso: node tools/eval/javaporcos-mapa-check.mjs [--mutante=X] [--json-out=arq]
    ============================================================================ */
@@ -81,7 +85,7 @@ import { THREE, initTextures, bootGame } from './harness.mjs';
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutante');
 const MUTANTES = ['mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta', 'boca-aberta', 'mata-avanca',
-  'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto', 'setor-buraco'];
+  'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto', 'setor-buraco', 'carro-mint'];
 if (MUT && !MUTANTES.includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT}. Há: ${MUTANTES.join(', ')}`);
   process.exit(2);
@@ -645,6 +649,21 @@ regra('SETOR1 setores cobrem a cidade sem sobrepor, peso = área', () => {
   exige(frac >= 0.98, `setores cobrem ${(100 * frac).toFixed(1)}% dos ${naCidade} nós da cidade (piso 98%)`);
   relatorio.setores = S;
   return `${S.length} setores, ${(100 * frac).toFixed(1)}% dos ${naCidade} nós da cidade, pesos somam ${soma.toFixed(3)}`;
+});
+
+/* ---------------------------------------------------------- props (PROPS1) */
+const { INVASAO_JAVAPORCOS_PROPS } = await import('../../public/js/map_invasao_javaporcos.js');
+regra('PROPS1 catálogo realista: sem carro Mint lowpoly, sem licença NC', () => {
+  const lista = [...INVASAO_JAVAPORCOS_PROPS, ...(MUT === 'carro-mint' ? ['fusca'] : [])];
+  const MINT = ['fusca', 'chevette', 'saveiro', 'opala', 'kombi', 'brasilia_vw'], NC = ['saveiro_robust', 'byd_dolphin'];
+  const proibido = lista.filter((id) => MINT.includes(id) || NC.includes(id));
+  exige(!proibido.length, `catálogo com ${proibido.join(', ')} (Mint lowpoly ou licença NC)`);
+  const faltando = lista.filter((id) => !fs.existsSync(new URL(`../../public/models/props/${id}.glb`, import.meta.url)));
+  exige(!faltando.length, `sem GLB no disco: ${faltando.join(', ')}`);
+  const REAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car', 'chevette_sl76', 'uno_mille', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle', 'old_vw_bug'];
+  const carros = lista.filter((id) => REAIS.includes(id));
+  exige(carros.length >= 3, `só ${carros.length} carro(s) realista(s) no catálogo`);
+  return `${lista.length} ids com GLB, ${carros.length} carros realistas`;
 });
 
 /* ------------------------------------------------------------------ fecho */
