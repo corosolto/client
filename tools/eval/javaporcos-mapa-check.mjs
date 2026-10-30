@@ -104,8 +104,9 @@ const MUT = arg('mutante');
 const MUTANTES = ['mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta', 'boca-aberta', 'mata-avanca',
   'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto', 'setor-buraco', 'carro-mint',
   'ceu-chapado', 'luz-laranja', 'copa-bola', 'mata-sem-lote', 'mapa-flutuando'];
-if (MUT && !MUTANTES.includes(MUT)) {
-  console.error(`mutante desconhecido: ${MUT}. Há: ${MUTANTES.join(', ')}`);
+const CIDADE = await import('./javaporcos-cidade-regras.mjs');   // ICO1, JANELA1, CARRO1, POSTE1, DECAL1
+if (MUT && ![...MUTANTES, ...CIDADE.MUTANTES].includes(MUT)) {
+  console.error(`mutante desconhecido: ${MUT}. Há: ${[...MUTANTES, ...CIDADE.MUTANTES].join(', ')}`);
   process.exit(2);
 }
 
@@ -695,13 +696,12 @@ regra('SETOR1 setores cobrem a cidade sem sobrepor, peso = área', () => {
 const { INVASAO_JAVAPORCOS_PROPS } = await import('../../public/js/map_invasao_javaporcos.js');
 regra('PROPS1 catálogo realista: sem carro Mint lowpoly, sem licença NC', () => {
   const lista = [...INVASAO_JAVAPORCOS_PROPS, ...(MUT === 'carro-mint' ? ['fusca'] : [])];
-  const MINT = ['fusca', 'chevette', 'saveiro', 'opala', 'kombi', 'brasilia_vw'], NC = ['saveiro_robust', 'byd_dolphin'];
+  const MINT = ['fusca', 'chevette', 'saveiro', 'opala', 'kombi', 'brasilia_vw'], NC = CIDADE.CARROS_NC;
   const proibido = lista.filter((id) => MINT.includes(id) || NC.includes(id));
   exige(!proibido.length, `catálogo com ${proibido.join(', ')} (Mint lowpoly ou licença NC)`);
   const faltando = lista.filter((id) => !fs.existsSync(new URL(`../../public/models/props/${id}.glb`, import.meta.url)));
   exige(!faltando.length, `sem GLB no disco: ${faltando.join(', ')}`);
-  const REAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car', 'chevette_sl76', 'uno_mille', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle', 'old_vw_bug'];
-  const carros = lista.filter((id) => REAIS.includes(id));
+  const carros = lista.filter((id) => CIDADE.CARROS_COMERCIAIS.includes(id));
   exige(carros.length >= 3, `só ${carros.length} carro(s) realista(s) no catálogo`);
   return `${lista.length} ids com GLB, ${carros.length} carros realistas`;
 });
@@ -786,6 +786,8 @@ regra('CHAO2 o mapa não flutua: chão e mata até o horizonte', () => {
   relatorio.horizonte = lados;
   return `chão ${(bb.max.x - bb.min.x).toFixed(0)} m, copas além de 78 m ${JSON.stringify(lados)}`;
 });
+
+CIDADE.regrasCidade({ W, THREE, MUT, regra, exige, fs });
 
 /* ------------------------------------------------------------------ fecho */
 relatorio.censo = W.censo;
