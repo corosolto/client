@@ -389,3 +389,38 @@ Originais completos preservados em `references/glb/` (ignorados). Receita
 Derivados `_lod.glb` por `tools/javaporcos-lod.mjs`: weld e simplify com razão0,30,
 erro0,01; materiais e bytes das texturas preservados. Rig de passada feito no
 runtime, sem animação gerada/paga adicional. Os quatro modelos anteriores permanecem.
+
+<!-- javaporcos-mint-packs:start -->
+
+### Pacotes Mint cidade e vegetação — 30/10/2026
+
+Modelos próprios do projeto CORO SOLTO — Javaporcos. Cidade: [pack](https://mint.gg/assets?asset=th753rbz1fjyvfcsypbdcfcntn8h8wr4), [solicitação](https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc). Vegetação: [pack](https://mint.gg/assets?asset=th7a6e6j8ex8gx7jc3btycpjdn8h8xj5), [solicitação](https://mint.gg/chat/ph78p4ab22f3c9cmqk4qy5hx9d8h9391).
+
+Originais ignorados em references/glb/javaporcos-mint-packs; hashes e processamento em mint-assets.json. Receita tools/javaporcos-mint-packs.mjs: escala uniforme declarada, pivô no chão, geometria original e WebP512/quality90. Sem quantização, sem conversão paga. Modelos catalogados; ainda não colocados no mapa, que mantém sua geometria física validada. Escalas são calibração local para futura integração, não medidas de objetos reais.
+
+| Arquivo | Item | Pack | Tris | KiB | Dimensão local (m) |
+|---|---|---|---|---|---|
+| `javaporcos_mint_fachada.glb` | Fachada de comércio do interior | cidade | 4713 | 338 | 5.228 × 4 × 4.552 |
+| `javaporcos_mint_fundo_casa.glb` | Fundo de casa do beco | cidade | 4674 | 311 | 4.249 × 4 × 2.287 |
+| `javaporcos_mint_cacamba.glb` | Caçamba de entulho | cidade | 4681 | 373 | 2.281 × 1.76 × 3.5 |
+| `javaporcos_mint_poste_trafo.glb` | Poste de concreto com transformador | cidade | 4863 | 437 | 3.335 × 8 × 1.988 |
+| `javaporcos_mint_padrao_luz.glb` | Padrão de entrada de luz | cidade | 4758 | 243 | 0.511 × 1 × 0.284 |
+| `javaporcos_mint_lixeira_tombada.glb` | Lixeira tombada | cidade | 4790 | 375 | 1.3 × 0.674 × 0.791 |
+| `javaporcos_mint_pilha_sacos.glb` | Pilha de sacos de lixo | cidade | 4920 | 369 | 1.491 × 1.034 × 1.5 |
+| `javaporcos_mint_banca_feira.glb` | Banca de feira | cidade | 4428 | 407 | 2.4 × 2.4 × 2.052 |
+| `javaporcos_mint_uno_batido.glb` | Uno batido abandonado | cidade | 4859 | 320 | 1.85 × 1.479 × 3.65 |
+| `javaporcos_mint_varal.glb` | Varal com roupas | cidade | 4601 | 363 | 4 × 2.262 × 1.01 |
+| `javaporcos_mint_mesa_bar.glb` | Mesa e cadeiras de bar | cidade | 4826 | 324 | 1.516 × 1 × 1.392 |
+| `javaporcos_mint_orelhao.glb` | Orelhão | cidade | 4515 | 265 | 0.908 × 2.2 × 1.003 |
+| `javaporcos_mint_mangueira.glb` | Mangueira | vegetacao | 4708 | 390 | 6.767 × 7 × 6.726 |
+| `javaporcos_mint_ipe_amarelo.glb` | Ipê-amarelo | vegetacao | 4498 | 439 | 7.17 × 8 × 7.342 |
+| `javaporcos_mint_arvore_mata.glb` | Árvore da mata atlântica | vegetacao | 4057 | 384 | 8.434 × 10 × 7.691 |
+| `javaporcos_mint_embauba.glb` | Embaúba | vegetacao | 4912 | 394 | 6.184 × 8 × 6.278 |
+| `javaporcos_mint_bananeira.glb` | Bananeira | vegetacao | 4897 | 339 | 4.217 × 5 × 4.178 |
+| `javaporcos_mint_jucara.glb` | Palmeira juçara | vegetacao | 5460 | 438 | 4.174 × 9 × 4.033 |
+| `javaporcos_mint_capim.glb` | Touceira de capim braquiária | vegetacao | 4249 | 428 | 1.167 × 1.2 × 1.2 |
+| `javaporcos_mint_cupinzeiro.glb` | Cupinzeiro de pasto | vegetacao | 4349 | 380 | 1.789 × 1.6 × 1.789 |
+| `javaporcos_mint_mourao.glb` | Mourão com arame farpado | vegetacao | 4285 | 387 | 0.186 × 1.3 × 2.433 |
+| `javaporcos_mint_moita.glb` | Moita de samambaia e helicônia | vegetacao | 3555 | 301 | 1.931 × 1.5 × 1.908 |
+
+<!-- javaporcos-mint-packs:end -->

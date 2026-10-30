@@ -43,7 +43,7 @@ import { TETO } from '../javaporcos-realista-assets.mjs';
 
 const FONTE = 'public/models/props/FONTE.md';
 const MUTANTES = new Set(['sem-fonte', 'sem-sha', 'arquivo-sumido', 'id-quebrado', 'sem-licenca', 'acima-do-teto']);
-const FRENTES = new Set(['v21-e-models', 'javaporcos-realista']);
+const FRENTES = new Set(['v21-e-models', 'javaporcos-realista', 'javaporcos-mint-packs']);
 const JP = 'javaporcos-realista';
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10);
 if (mutante && !MUTANTES.has(mutante)) {
@@ -93,9 +93,11 @@ for (const [index, [id, asset]] of entradas.entries()) {
     erros.push(`${id}: PAC3 — ${basename(file)} sem linha no ${FONTE} (procedência, licença, pipeline)`);
   }
 
-  if (asset.source?.frente !== JP) continue;
-  const licenca = alvoJp && mutante === 'sem-licenca' ? undefined : asset.source.license;
-  if (!licenca || !asset.source.url) erros.push(`${id}: PAC4 — source.license e source.url obrigatórios (procedência de terceiro)`);
+  if (![JP,'javaporcos-mint-packs'].includes(asset.source?.frente)) continue;
+  if (asset.source.frente === JP) {
+    const licenca = alvoJp && mutante === 'sem-licenca' ? undefined : asset.source.license;
+    if (!licenca || !asset.source.url) erros.push(`${id}: PAC4 — source.license e source.url obrigatórios (procedência de terceiro)`);
+  }
   const teto = TETO[asset.source.classe];
   if (!teto) { erros.push(`${id}: PAC5 — classe "${asset.source.classe}" sem teto`); continue; }
   if (!file || !existsSync(file)) continue;
@@ -114,4 +116,4 @@ if (erros.length) {
   erros.forEach((erro) => console.error(`✗ ${erro}`));
   process.exit(1);
 }
-console.log(`PROPS-ACERVO ✓ ${entradas.length} props (v2.1 + ${JP}) com GLB no disco, finalSha256, linha no FONTE.md; ${JP} com licença e no teto`);
+console.log(`PROPS-ACERVO ✓ ${entradas.length} props (v2.1 + ${JP} + javaporcos-mint-packs) com GLB no disco, finalSha256 e FONTE.md; Javaporcos no teto, terceiros com licença`);

@@ -25,7 +25,7 @@ for(const [raw,name,id]of variants){
  await io.write(runtime,doc);
  const entry={id:name.replaceAll('_','-'),provider:'Mint asset pack',pack:'th7f82d138zgbc9bzs2c3032f58h9f8g',asset:id,url:`https://mint.gg/assets?asset=${id}`,source,sourceSha256:hash(source),runtime,bytes:statSync(runtime).size,sha256:hash(runtime),recipe:'tools/javaporcos-variantes.mjs; texturas WebP 512 quality90; geometria original'};
  manifest.assets=manifest.assets.filter(a=>a.id!==entry.id);manifest.assets.push(entry);
- registry.assets[entry.id]={files:[runtime,runtime.replace('.glb','_lod.glb')],source:{kind:'mint-model',assetId:id,assetPackId:entry.pack,chatUrl:'https://mint.gg/chat/ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk',displayName:name,notes:'Original preservado em references/glb; WebP512/quality90 e LOD local. Procedência e hashes em public/models/enemies/javaporcos/asset-manifest.json.'}};
+ registry.assets[entry.id]={artifactType:'model/gltf-binary',files:[runtime,runtime.replace('.glb','_lod.glb')],source:{kind:'mint-model',assetId:id,assetPackId:entry.pack,chatUrl:'https://mint.gg/chat/ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk',displayName:name,notes:'Original preservado em references/glb; WebP512/quality90 e LOD local. Procedência e hashes em public/models/enemies/javaporcos/asset-manifest.json.'},processing:{tools:['tools/javaporcos-variantes.mjs','tools/javaporcos-lod.mjs'],finalSha256:entry.sha256}};
  console.log({name,bytes:entry.bytes,primitives:doc.getRoot().listMeshes().flatMap(m=>m.listPrimitives()).length,bounds});
 }
 manifest.generatedAt='2026-10-30';writeFileSync(path,JSON.stringify(manifest,null,2)+'\n');

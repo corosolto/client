@@ -640,3 +640,5 @@ Sketchfab26aguarda token por ambiente;NCnão usado. Não ler .env.
 Próximo: apresentar checkpoint e pedir autorização de push conforme promptlinha8;
 se autorizado executarhooknormal, acompanharpreview/CI e validar armas/MP de verdade.
 EgoTaskSpace8 continua ativo para essa continuação; não operar espaços de terceiros.
+Checkpoint de menu/mortes b38602641; checkpoint de variantes13eb85754; estrutura/rede
+2c7b78d49. Catálogo22props no checkpoint seguinte, sem mudar geometria de runtime.
