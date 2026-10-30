@@ -438,7 +438,7 @@ function propsOpcionais(root, occluders, campo, rnd, cidade, PB) {
       const [x, z] = lado === 'N' ? [uu, -v] : lado === 'S' ? [uu, v] : lado === 'O' ? [-v, uu] : [v, uu];
       if (pertoDeTrilha(x, z)) continue;
       const k = rnd();
-      if (k < 0.86) poe(PV, 'samambaia_mata', { x, z, targetH: 0.8 + rnd() * 0.5 });
+      if (k < 0.86) poe(PV, 'samambaia_mata', { x, z, targetH: 1.1 + rnd() * 0.6 });
       else if (k < 0.93) poe(PV, 'calathea_mata', { x, z, targetH: 0.9 + rnd() * 0.5 });
       else poe(PV, rnd() < 0.5 ? 'arbusto_mata_a' : 'arbusto_mata_b', { x, z, targetH: 1.4 + rnd() * 0.7 });
       if (rnd() < 0.03) poe(PV, rnd() < 0.5 ? 'toco_arvore' : 'tronco_caido', { x: x * 0.985, z: z * 0.985, targetH: 0.5, targetLen: rnd() < 0.5 ? 0 : 3 });
