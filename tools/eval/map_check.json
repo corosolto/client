@@ -1,5 +1,5 @@
 {
- "gerado": "2026-10-30T06:28:38.774Z",
+ "gerado": "2026-10-30T08:11:00.038Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -12129,14 +12129,14 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.2078,
+     "fracMedia": 0.207,
      "maiorVisada": 68
     },
     {
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.2505,
+     "fracMedia": 0.2493,
      "maiorVisada": 63.9
     }
    ],
@@ -12147,8 +12147,8 @@
      "z": 10.6,
      "chao": 0,
      "obsLonge": 1254,
-     "obsVendo": 304,
-     "frac": 0.2424,
+     "obsVendo": 302,
+     "frac": 0.2408,
      "maiorVisada": 61.4
     },
     {
@@ -12167,8 +12167,8 @@
      "z": 14.2,
      "chao": 0,
      "obsLonge": 1240,
-     "obsVendo": 231,
-     "frac": 0.1863,
+     "obsVendo": 230,
+     "frac": 0.1855,
      "maiorVisada": 62.7
     },
     {
@@ -12187,8 +12187,8 @@
      "z": 12.4,
      "chao": 0,
      "obsLonge": 1250,
-     "obsVendo": 273,
-     "frac": 0.2184,
+     "obsVendo": 271,
+     "frac": 0.2168,
      "maiorVisada": 63.9
     },
     {
@@ -12197,8 +12197,8 @@
      "z": 17,
      "chao": 0,
      "obsLonge": 1240,
-     "obsVendo": 208,
-     "frac": 0.1677,
+     "obsVendo": 207,
+     "frac": 0.1669,
      "maiorVisada": 68
     },
     {
@@ -12207,8 +12207,8 @@
      "z": -10.6,
      "chao": 0,
      "obsLonge": 1274,
-     "obsVendo": 333,
-     "frac": 0.2614,
+     "obsVendo": 331,
+     "frac": 0.2598,
      "maiorVisada": 60.2
     },
     {
@@ -12217,8 +12217,8 @@
      "z": -10.6,
      "chao": 0,
      "obsLonge": 1272,
-     "obsVendo": 344,
-     "frac": 0.2704,
+     "obsVendo": 343,
+     "frac": 0.2697,
      "maiorVisada": 58.6
     },
     {
@@ -12227,8 +12227,8 @@
      "z": -14.2,
      "chao": 0,
      "obsLonge": 1277,
-     "obsVendo": 311,
-     "frac": 0.2435,
+     "obsVendo": 309,
+     "frac": 0.242,
      "maiorVisada": 63.9
     },
     {
@@ -12237,8 +12237,8 @@
      "z": -14.2,
      "chao": 0,
      "obsLonge": 1267,
-     "obsVendo": 287,
-     "frac": 0.2265,
+     "obsVendo": 286,
+     "frac": 0.2257,
      "maiorVisada": 59.4
     }
    ],
@@ -12350,7 +12350,7 @@
    "travessia": [],
    "occluderSemMalha": [],
    "occMedidos": 463,
-   "occPulados": 6,
+   "occPulados": 7,
    "fracSemMalha": 0.0036,
    "quadrantes": [
     {
