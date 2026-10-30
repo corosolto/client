@@ -105,8 +105,9 @@ const MUTANTES = ['mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta'
   'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto', 'setor-buraco', 'carro-mint',
   'ceu-chapado', 'luz-laranja', 'copa-bola', 'mata-sem-lote', 'mapa-flutuando'];
 const CIDADE = await import('./javaporcos-cidade-regras.mjs');   // ICO1, JANELA1, CARRO1, POSTE1, DECAL1
-if (MUT && ![...MUTANTES, ...CIDADE.MUTANTES].includes(MUT)) {
-  console.error(`mutante desconhecido: ${MUT}. Há: ${[...MUTANTES, ...CIDADE.MUTANTES].join(', ')}`);
+const MATA = await import('./javaporcos-mata-regras.mjs');       // TRILHA3, MATA5, CUPIM1
+if (MUT && ![...MUTANTES, ...CIDADE.MUTANTES, ...MATA.MUTANTES].includes(MUT)) {
+  console.error(`mutante desconhecido: ${MUT}. Há: ${[...MUTANTES, ...CIDADE.MUTANTES, ...MATA.MUTANTES].join(', ')}`);
   process.exit(2);
 }
 
@@ -788,6 +789,7 @@ regra('CHAO2 o mapa não flutua: chão e mata até o horizonte', () => {
 });
 
 CIDADE.regrasCidade({ W, THREE, MUT, regra, exige, fs });
+MATA.regrasMata({ W, THREE, MUT, regra, exige });
 
 /* ------------------------------------------------------------------ fecho */
 relatorio.censo = W.censo;
