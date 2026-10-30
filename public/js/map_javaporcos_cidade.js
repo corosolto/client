@@ -159,7 +159,9 @@ function janela(ex, cx, cy, cz, ry, w, h, gradeada) {
   const p = (lista, lx, ly, lz, sx, sy, sz) => lista.push(mtx(cx + lx * cs + lz * sn, cy + ly, cz - lx * sn + lz * cs, sx, sy, sz, ry));
   const m = 0.09, f = 0.11;
   p(ex.vao, 0, 0, 0.01, w, h, 0.02);
-  p(ex.vidro, 0, 0, f - 0.08, w - 0.04, h - 0.04, 0.01);
+  const acesa = ex.rj() < 0.22;
+  p(acesa ? ex.vidroAceso : ex.vidro, 0, 0, f - 0.08, w - 0.04, h - 0.04, 0.01);
+  (acesa ? ex.vidroAcesoCor : ex.vidroCor).push(new THREE.Color(CORTINAS[(ex.rj() * CORTINAS.length) | 0]));
   p(ex.moldura, 0, h / 2 + m / 2, f / 2, w + 2 * m, m, f);
   p(ex.moldura, 0, -h / 2 - 0.03, 0.09, w + 0.3, 0.06, 0.18);
   for (const s of [-1, 1]) p(ex.moldura, s * (w / 2 + m / 2), 0, f / 2, m, h, f);
@@ -168,6 +170,9 @@ function janela(ex, cx, cy, cz, ry, w, h, gradeada) {
   for (let lx = -w / 2 + 0.06; lx <= w / 2 - 0.05; lx += 0.12) p(ex.grade, lx, 0, zg, 0.04, h + 0.04, 0.04);
   for (const ly of [-h / 2 + 0.02, 0, h / 2 - 0.02]) p(ex.grade, 0, ly, zg, w + 0.04, 0.04, 0.04);
 }
+
+// cortina desbotada: bege, azul, rosa, verde, mostarda e branco encardido
+const CORTINAS = [0xd8c6a8, 0xa8bccc, 0xdcb0aa, 0xb8c8a2, 0xe0c482, 0xeae4d6];
 
 function porta(ex, cx, cy, cz, ry) {
   const cs = Math.cos(ry), sn = Math.sin(ry);
@@ -774,7 +779,8 @@ const BECOS = {
 
 function novosExtras() {
   return { glb: [], medidor: [], eletroduto: [], vao: [], grade: [], arame: [], roupa: [], roupaCor: [], botijao: [], saco: [], lixeira: [], becoAreas: [],
-    vidro: [], moldura: [], porta: [], decal: [], letreiro: [], rua: [], lixeiraTomb: [], rr: lcg(0xbec0) };
+    vidro: [], vidroCor: [], vidroAceso: [], vidroAcesoCor: [], moldura: [], porta: [], decal: [], letreiro: [], rua: [], lixeiraTomb: [],
+    rr: lcg(0xbec0), rj: lcg(0x1a7e) };
 }
 
 const _mq = new THREE.Quaternion(), _me = new THREE.Euler(), _mp = new THREE.Vector3(), _ms = new THREE.Vector3();
@@ -920,7 +926,8 @@ function construirExtras(kit, ex) {
   lote(ex.medidor, cubo, MAT.medidor, 'beco-medidor');
   lote(ex.eletroduto, cubo, MAT.cabo, 'beco-eletroduto', { sombra: false });
   lote(ex.vao, cubo, MAT.vao, 'beco-janela', { sombra: false });
-  lote(ex.vidro, cubo, MAT.vidro, 'beco-vidro', { sombra: false });
+  lote(ex.vidro, cubo, MAT.janela, 'beco-vidro', { sombra: false, cores: ex.vidroCor });
+  lote(ex.vidroAceso, cubo, MAT.janelaAcesa, 'beco-vidro-aceso', { sombra: false, cores: ex.vidroAcesoCor });
   lote(ex.moldura, cubo, MAT.barra, 'janela-moldura');
   lote(ex.porta, cubo, MAT.madeira, 'casa-porta', { sombra: false });
   lote(ex.grade, cubo, MAT.cabo, 'beco-grade');

@@ -99,6 +99,8 @@ export function buildInvasaoJavaporcos(scene, T) {
     cabo: lam({ map: TX.lataTex('#3a3630', 5), roughness: 0.8 }),
     metal: lam({ map: T.metal, color: 0x8d8880, metalness: 0.42, roughness: 0.55 }),
     vao: lam({ map: TX.ceramicaTex(), color: 0x1c1f22, roughness: 1 }),
+    janela: lam({ map: TX.janelaTex(), emissiveMap: TX.janelaTex(), roughness: 0.22, emissive: 0x4a4238, emissiveIntensity: 1 }),
+    janelaAcesa: lam({ map: TX.janelaTex(), emissiveMap: TX.janelaTex(), roughness: 0.22, emissive: 0xffb066, emissiveIntensity: 0.55 }),
     barra: comPbr('peeling_painted_wall', TX.rebocoTex('#6f6354', 9), { color: 0xb0a89a }, { metros: 2.2 }),
     caixaDagua: lam({ map: TX.lataTex('#4d6f86', 6) }),
     rebocoLoja: comPbr('paintedplaster017', TX.rebocoTex(TX.COR.rebocoMenta, 5), { color: claro(TX.COR.rebocoMenta, 0.1) }, { metros: 3 }),

@@ -25,6 +25,9 @@
      ZEBRA1  o atlas é desenhado num contexto gravador e a célula da faixa é medida em
              METROS (0,5 × 2,6 m): nenhuma marca de desgaste ≥ 0,3 m com razão ≥ 4 no
              comprimento da faixa (veio), ≥ 80% das marcas com razão ≤ 4, tinta com b* ≤ 5.
+     JANELA2 o vidro mostra o cômodo ("janela preta atrás da grade", L* 6): material com o
+             mapa de interior, metal ≤ 0,1, cortina de luminância média ≥ 0,25 e 10–40% das
+             janelas acesas com emissivo quente (r > g > b) modulado pelo mesmo mapa.
 
    MUTANTES (cada um tem de acender a cláusula indicada):
      saco-icosaedro  planta um saco de icosaedro na avenida          -> ICO1
@@ -34,9 +37,10 @@
      poste-viga      poste volta a caixa 0,18 × 9 × 0,25             -> POSTE1
      beco-limpo      tira a malha de decalques                       -> DECAL1
      zebra-veio      devolve as 10 tiras de altura inteira da rodada 2  -> ZEBRA1
+     janela-preta    vidro volta ao cinza metálico 0x46525a, sem mapa    -> JANELA2
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); o gol g2 também é NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -91,6 +95,11 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     ico.name = 'lixo-saco-solto'; ico.position.set(3, 0.2, 18); W.root.add(ico); ico.updateMatrixWorld(true);
   }
   if (MUT === 'janela-cega') { const v = porNome('beco-vidro'); exige(v, 'MUTANTE janela-cega NÃO APLICOU'); v.parent.remove(v); }
+  if (MUT === 'janela-preta') {
+    const vs = ['beco-vidro', 'beco-vidro-aceso'].map(porNome).filter(Boolean);
+    exige(vs.length === 2, 'MUTANTE janela-preta NÃO APLICOU');
+    for (const v of vs) v.material = new THREE.MeshStandardMaterial({ color: 0x46525a, roughness: 0.12, metalness: 0.35 });
+  }
   if (MUT === 'carro-nc') { exige(W.root.userData.carros?.length, 'MUTANTE carro-nc NÃO APLICOU'); W.root.userData.carros[0].id = 'byd_dolphin'; }
   if (MUT === 'carros-poucos') { exige(W.root.userData.carros?.length, 'MUTANTE carros-poucos NÃO APLICOU'); W.root.userData.carros.length = 9; }
   if (MUT === 'poste-viga') { const p = porNome('poste'); exige(p, 'MUTANTE poste-viga NÃO APLICOU'); p.geometry = new THREE.BoxGeometry(0.18, 9, 0.25); }
@@ -111,7 +120,7 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
   });
 
   regra('JANELA1 janela com vidro recuado e grade de barra ≥ 0,04 a cada ≤ 0,13 m', () => {
-    const vidros = instancias(porNome('beco-vidro')), barras = instancias(porNome('beco-grade')), vaos = instancias(porNome('beco-janela'));
+    const vidros = [...instancias(porNome('beco-vidro')), ...instancias(porNome('beco-vidro-aceso'))], barras = instancias(porNome('beco-grade')), vaos = instancias(porNome('beco-janela'));
     exige(vaos.length >= 40, `só ${vaos.length} vãos de janela instanciados (piso 40: casas + becos)`);
     exige(vidros.length === vaos.length, `${vidros.length} vidros para ${vaos.length} vãos: janela sem vidro é buraco preto`);
     let gradeadas = 0, recuoMin = Infinity, passoMax = 0;
@@ -194,5 +203,26 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     exige(iso >= 0.8, `só ${(100 * iso).toFixed(0)}% das marcas com razão ≤ 4 em metros (piso 80%)`);
     exige(bstar <= 5, `tinta da faixa amarelada: b* ${bstar.toFixed(1)} (teto 5; a da rodada 2 dava 6,4)`);
     return `${gasto.length} marcas de desgaste, 0 veios, ${(100 * iso).toFixed(0)}% com razão ≤ 4 em metros, tinta b* ${bstar.toFixed(1)}`;
+  });
+
+  regra('JANELA2 janela com cômodo atrás do vidro, algumas acesas', () => {
+    const apagada = porNome('beco-vidro'), acesa = porNome('beco-vidro-aceso');
+    exige(apagada && acesa, `falta malha de vidro ${apagada ? '' : 'apagada '}${acesa ? '' : 'acesa'}`);
+    const lum = (c) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+    for (const v of [apagada, acesa]) {
+      const m = v.material;
+      exige(m.map && /janela-interior/.test(m.map.name || ''), `${v.name} sem o mapa de interior (vidro chapado)`);
+      exige(m.metalness <= 0.1, `${v.name} com metal ${m.metalness} (sem ambiente o metal sai preto)`);
+      exige(lum(m.color) >= 0.5, `${v.name} com cor de base escura (${m.color.getHexString()})`);
+      exige(v.instanceColor, `${v.name} sem cor de cortina por instância`);
+      const c = new THREE.Color(); let soma = 0;
+      for (let i = 0; i < v.count; i++) { v.getColorAt(i, c); soma += lum(c); }
+      exige(soma / v.count >= 0.25, `cortina média de luminância ${(soma / v.count).toFixed(2)} (piso 0,25)`);
+    }
+    const e = acesa.material.emissive, fr = acesa.count / (acesa.count + apagada.count);
+    exige(acesa.material.emissiveIntensity > 0 && e.r > e.g && e.g > e.b, 'janela acesa sem emissivo quente');
+    exige(acesa.material.emissiveMap === acesa.material.map, 'luz da janela acesa não passa pela cortina (emissiveMap ≠ map)');
+    exige(fr >= 0.1 && fr <= 0.4, `${(100 * fr).toFixed(0)}% das janelas acesas (faixa 10–40%)`);
+    return `${apagada.count + acesa.count} janelas com cortina, ${acesa.count} acesas (${(100 * fr).toFixed(0)}%)`;
   });
 }

@@ -468,6 +468,37 @@ export function tecidoTex(rx = 1, ry = 1) {
   }, 0.6);
 }
 
+/* Interior da janela atrás do vidro: cortina franzida (cor vem da instância), fresta do
+   cômodo, bandô no alto e um reflexo diagonal. Sem ele o vidro lia buraco preto (L* 6). */
+let _janela = null;
+export function janelaTex() {
+  if (_janela) return _janela;
+  const s = 256, c = document.createElement('canvas');
+  c.width = c.height = s;
+  const x = c.getContext('2d'), r = lcg(0x1a7e1a);
+  const fundo = x.createRadialGradient(s * 0.5, s * 0.45, 8, s * 0.5, s * 0.5, s * 0.7);
+  fundo.addColorStop(0, '#9a8c7c'); fundo.addColorStop(1, '#4a423a');
+  x.fillStyle = fundo; x.fillRect(0, 0, s, s);
+  const painel = (x0, x1, franzido) => {
+    for (let px = x0; px < x1; px += 2) {
+      const dobra = 0.5 + 0.5 * Math.sin((px - x0) * franzido + 1.7 * Math.sin((px - x0) * 0.031));
+      const v = 186 + dobra * 50 + r() * 6;
+      x.fillStyle = `rgb(${v | 0},${(v * 0.97) | 0},${(v * 0.92) | 0})`;
+      x.fillRect(px, s * 0.12, 2, s * (0.86 + 0.03 * Math.sin(px * 0.07)));
+    }
+  };
+  painel(0, s * (0.34 + r() * 0.08), 0.11);
+  painel(s * (0.6 + r() * 0.08), s, 0.09);
+  x.fillStyle = '#d8d2c6'; x.fillRect(0, 0, s, s * 0.13);
+  for (let i = 0; i < 6; i++) { x.fillStyle = 'rgba(40,34,28,0.35)'; x.fillRect(0, s * 0.02 + i * 5, s, 1.5); }
+  x.globalAlpha = 0.16; x.fillStyle = '#ffffff';
+  x.beginPath(); x.moveTo(s * 0.1, s); x.lineTo(s * 0.45, 0); x.lineTo(s * 0.62, 0); x.lineTo(s * 0.27, s); x.fill();
+  x.globalAlpha = 1;
+  const t = new THREE.CanvasTexture(c);
+  t.name = 'jp-janela-interior'; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  return (_janela = t);
+}
+
 /* Recorte de mancha (alpha com borda rasgada) para o pisoteio da trilha não ler quadrado. */
 export function manchaAlphaTex() {
   const s = 128, c = document.createElement('canvas');
