@@ -1,7 +1,7 @@
 /* Miolo urbano: avenidas, vielas, 16 quarteirões, 4 lojas com interior, praça com feira e
    o lixo que o javaporco revira. Medidas e paleta: docs/maps/invasao-javaporcos-visual.md. */
 import * as THREE from 'three';
-import { hasProp, placeProp } from './mapprops.js';
+import { hasProp, placeProp, PropBatch } from './mapprops.js';
 
 export const AV = 6;             // meia-largura da avenida (12 m de asfalto)
 export const CAL = 2;            // calçada
@@ -113,7 +113,6 @@ export function construirCidade(kit, campo, rnd) {
     }
     edificacoes += quarteiraoCasas(kit, campo, rnd, b, papel === 'sobrados' ? 2 : 0);
   }
-  construirExtras(kit, extras);
 
   // ── Postes, fiação e carros parados
   const postes = fiacao(kit, campo, rnd);
@@ -132,6 +131,9 @@ export function construirCidade(kit, campo, rnd) {
   for (const [id, kind, x, z] of pontos) criarFood(kit, campo, foodSpots, foodMeshes, foodColliders, id, kind, x, z);
 
   lixoSolto(kit, campo, rnd, extras.glb);
+  lixoDeRua(kit, campo, extras, pontos);
+  cacambas(kit, campo, extras, pontos);
+  construirExtras(kit, extras);
 
   /* O objetivo mora num ponto ALCANÇÁVEL (corredor da feira, porta da loja, adro da
      igreja) e leva `r`: centro de prédio era bando empacado na parede a 6,6 m (medido). */
@@ -658,6 +660,80 @@ function lixoSolto(kit, campo, rnd, glb) {
   add(caixotes, new THREE.BoxGeometry(0.5, 0.32, 0.38), MAT.caixote, 'lixo-caixote-solto');
 }
 
+/* Lixo pequeno de avenida: decalque no chão (papel, lata, poça, comida) e peça GLB na
+   sarjeta e na calçada. Nada disso tem colisor: é o estrago, não obstáculo. */
+const CEL_SARJETA = [1, 2, 2, 3, 3, 4, 5, 6, 6, 7], CEL_PISTA = [0, 0, 1, 1, 2, 7], CEL_CALCADA = [2, 3, 5, 5, 6, 7];
+function lixoDeRua(kit, campo, ex, pontos) {
+  const r = ex.rr;
+  const pick = (l) => l[(r() * l.length) | 0];
+  for (const eixoNS of [true, false]) {
+    for (let i = 0; i < 72; i++) {
+      const t = (r() - 0.5) * 2 * (CIDADE_R - 1.5), s = r() < 0.5 ? -1 : 1, u = r();
+      const [atr, cel] = u < 0.55 ? [s * (AV - 0.12 - r() * 1.1), pick(CEL_SARJETA)]
+        : u < 0.8 ? [s * (AV + 0.25 + r() * (CAL - 0.5)), pick(CEL_CALCADA)] : [(r() - 0.5) * 2 * (AV - 1.2), pick(CEL_PISTA)];
+      const [x, z] = eixoNS ? [atr, t] : [t, atr];
+      ex.decal.push({ k: cel, x, y: campo.amostra(x, z) + 0.022, z, s: cel === 0 ? 1.0 + r() * 1.6 : 0.4 + r() * 0.6, ry: r() * 6.283 });
+    }
+    for (let i = 0; i < 18; i++) {
+      const t = (r() - 0.5) * 2 * (CIDADE_R - 2), s = r() < 0.5 ? -1 : 1;
+      if (Math.abs(t) < AV + CAL) continue;
+      const atr = r() < 0.6 ? s * (AV - 0.25 - r() * 0.3) : s * (AV + 0.4 + r() * (CAL - 0.8));
+      const [x, z] = eixoNS ? [atr, t] : [t, atr];
+      const [id, h] = [['lata_enferrujada', 0.26], ['saco_lixo', 0.55], ['lata_enferrujada', 0.22]][i % 3];
+      ex.rua.push({ id, x, z, y: campo.amostra(x, z), h, ry: r() * 6.283 });
+    }
+  }
+  // sinalização gasta: eixo amarelo tracejado, faixa de pedestre, remendo e rachadura
+  for (const s of [-1, 1]) {
+    for (let t = AV + CAL + 2; t < CIDADE_R - 1; t += 6) {
+      ex.decal.push({ k: 9, x: 0, y: 0.034, z: s * t, w: 0.14, h: 2.8, ry: 0 });
+      ex.decal.push({ k: 9, x: s * t, y: 0.034, z: 0, w: 0.14, h: 2.8, ry: Math.PI / 2 });
+    }
+    for (let a = -AV + 1; a <= AV - 1; a += 1.0) {
+      ex.decal.push({ k: 8, x: a, y: 0.034, z: s * (AV + 1.4), w: 0.5, h: 2.6, ry: 0 });
+      ex.decal.push({ k: 8, x: s * (AV + 1.4), y: 0.034, z: a, w: 0.5, h: 2.6, ry: Math.PI / 2 });
+    }
+  }
+  for (let i = 0; i < 48; i++) {
+    const t = (r() - 0.5) * 2 * (CIDADE_R - 2), a = (r() - 0.5) * 2 * (AV - 0.8), ns = i % 2 === 0;
+    const [x, z] = ns ? [a, t] : [t, a];
+    const k = i % 3 ? 10 : 11;
+    ex.decal.push({ k, x, y: 0.03, z, w: 0.9 + r() * 2.2, h: 0.8 + r() * 1.6, ry: (ns ? 0 : Math.PI / 2) + (r() - 0.5) * 0.3 });
+  }
+  for (const [sx, sz] of QUADRANTES) {
+    const cx = sx * (AV + 1.0), cz = sz * (AV + 1.0), y = campo.amostra(cx, cz);
+    ex.rua.push({ id: 'lixeira_metal', x: cx, z: cz, y, h: 0.85, ry: r() * 6.283 });
+    for (const [ox, oz, id, h] of [[0.6, 0.1, 'saco_lixo', 0.6], [0.2, 0.65, 'saco_lixo', 0.5], [-0.5, 0.4, 'caixa_papelao', 0.4]]) {
+      ex.rua.push({ id, x: cx + ox * sx, z: cz + oz * sz, y, h, ry: r() * 6.283 });
+    }
+    for (let i = 0; i < 4; i++) ex.decal.push({ k: [2, 4, 6, 1][i], x: cx + (r() - 0.3) * 1.6 * sx, y: y + 0.02, z: cz + (r() - 0.3) * 1.6 * sz, s: 0.6 + r() * 0.5, ry: r() * 6.283 });
+  }
+  for (const [, kind, px, pz] of pontos) {
+    if (kind !== 'lixo') continue;
+    for (let i = 0; i < 6; i++) {
+      const a = r() * 6.283, d = 0.6 + r() * 1.4, x = px + Math.cos(a) * d, z = pz + Math.sin(a) * d;
+      ex.decal.push({ k: [2, 3, 4, 4, 6, 1][i], x, y: campo.amostra(x, z) + 0.024, z, s: 0.5 + r() * 0.5, ry: r() * 6.283 });
+    }
+  }
+}
+
+/* Uma caçamba por quarteirão, encostada na guia (avenida) ou no anel de terra (fundo). O
+   colisor é o mesmo em node e no navegador; o GLB só troca a aparência. */
+function cacambas(kit, campo, ex, pontos) {
+  for (const b of blocos()) {
+    let x, z, aoLongoZ;
+    if (b.ax === 'i') { x = b.sx * (AV - 0.95); z = b.sz * (b.az === 'i' ? 18.75 : 26.25); aoLongoZ = true; }
+    else if (b.az === 'i') { z = b.sz * (AV - 0.95); x = b.sx * 26.25; aoLongoZ = false; }
+    else { x = b.sx * 28.5; z = b.sz * 33.4; aoLongoZ = false; }
+    if (pontos.some(([, , px, pz]) => Math.hypot(px - x, pz - z) < 3.5)) continue;
+    const y = campo.amostra(x, z);
+    const [hx, hz] = aoLongoZ ? [0.62, 1.0] : [1.0, 0.62];
+    kit.colliders.push({ minX: x - hx, maxX: x + hx, minY: y, maxY: y + 1.3, minZ: z - hz, maxZ: z + hz });
+    if (usaGLB('dumpster')) ex.rua.push({ id: 'dumpster', x, z, y, h: 1.3, ry: aoLongoZ ? 0 : Math.PI / 2, solido: true });
+    else kit.caixa(2 * hx, 1.25, 2 * hz, kit.MAT.cacamba, x, y, z, { collide: false, bala: true });
+  }
+}
+
 /* ── BECOS ─────────────────────────────────────────────────────────────────────────── */
 /* Um beco por lado, no quarteirão externo: liga o anel perimetral (pasto) à viela.
    Medidas e o porquê dos 2,5 m: docs/maps/invasao-javaporcos-layout.md, seção "Becos". */
@@ -672,7 +748,7 @@ const BECOS = {
 
 function novosExtras() {
   return { glb: [], medidor: [], eletroduto: [], vao: [], grade: [], arame: [], roupa: [], roupaCor: [], botijao: [], saco: [], lixeira: [], becoAreas: [],
-    vidro: [], moldura: [], porta: [], rr: lcg(0xbec0) };
+    vidro: [], moldura: [], porta: [], decal: [], rua: [], lixeiraTomb: [], rr: lcg(0xbec0) };
 }
 
 const _mq = new THREE.Quaternion(), _me = new THREE.Euler(), _mp = new THREE.Vector3(), _ms = new THREE.Vector3();
@@ -767,6 +843,25 @@ function quarteiraoBeco(kit, campo, rnd, b, def, ex) {
   const [lx, lz] = W(cm + BECO_MEIA - 0.42, lIn - dIn * (BECO_FUNDO + 0.6));
   ex.lixeira.push(mtx(lx, 0.27, lz, 0.55, 0.52, 0.8, rnd() * 6.283, 0, Math.PI / 2));
 
+  // chão do beco: poça, óleo, papel, lata, comida, folha, sacola e barro (atlas único)
+  const PESO = [0, 0, 1, 1, 1, 2, 3, 4, 4, 5, 6, 7, 7, 7, 10, 11, 11];
+  for (let k = 0; k < 56; k++) {
+    const cel = PESO[(ex.rr() * PESO.length) | 0];
+    const [x, z] = W(cm + (ex.rr() - 0.5) * 2 * (BECO_MEIA - 0.3), lOut + dIn * ex.rr() * comp);
+    const tam = cel === 0 ? 0.9 + ex.rr() * 0.9 : 0.45 + ex.rr() * 0.6;
+    ex.decal.push({ k: cel, x, y: 0.034, z, s: tam, ry: ex.rr() * 6.283 });
+  }
+  for (let k = 0; k < 6; k++) {
+    const lado = k % 2 ? 1 : -1, [x, z] = W(cm + lado * (BECO_MEIA - 0.22), lOut + dIn * (0.1 + 0.15 * k + ex.rr() * 0.1) * comp);
+    ex.decal.push({ k: k % 3 ? 1 : 7, x, y: 0.035, z, w: aoLongoZ ? 0.5 : 1.8, h: aoLongoZ ? 1.8 : 0.5, ry: 0 });
+  }
+  const [tx0, tz0] = W(cm + BECO_MEIA - 0.42, (lOut + lIn) / 2 + dIn * 1.2);
+  ex.lixeiraTomb.push(mtx(tx0, 0.29, tz0, 1, 1, 1, aoLongoZ ? 0.3 : Math.PI / 2 + 0.3, 0, Math.PI / 2));
+  for (const [id, dc, dl, h] of [['saco_lixo', 0.5, 0.35, 0.55], ['saco_lixo', 0.75, 0.5, 0.5], ['caixa_papelao', 0.85, 0.55, 0.4],
+    ['lata_enferrujada', 0.95, 0.6, 0.28], ['saco_lixo', 0.2, 0.62, 0.6], ['lata_enferrujada', 0.6, 0.3, 0.25]]) {
+    const [x, z] = W(cm + (dc - 0.5) * 2 * (BECO_MEIA - 0.3), lOut + dIn * dl * comp);
+    ex.rua.push({ id, x, z, y: 0.026, h, ry: ex.rr() * 6.283 });
+  }
   const glb = (id, c, l, h) => { const [x, z] = W(c, l); ex.glb.push({ id, x, z, h, ry: rnd() * 6.283 }); };
   glb('saco_lixo', cm - BECO_MEIA + 0.45, lIn - dIn * 0.7, 0.75);
   glb('saco_lixo', cm - BECO_MEIA + 0.4, lIn - dIn * 1.5, 0.6);
@@ -803,6 +898,7 @@ function construirExtras(kit, ex) {
   lote(ex.moldura, cubo, MAT.barra, 'janela-moldura');
   lote(ex.porta, cubo, MAT.madeira, 'casa-porta', { sombra: false });
   lote(ex.grade, cubo, MAT.cabo, 'beco-grade');
+  lote(ex.lixeiraTomb, new THREE.CylinderGeometry(0.3, 0.26, 0.8, 14), MAT.lixeiraAmarela, 'beco-lixeira-tombada');
   lote(ex.arame, cubo, MAT.cabo, 'beco-varal', { sombra: false });
   const roupaGeo = new THREE.PlaneGeometry(1, 1);
   lote(ex.roupa, roupaGeo, MAT.roupa, 'beco-roupa', { cores: ex.roupaCor });
@@ -810,6 +906,49 @@ function construirExtras(kit, ex) {
   lote(ex.botijao, botijaoGeo, MAT.botijao, 'beco-botijao', { solido: true });
   if (!hasProp('saco_lixo')) lote(ex.saco, sacoGeo(), MAT.saco, 'beco-saco');
   if (!hasProp('lixeira_metal')) lote(ex.lixeira, cubo, MAT.lixeiraAmarela, 'beco-lixeira');
+  quads(kit, ex.decal.map((d) => ({ ...d, w: d.w ?? d.s, h: d.h ?? d.s, deitado: true, uv: celulaDecal(d.k) })), MAT.decal, 'decal-chao', false);
+  if (GLB && ex.rua.length) {
+    const PR = new PropBatch({ bucket: 24, cortes: { cadeira_plastico: 45 } });
+    const PL = new PropBatch({ bucket: 24, cast: false, cortes: { saco_lixo: 38, caixa_papelao: 38, lata_enferrujada: 28, lixeira_metal: 40 } });
+    for (const g of ex.rua) (PL.opts.cortes[g.id] ? PL : PR).add(g.id, { x: g.x, y: g.y ?? 0, z: g.z, targetH: g.h, ry: g.ry });
+    const antes = root.children.length;
+    PR.build(root); PL.build(root);
+    const solidos = new Set(ex.rua.filter((g) => g.solido).map((g) => g.id));
+    for (const o of root.children.slice(antes)) if (solidos.has(o.userData.mapPropId)) occluders.push(o);
+  }
+}
+
+const celulaDecal = (k) => {
+  const u0 = (k % 4) / 4, v1 = 1 - ((k / 4) | 0) / 3;
+  return [u0 + 0.002, v1 - 1 / 3 + 0.002, u0 + 0.248, v1 - 0.002];
+};
+
+/* Muitos quads (decalque de chão, letreiro) numa malha só: uma chamada de desenho para
+   todos, com a UV de cada um apontando para a célula do atlas. */
+function quads(kit, lista, mat, nome, sombra) {
+  if (!lista.length) return;
+  const n = lista.length, pos = new Float32Array(n * 12), nor = new Float32Array(n * 12), uv = new Float32Array(n * 8), idx = [];
+  const v = new THREE.Vector3(), no = new THREE.Vector3(), e = new THREE.Euler(0, 0, 0, 'YXZ'), m = new THREE.Matrix4();
+  lista.forEach((q, i) => {
+    e.set(q.deitado ? -Math.PI / 2 : 0, q.ry, 0);
+    m.compose(_mp.set(q.x, q.y, q.z), _mq.setFromEuler(e), _ms.set(q.w, q.h, 1));
+    const [u0, v0, u1, v1] = q.uv;
+    [[-0.5, -0.5, u0, v0], [0.5, -0.5, u1, v0], [0.5, 0.5, u1, v1], [-0.5, 0.5, u0, v1]].forEach(([a, b, uu, vv], k) => {
+      v.set(a, b, 0).applyMatrix4(m); no.set(0, 0, 1).transformDirection(m);
+      pos.set([v.x, v.y, v.z], (i * 4 + k) * 3); nor.set([no.x, no.y, no.z], (i * 4 + k) * 3); uv.set([uu, vv], (i * 4 + k) * 2);
+    });
+    idx.push(i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3);
+  });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeBoundingSphere();
+  const malha = new THREE.Mesh(g, mat);
+  malha.name = nome; malha.receiveShadow = true; malha.castShadow = sombra;
+  malha.userData.nonSolidSurface = true;
+  kit.root.add(malha);
 }
 
 /* Setores de domínio: grade 3×3 cortada no fio da calçada da avenida. O pasto fica fora:

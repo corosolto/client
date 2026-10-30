@@ -502,3 +502,109 @@ export function pbr(id, { repeat = 1, metros = 0 } = {}) {
   };
   return { map: canal('color', true), normalMap: canal('normal', false), roughnessMap: canal('rough', false) };
 }
+
+/* Atlas de decalque de chão 4×3 (célula 256): poça, óleo, papel, lata, comida, folha, sacola,
+   barro, faixa branca, faixa amarela, remendo e rachadura. Rugosidade num canvas irmão. */
+export const DECAL_CELULAS = 12;
+export function decalAtlasTex() {
+  const W = 1024, H = 768, C = 256;
+  const cor = document.createElement('canvas'), rug = document.createElement('canvas');
+  cor.width = rug.width = W; cor.height = rug.height = H;
+  const x = cor.getContext('2d'), g = rug.getContext('2d'), r = lcg(0xdeca1);
+  g.fillStyle = '#e6e6e6'; g.fillRect(0, 0, W, H);
+  const mancha = (cx, cy, raio, pontas, f = 0.35) => {
+    x.beginPath();
+    for (let k = 0; k <= pontas; k++) {
+      const a = (k / pontas) * 6.283, rr = raio * (1 - f / 2 + r() * f);
+      x.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * 0.8);
+    }
+    x.closePath();
+  };
+  const papel = (cx, cy, w, h, c) => {
+    x.save(); x.translate(cx, cy); x.rotate(r() * 6.283); x.fillStyle = c;
+    x.beginPath(); x.moveTo(-w / 2, -h / 2);
+    for (let k = 0; k < 6; k++) x.lineTo(-w / 2 + (k / 5) * w + (r() - 0.5) * 4, -h / 2 + (r() - 0.5) * 5);
+    x.lineTo(w / 2, h / 2); x.lineTo(-w / 2 + (r() - 0.5) * 6, h / 2 + (r() - 0.5) * 5); x.closePath(); x.fill();
+    x.strokeStyle = 'rgba(0,0,0,0.25)'; x.lineWidth = 1; x.stroke(); x.restore();
+  };
+  for (let k = 0; k < DECAL_CELULAS; k++) {
+    const ox = (k % 4) * C, oy = ((k / 4) | 0) * C, cx = ox + C / 2, cy = oy + C / 2;
+    x.save(); x.beginPath(); x.rect(ox + 4, oy + 4, C - 8, C - 8); x.clip();
+    if (k === 0) {
+      const gr = x.createRadialGradient(cx, cy, 10, cx, cy, 112);
+      gr.addColorStop(0, 'rgba(58,60,62,0.8)'); gr.addColorStop(0.75, 'rgba(52,50,46,0.6)'); gr.addColorStop(1, 'rgba(52,50,46,0)');
+      x.fillStyle = gr; mancha(cx, cy, 108, 22, 0.45); x.fill();
+      g.fillStyle = '#141414'; g.fillRect(ox, oy, C, C);
+    } else if (k === 1) {
+      for (let i = 0; i < 5; i++) { x.fillStyle = `rgba(30,27,24,${0.12 + i * 0.07})`; mancha(cx + (r() - 0.5) * 20, cy + (r() - 0.5) * 20, 100 - i * 17, 18, 0.5); x.fill(); }
+      g.fillStyle = '#6a6a6a'; g.fillRect(ox, oy, C, C);
+    } else if (k === 2) {
+      for (let i = 0; i < 9; i++) papel(ox + 40 + r() * 176, oy + 40 + r() * 176, 30 + r() * 46, 22 + r() * 34, ['#a29b8a', '#948c7a', '#8a9096', '#9c8e5a', '#968078', '#aca698'][(r() * 6) | 0]);
+    } else if (k === 3) {
+      for (let i = 0; i < 4; i++) {
+        const px = ox + 50 + r() * 156, py = oy + 50 + r() * 156, a = r() * 6.283;
+        x.save(); x.translate(px, py); x.rotate(a);
+        x.fillStyle = ['#8a3a30', '#9e9b94', '#38563c', '#a88a3a'][i]; x.fillRect(-22, -11, 44, 22);
+        x.fillStyle = 'rgba(255,255,255,0.3)'; x.fillRect(-22, -6, 44, 3);
+        x.fillStyle = 'rgba(30,26,22,0.45)'; x.fillRect(-22, 5, 44, 6);
+        x.fillStyle = '#7e7c76'; x.fillRect(18, -11, 5, 22); x.restore();
+      }
+      x.save(); x.translate(cx, cy + 40); x.rotate(r() * 3);
+      x.fillStyle = 'rgba(140,160,150,0.7)'; x.fillRect(-55, -14, 95, 28); x.fillRect(40, -6, 18, 12);
+      x.fillStyle = '#8e3a2e'; x.fillRect(-20, -14, 30, 28); x.restore();
+      g.fillStyle = '#707070'; g.fillRect(ox, oy, C, C);
+    } else if (k === 4) {
+      for (let i = 0; i < 26; i++) {
+        x.fillStyle = ['#5e6a2a', '#9a6a32', '#a8944e', '#4a3422', '#7e3a2a', '#b0a888'][(r() * 6) | 0];
+        x.beginPath(); x.ellipse(ox + 30 + r() * 196, oy + 30 + r() * 196, 5 + r() * 16, 3 + r() * 8, r() * 3, 0, 6.283); x.fill();
+      }
+      x.fillStyle = '#b89a3a'; x.beginPath(); x.ellipse(cx, cy, 46, 12, 0.6, 0, 6.283); x.fill();
+    } else if (k === 5) {
+      for (let i = 0; i < 30; i++) {
+        x.save(); x.translate(ox + 24 + r() * 208, oy + 24 + r() * 208); x.rotate(r() * 6.283);
+        x.fillStyle = ['#6a4a26', '#8a6232', '#4a3a22', '#7a7030'][(r() * 4) | 0];
+        x.beginPath(); x.ellipse(0, 0, 14 + r() * 10, 6 + r() * 4, 0, 0, 6.283); x.fill();
+        x.strokeStyle = 'rgba(30,20,10,0.6)'; x.beginPath(); x.moveTo(-16, 0); x.lineTo(16, 0); x.stroke(); x.restore();
+      }
+    } else if (k === 6) {
+      x.fillStyle = 'rgba(200,198,190,0.85)'; mancha(cx - 20, cy, 70, 14, 0.7); x.fill();
+      x.fillStyle = 'rgba(70,96,130,0.85)'; mancha(cx + 50, cy + 40, 46, 12, 0.7); x.fill();
+      x.strokeStyle = 'rgba(120,120,120,0.6)'; x.lineWidth = 2;
+      for (let i = 0; i < 6; i++) { x.beginPath(); x.moveTo(cx - 70 + r() * 80, cy - 40 + r() * 80); x.lineTo(cx - 40 + r() * 90, cy - 30 + r() * 70); x.stroke(); }
+      g.fillStyle = '#909090'; g.fillRect(ox, oy, C, C);
+    } else if (k === 7) {
+      for (let i = 0; i < 4; i++) { x.fillStyle = `rgba(78,62,44,${0.15 + i * 0.12})`; mancha(cx, cy, 104 - i * 20, 26, 0.6); x.fill(); }
+      for (let i = 0; i < 120; i++) { x.fillStyle = r() > 0.5 ? 'rgba(50,40,30,0.7)' : 'rgba(110,92,70,0.7)'; x.fillRect(ox + 30 + r() * 196, oy + 30 + r() * 196, 2 + r() * 5, 2 + r() * 5); }
+    } else if (k === 8 || k === 9) {
+      x.fillStyle = k === 8 ? 'rgba(214,210,198,0.85)' : 'rgba(206,168,62,0.85)'; x.fillRect(ox + 6, oy + 6, C - 12, C - 12);
+      x.globalCompositeOperation = 'destination-out';
+      for (let i = 0; i < 140; i++) { x.globalAlpha = 0.25 + r() * 0.6; x.beginPath(); x.ellipse(ox + r() * C, oy + r() * C, 1 + r() * 6, 1 + r() * 4, r() * 3, 0, 6.283); x.fill(); }
+      for (let i = 0; i < 10; i++) { x.globalAlpha = 0.5; x.fillRect(ox + r() * C, oy, 2 + r() * 5, C); }
+      x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1;
+      g.fillStyle = '#a0a0a0'; g.fillRect(ox, oy, C, C);
+    } else if (k === 10) {
+      x.fillStyle = 'rgba(48,47,45,0.75)'; x.beginPath();
+      for (let q = 0; q < 16; q++) { const a = (q / 16) * 6.283; x.lineTo(cx + Math.cos(a) * (96 + r() * 18), cy + Math.sin(a) * (90 + r() * 18)); }
+      x.closePath(); x.fill();
+      for (let i = 0; i < 160; i++) { x.fillStyle = r() > 0.5 ? 'rgba(30,30,30,0.5)' : 'rgba(110,108,104,0.45)'; x.fillRect(ox + 40 + r() * 176, oy + 40 + r() * 176, 2 + r() * 3, 2 + r() * 3); }
+    } else {
+      x.strokeStyle = 'rgba(26,24,22,0.85)';
+      for (let i = 0; i < 3; i++) {
+        let px = ox + 20 + r() * 40, py = oy + 30 + r() * 190; x.lineWidth = 2 + r() * 2;
+        x.beginPath(); x.moveTo(px, py);
+        while (px < ox + C - 20) { px += 10 + r() * 20; py += (r() - 0.5) * 26; x.lineTo(px, py); }
+        x.stroke();
+      }
+      for (let i = 0; i < 18; i++) { x.fillStyle = r() > 0.5 ? 'rgba(84,104,48,0.9)' : 'rgba(110,120,60,0.85)'; x.fillRect(ox + 30 + r() * 196, oy + 30 + r() * 196, 2, 6 + r() * 10); }
+    }
+    x.restore();
+  }
+  const fazer = (c, nome, srgb) => {
+    const t = new THREE.CanvasTexture(c); t.name = nome;
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    return t;
+  };
+  return { map: fazer(cor, 'jp-decal-atlas', true), roughnessMap: fazer(rug, 'jp-decal-rug', false) };
+}
+

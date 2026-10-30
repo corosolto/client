@@ -85,7 +85,7 @@ export const MAPS = {
   invasao_javaporcos: { name: 'Invasão dos Javaporcos', ctfMode: false, objectiveMode: 'horde',
     loadingWall: '/img/loading-javaporcos.webp',
     props: ['carro_batido_scan_03', 'perua_pichada_scan', 'junk_car', 'carro_batido_scan_07',
-      'chevette_sl76', 'arvore_mata', 'shopping_cart', 'capim_touceira_a', 'capim_touceira_b',
+      'chevette_sl76', 'dumpster', 'arvore_mata', 'shopping_cart', 'capim_touceira_a', 'capim_touceira_b',
       'arbusto_mata_a', 'arbusto_mata_b', 'samambaia_mata', 'calathea_mata', 'galhos_secos', 'toco_arvore',
       'tronco_caido', 'pedra_mata', 'saco_lixo', 'caixa_papelao', 'engradado_plastico', 'cadeira_plastico',
       'pneu_velho', 'tambor_metal', 'tampa_bueiro', 'lixeira_metal', 'lata_enferrujada', 'poste_luz_praca',
