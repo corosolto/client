@@ -16,6 +16,7 @@ const ACHATAMENTO = 0.62;          // copa é disco, não bola: proporção medi
 const NAVEGADOR = typeof document !== 'undefined';
 export const FOLHAGEM_URL = '/img/textures/folhagem_mata.webp';
 export const TRONCO_LADOS = 12;
+const HORIZONTE = 240;             // mata impostora além de HALF, para o mapa não flutuar no vazio
 
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler();
 const _p = new THREE.Vector3(), _s = new THREE.Vector3();
@@ -192,6 +193,8 @@ export function construirMata(kit, campo, rnd) {
     root.add(malha);
     return malha;
   };
+  const nCopaMapa = copas.length;
+  horizonte(campo, loc, copas, copaCor, TOM);
   const troncoMesh = add(troncos, troncoGeo, MAT.tronco, 'mata-troncos');
   const casca = new THREE.Color();
   for (let i = 0; i < troncos.length; i++) {
@@ -211,6 +214,7 @@ export function construirMata(kit, campo, rnd) {
   for (const m of [moitaMesh, cipoMesh, matoMesh, pisadaMesh]) if (m) m.userData.nonSolidSurface = true;
   for (const m of [troncoMesh, copaMesh]) if (m) occluders.push(m);
   if (matoMesh) matoMesh.material.side = THREE.DoubleSide;
+  root.add(chaoHorizonte(campo, MAT.grama));
 
 
   const boarEntrances = EIXOS.map((e) => ({
@@ -221,7 +225,7 @@ export function construirMata(kit, campo, rnd) {
   return {
     boarEntrances,
     censo: {
-      arvores: troncos.length, copas: copas.length,
+      arvores: troncos.length, copas: nCopaMapa, copasHorizonte: copas.length - nCopaMapa,
       subbosque: moitas.length + matos.length + cipos.length,
       colisoresTronco: troncosColididos, colisoresParede: paredes,
       trilhaPisada: pisadas.length,
@@ -289,6 +293,48 @@ function cruzadoGeo() {
     g.push(p);
   }
   return mergeGeometries(g);
+}
+
+/* Mata impostora de HALF a HALF + HORIZONTE: só copa, sem tronco nem colisor, no mesmo
+   lote da copa do mapa (zero chamada de desenho a mais). Passo cresce com a distância. */
+function horizonte(campo, r, copas, cores, TOM) {
+  const faixas = [[HALF - 1, HALF + 40, 4.2, 1], [HALF + 40, HALF + HORIZONTE, 9, 2]];
+  for (const [r0, r1, passo, esc] of faixas) {
+    for (let x = -r1; x <= r1; x += passo) {
+      for (let z = -r1; z <= r1; z += passo) {
+        const rr = Math.max(Math.abs(x), Math.abs(z));
+        if (rr < r0 || rr >= r1) continue;
+        const px = x + (r() - 0.5) * passo * 0.7, pz = z + (r() - 0.5) * passo * 0.7;
+        const y0 = campo.amostra(px, pz) - 0.3;
+        const andares = esc > 1 ? [[11 + r() * 5, 3.8 * esc]] : [[4.5 + r() * 3, 3.2], [9 + r() * 5, 3.8]];
+        for (const [h, j] of andares) {
+          const jr = j * (0.8 + r() * 0.5);
+          copas.push(matriz(px + (r() - 0.5), y0 + h, pz + (r() - 0.5), r() * 6.283, jr, jr * 0.7, jr));
+          cores.push(TOM[h > 8 ? 2 : 0].clone().multiplyScalar(0.85 + r() * 0.25));
+        }
+      }
+    }
+  }
+}
+
+/* Chão de 600 m que segue a borda do relevo (amostra satura fora do mapa); por dentro
+   afunda 2 m para baixo do terreno de verdade. */
+function chaoHorizonte(campo, grama) {
+  const mat = new THREE.MeshStandardMaterial({ map: grama.map, color: 0x56653c, roughness: 1, metalness: 0 });
+  const S = 600, n = 120;
+  const geo = new THREE.PlaneGeometry(S, S, n, n);
+  geo.rotateX(-Math.PI / 2);
+  const pos = geo.attributes.position, uv = geo.attributes.uv;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), z = pos.getZ(i);
+    const dentro = Math.max(Math.abs(x), Math.abs(z)) < HALF - 0.5;
+    pos.setY(i, campo.amostra(x, z) - (dentro ? 2 : 0.25));
+    uv.setXY(i, x / 2.4, z / 2.4);
+  }
+  geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, mat);
+  m.name = 'chao-horizonte'; m.receiveShadow = true; m.userData.nonSolidSurface = true;
+  return m;
 }
 
 /* Parede de mata: colunas livres fundidas em caixas LONGAS. A imagem é a mesma (a mata é

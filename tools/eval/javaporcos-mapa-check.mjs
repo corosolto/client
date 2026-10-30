@@ -72,6 +72,8 @@
      MATA4  nenhuma malha `mata-*` é poliedro (icosaedro/dodecaedro/octaedro); a copa é tufo de
             ≥ 8 cartões com alphaTest ≥ 0,3 em DoubleSide; o sub-bosque usa o MESMO material;
             tronco com ≥ 12 lados; ≤ 8 malhas `mata-*`, todas instanciadas (custo de draw call).
+     CHAO2  chão `chao-horizonte` de ≥ 600 m nos dois eixos e ≥ 50 copas impostoras além de
+            HALF + 20 em cada um dos 4 lados.
 
    MUTANTES (cada um tem de deixar a régua VERMELHA):
      mata-furada     derruba a parede de colisor do lado norte  -> MATA1, MATA3
@@ -90,6 +92,7 @@
      luz-laranja     hemisfério volta ao céu 0xc79872            -> LUZ1
      copa-bola       copa volta a IcosahedronGeometry opaca      -> MATA4
      mata-sem-lote   30 copas soltas, uma malha cada             -> MATA4
+     mapa-flutuando  tira o chão do horizonte e a mata impostora -> CHAO2
 
    Uso: node tools/eval/javaporcos-mapa-check.mjs [--mutante=X] [--json-out=arq]
    ============================================================================ */
@@ -100,7 +103,7 @@ const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').spl
 const MUT = arg('mutante');
 const MUTANTES = ['mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta', 'boca-aberta', 'mata-avanca',
   'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto', 'setor-buraco', 'carro-mint',
-  'ceu-chapado', 'luz-laranja', 'copa-bola', 'mata-sem-lote'];
+  'ceu-chapado', 'luz-laranja', 'copa-bola', 'mata-sem-lote', 'mapa-flutuando'];
 if (MUT && !MUTANTES.includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT}. Há: ${MUTANTES.join(', ')}`);
   process.exit(2);
@@ -217,6 +220,11 @@ if (MUT === 'mata-sem-lote') {
     const m = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial());
     m.name = 'mata-copa-solta'; m.position.set(-50 + i * 3, 8, -52); W.root.add(m); m.updateMatrixWorld(true);
   }
+}
+if (MUT === 'mapa-flutuando') {
+  const chao = malhaNomeada('chao-horizonte'), c = malhaNomeada('mata-copa');
+  exige(chao && c && W.censo?.copasHorizonte, 'MUTANTE mapa-flutuando NÃO APLICOU');
+  chao.parent.remove(chao); c.count -= W.censo.copasHorizonte;
 }
 
 /* ------------------------------------------------- varredura a pé (MATA1) */
@@ -759,6 +767,26 @@ regra('MATA4 copa de cartão de folha, tronco redondo e mata em lote', () => {
   relatorio.mata4 = { malhas: malhas.length, trisTufo: tris, ladosTronco: lados, instanciasCopa: copa.count };
   return `${malhas.length} malhas mata-*, tufo de ${tris} tri, alphaTest ${copa.material.alphaTest}, tronco ${lados} lados`;
 });
+regra('CHAO2 o mapa não flutua: chão e mata até o horizonte', () => {
+  const chao = malhaNomeada('chao-horizonte');
+  exige(chao, 'sem chao-horizonte');
+  chao.geometry.computeBoundingBox();
+  const bb = chao.geometry.boundingBox;
+  exige(bb.max.x - bb.min.x >= 600 && bb.max.z - bb.min.z >= 600, `chão do horizonte ${(bb.max.x - bb.min.x).toFixed(0)}×${(bb.max.z - bb.min.z).toFixed(0)} m (piso 600)`);
+  const copa = malhaNomeada('mata-copa');
+  const lados = { N: 0, S: 0, O: 0, L: 0 };
+  const mt = new THREE.Matrix4(), p = new THREE.Vector3();
+  for (let i = 0; i < (copa?.count || 0); i++) {
+    copa.getMatrixAt(i, mt); p.setFromMatrixPosition(mt);
+    if (Math.max(Math.abs(p.x), Math.abs(p.z)) <= 58 + 20) continue;
+    lados[Math.abs(p.z) >= Math.abs(p.x) ? (p.z < 0 ? 'N' : 'S') : (p.x < 0 ? 'O' : 'L')]++;
+  }
+  const pior = Math.min(...Object.values(lados));
+  exige(pior >= 50, `copas além de HALF+20 por lado ${JSON.stringify(lados)} (piso 50): o mapa flutua no vazio`);
+  relatorio.horizonte = lados;
+  return `chão ${(bb.max.x - bb.min.x).toFixed(0)} m, copas além de 78 m ${JSON.stringify(lados)}`;
+});
+
 /* ------------------------------------------------------------------ fecho */
 relatorio.censo = W.censo;
 relatorio.mutante = MUT || null;
