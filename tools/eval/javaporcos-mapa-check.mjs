@@ -67,6 +67,8 @@
    mata de icosaedro, mapa flutuando no vazio na vista alta):
      CEU1   o céu é panorama equirretangular 2:1 em disco (setMapSky), não `THREE.Color`; a
             névoa é neutra (b* ≤ 10) e começa longe (near ≥ 60, far ≥ 200), sem engolir a mata.
+     LUZ1   hemisfério com céu FRIO (b* < 0) e chão de b* ≤ 15: a sombra é iluminada por ele,
+            e céu quente é o que deixava a sombra laranja (b* 17,5 medido).
 
    MUTANTES (cada um tem de deixar a régua VERMELHA):
      mata-furada     derruba a parede de colisor do lado norte  -> MATA1, MATA3
@@ -82,6 +84,7 @@
      setor-buraco    some com um setor                          -> SETOR1
      carro-mint      põe o fusca Mint de volta no catálogo      -> PROPS1
      ceu-chapado     céu volta a `Color` salmão e névoa 38-150   -> CEU1
+     luz-laranja     hemisfério volta ao céu 0xc79872            -> LUZ1
 
    Uso: node tools/eval/javaporcos-mapa-check.mjs [--mutante=X] [--json-out=arq]
    ============================================================================ */
@@ -92,7 +95,7 @@ const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').spl
 const MUT = arg('mutante');
 const MUTANTES = ['mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta', 'boca-aberta', 'mata-avanca',
   'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto', 'setor-buraco', 'carro-mint',
-  'ceu-chapado'];
+  'ceu-chapado', 'luz-laranja'];
 if (MUT && !MUTANTES.includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT}. Há: ${MUTANTES.join(', ')}`);
   process.exit(2);
@@ -197,6 +200,7 @@ if (MUT === 'ceu-chapado') {
   delete jogo.scene.userData.skySource; delete jogo.scene.userData.skyUrl;
   jogo.scene.background = new THREE.Color(0xbb8559); jogo.scene.fog = new THREE.Fog(0xc08b60, 38, 150);
 }
+if (MUT === 'luz-laranja') { exige(W.hemi, 'MUTANTE luz-laranja NÃO APLICOU: sem hemi'); W.hemi.color.set(0xc79872); }
 
 /* ------------------------------------------------- varredura a pé (MATA1) */
 const B = W.bounds;
@@ -708,6 +712,14 @@ regra('CEU1 céu é panorama 2:1 em disco e a névoa não engole a mata', () => 
   exige(fog.near >= 60 && fog.far >= 200, `névoa de ${fog.near} a ${fog.far} m (piso 60 e 200): engole a mata a 14 m da borda`);
   relatorio.ceu = { url: src.url, w, h, nevoaB: +b.toFixed(1), near: fog.near, far: fog.far };
   return `${src.url} ${w}×${h}, névoa b* ${b.toFixed(1)} de ${fog.near} a ${fog.far} m`;
+});
+regra('LUZ1 hemisfério de céu frio: a sombra não sai laranja', () => {
+  exige(W.hemi?.isHemisphereLight, 'mundo sem hemi');
+  const bc = labB(W.hemi.color), bg = labB(W.hemi.groundColor);
+  exige(bc < 0, `céu do hemisfério com b* ${bc.toFixed(1)} (teto 0): luz de sombra quente`);
+  exige(bg <= 15, `chão do hemisfério com b* ${bg.toFixed(1)} (teto 15)`);
+  relatorio.luz = { hemiCeuB: +bc.toFixed(1), hemiChaoB: +bg.toFixed(1), sol: W.sun?.intensity };
+  return `hemi céu b* ${bc.toFixed(1)}, chão b* ${bg.toFixed(1)}`;
 });
 /* ------------------------------------------------------------------ fecho */
 relatorio.censo = W.censo;

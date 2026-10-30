@@ -226,7 +226,7 @@ export function buildInvasaoJavaporcos(scene, T) {
   // ── Luz e céu do entardecer medido nas referências de arte.
   setMapSky(scene, T, '/img/textures/sky_javaporcos.webp', 0x9a8a80);
   scene.fog = new THREE.Fog(0x9a8a80, 70, 260);
-  const sun = new THREE.DirectionalLight(0xffd3a0, 2.4);
+  const sun = new THREE.DirectionalLight(0xffc58a, 2.8);
   sun.position.set(-46, 22, 34);
   sun.castShadow = true;
   const sc = sun.shadow.camera;
@@ -234,7 +234,7 @@ export function buildInvasaoJavaporcos(scene, T) {
   sc.updateProjectionMatrix();
   sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.035;
   scene.add(sun); scene.add(sun.target);
-  const hemi = new THREE.HemisphereLight(0xc79872, 0x3a3328, 0.82);
+  const hemi = new THREE.HemisphereLight(0x8fa2b8, 0x4a4036, 0.9);
   scene.add(hemi);
   aplicaSombraSol(sun);
 
