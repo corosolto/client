@@ -228,11 +228,10 @@ o domínio calculado por observação com as mesmas constantes):
 Becos medidos com 4 becos sintéticos nas vielas do mapa de 29/10; o número real depende
 do `world.horda.becos` do mapa novo.
 
-Primeira leitura no mapa novo em obras (30/10, `world.horda` com 3 frentes e 4 becos de
-2,5 m; setores ainda no fallback 4×4), 3 sementes: a semente 11 SEGUROU as 8 ondas
-(10,8 min, domínio final 41%); 7 e 23 caíram nas ondas 6 e 4 (6,8 e 5,3 min). Beco:
-23–30% dos bichos das ondas ≥ 3 nas duas primeiras, 0% na 11 — a conferir quando o
-layout fechar.
+No mapa novo com o contrato (commit 340a87a: 3 frentes, 4 becos de 2,5 m, 9 setores),
+5 sementes: derrota nas ondas 4–6 aos 5,3–8,2 min, cada frente com a mesma cota (±1) e
+23–34% dos bichos das ondas ≥ 3 entrando por beco. Cai um pouco antes que no mapa de
+29/10 porque 9 setores pesam mais cada um que 16.
 
 ## Cotas do relevo
 
