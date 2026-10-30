@@ -13,6 +13,10 @@ const COLUNA = 0.5;
 const FOLGA_TRILHA = 2.9;
 const ACHATAMENTO = 0.62;          // copa é disco, não bola: proporção medida nas referências
 
+const NAVEGADOR = typeof document !== 'undefined';
+export const FOLHAGEM_URL = '/img/textures/folhagem_mata.webp';
+export const TRONCO_LADOS = 12;
+
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler();
 const _p = new THREE.Vector3(), _s = new THREE.Vector3();
 
@@ -41,13 +45,17 @@ function ladoDe(x, z) {
 
 export function construirMata(kit, campo, rnd) {
   const { root, colliders, occluders, MAT } = kit;
-  const troncoGeo = new THREE.CylinderGeometry(0.16, 0.34, 1, 7, 1, true);
-  const copaGeo = new THREE.IcosahedronGeometry(1, 1);
-  const moitaGeo = new THREE.IcosahedronGeometry(1, 0);
+  const troncoGeo = new THREE.CylinderGeometry(0.16, 0.34, 1, TRONCO_LADOS, 1, true);
+  const copaGeo = tufoGeo(14, 0x51a7);
+  const moitaGeo = cruzadoGeo();
+  const folha = materialFolhagem(MAT);
+  const loc = semente(0x3f1d);
   const cipoGeo = new THREE.CylinderGeometry(0.05, 0.035, 1, 4, 1, true);
   const matoGeo = new THREE.PlaneGeometry(1, 1);
 
-  const troncos = [], copaA = [], copaB = [], copaC = [], moitas = [], cipos = [], matos = [];
+  const troncos = [], copas = [], copaCor = [], moitas = [], cipos = [], matos = [];
+  const TOM = [new THREE.Color(0.54, 0.66, 0.7), new THREE.Color(0.8, 0.92, 0.96), new THREE.Color(0.98, 1.1, 1.14)];
+  const FICA = [0.55, 0.8, 1];       // fração de tufo por andar: o dossel fechado não deixava céu nenhum
   let troncosColididos = 0;
   /* A PAREDE vem antes das árvores de propósito: tronco que NÃO está dentro de uma caixa
      de parede é tronco que o jogador alcança, e tronco alcançável sem colisor é MAP1. */
@@ -79,14 +87,16 @@ export function construirMata(kit, campo, rnd) {
 
       /* Copa ACHATADA (0,62 de proporção) e com a base SEMPRE acima de 2,4 m: a primeira
          versão alongava a copa no Y e ela descia até o chão — a câmera andava dentro dela. */
-      const copas = [[0.66, 2.35], [0.82, 1.85], [0.97, 1.2]];
-      const destino = [copaA, copaB, copaC];
+      const andares = [[0.66, 2.35], [0.82, 1.85], [0.97, 1.2]];
       for (let c = 0; c < 3; c++) {
-        const [frac, raio] = copas[c];
+        const [frac, raio] = andares[c];
         const jr = raio * (0.82 + rnd() * 0.42);
         const cy = Math.max(y0 + 2.4 + jr * ACHATAMENTO, y0 + alto * frac);
-        destino[c].push(matriz(px + (rnd() - 0.5) * 0.9, cy, pz + (rnd() - 0.5) * 0.9,
-          rnd() * Math.PI * 2, jr, jr * ACHATAMENTO, jr));
+        const mt = matriz(px + (rnd() - 0.5) * 0.9, cy, pz + (rnd() - 0.5) * 0.9,
+          rnd() * Math.PI * 2, jr, jr * ACHATAMENTO, jr);
+        if (loc() > FICA[c]) continue;
+        copas.push(mt);
+        copaCor.push(TOM[c].clone().multiplyScalar(0.9 + loc() * 0.2));
       }
 
       /* Meia-extensão maior que o raio do pé do cone: foi tronco de 0,31 m com colisor
@@ -115,7 +125,7 @@ export function construirMata(kit, campo, rnd) {
       let escala = 0.75 + rnd() * 1.05;
       if (vp - escala * 1.25 < MATA_R - 0.6) escala = Math.max(0.35, (vp - MATA_R + 0.6) / 1.25);
       const ryM = rnd() * 6.283;
-      if (!(kit.orlaGLB && vp < MATA_R + 0.8)) moitas.push(matriz(px, y0 + escala * 0.55, pz, ryM, escala * 1.25, escala * 0.95, escala * 1.25));
+      if (!(kit.orlaGLB && vp < MATA_R + 0.8)) moitas.push(matriz(px, y0 - 0.08, pz, ryM, escala * 1.5, escala * 1.45, escala * 1.5));
       if (rnd() < 0.5) {
         const lado = rnd() * 6.283;
         matos.push(matriz(px + Math.cos(lado) * 0.7, y0 + 0.62, pz + Math.sin(lado) * 0.7, lado, 1.5, 1.25, 1));
@@ -139,8 +149,9 @@ export function construirMata(kit, campo, rnd) {
       const y0 = campo.amostra(ax, az);
       for (const s of [-1, 1]) {
         const jr = 2.3 + rnd() * 0.9;
-        copaB.push(matriz(ax + s * (1.4 + rnd()), y0 + 5.0 + rnd() * 1.4, az + (rnd() - 0.5) * 1.6,
+        copas.push(matriz(ax + s * (1.4 + rnd()), y0 + 5.0 + rnd() * 1.4, az + (rnd() - 0.5) * 1.6,
           rnd() * 6.283, jr, jr * 0.62, jr));
+        copaCor.push(TOM[1].clone());
       }
     }
   }
@@ -182,18 +193,23 @@ export function construirMata(kit, campo, rnd) {
     return malha;
   };
   const troncoMesh = add(troncos, troncoGeo, MAT.tronco, 'mata-troncos');
-  const copa1 = add(copaA, copaGeo, MAT.copaEscura, 'mata-copa-baixa');
-  const copa2 = add(copaB, copaGeo, MAT.copa, 'mata-copa-media');
-  const copa3 = add(copaC, copaGeo, MAT.copaClara, 'mata-copa-alta');
-  const moitaMesh = add(moitas, moitaGeo, MAT.moita, 'mata-subbosque', false);
+  const casca = new THREE.Color();
+  for (let i = 0; i < troncos.length; i++) {
+    const v = 0.62 + loc() * 0.5, cinza = loc() * 0.25;
+    troncoMesh.setColorAt(i, casca.setRGB(v * (1 + cinza * 0.2), v * (1 + cinza * 0.45), v * (1 + cinza * 0.7)));
+  }
+  troncoMesh.instanceColor.needsUpdate = true;
+  const copaMesh = add(copas, copaGeo, folha, 'mata-copa');
+  for (let i = 0; i < copaCor.length; i++) copaMesh.setColorAt(i, copaCor[i]);
+  copaMesh.instanceColor.needsUpdate = true;
+  const moitaMesh = add(moitas, moitaGeo, folha, 'mata-subbosque', false);
   const cipoMesh = add(cipos, cipoGeo, MAT.cipo, 'mata-cipo', false);
   const matoMesh = add(matos, matoGeo, MAT.mato, 'mata-capim', false);
   const pisadaGeo = new THREE.PlaneGeometry(1, 1);
   pisadaGeo.rotateX(-Math.PI / 2);
   const pisadaMesh = add(pisadas, pisadaGeo, MAT.terraTrilha, 'mata-trilha-pisada', false);
   for (const m of [moitaMesh, cipoMesh, matoMesh, pisadaMesh]) if (m) m.userData.nonSolidSurface = true;
-  for (const m of [troncoMesh, copa1, copa2, copa3]) if (m) occluders.push(m);
-  for (const m of [copa1, copa3]) if (m) m.castShadow = false;   // a copa média já projeta a sombra da mata
+  for (const m of [troncoMesh, copaMesh]) if (m) occluders.push(m);
   if (matoMesh) matoMesh.material.side = THREE.DoubleSide;
 
 
@@ -205,13 +221,74 @@ export function construirMata(kit, campo, rnd) {
   return {
     boarEntrances,
     censo: {
-      arvores: troncos.length, copas: copaA.length + copaB.length + copaC.length,
+      arvores: troncos.length, copas: copas.length,
       subbosque: moitas.length + matos.length + cipos.length,
       colisoresTronco: troncosColididos, colisoresParede: paredes,
       trilhaPisada: pisadas.length,
-      instanciados: [troncoMesh, copa1, copa2, copa3, moitaMesh, cipoMesh, matoMesh, pisadaMesh].filter(Boolean).length,
+      instanciados: [troncoMesh, copaMesh, moitaMesh, cipoMesh, matoMesh, pisadaMesh].filter(Boolean).length,
     },
   };
+}
+
+const semente = (s) => () => ((s = Math.imul(s, 1664525) + 1013904223 >>> 0) / 4294967296);
+
+/* Folhagem em cartão alfa sobre atlas de folhas escaneadas (Poly Haven CC0): metade
+   esquerda é tufo de copa, a direita é moita. Um material para copa e sub-bosque. */
+let _folha = null;
+function materialFolhagem(MAT) {
+  if (_folha) return _folha;
+  let map = MAT.copa.map;
+  if (NAVEGADOR) {
+    map = new THREE.TextureLoader().load(FOLHAGEM_URL);
+    map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 4;
+  }
+  _folha = new THREE.MeshStandardMaterial({ map, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.82, metalness: 0,
+    emissive: 0x1c2412, emissiveMap: map });   // luz que atravessa a folha: sem ela o dossel por baixo é preto
+  _folha.name = 'mata-folhagem';
+  _folha.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>',
+      THREE.ShaderChunk.normal_fragment_begin.replace('gl_FrontFacing ? 1.0 : - 1.0', '1.0'));
+  };
+  _folha.customProgramCacheKey = () => 'jp-folhagem-sem-verso';
+  return _folha;
+}
+
+/* Tufo de copa: n cartões virados para fora de uma bola unitária, normal esférica puxada
+   para cima (a copa recebe o céu por dentro em vez de virar teto preto). */
+function tufoGeo(n, s) {
+  const r = semente(s), g = [];
+  const d = new THREE.Vector3(), nrm = new THREE.Vector3();
+  for (let k = 0; k < n; k++) {
+    const y = k === 0 ? 1 : 1 - 1.75 * ((k + 0.5) / n), rr = Math.sqrt(Math.max(0, 1 - y * y));
+    const a = k * 2.39996 + r() * 0.6;
+    d.set(Math.cos(a) * rr, y, Math.sin(a) * rr).normalize();
+    const p = new THREE.PlaneGeometry(1.25, 1.25);
+    p.rotateZ(r() * 6.283);
+    p.lookAt(d);
+    p.translate(d.x * 0.5, d.y * 0.5, d.z * 0.5);
+    const uv = p.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) * 0.5);
+    nrm.copy(d).add(new THREE.Vector3(0, 1.2, 0)).normalize();
+    const no = p.attributes.normal;
+    for (let i = 0; i < no.count; i++) no.setXYZ(i, nrm.x, nrm.y, nrm.z);
+    g.push(p);
+  }
+  return mergeGeometries(g);
+}
+
+/* Moita: 3 cartões em pé a 60°, base no chão, metade direita do atlas. */
+function cruzadoGeo() {
+  const g = [];
+  for (let k = 0; k < 3; k++) {
+    const p = new THREE.PlaneGeometry(1, 1);
+    p.translate(0, 0.5, 0); p.rotateY((k / 3) * Math.PI);
+    const uv = p.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setX(i, 0.5 + uv.getX(i) * 0.5);
+    const no = p.attributes.normal;
+    for (let i = 0; i < no.count; i++) no.setXYZ(i, 0, 1, 0);
+    g.push(p);
+  }
+  return mergeGeometries(g);
 }
 
 /* Parede de mata: colunas livres fundidas em caixas LONGAS. A imagem é a mesma (a mata é

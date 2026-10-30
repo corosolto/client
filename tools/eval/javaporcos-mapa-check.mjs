@@ -69,6 +69,9 @@
             névoa é neutra (b* ≤ 10) e começa longe (near ≥ 60, far ≥ 200), sem engolir a mata.
      LUZ1   hemisfério com céu FRIO (b* < 0) e chão de b* ≤ 15: a sombra é iluminada por ele,
             e céu quente é o que deixava a sombra laranja (b* 17,5 medido).
+     MATA4  nenhuma malha `mata-*` é poliedro (icosaedro/dodecaedro/octaedro); a copa é tufo de
+            ≥ 8 cartões com alphaTest ≥ 0,3 em DoubleSide; o sub-bosque usa o MESMO material;
+            tronco com ≥ 12 lados; ≤ 8 malhas `mata-*`, todas instanciadas (custo de draw call).
 
    MUTANTES (cada um tem de deixar a régua VERMELHA):
      mata-furada     derruba a parede de colisor do lado norte  -> MATA1, MATA3
@@ -85,6 +88,8 @@
      carro-mint      põe o fusca Mint de volta no catálogo      -> PROPS1
      ceu-chapado     céu volta a `Color` salmão e névoa 38-150   -> CEU1
      luz-laranja     hemisfério volta ao céu 0xc79872            -> LUZ1
+     copa-bola       copa volta a IcosahedronGeometry opaca      -> MATA4
+     mata-sem-lote   30 copas soltas, uma malha cada             -> MATA4
 
    Uso: node tools/eval/javaporcos-mapa-check.mjs [--mutante=X] [--json-out=arq]
    ============================================================================ */
@@ -95,7 +100,7 @@ const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').spl
 const MUT = arg('mutante');
 const MUTANTES = ['mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta', 'boca-aberta', 'mata-avanca',
   'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto', 'setor-buraco', 'carro-mint',
-  'ceu-chapado', 'luz-laranja'];
+  'ceu-chapado', 'luz-laranja', 'copa-bola', 'mata-sem-lote'];
 if (MUT && !MUTANTES.includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT}. Há: ${MUTANTES.join(', ')}`);
   process.exit(2);
@@ -196,11 +201,23 @@ if (MUT === 'beco-aberto') {
   }
 }
 if (MUT === 'setor-buraco') { exige(W.horda?.setores?.length, 'MUTANTE setor-buraco NÃO APLICOU'); W.horda.setores.shift(); }
+const malhaNomeada = (nome) => { let m = null; W.root.traverse((o) => { if (o.name === nome) m = o; }); return m; };
 if (MUT === 'ceu-chapado') {
   delete jogo.scene.userData.skySource; delete jogo.scene.userData.skyUrl;
   jogo.scene.background = new THREE.Color(0xbb8559); jogo.scene.fog = new THREE.Fog(0xc08b60, 38, 150);
 }
 if (MUT === 'luz-laranja') { exige(W.hemi, 'MUTANTE luz-laranja NÃO APLICOU: sem hemi'); W.hemi.color.set(0xc79872); }
+if (MUT === 'copa-bola') {
+  const c = malhaNomeada('mata-copa');
+  exige(c, 'MUTANTE copa-bola NÃO APLICOU: sem mata-copa');
+  c.geometry = new THREE.IcosahedronGeometry(1, 1); c.material = new THREE.MeshStandardMaterial();
+}
+if (MUT === 'mata-sem-lote') {
+  for (let i = 0; i < 30; i++) {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial());
+    m.name = 'mata-copa-solta'; m.position.set(-50 + i * 3, 8, -52); W.root.add(m); m.updateMatrixWorld(true);
+  }
+}
 
 /* ------------------------------------------------- varredura a pé (MATA1) */
 const B = W.bounds;
@@ -720,6 +737,27 @@ regra('LUZ1 hemisfério de céu frio: a sombra não sai laranja', () => {
   exige(bg <= 15, `chão do hemisfério com b* ${bg.toFixed(1)} (teto 15)`);
   relatorio.luz = { hemiCeuB: +bc.toFixed(1), hemiChaoB: +bg.toFixed(1), sol: W.sun?.intensity };
   return `hemi céu b* ${bc.toFixed(1)}, chão b* ${bg.toFixed(1)}`;
+});
+regra('MATA4 copa de cartão de folha, tronco redondo e mata em lote', () => {
+  const POLI = /Icosahedron|Dodecahedron|Octahedron|Tetrahedron/;
+  const malhas = [];
+  W.root.traverse((o) => { if (o.isMesh && /^mata-/.test(o.name)) malhas.push(o); });
+  const poli = malhas.filter((m) => POLI.test(m.geometry?.type || ''));
+  exige(!poli.length, `${poli.map((m) => `${m.name} (${m.geometry.type})`).join(', ')}: faceta de poliedro`);
+  const copa = malhas.find((m) => m.name === 'mata-copa'), sub = malhas.find((m) => m.name === 'mata-subbosque');
+  exige(copa?.isInstancedMesh, 'sem mata-copa instanciada');
+  const g = copa.geometry, tris = (g.index ? g.index.count : g.attributes.position.count) / 3;
+  exige(tris >= 16, `tufo da copa com ${tris} triângulos (piso 16 = 8 cartões)`);
+  exige((copa.material.alphaTest || 0) >= 0.3 && copa.material.side === THREE.DoubleSide,
+    `copa sem recorte de folha (alphaTest ${copa.material.alphaTest}, side ${copa.material.side})`);
+  exige(sub && sub.material === copa.material, 'sub-bosque com material próprio: cartão em poucos materiais');
+  const tronco = malhas.find((m) => m.name === 'mata-troncos');
+  const lados = tronco?.geometry?.parameters?.radialSegments || 0;
+  exige(lados >= 12, `tronco com ${lados} lados (piso 12)`);
+  const soltas = malhas.filter((m) => !m.isInstancedMesh);
+  exige(malhas.length <= 8 && !soltas.length, `${malhas.length} malhas mata-* (teto 8), ${soltas.length} fora de lote`);
+  relatorio.mata4 = { malhas: malhas.length, trisTufo: tris, ladosTronco: lados, instanciasCopa: copa.count };
+  return `${malhas.length} malhas mata-*, tufo de ${tris} tri, alphaTest ${copa.material.alphaTest}, tronco ${lados} lados`;
 });
 /* ------------------------------------------------------------------ fecho */
 relatorio.censo = W.censo;
