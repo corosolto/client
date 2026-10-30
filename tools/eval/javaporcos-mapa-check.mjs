@@ -71,6 +71,8 @@
             e céu quente é o que deixava a sombra laranja (b* 17,5 medido). Rodada 4 (crítico
             30/10: "mata ciano, cena lavada" com 0x98b0d0 a 1,7): céu b* entre -15 e -6, chão
             b* ≤ 10 e intensidade 0,85–1,1 (copa 149° → 140°, ΔL sombra/sol do asfalto 10 → 16).
+            Rodada 5 (crítico 30/10: "mapa escuro", beco-n L* 27 → 17,6 com 0,95): intensidade
+            1,25–1,45 com as mesmas cores (1,35: beco-n 21, ΔL sombra/sol 13, copa 139°).
      MATA4  nenhuma malha `mata-*` é poliedro (icosaedro/dodecaedro/octaedro); a copa é tufo de
             ≥ 8 cartões com alphaTest ≥ 0,3 em DoubleSide; o sub-bosque usa o MESMO material;
             tronco com ≥ 12 lados; ≤ 8 malhas `mata-*`, todas instanciadas (custo de draw call).
@@ -93,6 +95,7 @@
      ceu-chapado     céu volta a `Color` salmão e névoa 38-150   -> CEU1
      luz-laranja     hemisfério volta ao céu 0xc79872            -> LUZ1
      hemi-ciano      hemisfério volta a 0x98b0d0/0x5a5856 a 1,7  -> LUZ1
+     hemi-escuro     hemisfério volta a 0,95 (beco-n L* 17,6)    -> LUZ1
      copa-bola       copa volta a IcosahedronGeometry opaca      -> MATA4
      mata-sem-lote   30 copas soltas, uma malha cada             -> MATA4
      mapa-flutuando  tira o chão do horizonte e a mata impostora -> CHAO2
@@ -104,7 +107,7 @@ import { THREE, initTextures, bootGame } from './harness.mjs';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutante');
-const MUTANTES = ['hemi-ciano', 'mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta', 'boca-aberta', 'mata-avanca',
+const MUTANTES = ['hemi-ciano', 'hemi-escuro', 'mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta', 'boca-aberta', 'mata-avanca',
   'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto', 'setor-buraco', 'carro-mint',
   'ceu-chapado', 'luz-laranja', 'copa-bola', 'mata-sem-lote', 'mapa-flutuando'];
 const CIDADE = await import('./javaporcos-cidade-regras.mjs');   // ICO1, JANELA1, CARRO1, POSTE1, DECAL1
@@ -216,6 +219,7 @@ if (MUT === 'ceu-chapado') {
 }
 if (MUT === 'luz-laranja') { exige(W.hemi, 'MUTANTE luz-laranja NÃO APLICOU: sem hemi'); W.hemi.color.set(0xc79872); }
 if (MUT === 'hemi-ciano') { exige(W.hemi, 'MUTANTE hemi-ciano NÃO APLICOU: sem hemi'); W.hemi.color.set(0x98b0d0); W.hemi.groundColor.set(0x5a5856); W.hemi.intensity = 1.7; }
+if (MUT === 'hemi-escuro') { exige(W.hemi, 'MUTANTE hemi-escuro NÃO APLICOU: sem hemi'); W.hemi.intensity = 0.95; }
 if (MUT === 'copa-bola') {
   const c = malhaNomeada('mata-copa');
   exige(c, 'MUTANTE copa-bola NÃO APLICOU: sem mata-copa');
@@ -750,7 +754,8 @@ regra('LUZ1 hemisfério de céu frio: a sombra não sai laranja', () => {
   exige(bc >= -15 && bc <= -6, `céu do hemisfério com b* ${bc.toFixed(1)} (faixa -15 a -6): abaixo a copa vira ciano`);
   exige(bg <= 10, `chão do hemisfério com b* ${bg.toFixed(1)} (teto 10)`);
   const i = W.hemi.intensity;
-  exige(i >= 0.85 && i <= 1.1, `hemisfério a ${i} (faixa 0,85–1,1): acima lava a cena e a sombra some`);
+  exige(i >= 1.25, `hemisfério a ${i} (mínimo 1,25): abaixo o beco cai a L* 18 e metade dele fica abaixo de L* 15`);
+  exige(i <= 1.45, `hemisfério a ${i} (teto 1,45): acima lava a cena e a sombra some`);
   relatorio.luz = { hemiCeuB: +bc.toFixed(1), hemiChaoB: +bg.toFixed(1), hemiInt: i, sol: W.sun?.intensity };
   return `hemi céu b* ${bc.toFixed(1)}, chão b* ${bg.toFixed(1)}, intensidade ${i}`;
 });
