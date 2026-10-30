@@ -55,6 +55,8 @@
      BARRA1  o material `barra-reboco` (rodapé e barra) usa o reboco descascado procedural
              (`jp-reboco-desc-*`), albedo branco e relevo com normalScale ≥ 2: o
              peeling_painted_wall tem sdL 1,8 e na sombra o rodapé lia flat8 99,7%.
+     ORC2    telhado de 4 águas não fica solto: nenhuma malha ConeGeometry de 4 lados e ≤ 3
+             malhas `telhado-lote` (eram 25 chamadas; a alta-diag estava em 999 de 1.000).
 
    RODADA 4 (crítico 6/10: "rua do centro lê como pátio", sem lixo ao longo da guia):
      ORC1    o GLB saco_lixo tem ~2,7 mil triângulos e a caixa ~3,2 mil: com os montes do
@@ -75,6 +77,7 @@
      janela-tabua    janela apagada volta a emitir 0x4a4238                -> JANELA3
      muro-escuro     muro volta ao albedo 0xc4c0b8                         -> MURO1
      barra-lisa      rodapé volta ao mapa liso, sem relevo                 -> BARRA1
+     telhado-solto   um cone de telhado por casa de novo                   -> ORC2
      saco-ovo        tira a escala por eixo e a inclinação de todo saco      -> SACO1
      guia-limpa      some com o lixo de guia da malha de decalque             -> RUA2
      saco-longe      corte do saco volta a 38 m no fonte lido                 -> ORC1
@@ -86,7 +89,7 @@
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -399,6 +402,18 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     const comp = 30 - (AV + CAL + 0.5), dens = conta.map((c) => c / comp);
     exige(dens.every((v) => v >= 0.8), `lixo por metro de guia: ${dens.map((v) => v.toFixed(2)).join(', ')} (piso 0,8)`);
     return `lixo por metro em ${GUIAS.length} trechos de guia: ${dens.map((v) => v.toFixed(2)).join(', ')}`;
+  });
+
+  if (MUT === 'telhado-solto') {
+    const l = porNome('telhado-lote'); exige(l, 'MUTANTE telhado-solto NÃO APLICOU');
+    for (let i = 0; i < 25; i++) { const c = new THREE.Mesh(new THREE.ConeGeometry(4, 1.2, 4), l.material); c.position.set(-30 + i * 2.4, 6, 20); W.root.add(c); }
+  }
+  regra('ORC2 telhados em lote, não um por casa', () => {
+    const soltos = malhas().filter((o) => o.geometry?.type === 'ConeGeometry' && o.geometry.parameters.radialSegments === 4);
+    const lotes = malhas().filter((o) => o.name === 'telhado-lote');
+    exige(!soltos.length, `${soltos.length} telhado(s) de 4 águas soltos: uma chamada de desenho cada`);
+    exige(lotes.length >= 1 && lotes.length <= 3, `${lotes.length} lotes de telhado (faixa 1–3)`);
+    return `${lotes.length} lotes de telhado, ${lotes.reduce((n, o) => n + o.geometry.attributes.position.count, 0)} vértices`;
   });
 
   regra('ORC1 saco e caixa GLB somem antes de 28 m', () => {
