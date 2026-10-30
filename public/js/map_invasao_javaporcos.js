@@ -17,13 +17,14 @@ const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 const GLB_ON = QP.get('glb') !== '0';
 
-/* Carros: scan e lataria de 1 a 5 primitivas (cada primitiva vira uma chamada de desenho
-   no lote); [id, comprimento, altura]. saveiro_robust e byd_dolphin ficam fora (licença NC). */
-const CARROS_GLB = [['junk_car', 4.0, 1.4], ['junk_car', 4.0, 1.4], ['carro_batido_scan_03', 4.3, 1.35], ['junk_car', 4.0, 1.4],
-  ['chevette_sl76', 4.2, 1.35], ['junk_car', 4.0, 1.4], ['perua_pichada_scan', 4.35, 1.5], ['junk_car', 4.0, 1.4], ['carro_batido_scan_07', 4.0, 1.4]];
+/* Carros: só scan (1 primitiva) e junk_car (5); [id, comprimento, altura]. Licença NC
+   (saveiro_robust, byd_dolphin, gol g2) fica fora; chevette custava 12 materiais. */
+const CARROS_GLB = [['junk_car', 4.0, 1.4], ['carro_batido_scan_03', 4.3, 1.35], ['junk_car', 4.0, 1.4], ['junk_car', 4.0, 1.4],
+  ['perua_pichada_scan', 4.35, 1.5], ['junk_car', 4.0, 1.4], ['junk_car', 4.0, 1.4], ['carro_batido_scan_07', 4.0, 1.4]];
+export const CARROS_MIN = 16;
 const SOLIDOS_GLB = new Set([...CARROS_GLB.map((c) => c[0]), 'arvore_mata', 'tronco_caido', 'toco_arvore', 'pedra_mata', 'poste_luz_praca']);
 export const INVASAO_JAVAPORCOS_PROPS = ['carro_batido_scan_03', 'perua_pichada_scan', 'junk_car', 'carro_batido_scan_07',
-  'chevette_sl76', 'dumpster', 'porta_aco', 'arvore_mata', 'shopping_cart',
+  'dumpster', 'porta_aco', 'arvore_mata', 'shopping_cart',
   'capim_touceira_a', 'capim_touceira_b', 'arbusto_mata_a', 'arbusto_mata_b', 'samambaia_mata', 'calathea_mata',
   'galhos_secos', 'toco_arvore', 'tronco_caido', 'pedra_mata', 'saco_lixo', 'caixa_papelao', 'engradado_plastico',
   'cadeira_plastico', 'pneu_velho', 'tambor_metal', 'tampa_bueiro', 'lixeira_metal', 'lata_enferrujada',
@@ -331,20 +332,36 @@ function carros(kit, campo, rnd, PB) {
   const vagas = [];
   for (let t = -30; t <= 30; t += 7.5) {
     if (Math.abs(t) < AV + 3) continue;
-    for (const s of [-1, 1]) { vagas.push([s * (AV - 1.1), t, 0]); vagas.push([t, s * (AV - 1.1), Math.PI / 2]); }
+    for (const s of [-1, 1]) { vagas.push([s * (AV - 1.2), t, 0]); vagas.push([t, s * (AV - 1.2), Math.PI / 2]); }
   }
+  /* Os sorteios do `rnd` ficam na mesma ordem de antes (a mata vem depois e lê o mesmo
+     gerador); quem completa as vagas até CARROS_MIN é um gerador próprio. */
+  let semVaga = 0x0ca770;
+  const meu = () => ((semVaga = Math.imul(semVaga, 1664525) + 1013904223 >>> 0) / 4294967296);
+  const sorteio = vagas.map(() => { const v = rnd(); return v > 0.38 ? null : [rnd(), rnd()]; });
+  const braco = ([x, z, ry]) => (ry ? (x < 0 ? 'O' : 'L') : (z < 0 ? 'N' : 'S'));
+  for (const b of ['N', 'S', 'O', 'L']) {
+    const doBraco = vagas.map((v, i) => i).filter((i) => braco(vagas[i]) === b);
+    const livres = doBraco.filter((i) => !sorteio[i]).sort(() => meu() - 0.5);
+    const falta = CARROS_MIN / 4 - doBraco.filter((i) => sorteio[i]).length;
+    for (const i of livres.slice(0, Math.max(0, falta))) sorteio[i] = [meu(), meu()];
+  }
+  const PC = PB ? new PropBatch({ bucket: 40 }) : null;
+  const lista = (kit.root.userData.carros = []);
   let n = 0;
-  for (const [x, z, ry] of vagas) {
-    if (rnd() > 0.38) continue;
+  for (let i = 0; i < vagas.length; i++) {
+    if (!sorteio[i]) continue;
+    const [x, z, ry] = vagas[i];
     const y = campo.amostra(x, z);
-    const giro = ry + (rnd() - 0.5) * 0.18;
-    const cor = [0x9c9a95, 0x7d4a3c, 0x4e5d6b, 0xbfb49a, 0x53504c][(rnd() * 5) | 0];
+    const giro = ry + (sorteio[i][0] - 0.5) * 0.08;
+    const cor = [0x9c9a95, 0x7d4a3c, 0x4e5d6b, 0xbfb49a, 0x53504c][(sorteio[i][1] * 5) | 0];
     const cs = Math.cos(giro), sn = Math.sin(giro);
     const desloca = (ox, oz) => [x + ox * cs + oz * sn, z - ox * sn + oz * cs];
-    const glb = PB && CARROS_GLB[(n * 2 + 1) % CARROS_GLB.length];
-    if (glb && hasProp(glb[0])) {
+    const glb = CARROS_GLB[n % CARROS_GLB.length];
+    lista.push({ id: glb[0], x, z, ry: giro });
+    if (PC && hasProp(glb[0])) {
       kit.colisor(x, z, 0.86, 2.05, y + 0.26, y + 0.98, giro);
-      PB.add(glb[0], { x, z, y, targetLen: glb[1], targetH: glb[2], ry: giro + eixoCarro(glb[0]) + (n % 2) * Math.PI });
+      PC.add(glb[0], { x, z, y, targetLen: glb[1], targetH: glb[2], ry: giro + eixoCarro(glb[0]) + (n % 2) * Math.PI });
       n++;
       continue;
     }
@@ -363,6 +380,7 @@ function carros(kit, campo, rnd, PB) {
     }
     n++;
   }
+  if (PC) PC.build(kit.root);
   return n;
 }
 
