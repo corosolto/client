@@ -60,6 +60,8 @@
      FORRO1  o beiral visto de baixo é forro de tábua ("beiral tábua preta"): cada lote de
              telhado tem 2 grupos, o segundo com o mapa `jp-madeira` e cor de vértice ≥ 1,4
              (albedo L* ~50 em vez dos 40 da madeira crua), e nunca o material da telha.
+     LAMP1   lâmpada do beco com ponto quente ("SpotLight virado pro chão, sem ponto quente"):
+             cone de sódio a ≥ 30 e lente `poste-lente` com emissivo 0xffc48a a ≥ 4.
 
    RODADA 4 (crítico 6/10: "rua do centro lê como pátio", sem lixo ao longo da guia):
      ORC1    o GLB saco_lixo tem ~2,7 mil triângulos e a caixa ~3,2 mil: com os montes do
@@ -82,6 +84,7 @@
      barra-lisa      rodapé volta ao mapa liso, sem relevo                 -> BARRA1
      telhado-solto   um cone de telhado por casa de novo                   -> ORC2
      beiral-preto    tampa de baixo do telhado volta à telha                -> FORRO1
+     lampada-fraca   cone volta a 20 e lente a 0xffb070 a 3                 -> LAMP1
      saco-ovo        tira a escala por eixo e a inclinação de todo saco      -> SACO1
      guia-limpa      some com o lixo de guia da malha de decalque             -> RUA2
      saco-longe      corte do saco volta a 38 m no fonte lido                 -> ORC1
@@ -93,7 +96,7 @@
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'beiral-preto', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'beiral-preto', 'lampada-fraca', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -448,6 +451,20 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     const longe = cortes.filter(([, , d]) => d > 28);
     exige(!longe.length, longe.map(([a, id, d]) => `${id} a ${d} m em ${a}`).join(', ') + ' (teto 28)');
     return `${cortes.length} cortes de saco/caixa, maior ${Math.max(...cortes.map(([, , d]) => d))} m`;
+  });
+
+  if (MUT === 'lampada-fraca') {
+    let l = null; W.root.traverse((o) => { if (o.isLight && o.name === 'beco-luz') l = o; });
+    const le = porNome('poste-lente'); exige(l && le, 'MUTANTE lampada-fraca NÃO APLICOU');
+    l.intensity = 20; le.material.emissive.set(0xffb070); le.material.emissiveIntensity = 3;
+  }
+  regra('LAMP1 lâmpada do beco com ponto quente', () => {
+    let l = null; W.root.traverse((o) => { if (o.isLight && o.name === 'beco-luz') l = o; });
+    const m = porNome('poste-lente')?.material;
+    exige(l && m, 'sem luz de beco ou sem lente');
+    exige(l.intensity >= 30, `cone do beco a ${l.intensity} (piso 30): chão sem ponto quente`);
+    exige(m.emissiveIntensity >= 4 && m.emissive.getHex() === 0xffc48a, `lente ${m.emissive.getHexString()} a ${m.emissiveIntensity} (0xffc48a a ≥ 4)`);
+    return `cone a ${l.intensity}, lente ${m.emissive.getHexString()} a ${m.emissiveIntensity}`;
   });
 
   regra('BECOLUZ1 uma luz de sódio dentro de cada beco', () => {

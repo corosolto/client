@@ -856,7 +856,7 @@ function telhadosEmLote(kit) {
    Cone virado para o chão: a pontual acendia o forro do beiral de laranja (C* 11 → 29). */
 function luzDosBecos(kit, postes) {
   const lampadas = postes.map((p) => new THREE.Vector3(p.lum[0], p.y + p.lum[1] - 0.15, p.lum[2]));
-  const luz = new THREE.SpotLight(0xffc48a, 20, 12, 1.1, 0.6, 2);
+  const luz = new THREE.SpotLight(0xffc48a, 32, 12, 1.1, 0.6, 2);
   luz.name = 'beco-luz'; luz.position.copy(lampadas[0]); luz.target.position.set(lampadas[0].x, 0, lampadas[0].z);
   kit.root.add(luz, luz.target);
   // triângulo degenerado sem corte de frustum: é ele que recebe a câmera a cada quadro

@@ -137,7 +137,7 @@ export function buildInvasaoJavaporcos(scene, T) {
     truckSide: lam({ map: T.truckSide }),
     decal: lam({ ...TX.decalAtlasTex(), transparent: true, depthWrite: false, alphaTest: 0.02, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
     letreiro: lam({ map: TX.letreiroAtlasTex(), roughness: 0.8 }),
-    luminaria: new THREE.MeshStandardMaterial({ color: 0xffd8a8, emissive: 0xffb070, emissiveIntensity: 3, roughness: 0.4 }),
+    luminaria: new THREE.MeshStandardMaterial({ color: 0xffd8a8, emissive: 0xffc48a, emissiveIntensity: 4, roughness: 0.4 }),
     reboco: [TX.COR.rebocoOcre, TX.COR.rebocoMenta, TX.COR.rebocoRosa, TX.COR.rebocoPalha]
       .map((c, i) => comPbr('worn_mossy_plasterwall', TX.rebocoTex(c, i + 1), { color: claro(c, 0.3) }, { metros: 3 })),
     toldo: [TX.COR.toldoA, TX.COR.toldoB, TX.COR.toldoC].map((c, i) => lam({ map: TX.toldoTex(c, i + 1) })),
