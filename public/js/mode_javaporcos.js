@@ -789,6 +789,7 @@ class InvasaoJavaporcos {
 
   prepareRound() {
     this.state = this.novaHorda();
+    for (const spot of this.game.world.foodSpots || []) this.marcarComida(spot, spot.hp);
     this.game.timeLeft = WAVE_COUNTS.length * (PREP_SECONDS + COMBAT_SECONDS);
     this.cinematic = null;
     this.scoreShown = false;
@@ -1141,6 +1142,7 @@ class InvasaoJavaporcos {
     if (alvo.kind !== 'jogador' && this.game.player?.pos) {
       this.rosnar(bot, bot.pos.distanceTo(this.game.player.pos), tempo);
     }
+    if (this.arrombar(bot, alvo, tempo)) { this.atualizaVisual(bot); return true; }
     const encostou = this.teimosia(bot, alvo, tempo);
     if (alvo.kind !== 'jogador' && this.state.mutante !== 'sem-desistencia' && this.cansaco(bot, tempo) > PERDIDO) {
       this.sumirNaMata(bot);
@@ -1224,6 +1226,14 @@ class InvasaoJavaporcos {
 
   /* Revirar o lixo: o bicho para, focinha e come o ponto até zerar — é o que faz a
      cidade ser invadida de verdade, em vez de todo mundo correr pro objetivo. */
+  arrombar(bot, alvo, tempo) {
+    const spot = alvo.kind === 'comida' && alvo.spot;
+    if (!spot?.porta || comidaRestante(this.state, spot) < spot.hp) return false;
+    if (Math.hypot(bot.pos.x - spot.porta.x, bot.pos.z - spot.porta.z) > AGGRO.ataque) return false;
+    this.revirar(bot, alvo, tempo);
+    return true;
+  }
+
   revirar(bot, alvo, tempo) {
     bot.vel.set(0, 0, 0);
     bot.yaw = Math.atan2(alvo.x - bot.pos.x, alvo.z - bot.pos.z);
@@ -1232,19 +1242,41 @@ class InvasaoJavaporcos {
     if (tempo < (bot._boarAttackAt || 0)) return;
     bot._boarAttackAt = tempo + .55;
     const damage = danoDoJavaporco(this.state, bot._boarType, 'comida');
+    const antes = comidaRestante(this.state, alvo.spot);
     const restante = atacarComida(this.state, alvo.spot, damage);
+    this.saquearLoja(alvo.spot, antes - restante);
     this.marcarComida(alvo.spot, restante);
     this.rosnar(bot, Math.hypot((this.game.player?.pos?.x ?? 0) - bot.pos.x, (this.game.player?.pos?.z ?? 0) - bot.pos.z), tempo);
     this.emitir('FOOD_HIT', { i: bot._boarId, food: alvo.spot.id, hp: Math.round(restante) });
   }
 
-  /* Lixo revirado tomba e afunda (o mesh é do mapa; só mexemos na pose) e o colisor
-     encolhe junto — pilha revirada não pode virar parede invisível no meio da rua. */
+  // Saquear todas as lojas de um setor equivale a conquistá-lo; o defensor pode retomá-lo.
+  saquearLoja(spot, gasto) {
+    if (!spot.loja || !(gasto > 0)) return;
+    const setores = this.horda.setores, i = setorEm(setores, spot.x, spot.z);
+    if (i < 0) return;
+    const lojas = this.game.world.foodSpots.filter(s => s.loja && setorEm(setores, s.x, s.z) === i).length;
+    this.state.controle[i] = Math.min(1, this.state.controle[i] + gasto / spot.hp / lojas);
+  }
+
   marcarComida(spot, restante) {
     const cheio = Number(spot.hp) || COMIDA_HP[spot.kind] || 120;
     const gasto = Math.max(0, Math.min(1, 1 - restante / cheio));
     const mesh = this.game.world.foodMesh?.(spot.id);
-    if (mesh) {
+    if (mesh?.getObjectByName('inteiro') && mesh.getObjectByName('revirado')) {
+      mesh.getObjectByName('inteiro').visible = gasto === 0;
+      mesh.getObjectByName('revirado').visible = gasto > 0;
+      const oclusores = this.game.world.occluders;
+      for (const [estado, malhas] of Object.entries(mesh.userData.foodOccluders || {})) {
+        const ativo = estado === (gasto > 0 ? 'revirado' : 'inteiro');
+        for (const malha of malhas) {
+          const i = oclusores.indexOf(malha);
+          if (ativo && i < 0) oclusores.push(malha);
+          else if (!ativo && i >= 0) oclusores.splice(i, 1);
+        }
+      }
+    }
+    if (mesh && !mesh.getObjectByName('inteiro')) {
       mesh.rotation.z = gasto * .9;
       mesh.position.y = (mesh.userData.foodY ??= mesh.position.y) - gasto * .18;
     }
@@ -1388,6 +1420,8 @@ class InvasaoJavaporcos {
     if (Array.isArray(net.controle)) this.state.controle = [...net.controle];
     this.state.dominio = net.dominio || 0;
     this.state.foodHp = { ...(net.foodHealth || {}) };
+    this.state.foodRevirada = Object.values(this.state.foodHp).filter(hp => hp <= 0).length;
+    for (const spot of this.game.world.foodSpots || []) this.marcarComida(spot, comidaRestante(this.state, spot));
     this.state.scores = structuredClone(net.scoreByPlayer || {});
     this.state.teamBonus = net.teamBonus || 0;
     this.state.winner = net.winner || null;

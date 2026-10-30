@@ -38,7 +38,7 @@ export function blocos() {
    quatro lojas em quadrantes diferentes e os sobrados nunca colados um no outro. */
 const PAPEL = {
   'ON-ii': 'praca', 'LN-ii': 'mercearia', 'OS-ii': 'padaria', 'LS-ii': 'boteco',
-  'ON-oo': 'racao', 'LN-oo': 'igreja', 'OS-oo': 'sobrados', 'LS-oo': 'sobrados',
+  'ON-io': 'farmacia', 'LN-oi': 'acougue', 'ON-oo': 'racao', 'LN-oo': 'igreja', 'OS-oo': 'sobrados', 'LS-oo': 'sobrados',
 };
 
 export function construirCidade(kit, campo, rnd) {
@@ -92,7 +92,7 @@ export function construirCidade(kit, campo, rnd) {
   }
 
   // ── Quarteirões: cada bloco tem UM papel, senão a loja nasce dentro de uma casa
-  const COM_LOJA = new Set(['mercearia', 'padaria', 'boteco', 'racao']);
+  const COM_LOJA = new Set(['mercearia', 'padaria', 'boteco', 'racao', 'farmacia', 'acougue']);
   let pracaInfo = null, igrejaInfo = null;
   for (const b of blocos()) {
     const papel = PAPEL[b.id] || 'casas';
@@ -106,8 +106,14 @@ export function construirCidade(kit, campo, rnd) {
       const l = loja(kit, campo, rnd, b, papel);
       lojas.push(l); portas.push(l.porta); edificacoes++;
       edificacoes += puxadinho(kit, campo, rnd, b, l);
-      if (papel === 'racao') criarFood(kit, campo, foodSpots, foodMeshes, foodColliders,
-        'racao-loja', 'racao', l.interior[0], l.interior[1]);
+      const comercio = papel === 'racao' ? 'armazem' : papel;
+      l.comercio = comercio;
+      criarFood(kit, campo, foodSpots, foodMeshes, foodColliders,
+        `saque-${comercio}`, 'racao', l.porta.dentro[0] + (l.eixo === 'z' ? 1.1 : 0), l.porta.dentro[1] + (l.eixo === 'x' ? 1.1 : 0));
+      const spot = foodSpots[foodSpots.length - 1], mesh = foodMeshes.get(spot.id);
+      spot.loja = comercio; spot.r = 1.15;
+      spot.porta = { x: l.porta.vao[0], z: l.porta.vao[1] };
+      portaSaque(kit, l, mesh);
       continue;
     }
     if (BECOS[b.id]) {
@@ -278,7 +284,7 @@ function quintal(kit, campo, rnd, b) {
 /* ── LOJA COM INTERIOR ─────────────────────────────────────────────────────────────── */
 /* Índices em LETREIROS (texturas): nome na fachada, anúncio pintado ao lado da porta e
    anúncio na parede lateral. */
-const LOJA_LETREIRO = { padaria: [0, 8, 5], mercearia: [1, 7, 4], boteco: [2, 6, -1], racao: [3, 9, -1] };
+const LOJA_LETREIRO = { padaria: [0, 8, 5], mercearia: [1, 7, 4], boteco: [2, 6, -1], racao: [3, 9, -1], farmacia: [5, 5, -1], acougue: [4, 4, -1] };
 
 function loja(kit, campo, rnd, b, papel) {
   const { MAT, caixa, piso, placa } = kit;
@@ -365,7 +371,29 @@ function loja(kit, campo, rnd, b, papel) {
   /* `dentro` fica entre a porta e o balcão: a 2,1 m do centro ele caía DENTRO do colisor
      do balcão, e nó dentro de sólido é destino que ninguém alcança (relato do modo). */
   const [dentroX, dentroZ] = mundo(sinal * (D / 2 - 1.1), 0);
-  return { papel, eixo, sinal, fundo: D, largura: W, porta: { x: portaX, z: portaZ, dentro: [dentroX, dentroZ] }, interior: [cx, cz] };
+  return { papel, eixo, sinal, fundo: D, largura: W, porta: { x: portaX, z: portaZ, vao: mundo(face, 0), dentro: [dentroX, dentroZ] }, interior: [cx, cz] };
+}
+
+function portaSaque(kit, loja, grupo) {
+  const geo = new THREE.BoxGeometry(2.6, 2.25, .08, 1, 36, 1);
+  const p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setZ(i, p.getZ(i) + .035 * Math.cos(p.getY(i) * Math.PI * 16));
+  geo.computeVertexNormals();
+  for (const estado of ['inteiro', 'revirado']) {
+    const porta = new THREE.Mesh(geo, kit.MAT.medidor);
+    porta.name = estado === 'inteiro' ? 'porta-fechada' : 'porta-arrombada';
+    porta.position.set(loja.porta.vao[0] - grupo.position.x, 1.15, loja.porta.vao[1] - grupo.position.z);
+    porta.rotation.order = 'YXZ';
+    porta.rotation.y = loja.eixo === 'z' ? 0 : Math.PI / 2;
+    if (estado === 'revirado') {
+      porta.rotation.x = -1.45; porta.position.y = .2; porta.scale.x = .65;
+      porta.position[loja.eixo === 'z' ? 'x' : 'z'] -= 1.7;
+    }
+    porta.castShadow = true; porta.receiveShadow = true;
+    grupo.getObjectByName(estado).add(porta);
+    grupo.userData.foodOccluders[estado].push(porta);
+    if (estado === 'inteiro') kit.occluders.push(porta);
+  }
 }
 
 /* ── IGREJINHA E PRAÇA ─────────────────────────────────────────────────────────────── */
@@ -639,7 +667,13 @@ function criarFood(kit, campo, foodSpots, foodMeshes, foodColliders, id, kind, x
      modo encolhe conforme o hp cai. Sem esta marca a sonda do map-check acusa saco rasgado. */
   grupo.userData.nonSolidSurface = true;
   kit.root.add(grupo);
-  grupo.traverse((o) => { if (o.isMesh) { o.userData.foodId = id; kit.occluders.push(o); } });
+  grupo.userData.foodOccluders = { inteiro: [], revirado: [] };
+  for (const estado of [inteiro, revirado]) estado.traverse(o => {
+    if (!o.isMesh) return;
+    o.userData.foodId = id;
+    grupo.userData.foodOccluders[estado.name].push(o);
+    if (estado === inteiro) kit.occluders.push(o);
+  });
 
   const altura = kind === 'cacamba' ? 1.5 : kind === 'feira' ? 1.1 : 0.9;
   const col = { minX: x - meia, maxX: x + meia, minY: y, maxY: y + altura, minZ: z - meia, maxZ: z + meia };

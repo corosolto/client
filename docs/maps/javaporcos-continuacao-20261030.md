@@ -20,7 +20,7 @@ verificação visual no jogo real e commit por assunto. Manter tudo no PR #1160.
 - Pedido 1 validado localmente: rig procedural por indivíduo, com geometria de pesos
   compartilhada por modelo e quatro fases; apoio fica ancorado no mundo e consulta
   o chão. Descarte de corpos libera skeleton/boneTexture, sem descartar material
-  ou geometria compartilhados. Os pedidos 2–7 ainda não foram implementados.
+  ou geometria compartilhados. Ver marcos dos pedidos 2 e 3 abaixo; 4–7 seguem pendentes.
 
 ## Push concluído
 
@@ -107,11 +107,47 @@ normal do áudio; nenhum binário é commitado. Não usa síntese como fallback.
   cliente, intervalo e ausência de movimento da IA; `cliente-mudo` reprova.
 - Segunda revisão somente leitura: sem novos achados.
 - Comentários, grafo de módulos, docs e arquitetura passaram.
-- `BASE=... npm run eval:javaporcosreal` mede DSP e integração MP com mutantes.
+- `BASE=... npm run eval:javaporcosreal` mede DSP e integração MP com mutantes;
+  execução completa final passou (log `audio/javaporcos-audio-real-wrapper-final.log`).
 - Partida real: ambos os buffers carregados (1,3583 s e 1,9656 s); Sfx do jogo
   aceitou grunhido. A primeira sonda sem ANGLE Metal travou; a repetição Metal
   mediu corretamente e travou apenas ao fechar, encerrada após salvar o resultado.
 - Aceite auditivo humano pendente.
+
+## Pedido 3 — lojas
+
+Seis comércios reais: armazém, farmácia, mercadinho, padaria, açougue e bar.
+Duas casas deram lugar a farmácia/açougue; a casa de ração é o armazém.
+Cada comércio tem estoque alcançável, porta corrugada com material já existente e
+estados intacto/revirado. O primeiro golpe parte de fora do vão; depois o bicho
+pode avançar ao estoque. Saquear todas as lojas de um setor equivale a conquistá-lo,
+proporcionalmente ao HP consumido e à quantidade de lojas no setor; o defensor
+pode retomar normalmente. Danos, intervalos e demais números existentes preservados.
+
+- Antes: nenhuma das seis lojas tinha o contrato de saque completo; régua vermelha.
+- Depois: seis pontos alcançáveis, consumo, estados, domínio e reset/rede verdes.
+- NAV1: 6 nós presos na primeira tentativa; corrigidos movendo estoque para o lado
+  da costura de navegação. Agora 0 presos/0 arestas cruzando, 6.221 nós/11.171 arestas.
+- TRILHA2: seis interiores alcançados das três entradas; mapa completo verde.
+- Primeira porta rejeitada: fora da fachada e caída cobrindo o vão. Corrigida para
+  posição real do vão e queda quase horizontal ao lado; fotos inspecionadas.
+- A suspeita de porta invisível bloqueando tiros foi rejeitada: o wrapper real
+  `shot_surfaces.js` já protege visibilidade ancestral. A sincronização explícita
+  continua necessária para inserir os occluders do estado revirado após o build.
+- Mutantes: loja-muda, loja-intacta, saque-sem-dominio, porta-fora,
+  revirado-sem-oclusao e atravessa-porta. Não confundir saída 0 do mutante detectado
+  com aprovação do comportamento quebrado.
+- Fotos 3:2 de três lojas, antes/depois; nas vistas medidas 626–794 chamadas e
+  1,56–1,85 M triângulos. Não substitui pior vista global nem aprovação humana.
+- Artefatos temporários `/tmp/javaporcos-lojas-visual/` e logs com prefixo
+  `/tmp/javaporcos-lojas-`; preservar em `artifacts/javaporcos-codex-20261030/lojas`.
+- Contrato de mapa, grafo de módulos, docs, arquitetura e comentários verdes.
+  Revisão final sem achados após cobrir o callsite de arrombamento no updateBot.
+  Portão inicialmente reprovou apenas o insumo map_check desatualizado; a nova
+  medição física final passou: zero corpo dentro/penetração, folga 1,9 m e área
+  contígua 53,2 m², zero occluder sem malha entre 498 medidos. Os outros 18 mapas
+  foram fundidos de volta sem mudar seus resultados. Portão está sendo repetido
+  com o insumo fresco.
 
 ## Restrições e próximo passo
 
@@ -120,7 +156,11 @@ Não alterar números de game feel sem o dono. Uma captura de browser por vez,
 com lock e BASE explícito. Manter budgets e preservar demais mapas em map_check.
 Push dos commits anteriores confirmado em 4acda7bf2; checkpoints locais posteriores
 130846748 e fa1fc3c35 ainda não publicados. Objetivo permanece os sete pedidos.
-Após checkpoint de áudio: lojas (3), pasto (4), AK (5),
+Áudio no checkpoint aab9e5237. Checkpoint das lojas por `git log -1 -- tools/eval/javaporcos-lojas-check.mjs`; depois pasto (4), AK (5),
 time/wallpapers (6) e intro (7), nessa ordem.
 Verificar pacotes Mint antes de gerar novamente; Sketchfab depende de token
 fornecido por ambiente, sem expor ou registrar seu valor.
+
+Sonda preparatória do pedido 4: campo real atual 7,47 m, 940 árvores. Protótipo
+54/68 apenas no navegador, sem modificar o mapa: repetir orçamento com
+`atualizaCortes` real, pois a primeira sonda manual omitiu esse passo.

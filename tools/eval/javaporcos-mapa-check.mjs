@@ -389,7 +389,9 @@ regra('COMIDA1 lixo e comida dentro da cidade, com malha e colisor vivos', () =>
   const spots = W.foodSpots || [];
   const cb = W.cityBounds;
   exige(cb && Number.isFinite(cb.minX), 'o mapa não expôs cityBounds');
-  exige(spots.length >= 12 && spots.length <= 20, `${spots.length} foodSpots (faixa 12 a 20)`);
+  const rua = spots.filter(s => !s.loja);
+  exige(rua.length >= 12 && rua.length <= 20, `${rua.length} foodSpots de rua (faixa 12 a 20)`);
+  exige(spots.filter(s => s.loja).length === W.lojas.length, 'cada loja precisa de um ponto de saque');
   const KINDS = new Set(['lixo', 'feira', 'cacamba', 'racao']);
   const quadrantes = new Set();
   for (const s of spots) {

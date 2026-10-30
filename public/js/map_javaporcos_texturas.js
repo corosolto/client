@@ -662,7 +662,7 @@ export const LETREIROS = [
   ['PADARIA ESTRELA', 'pães • bolos • salgados', '#e9dcb8', '#8a2a1e'],
   ['MERCADINHO SÃO LUIZ', 'secos e molhados', '#2f5d8a', '#f1e6c8'],
   ['BAR DO ZÉ', 'cerveja gelada', '#b8322a', '#f4e9cf'],
-  ['CASA DA RAÇÃO', 'agropecuária', '#e2b83a', '#2d3a20'],
+  ['ARMAZÉM DA RAÇÃO', 'agropecuária', '#e2b83a', '#2d3a20'],
   ['AÇOUGUE BOM CORTE', 'carnes em geral', '#f0ece2', '#a0281e'],
   ['FARMÁCIA SÃO JOSÉ', 'aberta até as 22h', '#e8efe6', '#1e6a3a'],
   ['CERVEJA GELADA', '', '#2e6a8a', '#f2d54a'],
