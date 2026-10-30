@@ -194,7 +194,7 @@ function jogoFalso({ mundo = mundoFalso(), jogadorEm = [0, 0] } = {}) {
     world: mundo, scene: new THREE.Scene(), camera: { position: new THREE.Vector3() },
     time: 0, state: 'live', online: false, dedicated: false, matchSeed: 7,
     player, bots: [semente], combatants: [player, semente],
-    el: { hud: { append() {} } },
+    el: { hud: { dataset: {}, append() {} } },
     sfx: { javaporco(kind, vol = 1, pan = 0, delay = 0) { sons.push({ kind, vol, pan, delay }); return true; } },
     _damage(ent, dano, autor, arma) { danos.push({ ent, dano, autor, arma }); ent.hp -= dano; },
     _endRound() {},
@@ -331,14 +331,14 @@ regra('fúria tem teto explícito: 500 abates não deixam o modo injogável', ()
 });
 
 /* ----------------------------------------------------------------- agressão */
-regra('raio de agressão passa de 7 m para 20 m, e o alerta estica até 34 m', () => {
+regra('bando saqueia sem provocação e alerta estica até 34 m', () => {
   const mundo = mundoFalso();
   const estado = criarHorda({ seed: 5, mutante });
   estado.wave = 1;
   const jogador = { alive: true, team: 'E', _playerId: 'defensor', pos: { x: 0, z: 0 } };
   const bicho = { pos: { x: 0, z: 16 }, _boarType: 'adulto' };
   assert.ok(raioDeAgressao(estado) >= 18, `raio base pequeno demais: ${raioDeAgressao(estado)}`);
-  assert.equal(escolherAlvo(bicho, { world: mundo, state: estado, jogadores: [jogador], tempo: 1 }).kind, 'jogador');
+  assert.notEqual(escolherAlvo(bicho, { world: mundo, state: estado, jogadores: [jogador], tempo: 1 }).kind, 'jogador');
   const longe = { pos: { x: 0, z: 30 }, _boarType: 'adulto' };
   assert.notEqual(escolherAlvo(longe, { world: mundo, state: estado, jogadores: [jogador], tempo: 1 }).kind, 'jogador');
   longe._boarAlertaAte = 5;   // ouviu tiro (game.js `_botOuve`) ou foi puxado pela manada
@@ -645,7 +645,7 @@ regra('o HUD mostra a % de domínio e o mini-mapa pinta de vermelho o setor toma
   ctx.modo.state.controle[1] = 1; ctx.modo.state.controle[2] = 0.5; ctx.modo.state.dominio = 0.375;
   ctx.modo.atualizaHud(true);
   assert.match(ctx.modo.hudDominio.textContent || '', /DOMÍNIO DA HORDA 38%/, 'HUD sem a % de domínio');
-  assert.match(ctx.modo.hudSetores.textContent || '', /1\/4 SETORES TOMADOS · PERDE EM 75%/, 'HUD sem a contagem de setores tomados');
+  assert.match(ctx.modo.hudSetores.textContent || '', /1\/4 SETORES TOMADOS · LIMPE PARA RETOMAR · PERDE EM 75%/, 'HUD sem a contagem de setores tomados');
   assert.equal(ctx.modo.hudBarra.style.width, '38%');
   assert.equal(ctx.modo.hudCelulas.length, HORDA_FALSA.setores.length, 'mini-mapa sem uma célula por setor');
   assert.equal(ctx.modo.hudCelulas[1].style.background, '#c42b18', 'setor tomado não ficou vermelho');
@@ -778,13 +778,32 @@ regra('javaporco abatido tomba e permanece visível antes de sumir', () => {
   const inicio = poseMorteJavaporco(0, 1, mutante);
   const queda = poseMorteJavaporco(0.28, 1, mutante);
   const chao = poseMorteJavaporco(0.7, 1, mutante);
-  const fim = poseMorteJavaporco(4.1, 1, mutante);
+  const fim = poseMorteJavaporco(120.1, 1, mutante);
   assert.equal(inicio.tilt, 0);
   assert.ok(queda.tilt > 0.4, `queda sem rotação visível: ${queda.tilt}`);
   assert.ok(chao.tilt > queda.tilt, 'o corpo não concluiu o tombo');
   assert.ok(chao.sink > 0.02, 'o corpo não assentou no chão');
   assert.equal(chao.done, false, 'cadáver desapareceu cedo demais');
   assert.equal(fim.done, true, 'cadáver não foi limpo depois da animação');
+});
+
+regra('corpos assentam no chão e a fila preserva os oito mais recentes', () => {
+  const ctx = jogoFalso({ jogadorEm: [60,60] });
+  abrirOnda(ctx, 3);
+  for (const [i,b] of vivos(ctx.modo).slice(0,10).entries()) { b.yaw=i*Math.PI/4; ctx.modo.onKill(b,ctx.game.player); }
+  assert.equal(ctx.modo.corpses.length,8);
+  ctx.game.time += 1; ctx.modo.atualizarCadaveres();
+  const box = new THREE.Box3();
+  for (const corpse of ctx.modo.corpses) {
+    corpse.visual.updateMatrixWorld(true); box.setFromObject(corpse.visual);
+    const q = corpse.visual.children[0].getWorldQuaternion(new THREE.Quaternion());
+    const frente = new THREE.Vector3(0,0,1).applyQuaternion(q);
+    assert.ok(Math.abs(frente.y)<.01, `morte de ponta cabeça: eixo longitudinal y=${frente.y}`);
+    const y = ctx.game.world.groundHeightAt(corpse.visual.position.x,corpse.visual.position.z);
+    assert.ok(Math.abs(box.min.y-y-.015)<.01, `corpo sem contato: ${box.min.y-y}`);
+  }
+  ctx.game.time += 45; ctx.modo.atualizarCadaveres(); assert.equal(ctx.modo.corpses.length,8);
+  ctx.game.time += 80; ctx.modo.atualizarCadaveres(); assert.equal(ctx.modo.corpses.length,0);
 });
 
 if (mutante) {

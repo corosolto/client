@@ -423,3 +423,35 @@ sumir1ªpessoa; URL do dono ainda pendente. Resultados/logs/capturas ignorados e
 artifacts/javaporcos-feedback-20261030/armas. Probe original interpretava stdout no
 stderr como erro; JSON recomposto dos logs reais, faca validada separadamente.
 Próximo: bandos3–4, dispersão, variações, corpos e mata explorável com novas frentes.
+
+30/10 — ampliação explícita do dono durante implementação (NÃO substituir pelo plano
+antigo): MP E×B×Javaporcos com3 placares e domínio territorial disputado; E/B podem
+se matar e horda ataca ambos. SP opção player×horda ou três lados. Domínio pode
+chegar100% SEM derrota territorial; derrota humana por wipe simultâneo, um vivo
+mantém o time. Respawn seguro longe da horda, acesso real a laje/telhado seguro.
+MP padrão proposto1000abates ou30min, SP infinito ou limites configuráveis de
+abates/mortes. Perguntas assíncronas pendentes: wipe elimina só time ou encerra
+partida;1000abates somados ou por time. Não presumir resposta ao decorrer do tempo.
+Movimento mais orgânico (sem filas) e morte sempre lateral, nunca em pé/de ponta.
+Plano atualizado em chat. Não há nova autorização de push.
+
+Estado intermediário: bandos3–4 por frente e beco, destinos por grupo, caça apenas
+perto/alerta, cinco proporções por modelo, corpos120s/cap8 implementados. Régua
+bandos5cláusulas vermelha antes(4falhas), verde após; mutante real persegue-tudo
+morde. Core passou após atualizar fixtures DOM/HUD e expectativas novas. CPU64
+p95 1,160ms média0,567ms (teto1,5ms). Morte lateral revelou BUG REAL: rotação no
+Z global tombava de ponta em yaw90°. Régua vermelha eixo longitudinaly0,989;
+pivô agora herda yaw antes do attach e rola no eixo local90°, régua passou em8rumos.
+Assentamento real Box3 no terreno e fila8 validados. Aceite visual NOVO ainda pendente.
+Mapa: seis frentes nos quatro lados,9m de mata caminhável (antes0,6m),1018árvores,
+12216nós/21992arestas,0presos/0cruzamentos,35926células alcançáveis,limite63,4m<64.
+Régua completa do mapa ainda em execução /tmp/javaporcos-mata-final.log.
+Render com56vivos+8corpos mediu1210calls/3,057Mtri; é ACIMA dos orçamentos e precisa
+otimização. Materiais175 da cena inteira não são comparáveis aos99 só do mapa;
+medir escopo igual. Heap157MB. Não declarar orçamento aprovado.
+Revisão crítica achou corrida pós-preload obrigatório na intro; corrigida passando
+AbortController próprio e guarda antes de efeitos. Nova intro-race: vermelho antes
+(ready/hide/intro antigos), verde depois, mutante sem guarda detectado. Launch-race
+10/10 e fluxo6casos verdes. Próximos: corrigir modo tri-facção/condições de fim,
+movimento orgânico, spawn/lajes, otimizar e validar gameplay/render reais. Armas26
+visíveis localmente; endereço do relato ainda pendente.
