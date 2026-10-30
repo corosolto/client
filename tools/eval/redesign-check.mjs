@@ -17,6 +17,8 @@ const alvoPorMutante = {
   'loading-uma-acao': 'UIA6',
   'loading-clipe-falso': 'UIA6',
   'sem-i18n': 'UIR1',
+  'loading-sem-tr': 'UIR1',
+  'loading-fallback-fora-tr': 'UIR1',
   'preview-render': 'UIR2',
   'preview-decode': 'UIR3',
   'mapa-esconde-um': 'UIR4',
@@ -156,6 +158,10 @@ loading3d = muta('loading-uma-faccao', loading3d,
   "U: 'blackmetal'",
   "U: 'canarinho'");
 
+main = muta('loading-sem-tr', main, 'a.textContent = tr(nomeTimeJavaporcos', 'a.textContent = (nomeTimeJavaporcos');
+main = muta('loading-fallback-fora-tr', main,
+  "a.textContent = tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'E') || FACTION_NAME[currentTeam] || '')",
+  "a.textContent = tr('') || (FACTION_NAME[currentTeam] || '')");
 main = muta('sem-i18n', main,
   "`${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`",
   "`MAPA ${MAP_IDS.indexOf(currentMap) + 1} DE ${MAP_IDS.length}`");
@@ -600,10 +606,11 @@ const loadingAcoes3d = new Set(loadingActions).size >= 6
 const funcLoop = blocoFuncao(main, 'loop');
 const funcShow = blocoFuncao(main, 'show');
 const funcMap = blocoFuncao(main, 'renderMapScreen');
+const mainLoadingI18n = main.replace(/nomeTimeJavaporcos\(currentMap === 'invasao_javaporcos' \? 'horde' : '', '[EB]'\) \|\| /g, '');
 const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main)
   && /tr\(FACTION_NAME\[c\.team\] \|\| ''\)[\s\S]{0,160}tr\('PERSONAGENS'\)/.test(main)
-  && /a\.textContent = tr\(FACTION_NAME\[currentTeam\] \|\| ''\)/.test(main)
-  && /b\.textContent = tr\(FACTION_NAME\[ladoDele\] \|\| ''\)/.test(main)
+  && /a\.textContent = tr\(FACTION_NAME\[currentTeam\] \|\| ''\)/.test(mainLoadingI18n)
+  && /b\.textContent = tr\(FACTION_NAME\[ladoDele\] \|\| ''\)/.test(mainLoadingI18n)
   && /chip\.textContent = `\$\{n\} \$\{tr\('PERSONAGENS'\)\}`/.test(main)
   && /ms-desc'\)\.textContent = tr\(MAP_DESC\[currentMap\] \|\| ''\)/.test(main)
   && /frase\('escolhaAdversario', tr\(FACTION_NAME\[myFaction\]/.test(main)

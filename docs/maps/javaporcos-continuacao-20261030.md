@@ -314,3 +314,34 @@ Nenhum asset NC foi usado. Mint indisponível nesta sessão; Sketchfab sem token
 não fornecido; esses pacotes ficam pendentes e não substituem os sete pedidos.
 Próximo passo: dono revisar jogo local e autorizar push dos checkpoints novos
 para atualizar o preview. Não mergear, não deployar manualmente, não force-push.
+
+## Push autorizado pelo dono e correções do hook
+
+O dono autorizou o envio dos10 checkpoints até865bb7781. Primeira tentativa
+interrompida antes do envio: boot-orcamento injeta main.js local sobre produção,
+onde javaporcos_intro.js ainda retorna404. Com BASE dev4321, hook completo
+registrou76/81 verdes; orçamento dev67,63MB/382requisições não é comparável ao
+Brotli público. Outras falhas: matriz com dois links de linha+1, UIR1 presa à
+expressão antiga e loaders de áudio data-URL sem resolução do novo import relativo.
+
+Correções de integração: matriz regenerada sem alterar valores; UIR1 normaliza
+somente o prefixo literal do modo dentro de tr, mantendo regex exata; mutantes
+loading-sem-tr e loading-fallback-fora-tr detectados. Helper de áudio preserva
+fonte/mutantes e absolutiza imports reais. Seleção de voz, rollback F/U e envelope
+verdes e mutantes detectados. Voice-mix agora executa e expõe MIX11/MIX15 antigos,
+fora deste hook; nenhum contrato de fala/menu foi alterado para escondê-los.
+Revisão independente cobriu helper e restrição do i18n.
+
+QA de compressão em4333 usa HTML público e arquivos public ATUAIS desta worktree,
+Brotli5, confirmado content-encoding:br na produção. Fallback remoto limitado a
+/_astro do shell e /api; asset public ausente retorna404 e é registrado. Script em
+`artifacts/javaporcos-codex-20261030/push/serve-compressed.mjs` (ignorado).
+Medição inicial5,20MB/313req e estrita3,51MB/315req, ambas abaixo dos tetos;
+mutantes e hook completo vão rodar novamente neste ambiente. Isto mede boot,
+não comprova build Vercel: build/commit do preview precisam ser conferidos apóspush.
+
+Recibo de publicação e estado mais recente do remoto/preview passam a ficar em
+`artifacts/javaporcos-codex-20261030/push/recibo.json`, atualizado após o envio,
+sem novo ciclo de commits só para carimbar dados externos. Esse recibo e este
+ledger juntos são o ponto de retomada. Browser manual agora usa Ego Lite,
+TaskSpace3 `Codex root · Javaporcos PR1160 push`, página p1; não criar outra.
