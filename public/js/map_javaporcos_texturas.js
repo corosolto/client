@@ -317,3 +317,155 @@ export function capimTex(rx = 1, ry = 1) {
     }
   }, 0.8);
 }
+
+/* Chão do pasto: braquiária verde com manchas secas, touceira escura e terra exposta. A
+   variação grande vem da cor por vértice da malha; aqui é a escala de palmo. */
+export function pastoTex(rx = 1, ry = 1) {
+  return tela('jp-pasto', 512, rx, ry, (x, s, r) => {
+    x.fillStyle = '#3d4a22'; x.fillRect(0, 0, s, s);
+    for (let i = 0; i < 26; i++) {
+      x.globalAlpha = 0.18 + r() * 0.2; x.fillStyle = r() > 0.5 ? '#6b6a2e' : '#26331a';
+      x.beginPath(); x.ellipse(r() * s, r() * s, 20 + r() * 70, 14 + r() * 50, r() * 3, 0, 6.283); x.fill();
+    }
+    for (let i = 0; i < 9; i++) {
+      x.globalAlpha = 0.35; x.fillStyle = '#5a4a36';
+      x.beginPath(); x.ellipse(r() * s, r() * s, 4 + r() * 12, 3 + r() * 9, r() * 3, 0, 6.283); x.fill();
+    }
+    x.globalAlpha = 1;
+    for (let i = 0; i < 9000; i++) {
+      const v = r();
+      x.strokeStyle = v > 0.8 ? '#8c7a42' : v > 0.55 ? '#5d6b2c' : v > 0.25 ? '#46561f' : '#2b3a17';
+      x.lineWidth = 0.8 + r() * 1.2;
+      const px = r() * s, py = r() * s;
+      x.beginPath(); x.moveTo(px, py); x.lineTo(px + (r() - 0.5) * 6, py - 2 - r() * 6); x.stroke();
+    }
+  }, 1.5);
+}
+
+/* Lâmina de pasto em cartão: muitas folhas finas, curvas, com ponta seca. */
+export function capimPastoTex(rx = 1, ry = 1) {
+  return tela('jp-capim-pasto', 256, rx, ry, (x, s, r) => {
+    x.clearRect(0, 0, s, s);
+    for (let i = 0; i < 260; i++) {
+      const base = 4 + r() * (s - 8), alt = s * (0.35 + r() * 0.62);
+      const curva = (r() - 0.5) * 60;
+      const v = r();
+      x.strokeStyle = v > 0.78 ? '#9a8648' : v > 0.45 ? '#55692a' : v > 0.18 ? '#3f5320' : '#2c3d16';
+      x.lineWidth = 1 + r() * 2.2;
+      x.beginPath(); x.moveTo(base, s);
+      x.quadraticCurveTo(base + curva * 0.3, s - alt * 0.6, base + curva, s - alt); x.stroke();
+    }
+  }, 0.8);
+}
+
+/* Touceira de capim-colonião: folha longa arqueada e a panícula de semente no topo. */
+export function capimAltoTex(rx = 1, ry = 1) {
+  return tela('jp-capim-alto', 256, rx, ry, (x, s, r) => {
+    x.clearRect(0, 0, s, s);
+    const meio = s / 2;
+    for (let i = 0; i < 150; i++) {
+      const base = meio + (r() - 0.5) * s * 0.35, alt = s * (0.55 + r() * 0.43);
+      const curva = (r() - 0.5) * s * 0.8;
+      const v = r();
+      x.strokeStyle = v > 0.7 ? '#a08c52' : v > 0.35 ? '#5f7330' : '#3b4f1d';
+      x.lineWidth = 1.5 + r() * 2.5;
+      x.beginPath(); x.moveTo(base, s);
+      x.quadraticCurveTo(base + curva * 0.2, s - alt * 0.7, base + curva, s - alt * (0.8 + r() * 0.2)); x.stroke();
+    }
+    for (let i = 0; i < 14; i++) {
+      const px = meio + (r() - 0.5) * s * 0.6, py = s * (0.04 + r() * 0.2);
+      x.strokeStyle = '#b39a66'; x.lineWidth = 1.2;
+      x.beginPath(); x.moveTo(px, py + s * 0.18); x.lineTo(px + (r() - 0.5) * 8, py); x.stroke();
+      for (let k = 0; k < 10; k++) {
+        x.fillStyle = r() > 0.5 ? '#c4ad78' : '#8f7a4c';
+        x.fillRect(px + (r() - 0.5) * 10, py + r() * s * 0.16, 2, 3);
+      }
+    }
+  }, 0.8);
+}
+
+/* Reboco de fundo de casa: a pintura descasca em ilhas e mostra o tijolo, a base fica
+   preta de umidade e a chuva escorre do beiral. É a parede do beco da referência. */
+export function rebocoDescascadoTex(cor, semente = 1, rx = 1, ry = 1) {
+  return tela(`jp-reboco-desc-${semente}`, 512, rx, ry, (x, s, r) => {
+    x.fillStyle = cor; x.fillRect(0, 0, s, s);
+    for (let i = 0; i < 14; i++) {
+      x.globalAlpha = 0.08 + r() * 0.14; x.fillStyle = i % 3 ? '#2e2a22' : '#ffffff';
+      x.beginPath(); x.ellipse(r() * s, r() * s, 30 + r() * 90, 20 + r() * 70, r() * 3, 0, 6.283); x.fill();
+    }
+    x.globalAlpha = 1;
+    for (let i = 0; i < 7; i++) {
+      const px = r() * s, py = r() * s, rw = 30 + r() * 70, rh = 20 + r() * 50;
+      x.save(); x.beginPath();
+      for (let k = 0; k < 12; k++) {
+        const a = (k / 12) * 6.283, f = 0.6 + r() * 0.5;
+        x.lineTo(px + Math.cos(a) * rw * f, py + Math.sin(a) * rh * f);
+      }
+      x.closePath(); x.fillStyle = '#8f8574'; x.fill(); x.clip();
+      for (let ly = py - rh; ly < py + rh; ly += 11) for (let lx = px - rw - ((ly / 11) % 2) * 12; lx < px + rw; lx += 24) {
+        const v = 0.8 + r() * 0.35;
+        x.fillStyle = `rgb(${(150 * v) | 0},${(82 * v) | 0},${(56 * v) | 0})`;
+        x.fillRect(lx, ly, 21, 8);
+      }
+      x.restore();
+      x.strokeStyle = 'rgba(40,34,28,0.55)'; x.lineWidth = 1.5; x.stroke();
+    }
+    const umidade = x.createLinearGradient(0, s, 0, s * 0.7);
+    umidade.addColorStop(0, 'rgba(34,36,26,0.7)'); umidade.addColorStop(1, 'rgba(34,36,26,0)');
+    x.fillStyle = umidade; x.fillRect(0, s * 0.7, s, s * 0.3);
+    for (let i = 0; i < 22; i++) {
+      const px = r() * s, comp = s * (0.15 + r() * 0.5);
+      const g = x.createLinearGradient(0, 0, 0, comp);
+      g.addColorStop(0, 'rgba(40,36,30,0.32)'); g.addColorStop(1, 'rgba(40,36,30,0)');
+      x.fillStyle = g; x.fillRect(px, 0, 2 + r() * 7, comp);
+    }
+    grao(x, s, 2200, ['#ffffff', '#000000', '#6b5d48'], 0.08, r);
+  }, 2.0);
+}
+
+/* Cimentado de beco: placa rachada, remendo e mancha de água parada. */
+export function cimentoTex(rx = 1, ry = 1) {
+  return tela('jp-cimento', 256, rx, ry, (x, s, r) => {
+    x.fillStyle = '#77736b'; x.fillRect(0, 0, s, s);
+    grao(x, s, 2600, ['#68645d', '#86827a', '#5a5650'], 0.5, r);
+    for (let i = 0; i < 6; i++) {
+      x.globalAlpha = 0.3 + r() * 0.25; x.fillStyle = r() > 0.5 ? '#4d4a44' : '#3b3c35';
+      x.beginPath(); x.ellipse(r() * s, r() * s, 10 + r() * 34, 8 + r() * 22, r() * 3, 0, 6.283); x.fill();
+    }
+    x.globalAlpha = 1;
+    x.strokeStyle = '#3a3732'; x.lineWidth = 1.3;
+    for (let i = 0; i < 9; i++) {
+      let px = r() * s, py = r() * s;
+      x.beginPath(); x.moveTo(px, py);
+      for (let k = 0; k < 6; k++) { px += (r() - 0.5) * 50; py += (r() - 0.5) * 50; x.lineTo(px, py); }
+      x.stroke();
+    }
+  }, 2.2);
+}
+
+/* Tecido de roupa no varal: trama clara; a cor de cada peça vem da instância. */
+export function tecidoTex(rx = 1, ry = 1) {
+  return tela('jp-tecido', 64, rx, ry, (x, s, r) => {
+    x.fillStyle = '#e6e2da'; x.fillRect(0, 0, s, s);
+    for (let i = 0; i < s; i += 2) { x.fillStyle = 'rgba(0,0,0,0.05)'; x.fillRect(0, i, s, 1); x.fillRect(i, 0, 1, s); }
+    for (let i = 0; i < 6; i++) { x.globalAlpha = 0.12; x.fillStyle = '#3a3128'; x.fillRect(0, r() * s, s, 2 + r() * 4); }
+    x.globalAlpha = 1;
+  }, 0.6);
+}
+
+/* Recorte de mancha (alpha com borda rasgada) para o pisoteio da trilha não ler quadrado. */
+export function manchaAlphaTex() {
+  const s = 128, c = document.createElement('canvas');
+  c.width = c.height = s;
+  const x = c.getContext('2d'), r = lcg(0x51a7);
+  const g = x.createRadialGradient(s / 2, s / 2, s * 0.12, s / 2, s / 2, s * 0.5);
+  g.addColorStop(0, '#ffffff'); g.addColorStop(0.7, '#9a9a9a'); g.addColorStop(1, '#000000');
+  x.fillStyle = g; x.fillRect(0, 0, s, s);
+  for (let i = 0; i < 260; i++) {
+    x.fillStyle = r() > 0.5 ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.35)';
+    x.beginPath(); x.arc(r() * s, r() * s, 1 + r() * 6, 0, 6.283); x.fill();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.name = 'jp-mancha-alpha';
+  return t;
+}
