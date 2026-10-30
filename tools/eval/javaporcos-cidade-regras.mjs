@@ -51,6 +51,10 @@
              braço norte, todo junk_car repintado, ≥ 4 com C* ≥ 20 em ≥ 3 cores; caçamba a
              ≤ 12 m da faixa norte, monte de ≥ 8 sacos e mesa de bar com ≥ 2 cadeiras cada.
 
+   RODADA 4 (crítico 6/10: "rua do centro lê como pátio", sem lixo ao longo da guia):
+     RUA2    no braço norte e nas duas guias da avenida leste-oeste (de 8,5 a 30 m do centro)
+             há ≥ 0,8 decalque de lixo por metro a ≤ 0,6 m de cada guia, do lado do asfalto.
+
    MUTANTES (cada um tem de acender a cláusula indicada):
      saco-icosaedro  planta um saco de icosaedro na avenida          -> ICO1
      janela-cega     tira o vidro de todas as janelas                -> JANELA1
@@ -63,6 +67,7 @@
      janela-tabua    janela apagada volta a emitir 0x4a4238                -> JANELA3
      muro-escuro     muro volta ao albedo 0xc4c0b8                         -> MURO1
      saco-ovo        tira a escala por eixo e a inclinação de todo saco      -> SACO1
+     guia-limpa      some com o lixo de guia da malha de decalque             -> RUA2
      beco-apagado    tira a luz dos becos                                 -> BECOLUZ1, POSTE1
      luz-presa       a luz não segue a câmera (fica no primeiro beco)     -> BECOLUZ1
      luz-bola        volta a pontual 0xffb060 a 18 (acende o forro do beiral) -> BECOLUZ1
@@ -71,7 +76,7 @@
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'saco-ovo', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'saco-ovo', 'guia-limpa', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -170,6 +175,21 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     const ss = W.root.userData.sacos || [];
     exige(ss.some((g) => g.esc), 'MUTANTE saco-ovo NÃO APLICOU');
     for (const g of ss) { delete g.esc; g.rx = 0; g.rz = 0; }
+  }
+  /* guias: [eixo da coordenada fixa, valor, sinal do asfalto] e o trecho de 8,5 a 30 m no outro eixo */
+  const GUIAS = [['x', -AV, 1, -1], ['x', AV, -1, -1], ['z', -AV, 1, -1], ['z', -AV, 1, 1], ['z', AV, -1, -1], ['z', AV, -1, 1]];
+  const naGuia = (x, z, [ex, v, , lado]) => {
+    const [f, t] = ex === 'x' ? [x, z] : [z, x];
+    return Math.abs(f - v) <= 0.6 && t * lado >= AV + CAL + 0.5 && t * lado <= 30;
+  };
+  if (MUT === 'guia-limpa') {
+    const d = porNome('decal-chao'); exige(d, 'MUTANTE guia-limpa NÃO APLICOU');
+    const pos = d.geometry.attributes.position;
+    for (let q = 0; q < pos.count / 4; q++) {
+      let x = 0, z = 0;
+      for (let k = 0; k < 4; k++) { x += pos.getX(q * 4 + k) / 4; z += pos.getZ(q * 4 + k) / 4; }
+      if (GUIAS.some((g) => naGuia(x, z, g))) for (let k = 0; k < 4; k++) pos.setXYZ(q * 4 + k, 0, -50, 0);
+    }
   }
   if (MUT === 'carro-nc') { exige(W.root.userData.carros?.length, 'MUTANTE carro-nc NÃO APLICOU'); W.root.userData.carros[0].id = 'byd_dolphin'; }
   if (MUT === 'carros-poucos') { exige(W.root.userData.carros?.length, 'MUTANTE carros-poucos NÃO APLICOU'); W.root.userData.carros.length = 9; }
@@ -341,6 +361,20 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
       return dentro.length;
     });
     return `sacos por beco ${desc.join(', ')}, todos em monte, amassados e inclinados, com tombado e lixo vazado`;
+  });
+
+  regra('RUA2 lixo ao longo da guia na rua do centro', () => {
+    const d = porNome('decal-chao');
+    exige(d, 'sem malha de decalque de chão');
+    const pos = d.geometry.attributes.position, conta = GUIAS.map(() => 0);
+    for (let q = 0; q < pos.count / 4; q++) {
+      let x = 0, z = 0;
+      for (let k = 0; k < 4; k++) { x += pos.getX(q * 4 + k) / 4; z += pos.getZ(q * 4 + k) / 4; }
+      GUIAS.forEach((g, i) => { if (naGuia(x, z, g)) conta[i]++; });
+    }
+    const comp = 30 - (AV + CAL + 0.5), dens = conta.map((c) => c / comp);
+    exige(dens.every((v) => v >= 0.8), `lixo por metro de guia: ${dens.map((v) => v.toFixed(2)).join(', ')} (piso 0,8)`);
+    return `lixo por metro em ${GUIAS.length} trechos de guia: ${dens.map((v) => v.toFixed(2)).join(', ')}`;
   });
 
   regra('BECOLUZ1 uma luz de sódio dentro de cada beco', () => {

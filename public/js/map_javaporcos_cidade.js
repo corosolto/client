@@ -135,6 +135,7 @@ export function construirCidade(kit, campo, rnd) {
 
   lixoSolto(kit, campo, rnd, extras.glb);
   lixoDeRua(kit, campo, extras, pontos);
+  lixoDaGuia(campo, extras);
   cacambas(kit, campo, extras, pontos);
   cenaDaRua(kit, campo, extras);
   kit.root.userData.sacos = [...extras.rua, ...extras.glb].filter((g) => g.id === 'saco_lixo');
@@ -786,6 +787,22 @@ function lixoDeRua(kit, campo, ex, pontos) {
       ex.decal.push({ k: [2, 3, 4, 4, 6, 1][i], x, y: campo.amostra(x, z) + 0.024, z, s: 0.5 + r() * 0.5, ry: r() * 6.283 });
     }
   }
+}
+
+/* Lixo encostado na guia, ~1 peça por metro, no que a câmera do centro vê: braço norte e as
+   duas guias da avenida leste-oeste. Sorteio próprio: o `ex.rr` move o lixo dos becos. */
+function lixoDaGuia(campo, ex) {
+  const r = lcg(0x9a1a), pick = (l) => l[(r() * l.length) | 0], ini = AV + CAL + 0.5;
+  const linhas = [];
+  for (const s of [-1, 1]) linhas.push((t) => [s * (AV - 0.22), -t]);
+  for (const s of [-1, 1]) for (const lado of [-1, 1]) linhas.push((t) => [s * t, lado * (AV - 0.22)]);
+  const lista = [];
+  for (const em of linhas) for (let t = ini; t < 30; t += 0.7 + r() * 0.6) {
+    const [x0, z0] = em(t), ox = (r() - 0.5) * 0.25, x = Math.abs(x0) < AV ? x0 - Math.sign(x0) * r() * 0.3 : x0 + ox, z = Math.abs(z0) < AV ? z0 - Math.sign(z0) * r() * 0.3 : z0 + ox;
+    lista.push({ k: pick(CEL_SARJETA), x, y: campo.amostra(x, z) + 0.023, z, s: 0.35 + r() * 0.4, ry: r() * 6.283 });
+  }
+  ex.decal.push(...lista);
+  ex.lixoGuia = lista.length;
 }
 
 /* Uma caçamba por quarteirão, encostada na guia (avenida) ou no anel de terra (fundo). O
