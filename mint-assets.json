@@ -2679,6 +2679,374 @@
         ],
         "finalSha256": "17fc3f1d7768dc5c6e3e5805f2ef89c86a14022fb86a014747b8d59ee0cafa50"
       }
+    },
+    "jp-saco-lixo": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/saco_lixo.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/trashbag",
+        "displayName": "trashbag",
+        "author": "Poly Haven: Benny Weimer",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (rua/beco). 4482 tris (bruto 4482), 0.53 x 0.57 x 0.46 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "8f9ee399c25fed43f088b987b2ad1addb35b36551c68479524a544f029fabb8d"
+      }
+    },
+    "jp-caixa-papelao": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/caixa_papelao.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/cardboard_box_01",
+        "displayName": "cardboard_box_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (rua/beco). 5000 tris (bruto 16952), 0.39 x 0.34 x 0.52 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "f2eaf727a82fefea489238bfd84cdd9a95770e073a3f46ba5031f027875f6a55"
+      }
+    },
+    "jp-engradado-plastico": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/engradado_plastico.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/plastic_crate_02",
+        "displayName": "plastic_crate_02",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (praça/rua). 5840 tris (bruto 5840), 0.51 x 0.25 x 0.41 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "c4290fe641b70e4b55f1f35d4968f36e9d419a8422b01b08556199c7096c5e52"
+      }
+    },
+    "jp-caixote-madeira": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/caixote_madeira.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/wooden_crate_01",
+        "displayName": "wooden_crate_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (praça (feira)). 6576 tris (bruto 6576), 0.83 x 0.35 x 0.41 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "3e652df1c0f8b4244b5fb4455095c32eab5b82a4d4b01952e72257a0c5fdf888"
+      }
+    },
+    "jp-pneu-velho": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/pneu_velho.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/old_tyre",
+        "displayName": "old_tyre",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (praça/rua). 2880 tris (bruto 2880), 0.6 x 0.6 x 0.16 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "0b433c6b3964ecc4372cca9ce2632f1059f0b1666b6e2a1a0ed7c6c454ef8ab7"
+      }
+    },
+    "jp-cadeira-plastico": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/cadeira_plastico.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/plastic_monobloc_chair_01",
+        "displayName": "plastic_monobloc_chair_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (rua (bar)). 3356 tris (bruto 3356), 0.64 x 0.88 x 0.63 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "dfc7f2432395d148864f807fe395c8b047e2e9e5828d3090b35ea2d3c7989340"
+      }
+    },
+    "jp-saco-cimento": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/saco_cimento.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/cement_bag",
+        "displayName": "cement_bag",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (beco/rua). 844 tris (bruto 844), 0.46 x 0.18 x 0.7 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "1676ab9b846d33bb661baae95d1f7c5298cd283e327a30bc9814e1d597dc6ee4"
+      }
+    },
+    "jp-tambor-metal": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/tambor_metal.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/barrel_03",
+        "displayName": "barrel_03",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (beco/pasto). 1473 tris (bruto 1473), 0.63 x 0.93 x 0.64 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "491b58bc9fa2e78e61062e76b0f98e912cba7161a053377188d142195c781138"
+      }
+    },
+    "jp-tampa-bueiro": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/tampa_bueiro.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/water_manhole_cover",
+        "displayName": "water_manhole_cover",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (rua). 2999 tris (bruto 6301), 0.69 x 0.07 x 0.69 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "10f1315dc7e4649e01bce415a5cf54c32edfa21c14ae851dfad1576b0c5c24fd"
+      }
+    },
+    "jp-lixeira-metal": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/lixeira_metal.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/metal_trash_can",
+        "displayName": "metal_trash_can",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (beco). 7532 tris (bruto 7532), 0.77 x 0.91 x 0.55 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "febd7bcb53a4e82c667c686ff8eeb50b5bbd978707bb4b4a1bf93bc906c753fe"
+      }
+    },
+    "jp-lata-enferrujada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/lata_enferrujada.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/can_rusted",
+        "displayName": "can_rusted",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (beco/rua). 1500 tris (bruto 3520), 0.12 x 0.15 x 0.12 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "331c771f37ef9ef8b7a570bade008f4eb674df9047292ab6651894302d7a45f9"
+      }
+    },
+    "jp-caixa-energia": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/caixa_energia.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/utility_box_01",
+        "displayName": "utility_box_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (beco). 4404 tris (bruto 4404), 0.52 x 1.12 x 0.43 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "2b8c722c7d70b7acb277876a77991211ddb0d7d40810f62a6989b92ea4877404"
+      }
+    },
+    "jp-porta-aco": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/porta_aco.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/rollershutter_door",
+        "displayName": "rollershutter_door",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (rua (comércio fechado)). 552 tris (bruto 552), 1.08 x 2.4 x 0.3 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "78e9de97a4a92c1b79d82a202eb8a5939466312f98300e30ec3f15c9db2a3256"
+      }
+    },
+    "jp-porta-aco-pichada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/porta_aco_pichada.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/rollershutter_door",
+        "displayName": "rollershutter_door",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (rua/beco). 552 tris (bruto 552), 1.08 x 2.4 x 0.3 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "fac91f6d7dca4ef78fdcb867ce7d4f2167c5b357b406859576f085c412fe8f1d"
+      }
+    },
+    "jp-barreira-concreto": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/barreira_concreto.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/concrete_road_barrier",
+        "displayName": "concrete_road_barrier",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (praça (barricada)). 8000 tris (bruto 60928), 1.54 x 0.83 x 0.64 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "6f36677963004786b3a8a6a009cb2c44bfbf0e1c122c0ad4d9f8f5a72477eef9"
+      }
+    },
+    "jp-luminaria-parede": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/luminaria_parede.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/street_lamp_02",
+        "displayName": "street_lamp_02",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (praça (fachada da igreja)). 8096 tris (bruto 20338), 0.39 x 1.67 x 0.81 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "f60196c2ec628650483fbf85086cd43e36697e238102e3ceaead147849d73cca"
+      }
     }
   }
 }
