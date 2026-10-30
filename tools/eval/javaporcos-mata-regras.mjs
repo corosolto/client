@@ -23,16 +23,20 @@
              vem só do hemi sob o dossel; mais amarelo sobe o b* médio das vistas).
      CUPIM1  o torno do cupinzeiro tem 3 lóbulos (harmônico 3 do raio ≥ 0,12 do raio médio
              nos anéis do meio) e cada cupinzeiro tem ≥ 2 torrões de 0,3–0,5 m de raio.
+     CUPIM2  rodada 4 ("ainda lê domo liso", boca-so sdL 4,8): o corpo tem ≥ 40 segmentos,
+             ruído radial fora do harmônico 3 com desvio ≥ 0,04 do raio nos anéis do meio e
+             ≥ 2 torrinhas fora do eixo (≥ 0,25 m do centro) que passam do topo do corpo.
 
    MUTANTES (cada um tem de acender a cláusula indicada):
      trilha-degrau   retalho volta a deitar na horizontal com 3,5 m          -> TRILHA3
      copa-pirulito   andar de cima de cada árvore volta a 1,1 m de raio      -> MATA5
      tronco-pelado   andar de baixo de cada árvore sobe para junto do de cima -> MATA5
      cupim-cone      torno volta a ConeGeometry lisa, sem torrão             -> CUPIM1
+     cupim-domo      torno de 48 lados com lóbulo e sem ruído nem torrinha    -> CUPIM2
      trilha-piche    cor do retalho volta a 1,15/0,9/0,58                     -> TRILHA4
    ============================================================================ */
 
-export const MUTANTES = ['trilha-piche', 'trilha-degrau', 'copa-pirulito', 'tronco-pelado', 'cupim-cone'];
+export const MUTANTES = ['cupim-domo', 'trilha-piche', 'trilha-degrau', 'copa-pirulito', 'tronco-pelado', 'cupim-cone'];
 const HALF = 58;
 
 export function regrasMata({ W, THREE, MUT, regra, exige }) {
@@ -92,6 +96,14 @@ export function regrasMata({ W, THREE, MUT, regra, exige }) {
     exige(cupim, 'MUTANTE cupim-cone NÃO APLICOU: sem pasto-cupinzeiro');
     cupim.geometry = new THREE.ConeGeometry(1, 1, 11, 6).translate(0, 0.5, 0);
     cupim.count = W.cupinzeiros?.length || cupim.count;
+  }
+
+  if (MUT === 'cupim-domo') {
+    exige(cupim, 'MUTANTE cupim-domo NÃO APLICOU: sem pasto-cupinzeiro');
+    const g = new THREE.LatheGeometry([[1.0, 0], [0.87, 0.3], [0.76, 0.5], [0.61, 0.69], [0.44, 0.84], [0.1, 1.01], [0, 1.02]].map(([r, y]) => new THREE.Vector2(r, y)), 48);
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) { const a = Math.atan2(p.getZ(i), p.getX(i)), n = 1 + 0.3 * Math.cos(3 * a + 2.2 * p.getY(i)); p.setXYZ(i, p.getX(i) * n, p.getY(i), p.getZ(i) * n); }
+    cupim.geometry = g;
   }
 
   /* ---------------------------------------------------------------- TRILHA3 */
@@ -156,7 +168,7 @@ export function regrasMata({ W, THREE, MUT, regra, exige }) {
   regra('CUPIM1 cupinzeiro tem lóbulo e torrão, não é cone', () => {
     exige(cupim?.isInstancedMesh, 'sem pasto-cupinzeiro');
     const pos = cupim.geometry.attributes.position, aneis = new Map();
-    for (let i = 0; i < pos.count; i++) {
+    for (let i = 0; i < (cupim.geometry.userData.vertsTorno ?? pos.count); i++) {
       const y = pos.getY(i);
       if (y < 0.15 || y > 0.85) continue;
       const k = y.toFixed(3);
@@ -182,5 +194,42 @@ export function regrasMata({ W, THREE, MUT, regra, exige }) {
     const fora = torroes.filter((r) => r < 0.3 - 1e-6 || r > 0.5 + 1e-6).length;
     exige(!fora, `${fora} torrões fora de 0,3–0,5 m de raio`);
     return `lóbulo ${med.toFixed(3)} do raio, ${n} cupinzeiros, ${torroes.length} torrões`;
+  });
+
+  /* ----------------------------------------------------------------- CUPIM2 */
+  regra('CUPIM2 cupinzeiro com ruído na silhueta e torrinha, não domo', () => {
+    exige(cupim?.isInstancedMesh, 'sem pasto-cupinzeiro');
+    const g = cupim.geometry, pos = g.attributes.position, nCorpo = g.userData.vertsTorno ?? pos.count;
+    const aneis = new Map();
+    let topo = 0;
+    for (let i = 0; i < nCorpo; i++) {
+      const y = pos.getY(i); topo = Math.max(topo, y);
+      if (y < 0.3 || y > 0.85) continue;
+      const k = y.toFixed(3);
+      if (!aneis.has(k)) aneis.set(k, []);
+      const a = Math.atan2(pos.getZ(i), pos.getX(i)), anel = aneis.get(k);
+      if (!anel.some(([b]) => Math.abs(Math.sin((a - b) / 2)) < 1e-4)) anel.push([a, Math.hypot(pos.getX(i), pos.getZ(i))]);
+    }
+    const lados = Math.max(...[...aneis.values()].map((a) => a.length));
+    exige(lados >= 40, `corpo com ${lados} lados (piso 40): silhueta poligonal`);
+    const res = [];
+    for (const anel of aneis.values()) {
+      const media = anel.reduce((s, [, r]) => s + r, 0) / anel.length;
+      let c = 0, s = 0;
+      for (const [a, r] of anel) { c += r * Math.cos(3 * a); s += r * Math.sin(3 * a); }
+      c *= 2 / anel.length; s *= 2 / anel.length;
+      const resto = anel.map(([a, r]) => r - media - c * Math.cos(3 * a) - s * Math.sin(3 * a));
+      res.push(Math.sqrt(resto.reduce((t, v) => t + v * v, 0) / resto.length) / media);
+    }
+    res.sort((a, b) => a - b);
+    const med = res[Math.floor(res.length / 2)] || 0;
+    exige(med >= 0.04, `ruído radial fora do lóbulo ${med.toFixed(3)} do raio (piso 0,04): domo liso`);
+    const torres = [];
+    for (let i = nCorpo; i < pos.count; i++) {
+      const x = pos.getX(i), z = pos.getZ(i), y = pos.getY(i);
+      if (y > topo && Math.hypot(x, z) >= 0.25 && !torres.some(([tx, tz]) => Math.hypot(tx - x, tz - z) < 0.3)) torres.push([x, z]);
+    }
+    exige(torres.length >= 2, `${torres.length} torrinha(s) acima do corpo e fora do eixo (piso 2)`);
+    return `${lados} lados, ruído ${med.toFixed(3)} do raio, ${torres.length} torrinhas`;
   });
 }

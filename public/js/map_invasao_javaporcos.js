@@ -75,7 +75,7 @@ export function buildInvasaoJavaporcos(scene, T) {
     pasto: comPbr('leafy_grass', TX.pastoTex(), { vertexColors: true }),
     capimPasto: lam({ map: TX.capimPastoTex(), alphaTest: 0.5, side: THREE.DoubleSide, roughness: 1 }),
     touceira: lam({ map: TX.capimAltoTex(), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 1 }),
-    cupim: comPbr('dirt', TX.terraTex(), { color: new THREE.Color(1.6, 1.0, 0.62), vertexColors: true }),   // barro de cupim é ocre, o dirt é L* 36
+    cupim: comPbr('dirt', TX.terraTex(), { color: new THREE.Color(1.6, 1.22, 0.96), vertexColors: true }),   // barro de cupim é ocre, o dirt é L* 36
     mourao: lam({ map: TX.cascaTex(), color: 0xb0a490 }),
     cimento: lam({ map: TX.cimentoTex(), color: 0xd8d2c6 }),
     medidor: lam({ map: TX.lataTex('#9a9c98', 8), metalness: 0.3, roughness: 0.5 }),

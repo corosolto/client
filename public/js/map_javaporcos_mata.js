@@ -547,23 +547,33 @@ export function construirPasto(kit, campo, rnd) {
   };
 }
 
-/* Perfil de torno com 3 lóbulos que torcem com a altura: cone liso lia como pirâmide de pedra. */
-export const CUPIM_LOBULO = 0.18;
+/* Perfil de torno com 3 lóbulos que torcem com a altura: cone liso lia como pirâmide de pedra.
+   Rodada 4: lóbulo 0,30, ruído radial de 6–11 voltas e 2 torrinhas fora do eixo (lia domo). */
+export const CUPIM_LOBULO = 0.30;
 function cupimTorno() {
   const perfil = [[1.0, 0], [0.95, 0.1], [0.87, 0.3], [0.76, 0.5], [0.61, 0.69], [0.44, 0.84], [0.26, 0.95], [0.1, 1.01], [0, 1.02]]
     .map(([r, y]) => new THREE.Vector2(r, y));
-  const geo = new THREE.LatheGeometry(perfil, 18);
-  const p = geo.attributes.position, uv = geo.attributes.uv, cor = new Float32Array(p.count * 3);   // vale do lóbulo e pé escurecem: na sombra da mata só o hemisfério ilumina
-  for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(z, x);
-    const n = 1 + CUPIM_LOBULO * Math.cos(3 * a + 2.2 * y) + 0.05 * Math.sin(7 * a - 4 * y) * Math.cos(9 * y);
-    p.setXYZ(i, x * n, y, z * n);
-    uv.setXY(i, uv.getX(i) * 3, uv.getY(i) * 1.2);
-    const v = 0.62 + 0.38 * (0.5 + 0.5 * Math.cos(3 * a + 2.2 * y)) * (0.7 + 0.3 * Math.min(1, y * 2));
-    cor.set([v, v * 0.96, v * 0.92], i * 3);
-  }
-  geo.setAttribute('color', new THREE.BufferAttribute(cor, 3));
+  const torno = (seg, lob, fase) => {
+    const geo = new THREE.LatheGeometry(perfil, seg);
+    const p = geo.attributes.position, uv = geo.attributes.uv, cor = new Float32Array(p.count * 3);   // vale do lóbulo e pé escurecem: na sombra da mata só o hemisfério ilumina
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(z, x);
+      const ruido = 0.12 * (0.55 * Math.sin(6 * a + 3.1 * y + fase) + 0.45 * Math.sin(11 * a - 5.3 * y + 2 * fase)) * Math.min(1, y * 4);
+      const n = 1 + lob * Math.cos(3 * a + 2.2 * y + fase) + ruido;
+      p.setXYZ(i, x * n, y, z * n);
+      uv.setXY(i, uv.getX(i) * 3, uv.getY(i) * 1.2);
+      const crista = 0.5 + 0.5 * Math.cos(3 * a + 2.2 * y + fase), v = Math.max(0.12, 0.12 + 1.05 * crista * crista * (0.55 + 0.45 * Math.min(1, y * 2)) - 2.5 * Math.max(0, -ruido));
+      cor.set([v, v * 0.96, v * 0.92], i * 3);
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(cor, 3));
+    return geo;
+  };
+  const corpo = torno(48, CUPIM_LOBULO, 0);
+  const torres = [[0.42, 0.3, 1.3, 1.1], [-0.3, -0.36, 1.05, 2.9]].map(([dx, dz, alto, fase]) =>
+    torno(16, 0.2, fase).scale(0.35, alto, 0.35).translate(dx, 0, dz));
+  const geo = mergeGeometries([corpo, ...torres], false);
   geo.computeVertexNormals();
+  geo.userData.vertsTorno = corpo.attributes.position.count;   // a régua mede o lóbulo só no corpo
   return geo;
 }
 
