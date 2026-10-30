@@ -31,6 +31,9 @@
      BECOLUZ1 luz de sódio em cada beco ("beco sem fonte de luz", saco L* 6): com a câmera
              posta em cada beco, a luz `beco-luz` vai para dentro dele a 4–5 m, quente,
              intensidade ≥ 4, alcance 10–16 m, decaimento 2, com luminária a ≤ 0,5 m.
+             Rodada 4 ("beiral alaranjado", C* 11,4 → 28,8): é SpotLight de abertura ≤ 1,2 rad
+             com o eixo a ≤ 10° da vertical para baixo (nada acima da lâmpada recebe luz) e
+             cor menos laranja (g/r ≥ 0,72; o 0xffb060 da rodada 3 dava 0,69).
      FIOS1   o rasgo de céu do beco tem poste e fio (sumiram na rodada 2): ≥ 3 fios acima de
              5,5 m cruzando o eixo de cada beco e um poste a ≤ 2 m da boca da viela.
      RUA1    rua do eixo da câmera do centro cheia ("rua vazia", ruaObj 3,8%): ≥ 8 carros no
@@ -48,12 +51,13 @@
      janela-preta    vidro volta ao cinza metálico 0x46525a, sem mapa    -> JANELA2
      beco-apagado    tira a luz dos becos                                 -> BECOLUZ1, POSTE1
      luz-presa       a luz não segue a câmera (fica no primeiro beco)     -> BECOLUZ1
+     luz-bola        volta a pontual 0xffb060 a 18 (acende o forro do beiral) -> BECOLUZ1
      beco-sem-fio    tira da fiação os segmentos sobre os becos           -> FIOS1
      rua-vazia       volta o braço norte a 4 carros e tira a cena da rua  -> RUA1
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'beco-apagado', 'luz-presa', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -111,8 +115,15 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
   const becoCaixas = () => malhas().filter((o) => o.name === 'chao-beco').map((b) => new THREE.Box3().setFromObject(b));
   const sobreBeco = (bb, x, z, folga) => x >= bb.min.x - folga && x <= bb.max.x + folga && z >= bb.min.z - folga && z <= bb.max.z + folga;
   if (MUT === 'beco-apagado') {
-    const ls = []; W.root.traverse((o) => { if (o.isPointLight && o.name === 'beco-luz') ls.push(o); });
+    const ls = []; W.root.traverse((o) => { if (o.isLight && o.name === 'beco-luz') ls.push(o); });
     exige(ls.length, 'MUTANTE beco-apagado NÃO APLICOU'); ls.forEach((l) => l.parent.remove(l));
+  }
+  if (MUT === 'luz-bola') {
+    const l = W.root.getObjectByName('beco-luz'), g = porNome('beco-luz-guia');
+    exige(l && g, 'MUTANTE luz-bola NÃO APLICOU');
+    const p = new THREE.PointLight(0xffb060, 18, 14, 2); p.name = 'beco-luz'; p.position.copy(l.position);
+    l.parent.add(p); l.parent.remove(l);
+    g.onBeforeRender = (r, s, cam) => { p.position.set(cam.position.x, 4.35, cam.position.z); p.updateMatrixWorld(); };
   }
   if (MUT === 'luz-presa') { const g = porNome('beco-luz-guia'); exige(g, 'MUTANTE luz-presa NÃO APLICOU'); g.onBeforeRender = () => {}; }
   if (MUT === 'beco-sem-fio') {
@@ -199,7 +210,7 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     exige(lente && lente.count === ps.length && lente.material.emissiveIntensity >= 2, 'luminária faltando ou apagada');
     exige(trafo && trafo.count >= Math.floor(ps.length / 3), `transformador em ${trafo?.count || 0} postes (piso 1 a cada 3)`);
     const luzes = { praca: 0, beco: 0, outras: 0 };
-    W.root.traverse((o) => { if (o.isPointLight) luzes[o.name === 'praca-luz' ? 'praca' : o.name === 'beco-luz' ? 'beco' : 'outras']++; });
+    W.root.traverse((o) => { if (o.isPointLight || o.isSpotLight) luzes[o.name === 'praca-luz' ? 'praca' : o.name === 'beco-luz' ? 'beco' : 'outras']++; });
     exige(luzes.praca === 4 && luzes.beco === 1 && !luzes.outras, `luzes pontuais: ${luzes.praca} na praça, ${luzes.beco} de beco, ${luzes.outras} outras (exatamente 4 + 1 + 0)`);
     return `${ps.length} postes cilíndricos, ${lente.count} luminárias, ${trafo.count} trafos, ${luzes.praca} luzes na praça e ${luzes.beco} de beco`;
   });
@@ -266,7 +277,7 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
 
   regra('BECOLUZ1 uma luz de sódio dentro de cada beco', () => {
     const bbs = becoCaixas(), luzes = [], lentes = instancias(porNome('poste-lente')), guia = porNome('beco-luz-guia');
-    W.root.traverse((o) => { if (o.isPointLight && o.name === 'beco-luz') luzes.push(o); });
+    W.root.traverse((o) => { if (o.isLight && o.name === 'beco-luz') luzes.push(o); });
     exige(bbs.length >= 4, `só ${bbs.length} becos`);
     exige(guia && luzes.length, 'sem luz de beco ou sem a guia que a leva até a câmera');
     const cam = new THREE.PerspectiveCamera();
@@ -278,6 +289,12 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
       exige(l, `beco em (${((bb.min.x + bb.max.x) / 2).toFixed(1)}, ${((bb.min.z + bb.max.z) / 2).toFixed(1)}) sem luz a 4–5 m dentro dele`);
       const p = l.getWorldPosition(new THREE.Vector3()), c = l.color;
       exige(c.r > c.g && c.g > c.b, 'luz do beco não é quente (sódio)');
+      const hex = c.getHex(), gr = ((hex >> 8) & 255) / Math.max(1, hex >> 16);   // sRGB, como o hex do fonte
+      exige(gr >= 0.72, `luz do beco laranja demais (g/r ${gr.toFixed(2)}, piso 0,72): beiral C* 29`);
+      exige(l.isSpotLight && l.angle <= 1.2, `luz do beco ${l.isSpotLight ? `com abertura ${l.angle.toFixed(2)} rad (teto 1,2)` : 'omnidirecional'}: acende o forro do beiral`);
+      l.target.updateMatrixWorld(true);
+      const eixo = l.target.getWorldPosition(new THREE.Vector3()).sub(p).normalize();
+      exige(eixo.y <= -Math.cos(THREE.MathUtils.degToRad(10)), `cone do beco fora da vertical (eixo y ${eixo.y.toFixed(2)})`);
       exige(l.intensity >= 4 && l.distance >= 10 && l.distance <= 16 && l.decay === 2, `luz do beco fraca ou sem alcance (int ${l.intensity}, alcance ${l.distance}, decaimento ${l.decay})`);
       exige(lentes.some((q) => Math.hypot(q.p.x - p.x, q.p.z - p.z) <= 0.5 && Math.abs(q.p.y - p.y) <= 0.4), 'luz do beco sem luminária visível a ≤ 0,5 m');
       return `${p.y.toFixed(1)} m`;

@@ -779,13 +779,13 @@ function cacambas(kit, campo, ex, pontos) {
   }
 }
 
-/* Uma luz de sódio só, que pula para o beco mais perto da câmera: quatro pontuais custavam
-   ~9% do quadro na cidade inteira (medido) e de dentro de um beco só se vê um. */
+/* Uma luz de sódio só, que pula para o beco mais perto da câmera (quatro custavam ~9% do quadro).
+   Cone virado para o chão: a pontual acendia o forro do beiral de laranja (C* 11 → 29). */
 function luzDosBecos(kit, postes) {
   const lampadas = postes.map((p) => new THREE.Vector3(p.lum[0], p.y + p.lum[1] - 0.15, p.lum[2]));
-  const luz = new THREE.PointLight(0xffb060, 18, 14, 2);
-  luz.name = 'beco-luz'; luz.position.copy(lampadas[0]);
-  kit.root.add(luz);
+  const luz = new THREE.SpotLight(0xffc48a, 20, 12, 1.1, 0.6, 2);
+  luz.name = 'beco-luz'; luz.position.copy(lampadas[0]); luz.target.position.set(lampadas[0].x, 0, lampadas[0].z);
+  kit.root.add(luz, luz.target);
   // triângulo degenerado sem corte de frustum: é ele que recebe a câmera a cada quadro
   const guia = new THREE.Mesh(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(9), 3)), kit.MAT.cabo);
   guia.name = 'beco-luz-guia'; guia.frustumCulled = false; guia.castShadow = false; guia.userData.nonSolidSurface = true;
@@ -793,7 +793,10 @@ function luzDosBecos(kit, postes) {
     if (!cam?.isPerspectiveCamera) return;
     let melhor = lampadas[0], d2 = Infinity;
     for (const l of lampadas) { const d = (l.x - cam.position.x) ** 2 + (l.z - cam.position.z) ** 2; if (d < d2) { d2 = d; melhor = l; } }
-    if (!luz.position.equals(melhor)) { luz.position.copy(melhor); luz.updateMatrixWorld(); }
+    if (!luz.position.equals(melhor)) {
+      luz.position.copy(melhor); luz.target.position.set(melhor.x, 0, melhor.z);
+      luz.updateMatrixWorld(); luz.target.updateMatrixWorld();
+    }
   };
   kit.root.add(guia);
 }
