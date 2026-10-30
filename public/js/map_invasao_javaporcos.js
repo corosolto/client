@@ -7,8 +7,8 @@ import { AMB_LOOPS } from './soundscape.js';
 import { detailFor } from './textures.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
-import { CampoDeAltura, malhaTerreno, HALF, CIDADE, EIXOS } from './map_javaporcos_relevo.js';
-import { construirMata } from './map_javaporcos_mata.js';
+import { CampoDeAltura, malhaTerreno, HALF, CIDADE, MATA_R, EIXOS, CORREGO_MEIA, corregoZ, corteCorrego, distPasto, PASSO } from './map_javaporcos_relevo.js';
+import { construirMata, construirPasto } from './map_javaporcos_mata.js';
 import { construirCidade, CIDADE_R, AV, CAL } from './map_javaporcos_cidade.js';
 import * as TX from './map_javaporcos_texturas.js';
 
@@ -54,9 +54,20 @@ export function buildInvasaoJavaporcos(scene, T) {
     calcada: lam({ map: TX.calcadaTex() }),
     bloquete: lam({ map: TX.bloqueteTex() }),
     terra: lam({ map: TX.terraTex() }),
-    terraTrilha: lam({ map: TX.terraTex(), color: 0xb6a894 }),
+    terraTrilha: lam({ map: TX.terraTex(), color: 0xb6a894, alphaMap: TX.manchaAlphaTex(), alphaTest: 0.42 }),
     terraQuintal: lam({ map: TX.terraTex(), color: 0xa09684 }),
     grama: lam({ map: TX.gramaTex() }),
+    pasto: lam({ map: TX.pastoTex(), vertexColors: true }),
+    capimPasto: lam({ map: TX.capimPastoTex(), alphaTest: 0.5, side: THREE.DoubleSide, roughness: 1 }),
+    touceira: lam({ map: TX.capimAltoTex(), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 1 }),
+    cupim: lam({ map: TX.terraTex(), color: 0xd09a72 }),
+    mourao: lam({ map: TX.cascaTex(), color: 0xb0a490 }),
+    cimento: lam({ map: TX.cimentoTex() }),
+    medidor: lam({ map: TX.lataTex('#9a9c98', 8), metalness: 0.3, roughness: 0.5 }),
+    roupa: lam({ map: TX.tecidoTex(), side: THREE.DoubleSide }),
+    botijao: lam({ map: TX.lataTex('#2f5f9a', 10), metalness: 0.25, roughness: 0.45 }),
+    lixeiraAmarela: lam({ map: TX.lataTex('#d1a92a', 11), roughness: 0.6 }),
+    rebocoDesc: [lam({ map: TX.rebocoDescascadoTex('#c9a86a', 1) }), lam({ map: TX.rebocoDescascadoTex('#7f9db0', 2) })],
     gramaCidade: lam({ map: TX.gramaTex(), color: 0x9a9272 }),
     bloco: lam({ map: TX.blocoTex() }),
     telha: lam({ map: TX.telhaTex() }),
@@ -167,23 +178,27 @@ export function buildInvasaoJavaporcos(scene, T) {
 
   // ── Relevo. A malha do terreno sai da MESMA grade que o groundHeightAt lê.
   const campo = new CampoDeAltura();
+  const P = MATA_R, C = CIDADE;
   const terreno = [
-    [-HALF, HALF, -HALF, -CIDADE, MAT.grama], [-HALF, HALF, CIDADE, HALF, MAT.grama],
-    [-HALF, -CIDADE, -CIDADE, CIDADE, MAT.grama], [CIDADE, HALF, -CIDADE, CIDADE, MAT.grama],
-    [-CIDADE, CIDADE, -CIDADE, CIDADE, MAT.gramaCidade],
+    [-HALF, HALF, -HALF, -P, MAT.grama], [-HALF, HALF, P, HALF, MAT.grama],
+    [-HALF, -P, -P, P, MAT.grama], [P, HALF, -P, P, MAT.grama],
+    [-P, P, -P, -C, MAT.pasto, true], [-P, P, C, P, MAT.pasto, true],
+    [-P, -C, -C, C, MAT.pasto, true], [C, P, -C, C, MAT.pasto, true],
+    [-C, C, -C, C, MAT.gramaCidade],
   ];
-  for (const [x0, x1, z0, z1, mat] of terreno) {
-    const m = malhaTerreno(campo, mat, x0, x1, z0, z1);
-    m.name = 'chao-terreno';
+  for (const [x0, x1, z0, z1, mat, pasto] of terreno) {
+    const m = pasto ? malhaTerreno(campo, mat, x0, x1, z0, z1, PASSO, 3.0, corPasto) : malhaTerreno(campo, mat, x0, x1, z0, z1);
+    m.name = pasto ? 'chao-pasto' : 'chao-terreno';
     root.add(m);
   }
-  agua(root, MAT, campo);
+  agua(root, campo);
 
   // ── Cidade primeiro (ela escreve as plataformas no campo), depois a mata.
   const cidade = construirCidade(kit, campo, rnd);
   const mata = construirMata(kit, campo, rnd);
+  const pasto = construirPasto(kit, campo, rnd);
   carros(kit, campo, rnd);
-  vegetacaoUrbana(kit, campo, rnd);
+  vegetacaoUrbana(kit, campo, rnd, cidade.becoAreas);
   if (SKIRT.build) SKIRT.build(root);
   propsOpcionais(root, occluders, campo, rnd, mata, cidade);
 
@@ -221,6 +236,8 @@ export function buildInvasaoJavaporcos(scene, T) {
     nearestWaypoint: nav.nearestWaypoint,
     findPath: nav.findPath,
     boarEntrances: mata.boarEntrances,
+    horda: contratoHorda(cidade),
+    cupinzeiros: pasto.cupinzeiros,
     hordeObjectives: cidade.hordeObjectives,
     foodSpots: cidade.foodSpots,
     lojas: cidade.lojas,
@@ -230,32 +247,57 @@ export function buildInvasaoJavaporcos(scene, T) {
     foodCollider: (id) => cidade.foodColliders.get(id) || null,
     cityBounds: { minX: -CIDADE_R, maxX: CIDADE_R, minZ: -CIDADE_R, maxZ: CIDADE_R },
     bounds: { minX: -HALF, maxX: HALF, minZ: -HALF, maxZ: HALF },
-    censo: { ...cidade.censo, ...mata.censo, nos: nav.nodes.length, nosPodados: nav.ilhados, colisores: colliders.length },
+    censo: { ...cidade.censo, ...mata.censo, ...pasto.censo, nos: nav.nodes.length, nosPodados: nav.ilhados, colisores: colliders.length },
     sound: { bioma: 'campo', loops: [
-      { src: AMB_LOOPS.passaros, pos: [0, 6, -44], radius: 90, vol: 0.28 },
+      { src: AMB_LOOPS.passaros, pos: [0, 6, -50], radius: 90, vol: 0.28 },
       { src: AMB_LOOPS.grilos, pos: [0, 2, 44], radius: 80, vol: 0.2 },
-      { src: AMB_LOOPS.corrego, pos: [4, 1, -39], radius: 34, vol: 0.26 },
+      { src: AMB_LOOPS.corrego, pos: [0, 1, -42], radius: 34, vol: 0.26 },
       { src: AMB_LOOPS.cidade, pos: [0, 3, 0], radius: 40, vol: 0.12 },
     ] },
   };
 }
 
-/* Lâmina do córrego: nome começando em `agua` para a régua de superfície e a sonda do
-   map-check a ignorarem — água não é chão nem teto. */
-function agua(root, MAT, campo) {
-  const geo = new THREE.PlaneGeometry(2 * HALF, 6.4, 116, 4);
+/* Lâmina do córrego: nível = fundo + 0,42 m onde há corte, enterrada no aterro da trilha.
+   Nome começando em `agua` para a régua de superfície e a sonda a ignorarem. */
+function agua(root, campo) {
+  const larg = 2 * CORREGO_MEIA * 0.72;
+  const geo = new THREE.PlaneGeometry(2 * HALF, larg, Math.round(2 * HALF / PASSO), 2);
+  geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
   for (let v = 0; v < pos.count; v++) {
-    const x = pos.getX(v), z = -39 - pos.getY(v);
-    pos.setZ(v, campo.amostra(x, z) + 0.18);
+    const x = pos.getX(v), zc = corregoZ(x);
+    const fundo = campo.amostra(x, zc);
+    pos.setXYZ(v, x, corteCorrego(x, zc) > 0.3 ? fundo + 0.42 : fundo - 0.4, zc + pos.getZ(v));
   }
-  geo.rotateX(-Math.PI / 2);
+  geo.computeVertexNormals();
   const mat = new THREE.MeshStandardMaterial({ color: 0x4d6150, roughness: 0.22, metalness: 0.1, transparent: true, opacity: 0.82 });
   const m = new THREE.Mesh(geo, mat);
-  m.position.set(0, 0, -39);
   m.name = 'agua-corrego';
   m.userData.nonSolidSurface = true;
   root.add(m);
+}
+
+/* Cor por vértice do pasto: mancha seca larga, borda pisada junto da cidade e terra na
+   trilha. É o que tira a leitura de plano verde repetido. */
+function corPasto(x, z) {
+  const seco = 0.5 + 0.5 * Math.sin(x * 0.11 + 1.3) * Math.cos(z * 0.13 - 0.4);
+  const fino = 0.06 * Math.sin(x * 1.7 + z * 0.9) * Math.cos(z * 1.3 - x * 0.4);
+  const r = Math.max(Math.abs(x), Math.abs(z));
+  const pisado = Math.max(0, 1 - (r - CIDADE) / 1.6) * 0.5 + Math.max(0, 1 - distPasto(x, z) / 1.5) * 0.8;
+  const t = Math.min(1, pisado);
+  const g = [0.9 + 0.28 * seco + fino, 0.96 + 0.04 * seco + fino, 0.82 - 0.16 * seco];
+  return [g[0] + (1.25 - g[0]) * t, g[1] + (0.98 - g[1]) * t, g[2] + (0.8 - g[2]) * t];
+}
+
+/* Contrato com a mecânica (docs/maps/invasao-javaporcos.md, "world.horda"): frentes com
+   rota da clareira até a cidade, becos que abrem na onda 3 e setores de domínio. */
+function contratoHorda(cidade) {
+  const p = ([x, z]) => ({ x: +x.toFixed(2), z: +z.toFixed(2) });
+  return {
+    frentes: EIXOS.map((e) => ({ id: e.id, nome: e.nome, lado: e.lado, boca: p(e.boca), clareira: p(e.clareira), rota: e.rota.map(p) })),
+    becos: cidade.becos,
+    setores: cidade.setores,
+  };
 }
 
 /* Carro parado é escala e cobertura de rua. Fica colado na calçada e NUNCA no
@@ -295,7 +337,7 @@ function carros(kit, campo, rnd) {
 
 /* Mato de calçada, bananeira de quintal e grama de beira: é o que tira o chão chapado
    entre o asfalto e a mata, e tudo instanciado em duas chamadas de desenho. */
-function vegetacaoUrbana(kit, campo, rnd) {
+function vegetacaoUrbana(kit, campo, rnd, becoAreas = []) {
   const { MAT } = kit;
   const tufos = [], arbustos = [];
   const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3();
@@ -315,7 +357,8 @@ function vegetacaoUrbana(kit, campo, rnd) {
       // cima de bloquete e dentro de loja, que foi o que a primeira captura mostrou.
       if (y > 0.17) continue;
       tufos.push(mtx(px, y + 0.12, pz, rnd() * 6.283, 0.55 + rnd() * 0.5, 0.26 + rnd() * 0.16));
-      if (rnd() < 0.08) arbustos.push(mtx(px, y + 0.42, pz, rnd() * 6.283, 0.8 + rnd() * 0.6, 0.8 + rnd() * 0.5));
+      const noBeco = becoAreas.some(([x0, x1, z0, z1]) => px > x0 - 0.6 && px < x1 + 0.6 && pz > z0 - 0.6 && pz < z1 + 0.6);
+      if (rnd() < 0.08 && !noBeco) arbustos.push(mtx(px, y + 0.42, pz, rnd() * 6.283, 0.8 + rnd() * 0.6, 0.8 + rnd() * 0.5));
     }
   }
   const add = (lista, geo, mat, nome) => {

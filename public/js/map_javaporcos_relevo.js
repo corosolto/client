@@ -2,35 +2,29 @@
    navegação. Derivação dos números e custo por chamada: docs/maps/invasao-javaporcos.md. */
 import * as THREE from 'three';
 
-/* Medidas do relevo (arena, cidade, barranco, córrego e pontes) e o porquê de cada
-   número: docs/maps/invasao-javaporcos.md, seção "Cotas do relevo". */
+/* Medidas do relevo (arena, cidade, pasto, barranco, córrego e trilhas) e o porquê de
+   cada número: docs/maps/invasao-javaporcos-layout.md, seção "Cotas do relevo". */
 export const HALF = 58;
 export const CIDADE = 36;
+export const MATA_R = 44;
 export const PASSO = 0.5;
+export const PASTO_SOBE = 0.45;
 export const BARRANCO = 2.6;
 export const SUBIDA = 4.5;
-export const CORREGO_Z = -39;
-export const CORREGO_MEIA = 3.2;
-export const CORREGO_FUNDO = 1.4;
-export const PONTES = [-20, 28];
-export const PONTE_MEIA = 2.2;
+export const CORREGO_Z = -41.6;
+export const CORREGO_MEIA = 2.3;
+export const CORREGO_FUNDO = 1.1;
+export const ATERRO_MEIA = 2.4;
 
 export const TRILHA_MEIA = 1.75;   // trilha de 3,5 m
-export const CLAREIRA_R = 3.8;
+export const CLAREIRA_R = 3.0;
 
-/* As dez bocas de mata. `u` é a coordenada da clareira ao longo do lado; `desvio` joga a
-   entrada para o lado, para a trilha DOBRAR e nenhuma delas enxergar a borda do mapa. */
+/* As três frentes. `u` é a boca ao longo do lado, `desvio` dobra a trilha dentro da mata
+   e `cidade` é o `u` onde a trilha de pasto encosta na cidade. */
 export const TRILHAS = Object.freeze([
-  { id: 'n1', lado: 'N', u: -26, desvio: 6 },
-  { id: 'n2', lado: 'N', u: -4, desvio: -6 },
-  { id: 'n3', lado: 'N', u: 22, desvio: 6 },
-  { id: 's1', lado: 'S', u: -22, desvio: -6 },
-  { id: 's2', lado: 'S', u: 2, desvio: 6 },
-  { id: 's3', lado: 'S', u: 27, desvio: -6 },
-  { id: 'o1', lado: 'O', u: -17, desvio: 6 },
-  { id: 'o2', lado: 'O', u: 19, desvio: -6 },
-  { id: 'l1', lado: 'L', u: -21, desvio: 6 },
-  { id: 'l2', lado: 'L', u: 15, desvio: -6 },
+  { id: 'norte', nome: 'Trilha do Norte', lado: 'N', u: -10, desvio: -9, cidade: -3, curva: 1.6 },
+  { id: 'leste', nome: 'Trilha do Leste', lado: 'L', u: 12, desvio: 9, cidade: 3, curva: -1.4 },
+  { id: 'sudoeste', nome: 'Trilha do Sudoeste', lado: 'S', u: -24, desvio: -9, cidade: -22, curva: 1.2 },
 ]);
 
 /* (u, v) do lado para (x, z) do mundo: u corre ao longo do lado, v cresce para FORA. */
@@ -41,12 +35,18 @@ export function paraMundo(lado, u, v) {
   return [v, u];
 }
 
-const V_BOCA = 33, V_RETA = 41, V_DOBRA = 45, V_CLAREIRA = 47.5;
+const V_RETA = MATA_R + 3.4, V_DOBRA = MATA_R + 5.4, V_CLAREIRA = MATA_R + 5.6;
+const V_CIDADE = CIDADE + 0.4;
 
+/* `pts` é a trilha DA MATA (boca -> clareira); `pasto` é a trilha de terra batida
+   (cidade -> boca). A rota da horda é a clareira até a cidade, nessa ordem. */
 export const EIXOS = TRILHAS.map((t) => {
-  const uv = [[t.u + t.desvio, V_BOCA], [t.u + t.desvio, V_RETA], [t.u, V_DOBRA], [t.u, V_CLAREIRA]];
+  const uv = [[t.u, MATA_R], [t.u, V_RETA], [t.u + t.desvio * 0.55, V_DOBRA], [t.u + t.desvio, V_CLAREIRA]];
   const pts = uv.map(([u, v]) => paraMundo(t.lado, u, v));
-  return { ...t, pts, clareira: pts[3], boca: pts[0] };
+  const meioU = (t.u + t.cidade) / 2 + t.curva, meioV = (MATA_R + V_CIDADE) / 2;
+  const pasto = [[t.cidade, V_CIDADE], [meioU, meioV], [t.u, MATA_R]].map(([u, v]) => paraMundo(t.lado, u, v));
+  const rota = [...pts.slice().reverse(), ...pasto.slice(0, -1).reverse()];
+  return { ...t, pts, pasto, rota, clareira: pts[3], boca: pts[0], cidadePt: pasto[0] };
 });
 
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -61,36 +61,63 @@ function distSegmento(x, z, ax, az, bx, bz) {
   return Math.hypot(qx, qz);
 }
 
-/* Distância até o eixo da trilha mais perto, já descontando o raio da clareira: é o
+const distPolilinha = (x, z, pts) => {
+  let melhor = Infinity;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const d = distSegmento(x, z, pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]);
+    if (d < melhor) melhor = d;
+  }
+  return melhor;
+};
+
+/* Distância até a trilha de MATA mais perto, já descontando o raio da clareira: é o
    mesmo número que decide o desenho do chão, a ausência de colisor e o nó de navegação. */
 export function distTrilha(x, z) {
   let melhor = Infinity;
   for (const e of EIXOS) {
     const dc = Math.hypot(x - e.clareira[0], z - e.clareira[1]) - (CLAREIRA_R - TRILHA_MEIA);
     if (dc < melhor) melhor = dc;
-    for (let i = 0; i < e.pts.length - 1; i++) {
-      const d = distSegmento(x, z, e.pts[i][0], e.pts[i][1], e.pts[i + 1][0], e.pts[i + 1][1]);
-      if (d < melhor) melhor = d;
-    }
+    const d = distPolilinha(x, z, e.pts);
+    if (d < melhor) melhor = d;
   }
   return Math.max(0, melhor);
 }
 
+export function distPasto(x, z) {
+  let melhor = Infinity;
+  for (const e of EIXOS) melhor = Math.min(melhor, distPolilinha(x, z, e.pasto));
+  return melhor;
+}
+
 export const naTrilha = (x, z, folga = 0) => distTrilha(x, z) <= TRILHA_MEIA + folga;
 
-/* Altura ANALÍTICA do terreno, sem as plataformas construídas. A cidade é plana de
-   propósito: desnível sob prédio é o que fazia o bicho entrar no chão. */
+export const corregoZ = (x) => CORREGO_Z + 0.8 * Math.sin(x * 0.083 + 0.6);
+
+/* Profundidade do corte do córrego em (x, z), 0 fora do leito e no aterro da trilha. */
+export function corteCorrego(x, z) {
+  const dc = Math.abs(z - corregoZ(x)) / CORREGO_MEIA;
+  if (dc >= 1 || z > -CIDADE) return 0;
+  if (distPasto(x, z) < ATERRO_MEIA) return 0;
+  const q = 1 - dc * dc;
+  return CORREGO_FUNDO * q * q;
+}
+
+/* Altura ANALÍTICA do terreno, sem as plataformas construídas: cidade plana, pasto em
+   rampa ondulada até a mata, barranco até o platô. */
 export function alturaTerreno(x, z) {
   const r = Math.max(Math.abs(x), Math.abs(z));
-  const s = suave(clamp01((r - CIDADE) / SUBIDA));
-  let h = s * BARRANCO + s * (0.42 * Math.sin(x * 0.31) + 0.38 * Math.cos(z * 0.27));
-  const dc = Math.abs(z - CORREGO_Z) / CORREGO_MEIA;
-  if (dc < 1 && z < -CIDADE + 4 && !PONTES.some((px) => Math.abs(x - px) < PONTE_MEIA)) {
-    const q = 1 - dc * dc;
-    h -= CORREGO_FUNDO * q * q;
+  const sp = suave(clamp01((r - CIDADE) / (MATA_R - CIDADE)));
+  const sb = suave(clamp01((r - MATA_R) / SUBIDA));
+  let h = PASTO_SOBE * sp + (BARRANCO - PASTO_SOBE) * sb;
+  h += sp * (1 - sb) * 0.09 * (Math.sin(x * 0.23 + z * 0.11) + Math.cos(z * 0.19 - x * 0.07));
+  h += sb * (0.42 * Math.sin(x * 0.31) + 0.38 * Math.cos(z * 0.27));
+  h -= corteCorrego(x, z);
+  if (r > CIDADE - 4) {
+    const dt = distTrilha(x, z);
+    if (dt < 2.6) h -= 0.22 * (1 - dt / 2.6);
+    const dp = distPasto(x, z);
+    if (dp < 1.6 && r > CIDADE + 0.6) h -= 0.08 * (1 - dp / 1.6);
   }
-  const dt = distTrilha(x, z);
-  if (dt < 2.6 && r > CIDADE - 4) h -= 0.22 * (1 - dt / 2.6);
   return h;
 }
 
@@ -131,8 +158,8 @@ export class CampoDeAltura {
 }
 
 /* Malha do terreno amostrada NA MESMA grade do campo: o vértice visível e o nó medido são
-   o mesmo número, então não existe chão desenhado acima do chão que a horda lê. */
-export function malhaTerreno(campo, mat, x0, x1, z0, z1, passo = PASSO * 2, tile = 2.4) {
+   o mesmo número. `cor(x, z)` opcional devolve [r,g,b] por vértice e quebra a repetição. */
+export function malhaTerreno(campo, mat, x0, x1, z0, z1, passo = PASSO * 2, tile = 2.4, cor = null) {
   const nx = Math.max(1, Math.round((x1 - x0) / passo)), nz = Math.max(1, Math.round((z1 - z0) / passo));
   const geo = new THREE.PlaneGeometry(x1 - x0, z1 - z0, nx, nz);
   const pos = geo.attributes.position, uv = geo.attributes.uv;
@@ -140,6 +167,11 @@ export function malhaTerreno(campo, mat, x0, x1, z0, z1, passo = PASSO * 2, tile
   for (let v = 0; v < pos.count; v++) pos.setZ(v, campo.amostra(cx + pos.getX(v), cz - pos.getY(v)));
   for (let v = 0; v < uv.count; v++) uv.setXY(v, uv.getX(v) * ((x1 - x0) / tile), uv.getY(v) * ((z1 - z0) / tile));
   uv.needsUpdate = true;
+  if (cor) {
+    const c = new Float32Array(pos.count * 3);
+    for (let v = 0; v < pos.count; v++) c.set(cor(cx + pos.getX(v), cz - pos.getY(v)), v * 3);
+    geo.setAttribute('color', new THREE.BufferAttribute(c, 3));
+  }
   geo.rotateX(-Math.PI / 2);
   geo.computeVertexNormals();
   const malha = new THREE.Mesh(geo, mat);

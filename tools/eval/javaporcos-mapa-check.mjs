@@ -24,7 +24,7 @@
             além de LIMITE_ESCAPE em `max(|x|,|z|)`. É a tradução literal de "não pode ser
             possível pros players irem até o limite do mapa".
      MATA2  DENSIDADE E BOCAS: o cinturão tem de ter mata instanciada de verdade, parede de
-            colisor, e de 8 a 10 bocas espalhadas pelos QUATRO lados.
+            colisor, e 3 bocas em 3 lados, a ≥ 40 m uma da outra (eram 10 até 30/10).
      CHAO1  RELEVO: `groundHeightAt` tem de separar rua, calçada, soleira de loja, barranco
             e leito do córrego — e, nos pontos andáveis, a altura que ele devolve tem de
             bater com a malha visível (sonda vertical, mesma do MAP1). Chão constante é o
@@ -36,11 +36,33 @@
      TRILHA2 E chega DENTRO das quatro lojas: sem a costura da porta na grade de 1,5 m a
             invasão para na calçada, que é o defeito que o dono viu.
 
+   LAYOUT DE 30/10/2026 (decisões do dono: pasto entre cidade e mata, 3 frentes):
+     MATA3  FRENTES FECHADAS: anel de sondas a pé na ENTRADA da parede (v = 45 m, os quatro
+            lados). Os arcos livres contíguos são as bocas de verdade — tem de haver
+            EXATAMENTE 3, cada um sobre uma frente declarada. Declarar 3 e deixar furo
+            aberto na mata é o que esta cláusula pega.
+     PASTO1 LINHA DE TIRO: raio horizontal a 1,6 m da borda da cidade (r = 35,8) para fora,
+            a cada 2 m dos quatro lados, contra `occluders` + sub-bosque. 85% dos raios têm de correr 7,4 m
+            livres (o pasto) e a mediana do primeiro acerto tem de cair na mata (≤ 12 m):
+            mede a largura do pasto pela primeira árvore, não pela constante.
+     PASTO2 GRAMA DE VERDADE: capim em cartão ≥ 2,5 por m² do anel, touceira ≥ 150 com
+            altura ≥ 0,9 m, ≥ 8 cupinzeiros com colisor, ≥ 60 mourões, e o chão do pasto
+            com cor por vértice variando (desvio do canal mais variado > 0,03) — não um plano verde liso.
+     HORDA1 CONTRATO `world.horda.frentes`: 3 frentes ≥ 40 m uma da outra, boca no fio da
+            mata (43 a 45 m), rota da mata (≥ 46 m) até a borda da cidade (35,5 a 36,6 m).
+            A rota é caminhada a cada 0,25 m: corpo de 0,45 m sem colisor, degrau ≤ 0,3 m
+            por passo e sonda de chão ≤ 0,30 m (o bicho não afunda). A navegação liga a
+            ponta da rota à cidade com ≤ 1,6× o comprimento da rota.
+
    MUTANTES (cada um tem de deixar a régua VERMELHA):
-     mata-furada     derruba a parede de colisor do lado norte  -> MATA1
-     chao-constante  `groundHeightAt` volta a devolver 0 fixo   -> CHAO1
+     mata-furada     derruba a parede de colisor do lado norte  -> MATA1, MATA3
+     chao-constante  `groundHeightAt` volta a devolver 0 fixo   -> CHAO1, HORDA1
      comida-fora     joga dois foodSpots para dentro da mata    -> COMIDA1
      trilha-solta    corta a costura da porta na navegação      -> TRILHA2
+     boca-aberta     abre a parede no sul, longe das frentes    -> MATA3
+     mata-avanca     planta uma fileira de mata no meio do pasto leste -> PASTO1
+     pasto-careca    zera o capim e a touceira                  -> PASTO2
+     rota-no-muro    desvia o meio de uma rota para dentro da mata -> HORDA1
 
    Uso: node tools/eval/javaporcos-mapa-check.mjs [--mutante=X] [--json-out=arq]
    ============================================================================ */
@@ -49,7 +71,8 @@ import { THREE, initTextures, bootGame } from './harness.mjs';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutante');
-const MUTANTES = ['mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta'];
+const MUTANTES = ['mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta', 'boca-aberta', 'mata-avanca',
+  'pasto-careca', 'rota-no-muro'];
 if (MUT && !MUTANTES.includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT}. Há: ${MUTANTES.join(', ')}`);
   process.exit(2);
@@ -63,9 +86,10 @@ const PASSO = 0.6;           // grade do flood-fill de fuga
 const DEGRAU = 1.2 * PASSO;
 const PEITO = 1.40;
 const PEN_MAX = 0.30;        // penetração máxima da sonda vertical (MAP1 do map-check)
-/* 54 m: a clareira mais funda fica a 51,3 m do centro (boca a 47,5 + raio 3,8), e a borda
-   do mapa está em 58. Entre 51,3 e 58 sobram 6,7 m de mata que ninguém pode atravessar. */
+/* 54 m: a clareira mais funda fica a 52,6 m do centro (49,6 + raio 3,0), e a borda do
+   mapa está em 58. Entre 52,6 e 58 sobram 5,4 m de mata que ninguém atravessa. */
 const LIMITE_ESCAPE = 54;
+const CIDADE_R = 36, MATA_R = 44, V_SONDA_PAREDE = 45.0;   // 0,4 m dentro do começo da parede (44,6)
 const SEED = 13007;
 let falhas = 0;
 const relatorio = {};
@@ -108,6 +132,28 @@ if (MUT === 'trilha-solta') {
     adj[i].length = 0; cortados++;
   }
   exige(cortados > 0, 'MUTANTE trilha-solta NÃO APLICOU: nenhum nó de porta encontrado');
+}
+if (MUT === 'boca-aberta') {
+  const antes = W.colliders.length;
+  for (let i = W.colliders.length - 1; i >= 0; i--) {
+    const c = W.colliders[i];
+    if (c.maxZ > 44 && c.minX < 16 && c.maxX > 8) W.colliders.splice(i, 1);
+  }
+  if (W.colliders.length === antes) throw new Error('MUTANTE boca-aberta NÃO APLICOU');
+}
+if (MUT === 'mata-avanca') {
+  const muro = new THREE.Mesh(new THREE.BoxGeometry(0.6, 6, 66), new THREE.MeshBasicMaterial());
+  muro.position.set(40, 3, 0); W.root.add(muro); muro.updateMatrixWorld(true); W.occluders.push(muro);
+}
+if (MUT === 'pasto-careca') {
+  let n = 0;
+  W.root.traverse((o) => { if (o.isInstancedMesh && /^pasto-(capim|touceira)$/.test(o.name)) { o.count = 0; n++; } });
+  exige(n === 2, 'MUTANTE pasto-careca NÃO APLICOU');
+}
+if (MUT === 'rota-no-muro') {
+  const f = W.horda?.frentes?.[0];
+  exige(f && f.rota.length > 3, 'MUTANTE rota-no-muro NÃO APLICOU: sem rota');
+  f.rota[1] = { x: f.rota[1].x + 7, z: f.rota[1].z - 1.5 };
 }
 
 /* ------------------------------------------------- varredura a pé (MATA1) */
@@ -161,23 +207,58 @@ regra('MATA1 a mata fecha o mapa: ninguém chega na borda a pé', () => {
   return `${celulas} células andáveis, a mais longe a ${maiorRaio.toFixed(1)} m`;
 });
 
-regra('MATA2 cinturão denso e 8 a 10 bocas nos quatro lados', () => {
+/* Os pisos de densidade foram medidos no cinturão de 22 m (1.212 árvores); com a mata
+   começando em r = 44 o anel tem 69% da área, e 935 árvores ainda passam do piso de 900. A
+   contagem de colisor de parede deixou de ser densidade: com 3 bocas a parede funde em
+   menos caixas (28), e quem prova que ela fecha é a MATA1 e a MATA3. */
+regra('MATA2 cinturão denso e 3 frentes separadas', () => {
   const c = W.censo || {};
   exige(c.arvores >= 900, `só ${c.arvores} árvores no cinturão (piso 900)`);
   exige(c.subbosque >= 2000, `só ${c.subbosque} peças de sub-bosque (piso 2000): a parede fecha por sub-bosque`);
-  exige(c.colisoresParede >= 80, `só ${c.colisoresParede} colisores de parede de mata (piso 80)`);
+  exige(c.colisoresParede >= 12, `só ${c.colisoresParede} colisores de parede de mata (piso 12, três por lado)`);
   exige(c.instanciados <= 14, `${c.instanciados} InstancedMesh na mata (teto 14): mata tem de ser lote, não malha por árvore`);
   const bocas = W.boarEntrances || [];
-  exige(bocas.length >= 8 && bocas.length <= 10, `${bocas.length} bocas de mata (faixa 8 a 10)`);
+  exige(bocas.length === 3, `${bocas.length} bocas de mata (o dono decidiu 3 frentes)`);
   const lados = new Set();
   for (const b of bocas) {
     exige(Number.isFinite(b.x) && Number.isFinite(b.z), `boca sem x/z: ${JSON.stringify(b)}`);
     const r = Math.max(Math.abs(b.x), Math.abs(b.z));
-    exige(r > 40, `boca em (${b.x}, ${b.z}) está a ${r.toFixed(1)} m: boca de mata nasce no cinturão, não na cidade`);
+    exige(r > MATA_R + 2, `boca em (${b.x}, ${b.z}) está a ${r.toFixed(1)} m: a clareira nasce dentro da mata`);
     lados.add(Math.abs(b.z) >= Math.abs(b.x) ? (b.z < 0 ? 'N' : 'S') : (b.x < 0 ? 'O' : 'L'));
   }
-  exige(lados.size === 4, `as bocas cobrem só ${[...lados].join('/')}: o cerco precisa de saída nos quatro lados`);
-  return `${c.arvores} árvores, ${c.colisoresParede} colisores de parede, ${bocas.length} bocas`;
+  exige(lados.size === 3, `as 3 bocas estão em só ${lados.size} lado(s): frente tem de ser frente`);
+  for (let i = 0; i < bocas.length; i++) for (let k = i + 1; k < bocas.length; k++) {
+    const d = Math.hypot(bocas[i].x - bocas[k].x, bocas[i].z - bocas[k].z);
+    exige(d >= 40, `bocas ${bocas[i].id} e ${bocas[k].id} a ${d.toFixed(1)} m (piso 40)`);
+  }
+  return `${c.arvores} árvores, ${c.colisoresParede} colisores de parede, ${bocas.length} bocas em ${[...lados].join('/')}`;
+});
+
+/* Anel de sondas DENTRO da parede: arco livre contíguo é boca que existe no chão, seja
+   ela declarada ou não. A sonda usa o `_collide` do jogo, a mesma do MATA1. */
+const paraMundo = (lado, u, v) => (lado === 'N' ? [u, -v] : lado === 'S' ? [u, v] : lado === 'O' ? [-v, u] : [v, u]);
+const livreEm = (x, z) => { const p = { x, y: gh(x, z), z }; jogo._collide(p, R_CORPO); return Math.abs(p.x - x) < 1e-6 && Math.abs(p.z - z) < 1e-6; };
+regra('MATA3 a mata só abre nas 3 frentes', () => {
+  const arcos = [];
+  for (const lado of ['N', 'L', 'S', 'O']) {
+    let aberto = null;
+    for (let u = -V_SONDA_PAREDE; u <= V_SONDA_PAREDE + 1e-6; u += 0.5) {
+      const [x, z] = paraMundo(lado, u, V_SONDA_PAREDE);
+      if (livreEm(x, z)) { if (!aberto) aberto = { lado, u0: u, pts: [] }; aberto.pts.push([x, z]); }
+      else if (aberto) { aberto.u1 = u; arcos.push(aberto); aberto = null; }
+    }
+    if (aberto) { aberto.u1 = V_SONDA_PAREDE; arcos.push(aberto); }
+  }
+  const frentes = W.horda?.frentes || [];
+  relatorio.arcosAbertos = arcos.map((a) => ({ lado: a.lado, u0: a.u0, u1: a.u1 }));
+  exige(arcos.length === 3, `${arcos.length} arco(s) aberto(s) na parede a ${V_SONDA_PAREDE} m: ` +
+    `${arcos.map((a) => `${a.lado}[${a.u0}..${a.u1}]`).join(' ')} — o dono pediu 3 frentes, o resto é mata fechada`);
+  for (const a of arcos) {
+    const [mx, mz] = a.pts[(a.pts.length / 2) | 0];
+    const dono = frentes.find((f) => f.rota.some((p) => Math.hypot(p.x - mx, p.z - mz) < 4.5));
+    exige(dono, `arco aberto ${a.lado}[${a.u0}..${a.u1}] não pertence a nenhuma frente declarada`);
+  }
+  return `${arcos.length} arcos abertos: ${arcos.map((a) => `${a.lado} ${(a.u1 - a.u0).toFixed(1)} m`).join(', ')}`;
 });
 
 /* ------------------------------------------------------------ chão (CHAO1) */
@@ -196,10 +277,13 @@ const sonda = (x, z) => {
 };
 
 regra('CHAO1 groundHeightAt tem relevo e bate com a malha visível', () => {
-  const rua = gh(0, 10), calcada = gh(7, 10), barranco = gh(0, -46), leito = gh(0, -39);
+  const rua = gh(0, 10), calcada = gh(7, 10), barranco = gh(0, -52);
+  let leito = Infinity;
+  for (let z = -46; z <= -37; z += 0.25) leito = Math.min(leito, gh(0, z));
   exige(calcada - rua > 0.08, `calçada (${calcada.toFixed(2)} m) não sobe sobre a rua (${rua.toFixed(2)} m): o chão é chapado`);
   exige(barranco > 2.0, `barranco do cinturão a ${barranco.toFixed(2)} m (piso 2,0): a cidade não está encaixada`);
   exige(barranco - leito > 1.0, `córrego a ${leito.toFixed(2)} m contra platô ${barranco.toFixed(2)} m: não há leito`);
+  exige(gh(0, -37) - leito > 0.5, `córrego a ${leito.toFixed(2)} m não afunda no pasto (borda a ${gh(0, -37).toFixed(2)} m)`);
   const soleiras = (W.lojas || []).map((l) => gh(l.interior[0], l.interior[1]));
   exige(soleiras.length >= 4, `o mapa expôs ${soleiras.length} lojas (piso 4)`);
   for (const s of soleiras) exige(s > 0.25, `piso de loja a ${s.toFixed(2)} m: sem soleira o bicho entra por baixo`);
@@ -330,6 +414,142 @@ regra('TRILHA2 a horda entra DENTRO das lojas', () => {
   return `${lojas.length} lojas alcançadas das ${W.boarEntrances.length} bocas`;
 });
 
+/* --------------------------------------------------------- pasto (PASTO) */
+const temNome = (o, re) => { for (let n = o; n; n = n.parent) if (re.test(n.name || '')) return true; return false; };
+regra('PASTO1 linha de tiro aberta da borda da cidade até a mata', () => {
+  const rc = new THREE.Raycaster();
+  rc.camera = jogo.camera;
+  const alvos = W.occluders.filter((o) => o.isMesh);
+  W.root.traverse((o) => { if (o.name === 'mata-subbosque') alvos.push(o); });
+  const dists = [];
+  let livres = 0;
+  for (const lado of ['N', 'L', 'S', 'O']) {
+    for (let u = -34; u <= 34; u += 2) {
+      const [x, z] = paraMundo(lado, u, CIDADE_R - 0.2);
+      const [x2, z2] = paraMundo(lado, u, CIDADE_R + 1);
+      const dir = new THREE.Vector3(x2 - x, 0, z2 - z).normalize();
+      rc.set(new THREE.Vector3(x, gh(x, z) + 1.6, z), dir);
+      rc.far = 30;
+      const h = rc.intersectObjects(alvos, false)[0];
+      const d = h ? h.distance : 30;
+      dists.push(d);
+      if (d >= 7.4) livres++;
+    }
+  }
+  dists.sort((a, b) => a - b);
+  const mediana = dists[dists.length >> 1], frac = livres / dists.length;
+  relatorio.pasto = { raios: dists.length, livres, fracao: +frac.toFixed(3), larguraMediana: +mediana.toFixed(2) };
+  exige(frac >= 0.85, `só ${(100 * frac).toFixed(0)}% dos ${dists.length} raios correm 7,4 m livres (piso 85%): o pasto está tomado`);
+  exige(mediana <= 12, `mediana do primeiro acerto a ${mediana.toFixed(1)} m (teto 12): os raios não acham a mata, a régua não mediu`);
+  return `${livres}/${dists.length} raios livres por 7,4 m; primeiro acerto mediano a ${mediana.toFixed(2)} m da borda`;
+});
+
+regra('PASTO2 grama densa, touceira alta, cupinzeiro e cerca', () => {
+  const area = (2 * MATA_R) ** 2 - (2 * CIDADE_R) ** 2;
+  const achar = (nome) => { let m = null; W.root.traverse((o) => { if (o.name === nome) m = o; }); return m; };
+  const capim = achar('pasto-capim'), touc = achar('pasto-touceira');
+  const naFaixa = (m, alturaMin) => {
+    if (!m?.isInstancedMesh) return 0;
+    let n = 0; const mt = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), e = new THREE.Vector3();
+    for (let i = 0; i < m.count; i++) {
+      m.getMatrixAt(i, mt); mt.decompose(p, q, e);
+      const r = Math.max(Math.abs(p.x), Math.abs(p.z));
+      if (r > CIDADE_R && r < MATA_R && e.y >= alturaMin) n++;
+    }
+    return n;
+  };
+  const nCapim = naFaixa(capim, 0), nTouc = naFaixa(touc, 0.9);
+  exige(nCapim / area >= 2.5, `capim a ${(nCapim / area).toFixed(2)}/m² no pasto (piso 2,5): é plano verde, não grama`);
+  exige(nTouc >= 150, `${nTouc} touceiras de ≥ 0,9 m no pasto (piso 150)`);
+  const cupins = W.cupinzeiros || [];
+  exige(cupins.length >= 8, `${cupins.length} cupinzeiros (piso 8)`);
+  for (const c of cupins) exige(dentroDeSolido(c.x, c.z), `cupinzeiro em (${c.x}, ${c.z}) sem colisor`);
+  exige((W.censo?.mouroes || 0) >= 60, `${W.censo?.mouroes || 0} mourões de cerca (piso 60)`);
+  let n = 0;
+  const soma = [0, 0, 0], soma2 = [0, 0, 0];
+  W.root.traverse((o) => {
+    if (o.name !== 'chao-pasto' || !o.geometry?.attributes?.color) return;
+    const c = o.geometry.attributes.color;
+    for (let i = 0; i < c.count; i++) { n++; for (let k = 0; k < 3; k++) { const v = c.getComponent(i, k); soma[k] += v; soma2[k] += v * v; } }
+  });
+  const desvio = n ? Math.max(...[0, 1, 2].map((k) => Math.sqrt(Math.max(0, soma2[k] / n - (soma[k] / n) ** 2)))) : 0;
+  exige(desvio > 0.03, `cor do chão do pasto com desvio ${desvio.toFixed(3)} (piso 0,03) em ${n} vértices: plano liso`);
+  relatorio.grama = { capimPorM2: +(nCapim / area).toFixed(2), touceiras: nTouc, cupinzeiros: cupins.length, mouroes: W.censo?.mouroes, desvioCor: +desvio.toFixed(3) };
+  return `${(nCapim / area).toFixed(2)} capim/m², ${nTouc} touceiras ≥ 0,9 m, ${cupins.length} cupinzeiros, ${W.censo?.mouroes} mourões, desvio de cor ${desvio.toFixed(3)}`;
+});
+
+/* -------------------------------------------- contrato da horda (HORDA/BECO) */
+const R_BICHO = 0.45;
+const bloqueado = (x, z) => {
+  const y = gh(x, z);
+  for (const c of W.colliders) {
+    if (x <= c.minX - R_BICHO || x >= c.maxX + R_BICHO || z <= c.minZ - R_BICHO || z >= c.maxZ + R_BICHO) continue;
+    if (y + 1.0 <= c.minY || y + 0.25 >= c.maxY) continue;
+    if (c.ry) {
+      const wx = x - c.cx, wz = z - c.cz;
+      const lx = wx * c.cos - wz * c.sin, lz = wx * c.sin + wz * c.cos;
+      if (Math.abs(lx) >= c.hx + R_BICHO || Math.abs(lz) >= c.hz + R_BICHO) continue;
+    }
+    return c;
+  }
+  return null;
+};
+/* Caminha a polilinha a cada 0,25 m: colisor no corpo, degrau e sonda de chão. */
+const caminha = (pts) => {
+  let comp = 0, prevY = null, pior = 0, onde = null;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1], L = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.ceil(L / 0.25));
+    comp += L;
+    for (let k = 0; k <= n; k++) {
+      const x = a.x + (b.x - a.x) * (k / n), z = a.z + (b.z - a.z) * (k / n), y = gh(x, z);
+      const c = bloqueado(x, z);
+      if (c) return { erro: `colisor no caminho em (${x.toFixed(1)}, ${z.toFixed(1)})`, comp };
+      if (prevY !== null && Math.abs(y - prevY) > 0.3) return { erro: `degrau de ${Math.abs(y - prevY).toFixed(2)} m em (${x.toFixed(1)}, ${z.toFixed(1)})`, comp };
+      prevY = y;
+      const s = sonda(x, z);
+      if (s.pen > pior) { pior = s.pen; onde = [+x.toFixed(1), +z.toFixed(1), s.nome]; }
+    }
+  }
+  if (pior > PEN_MAX) return { erro: `chão visível ${pior.toFixed(2)} m acima do groundHeightAt em ${JSON.stringify(onde)}: o bicho afunda`, comp };
+  return { comp, pior };
+};
+const compCaminho = (cam) => { let L = 0; const nos = W.waypoints.nodes; for (let i = 1; i < cam.length; i++) L += Math.hypot(nos[cam[i]].x - nos[cam[i - 1]].x, nos[cam[i]].z - nos[cam[i - 1]].z); return L; };
+const raioDe = (p) => Math.max(Math.abs(p.x), Math.abs(p.z));
+
+regra('HORDA1 3 frentes com rota caminhável da mata até a cidade', () => {
+  const H = W.horda;
+  exige(H && Array.isArray(H.frentes), 'o mapa não expôs world.horda.frentes');
+  const F = H.frentes;
+  exige(F.length === 3, `${F.length} frentes (o dono decidiu 3)`);
+  exige(new Set(F.map((f) => f.id)).size === 3, 'ids de frente repetidos');
+  for (let i = 0; i < 3; i++) for (let k = i + 1; k < 3; k++) {
+    const d = Math.hypot(F[i].boca.x - F[k].boca.x, F[i].boca.z - F[k].boca.z);
+    exige(d >= 40, `frentes ${F[i].id} e ${F[k].id} com bocas a ${d.toFixed(1)} m (piso 40)`);
+  }
+  const linhas = [];
+  for (const f of F) {
+    exige(typeof f.nome === 'string' && f.nome, `frente ${f.id} sem nome`);
+    const rb = raioDe(f.boca);
+    exige(rb >= 43 && rb <= 45, `boca da frente ${f.id} a ${rb.toFixed(1)} m (faixa 43 a 45: fio da mata)`);
+    exige(f.rota.length >= 3, `rota da frente ${f.id} com ${f.rota.length} pontos`);
+    const r0 = raioDe(f.rota[0]), r1 = raioDe(f.rota[f.rota.length - 1]);
+    exige(r0 >= 46, `rota ${f.id} começa a ${r0.toFixed(1)} m: tem de sair de dentro da mata (≥ 46)`);
+    exige(r1 >= 35.5 && r1 <= 36.6, `rota ${f.id} termina a ${r1.toFixed(1)} m: tem de encostar na cidade (35,5 a 36,6)`);
+    exige(f.rota.some((p) => Math.hypot(p.x - f.boca.x, p.z - f.boca.z) < 0.6), `a rota ${f.id} não passa pela própria boca`);
+    exige(W.boarEntrances.some((b) => Math.hypot(b.x - f.rota[0].x, b.z - f.rota[0].z) < 0.6), `rota ${f.id} não começa numa boarEntrance`);
+    const c = caminha(f.rota);
+    exige(!c.erro, `rota ${f.id}: ${c.erro}`);
+    const a = W.nearestWaypoint(f.rota[0].x, f.rota[0].z), b = W.nearestWaypoint(f.rota[f.rota.length - 1].x, f.rota[f.rota.length - 1].z);
+    const cam = W.findPath(a, b);
+    exige(cam.length > 1 && cam[cam.length - 1] === b, `a navegação não liga a clareira ${f.id} à cidade`);
+    const L = compCaminho(cam);
+    exige(L <= 1.6 * c.comp + 2, `navegação ${f.id} com ${L.toFixed(1)} m contra rota de ${c.comp.toFixed(1)} m: a horda não usa a trilha`);
+    linhas.push(`${f.id} ${c.comp.toFixed(1)} m (sonda ${c.pior.toFixed(2)})`);
+  }
+  relatorio.frentes = F.map((f) => ({ id: f.id, boca: f.boca, rota: f.rota }));
+  return linhas.join(' · ');
+});
+
 /* ------------------------------------------------------------------ fecho */
 relatorio.censo = W.censo;
 relatorio.mutante = MUT || null;
@@ -343,4 +563,4 @@ if (MUT) {
   process.exit(1);
 }
 if (falhas) { console.error(`✗ MAPA DA INVASÃO: ${falhas} cláusula(s) vermelha(s).`); process.exit(1); }
-console.log('✓ MAPA DA INVASÃO OK — cerco, relevo, comida e trilhas até dentro da loja.');
+console.log('✓ MAPA DA INVASÃO OK — cerco de 3 frentes, pasto, relevo, comida e trilhas até dentro da loja.');

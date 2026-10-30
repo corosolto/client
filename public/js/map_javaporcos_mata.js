@@ -1,14 +1,15 @@
-/* Cinturão de mata fechada: 5 m caminháveis com tronco colidível, depois parede opaca.
+/* Cinturão de mata fechada a partir de r = 44: 0,6 m de orla com tronco colidível, depois parede.
    A mata É o limite do mapa — não existe cerca-caixote. Brief: docs/maps/invasao-javaporcos.md. */
 import * as THREE from 'three';
-import { CIDADE, HALF, EIXOS, TRILHAS, distTrilha, paraMundo, CLAREIRA_R } from './map_javaporcos_relevo.js';
+import { mergeGeometries } from '../vendor/addons/utils/BufferGeometryUtils.js';
+import { CIDADE, MATA_R, HALF, EIXOS, TRILHAS, distTrilha, distPasto, paraMundo, CLAREIRA_R, corteCorrego } from './map_javaporcos_relevo.js';
 
 /* Cotas da mata (faixa caminhável, parede de colisor, coluna, folga de trilha e
-   achatamento da copa): docs/maps/invasao-javaporcos.md, seção "Cotas da mata". */
-export const V_ANDAVEL = 37.9;
-export const V_PAREDE0 = 37.9;
+   achatamento da copa): docs/maps/invasao-javaporcos-layout.md, seção "Cotas da mata". */
+export const V_ANDAVEL = MATA_R + 0.6;
+export const V_PAREDE0 = MATA_R + 0.6;
 export const V_PAREDE1 = HALF;
-const COLUNA = 2.5;
+const COLUNA = 0.5;
 const FOLGA_TRILHA = 2.9;
 const ACHATAMENTO = 0.62;          // copa é disco, não bola: proporção medida nas referências
 
@@ -63,13 +64,13 @@ export function construirMata(kit, campo, rnd) {
   for (let x = -HALF + 1.2; x <= HALF - 1.2; x += 2.4) {
     for (let z = -HALF + 1.2; z <= HALF - 1.2; z += 2.4) {
       const { v } = ladoDe(x, z);
-      if (v < CIDADE - 0.6) continue;
+      if (v < MATA_R - 0.6) continue;
       const px = x + (rnd() - 0.5) * 1.9, pz = z + (rnd() - 0.5) * 1.9;
       const vp = ladoDe(px, pz).v;
-      if (vp < CIDADE - 0.6 || vp > HALF - 0.4) continue;
+      if (vp < MATA_R - 0.6 || vp > HALF - 0.4) continue;
       const dt = distTrilha(px, pz);
       if (dt < 2.3) continue;
-      const borda = Math.min(1, (vp - CIDADE + 0.6) / 3.5);
+      const borda = Math.min(1, (vp - MATA_R + 0.6) / 3.5);
       const y0 = campo.amostra(px, pz);
       const alto = 6.5 + rnd() * 7.5 * (0.45 + 0.55 * borda);
       const ry = rnd() * Math.PI * 2;
@@ -104,14 +105,15 @@ export function construirMata(kit, campo, rnd) {
   for (let x = -HALF + 0.8; x <= HALF - 0.8; x += 1.6) {
     for (let z = -HALF + 0.8; z <= HALF - 0.8; z += 1.6) {
       const { v } = ladoDe(x, z);
-      if (v < CIDADE - 2.5) continue;
+      if (v < MATA_R - 0.7) continue;
       const px = x + (rnd() - 0.5) * 1.5, pz = z + (rnd() - 0.5) * 1.5;
       const vp = ladoDe(px, pz).v;
-      if (vp < CIDADE - 2.5 || vp > HALF - 0.3) continue;
+      if (vp < MATA_R - 0.5 || vp > HALF - 0.3) continue;
       const dt = distTrilha(px, pz);
-      if (dt < 1.95) continue;
+      if (dt < 1.95 || distPasto(px, pz) < 2.2) continue;
       const y0 = campo.amostra(px, pz);
-      const escala = 0.75 + rnd() * 1.05;
+      let escala = 0.75 + rnd() * 1.05;
+      if (vp - escala * 1.25 < MATA_R - 0.6) escala = Math.max(0.35, (vp - MATA_R + 0.6) / 1.25);
       moitas.push(matriz(px, y0 + escala * 0.55, pz, rnd() * 6.283, escala * 1.25, escala * 0.95, escala * 1.25));
       if (rnd() < 0.5) {
         const lado = rnd() * 6.283;
@@ -160,6 +162,15 @@ export function construirMata(kit, campo, rnd) {
       const a = (k / 7) * 6.283, r = k ? 1.6 + rnd() * 1.9 : 0;
       pisadas.push(matriz(cx + Math.cos(a) * r, campo.amostra(cx, cz) + 0.03, cz + Math.sin(a) * r,
         rnd() * 6.283, 3.0 + rnd() * 1.4, 1, 3.0 + rnd() * 1.4));
+    }
+    for (let i = 0; i < e.pasto.length - 1; i++) {
+      const [ax, az] = e.pasto[i], [bx, bz] = e.pasto[i + 1];
+      const passos = Math.ceil(Math.hypot(bx - ax, bz - az) / 0.7);
+      for (let k = 0; k < passos; k++) {
+        const t = k / passos, px = ax + (bx - ax) * t + (rnd() - 0.5) * 0.5, pz = az + (bz - az) * t + (rnd() - 0.5) * 0.5;
+        const esc = 1.5 + rnd() * 1.0;
+        pisadas.push(matriz(px, campo.amostra(px, pz) + 0.03, pz, rnd() * 6.283, esc, 1, esc * (0.8 + rnd() * 0.4)));
+      }
     }
   }
 
@@ -222,11 +233,11 @@ function construirParede(campo, colliders) {
           if (distTrilha(px, pz) < FOLGA_TRILHA) livre = false;
         }
         if (livre && inicio === null) inicio = v;
-        if (!livre && inicio !== null) { if (v - 0.5 - inicio >= 1.4) corridas.push([inicio, v - 0.5]); inicio = null; }
+        if (!livre && inicio !== null) { if (v - 0.5 - inicio >= 0.5) corridas.push([inicio, v - 0.5]); inicio = null; }
       }
       /* A última corrida fecha FORA do laço: sem este flush só sobravam os fragmentos ao
          lado de trilha, e a parede abria no meio de cada lado (medido: fuga a 57,4 m). */
-      if (inicio !== null && V_PAREDE1 - inicio >= 1.4) corridas.push([inicio, V_PAREDE1]);
+      if (inicio !== null && V_PAREDE1 - inicio >= 0.5) corridas.push([inicio, V_PAREDE1]);
       colunas.push({ ua, ub, chave: corridas.map((c) => c.join(':')).join('|'), corridas });
     }
     let grupo = null;
@@ -261,3 +272,151 @@ export function clareiras() {
 }
 
 export const TRILHAS_IDS = TRILHAS.map((t) => t.id);
+
+/* Pasto entre a cidade e a mata: capim denso em cartão, touceira alta, cupinzeiro e cerca
+   de mourão com arame. Tudo em lote; só mourão e cupinzeiro têm colisor. */
+export const CERCA_R = CIDADE + 1.2;
+const VAO_PORTEIRA = [[0, 7.6], [22, 2.8], [-22, 2.8]];
+
+export function construirPasto(kit, campo, rnd) {
+  const { root, colliders, occluders, MAT } = kit;
+  const noPasto = (x, z) => { const r = Math.max(Math.abs(x), Math.abs(z)); return r > CIDADE + 0.15 && r < MATA_R - 0.3; };
+  const cartao = () => {
+    const g = [];
+    for (let k = 0; k < 3; k++) {
+      const p = new THREE.PlaneGeometry(1, 1);
+      p.translate(0, 0.5, 0); p.rotateY((k / 3) * Math.PI);
+      g.push(p);
+    }
+    const geo = mergeGeometries(g);
+    const n = geo.attributes.normal;
+    for (let i = 0; i < n.count; i++) n.setXYZ(i, 0, 1, 0);
+    return geo;
+  };
+  const capim = [], capimCor = [], touceiras = [], touceiraCor = [];
+  const tom = (seco) => new THREE.Color().setRGB(0.86 + 0.3 * seco, 0.92 + 0.06 * seco, 0.74 - 0.12 * seco);
+  const secura = (x, z) => 0.5 + 0.5 * Math.sin(x * 0.11 + 1.3) * Math.cos(z * 0.13 - 0.4);
+  for (let x = -MATA_R; x <= MATA_R; x += 0.5) {
+    for (let z = -MATA_R; z <= MATA_R; z += 0.5) {
+      const px = x + (rnd() - 0.5) * 0.48, pz = z + (rnd() - 0.5) * 0.48;
+      if (!noPasto(px, pz)) continue;
+      const dp = distPasto(px, pz);
+      if (dp < 0.7 || corteCorrego(px, pz) > 0.55) continue;
+      if (dp < 1.3 && rnd() < 0.6) continue;
+      const f = (Math.max(Math.abs(px), Math.abs(pz)) - CIDADE) / (MATA_R - CIDADE);
+      const alto = (0.28 + 0.3 * f + rnd() * 0.22) * (dp < 1.6 ? 0.6 : 1);
+      const largo = 0.5 + rnd() * 0.35;
+      capim.push(matriz(px, campo.amostra(px, pz) - 0.02, pz, rnd() * 6.283, largo, alto, largo));
+      capimCor.push(tom(Math.min(1, secura(px, pz) * 0.8 + rnd() * 0.35)));
+    }
+  }
+  for (let i = 0; i < 90; i++) {
+    const a = rnd() * 6.283, cx = Math.cos(a) * 60, cz = Math.sin(a) * 60;
+    const esc = (CIDADE + 1.6 + rnd() * (MATA_R - CIDADE - 2.2)) / Math.max(Math.abs(cx), Math.abs(cz));
+    const ox = cx * esc, oz = cz * esc;
+    for (let k = 0, n = 2 + ((rnd() * 4) | 0); k < n; k++) {
+      const px = ox + (rnd() - 0.5) * 1.8, pz = oz + (rnd() - 0.5) * 1.8;
+      if (!noPasto(px, pz) || distPasto(px, pz) < 1.9 || corteCorrego(px, pz) > 0.4) continue;
+      const alto = 0.9 + rnd() * 0.65, largo = 0.9 + rnd() * 0.5;
+      touceiras.push(matriz(px, campo.amostra(px, pz) - 0.03, pz, rnd() * 6.283, largo, alto, largo));
+      touceiraCor.push(tom(0.3 + rnd() * 0.6));
+    }
+  }
+
+  /* Cupinzeiro: torno com ruído fixo por vértice. Colisor a 0,78 do raio da base, que é
+     onde o monte já passou de 0,3 m de altura. */
+  const cupins = [];
+  const perfil = [[1.0, 0], [0.88, 0.14], [0.66, 0.42], [0.47, 0.68], [0.3, 0.87], [0.12, 1.0], [0.0, 1.03]]
+    .map(([r, y]) => new THREE.Vector2(r, y));
+  const cupimGeo = new THREE.LatheGeometry(perfil, 11);
+  { const p = cupimGeo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+      const n = 1 + 0.13 * Math.sin(x * 7.1 + y * 5.3) * Math.cos(z * 6.7 - y * 3.1);
+      p.setXYZ(i, x * n, y, z * n);
+    }
+    cupimGeo.computeVertexNormals(); }
+  for (let tent = 0; tent < 400 && cupins.length < 13; tent++) {
+    const a = rnd() * 6.283, cx = Math.cos(a), cz = Math.sin(a);
+    const alvo = CIDADE + 2.6 + rnd() * (MATA_R - CIDADE - 4.2);
+    const esc = alvo / Math.max(Math.abs(cx), Math.abs(cz));
+    const px = cx * esc, pz = cz * esc;
+    if (distPasto(px, pz) < 3.2 || corteCorrego(px, pz) > 0 || Math.abs(Math.max(Math.abs(px), Math.abs(pz)) - CERCA_R) < 1.6) continue;
+    if (cupins.some((c) => Math.hypot(c.x - px, c.z - pz) < 7)) continue;
+    const sx = 0.55 + rnd() * 0.4, sy = 0.8 + rnd() * 1.0;
+    let y = Infinity;
+    for (const [dx, dz] of [[0, 0], [sx, 0], [-sx, 0], [0, sx], [0, -sx]]) y = Math.min(y, campo.amostra(px + dx, pz + dz));
+    cupins.push({ x: px, z: pz, sx, sy, y: y - 0.06 });
+    const h = 0.78 * sx;
+    colliders.push({ minX: px - h, maxX: px + h, minY: y - 0.5, maxY: y + sy, minZ: pz - h, maxZ: pz + h });
+  }
+
+  /* Cerca a 1,2 m da cidade, aberta na avenida, nas vielas e onde a trilha passa: a horda
+   atravessa por baixo do arame, o jogador só nos vãos. */
+  const mouroes = [], fios = [];
+  const fechado = (u, x, z) => VAO_PORTEIRA.some(([c, m]) => Math.abs(u - c) < m) || distPasto(x, z) < 2.6;
+  for (const lado of ['N', 'S', 'O', 'L']) {
+    let anterior = null;
+    for (let u = -CERCA_R; u <= CERCA_R + 0.01; u += 2.5) {
+      const uj = Math.abs(Math.abs(u) - CERCA_R) < 0.01 ? u : u + (rnd() - 0.5) * 0.3;
+      const [x, z] = paraMundo(lado, uj, CERCA_R);
+      if (fechado(uj, x, z) || rnd() < 0.04) { anterior = null; continue; }
+      const y = campo.amostra(x, z);
+      const alto = 1.35 + rnd() * 0.2;
+      mouroes.push(matrizInclinada(x, y - 0.05, z, rnd() * 6.283, (rnd() - 0.5) * 0.08, alto));
+      colliders.push({ minX: x - 0.09, maxX: x + 0.09, minY: y - 0.3, maxY: y + alto, minZ: z - 0.09, maxZ: z + 0.09 });
+      if (anterior && rnd() > 0.06) {
+        for (const h of [0.42, 0.8, 1.16]) fios.push(...fio(anterior, [x, y, z], h, rnd));
+      }
+      anterior = [x, y, z];
+    }
+  }
+
+  const lote = (lista, geo, mat, nome, cores = null) => {
+    if (!lista.length) return null;
+    const m = new THREE.InstancedMesh(geo, mat, lista.length);
+    for (let i = 0; i < lista.length; i++) { m.setMatrixAt(i, lista[i]); if (cores) m.setColorAt(i, cores[i]); }
+    m.name = nome; m.receiveShadow = true; m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    m.computeBoundingSphere();
+    root.add(m);
+    return m;
+  };
+  const capimMesh = lote(capim, cartao(), MAT.capimPasto, 'pasto-capim', capimCor);
+  const toucMesh = lote(touceiras, cartao(), MAT.touceira, 'pasto-touceira', touceiraCor);
+  const cupimMesh = lote(cupins.map((c) => matriz(c.x, c.y, c.z, rnd() * 6.283, c.sx, c.sy, c.sx)), cupimGeo, MAT.cupim, 'pasto-cupinzeiro');
+  const mouraoGeo = new THREE.CylinderGeometry(0.055, 0.075, 1, 7);
+  mouraoGeo.translate(0, 0.5, 0);
+  const mouraoMesh = lote(mouroes, mouraoGeo, MAT.mourao, 'pasto-mourao');
+  const fioMesh = lote(fios, new THREE.BoxGeometry(1, 0.012, 0.012), MAT.cabo, 'pasto-arame');
+  for (const m of [capimMesh, toucMesh, fioMesh]) if (m) m.userData.nonSolidSurface = true;
+  for (const m of [cupimMesh, mouraoMesh]) if (m) { m.castShadow = true; occluders.push(m); }
+  return {
+    cupinzeiros: cupins.map((c) => ({ x: +c.x.toFixed(2), z: +c.z.toFixed(2), r: +(0.78 * c.sx).toFixed(2) })),
+    censo: { capim: capim.length, touceiras: touceiras.length, cupinzeiros: cupins.length, mouroes: mouroes.length, fiosArame: fios.length },
+  };
+}
+
+function matrizInclinada(x, y, z, ry, tilt, alto) {
+  _e.set(tilt, ry, tilt * 0.6); _q.setFromEuler(_e);
+  _p.set(x, y, z); _s.set(1, alto, 1);
+  return new THREE.Matrix4().compose(_p, _q, _s);
+}
+
+function fio(a, b, h, rnd) {
+  const saida = [], n = 3, flecha = 0.05 + rnd() * 0.05;
+  const eixoX = new THREE.Vector3(1, 0, 0), d = new THREE.Vector3();
+  for (let k = 0; k < n; k++) {
+    const t0 = k / n, t1 = (k + 1) / n;
+    const y0 = a[1] + (b[1] - a[1]) * t0 + h - flecha * 4 * t0 * (1 - t0);
+    const y1 = a[1] + (b[1] - a[1]) * t1 + h - flecha * 4 * t1 * (1 - t1);
+    const x0 = a[0] + (b[0] - a[0]) * t0, z0 = a[2] + (b[2] - a[2]) * t0;
+    const x1 = a[0] + (b[0] - a[0]) * t1, z1 = a[2] + (b[2] - a[2]) * t1;
+    d.set(x1 - x0, y1 - y0, z1 - z0);
+    const len = d.length();
+    _q.setFromUnitVectors(eixoX, d.normalize());
+    _p.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); _s.set(len, 1, 1);
+    saida.push(new THREE.Matrix4().compose(_p, _q, _s));
+  }
+  return saida;
+}
