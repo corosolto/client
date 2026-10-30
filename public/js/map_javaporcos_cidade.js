@@ -135,7 +135,7 @@ export function construirCidade(kit, campo, rnd) {
     { id: 'igreja', x: +igrejaInfo.frente[0].toFixed(2), z: +igrejaInfo.frente[1].toFixed(2), hp: 1200, r: 3.0 },
   ];
 
-  return { foodSpots, foodMeshes, foodColliders, portas, lojas, hordeObjectives, becos, becoAreas: extras.becoAreas,
+  return { foodSpots, foodMeshes, foodColliders, portas, lojas, hordeObjectives, becos, becoAreas: extras.becoAreas, setores: setores(),
     censo: { edificacoes, postes, calcadas: calcadas.length, becos: becos.length, colisores: colliders.length }, root };
 }
 
@@ -701,4 +701,19 @@ function construirExtras(kit, ex) {
   const sacoGeo = new THREE.IcosahedronGeometry(0.3, 1);
   lote(ex.saco, sacoGeo, MAT.saco, 'beco-saco');
   lote(ex.lixeira, cubo, MAT.lixeiraAmarela, 'beco-lixeira');
+}
+
+/* Setores de domínio: grade 3×3 cortada no fio da calçada da avenida. O pasto fica fora:
+   é passagem, não território. Peso = área relativa. */
+export function setores() {
+  const R = CIDADE_R, M = AV + CAL;
+  const def = [
+    ['cruzamento', 'Cruzamento', -M, -M, M, M],
+    ['av-norte', 'Avenida Norte', -M, -R, M, -M], ['av-sul', 'Avenida Sul', -M, M, M, R],
+    ['av-oeste', 'Avenida Oeste', -R, -M, -M, M], ['av-leste', 'Avenida Leste', M, -M, R, M],
+    ['quadra-no', 'Quadra da Praça', -R, -R, -M, -M], ['quadra-ne', 'Quadra da Igreja', M, -R, R, -M],
+    ['quadra-so', 'Quadra da Padaria', -R, M, -M, R], ['quadra-se', 'Quadra do Boteco', M, M, R, R],
+  ];
+  const total = (2 * R) ** 2;
+  return def.map(([id, nome, x0, z0, x1, z1]) => ({ id, nome, x0, z0, x1, z1, peso: +(((x1 - x0) * (z1 - z0)) / total).toFixed(4) }));
 }

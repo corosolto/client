@@ -57,6 +57,8 @@
             até (viela) caminhável com corpo de 0,45 m; corredor de VERDADE — em ≥ 60% das
             sondas do trecho entre muros há parede dos dois lados e a largura livre fica
             entre 2,0 e 3,2 m; e a navegação atravessa (≤ 1,3× a reta).
+     SETOR1 `world.horda.setores`: retângulos dentro de cityBounds, sem sobreposição, que
+            cobrem ≥ 98% dos nós de navegação da cidade, com peso = área relativa.
 
    MUTANTES (cada um tem de deixar a régua VERMELHA):
      mata-furada     derruba a parede de colisor do lado norte  -> MATA1, MATA3
@@ -69,6 +71,7 @@
      rota-no-muro    desvia o meio de uma rota para dentro da mata -> HORDA1
      beco-fechado    entulho de 1 m no meio de cada beco        -> BECO1
      beco-aberto     derruba as paredes de um beco              -> BECO1
+     setor-buraco    some com um setor                          -> SETOR1
 
    Uso: node tools/eval/javaporcos-mapa-check.mjs [--mutante=X] [--json-out=arq]
    ============================================================================ */
@@ -78,7 +81,7 @@ import { THREE, initTextures, bootGame } from './harness.mjs';
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutante');
 const MUTANTES = ['mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta', 'boca-aberta', 'mata-avanca',
-  'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto'];
+  'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto', 'setor-buraco'];
 if (MUT && !MUTANTES.includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT}. Há: ${MUTANTES.join(', ')}`);
   process.exit(2);
@@ -178,6 +181,7 @@ if (MUT === 'beco-aberto') {
     if (c.maxX > x0 && c.minX < x1 && c.maxZ > z0 && c.minZ < z1) W.colliders.splice(i, 1);
   }
 }
+if (MUT === 'setor-buraco') { exige(W.horda?.setores?.length, 'MUTANTE setor-buraco NÃO APLICOU'); W.horda.setores.shift(); }
 
 /* ------------------------------------------------- varredura a pé (MATA1) */
 const B = W.bounds;
@@ -614,6 +618,35 @@ regra('BECO1 becos caminháveis entre paredes, ligando o pasto à rua', () => {
   return linhas.join(' · ');
 });
 
+regra('SETOR1 setores cobrem a cidade sem sobrepor, peso = área', () => {
+  const S = W.horda?.setores;
+  exige(Array.isArray(S) && S.length >= 4, `${S?.length || 0} setores (piso 4)`);
+  const cb = W.cityBounds, total = (cb.maxX - cb.minX) * (cb.maxZ - cb.minZ);
+  let soma = 0;
+  for (const s of S) {
+    exige(s.x0 < s.x1 && s.z0 < s.z1, `setor ${s.id} degenerado`);
+    exige(s.x0 >= cb.minX - 1e-6 && s.x1 <= cb.maxX + 1e-6 && s.z0 >= cb.minZ - 1e-6 && s.z1 <= cb.maxZ + 1e-6, `setor ${s.id} sai de cityBounds`);
+    const area = (s.x1 - s.x0) * (s.z1 - s.z0);
+    exige(Math.abs(s.peso - area / total) < 0.002, `setor ${s.id} com peso ${s.peso} para área relativa ${(area / total).toFixed(4)}`);
+    soma += s.peso;
+  }
+  exige(Math.abs(soma - 1) < 0.01 || S.length < 9, `pesos somam ${soma.toFixed(3)}`);
+  for (let i = 0; i < S.length; i++) for (let k = i + 1; k < S.length; k++) {
+    const ox = Math.min(S[i].x1, S[k].x1) - Math.max(S[i].x0, S[k].x0), oz = Math.min(S[i].z1, S[k].z1) - Math.max(S[i].z0, S[k].z0);
+    exige(!(ox > 1e-6 && oz > 1e-6), `setores ${S[i].id} e ${S[k].id} se sobrepõem`);
+  }
+  let naCidade = 0, cobertos = 0;
+  for (const n of W.waypoints.nodes) {
+    if (n.x < cb.minX || n.x > cb.maxX || n.z < cb.minZ || n.z > cb.maxZ) continue;
+    naCidade++;
+    if (S.some((s) => n.x >= s.x0 && n.x <= s.x1 && n.z >= s.z0 && n.z <= s.z1)) cobertos++;
+  }
+  const frac = cobertos / Math.max(1, naCidade);
+  exige(frac >= 0.98, `setores cobrem ${(100 * frac).toFixed(1)}% dos ${naCidade} nós da cidade (piso 98%)`);
+  relatorio.setores = S;
+  return `${S.length} setores, ${(100 * frac).toFixed(1)}% dos ${naCidade} nós da cidade, pesos somam ${soma.toFixed(3)}`;
+});
+
 /* ------------------------------------------------------------------ fecho */
 relatorio.censo = W.censo;
 relatorio.mutante = MUT || null;
@@ -627,4 +660,4 @@ if (MUT) {
   process.exit(1);
 }
 if (falhas) { console.error(`✗ MAPA DA INVASÃO: ${falhas} cláusula(s) vermelha(s).`); process.exit(1); }
-console.log('✓ MAPA DA INVASÃO OK — cerco de 3 frentes, pasto, becos, relevo, comida e trilhas até dentro da loja.');
+console.log('✓ MAPA DA INVASÃO OK — cerco de 3 frentes, pasto, becos, setores, relevo, comida e trilhas até dentro da loja.');
