@@ -143,3 +143,32 @@ controle. O cenário não reproduz uma propriedade ou município específico.
   praça e interior de loja, com draw calls e FPS medidos.
 - Os quatro animais Mint e o cartaz OpenRouter são abertos e inspecionados; se o
   GLB não carregar, o inimigo usa fallback procedural com a mesma hitbox.
+
+## Cotas do relevo
+
+Os números vivem em `public/js/map_javaporcos_relevo.js`; o porquê de cada um é aqui.
+
+| constante | valor | o que decide |
+| --- | --- | --- |
+| `HALF` | 58 m | meia-extensão da arena (`bounds` ±58). A mata começa muito antes: ninguém chega aqui a pé. |
+| `CIDADE` | 36 m | meia-extensão do miolo urbano (`cityBounds` ±36). É o que a horda tem de alcançar. |
+| `PASSO` | 0,5 m | passo da grade de altura (233×233 floats). Metade do corpo do javaporco jovem: degrau menor que isso não muda rota. |
+| `BARRANCO` | 2,6 m | desnível entre a cidade e o platô da mata. Acima de 2,6 m o jogador não sobe sem rampa, e é isso que fecha o cerco. |
+| `SUBIDA` | 4,5 m | comprimento horizontal do barranco (inclinação de ~30°): sobe-se pela trilha, não pela parede. |
+| `CORREGO_Z` | −39 | eixo do córrego, no sopé do barranco norte. |
+| `CORREGO_MEIA` | 3,2 m | meia-largura do leito. |
+| `CORREGO_FUNDO` | 1,4 m | profundidade no eixo: atravessar molhado custa tempo, não vida. |
+| `PONTES` | x = −20 e 28 | as duas travessias de madeira; o resto do córrego é passagem lenta. |
+| `PONTE_MEIA` | 2,2 m | meia-largura da ponte. |
+
+## Cotas da mata
+
+Em `public/js/map_javaporcos_mata.js`.
+
+| constante | valor | o que decide |
+| --- | --- | --- |
+| `V_ANDAVEL` | 37,9 m | fim da faixa de mata caminhável: daqui para dentro ainda se anda entre as árvores. |
+| `V_PAREDE0` / `V_PAREDE1` | 37,9 m até `HALF` | a parede de colisor. Ela vai até a borda porque canto aberto virou fuga medida na régua. |
+| `COLUNA` | 2,5 m | largura da coluna de parede: mais fina cola melhor na curva da trilha. |
+| `FOLGA_TRILHA` | 2,9 m | trilha (1,75) + meio corpo + margem, para o bando não entalar na boca. |
+| `ACHATAMENTO` | 0,62 | a copa é disco, não bola: proporção medida nas referências de arte. |
