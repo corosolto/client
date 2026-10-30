@@ -118,7 +118,7 @@ export function construirCidade(kit, campo, rnd) {
   }
 
   // ── Postes, fiação e carros parados
-  const postes = fiacao(kit, campo, rnd);
+  const postes = fiacao(kit, campo, rnd, extras);
 
   // ── Lixo que a horda revira, espalhado pelos quatro quadrantes
   const pontos = [
@@ -136,6 +136,7 @@ export function construirCidade(kit, campo, rnd) {
   lixoSolto(kit, campo, rnd, extras.glb);
   lixoDeRua(kit, campo, extras, pontos);
   cacambas(kit, campo, extras, pontos);
+  luzDosBecos(kit, extras.postesBeco);
   construirExtras(kit, extras);
 
   /* O objetivo mora num ponto ALCANÇÁVEL (corredor da feira, porta da loja, adro da
@@ -457,7 +458,7 @@ function colisorRedondo(kit, x, z, raio, minY, maxY) {
 }
 
 /* ── POSTES E FIAÇÃO ───────────────────────────────────────────────────────────────── */
-function fiacao(kit, campo, rnd) {
+function fiacao(kit, campo, rnd, ex) {
   const { MAT } = kit;
   const borda = AV + CAL - 0.45;
   /* Cada LINHA de postes é uma calçada: o cabo só fecha vão entre vizinhos da mesma
@@ -500,6 +501,19 @@ function fiacao(kit, campo, rnd) {
     }
     for (let i = 0; i + 1 < topo.length; i++) if (topo[i] && topo[i + 1]) cabos.push([topo[i], topo[i + 1]]);
   }
+  /* Poste do beco: luminária baixa (4,5 m) virada para dentro e trafo; a luz pontual é a
+     de luzDosBecos, aqui só a peça. */
+  for (const { x, y, z, lum: [lx, ly, lz] } of ex.postesBeco) {
+    const ry = Math.atan2(lx - x, lz - z), dx = Math.sin(ry), dz = Math.cos(ry), braco = Math.hypot(lx - x, lz - z);
+    L.fuste.push(mtx(x, y + 4.5, z, 1, 1, 1));
+    L.cruzeta.push(mtx(x, y + 8.35, z, 1.5, 0.12, 0.12, ry + Math.PI / 2));
+    L.braco.push(mtx(x + dx * braco / 2, y + ly + 0.14, z + dz * braco / 2, 0.05, 0.05, braco, ry));
+    L.luminaria.push(mtx(lx, y + ly + 0.06, lz, 0.24, 0.12, 0.5, ry));
+    L.lente.push(mtx(lx, y + ly - 0.005, lz, 0.18, 0.02, 0.38, ry));
+    L.trafo.push(mtx(x - dx * 0.42, y + 6.3, z - dz * 0.42, 1, 1, 1));
+    kit.colliders.push({ minX: x - 0.17, maxX: x + 0.17, minY: y, maxY: y + 9, minZ: z - 0.17, maxZ: z + 0.17 });
+    postes.push([x, y + 8.4, z]);
+  }
   const fusteGeo = new THREE.CylinderGeometry(0.10, 0.17, 9, 12);
   const uv = fusteGeo.attributes.uv;
   for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 0.85 / 2.5, uv.getY(i) * 9 / 2.5);
@@ -522,25 +536,24 @@ function fiacao(kit, campo, rnd) {
   const matrizes = [];
   const _q = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3();
   const eixoX = new THREE.Vector3(1, 0, 0), dir = new THREE.Vector3();
-  for (const [a, b] of cabos) {
+  const fio = (a, b, off, f) => {
     const nx = -(b[2] - a[2]), nz = b[0] - a[0];
     const comp = Math.hypot(nx, nz) || 1;
-    for (let c = 0; c < 3; c++) {
-      const off = (c - 1) * 0.3;
-      for (let k = 0; k < 6; k++) {
-        const t0 = k / 6, t1 = (k + 1) / 6;
-        const flecha = (t) => -0.9 * 4 * t * (1 - t);
-        const x0 = a[0] + (b[0] - a[0]) * t0 + off * nx / comp, z0 = a[2] + (b[2] - a[2]) * t0 + off * nz / comp;
-        const x1 = a[0] + (b[0] - a[0]) * t1 + off * nx / comp, z1 = a[2] + (b[2] - a[2]) * t1 + off * nz / comp;
-        const y0 = a[1] + (b[1] - a[1]) * t0 + flecha(t0), y1 = a[1] + (b[1] - a[1]) * t1 + flecha(t1);
-        const len = Math.hypot(x1 - x0, y1 - y0, z1 - z0);
-        _p.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
-        _q.setFromUnitVectors(eixoX, dir.set(x1 - x0, y1 - y0, z1 - z0).normalize());
-        _s.set(len, 1, 1);
-        matrizes.push(new THREE.Matrix4().compose(_p, _q, _s));
-      }
+    for (let k = 0; k < 6; k++) {
+      const t0 = k / 6, t1 = (k + 1) / 6;
+      const flecha = (t) => -f * 4 * t * (1 - t);
+      const x0 = a[0] + (b[0] - a[0]) * t0 + off * nx / comp, z0 = a[2] + (b[2] - a[2]) * t0 + off * nz / comp;
+      const x1 = a[0] + (b[0] - a[0]) * t1 + off * nx / comp, z1 = a[2] + (b[2] - a[2]) * t1 + off * nz / comp;
+      const y0 = a[1] + (b[1] - a[1]) * t0 + flecha(t0), y1 = a[1] + (b[1] - a[1]) * t1 + flecha(t1);
+      const len = Math.hypot(x1 - x0, y1 - y0, z1 - z0);
+      _p.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+      _q.setFromUnitVectors(eixoX, dir.set(x1 - x0, y1 - y0, z1 - z0).normalize());
+      _s.set(len, 1, 1);
+      matrizes.push(new THREE.Matrix4().compose(_p, _q, _s));
     }
-  }
+  };
+  for (const [a, b] of cabos) for (let c = 0; c < 3; c++) fio(a, b, (c - 1) * 0.3, 0.9);
+  for (const [a, b, f] of ex.fiosBeco) fio(a, b, 0, f);
   if (matrizes.length) {
     const cabos = new THREE.InstancedMesh(seg, MAT.cabo, matrizes.length);
     for (let i = 0; i < matrizes.length; i++) cabos.setMatrixAt(i, matrizes[i]);
@@ -765,6 +778,25 @@ function cacambas(kit, campo, ex, pontos) {
   }
 }
 
+/* Uma luz de sódio só, que pula para o beco mais perto da câmera: quatro pontuais custavam
+   ~9% do quadro na cidade inteira (medido) e de dentro de um beco só se vê um. */
+function luzDosBecos(kit, postes) {
+  const lampadas = postes.map((p) => new THREE.Vector3(p.lum[0], p.y + p.lum[1] - 0.15, p.lum[2]));
+  const luz = new THREE.PointLight(0xffb060, 18, 14, 2);
+  luz.name = 'beco-luz'; luz.position.copy(lampadas[0]);
+  kit.root.add(luz);
+  // triângulo degenerado sem corte de frustum: é ele que recebe a câmera a cada quadro
+  const guia = new THREE.Mesh(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(9), 3)), kit.MAT.cabo);
+  guia.name = 'beco-luz-guia'; guia.frustumCulled = false; guia.castShadow = false; guia.userData.nonSolidSurface = true;
+  guia.onBeforeRender = (r, s, cam) => {
+    if (!cam?.isPerspectiveCamera) return;
+    let melhor = lampadas[0], d2 = Infinity;
+    for (const l of lampadas) { const d = (l.x - cam.position.x) ** 2 + (l.z - cam.position.z) ** 2; if (d < d2) { d2 = d; melhor = l; } }
+    if (!luz.position.equals(melhor)) { luz.position.copy(melhor); luz.updateMatrixWorld(); }
+  };
+  kit.root.add(guia);
+}
+
 /* ── BECOS ─────────────────────────────────────────────────────────────────────────── */
 /* Um beco por lado, no quarteirão externo: liga o anel perimetral (pasto) à viela.
    Medidas e o porquê dos 2,5 m: docs/maps/invasao-javaporcos-layout.md, seção "Becos". */
@@ -780,6 +812,7 @@ const BECOS = {
 function novosExtras() {
   return { glb: [], medidor: [], eletroduto: [], vao: [], grade: [], arame: [], roupa: [], roupaCor: [], botijao: [], saco: [], lixeira: [], becoAreas: [],
     vidro: [], vidroCor: [], vidroAceso: [], vidroAcesoCor: [], moldura: [], porta: [], decal: [], letreiro: [], rua: [], lixeiraTomb: [],
+    postesBeco: [], fiosBeco: [],
     rr: lcg(0xbec0), rj: lcg(0x1a7e) };
 }
 
@@ -894,6 +927,20 @@ function quarteiraoBeco(kit, campo, rnd, b, def, ex) {
     const [x, z] = W(cm + (dc - 0.5) * 2 * (BECO_MEIA - 0.3), lOut + dIn * dl * comp);
     ex.rua.push({ id, x, z, y: 0.026, h, ry: ex.rr() * 6.283 });
   }
+  /* Poste de sódio na boca da viela, luminária a 4,5 m sobre o fundo do beco e fios
+     cruzando o rasgo de céu acima dos beirais (a rodada 2 tinha perdido os dois). */
+  const [px, pz] = W(cm + 0.9, lIn + dIn * 0.25), py = campo.amostra(px, pz);
+  const [lux, luz] = W(cm + 0.2, lIn - dIn * 0.7);
+  ex.postesBeco.push({ x: px, y: py, z: pz, lum: [lux, 4.5, luz] });
+  const topo = [px, py + 8.35, pz];
+  const ponto = (c, alt, l) => { const [x, z] = W(c, l); return [x, alt, z]; };
+  // térreo amarra o fio num cano de entrada no telhado, senão o fio desce abaixo do beiral
+  const altFioB = Math.max(altB + 0.75, 6.0);
+  const beiralA = (l, d = 0) => ponto(cm - BECO_MEIA - 0.55, altA + 0.75 + d, l), beiralB = (l, d = 0) => ponto(cm + BECO_MEIA + 0.55, altFioB + d, l);
+  if (altFioB > altB + 0.8) for (const lc of [lOut + dIn * 4.0, lOut + dIn * 5.4, lOut + dIn * 6.2, lOut + dIn * 7.4]) caixaLocal(ex.eletroduto, cm + BECO_MEIA + 0.55, (altB + altFioB + 0.6) / 2, lc, 0.06, altFioB + 0.6 - altB, 0.06);
+  ex.fiosBeco.push([topo, beiralA(lOut + dIn * 1.0), 0.7], [topo, beiralB(lOut + dIn * 4.0), 0.5],
+    [beiralA(lOut + dIn * 3.6), beiralB(lOut + dIn * 6.2), 0.35], [beiralA(lOut + dIn * 4.6, 0.3), beiralB(lOut + dIn * 7.4, 0.2), 0.3],
+    [beiralA(lOut + dIn * 5.0, 0.6), beiralB(lOut + dIn * 5.4, 0.5), 0.4]);
   const glb = (id, c, l, h) => { const [x, z] = W(c, l); ex.glb.push({ id, x, z, h, ry: rnd() * 6.283 }); };
   glb('saco_lixo', cm - BECO_MEIA + 0.45, lIn - dIn * 0.7, 0.75);
   glb('saco_lixo', cm - BECO_MEIA + 0.4, lIn - dIn * 1.5, 0.6);

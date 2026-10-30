@@ -18,7 +18,7 @@
              lateral até a guia entre 0,15 e 0,45 m e nenhum dentro do cruzamento.
      POSTE1  poste é CylinderGeometry, ≥ 16, nenhum no cruzamento (|x|,|z| < 8), uma
              luminária emissiva (≥ 2) por poste, trafo em ≥ 1 a cada 3 e exatamente 4
-             luzes pontuais (as da praça).
+             luzes pontuais na praça e 1 de sódio que serve aos becos (rodada 3), 5 no total.
      DECAL1  ≥ 25 decalques de chão (lixo, poça, mancha, rachadura) dentro de cada beco.
 
    RODADA 3 (crítico 5,5/10, 30/10: "faixa de pedestre parece tábua de madeira"):
@@ -28,6 +28,11 @@
      JANELA2 o vidro mostra o cômodo ("janela preta atrás da grade", L* 6): material com o
              mapa de interior, metal ≤ 0,1, cortina de luminância média ≥ 0,25 e 10–40% das
              janelas acesas com emissivo quente (r > g > b) modulado pelo mesmo mapa.
+     BECOLUZ1 luz de sódio em cada beco ("beco sem fonte de luz", saco L* 6): com a câmera
+             posta em cada beco, a luz `beco-luz` vai para dentro dele a 4–5 m, quente,
+             intensidade ≥ 4, alcance 10–16 m, decaimento 2, com luminária a ≤ 0,5 m.
+     FIOS1   o rasgo de céu do beco tem poste e fio (sumiram na rodada 2): ≥ 3 fios acima de
+             5,5 m cruzando o eixo de cada beco e um poste a ≤ 2 m da boca da viela.
 
    MUTANTES (cada um tem de acender a cláusula indicada):
      saco-icosaedro  planta um saco de icosaedro na avenida          -> ICO1
@@ -38,9 +43,12 @@
      beco-limpo      tira a malha de decalques                       -> DECAL1
      zebra-veio      devolve as 10 tiras de altura inteira da rodada 2  -> ZEBRA1
      janela-preta    vidro volta ao cinza metálico 0x46525a, sem mapa    -> JANELA2
+     beco-apagado    tira a luz dos becos                                 -> BECOLUZ1, POSTE1
+     luz-presa       a luz não segue a câmera (fica no primeiro beco)     -> BECOLUZ1
+     beco-sem-fio    tira da fiação os segmentos sobre os becos           -> FIOS1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'beco-apagado', 'luz-presa', 'beco-sem-fio'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); o gol g2 também é NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -95,6 +103,19 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     ico.name = 'lixo-saco-solto'; ico.position.set(3, 0.2, 18); W.root.add(ico); ico.updateMatrixWorld(true);
   }
   if (MUT === 'janela-cega') { const v = porNome('beco-vidro'); exige(v, 'MUTANTE janela-cega NÃO APLICOU'); v.parent.remove(v); }
+  const becoCaixas = () => malhas().filter((o) => o.name === 'chao-beco').map((b) => new THREE.Box3().setFromObject(b));
+  const sobreBeco = (bb, x, z, folga) => x >= bb.min.x - folga && x <= bb.max.x + folga && z >= bb.min.z - folga && z <= bb.max.z + folga;
+  if (MUT === 'beco-apagado') {
+    const ls = []; W.root.traverse((o) => { if (o.isPointLight && o.name === 'beco-luz') ls.push(o); });
+    exige(ls.length, 'MUTANTE beco-apagado NÃO APLICOU'); ls.forEach((l) => l.parent.remove(l));
+  }
+  if (MUT === 'luz-presa') { const g = porNome('beco-luz-guia'); exige(g, 'MUTANTE luz-presa NÃO APLICOU'); g.onBeforeRender = () => {}; }
+  if (MUT === 'beco-sem-fio') {
+    const f = porNome('fiacao'), bbs = becoCaixas(), fica = instancias(f).map((q, i) => [q, i]).filter(([q]) => !bbs.some((bb) => sobreBeco(bb, q.p.x, q.p.z, 1.5)));
+    exige(f && fica.length < f.count, 'MUTANTE beco-sem-fio NÃO APLICOU');
+    fica.forEach(([, i], k) => { f.getMatrixAt(i, m4); f.setMatrixAt(k, m4); });
+    f.count = fica.length;
+  }
   if (MUT === 'janela-preta') {
     const vs = ['beco-vidro', 'beco-vidro-aceso'].map(porNome).filter(Boolean);
     exige(vs.length === 2, 'MUTANTE janela-preta NÃO APLICOU');
@@ -160,10 +181,10 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     exige(ps.every((q) => !(Math.abs(q.p.x) < AV + CAL && Math.abs(q.p.z) < AV + CAL)), 'poste dentro do cruzamento');
     exige(lente && lente.count === ps.length && lente.material.emissiveIntensity >= 2, 'luminária faltando ou apagada');
     exige(trafo && trafo.count >= Math.floor(ps.length / 3), `transformador em ${trafo?.count || 0} postes (piso 1 a cada 3)`);
-    let luzes = 0;
-    W.root.traverse((o) => { if (o.isPointLight) luzes++; });
-    exige(luzes === 4, `${luzes} luzes pontuais no mapa (exatamente 4, as da praça)`);
-    return `${ps.length} postes cilíndricos, ${lente.count} luminárias, ${trafo.count} trafos, ${luzes} luzes na praça`;
+    const luzes = { praca: 0, beco: 0, outras: 0 };
+    W.root.traverse((o) => { if (o.isPointLight) luzes[o.name === 'praca-luz' ? 'praca' : o.name === 'beco-luz' ? 'beco' : 'outras']++; });
+    exige(luzes.praca === 4 && luzes.beco === 1 && !luzes.outras, `luzes pontuais: ${luzes.praca} na praça, ${luzes.beco} de beco, ${luzes.outras} outras (exatamente 4 + 1 + 0)`);
+    return `${ps.length} postes cilíndricos, ${lente.count} luminárias, ${trafo.count} trafos, ${luzes.praca} luzes na praça e ${luzes.beco} de beco`;
   });
 
   regra('DECAL1 chão do beco com ≥ 25 decalques por beco', () => {
@@ -224,5 +245,45 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     exige(acesa.material.emissiveMap === acesa.material.map, 'luz da janela acesa não passa pela cortina (emissiveMap ≠ map)');
     exige(fr >= 0.1 && fr <= 0.4, `${(100 * fr).toFixed(0)}% das janelas acesas (faixa 10–40%)`);
     return `${apagada.count + acesa.count} janelas com cortina, ${acesa.count} acesas (${(100 * fr).toFixed(0)}%)`;
+  });
+
+  regra('BECOLUZ1 uma luz de sódio dentro de cada beco', () => {
+    const bbs = becoCaixas(), luzes = [], lentes = instancias(porNome('poste-lente')), guia = porNome('beco-luz-guia');
+    W.root.traverse((o) => { if (o.isPointLight && o.name === 'beco-luz') luzes.push(o); });
+    exige(bbs.length >= 4, `só ${bbs.length} becos`);
+    exige(guia && luzes.length, 'sem luz de beco ou sem a guia que a leva até a câmera');
+    const cam = new THREE.PerspectiveCamera();
+    const desc = bbs.map((bb) => {
+      bb.getCenter(cam.position); cam.position.y = 1.7;
+      guia.onBeforeRender(null, null, cam);
+      luzes.forEach((q) => q.updateMatrixWorld(true));
+      const l = luzes.find((q) => { const p = q.getWorldPosition(new THREE.Vector3()); return sobreBeco(bb, p.x, p.z, 0.2) && p.y >= 4 && p.y <= 5; });
+      exige(l, `beco em (${((bb.min.x + bb.max.x) / 2).toFixed(1)}, ${((bb.min.z + bb.max.z) / 2).toFixed(1)}) sem luz a 4–5 m dentro dele`);
+      const p = l.getWorldPosition(new THREE.Vector3()), c = l.color;
+      exige(c.r > c.g && c.g > c.b, 'luz do beco não é quente (sódio)');
+      exige(l.intensity >= 4 && l.distance >= 10 && l.distance <= 16 && l.decay === 2, `luz do beco fraca ou sem alcance (int ${l.intensity}, alcance ${l.distance}, decaimento ${l.decay})`);
+      exige(lentes.some((q) => Math.hypot(q.p.x - p.x, q.p.z - p.z) <= 0.5 && Math.abs(q.p.y - p.y) <= 0.4), 'luz do beco sem luminária visível a ≤ 0,5 m');
+      return `${p.y.toFixed(1)} m`;
+    });
+    return `câmera em cada um dos ${desc.length} becos leva a luz de sódio para dentro dele (${desc.join(', ')})`;
+  });
+
+  regra('FIOS1 poste e fios cruzando o rasgo de céu de cada beco', () => {
+    const bbs = becoCaixas(), segs = instancias(porNome('fiacao')), postes = instancias(porNome('poste'));
+    const d = new THREE.Vector3();
+    const desc = bbs.map((bb) => {
+      const aoLongoZ = bb.max.z - bb.min.z > bb.max.x - bb.min.x, eixo = aoLongoZ ? (bb.min.x + bb.max.x) / 2 : (bb.min.z + bb.max.z) / 2;
+      let cruzam = 0;
+      for (const q of segs) {
+        if (q.p.y < 5.5 || !sobreBeco(bb, q.p.x, q.p.z, 1.5)) continue;
+        d.set(q.s.x / 2, 0, 0).applyQuaternion(q.q);
+        const a = aoLongoZ ? q.p.x - d.x : q.p.z - d.z, b = aoLongoZ ? q.p.x + d.x : q.p.z + d.z;
+        if ((a - eixo >= -1e-4) !== (b - eixo >= -1e-4)) cruzam++;   // semiaberto: o vértice no eixo conta uma vez
+      }
+      exige(cruzam >= 3, `beco em (${((bb.min.x + bb.max.x) / 2).toFixed(1)}, ${((bb.min.z + bb.max.z) / 2).toFixed(1)}): só ${cruzam} fio(s) cruzando o rasgo acima de 5,5 m (piso 3)`);
+      exige(postes.some((q) => sobreBeco(bb, q.p.x, q.p.z, 2)), 'beco sem poste a ≤ 2 m');
+      return cruzam;
+    });
+    return `fios cruzando o rasgo por beco: ${desc.join(', ')}; poste em todos`;
   });
 }
