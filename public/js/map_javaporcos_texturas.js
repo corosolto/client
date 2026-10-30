@@ -581,7 +581,7 @@ export function decalAtlasTex() {
       /* A célula estica ~5× no comprimento da faixa: lasca e desgaste nascem achatados
          no V (eixo comprido), senão viram veio de tábua (desvio 4,0 × 7,0 medido). */
       for (let i = 0; i < 140; i++) { const a = 2 + r() * 10; x.globalAlpha = 0.25 + r() * 0.6; x.beginPath(); x.ellipse(ox + r() * C, oy + r() * C, a, a * (0.15 + r() * 0.15), 0, 0, 6.283); x.fill(); }
-      for (let i = 0; i < 30; i++) { x.globalAlpha = 0.5; x.fillRect(ox + r() * C, oy + r() * C, 20 + r() * 60, 2 + r() * 3); }
+      for (let i = 0; i < 40; i++) { x.globalAlpha = 0.5; x.fillRect(ox + r() * C, oy + r() * C, 10 + r() * 30, 2 + r() * 4); }
       x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1;
       g.fillStyle = '#a0a0a0'; g.fillRect(ox, oy, C, C);
     } else if (k === 10) {
