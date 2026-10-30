@@ -95,7 +95,7 @@ export function buildInvasaoJavaporcos(scene, T) {
     poste: comPbr('concrete046', TX.blocoTex(), { color: 0xb9b5ad }, { metros: 2.5 }),
     cabo: lam({ map: TX.lataTex('#3a3630', 5), roughness: 0.8 }),
     metal: lam({ map: T.metal, color: 0x8d8880, metalness: 0.42, roughness: 0.55 }),
-    vao: lam({ map: TX.ceramicaTex(), color: 0x241f1a, roughness: 1 }),
+    vao: lam({ map: TX.ceramicaTex(), color: 0x1c1f22, roughness: 1 }),
     barra: comPbr('peeling_painted_wall', TX.rebocoTex('#6f6354', 9), { color: 0xb0a89a }, { metros: 2.2 }),
     caixaDagua: lam({ map: TX.lataTex('#4d6f86', 6) }),
     rebocoLoja: comPbr('paintedplaster017', TX.rebocoTex(TX.COR.rebocoMenta, 5), { color: claro(TX.COR.rebocoMenta, 0.1) }, { metros: 3 }),
@@ -126,7 +126,7 @@ export function buildInvasaoJavaporcos(scene, T) {
     };
     m.customProgramCacheKey = () => 'jp-cartao-sem-verso';
   }
-  MAT.vidro = lam({ map: TX.ceramicaTex(), color: 0x7f949c, roughness: 0.18, metalness: 0.12 });
+  MAT.vidro = lam({ map: TX.ceramicaTex(), color: 0x46525a, roughness: 0.12, metalness: 0.35 });
   MAT.pneu = lam({ map: TX.lataTex('#2a2825', 7, 1, 1) });
   /* Lataria memoizada por cor: cinco carros da mesma cor compartilham material, então a
      paleta não vira cinco programas de shader nem cinco linhas no SUP1. */

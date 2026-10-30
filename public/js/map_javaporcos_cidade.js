@@ -15,6 +15,9 @@ export const CIDADE_R = 36;
 const QUADRANTES = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
 const GLB = typeof location !== 'undefined' && /^https?:/.test(location.protocol || '') && new URLSearchParams(location.search).get('glb') !== '0';
 const usaGLB = (id) => GLB && hasProp(id);
+/* Sorteio próprio do que é só enfeite: o `rnd` do mapa é compartilhado com a mata, e uma
+   chamada a mais aqui desloca a mata inteira. */
+const lcg = (s) => () => ((s = Math.imul(s, 1664525) + 1013904223 >>> 0) / 4294967296);
 const faixa = (s, b) => (s > 0 ? [b[0], b[1]] : [-b[1], -b[0]]);
 
 export function blocos() {
@@ -41,6 +44,7 @@ export function construirCidade(kit, campo, rnd) {
   const foodSpots = [], foodMeshes = new Map(), foodColliders = new Map();
   const portas = [], lojas = [], becos = [];
   const extras = novosExtras();
+  kit.ex = extras;
   let edificacoes = 0;
 
   /* ── Plataformas no campo de altura ANTES de qualquer malha: é o campo que manda, e é
@@ -142,6 +146,32 @@ export function construirCidade(kit, campo, rnd) {
     censo: { edificacoes, postes, calcadas: calcadas.length, becos: becos.length, colisores: colliders.length }, root };
 }
 
+/* ── JANELA E PORTA ─────────────────────────────────────────────────────────────────── */
+/* (cx,cy,cz) é o centro do vão NO PLANO da parede; +z local sai da parede. Vidro 0,08 m
+   atrás da frente da moldura, grade de barra 0,04 a cada 0,12 m. Tudo vai para lote. */
+function janela(ex, cx, cy, cz, ry, w, h, gradeada) {
+  const cs = Math.cos(ry), sn = Math.sin(ry);
+  const p = (lista, lx, ly, lz, sx, sy, sz) => lista.push(mtx(cx + lx * cs + lz * sn, cy + ly, cz - lx * sn + lz * cs, sx, sy, sz, ry));
+  const m = 0.09, f = 0.11;
+  p(ex.vao, 0, 0, 0.01, w, h, 0.02);
+  p(ex.vidro, 0, 0, f - 0.08, w - 0.04, h - 0.04, 0.01);
+  p(ex.moldura, 0, h / 2 + m / 2, f / 2, w + 2 * m, m, f);
+  p(ex.moldura, 0, -h / 2 - 0.03, 0.09, w + 0.3, 0.06, 0.18);
+  for (const s of [-1, 1]) p(ex.moldura, s * (w / 2 + m / 2), 0, f / 2, m, h, f);
+  if (!gradeada) return;
+  const zg = f + 0.03;
+  for (let lx = -w / 2 + 0.06; lx <= w / 2 - 0.05; lx += 0.12) p(ex.grade, lx, 0, zg, 0.04, h + 0.04, 0.04);
+  for (const ly of [-h / 2 + 0.02, 0, h / 2 - 0.02]) p(ex.grade, 0, ly, zg, w + 0.04, 0.04, 0.04);
+}
+
+function porta(ex, cx, cy, cz, ry) {
+  const cs = Math.cos(ry), sn = Math.sin(ry);
+  const p = (lista, lx, ly, lz, sx, sy, sz) => lista.push(mtx(cx + lx * cs + lz * sn, cy + ly, cz - lx * sn + lz * cs, sx, sy, sz, ry));
+  p(ex.porta, 0, 0, 0.03, 0.92, 2.15, 0.05);
+  p(ex.moldura, 0, 1.12, 0.05, 1.18, 0.09, 0.1);
+  for (const s of [-1, 1]) p(ex.moldura, s * 0.51, 0, 0.05, 0.09, 2.2, 0.1);
+}
+
 /* ── CASA TÉRREA / SOBRADO ─────────────────────────────────────────────────────────── */
 function casa(kit, campo, rnd, x, z, w, d, ry, alt, cor, paredeMat = null) {
   const { MAT, caixa, placa } = kit;
@@ -157,11 +187,12 @@ function casa(kit, campo, rnd, x, z, w, d, ry, alt, cor, paredeMat = null) {
   kit.root.add(telhado); kit.occluders.push(telhado);
   const cs = Math.cos(ry), sn = Math.sin(ry);
   const frente = (ox, oy, oz) => [x + ox * cs + oz * sn, y + oy, z - ox * sn + oz * cs];
-  const [px, py, pz] = frente(0, 0, d / 2 + 0.02);
-  placa(1.0, 2.15, 0.08, MAT.vao, px, py + 0.02, pz, ry);
+  const ex = kit.ex;
+  const [px, py, pz] = frente(0, 1.1, d / 2);
+  porta(ex, px, py, pz, ry);
   for (const ox of [-w / 4 - 0.4, w / 4 + 0.4]) {
-    const [jx, jy, jz] = frente(ox, 1.15, d / 2 + 0.02);
-    placa(1.1, 1.0, 0.08, MAT.vao, jx, jy, jz, ry);
+    const [jx, jy, jz] = frente(ox, 1.65, d / 2);
+    janela(ex, jx, jy, jz, ry, 1.1, 1.0, ex.rr() < 0.7);
   }
   if (alt > 5) {
     const [lx, ly, lz] = frente(0, alt * 0.52, d / 2 + 0.02);
@@ -640,7 +671,8 @@ const BECOS = {
 };
 
 function novosExtras() {
-  return { glb: [], medidor: [], eletroduto: [], vao: [], grade: [], arame: [], roupa: [], roupaCor: [], botijao: [], saco: [], lixeira: [], becoAreas: [] };
+  return { glb: [], medidor: [], eletroduto: [], vao: [], grade: [], arame: [], roupa: [], roupaCor: [], botijao: [], saco: [], lixeira: [], becoAreas: [],
+    vidro: [], moldura: [], porta: [], rr: lcg(0xbec0) };
 }
 
 const _mq = new THREE.Quaternion(), _me = new THREE.Euler(), _mp = new THREE.Vector3(), _ms = new THREE.Vector3();
@@ -704,12 +736,12 @@ function quarteiraoBeco(kit, campo, rnd, b, def, ex) {
     caixaLocal(ex.medidor, cw, 1.68, lm, 0.13, 0.44, 0.34);
     caixaLocal(ex.eletroduto, cm + lado * (BECO_MEIA - 0.03), 1.9 + (alt - 2.0) / 2, lm, 0.05, alt - 2.0, 0.05);
   }
-  // janela gradeada: vão escuro e cinco barras, térreo e (sobrado) primeiro andar
+  // janela gradeada no térreo e (sobrado) no primeiro andar, olhando para dentro do beco
   for (const [lado, lm, alt] of [[-1, lOut + dIn * 3.6, altA], [1, lIn - dIn * 3.6, altB]]) {
+    const ry = aoLongoZ ? -lado * Math.PI / 2 : (lado > 0 ? Math.PI : 0);
     for (const yb of alt > 5 ? [1.25, 4.05] : [1.25]) {
-      caixaLocal(ex.vao, cm + lado * (BECO_MEIA - 0.02), yb + 0.5, lm, 0.06, 1.0, 0.9);
-      for (let k = -2; k <= 2; k++) caixaLocal(ex.grade, cm + lado * (BECO_MEIA - 0.08), yb + 0.5, lm + k * 0.19, 0.025, 1.04, 0.025);
-      for (const yy of [yb + 0.02, yb + 0.98]) caixaLocal(ex.grade, cm + lado * (BECO_MEIA - 0.08), yy, lm, 0.025, 0.025, 0.94);
+      const [jx, jz] = W(cm + lado * BECO_MEIA, lm);
+      janela(ex, jx, yb + 0.5, jz, ry, 0.9, 1.0, true);
     }
   }
   // varal na parede do sobrado: dois suportes, o arame e as peças penduradas acima de 1,6 m
@@ -767,7 +799,10 @@ function construirExtras(kit, ex) {
   lote(ex.medidor, cubo, MAT.medidor, 'beco-medidor');
   lote(ex.eletroduto, cubo, MAT.cabo, 'beco-eletroduto', { sombra: false });
   lote(ex.vao, cubo, MAT.vao, 'beco-janela', { sombra: false });
-  lote(ex.grade, cubo, MAT.metal, 'beco-grade', { sombra: false });
+  lote(ex.vidro, cubo, MAT.vidro, 'beco-vidro', { sombra: false });
+  lote(ex.moldura, cubo, MAT.barra, 'janela-moldura');
+  lote(ex.porta, cubo, MAT.madeira, 'casa-porta', { sombra: false });
+  lote(ex.grade, cubo, MAT.cabo, 'beco-grade');
   lote(ex.arame, cubo, MAT.cabo, 'beco-varal', { sombra: false });
   const roupaGeo = new THREE.PlaneGeometry(1, 1);
   lote(ex.roupa, roupaGeo, MAT.roupa, 'beco-roupa', { cores: ex.roupaCor });
