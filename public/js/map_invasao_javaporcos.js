@@ -106,6 +106,15 @@ export function buildInvasaoJavaporcos(scene, T) {
       .map((c, i) => lam({ map: TX.rebocoTex(c, i + 1) })),
     toldo: [TX.COR.toldoA, TX.COR.toldoB, TX.COR.toldoC].map((c, i) => lam({ map: TX.toldoTex(c, i + 1) })),
   };
+  /* Cartão de capim com normal para cima nas DUAS faces: o three inverte a normal no verso
+     em DoubleSide, e o verso do tufo saía preto. */
+  for (const m of [MAT.capimPasto, MAT.touceira, MAT.mato]) {
+    m.onBeforeCompile = (sh) => {
+      sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>',
+        THREE.ShaderChunk.normal_fragment_begin.replace('gl_FrontFacing ? 1.0 : - 1.0', '1.0'));
+    };
+    m.customProgramCacheKey = () => 'jp-cartao-sem-verso';
+  }
   MAT.vidro = lam({ map: TX.ceramicaTex(), color: 0x7f949c, roughness: 0.18, metalness: 0.12 });
   MAT.pneu = lam({ map: TX.lataTex('#2a2825', 7, 1, 1) });
   /* Lataria memoizada por cor: cinco carros da mesma cor compartilham material, então a

@@ -350,7 +350,7 @@ export function capimPastoTex(rx = 1, ry = 1) {
       const base = 4 + r() * (s - 8), alt = s * (0.35 + r() * 0.62);
       const curva = (r() - 0.5) * 60;
       const v = r();
-      x.strokeStyle = v > 0.78 ? '#9a8648' : v > 0.45 ? '#55692a' : v > 0.18 ? '#3f5320' : '#2c3d16';
+      x.strokeStyle = v > 0.78 ? '#c4b46e' : v > 0.45 ? '#86a243' : v > 0.18 ? '#6a8a33' : '#55722a';
       x.lineWidth = 1 + r() * 2.2;
       x.beginPath(); x.moveTo(base, s);
       x.quadraticCurveTo(base + curva * 0.3, s - alt * 0.6, base + curva, s - alt); x.stroke();
@@ -367,7 +367,7 @@ export function capimAltoTex(rx = 1, ry = 1) {
       const base = meio + (r() - 0.5) * s * 0.35, alt = s * (0.55 + r() * 0.43);
       const curva = (r() - 0.5) * s * 0.8;
       const v = r();
-      x.strokeStyle = v > 0.7 ? '#a08c52' : v > 0.35 ? '#5f7330' : '#3b4f1d';
+      x.strokeStyle = v > 0.7 ? '#c9b47a' : v > 0.35 ? '#8aa648' : '#62822f';
       x.lineWidth = 1.5 + r() * 2.5;
       x.beginPath(); x.moveTo(base, s);
       x.quadraticCurveTo(base + curva * 0.2, s - alt * 0.7, base + curva, s - alt * (0.8 + r() * 0.2)); x.stroke();
