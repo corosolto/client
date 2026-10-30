@@ -17,10 +17,13 @@ const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 const GLB_ON = QP.get('glb') !== '0';
 
-/* Carros: só scan (1 primitiva) e junk_car (5); [id, comprimento, altura]. Licença NC
-   (saveiro_robust, byd_dolphin, gol g2) fica fora; chevette custava 12 materiais. */
-const CARROS_GLB = [['junk_car', 4.0, 1.4], ['carro_batido_scan_03', 4.3, 1.35], ['junk_car', 4.0, 1.4], ['junk_car', 4.0, 1.4],
-  ['perua_pichada_scan', 4.35, 1.5], ['junk_car', 4.0, 1.4], ['junk_car', 4.0, 1.4], ['carro_batido_scan_07', 4.0, 1.4]];
+/* Carros: só scan (1 primitiva) e junk_car (5, repintado por instância); [id, comprimento,
+   altura]. Licença NC (saveiro_robust, byd_dolphin, gol g2) fica fora; chevette custava 12 materiais. */
+const JUNK = ['junk_car', 4.0, 1.4];
+const CARROS_GLB = [JUNK, JUNK, JUNK, ['carro_batido_scan_03', 4.3, 1.35], JUNK, JUNK, JUNK, ['perua_pichada_scan', 4.35, 1.5],
+  JUNK, JUNK, JUNK, ['carro_batido_scan_07', 4.0, 1.4]];
+// pintura de carro popular: azul, branco, vermelho, verde, bege, prata; C* ≥ 20 nos quatro primeiros
+export const CORES_CARRO = [0x2a5ca8, 0xe2dfd6, 0xb0302a, 0x2f6e46, 0xcdb084, 0x9a9c9e];
 export const CARROS_MIN = 16;
 const SOLIDOS_GLB = new Set([...CARROS_GLB.map((c) => c[0]), 'arvore_mata', 'tronco_caido', 'toco_arvore', 'pedra_mata', 'poste_luz_praca']);
 export const INVASAO_JAVAPORCOS_PROPS = ['carro_batido_scan_03', 'perua_pichada_scan', 'junk_car', 'carro_batido_scan_07',
@@ -356,9 +359,23 @@ function carros(kit, campo, rnd, PB) {
     const falta = CARROS_MIN / 4 - doBraco.filter((i) => sorteio[i]).length;
     for (const i of livres.slice(0, Math.max(0, falta))) sorteio[i] = [meu(), meu()];
   }
+  /* junk_car repintado: a textura de ferrugem vira só sujeira (luminância) e a cor vem da
+     instância. Sem isso 5 de cada 8 carros saíam carvão (C* 4); a tag isola do ferro-velho. */
+  const tinta = (m, pinta) => {
+    if (!pinta) return;
+    m.roughness = 0.55; m.metalness = 0;
+    m.onBeforeCompile = (sh) => {
+      sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `#ifdef USE_MAP
+        vec4 sampledDiffuseColor = texture2D( map, vMapUv );
+        float sujo = dot( sampledDiffuseColor.rgb, vec3( 0.2126, 0.7152, 0.0722 ) );
+        diffuseColor.rgb *= mix( sampledDiffuseColor.rgb * 3.0, vec3( clamp( 0.42 + sujo * 7.0, 0.3, 1.0 ) ), 0.85 );
+      #endif`);
+    };
+    m.customProgramCacheKey = () => 'jp-tinta-carro';
+  };
   /* O GLB do carro não projeta sombra: uma caixa de lataria + cabine, 0,1 m por dentro dele,
      faz isso por 24 triângulos. Com 23 carros a sombra do GLB custava ~270 mil tri por vista. */
-  const PC = PB ? new PropBatch({ bucket: 40, cast: false }) : null;
+  const PC = PB ? new PropBatch({ bucket: 40, tag: 'jp-pintura', cast: false, paintTest: (m) => /^Material_\d+$/.test(m.name || ''), matTweak: tinta }) : null;
   const sombras = [];
   const lista = (kit.root.userData.carros = []);
   let n = 0;
@@ -367,15 +384,16 @@ function carros(kit, campo, rnd, PB) {
     const [x, z, ry] = vagas[i];
     const y = campo.amostra(x, z);
     const giro = ry + (sorteio[i][0] - 0.5) * 0.08;
-    const cor = [0x9c9a95, 0x7d4a3c, 0x4e5d6b, 0xbfb49a, 0x53504c][(sorteio[i][1] * 5) | 0];
+    const cor = CORES_CARRO[(sorteio[i][1] * CORES_CARRO.length) | 0];
     const cs = Math.cos(giro), sn = Math.sin(giro);
     const desloca = (ox, oz) => [x + ox * cs + oz * sn, z - ox * sn + oz * cs];
     const glb = CARROS_GLB[n % CARROS_GLB.length];
-    lista.push({ id: glb[0], x, z, ry: giro });
+    const pinta = glb[0] === 'junk_car';
+    lista.push({ id: glb[0], x, z, ry: giro, cor: pinta ? cor : null });
     if (PC && hasProp(glb[0])) {
       kit.colisor(x, z, 0.86, 2.05, y + 0.26, y + 0.98, giro);
       sombras.push(new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), giro), new THREE.Vector3(1, 1, glb[1] / 4)));
-      PC.add(glb[0], { x, z, y, targetLen: glb[1], targetH: glb[2], ry: giro + eixoCarro(glb[0]) + (n % 2) * Math.PI });
+      PC.add(glb[0], { x, z, y, targetLen: glb[1], targetH: glb[2], ry: giro + eixoCarro(glb[0]) + (n % 2) * Math.PI, color: pinta ? cor : null });
       n++;
       continue;
     }
