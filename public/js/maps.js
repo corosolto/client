@@ -83,6 +83,7 @@ export const MAPS = {
     ambience: ['rat', 'pigeonGround', 'parrot', 'calango', 'lagarto', 'sertaoGoat', 'sertaoHen', 'sertaoChick'],
   },
   invasao_javaporcos: { name: 'Invasão dos Javaporcos', ctfMode: false, objectiveMode: 'horde',
+    loadingWall: '/img/loading-javaporcos.webp',
     props: ['arvore_mata', 'palmeira_babacu', 'grama_corrego_01', 'grama_corrego_02', 'planta_corrego_taboa',
       'planta_corrego_taioba', 'samambaia', 'bananeira', 'heliconia', 'ixora', 'agave',
       'fachada_comercio', 'fav_house', 'fav_brasileira', 'fav_modular', 'casa_geminada', 'igrejinha',
