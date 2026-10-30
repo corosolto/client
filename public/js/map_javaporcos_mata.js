@@ -534,13 +534,16 @@ export function construirPasto(kit, campo, rnd) {
   };
   const capimMesh = lote(capim, cartao(), MAT.capimPasto, 'pasto-capim', capimCor);
   const toucMesh = lote(touceiras, cartao(), MAT.touceira, 'pasto-touceira', touceiraCor);
-  const cupimMesh = lote([...cupins.map((c) => [c, rnd()]), ...torroes.map((c) => [c, rt()])].map(([c, g]) => matriz(c.x, c.y, c.z, g * 6.283, c.sx, c.sy, c.sx)), cupimGeo, MAT.cupim, 'pasto-cupinzeiro');
+  const giros = [...cupins.map(() => rnd()), ...torroes.map(() => rt())];   // mesma ordem de sorteio de antes
+  const cupimMesh = lote(cupins.map((c, i) => matriz(c.x, c.y, c.z, giros[i] * 6.283, c.sx, c.sy, c.sx)), cupimGeo, MAT.cupim, 'pasto-cupinzeiro');
+  // torrão de 0,3 m não precisa do torno de 48 lados com torrinha (é 3/4 das instâncias)
+  const torraoMesh = lote(torroes.map((c, i) => matriz(c.x, c.y, c.z, giros[cupins.length + i] * 6.283, c.sx, c.sy, c.sx)), cupimTorno(12, false), MAT.cupim, 'pasto-torrao');
   const mouraoGeo = new THREE.CylinderGeometry(0.055, 0.075, 1, 7);
   mouraoGeo.translate(0, 0.5, 0);
   const mouraoMesh = lote(mouroes, mouraoGeo, MAT.mourao, 'pasto-mourao');
   const fioMesh = lote(fios, new THREE.BoxGeometry(1, 0.012, 0.012), MAT.cabo, 'pasto-arame');
   for (const m of [capimMesh, toucMesh, fioMesh]) if (m) m.userData.nonSolidSurface = true;
-  for (const m of [cupimMesh, mouraoMesh]) if (m) { m.castShadow = true; occluders.push(m); }
+  for (const m of [cupimMesh, torraoMesh, mouraoMesh]) if (m) { m.castShadow = true; occluders.push(m); }
   return {
     cupinzeiros: cupins.map((c) => ({ x: +c.x.toFixed(2), z: +c.z.toFixed(2), r: +(0.78 * c.sx).toFixed(2) })),
     censo: { capim: capim.length, touceiras: touceiras.length, cupinzeiros: cupins.length, torroesCupim: torroes.length, mouroes: mouroes.length, fiosArame: fios.length },
@@ -550,7 +553,7 @@ export function construirPasto(kit, campo, rnd) {
 /* Perfil de torno com 3 lóbulos que torcem com a altura: cone liso lia como pirâmide de pedra.
    Rodada 4: lóbulo 0,30, ruído radial de 6–11 voltas e 2 torrinhas fora do eixo (lia domo). */
 export const CUPIM_LOBULO = 0.30;
-function cupimTorno() {
+function cupimTorno(lados = 48, torrinhas = true) {
   const perfil = [[1.0, 0], [0.95, 0.1], [0.87, 0.3], [0.76, 0.5], [0.61, 0.69], [0.44, 0.84], [0.26, 0.95], [0.1, 1.01], [0, 1.02]]
     .map(([r, y]) => new THREE.Vector2(r, y));
   const torno = (seg, lob, fase) => {
@@ -568,10 +571,10 @@ function cupimTorno() {
     geo.setAttribute('color', new THREE.BufferAttribute(cor, 3));
     return geo;
   };
-  const corpo = torno(48, CUPIM_LOBULO, 0);
-  const torres = [[0.42, 0.3, 1.3, 1.1], [-0.3, -0.36, 1.05, 2.9]].map(([dx, dz, alto, fase]) =>
-    torno(16, 0.2, fase).scale(0.35, alto, 0.35).translate(dx, 0, dz));
-  const geo = mergeGeometries([corpo, ...torres], false);
+  const corpo = torno(lados, CUPIM_LOBULO, 0);
+  const torres = !torrinhas ? [] : [[0.42, 0.3, 1.3, 1.1], [-0.3, -0.36, 1.05, 2.9]].map(([dx, dz, alto, fase]) =>
+    torno(10, 0.2, fase).scale(0.35, alto, 0.35).translate(dx, 0, dz));
+  const geo = torres.length ? mergeGeometries([corpo, ...torres], false) : corpo;
   geo.computeVertexNormals();
   geo.userData.vertsTorno = corpo.attributes.position.count;   // a régua mede o lóbulo só no corpo
   return geo;

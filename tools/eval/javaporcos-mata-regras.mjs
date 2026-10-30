@@ -188,8 +188,9 @@ export function regrasMata({ W, THREE, MUT, regra, exige }) {
     h3.sort((a, b) => a - b);
     const med = h3[Math.floor(h3.length / 2)];
     exige(med >= 0.12, `harmônico de 3 lóbulos ${med.toFixed(3)} do raio (piso 0,12): cone liso`);
-    const n = W.cupinzeiros?.length || 0, torroes = [];
+    const n = W.cupinzeiros?.length || 0, torroes = [], tm = porNome('pasto-torrao');
     for (let i = n; i < cupim.count; i++) torroes.push(inst(cupim, i).s.x);
+    for (let i = 0; i < (tm?.count || 0); i++) torroes.push(inst(tm, i).s.x);
     exige(n >= 8 && torroes.length >= 2 * n, `${torroes.length} torrões para ${n} cupinzeiros (piso 2 por cupinzeiro)`);
     const fora = torroes.filter((r) => r < 0.3 - 1e-6 || r > 0.5 + 1e-6).length;
     exige(!fora, `${fora} torrões fora de 0,3–0,5 m de raio`);
