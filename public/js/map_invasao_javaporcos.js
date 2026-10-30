@@ -105,6 +105,8 @@ export function buildInvasaoJavaporcos(scene, T) {
     vao: lam({ map: TX.ceramicaTex(), color: 0x1c1f22, roughness: 1 }),
     janela: lam({ map: TX.janelaTex(), emissiveMap: TX.janelaTex(), roughness: 0.22, emissive: 0x4a4238, emissiveIntensity: 1 }),
     janelaAcesa: lam({ map: TX.janelaTex(), emissiveMap: TX.janelaTex(), roughness: 0.22, emissive: 0xffb066, emissiveIntensity: 0.55 }),
+    // só projeta sombra: o passe de cor não escreve nada (sombra de caixa no lugar do GLB)
+    soSombra: new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }),
     barra: comPbr('peeling_painted_wall', TX.rebocoTex('#6f6354', 9), { color: 0xb0a89a }, { metros: 2.2 }),
     caixaDagua: lam({ map: TX.lataTex('#4d6f86', 6) }),
     rebocoLoja: comPbr('paintedplaster017', TX.rebocoTex(TX.COR.rebocoMenta, 5), { color: claro(TX.COR.rebocoMenta, 0.1) }, { metros: 3 }),
@@ -354,7 +356,10 @@ function carros(kit, campo, rnd, PB) {
     const falta = CARROS_MIN / 4 - doBraco.filter((i) => sorteio[i]).length;
     for (const i of livres.slice(0, Math.max(0, falta))) sorteio[i] = [meu(), meu()];
   }
-  const PC = PB ? new PropBatch({ bucket: 40 }) : null;
+  /* O GLB do carro não projeta sombra: uma caixa de lataria + cabine, 0,1 m por dentro dele,
+     faz isso por 24 triângulos. Com 23 carros a sombra do GLB custava ~270 mil tri por vista. */
+  const PC = PB ? new PropBatch({ bucket: 40, cast: false }) : null;
+  const sombras = [];
   const lista = (kit.root.userData.carros = []);
   let n = 0;
   for (let i = 0; i < vagas.length; i++) {
@@ -369,6 +374,7 @@ function carros(kit, campo, rnd, PB) {
     lista.push({ id: glb[0], x, z, ry: giro });
     if (PC && hasProp(glb[0])) {
       kit.colisor(x, z, 0.86, 2.05, y + 0.26, y + 0.98, giro);
+      sombras.push(new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), giro), new THREE.Vector3(1, 1, glb[1] / 4)));
       PC.add(glb[0], { x, z, y, targetLen: glb[1], targetH: glb[2], ry: giro + eixoCarro(glb[0]) + (n % 2) * Math.PI });
       n++;
       continue;
@@ -389,6 +395,13 @@ function carros(kit, campo, rnd, PB) {
     n++;
   }
   if (PC) PC.build(kit.root);
+  for (const geo of sombras.length ? [new THREE.BoxGeometry(1.55, 0.62, 3.75).translate(0, 0.62, 0), new THREE.BoxGeometry(1.3, 0.48, 1.7).translate(0, 1.15, -0.15)] : []) {
+    const caixas = new THREE.InstancedMesh(geo, MAT.soSombra, sombras.length);
+    sombras.forEach((m, i) => caixas.setMatrixAt(i, m));
+    caixas.name = 'carro-sombra'; caixas.castShadow = true; caixas.receiveShadow = false; caixas.userData.nonSolidSurface = true;
+    caixas.instanceMatrix.needsUpdate = true; caixas.computeBoundingSphere();
+    kit.root.add(caixas);
+  }
   return n;
 }
 
