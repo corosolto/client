@@ -57,6 +57,7 @@
     "eval:escala": "node tools/eval/escala-veiculo-check.mjs",
     "eval:prune": "node tools/eval/prune-check.mjs",
     "eval:mapjson": "node tools/eval/mapjson-check.mjs",
+    "eval:geoheaders": "node --experimental-strip-types tools/eval/geo-headers-check.mjs",
     "eval:escadao-contract": "node tools/eval/escadao-contract-check.mjs",
     "eval:escadao-rota": "node tools/eval/escadao-rota-check.mjs",
     "eval:escadao-facade": "node tools/eval/escadao-facade-check.mjs",
