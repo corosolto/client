@@ -2,8 +2,8 @@
 # 02 — Invasão dos Javaporcos
 
 Modo cooperativo de sobrevivência e pontuação numa cidade do interior CERCADA de mata
-fechada. O time segura ondas de javalis e javaporcos que saem de dez bocas de mata,
-entram pelas ruas, reviram o lixo e avançam sobre a feira, a mercearia e a igreja. Sem
+fechada. O time segura ondas de javalis e javaporcos que saem de três trilhas de mata,
+cruzam o pasto, entram pelas ruas e pelos becos, reviram o lixo e avançam sobre a feira, a mercearia e a igreja. Sem
 gore: impacto, poeira, tropeço e desaparecimento substituem ferimentos explícitos.
 
 ## Local real
@@ -16,8 +16,11 @@ controle. O cenário não reproduz uma propriedade ou município específico.
 
 ## Layout
 
-- **Pegada:** 116 × 116 m (`bounds` ±58). Miolo urbano em `cityBounds` ±36; cinturão de
-  mata de 22 m entre r = 36 e r = 58, com r = max(|x|, |z|).
+Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
+[`invasao-javaporcos-layout.md`](invasao-javaporcos-layout.md).
+
+- **Pegada:** 116 × 116 m (`bounds` ±58), com r = max(|x|, |z|). Miolo urbano em
+  `cityBounds` ±36; pasto de r = 36 a 44; mata de 44 a 58.
 - **Malha urbana:** avenida em cruz de 12 m (x = 0 e z = 0) com calçada de 2 m e meio-fio
   de 0,15 m; viela de terra de 3,5 m em |x| = 22 e |z| = 22; anel perimetral de terra
   entre 31,5 e 36 m. A calçada PARA no cruzamento — ela não atravessa a pista.
@@ -25,15 +28,18 @@ controle. O cenário não reproduz uma propriedade ou município específico.
   casa térrea de 3,00 m, sobrado de 6,00 m, 4 lojas com interior acessível (mercearia,
   padaria, boteco, loja de ração), igrejinha com campanário de 9,8 m e torre de caixa
   d'água de 8,5 m. 15% a 25% das massas giradas de 2° a 14°.
-- **Mata:** 1.212 árvores instanciadas (tronco + três camadas de copa achatada) e 4.924
-  peças de sub-bosque, cipó e capim. A faixa de 36 a 37,9 m é caminhável, com colisor por
-  tronco; de 37,9 m para fora é parede de colisor até a borda.
-- **Entradas:** 10 bocas de mata (3 norte, 3 sul, 2 leste, 2 oeste). Cada uma é uma
-  trilha de 3,5 m que entra na mata, DOBRA e morre numa clareira de 3,8 m de raio —
-  nenhuma delas enxerga ou alcança a borda do mapa.
-- **Relevo:** barranco de 2,6 m entre a cidade e o platô da mata, córrego de 1,4 m de
-  corte no sopé norte com duas pontes de madeira, calçada a 0,15 m e soleira de loja a
-  0,33 m. Tudo sai de UM campo de altura (ver abaixo).
+- **Pasto:** capim denso em cartão, touceira alta, cupinzeiro, cerca de mourão com
+  arame a 37,2 m e trilha de terra batida da boca até a cidade. Linha de tiro aberta da
+  borda da cidade até a mata.
+- **Mata:** ~940 árvores instanciadas (tronco + três camadas de copa achatada) e ~3.700
+  peças de sub-bosque, cipó e capim. A orla de 44 a 44,6 m é caminhável, com colisor
+  por tronco; de 44,6 m para fora é parede de colisor até a borda.
+- **Entradas:** 3 frentes (norte, leste, sudoeste). Cada uma é uma trilha de 3,5 m que
+  entra na mata, DOBRA e morre numa clareira de 3 m de raio; o resto da mata é fechado.
+- **Becos:** 4, um por lado, de 2,5 m entre fundos de casa, do anel perimetral à viela.
+- **Relevo:** pasto subindo 0,45 m até a mata, barranco de 2,6 m até o platô, córrego de
+  1,1 m de corte no pasto norte com aterro na trilha, calçada a 0,15 m e soleira de loja a
+  0,33 m. Tudo sai de UM campo de altura.
 - **Objetivos:** feira (corredor da praça), mercearia (porta) e igreja (adro). Cada um
   leva `r`, que é a distância em que o bando já encosta — objetivo no miolo do prédio
   deixava a horda empacada na parede a 6,6 m.
@@ -51,7 +57,7 @@ controle. O cenário não reproduz uma propriedade ou município específico.
   terreno é amostrada da MESMA grade, então o chão desenhado e o chão medido são o mesmo
   número — é o conserto do "javaporco indo por baixo da terra".
 - `cityBounds` — `{minX:-36, maxX:36, minZ:-36, maxZ:36}`.
-- `boarEntrances` — 10 clareiras `{id, lado, x, z}`.
+- `boarEntrances` — 3 clareiras `{id, lado, trilha, x, z}`, com o `id` da frente.
 - `foodSpots` — `[{id, x, z, hp, kind, r}]`, `kind` em `lixo|feira|cacamba|racao`. `r` JÁ
   é a distância do centro do ponto em que o focinho alcança (meia-extensão do colisor +
   0,40 m): quem consome não soma folga de corpo.
@@ -140,9 +146,10 @@ controle. O cenário não reproduz uma propriedade ou município específico.
 - Mutante que duplica o crédito de assistência reprova a soma de pontos.
 - Mutante que remove uma entrada reprova a conectividade das bocas de mata.
 - Mapa passa em `node tools/eval/javaporcos-mapa-check.mjs` (MATA1 cerco, MATA2
-  densidade e bocas, CHAO1 relevo, COMIDA1 lixo na cidade, NAV1 grade limpa, TRILHA1 e
-  TRILHA2 rota até dentro da loja) e nos mutantes `mata-furada`, `chao-constante`,
-  `comida-fora` e `trilha-solta`.
+  densidade e 3 bocas, MATA3 mata só abre nas frentes, CHAO1 relevo, COMIDA1 lixo na
+  cidade, NAV1 grade limpa, TRILHA1 e TRILHA2 rota até dentro da loja, PASTO1 linha de
+  tiro, PASTO2 grama, HORDA1 frentes, BECO1 becos, SETOR1 setores, PROPS1 catálogo) e
+  nos 12 mutantes listados no cabeçalho dela.
 - Mapa passa no `node tools/eval/mapa-novo-gate.mjs` em ORT1, ALT1, SUP1, SUP2, JOG1 e
   JOG2, sem entrada na dívida declarada.
 - Dois clientes com a mesma semente fecham cada onda com IDs, integridade e
@@ -233,31 +240,8 @@ No mapa novo com o contrato (commit 340a87a: 3 frentes, 4 becos de 2,5 m, 9 seto
 23–34% dos bichos das ondas ≥ 3 entrando por beco. Cai um pouco antes que no mapa de
 29/10 porque 9 setores pesam mais cada um que 16.
 
-## Cotas do relevo
+## Cotas do relevo e da mata
 
-Os números vivem em `public/js/map_javaporcos_relevo.js`; o porquê de cada um é aqui.
+Moraram aqui até 30/10/2026; agora estão em
+[`invasao-javaporcos-layout.md`](invasao-javaporcos-layout.md), junto da planta nova.
 
-| constante | valor | o que decide |
-| --- | --- | --- |
-| `HALF` | 58 m | meia-extensão da arena (`bounds` ±58). A mata começa muito antes: ninguém chega aqui a pé. |
-| `CIDADE` | 36 m | meia-extensão do miolo urbano (`cityBounds` ±36). É o que a horda tem de alcançar. |
-| `PASSO` | 0,5 m | passo da grade de altura (233×233 floats). Metade do corpo do javaporco jovem: degrau menor que isso não muda rota. |
-| `BARRANCO` | 2,6 m | desnível entre a cidade e o platô da mata. Acima de 2,6 m o jogador não sobe sem rampa, e é isso que fecha o cerco. |
-| `SUBIDA` | 4,5 m | comprimento horizontal do barranco (inclinação de ~30°): sobe-se pela trilha, não pela parede. |
-| `CORREGO_Z` | −39 | eixo do córrego, no sopé do barranco norte. |
-| `CORREGO_MEIA` | 3,2 m | meia-largura do leito. |
-| `CORREGO_FUNDO` | 1,4 m | profundidade no eixo: atravessar molhado custa tempo, não vida. |
-| `PONTES` | x = −20 e 28 | as duas travessias de madeira; o resto do córrego é passagem lenta. |
-| `PONTE_MEIA` | 2,2 m | meia-largura da ponte. |
-
-## Cotas da mata
-
-Em `public/js/map_javaporcos_mata.js`.
-
-| constante | valor | o que decide |
-| --- | --- | --- |
-| `V_ANDAVEL` | 37,9 m | fim da faixa de mata caminhável: daqui para dentro ainda se anda entre as árvores. |
-| `V_PAREDE0` / `V_PAREDE1` | 37,9 m até `HALF` | a parede de colisor. Ela vai até a borda porque canto aberto virou fuga medida na régua. |
-| `COLUNA` | 2,5 m | largura da coluna de parede: mais fina cola melhor na curva da trilha. |
-| `FOLGA_TRILHA` | 2,9 m | trilha (1,75) + meio corpo + margem, para o bando não entalar na boca. |
-| `ACHATAMENTO` | 0,62 | a copa é disco, não bola: proporção medida nas referências de arte. |
