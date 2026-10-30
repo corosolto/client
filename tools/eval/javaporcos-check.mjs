@@ -41,6 +41,7 @@
      sem-investida    o ariete não dá mais o arranco
      morte-muda       o abate não chama o sfx.javaporco
      duplica-assistencia / sem-morte   (mutantes antigos, preservados)
+     relogio-parado   a fúria para de crescer com o tempo de partida (dono, 30/10/2026)
    ============================================================================ */
 import assert from 'node:assert/strict';
 
@@ -471,6 +472,17 @@ regra('alvo cercado não trava a onda: o bando desiste e a onda fecha', () => {
   assert.ok(fechou, `onda não fechou em 150 s: ${ctx.modo.state.alive.length} presos`);
   assert.ok(comidaRestante(ctx.modo.state, preso) > 0, 'o ponto cercado foi comido através do muro');
   assert.ok(ctx.eventos.some((e) => e.k === 'OBJECTIVE_HIT' || e.k === 'BOAR_LOST'), 'ninguém chegou ao objetivo nem foi aposentado');
+});
+
+regra('o relógio da partida esquenta a horda: aos 10 min ela vem mais rápido e mais forte que aos 2', () => {
+  const horda = criarHorda({ seed: 8, mutante });
+  horda.wave = 3;
+  const em = (minutos) => { horda.clock = minutos * 60; recalcularFuria(horda); return { f: horda.fury, c: cadenciaDeSpawn(horda), v: velocidadeDoJavaporco(horda, 'adulto'), d: danoDoJavaporco(horda, 'adulto') }; };
+  const dois = em(2), dez = em(10);
+  assert.ok(dez.f >= dois.f + 0.6, `fúria quase igual aos 2 e aos 10 min: ${dois.f.toFixed(2)} → ${dez.f.toFixed(2)}`);
+  assert.ok(dez.c < dois.c * 0.8, 'spawn não acelerou com o tempo');
+  assert.ok(dez.v > dois.v && dez.d > dois.d, 'velocidade/dano não subiram com o tempo');
+  assert.ok(em(60).f <= FURIA.teto + 1e-9, 'o relógio furou o teto da fúria');
 });
 
 /* ------------------------------------------------------------------------ som */

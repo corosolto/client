@@ -11,10 +11,10 @@ export const BOAR_POINTS = Object.freeze({ jovem: 100, adulto: 180, matriarca: 3
    618 bichos na partida inteira só funcionam se cada um cai em poucos tiros. */
 export const BOAR_HP = Object.freeze({ jovem: 70, adulto: 130, matriarca: 320, ariete: 760 });
 export const SPAWN_BASE = 0.18;
-/* FÚRIA — cresce com abate e com onda e mexe em três coisas medíveis: cadência de
+/* FÚRIA — cresce com abate, com onda e com o RELÓGIO da partida e mexe em cadência de
    spawn, velocidade e dano. `teto` existe pra não virar injogável. */
 export const FURIA = Object.freeze({
-  porAbate: 0.004, porOnda: 0.08, teto: 1.6,
+  porAbate: 0.004, porOnda: 0.08, porMinuto: 0.1, teto: 1.6,
   cadencia: 1, velocidade: 0.22, dano: 0.45, raio: 0.25,
 });
 /* Agressão: o raio de perseguição era 7 m (o dono reprovou). `ouvido` é o alcance
@@ -104,7 +104,8 @@ export function tamanhoDaOnda(state, wave = state.wave) {
 
 export function recalcularFuria(state) {
   if (state.mutante === 'sem-furia') return (state.fury = 0);
-  const crua = state.kills * FURIA.porAbate + Math.max(0, state.wave - 1) * FURIA.porOnda;
+  const relogio = state.mutante === 'relogio-parado' ? 0 : (state.clock || 0) / 60 * FURIA.porMinuto;
+  const crua = state.kills * FURIA.porAbate + Math.max(0, state.wave - 1) * FURIA.porOnda + relogio;
   state.fury = state.mutante === 'furia-infinita' ? crua : Math.min(FURIA.teto, crua);
   return state.fury;
 }
@@ -171,6 +172,7 @@ function ondaLimpa(state) {
 export function passoHorda(state, dt) {
   if (state.winner) return state;
   state.clock += dt;
+  recalcularFuria(state);
   if (state.phase === 'prep') {
     state.prepLeft = Math.max(0, state.prepLeft - dt);
     if (!state.prepLeft) iniciarOnda(state);
