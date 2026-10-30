@@ -697,6 +697,23 @@ regra('horda rosna perto do jogador e anuncia a onda uma vez só', () => {
   assert.equal(kinds.filter((k) => k === 'horda').length, 1, 'anúncio da onda repetiu ou sumiu');
 });
 
+regra('cliente multiplayer rosna perto sem mover a IA e respeita intervalo', () => {
+  const ctx = jogoFalso({ jogadorEm: [0, 0] });
+  abrirOnda(ctx);
+  const bot = vivos(ctx.modo)[0];
+  ctx.modo.game.online = true;
+  bot.pos.set(2, 0, 2);
+  bot._boarRosnarAte = 0; ctx.modo.rosnadoAte = 0;
+  ctx.sons.length = 0;
+  if (mutante === 'cliente-mudo') ctx.modo.rosnar = () => {};
+  const antes = bot.pos.clone();
+  ctx.modo.updateBot(bot, 1 / 60);
+  assert.equal(ctx.sons.filter(s => s.kind === 'rosnado').length, 1, 'cliente não rosna');
+  ctx.modo.updateBot(bot, 1 / 60);
+  assert.equal(ctx.sons.length, 1, 'cliente ignora intervalo');
+  assert.equal(bot.pos.x, antes.x); assert.equal(bot.pos.z, antes.z);
+});
+
 /* ------------------------------------------------------------------ HUD e rede */
 regra('o HUD mostra a fúria e quantos javaporcos estão na rua', () => {
   const ctx = jogoFalso({ jogadorEm: [0, 0] });

@@ -1,3 +1,4 @@
+import { JAVAPORCO_GRAVACOES } from './data/javaporcos_audio.js';
 // Procedural WebAudio SFX + user sample packs (audio/manifest.json).
 // Real CS 1.6 samples are NOT bundled (Valve copyright) — drop your own legally-owned
 // files in audio/cs/ and register them under "cs" in audio/manifest.json.
@@ -986,14 +987,37 @@ export class Sfx {
   matchWin()  { const s = this._cs('roundwin'); if (s) { this._sample(s, .9); return; }
     this.ensure(); [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => this._beep('square', f, f, .18, .22, i * .14)); this.vuvuzela(1.8); }
 
-  /* Perfis das quatro vozes do javaporco. `dur` em segundos, `f0` a laringe, `glide`
-     a razão do fim, `fmt` o formante do fuço, `grao` a aspereza, `lvl` o pico pedido. */
   static JAVAPORCO = Object.freeze({
-    rosnado: { dur: [0.24, 0.40], f0: [88, 134], glide: [0.58, 0.86], fmt: [360, 820], q: 7, ruido: 0.55, grao: [17, 33], lvl: 0.54, transiente: 0 },
-    carga: { dur: [0.13, 0.25], f0: [152, 220], glide: [1.2, 1.75], fmt: [880, 1700], q: 3.2, ruido: 1, grao: [26, 48], lvl: 0.62, transiente: 0.5 },
-    morte: { dur: [0.70, 0.93], f0: [430, 620], glide: [0.2, 0.36], fmt: [1250, 2200], q: 5.5, ruido: 0.32, grao: [7, 14], lvl: 0.68, transiente: 0.2 },
-    horda: { dur: [0.45, 0.80], f0: [78, 120], glide: [0.6, 0.9], fmt: [300, 700], q: 6, ruido: 0.6, grao: [12, 26], lvl: 0.46, transiente: 0, camadas: [4, 7], defasagem: 0.75 },
+    rosnado: { sample: 'grunhido', dur: [.27, .40], rate: [.94, 1.06], offsets: [.06, .5, .9], lvl: .54 },
+    carga: { sample: 'guincho', dur: [.13, .25], rate: [1, 1.12], offset: [.05, .20], lvl: .62 },
+    morte: { sample: 'guincho', dur: [.70, .93], rate: [.88, .96], offset: [.35, .50], lvl: .68 },
+    horda: { sample: 'grunhido', dur: [.45, .80], rate: [.94, 1.06], offset: [0, .25], lvl: .46, camadas: [4, 7], defasagem: .75 },
+    fucar: { sample: 'grunhido', dur: [.45, .70], rate: [.9, 1], offset: [.1, .3], lvl: .54 },
   });
+  async preloadJavaporcos() {
+    this.ensure();
+    if (!this.ctx) return false;
+    this._boarSamples ||= new Map();
+    if (!this._boarLoading) this._boarLoading = Promise.all(Object.entries(JAVAPORCO_GRAVACOES).map(async ([key, sample]) => {
+      if (this._boarSamples.has(key)) return;
+      const response = await fetch(sample.file);
+      if (!response.ok) throw new Error(`JAV-AUDIO: HTTP ${response.status} em ${sample.file}`);
+      const decoded = await this.ctx.decodeAudioData(await response.arrayBuffer());
+      if (!(decoded.duration > 0)) throw new Error(`JAV-AUDIO: gravação vazia em ${sample.file}`);
+      let peak = 0;
+      for (let channel = 0; channel < decoded.numberOfChannels; channel++) {
+        for (const value of decoded.getChannelData(channel)) peak = Math.max(peak, Math.abs(value));
+      }
+      if (!(peak > 0)) throw new Error(`JAV-AUDIO: gravação muda em ${sample.file}`);
+      for (let channel = 0; channel < decoded.numberOfChannels; channel++) {
+        const data = decoded.getChannelData(channel);
+        for (let i = 0; i < data.length; i++) data[i] /= peak;
+      }
+      this._boarSamples.set(key, decoded);
+    })).finally(() => { this._boarLoading = null; });
+    await this._boarLoading;
+    return true;
+  }
   // Bus do bicho: limiter próprio antes do master e FORA do duckBus — o tiro não pode
   // apagar o aviso de que tem javaporco em cima do jogador.
   _javaporcoBus() {
@@ -1006,59 +1030,21 @@ export class Sfx {
     this._send(this._boarBus, 0.1);
     return this._boarBus;
   }
-  /* Ruído do fuço sai de UM buffer cacheado com rate e offset sorteados. O offset
-     respeita o que a voz vai consumir (dur × rate), senão o fim do guincho sai mudo. */
-  _javaporcoRuido(dur) {
-    const R = this.ctx;
-    if (!this._boarBuf) {
-      const n = (R.sampleRate * 1.6) | 0, b = R.createBuffer(1, n, R.sampleRate), d = b.getChannelData(0);
-      for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
-      this._boarBuf = b;
-    }
-    const src = R.createBufferSource(); src.buffer = this._boarBuf;
-    const rate = 0.7 + Math.random() * 0.7;
-    src.playbackRate.value = rate;
-    const folga = Math.max(0, this._boarBuf.duration - dur * rate - 0.05);
-    return { src, offset: Math.random() * folga };
-  }
-  /* Uma voz sorteada: duração, laringe, formante e grão mudam a cada chamada — sem o
-     sorteio, vinte bichos soam como um bicho só multiplicado. Devolve a duração. */
   _javaporcoVoz(cfg, t, pico, out) {
-    const R = this.ctx, r = (a, b) => a + (b - a) * Math.random();
-    const dur = r(cfg.dur[0], cfg.dur[1]);
-    const f0 = r(cfg.f0[0], cfg.f0[1]), glide = r(cfg.glide[0], cfg.glide[1]);
-    const fmt = r(cfg.fmt[0], cfg.fmt[1]);
-    // laringe, fuço e grão somam DENTRO do pico reservado: uma voz que estoura o
-    // próprio orçamento derruba o teto da horda inteira.
-    const voz = R.createGain();
-    this._env(voz, t, Math.min(0.018, dur * 0.1), pico * 0.8, dur);
-    voz.connect(out);
-    const o = this._osc('sawtooth', f0);
-    o.frequency.exponentialRampToValueAtTime(Math.max(24, f0 * glide), t + dur);
-    const lp = R.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.9;
-    lp.frequency.setValueAtTime(fmt * 2.4, t);
-    lp.frequency.exponentialRampToValueAtTime(Math.max(120, fmt * 0.7), t + dur);
-    const og = R.createGain(); og.gain.value = 0.55;
-    o.connect(lp); lp.connect(og); og.connect(voz);
-    o.start(t); o.stop(t + dur + 0.02);
-    const { src: n, offset } = this._javaporcoRuido(dur + 0.03);
-    const bp = R.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = cfg.q;
-    bp.frequency.setValueAtTime(fmt, t);
-    bp.frequency.exponentialRampToValueAtTime(Math.max(90, fmt * glide), t + dur);
-    const ng = R.createGain(); ng.gain.value = cfg.ruido * r(0.3, 0.45);
-    n.connect(bp); bp.connect(ng); ng.connect(voz);
-    n.start(t, offset); n.stop(t + dur + 0.03);
-    const lfo = this._osc('square', r(cfg.grao[0], cfg.grao[1]));
-    const lg = R.createGain(); lg.gain.value = pico * r(0.1, 0.2);
-    lfo.connect(lg); lg.connect(voz.gain);
-    lfo.start(t); lfo.stop(t + dur + 0.02);
-    if (cfg.transiente > 0) {
-      const { src: s, offset: off } = this._javaporcoRuido(0.1);
-      const hp = R.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1800;
-      const g = R.createGain(); this._env(g, t, 0.0015, pico * cfg.transiente, 0.03);
-      s.connect(hp); hp.connect(g); g.connect(out);
-      s.start(t, off); s.stop(t + 0.08);
-    }
+    const buffer = this._boarSamples.get(cfg.sample);
+    const random = range => range[0] + (range[1] - range[0]) * Math.random();
+    const rate = random(cfg.rate);
+    const dur = Math.min(random(cfg.dur), buffer.duration / rate);
+    const selected = cfg.offsets ? cfg.offsets[Math.floor(Math.random() * cfg.offsets.length)] + Math.random() * .015 : random(cfg.offset);
+    const offset = Math.min(selected, Math.max(0, buffer.duration - dur * rate));
+    const source = this.ctx.createBufferSource(), gain = this.ctx.createGain();
+    source.buffer = buffer; source.playbackRate.value = rate;
+    gain.gain.setValueAtTime(.0001, t);
+    gain.gain.exponentialRampToValueAtTime(pico, t + Math.min(.008, dur * .1));
+    gain.gain.setValueAtTime(pico, t + dur * .75);
+    gain.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    source.connect(gain); gain.connect(out);
+    source.start(t, offset); source.stop(t + dur);
     return dur;
   }
   /* Teto por TEMPO (gap da voz), por CONTAGEM e por ENERGIA (soma dos picos ao
@@ -1083,7 +1069,7 @@ export class Sfx {
     const cfg = Sfx.JAVAPORCO[kind];
     if (!cfg) return false;
     this.ensure();
-    if (!this.ctx) return false;
+    if (!this.ctx || !this._boarSamples?.has(cfg.sample)) return false;
     const pedido = Math.max(0, Math.min(1, vol)) * cfg.lvl;
     const t = this.ctx.currentTime + Math.max(0, delay);
     const slot = this._javaporcoSlot(kind, t, pedido);

@@ -90,12 +90,37 @@ Os resultados técnicos não equivalem a aprovação visual humana. Checkpoint d
 pedido 1 pode ser encontrado por `git log -1 -- public/js/javaporcos_passada.js`.
 Próximo: iniciar gravações reais de porco (pedido 2); pedidos 3–7 seguem pendentes.
 
+## Pedido 2 — gravações reais
+
+Grunhido CC0 de egomassive/Felix Blume e guincho CC0 de Jarred Gibb, com
+proveniência em `public/audio/javaporcos/FONTE.md` e catálogo/hash único em
+`public/js/data/javaporcos_audio.js`. Instalador reproduzível chamado pelo fetch
+normal do áudio; nenhum binário é commitado. Não usa síntese como fallback.
+
+- DSP anterior: rosnado/carga/morte/horda continham osciladores; fuçar ausente.
+- DSP novo: cinco vozes usam buffers decodificados reais, zero osciladores;
+  picos observados 0,31–0,80; mix de 32 pedidos ficou em 0,816 (4 aceitos pelo orçamento).
+- Mutantes `sintetico` e `sem-gravacao` reprovam as seis medições.
+- Régua de grafo de áudio e seus mutantes passaram; modo e seus mutantes passaram.
+- Revisão encontrou e corrigiu falha do preload encurtando a barreira de assets e
+  ausência de grunhido nos clientes MP. Nova cláusula integrada verifica som no
+  cliente, intervalo e ausência de movimento da IA; `cliente-mudo` reprova.
+- Segunda revisão somente leitura: sem novos achados.
+- Comentários, grafo de módulos, docs e arquitetura passaram.
+- `BASE=... npm run eval:javaporcosreal` mede DSP e integração MP com mutantes.
+- Partida real: ambos os buffers carregados (1,3583 s e 1,9656 s); Sfx do jogo
+  aceitou grunhido. A primeira sonda sem ANGLE Metal travou; a repetição Metal
+  mediu corretamente e travou apenas ao fechar, encerrada após salvar o resultado.
+- Aceite auditivo humano pendente.
+
 ## Restrições e próximo passo
 
 Não ler `.env`, não usar assets NC, não pular hooks, não fazer force push.
 Não alterar números de game feel sem o dono. Uma captura de browser por vez,
 com lock e BASE explícito. Manter budgets e preservar demais mapas em map_check.
-Depois do push: reproduzir patinação e AK preta no navegador; começar a régua
-da passada. O código atual só oscila o corpo inteiro em `atualizaVisual`.
+Push dos commits anteriores confirmado em 4acda7bf2; checkpoints locais posteriores
+130846748 e fa1fc3c35 ainda não publicados. Objetivo permanece os sete pedidos.
+Após checkpoint de áudio: lojas (3), pasto (4), AK (5),
+time/wallpapers (6) e intro (7), nessa ordem.
 Verificar pacotes Mint antes de gerar novamente; Sketchfab depende de token
 fornecido por ambiente, sem expor ou registrar seu valor.

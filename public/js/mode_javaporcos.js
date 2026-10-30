@@ -1122,7 +1122,7 @@ class InvasaoJavaporcos {
     const fury = this.state.fury || 0;
     bot._boarRosnarAte = tempo + 2.6 + (bot._boarJitter || 0) * 3.4;
     this.rosnadoAte = tempo + .5 / (1 + fury);
-    this.javaporcoSfx('rosnado', bot.pos, bot._boarType === 'ariete' ? 1 : .82);
+    this.javaporcoSfx(tempo < (bot._boarFocinhoAte || 0) ? 'fucar' : 'rosnado', bot.pos, bot._boarType === 'ariete' ? 1 : .82);
   }
 
   updateBot(bot, dt) {
@@ -1130,6 +1130,7 @@ class InvasaoJavaporcos {
     if (bot.mesh?.group) bot.mesh.group.visible = false;
     if (!bot._boarId || !bot.alive) return true;
     if (this.game.online && !this.game.dedicated) {
+      if (this.game.player?.pos) this.rosnar(bot, bot.pos.distanceTo(this.game.player.pos), this.game.time);
       this.aterrar(bot);
       this.atualizaVisual(bot);
       return true;
@@ -1137,6 +1138,9 @@ class InvasaoJavaporcos {
     const tempo = this.game.time;
     if ((bot.alertUntil || 0) > tempo) bot._boarAlertaAte = Math.max(bot._boarAlertaAte || 0, tempo + AGGRO.contagio);
     const alvo = escolherAlvo(bot, this.contexto(tempo), bot._boarAlvo ||= {});
+    if (alvo.kind !== 'jogador' && this.game.player?.pos) {
+      this.rosnar(bot, bot.pos.distanceTo(this.game.player.pos), tempo);
+    }
     const encostou = this.teimosia(bot, alvo, tempo);
     if (alvo.kind !== 'jogador' && this.state.mutante !== 'sem-desistencia' && this.cansaco(bot, tempo) > PERDIDO) {
       this.sumirNaMata(bot);

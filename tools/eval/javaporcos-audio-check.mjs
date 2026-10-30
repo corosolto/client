@@ -1,31 +1,5 @@
-/* ============================================================================
-   javaporcos-audio-check.mjs — O BICHO ROSNA, BUFA, GUINCHA E CABE NO MASTER (JAV)
-
-   O dono reprovou o modo em 28/10: "tem que fazer barulho de javaporco rosnando e
-   também morrendo". O acervo não tem amostra de bicho (e inventar download de
-   sample é pior do que não ter som), então `sfx.javaporco()` sintetiza as quatro
-   vozes no WebAudio, igual ao que o arquivo já faz com tiro, passo e explosão.
-
-   Não há navegador aqui. A régua planta um `AudioContext` FALSO que grava o grafo
-   (nós criados, ligações, parâmetros agendados, instantes de start/stop) e importa
-   `public/js/audio.js` DE VERDADE: o que se mede é a rotina de produção decidindo.
-
-   Cláusulas:
-     JAV1  as quatro vozes existem e produzem grafo ('rosnado','carga','morte','horda')
-     JAV2  cada voz dura dentro da faixa pedida pelo dono
-     JAV3  chamada nenhuma soa igual à anterior (vinte bichos não são um bicho clonado)
-     JAV4  as laringes das três vozes solo não se confundem entre si
-     JAV5  o teto de vozes simultâneas segura a horda, e vaga livre volta a ser usada
-     JAV6  nenhum caminho até o destino passa do teto de ganho, nem a SOMA das energias
-     JAV7  pan e delay chegam ao grafo como o modo pediu
-     JAV8  vol zerado, voz desconhecida e contexto morto devolvem false sem estourar
-
-   Mutantes (`--mutante=`):
-     voz-muda        a morte não toca nada             → JAV1 acende
-     voz-clonada     sorteio congelado (sem variação)  → JAV3 acende
-     teto-ignorado   o slot concede tudo sempre        → JAV5 e JAV6 acendem
-     ruido-estourado offset do ruído depois do buffer  → JAV9 acende
-   ============================================================================ */
+/* Contratos de duração, espacialização e orçamento das gravações reais.
+   O grafo falso mede decisões; javaporcos-real-audio-check.mjs decodifica e renderiza os MP3 reais. */
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const mutante = arg('mutante');
 if (mutante && !['voz-muda', 'voz-clonada', 'teto-ignorado', 'ruido-estourado'].includes(mutante)) {
@@ -125,6 +99,10 @@ function novoSfx({ volume = 1 } = {}) {
   sfx.pack = { weapons: {} };
   sfx.ensure();
   sfx.setVolume(volume);
+  sfx._boarSamples = new Map([
+    ['grunhido', sfx.ctx.createBuffer(1, 65200, 48000)],
+    ['guincho', sfx.ctx.createBuffer(1, 94350, 48000)],
+  ]);
   if (mutante === 'voz-muda') {
     const base = sfx.javaporco.bind(sfx);
     sfx.javaporco = (kind, ...resto) => {
@@ -137,8 +115,12 @@ function novoSfx({ volume = 1 } = {}) {
     sfx._javaporcoSlot = (kind, t, pico) => { mutouAlgo = true; return { kind, pico, fim: t + 1.6 }; };
   }
   if (mutante === 'ruido-estourado') {
-    const base = sfx._javaporcoRuido.bind(sfx);
-    sfx._javaporcoRuido = (dur) => { mutouAlgo = true; return { ...base(dur), offset: 1.5 }; };
+    const base = sfx.ctx.createBufferSource.bind(sfx.ctx);
+    sfx.ctx.createBufferSource = () => {
+      const node = base(), start = node.start;
+      node.start = t => { mutouAlgo = true; start(t, node.buffer.duration + .1); };
+      return node;
+    };
   }
   return sfx;
 }
@@ -199,13 +181,6 @@ const assinatura = (log) => {
     .map((n) => `${n.tipo}:${n.frequency.value.toFixed(2)}:${n.frequency._agenda.map((a) => Number(a[1]).toFixed(2)).join('/')}`)
     .join('|') + '#' + log.stops.map((s) => (s.t - ini).toFixed(4)).join(',');
 };
-/* A laringe é o dente de serra; o quadrado é o LFO do grão e mora em Hz de tremolo,
-   não de voz — medir o menor oscilador de todos leria o grão como se fosse o bicho. */
-const laringe = (log) => {
-  const oscs = log.criados.filter((n) => n.tipo === 'osc' && n.type === 'sawtooth');
-  return oscs.length ? Math.min(...oscs.map((n) => n.frequency.value)) : 0;
-};
-
 const erros = [], notas = [];
 const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`) : erros.push(`${id} ${msgRuim}`));
 
@@ -265,23 +240,17 @@ const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`
   }
   conferir('JAV3', fora.length === 0,
     `voz clonada — ${fora.join('; ')}`,
-    'as quatro vozes sorteiam duração, laringe e formante a cada chamada.');
+    'as vozes sorteiam duração, recorte e velocidade a cada chamada.');
 }
 
-// ── JAV4: as laringes das vozes solo não se confundem ─────────────────────
 {
   const sfx = novoSfx();
-  const faixa = {};
-  for (const kind of ['rosnado', 'carga', 'morte']) {
-    const vs = [];
-    for (let i = 0; i < 24; i++) vs.push(laringe(tocar(sfx, kind).log));
-    faixa[kind] = [Math.min(...vs), Math.max(...vs)];
-  }
-  const ok = faixa.rosnado[1] < faixa.carga[0] && faixa.carga[1] < faixa.morte[0];
-  conferir('JAV4', ok,
-    `vozes se confundem: rosnado ${faixa.rosnado.map(Math.round)}, carga ${faixa.carga.map(Math.round)}, morte ${faixa.morte.map(Math.round)} Hz`,
-    `laringes separadas: rosnado ${faixa.rosnado.map(Math.round).join('–')}, carga ${faixa.carga.map(Math.round).join('–')}, `
-    + `morte ${faixa.morte.map(Math.round).join('–')} Hz.`);
+  const samples = kind => tocar(sfx, kind).log.starts.map(s => s.no.buffer);
+  const grunt = sfx._boarSamples.get('grunhido'), squeal = sfx._boarSamples.get('guincho');
+  const ok = samples('rosnado').every(b => b === grunt) && samples('carga').every(b => b === squeal)
+    && samples('morte').every(b => b === squeal) && grunt !== squeal;
+  conferir('JAV4', ok, 'grunhido e guincho não usam as gravações distintas pedidas',
+    'rosnado usa grunhido; carga e morte usam guincho com recortes distintos.');
 }
 
 // ── JAV5: o teto de vozes segura a horda, e vaga livre volta a ser usada ──
@@ -325,27 +294,14 @@ const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`
     `teto declarado é plausível: ganho ${L.ganho}, ${L.vozes} vozes, pico mínimo ${L.minPico}.`);
 }
 
-// ── JAV4b: o guincho desce, o bufo sobe (pedido literal do dono) ──────────
 {
   const sfx = novoSfx();
-  const sentido = (kind) => {
-    const razoes = [];
-    for (let i = 0; i < 16; i++) {
-      const oscs = tocar(sfx, kind).log.criados.filter((n) => n.tipo === 'osc' && n.type === 'sawtooth');
-      for (const o of oscs) {
-        const alvo = o.frequency._agenda.find((a) => a[0] === 'exp');
-        if (alvo) razoes.push(alvo[1] / o.frequency.value);
-      }
-    }
-    return razoes;
-  };
-  const desce = (rs) => rs.length > 0 && rs.every((k) => k < 0.95);
-  const sobe = (rs) => rs.length > 0 && rs.every((k) => k > 1.05);
-  const morte = sentido('morte'), rosnado = sentido('rosnado'), carga = sentido('carga');
-  conferir('JAV4b', desce(morte) && desce(rosnado) && sobe(carga),
-    'glide errado: a morte tem que ser guincho DESCENDENTE e a carga um bufo que sobe',
-    `morte e rosnado descem (até ${Math.max(...morte).toFixed(2)}× e ${Math.max(...rosnado).toFixed(2)}×) `
-    + `e a carga sobe (${Math.min(...carga).toFixed(2)}× no mínimo).`);
+  const kinds = ['rosnado', 'carga', 'morte', 'horda', 'fucar'];
+  const ok = kinds.every(kind => {
+    const voice = tocar(sfx, kind);
+    return voice.ok && voice.log.starts.length > 0 && voice.log.starts.every(s => s.tipo === 'src');
+  });
+  conferir('JAV4b', ok, 'voz voltou a usar oscilador ou ficou muda', 'as vozes do bicho usam somente gravações, sem oscilador.');
 }
 
 // ── JAV7: pan e delay chegam ao grafo ─────────────────────────────────────
@@ -392,8 +348,8 @@ const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`
     }
   }
   conferir('JAV9', estouros.length === 0,
-    `ruído acaba antes da voz em ${estouros.length} fonte(s) — ex.: ${estouros.slice(0, 3).join(', ')}`,
-    'offset e rate do ruído cacheado cabem no buffer até o fim de cada voz.');
+    `gravação acaba antes da voz em ${estouros.length} fonte(s) — ex.: ${estouros.slice(0, 3).join(', ')}`,
+    'offset e rate cabem na gravação até o fim de cada voz.');
 }
 
 /* Lição 8: mutação que não aplicou parece mutação que passou. */

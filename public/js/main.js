@@ -2010,6 +2010,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         preloadEyewearAssets(matchEyewear),
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
         sfx.preloadWeaponSamples(_armasDaPartida),
+        currentMap === 'invasao_javaporcos' ? sfx.preloadJavaporcos().catch(e => console.error('JAV-AUDIO: preload falhou', e)) : null,
         preloadMapProps([...MAP_PROPS, ...(mapaPartida.props || [])]),   // + props do mapa (Havan: carros/estátua)
         /* Desktop preserva a fauna GLB do BUG-57 e os viewmodels autorados. No perfil
            móvel, ambos têm fallback procedural/legado e ficam fora do caminho crítico:
@@ -5112,6 +5113,7 @@ function mpPreCarregarProximo(m) {
   Promise.all([
     plano.chars.length ? preloadCharacterAssets(plano.chars, { weapons: armas }) : null,
     sfx.preloadWeaponSamples(armas),
+    plano.mapId === 'invasao_javaporcos' ? sfx.preloadJavaporcos().catch(e => console.error('JAV-AUDIO: preload falhou', e)) : null,
     mapaReady.then((mapa) => preloadMapProps([...MAP_PROPS, ...(mapa.props || [])])),
     MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadAmbientLife(mapa.ambience || [])),
     mapaReady.then((mapa) => mapa.preload ? mapa.preload() : null),
