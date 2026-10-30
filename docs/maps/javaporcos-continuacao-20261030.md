@@ -244,3 +244,15 @@ Não confundir máscara direta vmScene (falso verde) com o frame real com pós.
 Continuar pelos pedidos6 e7. Relatório físico4 ainda roda na sessão25243; fundir
 18mapas de `/tmp/javaporcos-pasto-map-check-original.json` ao terminar e rodar portão.
 Pickupfinal já fundiu19mapas, todos38deste mapa alcançáveis; JSON ainda não commitado.
+
+## Fechamento dos relatórios físicos do pedido4
+
+Map-check final com o carro já deslocado terminou: corpo dentro0, submersos0,
+folga1,9m, área contígua55,7m² e occluders sem malha0/506. Os outros18 registros
+foram preservados sem alteração. O pickup report original continha somente
+Penitenciária (não19 mapas como anotado acima): agora preserva esse registro e
+acrescenta Javaporcos38/38 alcançáveis, distância máxima0,13m, sem flutuação.
+O portão global relata44 dívidas de outros mapas; a linha Javaporcos tem zeros
+nas falhas de jogabilidade. Portão específico em execução: --mapa=invasao_javaporcos.
+Logs /tmp/javaporcos-pasto-mapcheck-carro-final.log e
+/tmp/javaporcos-pasto-pickup-relatorio.log; não há alteração adicional de geometria.
