@@ -27,7 +27,9 @@
              nos anéis do meio) e cada cupinzeiro tem ≥ 2 torrões de 0,3–0,5 m de raio.
      CUPIM2  rodada 4 ("ainda lê domo liso", boca-so sdL 4,8): o corpo tem ≥ 40 segmentos,
              ruído radial fora do harmônico 3 com desvio ≥ 0,04 do raio nos anéis do meio e
-             ≥ 2 torrinhas fora do eixo (≥ 0,25 m do centro) que passam do topo do corpo.
+             ≥ 2 torrinhas fora do eixo (≥ 0,2 m do centro).
+     CUPIM3  rodada 5 ("orelhas de gato"): nenhuma torrinha passa do topo do corpo (1,02) e o
+             perfil não termina em ponta (raio médio ≥ 0,15 no anel de y ≈ 1,0).
 
    MUTANTES (cada um tem de acender a cláusula indicada):
      trilha-degrau   retalho volta a deitar na horizontal com 3,5 m          -> TRILHA3
@@ -35,11 +37,12 @@
      tronco-pelado   andar de baixo de cada árvore sobe para junto do de cima -> MATA5
      cupim-cone      torno volta a ConeGeometry lisa, sem torrão             -> CUPIM1
      cupim-domo      torno de 48 lados com lóbulo e sem ruído nem torrinha    -> CUPIM2
+     cupim-orelha    torrinhas de volta a 1,3/1,05 m, finas e a 0,42 m        -> CUPIM3
      trilha-piche    cor do retalho volta a 1,15/0,9/0,58                     -> TRILHA4
      folha-escura    emissivo da folhagem volta a 0x1c2412                    -> FOLHA1
    ============================================================================ */
 
-export const MUTANTES = ['folha-escura', 'cupim-domo', 'trilha-piche', 'trilha-degrau', 'copa-pirulito', 'tronco-pelado', 'cupim-cone'];
+export const MUTANTES = ['cupim-orelha', 'folha-escura', 'cupim-domo', 'trilha-piche', 'trilha-degrau', 'copa-pirulito', 'tronco-pelado', 'cupim-cone'];
 const HALF = 58;
 
 export function regrasMata({ W, THREE, MUT, regra, exige }) {
@@ -241,9 +244,27 @@ export function regrasMata({ W, THREE, MUT, regra, exige }) {
     const torres = [];
     for (let i = nCorpo; i < pos.count; i++) {
       const x = pos.getX(i), z = pos.getZ(i), y = pos.getY(i);
-      if (y > topo && Math.hypot(x, z) >= 0.25 && !torres.some(([tx, tz]) => Math.hypot(tx - x, tz - z) < 0.3)) torres.push([x, z]);
+      if (Math.hypot(x, z) >= 0.2 && !torres.some(([tx, tz]) => Math.hypot(tx - x, tz - z) < 0.3)) torres.push([x, z]);
     }
-    exige(torres.length >= 2, `${torres.length} torrinha(s) acima do corpo e fora do eixo (piso 2)`);
+    exige(torres.length >= 2, `${torres.length} torrinha(s) fora do eixo (piso 2)`);
     return `${lados} lados, ruído ${med.toFixed(3)} do raio, ${torres.length} torrinhas`;
+  });
+
+  /* ----------------------------------------------------------------- CUPIM3 */
+  if (MUT === 'cupim-orelha') {
+    exige(cupim?.geometry?.userData?.vertsTorno, 'MUTANTE cupim-orelha NÃO APLICOU');
+    const g = cupim.geometry, pos = g.attributes.position;
+    for (let i = g.userData.vertsTorno; i < pos.count; i++) pos.setY(i, pos.getY(i) * 1.55);
+  }
+  regra('CUPIM3 cupinzeiro sem orelha: torrinha abaixo do topo e topo sem ponta', () => {
+    const g = cupim?.geometry, pos = g?.attributes.position, nCorpo = g?.userData.vertsTorno;
+    exige(nCorpo, 'sem torno do cupinzeiro');
+    let topo = 0, alto = 0, rs = [];
+    for (let i = 0; i < nCorpo; i++) { const y = pos.getY(i); topo = Math.max(topo, y); if (Math.abs(y - 1.0) < 1e-3) rs.push(Math.hypot(pos.getX(i), pos.getZ(i))); }
+    for (let i = nCorpo; i < pos.count; i++) alto = Math.max(alto, pos.getY(i));
+    exige(alto <= topo + 1e-6, `torrinha a ${alto.toFixed(2)} acima do topo do corpo ${topo.toFixed(2)}: orelha de gato`);
+    const r = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : 0;
+    exige(r >= 0.15, `raio ${r.toFixed(2)} no anel de y 1,0 (piso 0,15): topo em ponta`);
+    return `torrinha até ${alto.toFixed(2)}, corpo até ${topo.toFixed(2)}, raio ${r.toFixed(2)} em y 1,0`;
   });
 }

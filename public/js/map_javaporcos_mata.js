@@ -552,17 +552,18 @@ export function construirPasto(kit, campo, rnd) {
 }
 
 /* Perfil de torno com 3 lóbulos que torcem com a altura: cone liso lia como pirâmide de pedra.
-   Rodada 4: lóbulo 0,30, ruído radial de 6–11 voltas e 2 torrinhas fora do eixo (lia domo). */
+   Rodada 4: lóbulo 0,30, ruído radial de 6–11 voltas e 2 torrinhas fora do eixo (lia domo).
+   Rodada 5: torrinha baixa e gorda, abaixo do topo do corpo (a de 1,3 m lia orelha de gato). */
 export const CUPIM_LOBULO = 0.30;
 function cupimTorno(lados = 48, torrinhas = true) {
-  const perfil = [[1.0, 0], [0.95, 0.1], [0.87, 0.3], [0.76, 0.5], [0.61, 0.69], [0.44, 0.84], [0.26, 0.95], [0.1, 1.01], [0, 1.02]]
+  const perfil = [[1.0, 0], [0.95, 0.1], [0.87, 0.3], [0.76, 0.5], [0.61, 0.69], [0.44, 0.84], [0.26, 0.95], [0.18, 1.0], [0, 1.02]]
     .map(([r, y]) => new THREE.Vector2(r, y));
   const torno = (seg, lob, fase) => {
     const geo = new THREE.LatheGeometry(perfil, seg);
     const p = geo.attributes.position, uv = geo.attributes.uv, cor = new Float32Array(p.count * 3);   // vale do lóbulo e pé escurecem: na sombra da mata só o hemisfério ilumina
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(z, x);
-      const ruido = 0.12 * (0.55 * Math.sin(6 * a + 3.1 * y + fase) + 0.45 * Math.sin(11 * a - 5.3 * y + 2 * fase)) * Math.min(1, y * 4);
+      const ruido = 0.2 * (0.55 * Math.sin(6 * a + 3.1 * y + fase) + 0.45 * Math.sin(11 * a - 5.3 * y + 2 * fase)) * Math.min(1, y * 4);
       const n = 1 + lob * Math.cos(3 * a + 2.2 * y + fase) + ruido;
       p.setXYZ(i, x * n, y, z * n);
       uv.setXY(i, uv.getX(i) * 3, uv.getY(i) * 1.2);
@@ -573,8 +574,8 @@ function cupimTorno(lados = 48, torrinhas = true) {
     return geo;
   };
   const corpo = torno(lados, CUPIM_LOBULO, 0);
-  const torres = !torrinhas ? [] : [[0.42, 0.3, 1.3, 1.1], [-0.3, -0.36, 1.05, 2.9]].map(([dx, dz, alto, fase]) =>
-    torno(10, 0.2, fase).scale(0.35, alto, 0.35).translate(dx, 0, dz));
+  const torres = !torrinhas ? [] : [[0.25, 0.18, 0.85, 1.1], [-0.18, -0.22, 0.75, 2.9]].map(([dx, dz, alto, fase]) =>
+    torno(10, 0.2, fase).scale(0.5, alto, 0.5).translate(dx, 0, dz));
   const geo = torres.length ? mergeGeometries([corpo, ...torres], false) : corpo;
   geo.computeVertexNormals();
   geo.userData.vertsTorno = corpo.attributes.position.count;   // a régua mede o lóbulo só no corpo
