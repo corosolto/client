@@ -460,3 +460,15 @@ Mapa expandido: javaporcos-mapa-check concluiu VERDE completo em
 /tmp/javaporcos-mata-final.log. CHAO4042sondas pior0,083m; todas6bocas alcançam6lojas;
 pasto138/140raios livres. Simulação real5min3bots: onda4,36abates, sem vencedor,
 64,1s CPU. Este marco valida terreno/navegação, não orçamento da horda cheia.
+
+Marco de simulação tri-facção (implementação local, 30/10): E/B preservados como
+humanos e64NPCs independentes J; v7 usa bit16 da facção e teto80 entidades, v2–6
+mantêm teto64 e recusam J. Teste disputa13casos passou, incluindo100% sem fim,
+onda9 infinita, um vivo, wipe por time/partida,1000abates/1800s, limites SP, empate
+explícito e território transferível E/B. Core horda verde após inicializar defesaE/B
+no snapshot. Respawn de eliminados bloqueado; NPC não usa spawn humano.
+Placar triplo e títulos de resultado implementados, ainda SEM aceite no navegador.
+Defaults PROVISÓRIOS enquanto perguntas sem resposta: wipe elimina só o time,
+1000abates somados e vencedor por território (desempate por abates; empate explícito).
+Próximos: interface configurações, verificar fim/score online de ponta a ponta,
+movimento orgânico, refúgios seguros, orçamento GPU e réguas finais. Sem novo push.

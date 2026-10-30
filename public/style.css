@@ -1695,7 +1695,11 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard .sb-col td.sb-ping{padding-right:16px;color:#5c5d63;font-size:14px}
 #scoreboard .sb-col td:nth-child(3){color:#9a9ba1}
 #scoreboard tbody tr:first-of-type::before{display:none}
-#hud[data-objective="horde"] #score-b,#hud[data-objective="horde"] .tp-hud-retratos[data-lado="B"]{display:none!important}
+#hud[data-objective="horde"][data-human-teams="1"] #score-b,#hud[data-objective="horde"][data-human-teams="1"] .tp-hud-retratos[data-lado="B"]{display:none!important}
+#scoreboard .sb-cols:has(.horde-team){grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+#scoreboard .horde-team{--sb-grid:minmax(0,1fr) 65px 65px}
+#scoreboard .horde-team p{padding:12px;color:#d4bd7c;font-size:12px}
+#scoreboard .horde-avatar{width:48px;height:48px;object-fit:cover;border-radius:50%;margin-right:10px;vertical-align:middle}
 #hud[data-objective="horde"] #score-e{min-width:72px;flex-direction:column;gap:2px}
 #hud[data-objective="horde"] #score-e::after{content:"ABATES";font:700 10px/1 system-ui;margin:0 8px}
 #scoreboard .horde-score{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) 70px 70px 90px 90px 110px;

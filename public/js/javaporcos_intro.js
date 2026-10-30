@@ -1,4 +1,3 @@
-import { DOMINIO } from './mode_javaporcos.js';
 import { wallpaperJavaporcos } from './javaporcos_apresentacao.js';
 import { startVisibleRotation } from './media-rotation.js';
 let pending = null;
@@ -30,7 +29,7 @@ export function apresentarJavaporcos(signal) {
 <div class="ji-copy"><span class="ji-kicker">INVASÃO DOS JAVAPORCOS</span>
 <h1 id="javaporcos-intro-title">A praga chegou ao bairro.</h1>
 <div class="ji-scroll" tabindex="0" aria-label="Apresentação da praga; passe o mouse ou dê foco para pausar"><div class="ji-text"><p>O javaporco é o cruzamento do javali europeu com o porco doméstico. Invasor no Brasil, revira o solo, destrói lavouras e se multiplica rápido. Pode atacar.</p>
-<p class="ji-objective">Defenda a cidade. Não deixe os Javaporcos dominarem ${Math.round(DOMINIO.derrota * 100)}% do bairro. Proteja as lojas e retome os setores invadidos. Limpe os setores para reduzir a ocupação.</p><p>Explore a mata, procure os bandos e impeça que cheguem às lojas. O relógio da partida continua; a contagem de cada onda aparece separada.</p></div></div>
+<p class="ji-objective">Mantenha seu time vivo. Mesmo com a cidade toda ocupada, um sobrevivente mantém a resistência. Proteja as lojas e retome os setores invadidos. Limpe os setores para reduzir a ocupação.</p><p>Explore a mata, procure os bandos e impeça que cheguem às lojas. O relógio da partida continua; a contagem de cada onda aparece separada.</p></div></div>
 <div class="ji-actions"><button type="button" data-defender autofocus>Defender a cidade</button><button type="button" data-pular>Pular</button></div></div>`;
   let wall = 0;
   const art = dialog.querySelector('.ji-art');

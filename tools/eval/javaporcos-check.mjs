@@ -529,14 +529,14 @@ regra('setor com 3 bichos e sem defensor é tomado; defensor sozinho retoma; dis
   assert.ok(horda.controle[0] < 0.7, `defensor sozinho não retomou o setor: ${horda.controle[0]}`);
 });
 
-regra('75% de domínio, pesado pela área do setor, encerra a partida', () => {
+regra('domínio ponderado não encerra a partida', () => {
   const setores = [{ x0: 0, z0: 0, x1: 1, z1: 1, peso: 3 }, { x0: 1, z0: 0, x1: 2, z1: 1, peso: 1 }];
   const horda = criarHorda({ seed: 22, setores: 2, mutante });
   iniciarOnda(horda); passoHorda(horda, 1);
   for (let t = 0; t < Math.ceil(1 / DOMINIO.sobe) + 5 && !horda.winner; t++) passoDominio(horda, setores, [DOMINIO.minBichos, 0], [0, 0], 1);
   assert.ok(Math.abs(horda.dominio - 0.75) < 0.06, `setor de peso 3 em 4 devia valer 75%: ${horda.dominio}`);
-  assert.equal(horda.winner, 'B', `domínio de ${(horda.dominio * 100).toFixed(0)}% não derrotou a defesa`);
-  assert.equal(DOMINIO.derrota, 0.75);
+  assert.equal(horda.winner, null);
+  assert.equal(DOMINIO.max, 1);
 });
 
 regra('a horda vaga no setor, espalha pela lotação e toma a cidade sem defensor', () => {
@@ -552,7 +552,7 @@ regra('a horda vaga no setor, espalha pela lotação e toma a cidade sem defenso
   }
   const avancados = ctx.modo.state.controle.filter((v) => v >= 0.5).length;
   assert.ok(avancados >= 3, `só ${avancados} setores passaram de 50% em 70 s de horda sem defensor`);
-  assert.equal(ctx.modo.state.winner, 'B', `sem defensor a horda não chegou aos 75% (${(ctx.modo.state.dominio * 100).toFixed(0)}%)`);
+  assert.equal(ctx.modo.state.winner, null, 'ocupação territorial encerrou a partida');
   assert.ok(ocupados >= 3, `horda empilhada: no máximo ${ocupados} setores ocupados ao mesmo tempo`);
 });
 
@@ -645,7 +645,7 @@ regra('o HUD mostra a % de domínio e o mini-mapa pinta de vermelho o setor toma
   ctx.modo.state.controle[1] = 1; ctx.modo.state.controle[2] = 0.5; ctx.modo.state.dominio = 0.375;
   ctx.modo.atualizaHud(true);
   assert.match(ctx.modo.hudDominio.textContent || '', /DOMÍNIO DA HORDA 38%/, 'HUD sem a % de domínio');
-  assert.match(ctx.modo.hudSetores.textContent || '', /1\/4 SETORES TOMADOS · LIMPE PARA RETOMAR · PERDE EM 75%/, 'HUD sem a contagem de setores tomados');
+  assert.match(ctx.modo.hudSetores.textContent || '', /1\/4 SETORES TOMADOS · LIMPE PARA RETOMAR/, 'HUD sem a contagem de setores tomados');
   assert.equal(ctx.modo.hudBarra.style.width, '38%');
   assert.equal(ctx.modo.hudCelulas.length, HORDA_FALSA.setores.length, 'mini-mapa sem uma célula por setor');
   assert.equal(ctx.modo.hudCelulas[1].style.background, '#c42b18', 'setor tomado não ficou vermelho');

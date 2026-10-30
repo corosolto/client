@@ -3047,6 +3047,7 @@ export class Game {
     this.el.weaponName.textContent = WEAPONS[this.player.weapon].name;
     const slots = { E: 1, B: 0 };
     for (const b of this.bots) {
+      if (b._objectiveNpc) continue;
       const botSpawn = place(b, b.team, slots[b.team]++);
       b.yaw = this._spawnYaw(botSpawn, b.team, true);
       b.target = null; b.path = null; b.repathAt = 0;
@@ -3175,9 +3176,9 @@ export class Game {
        caminho). `roundsWon.E > roundsWon.B ? 'E' : 'B'` dava a vitória ao lado B por
        omissão — um vencedor sorteado pela ordem do ternário. Agora empate de rodadas vai
        pros abates da partida INTEIRA (matchKills, somado a cada _startRound). */
-    const winner = this.roundsWon.E !== this.roundsWon.B
+    const winner = this.objective?.state?.winner || (this.roundsWon.E !== this.roundsWon.B
       ? (this.roundsWon.E > this.roundsWon.B ? 'E' : 'B')
-      : ((this.matchKills.E + this.roundKills.E) >= (this.matchKills.B + this.roundKills.B) ? 'E' : 'B');
+      : ((this.matchKills.E + this.roundKills.E) >= (this.matchKills.B + this.roundKills.B) ? 'E' : 'B'));
     const mine = winner === this.playerTeam;
     // Tela de fim estilo CoD/Valorant: VITÓRIA/DERROTA gigante, time vencedor no sub.
     this.el.matchEnd.classList.toggle('win', mine);
@@ -5418,8 +5419,8 @@ export class Game {
   _factionOf(side) { return side === this.playerTeam ? this.playerFaction : this.enemyFaction; }
   _voiceKey(side) { return this._factionOf(side); }   // pack de vozes/round por facção (P/B/U)
   // Nome, sigla e brasão do time são do LADO: online a playerFaction é a categoria do corpo (só mãos).
-  _teamName(side) { return nomeTimeJavaporcos(this.world?.mode, side) || TEAM_LABEL[side] || side; }
-  _teamTag(side) { return nomeTimeJavaporcos(this.world?.mode, side) || (side === 'B' ? 'B' : 'E'); }
+  _teamName(side) { return nomeTimeJavaporcos(this.world?.mode, side, this.objective?.regras?.times) || TEAM_LABEL[side] || side; }
+  _teamTag(side) { return nomeTimeJavaporcos(this.world?.mode, side, this.objective?.regras?.times) || (side === 'B' ? 'B' : 'E'); }
 
   /* Uma plaqueta do HUD. Chamada por QUADRO, então tudo aqui é comparação barata:
      o número só é escrito se mudou, e o brasão (data-f, arte no CSS) só quando a
@@ -5428,7 +5429,8 @@ export class Game {
   _plaqueta(slot, side) {
     const num = this.el['score' + slot + 'Num'];
     /* Treta Pop (seção 2d): o número grande é round ganho; quem está vivo fica nos retratos. */
-    const n = String(this.objective?.state?.kills != null ? this.objective.state.kills : this._uiV3() ? this.roundsWon[side] : this.roundKills[side]);
+    const horda = this.objective?.state;
+    const n = String(horda?.kills != null ? this.objective.regras.times === 3 ? horda.teamKills[side] || 0 : horda.kills : this._uiV3() ? this.roundsWon[side] : this.roundKills[side]);
     if (num && num.textContent !== n) num.textContent = n;
     /* minúscula porque o seletor de atributo do CSS é SENSÍVEL A CAIXA e os arquivos
        são b/c/e/f/u.png — `data-f="U"` não casaria com `[data-f="u"]` e o brasão
@@ -7346,6 +7348,7 @@ export class Game {
     /* Online quem revive é o servidor. Renascer local escolheria um spawn que ele não
        escolheu, e o próximo snapshot arrastaria o jogador de volta. */
     if (this.online) return;
+    if (this.objective?.state?.eliminados?.includes(this.player.team)) return;
     const p = this.player;
     /* MODO ARENA: aplica a troca de time antes de escolher o spawn. */
     if (this.arena && p._switchTeam) {
@@ -7561,6 +7564,7 @@ export class Game {
   /* Mesmo respawn de sempre, agora chamável da IA E do slot de gente. Preso na IA, quem morria
      no multiplayer não voltava mais. Ver docs/MULTIPLAYER.md. */
   _respawnEntity(b) {
+    if (b._objectiveNpc || this.objective?.state?.eliminados?.includes(b.team)) return;
     const g = b.mesh.group;
     const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
     b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;
@@ -8883,7 +8887,7 @@ export class Game {
     if (this.objective?.state?.controle) {
       const h = this.objective.state, elapsed = Math.floor(h.clock || 0);
       this.el.roundTime.textContent = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
-      this.el.roundsRow.textContent = `TEMPO DE PARTIDA · ONDA ${Math.max(1, h.wave)}/8`;
+      this.el.roundsRow.textContent = `TEMPO DE PARTIDA · ONDA ${Math.max(1, h.wave)}`;
     } else if (this.ctf) {
       /* game.js:5800 — NO CAPTURA O MAIOR TIPO DO HUD MOSTRA BANDEIRA, NÃO SEGUNDO.
          O que o dono viu e reprovou foi "CAPTURA 1:32" contando pra trás a cada rodada.

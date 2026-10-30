@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { regrasDaInvasao, avaliarFimDaInvasao, repartirTerritorio } from './javaporcos_partida.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { assetUrl } from './data/asseturl.js';
 import { prepararPassada, atualizarPassada, liberarPassada } from './javaporcos_passada.js';
@@ -27,7 +28,7 @@ export const AGGRO = Object.freeze({
 export const DASH = Object.freeze({ perto: 4, longe: 12, duracao: 0.55, impulso: 2.7, espera: 4.5 });
 /* DOMÍNIO (dono, 30/10): setor tomado = controle 1; a partida cai com 75% da área.
    O porquê de cada número: docs/maps/invasao-javaporcos.md, seção "Domínio". */
-export const DOMINIO = Object.freeze({ derrota: 0.75, minBichos: 3, sobe: 1 / 40, desce: 1 / 10, passo: 0.25, lotado: 6 });
+export const DOMINIO = Object.freeze({ max: 1, minBichos: 3, sobe: 1 / 40, desce: 1 / 10, passo: 0.25, lotado: 6 });
 export const FRENTES = 3;
 export const BECO = Object.freeze({ abreNaOnda: 3, fracao: 0.4, explorar: 9, raio: 7 });
 const ROTA_RAIO = 3;
@@ -78,7 +79,7 @@ function scoreDe(state, playerId) {
   return state.scores[playerId] ||= { points: 0, kills: 0, assists: 0, combo: 0, bestCombo: 0, damagePrevented: 0, lastKillAt: -Infinity };
 }
 
-export function criarHorda({ seed = 1, maxAlive = DEFAULT_MAX_ALIVE, entradas = FRENTES, becos = 0, setores = 16, mutante = '' } = {}) {
+export function criarHorda({ seed = 1, maxAlive = DEFAULT_MAX_ALIVE, entradas = FRENTES, becos = 0, setores = 16, maxWaves = 8, mutante = '' } = {}) {
   const magra = mutante === 'horda-magra';
   return {
     seed: seed >>> 0,
@@ -87,6 +88,10 @@ export function criarHorda({ seed = 1, maxAlive = DEFAULT_MAX_ALIVE, entradas = 
     becos: Math.max(0, becos | 0),
     mutante,
     wave: 0,
+    maxWaves,
+    teamKills: { E: 0, B: 0, J: 0 },
+    territorio: { E: 0, B: 0, J: 0 },
+    eliminados: [],
     phase: 'prep',
     prepLeft: PREP_SECONDS,
     combatLeft: COMBAT_SECONDS,
@@ -98,6 +103,8 @@ export function criarHorda({ seed = 1, maxAlive = DEFAULT_MAX_ALIVE, entradas = 
     kills: 0,
     alive: [],
     controle: new Array(Math.max(1, setores | 0)).fill(0),
+    defesaE: new Array(Math.max(1, setores | 0)).fill(0),
+    defesaB: new Array(Math.max(1, setores | 0)).fill(0),
     dominio: 0,
     foodHp: {},
     foodRevirada: 0,
@@ -109,7 +116,7 @@ export function criarHorda({ seed = 1, maxAlive = DEFAULT_MAX_ALIVE, entradas = 
 
 /* Tamanho da onda: o mutante `horda-magra` devolve a horda rala que o dono reprovou. */
 export function tamanhoDaOnda(state, wave = state.wave) {
-  const total = WAVE_COUNTS[wave - 1] || 0;
+  const total = WAVE_COUNTS[Math.min(WAVE_COUNTS.length, wave) - 1] || 0;
   return state.mutante === 'horda-magra' ? Math.min(8, total) : total;
 }
 
@@ -140,7 +147,7 @@ export function raioDeAgressao(state) {
 }
 
 export function iniciarOnda(state) {
-  if (state.winner || state.wave >= WAVE_COUNTS.length) return false;
+  if (state.winner || (state.maxWaves && state.wave >= state.maxWaves)) return false;
   state.wave++;
   state.phase = 'combat';
   state.combatLeft = COMBAT_SECONDS;
@@ -176,7 +183,7 @@ function ondaLimpa(state) {
   if (state.phase !== 'combat' || state.remaining || state.alive.length) return;
   const livre = 1 - (state.dominio || 0);
   state.teamBonus += Math.round(1500 * livre);
-  if (state.wave === WAVE_COUNTS.length) {
+  if (state.maxWaves && state.wave === state.maxWaves) {
     state.teamBonus += Math.round(3000 * livre) + Math.ceil(state.combatLeft) * 10;
     state.phase = 'finished';
     state.winner = 'E';
@@ -189,7 +196,7 @@ function ondaLimpa(state) {
 /* Onda inteira na rua e o relógio dela zerou: a próxima vem com as sobras ainda vivas; na última, sobreviveu. */
 function venceuOTempo(state) {
   if (!state.alive.length) return;
-  if (state.wave === WAVE_COUNTS.length) {
+  if (state.maxWaves && state.wave === state.maxWaves) {
     state.teamBonus += Math.round(3000 * (1 - (state.dominio || 0)));
     state.phase = 'finished';
     state.winner = 'E';
@@ -271,12 +278,6 @@ export function passoDominio(state, setores, bichos, defensores, dt) {
     soma += controle[i] * peso; pesos += peso;
   }
   state.dominio = pesos ? soma / pesos : 0;
-  if (state.dominio >= DOMINIO.derrota && state.mutante !== 'sem-derrota') {
-    state.phase = 'finished';
-    state.winner = 'B';
-    state.alive.length = 0;
-    state.remaining = 0;
-  }
   return state.dominio;
 }
 
@@ -522,6 +523,12 @@ export function espacializarJavaporco(ouvinte, pos, alcance = 46) {
 export function snapshotHorda(state) {
   return {
     wave: state.wave,
+    clock: state.clock,
+    defesaE: state.defesaE,
+    defesaB: state.defesaB,
+    teamKills: state.teamKills,
+    territorio: state.territorio,
+    eliminados: state.eliminados,
     seed: state.seed,
     phase: state.phase,
     prepLeft: Number(state.prepLeft.toFixed(3)),
@@ -647,7 +654,7 @@ function marchaRural(sfx) {
 }
 
 function preencherSlotsDaHorda(game, boars) {
-  const template = boars[0];
+  const template = boars[0] || game.bots[0] || game.player;
   if (!template) return;
   while (boars.length < DEFAULT_MAX_ALIVE) {
     const group = new THREE.Group();
@@ -657,7 +664,7 @@ function preencherSlotsDaHorda(game, boars) {
       isPlayer: false,
       name: `[HORDA] Reserva ${boars.length + 1}`,
       def: template.def,
-      team: 'B',
+      team: 'J',
       mesh: { group, isGLB: false, parts: {} },
       pos: new THREE.Vector3(),
       vel: new THREE.Vector3(),
@@ -724,12 +731,16 @@ const ENTRADA_RE = Object.freeze({ ax: 0, az: -1, shift: false, crouch: false, j
 class InvasaoJavaporcos {
   constructor(game) {
     this.game = game;
-    this.boars = game.combatants.filter((ent) => !ent.isPlayer && ent.team === 'B');
+    this.regras = regrasDaInvasao(game.settings?.javaporcos, game.online || game.dedicated);
+    this.boars = this.regras.times === 3 ? [] : game.combatants.filter((ent) => !ent.isPlayer && ent.team !== game.player?.team);
+    for (const ent of this.boars) ent.team = 'J';
     preencherSlotsDaHorda(game, this.boars);
     this.slots = new Map();
     this.horda = lerHorda(game.world);
     this.bichosNoSetor = new Int32Array(this.horda.setores.length);
     this.defensoresNoSetor = new Int32Array(this.horda.setores.length);
+    this.timeENoSetor = new Int32Array(this.horda.setores.length);
+    this.timeBNoSetor = new Int32Array(this.horda.setores.length);
     this.dominioAte = 0;
     this.dominioEm = -1;
     this.state = this.novaHorda();
@@ -752,6 +763,7 @@ class InvasaoJavaporcos {
     for (const bot of this.boars) {
       bot.vel ||= new THREE.Vector3();
       bot._objectiveNpc = 'javaporco';
+      bot.team = 'J';
       bot.respawnAt = Infinity;
       bot.alive = false;
       bot.hp = 0;
@@ -779,6 +791,7 @@ class InvasaoJavaporcos {
       entradas: this.horda.frentes.length,
       becos: this.horda.becos.length,
       setores: this.horda.setores.length,
+      maxWaves: 0,
     });
   }
   get frentes() { return this.horda.frentes; }
@@ -794,7 +807,7 @@ class InvasaoJavaporcos {
     this.hudSetores = el('font:700 11px/1 system-ui;color:#e8d7b0;white-space:nowrap', linha);
     const barra = el('position:relative;height:9px;background:#3a2a1c;border:1px solid #6b4b2a', coluna);
     this.hudBarra = el('position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,#d6a03a,#c42b18)', barra);
-    el(`position:absolute;left:${DOMINIO.derrota * 100}%;top:-3px;bottom:-3px;width:2px;background:#fff`, barra);
+
     this.hudTexto = el('font:700 11px/1.3 system-ui;white-space:nowrap;color:#f3eadb', coluna);
     const c = this.game.world?.cityBounds || { minX: -36, maxX: 36, minZ: -36, maxZ: 36 };
     this.hudExtensao = { x0: c.minX - 8, z0: c.minZ - 8, w: c.maxX - c.minX + 16, d: c.maxZ - c.minZ + 16 };
@@ -814,6 +827,7 @@ class InvasaoJavaporcos {
 
   prepareRound() {
     this.state = this.novaHorda();
+    for (const campo of ['roundKills', 'roundsWon', 'matchKills', 'roundCaps']) if (this.game[campo]) this.game[campo].J = 0;
     for (const spot of this.game.world.foodSpots || []) this.marcarComida(spot, spot.hp);
     this.game.timeLeft = WAVE_COUNTS.length * (PREP_SECONDS + COMBAT_SECONDS);
     this.cinematic = null;
@@ -969,7 +983,7 @@ class InvasaoJavaporcos {
   listarJogadores() {
     const lista = this.jogadores;
     lista.length = 0;
-    for (const ent of this.game.combatants) if (ent.team === 'E' && ent.alive) lista.push(ent);
+    for (const ent of this.game.combatants) if (!ent._objectiveNpc && ent.alive && !this.state.eliminados.includes(ent.team)) lista.push(ent);
     return lista;
   }
 
@@ -988,6 +1002,8 @@ class InvasaoJavaporcos {
       const phase = this.state.phase, winner = this.state.winner, wave = this.state.wave;
       passoHorda(this.state, dt);
       this.tickDominio(this.game.time);
+      if (this.state.mutante !== 'sem-derrota') this.state.winner ||= avaliarFimDaInvasao(this.state, this.regras, this.game.combatants);
+      if (this.state.winner) this.state.phase = 'finished';
       this.sincronizarSlots();
       if (phase === 'combat' && this.state.phase !== 'combat') this.emitir('WAVE_CLEARED', { wave });
       if (!winner && this.state.winner) this.emitir('HORDE_FINISHED', { winner: this.state.winner, wave: this.state.wave });
@@ -1010,6 +1026,7 @@ class InvasaoJavaporcos {
     this.dominioAte = tempo + DOMINIO.passo;
     const setores = this.horda.setores, bichos = this.bichosNoSetor, defensores = this.defensoresNoSetor;
     bichos.fill(0); defensores.fill(0);
+    this.timeENoSetor.fill(0); this.timeBNoSetor.fill(0);
     for (const bot of this.boars) {
       if (!bot._boarId || !bot.alive) continue;
       const i = setorEm(setores, bot.pos.x, bot.pos.z);
@@ -1017,9 +1034,10 @@ class InvasaoJavaporcos {
     }
     for (const ent of this.jogadores) {
       const i = setorEm(setores, ent.pos.x, ent.pos.z);
-      if (i >= 0) defensores[i]++;
+      if (i >= 0) { defensores[i]++; (ent.team === 'B' ? this.timeBNoSetor : this.timeENoSetor)[i]++; }
     }
     passoDominio(this.state, setores, bichos, defensores, dt);
+    repartirTerritorio(this.state, setores, this.timeENoSetor, this.timeBNoSetor, bichos, dt, DOMINIO);
   }
 
   /* Manada: quem está alertado (viu jogador, ouviu tiro ou levou tiro) puxa o vizinho.
@@ -1345,7 +1363,10 @@ class InvasaoJavaporcos {
   }
 
   onKill(ent, attacker) {
-    if (!ent?._boarId) return;
+    if (!ent?._boarId) {
+      if (ent && !ent._objectiveNpc && attacker?._objectiveNpc) this.state.teamKills.J++;
+      return;
+    }
     const animalId = ent._boarId;
     const animalType = ent._boarType;
     if (this.state.mutante !== 'morte-muda') this.javaporcoSfx('morte', ent.pos, animalType === 'ariete' ? 1 : .9);
@@ -1353,6 +1374,7 @@ class InvasaoJavaporcos {
     if (this.game.online && !this.game.dedicated) return;
     const attackerId = this.idDo(attacker);
     registrarAbate(this.state, animalId, attackerId);
+    if (attacker && !attacker._objectiveNpc) this.state.teamKills[attacker.team] = (this.state.teamKills[attacker.team] || 0) + 1;
     this.emitir('BOAR_KILLED', { i: animalId, a: attackerId, type: animalType, wave: this.state.wave });
     ent.respawnAt = Infinity;
   }
@@ -1361,19 +1383,23 @@ class InvasaoJavaporcos {
      por um número que o olho não lê mais rápido que isso. */
   atualizaHud(forcar = false) {
     if (!this.hud) return;
-    if (this.game.el.hud?.dataset) this.game.el.hud.dataset.objective = 'horde';
+    if (this.game.el.hud?.dataset) {
+      this.game.el.hud.dataset.objective = 'horde';
+      this.game.el.hud.dataset.humanTeams = this.regras.times === 3 ? '2' : '1';
+    }
     if (!forcar && this.game.time < this.hudAte) return;
     this.hudAte = this.game.time + .12;
     const phase = this.state.phase === 'prep' ? `PRÓXIMA ONDA EM ${Math.ceil(this.state.prepLeft)}s` : `PRÓXIMA ONDA EM ${Math.ceil(this.state.combatLeft)}s · ${this.state.remaining + this.state.alive.length} RESTANTES`;
     const score = this.state.scores[this.idDo(this.game.player)]?.points || 0;
     const comida = (this.game.world.foodSpots || []).length;
     const lixo = comida ? ` · LIXO ${this.state.foodRevirada}/${comida}` : '';
-    this.hudTexto.textContent = `ONDA ${Math.max(1, this.state.wave)}/8 · ${phase} · ${this.state.alive.length} NA RUA · FÚRIA ${Math.round((this.state.fury || 0) * 100)}%${lixo} · ${score} PTS`;
+    this.hudTexto.textContent = `ONDA ${Math.max(1, this.state.wave)} · ${phase} · ${this.state.alive.length} NA RUA · FÚRIA ${Math.round((this.state.fury || 0) * 100)}%${lixo} · ${score} PTS`;
     if (this.state.mutante === 'mapa-mudo') return;
     const dominio = Math.round((this.state.dominio || 0) * 100);
     const tomados = this.state.controle.filter((v) => v >= 1).length;
-    this.hudDominio.textContent = `DOMÍNIO DA HORDA ${dominio}% · JAVAPORCOS`;
-    this.hudSetores.textContent = `${tomados}/${this.state.controle.length} SETORES TOMADOS · LIMPE PARA RETOMAR · PERDE EM ${Math.round(DOMINIO.derrota * 100)}%`;
+    const territorio = this.state.territorio;
+    this.hudDominio.textContent = this.regras.times === 3 ? `E ${Math.round(territorio.E * 100)}% · B ${Math.round(territorio.B * 100)}% · JAVAPORCOS ${dominio}%` : `DOMÍNIO DA HORDA ${dominio}% · JAVAPORCOS`;
+    this.hudSetores.textContent = `${tomados}/${this.state.controle.length} SETORES TOMADOS · LIMPE PARA RETOMAR`;
     this.hudBarra.style.width = `${Math.min(100, dominio)}%`;
     this.hudCelulas.forEach((cel, i) => {
       const v = this.state.controle[i] || 0;
@@ -1388,20 +1414,32 @@ class InvasaoJavaporcos {
   }
 
   roundIntro() {
-    return `NÃO DEIXE A HORDA DOMINAR ${Math.round(DOMINIO.derrota * 100)}% DO BAIRRO · OITO ONDAS`;
+    return 'MANTENHA SEU TIME VIVO · DISPUTE O BAIRRO E CACE OS JAVAPORCOS';
   }
 
   roundResult(winner) {
     return {
-      duration: winner === 'E' ? 10 : 6,
-      title: winner === 'E' ? 'LORDE DO TERROR ABATIDO' : 'O BAIRRO CAIU',
-      detail: winner === 'E' ? `${this.state.teamBonus} pontos · Javaporcos segurados em ${Math.round((this.state.dominio || 0) * 100)}% do bairro` : `os Javaporcos dominaram ${Math.round((this.state.dominio || 0) * 100)}% do bairro`,
+      duration: winner === 'J' ? 6 : 10,
+      title: winner === 'draw' ? 'DISPUTA EMPATADA' : winner === 'J' ? 'JAVAPORCOS VENCERAM' : `${this.game._teamName(winner)} VENCEU`,
+      detail: `${this.state.kills} javaporcos abatidos · ${Math.round((this.state.dominio || 0) * 100)}% ocupado pela horda`,
     };
   }
   renderScoreboard() {
     if (!this.game.el?.sbCols) return;
     const heading = document.querySelector('#scoreboard h3');
     if (heading) heading.textContent = `DEFESA DA CIDADE · ${this.state.kills} ABATES · ${Math.round(this.state.dominio * 100)}% OCUPADO POR JAVAPORCOS`;
+    if (this.regras.times === 3) {
+      const escape = name => String(name).replace(/[<>&"']/g, '');
+      this.game.el.sbCols.innerHTML = ['E', 'B', 'J'].map(team => {
+        const nome = this.game._teamName(team), dominio = Math.round((this.state.territorio[team] || 0) * 100);
+        const pessoas = this.game.combatants.filter(ent => ent.team === team && !ent._objectiveNpc);
+        const linhas = pessoas.map(ent => `<tr><td>${escape(ent.name)}</td><td>${ent.kills || 0}</td><td>${ent.deaths || 0}</td></tr>`).join('');
+        const imagem = team === 'J' ? '<img class="horde-avatar" src="/img/loading-javaporcos.webp" alt="Javaporco">' : '';
+        const status = this.state.eliminados.includes(team) ? 'ELIMINADO' : `${dominio}% DO MAPA`;
+        return `<section class="sb-col horde-team"><h4>${imagem}${nome}</h4><p>${status} · ${this.state.teamKills[team] || 0} ABATES</p><table><thead><tr><th>PARTICIPANTE</th><th>ABATES</th><th>MORTES</th></tr></thead><tbody>${linhas || `<tr><td>Horda · ${this.state.alive.length} vivos</td><td>${this.state.teamKills.J || 0}</td><td>${this.state.kills}</td></tr>`}</tbody></table></section>`;
+      }).join('');
+      return;
+    }
     const row = (name, points, kills, assists, combo, prevented, className = '') =>
       `<span class="horde-name ${className}">${String(name).replace(/[<>&]/g, '')}</span><span class="horde-points ${className}">${points}</span><span class="${className}">${kills}</span><span class="${className}">${assists}</span><span class="${className}">${combo}</span><span class="${className}">${prevented}</span>`;
     const names = new Map(this.game.combatants.filter(ent => ent.team === 'E' && !ent._objectiveNpc).map(ent => [this.idDo(ent), ent.name]));
@@ -1417,11 +1455,11 @@ class InvasaoJavaporcos {
 
 
   startCinematic(winner) {
-    this.cinematic = { winner, startedAt: this.game.time, duration: winner === 'E' ? 10 : 6 };
+    this.cinematic = { winner, startedAt: this.game.time, duration: winner === 'J' ? 6 : 10 };
     this.scoreShown = false;
     if (this.game.vmScene) this.game.vmScene.visible = false;
     if (this.cinemaTitle) {
-      this.cinemaTitle.textContent = winner === 'E' ? 'LORDE DO TERROR\nABATIDO' : 'O BAIRRO CAIU';
+      this.cinemaTitle.textContent = this.roundResult(winner).title;
       this.cinemaTitle.style.whiteSpace = 'pre-line';
       this.cinemaTitle.style.opacity = '1';
     }
@@ -1431,7 +1469,7 @@ class InvasaoJavaporcos {
   updatePresentation() {
     if (!this.cinematic || this.game.dedicated) return;
     const t = Math.min(1, (this.game.time - this.cinematic.startedAt) / this.cinematic.duration);
-    const win = this.cinematic.winner === 'E';
+    const win = this.cinematic.winner === this.game.player.team;
     const a = win ? { x: 0, y: 5, z: -51 } : { x: 0, y: 4, z: -44 };
     const b = win ? { x: 24, y: 25, z: 48 } : { x: 0, y: 8, z: -60 };
     const smooth = t * t * (3 - 2 * t);
@@ -1452,6 +1490,12 @@ class InvasaoJavaporcos {
   applyNetState(net) {
     if (!net || (!this.game.online || this.game.dedicated)) return;
     this.state.wave = net.wave;
+    this.state.clock = net.clock || 0;
+    this.state.defesaE = [...(net.defesaE || (net.controle || this.state.controle).map(()=>0))];
+    this.state.defesaB = [...(net.defesaB || (net.controle || this.state.controle).map(()=>0))];
+    this.state.teamKills = { ...net.teamKills };
+    this.state.territorio = { ...net.territorio };
+    this.state.eliminados = [...(net.eliminados || [])];
     this.state.seed = net.seed;
     this.state.phase = net.phase;
     this.state.prepLeft = net.prepLeft;
