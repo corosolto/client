@@ -10,7 +10,7 @@ import { placeProp, hasProp, PropBatch } from './mapprops.js';
 import { setMapSky } from './map_sky.js';
 import { CampoDeAltura, malhaTerreno, HALF, CIDADE, MATA_R, EIXOS, CORREGO_MEIA, corregoZ, corteCorrego, distPasto, PASSO } from './map_javaporcos_relevo.js';
 import { construirMata, construirPasto } from './map_javaporcos_mata.js';
-import { construirCidade, CIDADE_R, AV, CAL } from './map_javaporcos_cidade.js';
+import { construirCidade, amassaSaco, CIDADE_R, AV, CAL } from './map_javaporcos_cidade.js';
 import * as TX from './map_javaporcos_texturas.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -546,12 +546,15 @@ function propsOpcionais(root, occluders, campo, rnd, cidade, PB) {
     poe(PV, 'tambor_metal', { ...em(-3.4, 0.7), targetH: 0.9 });
   }
   // lixo de beco e de esquina, posição vinda da cidade
-  for (const g of cidade.glb || []) poe(PV, g.id, { x: g.x, z: g.z, targetH: g.h, ry: g.ry });
+  for (const g of cidade.glb || []) {
+    const a = g.id === 'saco_lixo' ? (g.esc ? g : amassaSaco(g.x, g.z)) : null;
+    poe(PV, g.id, { x: g.x, z: g.z, targetH: g.h, ry: g.ry, ...(a ? { rx: a.rx, rz: a.rz, esc: a.esc, y: campo.amostra(g.x, g.z) + (a.dy || 0) } : {}) });
+  }
   for (let i = 0; i < 14; i++) {
     const s = rnd() < 0.5 ? -1 : 1, t = (rnd() - 0.5) * 2 * (CIDADE_R - 6), o = s * (AV + CAL - 0.35);
     const [x, z] = rnd() < 0.5 ? [o, t] : [t, o];
     if (Math.abs(t) < AV + CAL + 1) continue;
-    poe(PV, ['saco_lixo', 'pneu_velho', 'lata_enferrujada', 'caixa_papelao'][i % 4], { x, z, targetH: [0.6, 0.62, 0.32, 0.42][i % 4] });
+    poe(PV, ['saco_lixo', 'pneu_velho', 'lata_enferrujada', 'caixa_papelao'][i % 4], { x, z, targetH: [0.6, 0.62, 0.32, 0.42][i % 4], ...(i % 4 ? {} : amassaSaco(x, z)) });
   }
   for (const l of cidade.lojas) {
     const [x, z] = l.interior;

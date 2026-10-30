@@ -35,6 +35,10 @@
     MURO1   rodada 4 (muro do beco na sombra voltou a L* 14 com o hemi a 0,95): o material
              `muro-bloco` tem albedo de luminância linear ≥ 0,7 (o 0xc4c0b8 dava 0,52). É albedo
              e não luz de preenchimento porque a cena já está no teto de 9 luzes pontuais.
+    SACO1   rodada 4 ("saco ovo": saco solto em pé de silhueta simétrica no beco-n): dentro de
+             cada beco todo saco está num monte (≥ 2 vizinhos a ≤ 1 m), com escala por eixo
+             (maior/menor ≥ 1,1, altura 0,65–0,95) e inclinação ≥ 15° ou tombado (≥ 70°), um
+             tombado por beco e ≥ 3 decalques de lixo a ≤ 0,9 m de um saco.
     BECOLUZ1 luz de sódio em cada beco ("beco sem fonte de luz", saco L* 6): com a câmera
              posta em cada beco, a luz `beco-luz` vai para dentro dele a 4–5 m, quente,
              intensidade ≥ 4, alcance 10–16 m, decaimento 2, com luminária a ≤ 0,5 m.
@@ -58,6 +62,7 @@
      janela-preta    vidro volta ao cinza metálico 0x46525a, sem mapa    -> JANELA2
      janela-tabua    janela apagada volta a emitir 0x4a4238                -> JANELA3
      muro-escuro     muro volta ao albedo 0xc4c0b8                         -> MURO1
+     saco-ovo        tira a escala por eixo e a inclinação de todo saco      -> SACO1
      beco-apagado    tira a luz dos becos                                 -> BECOLUZ1, POSTE1
      luz-presa       a luz não segue a câmera (fica no primeiro beco)     -> BECOLUZ1
      luz-bola        volta a pontual 0xffb060 a 18 (acende o forro do beiral) -> BECOLUZ1
@@ -66,7 +71,7 @@
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'saco-ovo', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -161,6 +166,11 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
   if (MUT === 'janela-tabua') { const v = porNome('beco-vidro'); exige(v, 'MUTANTE janela-tabua NÃO APLICOU'); v.material.emissive.set(0x4a4238); }
   const muroMat = () => { let m = null; W.root.traverse((o) => { if (o.isMesh && o.material?.name === 'muro-bloco') m = o.material; }); return m; };
   if (MUT === 'muro-escuro') { const m = muroMat(); exige(m, 'MUTANTE muro-escuro NÃO APLICOU'); m.color.set(0xc4c0b8); }
+  if (MUT === 'saco-ovo') {
+    const ss = W.root.userData.sacos || [];
+    exige(ss.some((g) => g.esc), 'MUTANTE saco-ovo NÃO APLICOU');
+    for (const g of ss) { delete g.esc; g.rx = 0; g.rz = 0; }
+  }
   if (MUT === 'carro-nc') { exige(W.root.userData.carros?.length, 'MUTANTE carro-nc NÃO APLICOU'); W.root.userData.carros[0].id = 'byd_dolphin'; }
   if (MUT === 'carros-poucos') { exige(W.root.userData.carros?.length, 'MUTANTE carros-poucos NÃO APLICOU'); W.root.userData.carros.length = 9; }
   if (MUT === 'poste-viga') { const p = porNome('poste'); exige(p, 'MUTANTE poste-viga NÃO APLICOU'); p.geometry = new THREE.BoxGeometry(0.18, 9, 0.25); }
@@ -302,6 +312,35 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     const y = 0.2126 * m.color.r + 0.7152 * m.color.g + 0.0722 * m.color.b;
     exige(y >= 0.7, `albedo do muro com luminância ${y.toFixed(2)} (piso 0,7): muro preto na sombra`);
     return `albedo do muro ${m.color.getHexString()}, luminância ${y.toFixed(2)}`;
+  });
+
+  regra('SACO1 saco do beco em monte, amassado e inclinado', () => {
+    const ss = W.root.userData.sacos || [], bbs = becoCaixas(), d = porNome('decal-chao');
+    exige(bbs.length >= 4 && d, 'sem becos ou sem decalque');
+    const pos = d.geometry.attributes.position, centros = [];
+    for (let q = 0; q < pos.count / 4; q++) {
+      let x = 0, z = 0;
+      for (let k = 0; k < 4; k++) { x += pos.getX(q * 4 + k) / 4; z += pos.getZ(q * 4 + k) / 4; }
+      centros.push([x, z]);
+    }
+    const desc = bbs.map((bb) => {
+      const dentro = ss.filter((g) => sobreBeco(bb, g.x, g.z, 0.3));
+      exige(dentro.length >= 3, `beco em (${((bb.min.x + bb.max.x) / 2).toFixed(1)}, ${((bb.min.z + bb.max.z) / 2).toFixed(1)}) com ${dentro.length} saco(s)`);
+      let tomb = 0;
+      for (const g of dentro) {
+        const viz = dentro.filter((o) => o !== g && Math.hypot(o.x - g.x, o.z - g.z) <= 1).length;
+        exige(viz >= 2, `saco isolado em (${g.x.toFixed(1)}, ${g.z.toFixed(1)}): ${viz} vizinho(s) a ≤ 1 m`);
+        const e = g.esc || [1, 1, 1], incl = THREE.MathUtils.radToDeg(Math.hypot(g.rx || 0, g.rz || 0));
+        exige(Math.max(...e) / Math.min(...e) >= 1.1 && e[1] >= 0.65 && e[1] <= 0.95, `saco em (${g.x.toFixed(1)}, ${g.z.toFixed(1)}) de escala ${e.map((v) => v.toFixed(2)).join('/')}: silhueta de ovo`);
+        exige(incl >= 15, `saco em (${g.x.toFixed(1)}, ${g.z.toFixed(1)}) em pé (${incl.toFixed(0)}°, piso 15°)`);
+        if (incl >= 70) tomb++;
+      }
+      exige(tomb >= 1, 'beco sem saco tombado');
+      const lixo = centros.filter(([x, z]) => dentro.some((g) => Math.hypot(g.x - x, g.z - z) <= 0.9)).length;
+      exige(lixo >= 3, `só ${lixo} decalque(s) a ≤ 0,9 m dos sacos (piso 3)`);
+      return dentro.length;
+    });
+    return `sacos por beco ${desc.join(', ')}, todos em monte, amassados e inclinados, com tombado e lixo vazado`;
   });
 
   regra('BECOLUZ1 uma luz de sódio dentro de cada beco', () => {

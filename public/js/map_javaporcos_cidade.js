@@ -137,6 +137,7 @@ export function construirCidade(kit, campo, rnd) {
   lixoDeRua(kit, campo, extras, pontos);
   cacambas(kit, campo, extras, pontos);
   cenaDaRua(kit, campo, extras);
+  kit.root.userData.sacos = [...extras.rua, ...extras.glb].filter((g) => g.id === 'saco_lixo');
   luzDosBecos(kit, extras.postesBeco);
   construirExtras(kit, extras);
 
@@ -587,7 +588,8 @@ function criarFood(kit, campo, foodSpots, foodMeshes, foodColliders, id, kind, x
   const cubo = (w, h, d) => new THREE.BoxGeometry(w, h, d);
   const saco = (alvo, px, py, pz, ry, e) => {
     const o = usaGLB('saco_lixo') ? placeProp('saco_lixo', { x: px, y: py, z: pz, targetH: 0.62 * e, ry }) : malha(sacoGeo(), MAT.saco, px, py, pz, ry);
-    if (!o.isMesh) { o.traverse((m) => { m.castShadow = false; }); alvo.add(o); return; }
+    const a = amassaSaco(x + px, z + pz);
+    if (!o.isMesh) { o.rotation.set(a.rx, ry, a.rz, 'YXZ'); o.scale.multiply(new THREE.Vector3(...a.esc)); o.traverse((m) => { m.castShadow = false; }); alvo.add(o); return; }
     o.scale.setScalar(e); alvo.add(o);
   };
   if (kind === 'lixo') {
@@ -662,6 +664,30 @@ function sacoGeo() {
   g.translate(0, 0.17, 0);
   g.computeVertexNormals();
   return (_sacoGeo = g);
+}
+
+/* Saco amassado: escala por eixo e inclinação sorteadas pela POSIÇÃO (não gasta o sorteio
+   da cidade). Saco em pé e redondo lia ovo de páscoa (crítico, rodada 3). */
+const _hash = (x, z, k) => { const v = Math.sin(x * 12.9898 + z * 78.233 + k * 37.719) * 43758.5453; return v - Math.floor(v); };
+export function amassaSaco(x, z, tombado = false) {
+  const h = (k) => _hash(x, z, k), esc = [1 + 0.3 * h(4), 0.7 + 0.2 * h(5), 1 + 0.3 * h(6)];
+  if (tombado) return { rx: 1.45, rz: (h(3) - 0.5) * 0.4, esc, dy: 0.2 };
+  const incl = (15 + 15 * h(1)) * Math.PI / 180, dir = h(2) * 6.283;
+  return { rx: Math.cos(dir) * incl, rz: Math.sin(dir) * incl, esc, dy: 0 };
+}
+// monte de n sacos (o último tombado) com lixo vazado no chão até 0,8 m do centro
+function monteDeSacos(ex, cx, cz, y, n, h = 0.55) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 6.283 + _hash(cx, cz, 10 + i), d = i ? 0.28 + 0.14 * _hash(cz, cx, 20 + i) : 0.05;
+    const x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d, m = amassaSaco(x, z, i === n - 1);
+    out.push({ id: 'saco_lixo', x, z, y: y + m.dy, dy: m.dy, h: h * (0.85 + 0.3 * _hash(x, z, 7)), ry: _hash(x, z, 8) * 6.283, rx: m.rx, rz: m.rz, esc: m.esc, monte: true });
+  }
+  for (let i = 0; i < 3; i++) {
+    const a = _hash(cx, cz, 30 + i) * 6.283, d = 0.35 + 0.45 * _hash(cx, cz, 40 + i);
+    ex.decal.push({ k: [4, 2, 3][i], x: cx + Math.cos(a) * d, y: y + 0.028, z: cz + Math.sin(a) * d, s: 0.6 + 0.4 * _hash(cz, cx, 50 + i), ry: a });
+  }
+  return out;
 }
 
 /* Lixo cênico: não é foodSpot, é o estrago. Tudo em UMA InstancedMesh por família e
@@ -813,8 +839,10 @@ function cenaDaRua(kit, campo, ex) {
   const sacos = [];
   for (let i = 0; i < 9; i++) {
     const a = r() * 6.283, d = 0.15 + r() * 0.75, x = -6.95 + Math.cos(a) * d * 0.6, z = -9.4 + Math.sin(a) * d;
-    sacos.push({ id: 'saco_lixo', x, z, y: campo.amostra(x, z) + (i > 6 ? 0.32 : 0), h: 0.5 + r() * 0.2, ry: r() * 6.283 });
+    const m = amassaSaco(x, z, i === 3);
+    sacos.push({ id: 'saco_lixo', x, z, y: campo.amostra(x, z) + (i > 6 ? 0.32 : 0) + m.dy, h: 0.5 + r() * 0.2, ry: r() * 6.283, rx: m.rx, rz: m.rz, esc: m.esc, monte: true });
   }
+  monteDeSacos(ex, -6.95, -9.4, campo.amostra(-6.95, -9.4), 0);
   ex.rua.push(...sacos, { id: 'caixa_papelao', x: -6.5, z: -10.5, y: campo.amostra(-6.5, -10.5), h: 0.42, ry: 0.4 });
   const mesas = [[7.05, -9.9], [7.05, -12.4]], cadeiras = [];
   for (const [mx, mz] of mesas) for (const [ox, oz, g] of [[-0.62, 0.1, -1.4], [0.55, -0.15, 1.7], [0.05, 0.62, 3.2]]) {
@@ -976,8 +1004,9 @@ function quarteiraoBeco(kit, campo, rnd, b, def, ex) {
   ex.lixeiraTomb.push(mtx(tx0, 0.29, tz0, 1, 1, 1, aoLongoZ ? 0.3 : Math.PI / 2 + 0.3, 0, Math.PI / 2));
   for (const [id, dc, dl, h] of [['saco_lixo', 0.5, 0.35, 0.55], ['saco_lixo', 0.75, 0.5, 0.5], ['caixa_papelao', 0.85, 0.55, 0.4],
     ['lata_enferrujada', 0.95, 0.6, 0.28], ['saco_lixo', 0.2, 0.62, 0.6], ['lata_enferrujada', 0.6, 0.3, 0.25]]) {
-    const [x, z] = W(cm + (dc - 0.5) * 2 * (BECO_MEIA - 0.3), lOut + dIn * dl * comp);
-    ex.rua.push({ id, x, z, y: 0.026, h, ry: ex.rr() * 6.283 });
+    const [x, z] = W(cm + (dc - 0.5) * 2 * (BECO_MEIA - 0.3), lOut + dIn * dl * comp), ry = ex.rr() * 6.283;
+    if (id !== 'saco_lixo') ex.rua.push({ id, x, z, y: 0.026, h, ry });
+    else if (dl === 0.35) ex.rua.push(...monteDeSacos(ex, x, z, 0.026, 4, h));
   }
   /* Poste de sódio na boca da viela, luminária a 4,5 m sobre o fundo do beco e fios
      cruzando o rasgo de céu acima dos beirais (a rodada 2 tinha perdido os dois). */
@@ -1001,6 +1030,9 @@ function quarteiraoBeco(kit, campo, rnd, b, def, ex) {
   const glb = (id, c, l, h) => { const [x, z] = W(c, l); ex.glb.push({ id, x, z, h, ry: rnd() * 6.283 }); };
   glb('saco_lixo', cm - BECO_MEIA + 0.45, lIn - dIn * 0.7, 0.75);
   glb('saco_lixo', cm - BECO_MEIA + 0.4, lIn - dIn * 1.5, 0.6);
+  // os dois sacos do muro viram um monte (o sorteio de cima continua o mesmo: a mata depende dele)
+  const [sx0, sz0] = W(cm - BECO_MEIA + 0.5, lIn - dIn * 1.1);
+  ex.glb.splice(ex.glb.length - 2, 2, ...monteDeSacos(ex, sx0, sz0, 0, 3, 0.62).map((g) => ({ ...g, y: undefined })));
   glb('caixa_papelao', cm - BECO_MEIA + 0.35, lIn - dIn * 2.3, 0.42);
   glb('lata_enferrujada', cm + BECO_MEIA - 0.25, lOut + dIn * 2.0, 0.3);
   glb('lixeira_metal', cm + BECO_MEIA - 0.42, lIn - dIn * (BECO_FUNDO + 0.6), 0.85);
@@ -1048,7 +1080,10 @@ function construirExtras(kit, ex) {
   if (GLB && ex.rua.length) {
     const PR = new PropBatch({ bucket: 24, cortes: { cadeira_plastico: 45 } });
     const PL = new PropBatch({ bucket: 24, cast: false, cortes: { saco_lixo: 38, caixa_papelao: 38, lata_enferrujada: 28, lixeira_metal: 40 } });
-    for (const g of ex.rua) (PL.opts.cortes[g.id] ? PL : PR).add(g.id, { x: g.x, y: g.y ?? 0, z: g.z, targetH: g.h, ry: g.ry });
+    for (const g of ex.rua) {
+      const a = g.id === 'saco_lixo' && !g.esc ? amassaSaco(g.x, g.z) : g;
+      (PL.opts.cortes[g.id] ? PL : PR).add(g.id, { x: g.x, y: (g.y ?? 0) + (a.dy && a !== g ? a.dy : 0), z: g.z, targetH: g.h, ry: g.ry, rx: a.rx, rz: a.rz, esc: a.esc });
+    }
     const antes = root.children.length;
     PR.build(root); PL.build(root);
     const solidos = new Set(ex.rua.filter((g) => g.solido).map((g) => g.id));
