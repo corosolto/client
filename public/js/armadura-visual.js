@@ -78,8 +78,8 @@ function caixaTronco(body, y0, y1, braco) {
   return box.isEmpty() ? null : box;
 }
 const lim = (v, a, b) => Math.min(b, Math.max(a, v));
-/* Medida do corpo no espaço da malha, com TRAVAS em fração da altura H: os 40+ corpos caricatos têm
-   pesos e nomes de osso diferentes, e medido na prancha a caixa crua ia de 0,17 m a 1,9 m de largura. */
+/* Medida do corpo no espaço da malha. O teto de largura é deliberadamente menor que a
+   antiga fração 0,32 H: poses com braço junto ao peito faziam o colete virar um cubo. */
 function medir(body) {
   const chave = body.geometry.uuid;
   if (_medidas.has(chave)) return _medidas.get(chave);
@@ -97,7 +97,7 @@ function medir(body) {
     const bt = caixaTronco(body, y0, y1, braco);
     const s = bt ? bt.getSize(new THREE.Vector3()) : new THREE.Vector3(H * 0.24, 0, H * 0.14);
     const c = bt ? bt.getCenter(new THREE.Vector3()) : new THREE.Vector3((gb.min.x + gb.max.x) / 2, 0, (gb.min.z + gb.max.z) / 2);
-    s.set(lim(s.x, H * 0.18, H * 0.32), y1 - y0, lim(s.z, H * 0.11, H * 0.22));
+    s.set(lim(s.x, H * 0.18, H * 0.22), y1 - y0, lim(s.z, H * 0.11, H * 0.22));
     m.tronco = { idx: Math.max(...troncoIdx), s, c, y0, y1 };
   }
   if (bc) {

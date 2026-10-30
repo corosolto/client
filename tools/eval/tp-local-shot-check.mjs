@@ -68,6 +68,7 @@ function fixture({weapon = 'pistol', view = 'third', online = true, built, absen
     _reloading: ActualGame.prototype._reloading, _startReload() { calls.reload++; },
     _tryKnifeAttack() { calls.knife++; }, _botOuve: noop, _aimOrigin: v => v.set(0, 1.62, 0),
     _fireHitscan() { calls.hitscan++; }, _shotRecoil: noop, _muzzleWorld: () => new THREE.Vector3(),
+    _bocaDaArmaDoCorpo: () => null,
     _flash: noop, _ejectCasing: noop, _scope: noop,
     vm: {authored: {shoot() { calls.vm++; }}, recoil: {kick: noop}},
     sfx: {shotWeapon: noop, dryFire: noop, jump: noop, land: noop},

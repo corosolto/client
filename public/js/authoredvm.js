@@ -576,10 +576,9 @@ export class AuthoredViewModels {
           boca: visual.scene.getObjectByName('SOCKET_FAB_BARREL') || null,
         };
       } else if (bakedWeapon) {
-        // GLB assado novo expõe MINT_WEAPON_*; nos goldens públicos antigos a
-        // primeira malha de arma é o corpo normalizado e recebe pintura e decalques.
-        const mint = visual.scene.getObjectByName(`MINT_WEAPON_${bakedWeapon.toUpperCase()}`)
-          || (golden ? visual.weaponMeshes[0] : null);
+        // Só MINT_WEAPON_* é wrap Mint; a golden já traz a arma final no próprio rig.
+        // Reusar a primeira mesh aplicava material/enquadramento que ampliava a AK.
+        const mint = visual.scene.getObjectByName(`MINT_WEAPON_${bakedWeapon.toUpperCase()}`);
         if (mint) entry.mint = { active: mint, wraps: new Map(), weaponId: bakedWeapon };
         entry.sockets = {
           muzzle: visual.scene.getObjectByName('SOCKET_MINT_MUZZLE') || null,

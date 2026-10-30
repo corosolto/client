@@ -183,9 +183,10 @@ const P1H_FORE = ((_p1h.length === 2 && !isNaN(_p1h[1]) ? _p1h[1] : -50)) * Math
 const CANARINHO_P1H_ARM = 32 * Math.PI / 180;
 const CANARINHO_P1H_FORE = -16 * Math.PI / 180;
 const P1H_MAO_L = [-0.19, -0.06, 0.02];
-/* Corpos onde o overlay balona a malha (select-inflate: p99 acima do teto). O delta de
-   braço soma em cima de um bind próprio; nesses rigs o clipe cru já lê melhor. */
+/* Corpos onde o clipe 1H autorado já resolve a anatomia e não aceita o overlay genérico. */
 const P1H_SKIP = new Set(['canarinho', 'bonzo']);
+/* Esquerdomacho alternava entre clipe 1H e overlay. Usa locomotiva base + um único overlay. */
+const P1H_BASE_CLIP = new Set(['esquerdomacho']);
 const loader = new GLTFLoader();
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 
@@ -1035,11 +1036,12 @@ class CharController {
         this._landT = Math.max(0, this._landT - dt);
         this._to('crouch');
       } else if (!this.shooting && !this.jumping) {
-        if (moving <= 0.05) { this._to(this.oneHanded && this.actions.idle1h ? 'idle1h' : 'idle'); this._loco = 'idle'; }
+        const usaClipe1h = this.oneHanded && !P1H_BASE_CLIP.has(this.bodyId);
+        if (moving <= 0.05) { this._to(usaClipe1h && this.actions.idle1h ? 'idle1h' : 'idle'); this._loco = 'idle'; }
         else if (back) {
           // Backpedal: walk clip REVERSED (negative timeScale below) so the feet step
           // backward — a forward clip while retreating is the classic moonwalk.
-          this._to(this.oneHanded && this.actions.walk1h ? 'walk1h' : 'walk'); this._loco = 'walk';
+          this._to(usaClipe1h && this.actions.walk1h ? 'walk1h' : 'walk'); this._loco = 'walk';
         } else {
           // Pick the clip by SPEED with hysteresis (not by hasTarget): fast movement with
           // the slow walk clip needs a frantic ~2.4x cycle; slow movement with the run
@@ -1047,7 +1049,7 @@ class CharController {
           if (this._loco !== 'run' && speed > 1.45) this._loco = 'run';
           else if (this._loco !== 'walk' && speed < 1.15) this._loco = 'walk';
           else if (this._loco !== 'walk' && this._loco !== 'run') this._loco = hasTarget && speed < 1.7 ? 'walk' : 'run';
-          this._to(this._loco === 'walk' && this.oneHanded && this.actions.walk1h ? 'walk1h' : this._loco);
+          this._to(this._loco === 'walk' && usaClipe1h && this.actions.walk1h ? 'walk1h' : this._loco);
         }
       }
       // Per-clip cycle rate = ground speed / that clip's measured natural speed, so the
@@ -1237,9 +1239,11 @@ class CharController {
          Canarinho recebe um porte curto próprio: os 50° humanos inflam a asa, mas sem
          overlay o cotovelo fica quase reto e a pistola lê como pendurada. */
       const canarinho1h = this.bodyId === 'canarinho';
+      const usaBase1h = P1H_BASE_CLIP.has(this.bodyId);
+      const clipeAceita1h = usaBase1h ? /^(idle|walk|run)$/ : /^(idle1h|walk1h)$/;
       const quer1h = PORTE_1H && this.oneHanded && !this.emotando && this.lod < 1
         && (!P1H_SKIP.has(this.bodyId) || canarinho1h)
-        && /^(idle1h|walk1h)$/.test(this.curName || '');
+        && clipeAceita1h.test(this.curName || '');
       this._porte1hK += ((quer1h ? 1 : 0) - this._porte1hK) * Math.min(1, dt * 10);
       if (this._porte1hK > 0.004 && this.reloadK <= 0.05 && this.corpo?.size) {
         const k1 = this._porte1hK;
