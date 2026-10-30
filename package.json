@@ -241,7 +241,7 @@
     "eval:audioeventos": "node tools/eval/audio-eventos-check.mjs",
     "eval:audioannouncer": "node tools/eval/audio-announcer-check.mjs",
     "eval:audiovoicemix": "node tools/eval/audio-voice-mix-check.mjs",
-    "eval:audioprivate": "node tools/eval/audio-private-pack-check.mjs",
+    "eval:audioprivate": "node tools/eval/audio-private-pack-check.mjs && node tools/eval/javaporcos-audio-private-check.mjs",
     "eval:audioruntimeassets": "node tools/eval/audio-runtime-assets-check.mjs",
     "eval:menumusicreview": "node tools/eval/menu-music-review-check.mjs",
     "audio:inventario": "node tools/audio/inventariar.mjs",

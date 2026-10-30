@@ -37,6 +37,7 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MENU_MUSIC_ACTIVE_IDS } from '../public/js/menu-music-selection.js';
+import { JAVAPORCO_GRAVACOES } from '../public/js/data/javaporcos_audio.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 /* `--raiz=<dir>` troca a pasta de áudio inteira. Existe para a régua de alcance
@@ -101,6 +102,8 @@ if (prev?._privateBuild?.format === 'content-addressed-v1') {
     else if (value && typeof value === 'object') Object.values(value).forEach(collect);
   };
   collect(prev);
+  // As gravações instaladas fora do zip são consumidas diretamente pelo runtime.
+  collect(Object.values(JAVAPORCO_GRAVACOES).map(sample => sample.file));
   const unique = new Set(refs);
   const missing = [...unique].filter((ref) => !existsSync(join(PUBLICO, decodeURIComponent(ref))));
   const opaqueDir = join(AUDIO, 'a');

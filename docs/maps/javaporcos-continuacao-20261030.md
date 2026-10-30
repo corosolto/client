@@ -345,3 +345,31 @@ Recibo de publicação e estado mais recente do remoto/preview passam a ficar em
 sem novo ciclo de commits só para carimbar dados externos. Esse recibo e este
 ledger juntos são o ponto de retomada. Browser manual agora usa Ego Lite,
 TaskSpace3 `Codex root · Javaporcos PR1160 push`, página p1; não criar outra.
+
+### Push autorizado concluído; correção do build privado preparada
+
+Remoto confirmado em `12638394a48f010661fbf68308c62cf0b21666b7`: os11 commits
+foram enviados. Hook sem bypass:81/81,373,1s no runner/386s total.
+Logs preservados no diretório `artifacts/javaporcos-codex-20261030/push/`.
+Vercel `dpl_DhXRqhKUbhsJ9vPrWdwc2DCCE2xi` desse mesmoSHA terminouERROR:
+`audio:check` chamou de órfãos os dois MP3 novos, porque o gerador privado só
+coletava folhas do manifesto, enquanto audio.js consome a tabela runtime
+`data/javaporcos_audio.js` diretamente. Não são gravações antigas removíveis.
+
+Correção local: o ramo privado coleta também os caminhos da tabela real do
+runtime. Nenhuma exceção por nome/hash, remoção de arquivo ou mudança de áudio.
+`tools/eval/javaporcos-audio-private-check.mjs` executa o gerador real em fixture
+privada: antes vermelho com os mesmos2 órfãos; depoisJAP1 verde, mutantes órfão
+novo e gravação ausente reprovados(JAP2/3). Integrada em `eval:audioprivate`, que
+passou com a régua anterior. Revisão independente: sem achados, incluindo integração.
+`npm run check:vercel`:8/8 em54,1s. `npm run build` bloqueado antes do Astro pela
+montagem local intencional de preview privado dos viewmodels; não desmontada.
+`npm run audio:check` local usa manifesto NÃOprivado e acusa DEFASADO preexistente;
+não regenerado para esconder essa diferença. O build remoto não está aprovado.
+
+Próximo passo: pedir autorização para publicar este checkpoint adicional; depois
+rodar hook completo, confirmar novoSHA remoto e novo build Vercel. Não confundir
+preview anteriorREADY com o buildERROR desteSHA. CI remota ainda em andamento,
+com reguas-e-siteFAIL; sem afirmarCI verde. Sem merge ou publicação em produção.
+EgoTaskSpace3 foi encerrada sem navegação porque não há preview novo utilizável;
+nenhuma validação manual do previewERROR foi alegada. Aceite humano segue pendente.
