@@ -28,7 +28,11 @@
      JANELA2 o vidro mostra o cômodo ("janela preta atrás da grade", L* 6): material com o
              mapa de interior, metal ≤ 0,1, cortina de luminância média ≥ 0,25 e 10–40% das
              janelas acesas com emissivo quente (r > g > b) modulado pelo mesmo mapa.
-     BECOLUZ1 luz de sódio em cada beco ("beco sem fonte de luz", saco L* 6): com a câmera
+     JANELA3 rodada 4 ("grade de tábua branca", p95 L* da janela 54 contra 31 da parede): a
+             janela apagada não brilha sozinha (emissivo de luminância linear ≤ 0,01; o
+             0x4a4238 da rodada 3 dava 0,05) e a acesa compensa a cortina mais escura com
+             emissiveIntensity ≥ 1,2.
+    BECOLUZ1 luz de sódio em cada beco ("beco sem fonte de luz", saco L* 6): com a câmera
              posta em cada beco, a luz `beco-luz` vai para dentro dele a 4–5 m, quente,
              intensidade ≥ 4, alcance 10–16 m, decaimento 2, com luminária a ≤ 0,5 m.
              Rodada 4 ("beiral alaranjado", C* 11,4 → 28,8): é SpotLight de abertura ≤ 1,2 rad
@@ -49,6 +53,7 @@
      beco-limpo      tira a malha de decalques                       -> DECAL1
      zebra-veio      devolve as 10 tiras de altura inteira da rodada 2  -> ZEBRA1
      janela-preta    vidro volta ao cinza metálico 0x46525a, sem mapa    -> JANELA2
+     janela-tabua    janela apagada volta a emitir 0x4a4238                -> JANELA3
      beco-apagado    tira a luz dos becos                                 -> BECOLUZ1, POSTE1
      luz-presa       a luz não segue a câmera (fica no primeiro beco)     -> BECOLUZ1
      luz-bola        volta a pontual 0xffb060 a 18 (acende o forro do beiral) -> BECOLUZ1
@@ -57,7 +62,7 @@
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -149,6 +154,7 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     exige(vs.length === 2, 'MUTANTE janela-preta NÃO APLICOU');
     for (const v of vs) v.material = new THREE.MeshStandardMaterial({ color: 0x46525a, roughness: 0.12, metalness: 0.35 });
   }
+  if (MUT === 'janela-tabua') { const v = porNome('beco-vidro'); exige(v, 'MUTANTE janela-tabua NÃO APLICOU'); v.material.emissive.set(0x4a4238); }
   if (MUT === 'carro-nc') { exige(W.root.userData.carros?.length, 'MUTANTE carro-nc NÃO APLICOU'); W.root.userData.carros[0].id = 'byd_dolphin'; }
   if (MUT === 'carros-poucos') { exige(W.root.userData.carros?.length, 'MUTANTE carros-poucos NÃO APLICOU'); W.root.userData.carros.length = 9; }
   if (MUT === 'poste-viga') { const p = porNome('poste'); exige(p, 'MUTANTE poste-viga NÃO APLICOU'); p.geometry = new THREE.BoxGeometry(0.18, 9, 0.25); }
@@ -273,6 +279,15 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     exige(acesa.material.emissiveMap === acesa.material.map, 'luz da janela acesa não passa pela cortina (emissiveMap ≠ map)');
     exige(fr >= 0.1 && fr <= 0.4, `${(100 * fr).toFixed(0)}% das janelas acesas (faixa 10–40%)`);
     return `${apagada.count + acesa.count} janelas com cortina, ${acesa.count} acesas (${(100 * fr).toFixed(0)}%)`;
+  });
+
+  regra('JANELA3 janela apagada não acende a cortina sozinha', () => {
+    const apagada = porNome('beco-vidro'), acesa = porNome('beco-vidro-aceso');
+    exige(apagada && acesa, 'falta malha de vidro');
+    const e = apagada.material.emissive, y = (0.2126 * e.r + 0.7152 * e.g + 0.0722 * e.b) * apagada.material.emissiveIntensity;
+    exige(y <= 0.01, `janela apagada emite ${y.toFixed(3)} (teto 0,01): cortina vira tábua branca`);
+    exige(acesa.material.emissiveIntensity >= 1.2, `janela acesa a ${acesa.material.emissiveIntensity} (piso 1,2): some com a cortina escura`);
+    return `apagada emite ${y.toFixed(4)}, acesa a ${acesa.material.emissiveIntensity}`;
   });
 
   regra('BECOLUZ1 uma luz de sódio dentro de cada beco', () => {

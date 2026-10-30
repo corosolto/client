@@ -479,17 +479,22 @@ export function janelaTex() {
   const fundo = x.createRadialGradient(s * 0.5, s * 0.45, 8, s * 0.5, s * 0.5, s * 0.7);
   fundo.addColorStop(0, '#9a8c7c'); fundo.addColorStop(1, '#4a423a');
   x.fillStyle = fundo; x.fillRect(0, 0, s, s);
+  // dobra de largura sorteada a cada volta: com passo fixo (~57 px) o franzido casava com a grade
   const painel = (x0, x1, franzido) => {
+    let fase = 0, passo = franzido * (0.55 + 0.9 * r());
     for (let px = x0; px < x1; px += 2) {
-      const dobra = 0.5 + 0.5 * Math.sin((px - x0) * franzido + 1.7 * Math.sin((px - x0) * 0.031));
-      const v = 186 + dobra * 50 + r() * 6;
+      const volta = Math.floor(fase / 6.283);
+      fase += 2 * passo;
+      if (Math.floor(fase / 6.283) !== volta) passo = franzido * (0.55 + 0.9 * r());
+      const dobra = 0.5 + 0.5 * Math.sin(fase);
+      const v = 120 + dobra * 22 + r() * 6;
       x.fillStyle = `rgb(${v | 0},${(v * 0.97) | 0},${(v * 0.92) | 0})`;
       x.fillRect(px, s * 0.12, 2, s * (0.86 + 0.03 * Math.sin(px * 0.07)));
     }
   };
   painel(0, s * (0.34 + r() * 0.08), 0.11);
   painel(s * (0.6 + r() * 0.08), s, 0.09);
-  x.fillStyle = '#d8d2c6'; x.fillRect(0, 0, s, s * 0.13);
+  x.fillStyle = '#8a8276'; x.fillRect(0, 0, s, s * 0.13);
   for (let i = 0; i < 6; i++) { x.fillStyle = 'rgba(40,34,28,0.35)'; x.fillRect(0, s * 0.02 + i * 5, s, 1.5); }
   x.globalAlpha = 0.16; x.fillStyle = '#ffffff';
   x.beginPath(); x.moveTo(s * 0.1, s); x.lineTo(s * 0.45, 0); x.lineTo(s * 0.62, 0); x.lineTo(s * 0.27, s); x.fill();

@@ -106,8 +106,8 @@ export function buildInvasaoJavaporcos(scene, T) {
     cabo: lam({ map: TX.lataTex('#3a3630', 5), roughness: 0.8 }),
     metal: lam({ map: T.metal, color: 0x8d8880, metalness: 0.42, roughness: 0.55 }),
     vao: lam({ map: TX.ceramicaTex(), color: 0x1c1f22, roughness: 1 }),
-    janela: lam({ map: TX.janelaTex(), emissiveMap: TX.janelaTex(), roughness: 0.22, emissive: 0x4a4238, emissiveIntensity: 1 }),
-    janelaAcesa: lam({ map: TX.janelaTex(), emissiveMap: TX.janelaTex(), roughness: 0.22, emissive: 0xffb066, emissiveIntensity: 0.55 }),
+    janela: lam({ map: TX.janelaTex(), emissiveMap: TX.janelaTex(), roughness: 0.22, emissive: 0x120f0c, emissiveIntensity: 1 }),
+    janelaAcesa: lam({ map: TX.janelaTex(), emissiveMap: TX.janelaTex(), roughness: 0.22, emissive: 0xffb066, emissiveIntensity: 1.5 }),
     // só projeta sombra: o passe de cor não escreve nada (sombra de caixa no lugar do GLB)
     soSombra: new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }),
     barra: comPbr('peeling_painted_wall', TX.rebocoTex('#6f6354', 9), { color: 0xb0a89a }, { metros: 2.2 }),
