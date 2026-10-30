@@ -112,6 +112,7 @@ export function buildInvasaoJavaporcos(scene, T) {
     signPastel: lam({ map: T.signPastel }),
     signSindicato: lam({ map: T.signSindicato }),
     truckSide: lam({ map: T.truckSide }),
+    luminaria: new THREE.MeshStandardMaterial({ color: 0xffd8a8, emissive: 0xffb070, emissiveIntensity: 3, roughness: 0.4 }),
     reboco: [TX.COR.rebocoOcre, TX.COR.rebocoMenta, TX.COR.rebocoRosa, TX.COR.rebocoPalha]
       .map((c, i) => comPbr('worn_mossy_plasterwall', TX.rebocoTex(c, i + 1), { color: claro(c, 0.3) }, { metros: 3 })),
     toldo: [TX.COR.toldoA, TX.COR.toldoB, TX.COR.toldoC].map((c, i) => lam({ map: TX.toldoTex(c, i + 1) })),
@@ -455,7 +456,7 @@ function propsOpcionais(root, occluders, campo, rnd, cidade, PB) {
   }
   // praça: postes de luz nos cantos e caixote de feira; avenida: tampa de bueiro
   const P0 = -(20.25), P1 = -8;
-  for (const [x, z] of [[P0 + 0.7, P0 + 0.7], [P1 - 0.7, P0 + 0.7], [P1 - 0.7, P1 - 0.7]]) poe(PB, 'poste_luz_praca', { x, z, y: 0.18, targetH: 3.8, ry: 0 });
+  for (const [x, z] of [[P0 + 0.7, P0 + 0.7], [P1 - 0.7, P0 + 0.7], [P1 - 0.7, P1 - 0.7], [P0 + 0.7, P1 - 0.7]]) poe(PB, 'poste_luz_praca', { x, z, y: 0.18, targetH: 3.8, ry: 0 });
   for (const [x, z] of [[-19.4, -12.6], [-8.9, -15.4], [-8.9, -11.2]]) poe(PB, 'caixote_madeira', { x, z, y: 0.18, targetH: 0.45 });
   for (const [x, z] of [[-3, -15], [3, 22], [15, 3], [-24, -3], [2.5, -28], [-29, 2]]) poe(PB, 'tampa_bueiro', { x, z, y: 0.015, targetLen: 0.75, targetH: 0.06, ry: 0 });
   // porta de loja: engradado, cadeira de plástico e tambor encostados na fachada

@@ -349,6 +349,12 @@ function praca(kit, campo, rnd, b) {
     kit.placa(0.18, 8.5, 0.18, MAT.metal, tx + ox, ty, tz + oz, 0);
   kit.placa(2.4, 2.1, 2.4, MAT.caixaDagua, tx, ty + 8.5, tz, rnd() * 0.3);
   colisorRedondo(kit, tx, tz, 1.1, ty, ty + 8.5);
+  // luz de verdade só nos quatro postes da praça; os da rua só brilham (emissivo)
+  for (const [lx, lz] of [[b.x0 + 0.7, b.z0 + 0.7], [b.x1 - 0.7, b.z0 + 0.7], [b.x1 - 0.7, b.z1 - 0.7], [b.x0 + 0.7, b.z1 - 0.7]]) {
+    const luz = new THREE.PointLight(0xffb070, 8, 11, 2);
+    luz.position.set(lx, y + 3.55, lz); luz.name = 'praca-luz';
+    kit.root.add(luz);
+  }
   return { objetivo: [cx, cz - 2.0], feira };
 }
 
@@ -386,34 +392,66 @@ function colisorRedondo(kit, x, z, raio, minY, maxY) {
 
 /* ── POSTES E FIAÇÃO ───────────────────────────────────────────────────────────────── */
 function fiacao(kit, campo, rnd) {
-  const { MAT, caixa } = kit;
+  const { MAT } = kit;
   const borda = AV + CAL - 0.45;
   /* Cada LINHA de postes é uma calçada: o cabo só fecha vão entre vizinhos da mesma
      linha. Ligar todo par a menos de 16 m virava rede cruzando a avenida inteira. */
   const linhas = [];
   for (const s of [-1, 1]) {
     const ao = [], través = [];
-    for (let t = -28; t <= 28; t += 14) { ao.push([s * borda, t]); través.push([t, s * borda]); }
+    /* ±19 e ±31: em ±14 o poste caía na frente da porta das lojas e furava o toldo; 0 era
+       o meio do cruzamento. Cinco posições continuam lendo o `rnd` (ordem da mata). */
+    for (const t of [-31, -19, null, 19, 31]) { ao.push(t === null ? null : [s * borda, t]); través.push(t === null ? null : [t, s * borda]); }
     linhas.push(ao, través);
   }
   const postes = [];
   const vistos = new Set();
   const cabos = [];
+  const L = { fuste: [], cruzeta: [], braco: [], luminaria: [], lente: [], trafo: [] };
   for (const linha of linhas) {
     const topo = [];
-    for (const [x, z] of linha) {
+    for (const ponto of linha) {
+      rnd();
+      if (!ponto) { topo.push(null); continue; }
+      const [x, z] = ponto;
       const k = `${x.toFixed(2)}|${z.toFixed(2)}`;
       const y = campo.amostra(x, z);
       if (!vistos.has(k)) {
         vistos.add(k);
-        caixa(0.18, 9.0, 0.25, MAT.poste, x, y, z, { ry: (rnd() - 0.5) * 0.12 });
-        caixa(1.5, 0.12, 0.12, MAT.metal, x, y + 8.35, z, { collide: false, cast: false });
+        const naNS = Math.abs(Math.abs(x) - borda) < 1e-6;
+        const ry = naNS ? (x > 0 ? -Math.PI / 2 : Math.PI / 2) : (z > 0 ? Math.PI : 0);
+        const dx = Math.sin(ry), dz = Math.cos(ry);
+        L.fuste.push(mtx(x, y + 4.5, z, 1, 1, 1));
+        L.cruzeta.push(mtx(x, y + 8.35, z, 1.5, 0.12, 0.12, ry + Math.PI / 2));
+        L.braco.push(mtx(x + dx * 0.65, y + 7.75, z + dz * 0.65, 0.05, 0.05, 1.2, ry));
+        L.luminaria.push(mtx(x + dx * 1.25, y + 7.9, z + dz * 1.25, 0.24, 0.12, 0.5, ry));
+        L.lente.push(mtx(x + dx * 1.27, y + 7.835, z + dz * 1.27, 0.18, 0.02, 0.38, ry));
+        if (postes.length % 3 === 1) L.trafo.push(mtx(x - dx * 0.42, y + 6.3, z - dz * 0.42, 1, 1, 1));
+        kit.colliders.push({ minX: x - 0.17, maxX: x + 0.17, minY: y, maxY: y + 9, minZ: z - 0.17, maxZ: z + 0.17 });
         postes.push([x, y + 8.4, z]);
       }
       topo.push([x, y + 8.35, z]);
     }
-    for (let i = 0; i + 1 < topo.length; i++) cabos.push([topo[i], topo[i + 1]]);
+    for (let i = 0; i + 1 < topo.length; i++) if (topo[i] && topo[i + 1]) cabos.push([topo[i], topo[i + 1]]);
   }
+  const fusteGeo = new THREE.CylinderGeometry(0.10, 0.17, 9, 12);
+  const uv = fusteGeo.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 0.85 / 2.5, uv.getY(i) * 9 / 2.5);
+  const lote = (lista, geo, mat, nome, solido = false, sombra = true) => {
+    const m = new THREE.InstancedMesh(geo, mat, lista.length);
+    lista.forEach((mt, i) => m.setMatrixAt(i, mt));
+    m.name = nome; m.castShadow = sombra; m.receiveShadow = true; m.instanceMatrix.needsUpdate = true;
+    if (solido) kit.occluders.push(m); else m.userData.nonSolidSurface = true;
+    m.computeBoundingSphere(); kit.root.add(m);
+  };
+  const cubo = new THREE.BoxGeometry(1, 1, 1);
+  lote(L.fuste, fusteGeo, MAT.poste, 'poste', true);
+  lote(L.cruzeta, cubo, MAT.metal, 'poste-cruzeta');
+  lote(L.braco, cubo, MAT.metal, 'poste-braco', false, false);
+  lote(L.luminaria, cubo, MAT.cabo, 'poste-luminaria');
+  lote(L.lente, cubo, MAT.luminaria, 'poste-lente', false, false);
+  const trafoGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.85, 12);
+  lote(L.trafo, trafoGeo, MAT.medidor, 'poste-trafo');
   const seg = new THREE.BoxGeometry(1, 0.045, 0.045);
   const matrizes = [];
   const _q = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3();
