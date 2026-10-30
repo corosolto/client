@@ -82,7 +82,11 @@ export function buildInvasaoJavaporcos(scene, T) {
     rebocoDesc: [comPbr('damaged_plaster', TX.rebocoDescascadoTex('#c9a86a', 1), { color: claro('#d8b06a', 0.15) }, { metros: 2.6 }),
       comPbr('damaged_plaster', TX.rebocoDescascadoTex('#7f9db0', 2), { color: claro('#7f9db0', 0.15) }, { metros: 2.6 })],
     gramaCidade: comPbr('sparse_grass', TX.gramaTex(), {}, {}),
-    bloco: comPbr('concrete_pavement', TX.blocoTex(), { color: 0xc8c3b8 }, { metros: 1.0 }),
+    // muro de bloco: mancha de umidade do reboco musgoso e a junta do bloco só no relevo (sdL 2,8 com o liso)
+    bloco: (() => {
+      const cor = TX.pbr('worn_mossy_plasterwall', { metros: 3 }), junta = TX.pbr('concrete_pavement', { repeat: 3, metros: 3 });
+      return cor ? lam({ ...cor, normalMap: junta.normalMap, roughness: 1, color: 0xc4c0b8 }) : lam({ map: TX.blocoTex(), color: 0xc8c3b8 });
+    })(),
     telha: lam({ map: TX.telhaTex() }),
     fibrocimento: lam({ map: TX.fibrocimentoTex() }),
     zinco: lam({ map: TX.zincoTex(), metalness: 0.35, roughness: 0.62 }),
