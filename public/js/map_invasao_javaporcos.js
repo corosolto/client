@@ -67,8 +67,8 @@ export function buildInvasaoJavaporcos(scene, T) {
     calcada: comPbr('concrete_pavement', TX.calcadaTex(), {}, { repeat: 0.8 }),
     bloquete: comPbr('patterned_cobblestone', TX.bloqueteTex(), {}, { repeat: 0.9 }),
     terra: comPbr('dirt', TX.terraTex(), {}, { repeat: 0.7 }),
-    // cor linear > 1: o dirt PBR tem L* 36 contra 49 da serrapilheira e a trilha lia piche
-    terraTrilha: comPbr('dirt', TX.terraTex(), { color: new THREE.Color(1.15, 0.9, 0.58), alphaMap: TX.manchaAlphaTex(), alphaTest: 0.42,
+    // cor linear > 1: sob o dossel só o hemi 0,95 alcança, e a 1,15/0,9/0,58 a trilha lia L* 20
+    terraTrilha: comPbr('dirt', TX.terraTex(), { color: new THREE.Color(2.3, 1.95, 1.6), alphaMap: TX.manchaAlphaTex(), alphaTest: 0.42,
       polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }),
     terraQuintal: comPbr('dirt', TX.terraTex(), { color: 0xa09684 }, { repeat: 0.7 }),
     grama: comPbr('forest_leaves_02', TX.gramaTex()),

@@ -18,6 +18,9 @@
      MATA5   cada árvore do mapa tem copa começando a ≤ 45% da altura do tronco em ≥ 90% das
              árvores; o andar mais alto de cada árvore tem raio ≥ 1,5 m; a copa impostora
              alta (y > 8 m) do horizonte tem raio ≥ 3,5 m.
+     TRILHA4 rodada 4 (crítico 30/10: com o hemi de volta a 0,95 a trilha da boca-so cai de
+             L* 30 para 20): cor do retalho com luminância linear ≥ 1,6 e r/b ≤ 1,6 (a luz
+             vem só do hemi sob o dossel; mais amarelo sobe o b* médio das vistas).
      CUPIM1  o torno do cupinzeiro tem 3 lóbulos (harmônico 3 do raio ≥ 0,12 do raio médio
              nos anéis do meio) e cada cupinzeiro tem ≥ 2 torrões de 0,3–0,5 m de raio.
 
@@ -26,9 +29,10 @@
      copa-pirulito   andar de cima de cada árvore volta a 1,1 m de raio      -> MATA5
      tronco-pelado   andar de baixo de cada árvore sobe para junto do de cima -> MATA5
      cupim-cone      torno volta a ConeGeometry lisa, sem torrão             -> CUPIM1
+     trilha-piche    cor do retalho volta a 1,15/0,9/0,58                     -> TRILHA4
    ============================================================================ */
 
-export const MUTANTES = ['trilha-degrau', 'copa-pirulito', 'tronco-pelado', 'cupim-cone'];
+export const MUTANTES = ['trilha-piche', 'trilha-degrau', 'copa-pirulito', 'tronco-pelado', 'cupim-cone'];
 const HALF = 58;
 
 export function regrasMata({ W, THREE, MUT, regra, exige }) {
@@ -108,6 +112,16 @@ export function regrasMata({ W, THREE, MUT, regra, exige }) {
     }
     exige(!ruins, `${ruins} de ${pis.count} retalhos com ponto a ${pior.toFixed(2)} m do chão em ${onde} (teto 0,12): degrau no barranco`);
     return `${pis.count} retalhos, pior ponto a ${pior.toFixed(3)} m do chão`;
+  });
+
+  if (MUT === 'trilha-piche') { exige(pis?.material?.color, 'MUTANTE trilha-piche NÃO APLICOU'); pis.material.color.setRGB(1.15, 0.9, 0.58); }
+  regra('TRILHA4 trilha clara sob o dossel, sem amarelar', () => {
+    const c = pis?.material?.color;
+    exige(c, 'sem cor no retalho da trilha');
+    const y = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b, rb = c.r / Math.max(1e-3, c.b);
+    exige(y >= 1.6, `luminância linear da cor ${y.toFixed(2)} (piso 1,6): trilha L* 20 sob o dossel`);
+    exige(rb <= 1.6, `r/b ${rb.toFixed(2)} (teto 1,6): trilha amarela`);
+    return `cor ${c.r}/${c.g}/${c.b}, luminância ${y.toFixed(2)}, r/b ${rb.toFixed(2)}`;
   });
 
   /* ------------------------------------------------------------------ MATA5 */
