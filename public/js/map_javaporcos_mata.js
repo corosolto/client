@@ -419,7 +419,7 @@ export function construirPasto(kit, campo, rnd) {
     return geo;
   };
   const capim = [], capimCor = [], touceiras = [], touceiraCor = [];
-  const tom = (seco) => new THREE.Color().setRGB(0.86 + 0.3 * seco, 0.92 + 0.06 * seco, 0.74 - 0.12 * seco);
+  const tom = (seco) => new THREE.Color().setRGB(0.84 + 0.26 * seco, 0.92 + 0.06 * seco, 0.86 - 0.1 * seco);
   const secura = (x, z) => 0.5 + 0.5 * Math.sin(x * 0.11 + 1.3) * Math.cos(z * 0.13 - 0.4);
   for (let x = -MATA_R; x <= MATA_R; x += 0.5) {
     for (let z = -MATA_R; z <= MATA_R; z += 0.5) {
