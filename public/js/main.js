@@ -426,7 +426,7 @@ function showLoading(label, status = 'CARREGANDO MODELOS 3D…', mapName = '') {
     if (mapName && currentEnemyFaction) {
       a.textContent = tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'E') || FACTION_NAME[currentTeam] || ''); a.style.color = (PALETA[currentTeam] || {}).base || '#e0762a';
       const ladoDele = currentTeam === 'B' ? 'E' : 'B';
-      b.textContent = currentMap === 'invasao_javaporcos' && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || ''); b.style.color = (PALETA[ladoDele] || {}).base || '#8258d8';
+      b.textContent = tr(currentMap === 'invasao_javaporcos' && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || ''); b.style.color = (PALETA[ladoDele] || {}).base || '#8258d8';
       vs.classList.remove('hidden');
     } else vs.classList.add('hidden');
   }

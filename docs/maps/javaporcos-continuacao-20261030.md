@@ -662,3 +662,15 @@ lajes-antes.log,lajes-depois.log,lajes-mutante.log e weapon-matrix-push.log.
 Próximo: concluir hook inicial, checkpoint dessas correções, repetir push normal,
 acompanhar CI/preview do SHA novo. Publicação coordenada do backend e dois clientes
 WS continuam pendentes; não confundir fixture com multiplayer publicado.
+
+Checkpoint de fixtures87467392b. Segundo push normal: boot/mutações e matriz verdes,
+mas eval:redesign/UIR1 bloqueou envio. A leitura dos últimos trechos do runner não
+mostrou esse vermelho intermediário; registrar e consultar todos os FALHOU, não
+apenas tail. Rótulo triplo de showLoading escapava tr(); agora tr envolve o ternário
+inteiro. Régua normaliza o ramo somente dentro de tr e ganhou mutante
+loading-triplo-fora-tr que reproduz o antes: UIR1 vermelha. Redesign final verde,
+mutantes loading-sem-tr/loading-fallback-fora-tr/sem-i18n também detectados.
+O mutante sem-i18n ainda apontava MAP_IDS; atualizado para o uso real MAPAS_MENU
+antes de validar, pois antes falhava como MUTAÇÃO IMPOSSÍVEL, sem medir o defeito.
+Revisão adversarial dos dois arquivos sem achados. Nada enviado nas duas tentativas;
+próximo checkpoint e terceiro push normal, depois CI/preview do SHA exato.

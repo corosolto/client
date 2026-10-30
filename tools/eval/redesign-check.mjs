@@ -19,6 +19,7 @@ const alvoPorMutante = {
   'sem-i18n': 'UIR1',
   'loading-sem-tr': 'UIR1',
   'loading-fallback-fora-tr': 'UIR1',
+  'loading-triplo-fora-tr': 'UIR1',
   'preview-render': 'UIR2',
   'preview-decode': 'UIR3',
   'mapa-esconde-um': 'UIR4',
@@ -162,9 +163,12 @@ main = muta('loading-sem-tr', main, 'a.textContent = tr(nomeTimeJavaporcos', 'a.
 main = muta('loading-fallback-fora-tr', main,
   "a.textContent = tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'E') || FACTION_NAME[currentTeam] || '')",
   "a.textContent = tr('') || (FACTION_NAME[currentTeam] || '')");
+main = muta('loading-triplo-fora-tr', main,
+  "b.textContent = tr(currentMap === 'invasao_javaporcos' && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || '')",
+  "b.textContent = currentMap === 'invasao_javaporcos' && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || '')");
 main = muta('sem-i18n', main,
-  "`${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`",
-  "`MAPA ${MAP_IDS.indexOf(currentMap) + 1} DE ${MAP_IDS.length}`");
+  "`${tr('MAPA')} ${MAPAS_MENU.indexOf(currentMap) + 1} ${tr('DE')} ${MAPAS_MENU.length}`",
+  "`MAPA ${MAPAS_MENU.indexOf(currentMap) + 1} DE ${MAPAS_MENU.length}`");
 main = muta('preview-render', main,
   "if ((csOpen || hubPreviewOpen) && pv && pv.model && !previewVideoVisible()) {",
   "if ((csOpen || hubPreviewOpen) && pv && pv.model) {");
@@ -606,7 +610,8 @@ const loadingAcoes3d = new Set(loadingActions).size >= 6
 const funcLoop = blocoFuncao(main, 'loop');
 const funcShow = blocoFuncao(main, 'show');
 const funcMap = blocoFuncao(main, 'renderMapScreen');
-const mainLoadingI18n = main.replace(/nomeTimeJavaporcos\(currentMap === 'invasao_javaporcos' \? 'horde' : '', '[EB]'\) \|\| /g, '');
+const mainLoadingI18n = main.replace(/nomeTimeJavaporcos\(currentMap === 'invasao_javaporcos' \? 'horde' : '', '[EB]'\) \|\| /g, '')
+  .replace("tr(currentMap === 'invasao_javaporcos' && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : ", 'tr(');
 const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main)
   && /tr\(FACTION_NAME\[c\.team\] \|\| ''\)[\s\S]{0,160}tr\('PERSONAGENS'\)/.test(main)
   && /a\.textContent = tr\(FACTION_NAME\[currentTeam\] \|\| ''\)/.test(mainLoadingI18n)
