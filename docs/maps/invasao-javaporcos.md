@@ -1,8 +1,8 @@
 <!-- spec:mapa -->
 # 02 — Invasão dos Javaporcos
 
-Modo cooperativo de sobrevivência e pontuação numa cidade do interior CERCADA de mata
-fechada. O time segura ondas de javalis e javaporcos que saem de três trilhas de mata,
+Modo de sobrevivência, disputa territorial e pontuação numa cidade do interior CERCADA de mata
+fechada. O time segura ondas de javalis e javaporcos que saem de seis frentes de mata,
 cruzam o pasto, entram pelas ruas e pelos becos, reviram o lixo e avançam sobre a feira, a mercearia e a igreja. Sem
 gore: impacto, poeira, tropeço e desaparecimento substituem ferimentos explícitos.
 
@@ -20,7 +20,7 @@ Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
 [`invasao-javaporcos-layout.md`](invasao-javaporcos-layout.md).
 
 - **Pegada:** 116 × 116 m (`bounds` ±58), com r = max(|x|, |z|). Miolo urbano em
-  `cityBounds` ±36; pasto de r = 36 a 44; mata de 44 a 58.
+  `cityBounds` ±36; pasto de r = 36 a 54; mata de 54 a 68.
 - **Malha urbana:** avenida em cruz de 12 m (x = 0 e z = 0) com calçada de 2 m e meio-fio
   de 0,15 m; viela de terra de 3,5 m em |x| = 22 e |z| = 22; anel perimetral de terra
   entre 31,5 e 36 m. A calçada PARA no cruzamento — ela não atravessa a pista.
@@ -31,10 +31,10 @@ Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
 - **Pasto:** capim denso em cartão, touceira alta, cupinzeiro, cerca de mourão com
   arame a 37,2 m e trilha de terra batida da boca até a cidade. Linha de tiro aberta da
   borda da cidade até a mata.
-- **Mata:** ~940 árvores instanciadas (tronco + três camadas de copa achatada) e ~3.700
-  peças de sub-bosque, cipó e capim. A orla de 44 a 44,6 m é caminhável, com colisor
-  por tronco; de 44,6 m para fora é parede de colisor até a borda.
-- **Entradas:** 3 frentes (norte, leste, sudoeste). Cada uma é uma trilha de 3,5 m que
+- **Mata:** 1.018 árvores instanciadas (tronco + três camadas de copa achatada) e ~3.700
+  peças de sub-bosque, cipó e capim. A faixa de 54 a 63 m é explorável, com colisor por tronco;
+  o limite externo de 63 a 68 m fecha a arena.
+- **Entradas:** seis frentes nos quatro lados (norte, leste, sul e oeste). Cada uma é uma trilha de 3,5 m que
   entra na mata, DOBRA e morre numa clareira de 3 m de raio; o resto da mata é fechado.
 - **Becos:** 4, um por lado, de 2,5 m entre fundos de casa, do anel perimetral à viela.
 - **Relevo:** pasto subindo 0,45 m até a mata, barranco de 2,6 m até o platô, córrego de
@@ -163,24 +163,34 @@ Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
 
 ## Domínio
 
-Decisão do dono (30/10/2026): os javaporcos querem DOMINAR o bairro e o jogador tem de
-impedir. A % de domínio substituiu os três objetivos com vida. Vitória: sobreviver às 8
-ondas (`WAVE_COUNTS` intocado). Derrota: domínio em 75%.
+Decisão atual do dono (30/10/2026): E × B × Javaporcos no multiplayer. Os dois
+times humanos podem se enfrentar, e a horda ataca ambos. No singleplayer, o menu
+permite jogador/time contra horda ou três lados. Domínio de 100% não encerra a
+partida. Um integrante vivo mantém sua equipe; o wipe elimina a equipe inteira.
+A opção de wipe também pode encerrar a partida com vitória da horda.
 
-**Modelo.** Cada setor tem `controle` de 0 a 1. Sobe quando há pelo menos `minBichos`
-javaporcos vivos dentro e nenhum defensor; desce quando há defensor e nenhum bicho;
-disputado (os dois dentro) fica parado. O domínio é a média dos controles ponderada
-por `peso`. Setor com controle 1 é "tomado" e fica vermelho no mini-mapa. A conta roda
-a 4 Hz no host e vai no snapshot.
+**Limites.** SP infinito por padrão, ou limite de abates, mortes ou minutos no menu.
+MP usa a proposta de 1000 abates somados ou 30 minutos. Defaults provisórios até
+resposta do dono: wipe elimina só o time; maior território vence no limite, abates
+desempatam e igualdade restante é empate. Não houve escolha posterior confirmada.
 
-**Como a horda anda.** Nasce no início da `rota` de uma das 3 frentes (rodízio por
-`seed + onda + ordinal`), segue os pontos da rota até a borda da cidade e só então
-escolhe alvo: jogador no raio de agressão > lixo > setor. No setor em que está, se não
-for tomado, ela VAGA (pontos a 3–6 m, no ritmo de 55%); quando ele é tomado, vai ao
-setor não tomado mais perto que não esteja lotado. Bicho perseguindo jogador já dentro
-da cidade larga a rota. A partir da onda 3, parte dos bichos é sorteada para o BECO:
-depois da rota da frente emenda `de → ate` do beco aberto mais perto da boca e explora
-o quarteirão (revira lixo num raio de 7 m ou vaga) por 9 s antes de seguir.
+**Modelo.** Cada setor divide sua área entre E, B, J e área livre. A soma nunca
+excede 100%, inclusive quando um animal saqueia uma loja. Três animais sem humanos
+fazem a ocupação crescer. Limpar reduz a ocupação mesmo sem defensor presente;
+um time humano sozinho passa a controlar a área. Presença rival mantém disputa.
+O domínio é ponderado pela área dos setores, calculado a 4 Hz no host e replicado.
+
+**Como a horda anda.** Bandos alternados de três e quatro usam seis frentes e
+becos, distribuem seus destinos pelos setores e procuram lixo e lojas próximos.
+Sem provocação perseguem apenas quem está a seis metros; alertados reagem à
+provocação. Desvios individuais contínuos evitam rumos idênticos. O aríete mantém
+sua investida. As quatro classes têm cinco variações de proporção cada.
+
+**Refúgios.** Duas lajes no pasto, em x ±42, com z escolhido sem colisores (E −4/B −16 no layout atual),
+têm escada de 18 degraus, patamar, guarda e salto final de 0,45 m. São os
+pontos de respawn dos humanos e ficam acima do alcance dos javaporcos. As lajes
+continuam expostas a tiros dos humanos rivais. Cadáveres da horda tombam de lado,
+assentam no terreno e permanecem 120 segundos, com limite de oito corpos.
 
 **Relógio.** A fúria (que já mexia em cadência, velocidade, dano e raio) ganhou um termo
 de tempo de partida: `+0,1 por minuto`, sob o mesmo teto de 1,6. Com zero abates na onda
@@ -191,17 +201,18 @@ de tempo de partida: `+0,1 por minuto`, sob o mesmo teto de 1,6. Com zero abates
 "gastava" no objetivo), então uma onda com bicho escondido nunca fechava: medido, a
 semente 11 ficou 9 min presa na onda 3. Agora, com a onda inteira já na rua e
 `COMBAT_SECONDS` (75 s, número de antes) zerado, a próxima vem com as sobras ainda vivas.
-Na onda 8, chegar ao fim do relógio é a vitória.
+Após a oitava onda, a composição final se repete. O runtime usa ondas sem limite;
+a fábrica pura mantém seu limite opcional para testes de partidas finitas.
 
 | constante | valor | o que decide |
 | --- | --- | --- |
-| `DOMINIO.derrota` | 0,75 | derrota (decisão do dono). |
+| `DOMINIO.max` | 1 | ocupação máxima; não encerra a partida. |
 | `DOMINIO.minBichos` | 3 | bichos sem defensor para o setor começar a cair; 1 ou 2 extraviados não tomam nada. |
 | `DOMINIO.sobe` | 1/40 por s | 40 s de setor ocupado e sem defensor para tomá-lo. Com 1/20 os bots perdiam já na onda 3 (3,2–3,6 min); com 1/40 perdem nas ondas 5–7 (7,2–9,9 min), o mesmo ponto em que perdiam pelos objetivos antigos (ondas 4–7, 3,0–9,0 min). |
 | `DOMINIO.desce` | 1/10 por s | retomar é 4× mais rápido que perder: limpar o setor e ficar 10 s devolve tudo. |
 | `DOMINIO.passo` | 0,25 s | período da contagem por setor (O(bichos × setores), 4 Hz basta). |
 | `DOMINIO.lotado` | 6 | acima disso no setor-alvo, o bicho prefere o próximo: é o que espalha a horda. |
-| `FRENTES` | 3 | frentes de trilha (decisão do dono). |
+| `FRENTES` | 3 | fallback; o mapa autoral exporta seis frentes. |
 | `BECO.abreNaOnda` | 3 | padrão quando o beco do mapa não diz (decisão do dono). |
 | `BECO.fracao` | 0,4 | fatia da onda sorteada para o beco (determinística, semente + ordinal). |
 | `BECO.explorar` | 9 s | tempo de "explorar" o quarteirão depois do beco. |
@@ -215,10 +226,11 @@ Na onda 8, chegar ao fim do relógio é a vitória.
 mais afastadas entre si (no mapa de 29/10: n1, s3 e l1), com rota da clareira até a borda
 de `cityBounds`. Becos: nenhum. Setores: grade 4×4 sobre `cityBounds`, peso 1.
 
-**HUD.** O painel do topo ganhou "DOMÍNIO DA HORDA x%" com "n/N SETORES TOMADOS · PERDE
-EM 75%" ao lado, a barra com a marca branca em 75% e o mini-mapa de 96 px (setor verde = livre,
-laranja = caindo, vermelho = tomado; ponto vermelho = boca de frente; ponto amarelo = beco
-aberto; ponto branco = jogador).
+**HUD.** Relógio de partida contínuo e contagem de onda separada. No modo triplo,
+as três parcelas de território e os abates por equipe aparecem identificados;
+TAB mostra três colunas, com avatar do javaporco. No cooperativo, um placar reúne
+os defensores e a contagem real de abates. O mini-mapa usa laranja para E, roxo para
+B e vermelho para J; a área livre é verde. Não há marca de derrota territorial.
 
 **A/B medido** (`tools/eval/javaporcos-dominio-sim.mjs --becos=vielas`, jogo real no
 mapa de 29/10, jogador parado + 2 bots aliados, 5 sementes; antes = código de 66da760 com

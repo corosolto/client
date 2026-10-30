@@ -11,6 +11,8 @@ import { setMapSky } from './map_sky.js';
 import { CampoDeAltura, malhaTerreno, HALF, CIDADE, MATA_R, EIXOS, CORREGO_MEIA, corregoZ, corteCorrego, distPasto, PASSO } from './map_javaporcos_relevo.js';
 import { construirMata, construirPasto } from './map_javaporcos_mata.js';
 import { construirCidade, amassaSaco, CIDADE_R, AV, CAL } from './map_javaporcos_cidade.js';
+import { construirRefugios, pisoDosRefugios } from './map_javaporcos_refugios.js';
+import { agruparConstrucoes } from './map_javaporcos_lotes.js';
 import * as TX from './map_javaporcos_texturas.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -170,6 +172,7 @@ export function buildInvasaoJavaporcos(scene, T) {
     const geo = VAO_BANDS ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING })
       : new THREE.BoxGeometry(w, h, d);
     const m = new THREE.Mesh(geo, VAO_BANDS ? aoMat(mat) : mat);
+    m.userData.construcaoImovel = true;
     m.position.set(x, y + h / 2, z);
     if (opts.ry) m.rotation.y = opts.ry;
     m.castShadow = opts.cast !== false; m.receiveShadow = true;
@@ -204,6 +207,7 @@ export function buildInvasaoJavaporcos(scene, T) {
     for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (w / tile), uv.getY(i) * (d / tile));
     uv.needsUpdate = true;
     const m = new THREE.Mesh(geo, mat);
+    m.userData.construcaoImovel = true;
     m.rotation.x = -Math.PI / 2;
     m.position.set(x, y, z); m.receiveShadow = true; m.name = nome;
     root.add(m);
@@ -212,6 +216,7 @@ export function buildInvasaoJavaporcos(scene, T) {
 
   const placa = (w, h, d, mat, x, y, z, ry = 0, rz = 0) => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.userData.construcaoImovel = true;
     m.position.set(x, y + h / 2, z);
     m.rotation.set(0, ry, rz);
     m.castShadow = true; m.receiveShadow = true;
@@ -267,9 +272,11 @@ export function buildInvasaoJavaporcos(scene, T) {
   aplicaSombraSol(sun);
 
   // ── Navegação
-  const nav = navegacao(colliders, campo, cidade.portas);
+  const hordeRefuges = construirRefugios(kit, campo);
+  agruparConstrucoes(root, occluders);
+  const nav = navegacao(colliders, campo, cidade.portas, hordeRefuges);
 
-  const groundHeightAt = (x, z) => campo.amostra(x, z);
+  const groundHeightAt = (x, z, yRef) => pisoDosRefugios(hordeRefuges, x, z, yRef, campo.amostra(x, z));
   /* Spawns no eixo da avenida, longe da fila de carros: o MAP2B cobra 1,20 m de folga de
      parede e 40 m² de chão contíguo, e nascer encostado em lataria reprova os dois. */
   const spawns = {
@@ -281,6 +288,8 @@ export function buildInvasaoJavaporcos(scene, T) {
   return {
     mode: 'horde', root, colliders, occluders, pickups, sun, hemi, spawns,
     groundHeightAt,
+    hordeRefuges,
+    stairs: hordeRefuges.map(r=>({nome:`escada refúgio ${r.team}`,x0:r.x-1,x1:r.x+1,z0:r.z+4.66,z1:r.z+9.98,topo:r.y-.45})),
     waypoints: { nodes: nav.nodes, adj: nav.adj },
     nearestWaypoint: nav.nearestWaypoint,
     findPath: nav.findPath,
@@ -576,8 +585,9 @@ function propsOpcionais(root, occluders, campo, rnd, cidade, PB) {
 
 /* NAVEGAÇÃO — grade de 1,5 m, costura explícita na porta de cada loja e índice de célula
    para `nearestWaypoint` sair de O(n) para O(1). O modo chama isso ~180×/s. */
-function navegacao(colliders, campo, portas) {
+function navegacao(colliders, campo, portas, refugios) {
   const livre = (x, z) => {
+    if (refugios.some(r=>Math.abs(x-r.x)<3.5 && z>r.z-3.5 && z<r.z+10.5)) return false;
     const y = campo.amostra(x, z);
     for (const c of colliders) {
       if (x < c.minX - RAIO_NAV || x > c.maxX + RAIO_NAV || z < c.minZ - RAIO_NAV || z > c.maxZ + RAIO_NAV) continue;

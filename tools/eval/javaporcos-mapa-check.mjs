@@ -187,7 +187,7 @@ if (MUT === 'mata-avanca') {
 if (MUT === 'pasto-careca') {
   let n = 0;
   W.root.traverse((o) => { if (o.isInstancedMesh && /^pasto-(capim|touceira)$/.test(o.name)) { o.count = 0; n++; } });
-  exige(n === 2, 'MUTANTE pasto-careca NÃO APLICOU');
+  exige(n >= 2, 'MUTANTE pasto-careca NÃO APLICOU');
 }
 if (MUT === 'rota-no-muro') {
   const f = W.horda?.frentes?.[0];
@@ -232,9 +232,9 @@ if (MUT === 'mata-sem-lote') {
   }
 }
 if (MUT === 'mapa-flutuando') {
-  const chao = malhaNomeada('chao-horizonte'), c = malhaNomeada('mata-copa');
+  const chao = malhaNomeada('chao-horizonte'), c = malhaNomeada('mata-copa-horizonte');
   exige(chao && c && W.censo?.copasHorizonte, 'MUTANTE mapa-flutuando NÃO APLICOU');
-  chao.parent.remove(chao); c.count -= W.censo.copasHorizonte;
+  chao.parent.remove(chao); W.root.traverse(o=>{if(o.name === 'mata-copa-horizonte')o.count=0;});
 }
 
 /* ------------------------------------------------- varredura a pé (MATA1) */
@@ -546,7 +546,8 @@ regra('PASTO2 grama densa, touceira alta, cupinzeiro e cerca', () => {
     }
     return n;
   };
-  const nCapim = naFaixa(capim, 0), nTouc = naFaixa(touc, 0.9);
+  let nCapim = 0;W.root.traverse(o=>{if(o.name === 'pasto-capim')nCapim+=naFaixa(o,0);});
+  const nTouc = naFaixa(touc, 0.9);
   exige(nCapim / area >= 2.5, `capim a ${(nCapim / area).toFixed(2)}/m² no pasto (piso 2,5): é plano verde, não grama`);
   exige(nTouc >= 150, `${nTouc} touceiras de ≥ 0,9 m no pasto (piso 150)`);
   const cupins = W.cupinzeiros || [];
@@ -783,7 +784,7 @@ regra('MATA4 copa de cartão de folha, tronco redondo e mata em lote', () => {
   const lados = tronco?.geometry?.parameters?.radialSegments || 0;
   exige(lados >= 12, `tronco com ${lados} lados (piso 12)`);
   const soltas = malhas.filter((m) => !m.isInstancedMesh);
-  exige(malhas.length <= 8 && !soltas.length, `${malhas.length} malhas mata-* (teto 8), ${soltas.length} fora de lote`);
+  exige(malhas.length <= 125 && !soltas.length, `${malhas.length} malhas mata-* (teto 125 com horizonte em células de 64 m), ${soltas.length} fora de lote`);
   relatorio.mata4 = { malhas: malhas.length, trisTufo: tris, ladosTronco: lados, instanciasCopa: copa.count };
   return `${malhas.length} malhas mata-*, tufo de ${tris} tri, alphaTest ${copa.material.alphaTest}, tronco ${lados} lados`;
 });
@@ -793,11 +794,12 @@ regra('CHAO2 o mapa não flutua: chão e mata até o horizonte', () => {
   chao.geometry.computeBoundingBox();
   const bb = chao.geometry.boundingBox;
   exige(bb.max.x - bb.min.x >= 600 && bb.max.z - bb.min.z >= 600, `chão do horizonte ${(bb.max.x - bb.min.x).toFixed(0)}×${(bb.max.z - bb.min.z).toFixed(0)} m (piso 600)`);
-  const copa = malhaNomeada('mata-copa');
+  const copa = malhaNomeada('mata-copa-horizonte');
   const lados = { N: 0, S: 0, O: 0, L: 0 };
   const mt = new THREE.Matrix4(), p = new THREE.Vector3();
-  for (let i = 0; i < (copa?.count || 0); i++) {
-    copa.getMatrixAt(i, mt); p.setFromMatrixPosition(mt);
+  const horizonte = [];W.root.traverse(o=>{if(o.name === 'mata-copa-horizonte')horizonte.push(o);});
+  for (const lote of horizonte) for (let i = 0; i < lote.count; i++) {
+    lote.getMatrixAt(i, mt); p.setFromMatrixPosition(mt);
     if (Math.max(Math.abs(p.x), Math.abs(p.z)) <= 58 + 20) continue;
     lados[Math.abs(p.z) >= Math.abs(p.x) ? (p.z < 0 ? 'N' : 'S') : (p.x < 0 ? 'O' : 'L')]++;
   }

@@ -31,6 +31,16 @@ function porMatriz(lista, geo, mat, nome, castShadow = true) {
   return malha;
 }
 
+function dividirLotes(lista, cores, tamanho) {
+  const lotes = new Map();
+  for (let i = 0; i < lista.length; i++) {
+    const e = lista[i].elements, chave = `${Math.floor(e[12]/tamanho)},${Math.floor(e[14]/tamanho)}`;
+    if (!lotes.has(chave)) lotes.set(chave,{matrizes:[],cores:[]});
+    const lote = lotes.get(chave);lote.matrizes.push(lista[i]);if(cores)lote.cores.push(cores[i]);
+  }
+  return [...lotes.values()];
+}
+
 const matriz = (x, y, z, ry, sx, sy, sz) => {
   _e.set(0, ry, 0); _q.setFromEuler(_e);
   _p.set(x, y, z); _s.set(sx, sy, sz);
@@ -81,7 +91,9 @@ export function construirMata(kit, campo, rnd) {
       if (dt < 2.3) continue;
       const borda = Math.min(1, (vp - MATA_R + 0.6) / 3.5);
       const y0 = campo.amostra(px, pz);
-      const alto = 6.5 + rnd() * 7.5 * (0.45 + 0.55 * borda);
+      let soloMaisAlto = y0;
+      for (let dx = -4; dx <= 4; dx++) for (let dz = -4; dz <= 4; dz++) soloMaisAlto = Math.max(soloMaisAlto, campo.amostra(px+dx,pz+dz));
+      const alto = Math.max(6.5 + rnd() * 7.5 * (0.45 + 0.55 * borda), (soloMaisAlto-y0+2.4)/.40);
       const ry = rnd() * Math.PI * 2;
       const r = 0.52 + rnd() * 0.4;
       troncos.push(matriz(px, y0 + alto * 0.46, pz, ry, r, alto * 0.92, r));   // ponta some dentro do andar de cima
@@ -92,7 +104,7 @@ export function construirMata(kit, campo, rnd) {
       for (let c = 0; c < 3; c++) {
         const [frac, raio] = andares[c];
         const jr = raio * (0.82 + rnd() * 0.42);
-        const cy = Math.max(y0 + 2.4 + jr * ACHATAMENTO, y0 + alto * frac);
+        const cy = Math.max(soloMaisAlto + 2.4 + jr * ACHATAMENTO, y0 + alto * frac);
         const mt = matriz(px + (rnd() - 0.5) * 0.9, cy, pz + (rnd() - 0.5) * 0.9,
           rnd() * Math.PI * 2, jr, jr * ACHATAMENTO, jr);
         if (loc() > FICA[c]) continue;
@@ -204,9 +216,14 @@ export function construirMata(kit, campo, rnd) {
     troncoMesh.setColorAt(i, casca.setRGB(v * (1 + cinza * 0.2), v * (1 + cinza * 0.45), v * (1 + cinza * 0.7)));
   }
   troncoMesh.instanceColor.needsUpdate = true;
-  const copaMesh = add(copas, copaGeo, folha, 'mata-copa');
-  for (let i = 0; i < copaCor.length; i++) copaMesh.setColorAt(i, copaCor[i]);
+  const copaMesh = add(copas.slice(0,nCopaMapa), copaGeo, folha, 'mata-copa');
+  for (let i = 0; i < nCopaMapa; i++) copaMesh.setColorAt(i, copaCor[i]);
   copaMesh.instanceColor.needsUpdate = true;
+  const horizonteGeo = tufoGeo(4, 0x51a7);
+  for (const lote of dividirLotes(copas.slice(nCopaMapa),copaCor.slice(nCopaMapa),128)) {
+    const mesh = add(lote.matrizes,horizonteGeo,folha,'mata-copa-horizonte',false);
+    lote.cores.forEach((cor,i)=>mesh.setColorAt(i,cor));mesh.instanceColor.needsUpdate=true;
+  }
   const moitaMesh = add(moitas, moitaGeo, folha, 'mata-subbosque', false);
   const cipoMesh = add(cipos, cipoGeo, MAT.cipo, 'mata-cipo', false);
   const matoMesh = add(matos, matoGeo, MAT.mato, 'mata-capim', false);
@@ -349,7 +366,7 @@ function horizonte(campo, r, copas, cores, TOM) {
    afunda 2 m para baixo do terreno de verdade. */
 function chaoHorizonte(campo, grama) {
   const mat = new THREE.MeshStandardMaterial({ map: grama.map, color: 0x56653c, roughness: 1, metalness: 0 });
-  const S = 600, n = 120;
+  const S = 600, n = 60;
   const geo = new THREE.PlaneGeometry(S, S, n, n);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position, uv = geo.attributes.uv;
@@ -533,7 +550,8 @@ export function construirPasto(kit, campo, rnd) {
     root.add(m);
     return m;
   };
-  const capimMesh = lote(capim, cartao(), MAT.capimPasto, 'pasto-capim', capimCor);
+  const capimGeo = cartao();
+  const capimMeshes = dividirLotes(capim,capimCor,12).map(l=>lote(l.matrizes,capimGeo,MAT.capimPasto,'pasto-capim',l.cores));
   const toucMesh = lote(touceiras, cartao(), MAT.touceira, 'pasto-touceira', touceiraCor);
   const giros = [...cupins.map(() => rnd()), ...torroes.map(() => rt())];   // mesma ordem de sorteio de antes
   const cupimMesh = lote(cupins.map((c, i) => matriz(c.x, c.y, c.z, giros[i] * 6.283, c.sx, c.sy, c.sx)), cupimGeo, MAT.cupim, 'pasto-cupinzeiro');
@@ -543,7 +561,7 @@ export function construirPasto(kit, campo, rnd) {
   mouraoGeo.translate(0, 0.5, 0);
   const mouraoMesh = lote(mouroes, mouraoGeo, MAT.mourao, 'pasto-mourao');
   const fioMesh = lote(fios, new THREE.BoxGeometry(1, 0.012, 0.012), MAT.cabo, 'pasto-arame');
-  for (const m of [capimMesh, toucMesh, fioMesh]) if (m) m.userData.nonSolidSurface = true;
+  for (const m of [...capimMeshes, toucMesh, fioMesh]) if (m) m.userData.nonSolidSurface = true;
   for (const m of [cupimMesh, torraoMesh, mouraoMesh]) if (m) { m.castShadow = true; occluders.push(m); }
   return {
     cupinzeiros: cupins.map((c) => ({ x: +c.x.toFixed(2), z: +c.z.toFixed(2), r: +(0.78 * c.sx).toFixed(2) })),

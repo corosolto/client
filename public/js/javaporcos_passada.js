@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 
 const geometrias = new WeakMap();
+const distantes = new WeakMap();
+export function registrarGeometriaDistante(original, distante) { distantes.set(original,distante); }
 const APOIO = .75;
 const FASES = [0, .5, .75, .25];
 
@@ -47,11 +49,24 @@ export function prepararPassada(pivo) {
     source.parent.add(mesh);
     source.removeFromParent();
     mesh.bind(new THREE.Skeleton([root, ...bones]));
-    mesh.frustumCulled = false;
-    rigs.push({ mesh, bones, ...data, pinned: [false, false, false, false],
+    data.geometry.computeBoundingSphere();
+    mesh.boundingSphere = data.geometry.boundingSphere.clone();
+    mesh.boundingSphere.radius += data.stride + data.height * .15;
+    mesh.frustumCulled = true;
+    const distante = distantes.has(source.geometry) ? geometriaPatas(distantes.get(source.geometry)).geometry : null;
+    rigs.push({ mesh, bones, ...data, distante, pinned: [false, false, false, false],
       anchors: data.feet.map(() => new THREE.Vector3()), local: new THREE.Vector3(), scale: new THREE.Vector3() });
   }
   pivo.userData.passada = { rigs, previous: new THREE.Vector3(), ready: false, phase: 0 };
+}
+
+export function selecionarDetalhePassada(pivo, distancia, mutante = '') {
+  const state = pivo.userData.passada;
+  if (!state) return;
+  const longe = mutante !== 'sem-lod' && distancia > (state.longe ? 16 : 18);
+  if (longe === state.longe) return;
+  state.longe = longe;
+  for (const rig of state.rigs) rig.mesh.geometry = longe && rig.distante ? rig.distante : rig.geometry;
 }
 
 export function atualizarPassada(pivo, pos, world, tempo, mutante = '') {

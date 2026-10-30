@@ -43,10 +43,10 @@
      duplica-assistencia / sem-morte   (mutantes antigos, preservados)
 
    DOMÍNIO (dono, 30/10/2026): "os javaporcos querem DOMINAR o mapa". Os três objetivos
-   com vida saíram; a derrota é 75% de domínio por setor. Cláusulas e mutantes novos:
+   com vida saíram; domínio é territorial e derrota exige todos os defensores mortos.
      dominio-surdo    setor nunca é tomado (controle não sobe)
      sem-retomada     defensor dentro do setor não devolve o controle
-     sem-derrota      75% de domínio não encerra a partida
+     sem-derrota      time inteiro morto não encerra a partida
      setor-cego       a horda não procura setor para tomar
      todo-lado        a horda volta a nascer nas dez bocas, não nas 3 frentes
      sem-rota         o bicho ignora a rota da trilha e corta direto
@@ -232,6 +232,12 @@ const passo = (ctx, dt) => {
   for (const bot of ctx.modo.boars) ctx.modo.updateBot(bot, dt);
 };
 const vivos = (modo) => modo.boars.filter((bot) => bot._boarId && bot.alive);
+regra('um sobrevivente mantém a resistência; wipe encerra a invasão', () => {
+  const ctx=jogoFalso(), aliado={...ctx.player,isPlayer:false,pos:ctx.player.pos.clone()};
+  ctx.game.combatants.push(aliado);ctx.player.alive=false;
+  ctx.modo.update(.016);assert.equal(ctx.modo.state.winner,null);
+  aliado.alive=false;ctx.modo.update(.016);assert.equal(ctx.modo.state.winner,'J');
+});
 /* Bicho já fora da trilha: as cláusulas de rumo, comida e muro medem o comportamento na cidade. */
 const soltar = (bots) => { for (const bot of bots) { bot._boarPasso = bot._boarPlano?.length || 0; bot._boarExplorarAte = 0; } };
 /* 2,5 s de onda: a cadência base é um bicho a cada 0,18 s, então um quadro só não
@@ -792,7 +798,8 @@ regra('corpos assentam no chão e a fila preserva os oito mais recentes', () => 
   abrirOnda(ctx, 3);
   for (const [i,b] of vivos(ctx.modo).slice(0,10).entries()) { b.yaw=i*Math.PI/4; ctx.modo.onKill(b,ctx.game.player); }
   assert.equal(ctx.modo.corpses.length,8);
-  ctx.game.time += 1; ctx.modo.atualizarCadaveres();
+  ctx.game.online = true;
+  ctx.game.time += 1; ctx.modo.updatePresentation();
   const box = new THREE.Box3();
   for (const corpse of ctx.modo.corpses) {
     corpse.visual.updateMatrixWorld(true); box.setFromObject(corpse.visual);
@@ -802,8 +809,8 @@ regra('corpos assentam no chão e a fila preserva os oito mais recentes', () => 
     const y = ctx.game.world.groundHeightAt(corpse.visual.position.x,corpse.visual.position.z);
     assert.ok(Math.abs(box.min.y-y-.015)<.01, `corpo sem contato: ${box.min.y-y}`);
   }
-  ctx.game.time += 45; ctx.modo.atualizarCadaveres(); assert.equal(ctx.modo.corpses.length,8);
-  ctx.game.time += 80; ctx.modo.atualizarCadaveres(); assert.equal(ctx.modo.corpses.length,0);
+  ctx.game.time += 45; ctx.modo.updatePresentation(); assert.equal(ctx.modo.corpses.length,8);
+  ctx.game.time += 80; ctx.modo.updatePresentation(); assert.equal(ctx.modo.corpses.length,0);
 });
 
 if (mutante) {

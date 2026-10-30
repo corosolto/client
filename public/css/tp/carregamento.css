@@ -74,6 +74,10 @@
   text-shadow:0 6px 0 color-mix(in srgb,var(--tp-lima) 40%,black),0 0 60px color-mix(in srgb,var(--tp-lima) 45%,transparent)}
 .tp-carga[data-forma="grade"] .tp-carga__vs{font-size:120px;color:var(--tp-lima)}
 .tp-carga[data-forma="vazio"] .tp-carga__vs{display:none}
+.tp-carga[data-times="3"] .tp-carga__vs{top:130px;font-size:24px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.tp-carga[data-times="3"] .tp-carga__vs img{width:180px;height:180px;object-fit:cover;border-radius:50%}
+.tp-carga[data-times="3"][data-tela="celular"] .tp-carga__vs{top:40px;font-size:18px;gap:10px}
+.tp-carga[data-times="3"][data-tela="celular"] .tp-carga__vs img{width:70px;height:70px}
 
 .tp-carga__rodape{position:absolute;left:48px;right:48px;bottom:44px;display:flex;align-items:flex-end;justify-content:space-between;gap:40px}
 .tp-carga__mapa{display:flex;flex-direction:column;gap:10px;min-width:0}

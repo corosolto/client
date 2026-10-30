@@ -14,7 +14,7 @@ try {
     await ctx.addInitScript(() => localStorage.setItem('awpbr_settings', JSON.stringify({ quality: 'low', vol: 0, menuMusic: false })));
     if (mutant) await ctx.route(/\/js\/javaporcos_intro\.js/, async route => {
       const response = await route.fetch(), source = await response.text();
-      const pair = mutant === 'sem-intro' ? ['dialog.showModal();', 'return Promise.resolve();'] : mutant === 'sem-pular' ? ["dialog.querySelector('[data-pular]')?.addEventListener", "dialog.querySelector('[data-inativo]')?.addEventListener"] : ['Math.round(DOMINIO.derrota * 100)', '99'];
+      const pair = mutant === 'sem-intro' ? ['dialog.showModal();', 'return Promise.resolve();'] : mutant === 'sem-pular' ? ["dialog.querySelector('[data-pular]')?.addEventListener", "dialog.querySelector('[data-inativo]')?.addEventListener"] : ['um sobrevivente mantém a resistência', 'a ocupação encerra a resistência'];
       applied = source.includes(pair[0]); assert.ok(applied, 'mutante não aplicou');
       await route.fulfill({ response, body: source.replace(pair[0], pair[1]) });
     });
@@ -25,8 +25,8 @@ try {
       await dialog.waitFor({ state: 'visible', timeout: 30000 });
       const text = await dialog.innerText();
       assert.match(text, /javali europeu/i); assert.match(text, /porco doméstico/i);
-      if (mutant === 'dominio-errado' && /99%/.test(text) && !/75%/.test(text)) detected = true;
-      assert.match(text, /75%/); assert.match(text, /Pular/);
+      if (mutant === 'dominio-errado' && /a ocupação encerra/.test(text)) detected = true;
+      assert.match(text, /um sobrevivente mantém a resistência/); assert.match(text, /Pular/);
       assert.equal(await page.evaluate(() => !!window.__game), false, 'partida nasceu antes da intro');
       if (!mutant && action === 'button') {
         await page.screenshot({ path: '/tmp/javaporcos-intro-desktop.png' });
@@ -49,7 +49,7 @@ try {
         await page.waitForTimeout(1000);
         assert.equal(await page.evaluate(() => !!window.__game), false, 'cancelamento criou Game');
       } else await page.waitForFunction(() => !!window.__game, null, { timeout: 180000 });
-      console.log(`✓ INTRO ${action}: factual, 75%, pausa antes do Game e saída funcional`);
+      console.log(`✓ INTRO ${action}: factual, sobrevivência, pausa antes do Game e saída funcional`);
     } catch (e) { failed = true;
       if (mutant === 'sem-intro') {
         await page.waitForFunction(() => !!window.__game, null, { timeout: 180000 });

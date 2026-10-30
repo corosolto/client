@@ -2818,7 +2818,7 @@ export class Game {
       : (PACE ? frase('alvoAbates', this.killsToWin)
         : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta'))));
     this._banner(frase('round', this.roundNum),
-      this.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound);
+      this.roundNum === 1 && !this.objective ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound);
     if (!this.sfx.roundNumber(this.roundNum) && !this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
   }
   _resetPositions() {
@@ -3127,7 +3127,7 @@ export class Game {
       if (cp > cb) winner = 'E'; else if (cb > cp) winner = 'B';
       else if (p > b) winner = 'E'; else if (b > p) winner = 'B';
     } else if (!winner && p > b) winner = 'E'; else if (!winner && b > p) winner = 'B';
-    if (winner) this.roundsWon[winner]++;
+    if (winner && winner !== 'draw') this.roundsWon[winner] = (this.roundsWon[winner] || 0) + 1;
     this.state = 'roundEnd';
     const objectiveResult = this.objective?.roundResult?.(winner);
     this.stateUntil = this.time + (objectiveResult?.duration || 4);
@@ -3145,8 +3145,8 @@ export class Game {
       // fechou no ALVO de abates (antes do tempo) vs ganhou no relógio — informação diferente
       const byTarget = PACE && !this.ctf && Math.max(p, b) >= this.killsToWin;
       this._resultadoDaRodada(objectiveResult?.title || `${this._teamName(winner)} LEVARAM O ROUND`, objectiveResult ? placar : `${placar} ` + (byTarget ? '— fecharam no alvo' : mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche'), !objectiveResult);
-      this._roundWinnerVoice(winner);
-      if (!this.sfx.roundSound(this._voiceKey(winner))) mine ? this.sfx.roundWin() : this.sfx.roundLose();
+      if (winner !== 'J' && winner !== 'draw') this._roundWinnerVoice(winner);
+      if (winner === 'J' || winner === 'draw' || !this.sfx.roundSound(this._voiceKey(winner))) mine ? this.sfx.roundWin() : this.sfx.roundLose();
     }
     if (this._fimDaPartida() && !this.objective)
       this.stateUntil = this.time + 4.5; // then match end
@@ -3164,6 +3164,7 @@ export class Game {
      gateado por `!this.ctf` (game.js:update), o que fazia o modo CAPTURA rodar pra sempre —
      rounds infinitos, nenhuma tela de fim, e o placar do topo subindo sem teto. */
   _fimDaPartida() {
+    if (this.objective) return !!this.objective.state.winner;
     if (this.ctf) return this.roundNum >= this.roundsMax || this.ctfMatchLeft <= 0;
     return this.roundNum >= this.roundsMax;
   }
@@ -3180,15 +3181,18 @@ export class Game {
       ? (this.roundsWon.E > this.roundsWon.B ? 'E' : 'B')
       : ((this.matchKills.E + this.roundKills.E) >= (this.matchKills.B + this.roundKills.B) ? 'E' : 'B'));
     const mine = winner === this.playerTeam;
+    const draw = winner === 'draw';
     // Tela de fim estilo CoD/Valorant: VITÓRIA/DERROTA gigante, time vencedor no sub.
     this.el.matchEnd.classList.toggle('win', mine);
-    this.el.matchEnd.classList.toggle('lose', !mine);
-    this.el.matchTitle.textContent = mine ? tr('VITÓRIA') : tr('DERROTA');
-    this.el.matchSub.textContent = mine
+    this.el.matchEnd.classList.toggle('lose', !mine && !draw);
+    this.el.matchEnd.classList.toggle('draw', draw);
+    this.el.matchTitle.textContent = draw ? tr('EMPATE') : mine ? tr('VITÓRIA') : tr('DERROTA');
+    this.el.matchSub.textContent = draw ? 'As equipes terminaram empatadas.' : mine
       ? frase('venceu', this._teamName(winner))
       : frase('perdeu', this._teamName(winner));
-    this.el.matchStats.innerHTML =
-      frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths);
+    this.el.matchStats.innerHTML = this.objective
+      ? (this.objective.regras.times === 3 ? ['E', 'B', 'J'] : ['E', 'J']).map(team => `${this._teamName(team)}: <b>${Math.round((this.objective.state.territorio?.[team] || 0) * 100)}%</b>`).join(' · ') + `<br>${this.player.kills} abates · ${this.player.deaths} mortes`
+      : frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths);
     /* Cada personagem tem duas artes estáticas: a tela mostra quem o jogador escolheu,
        na pose correspondente ao resultado. UIA1 garante o par antes do deploy. */
     const REP = { E: 'mst', B: 'bombado', U: 'metaleiro', C: 'bonzo', F: 'chave' };
@@ -7321,7 +7325,9 @@ export class Game {
     // A câmera olha para -Z; o corpo do bot para +Z.
     return spawn.yaw + (bot ? Math.PI : 0);
   }
-  _pickSpawn(team) {
+  _pickSpawn(team, entity = null) {
+    const seguro = this.objective?.safeSpawn?.(team, entity);
+    if (seguro) return seguro;
     const list = this.world.spawns[team] || [];
     if (!list.length) return { x: 0, z: 0 };
     const foes = this.combatants.filter(c => c.alive && c.team !== team);
@@ -7566,7 +7572,7 @@ export class Game {
   _respawnEntity(b) {
     if (b._objectiveNpc || this.objective?.state?.eliminados?.includes(b.team)) return;
     const g = b.mesh.group;
-    const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
+    const s = this._pickSpawn(b.team, b);   // mesmo critério de segurança do jogador
     b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;
     /* Renascem sobrepostos de propósito: jitter no spawn foi medido e reprovado. Quem
        desempilha é a despenetração do _botSeparation. Números: docs/MULTIPLAYER.md. */

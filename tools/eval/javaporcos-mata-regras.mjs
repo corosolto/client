@@ -170,8 +170,9 @@ export function regrasMata({ W, THREE, MUT, regra, exige }) {
     exige(fracPel <= 0.1, `${(100 * fracPel).toFixed(1)}% das árvores com tronco pelado acima de 45% da altura (teto 10%)`);
     exige(!pirulitos, `${pirulitos} árvores com o andar de cima < 1,5 m de raio: pirulito acima do dossel`);
     let horizPir = 0, horiz = 0;
-    for (let i = nCopaMapa; i < copa.count; i++) {
-      const e = inst(copa, i);
+    const horizontes = [];W.root.traverse(o=>{if(o.name === 'mata-copa-horizonte')horizontes.push(o);});
+    for (const lote of horizontes) for (let i = 0; i < lote.count; i++) {
+      const e = inst(lote, i);
       if (Math.max(Math.abs(e.p.x), Math.abs(e.p.z)) < HALF - 1 || e.p.y - gh(e.p.x, e.p.z) < 8) continue;
       horiz++;
       if (e.s.x < 3.5) horizPir++;

@@ -1,4 +1,4 @@
-# Invasão dos Javaporcos — layout de 30/10/2026: pasto, 3 frentes e becos
+# Invasão dos Javaporcos — layout de 30/10/2026: pasto, seis frentes e becos
 
 Decisões do dono de 30/10/2026, traduzidas em geometria. A ficha do mapa é
 [`invasao-javaporcos.md`](invasao-javaporcos.md); o brief visual é
@@ -8,8 +8,8 @@ planta macro).
 
 1. **Pasto** entre a cidade (`cityBounds` ±36) e a mata: anel de r = 36 a 54, com
    r = max(|x|, |z|). Linha de tiro aberta da borda da cidade até a primeira árvore.
-2. **Três frentes** de trilha (norte, leste, sudoeste). As outras sete bocas do layout de
-   29/10 viraram mata fechada e colidível.
+2. **Seis frentes** de trilha distribuídas pelos quatro lados da mata. Há nove metros
+   de profundidade explorável antes da parede externa colidível.
 3. **Becos** de 2,5 m entre fundos de casa ligando o anel que encosta no pasto à viela,
    abertos para a horda a partir da onda 3.
 4. Sem lowpoly: textura PBR e props realistas por cima da geometria autoral.

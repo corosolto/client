@@ -3,6 +3,7 @@ import {bootGame,initTextures} from './harness.mjs';
 import {passoDominio,iniciarOnda} from '../../public/js/mode_javaporcos.js';
 import {encodeSnapshot,decodeSnapshot} from '../../public/js/netcodec.js';
 import {regrasDaInvasao,avaliarFimDaInvasao,repartirTerritorio} from '../../public/js/javaporcos_partida.js';
+import {makeNetcode} from '../../public/js/netgame.js';
 const g=bootGame('invasao_javaporcos',{textures:initTextures(),bots:3,settings:{javaporcos:{times:3,fim:'infinito'}}});
 let failed=0;const test=(n,fn)=>{try{fn();console.log('✓ DISPUTA '+n);}catch(e){failed++;console.log('✗ DISPUTA '+n+': '+e.message.slice(0,160));}};
 test('dois times humanos e uma horda independente',()=>{assert.ok(g.combatants.some(c=>c.team==='B'&&!c._objectiveNpc));assert.equal(g.combatants.filter(c=>c.team==='J'&&c._objectiveNpc).length,64);});
@@ -12,6 +13,7 @@ const packet={type:'snapshot',room:'j',tick:1,t:1,state:'live',owner:'',players:
 test('snapshot v7 comporta humanos e 64 javaporcos',()=>{const snap=decodeSnapshot(encodeSnapshot(packet,7));assert.equal(snap.ents.length,80);assert.equal(snap.ents.filter(e=>e.team==='J').length,64);});
 test('protocolos antigos recusam terceira facção',()=>assert.throws(()=>encodeSnapshot({...packet,ents:[packet.ents.at(-1)]},6),/team/));
 const estado = () => ({kills:0,clock:0,eliminados:[],teamKills:{E:0,B:0,J:0},territorio:{E:0,B:0,J:0}});
+test('fim da invasão independe do contador de rodadas',()=>{const s=g.objective.state,old=s.winner;g._roundsMax=5;g.roundNum=1;s.winner=null;assert.equal(g._fimDaPartida(),false);s.winner='J';assert.equal(g._fimDaPartida(),true);s.winner=old;});
 test('um sobrevivente mantém o time mesmo com baixas',()=>{const s=estado();assert.equal(avaliarFimDaInvasao(s,regrasDaInvasao(),[{team:'E',alive:false},{team:'E',alive:true}]),null);assert.deepEqual(s.eliminados,[]);});
 test('wipe elimina só o time derrotado na disputa tripla',()=>{const s=estado();assert.equal(avaliarFimDaInvasao(s,regrasDaInvasao({times:3}),[{team:'E',alive:false},{team:'B',alive:true}]),null);assert.deepEqual(s.eliminados,['E']);assert.equal(avaliarFimDaInvasao(s,regrasDaInvasao({times:3}),[{team:'E',alive:false},{team:'B',alive:false}]),'J');});
 test('alternativa wipe da partida encerra na primeira equipe eliminada',()=>assert.equal(avaliarFimDaInvasao(estado(),regrasDaInvasao({times:3,wipe:'partida'}),[{team:'E',alive:false},{team:'B',alive:true}]),'J'));
@@ -20,4 +22,21 @@ test('limites multiplayer são 1000 abates ou 30 minutos',()=>{for(const patch o
 test('limite singleplayer configurável e empate sem favorecer um lado',()=>{assert.equal(avaliarFimDaInvasao({...estado(),kills:12},regrasDaInvasao({fim:'abates',abates:12}),[{team:'E',alive:true}]),'draw');assert.equal(avaliarFimDaInvasao(estado(),regrasDaInvasao({fim:'mortes',mortes:4}),[{team:'E',alive:true,deaths:4}]),'draw');});
 test('setor limpo passa de E para B sem exceder 100%',()=>{const s={...estado(),controle:[0],dominio:0,defesaE:[1],defesaB:[0]};repartirTerritorio(s,[{peso:1}],[0],[1],[0],10,{desce:.06,sobe:.03,minBichos:3});assert.ok(s.territorio.B>.5);assert.ok(s.territorio.E<.5);assert.ok(s.territorio.E+s.territorio.B+s.territorio.J<=1);});
 test('snapshot v7 recusa 81 entidades e v6 mantém teto 64',()=>{assert.throws(()=>encodeSnapshot({...packet,ents:[...packet.ents,packet.ents[0]]},7),/too_many_entities/);assert.throws(()=>encodeSnapshot({...packet,ents:packet.ents.slice(0,65)},6),/too_many_entities/);});
+test('saque por um javaporco respeita soma máxima de território',()=>{const s={...estado(),controle:[.7],dominio:.7,defesaE:[1],defesaB:[0]};repartirTerritorio(s,[{peso:1}],[0],[0],[1],.25,{desce:.06,sobe:.03,minBichos:3});assert.ok(s.territorio.E+s.territorio.B+s.territorio.J<=1);assert.ok(s.territorio.E<.31);});
+test('abate entre E e B soma à equipe e não conta morte aliada',()=>{const s=g.objective.state;s.teamKills.E=0;g.objective.onKill({team:'B'},{team:'E'});assert.equal(s.teamKills.E,1);g.objective.onKill({team:'E'},{team:'E'});assert.equal(s.teamKills.E,1);});
+test('join tardio casa animal com entidade reciclada e interpola posição',()=>{
+  const o=g.objective;for(const b of o.boars)o.desativar(b);
+  o.boars.forEach((b,i)=>{b._netId=10000+i;b._remote=10000+i;});
+  g.online=true;const mp=makeNetcode(g,{meta:{},yourEnt:1,startPing(){},stopPing(){}});g._mp=mp;
+  try {
+    o.applyNetState({...o.netState(),phase:'combat',alive:[{id:'9.4',type:'ariete',entrance:0,hp:180,entityId:10001},{id:'9.3',type:'jovem',entrance:1,hp:60,entityId:10000}]});
+    const b=o.slots.get('9.4');assert.equal(b,o.boars[1]);assert.equal(o.slots.get('9.3'),o.boars[0]);
+    mp._relogioAgora=()=>1500;mp.interpAtrasoMs=100;
+    Object.assign(b,{_bufAt:[1000,2000],_bufX:[0,10],_bufY:[0,0],_bufZ:[0,0],_bufYaw:[0,0],_bufPitch:[0,0]});
+    o.updateBot(b,.016);assert.ok(Math.abs(b.pos.x-4)<.001,`posição ${b.pos.x}`);assert.equal(b.mesh.group.visible,false);
+    b._nid=321;assert.equal(o.netState().alive.find(a=>a.id==='9.4').entityId,321);
+    let resultado;o.roundResult=winner=>({title:winner,detail:'fim'});o.startCinematic=()=>{};g._resultadoDaRodada=title=>resultado=title;
+    o.state.winner='J';mp._netTick=1;mp.transicaoDeEstado('live','roundEnd',{E:0,B:0});assert.equal(resultado,'J');
+  } finally {mp.dispose();g.online=false;}
+});
 process.exitCode=failed?1:0;

@@ -472,3 +472,93 @@ Defaults PROVISÓRIOS enquanto perguntas sem resposta: wipe elimina só o time,
 1000abates somados e vencedor por território (desempate por abates; empate explícito).
 Próximos: interface configurações, verificar fim/score online de ponta a ponta,
 movimento orgânico, refúgios seguros, orçamento GPU e réguas finais. Sem novo push.
+
+Revisão crítica tri-facção corrigida no diff posterior a bdf3c289e: contagem de
+abates E×B, normalização territorial após saque, empate explícito em Game/TP,
+objetivo aplicado antes da transição online e vitória de J preservada. Mais dois
+P1 reais corrigidos: interpolação remota J era pulada; join tardio casava animal ao
+slot errado. Snapshot agora leva entityId por animal e assignar exige o ID correto;
+modo consome interpolação antes de atualizar o visual. Régua disputa16casos verde,
+com slot reciclado invertido e interpolação real entre dois snapshots.
+
+Refúgios e movimento: duas lajes no pasto escolhem área sem colisores existentes,
+escada18degraus + salto de0,45m para a laje. Régua física real passa subida/salto,
+respawn humano no alto, exclusão do alcance da horda e desvios individuais suaves.
+Bots de IA mantêm spawn de chão para não ficarem eternamente acampados na laje;
+humanos remotos também recebem laje. Interface SP inclui2/3lados, infinito/abates/
+mortes/minutos, regra de wipe e critério do limite. Aceite DOM/browser em execução.
+
+Otimização em validação: construções imóveis em lotes por material/célula (fontes
+mantidas só como proxies de raycast), horizonte e capim em células para culling,
+limite de sombra da horda24m e boundingSphere conservadora para skins. Medição
+anterior ao último ajuste do chão de horizonte: pasto64vivos913calls/2,195Mtri;
+laje927calls/2,306Mtri; heap194MB. Laje ainda5,7ktri acima, novo chão distante60×60
+pendente de medição. Sem aceitação de orçamento até medição final. Nenhum GLB mudou.
+CPU64: média0,673ms p95 0,920ms. Core horda verde, formato-melhorde7/7verde.
+
+Em execução: mapa completo /tmp/javaporcos-mapa-refugios-final2.log e map-check
+/tmp/javaporcos-map-check-refugios-final.log. O map_check.json original foi copiado
+para /tmp/javaporcos-map-check-antes-20261030.json: mesclar só invasao_javaporcos ao
+final para preservar os outros18mapas. Não editar mapa até ler resultados. Últimos
+vermelhos anteriores: laje cruzava trilha (reposicionada); cupim sob laje (seleção
+agora evita colisores); régua MATA5 lia horizonte no lote antigo (agora percorre
+lotes reais). Repetir mutantes afetados após verde. Ainda pendem revisão final,
+MP end-to-end, corpos/variações em enquadramento correto, orçamento final e push
+expressamente autorizado. Não houve resposta às perguntas opcionais nem novo push.
+
+Marco adicional: sala autoritativa REAL do backend worktree objective-npc-slots
+(df6ab49), copiada em fixture ignorada artifacts/javaporcos-feedback-20261030/backend-fixture,
+sem editar outro checkout. Quatro humanos +64J,68 entidades,3375bytes v7, vagas E/B,
+regra1000/1800s, wipe sóE mantém B e wipeambos dáJ: verde (/tmp/javaporcos-room-fixture.log).
+Não equivale a backend publicado nem a sessão de dois browsers pela rede.
+
+Revisão crítica achou perda de oclusão na otimização: fontes ocultas eram removidas
+por shot_surfaces. Corrigido agrupando separadamente bloqueadores e decoração e
+substituindo fontes por lotes visíveis em occluders. Régua LOTES com raycast real
+através do wrapper verde; mutante sem-oclusao ainda deve ser executado.
+_fimDaPartida agora respeita winner do objetivo em vez do teto genérico de rodadas;
+resultado final e TP exibem parcelas territoriais e empate explícito.
+
+MAP1 e MAP6 passaram com guardas e patamares; MAP3 escadas18degraus conforme régua.
+NAV1 exclui o volume de refúgio da grade de IA, que continua no chão. Copa agora
+considera relevo vizinho e tronco acompanha sua cota: mapa específico todo verde
+(/tmp/javaporcos-mapa-refugios-nav-altura.log),12022nós/21565arestas, zero presos,
+1018árvores,7,9%tronco pelado (teto10%). Nova divisão de lotes do horizonte128m e
+capim32m precisa repetir réguas; map-check-final-lotes ainda mede versão anterior
+à última divisão, sua saída deve ser mesclada só para este mapa.
+
+PERF AINDA NÃO ACEITA:64vivos após240frames deram2,493Mtri/1022calls semLOD e
+2,365Mtri/1022calls comLOD55%. Heap já caiu naturalmente de361MB temporário para
+135MB em medição posterior anterior, não usar pico de carregamento como estável.
+TesteLOD30% está gerando4derivados dosGLBs locais, originais intactos, apenas>18m
+com histerese16m. Próximo: validar silhueta/texturas/patas eGPU com64vivos+8corpos,
+mutante sem-lod, ou rejeitarLOD se qualidade falhar. Não houve novo push.
+A captura /tmp/javaporcos-placar-triplo.png era cortina lima: NÃO É aceitevisual,
+apenas DOM validou3colunas/avatar. Cortina já saiu naturalmente; refazer captura.
+
+Marco GPU e corpos (Ego8/p1, canvas real):64vivos+8corpos =943calls/2.259Mtri,
+heap152MB;64vivos=935calls/2.244Mtri, mutante sem-lod=2.326Mtri (mesma câmera),
+heap153MB. Artefato /tmp/javaporcos-corpos-canvas-real.png inspecionado: corpos
+laterais no pasto, contatos no chão, pistola visível e mata densa. Captura do
+browser/CDP completa falha com Page.captureScreenshot timeout; exportar o canvas
+real via Ego funcionou. Isso NÃO aceita visualmente o DOM do placar/carregamento.
+LOD30%erro0,01:2243/1478/2155/2814tris vs4699/4930/4526/5054,4testes verdes;
+texturas byte a byte iguais, materiais iguais, volumes<1%, rigs e histerese18/16m.
+Tentativaerro0,02 REJEITADA pela régua de volume (aríete perdeu largura); regenerados
+os4LOD com0,01. Originais intactos. Horizonte4cards só distante, perto14preservado;
+capim em células12m, densidade3,60/m² intacta. Esses são os parâmetros finais atuais.
+
+Revisão adicional detectou cadáveres online congelados: objective.update não roda
+no cliente. Atualização mudou para updatePresentation, executado em ambos, antes
+do gatecinema. Régua corpos agora testa apresentação ONLINE em yawvariados, contato,
+45svisível e125slimpeza: core verde. Nova cláusula1sobrevivente/wipe verde e mutante
+sem-derrota agora efetivamente acende. Novas plaquetas E/B/J no topo e carregamento
+triplo (humanosE/B preservados, Javatar ao centro) aguardam conferênciaDOM apósreload.
+Disputa17casos repetindo após compatibilizar placarJ com DOM headless do harness.
+
+Último map-check acabado (anterior só à partição capim12m e cards horizonte4):
+MAP1=0,MAP3ambos18degraus,MAP2Bfolga1,9m/área55,7m²,MAP4zero195occludersmedidos,
+MAP6zero. Exatoestadofinalrodando /tmp/javaporcos-map-check-fecho.log (session64446).
+Arquivo map_check.json foi novamente sobrescrito; ao terminar MESCLAR com backup
+/tmp/javaporcos-map-check-antes-20261030.json preservando18outrosmapas. Mutantes
+pasto-careca e mapa-flutuando acenderam; mata-sem-lote rodando. Ainda sem novo push.

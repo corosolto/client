@@ -46,6 +46,8 @@ export function repartirTerritorio(state, setores, countsE, countsB, bichos, dt,
       state.defesaE[i]=Math.max(0,state.defesaE[i]-dominio.sobe*dt);
       state.defesaB[i]=Math.max(0,state.defesaB[i]-dominio.sobe*dt);
     }
+    const saldo = Math.max(0, 1 - state.controle[i]), humanos = state.defesaE[i] + state.defesaB[i];
+    if (humanos > saldo) { state.defesaE[i] *= saldo / humanos; state.defesaB[i] *= saldo / humanos; }
     const peso=setores[i]?.peso || 1; pesos+=peso;e+=state.defesaE[i]*peso;b+=state.defesaB[i]*peso;
   }
   state.territorio={E:pesos?e/pesos:0,B:pesos?b/pesos:0,J:state.dominio};

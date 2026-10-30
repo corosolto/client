@@ -1,4 +1,5 @@
 import { apresentarJavaporcos } from './javaporcos_intro.js';
+import { sincronizarOpcoesJavaporcos } from './javaporcos_opcoes.js';
 import { nomeTimeJavaporcos, wallpaperJavaporcos } from './javaporcos_apresentacao.js';
 // Boot, menus, settings, logo, main loop.
 import * as THREE from 'three';
@@ -425,7 +426,7 @@ function showLoading(label, status = 'CARREGANDO MODELOS 3D…', mapName = '') {
     if (mapName && currentEnemyFaction) {
       a.textContent = tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'E') || FACTION_NAME[currentTeam] || ''); a.style.color = (PALETA[currentTeam] || {}).base || '#e0762a';
       const ladoDele = currentTeam === 'B' ? 'E' : 'B';
-      b.textContent = tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || ''); b.style.color = (PALETA[ladoDele] || {}).base || '#8258d8';
+      b.textContent = currentMap === 'invasao_javaporcos' && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || ''); b.style.color = (PALETA[ladoDele] || {}).base || '#8258d8';
       vs.classList.remove('hidden');
     } else vs.classList.add('hidden');
   }
@@ -1982,6 +1983,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   /* Treta Pop: o carregamento VS mostra o elenco sorteado; o global cobre o ?auto=, que lança antes de tp/ligar.js chegar */
   if (document.documentElement.dataset.ui === 'v3') {
     window.__tpElenco = {
+      javaporcosTimes: sessao || settings.javaporcos?.times === 3 ? 3 : 2,
       lado: side, eu: CHARACTERS.find((c) => c.id === charId), aliados: matchRoster.allyDefs, inimigos: matchRoster.enemyDefs,
       online: !!sessao, tamanho: tamanhoTime || 0, ctf: matchMode === 'ctf', rounds: sessao ? sanitizeRounds(sessao.net.meta.roundsMax) : matchRounds(),
       mapa: MAPS[currentMap].name, desc: MAP_DESC[currentMap] || '', arte: mapPreviewPoster(currentMap, VERSION) };
@@ -2268,7 +2270,7 @@ let matchMode = 'rounds';   // 'rounds' | 'ctf' — lido em startGame (ctf)
 const modoObjetivoAtual = () => MAPS[currentMap]?.objectiveMode || '';
 const rotuloObjetivoAtual = () => ({ horde: 'HORDAS', escort: 'ESCOLTA' })[modoObjetivoAtual()]
   || modoObjetivoAtual().toUpperCase();
-const resumoObjetivoAtual = () => modoObjetivoAtual() === 'horde' ? '8 ONDAS COOPERATIVAS' : rotuloObjetivoAtual();
+const resumoObjetivoAtual = () => modoObjetivoAtual() === 'horde' ? 'INVASÃO · DISPUTA TERRITORIAL' : rotuloObjetivoAtual();
 /* O JOGADOR JÁ DISSE QUAL MODO QUER? (defeito: "esse mapa está como CAPTURA, mas eu
    selecionei single player — e esse erro se repete em outros mapas")
    O `ctfMode` do mapa é PADRÃO, não ordem. Só que `gotoMap` reescrevia `matchMode` a cada
@@ -2969,7 +2971,7 @@ const MAP_DESC = {
   campomorro: 'Campo de várzea cercado pelo morro: oito becos, arquibancada com torcida e galpão do baile.',
   parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
   velho_oeste: 'Duelo na cidade empoeirada: saloon, banco, carroças e tumbleweeds cruzando três rotas entre casas de madeira.',
-  invasao_javaporcos: 'Cidade e lavoura na mesma linha de defesa: oito ondas saem da mata e avançam sobre o silo, o posto rural e o portão do bairro.',
+  invasao_javaporcos: 'Dispute a cidade contra bandos que saem da mata por seis frentes. Retome setores, explore o pasto e mantenha seu time vivo. Escolha defesa contra a horda ou três times em disputa.',
   penitenciaria: 'Rebelião no pátio: celas abertas, concreto gasto, guaritas e barricadas policiais entre três rotas de confronto.',
   upa_24h: 'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.',
   obras_prefeitura: 'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.',
@@ -3172,6 +3174,10 @@ if (msRounds) for (let n = 1; n <= ROUNDS_CUSTOM_MAX; n++) { const o = document.
 if (msAlly) for (let n = 0; n <= 7; n++) { const o = document.createElement('option'); o.value = String(n); o.textContent = botsLabel(n); msAlly.appendChild(o); }
 if (msEnemy) for (let n = 1; n <= 8; n++) { const o = document.createElement('option'); o.value = String(n); o.textContent = botsLabel(n); msEnemy.appendChild(o); }
 function syncMapOptions() {
+  const horda = currentMap === 'invasao_javaporcos';
+  sincronizarOpcoesJavaporcos($('ms-match-options'), horda, settings, saveSettings);
+  if (msRounds?.parentElement) msRounds.parentElement.hidden = horda;
+  if (msEnemy?.parentElement) msEnemy.parentElement.hidden = horda && settings.javaporcos?.times !== 3;
   if (msWpnMode) msWpnMode.value = settings.wpnMode || 'all';
   if (msAlly) msAlly.value = String(settings.allyBots);
   if (msEnemy) msEnemy.value = String(settings.enemyBots);
