@@ -21,6 +21,11 @@
              luzes pontuais (as da praça).
      DECAL1  ≥ 25 decalques de chão (lixo, poça, mancha, rachadura) dentro de cada beco.
 
+   RODADA 3 (crítico 5,5/10, 30/10: "faixa de pedestre parece tábua de madeira"):
+     ZEBRA1  o atlas é desenhado num contexto gravador e a célula da faixa é medida em
+             METROS (0,5 × 2,6 m): nenhuma marca de desgaste ≥ 0,3 m com razão ≥ 4 no
+             comprimento da faixa (veio), ≥ 80% das marcas com razão ≤ 4, tinta com b* ≤ 5.
+
    MUTANTES (cada um tem de acender a cláusula indicada):
      saco-icosaedro  planta um saco de icosaedro na avenida          -> ICO1
      janela-cega     tira o vidro de todas as janelas                -> JANELA1
@@ -28,15 +33,48 @@
      carros-poucos   volta a 9 carros                                -> CARRO1
      poste-viga      poste volta a caixa 0,18 × 9 × 0,25             -> POSTE1
      beco-limpo      tira a malha de decalques                       -> DECAL1
+     zebra-veio      devolve as 10 tiras de altura inteira da rodada 2  -> ZEBRA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); o gol g2 também é NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
   'chevette_sl76', 'uno_mille', '1968_volkswagen_beetle', 'old_vw_bug'];
 
 const CIDADE_R = 36, AV = 6, CAL = 2, MEIA_CARRO = 0.86;
+const TX = await import('../../public/js/map_javaporcos_texturas.js');
+
+/* Desenha o atlas de decalque num canvas falso que grava fillRect/ellipse com a operação
+   e a tinta do momento: mede o desenho, não a intenção. */
+function gravaAtlas() {
+  const telas = [];
+  const novaTela = () => {
+    const marcas = [];
+    let op = 'source-over', estilo = '';
+    const ctx = new Proxy({}, {
+      get: (t, k) => (k === 'fillRect' ? (x, y, w, h) => marcas.push({ x, y, w, h, rot: 0, op, estilo })
+        : k === 'ellipse' ? (x, y, rx, ry, rot = 0) => marcas.push({ x: x - rx, y: y - ry, w: 2 * rx, h: 2 * ry, rot, op, estilo })
+          : typeof k === 'string' && k.startsWith('create') ? () => ({ addColorStop() {} })
+            : k === 'measureText' ? () => ({ width: 10 }) : k in t ? t[k] : () => {}),
+      set: (t, k, v) => { if (k === 'globalCompositeOperation') op = v; if (k === 'fillStyle') estilo = v; t[k] = v; return true; },
+    });
+    const c = { width: 0, height: 0, style: {}, getContext: () => ctx };
+    telas.push(marcas);
+    return c;
+  };
+  const orig = globalThis.document.createElement;
+  globalThis.document.createElement = (tag) => (tag === 'canvas' ? novaTela() : orig.call(globalThis.document, tag));
+  try { TX.decalAtlasTex(); } finally { globalThis.document.createElement = orig; }
+  return telas[0];
+}
+const labB = (r, g, b) => {
+  const lin = (v) => { v /= 255; return v > 0.04045 ? ((v + 0.055) / 1.055) ** 2.4 : v / 12.92; };
+  const [R, G, B] = [lin(r), lin(g), lin(b)];
+  const f = (t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+  const Y = 0.2126 * R + 0.7152 * G + 0.0722 * B, Z = (0.0193 * R + 0.1192 * G + 0.9505 * B) / 1.089;
+  return 200 * (f(Y) - f(Z));
+};
 
 export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
   const malhas = () => { const l = []; W.root.traverse((o) => { if (o.isMesh) l.push(o); }); return l; };
@@ -132,5 +170,29 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     }
     exige(bbs.length >= 4 && conta.every((c) => c >= 25), `decalques por beco: ${conta.join(', ')} (piso 25)`);
     return `${pos.count / 4} decalques no mapa; por beco ${conta.join(', ')}`;
+  });
+
+  regra('ZEBRA1 faixa de pedestre gasta sem veio de tábua', () => {
+    const C = 256, ox = (8 % 4) * C, oy = ((8 / 4) | 0) * C, SX = 0.5 / C, SY = 2.6 / C;   // célula 8 esticada 0,5 × 2,6 m
+    const marcas = gravaAtlas();
+    exige(marcas?.length, 'atlas de decalque não desenhou nada no canvas gravador');
+    const naCelula = marcas.filter((m) => m.x + m.w / 2 >= ox && m.x + m.w / 2 < ox + C && m.y + m.h / 2 >= oy && m.y + m.h / 2 < oy + C);
+    const tinta = naCelula.find((m) => m.op === 'source-over' && /rgba?\(/.test(m.estilo) && m.w > C / 2);
+    exige(tinta, 'sem tinta de faixa na célula 8');
+    if (MUT === 'zebra-veio') for (let i = 0; i < 10; i++) naCelula.push({ x: ox + i * 25, y: oy, w: 4, h: C, rot: 0, op: 'destination-out' });
+    const [r, g, b] = tinta.estilo.match(/[\d.]+/g).map(Number);
+    const bstar = labB(r, g, b);
+    const gasto = naCelula.filter((m) => m.op === 'destination-out').map((m) => {
+      const c = Math.cos(m.rot), s = Math.sin(m.rot);
+      const u = Math.hypot(c * m.w * SX, s * m.w * SY), v = Math.hypot(s * m.h * SX, c * m.h * SY);
+      return { longo: Math.max(u, v), razao: Math.max(u, v) / Math.max(1e-6, Math.min(u, v)), noComprimento: v > u };
+    });
+    exige(gasto.length >= 40, `só ${gasto.length} marcas de desgaste na faixa`);
+    const veios = gasto.filter((m) => m.noComprimento && m.longo >= 0.3 && m.razao >= 4);
+    const iso = gasto.filter((m) => m.razao <= 4).length / gasto.length;
+    exige(!veios.length, `${veios.length} marca(s) de desgaste viram veio de tábua (≥ 0,3 m e razão ≥ 4 no comprimento)`);
+    exige(iso >= 0.8, `só ${(100 * iso).toFixed(0)}% das marcas com razão ≤ 4 em metros (piso 80%)`);
+    exige(bstar <= 5, `tinta da faixa amarelada: b* ${bstar.toFixed(1)} (teto 5; a da rodada 2 dava 6,4)`);
+    return `${gasto.length} marcas de desgaste, 0 veios, ${(100 * iso).toFixed(0)}% com razão ≤ 4 em metros, tinta b* ${bstar.toFixed(1)}`;
   });
 }

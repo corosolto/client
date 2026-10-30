@@ -576,10 +576,12 @@ export function decalAtlasTex() {
       for (let i = 0; i < 4; i++) { x.fillStyle = `rgba(78,62,44,${0.15 + i * 0.12})`; mancha(cx, cy, 104 - i * 20, 26, 0.6); x.fill(); }
       for (let i = 0; i < 120; i++) { x.fillStyle = r() > 0.5 ? 'rgba(50,40,30,0.7)' : 'rgba(110,92,70,0.7)'; x.fillRect(ox + 30 + r() * 196, oy + 30 + r() * 196, 2 + r() * 5, 2 + r() * 5); }
     } else if (k === 8 || k === 9) {
-      x.fillStyle = k === 8 ? 'rgba(214,210,198,0.85)' : 'rgba(206,168,62,0.85)'; x.fillRect(ox + 6, oy + 6, C - 12, C - 12);
+      x.fillStyle = k === 8 ? 'rgba(236,234,226,0.9)' : 'rgba(206,168,62,0.85)'; x.fillRect(ox + 6, oy + 6, C - 12, C - 12);
       x.globalCompositeOperation = 'destination-out';
-      for (let i = 0; i < 140; i++) { x.globalAlpha = 0.25 + r() * 0.6; x.beginPath(); x.ellipse(ox + r() * C, oy + r() * C, 1 + r() * 6, 1 + r() * 4, r() * 3, 0, 6.283); x.fill(); }
-      for (let i = 0; i < 10; i++) { x.globalAlpha = 0.5; x.fillRect(ox + r() * C, oy, 2 + r() * 5, C); }
+      /* A célula estica ~5× no comprimento da faixa: lasca e desgaste nascem achatados
+         no V (eixo comprido), senão viram veio de tábua (desvio 4,0 × 7,0 medido). */
+      for (let i = 0; i < 140; i++) { const a = 2 + r() * 10; x.globalAlpha = 0.25 + r() * 0.6; x.beginPath(); x.ellipse(ox + r() * C, oy + r() * C, a, a * (0.15 + r() * 0.15), 0, 0, 6.283); x.fill(); }
+      for (let i = 0; i < 30; i++) { x.globalAlpha = 0.5; x.fillRect(ox + r() * C, oy + r() * C, 20 + r() * 60, 2 + r() * 3); }
       x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1;
       g.fillStyle = '#a0a0a0'; g.fillRect(ox, oy, C, C);
     } else if (k === 10) {
