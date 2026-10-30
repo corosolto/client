@@ -1859,7 +1859,7 @@ async function startGame(team, charId, enemyFaction, online = false) {
   });
   /* RÉGUA:launch-watchdog fim */
   try {
-    await _startGame(meuLancamento, team, charId, enemyFaction, online);
+    await _startGame(meuLancamento, team, charId, enemyFaction, online, introAbort);
     window.__gameLaunch?.ready('partida');
   } catch (e) {
     /* RÉGUA:launch-race queda início — extraído por `tools/eval/launch-race-check.mjs` */
@@ -1881,7 +1881,7 @@ async function startGame(team, charId, enemyFaction, online = false) {
     /* RÉGUA:launch-race queda fim */
   }
 }
-async function _startGame(meuLancamento, team, charId, enemyFaction, online = false) {
+async function _startGame(meuLancamento, team, charId, enemyFaction, online = false, introAbort) {
   const sessao = online ? mpSessao : null;
   const metaMp = sessao?.net?.meta || {};
   const salaMp = sessao?.sala || {};
@@ -2039,7 +2039,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
   if (lancamentoPerdeu(meuLancamento)) return;
   if (sessao) await preloadMapProps(mapaPartida.props || [], { required: true });
-  const introAbort = window.__javaporcosIntroAbort;
+  if (introAbort.signal.aborted || lancamentoPerdeu(meuLancamento)) return;
   if (currentMap === 'invasao_javaporcos' && !continuaPartida && (!testMode || params.get('hordeintro') === '1')) {
     window.__gameLaunch?.ready('partida');
     hideLoading();
