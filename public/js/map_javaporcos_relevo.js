@@ -2,15 +2,17 @@
    navegação. Derivação dos números e custo por chamada: docs/maps/invasao-javaporcos.md. */
 import * as THREE from 'three';
 
-export const HALF = 58;            // meia-extensão da arena (bounds ±58)
-export const CIDADE = 36;          // meia-extensão do miolo urbano (cityBounds ±36)
-export const PASSO = 0.5;          // passo da grade de altura, em metros
-export const BARRANCO = 2.6;       // desnível entre a cidade e o platô da mata
-export const SUBIDA = 4.5;         // comprimento horizontal do barranco
-export const CORREGO_Z = -39;      // eixo do córrego, no sopé do barranco norte
-export const CORREGO_MEIA = 3.2;   // meia-largura do leito
-export const CORREGO_FUNDO = 1.4;  // profundidade no eixo
-export const PONTES = [-20, 28];   // x das duas pontes de madeira
+/* Medidas do relevo (arena, cidade, barranco, córrego e pontes) e o porquê de cada
+   número: docs/maps/invasao-javaporcos.md, seção "Cotas do relevo". */
+export const HALF = 58;
+export const CIDADE = 36;
+export const PASSO = 0.5;
+export const BARRANCO = 2.6;
+export const SUBIDA = 4.5;
+export const CORREGO_Z = -39;
+export const CORREGO_MEIA = 3.2;
+export const CORREGO_FUNDO = 1.4;
+export const PONTES = [-20, 28];
 export const PONTE_MEIA = 2.2;
 
 export const TRILHA_MEIA = 1.75;   // trilha de 3,5 m

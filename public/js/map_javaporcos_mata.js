@@ -3,11 +3,13 @@
 import * as THREE from 'three';
 import { CIDADE, HALF, EIXOS, TRILHAS, distTrilha, paraMundo, CLAREIRA_R } from './map_javaporcos_relevo.js';
 
-export const V_ANDAVEL = 37.9;     // fim da faixa de mata caminhável
-export const V_PAREDE0 = 37.9;     // daqui para fora, parede de colisor
-export const V_PAREDE1 = HALF;   // a parede vai até a borda: canto aberto era fuga medida
-const COLUNA = 2.5;                // coluna de parede: mais fina, cola melhor na trilha
-const FOLGA_TRILHA = 2.9;          // trilha (1,75) + meio corpo + margem
+/* Cotas da mata (faixa caminhável, parede de colisor, coluna, folga de trilha e
+   achatamento da copa): docs/maps/invasao-javaporcos.md, seção "Cotas da mata". */
+export const V_ANDAVEL = 37.9;
+export const V_PAREDE0 = 37.9;
+export const V_PAREDE1 = HALF;
+const COLUNA = 2.5;
+const FOLGA_TRILHA = 2.9;
 const ACHATAMENTO = 0.62;          // copa é disco, não bola: proporção medida nas referências
 
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler();
