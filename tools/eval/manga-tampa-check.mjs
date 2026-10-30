@@ -109,6 +109,7 @@ function tuboQuantizado(segmentos = 16) {
 const malhaQ = tuboQuantizado();
 malhaQ.geometry.computeBoundingBox();
 const caixaAntes = malhaQ.geometry.boundingBox.clone();
+const verticesQ = malhaQ.geometry.attributes.position.clone();
 if (MUTANTE === 'tampa-crua') {
   // Estado do relato: copia os atributos escrevendo o valor DESNORMALIZADO no array cru.
   const geo = malhaQ.geometry, pos = geo.attributes.position;
@@ -130,5 +131,10 @@ const swQ = malhaQ.geometry.attributes.skinWeight;
 let somaMin = 2;
 for (let i = 0; i < swQ.count; i += 1) somaMin = Math.min(somaMin, swQ.getX(i) + swQ.getY(i) + swQ.getZ(i) + swQ.getW(i));
 chk('MT7', somaMin > 0.99, `pior peso de pele na malha quantizada = ${somaMin.toFixed(3)} (tem de ser 1)`);
+
+let erroQ = 0;
+const resultadoQ = malhaQ.geometry.attributes.position;
+for (let i = 0; i < verticesQ.count; i++) for (const c of ['getX', 'getY', 'getZ']) erroQ = Math.max(erroQ, Math.abs(verticesQ[c](i) - resultadoQ[c](i)));
+chk('MT8', erroQ <= 1e-6, `posição decodificada preservada: erro máximo ${erroQ}`);
 
 process.exit(falhas ? 1 : 0);

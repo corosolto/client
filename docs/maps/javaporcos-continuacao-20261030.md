@@ -220,3 +220,27 @@ repetição final em `/tmp/javaporcos-pasto-mapcheck-carro-final.log` (sessão25
 Relatórios pickup/map_check precisam fundir os outros mapas após executar.
 Checkpoint da geometria será feito com esta pendência explícita; a sonda5 não
 altera física/mapas e pode prosseguir enquanto a medição física longa termina.
+
+
+## Pedido 5 — AK corrigida localmente
+
+`capSleeveOpenings` copia atributos normalizados pelos acessores para Float32,
+preservando valores decodificados e índices de ossos. Manga permanece fechada em
+duas bocas e visível; luz, pose e asset privado não mudam. Antes: ROI do frame
+final 100% preta; depois: 0,251% em Javaporcos e 0% na Praça dos Poderes.
+Não confundir máscara direta vmScene (falso verde) com o frame real com pós.
+
+- Nova `eval:akmangagpu`: exige pós ativo, vmPass real, AK, duas tampas e manga visível.
+- Mutantes quantizacao-antiga: 100% preto em ambos os mapas; manga-oculta: visiblefalse;
+  sem-pos: postfalse apesar pixels limpos. Todos detectados, processos encerraram0.
+- MT1–MT8 CPU verdes; MT8 erro máximo2,94e-9 na posição decodificada. tampa-crua
+  reprova tamanho, pesos e posição. IBL, módulos, comentários, docs e arquitetura verdes.
+- Revisão crítica sem achado na implementação; falso verde de pipeline da régua corrigido.
+- Headless às vezes trava ao fechar no Mac. Régua agora usa launchServer com prazo
+  de fechamento e encerra somente o processo que criou. Nenhum browser do dono tocado.
+- Fotos/scripts/logs em `artifacts/javaporcos-codex-20261030/ak/`, com manifest de hashes.
+  Referência e reprodução em `docs/viewmodels/ak-manga-quantizada-20261030.md`.
+
+Continuar pelos pedidos6 e7. Relatório físico4 ainda roda na sessão25243; fundir
+18mapas de `/tmp/javaporcos-pasto-map-check-original.json` ao terminar e rodar portão.
+Pickupfinal já fundiu19mapas, todos38deste mapa alcançáveis; JSON ainda não commitado.
