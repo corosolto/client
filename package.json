@@ -50,6 +50,7 @@
     "eval:javaporcossim": "node tools/eval/javaporcos-dominio-sim.mjs --becos=vielas",
     "eval:javaporcosperf": "node tools/eval/javaporcos-perf.mjs && node tools/eval/javaporcos-perf.mjs --mutante=teto-furado",
     "eval:javaporcos:browser": "node tools/eval/javaporcos-browser.mjs",
+    "eval:javaporcosidentidade": "node tools/eval/javaporcos-identidade-check.mjs",
     "eval:javaporcoswall": "node tools/eval/javaporcos-wallpaper-check.mjs && ! node tools/eval/javaporcos-wallpaper-check.mjs --mutante=sem-fixa",
     "eval:javaporcospassada": "sh tools/eval/with-browser-lock.sh sh -c 'node tools/eval/javaporcos-passada-check.mjs && node tools/eval/javaporcos-passada-check.mjs --mutante=patina && node tools/eval/javaporcos-passada-check.mjs --mutante=apoio-no-ar'",
     "eval:meshoptvm": "node tools/eval/meshopt-vm-check.mjs && node tools/eval/meshopt-vm-check.mjs --mutante=troca-byte",

@@ -1334,7 +1334,7 @@ class InvasaoJavaporcos {
     if (this.state.mutante === 'mapa-mudo') return;
     const dominio = Math.round((this.state.dominio || 0) * 100);
     const tomados = this.state.controle.filter((v) => v >= 1).length;
-    this.hudDominio.textContent = `DOMÍNIO DA HORDA ${dominio}%`;
+    this.hudDominio.textContent = `DOMÍNIO DA HORDA ${dominio}% · JAVAPORCOS`;
     this.hudSetores.textContent = `${tomados}/${this.state.controle.length} SETORES TOMADOS · PERDE EM ${Math.round(DOMINIO.derrota * 100)}%`;
     this.hudBarra.style.width = `${Math.min(100, dominio)}%`;
     this.hudCelulas.forEach((cel, i) => {
@@ -1357,7 +1357,7 @@ class InvasaoJavaporcos {
     return {
       duration: winner === 'E' ? 10 : 6,
       title: winner === 'E' ? 'LORDE DO TERROR ABATIDO' : 'O BAIRRO CAIU',
-      detail: winner === 'E' ? `${this.state.teamBonus} pontos · horda segurada em ${Math.round((this.state.dominio || 0) * 100)}% do bairro` : `a horda dominou ${Math.round((this.state.dominio || 0) * 100)}% do bairro`,
+      detail: winner === 'E' ? `${this.state.teamBonus} pontos · Javaporcos segurados em ${Math.round((this.state.dominio || 0) * 100)}% do bairro` : `os Javaporcos dominaram ${Math.round((this.state.dominio || 0) * 100)}% do bairro`,
     };
   }
   renderScoreboard() {

@@ -1,3 +1,4 @@
+import { nomeTimeJavaporcos } from '../javaporcos_apresentacao.js';
 /* Treta Pop · 04 VS até 5, 14 VS 6 a 8, 20 mobile. Carregado por tp/ligar.js só com ?ui=v3.
    Espelha o #load-overlay (barra, status, dica) e o elenco que o main.js sorteia (evento tp:elenco). */
 import { tr, frase, LANG } from '../i18n.js';
@@ -49,7 +50,7 @@ function cabecalho(lado, n, forma) {
   const cab = el('div', 'tp-carga__cab');
   const bras = el('img');
   bras.alt = ''; bras.src = urlDoBrasao(lado.toLowerCase());
-  const nome = tr(NOME_LADO[lado]);
+  const nome = tr(nomeTimeJavaporcos(document.getElementById('load-overlay')?.dataset.mode, lado) || NOME_LADO[lado]);
   const texto = forma === 'grade' ? (lado === 'E' ? `${nome} · ${n}` : `${n} · ${nome}`) : nome;
   const disp = el('span', 'tp-disp');
   disp.append(el('span', 'tp-ital', texto));
@@ -99,6 +100,10 @@ export function ligar() {
 
   const escreve = (sel, t) => { const e = q(sel); if (e.textContent !== t) e.textContent = t; };
   const espelha = () => {
+    if (box.dataset.mode === 'horde') {
+      const wall = box.style.getPropertyValue('--loading-wall').match(/url\(['"]?(.*?)['"]?\)/)?.[1];
+      if (wall && arte.getAttribute('src') !== wall) { arte.src = wall; arte.hidden = false; }
+    }
     const pct = document.getElementById('load-pct')?.textContent || '0%';
     escreve('.tp-carga__pct', pct);
     raiz.style.setProperty('--p', String(Math.min(1, (parseInt(pct, 10) || 0) / 100)));
@@ -168,7 +173,7 @@ export function ligar() {
     visivel = agora;
     espelha();
   });
-  obs.observe(box, { attributes: true, attributeFilter: ['class'], childList: true, characterData: true, subtree: true });
+  obs.observe(box, { attributes: true, attributeFilter: ['class', 'style', 'data-mode'], childList: true, characterData: true, subtree: true });
   addEventListener('tp:elenco', (e) => { try { monta(e.detail || {}); } catch (err) { console.error('[treta-pop] carregamento', err); } });
   limpa();
   if (visivel && window.__tpElenco) monta(window.__tpElenco);

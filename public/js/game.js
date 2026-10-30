@@ -1,3 +1,4 @@
+import { nomeTimeJavaporcos } from './javaporcos_apresentacao.js';
 // Core game: FPS controller, weapons, bots, rounds, HUD.
 import * as THREE from 'three';
 import { escapeClanName } from './clan-label.js';
@@ -5417,8 +5418,8 @@ export class Game {
   _factionOf(side) { return side === this.playerTeam ? this.playerFaction : this.enemyFaction; }
   _voiceKey(side) { return this._factionOf(side); }   // pack de vozes/round por facção (P/B/U)
   // Nome, sigla e brasão do time são do LADO: online a playerFaction é a categoria do corpo (só mãos).
-  _teamName(side) { return TEAM_LABEL[side] || side; }
-  _teamTag(side) { return side === 'B' ? 'B' : 'E'; }
+  _teamName(side) { return nomeTimeJavaporcos(this.world?.mode, side) || TEAM_LABEL[side] || side; }
+  _teamTag(side) { return nomeTimeJavaporcos(this.world?.mode, side) || (side === 'B' ? 'B' : 'E'); }
 
   /* Uma plaqueta do HUD. Chamada por QUADRO, então tudo aqui é comparação barata:
      o número só é escrito se mudou, e o brasão (data-f, arte no CSS) só quando a

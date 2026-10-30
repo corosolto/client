@@ -52,6 +52,7 @@ function dados(fim) {
     const eu = g.playerTeam === 'B' ? 'B' : 'E', eles = eu === 'E' ? 'B' : 'E';
     const abates = g.player.kills | 0;
     return {
+      nomes: g.world?.mode === 'horde' ? { E: g._teamName('E'), B: g._teamName('B') } : null,
       venceu, vencedor: venceu ? eu : eles, placar: [g.roundsWon[eu] | 0, g.roundsWon[eles] | 0],
       abates, mortes: g.player.deaths | 0, hs: abates ? Math.round((100 * (g.player.headshots | 0)) / abates) : 0,
       segundos: Math.round(g.time || 0), combo: g.mk?.best | 0,
@@ -154,7 +155,7 @@ export function ligar() {
     frase.hidden = !d.vencedor;
     if (d.vencedor) {
       const modelo = vit ? 'A {time} levou a treta. O pastel da vitória está pago.' : 'A {time} levou a melhor. Já pediram CPI da partida.';
-      frase.textContent = tr(modelo).replace('{time}', tr(TIME[d.vencedor]));
+      frase.textContent = d.nomes ? `${d.nomes[d.vencedor]} venceram a partida.` : tr(modelo).replace('{time}', tr(TIME[d.vencedor]));
     }
 
     const stats = q('.tp-res__stats');

@@ -266,3 +266,15 @@ O npm eval:launchrace também executa menu-backdrop.test: 5/6 falham por deferre
 indefinido. loadMenuBackdrop está byte a byte idêntica ao HEAD anterior a6/7;
 essa falha permanece separada das alterações da apresentação. Watchdog8/8 verde.
 Portão específico final do Javaporcos passou, apenas2 dívidas COB2 declaradas.
+
+## Pedido6 validado: identidade e wallpapers
+
+Defensores/Javaporcos no placar, HUD, banners, loading e resultado. TP resultado
+usa concordância plural. A rotação reaproveita3 imagens já existentes; revisão
+pegou que só mudar CSS não mudava a arte v3 sobreposta. Corrigido img TP e observer.
+A régua final lê currentSrc carregado, loading real e resultado TP visível:
+Javaporcos e Praça verdes; nomes-antigos e wallpaper-fixo detectados, exit0.
+Outros modos preservam nomes e arte próprios. Não confundir B do atalho de câmera
+com time. Logs /tmp/javaporcos-identidade-final*.log e artefatos/apresentacao.
+Revisão crítica dos dois achados corrigidos concluída sem novos riscos materiais.
+Pedido7 em validação final separada; ainda não publicado nenhum commit novo.

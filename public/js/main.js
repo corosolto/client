@@ -1,3 +1,4 @@
+import { nomeTimeJavaporcos, wallpaperJavaporcos } from './javaporcos_apresentacao.js';
 // Boot, menus, settings, logo, main loop.
 import * as THREE from 'three';
 import { estadoDaUrl, urlDoEstado, CHAVES_DE_TELA } from './rotas.js';
@@ -421,13 +422,14 @@ function showLoading(label, status = 'CARREGANDO MODELOS 3D…', mapName = '') {
   if (vs) {
     const a = $('load-vs-a'), b = $('load-vs-b');
     if (mapName && currentEnemyFaction) {
-      a.textContent = tr(FACTION_NAME[currentTeam] || ''); a.style.color = (PALETA[currentTeam] || {}).base || '#e0762a';
+      a.textContent = tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'E') || FACTION_NAME[currentTeam] || ''); a.style.color = (PALETA[currentTeam] || {}).base || '#e0762a';
       const ladoDele = currentTeam === 'B' ? 'E' : 'B';
-      b.textContent = tr(FACTION_NAME[ladoDele] || ''); b.style.color = (PALETA[ladoDele] || {}).base || '#8258d8';
+      b.textContent = tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || ''); b.style.color = (PALETA[ladoDele] || {}).base || '#8258d8';
       vs.classList.remove('hidden');
     } else vs.classList.add('hidden');
   }
-  // Mapa com arte própria de espera (ex.: javaporcos) fixa a parede; a rotação respeita `_loadWallFixa`.
+  _lo.box.dataset.mode = currentMap === 'invasao_javaporcos' ? 'horde' : '';
+  _loadWallModoI = 0;
   _loadWallFixa = (mapName && MAPS[currentMap]?.loadingWall) || '';
   try { _lo.box.style.setProperty('--loading-wall', _loadWallFixa ? `url('${_loadWallFixa}')` : loadingWallUrl(_loadWallI++)); } catch {}
   _lo.box.classList.remove('hidden');
@@ -573,7 +575,7 @@ const LOADING_WALLS = ['/img/loading-20.webp', '/img/loading-21.webp', '/img/loa
   '/img/loading-27.webp', '/img/loading-28.webp', '/img/loading-29.webp', '/img/loading-30.webp',
   '/img/loading-31.webp', '/img/loading-32.webp', '/img/loading-33.webp', '/img/loading-34.webp',
   '/img/loading-35.webp', '/img/loading-36.webp', '/img/loading-37.webp', '/img/loading-38.webp'];
-let _loadWallI = 4, _loadWallFixa = '';
+let _loadWallI = 4, _loadWallFixa = '', _loadWallModoI = 0;
 const loadingWallUrl = (i) => `url('${LOADING_WALLS[i % LOADING_WALLS.length]}')`;
 function applySplashWallpaper() {
   const splash = $('boot-splash');
@@ -629,11 +631,15 @@ startVisibleRotation(async () => {
 startVisibleRotation(async () => {
   const next = (_loadWallI + 1) % LOADING_WALLS.length;
   const preload = new Image();
-  preload.src = LOADING_WALLS[next];
+  const horde = $('load-overlay')?.dataset.mode === 'horde';
+  preload.src = horde ? wallpaperJavaporcos(_loadWallModoI + 1) : LOADING_WALLS[next];
   await preload.decode();
   _loadWallI = next;
   $('boot-splash')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
-  if (!_loadWallFixa) $('load-overlay')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
+  if (horde) {
+    _loadWallFixa = wallpaperJavaporcos(++_loadWallModoI);
+    $('load-overlay')?.style.setProperty('--loading-wall', `url('${_loadWallFixa}')`);
+  } else if (!_loadWallFixa) $('load-overlay')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
 }, () => !MOBILE_AUTO && ['boot-splash', 'load-overlay'].some(id => {
   const element = $(id);
   return element && !element.classList.contains('gone') && !element.classList.contains('hidden');
