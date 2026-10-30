@@ -602,3 +602,41 @@ Próximo trabalho: baixar/catalogar os12propscidade+10vegetação prontos do pro
 sem trocar geometria física já validada do mapa indiscriminadamente. Depois conferir
 opçõesSP/fluxointro e fechar checkpoint. Sem push/merge/deploy; preview/MPWS continuam
 pendentes e armas26locais visíveis não provam o problema remoto relatado resolvido.
+
+Checkpoint variantes13eb85754. Novo achado de contrato no limite de mortesSP: interface
+fala "mortes do seu time", mas somavaE+B. Corrigido recebendo playerTeam e contando
+apenas essa equipe (compatívelE/B). Disputa18casos verde; mutante mortes-todos esperado
+vermelho. PacoteMintcidade12originais baixado porDownloadobject/UI do pack, semgastos.
+Vegetação10tambémpronta; downloadsseguintes. Arquivosignorados em artifacts/.../mint-cidade.
+
+Marco final de menu e catálogo: integração REALv3 encontrada ausente e corrigida
+em mainAPI/tp/modos. Ego verificou painelvisível;2ladosescondeinimigos,3ladosmostra;
+limitesaparecemconformefim; semintro duranteescolha. MutanteAPIsemhelper não cria
+controle e acende; restaurado volta. Relatório persistente
+artifacts/javaporcos-feedback-20261030/opcoes-v3-ego.json. Input.dispatchMouseEvent
+no p1 às vezes expira apesar de aplicar o clique; para essa conferência foram usados
+HTMLElement.click/dispatchEvent pelo Ego após inspeçãoDOM e falha do wrapper. Isso
+valida DOM/fluxo, não substitui captura visual completa (CDP screenshot ainda falha).
+
+Os12cidade+10vegetação estão baixados, otimizados, normalizados uniformemente e
+CATALOGADOS, sem inserção indiscriminada no mapa. Receitaproveniente
+ tools/javaporcos-mint-packs.mjs,22runtimeGLB,registroMint/FONTE, fontes ignoradas
+references/glb/javaporcos-mint-packs. Procedência por pack+nome escolhido noUI (não
+inventar childassetID a partir dos resultados duplicados do chat). PAC77propsverde,
+integridade151hashesverde, assetrev1746. Quatroboarsnovos tambémtêmfinalSha256.
+
+Regressões finais: netcodec30/30, netcode209/209, formato7/7, UIv3 10/10, introfluxo6/6,
+arch/comments/syntax/diffcheck verdes. Revisão crítica de menu/mortes/catálogo sem
+novosachados. Evidências antesem/tmp foram copiadas para
+artifacts/javaporcos-feedback-20261030/fecho (capturas3D+logs relevantes).
+
+PONTO DE ENTREGA LOCAL, NÃO PUBLICADO: trêsfacções/território real, sobrevivência,
+limitesSP/MP,refúgios,mataexpandida/entradas,bandos,morteslaterais,8aparências,
+loading/intro/placares implementados. Armas26aparecem localmente; bug remoto semURL
+não reproduzido, não declarar corrigido em produção. Preview novo e MP com dois
+clientes reais pendentes. Backendfixture verde não equivale a WSpublicado; cliente
+v7J e backend devem sair coordenados. CodeRabbit/CI atuais só após push autorizado.
+Sketchfab26aguarda token por ambiente;NCnão usado. Não ler .env.
+Próximo: apresentar checkpoint e pedir autorização de push conforme promptlinha8;
+se autorizado executarhooknormal, acompanharpreview/CI e validar armas/MP de verdade.
+EgoTaskSpace8 continua ativo para essa continuação; não operar espaços de terceiros.

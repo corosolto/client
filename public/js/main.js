@@ -3276,7 +3276,8 @@ if (HUB_ENABLED) montarHubSels();
 /* Treta Pop (public/js/tp/modos.js): lê o estado da partida e troca o mapa pela mesma máquina do menu. */
 if (document.documentElement.dataset.ui === 'v3') window.__tpModos = {
   mapas: () => MAPAS_MENU.map((id) => ({ id, nome: MAPS[id].name, poster: mapPreviewPoster(id, VERSION), cats: catsDe(id), data: MAP_DATA[id] || '', desc: tr(MAP_DESC[id] || ''), parado: MAPAS_PARADOS.has(id) })),
-  estado: () => ({ mapa: currentMap, modo: matchMode, armas: settings.wpnMode || 'all', aliados: settings.allyBots, inimigos: settings.enemyBots, rounds: matchRounds(), dificuldade: settings.difficulty || 'normal', escalados: [...settings.pinnedChars] }),
+  estado: () => ({ mapa: currentMap, modo: matchMode, armas: settings.wpnMode || 'all', aliados: settings.allyBots, inimigos: settings.enemyBots, rounds: matchRounds(), dificuldade: settings.difficulty || 'normal', escalados: [...settings.pinnedChars], javaporcos: {...settings.javaporcos} }),
+  opcoesJavaporcos: (host, mudou) => sincronizarOpcoesJavaporcos(host, currentMap === 'invasao_javaporcos', settings, () => { saveSettings(); syncMapOptions(); setMapMeta(); mudou?.(); }),
   irMapa: (id) => { if (MAPAS_MENU.includes(id)) gotoMap(MAPAS_MENU.indexOf(id)); },
 };
 if (diffSel) {

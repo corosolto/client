@@ -1023,7 +1023,7 @@ class InvasaoJavaporcos {
       const phase = this.state.phase, winner = this.state.winner, wave = this.state.wave;
       passoHorda(this.state, dt);
       this.tickDominio(this.game.time);
-      if (this.state.mutante !== 'sem-derrota') this.state.winner ||= avaliarFimDaInvasao(this.state, this.regras, this.game.combatants);
+      if (this.state.mutante !== 'sem-derrota') this.state.winner ||= avaliarFimDaInvasao(this.state, this.regras, this.game.combatants, this.game.playerTeam);
       if (this.state.winner) this.state.phase = 'finished';
       this.sincronizarSlots();
       if (phase === 'combat' && this.state.phase !== 'combat') this.emitir('WAVE_CLEARED', { wave });

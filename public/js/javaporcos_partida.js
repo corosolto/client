@@ -18,7 +18,7 @@ export function vencedorPorLimite(state, regras) {
   if (vivos.length > 1 && valor(vivos[0]) === valor(vivos[1]) && (state.teamKills?.[vivos[0]] || 0) === (state.teamKills?.[vivos[1]] || 0)) return 'draw';
   return vivos[0] || 'J';
 }
-export function avaliarFimDaInvasao(state, regras, combatants) {
+export function avaliarFimDaInvasao(state, regras, combatants, timeJogador = 'E') {
   if (state.winner) return state.winner;
   const humanos = combatants.filter(c => !c._objectiveNpc && (c.team === 'E' || c.team === 'B'));
   const times = [...new Set(humanos.map(c=>c.team))];
@@ -29,7 +29,7 @@ export function avaliarFimDaInvasao(state, regras, combatants) {
     if (regras.wipe === 'partida') return 'J';
   }
   if (times.length && times.every(team=>state.eliminados.includes(team))) return 'J';
-  const mortes = humanos.reduce((sum,c)=>sum+(c.deaths || 0),0);
+  const mortes = humanos.filter(c=>c.team === timeJogador || state.mutante === 'mortes-todos').reduce((sum,c)=>sum+(c.deaths || 0),0);
   if ((regras.abates && state.kills >= regras.abates) || (regras.segundos && state.clock >= regras.segundos) || (regras.mortes && mortes >= regras.mortes)) return vencedorPorLimite(state,regras);
   return null;
 }
