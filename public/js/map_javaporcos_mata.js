@@ -159,7 +159,7 @@ export function construirMata(kit, campo, rnd) {
 
   /* Chão pisado da trilha: retalho de terra instanciado sobre o terreno. Sem ele a trilha
      é um corredor de grama e o jogador não lê "caminho", lê "falha na mata". */
-  const pisadas = [];
+  let pisadas = [];
   for (const e of EIXOS) {
     for (let t = 0; t <= 1.0001; t += 0.045) {
       const i = Math.min(e.pts.length - 2, Math.floor(t * (e.pts.length - 1)));
@@ -167,14 +167,16 @@ export function construirMata(kit, campo, rnd) {
       const ax = e.pts[i][0] + (e.pts[i + 1][0] - e.pts[i][0]) * ft;
       const az = e.pts[i][1] + (e.pts[i + 1][1] - e.pts[i][1]) * ft;
       const esc = 2.6 + rnd() * 1.6;
-      pisadas.push(matriz(ax + (rnd() - 0.5) * 0.7, campo.amostra(ax, az) + 0.03, az + (rnd() - 0.5) * 0.7,
-        rnd() * 6.283, esc, 1, esc));
+      const m = pisada(campo, ax + (rnd() - 0.5) * 0.7, az + (rnd() - 0.5) * 0.7, rnd() * 6.283, esc, esc);
+      pisadas.push(m);
+      if (!m || Math.hypot(m.elements[0], m.elements[1], m.elements[2]) < esc * 0.75) {
+        for (let k = 0; k < 4; k++) pisadas.push(pisada(campo, ax + (loc() - 0.5) * 2, az + (loc() - 0.5) * 2, loc() * 6.283, esc, esc));
+      }
     }
     const [cx, cz] = e.clareira;
     for (let k = 0; k < 7; k++) {
       const a = (k / 7) * 6.283, r = k ? 1.6 + rnd() * 1.9 : 0;
-      pisadas.push(matriz(cx + Math.cos(a) * r, campo.amostra(cx, cz) + 0.03, cz + Math.sin(a) * r,
-        rnd() * 6.283, 3.0 + rnd() * 1.4, 1, 3.0 + rnd() * 1.4));
+      pisadas.push(pisada(campo, cx + Math.cos(a) * r, cz + Math.sin(a) * r, rnd() * 6.283, 3.0 + rnd() * 1.4, 3.0 + rnd() * 1.4));
     }
     for (let i = 0; i < e.pasto.length - 1; i++) {
       const [ax, az] = e.pasto[i], [bx, bz] = e.pasto[i + 1];
@@ -182,7 +184,7 @@ export function construirMata(kit, campo, rnd) {
       for (let k = 0; k < passos; k++) {
         const t = k / passos, px = ax + (bx - ax) * t + (rnd() - 0.5) * 0.5, pz = az + (bz - az) * t + (rnd() - 0.5) * 0.5;
         const esc = 1.5 + rnd() * 1.0;
-        pisadas.push(matriz(px, campo.amostra(px, pz) + 0.03, pz, rnd() * 6.283, esc, 1, esc * (0.8 + rnd() * 0.4)));
+        pisadas.push(pisada(campo, px, pz, rnd() * 6.283, esc, esc * (0.8 + rnd() * 0.4)));
       }
     }
   }
@@ -208,6 +210,7 @@ export function construirMata(kit, campo, rnd) {
   const moitaMesh = add(moitas, moitaGeo, folha, 'mata-subbosque', false);
   const cipoMesh = add(cipos, cipoGeo, MAT.cipo, 'mata-cipo', false);
   const matoMesh = add(matos, matoGeo, MAT.mato, 'mata-capim', false);
+  pisadas = pisadas.filter(Boolean);
   const pisadaGeo = new THREE.PlaneGeometry(1, 1);
   pisadaGeo.rotateX(-Math.PI / 2);
   const pisadaMesh = add(pisadas, pisadaGeo, MAT.terraTrilha, 'mata-trilha-pisada', false);
@@ -235,6 +238,30 @@ export function construirMata(kit, campo, rnd) {
 }
 
 const semente = (s) => () => ((s = Math.imul(s, 1664525) + 1013904223 >>> 0) / 4294967296);
+
+const DECLIVE_PISADA = 0.175;      // 10°: acima disso retalho largo plano corta o barranco em degrau
+const _n = new THREE.Vector3(), _cima = new THREE.Vector3(0, 1, 0), _qy = new THREE.Quaternion();
+function normalChao(campo, x, z) {
+  const d = 0.5;
+  return _n.set(campo.amostra(x - d, z) - campo.amostra(x + d, z), 2 * d, campo.amostra(x, z - d) - campo.amostra(x, z + d)).normalize();
+}
+const declive = (campo, x, z) => Math.acos(normalChao(campo, x, z).y);
+
+/* Retalho de terra deitado na normal do chão; encolhe (≤ 1,2 m no declive) até nenhum
+   canto ou meio de aresta ficar a mais de 8 cm do relevo; sem encaixe, devolve null. */
+const _v = new THREE.Vector3(), AMOSTRAS_PISADA = [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5], [0, -0.5], [0, 0.5], [-0.5, 0], [0.5, 0]];
+function pisada(campo, x, z, ry, sx, sz) {
+  if (declive(campo, x, z) > DECLIVE_PISADA) { sx = Math.min(sx, 1.2); sz = Math.min(sz, 1.2); }
+  _qy.setFromAxisAngle(_cima, ry);
+  _q.setFromUnitVectors(_cima, normalChao(campo, x, z)).multiply(_qy);
+  _p.set(x, campo.amostra(x, z) + 0.04, z);
+  const m = new THREE.Matrix4();
+  for (let k = 0; k < 8; k++, sx *= 0.8, sz *= 0.8) {
+    m.compose(_p, _q, _s.set(sx, 1, sz));
+    if (AMOSTRAS_PISADA.every(([a, b]) => Math.abs(_v.set(a, 0, b).applyMatrix4(m).y - campo.amostra(_v.x, _v.z)) <= 0.08)) return m;
+  }
+  return null;
+}
 
 /* Folhagem em cartão alfa sobre atlas de folhas escaneadas (Poly Haven CC0): metade
    esquerda é tufo de copa, a direita é moita. Um material para copa e sub-bosque. */
