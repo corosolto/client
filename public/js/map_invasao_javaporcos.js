@@ -7,6 +7,7 @@ import { AMB_LOOPS } from './soundscape.js';
 import { detailFor } from './textures.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
+import { setMapSky } from './map_sky.js';
 import { CampoDeAltura, malhaTerreno, HALF, CIDADE, MATA_R, EIXOS, CORREGO_MEIA, corregoZ, corteCorrego, distPasto, PASSO } from './map_javaporcos_relevo.js';
 import { construirMata, construirPasto } from './map_javaporcos_mata.js';
 import { construirCidade, CIDADE_R, AV, CAL } from './map_javaporcos_cidade.js';
@@ -223,8 +224,8 @@ export function buildInvasaoJavaporcos(scene, T) {
   propsOpcionais(root, occluders, campo, rnd, cidade, PB);
 
   // ── Luz e céu do entardecer medido nas referências de arte.
-  scene.background = new THREE.Color(0xbb8559);
-  scene.fog = new THREE.Fog(0xc08b60, 38, 150);
+  setMapSky(scene, T, '/img/textures/sky_javaporcos.webp', 0x9a8a80);
+  scene.fog = new THREE.Fog(0x9a8a80, 70, 260);
   const sun = new THREE.DirectionalLight(0xffd3a0, 2.4);
   sun.position.set(-46, 22, 34);
   sun.castShadow = true;

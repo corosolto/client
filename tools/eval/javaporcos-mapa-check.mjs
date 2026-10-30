@@ -63,6 +63,11 @@
             nenhum é carro Mint lowpoly (~2,8 k tris, troca pedida em 30/10) nem de licença NC
             (saveiro_robust, byd_dolphin: o dono decide), e há ≥ 3 carros realistas.
 
+   GAUNTLET VISUAL, RODADA 2 (crítico 3/10 em 30/10: céu chapado salmão, sombra laranja,
+   mata de icosaedro, mapa flutuando no vazio na vista alta):
+     CEU1   o céu é panorama equirretangular 2:1 em disco (setMapSky), não `THREE.Color`; a
+            névoa é neutra (b* ≤ 10) e começa longe (near ≥ 60, far ≥ 200), sem engolir a mata.
+
    MUTANTES (cada um tem de deixar a régua VERMELHA):
      mata-furada     derruba a parede de colisor do lado norte  -> MATA1, MATA3
      chao-constante  `groundHeightAt` volta a devolver 0 fixo   -> CHAO1, HORDA1
@@ -76,6 +81,7 @@
      beco-aberto     derruba as paredes de um beco              -> BECO1
      setor-buraco    some com um setor                          -> SETOR1
      carro-mint      põe o fusca Mint de volta no catálogo      -> PROPS1
+     ceu-chapado     céu volta a `Color` salmão e névoa 38-150   -> CEU1
 
    Uso: node tools/eval/javaporcos-mapa-check.mjs [--mutante=X] [--json-out=arq]
    ============================================================================ */
@@ -85,7 +91,8 @@ import { THREE, initTextures, bootGame } from './harness.mjs';
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutante');
 const MUTANTES = ['mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta', 'boca-aberta', 'mata-avanca',
-  'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto', 'setor-buraco', 'carro-mint'];
+  'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto', 'setor-buraco', 'carro-mint',
+  'ceu-chapado'];
 if (MUT && !MUTANTES.includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT}. Há: ${MUTANTES.join(', ')}`);
   process.exit(2);
@@ -186,6 +193,10 @@ if (MUT === 'beco-aberto') {
   }
 }
 if (MUT === 'setor-buraco') { exige(W.horda?.setores?.length, 'MUTANTE setor-buraco NÃO APLICOU'); W.horda.setores.shift(); }
+if (MUT === 'ceu-chapado') {
+  delete jogo.scene.userData.skySource; delete jogo.scene.userData.skyUrl;
+  jogo.scene.background = new THREE.Color(0xbb8559); jogo.scene.fog = new THREE.Fog(0xc08b60, 38, 150);
+}
 
 /* ------------------------------------------------- varredura a pé (MATA1) */
 const B = W.bounds;
@@ -666,6 +677,38 @@ regra('PROPS1 catálogo realista: sem carro Mint lowpoly, sem licença NC', () =
   return `${lista.length} ids com GLB, ${carros.length} carros realistas`;
 });
 
+/* ------------------------------------------------- céu, luz e mata (CEU/LUZ/MATA4/CHAO2) */
+const labB = (cor) => {
+  const lin = [cor.r, cor.g, cor.b];   // THREE.Color guarda linear
+  const X = (0.4124 * lin[0] + 0.3576 * lin[1] + 0.1805 * lin[2]) / 0.9505;
+  const Y = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+  const Z = (0.0193 * lin[0] + 0.1192 * lin[1] + 0.9505 * lin[2]) / 1.089;
+  const f = (t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+  return 200 * (f(Y) - f(Z));
+};
+const dimWebp = (arq) => {
+  const b = fs.readFileSync(arq);
+  const tipo = b.toString('ascii', 12, 16);
+  if (tipo === 'VP8 ') return [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff];
+  if (tipo === 'VP8X') return [1 + b.readUIntLE(24, 3), 1 + b.readUIntLE(27, 3)];
+  if (tipo === 'VP8L') { const v = b.readUInt32LE(21); return [1 + (v & 0x3fff), 1 + ((v >> 14) & 0x3fff)]; }
+  return [0, 0];
+};
+regra('CEU1 céu é panorama 2:1 em disco e a névoa não engole a mata', () => {
+  const src = jogo.scene.userData.skySource;
+  exige(src?.kind === 'webp' && src.url, `céu sem panorama (skySource = ${JSON.stringify(src || null)}): fundo chapado de cor única`);
+  const arq = new URL(`../../public${src.url}`, import.meta.url);
+  exige(fs.existsSync(arq), `panorama ${src.url} não está no disco`);
+  const [w, h] = dimWebp(arq);
+  exige(w >= 2048 && w === 2 * h, `panorama ${w}×${h}: precisa ser equirretangular 2:1 com ≥ 2048 px`);
+  const fog = jogo.scene.fog;
+  exige(fog?.isFog, 'sem névoa linear');
+  const b = labB(fog.color);
+  exige(b <= 10, `névoa com b* ${b.toFixed(1)} (teto 10): salmão`);
+  exige(fog.near >= 60 && fog.far >= 200, `névoa de ${fog.near} a ${fog.far} m (piso 60 e 200): engole a mata a 14 m da borda`);
+  relatorio.ceu = { url: src.url, w, h, nevoaB: +b.toFixed(1), near: fog.near, far: fog.far };
+  return `${src.url} ${w}×${h}, névoa b* ${b.toFixed(1)} de ${fog.near} a ${fog.far} m`;
+});
 /* ------------------------------------------------------------------ fecho */
 relatorio.censo = W.censo;
 relatorio.mutante = MUT || null;
