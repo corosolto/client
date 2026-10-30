@@ -36,7 +36,7 @@
      TRILHA2 E chega DENTRO das quatro lojas: sem a costura da porta na grade de 1,5 m a
             invasão para na calçada, que é o defeito que o dono viu.
 
-   LAYOUT DE 30/10/2026 (decisões do dono: pasto entre cidade e mata, 3 frentes):
+   LAYOUT DE 30/10/2026 (decisões do dono: pasto entre cidade e mata, 3 frentes, becos):
      MATA3  FRENTES FECHADAS: anel de sondas a pé na ENTRADA da parede (v = 45 m, os quatro
             lados). Os arcos livres contíguos são as bocas de verdade — tem de haver
             EXATAMENTE 3, cada um sobre uma frente declarada. Declarar 3 e deixar furo
@@ -53,6 +53,10 @@
             A rota é caminhada a cada 0,25 m: corpo de 0,45 m sem colisor, degrau ≤ 0,3 m
             por passo e sonda de chão ≤ 0,30 m (o bicho não afunda). A navegação liga a
             ponta da rota à cidade com ≤ 1,6× o comprimento da rota.
+     BECO1  `world.horda.becos`: ≥ 4, em ≥ 3 lados, abrem na onda 3; de (anel perimetral)
+            até (viela) caminhável com corpo de 0,45 m; corredor de VERDADE — em ≥ 60% das
+            sondas do trecho entre muros há parede dos dois lados e a largura livre fica
+            entre 2,0 e 3,2 m; e a navegação atravessa (≤ 1,3× a reta).
 
    MUTANTES (cada um tem de deixar a régua VERMELHA):
      mata-furada     derruba a parede de colisor do lado norte  -> MATA1, MATA3
@@ -63,6 +67,8 @@
      mata-avanca     planta uma fileira de mata no meio do pasto leste -> PASTO1
      pasto-careca    zera o capim e a touceira                  -> PASTO2
      rota-no-muro    desvia o meio de uma rota para dentro da mata -> HORDA1
+     beco-fechado    entulho de 1 m no meio de cada beco        -> BECO1
+     beco-aberto     derruba as paredes de um beco              -> BECO1
 
    Uso: node tools/eval/javaporcos-mapa-check.mjs [--mutante=X] [--json-out=arq]
    ============================================================================ */
@@ -72,7 +78,7 @@ import { THREE, initTextures, bootGame } from './harness.mjs';
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutante');
 const MUTANTES = ['mata-furada', 'chao-constante', 'comida-fora', 'trilha-solta', 'boca-aberta', 'mata-avanca',
-  'pasto-careca', 'rota-no-muro'];
+  'pasto-careca', 'rota-no-muro', 'beco-fechado', 'beco-aberto'];
 if (MUT && !MUTANTES.includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT}. Há: ${MUTANTES.join(', ')}`);
   process.exit(2);
@@ -154,6 +160,23 @@ if (MUT === 'rota-no-muro') {
   const f = W.horda?.frentes?.[0];
   exige(f && f.rota.length > 3, 'MUTANTE rota-no-muro NÃO APLICOU: sem rota');
   f.rota[1] = { x: f.rota[1].x + 7, z: f.rota[1].z - 1.5 };
+}
+if (MUT === 'beco-fechado') {
+  for (const b of W.horda?.becos || []) {
+    const x = (b.de.x + b.ate.x) / 2, z = (b.de.z + b.ate.z) / 2;
+    W.colliders.push({ minX: x - 0.9, maxX: x + 0.9, minY: -1, maxY: 1.2, minZ: z - 0.9, maxZ: z + 0.9 });
+  }
+  exige(W.horda?.becos?.length, 'MUTANTE beco-fechado NÃO APLICOU');
+}
+if (MUT === 'beco-aberto') {
+  const b = W.horda?.becos?.[0];
+  exige(b, 'MUTANTE beco-aberto NÃO APLICOU');
+  const x0 = Math.min(b.de.x, b.ate.x) - 2.2, x1 = Math.max(b.de.x, b.ate.x) + 2.2;
+  const z0 = Math.min(b.de.z, b.ate.z) - 2.2, z1 = Math.max(b.de.z, b.ate.z) + 2.2;
+  for (let i = W.colliders.length - 1; i >= 0; i--) {
+    const c = W.colliders[i];
+    if (c.maxX > x0 && c.minX < x1 && c.maxZ > z0 && c.minZ < z1) W.colliders.splice(i, 1);
+  }
 }
 
 /* ------------------------------------------------- varredura a pé (MATA1) */
@@ -550,6 +573,47 @@ regra('HORDA1 3 frentes com rota caminhável da mata até a cidade', () => {
   return linhas.join(' · ');
 });
 
+regra('BECO1 becos caminháveis entre paredes, ligando o pasto à rua', () => {
+  const B = W.horda?.becos;
+  exige(Array.isArray(B), 'o mapa não expôs world.horda.becos');
+  exige(B.length >= 4, `${B.length} becos (piso 4)`);
+  const lados = new Set();
+  const linhas = [];
+  for (const b of B) {
+    exige(b.abreNaOnda === 3, `beco ${b.id} abre na onda ${b.abreNaOnda} (contrato: 3)`);
+    const rd = raioDe(b.de), ra = raioDe(b.ate);
+    exige(rd >= 31.5 && rd <= 36.5, `beco ${b.id}: "de" a ${rd.toFixed(1)} m, fora do anel que encosta no pasto`);
+    exige(ra < rd - 5, `beco ${b.id}: "ate" a ${ra.toFixed(1)} m não entra na cidade`);
+    lados.add(Math.abs(b.de.z) >= Math.abs(b.de.x) ? (b.de.z < 0 ? 'N' : 'S') : (b.de.x < 0 ? 'O' : 'L'));
+    const c = caminha([b.de, b.ate]);
+    exige(!c.erro, `beco ${b.id}: ${c.erro}`);
+    const dx = (b.ate.x - b.de.x) / c.comp, dz = (b.ate.z - b.de.z) / c.comp, nx = -dz, nz = dx;
+    let sondas = 0, entreParedes = 0, largMin = Infinity, largMax = 0;
+    for (let t = 1.2; t <= c.comp - 1.2; t += 0.5) {
+      const x = b.de.x + dx * t, z = b.de.z + dz * t;
+      const lateral = (s) => { for (let d = 0; d <= 2.4; d += 0.05) if (dentroDeSolido(x + nx * s * d, z + nz * s * d)) return d; return Infinity; };
+      const e = lateral(1), d = lateral(-1);
+      sondas++;
+      if (Number.isFinite(e) && Number.isFinite(d)) {
+        entreParedes++;
+        largMin = Math.min(largMin, e + d); largMax = Math.max(largMax, e + d);
+      }
+    }
+    const frac = entreParedes / Math.max(1, sondas);
+    exige(frac >= 0.6, `beco ${b.id}: só ${(100 * frac).toFixed(0)}% das sondas têm parede dos dois lados — é terreno aberto, não beco`);
+    exige(largMin >= 2.0 && largMax <= 3.2, `beco ${b.id}: largura livre ${largMin.toFixed(2)} a ${largMax.toFixed(2)} m (faixa 2,0 a 3,2)`);
+    const a = W.nearestWaypoint(b.de.x, b.de.z), z = W.nearestWaypoint(b.ate.x, b.ate.z);
+    const cam = W.findPath(a, z);
+    exige(cam.length > 1 && cam[cam.length - 1] === z, `a navegação não atravessa o beco ${b.id}`);
+    const L = compCaminho(cam);
+    exige(L <= 1.3 * c.comp + 1.5, `navegação do beco ${b.id} com ${L.toFixed(1)} m contra ${c.comp.toFixed(1)} m de reta: dá a volta`);
+    linhas.push(`${b.id} ${largMin.toFixed(2)}–${largMax.toFixed(2)} m, ${(100 * frac).toFixed(0)}% entre paredes`);
+  }
+  exige(lados.size >= 3, `becos em só ${lados.size} lado(s) (piso 3)`);
+  relatorio.becos = B;
+  return linhas.join(' · ');
+});
+
 /* ------------------------------------------------------------------ fecho */
 relatorio.censo = W.censo;
 relatorio.mutante = MUT || null;
@@ -563,4 +627,4 @@ if (MUT) {
   process.exit(1);
 }
 if (falhas) { console.error(`✗ MAPA DA INVASÃO: ${falhas} cláusula(s) vermelha(s).`); process.exit(1); }
-console.log('✓ MAPA DA INVASÃO OK — cerco de 3 frentes, pasto, relevo, comida e trilhas até dentro da loja.');
+console.log('✓ MAPA DA INVASÃO OK — cerco de 3 frentes, pasto, becos, relevo, comida e trilhas até dentro da loja.');

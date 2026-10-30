@@ -36,7 +36,8 @@ const PAPEL = {
 export function construirCidade(kit, campo, rnd) {
   const { MAT, caixa, piso, placa, root, colliders } = kit;
   const foodSpots = [], foodMeshes = new Map(), foodColliders = new Map();
-  const portas = [], lojas = [];
+  const portas = [], lojas = [], becos = [];
+  const extras = novosExtras();
   let edificacoes = 0;
 
   /* ── Plataformas no campo de altura ANTES de qualquer malha: é o campo que manda, e é
@@ -98,8 +99,14 @@ export function construirCidade(kit, campo, rnd) {
         'racao-loja', 'racao', l.interior[0], l.interior[1]);
       continue;
     }
+    if (BECOS[b.id]) {
+      const bc = quarteiraoBeco(kit, campo, rnd, b, BECOS[b.id], extras);
+      becos.push(bc.contrato); edificacoes += bc.casas;
+      continue;
+    }
     edificacoes += quarteiraoCasas(kit, campo, rnd, b, papel === 'sobrados' ? 2 : 0);
   }
+  construirExtras(kit, extras);
 
   // ── Postes, fiação e carros parados
   const postes = fiacao(kit, campo, rnd);
@@ -128,15 +135,15 @@ export function construirCidade(kit, campo, rnd) {
     { id: 'igreja', x: +igrejaInfo.frente[0].toFixed(2), z: +igrejaInfo.frente[1].toFixed(2), hp: 1200, r: 3.0 },
   ];
 
-  return { foodSpots, foodMeshes, foodColliders, portas, lojas, hordeObjectives,
-    censo: { edificacoes, postes, calcadas: calcadas.length, colisores: colliders.length }, root };
+  return { foodSpots, foodMeshes, foodColliders, portas, lojas, hordeObjectives, becos, becoAreas: extras.becoAreas,
+    censo: { edificacoes, postes, calcadas: calcadas.length, becos: becos.length, colisores: colliders.length }, root };
 }
 
 /* ── CASA TÉRREA / SOBRADO ─────────────────────────────────────────────────────────── */
-function casa(kit, campo, rnd, x, z, w, d, ry, alt, cor) {
+function casa(kit, campo, rnd, x, z, w, d, ry, alt, cor, paredeMat = null) {
   const { MAT, caixa, placa } = kit;
   const y = campo.amostra(x, z);
-  const parede = MAT.reboco[cor % MAT.reboco.length];
+  const parede = paredeMat || MAT.reboco[cor % MAT.reboco.length];
   caixa(w, alt, d, parede, x, y, z, { ry });
   caixa(w + 0.04, 1.1, d + 0.04, MAT.barra, x, y, z, { ry, collide: false, cast: false });
   const cume = alt > 5 ? 1.3 : 1.1;
@@ -549,4 +556,149 @@ function lixoSolto(kit, campo, rnd) {
   };
   add(sacos, new THREE.IcosahedronGeometry(0.34, 0), MAT.saco, 'lixo-saco-solto');
   add(caixotes, new THREE.BoxGeometry(0.5, 0.32, 0.38), MAT.caixote, 'lixo-caixote-solto');
+}
+
+/* ── BECOS ─────────────────────────────────────────────────────────────────────────── */
+/* Um beco por lado, no quarteirão externo: liga o anel perimetral (pasto) à viela.
+   Medidas e o porquê dos 2,5 m: docs/maps/invasao-javaporcos-layout.md, seção "Becos". */
+export const BECO_MEIA = 1.25;
+const BECO_FUNDO = 5.2;
+const BECOS = {
+  'LN-io': { id: 'beco-norte', nome: 'Beco do Medidor' },
+  'OS-io': { id: 'beco-sul', nome: 'Beco do Varal' },
+  'LS-oi': { id: 'beco-leste', nome: 'Beco do Botijão' },
+  'ON-oi': { id: 'beco-oeste', nome: 'Beco da Caixa' },
+};
+
+function novosExtras() {
+  return { medidor: [], eletroduto: [], vao: [], grade: [], arame: [], roupa: [], roupaCor: [], botijao: [], saco: [], lixeira: [], becoAreas: [] };
+}
+
+const _mq = new THREE.Quaternion(), _me = new THREE.Euler(), _mp = new THREE.Vector3(), _ms = new THREE.Vector3();
+const mtx = (x, y, z, sx, sy, sz, ry = 0, rx = 0, rz = 0) => {
+  _me.set(rx, ry, rz); _mq.setFromEuler(_me); _mp.set(x, y, z); _ms.set(sx, sy, sz);
+  return new THREE.Matrix4().compose(_mp, _mq, _ms);
+};
+
+function quarteiraoBeco(kit, campo, rnd, b, def, ex) {
+  const { MAT, caixa, piso, colliders } = kit;
+  const aoLongoZ = b.az === 'o';
+  const [c0, c1] = aoLongoZ ? [b.x0, b.x1] : [b.z0, b.z1];
+  const [l0, l1] = aoLongoZ ? [b.z0, b.z1] : [b.x0, b.x1];
+  const sOut = aoLongoZ ? b.sz : b.sx;
+  const lOut = sOut < 0 ? l0 : l1, lIn = sOut < 0 ? l1 : l0, dIn = Math.sign(lIn - lOut);
+  const cm = (c0 + c1) / 2, comp = Math.abs(lIn - lOut);
+  const larg = (c1 - c0) / 2 - BECO_MEIA - 0.35;
+  const W = (c, l) => (aoLongoZ ? [c, l] : [l, c]);
+  const dims = (dc, dl) => (aoLongoZ ? [dc, dl] : [dl, dc]);
+  const ryPara = (f) => (aoLongoZ ? (f > 0 ? 0 : Math.PI) : (f > 0 ? Math.PI / 2 : -Math.PI / 2));
+  const parede = MAT.rebocoDesc;
+
+  const altA = 6, altB = rnd() < 0.5 ? 6 : 3;
+  const [ax, az] = W(cm - BECO_MEIA - larg / 2, lOut + dIn * BECO_FUNDO / 2);
+  casa(kit, campo, rnd, ax, az, larg, BECO_FUNDO, ryPara(-dIn), altA, 0, parede[0]);
+  const [bx, bz] = W(cm + BECO_MEIA + larg / 2, lIn - dIn * BECO_FUNDO / 2);
+  casa(kit, campo, rnd, bx, bz, larg, BECO_FUNDO, ryPara(dIn), altB, 1, parede[1]);
+
+  const muroC = (cc, la, lb, esp, alt, mat) => {
+    const [x, z] = W(cc, (la + lb) / 2), [w, d] = dims(esp, Math.abs(lb - la));
+    caixa(w, alt, d, mat, x, campo.amostra(x, z), z, {});
+  };
+  const muroL = (ll, ca, cb, esp, alt, mat) => {
+    const [x, z] = W((ca + cb) / 2, ll), [w, d] = dims(Math.abs(cb - ca), esp);
+    caixa(w, alt, d, mat, x, campo.amostra(x, z), z, {});
+  };
+  const quintal = comp - BECO_FUNDO;
+  muroC(cm - BECO_MEIA - 0.1, lOut + dIn * BECO_FUNDO, lIn, 0.2, 2.2, parede[1]);
+  muroC(cm + BECO_MEIA + 0.1, lOut, lOut + dIn * quintal, 0.2, 2.2, parede[0]);
+  muroL(lIn - dIn * 0.08, c0 + 0.2, cm - BECO_MEIA - 0.2, 0.16, 1.9, MAT.bloco);
+  muroC(c0 + 0.1, lOut + dIn * BECO_FUNDO, lIn - dIn * 0.16, 0.16, 1.9, MAT.bloco);
+  muroL(lOut + dIn * 0.08, cm + BECO_MEIA + 0.2, c1 - 0.2, 0.16, 1.9, MAT.bloco);
+  muroC(c1 - 0.1, lOut + dIn * 0.16, lOut + dIn * quintal, 0.16, 1.9, MAT.bloco);
+
+  const [fx, fz] = W(cm, (lOut + lIn) / 2), [fw, fd] = dims(2 * BECO_MEIA, comp);
+  piso(fw, fd, MAT.cimento, fx, fz, 0.026, 'chao-beco');
+  for (const [cc, la, lb] of [[cm - BECO_MEIA - larg / 2, lOut + dIn * BECO_FUNDO, lIn], [cm + BECO_MEIA + larg / 2, lOut, lOut + dIn * quintal]]) {
+    const [qx, qz] = W(cc, (la + lb) / 2), [qw, qd] = dims(larg, Math.abs(lb - la));
+    piso(qw, qd, MAT.terraQuintal, qx, qz, 0.006, 'chao-quintal');
+  }
+  const [ex0, ez0] = W(cm - BECO_MEIA, lOut), [ex1, ez1] = W(cm + BECO_MEIA, lIn);
+  ex.becoAreas.push([Math.min(ex0, ex1), Math.max(ex0, ex1), Math.min(ez0, ez1), Math.max(ez0, ez1)]);
+
+  const caixaLocal = (lista, c, y, l, dc, h, dl) => {
+    const [x, z] = W(c, l), [w, d] = dims(dc, dl);
+    lista.push(mtx(x, y, z, w, h, d));
+  };
+  // medidor com eletroduto subindo ao beiral, um em cada casa, na face do beco
+  for (const [lado, lm, alt] of [[-1, lOut + dIn * 1.5, altA], [1, lIn - dIn * 1.5, altB]]) {
+    const cw = cm + lado * (BECO_MEIA - 0.07);
+    caixaLocal(ex.medidor, cw, 1.68, lm, 0.13, 0.44, 0.34);
+    caixaLocal(ex.eletroduto, cm + lado * (BECO_MEIA - 0.03), 1.9 + (alt - 2.0) / 2, lm, 0.05, alt - 2.0, 0.05);
+  }
+  // janela gradeada: vão escuro e cinco barras, térreo e (sobrado) primeiro andar
+  for (const [lado, lm, alt] of [[-1, lOut + dIn * 3.6, altA], [1, lIn - dIn * 3.6, altB]]) {
+    for (const yb of alt > 5 ? [1.25, 4.05] : [1.25]) {
+      caixaLocal(ex.vao, cm + lado * (BECO_MEIA - 0.02), yb + 0.5, lm, 0.06, 1.0, 0.9);
+      for (let k = -2; k <= 2; k++) caixaLocal(ex.grade, cm + lado * (BECO_MEIA - 0.08), yb + 0.5, lm + k * 0.19, 0.025, 1.04, 0.025);
+      for (const yy of [yb + 0.02, yb + 0.98]) caixaLocal(ex.grade, cm + lado * (BECO_MEIA - 0.08), yy, lm, 0.025, 0.025, 0.94);
+    }
+  }
+  // varal na parede do sobrado: dois suportes, o arame e as peças penduradas acima de 1,6 m
+  const vl0 = lOut + dIn * 0.9, vl1 = lOut + dIn * 4.4, vc = cm - BECO_MEIA + 0.36;
+  for (const lv of [vl0, vl1]) caixaLocal(ex.arame, cm - BECO_MEIA + 0.18, 2.32, lv, 0.36, 0.03, 0.03);
+  caixaLocal(ex.arame, vc, 2.3, (vl0 + vl1) / 2, 0.012, 0.012, Math.abs(vl1 - vl0));
+  const CORES = [0xc94f4f, 0x3c5e8c, 0xe0d9c4, 0x6f8f4a, 0xd9a441, 0x8a5a9a, 0x2f2f33];
+  for (let t = 0.12; t < 0.95; t += 0.16 + rnd() * 0.06) {
+    const lr = vl0 + (vl1 - vl0) * t, h = 0.45 + rnd() * 0.25, w = 0.32 + rnd() * 0.2;
+    const [x, z] = W(vc, lr);
+    ex.roupa.push(mtx(x, 2.3 - h / 2, z, w, h, 1, aoLongoZ ? Math.PI / 2 : 0));
+    ex.roupaCor.push(new THREE.Color(CORES[(rnd() * CORES.length) | 0]));
+  }
+  // botijão encostado no muro, com colisor; lixo e lixeira tombada no fim do beco
+  const [gx, gz] = W(cm + BECO_MEIA - 0.24, lOut + dIn * 1.1);
+  ex.botijao.push(mtx(gx, 0.3, gz, 1, 1, 1, rnd() * 6.283));
+  colliders.push({ minX: gx - 0.17, maxX: gx + 0.17, minY: 0, maxY: 0.62, minZ: gz - 0.17, maxZ: gz + 0.17 });
+  for (let k = 0; k < 4; k++) {
+    const [x, z] = W(cm - BECO_MEIA + 0.3 + rnd() * 0.25, lIn - dIn * (0.5 + k * 0.42));
+    const e = 0.75 + rnd() * 0.45;
+    ex.saco.push(mtx(x, 0.2 * e, z, e, e * 0.8, e, rnd() * 6.283));
+  }
+  const [lx, lz] = W(cm + BECO_MEIA - 0.42, lIn - dIn * (BECO_FUNDO + 0.6));
+  ex.lixeira.push(mtx(lx, 0.27, lz, 0.55, 0.52, 0.8, rnd() * 6.283, 0, Math.PI / 2));
+
+  const [dx, dz] = W(cm, lOut - dIn * 0.6), [tx, tz] = W(cm, lIn + dIn * 0.6);
+  return {
+    casas: 2,
+    contrato: { id: def.id, nome: def.nome, de: { x: +dx.toFixed(2), z: +dz.toFixed(2) }, ate: { x: +tx.toFixed(2), z: +tz.toFixed(2) },
+      abreNaOnda: 3, largura: 2 * BECO_MEIA },
+  };
+}
+
+/* Peças do beco em lote: uma InstancedMesh por família para os quatro becos juntos. As
+   que não têm colisor levam `nonSolidSurface` — não são chão nem teto para a sonda. */
+function construirExtras(kit, ex) {
+  const { MAT, root, occluders } = kit;
+  const lote = (lista, geo, mat, nome, { solido = false, cores = null, sombra = true } = {}) => {
+    if (!lista.length) return;
+    const m = new THREE.InstancedMesh(geo, mat, lista.length);
+    for (let i = 0; i < lista.length; i++) { m.setMatrixAt(i, lista[i]); if (cores) m.setColorAt(i, cores[i]); }
+    m.name = nome; m.castShadow = sombra; m.receiveShadow = true; m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    if (solido) occluders.push(m); else m.userData.nonSolidSurface = true;
+    m.computeBoundingSphere();
+    root.add(m);
+  };
+  const cubo = new THREE.BoxGeometry(1, 1, 1);
+  lote(ex.medidor, cubo, MAT.medidor, 'beco-medidor');
+  lote(ex.eletroduto, cubo, MAT.cabo, 'beco-eletroduto', { sombra: false });
+  lote(ex.vao, cubo, MAT.vao, 'beco-janela', { sombra: false });
+  lote(ex.grade, cubo, MAT.metal, 'beco-grade', { sombra: false });
+  lote(ex.arame, cubo, MAT.cabo, 'beco-varal', { sombra: false });
+  const roupaGeo = new THREE.PlaneGeometry(1, 1);
+  lote(ex.roupa, roupaGeo, MAT.roupa, 'beco-roupa', { cores: ex.roupaCor });
+  const botijaoGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.6, 14);
+  lote(ex.botijao, botijaoGeo, MAT.botijao, 'beco-botijao', { solido: true });
+  const sacoGeo = new THREE.IcosahedronGeometry(0.3, 1);
+  lote(ex.saco, sacoGeo, MAT.saco, 'beco-saco');
+  lote(ex.lixeira, cubo, MAT.lixeiraAmarela, 'beco-lixeira');
 }
