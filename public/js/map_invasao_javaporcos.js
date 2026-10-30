@@ -238,7 +238,7 @@ export function buildInvasaoJavaporcos(scene, T) {
   sc.updateProjectionMatrix();
   sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.035;
   scene.add(sun); scene.add(sun.target);
-  const hemi = new THREE.HemisphereLight(0x8fa2b8, 0x4a4036, 0.9);
+  const hemi = new THREE.HemisphereLight(0x98b0d0, 0x5a5856, 1.7);
   scene.add(hemi);
   aplicaSombraSol(sun);
 
