@@ -128,7 +128,7 @@ const PEN_MAX = 0.30;        // penetração máxima da sonda vertical (MAP1 do 
 /* 64 m: a clareira mais funda fica a 62,6 m do centro (59,6 + raio 3,0), e a borda do
    mapa está em 68. Entre 62,6 e 68 sobram 5,4 m de mata que ninguém atravessa. */
 const LIMITE_ESCAPE = 64;
-const CIDADE_R = 36, MATA_R = 54, V_SONDA_PAREDE = 55.0;   // 0,4 m dentro do começo da parede (54,6)
+const CIDADE_R = 36, MATA_R = 54, V_SONDA_PAREDE = 63.8;   // 0,4 m dentro do começo da parede (54,6)
 const SEED = 13007;
 let falhas = 0;
 const relatorio = {};
@@ -292,14 +292,14 @@ regra('MATA1 a mata fecha o mapa: ninguém chega na borda a pé', () => {
    começando em r = 44 o anel tem 69% da área, e 935 árvores ainda passam do piso de 900. A
    contagem de colisor de parede deixou de ser densidade: com 3 bocas a parede funde em
    menos caixas (28), e quem prova que ela fecha é a MATA1 e a MATA3. */
-regra('MATA2 cinturão denso e 3 frentes separadas', () => {
+regra('MATA2 cinturão denso e seis frentes separadas', () => {
   const c = W.censo || {};
   exige(c.arvores >= 900, `só ${c.arvores} árvores no cinturão (piso 900)`);
   exige(c.subbosque >= 2000, `só ${c.subbosque} peças de sub-bosque (piso 2000): a parede fecha por sub-bosque`);
   exige(c.colisoresParede >= 12, `só ${c.colisoresParede} colisores de parede de mata (piso 12, três por lado)`);
   exige(c.instanciados <= 14, `${c.instanciados} InstancedMesh na mata (teto 14): mata tem de ser lote, não malha por árvore`);
   const bocas = W.boarEntrances || [];
-  exige(bocas.length === 3, `${bocas.length} bocas de mata (o dono decidiu 3 frentes)`);
+  exige(bocas.length === 6, `${bocas.length} bocas de mata (o dono pediu seis frentes)`);
   const lados = new Set();
   for (const b of bocas) {
     exige(Number.isFinite(b.x) && Number.isFinite(b.z), `boca sem x/z: ${JSON.stringify(b)}`);
@@ -307,7 +307,7 @@ regra('MATA2 cinturão denso e 3 frentes separadas', () => {
     exige(r > MATA_R + 2, `boca em (${b.x}, ${b.z}) está a ${r.toFixed(1)} m: a clareira nasce dentro da mata`);
     lados.add(Math.abs(b.z) >= Math.abs(b.x) ? (b.z < 0 ? 'N' : 'S') : (b.x < 0 ? 'O' : 'L'));
   }
-  exige(lados.size === 3, `as 3 bocas estão em só ${lados.size} lado(s): frente tem de ser frente`);
+  exige(lados.size === 4, `as seis bocas estão em só ${lados.size} lado(s): frente tem de ser frente`);
   for (let i = 0; i < bocas.length; i++) for (let k = i + 1; k < bocas.length; k++) {
     const d = Math.hypot(bocas[i].x - bocas[k].x, bocas[i].z - bocas[k].z);
     exige(d >= 40, `bocas ${bocas[i].id} e ${bocas[k].id} a ${d.toFixed(1)} m (piso 40)`);
@@ -319,7 +319,7 @@ regra('MATA2 cinturão denso e 3 frentes separadas', () => {
    ela declarada ou não. A sonda usa o `_collide` do jogo, a mesma do MATA1. */
 const paraMundo = (lado, u, v) => (lado === 'N' ? [u, -v] : lado === 'S' ? [u, v] : lado === 'O' ? [-v, u] : [v, u]);
 const livreEm = (x, z) => { const p = { x, y: gh(x, z), z }; jogo._collide(p, R_CORPO); return Math.abs(p.x - x) < 1e-6 && Math.abs(p.z - z) < 1e-6; };
-regra('MATA3 a mata só abre nas 3 frentes', () => {
+regra('MATA3 mata explorável por dentro e limite externo fechado', () => {
   const arcos = [];
   for (const lado of ['N', 'L', 'S', 'O']) {
     let aberto = null;
@@ -332,8 +332,13 @@ regra('MATA3 a mata só abre nas 3 frentes', () => {
   }
   const frentes = W.horda?.frentes || [];
   relatorio.arcosAbertos = arcos.map((a) => ({ lado: a.lado, u0: a.u0, u1: a.u1 }));
-  exige(arcos.length === 3, `${arcos.length} arco(s) aberto(s) na parede a ${V_SONDA_PAREDE} m: ` +
-    `${arcos.map((a) => `${a.lado}[${a.u0}..${a.u1}]`).join(' ')} — o dono pediu 3 frentes, o resto é mata fechada`);
+  exige(arcos.length === 0, `${arcos.length} aberturas no limite externo da mata`);
+  let andaveis = 0, sondas = 0;
+  for (const lado of ['N', 'L', 'S', 'O']) for (let u = -50; u <= 50; u += 2) {
+    const [x,z] = paraMundo(lado,u,58); sondas++;
+    if (livreEm(x,z)) andaveis++;
+  }
+  exige(andaveis / sondas >= .45, `mata explorável bloqueada: ${andaveis}/${sondas}`);
   for (const a of arcos) {
     const [mx, mz] = a.pts[(a.pts.length / 2) | 0];
     const dono = frentes.find((f) => f.rota.some((p) => Math.hypot(p.x - mx, p.z - mz) < 4.5));
@@ -599,13 +604,13 @@ const caminha = (pts) => {
 const compCaminho = (cam) => { let L = 0; const nos = W.waypoints.nodes; for (let i = 1; i < cam.length; i++) L += Math.hypot(nos[cam[i]].x - nos[cam[i - 1]].x, nos[cam[i]].z - nos[cam[i - 1]].z); return L; };
 const raioDe = (p) => Math.max(Math.abs(p.x), Math.abs(p.z));
 
-regra('HORDA1 3 frentes com rota caminhável da mata até a cidade', () => {
+regra('HORDA1 seis frentes com rota caminhável da mata até a cidade', () => {
   const H = W.horda;
   exige(H && Array.isArray(H.frentes), 'o mapa não expôs world.horda.frentes');
   const F = H.frentes;
-  exige(F.length === 3, `${F.length} frentes (o dono decidiu 3)`);
-  exige(new Set(F.map((f) => f.id)).size === 3, 'ids de frente repetidos');
-  for (let i = 0; i < 3; i++) for (let k = i + 1; k < 3; k++) {
+  exige(F.length === 6, `${F.length} frentes (o dono pediu seis)`);
+  exige(new Set(F.map((f) => f.id)).size === 6, 'ids de frente repetidos');
+  for (let i = 0; i < F.length; i++) for (let k = i + 1; k < F.length; k++) {
     const d = Math.hypot(F[i].boca.x - F[k].boca.x, F[i].boca.z - F[k].boca.z);
     exige(d >= 40, `frentes ${F[i].id} e ${F[k].id} com bocas a ${d.toFixed(1)} m (piso 40)`);
   }
@@ -818,4 +823,4 @@ if (MUT) {
   process.exit(1);
 }
 if (falhas) { console.error(`✗ MAPA DA INVASÃO: ${falhas} cláusula(s) vermelha(s).`); process.exit(1); }
-console.log('✓ MAPA DA INVASÃO OK — cerco de 3 frentes, pasto, becos, setores, relevo, comida e trilhas até dentro da loja.');
+console.log('✓ MAPA DA INVASÃO OK — cerco de seis frentes, pasto, becos, setores, relevo, comida e trilhas até dentro da loja.');

@@ -47,7 +47,7 @@ try {
   assert.ok(largura >= 16, `pasto real só ${largura.toFixed(2)} m (mínimo solicitado 16 m)`);
   assert.ok(profundidade >= 14, `mata encolheu para ${profundidade.toFixed(2)} m (cinturão anterior 14 m)`);
   assert.ok(troncos.count >= 940, `mata menor: ${troncos.count} árvores, antes 940`);
-  assert.equal(world.horda.frentes.length, 3);
+  assert.equal(world.horda.frentes.length, 6);
   // Mesma folga física de CHAO1/MAP1, cobrindo solo acima e abaixo dos pés.
   assert.ok(erro <= 0.30, `erro absoluto do chão ${erro.toFixed(3)} m em ${pior}`);
 } catch (e) { ok = false; console.error(`✗ PASTO GRANDE: ${e.message}`); }

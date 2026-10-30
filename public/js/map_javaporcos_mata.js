@@ -6,8 +6,8 @@ import { CIDADE, MATA_R, HALF, EIXOS, TRILHAS, distTrilha, distPasto, paraMundo,
 
 /* Cotas da mata (faixa caminhável, parede de colisor, coluna, folga de trilha e
    achatamento da copa): docs/maps/invasao-javaporcos-layout.md, seção "Cotas da mata". */
-export const V_ANDAVEL = MATA_R + 0.6;
-export const V_PAREDE0 = MATA_R + 0.6;
+export const V_ANDAVEL = MATA_R + 9;
+export const V_PAREDE0 = V_ANDAVEL;
 export const V_PAREDE1 = HALF;
 const COLUNA = 0.5;
 const FOLGA_TRILHA = 2.9;

@@ -19,12 +19,14 @@ export const ATERRO_MEIA = 2.4;
 export const TRILHA_MEIA = 1.75;   // trilha de 3,5 m
 export const CLAREIRA_R = 3.0;
 
-/* As três frentes. `u` é a boca ao longo do lado, `desvio` dobra a trilha dentro da mata
-   e `cidade` é o `u` onde a trilha de pasto encosta na cidade. */
+/* Seis frentes nos quatro lados; u e cidade posicionam as bocas, desvio dobra a trilha. */
 export const TRILHAS = Object.freeze([
   { id: 'norte', nome: 'Trilha do Norte', lado: 'N', u: -10, desvio: -9, cidade: -3, curva: 1.6 },
   { id: 'leste', nome: 'Trilha do Leste', lado: 'L', u: 12, desvio: 9, cidade: 3, curva: -1.4 },
   { id: 'sudoeste', nome: 'Trilha do Sudoeste', lado: 'S', u: -24, desvio: -9, cidade: -22, curva: 1.2 },
+  { id: 'oeste', nome: 'Trilha do Oeste', lado: 'O', u: 18, desvio: 7, cidade: 16, curva: -1.2 },
+  { id: 'nordeste', nome: 'Trilha do Nordeste', lado: 'N', u: 34, desvio: 4, cidade: 25, curva: 1.2 },
+  { id: 'sudeste', nome: 'Trilha do Sudeste', lado: 'S', u: 28, desvio: 7, cidade: 22, curva: -1.2 },
 ]);
 
 /* (u, v) do lado para (x, z) do mundo: u corre ao longo do lado, v cresce para FORA. */

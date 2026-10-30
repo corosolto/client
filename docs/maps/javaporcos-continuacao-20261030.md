@@ -455,3 +455,8 @@ AbortController próprio e guarda antes de efeitos. Nova intro-race: vermelho an
 10/10 e fluxo6casos verdes. Próximos: corrigir modo tri-facção/condições de fim,
 movimento orgânico, spawn/lajes, otimizar e validar gameplay/render reais. Armas26
 visíveis localmente; endereço do relato ainda pendente.
+
+Mapa expandido: javaporcos-mapa-check concluiu VERDE completo em
+/tmp/javaporcos-mata-final.log. CHAO4042sondas pior0,083m; todas6bocas alcançam6lojas;
+pasto138/140raios livres. Simulação real5min3bots: onda4,36abates, sem vencedor,
+64,1s CPU. Este marco valida terreno/navegação, não orçamento da horda cheia.
