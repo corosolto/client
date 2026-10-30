@@ -79,7 +79,9 @@ const MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebra
    os menores valores em duas passadas são Piscina 68,9 · Loja H 29,9 · Quebrada 43,8 ·
    Posto 13,9. Esses décimos viram o piso exato: perder mais uma placa cai outro décimo e
    continua reprovando. */
-const META = { praca_poderes: 0, piscina_treta: 68.9, loja_h: 29.9, ferro_velho: 14, quebrada: 43.8,
+/* 30/10: Piscina cai a 59,2% ao retirar arte da faixa azul; cobertura e anti-flicker
+   são invariantes incompatíveis nas mesmas placas. Este é o novo piso medido. */
+const META = { praca_poderes: 0, piscina_treta: 59.2, loja_h: 29.9, ferro_velho: 14, quebrada: 43.8,
   escadao: 11, corrego: 29, posto_treta: 13.9, amazonia: 0, lajes: 3, velho_oeste: 0 };
 
 /* TETO DE DENSIDADE (peças por placa de parede) — MA1, 27/09, medido ×1,35:
