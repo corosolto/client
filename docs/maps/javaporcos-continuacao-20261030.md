@@ -256,3 +256,13 @@ O portão global relata44 dívidas de outros mapas; a linha Javaporcos tem zeros
 nas falhas de jogabilidade. Portão específico em execução: --mapa=invasao_javaporcos.
 Logs /tmp/javaporcos-pasto-mapcheck-carro-final.log e
 /tmp/javaporcos-pasto-pickup-relatorio.log; não há alteração adicional de geometria.
+
+## Verificação de lançamento durante pedidos6–7
+
+A régua launch-race antiga abortava por fixture sem playerGloveId, skins de arma,
+faca e registro MAPS, embora esses campos já estivessem no nascimento do HEAD.
+Fixture atualizada: régua direta10/10 verde; mutante sem-preload reprova LR7.
+O npm eval:launchrace também executa menu-backdrop.test: 5/6 falham por deferred
+indefinido. loadMenuBackdrop está byte a byte idêntica ao HEAD anterior a6/7;
+essa falha permanece separada das alterações da apresentação. Watchdog8/8 verde.
+Portão específico final do Javaporcos passou, apenas2 dívidas COB2 declaradas.
