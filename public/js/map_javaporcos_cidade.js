@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { hasProp, placeProp, PropBatch, mergeParts } from './mapprops.js';
 import { LETREIRO_UV } from './map_javaporcos_texturas.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const AV = 6;             // meia-largura da avenida (12 m de asfalto)
 export const CAL = 2;            // calçada
@@ -141,6 +142,7 @@ export function construirCidade(kit, campo, rnd) {
   kit.root.userData.sacos = [...extras.rua, ...extras.glb].filter((g) => g.id === 'saco_lixo');
   luzDosBecos(kit, extras.postesBeco);
   construirExtras(kit, extras);
+  telhadosEmLote(kit);
 
   /* O objetivo mora num ponto ALCANÇÁVEL (corredor da feira, porta da loja, adro da
      igreja) e leva `r`: centro de prédio era bando empacado na parede a 6,6 m (medido). */
@@ -819,6 +821,24 @@ function cacambas(kit, campo, ex, pontos) {
     kit.colliders.push({ minX: x - hx, maxX: x + hx, minY: y, maxY: y + 1.3, minZ: z - hz, maxZ: z + hz });
     if (usaGLB('dumpster')) ex.rua.push({ id: 'dumpster', x, z, y, h: 1.3, ry: aoLongoZ ? 0 : Math.PI / 2, solido: true });
     else kit.caixa(2 * hx, 1.25, 2 * hz, kit.MAT.cacamba, x, y, z, { collide: false, bala: true });
+  }
+}
+
+/* Telhados de 4 águas num lote por material: eram 25 malhas, uma chamada de desenho cada. */
+function telhadosEmLote(kit) {
+  kit.root.updateMatrixWorld(true);
+  const porMat = new Map(), base = new THREE.Matrix4().copy(kit.root.matrixWorld).invert(), m4 = new THREE.Matrix4();
+  kit.root.traverse((o) => {
+    if (!o.isMesh || o.geometry.type !== 'ConeGeometry' || o.geometry.parameters.radialSegments !== 4) return;
+    if (!porMat.has(o.material)) porMat.set(o.material, []);
+    porMat.get(o.material).push(o);
+  });
+  for (const [mat, lista] of porMat) {
+    const geos = lista.map((o) => o.geometry.clone().applyMatrix4(m4.multiplyMatrices(base, o.matrixWorld)));
+    const lote = new THREE.Mesh(mergeGeometries(geos, false), mat);
+    lote.name = 'telhado-lote'; lote.castShadow = true; lote.receiveShadow = true;
+    for (const o of lista) { o.parent.remove(o); o.geometry.dispose(); const i = kit.occluders.indexOf(o); if (i >= 0) kit.occluders.splice(i, 1); }
+    kit.root.add(lote); kit.occluders.push(lote);
   }
 }
 
