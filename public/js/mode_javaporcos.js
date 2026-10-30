@@ -146,7 +146,6 @@ export function iniciarOnda(state) {
   state.remaining = tamanhoDaOnda(state);
   state.spawnOrdinal = 0;
   state.spawnClock = 0;
-  state.alive.length = 0;
   recalcularFuria(state);
   return true;
 }
@@ -168,7 +167,7 @@ export function vaiPeloBeco(state, ordinal) {
 }
 
 function ondaLimpa(state) {
-  if (state.remaining || state.alive.length) return;
+  if (state.phase !== 'combat' || state.remaining || state.alive.length) return;
   const livre = 1 - (state.dominio || 0);
   state.teamBonus += Math.round(1500 * livre);
   if (state.wave === WAVE_COUNTS.length) {
@@ -179,6 +178,19 @@ function ondaLimpa(state) {
     state.phase = 'prep';
     state.prepLeft = PREP_SECONDS;
   }
+}
+
+/* Onda inteira na rua e o relógio dela zerou: a próxima vem com as sobras ainda vivas; na última, sobreviveu. */
+function venceuOTempo(state) {
+  if (!state.alive.length) return;
+  if (state.wave === WAVE_COUNTS.length) {
+    state.teamBonus += Math.round(3000 * (1 - (state.dominio || 0)));
+    state.phase = 'finished';
+    state.winner = 'E';
+    return;
+  }
+  state.phase = 'prep';
+  state.prepLeft = PREP_SECONDS;
 }
 
 export function passoHorda(state, dt) {
@@ -198,6 +210,7 @@ export function passoHorda(state, dt) {
     state.spawnClock -= cadencia;
     spawnAnimal(state);
   }
+  if (!state.combatLeft && !state.remaining && state.mutante !== 'onda-eterna') venceuOTempo(state);
   ondaLimpa(state);
   return state;
 }

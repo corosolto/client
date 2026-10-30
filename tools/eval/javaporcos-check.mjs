@@ -54,6 +54,7 @@
      relogio-parado   a fúria para de crescer com o tempo de partida
      mapa-mudo        o HUD perde a % de domínio e o mini-mapa
      rede-sem-dominio o snapshot deixa de levar o controle por setor
+     onda-eterna      onda com bicho escondido nunca acaba (o relógio da onda é ignorado)
    ============================================================================ */
 import assert from 'node:assert/strict';
 
@@ -610,6 +611,21 @@ regra('a partir da onda 3 parte da horda entra pelo BECO e explora o quarteirão
   const dentro = [...becoBots].filter((id) => viuBeco.has(id)).length;
   assert.ok(dentro >= becoBots.size * 0.6, `só ${dentro}/${becoBots.size} bichos de beco andaram pelo corredor`);
   assert.ok(explorou.size >= becoBots.size * 0.5, `só ${explorou.size}/${becoBots.size} exploraram o quarteirão depois do beco`);
+});
+
+regra('onda que não é limpa no relógio não trava: a próxima vem com as sobras vivas', () => {
+  const horda = criarHorda({ seed: 31, mutante });
+  iniciarOnda(horda);
+  let guarda = 0;
+  while (horda.wave === 1 && guarda++ < 2000) passoHorda(horda, 0.1);
+  assert.equal(horda.wave, 2, `onda 1 não andou com ${horda.alive.length} bichos escondidos (combate ${horda.combatLeft.toFixed(1)} s)`);
+  assert.ok(horda.alive.some((a) => a.id.startsWith('1.')), 'as sobras da onda 1 sumiram na virada');
+  horda.wave = WAVE_COUNTS.length - 1;
+  for (let g = 0; g < 4000 && !horda.winner; g++) {
+    passoHorda(horda, 0.1);
+    if (horda.remaining && horda.alive.length >= horda.maxAlive) registrarAbate(horda, horda.alive[0].id, 'defensor');
+  }
+  assert.equal(horda.winner, 'E', 'sobreviver à última onda no relógio não deu vitória');
 });
 
 regra('o relógio da partida esquenta a horda: aos 10 min ela vem mais rápido e mais forte que aos 2', () => {
