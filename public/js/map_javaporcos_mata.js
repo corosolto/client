@@ -273,8 +273,9 @@ function materialFolhagem(MAT) {
     map = new THREE.TextureLoader().load(FOLHAGEM_URL);
     map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 4;
   }
+  // luz que atravessa a folha (dossel por baixo L* 19 → 24); o tom rosado segura a copa em 139° com o hemi 1,35
   _folha = new THREE.MeshStandardMaterial({ map, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.82, metalness: 0,
-    emissive: 0x1c2412, emissiveMap: map });   // luz que atravessa a folha: sem ela o dossel por baixo é preto
+    color: new THREE.Color(1.1, 1, 1.04), emissive: 0x5a4a54, emissiveMap: map });
   _folha.name = 'mata-folhagem';
   _folha.onBeforeCompile = (sh) => {
     sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>',

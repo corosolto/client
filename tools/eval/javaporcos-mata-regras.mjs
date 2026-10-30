@@ -21,6 +21,8 @@
      TRILHA4 rodada 4 (crítico 30/10: com o hemi de volta a 0,95 a trilha da boca-so cai de
              L* 30 para 20): cor do retalho com luminância linear ≥ 1,6 e r/b ≤ 1,6 (a luz
              vem só do hemi sob o dossel; mais amarelo sobe o b* médio das vistas).
+     FOLHA1  rodada 5 (crítico 30/10: dossel da boca-so L* 15,7): o emissivo da folhagem tem
+             luminância linear ≥ 0,05 e azul ≥ verde (sem puxar a copa da vista alta acima de 140°).
      CUPIM1  o torno do cupinzeiro tem 3 lóbulos (harmônico 3 do raio ≥ 0,12 do raio médio
              nos anéis do meio) e cada cupinzeiro tem ≥ 2 torrões de 0,3–0,5 m de raio.
      CUPIM2  rodada 4 ("ainda lê domo liso", boca-so sdL 4,8): o corpo tem ≥ 40 segmentos,
@@ -34,9 +36,10 @@
      cupim-cone      torno volta a ConeGeometry lisa, sem torrão             -> CUPIM1
      cupim-domo      torno de 48 lados com lóbulo e sem ruído nem torrinha    -> CUPIM2
      trilha-piche    cor do retalho volta a 1,15/0,9/0,58                     -> TRILHA4
+     folha-escura    emissivo da folhagem volta a 0x1c2412                    -> FOLHA1
    ============================================================================ */
 
-export const MUTANTES = ['cupim-domo', 'trilha-piche', 'trilha-degrau', 'copa-pirulito', 'tronco-pelado', 'cupim-cone'];
+export const MUTANTES = ['folha-escura', 'cupim-domo', 'trilha-piche', 'trilha-degrau', 'copa-pirulito', 'tronco-pelado', 'cupim-cone'];
 const HALF = 58;
 
 export function regrasMata({ W, THREE, MUT, regra, exige }) {
@@ -134,6 +137,16 @@ export function regrasMata({ W, THREE, MUT, regra, exige }) {
     exige(y >= 1.6, `luminância linear da cor ${y.toFixed(2)} (piso 1,6): trilha L* 20 sob o dossel`);
     exige(rb <= 1.6, `r/b ${rb.toFixed(2)} (teto 1,6): trilha amarela`);
     return `cor ${c.r}/${c.g}/${c.b}, luminância ${y.toFixed(2)}, r/b ${rb.toFixed(2)}`;
+  });
+
+  if (MUT === 'folha-escura') { exige(copa?.material?.emissive, 'MUTANTE folha-escura NÃO APLICOU'); copa.material.emissive.set(0x1c2412); }
+  regra('FOLHA1 dossel visto de baixo não é preto nem amarelo', () => {
+    const e = copa?.material?.emissive;
+    exige(e, 'sem emissivo na folhagem');
+    const y = 0.2126 * e.r + 0.7152 * e.g + 0.0722 * e.b;
+    exige(y >= 0.05, `luminância linear do emissivo ${y.toFixed(3)} (piso 0,05): dossel por baixo L* 16`);
+    exige(e.b >= e.g, `emissivo com azul ${e.b.toFixed(3)} < verde ${e.g.toFixed(3)}: copa amarela, b* médio sobe`);
+    return `emissivo ${e.getHexString()}, luminância ${y.toFixed(3)}`;
   });
 
   /* ------------------------------------------------------------------ MATA5 */
