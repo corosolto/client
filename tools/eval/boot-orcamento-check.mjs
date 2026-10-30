@@ -84,7 +84,7 @@ if (!MUTANTES.has(MUTANTE)) {
 const TETO_BYTES = 8_200_000;
 const TETO_REQS = 340;
 
-const JS_LOCAIS = ['js/main.js', 'js/textures.js'];
+const JS_LOCAIS = ['js/main.js', 'js/textures.js', 'js/javaporcos_intro.js', 'js/javaporcos_opcoes.js', 'js/javaporcos_apresentacao.js'];
 /* O pool ansioso é a REFERÊNCIA do ORC2, e também o mutante. A mesma transformação
    serve aos dois papéis de propósito: se ela parar de casar com o código, o portão
    morre barulhento (`throw`) em vez de passar em silêncio. */
@@ -139,8 +139,7 @@ async function mede({ refPoolAnsioso = false } = {}) {
       corpo = instrumentaCausaSplash(corpo);
     }
     await context.route(`**/${rel}*`, async (rota) => {
-      const r = await rota.fetch();
-      await rota.fulfill({ response: r, body: corpo });
+      await rota.fulfill({ status: 200, contentType: 'text/javascript', body: corpo });
     });
   }
 

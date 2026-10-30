@@ -642,3 +642,23 @@ se autorizado executarhooknormal, acompanharpreview/CI e validar armas/MP de ver
 EgoTaskSpace8 continua ativo para essa continuação; não operar espaços de terceiros.
 Checkpoint de menu/mortes b38602641; checkpoint de variantes13eb85754; estrutura/rede
 2c7b78d49. Catálogo22props no checkpoint seguinte, sem mudar geometria de runtime.
+
+Continuação de publicação: o dono autorizou o push com “sim”. Primeiro envio de
+916f3146e iniciou hook normal e encontrou boot/matriz vermelhos; nada foi enviado
+nessa tentativa. A régua de boot sobrepunha main.js local à produção, onde os módulos
+novos intro/opções/apresentação respondem404. Passou a servir esses módulos locais
+com status200/MIME JavaScript, mantendo contagens e tetos. Execução corrigida:
+5.096ms por assets,7,44MiB/318requisições; ORC1–3 verdes. Cartaz-ansioso reprovou
+ORC1/2 (10,99MiB); fauna-cedo reprovou ORC1/3. Não houve afrouxamento de orçamento.
+
+CI anterior em12638394 também falhava Lajes: fixture de fetch-audio não copiava o
+instalador javaporcos-samples e sua tabela. Reproduzido MODULE_NOT_FOUND antes;
+agora fixture executa instalador real com duas amostras determinísticas, hashes e
+curl restrito às URLs de teste, conferindo cache e unzip sem rede. LSA1–10 verdes;
+mutante sem-lajes vermelho. Matriz de armas regenerada: apenas dois links de linha
+mudaram. Revisor adversarial releu os três arquivos sem novos achados.
+Logs em artifacts/javaporcos-feedback-20261030/fecho/bootcorrigido.log,
+lajes-antes.log,lajes-depois.log,lajes-mutante.log e weapon-matrix-push.log.
+Próximo: concluir hook inicial, checkpoint dessas correções, repetir push normal,
+acompanhar CI/preview do SHA novo. Publicação coordenada do backend e dois clientes
+WS continuam pendentes; não confundir fixture com multiplayer publicado.
