@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { assetUrl } from './data/asseturl.js';
+import { prepararPassada, atualizarPassada, liberarPassada } from './javaporcos_passada.js';
 
 /* Teto de vivos MEDIDO em tools/eval/javaporcos-perf.mjs (64 vivos = 0,22 ms/quadro).
    Subir daqui sem medir de novo é chutar o orçamento de quadro. */
@@ -593,6 +594,7 @@ function visualAnimal(type, mutante = '') {
   const pivo = new THREE.Group();
   pivo.add(corpo);
   pivo.userData.corpo = corpo;
+  if (template) prepararPassada(pivo);
   return pivo;
 }
 
@@ -852,6 +854,7 @@ class InvasaoJavaporcos {
   }
 
   desativar(bot) {
+    liberarPassada(bot._boarVisual);
     if (bot._boarVisual) this.game.scene.remove(bot._boarVisual);
     if (bot.mesh?.group) bot.mesh.group.visible = false;
     if (bot._boarId) this.slots.delete(bot._boarId);
@@ -892,13 +895,17 @@ class InvasaoJavaporcos {
       corpse.visual.rotation.z = pose.tilt;
       corpse.visual.position.y = corpse.baseY - pose.sink;
       if (!pose.done) continue;
+      liberarPassada(corpse.visual);
       this.game.scene.remove(corpse.visual);
       this.corpses.splice(i, 1);
     }
   }
 
   limparCadaveres() {
-    for (const corpse of this.corpses) this.game.scene.remove(corpse.visual);
+    for (const corpse of this.corpses) {
+      liberarPassada(corpse.visual);
+      this.game.scene.remove(corpse.visual);
+    }
     this.corpses.length = 0;
   }
 
@@ -1248,10 +1255,10 @@ class InvasaoJavaporcos {
     if (!visual) return;
     const tempo = this.game.time;
     visual.visible = bot.alive;
-    const trote = Math.abs(Math.sin(this.state.clock * 9 + bot.pos.x)) * .03;
-    visual.position.set(bot.pos.x, bot.pos.y + trote, bot.pos.z);
+    visual.position.copy(bot.pos);
     visual.rotation.y = bot.yaw;
     visual.rotation.x = tempo < (bot._boarFocinhoAte || 0) ? Math.sin(tempo * 15) * .13 - .12 : 0;
+    atualizarPassada(visual, bot.pos, this.game.world, tempo, this.state.mutante);
   }
 
   onDamage(ent, damage, attacker) {
