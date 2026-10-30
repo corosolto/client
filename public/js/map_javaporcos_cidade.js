@@ -136,7 +136,7 @@ export function construirCidade(kit, campo, rnd) {
 
   lixoSolto(kit, campo, rnd, extras.glb);
   lixoDeRua(kit, campo, extras, pontos);
-  lixoDaGuia(campo, extras);
+  kit.root.userData.lixoGuia = lixoDaGuia(campo, extras);
   cacambas(kit, campo, extras, pontos);
   cenaDaRua(kit, campo, extras);
   kit.root.userData.sacos = [...extras.rua, ...extras.glb].filter((g) => g.id === 'saco_lixo');
@@ -801,10 +801,18 @@ function lixoDaGuia(campo, ex) {
   const lista = [];
   for (const em of linhas) for (let t = ini; t < 30; t += 0.7 + r() * 0.6) {
     const [x0, z0] = em(t), ox = (r() - 0.5) * 0.25, x = Math.abs(x0) < AV ? x0 - Math.sign(x0) * r() * 0.3 : x0 + ox, z = Math.abs(z0) < AV ? z0 - Math.sign(z0) * r() * 0.3 : z0 + ox;
-    lista.push({ k: pick(CEL_SARJETA), x, y: campo.amostra(x, z) + 0.023, z, s: 0.35 + r() * 0.4, ry: r() * 6.283 });
+    lista.push({ k: pick(CEL_SARJETA), x, y: campo.amostra(x, z) + 0.023, z, s: 0.9 + r() * 0.6, ry: r() * 6.283 });
   }
   ex.decal.push(...lista);
   ex.lixoGuia = lista.length;
+  // lata de 0,28 m a cada 3 m nos primeiros 15 m: decalque deitado mudava 1–4 px da faixa
+  const q = lcg(0x1a7a), pecas = [];
+  for (const em of linhas) for (let t = ini + 0.6; t < ini + 15; t += 3) {
+    const [x, z] = em(t), tomba = q() < 0.6;
+    pecas.push({ id: 'lata_enferrujada', x, z, y: campo.amostra(x, z) + (tomba ? 0.09 : 0), h: 0.28, ry: q() * 6.283, rz: tomba ? Math.PI / 2 : 0 });
+  }
+  if (usaGLB('lata_enferrujada')) ex.rua.push(...pecas);
+  return pecas;
 }
 
 /* Uma caçamba por quarteirão, encostada na guia (avenida) ou no anel de terra (fundo). O

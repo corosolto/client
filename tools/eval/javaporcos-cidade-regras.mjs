@@ -64,6 +64,8 @@
              cone de sódio a ≥ 30 e lente `poste-lente` com emissivo 0xffc48a a ≥ 4.
      LAMP2   halo `beco-luz-halo` aditivo de raio ≥ 0,5 m que vai com a luz para cada beco
              (a ≤ 0,3 m dela) e encara a câmera: a captura não passa pelo bloom.
+     RUA3    lixo de guia que se vê ("mudou 1–4 px"): em cada trecho de RUA2, ≥ 5 peças 3D de
+             ≥ 0,15 m a ≤ 0,6 m da guia nos primeiros 15 m e decalque de lado médio ≥ 0,9 m.
 
    RODADA 4 (crítico 6/10: "rua do centro lê como pátio", sem lixo ao longo da guia):
      ORC1    o GLB saco_lixo tem ~2,7 mil triângulos e a caixa ~3,2 mil: com os montes do
@@ -88,6 +90,7 @@
      beiral-preto    tampa de baixo do telhado volta à telha                -> FORRO1
      lampada-fraca   cone volta a 20 e lente a 0xffb070 a 3                 -> LAMP1
      sem-halo        tira o halo da lâmpada                                 -> LAMP2
+     guia-rasa       some com as latas da guia                              -> RUA3
      saco-ovo        tira a escala por eixo e a inclinação de todo saco      -> SACO1
      guia-limpa      some com o lixo de guia da malha de decalque             -> RUA2
      saco-longe      corte do saco volta a 38 m no fonte lido                 -> ORC1
@@ -99,7 +102,7 @@
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'beiral-preto', 'lampada-fraca', 'sem-halo', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'beiral-preto', 'lampada-fraca', 'sem-halo', 'guia-rasa', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -412,6 +415,24 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     const comp = 30 - (AV + CAL + 0.5), dens = conta.map((c) => c / comp);
     exige(dens.every((v) => v >= 0.8), `lixo por metro de guia: ${dens.map((v) => v.toFixed(2)).join(', ')} (piso 0,8)`);
     return `lixo por metro em ${GUIAS.length} trechos de guia: ${dens.map((v) => v.toFixed(2)).join(', ')}`;
+  });
+
+  if (MUT === 'guia-rasa') { exige(W.root.userData.lixoGuia?.length, 'MUTANTE guia-rasa NÃO APLICOU'); W.root.userData.lixoGuia = []; }
+  regra('RUA3 lixo de guia com peça 3D e decalque grande', () => {
+    const pecas = W.root.userData.lixoGuia || [], d = porNome('decal-chao'), ini = AV + CAL + 0.5;
+    exige(d, 'sem malha de decalque de chão');
+    const perto = (x, z, [ex, v, , lado]) => { const [f, t] = ex === 'x' ? [x, z] : [z, x]; return Math.abs(f - v) <= 0.6 && t * lado >= ini && t * lado <= ini + 15; };
+    const conta = GUIAS.map((g) => pecas.filter((p) => p.h >= 0.15 && perto(p.x, p.z, g)).length);
+    exige(conta.every((n) => n >= 5), `peças 3D nos primeiros 15 m de cada guia: ${conta.join(', ')} (piso 5)`);
+    const pos = d.geometry.attributes.position, lados = [];
+    for (let q = 0; q < pos.count / 4; q++) {
+      let x = 0, z = 0;
+      for (let k = 0; k < 4; k++) { x += pos.getX(q * 4 + k) / 4; z += pos.getZ(q * 4 + k) / 4; }
+      if (GUIAS.some((g) => naGuia(x, z, g))) lados.push(Math.hypot(pos.getX(q * 4) - pos.getX(q * 4 + 1), pos.getZ(q * 4) - pos.getZ(q * 4 + 1)));
+    }
+    const med = lados.reduce((a, b) => a + b, 0) / Math.max(1, lados.length);
+    exige(med >= 0.9, `decalque de guia com lado médio ${med.toFixed(2)} m (piso 0,9): some a 20 m`);
+    return `peças por guia ${conta.join(', ')}, decalque médio ${med.toFixed(2)} m`;
   });
 
   if (MUT === 'telhado-solto') {
