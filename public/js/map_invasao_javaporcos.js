@@ -422,7 +422,6 @@ function propsOpcionais(root, occluders, campo, rnd, cidade, PB) {
   const poe = (lote, id, o) => { if (lote.add(id, { ry: rnd() * 6.283, ...o, y: o.y ?? campo.amostra(o.x, o.z) })) n++; };
   const r = (x, z) => Math.max(Math.abs(x), Math.abs(z));
   for (const e of EIXOS) {
-    for (const s of [-1, 1]) poe(PB, 'arvore_mata', { x: e.clareira[0] + s * 4.2, z: e.clareira[1] + s * 2.6, targetH: 11 + rnd() * 4 });
     const [cx, cz] = e.clareira;
     const a0 = rnd() * 6.283;
     poe(PB, 'tronco_caido', { x: cx + Math.cos(a0) * 2.6, z: cz + Math.sin(a0) * 2.6, targetLen: 3.6, targetH: 0.45, ry: a0 + Math.PI / 2 });
