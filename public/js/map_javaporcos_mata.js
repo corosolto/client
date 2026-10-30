@@ -56,7 +56,7 @@ export function construirMata(kit, campo, rnd) {
 
   const troncos = [], copas = [], copaCor = [], moitas = [], cipos = [], matos = [];
   const TOM = [new THREE.Color(0.54, 0.66, 0.7), new THREE.Color(0.8, 0.92, 0.96), new THREE.Color(0.98, 1.1, 1.14)];
-  const FICA = [0.55, 0.8, 1];       // fração de tufo por andar: o dossel fechado não deixava céu nenhum
+  const FICA = [0.93, 0.9, 1];       // fração de tufo por andar: andar faltando deixava tronco pelado
   let troncosColididos = 0;
   /* A PAREDE vem antes das árvores de propósito: tronco que NÃO está dentro de uma caixa
      de parede é tronco que o jogador alcança, e tronco alcançável sem colisor é MAP1. */
@@ -84,11 +84,11 @@ export function construirMata(kit, campo, rnd) {
       const alto = 6.5 + rnd() * 7.5 * (0.45 + 0.55 * borda);
       const ry = rnd() * Math.PI * 2;
       const r = 0.52 + rnd() * 0.4;
-      troncos.push(matriz(px, y0 + alto / 2, pz, ry, r, alto, r));
+      troncos.push(matriz(px, y0 + alto * 0.46, pz, ry, r, alto * 0.92, r));   // ponta some dentro do andar de cima
 
       /* Copa ACHATADA (0,62 de proporção) e com a base SEMPRE acima de 2,4 m: a primeira
          versão alongava a copa no Y e ela descia até o chão — a câmera andava dentro dela. */
-      const andares = [[0.66, 2.35], [0.82, 1.85], [0.97, 1.2]];
+      const andares = [[0.5, 2.8], [0.7, 2.4], [0.86, 2.0]];
       for (let c = 0; c < 3; c++) {
         const [frac, raio] = andares[c];
         const jr = raio * (0.82 + rnd() * 0.42);
@@ -333,7 +333,7 @@ function horizonte(campo, r, copas, cores, TOM) {
         if (rr < r0 || rr >= r1) continue;
         const px = x + (r() - 0.5) * passo * 0.7, pz = z + (r() - 0.5) * passo * 0.7;
         const y0 = campo.amostra(px, pz) - 0.3;
-        const andares = esc > 1 ? [[11 + r() * 5, 3.8 * esc]] : [[4.5 + r() * 3, 3.2], [9 + r() * 5, 3.8]];
+        const andares = esc > 1 ? [[9 + r() * 5, 5.0 * esc]] : [[4.5 + r() * 3, 3.2], [9 + r() * 5, 5.0]];
         for (const [h, j] of andares) {
           const jr = j * (0.8 + r() * 0.5);
           copas.push(matriz(px + (r() - 0.5), y0 + h, pz + (r() - 0.5), r() * 6.283, jr, jr * 0.7, jr));
