@@ -19,7 +19,7 @@ verificação visual no jogo real e commit por assunto. Manter tudo no PR #1160.
 - Link privado de viewmodels presente. `worktrees/` não rastreado é preexistente.
 - Nenhuma das sete correções foi implementada nesta retomada.
 
-## Push autorizado, ainda pendente de confirmação
+## Push concluído
 
 O dono autorizou enviar os commits existentes. A primeira tentativa foi bloqueada
 pelo hook: scripts npm selecionaram Node antigo apesar de `node -v` indicar 26.
@@ -29,14 +29,20 @@ somente `eval:redesign` falhou, por âncoras antigas em UIR16/UIR32 que ignorava
 wallpaper fixo do mapa. Corrigida a âncora e o mutante correspondente, sem mudar
 runtime. Baseline passou; mutantes `loading-sem-wallpaper`, `loading-uma-faccao`
 e `loading-wall-cover-unico` fizeram as invariantes esperadas ficarem vermelhas.
-Revisão independente do diff local: sem achados. Repetir push com PATH corrigido.
-Confirmar o SHA remoto antes de repetir o envio. Remoto observado antes dessa
-conclusão: `4706b457f8cec9136e83ec77763e1329a1d9aded`.
+Revisão independente do diff local: sem achados. Correção em `4acda7bf2`.
+Terceira tentativa: 81/81 portões passaram (359,8 s); push retornou zero.
+`git ls-remote` confirmou `4acda7bf2257842b1e4aa03d7e0f2cc679f77064` no remoto.
+Os commits existentes e a correção da régua foram enviados, sem pular hooks.
 Relatório completo da segunda tentativa preservado em
 `/tmp/javaporcos-prepush-node26-20261030.log` (temporário, fora do Git).
 O primeiro hook regravou `tools/eval/map_check.json`; somente essa alteração gerada
 foi restaurada, pois a árvore estava limpa antes da execução.
-`eval:javaporcoswall` ainda não executado: exige BASE local explícito e navegador.
+`eval:javaporcoswall` passou no navegador com BASE=http://localhost:4321 e browser
+lock: JW1 arte do modo, JW2 rotação normal em outro mapa, JW3 HTTP 200 image/webp.
+Servidor preexistente PID 35025 pertence a esta worktree (cwd confirmado); HTTP 200.
+Captura 3:2 de diagnóstico em execução, saída em
+`/tmp/javaporcos-evidence-20261030/`. Os quatro GLBs de fauna têm uma única malha,
+sem skins ou animações; não confundir a oscilação do corpo com uma passada.
 
 ## Restrições e próximo passo
 
