@@ -1,4 +1,4 @@
-import { nomeTimeJavaporcos } from '../javaporcos_apresentacao.js';
+import { wallpaperJavaporcos, nomeTimeJavaporcos } from '../javaporcos_apresentacao.js';
 /* Treta Pop · 04 VS até 5, 14 VS 6 a 8, 20 mobile. Carregado por tp/ligar.js só com ?ui=v3.
    Espelha o #load-overlay (barra, status, dica) e o elenco que o main.js sorteia (evento tp:elenco). */
 import { tr, frase, LANG } from '../i18n.js';
@@ -35,7 +35,9 @@ function cartao(p, i) {
     c.append(el('span', 'tp-carga__k', tr('VAGA DE BOT ENTRANDO')));
   } else {
     if (p.voce) { c.dataset.voce = ''; vaga.dataset.voce = ''; }
-    c.append(retrato(p.id), el('span', 'tp-carga__sombra'));
+    const portrait = p.javaporco ? el('img') : retrato(p.id);
+    if (p.javaporco) { portrait.src = wallpaperJavaporcos(i % 3); portrait.alt = 'Javaporco'; portrait.style.objectPosition = 'center'; }
+    c.append(portrait, el('span', 'tp-carga__sombra'));
     const nm = el('span', 'tp-carga__nm');
     if (p.rotulo) nm.append(el('span', 'tp-carga__k', p.rotulo));
     nm.append(el('span', 'tp-carga__n', p.nome));
@@ -49,7 +51,7 @@ function cartao(p, i) {
 function cabecalho(lado, n, forma) {
   const cab = el('div', 'tp-carga__cab');
   const bras = el('img');
-  bras.alt = ''; bras.src = urlDoBrasao(lado.toLowerCase());
+  bras.alt = ''; bras.src = document.getElementById('load-overlay')?.dataset.mode === 'horde' && lado === 'B' ? wallpaperJavaporcos(0) : urlDoBrasao(lado.toLowerCase());
   const nome = tr(nomeTimeJavaporcos(document.getElementById('load-overlay')?.dataset.mode, lado) || NOME_LADO[lado]);
   const texto = forma === 'grade' ? (lado === 'E' ? `${nome} · ${n}` : `${n} · ${nome}`) : nome;
   const disp = el('span', 'tp-disp');
@@ -134,10 +136,11 @@ export function ligar() {
     const rotuloBot = d.online ? '' : tr('BOT');
     const gente = (defs) => defs.map((c) => ({ id: c.id, nome: tr(c.name || c.id), rotulo: rotuloBot }));
     const meus = [{ id: d.eu?.id, nome: tr(d.eu?.name || ''), rotulo: tr('VOCÊ'), voce: true }, ...gente(d.aliados || [])];
-    const deles = gente(d.inimigos || []);
+    const horde = box.dataset.mode === 'horde';
+    const deles = horde ? [{ id: 'javaporco', nome: 'Javaporcos', rotulo: 'PRAGA INVASORA', javaporco: true }] : gente(d.inimigos || []);
     /* vaga só existe quando o servidor promete um time maior que o elenco que chegou */
     const completa = (lista) => { while (d.tamanho && lista.length < d.tamanho) lista.push({ vazia: true }); return lista; };
-    completa(meus); completa(deles);
+    completa(meus); if (!horde) completa(deles);
     const forma = Math.max(meus.length, deles.length) <= ATE_BANNER ? 'banners' : 'grade';
     raiz.dataset.forma = forma;
     raiz.dataset.meuLado = meuLado;
@@ -156,7 +159,7 @@ export function ligar() {
       alvo.dataset.meu = lado === meuLado ? '1' : '0';
     }
     const formato = `${meus.length} × ${deles.length}`;
-    q('.tp-carga__modo').textContent = d.rounds ? `${frase(d.ctf ? 'ctfMelhorDeN' : 'melhorDeN', d.rounds)} · ${formato}` : formato;
+    q('.tp-carga__modo').textContent = horde ? 'DEFESA COOPERATIVA · 8 ONDAS' : d.rounds ? `${frase(d.ctf ? 'ctfMelhorDeN' : 'melhorDeN', d.rounds)} · ${formato}` : formato;
     q('h1 .tp-ital').textContent = d.mapa || '';
     const desc = d.desc ? tr(d.desc) : '';
     /* descrição de mapa ainda sem inglês: melhor nenhuma frase do que português no meio do EN */

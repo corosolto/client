@@ -409,3 +409,17 @@ EgoSpace8 permanece ativa. Dev4321recusouconexão e astro recusou iniciar por
 registro antigo35025; não alterado. Serve4344 iniciou, mas shellVite travou boot
 comerro prévio de envio ao Viteserver; QA4333 usa shellprod+arquivosatuais.
 Push continua sem nova autorização;6093aaf4d permanece local.
+
+Marco2 — entrada após preload, texto rolante e retrato da ameaça. Régua nova
+javaporcos-entrada-check ficou vermelha nas4 cláusulas antes; verde depois,
+mutante sem apresentação detectado. Fluxo SP/MP/remontagem/debug e mutante
+remontagem passaram; launch-race10/10. Ego8 confirmou intro com Game ainda não
+criado, loading fechado, animationName ji-rolar e retrato B loading-javaporcos.webp.
+Captura inspecionada /tmp/javaporcos-entrada-rolante.png. Leitura encerra watchdog
+já atendido pelo preload e mantém PREP intacto; abort/generation guard preservados.
+Matriz local de25 armas de fogo+faca renderizada: todas visíveis, contato inspecionado
+/tmp/javaporcos-armas-contact.png e /tmp/javaporcos-knife-frame.png. Não reproduzido
+sumir1ªpessoa; URL do dono ainda pendente. Resultados/logs/capturas ignorados em
+artifacts/javaporcos-feedback-20261030/armas. Probe original interpretava stdout no
+stderr como erro; JSON recomposto dos logs reais, faca validada separadamente.
+Próximo: bandos3–4, dispersão, variações, corpos e mata explorável com novas frentes.

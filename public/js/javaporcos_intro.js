@@ -15,6 +15,11 @@ export function apresentarJavaporcos(signal) {
 #javaporcos-intro .ji-copy{padding:clamp(20px,4vw,40px)}
 #javaporcos-intro h1{font-size:clamp(28px,5vw,48px);line-height:1;margin:8px 0 24px;font-style:italic;text-transform:uppercase}
 #javaporcos-intro p{font-size:clamp(16px,2vw,20px);line-height:1.45;max-width:760px}
+#javaporcos-intro .ji-scroll{height:clamp(160px,27vh,260px);overflow:auto;mask-image:linear-gradient(transparent,#000 8%,#000 90%,transparent)}
+#javaporcos-intro .ji-text{animation:ji-rolar 28s linear 3s infinite;padding:4px 0 20px}
+#javaporcos-intro .ji-scroll:hover .ji-text,#javaporcos-intro .ji-scroll:focus-within .ji-text{animation-play-state:paused}
+@keyframes ji-rolar{0%,12%{transform:translateY(0)}85%,100%{transform:translateY(-30%)}}
+@media(prefers-reduced-motion:reduce){#javaporcos-intro .ji-text{animation:none}}
 #javaporcos-intro .ji-kicker{letter-spacing:.18em;color:#d4bd7c;font-size:12px;font-weight:bold}
 #javaporcos-intro .ji-objective{border-left:3px solid #d4bd7c;padding-left:16px;font-weight:bold}
 #javaporcos-intro .ji-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:26px}
@@ -24,8 +29,8 @@ export function apresentarJavaporcos(signal) {
 </style><div class="ji-art" role="img" aria-label="Javaporcos avançam da mata para a cidade"></div>
 <div class="ji-copy"><span class="ji-kicker">INVASÃO DOS JAVAPORCOS</span>
 <h1 id="javaporcos-intro-title">A praga chegou ao bairro.</h1>
-<p>O javaporco é o cruzamento do javali europeu com o porco doméstico. Invasor no Brasil, revira o solo, destrói lavouras e se multiplica rápido. Pode atacar.</p>
-<p class="ji-objective">Defenda a cidade. Não deixe os Javaporcos dominarem ${Math.round(DOMINIO.derrota * 100)}% do bairro. Proteja as lojas e retome os setores invadidos.</p>
+<div class="ji-scroll" tabindex="0" aria-label="Apresentação da praga; passe o mouse ou dê foco para pausar"><div class="ji-text"><p>O javaporco é o cruzamento do javali europeu com o porco doméstico. Invasor no Brasil, revira o solo, destrói lavouras e se multiplica rápido. Pode atacar.</p>
+<p class="ji-objective">Defenda a cidade. Não deixe os Javaporcos dominarem ${Math.round(DOMINIO.derrota * 100)}% do bairro. Proteja as lojas e retome os setores invadidos. Limpe os setores para reduzir a ocupação.</p><p>Explore a mata, procure os bandos e impeça que cheguem às lojas. O relógio da partida continua; a contagem de cada onda aparece separada.</p></div></div>
 <div class="ji-actions"><button type="button" data-defender autofocus>Defender a cidade</button><button type="button" data-pular>Pular</button></div></div>`;
   let wall = 0;
   const art = dialog.querySelector('.ji-art');

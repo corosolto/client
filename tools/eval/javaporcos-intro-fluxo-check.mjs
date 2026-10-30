@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const source = fs.readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
-const prefix = source.slice(source.indexOf('async function startGame('), source.indexOf('  /* #241:', source.indexOf('async function startGame(')));
-assert.ok(prefix.includes('await apresentarJavaporcos(introAbort.signal)'));
+const start = source.indexOf("  const introAbort = window.__javaporcosIntroAbort;", source.indexOf('async function _startGame'));
+const prefix = "async function fluxo(online) { const introAbort = window.__javaporcosIntroAbort;\n" + source.slice(start + "  const introAbort = window.__javaporcosIntroAbort;".length, source.indexOf('  /* RÉGUA:launch-race nascimento',start));
 const mutant = process.argv.includes('--mutante=remontagem');
 const code = mutant ? prefix.replace('&& !continuaPartida', '') : prefix;
 assert.ok(!mutant || code !== prefix, 'mutante não aplicou');
@@ -17,10 +17,10 @@ for (const [label, overrides, expected] of [
   ['debug forçado', { testMode: true }, 1],
 ]) {
   let calls = 0;
-  const ctx = vm.createContext({ window: {}, AbortController, currentMap: 'invasao_javaporcos', testMode: false, params: new URLSearchParams('hordeintro=1'),
+  const ctx = vm.createContext({ window: { __javaporcosIntroAbort: new AbortController() }, hideLoading: () => {}, continuaPartida: false, meuLancamento: 1, AbortController, currentMap: 'invasao_javaporcos', testMode: false, params: new URLSearchParams('hordeintro=1'),
     telemetryGameContext: {}, mpSessao: { net: { meta: { room: 'sala1' } } }, game: null,
-    novoLancamento: () => 1, lancamentoPerdeu: () => false, apresentarJavaporcos: async () => { calls++; }, ...overrides });
-  await vm.runInContext(`${code}\n return true; }\nstartGame('E', 'ruben', 'B', ${!!overrides.online})`, ctx);
+    novoLancamento: () => 1, lancamentoPerdeu: () => false, apresentarJavaporcos: async () => { calls++; }, ...overrides, continuaPartida: label === 'remontagem MP' });
+  await vm.runInContext(`${code}\n return true; }\nfluxo(${!!overrides.online})`, ctx);
   const ok = calls === expected;
   if (!ok) failures++;
   console.log(`${ok ? '✓' : '✗'} INTRO fluxo ${label}: ${calls}, esperado ${expected}`);

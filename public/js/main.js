@@ -1842,7 +1842,6 @@ async function startGame(team, charId, enemyFaction, online = false) {
   window.__javaporcosIntroAbort = introAbort;
   const continuaPartida = online && telemetryGameContext.gameType === 'multiplayer'
     && telemetryGameContext.roomId === (mpSessao?.net?.meta?.room || mpSessao?.sala?.id || mpSessao?.sala?.room || null) && game?._mapId === currentMap;
-  if (currentMap === 'invasao_javaporcos' && !continuaPartida && (!testMode || params.get('hordeintro') === '1')) await apresentarJavaporcos(introAbort.signal);
   if (introAbort.signal.aborted || lancamentoPerdeu(meuLancamento)) return;
   /* #241: em rede lenta o preload dos GLBs passa de 60 s COM progresso andando
      (_lstat.loaded sobe a cada arquivo do DefaultLoadingManager). O watchdog
@@ -2040,6 +2039,13 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
   if (lancamentoPerdeu(meuLancamento)) return;
   if (sessao) await preloadMapProps(mapaPartida.props || [], { required: true });
+  const introAbort = window.__javaporcosIntroAbort;
+  if (currentMap === 'invasao_javaporcos' && !continuaPartida && (!testMode || params.get('hordeintro') === '1')) {
+    window.__gameLaunch?.ready('partida');
+    hideLoading();
+    await apresentarJavaporcos(introAbort.signal);
+    if (introAbort.signal.aborted || lancamentoPerdeu(meuLancamento)) return;
+  }
   /* RÉGUA:launch-race nascimento início — extraído por `tools/eval/launch-race-check.mjs` */
   /* O preload leva segundos: sem esta saída, uma queda de socket no meio dele fazia nascer um
      Game zumbi por cima do menu que a desconexão já havia aberto. */

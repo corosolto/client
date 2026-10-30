@@ -4,7 +4,7 @@ const task = await taskSpace('Codex root · Javaporcos feedback rodada2');
 const page = task.page('p1');
 const result = await page.evaluate(() => {
   const g = window.__game, objective = g.objective, h = objective.state;
-  const before = { kills: h.kills, clock: h.clock, scores: h.scores, phase: h.phase, wave: h.wave };
+  const before = { kills: h.kills, clock: h.clock, scores: h.scores, phase: h.phase, wave: h.wave, prepLeft: h.prepLeft };
   try {
     h.kills = 3; h.clock = 62; h.phase = 'combat'; h.wave = 2;
     h.scores = { [objective.idDo(g.player)]: { points: 500, kills: 3, assists: 1, bestCombo: 2, damagePrevented: 130 } };
