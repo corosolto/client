@@ -52,6 +52,9 @@
              ≤ 12 m da faixa norte, monte de ≥ 8 sacos e mesa de bar com ≥ 2 cadeiras cada.
 
    RODADA 4 (crítico 6/10: "rua do centro lê como pátio", sem lixo ao longo da guia):
+     ORC1    o GLB saco_lixo tem ~2,7 mil triângulos e a caixa ~3,2 mil: com os montes do
+             beco o beco-l passava de 2,36 M. Corte por distância de saco_lixo e caixa_papelao
+             ≤ 28 m em todo PropBatch da cidade e do mapa (eram 35–40).
      RUA2    no braço norte e nas duas guias da avenida leste-oeste (de 8,5 a 30 m do centro)
              há ≥ 0,8 decalque de lixo por metro a ≤ 0,6 m de cada guia, do lado do asfalto.
 
@@ -68,6 +71,7 @@
      muro-escuro     muro volta ao albedo 0xc4c0b8                         -> MURO1
      saco-ovo        tira a escala por eixo e a inclinação de todo saco      -> SACO1
      guia-limpa      some com o lixo de guia da malha de decalque             -> RUA2
+     saco-longe      corte do saco volta a 38 m no fonte lido                 -> ORC1
      beco-apagado    tira a luz dos becos                                 -> BECOLUZ1, POSTE1
      luz-presa       a luz não segue a câmera (fica no primeiro beco)     -> BECOLUZ1
      luz-bola        volta a pontual 0xffb060 a 18 (acende o forro do beiral) -> BECOLUZ1
@@ -76,7 +80,7 @@
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'saco-ovo', 'guia-limpa', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -375,6 +379,19 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     const comp = 30 - (AV + CAL + 0.5), dens = conta.map((c) => c / comp);
     exige(dens.every((v) => v >= 0.8), `lixo por metro de guia: ${dens.map((v) => v.toFixed(2)).join(', ')} (piso 0,8)`);
     return `lixo por metro em ${GUIAS.length} trechos de guia: ${dens.map((v) => v.toFixed(2)).join(', ')}`;
+  });
+
+  regra('ORC1 saco e caixa GLB somem antes de 28 m', () => {
+    const cortes = [];
+    for (const arq of ['map_javaporcos_cidade.js', 'map_invasao_javaporcos.js']) {
+      let src = fs.readFileSync(new URL(`../../public/js/${arq}`, import.meta.url), 'utf8');
+      if (MUT === 'saco-longe') src = src.replace(/saco_lixo: \d+/, 'saco_lixo: 38');
+      for (const m of src.matchAll(/(saco_lixo|caixa_papelao): (\d+)/g)) cortes.push([arq, m[1], +m[2]]);
+    }
+    exige(cortes.length >= 4, `só ${cortes.length} corte(s) de saco/caixa achado(s) no fonte`);
+    const longe = cortes.filter(([, , d]) => d > 28);
+    exige(!longe.length, longe.map(([a, id, d]) => `${id} a ${d} m em ${a}`).join(', ') + ' (teto 28)');
+    return `${cortes.length} cortes de saco/caixa, maior ${Math.max(...cortes.map(([, , d]) => d))} m`;
   });
 
   regra('BECOLUZ1 uma luz de sódio dentro de cada beco', () => {

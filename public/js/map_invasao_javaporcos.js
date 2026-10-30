@@ -237,7 +237,7 @@ export function buildInvasaoJavaporcos(scene, T) {
   const cidade = construirCidade(kit, campo, rnd);
   const mata = construirMata(kit, campo, rnd);
   const pasto = construirPasto(kit, campo, rnd);
-  const PB = GLB_ON && typeof document !== 'undefined' ? new PropBatch({ bucket: 16, cortes: { tampa_bueiro: 40, lata_enferrujada: 30, saco_lixo: 40, caixa_papelao: 40, cadeira_plastico: 45, engradado_plastico: 45, pneu_velho: 40, toco_arvore: 45, tronco_caido: 50, galhos_secos: 30, pedra_mata: 45 } }) : null;
+  const PB = GLB_ON && typeof document !== 'undefined' ? new PropBatch({ bucket: 16, cortes: { tampa_bueiro: 40, lata_enferrujada: 30, saco_lixo: 28, caixa_papelao: 28, cadeira_plastico: 45, engradado_plastico: 45, pneu_velho: 40, toco_arvore: 45, tronco_caido: 50, galhos_secos: 30, pedra_mata: 45 } }) : null;
   carros(kit, campo, rnd, PB);
   vegetacaoUrbana(kit, campo, rnd, cidade.becoAreas);
   if (SKIRT.build) SKIRT.build(root);
@@ -495,7 +495,7 @@ function eixoCarro(id) {
 function propsOpcionais(root, occluders, campo, rnd, cidade, PB) {
   if (!PB) return 0;
   const PV = new PropBatch({ bucket: 12, cast: false, cortes: { capim_touceira_a: 24, capim_touceira_b: 24, samambaia_mata: 32, calathea_mata: 32, arbusto_mata_a: 38, arbusto_mata_b: 38,
-    toco_arvore: 40, tronco_caido: 45, saco_lixo: 35, caixa_papelao: 35, engradado_plastico: 40, cadeira_plastico: 40, pneu_velho: 35, lata_enferrujada: 25, lixeira_metal: 40, tambor_metal: 40 } });
+    toco_arvore: 40, tronco_caido: 45, saco_lixo: 24, caixa_papelao: 24, engradado_plastico: 40, cadeira_plastico: 40, pneu_velho: 35, lata_enferrujada: 25, lixeira_metal: 40, tambor_metal: 40 } });
   let n = 0;
   const poe = (lote, id, o) => { if (lote.add(id, { ry: rnd() * 6.283, ...o, y: o.y ?? campo.amostra(o.x, o.z) })) n++; };
   const r = (x, z) => Math.max(Math.abs(x), Math.abs(z));

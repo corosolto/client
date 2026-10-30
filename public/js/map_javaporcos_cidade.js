@@ -1096,7 +1096,7 @@ function construirExtras(kit, ex) {
   quads(kit, ex.letreiro.map((l) => ({ ...l, uv: LETREIRO_UV(l.i) })), MAT.letreiro, 'letreiro-loja', true);
   if (GLB && ex.rua.length) {
     const PR = new PropBatch({ bucket: 24, cortes: { cadeira_plastico: 45 } });
-    const PL = new PropBatch({ bucket: 24, cast: false, cortes: { saco_lixo: 38, caixa_papelao: 38, lata_enferrujada: 28, lixeira_metal: 40 } });
+    const PL = new PropBatch({ bucket: 24, cast: false, cortes: { saco_lixo: 20, caixa_papelao: 20, lata_enferrujada: 28, lixeira_metal: 40 } });
     for (const g of ex.rua) {
       const a = g.id === 'saco_lixo' && !g.esc ? amassaSaco(g.x, g.z) : g;
       (PL.opts.cortes[g.id] ? PL : PR).add(g.id, { x: g.x, y: (g.y ?? 0) + (a.dy && a !== g ? a.dy : 0), z: g.z, targetH: g.h, ry: g.ry, rx: a.rx, rz: a.rz, esc: a.esc });
