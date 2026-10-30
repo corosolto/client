@@ -475,19 +475,10 @@ export function construirPasto(kit, campo, rnd) {
     }
   }
 
-  /* Cupinzeiro: torno com ruído fixo por vértice. Colisor a 0,78 do raio da base, que é
-     onde o monte já passou de 0,3 m de altura. */
-  const cupins = [];
-  const perfil = [[1.0, 0], [0.88, 0.14], [0.66, 0.42], [0.47, 0.68], [0.3, 0.87], [0.12, 1.0], [0.0, 1.03]]
-    .map(([r, y]) => new THREE.Vector2(r, y));
-  const cupimGeo = new THREE.LatheGeometry(perfil, 11);
-  { const p = cupimGeo.attributes.position;
-    for (let i = 0; i < p.count; i++) {
-      const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-      const n = 1 + 0.13 * Math.sin(x * 7.1 + y * 5.3) * Math.cos(z * 6.7 - y * 3.1);
-      p.setXYZ(i, x * n, y, z * n);
-    }
-    cupimGeo.computeVertexNormals(); }
+  /* Cupinzeiro: torno em 3 lóbulos (±18% no raio) com 2-3 torrões satélites. Colisor a
+     0,78 do raio da base, onde o monte já passou de 0,3 m de altura. */
+  const cupins = [], torroes = [], rt = semente(0xc0b1);   // semente própria: não desloca o rnd do mapa
+  const cupimGeo = cupimTorno();
   for (let tent = 0; tent < 400 && cupins.length < 13; tent++) {
     const a = rnd() * 6.283, cx = Math.cos(a), cz = Math.sin(a);
     const alvo = CIDADE + 2.6 + rnd() * (MATA_R - CIDADE - 4.2);
@@ -501,6 +492,13 @@ export function construirPasto(kit, campo, rnd) {
     cupins.push({ x: px, z: pz, sx, sy, y: y - 0.06 });
     const h = 0.78 * sx;
     colliders.push({ minX: px - h, maxX: px + h, minY: y - 0.5, maxY: y + sy, minZ: pz - h, maxZ: pz + h });
+    for (let k = 0, n = 2 + (rt() < 0.5 ? 1 : 0); k < n; k++) {
+      const ang = rt() * 6.283, d = sx * 0.8 + rt() * 0.3, r = 0.3 + rt() * 0.2;
+      const tx = px + Math.cos(ang) * d, tz = pz + Math.sin(ang) * d;
+      const ty = campo.amostra(tx, tz) - 0.05, alto = 0.2 + rt() * 0.15;
+      torroes.push({ x: tx, z: tz, sx: r, sy: alto, y: ty });
+      colliders.push({ minX: tx - 0.78 * r, maxX: tx + 0.78 * r, minY: ty - 0.3, maxY: ty + alto, minZ: tz - 0.78 * r, maxZ: tz + 0.78 * r });
+    }
   }
 
   /* Cerca a 1,2 m da cidade, aberta na avenida, nas vielas e onde a trilha passa: a horda
@@ -536,7 +534,7 @@ export function construirPasto(kit, campo, rnd) {
   };
   const capimMesh = lote(capim, cartao(), MAT.capimPasto, 'pasto-capim', capimCor);
   const toucMesh = lote(touceiras, cartao(), MAT.touceira, 'pasto-touceira', touceiraCor);
-  const cupimMesh = lote(cupins.map((c) => matriz(c.x, c.y, c.z, rnd() * 6.283, c.sx, c.sy, c.sx)), cupimGeo, MAT.cupim, 'pasto-cupinzeiro');
+  const cupimMesh = lote([...cupins.map((c) => [c, rnd()]), ...torroes.map((c) => [c, rt()])].map(([c, g]) => matriz(c.x, c.y, c.z, g * 6.283, c.sx, c.sy, c.sx)), cupimGeo, MAT.cupim, 'pasto-cupinzeiro');
   const mouraoGeo = new THREE.CylinderGeometry(0.055, 0.075, 1, 7);
   mouraoGeo.translate(0, 0.5, 0);
   const mouraoMesh = lote(mouroes, mouraoGeo, MAT.mourao, 'pasto-mourao');
@@ -545,8 +543,28 @@ export function construirPasto(kit, campo, rnd) {
   for (const m of [cupimMesh, mouraoMesh]) if (m) { m.castShadow = true; occluders.push(m); }
   return {
     cupinzeiros: cupins.map((c) => ({ x: +c.x.toFixed(2), z: +c.z.toFixed(2), r: +(0.78 * c.sx).toFixed(2) })),
-    censo: { capim: capim.length, touceiras: touceiras.length, cupinzeiros: cupins.length, mouroes: mouroes.length, fiosArame: fios.length },
+    censo: { capim: capim.length, touceiras: touceiras.length, cupinzeiros: cupins.length, torroesCupim: torroes.length, mouroes: mouroes.length, fiosArame: fios.length },
   };
+}
+
+/* Perfil de torno com 3 lóbulos que torcem com a altura: cone liso lia como pirâmide de pedra. */
+export const CUPIM_LOBULO = 0.18;
+function cupimTorno() {
+  const perfil = [[1.0, 0], [0.95, 0.1], [0.87, 0.3], [0.76, 0.5], [0.61, 0.69], [0.44, 0.84], [0.26, 0.95], [0.1, 1.01], [0, 1.02]]
+    .map(([r, y]) => new THREE.Vector2(r, y));
+  const geo = new THREE.LatheGeometry(perfil, 18);
+  const p = geo.attributes.position, uv = geo.attributes.uv, cor = new Float32Array(p.count * 3);   // vale do lóbulo e pé escurecem: na sombra da mata só o hemisfério ilumina
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(z, x);
+    const n = 1 + CUPIM_LOBULO * Math.cos(3 * a + 2.2 * y) + 0.05 * Math.sin(7 * a - 4 * y) * Math.cos(9 * y);
+    p.setXYZ(i, x * n, y, z * n);
+    uv.setXY(i, uv.getX(i) * 3, uv.getY(i) * 1.2);
+    const v = 0.62 + 0.38 * (0.5 + 0.5 * Math.cos(3 * a + 2.2 * y)) * (0.7 + 0.3 * Math.min(1, y * 2));
+    cor.set([v, v * 0.96, v * 0.92], i * 3);
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(cor, 3));
+  geo.computeVertexNormals();
+  return geo;
 }
 
 function matrizInclinada(x, y, z, ry, tilt, alto) {
