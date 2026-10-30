@@ -240,6 +240,13 @@ export class OperacaoFlavio {
   prepareRound() {
     if (!this.vip) return;
     this.state = criarEstadoEscolta(this.game.world.escortPath);
+    const plano = this.game.world.objectivePlane;
+    if (plano?.position) {
+      this._planeOrigin ??= { x: plano.position.x, y: plano.position.y, z: plano.position.z };
+      plano.position.x = this._planeOrigin.x;
+      plano.position.y = this._planeOrigin.y;
+      plano.position.z = this._planeOrigin.z;
+    }
     this.game.timeLeft = 360;
     this.vip.alive = true;
     this.vip.hp = 100;
