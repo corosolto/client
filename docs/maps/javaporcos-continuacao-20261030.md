@@ -562,3 +562,43 @@ MAP6zero. Exatoestadofinalrodando /tmp/javaporcos-map-check-fecho.log (session64
 Arquivo map_check.json foi novamente sobrescrito; ao terminar MESCLAR com backup
 /tmp/javaporcos-map-check-antes-20261030.json preservando18outrosmapas. Mutantes
 pasto-careca e mapa-flutuando acenderam; mata-sem-lote rodando. Ainda sem novo push.
+
+Checkpoint local 2c7b78d49 recuperável: disputa E/B/J, regras configuráveis,
+refúgios, lotes com oclusão, LOD e corpos online. Sem push. Map-check final exato
+terminou verde (/tmp/javaporcos-map-check-fecho.log); saída mesclada preservando
+os18outrosmapas. Mutantes mata-sem-lote, pasto-careca e mapa-flutuando acenderam.
+
+Mint confirmou quatro variantes prontas no pack th7f82d138zgbc9bzs2c3032f58h9f8g,
+chat ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk: leitão listrado, velho cicatrizado, ruivo,
+malhado. Downloads originais via Ego8/p2 para artifacts/javaporcos-feedback-20261030/mint
+(ignorados), sem conversões pagas. Leitão é um mesh/um material,4760tris,3texturas2048,
+6,1MB; as9partes da interface já vêm reunidas. Próximo: otimizar texturas localmente,
+validar orientação/rig, acrescentar aparências determinísticas e repetir GPU.
+
+Variantes Mint integradas:8aparências totais,4novos originaisruntime+LOD, texturas512
+WebPquality90 como os4anteriores, geometria perto intacta. Proveniência/hashes/receitas
+em asset-manifest.json; fontes ignoradas references/glb. Imagem frontal real inspecionada
+/tmp/javaporcos-oito-variantes-frente.png: listras/manchas/ruivo/velho, orientação correta.
+LOD8e passada real numérica perto/longe verdes:2patas imóveis no chão >94% dos quadros.
+Regra redução aceita>=30% por modelo preservando erro0,01; novos listrado/velho reduzem
+só~33%, melhor conservar silhueta que elevar erro (tentativa anterior0,02 rejeitada).
+
+Ego64vivos+8corpos mistos:966calls/2.214Mtri/141MB SEM as2fumaças já ativas na partida.
+Com as2fumaças:1014calls/2.214Mtri/141MB (+48sprites). Registrar ambos: teto1000calls
+ultrapassado em1,4% nesse cenário com efeitos; basecomparável dentro. Nenhuma mudança
+na densidade/colisões do mapa. Tentativa reduzir raio de sombra não ajudou e foi revertida.
+
+Revisão crítica encontrou correlação ordinal%3: todosadultos viravamruivo. Corrigido
+com mistura inteira determinística do ordinal; nova régua percorre composição REAL
+das8ondas e exige8aparências, mutantevariantes-correlacionadas. Captura plantada sozinha
+não provaria variedade real. PlacarTAB DOM confirmou3colunas e64vivos; loading DOM
+confirmou rostersE/B eJavatar central. CapturaDOM continua falhandoCDP timeout, nãoaceita.
+
+Fecho deste marco:coreverde com cobertura8aparências em ondas reais; mutante de
+correlação acendeu. Revisão crítica releu hash e não encontrou novos problemas.
+RegraLOD/passada8modelos verde; sem-lod falha como esperado. ContratoMC1/MC2/MC3verde;
+comentários verdes. Assetrev1724binários. CatálogoMint e FONTE também registrados.
+Próximo trabalho: baixar/catalogar os12propscidade+10vegetação prontos do prompt,
+sem trocar geometria física já validada do mapa indiscriminadamente. Depois conferir
+opçõesSP/fluxointro e fechar checkpoint. Sem push/merge/deploy; preview/MPWS continuam
+pendentes e armas26locais visíveis não provam o problema remoto relatado resolvido.

@@ -3369,6 +3369,62 @@
         ],
         "finalSha256": "51d4e6fc34cf03619eed92d7350ca50661b877a871f1d0435838d19e0f8cdd81"
       }
+    },
+    "leitao-listrado": {
+      "files": [
+        "public/models/enemies/javaporcos/leitao_listrado.glb",
+        "public/models/enemies/javaporcos/leitao_listrado_lod.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks72s7n7xpvss3hp3vncm5xd2h8h8w2w",
+        "assetPackId": "th7f82d138zgbc9bzs2c3032f58h9f8g",
+        "chatUrl": "https://mint.gg/chat/ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk",
+        "displayName": "leitao_listrado",
+        "notes": "Original preservado em references/glb; WebP512/quality90 e LOD local. Procedência e hashes em public/models/enemies/javaporcos/asset-manifest.json."
+      }
+    },
+    "javaporco-velho-cicatrizado": {
+      "files": [
+        "public/models/enemies/javaporcos/javaporco_velho_cicatrizado.glb",
+        "public/models/enemies/javaporcos/javaporco_velho_cicatrizado_lod.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks70t3c3mkxgtszkhd7wb1q54n8h88xn",
+        "assetPackId": "th7f82d138zgbc9bzs2c3032f58h9f8g",
+        "chatUrl": "https://mint.gg/chat/ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk",
+        "displayName": "javaporco_velho_cicatrizado",
+        "notes": "Original preservado em references/glb; WebP512/quality90 e LOD local. Procedência e hashes em public/models/enemies/javaporcos/asset-manifest.json."
+      }
+    },
+    "javaporco-ruivo": {
+      "files": [
+        "public/models/enemies/javaporcos/javaporco_ruivo.glb",
+        "public/models/enemies/javaporcos/javaporco_ruivo_lod.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7c1r9d83q0d6ekjd3m6747vx8h8qgm",
+        "assetPackId": "th7f82d138zgbc9bzs2c3032f58h9f8g",
+        "chatUrl": "https://mint.gg/chat/ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk",
+        "displayName": "javaporco_ruivo",
+        "notes": "Original preservado em references/glb; WebP512/quality90 e LOD local. Procedência e hashes em public/models/enemies/javaporcos/asset-manifest.json."
+      }
+    },
+    "javaporco-malhado": {
+      "files": [
+        "public/models/enemies/javaporcos/javaporco_malhado.glb",
+        "public/models/enemies/javaporcos/javaporco_malhado_lod.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks77ht2fkgabbttc2mqq96p0x98h962g",
+        "assetPackId": "th7f82d138zgbc9bzs2c3032f58h9f8g",
+        "chatUrl": "https://mint.gg/chat/ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk",
+        "displayName": "javaporco_malhado",
+        "notes": "Original preservado em references/glb; WebP512/quality90 e LOD local. Procedência e hashes em public/models/enemies/javaporcos/asset-manifest.json."
+      }
     }
   }
 }

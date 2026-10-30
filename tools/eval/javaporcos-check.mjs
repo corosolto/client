@@ -76,6 +76,7 @@ const {
   alturaDoChao, espacializarJavaporco, registrarModeloJavaporco, criarInvasaoJavaporcos,
 } = await import('../../public/js/mode_javaporcos.js');
 const { encodeSnapshot, decodeSnapshot } = await import('../../public/js/netcodec.js');
+const { MODELOS_JAVAPORCOS, varianteJavaporco } = await import('../../public/js/data/javaporcos_modelos.js');
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.split('=')[1] || '';
 let falhas = 0;
@@ -292,6 +293,23 @@ regra('as três frentes entram no rodízio e os IDs são estáveis', () => {
   assert.deepEqual(snapshotHorda(a), snapshotHorda(b));
   assert.equal(FRENTES, 3);
   assert.deepEqual(new Set(a.alive.map((animal) => animal.entrance)), new Set([0, 1, 2]));
+});
+
+regra('as ondas reais alcançam todas as oito aparências', () => {
+  const horda = criarHorda({ seed: 319 }), vistas = new Set();
+  const pools = { jovem: ['jovem','listrado'], adulto: ['adulto','malhado','ruivo'], matriarca: ['matriarca','velho'], ariete: ['ariete'] };
+  for(let onda=0;onda<8;onda++) {
+    iniciarOnda(horda);let guarda=0;
+    while(horda.remaining>0&&guarda++<10000) {
+      passoHorda(horda,.25);
+      for(const a of [...horda.alive]) {
+        const n=Number(a.id.split('.')[1]),v=mutante==='variantes-correlacionadas'?pools[a.type][n%pools[a.type].length]:varianteJavaporco(a.type,n);
+        vistas.add(v);registrarAbate(horda,a.id,'defensor');
+      }
+    }
+    assert.ok(guarda<10000,'onda travada');
+  }
+  assert.deepEqual([...vistas].sort(),Object.keys(MODELOS_JAVAPORCOS).sort());
 });
 
 regra('dois clientes fecham as oito ondas com o mesmo estado', () => {

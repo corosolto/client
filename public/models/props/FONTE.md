@@ -370,3 +370,22 @@ o acervo já carrega o Gol G2 NC, mas com loja no jogo a decisão de mantê-los 
 | `toco_arvore.glb` | <https://polyhaven.com/a/tree_stump_01> | Poly Haven | CC0 1.0 | 7.994 (41.046) | 404 | 1.43 x 0.57 x 1.59 | pasto/mata |
 | `tronco_caido.glb` | <https://polyhaven.com/a/dead_tree_trunk> | Poly Haven | CC0 1.0 | 7.994 (101.802) | 324 | 3.05 x 0.29 x 0.28 | mata/pasto |
 | `pedra_mata.glb` | <https://polyhaven.com/a/rock_07> | Poly Haven | CC0 1.0 | 3.998 (14.844) | 216 | 0.17 x 0.14 x 0.32 | pasto/mata |
+
+### Javaporcos: quatro aparências Mint — 30/10/2026
+
+Modelos próprios do projeto CORO SOLTO — Javaporcos, pack
+`th7f82d138zgbc9bzs2c3032f58h9f8g`,
+[solicitação no Mint](https://mint.gg/chat/ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk).
+Os animais ficam em `public/models/enemies/javaporcos/`, registrados em
+`mint-assets.json` e no `asset-manifest.json` dessa pasta com hashes e origem.
+
+- `leitao_listrado.glb` — `ks72s7n7xpvss3hp3vncm5xd2h8h8w2w`.
+- `javaporco_malhado.glb` — `ks77ht2fkgabbttc2mqq96p0x98h962g`.
+- `javaporco_ruivo.glb` — `ks7c1r9d83q0d6ekjd3m6747vx8h8qgm`.
+- `javaporco_velho_cicatrizado.glb` — `ks70t3c3mkxgtszkhd7wb1q54n8h88xn`.
+
+Originais completos preservados em `references/glb/` (ignorados). Receita
+`tools/javaporcos-variantes.mjs`: geometria intacta, WebP512/quality90, dedup/prune.
+Derivados `_lod.glb` por `tools/javaporcos-lod.mjs`: weld e simplify com razão0,30,
+erro0,01; materiais e bytes das texturas preservados. Rig de passada feito no
+runtime, sem animação gerada/paga adicional. Os quatro modelos anteriores permanecem.

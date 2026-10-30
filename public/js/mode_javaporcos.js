@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { regrasDaInvasao, avaliarFimDaInvasao, repartirTerritorio } from './javaporcos_partida.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { assetUrl } from './data/asseturl.js';
+import { MODELOS_JAVAPORCOS, varianteJavaporco } from './data/javaporcos_modelos.js';
 import { prepararPassada, atualizarPassada, liberarPassada, registrarGeometriaDistante, selecionarDetalhePassada } from './javaporcos_passada.js';
 
 /* Teto de vivos MEDIDO em tools/eval/javaporcos-perf.mjs (64 vivos = 0,22 ms/quadro).
@@ -552,12 +553,7 @@ export function snapshotHorda(state) {
   };
 }
 
-const MODEL_PATHS = Object.freeze({
-  jovem: '/models/enemies/javaporcos/javali_jovem.glb',
-  adulto: '/models/enemies/javaporcos/javaporco_adulto.glb',
-  matriarca: '/models/enemies/javaporcos/matriarca_javali.glb',
-  ariete: '/models/enemies/javaporcos/ariete_javali.glb',
-});
+const MODEL_PATHS = Object.fromEntries(Object.entries(MODELOS_JAVAPORCOS).map(([tipo, nome]) => [tipo, `/models/enemies/javaporcos/${nome}.glb`]));
 const modelTemplates = new Map();
 let preloadPromise = null;
 
@@ -627,7 +623,8 @@ function fallbackAnimal(type) {
 /* O modelo vai DENTRO de um grupo e o grupo é que vai pro chão: era a conta de
    `position.y = -box.min.y` que o passo do bicho sobrescrevia e enterrava a pata. */
 function visualAnimal(type, mutante = '', ordinal = 0) {
-  const template = modelTemplates.get(type);
+  const variante = varianteJavaporco(type, ordinal);
+  const template = modelTemplates.get(variante) || modelTemplates.get(type);
   const corpo = template ? template.clone(true) : fallbackAnimal(type);
   const box = new THREE.Box3().setFromObject(corpo);
   const altura = Math.max(.01, box.max.y - box.min.y);
@@ -639,6 +636,7 @@ function visualAnimal(type, mutante = '', ordinal = 0) {
   const pivo = new THREE.Group();
   pivo.add(corpo);
   pivo.userData.corpo = corpo;
+  pivo.userData.variante = variante;
   if (template) prepararPassada(pivo);
   return pivo;
 }
