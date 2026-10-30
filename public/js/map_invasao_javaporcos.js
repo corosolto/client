@@ -49,26 +49,32 @@ export function buildInvasaoJavaporcos(scene, T) {
 
   /* Toda superfície estrutural nasce COM `map` e com `repeat` 1: a densidade de texel vem
      da UV POR TAMANHO DE MUNDO (vao.js nas caixas, `piso`/`malhaTerreno` nos planos). */
+  const comPbr = (id, proc, o = {}, opt = {}) => {
+    const p = TX.pbr(id, opt);
+    return p ? lam({ ...o, ...p, roughness: 1 }) : lam({ map: proc, ...o });
+  };
+  const claro = (c, f = 0.4) => new THREE.Color(c).lerp(new THREE.Color(0xffffff), f);
   const MAT = {
-    asfalto: lam({ map: TX.asfaltoTex() }),
-    calcada: lam({ map: TX.calcadaTex() }),
-    bloquete: lam({ map: TX.bloqueteTex() }),
-    terra: lam({ map: TX.terraTex() }),
-    terraTrilha: lam({ map: TX.terraTex(), color: 0xb6a894, alphaMap: TX.manchaAlphaTex(), alphaTest: 0.42 }),
-    terraQuintal: lam({ map: TX.terraTex(), color: 0xa09684 }),
-    grama: lam({ map: TX.gramaTex() }),
-    pasto: lam({ map: TX.pastoTex(), vertexColors: true }),
+    asfalto: comPbr('asphalt_02', TX.asfaltoTex(), {}, { repeat: 0.5 }),
+    calcada: comPbr('concrete_pavement', TX.calcadaTex(), {}, { repeat: 0.8 }),
+    bloquete: comPbr('patterned_cobblestone', TX.bloqueteTex(), {}, { repeat: 0.9 }),
+    terra: comPbr('dirt', TX.terraTex(), {}, { repeat: 0.7 }),
+    terraTrilha: comPbr('dirt', TX.terraTex(), { color: 0xc9b9a2, alphaMap: TX.manchaAlphaTex(), alphaTest: 0.42 }),
+    terraQuintal: comPbr('dirt', TX.terraTex(), { color: 0xa09684 }, { repeat: 0.7 }),
+    grama: comPbr('forest_leaves_02', TX.gramaTex()),
+    pasto: comPbr('leafy_grass', TX.pastoTex(), { vertexColors: true }),
     capimPasto: lam({ map: TX.capimPastoTex(), alphaTest: 0.5, side: THREE.DoubleSide, roughness: 1 }),
     touceira: lam({ map: TX.capimAltoTex(), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 1 }),
     cupim: lam({ map: TX.terraTex(), color: 0xd09a72 }),
     mourao: lam({ map: TX.cascaTex(), color: 0xb0a490 }),
-    cimento: lam({ map: TX.cimentoTex() }),
+    cimento: comPbr('concrete_pavement', TX.cimentoTex(), { color: 0xb8b2a6 }, { repeat: 0.6 }),
     medidor: lam({ map: TX.lataTex('#9a9c98', 8), metalness: 0.3, roughness: 0.5 }),
     roupa: lam({ map: TX.tecidoTex(), side: THREE.DoubleSide }),
     botijao: lam({ map: TX.lataTex('#2f5f9a', 10), metalness: 0.25, roughness: 0.45 }),
     lixeiraAmarela: lam({ map: TX.lataTex('#d1a92a', 11), roughness: 0.6 }),
-    rebocoDesc: [lam({ map: TX.rebocoDescascadoTex('#c9a86a', 1) }), lam({ map: TX.rebocoDescascadoTex('#7f9db0', 2) })],
-    gramaCidade: lam({ map: TX.gramaTex(), color: 0x9a9272 }),
+    rebocoDesc: [comPbr('damaged_plaster', TX.rebocoDescascadoTex('#c9a86a', 1), { color: claro('#d8b06a', 0.15) }, { metros: 2.6 }),
+      comPbr('damaged_plaster', TX.rebocoDescascadoTex('#7f9db0', 2), { color: claro('#7f9db0', 0.15) }, { metros: 2.6 })],
+    gramaCidade: comPbr('sparse_grass', TX.gramaTex(), {}, {}),
     bloco: lam({ map: TX.blocoTex() }),
     telha: lam({ map: TX.telhaTex() }),
     fibrocimento: lam({ map: TX.fibrocimentoTex() }),

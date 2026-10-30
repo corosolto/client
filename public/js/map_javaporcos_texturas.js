@@ -469,3 +469,21 @@ export function manchaAlphaTex() {
   t.name = 'jp-mancha-alpha';
   return t;
 }
+
+/* PBR do Poly Haven (cor/normal/rugosidade) só no navegador; em node fica a procedural.
+   `metros` finge o tamanho da imagem antes do load: a UV por mundo das caixas (vao.js) usa. */
+const NAVEGADOR = typeof location !== 'undefined' && /^https?:/.test(location.protocol || '');
+export function pbr(id, { repeat = 1, metros = 0 } = {}) {
+  if (!NAVEGADOR) return null;
+  const canal = (nome, srgb) => {
+    const t = new THREE.TextureLoader().load(`/img/textures/pbr_${id}_${nome}.webp`);
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(repeat, repeat);
+    t.anisotropy = 8;
+    t.name = `pbr-${id}-${nome}`;
+    if (metros) t.image = { width: metros * 128, height: metros * 128 };
+    return t;
+  };
+  return { map: canal('color', true), normalMap: canal('normal', false), roughnessMap: canal('rough', false) };
+}
