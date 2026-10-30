@@ -1,3 +1,4 @@
+import { apresentarJavaporcos } from './javaporcos_intro.js';
 import { nomeTimeJavaporcos, wallpaperJavaporcos } from './javaporcos_apresentacao.js';
 // Boot, menus, settings, logo, main loop.
 import * as THREE from 'three';
@@ -755,6 +756,7 @@ const _armMusic = () => {
 // destrava o áudio COM SOM na hora — sem fallback mudo e sem fade atrapalhado. Registrado
 // em capture ANTES do _armMusic, que vira no-op (musicArmed já true).
 function dismissSplash(e) {
+  if (document.querySelector('#javaporcos-intro:modal')) return;
   const sp = document.getElementById('boot-splash');
   if (!sp || !_splashReady || sp.classList.contains('gone')) return;
   if (e?.target?.closest?.('[data-splash-fica]')) return;
@@ -1424,6 +1426,7 @@ const lancamentoPerdeu = (n) => n !== _lancamento;
 function soltarPartida() {
   game = null; window.__game = null;
   _lancamento++;
+  window.__javaporcosIntroAbort?.abort();
   /* A tela de loading morre COM a partida: `show()` não mexe no overlay, e uma queda no meio
      do preload deixava o menu atrás de um "CARREGANDO MODELOS 3D…" eterno. */
   try { hideLoading(); } catch { /* overlay ainda não existe */ }
@@ -1833,6 +1836,14 @@ addEventListener('pointerdown', _menuOnce);
 addEventListener('keydown', _menuOnce);
 
 async function startGame(team, charId, enemyFaction, online = false) {
+  const meuLancamento = novoLancamento();
+  window.__javaporcosIntroAbort?.abort();
+  const introAbort = new AbortController();
+  window.__javaporcosIntroAbort = introAbort;
+  const continuaPartida = online && telemetryGameContext.gameType === 'multiplayer'
+    && telemetryGameContext.roomId === (mpSessao?.net?.meta?.room || mpSessao?.sala?.id || mpSessao?.sala?.room || null) && game?._mapId === currentMap;
+  if (currentMap === 'invasao_javaporcos' && !continuaPartida && (!testMode || params.get('hordeintro') === '1')) await apresentarJavaporcos(introAbort.signal);
+  if (introAbort.signal.aborted || lancamentoPerdeu(meuLancamento)) return;
   /* #241: em rede lenta o preload dos GLBs passa de 60 s COM progresso andando
      (_lstat.loaded sobe a cada arquivo do DefaultLoadingManager). O watchdog
      renova enquanto há movimento e só falha se o progresso PARAR — travamento
@@ -1848,7 +1859,6 @@ async function startGame(team, charId, enemyFaction, online = false) {
     return false;
   });
   /* RÉGUA:launch-watchdog fim */
-  const meuLancamento = novoLancamento();
   try {
     await _startGame(meuLancamento, team, charId, enemyFaction, online);
     window.__gameLaunch?.ready('partida');

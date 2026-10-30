@@ -278,3 +278,39 @@ Outros modos preservam nomes e arte próprios. Não confundir B do atalho de câ
 com time. Logs /tmp/javaporcos-identidade-final*.log e artefatos/apresentacao.
 Revisão crítica dos dois achados corrigidos concluída sem novos riscos materiais.
 Pedido7 em validação final separada; ainda não publicado nenhum commit novo.
+
+## Pedido7 validado: introdução pulável da praga
+
+Tela curta em português, com fatos parafraseados de Ibama/Brasília Ambiental e
+objetivo lido de DOMINIO.derrota (75%). Fontes e comandos em
+`docs/maps/javaporcos-apresentacao-20261030.md`. Reaproveita artes existentes.
+Antes: régua vermelha por ausência da tela. Depois, navegador real passou
+Pular/Escape/Enter/abort; Game não nasce durante13s de leitura, preservando PREP12.
+Régua de fluxo extrai o prefixo real startGame: nova SP/MP apresenta, remontagem
+MP não reapresenta, outro mapa não apresenta e debug só força com hordeintro=1.
+Mutante sem guarda de remontagem detectado. Browser: sem-intro, sem-pular e
+limiar99% detectados. Régua exige evidência específica, não qualquer erro.
+
+Revisão crítica corrigiu cancelamento/modal sobrevivente, repetição na troca de
+vaga MP e mutante que antes alterava só CSS. Último achado de execução: splash de
+boot em auto debug consumia o primeiro gesto; dismissSplash ignora intro modal.
+Guarda revisado, baseline final4/4 verde em /tmp/javaporcos-intro-final.log.
+Mutantes robustos em /tmp/javaporcos-intro-mutante-{pular,ausente}-final.log;
+rodada confirmatória completa em /tmp/javaporcos-intro-*-real-final.log.
+Desktop1440x960 e celular390x844 inspecionados: tela centralizada, leitura e
+botões dentro da área visível. Capturas em artefatos/apresentacao, com hashes.
+Watchdog8/8, corrida de lançamento10/10 direta, módulos, comentários, redesign,
+documentação e arquitetura verdes. O agregado npm launchrace continua com
+5 falhas preexistentes em menu-backdrop.test, função de produção inalterada.
+
+## Estado de entrega dos sete pedidos
+
+Implementação local dos pedidos1–7 concluída; aceite visual/auditivo humano
+continua pendente. Novos commits não foram publicados. Remoto/preview segue
+4acda7bf2, o push dos85 commits iniciais autorizado pelo dono. CI remoto ainda
+não representa estas correções; falhas antigas BOT2, classificação e demais
+mapas permanecem registradas, sem afirmar PR verde ou pronto para merge.
+Nenhum asset NC foi usado. Mint indisponível nesta sessão; Sketchfab sem token
+não fornecido; esses pacotes ficam pendentes e não substituem os sete pedidos.
+Próximo passo: dono revisar jogo local e autorizar push dos checkpoints novos
+para atualizar o preview. Não mergear, não deployar manualmente, não force-push.
