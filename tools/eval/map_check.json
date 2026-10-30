@@ -1,5 +1,5 @@
 {
- "gerado": "2026-10-30T03:15:54.153Z",
+ "gerado": "2026-10-30T04:16:37.023Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -12136,7 +12136,7 @@
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.2746,
+     "fracMedia": 0.2754,
      "maiorVisada": 63.9
     }
    ],
@@ -12207,8 +12207,8 @@
      "z": -10.6,
      "chao": 0,
      "obsLonge": 1290,
-     "obsVendo": 364,
-     "frac": 0.2822,
+     "obsVendo": 365,
+     "frac": 0.2829,
      "maiorVisada": 60.2
     },
     {
@@ -12217,8 +12217,8 @@
      "z": -10.6,
      "chao": 0,
      "obsLonge": 1288,
-     "obsVendo": 383,
-     "frac": 0.2974,
+     "obsVendo": 384,
+     "frac": 0.2981,
      "maiorVisada": 58.6
     },
     {
@@ -12227,8 +12227,8 @@
      "z": -14.2,
      "chao": 0,
      "obsLonge": 1294,
-     "obsVendo": 350,
-     "frac": 0.2705,
+     "obsVendo": 351,
+     "frac": 0.2713,
      "maiorVisada": 63.9
     },
     {
@@ -12237,8 +12237,8 @@
      "z": -14.2,
      "chao": 0,
      "obsLonge": 1284,
-     "obsVendo": 319,
-     "frac": 0.2484,
+     "obsVendo": 320,
+     "frac": 0.2492,
      "maiorVisada": 60.1
     }
    ],
@@ -12350,7 +12350,7 @@
    "travessia": [],
    "occluderSemMalha": [],
    "occMedidos": 441,
-   "occPulados": 7,
+   "occPulados": 5,
    "fracSemMalha": 0.004,
    "quadrantes": [
     {
