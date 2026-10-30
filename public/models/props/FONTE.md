@@ -354,3 +354,19 @@ o acervo já carrega o Gol G2 NC, mas com loja no jogo a decisão de mantê-los 
 | `poste_transformador.glb` | <https://polyhaven.com/a/modular_electricity_poles> | Poly Haven | CC0 1.0 | 12.665 (31.932) | 867 | 1.2 x 6.13 x 1.96 | rua/praça |
 | `poste_fiacao.glb` | <https://polyhaven.com/a/modular_electricity_poles> | Poly Haven | CC0 1.0 | 12.499 (26.466) | 856 | 1.2 x 6.13 x 0.85 | rua/beco |
 | `poste_luz_praca.glb` | <https://polyhaven.com/a/street_lamp_01> | Poly Haven | CC0 1.0 | 12.095 (30.610) | 359 | 0.7 x 3.87 x 0.39 | praça |
+
+### Mato, mata e pasto
+
+| Arquivo | Origem | Autor | Licença | Tris (bruto) | KB | Dimensão (m) | Uso |
+|---|---|---|---|---|---|---|---|
+| `capim_touceira_a.glb` | <https://polyhaven.com/a/grass_medium_02> | Poly Haven | CC0 1.0 | 2.489 (2.489) | 111 | 0.32 x 0.26 x 0.36 | pasto/mata |
+| `capim_touceira_b.glb` | <https://polyhaven.com/a/grass_medium_02> | Poly Haven | CC0 1.0 | 1.760 (1.760) | 87 | 0.18 x 0.18 x 0.2 | pasto/calçada |
+| `mato_erva.glb` | <https://polyhaven.com/a/weed_plant_02> | Poly Haven | CC0 1.0 | 2.967 (2.967) | 157 | 0.22 x 0.07 x 0.29 | calçada/beco |
+| `arbusto_mata_a.glb` | <https://polyhaven.com/a/shrub_02> | Poly Haven | CC0 1.0 | 9.234 (9.234) | 306 | 1.77 x 1.31 x 2.29 | mata/pasto |
+| `arbusto_mata_b.glb` | <https://polyhaven.com/a/shrub_02> | Poly Haven | CC0 1.0 | 7.590 (7.590) | 258 | 1.31 x 1.69 x 1.64 | mata/praça |
+| `samambaia_mata.glb` | <https://polyhaven.com/a/fern_02> | Poly Haven | CC0 1.0 | 2.384 (2.384) | 112 | 0.99 x 0.43 x 0.89 | mata |
+| `calathea_mata.glb` | <https://polyhaven.com/a/calathea_orbifolia_01> | Poly Haven | CC0 1.0 | 5.904 (5.904) | 194 | 0.6 x 0.42 x 0.53 | mata |
+| `galhos_secos.glb` | <https://polyhaven.com/a/dry_branches_medium_01> | Poly Haven | CC0 1.0 | 5.933 (5.933) | 332 | 0.32 x 0.34 x 1.3 | mata/pasto |
+| `toco_arvore.glb` | <https://polyhaven.com/a/tree_stump_01> | Poly Haven | CC0 1.0 | 7.994 (41.046) | 404 | 1.43 x 0.57 x 1.59 | pasto/mata |
+| `tronco_caido.glb` | <https://polyhaven.com/a/dead_tree_trunk> | Poly Haven | CC0 1.0 | 7.994 (101.802) | 324 | 3.05 x 0.29 x 0.28 | mata/pasto |
+| `pedra_mata.glb` | <https://polyhaven.com/a/rock_07> | Poly Haven | CC0 1.0 | 3.998 (14.844) | 216 | 0.17 x 0.14 x 0.32 | pasto/mata |
