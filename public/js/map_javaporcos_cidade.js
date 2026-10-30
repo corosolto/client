@@ -1,7 +1,7 @@
 /* Miolo urbano: avenidas, vielas, 16 quarteirões, 4 lojas com interior, praça com feira e
    o lixo que o javaporco revira. Medidas e paleta: docs/maps/invasao-javaporcos-visual.md. */
 import * as THREE from 'three';
-import { hasProp } from './mapprops.js';
+import { hasProp, placeProp } from './mapprops.js';
 
 export const AV = 6;             // meia-largura da avenida (12 m de asfalto)
 export const CAL = 2;            // calçada
@@ -13,6 +13,8 @@ export const PERIMETRAL = [31.5, 36];
 export const CIDADE_R = 36;
 
 const QUADRANTES = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
+const GLB = typeof location !== 'undefined' && /^https?:/.test(location.protocol || '') && new URLSearchParams(location.search).get('glb') !== '0';
+const usaGLB = (id) => GLB && hasProp(id);
 const faixa = (s, b) => (s > 0 ? [b[0], b[1]] : [-b[1], -b[0]]);
 
 export function blocos() {
@@ -505,16 +507,20 @@ function criarFood(kit, campo, foodSpots, foodMeshes, foodColliders, id, kind, x
     return m;
   };
   const cubo = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const saco = (alvo, px, py, pz, ry, e) => {
+    const o = usaGLB('saco_lixo') ? placeProp('saco_lixo', { x: px, y: py, z: pz, targetH: 0.62 * e, ry }) : malha(sacoGeo(), MAT.saco, px, py, pz, ry);
+    if (!o.isMesh) { o.traverse((m) => { m.castShadow = false; }); alvo.add(o); return; }
+    o.scale.setScalar(e); alvo.add(o);
+  };
   if (kind === 'lixo') {
-    for (let i = 0; i < 4; i++) {
-      const a = (i / 4) * 6.283;
-      inteiro.add(malha(new THREE.IcosahedronGeometry(0.33, 0), MAT.saco,
-        Math.cos(a) * 0.3, 0.3 + (i % 2) * 0.26, Math.sin(a) * 0.3, a));
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * 6.283;
+      saco(inteiro, Math.cos(a) * 0.3, i === 2 ? 0.28 : 0, Math.sin(a) * 0.3, a, 1.05);
     }
     inteiro.add(malha(cubo(0.73, 1.07, 0.58), MAT.lixeira, 0.55, 0.53, -0.3, 0.4));
     for (let i = 0; i < 7; i++) {
       const a = (i / 7) * 6.283, r = 0.5 + (i % 3) * 0.35;
-      revirado.add(malha(new THREE.IcosahedronGeometry(0.2, 0), MAT.saco, Math.cos(a) * r, 0.14, Math.sin(a) * r, a));
+      saco(revirado, Math.cos(a) * r, 0, Math.sin(a) * r, a, 0.65);
     }
     revirado.add(malha(cubo(1.07, 0.58, 0.73), MAT.lixeira, 0.6, 0.29, -0.4, 0.9));
   } else if (kind === 'cacamba') {
@@ -524,7 +530,9 @@ function criarFood(kit, campo, foodSpots, foodMeshes, foodColliders, id, kind, x
     revirado.add(malha(cubo(3.0, 1.2, 1.6), MAT.cacamba, 0, 0.85, 0));
     for (let i = 0; i < 9; i++) {
       const a = (i / 9) * 6.283, r = 1.4 + (i % 3) * 0.4;
-      revirado.add(malha(new THREE.IcosahedronGeometry(0.22, 0), MAT.entulho, Math.cos(a) * r, 0.16, Math.sin(a) * r, a));
+      const pedaco = malha(cubo(0.38, 0.17, 0.26), MAT.entulho, Math.cos(a) * r, 0.09, Math.sin(a) * r, a * 2.3);
+      pedaco.rotation.z = (i % 3 - 1) * 0.35;
+      revirado.add(pedaco);
     }
   } else if (kind === 'feira') {
     inteiro.add(malha(cubo(1.8, 0.85, 0.95), MAT.madeira, 0, 0.42, 0));
@@ -558,6 +566,26 @@ function criarFood(kit, campo, foodSpots, foodMeshes, foodColliders, id, kind, x
   foodSpots.push({ id, x: +x.toFixed(2), z: +z.toFixed(2), hp: HP_PADRAO[kind], kind, r: +(meia + 0.4).toFixed(2) });
 }
 
+// fallback do GLB `saco_lixo` (node ou ?glb=0): esfera com nó no topo e fundo assentado
+let _sacoGeo = null;
+function sacoGeo() {
+  if (_sacoGeo) return _sacoGeo;
+  const g = new THREE.SphereGeometry(0.3, 14, 10);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const t = (y + 0.3) / 0.6;
+    const aperto = t > 0.8 ? 0.3 + (1 - t) * 2.2 : 1;
+    const ruga = 1 + 0.07 * Math.sin(x * 31 + z * 17) + 0.05 * Math.sin(y * 40 + x * 9);
+    x *= aperto * ruga; z *= aperto * ruga;
+    if (y < -0.16) y = -0.16 + (y + 0.16) * 0.2;
+    p.setXYZ(i, x * 1.05, y, z * 0.92);
+  }
+  g.translate(0, 0.17, 0);
+  g.computeVertexNormals();
+  return (_sacoGeo = g);
+}
+
 /* Lixo cênico: não é foodSpot, é o estrago. Tudo em UMA InstancedMesh por família e
    marcado `nonSolidSurface` — peça solta de 0,3 m não pode virar teto na sonda do mapa. */
 function lixoSolto(kit, campo, rnd, glb) {
@@ -584,7 +612,7 @@ function lixoSolto(kit, campo, rnd, glb) {
     const saco = rnd() < 0.55, ry = rnd() * 6.283, e = saco ? 0.5 + rnd() * 0.5 : 0.7 + rnd() * 0.6;
     const id = saco ? 'saco_lixo' : 'caixa_papelao';
     if (hasProp(id)) { if (i % 2 === 0) glb.push({ id, x, z, h: saco ? 0.35 + e * 0.3 : 0.28 + e * 0.12, ry }); continue; }
-    (saco ? sacos : caixotes).push(mtx(x, y + (saco ? 0.2 : 0.16), z, ry, e));
+    (saco ? sacos : caixotes).push(mtx(x, y + (saco ? 0 : 0.16), z, ry, e));
   }
   const add = (lista, geo, mat, nome) => {
     if (!lista.length) return;
@@ -595,7 +623,7 @@ function lixoSolto(kit, campo, rnd, glb) {
     m.computeBoundingSphere();
     kit.root.add(m);
   };
-  add(sacos, new THREE.IcosahedronGeometry(0.34, 0), MAT.saco, 'lixo-saco-solto');
+  add(sacos, sacoGeo(), MAT.saco, 'lixo-saco-solto');
   add(caixotes, new THREE.BoxGeometry(0.5, 0.32, 0.38), MAT.caixote, 'lixo-caixote-solto');
 }
 
@@ -745,8 +773,7 @@ function construirExtras(kit, ex) {
   lote(ex.roupa, roupaGeo, MAT.roupa, 'beco-roupa', { cores: ex.roupaCor });
   const botijaoGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.6, 14);
   lote(ex.botijao, botijaoGeo, MAT.botijao, 'beco-botijao', { solido: true });
-  const sacoGeo = new THREE.IcosahedronGeometry(0.3, 1);
-  if (!hasProp('saco_lixo')) lote(ex.saco, sacoGeo, MAT.saco, 'beco-saco');
+  if (!hasProp('saco_lixo')) lote(ex.saco, sacoGeo(), MAT.saco, 'beco-saco');
   if (!hasProp('lixeira_metal')) lote(ex.lixeira, cubo, MAT.lixeiraAmarela, 'beco-lixeira');
 }
 

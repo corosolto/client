@@ -387,7 +387,10 @@ function vegetacaoUrbana(kit, campo, rnd, becoAreas = []) {
       if (y > 0.17) continue;
       tufos.push(mtx(px, y + 0.12, pz, rnd() * 6.283, 0.55 + rnd() * 0.5, 0.26 + rnd() * 0.16));
       const noBeco = becoAreas.some(([x0, x1, z0, z1]) => px > x0 - 0.6 && px < x1 + 0.6 && pz > z0 - 0.6 && pz < z1 + 0.6);
-      if (rnd() < 0.08 && !noBeco) arbustos.push(mtx(px, y + 0.42, pz, rnd() * 6.283, 0.8 + rnd() * 0.6, 0.8 + rnd() * 0.5));
+      if (rnd() < 0.08 && !noBeco) {
+        const a = rnd(), b = rnd(), c = rnd();
+        if (!naRua) arbustos.push({ x: px, y, z: pz, ry: a * 6.283, h: 0.9 + b * 0.5 + c * 0.3 });
+      }
     }
   }
   const add = (lista, geo, mat, nome) => {
@@ -399,7 +402,12 @@ function vegetacaoUrbana(kit, campo, rnd, becoAreas = []) {
     kit.root.add(m);
   };
   add(tufos, new THREE.PlaneGeometry(1, 1), MAT.mato, 'cidade-mato');
-  add(arbustos, new THREE.IcosahedronGeometry(1, 0), MAT.moita, 'cidade-arbusto');
+  /* Arbusto de quintal só com GLB de verdade (um a cada três, 8 k tris cada); sem GLB fica
+     o capim. Lote próprio de bloco largo: bloco de 12 m virava uma chamada por quintal. */
+  if (!GLB_ON || typeof document === 'undefined' || !hasProp('arbusto_mata_a')) return;
+  const PA = new PropBatch({ bucket: 36, cast: false, cortes: { arbusto_mata_a: 36, arbusto_mata_b: 36 } });
+  arbustos.forEach((a, i) => { if (i % 3 === 0) PA.add(i % 2 ? 'arbusto_mata_b' : 'arbusto_mata_a', { x: a.x, y: a.y, z: a.z, ry: a.ry, targetH: a.h }); });
+  PA.build(kit.root);
 }
 
 /* Giro que põe o eixo longo do GLB no z local do carro procedural (medido uma vez). */
