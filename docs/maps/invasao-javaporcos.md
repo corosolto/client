@@ -57,7 +57,14 @@ controle. O cenário não reproduz uma propriedade ou município específico.
   0,40 m): quem consome não soma folga de corpo.
 - `foodMesh(id)` e `foodCollider(id)` — o `Object3D` e o colisor VIVO daquele ponto (o
   mesmo objeto do array `colliders`, não cópia: mexer no `maxY` muda a colisão na hora).
-- `hordeObjectives` — `[{id, x, z, hp, r}]`, três, todos em ponto alcançável.
+- `hordeObjectives` — `[{id, x, z, hp, r}]`, três, todos em ponto alcançável. O modo
+  NÃO usa mais (o domínio substituiu os objetivos com vida em 30/10/2026).
+- `horda` — o contrato da mecânica de domínio (ver "Domínio"):
+  `frentes: [{id, nome, boca:{x,z}, rota:[{x,z},...]}]` (3; `boca` é a saída da trilha
+  no pasto, `rota` vai da mata à borda da cidade), `becos: [{id, nome, de:{x,z},
+  ate:{x,z}, abreNaOnda}]` (`de` no pasto, `ate` na rua) e `setores: [{id, nome, x0, z0,
+  x1, z1, peso}]` (retângulos dentro de `cityBounds`; `peso` = área relativa). Sem ele o
+  modo cai em fallback peça por peça (ver "Domínio").
 - `lojas` — `[{papel, eixo, sinal, porta:{x,z,dentro}, interior:[x,z]}]`.
 - `waypoints:{nodes,adj}`, `nearestWaypoint(x,z)` (índice de célula, O(1)) e
   `findPath(a,b)` (BFS com buffers do mapa, zero alocação por chamada). Grade de 1,0 m,
@@ -85,17 +92,20 @@ controle. O cenário não reproduz uma propriedade ou município específico.
 - Assistência vale 40% dos pontos, dividida proporcionalmente pelo dano.
 - Combo cresce por abates em até 4 s: ×1,0, ×1,25, ×1,5, ×2,0; dano aliado não
   existe e acerto em objetivo não gera pontos.
-- Bônus de onda: `500 × objetivos intactos`; bônus final: integridade restante
-  somada ao tempo, sem prêmio por prolongar a partida.
+- Bônus de onda: `1500 × (1 − domínio)`; bônus final: `3000 × (1 − domínio)` somado ao
+  tempo, sem prêmio por prolongar a partida. Os tetos são os mesmos de antes (3 objetivos
+  × 500 e 3 × 1000 de integridade).
 - Placar mostra pontos, eliminações, assistências, maior combo e dano evitado.
 
 ## Modo multiplayer
 
 - Servidor/host autoritativo decide spawn, navegação, dano, abate, pontuação,
   integridade e início/fim de onda.
-- Snapshot replica `wave`, `seed`, `aliveIds`, `objectiveHealth`, `scoreByPlayer`,
-  `prepLeft` e `winner`; eventos incluem `BOAR_SPAWN`, `BOAR_HIT`, `BOAR_KILLED`,
-  `OBJECTIVE_HIT`, `WAVE_CLEARED` e `HORDE_FINISHED`.
+- Snapshot replica `wave`, `seed`, `alive` (com `beco` quando o bicho foi sorteado para
+  o beco), `controle` por setor (2 casas), `dominio`, `scoreByPlayer`, `prepLeft` e
+  `winner`; eventos incluem `BOAR_SPAWN`, `BOAR_HIT`, `BOAR_KILLED`, `BOAR_LOST`,
+  `FOOD_HIT`, `WAVE_CLEARED` e `HORDE_FINISHED`. O cliente não roda a IA: ele só
+  aplica `controle`/`dominio` e redesenha o mini-mapa.
 - Posição usa quantização já adotada pela simulação; fauna usa IDs estáveis por
   `matchSeed + wave + ordinal`. Partículas, vegetação e música não entram no hash.
 - Offline usa o mesmo estado com companheiros bots. A rede é opcional, nunca
@@ -137,12 +147,92 @@ controle. O cenário não reproduz uma propriedade ou município específico.
   JOG2, sem entrada na dívida declarada.
 - Dois clientes com a mesma semente fecham cada onda com IDs, integridade e
   pontuação idênticos.
-- Bots defendem ao menos dois objetivos em 30–70% das sementes na dificuldade
-  média; fora dessa faixa o balanceamento está trivial ou impossível.
+- Mecânica de domínio passa em `npm run eval:javaporcos` (cláusulas e mutantes em
+  "Domínio") e a partida inteira é medida em `npm run eval:javaporcossim`.
 - Capturas obrigatórias: cruzamento central nos quatro rumos, trilha de mata, clareira,
   praça e interior de loja, com draw calls e FPS medidos.
 - Os quatro animais Mint e o cartaz OpenRouter são abertos e inspecionados; se o
   GLB não carregar, o inimigo usa fallback procedural com a mesma hitbox.
+
+## Domínio
+
+Decisão do dono (30/10/2026): os javaporcos querem DOMINAR o bairro e o jogador tem de
+impedir. A % de domínio substituiu os três objetivos com vida. Vitória: sobreviver às 8
+ondas (`WAVE_COUNTS` intocado). Derrota: domínio em 75%.
+
+**Modelo.** Cada setor tem `controle` de 0 a 1. Sobe quando há pelo menos `minBichos`
+javaporcos vivos dentro e nenhum defensor; desce quando há defensor e nenhum bicho;
+disputado (os dois dentro) fica parado. O domínio é a média dos controles ponderada
+por `peso`. Setor com controle 1 é "tomado" e fica vermelho no mini-mapa. A conta roda
+a 4 Hz no host e vai no snapshot.
+
+**Como a horda anda.** Nasce no início da `rota` de uma das 3 frentes (rodízio por
+`seed + onda + ordinal`), segue os pontos da rota até a borda da cidade e só então
+escolhe alvo: jogador no raio de agressão > lixo > setor. No setor em que está, se não
+for tomado, ela VAGA (pontos a 3–6 m, no ritmo de 55%); quando ele é tomado, vai ao
+setor não tomado mais perto que não esteja lotado. Bicho perseguindo jogador já dentro
+da cidade larga a rota. A partir da onda 3, parte dos bichos é sorteada para o BECO:
+depois da rota da frente emenda `de → ate` do beco aberto mais perto da boca e explora
+o quarteirão (revira lixo num raio de 7 m ou vaga) por 9 s antes de seguir.
+
+**Relógio.** A fúria (que já mexia em cadência, velocidade, dano e raio) ganhou um termo
+de tempo de partida: `+0,1 por minuto`, sob o mesmo teto de 1,6. Com zero abates na onda
+3: aos 2 min fúria 0,36 (cadência 0,132 s, velocidade 1,08×, dano 20,9, raio 21,8 m); aos
+10 min fúria 1,16 (0,083 s, 1,26×, 27,4, 25,8 m). Antes era 0,16 nos dois instantes.
+
+**Onda que vira no relógio.** Bicho que só vaga não morre sozinho (antes ele se
+"gastava" no objetivo), então uma onda com bicho escondido nunca fechava: medido, a
+semente 11 ficou 9 min presa na onda 3. Agora, com a onda inteira já na rua e
+`COMBAT_SECONDS` (75 s, número de antes) zerado, a próxima vem com as sobras ainda vivas.
+Na onda 8, chegar ao fim do relógio é a vitória.
+
+| constante | valor | o que decide |
+| --- | --- | --- |
+| `DOMINIO.derrota` | 0,75 | derrota (decisão do dono). |
+| `DOMINIO.minBichos` | 3 | bichos sem defensor para o setor começar a cair; 1 ou 2 extraviados não tomam nada. |
+| `DOMINIO.sobe` | 1/40 por s | 40 s de setor ocupado e sem defensor para tomá-lo. Com 1/20 os bots perdiam já na onda 3 (3,2–3,6 min); com 1/40 perdem nas ondas 5–7 (7,2–9,9 min), o mesmo ponto em que perdiam pelos objetivos antigos (ondas 4–7, 3,0–9,0 min). |
+| `DOMINIO.desce` | 1/10 por s | retomar é 4× mais rápido que perder: limpar o setor e ficar 10 s devolve tudo. |
+| `DOMINIO.passo` | 0,25 s | período da contagem por setor (O(bichos × setores), 4 Hz basta). |
+| `DOMINIO.lotado` | 6 | acima disso no setor-alvo, o bicho prefere o próximo: é o que espalha a horda. |
+| `FRENTES` | 3 | frentes de trilha (decisão do dono). |
+| `BECO.abreNaOnda` | 3 | padrão quando o beco do mapa não diz (decisão do dono). |
+| `BECO.fracao` | 0,4 | fatia da onda sorteada para o beco (determinística, semente + ordinal). |
+| `BECO.explorar` | 9 s | tempo de "explorar" o quarteirão depois do beco. |
+| `BECO.raio` | 7 m | raio da exploração em volta do `ate` do beco. |
+| `ROTA_RAIO` | 3 m | distância em que o ponto da rota conta como alcançado. |
+| `VAGAR_RITMO` | 0,55 | velocidade relativa enquanto vaga no setor. |
+| `VAGAR_TROCA` | 5 s | validade de um ponto de vagar antes de sortear outro. |
+| `FURIA.porMinuto` | 0,1 | fúria por minuto de partida. |
+
+**Fallback enquanto o mapa não exporta `world.horda`.** Frentes: as 3 `boarEntrances`
+mais afastadas entre si (no mapa de 29/10: n1, s3 e l1), com rota da clareira até a borda
+de `cityBounds`. Becos: nenhum. Setores: grade 4×4 sobre `cityBounds`, peso 1.
+
+**HUD.** O painel do topo ganhou "DOMÍNIO DA HORDA x%" com "n/N SETORES TOMADOS · PERDE
+EM 75%" ao lado, a barra com a marca branca em 75% e o mini-mapa de 96 px (setor verde = livre,
+laranja = caindo, vermelho = tomado; ponto vermelho = boca de frente; ponto amarelo = beco
+aberto; ponto branco = jogador).
+
+**A/B medido** (`tools/eval/javaporcos-dominio-sim.mjs --becos=vielas`, jogo real no
+mapa de 29/10, jogador parado + 2 bots aliados, 5 sementes; antes = código de 66da760 com
+o domínio calculado por observação com as mesmas constantes):
+
+| | antes | depois |
+| --- | --- | --- |
+| fim da partida | derrota pelos objetivos, ondas 4–7, 3,0–9,0 min | derrota por domínio, ondas 5–7, 7,2–9,9 min |
+| domínio no fim | 18–44% (ninguém media) | 75% |
+| bocas usadas | 10 (16–46 bichos cada) | 3 (n1/s3/l1, cotas iguais ±1) |
+| bichos das ondas ≥ 3 que entram por beco (`de` → `ate`) | 3,6–7,4% (passagem casual) | 34,9–53,8% |
+| fúria aos 2 min | 0,10–0,22 | 0,31–0,38 |
+
+Becos medidos com 4 becos sintéticos nas vielas do mapa de 29/10; o número real depende
+do `world.horda.becos` do mapa novo.
+
+Primeira leitura no mapa novo em obras (30/10, `world.horda` com 3 frentes e 4 becos de
+2,5 m; setores ainda no fallback 4×4), 3 sementes: a semente 11 SEGUROU as 8 ondas
+(10,8 min, domínio final 41%); 7 e 23 caíram nas ondas 6 e 4 (6,8 e 5,3 min). Beco:
+23–30% dos bichos das ondas ≥ 3 nas duas primeiras, 0% na 11 — a conferir quando o
+layout fechar.
 
 ## Cotas do relevo
 
