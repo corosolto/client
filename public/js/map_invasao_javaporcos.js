@@ -92,7 +92,7 @@ export function buildInvasaoJavaporcos(scene, T) {
     prateleira: lam({ map: TX.madeiraTex(), color: 0xa08a70 }),
     cacamba: lam({ map: TX.lataTex(TX.COR.cacamba, 1) }),
     lixeira: lam({ map: TX.lataTex(TX.COR.lixeira, 2) }),
-    saco: lam({ map: TX.lataTex(TX.COR.saco, 3), roughness: 0.62 }),
+    saco: lam({ map: TX.lataTex(TX.COR.saco, 3), roughness: 0.35 }),
     entulho: lam({ map: TX.terraTex(), color: 0x9a9088 }),
     racao: lam({ map: TX.lataTex('#b99b63', 4) }),
     poste: comPbr('concrete046', TX.blocoTex(), { color: 0xb9b5ad }, { metros: 2.5 }),

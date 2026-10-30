@@ -47,6 +47,8 @@ export function construirCidade(kit, campo, rnd) {
   const extras = novosExtras();
   kit.ex = extras;
   let edificacoes = 0;
+  // saco plástico brilha: rugosidade 1 do GLB deixava o saco um "ovo preto" (L* 6, C* 0,4)
+  if (usaGLB('saco_lixo')) placeProp('saco_lixo', {})?.traverse((m) => { if (m.isMesh) m.material.roughness = MAT.saco.roughness; });
 
   /* ── Plataformas no campo de altura ANTES de qualquer malha: é o campo que manda, e é
      por isso que o bicho deixa de andar por baixo de calçada e soleira. */
