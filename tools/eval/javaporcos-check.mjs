@@ -41,7 +41,19 @@
      sem-investida    o ariete não dá mais o arranco
      morte-muda       o abate não chama o sfx.javaporco
      duplica-assistencia / sem-morte   (mutantes antigos, preservados)
-     relogio-parado   a fúria para de crescer com o tempo de partida (dono, 30/10/2026)
+
+   DOMÍNIO (dono, 30/10/2026): "os javaporcos querem DOMINAR o mapa". Os três objetivos
+   com vida saíram; a derrota é 75% de domínio por setor. Cláusulas e mutantes novos:
+     dominio-surdo    setor nunca é tomado (controle não sobe)
+     sem-retomada     defensor dentro do setor não devolve o controle
+     sem-derrota      75% de domínio não encerra a partida
+     setor-cego       a horda não procura setor para tomar
+     todo-lado        a horda volta a nascer nas dez bocas, não nas 3 frentes
+     sem-rota         o bicho ignora a rota da trilha e corta direto
+     beco-fechado     nenhum bicho entra pelo beco a partir da onda 3
+     relogio-parado   a fúria para de crescer com o tempo de partida
+     mapa-mudo        o HUD perde a % de domínio e o mini-mapa
+     rede-sem-dominio o snapshot deixa de levar o controle por setor
    ============================================================================ */
 import assert from 'node:assert/strict';
 
@@ -56,7 +68,8 @@ globalThis.document = {
 const THREE = await import('three');
 const {
   WAVE_COUNTS, MAX_ALIVE, BOAR_POINTS, BOAR_HP, FURIA, AGGRO, DASH, SPAWN_BASE,
-  criarHorda, iniciarOnda, passoHorda, registrarDano, registrarAbate, atingirObjetivo,
+  DOMINIO, BECO, FRENTES, passoDominio, lerHorda, gradeDeSetores, setorEm, vaiPeloBeco,
+  criarHorda, iniciarOnda, passoHorda, registrarDano, registrarAbate,
   snapshotHorda, poseMorteJavaporco, escolherAlvo, atacarComida, comidaRestante,
   recalcularFuria, cadenciaDeSpawn, velocidadeDoJavaporco, danoDoJavaporco, raioDeAgressao,
   alturaDoChao, espacializarJavaporco, registrarModeloJavaporco, criarInvasaoJavaporcos,
@@ -77,7 +90,26 @@ const CHAO = (x, z) => {
   return 0;
 };
 
-function mundoFalso() {
+/* Contrato `world.horda` que o mapa novo exporta: 3 frentes com rota, 2 becos, 4 setores. */
+const HORDA_FALSA = {
+  frentes: [
+    { id: 'norte', nome: 'Trilha norte', boca: { x: -8, z: -20 }, rota: [{ x: -8, z: -29 }, { x: -8, z: -24 }, { x: -8, z: -20 }] },
+    { id: 'sul', nome: 'Trilha sul', boca: { x: 8, z: 20 }, rota: [{ x: 8, z: 29 }, { x: 8, z: 20 }] },
+    { id: 'leste', nome: 'Trilha leste', boca: { x: 20, z: 2 }, rota: [{ x: 29, z: 2 }, { x: 24, z: 6 }, { x: 20, z: 2 }] },
+  ],
+  becos: [
+    { id: 'beco-sul', nome: 'Beco do varal', de: { x: -12, z: 20 }, ate: { x: -12, z: 8 }, abreNaOnda: 3 },
+    { id: 'beco-leste', nome: 'Beco do botijão', de: { x: 20, z: -10 }, ate: { x: 8, z: -10 }, abreNaOnda: 3 },
+  ],
+  setores: [
+    { id: 'no', nome: 'Noroeste', x0: -18, z0: -18, x1: 0, z1: 0, peso: 1 },
+    { id: 'ne', nome: 'Nordeste', x0: 0, z0: -18, x1: 18, z1: 0, peso: 1 },
+    { id: 'so', nome: 'Sudoeste', x0: -18, z0: 0, x1: 0, z1: 18, peso: 1 },
+    { id: 'se', nome: 'Sudeste', x0: 0, z0: 0, x1: 18, z1: 18, peso: 1 },
+  ],
+};
+
+function mundoFalso({ horda = false } = {}) {
   const nodes = [], index = new Map();
   for (let z = -30; z <= 30; z += 1.5) for (let x = -30; x <= 30; x += 1.5) {
     const px = Number(x.toFixed(2)), pz = Number(z.toFixed(2));
@@ -138,6 +170,7 @@ function mundoFalso() {
     foodMesh: (id) => meshes.get(id) || null,
     cityBounds: { minX: -18, maxX: 18, minZ: -18, maxZ: 18 },
     bounds: { minX: -31, maxX: 31, minZ: -31, maxZ: 31 },
+    ...(horda ? { horda: structuredClone(HORDA_FALSA) } : {}),
   };
 }
 
@@ -198,6 +231,8 @@ const passo = (ctx, dt) => {
   for (const bot of ctx.modo.boars) ctx.modo.updateBot(bot, dt);
 };
 const vivos = (modo) => modo.boars.filter((bot) => bot._boarId && bot.alive);
+/* Bicho já fora da trilha: as cláusulas de rumo, comida e muro medem o comportamento na cidade. */
+const soltar = (bots) => { for (const bot of bots) { bot._boarPasso = bot._boarPlano?.length || 0; bot._boarExplorarAte = 0; } };
 /* 2,5 s de onda: a cadência base é um bicho a cada 0,18 s, então um quadro só não
    enche bando nenhum e as cláusulas de bando mediriam o vazio. */
 const abrirOnda = (ctx, segundos = 2.5) => {
@@ -242,16 +277,14 @@ regra('vinte sementes fecham as oito ondas, enchem o teto de 64 e nunca passam d
   }
 });
 
-regra('as dez bocas de mata entram no rodízio e os IDs são estáveis', () => {
-  const a = criarHorda({ seed: 319, entradas: 10, mutante });
-  const b = criarHorda({ seed: 319, entradas: 10, mutante });
+regra('as três frentes entram no rodízio e os IDs são estáveis', () => {
+  const a = criarHorda({ seed: 319, mutante });
+  const b = criarHorda({ seed: 319, mutante });
   iniciarOnda(a); iniciarOnda(b);
   passoHorda(a, 2); passoHorda(b, 2);
   assert.deepEqual(snapshotHorda(a), snapshotHorda(b));
-  assert.equal(new Set(a.alive.map((animal) => animal.entrance)).size, 10);
-  const quatro = criarHorda({ seed: 319, mutante });
-  iniciarOnda(quatro); passoHorda(quatro, 2);
-  assert.deepEqual(new Set(quatro.alive.map((animal) => animal.entrance)), new Set([0, 1, 2, 3]));
+  assert.equal(FRENTES, 3);
+  assert.deepEqual(new Set(a.alive.map((animal) => animal.entrance)), new Set([0, 1, 2]));
 });
 
 regra('dois clientes fecham as oito ondas com o mesmo estado', () => {
@@ -364,13 +397,14 @@ regra('a horda revira o LIXO antes de bater no objetivo', () => {
   for (const spot of mundo.foodSpots) atacarComida(estado, spot, 9999);
   assert.equal(estado.foodRevirada, mundo.foodSpots.length, 'contador de cidade revirada não fechou');
   const depois = escolherAlvo(bicho, { world: mundo, state: estado, jogadores: [], tempo: 1 });
-  assert.equal(depois.kind, 'objetivo', 'com o lixo revirado a horda tinha de ir ao objetivo');
+  assert.ok(['setor', 'vagar'].includes(depois.kind), `com o lixo revirado a horda tinha de ir tomar setor, foi ${depois.kind}`);
 });
 
 regra('focinhar gasta o ponto de comida e o bicho só sai quando acaba', () => {
   const ctx = jogoFalso({ jogadorEm: [26, 26] });
   abrirOnda(ctx);
   const bicho = vivos(ctx.modo)[0];
+  soltar(vivos(ctx.modo));
   const spot = ctx.game.world.foodSpots[0];
   bicho.pos.set(spot.x, 0, spot.z);
   bicho._boarAttackAt = 0;
@@ -423,9 +457,10 @@ regra('a pata encosta no chão mesmo com o pivô do GLB fora do lugar', () => {
 });
 
 regra('o bando anda PARA o alvo, não de costas', () => {
-  const ctx = jogoFalso({ jogadorEm: [26, 26] });
+  const ctx = jogoFalso({ jogadorEm: [60, 60] });
   abrirOnda(ctx);
   const bando = vivos(ctx.modo);
+  soltar(bando);
   const antes = bando.map((bot) => escolherAlvo(bot, { world: ctx.game.world, state: ctx.modo.state, jogadores: [], tempo: ctx.game.time }).distance);
   for (let i = 0; i < 120; i++) passo(ctx, 1 / 60);
   let aproximaram = 0, ganhoMedio = 0;
@@ -445,6 +480,7 @@ regra('muro atravessado pela grade: o javaporco contorna em vez de empurrar tijo
   abrirOnda(ctx, 1);
   const bicho = vivos(ctx.modo)[0];
   assert.ok(bicho, 'onda não abriu nenhum javaporco');
+  soltar([bicho]);
   bicho.pos.set(0, 0, 18);                       // atrás do muro (z 13,4-14,2), comida do outro lado
   bicho._boarCansaco = 0; bicho._boarMelhorEm = ctx.game.time; bicho._boarAlvoChave = null;
   let maisFundo = bicho.pos.z;
@@ -456,22 +492,124 @@ regra('muro atravessado pela grade: o javaporco contorna em vez de empurrar tijo
   assert.ok(comidaRestante(ctx.modo.state, ctx.game.world.foodSpots[2]) < 150, 'passou do muro mas não comeu a feira');
 });
 
-regra('alvo cercado não trava a onda: o bando desiste e a onda fecha', () => {
+regra('alvo cercado não prende o bando: ele desiste do ponto e vai tomar setor', () => {
   const mundo = mundoFalso();
   const preso = mundo.foodSpots[0];               // lixo-a (-6, 4), cercado por quatro muros
   for (const [dx, dz, w, d] of [[0, 2.2, 4.4, .4], [0, -2.2, 4.4, .4], [2.2, 0, .4, 4.4], [-2.2, 0, .4, 4.4]])
     mundo.colliders.push({ minX: preso.x + dx - w / 2, maxX: preso.x + dx + w / 2, minZ: preso.z + dz - d / 2, maxZ: preso.z + dz + d / 2, minY: 0, maxY: 3 });
+  for (const spot of mundo.foodSpots.slice(1)) spot.hp = 1;
   const ctx = jogoFalso({ mundo, jogadorEm: [60, 60] });
-  abrirOnda(ctx, 0);
-  ctx.modo.state.objectives = [1e6, 1e6, 1e6];    // objetivo indestrutível: a onda só fecha se o bando SAIR
-  let fechou = 0;
-  for (let i = 0; i < 60 * 150 && !fechou; i++) {
+  abrirOnda(ctx, 2);
+  const bando = vivos(ctx.modo);
+  soltar(bando);
+  for (const bot of bando) bot.pos.set(preso.x + 3.2, 0, preso.z + .5);
+  const desistiu = new Set();
+  for (let i = 0; i < 60 * 20; i++) {
     passo(ctx, 1 / 60);
-    if (ctx.modo.state.remaining === 0 && ctx.modo.state.alive.length === 0) fechou = i / 60;
+    for (const bot of vivos(ctx.modo)) if (['setor', 'vagar'].includes(bot._boarAlvo?.kind)) desistiu.add(bot);
   }
-  assert.ok(fechou, `onda não fechou em 150 s: ${ctx.modo.state.alive.length} presos`);
   assert.ok(comidaRestante(ctx.modo.state, preso) > 0, 'o ponto cercado foi comido através do muro');
-  assert.ok(ctx.eventos.some((e) => e.k === 'OBJECTIVE_HIT' || e.k === 'BOAR_LOST'), 'ninguém chegou ao objetivo nem foi aposentado');
+  assert.ok(desistiu.size >= Math.ceil(bando.length * 0.8), `só ${desistiu.size}/${bando.length} largaram o ponto cercado e foram tomar setor em 20 s`);
+});
+
+/* -------------------------------------------------------------------- domínio */
+regra('setor com 3 bichos e sem defensor é tomado; defensor sozinho retoma; disputa congela', () => {
+  const setores = HORDA_FALSA.setores;
+  const horda = criarHorda({ seed: 21, setores: setores.length, mutante });
+  const um = (b, d) => passoDominio(horda, setores, [b, 0, 0, 0], [d, 0, 0, 0], 1);
+  for (let t = 0; t < 10; t++) um(DOMINIO.minBichos - 1, 0);
+  assert.equal(horda.controle[0], 0, `${DOMINIO.minBichos - 1} bichos já tomam setor`);
+  for (let t = 0; t < Math.ceil(1 / DOMINIO.sobe); t++) um(DOMINIO.minBichos, 0);
+  assert.equal(horda.controle[0], 1, `setor não foi tomado em ${Math.ceil(1 / DOMINIO.sobe)} s: ${horda.controle[0]}`);
+  assert.ok(Math.abs(horda.dominio - 0.25) < 1e-9, `domínio de 1 setor em 4 devia ser 25%: ${horda.dominio}`);
+  um(5, 1);
+  assert.equal(horda.controle[0], 1, 'setor disputado mudou de dono');
+  for (let t = 0; t < 4; t++) um(0, 1);
+  assert.ok(horda.controle[0] < 0.7, `defensor sozinho não retomou o setor: ${horda.controle[0]}`);
+});
+
+regra('75% de domínio, pesado pela área do setor, encerra a partida', () => {
+  const setores = [{ x0: 0, z0: 0, x1: 1, z1: 1, peso: 3 }, { x0: 1, z0: 0, x1: 2, z1: 1, peso: 1 }];
+  const horda = criarHorda({ seed: 22, setores: 2, mutante });
+  iniciarOnda(horda); passoHorda(horda, 1);
+  for (let t = 0; t < Math.ceil(1 / DOMINIO.sobe) + 5 && !horda.winner; t++) passoDominio(horda, setores, [DOMINIO.minBichos, 0], [0, 0], 1);
+  assert.ok(Math.abs(horda.dominio - 0.75) < 0.06, `setor de peso 3 em 4 devia valer 75%: ${horda.dominio}`);
+  assert.equal(horda.winner, 'B', `domínio de ${(horda.dominio * 100).toFixed(0)}% não derrotou a defesa`);
+  assert.equal(DOMINIO.derrota, 0.75);
+});
+
+regra('a horda vaga no setor, espalha pela lotação e toma a cidade sem defensor', () => {
+  const ctx = jogoFalso({ mundo: mundoFalso({ horda: true }), jogadorEm: [60, 60] });
+  abrirOnda(ctx, 2);
+  for (const spot of ctx.game.world.foodSpots) atacarComida(ctx.modo.state, spot, 9999);
+  let ocupados = 0;
+  for (let i = 0; i < 60 * 70; i++) {
+    passo(ctx, 1 / 60);
+    if (i % 30) continue;
+    const agora = new Set(vivos(ctx.modo).map((bot) => setorEm(HORDA_FALSA.setores, bot.pos.x, bot.pos.z)).filter((k) => k >= 0));
+    ocupados = Math.max(ocupados, agora.size);
+  }
+  const avancados = ctx.modo.state.controle.filter((v) => v >= 0.5).length;
+  assert.ok(avancados >= 3, `só ${avancados} setores passaram de 50% em 70 s de horda sem defensor`);
+  assert.equal(ctx.modo.state.winner, 'B', `sem defensor a horda não chegou aos 75% (${(ctx.modo.state.dominio * 100).toFixed(0)}%)`);
+  assert.ok(ocupados >= 3, `horda empilhada: no máximo ${ocupados} setores ocupados ao mesmo tempo`);
+});
+
+regra('a horda nasce nas 3 frentes do mapa e segue a rota da trilha até a cidade', () => {
+  const ctx = jogoFalso({ mundo: mundoFalso({ horda: true }), jogadorEm: [60, 60] });
+  iniciarOnda(ctx.modo.state);
+  const inicios = HORDA_FALSA.frentes.map((f) => f.rota[0]);
+  const leste = HORDA_FALSA.frentes[2].rota[1];         // dobra da trilha leste
+  const nasceu = new Map(), perto = new Map();
+  for (let i = 0; i < 60 * 6; i++) {
+    passo(ctx, 1 / 60);
+    for (const bot of vivos(ctx.modo)) {
+      if (!nasceu.has(bot._boarId) && i < 60 * 1.5) nasceu.set(bot._boarId, { x: bot.pos.x, z: bot.pos.z });
+      if (perto.has(bot._boarId) || Math.hypot(bot.pos.x - 29, bot.pos.z - 2) < 4) perto.set(bot._boarId, Math.min(perto.get(bot._boarId) ?? Infinity, Math.hypot(bot.pos.x - leste.x, bot.pos.z - leste.z)));
+    }
+  }
+  assert.ok(nasceu.size >= 6, `só ${nasceu.size} bichos nasceram em 1,5 s`);
+  const usadas = new Set();
+  for (const p of nasceu.values()) {
+    const d = inicios.map((q) => Math.hypot(q.x - p.x, q.z - p.z));
+    const k = d.indexOf(Math.min(...d));
+    assert.ok(d[k] < 4, `bicho nasceu fora das frentes em (${p.x.toFixed(1)}, ${p.z.toFixed(1)})`);
+    usadas.add(k);
+  }
+  assert.equal(usadas.size, 3, 'nem as 3 frentes entraram no rodízio');
+  const passou = [...perto.values()].filter((d) => d < 3).length;
+  assert.ok(perto.size >= 2 && passou >= Math.ceil(perto.size * 0.8), `só ${passou}/${perto.size} passaram pela dobra da trilha leste`);
+  const fallback = lerHorda(mundoFalso());
+  assert.equal(fallback.frentes.length, 3, 'sem world.horda o fallback não deu 3 frentes');
+  const [a, b, c] = fallback.frentes.map((f) => f.plano[0]);
+  assert.ok(Math.min(Math.hypot(a.x - b.x, a.z - b.z), Math.hypot(a.x - c.x, a.z - c.z), Math.hypot(b.x - c.x, b.z - c.z)) > 25, 'frentes de fallback coladas');
+  assert.equal(fallback.becos.length, 0);
+  assert.equal(fallback.setores.length, 16);
+});
+
+regra('a partir da onda 3 parte da horda entra pelo BECO e explora o quarteirão', () => {
+  const pura = criarHorda({ seed: 5, becos: 2, mutante });
+  for (const onda of [1, 2]) { pura.wave = onda; assert.ok(![...Array(60).keys()].some((o) => vaiPeloBeco(pura, o)), `beco aberto na onda ${onda}`); }
+  pura.wave = BECO.abreNaOnda;
+  const fatia = [...Array(200).keys()].filter((o) => vaiPeloBeco(pura, o)).length / 200;
+  assert.ok(fatia >= 0.25 && fatia <= 0.55, `fração de beco fora da faixa: ${(fatia * 100).toFixed(0)}%`);
+  const ctx = jogoFalso({ mundo: mundoFalso({ horda: true }), jogadorEm: [60, 60] });
+  ctx.modo.state.wave = BECO.abreNaOnda - 1;
+  iniciarOnda(ctx.modo.state);
+  const viuBeco = new Set(), explorou = new Set(), becoBots = new Set();
+  const seg = (b, p) => { const dx = b.ate.x - b.de.x, dz = b.ate.z - b.de.z, L = dx * dx + dz * dz, t = Math.max(0, Math.min(1, ((p.x - b.de.x) * dx + (p.z - b.de.z) * dz) / L)); return Math.hypot(b.de.x + dx * t - p.x, b.de.z + dz * t - p.z); };
+  for (let i = 0; i < 60 * 25; i++) {
+    passo(ctx, 1 / 60);
+    for (const bot of vivos(ctx.modo)) {
+      if (bot._boarExplorar) becoBots.add(bot._boarId);
+      if (HORDA_FALSA.becos.some((b) => seg(b, bot.pos) < 2.2 && Math.hypot(bot.pos.x - b.de.x, bot.pos.z - b.de.z) > 2)) viuBeco.add(bot._boarId);
+      if ((bot._boarExplorarAte || 0) > ctx.game.time) explorou.add(bot._boarId);
+    }
+  }
+  assert.ok(becoBots.size >= 4, `só ${becoBots.size} bichos sorteados pro beco`);
+  const dentro = [...becoBots].filter((id) => viuBeco.has(id)).length;
+  assert.ok(dentro >= becoBots.size * 0.6, `só ${dentro}/${becoBots.size} bichos de beco andaram pelo corredor`);
+  assert.ok(explorou.size >= becoBots.size * 0.5, `só ${explorou.size}/${becoBots.size} exploraram o quarteirão depois do beco`);
 });
 
 regra('o relógio da partida esquenta a horda: aos 10 min ela vem mais rápido e mais forte que aos 2', () => {
@@ -483,6 +621,36 @@ regra('o relógio da partida esquenta a horda: aos 10 min ela vem mais rápido e
   assert.ok(dez.c < dois.c * 0.8, 'spawn não acelerou com o tempo');
   assert.ok(dez.v > dois.v && dez.d > dois.d, 'velocidade/dano não subiram com o tempo');
   assert.ok(em(60).f <= FURIA.teto + 1e-9, 'o relógio furou o teto da fúria');
+});
+
+regra('o HUD mostra a % de domínio e o mini-mapa pinta de vermelho o setor tomado', () => {
+  const ctx = jogoFalso({ mundo: mundoFalso({ horda: true }), jogadorEm: [0, 0] });
+  abrirOnda(ctx, 0.2);
+  ctx.modo.state.controle[1] = 1; ctx.modo.state.controle[2] = 0.5; ctx.modo.state.dominio = 0.375;
+  ctx.modo.atualizaHud(true);
+  assert.match(ctx.modo.hudDominio.textContent || '', /DOMÍNIO DA HORDA 38%/, 'HUD sem a % de domínio');
+  assert.match(ctx.modo.hudSetores.textContent || '', /1\/4 SETORES TOMADOS · PERDE EM 75%/, 'HUD sem a contagem de setores tomados');
+  assert.equal(ctx.modo.hudBarra.style.width, '38%');
+  assert.equal(ctx.modo.hudCelulas.length, HORDA_FALSA.setores.length, 'mini-mapa sem uma célula por setor');
+  assert.equal(ctx.modo.hudCelulas[1].style.background, '#c42b18', 'setor tomado não ficou vermelho');
+  assert.notEqual(ctx.modo.hudCelulas[2].style.background, '#c42b18', 'setor em disputa pintado como tomado');
+});
+
+regra('o snapshot leva o controle por setor e o cliente reconstrói o domínio', () => {
+  const host = jogoFalso({ mundo: mundoFalso({ horda: true }) });
+  abrirOnda(host, 0.5);
+  host.modo.state.controle = [1, 0.42, 0, 0.8];
+  host.modo.state.dominio = 0.555;
+  const net = decodeSnapshot(encodeSnapshot({
+    type: 'snapshot', room: 'horda', tick: 1, t: 1, state: 'live', owner: '', players: 1, spectators: 0,
+    livre: { E: 3, B: 0 }, timeLeft: 60, roundNum: 1, scoreE: 0, scoreB: 0, roundKillsE: 0, roundKillsB: 0,
+    objective: host.modo.netState(), ents: [],
+  }, 7)).objective;
+  const cliente = jogoFalso({ mundo: mundoFalso({ horda: true }) });
+  cliente.game.online = true;
+  cliente.modo.applyNetState(net);
+  assert.deepEqual(cliente.modo.state.controle, [1, 0.42, 0, 0.8], 'controle por setor não chegou no cliente');
+  assert.equal(cliente.modo.state.dominio, 0.555);
 });
 
 /* ------------------------------------------------------------------------ som */
@@ -520,7 +688,7 @@ regra('o HUD mostra a fúria e quantos javaporcos estão na rua', () => {
   ctx.modo.state.kills = 120;
   recalcularFuria(ctx.modo.state);
   for (let i = 0; i < 30; i++) passo(ctx, 1 / 60);
-  const texto = ctx.modo.hud.textContent;
+  const texto = ctx.modo.hudTexto.textContent;
   assert.ok(/FÚRIA \d+%/.test(texto), `HUD sem fúria: ${texto}`);
   assert.ok(/\d+ NA RUA/.test(texto), `HUD sem contagem de vivos: ${texto}`);
   assert.ok(/LIXO \d+\/\d+/.test(texto), `HUD sem placar de lixo revirado: ${texto}`);
@@ -572,13 +740,6 @@ regra('assistência distribui só 40% dos pontos', () => {
   assert.equal(horda.scores.assistente.damagePrevented, 40);
 });
 
-regra('três objetivos destruídos encerram a defesa', () => {
-  const horda = criarHorda({ seed: 9, mutante });
-  atingirObjetivo(horda, 0, 1000);
-  atingirObjetivo(horda, 1, 1000);
-  atingirObjetivo(horda, 2, 1000);
-  assert.equal(horda.winner, 'B');
-});
 
 regra('javaporco abatido tomba e permanece visível antes de sumir', () => {
   const inicio = poseMorteJavaporco(0, 1, mutante);

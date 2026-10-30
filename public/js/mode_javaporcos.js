@@ -24,6 +24,14 @@ export const AGGRO = Object.freeze({
   ataque: 1.9, comida: 1.6, objetivo: 2.4, rosnado: 26,
 });
 export const DASH = Object.freeze({ perto: 4, longe: 12, duracao: 0.55, impulso: 2.7, espera: 4.5 });
+/* DOMÍNIO (dono, 30/10): setor tomado = controle 1; a partida cai com 75% da área.
+   O porquê de cada número: docs/maps/invasao-javaporcos.md, seção "Domínio". */
+export const DOMINIO = Object.freeze({ derrota: 0.75, minBichos: 3, sobe: 1 / 40, desce: 1 / 10, passo: 0.25, lotado: 6 });
+export const FRENTES = 3;
+export const BECO = Object.freeze({ abreNaOnda: 3, fracao: 0.4, explorar: 9, raio: 7 });
+const ROTA_RAIO = 3;
+const VAGAR_RITMO = 0.55;
+const VAGAR_TROCA = 5;
 
 const DEFAULT_MAX_ALIVE = MAX_ALIVE;
 const PREP_SECONDS = 12;
@@ -34,7 +42,6 @@ const MODEL_HEIGHTS = Object.freeze({ jovem: 1.05, adulto: 1.3, matriarca: 1.58,
 /* Dano base por alvo. O multiplicador de fúria entra em danoDoJavaporco. */
 const BASE_DANO = Object.freeze({
   jogador: { jovem: 18, adulto: 18, matriarca: 30, ariete: 42 },
-  objetivo: { jovem: 105, adulto: 105, matriarca: 170, ariete: 260 },
   comida: { jovem: 40, adulto: 55, matriarca: 70, ariete: 95 },
 });
 const COMIDA_HP = Object.freeze({ lixo: 90, feira: 150, cacamba: 220, racao: 120 });
@@ -69,12 +76,13 @@ function scoreDe(state, playerId) {
   return state.scores[playerId] ||= { points: 0, kills: 0, assists: 0, combo: 0, bestCombo: 0, damagePrevented: 0, lastKillAt: -Infinity };
 }
 
-export function criarHorda({ seed = 1, maxAlive = DEFAULT_MAX_ALIVE, entradas = 4, mutante = '' } = {}) {
+export function criarHorda({ seed = 1, maxAlive = DEFAULT_MAX_ALIVE, entradas = FRENTES, becos = 0, setores = 16, mutante = '' } = {}) {
   const magra = mutante === 'horda-magra';
   return {
     seed: seed >>> 0,
     maxAlive: Math.max(1, Math.min(magra ? 24 : DEFAULT_MAX_ALIVE, maxAlive | 0)),
     entrances: Math.max(1, entradas | 0),
+    becos: Math.max(0, becos | 0),
     mutante,
     wave: 0,
     phase: 'prep',
@@ -87,7 +95,8 @@ export function criarHorda({ seed = 1, maxAlive = DEFAULT_MAX_ALIVE, entradas = 
     fury: 0,
     kills: 0,
     alive: [],
-    objectives: [1000, 1000, 1000],
+    controle: new Array(Math.max(1, setores | 0)).fill(0),
+    dominio: 0,
     foodHp: {},
     foodRevirada: 0,
     scores: {},
@@ -146,21 +155,24 @@ function spawnAnimal(state) {
   const ordinal = state.spawnOrdinal++;
   const total = tamanhoDaOnda(state);
   const type = tipoDaOnda(state.wave, ordinal, total);
-  state.alive.push({
-    id: `${state.wave}.${ordinal}`,
-    type,
-    entrance: (state.seed + state.wave + ordinal) % state.entrances,
-    hp: BOAR_HP[type],
-    damage: {},
-  });
+  const animal = { id: `${state.wave}.${ordinal}`, type, entrance: (state.seed + state.wave + ordinal) % state.entrances, hp: BOAR_HP[type], damage: {} };
+  if (vaiPeloBeco(state, ordinal)) animal.beco = 1;
+  state.alive.push(animal);
   state.remaining--;
+}
+
+/* Sorteio determinístico (semente + ordinal): host e cliente concordam sem trocar nada. */
+export function vaiPeloBeco(state, ordinal) {
+  if (!state.becos || state.wave < BECO.abreNaOnda || state.mutante === 'beco-fechado') return false;
+  return (ordinal * 37 + state.seed * 11) % 100 < BECO.fracao * 100;
 }
 
 function ondaLimpa(state) {
   if (state.remaining || state.alive.length) return;
-  state.teamBonus += 500 * state.objectives.filter((hp) => hp > 0).length;
+  const livre = 1 - (state.dominio || 0);
+  state.teamBonus += Math.round(1500 * livre);
   if (state.wave === WAVE_COUNTS.length) {
-    state.teamBonus += state.objectives.reduce((total, hp) => total + hp, 0) + Math.ceil(state.combatLeft) * 10;
+    state.teamBonus += Math.round(3000 * livre) + Math.ceil(state.combatLeft) * 10;
     state.phase = 'finished';
     state.winner = 'E';
   } else {
@@ -226,16 +238,37 @@ export function registrarAbate(state, animalId, killerId, mutant = '') {
   return true;
 }
 
-export function atingirObjetivo(state, objectiveIndex, damage) {
-  if (state.winner || objectiveIndex < 0 || objectiveIndex >= state.objectives.length || damage <= 0) return false;
-  state.objectives[objectiveIndex] = Math.max(0, state.objectives[objectiveIndex] - damage);
-  if (state.objectives.every((hp) => hp === 0)) {
+/* Um passo do domínio. `bichos[i]`/`defensores[i]` são as contagens do setor i agora;
+   setor disputado (os dois lados dentro) fica parado. */
+export function passoDominio(state, setores, bichos, defensores, dt) {
+  if (state.winner) return state.dominio;
+  const controle = state.controle;
+  let soma = 0, pesos = 0;
+  for (let i = 0; i < controle.length; i++) {
+    const b = bichos[i] || 0, d = defensores[i] || 0;
+    if (b >= DOMINIO.minBichos && !d && state.mutante !== 'dominio-surdo') controle[i] = Math.min(1, controle[i] + DOMINIO.sobe * dt);
+    else if (d && !b && state.mutante !== 'sem-retomada') controle[i] = Math.max(0, controle[i] - DOMINIO.desce * dt);
+    const peso = setores?.[i]?.peso || 1;
+    soma += controle[i] * peso; pesos += peso;
+  }
+  state.dominio = pesos ? soma / pesos : 0;
+  if (state.dominio >= DOMINIO.derrota && state.mutante !== 'sem-derrota') {
     state.phase = 'finished';
     state.winner = 'B';
     state.alive.length = 0;
     state.remaining = 0;
   }
-  return true;
+  return state.dominio;
+}
+
+export const setorTomado = (state, i) => (state.controle[i] || 0) >= 1;
+
+export function setorEm(setores, x, z) {
+  for (let i = 0; i < setores.length; i++) {
+    const s = setores[i];
+    if (x >= s.x0 && x < s.x1 && z >= s.z0 && z < s.z1) return i;
+  }
+  return -1;
 }
 
 /* Lixo/feira/caçamba: o ponto tem vida própria e some do cardápio quando é revirado. */
@@ -262,7 +295,56 @@ function dentroDaCidade(world, x, z) {
   return x >= c.minX && x <= c.maxX && z >= c.minZ && z <= c.maxZ;
 }
 
-const CHAVE_OBJETIVO = Object.freeze(['o:0', 'o:1', 'o:2']);
+/* Grade 4×4 sobre a cidade: é o fallback enquanto o mapa não exporta `world.horda.setores`. */
+export function gradeDeSetores(c = { minX: -36, maxX: 36, minZ: -36, maxZ: 36 }) {
+  const lista = [], w = (c.maxX - c.minX) / 4, d = (c.maxZ - c.minZ) / 4;
+  for (let i = 0; i < 4; i++) for (let k = 0; k < 4; k++)
+    lista.push({ id: `q${i}${k}`, nome: `Quadra ${i + 1}-${k + 1}`, x0: c.minX + i * w, z0: c.minZ + k * d, x1: c.minX + (i + 1) * w, z1: c.minZ + (k + 1) * d, peso: 1 });
+  return lista;
+}
+
+/* Sem `world.horda.frentes`: as 3 bocas mais afastadas entre si, cada uma com rota até a borda da cidade. */
+function frentesDasBocas(world) {
+  const bocas = world?.boarEntrances?.length ? world.boarEntrances : [{ x: 0, z: -50 }, { x: 43, z: 25 }, { x: -43, z: 25 }];
+  const escolhidas = [bocas[0]];
+  while (escolhidas.length < Math.min(FRENTES, bocas.length)) {
+    let melhor = null, folga = -1;
+    for (const b of bocas) {
+      if (escolhidas.includes(b)) continue;
+      const d = Math.min(...escolhidas.map((e) => Math.hypot(e.x - b.x, e.z - b.z)));
+      if (d > folga) { folga = d; melhor = b; }
+    }
+    escolhidas.push(melhor);
+  }
+  const c = world?.cityBounds || { minX: -36, maxX: 36, minZ: -36, maxZ: 36 };
+  const meia = Math.min(c.maxX - c.minX, c.maxZ - c.minZ) / 2;
+  return escolhidas.map((b, i) => {
+    const k = Math.min(1, meia / Math.max(1e-6, Math.abs(b.x), Math.abs(b.z)));
+    const borda = { x: b.x * k, z: b.z * k };
+    return { id: b.id || `frente${i}`, nome: b.id || `Frente ${i + 1}`, boca: borda, rota: [{ x: b.x, z: b.z }, borda] };
+  });
+}
+
+const ponto = (p, chave) => ({ x: Number(p?.x) || 0, z: Number(p?.z) || 0, chave });
+
+/* Lê o contrato `world.horda` do mapa, com fallback por peça; `plano` é a rota com chave de campo pronta. */
+export function lerHorda(world) {
+  const h = world?.horda || {};
+  const setores = h.setores?.length ? h.setores : gradeDeSetores(world?.cityBounds);
+  const frentes = (h.frentes?.length ? h.frentes : frentesDasBocas(world)).map((f, i) => {
+    const id = f.id || `frente${i}`;
+    const rota = f.rota?.length ? f.rota : [f.boca];
+    return { id, nome: f.nome || id, boca: ponto(f.boca || rota[rota.length - 1]), plano: rota.map((p, k) => ponto(p, `r:${id}:${k}`)), viaBeco: new Map() };
+  });
+  const becos = (h.becos || []).filter((b) => b?.de && b?.ate).map((b, i) => {
+    const id = b.id || `beco${i}`;
+    return { id, nome: b.nome || id, de: ponto(b.de, `b:${id}:de`), ate: ponto(b.ate, `b:${id}:ate`), abreNaOnda: b.abreNaOnda ?? BECO.abreNaOnda };
+  });
+  return { frentes, becos, setores, doMapa: !!world?.horda };
+}
+
+const CHAVES_SETOR = [];
+const chaveDoSetor = (i) => (CHAVES_SETOR[i] ||= `s:${i}`);
 const CHAVES_COMIDA = new Map();
 const chaveDaComida = (id) => {
   let chave = CHAVES_COMIDA.get(id);
@@ -282,12 +364,13 @@ function alvoEm(saida, kind, x, z, distance, chave, ent, spot, objectiveIndex, r
    saco de lixo atrás de um muro prende meia horda até o fim da onda (medido no mapa). */
 const evitando = (bot, chave, tempo) => (bot._boarEvitar?.get(chave) || 0) > tempo;
 
-function comidaMaisProxima(bot, world, state, tempo, saida) {
+function comidaMaisProxima(bot, world, state, tempo, saida, perto = null, raioMax = Infinity) {
   const spots = world?.foodSpots || [];
   let alvo = null, melhor = Infinity;
   for (let i = 0; i < spots.length; i++) {
     const spot = spots[i];
     if (comidaRestante(state, spot) <= 0 || !dentroDaCidade(world, spot.x, spot.z)) continue;
+    if (perto && Math.hypot(spot.x - perto.x, spot.z - perto.z) > raioMax) continue;
     if (evitando(bot, chaveDaComida(spot.id), tempo)) continue;
     const d = Math.hypot(spot.x - bot.pos.x, spot.z - bot.pos.z);
     if (d < melhor) { melhor = d; alvo = spot; }
@@ -299,25 +382,60 @@ function comidaMaisProxima(bot, world, state, tempo, saida) {
   return alvoEm(saida, 'comida', alvo.x, alvo.z, melhor, chaveDaComida(alvo.id), null, alvo, -1, raio);
 }
 
-function objetivoMaisProximo(bot, world, state, tempo, saida) {
-  const lista = world?.hordeObjectives || [];
-  let indice = -1, melhor = Infinity;
-  for (let i = 0; i < lista.length; i++) {
-    if (!(state.objectives[i] > 0) || evitando(bot, CHAVE_OBJETIVO[i], tempo)) continue;
-    const d = Math.hypot(lista[i].x - bot.pos.x, lista[i].z - bot.pos.z);
-    if (d < melhor) { melhor = d; indice = i; }
+/* Ponto de vagar a 3–6 m do bicho, preso na caixa: perto o bastante pra andar reto sem campo de fluxo. */
+function vagarEm(bot, x0, z0, x1, z1, tempo, saida) {
+  let v = bot._boarVagar;
+  const longe = v ? Math.hypot(v.x - bot.pos.x, v.z - bot.pos.z) : 0;
+  if (!v || tempo > v.ate || longe < 1.2 || v.x < x0 || v.x > x1 || v.z < z0 || v.z > z1) {
+    v = bot._boarVagar ||= { x: 0, z: 0, ate: 0 };
+    const n = (bot._boarVagarN = (bot._boarVagarN || 0) + 1);
+    const u = Math.abs(Math.sin(n * 12.9898 + (bot._boarJitter || 0) * 78.233) * 43758.5453) % 1;
+    const ang = u * Math.PI * 2, r = 3 + (u * 7.31 % 1) * 3;
+    v.x = Math.max(x0 + 1.5, Math.min(x1 - 1.5, bot.pos.x + Math.sin(ang) * r));
+    v.z = Math.max(z0 + 1.5, Math.min(z1 - 1.5, bot.pos.z + Math.cos(ang) * r));
+    v.ate = tempo + VAGAR_TROCA;
   }
-  if (indice < 0) return alvoEm(saida, 'vazio', bot.pos.x, bot.pos.z, 0, 'v', null, null, -1, 0);
-  const alvo = lista[indice];
-  /* `r` do objetivo (opcional) é o raio em que o bicho já alcança a parede do prédio —
-     mesma ideia do `r` da comida. Sem ele, 2,4 m, que só serve pra alvo pequeno. */
-  const raio = Number(alvo.r) > 0 ? Number(alvo.r) : AGGRO.objetivo;
-  return alvoEm(saida, 'objetivo', alvo.x, alvo.z, melhor, CHAVE_OBJETIVO[indice] || `o:${indice}`, null, null, indice, raio);
+  return alvoEm(saida, 'vagar', v.x, v.z, Math.hypot(v.x - bot.pos.x, v.z - bot.pos.z), 'v', null, null, -1, 0);
 }
 
-/* Prioridade da horda: jogador perto > lixo/comida da cidade > objetivo.
-   É a comida que faz o bando REVIRAR a cidade antes de bater no objetivo. */
-export function escolherAlvo(bot, { world, state, jogadores = [], tempo = 0 }, saida = {}) {
+/* Setor: vaga no setor em que está até ele ser tomado; depois vai ao não tomado mais perto que não esteja lotado. */
+function setorAlvo(bot, setores, state, tempo, lotacao, saida) {
+  if (state.mutante === 'setor-cego') return alvoEm(saida, 'vazio', bot.pos.x, bot.pos.z, 0, 'v', null, null, -1, 0);
+  const aqui = setorEm(setores, bot.pos.x, bot.pos.z);
+  if (aqui >= 0 && !setorTomado(state, aqui)) {
+    const s = setores[aqui];
+    return vagarEm(bot, s.x0, s.z0, s.x1, s.z1, tempo, saida);
+  }
+  let livre = -1, dLivre = Infinity, qualquer = -1, dQualquer = Infinity;
+  for (let i = 0; i < setores.length; i++) {
+    if (setorTomado(state, i) || evitando(bot, chaveDoSetor(i), tempo)) continue;
+    const s = setores[i];
+    const d = Math.hypot((s.x0 + s.x1) / 2 - bot.pos.x, (s.z0 + s.z1) / 2 - bot.pos.z);
+    if (d < dQualquer) { dQualquer = d; qualquer = i; }
+    if ((lotacao?.[i] || 0) < DOMINIO.lotado && d < dLivre) { dLivre = d; livre = i; }
+  }
+  const i = livre >= 0 ? livre : qualquer;
+  if (i < 0) {
+    const s = aqui >= 0 ? setores[aqui] : null;
+    return s ? vagarEm(bot, s.x0, s.z0, s.x1, s.z1, tempo, saida) : alvoEm(saida, 'vazio', bot.pos.x, bot.pos.z, 0, 'v', null, null, -1, 0);
+  }
+  const s = setores[i];
+  return alvoEm(saida, 'setor', (s.x0 + s.x1) / 2, (s.z0 + s.z1) / 2, livre >= 0 ? dLivre : dQualquer, chaveDoSetor(i), null, null, i, AGGRO.objetivo);
+}
+
+const SETORES_PADRAO = new WeakMap();
+function setoresDe(ctx) {
+  if (ctx.setores) return ctx.setores;
+  const w = ctx.world || {};
+  let lista = SETORES_PADRAO.get(w);
+  if (!lista) SETORES_PADRAO.set(w, lista = lerHorda(w).setores);
+  return lista;
+}
+
+/* Prioridade da horda: jogador perto > rota da frente/beco > explorar o quarteirão > lixo > setor.
+   É a comida que faz o bando REVIRAR a cidade antes de tomar setor. */
+export function escolherAlvo(bot, ctx, saida = {}) {
+  const { world, state, jogadores = [], tempo = 0 } = ctx;
   const raio = raioDeAgressao(state);
   let ent = null, perto = Infinity;
   for (let i = 0; i < jogadores.length; i++) {
@@ -329,9 +447,20 @@ export function escolherAlvo(bot, { world, state, jogadores = [], tempo = 0 }, s
   const puxado = state.mutante !== 'focinho-curto' && (bot._boarAlertaAte || 0) > tempo;
   if (ent && (perto <= raio || (puxado && perto <= AGGRO.ouvido)))
     return alvoEm(saida, 'jogador', ent.pos.x, ent.pos.z, perto, ent._chaveDeFluxo ||= `j:${ent._playerId || ent.name || 'p'}`, ent, null, -1, 0);
+  const plano = state.mutante === 'sem-rota' ? null : bot._boarPlano;
+  if (plano && (bot._boarPasso || 0) < plano.length) {
+    const p = plano[bot._boarPasso || 0];
+    return alvoEm(saida, 'rota', p.x, p.z, Math.hypot(p.x - bot.pos.x, p.z - bot.pos.z), p.chave, null, null, -1, ROTA_RAIO);
+  }
+  const explorar = (bot._boarExplorarAte || 0) > tempo ? bot._boarExplorar : null;
+  if (explorar) {
+    const comida = state.mutante === 'ignora-comida' ? null : comidaMaisProxima(bot, world, state, tempo, saida, explorar, BECO.raio);
+    if (comida) return comida;
+    return vagarEm(bot, explorar.x - BECO.raio, explorar.z - BECO.raio, explorar.x + BECO.raio, explorar.z + BECO.raio, tempo, saida);
+  }
   const comida = state.mutante === 'ignora-comida' ? null : comidaMaisProxima(bot, world, state, tempo, saida);
   if (comida) return comida;
-  return objetivoMaisProximo(bot, world, state, tempo, saida);
+  return setorAlvo(bot, setoresDe(ctx), state, tempo, ctx.lotacao, saida);
 }
 
 /* Chão REAL: o bicho andava enterrado porque o modo assumia y=0 (relato do dono). */
@@ -363,8 +492,9 @@ export function snapshotHorda(state) {
     remaining: state.remaining,
     fury: Number((state.fury || 0).toFixed(3)),
     kills: state.kills || 0,
-    alive: state.alive.map(({ id, type, entrance, hp }) => ({ id, type, entrance, hp })),
-    objectiveHealth: [...state.objectives],
+    alive: state.alive.map(({ id, type, entrance, hp, beco }) => (beco ? { id, type, entrance, hp, beco } : { id, type, entrance, hp })),
+    controle: state.mutante === 'rede-sem-dominio' ? [] : state.controle.map((v) => Math.round(v * 100) / 100),
+    dominio: state.mutante === 'rede-sem-dominio' ? 0 : Math.round((state.dominio || 0) * 1000) / 1000,
     foodHealth: { ...state.foodHp },
     scoreByPlayer: structuredClone(state.scores),
     teamBonus: state.teamBonus,
@@ -557,6 +687,11 @@ class InvasaoJavaporcos {
     this.boars = game.combatants.filter((ent) => !ent.isPlayer && ent.team === 'B');
     preencherSlotsDaHorda(game, this.boars);
     this.slots = new Map();
+    this.horda = lerHorda(game.world);
+    this.bichosNoSetor = new Int32Array(this.horda.setores.length);
+    this.defensoresNoSetor = new Int32Array(this.horda.setores.length);
+    this.dominioAte = 0;
+    this.dominioEm = -1;
     this.state = this.novaHorda();
     this.cinematic = null;
     this.audioNodes = [];
@@ -567,7 +702,7 @@ class InvasaoJavaporcos {
     this.jogadores = [];
     this.vivos = [];
     this.hudAte = 0;
-    this.ctx = { world: game.world, state: null, jogadores: this.jogadores, tempo: 0 };
+    this.ctx = { world: game.world, state: null, jogadores: this.jogadores, tempo: 0, setores: this.horda.setores, lotacao: this.bichosNoSetor };
     this.campos = new Map();
     this.orcamentoCampo = 1;
     this.manadaAte = 0;
@@ -585,7 +720,8 @@ class InvasaoJavaporcos {
     if (!game.dedicated && typeof document !== 'undefined') {
       this.hud = document.createElement('div');
       this.hud.id = 'horde-objective';
-      this.hud.style.cssText = 'position:fixed;left:50%;top:5.7rem;transform:translateX(-50%);z-index:12;min-width:360px;padding:.58rem .9rem;background:#1a120bdd;border:1px solid #d6a03a;color:#fff;font:700 13px/1.35 system-ui;text-align:center;letter-spacing:.035em;pointer-events:none';
+      this.hud.style.cssText = 'position:fixed;left:50%;top:5.7rem;transform:translateX(-50%);z-index:12;display:flex;gap:.75rem;align-items:center;min-width:360px;padding:.5rem .7rem;background:#1a120bdd;border:1px solid #d6a03a;color:#fff;font:700 13px/1.35 system-ui;text-align:center;letter-spacing:.035em;pointer-events:none';
+      this.montarHudDominio();
       game.el.hud?.append?.(this.hud);
       this.cinemaTitle = document.createElement('div');
       this.cinemaTitle.style.cssText = 'position:fixed;inset:32% 0 auto;z-index:14;text-align:center;color:#e0b347;font:900 clamp(30px,6vw,82px)/.9 Impact,sans-serif;letter-spacing:.06em;text-shadow:0 4px 0 #2a1008,0 0 28px #c42b18;opacity:0;pointer-events:none';
@@ -600,8 +736,36 @@ class InvasaoJavaporcos {
     return criarHorda({
       seed: this.game.matchSeed || this.game.seed || 1,
       maxAlive: Math.max(1, this.boars.length),
-      entradas: this.game.world?.boarEntrances?.length || 4,
+      entradas: this.horda.frentes.length,
+      becos: this.horda.becos.length,
+      setores: this.horda.setores.length,
     });
+  }
+  get frentes() { return this.horda.frentes; }
+  get becos() { return this.horda.becos; }
+  get setores() { return this.horda.setores; }
+
+  /* Painel: % de domínio com a marca de derrota em 75% e o mini-mapa por setor (vermelho = tomado). */
+  montarHudDominio() {
+    const el = (css, pai) => { const d = document.createElement('div'); d.style.cssText = css; pai?.append?.(d); return d; };
+    const coluna = el('display:flex;flex-direction:column;gap:.3rem;min-width:300px', this.hud);
+    const linha = el('display:flex;align-items:baseline;justify-content:space-between;gap:.8rem', coluna);
+    this.hudDominio = el('font:900 19px/1 system-ui;color:#ffd27a;letter-spacing:.06em;white-space:nowrap', linha);
+    this.hudSetores = el('font:700 11px/1 system-ui;color:#e8d7b0;white-space:nowrap', linha);
+    const barra = el('position:relative;height:9px;background:#3a2a1c;border:1px solid #6b4b2a', coluna);
+    this.hudBarra = el('position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,#d6a03a,#c42b18)', barra);
+    el(`position:absolute;left:${DOMINIO.derrota * 100}%;top:-3px;bottom:-3px;width:2px;background:#fff`, barra);
+    this.hudTexto = el('font:700 11px/1.3 system-ui;white-space:nowrap;color:#f3eadb', coluna);
+    const c = this.game.world?.cityBounds || { minX: -36, maxX: 36, minZ: -36, maxZ: 36 };
+    this.hudExtensao = { x0: c.minX - 8, z0: c.minZ - 8, w: c.maxX - c.minX + 16, d: c.maxZ - c.minZ + 16 };
+    this.hudMapa = el('position:relative;width:96px;height:96px;flex:none;background:#24301c;border:1px solid #d6a03a', this.hud);
+    const pct = (v) => `${Math.max(0, Math.min(100, v * 100)).toFixed(1)}%`;
+    const px = (x) => pct((x - this.hudExtensao.x0) / this.hudExtensao.w), pz = (z) => pct((z - this.hudExtensao.z0) / this.hudExtensao.d);
+    this.hudCelulas = this.horda.setores.map((s) => el(`position:absolute;left:${px(s.x0)};top:${pz(s.z0)};width:${pct((s.x1 - s.x0) / this.hudExtensao.w)};height:${pct((s.z1 - s.z0) / this.hudExtensao.d)};box-sizing:border-box;border:1px solid #0006;background:#5d6b4a`, this.hudMapa));
+    for (const f of this.horda.frentes) el(`position:absolute;left:${px(f.boca.x)};top:${pz(f.boca.z)};width:8px;height:8px;margin:-4px;border-radius:50%;background:#c42b18;border:1px solid #fff`, this.hudMapa);
+    this.hudBecos = this.horda.becos.map((b) => el(`position:absolute;left:${px(b.ate.x)};top:${pz(b.ate.z)};width:5px;height:5px;margin:-2.5px;background:#ffd27a;opacity:0`, this.hudMapa));
+    this.hudJogador = el('position:absolute;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff', this.hudMapa);
+    this.hudPx = px; this.hudPz = pz;
   }
   emitir(k, data = {}) {
     this.game._objectiveEvent?.({ k, ...data });
@@ -615,6 +779,8 @@ class InvasaoJavaporcos {
     this.scoreShown = false;
     this.campos.clear();
     this.ondaAnunciada = 0;
+    this.dominioAte = 0;
+    this.dominioEm = -1;
     if (this.game.vmScene) this.game.vmScene.visible = true;
     if (this.cinemaTitle) this.cinemaTitle.style.opacity = '0';
     this.limparCadaveres();
@@ -629,8 +795,13 @@ class InvasaoJavaporcos {
   assignar(animal) {
     const bot = this.boars.find((item) => !item._boarId);
     if (!bot) return;
+    const frente = this.horda.frentes[animal.entrance % this.horda.frentes.length];
+    const plano = this.planoDe(frente, animal);
     const bocas = this.game.world.boarEntrances || [];
-    const entrance = bocas[animal.entrance % Math.max(1, bocas.length)] || { x: 0, z: 0 };
+    const entrance = this.state.mutante === 'todo-lado' && bocas.length
+      ? bocas[Number(animal.id.split('.')[1]) % bocas.length] : plano[0];
+    bot._boarPlano = plano; bot._boarPasso = 0;
+    bot._boarExplorar = plano.beco || null; bot._boarExplorarAte = 0; bot._boarVagar = null;
     bot._boarId = animal.id;
     bot._boarType = animal.type;
     bot._objectiveNpc = 'javaporco';
@@ -650,6 +821,21 @@ class InvasaoJavaporcos {
     this.game.scene.add(bot._boarVisual);
     this.emitir('BOAR_SPAWN', { i: animal.id, type: animal.type, entrance: animal.entrance, wave: this.state.wave });
     this.slots.set(animal.id, bot);
+  }
+
+  /* Rota da frente; com `beco`, emenda o beco aberto mais perto da boca (o jitter alterna entre os dois mais perto). */
+  planoDe(frente, animal) {
+    const abertos = animal.beco ? this.horda.becos.filter((b) => b.abreNaOnda <= this.state.wave) : [];
+    if (!abertos.length) return frente.plano;
+    abertos.sort((a, b) => Math.hypot(a.de.x - frente.boca.x, a.de.z - frente.boca.z) - Math.hypot(b.de.x - frente.boca.x, b.de.z - frente.boca.z));
+    const beco = abertos[abertos.length > 1 && this.jitter > .5 ? 1 : 0];
+    let plano = frente.viaBeco.get(beco.id);
+    if (!plano) {
+      plano = [...frente.plano, beco.de, beco.ate];
+      plano.beco = beco.ate;
+      frente.viaBeco.set(beco.id, plano);
+    }
+    return plano;
   }
 
   desativar(bot) {
@@ -743,6 +929,7 @@ class InvasaoJavaporcos {
     if (!this.game.online || this.game.dedicated) {
       const phase = this.state.phase, winner = this.state.winner, wave = this.state.wave;
       passoHorda(this.state, dt);
+      this.tickDominio(this.game.time);
       this.sincronizarSlots();
       if (phase === 'combat' && this.state.phase !== 'combat') this.emitir('WAVE_CLEARED', { wave });
       if (!winner && this.state.winner) this.emitir('HORDE_FINISHED', { winner: this.state.winner, wave: this.state.wave });
@@ -755,6 +942,26 @@ class InvasaoJavaporcos {
     }
     this.game.timeLeft = this.state.phase === 'prep' ? this.state.prepLeft : this.state.combatLeft;
     this.atualizaHud();
+  }
+
+  /* Conta bicho e defensor por setor a 4 Hz e avança o domínio; a contagem também é a lotação que espalha a horda. */
+  tickDominio(tempo) {
+    if (tempo < this.dominioAte || this.state.winner) return;
+    const dt = this.dominioEm < 0 ? 0 : tempo - this.dominioEm;
+    this.dominioEm = tempo;
+    this.dominioAte = tempo + DOMINIO.passo;
+    const setores = this.horda.setores, bichos = this.bichosNoSetor, defensores = this.defensoresNoSetor;
+    bichos.fill(0); defensores.fill(0);
+    for (const bot of this.boars) {
+      if (!bot._boarId || !bot.alive) continue;
+      const i = setorEm(setores, bot.pos.x, bot.pos.z);
+      if (i >= 0) bichos[i]++;
+    }
+    for (const ent of this.jogadores) {
+      const i = setorEm(setores, ent.pos.x, ent.pos.z);
+      if (i >= 0) defensores[i]++;
+    }
+    passoDominio(this.state, setores, bichos, defensores, dt);
   }
 
   /* Manada: quem está alertado (viu jogador, ouviu tiro ou levou tiro) puxa o vizinho.
@@ -844,7 +1051,7 @@ class InvasaoJavaporcos {
        o focinho +Z do modelo segue; com `az:+1` o _moveEntity anda nessa mesma direção. */
     if (!emDash) this.conferirAvanco(bot, tempo);
     if (dx || dz) bot.yaw = Math.atan2(dx, dz) + (tempo < (bot._boarDeslizeAte || 0) ? bot._boarDeslizeLado * DESLIZE_ANGULO : 0);
-    const escala = velocidadeDoJavaporco(this.state, bot._boarType) * (emDash ? DASH.impulso : 1);
+    const escala = velocidadeDoJavaporco(this.state, bot._boarType) * (emDash ? DASH.impulso : alvo.kind === 'vagar' ? VAGAR_RITMO : 1);
     this.game._moveEntity(bot, this.state.mutante === 'rumo-invertido' ? ENTRADA_RE : ENTRADA_FRENTE, dt * escala);
     this.aterrar(bot);
   }
@@ -916,6 +1123,7 @@ class InvasaoJavaporcos {
       return true;
     }
     if (alvo.kind === 'jogador') {
+      if (!bot._boarExplorar && bot._boarPlano && dentroDaCidade(this.game.world, bot.pos.x, bot.pos.z)) bot._boarPasso = bot._boarPlano.length;
       bot._boarAlertaAte = Math.max(bot._boarAlertaAte || 0, tempo + AGGRO.contagio);
       this.rosnar(bot, alvo.distance, tempo);
       if (alvo.distance < AGGRO.ataque && tempo >= bot._boarAttackAt) {
@@ -929,13 +1137,9 @@ class InvasaoJavaporcos {
       this.moverPara(bot, alvo, dt);
     } else if (alvo.kind === 'comida' && (alvo.distance < alvo.raio || encostou)) {
       this.revirar(bot, alvo, tempo);
-    } else if (alvo.kind === 'objetivo' && (alvo.distance < alvo.raio || encostou)) {
-      const damage = Math.round(danoDoJavaporco(this.state, bot._boarType, 'objetivo'));
-      atingirObjetivo(this.state, alvo.objectiveIndex, damage);
-      this.emitir('OBJECTIVE_HIT', { i: bot._boarId, objective: alvo.objectiveIndex, damage, hp: this.state.objectives[alvo.objectiveIndex] });
-      registrarAbate(this.state, bot._boarId, null);
-      this.desativar(bot);
-      return true;
+    } else if (alvo.kind === 'rota' && (alvo.distance < alvo.raio || encostou)) {
+      if (++bot._boarPasso >= bot._boarPlano.length && bot._boarExplorar) bot._boarExplorarAte = tempo + BECO.explorar;
+      this.moverPara(bot, alvo, dt);
     } else {
       this.moverPara(bot, alvo, dt);
     }
@@ -957,7 +1161,11 @@ class InvasaoJavaporcos {
      focinhada: sem isto o bando empurrava a pilha pra sempre e a onda não fechava.
      Devolve true quando "encostou o quanto dava"; 3,5 s sem encurtar nada = desiste. */
   teimosia(bot, alvo, tempo) {
-    if (alvo.kind === 'jogador' || alvo.kind === 'vazio') { bot._boarAlvoChave = null; return false; }
+    if (alvo.kind === 'jogador' || alvo.kind === 'vazio' || alvo.kind === 'vagar') {
+      if (alvo.kind === 'vagar') { bot._boarMelhorEm = tempo; bot._boarCansaco = 0; }
+      bot._boarAlvoChave = null;
+      return false;
+    }
     if (bot._boarAlvoChave !== alvo.chave) {
       /* O cansaço ATRAVESSA a troca de alvo: sem isso o bicho que fica pulando entre dois
          pontos inalcançáveis zerava o relógio toda vez e nunca era dado como perdido. */
@@ -979,6 +1187,7 @@ class InvasaoJavaporcos {
     if (parado > 1.2 && alvo.distance <= limite) return true;
     if (parado <= 3.5 || this.state.mutante === 'sem-desistencia') return false;
     (bot._boarEvitar ||= new Map()).set(alvo.chave, tempo + 20);
+    if (alvo.kind === 'rota') bot._boarPasso++;
     bot._boarAlvoChave = null;
     bot._boarNoAte = 0;
     return false;
@@ -1062,22 +1271,37 @@ class InvasaoJavaporcos {
     if (!forcar && this.game.time < this.hudAte) return;
     this.hudAte = this.game.time + .12;
     const phase = this.state.phase === 'prep' ? `PREPARAÇÃO ${Math.ceil(this.state.prepLeft)}s` : `${this.state.remaining + this.state.alive.length} RESTANTES`;
-    const hp = this.state.objectives.map((value) => Math.ceil(value / 10)).join('% · ');
     const score = this.state.scores[this.idDo(this.game.player)]?.points || 0;
     const comida = (this.game.world.foodSpots || []).length;
     const lixo = comida ? ` · LIXO ${this.state.foodRevirada}/${comida}` : '';
-    this.hud.textContent = `INVASÃO DOS JAVAPORCOS · ONDA ${Math.max(1, this.state.wave)}/8 · ${phase} · ${this.state.alive.length} NA RUA · FÚRIA ${Math.round((this.state.fury || 0) * 100)}%${lixo} · OBJETIVOS ${hp}% · ${score} PTS`;
+    this.hudTexto.textContent = `ONDA ${Math.max(1, this.state.wave)}/8 · ${phase} · ${this.state.alive.length} NA RUA · FÚRIA ${Math.round((this.state.fury || 0) * 100)}%${lixo} · ${score} PTS`;
+    if (this.state.mutante === 'mapa-mudo') return;
+    const dominio = Math.round((this.state.dominio || 0) * 100);
+    const tomados = this.state.controle.filter((v) => v >= 1).length;
+    this.hudDominio.textContent = `DOMÍNIO DA HORDA ${dominio}%`;
+    this.hudSetores.textContent = `${tomados}/${this.state.controle.length} SETORES TOMADOS · PERDE EM ${Math.round(DOMINIO.derrota * 100)}%`;
+    this.hudBarra.style.width = `${Math.min(100, dominio)}%`;
+    this.hudCelulas.forEach((cel, i) => {
+      const v = this.state.controle[i] || 0;
+      const nivel = v >= 1 ? 10 : Math.floor(v * 9);
+      if (cel._nivel === nivel) return;
+      cel._nivel = nivel;
+      cel.style.background = v >= 1 ? '#c42b18' : nivel ? `rgba(214,120,40,${(.3 + v * .6).toFixed(2)})` : '#5d6b4a';
+    });
+    this.hudBecos.forEach((el, i) => { el.style.opacity = this.horda.becos[i].abreNaOnda <= this.state.wave ? '1' : '0'; });
+    const p = this.game.player?.pos;
+    if (p) { this.hudJogador.style.left = this.hudPx(p.x); this.hudJogador.style.top = this.hudPz(p.z); }
   }
 
   roundIntro() {
-    return 'DEFENDA O BAIRRO · OITO ONDAS';
+    return `NÃO DEIXE A HORDA DOMINAR ${Math.round(DOMINIO.derrota * 100)}% DO BAIRRO · OITO ONDAS`;
   }
 
   roundResult(winner) {
     return {
       duration: winner === 'E' ? 10 : 6,
       title: winner === 'E' ? 'LORDE DO TERROR ABATIDO' : 'O BAIRRO CAIU',
-      detail: winner === 'E' ? `${this.state.teamBonus} pontos de objetivos intactos` : 'os três objetivos foram destruídos',
+      detail: winner === 'E' ? `${this.state.teamBonus} pontos · horda segurada em ${Math.round((this.state.dominio || 0) * 100)}% do bairro` : `a horda dominou ${Math.round((this.state.dominio || 0) * 100)}% do bairro`,
     };
   }
   renderScoreboard() {
@@ -1137,7 +1361,8 @@ class InvasaoJavaporcos {
     this.state.remaining = net.remaining;
     this.state.fury = net.fury || 0;
     this.state.kills = net.kills || 0;
-    this.state.objectives = [...net.objectiveHealth];
+    if (Array.isArray(net.controle)) this.state.controle = [...net.controle];
+    this.state.dominio = net.dominio || 0;
     this.state.foodHp = { ...(net.foodHealth || {}) };
     this.state.scores = structuredClone(net.scoreByPlayer || {});
     this.state.teamBonus = net.teamBonus || 0;
