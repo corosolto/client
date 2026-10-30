@@ -6,7 +6,7 @@ import { WEAPONS } from './data/weapons.js';
 export const ECONOMIA = Object.freeze({
   saldoInicial: 800,
   teto: 16000,
-  tempoCompraS: 20,
+  tempoCompraS: 30,
   raioCompraM: 9,
   vitoria: 3250,
   derrotaSeguida: Object.freeze([1400, 1900, 2400, 2900, 3400]),
@@ -43,7 +43,7 @@ export function recompensaKill(arma, { mesmoTime = false } = {}) {
   if (mesmoTime) return 0;
   const armaId = WEAPONS[arma] ? arma : (ID_DO_ROTULO[arma] || arma);
   const it = itemDaCompra(armaId);
-  if (it && it.slot !== 'equipamento') return it.recompensaKill;
+  if (it && it.slot !== 'equipamento' && it.slot !== 'municao') return it.recompensaKill;
   return RECOMPENSA_FORA_DO_CATALOGO[armaId] ?? ECONOMIA.recompensaKillPadrao;
 }
 
@@ -84,7 +84,10 @@ function recusaDoEquipamento(it, equip) {
 }
 
 // Número que não dá para ler (NaN, undefined) recusa: compra nunca passa por omissão.
-export function motivoRecusa({ id, saldo, agora, compraAte, distSpawn, vivo, possui, assinatura = null, equip = null, desligados = [] }) {
+export function motivoRecusa({
+  id, saldo, agora, compraAte, distSpawn, vivo, possui, assinatura = null,
+  equip = null, municao = null, desligados = [],
+}) {
   const it = itemDaCompra(id);
   if (!it || desligados.includes(it.chave)) return 'item';
   if (vivo !== true) return 'morto';
@@ -93,6 +96,9 @@ export function motivoRecusa({ id, saldo, agora, compraAte, distSpawn, vivo, pos
   if (it.slot === 'equipamento') {
     const m = recusaDoEquipamento(it, equip);
     if (m) return m;
+  } else if (it.slot === 'municao') {
+    if (!Number.isFinite(municao?.atual) || !Number.isFinite(municao?.max)) return 'item';
+    if (municao.atual >= municao.max) return 'limite';
   } else if ((possui || []).includes(id)) return 'ja-tem';
   if (!(saldo >= precoDe(id, { assinatura, equip }))) return 'saldo';
   return null;

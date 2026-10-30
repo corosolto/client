@@ -3621,31 +3621,36 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
 #emote-wheel .emote-fatia.ativo b{color:#10141a}
 @media (max-width:720px){#emote-wheel .emote-fatia{min-width:84px;font-size:10px;padding:7px 9px}}
 
-/* TRETA$ da partida (compra-partida.js): verde-lima do HUD de partida, nunca o T$ dourado da loja do menu */
-#hud-treta{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:8px;font:800 20px/1 var(--tp-num,var(--aaa-font-body,sans-serif));color:#b4d92e;text-shadow:0 2px 6px #000}
+/* TRETA$ da partida: saldo acima da pilha de armas; o menu ocupa a tela como no CS. */
+#hud-treta{position:absolute;right:20px;bottom:350px;z-index:22;display:flex;align-items:baseline;justify-content:flex-end;flex-wrap:wrap;gap:6px;max-width:280px;
+  font:800 20px/1 var(--tp-num,var(--aaa-font-body,sans-serif));color:#b4d92e;text-align:right;text-shadow:0 2px 6px #000}
 #hud-treta .ht-moeda{font-size:12px;letter-spacing:.12em;color:#cfd6c0}
 #hud-treta .ht-ganho{font-style:normal;font-size:14px;color:#e8ff8a;opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s}
 #hud-treta .ht-ganho.on{opacity:1;transform:none}
 #hud-treta .ht-dica{flex-basis:100%;font:700 11px/1.2 var(--aaa-font-body,sans-serif);letter-spacing:.08em;color:#cfd6c0}
 #hud-treta .ht-dica:empty{display:none}
-#compra-menu{position:fixed;left:24px;top:50%;transform:translateY(-50%);z-index:35;min-width:300px;max-width:min(380px,calc(100vw - 32px));padding:10px;background:rgba(11,14,10,.92);border:1px solid var(--tp-vidro-borda,rgba(255,255,255,.18));border-radius:10px;backdrop-filter:blur(4px);pointer-events:auto;font-family:var(--aaa-font-body,sans-serif)}
+#compra-menu{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:0;box-sizing:border-box;
+  background:rgba(5,7,5,.84);backdrop-filter:blur(8px);pointer-events:auto;font-family:var(--aaa-font-body,sans-serif)}
 #compra-menu.hidden{display:none}
-#compra-menu .cm-cabeca{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:2px 4px 8px;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,.14);font:800 12px/1 inherit;letter-spacing:.14em;color:#cfd6c0}
-#compra-menu .cm-cabeca b{font-size:16px;letter-spacing:.04em;color:#b4d92e}
-#compra-menu .cm-linha{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:4px 8px;margin:2px 0;background:none;border:1px solid transparent;border-radius:6px;color:#fff;font:700 13px/1.1 inherit;letter-spacing:.05em;text-align:left;cursor:pointer}
+#compra-menu .cm-painel{width:100%;height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding:clamp(20px,4vw,64px);box-sizing:border-box;
+  background:linear-gradient(145deg,rgba(22,28,18,.98),rgba(7,10,8,.98));border:0;box-shadow:none}
+#compra-menu .cm-cabeca{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:2px 4px 16px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,.14);font:800 15px/1 inherit;letter-spacing:.14em;color:#cfd6c0}
+#compra-menu .cm-cabeca b{font-size:22px;letter-spacing:.04em;color:#b4d92e}
+#compra-menu .cm-corpo{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));align-content:start;gap:8px 12px;overflow:auto;padding:4px}
+#compra-menu .cm-linha{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.08);border-radius:7px;color:#fff;font:700 14px/1.1 inherit;letter-spacing:.05em;text-align:left;cursor:pointer}
 #compra-menu .cm-linha:hover,#compra-menu .cm-linha:focus-visible{background:rgba(180,217,46,.16);border-color:#b4d92e}
-#compra-menu .cm-linha i{font-style:normal;min-width:16px;color:#b4d92e}
-#compra-menu .cm-linha img{width:64px;height:26px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
+#compra-menu .cm-linha i{font-style:normal;min-width:18px;color:#b4d92e}
+#compra-menu .cm-linha img{width:82px;height:34px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
 #compra-menu .cm-linha span{flex:1}
 #compra-menu .cm-linha span em{font-style:normal;font-size:10px;color:#10141a;background:#b4d92e;border-radius:3px;padding:1px 4px;margin-left:4px}
-#compra-menu .cm-linha b{color:#b4d92e;font-size:13px}
+#compra-menu .cm-linha b{color:#b4d92e;font-size:14px}
 #compra-menu .cm-linha b s{color:#9a9ba1;font-weight:600;margin-right:6px}
 #compra-menu .cm-linha.off{opacity:.42}
 #compra-menu .cm-linha small{margin-left:6px;font-size:11px;color:#cfd6c0}
 #compra-menu .cm-linha.assinatura{border-color:rgba(180,217,46,.45)}
-#compra-menu .cm-pe{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.14)}
-#compra-menu .cm-aviso{display:block;padding:2px 8px 4px;font:700 12px/1.2 inherit;color:#ff8a7a}
-#compra-menu .cm-voltar{min-height:32px;color:#cfd6c0}
+#compra-menu .cm-pe{display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.14)}
+#compra-menu .cm-aviso{display:block;flex:1;padding:2px 8px 4px;font:700 12px/1.2 inherit;color:#ff8a7a}
+#compra-menu .cm-voltar{min-height:42px;max-width:240px;color:#cfd6c0}
 .touch-compra{position:fixed;left:calc(212px + env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));width:44px;height:44px;font:800 22px/1 sans-serif;color:#10141a!important;background:#b4d92e!important;border-radius:50%}
 .touch-compra.hidden{display:none}
-@media (pointer:coarse),(max-height:500px){#compra-menu{left:50%;transform:translate(-50%,-50%);max-height:calc(100vh - 24px);overflow:auto}#compra-menu .cm-linha{min-height:36px}}
+@media (pointer:coarse),(max-height:500px){#hud-treta{right:10px;bottom:250px}#compra-menu{padding:0}#compra-menu .cm-painel{height:100%;padding:12px}#compra-menu .cm-linha{min-height:44px}}

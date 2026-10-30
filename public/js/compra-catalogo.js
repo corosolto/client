@@ -9,10 +9,11 @@ export const GRUPOS_COMPRA = Object.freeze([
   { id: 'fuzis', rotulo: 'FUZIS' },
   { id: 'precisao', rotulo: 'SNIPERS' },
   { id: 'equipamento', rotulo: 'EQUIPAMENTO' },
+  { id: 'municao', rotulo: 'MUNIÇÃO' },
 ]);
 
-// `slot` diz o que a compra substitui; 'equipamento' não troca arma: soma colete, capacete ou flash.
-export const SLOTS_COMPRA = Object.freeze(['primaria', 'secundaria', 'equipamento']);
+// `slot` diz o destino: equipamento soma proteção/flash; munição repõe a reserva, sem trocar arma.
+export const SLOTS_COMPRA = Object.freeze(['primaria', 'secundaria', 'equipamento', 'municao']);
 
 const item = (id, grupo, slot, preco, recompensaKill) => Object.freeze({ id, grupo, slot, preco, recompensaKill });
 
@@ -50,12 +51,24 @@ export const EQUIPAMENTO_COMPRA = Object.freeze([
   equip('flash', 200, 'FLASH', 'flash', { limite: 2 }),
 ]);
 
+const municao = (id, preco, rotulo, armaSlot) =>
+  Object.freeze({ id, grupo: 'municao', slot: 'municao', preco, recompensaKill: 0, rotulo, armaSlot });
+
+export const MUNICAO_COMPRA = Object.freeze([
+  municao('municao-primaria', 200, 'MUNIÇÃO PRIMÁRIA', 'primary'),
+  municao('municao-secundaria', 100, 'MUNIÇÃO SECUNDÁRIA', 'secondary'),
+]);
+
 // Armas que não estão à venda mas matam (faca, pistola de nascença, pickup de mapa).
 export const RECOMPENSA_FORA_DO_CATALOGO = Object.freeze({
   knife: 1500, pistol: 300, akm: 300, g3: 300, m400: 300, rem700: 300, tavor: 300,
 });
 
-export const itemDaCompra = (id) => CATALOGO_COMPRA.find((i) => i.id === id) || EQUIPAMENTO_COMPRA.find((i) => i.id === id) || null;
+export const itemDaCompra = (id) => CATALOGO_COMPRA.find((i) => i.id === id)
+  || EQUIPAMENTO_COMPRA.find((i) => i.id === id)
+  || MUNICAO_COMPRA.find((i) => i.id === id)
+  || null;
 // `desligados`: chaves com kill-switch ligado ('armadura', 'flash'); o item some do menu.
 export const itensDoGrupo = (grupo, { desligados = [] } = {}) =>
-  [...CATALOGO_COMPRA, ...EQUIPAMENTO_COMPRA].filter((i) => i.grupo === grupo && !desligados.includes(i.chave));
+  [...CATALOGO_COMPRA, ...EQUIPAMENTO_COMPRA, ...MUNICAO_COMPRA]
+    .filter((i) => i.grupo === grupo && !desligados.includes(i.chave));

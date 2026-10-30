@@ -855,6 +855,7 @@ const FRASES = {
   // TRETA$ da partida (compra-partida.js): menu de compra e dica do HUD
   compraTitulo: { pt: () => 'COMPRAR', en: () => 'BUY' },
   compraDica: { pt: (toque, s) => `${toque ? '$' : 'B'} COMPRAR · ${s}s`, en: (toque, s) => `${toque ? '$' : 'B'} BUY · ${s}s` },
+  compraPrepare: { pt: (s) => `PREPARE-SE PARA COMPRAR, VOCÊ TEM ${s} SEGUNDOS`, en: (s) => `GET READY TO BUY, YOU HAVE ${s} SECONDS` },
   compraSuaArma: { pt: () => 'SUA ARMA', en: () => 'YOUR GUN' },
   compraVoltar: { pt: () => 'VOLTAR', en: () => 'BACK' },
   compraFechar: { pt: () => 'FECHAR', en: () => 'CLOSE' },

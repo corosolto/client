@@ -41,6 +41,7 @@
 - As telas de carregamento agora mostram o elenco inteiro: os 19 personagens entram em tela cheia, cada um com a sua arte e a marca CORO SOLTO no canto, no lugar do lote antigo de seis.
 
 ### Corrigido
+- A Piscina deixa de repetir grafites ou pintá-los sobre a faixa azul; armários não engolem a câmera, e armas estáticas deixam todos os mapas. Esquerdomacho segura pistola e faca sem disputar duas poses, recebe colete proporcional, e a AK volta ao tamanho certo em primeira pessoa. O menu de compra ocupa a tela, B fica exclusivo da loja, N troca a câmera, o saldo vai para a direita, a janela passa a 30 segundos e vírgula/ponto compram munição extra.
 - Canarinho e suas três skins deixam de carregar uma cauda maior que quase metade do corpo. A pistola fica à frente do tronco, com cotovelo dobrado e montagem recalculada depois da pose de uma mão.
 - Perfis públicos continuam visíveis quando o bootstrap da conta falha ou a sessão expira. Links do ranking usam o handle público, o histórico do navegador restaura a lista, e perfis sem totais aparecem com zero.
 - O contador online voltou ao topo em desktop e celular. O rodapé móvel usa ícones quadrados com nome acessível, e a tela de privacidade preserva a foto com checkbox de 20 px.

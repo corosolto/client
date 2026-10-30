@@ -47,7 +47,7 @@ const ESPERADO = { 'pega-morta': ['AN1'], 'torso-mudo': ['AN1', 'AN2'], 'lean-mo
   'flinch-mudo': ['AN6'], 'agachado-estatua': ['AN1', 'AN7'], 'ar-correndo': ['AN8', 'AN9'], 'quadril-colado': ['AN9'], 'lod-cego': ['AN10'] };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
-const PARTIDA = 'debug=1&auto=E,esquerdomacho&map=praca_poderes';
+const PARTIDA = 'debug=1&economia=0&auto=E,esquerdomacho&map=praca_poderes';
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
@@ -98,14 +98,14 @@ async function abrir() {
   return { page, fechar: () => ctx.close() };
 }
 
-/* ---- AN1–AN3: até 3 bots, fica no primeiro que cumpre o contrato ---- */
+/* ---- AN1–AN3: até 8 bots; cada cláusula usa um rig que consiga exercê-la ---- */
 const { page, fechar } = await abrir();
 const m = await page.evaluate(async () => {
   const g = window.__game;
   const T = await import('/vendor/three.module.js');
   const V = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
   const cand = (g.bots || []).filter(x => x.mesh?.ctrl?.ikL && x.mesh?.ctrl?.torso?.spines?.length && x.alive).slice(0, 8);
-  let melhor = null;
+  const medidos = [];
   for (const b of cand) {
     const ctrl = b.mesh.ctrl, grupo = b.mesh.group, torso = ctrl.torso;
     let cabeca = null; grupo.traverse(o => { if (!cabeca && o.isBone && /head/i.test(o.name)) cabeca = o; });
@@ -142,11 +142,24 @@ const m = await page.evaluate(async () => {
     const an1 = { foiCm: base.mao.distanceTo(meio.mao) * 100, aoPenteCm: meio.mao.distanceTo(magAlvo) * 100, basePenteCm: base.mao.distanceTo(magAlvo) * 100, voltouCm: fim.mao.distanceTo(base.mao) * 100, kMeio: meio.k, durFim: fim.dur };
     const an2 = { quedaCm: (base.cabeca.y - meio.cabeca.y) * 100, frenteCm: Math.abs((meio.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100, voltaCm: Math.abs((fim.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100 };
     const an3 = { leanK, deslocCm: Math.abs((cabecaLean.clone().sub(base.cabeca)).dot(direita())) * 100, voltaCm: Math.abs((cabecaVolta.clone().sub(base.cabeca)).dot(direita())) * 100, mortoDeslocCm: Math.abs((mortoCom.clone().sub(morto0)).dot(direita())) * 100 };
-    const cumpre = an1.foiCm >= 8 && an1.aoPenteCm <= an1.basePenteCm - 10 && an2.frenteCm >= 5 && an3.deslocCm >= 4;
-    if (cumpre || !melhor) melhor = { charId: ctrl.charId, an1, an2, an3, an6, an7, an8, an9 };
-    if (cumpre) break;
+    medidos.push({ charId: ctrl.charId, an1, an2, an3, an6, an7, an8, an9 });
   }
-  return melhor || { erro: 'sem bot com arma de 2 mãos' };
+  if (!medidos.length) return { erro: 'sem bot com arma de 2 mãos' };
+  const escolhe = (pred) => medidos.find(pred) || medidos[0];
+  const m1 = escolhe((x) => x.an1.foiCm >= 8 && x.an1.aoPenteCm <= x.an1.basePenteCm - 10
+    && x.an1.voltouCm <= 2 && x.an1.kMeio > 0.9 && x.an1.durFim === 0);
+  const m2 = escolhe((x) => x.an2.frenteCm >= 5 && x.an2.voltaCm <= 1.5);
+  const m3 = escolhe((x) => x.an3.leanK > 0.07 && x.an3.deslocCm >= 4
+    && x.an3.voltaCm <= 1.5 && x.an3.mortoDeslocCm <= 0.5);
+  const m6 = escolhe((x) => x.an6.picoCm >= 3 && x.an6.voltaCm <= 1.5);
+  const m7 = escolhe((x) => x.an7.recuoCm >= 0.5 && /crouch/.test(x.an7.estado || ''));
+  const m8 = escolhe((x) => x.an8.noAr === 'jump' && x.an8.noPouso === 'crouch');
+  const m9 = escolhe((x) => x.an9.lagImediato >= 0.25 && x.an9.lagDepois <= 0.08);
+  return {
+    charId: m1.charId,
+    an1: m1.an1, an2: m2.an2, an3: m3.an3,
+    an6: m6.an6, an7: m7.an7, an8: m8.an8, an9: m9.an9,
+  };
 });
 await fechar();
 

@@ -32,7 +32,7 @@ mesma do CS porque a partida começa com o mesmo saldo e tem o mesmo teto.
 | vitória de rodada | 3250 | 3250 (eliminação) |
 | derrota em sequência | 1400, 1900, 2400, 2900, 3400 | idem; satura na 5ª |
 | empate | conta como derrota para os dois times | CS não tem empate; aqui a rodada pode empatar |
-| tempo de compra | 20 s, contados depois da contagem de início | 20 s depois do freeze time |
+| tempo de compra | 30 s, contados depois da contagem de início | 20 s depois do freeze time; ampliado por decisão do dono |
 | zona de compra | 9 m do ponto de spawn mais próximo do próprio time | buy zone |
 | assinatura do personagem | 10% de desconto, arredondado a 50 | não existe no CS |
 
@@ -81,14 +81,23 @@ antigas continuam medindo o mesmo jogo.
 | nascimento | faca + PT-38, sem primária, TRETA$ 800 |
 | arma do personagem | deixa de vir de graça; aparece no menu com selo SUA ARMA e 10% de desconto |
 | armário grátis do spawn | não monta com a loja ligada (com ele ninguém compraria) |
-| pickups de mapa e drops de morte | continuam (no CS também se pega arma do chão) |
-| compra | tecla **B** (ou botão `$` no toque, no topo da tela) no tempo e na zona de compra; 1-9 escolhem, 0 volta, B/Esc fecham; segurar a tecla não repete a compra; com a mira travada o clique é tiro, então no desktop o menu é de teclado |
+| pickups de mapa e drops de morte | pickups estáticos saem de todos os mapas; a arma de quem morre continua caindo |
+| compra | tecla **B** (ou botão `$` no toque) abre o menu em tela inteira no tempo e na zona; 1-9 escolhem, 0 volta, B/Esc fecham; segurar a tecla não repete |
+| munição | `,` compra um carregador da primária por 200; `.` compra um da secundária por 100; reserva máxima = 2× a reserva padrão |
 | arma do chão | troca a do mesmo slot (primária por primária, pistola por pistola) e larga a antiga |
-| B fora do tempo ou da zona | continua trocando a câmera, como hoje |
+| câmera | tecla **N** cicla 1ª pessoa, 3ª pessoa e ombro; B pertence só à compra |
 | morte | larga a primária comprada no chão e renasce de faca + pistola |
 | fim de rodada | quem está vivo fica com o que comprou; todo mundo recebe vitória ou derrota |
 | modo sem rodada (`?arena=1`) | a janela de compra abre a cada renascimento |
-| HUD | `TRETA$ 800` em verde-lima acima da vida, com `+300` a cada abate e a dica `B COMPRAR · 17s` |
+| HUD | saldo TRETA$ alinhado à direita acima da pilha de armas, com `+300` a cada abate e a dica `B COMPRAR · 17s` |
+
+
+### Munição extra
+
+O grupo **7 MUNIÇÃO** e os atalhos clássicos compram um carregador por vez. A primária
+custa 200 e a secundária 100. `CompraPartida.limiteMunicao` limita cada reserva ao dobro
+de `WEAPONS[id].reserve`; uma tentativa no teto não debita TRETA$. O menu permanece aberto
+para compras sucessivas e mostra reserva atual/máxima.
 
 ### Bots
 
@@ -104,13 +113,11 @@ Mesma regra do jogador, sem tabela por dificuldade (a dificuldade já mexe na mi
   a cada renascimento);
 - primária pega do chão vale como compra feita: o bot não paga para trocá-la pela sorteada.
 
-Régua: `npm run eval:economia-jogo` sobe o `Game` real no arnês (EJ1 a EJ16)
-com catorze mutantes: carteira do menu, tecla 1 dando AWP, morte sem perda, armário de volta,
-menu sem teclado, B sempre câmera, repetição comprando, pickup largando a arma da mão e
-um `primary || 'awp'` de volta na rodinha, bot comprando de graça, bot que não perde a arma ao morrer, troca de malha depois do
-posicionamento (bot invisível), bot recomprando a cada renascimento e bot pagando para
-trocar uma primária pega do chão. O arnês não carrega CSS: a camada do menu sobre
-o `#touch-ui` foi conferida no navegador.
+Régua: `npm run eval:economia-jogo` sobe o `Game` real no arnês e mata mutantes de
+carteira do menu, AWP grátis, perda de arma/equipamento, compra dos bots, teclado,
+pickups estáticos, B concorrendo com a câmera, munição ausente ou sem teto e janela de
+20 segundos. O arnês não carrega CSS: tela inteira, posição do saldo e camada sobre
+`#touch-ui` são conferidas no navegador.
 
 ## Equipamento (lote de 29/10)
 

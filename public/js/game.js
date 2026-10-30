@@ -40,7 +40,7 @@ import { viewmodelVisibility } from './vmvisibility.js';
 import { urlDoBrasao } from './brasoes_versao.js';
 
 import { WEAPONS } from './data/weapons.js';
-import { economiaLigada } from './economia-partida.js';
+import { ECONOMIA, economiaLigada } from './economia-partida.js';
 import { CompraPartida } from './compra-partida.js';
 import { danoComArmadura, ARMADURA_MAX } from './armadura.js';
 import { vestirArmadura, ocultarArmadura } from './armadura-visual.js';
@@ -825,48 +825,10 @@ export class Game {
     this.world = MAPS[this._mapId].build(this.scene, textures);
     this._buildEnv();   // IBL: env map de gradiente dusk -> materiais PBR (Standard) ganham ambiente/reflexo
     this.flashTex = textures.flash;
-    /* modo de armas também muda o mapa: pickups fora do modo somem (e suas meshes)
-       `removeFromParent()` e NÃO `scene.remove()`: o mapa pendura a arma em `root`, e o
-       remove() do three é no-op mudo quando o objeto não é filho direto de quem chamou. */
-    if (this.world.pickups) {
-      const keep = [];
-      for (const pk of this.world.pickups) {
-        /* id fora de WEAPONS não entra no estado do jogo: o prompt do [E] lê `.short`
-           sem guarda todo quadro e congelava a partida. KNOWN-BUGS BUG-70 / #366. */
-        if (!WEAPONS[pk.weapon]) {
-          console.warn(`[pickup] mapa ${this._mapId}: arma '${pk.weapon}' não existe em WEAPONS — pickup ignorado`);
-          pk.mesh?.removeFromParent();
-          continue;
-        }
-        if (this._pickupAllowed(pk.weapon)) {
-          const rw = weaponModel(pk.weapon);            // swap the map's box gun for the real GLB
-          if (rw && pk.mesh) {
-            // ROTAÇÃO ANTES da altura: o assentamento mede a bbox JÁ girada (ver _assentarNoChao).
-            rw.rotation.set(0, pk.mesh.rotation.y, 0.12);
-            rw.traverse(o => { if (o.isMesh) o.castShadow = true; });
-            pk.mesh.removeFromParent(); this.scene.add(rw); pk.mesh = rw;
-          }
-          keep.push(pk);
-        } else if (pk.mesh) pk.mesh.removeFromParent();
-      }
-      this.world.pickups = keep;
-      /* AQUI ficava `_puxarPickupsProGrafo()` (commit 5f8b5a5), REVERTIDO E REMOVIDO em
-         08/2026. POR QUE: a crítica adversarial mediu o resultado do arrasto e ele falhou no
-         próprio objetivo — 7 dos 8 pickups arrastados continuaram a 2,10-2,50 m da aresta
-         mais próxima do grafo, ou seja, seguiram fora do alcance do A*. O `botsim.mjs` de
-         piscina_treta saiu byte a byte IDÊNTICO com e sem o arrasto: mover não mudou nada no
-         comportamento do bot, que era a justificativa inteira. E o custo foi real: quebrou a
-         simetria espelhada de piscina_treta (moveu as 5 armas da parede leste e NENHUMA das 5
-         espelhadas do oeste, por mera fase da grade de waypoints) e encostou a deagle a
-         0,10 m do spawn P slot 0 (era 1,00 m). Se um pickup do mapa ficar mesmo fora do
-         alcance, o conserto é NO MAPA (como o de map_havan.js:1207 desta rodada), não um
-         arrasto global em runtime. */
-      /* DEFEITO CONSERTADO (game.js:498 antigo): `rw.position.y = Math.max(0.16, ...)` era um
-         PISO ABSOLUTO de mundo aplicado depois de o mapa devolver a posição — jogava fora
-         qualquer altura que o mapa tivesse calculado e deixava a arma boiando a 0,16 m em
-         mapa plano e enterrada em mapa com relevo. Mesmo helper do armário, uma conta só. */
-      for (const pk of this.world.pickups) if (pk.mesh) this._assentarNoChao(pk.mesh, pk.x, pk.z);
-    }
+    // A economia da partida substitui o arsenal espalhado: mapas não entregam arma grátis.
+    // Drops de abate continuam em `this.drops`; apenas os pickups estáticos do build saem.
+    for (const pk of this.world.pickups || []) pk.mesh?.removeFromParent?.();
+    this.world.pickups = [];
 
     // teams & rosters. playerTeam = LADO físico (P/B) — dirige tudo (spawns/placar/killfeed/CTF/
     // cores/yaw). playerFaction = de qual ROSTER vêm os personagens do jogador ('E'/'B'/'U' Tribos
@@ -892,9 +854,8 @@ export class Game {
     this._mpPend = this.online ? { mpFactory, net } : null;
     // TRETA$ da partida (docs/ECONOMIA-PARTIDA.md): só o main.js liga; arnês e nó dedicado ficam no loadout antigo.
     this._ecoLigada = !!economia && economiaLigada({ busca: location.search, online: this.online, dedicado: this.dedicated, wpnMode: this._wpnMode() });
-
-    // Câmera 3ª pessoa (tecla B): modo de VISÃO, não de combate - mira e tiro seguem saindo
-    // da câmera. Modos, rig, grip e pré-carga do corpo: docs/RIG-PEGA-ARMA.md.
+    // Câmera 3ª pessoa (tecla N): B pertence exclusivamente ao menu de compra.
+    // Mira e tiro continuam saindo da câmera; rig e grip: docs/RIG-PEGA-ARMA.md.
     this.camView = ['first', 'third', 'shoulder'].includes(settings.camView) ? settings.camView : 'first';
     this.playerTP = null;
     this.emoteOpen = false; this.emoteCam = null; this._emoteMod = null; this._emoteAtual = null;
@@ -907,7 +868,7 @@ export class Game {
     this._tpOrbitYaw = 0;
     this._tpOrbitPitch = 0;
     this._eyeWorld = new THREE.Vector3();   // posição do OLHO — origem de tiro/fumaça em 3ª pessoa
-    /* Só o CORPO do jogador (tecla B) — sem `weapons` o glbchars pré-carrega as 26 armas
+    /* Só o CORPO do jogador (tecla N) — sem `weapons` o glbchars pré-carrega as 26 armas
        BLOQUEANDO e desfaz o lazy da partida (ARM1/ARM3). BUG-85. */
     /* O dedicado usa `testMode`: sem browser/GLB, preload inútil compete com snapshots.
        No browser, main.js já aguarda o preload antes do `new Game`. */
@@ -2191,8 +2152,10 @@ export class Game {
       if (e.code === 'KeyX') { this._radioShow('x'); return; }
       if (e.code === 'KeyV') { this._radioShow('c'); return; }
       if (this._compra?.tecla(e.code, e.repeat)) return;   // menu de compra aberto: 1-9 escolhem, 0 volta
-      // B compra no tempo e na zona de compra (CS); fora disso continua trocando a câmera
-      if (e.code === 'KeyB') { if (this._compra?.podeComprar()) this._compra.alternar(); else this._toggleCamView(); return; }
+      if (e.code === 'KeyB') { this._compra?.alternar(); return; }
+      if (e.code === 'Comma' && !e.repeat) { this._compra?.comprarMunicao('primary'); return; }
+      if (e.code === 'Period' && !e.repeat) { this._compra?.comprarMunicao('secondary'); return; }
+      if (e.code === 'KeyN' && !e.repeat) { this._toggleCamView(); return; }
       if (e.code === 'KeyT' && !e.repeat) { this._emoteToggle(); return; }   // roda de dança
       if (this.emoteOpen) {
         const n = /^Digit([1-8])$/.exec(e.code);
@@ -2556,7 +2519,7 @@ export class Game {
      `beforeunload` no main.js. Régua: `tools/eval/ctrlw-check.mjs`. */
   _travaAtalhos() {
     if (this.testMode || !document.fullscreenElement) return;
-    try { navigator.keyboard?.lock?.(['KeyW', 'KeyT', 'KeyN', 'KeyR', 'KeyI', 'Digit1', 'Digit2', 'Digit3'])?.catch?.(() => {}); } catch {}
+    try { navigator.keyboard?.lock?.(['KeyW', 'KeyT', 'KeyN', 'KeyB', 'KeyR', 'KeyI', 'Comma', 'Period', 'Digit1', 'Digit2', 'Digit3'])?.catch?.(() => {}); } catch {}
   }
   _soltaAtalhos() {
     try { navigator.keyboard?.unlock?.(); } catch {}
@@ -2885,8 +2848,9 @@ export class Game {
       ? frase('alvoBandeiras', this.capsToWin)
       : (PACE ? frase('alvoAbates', this.killsToWin)
         : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta')));
-    this._banner(frase('round', this.roundNum),
-      this.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound);
+    const compraAviso = this._compra ? frase('compraPrepare', ECONOMIA.tempoCompraS) : '';
+    const detalhe = this.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound;
+    this._banner(frase('round', this.roundNum), [compraAviso, detalhe].filter(Boolean).join(' · '));
     if (!this.sfx.roundNumber(this.roundNum) && !this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
   }
   _resetPositions() {
@@ -6594,8 +6558,8 @@ export class Game {
       c.rotation.x += (wantPitch - c.rotation.x) * Math.min(1, dt * 3.5);
     }
   }
-  // Cicla 1ª → 3ª (longe) → ombro (perto, vê braços) → 1ª (tecla B). Constrói o corpo
-  // 3ª pessoa na 1ª vez (lazy).
+  // Cicla 1ª → 3ª (longe) → ombro (perto, vê braços) → 1ª (tecla N). Constrói o
+  // corpo 3ª pessoa na primeira vez (lazy).
   _toggleCamView() {
     // first = 1ª pessoa (só-arma, padrão do jogo) · third = OTS SOCOM (cintura pra cima) ·
     // shoulder = OTS colado (vê a arma de perto). A 1ª-pessoa-com-corpo (fpbody) foi removida.

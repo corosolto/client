@@ -20,7 +20,7 @@
      EJ12 bot que morre perde a arma, renasce de pistola e só recompra na rodada seguinte;
           bot que mata recebe pela classe da arma; a malha nova nasce no spawn, visível
      EJ16 bot com primária pega do chão não compra a sorteada
-     EJ13 teclado: B abre, 4/5 compram, repetição não compra, fora da zona B é câmera
+     EJ13 teclado: B abre a loja em qualquer posição; N muda a câmera sem conflitar
      EJ14 arma do chão troca a do mesmo slot (a comprada cai)
      EJ15 varredura: nenhum `primary || 'awp'` no game.js
      EJ17 equipamento: kit 1000 dá colete 100 + capacete, 2 flashes de 200 e a 3ª recusa;
@@ -28,6 +28,9 @@
      EJ18 kill-switch: sem armadura (?armadura=0) colete some e recusa; sem flash (?flash=0) idem
      EJ19 bot armado gasta a sobra em colete + capacete e chega com ele na rodada; bot que
           guarda para a arma não gasta
+     EJ20 Piscina não expõe armas estáticas; drops de morte continuam existindo
+     EJ21 compra primária/secundária por cartucho, com teto e atalhos vírgula/ponto
+     EJ22 janela e aviso de compra começam em 30 segundos
 
    Mutantes (rodam sempre; cada um TEM de acender pelo menos uma cláusula):
      carteira-menu  o crédito de abate também grava o saldo numa chave treta do localStorage
@@ -40,9 +43,11 @@
      bot-recompra-no-renascer  bot recompra a cada renascimento no modo de rodada
      bot-troca-arma-do-chao    bot paga para trocar a primária pega do chão (EJ16)
      sem-tecla / b-sempre-camera / repete-compra   o caminho do teclado (EJ13)
+     mapa-armas     os pickups estáticos do mapa voltam a aparecer (EJ20)
+     sem-municao / municao-sem-teto   compra de cartuchos some ou passa do máximo (EJ21)
+     compra-vinte   janela/aviso volta a 20 segundos (EJ22)
      pickup-mao     a arma do chão larga a da mão, não a do slot (EJ14)
      awp-na-rodinha um único `primary || 'awp'` volta na rodinha (EJ15)
-     equip-sem-entrega / equip-nao-perde / rodada-zera-equip / loja-ignora-switch   (EJ17-EJ19)
 
    Uso: node tools/eval/economia-jogo-check.mjs
    ============================================================================ */
@@ -61,13 +66,13 @@ const textures = initTextures();
 const FONTE = (await import('node:fs')).readFileSync(path.join(ROOT, 'public/js/game.js'), 'utf8');
 const PERSONAGEM = CHARACTERS.find((c) => c.team === 'E' && !['pistol', 'deagle', 'revolver38'].includes(charWeapon(c.id)));
 
-function boot({ economia = true, settings = {}, dedicated = false, mut = null } = {}) {
+function boot({ economia = true, settings = {}, dedicated = false, mapId = 'ferro_velho', mut = null } = {}) {
   seedRandom(12345);
   const g = new Game({
     renderer, textures, sfx,
     settings: { bots: 4, quality: 'low', difficulty: 'normal', sens: 1, ...settings },
     playerCharId: PERSONAGEM.id, playerTeam: 'E', playerFaction: PERSONAGEM.team, enemyFaction: 'B',
-    nickname: 'SIM', mapId: 'ferro_velho', ctf: false, testMode: true, onQuit() {}, onMatchEnd() {},
+    nickname: 'SIM', mapId, ctf: false, testMode: true, onQuit() {}, onMatchEnd() {},
     economia, dedicated,
   });
   g._ensureDolly = () => {};
@@ -207,7 +212,7 @@ function medir(mut = {}) {
   }
 
   {
-    // caminho principal: B abre, 4 = fuzis, 5 = AK; segurar o 4 não compra; fora da zona B é câmera
+    // caminho principal: B é exclusivamente compra; N alterna a câmera em qualquer posição.
     const g = boot({ mut: mut.boot });
     const p = g.player;
     p.carteira.saldo = 3000;
@@ -219,9 +224,12 @@ function medir(mut = {}) {
     const comprou = p.primary === 'ak' && !g._compra.aberto && g.camView === cam0;
     p.pos.x += 200;
     tecla(g, 'KeyB');
-    const camera = g.camView !== cam0 && !g._compra.aberto;
-    check('EJ13', 'teclado: B abre, 4 e 5 compram a AK, repetição não compra, fora da zona B é câmera',
-      abriu && naoComprouNaRepeticao && comprou && camera, { abriu, naoComprouNaRepeticao, comprou, primary: p.primary, cam0, cam: g.camView });
+    const bNaoMoveCamera = g.camView === cam0 && !g._compra.aberto;
+    tecla(g, 'KeyN');
+    const camera = g.camView !== cam0;
+    check('EJ13', 'teclado: B abre/compra sem mexer na câmera; N muda a câmera',
+      abriu && naoComprouNaRepeticao && comprou && bNaoMoveCamera && camera,
+      { abriu, naoComprouNaRepeticao, comprou, primary: p.primary, bNaoMoveCamera, cam0, cam: g.camView });
   }
 
   {
@@ -296,6 +304,48 @@ function medir(mut = {}) {
   }
 
   {
+    const g = boot({ mapId: 'piscina_treta', mut: mut.boot });
+    const estaticas = g.world.pickups?.length || 0;
+    const antes = g.drops.length;
+    g.player.primary = 'ak'; g.player.weapon = 'pistol';
+    matar(g, g.player, inimigo(g), 'AK');
+    const dropsMorte = g.drops.length - antes;
+    check('EJ20', 'mapa sem armas estáticas; arma de quem morre ainda cai',
+      estaticas === 0 && dropsMorte === 1, { estaticas, dropsMorte });
+  }
+
+  {
+    const g = boot({ mut: mut.boot });
+    const p = g.player;
+    p.carteira.saldo = 15000;
+    g._compra.comprar('ak');
+    const basePrimaria = p.ammo.ak.res;
+    tecla(g, 'Comma');
+    const depoisVirgula = p.ammo.ak.res;
+    for (let i = 0; i < 20; i++) tecla(g, 'Comma');
+    const tetoPrimaria = p.ammo.ak.res;
+    const saldoNoTeto = saldo(g);
+    tecla(g, 'Comma');
+    const naoDebitouNoTeto = saldo(g) === saldoNoTeto;
+    const baseSecundaria = p.ammo.pistol.res;
+    tecla(g, 'Period');
+    const depoisPonto = p.ammo.pistol.res;
+    check('EJ21', 'vírgula/ponto compram um cartucho até o teto sem débito excedente',
+      depoisVirgula === basePrimaria + 30 && tetoPrimaria === 180 && naoDebitouNoTeto
+      && depoisPonto === baseSecundaria + 12,
+      { basePrimaria, depoisVirgula, tetoPrimaria, baseSecundaria, depoisPonto, saldo: saldo(g) });
+  }
+
+  {
+    const g = boot({ mut: mut.boot });
+    const segundos = Math.round(g._compra.compraAte - g.stateUntil);
+    const aviso = g.el?.bannerSub?.textContent || '';
+    check('EJ22', 'rodada começa com aviso e janela de compra de 30 segundos',
+      segundos === 30 && /PREPARE-SE PARA COMPRAR/i.test(aviso) && /30 SEGUNDOS/i.test(aviso),
+      { segundos, aviso });
+  }
+
+  {
     const off = boot({ economia: false, mut: mut.boot });
     check('EJ2', 'sem economia: arma do personagem e armário de hoje',
       !off._compra && off.player.weapon === charWeapon(PERSONAGEM.id) && rack(off) > 0,
@@ -361,8 +411,27 @@ const MUTANTES = {
   } },
   'bot-de-graca': { boot: (g) => { if (g._compra) g._compra._botCompra = (b) => g._compra._armarBot(b, b._armaAlvo); } },
   'sem-tecla': { boot: (g) => { if (g._compra) g._compra.tecla = () => false; } },
-  'b-sempre-camera': { boot: (g) => { if (g._compra) g._compra.podeComprar = () => false; } },
+  'b-sempre-camera': { boot: (g) => {
+    const original = g._kd.bind(g);
+    g._kd = (e) => {
+      if (e.code === 'KeyB' && !g._compra?.podeComprar()) g.setCamView(g.camView === 'first' ? 'third' : 'first');
+      return original(e);
+    };
+  } },
   'repete-compra': { boot: (g) => { if (g._compra) { const t = g._compra.tecla.bind(g._compra); g._compra.tecla = (c) => t(c, false); } } },
+  'mapa-armas': { boot: (g) => { if (g._mapId === 'piscina_treta') g.world.pickups = [{ x: 0, y: 0, z: 0, weapon: 'ak' }]; } },
+  'sem-municao': { boot: (g) => { if (g._compra) g._compra.comprarMunicao = () => ({ ok: false, motivo: 'item' }); } },
+  'municao-sem-teto': { boot: (g) => { if (g._compra) g._compra.limiteMunicao = () => Number.MAX_SAFE_INTEGER; } },
+  'compra-vinte': { boot: (g) => {
+    if (!g._compra) return;
+    const start = g.start.bind(g);
+    g.start = () => {
+      const r = start();
+      g._compra.compraAte = g.stateUntil + 20;
+      if (g.el?.bannerSub) g.el.bannerSub.textContent = 'PREPARE-SE PARA COMPRAR · VOCÊ TEM 20 SEGUNDOS';
+      return r;
+    };
+  } },
   'pickup-mao': { boot: (g) => { const r = g._grabPickup.bind(g); g._grabPickup = (pk, who, isP) => { const c = g._compra; g._compra = null; const x = r(pk, who, isP); g._compra = c; return x; }; } },
   'awp-na-rodinha': { fonte: (s) => s.replace('const slots = [this._slotPrimaria(),', "const slots = [p.primary || 'awp',") },
   'equip-sem-entrega': { boot: (g) => { if (g._compra) g._compra._vestir = () => {}; } },
@@ -379,13 +448,16 @@ const MUTANTES = {
     g._resetPositions = () => { const c = g._compra; g._compra = null; r(); g._compra = c; };
   } },
 };
+const mutanteAlvo = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice('--mutante='.length) || null;
+if (mutanteAlvo && !MUTANTES[mutanteAlvo]) throw new Error(`Mutante desconhecido: ${mutanteAlvo}`);
+const mutantesExecutados = mutanteAlvo ? [[mutanteAlvo, MUTANTES[mutanteAlvo]]] : Object.entries(MUTANTES);
 
 const print = (rows) => rows.map((r) => `${r.pass ? 'ok ' : 'XX '} ${r.id} ${r.nome}${r.pass ? '' : ' ' + JSON.stringify(r.obs)}`).join('\n');
 const real = comEspiao(() => medir());
 console.log(print(real));
 const falhas = real.filter((r) => !r.pass);
 const cegos = [];
-for (const [nome, m] of Object.entries(MUTANTES)) {
+for (const [nome, m] of mutantesExecutados) {
   let vermelhas;
   try { vermelhas = comEspiao(() => medir(m)).filter((r) => !r.pass).map((r) => r.id); } catch (e) { vermelhas = [`exceção: ${e.message}`]; }
   console.log(`mutante ${nome}: ${vermelhas.length ? 'VERMELHO (' + vermelhas.join(',') + ')' : 'VERDE, régua cega'}`);

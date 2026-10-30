@@ -44,16 +44,16 @@ export class CompraPartida {
 
   _montarDom() {
     const hud = this.game.el?.hud;
-    const base = document.getElementById('hud-bottom-left');
     // o #hud sobrevive à partida: sem limpar, a revanche empilharia um segundo saldo
     for (const id of ['hud-treta', 'compra-menu']) document.getElementById(id)?.remove?.();
     this.elSaldo = document.createElement('div');
     this.elSaldo.id = 'hud-treta';
     this.elSaldo.innerHTML = '<span class="ht-moeda">TRETA$</span><b>0</b><em class="ht-ganho"></em><small class="ht-dica"></small>';
-    if (base?.prepend) base.prepend(this.elSaldo); else hud?.appendChild?.(this.elSaldo);
+    hud?.appendChild?.(this.elSaldo);
     this.elMenu = document.createElement('div');
     this.elMenu.id = 'compra-menu';
     this.elMenu.className = 'hidden';
+    this.elMenu.addEventListener('click', (e) => { if (e.target === this.elMenu) this.fechar(); });
     // no body e não no #hud: o z-index 20 do #hud prende o menu atrás do #touch-ui (30)
     document.body?.appendChild?.(this.elMenu);
   }
@@ -70,6 +70,22 @@ export class CompraPartida {
   distSpawn() {
     const p = this.game.player;
     return distanciaAoSpawn(p.pos, this.game.world?.spawns?.[p.team]);
+  }
+
+  limiteMunicao(id) {
+    const reserva = WEAPONS[id]?.reserve;
+    return Number.isFinite(reserva) ? reserva * 2 : 0;
+  }
+
+  municaoDe(armaSlot, c = this.game.player) {
+    const id = c?.[armaSlot];
+    const atual = id ? c.ammo?.[id]?.res : null;
+    const max = id ? this.limiteMunicao(id) : null;
+    return { id, atual, max };
+  }
+
+  comprarMunicao(armaSlot) {
+    return this.comprar(armaSlot === 'primary' ? 'municao-primaria' : 'municao-secundaria');
   }
 
   podeComprar() {
@@ -113,11 +129,12 @@ export class CompraPartida {
   }
 
   comprar(id) {
-    const g = this.game, p = g.player;
+    const g = this.game, p = g.player, item = itemDaCompra(id);
+    const estadoMunicao = item?.slot === 'municao' ? this.municaoDe(item.armaSlot, p) : null;
     const r = comprar(this.carteira, {
       id, agora: g.time, compraAte: this.compraAte, distSpawn: this.distSpawn(), vivo: p.alive,
       possui: [p.primary, p.secondary].filter(Boolean), assinatura: this.assinatura(),
-      equip: this.equipDe(p), desligados: this.desligados(),
+      equip: this.equipDe(p), municao: estadoMunicao, desligados: this.desligados(),
     });
     if (!r.ok) {
       this.aviso = frase('compraRecusa', r.motivo);
@@ -129,6 +146,14 @@ export class CompraPartida {
       // menu fica aberto, como no CS: dá para levar colete e as duas flashes de uma vez
       this.aviso = '';
       if (this.aberto) this._render();
+      return r;
+    }
+    if (r.item.slot === 'municao') {
+      const armaId = estadoMunicao.id, ammo = p.ammo[armaId], w = WEAPONS[armaId];
+      ammo.res = Math.min(estadoMunicao.max, ammo.res + w.mag);
+      this.aviso = '';
+      if (this.aberto) this._render();
+      this.game._updateWeaponHud?.();
       return r;
     }
     const antiga = r.item.slot === 'primaria' ? p.primary : (p.secondary !== 'pistol' ? p.secondary : null);
@@ -279,6 +304,18 @@ export class CompraPartida {
       + `<span>${tr(it.rotulo)}${qtd}</span><b>${fmt(preco)}</b></button>`;
   }
 
+  _linhaMunicao(it, i, saldo) {
+    const municao = this.municaoDe(it.armaSlot);
+    const g = this.game, arma = municao.id && WEAPONS[municao.id];
+    const recusa = motivoRecusa({
+      id: it.id, saldo, agora: g.time, compraAte: this.compraAte,
+      distSpawn: this.distSpawn(), vivo: g.player.alive, municao,
+    });
+    const qtd = arma ? `<small>${municao.atual}/${municao.max}</small>` : '';
+    return `<button type="button" class="cm-linha cm-item cm-municao${recusa ? ' off' : ''}" data-n="${i + 1}"><i>${i + 1}</i>`
+      + `<span>${tr(it.rotulo)}${arma ? ` · ${arma.short}` : ''} ${qtd}</span><b>${fmt(it.preco)}</b></button>`;
+  }
+
   _render() {
     const m = this.elMenu;
     if (!m) return;
@@ -293,6 +330,7 @@ export class CompraPartida {
       const desl = this.desligados(), equip = this.equipDe(p);
       corpo = itensDoGrupo(this.grupo, { desligados: desl }).map((it, i) => {
         if (it.slot === 'equipamento') return this._linhaEquip(it, i, saldo, equip);
+        if (it.slot === 'municao') return this._linhaMunicao(it, i, saldo);
         const preco = precoDe(it.id, { assinatura: assin });
         const tem = p.primary === it.id || p.secondary === it.id;
         const sem = saldo < preco;
@@ -307,7 +345,7 @@ export class CompraPartida {
     }
     const pe = `<div class="cm-pe">${this.aviso ? `<span class="cm-aviso">${this.aviso}</span>` : ''}`
       + `<button type="button" class="cm-linha cm-voltar" data-n="0"><i>0</i><span>${frase(this.grupo ? 'compraVoltar' : 'compraFechar')}</span></button></div>`;
-    m.innerHTML = cab + corpo + pe;
+    m.innerHTML = `<div class="cm-painel">${cab}<div class="cm-corpo">${corpo}</div>${pe}</div>`;
     m.classList.remove('hidden');
     for (const b of m.querySelectorAll?.('button[data-n]') || []) b.onclick = () => this._escolher(+b.dataset.n);
   }

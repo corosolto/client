@@ -103,7 +103,7 @@ function montarHud(hud) {
   }
   const acoes = $('hud-actions');
   if (acoes) acoes.prepend(el('span', 'tp-hud-cam'));
-  /* Teclas lidas do game.js (_input) e do ping deste módulo; nenhuma muda aqui. */
+  /* Teclas lidas do game.js (_input) e do ping deste módulo. */
   const dicas = el('div', 'tp-hud-dicas');
   dicas.title = tr('Comandos: somem em 60 s, voltam com ALT');
   const dica = (teclas, txt) => {
@@ -114,7 +114,9 @@ function montarHud(hud) {
     return s;
   };
   dica('E', 'pegar');
-  dica('B', 'câmera');
+  dica('B', 'comprar');
+  dica(',/.', 'munição');
+  dica('N', 'câmera');
   dica('F', 'ping');
   dica('Z/X/V', 'rádio');
   dica('Y/U', 'chat').dataset.chat = '';
@@ -128,7 +130,7 @@ const CAMERA = { first: '1ª PESSOA', third: '3ª PESSOA', shoulder: 'OMBRO' };
 function atualizarCamera(g) {
   const chip = document.querySelector('#hud-actions .tp-hud-cam');
   if (!chip) return;
-  const txt = `${tr(CAMERA[g.camView] || CAMERA.first)} · B`;
+  const txt = `${tr(CAMERA[g.camView] || CAMERA.first)} · N`;
   if (chip.textContent !== txt) chip.textContent = txt;
 }
 
