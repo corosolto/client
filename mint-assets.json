@@ -3047,6 +3047,75 @@
         ],
         "finalSha256": "f60196c2ec628650483fbf85086cd43e36697e238102e3ceaead147849d73cca"
       }
+    },
+    "jp-poste-transformador": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/poste_transformador.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/modular_electricity_poles",
+        "displayName": "modular_electricity_poles",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "estrutura",
+        "notes": "Invasão dos Javaporcos (rua/praça). 12665 tris (bruto 31932), 1.2 x 6.13 x 1.96 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "c686408577a737aa3a23ddd41ba5be30fd4ce3c4045797bae2a7136211069156"
+      }
+    },
+    "jp-poste-fiacao": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/poste_fiacao.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/modular_electricity_poles",
+        "displayName": "modular_electricity_poles",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "estrutura",
+        "notes": "Invasão dos Javaporcos (rua/beco). 12499 tris (bruto 26466), 1.2 x 6.13 x 0.85 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "590675796500f0aeb99186adbf02835411357e72afedcb63c8ae87c21d1d361a"
+      }
+    },
+    "jp-poste-luz-praca": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/poste_luz_praca.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/street_lamp_01",
+        "displayName": "street_lamp_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "estrutura",
+        "notes": "Invasão dos Javaporcos (praça). 12095 tris (bruto 30610), 0.7 x 3.87 x 0.39 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "23a9860c2b24c4d832ed906eaeb146398fd464cddd4d20175e4208b18d419af8"
+      }
     }
   }
 }

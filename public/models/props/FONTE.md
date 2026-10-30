@@ -346,3 +346,11 @@ o acervo já carrega o Gol G2 NC, mas com loja no jogo a decisão de mantê-los 
 | `porta_aco_pichada.glb` | <https://polyhaven.com/a/rollershutter_door> | Poly Haven | CC0 1.0 | 552 (552) | 217 | 1.08 x 2.4 x 0.3 | rua/beco |
 | `barreira_concreto.glb` | <https://polyhaven.com/a/concrete_road_barrier> | Poly Haven | CC0 1.0 | 8.000 (60.928) | 281 | 1.54 x 0.83 x 0.64 | praça (barricada) |
 | `luminaria_parede.glb` | <https://polyhaven.com/a/street_lamp_02> | Poly Haven | CC0 1.0 | 8.096 (20.338) | 287 | 0.39 x 1.67 x 0.81 | praça (fachada da igreja) |
+
+### Postes (rua, beco e praça)
+
+| Arquivo | Origem | Autor | Licença | Tris (bruto) | KB | Dimensão (m) | Uso |
+|---|---|---|---|---|---|---|---|
+| `poste_transformador.glb` | <https://polyhaven.com/a/modular_electricity_poles> | Poly Haven | CC0 1.0 | 12.665 (31.932) | 867 | 1.2 x 6.13 x 1.96 | rua/praça |
+| `poste_fiacao.glb` | <https://polyhaven.com/a/modular_electricity_poles> | Poly Haven | CC0 1.0 | 12.499 (26.466) | 856 | 1.2 x 6.13 x 0.85 | rua/beco |
+| `poste_luz_praca.glb` | <https://polyhaven.com/a/street_lamp_01> | Poly Haven | CC0 1.0 | 12.095 (30.610) | 359 | 0.7 x 3.87 x 0.39 | praça |
