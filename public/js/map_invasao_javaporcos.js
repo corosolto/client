@@ -71,7 +71,7 @@ export function buildInvasaoJavaporcos(scene, T) {
     touceira: lam({ map: TX.capimAltoTex(), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 1 }),
     cupim: lam({ map: TX.terraTex(), color: 0xd09a72 }),
     mourao: lam({ map: TX.cascaTex(), color: 0xb0a490 }),
-    cimento: comPbr('concrete_pavement', TX.cimentoTex(), { color: 0xb8b2a6 }, { repeat: 0.6 }),
+    cimento: lam({ map: TX.cimentoTex(), color: 0xd8d2c6 }),
     medidor: lam({ map: TX.lataTex('#9a9c98', 8), metalness: 0.3, roughness: 0.5 }),
     roupa: lam({ map: TX.tecidoTex(), side: THREE.DoubleSide }),
     botijao: lam({ map: TX.lataTex('#2f5f9a', 10), metalness: 0.25, roughness: 0.45 }),

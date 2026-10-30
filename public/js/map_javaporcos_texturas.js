@@ -423,24 +423,39 @@ export function rebocoDescascadoTex(cor, semente = 1, rx = 1, ry = 1) {
   }, 2.0);
 }
 
-/* Cimentado de beco: placa rachada, remendo e mancha de água parada. */
+/* Cimentado de beco: junta de dilatação a cada metro, rachadura ramificada, mancha de
+   umidade em polígono irregular (nada de elipse) e agregado aparente. */
 export function cimentoTex(rx = 1, ry = 1) {
-  return tela('jp-cimento', 256, rx, ry, (x, s, r) => {
-    x.fillStyle = '#77736b'; x.fillRect(0, 0, s, s);
-    grao(x, s, 2600, ['#68645d', '#86827a', '#5a5650'], 0.5, r);
-    for (let i = 0; i < 6; i++) {
-      x.globalAlpha = 0.3 + r() * 0.25; x.fillStyle = r() > 0.5 ? '#4d4a44' : '#3b3c35';
-      x.beginPath(); x.ellipse(r() * s, r() * s, 10 + r() * 34, 8 + r() * 22, r() * 3, 0, 6.283); x.fill();
+  return tela('jp-cimento', 512, rx, ry, (x, s, r) => {
+    x.fillStyle = '#7d786f'; x.fillRect(0, 0, s, s);
+    grao(x, s, 9000, ['#6a665e', '#8e8a81', '#5c5851', '#9a958a'], 0.45, r);
+    for (let i = 0; i < 9; i++) {
+      const cx = r() * s, cy = r() * s, raio = 30 + r() * 90;
+      for (let camada = 0; camada < 4; camada++) {
+        x.globalAlpha = 0.07 + r() * 0.06; x.fillStyle = r() > 0.4 ? '#3c3a34' : '#56584a';
+        x.beginPath();
+        for (let k = 0; k < 14; k++) { const a = (k / 14) * 6.283, f = (0.55 + r() * 0.6) * (1 - camada * 0.18); x.lineTo(cx + Math.cos(a) * raio * f, cy + Math.sin(a) * raio * f * 0.7); }
+        x.closePath(); x.fill();
+      }
     }
     x.globalAlpha = 1;
-    x.strokeStyle = '#3a3732'; x.lineWidth = 1.3;
-    for (let i = 0; i < 9; i++) {
-      let px = r() * s, py = r() * s;
-      x.beginPath(); x.moveTo(px, py);
-      for (let k = 0; k < 6; k++) { px += (r() - 0.5) * 50; py += (r() - 0.5) * 50; x.lineTo(px, py); }
-      x.stroke();
+    for (const p of [0, s / 2]) {
+      x.fillStyle = 'rgba(40,38,34,0.75)'; x.fillRect(p, 0, 3, s); x.fillRect(0, p, s, 3);
+      for (let i = 0; i < 40; i++) { x.fillStyle = 'rgba(48,45,40,0.6)'; x.fillRect(p - 2 + r() * 4, r() * s, 2 + r() * 4, 2 + r() * 6); x.fillRect(r() * s, p - 2 + r() * 4, 2 + r() * 6, 2 + r() * 4); }
     }
-  }, 2.2);
+    const racha = (px, py, n, w) => {
+      x.lineWidth = w; x.beginPath(); x.moveTo(px, py);
+      for (let k = 0; k < n; k++) {
+        px += (r() - 0.5) * 40; py += (r() - 0.5) * 40; x.lineTo(px, py);
+        if (w > 0.8 && r() < 0.25) { x.stroke(); racha(px, py, 3, w * 0.6); x.beginPath(); x.moveTo(px, py); x.lineWidth = w; }
+      }
+      x.stroke();
+    };
+    x.strokeStyle = '#2e2b27';
+    for (let i = 0; i < 7; i++) racha(r() * s, r() * s, 8, 1.6);
+    x.strokeStyle = 'rgba(200,194,182,0.25)';
+    for (let i = 0; i < 5; i++) racha(r() * s, r() * s, 5, 1);
+  }, 2.6);
 }
 
 /* Tecido de roupa no varal: trama clara; a cor de cada peça vem da instância. */
