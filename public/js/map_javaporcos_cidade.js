@@ -871,7 +871,22 @@ function luzDosBecos(kit, postes) {
       luz.updateMatrixWorld(); luz.target.updateMatrixWorld();
     }
   };
-  kit.root.add(guia);
+  // halo de 0,6 m que encara a câmera: a captura não passa pelo bloom, então o brilho é dele
+  const disco = new THREE.RingGeometry(0, 0.6, 24, 2), pos = disco.attributes.position, alfa = [];
+  for (let i = 0; i < pos.count; i++) { const t = 1 - Math.hypot(pos.getX(i), pos.getY(i)) / 0.6; alfa.push(1, 1, 1, t * t); }
+  disco.setAttribute('color', new THREE.Float32BufferAttribute(alfa, 4));
+  const halo = new THREE.Mesh(disco, new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc48a).multiplyScalar(2), vertexColors: true, transparent: true,
+    blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  halo.name = 'beco-luz-halo'; halo.frustumCulled = false; halo.castShadow = false; halo.userData.nonSolidSurface = true;
+  kit.root.add(guia, halo);
+  const antes = guia.onBeforeRender;
+  guia.onBeforeRender = (r, s, cam) => {
+    antes(r, s, cam);
+    if (!cam?.isPerspectiveCamera) return;
+    halo.visible = cam.position.y < 15 && luz.position.distanceToSquared(cam.position) < 900;
+    halo.position.set(luz.position.x, luz.position.y + 0.12, luz.position.z); halo.quaternion.copy(cam.quaternion);
+    halo.updateMatrixWorld();
+  };
 }
 
 /* Cena do eixo da câmera do centro (rua do conceito D): caçamba na guia da avenida

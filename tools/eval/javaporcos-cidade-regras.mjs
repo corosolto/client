@@ -62,6 +62,8 @@
              (albedo L* ~50 em vez dos 40 da madeira crua), e nunca o material da telha.
      LAMP1   lâmpada do beco com ponto quente ("SpotLight virado pro chão, sem ponto quente"):
              cone de sódio a ≥ 30 e lente `poste-lente` com emissivo 0xffc48a a ≥ 4.
+     LAMP2   halo `beco-luz-halo` aditivo de raio ≥ 0,5 m que vai com a luz para cada beco
+             (a ≤ 0,3 m dela) e encara a câmera: a captura não passa pelo bloom.
 
    RODADA 4 (crítico 6/10: "rua do centro lê como pátio", sem lixo ao longo da guia):
      ORC1    o GLB saco_lixo tem ~2,7 mil triângulos e a caixa ~3,2 mil: com os montes do
@@ -85,6 +87,7 @@
      telhado-solto   um cone de telhado por casa de novo                   -> ORC2
      beiral-preto    tampa de baixo do telhado volta à telha                -> FORRO1
      lampada-fraca   cone volta a 20 e lente a 0xffb070 a 3                 -> LAMP1
+     sem-halo        tira o halo da lâmpada                                 -> LAMP2
      saco-ovo        tira a escala por eixo e a inclinação de todo saco      -> SACO1
      guia-limpa      some com o lixo de guia da malha de decalque             -> RUA2
      saco-longe      corte do saco volta a 38 m no fonte lido                 -> ORC1
@@ -96,7 +99,7 @@
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'beiral-preto', 'lampada-fraca', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'beiral-preto', 'lampada-fraca', 'sem-halo', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -465,6 +468,25 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     exige(l.intensity >= 30, `cone do beco a ${l.intensity} (piso 30): chão sem ponto quente`);
     exige(m.emissiveIntensity >= 4 && m.emissive.getHex() === 0xffc48a, `lente ${m.emissive.getHexString()} a ${m.emissiveIntensity} (0xffc48a a ≥ 4)`);
     return `cone a ${l.intensity}, lente ${m.emissive.getHexString()} a ${m.emissiveIntensity}`;
+  });
+
+  if (MUT === 'sem-halo') { const h = porNome('beco-luz-halo'); exige(h, 'MUTANTE sem-halo NÃO APLICOU'); h.parent.remove(h); }
+  regra('LAMP2 halo da lâmpada vai com a luz e encara a câmera', () => {
+    const h = porNome('beco-luz-halo'), guia = porNome('beco-luz-guia');
+    let l = null; W.root.traverse((o) => { if (o.isLight && o.name === 'beco-luz') l = o; });
+    exige(h && guia && l, 'sem halo, guia ou luz do beco');
+    exige(h.material.blending === THREE.AdditiveBlending && !h.material.depthWrite, 'halo não é aditivo sem escrita de profundidade');
+    h.geometry.computeBoundingSphere();
+    exige(h.geometry.boundingSphere.radius >= 0.5, `halo de raio ${h.geometry.boundingSphere.radius.toFixed(2)} (piso 0,5)`);
+    const cam = new THREE.PerspectiveCamera();
+    const ds = becoCaixas().map((bb) => {
+      bb.getCenter(cam.position); cam.position.y = 1.7; cam.rotation.set(0.3, 1, 0); cam.updateMatrixWorld();
+      guia.onBeforeRender(null, null, cam);
+      exige(h.visible && h.quaternion.angleTo(cam.quaternion) < 1e-3, 'halo apagado ou sem encarar a câmera dentro do beco');
+      return h.position.distanceTo(l.position);
+    });
+    exige(ds.every((d) => d <= 0.3), `halo longe da luz: ${ds.map((d) => d.toFixed(2)).join(', ')} m (teto 0,3)`);
+    return `halo em ${ds.length} becos a ${Math.max(...ds).toFixed(2)} m da luz`;
   });
 
   regra('BECOLUZ1 uma luz de sódio dentro de cada beco', () => {
