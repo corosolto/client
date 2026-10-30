@@ -37,19 +37,19 @@
             invasão para na calçada, que é o defeito que o dono viu.
 
    LAYOUT DE 30/10/2026 (decisões do dono: pasto entre cidade e mata, 3 frentes, becos):
-     MATA3  FRENTES FECHADAS: anel de sondas a pé na ENTRADA da parede (v = 45 m, os quatro
+     MATA3  FRENTES FECHADAS: anel de sondas a pé na ENTRADA da parede (v = 55 m, os quatro
             lados). Os arcos livres contíguos são as bocas de verdade — tem de haver
             EXATAMENTE 3, cada um sobre uma frente declarada. Declarar 3 e deixar furo
             aberto na mata é o que esta cláusula pega.
      PASTO1 LINHA DE TIRO: raio horizontal a 1,6 m da borda da cidade (r = 35,8) para fora,
-            a cada 2 m dos quatro lados, contra `occluders` + sub-bosque. 85% dos raios têm de correr 7,4 m
-            livres (o pasto) e a mediana do primeiro acerto tem de cair na mata (≤ 12 m):
+            a cada 2 m dos quatro lados, contra `occluders` + sub-bosque. 85% dos raios têm de correr 17,4 m
+            livres (o pasto) e a mediana do primeiro acerto tem de cair na mata (≤ 22 m):
             mede a largura do pasto pela primeira árvore, não pela constante.
      PASTO2 GRAMA DE VERDADE: capim em cartão ≥ 2,5 por m² do anel, touceira ≥ 150 com
             altura ≥ 0,9 m, ≥ 8 cupinzeiros com colisor, ≥ 60 mourões, e o chão do pasto
             com cor por vértice variando (desvio do canal mais variado > 0,03) — não um plano verde liso.
      HORDA1 CONTRATO `world.horda.frentes`: 3 frentes ≥ 40 m uma da outra, boca no fio da
-            mata (43 a 45 m), rota da mata (≥ 46 m) até a borda da cidade (35,5 a 36,6 m).
+            mata (53 a 55 m), rota da mata (≥ 56 m) até a borda da cidade (35,5 a 36,6 m).
             A rota é caminhada a cada 0,25 m: corpo de 0,45 m sem colisor, degrau ≤ 0,3 m
             por passo e sonda de chão ≤ 0,30 m (o bicho não afunda). A navegação liga a
             ponta da rota à cidade com ≤ 1,6× o comprimento da rota.
@@ -125,10 +125,10 @@ const PASSO = 0.6;           // grade do flood-fill de fuga
 const DEGRAU = 1.2 * PASSO;
 const PEITO = 1.40;
 const PEN_MAX = 0.30;        // penetração máxima da sonda vertical (MAP1 do map-check)
-/* 54 m: a clareira mais funda fica a 52,6 m do centro (49,6 + raio 3,0), e a borda do
-   mapa está em 58. Entre 52,6 e 58 sobram 5,4 m de mata que ninguém atravessa. */
-const LIMITE_ESCAPE = 54;
-const CIDADE_R = 36, MATA_R = 44, V_SONDA_PAREDE = 45.0;   // 0,4 m dentro do começo da parede (44,6)
+/* 64 m: a clareira mais funda fica a 62,6 m do centro (59,6 + raio 3,0), e a borda do
+   mapa está em 68. Entre 62,6 e 68 sobram 5,4 m de mata que ninguém atravessa. */
+const LIMITE_ESCAPE = 64;
+const CIDADE_R = 36, MATA_R = 54, V_SONDA_PAREDE = 55.0;   // 0,4 m dentro do começo da parede (54,6)
 const SEED = 13007;
 let falhas = 0;
 const relatorio = {};
@@ -358,7 +358,7 @@ const sonda = (x, z) => {
 };
 
 regra('CHAO1 groundHeightAt tem relevo e bate com a malha visível', () => {
-  const rua = gh(0, 10), calcada = gh(7, 10), barranco = gh(0, -52);
+  const rua = gh(0, 10), calcada = gh(7, 10), barranco = gh(0, -62);
   let leito = Infinity;
   for (let z = -46; z <= -37; z += 0.25) leito = Math.min(leito, gh(0, z));
   exige(calcada - rua > 0.08, `calçada (${calcada.toFixed(2)} m) não sobe sobre a rua (${rua.toFixed(2)} m): o chão é chapado`);
@@ -516,15 +516,15 @@ regra('PASTO1 linha de tiro aberta da borda da cidade até a mata', () => {
       const h = rc.intersectObjects(alvos, false)[0];
       const d = h ? h.distance : 30;
       dists.push(d);
-      if (d >= 7.4) livres++;
+      if (d >= 17.4) livres++;
     }
   }
   dists.sort((a, b) => a - b);
   const mediana = dists[dists.length >> 1], frac = livres / dists.length;
   relatorio.pasto = { raios: dists.length, livres, fracao: +frac.toFixed(3), larguraMediana: +mediana.toFixed(2) };
-  exige(frac >= 0.85, `só ${(100 * frac).toFixed(0)}% dos ${dists.length} raios correm 7,4 m livres (piso 85%): o pasto está tomado`);
-  exige(mediana <= 12, `mediana do primeiro acerto a ${mediana.toFixed(1)} m (teto 12): os raios não acham a mata, a régua não mediu`);
-  return `${livres}/${dists.length} raios livres por 7,4 m; primeiro acerto mediano a ${mediana.toFixed(2)} m da borda`;
+  exige(frac >= 0.85, `só ${(100 * frac).toFixed(0)}% dos ${dists.length} raios correm 17,4 m livres (piso 85%): o pasto está tomado`);
+  exige(mediana <= 22, `mediana do primeiro acerto a ${mediana.toFixed(1)} m (teto 22): os raios não acham a mata, a régua não mediu`);
+  return `${livres}/${dists.length} raios livres por 17,4 m; primeiro acerto mediano a ${mediana.toFixed(2)} m da borda`;
 });
 
 regra('PASTO2 grama densa, touceira alta, cupinzeiro e cerca', () => {
@@ -613,10 +613,10 @@ regra('HORDA1 3 frentes com rota caminhável da mata até a cidade', () => {
   for (const f of F) {
     exige(typeof f.nome === 'string' && f.nome, `frente ${f.id} sem nome`);
     const rb = raioDe(f.boca);
-    exige(rb >= 43 && rb <= 45, `boca da frente ${f.id} a ${rb.toFixed(1)} m (faixa 43 a 45: fio da mata)`);
+    exige(rb >= 53 && rb <= 55, `boca da frente ${f.id} a ${rb.toFixed(1)} m (faixa 53 a 55: fio da mata)`);
     exige(f.rota.length >= 3, `rota da frente ${f.id} com ${f.rota.length} pontos`);
     const r0 = raioDe(f.rota[0]), r1 = raioDe(f.rota[f.rota.length - 1]);
-    exige(r0 >= 46, `rota ${f.id} começa a ${r0.toFixed(1)} m: tem de sair de dentro da mata (≥ 46)`);
+    exige(r0 >= 56, `rota ${f.id} começa a ${r0.toFixed(1)} m: tem de sair de dentro da mata (≥ 56)`);
     exige(r1 >= 35.5 && r1 <= 36.6, `rota ${f.id} termina a ${r1.toFixed(1)} m: tem de encostar na cidade (35,5 a 36,6)`);
     exige(f.rota.some((p) => Math.hypot(p.x - f.boca.x, p.z - f.boca.z) < 0.6), `a rota ${f.id} não passa pela própria boca`);
     exige(W.boarEntrances.some((b) => Math.hypot(b.x - f.rota[0].x, b.z - f.rota[0].z) < 0.6), `rota ${f.id} não começa numa boarEntrance`);

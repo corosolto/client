@@ -146,8 +146,8 @@ pode retomar normalmente. Danos, intervalos e demais números existentes preserv
   Portão inicialmente reprovou apenas o insumo map_check desatualizado; a nova
   medição física final passou: zero corpo dentro/penetração, folga 1,9 m e área
   contígua 53,2 m², zero occluder sem malha entre 498 medidos. Os outros 18 mapas
-  foram fundidos de volta sem mudar seus resultados. Portão está sendo repetido
-  com o insumo fresco.
+  foram fundidos de volta sem mudar seus resultados. Portão final verde: apenas
+  duas dívidas COB2 já declaradas, nenhum vermelho novo. Checkpoint 2362bb011.
 
 ## Restrições e próximo passo
 
@@ -164,3 +164,59 @@ fornecido por ambiente, sem expor ou registrar seu valor.
 Sonda preparatória do pedido 4: campo real atual 7,47 m, 940 árvores. Protótipo
 54/68 apenas no navegador, sem modificar o mapa: repetir orçamento com
 `atualizaCortes` real, pois a primeira sonda manual omitiu esse passo.
+
+
+## Pedido 4 — ampliação em validação (não concluído)
+
+Arena ±68, cidade ±36, mata começa em 54: campo real 17,86 m, profundidade de
+mata 14,14 m, 1.056 árvores (antes 7,47 m/940 árvores). Três bocas preservadas;
+MATA1/2/3, NAV1, TRILHA1/2, PASTO1/2 passam no protótipo ampliado. Nova régua
+`javaporcos-pasto-grande-check.mjs` reprova original e mutante pasto-curto.
+
+- Protótipo apenas com dimensões estourava triângulos: centro 2.345.283.
+- Redução uniforme da malha reprovou CHAO1: 0,43 m acima do campo no aterro.
+- Revisor identificou cegueira de CHAO1 para solo abaixo dos pés. Nova régua mede
+  erro absoluto e tem mutante terreno-afundado; detectou 0,478 m na mata com malha2m.
+- Ajuste atual: física sempre 0,5 m; mata visual 1 m; cidade plana 2 m; pasto 2 m,
+  córrego 1 m e borda de aterro 0,5 m. A diagonal segue o vinco x=z: erro máximo
+  caiu de 0,346 m para 0,150 m. Mapa completo e revisão final passaram.
+- Sondas iniciais de GPU variaram com armas/atores assíncronos (até 1.033 chamadas)
+  e memória antes de estabilizar. A/B final esperou 6 s e GC por CDP: antes
+  916/994/520 chamadas, 2,197/2,106/1,372 M tris, heap 238 MB; depois
+  868/953/485 chamadas, 2,290/2,242/1,558 M tris, heap 241 MB. Materiais 99.
+  Três vistas medidas dentro dos tetos; não equivale a aprovação humana.
+- Scripts/logs temporários `/tmp/javaporcos-pasto-*`; fotos3:2 campo ampliado.
+  Preservar artefatos e fazer map-check POR ÚLTIMO ao encerrar a fase4.
+
+Próximo passo exato: aguardar map-check final (sessão 2499), fundir outros 18 mapas,
+rodar portão fresco, preservar logs finais e fazer checkpoint 4.
+Mutantes de campo curto, afundamento, diagonal antiga, mata-avanca, rota-no-muro,
+boca-aberta e chao-constante detectados. Comentários, módulos, docs e arquitetura verdes.
+Depois investigar AK por pixels/geometria: IBL shader já passa nos dois mapas,
+portanto não alterar luz sem diagnóstico. Pedidos5/6/7 continuam obrigatórios.
+
+
+Revisão de PR somente leitura: remoto4acda7bf2 tem0reviews/0threads e nenhum
+comentário CodeRabbit acionável (8comentários gerais auditados com paginação).
+Resumo `/tmp/pr1160-review-summary.json`. CI remoto tem falhas classify/invariantes/build,
+causas ainda não investigadas; não declarar PR pronto nem revisão do HEAD local.
+
+
+Sonda somente leitura da AK confirmou causa específica: com tampa de manga padrão,
+retângulo preto cobre o centro; com `mangatampa=0`, AK e braços aparecem corretos.
+Fotos `/tmp/javaporcos-ak-cap-true.png` e `-false.png`, meshes em
+`/tmp/javaporcos-ak-diagnostico.log`. IBL não é causa. Próxima fase5 deve corrigir
+`capSleeveOpenings` preservando mangas fechadas, sem esconder braço nem mudar luz.
+Ainda não há correção5. Não alterar Game antes do checkpoint4.
+
+
+Fechamento da geometria4: mapa completo verde, revisão sem achados e GPU A/B verde.
+CI revelou VM14 real: SVD do armário norte a1,13m do chão alcançável, espremida
+entre carros. Primeiro carro norte/oeste avançou de z−10,9 para−9,9, preservando
+quantidade/modelo e liberando a passagem: 38/38 pickups alcançáveis depois.
+Mutante carro-no-armario restaura o colisor antigo e remonta o armário.
+Checagem física anterior interrompida por essa alteração legítima de geometria;
+repetição final em `/tmp/javaporcos-pasto-mapcheck-carro-final.log` (sessão25243).
+Relatórios pickup/map_check precisam fundir os outros mapas após executar.
+Checkpoint da geometria será feito com esta pendência explícita; a sonda5 não
+altera física/mapas e pode prosseguir enquanto a medição física longa termina.

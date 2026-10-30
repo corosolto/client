@@ -1,4 +1,4 @@
-/* Cinturão de mata fechada a partir de r = 44: 0,6 m de orla com tronco colidível, depois parede.
+/* Cinturão de mata fechada a partir de r = 54: 0,6 m de orla com tronco colidível, depois parede.
    A mata É o limite do mapa — não existe cerca-caixote. Brief: docs/maps/invasao-javaporcos.md. */
 import * as THREE from 'three';
 import { mergeGeometries } from '../vendor/addons/utils/BufferGeometryUtils.js';

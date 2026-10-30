@@ -6,7 +6,7 @@ Decisões do dono de 30/10/2026, traduzidas em geometria. A ficha do mapa é
 artes-conceito em [`arte-javaporcos/`](arte-javaporcos/README.md) (`conceito-a-aerea` é a
 planta macro).
 
-1. **Pasto** entre a cidade (`cityBounds` ±36) e a mata: anel de r = 36 a 44, com
+1. **Pasto** entre a cidade (`cityBounds` ±36) e a mata: anel de r = 36 a 54, com
    r = max(|x|, |z|). Linha de tiro aberta da borda da cidade até a primeira árvore.
 2. **Três frentes** de trilha (norte, leste, sudoeste). As outras sete bocas do layout de
    29/10 viraram mata fechada e colidível.
@@ -14,17 +14,17 @@ planta macro).
    abertos para a horda a partir da onda 3.
 4. Sem lowpoly: textura PBR e props realistas por cima da geometria autoral.
 
-A arena continua ±58: a clareira mais funda fica a 52,6 m e a varredura a pé chega a
-53,6 m, abaixo do teto de 54 da MATA1. Não houve medida pedindo arena maior.
+O pedido 4 amplia a arena para ±68 e o campo para 18 m. A clareira mais funda
+fica a 62,6 m; MATA1 mantém 5,4 m de mata fechada entre clareira e borda.
 
 ## Planta
 
 | faixa (r) | o que é |
 | --- | --- |
 | 0 a 36 | cidade: avenida em cruz, vielas em ±22, anel perimetral de terra 31,5–36 |
-| 36 a 44 | pasto: sobe 0,45 m em rampa ondulada; cerca a 37,2; córrego no lado norte |
-| 43,4 a 44,6 | orla: primeira fileira de árvore, com colisor por tronco |
-| 44,6 a 58 | parede de mata: colisor em colunas de 0,5 m, aberto só nas trilhas |
+| 36 a 54 | pasto: sobe 0,45 m em rampa ondulada; cerca a 37,2; córrego no lado norte |
+| 53,4 a 54,6 | orla: primeira fileira de árvore, com colisor por tronco |
+| 54,6 a 68 | parede de mata: colisor em colunas de 0,5 m, aberto só nas trilhas |
 
 ## Cotas do relevo
 
@@ -32,13 +32,13 @@ Os números vivem em `public/js/map_javaporcos_relevo.js`.
 
 | constante | valor | o que decide |
 | --- | --- | --- |
-| `HALF` | 58 m | meia-extensão da arena (`bounds` ±58). Ninguém chega aqui a pé (MATA1). |
+| `HALF` | 68 m | meia-extensão da arena (`bounds` ±68). Ninguém chega aqui a pé (MATA1). |
 | `CIDADE` | 36 m | meia-extensão do miolo urbano; o pasto começa aqui. |
-| `MATA_R` | 44 m | onde a mata começa. Pasto de 8 m: decisão do dono. |
-| `PASSO` | 0,5 m | passo da grade de altura (233×233 floats). A malha do pasto usa o mesmo passo. |
+| `MATA_R` | 54 m | onde a mata começa. Pasto de 18 m: pedido 4 do prompt de 30/10. |
+| `PASSO` | 0,5 m | passo da grade física de altura (273×273 floats). Malha visível: cidade plana 2 m, mata 1 m, pasto 2 m, córrego 1 m e aterro 0,5 m. |
 | `PASTO_SOBE` | 0,45 m | rampa do pasto até a mata: lê como terreno, não como mesa. Ondulação de ±0,18 m por cima. |
 | `BARRANCO` | 2,6 m | desnível entre a cidade e o platô da mata. |
-| `SUBIDA` | 4,5 m | comprimento do barranco, de 44 a 48,5 (~0,7 m/m, subível pelo `_collide`). |
+| `SUBIDA` | 4,5 m | comprimento do barranco, de 54 a 58,5 (~0,7 m/m, subível pelo `_collide`). |
 | `CORREGO_Z` | −41,6 | eixo do córrego no pasto norte, ondulando ±0,8 m. |
 | `CORREGO_MEIA` / `CORREGO_FUNDO` | 2,3 / 1,1 m | leito; lâmina d'água a 0,42 m do fundo, só onde há corte. |
 | `ATERRO_MEIA` | 2,4 m | a trilha norte cruza o córrego por aterro (sem corte a 2,4 m do eixo). |
@@ -51,14 +51,14 @@ Em `public/js/map_javaporcos_mata.js`.
 
 | constante | valor | o que decide |
 | --- | --- | --- |
-| `V_ANDAVEL` / `V_PAREDE0` | 44,6 m | 0,6 m de orla caminhável; dali para fora é parede. |
-| `V_PAREDE1` | 58 m | a parede vai até a borda. |
+| `V_ANDAVEL` / `V_PAREDE0` | 54,6 m | 0,6 m de orla caminhável; dali para fora é parede. |
+| `V_PAREDE1` | 68 m | a parede vai até a borda. |
 | `COLUNA` | 0,5 m | coluna de parede. Com 2,5 m a coluna vizinha da trilha caía inteira e deixava bolsões de 5 m entre troncos: a MATA3 mediu 9 arcos abertos onde devia haver 3. |
 | corrida mínima | 0,5 m | trecho de parede menor que 1,4 m era descartado e virava furo ao lado da curva da trilha. |
 | `FOLGA_TRILHA` | 2,9 m | trilha + meio corpo + margem. |
 | `ACHATAMENTO` | 0,62 | copa em disco. |
 
-A moita da orla encolhe até não passar de r = 43,4: moita de 2,25 m de raio em 43,5 tapava
+A moita da orla encolhe até não passar de r = 53,4. Na versão anterior (pasto de 8 m): moita de 2,25 m de raio em 43,5 tapava
 a linha de tiro (PASTO1 media 51% de raios livres antes disso; agora 138 de 140, primeiro acerto mediano
 a 8,38 m da borda da cidade).
 
@@ -86,9 +86,9 @@ chão visível acima do `groundHeightAt` (HORDA1).
 
 | id | nome | boca | rota (clareira → cidade) |
 | --- | --- | --- | --- |
-| `norte` | Trilha do Norte | (−10, −44) | (−19, −49,6) → (−14,95, −49,4) → (−10, −47,4) → (−10, −44) → (−4,9, −40,2) → (−3, −36,4) |
-| `leste` | Trilha do Leste | (44, 12) | (49,6, 21) → (49,4, 16,95) → (47,4, 12) → (44, 12) → (40,2, 6,1) → (36,4, 3) |
-| `sudoeste` | Trilha do Sudoeste | (−24, 44) | (−33, 49,6) → (−28,95, 49,4) → (−24, 47,4) → (−24, 44) → (−21,8, 40,2) → (−22, 36,4) |
+| `norte` | Trilha do Norte | (−10, −54) | (−19, −59,6) → (−14,95, −59,4) → (−10, −57,4) → (−10, −54) → (−4,9, −45,2) → (−3, −36,4) |
+| `leste` | Trilha do Leste | (54, 12) | (59,6, 21) → (59,4, 16,95) → (57,4, 12) → (54, 12) → (45,2, 6,1) → (36,4, 3) |
+| `sudoeste` | Trilha do Sudoeste | (−24, 54) | (−33, 59,6) → (−28,95, 59,4) → (−24, 57,4) → (−24, 54) → (−21,8, 45,2) → (−22, 36,4) |
 
 Norte chega na ponta da avenida norte, leste na avenida leste, sudoeste na viela oeste
 pelo anel sul. `boarEntrances` são as três clareiras, com o mesmo `id`.
@@ -185,3 +185,14 @@ mapa (personagens, armas, céu). O que resta caro no mapa é a copa em icosaedro
 `node tools/eval/javaporcos-mapa-check.mjs` — cláusulas MATA1–3, CHAO1, COMIDA1, NAV1,
 TRILHA1–2, PASTO1–2, HORDA1, BECO1, SETOR1, PROPS1. Os 12 mutantes estão no cabeçalho
 do arquivo; cada um acende a cláusula que diz medir.
+
+
+### Tesselação da ampliação
+
+A física continua amostrada a cada 0,5 m. A malha acompanha a dobra `x=z` do barranco
+nos quadrantes norte/oeste e sul/leste: a diagonal oposta fazia ponte 0,346 m acima
+do campo. A régua `eval:javaporcospasto` mede erro absoluto nos dois sentidos,
+com a mesma folga 0,30 m de CHAO1/MAP1. Mutantes: campo curto, terreno afundado,
+e diagonal antiga. O máximo observado após ajuste é 0,150 m.
+O córrego mantém resolução 1 m, com o aterro norte 0,5 m; essa faixa é detalhada
+porque a malha uniforme 1 m provocava penetração 0,43 m na borda do aterro.

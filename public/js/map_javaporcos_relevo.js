@@ -4,9 +4,9 @@ import * as THREE from 'three';
 
 /* Medidas do relevo (arena, cidade, pasto, barranco, córrego e trilhas) e o porquê de
    cada número: docs/maps/invasao-javaporcos-layout.md, seção "Cotas do relevo". */
-export const HALF = 58;
+export const HALF = 68;
 export const CIDADE = 36;
-export const MATA_R = 44;
+export const MATA_R = 54;
 export const PASSO = 0.5;
 export const PASTO_SOBE = 0.45;
 export const BARRANCO = 2.6;
@@ -171,6 +171,16 @@ export function malhaTerreno(campo, mat, x0, x1, z0, z1, passo = PASSO * 2, tile
     const c = new Float32Array(pos.count * 3);
     for (let v = 0; v < pos.count; v++) c.set(cor(cx + pos.getX(v), cz - pos.getY(v)), v * 3);
     geo.setAttribute('color', new THREE.BufferAttribute(c, 3));
+  }
+  // A dobra quadrada do barranco segue x=z em dois quadrantes; a diagonal oposta cria uma ponte sobre a física.
+  const indices = geo.index;
+  for (let iz = 0; iz < nz; iz++) for (let ix = 0; ix < nx; ix++) {
+    const ax = x0 + ix * (x1 - x0) / nx, az = z0 + iz * (z1 - z0) / nz;
+    const bx = x0 + (ix + 1) * (x1 - x0) / nx, bz = z0 + (iz + 1) * (z1 - z0) / nz;
+    if (ax * az <= 0 || Math.max(ax, az) > Math.min(bx, bz)) continue;
+    const a = ix + (nx + 1) * iz, b = a + nx + 1, c = b + 1, d = a + 1;
+    const k = (iz * nx + ix) * 6;
+    [a, b, c, a, c, d].forEach((v, i) => indices.setX(k + i, v));
   }
   geo.rotateX(-Math.PI / 2);
   geo.computeVertexNormals();

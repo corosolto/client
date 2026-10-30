@@ -43,7 +43,7 @@
    ============================================================================ */
 
 export const MUTANTES = ['cupim-orelha', 'folha-escura', 'cupim-domo', 'trilha-piche', 'trilha-degrau', 'copa-pirulito', 'tronco-pelado', 'cupim-cone'];
-const HALF = 58;
+const HALF = 68;
 
 export function regrasMata({ W, THREE, MUT, regra, exige }) {
   const porNome = (nome) => { let m = null; W.root.traverse((o) => { if (o.name === nome) m = o; }); return m; };

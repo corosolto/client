@@ -228,12 +228,14 @@ export function buildInvasaoJavaporcos(scene, T) {
   const terreno = [
     [-HALF, HALF, -HALF, -P, MAT.grama], [-HALF, HALF, P, HALF, MAT.grama],
     [-HALF, -P, -P, P, MAT.grama], [P, HALF, -P, P, MAT.grama],
-    [-P, P, -P, -C, MAT.pasto, true], [-P, P, C, P, MAT.pasto, true],
-    [-P, -C, -C, C, MAT.pasto, true], [C, P, -C, C, MAT.pasto, true],
+    [-P, P, -P, -45, MAT.pasto, 2], [-P, -8, -45, -38, MAT.pasto, 1], [-8, 1, -45, -38, MAT.pasto, PASSO],
+    [1, P, -45, -38, MAT.pasto, 1],
+    [-P, P, -38, -C, MAT.pasto, 2], [-P, P, C, P, MAT.pasto, 2],
+    [-P, -C, -C, C, MAT.pasto, 2], [C, P, -C, C, MAT.pasto, 2],
     [-C, C, -C, C, MAT.gramaCidade],
   ];
   for (const [x0, x1, z0, z1, mat, pasto] of terreno) {
-    const m = pasto ? malhaTerreno(campo, mat, x0, x1, z0, z1, PASSO, 3.0, corPasto) : malhaTerreno(campo, mat, x0, x1, z0, z1);
+    const m = pasto ? malhaTerreno(campo, mat, x0, x1, z0, z1, pasto, 3.0, corPasto) : malhaTerreno(campo, mat, x0, x1, z0, z1, mat === MAT.gramaCidade ? 2 : 1);
     m.name = pasto ? 'chao-pasto' : 'chao-terreno';
     root.add(m);
   }
@@ -365,7 +367,7 @@ function carros(kit, campo, rnd, PB) {
   /* Braço norte é o eixo da câmera do centro: fila cheia nas duas guias, desviando da
      caçamba leste (z −18,75), e três carros na faixa norte da avenida leste-oeste. */
   for (let i = vagas.length - 1; i >= 0; i--) if (braco(vagas[i]) === 'N') { vagas.splice(i, 1); sorteio.splice(i, 1); }
-  const NORTE = [[-1, -10.9], [-1, -15.6], [-1, -20.3], [-1, -25.0], [-1, -29.7], [1, -10.9], [1, -15.3], [1, -22.3], [1, -27.0], [1, -31.6]];
+  const NORTE = [[-1, -9.9], [-1, -15.6], [-1, -20.3], [-1, -25.0], [-1, -29.7], [1, -10.9], [1, -15.3], [1, -22.3], [1, -27.0], [1, -31.6]];
   NORTE.forEach(([s, t], k) => { vagas.push([s * (AV - 1.2), t, 0]); sorteio.push([meu(), ((k * 7) % 6 + 0.5) / 6]); });
   for (const t of [15, -15]) { const k = vagas.findIndex(([x, z]) => x === t && z === -(AV - 1.2)); if (k >= 0) sorteio[k] = sorteio[k] || [meu(), meu()]; }
   vagas.push([10.75, -(AV - 1.2), Math.PI / 2]); sorteio.push([meu(), 2.5 / 6]);
