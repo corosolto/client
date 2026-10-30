@@ -304,7 +304,7 @@ game = muta('resultado-personagem-antigo', game,
   'if (charId) { this.playerDef = byId(charId); this.playerCharId = charId; p.def = this.playerDef; }',
   'if (charId) { this.playerDef = byId(charId); p.def = this.playerDef; }');
 main = muta('loading-sem-wallpaper', main,
-  "_lo.box.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI++));",
+  "_lo.box.style.setProperty('--loading-wall', _loadWallFixa ? `url('${_loadWallFixa}')` : loadingWallUrl(_loadWallI++));",
   "_lo.box.style.setProperty('--loading-wall', 'none');");
 main = muta('splash-sem-wallpaper', main,
   "splash.style.setProperty('--loading-wall', loadingWallUrl(_wallK));",
@@ -768,8 +768,9 @@ const resultadoEstatico = /--me-art/.test(game)
      (`if (charId) { this.playerDef = byId(charId); ... }`) e ficou vermelha sozinha
      quando o guarda ganhou reserva de facção, sem que nada do contrato mudasse. */
   && /_switchTeam\(charId\)[\s\S]{0,900}?this\.playerDef =[\s\S]{0,400}?this\.playerCharId = this\.playerDef\.id;[\s\S]{0,200}?p\.def = this\.playerDef;/.test(game);
+const loadingWallAplicada = main.includes("_lo.box.style.setProperty('--loading-wall', _loadWallFixa ? `url('${_loadWallFixa}')` : loadingWallUrl(_loadWallI++));");
 const loadingWallpaper = /const loadingWallUrl = \(i\) =>/.test(main)
-  && /_lo\.box\.style\.setProperty\('--loading-wall', loadingWallUrl\(_loadWallI\+\+\)\)/.test(main)
+  && loadingWallAplicada
   && /splash\.style\.setProperty\('--loading-wall', loadingWallUrl\(_wallK\)\)/.test(main)
   && loadingCharacterIds.length === 5 && new Set(loadingCharacterIds).size === 5
   && /E: 'gotinha'[\s\S]*?B: 'canarinho'[\s\S]*?U: 'blackmetal'[\s\S]*?C: 'bonzo'[\s\S]*?F: 'mandrake'/.test(loading3d)
@@ -860,7 +861,7 @@ const menuWall3x2AssetsOk = menuWallSources.length > 0 && (await Promise.all(men
   return meta.width === sourceMeta.width && meta.height === Math.round(sourceMeta.width / 1.5);
 }))).every(Boolean);
 const wallpaperLoadingResponsivo = /setProperty\('--loading-wall', loadingWallUrl\(_wallK\)\)/.test(main)
-  && /setProperty\('--loading-wall', loadingWallUrl\(_loadWallI\+\+\)\)/.test(main)
+  && loadingWallAplicada
   && /setProperty\('--menu-wall', HOME_WALL\)/.test(main)
   && /setProperty\('--menu-wall', SETUP_WALL\)/.test(main)
   && /setProperty\('--menu-wall-3x2', HOME_WALL_3X2\)/.test(main)
