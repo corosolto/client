@@ -608,3 +608,47 @@ export function decalAtlasTex() {
   return { map: fazer(cor, 'jp-decal-atlas', true), roughnessMap: fazer(rug, 'jp-decal-rug', false) };
 }
 
+/* Letreiro pintado à mão: atlas 2×7 de 512×146 (3,5:1). Índice = posição em LETREIROS. */
+export const LETREIROS = [
+  ['PADARIA ESTRELA', 'pães • bolos • salgados', '#e9dcb8', '#8a2a1e'],
+  ['MERCADINHO SÃO LUIZ', 'secos e molhados', '#2f5d8a', '#f1e6c8'],
+  ['BAR DO ZÉ', 'cerveja gelada', '#b8322a', '#f4e9cf'],
+  ['CASA DA RAÇÃO', 'agropecuária', '#e2b83a', '#2d3a20'],
+  ['AÇOUGUE BOM CORTE', 'carnes em geral', '#f0ece2', '#a0281e'],
+  ['FARMÁCIA SÃO JOSÉ', 'aberta até as 22h', '#e8efe6', '#1e6a3a'],
+  ['CERVEJA GELADA', '', '#2e6a8a', '#f2d54a'],
+  ['FEIJÃO • ARROZ', 'óleo • açúcar', '#d9c99a', '#7a2a20'],
+  ['BOLOS E SALGADOS', 'encomendas', '#f2e2c4', '#5a3a8a'],
+  ['GÁS E ÁGUA', 'entrega rápida', '#c43a2a', '#ffffff'],
+];
+export function letreiroAtlasTex() {
+  const W = 1024, H = 1024, LW = 512, LH = 146;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const x = c.getContext('2d'), r = lcg(0x1e7e);
+  LETREIROS.forEach(([titulo, sub, fundo, tinta], i) => {
+    const ox = (i % 2) * LW, oy = ((i / 2) | 0) * LH;
+    x.fillStyle = fundo; x.fillRect(ox, oy, LW, LH);
+    x.strokeStyle = tinta; x.lineWidth = 5; x.strokeRect(ox + 8, oy + 8, LW - 16, LH - 16);
+    x.fillStyle = tinta; x.textAlign = 'center'; x.textBaseline = 'middle';
+    let tam = 62;
+    x.font = `900 ${tam}px Impact, 'Arial Black', sans-serif`;
+    while (x.measureText(titulo).width > LW - 50 && tam > 24) { tam -= 2; x.font = `900 ${tam}px Impact, 'Arial Black', sans-serif`; }
+    x.fillText(titulo, ox + LW / 2, oy + (sub ? LH * 0.42 : LH / 2));
+    if (sub) { x.font = `italic 700 26px Georgia, serif`; x.fillText(sub, ox + LW / 2, oy + LH * 0.78); }
+    for (let k = 0; k < 40; k++) {
+      x.globalAlpha = 0.08 + r() * 0.2; x.fillStyle = r() > 0.4 ? '#3a2e22' : '#ffffff';
+      x.beginPath(); x.ellipse(ox + r() * LW, oy + r() * LH, 3 + r() * 30, 2 + r() * 14, r() * 3, 0, 6.283); x.fill();
+    }
+    const escorre = x.createLinearGradient(0, oy + LH * 0.55, 0, oy + LH);
+    escorre.addColorStop(0, 'rgba(40,32,24,0)'); escorre.addColorStop(1, 'rgba(40,32,24,0.4)');
+    x.globalAlpha = 1; x.fillStyle = escorre; x.fillRect(ox, oy + LH * 0.55, LW, LH * 0.45);
+  });
+  const t = new THREE.CanvasTexture(c);
+  t.name = 'jp-letreiros'; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+export const LETREIRO_UV = (i) => {
+  const u0 = (i % 2) * 0.5, v1 = 1 - ((i / 2) | 0) * (146 / 1024);
+  return [u0, v1 - 146 / 1024, u0 + 0.5, v1];
+};

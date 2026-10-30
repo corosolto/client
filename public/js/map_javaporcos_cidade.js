@@ -2,6 +2,7 @@
    o lixo que o javaporco revira. Medidas e paleta: docs/maps/invasao-javaporcos-visual.md. */
 import * as THREE from 'three';
 import { hasProp, placeProp, PropBatch } from './mapprops.js';
+import { LETREIRO_UV } from './map_javaporcos_texturas.js';
 
 export const AV = 6;             // meia-largura da avenida (12 m de asfalto)
 export const CAL = 2;            // calçada
@@ -262,7 +263,9 @@ function quintal(kit, campo, rnd, b) {
 }
 
 /* ── LOJA COM INTERIOR ─────────────────────────────────────────────────────────────── */
-const LOJA_LETREIRO = { mercearia: 'signBoteco', padaria: 'signPastel', boteco: 'signSindicato', racao: 'truckSide' };
+/* Índices em LETREIROS (texturas): nome na fachada, anúncio pintado ao lado da porta e
+   anúncio na parede lateral. */
+const LOJA_LETREIRO = { padaria: [0, 8, 5], mercearia: [1, 7, 4], boteco: [2, 6, -1], racao: [3, 9, -1] };
 
 function loja(kit, campo, rnd, b, papel) {
   const { MAT, caixa, piso, placa } = kit;
@@ -304,10 +307,25 @@ function loja(kit, campo, rnd, b, papel) {
   telhado.castShadow = true; telhado.receiveShadow = true;
   kit.root.add(telhado); kit.occluders.push(telhado);
 
-  const letreiro = MAT[LOJA_LETREIRO[papel]] || MAT.billboard;
-  const [lx, lz] = mundo(sinal * (D / 2 + 0.12), 0);
-  const [lw, ld] = dims(0.1, W * 0.78);
-  placa(lw, 0.85, ld, letreiro, lx, y + alt - 0.55, lz, 0);
+  const [nome, anuncio, lateral] = LOJA_LETREIRO[papel];
+  const ryFora = eixo === 'z' ? (sinal > 0 ? 0 : Math.PI) : (sinal > 0 ? Math.PI / 2 : -Math.PI / 2);
+  const ex = kit.ex;
+  // letreiro na testeira do beiral (o beiral avança ~0,9 m): rente à parede o telhado o cortava
+  const lw = Math.min(4.2, W * 0.55), [lx, lz] = mundo(sinal * (D / 2 + 1.0), 0), [bx0, bz0] = mundo(sinal * (D / 2 + 0.965), 0);
+  ex.letreiro.push({ i: nome, x: lx, y: y + alt + 0.05, z: lz, ry: ryFora, w: lw, h: lw / 3.5 });
+  ex.moldura.push(mtx(bx0, y + alt + 0.05, bz0, eixo === 'z' ? lw + 0.12 : 0.06, lw / 3.5 + 0.12, eixo === 'z' ? 0.06 : lw + 0.12));
+  // um lado da porta com porta de aço baixada, o outro com o anúncio pintado na parede
+  const ladoAco = papel.length % 2 ? 1 : -1;
+  const [ax, az] = mundo(sinal * (D / 2 + 0.16), ladoAco * (vao + meio) / 2);
+  ex.rua.push({ id: 'porta_aco', x: ax, z: az, y, h: 2.4, ry: ryFora });
+  const [px2, pz2] = mundo(sinal * (D / 2 + 0.03), -ladoAco * (vao + meio) / 2);
+  ex.letreiro.push({ i: anuncio, x: px2, y: y + 1.75, z: pz2, ry: ryFora, w: Math.min(2.5, meio - 0.3), h: Math.min(2.5, meio - 0.3) / 3.5 * 1.25 });
+  if (lateral >= 0) {
+    const lado = eixo === 'z' ? -b.sx : -b.sz;
+    const [sx2, sz2] = mundo(0, lado * (W / 2 + 0.03));
+    const ryLado = eixo === 'z' ? (lado > 0 ? Math.PI / 2 : -Math.PI / 2) : (lado > 0 ? 0 : Math.PI);
+    ex.letreiro.push({ i: lateral, x: sx2, y: y + 2.0, z: sz2, ry: ryLado, w: 3.2, h: 3.2 / 3.5 });
+  }
 
   // balcão e prateleiras: é o que dá leitura de loja ao interior, em vez de caixa oca
   const [bx, bz] = mundo(-sinal * 1.9, 0);
@@ -324,6 +342,12 @@ function loja(kit, campo, rnd, b, papel) {
     placa(tw, 0.08, td, MAT.toldo[papel.length % 3], tx, y + 2.55, tz, 0, sinal * (eixo === 'z' ? 0.14 : -0.14));
   }
 
+  if (papel === 'boteco') {
+    for (const [lat, nor, giro] of [[1.5, 1.7, 0.4], [2.3, 2.0, -0.3], [3.0, 1.5, 2.6], [-1.6, 1.8, 3.4], [-2.4, 1.6, 1.2]]) {
+      const [cx2, cz2] = mundo(sinal * (D / 2 + nor), lat);
+      ex.rua.push({ id: 'cadeira_plastico', x: cx2, z: cz2, y: campo.amostra(cx2, cz2), h: 0.86, ry: ryFora + giro });
+    }
+  }
   const [portaX, portaZ] = mundo(sinal * (D / 2 + 1.1), 0);
   /* `dentro` fica entre a porta e o balcão: a 2,1 m do centro ele caía DENTRO do colisor
      do balcão, e nó dentro de sólido é destino que ninguém alcança (relato do modo). */
@@ -748,7 +772,7 @@ const BECOS = {
 
 function novosExtras() {
   return { glb: [], medidor: [], eletroduto: [], vao: [], grade: [], arame: [], roupa: [], roupaCor: [], botijao: [], saco: [], lixeira: [], becoAreas: [],
-    vidro: [], moldura: [], porta: [], decal: [], rua: [], lixeiraTomb: [], rr: lcg(0xbec0) };
+    vidro: [], moldura: [], porta: [], decal: [], letreiro: [], rua: [], lixeiraTomb: [], rr: lcg(0xbec0) };
 }
 
 const _mq = new THREE.Quaternion(), _me = new THREE.Euler(), _mp = new THREE.Vector3(), _ms = new THREE.Vector3();
@@ -907,6 +931,7 @@ function construirExtras(kit, ex) {
   if (!hasProp('saco_lixo')) lote(ex.saco, sacoGeo(), MAT.saco, 'beco-saco');
   if (!hasProp('lixeira_metal')) lote(ex.lixeira, cubo, MAT.lixeiraAmarela, 'beco-lixeira');
   quads(kit, ex.decal.map((d) => ({ ...d, w: d.w ?? d.s, h: d.h ?? d.s, deitado: true, uv: celulaDecal(d.k) })), MAT.decal, 'decal-chao', false);
+  quads(kit, ex.letreiro.map((l) => ({ ...l, uv: LETREIRO_UV(l.i) })), MAT.letreiro, 'letreiro-loja', true);
   if (GLB && ex.rua.length) {
     const PR = new PropBatch({ bucket: 24, cortes: { cadeira_plastico: 45 } });
     const PL = new PropBatch({ bucket: 24, cast: false, cortes: { saco_lixo: 38, caixa_papelao: 38, lata_enferrujada: 28, lixeira_metal: 40 } });

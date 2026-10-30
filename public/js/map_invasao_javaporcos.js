@@ -23,7 +23,7 @@ const CARROS_GLB = [['junk_car', 4.0, 1.4], ['junk_car', 4.0, 1.4], ['carro_bati
   ['chevette_sl76', 4.2, 1.35], ['junk_car', 4.0, 1.4], ['perua_pichada_scan', 4.35, 1.5], ['junk_car', 4.0, 1.4], ['carro_batido_scan_07', 4.0, 1.4]];
 const SOLIDOS_GLB = new Set([...CARROS_GLB.map((c) => c[0]), 'arvore_mata', 'tronco_caido', 'toco_arvore', 'pedra_mata', 'poste_luz_praca']);
 export const INVASAO_JAVAPORCOS_PROPS = ['carro_batido_scan_03', 'perua_pichada_scan', 'junk_car', 'carro_batido_scan_07',
-  'chevette_sl76', 'dumpster', 'arvore_mata', 'shopping_cart',
+  'chevette_sl76', 'dumpster', 'porta_aco', 'arvore_mata', 'shopping_cart',
   'capim_touceira_a', 'capim_touceira_b', 'arbusto_mata_a', 'arbusto_mata_b', 'samambaia_mata', 'calathea_mata',
   'galhos_secos', 'toco_arvore', 'tronco_caido', 'pedra_mata', 'saco_lixo', 'caixa_papelao', 'engradado_plastico',
   'cadeira_plastico', 'pneu_velho', 'tambor_metal', 'tampa_bueiro', 'lixeira_metal', 'lata_enferrujada',
@@ -113,6 +113,7 @@ export function buildInvasaoJavaporcos(scene, T) {
     signSindicato: lam({ map: T.signSindicato }),
     truckSide: lam({ map: T.truckSide }),
     decal: lam({ ...TX.decalAtlasTex(), transparent: true, depthWrite: false, alphaTest: 0.02, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+    letreiro: lam({ map: TX.letreiroAtlasTex(), roughness: 0.8 }),
     luminaria: new THREE.MeshStandardMaterial({ color: 0xffd8a8, emissive: 0xffb070, emissiveIntensity: 3, roughness: 0.4 }),
     reboco: [TX.COR.rebocoOcre, TX.COR.rebocoMenta, TX.COR.rebocoRosa, TX.COR.rebocoPalha]
       .map((c, i) => comPbr('worn_mossy_plasterwall', TX.rebocoTex(c, i + 1), { color: claro(c, 0.3) }, { metros: 3 })),
