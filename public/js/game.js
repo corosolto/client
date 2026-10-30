@@ -5428,7 +5428,7 @@ export class Game {
   _plaqueta(slot, side) {
     const num = this.el['score' + slot + 'Num'];
     /* Treta Pop (seção 2d): o número grande é round ganho; quem está vivo fica nos retratos. */
-    const n = String(this._uiV3() ? this.roundsWon[side] : this.roundKills[side]);
+    const n = String(this.objective?.state?.kills != null ? this.objective.state.kills : this._uiV3() ? this.roundsWon[side] : this.roundKills[side]);
     if (num && num.textContent !== n) num.textContent = n;
     /* minúscula porque o seletor de atributo do CSS é SENSÍVEL A CAIXA e os arquivos
        são b/c/e/f/u.png — `data-f="U"` não casaria com `[data-f="u"]` e o brasão
@@ -8712,6 +8712,12 @@ export class Game {
   }
   _showScoreboard(v) {
     if (v && this._entradaTravada) return;
+    if (this.objective?.renderScoreboard) {
+      if (v) this.objective.renderScoreboard();
+      this.el.scoreboard.classList.toggle('hidden', !v);
+      this.el.hud.classList.toggle('sb-on', !!v);
+      return;
+    }
     if (v) {
       const r = this._resultado;
       const totalRounds = this._inspectionTotalRounds || this.roundsMax;
@@ -8874,7 +8880,11 @@ export class Game {
     // HUD comunicar a AUSÊNCIA de informação, enquanto o placar de bandeiras ficava numa
     // faixa de 12px. Agora o timer encolhe pra rótulo de modo e a linha de baixo passa a
     // trazer o placar que vale (capturas).
-    if (this.ctf) {
+    if (this.objective?.state?.controle) {
+      const h = this.objective.state, elapsed = Math.floor(h.clock || 0);
+      this.el.roundTime.textContent = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
+      this.el.roundsRow.textContent = `TEMPO DE PARTIDA · ONDA ${Math.max(1, h.wave)}/8`;
+    } else if (this.ctf) {
       /* game.js:5800 — NO CAPTURA O MAIOR TIPO DO HUD MOSTRA BANDEIRA, NÃO SEGUNDO.
          O que o dono viu e reprovou foi "CAPTURA 1:32" contando pra trás a cada rodada.
          Aqui o elemento de topo passa a ser o PLACAR DE BANDEIRAS da rodada (que é a

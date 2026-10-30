@@ -1695,6 +1695,9 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard .sb-col td.sb-ping{padding-right:16px;color:#5c5d63;font-size:14px}
 #scoreboard .sb-col td:nth-child(3){color:#9a9ba1}
 #scoreboard tbody tr:first-of-type::before{display:none}
+#hud[data-objective="horde"] #score-b,#hud[data-objective="horde"] .tp-hud-retratos[data-lado="B"]{display:none!important}
+#hud[data-objective="horde"] #score-e{min-width:72px;flex-direction:column;gap:2px}
+#hud[data-objective="horde"] #score-e::after{content:"ABATES";font:700 10px/1 system-ui;margin:0 8px}
 #scoreboard .horde-score{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) 70px 70px 90px 90px 110px;
   align-items:center;background:rgba(13,14,17,.92);border:1px solid #26272d;border-top:2px solid #e0762a}
 #scoreboard .horde-score>span{min-width:0;padding:13px 10px;border-bottom:1px solid #26272d;

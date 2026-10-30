@@ -373,3 +373,39 @@ preview anteriorREADY com o buildERROR desteSHA. CI remota ainda em andamento,
 com reguas-e-siteFAIL; sem afirmarCI verde. Sem merge ou publicação em produção.
 EgoTaskSpace3 foi encerrada sem navegação porque não há preview novo utilizável;
 nenhuma validação manual do previewERROR foi alegada. Aceite humano segue pendente.
+
+### Rodada de feedback do dono — placar, ocupação e comportamento
+
+Objetivo completo autorizado: consertar todas as armas em1ªpessoa; placar de um
+único time defensor com números reais; loading com javaporco; apresentação com
+texto rolando após seleção, na entrada da partida; mais variações visuais;
+mais entradas e mata explorável maior; grupos3–4 dispersos que saqueiam lixo e
+lojas sem perseguir jogadores automaticamente à distância; corpos estirados;
+domínio proporcional à área ocupada, caindo ao limpar setores; relógios claros.
+Plano apresentado em chat, ordem: armas/placar, domínio/relógio, apresentação,
+mapa e IA/corpos. Preservar PREP12, danos18/30/42, rosnado26m e vivos64.
+Ponto inicial6093aaf4d, remoto12638394a; sem autorização nova de push.
+Aceite: réguas vermelhas antes dos fixes, mutantes detectados, runtime3:2 e
+orçamentos; checkpoint por marco; revisão crítica antes de concluir/publicar.
+Próximo passo: reproduzir ausência das armas em EgoLite e examinar o placar real.
+
+Marco1 — placar, relógio e retomada validados. Antes, simular500PTS/3abates no
+runtime mantinha0×0 genérico e duas colunas. Agora TAB chama renderScoreboard da
+horda, com nomes e estatísticas reais, incluindo defensores semabates. HUD tem
+só defensores, contador de abates e relógio crescente da partida; próxima onda
+é rotulada separadamente. EgoSpace8(p1), URL QA4333: regua
+`ego-browser nodejs < tools/eval/javaporcos-placar-ego.mjs` passou3abates/500PTS,
+1:02 preservado ao trocarcombat→prep/onda2→3, inimigodisplaynone; mutante genérico
+voltou2colunas e apagou500PTS. Captura inspecionada em
+`artifacts/javaporcos-feedback-20261030/placar/`; badge ajustado para coluna.
+`javaporcos-retomada-check.mjs`: vermelho antes, verde depois. Setor vazio perde
+controle mesmo sem defensor dentro; ocupado continua subindo, vazio não cresce,
+mapa limpo volta0. Core javaporcos-check baseline e mutante sem-retomada verdes.
+Armas: pistola e AK vistas em frames REAIS locais. Lista26 ainda não concluída;
+uma avaliação Ego longa foi rejeitada aos15s(pendente com efeitos), recarregada
+antes de continuar. Próximo passo: testar arma por arma com chamadas curtas e
+concluir diagnóstico; depois apresentação/loading, mapa, grupos/variação/corpos.
+EgoSpace8 permanece ativa. Dev4321recusouconexão e astro recusou iniciar por
+registro antigo35025; não alterado. Serve4344 iniciou, mas shellVite travou boot
+comerro prévio de envio ao Viteserver; QA4333 usa shellprod+arquivosatuais.
+Push continua sem nova autorização;6093aaf4d permanece local.

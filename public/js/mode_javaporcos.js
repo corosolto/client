@@ -261,7 +261,7 @@ export function passoDominio(state, setores, bichos, defensores, dt) {
   for (let i = 0; i < controle.length; i++) {
     const b = bichos[i] || 0, d = defensores[i] || 0;
     if (b >= DOMINIO.minBichos && !d && state.mutante !== 'dominio-surdo') controle[i] = Math.min(1, controle[i] + DOMINIO.sobe * dt);
-    else if (d && !b && state.mutante !== 'sem-retomada') controle[i] = Math.max(0, controle[i] - DOMINIO.desce * dt);
+    else if (!b && state.mutante !== 'sem-retomada') controle[i] = Math.max(0, controle[i] - DOMINIO.desce * dt);
     const peso = setores?.[i]?.peso || 1;
     soma += controle[i] * peso; pesos += peso;
   }
@@ -1324,9 +1324,10 @@ class InvasaoJavaporcos {
      por um número que o olho não lê mais rápido que isso. */
   atualizaHud(forcar = false) {
     if (!this.hud) return;
+    this.game.el.hud.dataset.objective = 'horde';
     if (!forcar && this.game.time < this.hudAte) return;
     this.hudAte = this.game.time + .12;
-    const phase = this.state.phase === 'prep' ? `PREPARAÇÃO ${Math.ceil(this.state.prepLeft)}s` : `${this.state.remaining + this.state.alive.length} RESTANTES`;
+    const phase = this.state.phase === 'prep' ? `PRÓXIMA ONDA EM ${Math.ceil(this.state.prepLeft)}s` : `PRÓXIMA ONDA EM ${Math.ceil(this.state.combatLeft)}s · ${this.state.remaining + this.state.alive.length} RESTANTES`;
     const score = this.state.scores[this.idDo(this.game.player)]?.points || 0;
     const comida = (this.game.world.foodSpots || []).length;
     const lixo = comida ? ` · LIXO ${this.state.foodRevirada}/${comida}` : '';
@@ -1335,7 +1336,7 @@ class InvasaoJavaporcos {
     const dominio = Math.round((this.state.dominio || 0) * 100);
     const tomados = this.state.controle.filter((v) => v >= 1).length;
     this.hudDominio.textContent = `DOMÍNIO DA HORDA ${dominio}% · JAVAPORCOS`;
-    this.hudSetores.textContent = `${tomados}/${this.state.controle.length} SETORES TOMADOS · PERDE EM ${Math.round(DOMINIO.derrota * 100)}%`;
+    this.hudSetores.textContent = `${tomados}/${this.state.controle.length} SETORES TOMADOS · LIMPE PARA RETOMAR · PERDE EM ${Math.round(DOMINIO.derrota * 100)}%`;
     this.hudBarra.style.width = `${Math.min(100, dominio)}%`;
     this.hudCelulas.forEach((cel, i) => {
       const v = this.state.controle[i] || 0;
@@ -1362,11 +1363,15 @@ class InvasaoJavaporcos {
   }
   renderScoreboard() {
     if (!this.game.el?.sbCols) return;
+    const heading = document.querySelector('#scoreboard h3');
+    if (heading) heading.textContent = `DEFESA DA CIDADE · ${this.state.kills} ABATES · ${Math.round(this.state.dominio * 100)}% OCUPADO POR JAVAPORCOS`;
     const row = (name, points, kills, assists, combo, prevented, className = '') =>
       `<span class="horde-name ${className}">${String(name).replace(/[<>&]/g, '')}</span><span class="horde-points ${className}">${points}</span><span class="${className}">${kills}</span><span class="${className}">${assists}</span><span class="${className}">${combo}</span><span class="${className}">${prevented}</span>`;
-    const rows = Object.entries(this.state.scores)
+    const names = new Map(this.game.combatants.filter(ent => ent.team === 'E' && !ent._objectiveNpc).map(ent => [this.idDo(ent), ent.name]));
+    const scores = { ...Object.fromEntries([...names.keys()].map(id => [id, { points: 0, kills: 0, assists: 0, bestCombo: 0, damagePrevented: 0 }])), ...this.state.scores };
+    const rows = Object.entries(scores)
       .sort(([, a], [, b]) => b.points - a.points)
-      .map(([id, score]) => row(id, score.points, score.kills, score.assists, `${score.bestCombo}×`, Math.round(score.damagePrevented || 0)))
+      .map(([id, score]) => row(names.get(id) || id, score.points, score.kills, score.assists, `${score.bestCombo}×`, Math.round(score.damagePrevented || 0)))
       .join('');
     const header = row('DEFESA DA CIDADE', 'PTS', 'ABT.', 'ASSIST.', 'COMBO', 'EVITADO', 'horde-head');
     const empty = row('Equipe', 0, 0, 0, '0×', 0);
@@ -1430,6 +1435,7 @@ class InvasaoJavaporcos {
   }
 
   dispose() {
+    if (this.game.el?.hud) delete this.game.el.hud.dataset.objective;
     if (this._key) window.removeEventListener('keydown', this._key);
     this.hud?.remove();
     this.cinemaTitle?.remove();
