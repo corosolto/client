@@ -353,6 +353,13 @@ function carros(kit, campo, rnd, PB) {
   const meu = () => ((semVaga = Math.imul(semVaga, 1664525) + 1013904223 >>> 0) / 4294967296);
   const sorteio = vagas.map(() => { const v = rnd(); return v > 0.38 ? null : [rnd(), rnd()]; });
   const braco = ([x, z, ry]) => (ry ? (x < 0 ? 'O' : 'L') : (z < 0 ? 'N' : 'S'));
+  /* Braço norte é o eixo da câmera do centro: fila cheia nas duas guias, desviando da
+     caçamba leste (z −18,75), e três carros na faixa norte da avenida leste-oeste. */
+  for (let i = vagas.length - 1; i >= 0; i--) if (braco(vagas[i]) === 'N') { vagas.splice(i, 1); sorteio.splice(i, 1); }
+  const NORTE = [[-1, -10.9], [-1, -15.6], [-1, -20.3], [-1, -25.0], [-1, -29.7], [1, -10.9], [1, -15.3], [1, -22.3], [1, -27.0], [1, -31.6]];
+  NORTE.forEach(([s, t], k) => { vagas.push([s * (AV - 1.2), t, 0]); sorteio.push([meu(), ((k * 7) % 6 + 0.5) / 6]); });
+  for (const t of [15, -15]) { const k = vagas.findIndex(([x, z]) => x === t && z === -(AV - 1.2)); if (k >= 0) sorteio[k] = sorteio[k] || [meu(), meu()]; }
+  vagas.push([10.75, -(AV - 1.2), Math.PI / 2]); sorteio.push([meu(), 2.5 / 6]);
   for (const b of ['N', 'S', 'O', 'L']) {
     const doBraco = vagas.map((v, i) => i).filter((i) => braco(vagas[i]) === b);
     const livres = doBraco.filter((i) => !sorteio[i]).sort(() => meu() - 0.5);
@@ -387,7 +394,7 @@ function carros(kit, campo, rnd, PB) {
     const cor = CORES_CARRO[(sorteio[i][1] * CORES_CARRO.length) | 0];
     const cs = Math.cos(giro), sn = Math.sin(giro);
     const desloca = (ox, oz) => [x + ox * cs + oz * sn, z - ox * sn + oz * cs];
-    const glb = CARROS_GLB[n % CARROS_GLB.length];
+    const glb = braco(vagas[i]) === 'N' ? JUNK : CARROS_GLB[n % CARROS_GLB.length];
     const pinta = glb[0] === 'junk_car';
     lista.push({ id: glb[0], x, z, ry: giro, cor: pinta ? cor : null });
     if (PC && hasProp(glb[0])) {

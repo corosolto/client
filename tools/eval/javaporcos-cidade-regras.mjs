@@ -33,6 +33,9 @@
              intensidade ≥ 4, alcance 10–16 m, decaimento 2, com luminária a ≤ 0,5 m.
      FIOS1   o rasgo de céu do beco tem poste e fio (sumiram na rodada 2): ≥ 3 fios acima de
              5,5 m cruzando o eixo de cada beco e um poste a ≤ 2 m da boca da viela.
+     RUA1    rua do eixo da câmera do centro cheia ("rua vazia", ruaObj 3,8%): ≥ 8 carros no
+             braço norte, todo junk_car repintado, ≥ 4 com C* ≥ 20 em ≥ 3 cores; caçamba a
+             ≤ 12 m da faixa norte, monte de ≥ 8 sacos e mesa de bar com ≥ 2 cadeiras cada.
 
    MUTANTES (cada um tem de acender a cláusula indicada):
      saco-icosaedro  planta um saco de icosaedro na avenida          -> ICO1
@@ -46,9 +49,11 @@
      beco-apagado    tira a luz dos becos                                 -> BECOLUZ1, POSTE1
      luz-presa       a luz não segue a câmera (fica no primeiro beco)     -> BECOLUZ1
      beco-sem-fio    tira da fiação os segmentos sobre os becos           -> FIOS1
+     rua-vazia       volta o braço norte a 4 carros e tira a cena da rua  -> RUA1
+     carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'beco-apagado', 'luz-presa', 'beco-sem-fio'];
+export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'beco-apagado', 'luz-presa', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); o gol g2 também é NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -115,6 +120,18 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     exige(f && fica.length < f.count, 'MUTANTE beco-sem-fio NÃO APLICOU');
     fica.forEach(([, i], k) => { f.getMatrixAt(i, m4); f.setMatrixAt(k, m4); });
     f.count = fica.length;
+  }
+  const noNorte = (c) => Math.abs(c.x) < AV && c.z <= -(AV + CAL) && c.z >= -CIDADE_R;
+  if (MUT === 'rua-vazia') {
+    const cs = W.root.userData.carros || [];
+    exige(cs.filter(noNorte).length > 4 && W.root.userData.cenaRua, 'MUTANTE rua-vazia NÃO APLICOU');
+    let k = 0;
+    W.root.userData.carros = cs.filter((c) => !noNorte(c) || k++ < 4);
+    W.root.userData.cenaRua = null;
+  }
+  if (MUT === 'carro-carvao') {
+    const cs = (W.root.userData.carros || []).filter((c) => c.id === 'junk_car');
+    exige(cs.length, 'MUTANTE carro-carvao NÃO APLICOU'); cs.forEach((c) => { c.cor = null; });
   }
   if (MUT === 'janela-preta') {
     const vs = ['beco-vidro', 'beco-vidro-aceso'].map(porNome).filter(Boolean);
@@ -285,5 +302,28 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
       return cruzam;
     });
     return `fios cruzando o rasgo por beco: ${desc.join(', ')}; poste em todos`;
+  });
+
+  regra('RUA1 rua do centro com carros coloridos, caçamba, sacos e mesa de bar', () => {
+    const carros = W.root.userData.carros || [], norte = carros.filter(noNorte);
+    exige(norte.length >= 8, `só ${norte.length} carros no braço norte (piso 8)`);
+    const semTinta = carros.filter((c) => c.id === 'junk_car' && c.cor == null);
+    exige(!semTinta.length, `${semTinta.length} junk_car sem pintura (carvão, C* 4)`);
+    const croma = (hex) => {
+      const c = new THREE.Color(hex), lin = [c.r, c.g, c.b];
+      const f = (t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+      const X = (0.4124 * lin[0] + 0.3576 * lin[1] + 0.1805 * lin[2]) / 0.9505, Y = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+      const Z = (0.0193 * lin[0] + 0.1192 * lin[1] + 0.9505 * lin[2]) / 1.089;
+      return Math.hypot(500 * (f(X) - f(Y)), 200 * (f(Y) - f(Z)));
+    };
+    const vivos = norte.filter((c) => c.cor != null && croma(c.cor) >= 20);
+    const cores = new Set(vivos.map((c) => c.cor));
+    exige(vivos.length >= 4 && cores.size >= 3, `braço norte com ${vivos.length} carro(s) de C* ≥ 20 em ${cores.size} cor(es) (piso 4 em 3)`);
+    const cena = W.root.userData.cenaRua;
+    exige(cena, 'sem cena da rua (caçamba, sacos, mesa de bar)');
+    exige(Math.hypot(cena.cacamba[0], cena.cacamba[1] + AV + 1.4) <= 12, 'caçamba longe da faixa norte (> 12 m)');
+    exige(cena.sacos >= 8, `monte de ${cena.sacos} sacos (piso 8)`);
+    exige(cena.mesas >= 1 && cena.cadeiras >= 2 * cena.mesas, `bar com ${cena.mesas} mesa(s) e ${cena.cadeiras} cadeira(s)`);
+    return `${norte.length} carros no braço norte, ${vivos.length} de C* ≥ 20 em ${cores.size} cores; caçamba, ${cena.sacos} sacos, ${cena.mesas} mesas com ${cena.cadeiras} cadeiras`;
   });
 }

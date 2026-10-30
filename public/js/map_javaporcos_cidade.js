@@ -1,7 +1,7 @@
 /* Miolo urbano: avenidas, vielas, 16 quarteirões, 4 lojas com interior, praça com feira e
    o lixo que o javaporco revira. Medidas e paleta: docs/maps/invasao-javaporcos-visual.md. */
 import * as THREE from 'three';
-import { hasProp, placeProp, PropBatch } from './mapprops.js';
+import { hasProp, placeProp, PropBatch, mergeParts } from './mapprops.js';
 import { LETREIRO_UV } from './map_javaporcos_texturas.js';
 
 export const AV = 6;             // meia-largura da avenida (12 m de asfalto)
@@ -136,6 +136,7 @@ export function construirCidade(kit, campo, rnd) {
   lixoSolto(kit, campo, rnd, extras.glb);
   lixoDeRua(kit, campo, extras, pontos);
   cacambas(kit, campo, extras, pontos);
+  cenaDaRua(kit, campo, extras);
   luzDosBecos(kit, extras.postesBeco);
   construirExtras(kit, extras);
 
@@ -795,6 +796,36 @@ function luzDosBecos(kit, postes) {
     if (!luz.position.equals(melhor)) { luz.position.copy(melhor); luz.updateMatrixWorld(); }
   };
   kit.root.add(guia);
+}
+
+/* Cena do eixo da câmera do centro (rua do conceito D): caçamba na guia da avenida
+   oeste, monte de sacos na esquina da praça e mesa de bar na calçada da mercearia. */
+function cenaDaRua(kit, campo, ex) {
+  const { MAT } = kit;
+  const [cx, cz] = [-10.6, -(AV - 0.95)], cy = campo.amostra(cx, cz);
+  kit.colliders.push({ minX: cx - 1.0, maxX: cx + 1.0, minY: cy, maxY: cy + 1.3, minZ: cz - 0.62, maxZ: cz + 0.62 });
+  if (usaGLB('dumpster')) ex.rua.push({ id: 'dumpster', x: cx, z: cz, y: cy, h: 1.3, ry: Math.PI / 2, solido: true });
+  else kit.caixa(2.0, 1.25, 1.24, MAT.cacamba, cx, cy, cz, { collide: false, bala: true });
+  const r = lcg(0x5ac0);
+  const sacos = [];
+  for (let i = 0; i < 9; i++) {
+    const a = r() * 6.283, d = 0.15 + r() * 0.75, x = -6.95 + Math.cos(a) * d * 0.6, z = -9.4 + Math.sin(a) * d;
+    sacos.push({ id: 'saco_lixo', x, z, y: campo.amostra(x, z) + (i > 6 ? 0.32 : 0), h: 0.5 + r() * 0.2, ry: r() * 6.283 });
+  }
+  ex.rua.push(...sacos, { id: 'caixa_papelao', x: -6.5, z: -10.5, y: campo.amostra(-6.5, -10.5), h: 0.42, ry: 0.4 });
+  const mesas = [[7.05, -9.9], [7.05, -12.4]], cadeiras = [];
+  for (const [mx, mz] of mesas) for (const [ox, oz, g] of [[-0.62, 0.1, -1.4], [0.55, -0.15, 1.7], [0.05, 0.62, 3.2]]) {
+    cadeiras.push({ id: 'cadeira_plastico', x: mx + ox, z: mz + oz, y: campo.amostra(mx + ox, mz + oz), h: 0.86, ry: g });
+  }
+  ex.rua.push(...cadeiras);
+  const tampo = new THREE.BoxGeometry(0.72, 0.035, 0.72).translate(0, 0.72, 0);
+  const pernas = [-1, 1].flatMap((a) => [-1, 1].map((b) => new THREE.CylinderGeometry(0.022, 0.026, 0.72, 6).translate(a * 0.31, 0.36, b * 0.31)));
+  const geo = mergeParts([tampo, ...pernas]);
+  const im = new THREE.InstancedMesh(geo, MAT.lixeiraAmarela, mesas.length);
+  mesas.forEach(([mx, mz], i) => im.setMatrixAt(i, mtx(mx, campo.amostra(mx, mz), mz, 1, 1, 1, 0.3 * i)));
+  im.name = 'rua-mesa-bar'; im.castShadow = true; im.receiveShadow = true; im.userData.nonSolidSurface = true;
+  im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); kit.root.add(im);
+  kit.root.userData.cenaRua = { cacamba: [cx, cz], sacos: sacos.length, mesas: mesas.length, cadeiras: cadeiras.length };
 }
 
 /* ── BECOS ─────────────────────────────────────────────────────────────────────────── */
