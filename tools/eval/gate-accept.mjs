@@ -11,6 +11,9 @@ export function cobertura(chaves, esperadas) {
 
 const max = (a, k) => Math.max(...a.map((x) => x[k]));
 const min = (a, k) => Math.min(...a.map((x) => x[k]));
+/* Amplitude real max−min: critério de deriva compartilhado entre LA5 (browser) e
+   DERIVA-GRAUS/DERIVA-M (gate Node preview-grip-phase) — mesmo limiar, mesma função. */
+export const amplitude = (a, k) => max(a, k) - min(a, k);
 /* LA1..LA5 do lobby-arma-mao-check: medida não finita ou ausente reprova, nunca aprova. */
 export function lobbyFalhas(r, TETO, TETO_PEGADA) {
   if (r.erro) return { falhas: [], invalidas: [`caso com erro: ${r.erro}`] };
@@ -25,7 +28,7 @@ export function lobbyFalhas(r, TETO, TETO_PEGADA) {
   if (max(a, 'palma') > TETO.palmaM) f.push('LA2');
   if (max(a, 'caixa') > Math.max(TETO.caixaM, (finite(r.caixaJogo) ? r.caixaJogo : 0) + 0.005)) f.push('LA3');
   if (min(a, 'canoZ') < TETO.canoZmin) f.push('LA4');
-  if (max(a, 'pegada') - min(a, 'pegada') > TETO.derivaGraus || max(a, 'palma') - min(a, 'palma') > TETO.derivaM) f.push('LA5');
+  if (amplitude(a, 'pegada') > TETO.derivaGraus || amplitude(a, 'palma') > TETO.derivaM) f.push('LA5');
   return { falhas: f, invalidas: [] };
 }
 

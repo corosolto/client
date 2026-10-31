@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { amplitude } from './gate-accept.mjs';
 
 const argv = process.argv.slice(2);
 const MUT = (argv.find((a) => a.startsWith('--mutante=')) || '').slice(10);
@@ -15,6 +16,7 @@ const ESPERADO = {
   'sem-settle': { 'canarinho/deagle': ['FASE'] },
   'fase-inclinada': { 'canarinho/deagle': ['FASE'] },
   'arma-solta': { 'canarinho/deagle': ['LA2', 'LA3'] },
+  'arma-oscilante': { 'mst/ak': ['DERIVA-M'] },
 };
 const uso = (m) => { console.error(`uso: node tools/eval/preview-grip-phase-check.mjs [--mutante=${Object.keys(ESPERADO).join('|')}] [--json] — ${m}`); process.exit(2); };
 if (argv.filter((a) => a.startsWith('--mutante=')).length > 1) uso('--mutante= duplicado');
@@ -208,9 +210,21 @@ for (const [cid, wid] of CASOS) {
     const { gun, hand } = find(m);
     if (!gun || !hand) infra(`${cid}/${wid}: sem arma ou sem mão no preview`);
     const faseBuild = m.ctrl.tpMount?.pegada ? deg(m.ctrl.tpMount.pegada, qRef) : Infinity;   // invariante FASE
+    /* arma-oscilante: reproduz o ensaio externo PREVIEW-DRIFT-COORD-FEASIBILITY-R1-z —
+       gunObj REAL em Z (só MST/AK), relógio simulado 1/60, 1ª amostra em zero, período 2 s. */
+    const osc = MUT === 'arma-oscilante';
+    const oscBase = osc ? gun.position.clone() : null;
+    let oscTempo = 0;
     const amostras = [];
     for (let s = 0; s < 8; s++) {
-      for (let i = 0; i < 30; i++) { m.ctrl.update(1 / 60, 0, false, 0); m.group.rotation.y += 0.9 / 60; }
+      for (let i = 0; i < 30; i++) {
+        m.ctrl.update(1 / 60, 0, false, 0);
+        if (osc) {
+          oscTempo += 1 / 60;
+          if (cid === 'mst' && wid === 'ak') gun.position.z = oscBase.z + .008 * Math.sin(Math.PI * (oscTempo - .5));
+        }
+        m.group.rotation.y += 0.9 / 60;
+      }
       m.group.updateMatrixWorld(true);
       const palma = palmaMedia(m, hand);
       const model = m.ctrl.tpMount?.model || m.group;
@@ -231,6 +245,7 @@ for (const [cid, wid] of CASOS) {
         escalaModeloM: escalaM,
       });
     }
+    if (osc && cid === 'mst' && wid === 'ak' && gun.position.z === oscBase.z) infra('mutante arma-oscilante: gunObj não moveu em Z');
     out.push({ caso: `${cid}/${wid}`, arma: gun.name, faseBuild, caixaJogo, amostras });
   } catch (e) { infra(`${cid}/${wid}: ${e.message}`); }
 }
@@ -250,9 +265,10 @@ for (const r of out) {
   if (max('caixa') > Math.max(TETO.caixaM, (Number.isFinite(r.caixaJogo) ? r.caixaJogo : 0) + 0.005)) f.push('LA3');
   if (max('palma') > TETO.palmaM) f.push('LA2');
   if (min('canoZ') < TETO.canoZmin) f.push('LA4');
-  const d0 = a[0];
-  const derivaG = Math.max(...a.map((x) => Math.abs(x.pegada - d0.pegada)));
-  const derivaM = Math.max(...a.map((x) => Math.abs(x.palma - d0.palma)));
+  /* DERIVA-*: amplitude max−min compartilhada com o LA5 do browser (gate-accept);
+     o max|−1ª amostra| anterior era cego a vaivém periódico que cruza o zero na 1ª amostra. */
+  const derivaG = amplitude(a, 'pegada');
+  const derivaM = amplitude(a, 'palma');
   if (derivaG > TETO.derivaGraus) f.push('DERIVA-GRAUS');
   if (derivaM > TETO.derivaM) f.push('DERIVA-M');
   if (!a.every((x) => [x.pegada, x.palma, x.caixa, x.canoZ, x.frenteZLocal, x.frenteZMundoM].every(Number.isFinite))) f.push('INVALIDA');

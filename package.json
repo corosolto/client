@@ -771,7 +771,7 @@
     "//check:visual:browser": "Contratos públicos em Chromium: lobby completo e mira1P da AK. Exige BASE e Playwright instalado; não integra o fast Node.",
     "check:visual:private": "node tools/eval/runner.mjs eval:mira-alinhada eval:ads1p-linha",
     "//check:visual:private": "QA local de release com catálogo privado autorizado de pistol/deagle. Não executado em PR público/fork.",
-    "eval:preview-grip-phase": "node tools/eval/preview-grip-phase-check.mjs && node tools/eval/preview-grip-phase-check.mjs --mutante=sem-settle && node tools/eval/preview-grip-phase-check.mjs --mutante=fase-inclinada && node tools/eval/preview-grip-phase-check.mjs --mutante=arma-solta",
+    "eval:preview-grip-phase": "node tools/eval/preview-grip-phase-check.mjs && node tools/eval/preview-grip-phase-check.mjs --mutante=sem-settle && node tools/eval/preview-grip-phase-check.mjs --mutante=fase-inclinada && node tools/eval/preview-grip-phase-check.mjs --mutante=arma-solta && node tools/eval/preview-grip-phase-check.mjs --mutante=arma-oscilante",
     "eval:knife-skin-markings": "node tools/eval/knife-skin-markings-check.mjs",
     "eval:campo-uv": "node tools/eval/campo-uv-finish-mutations.mjs",
     "eval:grafite-atual": "node tools/eval/graffiti-current-ci-check.mjs --map=all --json=artifacts/grafite-atual",

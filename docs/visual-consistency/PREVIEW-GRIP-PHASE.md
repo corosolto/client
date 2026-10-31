@@ -18,7 +18,16 @@ material, FPS, nem os três casos com skin do gate browser.
 
 A referência é o modelo de jogo funcional, mesmo rig/arma/clips reais.
 Canarinho/Deagle deve capturar a fase em até 2 graus. LA1–LA5 e deriva continuam medidos
-sem elevar os limites herdados.
+sem elevar os limites herdados. A deriva usa a amplitude `max−min` da pegada e da
+distância palma→arma, pelo helper `amplitude` compartilhado com `lobbyFalhas`.
+O domínio continua nos escalares existentes: a métrica não cobre toda a transformação
+relativa mão/arma nem substitui o crivo visual.
+
+O critério anterior comparava cada amostra só à primeira. A contraprova física
+MST/AK mede distância à primeira de 7,917 mm, mas amplitude de 15,815 mm: o Node
+antigo passava e o validador de lobby reprovava LA5 com as mesmas amostras reais.
+Scripts e JSONs: `PREVIEW-DRIFT-COORD-FEASIBILITY-R1-z` e
+`PREVIEW-DRIFT-COORD-BROWSER-VERDICT-R1.json` no audit de 31/10.
 
 ## Extensão frontal: instrumento rejeitado, dívida declarada
 
@@ -54,6 +63,10 @@ ruim do mesmo rig. Este gate **não aprova** essa aparência; remover o teto sem
   Canarinho/Deagle/preview); a palma skinnada não segue e o contato reprova em LA2 e LA3.
   Substitui a antiga `frente-sem-clamp`, cujo alvo (`else if (_v.z > fzMax)`) saiu do
   fonte com o clamp rejeitado.
+- `--mutante=arma-oscilante`: move o filho real da arma em Z local, ±8 mm,
+  com período de 2 s, a cada update do MST/AK. A primeira amostra fica no meio do
+  ciclo. Só DERIVA-M reprova; FASE, LA1–LA4 e os outros sete casos permanecem verdes.
+  A palma continua skinnada, sem substituir métricas ou amostras por valores prontos.
 
 O verificador exige o conjunto exato de casos e cláusulas. Nominal verde sai 0; nominal
  válido vermelho sai 1; uso inválido sai 2; infraestrutura sai 3. Uma contraprova sai 0
