@@ -29,3 +29,9 @@ Audit externo: `audits/2026-10-31-visual-consistency/` na raiz agregadora. Space
 ### Atualização pós-crítico yaw
 
 Microfix61afae0ad integra undo também em die antes do próximo update. Nominal33casos/31.500updates e13mutantes; wiring substitui lista manual por nominal+autoteste. Ego7chars×600standingupdates/proxies~7e-15; capturaR2 em1320×880 vista. A morte ainda não tem aceite visual novo. Novos reds hosted21: AUD1C(ctxfilho),VM14(53flutuantes em5mapas), grafite-atual(404decalassets), select(referência0.675/23.6 vs atual0.689/28.6). Investigações próprias separadas, sem tetos afrouxados. Remoto ainda21; próximo gate de publicação exige fix/prova desses reds além do OOM.
+
+### Paridade hosted, 19:28UTC
+
+AUD1C fonte a49553570 aceita como51923630a: JSON puro nos dois caminhos de boot, logs preservados no stderr, try/finally restaura console. Node22/26 JSON estrito21checks/862calls;8controles do classificador exato e6mutantes. GLMRO excedeu prazo sem relatório, não conta como revisão. Economia fonte a66e2b4dc aceita como cb2c97c2d: processos isolados mantêm24mutantes padrão (a contagem anterior27 era estimativa incorreta). Node22 exit0,23/23cláusulas,24/24detectados em133,32s,heap pai237MB; original RED exit134/4,095GB. Controles mantêm crash/CANT_TEST vermelho. Ainda exige execução consolidada/push/hosted.
+
+Root abriu lane visual-ci-parity-20261031, base88fc, para VM14/IK em sequência. Pickup RED reproduzido944/53, todos mapas com placeholders enterrados; nenhum rack fora do vão. Seleção tem clamp até punho para alvo da palma; protótipo restaura referência, mas14bloqueadores de roster continuam em investigação. Workflow de grafites em lane independente, sem browser concorrente. Próxima publicação só após reparar/medir esses reds, sem alterar tetos/dívida.
