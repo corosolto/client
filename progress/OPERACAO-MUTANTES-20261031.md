@@ -1,0 +1,9 @@
+# Continuação — prova dos mutantes1169
+
+Objetivo completo: Flávio/47PRs/HQ/media, GLM peloOMP e crítico independente. Javaporcos outroowner intocável; CodeRabbit dispensado explicitamente. Esta lane cobre falsoverde de teste em1169externamenteintegrada, sem runtime/UI/publicação.
+
+2026-10-31T11:25:35.165645+00:00 — WTfix-1169-mutantes-20261031 branchrepair/1169-mutantes,antes7cca05e41limpo; main00e746 integradoLOCALsemconflitos em10a7a256625d4f3498131abebacd4d32ca5012e6. FFnãoaplicava porque1169foisquash602c. Réguacommunityretry-new-key atual executou23/25REDsemântico; NÃO há driftliteralobservado. Risco!nodeaceitaqualquererro/setup precisa demonstração negativa própria/driverstrict. Próximo capturarsetupdeliberadopararepro, GLM132 ecrítico, semmerge/deploy/DDL.
+
+2026-10-31T11:32:08.117372+00:00 — Antes132:13mutantesatuais executamREDsemântico; fixturecópiaâncoradeliberadaausente(comfonteproductionintocada) sai1/setup e!node devolve0, falsoverdeprovadoHQcommunity132-before-proof.json. GLM132aplicado4leases:reportestruturado/aplicaçãoúnica/CLIwhitelist ealiasmutaçõesexplícitas. Rootnormalizou4metadatarelativas;REJEITOUerror.status(execFileusaerror.code) antesaplicar eexigiurejeiçãostdout+stderr. PackageJSONtotalcomparado,só2aliasesalterados. MetacheckCodex1positivo/16negativos,aguardatesteparanãocompetircom40serial1. Próximoalias2+críticointegralsemruntimechange.
+
+2026-10-31T11:34:59.003517+00:00 — Marco132 fechado:críticopegouP1helperaindanegado15vezes;aliasREALreproduziu25/25+helperPASSmasexit1. Codexremoveu15negações eadicionou metacadeiasREAIS/bin/sh childisolado:status0→13/2calls+0;status7→1call+7,maisCLIforawhitelist2. Metacheck1positivo/16falsospositivos+4cadeias+CLI GREEN. AliasesREAIS community/MA2/2GREEN6.4s,13+2mutantes;críticore-revisão integralFINALCLEANcontra00e746. Nenhumaalteração runtime. Próximo docs/checkpoint/pushnormal/PRdraftseguimento;1169originalexternamentemergednãoémerge nosso.
