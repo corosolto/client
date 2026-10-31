@@ -1,15 +1,32 @@
-// Geo a partir dos headers da Vercel (grátis, sem API externa).
-export interface Geo { city: string | null; country: string | null; lat: number | null; lon: number | null; }
+// Geo usa a borda que recebeu a requisição: Cloudflare no domínio público e
+// Vercel nos aliases diretos. Sem API externa.
+export interface Geo {
+  city: string | null;
+  country: string | null;
+  lat: number | null;
+  lon: number | null;
+}
+
+function textoDoHeader(bruto: string): string {
+  try {
+    return decodeURIComponent(bruto).trim() || bruto;
+  } catch {
+    return bruto.trim();
+  }
+}
 
 export function geoFrom(request: Request): Geo | null {
   const h = request.headers;
-  const country = h.get('x-vercel-ip-country');
-  if (!country) return null; // fora da Vercel (localhost etc.)
-  const cityRaw = h.get('x-vercel-ip-city');
-  const lat = parseFloat(h.get('x-vercel-ip-latitude') || '');
-  const lon = parseFloat(h.get('x-vercel-ip-longitude') || '');
+  const cfCountry = h.get('cf-ipcountry')?.trim().toUpperCase();
+  const usaCloudflare = Boolean(cfCountry && cfCountry !== 'XX');
+  const country = usaCloudflare ? cfCountry : h.get('x-vercel-ip-country')?.trim().toUpperCase();
+  if (!country || country === 'XX') return null;
+
+  const cityRaw = h.get(usaCloudflare ? 'cf-ipcity' : 'x-vercel-ip-city');
+  const lat = Number.parseFloat(h.get(usaCloudflare ? 'cf-iplatitude' : 'x-vercel-ip-latitude') || '');
+  const lon = Number.parseFloat(h.get(usaCloudflare ? 'cf-iplongitude' : 'x-vercel-ip-longitude') || '');
   return {
-    city: cityRaw ? decodeURIComponent(cityRaw) : null,
+    city: cityRaw ? textoDoHeader(cityRaw) : null,
     country,
     lat: Number.isFinite(lat) ? lat : null,
     lon: Number.isFinite(lon) ? lon : null,

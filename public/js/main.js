@@ -6,6 +6,7 @@ import {initAccountEntry,mountProfilePreferences} from './account-entry.js';
 import {initLoginPrompt,noteLoginPromptMatch} from './login-prompt.js';
 import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
+import { clientUuid, getAnonId } from './client-id.js';
 import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
 import {tretaPack} from './data/pack-definitions.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
@@ -1441,24 +1442,7 @@ function soltarPartida() {
    Os eventos usam fetch keepalive: sobrevive ao unload e permite `credentials: omit`.
    Isto importa porque sendBeacon força credenciais e, com JSON cross-origin, depende de
    um preflight credenciado perfeito no Cloud Run. */
-const ANON_KEY = 'cs_anon';
 const SESSION_KEY = 'cs_session';
-function clientUuid() {
-  const c = globalThis.crypto;
-  if (typeof c?.randomUUID === 'function') return c.randomUUID();
-  if (typeof c?.getRandomValues !== 'function') throw new Error('Web Crypto indisponível');
-  const bytes = new Uint8Array(16);
-  c.getRandomValues(bytes);
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = [...bytes].map(value => value.toString(16).padStart(2, '0')).join('');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
-function getAnonId() {
-  let a = localStorage.getItem(ANON_KEY);
-  if (!a) { a = clientUuid(); localStorage.setItem(ANON_KEY, a); }
-  return a;
-}
 function getSessionId() {
   let s = sessionStorage.getItem(SESSION_KEY);
   if (!s) { s = clientUuid(); sessionStorage.setItem(SESSION_KEY, s); }

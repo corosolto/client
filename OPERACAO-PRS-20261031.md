@@ -11,3 +11,9 @@ Objetivo integral47PRs/Flávio/HQ/anúncios/pilotos,GLMOMP+críticoindependente;
 2026-10-31 08:02 UTC — Replay boot102 validado: mede19controles/9mutantes e veredicto19/3 preservados. Runner boot (normal+2mutantes reais)/menu/netcode/docs/arch 5/5,30.3s (/tmp/corosolto-net1143-boot102-focused.log). Não alterou fonte de rede nem medições WS anteriores. Checkpoint antes do crítico integral e envio normal; GUI permanece pendente.
 
 2026-10-31 08:14 UTC — Push normal bd749 bloqueado unicamente por CM1: bloco de3linhas em net.js. Removido o cabeçalho narrativo, mantidas2linhas sobre semântica do relógio. Sem alteração de runtime; hash oficial antes da mudança já igual ao publicado c0dec4566f5f386c. Gen-docs atualizado. Checagem do comentário lê base...HEAD, por isso execução antes do checkpoint ainda vê o trecho antigo; conferir novamente após commit. Próximo envio normal repete todos os portões, sem bypass. Crítico integral anterior14arquivos FINAL CLEAN preservado, delta atual só comentário/ledger/gerados.
+
+2026-10-31T08:21:43.547500+00:00 — Push normal07a498dc6 confirmado após hooks302s, sem bypass; CI em execução. QAvisual ainda pendente.
+
+2026-10-31T08:27:42.907573+00:00 — CI07a4987SUCCESS/5SKIPPED inclusiveVercel. GitHubCONFLICTING com mainc7fa; merge-tree readonly encontrou único conflito em boot-orcamento failsafe/naJanela. Próximo merge main só nesta branch: preservar transporte101/102 e incorporar mensagemdiagnóstica main; client-id automerge necessário. Sem merge main/produção; QAvisual pendente.
+
+2026-10-31T08:30:38.596587+00:00 — Merge mainc7fa preserva transporte101/102 + mensagemfailsafe; client-id automerge. Runnerboot2mutantes/menu/netcode/docs/arch/syntax6/6verde103.6s. Merge trouxe81linhas Game de main; SIM_HASHregeneradoe201477cc24921ae/130. Próximo crítico da resolução e push normal; QAvisual pendente.

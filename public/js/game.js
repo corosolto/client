@@ -869,7 +869,10 @@ export class Game {
       isPlayer: true, name: (nickname || '').trim().slice(0, 32) || tr('VOCÊ'), def: this.playerDef, team: playerTeam,
       pos: new THREE.Vector3(), vel: new THREE.Vector3(),
       yaw: 0, pitch: 0, hp: 100, alive: true, respawnAt: 0, crouchF: 0,
-      weapon: startWeapon, scoped: false, reloadUntil: 0, nextShotAt: 0, drawUntil: 0,
+      weapon: startWeapon, scoped: false, reloadUntil: 0, reloadWeapon: '', nextShotAt: 0, drawUntil: 0,
+      // Janela do arremesso: trava gatilho e recarga enquanto a mão é da granada
+      // (docs/GRANADA-RECARGA-MORTE-2026-10-26.md §1; régua GRM1).
+      nadeBusyUntil: 0,
       primary: startWeapon, secondary: 'pistol',
       ammo: Object.fromEntries(Object.keys(WEAPONS).filter(w => w !== 'knife').map(w => [w, { mag: WEAPONS[w].mag, res: WEAPONS[w].reserve }])),
       kills: 0, deaths: 0, headshots: 0, grounded: true, stepPhase: 0, revealedAt: -99, protUntil: 0, smokes: 5,
@@ -2104,9 +2107,14 @@ export class Game {
       if (document.pointerLockElement) e.preventDefault();
       // Y/U abrem o chat antes do portão _acceptInput (o espectador não tem pointer lock), nunca pausado;
       // valem em roundEnd e matchEnd também: o §5 do contrato libera o fim de partida para todos
-      if ((e.code === 'KeyY' || e.code === 'KeyU') && this.onAbrirChat && !this.paused && this.state !== 'boot') {
+      if ((e.code === 'KeyY' || e.code === 'KeyU') && !this.paused && this.state !== 'boot') {
         e.preventDefault();
-        this.onAbrirChat(e.code === 'KeyY' ? 'sala' : 'time');
+        // `abrir` devolve false quando não há chat (partida local, ou nó sem MP_CHAT: o welcome
+        // vem sem `meta.chat`). Tecla morta e calada era o relato "o chat em jogo não abre".
+        const abriu = this.onAbrirChat ? this.onAbrirChat(e.code === 'KeyY' ? 'sala' : 'time') !== false : false;
+        if (!abriu) this._abilityNotice(this.online
+          ? tr('O chat desta sala está desligado no servidor.')
+          : tr('O chat é das salas online. Entre no multiplayer pra conversar.'));
         return;
       }
       this.keys[e.code] = true;
@@ -3788,11 +3796,13 @@ export class Game {
     /* reloadUntil > 0 com prazo vencido = recarga que COMPLETA neste quadro; rearmar por
        cima dela era o reload infinito do gatilho preso. Régua: pulo-tiro-recarga C1-C3. */
     if (w === 'knife' || !p.alive || p.reloadUntil > 0) return;
+    if (this.time < (p.nadeBusyUntil || 0)) return;   // mão ocupada: a granada ainda está saindo
     const a = p.ammo[w];
     if (a.mag >= WEAPONS[w].mag || a.res <= 0) return;
     this._cancelInspect();
     this._scope(false, true);
     p.reloadUntil = this.time + WEAPONS[w].reload;
+    p.reloadWeapon = w;   // quem recarregou é quem é servido no fim (ver _armasServidasPelaRecarga)
     if (this.online) this._mp?.pedirReload(w);
     // BUG-04: MESMA duração da tabela de armas nos dois lados — o relógio de jogo
     // (reloadUntil, que devolve a munição) e a animação terminam no mesmo quadro.
@@ -3806,6 +3816,51 @@ export class Game {
     // 3P: o corpo denuncia a recarga (overlay procedural - docs/ANIM-3P.md).
     if (this.camView !== 'first') this.playerTP?.ctrl?.reload?.(WEAPONS[w].reload);
     this._reloadLayers(w, WEAPONS[w].reload);
+  }
+  /* Recarga abortada: relógio, som, aviso e animação caem no MESMO quadro.
+     Granada e morte cancelam, como no CS (docs/GRANADA-RECARGA-MORTE §2; GRM2). */
+  _cancelReload() {
+    const p = this.player;
+    if (!(p.reloadUntil > 0)) return false;
+    p.reloadUntil = 0;
+    p.reloadWeapon = '';
+    this._rlTok = (this._rlTok || 0) + 1;   // invalida as camadas de som já agendadas
+    this.el?.reloadNote?.classList.add('hidden');
+    this.vm.authored?.idleWeapon?.(p.weapon);
+    this.vm.rig?.cancelReload?.();
+    this.playerTP?.ctrl?.cancelReload?.();   // 3P: o corpo para de mergulhar atrás do pente
+    return true;
+  }
+  /* Morto, o _updatePlayer sai cedo e congela mixer e relógio, que descongelavam na
+     base. A vida acaba junto com eles (docs/GRANADA-RECARGA-MORTE §3; GRM3/GRM4). */
+  _abortarArmaNaMorte() {
+    const p = this.player;
+    this._cancelReload();
+    p.nade = null;
+    p.nadeBusyUntil = 0;
+    p._nextNade = 0;
+    this.vm.authored?.abortUtility?.();
+    this.vm.rig?.reset?.();
+    this._applyVmVisibility();
+    this._updateWeaponHud();
+  }
+  /* Renasce no idle e SACA, em vez de retomar o quadro congelado da morte. Vale pro
+     respawn local e pro revive do servidor (netgame), que não passa pelo _respawnPlayer. */
+  _voltarPraBase() {
+    const w = this.player.weapon;
+    this.vm.authored?.abortUtility?.();
+    this.vm.rig?.reset?.();
+    this._applyVmVisibility();
+    if (this.vm.melee?.active) this.vm.melee.draw();
+    else if (this.vm.authored?.active(w)) this.vm.authored.draw(w, 0.38);
+    else this.vm.rig?.startDraw?.();
+  }
+  /* A recarga serve a arma que ENTROU nela, com a da mão como retaguarda (netgame e QA
+     marcam `reloadUntil` direto). Era um laço em todo o p.ammo: §4 do doc; GRM5. */
+  _armasServidasPelaRecarga() {
+    const p = this.player;
+    const w = p.reloadWeapon && p.ammo[p.reloadWeapon] ? p.reloadWeapon : p.weapon;
+    return p.ammo[w] && WEAPONS[w] ? [w] : [];
   }
   // Camadas de recarga (GUNFEEL): era 1 beep na entrada e 1 na saída. Agora magOut (trava +
   // pente caindo), magIn (thunk grave de encaixe) e boltRelease (ressonador metálico),
@@ -3885,6 +3940,9 @@ export class Game {
       if (!continuo) this._throwNade(p.nade, p.nade === 'frag' ? 'frags' : 'smokes', 1);
       return;
     }
+    /* Arremesso em voo: a mão ainda é da granada, o gatilho espera
+       (docs/GRANADA-RECARGA-MORTE-2026-10-26.md §1; régua GRM1). */
+    if (this.time < (p.nadeBusyUntil || 0)) return;
     if (this.time < p.nextShotAt || this._reloading() || this.time < p.drawUntil) return;
     this._cancelInspect?.();
     if (p.weapon === 'knife') {
@@ -4402,6 +4460,7 @@ export class Game {
     }
     if (ent.isPlayer) {
       this._scope(false, true);
+      this._abortarArmaNaMorte();   // recarga e arremesso morrem com o jogador (GRM3/GRM4)
       this._unequipNade();
       this._resetKillSequence();
       this.el.respawn.classList.remove('hidden');
@@ -5161,6 +5220,7 @@ export class Game {
   _throwNade(kind, ammoKey, forca = 1) {
     const p = this.player;
     if (!p.alive || (p[ammoKey] | 0) <= 0 || this.time < (p._nextNade || 0)) return;
+    if (this.time < (p.nadeBusyUntil || 0)) return;   // uma granada por animação
     /* Online o servidor lança e o pedido só carrega o TIPO (netgame.pedirNade): sem campo
        de força no protocolo, o botão direito lança igual ao esquerdo em partida online. */
     const f = this.online ? 1 : forca;
@@ -5174,7 +5234,13 @@ export class Game {
     };
     // Sem utilidade sobrando o porte acaba junto com o arremesso: a arma volta à mão.
     if ((p[ammoKey] | 0) <= 0 && p.nade === kind) { p.nade = null; this.vm.authored?.releaseUtility(); }
-    if (!this.vm.authored?.throwUtility(kind, 1.05, release)) release();
+    this._cancelReload();   // recarregando e jogou granada: a recarga cai (mesma regra do porte)
+    const ANIM_ARREMESSO = 1.05;
+    const animou = Boolean(this.vm.authored?.throwUtility(kind, ANIM_ARREMESSO, release));
+    /* Sem pacote pago (mobile/legado) a granada sai no ato e não há animação para proteger:
+       a janela é só a do arremesso que existe. */
+    p.nadeBusyUntil = this.time + (animou ? ANIM_ARREMESSO : 0);
+    if (!animou) release();
     this._applyVmVisibility();
     this._updateWeaponHud();
   }
@@ -5187,6 +5253,7 @@ export class Game {
     if (!p.alive || this.state !== 'live') return false;
     if (p.nade === kind) { this._unequipNade(); return false; }
     if ((p[ammoKey] | 0) <= 0) return false;
+    this._cancelReload();   // granada na mão cancela a recarga (GRM2) — não a deixa correndo escondida
     p.nade = kind;
     this._scope(false, true);
     this._cancelInspect();
@@ -6716,13 +6783,15 @@ export class Game {
     if (!this._reloading() && p.reloadUntil > 0) {
       p.reloadUntil = 0;
       const inf = this._municaoInfinita();   // modo de arma única: ver _municaoInfinita()
-      for (const k of Object.keys(p.ammo)) {
+      for (const k of this._armasServidasPelaRecarga()) {
         const am = p.ammo[k], wm = WEAPONS[k].mag;
+        if (!am || !wm) continue;
         if (am.mag < wm && am.res > 0) { const need = wm - am.mag, take = Math.min(need, am.res); am.mag += take; am.res -= take; }
         // depois de servir o pente, não antes: portão de recarga, HUD e `util` do bot
         // seguem lendo número normal e nenhum precisa saber que existe modo infinito.
         if (inf) am.res = WEAPONS[k].reserve;
       }
+      p.reloadWeapon = '';
       this.el.reloadNote.classList.add('hidden');
       this.sfx.reloadEnd();
     }
@@ -7277,6 +7346,8 @@ export class Game {
     const s = this._pickSpawn(p.team);
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
     p.hp = 100; p.alive = true; p.crouchF = 0;
+    p.reloadUntil = 0; p.reloadWeapon = ''; p.nadeBusyUntil = 0; p._nextNade = 0;
+    this._voltarPraBase();
     p._lifeDmg = 0;
     this._tpRevive();   // o corpo TP não pode renascer deitado (BUG-86)
     if (this._deathPanel) this._deathPanel.innerHTML = '';   // painel de morte não vaza pra vida nova

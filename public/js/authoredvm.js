@@ -1041,6 +1041,32 @@ export class AuthoredViewModels {
   }
   utilityHeld() { return this.held?.kind || null; }
 
+  /* Abortar (morte): o `releaseUtility` GUARDA e deixa o arremesso terminar; aqui ele morre,
+     com `onRelease` descartado e a `utility` solta (docs/GRANADA-RECARGA-MORTE §3). */
+  abortUtility() {
+    if (!this.utility && !this.held) return false;
+    const entry = this.utility?.entry || this.held?.entry || null;
+    this.utility = null;
+    this.held = null;
+    if (entry) {
+      entry.mount.visible = false;
+      this._idle(entry);
+    }
+    const weaponEntry = this.entry();
+    if (weaponEntry) {
+      weaponEntry.mount.visible = true;
+      this._idle(weaponEntry);
+    }
+    return true;
+  }
+
+  // Ação cancelada (recarga interrompida por granada/morte): a arma volta ao idle sem
+  // esperar o clipe terminar — senão a pose fica congelada no meio da recarga.
+  idleWeapon(id = this.weapon) {
+    const entry = this.entry(id);
+    return entry ? this._idle(entry, entry.mount.visible ? 0.12 : 0) : false;
+  }
+
   _sequence(entry, names, duration) {
     const total = names.reduce((sum, name) => sum + entry.clips.get(name).duration, 0);
     const timeScale = duration > 0 ? total / duration : 1;
