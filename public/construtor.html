@@ -178,8 +178,15 @@ function draw(){
   const [fx,fz]=w2s(-bx,-bz); ctx.fillStyle=spec.floor.color; ctx.fillRect(fx,fz,bx*2*view.scale,bz*2*view.scale);
   // grade
   ctx.strokeStyle='rgba(255,255,255,.05)'; ctx.lineWidth=1;
-  for(let gx=-bx;gx<=bx;gx+=2){const[a,b]=w2s(gx,-bz),[c,d]=w2s(gx,bz);ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();}
-  for(let gz=-bz;gz<=bz;gz+=2){const[a,b]=w2s(-bx,gz),[c,d]=w2s(bx,gz);ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();}
+  if(Number.isFinite(view.scale)&&view.scale>0){
+    const kx0=Math.ceil(Math.max((0-cx())/view.scale,-bx)/2), kx1=Math.floor(Math.min((cv.width-cx())/view.scale,bx)/2);
+    const kz0=Math.ceil(Math.max((0-cz())/view.scale,-bz)/2), kz1=Math.floor(Math.min((cv.height-cz())/view.scale,bz)/2);
+    const nx=kx1-kx0, nz=kz1-kz0;
+    if(Number.isSafeInteger(kx0)&&Number.isSafeInteger(kx1)&&nx>=0&&nx<=cv.width)
+    for(let i=0;i<=nx;i++){const gx=(kx0+i)*2,[a,b]=w2s(gx,-bz),[c,d]=w2s(gx,bz);ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();}
+    if(Number.isSafeInteger(kz0)&&Number.isSafeInteger(kz1)&&nz>=0&&nz<=cv.height)
+    for(let i=0;i<=nz;i++){const gz=(kz0+i)*2,[a,b]=w2s(-bx,gz),[c,d]=w2s(bx,gz);ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();}
+  }
   // muro perimetral
   ctx.strokeStyle=spec.walls.color; ctx.lineWidth=3; ctx.strokeRect(fx,fz,bx*2*view.scale,bz*2*view.scale);
 
