@@ -755,11 +755,11 @@ com referência conceito-a-aerea.webp e qualidade Medium (até8.000 créditos ca
 Todos aceitos/Generating, ainda sem GLB inspecionado ou integrado. Reserva de
 24.000 créditos; UI mostrou27.089 disponíveis depois do terceiro pedido. Não
 comprar créditos nem regenerar automaticamente. Prompts exatos em
-prompts/caca-javaporco-arquitetura-20261031.json; ficha
-plans/02-CACA-JAVAPORCO-PILOTOS-ARQUITETURA-20261031.md passou spec:check.
+docs/maps/javaporcos-arquitetura-20261031/pedidos.json; ficha
+docs/maps/javaporcos-arquitetura-20261031/ficha.md passou spec:check.
 Primeira tentativa de anexar conceito-d-rua foi rejeitada pelo site com This
 content cannot be submitted; não houve geração. Referência aérea foi aceita.
-FONTE local em references/caca-javaporco-arquitetura/FONTE.md.
+FONTE local em docs/maps/javaporcos-arquitetura-20261031/FONTE.md.
 
 Revalidação local da intenção: seis casos verdes, incluindo queda sobre telhado
 a20/30/60/120Hz. Três mutantes finais lixo-depois/entrada-fixa/sem-ataque derrubam
@@ -767,3 +767,19 @@ somente o caso esperado e são detectados. Isto não substitui revisão visual d
 animação ou validação MP. Próximo imediato: javaporco no LoadingCharacterStage;
 manter o restante do objetivo acima, acompanhar os três pedidos e inspecionar os
 modelos antes de considerá-los aproveitáveis.
+
+31/10 — correção local da morte humana se retorcendo: CharController agora
+restaura a pose base antes de reaplicar a inclinação direcional e antes de
+reviver. O mixer com clamp deixava a rotação adicional acumular a cada quadro.
+Régua tools/eval/morte-pose-estavel-check.mjs usa controlador e AnimationMixer
+reais: desvio após assentamento passou de3.14140899rad para0.00000004rad em10s;
+reviver/morrer novamente estável. Mutante acumula reproduz e detecta o defeito.
+No navegador local, Gotinha/Curupira/Funkraiz ficaram estáveis após o clipe
+(desvio máximo2.98e-8rad). Captura3:2:
+artifacts/javaporcos-feedback-20261031/morte-gotinha-assentada-3x2.png.
+Revisão independente review_morte_loading não encontrou regressão funcional na
+correção. Ainda local, sem publicação no preview. Outros diffs de loading,
+placar, movimentação e arquitetura continuam em andamento; não confundir com
+esta validação. Próximo: fechar cobertura de carregamento frio/cancelamento e
+revisão visual móvel do loading, acompanhar os três pilotos Mint e seguir as
+pendências de interiores/mapas/MP registradas acima.
