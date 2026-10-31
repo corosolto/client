@@ -168,6 +168,12 @@ for (const mapId of MAP_IDS) {
   } catch (e) { mapas.push({ map: mapId, err: e.message }); console.error(`[MAPAUD] erro ${mapId}: ${e.message}`); continue; }
 
   const W = g.world;
+  // Ativa o descarte exato por AABB já implementado no Mesh.raycast do Three.
+  // Malhas deformáveis ficam fora; todas as sondas e os triângulos são preservados.
+  W.root.traverse(node => {
+    if (node.isMesh && !node.isSkinnedMesh && !Object.keys(node.geometry.morphAttributes).length)
+      node.geometry.computeBoundingBox();
+  });
   /* MATRIZES DE MUNDO: sem render ninguém chama updateMatrixWorld, e o Raycaster do three
      NÃO atualiza sozinho — ele assume matrizes prontas. Sem esta linha o raio testa cada
      malha na posição LOCAL dela: a primeira versão desta régua acusou 16 pontos "dentro de
