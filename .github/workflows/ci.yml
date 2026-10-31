@@ -96,6 +96,8 @@ jobs:
         run: npm run eval:mapcontrato
       - name: Câmera, atalhos e HUD com mutantes
         run: npm run eval:cameraoclusao
+      - name: Backpedal preserva autoridade e lateral com mutantes
+        run: npm run eval:tpbackpedal
       - name: Amazônia acessível e bots entre palafitas
         run: npm run eval:amazonia
       - name: Escadão — circulação, estrutura e casa
