@@ -1163,10 +1163,6 @@ class CharController {
         this.headBone.updateWorldMatrix(false, true);
       }
     }
-    if (this.headBone) {
-      this.group.updateMatrixWorld(true);
-      this.head.position.copy(this.group.worldToLocal(this.headBone.getWorldPosition(_v)));
-    }
     // Sombra de contato: reage ao estado do corpo. No pulo ela ABRE e desbota (penumbra
     // que cresce com a distância do contato, critério A4); agachado ela FECHA e escurece
     // (o corpo está mais perto do chão); morto, alivia — o corpo tombou e a mancha sob
@@ -1425,6 +1421,12 @@ class CharController {
         _axisF.set(-d.z / n, 0, d.x / n).applyQuaternion(_pq).normalize();
         _aplicaMorte(bone, _qLean.setFromAxisAngle(_axisF, this._deathK * 0.22).clone());
       }
+    }
+    /* Hitbox da cabeça sincronizada por ÚLTIMO: overlays de tronco/emote/recarga/morte
+       mexem em ancestrais do Head DEPOIS do ponto onde ela era copiada (crítico 31/10, docs/visual-consistency/TP-WORLD.md). */
+    if (this.headBone) {
+      this.group.updateMatrixWorld(true);
+      this.head.position.copy(this.group.worldToLocal(this.headBone.getWorldPosition(_v)));
     }
   }
 }

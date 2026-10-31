@@ -566,3 +566,9 @@ Ego R2 real (Space32 p1) rejeitou o CSS R1: landscape 844×390 lista244px invade
 ### 14:48 UTC — equivalência de normais integrada e contratos de câmera
 
 Helper/gate/caller de equivalência normal-only copiados exatamente do PR1184SHA52a2645d0; `npm run eval:normal-only-fit-equivalence` nominal+mutantes GREEN no WT agregado. Nenhum novo GLB foi alterado. TP-WORLD R3 crítico CLEAN (509b3877), nominal13/13 e contraprovas NaNprimeiro/permanente/Infinity, imports/infra, nominal-first e falhas exatas. Death R5 crítico CLEAN (8d03ef8b): acumulação por frame detecta NaN transitório, S3 e status42; nominal25/25 e3mutantes causais exatos GREEN. Produto ainda sem recaptura de morte. CampoR7 nominal4/4; fixture reextraída imutávelpréR5 com geometriaSHA, proveniência e demais campos idênticos, crítico em curso.
+
+### 14:52 UTC — checkpoint movimento3P, grade real e censo com falha de fechamento
+
+TP-WORLD nominal13/13+6mutantes reais pelo CLI GREEN em root-tp-world-R3-wired.log, críticaR3 CLEAN509b3877. Game usa perfil analítico em _consultarTiro; a prova de proxy não é prova geral de hitscan alinhado a toda animação. DeathR5 nominal25/25+3mutantes+CAMMORTE nominal passaram no comando integrado, críticaCLEAN8d03ef8b. CSSgradeR3 Ego confirmou semsobreposição e seleção real49º/volta47º.
+
+CensoR5 mediu os14mapas/465peças, todos com contadores0 e semerrosporpágina. Porém filhoEgo saiu1 ANTES do recibo final: o conjunto NÃO está aprovado; diagnóstico isoladoPosto preservando stdoutcompleto em curso. Não confundir inventáriosindividuais com portãoGREEN. CampoR8 críticoCLEAN2995d2f7, próximaação migrar explicitamente4guards→40fixtureM3 sem mudarinterior. Córrego gateR5 rejeitado pelo crítico por NaN UV/sampler; produtoPBRR4 continuaaceito4poses eUVhelperCLEAN, gates em revisão.
