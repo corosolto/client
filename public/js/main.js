@@ -7,7 +7,7 @@ import {initLoginPrompt,noteLoginPromptMatch} from './login-prompt.js';
 import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
 import { clientUuid, getAnonId } from './client-id.js';
-import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
+import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
 import {tretaPack} from './data/pack-definitions.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
@@ -907,52 +907,90 @@ let pv = null, pvDrag = null;
    404 por personagem faltando.
    Uma função só alimenta prévia estática, fallback do snapshot 3D e modo de
    qualidade baixa — trocar aqui melhora os três de uma vez. */
-const portraitUrl = (def) => `/img/chars-hero/${def.id}.webp?v=${VERSION}`;
+const portraitUrl = (def) => {
+  const skin=tretaSkinPresentation(def.skinId,def.id);
+  return skin?(skin.poster?`${skin.poster}?v=${VERSION}`:null):`/img/chars-hero/${def.id}.webp?v=${VERSION}`;
+};
 /* O antigo continua no repo e vira a rede de segurança: se o hero não carregar, a
    imagem cai para o recorte do modelo em vez de ficar quebrada. */
 const portraitFallbackUrl = (def) => `/img/chars/${def.id}.webp?v=${VERSION}`;
 /* VÍDEO DO PERSONAGEM (tela 03 do redesign): captura do próprio modelo, rig e clipe
    do jogo por tools/eval/char-native-vids.mjs. Falha de rede mantém o canvas/GLB. */
 let pvVidToken = 0;
+let pvImageToken = 0;
+let pvStaticKey = '';
+let pvPosterFailure = null;
+const pvReducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+pvReducedMotion.addEventListener?.('change',event=>{if(event.matches)pvStopVideo();});
+function resolvePreviewCharacter(def) {
+  const skinId=Object.hasOwn(def,'skinId')?def.skinId:equippedTretaSkin(def.id);
+  return {...def,skinId:tretaSkinPresentation(skinId,def.id)?.id || null,eyewearId:equippedTretaEyewear()};
+}
 function previewVideoVisible() {
   return document.querySelector('.char-preview-box')?.classList.contains('has-video') === true;
 }
 function pvStopVideo() {
+  pvVidToken++;
   const box = document.querySelector('.char-preview-box');
   const video = $('char-preview-video');
   if (!video) return;
+  video.onloadeddata=null;video.onerror=null;
   video.pause();
   video.removeAttribute('src');
   video.load();
   video.classList.add('hidden');
   box?.classList.remove('has-video');
+  const label=$('char-preview-skin');
+  if(label && pvPosterFailure){label.hidden=false;label.textContent=`Prévia indisponível: ${pvPosterFailure}`;}
 }
 function pvSetVideo(def) {
   const box = document.querySelector('.char-preview-box');
   const video = $('char-preview-video'), hints = document.querySelector('.pv-hints');
   if (!box || !video) return;
-  const my = ++pvVidToken;
+  def=resolvePreviewCharacter(def);
+  const skin=tretaSkinPresentation(def.skinId,def.id);
+  const src=skin?(skin.video?.webm || skin.video?.mp4):`/video/chars/${def.id}.webm`;
+  if(!src || pvReducedMotion.matches){pvStopVideo();return;}
+  const url=`${src}?v=${VERSION}`;
+  if(video.dataset.previewSrc===url && video.onloadeddata)return;
+  pvStopVideo();
+  const my = pvVidToken;
+  video.dataset.previewSrc=url;
   box.classList.remove('has-video');
   video.classList.add('hidden');
   // no modo estático (sem WebGL) as dicas de GIRAR/ZOOM nunca aparecem — nem quando o vídeo falta
   if (hints) hints.classList.toggle('hidden', staticPreviews);
-  video.onerror = () => { if (my === pvVidToken) { box.classList.remove('has-video'); video.classList.add('hidden'); } };
-  video.onloadeddata = () => {
+  video.onerror = () => {if(my===pvVidToken)pvStopVideo();};
+  video.onloadeddata = async () => {
     if (my !== pvVidToken) return;
-    video.play().catch(() => {});
+    try{await video.play();}catch{if(my===pvVidToken)pvStopVideo();return;}
+    if(my!==pvVidToken)return;
     box.classList.add('has-video');
     video.classList.remove('hidden');
+    const label=$('char-preview-skin');if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
     if (hints) hints.classList.add('hidden');
   };
-  video.src = `/video/chars/${def.id}.webm?v=${VERSION}`;
+  video.src = url;
   video.load();
 }
 function showStaticPreview(def) {
   const canvas = $('char-preview'), image = $('char-preview-static'), hints = document.querySelector('.pv-hints');
+  const skin=tretaSkinPresentation(def.skinId,def.id),label=$('char-preview-skin'),weaponLabel=$('char-preview-weapon');
+  const weapon=armaDoPreview(def.id),paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId);
+  const key=JSON.stringify([def.id,def.skinId,skin?.poster,skin?.name,skin?.video,def.eyewearId,weapon,paint?.name]);
+  if(key===pvStaticKey)return;
+  pvStaticKey=key;pvPosterFailure=null;pvStopVideo();
+  if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
+  if(weaponLabel){const names={ak:'AK-47',m4:'M4',scar:'SCAR',pistol:'Pistola'};weaponLabel.textContent=paint?`Pintura: ${names[weapon.weaponId] || weapon.weaponId} · ${paint.name}`:'';weaponLabel.hidden=!paint;}
   if (canvas) canvas.classList.add('hidden');
   if (image) {
-    image.onerror = () => { image.onerror = null; image.src = portraitFallbackUrl(def); };
-    image.src = portraitUrl(def); image.alt = def.name; image.classList.remove('hidden');
+    const my=++pvImageToken;
+    const unavailable=()=>{pvPosterFailure=skin?.name || def.name;image.classList.add('hidden');if(label && !previewVideoVisible()){label.hidden=false;label.textContent=`Prévia indisponível: ${pvPosterFailure}`;}};
+    image.onload=()=>{if(my!==pvImageToken)return;pvPosterFailure=null;if(label && !previewVideoVisible()){label.textContent=skin?.name || '';label.hidden=!skin;}};
+    image.onerror = () => {if(my!==pvImageToken)return;image.onerror=null;if(skin)unavailable();else{image.onerror=()=>{if(my===pvImageToken)unavailable();};image.src=portraitFallbackUrl(def);}};
+    const src=portraitUrl(def);
+    image.alt = skin?.name || def.name;image.classList.remove('hidden');
+    if(src)image.src=src;else unavailable();
   }
   if (hints) hints.classList.add('hidden');
 }
@@ -1144,12 +1182,14 @@ async function montaBarraEmotes() {
 religaAbrirEmotes();
 
 function pvSetChar(def) {
-  def = {...def, skinId:equippedTretaSkin(def.id),eyewearId:equippedTretaEyewear()};
+  def = resolvePreviewCharacter(def);
+  const my = ++pvToken;
   if (staticPreviews) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
+  pvImageToken++;pvStaticKey='';pvStopVideo();
+  for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label)label.hidden=true;}
   // Swap to the real rigged GLB (idle) once loaded, if this is still the selection.
-  const my = ++pvToken;
   const showBox = () => {   // procedural fallback (only when there's no GLB at all)
     if (p.model) p.scene.remove(p.model);
     p.mixer = null; p.ctrl = null;
@@ -1226,7 +1266,7 @@ function returnPreviewToSelection() {
   if (box && marker && box.parentElement !== marker.parentElement) marker.parentElement.insertBefore(box, marker.nextSibling);
 }
 function syncHomeCharacter() {
-  if (!HUB_ENABLED || $('main-menu')?.dataset.hubTab !== 'jogar' || $('main-menu')?.dataset.hubNet !== 'sp') return;
+  if (!HUB_ENABLED || $('main-menu')?.classList.contains('hidden') || $('main-menu')?.dataset.hubTab !== 'jogar' || $('main-menu')?.dataset.hubNet !== 'sp') return;
   const box = document.querySelector('.char-preview-box');
   const host = $('hub-character');
   if (box && host && box.parentElement !== host) host.appendChild(box);
@@ -1236,6 +1276,11 @@ function syncHomeCharacter() {
   $('hub-character-crest').src = `/img/brasoes/${lado.toLowerCase()}.png`;
   $('hub-change-character').style.setProperty('--hub-faction', PALETA[lado]?.base || '#b4d92e');
   pvSetChar(def);
+}
+function refreshMenuEquipment() {
+  if(selChar && !$('char-select')?.classList.contains('hidden')){pvSetChar(selChar);if(staticPreviews)pvSetVideo(selChar);}
+  else syncHomeCharacter();
+  if(!$('hub-roster-modal')?.hidden)hubRosterRender?.();
 }
 let hubMapReturnQuick = false;
 let hubRosterLado = 'E', hubRosterCat = null;
@@ -5258,7 +5303,7 @@ void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params
 // Logar com a aba RANKING aberta tira o convite de nick na hora, sem refazer a lista.
 document.addEventListener('cs-account-change',(e)=>{contaNick=e.detail?.profile?.nick || '';const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);});
 tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
-document.addEventListener('cs-treta-inventory-change',()=>{syncHomeCharacter();if(!$('hub-roster-modal')?.hidden)hubRosterRender?.();});
+document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
 // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
 if (directRoute) document.getElementById('boot-splash')?.remove();
 const abrirVitrine=()=>{if(!tretaVitrine()?.length)return;document.removeEventListener('cs-treta-state',abrirVitrine);void import('./treta-vitrine.js').then(m=>m.iniciarVitrine()).catch(()=>{});};

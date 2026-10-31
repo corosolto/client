@@ -126,7 +126,20 @@ caso('RS5', 'fiação do modal: armário no openHubRoster, equipar na célula de
   assert.ok(/aria-pressed', String\(skin\.equipped && def\.id === currentChar\)/.test(roster), 'célula de skin não reflete o equipado');
   assert.ok(/hub-roster-selected'\)\.textContent = `Selecionado:[^`]*\$\{skinAtual \? ` · \$\{skinAtual\.name\}` : ''\}`/.test(roster), 'a linha Selecionado não mostra a skin');
   assert.ok(/hubRosterRender = render;/.test(roster), 'openHubRoster não publica o render do modal');
-  assert.ok(/cs-treta-inventory-change'[\s\S]{0,160}hubRosterRender\?\.\(\)/.test(fonteMain), 'o armário que chega depois do boot não redesenha o modal aberto');
+  const start=fonteMain.indexOf('function refreshMenuEquipment()');
+  const end=fonteMain.indexOf('let hubMapReturnQuick',start);
+  assert.ok(start>=0 && end>start,'handler de equipamento ausente');
+  const registration=fonteMain.split('\n').find(line=>line.startsWith("document.addEventListener('cs-treta-inventory-change',"));
+  assert.ok(registration,'evento de equipamento sem inscrição');
+  const modal={hidden:false},events=new EventTarget();let renders=0;
+  vm.runInNewContext(fonteMain.slice(start,end)+'\n'+registration,{
+    document:events,$:id=>id==='hub-roster-modal'?modal:null,selChar:null,
+    syncHomeCharacter:()=>{},hubRosterRender:()=>{renders++;},
+  });
+  events.dispatchEvent(new Event('cs-treta-inventory-change'));
+  assert.equal(renders,1,'o armário que chega depois do boot não redesenha o modal aberto');
+  modal.hidden=true;events.dispatchEvent(new Event('cs-treta-inventory-change'));
+  assert.equal(renders,1,'modal fechado não deve ser redesenhado');
 });
 
 caso('RS6', 'sem conta e sem inventário o armário é vazio: o modal fica igual ao de hoje', () => {

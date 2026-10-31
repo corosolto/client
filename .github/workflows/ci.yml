@@ -76,6 +76,8 @@ jobs:
         run: npm run eval:treta-coins
       - name: Skin equipada aguarda manifesto e conta vigente no boot
         run: npm run eval:treta-manifest-ready
+      - name: Preview mobile preserva skin e propriedade da mídia
+        run: npm run eval:character-preview-media
       - name: Acúmulo de armas no chão tem teto
         run: npm run eval:drop
       - name: Loja sem nome de político real

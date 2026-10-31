@@ -660,6 +660,7 @@
     "eval:treta-rewards": "node tools/eval/treta-rewards-check.mjs && node tools/eval/treta-rewards-check.mjs --mutations",
     "eval:treta-skins": "node tools/eval/treta-skins-check.mjs && node tools/eval/treta-skins-check.mjs --mutations",
     "eval:treta-manifest-ready": "node --test tests/treta-manifest-readiness.test.mjs",
+    "eval:character-preview-media": "node --test tests/character-preview-media.test.mjs",
     "eval:treta-nomes": "node tools/eval/treta-nomes-reais-check.mjs && node tools/eval/treta-nomes-reais-check.mjs --mutations",
     "eval:treta-video": "node tools/eval/treta-skin-video-check.mjs && node tools/eval/treta-skin-video-check.mjs --mutations",
     "eval:treta-video-hover": "node tools/eval/treta-video-hover-browser.mjs && node tools/eval/treta-video-hover-browser.mjs --mutations",
