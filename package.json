@@ -216,7 +216,7 @@
     "eval:audioespacial": "node tools/eval/audio-espacial-check.mjs",
     "eval:audioenvelope": "node tools/eval/audio-envelope-check.mjs",
     "eval:audioproc": "node tools/eval/audio-proveniencia-check.mjs",
-    "eval:audiomarcas": "node tools/eval/audio-manifest-marcas-check.mjs && node tools/eval/audio-manifest-marcas-check.mjs --mutante=marca-volta && node tools/eval/audio-manifest-marcas-check.mjs --mutante=chave-sumida && node tools/eval/audio-manifest-marcas-check.mjs --mutante=varredor-cego",
+    "eval:audiomarcas": "node tools/eval/audio-manifest-marcas-check.mjs && node tools/eval/audio-manifest-marcas-check.mjs --mutante=marca-volta && node tools/eval/audio-manifest-marcas-check.mjs --mutante=chave-sumida && node tools/eval/audio-manifest-marcas-check.mjs --mutante=varredor-cego && node tools/eval/audio-manifest-container-check.mjs",
     "eval:audiocapacidade": "node tools/eval/audio-capacidade-check.mjs",
     "eval:audiofablocal": "node tools/eval/audio-fab-local-check.mjs",
     "eval:audioeventos": "node tools/eval/audio-eventos-check.mjs",

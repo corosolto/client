@@ -116,6 +116,7 @@ if (contratoMorto.length) {
 }
 
 let folhasVistas = 0;
+let aplicado = false;
 
 for (const alvo of alvos) {
   let dados;
@@ -126,17 +127,23 @@ for (const alvo of alvos) {
     continue;
   }
 
-  if (mutante === 'chave-sumida') delete dados.weapons;
+  if (mutante === 'chave-sumida' && Object.prototype.hasOwnProperty.call(dados, 'weapons')) {
+    delete dados.weapons;
+    aplicado = true;
+  }
 
   const folhas = [];
   (function anda(o) {
-    if (mutante === 'varredor-cego') return;
+    if (mutante === 'varredor-cego') { aplicado = true; return; }
     if (Array.isArray(o)) o.forEach(anda);
     else if (o && typeof o === 'object') Object.values(o).forEach(anda);
     else if (typeof o === 'string') folhas.push(o);
   })(dados);
 
-  if (mutante === 'marca-volta') folhas.push('audio/game/awp-cs-1-6.mp3');
+  if (mutante === 'marca-volta') {
+    folhas.push('audio/game/awp-cs-1-6.mp3');
+    aplicado = true;
+  }
   folhasVistas += folhas.length;
 
   /* ── MARCA1: nenhuma folha cita marca ou nome de arquivo de terceiro ─────── */
@@ -175,7 +182,11 @@ for (const alvo of alvos) {
   }
   const malFormadas = [];
   for (const [chave, valor] of Object.entries(dados)) {
-    for (const [sub, lista] of Object.entries(valor && typeof valor === 'object' ? valor : {})) {
+    if (!valor || typeof valor !== 'object' || Array.isArray(valor) || Object.keys(valor).length === 0) {
+      malFormadas.push(chave);
+      continue;
+    }
+    for (const [sub, lista] of Object.entries(valor)) {
       if (!Array.isArray(lista) || !lista.length || !lista.every((p) => typeof p === 'string' && EXT_AUDIO.test(p))) {
         malFormadas.push(`${chave}.${sub}`);
       }
@@ -207,12 +218,16 @@ if (!alvos.length) {
 for (const nota of notas) console.log(`  ✓ ${nota}`);
 
 if (mutante) {
-  if (falhas.length) {
+  /* Mutante só é detectado se aplicou E acendeu a cláusula esperada. */
+  const esperado = { 'marca-volta': 'MARCA1', 'chave-sumida': 'MARCA2', 'varredor-cego': 'MARCA3' }[mutante];
+  if (aplicado) console.log(`Mutação aplicada: ${mutante}`);
+  if (aplicado && falhas.some((f) => f.startsWith(`${esperado}:`))) {
     console.log(`\nMUTANTE ${mutante} DETECTADO — ${falhas.length} cláusula(s) vermelha(s):`);
     falhas.forEach((f) => console.log(`  ✗ ${f}`));
     process.exit(0);
   }
   console.error(`\nMUTANTE ${mutante} PASSOU BATIDO — a régua não vê o que deveria ver.`);
+  if (!aplicado) console.error('  (a mutação nem foi aplicada — alvo ausente não é detecção).');
   process.exit(1);
 }
 if (falhas.length) {
