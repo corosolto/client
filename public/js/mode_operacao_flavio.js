@@ -277,9 +277,36 @@ export class OperacaoFlavio {
   _finalizarCinematic() {
     if (!this.cinematic || this.cinematic.skipped) return;
     if (!this.game.online && this.game.state === 'roundEnd') this.game.stateUntil = this.game.time;
+    this._pararBoarding();
     this.cinematic.skipped = true;
     this._encerrarFontes();
     this._restaurarAmbiente();
+  }
+
+  // O ator visual não substitui a entidade autoritativa do VIP.
+  _pararBoarding() {
+    this._boardingSession = null;
+    this._boarding?.stop();
+  }
+
+  _iniciarBoarding() {
+    if (!this.vip) return;
+    const def = this.game._defNoLado?.(this.vip.def, this.vip.team) || this.vip.def;
+    if (!def?.id) return;
+    const sessao = this.cinematic;
+    this._boardingSession = sessao;
+    const atual = () => !this._boardingDisposed && this._boardingSession === sessao
+      && this.cinematic === sessao && this.cinematicActive && this.game.state === 'roundEnd'
+      && this._elapsedCinematic() < 9;
+    import('./flavio-boarding.js')
+      .then(({ FlavioBoarding }) => {
+        if (!atual()) return;
+        const boarding = (this._boarding ??= new FlavioBoarding(this.game));
+        return boarding.start(this.vip, def, atual).then((ok) => {
+          if (ok && atual()) boarding.update(this._elapsedCinematic());
+        });
+      })
+      .catch(() => {});
   }
 
   // Fontes agendadas também precisam parar ao pular ou substituir a cena.
@@ -332,6 +359,7 @@ export class OperacaoFlavio {
   }
 
   prepareRound() {
+    this._pararBoarding();
     if (!this.vip) return;
     this._encerrarFontes();
     this._restaurarAmbiente();
@@ -525,9 +553,11 @@ export class OperacaoFlavio {
   }
 
   startCinematic(winner) {
+    this._pararBoarding();
     this._encerrarFontes();   // cena nova substitui a marcha anterior, não dobra com ela
     this._restaurarAmbiente();   // ambiente da cena anterior não vaza para a nova
     this.cinematic = { winner, startedAt: this.game.time, anchorAt: performance.now(), skipped: false };
+    if (winner === 'B' && (!this.game.dedicated || this.game.online)) this._iniciarBoarding();
     if (this.game.vmScene) this.game.vmScene.visible = false;
     if (!this.game.dedicated || this.game.online) this.fontes = marchaMilitar(this.game.sfx);
     if (winner === 'E' && (!this.game.dedicated || this.game.online)) {
@@ -548,10 +578,11 @@ export class OperacaoFlavio {
     const cam = this.game.camera;
     const ganhou = this.cinematic.winner === 'B';
     // O pátio mantém o trajeto da câmera fora das vigas do hangar.
-    if (ganhou && this.game.world.objectivePlane) {
-      this.game.world.objectivePlane.position.z = 55 + Math.max(0, t - 0.35) * 20;
+    const atorPronto = ganhou && this._boardingSession === this.cinematic ? !!this._boarding?.update(elapsed) : false;
+    if (ganhou && !atorPronto && this.game.world.objectivePlane) {
+      this.game.world.objectivePlane.position.z = 55 + Math.max(0, elapsed - 6.8) * 5;
     }
-    const alvo = this.game.world.objectivePlane ? this.game.world.objectivePlane.position : { x: 0, z: 55 };
+    const alvo = atorPronto ? this._boarding.target : this.game.world.objectivePlane ? this.game.world.objectivePlane.position : { x: 0, z: 55 };
     const a = ganhou ? { x: 16, y: 7, z: 50 } : { x: -15, y: 6, z: 50 };
     const b = ganhou ? { x: 10, y: 5, z: 62 } : { x: -7, y: 4, z: 56 };
     const smooth = t * t * (3 - 2 * t);
@@ -574,6 +605,10 @@ export class OperacaoFlavio {
   }
 
   dispose() {
+    this._pararBoarding();
+    this._boardingDisposed = true;
+    this._boarding?.dispose();
+    this._boarding = null;
     if (this._key) window.removeEventListener('keydown', this._key);
     this.hud?.remove();
     this._encerrarFontes();
