@@ -118,6 +118,11 @@ for (const arma of ALVO) {
     for (let i = 0; i < 60 && !g.vm.authored?.entry?.(a); i += 1) {
       await new Promise((r2) => setTimeout(r2, 120));     // espera o GLB chegar
     }
+    for (let i = 0; i < 120; i += 1) {
+      const e = g.vm.authored?.entry?.(a);
+      if (!e || (g.vm.authored.state(a) === 'idle' && e.drawTime >= e.drawDuration)) break;
+      await new Promise((r2) => setTimeout(r2, 120));
+    }
     await new Promise((r2) => setTimeout(r2, 250));
     const ent = g.vm.authored?.entry?.(a);
     const visivel = (o) => { let v = o.visible; let p = o.parent; while (v && p) { v = p.visible; p = p.parent; } return v; };
@@ -149,10 +154,11 @@ for (const arma of ALVO) {
     return { arma: a, chave: ent?.key || null, maos: maos.length, visiveis: maos.filter(visivel).length,
       emQuadro, rastroPx, mobile: g.mobile, autorada: g._vmVisibility?.authored, fallback: g._vmVisibility?.fallback };
   }, arma);
-  if (FOTOS && ['awp', 'ak', 'pistol', 'knife'].includes(arma)) {
+  if (FOTOS) {
     const dir = FOTOS;
     fs.mkdirSync(dir, { recursive: true });
     await pag.screenshot({ path: `${dir}/${arma}.png` });
+    await pag.screenshot({ path: `${dir}/${arma}-sem-hud.png`, style: '#touch-ui, #hud, #tp-hud, #vm-precision-qa { visibility: hidden !important; }' });
   }
   const ok = Boolean(r.chave?.includes('#')) && r.visiveis > 0
     && (arma === 'knife' || (r.autorada && !r.fallback && r.emQuadro && r.mobile === MOBILE && r.rastroPx <= 1));
