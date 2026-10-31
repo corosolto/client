@@ -152,7 +152,7 @@ TANGENT, solda de só 3 de cada 4 grupos e NORMAL degenerada em output real — 
 tem que ser pego pela cláusula correta. O placar é reportado pela execução, não fixado
 na documentação.
 
-## Estado — candidato aplicado; movimento contínuo pendente
+## Estado — aplicado; movimento contínuo capturado
 - **Referência v2 (31/10/2026, R7)**: gerada dos originais extraídos de `ad696fb87` +
   output aprovado v5 (revisado em v3, hashes idênticos); a determinismo foi reconferida
   rodando `smooth-normals.mjs` sobre os originais do commit — os 4 hashes batem com v5.
@@ -176,7 +176,16 @@ na documentação.
 - **Crítico de asset com contexto limpo ENTREGUE (31/10/2026, `CRITICO-NORMAIS-OUTPUT-V3.md`
   no audit, escopo frames v3)**: preferiu weld60 nos 4 personagens, sem regressão nova,
   rostos preservados — **não é aceite de release**.
-- **Escopo da evidência visual**: frames discretos v3. **Movimento contínuo/cintilação em
-  jogo permanece UNKNOWN** — não afirmado por Node nem por frames. A aplicação
-  faz parte da missão autorizada; conferir o candidato no jogo antes do release.
-  Nada aqui se declara FINAL por conta de gate de Node.
+- **Runtime público contínuo**: vídeos8,5s emPiscina/Ferro com os quatro personagens,
+  CharController real, fases idle/walk/run/reload/stop,501+493frames finitos.
+  Roots fixos: isso valida a apresentação temporal do controller, sem testar física
+  de deslocamento. Viewport1320×880; drawingbufferlow990×660, sem ampliar o vídeo.
+  `character-normal-public-{piscina_treta,ferro_velho}-continuous.webm` eJSONs no audit.
+  Crítico `CRITICO-NORMAIS-PUBLICO-CONTINUO-R1.md` aprovou o recorte amostrado dos
+  quatro personagens; cintilação em todo o vídeo permanece UNKNOWN. Não é release.
+
+## Compatibilidade com a medição de cabeça em integração
+
+O WT integral também contém a medição de cabeças do PR#1179, ausente da main usada nesta entrega isolada. Nele, os quatro GLBs antigos e novos foram medidos no Ego com o corpo exato do gerador: geometria e silhueta deram o mesmo resultado. Apenas quatro registros de SHA/frescor precisaram atualizar; hitboxes públicas permaneceram iguais.
+
+Essa atualização da tabela pertence à integração com#1179; não há tabela nova nem mudança de hitbox nesta branch. Provas na auditoria privada: headshot-four-{real,baseline}-Ego.json, headshot-four-freshness-provenance.json e root-headshot-normal-all-final.log.
