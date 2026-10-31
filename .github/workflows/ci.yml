@@ -311,6 +311,12 @@ jobs:
           python3 scripts/ci/autofix_allowlist.py --selftest
           python3 scripts/ci/dco_check.py --selftest
           python3 scripts/ci/agente_check.py --selftest
+          # O critério de `bot-fixable` e a varredura semanal decidem sozinhos
+          # o que o csbrasil-bot vai rascunhar — e os autotestes deles nunca
+          # rodavam aqui. Foi por isso que a não-idempotência sob `issues:
+          # edited` sobreviveu até 28/10.
+          python3 scripts/ci/issue_review.py --selftest
+          python3 scripts/ci/issue_sweep.py --selftest
       # No lote da fila o intervalo inclui os merges que ela escreve; o dco_check.py os isenta.
       - name: Check Signed-off-by
         env:
