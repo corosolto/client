@@ -100,3 +100,16 @@ Próximo: terminar fixture/preview causal e validações, integrar somente check
 Prod-watch41237912898 terminouSUCCESS no main49fd69f11 após a primeira tentativa Ego ainda receber132. Segunda tentativa release133-Ego-R2 terminouexit0 e foi vista: VERSION2.1.0-alpha.133, SIM_HASH7be9578eea327784, offlinePiscina/live/alive, authoredpistolvisível12SkinnedMesh, contexto não perdido e crashnull,1320×880, preferências restauradas bytea-byte. PNG/JSON/log preservados no audit; a primeira captura132 continua evidência rejeitada para133. O teste é smoke de boot/produção, não aceite de mobile físico, MP ou catálogo/skins completo.
 
 Revisões publicadas atuais estavam ausentes nos PRs independentes1186(head365ef17318,2arquivos) e1182(head5e0ddca076,6arquivos); comandos fullreview enviados uma vez sob protocolo pr-hardening: issuecomment6548599688 e6548599925. Nenhum desses PRs foi mesclado/assumido verde só pela CI. #1188 continua remoto21f264; push abortado e todos os REDs anteriores permanecem rastreados.
+
+
+### Fixtures aceitas e sincronização da alpha.133
+
+Fonte a7a6c97ad integrada seletivamente como7f8267546: _vmBootWeapons e economia fornecidos às fixtures reais; menu acompanha props→fauna, mantém callbacks stale/seq e cinco mutantes causais. Node22/26 do owner17/17; Root repetiu os dois aliases completos consolidados em Node26, QA-BOOT-FIXTURE-R2.log exit0/2de2 (4,4s). Crítico independente RO em curso; nenhum aceite whole-PR por esse focal.
+
+Main49fd69f11 foi buscada e está sendo incorporada. Único conflito foi ARCH gerado, resolvido por npm run arch (QA-MAIN133-ARCH-R1.log exit0); não editar índice à mão. Release/version/changelog/docs publicados vêm da main, sem bump manual. Remoto #1188 ainda21f264c519; pushR5 abortado continua sem validade de prepush.
+
+Canarinho: causa funcional comprovada é captura antes de ligar ctrl.torso/corpo (_porte1hK0 vsref.999982); dez updates pós-wiring dão fase.264997graus. .23 antigo é Z local, calibrado por humanos sem referência da asa, não metros nem contato; RO histórico emCANARINHO-FRENTE-RO-R1.md. GLM5.3 implementa reparo mínimo na lane parity; nenhum novoasset ou clamp adotado. Ego BEFORE-R2 mostra mão/asa facetada aberta encobrindo parcialmente Deagle; fasecorrigida não aprova modelagem. R5privado foi rejeitado por cruzamentos/strain, semGLB; R6privado estuda factibilidade de contato por superfície, separado do release.
+
+Parapeitos Córrego: candidato ae0c2e0de isolado, contratos técnicos verdes, sem adoção/aceite artístico. Root preparou252symlinks de dependências ignoradas, preservando shimthree próprio, e servidor4375/session13632 comcache próprio; servidor começou, captura A/B pendente. Space39ativo/p1continua próprio. Três mutantes3P restantes em execução separada; não declarar verde antes de exits.
+
+Próximo: concluir fase/gate/Ego e crítico, mutantes3P/boot/build pertinentes; congelar checkpoint e fazer pushnormalcomhook, revisão atualEstraga, CI e adversarialwholePRposterior. #1182/#1186 seguem sem review publicado, requests existentes sem duplicação. Objetivo integral/definição de pronto mantidos; arte/mobilefísico/MP/skins autenticadas ainda não aceitos.
