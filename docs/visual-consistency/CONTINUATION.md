@@ -625,3 +625,54 @@ GLM F2 encerrou no limite de20min, exit1/Deadline exceeded e sem relatório: pro
 ### 15:30 UTC — checkpoint dos mapas e wrapper
 
 Campo R5 tem40 trechos no perímetro, quatro capturas locais aceitas, interior preservado e delta físico perimetral declarado. Gate Campo R8 CLEAN2995d2f7, baseline extraída da fonte pré-R5 imutável e NaN distinto de Infinity. Migração FV-M1 CLEAN6d07d81f:95 interiores verbatim e todo Córrego intacto, somente4→40 guardas. Root executou nominal+9 mutantes Campo e nominal+5 Favela com conjuntos RED exatos. Córrego materiais8 e UV4 também passaram. Wrapper R4 crítico CLEAN21a161d6, stdout JSON único e timeout com error/signal sempre infra3. Checkpoint inclui apenas mapas/gates/baselines/contrato e ledger; package/CI e curadoria final ficam para a próxima entrega. Não há merge/publicação dessas mudanças.
+
+
+### 15:32 UTC — calibração do preview em correção isolada
+
+Diagnóstico Canarinho/Deagle CLEAN causal5a958a81:50,5069° reproduzido no fd553 e no atual; o clamp de frente assenta a mão depois da captura inicial. Contraprova privada pós-pose reduz0,0258° sem elevar teto nem remover clamp; ainda não há produto nem aceite visual. GLM recebe somente hunks do build/calibração de glbchars e gate/contrato novos, preservando headproxy e handik. F2 continua congelado para crítica, e GLM1179 escreve somente gates.
+
+
+### 15:34 UTC — integração de entrega em checkout separado
+
+O checkpoint aceito mais recente é83696cded (mapas/contratos). O checkout visual-release-review-20261031 está limpo em4c1e5057c e contém somente snapshots já aceitos. Root vai avançá-lo por merge do checkpoint83696cded e do main alpha1315d1e52d347 para validar/pedir revisão da integração enquanto os writers ficam isolados nesta lane. Não levar dirty F2/Canarinho/gates1179/curadoria final antes de crítica e prova. Package/CI serão unidos explicitamente aos scripts novos de main, preservando vm-presence. Essa mudança de checkout não transfere ownership dos writers nem encerra a missão.
+
+
+### 15:33 UTC — faca R1 recusada, nova iteração focal
+
+Crítico knife R1 REJECT8f0fa930: quatro P2 (suporte incompleto, perfil não vinculado à representação, clones/skeleton/casos do gate incorretos e mutantes aceitando crashes). A base de attach no osso é aproveitável:30 poses e5262 vértices finitos no probe privado, mas isso não aprova footprint nem imagem. GLM R2 recebe somente faca/aplicador/callers/gate/contrato; exige suporte contínuo por união de triângulos, dois perfis conhecidos, consumidores reais e aceite causal único. Nenhum arquivo parcial vai para entrega antes de nova crítica e prova.
+
+
+## 15:40 UTC — integração alpha.131 e fechamento em curso
+
+Missão e exclusões originais preservadas; janela até18:45UTC. Produção publicou
+alpha.131/main5d1e52d347c (hotfix1183/ec7). Prod-watch e preview-deploy SUCCESS.
+Ego Space32p1 abriu partida real na produção; pistola e mãos visíveis em1P,
+HUD/estado live confirmados em release131-prod-game-R1.png. Isso não publica os
+ajustes desta lane nem prova MP/mobile físico/FPS.
+
+Checkpoint83696cded contém Campo/favelas e wrapper comum revisados. QA separado
+visual-release-review-20261031 HEAD8dc87d31d integrou esse checkpoint e main5d1,
+preservando exatamente o patch do hotfix. Crítico integração CLEAN b3e9ae4a;
+portões focais verdes, push com hook integral em curso e logs retidos. Nenhum PR
+consolidado publicado ainda. Normais1184 head72e80d366 eSB7/1181 head3de33b4f
+pushed após hooks integrais; Estraga real solicitado nos dois heads, pendente.
+
+Curation R10 fechou transporte nominal.unknownMotivos; produtor→main nominal0,
+RED1 e33+11 controles CLEAN fe65baa3. Censo real14R11 em curso p2; não declarar
+GREEN antes do recibo. Layout oficial CampoR8/PostoR6/CorgR7:14mapas444peças,
+frescor e determinismo --duplo GREEN (layout-current-R9.log). Posto teste final
+R4/R5 INFRA3 por syntax export em weapon-skins.js, arquivo sob lease F2GLM;
+não é uma reprovação geométrica do outdoor nem resultado aceito. Repetir quando
+writer F2 liberar fonte parseável. PreviewCanarinho eKnifeF2 ainda em leasesGLM,
+não aceitos; gates1179R3 em crítica sem relatórioGLMfinal, nada chamado completo.
+
+
+## 15:43 UTC — outdoor Posto e bake oficial recuperáveis
+
+Após fonte F2 voltar a compilar, PostoR6 nominal6/6 e7mutantes com conjuntos
+exatos passaram; wrapper7controles tambémGREEN, logposto-support-final-R6.log.
+As falhasR4/R5 eram infraestrutura transitória e ficam rejeitadas. Produto/duas
+fotos e wrapper já tinham críticas CLEAN (30e88...), custo+4draws/+36tri explícito.
+Checkpoint seletivo leva só outdoor, layout oficial fresco/determinístico e suas
+réguas/doc/ledger. Package/CI em escrita do Root não entram neste checkpoint;
+censo atualR11 continua separado em curso, sem alegar aceite de todas14cenas.
