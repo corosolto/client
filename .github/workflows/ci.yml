@@ -98,6 +98,8 @@ jobs:
         run: npm run eval:mapcontrato
       - name: Câmera, atalhos e HUD com mutantes
         run: npm run eval:cameraoclusao
+      - name: Spawns orientam jogador e bots pelo consumidor real
+        run: npm run eval:spawnface
       - name: Backpedal preserva autoridade e lateral com mutantes
         run: npm run eval:tpbackpedal
       - name: Amazônia acessível e bots entre palafitas

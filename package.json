@@ -452,7 +452,7 @@
     "eval:map-evidence": "node tools/eval/map-evidence-contract-check.mjs",
     "capture:map-evidence": "node tools/capture-map-evidence.mjs",
     "eval:mapview": "node tools/eval/mapview-redraw-check.mjs",
-    "eval:spawnface": "node tools/eval/spawn-facing-check.mjs",
+    "eval:spawnface": "node tools/eval/spawn-facing-proof.mjs --autoteste && node tools/eval/spawn-facing-proof.mjs",
     "eval:charhard": "node tools/eval/char-hard-surface-check.mjs",
     "eval:charpbr": "node tools/eval/char-pbr-check.mjs",
     "eval:charplastico": "node tools/eval/char-plastico.mjs",
