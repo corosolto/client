@@ -57,12 +57,12 @@ desconhecido, sai2. Falta de fonte/clipe, erro de import ou adaptação temporá
 ambígua sai3; infra não conta como mutante detectado. O autoteste também exercita
 argumento desconhecido e execução sem produto num diretório temporário vazio.
 
-## Checkpoint preparado: produto ainda com yaw
+## Checkpoint histórico preparado antes da retirada do yaw
 
 Esta alteração de contrato foi preparada em lane isolada **sem editar produto ou
-package**. Portanto o nominal é RED causal enquanto yaw permanece ativo. Não
-publicar o gate sozinho como se o produto já estivesse corrigido. O integrador
-retira a feature e roda nominal/autoteste no produto consolidado.
+package**. Naquela fonte o nominal era RED causal enquanto yaw permanecia ativo.
+O gate não foi aceito sozinho como correção do produto. A integração real abaixo
+retirou a feature; os comandos nominais, sem flag, são os válidos no consolidado.
 
 ```sh
 node tools/eval/head-yaw-check.mjs --proposta-sem-yaw
@@ -92,3 +92,13 @@ GREEN proposto não é GREEN do produto nem aprovação visual.
 O select e seu teto/dívida permanecem intactos. A régua nova não mede pixels,
 face física, todos GLB/armas/skins ou mobile. Browser/Ego, revisão artística,
 consumidor real e integração permanecem com o root.
+
+
+## Integração do produto rejeitando yaw
+
+A lane consolidada integrou a retirada real em8ff1098c0 (fonteb7a66871f), junto
+com este contrato em e7ceff47d. O checkpoint preparado acima descreve a lane de
+origem antes da retirada. O nominal válido agora roda sem flag; prova real fonteb7
+GREEN30casos/27.520frames e6mutantes, sem variante. O consumidor select no Chromium
+passou0/63bloqueadores com22dívidas históricas, referências0,675/23,6 intactas.
+Isso preserva a pose; não aprova artisticamente rosto/pegada ou todosGLB/skins.
