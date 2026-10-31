@@ -92,8 +92,78 @@ async function abrir() {
   if (MUT === 'quadril-colado') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('const teto = 0.61;', 'const teto = 0;'));
   if (MUT === 'lod-cego') await reescreve(/\/js\/game\.js/, (t) => t.replace('const passo = distCam > 45 ? 0.1 : (distCam > 25 ? 0.05 : 0);', 'const passo = 0;'));
   if (MUT === 'reload-mudo') await reescreve(/\/js\/game\.js/, (t) => t.split('b.mesh?.ctrl?.reload?.(Wb.reload || 2.4); ').join('').split(' b.mesh?.ctrl?.reload?.(Wb.reload || 2.4);').join(''));
-  await page.goto(`${BASE}/?${PARTIDA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
-  await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 240000 });
+  // Diagnóstico de boot somente na falha; limites do teste permanecem os mesmos.
+  const cap = (s) => String(s ?? '').replace(/https?:\/\/[^\s"'<>]+/g, (u) => {
+    try { return new URL(u).pathname; } catch { return '(url)'; }
+  }).slice(0, 300);
+  const local = (u) => { try { const x = new URL(u); return x.origin === new URL(BASE).origin ? cap(x.pathname) : null; } catch { return null; } };
+  const pend = new Set(), erros = [], http = [];
+  const addErro = (e) => { if (erros.length < 12) erros.push(e); };
+  const onReq = (r) => { const p = local(r.url()); if (p && pend.size < 32) pend.add(p); };
+  const onFim = (r) => { const p = local(r.url()); if (p) pend.delete(p); };
+  const onFalha = (r) => { const p = local(r.url()); if (p) addErro({ path: p, falha: cap(r.failure()?.errorText) }); };
+  const onPageErr = (e) => addErro({ pageError: cap(e?.message) });
+  const onConsole = (m) => { if (m.type() === 'error') addErro({ console: cap(m.text()) }); };
+  const onResp = (r) => { const p = local(r.url()); if (p && r.status() >= 400 && http.length < 12) http.push({ status: r.status(), path: p }); };
+  const ouvintes = [['request', onReq], ['requestfinished', onFim], ['requestfailed', onFim], ['requestfailed', onFalha],
+    ['pageerror', onPageErr], ['console', onConsole], ['response', onResp]];
+  for (const [ev, fn] of ouvintes) page.on(ev, fn);
+  let fase = 'DOM';
+  try {
+    await page.goto(`${BASE}/?${PARTIDA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    fase = 'LIVE';
+    await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 240000 });
+  } catch (e) {
+    let dom = null, timer;
+    try {
+      dom = await Promise.race([
+        page.evaluate(() => ({ state: String(window.__game?.state ?? '').slice(0, 100), readyState: document.readyState })),
+        new Promise((r) => { timer = setTimeout(() => r('timeout-3s'), 3000); }),
+      ]);
+    } catch { dom = 'indisponível'; } finally { clearTimeout(timer); }
+    // Amostra opcional só depois da falha; cada espera inclui o prazo do diagnóstico.
+    let pilha = null, sess, timerPilha, timerLimpeza, expirou = false;
+    const amostra = (async () => {
+      sess = await ctx.newCDPSession(page);
+      if (expirou) { void sess.detach().catch(() => {}); return null; }
+      await sess.send('Debugger.enable');
+      if (expirou) return null;
+      const pausado = new Promise((res) => sess.once('Debugger.paused', res));
+      await sess.send('Debugger.pause');
+      const ev = await pausado;
+      return (ev?.callFrames || []).slice(0, 10).map((f) => ({
+        fn: cap(f.functionName).slice(0, 100), url: cap(String(f.url || '').split(/[?#]/)[0]),
+        line: Number.isInteger(f.location?.lineNumber) ? f.location.lineNumber : null,
+        column: Number.isInteger(f.location?.columnNumber) ? f.location.columnNumber : null,
+      }));
+    })().catch(() => null);
+    try {
+      pilha = await Promise.race([amostra, new Promise((r) => { timerPilha = setTimeout(() => r(null), 3000); })]);
+    } finally { expirou = true; clearTimeout(timerPilha); }
+    if (sess) {
+      try {
+        await Promise.race([
+          Promise.allSettled([sess.send('Debugger.resume'), sess.detach()]),
+          new Promise((r) => { timerLimpeza = setTimeout(r, 2000); }),
+        ]);
+      } catch { /* diagnóstico nunca substitui a falha original */ }
+      finally { clearTimeout(timerLimpeza); }
+    }
+    const dados = { fase, erro: cap(e?.message), pendentes: [...pend], erros, http, dom, pilha };
+    while (Buffer.byteLength(JSON.stringify(dados)) > 8000) {
+      if (dados.pendentes.length) dados.pendentes.pop();
+      else if (dados.erros.length) dados.erros.pop();
+      else if (dados.http.length) dados.http.pop();
+      else if (dados.pilha?.length) dados.pilha.pop();
+      else break;
+    }
+    console.log('TP_BOOT_DIAGNOSTIC ' + JSON.stringify(dados));
+    try { await ctx.close(); } catch { /* preserva a falha original */ }
+    try { await browser.close(); } catch { /* só o browser criado por este teste */ }
+    throw e;
+  } finally {
+    for (const [ev, fn] of ouvintes) page.off(ev, fn);
+  }
   await page.waitForTimeout(2500);
   await page.evaluate(() => document.getElementById('crash-overlay')?.remove());
   return { page, fechar: () => ctx.close() };

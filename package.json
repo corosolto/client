@@ -108,6 +108,8 @@
     "eval:pegada": "node tools/eval/pegada-check.mjs",
     "eval:dmgdir": "node tools/eval/dmgdir-check.mjs",
     "eval:ctflabels": "node tools/eval/ctf-coverage-check.mjs",
+    "//eval:tpreloadpaired": "Regressão CPU da recarga pareada: GLBs e AnimationMixer reais, sem render.",
+    "eval:tpreloadpaired": "node tools/eval/tp-reload-paired-check.mjs --self-test",
     "eval:faccao": "node tools/eval/faccao-paleta-check.mjs",
     "eval:mapid": "node tools/eval/mapa-id-check.mjs",
     "eval:maprotate": "node tools/eval/map-rotation-check.mjs",
