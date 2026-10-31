@@ -149,18 +149,6 @@ jobs:
           PY
           python3 scripts/ci/estragacodigo_gate.py --selftest
           python3 scripts/ci/estragacodigo_gate.py < /tmp/pr-estragacodigo.json > /tmp/pr-estragacodigo-labels.json
-      - name: Request estraga-codigo review
-        run: |
-          python3 - <<'PY'
-          import json, os, subprocess
-          gate = json.load(open('/tmp/pr-estragacodigo-labels.json'))
-          if gate.get('request_review'):
-              subprocess.run([
-                  'gh', 'api', '-X', 'POST',
-                  f"repos/{os.environ['GITHUB_REPOSITORY']}/pulls/{os.environ['PR_NUMBER']}/requested_reviewers",
-                  '--input', '-',
-              ], input=json.dumps({'reviewers': ['estraga-codigo']}), text=True, check=True)
-          PY
       - name: Apply labels
         run: |
           python3 - <<'PY'
@@ -177,6 +165,18 @@ jobs:
           for lab in remove:
               import urllib.parse
               subprocess.run(['gh', 'api', '-X', 'DELETE', f'repos/{repo}/issues/{n}/labels/{urllib.parse.quote(lab)}'], check=False)
+          PY
+      - name: Request estraga-codigo review
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          gate = json.load(open('/tmp/pr-estragacodigo-labels.json'))
+          if gate.get('request_review'):
+              subprocess.run([
+                  'gh', 'api', '-X', 'POST',
+                  f"repos/{os.environ['GITHUB_REPOSITORY']}/pulls/{os.environ['PR_NUMBER']}/requested_reviewers",
+                  '--input', '-',
+              ], input=json.dumps({'reviewers': ['estraga-codigo']}), text=True, check=True)
           PY
       - name: Update bot classification comment
         run: |
