@@ -90,7 +90,7 @@ const PISO_AUDIO = 250;          // real 308 · exemplo 62 — ver o bloco de me
    script — o chamador real — contra uma fixture sintética. A prova adversarial
    da procedência era manual até a 5ª rodada, e prova manual não roda no portão.
    Sem os flags, nada muda. */
-const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
+const arg = (n) => process.argv.find((a) => a.startsWith(`--${n}=`))?.slice(n.length + 3) || '';
 const PUBLICO = arg('raiz') || 'public';
 const LEDGER = arg('ledger') || 'docs/audio/proveniencia.json';
 const SO = arg('so');

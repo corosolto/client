@@ -52,7 +52,7 @@ try {
   if (rodarDecals().status !== 0) falhas.push('DEC3 restaurar o nome solicitado não recuperou o contrato');
   const padrao = rodarDecals([]);
   if (padrao.status !== 1 || !padrao.stderr.includes('áudio:')) falhas.push('DEC4 modo padrão deixou de exigir áudio');
-  for (const modos of [['--so=wrong-mode'], ['--so='], ['--so'], ['--so=decals', '--so=audio']]) {
+  for (const modos of [['--so=wrong-mode'], ['--so='], ['--so'], ['--so=decals', '--so=audio'], ['--so=decals=sufixo'], ['--so=audio=sufixo'], ['--so=runtime-audio=sufixo']]) {
     if (rodarDecals(modos).status !== 2) falhas.push(`DEC5 ${modos.join(' ')} inválido não falhou fechado`);
   }
 } catch (e) { falhas.push(String(e.message)); }
