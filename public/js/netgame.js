@@ -727,12 +727,24 @@ class Netcode {
       : ent.pos.clone().setY(ent.pos.y + 1.45);   // compatibilidade com nó anterior
     const dist = p && p.pos ? Math.hypot(ent.pos.x - p.pos.x, ent.pos.z - p.pos.z) : 0;
     const cheio = ent === p || (dist < 45 && game.settings.quality !== 'low');
+    // Boca da arma na tela (eval:boca-cano): remoto só se a ≤1,5 m da origem do evento (pose
+    // adiantada volta ao olho, MPT1); eu mesmo uso a origem do traçante do jogo local.
+    const primeiroP = e.p[0];
+    const dirP = primeiroP ? new THREE.Vector3(+primeiroP[0] || 0, +primeiroP[1] || 0, +primeiroP[2] || 0).sub(olho).normalize() : null;
+    let boca = null;
+    try {
+      if (ent === p) boca = dirP && game._bocaLigada?.() ? game._origemTracerJogador(olho, dirP) : null;
+      else {
+        const b = game._bocaDaArmaDoCorpo?.(ent.mesh?.group);
+        if (b && b.distanceTo(olho) <= 1.5) boca = b;
+      }
+    } catch { boca = null; }
     const tetos = cheio ? 4 : 1;   // shotgun não vira 9 traçantes na tela de ninguém
     const sup = typeof e.s === 'string' ? e.s : '';
     for (let i = 0; i < Math.min(tetos, e.p.length); i++) {
       const a = e.p[i];
       const alvo = new THREE.Vector3(+a[0] || 0, +a[1] || 0, +a[2] || 0);
-      try { game._tracer(olho.clone().lerp(alvo, 0.06), alvo); } catch { /* sem fx */ }
+      try { game._tracer(boca ? boca.clone() : olho.clone().lerp(alvo, 0.06), alvo); } catch { /* sem fx */ }
       /* POEIRA E SOM no ponto verdadeiro. Saíam do `_fireHitscan`, que o online não chama
          mais — sem isto o tiro na parede virou mudo e limpo (o furo sumiu da tela). */
       const surf = supDeCod(sup[i]);
@@ -746,7 +758,12 @@ class Netcode {
     const primeiro = e.p[0];
     if (primeiro) {
       const dir = new THREE.Vector3(+primeiro[0] || 0, +primeiro[1] || 0, +primeiro[2] || 0).sub(olho).normalize();
-      try { game._flash(olho.clone().addScaledVector(dir, 0.35), dir); } catch { /* sem fx */ }
+      // Eco do meu tiro: se o _tryShoot já acendeu na boca há <0,5 s (RTT), não acende um segundo;
+      // tiro que só o nó deu (dessincronia de cadência) ainda ganha clarão.
+      const ecoLocal = ent === p && boca && game.time - (game._claraoLocalEm ?? -Infinity) < 0.5;
+      if (!ecoLocal) {
+        try { game._flash(boca ? boca.clone() : olho.clone().addScaledVector(dir, 0.35), dir); } catch { /* sem fx */ }
+      }
     }
   }
 
@@ -758,7 +775,12 @@ class Netcode {
     const yaw = game.camera.rotation.y;
     const pan = Math.max(-1, Math.min(1, (dx * Math.cos(yaw) - dz * Math.sin(yaw)) / (sd || 1)));
     try { game.sfx.shotWeapon(ent.weapon || 'ak', sd, 0.5, pan, Math.min(0.25, sd / 343)); } catch { /* ctx mudo */ }
-    try { game._flash(ent.pos.clone().setY(ent.pos.y + 1.4), new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw))); } catch { /* sem fx */ }
+    // Com `ev`, o tiroDeRede já acende na mesma boca: dois clarões sobrepostos dobravam brilho e custo.
+    if (this._evOn && game._bocaLigada?.()) return;
+    // clarão na boca da arma do corpo (eval:boca-cano); sem corpo, o ponto antigo no peito
+    let boca = null;
+    try { boca = game._bocaDaArmaDoCorpo?.(ent.mesh?.group) || null; } catch { boca = null; }
+    try { game._flash(boca || ent.pos.clone().setY(ent.pos.y + 1.4), new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw))); } catch { /* sem fx */ }
   }
 
   /* MORTE do jogador local no MULTIPLAYER: quem mata é o servidor (alive true->false no
