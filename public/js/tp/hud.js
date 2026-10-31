@@ -498,6 +498,7 @@ function montarToque(raiz) {
   botao('tp-toque-pula', tr('PULA'), tr('Pular'), (g) => { g.keys.Space = true; }, (g) => { g.keys.Space = false; });
   botao('tp-toque-camera', '', tr('Alternar câmera'), (g) => g._toggleCamView());
   raiz.querySelector('.tp-toque-camera').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>';
+  botao('tp-toque-ping', 'PING', 'Ping', () => marcarPing());
   botao('tp-toque-placar', '', tr('Placar'), (g) => g._showScoreboard?.(!!g.el?.scoreboard?.classList.contains('hidden')));
   raiz.querySelector('.tp-toque-placar').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
   raiz.append(el('span', 'tp-toque-mira-dica', tr('ARRASTE AQUI PRA MIRAR')));
