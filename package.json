@@ -201,7 +201,7 @@
     "eval:screenquery:browser": "node tools/eval/screen-query-browser.mjs",
     "eval:loadingwall": "node tools/eval/loading-wallpaper-check.mjs",
     "eval:menuwallboot": "node tools/eval/menu-wall-boot-check.mjs",
-    "eval:matchoptions": "node tools/eval/match-options-check.mjs",
+    "eval:matchoptions": "node tools/eval/match-options-check.mjs && node tools/eval/match-options-check.mjs --mutante=modo-preferido",
     "eval:charvoice": "node tools/eval/character-select-voice-check.mjs",
     "eval:mat": "node tools/eval/mat-check.mjs",
     "eval:seo": "node tools/eval/seo-check.mjs",

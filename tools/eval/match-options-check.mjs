@@ -21,6 +21,7 @@
         node tools/eval/match-options-check.mjs --mutante=mp-local
         node tools/eval/match-options-check.mjs --mutante=mp-ignora-servidor
         node tools/eval/match-options-check.mjs --mutante=mp-sem-sanitizar
+        node tools/eval/match-options-check.mjs --mutante=modo-preferido
 */
 import { readFileSync } from 'node:fs';
 import { bootGame, initTextures } from './harness.mjs';
@@ -104,9 +105,63 @@ for (const [ctf, expected] of [[false, 5], [true, 3]]) {
   rows.push(`multiplayer       roundsMax = ${expr}`);
 }
 
+/* CALLBACK REAL: init ('let matchMode ='→'const menuSetup ='), matchRounds e msRounds.onchange
+   extraídos do main e executados em VM — nunca comparados como texto. Mutante modo-preferido. */
+{
+  let main = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
+  const recorte = (re, nome) => {
+    const m = main.match(re);
+    expect(!!m, `main.js: trecho real ${nome} não encontrado`);
+    return m ? m[0] : '';
+  };
+  const init = recorte(/let matchMode = [\s\S]*?\n(?=const menuSetup =)/, 'init do matchMode');
+  const fn = recorte(/^function matchRounds\(\) \{[\s\S]*?\n\}/m, 'function matchRounds');
+  let cb = recorte(/if \(msRounds\) msRounds\.onchange = \(\) => \{[\s\S]*?\n\};/, 'callback msRounds.onchange');
+  /* modo-preferido: reverte SÓ o callback para a preferência (matchMode), ignorando o mapa objetivo. */
+  if (MUT === 'modo-preferido') {
+    const before = "modoEfetivoAtual() === 'ctf'";
+    if (cb.split(before).length !== 3) throw new Error('MUTANTE NÃO APLICOU: callback de rounds');
+    cb = cb.replaceAll(before, "matchMode === 'ctf'");
+    console.log('Mutação aplicada: modo-preferido');
+  }
+  const cenarios = [
+    ['normal, pref ctf', { ctfMode: true }, 'ctfRounds', 'rounds', 3],
+    ['normal, pref rounds', {}, 'rounds', 'ctfRounds', 5],
+    ['objetivo, pref ctf', { objectiveMode: 'escolta', ctfMode: true }, 'rounds', 'ctfRounds', 5],
+    ['objetivo, pref rounds', { objectiveMode: 'escolta' }, 'rounds', 'ctfRounds', 5],
+  ];
+  for (const [nome, mapa, campo, outro, invalido] of cenarios) {
+    const settings = { rounds: 5, ctfRounds: 3 };
+    const msRounds = { value: '9' };
+    const noop = () => {};
+    let liberado = null;
+    try {
+      liberado = new Function('settings', 'msRounds', 'MAPS', 'currentMap', 'sanitizeRounds',
+        'saveSettings', 'setMapMeta', 'setMapMode', 'renderMapScreen', 'sfx',
+        `${init}\n${fn}\n${cb}\nreturn { modoEfetivoAtual, matchRounds, onchange: () => msRounds.onchange() };`
+      )(settings, msRounds, { mapa }, 'mapa', sanitizeRounds, noop, noop, noop, noop, { uiClick: noop });
+    } catch (e) { expect(false, `${nome}: VM não executou o código real (${e.message})`); continue; }
+    liberado.onchange();
+    const intactos = settings[campo] === 9 && settings[outro] === (outro === 'rounds' ? 5 : 3);
+    expect(intactos, `${nome}: valor 9 gravou ${campo}=${settings[campo]}, ${outro}=${settings[outro]} (esperado 9 e outro intacto)`);
+    expect(liberado.matchRounds() === 9, `${nome}: matchRounds()=${liberado.matchRounds()}, esperado 9`);
+    msRounds.value = '';
+    liberado.onchange();
+    expect(settings[campo] === invalido, `${nome}: inválido → ${campo}=${settings[campo]}, padrão esperado ${invalido}`);
+    rows.push(`callback ${nome.padEnd(22)} ${campo}=9, ${outro} intacto, matchRounds=9, inválido→${invalido}`);
+  }
+}
+
 console.log('┌─ MATCH-OPTIONS-CHECK');
 for (const row of rows) console.log(`│ ${row}`);
 console.log('└─');
+
+if (MUT === 'modo-preferido') {
+  const expected = ['objetivo, pref ctf: valor 9 gravou ', 'objetivo, pref ctf: matchRounds()='];
+  const semantic = failures.length === expected.length && expected.every(prefix => failures.some(f => f.startsWith(prefix)));
+  console.log(JSON.stringify({ mutant: MUT, failed: failures, semantic }));
+  process.exit(semantic ? 0 : 1);
+}
 
 if (MUT) {
   if (failures.length) {
