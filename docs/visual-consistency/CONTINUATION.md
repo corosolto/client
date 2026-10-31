@@ -702,7 +702,7 @@ para usar helperreal de câmera e manter autoridade/contraprovas. PushQA integra
 atual ainda rodando; bootorcamento e2fixtures falharam, sem bypass/merge.
 
 
-## 16:00 UTC — gates herdados e fixtures TP fechados
+## Rodada de gates herdados e fixtures TP fechados
 
 FlashR5 mantém o predicado e serializa observação booleana; nominal30/30 e
 onze mutantes exatos GREEN, controlador exit0. Crítico CLEAN b490e134, além do
@@ -741,3 +741,18 @@ bloqueado; únicoP3 de comentário reduzido. Aceite visual da pegada/dedos perma
 parcial; zoomdiagnóstico pvcam entra na malha e NÃO serve como evidência visual.
 Candidato CampoUV transferido ao produto, régua causal nova em lease GLM. F2R3
 escreve apenas gate/doc, sem produto, para lacunas apontadas em d5773902.
+
+
+## Preview — fase funcional corrigida, dedos ainda recusados visualmente
+
+Canarinho preview captura pegada depois de torso/corpo e assentamento único
+60×1/30s, sem mudar caminho de jogo nem clamp0.20m. Fase real50.5069°→0.3264°,
+nominal8×8amostrasGREEN e3contraprovas com conjuntos exatosGREEN. CríticoR3
+f9976d65 semP1/P2; únicoP3 de comentário reduzido a2linhas. O checkpoint
+protege essa correção numérica; NÃO aprova dedos/anatomia nem qualidade geral.
+
+EgoR7 quatro quadros de giro real (turn-R7-0…3.png) mostram dedos abertos e
+pegada visual ruim mesmo com alinhamento correto. Zoompvcam entra na malha
+e foi rejeitado como captura útil. Diagnóstico de rig/pesos/curl em crítica
+read-only; manter esse defeito aberto para nova correção. Nenhuma mudança de
+GLB/topologia/identidade foi inventada para esconder a lacuna.
