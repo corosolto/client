@@ -512,3 +512,11 @@ MotionR5 devolvido: AKnovaL1v realmenteRED +7px nas2proporções, nãoUNKNOWN. S
 - M3R2 crítico: C4 e pisoCorgR3 aceitos locais, C2 ainda muralha/CorgR1 ganho mínimo;5P2 gate/produto. GLM-R3 só corrige occluders Corg+comentários/gate/fixture/doc sem alterar pixels. Não assado novamente.
 - Posto suporteR1 nominal6/6 e2fotos reais mesmoFOV66/poses; crítico visual em andamento, ainda sem aceite final. GramaR3 tool selftestRoot0,4binários mesmosR2;24fotos ainda em revisão, nenhuma troca pública.
 - NF-R3 terminou, crítico focal em andamento. Curation browserR1 rejeitadoRoot: MUTADOR serializado inválido/faltavam ramos; GLM-R2 rewrite apenas tool/doc, nenhum browser feito por GLM.
+
+
+### 13:42 UTC — pickups/flash validados e gates ligados
+
+- Produto Game/netgame: clear de pickups limitado à economia realmente ligada; modos off/dedicado/especiais preservam arsenal e drops. FlashOff recusa nade e limpa boom residual; flashOn segue com owner remoto real.
+- Root wrappers npm eval:match-pickups e eval:net-flash-disable terminam naturalmente0: nominal6/6 e7/7, mutantes exatamentePM2-PM5/NF1,NF3; controles positivos continuamGREEN. Ambos ligados a fast/deploy, docs geradas.
+- Crítico PICKUPS-FLASH-R3 CLEAN focal SHA5965d1ad46c3ac31837ec2cda06a5f1859beabaae40adefecda319c7d504f0a6: exceções sãoinfra3, suprimir_popFlash/owneracendeNF7. Nenhuma alegação de partidaMP real.
+- Checkpoint seletivo Game contém só dois hunks de constructor pickups; skins/câmera de morte continuam fora deste commit.

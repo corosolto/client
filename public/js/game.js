@@ -829,10 +829,14 @@ export class Game {
     this.world = MAPS[this._mapId].build(this.scene, textures);
     this._buildEnv();   // IBL: env map de gradiente dusk -> materiais PBR (Standard) ganham ambiente/reflexo
     this.flashTex = textures.flash;
-    // A economia da partida substitui o arsenal espalhado: mapas não entregam arma grátis.
-    // Drops de abate continuam em `this.drops`; apenas os pickups estáticos do build saem.
-    for (const pk of this.world.pickups || []) pk.mesh?.removeFromParent?.();
-    this.world.pickups = [];
+    // TRETA$ (docs/ECONOMIA-PARTIDA.md): a loja substitui o arsenal do mapa; sem ela
+    // (offline/dedicado/modo especial/?economia=0) os pickups estáticos FICAM (#1179).
+    this.dedicated = !!dedicated;
+    this._ecoLigada = !!economia && economiaLigada({ busca: location.search, online: this.online, dedicado: this.dedicated, wpnMode: this._wpnMode() });
+    if (this._ecoLigada) {
+      for (const pk of this.world.pickups || []) pk.mesh?.removeFromParent?.();
+      this.world.pickups = [];
+    }
 
     // teams & rosters. playerTeam = LADO físico (P/B) — dirige tudo (spawns/placar/killfeed/CTF/
     // cores/yaw). playerFaction = de qual ROSTER vêm os personagens do jogador ('E'/'B'/'U' Tribos
@@ -853,11 +857,8 @@ export class Game {
     this.combatants = [];   // scoreboard entries
     /* Servidor dedicado: o `player` que ninguém controla fica FORA do elenco, senão vira corpo
        parado e imortal que os inimigos abatem em loop. Ver docs/MULTIPLAYER.md. */
-    this.dedicated = !!dedicated;
     this._mp = null;
     this._mpPend = this.online ? { mpFactory, net } : null;
-    // TRETA$ da partida (docs/ECONOMIA-PARTIDA.md): só o main.js liga; arnês e nó dedicado ficam no loadout antigo.
-    this._ecoLigada = !!economia && economiaLigada({ busca: location.search, online: this.online, dedicado: this.dedicated, wpnMode: this._wpnMode() });
     // Câmera 3ª pessoa (tecla N): B pertence exclusivamente ao menu de compra.
     // Mira e tiro continuam saindo da câmera; rig e grip: docs/RIG-PEGA-ARMA.md.
     this.camView = ['first', 'third', 'shoulder'].includes(settings.camView) ? settings.camView : 'first';
