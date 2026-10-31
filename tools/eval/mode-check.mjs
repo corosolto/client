@@ -32,15 +32,39 @@
 
    Uso: node tools/eval/mode-check.mjs [--json]
    ============================================================================ */
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
-const SRC = readFileSync(path.join(ROOT, 'public', 'js', 'main.js'), 'utf8');
+const ARGS = process.argv.slice(2);
+const MUTANTE = ARGS.find((a) => a.startsWith('--mutante='))?.slice(10) || '';
+const DRIVER = ARGS.includes('--mutantes'), META = ARGS.includes('--selftest');
+const JSON_OUT = ARGS.includes('--json');
+const known = ['--json', '--mutantes', '--selftest', '--mutante=sem-backdrop', '--mutante=arena-no-construtor'];
+if (new Set(ARGS).size !== ARGS.length || ARGS.some((a) => !known.includes(a))
+    || ((DRIVER || META) && ARGS.length !== 1)
+    || (!DRIVER && !META && ARGS.length > (MUTANTE ? 2 : 1))) {
+  console.error('uso: mode-check [--json] [--mutante=sem-backdrop] | --mutantes | --selftest'); process.exit(2);
+}
+if (MUTANTE === 'arena-no-construtor' && (!JSON_OUT || process.env.MODECHECK_DRIVER_PROV !== MUTANTE)) {
+  console.error('setup: arena-no-construtor exige o driver'); process.exit(2);
+}
+let SRC = readFileSync(path.join(ROOT, 'public', 'js', 'main.js'), 'utf8');
+if (MUTANTE === 'arena-no-construtor') {
+  const anchor = 'game = new Game({';
+  if (SRC.split(anchor).length !== 2) throw new Error('setup: newGame não único');
+  const obj = bloco(SRC, anchor), matches = [...obj.matchAll(/\barena:\s*[^,]+,/g)];
+  if (matches.length !== 1) throw new Error('setup: campo arena do newGame não único');
+  const offset = SRC.indexOf(anchor) + matches[0].index, field = matches[0][0];
+  const before = SRC;
+  SRC = SRC.slice(0, offset) + 'arena: false,' + SRC.slice(offset + field.length);
+  if (SRC === before) throw new Error('setup: arena-no-construtor não aplicado');
+  writeSync(2, 'MODECHECK_APPLIED:arena-no-construtor\n');
+}
 const MAPSRC = readFileSync(path.join(ROOT, 'public', 'js', 'maps.js'), 'utf8');
-const JSON_OUT = process.argv.includes('--json');
 
 /* ---- recorte por casamento de chaves (não por regex de linha inteira) ---- */
 function bloco(fonte, ancora, abre = '{', fecha = '}') {
@@ -87,10 +111,22 @@ const BADGE = (() => {
   if (i < 0) throw new Error('não achei o handler de clique do badge de modo');
   return bloco(SRC.slice(i), "mm.addEventListener('click'");
 })();
-// a expressão que vai pro Game
-const CTF_EXPR = (SRC.match(/^\s*ctf:\s*([^,]+),/m) || [])[1];
-const ARENA_EXPR = (SRC.match(/\barena:\s*([^,]+),/m) || [])[1];
-if (!CTF_EXPR || !ARENA_EXPR) throw new Error('não achei as propriedades `ctf:`/`arena:` passadas ao Game');
+// a expressão que vai pro Game: ancorada no objeto REAL `game = new Game({` do main.js
+// (RED da crítica: o primeiro `arena:` solto era o __tpElenco, não o Game). Fail-closed:
+// âncora única + cada propriedade exatamente 1x dentro do objeto recortado por chaves.
+const NEWGAME_ANCORA = 'game = new Game({';
+{
+  const n = SRC.split(NEWGAME_ANCORA).length - 1;
+  if (n !== 1) throw new Error(`âncora \`${NEWGAME_ANCORA}\` não é única no main.js (${n}x)`);
+}
+const NEWGAME = bloco(SRC, NEWGAME_ANCORA);
+const prop = (nome) => {
+  const m = [...NEWGAME.matchAll(new RegExp(`\\b${nome}:\\s*([^,]+),`, 'g'))];
+  if (m.length !== 1) throw new Error(`esperava exatamente 1 \`${nome}:\` no objeto new Game, achei ${m.length}`);
+  return m[0][1];
+};
+const CTF_EXPR = prop('ctf');
+const ARENA_EXPR = prop('arena');
 
 /* ---- registro de mapas: lido do maps.js, sem importar (evita puxar three) ---- */
 const MAP_IDS = [...MAPSRC.matchAll(/^\s{2}(\w+):\s*\{/gm)].map((m) => m[1]);
@@ -138,6 +174,63 @@ function novoMenu(mapaInicial) {
     el, noop, noop, noop, loadMenuBackdrop, noop);
 }
 
+// Só status semântico da fonte realmente transformada vale como mutante detectado.
+function veredito(r, mutante = '') {
+  if (r.error || r.signal || r.status !== (mutante ? 1 : 0)) return false;
+  const stderr = r.stderr || '';
+  if (/TypeError|ReferenceError|SyntaxError|setup:/.test(stderr)) return false;
+  const markers = stderr.split('\n').filter((s) => s.startsWith('MODECHECK_APPLIED:'));
+  if (mutante ? (markers.length !== 1 || markers[0] !== 'MODECHECK_APPLIED:' + mutante) : markers.length !== 0) return false;
+  const records = stderr.split('\n').filter((s) => s.startsWith('MODECHECK_RESULT:'));
+  if (records.length !== 1) return false;
+  let d; try { d = JSON.parse(records[0].slice('MODECHECK_RESULT:'.length)); } catch { return false; }
+  return d.tool === 'mode-check' && d.clausula === 'MOD2' && d.mutante === mutante && Number.isInteger(d.total) && d.total > 0
+    && (mutante ? (d.erro === 'ContractViolation' && Number.isInteger(d.falhas) && d.falhas > 0 && d.falhas <= d.total
+      && d.falhasArena === d.falhas && d.falhasOutros === 0)
+      : (d.erro === null && d.falhas === 0 && d.falhasArena === 0 && d.falhasOutros === 0));
+}
+function metaDriver() {
+  const nome = 'arena-no-construtor';
+  const record = { tool: 'mode-check', clausula: 'MOD2', mutante: nome, erro: 'ContractViolation', total: 180, falhas: 36, falhasArena: 36, falhasOutros: 0 };
+  const stderr = (d) => `MODECHECK_APPLIED:${nome}\nMODECHECK_RESULT:${JSON.stringify(d)}\n`;
+  const ok = { status: 1, signal: null, error: null, stderr: stderr(record) };
+  const exige = (p, msg) => { if (!p) throw new Error('metadriver: ' + msg); };
+  exige(veredito(ok, nome), 'controle válido recusado');
+  const bad = [
+    { ...ok, error: new Error('spawn') }, { ...ok, signal: 'SIGTERM' },
+    ...[0, 2, null].map((status) => ({ ...ok, status })),
+    { ...ok, stderr: ok.stderr.split('\n').slice(1).join('\n') },
+    { ...ok, stderr: ok.stderr + `MODECHECK_APPLIED:${nome}\n` },
+    { ...ok, stderr: `MODECHECK_APPLIED:${nome}\n` },
+    { ...ok, stderr: ok.stderr + `MODECHECK_RESULT:${JSON.stringify(record)}\n` },
+    ...[{ tool: 'outro' }, { clausula: 'outra' }, { mutante: 'outro' }, { erro: 'TypeError' },
+      { falhas: 0 }, { falhasArena: 0 }, { falhasOutros: 1 }].map((x) => ({ ...ok, stderr: stderr({ ...record, ...x }) })),
+    { ...ok, stderr: ok.stderr + 'TypeError: setup\n' },
+  ];
+  bad.forEach((r, i) => exige(!veredito(r, nome), 'falso positivo aceito ' + i));
+  const base = { status: 0, signal: null, error: null, stderr: 'MODECHECK_RESULT:' + JSON.stringify({ ...record, mutante: '', erro: null, falhas: 0, falhasArena: 0 }) + '\n' };
+  exige(veredito(base), 'baseline válida recusada');
+  for (const r of [{ ...base, status: 1 }, { ...base, signal: 'SIGKILL' }, { ...base, error: new Error('spawn') },
+    { ...base, stderr: 'MODECHECK_APPLIED:arena-no-construtor\n' + base.stderr }]) exige(!veredito(r), 'baseline falsa aceita');
+}
+if (DRIVER || META) {
+  metaDriver();
+  if (DRIVER) {
+    const roda = (mutante = '') => {
+      const env = { ...process.env }; delete env.MODECHECK_DRIVER_PROV;
+      const args = [fileURLToPath(import.meta.url), '--json'];
+      if (mutante) { env.MODECHECK_DRIVER_PROV = mutante; args.push('--mutante=' + mutante); }
+      return spawnSync(process.execPath, args, { env, encoding: 'utf8', timeout: 120000, maxBuffer: 2 * 1024 * 1024 });
+    };
+    for (const nome of ['', 'arena-no-construtor']) {
+      const r = roda(nome);
+      if (!veredito(r, nome)) { console.error('mode driver inválido:', nome || 'baseline', r.status, r.signal, (r.stderr || '').slice(-1000)); process.exit(2); }
+    }
+  }
+  console.log('MODECHECK driver: baseline0 + arena-no-construtor MOD2/arena + metadriver PASS');
+  process.exit(0);
+}
+
 /* ---- modos explícitos × mapas ---- */
 const casos = [];
 for (const alvo of MAP_IDS) {
@@ -180,6 +273,7 @@ for (const alvo of MAP_IDS) {
 }
 
 const falhas = casos.filter((c) => !c.ok);
+writeSync(2, 'MODECHECK_RESULT:' + JSON.stringify({ tool: 'mode-check', clausula: 'MOD2', mutante: MUTANTE, erro: falhas.length ? 'ContractViolation' : null, total: casos.length, falhas: falhas.length, falhasArena: falhas.filter((c) => c.escolhido === 'arena').length, falhasOutros: falhas.filter((c) => c.escolhido !== 'arena').length }) + '\n');
 const saida = { gerado: new Date().toISOString(), total: casos.length, falhas: falhas.length, casos };
 if (JSON_OUT) console.log(JSON.stringify(saida, null, 1));
 else {

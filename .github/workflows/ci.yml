@@ -59,6 +59,9 @@ jobs:
         run: npm run eval:wfcheckout
       - name: Syntax check do jogo (public/js)
         run: npm run syntax
+      # Os contratos de modo também precisam rodar neste CI explícito.
+      - name: Arena, formato melhor-de e preload (node puro)
+        run: node tools/eval/runner.mjs eval:arena-mode eval:formatomelhorde eval:preload
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         run: npm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o

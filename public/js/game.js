@@ -2436,7 +2436,7 @@ export class Game {
     const ax = -Math.sin(p.yaw) * cp, ay = Math.sin(p.pitch), az = -Math.cos(p.yaw) * cp;   // forward = (-sin,-cos)
     let best = null, bestAng = 0.11;   // ~6,3° de cone
     for (const b of this.bots) {
-      if (!b.alive || b.team === this.playerTeam) continue;
+      if (!b.alive || b.team === p.team) continue;
       const dx = b.pos.x - from.x, dy = (b.pos.y + 1.2) - from.y, dz = b.pos.z - from.z;
       const dist = Math.hypot(dx, dy, dz); if (dist < 0.5 || dist > 60) continue;
       const nx = dx / dist, ny = dy / dist, nz = dz / dist;
@@ -2796,6 +2796,7 @@ export class Game {
     // por dominação no mesmo frame em que o alvo de bandeiras foi batido, o pedido fica
     // pendurado e mataria a rodada seguinte no primeiro quadro.
     this._roundOverPedido = false;
+    this._matchEndShown = false;
     this._resetKillSequence();
     this._resetPositions();
     if (this.ctf) this._initCTF();
@@ -3174,8 +3175,10 @@ export class Game {
     return total;
   }
   _endMatch(winnerOverride = null) {
-    if (this.state === 'matchEnd') return;
-    this.state = 'matchEnd';
+    // O snapshot pode ter aplicado o estado antes da apresentação local.
+    if (this._matchEndShown) return;
+    this._matchEndShown = true;
+    if (this.state !== 'matchEnd') this.state = 'matchEnd';
     /* No Vira-Casaca o vencedor vem da população final. Nos modos de rodada, empate
        segue para abates da partida inteira. */
     const winner = winnerOverride || (this.roundsWon.E !== this.roundsWon.B
@@ -3384,21 +3387,21 @@ export class Game {
   _switchTeam(charId) {
     if (!this.player.alive || (this.state !== 'live' && this.state !== 'countdown')) return;
     const p = this.player;
+    const oldTeam = p.team;
+    const newTeam = oldTeam === 'E' ? 'B' : 'E';
+    const oldFaction = this._factionOf(oldTeam);
+    const newFaction = this._factionOf(newTeam);
     /* Reserva igual à da linha 712 (`byId` dá undefined fora do elenco), e da facção em que
        ele ENTRA. Sem ela o Game seguia corrompido: BUG-168, `eval:switchteam`. */
     if (charId) {
       const def = byId(charId);
       if (!def) console.warn(`[elenco] troca de lado pediu '${charId}', fora do elenco — usando a reserva do grupo`);
-      this.playerDef = def || CHARACTERS.find(_doLado(this.enemyFaction)) || this.playerDef;
+      this.playerDef = def || CHARACTERS.find(_doLado(newFaction)) || this.playerDef;
       this.playerCharId = this.playerDef.id;
       p.def = this.playerDef;
     }
-    const oldTeam = this.playerTeam;
-    const newTeam = oldTeam === 'E' ? 'B' : 'E';
-    const oldFaction = this.playerFaction;
     this.playerTeam = newTeam; this.enemyTeam = oldTeam;
-    this.playerFaction = this.enemyFaction;
-    this.enemyFaction = oldFaction;
+    this.playerFaction = newFaction; this.enemyFaction = oldFaction;
     const handProfile = { id: this.playerCharId, faction: this.playerFaction, gloveSkinId: this.playerGloveId,
       skin: this.playerDef?.pal?.skin, sleeve: this.playerDef?.pal?.shirt, accent: this.playerDef?.pal?.pants };
     this.vm.authored?.setProfile(handProfile);
@@ -3425,7 +3428,7 @@ export class Game {
       swapBot.mesh = buildCharacterModel(veste) || buildCharacter(veste);
       swapBot.mesh.group.traverse(o => { o.userData.botOwner = swapBot; });
       this.scene.add(swapBot.mesh.group);
-      swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot.alive = true;
+      swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot._switchTeam = null; swapBot.alive = true;
       const s = this.world.spawns[oldTeam][(Math.random() * 4) | 0];
       swapBot.pos.set(s.x, this._spawnY(s.x, s.z), s.z);
       swapBot.yaw = this._spawnYaw(s, oldTeam, true);
@@ -4055,7 +4058,7 @@ export class Game {
     const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
     let best = null, bd = WEAPONS.knife.range;
     for (const b of this.bots) {
-      if (!b.alive || b.team === this.playerTeam) continue;
+      if (!b.alive || b.team === this.player.team) continue;
       const to = b.pos.clone().setY(b.pos.y + 1.2).sub(from);
       const d = to.length();
       if (d < bd && to.normalize().dot(dir) > 0.6) { best = b; bd = d; }
@@ -4496,6 +4499,9 @@ export class Game {
     if (!this.arena || this.state !== 'live') return;
     const e = this._teamPopulation('E'), b = this._teamPopulation('B');
     if (e > 0 && b > 0) return;
+    // A população só é definitiva depois de aplicar as conversões no respawn.
+    if (this.player._switchTeam) return;
+    for (const c of this.combatants || []) if (c._switchTeam) return;
     this._endMatch(e > 0 ? 'E' : 'B');
   }
   /* ===================== INDICADOR DIRECIONAL DE DANO =====================
@@ -6463,7 +6469,7 @@ export class Game {
       el.style.visibility = 'hidden';
       return;
     }
-    const enemyGroups = this.bots.filter(b => b.alive && b.team !== this.playerTeam).map(b => b.mesh.group);
+    const enemyGroups = this.bots.filter(b => b.alive && b.team !== this.player.team).map(b => b.mesh.group);
     // A profundidade vista pela câmera evita cruz falsa atrás da cobertura.
     this.ray.set(this.camera.position, cameraDir);
     this.ray.far = 200;
@@ -7394,7 +7400,7 @@ export class Game {
     if (this.time < (this._radioCd || 0)) return;
     if (b.pos.distanceTo(this.player.pos) > 55) return;   // longe demais: não escutaria
     this._radioCd = this.time + 5;
-    const mine = b.team === this.playerTeam;
+    const mine = b.team === this.player.team;
     const lines = mine
       ? ['Contato!', 'Tô vendo um aqui!', 'Inimigo na minha frente!', 'Cobre eu que eu vou!']
       : ['Achei um!', 'Tá aqui, ó!'];
@@ -7455,7 +7461,7 @@ export class Game {
   }
   _makeTeamMark(bot) {
     if (QS.get('teammark') === '0') return;
-    const ally = bot.team === this.playerTeam;
+    const ally = bot.team === this.player.team;
     const col = new THREE.Color(this._teamColor(bot.team));
     this._tmHaloGeo = this._tmHaloGeo || new THREE.PlaneGeometry(1, 1);
     const halo = new THREE.Mesh(this._tmHaloGeo, new THREE.MeshBasicMaterial({
@@ -7465,7 +7471,7 @@ export class Game {
     }));
     halo.rotation.x = -Math.PI / 2; halo.scale.setScalar(1.45); halo.renderOrder = 3;
     this.scene.add(halo);
-    bot._mark = { halo, ally };   // SEM chevron/seta na cabeça (pedido do dono) — só o halo no chão
+    bot._mark = { halo, ally, col: this._teamColor(bot.team) };
   }
   /* Escolha de personagem no meio da partida (multiplayer). O servidor roda o mesmo método,
      então def, nome e malha ficam iguais nos dois lados do fio. */
@@ -7514,6 +7520,14 @@ export class Game {
   _updateTeamMark(b) {
     const m = b._mark;
     if (!m) return;
+    const ally = b.team === this.player.team;
+    if (m.ally !== ally) {
+      m.ally = ally;
+      m.halo.material.map = this._teamMarkTex(ally ? 'haloAlly' : 'haloEnemy');
+      m.halo.material.needsUpdate = true;
+    }
+    const col = this._teamColor(b.team);
+    if (m.col !== col) { m.col = col; m.halo.material.color.set(col); }
     if (!b.alive || !b.mesh.group.visible) { m.halo.visible = false; return; }
     m.halo.visible = true;
     m.halo.position.set(b.pos.x, b.pos.y + 0.05, b.pos.z);
@@ -8638,7 +8652,7 @@ export class Game {
     x.shadowBlur = 5;
     for (const c of this.combatants) {
       if (!c.alive || c.isPlayer) continue;
-      const ally = c.team === this.playerTeam;
+      const ally = c.team === this.player.team;
       if (!ally && this.time - c.revealedAt > 1.6) continue;
       const col = ally ? this._teamColor(c.team) : '#ffb44d';   // inimigo revelado = âmbar (objetivo), aliado = cor do time
       x.fillStyle = col; x.shadowColor = col;
