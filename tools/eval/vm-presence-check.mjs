@@ -7,7 +7,7 @@ import { Game, THREE, renderer, initTextures, sfx, CHARACTERS, PCHAR } from './h
 import { WEAPON_IDS } from '../../public/js/weapons.js';
 
 const mutation = process.argv.find((arg) => arg.startsWith('--mutante='))?.split('=')[1];
-const mutations = ['raiz-vazia', 'fallback-oculto', 'fallback-duplo'];
+const mutations = ['raiz-vazia', 'fallback-oculto', 'fallback-duplo', 'fora-do-quadro'];
 if (mutation && !mutations.includes(mutation)) throw new Error(`mutante desconhecido: ${mutation}`);
 const errors = [];
 let samples = 0;
@@ -16,6 +16,18 @@ const meshes = (root) => {
   let count = 0;
   root.traverseVisible((node) => { if (node.isMesh && node.geometry?.attributes.position?.count) count++; });
   return count;
+};
+const inFrame = (game) => {
+  game.vmCamera.updateProjectionMatrix();
+  game.vmCamera.updateMatrixWorld(true);
+  game.vm.root.updateWorldMatrix(true, true);
+  const frustum = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4()
+    .multiplyMatrices(game.vmCamera.projectionMatrix, game.vmCamera.matrixWorldInverse));
+  let visible = false;
+  game.vm.root.traverseVisible((node) => {
+    if (node.isMesh && node.geometry?.attributes.position?.count && frustum.intersectsObject(node)) visible = true;
+  });
+  return visible;
 };
 const def = CHARACTERS.find((character) => character.id === PCHAR);
 const textures = initTextures();
@@ -34,6 +46,7 @@ for (const mobile of [true, false]) {
   game.vm.melee = null;
   game.vm.authored?.dispose();
   game.vm.authored = null;
+  if (mutation === 'fora-do-quadro') game.vm.root.position.x = 10000;
   if (mutation === 'raiz-vazia') {
     const build = game._buildViewModels;
     game._buildViewModels = function (...args) {
@@ -61,6 +74,7 @@ for (const mobile of [true, false]) {
       game._applyVmVisibility();
       const label = `${mobile ? 'mobile' : 'desktop'} ${width}x${height} ${weapon}`;
       check(game._vmVisibility.fallback && meshes(game.vm.root) > 0, 'VMP1', label);
+      check(inFrame(game), 'VMP9', `${label}: malha dentro do quadro`);
       check(Object.values(game.vm.models).filter((model) => model.visible).length === 1,
         'VMP2', `${label}: exatamente uma arma alternativa`);
       game._syncVmPresentation(true, 1);
@@ -96,7 +110,7 @@ if (process.argv.includes('--mutantes') && !errors.length) {
   for (const name of mutations) {
     const result = spawnSync(process.execPath, [fileURLToPath(import.meta.url), `--mutante=${name}`],
       { encoding: 'utf8', timeout: 60000 });
-    check(result.status === 1 && /VMP[125]/.test(result.stdout), 'VMP8', `mutante ${name} detectado`);
+    check(result.status === 1 && /VMP[1259]/.test(result.stdout), 'VMP8', `mutante ${name} detectado`);
   }
 }
 console.log(JSON.stringify({ ok: errors.length === 0, samples, mutation: mutation || null, errors: errors.slice(0, 12), failures: errors.length }));
