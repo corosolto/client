@@ -955,3 +955,4 @@ BootR18 privado fechouexit1 realcontratoporFIM:8.456.735B/326req (256.735Bacimat
 Merge9b03aad7f preserva ledgerQA que jácontém asduasnotasnovasimpl; alteraçãofuncionalúnica main.js1168 aprovadacrítica4ddb0d79. Release v2.1.0-alpha.132 publicado17:34:14, prod-watch41225397893SUCCESS noab3e20c75. BootR18CLEANfonte73contraprovas0f369203 masnominalRED8.456.735B/326, sempromoção.
 
 2026-10-31T18:39:39.132469+00:00 — R21PROMOÇÃO aceita4b747cf4, seisarquivosboot/body/origin/window/contract/doc. Syntax+selftestpúblicos0, Node22selftestrepassado. CheckpointseletivoantesmergeQA/pushnormal; nenhumtetoalterado/novaisenção.
+
