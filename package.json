@@ -11,7 +11,7 @@
     "//eval:profile-character": "perfil público fica legível sem arena; personagem vem da projeção autorizada e catálogo real, sem fallback inventado",
     "eval:profile-character": "node scripts/profile-character-catalog.mjs --check && node tools/eval/profile-character-check.mjs",
     "eval:social-serve": "node tools/eval/social-serve-check.mjs",
-    "eval:social-boot-guest": "node tools/eval/social-boot-guest-check.mjs",
+    "eval:social-boot-guest": "node tools/eval/social-boot-guest-check.mjs --mutantes",
     "eval:hub-identity": "node tools/eval/hub-identity-check.mjs",
     "build": "node tools/viewmodels/prepare_precision_preview.mjs --assert-clean && npm run copy-wasm && npm run gen:assetrev && astro build && node scripts/prune-dist.mjs",
     "release": "node scripts/release.mjs",
