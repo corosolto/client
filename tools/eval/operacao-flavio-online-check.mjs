@@ -33,6 +33,8 @@ const netEdits = mutante === 'sem-placar'
   ? [['resultadoDesconhecido = subiuE && subiuB;', 'resultadoDesconhecido = false;']]
   : mutante === 'sem-winner-atual'
   ? [["if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes, snap.objective?.winner);", "if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes);"]]
+  : mutante === 'winner-persistido'
+  ? [["if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes, snap.objective?.winner);", "if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes, game.objective?.state?.winner);"]]
   : [];
 const { makeNetcode } = netEdits.length
   ? await moduloMutado('../../public/js/netgame.js', netEdits) : await import('../../public/js/netgame.js');
@@ -73,7 +75,7 @@ else if (mutante === 'sem-reset') {
     this.cinematic = cinematic;
     this.game.world.objectivePlane.position.copy(plane);
   };
-} else if (mutante && !['sem-placar','sem-ordem','sem-parar','sem-retomada','sem-reancora','sem-limpar-drops','sem-fim-identidade','reset-match-end','empate-desconhecido','sem-winner-atual'].includes(mutante)) throw new Error('Mutante desconhecido: '+mutante);
+} else if (mutante && !['sem-placar','sem-ordem','sem-parar','sem-retomada','sem-reancora','sem-limpar-drops','sem-fim-identidade','reset-match-end','empate-desconhecido','sem-winner-atual','winner-persistido'].includes(mutante)) throw new Error('Mutante desconhecido: '+mutante);
 if (mutante) console.log('Mutação aplicada: '+mutante);
 let failures = 0;
 const check = (name, fn) => {
@@ -256,6 +258,16 @@ try {
     mp.applySnapshot();
     assert.equal(result.at(-1)?.[0],'RESULTADO ATUALIZADO');
     assert.equal(game.objective.cinematic,null,'não inventa vencedor');
+  });
+  check('winner ausente não herda estado antigo sem troca de identidade', () => {
+    game.state = 'live'; game.roundsWon = { E: 1, B: 1 }; game.objective.prepareRound();
+    game.objective.state.winner = 'B';
+    net.snap = { ...net.snap, tick: net.snap.tick + 1, t: net.snap.t + .05,
+      state: 'roundEnd', roundNum: game.roundNum, scoreE: 2, scoreB: 2, objective: undefined };
+    mp.applySnapshot();
+    assert.equal(game.objective.state.winner, 'B', 'pré-condição antiga persiste até a transição');
+    assert.equal(result.at(-1)?.[0], 'RESULTADO ATUALIZADO');
+    assert.equal(game.objective.cinematic, null);
   });
   for (const winner of ['E', 'B']) check('salto com winner explícito atual ' + winner + ' encena uma única vez', () => {
     game.state = 'live'; game.roundsWon = { E: 1, B: 1 }; game.objective.prepareRound();

@@ -32,6 +32,7 @@ const familias = {
     'reset-match-end': '✗ matchEnd não prepara uma rodada de jogo mesmo com roundNum novo:',
     'empate-desconhecido': '✗ salto com dois placares crescidos mostra resultado desconhecido sem inventar empate:',
     'sem-winner-atual': '✗ salto com winner explícito atual E encena uma única vez:',
+    'winner-persistido': '✗ winner ausente não herda estado antigo sem troca de identidade:',
   }],
   reset: ['operacao-flavio-reset-check.mjs', {
     'sem-reset': 'avião volta à posição original após rodada 1, online=false',
