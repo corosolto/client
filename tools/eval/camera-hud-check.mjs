@@ -1,6 +1,8 @@
 // Executa montagem e atualização reais do HUD TP; não substitui QA no navegador.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import vm from 'node:vm';
 let source=readFileSync(new URL('../../public/js/tp/hud.js',import.meta.url),'utf8');
 const mutant=process.argv.find(a=>a.startsWith('--mutante='))?.split('=')[1];
@@ -8,6 +10,20 @@ const edits={
   'tp-dica-b':["dica('N', 'câmera');","dica('B', 'câmera');"],
   'tp-chip-b':['|| CAMERA.first)} · N`','|| CAMERA.first)} · B`'],
 };
+if(process.argv.includes('--mutantes')){
+  for(const [name,clauses] of Object.entries({
+    'tp-dica-b':['TP dica N câmera preserva B para loja'],
+    'tp-chip-b':['first','third','shoulder'].map(mode=>'TP chip atualizado anuncia N: '+mode),
+  })){
+    const r=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--mutante='+name],{encoding:'utf8'});
+    assert.equal(r.status,1,name);assert.ok(r.stdout.includes('Mutação aplicada: '+name),'mutação aplicada: '+name);
+    const failed=r.stderr.split('\n').filter(line=>line.startsWith('FAIL '));
+    assert.equal(failed.length,clauses.length,name);
+    for(const clause of clauses)assert.ok(failed.some(line=>line.startsWith('FAIL '+clause+':')),clause);
+    console.log('PASS mutante aplicado e cláusula esperada: '+name);
+  }
+  process.exit(0);
+}
 if(mutant){const e=edits[mutant];assert.ok(e);assert.equal(source.split(e[0]).length,2);source=source.replace(...e);console.log('Mutação aplicada: '+mutant);}
 const element=(tag,cls,txt)=>({tagName:tag,className:cls||'',dataset:{},children:[],own:txt||'',
   append(...items){this.children.push(...items);},prepend(...items){this.children.unshift(...items);},

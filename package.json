@@ -142,7 +142,7 @@
     "eval:pickuparma": "node tools/eval/pickup-arma-check.mjs",
     "eval:scrollarma": "node tools/eval/scroll-arma-check.mjs",
     "eval:roundmunicao": "node tools/eval/round-municao-check.mjs",
-    "eval:cameraoclusao": "node tools/eval/camera-oclusao-check.mjs && node tools/eval/camera-hud-check.mjs && ! node tools/eval/camera-hud-check.mjs --mutante=tp-dica-b && ! node tools/eval/camera-hud-check.mjs --mutante=tp-chip-b && npm run mut:cameraoclusao",
+    "eval:cameraoclusao": "node tools/eval/camera-oclusao-check.mjs && node tools/eval/camera-hud-check.mjs && node tools/eval/camera-hud-check.mjs --mutantes && npm run mut:cameraoclusao",
     "eval:pistolacadencia": "node tools/eval/pistola-cadencia-check.mjs",
     "eval:fragrestock": "node tools/eval/frag-restock-check.mjs",
     "eval:formatomelhorde": "node tools/eval/formato-melhorde-check.mjs",
