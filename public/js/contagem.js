@@ -2,6 +2,7 @@
    independente do consentimento. Carrega antes do main.js (index.astro). Régua: tools/eval/contagem-check.mjs. */
 import { apiUrl } from './apibase.js';
 import { VERSION } from './version.js';
+import { jogadoresUnicos } from './player-unique.js';
 
 const UMA_VEZ = new Set(['page_view', 'game_loaded', 'splash_enter', 'boot_error', 'login_prompt_shown', 'login_prompt_dismissed', 'login_prompt_provider_click', 'session_end']);
 
@@ -23,6 +24,7 @@ export function criarContagem({ enviar, agora, versao = VERSION, desligado = fal
       enviados.add(event);
     }
     try { enviar(JSON.stringify({ event, version: versao, ...campos })); } catch { /* contagem nunca quebra o jogo */ }
+    jogadoresUnicos.evento(event, versao);
     return true;
   };
   const partida = (campos) => ({
