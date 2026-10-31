@@ -5,24 +5,29 @@ import { THREE, MAPS, initTextures } from './harness.mjs';
 import { createSoundscape } from '../../public/js/soundscape.js';
 
 const MUTANTE = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').slice(10) || null;
-if (MUTANTE && !['path-no-lugar-de-src', 'posicao-sem-z'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
+if (MUTANTE && !['path-no-lugar-de-src', 'posicao-sem-z', 'piscina-sem-loops'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 
 const textures = await initTextures();
 const invalidos = [];
 let mutanteAplicado = false;
 let alvoMutado = null;
 let loopsConsumidos = 0;
+let piscinaVista = false;
 
 async function consumirLoops(loops) {
   const originalFetch = globalThis.fetch;
   const ganhos = [];
-  const parametro = () => ({ value: 0, setTargetAtTime(value) {
-    if (!Number.isFinite(value)) throw new Error('AudioParam recebeu valor não finito');
-    ganhos.push(value);
-  } });
+  const parametro = (ganho = false) => {
+    const param = { value: 0, chamadas: 0, setTargetAtTime(value) {
+      if (!Number.isFinite(value)) throw new Error('AudioParam recebeu valor não finito');
+      this.chamadas++;
+    } };
+    if (ganho) ganhos.push(param);
+    return param;
+  };
   const node = () => ({ connect() {}, start() {}, stop() {} });
   const ctx = { currentTime: 1, decodeAudioData: async () => ({ duration: 1 }),
-    createBufferSource: node, createGain: () => ({ ...node(), gain: parametro() }),
+    createBufferSource: node, createGain: () => ({ ...node(), gain: parametro(true) }),
     createStereoPanner: () => ({ ...node(), pan: parametro() }) };
   const soundscape = createSoundscape({ ctx, master: {} }, { loops });
   globalThis.fetch = async () => new Response(new Uint8Array(1));
@@ -32,7 +37,8 @@ async function consumirLoops(loops) {
       await new Promise(resolve => setImmediate(resolve));
     if (soundscape.state.loops.length !== loops.length) throw new Error('loops não chegaram ao consumidor');
     soundscape.update(.016, { x: 2, y: 1.65, z: -3 });
-    if (loops.length && ganhos.length < loops.length) throw new Error('update não escreveu todos os ganhos');
+    if (ganhos.length !== loops.length || ganhos.some(param => param.chamadas === 0))
+      throw new Error('update não escreveu todos os ganhos');
     loopsConsumidos += loops.length;
   } finally { soundscape.dispose(); globalThis.fetch = originalFetch; }
 }
@@ -40,6 +46,13 @@ async function consumirLoops(loops) {
 for (const [mapa, registro] of Object.entries(MAPS)) {
   const world = registro.build(new THREE.Scene(), textures);
   const loops = world.sound?.loops || [];
+  if (mapa === 'piscina_treta') {
+    piscinaVista = true;
+    if (MUTANTE === 'piscina-sem-loops') {
+      loops.splice(0); mutanteAplicado = true; alvoMutado = { mapa, indice: -2 };
+    }
+    if (loops.length !== 2) invalidos.push({ mapa, indice: -2, motivo: 'Piscina precisa publicar os dois loops' });
+  }
   if (MUTANTE === 'path-no-lugar-de-src' && !mutanteAplicado && loops.length) {
     loops[0] = { ...loops[0], path: loops[0].src };
     delete loops[0].src;
@@ -62,6 +75,8 @@ for (const [mapa, registro] of Object.entries(MAPS)) {
     catch (error) { invalidos.push({ mapa, indice: -1, motivo: error.message }); }
   }
 }
+
+if (!piscinaVista) invalidos.push({ mapa: 'piscina_treta', indice: -2, motivo: 'Piscina não foi construída' });
 
 if (MUTANTE && !mutanteAplicado) {
   console.error('MUTANTE NÃO APLICOU: nenhum mapa declarou loop de áudio');
