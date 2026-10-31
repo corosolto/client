@@ -196,12 +196,12 @@ const _alcA = new THREE.Vector3(), _alcB = new THREE.Vector3(), _upY = new THREE
 /* Guarda de alcance do IK (31/10): alvo dentro de 95% do braço, sem contorção. Hist: docs/ANIM-3P.md. */
 function clampAlcanceIK(chain, end, alvo) {
   if (!chain || chain.length < 2 || !alvo) return alvo;
-  chain[0].getWorldPosition(_alcA);          // ombro
-  chain[1].getWorldPosition(_alcB);          // cotovelo
+  chain[0].getWorldPosition(_alcA);
+  chain[1].getWorldPosition(_alcB);
   const braco = _alcA.distanceTo(_alcB);     // comprimento de osso: invariante à pose
-  end.getWorldPosition(_alcA);               // mão
+  end.getWorldPosition(_alcA);
   const alcance = (braco + _alcB.distanceTo(_alcA)) * 0.95;
-  chain[0].getWorldPosition(_alcB);          // ombro de novo (base do clamp)
+  chain[0].getWorldPosition(_alcB);          // base do clamp
   const dx = alvo.x - _alcB.x, dy = alvo.y - _alcB.y, dz = alvo.z - _alcB.z;
   const d = Math.hypot(dx, dy, dz);
   if (d <= alcance || d < 1e-6) return alvo;
