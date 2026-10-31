@@ -236,7 +236,9 @@ export function buildCorrego(scene, T) {
     const solo = onGround(y, h) && !opts.ry;
     const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING })
       : new THREE.BoxGeometry(w, h, d);
+    if (opts.uv) geo.userData.texelEscalada = true;   // UV autorada: trava a 2ª escala do vao.js
     const m = new THREE.Mesh(geo, vao ? aoMat(mat) : mat);
+    if (opts.uv) opts.uv(geo, w, h, d);
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
     if (solo && opts.skirt !== false) SKIRT.add(x, y, z, w, d, opts.ry || 0);
@@ -254,7 +256,9 @@ export function buildCorrego(scene, T) {
   const _mtx = new THREE.Matrix4(), _eul = new THREE.Euler();
   function addBoxSB(w, h, d, mat, x, y, z, opts = {}) {
     const geo = aoBoxGeo(w, h, d, { low: LOWQ, base: (onGround(y, h) && !opts.ry) ? undefined : BASE_FLOATING });
+    if (opts.uv) geo.userData.texelEscalada = true;   // UV autorada: trava a 2ª escala do vao.js
     const m = aoMat(mat);
+    if (opts.uv) opts.uv(geo, w, h, d);
     /* rz era ACEITO e IGNORADO (euler fixava 0): a rampa da travessia saiu horizontal
        flutuando a 2,7 m e o dono reportou a rota alta como inacessível — BUG-84. */
     _eul.set(opts.rx || 0, opts.ry || 0, opts.rz || 0, 'YXZ');
@@ -1113,7 +1117,26 @@ export function buildCorrego(scene, T) {
      groundHeightAt; aqui e a geometria e os guarda-corpos. BUG-82. */
   {
     const matPass = lam({ map: TEX.wall.map || T.wall, color: 0x9a8f7e, roughness: .95 });
-    const matGuarda = lam({ color: 0x6a5f52, roughness: .9 });
+    /* Guarda-corpo: mesmo albedo do tapume (tex_madeira), sampler clonado em 1×1 — cor
+       neutra, sem a segunda tintura que o color 0x6a5f52 aplicava. */
+    const mapGuarda = TEX.wall.map.clone();
+    mapGuarda.repeat.set(1, 1); mapGuarda.needsUpdate = true;
+    const matGuarda = lam({ map: mapGuarda, roughness: .9 });
+    /* UV longitudinal da guarda por METRO local (faces da BoxGeometry, antes do rz do
+       lote): parte da referência aceita do piso e não lê metadados da imagem. */
+    const G_UF = 6 / Math.hypot(PASS.x0 - RAMPA_X1, PASS.y), G_VF = .45 * 2 / (PASS.meiaL * 2);
+    const uvGuarda = (geo, w, h, d) => {
+      const uv = geo.attributes.uv, idx = geo.index, EXT = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+      const visto = new Uint8Array(uv.count);
+      for (const g of geo.groups) {
+        const [eu, ev] = EXT[g.materialIndex | 0] || [0, 0]; if (!eu || !ev) continue;
+        for (let k = g.start; k < g.start + g.count; k++) {
+          const i = idx.getX(k); if (visto[i]) continue; visto[i] = 1;
+          uv.setXY(i, uv.getX(i) * eu * G_UF, uv.getY(i) * ev * G_VF);
+        }
+      }
+      uv.needsUpdate = true;
+    };
     const matMadeira = lam({ map: TEX.wall.map || T.wall, color: 0x7a5a3a, roughness: .95 });
     /* R2→R3: mesclado saiu do StaticBatch; sem registro manual a bala/MAP4 atravessam
        o tabuleiro. Contrato de cláusula: FV-M5 do favela-finish-check (ray real). */
@@ -1141,7 +1164,7 @@ export function buildCorrego(scene, T) {
       // rampa cai na rua, nao no canal — colisor aqui viraria muro na rua embaixo)
       for (const dz of [-PASS.meiaL - 0.05, PASS.meiaL + 0.05]) {
         addBoxSB(hip, 0.55, 0.09, matGuarda, lado * (RAMPA_X1 + PASS.x0) / 2, PASS.y / 2 + 0.28, PASS.z + dz,
-          { collide: false, skirt: false, cast: false, rz });
+          { collide: false, skirt: false, cast: false, rz, uv: uvGuarda });
       }
       /* PILARES DE MADEIRA sob a rampa, no vao central e no pe: e o que faz a rampa
          LER como construcao de favela e nao como prancha solta (foto_004, palafita).
@@ -1171,7 +1194,7 @@ export function buildCorrego(scene, T) {
       occluders.push(m);
     }
     for (const dz of [-PASS.meiaL, PASS.meiaL]) {
-      addBox(RAMPA_X1 * 2, 0.9, 0.1, matGuarda, 0, PASS.y, PASS.z + dz, { skirt: false, cast: false });
+      addBox(RAMPA_X1 * 2, 0.9, 0.1, matGuarda, 0, PASS.y, PASS.z + dz, { skirt: false, cast: false, uv: uvGuarda });
     }
     /* BARRACO DE PASSAGEM (margem oeste): quatro paredes com VAO DE PORTA no lado da rua.
        O teto nao colide — o `_collide` so morde entre pos.y+0,3 e pos.y+1,5, e a laje
