@@ -98,6 +98,14 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
   Não alterar produtor/mapas durante esse bake. Fotos finais ainda pendentes.
 - Auditoria SHA-256 dos arquivos de decals/posters: nenhum arquivo binário
   duplicado com outro nome. Não equivale a inspeção semântica de todas as artes.
+- Novas leases GLM: economia somente `economia-jogo-check.mjs` e
+  `ECONOMIA-PARTIDA.md`; atualizar EJ12/EJ22 à decisão de 50 s/recompra no respawn
+  documentada no #1179, sem editar runtime. Censo personagens/skins é somente
+  leitura de fontes/assets, resultados fora Git nos audits GLM-PERSONAGENS-*.
+- Snapshot 09:05 UTC: main permanece `364be45bb`; #1180 avançou a `20cdff5c7`,
+  bloqueado por CHANGES_REQUESTED/checks em fila. Não mergear por status antigo.
+  Nesta branch são ancestrais os heads #1179/#1171/#1165/#1162/#1161/#1156/#1155/
+  #1152/#1150; isso não comprova revisão/aceite dessas mudanças.
 
 ## Aceites, rejeições e limites
 
