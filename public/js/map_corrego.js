@@ -1,9 +1,8 @@
 // CÓRREGO (corrego) — spec em plans/13-CORREGO.md. Planta: eixo longo = z, norte = −z;
 // córrego em x ∈ [−3, 3] (água rasa), margens em ±[3, 24], pontes em z = −22, 0, 22.
 import * as THREE from 'three';
-import { directedMasonry } from './map_surface_finish.js';
 import { aplicaSombraSol } from './mapquality.js';
-import { placeProp, hasProp, PropBatch, StaticBatch, InstBatch } from './mapprops.js';
+import { placeProp, hasProp, PropBatch, StaticBatch, InstBatch, mergeParts } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar, retanguloGrafiteDesenhado } from './graffiti_pass.js';
 import { criarSuporteGrafite } from './graffiti_surface.js';
@@ -112,7 +111,6 @@ export function buildCorrego(scene, T) {
     dirt: lam({ map: T.dirt }), concrete: lam({ map: T.concrete }),
     asphalt: lam({ map: T.asphalt }), concreteDark: lam({ map: T.concreteDark }),
     wall: lam({ map: T.dirt, color: 0x9a7658 }),
-    tijolo: lam({ map: T.dirt, color: 0xb98a63 }),
     zinco: lam({ color: 0x77746d, metalness: 0.4, roughness: 0.6 }),
     agua: lam({ color: 0x42543b, roughness: 0.24, metalness: 0.12 }),
     pixo: lam({ map: T.concreteDark, roughness: 0.98 }),
@@ -126,9 +124,6 @@ export function buildCorrego(scene, T) {
     };
     TEX.dirt = lam({ map: load('/img/textures/dirt_field.webp', 5, 8), roughness: 1.0 });
     TEX.wall = lam({ map: load('/img/textures/tex_madeira.webp', 2, 2) });         // tapume/compensado
-    /* Alvenaria. Mesma textura que escadão/campomorro/lajes já consomem — o córrego era
-       o único mapa de favela que não a usava (ver o bloco ALVENARIA mais abaixo). */
-    TEX.tijolo = lam({ map: load('/img/textures/favela_wall.webp', 2, 2), roughness: 0.97 });
     TEX.zinco = lam({ map: load('/img/textures/tex_zinco.webp', 3, 3), metalness: 0.4, roughness: 0.6 });
     TEX.asphalt = lam({ map: load('/img/textures/asphalt_br.webp', 5, 8) });
     TEX.concrete = lam({ map: load('/img/textures/concrete_br.webp', 3, 5) });
@@ -167,23 +162,36 @@ export function buildCorrego(scene, T) {
   const matOlhoEscuro = lam({ color: 0x15100d });
   const matFocinhoCap = lam({ color: 0x211b17, roughness: .8 });
 
-  /* ── ALVENARIA: favela_wall.webp já era consumida por escadão/campomorro/lajes, menos
-     aqui. Uma fonte só variando por tinta e repeat; cores das fotos (foto_001/005/040/012). */
-  const _srcTijolo = TEX.tijolo.map;
-  const tijoloTex = (rx, ry, variant = 0, raw = false) => {
-    if (!_srcTijolo) return null;
-    const t = directedMasonry(rx, ry, variant, raw); t.needsUpdate = true;
-    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry);
-    return t;
+  /* ── ALVENARIA PBR: vencedora do A/B corrego-material-prototype-R1 (crítico R1
+     preferiu PBR nas 4 poses; photo global e faixas procedurais rejeitadas). */
+  const pbrSources = new Map();
+  const pbrSource = (file, srgb) => {
+    if (!pbrSources.has(file)) {
+      const t = typeof document !== 'undefined' ? new THREE.TextureLoader().load(`/img/textures/${file}`) : new THREE.Texture();
+      t.name = file.replace(/\.webp$/, '');
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+      t.anisotropy = 4;
+      pbrSources.set(file, t);
+    }
+    return pbrSources.get(file);
   };
-  /* As cores saem das fotos, não de paleta de designer: bege de reboco velho, o
-     rosa-terra do tijolo lavado, e os quatro tons de pintura que aparecem em
-     foto_040/foto_012. `0xffffff` = a textura crua, sem tinta. */
+  const pbrMaterial = (familia, rx, ry, color = 0xffffff) => {
+    const slot = (sufixo, srgb) => {
+      const t = pbrSource(`${familia}_${sufixo}.webp`, srgb).clone();
+      t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry);
+      if (sufixo === 'color') t.userData.texelReference = { width: 256, height: 256 };
+      return t;
+    };
+    return lam({ color, map: slot('color', true), normalMap: slot('normal', false), roughnessMap: slot('rough', false),
+      normalScale: new THREE.Vector2(1, 1), roughness: 1 });
+  };
+  // A/B R1 preservou as oito tintas autoradas; só o tijolo cru dispensa a tinta vermelha.
   const CORES_ALVENARIA = [0xffffff, 0xe6d4b4, 0xc9a883, 0xb9c9b4, 0xd9c78e, 0xa9c2c6, 0xd8b3a2, 0xcdc4ae];
   const MURO = CORES_ALVENARIA.map((color, i) =>
-    lam({ map: tijoloTex(1.6 + (i % 3) * 0.4, 1.6 + (i % 2) * 0.5, i) || T.dirt, color, roughness: 0.97 }));
-  // Pavimento de cima sem reboco nenhum: tijolo cru, mais vermelho e mais miúdo.
-  const matTijoloCru = lam({ map: tijoloTex(2.4, 2.0, 0, true) || T.dirt, color: 0xc98a63, roughness: 1 });
+    pbrMaterial('pbr_paintedplaster017', 1.6 + (i % 3) * 0.4, 1.6 + (i % 2) * 0.5, color));
+  // Pavimento de cima sem reboco: tijolo cru — o vermelho já está impresso na imagem.
+  const matTijoloCru = pbrMaterial('pbr_bricks051', 2.4, 2.0);
   // Reboco liso: o embasamento de concreto que sobe da água (foto_001) e as platibandas.
   const matReboco = lam({ map: TEX.concrete.map || T.concrete, color: 0xb4ada0, roughness: 0.96 });
   const matRebocoSujo = lam({ map: TEX.concrete.map || T.concrete, color: 0x8d8579, roughness: 0.98 });
@@ -725,7 +733,7 @@ export function buildCorrego(scene, T) {
     solids.push({ x0: x - w / 2 - 0.4, x1: x + w / 2 + 0.4, z0: z - d / 2 - 0.4, z1: z + d / 2 + 0.4 });
 
     // (3) PILARES de concreto aparente nos quatro cantos, saindo 7 cm da alvenaria.
-    for (const a of [-w / 2 + 0.14, w / 2 - 0.14]) for (const b of [-d / 2 + 0.14, d / 2 - 0.14])
+    for (const a of [-w / 2 + 0.07, w / 2 - 0.07]) for (const b of [-d / 2 + 0.07, d / 2 - 0.07])
       addBoxI(0.28, h + 0.12, 0.28, matPilar, px(a, b), 0, pz(a, b), { ry });
     // (4) FAIXA DE LAJE por pavimento: 12 cm avançando, é a linha horizontal de sombra.
     for (let k = 1; k < andares; k++)
@@ -1107,19 +1115,28 @@ export function buildCorrego(scene, T) {
     const matPass = lam({ map: TEX.wall.map || T.wall, color: 0x9a8f7e, roughness: .95 });
     const matGuarda = lam({ color: 0x6a5f52, roughness: .9 });
     const matMadeira = lam({ map: TEX.wall.map || T.wall, color: 0x7a5a3a, roughness: .95 });
-    /* Tablado sobre o canal: SÓ a faixa andável (|x| <= RAMPA_X1, é o que o
-       groundHeightAt devolve). A versão anterior cobria |x| <= 13,6 — 8,6 m de
-       assoalho FALSO por margem, em cima da faixa onde a rampa de verdade sobe. */
-    addBoxSB(RAMPA_X1 * 2, 0.18, PASS.meiaL * 2, matPass, 0, PASS.y - 0.18, PASS.z,
-      { collide: false, skirt: false });
+    /* R2→R3: mesclado saiu do StaticBatch; sem registro manual a bala/MAP4 atravessam
+       o tabuleiro. Contrato de cláusula: FV-M5 do favela-finish-check (ray real). */
+    const uvGeo = (geo, mu, mv) => {
+      const uv = geo.attributes.uv;
+      for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * mu, uv.getY(k) * mv);
+      uv.needsUpdate = true;
+      return geo;
+    };
+    const peca = (w, h, d, x, y, z, rz = 0, mu = 0, mv = 0) => {
+      const geo = new THREE.BoxGeometry(w, h, d);
+      if (mu) uvGeo(geo, mu, mv);
+      return geo.rotateZ(rz).translate(x, y + h / 2, z);
+    };
+    const fimPass = [peca(RAMPA_X1 * 2, 0.18, PASS.meiaL * 2, 0, PASS.y - 0.18, PASS.z, 0, 4, 0.45)];
+    const fimPilar = [], fimViga = [];
     for (const lado of [-1, 1]) {
       const L = PASS.x0 - RAMPA_X1;
       const hip = Math.hypot(L, PASS.y);
       /* A laje ACOMPANHA o chão físico: rz negativo desce para a ponta +x na margem
          leste, espelhado a oeste. Sem isto a rampa flutuava horizontal (BUG-84). */
       const rz = -lado * Math.atan2(PASS.y, L);
-      addBoxSB(hip, 0.18, PASS.meiaL * 2, matPass, lado * (RAMPA_X1 + PASS.x0) / 2, PASS.y / 2 - 0.18, PASS.z,
-        { collide: false, skirt: false, rz });
+      fimPass.push(peca(hip, 0.18, PASS.meiaL * 2, lado * (RAMPA_X1 + PASS.x0) / 2, PASS.y / 2 - 0.18, PASS.z, rz, 3, 0.45));
       // mureta baixa acompanhando a rampa, dos dois lados do vao (visual: quem cai da
       // rampa cai na rua, nao no canal — colisor aqui viraria muro na rua embaixo)
       for (const dz of [-PASS.meiaL - 0.05, PASS.meiaL + 0.05]) {
@@ -1131,14 +1148,28 @@ export function buildCorrego(scene, T) {
          Sem colisor: poste fino no meio da rua vira gancho de bot. */
       for (const t of [0.25, 0.55, 0.85]) {
         const px = RAMPA_X1 + L * t, py = PASS.y * (1 - t);
-        addBoxSB(0.22, py, 0.22, matMadeira, lado * px, 0, PASS.z - PASS.meiaL + 0.2, { collide: false, skirt: false });
-        addBoxSB(0.22, py, 0.22, matMadeira, lado * px, 0, PASS.z + PASS.meiaL - 0.2, { collide: false, skirt: false });
+        fimPilar.push(peca(0.22, py, 0.22, lado * px, 0, PASS.z - PASS.meiaL + 0.2, 0, 0.45, 2.5));
+        fimPilar.push(peca(0.22, py, 0.22, lado * px, 0, PASS.z + PASS.meiaL - 0.2, 0, 0.45, 2.5));
+        // viga transversal no TOPO de cada apoio: a junta onde o tabuleiro descansa
+        fimViga.push(peca(0.26, 0.12, PASS.meiaL * 2 + 0.3, lado * px, py - 0.3, PASS.z, rz));
       }
+      // encontro rampa×tablado sobre o eixo do canal: a junta que o R1 apontava ilegível
+      fimViga.push(peca(0.26, 0.12, PASS.meiaL * 2 + 0.3, lado * RAMPA_X1, PASS.y - 0.3, PASS.z));
     }
     // pilares do tablado descendo ao leito, como os das pontes — SEM colisor: o
     // leito em z=-11 é lane de bot (BUG-84)
-    for (const px of [-1.5, 1.5]) for (const dz of [-PASS.meiaL + 0.2, PASS.meiaL - 0.2])
-      addBoxSB(0.28, PASS.y - CANAL_FUNDO - 0.18, 0.28, matMadeira, px, CANAL_FUNDO, PASS.z + dz, { collide: false, skirt: false });
+    for (const px of [-1.5, 1.5]) {
+      for (const dz of [-PASS.meiaL + 0.2, PASS.meiaL - 0.2])
+        fimPilar.push(peca(0.28, PASS.y - CANAL_FUNDO - 0.18, 0.28, px, CANAL_FUNDO, PASS.z + dz, 0, 0.45, 2.5));
+      fimViga.push(peca(0.26, 0.12, PASS.meiaL * 2 + 0.3, px, PASS.y - 0.3, PASS.z));
+    }
+    for (const [lista, mat] of [[fimPass, matPass], [fimPilar, matMadeira], [fimViga, matMadeiraBruta]]) {
+      const m = new THREE.Mesh(mergeParts(lista), mat);
+      m.userData.favelaFinish = 'corrego';
+      m.castShadow = m.receiveShadow = true;
+      root.add(m);
+      occluders.push(m);
+    }
     for (const dz of [-PASS.meiaL, PASS.meiaL]) {
       addBox(RAMPA_X1 * 2, 0.9, 0.1, matGuarda, 0, PASS.y, PASS.z + dz, { skirt: false, cast: false });
     }

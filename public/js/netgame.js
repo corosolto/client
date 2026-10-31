@@ -552,7 +552,8 @@ class Netcode {
       if (i >= 0) game._sumirDrop(i);
     } else if (e.k === 'nade') {
       if (!Number.isInteger(e.i) || game._grenades.some((x) => x._nid === e.i)) return;
-      const kind = e.kind === 'smoke' || (e.kind === 'flash' && this.flashOn) ? e.kind : 'frag';
+      if (e.kind === 'flash' && !this.flashOn) return;   // flash desligado não vira frag local (#1179)
+      const kind = e.kind === 'smoke' || e.kind === 'flash' ? e.kind : 'frag';
       const dono = this._netMap.get(e.o | 0) || ((e.o | 0) === meu ? p : null);
       const origem = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0), dir = new THREE.Vector3(+e.vx || 0, +e.vy || 0, +e.vz || 0);
       game._spawnGrenade(origem, dir.lengthSq() ? dir.clone().normalize() : new THREE.Vector3(0, 0, -1), kind, dono);
@@ -564,7 +565,7 @@ class Netcode {
       const pos = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0);
       if (e.kind === 'smoke') game._popSmoke(pos);
       // cegueira é LOCAL: cada cliente mede a do próprio olho; a dos bots quem mede é o servidor
-      else if (e.kind === 'flash' && this.flashOn) game._popFlash(pos, this._netMap.get(e.o | 0) || null);
+      else if (e.kind === 'flash') { if (this.flashOn) game._popFlash(pos, this._netMap.get(e.o | 0) || null); }
       else game._explodeFrag(pos, this._netMap.get(e.o | 0) || null);
     }
   }

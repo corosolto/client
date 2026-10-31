@@ -919,11 +919,14 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 .char-stage{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);
   --char-thumb:114px;grid-template-rows:minmax(0,1fr) auto;grid-template-areas:"sheet preview" "rail rail";
   gap:var(--s-4) var(--s-5);align-items:stretch;flex:1 1 auto;min-height:0;width:min(1280px,95vw)}
-.char-filmstrip{grid-area:rail;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:var(--s-2);min-width:0;min-height:0}
+.char-filmstrip{grid-area:rail;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;
+  align-items:center;gap:var(--s-2);min-width:0;min-height:0}
 /* GRADE DO ELENCO (relato do dono, 31/10: "são muitos personagens, está difícil
    escolher assim" numa faixa horizontal): a fileira única vira grade multilinha com
    rolagem própria; thumbs de 72 px mostram o elenco inteiro de uma vez. */
 .char-list{--char-thumb:72px;display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--char-thumb),1fr));gap:var(--s-2);min-width:0;width:100%;max-width:100%;
+  /* mínimo de 1 fileira inteira: em tela baixa o trilho encolhe, mas a thumb não corta (#1179) */
+  min-height:calc(var(--char-thumb) + 12px);
   max-height:calc(var(--char-thumb) * 3 + var(--s-2) * 2 + 12px);overflow-y:auto;overflow-x:hidden;
   overscroll-behavior:contain;padding:2px 3px 6px;
   scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
@@ -940,7 +943,7 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 /* SELECIONADO: amarelo da faixa (era ciano do sistema — ciano é foco, não escolha) */
 .char-row.sel,.char-row[aria-selected="true"]{border-color:var(--br-faixa);box-shadow:inset 0 3px 0 var(--br-faixa)}
 .strip-arrow{background:rgba(var(--bg-800-rgb),.9);border:1px solid var(--line);color:var(--ink-300);cursor:pointer;
-  flex:0 0 44px;width:44px;height:var(--char-thumb);font-size:24px;line-height:1;padding:0;clip-path:var(--cut-sm);
+  flex:0 0 44px;width:44px;height:44px;font-size:24px;line-height:1;padding:0;clip-path:var(--cut-sm);
   transition:color var(--t) var(--ease),border-color var(--t) var(--ease)}
 .strip-arrow:hover,.strip-arrow:focus-visible{color:var(--br-faixa);border-color:var(--br-faixa)}
 /* A FICHA ABRAÇA O CONTEÚDO (align-self:start) em vez de esticar até o rodapé do palco.
@@ -3120,12 +3123,17 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
      precisa das áreas em coluna única, senão o "sheet preview" de 2 colunas some o botão. */
   .char-preview-box, .pv-hints { display: none; }
   .char-stage { grid-template-columns: 1fr; grid-template-areas: "sheet" "rail";
-    grid-template-rows: auto var(--char-thumb); }
+    /* trilho elástico (antes travado em 114px espremia a grade a 10px — #1179) */
+    grid-template-rows: auto minmax(84px, 1fr); }
   .char-sheet { flex-direction: row; align-items: center; gap: 14px; max-height: none;
     overflow: visible; padding: var(--s-2) var(--s-4); align-self: start; }
   /* faixa do meio mais baixa: menos respiro em volta e teto no palco pra não invadir os
      retratos da fileira de baixo */
   .char-stage { gap: var(--s-2) var(--s-4); }
+  /* a grade não pode ser bloco de 244px centrado no trilho: sangra 33px sobre a
+     ficha e 33px pra fora do palco (#1179). A fileira do meio vira trilho definido. */
+  .char-filmstrip { grid-template-rows: minmax(0, 1fr); }
+  .char-list { height: 100%; max-height: none; }
   .char-sheet #char-info-blurb, .char-sheet .char-attrs-block { display: none; }
   /* a descrição da especialidade quebrava em 2 linhas nos nomes longos e esticava a faixa
      (o Dollynho, curto, ficava certo). Trava em 1 linha: altura da faixa vira constante. */

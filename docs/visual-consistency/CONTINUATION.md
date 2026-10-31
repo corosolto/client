@@ -502,3 +502,126 @@ MotionR5 devolvido: AKnovaL1v realmenteRED +7px nas2proporções, nãoUNKNOWN. S
 - M3 R2 ainda NÃO aceito: crítico encontrou UVs/localtransform que escapam do novo gate e regressão real de occluders na travessia Córrego. Capturas de Campo4 já válidas; Córrego retomado depois de timeout causado exclusivamente por mídia de áudio local, fora do recorte visual. Correção de tiro/LOS e instrumentos antecederá integração.
 - Motion crítico R2 achou câmera entrando no crânio na morte; caminhada/ADS/recarga/pistola/parede sem outro defeito concreto nas amostras. Game congelado para crítica de skins antes de writer da morte.
 - Pickups produto sem novo achado; gate flash ainda tem duas lacunas (crash confundido com detecção e falta de boom flashOn), GLM R3 exclusivo em correção. Não contar banner ou classe de erro como aceitação.
+
+
+### 13:36 UTC — leases e QA isolado
+
+- Objetivo10h permanece integral: integrar PRs/release elegíveis, excluir Operação Flávio, elevar mapas/UI/personagens/skins/motion com evidência real; UI fluxos/social ficam na próxima fase.
+- Checkpoint5501936d6 em WT irmão visual-release-review-20261031, branch codex/visual-release-review-20261031. docs/gen-arch gerou3linhas de documentação, deployR1 em andamento; nenhum push/PR visual ainda. HEAD não contém checkpoint Flávio53826e9d (merge-base exit1). #1181 aguarda Estraga no SHA03008374.
+- Crítico skinsR1: produtoF1/F3/F4 sem novo P2; gate rejeitado3P2+2P3. GLM-R2 lease somente gate/doc skins, probe crítico /tmp/critico-skins-flow-r1/proof.mjs referência obrigatória; Game/main liberados. GLM morteR1 lease Game apenas câmera/visibilidade própria + gate/doc novos; preservar pickups/skins.
+- M3R2 crítico: C4 e pisoCorgR3 aceitos locais, C2 ainda muralha/CorgR1 ganho mínimo;5P2 gate/produto. GLM-R3 só corrige occluders Corg+comentários/gate/fixture/doc sem alterar pixels. Não assado novamente.
+- Posto suporteR1 nominal6/6 e2fotos reais mesmoFOV66/poses; crítico visual em andamento, ainda sem aceite final. GramaR3 tool selftestRoot0,4binários mesmosR2;24fotos ainda em revisão, nenhuma troca pública.
+- NF-R3 terminou, crítico focal em andamento. Curation browserR1 rejeitadoRoot: MUTADOR serializado inválido/faltavam ramos; GLM-R2 rewrite apenas tool/doc, nenhum browser feito por GLM.
+
+
+### 13:42 UTC — pickups/flash validados e gates ligados
+
+- Produto Game/netgame: clear de pickups limitado à economia realmente ligada; modos off/dedicado/especiais preservam arsenal e drops. FlashOff recusa nade e limpa boom residual; flashOn segue com owner remoto real.
+- Root wrappers npm eval:match-pickups e eval:net-flash-disable terminam naturalmente0: nominal6/6 e7/7, mutantes exatamentePM2-PM5/NF1,NF3; controles positivos continuamGREEN. Ambos ligados a fast/deploy, docs geradas.
+- Crítico PICKUPS-FLASH-R3 CLEAN focal SHA5965d1ad46c3ac31837ec2cda06a5f1859beabaae40adefecda319c7d504f0a6: exceções sãoinfra3, suprimir_popFlash/owneracendeNF7. Nenhuma alegação de partidaMP real.
+- Checkpoint seletivo Game contém só dois hunks de constructor pickups; skins/câmera de morte continuam fora deste commit.
+
+
+### 13:57 UTC — entrega separada e leases
+
+- Normais isoladas sobre main00e746: branch codex/normais-personagens-20261031, HEADf1178901f; quatro GLBs/NORMAL, gate causal e crítico CLEAN. Push bloqueado por check:deploy cujo hook removeu o log; rerun explícito em normais-delivery-check-deploy-R2.log. Não há PR novo nem merge/release nosso.
+- Snapshot consolidado antigo deployR2:80/86 verdes; seis RED (boot, matriz gerada, mutante bot fuga, redesign, tr ausente no harness treta e gatilhos do censo). Não publicar consolidado como CI verde; tratar deltas próprios antes da integração com pais atuais.
+- Posto suporteR3 crítico focal CLEAN (30e88fc9): wrapper rejeita allPASS/exit1 ou4; produto local duas fotos aceitas, +4draw/+36tri. Wiring/checkpoint e bake oficial ainda pendentes.
+- GLM3P R1 liberou handik/glbchars: palma em unidades mundiais e proxy final após overlays; gate12/12 e três mutantes reportados, crítica e runtime pendentes. Outerclamp.95 preservado.
+- M3R4 liberou gate/doc: Jacobiano UV e NaN/OBB corrigidos, crítico pendente. Pixels R2 permanecem recusados no C2 e CórregoR1; sem bake novo. Skins R3 liberou gate/doc com nominal/infra separados; crítico focal em curso. Morte gateR2 ainda writer, GameR1 rejeitado por transição morto first→third/shoulder; produtoR2 inicia agora em Game apenas.
+- Objetivo10h integral até18:45UTC; Operação Flávio excluída, UI fluxos/social depois.
+
+
+### 14:00 UTC — provas focais e favelas
+
+- Treta VM harness passou após injetar tr+frase reais de i18n (imports do produto removidos pelo extractor); nominalOFF e5mutantesGREEN. Gatilho portão cobre agora os dois módulos do censo; PGfecho246/219GREEN. Matriz de armas regenerada oficialmente, só linhas de referência mudaram; reexecutar após morteGameR2 terminar.
+- Posto wiring npm nominal+7causais8/8GREEN, selftest7/7; bake final mapa ainda pendente antescheckpoint produto.
+- M3R4 crítico focal CLEAN (1ba14d94), comentário3→2Rootsemsemântica. CampoR5 inicia produto sóguarda perimetral, novo gate separado e seção doc: guarda atual única porlado vira trechos acompanhandoencosta. DeltaFÍSICOintencional somente perímetro; fixtureM3 congelada, FV-M1deveREDatéconciliação explícita. Não encobrir com baseline regravada.
+- Córrego A/B runtime concluído12fotos base/foto/PBR×4poses1320×880 medraw mesmasluz/geo; JSON corrego-material-prototype-R1.json, sourceStable/restoredtrue. Primeiratentativa erro404PBRnomeerrado zeroFotos; retrycomnomepbr_paintedplaster017 correto. Crítico julga12fotos. Nenhumproduto/material público adotado.
+- Normais standalonecheckdeployR2 boot ebotmutantesGREEN, suiteaindaemcurso; pushanteriorfalhousomentecheckdeploysemdiagnósticopreservado. NãoháPR/releasevisualnovo.
+
+### 14:14 UTC — revisão e contratos em fechamento
+
+- Correção de ancestralidade: merge próprio ad696fb87 já contém fd553b310, o HEAD completo de #1179, não uma versão anterior. #1173 está cherry-picked com o cancelamento do bake ruim a63182820. Nenhum merge/release nosso ocorreu; #1181 segue CLEAN/CI verde no SHA03008374, sem review do Estraga.
+- Normais standalone deployR2 terminou82/83 GREEN em445,6s. Único RED: landmarks de eyewear ainda apontam ao hash histórico do Esquerdomacho, embora os bytes fora de NORMAL permaneçam iguais. GLM criou exceção explícita de equivalência por original/protected/NORMAL/output exatos, sem reescrever capturas/JSON/aprovações; crítico independente em curso. Não há push/PR das normais ainda.
+- Skins R3 crítico focal CLEAN (77173881). TP-WORLD R1 produto sem defeito novo comprovado, gate recusado2P2+2P3 (nominal/RED exato, erros por frame, rotação equivalente, CLI). GLM81213 somente gate/doc em R2; glbchars/handik congelados. GLM73055 câmera de morte R3 somente Game+gate/doc; demais writers não tocam Game.
+- Campo R5 concluiu:40 trechos no perímetro; gate novo4/4 e interior determinístico igual ao snapshot pré-R5. FV-M1 antigo continua RED esperado, sem regravação da fixture. Capturas reais4poses agora em curso, crítico físico/visual e conciliação explícita do contrato ainda pendentes.
+- Córrego protótipo PBR preferido nas4poses; foto favela_wall rejeitada por repetir rasgos. GLM31767 material/gate/doc em curso. Diagnóstico Root das quinas listradas: faces de pilares e paredes coplanares, diferença de raio ~0,00000027m; fonte promete7cm mas inset.14 com pilar.28 dá0cm. Corrigir só após liberar lease do material; sem trocar física interior.
+- Curation runtime R3 encerrou por deadline sem relatório: alterações não aceitas, crítico focal em curso. Redesign UIR13 atualizado à grade72 de #1179, nominal+5mutantes reportados verdes; revisão Root/browser pendentes. Próximo checkpoint não inclui esses arquivos antes de validação.
+
+### 14:29 UTC — fechamento dos recortes e entrega isolada
+
+- Normais: revisão focal R3 do helper/caller CLEAN (relatório b7c9ca67493c0ca3c6cc6a8b392639676ff35c031d37a05ef227a392c11915a8); documentação shallow corrigida, gate ligado a fast/deploy. Checkpoint52a2645d0 no WT normais-delivery-20261031. Push normal com hook completo em andamento, sem pular portões.
+- Campo R5: crítico aceitou visualmente apenas a remoção da faixa de borda nas4poses 1320×880; relatório c588e9ad43b6ef2e2ede40da6094f97d28d3b0ec1e3c52469e5cdfebbfb0a2cc. A altura original medida era7,14476m/topo8,56198m; não20m. Gate novo precisa fechar material invisível, seis limites e snapshot completo; GLM R6 em lease somente gate/baseline/doc. Baseline M3 antigo ainda requer migração explícita4→40guards, sem renovar outros campos.
+- Córrego: bake oficial R6 concluiu444peças/fingerprintfc80e82d83be4ccd com restauração das preferências. Depois, correçãoUV R4 tornou seu fingerprint obsoleto: refazer SOMENTE Córrego oficialmente após revisão. texelReference256×256 preserva o tile autorado antes de a imagemPBR carregar;4novasfotos em corrego-pbr-R4-*.png/manifesto. Produto vao/map_corrego congelado para crítico; GLM R4 gates/doc em lease separada.
+- Córrego LOS: os pilares opaqueIB SÃO occluders de tiro. O recuo.14→.07 cria7cm de relevo visível e deltaLOS correspondente intencional; os colliders de corpo não mudam. Não declarar o snapshot de tiros idêntico. O texel-check legado reportou25RED em18mapas; origem ainda não classificada, sem baselinecomparável.
+- Death R3: crítico confirmou3P2 (retorno precoce após no-opMP, NaN de câmera aceito e status42 aceito como mutante). GLM R4 corrige apenas hunks de morte/Game+gate+doc; sem aprovação visual, vídeos nas2proporções pendentes. TP-world R2 gate retornou, revisão focal independente em curso. Skins R3 permanece CLEAN com evidência de equiproute real pendente.
+- Curation runtime R4 encerrou por deadline, resultado parcial. Root repetiu probes críticos R3: contadores contraditórios/negativos/fracionários e JSONmalformado agora INFRA3; preferências restauradas após segunda escrita falhar; nominalRED não executa mutante. Falta crítico focal e census real após bakefinal.
+- Remoto14:28: #1183 hotfix de arma invisível mobile/desktop é novo e está sob revisão/CI do owner; acompanhar e integrar quando elegível. Main/release ainda alpha130, #1179fd553 já contido integralmente por ad696fb87; #1181SB7SHA030verde sem review efetivo. OperaçãoFlávio#1158 continua excluída. Missão10h completa e tarefas UIfluxos/redessociais posteriores preservadas.
+
+### 14:44 UTC — contraprova visual da grade e frentes congeladas
+
+Ego R2 real (Space32 p1) rejeitou o CSS R1: landscape 844×390 lista244px invade ficha/botão (grade y150,95, ficha até175). Desktop sem sobreposição nessa captura; portrait continua rotação intencional. GLM recebe R2 CSS-only, browser proibido; aceite será Ego e crítico. Curation R5 crítico CLEAN, censo14 real em execução p2. TP R3 em crítica somente leitura. Death R4 produto congelado, Root fecha finitude por frame no gate; Campo R6 produto aceito4poses, Root fecha hash de geometria do snapshot antes de migrar fixture. Normais PR1184 publicado HEAD52a2645d0, prepush461s verde, revisão Estraga pedida e pendente.
+
+### 14:48 UTC — equivalência de normais integrada e contratos de câmera
+
+Helper/gate/caller de equivalência normal-only copiados exatamente do PR1184SHA52a2645d0; `npm run eval:normal-only-fit-equivalence` nominal+mutantes GREEN no WT agregado. Nenhum novo GLB foi alterado. TP-WORLD R3 crítico CLEAN (509b3877), nominal13/13 e contraprovas NaNprimeiro/permanente/Infinity, imports/infra, nominal-first e falhas exatas. Death R5 crítico CLEAN (8d03ef8b): acumulação por frame detecta NaN transitório, S3 e status42; nominal25/25 e3mutantes causais exatos GREEN. Produto ainda sem recaptura de morte. CampoR7 nominal4/4; fixture reextraída imutávelpréR5 com geometriaSHA, proveniência e demais campos idênticos, crítico em curso.
+
+### 14:52 UTC — checkpoint movimento3P, grade real e censo com falha de fechamento
+
+TP-WORLD nominal13/13+6mutantes reais pelo CLI GREEN em root-tp-world-R3-wired.log, críticaR3 CLEAN509b3877. Game usa perfil analítico em _consultarTiro; a prova de proxy não é prova geral de hitscan alinhado a toda animação. DeathR5 nominal25/25+3mutantes+CAMMORTE nominal passaram no comando integrado, críticaCLEAN8d03ef8b. CSSgradeR3 Ego confirmou semsobreposição e seleção real49º/volta47º.
+
+CensoR5 mediu os14mapas/465peças, todos com contadores0 e semerrosporpágina. Porém filhoEgo saiu1 ANTES do recibo final: o conjunto NÃO está aprovado; diagnóstico isoladoPosto preservando stdoutcompleto em curso. Não confundir inventáriosindividuais com portãoGREEN. CampoR8 críticoCLEAN2995d2f7, próximaação migrar explicitamente4guards→40fixtureM3 sem mudarinterior. Córrego gateR5 rejeitado pelo crítico por NaN UV/sampler; produtoPBRR4 continuaaceito4poses eUVhelperCLEAN, gates em revisão.
+
+### 14:58 UTC — mapas e UI com prova local, regressão de instrumento corrigida
+
+CampoR8 CLEAN2995d2f7; migração FV-M1 GLM concluiu (4guardas→40,95interiores verbatim), nominal5/5 e5mutantesRED esperados, crítico independente em curso. UIgradeR3 crítico visual1a89a3bf aceitou somente poses desktop/landscape/portraitrotate e lastitem; nominal+5mutantes CLIGREEN, wrapperCLEAN9a061264.
+
+CensoR5 falhou por evaluate(string,arg) incompatível na restauração, não por cena. Callback agorafunção; Posto isoladoGREEN real apóscorreção. R6 persiste preferênciasantes+reciboigualdadefinal e stdoutcompletoemfalha; censo14 repetindo p2. Chave manual deQA recuperada da referência bake14-R1 (null), demais chaves preservadas. DeathR1real2vídeos13,5s1320×880/844×390, Game.update real comAI congelada/HUDoculta/semMP:808/791updates medidos finitos,8estados cada, nenhumaexceção. Sem aprovaçãovisualaté sheets/crítico. Nenhumaescrita prefs no vídeo; onCamViewChange deQA desativado paraevitar corrida comcenso.
+
+F2 diagnóstico GLMmotion era contrafactual: faca NÃO temlayout demarca, logo NÃO háplano flutuante atual. Crítico confirmou zero marcas atuais Caveira/MAGA e histograma5262/5262peso1CoroWeapon. 3Pconsumidor0,30m apósCFG;~1m eraassetraw e GLMerroueixo. Plano knife-only emelaboração, produto nãoeditado. Normais1184 eSB71181CIverdes/CLEAN, semreviewefetivodoEstraga. #1179fd553 requeridoCHANGES_REQUESTED noHEAD; baseempilhável é lote/gauntlet-personagens-20261031 no client. Últimoreleasealpha13003:59Z, nenhummergenossorealizado.
+
+### 14:58 UTC — checkpoint da grade e contraprova de enquadramento morto
+
+Grade72px: nominal+5mutantes exatos GREEN após CSSfinal, fotos/interação EgoR3 e crítico visual1a89a3bf aceitos nas poses locais. WrapperR2crítico9a061264. Checkpoint inclui somente CSS/gate/contratoUI+ledger; nenhum claim mobilefísico/FPS. Migração FV-M1 críticoCLEAN6d07d81f:4→40guards,95interiores e demais snapshots iguais, nominal5/5+mutantefisicaFV-M1RED.
+
+DeathR1 real rejeitado para aceitevisualcompleto: cabeça do cadáverY1,2246, corpoY0,945..1,36, câmeraTPY2,8 presa ao olho vivo; só52/1373vértices do corpo emNDC. Problema é enquadramento, não cadáverausente. Crítico avalia fix mínimo morto-only; produto Game ainda não mexido após R4.
+
+
+### 2026-10-31T15:06:36.283832+00:00 — câmara XYZ e próxima lease F2
+
+Death R1 visual REJECTED: cadáver fora de tela. R2 Y-only insuficiente; R3 XYZ tem vídeos reais1320×880 e844×390 finitos, cabeça dentro; ainda aguarda crítico e gateGLBreal. Gateprocedural R7 revelou falsa cobertura (olho-vivo sobrevive), rejeitado. R8 carregaGLB/rig/clipes reais omitindo apenas imagens Node, em execução. ProdutoGame congelado neste ponto para próximo writer. Córrego gatesR6 rejeitados por comparaçãoUVúnico/set; RootR7 matrizcompleta em execução, crítico pendente. CurationR6 censo14maps ainda ativo p2, sem aceite final. F2 atual confirmado: Caveira/MAGA knife sem marca em1P/3P; diagnóstico nativo corrige unidades e prova que plano flutuante NÃO existe hoje. Próxima leaseGLM somente knife layout/attach, callers e gate; semGame/AK/pistol/rig/GLB. Objetivo10h completo e exclusões originais mantidos.
+
+
+### 2026-10-31T15:10:47.212406+00:00 — gates herdados1179 e hotfixmain
+
+Mainatualec7cec33405 integrou1183 às14:58:47UTC; releaseaindaalpha130. PR1184 emsincronizaçãoisolada, críticos/portõespendentes, nãoPRmerge. CurationR6all14GREEN465peças, prefreceiptobrigatório. MutanteFerroinfra3porquefixtureparedefina examinavaeixerrado; Rootcorrigiufixture semtocargrafites, retestependente. DeathR8GLBrealnom27PASS+4mutantesexatosGREEN, críticoemcurso. NativeCRITICO-PR1179-GATES-R1 confirmou4P2nosgates:flashpositivoocluído, shell!aceitainfra, lobby/miraNaN e miramutantecoberturafaltante. PróximawriterGLM somentegatesherdados+wrappermovimento e doc, semproduto, respeitandoF2knifelease.
+
+
+### 2026-10-31T15:14:21.996941+00:00 — CórregoR8fechado
+
+MaterialprodutoR4: crítico2e4ef660CLEAN e4capturasreaispósUV,9fixtureshelper. GatesR8: CRITICO-CORREGO-GATES-R8.md SHA8edc100bfe53964d4a4832c773b6d863e1509381582d49d6334dce08be9cb594 CLEANincluindocalibração rotação e8/4listasdoc. Nominais0;8material+4UVvariantes RED1exactsets. BakeoficialR7Corg51peças0murais,total444,fpfc80e82d83be4ccd, layoutcomPostoR6 serácheckpointseparado. Odelta7cmpilareséintencionalemshotoccluders, bodycollidersiguais. WrappercomumCIaindaemexecução/nãorevisado. Checkpointsomente5arquivosCorgproduto/gates/doc, semalegarCIGREENoumerge/release.
+
+
+### 2026-10-31T15:14:33.729366+00:00 — morte e perfil equipadovalidados
+
+DeathR8 crítico CRITICO-DEATH-CAMERA-R8.md SHA59a447a076e9cb72152c131ce2288c42945a47d7c880f0475a79e4507e1df205 semP1/P2; R3localvisualaceito emquadrosamostrados2ratios,defaultvivo128casosigual. P3doccorrigido: fixtureNodeomiteimagens E substituimateriais; nãoaprovamaterialrender. Node27PASS+4mutantesexatos0, legacyCAMMORTE3mapsGREENprecedente. SkinsF1/F3/F4críticoR3CLEAN77173881,12cláusulas+4mutanteswiredGREEN: persisteweaponSkins, knife3pusa playerKnifeSkinId, preloadesperatodas. CheckpointprodutoGame/main e2gates/docs; F2writerknifeprossegueindependente semtocarGame. Package/CIwirefinal/mergedmain/hook/PRaindapendentes.
+
+
+### 15:25 UTC — release131, sincronia e contraprovas
+
+Main5d1e52d347 publicou alpha.131 às15:13:44Z, incluindohotfix1183ec7. prod-watch41214040852 epreview-deploy41214238759SUCCESS; EgoSpace32p1homeexibealpha131,partidarealaindaemverificação. Não érelease dasmudanças visuaisdesta lane. Normais1184HEAD72e80d366 mergeec7,31fonteshotfixiguais e12fontesnormaispreservadas; críticoCLEANa7f30dae,5gatesfocaisGREEN, pushnormal485sGREEN, Estragarepedidoatual72e; CIaindaemcurso. SB71181HEAD3de33b4f5 equivalente31+18fontes, críticoCLEAN089fb216 e4focaisGREEN; pushR1canceladosóárvoreprópriaparaserializar, retryR2hookemcurso, sempublicaçãonovoconfirmada.
+
+CurationR6all14GREEN465peças; PiscinaR7mutanteazulGREEN comoutside1+unsupported1causaispoiswall-bandexcluído, prefsRestoredtrue; FerroR7falhoufixturematrixAutoUpdatefalse/metayfaltante. RootcorrigiuupdateMatrixeXYZ, retesteR8p2emcurso; semalterarproduto/extrator. WrappermapasR2trêsP2antigosfechadosmasnovoP2stdoutlogboot eP3timeout. RootR3classificaerror/signalinfra3; stdoutaindaprecisaredirectconsole.infoalém.log duranteboot, semrelaxarJSONestrito. R3nãoaceito.
+
+GLM1179gatesR2entregouflash30/30+11mutantes ewrappermovimento; críticoindependenteachouimportsremovidosnolobby/mira, nãoaceitaratéfecho. R1mediçãoCanarinhoDeagle50,5grausLA1nominalREDemdianósticonativoread-only. GLMF2éúnicoescritorweapon-skins/meleevm/weapons, semGame. Objetivo10h18:45Zmantidointeiro, Flávio1158excluído, fluxosUI/socialposteriores.
+
+
+### 15:28 UTC — leases de correção
+
+GLM F2 encerrou no limite de20min, exit1/Deadline exceeded e sem relatório: produto parcial NÃO aceito. weapon-skins/meleevm/weapons e gate de faca congelados para crítica antes de novo escritor. Gates1179 R2 crítico REJECT ff19ad72: cinco P2 (imports, massa ausente, oito amostras, status filho flash e espera de boot) e três P3. Próxima lease GLM R3 somente cinco gates/helper e contrato, sem produto/package/browser. Wrapper mapas R4 CLEAN21a161d6, Root confirmou8 variantes de materiais e Campo9/Favela5/UV4; checkpoint em preparação.
+
+
+### 15:30 UTC — checkpoint dos mapas e wrapper
+
+Campo R5 tem40 trechos no perímetro, quatro capturas locais aceitas, interior preservado e delta físico perimetral declarado. Gate Campo R8 CLEAN2995d2f7, baseline extraída da fonte pré-R5 imutável e NaN distinto de Infinity. Migração FV-M1 CLEAN6d07d81f:95 interiores verbatim e todo Córrego intacto, somente4→40 guardas. Root executou nominal+9 mutantes Campo e nominal+5 Favela com conjuntos RED exatos. Córrego materiais8 e UV4 também passaram. Wrapper R4 crítico CLEAN21a161d6, stdout JSON único e timeout com error/signal sempre infra3. Checkpoint inclui apenas mapas/gates/baselines/contrato e ledger; package/CI e curadoria final ficam para a próxima entrega. Não há merge/publicação dessas mudanças.

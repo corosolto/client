@@ -179,6 +179,7 @@ export function buildCampoMorro(scene, T = {}) {
   /* UV do reboco EM METROS por face (grupos da BoxGeometry): tile de 2,0 m igual ao
      Lajes — independe do tamanho da caixa, acaba com o papel de parede por repeat. */
   const REBOCO_TILE = 2.0;
+  MAT.wall.userData.rebocoMetros = true;   // família: clones tintados herdam o UV métrico, não a identidade
   const uvRebocoMetros = (geo, w, h, d) => {
     geo.userData.texelEscalada = true;   // trava a 2ª escala do vao.js, igual ao uvTijoloMetros
     const uv = geo.attributes.uv, idx = geo.index;
@@ -197,7 +198,7 @@ export function buildCampoMorro(scene, T = {}) {
 
   const addBox = (w, h, d, mat, x, y, z, opts = {}) => {
     const geo = new THREE.BoxGeometry(w, h, d);
-    if (mat === MAT.wall) uvRebocoMetros(geo, w, h, d);
+    if (mat === MAT.wall || mat.userData?.rebocoMetros) uvRebocoMetros(geo, w, h, d);
     const m = new THREE.Mesh(geo, mat);
     m.position.set(x, y + h / 2, z);
     m.castShadow = opts.cast !== false; m.receiveShadow = true;
@@ -209,6 +210,10 @@ export function buildCampoMorro(scene, T = {}) {
     } else if (opts.bala) occluders.push(m);   // visível dentro de colisor alheio: a bala para nele (BUG-54)
     return m;
   };
+  /* Acabamento M3 R1: peças mescladas (juntas, vergas, peitoris, coroas) — uma malha,
+     zero colisor. Contrato em tools/eval/favela-finish-check.mjs (FV-M1/FV-M2). */
+  const pecasFim = [];
+  const fim = (w, h, d, x, y, z) => pecasFim.push(new THREE.BoxGeometry(w, h, d).translate(x, y + h / 2, z));
 
   // Planos rasos: não criam colisão nem obstáculo. `base` é a cota do terreno sob a
   // casa — sem ela, porta e janela flutuam na encosta ou afundam na baixada.
@@ -293,6 +298,15 @@ export function buildCampoMorro(scene, T = {}) {
   sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006;
 
   // Talude do campo: oito aberturas ficam livres; os trechos restantes sao cover baixo.
+  // Coroa fina de concreto no topo termina a aresta de caixa contra o céu (C2, M3 R1).
+  for (const [a, b] of [[-20, -14.8], [-10.2, -2.2], [2.2, 10.2], [14.8, 20]]) {
+    fim(b - a + 0.12, 0.09, 0.5, (a + b) / 2, FIELD_Y + 1.05, -FIELD_Z);
+    fim(b - a + 0.12, 0.09, 0.5, (a + b) / 2, FIELD_Y + 1.05, FIELD_Z);
+  }
+  for (const [a, b] of [[-FIELD_Z, -2.2], [2.2, FIELD_Z]]) {
+    fim(0.5, 0.09, b - a + 0.12, -FIELD_X, FIELD_Y + 1.05, (a + b) / 2);
+    fim(0.5, 0.09, b - a + 0.12, FIELD_X, FIELD_Y + 1.05, (a + b) / 2);
+  }
   for (const [a, b] of [[-20, -14.8], [-10.2, -2.2], [2.2, 10.2], [14.8, 20]]) {
     addBox(b - a, 1.05, 0.35, MAT.wall, (a + b) / 2, FIELD_Y, -FIELD_Z);
     addBox(b - a, 1.05, 0.35, MAT.wall, (a + b) / 2, FIELD_Y, FIELD_Z);
@@ -617,36 +631,72 @@ export function buildCampoMorro(scene, T = {}) {
     addBox(0.5, h, 0.42, mat, x, FIELD_Y, -FIELD_Z, { collide: false });
   addBox(5.7, 0.3, 0.58, MAT.roof, 12.5, 2.62, -FIELD_Z, { collide: false });
 
-  /* GUARDA DA BORDA: cada trecho assenta na cota MÍNIMA do seu pedaço e sobra 3 m acima
-     da MÁXIMA, com sobreposição entre trechos — sem fresta na guarda (MAP6). */
-  const guardaBorda = (x, z, w, d) => {
+  /* GUARDA DA BORDA (R5): trechos de 6,5–7 m sobrepostos, cada um do mínimo LOCAL até
+     máximo LOCAL + 3 m — acompanha a encosta sem fresta (MAP6). Contrato: campo-boundary-finish-check.mjs. */
+  const guardaTrecho = (cx, cz, w, d) => {
     let min = Infinity, max = -Infinity;
     for (let t = -0.5; t <= 0.5001; t += 0.02) {
-      const g = morroBase(x + (d > w ? 0 : w * t), z + (d > w ? d * t : 0));
+      const g = morroBase(cx + (d > w ? 0 : w * t), cz + (d > w ? d * t : 0));
       min = Math.min(min, g); max = Math.max(max, g);
     }
-    addBox(w, (max - min) + 3, d, MAT.muralha, x, min, z);
+    const m = addBox(w, (max - min) + 3, d, MAT.muralha, cx, min, cz);
+    m.userData.guardaBorda = Math.abs(w) < Math.abs(d) ? 'z' : 'x';
+    return m;
   };
+  const guardaLado = (fix, eixoX, from, to) => {
+    const n = Math.ceil((to - from) / 7), trecho = (to - from) / n, ov = 0.15;
+    for (let i = 0; i < n; i++) {
+      const a = from + i * trecho - (i ? ov / 2 : 0), b = from + (i + 1) * trecho + (i < n - 1 ? ov / 2 : 0);
+      const c = (a + b) / 2, len = b - a;
+      if (eixoX) guardaTrecho(fix, c, 0.5, len); else guardaTrecho(c, fix, len, 0.5);
+    }
+  };
+  /* FAVELA-M3 R2 (crítico depois-R1): cada faixa vira DOIS imóveis com contenção e
+     divisa; verga/peitoril nos bounds REAIS do vidro (yv..yv+altura), não no centro. */
+  const tinteReboco = (hex) => { const m = repetido(MAT.wall, 1, 1); m.color.setHex(hex); m.userData.rebocoMetros = true; return m; };
+  const TINTA_X = { 2: tinteReboco(0xc7b596), 6: tinteReboco(0x9f9a8a) };
+  const TINTA_Z = { 3: tinteReboco(0xb9a98c), 7: tinteReboco(0xa8a396) };
+  const matJunta = lam({ map: T.concrete, color: 0x7c7466 });
   for (const sx of [-HALF_X, HALF_X]) {
-    guardaBorda(sx, 0, 0.5, HALF_Z * 2);
+    guardaLado(sx, true, -HALF_Z, HALF_Z);
     for (let z = -26; z <= 26; z += 6.5) {
       const i = Math.round((z + 26) / 6.5), base = morroBase(sx, z), h = 3.2 + (i % 3) * 0.72;
-      addBox(0.12, h, 5.9, MAT.wall, sx - Math.sign(sx) * 0.31, base, z, { collide: false });
-      addBox(0.38, 0.1, 6.15, MAT.roof, sx - Math.sign(sx) * 0.25, base + h, z, { collide: false });
-      addBox(0.05, 0.82, 1.15, MAT.glass, sx - Math.sign(sx) * 0.39, base + 1.25 + (i % 2) * 0.42, z - 1.25, { collide: false, cast: false });
+      const fx = sx - Math.sign(sx) * 0.31;
+      addBox(0.12, h, 3.3, TINTA_X[i] || MAT.wall, fx, base, z - 1.3, { collide: false });
+      addBox(0.12, h - 0.35, 2.4, i % 3 ? MAT.wall : MAT.concrete, fx, base, z + 1.7, { collide: false });
+      addBox(0.38, 0.1, 3.5, MAT.roof, sx - Math.sign(sx) * 0.25, base + h, z - 1.3, { collide: false });
+      addBox(0.38, 0.1, 2.6, MAT.roof, sx - Math.sign(sx) * 0.25, base + h - 0.35, z + 1.7, { collide: false });
+      const yv = base + 1.25 + (i % 2) * 0.42;
+      addBox(0.05, 0.82, 1.15, MAT.glass, sx - Math.sign(sx) * 0.39, yv, z - 1.25, { collide: false, cast: false });
       addBox(0.05, 1.92, 0.82, MAT.door, sx - Math.sign(sx) * 0.39, base + 0.02, z + 1.45, { collide: false, cast: false });
+      fim(0.18, 0.09, 1.32, fx, yv + 0.82, z - 1.25);   // verga: base = topo REAL do vidro
+      fim(0.2, 0.07, 1.32, fx, yv - 0.07, z - 1.25);    // peitoril: topo = base REAL do vidro
+      fim(0.16, 0.6, 5.9, fx, base - 0.05, z);          // embasamento de contenção: encontro com o chão
+      for (const borda of [-1, 1]) fim(0.22, h + 0.12, 0.5, fx, base, z + borda * 2.95);   // pilar de divisa
     }
   }
   for (const sz of [-HALF_Z, HALF_Z]) {
-    guardaBorda(0, sz, HALF_X * 2, 0.5);
+    guardaLado(sz, false, -HALF_X, HALF_X);
     for (let x = -31.5; x <= 31.5; x += 7) {
       const i = Math.round((x + 31.5) / 7), base = morroBase(x, sz), h = 3.0 + ((i + (sz > 0 ? 1 : 0)) % 4) * 0.55;
-      addBox(6.4, h, 0.12, i % 3 ? MAT.wall : MAT.concrete, x, base, sz - Math.sign(sz) * 0.31, { collide: false });
-      addBox(6.65, 0.1, 0.38, MAT.roof, x, base + h, sz - Math.sign(sz) * 0.25, { collide: false });
-      addBox(1.08, 0.78, 0.05, MAT.glass, x - 1.4, base + 1.25 + (i % 2) * 0.38, sz - Math.sign(sz) * 0.39, { collide: false, cast: false });
+      const fz = sz - Math.sign(sz) * 0.31;
+      addBox(3.5, h, 0.12, TINTA_Z[i] || MAT.wall, x - 1.35, base, fz, { collide: false });
+      addBox(2.7, h - 0.3, 0.12, i % 3 ? MAT.wall : MAT.concrete, x + 1.75, base, fz, { collide: false });
+      addBox(3.7, 0.1, 0.38, MAT.roof, x - 1.35, base + h, sz - Math.sign(sz) * 0.25, { collide: false });
+      addBox(2.9, 0.1, 0.38, MAT.roof, x + 1.75, base + h - 0.3, sz - Math.sign(sz) * 0.25, { collide: false });
+      const yv = base + 1.25 + (i % 2) * 0.38;
+      addBox(1.08, 0.78, 0.05, MAT.glass, x - 1.4, yv, sz - Math.sign(sz) * 0.39, { collide: false, cast: false });
       addBox(0.84, 1.92, 0.05, MAT.door, x + 1.45, base + 0.02, sz - Math.sign(sz) * 0.39, { collide: false, cast: false });
+      fim(1.32, 0.09, 0.18, x - 1.4, yv + 0.78, fz);
+      fim(1.32, 0.07, 0.2, x - 1.4, yv - 0.07, fz);
+      fim(5.9, 0.6, 0.16, x, base - 0.05, fz);
+      for (const borda of [-1, 1]) fim(0.5, h + 0.12, 0.22, x + borda * 2.95, base, fz);
     }
   }
+  const malhaAcabamento = new THREE.Mesh(mergeParts(pecasFim), matJunta);
+  malhaAcabamento.userData.favelaFinish = 'campo';
+  malhaAcabamento.castShadow = malhaAcabamento.receiveShadow = true;
+  root.add(malhaAcabamento);
 
   /* SILHUETA DO MORRO: estas lajes ficam ALÉM da muralha (fora de `bounds`) — não tocam
      navegação nem colisão, são só a favela continuando morro acima. */
