@@ -1,7 +1,8 @@
 // Física real do mapa com registro de templates instrumentado; sem afirmar fidelidade visual dos GLBs.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { THREE, initTextures } from './harness.mjs';
+import { Game, THREE, initTextures } from './harness.mjs';
+import { withVisibleShotOccluders } from '../../public/js/shot_surfaces.js';
 
 const url = new URL('../../public/js/map_operacao_flavio.js', import.meta.url);
 let source = readFileSync(url, 'utf8');
@@ -25,7 +26,7 @@ const textures = initTextures();
 const template = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial());
 const world = loaded => {
   fixtureTemplates(loaded ? template : null);
-  return buildOperacaoFlavio(new THREE.Scene(), textures);
+  return withVisibleShotOccluders(buildOperacaoFlavio)(new THREE.Scene(), textures);
 };
 const fallback = world(false), loaded = world(true);
 const blocked = (map, x, z) => map.colliders.some(c => x > c.minX && x < c.maxX && z > c.minZ && z < c.maxZ && c.minY < 1.8 && c.maxY > .1);
@@ -47,6 +48,17 @@ try {
     assert.equal(blocked(fallback, 5, 55), false);
     assert.equal(blocked(loaded, 0, 56), true);
     assert.equal(blocked(fallback, 0, 56), true);
+  });
+  for (const [name,map] of [['loaded',loaded],['fallback',fallback]]) check('plane-occludes-'+name, () => {
+    map.root.updateMatrixWorld(true);
+    const context = { world: map, ray: new THREE.Raycaster(), _smokes: [] };
+    const clear = Game.prototype._losClear.call(context,new THREE.Vector3(-15,1.5,56),new THREE.Vector3(15,1.5,56));
+    assert.equal(clear,false,'fuselagem bloqueia LOS e raycast do jogo');
+  });
+  for (const [name,map] of [['loaded',loaded],['fallback',fallback]]) check('plane-stops-hitscan-'+name, () => {
+    map.root.updateMatrixWorld(true);
+    const ray = new THREE.Raycaster(new THREE.Vector3(-15,1.5,56),new THREE.Vector3(1,0,0),0,30);
+    assert.ok(ray.intersectObjects(map.occluders,false).length > 0,'a lista real de superfícies intercepta a bala');
   });
 } finally {
   fixtureTemplates(null); fallback.dispose?.(); loaded.dispose?.();

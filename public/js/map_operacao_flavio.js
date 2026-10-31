@@ -8,7 +8,7 @@ import { AMB_LOOPS } from './soundscape.js';
 import { detailFor } from './textures.js';
 
 const PROP_ROOT = 'models/props/operacao_decola/';
-const PROP_FILES = {
+export const PROP_FILES = {
   aviao_executivo: 'aviao_executivo.glb',
   trator_bagagem: 'trator_bagagem.glb',
   carrinho_ferramentas: 'carrinho_ferramentas.glb',
@@ -29,6 +29,8 @@ const PROP_FILES = {
 };
 const templates = new Map();
 let preloadPromise = null;
+// Registro confiável interno por id: o servidor headless injeta os 17 GLB antes da sala existir.
+export const registerOperacaoFlavioTemplate = (id, scene) => templates.set(id, scene);
 
 const ESCORT_PATH = [
   { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
@@ -302,7 +304,11 @@ export function buildOperacaoFlavio(scene, T = {}) {
   const usarProp = (id, pos, desiredSize, fallback, yaw = 0, fallbackSolid = true) => {
     const template = templates.get(id);
     // Fallback visual é decorativo: o colisor é o proxy explícito do colliderDoProp (igual com/sem GLB).
-    if (!template) return bloco(`fallback-${id}`, pos[0], fallback[1] / 2, pos[2], fallback[0], fallback[1], fallback[2], mats.metal, false);
+    if (!template) {
+      const caixa = bloco(`fallback-${id}`, pos[0], fallback[1] / 2, pos[2], fallback[0], fallback[1], fallback[2], mats.metal, false);
+      if (fallbackSolid) occluders.push(caixa);
+      return caixa;
+    }
     const model = template.clone(true);
     model.name = id;
     model.rotation.y = yaw;
@@ -389,7 +395,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
     ['barreiras_aeroporto', 11, 45, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
   ];
   for (const [id, x, z, size, yaw, w, h, d, solid] of equipamentos) {
-    usarProp(id, [x, 0.08, z], size, [w, h, d], yaw);
+    usarProp(id, [x, 0.08, z], size, [w, h, d], yaw, solid);
     if (solid) colliderDoProp(id, x, 0, z, w, h, d);
   }
 
