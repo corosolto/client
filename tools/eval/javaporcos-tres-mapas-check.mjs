@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {bootGame,initTextures,MAPS,THREE} from './harness.mjs';
 const mutant=process.argv.find(a=>a.startsWith('--mutante='))?.slice(10)||'';
-assert.ok(['','layout-copiado','sem-horda','silo-transparente','via-obstruida'].includes(mutant));
+assert.ok(['','layout-copiado','sem-horda','silo-transparente','via-obstruida','terreno-deslocado'].includes(mutant));
 const ids=['invasao_javaporcos','distrito_rural','vila_da_mata'],assinaturas=new Set();
 let falha='';
 try {
@@ -32,6 +32,14 @@ try {
     assert.ok(!w.colliders.some(c=>c.maxY>y+1.5&&c.minY<y+1.5&&x>c.minX+.05&&x<c.maxX-.05&&z>c.minZ+.05&&z<c.maxZ-.05),`${id}: via bloqueada em ${x.toFixed(1)},${z.toFixed(1)}`);
    }
   }
+  if(id==='vila_da_mata'){
+   const terrenos=w.root.children.filter(m=>m.name==='chao-terreno');
+   if(mutant==='terreno-deslocado'){for(const m of terrenos)m.position.y+=.5;g.scene.updateMatrixWorld(true);}
+   for(const [x,z] of [...Array.from({length:8},(_,i)=>[22+i,-11]),[7,-8],[7,-7]]){
+    const y=w.groundHeightAt(x,z,0),ray=new THREE.Raycaster(new THREE.Vector3(x,y+1.5,z),new THREE.Vector3(0,-1,0),0,3),h=ray.intersectObjects(terrenos,false)[0];
+    assert.ok(h&&Math.abs(h.point.y-y)<.05,`relevo visível diverge do chão em ${x},${z}`);
+   }
+  }
   if(id==='distrito_rural'){
    const silos=[];w.root.traverse(m=>{if(m.name==='telhado-silo')silos.push(m);});assert.equal(silos.length,2);
    g.scene.updateMatrixWorld(true);
@@ -49,5 +57,5 @@ try {
  }
  assert.equal(assinaturas.size,3,'layouts não diferem');
 }catch(e){falha=e.message;console.log('✗ TRES-MAPAS: '+e.message);}
-const esperado={'layout-copiado':'layouts não diferem','sem-horda':'mecânica errada','silo-transparente':'tiro atravessa telhado','via-obstruida':'via bloqueada'}[mutant];
+const esperado={'layout-copiado':'layouts não diferem','sem-horda':'mecânica errada','silo-transparente':'tiro atravessa telhado','via-obstruida':'via bloqueada','terreno-deslocado':'relevo visível diverge do chão'}[mutant];
 process.exitCode=mutant?(falha.includes(esperado)?0:1):(falha?1:0);

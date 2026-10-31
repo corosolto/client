@@ -941,3 +941,20 @@ proporção e piso coincidindo com malha; verde. Régua refúgios movimento verd
 Revisão crítica independente dos2fixes sem bloqueios. Docs/arch/assetrev
 regenerados sem diff. Próximo: commit e push normal BASE4333, aguardar READY
 novo, verificar JS real do preview; não considerar deploy5a publicado.
+
+Push49eb verde393s/remoto confirmado; deploy dpl_6o9XZqTVU1Yr6VYngEHMHpBttv7K
+passou assets/audio, mas ERRO Astro /maps: MAP_EN sem novosids. Corrigido
+src/pages/maps.astro com traduções2mapas e remoção da descrição obsoleta8ondas.
+MAPCHECK atualRural exit0:corpo0/submersos0/escadasok, relatório
+/tmp/jav-map-atual-distrito_rural.json. Vila49eb reprovou10pontos terreno
+.345m: malha central passo2 ignorava plataformas do campo.5. Correção somente
+novosambientes malha central passo.5; originalCidade preservada. Teste3mapas
+verde nos10pontos e mutante terreno-deslocado detectado como esperado(exit0).
+Crítico independente90amostras, inclusive±.25m, erro0m; sem novo bloqueador.
+Custo central+38880tris/+19656vértices, semdrawcallnovo; orçamento real pendente.
+Compilação Astro completa verde26.19s, /maps gerado com2novosnomes no HTML.
+npm run build local interrompido pela montagem privada de viewmodels existente;
+ela foi preservada e npx astro build validou páginas sem remover a montagem.
+Nova MAPCHECK ampla Vila terreno corrigido ativa sessão22355, log
+/tmp/jav-map-vila-terreno-final.log, JSON futuro /tmp/jav-map-vila-terreno-final.json;
+wrapper restaura consolidado. Próximo: commit+push normal+READY+verificar servido.

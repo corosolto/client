@@ -241,7 +241,7 @@ export function buildInvasaoJavaporcos(scene, T, ambiente='cidade') {
     [-C, C, -C, C, MAT.gramaCidade],
   ];
   for (const [x0, x1, z0, z1, mat, pasto] of terreno) {
-    const m = pasto ? malhaTerreno(campo, mat, x0, x1, z0, z1, pasto, 3.0, corPasto) : malhaTerreno(campo, mat, x0, x1, z0, z1, mat === MAT.gramaCidade ? 2 : 1);
+    const m = pasto ? malhaTerreno(campo, mat, x0, x1, z0, z1, pasto, 3.0, corPasto) : malhaTerreno(campo, mat, x0, x1, z0, z1, mat === MAT.gramaCidade ? (ambiente==='cidade'?2:PASSO) : 1);
     m.name = pasto ? 'chao-pasto' : 'chao-terreno';
     root.add(m);
   }
