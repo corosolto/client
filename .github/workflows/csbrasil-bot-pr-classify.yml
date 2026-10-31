@@ -118,11 +118,19 @@ jobs:
         env:
           NEW_ESTRAGACODIGO_REVIEW: ${{ github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.user.login == 'estraga-codigo' }}
         run: |
-          gh pr view "$PR_NUMBER" --json headRefOid,reviewRequests,reviews,statusCheckRollup,labels > /tmp/pr-estragacodigo.json
+          gh pr view "$PR_NUMBER" --json headRefOid,reviewRequests,reviews,labels > /tmp/pr-estragacodigo.json
           python3 - <<'PY'
           import json, os, subprocess
           path = '/tmp/pr-estragacodigo.json'
           payload = json.load(open(path))
+          checks = json.loads(subprocess.check_output([
+              'gh', 'api',
+              f"repos/{os.environ['GITHUB_REPOSITORY']}/commits/{payload['headRefOid']}/check-runs?per_page=100",
+          ], text=True)).get('check_runs') or []
+          payload['statusCheckRollup'] = [
+              {'__typename': 'CheckRun', 'name': check.get('name')}
+              for check in checks
+          ]
           payload['new_estragacodigo_review'] = os.environ.get('NEW_ESTRAGACODIGO_REVIEW') == 'true'
           labels = {label.get('name') for label in payload.get('labels') or []}
           if 'estragacodigo-resolved' in labels:
