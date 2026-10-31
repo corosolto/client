@@ -70,6 +70,8 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 63 | `VMLAB` | 3 |
 | 68 | `VM_QA_CICLO` | 3 |
 | 72 | `VM_QA_ADS` | 8 |
+| 79 | `FLASH_DEBUG_N` | 3 |
+| 82 | `NADE_ESTOQUE` | 8 |
 | 80 | `VM_MAT_LEGACY` | 4 |
 | 86 | `DROP_TTL` | 8 |
 | 94 | `ROUNDS_MAX` | 27 |
@@ -298,9 +300,18 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 5223 | `_throwNade()` | 27 |
 | 5250 | `_throwSmoke()` | 1 |
 | 5251 | `_throwFrag()` | 2 |
+| 5284 | `_flashLiberada()` | 2 |
 | 5253 | `_equipNade()` | 16 |
 | 5269 | `_unequipNade()` | 11 |
 | 5280 | `_explodeFrag()` | 40 |
+| 5340 | `_carregarFlashMint()` | 13 |
+| 5353 | `_flashProvisoria()` | 17 |
+| 5370 | `_cegueiraDe()` | 9 |
+| 5379 | `_popFlash()` | 32 |
+| 5411 | `_cegarJogador()` | 7 |
+| 5418 | `_limparCegueira()` | 6 |
+| 5424 | `_tickCegueiraJogador()` | 18 |
+| 5442 | `_capturarRetida()` | 27 |
 | 5320 | `_corDaFumaca()` | 16 |
 | 5336 | `_popSmoke()` | 23 |
 | 5359 | `_updateGrenades()` | 35 |
