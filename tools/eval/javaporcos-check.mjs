@@ -486,14 +486,24 @@ regra('o bando anda PARA o alvo, não de costas', () => {
   abrirOnda(ctx);
   const bando = vivos(ctx.modo);
   soltar(bando);
-  const antes = bando.map((bot) => escolherAlvo(bot, { world: ctx.game.world, state: ctx.modo.state, jogadores: [], tempo: ctx.game.time }).distance);
-  for (let i = 0; i < 120; i++) passo(ctx, 1 / 60);
+  const antes = bando.map((bot) => {
+    const alvo=escolherAlvo(bot,{world:ctx.game.world,state:ctx.modo.state,jogadores:[],tempo:ctx.game.time});
+    return {chave:alvo.chave,distancia:alvo.distance,ganho:0};
+  });
+  for (let i = 0; i < 120; i++) {
+    passo(ctx, 1 / 60);
+    bando.forEach((bot,k)=>{
+      const alvo=bot._boarAlvo;if(!bot._boarId||!alvo)return;
+      const distancia=Math.hypot(alvo.x-bot.pos.x,alvo.z-bot.pos.z),anterior=antes[k];
+      if(alvo.chave===anterior.chave)anterior.ganho+=anterior.distancia-distancia;
+      anterior.chave=alvo.chave;anterior.distancia=distancia;
+    });
+  }
   let aproximaram = 0, ganhoMedio = 0;
   bando.forEach((bot, i) => {
     if (!bot._boarId) return;
-    const agora = escolherAlvo(bot, { world: ctx.game.world, state: ctx.modo.state, jogadores: [], tempo: ctx.game.time }).distance;
-    ganhoMedio += antes[i] - agora;
-    if (agora < antes[i] - 4) aproximaram++;
+    ganhoMedio += antes[i].ganho;
+    if (antes[i].ganho > 4) aproximaram++;
   });
   ganhoMedio /= Math.max(1, bando.length);
   assert.ok(aproximaram >= Math.ceil(bando.length * 0.7), `só ${aproximaram}/${bando.length} fecharam distância em 2 s`);

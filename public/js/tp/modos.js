@@ -243,7 +243,7 @@ function pintar() {
   };
   for (const [k, p] of Object.entries(PASSOS)) {
     const linha = tela.painel.querySelector(`[data-passo="${k}"]`);
-    linha.hidden = horda && (k === 'rounds' || (k === 'inimigos' && est.javaporcos?.times !== 3));
+    linha.hidden = horda;
     linha.querySelector('.tp-modos__valor').textContent = valores[k];
     linha.querySelector('.tp-modos__menos').disabled = est[k] <= p.min;
     linha.querySelector('.tp-modos__mais').disabled = est[k] >= p.max;

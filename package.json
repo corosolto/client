@@ -739,7 +739,15 @@
     "eval:tplocalshot": "node tools/eval/tp-local-shot-check.mjs",
     "//eval:tplocalshot": "Evento local de tiro TP, fase original, retorno parado e expiração no Game/controlador reais; prova CPU limitada sem aceite de arte.",
     "eval:tpbackpedal": "node tools/eval/tp-local-backpedal-check.mjs",
-    "//eval:tpbackpedal": "Sentido de recuo local no controlador real, preservando autoridade e poses fora do recuo; mutantes no-back, wrong-sign e player."
+    "//eval:tpbackpedal": "Sentido de recuo local no controlador real, preservando autoridade e poses fora do recuo; mutantes no-back, wrong-sign e player.",
+    "//eval:javaporcoscidadeinterface": "Cidade exclusiva, silêncio político, elenco solo4–8 e abates/avatar da horda no coop; três mutantes reais.",
+    "eval:javaporcoscidadeinterface": "node tools/eval/javaporcos-cidade-interface-check.mjs && node tools/eval/javaporcos-cidade-interface-check.mjs --mutante=mapas-expostos && node tools/eval/javaporcos-cidade-interface-check.mjs --mutante=falas-liberadas && node tools/eval/javaporcos-cidade-interface-check.mjs --mutante=placar-ausente",
+    "//eval:javaporcosdirecao": "Condução curva com obstáculos, flancos, espaçamento e apoios no deslocamento real; mutantes isolados.",
+    "eval:javaporcosdirecao": "node tools/eval/javaporcos-direcao-check.mjs && node tools/eval/javaporcos-direcao-check.mjs --mutante=grade-rigida && node tools/eval/javaporcos-direcao-check.mjs --mutante=sem-flanco && node tools/eval/javaporcos-direcao-check.mjs --mutante=corpo-rigido && node tools/eval/javaporcos-direcao-check.mjs --mutante=sem-separacao && node tools/eval/javaporcos-direcao-check.mjs --mutante=ordem-fixa",
+    "//eval:javaporcosnetpersonagem": "Eventos e roster J preservam modelo NPC sem bloquear cosméticos humanos.",
+    "eval:javaporcosnetpersonagem": "node tools/eval/javaporcos-net-personagem-check.mjs && node tools/eval/javaporcos-net-personagem-check.mjs --mutante=personagem-humano",
+    "//eval:javaporcoscidadeacessivel": "Cidade real: subida/descida da torre, três linhas de tiro, quatro casas com percurso completo, armas distribuídas e UV de madeira; cinco mutantes.",
+    "eval:javaporcoscidadeacessivel": "node tools/eval/javaporcos-cidade-acessivel-check.mjs && node tools/eval/javaporcos-cidade-acessivel-check.mjs --mutante=torre-sem-piso && node tools/eval/javaporcos-cidade-acessivel-check.mjs --mutante=janela-fechada && node tools/eval/javaporcos-cidade-acessivel-check.mjs --mutante=armas-centrais && node tools/eval/javaporcos-cidade-acessivel-check.mjs --mutante=rampa-lisa && node tools/eval/javaporcos-cidade-acessivel-check.mjs --mutante=casa-porta-bloqueada"
   },
   "repository": {
     "type": "git",

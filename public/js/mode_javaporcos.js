@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { assetUrl } from './data/asseturl.js';
 import { MODELOS_JAVAPORCOS, varianteJavaporco } from './data/javaporcos_modelos.js';
 import { prepararPassada, atualizarPassada, liberarPassada, registrarGeometriaDistante, selecionarDetalhePassada } from './javaporcos_passada.js';
+import { DIRECAO_FLUIDA, direcaoDaHorda, curvarRumo } from './javaporcos_direcao.js';
 
 /* Teto de vivos MEDIDO em tools/eval/javaporcos-perf.mjs (64 vivos = 0,22 ms/quadro).
    Subir daqui sem medir de novo é chutar o orçamento de quadro. */
@@ -821,10 +822,14 @@ class InvasaoJavaporcos {
 
   /* Painel de território e mini-mapa por setor; 100% de ocupação não encerra a partida. */
   montarHudDominio() {
-    if (this.regras.times === 3 && document.getElementById?.('hud-top')) {
+    if (document.getElementById?.('hud-top')) {
+      if (this.regras.times !== 3) {
+        this.placarHumanoB = document.getElementById('score-b');
+        if (this.placarHumanoB) { this.placarBDisplay = this.placarHumanoB.style.display; this.placarHumanoB.style.display = 'none'; }
+      }
       this.placarJ = document.createElement('div');
       this.placarJ.id = 'score-j'; this.placarJ.className = 'team-score';
-      const img = document.createElement('img'); img.src='/img/loading-javaporcos.webp'; img.alt='Javaporcos';
+      const img = document.createElement('img'); img.src='/img/javaporco-card.webp'; img.alt='Javaporcos';
       this.placarJNum = document.createElement('b'); this.placarJNum.textContent='0';
       const nome = document.createElement('span'); nome.textContent='JAVAPORCOS';
       for (const node of [img,this.placarJNum,nome]) this.placarJ.appendChild(node);
@@ -886,7 +891,7 @@ class InvasaoJavaporcos {
     const bocas = this.game.world.boarEntrances || [];
     const entrance = this.state.mutante === 'todo-lado' && bocas.length
       ? bocas[Number(animal.id.split('.')[1]) % bocas.length] : plano[0];
-    bot._boarPlano = plano; bot._boarPasso = 0;
+    bot._boarPlano = plano; bot._boarPasso = 0; bot._boarRumo = null; bot._boarCorpo = null;
     bot._boarExplorar = plano.beco || null; bot._boarExplorarAte = 0; bot._boarVagar = null;
     bot._boarId = animal.id;
     bot._boarType = animal.type;
@@ -1163,9 +1168,11 @@ class InvasaoJavaporcos {
     let dx = alvo.x - bot.pos.x, dz = alvo.z - bot.pos.z;
     const reta = Math.hypot(dx, dz);
     const emDash = tempo < (bot._boarDashAte || 0);
-    if (!emDash && reta > 6) {
-      const no = this.noDoBicho(bot, tempo);
-      const campo = no >= 0 ? this.campoDe(alvo) : null;
+    let no = -1, campo = null;
+    const fluido = DIRECAO_FLUIDA && this.state.mutante !== 'grade-rigida';
+    if (!emDash && reta > 6 && !fluido) {
+      no = this.noDoBicho(bot, tempo);
+      campo = no >= 0 ? this.campoDe(alvo) : null;
       const proximo = campo && no < campo.length ? campo[no] : -1;
       const node = proximo >= 0 ? world.waypoints.nodes[proximo] : null;
       if (node) {
@@ -1178,7 +1185,11 @@ class InvasaoJavaporcos {
        o focinho +Z do modelo segue; com `az:+1` o _moveEntity anda nessa mesma direção. */
     if (!emDash) this.conferirAvanco(bot, tempo);
     const desvio = !emDash && alvo.kind !== 'jogador' && reta > 2 ? desvioDeCaminhada(tempo, bot._boarJitter || 0, this.state.mutante) : 0;
-    if (dx || dz) bot.yaw = Math.atan2(dx, dz) + desvio + (tempo < (bot._boarDeslizeAte || 0) ? bot._boarDeslizeLado * DESLIZE_ANGULO : 0);
+    if (dx || dz) {
+      const rumo = fluido && !emDash ? direcaoDaHorda(this,bot,alvo,tempo,this.state.mutante) : Math.atan2(dx,dz);
+      const desejado = rumo + desvio + (tempo < (bot._boarDeslizeAte || 0) ? bot._boarDeslizeLado * DESLIZE_ANGULO : 0);
+      bot.yaw = fluido && !emDash ? curvarRumo(bot.yaw,desejado,dt) : desejado;
+    }
     const escala = velocidadeDoJavaporco(this.state, bot._boarType) * (emDash ? DASH.impulso : alvo.kind === 'vagar' ? VAGAR_RITMO : 1);
     this.game._moveEntity(bot, this.state.mutante === 'rumo-invertido' ? ENTRADA_RE : ENTRADA_FRENTE, dt * escala);
     this.aterrar(bot);
@@ -1418,6 +1429,17 @@ class InvasaoJavaporcos {
       rig.head.rotation.x = golpe ? Math.sin(golpe * Math.PI) * -.4 : fucar ? .3 + Math.sin(tempo * 12) * .18 : 0;
       rig.head.rotation.y = fucar ? Math.sin(tempo * 6) * .16 : 0;
     }
+    const corpo = bot._boarCorpo ||= {x:bot.pos.x,z:bot.pos.z,tempo,ritmo:0,fase:0};
+    const delta = Math.max(0,tempo-corpo.tempo), distancia = Math.hypot(bot.pos.x-corpo.x,bot.pos.z-corpo.z);
+    const andando = delta>0 && distancia/delta>.08 && distancia<2;
+    corpo.ritmo += ((andando?1:0)-corpo.ritmo)*Math.min(1,delta*12);
+    corpo.fase += distancia*8;corpo.x=bot.pos.x;corpo.z=bot.pos.z;corpo.tempo=tempo;
+    if(this.state.mutante!=='corpo-rigido'&&visual.userData.passada?.rigs.length&&!fucar&&!golpe){
+      visual.position.y += Math.sin(corpo.fase*2)*.018*corpo.ritmo;
+      visual.rotation.x += Math.sin(corpo.fase*2)*.025*corpo.ritmo;
+      visual.rotation.z += Math.sin(corpo.fase)*.035*corpo.ritmo;
+      for(const rig of visual.userData.passada?.rigs||[])rig.head.rotation.y=Math.sin(corpo.fase*.5)*.06*corpo.ritmo;
+    }
     atualizarPassada(visual, bot.pos, this.game.world, tempo, this.state.mutante);
   }
 
@@ -1463,6 +1485,7 @@ class InvasaoJavaporcos {
     const comida = (this.game.world.foodSpots || []).length;
     const lixo = comida ? ` · LIXO ${this.state.foodRevirada}/${comida}` : '';
     this.hudTexto.textContent = `ONDA ${Math.max(1, this.state.wave)} · ${phase} · ${this.state.alive.length} NA RUA · FÚRIA ${Math.round((this.state.fury || 0) * 100)}%${lixo} · ${score} PTS`;
+    if (this.state.waitingForPlayers) this.hudTexto.textContent = `AGUARDANDO DEFENSORES · ${this.state.players || 0}/${this.state.minPlayers || 4} PARA COMEÇAR · MÁXIMO 8`;
     if (this.state.mutante === 'mapa-mudo') return;
     const dominio = Math.round((this.state.dominio || 0) * 100);
     const tomados = this.state.controle.filter((v) => v >= 1).length;
@@ -1471,7 +1494,7 @@ class InvasaoJavaporcos {
       this.placarJNum.textContent = this.state.teamKills.J || 0;
       this.placarJ.setAttribute('aria-label',`Javaporcos: ${this.state.teamKills.J || 0} abates, ${dominio}% do mapa`);
     }
-    this.hudDominio.textContent = this.regras.times === 3 ? `E ${Math.round(territorio.E * 100)}% / ${this.state.teamKills.E} ABATES · B ${Math.round(territorio.B * 100)}% / ${this.state.teamKills.B} ABATES · JAVAPORCOS ${dominio}% / ${this.state.teamKills.J} ABATES` : `DOMÍNIO DA HORDA ${dominio}% · JAVAPORCOS`;
+    this.hudDominio.textContent = this.regras.times === 3 ? `E ${Math.round(territorio.E * 100)}% / ${this.state.teamKills.E} ABATES · B ${Math.round(territorio.B * 100)}% / ${this.state.teamKills.B} ABATES · JAVAPORCOS ${dominio}% / ${this.state.teamKills.J} ABATES` : `DOMÍNIO DA HORDA ${dominio}% · ${this.state.teamKills.J} ABATES`;
     this.hudSetores.textContent = `${tomados}/${this.state.controle.length} SETORES TOMADOS · LIMPE PARA RETOMAR`;
     this.hudBarra.style.width = `${Math.min(100, dominio)}%`;
     this.hudCelulas.forEach((cel, i) => {
@@ -1525,7 +1548,7 @@ class InvasaoJavaporcos {
         const nome = this.game._teamName(team), dominio = Math.round((this.state.territorio[team] || 0) * 100);
         const pessoas = this.game.combatants.filter(ent => ent.team === team && !ent._objectiveNpc);
         const linhas = pessoas.map(ent => `<tr><td>${escape(ent.name)}</td><td>${ent.kills || 0}</td><td>${ent.deaths || 0}</td></tr>`).join('');
-        const imagem = team === 'J' ? '<img class="horde-avatar" src="/img/loading-javaporcos.webp" alt="Javaporco">' : '';
+        const imagem = team === 'J' ? '<img class="horde-avatar" src="/img/javaporco-card.webp" alt="Javaporco">' : '';
         const status = this.state.eliminados.includes(team) ? 'ELIMINADO' : `${dominio}% DO MAPA`;
         return `<section class="sb-col horde-team"><h4>${imagem}${nome}</h4><p>${status} · ${this.state.teamKills[team] || 0} ABATES</p><table><thead><tr><th>PARTICIPANTE</th><th>ABATES</th><th>MORTES</th></tr></thead><tbody>${linhas || `<tr><td>Horda · ${this.state.alive.length} vivos</td><td>${this.state.teamKills.J || 0}</td><td>${this.state.kills}</td></tr>`}</tbody></table></section>`;
       }).join('');
@@ -1541,7 +1564,7 @@ class InvasaoJavaporcos {
       .join('');
     const header = row('DEFESA DA CIDADE', 'PTS', 'ABT.', 'ASSIST.', 'COMBO', 'EVITADO', 'horde-head');
     const empty = row('Equipe', 0, 0, 0, '0×', 0);
-    this.game.el.sbCols.innerHTML = `<div class="horde-score">${header}${rows || empty}${row('Bônus coletivo', this.state.teamBonus, '—', '—', '—', '—', 'horde-bonus')}</div>`;
+    this.game.el.sbCols.innerHTML = `<div class="horde-score">${header}${rows || empty}${row('Bônus coletivo', this.state.teamBonus, '—', '—', '—', '—', 'horde-bonus')}</div><section class="sb-col horde-team horde-enemy"><h4><img class="horde-avatar" src="/img/javaporco-card.webp" alt="Javaporco">Javaporcos</h4><p>${this.state.teamKills.J || 0} ABATES DE DEFENSORES · ${this.state.kills} JAVAPORCOS ABATIDOS</p></section>`;
   }
 
 
@@ -1591,6 +1614,9 @@ class InvasaoJavaporcos {
     if (!net || (!this.game.online || this.game.dedicated)) return;
     this.state.wave = net.wave;
     this.state.clock = net.clock || 0;
+    this.state.waitingForPlayers = net.waitingForPlayers === true;
+    this.state.players = net.players || 0;
+    this.state.minPlayers = net.minPlayers || 4;
     this.state.defesaE = [...(net.defesaE || (net.controle || this.state.controle).map(()=>0))];
     this.state.defesaB = [...(net.defesaB || (net.controle || this.state.controle).map(()=>0))];
     this.state.teamKills = { ...net.teamKills };
@@ -1623,6 +1649,7 @@ class InvasaoJavaporcos {
   dispose() {
     if (this.game.el?.hud) { delete this.game.el.hud.dataset.objective; delete this.game.el.hud.dataset.humanTeams; }
     this.placarJ?.remove();
+    if (this.placarHumanoB) this.placarHumanoB.style.display = this.placarBDisplay;
     if (this._key) window.removeEventListener('keydown', this._key);
     this.hud?.remove();
     this.cinemaTitle?.remove();

@@ -1697,6 +1697,7 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard tbody tr:first-of-type::before{display:none}
 #hud[data-objective="horde"][data-human-teams="1"] #score-b,#hud[data-objective="horde"][data-human-teams="1"] .tp-hud-retratos[data-lado="B"]{display:none!important}
 #scoreboard .sb-cols:has(.horde-team){grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+#scoreboard .sb-cols:has(.horde-enemy){grid-template-columns:minmax(0,1fr)}
 #scoreboard .horde-team{--sb-grid:minmax(0,1fr) 65px 65px}
 #scoreboard .horde-team p{padding:12px;color:#d4bd7c;font-size:12px}
 #scoreboard .horde-avatar{width:48px;height:48px;object-fit:cover;border-radius:50%;margin-right:10px;vertical-align:middle}
