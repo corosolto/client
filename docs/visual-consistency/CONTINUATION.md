@@ -329,3 +329,10 @@ skins, mapas restantes e acompanhamento de merges/release durante a janela compl
 - Acabamento visual: Ferro tijolo melhora; Campo solo bege rejeitado por perda de identidade vermelha. Crítico apontou vegetação atravessando balcão Ferro; probe de triângulos reais confirmou RED em med e low. Ainda não corrigido. Revisão GLM integral de acabamento expirou sem relatório: não conta como revisão limpa.
 - Posters: builder expirou parcial. Root reproduziu ReferenceError norte e corrigiu declaração; gate passou a cinco SUPORTE RED. Probe investiga auto-interseção do cartaz no raycaster antes de deslocar geometria. Fonte das paredes e suporte físico precisam ser conferidos no jogo real.
 - Baseline1179 agora possui node_modules isolado por clone APFS e serve4368 novamente. esbuild nativo/API JS verificados. WT principal ainda tem symlink de dependências e será isolado com writers quietos. Não atribuir falha HMR anterior a essa causa sem prova.
+
+### Preparação do prop e devolução de leases
+
+- Ficha FERRO-VELHO-ACABAMENTO-20261031 validada `spec:check`, procedência e prompt próprios. Experimento proposto Modeler Low com teto2.000créditos existentes, sem compra/revisão paga automática. Só balcão fechado dentro do envelope3.2×1×1.4m existente; sem autorização inferida para trocar colisão. Sessão própria no Mint em Space32p1; não operar sessões do Javaporco.
+- Normais R2 devolvido60196: Root repetiu23/23GREEN e outputs byte-idênticos aos4GLBs v3. Revisão GLM integral R3 readonly60899 em curso. Produto ainda não trocado.
+- Auto-interseção de poster comprovada: antesRED, depoisGREEN ignorando só mesh alvo. Default de suporte preservado. Fixture suspenso/outro poster à frente RED e self-test de guardas GREEN. Cinco posters Praça/Posto agora suporteGREEN no Node; fotos reais e arte/overlap seguem pendentes. Builder GLM-POSTERS-FECHAR-R2 lease55857 nos2mapas/manualgate/doc, sem browser.
+- Reviews readonly ativos: AK64779, acabamento84197 (retry com relatório incremental). Primeiro review acabamento expirado continua inválido. Próximo: receber crítico de curadoria e fechar seus falsosGREEN, sem relaxar critérios.
