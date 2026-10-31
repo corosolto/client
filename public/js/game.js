@@ -6999,9 +6999,8 @@ export class Game {
     const px0 = p.pos.x, pz0 = p.pos.z;
     tryAxis(p.vel.x * dt, 0, 0); tryAxis(0, p.vel.z * dt, 1);
     this._collide(p.pos, 0.38);
-    // Velocidade EFETIVA = deslocamento XZ real dentro da física (integração + correção
-    // de colisão)/dt: corpo preso em parede/bounds não vira gait e teleporte do chamador
-    // (reconciliação) fica fora da medição. Limitado ao maxSp já calculado.
+    // Gait usa deslocamento XZ após colisão, limitado a maxSp; reconciliação fica fora.
+    // Contratos e controles: docs/visual-consistency/MOVIMENTO-1P.md.
     const effectiveSp = Math.min(maxSp, dt > 0 ? Math.hypot(p.pos.x - px0, p.pos.z - pz0) / dt : 0);
     p.pos.y += p.vel.y * dt;
     const g2 = this.world.groundHeightAt(p.pos.x, p.pos.z, p.pos.y);
