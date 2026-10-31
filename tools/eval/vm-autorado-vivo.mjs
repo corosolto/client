@@ -9,13 +9,17 @@
  *
  * Régua de contagem não pegaria: as malhas existem no GLB e a config está certa.
  * O que falhava era a LIGAÇÃO. Por isso esta régua mede no jogo de verdade, arma
- * por arma, três coisas juntas:
+ * por arma:
  *   1. a chave resolvida é autorada: `gold#` (AK) ou `fab#` (produto da fábrica);
  *   2. o controlador tem malha de mão na entrada;
  *   3. a mão está visível com a cadeia de pais inteira.
+ *   4. mãos e boca ficam no quadro; o traçante coincide com o socket/vértices
+ *      do modelo, projetados pela vmCamera sem consultar _muzzleWorld.
  *
  * Mutação:
  *   --mutante=semfiacao   serve o game.js sem o `authored?.setWeapon` → 0 armas
+ *   --mutante=maos-ocultas   oculta as mãos reais
+ *   --mutante=cano-lateral  desloca só a origem do traçante, mantendo o modelo
  *
  *   node tools/eval/vm-autorado-vivo.mjs --porta=4361
  *   node tools/eval/vm-autorado-vivo.mjs --porta=4361 --todas   # as 25 armas de fogo
@@ -32,7 +36,7 @@ const arg = (n, d) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `=${
   .split('=').slice(1).join('=');
 const PORTA = arg('porta', '4361');
 const MUTANTE = arg('mutante', '');
-if (MUTANTE && !['semfiacao', 'maos-ocultas'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
+if (MUTANTE && !['semfiacao', 'maos-ocultas', 'cano-lateral'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 const SO = arg('armas', '').split(',').filter(Boolean);
 const TODAS = process.argv.includes('--todas');
 const SEM_FLAGS = process.argv.includes('--sem-flags');
@@ -69,6 +73,13 @@ if (MUTANTE === 'maos-ocultas') {
   const fonte = antes.replace('handMeshes.push(object);', 'object.visible = false; handMeshes.push(object);');
   if (fonte === antes) throw new Error('maos-ocultas não aplicou');
   await pag.route('**/js/authoredvm.js*', (r) => r.fulfill({ contentType: 'application/javascript', body: fonte }));
+}
+if (MUTANTE === 'cano-lateral') {
+  const antes = fs.readFileSync('public/js/game.js', 'utf8');
+  const fonte = antes.replace('return cam.addScaledVector(ray, 1.5);',
+    'return cam.addScaledVector(ray, 1.5).add(this.camera.getWorldDirection(new THREE.Vector3()).cross(this.camera.up).multiplyScalar(0.2));');
+  if (fonte === antes) throw new Error('cano-lateral não aplicou');
+  await pag.route('**/js/game.js*', (r) => r.fulfill({ contentType: 'application/javascript', body: fonte }));
 }
 
 const FAMILIAS = 'ak,ar,mp5,smg,p90,g3,marksman,svd,sniper,bolt,deagle,pistol,revolver,shotgun,lmg,grenade';
@@ -139,9 +150,36 @@ for (const arma of ALVO) {
       }
       if (emQuadro) break;
     }
-    let rastroPx = Infinity;
+    let rastroPx = Infinity, canoEmQuadro = false, fonteCano = null;
     if (ent && g._vmVisibility?.authored) {
-      const muzzle = g._muzzleWorld('rifle').clone().project(g.camera);
+      // Oráculo independente: socket do GLB visível, ou vértices deformados da boca
+      // nos goldens sem socket. Nunca chama _muzzleWorld/muzzleVm do runtime.
+      ent.scene.updateWorldMatrix(true, true);
+      const socket = ent.sockets?.boca || ent.sockets?.muzzle;
+      let muzzle = null;
+      if (socket) {
+        muzzle = socket.getWorldPosition(g.player.pos.clone());
+        fonteCano = 'socket';
+      } else {
+        const pontos = [], p = g.player.pos.clone();
+        let frente = Infinity;
+        for (const mesh of ent.weaponMeshes.filter(visivel)) {
+          mesh.skeleton?.update();
+          for (let i = 0; i < (mesh.geometry?.attributes?.position?.count || 0); i += 1) {
+            mesh.getVertexPosition(i, p).applyMatrix4(mesh.matrixWorld);
+            pontos.push(p.clone()); frente = Math.min(frente, p.z);
+          }
+        }
+        const boca = pontos.filter((p) => p.z < frente + 0.03);
+        if (boca.length) {
+          muzzle = boca.reduce((s, p) => s.add(p), g.player.pos.clone().set(0, 0, 0)).divideScalar(boca.length);
+          fonteCano = 'vertices';
+        }
+      }
+      if (muzzle) {
+        muzzle.project(g.vmCamera);
+        canoEmQuadro = [muzzle.x, muzzle.y, muzzle.z].every((v) => Number.isFinite(v) && Math.abs(v) < 1);
+      }
       const tracer = g._tracer, consultar = g._consultarTiro;
       let start;
       try {
@@ -149,11 +187,11 @@ for (const arma of ALVO) {
         g._tracer = (from) => { start = from.clone().project(g.camera); };
         g._fireHitscan(g.player, g._aimOrigin(g.player.pos.clone()),
           g.camera.getWorldDirection(g.player.pos.clone()), 1, true, a, a, true);
-        if (start) rastroPx = Math.hypot((start.x - muzzle.x) * innerWidth / 2, (start.y - muzzle.y) * innerHeight / 2);
+        if (start && muzzle) rastroPx = Math.hypot((start.x - muzzle.x) * innerWidth / 2, (start.y - muzzle.y) * innerHeight / 2);
       } finally { g._tracer = tracer; g._consultarTiro = consultar; }
     }
     return { arma: a, chave: ent?.key || null, maos: maos.length, visiveis: maos.filter(visivel).length,
-      emQuadro, rastroPx, mobile: g.mobile, autorada: g._vmVisibility?.authored, fallback: g._vmVisibility?.fallback };
+      emQuadro, canoEmQuadro, fonteCano, rastroPx, mobile: g.mobile, autorada: g._vmVisibility?.authored, fallback: g._vmVisibility?.fallback };
   }, arma);
   if (FOTOS) {
     const dir = FOTOS;
@@ -162,9 +200,9 @@ for (const arma of ALVO) {
     await pag.screenshot({ path: `${dir}/${arma}-sem-hud.png`, style: '#touch-ui, #hud, #tp-hud, #vm-precision-qa { visibility: hidden !important; }' });
   }
   const ok = Boolean(r.chave?.includes('#')) && r.visiveis > 0
-    && (arma === 'knife' || (r.autorada && !r.fallback && r.emQuadro && r.mobile === MOBILE && r.rastroPx <= 1));
+    && (arma === 'knife' || (r.autorada && !r.fallback && r.emQuadro && r.canoEmQuadro && r.mobile === MOBILE && r.rastroPx <= 1));
   linhas.push({ ...r, ok });
-  console.log(`  ${r.arma.padEnd(10)} ${String(r.chave || 'LEGADO').padEnd(22)} maos ${r.visiveis}/${r.maos} emQuadro=${r.emQuadro} rastroPx=${r.rastroPx?.toFixed(2)} ${ok ? 'ok' : 'FALHA'}`);
+  console.log(`  ${r.arma.padEnd(10)} ${String(r.chave || 'LEGADO').padEnd(22)} maos ${r.visiveis}/${r.maos} emQuadro=${r.emQuadro} cano=${r.fonteCano}/${r.canoEmQuadro} rastroPx=${r.rastroPx?.toFixed(2)} ${ok ? 'ok' : 'FALHA'}`);
 }
 await nav.close();
 
@@ -175,7 +213,9 @@ console.log(`\n  ${bons}/${ALVO.length} armas montam o viewmodel autorado COM m�
 if (legado.length) console.log(`  caíram no legado: ${legado.join(' ')}`);
 if (semMao.length) console.log(`  autoradas mas SEM mão: ${semMao.join(' ')}`);
 if (erros.length) console.log(`  erros de página: ${[...new Set(erros)].slice(0, 3).join(' | ')}`);
-const ok = MUTANTE ? bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave : !l.visiveis) : bons === ALVO.length;
+const ok = MUTANTE ? bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave
+  : MUTANTE === 'cano-lateral' ? l.visiveis > 0 && l.emQuadro && l.canoEmQuadro && l.autorada && !l.fallback && l.mobile === MOBILE && Number.isFinite(l.rastroPx) && l.rastroPx > 1
+  : !l.visiveis) : bons === ALVO.length;
 if (MUTANTE) console.log(`  mutante ${MUTANTE}: ${ok ? 'detectado' : 'sobreviveu ou falhou por outro motivo'}`);
 console.log(ok ? (MUTANTE ? '\n  VERDE — regressão provocada detectada\n' : '\n  VERDE — o caminho autorado está ligado\n')
                : '\n  VERMELHO — o jogo não está montando o viewmodel novo\n');

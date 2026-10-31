@@ -52,5 +52,8 @@ câmera, que chama a mesma alternância primeira→terceira→ombro da tecla B.
 O perfil móvel mantém DPR, textura, efeitos e sombras reduzidos, mas usa os mesmos
 viewmodels autorados com mãos do desktop. `eval:vm-maos-mobile-desktop` percorre o catálogo
 real nos dois recortes e verifica mãos dentro do quadro e traçante no pixel do cano.
+A posição esperada vem do socket ou dos vértices deformados do modelo, independente
+da função que origina o traçante. O mutante `cano-lateral` desloca só essa origem e
+precisa reprovar a régua.
 No CI, os assets publicados são conferidos por tamanho e SHA256 contra o manifesto;
 não há cópia de modelos privados no Git. Esses dois testes rodam no portão de navegador.
