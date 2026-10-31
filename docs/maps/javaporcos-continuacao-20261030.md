@@ -837,3 +837,24 @@ Próximo: terminar réguas/revisão crítica, corrigir achados, obter autorizaç
 pendente para novo EgoSpace, inspecionar três mapas + loading móvel, revisar assets,
 e então push/confirmar READY e bytes publicados. Não confundir checkpoint local
 com entrega pronta ou aprovação visual. Último preview ainda SHA0b2fee102.
+
+Checkpoint ed7ffb5d3 preservou a produção local. Revisão crítica seguinte achou
+via rural com largura girada errada, rua da Vila cruzando casas e tampa do silo
+sem oclusão/piso. Corrigidos: via orientada pelo segmento, casas/loja/muro fora
+dos eixos, tampa cone16 registrada em occluders e altura física por faceta.
+Crítico independente confirmou0 expulsões laterais>0.1m a cada0.5m dos eixos
+nos dois mapas. Régua três mapas atual passa e compara raycast real do silo
+contra piso em três raios. Mutantes via-obstruida e silo-transparente detectam
+as falhas certas; os anteriores layout-copiado/sem-horda também foram detectados.
+Interiores baseline+4mutantes verdes (falhas injetadas na cláusula esperada).
+Loading cache/frio/hide/troca de facção verde+mutante humano detectado. Fluxo da
+intro verde nos três mapas; mutante remontagem detectado. A parte browser de
+npm eval:javaporcosintro não executou: BASE obrigatório, sem browser aberto.
+Cards dos dois mapas novos usam temporariamente arte comum do modo, documentada
+em FONTE; não são imagens dos layouts. Substituição por screenshot real pendente.
+Mapid varria checkout worktrees/ (só ignorava .worktrees/), corrigido sem tocar
+outras lanes. Execução antiga foi interrompida e precisa ser substituída pelo
+resultado /tmp/jav-mapid-21.log. Contratos amplos e map-check continuam em curso;
+logs temporários citados acima. Próximo: confirmar contratos/pre-push, publicar
+preview de teste autorizado (sem alegar aprovação visual/Mint/MP real), recuperar
+Ego somente com resposta ao pedido pendente para QA visual e pilotos Mint.

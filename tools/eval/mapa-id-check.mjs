@@ -82,7 +82,7 @@ const SEM_VARREDURA = [
   /* Worktrees são checkouts paralelos de OUTRAS branches — não são código vivo
      da árvore atual. Sem isto, a régua escaneia `.worktrees/<branch-velha>/` e
      acusa ids antigos que só existem lá, virando vermelha sem defeito. */
-  '.worktrees',
+  '.worktrees', 'worktrees',
   'CHANGELOG.md', 'KNOWN-BUGS.md',
   /* Atribuição histórica: `docs/LICENCA.md` cita o mapa `fy_pool_day` como veio
      do contribuidor daltonfontes — é o nome da contribuição na origem, não código

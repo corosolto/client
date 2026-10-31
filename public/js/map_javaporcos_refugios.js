@@ -71,7 +71,8 @@ export function pisosElevados(colliders, root, materiais) {
         if(Math.abs(lx)<=r.w&&Math.abs(lz)<=r.d){const topo=r.y+r.h*(1-Math.abs(lx)/r.w);if(yRef>=topo-.22)y=Math.max(y,topo);}
         continue;
       }
-      const dx=x-r.x,dz=z-r.z, d=Math.abs(dx*r.cos-dz*r.sin)+Math.abs(dx*r.sin+dz*r.cos);
+      const dx=x-r.x,dz=z-r.z,passo=2*Math.PI/(r.lados||4),theta=Math.atan2(dx,dz);
+      const d=r.tipo==='cone'?Math.hypot(dx,dz)*Math.cos(theta-(Math.floor(theta/passo)+.5)*passo)/Math.cos(passo/2):Math.abs(dx*r.cos-dz*r.sin)+Math.abs(dx*r.sin+dz*r.cos);
       if(d>r.r) continue;
       const topo=r.y+r.h*(1-d/r.r);
       if(yRef>=topo-.22) y=Math.max(y,topo);

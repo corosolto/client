@@ -252,7 +252,7 @@ function montarEsquerda(play) {
   const invasao = no('button', 'tp-lobby-painel tp-lobby-invasao');
   invasao.type='button';invasao.id='tp-lobby-invasao';
   const arte=no('img');arte.src='/img/javaporcos-ataque-cidade.webp';arte.alt='';arte.loading='lazy';arte.decoding='async';
-  invasao.append(arte,no('span','tp-chip tp-chip--novo',tr('INVASÃO')),no('strong','tp-disp',tr('JAVAPORCOS')),no('span','',tr('Defenda a cidade ou dispute entre três times')),no('span','tp-lobby-link',tr('JOGAR INVASÃO ▸')));
+  invasao.append(arte,no('span','tp-chip tp-chip--novo',tr('INVASÃO')),no('strong','tp-disp',tr('CAÇA AO JAVAPORCO')),no('span','',tr('Três mapas para defender contra a horda')),no('span','tp-lobby-link',tr('ESCOLHER MAPA ▸')));
   invasao.addEventListener('click',()=>{$('hub-sp')?.click();window.__tpModos?.irMapa('invasao_javaporcos');$('hub-map-change')?.click();});
   esq.appendChild(invasao);
   const quests = no('section', 'tp-lobby-painel tp-lobby-quests');

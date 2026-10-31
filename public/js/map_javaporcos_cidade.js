@@ -254,20 +254,22 @@ function construirAmbiente(kit,campo,rnd,ambiente){
   kit.ambiente=ambiente;kit.ex=novosExtras();
   root.userData.layoutAmbiente=ambiente==='rural'?'fazendas-patios':'vila-praca-ruelas';
   const via=(pts,largura,mat)=>{
+    (root.userData.vias ||= []).push({pts,largura});
     for(let i=1;i<pts.length;i++){
       const a=pts[i-1],b=pts[i],n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/.6);
-      for(let j=0;j<=n;j++){const t=j/n,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;piso(largura,.75,mat,x,z,campo.amostra(x,z)+.025,'chao-caminho');}
+      for(let j=0;j<=n;j++){const t=j/n,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;piso(largura,.75,mat,x,z,campo.amostra(x,z)+.025,'chao-caminho').rotateZ(Math.atan2(b[0]-a[0],b[1]-a[1]));}
     }
   };
   if(ambiente==='rural'){
     via([[-36,-12],[-8,-12],[4,0],[5,25],[24,36]],7,MAT.terra);
     via([[-36,20],[-12,20],[5,10],[36,10]],5,MAT.terra);
     for(const [x,z] of [[-19,-2],[19,-17]])casa(kit,campo,rnd,x,z,9,10,0,6,0,MAT.madeira,true);
-    for(const [x,z,ry] of [[-24,-25,0],[22,25,Math.PI],[-25,23,Math.PI/2]])casa(kit,campo,rnd,x,z,6,6,ry,3,0);
+    for(const [x,z,ry] of [[-24,-25,0],[22,25,Math.PI],[-25,28,Math.PI/2]])casa(kit,campo,rnd,x,z,6,6,ry,3,0);
     for(const [x,z] of [[23,-29],[29,-29]]){
       const y=campo.amostra(x,z),silo=new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.2,7,16),MAT.medidor);
       silo.position.set(x,y+3.5,z);silo.castShadow=true;silo.receiveShadow=true;root.add(silo);kit.occluders.push(silo);kit.colisor(x,z,2.2,2.2,y,y+7,0);
-      const topo=new THREE.Mesh(new THREE.ConeGeometry(2.4,1.5,16),MAT.zinco);topo.position.set(x,y+7.75,z);root.add(topo);
+      const topo=new THREE.Mesh(new THREE.ConeGeometry(2.4,1.5,16),MAT.zinco);topo.position.set(x,y+7.75,z);topo.name='telhado-silo';root.add(topo);kit.occluders.push(topo);
+      (root.userData.coberturas ||= []).push({tipo:'cone',lados:16,x,z,y:y+7,h:1.5,r:2.4,cos:1,sin:0});
     }
     for(const [x,z] of [[-15,-27],[17,24],[-24,13]])for(const side of [-1,1]){
       for(let i=-4;i<=4;i+=2){const px=x+i,pz=z+side*4,y=campo.amostra(px,pz);caixa(.15,1.3,.15,MAT.madeira,px,y,pz,{nome:'mourao-curral'});}
@@ -277,14 +279,14 @@ function construirAmbiente(kit,campo,rnd,ambiente){
     via([[-36,-10],[-6,-10],[0,0],[8,13],[36,18]],4,MAT.bloquete);
     via([[-8,-36],[-8,-10],[0,0],[-8,18],[-8,36]],4,MAT.bloquete);
     for(let x=-5;x<=5;x+=1)for(let z=-5;z<=5;z+=1)piso(1,1,MAT.bloquete,x,z,campo.amostra(x,z)+.025,'chao-praca-vila');
-    const casas=[[-23,-24,0],[-10,-24,0],[9,-26,.08],[25,-20,-Math.PI/2],[-24,-3,Math.PI/2],[24,4,-Math.PI/2],[-24,17,Math.PI/2],[-10,25,Math.PI],[10,25,Math.PI],[26,24,Math.PI]];
+    const casas=[[-23,-24,0],[-15,-24,0],[9,-26,.08],[25,-20,-Math.PI/2],[-24,-3,Math.PI/2],[24,4,-Math.PI/2],[-24,17,Math.PI/2],[-16,25,Math.PI],[10,25,Math.PI],[26,24,Math.PI]];
     casas.forEach(([x,z,ry],i)=>casa(kit,campo,rnd,x,z,6.5,6.5,ry,6,i%2,MAT.rebocoIgreja,i<2));
-    for(const [x,z] of [[-15,9],[14,-12],[16,16]]){
+    for(const [x,z] of [[-15,9],[14,-12],[16,5]]){
       const y=campo.amostra(x,z);caixa(6,.95,.22,MAT.bloco,x,y,z,{nome:'muro-patio'});
       for(const dx of [-3,3])caixa(.22,.95,4,MAT.bloco,x+dx,y,z+2,{nome:'muro-patio'});
     }
   }
-  const pontosLojas=ambiente==='rural'?[['racao',-13,12],['mercearia',17,2]]:[['mercearia',-13,1],['padaria',12,-6],['boteco',8,14]];
+  const pontosLojas=ambiente==='rural'?[['racao',-13,12],['mercearia',17,2]]:[['mercearia',-13,1],['padaria',12,-6],['boteco',25,-7]];
   for(const [papel,x,z] of pontosLojas){
     const b={x0:x-5,x1:x+5,z0:z-4.5,z1:z+4.5,ax:'i',az:'i',sx:Math.sign(x)||1,sz:Math.sign(z)||1};
     const l=loja(kit,campo,rnd,b,papel);l.aberta=true;l.comercio=papel;lojas.push(l);portas.push(l.porta);

@@ -22,3 +22,8 @@ Originais de geração locais em `/tmp/gen-image/javaporco-card.png` e
 `/tmp/gen-image/javaporcos-ataque-cidade.png`; não são modelos3D do Mint.
 SHA256 do retrato:61ace1e568dc5045a6ec340a0a39c980d8914c6316accbabf5b5e2ecd846d347.
 SHA256 do wallpaper:f7e9891f970c716b58825600d85f73849c4ddb58553ffa69da07e14d2d50ee3b.
+
+Os cartões `public/img/map-previews/distrito_rural.jpg` e `vila_da_mata.jpg`
+usam temporariamente a arte compartilhada do modo, convertida do wallpaper
+acima com sips (sem nova geração). Não são capturas dos layouts. Substituir por
+capturas reais após recuperar o navegador; nomes dos mapas vêm da interface.
