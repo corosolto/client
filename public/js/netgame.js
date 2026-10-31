@@ -365,6 +365,7 @@ class Netcode {
     const snap = net.snap;
     if (this._netMap.size === 0) {
       this._casar(snap);
+      if (Number.isFinite(snap.roundNum)) this._netRodada = snap.roundNum;   // quem entra no meio herda a rodada em curso
       if (this._evOn && Array.isArray(net.meta?.drops)) for (const d of net.meta.drops) this._dropDeRede(d);   // quem entra no meio vê os drops vivos
     }
 
@@ -387,6 +388,18 @@ class Netcode {
        A guarda anterior ao incremento do tick mantém a entrada sem cerimônia. */
     const fimDeRound = game.state === 'roundEnd' && game.state !== estadoAntes && this._netTick >= 0;
     if (game.state !== estadoAntes && !fimDeRound) this.transicaoDeEstado(estadoAntes, game.state, placarAntes);
+    // Retomada pode omitir countdown: limpar a apresentação uma vez por rodada,
+    // antes de aplicar entidades e objetivo, preservando o relógio autoritativo.
+    const rodadaNova = this._netTick >= 0 && game.state !== 'roundEnd'
+      && ((Number.isFinite(snap.roundNum) && snap.roundNum !== this._netRodada)
+        || (game.state === 'live' && estadoAntes === 'roundEnd' && !Number.isFinite(snap.roundNum)));
+    if (rodadaNova) {
+      const relogioDoServidor = game.timeLeft;   // prepareRound escreve 360: o relógio é do servidor
+      game._resultado = null; game._showScoreboard(false);
+      game.objective?.prepareRound?.();
+      this._netRodada = Number.isFinite(snap.roundNum) ? snap.roundNum : game.roundNum;
+      if (Number.isFinite(relogioDoServidor)) game.timeLeft = relogioDoServidor;
+    }
     this.vagas = snap.livre || null;
 
     if (snap.tick === this._netTick) return;
@@ -602,6 +615,7 @@ class Netcode {
           // prepareRound escreve timeLeft=360: o relógio autoritativo já veio do snapshot.
           const relogioDoServidor = game.timeLeft;
           game.objective.prepareRound();
+          this._netRodada = game.roundNum;   // countdown já preparou: o 'live' da rodada não repete o reset
           if (Number.isFinite(relogioDoServidor)) game.timeLeft = relogioDoServidor;
         }
         const subRound = game.ctf

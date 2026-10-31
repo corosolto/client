@@ -19,6 +19,8 @@ const netEdits = mutante === 'sem-placar'
   : mutante === 'sem-ordem'
   ? [["if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes);", ''],
     ['const primeiroSnap = this._tAt.length <= 1;', "if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes);\n    const primeiroSnap = this._tAt.length <= 1;"]]
+  : mutante === 'sem-retomada'
+  ? [['if (rodadaNova) {', 'if (false && rodadaNova) {']]
   : [];
 const { makeNetcode } = netEdits.length
   ? await moduloMutado('../../public/js/netgame.js', netEdits) : await import('../../public/js/netgame.js');
@@ -59,7 +61,7 @@ else if (mutante === 'sem-reset') {
     this.cinematic = cinematic;
     this.game.world.objectivePlane.position.copy(plane);
   };
-} else if (mutante && !['sem-placar','sem-ordem','sem-parar'].includes(mutante)) throw new Error('Mutante desconhecido: '+mutante);
+} else if (mutante && !['sem-placar','sem-ordem','sem-parar','sem-retomada'].includes(mutante)) throw new Error('Mutante desconhecido: '+mutante);
 if (mutante) console.log('Mutação aplicada: '+mutante);
 let failures = 0;
 const check = (name, fn) => {
@@ -161,6 +163,36 @@ try {
     assert.equal(vip.hp, 42);
     assert.equal(vip.alive, false);
     assert.equal(game.objective.state.checkpoint, 1);
+  });
+  for (const before of ['roundEnd', 'live']) check('nova rodada sem countdown observado, estado anterior '+before, () => {
+    game.state = before;
+    game.objective.startCinematic('B');
+    assert.equal(game.vmScene.visible, false, 'pré-condição: apresentação anterior ativa');
+    const nextRound = game.roundNum + 1;
+    net.snap = { ...net.snap, tick: net.snap.tick + 1, t: net.snap.t + .05,
+      state: 'live', roundNum: nextRound, timeLeft: 291,
+      objective: { checkpoint: 1, position: { x: 0, z: 6 }, escortCount: 2 },
+      ents: [{ ...net.snap.ents[0], hp: 57, alive: false }] };
+    mp.applySnapshot();
+    assert.equal(game.objective.cinematic, null, 'rodada nova encerra câmera anterior');
+    assert.equal(game.vmScene.visible, true);
+    assert.equal(game.timeLeft, 291, 'relógio do snapshot preservado');
+    assert.equal(vip.hp, 57, 'entidades aplicadas depois do reset');
+    assert.equal(vip.alive, false);
+    assert.equal(game.objective.state.position.z, 6, 'objetivo aplicado depois do reset');
+    assert.equal(game.roundNum, nextRound);
+  });
+  check('mesma rodada não reinicia apresentação em snapshots subsequentes', () => {
+    const prepare = game.objective.prepareRound;
+    let resets = 0;
+    game.objective.prepareRound = function () { resets++; return prepare.call(this); };
+    try {
+      net.snap = { ...net.snap, tick: net.snap.tick + 1, t: net.snap.t + .05 };
+      mp.applySnapshot();
+      mp.applySnapshot();
+      assert.equal(resets, 0);
+      assert.equal(game.timeLeft, 291);
+    } finally { game.objective.prepareRound = prepare; }
   });
 } finally { mp.dispose(); game.objective.dispose(); }
 if (failures) process.exitCode = 1;

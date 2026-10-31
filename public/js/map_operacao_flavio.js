@@ -301,7 +301,8 @@ export function buildOperacaoFlavio(scene, T = {}) {
 
   const usarProp = (id, pos, desiredSize, fallback, yaw = 0, fallbackSolid = true) => {
     const template = templates.get(id);
-    if (!template) return bloco(`fallback-${id}`, pos[0], fallback[1] / 2, pos[2], fallback[0], fallback[1], fallback[2], mats.metal, fallbackSolid);
+    // Fallback visual é decorativo: o colisor é o proxy explícito do colliderDoProp (igual com/sem GLB).
+    if (!template) return bloco(`fallback-${id}`, pos[0], fallback[1] / 2, pos[2], fallback[0], fallback[1], fallback[2], mats.metal, false);
     const model = template.clone(true);
     model.name = id;
     model.rotation.y = yaw;
@@ -332,7 +333,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
   usarProp('carrinho_ferramentas', [27, 0.08, 38], 2.2, [2.2, 1.4, 1.2], Math.PI / 2);
   usarProp('arco_seguranca', [0, 0.08, -13], 3, [3, 3, 0.8], 0, false);
   const colliderDoProp = (id, x, y, z, w, h, d) => {
-    if (!templates.has(id)) return;
+    // Proxy explícito: física idêntica com ou sem os templates (servidor headless sem GLB).
     colliders.push({ minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 });
   };
   colliderDoProp('aviao_executivo', 0, 0, 56, 3.4, 4.6, 10);

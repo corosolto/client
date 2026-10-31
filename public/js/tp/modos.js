@@ -218,7 +218,10 @@ function pintar() {
   const est = api().estado();
   const mapa = api().mapas().find((m) => m.id === est.mapa);
   for (const b of tela.modos.querySelectorAll('.tp-modos__modo')) {
-    if (b.dataset.modo === 'rounds' || b.dataset.modo === 'ctf') b.setAttribute('aria-pressed', String(b.dataset.modo === est.modo));
+    if (b.dataset.modo === 'rounds' || b.dataset.modo === 'ctf') {
+      b.disabled = !!est.objetivo;
+      b.setAttribute('aria-pressed', String(!est.objetivo && b.dataset.modo === est.modo));
+    }
     if (b.dataset.modo === 'mp') {
       const count = $('hub-online-n'), box = count?.closest('.hub-online');
       const n = box && !box.hidden ? Number(count.dataset.online) || 0 : 0;
@@ -226,7 +229,7 @@ function pintar() {
     }
   }
   for (const c of tela.lista.querySelectorAll('.tp-modos__mapa')) c.querySelector('.tp-modos__mapa-btn').setAttribute('aria-pressed', String(c.dataset.id === est.mapa));
-  const modo = tr(est.modo === 'ctf' ? 'CAPTURA' : 'MATA-MATA');
+  const modo = tr(est.objetivo ? 'ESCOLTA' : est.modo === 'ctf' ? 'CAPTURA' : 'MATA-MATA');
   tela.ficha.querySelector('.tp-modos__olho').textContent = mapa ? `${modo} · ${mapa.cats.map(tr).join(' · ')}` : modo;
   tela.ficha.querySelector('.tp-modos__nome').textContent = mapa?.nome || '';
   tela.ficha.querySelector('.tp-modos__desc').textContent = mapa?.desc || '';
