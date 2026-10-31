@@ -83,7 +83,7 @@ if (!MUTANTES.has(MUTANTE)) {
 const TETO_BYTES = 7_200_000;
 const TETO_REQS = 340;
 
-const JS_LOCAIS = ['js/main.js', 'js/textures.js'];
+const JS_LOCAIS = ['js/main.js', 'js/client-id.js', 'js/textures.js'];
 /* O pool ansioso é a REFERÊNCIA do ORC2, e também o mutante. A mesma transformação
    serve aos dois papéis de propósito: se ela parar de casar com o código, o portão
    morre barulhento (`throw`) em vez de passar em silêncio. */
@@ -127,6 +127,10 @@ async function mede({ refPoolAnsioso = false } = {}) {
     if (rel === 'js/textures.js' && (refPoolAnsioso || MUTANTE === 'cartaz-ansioso')) corpo = poolAnsioso(corpo);
     if (rel === 'js/main.js' && MUTANTE === 'fauna-cedo') corpo = faunaCedo(corpo);
     await context.route(`**/${rel}*`, async (rota) => {
+      if (rel === 'js/client-id.js') {
+        await rota.fulfill({ status: 200, contentType: 'text/javascript', body: corpo });
+        return;
+      }
       const r = await rota.fetch();
       await rota.fulfill({ response: r, body: corpo });
     });
@@ -165,8 +169,7 @@ async function mede({ refPoolAnsioso = false } = {}) {
   if (portao === null) throw new Error('a splash não liberou a entrada em 180 s');
   /* O failsafe de 20 s solta a splash com o cenário pela metade (main.js): medir ali
      seria medir o failsafe, e o orçamento sairia pequeno por motivo errado. */
-  if (portao > 19000) throw new Error(`a splash liberou em ${Math.round(portao)} ms — isso é o failsafe de 20 s, não o caminho dos assets`);
-
+  if (portao > 19000) throw new Error(`a splash liberou em ${Math.round(portao)} ms; erros: ${erros.join(' | ') || 'nenhum'}`);
   const ate = [...reqs.values()].filter((r) => r.fim !== null && r.fim <= portao + 50);
   const patchado = (u) => JS_LOCAIS.some((p) => u.includes(p));
   const resultado = {

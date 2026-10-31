@@ -1,0 +1,5 @@
+# Continuidade Ctrl+W / operação47
+
+Objetivo completo: Flávio+47PRs+HQ com GLM/OMP, anúncios/pilotos manuais; Javaexterno. Sem presumir merge main/deploy/migração/upload/publicação.
+
+2026-10-31T02:31:06.483419+00:00 — Branchfix/ctrl-w-20261028 head068bc28e4 estava limpa antes da sincronização. Merge origin/main4c9dc88b4 só conflitou em links de linhas gerados de docs/ARMAS-MATRIZ.md. Resolvido pelo gerador normal node tools/gen-weapon-matrix.mjs, sem editar números. Game automerge sem conflito; node --check Game/main/régua, docs:check e arch:check verdes; arch/docs gerados normalmente. Logs /tmp/corosolto-ctrlw-{matrix,arch,docs,docs-check,arch-check}.log. Checkpoint local antes de browser: eval:ctrlw real e mutantes ainda pendentes, assim como Windows/atalho reservado do OS, revisão atual e push. Não concluir que Ctrl+W ficou bloqueado em todo navegador; CW7 só mede confirmação real do Chrome. Outros owners usam browser, preservar filaúnica. Próximo executar gate existente com recursos livres e pushnormal, sem bypass.
