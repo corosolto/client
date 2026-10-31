@@ -153,7 +153,7 @@
     "eval:modoarmamp": "node tools/eval/modo-arma-mp-check.mjs",
     "eval:trocaarmamp": "node tools/eval/troca-arma-mp-check.mjs",
     "eval:fixture": "node tools/eval/fixture-check.mjs",
-    "eval:preload": "node tools/eval/preload-check.mjs",
+    "eval:preload": "node tools/eval/preload-check.mjs && node tools/eval/match-weapons-binding-check.mjs --self-test",
     "eval:apis": "node tools/eval/apis-migradas-check.mjs",
     "eval:geoproxy": "node tools/eval/geo-proxy-check.mjs",
     "eval:clans-sessao": "node tools/eval/clans-session-check.mjs",

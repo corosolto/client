@@ -731,6 +731,7 @@ export class Game {
     this._ctfOpt = ctf;
     this._arenaOpt = arena;
     this._armaN = 0;
+    this._matchWeapons = matchWeapons;
     this.renderer = renderer;
     this.sfx = sfx;
     this.settings = settings;
