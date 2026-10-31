@@ -146,7 +146,11 @@ async function preparar(page, mutante, aplicados = null, ctx = 0, rotas = null) 
   if (mutante === 'chat-eterno') await reescreve(css, (t) => t.replace('#chat-sala:not(.aberto) #chat-log>li:not(:nth-last-child(-n+3)){display:none}', ''));
   if (mutante === 'sem-silenciar') await reescreve(js, (t) => t.replace("acoes.insertBefore(silenciar, bloquear);", ''));
   if (mutante === 'pula-pequeno') await reescreve(css, (t) => t.replace('.tp-toque-pula{right:calc(40px + var(--sr));bottom:calc(128px + var(--sb));width:56px;height:56px}', '.tp-toque-pula{right:calc(40px + var(--sr));bottom:calc(128px + var(--sb));width:36px;height:36px}'));
-  if (mutante === 'atira-mudo') await reescreve(js, (t) => t.replace('g.mouseDown0 = true;', ''));
+  if (mutante === 'atira-mudo') await reescreve(/\/js\/game\.js/, (t) => {
+    const alvo = "    on('.touch-fire', () => {\n      if (!this._acceptInput() || !this.player.alive) return;\n      this.mouseDown0 = true; this._tryShoot();";
+    if (t.split(alvo).length !== 2) throw new Error('atira-mudo: bloco touch-fire ausente ou repetido');
+    return t.replace(alvo, alvo.replace('this.mouseDown0 = true; ', ''));
+  });
   if (mutante === 'ping-surdo') await reescreve(js, (t) => t.replace("e.code === 'KeyF'", "e.code === 'KeyF9'"));
   if (mutante === 'sem-cache-avatar') await reescreve(js, (t) => t.replace('const acerto = avatarCache.get(pid);', 'const acerto = null;'));
   if (mutante === 'cache-falha-preso') await reescreve(js, (t) => t.replace('avatarCache.delete(pid);', ''));
