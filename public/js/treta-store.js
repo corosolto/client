@@ -34,6 +34,7 @@ const storeVisit=()=>{
 let state=null,manifest={skins:{}},eyeManifest={eyewear:{}},selected=null,filter='all',stage=null,purchaseStage=null,refreshPromise=null,account=null;
 let onEquip=()=>{},infoStage=null,infoVersion=0;
 let equipmentRevision='';
+const inventoryWaiters=new Set();
 let accountEpoch=0,refreshEpoch=-1,loading=false,refreshFailed=false,purchasePending=false,view='characters',detailVersion=0,previewReady=false,previewLoading=false;
 const $=id=>document.getElementById(id);
 const owned=id=>state?.inventory?.some(s=>s.skin_id===id);
@@ -143,6 +144,8 @@ export async function desequiparTretaSkin() {
   return true;
 }
 function notifyEquipment() {
+  // A skin pode ser removida do inventário antes de seu manifesto chegar.
+  for(const resolve of inventoryWaiters)resolve();inventoryWaiters.clear();
   const revision=`${state?.accountId || ''}:${state?.inventory?.filter(s=>s.equipped && available(s.skin_id)).map(s=>s.skin_id).join(',') || ''}`;
   if(revision===equipmentRevision)return;
   equipmentRevision=revision;document.dispatchEvent(new CustomEvent('cs-treta-inventory-change'));
@@ -448,6 +451,8 @@ function initProposals() {
 export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   if(!$('hub-shop'))return;
   onEquip=onEquipped;initTretaRewards();initProposals();
+  let accountChange;
+  let accountChanged=new Promise(resolve=>{accountChange=resolve;});
   $('treta-retry').onclick=()=>void refresh();
   const code=new URLSearchParams(location.search).get('treta');
   const inviteCode=code && /^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(code)?code:null;
@@ -504,7 +509,7 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   document.addEventListener('cs-match-end',()=>{for(const delay of [2000,12000,30000])setTimeout(()=>{if(account?.authenticated)void refresh();},delay);});
   document.addEventListener('cs-shop-open',()=>{storeVisit();void refresh();});
   if(estadoDaUrl(location.href)?.secao==='loja')storeVisit();
-  document.addEventListener('cs-account-change',event=>{accountEpoch++;account=event.detail;state=null;selected=null;updateTretaRewards(null);for(const id of ['treta-detail','treta-purchase'])if($(id).open)$(id).close();draw();updateBuy();notifyEquipment();void refresh();});
+  document.addEventListener('cs-account-change',event=>{accountEpoch++;accountChange();accountChanged=new Promise(resolve=>{accountChange=resolve;});account=event.detail;state=null;selected=null;updateTretaRewards(null);for(const id of ['treta-detail','treta-purchase'])if($(id).open)$(id).close();draw();updateBuy();notifyEquipment();void refresh();});
   // Apresentação só depois da 1ª partida, quando o convite pós-partida (login-prompt.js) já decidiu.
   document.addEventListener('cs-pos-partida',event=>{
     if(event.detail?.treta){stored('cs_treta_intro','v1');return;}   // o convite já mostrou os T$
@@ -514,10 +519,26 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   });
   draw();
   const manifestsReady=()=>{draw();notifyEquipment();if(selected && $('treta-detail').open)void detail(selected,false);};
-  void fetch(assetUrl('models/skins/manifest.json')).then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();}).then(data=>{manifest=data;manifestsReady();}).catch(()=>{});
+  let skinManifestSettled=false;
+  const skinManifestReady=Promise.resolve().then(()=>fetch(assetUrl('models/skins/manifest.json'),{signal:AbortSignal.timeout(12000)})).then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();}).then(data=>{
+    if(!data || typeof data!=='object' || !data.skins || typeof data.skins!=='object' || Array.isArray(data.skins))throw new Error('manifest_invalid');
+    manifest=data;manifestsReady();
+  }).catch(()=>{}).finally(()=>{skinManifestSettled=true;});
   if(TRETA_ITEMS_ENABLED)void loadEyewearFitData().then(data=>{eyeManifest=data.manifest;manifestsReady();});
   void loadAccount().then(auth=>{account=auth;}).catch(()=>{});
-  return refresh();
+  return (async()=>{
+    let epoch;
+    do{
+      epoch=accountEpoch;const changed=accountChanged;
+      await Promise.race([refresh(),changed]);
+      if(epoch!==accountEpoch)continue;
+      while(!skinManifestSettled && epoch===accountEpoch && state?.inventory?.some(s=>s.equipped && (item(s.skin_id)?.slot || 'character')==='character')){
+        let wake;
+        const inventoryChanged=new Promise(resolve=>{wake=resolve;inventoryWaiters.add(resolve);});
+        try{await Promise.race([skinManifestReady,changed,inventoryChanged]);}finally{inventoryWaiters.delete(wake);}
+      }
+    }while(epoch!==accountEpoch);
+  })();
 }
 /* Histórico de compras: linhas de ledger kind='purchase' nomeadas pelo catálogo. */
 function drawHistory(){
