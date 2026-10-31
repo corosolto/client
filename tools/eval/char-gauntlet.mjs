@@ -168,14 +168,29 @@ for (const id of alvos) {
         cam.lookAt(mp.x, mp.y + 0.02, mp.z);
         X.renderer.render(X.scene, cam);
         const maos = X.renderer.domElement.toDataURL('image/png');
+        /* RECARGA (relato do dono, 31/10 — "animação de recarregar esquisita, braço vai
+           pra trás"): dispara o overlay procedural no pico do envelope (t = dur/2) e
+           captura o close da mão-L no pente. Só arma de 2 mãos (pistola recarrega 1h). */
+        let recarga = null;
+        if (w !== 'knife') {
+          m.ctrl.reload(1.2);
+          for (let i = 0; i < 36; i++) m.ctrl.update(1 / 60, 0, false, 0);
+          X.scene.updateMatrixWorld(true);
+          const mp2 = tp.mount.getWorldPosition(new THREE.Vector3());
+          cam.position.set(mp2.x + Math.sin(azC) * 1.25, mp2.y + 0.1, mp2.z + Math.cos(azC) * 1.25);
+          cam.lookAt(mp2.x, mp2.y, mp2.z);
+          X.renderer.render(X.scene, cam);
+          recarga = X.renderer.domElement.toDataURL('image/png');
+        }
+        const png = { frente, tres_quartos: tresQuartos, maos };
+        if (recarga) png.recarga = recarga;
         return {
           id: cid, wid: w,
           num: {
             frenteZ: +centroM.z.toFixed(3), canoZ: +cano.z.toFixed(3), rollDeg,
             dMaoR, dMaoL, oneHanded: !!m.ctrl.oneHanded, ikL: !!m.ctrl.ikL,
-            altura: +(model.scale ? 1 : 0),
           },
-          png: { frente, tres_quartos: tresQuartos, maos },
+          png,
         };
       } catch (e) {
         return { id: cid, wid: w, erro: String(e && e.message || e).slice(0, 200) };

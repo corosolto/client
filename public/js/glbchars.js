@@ -185,8 +185,12 @@ const CANARINHO_P1H_FORE = -16 * Math.PI / 180;
 const P1H_MAO_L = [-0.19, -0.06, 0.02];
 /* Corpos onde o clipe 1H autorado já resolve a anatomia e não aceita o overlay genérico. */
 const P1H_SKIP = new Set(['canarinho', 'bonzo']);
-/* Esquerdomacho alternava entre clipe 1H e overlay. Usa locomotiva base + um único overlay. */
-const P1H_BASE_CLIP = new Set(['esquerdomacho']);
+/* Esquerdomacho alternava entre clipe 1H e overlay. Usa locomotiva base + um único overlay.
+ * CANARINHO (31/10, "a pistola do canarinho é o pior de todos"): o idle1h retargetado do
+ * humano estica a ASA 0,50 m à frente do corpo (frenteZ medido 0,499 vs 0,26 dos
+ * elogiados) — a pistola lê como flutuando longe do corpo. No clipe base a asa fica ao
+ * lado do corpo e o porte curto dele (32°/-16°) segura a arma baixa, leitura de mascote. */
+const P1H_BASE_CLIP = new Set(['esquerdomacho', 'canarinho']);
 const loader = new GLTFLoader();
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 
