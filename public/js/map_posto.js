@@ -514,14 +514,21 @@ export function buildPosto(scene, T) {
   // OUTDOOR grande no muro leste (usa um poster da coleção, se houver; senão um letreiro)
   {
     const imgs = (T && T.posterImgs) || [], asp = (T && T.posterAspects) || [];
-    const board = new THREE.MeshLambertMaterial(imgs.length
-      ? { map: imgs[0], side: THREE.DoubleSide }
+    /* Paisagem (aspect 1,338): proporção de outdoor de verdade, texto grande legível
+       à distância. Arquivo distinto do bake — nome canônico reserva no graffiti_pass. */
+    const ARQUIVO = '6f2bbbe03a6c5a16af15fe12ebea0d6c.jpg';
+    const pi = (T && T.posterFiles) ? T.posterFiles.indexOf(ARQUIVO) : -1;
+    const board = new THREE.MeshLambertMaterial(pi >= 0 && imgs.length
+      ? { map: imgs[pi], side: THREE.DoubleSide }
       : { map: signTex('#111417', '#e03c3c', 'TRETA SUPREMA', 'ABASTECE E VAZA'), side: THREE.DoubleSide });
-    const A = imgs.length ? (asp[0] || 0.7) : 2.2;
+    const A = pi >= 0 && imgs.length ? (asp[pi] || 0.7) : 2.2;
     const H = 5;
-    addBox(0.3, 6, H * A + 1, MAT.aco, wX - 0.4, 3, -18, { collide: false });   // moldura
+    const moldura = addBox(0.3, 6, H * A + 1, MAT.aco, wX - 0.4, 3, -18, { collide: false });   // moldura
     const bm = new THREE.Mesh(new THREE.PlaneGeometry(H * A, H), board);
-    bm.position.set(wX - 0.6, 5.5, -18); bm.rotation.y = -Math.PI / 2; root.add(bm);
+    /* 2,5 cm da face REAL oeste da moldura (era 5 cm nominais: fronteira do float no
+       suporte de 5 cm). A moldura (y 3–9) cobre a peça inteira. */
+    bm.position.set(moldura.position.x - 0.15 - 0.025, 5.5, -18); bm.rotation.y = -Math.PI / 2; root.add(bm);
+    bm.name = 'poster:' + ARQUIVO;
   }
 
   /* ---------------- GREVE DOS CAMINHONEIROS (reflete o Brasil: preço alto → greve → protesto) ----------------

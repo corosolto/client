@@ -165,7 +165,7 @@
     "eval:clans-sessao": "node tools/eval/clans-session-check.mjs",
     "eval:armas": "node tools/eval/armas-check.mjs",
     "eval:comentario": "node tools/eval/comentario-check.mjs",
-    "eval:posters": "node tools/eval/poster-aspect-check.mjs",
+    "eval:posters": "node tools/eval/poster-aspect-check.mjs && node tools/eval/manual-poster-placement-check.mjs && node tools/eval/manual-poster-placement-check.mjs --mutante=arte-repetida && node tools/eval/manual-poster-placement-check.mjs --mutante=afastado && node tools/eval/manual-poster-placement-check.mjs --mutante=sobreposto && node tools/eval/manual-poster-placement-check.mjs --mutante=peca-encolhida && node tools/eval/manual-poster-placement-check.mjs --mutante=material-escondido",
     "eval:ui": "node tools/eval/ui-check.mjs all",
     "eval:ui-chat": "node tools/eval/ui-check.mjs ui1c",
     "//eval:community-inbox": "Central da conta (missões, avisos, mensagens) no community.js real: contadores, rascunho/idempotência do envio, leitura só dos ids recebidos e a DM escondida com a flag do servidor desligada. Mutantes: feature-off-entry, unsafe-text, dead-actions, retry-new-key, account-keeps-draft, stale-conversation-response, typing-during-send, failure-keeps-disabled, rerender-keeps-input-enabled, read-all-rows, ignore-message-badge, refresh-engole-render.",
@@ -739,7 +739,8 @@
     "//eval:tpbackpedal": "Sentido de recuo local no controlador real, preservando autoridade e poses fora do recuo; mutantes no-back, wrong-sign e player.",
     "//eval:character-normal-quality": "Normais dos quatro personagens revisados: fingerprint completo e continuidade dos grupos; contrato em docs/visual-consistency/NORMAIS-PERSONAGENS.md.",
     "eval:character-normal-quality": "node tools/eval/character-normal-quality-check.mjs",
-    "eval:character-normal-weld": "node tools/eval/character-normal-weld-check.mjs"
+    "eval:character-normal-weld": "node tools/eval/character-normal-weld-check.mjs",
+    "//eval:posters": "Proporção dos posters e montagem manual real em Praça/Posto: identidade, suporte e sobreposição, mais5mutantes causais; docs/visual-consistency/POSTERS-MANUAIS.md."
   },
   "repository": {
     "type": "git",
