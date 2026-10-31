@@ -494,3 +494,11 @@ MotionR5 devolvido: AKnovaL1v realmenteRED +7px nas2proporções, nãoUNKNOWN. S
 - Censo R4: crítico final focal CLEAN, cinco controles incluindo erro/404 tardio durante leitura mapId e silêncio insuficiente com zero pendentes. Root repetiu Ego Piscina:52peças102/91011,2% RED contra piso59,2 antigo. Dados e META/TETO preservados. Novo contrato runtime derivado do pedido atual (limpo, único, branco/casaB) em escrita GLM92313, sem diminuir metas antigas.
 - Correção de evidência motion:803/634 são updates contados no vídeo, não todos verificados quanto à finitude. A instrumentação R2 verifica números apenas nas amostras ~20Hz (JSON), todas finitas. Critério de revisão contínua ainda em andamento; não anunciar finitude de cada quadro.
 - Grass close R1: primeira chamada excedeu15s do Ego enquanto carregava assets; não produziu fotos e não é aceite. Recuperar página e agendar boot assíncrono antes de repetir. Nenhum asset público trocado.
+
+### Entrega isolada do checkpoint — 13:31 UTC
+
+- Criar checkout próprio de QA a partir do último checkpoint42c89bea6, separado dos writers M3/skins/réguas. O objetivo é validar e abrir draft revisável com o trabalho já consolidado, sem esperar a missão inteira e sem incluir alterações ainda recusadas. O WT principal de implementação permanece a fonte das próximas melhorias, transferidas só após crítica e prova.
+- Não houve merge/release. Estraga-código ainda precisa revisar o SHA atual de #1181. Operação Flávio permanece excluída.
+- M3 R2 ainda NÃO aceito: crítico encontrou UVs/localtransform que escapam do novo gate e regressão real de occluders na travessia Córrego. Capturas de Campo4 já válidas; Córrego retomado depois de timeout causado exclusivamente por mídia de áudio local, fora do recorte visual. Correção de tiro/LOS e instrumentos antecederá integração.
+- Motion crítico R2 achou câmera entrando no crânio na morte; caminhada/ADS/recarga/pistola/parede sem outro defeito concreto nas amostras. Game congelado para crítica de skins antes de writer da morte.
+- Pickups produto sem novo achado; gate flash ainda tem duas lacunas (crash confundido com detecção e falta de boom flashOn), GLM R3 exclusivo em correção. Não contar banner ou classe de erro como aceitação.
