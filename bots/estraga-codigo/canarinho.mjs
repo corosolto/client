@@ -734,7 +734,7 @@ const chamadoDireto = process.argv[1] && import.meta.url === new URL(`file://${p
 if (chamadoDireto) {
   if (!REPOS.includes(repoCli)) throw new Error(`repo não configurado: ${repoCli}`);
   if (cmd === 'poll') await poll();
-  else if (cmd === 'review') await reviewPr(repoCli, Number(arg), { forcar: flags.includes('--force') });
+  else if (cmd === 'review') await reviewPr(repoCli, Number(arg), { forcar: flags.includes('--force'), publicarSempre: flags.includes('--force') });
   else if (cmd === 'replay') await reviewPr(repoCli, Number(arg), { seco: true });
   else if (cmd === 'fix') await fixPr(Number(arg));
   else if (cmd === 'varre') await varre(Number(arg), { seco: flags.includes('--seco') });
