@@ -11,8 +11,9 @@
    semântico — falso verde, limiar duplicado, invariante sem mutação.
 
    COMANDOS:
-     node canarinho.mjs poll              daemon: PRs novos + pushes diretos na main
-     node canarinho.mjs review 300        revisa um PR e POSTA (credencial: pat_env do config.json)
+     node canarinho.mjs poll              daemon: comentários, PRs e pushes na main
+     node canarinho.mjs review 300        revisa no primeiro repo e POSTA
+     node canarinho.mjs review 300 --repo=corosolto/backend
      node canarinho.mjs replay 300        idem, mas NÃO posta (calibração)
      node canarinho.mjs commits           revisa pushes diretos na main não-merge
      node canarinho.mjs selftest          fixture mínima pelo pipeline inteiro
@@ -29,6 +30,35 @@ import { alerta, barra, codigo, grafoMermaid } from '../lib/formatacao.mjs';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)));
 const CFG = JSON.parse(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
+
+function reposDoConfig(cfg) {
+  if (!Array.isArray(cfg.repos) || cfg.repos.length === 0)
+    throw new Error('config.json precisa de "repos": ["owner/repo", ...]');
+  const repos = [...new Set(cfg.repos.map((repo) => String(repo).trim()).filter(Boolean))];
+  if (repos.some((repo) => !/^[^/\s]+\/[^/\s]+$/.test(repo)))
+    throw new Error('cada item de "repos" precisa estar no formato owner/repo');
+  return repos;
+}
+const REPOS = reposDoConfig(CFG);
+const REPO_PRINCIPAL = REPOS[0];
+const chavePr = (repo, n) => `${repo}#${n}`;
+const chaveComentario = (repo, id) => `${repo}#${id}`;
+const ASSOCIACOES_AUTORIZADAS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
+
+function comandosPendentes(repo, comentarios, processados) {
+  return comentarios
+    .filter((comentario) => ASSOCIACOES_AUTORIZADAS.has(comentario.author_association))
+    .filter((comentario) => String(comentario.body || '').split(/\r?\n/).some((linha) =>
+      linha.trim().toLowerCase() === '@estraga-codigo full review'))
+    .filter((comentario) => !processados.has(chaveComentario(repo, comentario.id)))
+    .map((comentario) => ({
+      id: comentario.id,
+      key: chaveComentario(repo, comentario.id),
+      number: Number(String(comentario.issue_url || '').match(/\/issues\/(\d+)$/)?.[1]),
+    }))
+    .filter((comando) => Number.isInteger(comando.number) && comando.number > 0)
+    .sort((a, b) => a.id - b.id);
+}
 const PERSONA = carregarPersona(RAIZ);
 /* Estado FORA do volume externo: sob launchd o node leva EPERM ao abrir para
  * escrita qualquer coisa em /Volumes/Zenith (TCC), e sem gravar o head revisado
@@ -40,17 +70,26 @@ const ESTADO_DIR = meuEstadoDir('estraga-codigo', {
 });
 if (!existsSync(join(ESTADO_DIR, 'reviews'))) mkdirSync(join(ESTADO_DIR, 'reviews'), { recursive: true });
 const ESTADO_ARQ = join(ESTADO_DIR, 'estado.json');
-const estado = existsSync(ESTADO_ARQ) ? JSON.parse(readFileSync(ESTADO_ARQ, 'utf8')) : { prs: {}, main: null };
+const estadoLido = existsSync(ESTADO_ARQ) ? JSON.parse(readFileSync(ESTADO_ARQ, 'utf8')) : {};
+const estado = {
+  prs: estadoLido.prs || {},
+  main: typeof estadoLido.main === 'object' && estadoLido.main !== null
+    ? estadoLido.main
+    : { [REPO_PRINCIPAL]: estadoLido.main || null },
+  comandos: estadoLido.comandos || {},
+};
+const estadoPr = (repo, n) =>
+  estado.prs[chavePr(repo, n)] || (repo === REPO_PRINCIPAL ? estado.prs[n] : undefined);
 const salvar = () => writeFileSync(ESTADO_ARQ, JSON.stringify(estado, null, 2));
 
 /* Cliente GitHub da casa: PAT por pat_env (config.json), keychain de fallback
- * (compat com o token já instalado na máquina) e GH_DRY_RUN que intercepta
- * todo POST antes de sair da máquina — ver bots/lib/gh.mjs. */
+ * (compat com o token já instalado na máquina) e GH_DRY_RUN opcional para
+ * calibração manual — ver bots/lib/gh.mjs. */
 const { gh, api, gq, dry } = criarCliente({
   patEnv: CFG.pat_env || 'GH_PAT_FALA',
   keychain: CFG.keychain || null,
   estadoDir: ESTADO_DIR,
-  repo: CFG.repo,
+  repo: REPO_PRINCIPAL,
 });
 const log = (...a) => console.log(`[${new Date().toLocaleTimeString('pt-BR')}]`, ...a);
 
@@ -91,17 +130,17 @@ function extraiJson(texto) {
   return null;
 }
 
-function diffDoPr(n) {
+function diffDoPr(repo, n) {
   /* `gh pr diff` morre em 406 acima de 300 arquivos — cai pra API de files
    * (paginada) e monta um diff equivalente por patch. */
   try {
-    const diff = gh(['pr', 'diff', String(n), '-R', CFG.repo]);
+    const diff = gh(['pr', 'diff', String(n), '-R', repo]);
     const arquivos = [...diff.matchAll(/^diff --git a\/(\S+) b\/(\S+)$/gm)].map((m) => m[2]);
     return { diff, arquivos };
   } catch {
     const arquivos = []; const pedacos = [];
     for (let pag = 1; pag <= 10; pag++) {
-      const fs = api(`repos/${CFG.repo}/pulls/${n}/files?per_page=100&page=${pag}`);
+      const fs = api(`repos/${repo}/pulls/${n}/files?per_page=100&page=${pag}`);
       if (!fs.length) break;
       for (const f of fs) { arquivos.push(f.filename); pedacos.push(`diff --git a/${f.filename} b/${f.filename}\n${f.patch || '(binário/sem patch)'}`); }
       if (fs.length < 100) break;
@@ -325,9 +364,9 @@ function corpoReview(achados, { resumo = '', arquivos = [], risco = null, nota =
   return `${cabecalho(PERSONA)}\n\n${mapa}\n${oquee}${abre}\n\n${veredito}\n\n> Revisão de bot — fio não resolvido TRAVA o merge (a main exige conversa resolvida). Resolve ou refuta.\n\n${blocos.join('\n\n')}\n${blocoImpacto}\n---\nResolve ou refuta nos fios — refutado com razão, eu caio fora.\n\n${assinatura(PERSONA)}`;
 }
 
-function postaReview(n, pr, meta, arquivos) {
+function postaReview(repo, n, pr, meta, arquivos, { marcador = '' } = {}) {
   const { achados } = meta;
-  const body = corpoReview(achados, { ...meta, arquivos });
+  const body = `${corpoReview(achados, { ...meta, arquivos })}${marcador ? `\n\n${marcador}` : ''}`;
   const rotuloSev = { major: 'grave', minor: 'leve' };
   /* REQUEST_CHANGES com achado grave: com a main protegida por "require
    * resolved conversations", fio do bot não resolvido TRAVA o merge — era o
@@ -347,19 +386,21 @@ function postaReview(n, pr, meta, arquivos) {
     return { path: x.arquivo, line: x.linha, body: corpo + conserto + patch + mut };
   });
   try {
-    api(`repos/${CFG.repo}/pulls/${n}/reviews`, 'POST', { commit_id: pr.headRefOid, body, event: evento, comments });
+    api(`repos/${repo}/pulls/${n}/reviews`, 'POST', { commit_id: pr.headRefOid, body, event: evento, comments });
   } catch {
     /* linha fora do diff (422): publica tudo no corpo — fio não se perde por causa de índice */
-    api(`repos/${CFG.repo}/pulls/${n}/reviews`, 'POST', { commit_id: pr.headRefOid, body, event: evento });
+    api(`repos/${repo}/pulls/${n}/reviews`, 'POST', { commit_id: pr.headRefOid, body, event: evento });
   }
 }
 
-function registraReview(n, pr, meta, decisao, publicada) {
+function registraReview(repo, n, pr, meta, decisao, publicada) {
   const quando = new Date().toISOString();
-  estado.prs[n] = { head: pr.headRefOid, quando, publicada };
+  estado.prs[chavePr(repo, n)] = { head: pr.headRefOid, quando, publicada };
   // Só bloqueadores qualificados alimentam o conserta-codigo. Todo o resto
   // fica como observação local para calibrar o revisor sem poluir GitHub.
-  writeFileSync(join(ESTADO_DIR, 'reviews', `pr-${n}.json`), JSON.stringify({
+  const nomeRepo = repo.replace('/', '-');
+  writeFileSync(join(ESTADO_DIR, 'reviews', `${nomeRepo}-pr-${n}.json`), JSON.stringify({
+    repo,
     pr: n,
     head: pr.headRefOid,
     quando,
@@ -370,14 +411,20 @@ function registraReview(n, pr, meta, decisao, publicada) {
   salvar();
 }
 
-async function reviewPr(n, { seco = false } = {}) {
-  const pr = gh(['pr', 'view', String(n), '-R', CFG.repo, '--json', 'number,title,headRefOid,isDraft,baseRefName'], { json: true });
-  if (pr.isDraft && CFG.pular_drafts) return console.log(`PR ${n} é draft — pulado`);
-  const ja = estado.prs[n]?.head === pr.headRefOid;
-  if (ja && !seco) return console.log(`PR ${n} head ${pr.headRefOid.slice(0, 8)} já revisado`);
-  console.log(`PR ${n}: ${pr.title}`);
-  const { diff, arquivos } = diffDoPr(n);
-  const meta = await revisar({ diff, arquivos }, { rotulo: `PR ${n}` });
+async function reviewPr(repo, n, {
+  seco = false,
+  forcar = false,
+  permitirDraft = false,
+  publicarSempre = false,
+  marcador = '',
+} = {}) {
+  const pr = gh(['pr', 'view', String(n), '-R', repo, '--json', 'number,title,headRefOid,isDraft,baseRefName'], { json: true });
+  if (pr.isDraft && CFG.pular_drafts && !permitirDraft) return console.log(`${repo} PR ${n} é draft — pulado`);
+  const ja = estadoPr(repo, n)?.head === pr.headRefOid;
+  if (ja && !seco && !forcar) return console.log(`${repo} PR ${n} head ${pr.headRefOid.slice(0, 8)} já revisado`);
+  console.log(`${repo} PR ${n}: ${pr.title}`);
+  const { diff, arquivos } = diffDoPr(repo, n);
+  const meta = await revisar({ diff, arquivos }, { rotulo: `${repo} PR ${n}` });
   console.log(corpoReview(meta.achados, { ...meta, arquivos }));
   /* O replay existe para CALIBRAR, e calibrar sem saber se aquilo iria ao ar é
    * meio exercício: o que decide a publicação não é o achado, é o filtro de
@@ -390,21 +437,26 @@ async function reviewPr(n, { seco = false } = {}) {
     return;
   }
   const decisao = decisaoPublicacao(meta.achados);
-  if (decisao.publicar) {
-    postaReview(n, pr, { ...meta, achados: decisao.achados }, arquivos);
-    registraReview(n, pr, meta, decisao, true);
-    console.log(`→ review bloqueante postada no PR ${n}`);
+  if (decisao.publicar || publicarSempre) {
+    postaReview(repo, n, pr, { ...meta, achados: decisao.achados }, arquivos, { marcador });
+    registraReview(repo, n, pr, meta, decisao, true);
+    console.log(`→ review ${decisao.publicar ? 'bloqueante ' : ''}postada em ${repo}#${n}`);
   } else {
-    registraReview(n, pr, meta, decisao, false);
+    registraReview(repo, n, pr, meta, decisao, false);
     console.log(`→ silencioso no GitHub: ${decisao.silenciados} observação(ões) registrada(s) localmente`);
   }
 }
 
 /* Pushes DIRETOS na main (não-merge) também são diff — comentário no commit. */
-async function reviewCommits({ seco = false } = {}) {
-  const ultimo = estado.main;
-  const lista = gh(['api', `repos/${CFG.repo}/commits?sha=main&per_page=15`], { json: true })
-    .filter((c) => !ultimo || c.sha !== ultimo)
+async function reviewCommits(repo, { seco = false } = {}) {
+  const ultimo = estado.main[repo];
+  if (!ultimo) {
+    estado.main[repo] = gh(['api', `repos/${repo}/commits/main`], { json: true }).sha;
+    salvar();
+    return;
+  }
+  const lista = gh(['api', `repos/${repo}/commits?sha=main&per_page=15`], { json: true })
+    .filter((c) => c.sha !== ultimo)
     .filter((c) => c.parents.length === 1)   // merge tem 2 pais: veio de PR revisada
     /* bump de release é commit de MÁQUINA (gerado por tools/gen-docs no CI):
      * revisá-lo é auto-revisão de pipeline — o e-mail com falso grave do
@@ -416,32 +468,66 @@ async function reviewCommits({ seco = false } = {}) {
      * meio não pode deixar o mesmo commit re-revisado (e re-comentado) pra
      * sempre — era o loop infinito do "poll: achados is not defined". */
     try {
-      console.log(`commit direto ${c.sha.slice(0, 8)}: ${c.commit.message.split('\n')[0]}`);
-      const det = gh(['api', `repos/${CFG.repo}/commits/${c.sha}`], { json: true });
+      console.log(`${repo} commit direto ${c.sha.slice(0, 8)}: ${c.commit.message.split('\n')[0]}`);
+      const det = gh(['api', `repos/${repo}/commits/${c.sha}`], { json: true });
       const arquivos = det.files.map((f) => f.filename);
       const diff = det.files.map((f) => `diff --git a/${f.filename} b/${f.filename}\n${f.patch || ''}`).join('\n');
-      const meta = await revisar({ diff, arquivos }, { rotulo: c.sha.slice(0, 8) });
+      const meta = await revisar({ diff, arquivos }, { rotulo: `${repo} ${c.sha.slice(0, 8)}` });
       const decisao = decisaoPublicacao(meta.achados);
       if (decisao.publicar && !seco)
-        api(`repos/${CFG.repo}/commits/${c.sha}/comments`, 'POST', { body: corpoReview(decisao.achados, { ...meta, arquivos }) });
+        api(`repos/${repo}/commits/${c.sha}/comments`, 'POST', { body: corpoReview(decisao.achados, { ...meta, arquivos }) });
       else if (meta.achados.length) console.log(corpoReview(meta.achados, { ...meta, arquivos }));
       console.log(`→ ${meta.achados.length} observação(ões), ${decisao.achados.length} publicável(is)`);
     } catch (e) { console.error(`  commit ${c.sha.slice(0, 8)}: ${String(e.message).split('\n')[0]}`); }
-    estado.main = c.sha;
+    estado.main[repo] = c.sha;
     salvar();
   }
-  estado.main = gh(['api', `repos/${CFG.repo}/commits/main`], { json: true }).sha;
+  estado.main[repo] = gh(['api', `repos/${repo}/commits/main`], { json: true }).sha;
   salvar();
 }
 
-async function poll() {
-  console.log(`canarinho poll: ${CFG.repo} a cada ${CFG.intervalo_min} min (Ctrl+C para)`);
-  for (;;) {
+const marcadorComando = (id) => `<!-- estraga-codigo:full-review:${id} -->`;
+
+async function processaComandos(repo, numerosAbertos) {
+  const comentarios = api(`repos/${repo}/issues/comments?sort=created&direction=desc&per_page=100`);
+  const pendentes = comandosPendentes(repo, comentarios, new Set(Object.keys(estado.comandos)));
+  for (const comando of pendentes) {
+    if (!numerosAbertos.has(comando.number)) continue;
+    const marcador = marcadorComando(comando.id);
+    const reviews = api(`repos/${repo}/pulls/${comando.number}/reviews?per_page=100`);
+    if (reviews.some((review) => String(review.body || '').includes(marcador))) {
+      estado.comandos[comando.key] = { pr: comando.number, quando: new Date().toISOString() };
+      salvar();
+      continue;
+    }
+    log(`comando full review: ${repo}#${comando.number} (comentário ${comando.id})`);
     try {
-      const prs = gh(['pr', 'list', '-R', CFG.repo, '--state', 'open', '--limit', '30', '--json', 'number'], { json: true });
-      for (const { number } of prs) await reviewPr(number);
-      await reviewCommits();
-    } catch (e) { console.error('poll:', String(e.message).split('\n')[0]); }
+      await reviewPr(repo, comando.number, {
+        forcar: true,
+        permitirDraft: true,
+        publicarSempre: true,
+        marcador,
+      });
+      estado.comandos[comando.key] = { pr: comando.number, quando: new Date().toISOString() };
+      salvar();
+    } catch (e) {
+      console.error(`comando ${repo}#${comando.number}:`, String(e.message).split('\n')[0]);
+    }
+  }
+}
+
+async function poll() {
+  console.log(`canarinho poll: ${REPOS.join(', ')} a cada ${CFG.intervalo_min} min (Ctrl+C para)`);
+  for (;;) {
+    for (const repo of REPOS) {
+      try {
+        const prs = gh(['pr', 'list', '-R', repo, '--state', 'open', '--limit', '100', '--json', 'number'], { json: true });
+        const numerosAbertos = new Set(prs.map(({ number }) => number));
+        await processaComandos(repo, numerosAbertos);
+        for (const { number } of prs) await reviewPr(repo, number);
+        await reviewCommits(repo);
+      } catch (e) { console.error(`poll ${repo}:`, String(e.message).split('\n')[0]); }
+    }
     await new Promise((r) => setTimeout(r, CFG.intervalo_min * 60_000));
   }
 }
@@ -554,7 +640,7 @@ async function fixar(n, pr, achados) {
       log('     (o comentário da revisão já foi postado; o conserto ficou no worktree descartado)');
       return;
     }
-    const prFilho = api(`repos/${CFG.repo}/pulls`, 'POST', {
+    const prFilho = api(`repos/${REPO_PRINCIPAL}/pulls`, 'POST', {
       title: `fix(pr#${n}): ${aplicadas[0].titulo.slice(0, 60)}`,
       head: branch, base: pr.headRefName,
       body: `Conserto automático do **estraga-codigo** para ${aplicadas.length} achado(s) **major** da revisão advisory do #${n}.\n\n${aplicadas.map((e) => `- ${e.titulo} (\`${e.arquivo}\`)`).join('\n')}\n\nGate local no worktree: \`${CFG.gate_cmd || 'npm run syntax'}\` verde.\n\n---\nRevisão de humano ainda vale — o bot passou pelas réguas, não pelo teu olho.`,
@@ -567,10 +653,10 @@ async function fixar(n, pr, achados) {
 }
 
 async function fixPr(n) {
-  const pr = gh(['pr', 'view', String(n), '-R', CFG.repo, '--json', 'number,headRefName,headRefOid,baseRefName'], { json: true });
-  log(`fix PR ${n} (head ${pr.headRefOid.slice(0, 8)})`);
-  const { diff, arquivos } = diffDoPr(n);
-  const { achados } = await revisar({ diff, arquivos }, { rotulo: `fix ${n}` });
+  const pr = gh(['pr', 'view', String(n), '-R', REPO_PRINCIPAL, '--json', 'number,headRefName,headRefOid,baseRefName'], { json: true });
+  log(`fix ${REPO_PRINCIPAL} PR ${n} (head ${pr.headRefOid.slice(0, 8)})`);
+  const { diff, arquivos } = diffDoPr(REPO_PRINCIPAL, n);
+  const { achados } = await revisar({ diff, arquivos }, { rotulo: `fix ${REPO_PRINCIPAL}#${n}` });
   return fixar(n, pr, decisaoPublicacao(achados).achados);
 }
 
@@ -581,14 +667,14 @@ async function fixPr(n) {
 const BOTS_REVISOR = /^(coderabbitai|greptile-apps|greptile|estraga-codigo)(\[bot\])?$/i;
 
 async function threadsDoPr(n) {
-  const [owner, repo] = CFG.repo.split('/');
+  const [owner, repo] = REPO_PRINCIPAL.split('/');
   const q = `query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){reviewThreads(first:50){nodes{id isResolved comments(first:30){nodes{author{login} body replies(first:30){nodes{author{login}}}}}}}}}}`;
   return gq(q, { o: owner, r: repo, n })?.data?.repository?.pullRequest?.reviewThreads?.nodes || [];
 }
 
 async function varre(n, { seco = false } = {}) {
-  const pr = gh(['pr', 'view', String(n), '-R', CFG.repo, '--json', 'number,title,headRefOid,isDraft,baseRefName,statusCheckRollup'], { json: true });
-  log(`── PR #${n} · ${pr.title.slice(0, 64)} (${pr.headRefOid.slice(0, 8)})`);
+  const pr = gh(['pr', 'view', String(n), '-R', REPO_PRINCIPAL, '--json', 'number,title,headRefOid,isDraft,baseRefName,statusCheckRollup'], { json: true });
+  log(`── ${REPO_PRINCIPAL} PR #${n} · ${pr.title.slice(0, 64)} (${pr.headRefOid.slice(0, 8)})`);
   if (pr.isDraft && CFG.pular_drafts) return log('     draft — pulado');
   const roll = pr.statusCheckRollup || [];
   const vermelhos = roll.filter((c) => c.conclusion === 'FAILURE' || c.state === 'FAILURE').length;
@@ -601,19 +687,19 @@ async function varre(n, { seco = false } = {}) {
     return BOTS_REVISOR.test(ultimo?.author?.login || '');
   });
   log(`     fios: ${abertos.length} aberto(s) · ${esperando.length} com revisor-bot na última palavra`);
-  const { diff, arquivos } = diffDoPr(n);
-  const meta = await revisar({ diff, arquivos }, { rotulo: `varre ${n}` });
+  const { diff, arquivos } = diffDoPr(REPO_PRINCIPAL, n);
+  const meta = await revisar({ diff, arquivos }, { rotulo: `varre ${REPO_PRINCIPAL}#${n}` });
   const achados = meta.achados;
   const decisao = decisaoPublicacao(achados);
   log(`     revisão: ${achados.length} achado(s)${achados.length ? ' — ' + achados.map((x) => `[${x.severidade}] ${x.titulo.slice(0, 40)}`).join(' · ') : ' 🎉'}`);
   if (seco) return log('     (seco: sem post, sem push)');
-  const novo = estado.prs[n]?.head !== pr.headRefOid;
+  const novo = estadoPr(REPO_PRINCIPAL, n)?.head !== pr.headRefOid;
   if (novo && decisao.publicar) {
-    postaReview(n, pr, { ...meta, achados: decisao.achados }, arquivos);
-    registraReview(n, pr, meta, decisao, true);
+    postaReview(REPO_PRINCIPAL, n, pr, { ...meta, achados: decisao.achados }, arquivos);
+    registraReview(REPO_PRINCIPAL, n, pr, meta, decisao, true);
     log('     → review bloqueante postada');
   } else if (novo) {
-    registraReview(n, pr, meta, decisao, false);
+    registraReview(REPO_PRINCIPAL, n, pr, meta, decisao, false);
     log(`     → GitHub silencioso (${decisao.silenciados} observação(ões) local(is))`);
   }
   if (decisao.achados.length) await fixar(n, pr, decisao.achados);
@@ -621,14 +707,14 @@ async function varre(n, { seco = false } = {}) {
 
 async function warroom({ umaRodada = false, seco = false } = {}) {
   console.log('\x1b[2m' + '═'.repeat(72) + '\x1b[0m');
-  console.log('  ESTraga-código WAR-ROOM · ' + CFG.repo + (umaRodada ? ' · 1 rodada' : ' · Ctrl+C para sair') + (seco ? ' · SECO (sem post)' : ' · REAL (posta e corrige)'));
+  console.log('  ESTraga-código WAR-ROOM · ' + REPO_PRINCIPAL + (umaRodada ? ' · 1 rodada' : ' · Ctrl+C para sair') + (seco ? ' · SECO (sem post)' : ' · REAL (posta e corrige)'));
   console.log('\x1b[2m' + '═'.repeat(72) + '\x1b[0m');
   for (;;) {
     try {
-      const prs = gh(['pr', 'list', '-R', CFG.repo, '--state', 'open', '--limit', '30', '--json', 'number'], { json: true });
+      const prs = gh(['pr', 'list', '-R', REPO_PRINCIPAL, '--state', 'open', '--limit', '30', '--json', 'number'], { json: true });
       log(`${prs.length} PR(s) aberto(s)`);
       for (const { number } of prs) await varre(number, { seco }).catch((e) => log(`  erro PR ${number}: ${String(e.message).split('\n')[0]}`));
-      await reviewCommits({ seco }).catch((e) => log('  erro commits:', String(e.message).split('\n')[0]));
+      await reviewCommits(REPO_PRINCIPAL, { seco }).catch((e) => log('  erro commits:', String(e.message).split('\n')[0]));
     } catch (e) { log('rodada falhou:', String(e.message).split('\n')[0]); }
     if (umaRodada) break;
     log(`zZZ — próxima rodada em ${CFG.intervalo_min} min`);
@@ -638,19 +724,21 @@ async function warroom({ umaRodada = false, seco = false } = {}) {
 
 const [cmd, arg, ...flags] = process.argv.slice(2);
 const seco = flags.includes('--seco') || cmd === 'replay';
+const repoCli = flags.find((flag) => flag.startsWith('--repo='))?.slice('--repo='.length) || REPO_PRINCIPAL;
 /* Guard de CLI: importado pelo teste, não dispara comando nenhum. */
 const chamadoDireto = process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href;
 if (chamadoDireto) {
+  if (!REPOS.includes(repoCli)) throw new Error(`repo não configurado: ${repoCli}`);
   if (cmd === 'poll') await poll();
-  else if (cmd === 'review') await reviewPr(Number(arg));
-  else if (cmd === 'replay') await reviewPr(Number(arg), { seco: true });
+  else if (cmd === 'review') await reviewPr(repoCli, Number(arg), { forcar: flags.includes('--force') });
+  else if (cmd === 'replay') await reviewPr(repoCli, Number(arg), { seco: true });
   else if (cmd === 'fix') await fixPr(Number(arg));
   else if (cmd === 'varre') await varre(Number(arg), { seco: flags.includes('--seco') });
   else if (cmd === 'warroom') await warroom({ umaRodada: flags.includes('--uma-rodada'), seco: flags.includes('--seco') });
-  else if (cmd === 'commits') await reviewCommits({ seco });
+  else if (cmd === 'commits') await reviewCommits(repoCli, { seco });
   else if (cmd === 'selftest') await selftest();
-  else { console.log('uso: canarinho.mjs poll|review <n>|replay <n>|fix <n>|varre <n>|warroom [--uma-rodada]|commits|selftest'); process.exit(2); }
+  else { console.log('uso: canarinho.mjs poll|review <n> [--repo=owner/repo] [--force]|replay <n> [--repo=owner/repo]|fix <n>|varre <n>|warroom [--uma-rodada]|commits [--repo=owner/repo]|selftest'); process.exit(2); }
 }
 
 /* Exportados para o teste offline (testes/teste.mjs) — tudo puro ou local. */
-export { extraiJson, corpoReview, fatiaDiff, arquivosDoPedaco, acoesPara, acoes, IGNORAR };
+export { extraiJson, corpoReview, fatiaDiff, arquivosDoPedaco, acoesPara, acoes, IGNORAR, reposDoConfig, chavePr, comandosPendentes };

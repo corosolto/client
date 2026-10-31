@@ -1,6 +1,6 @@
 ---
 nome: backend-api
-quando: src/pages/api/**, src/lib/**, src/middleware*
+quando: src/pages/api/**, src/lib/**, src/middleware*, game/**, signaling/**, scripts/**, server.js, server-*.js
 ativo: true
 ---
 Revisão de rota/biblioteca de SERVIDOR (nunca vai ao browser, mas decide coisa séria):

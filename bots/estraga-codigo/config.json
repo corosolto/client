@@ -1,5 +1,5 @@
 {
-  "repo": "corosolto/client",
+  "repos": ["corosolto/client", "corosolto/backend"],
   "pat_env": "GH_PAT_FALA",
   "keychain": "estraga-codigo",
   "intervalo_min": 10,

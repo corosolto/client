@@ -1,6 +1,6 @@
 /* Teste offline do estraga-codigo: parser, grafo de importação e o corpo da
    revisão no formato nota/risco/impacto — grave/leve em português. */
-import { extraiJson, corpoReview, decisaoPublicacao, fatiaDiff, acoesPara, grafoDeImports, importadoresDe, IGNORAR } from '../canarinho.mjs';
+import { extraiJson, corpoReview, decisaoPublicacao, fatiaDiff, acoesPara, grafoDeImports, importadoresDe, IGNORAR, reposDoConfig, chavePr, comandosPendentes } from '../canarinho.mjs';
 import { carregarPersona, cabecalho } from '../../lib/persona.mjs';
 
 export async function testar(t, { dir }) {
@@ -76,6 +76,8 @@ export async function testar(t, { dir }) {
   t.ok(ativas.some((a) => a.nome === 'leis-da-casa'), 'ação geral acorda para qualquer diff');
   const soBots = acoesPara(['bots/lib/gh.mjs']);
   t.ok(soBots.every((a) => a.nome === 'leis-da-casa'), 'ação de mapa NÃO acorda para bots/');
+  t.ok(acoesPara(['game/server.js']).some((a) => a.nome === 'backend-api'), 'ação backend acorda para game/');
+  t.ok(acoesPara(['server.js']).some((a) => a.nome === 'backend-api'), 'ação backend acorda para server.js');
 
   /* ── IGNORAR: artefato de build não é código — o falso grave do e-mail
    * de 18/08 (versão "lida" dentro de bundle minificado do Docusaurus) ── */
@@ -83,6 +85,43 @@ export async function testar(t, { dir }) {
   t.ok(IGNORAR.test('public/docs/colaborar/index.html'), 'HTML gerado do Docusaurus é ignorado');
   t.ok(!IGNORAR.test('public/js/game.js'), 'código do jogo NÃO é ignorado');
   t.ok(!IGNORAR.test('docs/docs/colaborar.md'), 'fonte de docs NÃO é ignorado');
+
+  /* ── multi-repo + comando explícito: comentário precisa disparar review real ── */
+  t.igual(
+    JSON.stringify(reposDoConfig({ repos: ['corosolto/client', 'corosolto/backend'] })),
+    JSON.stringify(['corosolto/client', 'corosolto/backend']),
+    'config exige e preserva os dois repos',
+  );
+  t.igual(chavePr('corosolto/client', 193), 'corosolto/client#193', 'estado client tem namespace');
+  t.igual(chavePr('corosolto/backend', 193), 'corosolto/backend#193', 'estado backend não colide');
+  const comentarios = [
+    {
+      id: 11,
+      body: '@estraga-codigo full review\n\nO head mudou.',
+      author_association: 'OWNER',
+      issue_url: 'https://api.github.com/repos/corosolto/client/issues/1178',
+    },
+    {
+      id: 12,
+      body: 'texto sem comando',
+      author_association: 'OWNER',
+      issue_url: 'https://api.github.com/repos/corosolto/client/issues/1177',
+    },
+    {
+      id: 13,
+      body: '@estraga-codigo full review',
+      author_association: 'NONE',
+      issue_url: 'https://api.github.com/repos/corosolto/client/issues/1177',
+    },
+  ];
+  const comandos = comandosPendentes('corosolto/client', comentarios, new Set());
+  t.igual(comandos.length, 1, 'só comando autorizado entra na fila');
+  t.igual(comandos[0].number, 1178, 'comando extrai o número do PR');
+  t.igual(
+    comandosPendentes('corosolto/client', comentarios, new Set(['corosolto/client#11'])).length,
+    0,
+    'comentário processado não dispara review duplicado',
+  );
 }
 
 const bordaoDo = (corpo) => corpo.split('\n').find((l) => l.startsWith('— *')) || '';
