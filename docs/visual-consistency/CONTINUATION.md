@@ -601,3 +601,8 @@ Mainatualec7cec33405 integrou1183 às14:58:47UTC; releaseaindaalpha130. PR1184 e
 ### 2026-10-31T15:14:21.996941+00:00 — CórregoR8fechado
 
 MaterialprodutoR4: crítico2e4ef660CLEAN e4capturasreaispósUV,9fixtureshelper. GatesR8: CRITICO-CORREGO-GATES-R8.md SHA8edc100bfe53964d4a4832c773b6d863e1509381582d49d6334dce08be9cb594 CLEANincluindocalibração rotação e8/4listasdoc. Nominais0;8material+4UVvariantes RED1exactsets. BakeoficialR7Corg51peças0murais,total444,fpfc80e82d83be4ccd, layoutcomPostoR6 serácheckpointseparado. Odelta7cmpilareséintencionalemshotoccluders, bodycollidersiguais. WrappercomumCIaindaemexecução/nãorevisado. Checkpointsomente5arquivosCorgproduto/gates/doc, semalegarCIGREENoumerge/release.
+
+
+### 2026-10-31T15:14:33.729366+00:00 — morte e perfil equipadovalidados
+
+DeathR8 crítico CRITICO-DEATH-CAMERA-R8.md SHA59a447a076e9cb72152c131ce2288c42945a47d7c880f0475a79e4507e1df205 semP1/P2; R3localvisualaceito emquadrosamostrados2ratios,defaultvivo128casosigual. P3doccorrigido: fixtureNodeomiteimagens E substituimateriais; nãoaprovamaterialrender. Node27PASS+4mutantesexatos0, legacyCAMMORTE3mapsGREENprecedente. SkinsF1/F3/F4críticoR3CLEAN77173881,12cláusulas+4mutanteswiredGREEN: persisteweaponSkins, knife3pusa playerKnifeSkinId, preloadesperatodas. CheckpointprodutoGame/main e2gates/docs; F2writerknifeprossegueindependente semtocarGame. Package/CIwirefinal/mergedmain/hook/PRaindapendentes.

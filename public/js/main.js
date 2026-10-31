@@ -24,7 +24,7 @@ import { preloadWeapons, WEAPON_IDS } from './weapons.js';
 import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
 import { Sfx } from './audio.js';
-import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons, sanitizeRounds, ROUNDS_CUSTOM_MAX } from './game.js';
+import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons, sanitizeRounds, ROUNDS_CUSTOM_MAX, aguardarPreloads } from './game.js';
 import { economiaLigada } from './economia-partida.js';
 import { VERSION } from './version.js';
 import { bindMapPreview, stopMapPreviews, previewRevision } from './amazonia_map_preview.js';
@@ -1989,11 +1989,12 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon, economia ? 'pistol' : null])].filter(Boolean);
   try {
     if (!navOnly) {
-      await Promise.all([
+      await aguardarPreloads([
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
         preloadCosmeticAssets(matchSkins),
         preloadEyewearAssets(matchEyewear),
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
+        playerKnifeSkinId ? preloadWeaponSkinCandidate(playerKnifeSkinId) : null,
         sfx.preloadWeaponSamples(_armasDaPartida),
         preloadMapProps([...MAP_PROPS, ...(mapaPartida.props || [])]),   // + props do mapa (Havan: carros/estátua)
         /* Desktop preserva a fauna GLB do BUG-57 e os viewmodels autorados. No perfil

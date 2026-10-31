@@ -778,6 +778,15 @@ export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
   return Array.from({ length: Math.max(1, teamSize) * 2 }, um);
 }
 
+/* Barreira de preload do boot (main.js): cada load é independente — uma rejeição cedo não
+   pode derrubar a barreira enquanto outros ainda carregam (F4, docs/visual-consistency/SKINS-FLOW.md). */
+export function aguardarPreloads(loads) {
+  return Promise.all(loads.map((load) => Promise.resolve(load).catch((e) => {
+    console.error('preload da partida falhou parcialmente', e);
+    return null;
+  })));
+}
+
 /* Clarão dos tiros por opção do jogador (CONFIGURAÇÕES > VÍDEO). Fatores medidos no
    dev.html: reduzido ~metade do pico percebido; mínimo deixa rastro sem estourar. */
 const FX_CLARAO = { normal: 1, reduzido: 0.45, minimo: 0.15 };
@@ -3445,8 +3454,10 @@ export class Game {
     this.playerTeam = newTeam; this.enemyTeam = oldTeam;
     this.playerFaction = this.enemyFaction;
     this.enemyFaction = oldFaction;
+    /* F1: setProfile substitui o perfil INTEIRO — sem isto a troca de lado perdia as
+       skins equipadas (docs/visual-consistency/SKINS-FLOW.md). */
     const handProfile = { id: this.playerCharId, faction: this.playerFaction, gloveSkinId: this.playerGloveId,
-      skin: this.playerDef?.pal?.skin, sleeve: this.playerDef?.pal?.shirt, accent: this.playerDef?.pal?.pants };
+      weaponSkins: this.playerWeaponSkins, skin: this.playerDef?.pal?.skin, sleeve: this.playerDef?.pal?.shirt, accent: this.playerDef?.pal?.pants };
     this.vm.authored?.setProfile(handProfile);
     this.vm.melee?.setProfile(handProfile);
     p.team = newTeam;
@@ -6673,8 +6684,8 @@ export class Game {
   // ainda, cai no box e faz upgrade quando o asset chegar. Ver docs/RIG-PEGA-ARMA.md.
   _ensurePlayerTP() {
     const w = this.player.weapon, def = this._defNoLado(this.playerDef, this.playerTeam);
-    // A pintura equipada também vale em 3ª pessoa. Kill-switch: ?skin3p=0.
-    const skinTP = QS.get('skin3p') === '0' ? null : (this.playerWeaponSkins?.[w] || null);
+    // A pintura equipada também vale em 3ª pessoa; a faca vive em campo próprio (pack). Kill-switch: ?skin3p=0.
+    const skinTP = QS.get('skin3p') === '0' ? null : (w === 'knife' ? (this.playerKnifeSkinId || null) : (this.playerWeaponSkins?.[w] || null));
     const weaponChanged = this.playerTP && (this._tpWeapon !== w || this._tpDefId !== def.id || this._tpSkinId !== (def.skinId || null) || this._tpEyewearId !== (def.eyewearId || null) || this._tpArmaSkin !== skinTP);
     const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id);
     if (this.playerTP && !weaponChanged && !wantUpgrade) return;
@@ -6724,6 +6735,14 @@ export class Game {
     } else if (tp.mixer) {
       tp.mixer.update(dt);
     }
+    this._updatePlayerTPCamera(dt, eye);
+  }
+
+  // Câmera de 3ª pessoa (viva OU morta): enquadramento, boom/oclusão e máscara própria.
+  // Extraído fiel de _updatePlayerTP — o morto reutiliza sem religar o relógio de animação.
+  _updatePlayerTPCamera(dt, eye, anchor = null) {
+    const tp = this.playerTP, p = this.player;
+    if (!tp) return;
     this._tpEul.set(Math.max(-1.45, Math.min(1.45, p.pitch + this._tpOrbitPitch)), p.yaw + this._tpOrbitYaw, 0, 'YXZ');
     const fwd = this._tpFwd.set(0, 0, -1).applyEuler(this._tpEul);
     const right = this._tpRight.set(1, 0, 0).applyEuler(this._tpEul);
@@ -6741,14 +6760,15 @@ export class Game {
     const TP_DIST = (shoulder ? 0.85 : 1.7) + (shoulder ? 0.30 : 0.50) * ads + (shoulder ? 0.85 : 0) * orbitBlend + 1.5 * danca;
     const TP_UP = shoulder ? 0.10 : 0.18;
     const TP_SIDE = (shoulder ? 0.34 : 0.28) + (shoulder ? 0.16 : 0.22) * ads;
-    cam.position.set(p.pos.x, p.pos.y + eye, p.pos.z).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE);
+    const eyePos = this._tpEyePos || (this._tpEyePos = new THREE.Vector3());
+    if (anchor) eyePos.copy(anchor);
+    else eyePos.set(p.pos.x, p.pos.y + eye, p.pos.z);
+    cam.position.copy(eyePos).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE);
     cam.position.y += TP_UP - 0.45 * orbitBlend + 0.35 * danca;
     const gy = this.world.groundHeightAt(cam.position.x, cam.position.z, cam.position.y) + 0.2;
     if (cam.position.y < gy) cam.position.y = gy;   // não atravessa o chão
     /* OCLUSÃO DO BOOM: câmera de 3ª pessoa não entra em prop atrás do jogador (relato
        out/2026). Occluders seguram bala; world.camBlockers é PANO (câmera para, tiro passa). */
-    const eyePos = this._tpEyePos || (this._tpEyePos = new THREE.Vector3());
-    eyePos.set(p.pos.x, p.pos.y + eye, p.pos.z);
     const boom = this._tpBoom || (this._tpBoom = new THREE.Vector3());
     boom.copy(cam.position).sub(eyePos);
     const boomLen = boom.length();
@@ -6804,7 +6824,7 @@ export class Game {
     // Cruz no alvo do raio autoritativo a distância de combate; o tiro continua
     // saindo do olho com yaw/pitch, igual ao servidor multiplayer.
     const aimPoint = this._tpAimPoint || (this._tpAimPoint = new THREE.Vector3());
-    aimPoint.copy(this._eyeWorld).addScaledVector(fwd, 12 * (1 - orbitBlend));
+    aimPoint.copy(anchor || this._eyeWorld).addScaledVector(fwd, 12 * (1 - orbitBlend));
     aimPoint.y -= 0.7 * orbitBlend;
     cam.lookAt(aimPoint);
   }
@@ -6855,21 +6875,57 @@ export class Game {
     el.style.top = `${((1 - point.y) * 50).toFixed(3)}%`;
   }
 
-  // Morte em 3ª pessoa (e também visível na 1ª, na câmera de morte): toca a animação de
-  // queda no corpo TP e o mantém caindo. Sem isto o boneco ficava de pé (bug relatado).
+  // Morte em 3ª pessoa: toca a animação de queda no corpo TP e o mantém caindo
   _tpDeath(dt) {
     this._ensurePlayerTP();
     const tp = this.playerTP, p = this.player;
     if (!tp) return;
+    /* P2 31/10 (CRITICO-MOTION-REAL-R2): a câmera de morte em 1ª pessoa fica no olho,
+       dentro do próprio crânio — o corpo só é visível na queda vista em third/shoulder. */
+    const first = this.camView === 'first';
+    if (first) {
+      tp.group.visible = false;
+      if (!tp.selfOccluded) {
+        for (const item of tp.selfMeshes) item.object.visible = false;
+        if (tp.isGLB) ocultarArmadura(tp.ctrl?.model, true);
+        tp.selfOccluded = true;
+      }
+    } else {
+      // Saiu de first ainda morto: devolve grupo/flags ORIGINAIS; a máscara do boom abaixo
+      // volta a decidir se o corpo some (câmera dentro da cápsula). Respeita item.visible.
+      tp.group.visible = true;
+      if (tp.selfOccluded) {
+        for (const item of tp.selfMeshes) item.object.visible = item.visible;
+        tp.selfOccluded = false;
+      }
+      if (tp.isGLB) ocultarArmadura(tp.ctrl?.model, false);
+    }
     if (!this._tpDead) {
       this._tpDead = true;
-      tp.group.visible = true;                        // mostra o corpo caindo mesmo em 1ª pessoa
       tp.group.position.copy(p.pos);
       tp.group.rotation.set(0, p.yaw + Math.PI, 0);
       if (tp.ctrl && tp.ctrl.die) tp.ctrl.die(p._matadorPos ? { x: p.pos.x - p._matadorPos.x, z: p.pos.z - p._matadorPos.z } : null);
     }
     if (tp.ctrl) tp.ctrl.update(dt, 0, false, 0, false);
     else if (tp.mixer) tp.mixer.update(dt);
+    if (!first) {
+      // O cadáver desloca a cabeça em XYZ; câmera e boom acompanham a pose animada.
+      // Sem âncora válida, permanece o enquadramento anterior, sem alterar a posição física.
+      const eye = 1.62 - 0.52 * p.crouchF;
+      let anchor = null;
+      const head = tp.ctrl?.headBone || tp.parts?.head;
+      if (head) {
+        tp.group.updateMatrixWorld(true);
+        const point = head.getWorldPosition(this._tpDeathHead || (this._tpDeathHead = new THREE.Vector3()));
+        if (point.toArray().every(Number.isFinite)) {
+          point.y = Math.max(p.pos.y + 0.3, Math.min(p.pos.y + eye, point.y));
+          anchor = point;
+        }
+      }
+      if (anchor) this._eyeWorld.copy(anchor);
+      else this._eyeWorld.set(p.pos.x, p.pos.y + eye, p.pos.z);
+      this._updatePlayerTPCamera(dt, eye, anchor);
+    }
   }
 
   /* Desarma o _tpDeath no respawn. No online o respawn vem por SNAPSHOT e não passa pelo
@@ -6881,6 +6937,11 @@ export class Game {
     this.player.mantleF = 0;
     const tp = this.playerTP;
     if (!tp) return;
+    if (tp.selfOccluded) {
+      for (const item of tp.selfMeshes) item.object.visible = item.visible;
+      tp.selfOccluded = false;
+    }
+    if (tp.isGLB) ocultarArmadura(tp.ctrl?.model, false);
     if (tp.ctrl && tp.ctrl.revive) tp.ctrl.revive();
     if (tp.group) {
       tp.group.visible = this.camView !== 'first';
@@ -7027,9 +7088,19 @@ export class Game {
       this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
       this._deathFeedback(dt);
       this._tpDeath(dt);   // corpo TP cai (item: "boneco não caía morto")
-      if (left <= 0) this._respawnPlayer();
-      this.camera.position.y = Math.max(0.5, this.camera.position.y - dt * 2);
-      this.camera.rotation.z = Math.min(0.5, (this.camera.rotation.z || 0) + dt * 0.8);
+      /* Online o _respawnPlayer é no-op (revive vem do snapshot): seguir morto mantém a
+         câmera caindo até lá. SP reviveu (p.alive true) não roda a queda de novo. */
+      if (left <= 0) { this._respawnPlayer(); if (p.alive) return; }
+      // Queda/roll são da câmera morta em 1ª pessoa; em TP o helper do _tpDeath já
+      // posicionou a câmera com boom/oclusão — sobrescrever aqui expõe o crânio.
+      if (this.camView === 'first') {
+        /* Chão LOCAL (multinível), yRef = pé do cadáver consultado ANTES da descida: com o
+           olho (cam.y) o vão do córrego devolvia o tabuleiro e a câmera SUBIA ao morrer. */
+        const gy = this.world && this.world.groundHeightAt
+          ? this.world.groundHeightAt(this.camera.position.x, this.camera.position.z, p.pos.y) + 0.5 : 0.5;
+        this.camera.position.y = Math.max(gy, this.camera.position.y - dt * 2);
+        this.camera.rotation.z = Math.min(0.5, (this.camera.rotation.z || 0) + dt * 0.8);
+      }
       return;
     }
     if (this.mobile && this.state === 'live') this._aimAssist(dt);
@@ -7883,7 +7954,7 @@ export class Game {
     if (c === this.player) {
       this.playerDef = def; this.playerCharId = def.id; c.def = def;
       if (reload) this._tpDefId = null;
-      const perfil = { id: def.id, faction: this.playerFaction, gloveSkinId: this.playerGloveId, skin: def.pal?.skin, sleeve: def.pal?.shirt, accent: def.pal?.pants };
+      const perfil = { id: def.id, faction: this.playerFaction, gloveSkinId: this.playerGloveId, weaponSkins: this.playerWeaponSkins, skin: def.pal?.skin, sleeve: def.pal?.shirt, accent: def.pal?.pants };
       this.vm?.authored?.setProfile(perfil);
       this.vm?.melee?.setProfile(perfil);
       return true;
