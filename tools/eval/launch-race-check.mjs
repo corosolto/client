@@ -243,6 +243,7 @@ function banco() {
     renderPlayerPlate() {},
     va: (_tipo, ev) => eventos.push(ev),
     currentMap: 'upa_24h',
+    MAPS: { upa_24h: {} },
     matchMode: 'rounds',
     game: null,
     /* o nascimento: `Game` é contado, não simulado — o que a LR7 pergunta é SE ele nasce */
@@ -321,7 +322,7 @@ function banco() {
     fonteQueda = fonteQueda.replace('if (!lancamentoPerdeu(meuLancamento)) {', 'if (true) {');
   }
   vm.runInContext(`window.__cauda = async function (meuLancamento, team, charId) {\n${fonteCauda}\n};`, ctx);
-  vm.runInContext(`window.__nascimento = function (meuLancamento, sessao, charId, side, faction, enemyFac, tamanhoTime, matchRoster, matchWeapons, playerSkinId = null, playerEyewearId = null) {\n${fonteNasc}\n};`, ctx);
+  vm.runInContext(`window.__nascimento = function (meuLancamento, sessao, charId, side, faction, enemyFac, tamanhoTime, matchRoster, matchWeapons, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null) {\n${fonteNasc}\n};`, ctx);
   vm.runInContext(`window.__queda = function (meuLancamento, e) {\n${fonteQueda}\n};`, ctx);
 
   const quadro = () => { const f = fila; fila = []; for (const fn of f) fn(); };

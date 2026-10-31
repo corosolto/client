@@ -961,6 +961,7 @@ class CharController {
     // Viés de tombo pela direção do disparo: o mesmo clipe deixa de cair sempre igual.
     this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
     this._deathDir = dir ? { x: dir.x, z: dir.z } : null;
+    this._deathK = 0;
     this.dead = true; this.shooting = false; this._ar = false;
     this._to('death', true);
     if (this.actions.death) this.actions.death.timeScale = 1.8; // snappy fall, not slow-mo
@@ -971,10 +972,18 @@ class CharController {
   // character does everything on top of the fallen pose (the "walking while falling
   // backward" bug). Then start idle clean.
   revive() {
+    this._restaurarPoseMorte();
+    this._deathK = 0; this._deathDir = null;
     this.dead = false; this.shooting = false; this.jumping = false;
     this.mixer.stopAllAction();
     this.cur = null;
     this._to('idle');
+  }
+
+  _restaurarPoseMorte() {
+    if (!this._deathPoseBone) return;
+    this._deathPoseBone.quaternion.copy(this._deathPoseBase);
+    this._deathPoseBone = null;
   }
 
   // moving: 0..1, hasTarget: bool, speed: real ground speed (m/s), back: true when the
@@ -983,6 +992,7 @@ class CharController {
   // so the feet plant instead of ice-skating (root-motion-free clips have no built-in
   // stride, so we drive the cycle rate from how fast the body is really moving).
   update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
+    this._restaurarPoseMorte();
     if (!this.dead) {
       if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
       if (this.crouch) {
@@ -1299,6 +1309,8 @@ class CharController {
       this.group.updateMatrixWorld(true);
       bone_pai: {
         const bone = torso.spines[0];
+        this._deathPoseBase ||= new THREE.Quaternion();
+        this._deathPoseBase.copy(bone.quaternion); this._deathPoseBone = bone;
         bone.parent.getWorldQuaternion(_pq).invert();
         _axisF.set(-d.z / n, 0, d.x / n).applyQuaternion(_pq).normalize();
         _aplicaMorte(bone, _qLean.setFromAxisAngle(_axisF, this._deathK * 0.22).clone());

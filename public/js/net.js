@@ -145,7 +145,7 @@ export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
     if (!h) return { ...no, http, ping: null, online: false, jogadores: 0, salas: 0 };
     /* `salaConvite`: o nó guarda sala privada SEM senha só para quem tem o código (backend#62).
        Nó sem o campo listaria essa sala aberta, então o JOGAR COM AMIGOS não a cria nele. */
-    return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0, salaConvite: h.salaConvite === true, soloVerified: h.soloVerified === true };
+    return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0, salaConvite: h.salaConvite === true, soloVerified: h.soloVerified === true, horde: h.horde || null };
   }));
 }
 

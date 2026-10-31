@@ -30,6 +30,7 @@ esac
 # precisa de credencial; o privado NÃO recebe, porque ambiência real que falta
 # tem de reprovar o build, não ser trocada por silêncio.
 prepara_ambiencia() {
+  node tools/audio/javaporcos-samples.mjs
   node tools/audio/complete-amazonia-soundscape.mjs
   node tools/audio/extend-map-soundscapes.mjs "$DEST/manifest.json"
   node tools/audio/lajes-soundscape.mjs "$DEST/manifest.json"

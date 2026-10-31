@@ -152,10 +152,10 @@ export function capSleeveOpenings(mesh) {
   for (const nome of nomes) {
     const attr = geo.attributes[nome];
     const item = attr.itemSize;
-    const arr = new attr.array.constructor((pos.count + extras.length) * item);
-    const novo = new THREE.BufferAttribute(arr, item, attr.normalized);
-    /* Pelo ACESSOR, nunca pelo array cru: `getX` desnormaliza e o golden é quantizado
-       (Int16 normalizada), então o float truncava pra 0. §5 do doc de 26/10; MT6/MT7. */
+    const arr = attr.normalized ? new Float32Array((pos.count + extras.length) * item) : new attr.array.constructor((pos.count + extras.length) * item);
+    const novo = new THREE.BufferAttribute(arr, item, false);
+    // A cópia desquantiza pelo acessor; buffers inteiros reconstruídos criavam um painel preto no pós.
+    // Referência e régua GPU: docs/viewmodels/ak-manga-quantizada-20261030.md.
     for (let i = 0; i < attr.count; i += 1) for (let c = 0; c < item; c += 1) novo[SET[c]](i, attr[GET[c]](i));
     extras.forEach((media, k) => {
       for (let c = 0; c < item; c += 1) novo[SET[c]](pos.count + k, media[nome][c]);

@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {bootGame,initTextures} from './harness.mjs';
+import {escolherAlvo,desvioDeCaminhada} from '../../public/js/mode_javaporcos.js';
+const g=bootGame('invasao_javaporcos',{textures:initTextures(),bots:1});g.state='live';g.killsToWin=Infinity;
+let failed=0;const test=(n,fn)=>{try{fn();console.log('✓ REFUGIO '+n);}catch(e){failed++;console.log('✗ REFUGIO '+n+': '+e.message.slice(0,240));}};
+const andar={ax:0,az:1,jump:false,crouch:false,sprint:false};
+test('respawn E/B ocorre nas lajes e varia sem exposição à horda',()=>{for(const team of ['E','B']){const usados=new Set();for(let i=0;i<6;i++){const s=g._pickSpawn(team),r=g.world.hordeRefuges.find(r=>r.team===team&&Math.abs(s.x-r.x)<2&&s.z===r.z);assert.ok(r);usados.add(r.z);assert.equal(g._spawnY(s.x,s.z),r.y);assert.ok(r.y-g.world.groundHeightAt(r.x,r.z,0)>3);}assert.ok(usados.size>=2);}});
+test('horda não escolhe nem ataca jogador protegido acima dela',()=>{const r=g.world.hordeRefuges[0];const alvo=escolherAlvo({pos:{x:r.x,y:0,z:r.z},_boarAlertaAte:100},{world:g.world,state:g.objective.state,tempo:1,jogadores:[{alive:true,pos:{x:r.x,y:r.y,z:r.z}}]});assert.notEqual(alvo.kind,'jogador');});
+test('escada e salto permitem acesso real à laje',()=>{const r=g.world.hordeRefuges[0],p=g.player;p.pos.set(r.x,g.world.groundHeightAt(r.x,r.z+10.8,0),r.z+10.8);p.vel.set(0,0,0);p.yaw=Math.PI;p.grounded=true;let saltou=false,maxY=p.pos.y;for(let i=0;i<300;i++){const jump=!saltou&&p.pos.z<r.z+4.7;if(jump)saltou=true;g.time+=1/120;g._moveEntity(p,{...andar,jump},1/120);maxY=Math.max(maxY,p.pos.y);if(p.pos.z<r.z+1.5)break;}assert.ok(saltou);assert.ok(p.pos.z<r.z+3,`parou em z=${p.pos.z.toFixed(2)} y=${p.pos.y.toFixed(2)} maxY=${maxY.toFixed(2)} laje=${r.y.toFixed(2)}`);p.vel.x=0;p.vel.z=0;for(let i=0;i<240;i++){g.time+=1/120;g._moveEntity(p,{...andar,az:0},1/120);}assert.ok(Math.abs(p.pos.y-r.y)<.1,`y=${p.pos.y} laje=${r.y}`);});
+test('caminhada varia entre indivíduos sem virada abrupta',()=>{const angles=Array.from({length:7},(_,i)=>desvioDeCaminhada(3,i*.137));assert.ok(Math.max(...angles)-Math.min(...angles)>.35);let max=0;for(let t=0;t<20;t+=.016)max=Math.max(max,Math.abs(desvioDeCaminhada(t+.016,.37)-desvioDeCaminhada(t,.37)));assert.ok(max<.01);assert.equal(desvioDeCaminhada(3,.37,'fila-indiana'),0);});
+process.exitCode=failed?1:0;

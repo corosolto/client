@@ -59,7 +59,7 @@ export const GATILHOS = {
     workflow: '.github/workflows/portao-browser.yml',
     padroes: [
       ...COMUM,
-      /^tools\/eval\/(serve|harness|graffiti-census|graffiti-audit|select-inflate|entrada-check|armas-check|boot-check|perfil-mobile-browser|sertao-livestock-runtime-check|treta-vitrine-browser)\.mjs$/,
+      /^tools\/eval\/(serve|harness|three-node|graffiti-census|graffiti-audit|select-inflate|entrada-check|armas-check|boot-check|perfil-mobile-browser|sertao-livestock-runtime-check|treta-vitrine-browser)\.mjs$/,
       /^tools\/eval\/(graffiti_census|graffiti_audit|select_inflate|select_inflate_debt)\.json$/,
       /^tools\/ops\//,
       /^\.github\/workflows\/portao-browser\.yml$/,
