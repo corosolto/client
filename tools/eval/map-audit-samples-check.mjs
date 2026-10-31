@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import * as THREE from 'three';
+import { THREE } from './three-node.mjs';
 import { amostraBaricentrica } from './map-audit-samples.mjs';
 
 const geo = new THREE.BufferGeometry();

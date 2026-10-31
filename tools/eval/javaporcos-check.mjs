@@ -66,7 +66,7 @@ globalThis.document = {
   createElement: () => ({ style: {}, textContent: '', append() {}, remove() {} }),
 };
 
-const THREE = await import('three');
+const { THREE } = await import('./three-node.mjs');
 const {
   WAVE_COUNTS, MAX_ALIVE, BOAR_POINTS, BOAR_HP, FURIA, AGGRO, DASH, SPAWN_BASE,
   DOMINIO, BECO, FRENTES, passoDominio, lerHorda, gradeDeSetores, setorEm, vaiPeloBeco,
