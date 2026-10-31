@@ -771,7 +771,7 @@
     "eval:knife-skin-markings": "node tools/eval/knife-skin-markings-check.mjs",
     "eval:campo-uv": "node tools/eval/campo-uv-finish-mutations.mjs",
     "eval:grafite-atual": "node tools/eval/graffiti-current-ci-check.mjs --map=all --json=artifacts/grafite-atual",
-    "eval:grafite-atual:prova": "node tools/eval/graffiti-current-ci-check.mjs --self-test"
+    "eval:grafite-atual:prova": "node tools/eval/graffiti-art-identity-check.mjs && node tools/eval/graffiti-current-ci-check.mjs --self-test"
   },
   "repository": {
     "type": "git",

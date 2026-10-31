@@ -865,3 +865,9 @@ QA pinworkflowantigoP1GLMR4fechadocomteste6/6+ops79/79 ecríticaindependenteca30
 
 
 QA integrou b24c9a52f preservando ambos os appendices de continuação. Conflito só no ledger; produto aceito copiado por merge, nenhum dirty BootR10. Alias editorial ainda aguarda rodada runtime71 nova, visualEgo impedido por serviço global sem resposta. Próximo: ligar gate identidade ao proof público, regenerar docs, finalizar BootR11 e normalprepush.
+
+
+QA prova pública agora executa gate de identidade real antes do self-test de transporte; mantém o alias existente e o runtime14 no portão-browser. Nenhum asset privado ou fallbackEgo adicionado. Docsregenerados e focaisde wiring voltam àvalidação após mergeb24.
+
+
+QA R6 provaidentidade+wiring4/4GREEN17s, docs0alterações, críticoindependente5f100783CLEAN. Contraprova privada aliasoff fazgate/alias/runnerRED1 eimpedesegundocomando; públicossemprivados, browser14separado. Gate helper compatNode22 emverificação. Boot/R11janela/bodyruntimeaindapendente; Egoquery3minsemmesmoexecutarJS e inspeçãonativa29stimeout confirmamhostindisponível, nãoQAvisualaprovado.
