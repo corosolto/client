@@ -235,26 +235,28 @@ export function buildMapFromJSON(scene, _T, spec) {
   const plan = planFromJSON(spec);
   const root = new THREE.Group(); scene.add(root);
   const lam = (color) => new THREE.MeshLambertMaterial({ color });
+  // owned: malhas com geometria/material criados POR ESTE build — clones de placeProp() compartilham o template e ficam de fora.
+  const owned = [];
 
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(plan.half.x * 2, plan.half.z * 2), lam(plan.floor.color));
-  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; root.add(floor);
+  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; root.add(floor); owned.push(floor);
 
   const occluders = [];
   for (const b of plan.boxes) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(b.w, b.h, b.d), lam(b.color));
     m.position.set(b.x, b.h / 2, b.z); m.castShadow = true; m.receiveShadow = true;
-    root.add(m); occluders.push(m);
+    root.add(m); occluders.push(m); owned.push(m);
   }
   for (const r of plan.ramps) {
     const m = new THREE.Mesh(buildRampGeo(r), lam(r.color));
     m.position.set(r.x, 0, r.z); m.castShadow = true; m.receiveShadow = true;
-    root.add(m); occluders.push(m);   // bala/bloodspatter batem na rampa como em qualquer superfície
+    root.add(m); occluders.push(m); owned.push(m);   // bala/bloodspatter batem na rampa como em qualquer superfície
   }
   // zonas lentas: lâmina fina translúcida só para o jogador VER a água (não é occluder nem colisor)
   for (const s of plan.slowRects) {
     const w = new THREE.Mesh(new THREE.PlaneGeometry(s.w, s.d),
       new THREE.MeshLambertMaterial({ color: '#2b6c8f', transparent: true, opacity: 0.55 }));
-    w.rotation.x = -Math.PI / 2; w.position.set(s.x, 0.03, s.z); w.receiveShadow = true; root.add(w);
+    w.rotation.x = -Math.PI / 2; w.position.set(s.x, 0.03, s.z); w.receiveShadow = true; root.add(w); owned.push(w);
   }
 
   const hemi = new THREE.HemisphereLight(0xf2fbff, 0xb9c6d0, 1.2); scene.add(hemi);
@@ -286,7 +288,7 @@ export function buildMapFromJSON(scene, _T, spec) {
   const pickups = plan.pickups.map((p) => {
     // caixa-marcador: game.js troca pelo GLB da arma em startGame; assentada no relevo.
     const m = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 0.9), lam('#c9a227'));
-    m.position.set(p.x, groundHeightAt(p.x, p.z) + 0.16, p.z); m.castShadow = true; root.add(m);
+    m.position.set(p.x, groundHeightAt(p.x, p.z) + 0.16, p.z); m.castShadow = true; root.add(m); owned.push(m);
     return { weapon: p.weapon, x: p.x, z: p.z, mesh: m };
   });
 
@@ -311,9 +313,23 @@ export function buildMapFromJSON(scene, _T, spec) {
     return [fromIdx];
   }
 
+  // dispose() é idempotente e só libera o que ESTE build criou (owned + alvo de sombra);
+  // texturas de initTextures e recursos dos props são compartilhados e preservados.
+  let disposed = false;
+  const dispose = () => {
+    if (disposed) return; disposed = true;
+    scene.remove(root); scene.remove(hemi); scene.remove(sun);
+    sun.shadow.dispose();
+    for (const m of owned) {
+      m.geometry?.dispose();
+      const mat = m.material;
+      if (Array.isArray(mat)) mat.forEach((x) => x?.dispose()); else mat?.dispose();
+    }
+  };
+
   return {
     root, colliders: plan.colliders, occluders, decalSolids: [root], groundHeightAt, slowAt,
-    spawns: plan.spawns, sun, hemi, pickups, ctfPoints: plan.ctfPoints,
+    spawns: plan.spawns, sun, hemi, pickups, ctfPoints: plan.ctfPoints, dispose,
     waypoints: { nodes, adj }, nearestWaypoint, findPath, bounds: plan.bounds,
     // relevo: o jogo passa yRef pro groundHeightAt dos bots e confere dy nas arestas.
     layeredNavigation: plan.hasElevation, botLayeredNavigation: plan.hasElevation,

@@ -364,9 +364,8 @@ $('prev-btn').onclick=async()=>{
   if(problemas.length){ alert('Corrija a validação antes de pré-ver:\n'+problemas.join('\n')); return; }
   prev.style.display='block'; cv.style.display='none'; $('prev-btn').textContent='Voltar ao 2D';
   if(!three){
-    const r=prev.getBoundingClientRect();
-    const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(r.width,r.height); renderer.shadowMap.enabled=true; prev.appendChild(renderer.domElement);
-    const cam=new THREE.PerspectiveCamera(55,r.width/r.height,0.1,2000);
+    const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.shadowMap.enabled=true; prev.appendChild(renderer.domElement);
+    const cam=new THREE.PerspectiveCamera(55,1,0.1,2000);
     const orb={theta:0.7,phi:0.9,rad:Math.max(spec.bounds.x,spec.bounds.z)*2.2};
     const place=()=>{ cam.position.set(orb.rad*Math.sin(orb.phi)*Math.sin(orb.theta), orb.rad*Math.cos(orb.phi), orb.rad*Math.sin(orb.phi)*Math.cos(orb.theta)); cam.lookAt(0,0,0); };
     let od=null;
@@ -375,18 +374,24 @@ $('prev-btn').onclick=async()=>{
     addEventListener('mouseup',()=>od=null);
     renderer.domElement.addEventListener('wheel',e=>{ e.preventDefault(); orb.rad=Math.max(6,Math.min(400,orb.rad*(e.deltaY<0?0.9:1.11))); place(); },{passive:false});
     place();
-    three={renderer,cam,scene:null};
+    // 0x0/não finito (painel oculto) não toca no renderer; aspect nunca vira NaN.
+    const fit3d=()=>{ const r=prev.getBoundingClientRect(); const w=r.width,h=r.height;
+      if(!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0) return;
+      renderer.setSize(w,h); cam.aspect=w/h; cam.updateProjectionMatrix(); };
+    three={renderer,cam,scene:null,world:null,fit3d};
     (function loop(){ requestAnimationFrame(loop); if(three.scene) renderer.render(three.scene,cam); })();
-    addEventListener('resize',()=>{ const r=prev.getBoundingClientRect(); renderer.setSize(r.width,r.height); cam.aspect=r.width/r.height; cam.updateProjectionMatrix(); });
+    addEventListener('resize',fit3d);
   }
+  three.fit3d();   // toda abertura redimensiona, reusando renderer/câmera/órbita
   try{
     const { initTextures } = await import('./js/textures.js');
     const { preloadMapProps } = await import('./js/mapprops.js');
     await preloadMapProps(propIdsFromSpec(spec)).catch(()=>{});
     const scene=new THREE.Scene(); scene.background=new THREE.Color('#8fb7e0');
-    buildMapFromJSON(scene, initTextures(), clean());
+    const world=buildMapFromJSON(scene, initTextures(), clean());
+    three.world?.dispose?.();   // build anterior solta só o que criou; props/template compartilhados ficam
+    three.scene=scene; three.world=world;
     scene.updateMatrixWorld(true);
-    three.scene=scene;
   }catch(e){ alert('Falha ao construir 3D: '+e.message); prev.style.display='none'; cv.style.display='block'; $('prev-btn').textContent='Pré-ver 3D'; }
 };
 

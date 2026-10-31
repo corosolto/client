@@ -5,7 +5,9 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import vm from 'node:vm';
-import { planFromJSON, propIdsFromSpec } from '../../public/js/map_json.js';
+import { buildMapFromJSON, planFromJSON, propIdsFromSpec } from '../../public/js/map_json.js';
+import * as THREE from '../../public/vendor/three.module.js';
+import { registerPropTemplate } from '../../public/js/mapprops.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const fixture = JSON.parse(readFileSync(new URL('./mapjson_fixture.json', import.meta.url), 'utf8'));
@@ -115,6 +117,83 @@ for (const [name, bounds, override, expected] of drawCases) {
   // 2m grid counts are measured on the 800x600 viewport, including pan and minimum UI zoom (3px/m).
   check(`draw-${name}`, !error && strokes === expected,
     `strokes=${strokes} expected=${expected} error=${error?.code ?? error?.message ?? 'none'}`);
+}
+
+const previewStart = html.indexOf('let three=null;');
+const previewEnd = html.indexOf('// ---- boot', previewStart);
+if (previewStart < 0 || previewEnd < 0) throw new Error('editor preview lifecycle not found');
+let previewSource = html.slice(previewStart, previewEnd);
+for (const [old, replacement] of [
+  ["await import('./js/textures.js')", '__modules.textures'],
+  ["await import('./js/mapprops.js')", '__modules.props'],
+]) {
+  if (previewSource.split(old).length !== 2) throw new Error('preview import fixture did not apply');
+  previewSource = previewSource.replace(old, replacement);
+}
+{
+  const elements = new Map(), listeners = new Map(), scenes = [], alerts = [];
+  const size = { width: 800, height: 600 }, calls = [];
+  const sharedGeometry = new THREE.BoxGeometry(1, 1, 1), sharedMaterial = new THREE.MeshBasicMaterial();
+  let sharedDisposed = 0;
+  sharedGeometry.addEventListener('dispose', () => sharedDisposed++);
+  sharedMaterial.addEventListener('dispose', () => sharedDisposed++);
+  const template = new THREE.Mesh(sharedGeometry, sharedMaterial);
+  registerPropTemplate('qa-sdk-preview', template);
+  const candidate = structuredClone(fixture);
+  candidate.props = [{ id: 'qa-sdk-preview', x: 0, z: 0, h: 1, solid: false }];
+  const prev = { style: { display: 'none' }, appendChild() {},
+    getBoundingClientRect: () => prev.style.display === 'none' ? { width: 0, height: 0 } : { ...size } };
+  class Renderer {
+    constructor() { this.shadowMap = {}; this.domElement = { addEventListener() {} }; }
+    setSize(width, height) { calls.push([width, height]); }
+    render() {}
+  }
+  const context = { THREE: { ...THREE, WebGLRenderer: Renderer }, spec: candidate,
+    problemas: [], cv: { style: {} }, clean: () => candidate,
+    $: id => { if (id === 'prev') return prev; if (!elements.has(id)) elements.set(id, {}); return elements.get(id); },
+    alert: message => alerts.push(message), requestAnimationFrame() {},
+    addEventListener: (event, handler) => { if (!listeners.has(event)) listeners.set(event, []); listeners.get(event).push(handler); },
+    __modules: { textures: { initTextures: () => ({}) }, props: { preloadMapProps: async () => {} } },
+    propIdsFromSpec,
+    buildMapFromJSON(scene, textures, spec) {
+      const world = buildMapFromJSON(scene, textures, spec);
+      const resources = new Set(), disposed = new Set(), disposeCounts = new Map();
+      scene.traverse(o => {
+        for (const resource of [o.geometry, ...(Array.isArray(o.material) ? o.material : [o.material])]) {
+          if (!resource || resource === sharedGeometry || resource === sharedMaterial) continue;
+          resources.add(resource); resource.addEventListener('dispose', () => {
+            disposed.add(resource); disposeCounts.set(resource, (disposeCounts.get(resource) ?? 0) + 1);
+          });
+        }
+      });
+      let shadowDisposals = 0, shadowPassDisposals = 0;
+      world.sun.shadow.map = { dispose: () => { shadowDisposals++; } };
+      world.sun.shadow.mapPass = { dispose: () => { shadowPassDisposals++; } };
+      scenes.push({ world, scene, resources, disposed, disposeCounts,
+        shadowDisposals: () => shadowDisposals, shadowPassDisposals: () => shadowPassDisposals });
+      return world;
+    },
+  };
+  vm.createContext(context); vm.runInContext(previewSource, context);
+  await context.$('prev-btn').onclick();
+  await context.$('prev-btn').onclick();
+  for (const handler of listeners.get('resize') ?? []) handler();
+  size.width = 640; size.height = 480;
+  await context.$('prev-btn').onclick();
+  const state = vm.runInContext('three', context);
+  check('preview-resize-reopen', alerts.length === 0 && calls.every(([w, h]) => w > 0 && h > 0)
+    && JSON.stringify(calls.at(-1)) === '[640,480]' && state.cam.aspect === 640 / 480,
+    `sizes=${JSON.stringify(calls)} aspect=${state.cam.aspect} alerts=${JSON.stringify(alerts)}`);
+  check('preview-disposes-replaced-scene', scenes.length === 2 && scenes[0].resources.size > 0
+    && scenes[0].disposed.size === scenes[0].resources.size && scenes[0].shadowDisposals() === 1
+    && scenes[0].shadowPassDisposals() === 1 && scenes[0].scene.children.length === 0,
+    `scenes=${scenes.length} disposed=${scenes[0]?.disposed.size}/${scenes[0]?.resources.size} shadow=${scenes[0]?.shadowDisposals()}/${scenes[0]?.shadowPassDisposals()}`);
+  scenes[0].world.dispose();
+  check('preview-dispose-idempotent', [...scenes[0].disposeCounts.values()].every(count => count === 1)
+    && scenes[0].shadowDisposals() === 1 && scenes[0].shadowPassDisposals() === 1,
+    `owned=${scenes[0].disposed.size} shadow=${scenes[0].shadowDisposals()}/${scenes[0].shadowPassDisposals()}`);
+  check('preview-preserves-shared-props', sharedDisposed === 0, `shared disposals=${sharedDisposed}`);
+  registerPropTemplate('qa-sdk-preview', null);
 }
 
 const start = html.indexOf("addEventListener('keydown',");
