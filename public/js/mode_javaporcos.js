@@ -652,9 +652,10 @@ export function criarPreviewJavaporco() {
   return visualAnimal('adulto', '', 1);
 }
 
-function marchaRural(sfx) {
+function marchaRural(sfx, mutante = '') {
   const ctx = sfx?.ctx;
-  if (!ctx?.createOscillator) return [];   // sfx dublê (arnês) não tem AudioContext de verdade
+  const output = mutante === 'marcha-sem-master' ? ctx?.destination : sfx?.master;
+  if (!ctx?.createOscillator || !output) return [];
   const start = ctx.currentTime + .03;
   const nodes = [];
   for (let beat = 0; beat < 48; beat++) {
@@ -662,13 +663,13 @@ function marchaRural(sfx) {
     const drum = ctx.createOscillator(), gain = ctx.createGain();
     drum.type = 'triangle'; drum.frequency.setValueAtTime(beat % 4 === 0 ? 105 : 150, at);
     gain.gain.setValueAtTime(.0001, at); gain.gain.exponentialRampToValueAtTime(.055, at + .015);
-    gain.gain.exponentialRampToValueAtTime(.0001, at + .13); drum.connect(gain).connect(ctx.destination);
+    gain.gain.exponentialRampToValueAtTime(.0001, at + .13); drum.connect(gain).connect(output);
     drum.start(at); drum.stop(at + .15); nodes.push(drum);
     if (beat % 2 === 0) {
       const viola = ctx.createOscillator(), vg = ctx.createGain();
       viola.type = 'sawtooth'; viola.frequency.setValueAtTime([196, 220, 247, 220][(beat / 2) % 4], at);
       vg.gain.setValueAtTime(.0001, at); vg.gain.exponentialRampToValueAtTime(.018, at + .08);
-      vg.gain.exponentialRampToValueAtTime(.0001, at + .34); viola.connect(vg).connect(ctx.destination);
+      vg.gain.exponentialRampToValueAtTime(.0001, at + .34); viola.connect(vg).connect(output);
       viola.start(at); viola.stop(at + .38); nodes.push(viola);
     }
   }
@@ -772,6 +773,9 @@ class InvasaoJavaporcos {
     this.corpses = [];
     this.deathBox = new THREE.Box3();
     this.deathCenter = new THREE.Vector3();
+    this.mordidaRay = new THREE.Raycaster();
+    this.mordidaDe = new THREE.Vector3();
+    this.mordidaAte = new THREE.Vector3();
     this.jogadores = [];
     this.vivos = [];
     this.hudAte = 0;
@@ -1244,6 +1248,20 @@ class InvasaoJavaporcos {
     this.javaporcoSfx(tempo < (bot._boarFocinhoAte || 0) ? 'fucar' : 'rosnado', bot.pos, bot._boarType === 'ariete' ? 1 : .82);
   }
 
+  mordidaLivre(bot, alvo) {
+    if (this.state.mutante === 'morde-parede') return true;
+    this.mordidaDe.copy(bot.pos); this.mordidaDe.y += .5;
+    this.mordidaAte.copy(alvo.pos); this.mordidaAte.y += .9;
+    this.mordidaAte.sub(this.mordidaDe);
+    const distancia = this.mordidaAte.length();
+    if (distancia < 1e-7) return true;
+    this.mordidaRay.set(this.mordidaDe, this.mordidaAte.multiplyScalar(1 / distancia));
+    this.mordidaRay.far = distancia;
+    const world = this.game.world;
+    return !(world.rayOccluded ? world.rayOccluded(this.mordidaRay)
+      : this.mordidaRay.intersectObjects(world.occluders || [], false).length);
+  }
+
   updateBot(bot, dt) {
     if (bot._objectiveNpc !== 'javaporco') return false;
     if (bot.mesh?.group) bot.mesh.group.visible = false;
@@ -1271,7 +1289,7 @@ class InvasaoJavaporcos {
       if (!bot._boarExplorar && bot._boarPlano && dentroDaCidade(this.game.world, bot.pos.x, bot.pos.z)) bot._boarPasso = bot._boarPlano.length;
       bot._boarAlertaAte = Math.max(bot._boarAlertaAte || 0, tempo + AGGRO.contagio);
       this.rosnar(bot, alvo.distance, tempo);
-      if (alvo.distance < AGGRO.ataque && tempo >= bot._boarAttackAt) {
+      if (alvo.distance < AGGRO.ataque && tempo >= bot._boarAttackAt && this.mordidaLivre(bot, alvo.ent)) {
         bot._boarAttackAt = tempo + (bot._boarType === 'ariete' ? 1.5 : 1.05);
         bot._boarGolpeAte = tempo + .42;
         bot.vel.set(0, 0, 0);
@@ -1577,10 +1595,11 @@ class InvasaoJavaporcos {
       this.cinemaTitle.style.whiteSpace = 'pre-line';
       this.cinemaTitle.style.opacity = '1';
     }
-    this.audioNodes = marchaRural(this.game.sfx);
+    this.audioNodes = marchaRural(this.game.sfx, this.state.mutante);
   }
 
   updatePresentation() {
+    if (this.game.online && !this.game.dedicated && this.state.mutante !== 'hud-rede-congelado') this.atualizaHud();
     this.atualizarCadaveres();
     if (!this.cinematic || this.game.dedicated) return;
     const t = Math.min(1, (this.game.time - this.cinematic.startedAt) / this.cinematic.duration);

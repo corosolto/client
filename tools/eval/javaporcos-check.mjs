@@ -370,6 +370,23 @@ regra('bando saqueia sem provocação e alerta estica até 34 m', () => {
   assert.ok(AGGRO.ouvido >= 30 && AGGRO.visao >= 18, 'constantes de agressão encolheram');
 });
 
+regra('mordida respeita parede fechada e passa pela porta aberta', () => {
+  const ctx = jogoFalso({ jogadorEm: [.6, 0] });
+  ctx.modo.assignar({ id: 'qa.parede', type: 'adulto', hp: 70, entrance: 0 });
+  const bot = vivos(ctx.modo)[0];
+  soltar([bot]); bot.pos.set(-.6, CHAO(-.6, 0), 0); bot._boarAttackAt = 0;
+  const parede = new THREE.Mesh(new THREE.BoxGeometry(.2, 3, 4), new THREE.MeshBasicMaterial());
+  parede.position.y = 1.5; parede.updateMatrixWorld(true);
+  ctx.game.world.occluders = [parede];
+  ctx.modo.listarJogadores();
+  ctx.modo.updateBot(bot, 1 / 60);
+  assert.equal(ctx.danos.length, 0, 'mordeu o defensor através da parede');
+  ctx.game.world.occluders = [];
+  bot.pos.set(-.6, CHAO(-.6, 0), 0); bot._boarAttackAt = 0;
+  ctx.modo.updateBot(bot, 1 / 60);
+  assert.equal(ctx.danos.length, 1, 'não mordeu pelo vão aberto');
+});
+
 regra('manada: quem vê o jogador puxa o vizinho de 9 m para a perseguição', () => {
   const ctx = jogoFalso({ jogadorEm: [0, 0] });
   abrirOnda(ctx);
@@ -703,7 +720,44 @@ regra('o snapshot leva o controle por setor e o cliente reconstrói o domínio',
   assert.equal(cliente.modo.state.dominio, 0.555);
 });
 
+regra('o cliente multiplayer apresenta snapshots no HUD sem simular a horda', () => {
+  const ctx = jogoFalso({ mundo: mundoFalso({ horda: true }) });
+  ctx.game.online = true;
+  ctx.modo.placarJNum = { textContent: '0' };
+  ctx.modo.placarJ = { setAttribute() {} };
+  const net = { ...ctx.modo.netState(), phase: 'combat', clock: 42, wave: 2,
+    controle: [1, .5, 0, 0], dominio: .375, teamKills: { E: 2, B: 0, J: 7 }, alive: [] };
+  ctx.modo.applyNetState(net);
+  ctx.game.time = 1;
+  const antes = structuredClone(ctx.modo.state);
+  ctx.modo.updatePresentation();
+  assert.match(ctx.modo.hudDominio.textContent, /DOMÍNIO DA HORDA 38% · 7 ABATES/);
+  assert.equal(ctx.modo.placarJNum.textContent, 7);
+  assert.equal(ctx.modo.hudBarra.style.width, '38%');
+  assert.equal(ctx.modo.hudCelulas[0].style.background, '#c42b18');
+  assert.deepEqual(ctx.modo.state, antes, 'apresentação avançou a simulação autoritativa');
+  ctx.modo.applyNetState({ ...net, controle: [0, 0, 0, 0], dominio: 0, waitingForPlayers: true, players: 3, minPlayers: 4 });
+  ctx.game.time += .13;
+  ctx.modo.updatePresentation();
+  assert.match(ctx.modo.hudTexto.textContent, /AGUARDANDO DEFENSORES · 3\/4/);
+  assert.equal(ctx.modo.hudBarra.style.width, '0%');
+  assert.equal(ctx.modo.hudCelulas[0].style.background, '#5d6b4a');
+});
+
 /* ------------------------------------------------------------------------ som */
+regra('a marcha da cinemática passa pelo volume mestre', () => {
+  const ctx = jogoFalso();
+  const master = {}, destination = {}, destinos = [];
+  const param = () => ({ setValueAtTime() {}, exponentialRampToValueAtTime() {} });
+  ctx.game.sfx.master = master;
+  ctx.game.sfx.ctx = { currentTime: 0, destination,
+    createOscillator: () => ({ frequency: param(), connect(node) { return node; }, start() {}, stop() {} }),
+    createGain: () => ({ gain: param(), connect(node) { destinos.push(node); return node; } }) };
+  ctx.modo.startCinematic('J');
+  assert.equal(destinos.length, 72, 'marcha não foi exercitada');
+  assert.ok(destinos.every(node => node === master), 'marcha contornou o volume mestre');
+});
+
 regra('abate chama o sfx.javaporco com volume e pan por distância', () => {
   const ctx = jogoFalso({ jogadorEm: [0, 0] });
   abrirOnda(ctx);
