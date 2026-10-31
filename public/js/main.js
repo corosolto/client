@@ -25,6 +25,7 @@ import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons, sanitizeRounds, ROUNDS_CUSTOM_MAX } from './game.js';
+import { economiaLigada } from './economia-partida.js';
 import { VERSION } from './version.js';
 import { bindMapPreview, stopMapPreviews, previewRevision } from './amazonia_map_preview.js';
 import { mapPreviewPoster as escadaoMapPreviewPoster, bindMapPreviews, stopMapPreview } from './escadao_preview.js';
@@ -624,7 +625,8 @@ startVisibleRotation(async () => {
   _wallK = next;
   try { localStorage.setItem('cs_wallK', String(_wallK)); } catch {}
   refreshWallpapers();
-}, () => !MOBILE_AUTO && ['main-menu', 'team-select', 'char-select'].some(id => !$(id)?.classList.contains('hidden')));
+/* Rotação de wallpaper fora do char-select (dono, 31/10): fundo girando sob o preview lê como flicker. */
+}, () => !MOBILE_AUTO && ['main-menu', 'team-select'].some(id => !$(id)?.classList.contains('hidden')));
 startVisibleRotation(async () => {
   const next = (_loadWallI + 1) % LOADING_WALLS.length;
   const preload = new Image();
@@ -1172,7 +1174,7 @@ function pvSetChar(def) {
       // (era o "posturas bizarras" de 05/08). Ângulos por classe em glbchars.js. No jogo,
       // nada muda.
       const m = hasModel(def.id) ? buildCharacterModel(def, { weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, gloveSkinId: arma.gloveSkinId, preview: true }) : null;
-      if (!m) { showBox(); return; }
+      if (!m) { if (!p.model) showBox(); return; }   // já há um personagem na tela: manter, nunca piscar a caixa
       if (p.model) p.scene.remove(p.model);
       // Evidência do que foi montado na mão (régua LB20): os valores saem do objeto 3D,
       // não da intenção - canvas não se lê e intenção não prova nada.
@@ -1198,7 +1200,7 @@ function pvSetChar(def) {
       // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
       // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.
       if (PV_CAM_MAOS) enquadrarMaos(p, m);
-    }).catch(() => { if (my === pvToken) showBox(); });
+    }).catch(() => { if (my === pvToken && !p.model) showBox(); });
   } else {
     showBox();
   }
@@ -1982,7 +1984,9 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // A sonda de QA do viewmodel inclui a arma pedida no preload; sem isso a HUD podia
   // selecionar uma arma de teste cujo GLB não tinha entrado nesta partida reduzida.
   const _qaVmWeapon = testMode && WEAPON_IDS.includes(params.get('vmweapon')) ? params.get('vmweapon') : null;
-  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon])].filter(Boolean);
+  // TRETA$ da partida: todo mundo nasce de pistola, então ela entra no preload junto com as sorteadas
+  const economia = economiaLigada({ busca: location.search, online: !!sessao, wpnMode: settings.wpnMode });
+  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon, economia ? 'pistol' : null])].filter(Boolean);
   try {
     if (!navOnly) {
       await Promise.all([
@@ -2015,7 +2019,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     settings: sessao ? { ...settings, bots: tamanhoTime, allyBots: Math.max(0, tamanhoTime - 1), enemyBots: tamanhoTime } : settings,
     renderer, textures, sfx,
     playerCharId: charId, playerSkinId, playerEyewearId, playerGloveId, playerWeaponSkins, playerKnifeSkinId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
-    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
+    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons, economia,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
     /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
        sobrariam nove corpos locais para dez entidades e um jogador ficaria invisível. */
@@ -3930,8 +3934,8 @@ function pickTeam(faction) {
       // Avatar = busto cortado da ARTE APROVADA (molde/neutro), não do GLB low-poly —
       // referência 03: a coluna da esquerda é uma fileira de retratos, não de modelos 3D.
       const thumb0 = `/img/chars/avatars/${c.id}.webp?v=${VERSION}`;
-      row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false');
-      row.innerHTML = `<img src="${thumb0}" alt="${c.name}"><span>${c.name}</span>`;
+      row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false'); row.title = c.name;
+      row.innerHTML = `<img src="${thumb0}" alt="${c.name}" loading="lazy"><span>${c.name}</span>`;
       row.onmouseenter = () => ui.hover();
       // A faixa é horizontal, mas ↑↓ continuam aceitos para quem já usava o fluxo antigo.
       row.onkeydown = (e) => {

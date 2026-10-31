@@ -40,7 +40,7 @@ const MUTANTE = arg('mutante');
 const MUTANTES = { 'roteiro-mudo': ['QAM2'] };
 if (MUTANTE && !MUTANTES[MUTANTE]) throw new Error(`mutante desconhecido: ${MUTANTE} (conheço ${Object.keys(MUTANTES).join(', ')})`);
 
-const PARTIDA = 'debug=1&auto=E,esquerdomacho&map=praca_poderes';
+const PARTIDA = 'debug=1&economia=0&auto=E,esquerdomacho&map=praca_poderes';
 const ARQUIVO_HARNESS = '/js/qa-mobile.js';
 const PRAZO_LIVE_MS = 300_000;
 const PRAZO_RELATORIO_MS = 120_000;

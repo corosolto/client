@@ -23,6 +23,59 @@ const mutantSource = source.replace(marker, '  grafitar({')
 let mutant;
 try { mutant = await import(`data:text/javascript,${encodeURIComponent(mutantSource)}`); }
 catch (error) { throw new Error(`Order mutant import failed: ${error.message.slice(0, 200)}`); }
+
+/* Relato #1171: arte idêntica não se repete lado a lado e nenhuma peça cruza a faixa
+ * azul perimetral (o plano atrás + a faixa à frente produziam z-fighting). Os mutantes
+ * desligam cada proteção no mesmo build real e precisam reproduzir os dois defeitos. */
+const pecasDo = (world) => world.root.userData.graffitiPecas || [];
+const repeticoes = (pecas, distancia = 9) => {
+  let n = 0;
+  for (let i = 0; i < pecas.length; i++) for (let j = 0; j < i; j++) {
+    const a = pecas[i], b = pecas[j];
+    if (a.f !== b.f || Math.abs(Math.cos(a.ry - b.ry)) < 0.9) continue;
+    const nx = Math.sin(a.ry), nz = Math.cos(a.ry), dx = a.x - b.x, dz = a.z - b.z;
+    if (Math.abs(dx * nx + dz * nz) > 0.3) continue;
+    const tangente = Math.abs(dx * Math.cos(a.ry) - dz * Math.sin(a.ry));
+    if (tangente < distancia) n++;
+  }
+  return n;
+};
+const cruzaFaixa = (p) => p.y - p.h / 2 < 2.6 && p.y + p.h / 2 > 2
+  && (Math.abs(Math.abs(p.x) - 16.97) < 0.2
+    || Math.abs(Math.abs(p.x) - 20.97) < 0.2
+    || Math.abs(Math.abs(p.z) - 24.97) < 0.2);
+const artesNaFaixa = (world) => {
+  const nomes = [];
+  world.root.traverse((o) => {
+    if (!o.isMesh || o.userData?.pecas || !/^(?:decal:|mural:|poster:)/.test(o.name || '')) return;
+    const box = new THREE.Box3().setFromObject(o);
+    if (box.min.y < 2.6 && box.max.y > 2) nomes.push(o.name);
+  });
+  return nomes;
+};
+const buildPiscina = (mutante = '') => {
+  const antes = process.env.PISCINA_GRAFFITI_MUTANT;
+  if (mutante) process.env.PISCINA_GRAFFITI_MUTANT = mutante; else delete process.env.PISCINA_GRAFFITI_MUTANT;
+  try {
+    seedRandom(12345);
+    const world = MAPS.piscina_treta.build(new THREE.Scene(), initTextures());
+    world.root.updateMatrixWorld(true);
+    return world;
+  } finally {
+    if (antes === undefined) delete process.env.PISCINA_GRAFFITI_MUTANT;
+    else process.env.PISCINA_GRAFFITI_MUTANT = antes;
+  }
+};
+const producao = buildPiscina(), mutRep = buildPiscina('repeticao'), mutFaixa = buildPiscina('faixa');
+assert.equal(repeticoes(pecasDo(producao)), 0, 'produção não repete o mesmo grafite no mesmo muro a menos de 9 m');
+assert.ok(repeticoes(pecasDo(mutRep)) > 0, 'mutante sem filtro reproduz grafites repetidos');
+assert.equal(pecasDo(producao).filter(cruzaFaixa).length, 0, 'produção não pinta por cima da faixa azul');
+assert.equal(artesNaFaixa(producao).length, 0, 'cartaz, mural ou decal manual não invade a faixa azul');
+assert.ok(pecasDo(mutFaixa).filter(cruzaFaixa).length > 0, 'mutante sem exclusão reproduz z-fighting na faixa azul');
+assert.ok(artesNaFaixa(mutFaixa).length > 0, 'mutante recoloca arte manual sobre a faixa azul');
+console.log(JSON.stringify({ gate: 'piscina-editorial', pecas: pecasDo(producao).length,
+  repeticoesMutante: repeticoes(pecasDo(mutRep)), faixaMutante: pecasDo(mutFaixa).filter(cruzaFaixa).length,
+  arteManualMutante: artesNaFaixa(mutFaixa).length }));
 const textures = initTextures(), savedLayout = GRAFITE.piscina_treta;
 assert.ok(textures.decalFiles.includes('tags-treino-04.png'), 'fixture uses real artwork');
 GRAFITE.piscina_treta = { arquivos: ['tags-treino-04.png'], pecas: [

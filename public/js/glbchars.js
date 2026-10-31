@@ -139,6 +139,10 @@ const TP_MOUNT_V2 = qp.get('tpmount') !== '0';
 // ?tpmountlive=0 -> mount volta a ser resolvido só uma vez, na pose de idle (ver o bloco
 // longo em buildCharacterModel). Existe pra permitir A/B do defeito, não pra uso normal.
 const TP_MOUNT_LIVE = qp.get('tpmountlive') !== '0';
+// Vitrine do lobby gira o PULSO, não a arma na mão (girar a arma deixava 37-65° fora da
+// pegada: "arma bugada na mão", 28/10). Régua eval:lobbyarmamao; ?pvpulso=0 volta ao antigo.
+const PV_PULSO = qp.get('pvpulso') !== '0';
+const PV_PIVO = qp.get('pvpivo') !== '0';   // ?pvpivo=0: gira no osso (sem CCD na palma), só p/ mutante
 const _tpc = (qp.get('tpcarry') || '').split(',').map(Number);
 const TP_CARRY_PITCH = ((_tpc.length === 2 && !isNaN(_tpc[0]) ? _tpc[0] : -6)) * Math.PI / 180;  // cano levemente pro chão (porte)
 const TP_CARRY_YAW = ((_tpc.length === 2 && !isNaN(_tpc[1]) ? _tpc[1] : 4)) * Math.PI / 180;     // levemente cruzando o corpo
@@ -179,11 +183,36 @@ const P1H_FORE = ((_p1h.length === 2 && !isNaN(_p1h[1]) ? _p1h[1] : -50)) * Math
 const CANARINHO_P1H_ARM = 32 * Math.PI / 180;
 const CANARINHO_P1H_FORE = -16 * Math.PI / 180;
 const P1H_MAO_L = [-0.19, -0.06, 0.02];
-/* Corpos onde o overlay balona a malha (select-inflate: p99 acima do teto). O delta de
-   braço soma em cima de um bind próprio; nesses rigs o clipe cru já lê melhor. */
+/* Corpos onde o clipe 1H autorado já resolve a anatomia e não aceita o overlay genérico. */
 const P1H_SKIP = new Set(['canarinho', 'bonzo']);
+/* Esquerdomacho alternava entre clipe 1H e overlay. Usa locomotiva base + um único overlay. */
+const P1H_BASE_CLIP = new Set(['esquerdomacho']);
+/* Teto de frente por corpo (31/10): clamp espelhado ao piso, mão de volta, arma colada. Hist: docs/ANIM-3P.md. */
+const TP_FRONT_MAX_CHAR = { canarinho: 0.20 };
 const loader = new GLTFLoader();
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
+/* Temporários da guarda de alcance do IK (zero alocação por quadro). */
+const _alcA = new THREE.Vector3(), _alcB = new THREE.Vector3(), _upY = new THREE.Vector3(0, 1, 0);
+/* Guarda de alcance do IK (31/10): alvo dentro de 95% do braço, sem contorção. Hist: docs/ANIM-3P.md. */
+function clampAlcanceIK(chain, end, alvo) {
+  if (!chain || chain.length < 2 || !alvo) return alvo;
+  chain[0].getWorldPosition(_alcA);
+  chain[1].getWorldPosition(_alcB);
+  const braco = _alcA.distanceTo(_alcB);     // comprimento de osso: invariante à pose
+  end.getWorldPosition(_alcA);
+  const alcance = (braco + _alcB.distanceTo(_alcA)) * 0.95;
+  chain[0].getWorldPosition(_alcB);          // base do clamp
+  const dx = alvo.x - _alcB.x, dy = alvo.y - _alcB.y, dz = alvo.z - _alcB.z;
+  const d = Math.hypot(dx, dy, dz);
+  if (d <= alcance || d < 1e-6) return alvo;
+  const k = alcance / d;
+  alvo.set(_alcB.x + dx * k, _alcB.y + dy * k, _alcB.z + dz * k);
+  return alvo;
+}
+/* Tint 3P por personagem (31/10, capa do Juiz); crivo na contact sheet. Hist: docs/ANIM-3P.md. */
+const TINT_3P = {
+  juiz: [{ material: /Navy Broadshoulder/i, color: 0x98a3c6 }],
+};
 
 let _clips = null;                 // { idle: AnimationClip, ... } shared fallback
 const _clipsByChar = {};           // id -> per-character retargeted clip set (fallback to _clips)
@@ -491,11 +520,26 @@ const _v = new THREE.Vector3();
 const _gq = new THREE.Quaternion(), _wq = new THREE.Quaternion(), _pq = new THREE.Quaternion(), _headUpQ = new THREE.Quaternion();
 const _qLean = new THREE.Quaternion(), _axisF = new THREE.Vector3();
 const _right = new THREE.Vector3();
-const _ikTgt = new THREE.Vector3();
+const _ikTgt = new THREE.Vector3(), _ancoraPalma = new THREE.Vector3();
 function orientTpMount(t) {
   t.handBone.updateWorldMatrix(true, false);
   t.model.getWorldQuaternion(_gq);
   _wq.copy(_gq).multiply(t.carry);
+  // Só no porte parado: em corrida/tiro (tela de carregamento) a mão volta a seguir o clipe.
+  if (t.pegada && t.pegadaAtiva) {
+    // PV_PULSO: a mão segue a arma (absoluto, não acumula). Pivô na PALMA via CCD: girar
+    // no osso empurrava a palma 2 cm e esticava o braço da pistola (select-mount ESTICADO).
+    const ancora = PV_PIVO && t.palmLocal && t.rArm && t.rFore ? t.handBone.localToWorld(_ancoraPalma.copy(t.palmLocal)) : null;
+    t.mount.quaternion.copy(t.pegada);
+    for (let i = 0; i < (ancora ? 2 : 1); i++) {
+      if (i) solveCCDIK([t.rArm, t.rFore], t.handBone, ancora, { iterations: 4, endOffset: t.palmLocal });
+      t.handBone.parent.updateWorldMatrix(true, false);
+      t.handBone.parent.getWorldQuaternion(_pq).invert();
+      t.handBone.quaternion.copy(_pq.multiply(_wq).multiply(t.pegadaInv));
+      t.handBone.updateWorldMatrix(false, true);
+    }
+    return;
+  }
   t.handBone.getWorldQuaternion(_pq);
   t.mount.quaternion.copy(_pq.invert().multiply(_wq));
 }
@@ -741,6 +785,17 @@ export function buildCharacterModel(def, opts = {}) {
         handBone.localToWorld(carryPalm);model.worldToLocal(carryPalm);
         ctrl.tpMount.carryPalmModel=carryPalm;
       }
+      // PV_PULSO: guarda a pegada de JOGO e gira o pulso. Só depois da palma/folga (antes,
+      // desviava a folga do corpo nos mascotes). Faca fora: mesmo porte no jogo e na vitrine.
+      if (PV_PULSO && opts.preview && !faca && ctrl.tpMount) {
+        const funcional = new THREE.Quaternion().setFromEuler(new THREE.Euler(TP_CARRY_PITCH, TP_CARRY_YAW, 0, 'YXZ'));
+        const pegada = handBone.getWorldQuaternion(new THREE.Quaternion()).invert()
+          .multiply(model.getWorldQuaternion(new THREE.Quaternion()).multiply(funcional));
+        ctrl.tpMount.pegada = pegada;
+        ctrl.tpMount.pegadaInv = pegada.clone().invert();
+        ctrl.tpMount.pegadaAtiva = true;
+        orientTpMount(ctrl.tpMount);
+      }
     } else if (mount) {
       // --- caminho antigo (?tpmount=0): direção do cano pela linha antebraço->mão ---
       const dirAvg = new THREE.Vector3();
@@ -768,18 +823,19 @@ export function buildCharacterModel(def, opts = {}) {
        fina ou os dedos atravessam a arma grossa; nos dois casos lê como "mão solta".
        Aqui o ângulo sai da própria arma: `gripPoints` dá o ponto do guarda-mão e o
        weaponModel dá a caixa, então a espessura no grip é MEDIDA e não tabelada.
-       Faixa 0,35-0,80 rad: abaixo disso a mão não fecha, acima os dedos entram na palma.
-       RESSALVA HONESTA: sem os GLB de personagem nesta árvore não deu pra conferir o
-       resultado em imagem. A faixa é conservadora e contém o 0,5 antigo, então o pior
-       caso é ficar igual ao que já estava. */
+       Faixa 0,55-0,95 rad (31/10, afinada em 2 rodadas de juiz nos 13 flagrados: 7 com "dedos planos/
+       bloco que não envolvem o cabo" — jozo, bonzo, esquerdomacho, cadequinha, juiz,
+       canarinho, lobisomem): a faixa antiga 0,35-0,80 era conservadora e a mão lia
+       como espalmada na arma. Acima disso os dedos entram na palma em arma grossa;
+       teto por corpo segue no CURL_MAX. */
     const curlPara = (obj) => {
-      if (!obj) return 0.5;
+      if (!obj) return 0.7;
       const sz = new THREE.Vector3();
       new THREE.Box3().setFromObject(obj).getSize(sz);
       const esp = Math.min(sz.x, sz.y, sz.z);            // menor dimensão = espessura do corpo da arma
-      if (!isFinite(esp) || esp <= 0) return 0.5;
-      // mão humana fecha ~0,8 rad em volta de 3 cm e ~0,35 rad em volta de 9 cm
-      return Math.max(0.35, Math.min(0.80, 0.80 - (esp - 0.03) * (0.45 / 0.06)));
+      if (!isFinite(esp) || esp <= 0) return 0.7;
+      // mão humana fecha ~0,95 rad em volta de 3 cm e ~0,55 rad em volta de 9 cm
+      return Math.max(0.55, Math.min(0.95, 0.95 - (esp - 0.03) * (0.40 / 0.06)));
     };
     /* Teto de curl por personagem: a faixa do `curlPara` é calibrada em mão HUMANA e o lobo
        tem pata. Não morde hoje (shotgun já dá 0,35); varredura e porquê em BUG-149. */
@@ -792,6 +848,25 @@ export function buildCharacterModel(def, opts = {}) {
     for (const b of curlRs) b.rotation.x += curl;
     const supportCurl = skin?.gripProfile === 'mint24-curl-v1' && ['lula-drip', 'senador-drip', 'zero-um-mandrake'].includes(def.skinId) ? 2.5 : curl;
     if (twoHanded) for (const b of curlLs) b.rotation.x += supportCurl;
+    /* TINT 3P (ver TINT_3P): multiplicador de cor sobre a textura, clonando o material
+     * só dos meshes atingidos (o resto do elenco não toca em nada). */
+    const tints = TINT_3P[def.id];
+    if (tints?.length) {
+      model.traverse((o) => {
+        if (!o.isMesh || !o.material) return;
+        const lista = Array.isArray(o.material) ? o.material : [o.material];
+        let trocou = false;
+        for (let i = 0; i < lista.length; i++) {
+          const t = tints.find((tt) => lista[i]?.name && tt.material.test(lista[i].name));
+          if (!t) continue;
+          const c = lista[i].clone();
+          c.color = new THREE.Color(t.color);
+          lista[i] = c;
+          trocou = true;
+        }
+        if (trocou) o.material = Array.isArray(o.material) ? lista : lista[0];
+      });
+    }
     // IK da mão de apoio (FASE 2): em armas de 2 mãos, o CharController trava a palma L
     // no guarda-mão depois de cada mixer.update — vale pra idle/walk dos bots E pro
     // preview da tela de seleção (mesmo ctrl.update). Posicional apenas: os clipes já
@@ -856,7 +931,7 @@ class CharController {
     this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
     this._emoteId = null; this._emoteT = 0; this._emoteK = 0; this._emoteDip = 0;
     this.emotando = false; this._emoteOssos = [];
-    this._ar = false; this._landT = 0; this._yawAtraso = null; this._deathTilt = 0; this.lod = 0;
+    this._ar = false; this._mantleF = null; this._landT = 0; this._yawAtraso = null; this._deathTilt = 0; this.lod = 0;
     this.shadow = null; this._airK = 0;   // sombra de contato + fator "está no ar" (0..1, suavizado)
     this.oneHanded = false; // arma de 1 mão: idle/walk trocam p/ idle1h/walk1h (setado em buildCharacterModel)
     this._loco = 'idle'; // current locomotion state (hysteresis memory for walk/run choice)
@@ -926,6 +1001,12 @@ class CharController {
     this._ar = novo;
   }
 
+  /* O mantle reutiliza o clipe de pulo, mas o tempo vem do progresso físico. Deixar o
+     mixer tocar livre fazia braços e corpo terminarem antes de o jogador cruzar a borda. */
+  setMantle(f) {
+    this._mantleF = Number.isFinite(f) ? Math.max(0, Math.min(1, f)) : null;
+  }
+
   jump() {
     if (this.dead || this.crouch || this.jumping || !this.actions.jump) return;
     this.jumping = true;
@@ -961,7 +1042,12 @@ class CharController {
     // Viés de tombo pela direção do disparo: o mesmo clipe deixa de cair sempre igual.
     this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
     this._deathDir = dir ? { x: dir.x, z: dir.z } : null;
-    this.dead = true; this.shooting = false; this._ar = false;
+    this.dead = true; this.shooting = false; this._ar = false; this._mantleF = null;
+    /* Overlays de vida (reload/flinch/lean/pitch) morrem junto com o corpo (dono, 31/10). Hist: docs/ANIM-3P.md. */
+    this.cancelReload();
+    this._flinchDur = 0;
+    this._leanK = 0;
+    this.aimPitch = 0;
     this._to('death', true);
     if (this.actions.death) this.actions.death.timeScale = 1.8; // snappy fall, not slow-mo
   }
@@ -971,7 +1057,7 @@ class CharController {
   // character does everything on top of the fallen pose (the "walking while falling
   // backward" bug). Then start idle clean.
   revive() {
-    this.dead = false; this.shooting = false; this.jumping = false;
+    this.dead = false; this.shooting = false; this.jumping = false; this._ar = false; this._mantleF = null;
     this.mixer.stopAllAction();
     this.cur = null;
     this._to('idle');
@@ -985,7 +1071,13 @@ class CharController {
   update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
     if (!this.dead) {
       if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
-      if (this.crouch) {
+      if (this._mantleF !== null && this.actions.jump) {
+        if (this.cur !== this.actions.jump) { this._to('jump'); this.jumping = false; }
+        const jump = this.actions.jump;
+        jump.paused = true;
+        jump.time = jump.getClip().duration * (0.08 + this._mantleF * 0.88);
+        this.curName = 'jump';
+      } else if (this.crouch) {
         this._to(moving > 0.05 ? 'crouchwalk' : 'crouch');
       } else if (this.shooting && moving > 0.05 && this.actions.walkfire) {
         // Atirar EM MOVIMENTO: o clipe combinado (walk+fire) mantém as pernas andando —
@@ -997,19 +1089,20 @@ class CharController {
         this.actions.shoot.paused = false;
         this._to('shoot', true, false);
       } else if (this._ar && this.actions.jump) {
-        // no ar: segura a pose do pulo em vez de voltar a andar/correr
         if (this.cur !== this.actions.jump) { this._to('jump'); this.jumping = false; }
-        this.actions.jump.paused = this.actions.jump.time >= this.actions.jump.getClip().duration - 0.02;
+        const jump = this.actions.jump;
+        jump.paused = jump.time >= jump.getClip().duration - 0.02;
         this.curName = 'jump';
       } else if (this._landT > 0 && this.actions.crouch) {
         this._landT = Math.max(0, this._landT - dt);
         this._to('crouch');
       } else if (!this.shooting && !this.jumping) {
-        if (moving <= 0.05) { this._to(this.oneHanded && this.actions.idle1h ? 'idle1h' : 'idle'); this._loco = 'idle'; }
+        const usaClipe1h = this.oneHanded && !P1H_BASE_CLIP.has(this.bodyId);
+        if (moving <= 0.05) { this._to(usaClipe1h && this.actions.idle1h ? 'idle1h' : 'idle'); this._loco = 'idle'; }
         else if (back) {
           // Backpedal: walk clip REVERSED (negative timeScale below) so the feet step
           // backward — a forward clip while retreating is the classic moonwalk.
-          this._to(this.oneHanded && this.actions.walk1h ? 'walk1h' : 'walk'); this._loco = 'walk';
+          this._to(usaClipe1h && this.actions.walk1h ? 'walk1h' : 'walk'); this._loco = 'walk';
         } else {
           // Pick the clip by SPEED with hysteresis (not by hasTarget): fast movement with
           // the slow walk clip needs a frantic ~2.4x cycle; slow movement with the run
@@ -1017,7 +1110,7 @@ class CharController {
           if (this._loco !== 'run' && speed > 1.45) this._loco = 'run';
           else if (this._loco !== 'walk' && speed < 1.15) this._loco = 'walk';
           else if (this._loco !== 'walk' && this._loco !== 'run') this._loco = hasTarget && speed < 1.7 ? 'walk' : 'run';
-          this._to(this._loco === 'walk' && this.oneHanded && this.actions.walk1h ? 'walk1h' : this._loco);
+          this._to(this._loco === 'walk' && usaClipe1h && this.actions.walk1h ? 'walk1h' : this._loco);
         }
       }
       // Per-clip cycle rate = ground speed / that clip's measured natural speed, so the
@@ -1052,6 +1145,24 @@ class CharController {
         this.headBone.updateWorldMatrix(false, true);
       }
     }
+    /* Recentro de YAW da cabeça em porte parado (dono, 31/10); malha fechada igual ao pitch. Hist: docs/ANIM-3P.md. */
+    if (this.headBone && !this.dead && this.lod < 2
+        && /^(idle|idle1h|crouch)$/.test(this.curName || '')) {
+      this.group.getWorldQuaternion(_gq);
+      _v.set(0, 0, 1).applyQuaternion(_gq);            // frente do corpo em mundo
+      const fx = _v.x, fz = _v.z;
+      this.headBone.getWorldQuaternion(_wq);
+      _v.set(0, 0, 1).applyQuaternion(_wq);            // olhar da cabeça em mundo
+      const curYaw = Math.atan2(fx * _v.z - fz * _v.x, fx * _v.x + fz * _v.z);
+      const corr = Math.max(-AIM_CORR_CLAMP, Math.min(AIM_CORR_CLAMP, curYaw * 0.8));
+      this._yawCorr = (this._yawCorr || 0) + (corr - (this._yawCorr || 0)) * Math.min(1, dt * 6);
+      if (Math.abs(this._yawCorr) > 1e-4) {
+        _headUpQ.setFromAxisAngle(_upY, this._yawCorr);
+        this.headBone.parent.getWorldQuaternion(_pq);
+        this.headBone.quaternion.copy(_pq.invert().multiply(_headUpQ).multiply(_wq));
+        this.headBone.updateWorldMatrix(false, true);
+      }
+    }
     if (this.headBone) {
       this.group.updateMatrixWorld(true);
       this.head.position.copy(this.group.worldToLocal(this.headBone.getWorldPosition(_v)));
@@ -1061,7 +1172,7 @@ class CharController {
     // (o corpo está mais perto do chão); morto, alivia — o corpo tombou e a mancha sob
     // o eixo do grupo deixaria de fazer sentido se ficasse cheia.
     if (this.shadow) {
-      const air = this.jumping ? 1 : 0;
+      const air = this._ar ? 1 : 0;
       this._airK += (air - this._airK) * Math.min(1, dt * 8);
       const k = 1 - this._airK;
       const s = this.shadow, base = s.userData.csBase || 0.9;
@@ -1092,6 +1203,7 @@ class CharController {
     }
     if (this.tpMount && !this.dead && !this.emotando) {
       const t = this.tpMount;
+      if (t.pegada) t.pegadaAtiva = /^(idle|idle1h|crouch)$/.test(this.curName || '');
       orientTpMount(t);
       if(t.stabilizeCarry && t.carryPalmModel && t.rArm && t.rFore && /^(walk|run|walk1h|walkfire)$/.test(this.curName || '')){
         _v.copy(t.carryPalmModel);t.model.localToWorld(_v);
@@ -1107,20 +1219,24 @@ class CharController {
       // ("arma por trás" — jozo/trapfunk/coach). Empurrar só o MOUNT foi tentado e
       // reprovado no olho: a arma descolava da mão (esbirro: 11 cm). Aqui a MÃO inteira
       // vem pra frente (CCD em Arm→ForeArm, o mesmo solver da mão de apoio) e a arma,
-      // filha do osso, vem colada. SÓ em porte parado (idle/idle1h/crouch): no walk/run
-      // a mão balança pra trás por natureza. Nota de ordem: este bloco roda ANTES da
-      // orientação do cano (acima), então na 1ª chamada a orientação usa a mão pré-IK e
-      // converge no quadro seguinte — o assentamento da seleção roda 60 quadros.
       if (t.palmLocal && t.rArm && t.rFore && TP_FRONT_MIN > -Infinity
           && /^(idle|idle1h|crouch)$/.test(this.curName || '')) {
         _v.copy(t.palmLocal);
         t.handBone.localToWorld(_v);
         t.model.worldToLocal(_v);
+        /* TETO por corpo (ver TP_FRONT_MAX_CHAR): mesma mecânica do piso, espelhada —
+         * puxa a mão de VOLTA quando o clipe humano estica demais o braço/asa. */
+        const fzMax = TP_FRONT_MAX_CHAR[this.bodyId] ?? Infinity;
         if (_v.z < TP_FRONT_MIN) {
           _v.z = TP_FRONT_MIN;
           t.model.localToWorld(_v);
           solveCCDIK([t.rArm, t.rFore], t.handBone, _v, { iterations: 6, endOffset: t.palmLocal });
           orientTpMount(t);   // reorienta o cano pós-IK
+        } else if (_v.z > fzMax) {
+          _v.z = fzMax;
+          t.model.localToWorld(_v);
+          solveCCDIK([t.rArm, t.rFore], t.handBone, _v, { iterations: 6, endOffset: t.palmLocal });
+          orientTpMount(t);
         }
       }
     }
@@ -1131,6 +1247,7 @@ class CharController {
       ik.gun.updateWorldMatrix(true, false);
       _ikTgt.copy(ik.fore);
       ik.gun.localToWorld(_ikTgt);
+      clampAlcanceIK(ik.chain, ik.end, _ikTgt);
       solveCCDIK(ik.chain, ik.end, _ikTgt, { iterations: 8, endOffset: ik.endOffset });
     }
     /* Overlays de tronco por ÚLTIMO; eixo em MUNDO via quadro do pai e undo antes do
@@ -1206,9 +1323,11 @@ class CharController {
          Canarinho recebe um porte curto próprio: os 50° humanos inflam a asa, mas sem
          overlay o cotovelo fica quase reto e a pistola lê como pendurada. */
       const canarinho1h = this.bodyId === 'canarinho';
+      const usaBase1h = P1H_BASE_CLIP.has(this.bodyId);
+      const clipeAceita1h = usaBase1h ? /^(idle|walk|run)$/ : /^(idle1h|walk1h)$/;
       const quer1h = PORTE_1H && this.oneHanded && !this.emotando && this.lod < 1
         && (!P1H_SKIP.has(this.bodyId) || canarinho1h)
-        && /^(idle1h|walk1h)$/.test(this.curName || '');
+        && clipeAceita1h.test(this.curName || '');
       this._porte1hK += ((quer1h ? 1 : 0) - this._porte1hK) * Math.min(1, dt * 10);
       if (this._porte1hK > 0.004 && this.reloadK <= 0.05 && this.corpo?.size) {
         const k1 = this._porte1hK;
@@ -1223,6 +1342,7 @@ class CharController {
           this.model.worldToLocal(_ikTgt);
           _ikTgt.set(_ikTgt.x + P1H_MAO_L[0], _ikTgt.y + P1H_MAO_L[1], _ikTgt.z + P1H_MAO_L[2]);
           this.model.localToWorld(_ikTgt);
+          clampAlcanceIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt);
           solveCCDIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt, { iterations: 8 });
         }
       }
@@ -1279,10 +1399,12 @@ class CharController {
         if (this.ikL && torso.magLocal && torso.gun) {
           _ikTgt.copy(this.ikL.fore).lerp(torso.magLocal, k);
           torso.gun.localToWorld(_ikTgt);
+          clampAlcanceIK(this.ikL.chain, this.ikL.end, _ikTgt);
           solveCCDIK(this.ikL.chain, this.ikL.end, _ikTgt, { iterations: 12, endOffset: this.ikL.endOffset });
         } else if (torso.lArm && torso.lFore && torso.lHand && this.model) {
           _ikTgt.copy(torso.beltLocal);
           this.model.localToWorld(_ikTgt);
+          clampAlcanceIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt);
           solveCCDIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt, { iterations: 8 });
         }
       }
