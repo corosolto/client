@@ -118,11 +118,40 @@ jobs:
         env:
           NEW_ESTRAGACODIGO_REVIEW: ${{ github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.user.login == 'estraga-codigo' }}
         run: |
-          gh pr view "$PR_NUMBER" --json headRefOid,reviewRequests,reviews,labels > /tmp/pr-estragacodigo.json
           python3 - <<'PY'
           import json, os, subprocess
+          repo = os.environ['GITHUB_REPOSITORY']
+          number = os.environ['PR_NUMBER']
           path = '/tmp/pr-estragacodigo.json'
-          payload = json.load(open(path))
+          def api(endpoint):
+              return json.loads(subprocess.check_output(['gh', 'api', endpoint], text=True))
+          def api_pages(endpoint):
+              pages = json.loads(subprocess.check_output([
+                  'gh', 'api', '--paginate', '--slurp', endpoint,
+              ], text=True))
+              return [item for page in pages for item in page]
+          pr = api(f'repos/{repo}/pulls/{number}')
+          requests = api(f'repos/{repo}/pulls/{number}/requested_reviewers')
+          payload = {
+              'headRefOid': (pr.get('head') or {}).get('sha'),
+              'reviewRequests': [
+                  {'login': user.get('login')}
+                  for user in requests.get('users') or []
+              ],
+              'reviews': [
+                  {
+                      'author': {'login': (review.get('user') or {}).get('login')},
+                      'state': review.get('state'),
+                      'commit': {'oid': review.get('commit_id')},
+                      'submittedAt': review.get('submitted_at'),
+                  }
+                  for review in api_pages(f'repos/{repo}/pulls/{number}/reviews?per_page=100')
+              ],
+              'labels': [
+                  {'name': label.get('name')}
+                  for label in pr.get('labels') or []
+              ],
+          }
           checks = json.loads(subprocess.check_output([
               'gh', 'api',
               f"repos/{os.environ['GITHUB_REPOSITORY']}/commits/{payload['headRefOid']}/check-runs?per_page=100",
