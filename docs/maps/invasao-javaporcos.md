@@ -51,13 +51,14 @@ Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
 `buildInvasaoJavaporcos` devolve, além de `root`/`colliders`/`occluders`/`spawns`:
 
 - `groundHeightAt(x, z)` — altura REAL do chão. É a amostra bilinear de uma grade de
-  0,5 m (233 × 233 floats, 217 kB) construída UMA vez no boot. Custo por chamada: 2
+  0,5 m (273 × 273 Float32, 298.116 bytes; lado = 2 × HALF / PASSO + 1) construída UMA vez no boot. Custo por chamada: 2
   truncamentos, 4 leituras de `Float32Array` e 3 interpolações, sem alocação e sem ramo
   de busca. A horda chama dezenas de vezes por quadro e NÃO precisa cachear. A malha do
   terreno é amostrada da MESMA grade, então o chão desenhado e o chão medido são o mesmo
   número — é o conserto do "javaporco indo por baixo da terra".
 - `cityBounds` — `{minX:-36, maxX:36, minZ:-36, maxZ:36}`.
-- `boarEntrances` — 3 clareiras `{id, lado, trilha, x, z}`, com o `id` da frente.
+- `boarEntrances` — 6 clareiras `{id, lado, trilha, x, z}`, com os ids das frentes:
+  `norte`, `leste`, `sudoeste`, `oeste`, `nordeste`, `sudeste`.
 - `foodSpots` — `[{id, x, z, hp, kind, r}]`, `kind` em `lixo|feira|cacamba|racao`. `r` JÁ
   é a distância do centro do ponto em que o focinho alcança (meia-extensão do colisor +
   0,40 m): quem consome não soma folga de corpo.
@@ -222,7 +223,7 @@ a fábrica pura mantém seu limite opcional para testes de partidas finitas.
 | `VAGAR_TROCA` | 5 s | validade de um ponto de vagar antes de sortear outro. |
 | `FURIA.porMinuto` | 0,1 | fúria por minuto de partida. |
 
-**Fallback enquanto o mapa não exporta `world.horda`.** Frentes: as 3 `boarEntrances`
+**Fallback enquanto o mapa não exporta `world.horda`.** Frentes: as `boarEntrances`
 mais afastadas entre si (no mapa de 29/10: n1, s3 e l1), com rota da clareira até a borda
 de `cityBounds`. Becos: nenhum. Setores: grade 4×4 sobre `cityBounds`, peso 1.
 

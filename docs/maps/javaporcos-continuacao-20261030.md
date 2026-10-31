@@ -1224,3 +1224,22 @@ UI-v3 revelou duas cores do card novo fora da paleta: substituídas pelos tokens
 existentes painel/âmbar, sem mudar geometria. Baseline UI 10/10 e dez mutantes
 passaram. Revisão independente achou compartilhamento e quebra de tabela; ambos corrigidos.
 Merge/release ainda não feitos; aguardam push, CI e revisão do novo HEAD.
+
+## Segunda revisão estraga-codigo 5722453835
+
+Quatro achados sobre 00cede9c6. 4431484854/4857 confirmados: contrato ainda tinha
+3 clareiras e grade233. Corrigido para seis ids explícitos e273×273 Float32,
+298.116 bytes, derivados de HALF68/PASSO0,5. Medição antes divergente/depois igual;
+restaurar grade233 ou três clareiras em memória reprova a comparação. spec verde.
+4431484848 refutado: importAudioProbe converte relativos em file: absolutos, que
+são importáveis de data:. Node26 importou Sfx real; envelope/rollback/seleção de voz
+passaram. Mix carregou e falhou MIX11/MIX15, reproduzidas identicamente com fontes
+da main00e746b5 em diretório temporário; não são erro de importação nem novos
+registros KNOWN-RED. Não alterar música aprovada para satisfazer expectativa antiga.
+4431484852: filtro sugerido não executaria AK GPU, pois workflowUbuntu não chama
+essa régua Metal/macOS. Validação GPU local e três mutantes estão no pedido5 e em
+docs/viewmodels/ak-manga-quantizada-20261030.md. Não alegar cobertura GPU em CI.
+Revisor independente confirmou ambas as refutações e as duas correções documentais.
+Régua completa de mapa agora repetida: CHAO1/HORDA1 verdes; JANELA1/TRILHA3 vermelhas.
+Investigação em curso: janelas reais substituíram decorativas e consulta de terreno
+sem yRef pode retornar laje. Não declarar régua integral verde enquanto não corrigida.
