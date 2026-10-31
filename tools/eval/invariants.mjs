@@ -2464,6 +2464,15 @@ PRE_DISPARO = false;
   }
 }
 
+{
+  const out = await runNode('vm-presence-check.mjs', {}, ['--mutantes'], 60000);
+  let report;
+  try { report = JSON.parse(out.split('\n').find((line) => line.startsWith('{"ok":'))); } catch {}
+  put('AUD1V', 'construção e apresentação reais mantêm arma visível no mobile e desktop',
+    report?.ok === true && !out.includes('__ERRO__'),
+    report ? `${report.samples} verificações; ${report.failures} falhas` : out.slice(-300));
+}
+
 // ── 10. INVARIANTES QUE EXIGEM PIXEL (marcadas, não rodadas aqui) ───────────
 // Regressões reportadas em 27/09: a validação de área útil do ADS e da MGX5
 // em jogo real está em `node tools/eval/ads-visibility-check.mjs`. Estas três

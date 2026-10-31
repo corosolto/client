@@ -1482,9 +1482,9 @@ export class Game {
     } catch (e) { console.warn('env map', e); }
   }
 
-  _buildViewModels() {
-    const root = new THREE.Group();
-    if (AUTHORED_VM_ENABLED) {
+  _buildViewModels({ fallback = false, root = null } = {}) {
+    root ||= new THREE.Group();
+    if (AUTHORED_VM_ENABLED && !fallback) {
       this._vmFrame = () => {};
       this._vmMontarTardio = null;
       this._weaponOnly = false;
@@ -1717,7 +1717,8 @@ export class Game {
     // group): real GLB + a hand, positioned like the AWP viewmodel.
     for (const id of WEAPON_IDS) {
       if (models[id]) continue;
-      const g = new THREE.Group();
+      const g = hasWeapon(id) ? new THREE.Group()
+        : mkRifle(dark(0x333333), dark(0x3a2a1e), weaponCFG(id).len * 0.6, 0.1);
       mountRw(g, id);
       const hR = fpArm(); hR.name = 'handR'; hR.scale.setScalar(0.85); g.add(hR);   // fallback menor (proporção)
       if (!ONE_HANDED.has(id)) { const hL = frontHand(0.95); hL.name = 'handL'; hL.scale.setScalar(0.85); g.add(hL); }
@@ -3443,13 +3444,15 @@ export class Game {
   // 07/08/2026 — o histórico está no git.
   _applyVmVisibility() {
     const w = this.player.weapon;
-    this._vmMontarTardio?.(w);
     const melee = this.vm.melee?.setWeapon(w) || false;
     const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
     if (melee) this.vm.authored?.setWeapon('');
-    // Em runtime autorado, uma carga pendente apresenta o último mount ainda válido ou
-    // um root vazio. O procedural só existe quando o renderer autorado foi desligado.
-    // Utilidade na mão tem precedência de cena, inclusive sobre o pacote de faca.
+    // Sem controlador pronto, inclusive no toque, a arma alternativa precisa existir.
+    // Reutiliza a raiz para preservar os controladores e o rig de luz já instalados.
+    if (!authored && !melee && !this.vm.models[w]) {
+      Object.assign(this.vm, this._buildViewModels({ fallback: true, root: this.vm.root }));
+    }
+    this._vmMontarTardio?.(w);
     const utilidade = this._utilidadeNaMao();
     this._vmPresentation = { authored, melee, utility: utilidade };
     this._syncVmPresentation();
