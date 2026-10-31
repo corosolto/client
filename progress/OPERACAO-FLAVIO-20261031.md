@@ -34,3 +34,8 @@
 2026-10-31T19:10:57.617199+00:00 — Integração200/7d73: críticoe52 FINALCLEAN e atuaisCPU7/hostpairstrict195relocado/fullbuild/ChromeAN10+modo aprovados; detalhes emHQruntime/flavio200-*-receipt/status.json. Pins intactos; imagemDocker anterior continua0f973/ddac4, semfalsaextensão da prova deimagem195 paraheadnovo. Próximoenvionormalcomtodoshooks/CI. QAhumana/estética/escuta/editorial/rollout pendentes.
 
 2026-10-31T19:15:12.245754+00:00 — Envio200 NORMAL0/remote 551584ad0651b47168ed79d4dc85c2a55950c067 confirmado, hooksativos efontesintactas, servidorpróprioencerrado0. CIremotoaguarda; nãomerge/deploy. Imagem196seguepinanterior atérepin/rebuild. AnúncioH640x360faltapreservar; pilotosH/Vhistóricosnãoébuild200. Próximo: CI/capturasatuais/repin196conformecontrato, mantendo47/HQ/Javaowner.
+
+2026-10-31 19:36 UTC — GLM210 CSS paisagem baixa aplicado sob lease após crítico_media FINALCLEAN estático. Só breakpoint orientation:landscape/max-height420; JS/DOM/imagens/seenkey intactos. Baseline200v3 H640x360 painel486/CTAfora e V360x640cabe preservada. Próximo: build e recaptura nativa isolada H640x360/H844x390/V360x640 com pins, geometria e crítica visual; sem push antes verificação.
+
+2026-10-31T19:37 UTC — crítico_media FINALCLEAN defeito responsivo210 após seisPNGsinitial/focus. H640CTAaté350/H844até380/V360geometriabaselineidêntica, todossemrolagem/overlap/corte, foco inteiro. Logo/miniaturasHpequenosdecisãoeditorial; capturaambiente nãoatestaqualidadegameplay. 0pageerrors, requests38/15/16falham: nãofullintegração. QAestéticahumana/editorialRubenpendentes.
+Freshbuild/npm0 efontespreservadas;recibosHQruntime/flavio210-*.json,PNGsmedia/flavio-announcement210. Próximo envioNORMALcomtodoshooks/CI; não merge/deploy/post.
