@@ -674,3 +674,51 @@ O mutante sem-i18n ainda apontava MAP_IDS; atualizado para o uso real MAPAS_MENU
 antes de validar, pois antes falhava como MUTAÇÃO IMPOSSÍVEL, sem medir o defeito.
 Revisão adversarial dos dois arquivos sem achados. Nada enviado nas duas tentativas;
 próximo checkpoint e terceiro push normal, depois CI/preview do SHA exato.
+
+PUSH CONFIRMADO: terceiro hook passou81/81 (394,7s; hook408s), sem bypass.
+Treze commits enviados, remoto/PR confirmados em
+cf2348b4449a6a17b6532867a3210cdc509f989f. Runner completo preservado em
+artifacts/javaporcos-feedback-20261030/fecho/prepush-terceiro-check-deploy.log.
+CI novo pr-fast41147454413 e preview-build41147454446 iniciados. Vercel correto:
+projeto csbrasil/prj_TWb3W0xgVwsqRA3WEI06p8caAUAz, rubenmarcus-projects;
+deploy dpl_EBxh6PH1TSbd2WKntYBhZXWuB5rB,
+https://csbrasil-oky3haskc-rubenmarcus-projects.vercel.app em BUILDING inicialmente.
+O .vercel/project.json local aponta outro projeto e não foi alterado. Próximo:
+aguardar resultados do SHA exato, validar preview/armas no EgoTaskSpace8.
+
+PREVIEW READY no deploy acima. Build remoto passou áudio privado (1066referências,
+834únicas), check:vercel e Astro. EgoTaskSpace8 abriu a URL exata: loading com
+Defensores/Javaporcos e avatar de javaporco; depois intro rolável/pulável antes de
+criar Game. Captura completa observada em fecho/preview-intro.png. Entrada normal
+pelo botão Defender a cidade abriu partida, relógio/onda e domínio separados.
+
+Armas conferidas no PREVIEW:25fogo com malha da arma projetada visível e faca
+renderizada; contato visual revisado. Capturas/relatório em
+artifacts/javaporcos-feedback-20261030/preview-armas, resultados.json e contato-25.png.
+AK com madeira/metal visíveis em fecho/preview-ak-3x2.png (1320x880,aspect1,5),
+sem silhueta preta. Procedimento inicial usava um update(.5), mas authoredvm limita
+passo a.05: capturava saque incompleto e gerava falsos zeros. Conferência final
+avançou40passos de.05 do VM e projetou vértices COM skinning/getVertexPosition.
+Contagens só da arma (weaponMeshes), não mãos. A faca foi observada em imagem.
+Screenshot wrapper restaura viewport do host; captura3:2 válida usa CDP clip e
+renderer1320x880, não a imagem inicial preview-jogo-3x2.png (nome não prova proporção).
+Isso confirma visibilidade neste preview, não reprodução/correção universal do
+relato original sem URL. MPWS publicado e aprovação humana de gameplay pendentes.
+
+Fecho em 2026-10-31 UTC: preview também validado pela seleção real de três lados.
+Escolha E × B × JAVAPORCOS mostra inimigos e não abre introdução durante escolha;
+JOGAR mostra loading E/B + javaporcos e só depois a introdução. Entrada normal
+criou regras.times=3, sete bots humanos e64NPCs (71bots), infinito/wipe=time.
+HUD e TAB exibem E, B e Javaporcos, domínio/abates separados e avatar da horda.
+Captura observada fecho/preview-triplo-placar.png (1320x880); contém pausa ao fundo,
+portanto serve para conferir estrutura do placar, não aprovação visual final.
+EgoTaskSpace8 concluído com keep=[]; não tentar retomar espaço encerrado.
+
+Última consulta do CI: reguas-e-site, build, DCO, smoke/chat-desktop e classify
+verdes; invariantes, serta o portao-browser (jobs sertao/portao) ainda pendentes,
+sem falhas observadas. PR reviews=[] nesta consulta: CodeRabbit não revisou o HEAD.
+Não declarar PR pronto ou multiplayer publicado. Próximo passo: consultar os jobs
+41147454413/41147454327 e corrigir somente falhas comprovadas; depois obter revisão
+no HEAD. Backend objetivo/NPC e teste real WS de dois clientes seguem pendentes.
+Runtime remoto permanece cf2348b4449a6a17b6532867a3210cdc509f989f; este checkpoint
+é apenas documentação local e não inicia outro push/preview. Nenhum merge realizado.
