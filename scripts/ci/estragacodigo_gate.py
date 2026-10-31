@@ -8,6 +8,7 @@ def decide(payload: dict) -> dict:
     status_rollup = payload.get("statusCheckRollup") or []
     head_oid = payload.get("headRefOid")
     review_requests = payload.get("reviewRequests") or []
+    new_estragacodigo_review = bool(payload.get("new_estragacodigo_review"))
 
     has_estragacodigo_review = any(
         ((review.get("author") or {}).get("login") or "").lower() == "estraga-codigo"
@@ -47,7 +48,7 @@ def decide(payload: dict) -> dict:
         "needs_resolution": precisa,
         "labels_add": ["needs-estragacodigo-resolution"] if precisa else [],
         "labels_remove": ["estragacodigo-resolved"]
-        if reviewer_requested or request_review else [],
+        if reviewer_requested or request_review or new_estragacodigo_review else [],
         "request_review": request_review,
     }
 
@@ -118,6 +119,14 @@ def selftest() -> int:
          {"needs_resolution": True,
           "labels_add": ["needs-estragacodigo-resolution"],
           "labels_remove": []}),
+        ("nova review atual invalida resolução anterior",
+         {"headRefOid": "abc", "reviews": [
+             {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
+              "state": "COMMENTED"}
+         ], "new_estragacodigo_review": True},
+         {"needs_resolution": True,
+          "labels_add": ["needs-estragacodigo-resolution"],
+          "labels_remove": ["estragacodigo-resolved"]}),
     ]
     erros = 0
     for nome, payload, esperado in casos:

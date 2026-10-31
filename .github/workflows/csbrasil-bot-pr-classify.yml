@@ -115,8 +115,17 @@ jobs:
           python3 scripts/ci/pr_classify.py --selftest
           python3 scripts/ci/pr_classify.py < /tmp/pr.json > /tmp/pr-labels.json
       - name: Gate on estraga-codigo review
+        env:
+          NEW_ESTRAGACODIGO_REVIEW: ${{ github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.user.login == 'estraga-codigo' }}
         run: |
           gh pr view "$PR_NUMBER" --json headRefOid,reviewRequests,reviews,statusCheckRollup > /tmp/pr-estragacodigo.json
+          python3 - <<'PY'
+          import json, os
+          path = '/tmp/pr-estragacodigo.json'
+          payload = json.load(open(path))
+          payload['new_estragacodigo_review'] = os.environ.get('NEW_ESTRAGACODIGO_REVIEW') == 'true'
+          open(path, 'w').write(json.dumps(payload))
+          PY
           python3 scripts/ci/estragacodigo_gate.py --selftest
           python3 scripts/ci/estragacodigo_gate.py < /tmp/pr-estragacodigo.json > /tmp/pr-estragacodigo-labels.json
       - name: Request estraga-codigo review
