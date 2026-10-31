@@ -49,6 +49,8 @@ jobs:
       # (scripts/ci/gatilho.mjs). Node puro, < 1 s.
       - name: Gatilho do portão e do smoke cobre o que eles medem
         run: npm run eval:portaogatilho
+      - name: Ciclo de vida do Keyboard Lock (node puro, com mutantes)
+        run: npm run eval:ctrlwlifecycle
       # Réguas de workflow e as de contrato em node puro (< 2 s, sem npm ci). Ficavam só no
       # check:fast, que roda na máquina de quem lembra: PR que quebrasse workflow passava
       # aqui verde. O runner roda todas e só reprova no fim (PI3 cobra esta lista).

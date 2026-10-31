@@ -2485,19 +2485,24 @@ export class Game {
      Chromium só. Firefox e Safari caem na segunda camada — a confirmação de saída do
      `beforeunload` no main.js. Régua: `tools/eval/ctrlw-check.mjs`. */
   _travaAtalhos() {
-    if (this.testMode) return;
+    if (this.testMode || this._disposed || this.paused
+        || (this.state !== 'live' && this.state !== 'countdown')) return;
+    // Cada pedido pertence à sessão que o iniciou. Pausa e dispose a invalidam.
+    const gen = (this._atalhosGen = (this._atalhosGen || 0) + 1);
     const trava = () => {
+      if (gen !== this._atalhosGen || this.testMode || this._disposed || this.paused
+          || (this.state !== 'live' && this.state !== 'countdown')
+          || !document.fullscreenElement) return;   // sem tela cheia não há Keyboard Lock
       this._tevemosTelaCheia = true;
       try { navigator.keyboard?.lock?.(['KeyW', 'KeyT', 'KeyN', 'KeyR', 'KeyI', 'Digit1', 'Digit2', 'Digit3'])?.catch?.(() => {}); } catch {}
     };
     if (document.fullscreenElement) { trava(); return; }
-    /* Tela cheia caiu (Escape sai dela, e Escape é o menu de pausa)? Repede a que já
-       tivemos e rearma. Por que assim, e o mutante: CW5 em tools/eval/ctrlw-check.mjs. */
+    // Recupera somente a tela cheia que já tivemos (CW5 em ctrlw-check.mjs).
     if (!this._tevemosTelaCheia) return;
-    if (this.paused || (this.state !== 'live' && this.state !== 'countdown')) return;
     try { document.documentElement.requestFullscreen?.()?.then?.(trava, () => {}); } catch {}
   }
   _soltaAtalhos() {
+    this._atalhosGen = (this._atalhosGen || 0) + 1;
     try { navigator.keyboard?.unlock?.(); } catch {}
   }
   /* Está ASSISTINDO? No multiplayer o servidor pode não ter dado corpo (sala cheia, ou o
