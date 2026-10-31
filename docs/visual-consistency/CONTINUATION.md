@@ -424,3 +424,11 @@ MotionR5 devolvido: AKnovaL1v realmenteRED +7px nas2proporções, nãoUNKNOWN. S
 
 - UI U4local concluído:5células, diálogo e scroll exatamente estáveis antes/pin/despin em844×390 PT;3fotos+JSON. Dimensão U4global continuaUNKNOWN, inclusiveprévia3D eoutrosestados. CheckpointUI técnico agora, críticoR3CLEAN e sintaxe/diffcheckGREEN.
 - Retificação de rótulo: arquitetura“menoscaixa”é **M3** emMETRICA.md; “M4”emnomesinternosdascouts/trechosanterioreseraetiquetadefrente, nãoa dimensão oficial. M4oficial éleitura/custo e exige medição apropriada.
+
+### Checkpoint de frescor — 12:25 UTC
+
+- UI checkpointa7287b678:5fontes+doc+ledger, críticoR3CLEAN,8capturas eU4localestável. SemPRvisualnosso ainda.
+- Cabeças: `npm run eval:headshot-hitbox` finalexit0 (J1–J6+4mutantes), tabela públicagerada idêntica. JSON4entradas atualizadas/59preservadas; revisãofocalindependente emcurso.
+- Balcão runtime:5capturasmed válidas inclmodelo/fallback/404real; camera interior122vs118draws e21248vs20668triângulos (+4draws/+580tris sobrecaixaAO28tri). NãoFPSmobile. Screenshotmed404entrada deuCDPtimeout, retryrecuperoumesmaSpace32p2contextnotlost; lowainda pendente. RootviuinteriorA/B epreferiuassetcomportas/ferragens ao bloco simples.
+- AcabamentoR5: grupo truncado+UVNaN emBoxexistente reproduziu falsoGREEN exit0 antesfix; agora partição exata dosranges eUVreferenciado real,12ºmutante específico. Wrapperbaseline+12GREEN; safeguard rangeinválido retornaFAILantesloop. CríticaR5pendente.
+- MotionR7GLMparcial: cleanuprevive+diagonalantesclamp fechados. Root adicionou finitude doABapós800updates. **R8RED:** novonan-kill-switchfoiinjetadodentrodebranchquedesativava, nãoaplicou; a alegação de pré-provaRootusandoessamesmainjeçãoé INVÁLIDA efoiretirada. R9moveinjeçãoantesbranch, pré-condiçãofísicaindependenteobserva scale.zfinito→NaN apósupdate, e14mutantesdetectadosGREEN; ctx6mutantesGREEN. CríticoR8/R9emcurso; AKaindaaguarda.
