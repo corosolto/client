@@ -1,97 +1,6 @@
-/* ============================================================================
-   MEDIDOR DE TAXA DE REDE (snapshots/s e banda) — conserto do BUG-160
-   ----------------------------------------------------------------------------
-   O QUE ESTAVA ERRADO (medido, não suposto)
-
-   O medidor antigo vivia em `net.js` e era isto:
-
-       const now = performance.now(), cut = now - 1000;
-       while (this._snapT.length && this._snapT[0] < cut) this._snapT.shift();
-       this.stats.hz = this._snapT.length;                        // ← a taxa
-       this.stats.kbps = this._byteT.reduce((s, x) => s + x.b, 0) / 1024;
-
-   A janela parece de relógio, mas o CARIMBO de cada amostra (`now`) é o instante
-   em que o handler `onmessage` RODOU — isto é, o instante em que o quadro de
-   render liberou a thread e o navegador drenou a fila. A abscissa é o render,
-   não a rede. Com o quadro durando ΔF segundos, cada drenagem entrega R·ΔF
-   snapshots com carimbos praticamente iguais, e a janela de 1 s retém
-
-       ⌈1/ΔF⌉ drenagens × R·ΔF snapshots ≈ R · ΔF · ⌈1/ΔF⌉ ≥ R
-
-   O excedente é SEMPRE de até uma drenagem inteira, ou seja, R·ΔF snapshots a
-   mais — erro relativo de até ΔF (= 1/FPS):
-
-       60 fps → +1,7%    30 fps → +3,3%    15 fps → +6,7%    2 fps → +50%
-
-   E quando ΔF passa de 1 s (travada de GPU/compilação de shader) a janela cabe
-   dentro de UMA drenagem: a taxa reportada vira R·ΔF e o instrumento oscila
-   entre 0 Hz (janela entre drenagens) e R·ΔF. Foi o que o registro mediu: uma
-   travada de ≈9,1 s com R = 30 Hz e 0,70 KB por snapshot dá 30×9,1 = 273 Hz e
-   273×0,70 = 191 KB/s — o `snap 274 Hz /30` e `band 191,9 KB/s` do BUG-160,
-   contra os 30 Hz / 20,8 KB/s reais do mesmo nó com GPU de verdade.
-
-   O QUE ESTE MÓDULO FAZ DIFERENTE
-
-   O eixo da medida é o RELÓGIO DO SERVIDOR que carimbou o snapshot (`snapshot.t`,
-   f64 em segundos — ver `netcodec.js`). Esse eixo não encolhe quando o render
-   engasga: trezentos snapshots drenados no mesmo quadro continuam espalhados por
-   dez segundos de servidor, e a janela de 1 s retém só os trinta que são de
-   verdade do último segundo. Snapshot sem `t` (protocolo antigo) cai para o
-   relógio local, que é o comportamento que havia — pior, mas não inventado.
-
-   A divisão é pela DURAÇÃO REALMENTE COBERTA pela janela, nunca por "1 s"
-   presumido nem por contagem de quadros. E o fim da janela anda com o relógio
-   LOCAL mesmo sem pacote nenhum: aba em segundo plano para de renderizar mas não
-   para o tempo, então a taxa tem que CAIR para zero, não congelar no último valor
-   bom. O piso de `MIN_JANELA_MS` é o que impede divisão por zero no primeiro
-   instante da sessão (uma amostra só cobre duração zero).
-
-   NÃO É CAMINHO DE ENVIO. Este módulo não vê, não toca e não decide nada sobre o
-   que o cliente manda: ele conta bytes e tempos de coisas que já chegaram.
-
-   Régua: `tools/eval/net-rate-check.mjs` (npm run eval:netrate).
-   ============================================================================ */
-
-/* ============================================================================
-   net-rate-check.mjs — A TAXA DE REDE INDEPENDE DO FPS? (BUG-160, issue #1122)
-   ----------------------------------------------------------------------------
-   O DEFEITO QUE ESTA RÉGUA EXISTE PARA IMPEDIR
-
-   O painel de rede do cliente media snapshots/s contando as mensagens carimbadas
-   com `performance.now()` do handler `onmessage` e tomando a contagem da janela
-   de 1 s como taxa (`public/js/net.js`, antes deste conserto):
-
-       const now = performance.now(), cut = now - 1000;
-       while (this._snapT.length && this._snapT[0] < cut) this._snapT.shift();
-       this.stats.hz = this._snapT.length;
-
-   Esse carimbo não é a hora em que o pacote chegou: é a hora em que o QUADRO de
-   render liberou a thread e o navegador drenou a fila. Com o quadro durando ΔF,
-   cada drenagem entrega R·ΔF snapshots com carimbos quase idênticos, e a janela
-   retém até uma drenagem a mais do que devia — erro de até ΔF (1/FPS): +3,3% a
-   30 fps, +6,7% a 15 fps, +50% a 2 fps. Quando ΔF passa de 1 s (travada de GPU),
-   a janela inteira cabe numa drenagem e a taxa vira R·ΔF: a travada de ≈9,1 s do
-   registro deu `snap 274 Hz /30` e `band 191,9 KB/s` num nó que mandava 30 Hz e
-   20,8 KB/s. O instrumento acusava tempestade de rede no cenário em que o
-   problema era de GPU.
-
-   COMO ELA MEDE
-
-   Executa o MÓDULO DE PRODUÇÃO (`public/js/netrate.js`) contra um servidor
-   sintético: R snapshots por segundo, B bytes cada, relógio de servidor próprio,
-   latência fixa. O cliente é simulado como quadros de render: entre dois quadros
-   a thread está presa, e ao acordar drena TUDO que chegou, com um carimbo local
-   só. O mesmo tráfego é passado por 60, 30, 15 e 2 fps e por uma travada de 9,1 s.
-   Se a taxa reportada depender do FPS, as médias divergem e a régua acende.
-
-   Os mutantes reescrevem o FONTE do módulo (não uma cópia do algoritmo) e são
-   importados de verdade — portão que não cai com a mutação é portão cego.
-
-   Uso: node tools/eval/net-rate-check.mjs [--json] [--mutante=<nome>]
-        mutantes: eixo-de-quadros | conta-sem-dividir | janela-parada
-   ============================================================================ */
-import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+// Estimativa por tempo de simulação: mede independência do render quando esse tempo avança.
+// Relógio congelado não informa emissão; net-rate-frozen-check.mjs exige indisponibilidade.
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -119,15 +28,16 @@ const MUTANTES = {
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
+let mutanteAplicado = false;
 async function carregaMedidor() {
   const src = readFileSync(FONTE, 'utf8');
   if (!MUT) return (await import(pathToFileURL(FONTE).href)).MedidorDeTaxa;
   const [de, para] = MUTANTES[MUT];
-  if (!src.includes(de)) throw new Error(`âncora do mutante '${MUT}' sumiu de netrate.js: ${de}`);
-  const dir = mkdtempSync(path.join(tmpdir(), 'netrate-mut-'));
-  const alvo = path.join(dir, 'netrate.js');
-  writeFileSync(alvo, src.replace(de, para));
-  return (await import(pathToFileURL(alvo).href)).MedidorDeTaxa;
+  if (src.split(de).length - 1 !== 1) throw new Error(`âncora do mutante '${MUT}' precisa ser única: ${de}`);
+  const module = await import('data:text/javascript;base64,' + Buffer.from(src.replace(de, para)).toString('base64'));
+  mutanteAplicado = true;
+  if (!JSON_OUT) console.log(`Mutação aplicada: ${MUT}`);
+  return module.MedidorDeTaxa;
 }
 
 /* ---------------- servidor e cliente sintéticos ---------------- */
@@ -242,7 +152,7 @@ cobra(semTEstavel.every((l) => Number.isFinite(l.hz)) && Math.abs(media(semTEsta
 /* ---------------- saída ---------------- */
 if (JSON_OUT) {
   console.log(JSON.stringify({
-    mutante: MUT || null, falhas, ok: linhas,
+    mutante: MUT || null, aplicado: mutanteAplicado, falhas, ok: linhas,
     porFps: Object.fromEntries(CENARIOS.map((f) => [f, porFps.get(f)])),
     picoTravada, picoBanda, alvoKbps: ALVO_KBPS,
   }, null, 2));
@@ -253,7 +163,8 @@ if (JSON_OUT) {
 }
 
 if (MUT) {
-  const acendeu = falhas.length > 0;
+  const esperada = { 'eixo-de-quadros': 'NR2 ·', 'conta-sem-dividir': 'NR6 ·', 'janela-parada': 'NR5b ·' }[MUT];
+  const acendeu = mutanteAplicado && falhas.some(falha => falha.startsWith(esperada));
   if (!JSON_OUT) {
     console.log(acendeu
       ? `  \x1b[32m✓\x1b[0m MUTAÇÃO '${MUT}' acendeu ${falhas.length} cláusula(s) — a régua enxerga`

@@ -178,10 +178,8 @@ export class NetClient {
     this.onPersonagem = null;
     this.onChat = null; this._chatFila = [];
     // ── diagnóstico de rede (snapshots/s e banda) ──
-    /* `hz`/`kbps` saem do MedidorDeTaxa: janela de relógio DO SERVIDOR, não de quadros
-       de render. O medidor antigo morava aqui e contava `this._snapT.length` como taxa —
-       com o quadro travado o cliente drenava segundos de fila num carimbo só e o número
-       inflava na proporção da travada (BUG-160). Ver o cabeçalho de netrate.js. */
+    // Taxa estimada pelo tempo de simulação; relógio parado publica indisponibilidade.
+    // Chegada local mede silêncio; quadros de render não definem emissão.
     this.stats = { hz: 0, kbps: 0, gapMax: 0, sinceLast: 0, ents: 0, tick: 0, ping: 0, snaps: 0, bytes: 0 };
     this._taxa = new MedidorDeTaxa();
     this._lastSnapT = 0;
@@ -192,6 +190,7 @@ export class NetClient {
   computeStats() {
     const now = performance.now();
     const taxa = this._taxa.atualizar(now);
+    // relógio do servidor parado publica null: indisponível, telemetria filtra antes de Number
     this.stats.hz = taxa.hz;
     this.stats.kbps = taxa.kbps;
     // `sinceLast` é "há quanto tempo NÓS não vemos um pacote": é propriedade do
@@ -282,6 +281,8 @@ export class NetClient {
           this.snap = null; this.prev = null;   // snapshots do jogo velho não servem para o novo
           this.events.length = 0;               // eventos do jogo velho idem
           this.proximo = null;
+          // a janela de taxa pertence ao jogo que acabou de morrer: recomeça do zero
+          this._taxa.reiniciar();
           this.onPartida?.(m);
         } else if (m.type === 'proximo') {
           if (typeof m.map === 'string' && m.map) {

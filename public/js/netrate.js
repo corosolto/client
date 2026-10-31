@@ -1,4 +1,4 @@
-// Medidor de taxa de rede por relógio DO SERVIDOR (BUG-160 / #1122).
+// Estimativa por tempo de simulação; relógio parado publica indisponibilidade (#1122).
 // Motivo, aritmética do defeito e provas: tools/eval/net-rate-check.mjs.
 
 /** Janela de medida. 1 s é o que o painel de rede sempre leu. */
@@ -29,12 +29,13 @@ export class MedidorDeTaxa {
     this._ultimoLocal = 0;
     this._eixoServidor = false;
     this._vivo = false;
+    this._congelado = false; // relógio do servidor parado: taxa indisponível, não inventada
   }
 
   /** Esquece a janela e recomeça do zero (sessão nova, eixo novo). */
   reiniciar() {
     this._tm.length = 0; this._bytes.length = 0;
-    this._i = 0; this._soma = 0; this._vivo = false;
+    this._i = 0; this._soma = 0; this._vivo = false; this._congelado = false;
     this.hz = 0; this.kbps = 0;
   }
 
@@ -44,7 +45,18 @@ export class MedidorDeTaxa {
     const temSrv = Number.isFinite(tServidorS);
     const tm = temSrv ? tServidorS * 1000 : tLocalMs;
     if (!Number.isFinite(tm) || !Number.isFinite(tLocalMs)) return;
-    if (!this._vivo || temSrv !== this._eixoServidor
+    /* `t` avançando é ESTIMATIVA em tempo de simulação, não hora de emissão: repetido ou
+       atrasado não deixa ritmo a inferir — NULL, só a âncora, nunca 0/clamp/valor antigo. */
+    if (this._vivo && temSrv && this._eixoServidor && tm <= this._ultimoTm && tm >= this._ultimoTm - RECUO_MAX_MS) {
+      this._congelado = true;
+      this._tm.length = 0; this._bytes.length = 0; this._i = 0; this._soma = 0;
+      const b = Number.isFinite(bytes) && bytes > 0 ? bytes : 0;
+      this._tm.push(tm); this._bytes.push(b); this._soma = b;
+      this._ultimoTm = tm; this._ultimoLocal = tLocalMs;
+      this.hz = null; this.kbps = null;
+      return;
+    }
+    if (!this._vivo || temSrv !== this._eixoServidor || this._congelado
       || tm < this._ultimoTm - RECUO_MAX_MS || tm > this._ultimoTm + SALTO_MAX_MS) {
       this.reiniciar();
       this._eixoServidor = temSrv;
@@ -59,6 +71,13 @@ export class MedidorDeTaxa {
   /** Recalcula `hz`/`kbps` da janela que termina AGORA. `tLocalMs` = performance.now(). */
   atualizar(tLocalMs) {
     if (!this._vivo) { this.hz = 0; this.kbps = 0; return this; }
+    /* Congelado não define taxa; só o silêncio LOCAL >= janela autoriza o 0 honesto. */
+    if (this._congelado) {
+      const parado = Number.isFinite(tLocalMs) ? tLocalMs - this._ultimoLocal : 0;
+      this.hz = parado >= this.janelaMs ? 0 : null;
+      this.kbps = parado >= this.janelaMs ? 0 : null;
+      return this;
+    }
     /* O fim da janela não é o último pacote: é agora. Quem decide o avanço é o
        relógio local, que continua andando com a aba oculta e com a rede muda. */
     const avanco = Number.isFinite(tLocalMs) ? Math.max(0, tLocalMs - this._ultimoLocal) : 0;
