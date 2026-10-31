@@ -1321,6 +1321,7 @@ export const ASSET_REV = Object.freeze({
   "models/characters/titica.glb": "264d99d9a0",
   "models/characters/trapfunk.glb": "7ed59f4903",
   "models/characters/zumbi.glb": "b8596378f0",
+  "models/cinematics/operacao_flavio_boarding.glb": "6b2ace3066",
   "models/dollynho_dance.glb": "9b0f9642ab",
   "models/fparms/arms.glb": "58bfa84216",
   "models/gloves/1p/fpvm-hands-2c8f9a3dd5ca.glb": "7a514762be",
