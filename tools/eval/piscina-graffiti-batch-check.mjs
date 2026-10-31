@@ -9,6 +9,7 @@ import { THREE, MAPS, initTextures, seedRandom } from './harness.mjs';
 import { GRAFITE } from '../../public/js/graffiti_layout.js';
 import { criarSuporteGrafite, superficieGrafitavel } from '../../public/js/graffiti_surface.js';
 import { measureGraffitiArea } from './graffiti-area-audit.mjs';
+import { registerPropTemplate } from '../../public/js/mapprops.js';
 
 const mapURL = new URL('../../public/js/map_piscina.js', import.meta.url);
 const source = readFileSync(mapURL, 'utf8');
@@ -16,12 +17,15 @@ const marker = '  batchStaticBoxes();\n  grafitar({';
 assert.equal(source.split(marker).length, 2, 'actual map must batch before placement');
 const lateMarker = '  return {\n    ambience,\n    root, colliders,';
 assert.equal(source.split(lateMarker).length, 2, 'order mutant must identify one map return');
-const mutantSource = source.replace(marker, '  grafitar({')
-  .replace(lateMarker, '  batchStaticBoxes();\n' + lateMarker)
-  .replace(/(\bfrom\s*)(['"])([^'"\n]+)\2/g, (_full, prefix, _quote, specifier) =>
+const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+if (MUT && MUT !== 'lote-sem-permissao') { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
+async function importaMapa(texto) {
+  const resolvido = texto.replace(/(\bfrom\s*)(['"])([^'"\n]+)\2/g, (_full, prefix, _quote, specifier) =>
     prefix + JSON.stringify(specifier.startsWith('.') ? new URL(specifier, mapURL).href : import.meta.resolve(specifier)));
+  return import(`data:text/javascript,${encodeURIComponent(resolvido)}`);
+}
 let mutant;
-try { mutant = await import(`data:text/javascript,${encodeURIComponent(mutantSource)}`); }
+try { mutant = await importaMapa(source.replace(marker, '  grafitar({').replace(lateMarker, '  batchStaticBoxes();\n' + lateMarker)); }
 catch (error) { throw new Error(`Order mutant import failed: ${error.message.slice(0, 200)}`); }
 const textures = initTextures(), savedLayout = GRAFITE.piscina_treta;
 assert.ok(textures.decalFiles.includes('tags-treino-04.png'), 'fixture uses real artwork');
@@ -74,5 +78,33 @@ excluded.position.y = 2; excluded.userData.graffitiSupportExcluded = true;
 const root = new THREE.Group(); root.add(excluded);
 assert.equal(criarSuporteGrafite(root)({ x: 0, y: 2, z: .13, ry: 0, w: 2, h: 2 }), false);
 assert.equal(excluded.userData.nonSolidSurface, undefined);
+
+/* Lote dos props autorais (#1109). `batchAuthoredProps` troca os grupos `piscina:<id>`
+   por um InstancedMesh na raiz, e o grupo é quem carrega `graffitiSupportExcluded`. Sem
+   repassar a permissão, os lotes viravam parede pintável e o bake da piscina ia de 475 a
+   504 peças. Em node o GLB não existe e o lote saía vazio, então o template é registrado
+   aqui. */
+const AUTORAIS = ['piscina_escada', 'piscina_armarios', 'piscina_banco', 'piscina_espreguicadeira'];
+const marcaLote = '      batch.userData.graffitiSupportExcluded = !superficieGrafitavel(first);\n      const matrix = new THREE.Matrix4();';
+assert.equal(source.split(marcaLote).length, 2, 'authored batch must carry the paint permission');
+const geoProp = new THREE.BoxGeometry(1, 1, 1), matProp = new THREE.MeshLambertMaterial();
+for (const id of AUTORAIS) { const g = new THREE.Group(); g.add(new THREE.Mesh(geoProp, matProp)); registerPropTemplate(id, g); }
+let lotes;
+try {
+  const alvo = MUT === 'lote-sem-permissao'
+    ? await importaMapa(source.replace(marcaLote, '      const matrix = new THREE.Matrix4();'))
+    : { buildPoolDay: MAPS.piscina_treta.build };
+  seedRandom(12345); const w = alvo.buildPoolDay(new THREE.Scene(), textures);
+  lotes = w.root.children.filter((o) => o.isInstancedMesh && /^piscina:piscina_.*:batch$/.test(o.name));
+} finally { for (const id of AUTORAIS) registerPropTemplate(id, null); }
+assert.ok(lotes.length > 0, 'authored props must batch when their GLB exists');
+const pintaveis = lotes.filter((o) => superficieGrafitavel(o)).map((o) => o.name);
+console.log(JSON.stringify({ gate: 'authored-batch-permission', lotes: lotes.length, pintaveis }));
+if (pintaveis.length) {
+  console.log(`  ✗ lote de prop autoral pintável: ${pintaveis.join(', ')}`);
+  process.exit(1);
+}
+if (MUT) { console.log(`  ✗ MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`); process.exit(1); }
+
 assert.equal(readFileSync(mapURL, 'utf8'), source, 'production map was never patched by mutant');
-console.log('Piscina batch gate: real geometry, order mutation, exclusion and physics parity passed');
+console.log('Piscina batch gate: real geometry, order mutation, exclusion, authored batch permission and physics parity passed');
