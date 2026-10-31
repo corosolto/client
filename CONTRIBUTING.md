@@ -120,6 +120,14 @@ entra no jogo em T-pose.
 `public/js/maps.js` (`MAPS`). Colisores são AABBs declarados junto de cada mesh.
 Espelhe em `src/data/jogo.ts` (`MAPAS`) pro mapa aparecer em `/mapas`.
 
+**Sem escrever código:** o formato "mapa como dado" (`public/js/map_json.js`) carrega
+uma arena a partir de um descritor JSON — caixas, rampas, plataformas, água, props por
+GLB, spawns, bandeiras e pickups. O editor visual é `public/construtor.html` (abra
+`/construtor.html` com `npm run dev`): ele valida na mesma régua do jogo
+(`npm run eval:mapjson` · `npm run eval:mapjsonboot`) e gera o `.json` + o snippet de
+registro. Passo a passo em `docs/docs/construtor-de-mapas.md`. Relevo em camadas
+(mezanino sobre piso) continua exigindo o caminho de código acima.
+
 > **Este espelho já foi esquecido, e nos dois sentidos.** A `quebrada` entrou
 > no registro do jogo e não apareceu em `/mapas`, no `llms.txt` nem no JSON-LD; a
 > `praca_old` saiu do registro e continuou listada nos três. Um a mais e um a
