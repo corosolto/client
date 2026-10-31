@@ -1,5 +1,24 @@
 # Consistência visual e release, 31/10/2026
 
+## Estado para retomada — 2026-10-31T18:32:40.617757+00:00
+
+**Objetivo integral:** missão visual de10h iniciada08:45UTC, referênciaPDF/ComplexoFavela/roadmap; acompanhar reviews/merges/releases, corrigir mapas/UI visual/personagens/1P3P/ADS/skins. ExcluirOperaçãoFlávio e preservarJavaporcos/itensdosoutrosowners; fluxosUI/redessociais são faseposterior. A missão NÃO está integralmente concluída.
+
+- **Publicado:** PR#1184, normais deCaipora/Esquerdomacho/Lampião/Zumbi, merge8f1c04a18 apósEstragaSHA72e80d3limpo/CIverde. Releasealpha.132 publicado17:34:14,mainab3e20c75, workflow41224203557SUCCESS,prod-watch41225397893SUCCESS. HTTPdiretoRootversion403; nãoéQAmanualnovoemprodução.
+- **Checkpointsdeproduto:** impl9b03aad7f em codex/consistencia-visual-release-20261031; QA aefeb1409 em codex/visual-release-review-20261031, sincronizadoalpha132. QAéárvoredeentrega limpa/correta; nãofoienviado/PRloteaindanãoexiste. Mudançasposteriorespodemserapenasledger.
+- **Mapas:** bake14real437peças/fp161c4394b4a2247a; runtimeCI71mediçõesGREEN/14nominais458peçascontandoartesmanuais. Identidadeeditorialtaglarga→tagfina, FerrocasarespawnB/Piscinaparedesbrancas, suporte/duplicação/zonas econtrolescausais. Segundo bakefísicoR2NÃOaprovado (interrupção/timeout); --duploéhash, nãorebakeduplo.
+- **Acabamento/movimento:** CórregoPBR/alvenaria, Campoformas+UV, balcãoFerro/posteoutdoorPosto; gaitcausal1P, ADSAKgeométrico, câmera demorte, contatosTP, fixesskinsF1/F3/F4, facasCaveira/MAGAcomsloganlongitudinal. Verdocspróprios/artefatos; coberturaéfinita, semaprovaçãogeralFPS/mobilefísico/MPoucatálogo/comprar/equipar.
+- **Preview:** GLM1linha limita preloadàarmaescolhida; crítico4ddb0d79/14asserções+20.412decisõesdecatálogoreais, preservaskin/luva/óculos/token. Provapedidos1vs26,nãoreduçãodebytesmedida.
+- **Nãoadotado:** CanarinhoR3comdedosarticuladospreservadoapenasprivado; críticorecusoupegadacontato/achatamento. Nenhumremodeling/assetprivadoreprovadoentrouproduto.
+- **Bloqueioboot:** R18privadoéfonteCLEAN73controles, masnominalrealREDexit1:8.456.735B/326req,256.735Bacima8.2MB;235corposSHA/39clones. Nenhum mutante aplicado; NÃOPROMOVER.Nãoalterarteto/3isenções. Fonte/manifests em audit/boot-network-R11/R18-source e CONTINUACAO.md. UmaúltimadiagnósticaR19exact/pollsameRUNestáautorizadaemcurso,nãoégateaprovado.
+- **Ego:** runtimevoltou, masSpace32sumiu. R3AKfalhouantesdeabrirjogo; listaapenasuserSpaces1/25,nãooperadas. RajadaAK30tirosbrowser/auditoriavisualpósaliascontinuampendentes; Node30tiros0°não substituibrowser. Inventáriohostsemórfãoowned; nãomatamosprocessosoutrosowners.
+- **PR#1181:** reparoENOBUFSf68ac08b8 +mergealpha13228f66aa95; crítico014e6981CLEAN51asserções ecríticomergebd67657f743asserções; fullsonda/docs/normais4/4GREEN15s. Pushnormalemcurso(push-sb7-enobufs-R1.py/sessão55348), sem bypass; nãoconsiderarpublicadoatéexit0/remotoigual. Depoisrequestreview+comentário @estraga-codigo full review, checks/threadsSHAatual antesmerge.
+- **Sujeiraimplnãoadotar:** antigoBootR10rejeitado/tools/eval/boot-overlay.mjs/doccoherent; package/CIunsafeanteriores; fixtures/ARMAS-MATRIZ/optimizegrass. Não copiar/stageembloco. QAtemwiringcorretoCI/portao14maps +provaaliasidentidade.
+- **Servidoresown:**4367/43925impl;4368/26311baseline;4369/11945normais;4370/59188balcão;4371/38760grama;4372/21254Canarinhoprivado. TodosLISTENúltimoinventário; semChromeownedpendente.
+
+**Próximo passo concreto:** terminarhook1181epublicarreviewnoSHAnovo; avaliarR19semtransformarFAILSAFEemassetsREADY. Seexcessoforreal, corrigirlazyload/ordemdeprioridadedafaunano produtoeverificarnominal+ref+2mutantesantespromoverR18eenviarelotevisual. RetomarQAmanualsomentecomSpaceEgoagenteválido,semusarespaçosdeoutros. LerMÉTRICA(0–3/UNKNOWN,sem média) e evidênciadecadadimensão; verdeNode/CI nãoéaceitevisualnemrelease.
+
+
 ## Missão completa e pronto
 
 Ruben autorizou uma janela de dez horas em worktree novo para acompanhar os
