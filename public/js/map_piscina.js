@@ -1233,8 +1233,8 @@ export function buildPoolDay(scene, T) {
     sound: {
       bioma: 'indoor',
       loops: [
-        { path: AMB_LOOPS.piscina, pos: [0, 0], radius: 30, vol: 0.24 },
-        { path: AMB_LOOPS.hum, pos: [SERVICE.axisX, 0], radius: 18, vol: 0.08 },
+        { src: AMB_LOOPS.piscina, pos: [0, 0, 0], radius: 30, vol: 0.24 },
+        { src: AMB_LOOPS.hum, pos: [SERVICE.axisX, 0, 0], radius: 18, vol: 0.08 },
       ],
     },
     bounds: { minX: SERVICE.minX, maxX: EAST_SERVICE.maxX, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
