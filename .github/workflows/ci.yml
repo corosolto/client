@@ -227,6 +227,8 @@ jobs:
         run: npm run eval:melee-vm
       - name: Chave tudo-ou-nada do viewmodel (sem ativação parcial)
         run: npm run eval:vm-launch
+      - name: Arma visível no mobile e desktop, inclusive sem assets
+        run: npm run eval:vm-presence
       # As réguas de imagem (mira, cobertura, pistola-ref, mãos, carregador) pedem o
       # catálogo privado e navegador; aqui o CI cobra o RESULTADO assado delas.
       - name: Placar das réguas de imagem do viewmodel em dia
