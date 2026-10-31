@@ -163,9 +163,20 @@ async function mede({ refPoolAnsioso = false } = {}) {
   await cdp.send('Network.enable');
 
   const reqs = new Map();
+  /* Papel (props/ambient/posters) fixado na URL de ORIGEM: redirect do CDP reusa requestId.
+     Sem isto, URL final cdn/hash.bin perde a classificação da origem na cadeia. */
+  const papelDe = (u) => /\/models\/props\//.test(u) ? 'props' : /\/models\/ambient\//.test(u) ? 'ambient' : /\/posters\//.test(u) ? 'posters' : null;
   const t0 = Date.now();
   cdp.on('Network.requestWillBeSent', (e) => {
-    reqs.set(e.requestId, { url: e.request.url, inicio: Date.now() - t0, fim: null, bytes: 0, status: null, falhou: false });
+    /* Redirect reusa requestId: mutar o MESMO objeto do snapshot naJanela (início e papel da origem preservados). */
+    const r = reqs.get(e.requestId);
+    if (r && e.redirectResponse) {
+      r.url = e.request.url;
+      if (r.papel === null) { r.papel = papelDe(r.url); r.origem = r.url; }
+      r.fim = null; r.bytes = 0; r.status = null; r.falhou = false;
+      return;
+    }
+    reqs.set(e.requestId, { url: e.request.url, origem: e.request.url, papel: papelDe(e.request.url), inicio: Date.now() - t0, fim: null, bytes: 0, status: null, falhou: false });
   });
   cdp.on('Network.responseReceived', (e) => {
     const r = reqs.get(e.requestId); if (r) r.status = e.response.status;
@@ -200,13 +211,12 @@ async function mede({ refPoolAnsioso = false } = {}) {
   if (portao > 19000) throw new Error(`a splash liberou em ${Math.round(portao)} ms — isso é o failsafe de 20 s, não o caminho dos assets`);
 
   // O orçamento mantém o corte do portão; falha de transporte invalida a medição.
-  const CRITICO = /\/(models\/props|models\/ambient|posters)\//;
   const naJanela = [...reqs.values()].filter((r) => r.inicio <= portao + 50);
   const limite = Date.now() + 180000;
-  while (naJanela.some((r) => CRITICO.test(r.url) && r.fim === null) && Date.now() < limite) {
+  while (naJanela.some((r) => r.papel !== null && r.fim === null) && Date.now() < limite) {
     await page.waitForTimeout(100);
   }
-  for (const r of naJanela.filter((r) => CRITICO.test(r.url))) {
+  for (const r of naJanela.filter((r) => r.papel !== null)) {
     if (r.falhou || r.fim === null || r.status === null || r.status >= 400) {
       const causa = r.falhou ? 'loadingFailed' : r.fim === null ? 'corpo incompleto' : r.status === null ? 'sem resposta' : `HTTP ${r.status}`;
       throw new Error(`asset de boot inválido: ${r.url} (${causa})`);
@@ -218,9 +228,10 @@ async function mede({ refPoolAnsioso = false } = {}) {
     portao,
     bytes: ate.reduce((s, r) => s + (patchado(r.url) ? 0 : r.bytes), 0),
     reqs: ate.length,
-    cartazes: new Set(ate.filter((r) => /\/posters\//.test(r.url)).map((r) => r.url.split('?')[0])).size,
-    ultimoProp: Math.max(-1, ...ate.filter((r) => /\/models\/props\//.test(r.url)).map((r) => r.fim)),
-    primeiraFauna: Math.min(Infinity, ...[...reqs.values()].filter((r) => /\/models\/ambient\//.test(r.url)).map((r) => r.inicio)),
+    cartazes: new Set(ate.filter((r) => r.papel === 'posters').map((r) => r.origem.split('?')[0])).size,
+    /* ORC3 olha o término de TODOS os props iniciados na janela (naJanela), não só `ate`. */
+    ultimoProp: Math.max(-1, ...naJanela.filter((r) => r.papel === 'props').map((r) => r.fim)),
+    primeiraFauna: Math.min(Infinity, ...[...reqs.values()].filter((r) => r.papel === 'ambient').map((r) => r.inicio)),
     erros,
   };
   await context.close();
