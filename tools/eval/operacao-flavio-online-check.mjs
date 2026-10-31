@@ -21,6 +21,16 @@ const netEdits = mutante === 'sem-placar'
     ['const primeiroSnap = this._tAt.length <= 1;', "if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes);\n    const primeiroSnap = this._tAt.length <= 1;"]]
   : mutante === 'sem-retomada'
   ? [['if (rodadaNova) {', 'if (false && rodadaNova) {']]
+  : mutante === 'sem-reancora'
+  ? [[' || (!this.__mutSemVirada && rodadaNova);', ';']]
+  : mutante === 'sem-limpar-drops'
+  ? [['      if (this._evOn) this.limparDropsDeRede();\n      const relogioDoServidor', '      const relogioDoServidor']]
+  : mutante === 'sem-fim-identidade'
+  ? [['(fimPorTroca || rodadaNova);', '(fimPorTroca);']]
+  : mutante === 'reset-match-end'
+  ? [["game.state !== 'matchEnd'\n      &&", 'true\n      &&']]
+  : mutante === 'empate-desconhecido'
+  ? [['resultadoDesconhecido = subiuE && subiuB;', 'resultadoDesconhecido = false;']]
   : [];
 const { makeNetcode } = netEdits.length
   ? await moduloMutado('../../public/js/netgame.js', netEdits) : await import('../../public/js/netgame.js');
@@ -61,7 +71,7 @@ else if (mutante === 'sem-reset') {
     this.cinematic = cinematic;
     this.game.world.objectivePlane.position.copy(plane);
   };
-} else if (mutante && !['sem-placar','sem-ordem','sem-parar','sem-retomada'].includes(mutante)) throw new Error('Mutante desconhecido: '+mutante);
+} else if (mutante && !['sem-placar','sem-ordem','sem-parar','sem-retomada','sem-reancora','sem-limpar-drops','sem-fim-identidade','reset-match-end','empate-desconhecido'].includes(mutante)) throw new Error('Mutante desconhecido: '+mutante);
 if (mutante) console.log('Mutação aplicada: '+mutante);
 let failures = 0;
 const check = (name, fn) => {
@@ -192,6 +202,68 @@ try {
       mp.applySnapshot();
       assert.equal(resets, 0);
       assert.equal(game.timeLeft, 291);
+    } finally { game.objective.prepareRound = prepare; }
+  });
+  for (const before of ['roundEnd', 'live']) {
+    check('retomada '+before+' reancora jogador vivo e limpa predição', () => {
+      game.state = before;
+      Object.assign(game.player, { pos: new THREE.Vector3(-30,0,-40), vel: new THREE.Vector3(1,0,1), hp: 100, alive: true });
+      mp._netMap.set(8,game.player);
+      mp._predSeq = [900]; mp._predX = [-30]; mp._predY = [0]; mp._predZ = [-40];
+      mp._ackOn = true;
+      net.snap = { ...net.snap, tick: net.snap.tick+1, t: net.snap.t+.05,
+        state: 'live', roundNum: game.roundNum+1,
+        ents: [...net.snap.ents.filter(e => e.id !== 8), { id: 8, x: 5, y: 2, z: 9, hp: 100, alive: true, ackSeq: 1 }] };
+      mp.applySnapshot();
+      assert.deepEqual(game.player.pos.toArray(),[5,2,9]);
+      assert.deepEqual(game.player.vel.toArray(),[0,0,0]);
+      assert.equal(mp._predSeq.length,0);
+    });
+    check('retomada '+before+' remove drops da rodada anterior e preserva rack', () => {
+      game.state = before;
+      game.drops = [{ _nid: 44 }, { weapon: 'pistol' }];
+      game._sumirDrop = i => game.drops.splice(i,1);
+      mp._evOn = true;
+      net.snap = { ...net.snap, tick: net.snap.tick+1, t: net.snap.t+.05,
+        state: 'live', roundNum: game.roundNum+1 };
+      mp.applySnapshot();
+      assert.equal(game.drops.length,1);
+      assert.equal(game.drops[0].weapon,'pistol');
+    });
+  }
+  check('retomada roundEnd de outra rodada substitui a cerimônia anterior uma única vez', () => {
+    game.state = 'roundEnd'; game.roundsWon = { E: 0, B: 1 };
+    game.objective.startCinematic('B');
+    const nextRound = game.roundNum + 1, before = result.length;
+    net.snap = { ...net.snap, tick: net.snap.tick+1, t: net.snap.t+.05,
+      state: 'roundEnd', roundNum: nextRound, scoreE: 1, scoreB: 1,
+      ents: net.snap.ents.map(e => e.id === 7 ? { ...e, hp: 0, alive: false } : e) };
+    mp.applySnapshot();
+    assert.equal(game.objective.cinematic?.winner,'E');
+    assert.equal(result.at(-1)?.[0],'FLÁVIO FOI MORTO');
+    assert.equal(result.length,before+1);
+    mp.applySnapshot();
+    net.snap = { ...net.snap, tick: net.snap.tick+1, t: net.snap.t+.05 };
+    mp.applySnapshot();
+    assert.equal(result.length,before+1,'mesma rodada não repete a cerimônia');
+  });
+  check('salto com dois placares crescidos mostra resultado desconhecido sem inventar empate', () => {
+    game.state='live';game.roundsWon={E:1,B:1};game.objective.prepareRound();
+    net.snap={...net.snap,tick:net.snap.tick+1,t:net.snap.t+.05,state:'roundEnd',roundNum:game.roundNum+2,scoreE:2,scoreB:2};
+    mp.applySnapshot();
+    assert.equal(result.at(-1)?.[0],'RESULTADO ATUALIZADO');
+    assert.equal(game.objective.cinematic,null,'não inventa vencedor');
+  });
+  check('matchEnd não prepara uma rodada de jogo mesmo com roundNum novo', () => {
+    const prepare = game.objective.prepareRound;
+    let resets = 0;
+    game.objective.prepareRound = function () { resets++; return prepare.call(this); };
+    game._endMatch = () => {};
+    try {
+      net.snap = { ...net.snap, tick: net.snap.tick+1, t: net.snap.t+.05,
+        state: 'matchEnd', roundNum: game.roundNum+1 };
+      mp.applySnapshot();
+      assert.equal(resets,0);
     } finally { game.objective.prepareRound = prepare; }
   });
 } finally { mp.dispose(); game.objective.dispose(); }

@@ -386,14 +386,20 @@ class Netcode {
     }
     /* roundEnd lê as entidades atuais; countdown reseta antes de recebê-las.
        A guarda anterior ao incremento do tick mantém a entrada sem cerimônia. */
-    const fimDeRound = game.state === 'roundEnd' && game.state !== estadoAntes && this._netTick >= 0;
-    if (game.state !== estadoAntes && !fimDeRound) this.transicaoDeEstado(estadoAntes, game.state, placarAntes);
-    // Retomada pode omitir countdown: limpar a apresentação uma vez por rodada,
-    // antes de aplicar entidades e objetivo, preservando o relógio autoritativo.
-    const rodadaNova = this._netTick >= 0 && game.state !== 'roundEnd'
+    const fimPorTroca = game.state !== estadoAntes && this._netTick >= 0;
+    if (fimPorTroca && game.state !== 'roundEnd') this.transicaoDeEstado(estadoAntes, game.state, placarAntes);
+    // Rodada nova por IDENTIDADE (roundNum) vale em countdown/live/roundEnd; matchEnd não é
+    // rodada de jogo. O countdown da transição acima já resetou e selou _netRodada da rodada.
+    const rodadaNova = this._netTick >= 0 && game.state !== 'matchEnd'
       && ((Number.isFinite(snap.roundNum) && snap.roundNum !== this._netRodada)
         || (game.state === 'live' && estadoAntes === 'roundEnd' && !Number.isFinite(snap.roundNum)));
+    // roundEnd de OUTRA rodada: reset acima antes das entidades e a cerimônia do resultado
+    // ATUAL uma única vez, adiada para depois do laço de entidades.
+    const fimDeRound = game.state === 'roundEnd' && this._netTick >= 0 && (fimPorTroca || rodadaNova);
     if (rodadaNova) {
+      // O servidor zera `drops` no _startRound sem mandar `gone`: a retomada sem
+      // countdown recebe a mesma limpeza do countdown, antes das entidades.
+      if (this._evOn) this.limparDropsDeRede();
       const relogioDoServidor = game.timeLeft;   // prepareRound escreve 360: o relógio é do servidor
       game._resultado = null; game._showScoreboard(false);
       game.objective?.prepareRound?.();
@@ -458,7 +464,9 @@ class Netcode {
         /* O cliente também cria um spawn local. No primeiro snapshot e no respawn ele não é
            uma predição adiantada: é uma posição concorrente, às vezes de outro slot/mapa.
            Nestes dois marcos a autoridade precisa vencer imediatamente, inclusive no Y. */
-        const imediato = primeiroSnap || renasceu || viradaDeRound;
+        // Retomada live→live (roundNum+1) não muda estado: a detecção ÚNICA de rodada
+        // nova também reancora o jogador — o servidor teleportou todos (BUG-155).
+        const imediato = primeiroSnap || renasceu || viradaDeRound || (!this.__mutSemVirada && rodadaNova);
         // teleporte invalida toda pose predita: sem zerar, o ack seguinte cobra a distância
         // dele como divergência (BUG-153).
         if (imediato) { ent.pos.set(e.x, e.y, e.z); ent.vel.set(0, 0, 0); this._clearPrediction(); }
@@ -584,14 +592,18 @@ class Netcode {
     if (this._netTick < 0) return;   // 1º snapshot: entrou no meio de algo — sem cerimônia (e sem "empate" inventado)
     try {
       if (depois === 'roundEnd') {
-        let winner = null;
+        let winner = null, resultadoDesconhecido = false;
         if (placarAntes && game.roundsWon) {
-          if (game.roundsWon.E > placarAntes.E) winner = 'E';
-          else if (game.roundsWon.B > placarAntes.B) winner = 'B';
+          // Salto de 2+ rodadas soma nos dois placares: sem protocolo de vencedor,
+          // não encenar campeão falso — só um ÚNICO lado crescido define o winner.
+          const subiuE = game.roundsWon.E > placarAntes.E, subiuB = game.roundsWon.B > placarAntes.B;
+          resultadoDesconhecido = subiuE && subiuB;
+          if (subiuE !== subiuB) winner = subiuE ? 'E' : 'B';
         }
         game.player.scoped = false; game.el.scope?.classList.remove('on');
         game.radioOpen = null; game._radioUi?.();
-        if (!winner) { game._resultadoDaRodada('EMPATE NA TRETA', 'ninguém convenceu ninguém'); game.sfx.roundLose(); }
+        if (resultadoDesconhecido) game._resultadoDaRodada('RESULTADO ATUALIZADO', 'a sala avançou durante a reconexão');
+        else if (!winner) { game._resultadoDaRodada('EMPATE NA TRETA', 'ninguém convenceu ninguém'); game.sfx.roundLose(); }
         else {
           const mine = winner === game.playerTeam;
           if (game.objective?.roundResult) {
