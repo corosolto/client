@@ -61,6 +61,7 @@
    ============================================================================ */
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { rodarMutanteIsolado } from './economia-jogo-isolado.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const { initTextures, renderer, sfx, seedRandom, CHARACTERS } =
@@ -548,6 +549,13 @@ console.log(print(real));
 const falhas = real.filter((r) => !r.pass);
 const cegos = [], cantTest = [];
 for (const [nome, m] of mutantesExecutados) {
+  if (!mutanteAlvo) {
+    const r = rodarMutanteIsolado(fileURLToPath(import.meta.url), nome, real.length);
+    console.log(r.linha);
+    if (r.estado === 'cego') cegos.push(nome);
+    if (r.estado === 'cant_test') cantTest.push(nome);
+    continue;
+  }
   let vermelhas, erro = null;
   try {
     // o obs acompanha o vermelho: prova que a cláusula certa mordeu, não vermelho por acaso
