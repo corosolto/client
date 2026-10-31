@@ -369,3 +369,30 @@ skins, mapas restantes e acompanhamento de merges/release durante a janela compl
 - MT8 perdeu rejeição por nome: cópia audit sem aplicar mutação mantém nome e sai0; antes saía1 (logs Root RED→GREEN). Mutante aplicado sai1/36zeros, npm baseline+3mutantes exit0; vm-manga-oca26armas tambémGREEN. GLM revisão integral R2 CLEAN semP1/P2, residual descrição npm corrigida; crítico independente R1 não encontrou regressão de produto e seus3achados foram fechados.
 - Checkpoint seletivo desta frente inclui só vmsleeve/MT8/doc e duas chaves npm; motion/AK continuam uncommitted do writer89302. Não confundir checkpoint com merge/release. SCRIPTS.md está no repo progress de outro owner: não editado nesta lane; descrição canônica está no package/doc.
 - Normais31115 concluiu26/26 e4outputs-v5 iguaisv3; crítico independente R5 em curso. Balcão63169 integra visual/fallback/colisão e procedência; termos seção4 confirmados ao vivo viaEgo em31/10, sem nova geração ou compra. Posters57329 sógate/doc; curadoria70409 devolvida73/73, críticoR6 em curso.
+
+### Fechamento de leases — 11:31 UTC
+
+- Curadoria Root fechou UV não finita em ocorrência não indexada e rotationNaN: RED→GREEN,77/77; críticoR7 CLEAN focal. Survey real dos14mapas e bake final ainda pendentes.
+- SB7 Root repetiu20/20 GREEN no ponto final; revisão GLM integralR4 CLEAN e crítico independente integralR4 CLEAN, hashes estáveis. Preparar checkpoint/CI antes de integração; sem merge nosso ainda.
+- Balcão63169 devolvido: asset/registro/fallback implementados, mas24draws e gate incompleto. Próxima lease deve agrupar5materiais e validar física/fallback/custo med+low.
+- Motion89302 devolveu PARCIAL. Lease sequencial R5 assume só1P/AK/game/réguas: probe Game→ctx isolado, AUD1C erro+stdoutGREEN, speed pós-colisão sem threshold12 arbitrário e vertical AK específica. Economia/flash/3P aguardam. Manga3a176b0fb permanece congelada.
+- Normais59463 R6 ainda exclusiva para finitude/ângulo e referência de qualidade durável, sem trocarGLB. Complementos readonly1179 produto10100 e gates83459 ativos.
+- Retificação da métrica3P: “head” no JSON de ablação é variante HEAD do fonte, não cabeça. ruins1e4 é contagem por10.000arestas, não porcentagem. SemClamp melhora p99 Mandrake .551→.540 mas piora máximo2.80→3.43; não é aceite. Crítico descobriu offset palma local somado a distâncias mundo (escala~.01) e proxy cabeça sincronizado cedo; diagnóstico salvo, fix futuro sequencial.
+
+- 11:33 UTC: normais59463 devolvida,28/28 e qualitygate4/4 em temporários; originais RED esperado. Sem swap até revisão. Lease balcãoR2 só trecho Ferro/maps/gate/proveniência: PropBatch5draws e contratos reais de fallback/física med+low. Survey5 já concluiuFerro antes da lease; curadoria não muda.
+
+### Revisões de fechamento — 11:37 UTC
+
+Survey5 real14mapas concluiu (últimos3 por job assíncrono Ego, timeout15s anterior não virouGREEN). Todos medidos com0duplicadas/unsupported/unknown/divergent. Quebrada tem2faixas físicas/4faces válidas consolidadas pelo contrato; inventário bruto rotula4faces unclassified, mas medição reconcilia as2peças físicas. Semcapturasneste survey, nãoaceitevisual.
+
+Posters críticoR4 achou1P2: CONTAGEM_MANUAL não entra noSet queverifica mutante. Root reproduziuRED exit1 e acrescentoucláusula; GREEN e5mutantes pendentes. NormaiscríticoR6 fechou finitude/F2mas novoqualitygate deixa flipconjunto/NORMAL fora grupos passarem e falta baselinepós-swap; R7 fecha sóesses+parser, semswapdeGLB. Córrego críticoR2 achou3bypassesnaregua (DoubleSide/UVdobrada/reflexão) ecausalidadeguardoff; R3lease fecha semalterarprodutoatual.
+
+MotionR5 devolvido: AKnovaL1v realmenteRED +7px nas2proporções, nãoUNKNOWN. Socketsna cruz não provam ponta visível; próximaetapa precisa conferir oclusão da alça e corrigiraltura físicamínima. Probe Game→ctx atualainda fraco (nãoexercitaparede,diagonalrotuladaéstrafe,morte sólêamostraanterior), necessáriofecharcausalmenteantesaprovar. Foto manga hipclean é válida; ADS clean mostra canvaspreto e estáREJEITADAcomoaceite deADS (normais0zero continuammedidos). Repetircaptura pelo rendercompleto real.
+
+- UI crítico visual R1: EN/PT incompleto e chip+44px sobre rosto em844×390; scroll existe, não perda de conteúdo. GLM UI R2 lease só textos seleção/carteira e dimensão visual do pin mantendo alvo44px. Nenhum fluxo novo, HUD/arma/compra/API preservados. Root repetirá PT/EN e coarse nas2orientações.
+
+### Normais aplicadas e SB7 remoto — 11:51 UTC
+
+- Root repetiu28/28 da transformação sobre originais extraídos de ad696fb87 e4/4 sobre outputs v5; crítico integral R7 CLEAN de fonte. Aplicados os quatro GLBs públicos (zumbi/caipora/lampiao/esquerdomacho), hashes iguais ao manifesto v3. Gate de produto público4/4 GREEN; revisão de72frames prefere esses mesmos bytes. Movimento contínuo ainda pendente, não aceite de release. assetver atualizado só para esses4assets, sem invalidar áudio. Novo gate de produto ligado a fast/deploy; régua manual preserva baseline explícito.
+- PR#1181 aberto no SHA03008374bb8b5f9fbf4c91698273d67686956dc5 após pre-push435s GREEN; Estraga-código solicitado pela API. CI reguas-e-site/preview/classify verdes; invariantes ainda executando e nenhum review publicado na consulta11:50UTC. Não mergeado.
+- Fotos Campo v4 com atores, efeitos transitórios e marcadores CTF ocultos concluídas6/6 em1320×880, mesmo enquadramento/qualidade med. Substituem v3 com fumaça. Root prefere solo vermelho sem padrão losango e menos colagem repetida; fachadas continuam muito retangulares, M4 não aprovado. Ferro fallback e régua ainda têm achados independentes R2, lease de fechamento seguinte.
