@@ -191,6 +191,45 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
 
 ## Aceites, rejeições e limites
 
+### Conferência de 09:53–09:56 UTC
+
+- Escadão: as faixas diagonais vistas no mapview NÃO se reproduzem no renderer
+  real do jogo. `escadao-real-game-original.png` usa PCFSoft + normalBias .03
+  normal do jogo; mapview usava PCF e normalBias 0. Não mudar sombras de produto
+  para corrigir artefato do arnês. Mapview fica para bake/geometria; acabamento
+  final exige o jogo real com pós. As quatro câmeras inválidas ainda precisam
+  ser recapturadas.
+- GLM AK e acabamento encerraram por deadline, sem entrega completa. Conferência
+  independente reprovou ambos: `massaNaImagem` da régua ADS ficou sem return e
+  `external` do Campo quebrou o gate existente de binding. Nenhum GREEN aceito.
+  Lease de acabamento devolvida e redistribuída a GLM-ACABAMENTO-FECHAR (2 mapas,
+  binding-check, régua focada e doc); lease sequencial de arma agora GLM-MOTION-P2
+  (authoredvm/locomotion/transition/doc), sem tocar config AK até devolução.
+- Economia: followup fortaleceu recompra pós-respawn, mas fixture nova de remoto
+  mudou arma lógica sem remontar malha. Root reproduziu EJ12 RED e alinhou a
+  pré-condição pela função real `_armarBot` antes de marcar remoto. Gate inteiro
+  `root-economia-fixture-corrigida.log` em curso; resultados anteriores não valem
+  como aceitação desta revisão. Não houve mudança de produto de economia.
+- Normais: diagnóstico GLM readonly e A/B real Root identificam normais gravadas
+  por face em Zumbi/Caipora/Lampião/Esquerdomacho. Experimento in-memory 60 graus,
+  agrupando posição e influências de skin canônicas, suavizou corpo nas imagens
+  `character-normals-*-original-vs-smooth60.png`; getters provaram preservação de
+  posição/UV/skin/índices (inclusive atributos interleaved). Primeira tentativa
+  com leitura crua de interleaved foi descartada e corrigida antes desta prova.
+  Nenhum GLB/produto mudou; crítico visual independente pendente. Saci tem causa
+  diferente (normais já suaves), não aplicar automaticamente a mesma solução.
+- Skins: quatro comparações reais em Piscina, arquivos por ID da skin em
+  `character-skins-*-pool.png`; diferenças de escala/contato são pistas para
+  investigar no rig/pose, não bug automaticamente confirmado.
+- Dependências isoladas preparadas por npm ci foraGit em `isolated-deps` do audit.
+  Ainda NÃO substituídas durante writers/testes ativos; own node_modules segue
+  symlink inicial. Lockfiles diferem do root, então isolamento é pendência para
+  gates finais. Three é shim vendorizado criado pelo harness, não dependência npm.
+- Fila remota: main `bee715af8` inclui #1140 por outro integrador. #1180 avançou
+  a `249ffac6c`, classify falha; #1160 segue `ff0a52097` com MAPAUD/aggregator RED.
+  #1167 `d4e0ccfda` CLEAN, revisão GLM integral ativa antes do crítico e possível
+  integração. Respeitar owners e reconsultar head/CI antes de merge.
+
 Correções de produto locais acima ainda sem commit ou aprovação integral. Head do #1179 contém
 afirmações de melhorias e limitações contraditórias no corpo: tratar como pistas,
 nunca como aceite. Não usar status histórico alpha.7 como versão atual.
