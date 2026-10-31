@@ -1080,7 +1080,9 @@ function enquadrarMaos(p, m) {
   let mao = null;
   m.group.traverse((o) => { if (!mao && o.isBone && /right.?hand|hand.?r\b|rhand|r_hand/i.test(o.name)) mao = o; });
   if (!mao) return;
-  if (p.mixer) { p.mixer.update(0); p.mixer.timeScale = 0; }
+  // mede a pose que o loop() de fato desenha: ctrl (idle+IK) restaura o overlay que mixer.update(0) desfaz
+  if (p.ctrl) p.ctrl.update(0, 0, false, 0); else if (p.mixer) p.mixer.update(0);
+  if (p.mixer) p.mixer.timeScale = 0;
   m.group.updateMatrixWorld(true);
   const alvo = new THREE.Vector3().setFromMatrixPosition(mao.matrixWorld);
   p.cam.position.set(alvo.x + 0.42, alvo.y + 0.12, alvo.z + 0.52);
@@ -4280,7 +4282,9 @@ function loop(agoraMs = performance.now()) {
       const pvDt = pv.travado ? 0 : Math.min(0.05, dtReal);   // ?pvcam=maos congela pose e giro
       if (!pvDrag && !pv.travado) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
       // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
-      if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
+      if (!pv.travado) {
+        if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
+      }
       pv.r.render(pv.scene, pv.cam);
     }
   }
