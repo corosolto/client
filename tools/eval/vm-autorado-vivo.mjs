@@ -46,7 +46,8 @@ const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 console.log(`VMH: ${MOBILE ? 'mobile' : 'desktop'} abre navegador`);
-const nav = await chromium.launch(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : {});
+const nav = await chromium.launch({ args: ['--mute-audio', '--enable-unsafe-swiftshader'],
+  ...(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : {}) });
 console.log('VMH: navegador aberto');
 const pag = await nav.newPage({ viewport: MOBILE ? { width: 844, height: 390 } : { width: 1440, height: 960 },
   ...(MOBILE ? { isMobile: true, hasTouch: true } : {}) });
@@ -176,6 +177,6 @@ if (semMao.length) console.log(`  autoradas mas SEM mão: ${semMao.join(' ')}`);
 if (erros.length) console.log(`  erros de página: ${[...new Set(erros)].slice(0, 3).join(' | ')}`);
 const ok = MUTANTE ? bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave : !l.visiveis) : bons === ALVO.length;
 if (MUTANTE) console.log(`  mutante ${MUTANTE}: ${ok ? 'detectado' : 'sobreviveu ou falhou por outro motivo'}`);
-console.log(ok ? '\n  VERDE — o caminho autorado está ligado\n'
+console.log(ok ? (MUTANTE ? '\n  VERDE — regressão provocada detectada\n' : '\n  VERDE — o caminho autorado está ligado\n')
                : '\n  VERMELHO — o jogo não está montando o viewmodel novo\n');
 process.exit(ok ? 0 : 1);
