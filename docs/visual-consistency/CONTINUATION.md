@@ -502,3 +502,13 @@ MotionR5 devolvido: AKnovaL1v realmenteRED +7px nas2proporções, nãoUNKNOWN. S
 - M3 R2 ainda NÃO aceito: crítico encontrou UVs/localtransform que escapam do novo gate e regressão real de occluders na travessia Córrego. Capturas de Campo4 já válidas; Córrego retomado depois de timeout causado exclusivamente por mídia de áudio local, fora do recorte visual. Correção de tiro/LOS e instrumentos antecederá integração.
 - Motion crítico R2 achou câmera entrando no crânio na morte; caminhada/ADS/recarga/pistola/parede sem outro defeito concreto nas amostras. Game congelado para crítica de skins antes de writer da morte.
 - Pickups produto sem novo achado; gate flash ainda tem duas lacunas (crash confundido com detecção e falta de boom flashOn), GLM R3 exclusivo em correção. Não contar banner ou classe de erro como aceitação.
+
+
+### 13:36 UTC — leases e QA isolado
+
+- Objetivo10h permanece integral: integrar PRs/release elegíveis, excluir Operação Flávio, elevar mapas/UI/personagens/skins/motion com evidência real; UI fluxos/social ficam na próxima fase.
+- Checkpoint5501936d6 em WT irmão visual-release-review-20261031, branch codex/visual-release-review-20261031. docs/gen-arch gerou3linhas de documentação, deployR1 em andamento; nenhum push/PR visual ainda. HEAD não contém checkpoint Flávio53826e9d (merge-base exit1). #1181 aguarda Estraga no SHA03008374.
+- Crítico skinsR1: produtoF1/F3/F4 sem novo P2; gate rejeitado3P2+2P3. GLM-R2 lease somente gate/doc skins, probe crítico /tmp/critico-skins-flow-r1/proof.mjs referência obrigatória; Game/main liberados. GLM morteR1 lease Game apenas câmera/visibilidade própria + gate/doc novos; preservar pickups/skins.
+- M3R2 crítico: C4 e pisoCorgR3 aceitos locais, C2 ainda muralha/CorgR1 ganho mínimo;5P2 gate/produto. GLM-R3 só corrige occluders Corg+comentários/gate/fixture/doc sem alterar pixels. Não assado novamente.
+- Posto suporteR1 nominal6/6 e2fotos reais mesmoFOV66/poses; crítico visual em andamento, ainda sem aceite final. GramaR3 tool selftestRoot0,4binários mesmosR2;24fotos ainda em revisão, nenhuma troca pública.
+- NF-R3 terminou, crítico focal em andamento. Curation browserR1 rejeitadoRoot: MUTADOR serializado inválido/faltavam ramos; GLM-R2 rewrite apenas tool/doc, nenhum browser feito por GLM.
