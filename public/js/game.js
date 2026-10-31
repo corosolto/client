@@ -839,7 +839,7 @@ export class Game {
     this._mp = null;
     this._mpPend = this.online ? { mpFactory, net } : null;
 
-    // Câmera 3ª pessoa (tecla B): modo de VISÃO, não de combate - mira e tiro seguem saindo
+    // Câmera 3ª pessoa (tecla N): modo de VISÃO, não de combate - mira e tiro seguem saindo
     // da câmera. Modos, rig, grip e pré-carga do corpo: docs/RIG-PEGA-ARMA.md.
     this.camView = ['first', 'third', 'shoulder'].includes(settings.camView) ? settings.camView : 'first';
     this.playerTP = null;
@@ -853,7 +853,7 @@ export class Game {
     this._tpOrbitYaw = 0;
     this._tpOrbitPitch = 0;
     this._eyeWorld = new THREE.Vector3();   // posição do OLHO — origem de tiro/fumaça em 3ª pessoa
-    /* Só o CORPO do jogador (tecla B) — sem `weapons` o glbchars pré-carrega as 26 armas
+    /* Só o CORPO do jogador (tecla N) — sem `weapons` o glbchars pré-carrega as 26 armas
        BLOQUEANDO e desfaz o lazy da partida (ARM1/ARM3). BUG-85. */
     /* O dedicado usa `testMode`: sem browser/GLB, preload inútil compete com snapshots.
        No browser, main.js já aguarda o preload antes do `new Game`. */
@@ -6278,7 +6278,7 @@ export class Game {
       c.rotation.x += (wantPitch - c.rotation.x) * Math.min(1, dt * 3.5);
     }
   }
-  // Cicla 1ª → 3ª (longe) → ombro (perto, vê braços) → 1ª (tecla B). Constrói o corpo
+  // Cicla 1ª → 3ª (longe) → ombro (perto, vê braços) → 1ª (tecla N). Constrói o corpo
   // 3ª pessoa na 1ª vez (lazy).
   _toggleCamView() {
     // first = 1ª pessoa (só-arma, padrão do jogo) · third = OTS SOCOM (cintura pra cima) ·
