@@ -44,7 +44,7 @@ const CAMPOS = {
   match_start: ['map', 'mode', 'game'], match_end: ['map', 'mode', 'game'], mp_join: ['map', 'mode'],
   session_end: ['dur', 'matches'],
 };
-const ENUM = { mode: ['rounds', 'ctf'], game: ['sp', 'mp'], dur: ['lt1', '1-5', '5-15', '15-60', 'gt60'], matches: ['0', '1', '2-3', '4+'] };
+const ENUM = { mode: ['rounds', 'ctf', 'arena'], game: ['sp', 'mp'], dur: ['lt1', '1-5', '5-15', '15-60', 'gt60'], matches: ['0', '1', '2-3', '4+'] };
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 const corpoLimpo = (txt) => {
   let c;
@@ -120,14 +120,16 @@ async function mundo({ webdriver = false, search = '', fetchFalha = false, agora
   c.partidaTerminada({ map: 'escadao', mode: 'ctf', game: 'sp' });
   c.entrouNoMp({ map: 'lajes', mode: 'rounds' });
   c.partidaIniciada({ map: 'lajes', mode: 'rounds', game: 'mp' });
+  c.partidaIniciada({ map: 'praca_poderes', mode: 'arena', game: 'sp' });
   m.relogio.t = 7 * 60_000 + 412;
   c.fimDaSessao();
   const sujos = m.enviados.map((e) => corpoLimpo(e.opts.body)).filter(Boolean);
   cobra(sujos.length === 0, `CT2 corpo fora da allowlist: ${sujos.join(' | ')}`);
   const eventos = m.corpos().map((b) => b.event);
   for (const ev of Object.keys(CAMPOS)) cobra(eventos.includes(ev), `CT2 evento ${ev} não saiu`);
+  cobra(m.corpos().some((b) => b.event === 'match_start' && b.mode === 'arena'), 'CT2 Vira-Casaca foi reduzido a rounds');
   const fim = m.corpos().find((b) => b.event === 'session_end');
-  cobra(fim?.dur === '5-15' && fim?.matches === '2-3', `CT3 session_end com 7 min e 2 partidas tem de ser 5-15/2-3, veio ${JSON.stringify(fim)}`);
+  cobra(fim?.dur === '5-15' && fim?.matches === '2-3', `CT3 session_end com 7 min e 3 partidas tem de ser 5-15/2-3, veio ${JSON.stringify(fim)}`);
   cobra(m.storage.length === 0, `CT4 tocou storage/cookie: ${m.storage.join(', ')}`);
 }
 { // CT3: faixas nas bordas

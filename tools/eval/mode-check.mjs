@@ -26,10 +26,9 @@
    Se algum desses trechos deixar de existir com a forma esperada, o arnês FALHA em vez de
    passar — portão verde por ausência de dado é o modo de falha que este projeto já teve.
 
-   OS 10 CASOS: 5 mapas × 2 modos. Em cada um o jogador faz o que faz de verdade —
-   clica no item do menu (escolha), depois navega no carrossel até o mapa (uma seta por
-   vez, como no jogo), e só então aperta JOGAR. O que se compara é o valor que o `Game`
-   RECEBERIA em `ctf:` contra o que ele pediu.
+   OS CASOS: todos os mapas × três modos. Em cada um o jogador faz o que faz de verdade —
+   escolhe o modo, navega no carrossel e aperta JOGAR. O que se compara é o par
+   `ctf`/`arena` que o Game receberia contra o modo pedido.
 
    Uso: node tools/eval/mode-check.mjs [--json]
    ============================================================================ */
@@ -76,6 +75,9 @@ function blocoInicial() {
 
 const INIT = blocoInicial();
 const OPEN_SETUP = bloco(SRC, 'const openSetup = (mode, title, act) =>');
+const SELECT_MODE = bloco(SRC, 'function selectMatchMode(');
+const MODE_CHOSEN = (SRC.match(/^let modoEscolhido = .*$/m) || [])[0];
+if (!MODE_CHOSEN) throw new Error('não achei `let modoEscolhido =` no main.js');
 const GOTO_MAP = bloco(SRC, 'function gotoMap(');
 const MAP_IDX = (SRC.match(/^let mapIdx = .*$/m) || [])[0];
 if (!MAP_IDX) throw new Error('não achei `let mapIdx =` no main.js');
@@ -87,7 +89,8 @@ const BADGE = (() => {
 })();
 // a expressão que vai pro Game
 const CTF_EXPR = (SRC.match(/^\s*ctf:\s*([^,]+),/m) || [])[1];
-if (!CTF_EXPR) throw new Error('não achei a propriedade `ctf:` passada ao Game');
+const ARENA_EXPR = (SRC.match(/\barena:\s*([^,]+),/m) || [])[1];
+if (!CTF_EXPR || !ARENA_EXPR) throw new Error('não achei as propriedades `ctf:`/`arena:` passadas ao Game');
 
 /* ---- registro de mapas: lido do maps.js, sem importar (evita puxar three) ---- */
 const MAP_IDS = [...MAPSRC.matchAll(/^\s{2}(\w+):\s*\{/gm)].map((m) => m[1]);
@@ -110,15 +113,18 @@ function novoMenu(mapaInicial) {
     { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
   const corpo = `
     let currentMap = ${JSON.stringify(mapaInicial)};
+    const sessao = null;
     let setupTitle = 'SINGLE PLAYER';
     ${INIT}
+    ${MODE_CHOSEN}
     ${MAP_IDX}
     ${GOTO_MAP}
     ${OPEN_SETUP}
+    ${SELECT_MODE}
     const badge = () => { const mm = $('map-mode'); ${BADGE.replace("mm.addEventListener('click', () =>", 'const _h = () =>')}; return _h(); };
     return {
-      // o que o Game receberia em ctf: — a EXPRESSÃO literal do startGame
-      jogar: () => (${CTF_EXPR}) ? 'ctf' : 'rounds',
+      // o modo que o Game receberia — expressões literais do startGame
+      jogar: () => (${ARENA_EXPR}) ? 'arena' : ((${CTF_EXPR}) ? 'ctf' : 'rounds'),
       modo: () => matchMode,
       mapa: () => currentMap,
       idx: () => mapIdx,
@@ -132,13 +138,13 @@ function novoMenu(mapaInicial) {
     el, noop, noop, noop, loadMenuBackdrop, noop);
 }
 
-/* ---- os 10 casos ---- */
+/* ---- modos explícitos × mapas ---- */
 const casos = [];
 for (const alvo of MAP_IDS) {
-  for (const escolha of ['rounds', 'ctf']) {
+  for (const escolha of ['rounds', 'ctf', 'arena']) {
     // o jogador começa no mapa padrão (é o que o menu abre) e ESCOLHE o modo no item
     const m = novoMenu(DEFAULT_MAP);
-    m.openSetup(escolha, escolha === 'ctf' ? 'CAPTURE THE FLAG' : 'SINGLE PLAYER', escolha);
+    m.openSetup(escolha, escolha === 'arena' ? 'VIRA-CASACA' : (escolha === 'ctf' ? 'CAPTURE THE FLAG' : 'SINGLE PLAYER'), escolha);
     // ...depois navega no carrossel até o mapa que quer, uma seta por vez (como no jogo)
     const destino = MAP_IDS.indexOf(alvo);
     for (let i = 0; i < MAP_IDS.length; i++) { if (m.idx() === destino) break; m.gotoMap(m.idx() + 1); }
@@ -154,8 +160,9 @@ for (const alvo of MAP_IDS) {
   const destino = MAP_IDS.indexOf(alvo);
   for (let i = 0; i < MAP_IDS.length; i++) { if (m.idx() === destino) break; m.gotoMap(m.idx() + 1); }
   const antes = m.modo();
-  m.badge();                                            // alterna
-  const escolha = antes === 'ctf' ? 'rounds' : 'ctf';
+  m.badge();                                            // avança no ciclo rounds → ctf → arena
+  const ordem = ['rounds', 'ctf', 'arena'];
+  const escolha = ordem[(ordem.indexOf(antes) + 1) % ordem.length];
   m.gotoMap(m.idx() + 1); m.gotoMap(m.idx() - 1);       // vai e volta no carrossel
   const jogado = m.jogar();
   casos.push({ mapa: alvo, escolhido: escolha, jogado, ok: jogado === escolha, via: 'badge+carrossel' });
