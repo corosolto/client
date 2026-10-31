@@ -586,3 +586,18 @@ F2 diagnóstico GLMmotion era contrafactual: faca NÃO temlayout demarca, logo N
 Grade72px: nominal+5mutantes exatos GREEN após CSSfinal, fotos/interação EgoR3 e crítico visual1a89a3bf aceitos nas poses locais. WrapperR2crítico9a061264. Checkpoint inclui somente CSS/gate/contratoUI+ledger; nenhum claim mobilefísico/FPS. Migração FV-M1 críticoCLEAN6d07d81f:4→40guards,95interiores e demais snapshots iguais, nominal5/5+mutantefisicaFV-M1RED.
 
 DeathR1 real rejeitado para aceitevisualcompleto: cabeça do cadáverY1,2246, corpoY0,945..1,36, câmeraTPY2,8 presa ao olho vivo; só52/1373vértices do corpo emNDC. Problema é enquadramento, não cadáverausente. Crítico avalia fix mínimo morto-only; produto Game ainda não mexido após R4.
+
+
+### 2026-10-31T15:06:36.283832+00:00 — câmara XYZ e próxima lease F2
+
+Death R1 visual REJECTED: cadáver fora de tela. R2 Y-only insuficiente; R3 XYZ tem vídeos reais1320×880 e844×390 finitos, cabeça dentro; ainda aguarda crítico e gateGLBreal. Gateprocedural R7 revelou falsa cobertura (olho-vivo sobrevive), rejeitado. R8 carregaGLB/rig/clipes reais omitindo apenas imagens Node, em execução. ProdutoGame congelado neste ponto para próximo writer. Córrego gatesR6 rejeitados por comparaçãoUVúnico/set; RootR7 matrizcompleta em execução, crítico pendente. CurationR6 censo14maps ainda ativo p2, sem aceite final. F2 atual confirmado: Caveira/MAGA knife sem marca em1P/3P; diagnóstico nativo corrige unidades e prova que plano flutuante NÃO existe hoje. Próxima leaseGLM somente knife layout/attach, callers e gate; semGame/AK/pistol/rig/GLB. Objetivo10h completo e exclusões originais mantidos.
+
+
+### 2026-10-31T15:10:47.212406+00:00 — gates herdados1179 e hotfixmain
+
+Mainatualec7cec33405 integrou1183 às14:58:47UTC; releaseaindaalpha130. PR1184 emsincronizaçãoisolada, críticos/portõespendentes, nãoPRmerge. CurationR6all14GREEN465peças, prefreceiptobrigatório. MutanteFerroinfra3porquefixtureparedefina examinavaeixerrado; Rootcorrigiufixture semtocargrafites, retestependente. DeathR8GLBrealnom27PASS+4mutantesexatosGREEN, críticoemcurso. NativeCRITICO-PR1179-GATES-R1 confirmou4P2nosgates:flashpositivoocluído, shell!aceitainfra, lobby/miraNaN e miramutantecoberturafaltante. PróximawriterGLM somentegatesherdados+wrappermovimento e doc, semproduto, respeitandoF2knifelease.
+
+
+### 2026-10-31T15:14:21.996941+00:00 — CórregoR8fechado
+
+MaterialprodutoR4: crítico2e4ef660CLEAN e4capturasreaispósUV,9fixtureshelper. GatesR8: CRITICO-CORREGO-GATES-R8.md SHA8edc100bfe53964d4a4832c773b6d863e1509381582d49d6334dce08be9cb594 CLEANincluindocalibração rotação e8/4listasdoc. Nominais0;8material+4UVvariantes RED1exactsets. BakeoficialR7Corg51peças0murais,total444,fpfc80e82d83be4ccd, layoutcomPostoR6 serácheckpointseparado. Odelta7cmpilareséintencionalemshotoccluders, bodycollidersiguais. WrappercomumCIaindaemexecução/nãorevisado. Checkpointsomente5arquivosCorgproduto/gates/doc, semalegarCIGREENoumerge/release.
