@@ -170,7 +170,7 @@ function marchaMilitar(sfx) {
     const fontes = [];
     const agora = ctx.currentTime;
     const notas = [196, 247, 294, 392, 294, 330, 392, 494];
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 64; i++) {
       const t = agora + i * 0.34;
       const caixa = ctx.createOscillator();
       const cg = ctx.createGain();
