@@ -1,57 +1,94 @@
-# Recentro da cabeça sem realimentação
+# Pose de cabeça autorada e proxy final
 
-Finding #1188, inline `4432950826`, revisão Estraga `5724445885`, base
-`21f264c519aac547148ea1bab3c5c64d847e8290`.
+O comando `head-yaw-check.mjs` mantém o nome para preservar o wiring, mas o
+contrato atual **não exige yaw80%**. A integração rejeita explicitamente esse
+algoritmo novo do #1179 por regressão de deformação; não aprova visualmente o rosto
+nem considera a meta artística de alinhamento resolvida.
 
-O produto mede yaw com o sinal inverso ao ângulo da cabeça: corpo apontando +Z e
-cabeça girada +θ produzem `curYaw=-θ`. O sinal anterior recentra corretamente;
-invertê-lo aumentaria o erro. A causa reproduzida é outra: a correção persiste no
-osso quando o mixer não reescreve sua rotação. Isso também ocorre com track de
-quaternion constante, pois `PropertyMixer` evita aplicar o mesmo valor novamente.
+## Contrato atual
 
-A reprodução inicial usou `CharController`, `AnimationMixer` e Three reais, sem
-reimplementar o controlador. Com yaw inicial +0,5 rad, o track constante chegou a
-+0,6505 rad e cruzou o centro antes de se estabilizar perto de zero. O resultado
-esperado pela receita anterior é +0,1 rad: reduzir 80%, preservando o offset autoral.
-Os dados RED ficam em `HEAD-YAW-RED-R1.json` no audit externo da missão31/10.
+Em estado neutro (`aimPitch === undefined`, sem emote), o quaternion LOCAL do Head
+segue os clipes autorados, inclusive quando o AnimationMixer otimiza tracks
+constantes ou quando não existe track de rotação. Giro do grupo, rotação/escala de
+ancestrais e overlays de tronco não autorizam yaw extra no Head. O proxy coincide
+com a posição mundial FINAL do osso em cada frame medido.
 
-O controlador remove o inverso do delta local anterior **antes** do mixer e aplica
-a correção uma única vez depois dos overlays, antes da sincronização do proxy.
-Assim não depende de o mixer escrever um valor diferente. O eixo segue vertical
-em mundo, convertido pelo quaternion do pai, inclusive em rigs escalados. A pose
-final de emote conserva seu gesto; morto, LOD distante e locomoção não acumulam
-correção residual. Ao sair do porte parado, a memória escalar é zerada. O delta
-também sai antes de ativar ações ou reiniciar o mixer em `revive()`, impedindo que
-a pose restaurada receba um undo antigo.
+Pitch definido e gestos de emote continuam legítimos. Os ensaios próprios permitem
+esse movimento e exigem que ele tenha efeito: pitch melhora erro ao alvo tanto
+contra o mixer neutro do mesmo frame quanto contra o frame anterior à mira, com
+mudança local do Head; emote movimenta Neck ou Head através do driver explícito.
+Depois do gesto/mira, o clipe animado retoma a pose. Não se impõe ganho80%, direção
+física de rosto por eixo+Z, nem um novo teto artístico.
 
-## Régua reproduzível
+## Oráculo e cobertura
 
-`node tools/eval/head-yaw-check.mjs` cria rigs sintéticos e importa o controlador
-real em módulo temporário, acrescentando apenas seu export. Um segundo controlador
-real com o bloco de yaw removido fornece a pose natural independente. O oráculo
-aplica sobre ela o contrato preservado da base: ganho0,8, teto0,5rad, suavização6/s
-e deadzone0,0001rad. A tolerância1e-6rad é numérica, sem aprovação estética implícita.
+A régua importa somente o controlador real em cópia temporária fora da árvore
+pública; imports retornam aos módulos reais. Um **AnimationMixer independente**,
+sem segundo CharController, toca clones das mesmas fixtures conforme uma sequência
+explícita de ações. O oráculo avança com o mesmo dt e verifica o nome da ação.
+Além da comparação com o mixer, repouso constante/sem track compara diretamente
+com o quaternion autorado não nulo (+0,5/−0,5rad mais pitch/roll da fixture).
 
-Cobre osso sem track, track constante, track animado e ação pausada, duas cadeias
-com yaw/pitch/escala diferentes, mira vertical variando no retorno ao idle,
-frames alternados30/60/120Hz, dt zero e hitch, troca de track ausente para
-track animado e transições entre
-idle, crouch, idle1h, movimento, morte, LOD e emote, seguidas de retorno ao idle. Inclui `revive()` durante o porte e morte/respawn
-sem uma atualização intermediária; esse caso foi RED antes do helper de transição.
-Também compara o proxy à posição final do osso a cada atualização. Probes
-separados leem a cabeça logo após cada método de transição, antes de `update()`,
-e o ponto fixo do porte é conferido diretamente em +0,1/-0,1rad para offset de
-+0,5/-0,5rad, sem depender do oráculo dinâmico.
+São30 casos/27.520frames medidos: tracks constantes, animadas e ausentes; clipe
+animado pausado; repouso longo; grupo girando; pais com yaw/pitch/escala0,01;
+30/60/120Hz, dt0 e hitch0,3s; idle/idle1h/walk/walk1h/run/crouch; métodos reais
+shoot/jump/die/revive; morte→revive sem frame intermediário; LOD; emotes Neck/Head;
+pitch positivo/negativo definido e retorno neutro; guards de pitch em morte/LOD2. As pequenas cenas usam as velocidades naturais
+legadas0,84/2,08m/s para controlar o tempo do clipe. O oráculo não executa nem
+copia update(): define explicitamente controles de playback de fixture (fade0,16,
+shoot0,06, jump0,08, death1,8× e velocidades limitadas0,45–3). Essas premissas
+seguem a política atual e exigem revisão separada se ela for alterada; não são
+valores de pose ou ganho de cabeça derivados do resultado do controlador.
+Todos frames medidos verificam proxy final e finitude. Tolerância1e−6 é numérica.
 
-`node tools/eval/head-yaw-check.mjs --autoteste` executa todos os mutantes e
-reprova se qualquer um sobreviver ou não produzir a resposta RED esperada.
-Cada `--mutante=<nome>` modifica somente a cópia temporária e deve imprimir RED
-com exit0 (mutante morto). Nominal RED ou mutante não detectado sai1; argumento
-inválido sai2; incapacidade de medir sai3. Variantes: `sem-undo`, `undo-tardio`,
-`sinal-invertido`, `sem-clamp`, `sem-yaw`, `yaw-emote`, `estado-persistente`, `revive-pendente`, `undo-to-ausente`, `undo-shoot-ausente`,
-`undo-emote-ausente`, `undo-die-ausente`, `revive-sem-reset`.
-O teste recusa substituição que não aplique uma única vez.
+## Execução e falhas fechadas
 
-A régua não mede os pixels, os GLB de todo elenco, compra/skins ou mobile físico.
-A validação visual no jogo real e a revisão adversarial da integração seguem com
-o integrador. O problema semelhante do pitch não foi alterado nesta correção.
+```sh
+node tools/eval/head-yaw-check.mjs
+node tools/eval/head-yaw-check.mjs --autoteste
+```
+
+Nominal RED sai1. `--autoteste` primeiro exige nominal GREEN e só então prova que
+os seis mutantes falham: `yaw80` (delta removido antes do mixer),
+`yaw-acumulativo`, `proxy-antes-pose`, `sem-pitch`, `sem-emote` e `pitch-fora-guarda`. O proxy antecipado
+produz witness com erro e rotação do Neck/Head no mesmo frame. Cada mutante morto
+imprime RED com exit0; sobrevivente sai1. CLI inválida, inclusive mutante vazio ou
+desconhecido, sai2. Falta de fonte/clipe, erro de import ou adaptação temporária
+ambígua sai3; infra não conta como mutante detectado. O autoteste também exercita
+argumento desconhecido e execução sem produto num diretório temporário vazio.
+
+## Checkpoint preparado: produto ainda com yaw
+
+Esta alteração de contrato foi preparada em lane isolada **sem editar produto ou
+package**. Portanto o nominal é RED causal enquanto yaw permanece ativo. Não
+publicar o gate sozinho como se o produto já estivesse corrigido. O integrador
+retira a feature e roda nominal/autoteste no produto consolidado.
+
+```sh
+node tools/eval/head-yaw-check.mjs --proposta-sem-yaw
+node tools/eval/head-yaw-check.mjs --proposta-sem-yaw --autoteste
+```
+
+Esse modo de preparação remove SOMENTE o bloco yaw61 da cópia temporária, registra
+`proposal:true` e o SHA256 da fonte, e não altera glbchars. Depois da retirada real,
+a opção deve falhar por bloco ausente; os comandos nominais são os válidos para CI.
+GREEN proposto não é GREEN do produto nem aprovação visual.
+
+## Histórico preservado
+
+- `1906b2da8`/#1179 introduziu recentro yaw80%/clamp0,5rad/6s⁻¹, sem prova do eixo
+  físico do rosto. A introdução causa onze bloqueadores do select após corrigir
+  referências; distribuição cervical50/50 e100% foi medida e rejeitada.
+- #1188 inline`4432950826`, revisão`5724445885`, base`21f264c519`: feedback real
+  foi reproduzido, inclusive track constante otimizado pelo mixer.
+  `5d0548a9a`/integração`6cc50e854` e `61afae0ad`/integração`96dce2261` corrigiram
+  corretamente undo/transições enquanto a feature existia. O gate antigo protegia
+  esse comportamento ativo; ele foi substituído junto da decisão explícita de
+  rejeitar a feature, não para esconder produto ainda ativo.
+- Evidências antigas ficam nos commits e audit externo: `HEAD-YAW-RED-R1.json`,
+  `HEAD-YAW-GREEN-R7.json`, `HEAD-YAW-AUTOTESTE-R2.log`. Relatórios de atribuição:
+  `docs/reports/SELECT-CI-CAUSE-20261031.md` e `SELECT-CI-BLOCKERS-20261031.md`.
+
+O select e seu teto/dívida permanecem intactos. A régua nova não mede pixels,
+face física, todos GLB/armas/skins ou mobile. Browser/Ego, revisão artística,
+consumidor real e integração permanecem com o root.
