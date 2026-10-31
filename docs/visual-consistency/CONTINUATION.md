@@ -191,6 +191,39 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
 
 ## Aceites, rejeições e limites
 
+### Conferência de 10:07 UTC
+
+- GLM-MOTION-P2 devolveu a lease: locomotion 16/16 + seis mutantes;
+  transition 28/28 + nove mutantes. Root ainda deve conferir os logs/patch final,
+  revisão GLM independente e crítico, além do movimento real em 3:2.
+- A régua desenhada de grafite acusava UNKNOWN para paredes texturizadas comuns.
+  Fixture nova reproduziu exatamente `unknown:[parede]`; correção restringe a
+  decomposição em quads aos overlays nomeados e mantém inventário independente
+  para arte sem prefixo. Node 19 cláusulas voltou GREEN; mutantes reais no Ego
+  ainda pendentes. Evidências anteriores ficam preservadas, sem sobrescrever.
+- Próxima lease sequencial de arma: GLM-AK-FECHAR, apenas config AK, régua ADS e
+  AK-ADS.md; restaurar retorno da medição e provar ponto frontal pela geometria,
+  mantendo o teto de quatro pixels. Nenhuma mudança em tiro, asset ou hip.
+- Mutantes reais `curation-drawn-mutations-AFTER2.json`: cena limpa Piscina
+  52/52, clone sobe a 53/52 e reprova repetição, translação reprova suporte e
+  branco, poster sem prefixo reprova inventário. Esses são os resultados aceitos.
+- Nova varredura achou posters manuais omitidos: Brasília tem três cópias do leão
+  e quatro posters a 30 cm da fachada; Posto repete outdoor com a passada e fica
+  no limite geométrico de suporte. Provas após nomear só em memória estão em
+  `*-manual-poster-probe.json`. Nova lease GLM-POSTERS-MANUAIS: só os dois mapas,
+  régua focada nova e doc; Root conserva inventário/medidor/gerador/layout.
+- Quebrada NÃO tem quatro faixas repetidas: são duas faces opostas coplanares de
+  cada uma das duas faixas aprovadas em 06/08, com texto legível dos dois lados.
+  Medidor deve reconhecer o objeto físico sem ignorar clones em outro lugar.
+  Não remover faixas nem mudar a solução de leitura já aprovada.
+- A/B Ego select-inflate isolou limite de alcance duplicado: Mandrake head
+  p99 .551/22.9 ruins, sem apenas clamp geral .540/18.9 (referência exata).
+  Sem yaw .547/22.9; Pagodeiro .414/9.5 nas quatro variantes. Config de teto e
+  dívida não mudaram. Correção 3P fica SEQUENCIAL, depois de devolver lease AK;
+  preservar proteção de recarga/Juiz, comprovar porte e contato reais.
+- GLM acabamento atingiu deadline novamente; escreveu binding-clones e nova
+  régua, não entregou doc. Root assume fechamento e verifica antes do bake.
+
 ### Conferência de 09:54 UTC
 
 - Escadão: as faixas diagonais vistas no mapview NÃO se reproduzem no renderer
