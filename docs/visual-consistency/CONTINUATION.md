@@ -168,6 +168,27 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
   Gate select-inflate do #1179 acusa drift de referência: investigar causa,
   sem elevar teto congelado ou dívida apenas para obter verde.
 
+
+- 09:43 UTC: revisão adversarial REABRIU a régua de curadoria: cenas mutantes reais
+  no Ego (clone baked, translação geometry 1000m, poster sem prefixo) ficaram
+  falsamente GREEN. `curation-drawn-mutations.json` confirma a brecha; os números
+  anteriores não são mais gate final. Lease GLM exclusiva measure + inventory +
+  novo graffiti-drawn-check/doc para geometria efetivamente desenhada e
+  reconciliação de metadados; repetição/allowlist do produto não foi relaxada.
+- Revisores GLM e crítico independentes não acharam P1/P2 no microdiff economia;
+  conferência contou 23 mutantes reais, não 20 do relatório anterior. GLM recebe
+  followup para nitpicks e compra real após respawn (EJ23), seguida de gate inteiro.
+- Censo luvas: achado de sombras/FX foi REFUTADO. attachGloves vem antes do passe
+  de materiais em buildCharacterModel; runtime com esquerdomacho equipado confirmou
+  castShadow=true, receiveShadow=true e shaderHook do corpo. Não corrigir algo já
+  correto. Fotos iniciais de personagens com overlay GO/recorte preto rejeitadas;
+  versões `character-surface-*-pool-clear.png` são 3:2 válidas na luz/cena real da
+  Piscina, atores comparativos injetados com loader/controlador reais. Não são
+  partida natural nem aceite integral; Lampião/controle mostram facetas no corpo.
+- Nova investigação GLM readonly de normais/topologia dos personagens/skins e
+  outra do drift select-inflate; nenhuma mudança de asset autorizada por hipótese.
+  Ablacões de albedo/normal/vertexColor do Escadão em curso somente em memória.
+
 ## Aceites, rejeições e limites
 
 Correções de produto locais acima ainda sem commit ou aprovação integral. Head do #1179 contém
