@@ -3439,6 +3439,9 @@ export class Game {
       swapBot.mesh.group.traverse(o => { o.userData.botOwner = swapBot; });
       this.scene.add(swapBot.mesh.group);
       swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot.alive = true;
+      // O teleporte invalida a trajetória absoluta do lado anterior.
+      swapBot.mantle = null; swapBot.mantleF = 0; swapBot._spaceHeld = false;
+      swapBot._mantleScanAt = 0; swapBot.jumpBufferedUntil = 0; swapBot.coyoteUntil = 0;
       const s = this.world.spawns[oldTeam][(Math.random() * 4) | 0];
       swapBot.pos.set(s.x, this._spawnY(s.x, s.z), s.z);
       swapBot.yaw = this._spawnYaw(s, oldTeam, true);
@@ -3449,6 +3452,9 @@ export class Game {
     // respawn do jogador no lado novo
     const s = this.world.spawns[newTeam][(Math.random() * 4) | 0];
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
+    // O teleporte invalida a trajetória absoluta do lado anterior.
+    p.mantle = null; p.mantleF = 0; p._spaceHeld = false; p._mantleScanAt = 0;
+    p.jumpBufferedUntil = 0; p.coyoteUntil = 0;
     p.yaw = this._spawnYaw(s, newTeam); p.pitch = 0; p.hp = 100;
     this._scope(false, true);
     this._banner(frase('agoraVoceE', this._teamName(newTeam)), 'trocou de lado na treta — sem penalty, só julgamento');
