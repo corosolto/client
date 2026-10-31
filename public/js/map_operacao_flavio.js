@@ -221,7 +221,8 @@ export function buildOperacaoFlavio(scene, T = {}) {
 
   // Terminal executivo aberto: os móveis PBR dão abrigo sem transformar a primeira etapa em labirinto.
   paredeX('fachada-sul', 0, -52, 58, [-20, 20]);
-  paredeX('fachada-norte', 0, -16, 58, [-17, 0, 17]);
+  const fachadaNorte = { x: 0, z: -16, w: 58, portas: [-17, 0, 17] };
+  paredeX('fachada-norte', fachadaNorte.x, fachadaNorte.z, fachadaNorte.w, fachadaNorte.portas);
   paredeZ('lateral-oeste', -29, -34, 36, [-43, -25]);
   paredeZ('lateral-leste', 29, -34, 36, [-43, -25]);
   bloco('faixa-fachada-sul', 0, 2.9, -52.18, 58, 0.58, 0.16, mats.marinho, false);
@@ -423,6 +424,8 @@ export function buildOperacaoFlavio(scene, T = {}) {
   const adj = [];
   const step = 3.5;
   for (let x = -40; x <= 40; x += step) for (let z = -55; z <= 55; z += step) if (!blocked(x, z)) nodes.push({ x, z });
+  for (const x of fachadaNorte.portas) if (!blocked(x, fachadaNorte.z)) nodes.push({ x, z: fachadaNorte.z });
+  if (!blocked(fachadaNorte.x, fachadaNorte.z + step)) nodes.push({ x: fachadaNorte.x, z: fachadaNorte.z + step });
   for (let i = 0; i < nodes.length; i++) {
     adj[i] = [];
     for (let j = 0; j < nodes.length; j++) {
