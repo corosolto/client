@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, copyFileSy
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { sonda, pula } from './sonda-filho.mjs';
 import { carregarMapIds } from '../audio/map-ids.mjs';
 
 const root = resolve(new URL('../..', import.meta.url).pathname);
@@ -80,9 +81,11 @@ try {
   writeFileSync(ledger, JSON.stringify({ prefixoDerivado: 'audio/piloto/', raizesRuntime: [], fontes: {}, derivados: [], piloto: [] }));
   const gate = value => {
     writeFileSync(path, JSON.stringify(value));
-    return spawnSync(process.execPath, [join(root, 'tools/eval/assets-check.mjs'), `--raiz=${join(temp, 'public')}`, `--ledger=${ledger}`, '--so=runtime-audio'], { cwd: root, encoding: 'utf8' });
+    return sonda([join(root, 'tools/eval/assets-check.mjs'), `--raiz=${join(temp, 'public')}`, `--ledger=${ledger}`, '--so=runtime-audio'], { cwd: root });
   };
-  const red = gate(full); assert.notEqual(red.status, 0); assert.match(red.stderr + red.stdout, /lajes/);
+  /* assets-check importa three; filho morto daria "vermelho" sem medir nada. */
+  const red = gate(full); if (!red.mediu) pula(red.causa, 'LSA9');
+  assert.notEqual(red.status, 0); assert.match(red.stderr + red.stdout, /lajes/);
   const green = gate(completeLajesSoundscape(full)); assert.equal(green.status, 0, green.stderr + green.stdout);
   delete full.mapSoundscapes.corrego;
   const missingOther = gate(completeLajesSoundscape(full)); assert.notEqual(missingOther.status, 0); assert.match(missingOther.stderr + missingOther.stdout, /corrego/);

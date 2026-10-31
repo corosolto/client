@@ -24,7 +24,7 @@
    ============================================================================ */
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { sonda, pula } from './sonda-filho.mjs';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -119,9 +119,13 @@ for (const s of ['SIGINT', 'SIGTERM']) process.on(s, () => { restaura(); process
 process.on('uncaughtException', (e) => { restaura(); throw e; });
 
 function rodaRegua() {
-  const r = spawnSync(process.execPath, [path.join(HERE, 'texel-check.mjs'), `--mapa=${MAPA}`], {
-    cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
+  const r = sonda([path.join(HERE, 'texel-check.mjs'), `--mapa=${MAPA}`], {
+    cwd: ROOT, maxBuffer: 64 * 1024 * 1024,
   });
+  /* Sem medir, `acusa()` devolveria conjunto vazio dos dois lados e TODO mutante
+     apareceria como SOBREVIVEU — diagnóstico de régua fraca para um defeito de
+     ambiente (issue #1133). */
+  if (!r.mediu) { restaura(); pula(r.causa, 'régua TEXEL'); }
   return { code: r.status, txt: (r.stdout || '') + (r.stderr || '') };
 }
 
