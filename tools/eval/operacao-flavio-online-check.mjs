@@ -1,7 +1,30 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { Game, THREE, mkEl } from './harness.mjs';
-import { makeNetcode } from '../../public/js/netgame.js';
-import { OperacaoFlavio } from '../../public/js/mode_operacao_flavio.js';
+
+const mutante = process.argv.find(arg => arg.startsWith('--mutante='))?.split('=')[1];
+async function moduloMutado(path, edits) {
+  const url = new URL(path, import.meta.url);
+  let source = readFileSync(url, 'utf8');
+  for (const [before, after] of edits) {
+    assert.equal(source.split(before).length - 1, 1, 'mutação tem alvo único');
+    source = source.replace(before, after);
+  }
+  source = source.replace(/from\s+(['"])([^'"]+)\1/g, (_, quote, spec) =>
+    'from '+JSON.stringify(spec.startsWith('.') ? new URL(spec, url).href : import.meta.resolve(spec)));
+  return import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+}
+const netEdits = mutante === 'sem-placar'
+  ? [['game._resultadoDaRodada(fim.title, fim.detail, false);', 'game._resultadoDaRodada(fim.title, fim.detail);']]
+  : mutante === 'sem-ordem'
+  ? [["if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes);", ''],
+    ['const primeiroSnap = this._tAt.length <= 1;', "if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes);\n    const primeiroSnap = this._tAt.length <= 1;"]]
+  : [];
+const { makeNetcode } = netEdits.length
+  ? await moduloMutado('../../public/js/netgame.js', netEdits) : await import('../../public/js/netgame.js');
+const { OperacaoFlavio } = mutante === 'sem-parar'
+  ? await moduloMutado('../../public/js/mode_operacao_flavio.js', [['for (const fonte of this.fontes) { try { fonte.stop(); }', 'for (const fonte of []) { try { fonte.stop(); }']])
+  : await import('../../public/js/mode_operacao_flavio.js');
 
 // Régua independente: roda HUD e transições reais, sem renderer ou rede humana.
 const el = Object.fromEntries(['hud','hpNum','hpFill','ammoWeaponArt','ammoMag','ammoRes','ammoBars','roundTime','roundsRow','scoreP','scoreB','prot','protCount','scope'].map(k => [k, mkEl('div')]));
@@ -25,7 +48,6 @@ game.objective.prepareRound();
 const net = { meta: {}, startPing() {}, stopPing() {} };
 const mp = makeNetcode(game, net);
 mp._netTick = 1;
-const mutante = process.argv.find(arg => arg.startsWith('--mutante='))?.split('=')[1];
 if (mutante === 'sem-hud') game.objective.atualizaHud = () => {};
 else if (mutante === 'sem-cinematica') game.objective.startCinematic = () => {};
 else if (mutante === 'sem-reset') {
@@ -37,7 +59,7 @@ else if (mutante === 'sem-reset') {
     this.cinematic = cinematic;
     this.game.world.objectivePlane.position.copy(plane);
   };
-} else if (mutante) throw new Error('Mutante desconhecido: '+mutante);
+} else if (mutante && !['sem-placar','sem-ordem','sem-parar'].includes(mutante)) throw new Error('Mutante desconhecido: '+mutante);
 if (mutante) console.log('Mutação aplicada: '+mutante);
 let failures = 0;
 const check = (name, fn) => {
@@ -58,6 +80,7 @@ try {
     mp.transicaoDeEstado('live', 'roundEnd', { E: 0, B: 0 });
     assert.equal(game.objective.cinematic?.winner, 'B');
     assert.equal(result.at(-1)?.[0], 'FLÁVIO EMBARCOU');
+    assert.equal(result.at(-1)?.[2], false, 'placar não cobre a cinemática do objetivo');
     assert.equal(game.vmScene.visible, false);
     Game.prototype._updateHud.call(game);
     assert.equal(game.objective.hud.textContent, 'EMBARQUE CONCLUÍDO', 'HUD normal não apaga a mensagem da cinemática');
@@ -81,6 +104,63 @@ try {
     mp.transicaoDeEstado('live', 'roundEnd', { E: 0, B: 0 });
     assert.equal(game.objective.cinematic, null);
     assert.equal(result.length, before);
+  });
+  check('morte do VIP no snapshot de roundEnd determina o título atual', () => {
+    game.objective.prepareRound();
+    game.state = 'live'; game.roundsWon = { E: 0, B: 0 };
+    mp._netTick = 20;
+    mp._netMap.set(7, vip);
+    net.snap = { tick: 21, t: 1, state: 'roundEnd', scoreE: 1, scoreB: 0,
+      timeLeft: 90, objective: { checkpoint: 0 },
+      ents: [{ id: 7, team: 'B', bot: true, name: 'Flávio Bolsonaro', alive: false,
+        hp: 0, x: 0, y: 0, z: 0, yaw: 0, k: 0, d: 1, weapon: 'knife' }] };
+    mp.applySnapshot();
+    assert.equal(vip.alive, false, 'pré-condição: snapshot aplicado');
+    assert.equal(result.at(-1)?.[0], 'FLÁVIO FOI MORTO');
+    const before = result.length;
+    mp.applySnapshot();
+    assert.equal(result.length, before, 'snapshot repetido não repete a cerimônia');
+  });
+  check('reset e nova cinemática encerram todas as fontes anteriores', () => {
+    const sources = [];
+    const ctx = { currentTime: 0,
+      createOscillator() {
+        const source = { frequency: {}, stops: [], connect() {}, start() {}, stop(at) { this.stops.push(at); } };
+        sources.push(source); return source;
+      },
+      createGain: () => ({ gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {} }),
+    };
+    const priorSfx = game.sfx;
+    game.sfx = { ensure() {}, ctx, master: {} };
+    try {
+      game.objective.startCinematic('B');
+      const first = [...sources];
+      assert.ok(first.length > 0, 'pré-condição: marcha agendada');
+      game.objective.prepareRound();
+      assert.ok(first.every(s => s.stops.some(at => at === undefined || at <= ctx.currentTime)), 'reset interrompe a marcha anterior');
+      game.objective.startCinematic('B');
+      const second = sources.slice(first.length);
+      game.objective.startCinematic('E');
+      assert.ok(second.every(s => s.stops.some(at => at === undefined || at <= ctx.currentTime)), 'nova cena interrompe as fontes substituídas');
+    } finally { game.objective.dispose(); game.sfx = priorSfx; }
+  });
+  check('primeiro applySnapshot em roundEnd permanece sem cerimônia', () => {
+    game.state = 'live'; mp._netTick = -1; game.objective.cinematic = null;
+    net.snap = { ...net.snap, tick: 31, t: 2, scoreE: 2 };
+    const before = result.length;
+    mp.applySnapshot();
+    assert.equal(result.length, before);
+    assert.equal(game.objective.cinematic, null);
+  });
+  check('countdown reseta antes de aplicar o estado autoritativo da rodada nova', () => {
+    net.snap = { ...net.snap, tick: 32, t: 2.05, state: 'countdown', timeLeft: 347,
+      objective: { checkpoint: 1, position: { x: 0, z: 4 }, escortCount: 2 },
+      ents: [{ ...net.snap.ents[0], hp: 42, alive: false }] };
+    mp.applySnapshot();
+    assert.equal(game.timeLeft, 347);
+    assert.equal(vip.hp, 42);
+    assert.equal(vip.alive, false);
+    assert.equal(game.objective.state.checkpoint, 1);
   });
 } finally { mp.dispose(); game.objective.dispose(); }
 if (failures) process.exitCode = 1;

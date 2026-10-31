@@ -39,3 +39,9 @@ SHA de Java pinado cf2348b4449a6a17b6532867a3210cdc509f989f; backend df6ab491eb4
 
 ### GLM-05 recebido e verificado
 Codec v7 agora preserva time J (bit16) e80 slots em encode/decode. Seis casos locais verdes, três mutações aplicadas/reprovadas. Hashes binários de frames E/B v2..v6 conferem exatamente com codec anterior8248164; formatos antigos seguem limite64 e rejeitam J. Régua preexistente netcodec:30ok,0falhas. Main consultada via GitHub ainda declaraCURRENT_VERSION6: não confundir extensõesv7 abertas em PR com produção. Falta consumo do NPC no cliente e negociação/backend completo; nenhuma escrita externa.
+
+### GLM-08 reservado: apresentação e áudio
+Régua independente ampliada antes do reparo: três RED confirmados (placar, morte no snapshot de roundEnd, marcha após reset). Lease exclusivo em netgame.js/mode_operacao_flavio.js; GLM propõe patch, Codex integra. Preservar countdown antes das entidades e primeiro snapshot sem cerimônia. GLM-07 mantém lease em main.js/mode-announcements.js. Base {"public/js/netgame.js": "a4d969e9729e863c786eeeeda3d1cb4bc14019988bec3453d54a3fc59a7ed596", "public/js/mode_operacao_flavio.js": "75354f8c0681bd0bcb8049a7621bf04ad5398758e5366ec3e6068ef45941a301"}
+
+### GLM-08 recebido e medido
+Base/hash/trechos conferidos. Oito casos locais verdes: placar oculto durante cena, morte atual do VIP no roundEnd, reset com relógio e entidades autoritativas preservados, primeiro snapshot sem cerimônia e corte da marcha no reset/reentrada. Seis mutantes aplicados/reprovados, incluindo regressão da ordem real do snapshot. Sem teste humano/MP pareado ainda. HQ checkpoint5237cb5 com185 testes verdes e execução/tokens por pacote no navegador.

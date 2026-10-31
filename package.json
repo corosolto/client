@@ -715,7 +715,7 @@
     "eval:tpbackpedal": "node tools/eval/tp-local-backpedal-check.mjs",
     "//eval:tpbackpedal": "Sentido de recuo local no controlador real, preservando autoridade e poses fora do recuo; mutantes no-back, wrong-sign e player.",
     "eval:operacao-reset": "node tools/eval/operacao-flavio-reset-check.mjs && ! node tools/eval/operacao-flavio-reset-check.mjs --mutante=sem-reset",
-    "eval:operacao-online": "node tools/eval/operacao-flavio-online-check.mjs && for m in sem-hud sem-cinematica sem-reset; do ! node tools/eval/operacao-flavio-online-check.mjs --mutante=$m || exit 1; done",
+    "eval:operacao-online": "node tools/eval/operacao-flavio-online-check.mjs && for m in sem-hud sem-cinematica sem-reset; do ! node tools/eval/operacao-flavio-online-check.mjs --mutante=$m || exit 1; done && ! node tools/eval/operacao-flavio-online-check.mjs --mutante=sem-placar && ! node tools/eval/operacao-flavio-online-check.mjs --mutante=sem-ordem && ! node tools/eval/operacao-flavio-online-check.mjs --mutante=sem-parar",
     "eval:objective-codec-contract": "node tools/eval/objective-codec-contract-check.mjs && for m in sem-time-j limite-64 j-legado; do ! node tools/eval/objective-codec-contract-check.mjs --mutante=$m || exit 1; done"
   },
   "repository": {

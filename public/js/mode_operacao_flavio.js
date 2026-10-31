@@ -237,8 +237,17 @@ export class OperacaoFlavio {
     return destinoProtecaoEscolta(bot, this.vip, this.game.bots, ameacas, bot._escortDestination || (bot._escortDestination = {}));
   }
 
+  /* Encerra a marcha da cinemática anterior — prepareRound/startCinematic trocavam de cena
+     deixando as fontes agendadas tocando (duas marchas dobram pela rodada seguinte). Chamar de
+     novo é inofensivo: lista vazia não faz nada e stop duplo é engolido. */
+  _encerrarFontes() {
+    for (const fonte of this.fontes) { try { fonte.stop(); } catch { /* já parada */ } }
+    this.fontes = [];
+  }
+
   prepareRound() {
     if (!this.vip) return;
+    this._encerrarFontes();
     this.state = criarEstadoEscolta(this.game.world.escortPath);
     const plano = this.game.world.objectivePlane;
     if (plano?.position) {
@@ -379,6 +388,7 @@ export class OperacaoFlavio {
   }
 
   startCinematic(winner) {
+    this._encerrarFontes();   // cena nova substitui a marcha anterior, não dobra com ela
     this.cinematic = { winner, startedAt: this.game.time };
     if (this.game.vmScene) this.game.vmScene.visible = false;
     this.fontes = marchaMilitar(this.game.sfx);
@@ -414,8 +424,7 @@ export class OperacaoFlavio {
   dispose() {
     if (this._key) window.removeEventListener('keydown', this._key);
     this.hud?.remove();
-    for (const fonte of this.fontes) { try { fonte.stop(); } catch {} }
-    this.fontes = [];
+    this._encerrarFontes();
   }
 }
 

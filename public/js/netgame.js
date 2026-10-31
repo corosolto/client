@@ -374,7 +374,15 @@ class Netcode {
       game.roundKills.E = snap.roundKillsE;
       game.roundKills.B = snap.roundKillsB;
     }
-    if (game.state !== estadoAntes) this.transicaoDeEstado(estadoAntes, game.state, placarAntes);
+    /* roundEnd é o único adiado para DEPOIS das entidades (fimDeRound): o título do objetivo
+       lê o alive autoritativo DESTE snapshot — antes do laço o VIP ainda carrega o estado da
+       rodada passada e morte+fim no mesmo pacote virava "A FUGA FOI INTERROMPIDA". As demais
+       transições seguem ANTES das entidades: o prepareRound do countdown reseta a apresentação
+       e o snapshot da rodada nova assenta as poses válidas por cima. `_netTick >= 0` é a MESMA
+       guarda do 1º snapshot (ver transicaoDeEstado) avaliada ANTES de subir o tick: entrar no
+       meio de um roundEnd continua sem cerimônia. */
+    const fimDeRound = game.state === 'roundEnd' && game.state !== estadoAntes && this._netTick >= 0;
+    if (game.state !== estadoAntes && !fimDeRound) this.transicaoDeEstado(estadoAntes, game.state, placarAntes);
     this.vagas = snap.livre || null;
 
     if (snap.tick === this._netTick) return;
@@ -488,6 +496,9 @@ class Netcode {
         this.morteRemota(ent, att);
       }
     }
+    /* Cerimônia do roundEnd com as entidades DESTE snapshot já aplicadas (fimDeRound acima);
+       snapshot repetido não chega aqui: o estado já era roundEnd e não há transição. */
+    if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes);
     if (this._evOn) this._drenar(snap, primeiroSnap);
     /* Arco de dano no MP: heurística do atirador mais próximo <600 ms — o snapshot não diz
        QUEM acertou; causa, medição e pendência de protocolo no BUG-90 (KNOWN-BUGS.md). */
@@ -570,7 +581,9 @@ class Netcode {
           const mine = winner === game.playerTeam;
           if (game.objective?.roundResult) {
             const fim = game.objective.roundResult(winner);
-            game._resultadoDaRodada(fim.title, fim.detail);
+            // false = sem placar: a cinemática do objetivo é o palco deste roundEnd (mesma
+            // regra do _endRound local). Sem objetivo, o placar comum segue como antes.
+            game._resultadoDaRodada(fim.title, fim.detail, false);
           } else {
             game._resultadoDaRodada(`${game._teamName(winner)} LEVARAM O ROUND`, mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche');
           }
