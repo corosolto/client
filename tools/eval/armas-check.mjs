@@ -156,6 +156,33 @@ try {
     writeFileSync(FOTO, Buffer.from(png, 'base64'));
     console.log(`  figura: ${FOTO}`);
   }
+  for (const mobile of [false, true]) {
+    const target = mobile ? await browser.newPage({ viewport: { width: 844, height: 390 },
+      isMobile: true, hasTouch: true }) : page;
+    if (mobile) {
+      await target.goto(`${BASE}/?debug=1&auto=E&map=piscina_treta&vmweapon=awp`,
+        { waitUntil: 'load', timeout: 180000 });
+      await target.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
+    }
+    const presence = await target.evaluate(() => {
+      const g = window.__game;
+      g.player.alive = true; g.camView = 'first';
+      const samples = [];
+      for (const weapon of ['awp', 'pistol', 'awp']) {
+        g.player.weapon = weapon;
+        g._scope(false, true); g._applyVmVisibility();
+        let meshes = 0;
+        g.vm.root.traverseVisible((node) => { if (node.isMesh && node.geometry?.attributes.position?.count) meshes++; });
+        samples.push({ weapon, meshes });
+      }
+      return { mobile: g.mobile, samples };
+    });
+    console.log(`  ARM7 arma visível no ${mobile ? 'mobile' : 'desktop'}: ${JSON.stringify(presence)}`);
+    if (presence.mobile !== mobile || presence.samples.some((sample) => !sample.meshes)) {
+      falhas.push(`ARM7 arma invisível no ${mobile ? 'mobile' : 'desktop'}`);
+    }
+    if (mobile) await target.close();
+  }
 } catch (e) {
   falhas.push(`ARM não deu para medir: ${String(e).split('\n')[0]}`);
 }

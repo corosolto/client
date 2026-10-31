@@ -23,7 +23,7 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
     }
     const loading = decide({ alive: true, firstPerson: true, authoredMode: true, authoredReady: false });
     samples += 1;
-    if (!loading.root || loading.authored || loading.fallback) errors.push(`${aspect} ciclo ${cycle}: lacuna pré-load`);
+    if (!loading.root || loading.authored || !loading.fallback) errors.push(`${aspect} ciclo ${cycle}: lacuna pré-load`);
     if (!accepts({ request: activeRequest, activeRequest, key: 'sniper#m400', activeKey: 'sniper#m400', utility: false })) {
       errors.push(`${aspect} ciclo ${cycle}: promise atual recusada`);
     }
@@ -56,8 +56,8 @@ check(baseline.errors.length === 0, 'M400 atravessa lifecycle 30x em 3:2 e 16:9'
 
 const stale = matrix({ accepts: ({ key, activeKey, utility }) => key === activeKey && !utility });
 check(stale.errors.length > 0, 'mutante que aceita Promise obsoleta reprova');
-const preload = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: true, scopeCovered: false } });
-check(preload.errors.length > 0, 'mutante que exibe fallback pré-load reprova');
+const preload = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: false, scopeCovered: false } });
+check(preload.errors.length > 0, 'mutante que oculta fallback pré-load reprova');
 for (const event of ['equip-end', 'reload-empty-end', 'inspect-end', 'ads-out']) {
   const hidden = matrix({ mutateEvent: (current, state) => current === event
     ? { ...state, root: false, authored: false, fallback: false } : state });
