@@ -26,3 +26,8 @@ Próximo: adaptar dependências Node com shim local ao checkout, rodar gate de n
 ### 2026-10-31T15:09:42.014497+00:00 — sincronização hotfix1183
 
 PR1184 HEAD52a2645d0 CIverde anterior, sem revisãoEstraga atual. Mainintegrouec7cec33405 (#1183 arma invisível), GitHub1184 agoraDIRTY. Árvore limpa confirmada antes desta nota. Próximo passo mergeorigin/main na branchprópria, preservarhotfix/corrigirconflitosdewiring, revalidarnormais+portões e pushnormal comnovo pedidoEstraga. Não é aceitemerge/release. Missão10h permanece na lane de implementação.
+
+
+### 2026-10-31T15:11:22.574639+00:00 — hotfixpreservado e syncvalidada
+
+Críticoindependente conferiu31/31arquivoshotfix idênticos ao MERGE_HEADec7cec33405 e12/12normais/helper/gates/refidênticos52a2645d0. Packagepreserva prefixosfast/deploydomain+vm-presence1×, apenas3scriptsnormais+2appendsnovos. Docsgeneratorsemconflitosrestantes; focal5/5GREEN30.8s (normalquality/equivalence/vmpresence/comentario/docs). Mergeprópriobranchpronto para checkpoint e pushnormal, EstragaSHAatualaindapendente.
