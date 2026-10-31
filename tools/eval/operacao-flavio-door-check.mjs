@@ -21,6 +21,8 @@ if (mutation) {
   adj[atalho[0]].push(atalho[1]); adj[atalho[1]].push(atalho[0]);
   const nearestWaypoint = (x, z) => {`],
   };
+  edits['atalho-inverso'] = [edits['atalho-parede'][0], edits['atalho-parede'][1].replace(
+    'adj[atalho[0]].push(atalho[1]); adj[atalho[1]].push(atalho[0]);', 'adj[Math.max(...atalho)].push(Math.min(...atalho));')];
   assert(Object.hasOwn(edits, mutation), 'mutante conhecido');
   let source = readFileSync(mapUrl, 'utf8'); const [before, after] = edits[mutation];
   assert.equal(source.split(before).length, 2, 'mutação única no mapa real'); source = source.replace(before, after);
@@ -111,7 +113,7 @@ try {
     return false;
   };
   const edges = [];
-  for (let i = 0; i < nodes.length; i++) for (const j of adj[i]) if (i < j) edges.push([i, j]);
+  for (let i = 0; i < nodes.length; i++) for (const j of adj[i]) edges.push([i, j]);
   check('grafo: nós não começam penetrados', () => assert(nodes.every(node => validPosition({ ...node, y: 0 })), 'todo nó tem posição física válida'));
   check('fachada: arestas respeitam paredes', () => {
     for (const [i, j] of edges) {

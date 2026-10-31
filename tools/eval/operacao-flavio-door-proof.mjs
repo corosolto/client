@@ -27,6 +27,7 @@ if (process.argv.includes('--autoteste')) {
     ['meia-porta', ['--mutante=meia-porta'], 'porta 0: grafo'],
     ['no-penetrado', ['--mutante=no-penetrado'], 'grafo: nós não começam penetrados'],
     ['atalho-parede', ['--mutante=atalho-parede'], 'fachada: arestas respeitam paredes'],
+    ['atalho-inverso', ['--mutante=atalho-inverso'], 'fachada: arestas respeitam paredes'],
     ['passo-duplo', ['--prova-salto'], 'porta 0: física'],
   ]) {
     const result = run(args);
