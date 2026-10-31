@@ -929,6 +929,7 @@ class CharController {
   constructor(mixer, actions, group, headBone, head, charId, model, bodyId = charId) {
     this.mixer = mixer; this.actions = actions;
     this.group = group; this.headBone = headBone; this.head = head;
+    this._yawCorr = 0; this._yawUndo = new THREE.Quaternion(); this._yawApplied = false;
     /* Base do Y vem do enquadramento da bind (`model.position.y = -bbox.min.y * s`, acima).
        A correção do clipe é somada A ELA, nunca substitui — senão o personagem perde o
        alinhamento de bind que já estava certo em todos os 44. */
@@ -950,9 +951,17 @@ class CharController {
     this._to('idle');
   }
 
+  _undoHeadYaw() {
+    if (this.headBone && this._yawApplied) {
+      this.headBone.quaternion.premultiply(this._yawUndo);
+      this._yawApplied = false;
+    }
+  }
+
   _to(name, once = false, restart = true) {
     const a = this.actions[name];
     if (!a || this.cur === a) return;
+    this._undoHeadYaw();
     if (a !== this.actions.jump) this.jumping = false;
     if (restart) {
       a.reset();
@@ -972,6 +981,7 @@ class CharController {
      de 0,18 s — cortar no quadro dá solavanco e o boneco "pula" de pose. */
   emote(id) {
     if (this.dead || !id) return false;
+    this._undoHeadYaw();
     this._emoteId = id; this._emoteT = 0; this.emotando = true;
     return true;
   }
@@ -1028,6 +1038,7 @@ class CharController {
 
   shoot() {
     if (this.dead) return;
+    this._undoHeadYaw();
     // Agachado não troca de clipe (a pose já mira), mas ganha recuo aditivo: antes o
     // bot agachado atirava completamente imóvel. Ver docs/ANIM-3P.md.
     if (this.crouch || !this.actions.shoot) { this._fireDur = 0.12; this._fireT = 0; return; }
@@ -1065,6 +1076,7 @@ class CharController {
   // character does everything on top of the fallen pose (the "walking while falling
   // backward" bug). Then start idle clean.
   revive() {
+    this._undoHeadYaw(); this._yawCorr = 0;
     this.dead = false; this.shooting = false; this.jumping = false; this._ar = false; this._mantleF = null;
     this.mixer.stopAllAction();
     this.cur = null;
@@ -1077,6 +1089,7 @@ class CharController {
   // so the feet plant instead of ice-skating (root-motion-free clips have no built-in
   // stride, so we drive the cycle rate from how fast the body is really moving).
   update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
+    this._undoHeadYaw();
     if (!this.dead) {
       if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
       if (this._mantleF !== null && this.actions.jump) {
@@ -1148,24 +1161,6 @@ class CharController {
       this._aimCorr = (this._aimCorr || 0) + (corr - (this._aimCorr || 0)) * Math.min(1, dt * 6);
       if (Math.abs(this._aimCorr) > 1e-4) {
         _headUpQ.setFromAxisAngle(_right, -this._aimCorr);
-        this.headBone.parent.getWorldQuaternion(_pq);
-        this.headBone.quaternion.copy(_pq.invert().multiply(_headUpQ).multiply(_wq));
-        this.headBone.updateWorldMatrix(false, true);
-      }
-    }
-    /* Recentro de YAW da cabeça em porte parado (dono, 31/10); malha fechada igual ao pitch. Hist: docs/ANIM-3P.md. */
-    if (this.headBone && !this.dead && this.lod < 2
-        && /^(idle|idle1h|crouch)$/.test(this.curName || '')) {
-      this.group.getWorldQuaternion(_gq);
-      _v.set(0, 0, 1).applyQuaternion(_gq);            // frente do corpo em mundo
-      const fx = _v.x, fz = _v.z;
-      this.headBone.getWorldQuaternion(_wq);
-      _v.set(0, 0, 1).applyQuaternion(_wq);            // olhar da cabeça em mundo
-      const curYaw = Math.atan2(fx * _v.z - fz * _v.x, fx * _v.x + fz * _v.z);
-      const corr = Math.max(-AIM_CORR_CLAMP, Math.min(AIM_CORR_CLAMP, curYaw * 0.8));
-      this._yawCorr = (this._yawCorr || 0) + (corr - (this._yawCorr || 0)) * Math.min(1, dt * 6);
-      if (Math.abs(this._yawCorr) > 1e-4) {
-        _headUpQ.setFromAxisAngle(_upY, this._yawCorr);
         this.headBone.parent.getWorldQuaternion(_pq);
         this.headBone.quaternion.copy(_pq.invert().multiply(_headUpQ).multiply(_wq));
         this.headBone.updateWorldMatrix(false, true);
@@ -1430,6 +1425,26 @@ class CharController {
         _aplicaMorte(bone, _qLean.setFromAxisAngle(_axisF, this._deathK * 0.22).clone());
       }
     }
+    // Delta de yaw sai antes do mixer e entra uma vez sobre a pose final (docs/visual-consistency/HEAD-YAW.md).
+    if (this.headBone && !this.dead && !this.emotando && this.lod < 2
+        && /^(idle|idle1h|crouch)$/.test(this.curName || '')) {
+      this.group.getWorldQuaternion(_gq);
+      _v.set(0, 0, 1).applyQuaternion(_gq);
+      const fx = _v.x, fz = _v.z;
+      this.headBone.getWorldQuaternion(_wq);
+      _v.set(0, 0, 1).applyQuaternion(_wq);
+      const curYaw = Math.atan2(fx * _v.z - fz * _v.x, fx * _v.x + fz * _v.z);
+      const corr = Math.max(-AIM_CORR_CLAMP, Math.min(AIM_CORR_CLAMP, curYaw * 0.8));
+      this._yawCorr = (this._yawCorr || 0) + (corr - (this._yawCorr || 0)) * Math.min(1, dt * 6);
+      if (Math.abs(this._yawCorr) > 1e-4) {
+        _headUpQ.setFromAxisAngle(_upY, this._yawCorr);
+        this.headBone.parent.getWorldQuaternion(_pq);
+        this._yawUndo.copy(_pq).invert().multiply(_headUpQ).multiply(_pq);
+        this.headBone.quaternion.premultiply(this._yawUndo);
+        this._yawUndo.invert(); this._yawApplied = true;
+        this.headBone.updateWorldMatrix(false, true);
+      }
+    } else this._yawCorr = 0;
     /* Hitbox da cabeça sincronizada por ÚLTIMO: overlays de tronco/emote/recarga/morte
        mexem em ancestrais do Head DEPOIS do ponto onde ela era copiada (crítico 31/10, docs/visual-consistency/TP-WORLD.md). */
     if (this.headBone) {
