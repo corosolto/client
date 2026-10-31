@@ -311,3 +311,10 @@ jogo real. Revisar UV/acabamento, repetir física e bake dos mapas alterados e
 recapturar os quatro pontos inválidos. Fechar checkpoints por componente, revisar
 diff inteiro e integrar main antes de abrir PRs empilhados. Continuar personagens,
 skins, mapas restantes e acompanhamento de merges/release durante a janela completa.
+
+### Conferência Root 10:22 UTC
+
+- Novas fotos reais v2 Campo/Ferro concluídas12/12, oficina1 e actual mapId conferidos. Sheets map-finish-real-v2-{campomorro,ferro_velho}-sheet.jpg. V1Campo descartado (fallback Praça). Ferro tijolo melhor em escala/relevo; Campo limpo porém solo perdeu vermelho, revisão visual independente em curso; sem aceite final.
+- Normais builder deadline: lease devolvida,20/20 gate repetido Root GREEN em root-normal-tool-check.log. Nenhum GLB de produto alterado. Tool/doc/régua inteiros em revisão GLM readonly; repetir A/B nos outputs e movimento antes de aplicar.
+- SB7 builder devolveu lease,10/10 gate Root GREEN, wire novo eval:sondafilho em fast/deploy no WT isolado. Revisão GLM do PR inteiro+fix em curso.
+- Revisões GLM readonly14min para acabamento, normais e SB7 iniciadas10:20; writers AK/posters/curadoria ainda ativos. Crítico achou UV repetida e textura sem pixels além do winding; relatório R2 disponível à curadoria.
