@@ -858,3 +858,54 @@ resultado /tmp/jav-mapid-21.log. Contratos amplos e map-check continuam em curso
 logs temporários citados acima. Próximo: confirmar contratos/pre-push, publicar
 preview de teste autorizado (sem alegar aprovação visual/Mint/MP real), recuperar
 Ego somente com resposta ao pedido pendente para QA visual e pilotos Mint.
+
+Correções de vias/silos e cards recuperáveis no commit df967a57c. Crítico asset
+review_asset_loading aprovou o retrato no cartão da captura desktop3:2 existente;
+não cobre móvel nem screenshots posteriores. Contratos amplos: sintaxe, mapas
+sob demanda, contrato, rotação, mapas pausados e comentários verdes. Mapid continua
+vermelho por12 aliases legados em arquivos fora desta entrega; M2/M3 atuais verdes
+com os21 mapas. Não tratar esse vermelho como regressão dos novos IDs.
+Primeiro push foi interrompido somente na árvore de processos própria: o boot
+check padrão usa produção, intercepta main local e mistura imports novos com
+maps.js antigo (produção não exporta ehMapaJavaporcos, conferido por HTTP).
+Reiniciado sem bypass com BASE=http://127.0.0.1:4333 para testar o worktree certo.
+Push atual: /tmp/jav-push-local-20261031.log, sessão80731. Não afirmar push/READY
+antes de retorno. Map-check geral Rural/Vila segue no processo próprio98585,
+sessão48295 e logs /tmp/jav-map-{rural,vila}.log; ainda sem resultado final.
+Boot-orcamento no pre-push local passou(99.6s); sintaxe91.1s também verde.
+Processo do hook atual17132; log interno /tmp/prepush-17132.log (temporário).
+Servidor4333 continua vivo no PID3152; curl do sistema não decodifica Brotli,
+portanto erro61 do curl com --compressed não significa servidor indisponível.
+
+Nova regressão capturada antes da publicação: MAPCHECK Rural terminou com12
+pontos dentro de degrau-interior, pior1.375m. Relatório rejeitado salvo em
+/tmp/jav-map-rural-result.json; não substituir o relatório consolidado por uma
+execução de mapa único. Vila continua medindo o estado anterior ao conserto.
+Baseline da régua dirigida /tmp/jav-escada-baseline.log reproduz: consulta de
+chão sem yRef devolvia térreo no volume da escada. Conserto: degrau sólido até
+solo e superfície de escada independente de yRef, mantendo loft/telhado por
+camada. tryAxis bloqueia acesso lateral alto em vez de teleportar. Nova cláusula
+mede24degraus/casa, raio de corpo e tentativa lateral. Cidade6/6 verde; Rural/Vila
+em execução na sessão25014; mutante escada-vazada e raycast sessão50300.
+Revisão crítica independente solicitada. Push80731 também interrompido (somente
+árvore própria17094) para incluir este fix e regenerar docs/ARMAS-MATRIZ.md:
+weapon-matrix reprovou apenas por referência de linha desatualizada do game.js.
+Não há push ativo nosso agora. Retomar: concluir testes dirigidos/criticidade,
+regenerar matriz/docs/arch/assetrev, commit e novo push com BASE4333 e hooks ativos.
+Não repetir push sem BASE local nem alegar mapas publicados enquanto falha local.
+Probe independente de10telhados da Vila/30raios:0falhas, normais superiores
+positivas, diferença máxima físico/visual4.77e-8m. Sem aprovação visual dos mapas.
+
+Revisão seguinte identificou que o raio da cápsula ainda atravessava lateral
+0.375m e que a régua usava yaw inicial errado. Corrigidos: yaw0/reset e exigência
+de aproximação+folga0.38m; colisores somente nas faces laterais/final da escada,
+correspondentes ao degrau sólido, sem travar a subida. Raio nos24degraus revelou
+muro de1.8m cruzando casa OS-oo; vizinha também sobrepunha1.325m ao interior.
+Reorganizados só os2blocos abertos: um sobrado central com fachada livre, sem
+props de quintal no interior; sorteios de casas omitidas/muro/quintal preservados.
+Cidade/Rural/Vila7/7 verdes nos logs /tmp/jav-interiores-replanejados.log,
+/tmp/jav-{rural,vila}-laterais.log. Crítico independente confirmou e não achou
+novo bloqueador funcional. Suite baseline+7mutantes em curso sessão88214;
+mutante escada-sem-lateral remove somente faces físicas mantendo o piso. Nova
+checagem3mapas+intencao/refugios/lojas sessão12670. Matriz de armas regenerada:
+apenas referências game.js4053→4054 e4107→4108, sem mudança de dano/arsenal.

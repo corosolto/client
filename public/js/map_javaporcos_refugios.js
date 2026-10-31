@@ -40,10 +40,10 @@ export function construirRefugios(kit, campo) {
 
 export function pisosElevados(colliders, root, materiais) {
   const cells = new Map(), coberturas = [...(root.userData.coberturas || [])];
-  const degraus=(root.userData.interiores||[]).flatMap(c=>[...c.escada,...c.pisos].map(s=>{
+  const degraus=(root.userData.interiores||[]).flatMap(c=>[...c.escada.map(s=>({...s,superficieEscada:true})),...c.pisos].map(s=>{
     const cos=Math.cos(c.ry),sin=Math.sin(c.ry),{hx,hz}=s;
     const cx=c.x+s.x*cos+s.z*sin,cz=c.z-s.x*sin+s.z*cos,ax=Math.abs(hx*cos)+Math.abs(hz*sin),az=Math.abs(hx*sin)+Math.abs(hz*cos);
-    return {minX:cx-ax,maxX:cx+ax,minZ:cz-az,maxZ:cz+az,minY:c.y+s.y-.125,maxY:c.y+s.y,ry:c.ry,cx,cz,hx,hz,cos,sin};
+    return {minX:cx-ax,maxX:cx+ax,minZ:cz-az,maxZ:cz+az,minY:c.y+s.y-.125,maxY:c.y+s.y,ry:c.ry,cx,cz,hx,hz,cos,sin,superficieEscada:s.superficieEscada};
   }));
   const key = (x,z) => `${Math.floor(x/8)},${Math.floor(z/8)}`;
   for (const c of [...colliders,...degraus]) {
@@ -57,10 +57,9 @@ export function pisosElevados(colliders, root, materiais) {
     if (p?.radialSegments===4 && materiais.includes(m.material)) coberturas.push({x:m.position.x,z:m.position.z,y:m.position.y-p.height/2,h:p.height,r:p.radius,cos:Math.cos(m.rotation.y),sin:Math.sin(m.rotation.y)});
   });
   return (x,z,yRef,solo) => {
-    if (!Number.isFinite(yRef)) return solo;
     let y=solo;
     for(const c of cells.get(key(x,z)) || []) {
-      if(yRef<c.maxY-.22 || c.maxY<=y || x<c.minX || x>c.maxX || z<c.minZ || z>c.maxZ) continue;
+      if((!c.superficieEscada&&(!Number.isFinite(yRef)||yRef<c.maxY-.22)) || c.maxY<=y || x<c.minX || x>c.maxX || z<c.minZ || z>c.maxZ) continue;
       const dx=x-c.cx,dz=z-c.cz;
       if(c.ry && (Math.abs(dx*c.cos-dz*c.sin)>c.hx || Math.abs(dx*c.sin+dz*c.cos)>c.hz)) continue;
       y=c.maxY;

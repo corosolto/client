@@ -11,9 +11,15 @@ export function construirInterior(kit,{x,z,y,w,d,ry,parede}) {
   for(const s of [-1,1])box(s*w/2,0,esp,d,0,6);
   box(0,0,w-.2,d-.2,0,.06,MAT.ceramica,'piso-interior');
   const sx=-w/2+1,largura=1.4,run=d-1.6,passo=run/24;
+  const faceEscada=(px,pz,hx,hz,topo)=>{
+    kit.colisor(x+px*cs+pz*sn,z-px*sn+pz*cs,hx,hz,y,y+topo,ry);
+    kit.colliders.at(-1).escadaLateral=true;
+  };
   for(let i=0;i<24;i++){
     const sz=d/2-.4-(i+.5)*passo,topo=(i+1)*3/24;
-    box(sx,sz,largura,passo,topo-.125,.125,MAT.calcada,'degrau-interior',false);
+    box(sx,sz,largura,passo,0,topo,MAT.calcada,'degrau-interior',false);
+    for(const lado of [-1,1])faceEscada(sx+lado*(largura/2-.02),sz,.02,passo/2,topo);
+    if(i===23)faceEscada(sx,sz-passo/2+.02,largura/2,.02,topo);
     escada.push({x:sx,z:sz,y:topo,hx:largura/2,hz:passo/2});
   }
   const limite=sx+largura/2;

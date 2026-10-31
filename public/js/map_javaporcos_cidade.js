@@ -309,7 +309,11 @@ function quarteiraoCasas(kit, campo, rnd, b, sobrados) {
   const cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2;
   let n = 0;
   const primeiraAberta=['OS-oo','LS-oo'].includes(b.id);
-  const construirCasa=(...args)=>casa(...args,null,primeiraAberta&&n===0);
+  const construirCasa=(...args)=>{
+    if(!primeiraAberta)return casa(...args,null,false);
+    if(n===0){args.splice(3,6,cx,cz,largura-1.2,fundo-1.2,0,6);return casa(...args,null,true);}
+    rnd();kit.ex.rr();kit.ex.rr();return 0;
+  };
   const giro = () => (rnd() < 0.22 ? (rnd() - 0.5) * 0.49 : 0);
   if (largura >= 11 && fundo >= 11) {
     n += construirCasa(kit, campo, rnd, b.x0 + 3.5, b.z0 + 4.2, 6.4, 7.6, giro(), sobrados ? 6 : 3, (rnd() * 4) | 0);
@@ -322,14 +326,14 @@ function quarteiraoCasas(kit, campo, rnd, b, sobrados) {
     n += construirCasa(kit, campo, rnd, cx, cz - fundo / 4, largura - 2.6, 5.4, giro() + Math.PI / 2, sobrados ? 6 : 3, (rnd() * 4) | 0);
     n += construirCasa(kit, campo, rnd, cx, cz + fundo / 4, largura - 3.2, 5.0, giro() + Math.PI / 2, 3, (rnd() * 4) | 0);
   }
-  muroDeFundo(kit, campo, rnd, b);
-  quintal(kit, campo, rnd, b);
+  muroDeFundo(kit, campo, rnd, b, '', primeiraAberta);
+  quintal(kit, campo, rnd, b, primeiraAberta);
   return n;
 }
 
 /* Muro de fundo e de divisa: 1,80 m, 2,20 m na esquina. É o que transforma quarteirão em
    labirinto para a horda. `pular` guarda a face da fachada: muro ali sela a porta da loja. */
-function muroDeFundo(kit, campo, rnd, b, pular = '') {
+function muroDeFundo(kit, campo, rnd, b, pular = '', abrirFrente=false) {
   const { MAT } = kit;
   const lados = [
     ['z0', b.x0, b.x1, b.z0, b.z0, 'z'], ['z1', b.x0, b.x1, b.z1, b.z1, 'z'],
@@ -343,7 +347,8 @@ function muroDeFundo(kit, campo, rnd, b, pular = '') {
     const y = campo.amostra((x0 + x1) / 2, (z0 + z1) / 2);
     if (eixo === 'z') {
       const comp = (x1 - x0) * (0.55 + rnd() * 0.4);
-      kit.caixa(comp, alt, esp, MAT.bloco, (x0 + x1) / 2 + (rnd() - 0.5) * 1.2, y, z0, {});
+      const px=(x0+x1)/2+(rnd()-.5)*1.2;
+      if(!abrirFrente||nome!=='z1')kit.caixa(comp,alt,esp,MAT.bloco,px,y,z0,{});
     } else {
       const comp = (z1 - z0) * (0.55 + rnd() * 0.4);
       kit.caixa(esp, alt, comp, MAT.bloco, x0, y, (z0 + z1) / 2 + (rnd() - 0.5) * 1.2, {});
@@ -351,16 +356,16 @@ function muroDeFundo(kit, campo, rnd, b, pular = '') {
   }
 }
 
-function quintal(kit, campo, rnd, b) {
+function quintal(kit, campo, rnd, b, livre=false) {
   const { MAT, caixa, piso } = kit;
   const cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2;
   piso(b.x1 - b.x0 - 0.4, b.z1 - b.z0 - 0.4, MAT.terraQuintal, cx, cz, 0.006, 'chao-quintal');
   if (rnd() < 0.55) {
     const y = campo.amostra(cx, cz);
-    kit.caixa(1.1, 1.4, 1.1, MAT.caixaDagua, b.x0 + 1.4, y + 2.9, b.z1 - 1.5, { collide: false });
-    kit.caixa(0.12, 2.9, 0.12, MAT.metal, b.x0 + 1.4, y, b.z1 - 1.5, { collide: false, cast: false });
+    if(!livre)kit.caixa(1.1, 1.4, 1.1, MAT.caixaDagua, b.x0 + 1.4, y + 2.9, b.z1 - 1.5, { collide: false });
+    if(!livre)kit.caixa(0.12, 2.9, 0.12, MAT.metal, b.x0 + 1.4, y, b.z1 - 1.5, { collide: false, cast: false });
   }
-  if (rnd() < 0.5) kit.caixa(1.8, 0.9, 1.2, MAT.caixote, cx + (rnd() - 0.5) * 3, campo.amostra(cx, cz), cz + (rnd() - 0.5) * 3, { ry: rnd() * 3 });
+  if(rnd()<.5){const px=cx+(rnd()-.5)*3,pz=cz+(rnd()-.5)*3,ry=rnd()*3;if(!livre)kit.caixa(1.8,.9,1.2,MAT.caixote,px,campo.amostra(cx,cz),pz,{ry});}
 }
 
 /* ── LOJA COM INTERIOR ─────────────────────────────────────────────────────────────── */
