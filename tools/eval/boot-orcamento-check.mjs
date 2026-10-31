@@ -84,7 +84,7 @@ if (!MUTANTES.has(MUTANTE)) {
 const TETO_BYTES = 8_200_000;
 const TETO_REQS = 340;
 
-const JS_LOCAIS = ['js/main.js', 'js/textures.js', 'js/javaporcos_intro.js', 'js/javaporcos_opcoes.js', 'js/javaporcos_apresentacao.js'];
+const JS_LOCAIS = ['js/main.js', 'js/client-id.js', 'js/textures.js', 'js/javaporcos_intro.js', 'js/javaporcos_opcoes.js', 'js/javaporcos_apresentacao.js'];
 /* O pool ansioso é a REFERÊNCIA do ORC2, e também o mutante. A mesma transformação
    serve aos dois papéis de propósito: se ela parar de casar com o código, o portão
    morre barulhento (`throw`) em vez de passar em silêncio. */
@@ -112,12 +112,15 @@ const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
+/* SwiftShader forçado no M4 consumia o mesmo CPU da aplicação: 88–150 s até o portão
+   e quedas no failsafe. Com o backend padrão do Chrome: 1,6–1,8 s. No runner Linux
+   sem GPU, mantém o software GL explícito. */
+const softwareGLArgs = process.platform === 'darwin'
+  ? []
+  : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  args: [
-    ...(process.platform === 'darwin' ? [] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']),
-    '--headless=new', '--mute-audio', '--disable-dev-shm-usage',
-  ],
+  args: [...softwareGLArgs, '--headless=new', '--mute-audio', '--disable-dev-shm-usage'],
 });
 
 /* `refPoolAnsioso` liga a referência do ORC2; o mutante `cartaz-ansioso` liga a MESMA
@@ -139,7 +142,12 @@ async function mede({ refPoolAnsioso = false } = {}) {
       corpo = instrumentaCausaSplash(corpo);
     }
     await context.route(`**/${rel}*`, async (rota) => {
-      await rota.fulfill({ status: 200, contentType: 'text/javascript', body: corpo });
+      if (rel === 'js/client-id.js') {
+        await rota.fulfill({ status: 200, contentType: 'text/javascript', body: corpo });
+        return;
+      }
+      const r = await rota.fetch();
+      await rota.fulfill({ response: r, body: corpo });
     });
   }
 
@@ -173,13 +181,26 @@ async function mede({ refPoolAnsioso = false } = {}) {
   });
   const portao = await page.waitForFunction(() => window.__csPortao, null, { timeout: 180000, polling: 100 })
     .then((h) => h.jsonValue()).catch(() => null);
-  if (portao === null) throw new Error('a splash não liberou a entrada em 180 s');
+  if (portao === null) {
+    const estado = await page.evaluate(() => {
+      const splash = document.getElementById('splash-enter');
+      return {
+        readyState: document.readyState,
+        splash: splash?.className || null,
+        href: location.href,
+      };
+    }).catch(() => null);
+    const pendentes = [...reqs.values()]
+      .filter((r) => r.fim === null)
+      .slice(-8)
+      .map((r) => r.url);
+    throw new Error(`a splash não liberou a entrada em 180 s; estado=${JSON.stringify(estado)}; pendentes=${pendentes.join(', ') || 'nenhum'}; erros=${erros.join(' | ') || 'nenhum'}`);
+  }
   const causa = await page.evaluate(() => window.__csSplashCause || null);
   /* O instante absoluto varia com CPU, GPU e CDP. A própria função de produção sabe
      se o primeiro desbloqueio veio dos assets ou do timer, então a régua carimba essa
-     causa na cópia de main.js servida só neste navegador. */
-  if (causa !== 'assets') throw new Error(`a splash liberou em ${Math.round(portao)} ms por ${causa || 'causa desconhecida'}, não pelo caminho dos assets`);
-
+     causa na cópia de main.js servida só neste navegador. A decisão fica no candidato:
+     a referência deliberadamente pesada pode cair no failsafe sem invalidar a contagem. */
   const ate = [...reqs.values()].filter((r) => r.fim !== null && r.fim <= portao + 50);
   const patchado = (u) => JS_LOCAIS.some((p) => u.includes(p));
   const resultado = {
@@ -202,6 +223,7 @@ try {
   const ref = await mede({ refPoolAnsioso: true });
 
   const ok = {
+    READY: cand.causa === 'assets',
     ORC1: cand.bytes <= TETO_BYTES && cand.reqs <= TETO_REQS,
     ORC2: cand.cartazes < ref.cartazes,
     /* Sem props no lobby o ORC3 não tem o que ordenar; sem fauna ele passaria de graça.
@@ -212,6 +234,7 @@ try {
 
   console.log(`base      ${BASE}${MUTANTE ? `  (mutante=${MUTANTE})` : ''}`);
   console.log(`portão    splash liberou em ${Math.round(cand.portao)} ms por ${cand.causa}`);
+  console.log(`READY     caminho dos assets  ${ok.READY ? 'ok' : 'FALHA'}`);
   console.log(`ORC1      ${(cand.bytes / 1048576).toFixed(2)} MB em ${cand.reqs} req  (teto ${(TETO_BYTES / 1048576).toFixed(2)} MB / ${TETO_REQS} req)  ${ok.ORC1 ? 'ok' : 'FALHA'}`);
   console.log(`ORC2      ${cand.cartazes} cartaz(es) sob demanda vs ${ref.cartazes} com o pool ansioso  ${ok.ORC2 ? 'ok' : 'FALHA'}`);
   console.log(`ORC3      último prop em ${cand.ultimoProp} ms, 1ª fauna pedida em ${Number.isFinite(cand.primeiraFauna) ? cand.primeiraFauna : '—'} ms  ${ok.ORC3 ? 'ok' : 'FALHA'}`);
