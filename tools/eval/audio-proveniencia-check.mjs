@@ -69,6 +69,7 @@
    Uso: node tools/eval/audio-proveniencia-check.mjs [--mutante=…]
    ============================================================================ */
 import { execFileSync } from 'node:child_process';
+import { causaNaoMedivel, pula } from './sonda-filho.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -793,6 +794,7 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
    e a mesma pergunta, só que sobre o pacote instalado. */
 {
   const tmp = mkdtempSync(join(tmpdir(), 'csbr-prv13-'));
+  let infra13 = '';
   try {
     const PUB = join(tmp, 'public');
     mkdirSync(join(PUB, 'audio', 'piloto'), { recursive: true });
@@ -830,7 +832,13 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
           stdio: 'pipe',
         });
         return { saida: 0, texto: out };
-      } catch (e) { return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || '') }; }
+      } catch (e) {
+        /* assets-check importa three; sem ele o catch abaixo transformaria um
+           ambiente quebrado em veredito de procedência (issue #1133). */
+        const causa = causaNaoMedivel(e);
+        if (causa) { infra13 = causa; return { saida: null, texto: causa }; }
+        return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || '') };
+      }
     };
 
     const a = rodar('audio/piloto/nao-catalogado.wav');
@@ -844,18 +852,25 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
         + ' (`audio/game/awp-cs-1-6.mp3`). O bloqueio é por NOME — sem hash não há bloqueio por conteúdo.');
     }
     /* IRMÃ: o catalogado, aprovado e de fonte livre TEM que passar. Sem ela, um
-       `assets-check` que recusasse tudo passaria em (a) e (c) sem proteger nada. */
+       `assets-check` que recusasse tudo passaria em (a) e (c) sem proteger nada.
+       Medição é por resultado: irmã medida que reprova é vermelho mesmo se outro
+       filho do grupo morreu por infra (issue #1133). */
     const b = rodar('audio/piloto/aprovado.wav');
-    if (b.saida !== 0) {
+    if (b.saida !== 0 && b.saida !== null) {
       erros.push(`PRV13b IRMÃ: o \`assets-check\` REPROVOU o derivado catalogado, aprovado e de fonte`
         + ` \`livre\` (saiu ${b.saida}: ${b.texto.trim().split('\n').pop()}).`
         + ' Régua que recusa tudo não protege nada.');
     }
-    if (a.saida !== 0 && c.saida !== 0 && b.saida === 0) {
+    if (a.saida !== 0 && a.saida !== null && c.saida !== 0 && c.saida !== null && b.saida === 0) {
       notas.push('PRV13 ok: o `assets-check` real reprova o não catalogado e o legado, e aceita o'
         + ' catalogado/aprovado/livre — prova automatizada, não mais manual.');
     }
   } finally { rmSync(tmp, { recursive: true, force: true }); }
+  /* Vermelho já medido em PRV1..PRV12 vence SKIP; sem ele, 78 após o finally. */
+  if (infra13) {
+    if (!erros.length) pula(infra13, 'PRV13');
+    console.error(`\x1b[33m⊘ PRV13 não medido: ${infra13} — vermelho anterior preservado\x1b[0m`);
+  }
 }
 
 /* ── PRV14: raízes LOCAIS também obedecem à licença ────────────────────────
@@ -869,6 +884,7 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
    falhar e a irmã CC0 precisa passar; recusar tudo não satisfaz a régua. */
 {
   const tmp = mkdtempSync(join(tmpdir(), 'csbr-prv14-'));
+  let infra14 = '';
   try {
     const PUB = join(tmp, 'public');
     const AUD = join(PUB, 'audio');
@@ -894,7 +910,6 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
       },
       derivados: [],
     }));
-
     const rodarBuilder = (caminho, tag) => {
       writeFileSync(join(AUD, 'manifest.json'), JSON.stringify({ general: { cue: [caminho] } }));
       const out = join(tmp, `out-${tag}`);
@@ -903,6 +918,9 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
           `--raiz=${AUD}`, `--ledger=${ledgerPath}`], { encoding: 'utf8', stdio: 'pipe' });
         return { saida: 0, texto: '', zip: existsSync(join(out, 'audio-pack.zip')) };
       } catch (e) {
+        /* Mesma regra do rodar: builder morto por infra não é recusa (issue #1133). */
+        const causa = causaNaoMedivel(e);
+        if (causa) { infra14 = causa; return { saida: null, texto: causa, zip: false }; }
         return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || ''),
           zip: existsSync(join(out, 'audio-pack.zip')) };
       }
@@ -919,6 +937,8 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
         });
         return { saida: 0, texto: '' };
       } catch (e) {
+        const causa = causaNaoMedivel(e);
+        if (causa) { infra14 = causa; return { saida: null, texto: causa }; }
         return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || '') };
       }
     };
@@ -937,18 +957,24 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
     if (ap.saida === 0) {
       erros.push('PRV14b ESCAPE: o `assets-check` aceitou uma raiz Fish declarada `proibida`.');
     }
-    if (bl.saida !== 0 || !bl.zip) {
+    if (bl.saida !== 0 && bl.saida !== null || !bl.zip && bl.saida !== null) {
       erros.push(`PRV14c IRMÃ: o empacotador recusou a raiz CC0 livre (saiu ${bl.saida}: `
         + `${bl.texto.trim().split('\n')[0]}).`);
     }
-    if (al.saida !== 0) {
+    if (al.saida !== 0 && al.saida !== null) {
       erros.push(`PRV14d IRMÃ: o \`assets-check\` recusou a raiz CC0 livre (saiu ${al.saida}: `
         + `${al.texto.trim().split('\n').pop()}). Metadado editorial do laboratório não é caminho.`);
     }
-    if (bp.saida !== 0 && !bp.zip && ap.saida !== 0 && bl.saida === 0 && bl.zip && al.saida === 0) {
+    if (bp.saida !== null && bp.saida !== 0 && !bp.zip && ap.saida !== null && ap.saida !== 0
+      && bl.saida === 0 && bl.zip && al.saida === 0) {
       notas.push('PRV14 ok: builder e assets-check recusam raiz local proibida e aceitam a irmã CC0 livre.');
     }
   } finally { rmSync(tmp, { recursive: true, force: true }); }
+  /* Mesma prioridade do PRV13: vermelho medido vence SKIP, e o finally já rodou. */
+  if (infra14) {
+    if (!erros.length) pula(infra14, 'PRV14');
+    console.error(`\x1b[33m⊘ PRV14 não medido: ${infra14} — vermelho anterior preservado\x1b[0m`);
+  }
 }
 
 const rotulo = mutante ? `PROVENIENCIA [mutante=${mutante}]` : 'PROVENIENCIA';
