@@ -7,6 +7,7 @@ const cases = {
   alvo: /alvo balístico mudou/,
   'sem-flush': /FX reais ausentes/,
   'bind-antigo': /(?:clarão|origem) deslocad/,
+  'sem-cancelar': /cancelamento .* deixou FX pendente/,
 };
 for (const [mutant, expected] of Object.entries(cases)) {
   const r = spawnSync(process.execPath, [new URL('./shot-final-pose-check.mjs', import.meta.url).pathname, `--mutante=${mutant}`], { encoding: 'utf8', timeout: 30000 });

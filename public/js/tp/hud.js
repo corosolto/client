@@ -477,39 +477,29 @@ function montarToque(raiz) {
     const b = el('button', `tp-toque ${cls}`, txt);
     b.type = 'button';
     b.setAttribute('aria-label', rotulo);
-    b.addEventListener('touchstart', (e) => { e.preventDefault(); const g = window.__game; if (g) inicio(g); }, { passive: false });
-    if (fim) {
-      const h = (e) => { e.preventDefault(); const g = window.__game; if (g) fim(g); };
-      b.addEventListener('touchend', h);
-      b.addEventListener('touchcancel', h);
-    }
+    let dedo = null;
+    const solta = () => { dedo = null; const g = window.__game; if (g) fim?.(g); };
+    raiz.addEventListener('touchreset', solta);
+    b.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const g = window.__game;
+      if (dedo !== null || !g?._acceptInput?.()) return;
+      dedo = e.changedTouches[0].identifier; inicio(g);
+    }, { passive: false });
+    const h = (e) => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === dedo) solta(); };
+    b.addEventListener('touchend', h); b.addEventListener('touchcancel', h);
     raiz.append(b);
     return b;
   };
-  /* ATIRA também MIRA: o arrasto do gatilho vai para o `_touchLook` do game.js, senão
-     corrigir a mira na rajada exige soltar o tiro (docs/mobile/CONTROLES-TOQUE.md). */
-  const atira = botao('tp-toque-atira', tr('ATIRA'), tr('Atirar'), (g) => {
-    if (!g._acceptInput?.()) return;
-    g.mouseDown0 = true;
-    g._tryShoot?.();
-  }, (g) => { g.mouseDown0 = false; });
+  const atira = raiz.querySelector('.touch-fire');
   if (atira) {
-    let dedo = null, ax = 0, ay = 0;
-    atira.addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; dedo = t.identifier; ax = t.clientX; ay = t.clientY; }, { passive: true });
-    atira.addEventListener('touchmove', (e) => {
-      for (const t of e.changedTouches) {
-        if (t.identifier !== dedo) continue;
-        const dx = t.clientX - ax, dy = t.clientY - ay; ax = t.clientX; ay = t.clientY;
-        window.__game?._touchLook?.(dx, dy);
-      }
-      e.preventDefault();
-    }, { passive: false });
-    const solta = (e) => { for (const t of e.changedTouches) if (t.identifier === dedo) dedo = null; };
-    atira.addEventListener('touchend', solta);
-    atira.addEventListener('touchcancel', solta);
+    atira.classList.add('tp-toque', 'tp-toque-atira');
+    atira.textContent = tr('ATIRA');
+    atira.setAttribute('aria-label', tr('Atirar'));
   }
   botao('tp-toque-pula', tr('PULA'), tr('Pular'), (g) => { g.keys.Space = true; }, (g) => { g.keys.Space = false; });
-  botao('tp-toque-ping', 'PING', 'Ping', () => marcarPing());
+  botao('tp-toque-camera', '', tr('Alternar câmera'), (g) => g._toggleCamView());
+  raiz.querySelector('.tp-toque-camera').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>';
   botao('tp-toque-placar', '', tr('Placar'), (g) => g._showScoreboard?.(!!g.el?.scoreboard?.classList.contains('hidden')));
   raiz.querySelector('.tp-toque-placar').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
   raiz.append(el('span', 'tp-toque-mira-dica', tr('ARRASTE AQUI PRA MIRAR')));

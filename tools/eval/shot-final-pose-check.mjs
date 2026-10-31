@@ -8,7 +8,7 @@ const { THREE, Game, bootGame, initTextures } = await import('./harness.mjs');
 let { AuthoredViewModels } = await import('../../public/js/authoredvm.js');
 const option = n => process.argv.find(a => a.startsWith(`--${n}=`))?.slice(n.length + 3);
 const mutant = option('mutante');
-const mutants = ['imediato', 'sem-follow', 'alvo', 'sem-flush', 'bind-antigo'];
+const mutants = ['imediato', 'sem-follow', 'alvo', 'sem-flush', 'bind-antigo', 'sem-cancelar'];
 if (process.argv.slice(2).some(a => !/^--(?:game-module|mutante)=.+$/.test(a)) || (mutant && !mutants.includes(mutant))) {
   console.error('CLI inválida'); process.exit(2);
 }
@@ -34,6 +34,7 @@ if (mutant && mutant !== 'bind-antigo') {
   if (mutant === 'sem-follow') replace('if (m.armaFp) {', 'if (false && m.armaFp) {');
   if (mutant === 'alvo') replace(', fx.alvo);', ', fx.alvo.clone().add(new THREE.Vector3(1, 0, 0)));');
   if (mutant === 'sem-flush') replace('const pendentes = this._fxTiroPendente;', 'const pendentes = null;');
+  if (mutant === 'sem-cancelar') replace('  _releaseInput() {\n    this._fxTiroPendente = null;', '  _releaseInput() {');
   source = source.replace(/from\s+(['"])([^'"]+)\1/g, (_, q, spec) => 'from ' + JSON.stringify(spec.startsWith('.') ? new URL(spec, url).href : import.meta.resolve(spec)));
   Runtime = (await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))).Game;
 }
@@ -135,6 +136,20 @@ assert.equal(g._fxTiroPendente, null); assert.equal(g._vmMzPool.length, poolSwit
 g.player.weapon = 'ak'; pending(); g.player.alive = false; g._updateFx(1 / 60);
 assert.equal(g._fxTiroPendente, null); assert.equal(g._vmMzPool.length, poolSwitch);
 g.player.alive = true;
+// Um disparo aceito antes do cancelamento não pode reaparecer ao retomar a partida.
+for (const [tag, cancel, resume] of [
+  ['reset', () => g._releaseInput(), () => {}],
+  ['pause', () => g.setPaused(true), () => g.setPaused(false)],
+  ['chat', () => g.travarEntrada(true), () => g.travarEntrada(false)],
+]) {
+  pending();
+  const emitted = endpoints.length, pool = g._vmMzPool.length;
+  cancel();
+  assert.equal(g._fxTiroPendente, null, `cancelamento ${tag} deixou FX pendente`);
+  resume(); tick();
+  assert.equal(endpoints.length, emitted, `cancelamento ${tag} emitiu traçante ao retomar`);
+  assert.equal(g._vmMzPool.length, pool, `cancelamento ${tag} alocou clarão ao retomar`);
+}
 // 3P e legacy continuam imediatos; alvo da rede fica congelado até o flush.
 const { makeNetcode } = await import('../../public/js/netgame.js');
 const nc = makeNetcode(g, { meta: { snapshotHz: 20 }, startPing() {}, stopPing() {} });

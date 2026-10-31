@@ -2756,15 +2756,13 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   background:rgba(180,217,46,.30);border:2px solid rgba(255,255,255,.32);will-change:transform;
   display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.62)}
 #touch-ui .touch-joy-knob svg{width:56%;height:56%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));pointer-events:none}
-/* MIOLO PRESSIONADO = tiro: o knob acende vermelho enquanto atira (feedback do gatilho central) */
-#touch-ui .touch-joy.firing .touch-joy-knob{background:rgba(230,60,50,.55);border-color:rgba(255,150,140,.8);color:#fff}
 #touch-ui .touch-btn{position:absolute;pointer-events:auto;z-index:2;border-radius:50%;color:#fff;
   font:800 11px/1 var(--aaa-font-body,sans-serif);letter-spacing:.3px;
   background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.32);display:flex;align-items:center;justify-content:center}
 #touch-ui .touch-btn:active{background:rgba(180,217,46,.55)}
 #touch-ui .touch-btn svg{width:54%;height:54%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.65))}
-/* TIRO agora é no MIOLO dos dois sticks (não há mais botões de fogo dedicados).
-   DIREITA: MIRAR / RECARREGAR / ABAIXAR ficam ACIMA e à ESQUERDA do stick de olhar. */
+#touch-ui .touch-fire{right:calc(32px + var(--sr));bottom:calc(34px + var(--sb));width:104px;height:104px;background:rgba(224,50,50,.55)}
+#touch-ui .touch-joy-r{display:none}
 #touch-ui .touch-ads{right:calc(150px + var(--sr));bottom:calc(150px + var(--sb));width:54px;height:54px}
 #touch-ui .touch-reload{right:calc(140px + var(--sr));bottom:calc(50px + var(--sb));width:50px;height:50px}
 #touch-ui .touch-crouch{right:calc(204px + var(--sr));bottom:calc(54px + var(--sb));width:50px;height:50px}
