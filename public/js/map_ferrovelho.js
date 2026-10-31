@@ -1931,7 +1931,7 @@ export function buildFerroVelho(scene, T) {
     ],
     B: [
       ...[-14, -9, -4, 1].map(x => ({ x, z: -25, yaw: Math.PI })),
-      ...[-16.0, -9, -4, 1].map(x => ({ x, z: -22.6, yaw: Math.PI })),
+      ...[-16.0, -9, -4, 0].map(x => ({ x, z: -22.6, yaw: Math.PI })),
     ],
   };
   // 4 bandeiras (dono): 1 CENTRAL + as outras ESPAÇADAS, e NENHUMA no respawn (a antiga
@@ -1967,7 +1967,7 @@ export function buildFerroVelho(scene, T) {
     ],
     dogs: [{ pos: [4.0, 0, -28.0], to: [7.0, 0, -27.5], phase: 1.1 }],
     cockroaches: [
-      { pos: [6.4, 0, -30.7], to: [5.8, 0, -30.0], phase: .2 },
+      { pos: [7.0, 0, -30.7], to: [7.6, 0, -30.0], phase: .2 },
       { pos: [-28.0, 0, -17.5], to: [-27.4, 0, -18.1], phase: 1.6 },
     ],
   });

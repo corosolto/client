@@ -52,6 +52,7 @@
 - Girar no lugar deixa o quadril para trás e os pés alcançam depois, em vez de o corpo inteiro teleportar junto com a mira.
 - Personagens distantes animam com menos frequência, devolvendo quadros ao celular sem mudar o que se vê de perto.
 - Recarregar ficou visível de fora: em terceira pessoa, a mão livre vai ao carregador e o corpo mergulha durante a recarga, do jogador e dos bots — dá saber quando o adversário está vulnerável.
+- Os spawns do Escadão e do Ferro Velho deixam a primeira rota livre; a fauna do Ferro Velho nasce fora dos colisores.
 - Andar de lado entorta o corpo na direção do movimento, em vez de deslizar de frente parado.
 - Durante a partida, o perfil móvel começa com resolução de 60%, limita a cadência a 60 FPS no jogo e 30 FPS nos menus, reduz partículas, cápsulas e marcas conforme o aparelho sofre e recupera o último degrau sustentável na sessão seguinte.
 - No celular, a barra de armas mostra a arma de verdade em vez de um desenho genérico, e a imagem muda junto com o que está na mão.
