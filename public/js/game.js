@@ -6953,7 +6953,10 @@ export class Game {
     if (podeEscanear) p._mantleScanAt = this.time + MANTLE_SCAN_DT;
     if (target) this._beginMantle(p, target);
     else if ((p.jumpBufferedUntil || 0) > this.time && this.time < (p.coyoteUntil || 0) && aceitaMovimento) {
-      p.vel.y = this.world.jumpImpulse ?? 5.0;
+      /* 5.0 -> 5.6 (relato do dono, 31/10: "seria bom o personagem poder pular mais e
+         subir nas estruturas"): ápice ~0.61 -> ~0.76 m com a gravidade 20.6; mapa que
+         declara jumpImpulse próprio (lajes 5.85) continua mandando. */
+      p.vel.y = this.world.jumpImpulse ?? 5.6;
       p.grounded = false;
       p.jumpBufferedUntil = 0;
       p.coyoteUntil = 0;
@@ -7743,7 +7746,7 @@ export class Game {
          a CADA renascimento — também no modo de rodadas, não só na arena. O banner diz o
          tempo; a dica do HUD (#hud-treta) mantém o countdown correndo. */
       this._compra.abrirJanela();
-      this._banner(frase('compraPrepare', ECONOMIA.tempoCompraS), frase('compraDica', this.mobile, ECONOMIA.tempoCompraS));
+      this._banner(frase('compraPrepare', ECONOMIA.tempoCompraS), '');
     }
     // Top off the CURRENT loadout's mags (primary could be any weapon now, not just AWP).
     // #268: em modo arma-única só recarrega slot PERMITIDO pelo modo (pistola não sai de
