@@ -26,7 +26,6 @@
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
-import { WEAPON_IDS } from '../../public/js/weapons.js';
 import { installViewmodelAssets } from './viewmodel-network-fixture.mjs';
 
 const arg = (n, d) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `=${d}`)
@@ -85,7 +84,8 @@ await pag.evaluate(() => { document.getElementById('crash-overlay')?.remove(); w
    parser à mão já falhou aqui e devolveu zero armas com o arquivo correto.
    Só entram as que o portão de rollout deixa passar (família ready + arma não
    segurada): as demais caem no legado DE PROPÓSITO e não são defeito. */
-const ALVO = SO.length ? SO : SEM_FLAGS ? WEAPON_IDS : await pag.evaluate(async (todas) => {
+const ALVO = SO.length ? SO : SEM_FLAGS ? await pag.evaluate(async () =>
+  (await import('/js/weapons.js')).WEAPON_IDS) : await pag.evaluate(async (todas) => {
   const vm = await import('/js/data/vmconfig.js');
   return Object.entries(vm.VM_WEAPON || {})
     .filter(([, c]) => todas || (c.ready !== false && vm.VM_FAMILY?.[c.family]?.ready === true))
