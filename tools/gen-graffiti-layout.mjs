@@ -160,9 +160,15 @@ for (const id of MAPAS) {
   page.on('requestfailed', r => { const url = r.url(); if (classifica(url, r.resourceType()) !== 'auxiliar') falta('requestfailed', url, r.failure()?.errorText || '?'); });
   page.on('response', r => { if (r.status() >= 400 && classifica(r.url(), r.request().resourceType()) !== 'auxiliar') falta('response', r.url(), String(r.status())); });
   page.on('console', m => {
-    const text = m.text(); if (!/load failed/i.test(text)) return;
-    const url = text.match(/https?:\/\/[^\s"'<>\[\]]+/)?.[0] || '';
-    if (!url || classifica(url) !== 'auxiliar') falta('console', url, text.slice(0, 160));
+    // #1109: o GLTFLoader pode devolver textura null e só registrar este diagnóstico.
+    const text = m.text();
+    if (text.startsWith("THREE.GLTFLoader: Couldn't load texture")) { falta('console', '', text.slice(0, 160)); return; }
+    if (!/load failed/i.test(text)) return;
+    // O aviso identifica o prop; URLs da stack JS não identificam a entrada ausente.
+    const linha = text.split('\n', 1)[0];
+    if (/^map prop load failed \S/.test(linha)) { falta('console', '', linha.slice(0, 160)); return; }
+    const url = linha.match(/https?:\/\/[^\s"'<>\[\]]+/)?.[0] || '';
+    if (!url || classifica(url) !== 'auxiliar') falta('console', url, linha.slice(0, 160));
   });
   if (process.env.GRAFITE_DERRUBA) {
     const padrao = process.env.GRAFITE_DERRUBA;
