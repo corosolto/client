@@ -7731,11 +7731,9 @@ export class Game {
     if (objectiveDestination && b.target) {
       const bx = b.pos.x - objectiveDestination.centerX, bz = b.pos.z - objectiveDestination.centerZ;
       const sx = b.pos.x - objectiveDestination.x, sz = b.pos.z - objectiveDestination.z;
-      const tx = b.target.pos.x - objectiveDestination.centerX, tz = b.target.pos.z - objectiveDestination.centerZ;
-      const alvoImediato = tx * tx + tz * tz <= objectiveDestination.protectRadius * objectiveDestination.protectRadius;
+      // A formação limita deslocamento; alvos visíveis continuam recebendo resposta.
       if (bx * bx + bz * bz > objectiveDestination.leash * objectiveDestination.leash
-          || tx * tx + tz * tz > objectiveDestination.engageRadius * objectiveDestination.engageRadius
-          || (sx * sx + sz * sz > objectiveDestination.slotRadius * objectiveDestination.slotRadius && !alvoImediato)) {
+          || sx * sx + sz * sz > objectiveDestination.slotRadius * objectiveDestination.slotRadius) {
         b.target = null; b._losLost = false; b._lostAt = 0;
       }
     }
@@ -7804,7 +7802,7 @@ export class Game {
          de si mesmo". Gente não faz isso: quando o alvo sai muito do eixo (>40°), você
          REPOSICIONA. Aqui, sair do eixo cancela o hold e o bot volta a andar enquanto vira. */
       if (Math.abs(dy) > 0.5) b.holdUntil = 0;
-      const holding = this.time < (b.holdUntil || 0);
+      const holding = this.time < (b.holdUntil || 0) || !!objectiveDestination;
       /* A banda de distância é a única dona do avanço/recuo; movimento aleatório
          no miolo voltava a cruzar seus próprios limiares. */
       if (BOT_MOVE2 && !this.__mutBotMidWander) {
@@ -7840,7 +7838,7 @@ export class Game {
          é, na tela, a pirueta — e a métrica confirma (voltas/min sobe quando o bot para de
          derivar de lado). Gente que é surpreendida pelo flanco DÁ UM PASSO enquanto vira.
          Então: enquanto o alvo estiver a mais de ~29° do eixo, o passo é pra frente. */
-      if (BOT_MOVE2 && !approach && Math.abs(dy) > 0.5) approach = 0.5;
+      if (BOT_MOVE2 && !approach && Math.abs(dy) > 0.5 && !objectiveDestination) approach = 0.5;
       const strafe = holding ? 0 : (b._lat || 0);
       const fdx = Math.sin(b.yaw), fdz = Math.cos(b.yaw);   // forward (mesh facing)
       const rdx = Math.cos(b.yaw), rdz = -Math.sin(b.yaw);  // right
@@ -7873,7 +7871,7 @@ export class Game {
          o bot anda de frente pra onde vai. Em combate o bot avança, recua, segura ou
          reposiciona — sempre com a animação certa. */
       const off = b.laneX - b.pos.x;
-      if (BOT_MOVE2) {
+      if (BOT_MOVE2 || objectiveDestination) {
         /* sem deslocamento lateral em combate — ver o bloco acima */
       } else if (dist > 20) {
         const lz = Math.sign(dz) || 1, ln = Math.hypot(off, lz) || 1;
