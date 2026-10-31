@@ -361,9 +361,11 @@ function normaliza(s){ s.boxes=s.boxes||[];s.ramps=s.ramps||[];s.slow=s.slow||[]
 
 // ---- preview 3D ---------------------------------------------------------------
 let three=null;
+let prevToken=0;
 $('prev-btn').onclick=async()=>{
   const prev=$('prev');
-  if(prev.style.display==='block'){ prev.style.display='none'; cv.style.display='block'; $('prev-btn').textContent='Pré-ver 3D'; return; }
+  if(prev.style.display==='block'){ prevToken++; prev.style.display='none'; cv.style.display='block'; $('prev-btn').textContent='Pré-ver 3D'; return; }
+  prevToken++; const token=prevToken;
   if(problemas.length){ alert('Corrija a validação antes de pré-ver:\n'+problemas.join('\n')); return; }
   prev.style.display='block'; cv.style.display='none'; $('prev-btn').textContent='Voltar ao 2D';
   if(!three){
@@ -387,17 +389,23 @@ $('prev-btn').onclick=async()=>{
   }
   three.fit3d();   // toda abertura redimensiona, reusando renderer/câmera/órbita
   try{
+    const snapshot=clean();
     const { initTextures } = await import('./js/textures.js');
     const { preloadMapProps } = await import('./js/mapprops.js');
-    await preloadMapProps(propIdsFromSpec(spec)).catch(()=>{});
+    await preloadMapProps(propIdsFromSpec(snapshot)).catch(()=>{});
+    if(token!==prevToken || prev.style.display!=='block') return;
+    if(JSON.stringify(clean())!==JSON.stringify(snapshot)) throw new Error('mapa editado durante a prévia — abra a prévia novamente');
     revalidate();
     if (problemas.length) throw new Error('Corrija a validação antes de pré-ver:\n'+problemas.join('\n'));
     const scene=new THREE.Scene(); scene.background=new THREE.Color('#8fb7e0');
-    const world=buildMapFromJSON(scene, initTextures(), clean());
+    const world=buildMapFromJSON(scene, initTextures(), snapshot);
     three.world?.dispose?.();   // build anterior solta só o que criou; props/template compartilhados ficam
     three.scene=scene; three.world=world;
     scene.updateMatrixWorld(true);
-  }catch(e){ alert('Falha ao construir 3D: '+e.message); prev.style.display='none'; cv.style.display='block'; $('prev-btn').textContent='Pré-ver 3D'; }
+  }catch(e){
+    if(token!==prevToken || prev.style.display!=='block') return;
+    alert('Falha ao construir 3D: '+e.message);
+    if(token===prevToken && prev.style.display==='block'){ prevToken++; prev.style.display='none'; cv.style.display='block'; $('prev-btn').textContent='Pré-ver 3D'; } }
 };
 
 // ---- boot ---------------------------------------------------------------------
