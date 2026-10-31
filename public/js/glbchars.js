@@ -187,23 +187,13 @@ const P1H_MAO_L = [-0.19, -0.06, 0.02];
 const P1H_SKIP = new Set(['canarinho', 'bonzo']);
 /* Esquerdomacho alternava entre clipe 1H e overlay. Usa locomotiva base + um único overlay. */
 const P1H_BASE_CLIP = new Set(['esquerdomacho']);
-/* TETO DE FRENTE POR CORPO (31/10): o idle/idle1h retargetado do humano deixa corpos
- * não-humanos com a mão MUITO à frente — canarinho (asa) a 0,50 m do tronco, contra
- * 0,23-0,26 dos elogiados: a arma lê como flutuando longe do corpo ("o canarinho de
- * pistola é o pior de todos", dono 31/10). O clamp puxa a MÃO de volta pelo MESMO CCD
- * do piso (TP_FRONT_MIN), arma colada. Só o canarinho: o lobisomem (0,49-0,80 m) passa
- * em NA-CABECA no porte alto e o puxão derrubava a arma abaixo da cabeça (postura
- * 187/189); o defeito dele era dedo (curl), não distância. Primeira tentativa do
- * canarinho (clipe base) foi revertida: afundava 1,2 cm no idle (CHR7). */
+/* Teto de frente por corpo (31/10): clamp espelhado ao piso, mão de volta, arma colada. Hist: docs/ANIM-3P.md. */
 const TP_FRONT_MAX_CHAR = { canarinho: 0.20 };
 const loader = new GLTFLoader();
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 /* Temporários da guarda de alcance do IK (zero alocação por quadro). */
 const _alcA = new THREE.Vector3(), _alcB = new THREE.Vector3(), _upY = new THREE.Vector3(0, 1, 0);
-/* GUARDA DE ALCANCE DO IK (31/10, dono: recarga do Juiz com "o braço indo pra trás"):
- * CCD sem limite contorce ombro/cotovelo quando o alvo está além do braço — o cotovelo
- * sobe e o braço cruza o corpo por trás. O alvo vem PRA DENTRO do alcance (95%) e o
- * braço alcança o que dá, sem contorção. Vale pra mão de apoio, porte 1H e recarga. */
+/* Guarda de alcance do IK (31/10): alvo dentro de 95% do braço, sem contorção. Hist: docs/ANIM-3P.md. */
 function clampAlcanceIK(chain, end, alvo) {
   if (!chain || chain.length < 2 || !alvo) return alvo;
   chain[0].getWorldPosition(_alcA);          // ombro
@@ -219,9 +209,7 @@ function clampAlcanceIK(chain, end, alvo) {
   alvo.set(_alcB.x + dx * k, _alcB.y + dy * k, _alcB.z + dz * k);
   return alvo;
 }
-/* TINT 3P por personagem (31/10, dono: capa do Juiz "esbranquiçada demais e feia"):
- * multiplica a cor do material (a textura do robe é clara e lavada). Caso-a-caso,
- * declarado aqui; o crivo final é a contact sheet. */
+/* Tint 3P por personagem (31/10, capa do Juiz); crivo na contact sheet. Hist: docs/ANIM-3P.md. */
 const TINT_3P = {
   juiz: [{ material: /Navy Broadshoulder/i, color: 0x98a3c6 }],
 };
@@ -1055,11 +1043,7 @@ class CharController {
     this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
     this._deathDir = dir ? { x: dir.x, z: dir.z } : null;
     this.dead = true; this.shooting = false; this._ar = false; this._mantleF = null;
-    /* MORRER NO MEIO DA RECARREGA (relato do dono, 31/10: "quando morre o personagem
-       fica se debatendo pra trás"): o envelope reloadK não era guardado por `dead` e o
-       mergulho do tronco (spine k*0.20 pra trás) continuava aplicado SOBRE o clipe
-       death clampado — o cadáver ficava arcado, se contorcendo. Os overlays de vida
-       (reload/flinch/lean/pitch) morrem junto. */
+    /* Overlays de vida (reload/flinch/lean/pitch) morrem junto com o corpo (dono, 31/10). Hist: docs/ANIM-3P.md. */
     this.cancelReload();
     this._flinchDur = 0;
     this._leanK = 0;
@@ -1161,10 +1145,7 @@ class CharController {
         this.headBone.updateWorldMatrix(false, true);
       }
     }
-    /* RECENTRO DE YAW da cabeça (31/10, dono: "personagens em postura torta, com rosto
-       e cabeça pra um lado e corpo pro outro" — o Esquerdomacho é o pior). Clipes
-       retargetados deixam a cabeça virada CONTRA o torso parado. Mesma malha fechada do
-       pitch, no eixo vertical do grupo, só em porte parado (não briga com mira/locomoção). */
+    /* Recentro de YAW da cabeça em porte parado (dono, 31/10); malha fechada igual ao pitch. Hist: docs/ANIM-3P.md. */
     if (this.headBone && !this.dead && this.lod < 2
         && /^(idle|idle1h|crouch)$/.test(this.curName || '')) {
       this.group.getWorldQuaternion(_gq);

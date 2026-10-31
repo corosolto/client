@@ -624,10 +624,7 @@ startVisibleRotation(async () => {
   _wallK = next;
   try { localStorage.setItem('cs_wallK', String(_wallK)); } catch {}
   refreshWallpapers();
-/* Sem char-select na condição (relato do dono, 31/10 — "flickering no lobby"): o preview
-   é um canvas TRANSPARENTE sobre o wallpaper; girar o fundo sob o personagem troca a
-   cena inteira a cada intervalo e lê como flicker. No menu principal e no team-select
-   a rotação continua. */
+/* Rotação de wallpaper fora do char-select (dono, 31/10): fundo girando sob o preview lê como flicker. */
 }, () => !MOBILE_AUTO && ['main-menu', 'team-select'].some(id => !$(id)?.classList.contains('hidden')));
 startVisibleRotation(async () => {
   const next = (_loadWallI + 1) % LOADING_WALLS.length;

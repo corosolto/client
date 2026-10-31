@@ -194,3 +194,14 @@ A fila de revisão, com o que cada um quebra hoje:
 Os três de tremor são os mesmos corpos que o `EMOTES-BR.md` já apontava por dependerem do
 pack de animação compartilhado: o tremor está no CLIPE, não no mount — consertar é re-autorar
 ou filtrar, e cada um desses caminhos é decisão de custo, não de parâmetro.
+
+## Rodada 31/10 — gauntlet do lote #1171
+
+Histórico e causa dos fixes desta rodada (o código aponta pra cá; comentário inline tem teto de 2 linhas).
+
+- **Teto de frente por corpo (`TP_FRONT_MAX_CHAR`)**: o dono viu "a pistola do canarinho é o pior de todos". O `idle1h` retargetado do humano estica a ASA 0,50 m à frente do tronco (frenteZ medido 0,499; elogiados 0,23-0,26) e a arma lia como flutuando. O clamp puxa a MÃO de volta pelo mesmo CCD do piso (`TP_FRONT_MIN`), arma colada. Só o canarinho: o lobisomem (0,49-0,80 m) passava em NA-CABECA e o puxão derrubava a arma abaixo da banda da cabeça (postura 187/189); o defeito dele era dedo (curl). Primeira tentativa do canarinho com clipe base afundava 1,2 cm no idle (CHR7) e foi revertida. Depois do fix: frenteZ 0,143.
+- **Curl dos dedos 0,55-0,95 rad**: duas rodadas de juiz visual nos 13 flagrados. A faixa antiga 0,35-0,80 lia "mão espalmada/dedos planos" em 7 (jozo, bonzo, esquerdomacho, cadequinha, juiz, canarinho, lobisomem); 0,55-1,10 fechava o punho mas os dedos atravessavam o cabo em coach/lobisomem/juiz/trapfunk. O meio fecha sem fundir.
+- **Recentro de YAW da cabeça**: o dono via "postura torta, rosto e cabeça pra um lado e corpo pro outro" (Esquerdomacho o pior). Clipes retargetados deixam a cabeça virada contra o torso parado. Malha fechada igual à do pitch, no eixo vertical do grupo, só em porte parado. A/B do juiz: postura_corpo 1→3, "não há mais a sensação de direções opostas".
+- **Guarda de alcance do IK (`clampAlcanceIK`)**: recarga do Juiz com "o braço indo pra trás". CCD sem limite contorcia ombro/cotovelo quando o alvo está além do braço; o alvo agora vem pra dentro de 95% do comprimento do braço (mão de apoio, porte 1H e recarga).
+- **Tint 3P (`TINT_3P`)**: capa do Juiz "esbranquiçada demais" — a textura do robe é clara de fábrica (PBR verde em 74/74). Multiplicador 0x98a3c6 no material da toga; crivo final na contact sheet.
+- **Morrer no meio da recarga**: `die()` cancela reload/flinch/lean/pitch. O envelope `reloadK` não era guardado por `dead` e o mergulho do tronco (spine k*0.20 pra trás) continuava sobre o clipe death clampado: o "cadáver se debatendo pra trás" do dono. Medido: reloadK 0 no cadáver.

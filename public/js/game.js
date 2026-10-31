@@ -7741,10 +7741,7 @@ export class Game {
     p.yaw = this._spawnYaw(s, p.team); p.pitch = 0;
     if (this._compra) {
       this._compra.rearmar(p);
-      /* RELATO DO DONO (31/10): "quando o usuário volta pro respawn depois de morrer,
-         mostrar que ele tem 50 segs pra comprar arma". A janela de compra volta a abrir
-         a CADA renascimento — também no modo de rodadas, não só na arena. O banner diz o
-         tempo; a dica do HUD (#hud-treta) mantém o countdown correndo. */
+      /* 50 s de compra a cada renascimento (dono, 31/10); banner + countdown no HUD. */
       this._compra.abrirJanela();
       this._banner(frase('compraPrepare', ECONOMIA.tempoCompraS), '');
     }
