@@ -224,7 +224,7 @@ function dot(o,color,label){ const[a,b]=w2s(o.x,o.z); ctx.fillStyle=color;ctx.be
 function flag(f){ const[a,b]=w2s(f.x,f.z); ctx.strokeStyle=COL.ctf;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(a,b+8);ctx.lineTo(a,b-10);ctx.stroke();
   ctx.fillStyle=COL.ctf;ctx.beginPath();ctx.moveTo(a,b-10);ctx.lineTo(a+11,b-7);ctx.lineTo(a,b-4);ctx.fill();
   ctx.fillStyle='#cfe';ctx.font='10px monospace';ctx.fillText(f.label||f.id||'',a+13,b-5); }
-function spawnMark(s,color){ const[a,b]=w2s(s.x,s.z); const fx=Math.sin(s.yaw||0),fz=Math.cos(s.yaw||0);
+function spawnMark(s,color){ const[a,b]=w2s(s.x,s.z); const fx=-Math.sin(s.yaw||0),fz=-Math.cos(s.yaw||0);
   ctx.fillStyle=color;ctx.beginPath();ctx.arc(a,b,6,0,7);ctx.fill();
   ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(a+fx*16,b+fz*16);ctx.stroke(); }
 

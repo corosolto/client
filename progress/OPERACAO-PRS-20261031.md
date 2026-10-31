@@ -1,0 +1,7 @@
+
+## SDK PR1101 — orientação de spawn
+Objetivo completo: Flávio/47PRs/anúncios/trailers, Java externo preservado. SDK branch codex/sdk-main-integration-20261025 HEAD a5e50310d. Régua independente construtor-yaw-check.mjs executa desenho real, _spawnYaw real e câmera Three; RED yaw0 dot=-112. GLM25 pelo OMP reserva apenas public/construtor.html::spawnMark, sem executar/escrever. Não tocar Game/testes. Próximo: receber patch, conferir base/literal, GREEN/mutante e QA visual antes de push/revisão. Nenhum merge/deploy/publicação.
+
+GLM25 recebido JSON puro, base SHA e literal conferidos; só vetor de spawnMark mudou.10 orientações câmera real/desenho real verdes, mutante aplicado e vermelho dot=-112. Execução de régua por Codex. Próximo: gate mapjson, docs geradas e QA visual no browser quando gate B4 liberar o coordenador.
+
+Gate eval:mapjson completo passou (entradas inválidas, regressões editor, contrato e mutantes anteriores, yaw10orientações e mutante aplicado/reprovado). Geradores arch/docs normais e docs:check verdes, sem delta. Log /tmp/corosolto-sdk-mapjson-focused.log. QA visual ainda pendente; não declarar PR1101 concluído nem Vercel liberada.
