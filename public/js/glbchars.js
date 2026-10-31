@@ -187,28 +187,8 @@ const P1H_MAO_L = [-0.19, -0.06, 0.02];
 const P1H_SKIP = new Set(['canarinho', 'bonzo']);
 /* Esquerdomacho alternava entre clipe 1H e overlay. Usa locomotiva base + um único overlay. */
 const P1H_BASE_CLIP = new Set(['esquerdomacho']);
-/* Teto de frente por corpo (31/10): clamp espelhado ao piso, mão de volta, arma colada. Hist: docs/ANIM-3P.md. */
-const TP_FRONT_MAX_CHAR = { canarinho: 0.20 };
 const loader = new GLTFLoader();
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
-/* Temporários da guarda de alcance do IK (zero alocação por quadro). */
-const _alcA = new THREE.Vector3(), _alcB = new THREE.Vector3(), _upY = new THREE.Vector3(0, 1, 0);
-/* Guarda de alcance do IK (31/10): alvo dentro de 95% do braço, sem contorção. Hist: docs/ANIM-3P.md. */
-function clampAlcanceIK(chain, end, alvo) {
-  if (!chain || chain.length < 2 || !alvo) return alvo;
-  chain[0].getWorldPosition(_alcA);
-  chain[1].getWorldPosition(_alcB);
-  const braco = _alcA.distanceTo(_alcB);     // comprimento de osso: invariante à pose
-  end.getWorldPosition(_alcA);
-  const alcance = (braco + _alcB.distanceTo(_alcA)) * 0.95;
-  chain[0].getWorldPosition(_alcB);          // base do clamp
-  const dx = alvo.x - _alcB.x, dy = alvo.y - _alcB.y, dz = alvo.z - _alcB.z;
-  const d = Math.hypot(dx, dy, dz);
-  if (d <= alcance || d < 1e-6) return alvo;
-  const k = alcance / d;
-  alvo.set(_alcB.x + dx * k, _alcB.y + dy * k, _alcB.z + dz * k);
-  return alvo;
-}
 /* Tint 3P por personagem (31/10, capa do Juiz); crivo na contact sheet. Hist: docs/ANIM-3P.md. */
 const TINT_3P = {
   juiz: [{ material: /Navy Broadshoulder/i, color: 0x98a3c6 }],
@@ -818,13 +798,15 @@ export function buildCharacterModel(def, opts = {}) {
        como espalmada na arma. Acima disso os dedos entram na palma em arma grossa;
        teto por corpo segue no CURL_MAX. */
     const curlPara = (obj) => {
-      if (!obj) return 0.7;
+      const zumbi = def.id === 'zumbi';
+      if (!obj) return zumbi ? 0.5 : 0.7;
       const sz = new THREE.Vector3();
       new THREE.Box3().setFromObject(obj).getSize(sz);
       const esp = Math.min(sz.x, sz.y, sz.z);            // menor dimensão = espessura do corpo da arma
-      if (!isFinite(esp) || esp <= 0) return 0.7;
-      // mão humana fecha ~0,95 rad em volta de 3 cm e ~0,55 rad em volta de 9 cm
-      return Math.max(0.55, Math.min(0.95, 0.95 - (esp - 0.03) * (0.40 / 0.06)));
+      if (!isFinite(esp) || esp <= 0) return zumbi ? 0.5 : 0.7;
+      // mão humana fecha ~0,95 rad em volta de 3 cm e ~0,55 em 9 cm; zumbi mantém a curva legada (.35–.80)
+      return zumbi ? Math.max(0.35, Math.min(0.80, 0.80 - (esp - 0.03) * (0.45 / 0.06)))
+                   : Math.max(0.55, Math.min(0.95, 0.95 - (esp - 0.03) * (0.40 / 0.06)));
     };
     /* Teto de curl por personagem: a faixa do `curlPara` é calibrada em mão HUMANA e o lobo
        tem pata. Não morde hoje (shotgun já dá 0,35); varredura e porquê em BUG-149. */
@@ -898,14 +880,6 @@ export function buildCharacterModel(def, opts = {}) {
      (o overlay 1H precisa deles) e da pose funcional assentada (#1179, crítico 31/10). */
   if (PV_PULSO && opts.preview && withWeapon && ctrl.tpMount && !BLADES.has(opts.weaponId)) {
     const funcional = new THREE.Quaternion().setFromEuler(new THREE.Euler(TP_CARRY_PITCH, TP_CARRY_YAW, 0, 'YXZ'));
-    // A pegada funcional é a POSE ASSENTADA (clamp de frente + overlay 1H): assenta o
-    // porte real uma vez aqui no build, com o carry de jogo, só onde o clamp existe.
-    if (TP_FRONT_MAX_CHAR[ctrl.bodyId] !== undefined) {
-      const vitrine = ctrl.tpMount.carry;
-      ctrl.tpMount.carry = funcional;
-      for (let i = 0; i < 60; i++) ctrl.update(1 / 30, 0, false, 0);
-      ctrl.tpMount.carry = vitrine;
-    }
     const pegada = handBone.getWorldQuaternion(new THREE.Quaternion()).invert()
       .multiply(model.getWorldQuaternion(new THREE.Quaternion()).multiply(funcional));
     ctrl.tpMount.pegada = pegada;
@@ -929,7 +903,6 @@ class CharController {
   constructor(mixer, actions, group, headBone, head, charId, model, bodyId = charId) {
     this.mixer = mixer; this.actions = actions;
     this.group = group; this.headBone = headBone; this.head = head;
-    this._yawCorr = 0; this._yawUndo = new THREE.Quaternion(); this._yawApplied = false;
     /* Base do Y vem do enquadramento da bind (`model.position.y = -bbox.min.y * s`, acima).
        A correção do clipe é somada A ELA, nunca substitui — senão o personagem perde o
        alinhamento de bind que já estava certo em todos os 44. */
@@ -951,17 +924,9 @@ class CharController {
     this._to('idle');
   }
 
-  _undoHeadYaw() {
-    if (this.headBone && this._yawApplied) {
-      this.headBone.quaternion.premultiply(this._yawUndo);
-      this._yawApplied = false;
-    }
-  }
-
   _to(name, once = false, restart = true) {
     const a = this.actions[name];
     if (!a || this.cur === a) return;
-    this._undoHeadYaw();
     if (a !== this.actions.jump) this.jumping = false;
     if (restart) {
       a.reset();
@@ -981,7 +946,6 @@ class CharController {
      de 0,18 s — cortar no quadro dá solavanco e o boneco "pula" de pose. */
   emote(id) {
     if (this.dead || !id) return false;
-    this._undoHeadYaw();
     this._emoteId = id; this._emoteT = 0; this.emotando = true;
     return true;
   }
@@ -1038,7 +1002,6 @@ class CharController {
 
   shoot() {
     if (this.dead) return;
-    this._undoHeadYaw();
     // Agachado não troca de clipe (a pose já mira), mas ganha recuo aditivo: antes o
     // bot agachado atirava completamente imóvel. Ver docs/ANIM-3P.md.
     if (this.crouch || !this.actions.shoot) { this._fireDur = 0.12; this._fireT = 0; return; }
@@ -1058,7 +1021,6 @@ class CharController {
   die(dir = null) {
     this._emoteId = null;
     if (this.dead) return;
-    this._undoHeadYaw();
     // Viés de tombo pela direção do disparo: o mesmo clipe deixa de cair sempre igual.
     this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
     this._deathDir = dir ? { x: dir.x, z: dir.z } : null;
@@ -1077,7 +1039,6 @@ class CharController {
   // character does everything on top of the fallen pose (the "walking while falling
   // backward" bug). Then start idle clean.
   revive() {
-    this._undoHeadYaw(); this._yawCorr = 0;
     this.dead = false; this.shooting = false; this.jumping = false; this._ar = false; this._mantleF = null;
     this.mixer.stopAllAction();
     this.cur = null;
@@ -1090,7 +1051,6 @@ class CharController {
   // so the feet plant instead of ice-skating (root-motion-free clips have no built-in
   // stride, so we drive the cycle rate from how fast the body is really moving).
   update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
-    this._undoHeadYaw();
     if (!this.dead) {
       if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
       if (this._mantleF !== null && this.actions.jump) {
@@ -1222,19 +1182,11 @@ class CharController {
         _v.copy(t.palmLocal);
         t.handBone.localToWorld(_v);
         t.model.worldToLocal(_v);
-        /* TETO por corpo (ver TP_FRONT_MAX_CHAR): mesma mecânica do piso, espelhada —
-         * puxa a mão de VOLTA quando o clipe humano estica demais o braço/asa. */
-        const fzMax = TP_FRONT_MAX_CHAR[this.bodyId] ?? Infinity;
         if (_v.z < TP_FRONT_MIN) {
           _v.z = TP_FRONT_MIN;
           t.model.localToWorld(_v);
           solveCCDIK([t.rArm, t.rFore], t.handBone, _v, { iterations: 6, endOffset: t.palmLocal });
           orientTpMount(t);   // reorienta o cano pós-IK
-        } else if (_v.z > fzMax) {
-          _v.z = fzMax;
-          t.model.localToWorld(_v);
-          solveCCDIK([t.rArm, t.rFore], t.handBone, _v, { iterations: 6, endOffset: t.palmLocal });
-          orientTpMount(t);
         }
       }
     }
@@ -1245,7 +1197,6 @@ class CharController {
       ik.gun.updateWorldMatrix(true, false);
       _ikTgt.copy(ik.fore);
       ik.gun.localToWorld(_ikTgt);
-      clampAlcanceIK(ik.chain, ik.end, _ikTgt);
       solveCCDIK(ik.chain, ik.end, _ikTgt, { iterations: 8, endOffset: ik.endOffset });
     }
     /* Overlays de tronco por ÚLTIMO; eixo em MUNDO via quadro do pai e undo antes do
@@ -1340,7 +1291,6 @@ class CharController {
           this.model.worldToLocal(_ikTgt);
           _ikTgt.set(_ikTgt.x + P1H_MAO_L[0], _ikTgt.y + P1H_MAO_L[1], _ikTgt.z + P1H_MAO_L[2]);
           this.model.localToWorld(_ikTgt);
-          clampAlcanceIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt);
           solveCCDIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt, { iterations: 8 });
         }
       }
@@ -1397,12 +1347,10 @@ class CharController {
         if (this.ikL && torso.magLocal && torso.gun) {
           _ikTgt.copy(this.ikL.fore).lerp(torso.magLocal, k);
           torso.gun.localToWorld(_ikTgt);
-          clampAlcanceIK(this.ikL.chain, this.ikL.end, _ikTgt);
           solveCCDIK(this.ikL.chain, this.ikL.end, _ikTgt, { iterations: 12, endOffset: this.ikL.endOffset });
         } else if (torso.lArm && torso.lFore && torso.lHand && this.model) {
           _ikTgt.copy(torso.beltLocal);
           this.model.localToWorld(_ikTgt);
-          clampAlcanceIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt);
           solveCCDIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt, { iterations: 8 });
         }
       }
@@ -1424,26 +1372,6 @@ class CharController {
         _aplicaMorte(bone, _qLean.setFromAxisAngle(_axisF, this._deathK * 0.22).clone());
       }
     }
-    // Delta de yaw sai antes do mixer e entra uma vez sobre a pose final (docs/visual-consistency/HEAD-YAW.md).
-    if (this.headBone && !this.dead && !this.emotando && this.lod < 2
-        && /^(idle|idle1h|crouch)$/.test(this.curName || '')) {
-      this.group.getWorldQuaternion(_gq);
-      _v.set(0, 0, 1).applyQuaternion(_gq);
-      const fx = _v.x, fz = _v.z;
-      this.headBone.getWorldQuaternion(_wq);
-      _v.set(0, 0, 1).applyQuaternion(_wq);
-      const curYaw = Math.atan2(fx * _v.z - fz * _v.x, fx * _v.x + fz * _v.z);
-      const corr = Math.max(-AIM_CORR_CLAMP, Math.min(AIM_CORR_CLAMP, curYaw * 0.8));
-      this._yawCorr = (this._yawCorr || 0) + (corr - (this._yawCorr || 0)) * Math.min(1, dt * 6);
-      if (Math.abs(this._yawCorr) > 1e-4) {
-        _headUpQ.setFromAxisAngle(_upY, this._yawCorr);
-        this.headBone.parent.getWorldQuaternion(_pq);
-        this._yawUndo.copy(_pq).invert().multiply(_headUpQ).multiply(_pq);
-        this.headBone.quaternion.premultiply(this._yawUndo);
-        this._yawUndo.invert(); this._yawApplied = true;
-        this.headBone.updateWorldMatrix(false, true);
-      }
-    } else this._yawCorr = 0;
     /* Hitbox da cabeça sincronizada por ÚLTIMO: overlays de tronco/emote/recarga/morte
        mexem em ancestrais do Head DEPOIS do ponto onde ela era copiada (crítico 31/10, docs/visual-consistency/TP-WORLD.md). */
     if (this.headBone) {
