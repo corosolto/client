@@ -5,3 +5,5 @@ Objetivo completo: Flávio/47PRs/anúncios/trailers, Java externo preservado. SD
 GLM25 recebido JSON puro, base SHA e literal conferidos; só vetor de spawnMark mudou.10 orientações câmera real/desenho real verdes, mutante aplicado e vermelho dot=-112. Execução de régua por Codex. Próximo: gate mapjson, docs geradas e QA visual no browser quando gate B4 liberar o coordenador.
 
 Gate eval:mapjson completo passou (entradas inválidas, regressões editor, contrato e mutantes anteriores, yaw10orientações e mutante aplicado/reprovado). Geradores arch/docs normais e docs:check verdes, sem delta. Log /tmp/corosolto-sdk-mapjson-focused.log. QA visual ainda pendente; não declarar PR1101 concluído nem Vercel liberada.
+
+2026-10-31T01:49:59.458036+00:00 — EgoLiteSpace13/p4: appreal9343/construtor.html, selecionado spawnA yaw0 aponta−Z; alterado yawπ/2 peloinspector, seta−X visível, exportaçãoJSON preservaπ/2 e spawnBπ.94nós598arestas, validaçãoconexa permaneceu. Screens/JSONHQruntime/media/sdk-construtor-yaw-*. Página QAfechada; teste próprio jáprova10orientações nacâmerareal. QAeditor local concluída, não publicação/Vercel/merge. Próximo checkpoint e pushnormal/reviewatual.
