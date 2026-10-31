@@ -750,17 +750,40 @@ function dismissSplash(e) {
   const sp = document.getElementById('boot-splash');
   if (!sp || !_splashReady || sp.classList.contains('gone')) return;
   if (e?.target?.closest?.('[data-splash-fica]')) return;
-  e?.preventDefault?.(); e?.stopPropagation?.();
+  e?.preventDefault?.(); e?.stopPropagation?.();   // bloqueia ANTES da anti-reentrada: 2º gesto preso na splash não vaza atalho para o lobby
+  if (sp.dataset.csEntrada) return;   // splash presa aguardando anúncio/import: 2º gesto não reprocessa
+  sp.dataset.csEntrada = '1';
   _entradaEm = performance.now();
   loadingStage.hide();
   dockLoadingCharacter();
-  sp.classList.add('gone');
   window.__gameLaunch?.ready('entrada');
   contagem.evento('splash_enter');
-  marcoFunil('splash_enter');   // funil (084): o lobby ficou visível de verdade
-  _lobbyEntrou();               // e o relógio de permanência no lobby começa aqui
-  setTimeout(() => sp.remove(), 480);
-  setTimeout(focusMenu, 120);   // pós-splash: dá foco ao 1º botão pra ↑/↓ navegarem SEM precisar de Tab
+  // O anúncio deve fechar antes de contar a entrada no lobby; convites e testes
+  // preservam o caminho direto. O gesto inicial continua destravando o áudio.
+  let lobbyMarcado = false;
+  const entrarNoLobby = () => {
+    if (lobbyMarcado) return; lobbyMarcado = true;
+    marcoFunil('splash_enter');   // funil (084): o lobby ficou visível de verdade
+    _lobbyEntrou();               // e o relógio de permanência no lobby começa aqui
+    setTimeout(focusMenu, 120);   // pós-splash: dá foco ao 1º botão pra ↑/↓ navegarem SEM precisar de Tab
+  };
+  const soltaSplash = () => {   // splash some SÓ com anúncio aberto de verdade ou lobby liberado — nunca no limbo
+    sp.classList.add('gone');
+    setTimeout(() => sp.remove(), 480);
+  };
+  if (inspectionScreen || testMode || params.get('sala')) { entrarNoLobby(); soltaSplash(); }
+  else {
+    const menuIds = mapasDoMenu().map((m) => (typeof m === 'string' ? m : m?.id)).filter(Boolean);
+    let prazo = setTimeout(() => { prazo = null; entrarNoLobby(); soltaSplash(); }, 2500); // prazo operacional curto: libera UMA vez; o import em si NÃO é cancelado
+    import('./mode-announcements.js')   // dinâmico: o módulo só baixa quando há o que anunciar
+      .then((m) => {
+        if (prazo) { clearTimeout(prazo); prazo = null; }
+        if (lobbyMarcado) { soltaSplash(); return; }   // timeout/jogo já mudaram de fase: anúncio tardio não abre
+        if (m.mostrarNovidadesModos({ mapIds: menuIds, onDone: entrarNoLobby })) soltaSplash(); // modal aberto de verdade: splash sai agora, lobby só no onDone
+        else { soltaSplash(); entrarNoLobby(); }   // sem UI: onDone já rodou no módulo; a guarda evita 2ª marcação
+      })
+      .catch(() => { if (prazo) { clearTimeout(prazo); prazo = null; } soltaSplash(); entrarNoLobby(); });   // módulo falhou: lobby liberado como no fluxo atual, splash nunca presa
+  }
   musicArmed = true;
   if (musicFade) { clearInterval(musicFade); musicFade = null; }
   startMenuMusic();

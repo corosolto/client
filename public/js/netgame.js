@@ -316,6 +316,15 @@ class Netcode {
     const roster = (net.meta && net.meta.roster) || [];
     const rosterById = new Map(roster.map((row) => [row.id, row]));
     const charDe = (id) => rosterById.get(id)?.char;
+    /* Com identidade autoritativa, o corpo do VIP fica reservado mesmo se um humano
+       usar o mesmo personagem. Sem essa extensão, permanece o casamento legado. */
+    const vipId = snap.objective?.vipId;
+    const vipValido = Number.isInteger(vipId) && vipId >= 0 && vipId <= 65535;
+    const vipLocal = vipValido ? game.objective?.vip : null;
+    if (vipLocal) {
+      const iv = livres.indexOf(vipLocal);
+      if (iv >= 0) livres.splice(iv, 1);   // corpo reservado ao NPC: ninguém mais o recebe
+    }
     const pega = (team, id) => {
       const alvo = charDe(id);
       let i = alvo ? livres.findIndex((b) => b.def && b.def.id === alvo && b.team === team) : -1;
@@ -332,7 +341,7 @@ class Netcode {
         this._netMap.set(e.id, game.player);
         continue;
       }
-      const bot = pega(e.team, e.id);
+      const bot = (vipValido && e.id === vipId && vipLocal) ? vipLocal : pega(e.team, e.id);
       if (!bot) continue;
       bot._remote = e.id; bot._netId = e.id;
       bot.team = e.team;                      // o lado do corpo passa a ser o do servidor
@@ -374,13 +383,8 @@ class Netcode {
       game.roundKills.E = snap.roundKillsE;
       game.roundKills.B = snap.roundKillsB;
     }
-    /* roundEnd é o único adiado para DEPOIS das entidades (fimDeRound): o título do objetivo
-       lê o alive autoritativo DESTE snapshot — antes do laço o VIP ainda carrega o estado da
-       rodada passada e morte+fim no mesmo pacote virava "A FUGA FOI INTERROMPIDA". As demais
-       transições seguem ANTES das entidades: o prepareRound do countdown reseta a apresentação
-       e o snapshot da rodada nova assenta as poses válidas por cima. `_netTick >= 0` é a MESMA
-       guarda do 1º snapshot (ver transicaoDeEstado) avaliada ANTES de subir o tick: entrar no
-       meio de um roundEnd continua sem cerimônia. */
+    /* roundEnd lê as entidades atuais; countdown reseta antes de recebê-las.
+       A guarda anterior ao incremento do tick mantém a entrada sem cerimônia. */
     const fimDeRound = game.state === 'roundEnd' && game.state !== estadoAntes && this._netTick >= 0;
     if (game.state !== estadoAntes && !fimDeRound) this.transicaoDeEstado(estadoAntes, game.state, placarAntes);
     this.vagas = snap.livre || null;
@@ -496,8 +500,6 @@ class Netcode {
         this.morteRemota(ent, att);
       }
     }
-    /* Cerimônia do roundEnd com as entidades DESTE snapshot já aplicadas (fimDeRound acima);
-       snapshot repetido não chega aqui: o estado já era roundEnd e não há transição. */
     if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes);
     if (this._evOn) this._drenar(snap, primeiroSnap);
     /* Arco de dano no MP: heurística do atirador mais próximo <600 ms — o snapshot não diz
@@ -581,8 +583,7 @@ class Netcode {
           const mine = winner === game.playerTeam;
           if (game.objective?.roundResult) {
             const fim = game.objective.roundResult(winner);
-            // false = sem placar: a cinemática do objetivo é o palco deste roundEnd (mesma
-            // regra do _endRound local). Sem objetivo, o placar comum segue como antes.
+            // O placar não pode cobrir a cinemática, como no _endRound local.
             game._resultadoDaRodada(fim.title, fim.detail, false);
           } else {
             game._resultadoDaRodada(`${game._teamName(winner)} LEVARAM O ROUND`, mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche');

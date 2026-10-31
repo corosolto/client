@@ -237,9 +237,7 @@ export class OperacaoFlavio {
     return destinoProtecaoEscolta(bot, this.vip, this.game.bots, ameacas, bot._escortDestination || (bot._escortDestination = {}));
   }
 
-  /* Encerra a marcha da cinemática anterior — prepareRound/startCinematic trocavam de cena
-     deixando as fontes agendadas tocando (duas marchas dobram pela rodada seguinte). Chamar de
-     novo é inofensivo: lista vazia não faz nada e stop duplo é engolido. */
+  // Fontes agendadas também precisam parar ao pular ou substituir a cena.
   _encerrarFontes() {
     for (const fonte of this.fontes) { try { fonte.stop(); } catch { /* já parada */ } }
     this.fontes = [];
@@ -413,7 +411,10 @@ export class OperacaoFlavio {
   }
 
   netState() {
-    return snapshotEscolta(this.state);
+    const snap = snapshotEscolta(this.state);
+    const nid = this.vip?._nid;
+    if (Number.isInteger(nid) && nid >= 0 && nid <= 65535) snap.vipId = nid;   // id autoritativo do NPC: cliente reserva o corpo dele antes do casamento
+    return snap;
   }
 
   applyNetState(net) {

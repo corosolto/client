@@ -45,3 +45,13 @@ Régua independente ampliada antes do reparo: três RED confirmados (placar, mor
 
 ### GLM-08 recebido e medido
 Base/hash/trechos conferidos. Oito casos locais verdes: placar oculto durante cena, morte atual do VIP no roundEnd, reset com relógio e entidades autoritativas preservados, primeiro snapshot sem cerimônia e corte da marcha no reset/reentrada. Seis mutantes aplicados/reprovados, incluindo regressão da ordem real do snapshot. Sem teste humano/MP pareado ainda. HQ checkpoint5237cb5 com185 testes verdes e execução/tokens por pacote no navegador.
+
+### GLM-12 reservado: identidade do NPC e contenção de entrada
+Checkpoint f75b1a391. RED independente reproduz humano com skin igual consumindo corpo do VIP, vipId ausente no estado, e segundo gesto escapando da splash pendente. Lease em netgame.js, mode_operacao_flavio.js e main.js até recebimento. Backend/Java intocados; novo campo objective JSON aproveita backend182 existente. Testes de ordem normal, sem NPC e mutantes ainda serão ampliados no recebimento.
+
+### GLM-12 recebido e validado localmente
+JSON veio com cercas Markdown, removidas só do envelope; versão bruta preservada no HQ. Hashes/trechos conferidos. Identidade numérica do VIP via objective JSON, reserva antecipada do corpo e contenção dos gestos verdes. Régua NPC:8casos incluindo ordem/limites/fallback,2mutantes aplicados/reprovados. Anúncio: disponibilidade, entrada única, timeout/import tardio, falha, convite/teste e3mutantes aplicados/reprovados.
+
+QA pareada local passou: fixture runtime/flavio-pair/ no HQ usa game/ e api/_lib do backend182 df6ab491, public/tools da lane cliente, sem modificar symlink backend→Java. Room e Game reais, codec binário v7, humano com mesmo personagem sem tomar VIP, morte atual/resultado sem placar e countdown preservando relógio. É fixture sem WebSocket nem participantes humanos; não é produção ou partida humana. Script/check/result e pins preservados no runtime. Avisos de instâncias Three/GLTF anotados no log, sem falha de contrato.
+
+Checagem ampla check:fast segue rodando; eval:tpanim3p já falhou e precisa diagnóstico antes de qualquer declaração de gate verde. Não atribuir automaticamente à lane nem ignorar como dívida. Falta revisão independente no head final, CodeRabbit atual, push normal com hooks e QA WebSocket/browser pareada.
