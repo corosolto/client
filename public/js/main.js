@@ -5087,7 +5087,7 @@ function mpPreCarregarProximo(m) {
     mapaReady.then((mapa) => preloadMapProps([...MAP_PROPS, ...(mapa.props || [])])),
     MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadAmbientLife(mapa.ambience || [])),
     mapaReady.then((mapa) => mapa.preload ? mapa.preload() : null),
-    preloadAuthoredFamilies(authoredBootFamilies(POINTER_COARSE ? [charWeapon(currentChar)] : armas)),
+    preloadAuthoredFamilies(authoredBootFamilies(POINTER_COARSE ? [] : armas)),
   ]).catch((e) => console.warn('[mp] pré-carga do próximo mapa falhou (a virada carrega):', e && e.message));
 }
 

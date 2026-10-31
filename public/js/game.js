@@ -2871,7 +2871,8 @@ export class Game {
     // modo de armas: aplica o loadout inicial. No modo 'all', o player entra com a arma do
     // personagem dele (a mesma da tela de seleção) em vez da AWP padrão.
     const mode = this._wpnMode();
-    const cw = charWeapon(this.playerCharId);
+    const rosterWeapon = this._mp?.net?.meta?.roster?.find((r) => r.id === this._mp.net.yourEnt)?.weapon;
+    const cw = (this.online && WEAPONS[rosterWeapon] ? rosterWeapon : null) || charWeapon(this.playerCharId);
     if (mode === 'pistols') {
       this.player.weapon = 'pistol';
       this.player.ammo.awp = { mag: 0, res: 0 };

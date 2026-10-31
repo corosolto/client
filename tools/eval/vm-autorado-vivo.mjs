@@ -21,6 +21,8 @@
  *   --mutante=maos-ocultas   oculta as mãos reais
  *   --mutante=cano-lateral  desloca só a origem do traçante, mantendo o modelo
  *   --mutante=boot-catalogo  volta a bloquear o mobile com modelos não equipados
+ *   --mutante=boot-mp-local  volta a ativar a arma do personagem antes do snapshot
+ *   --mp testa o boot real com personagem de pistola herdando AWP do servidor
  *
  *   node tools/eval/vm-autorado-vivo.mjs --porta=4361
  *   node tools/eval/vm-autorado-vivo.mjs --porta=4361 --todas   # as 25 armas de fogo
@@ -37,11 +39,12 @@ const arg = (n, d) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `=${
   .split('=').slice(1).join('=');
 const PORTA = arg('porta', '4361');
 const MUTANTE = arg('mutante', '');
-if (MUTANTE && !['semfiacao', 'maos-ocultas', 'cano-lateral', 'boot-catalogo'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
+if (MUTANTE && !['semfiacao', 'maos-ocultas', 'cano-lateral', 'boot-catalogo', 'boot-mp-local'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 const SO = arg('armas', '').split(',').filter(Boolean);
 const TODAS = process.argv.includes('--todas');
 const SEM_FLAGS = process.argv.includes('--sem-flags');
 const MOBILE = process.argv.includes('--mobile');
+const MP = process.argv.includes('--mp');
 const FOTOS = arg('fotos', '');
 const BASE = process.env.BASE || `http://localhost:${PORTA}`;
 
@@ -68,6 +71,24 @@ if (MOBILE && SEM_FLAGS) await pag.route('**/js/main.js*', async (route) => {
     "import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';",
     "import { preloadAuthoredFamilies as preloadVmReal, authoredBootFamilies } from './authoredvm.js'; const preloadAuthoredFamilies = (keys) => { (globalThis.__vmBootKeys ||= []).push([...keys]); return preloadVmReal(keys); };");
   if (source === before) throw new Error('instrumentação do boot não aplicou');
+  if (MP) {
+    const beforeMp = source;
+    source = source.replace('  const sessao = online ? mpSessao : null;', `
+  online = true;
+  const roster = [{ id: 1, char: charId, team: 'E', weapon: 'awp' },
+    { id: 2, char: CHARACTERS.find((c) => c.team === 'B').id, team: 'B', weapon: 'ak' }];
+  let seq = 0;
+  mpSessao = { net: { yourEnt: 1, yourTeam: 'E', espectador: false,
+    meta: { room: 'vm-boot-fixture', teamSize: 1, roster, protocolVersion: 4 }, events: [],
+    startPing() {}, stopPing() {}, sendInput() { return ++seq; },
+    computeStats() { return { hz: 20, kbps: 0, gapMax: 50, sinceLast: 10, ents: 2, tick: 1, ping: 0 }; },
+    snap: { tick: 1, t: 1, state: 'live', ents: roster.map((r) => ({ ...r,
+      alive: true, hp: 100, x: 0, y: 0, z: 0, yaw: 0, pitch: 0, bot: 0, ackSeq: 0 })) } } };
+  globalThis.__vmPreNext = () => mpPreCarregarProximo({ map: 'piscina_treta',
+    chars: roster.map((r) => r.char), weapons: ['m4'], trocaEmMs: 8000 });
+  const sessao = online ? mpSessao : null;`);
+    if (source === beforeMp) throw new Error('fixture MP não aplicou');
+  }
   if (MUTANTE === 'boot-catalogo') {
     const mutated = source.replace('authoredBootFamilies(_vmBootWeapons, playerWeaponSkins)', 'authoredBootFamilies(_armasDaPartida, playerWeaponSkins)');
     if (mutated === source) throw new Error('boot-catalogo não aplicou');
@@ -75,6 +96,12 @@ if (MOBILE && SEM_FLAGS) await pag.route('**/js/main.js*', async (route) => {
   }
   await route.fulfill({ response: res, body: source });
 });
+if (MUTANTE === 'boot-mp-local') {
+  const before = fs.readFileSync('public/js/game.js', 'utf8');
+  const source = before.replace('const cw = (this.online && WEAPONS[rosterWeapon] ? rosterWeapon : null) || charWeapon(this.playerCharId);', 'const cw = charWeapon(this.playerCharId);');
+  if (source === before) throw new Error('boot-mp-local não aplicou');
+  await pag.route('**/js/game.js*', (r) => r.fulfill({ contentType: 'application/javascript', body: source }));
+}
 
 await pag.route(/\.astro\/eval-vite|dev-toolbar|@vite\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: 'export default {};export const createHotContext=()=>({accept(){},dispose(){},prune(){},on(){},off(){},send(){},invalidate(){},data:{}});export const updateStyle=()=>{};export const removeStyle=()=>{};export const injectQuery=u=>u;export class ErrorOverlay{}' }));
 const erros = [];
@@ -130,8 +157,9 @@ if (!ALVO.length) {
 }
 
 let bootOk = true;
+let nextOk = true;
 if (MOBILE && SEM_FLAGS) {
-  const boot = await pag.evaluate(async () => { const weapon = window.__game.player.weapon; return { keys: globalThis.__vmBootKeys?.[0], weapon, source: (await import('/js/authoredvm.js')).vmFonteDe(weapon) }; });
+  const boot = await pag.evaluate(async () => { const g = window.__game; const weapon = g.online ? g._mp.net.meta.roster.find((r) => r.id === g._mp.net.yourEnt).weapon : g.player.weapon; return { keys: globalThis.__vmBootKeys?.[0], weapon, equipped: g.player.weapon, source: (await import('/js/authoredvm.js')).vmFonteDe(weapon) }; });
   const manifest = JSON.parse(fs.readFileSync('tools/viewmodels/vm-assets.manifest.json'));
   const root = manifest.servedRoot + '/';
   const allowed = new Map(manifest.files.filter((f) => /^(?:shared\/|melee\/|grenade\/|recoil\.json$)/.test(f.path) || root + f.path === new URL(boot.source.url, BASE).pathname)
@@ -139,9 +167,16 @@ if (MOBILE && SEM_FLAGS) {
   const unrelated = [...bootPaths].filter((p) => !allowed.has(p));
   const bytes = [...bootPaths].reduce((sum, p) => sum + (manifest.files.find((f) => root + f.path === p)?.bytes || 0), 0);
   const budget = [...allowed.values()].reduce((a, b) => a + b, 0);
-  bootOk = boot.keys?.length === 2 && boot.keys.includes(boot.source.chave)
+  bootOk = boot.weapon === boot.equipped && boot.keys?.length === 2 && boot.keys.includes(boot.source.chave)
     && boot.keys.includes('grenade') && !unrelated.length && bytes > 0 && bytes <= budget;
   console.log(`VMH boot mobile: ${JSON.stringify({ ...boot, bytes, budget, unrelated, ok: bootOk })}`);
+  if (MP) {
+    await pag.evaluate(() => globalThis.__vmPreNext());
+    await pag.waitForTimeout(1000);
+    const keys = await pag.evaluate(() => globalThis.__vmBootKeys.at(-1));
+    nextOk = keys.length === 1 && keys[0] === 'grenade';
+    console.log(`VMH próximo mobile: ${JSON.stringify({ keys, ok: nextOk })}`);
+  }
 }
 
 const linhas = [];
@@ -249,9 +284,9 @@ console.log(`\n  ${bons}/${ALVO.length} armas montam o viewmodel autorado COM m�
 if (legado.length) console.log(`  caíram no legado: ${legado.join(' ')}`);
 if (semMao.length) console.log(`  autoradas mas SEM mão: ${semMao.join(' ')}`);
 if (erros.length) console.log(`  erros de página: ${[...new Set(erros)].slice(0, 3).join(' | ')}`);
-const ok = MUTANTE === 'boot-catalogo' ? !bootOk && bons === ALVO.length : MUTANTE ? bootOk && bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave
+const ok = nextOk && (['boot-catalogo', 'boot-mp-local'].includes(MUTANTE) ? !bootOk && bons === ALVO.length : MUTANTE ? bootOk && bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave
   : MUTANTE === 'cano-lateral' ? l.visiveis > 0 && l.emQuadro && l.canoEmQuadro && l.autorada && !l.fallback && l.mobile === MOBILE && Number.isFinite(l.rastroPx) && l.rastroPx > 1
-  : !l.visiveis) : bootOk && bons === ALVO.length;
+  : !l.visiveis) : bootOk && bons === ALVO.length);
 if (MUTANTE) console.log(`  mutante ${MUTANTE}: ${ok ? 'detectado' : 'sobreviveu ou falhou por outro motivo'}`);
 console.log(ok ? (MUTANTE ? '\n  VERDE — regressão provocada detectada\n' : '\n  VERDE — o caminho autorado está ligado\n')
                : '\n  VERMELHO — o jogo não está montando o viewmodel novo\n');

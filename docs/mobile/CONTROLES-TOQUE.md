@@ -69,9 +69,14 @@ rodada encerrada são cancelados antes de começar a próxima. Os mutantes `roun
 e `round-mp-preso` removem cada limpeza separadamente.
 
 No mobile o boot espera só a arma inicialmente equipada e os recursos compartilhados,
-incluindo a granada; os demais viewmodels entram no primeiro uso. O mesmo limite vale
-na pré-carga do próximo mapa. A régua de catálogo registra chaves e requisições antes
+incluindo a granada; os demais viewmodels entram no primeiro uso. No próximo mapa,
+o anúncio ainda não informa sua arma: só compartilhados/granada são antecipados.
+A régua de catálogo registra chaves e requisições antes
 de trocar de arma: só aceita a entrada equipada, utilitários e bytes previstos no
 manifesto. `boot-catalogo` restaura a carga do elenco inteiro e precisa reprovar esse
 orçamento, mantendo a montagem e as mãos corretas. A varredura seguinte das armas
 continua exigindo mãos e cano corretos quando cada modelo chega sob demanda.
+O cenário `--mp` atravessa o boot real com roster e snapshots v4 simulados: personagem
+de pistola herda AWP, sem pedir a pistola temporariamente. `boot-mp-local` restaura a
+escolha local errada e precisa ultrapassar o orçamento. A pré-carga do próximo mapa
+é invocada nesse cenário e só pode anunciar a chave compartilhada `grenade`.
