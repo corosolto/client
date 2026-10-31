@@ -722,3 +722,22 @@ em curso. F2R2 crítica achou lacunas na cobertura causal e integridade
 da instância aplicada; produto e gate ainda NÃO aceitos. Campo novoTEXEL3
 localizado nos UV de guardas/acabamento; candidato privado fecha1.4244≤1.5,
 sem apagarTEXEL3b antigo. Produto ainda intacto até transferência.
+
+
+## 15:59 UTC — curadoria runtime aceita no contrato vigente
+
+R11 mediu14mapas/465peças, zero duplicate/outside/unsupported/unknown/divergent.
+Recibo privado curation-current-R14-receipt.json com hashes por mapa; prefs antes
+e depois iguais nas rodadas11–14. R12 recusado: wireframe torna a mesma peça
+também nao-medido; não era falha do produto. R14 exige exatamente os dois motivos
+acoplados com contagens iguais/soma correta, outras cláusulaszero; runtime exit0.
+CanalUV R13 exige só uv-canal e passou0. Crítico focal R14 CLEANa4c7d0d,
+27controles, combinado ao R10 integral CLEANfe65baa3. Checkpoint seletivo do
+controlador Ego/doc. O censo antigo de saturação fica intacto e vermelho; adaptação
+CI explícita ao contrato atual em lease GLM separada, sem waiver de META.
+
+PreviewR4 crítico semP1/P2 f9976d65, três mutantes exatos e baselinequebrado
+bloqueado; únicoP3 de comentário reduzido. Aceite visual da pegada/dedos permanece
+parcial; zoomdiagnóstico pvcam entra na malha e NÃO serve como evidência visual.
+Candidato CampoUV transferido ao produto, régua causal nova em lease GLM. F2R3
+escreve apenas gate/doc, sem produto, para lacunas apontadas em d5773902.
