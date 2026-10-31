@@ -193,7 +193,7 @@ plantarPontesThree();
 PRE_DISPARO = true;
 const MAP_JSON = join(ROOT, 'tools', 'eval', 'map_check.json');
 const REL_MAP = existsSync(join(HERE, 'map-check.mjs'))
-  ? freshReport(MAP_JSON, () => runNode('map-check.mjs', {}, [], 900000)) : null;
+  ? freshReport(MAP_JSON, () => runNode('map-check.mjs', {}, [], 1500000)) : null;
 const MAT_JSON = join(ROOT, 'tools', 'eval', 'mat_check.json');
 const REL_MAT = existsSync(join(HERE, 'mat-check.mjs'))
   ? freshReport(MAT_JSON, () => runNode('mat-check.mjs')) : null;

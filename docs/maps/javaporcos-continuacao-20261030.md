@@ -1150,3 +1150,7 @@ CI41187084729 confirmou novamente MAPAUD sem relatório após900s; restantes ré
 Rechecagem do revisor aceitou cinco correções e detectou OBJ3 comparando evidência com a própria cópia antiga. Corrigido o call-site para capturar net.snap atual e evidência sincronamente; polling até15s aguarda consumo do tick atual. Unidade executa o mesmo coletor e rejeita snapshot tick8 com consumo tick7. Incluído sem-objetivo na whitelist do arnês. Baseline unidade/sintaxe verdes; MP real ainda não rodado.
 
 Sondas no Ego31 local, SIM97f50aeceda56123: parede sólida da primeira casa bloqueia mordida=false e porta real permite=true. Grafo AudioNode real com volume0:72gains,72conexões ao master,0diretas ao destination, master.gain=0. Instrumentação restaurada depois; sem prova auditiva de qualidade a partir desse teste.
+
+### Orçamento da auditoria completa
+
+CIff0 gastou358.62s só em Lajes e morreu aos900.2s durante Cidade; main17mapas levou687.1s. Perfil original local também confirmou novos custos separados (Cidade627.91s, Rural468.22s, Vila ainda executando sob carga compartilhada). Ampliado apenas timeout do subprocesso para1500s e job de invariantes para30min (teto da casa), mantendo todos21mapas, amostras, limiares e falha de relatório ausente. AABBs estáticos já comparados sem nenhuma diferença em Lajes. Testes fresh-report5/5 e workflow-timeout verdes. CI real no novo HEAD decidirá se orçamento basta; não inferir verde local. CodeRabbit ainda sem review.
