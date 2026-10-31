@@ -59,7 +59,8 @@ export function prepararPassada(pivo) {
     mesh.frustumCulled = true;
     const distante = distantes.has(source.geometry) ? geometriaPatas(distantes.get(source.geometry)).geometry : null;
     rigs.push({ mesh, bones, head, ...data, distante, pinned: [false, false, false, false],
-      anchors: data.feet.map(() => new THREE.Vector3()), local: new THREE.Vector3(), scale: new THREE.Vector3() });
+      anchors: data.feet.map(() => new THREE.Vector3()), previousFeet: data.feet.map(() => new THREE.Vector3()),
+      feetReady: false, local: new THREE.Vector3(), scale: new THREE.Vector3() });
   }
   pivo.userData.passada = { rigs, previous: new THREE.Vector3(), ready: false, phase: 0 };
 }
@@ -96,7 +97,8 @@ export function atualizarPassada(pivo, pos, world, tempo, mutante = '') {
       if (distance < 1e-7) {
         if (rig.pinned[i]) rig.local.copy(rig.anchors[i]);
         else {
-          rig.local.copy(foot).add(bone.position); rig.mesh.localToWorld(rig.local);
+          if (rig.feetReady && mutante !== 'parada-desliza') rig.local.copy(rig.previousFeet[i]);
+          else { rig.local.copy(foot).add(bone.position); rig.mesh.localToWorld(rig.local); }
           const floor = world?.groundHeightAt?.(rig.local.x, rig.local.z) ?? rig.local.y;
           const dy = floor - rig.local.y, step = rig.height * rig.scale.y * dt;
           rig.local.y += THREE.MathUtils.clamp(dy, -step, step);
@@ -125,6 +127,8 @@ export function atualizarPassada(pivo, pos, world, tempo, mutante = '') {
         bone.position.set(0, bone.position.y + dy, rig.stride * APOIO * (ease - .5));
       }
     }
+    for (let i = 0; i < 4; i++) rig.previousFeet[i].copy(rig.feet[i]).add(rig.bones[i].position).applyMatrix4(rig.mesh.matrixWorld);
+    rig.feetReady = true;
   }
 }
 

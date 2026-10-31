@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 const base = process.env.BASE;
 if (!base) throw new Error('BASE obrigatório');
 const mutante = process.argv.find(arg => arg.startsWith('--mutante='))?.slice(10) || '';
-if (!['', 'patina', 'apoio-no-ar'].includes(mutante)) throw new Error('mutante desconhecido');
+if (!['', 'patina', 'apoio-no-ar', 'parada-desliza'].includes(mutante)) throw new Error('mutante desconhecido');
 const type = process.env.TYPE || 'jovem';
 const step = Number(process.env.STEP || .01);
 if (!['jovem', 'adulto', 'matriarca', 'ariete'].includes(type) || !(step > 0)) throw new Error('TYPE ou STEP inválido');
@@ -26,16 +26,22 @@ try {
     if (!g.bots.some(b => b.alive && b._boarType === type)) g.objective.assignar({ id: `qa.${type}`, type, hp: 100, entrance: 0 });
     const bot = g.bots.find(b => b.alive && b._boarType === type && b._boarVisual);
     const visual = bot._boarVisual;
+    bot.pos.set(0, 0, 0); bot.yaw = 0; bot._boarFocinhoAte = 0; bot._boarGolpeAte = 0; bot._boarCorpo = null;
+    g.player.pos.set(3, 0, 0); g.objective.state.mutante = mutante;
+    g.objective.atualizaVisual(bot); visual.updateMatrixWorld(true);
     let mesh;
     visual.traverse(o => { if (o.isMesh) mesh ||= o; });
     const attr = mesh.geometry.attributes.position;
+    mesh.geometry.computeBoundingBox();
+    const box = mesh.geometry.boundingBox, midX = (box.min.x + box.max.x) / 2, midZ = (box.min.z + box.max.z) / 2;
     const feet = Array(4).fill(-1);
     for (let i = 0; i < attr.count; i++) {
-      const q = (attr.getX(i) < 0 ? 0 : 1) + (attr.getZ(i) < 0 ? 0 : 2);
+      const q = (attr.getX(i) < midX ? 0 : 1) + (attr.getZ(i) < midZ ? 0 : 2);
       if (feet[q] < 0 || attr.getY(i) < attr.getY(feet[q])) feet[q] = i;
     }
     if (feet.includes(-1)) throw new Error('não encontrei as quatro patas no GLB real');
     const footWorld = index => {
+      if (mesh.geometry.attributes.position !== attr) throw new Error('LOD mudou durante a comparação de vértices');
       const v = new THREE.Vector3().fromBufferAttribute(attr, index);
       if (mesh.isSkinnedMesh) mesh.applyBoneTransform(index, v);
       return mesh.localToWorld(v);
@@ -76,7 +82,7 @@ try {
         && Math.hypot(v.x - previous[i].x, v.z - previous[i].z) < 1e-5).length >= 2) resumed++;
       previous = next;
     }
-    return { type: bot._boarType, step, skinned: !!mesh.isSkinnedMesh, frames: 240, supported, stopSlip, settled, resumed,
+    return { type: bot._boarType, lod: visual.userData.passada.longe ? 'far' : 'near', step, skinned: !!mesh.isSkinnedMesh, frames: 240, supported, stopSlip, settled, resumed,
       meanSlipRatio: ratios.reduce((a, b) => a + b, 0) / ratios.length, worstSlipRatio: Math.max(...ratios) };
   }, { mutante, type, step });
   writeFileSync(`${out}/resultado${mutante ? `-${mutante}` : ''}.json`, JSON.stringify(result, null, 2));
