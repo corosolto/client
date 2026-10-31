@@ -91,8 +91,7 @@ Cobertura: **3864 de 9087 linhas (43%)** do `game.js` têm dono declarado. O res
 | 295 | `MOVE_MUL` | 6 |
 | 302 | `MOVE2` | 4 |
 | 306 | `STEP_H` | 3 |
-| 313 | `MANTLE_APOIO` | 4 |
-| 317 | `MANTLE_GRID` | 5 |
+| 321 | `EMPTY_COLLIDERS` | 5 |
 | 322 | `RACK_OLD` | 4 |
 | 326 | `RACK_RETA` | 25 |
 | 353 | `RADIO` | 5 |
@@ -195,6 +194,8 @@ Cobertura: **3864 de 9087 linhas (43%)** do `game.js` têm dono declarado. O res
 | 3129 | `_endRound()` | 34 |
 | 3163 | `_roundWinnerVoice()` | 12 |
 | 3175 | `_fimDaPartida()` | 7 |
+| 3195 | `_modeId()` | 1 |
+| 3196 | `_teamPopulation()` | 5 |
 | 3182 | `_endMatch()` | 61 |
 | 3243 | `_ensureDolly()` | 41 |
 | 3284 | `_tickDolly()` | 23 |
@@ -331,8 +332,11 @@ Cobertura: **3864 de 9087 linhas (43%)** do `game.js` têm dono declarado. O res
 | 6030 | `_collide()` | 23 |
 | 6053 | `_collideRot()` | 22 |
 | 6075 | `_mantleAlcance()` | 50 |
+| 6145 | `_mantleColliders()` | 10 |
 | 6125 | `_mantleAlcancavel()` | 12 |
 | 6137 | `_mantleTarget()` | 35 |
+| 6199 | `_beginMantle()` | 16 |
+| 6215 | `_stepMantle()` | 29 |
 | 6172 | `_freeSpot()` | 30 |
 | 6202 | `_retaAndavel()` | 20 |
 | 6222 | `_walkDepth()` | 16 |

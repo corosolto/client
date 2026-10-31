@@ -311,10 +311,14 @@ const MANTLE_H = 1.95;
 const MANTLE_D0 = 0.58;
 const MANTLE_ALC = 1.50;
 const MANTLE_APOIO = 0.50;
-/* MANTLE_GRID = 0,75 m — passo da grade de alcance (ver `_mantleAlcance`). Menor que o
-   DIÂMETRO do corpo (0,76 m): a inundação não escorre por uma fresta por onde o corpo não
-   passaria. Maior que isso e ela vazaria; muito menor e custa tempo à toa. */
-const MANTLE_GRID = 0.75;
+const MANTLE_T_MIN = 0.30;
+const MANTLE_T_MAX = 0.44;
+const MANTLE_SCAN = 0.05;   // não pula apoios estreitos entre duas amostras de colisão
+/* Grade menor que o corpo impede frestas; 0,75 m aliasava rampas e o pontão amazônico. */
+const MANTLE_GRID = 0.50;
+const MANTLE_SCAN_DT = 0.05;
+const MANTLE_COLLIDER_GRID = 4;
+const EMPTY_COLLIDERS = Object.freeze([]);
 /* KILL-SWITCH DO ARMÁRIO DO SPAWN (P3, 01/08). `?rack=old` traz de volta o layout cego
    (2 fileiras fixas a 2,0/3,25 m atrás do spawn, x absoluto) E a seleção antiga (só a arma
    mais próxima em 1,9 m) — os dois juntos são o bug que o dono reportou às 20:38, e ficam
@@ -727,10 +731,11 @@ export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
 const FX_CLARAO = { normal: 1, reduzido: 0.45, minimo: 0.15 };
 
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, arena = false, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
     this._ctfOpt = ctf;
-    this._matchWeapons = matchWeapons;
+    this._arenaOpt = arena;
     this._armaN = 0;
+    this._matchWeapons = matchWeapons;
     this.renderer = renderer;
     this.sfx = sfx;
     this.settings = settings;
@@ -1316,15 +1321,16 @@ export class Game {
       }, undefined, () => {});
     }
     this._smokeTex = this._makeSmokeTex();
-    // modo Capture the Flag (?ctf=1): 3 pontos (2 spawns + meio); time vence o round segurando
-    // os 3 ao mesmo tempo. Rounds SEM FIM (sem _endMatch). Captura = ~3s na zona sem inimigo.
-    this.ctf = !!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1');   // menu (Capture the Flag) ou ?ctf=1
+    // Modos são explícitos no contrato do Game. Vira-Casaca é local: nunca divide estado
+    // com CTF nem depende de query string escondida.
+    this.arena = !!this._arenaOpt;
+    this.ctf = !this.arena && (!!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1'));
     /* TETO DE RODADAS LIVRE (1–15, ROUNDS_CUSTOM_MAX): era whitelist [1,3,5,7] — o dono
        pediu número customizado. Fora do intervalo cai no padrão do modo. Empate em teto
-       PAR (2×2 no melhor de 4) segue pro desempate por abates (já existente no _endMatch). */
+       PAR (2×2 no melhor de 4) segue pro desempate por abates (já existente no _endMatch).
+       Vira-Casaca é uma única disputa contínua, encerrada pela conversão do último rival. */
     const requestedRounds = sanitizeRounds(roundsMax);
-    this._roundsMax = requestedRounds || (this.ctf ? CTF_ROUNDS_MAX : ROUNDS_MAX);
-    this.roundsToWin = Math.floor(this._roundsMax / 2) + 1;
+    this._roundsMax = this.arena ? 1 : (requestedRounds || (this.ctf ? CTF_ROUNDS_MAX : ROUNDS_MAX));
     this.ctfPts = [];
     this.ctfCaps = { E: 0, B: 0 };   // total de capturas de bandeira por time (cumulativo na partida)
     this._ctfRingGeo = new THREE.TorusGeometry(1, 0.045, 8, 48);   // anel FINO de contorno (era disco gordo)
@@ -1340,11 +1346,9 @@ export class Game {
     this.roundCaps = { E: 0, B: 0 };    // capturas DESTA rodada (o ctfCaps é da partida toda)
     this.matchKills = { E: 0, B: 0 };   // abates das rodadas JÁ FECHADAS (desempate do _endMatch)
     this.timeLeft = ROUND_TIME;
-    /* MODO ARENA: mata-mata onde quem morre troca de time. O jogo corre sem rounds,
-       respawn contínuo, e a partida acaba quando um time fica com ≤ 1 jogador.
-       ?arena=1 ativa. */
-    this.arena = QS.get('arena') === '1';
-    this.arenaSwitched = 0;   // contador de trocas (pro HUD)
+    /* VIRA-CASACA: quem morre troca de time no respawn. A partida corre sem rounds
+       intermediários e termina quando a conversão deixa um dos lados vazio. */
+    this.arenaSwitched = 0;
     /* game.js:944 — RELÓGIO DE PARTIDA DO CAPTURA (não é relógio de round). Só o modo
        CTF usa; no modo de abate fica Infinity e nada o lê. Ele NÃO reinicia a cada
        rodada (é o que o diferencia do `timeLeft`) e só aparece no HUD nos últimos
@@ -2454,7 +2458,7 @@ export class Game {
     const ax = -Math.sin(p.yaw) * cp, ay = Math.sin(p.pitch), az = -Math.cos(p.yaw) * cp;   // forward = (-sin,-cos)
     let best = null, bestAng = 0.11;   // ~6,3° de cone
     for (const b of this.bots) {
-      if (!b.alive || b.team === this.playerTeam) continue;
+      if (!b.alive || b.team === p.team) continue;
       const dx = b.pos.x - from.x, dy = (b.pos.y + 1.2) - from.y, dz = b.pos.z - from.z;
       const dist = Math.hypot(dx, dy, dz); if (dist < 0.5 || dist > 60) continue;
       const nx = dx / dist, ny = dy / dist, nz = dz / dist;
@@ -2801,8 +2805,8 @@ export class Game {
     this.roundKills = { E: 0, B: 0 };
     this.roundCaps = { E: 0, B: 0 };
     this.timeLeft = ROUND_TIME;
-    /* MODO ARENA: sem timer de round — a partida só acaba quando um time fica
-       com ≤ 1 jogador (_checkArenaWin). */
+    /* VIRA-CASACA: sem timer de round — a partida acaba quando um lado fica vazio,
+       depois que a conversão pendente é aplicada no respawn. */
     if (this.arena) this.timeLeft = Infinity;
     this._matchPoint = false;    // banner de MATCH POINT dispara uma vez por round
     this._resultado = null;      // o título do placar é da RODADA que acabou, não da que começa
@@ -2810,8 +2814,10 @@ export class Game {
     // por dominação no mesmo frame em que o alvo de bandeiras foi batido, o pedido fica
     // pendurado e mataria a rodada seguinte no primeiro quadro.
     this._roundOverPedido = false;
+    this._matchEndShown = false;
     this._resetKillSequence();
     this._resetPositions();
+    if (MANTLE && !this._mAlc) this._mantleAlcance();
     if (this.ctf) this._initCTF();
     this.state = 'countdown';
     this.stateUntil = this.time + 3;
@@ -2823,12 +2829,14 @@ export class Game {
        relógio: dizer "primeiro a 2 bandeiras" é o que substitui o cronômetro que saiu. */
     // O ROUND 1 ainda declara o FORMATO (melhor de N, primeiro a X): o teto só vivia no
     // menu/HUD e jogador achava que não existia (relato out/2026).
-    const subRound = this.ctf
-      ? frase('alvoBandeiras', this.capsToWin)
-      : (PACE ? frase('alvoAbates', this.killsToWin)
-        : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta')));
-    this._banner(frase('round', this.roundNum),
-      this.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound);
+    const subRound = this.arena
+      ? tr('QUEM CAIR MUDA DE LADO')
+      : (this.ctf
+        ? frase('alvoBandeiras', this.capsToWin)
+        : (PACE ? frase('alvoAbates', this.killsToWin)
+          : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta'))));
+    this._banner(this.arena ? tr('VIRA-CASACA') : frase('round', this.roundNum),
+      this.arena ? subRound : (this.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound));
     if (!this.sfx.roundNumber(this.roundNum) && !this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
   }
   _resetPositions() {
@@ -2854,6 +2862,9 @@ export class Game {
       const jx = s.x + (Math.random() - .5), jz = s.z + (Math.random() - .5);
       ent.pos.set(jx, this._spawnY(jx, jz), jz);
       ent.hp = 100; ent.alive = true; ent.respawnAt = 0; ent.protUntil = 0;
+      // Rodada nova elimina a trajetória anterior e os buffers de salto em todos os slots.
+      ent.mantle = null; ent.mantleF = 0; ent._spaceHeld = false; ent._mantleScanAt = 0;
+      ent.jumpBufferedUntil = 0; ent.coyoteUntil = 0;
       return s;
     };
     const playerSpawn = place(this.player, this.playerTeam, 0);
@@ -3115,7 +3126,7 @@ export class Game {
   }
   _checkPace() {
     if (!PACE || this.state !== 'live') return;
-    if (this.ctf) return;   // o CAPTURA fecha pelo _checkCtfAlvo, que roda SEMPRE
+    if (this.ctf || this.arena) return;   // CTF e Vira-Casaca têm condições próprias
     const p = this.roundKills.E, b = this.roundKills.B, tgt = this.killsToWin;
     const lead = Math.max(p, b);
     if (!this._matchPoint && lead >= tgt - 2) {
@@ -3173,22 +3184,32 @@ export class Game {
      gateado por `!this.ctf` (game.js:update), o que fazia o modo CAPTURA rodar pra sempre —
      rounds infinitos, nenhuma tela de fim, e o placar do topo subindo sem teto. */
   _fimDaPartida() {
+    if (this.arena) return this.state === 'matchEnd';
     if (this.ctf) return this.roundNum >= this.roundsMax || this.ctfMatchLeft <= 0;
     return this.roundNum >= this.roundsMax;
   }
   // teto de rodadas do modo em jogo — o HUD conta "RODADA n/N" com este número
   get roundsMax() { return this._roundsMax; }
+  get roundsToWin() { return Math.floor(this._roundsMax / 2) + 1; }
 
-  _endMatch() {
-    this.state = 'matchEnd';
-    /* DESEMPATE: com o teto de 5 rodadas a partida pode fechar 2 × 2 (dois empates pelo
-       caminho). `roundsWon.E > roundsWon.B ? 'E' : 'B'` dava a vitória ao lado B por
-       omissão — um vencedor sorteado pela ordem do ternário. Agora empate de rodadas vai
-       pros abates da partida INTEIRA (matchKills, somado a cada _startRound). */
-    const winner = this.roundsWon.E !== this.roundsWon.B
+  _modeId() { return this.arena ? 'arena' : (this.ctf ? 'ctf' : 'rounds'); }
+  _teamPopulation(side) {
+    let total = 0;
+    for (const combatente of this.combatants || []) if (combatente.team === side) total++;
+    return total;
+  }
+  _endMatch(winnerOverride = null) {
+    // O snapshot pode ter aplicado o estado antes da apresentação local.
+    if (this._matchEndShown) return;
+    this._matchEndShown = true;
+    if (this.state !== 'matchEnd') this.state = 'matchEnd';
+    /* No Vira-Casaca o vencedor vem da população final. Nos modos de rodada, empate
+       segue para abates da partida inteira. */
+    const winner = winnerOverride || (this.roundsWon.E !== this.roundsWon.B
       ? (this.roundsWon.E > this.roundsWon.B ? 'E' : 'B')
-      : ((this.matchKills.E + this.roundKills.E) >= (this.matchKills.B + this.roundKills.B) ? 'E' : 'B');
-    const mine = winner === this.playerTeam;
+      : ((this.matchKills.E + this.roundKills.E) >= (this.matchKills.B + this.roundKills.B) ? 'E' : 'B'));
+    const playerSide = this.arena ? this.player.team : this.playerTeam;
+    const mine = winner === playerSide;
     // Tela de fim estilo CoD/Valorant: VITÓRIA/DERROTA gigante, time vencedor no sub.
     this.el.matchEnd.classList.toggle('win', mine);
     this.el.matchEnd.classList.toggle('lose', !mine);
@@ -3196,8 +3217,9 @@ export class Game {
     this.el.matchSub.textContent = mine
       ? frase('venceu', this._teamName(winner))
       : frase('perdeu', this._teamName(winner));
-    this.el.matchStats.innerHTML =
-      frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths);
+    this.el.matchStats.innerHTML = this.arena
+      ? `${tr('CONVERSÕES')}: ${this.arenaSwitched} · ${tr('SEUS ABATES')}: ${this.player.kills}`
+      : frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths);
     /* Cada personagem tem duas artes estáticas: a tela mostra quem o jogador escolheu,
        na pose correspondente ao resultado. UIA1 garante o par antes do deploy. */
     const REP = { E: 'mst', B: 'bombado', U: 'metaleiro', C: 'bonzo', F: 'chave' };
@@ -3221,13 +3243,13 @@ export class Game {
     try {
       window.va?.('event', { name: 'match_end', data: {
         winner, roundsP: this.roundsWon.E, roundsB: this.roundsWon.B,
-        map: this._mapId, mode: this.ctf ? 'ctf' : 'rounds',
+        map: this._mapId, mode: this._modeId(),
         character: this.playerCharId, seconds: Math.round(this.time),
       } });
     } catch {}
     try {
       this.onMatchEnd?.({
-        won: mine, team: this.playerTeam, character: this.playerDef.id,
+        won: mine, team: playerSide, mode: this._modeId(), character: this.playerDef.id,
         kills: this.player.kills, deaths: this.player.deaths,
         headshots: this.player.headshots || 0, bestStreak: this.mk.best || 0,
         roundsP: this.roundsWon.E, roundsB: this.roundsWon.B,
@@ -3389,21 +3411,21 @@ export class Game {
   _switchTeam(charId) {
     if (!this.player.alive || (this.state !== 'live' && this.state !== 'countdown')) return;
     const p = this.player;
+    const oldTeam = p.team;
+    const newTeam = oldTeam === 'E' ? 'B' : 'E';
+    const oldFaction = this._factionOf(oldTeam);
+    const newFaction = this._factionOf(newTeam);
     /* Reserva igual à da linha 712 (`byId` dá undefined fora do elenco), e da facção em que
        ele ENTRA. Sem ela o Game seguia corrompido: BUG-168, `eval:switchteam`. */
     if (charId) {
       const def = byId(charId);
       if (!def) console.warn(`[elenco] troca de lado pediu '${charId}', fora do elenco — usando a reserva do grupo`);
-      this.playerDef = def || CHARACTERS.find(_doLado(this.enemyFaction)) || this.playerDef;
+      this.playerDef = def || CHARACTERS.find(_doLado(newFaction)) || this.playerDef;
       this.playerCharId = this.playerDef.id;
       p.def = this.playerDef;
     }
-    const oldTeam = this.playerTeam;
-    const newTeam = oldTeam === 'E' ? 'B' : 'E';
-    const oldFaction = this.playerFaction;
     this.playerTeam = newTeam; this.enemyTeam = oldTeam;
-    this.playerFaction = this.enemyFaction;
-    this.enemyFaction = oldFaction;
+    this.playerFaction = newFaction; this.enemyFaction = oldFaction;
     const handProfile = { id: this.playerCharId, faction: this.playerFaction, gloveSkinId: this.playerGloveId,
       skin: this.playerDef?.pal?.skin, sleeve: this.playerDef?.pal?.shirt, accent: this.playerDef?.pal?.pants };
     this.vm.authored?.setProfile(handProfile);
@@ -3430,7 +3452,10 @@ export class Game {
       swapBot.mesh = buildCharacterModel(veste) || buildCharacter(veste);
       swapBot.mesh.group.traverse(o => { o.userData.botOwner = swapBot; });
       this.scene.add(swapBot.mesh.group);
-      swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot.alive = true;
+      swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot._switchTeam = null; swapBot.alive = true;
+      // O teleporte invalida a trajetória absoluta do lado anterior.
+      swapBot.mantle = null; swapBot.mantleF = 0; swapBot._spaceHeld = false;
+      swapBot._mantleScanAt = 0; swapBot.jumpBufferedUntil = 0; swapBot.coyoteUntil = 0;
       const s = this.world.spawns[oldTeam][(Math.random() * 4) | 0];
       swapBot.pos.set(s.x, this._spawnY(s.x, s.z), s.z);
       swapBot.yaw = this._spawnYaw(s, oldTeam, true);
@@ -3441,6 +3466,9 @@ export class Game {
     // respawn do jogador no lado novo
     const s = this.world.spawns[newTeam][(Math.random() * 4) | 0];
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
+    // O teleporte invalida a trajetória absoluta do lado anterior.
+    p.mantle = null; p.mantleF = 0; p._spaceHeld = false; p._mantleScanAt = 0;
+    p.jumpBufferedUntil = 0; p.coyoteUntil = 0;
     p.yaw = this._spawnYaw(s, newTeam); p.pitch = 0; p.hp = 100;
     this._scope(false, true);
     this._banner(frase('agoraVoceE', this._teamName(newTeam)), 'trocou de lado na treta — sem penalty, só julgamento');
@@ -4062,7 +4090,7 @@ export class Game {
     const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
     let best = null, bd = WEAPONS.knife.range;
     for (const b of this.bots) {
-      if (!b.alive || b.team === this.playerTeam) continue;
+      if (!b.alive || b.team === this.player.team) continue;
       const to = b.pos.clone().setY(b.pos.y + 1.2).sub(from);
       const d = to.length();
       if (d < bd && to.normalize().dot(dir) > 0.6) { best = b; bd = d; }
@@ -4497,24 +4525,17 @@ export class Game {
     // poça que cresce sob o cadáver (qualquer morte com posição — inclui bot×bot)
     if (BLOOD && ent.pos) this._bloodPoolAt(ent.pos);
     this._feed(attacker, ent, weap, head);
-    /* MODO ARENA: checa se a troca de time esvaziou um lado (≤ 1 sobrando). */
-    if (this.arena) this._checkArenaWin();
   }
-  /* ===================== MODO ARENA: condição de vitória =====================
-     Conta jogadores por time (player + bots, vivos e mortos — o morto vai
-     trocar no respawn). Se um time ficou com ≤ 1, o outro vence. */
+  /* VIRA-CASACA termina só depois do respawn aplicar a conversão. Um combatente
+     restante ainda pode lutar; zero combatentes significa que o lado foi convertido. */
   _checkArenaWin() {
-    const all = [this.player, ...this.bots];
-    const e = all.filter(e => e.team === 'E').length;
-    const b = all.filter(e => e.team === 'B').length;
-    if (e <= 1 || b <= 1) {
-      const winner = e > b ? 'E' : 'B';
-      this.state = 'matchEnd';
-      this.el.matchEnd.classList.remove('hidden');
-      this.el.matchTitle.textContent = winner === this.player.team ? 'VOCÊ SOBREVIVEU!' : 'VOCÊ FOI CONVERTIDO';
-      this.el.matchSub.textContent = `Time ${this._teamTag(winner)} venceu com ${Math.max(e, b)} jogadores`;
-      this.el.matchStats.innerHTML = `Trocas de time: ${this.arenaSwitched} · Seus abates: ${this.player.kills}`;
-    }
+    if (!this.arena || this.state !== 'live') return;
+    const e = this._teamPopulation('E'), b = this._teamPopulation('B');
+    if (e > 0 && b > 0) return;
+    // A população só é definitiva depois de aplicar as conversões no respawn.
+    if (this.player._switchTeam) return;
+    for (const c of this.combatants || []) if (c._switchTeam) return;
+    this._endMatch(e > 0 ? 'E' : 'B');
   }
   /* ===================== INDICADOR DIRECIONAL DE DANO =====================
      Dono: "matam muito fácil e o usuário não vê de onde veio o tiro". O indicador antigo era
@@ -5440,8 +5461,8 @@ export class Game {
      (scorePNum/crestP/siglaP) e `side` é o lado no modelo do jogo. */
   _plaqueta(slot, side) {
     const num = this.el['score' + slot + 'Num'];
-    /* Treta Pop (seção 2d): o número grande é round ganho; quem está vivo fica nos retratos. */
-    const n = String(this._uiV3() ? this.roundsWon[side] : this.roundKills[side]);
+    /* Vira-Casaca usa a população viva do lado; os demais modos mantêm a métrica do placar. */
+    const n = String(this.arena ? this._teamPopulation(side) : (this._uiV3() ? this.roundsWon[side] : this.roundKills[side]));
     if (num && num.textContent !== n) num.textContent = n;
     /* minúscula porque o seletor de atributo do CSS é SENSÍVEL A CAIXA e os arquivos
        são b/c/e/f/u.png — `data-f="U"` não casaria com `[data-f="u"]` e o brasão
@@ -6027,8 +6048,8 @@ export class Game {
      ainda não olham `ry`, `map-check`, `pickup-check`). Só quem passa pela rejeição paga
      o seno/cosseno, e os senos vêm precomputados do mapa. Medido no botsim (determinístico,
      60 s × 6 mapas): ver o commit desta correção. */
-  _collide(pos, r) {
-    for (const c of this.world.colliders) {
+  _collide(pos, r, colliders = this.world.colliders) {
+    for (const c of colliders) {
       const nx = Math.max(c.minX, Math.min(pos.x, c.maxX));
       const nz = Math.max(c.minZ, Math.min(pos.z, c.maxZ));
       const dx = pos.x - nx, dz = pos.z - nz;
@@ -6116,8 +6137,30 @@ export class Game {
         if (ok) { vis[d] = 1; fila.push(d); }
       }
     }
-    this._mAlc = { nx, nz, G, minX: B.minX, minZ: B.minZ, alt, vis };
+    const CG = MANTLE_COLLIDER_GRID;
+    const cnx = Math.max(1, Math.ceil((B.maxX - B.minX) / CG));
+    const cnz = Math.max(1, Math.ceil((B.maxZ - B.minZ) / CG));
+    const col = new Map();
+    for (const c of W.colliders) {
+      const i0 = Math.max(0, Math.floor((c.minX - 0.38 - B.minX) / CG));
+      const i1 = Math.min(cnx - 1, Math.floor((c.maxX + 0.38 - B.minX) / CG));
+      const k0 = Math.max(0, Math.floor((c.minZ - 0.38 - B.minZ) / CG));
+      const k1 = Math.min(cnz - 1, Math.floor((c.maxZ + 0.38 - B.minZ) / CG));
+      for (let i = i0; i <= i1; i++) for (let k = k0; k <= k1; k++) {
+        const key = i * cnz + k;
+        const bucket = col.get(key);
+        if (bucket) bucket.push(c); else col.set(key, [c]);
+      }
+    }
+    this._mAlc = { nx, nz, G, minX: B.minX, minZ: B.minZ, alt, vis, CG, cnx, cnz, col };
     return this._mAlc;
+  }
+  _mantleColliders(x, z) {
+    const M = this._mAlc || this._mantleAlcance();
+    const i = Math.floor((x - M.minX) / M.CG);
+    const k = Math.floor((z - M.minZ) / M.CG);
+    if (i < 0 || i >= M.cnx || k < 0 || k >= M.cnz) return EMPTY_COLLIDERS;
+    return M.col.get(i * M.cnz + k) || EMPTY_COLLIDERS;
   }
   /* O ponto (x, z) na cota `y` é chão que a caminhada já alcança? Olha a vizinhança de uma
      célula porque a grade é grossa de propósito; a cota tem que BATER (dentro do degrau),
@@ -6143,25 +6186,67 @@ export class Game {
     dx /= n; dz /= n;
     const chao = W.groundHeightAt(pos.x, pos.z, pos.y);
     const teto = chao + MANTLE_H;
-    const p = new THREE.Vector3();
-    for (let d = MANTLE_D0; d <= MANTLE_ALC + 1e-6; d += 0.25) {
+    const p = this._mantleProbe || (this._mantleProbe = new THREE.Vector3());
+    for (let d = MANTLE_D0; d <= MANTLE_ALC + 1e-6; d += MANTLE_SCAN) {
       const px = pos.x + dx * d, pz = pos.z + dz * d;
       const py = W.groundHeightAt(px, pz, teto + 0.5);   // Y do teto: resolve mapa multinível
-      p.set(px, py, pz); this._collide(p, 0.38);
+      p.set(px, py, pz); this._collide(p, 0.38, this._mantleColliders(px, pz));
       if (Math.abs(p.x - px) > 1e-3 || Math.abs(p.z - pz) > 1e-3) continue;
-      if (py <= chao + STEP_H) return null;
+      if (py <= chao + STEP_H) continue;   // ainda é o mesmo chão; a beirada pode estar mais adiante
       if (py > teto) return null;
       // APOIO: a superfície tem que continuar plana MANTLE_APOIO adiante, senão o corpo
       // não cabe em cima e o mantle entrega o jogador a uma queda.
       const ax = px + dx * MANTLE_APOIO, az = pz + dz * MANTLE_APOIO;
       const ay = W.groundHeightAt(ax, az, py + 0.5);
       if (Math.abs(ay - py) > STEP_H) return null;
-      p.set(ax, ay, az); this._collide(p, 0.38);
+      p.set(ax, ay, az); this._collide(p, 0.38, this._mantleColliders(ax, az));
       if (Math.abs(p.x - ax) > 1e-3 || Math.abs(p.z - az) > 1e-3) return null;
       if (!this._mantleAlcancavel(ax, az, ay)) return null;   // território novo: ver _mantleAlcance
       return { x: ax, y: ay, z: az };
     }
     return null;
+  }
+
+  /* A decisão fica em `_mantleTarget`; esta trajetória determinística é compartilhada por
+     predição e servidor e sobe antes de cruzar a parede. */
+  _beginMantle(p, target) {
+    const rise = target.y - p.pos.y;
+    p.mantle = {
+      x0: p.pos.x, y0: p.pos.y, z0: p.pos.z,
+      x1: target.x, y1: target.y, z1: target.z,
+      t: 0,
+      dur: Math.max(MANTLE_T_MIN, Math.min(MANTLE_T_MAX, 0.24 + rise * 0.10)),
+    };
+    p.mantleF = 0;
+    p.vel.set(0, 0, 0);
+    p.grounded = false;
+    p.jumpBufferedUntil = 0;
+    p.coyoteUntil = 0;
+    this.sfx.jump();
+  }
+
+  _stepMantle(p, dt) {
+    const m = p.mantle;
+    if (!m) return false;
+    m.t = Math.min(m.dur, m.t + dt);
+    const f = m.t / m.dur;
+    const smooth = (v) => v * v * (3 - 2 * v);
+    const up = smooth(Math.min(1, f / 0.68));
+    const across = smooth(Math.max(0, (f - 0.18) / 0.82));
+    p.pos.x = m.x0 + (m.x1 - m.x0) * across;
+    p.pos.z = m.z0 + (m.z1 - m.z0) * across;
+    p.pos.y = m.y0 + (m.y1 - m.y0) * up + Math.sin(f * Math.PI) * 0.04;
+    p.vel.set(0, 0, 0);
+    p.grounded = false;
+    p.mantleF = f;
+    if (f < 1) return true;
+    p.pos.set(m.x1, m.y1, m.z1);
+    p.grounded = true;
+    p.mantle = null;
+    p.mantleF = 0;
+    p.landDip = Math.max(p.landDip || 0, 0.22);
+    this.sfx.land();
+    return true;
   }
   /* PONTO ANDÁVEL MAIS PRÓXIMO (usado pelo armário do spawn).
      Empurra (x,z) pra fora de qualquer colisor/limite usando a MESMA física do jogador —
@@ -6373,6 +6458,7 @@ export class Game {
     // animação: locomoção pela velocidade + agachado + mira da cabeça pelo pitch.
     if (tp.ctrl) {
       tp.ctrl.setCrouch?.(p.crouchF > 0.5);
+      tp.ctrl.setMantle?.(p.mantle ? p.mantleF : null);
       tp.ctrl.setAr?.(p.grounded === false);
       tp.ctrl.aimPitch = p.pitch;
       const back = -(p.vel.x * Math.sin(p.yaw) + p.vel.z * Math.cos(p.yaw)) < -0.25;
@@ -6483,7 +6569,7 @@ export class Game {
       el.style.visibility = 'hidden';
       return;
     }
-    const enemyGroups = this.bots.filter(b => b.alive && b.team !== this.playerTeam).map(b => b.mesh.group);
+    const enemyGroups = this.bots.filter(b => b.alive && b.team !== this.player.team).map(b => b.mesh.group);
     // A profundidade vista pela câmera evita cruz falsa atrás da cobertura.
     this.ray.set(this.camera.position, cameraDir);
     this.ray.far = 200;
@@ -6534,6 +6620,8 @@ export class Game {
      mundo (BUG-86, KNOWN-BUGS.md). Chamado pelo _respawnPlayer (SP) e pelo netgame (MP). */
   _tpRevive() {
     this._tpDead = false;
+    this.player.mantle = null;
+    this.player.mantleF = 0;
     const tp = this.playerTP;
     if (!tp) return;
     if (tp.ctrl && tp.ctrl.revive) tp.ctrl.revive();
@@ -6552,6 +6640,12 @@ export class Game {
     p.crouchF = Math.max(0, Math.min(1, p.crouchF + (wantCrouch ? dt * 7 : -dt * (MOVE2 ? 4.2 : 7))));
     const walking = MOVE2 && !!inp.shift;   // Shift = ANDAR (silencioso)
     const sprint = !MOVE2 && !!inp.shift && p.crouchF < 0.3;
+    if (p.mantle) {
+      p._spaceHeld = !!inp.jump;
+      this._stepMantle(p, dt);
+      this.sfx._quiet = true;
+      return { sp: 0, walking, sprint: false, mantling: true };
+    }
     const slowMul = this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 0.45 : 1;  // água/lago
     // velocidade base × ARMA (MOVE_MUL) × andar × ADS × agachado × água
     const wpnMul = MOVE2 ? (MOVE_MUL[p.weapon] !== undefined ? MOVE_MUL[p.weapon] : 0.9) : 1;
@@ -6567,11 +6661,9 @@ export class Game {
     const sin = Math.sin(p.yaw), cos = Math.cos(p.yaw);
     // camera: forward = (-sin, -cos), right = (cos, -sin)  →  wish = right*ix + forward*(-iz)
     const wx = ix * cos + iz * sin, wz = -ix * sin + iz * cos;
-    // CoD tuning (port tuning.js): chão 92 m/s² (velocidade cheia em ~50ms = "tight");
-    // ar = 25% de autoridade e NÃO ganha velocidade além da que saiu do chão (cap).
-    // `__mutAccel`: gancho da movimento-golden. Sem ele o `--mutar=n` era setado e nunca
-    // lido, e a régua passava verde com a física mudada. Zero em produção.
-    const accel = (p.grounded ? 92 : 23) + (this.__mutAccel || 0);
+    // 48 m/s² chega a 90% em 0,167 s; ar mantém 25% de autoridade. `__mutAccel`
+    // alimenta as réguas movimento-golden e movimento-fluidez.
+    const accel = (p.grounded ? 48 : 12) + (this.__mutAccel || 0);
     const spBefore = Math.hypot(p.vel.x, p.vel.z);
     p.vel.x += wx * accel * dt; p.vel.z += wz * accel * dt;
     if (!p.grounded) {
@@ -6600,13 +6692,29 @@ export class Game {
     if (sp > maxSp) { p.vel.x *= maxSp / sp; p.vel.z *= maxSp / sp; }
     // Shift silencioso: gate global do sfx.step (instalado no constructor) + ninguém escuta.
     this.sfx._quiet = MOVE2 && walking && sp < PLAYER_SPEED * wpnMul * (WALK_MUL + 0.06);
-    // jump: coyote time (90ms) + jump buffer (130ms) — tuning CoD/MW: pular logo depois de
-    // sair da borda ou logo antes de tocar o chão ainda funciona (feel moderno, zero risco)
+    // jump: coyote time (90ms) + jump buffer (130ms). Segurar Espaço mantém a intenção
+    // de mantle durante o arco: o jogador pode pular cedo e agarrar a beirada ao alcançá-la.
     p.coyoteUntil = p.grounded ? this.time + 0.09 : (p.coyoteUntil || 0);
     if (inp.jump && !p._spaceHeld) p.jumpBufferedUntil = this.time + 0.13;
     p._spaceHeld = !!inp.jump;
-    if ((p.jumpBufferedUntil || 0) > this.time && this.time < (p.coyoteUntil || 0) && this._acceptInput()) {
-      p.vel.y = this.world.jumpImpulse ?? 5.0; p.grounded = false; p.jumpBufferedUntil = 0; p.coyoteUntil = 0; this.sfx.jump();
+    const aceitaMovimento = this._acceptInput();
+    if (!inp.jump) p._mantleScanAt = 0;
+    const podeEscanear = aceitaMovimento && inp.jump && (ix || iz) && p.crouchF < 0.7
+      && this.time >= (p._mantleScanAt || 0);
+    const target = podeEscanear ? this._mantleTarget(p.pos, wx, wz) : null;
+    if (podeEscanear) p._mantleScanAt = this.time + MANTLE_SCAN_DT;
+    if (target) this._beginMantle(p, target);
+    else if ((p.jumpBufferedUntil || 0) > this.time && this.time < (p.coyoteUntil || 0) && aceitaMovimento) {
+      p.vel.y = this.world.jumpImpulse ?? 5.0;
+      p.grounded = false;
+      p.jumpBufferedUntil = 0;
+      p.coyoteUntil = 0;
+      this.sfx.jump();
+    }
+    if (p.mantle) {
+      this._stepMantle(p, dt);
+      this.sfx._quiet = true;
+      return { sp: 0, walking, sprint: false, mantling: true };
     }
     const followStepDown = this.world.snapDownSteps === true && p.grounded && p.vel.y <= 0;
     p.vel.y -= 20.6 * dt;   // gravidade exagerada do CoD — arco de pulo "snappy", não flutuante
@@ -7388,6 +7496,7 @@ export class Game {
     this.camera.rotation.z = 0;
     this.el.respawn.classList.add('hidden');
     this.sfx.respawn();
+    this._checkArenaWin();
   }
 
   /* ================= bots ================= */
@@ -7414,7 +7523,7 @@ export class Game {
     if (this.time < (this._radioCd || 0)) return;
     if (b.pos.distanceTo(this.player.pos) > 55) return;   // longe demais: não escutaria
     this._radioCd = this.time + 5;
-    const mine = b.team === this.playerTeam;
+    const mine = b.team === this.player.team;
     const lines = mine
       ? ['Contato!', 'Tô vendo um aqui!', 'Inimigo na minha frente!', 'Cobre eu que eu vou!']
       : ['Achei um!', 'Tá aqui, ó!'];
@@ -7475,7 +7584,7 @@ export class Game {
   }
   _makeTeamMark(bot) {
     if (QS.get('teammark') === '0') return;
-    const ally = bot.team === this.playerTeam;
+    const ally = bot.team === this.player.team;
     const col = new THREE.Color(this._teamColor(bot.team));
     this._tmHaloGeo = this._tmHaloGeo || new THREE.PlaneGeometry(1, 1);
     const halo = new THREE.Mesh(this._tmHaloGeo, new THREE.MeshBasicMaterial({
@@ -7485,7 +7594,7 @@ export class Game {
     }));
     halo.rotation.x = -Math.PI / 2; halo.scale.setScalar(1.45); halo.renderOrder = 3;
     this.scene.add(halo);
-    bot._mark = { halo, ally };   // SEM chevron/seta na cabeça (pedido do dono) — só o halo no chão
+    bot._mark = { halo, ally, col: this._teamColor(bot.team) };
   }
   /* Escolha de personagem no meio da partida (multiplayer). O servidor roda o mesmo método,
      então def, nome e malha ficam iguais nos dois lados do fio. */
@@ -7534,6 +7643,14 @@ export class Game {
   _updateTeamMark(b) {
     const m = b._mark;
     if (!m) return;
+    const ally = b.team === this.player.team;
+    if (m.ally !== ally) {
+      m.ally = ally;
+      m.halo.material.map = this._teamMarkTex(ally ? 'haloAlly' : 'haloEnemy');
+      m.halo.material.needsUpdate = true;
+    }
+    const col = this._teamColor(b.team);
+    if (m.col !== col) { m.col = col; m.halo.material.color.set(col); }
     if (!b.alive || !b.mesh.group.visible) { m.halo.visible = false; return; }
     m.halo.visible = true;
     m.halo.position.set(b.pos.x, b.pos.y + 0.05, b.pos.z);
@@ -7574,9 +7691,15 @@ export class Game {
   /* Mesmo respawn de sempre, agora chamável da IA E do slot de gente. Preso na IA, quem morria
      no multiplayer não voltava mais. Ver docs/MULTIPLAYER.md. */
   _respawnEntity(b) {
+    if (this.arena && b._switchTeam) {
+      b.team = b._switchTeam;
+      b._switchTeam = null;
+    }
     const g = b.mesh.group;
     const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
     b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;
+    b.mantle = null; b.mantleF = 0; b._spaceHeld = false; b._mantleScanAt = 0;
+    b.jumpBufferedUntil = 0; b.coyoteUntil = 0;
     /* Renascem sobrepostos de propósito: jitter no spawn foi medido e reprovado. Quem
        desempilha é a despenetração do _botSeparation. Números: docs/MULTIPLAYER.md. */
     b.protUntil = this.time + SPAWN_PROT;
@@ -7593,6 +7716,7 @@ export class Game {
     b._lp = { x: s.x, z: s.z };   // evita spike de velocidade (teleporte) no 1º frame
     g.rotation.set(0, b.yaw, 0); g.position.copy(b.pos); g.visible = true;
     if (b.mesh.isGLB) b.mesh.ctrl.revive();
+    this._checkArenaWin();
   }
 
   // Som alerta (360°) e marca o ponto ouvido para investigar; adquirir alvo ainda exige visão.
@@ -8435,7 +8559,7 @@ export class Game {
     try {
       if (!this._recorder || !this._recordEnabled || this._recorder.count === 0) return;
       const blob = this._recorder.flush({
-        map: this._mapId, mode: this.ctf ? 'ctf' : 'rounds',
+        map: this._mapId, mode: this._modeId(),
         weapon: this.player.weapon,
       });
       if (blob) this.onTrainingFrames?.(blob);
@@ -8653,7 +8777,7 @@ export class Game {
     x.shadowBlur = 5;
     for (const c of this.combatants) {
       if (!c.alive || c.isPlayer) continue;
-      const ally = c.team === this.playerTeam;
+      const ally = c.team === this.player.team;
       if (!ally && this.time - c.revealedAt > 1.6) continue;
       const col = ally ? this._teamColor(c.team) : '#ffb44d';   // inimigo revelado = âmbar (objetivo), aliado = cor do time
       x.fillStyle = col; x.shadowColor = col;
@@ -8728,13 +8852,16 @@ export class Game {
       const r = this._resultado;
       const totalRounds = this._inspectionTotalRounds || this.roundsMax;
       const clock = this.ctf ? Math.max(0, Math.ceil(this.ctfMatchLeft)) : Math.max(0, Math.ceil(this.timeLeft));
-      const clockText = `${Math.floor(clock / 60)}:${String(clock % 60).padStart(2, '0')}`;
+      const clockText = this.arena ? tr('VIRA-CASACA') : `${Math.floor(clock / 60)}:${String(clock % 60).padStart(2, '0')}`;
       const crest = (side) => String(side || 'E').toLowerCase();
+      const scoreE = this.arena ? this._teamPopulation('E') : this.roundsWon.E;
+      const scoreB = this.arena ? this._teamPopulation('B') : this.roundsWon.B;
+      const status = this.arena ? `${tr('CONVERSÕES')}: ${this.arenaSwitched}` : `RODADA ${this.roundNum}/${totalRounds}`;
       document.querySelector('#scoreboard h3').innerHTML =
         (r ? `<span class="sb-result">${r.titulo}</span><span class="sb-result-sub">${r.sub}</span>` : '') +
-        `<span class="sb-clock">RODADA ${this.roundNum}/${totalRounds} · <em>${clockText}</em></span>` +
-        `<span class="sb-score"><b class="tp"><img class="sb-crest" src="/${urlDoBrasao(crest('E'))}" alt=""><span class="sb-team-name">${this._teamName('E')}</span><strong class="sb-score-num">${this.roundsWon.E}</strong></b>` +
-        `<span class="sb-vs">VS</span><b class="tb"><strong class="sb-score-num">${this.roundsWon.B}</strong><span class="sb-team-name">${this._teamName('B')}</span><img class="sb-crest" src="/${urlDoBrasao(crest('B'))}" alt=""></b></span>`;
+        `<span class="sb-clock">${status} · <em>${clockText}</em></span>` +
+        `<span class="sb-score"><b class="tp"><img class="sb-crest" src="/${urlDoBrasao(crest('E'))}" alt=""><span class="sb-team-name">${this._teamName('E')}</span><strong class="sb-score-num">${scoreE}</strong></b>` +
+        `<span class="sb-vs">VS</span><b class="tb"><strong class="sb-score-num">${scoreB}</strong><span class="sb-team-name">${this._teamName('B')}</span><img class="sb-crest" src="/${urlDoBrasao(crest('B'))}" alt=""></b></span>`;
       // no CTF ordena por capturas (depois kills); senão por kills
       const rank = this.ctf ? (a, b) => (b.captures || 0) - (a.captures || 0) || b.kills - a.kills : (a, b) => b.kills - a.kills;
       /* DUAS COLUNAS COM BRASÃO (referência 08_placar, pedido do dono 07/08: "na tela de
@@ -8886,7 +9013,15 @@ export class Game {
     // HUD comunicar a AUSÊNCIA de informação, enquanto o placar de bandeiras ficava numa
     // faixa de 12px. Agora o timer encolhe pra rótulo de modo e a linha de baixo passa a
     // trazer o placar que vale (capturas).
-    if (this.ctf) {
+    if (this.arena) {
+      const e = this._teamPopulation('E'), b = this._teamPopulation('B');
+      const roundText = `${e} × ${b}`;
+      if (this.el.roundTime.textContent !== roundText) this.el.roundTime.textContent = roundText;
+      if (this.el.roundTime.classList.contains('ctf')) this.el.roundTime.classList.remove('ctf');
+      if (this.el.roundTime.classList.contains('urgente')) this.el.roundTime.classList.remove('urgente');
+      const roundsText = `${tr('VIRA-CASACA')} · ${this.arenaSwitched} ${tr('CONVERSÕES')}`;
+      if (this.el.roundsRow.textContent !== roundsText) this.el.roundsRow.textContent = roundsText;
+    } else if (this.ctf) {
       /* game.js:5800 — NO CAPTURA O MAIOR TIPO DO HUD MOSTRA BANDEIRA, NÃO SEGUNDO.
          O que o dono viu e reprovou foi "CAPTURA 1:32" contando pra trás a cada rodada.
          Aqui o elemento de topo passa a ser o PLACAR DE BANDEIRAS da rodada (que é a

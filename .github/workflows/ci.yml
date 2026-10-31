@@ -59,6 +59,11 @@ jobs:
         run: npm run eval:wfcheckout
       - name: Syntax check do jogo (public/js)
         run: npm run syntax
+      # Os contratos de modo também precisam rodar neste CI explícito.
+      - name: Arena, formato melhor-de e preload (node puro)
+        run: node tools/eval/runner.mjs eval:arena-mode eval:formatomelhorde eval:preload
+      - name: Veredicto real dos mutantes do orçamento de boot
+        run: node tools/eval/boot-mutant-verdict-check.mjs --mutantes
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         run: npm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
@@ -90,6 +95,8 @@ jobs:
         run: npm run eval:amazonia
       - name: Escadão — circulação, estrutura e casa
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
+      - name: Validar fluidez, território e rede do mantle
+        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network
       - name: Escadão — compatibilidade com pacote de áudio publicado
         run: node tools/eval/escadao-audio-pack-check.mjs
       # eval:lajes-spawn-space e eval:lajes-raycast saíram daqui porque as invariantes
