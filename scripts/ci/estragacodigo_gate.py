@@ -11,6 +11,7 @@ def decide(payload: dict) -> dict:
 
     has_estragacodigo_review = any(
         ((review.get("author") or {}).get("login") or "").lower() == "estraga-codigo"
+        and (review.get("state") or "").upper() != "DISMISSED"
         for review in reviews
     )
     has_estragacodigo_check = any(
@@ -36,11 +37,17 @@ def decide(payload: dict) -> dict:
     request_review = bool(head_oid) and not reviewer_requested and not reviewed_head
 
 
-    precisa = request_review or has_estragacodigo_review or has_estragacodigo_check
+    precisa = (
+        reviewer_requested
+        or request_review
+        or has_estragacodigo_review
+        or has_estragacodigo_check
+    )
     return {
         "needs_resolution": precisa,
         "labels_add": ["needs-estragacodigo-resolution"] if precisa else [],
-        "labels_remove": ["estragacodigo-resolved"] if request_review else [],
+        "labels_remove": ["estragacodigo-resolved"]
+        if reviewer_requested or request_review else [],
         "request_review": request_review,
     }
 
@@ -67,6 +74,8 @@ def selftest() -> int:
         ("outro check não confunde",
          {"statusCheckRollup": [{"__typename": "CheckRun", "name": "build"}]}, False),
         ("author nulo não explode", {"reviews": [{"author": None, "state": "COMMENTED"}]}, False),
+        ("review descartado não vira pendência histórica",
+         {"reviews": [{"author": {"login": "estraga-codigo"}, "state": "DISMISSED"}]}, False),
         ("payload vazio não explode", {}, False),
     ]
     pedidos = [
@@ -92,6 +101,12 @@ def selftest() -> int:
     transicoes = [
         ("pedido inicial fecha janela do automerge",
          {"headRefOid": "abc", "reviews": [], "reviewRequests": []},
+         {"needs_resolution": True,
+          "labels_add": ["needs-estragacodigo-resolution"],
+          "labels_remove": ["estragacodigo-resolved"]}),
+        ("pedido pendente mantém o automerge fechado",
+         {"headRefOid": "abc", "reviews": [],
+          "reviewRequests": [{"login": "estraga-codigo"}]},
          {"needs_resolution": True,
           "labels_add": ["needs-estragacodigo-resolution"],
           "labels_remove": ["estragacodigo-resolved"]}),
