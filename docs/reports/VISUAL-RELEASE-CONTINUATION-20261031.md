@@ -93,3 +93,10 @@ VM26 R1 local foi interrompida: /private-assets inexistente na WT e AWP404; esse
 GitHub release alpha.133 publicado20:10:57UTC, CI41236494634 e release41236503710SUCCESS; mainagora49fd69f11(chore release) sobre457481cc2. Porém Ego produção R1 ainda recebeuVERSIONalpha.132/SIM_HASH0e86e4433e7be166, apesar de nocacheCDP: jogoofflinePiscina vivo, authoredpistolvisível12skinned, contexto/crashok,1320x880,prefsrestauradas. Smoke para133 saiu1 corretamente; PNG/JSON/log release133-Ego-R1 não são prova de133 em produção. Acompanhar deploy/prod-watch e verificar novamente sem anunciar propagação concluída.
 
 Próximo: terminar fixture/preview causal e validações, integrar somente checkpoints técnicos revisados, regenerar/checkdocs e prepush normal no novohead. #1188 atual ainda é remoto21; novo fullreview/hosted/wholePRcrítico/merge/release permanecem pendentes. Arte e Canarinho privados seguem sem aceite.
+
+
+### Release alpha.133 confirmado em produção
+
+Prod-watch41237912898 terminouSUCCESS no main49fd69f11 após a primeira tentativa Ego ainda receber132. Segunda tentativa release133-Ego-R2 terminouexit0 e foi vista: VERSION2.1.0-alpha.133, SIM_HASH7be9578eea327784, offlinePiscina/live/alive, authoredpistolvisível12SkinnedMesh, contexto não perdido e crashnull,1320×880, preferências restauradas bytea-byte. PNG/JSON/log preservados no audit; a primeira captura132 continua evidência rejeitada para133. O teste é smoke de boot/produção, não aceite de mobile físico, MP ou catálogo/skins completo.
+
+Revisões publicadas atuais estavam ausentes nos PRs independentes1186(head365ef17318,2arquivos) e1182(head5e0ddca076,6arquivos); comandos fullreview enviados uma vez sob protocolo pr-hardening: issuecomment6548599688 e6548599925. Nenhum desses PRs foi mesclado/assumido verde só pela CI. #1188 continua remoto21f264; push abortado e todos os REDs anteriores permanecem rastreados.
