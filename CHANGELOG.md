@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.129`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.130`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -53,6 +53,9 @@
 - Personagens distantes animam com menos frequência, devolvendo quadros ao celular sem mudar o que se vê de perto.
 - Recarregar ficou visível de fora: em terceira pessoa, a mão livre vai ao carregador e o corpo mergulha durante a recarga, do jogador e dos bots — dá saber quando o adversário está vulnerável.
 - Piscina da Treta volta a carregar sua ambiência.
+- O placar reaproveita cada retrato em vez de baixar o mesmo avatar seis vezes.
+- O guia inicial mostra movimento, tiro e recarga por 15 segundos; a ajuda completa continua no ALT.
+- Os spawns do Escadão e do Ferro Velho deixam a primeira rota livre; a fauna do Ferro Velho nasce fora dos colisores.
 - Andar de lado entorta o corpo na direção do movimento, em vez de deslizar de frente parado.
 - Durante a partida, o perfil móvel começa com resolução de 60%, limita a cadência a 60 FPS no jogo e 30 FPS nos menus, reduz partículas, cápsulas e marcas conforme o aparelho sofre e recupera o último degrau sustentável na sessão seguinte.
 - No celular, a barra de armas mostra a arma de verdade em vez de um desenho genérico, e a imagem muda junto com o que está na mão.
@@ -151,6 +154,12 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.130] — 2026-10-31
+
+### Mudado
+- Conta visitantes em todas as páginas públicas (#1176)
+- fix: conte visitantes em todas as páginas
 
 ## [2.1.0-alpha.129] — 2026-10-30
 
