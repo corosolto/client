@@ -534,11 +534,15 @@ regra('muro atravessado pela grade: o javaporco contorna em vez de empurrar tijo
   assert.ok(bicho, 'onda não abriu nenhum javaporco');
   soltar([bicho]);
   bicho.pos.set(0, 0, 18);                       // atrás do muro (z 13,4-14,2), comida do outro lado
-  bicho._boarCansaco = 0; bicho._boarMelhorEm = ctx.game.time; bicho._boarAlvoChave = null;
+  bicho.yaw = Math.PI;
+  const spot = ctx.game.world.foodSpots[2];
+  const alvo = { kind: 'comida', chave: spot.id, spot, x: spot.x, z: spot.z, raio: spot.r };
   let maisFundo = bicho.pos.z;
   for (let i = 0; i < 60 * 10; i++) {
-    passo(ctx, 1 / 60);
-    if (bicho._boarId) maisFundo = Math.min(maisFundo, bicho.pos.z);
+    ctx.game.time += 1 / 60;
+    if (Math.hypot(bicho.pos.x - spot.x, bicho.pos.z - spot.z) <= spot.r) ctx.modo.revirar(bicho, alvo, ctx.game.time);
+    else ctx.modo.moverPara(bicho, alvo, 1 / 60);
+    maisFundo = Math.min(maisFundo, bicho.pos.z);
   }
   assert.ok(maisFundo < 13.4, `empacou no muro: chegou só a z=${maisFundo.toFixed(2)} em 10 s`);
   assert.ok(comidaRestante(ctx.modo.state, ctx.game.world.foodSpots[2]) < 150, 'passou do muro mas não comeu a feira');
@@ -828,7 +832,7 @@ regra('snapshot v7 replica o estado completo da horda', () => {
 });
 
 regra('snapshot com a horda cheia ainda cabe nos 8 KB do fio', () => {
-  const horda = criarHorda({ seed: 12, mutante });
+  const horda = criarHorda({ seed: 12 });
   horda.wave = WAVE_COUNTS.length - 1;
   iniciarOnda(horda);
   while (horda.alive.length < horda.maxAlive && horda.remaining > 0) passoHorda(horda, 0.2);

@@ -1154,3 +1154,9 @@ Sondas no Ego31 local, SIM97f50aeceda56123: parede sólida da primeira casa bloq
 ### Orçamento da auditoria completa
 
 CIff0 gastou358.62s só em Lajes e morreu aos900.2s durante Cidade; main17mapas levou687.1s. Perfil original local também confirmou novos custos separados (Cidade627.91s, Rural468.22s, Vila ainda executando sob carga compartilhada). Ampliado apenas timeout do subprocesso para1500s e job de invariantes para30min (teto da casa), mantendo todos21mapas, amostras, limiares e falha de relatório ausente. AABBs estáticos já comparados sem nenhuma diferença em Lajes. Testes fresh-report5/5 e workflow-timeout verdes. CI real no novo HEAD decidirá se orçamento basta; não inferir verde local. CodeRabbit ainda sem review.
+
+### Régua da horda no CI e mutante de contorno atualizado
+
+Adicionada eval:javaporcos ao job reguas-e-site: as novas regressões deixam de depender de execução manual. O comando integral revelou sem-contorno inoperante: desligava apenas a recuperação antiga, enquanto direcaoDaHorda ainda planejava desvios. Atualizado o mutante no caminho fluido real. A fixture anterior também permitia trocar de alimento e creditava comida tocada por outro bicho; agora mede moverPara/revirar do mesmo animal até a feira fixa através do muro. Baseline passou sem alterar prazo10s, limiarz13.4 ou dano esperado. Mutante agora falha exatamente nessa cláusula (para emz14.58); não é defeito de gameplay baseline. A fixture de limite8KB sempre enche a horda completa, sem encolher sob horda-magra e gerar TypeError por falta do10ºanimal. Testes workflow-timeout e segurança verdes. Push anterior foi cancelado antes de enviar para incluir essas garantias. Suite completa será repetida no novo HEAD; nenhum merge/release.
+
+Captura cidade-final-runtime.png foi vista em1320×880 com render normal, arma/HUD/cidade/horda visíveis e34javaporcos vivos. Não confundir com as capturas anteriores de UI sobre canvas preto.

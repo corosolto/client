@@ -62,6 +62,7 @@ export function segmentoLivre(world, origem, x, z) {
 }
 
 export function direcaoDaHorda(modo,bot,alvo,tempo,mutante='') {
+  if(mutante==='sem-contorno')return Math.atan2(alvo.x-bot.pos.x,alvo.z-bot.pos.z);
   const game=modo.game,boars=modo.boars;
   const world=game.world;let rota=bot._boarRumo;
   if((!rota||rota.chave!==alvo.chave||tempo>=rota.ate||Math.hypot(rota.x-bot.pos.x,rota.z-bot.pos.z)<.8)&&reservarPlano(modo,bot,tempo)){
