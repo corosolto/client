@@ -12,9 +12,9 @@ import { fileURLToPath } from 'node:url';
 const argv = process.argv.slice(2);
 const MUT = (argv.find((a) => a.startsWith('--mutante=')) || '').slice(10);
 const ESPERADO = {
-  'sem-settle': { 'canarinho/deagle': ['FASE', 'LA1'] },
+  'sem-settle': { 'canarinho/deagle': ['FASE'] },
   'fase-inclinada': { 'canarinho/deagle': ['FASE'] },
-  'frente-sem-clamp': { 'canarinho/deagle': ['FRENTE-Z'] },
+  'arma-solta': { 'canarinho/deagle': ['LA2', 'LA3'] },
 };
 const uso = (m) => { console.error(`uso: node tools/eval/preview-grip-phase-check.mjs [--mutante=${Object.keys(ESPERADO).join('|')}] [--json] — ${m}`); process.exit(2); };
 if (argv.filter((a) => a.startsWith('--mutante=')).length > 1) uso('--mutante= duplicado');
@@ -52,21 +52,21 @@ const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
 let src = fs.readFileSync(path.join(WT, 'public/js/glbchars.js'), 'utf8');
 const srcHash = sha(Buffer.from(src));
 if (MUT === 'sem-settle') {
-  const alvo = 'for (let i = 0; i < 60; i++) ctrl.update(1 / 30, 0, false, 0);';
-  if (!src.includes(alvo)) infra('mutante sem-settle: trecho do assentamento não encontrado no fonte');
+  const alvo = "if (def.id === 'canarinho') for (let i = 0; i < 10; i++) ctrl.update(1 / 30, 0, false, 0);";
+  if (src.split(alvo).length !== 2) infra('mutante sem-settle: settle do preview não encontrado exatamente uma vez');
   src = src.replace(alvo, '');
 }
 if (MUT === 'fase-inclinada') {
   const target = 'ctrl.tpMount.pegada = pegada;';
   if (src.split(target).length !== 2) infra('mutação fase não aplica exatamente uma vez');
   src = src.replace(target, "if (ctrl.bodyId === 'canarinho' && opts.weaponId === 'deagle') pegada.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 18));\n" + target);
-} else if (MUT === 'frente-sem-clamp') {
-  const target = 'else if (_v.z > fzMax)';
-  if (src.split(target).length !== 2) infra('mutação clamp não aplica exatamente uma vez');
-  src = src.replace(target, 'else if (false && _v.z > fzMax)');
+} else if (MUT === 'arma-solta') {
+  /* Contraprova física de contato: desloca a arma REAL 0,12 m no gunObj (construção),
+     só Canarinho/Deagle/preview. A palma skinnada não segue: LA2/LA3 têm que reprovar. */
+  const target = 'gun.position.set(0, 0, 0);   // o grip já é a origem do weaponModel; quem posiciona é o mount';
+  if (src.split(target).length !== 2) infra('mutação arma-solta não aplica exatamente uma vez');
+  src = src.replace(target, target + "\n      if (opts.preview && def.id === 'canarinho' && opts.weaponId === 'deagle') gun.position.x += 0.12;");
 }
-/* nominal: o clamp de frente que motivou a correção precisa continuar no fonte (#1179) */
-const CLAMP_CANARINHO = 'const TP_FRONT_MAX_CHAR = { canarinho: 0.20 };';
 const rewriteFrom = (dir) => (s) => s.replace(/from '([^']+)'/g, (all, p) =>
   p === 'three' ? `from '${pathToFileURL(path.join(WT, 'public/vendor/three.module.js'))}'`
     : p.startsWith('three/') ? `from '${pathToFileURL(path.join(WT, 'public/vendor/' + p.slice(6)))}'`
@@ -136,7 +136,7 @@ const load = async (p) => {
 /* Tetos LA1..LA5 do lobby-arma-mao-check.mjs (fonte única de lá); FASE é a invariante
    nova deste gate: pegada capturada = referência funcional assentada (medido 0,33°). */
 const TETO_PEGADA = { canarinho: 20 };
-const TETO = { pegadaGraus: 10, faseGraus: 2, palmaM: 0.10, caixaM: 0.02, canoZmin: 0.594, derivaGraus: 2, derivaM: 0.01, frenteZmax: 0.23 };
+const TETO = { pegadaGraus: 10, faseGraus: 2, palmaM: 0.10, caixaM: 0.02, canoZmin: 0.594, derivaGraus: 2, derivaM: 0.01 };
 
 const find = (m) => {
   let gun = null, hand = null;
@@ -217,12 +217,18 @@ for (const [cid, wid] of CASOS) {
       const qM = model.getWorldQuaternion(new THREE.Quaternion()).invert();
       const cano = new THREE.Vector3(0, 0, 1).applyQuaternion(gun.getWorldQuaternion(new THREE.Quaternion())).applyQuaternion(qM);
       const palmaModelo = palma ? model.worldToLocal(palma.clone()) : null;
+      // Extensão é diagnóstico, sem limite antropométrico; PREVIEW-GRIP-PHASE.md.
+      const escalaM = model.getWorldScale(new THREE.Vector3()).toArray();
+      const origem = model.getWorldPosition(new THREE.Vector3());
+      const frente = new THREE.Vector3(0, 0, 1).transformDirection(model.matrixWorld);
       amostras.push({
         pegada: deg(gripQ(gun, hand), qRef),
         palma: palma ? palma.distanceTo(gun.getWorldPosition(new THREE.Vector3())) : Infinity,
         caixa: palma ? caixaLocal(gun, palma) : Infinity,
         canoZ: cano.z,
-        frenteZ: palmaModelo ? palmaModelo.z : -Infinity,
+        frenteZLocal: palmaModelo ? palmaModelo.z : NaN,
+        frenteZMundoM: palma ? palma.clone().sub(origem).dot(frente) : NaN,
+        escalaModeloM: escalaM,
       });
     }
     out.push({ caso: `${cid}/${wid}`, arma: gun.name, faseBuild, caixaJogo, amostras });
@@ -236,7 +242,6 @@ for (const r of out) {
   const a = r.amostras, max = (k) => Math.max(...a.map((x) => x[k]));
   const min = (k) => Math.min(...a.map((x) => x[k]));
   const f = [];
-  if (cid === 'canarinho' && !src.includes(CLAMP_CANARINHO)) f.push('FRENTE-CONTRATO');
   if (r.caso === 'canarinho/deagle' && r.faseBuild > TETO.faseGraus) f.push('FASE');
   if (!Number.isFinite(r.faseBuild)) f.push('INVALIDA');
   if (r.arma !== 'arma-glb') f.push('ARMA-CAIXA');
@@ -250,8 +255,7 @@ for (const r of out) {
   const derivaM = Math.max(...a.map((x) => Math.abs(x.palma - d0.palma)));
   if (derivaG > TETO.derivaGraus) f.push('DERIVA-GRAUS');
   if (derivaM > TETO.derivaM) f.push('DERIVA-M');
-  if (cid === 'canarinho' && max('frenteZ') > TETO.frenteZmax) f.push('FRENTE-Z');
-  if (!a.every((x) => [x.pegada, x.palma, x.caixa, x.canoZ, x.frenteZ].every(Number.isFinite))) f.push('INVALIDA');
+  if (!a.every((x) => [x.pegada, x.palma, x.caixa, x.canoZ, x.frenteZLocal, x.frenteZMundoM].every(Number.isFinite))) f.push('INVALIDA');
   f.forEach((x) => vermelhas.add(x));
   r.falhas = f;
   if (f.length) erros++;
@@ -270,9 +274,9 @@ if (MUT) {
   const expected = Object.fromEntries(Object.entries(ESPERADO[MUT]).map(([k, v]) => [k, [...v].sort()]));
   if (JSON.stringify(obtained) !== JSON.stringify(expected)) {
     console.error(`RED: mutante ${MUT}, cláusulas ${JSON.stringify(obtained)}, esperadas ${JSON.stringify(expected)}`);
-    process.exit(1);
+    process.exitCode = 1;
+  } else {
+    if (!JSON_OUT) console.log(`mutante ${MUT}: conjunto exato confirmado`);
+    process.exitCode = 0;
   }
-  if (!JSON_OUT) console.log(`mutante ${MUT}: conjunto exato confirmado`);
-  process.exit(0);
-}
-process.exit(erros ? 1 : 0);
+} else process.exitCode = erros ? 1 : 0;

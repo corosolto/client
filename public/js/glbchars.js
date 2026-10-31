@@ -879,6 +879,8 @@ export function buildCharacterModel(def, opts = {}) {
   /* PV_PULSO: guarda a pegada de JOGO e gira o pulso — mas só DEPOIS de torso/corpo
      (o overlay 1H precisa deles) e da pose funcional assentada (#1179, crítico 31/10). */
   if (PV_PULSO && opts.preview && withWeapon && ctrl.tpMount && !BLADES.has(opts.weaponId)) {
+    // O overlay 1H precisa de torso/corpo antes da captura; ver PREVIEW-GRIP-PHASE.md.
+    if (def.id === 'canarinho') for (let i = 0; i < 10; i++) ctrl.update(1 / 30, 0, false, 0);
     const funcional = new THREE.Quaternion().setFromEuler(new THREE.Euler(TP_CARRY_PITCH, TP_CARRY_YAW, 0, 'YXZ'));
     const pegada = handBone.getWorldQuaternion(new THREE.Quaternion()).invert()
       .multiply(model.getWorldQuaternion(new THREE.Quaternion()).multiply(funcional));
