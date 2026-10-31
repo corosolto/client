@@ -89,19 +89,31 @@ const JS_LOCAIS = ['js/main.js', 'js/textures.js'];
    morre barulhento (`throw`) em vez de passar em silêncio. */
 const ANSIOSO = /( {2})T\.posterImgs = \[\];\n {2}POSTER_FILES\.forEach\(\(\[f\], i\) => \{[\s\S]*?\n {2}\}\);\n/;
 function poolAnsioso(corpo) {
-  if (!ANSIOSO.test(corpo)) throw new Error('não achei o bloco de getters de T.posterImgs em textures.js');
-  return corpo.replace(ANSIOSO, '  T.posterImgs = POSTER_FILES.map(([f]) => _cartaz(f));\n');
+  const ansioso = '  T.posterImgs = POSTER_FILES.map(([f]) => _cartaz(f));\n';
+  const nBloco = [...corpo.matchAll(new RegExp(ANSIOSO.source, 'g'))].length;
+  if (nBloco !== 1) throw new Error(`esperava 1 bloco de getters de T.posterImgs em textures.js, achei ${nBloco}`);
+  const depois = corpo.replace(ANSIOSO, ansioso);
+  if ([...depois.matchAll(new RegExp(ANSIOSO.source, 'g'))].length !== 0 || depois.split(ansioso).length !== 2) throw new Error('pool ansioso não aplicou exatamente uma vez');
+  return depois;
 }
 /* Ancorado em NOME, não em número de linha: a ordem do boot já mudou antes e cegou
    régua ancorada em posição. */
 const FAUNA_ADIADA = '      preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});\n';
 function faunaCedo(corpo) {
-  if (!corpo.includes(FAUNA_ADIADA)) throw new Error('não achei a chamada adiada de preloadAmbientLife em main.js');
-  return corpo
+  const paralela = '    preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});\n';
+  const retorno = '    return propsReady.then(() => {';
+  const nAdiada = corpo.split(FAUNA_ADIADA).length - 1;
+  const nRetorno = corpo.split(retorno).length - 1;
+  if (nAdiada !== 1) throw new Error(`esperava 1 chamada adiada de preloadAmbientLife em main.js, achei ${nAdiada}`);
+  if (nRetorno !== 1) throw new Error(`esperava 1 âncora return propsReady.then em main.js, achei ${nRetorno}`);
+  const depois = corpo
     .replace(FAUNA_ADIADA, '')
-    .replace('    return propsReady.then(() => {', `    preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});\n    return propsReady.then(() => {`);
+    .replace(retorno, `${paralela}${retorno}`);
+  if (depois.split(FAUNA_ADIADA).length !== 1 || depois.split(paralela).length !== 2) throw new Error('fauna cedo não aplicou exatamente uma vez');
+  return depois;
 }
 
+let mutacaoAplicada = false;
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
@@ -129,8 +141,14 @@ async function mede({ refPoolAnsioso = false } = {}) {
   });
   for (const rel of JS_LOCAIS) {
     let corpo = readFileSync(new URL(`../../public/${rel}`, import.meta.url), 'utf8');
-    if (rel === 'js/textures.js' && (refPoolAnsioso || MUTANTE === 'cartaz-ansioso')) corpo = poolAnsioso(corpo);
-    if (rel === 'js/main.js' && MUTANTE === 'fauna-cedo') corpo = faunaCedo(corpo);
+    if (rel === 'js/textures.js' && (refPoolAnsioso || MUTANTE === 'cartaz-ansioso')) {
+      corpo = poolAnsioso(corpo);
+      if (!refPoolAnsioso) mutacaoAplicada = true;
+    }
+    if (rel === 'js/main.js' && MUTANTE === 'fauna-cedo') {
+      corpo = faunaCedo(corpo);
+      if (!refPoolAnsioso) mutacaoAplicada = true;
+    }
     await context.route(`**/${rel}*`, async (rota) => {
       const r = await rota.fetch();
       await rota.fulfill({ response: r, body: corpo });
@@ -214,8 +232,11 @@ try {
   /* Convenção do repo (perfil-mobile-check): COM mutante, a régua passa quando a
      mutação foi VISTA. Mutação que escapa é o único resultado inaceitável. */
   if (MUTANTE) {
-    if (falhas.length) { console.log(`\nmutante ${MUTANTE} reprovado como devia: ${falhas.join(', ')}`); saida = 0; }
-    else console.error(`\nMUTAÇÃO PASSOU — ${MUTANTE} não foi visto pela régua.`);
+    /* Morte válida: transformação REAL no candidato + a ORC exigida falhou, sem pageerror. */
+    const exigida = MUTANTE === 'cartaz-ansioso' ? 'ORC2' : 'ORC3';
+    const morteValida = mutacaoAplicada && !erros.length && falhas.includes(exigida);
+    if (morteValida) { console.log(`\nmutante ${MUTANTE} reprovado como devia: ${falhas.join(', ')}`); saida = 0; }
+    else console.error(`\nMUTAÇÃO PASSOU — ${MUTANTE} sem morte válida (aplicada=${mutacaoAplicada}, exigia ${exigida}${erros.length ? ' +pageerror' : ''})`);
   } else if (falhas.length) {
     console.error(`\n✗ orçamento de boot estourado: ${falhas.join(', ')}`);
   } else {

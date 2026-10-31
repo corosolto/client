@@ -63,6 +63,8 @@ jobs:
         run: npm run eval:audiomarcas
       - name: Dependências e reconstrução do fundo do menu
         run: npm run eval:menuprops
+      - name: Mutantes do orçamento exigem a falha correta
+        run: node tools/eval/boot-mutant-verdict-check.mjs --mutantes
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         run: npm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
