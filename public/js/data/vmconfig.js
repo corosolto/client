@@ -187,8 +187,8 @@ export const VM_FABRICA = Object.freeze({
   p90: F('p90', 'PDW90', { recoilScale: 0.85, recoilLoc: 0.6, ads: A(0.5) }),
   lmg: F('lmg', 'MGX5', { recoilScale: 4, recoilLoc: 1.5, frame: { x: 0.335, y: -0.04, z: -0.15, rotDeg: [1.69, 0, -8] }, ads: S(0.3) }),
   shotgun: F('shotgun', 'KXG12', { recoilScale: 2.8, recoilLoc: 1.2, ads: A(0.1) }),
-  pistol: F('pistol', 'X18', { frame: CURTA, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco' } }),
-  deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco' } }),
+  pistol: F('pistol', 'X18', { frame: CURTA, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco', linha: { off: [0, -0.08, 0], estilo: 'foco' } } }),
+  deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco', linha: { off: [0, -0.08, 0], estilo: 'foco' } } }),
   revolver38: F('revolver', 'Viper-357', { frame: { ...CURTA, y: -0.07, rotDeg: [-10, 0, -5] }, ads: A(0.38) }),
   m92: F('ak', 'AK', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
   md97: F('ar', 'MX16A4', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
@@ -288,6 +288,14 @@ export const VM_SIDE_CONTRACT = Object.freeze({
   visibleMin: 0.70,
   profileMin: 0.02,
 });
+
+// Foco com `ads.linha` vira ADS automático pela alça e massa; um objeto sobrepõe os pontos.
+// ?ads1pfix=0 volta ao foco. Régua: tools/eval/ads1p-linha-check.mjs.
+export function adsEfetivo(ads, linha = true) {
+  if (!linha || ads?.estilo !== 'foco' || !ads.linha) return ads;
+  const { linha: extra, ...resto } = ads;
+  return { ...resto, auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], estilo: 'linha', ...(extra === true ? {} : extra) };
+}
 
 export function authoredFrameFor(weapon, family, sourceKey = '', cameraFov = 84) {
   if (sourceKey.startsWith('fab#')) {

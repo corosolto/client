@@ -25,6 +25,7 @@ import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons, sanitizeRounds, ROUNDS_CUSTOM_MAX } from './game.js';
+import { economiaLigada } from './economia-partida.js';
 import { VERSION } from './version.js';
 import { bindMapPreview, stopMapPreviews, previewRevision } from './amazonia_map_preview.js';
 import { mapPreviewPoster as escadaoMapPreviewPoster, bindMapPreviews, stopMapPreview } from './escadao_preview.js';
@@ -1982,7 +1983,9 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // A sonda de QA do viewmodel inclui a arma pedida no preload; sem isso a HUD podia
   // selecionar uma arma de teste cujo GLB não tinha entrado nesta partida reduzida.
   const _qaVmWeapon = testMode && WEAPON_IDS.includes(params.get('vmweapon')) ? params.get('vmweapon') : null;
-  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon])].filter(Boolean);
+  // TRETA$ da partida: todo mundo nasce de pistola, então ela entra no preload junto com as sorteadas
+  const economia = economiaLigada({ busca: location.search, online: !!sessao, wpnMode: settings.wpnMode });
+  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon, economia ? 'pistol' : null])].filter(Boolean);
   try {
     if (!navOnly) {
       await Promise.all([
@@ -2015,7 +2018,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     settings: sessao ? { ...settings, bots: tamanhoTime, allyBots: Math.max(0, tamanhoTime - 1), enemyBots: tamanhoTime } : settings,
     renderer, textures, sfx,
     playerCharId: charId, playerSkinId, playerEyewearId, playerGloveId, playerWeaponSkins, playerKnifeSkinId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
-    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
+    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons, economia,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
     /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
        sobrariam nove corpos locais para dez entidades e um jogador ficaria invisível. */

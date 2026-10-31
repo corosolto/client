@@ -935,6 +935,47 @@ export class Sfx {
     this._burst(.42, .36 * vol, 720, 1.1, 'lowpass', propDelay, out);
     this._burst(.18, .16 * vol, 2400, 1.8, 'bandpass', propDelay + .035, out);
   }
+  // flash: estalo seco e agudo (sem o corpo grave da frag) + cauda curta
+  flashPop(vol = 1, pan = 0, propDelay = 0) {
+    this.ensure(); if (!this.ctx) return;
+    const bus = this.ctx.createGain(); bus.gain.value = vol;
+    if (pan) { const panner = this.ctx.createStereoPanner(); panner.pan.value = pan; bus.connect(panner); panner.connect(this.master); }
+    else bus.connect(this.master);
+    this._burst(.07, .95, 2600, 0.8, 'highpass', propDelay, bus);
+    this._burst(.32, .45, 1400, 0.9, 'lowpass', propDelay + .01, bus);
+    this._beep('square', 2100, 900, .05, .18, propDelay, bus);
+  }
+  /* Surdez da flash: passa-baixa entre o master e o limiter (inserido na 1ª flash; em
+     20 kHz é transparente) que cai com a força da cegueira e volta ao longo de `dur`, e
+     um zumbido agudo que passa POR FORA do filtro. dur 0 desfaz na hora (respawn/rodada). */
+  flashSurdo(dur = 0, forca = 0) {
+    if (dur <= 0 && !this._surdoLp) return;   // nada abafado: nada a desfazer
+    this.ensure(); if (!this.ctx || !this.master) return;
+    const R = this.ctx, t = R.currentTime;
+    if (!this._surdoLp) {
+      this._surdoLp = R.createBiquadFilter(); this._surdoLp.type = 'lowpass';
+      this._surdoLp.frequency.value = 20000; this._surdoLp.Q.value = 0.7;
+      this.master.disconnect(); this.master.connect(this._surdoLp); this._surdoLp.connect(this.limiter);
+    }
+    const f = this._surdoLp.frequency;
+    f.cancelScheduledValues(t);
+    try { this._surdoRing?.stop(); } catch { /* já parou */ }
+    this._surdoRing = null;
+    if (dur <= 0) { f.setTargetAtTime(20000, t, 0.05); return; }
+    const fundo = 20000 * Math.pow(0.02, Math.min(1, forca));   // forca 1 → 400 Hz
+    const hold = Math.max(0, dur - 2.4);
+    f.setValueAtTime(20000, t);
+    f.linearRampToValueAtTime(fundo, t + 0.06);   // deixa o estalo passar antes de abafar
+    f.setValueAtTime(fundo, t + 0.06 + hold);
+    f.exponentialRampToValueAtTime(20000, t + 0.06 + Math.max(hold + 0.2, dur));
+    const o = this._osc('sine', 3400 + Math.random() * 300), g = R.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.10 * Math.max(0.1, forca) * this.vol + 0.0001, t + 0.08);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.4);
+    o.connect(g); g.connect(this.limiter);
+    o.start(t); o.stop(t + dur + 0.5);
+    this._surdoRing = o;
+  }
   explosion(vol = 1, pan = 0, propDelay = 0) { // frag: crack agudo + corpo grave + rumble
     const sample = this._cs('explosion');
     this.duck(0.22, 0.3);

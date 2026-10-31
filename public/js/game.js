@@ -40,10 +40,20 @@ import { viewmodelVisibility } from './vmvisibility.js';
 import { urlDoBrasao } from './brasoes_versao.js';
 
 import { WEAPONS } from './data/weapons.js';
+import { ECONOMIA, economiaLigada } from './economia-partida.js';
+import { CompraPartida } from './compra-partida.js';
+import { danoComArmadura, ARMADURA_MAX } from './armadura.js';
+import { vestirArmadura, ocultarArmadura } from './armadura-visual.js';
 import { perfilArma } from './data/weapon-profiles.js';
 export { perfilArma };
 import { saidaPenetracao, direcaoDesviada, resolverRaio } from './ballistics.js';
 import { entradaCombatente, ALCANCE_TIRO, alturaDoOlho } from './hitboxes.js';
+import { CABECAS_HITBOX, CABECA_PADRAO } from './data/cabecas-hitbox.js';
+// Cabeça justa à malha (régua: tools/eval/headshot-hitbox-check.mjs). ?hscaixa=0 volta à
+// esfera de 0,50 m, que o servidor de MP ainda usa.
+const HS_CAIXA = new URLSearchParams(location.search).get('hscaixa') !== '0';
+import { cegueiraFlash, brancoEm, retidaEm, FLASH_ERRO_MIRA } from './flashbang.js';
+import { assetUrl } from './data/asseturl.js';
 export { saidaPenetracao, resolverRaio };
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
 // autoritativo) e tools/eval/botdiag.mjs. Consumidor novo importa de data/weapons.js.
@@ -70,6 +80,14 @@ const VM_QA_CICLO = QS.get('debug') === '1';
 // de trackpad troca uma vez por gesto, que termina após 150 ms sem evento (scroll-arma-check).
 const WHEEL_NOTCH_PX = 50, WHEEL_IDLE_MS = 150;
 const VM_QA_ADS = QS.get('debug') === '1' && QS.get('vmads') === '1';
+/* FLASHBANG. `?flash=0` tira a granada do jogo inteira: sem tecla, sem slot, sem estoque,
+   sem efeito. O estoque normal é 0 porque a compra entra pelo PR da economia de partida;
+   até lá `?debug=1&flashes=N` (N ≤ 5) dá N por rodada para testar sem loja. */
+const FLASH_ON = QS.get('flash') !== '0';
+const FLASH_DEBUG_N = FLASH_ON && QS.get('debug') === '1'
+  ? Math.max(0, Math.min(5, parseInt(QS.get('flashes'), 10) || 0)) : 0;
+// Tipo da granada → campo de estoque no combatente. Um lugar só: eram três ternários soltos.
+const NADE_ESTOQUE = { smoke: 'smokes', frag: 'frags', flash: 'flashes' };
 /* KILL-SWITCH DA RODADA DE MATERIAL: ?vmmat=legacy devolve, de uma vez, o clamp
    `min(metalness, 0.55)` do viewmodel E o orçamento fixo de 7,60 unidades de luz da vmScene.
    Está aqui em cima, num lugar só, porque as duas coisas são UMA correção (ver o bloco do
@@ -349,6 +367,14 @@ const RACK_RETA = QS.get('rackreta') === '1';
    A simetria é parte do desenho: vale pra jogador E bots — meia regeneração faria o bot
    virar esponja. Régua: invariante REGEN de `tools/eval/regen-check.mjs`. */
 const REGEN = QS.get('regen') === '1', REGEN_DELAY = 6, REGEN_RATE = 22;
+// Colete/capacete estilo CS só na partida local (online o dano é do servidor): regra em armadura.js.
+// `?armadura=0` desliga; `?debug=1&colete=100&capacete=1` equipa jogador e bots a cada vida.
+const ARMADURA = QS.get('armadura') !== '0';
+// `?armadurachumbo=0` volta a rajada de chumbo do bot a passar inteira pela regra da cabeça.
+const ARMADURA_CHUMBO = QS.get('armadurachumbo') !== '0';
+const ARMADURA_DEBUG = QS.get('debug') === '1' && QS.has('colete')
+  ? { colete: Math.max(0, Math.min(ARMADURA_MAX, parseInt(QS.get('colete'), 10) || 0)), capacete: QS.get('capacete') === '1' }
+  : null;
 const TEAM_LABEL = { E: 'TIME E', B: 'TIME B' };
 const RADIO = {
   z: { title: 'COMANDOS', items: ['Bora, bora, bora!', 'Cobre eu!', 'Recua, recua!'] },
@@ -367,6 +393,32 @@ const GUNFEEL = new URLSearchParams(location.search).get('gunfeel') !== '0';
    ~80 ms), flash/luz de boca ~30% maiores e duck do mix no tiro synth. ?punch=0 desliga. */
 const PUNCH = new URLSearchParams(location.search).get('punch') !== '0';
 const PUNCH_ZOOM = 0.014, PUNCH_DECAY = 13;
+/* Clarão e traçante saem da boca da arma NA TELA (corpo em 3P/bots/remotos, pixel do VM em
+   1P), não de um ponto do olho. ?bocacano=0 volta ao antigo; régua eval:boca-cano. */
+const BOCA_CORPO = QS.get('bocacano') !== '0';
+// Boca no espaço LOCAL da arma: GLB usa a medida do measureGun (÷ norm); a caixa procedural é
+// medida com a mesma receita (centroide dos vértices nos 2% mais avançados em +Z).
+function bocaLocalDaArma(gun) {
+  const met = gun.userData.metrics;
+  if (met?.muzzle) return met.muzzle.clone().divideScalar(met.norm || 1);
+  gun.updateWorldMatrix(true, true);
+  const inv = gun.matrixWorld.clone().invert(), m = new THREE.Matrix4(), v = new THREE.Vector3();
+  const pts = [];
+  gun.traverse((o) => {
+    const pos = o.isMesh && o.geometry?.attributes?.position;
+    if (!pos) return;
+    m.multiplyMatrices(inv, o.matrixWorld);
+    const step = Math.max(1, Math.ceil(pos.count / 30000));
+    for (let i = 0; i < pos.count; i += step) pts.push(v.fromBufferAttribute(pos, i).applyMatrix4(m).clone());
+  });
+  if (!pts.length) return null;
+  let zMin = Infinity, zMax = -Infinity;
+  for (const p of pts) { if (p.z < zMin) zMin = p.z; if (p.z > zMax) zMax = p.z; }
+  const corte = zMax - (zMax - zMin) * 0.02, c = new THREE.Vector3();
+  let n = 0;
+  for (const p of pts) if (p.z >= corte) { c.add(p); n++; }
+  return c.divideScalar(n);
+}
 // BUG-187: .0115 m / 58 ms era ~1 px por 3 quadros — o dono não via o traçado. Ver eval:smoke SMK3b.
 const TRACER_STYLE = Object.freeze({ radius: .03, speed: 180, minTravel: .06, fade: .07, segment: 5 });
 
@@ -727,7 +779,7 @@ export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
 const FX_CLARAO = { normal: 1, reduzido: 0.45, minimo: 0.15 };
 
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null, economia = false }) {
     this._ctfOpt = ctf;
     this._matchWeapons = matchWeapons;
     this._armaN = 0;
@@ -773,48 +825,10 @@ export class Game {
     this.world = MAPS[this._mapId].build(this.scene, textures);
     this._buildEnv();   // IBL: env map de gradiente dusk -> materiais PBR (Standard) ganham ambiente/reflexo
     this.flashTex = textures.flash;
-    /* modo de armas também muda o mapa: pickups fora do modo somem (e suas meshes)
-       `removeFromParent()` e NÃO `scene.remove()`: o mapa pendura a arma em `root`, e o
-       remove() do three é no-op mudo quando o objeto não é filho direto de quem chamou. */
-    if (this.world.pickups) {
-      const keep = [];
-      for (const pk of this.world.pickups) {
-        /* id fora de WEAPONS não entra no estado do jogo: o prompt do [E] lê `.short`
-           sem guarda todo quadro e congelava a partida. KNOWN-BUGS BUG-70 / #366. */
-        if (!WEAPONS[pk.weapon]) {
-          console.warn(`[pickup] mapa ${this._mapId}: arma '${pk.weapon}' não existe em WEAPONS — pickup ignorado`);
-          pk.mesh?.removeFromParent();
-          continue;
-        }
-        if (this._pickupAllowed(pk.weapon)) {
-          const rw = weaponModel(pk.weapon);            // swap the map's box gun for the real GLB
-          if (rw && pk.mesh) {
-            // ROTAÇÃO ANTES da altura: o assentamento mede a bbox JÁ girada (ver _assentarNoChao).
-            rw.rotation.set(0, pk.mesh.rotation.y, 0.12);
-            rw.traverse(o => { if (o.isMesh) o.castShadow = true; });
-            pk.mesh.removeFromParent(); this.scene.add(rw); pk.mesh = rw;
-          }
-          keep.push(pk);
-        } else if (pk.mesh) pk.mesh.removeFromParent();
-      }
-      this.world.pickups = keep;
-      /* AQUI ficava `_puxarPickupsProGrafo()` (commit 5f8b5a5), REVERTIDO E REMOVIDO em
-         08/2026. POR QUE: a crítica adversarial mediu o resultado do arrasto e ele falhou no
-         próprio objetivo — 7 dos 8 pickups arrastados continuaram a 2,10-2,50 m da aresta
-         mais próxima do grafo, ou seja, seguiram fora do alcance do A*. O `botsim.mjs` de
-         piscina_treta saiu byte a byte IDÊNTICO com e sem o arrasto: mover não mudou nada no
-         comportamento do bot, que era a justificativa inteira. E o custo foi real: quebrou a
-         simetria espelhada de piscina_treta (moveu as 5 armas da parede leste e NENHUMA das 5
-         espelhadas do oeste, por mera fase da grade de waypoints) e encostou a deagle a
-         0,10 m do spawn P slot 0 (era 1,00 m). Se um pickup do mapa ficar mesmo fora do
-         alcance, o conserto é NO MAPA (como o de map_havan.js:1207 desta rodada), não um
-         arrasto global em runtime. */
-      /* DEFEITO CONSERTADO (game.js:498 antigo): `rw.position.y = Math.max(0.16, ...)` era um
-         PISO ABSOLUTO de mundo aplicado depois de o mapa devolver a posição — jogava fora
-         qualquer altura que o mapa tivesse calculado e deixava a arma boiando a 0,16 m em
-         mapa plano e enterrada em mapa com relevo. Mesmo helper do armário, uma conta só. */
-      for (const pk of this.world.pickups) if (pk.mesh) this._assentarNoChao(pk.mesh, pk.x, pk.z);
-    }
+    // A economia da partida substitui o arsenal espalhado: mapas não entregam arma grátis.
+    // Drops de abate continuam em `this.drops`; apenas os pickups estáticos do build saem.
+    for (const pk of this.world.pickups || []) pk.mesh?.removeFromParent?.();
+    this.world.pickups = [];
 
     // teams & rosters. playerTeam = LADO físico (P/B) — dirige tudo (spawns/placar/killfeed/CTF/
     // cores/yaw). playerFaction = de qual ROSTER vêm os personagens do jogador ('E'/'B'/'U' Tribos
@@ -838,9 +852,10 @@ export class Game {
     this.dedicated = !!dedicated;
     this._mp = null;
     this._mpPend = this.online ? { mpFactory, net } : null;
-
-    // Câmera 3ª pessoa (tecla B): modo de VISÃO, não de combate - mira e tiro seguem saindo
-    // da câmera. Modos, rig, grip e pré-carga do corpo: docs/RIG-PEGA-ARMA.md.
+    // TRETA$ da partida (docs/ECONOMIA-PARTIDA.md): só o main.js liga; arnês e nó dedicado ficam no loadout antigo.
+    this._ecoLigada = !!economia && economiaLigada({ busca: location.search, online: this.online, dedicado: this.dedicated, wpnMode: this._wpnMode() });
+    // Câmera 3ª pessoa (tecla N): B pertence exclusivamente ao menu de compra.
+    // Mira e tiro continuam saindo da câmera; rig e grip: docs/RIG-PEGA-ARMA.md.
     this.camView = ['first', 'third', 'shoulder'].includes(settings.camView) ? settings.camView : 'first';
     this.playerTP = null;
     this.emoteOpen = false; this.emoteCam = null; this._emoteMod = null; this._emoteAtual = null;
@@ -853,7 +868,7 @@ export class Game {
     this._tpOrbitYaw = 0;
     this._tpOrbitPitch = 0;
     this._eyeWorld = new THREE.Vector3();   // posição do OLHO — origem de tiro/fumaça em 3ª pessoa
-    /* Só o CORPO do jogador (tecla B) — sem `weapons` o glbchars pré-carrega as 26 armas
+    /* Só o CORPO do jogador (tecla N) — sem `weapons` o glbchars pré-carrega as 26 armas
        BLOQUEANDO e desfaz o lazy da partida (ARM1/ARM3). BUG-85. */
     /* O dedicado usa `testMode`: sem browser/GLB, preload inútil compete com snapshots.
        No browser, main.js já aguarda o preload antes do `new Game`. */
@@ -875,7 +890,7 @@ export class Game {
       nadeBusyUntil: 0,
       primary: startWeapon, secondary: 'pistol',
       ammo: Object.fromEntries(Object.keys(WEAPONS).filter(w => w !== 'knife').map(w => [w, { mag: WEAPONS[w].mag, res: WEAPONS[w].reserve }])),
-      kills: 0, deaths: 0, headshots: 0, grounded: true, stepPhase: 0, revealedAt: -99, protUntil: 0, smokes: 5,
+      kills: 0, deaths: 0, headshots: 0, grounded: true, stepPhase: 0, revealedAt: -99, protUntil: 0, smokes: 5, flashes: 0,
     };
     if (!this.dedicated) this.combatants.push(this.player);
     // TELEMETRIA DE ARMA (feat/telemetria): conta abates por id de arma nesta
@@ -923,7 +938,8 @@ export class Game {
     const mkBot = (def, team, i) => {
       // arma sorteada no main.js (que preloadou por ela); sem lista, sorteia aqui. Contador
       // próprio: `i` reinicia por LADO e daria a mesma arma aos dois times.
-      const wpn = this._matchWeapons?.[this._armaN++] || this._botWeapon();
+      const alvo = this._matchWeapons?.[this._armaN++] || this._botWeapon();
+      const wpn = this._ecoLigada ? 'pistol' : alvo;   // com loja o bot nasce de pistola e compra a sorteada
       const veste = this._defNoLado(def, team);
       const c = buildCharacterModel(veste, { weaponId: wpn }) || buildCharacter(veste);
       c.group.traverse(o => { o.userData.botOwner = null; });
@@ -933,7 +949,7 @@ export class Game {
         respawnAt: 0, protUntil: 0, kills: 0, deaths: 0,
         crouchF: 0,
         target: null, reactAt: 0, nextShotAt: 0, skill: rollBotSkill(this._diffMul) * (0.9 + Math.random() * 0.2), weapon: wpn,
-        _meshWeapon: wpn,
+        _meshWeapon: wpn, _armaAlvo: alvo,
         mag: (WEAPONS[wpn] && WEAPONS[wpn].mag) || 30, aimErr: 0.2, burst: 0, alertUntil: 0,
         path: null, pathIdx: 0, repathAt: 0, roamIdx: 0, phase: 0, think: Math.random() * 0.2,
         deadT: 0, strafeT: Math.random() * 10, revealedAt: -99,
@@ -1306,13 +1322,18 @@ export class Game {
     this._grenGeo = new THREE.SphereGeometry(0.06, 8, 6);
     this._grenMat = new THREE.MeshStandardMaterial({ color: 0x38472c, metalness: 0.2, roughness: 0.8 });
     this._fragMat = new THREE.MeshStandardMaterial({ color: 0x4a2018, metalness: 0.5, roughness: 0.55 });   // HE frag (marrom-metálico)
+    this._flashMat = new THREE.MeshStandardMaterial({ color: 0xc9ccd0, metalness: 0.6, roughness: 0.35 });   // flash (alumínio)
     this._grenTemplates = {};
     if (!NODE_RUNTIME) {
       new GLTFLoader().load('/private-assets/viewmodels/grenade/grenades-world.glb?v=paid-aaa-1', (gltf) => {
         if (this._disposed) return;
         this._grenTemplates.frag = gltf.scene.getObjectByName('UTILITY_HE') || null;
         this._grenTemplates.smoke = gltf.scene.getObjectByName('UTILITY_SMOKE') || null;
-        this._grenTemplates.flash = gltf.scene.getObjectByName('UTILITY_FLASH') || null;
+        /* Flash PROVISÓRIA: casco da fumaça em alumínio com faixa amarela, para ler diferente
+           das outras no ar. O modelo final da flash vem do Mint e entra trocando só esta linha. */
+        const casco = this._grenTemplates.smoke || this._grenTemplates.frag;
+        // a do Mint (abaixo) pode ter chegado antes: a provisória só ocupa a vaga vazia
+        if (!this._grenTemplates.flash) this._grenTemplates.flash = FLASH_ON && casco ? this._flashProvisoria(casco) : null;
         for (const model of Object.values(this._grenTemplates)) model?.traverse((object) => { object.castShadow = true; });
       }, undefined, () => {});
     }
@@ -1358,6 +1379,8 @@ export class Game {
     this.stateUntil = 0;
 
     this._dom();
+    this._compra = this._ecoLigada ? new CompraPartida(this) : null;
+    if (this._compra) { this.player.primary = null; this.player.weapon = 'pistol'; }
     this._input();
     this._applyQuality();
     this.radarCtx = this.el.radar ? this.el.radar.getContext('2d') : null;
@@ -2128,7 +2151,11 @@ export class Game {
       if (e.code === 'KeyZ') { this._radioShow('z'); return; }
       if (e.code === 'KeyX') { this._radioShow('x'); return; }
       if (e.code === 'KeyV') { this._radioShow('c'); return; }
-      if (e.code === 'KeyB') { this._toggleCamView(); return; }   // 1ª → 3ª → ombro
+      if (this._compra?.tecla(e.code, e.repeat)) return;   // menu de compra aberto: 1-9 escolhem, 0 volta
+      if (e.code === 'KeyB') { this._compra?.alternar(); return; }
+      if (e.code === 'Comma' && !e.repeat) { this._compra?.comprarMunicao('primary'); return; }
+      if (e.code === 'Period' && !e.repeat) { this._compra?.comprarMunicao('secondary'); return; }
+      if (e.code === 'KeyN' && !e.repeat) { this._toggleCamView(); return; }
       if (e.code === 'KeyT' && !e.repeat) { this._emoteToggle(); return; }   // roda de dança
       if (this.emoteOpen) {
         const n = /^Digit([1-8])$/.exec(e.code);
@@ -2136,7 +2163,7 @@ export class Game {
         if (e.code === 'Escape') { this._emoteClose(); return; }
       }
       // slot memory: 1 = last primary held, 2 = last sidearm held (not a hardcoded reset)
-      if (e.code === 'Digit1') this._switchWeapon(this.player.primary || 'awp');
+      if (e.code === 'Digit1') this._switchWeapon(this._slotPrimaria());
       if (e.code === 'Digit2') this._switchWeapon(this.player.secondary || 'pistol');
       if (e.code === 'Digit3') this._switchWeapon('knife');
       if (e.code === 'KeyQ' && this.player.lastInv && this.player.lastInv !== this.player.weapon)
@@ -2152,6 +2179,8 @@ export class Game {
       // 4/5/G EQUIPAM a utilidade; o arremesso é o botão do mouse (esquerdo longe, direito curto).
       if (e.code === 'Digit4') this._equipNade('smoke');
       if (e.code === 'Digit5') this._equipNade('frag');
+      // 6 = flash, seguindo a fileira 4/5 (o F do CS da comunidade é o ping do Treta Pop).
+      if (e.code === 'Digit6' && FLASH_ON) this._equipNade('flash');
       if (e.code === 'KeyG') this._equipNade('smoke');
       if (e.code === 'Space') e.preventDefault();
     };
@@ -2190,7 +2219,7 @@ export class Game {
       if (e.button === 0) { this.mouseDown0 = true; this._tryShoot(); }
       if (e.button === 2) {
         // Granada equipada: o direito é o lançamento CURTO (o esquerdo joga longe).
-        if (this.player.nade) { this._throwNade(this.player.nade, this.player.nade === 'frag' ? 'frags' : 'smokes', 0.45); return; }
+        if (this.player.nade) { this._throwNade(this.player.nade, NADE_ESTOQUE[this.player.nade], 0.45); return; }
         if (this.player.weapon === 'knife') {
           this._tryKnifeAttack('heavy');
           return;
@@ -2301,6 +2330,7 @@ export class Game {
         '<button class="touch-wep" data-wep="knife" aria-label="Faca"></button>' +
         '<button class="touch-wep" data-wep="smoke" aria-label="Fumaça">' + IC.nade + '</button>' +
         '<button class="touch-wep" data-wep="frag" aria-label="Granada">' + IC.nade + '</button>' +
+        (FLASH_ON ? '<button class="touch-wep hidden" data-wep="flash" aria-label="Flash">' + IC.nade + '</button>' : '') +
       '</div>';
     document.body.appendChild(root);
     this._touchUi = root;
@@ -2373,7 +2403,7 @@ export class Game {
     on('.touch-ads', () => {
       if (!this._acceptInput()) return;
       // Mesmo contrato do botão direito do mouse: com granada equipada, lançamento CURTO.
-      if (this.player.nade) { this._throwNade(this.player.nade, this.player.nade === 'frag' ? 'frags' : 'smokes', 0.45); return; }
+      if (this.player.nade) { this._throwNade(this.player.nade, NADE_ESTOQUE[this.player.nade], 0.45); return; }
       const w = this.player.weapon;
       if (w === 'knife') { this._tryKnifeAttack('heavy'); return; }
       if (WEAPONS[w] && WEAPONS[w].scope) this._scope(!this.player.scoped); else this._scope(true);
@@ -2389,11 +2419,12 @@ export class Game {
         e.preventDefault();
         if (!this._acceptInput()) return;
         const w = b.dataset.wep, p = this.player;
-        if (w === 'primary') this._switchWeapon(p.primary || 'awp');
+        if (w === 'primary') this._switchWeapon(this._slotPrimaria());
         else if (w === 'secondary') this._switchWeapon(p.secondary || 'pistol');
         else if (w === 'knife') this._switchWeapon('knife');
         else if (w === 'smoke') this._equipNade('smoke');
         else if (w === 'frag') this._equipNade('frag');
+        else if (w === 'flash') this._equipNade('flash');
       }, { passive: false });
     });
     this._syncTouchWeps();
@@ -2416,10 +2447,12 @@ export class Game {
   _syncTouchWeps() {
     const root = this._touchUi; if (!root) return;
     const p = this.player;
-    const arma = { primary: p.primary || 'awp', secondary: p.secondary || 'pistol', knife: 'knife' };
+    const arma = { primary: this._slotPrimaria(), secondary: p.secondary || 'pistol', knife: 'knife' };
     for (const b of root.querySelectorAll('.touch-wep')) {
       const slot = b.dataset.wep, id = arma[slot];
-      if (!id) continue;
+      // classe e não o atributo `hidden`: `.touch-wep{display:flex}` vence o atributo
+      if (slot === 'primary') b.classList.toggle('hidden', !id);
+      if (!id) { delete b.dataset.arte; b.innerHTML = ''; b.classList.remove('ativa'); continue; }
       b.classList.toggle('ativa', p.weapon === id);
       if (b.dataset.arte === id) continue;
       b.dataset.arte = id;
@@ -2486,7 +2519,7 @@ export class Game {
      `beforeunload` no main.js. Régua: `tools/eval/ctrlw-check.mjs`. */
   _travaAtalhos() {
     if (this.testMode || !document.fullscreenElement) return;
-    try { navigator.keyboard?.lock?.(['KeyW', 'KeyT', 'KeyN', 'KeyR', 'KeyI', 'Digit1', 'Digit2', 'Digit3'])?.catch?.(() => {}); } catch {}
+    try { navigator.keyboard?.lock?.(['KeyW', 'KeyT', 'KeyN', 'KeyB', 'KeyR', 'KeyI', 'Comma', 'Period', 'Digit1', 'Digit2', 'Digit3'])?.catch?.(() => {}); } catch {}
   }
   _soltaAtalhos() {
     try { navigator.keyboard?.unlock?.(); } catch {}
@@ -2801,6 +2834,8 @@ export class Game {
     if (this.ctf) this._initCTF();
     this.state = 'countdown';
     this.stateUntil = this.time + 3;
+    this._compra?.abrirJanela(3);   // tempo de compra conta depois da contagem
+    this._compra?.botsCompram();
     this._showScoreboard(false);
     // O alvo do round entra no banner: sem isso o jogador não tem como saber que existe
     // condição de vitória por abates (o HUD só mostra o placar corrido).
@@ -2813,8 +2848,9 @@ export class Game {
       ? frase('alvoBandeiras', this.capsToWin)
       : (PACE ? frase('alvoAbates', this.killsToWin)
         : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta')));
-    this._banner(frase('round', this.roundNum),
-      this.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound);
+    const compraAviso = this._compra ? frase('compraPrepare', ECONOMIA.tempoCompraS) : '';
+    const detalhe = this.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound;
+    this._banner(frase('round', this.roundNum), [compraAviso, detalhe].filter(Boolean).join(' · '));
     if (!this.sfx.roundNumber(this.roundNum) && !this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
   }
   _resetPositions() {
@@ -2839,6 +2875,7 @@ export class Game {
       const jx = s.x + (Math.random() - .5), jz = s.z + (Math.random() - .5);
       ent.pos.set(jx, this._spawnY(jx, jz), jz);
       ent.hp = 100; ent.alive = true; ent.respawnAt = 0; ent.protUntil = 0;
+      this._equiparArmadura(ent);
       return s;
     };
     const playerSpawn = place(this.player, this.playerTeam, 0);
@@ -2847,12 +2884,18 @@ export class Game {
     this._resetSliceAbilities();
     this.player.ammo.awp = { mag: WEAPONS.awp.mag, res: WEAPONS.awp.reserve };
     this.player.ammo.pistol = { mag: WEAPONS.pistol.mag, res: WEAPONS.pistol.reserve };
-    this.player.smokes = 5; this.player.frags = 1; this._updateSmokeHud();   // 5 fumaças + 1 frag por round
+    this.player.smokes = 5; this.player.frags = 1;   // 5 fumaças + 1 frag por round
+    // flash só pela loja ou ?debug=1&flashes=N; com loja, quem sobreviveu guarda a que comprou (CS)
+    this.player.flashes = this._compra && !FLASH_DEBUG_N ? (this.player.flashes | 0) : FLASH_DEBUG_N;
+    if (this.player.flashes > 0) this._carregarFlashMint();
+    this._limparCegueira();
+    this._updateSmokeHud();
     this._unequipNade();   // rodada nova começa com a arma na mão, nunca com a granada
     // sequência de frag é da RODADA (jogador e combatentes: no nó autoritativo o
     // _resetPositions roda pro slot remoto também). Régua: frag-restock-check.mjs
     this.player._fragSeq = 0;
     for (const c of this.combatants || []) c._fragSeq = 0;
+    for (const c of this.combatants || []) { c.cegoAte = 0; c.cegoTotalAte = 0; }   // flash não atravessa o round
     // modo de armas: aplica o loadout inicial. No modo 'all', o player entra com a arma do
     // personagem dele (a mesma da tela de seleção) em vez da AWP padrão.
     const mode = this._wpnMode();
@@ -2867,13 +2910,18 @@ export class Game {
     } else if (mode === 'awp') {
       this.player.weapon = 'awp';
       this.player.ammo.pistol = { mag: 0, res: 0 };
+    } else if (this._compra) {
+      this._compra.rearmar(this.player);   // quem sobreviveu à rodada fica com o que comprou (CS)
+      this.player.weapon = this.player.primary || this.player.secondary;
     } else {
       this.player.weapon = cw;
     }
     if (VM_QA_WEAPON) this.player.weapon = VM_QA_WEAPON;
     // reset slot memory to the loadout (1 = primary, 2 = sidearm)
-    this.player.primary = PISTOLS.has(this.player.weapon) ? 'pistol' : (this.player.weapon === 'knife' ? cw : this.player.weapon);
-    this.player.secondary = 'pistol';
+    if (!this._compra) {
+      this.player.primary = PISTOLS.has(this.player.weapon) ? 'pistol' : (this.player.weapon === 'knife' ? cw : this.player.weapon);
+      this.player.secondary = 'pistol';
+    }
     // ROUND NOVO, LOADOUT CHEIO: quem SOBREVIVE o corte não chega sem balas (relato out/2026).
     // Mesma guarda do _respawn; história e números em tools/eval/round-municao-check.mjs.
     for (const slot of [this.player.primary, this.player.secondary]) {
@@ -2899,7 +2947,7 @@ export class Game {
       ['ak', 'm4', 'md97', 'scar', 'carbine', 'm92'],
       ['famas', 'p90', 'mp5', 'uzi', 'shotgun', 'lmg'],
       ['deagle', 'revolver38', 'pistol'],
-    ].map(row => row.filter(w => this._pickupAllowed(w)));
+    ].map(row => (this._compra ? [] : row.filter(w => this._pickupAllowed(w))));   // com loja não há armário grátis
     /* ARMÁRIO DO SPAWN — POSIÇÃO MEDIDA CONTRA A GEOMETRIA DO MAPA (P3, 01/08).
        BUG DO DONO (print 20:38, ferro_velho): "as armas não dá pra pegar, a segunda
        fileira de armas nos mapas". A versão anterior (b7495ae) botou o rack no CHÃO, mas
@@ -3123,6 +3171,7 @@ export class Game {
       else if (p > b) winner = 'E'; else if (b > p) winner = 'B';
     } else if (p > b) winner = 'E'; else if (b > p) winner = 'B';
     if (winner) this.roundsWon[winner]++;
+    this._compra?.aoFimDaRodada(winner);
     this.state = 'roundEnd';
     this.stateUntil = this.time + 4;
     this.player.scoped = false; this.el.scope.classList.remove('on');
@@ -3415,6 +3464,7 @@ export class Game {
       swapBot.mesh.group.traverse(o => { o.userData.botOwner = swapBot; });
       this.scene.add(swapBot.mesh.group);
       swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot.alive = true;
+      this._equiparArmadura(swapBot);
       const s = this.world.spawns[oldTeam][(Math.random() * 4) | 0];
       swapBot.pos.set(s.x, this._spawnY(s.x, s.z), s.z);
       swapBot.yaw = this._spawnYaw(s, oldTeam, true);
@@ -3426,6 +3476,7 @@ export class Game {
     const s = this.world.spawns[newTeam][(Math.random() * 4) | 0];
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
     p.yaw = this._spawnYaw(s, newTeam); p.pitch = 0; p.hp = 100;
+    this._equiparArmadura(p);
     this._scope(false, true);
     this._banner(frase('agoraVoceE', this._teamName(newTeam)), 'trocou de lado na treta — sem penalty, só julgamento');
     this.sfx.uiClick();
@@ -3689,7 +3740,7 @@ export class Game {
   /* Scroll: mesmos slots das teclas 1/2/3, na mesma ordem. */
   _cycleWeapon(dir) {
     const p = this.player;
-    const slots = [p.primary || 'awp', p.secondary || 'pistol', 'knife'].filter(w => WEAPONS[w] && this._pickupAllowed(w));
+    const slots = [this._slotPrimaria(), p.secondary || 'pistol', 'knife'].filter(w => WEAPONS[w] && this._pickupAllowed(w));
     if (slots.length < 2) return;
     const i = slots.indexOf(p.weapon);
     this._switchWeapon(slots[((i < 0 ? (dir > 0 ? -1 : 0) : i) + dir + slots.length) % slots.length]);
@@ -3937,7 +3988,7 @@ export class Game {
     // Granada equipada: o gatilho ARREMESSA (longe) em vez de atirar. `continuo` é o
     // auto-fire segurando o botão — granada não é automática.
     if (p.nade) {
-      if (!continuo) this._throwNade(p.nade, p.nade === 'frag' ? 'frags' : 'smokes', 1);
+      if (!continuo) this._throwNade(p.nade, NADE_ESTOQUE[p.nade], 1);
       return;
     }
     /* Arremesso em voo: a mão ainda é da granada, o gatilho espera
@@ -4019,7 +4070,12 @@ export class Game {
     // concussão do PUNCH: pesada em tiro único, mais leve por bala em full-auto
     if (PUNCH) this._punchF = Math.min(1.4, (this._punchF || 0) + (w.auto ? 0.5 : 1) * (kickMul === 0.5 ? 0.7 : 1));
     const _cls = STATIC_CLASS[p.weapon] || 'rifle';
-    this._flash(this._muzzleWorld(_cls), this.camera.getWorldDirection(new THREE.Vector3()), _cls);
+    // 3ª pessoa: clarão de MUNDO na boca da arma do corpo. O de 1ª pessoa é filho do vm.root,
+    // que nem é desenhado em 3P — sobravam só faísca e luz, nascendo no viewmodel invisível.
+    const _boca3p = this.camView !== 'first' ? this._bocaDaArmaDoCorpo(this.playerTP?.group) : null;
+    if (_boca3p) this._flash(_boca3p, this.camera.getWorldDirection(new THREE.Vector3()));
+    else this._flash(this._muzzleWorld(_cls), this.camera.getWorldDirection(new THREE.Vector3()), _cls);
+    this._claraoLocalEm = this.time;   // o eco online do mesmo tiro não acende outro (netgame.tiroDeRede)
     this._ejectCasing();
     // bolt-action snipers drop the scope after each shot (CS-style); autos stay aimed
     if (p.scoped && (p.weapon === 'awp' || p.weapon === 'mosin')) this._scope(false, true);
@@ -4108,7 +4164,7 @@ export class Game {
     const paredes = this.ray.intersectObjects(this.world.occluders, false);
     const atores = [...(this.bots || []), ...(this.dedicated ? [] : [this.player])];
     const alvos = atores.filter(e => e && e !== shooter && e.alive && !e._idle && e.team !== shooter.team)
-      .map(ent => ({ ent, pos: ent.pos, crouchF: ent.crouchF || 0 }));
+      .map(ent => ({ ent, pos: ent.pos, crouchF: ent.crouchF || 0, cabeca: this._perfilCabeca(ent) }));
     const hit = resolverRaio({ origem: from, direcao: dir, alvos, paredes, alcance: ALCANCE_TIRO,
       intersectar: entradaCombatente,
       atravessar: parede => this._penetrationExit(parede, dir, wid, this._surfaceOf(parede.object)) });
@@ -4116,13 +4172,30 @@ export class Game {
     return hit;
   }
 
+  // Yaw do CORPO: humano (local, remoto ou slot do nó) guarda o yaw da câmera, corpo = yaw + 180°
+  // (_updatePlayerTP, netgame corpoYaw). Sem medida vale a mediana do elenco, nunca a esfera velha.
+  _perfilCabeca(ent) {
+    if (!HS_CAIXA) return null;
+    const p = CABECAS_HITBOX[ent.def?.id] || CABECA_PADRAO;
+    const yaw = this._participanteHumano(ent) ? (ent.yaw || 0) + Math.PI : (ent.yaw ?? ent.mesh?.group?.rotation?.y ?? 0);
+    return { ...p, yaw };
+  }
+
   _origemTiroBot(bot) {
     return this._botEye(bot);
   }
 
   _miraTiroBot(ent) {
-    return this._participanteHumano(ent) ? new THREE.Vector3(ent.pos.x, ent.pos.y + alturaDoOlho(ent.crouchF || 0), ent.pos.z)
-      : this._origemTiroBot(ent);
+    if (!this._participanteHumano(ent)) return this._origemTiroBot(ent);
+    const mira = new THREE.Vector3(ent.pos.x, ent.pos.y + alturaDoOlho(ent.crouchF || 0), ent.pos.z);
+    // Cabeça justa: mira na BASE da cabeça de cada personagem (o olho a 1,62 m é ar acima de
+    // cabeça baixa). Mantém a letalidade da esfera antiga: headshot-hitbox-check J6.
+    const p = this._perfilCabeca(ent);
+    if (p) {
+      const s = Math.sin(p.yaw), c = Math.cos(p.yaw);
+      mira.add(new THREE.Vector3(c * p.l + s * p.f, p.y - p.ry - alturaDoOlho(0), -s * p.l + c * p.f));
+    }
+    return mira;
   }
 
   _participanteHumano(ent) {
@@ -4152,14 +4225,15 @@ export class Game {
     return dano * mul;
   }
 
-  _aplicarTiroBot(bot, hit, dir, W, head, dano) {
+  _aplicarTiroBot(bot, hit, dir, W, head, dano, fracCabeca = null) {
     const alvo = hit.ent;
-    this._damage(alvo, dano, bot, W.short || 'ARMA', head, hit.point);
+    const blindado = this._armoredTarget(alvo, head);   // antes do dano: o tiro que zera o colete ainda bate nele
+    this._damage(alvo, dano, bot, W.short || 'ARMA', head, hit.point, fracCabeca);
     if (hit.atravessou) this._puff(hit.atravessou.point, hit.atravessou.face?.normal || null,
       this._surfaceOf(hit.atravessou.object), false);
     if (BLOOD) {
       if (alvo.isPlayer) this._bloodSpatter(hit.point, dir, head, alvo.pos.y);
-      else this._fleshImpact(hit.point, dir, head, alvo.pos.y, false);
+      else this._fleshImpact(hit.point, dir, head, alvo.pos.y, false, blindado);
     }
     if (alvo.isPlayer) this._noteHit(bot, W.short || 'ARMA', dano, head, hit.dist);
   }
@@ -4179,24 +4253,26 @@ export class Game {
       if (!hit?.ent) continue;
       const head = !!(hit.head && permiteCabeca), dano = this._danoTiroBot(bot, hit, W, head) * peso;
       if (!(dano > 0)) continue;
-      const grupo = porAtor.get(hit.ent) || { hit, dir: direcao, dano: 0, head: false };
+      const grupo = porAtor.get(hit.ent) || { hit, dir: direcao, dano: 0, danoCabeca: 0, head: false };
       if (head && !grupo.head) { grupo.hit = hit; grupo.dir = direcao; }
-      grupo.dano += dano; grupo.head ||= head; porAtor.set(hit.ent, grupo); bruto += dano;
+      grupo.dano += dano; grupo.head ||= head; if (head) grupo.danoCabeca += dano; porAtor.set(hit.ent, grupo); bruto += dano;
     }
     const total = bruto > 0 ? Math.max(6, Math.round(bruto)) : 0;
     for (const grupo of porAtor.values()) {
       const dano = Math.min(this._participanteHumano(grupo.hit.ent) ? 100 : 130, total * grupo.dano / bruto);
-      this._aplicarTiroBot(bot, grupo.hit, grupo.dir, W, grupo.head, dano);
+      this._aplicarTiroBot(bot, grupo.hit, grupo.dir, W, grupo.head, dano, grupo.danoCabeca / grupo.dano);
     }
     const primeiro = porAtor.values().next().value?.hit || raios[0]?.hit;
     return { ...primeiro, point: primeiro?.point || raios[0]?.point, raios,
       atingiuJogadorLocal: [...porAtor.keys()].some(ent => ent.isPlayer) };
   }
 
-  _rastroTiroBot(from, dir, end, resultado) {
+  _rastroTiroBot(from, dir, end, resultado, bot = null) {
+    // Com o corpo do bot na mão, o traçante sai da BOCA da arma dele (não do olho + 0,7 m).
+    const boca = this._bocaDaArmaDoCorpo(bot?.mesh?.group);
     if (resultado?.raios) {
-      for (const r of resultado.raios.slice(0, 4)) this._tracer(from.clone().addScaledVector(r.dir, .7), r.point);
-    } else this._tracer(from.clone().addScaledVector(dir, .7), end);
+      for (const r of resultado.raios.slice(0, 4)) this._tracer(boca ? boca.clone() : from.clone().addScaledVector(r.dir, .7), r.point);
+    } else this._tracer(boca || from.clone().addScaledVector(dir, .7), end);
   }
 
   _fireHitscan(shooter, from, dir, dmg, byPlayer = false, weap = 'AWP', wid = null, tracer = true) {
@@ -4211,9 +4287,10 @@ export class Game {
       }
       const base = this._shotDamage(dmg, wid, hit.dist, head);
       const dano = hit.damageMul == null ? base : Math.round(base * hit.damageMul);
+      const blindado = this._armoredTarget(bot, head);
       if (!this.online) this._damage(bot, dano, shooter, weap, head, end);
       else if (byPlayer && !hit.atravessou) this._acertoPrevisto(bot, dano, head, end);
-      this._fleshImpact(end, dir, head, bot.pos.y, byPlayer, this._armoredTarget(bot));
+      this._fleshImpact(end, dir, head, bot.pos.y, byPlayer, blindado);
     } else if (hit?.object) {
       const surf = hit.sup;
       this._puff(hit.point, hit.n, surf, false);   // BUG-187: impacto de bala sem fumaça (furo, faísca e som ficam)
@@ -4223,26 +4300,7 @@ export class Game {
       else if (Math.random() < 0.3) this.sfx.ricochet();
     }
     this.world.ambience?.onShot(from, end);
-    if (byPlayer && tracer) {
-      /* 3ª pessoa: o rastro nasce da ARMA DO CORPO (arma-glb/caixa do playerTP) e não da
-         câmera, que está atrás do personagem — sem corpo montado, cai na receita dos bots. */
-      if (this.camView !== 'first' && this.playerTP?.group) {
-        const gun = this.playerTP.group.getObjectByName('arma-glb') || this.playerTP.group.getObjectByName('arma-caixa')
-          || this.playerTP.parts?.gun || null;
-        const a = (gun ? gun.getWorldPosition(new THREE.Vector3()) : from.clone())
-          .addScaledVector(dir, gun ? 0.55 : 0.7);
-        this._tracer(a, end);
-      } else {
-        // BUG-187: nasce no raio câmera→boca (onde o cano aparece na tela). A boca autorada
-        // (bbox de malha skinned) caía 10,9 m atrás da câmera em produção: aí vale a da pose.
-        const cam = this.camera.getWorldPosition(new THREE.Vector3());
-        const rel = this._muzzleWorld(STATIC_CLASS[this.player.weapon] || 'rifle').clone().sub(cam);
-        if (rel.length() > 2 || rel.dot(this.camera.getWorldDirection(new THREE.Vector3())) < 0.2) {
-          rel.copy(this.camera.localToWorld(new THREE.Vector3(0.1, -0.06, -0.75))).sub(cam);
-        }
-        this._tracer(cam.addScaledVector(rel.normalize(), 1.5), end);
-      }
-    }
+    if (byPlayer && tracer) this._tracer(this._origemTracerJogador(from, dir), end);
     return end;
   }
   _targetFromHit(hit) {
@@ -4289,8 +4347,49 @@ export class Game {
   }
   // Impacto em CARNE: puff vermelho curto + som próprio. Antes o único sinal de que você
   // acertou uma PESSOA era o mesmo bip de acertar uma parede (grep blood = 0 ocorrências).
-  _armoredTarget(ent) {
+  _armoredTarget(ent, head = false) {
+    if (ARMADURA && (ent?.armor || 0) > 0 && (!head || ent.helmet)) return true;
     return /colete|cota de malha|armadura|capacete/i.test(ent?.def?.blurb || '');
+  }
+  // Partida local só: online o nó roda este mesmo `_damage` sem estado de armadura (contrato no PR do colete).
+  // `fracCabeca`: rajada de chumbo somada (bot) passa cabeça e corpo cada um pela sua regra (AR14).
+  _aplicaArmadura(ent, dmg, weap, head, fracCabeca = null) {
+    if (!ARMADURA || this.online || this.dedicated || !(ent.armor > 0)) return dmg;
+    if (ARMADURA_CHUMBO && fracCabeca > 0 && fracCabeca < 1) {
+      const cab = this._aplicaArmadura(ent, dmg * fracCabeca, weap, true);
+      return cab + this._aplicaArmadura(ent, dmg * (1 - fracCabeca), weap, false);
+    }
+    const r = danoComArmadura({ dano: dmg, cabeca: head, colete: ent.armor, capacete: ent.helmet, arma: weap });
+    ent.armor = r.colete;
+    return r.vida;
+  }
+  _armaduraLigada() { return ARMADURA && !this.online && !this.dedicated; }
+  _equiparArmadura(ent) {
+    const d = this._armaduraLigada() ? ARMADURA_DEBUG : null;
+    // com loja o colete é comprado e só se perde morrendo (CompraPartida.aoAbate)
+    if (!d && this._compra && this._armaduraLigada()) return;
+    ent.armor = d ? d.colete : 0;
+    ent.helmet = !!(d && d.capacete && d.colete > 0);
+  }
+  // Roda por quadro: só toca o DOM quando o texto muda (mesma regra do número de vida).
+  _updateArmaduraHud(p) {
+    const box = this._armorEl || (this._armorEl = document.getElementById('armor-hud'));
+    if (!box) return;
+    const colete = ARMADURA && p.alive ? Math.max(0, Math.ceil(p.armor || 0)) : 0;   // morto não mostra o colete que sobrou
+    const chave = colete > 0 ? `${colete}${p.helmet ? 'c' : ''}` : '';
+    if (this._armorHudKey === chave) return;
+    this._armorHudKey = chave;
+    box.classList.toggle('hidden', !chave);
+    box.classList.toggle('com-capacete', !!(chave && p.helmet));
+    const num = this._armorNum || (this._armorNum = document.getElementById('armor-num'));
+    if (num) num.textContent = String(colete);
+  }
+  // Visual provisório (armadura-visual.js) segue o estado; barato porque só monta quando a chave do modelo muda.
+  _sincronizarArmaduraVisual() {
+    if (!ARMADURA) return;
+    const vestir = (ent, model) => model && vestirArmadura(model, { colete: ent.armor > 0, capacete: !!ent.helmet && ent.armor > 0 });
+    if (this.playerTP?.isGLB) vestir(this.player, this.playerTP.ctrl?.model);
+    for (const b of this.bots) if (b.mesh?.isGLB) vestir(b, b.mesh.ctrl?.model);
   }
   _fleshImpact(pos, dir, head, footY = null, byPlayer = true, armored = false) {
     if (!GUNFEEL) return;
@@ -4373,9 +4472,10 @@ export class Game {
     fx.setBudget(this._fxAdaptativa);
     return fx;
   }
-  _damage(ent, dmg, attacker, weap = 'AWP', head = false, point = null) {
+  _damage(ent, dmg, attacker, weap = 'AWP', head = false, point = null, fracCabeca = null) {
     if (!ent.alive || this.state !== 'live') return;
     if (this.time < (ent.protUntil || 0)) return;   // spawn protection: zero dano (e sem hitmarker) enquanto protegido
+    dmg = this._aplicaArmadura(ent, dmg, weap, head, fracCabeca);
     ent.hp -= dmg;
     // 3P: o corpo cede na direção do tiro — sem isso quem atira de longe não sabe se acertou.
     if (ent.hp > 0 && attacker && attacker.pos) {
@@ -4445,9 +4545,12 @@ export class Game {
     }
     // Drop tem prazo e teto porque a versão sem eles foi retirada por virar lixo de mapa;
     // faca não dropa (todo mundo nasce com uma). Histórico e números: tools/eval/drop-check.mjs.
-    if (ent.weapon && ent.weapon !== 'knife' && this._pickupAllowed(ent.weapon)) {
-      this._dropWeapon(ent.pos.x, ent.pos.z, ent.weapon, false, 0.01, this.time + DROP_TTL);
+    // com loja, quem morre larga a primária comprada mesmo segurando pistola ou faca (CS)
+    const largar = this._compra && ent.primary ? ent.primary : ent.weapon;
+    if (largar && largar !== 'knife' && this._pickupAllowed(largar)) {
+      this._dropWeapon(ent.pos.x, ent.pos.z, largar, false, 0.01, this.time + DROP_TTL);
     }
+    this._compra?.aoAbate(ent, attacker, weap);
     if (attacker) {
       attacker.kills++; this.roundKills[attacker.team]++;
       // TELEMETRIA DE ARMA: quando o JOGADOR mata, conta a arma usada (param `weap`
@@ -4930,6 +5033,12 @@ export class Game {
     cam.setViewOffset(w, h, w - w * k, h - h * k, w * k, h * k);
   }
   _muzzleWorld(cls) {
+    // 3ª pessoa: a arma visível é a do CORPO. Vinha antes do viewmodel autorado de propósito —
+    // ele continua carregado (só invisível) e devolvia a boca de uma arma que não está na tela.
+    if (this.camView !== 'first') {
+      const boca = this._bocaDaArmaDoCorpo(this.playerTP?.group);
+      if (boca) return boca;
+    }
     // Caminho autorado: a boca vem da arma VISÍVEL (a legada fica oculta e o
     // _vmMuzzle dela apontaria flash/tracer para um cano que não está na tela).
     const vmPt = this.vm.authored?.muzzleVm?.(this.player?.weapon);
@@ -4954,7 +5063,55 @@ export class Game {
     this.vm.root.updateWorldMatrix(true, false);
     const v = off.clone();
     this.vm.root.localToWorld(v);          // vmScene == espaço da câmera (vmCamera na origem)
+    if (this._bocaLigada()) {
+      // Mesmo PIXEL da boca, como no caminho autorado: a vmCamera tem FOV próprio (~48° contra
+      // 70°) e o localToWorld direto punha o traçante ~136 px ao lado do cano a 1280×720.
+      const cam = this.camera.getWorldPosition(new THREE.Vector3());
+      const ndc = v.clone().project(this.vmCamera);
+      const ray = new THREE.Vector3(ndc.x, ndc.y, 0.5).unproject(this.camera).sub(cam).normalize();
+      return cam.addScaledVector(ray, v.length());
+    }
     return this.camera.localToWorld(v);
+  }
+  _bocaLigada() { return BOCA_CORPO && this._bocaCorpo !== false; }
+  // Boca (world) da arma na mão de um corpo 3P — jogador, bot ou remoto. null = sem corpo/arma
+  // ou ?bocacano=0, e quem chama usa a receita antiga a partir do olho.
+  _bocaDaArmaDoCorpo(grp, out = new THREE.Vector3()) {
+    if (!grp || !this._bocaLigada()) return null;
+    const gun = grp.getObjectByName('arma-glb') || grp.getObjectByName('arma-caixa');
+    if (!gun || !gun.visible) return null;   // emote esconde a arma: a boca na pose da dança não serve
+    if (gun.userData.bocaLocal === undefined) gun.userData.bocaLocal = bocaLocalDaArma(gun);
+    if (!gun.userData.bocaLocal) return null;
+    gun.updateWorldMatrix(true, false);
+    return out.copy(gun.userData.bocaLocal).applyMatrix4(gun.matrixWorld);
+  }
+  // Origem do clarão/traçante de um bot: a boca da arma dele; sem corpo, a receita do olho.
+  _bocaTiroBot(bot, from, dir, avanco) {
+    return this._bocaDaArmaDoCorpo(bot?.mesh?.group) || from.clone().addScaledVector(dir, avanco);
+  }
+  // Origem do traçante do PRÓPRIO jogador (offline e online): em 3P sai da arma do corpo; em
+  // 1P, do raio câmera→boca do viewmodel (BUG-187), que é onde o cano aparece na tela.
+  _origemTracerJogador(from, dir) {
+    if (this.camView !== 'first' && this.playerTP?.group) {
+      const boca = this._bocaDaArmaDoCorpo(this.playerTP.group);
+      if (boca) return boca;
+      /* 3ª pessoa: o rastro nasce da ARMA DO CORPO (arma-glb/caixa do playerTP) e não da
+         câmera, que está atrás do personagem — sem corpo montado, cai na receita dos bots. */
+      const gun = this.playerTP.group.getObjectByName('arma-glb') || this.playerTP.group.getObjectByName('arma-caixa')
+        || this.playerTP.parts?.gun || null;
+      return (gun ? gun.getWorldPosition(new THREE.Vector3()) : from.clone())
+        .addScaledVector(dir, gun ? 0.55 : 0.7);
+    }
+    // BUG-187: nasce no raio câmera→boca (onde o cano aparece na tela). A boca autorada
+    // (bbox de malha skinned) caía 10,9 m atrás da câmera em produção: aí vale a da pose.
+    const cam = this.camera.getWorldPosition(new THREE.Vector3());
+    const rel = this._muzzleWorld(STATIC_CLASS[this.player.weapon] || 'rifle').clone().sub(cam);
+    // A boca autorada da AK fica a 2,25 m na vmScene: o teto de 2 m a descartava (40 px fora do cano).
+    const tetoRel = this._bocaLigada() ? 4 : 2;
+    if (rel.length() > tetoRel || rel.dot(this.camera.getWorldDirection(new THREE.Vector3())) < 0.2) {
+      rel.copy(this.camera.localToWorld(new THREE.Vector3(0.1, -0.06, -0.75))).sub(cam);
+    }
+    return cam.addScaledVector(rel.normalize(), 1.5);
   }
 
   // Origem do tiro/raycast: olho do jogador. Em 3ª pessoa a câmera está atrás — usar a
@@ -5178,7 +5335,10 @@ export class Game {
   }
 
   _updateSmokeHud() {
-    if (this.el && this.el.smokeCount) this.el.smokeCount.textContent = '💨 ' + (this.player.smokes | 0) + '   🧨 ' + (this.player.frags | 0);
+    if (this.el && this.el.smokeCount) this.el.smokeCount.textContent = '💨 ' + (this.player.smokes | 0) + '   🧨 ' + (this.player.frags | 0)
+      + (FLASH_ON && this.player.flashes > 0 ? '   ⚡ ' + (this.player.flashes | 0) : '');
+    // botão de toque da flash só aparece com flash no bolso (até a loja, quase ninguém tem)
+    this._touchUi?.querySelector('[data-wep="flash"]')?.classList.toggle('hidden', !(this.player.flashes > 0));
   }
 
   _grenadeSpatial(pos, maxDistance = 70) {
@@ -5196,10 +5356,11 @@ export class Game {
   // Spawner genérico: projétil físico com pavio; ao estourar vira fumaça OU explosão de frag.
   // Usado pelo jogador (câmera) e pelos bots (olho + direção do alvo).
   _spawnGrenade(origin, dir, kind, owner, forca = 1) {
+    if (kind === 'flash') this._carregarFlashMint();   // flash de outro (online/loja): da próxima em diante vem a do Mint
     const template = this._grenTemplates[kind];
     const mesh = template
       ? template.clone(true)
-      : new THREE.Mesh(this._grenGeo, kind === 'frag' ? this._fragMat : this._grenMat);
+      : new THREE.Mesh(this._grenGeo, kind === 'frag' ? this._fragMat : kind === 'flash' ? this._flashMat : this._grenMat);
     mesh.position.copy(origin).addScaledVector(dir, 0.5);
     this.scene.add(mesh);
     // forca 1 = arremesso cheio (botão esquerdo); 0,45 = lançamento curto (botão direito),
@@ -5207,8 +5368,9 @@ export class Game {
     const f = Math.max(0.15, Math.min(1, Number(forca) || 1));
     this._grenades.push({
       mesh, kind, owner,
-      v: dir.clone().multiplyScalar((kind === 'frag' ? 17 : 15) * f).add(new THREE.Vector3(0, 3.2 * (0.45 + 0.55 * f), 0)),
-      fuse: kind === 'frag' ? 1.5 : 2.2,
+      // flash voa e estoura como a frag (pavio 1,5 s, o mesmo do CS): é granada de entrada.
+      v: dir.clone().multiplyScalar((kind === 'smoke' ? 15 : 17) * f).add(new THREE.Vector3(0, 3.2 * (0.45 + 0.55 * f), 0)),
+      fuse: kind === 'smoke' ? 2.2 : 1.5,
     });
     const spatial = this._grenadeSpatial(origin);
     this.sfx.grenadeThrow(kind, spatial.vol, spatial.pan, spatial.delay);
@@ -5221,6 +5383,7 @@ export class Game {
     const p = this.player;
     if (!p.alive || (p[ammoKey] | 0) <= 0 || this.time < (p._nextNade || 0)) return;
     if (this.time < (p.nadeBusyUntil || 0)) return;   // uma granada por animação
+    if (kind === 'flash' && !this._flashLiberada()) return;
     /* Online o servidor lança e o pedido só carrega o TIPO (netgame.pedirNade): sem campo
        de força no protocolo, o botão direito lança igual ao esquerdo em partida online. */
     const f = this.online ? 1 : forca;
@@ -5246,11 +5409,16 @@ export class Game {
   }
   _throwSmoke(forca = 1) { this._throwNade('smoke', 'smokes', forca); }
   _throwFrag(forca = 1) { this._throwNade('frag', 'frags', forca); }
+  /* Flash online só com servidor que a conheça (`meta.flash`, ver netgame.flashOn): o
+     servidor de hoje descarta `nade: 'flash'` e o estoque sumiria sem granada nenhuma. */
+  _flashLiberada() { return FLASH_ON && (!this.online || Boolean(this._mp?.flashOn)); }
   // Apertar a mesma tecla guarda a utilidade de volta.
   _equipNade(kind) {
     const p = this.player;
-    const ammoKey = kind === 'frag' ? 'frags' : 'smokes';
-    if (!p.alive || this.state !== 'live') return false;
+    const ammoKey = NADE_ESTOQUE[kind];
+    if (!ammoKey || !p.alive || this.state !== 'live') return false;
+    if (kind === 'flash' && !this._flashLiberada()) return false;
+    if (kind === 'flash') this._carregarFlashMint();
     if (p.nade === kind) { this._unequipNade(); return false; }
     if ((p[ammoKey] | 0) <= 0) return false;
     this._cancelReload();   // granada na mão cancela a recarga (GRM2) — não a deixa correndo escondida
@@ -5295,6 +5463,120 @@ export class Game {
       this.el.vignette.style.transition = 'opacity 0.1s'; this.el.vignette.style.opacity = String(Math.min(0.85, (R * 1.6 - pd) / (R * 1.6)));
       setTimeout(() => { if (this.el.vignette) this.el.vignette.style.opacity = '0'; }, 130);
     }
+  }
+
+  // Flash do Mint (362 KB) só quando alguém tem flash (PMB7); sem o GLB fica a provisória.
+  // `?flashmodelo=provisoria` força a provisória.
+  _carregarFlashMint() {
+    if (this._flashMintPedida || NODE_RUNTIME || !FLASH_ON || QS.get('flashmodelo') === 'provisoria') return;
+    this._flashMintPedida = true;
+    new GLTFLoader().load(assetUrl('/models/granadas/flash-world.glb'), (gltf) => {
+      if (this._disposed) return;
+      const mint = gltf.scene.getObjectByName('UTILITY_FLASH_MINT');
+      if (!mint) return;
+      mint.traverse((object) => { object.castShadow = true; });
+      this._grenTemplates.flash = mint;
+    }, undefined, () => {});
+  }
+  // Casco provisório da flash: clona o da fumaça (cilindro M18), pinta de alumínio e põe
+  // duas faixas amarelas. Sai quando o modelo do Mint chegar.
+  _flashProvisoria(casco) {
+    const c = casco.clone(true);
+    c.name = 'flash-provisoria';
+    c.position.set(0, 0, 0); c.rotation.set(0, 0, 0);
+    c.traverse((o) => {
+      if (!o.isMesh) return;
+      o.material = Array.isArray(o.material) ? o.material.map(() => this._flashMat) : this._flashMat;
+    });
+    const faixa = new THREE.MeshStandardMaterial({ color: 0xf2c200, metalness: 0.2, roughness: 0.6 });
+    const geo = new THREE.CylinderGeometry(0.0335, 0.0335, 0.016, 20, 1, true);
+    for (const y of [0.018, -0.03]) { const m = new THREE.Mesh(geo, faixa); m.position.y = y; m.name = 'flash-provisoria-faixa'; c.add(m); }
+    return c;
+  }
+
+  /* Quanto UM observador fica cego com o estouro em `pos` (conta em flashbang.js).
+     A luz passa ou não pelo mesmo `_losClear` da visão dos bots: parede e fumaça opaca
+     tapam. O ponto sobe 15 cm para o raio não nascer dentro do chão. */
+  _cegueiraDe(olho, frente, pos) {
+    const estouro = this._flashTmp || (this._flashTmp = new THREE.Vector3());
+    estouro.set(pos.x, pos.y + 0.15, pos.z);
+    const ocluido = !this._losClear(estouro, olho);
+    return cegueiraFlash({ olho, frente, estouro, ocluido });
+  }
+
+  /* Estouro da flash: estampido + clarão no mundo, e cegueira de TODO mundo que vê,
+     inclusive o dono e o próprio time, como no CS. */
+  _popFlash(pos, owner) {
+    if (!FLASH_ON) return;
+    const spatial = this._grenadeSpatial(pos, 90);
+    this.sfx.flashPop?.(spatial.vol, spatial.pan, spatial.delay);
+    this._flash(pos.clone());
+    const resultado = [];
+    for (const b of this.bots) {
+      if (!b.alive) continue;
+      const frente = { x: Math.sin(b.yaw), y: 0, z: Math.cos(b.yaw) };
+      const c = this._cegueiraDe(this._botEye(b), frente, pos);
+      if (c.dur > 0 && this.time + c.dur > (b.cegoAte || 0)) {
+        b.cegoAte = this.time + c.dur;
+        // metade inicial (o branco cheio) = não enxerga; depois só a mira fica ruim
+        b.cegoTotalAte = this.time + Math.max(0, c.dur - 2.4);
+        // a visão some NO estouro, não no próximo `think` (até 0,22 s depois): fecha o gatilho já
+        if (b.cegoTotalAte > this.time && b.target) { b._losLost = true; b._lostAt = b._lostAt || this.time; }
+      }
+      resultado.push({ quem: b, ...c });
+    }
+    const p = this.player;
+    if (p && p.alive && !this.dedicated && !this.espectando?.()) {
+      const frente = new THREE.Vector3(); this.camera.getWorldDirection(frente);
+      const c = this._cegueiraDe(this.camera.position.clone(), frente, pos);
+      if (c.dur > 0) this._cegarJogador(c);
+      resultado.push({ quem: p, ...c });
+    }
+    this._ultimoFlash = resultado;   // lido pela régua e pelo QA no console
+    return resultado;
+  }
+
+  /* Jogador cego: tela branca + imagem retida (o último quadro, capturado logo depois do
+     render) + som abafado e zumbido. Uma flash nova só substitui a atual se cegar mais. */
+  _cegarJogador(c) {
+    const resta = this._cegoJ ? this._cegoJ.dur - (this.time - this._cegoJ.t0) : 0;
+    if (resta > c.dur) return;
+    this._cegoJ = { t0: this.time, dur: c.dur, pico: c.pico, forca: c.forca };
+    if (c.forca >= 0.25) this._flashCapturar = true;
+    this.sfx.flashSurdo?.(c.dur, c.forca);
+  }
+  _limparCegueira() {
+    this._cegoJ = null; this._flashCapturar = false;
+    if (this._flashBranco) this._flashBranco.style.opacity = '0';
+    if (this._flashRetida) this._flashRetida.style.opacity = '0';
+    this.sfx.flashSurdo?.(0, 0);
+  }
+  _tickCegueiraJogador() {
+    const cj = this._cegoJ;
+    if (!cj || NODE_RUNTIME || !this.el?.hud) return;
+    const t = this.time - cj.t0;
+    if (!this._flashBranco) {
+      // o #hud sobrevive à partida: some com overlay órfão de uma partida anterior
+      for (const velho of this.el.hud.querySelectorAll('[data-flash-overlay]')) velho.remove();
+      const mk = (tag, css) => { const e = document.createElement(tag); e.style.cssText = css; e.setAttribute('aria-hidden', 'true'); e.dataset.flashOverlay = '1'; this.el.hud.prepend(e); return e; };
+      // fica no começo do #hud: o branco cobre o mundo, o HUD continua legível por cima (CS)
+      this._flashRetida = mk('canvas', 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;filter:grayscale(.6) brightness(1.6) blur(2px)');
+      this._flashBranco = mk('div', 'position:absolute;inset:0;pointer-events:none;background:#fff;opacity:0');
+    }
+    const b = brancoEm(t, cj.dur, cj.pico), r = retidaEm(t, cj.dur, cj.forca);
+    this._flashBranco.style.opacity = b.toFixed(3);
+    this._flashRetida.style.opacity = r.toFixed(3);
+    if (b <= 0 && r <= 0 && t > 0) this._cegoJ = null;
+  }
+  // Chamado logo depois do render do quadro: o buffer WebGL ainda vale (sem preserveDrawingBuffer).
+  _capturarRetida() {
+    this._flashCapturar = false;
+    const cv = this._flashRetida, src = this.renderer?.domElement;
+    if (!cv || !src) return;
+    try {
+      cv.width = Math.max(1, (src.width / 4) | 0); cv.height = Math.max(1, (src.height / 4) | 0);
+      cv.getContext('2d').drawImage(src, 0, 0, cv.width, cv.height);
+    } catch { /* contexto perdido: fica só o branco */ }
   }
 
   /* COR DA FUMAÇA = O CÉU MEDIDO DO MAPA × ALBEDO (invariante FOG1).
@@ -5369,10 +5651,12 @@ export class Game {
       }
       if (g.fuse <= 0) {
         if (g.kind === 'frag') this._explodeFrag(g.mesh.position.clone(), g.owner);
+        else if (g.kind === 'flash') this._popFlash(g.mesh.position.clone(), g.owner);
         else this._popSmoke(g.mesh.position.clone());
         this.scene.remove(g.mesh); this._grenades.splice(i, 1);
       }
     }
+    this._tickCegueiraJogador();
     for (let i = this._smokes.length - 1; i >= 0; i--) {
       const s = this._smokes[i], age = this.time - s.born;
       if (age >= s.dur) { this.scene.remove(s.group); this._smokes.splice(i, 1); continue; }
@@ -6274,8 +6558,8 @@ export class Game {
       c.rotation.x += (wantPitch - c.rotation.x) * Math.min(1, dt * 3.5);
     }
   }
-  // Cicla 1ª → 3ª (longe) → ombro (perto, vê braços) → 1ª (tecla B). Constrói o corpo
-  // 3ª pessoa na 1ª vez (lazy).
+  // Cicla 1ª → 3ª (longe) → ombro (perto, vê braços) → 1ª (tecla N). Constrói o
+  // corpo 3ª pessoa na primeira vez (lazy).
   _toggleCamView() {
     // first = 1ª pessoa (só-arma, padrão do jogo) · third = OTS SOCOM (cintura pra cima) ·
     // shoulder = OTS colado (vê a arma de perto). A 1ª-pessoa-com-corpo (fpbody) foi removida.
@@ -6437,6 +6721,7 @@ export class Game {
       for (const item of tp.selfMeshes) item.object.visible = item.visible;
     }
     tp.selfOccluded = selfOccluded;
+    if (tp.isGLB) ocultarArmadura(tp.ctrl?.model, selfOccluded);   // colete/capacete entram depois de selfMeshes
     // Cruz no alvo do raio autoritativo a distância de combate; o tiro continua
     // saindo do olho com yaw/pitch, igual ao servidor multiplayer.
     const aimPoint = this._tpAimPoint || (this._tpAimPoint = new THREE.Vector3());
@@ -7165,6 +7450,9 @@ export class Game {
     if (mode === 'awp') return w === 'awp';
     return true; // all
   }
+  // Tecla 1: com loja, quem não comprou primária não ganha AWP de brinde.
+  _slotPrimaria() { return this.player.primary || (this._compra ? null : 'awp'); }
+  _largarArma(ent, w) { this._dropWeapon(ent.pos.x, ent.pos.z, w, false, 0.01, this.time + DROP_TTL); }
   // Pega a arma em foco (E no teclado ou botão PEGAR no toque). Extraído do handler do KeyE
   // pra o mobile chamar o MESMO caminho — nada de duplicar a lógica de consumir o drop.
   _grabNearPickup() {
@@ -7186,7 +7474,8 @@ export class Game {
       who.ammo[w].mag = WEAPONS[w].mag;
       who.ammo[w].res = WEAPONS[w].reserve;
       {
-        const oldW = who.weapon;                   // arma que estava na mão
+        // com loja larga a arma do MESMO slot, senão a primária comprada some sem cair no chão
+        const oldW = this._compra ? (PISTOLS.has(w) ? who.secondary : who.primary) : who.weapon;
         this._switchWeapon(w, { pickup: true });
         // dropa a arma antiga no chão (estilo CS) — MAS não no rack: o rack é armário, você
         // só troca de arma lá sem largar a anterior (senão o spawn vira um monte de armas).
@@ -7346,13 +7635,19 @@ export class Game {
     const s = this._pickSpawn(p.team);
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
     p.hp = 100; p.alive = true; p.crouchF = 0;
+    this._equiparArmadura(p);
     p.reloadUntil = 0; p.reloadWeapon = ''; p.nadeBusyUntil = 0; p._nextNade = 0;
+    this._limparCegueira();   // renasce enxergando
     this._voltarPraBase();
     p._lifeDmg = 0;
     this._tpRevive();   // o corpo TP não pode renascer deitado (BUG-86)
     if (this._deathPanel) this._deathPanel.innerHTML = '';   // painel de morte não vaza pra vida nova
     p.protUntil = this.time + SPAWN_PROT;
     p.yaw = this._spawnYaw(s, p.team); p.pitch = 0;
+    if (this._compra) {
+      this._compra.rearmar(p);
+      if (this.arena) this._compra.abrirJanela();   // sem rodada, compra a cada renascimento
+    }
     // Top off the CURRENT loadout's mags (primary could be any weapon now, not just AWP).
     // #268: em modo arma-única só recarrega slot PERMITIDO pelo modo (pistola não sai de
     // 0/0 no SÓ AWP), e quem morreu com arma proibida renasce com a arma do modo.
@@ -7363,6 +7658,7 @@ export class Game {
       const volta = mode === 'awp' ? 'awp' : (p.secondary || 'pistol');
       if (WEAPONS[volta] && this._pickupAllowed(volta)) this._switchWeapon(volta);
     }
+    if (this._compra && ![p.primary, p.secondary, 'knife'].includes(p.weapon)) this._switchWeapon(p.secondary || 'pistol');
     this.camera.rotation.z = 0;
     this.el.respawn.classList.add('hidden');
     this.sfx.respawn();
@@ -7552,14 +7848,17 @@ export class Game {
   /* Mesmo respawn de sempre, agora chamável da IA E do slot de gente. Preso na IA, quem morria
      no multiplayer não voltava mais. Ver docs/MULTIPLAYER.md. */
   _respawnEntity(b) {
+    this._compra?.aoRenascerBot(b);   // antes do `g`: trocar a arma remonta a malha
     const g = b.mesh.group;
     const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
     b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;
+    this._equiparArmadura(b);
     /* Renascem sobrepostos de propósito: jitter no spawn foi medido e reprovado. Quem
        desempilha é a despenetração do _botSeparation. Números: docs/MULTIPLAYER.md. */
     b.protUntil = this.time + SPAWN_PROT;
     b.mag = (WEAPONS[b.weapon] && WEAPONS[b.weapon].mag) || 30;
     b.aimErr = 0.2; b.burst = 0; b.alertUntil = 0; b._hurtAt = 0; b.reloadUntil = 0;
+    b.cegoAte = 0; b.cegoTotalAte = 0;   // renasce enxergando
     b.focusUntil = 0; b._spinAcc = 0; b._spinAt = 0; b._sideUntil = 0;   // estado de mira/anti-pirueta da vida anterior
     b.target = null; b.path = null; b.yaw = this._spawnYaw(s, b.team, true);
     this._posturaBot(b, false);
@@ -7655,7 +7954,10 @@ export class Game {
       const view = Math.max(W0 && (W0.scope || W0.spreadScope) ? BOT_VIEW_SNIPER : BOT_VIEW,
         this.time < (b.alertUntil || 0) ? BOT_VIEW_ALERT : 0);
       let best = null, bd = 1e9;
-      for (const e of this._enemyOf(b)) {
+      // FLASH: no branco cheio o bot não enxerga ninguém. Sem `best`, cai no ramo de alvo
+      // perdido abaixo: `_losLost` fecha o gatilho e, passado o grace, ele larga o alvo.
+      const cegoTotal = this.time < (b.cegoTotalAte || 0);
+      for (const e of (cegoTotal ? [] : this._enemyOf(b))) {
         const d = b.pos.distanceTo(e.pos);
         // BOT_VIEW < map length: with 70m+ sight on the open esplanade both teams
         // acquired from spawn and the round became a stand-still snipe loop (100 dmg
@@ -7900,6 +8202,10 @@ export class Game {
         const rate = (snip0 ? 1.2 : 2.0) * Math.max(0.4, b.skill);
         b.aimErr = floorErr + ((b.aimErr === undefined ? 0.2 : b.aimErr) - floorErr) * Math.exp(-rate * dt);
         b.aimErr = Math.max(0.002, b.aimErr + (Math.random() - 0.5) * 0.02 * dt);   // micro-tremor
+        // FLASH: enquanto durar a cegueira o erro não desce de FLASH_ERRO_MIRA (≈34°, nada
+        // acerta); no último 1 s ele solta aos poucos e a mira volta a arrastar do zero.
+        const cegoResta = (b.cegoAte || 0) - this.time;
+        if (cegoResta > 0) b.aimErr = Math.max(b.aimErr, FLASH_ERRO_MIRA * Math.min(1, cegoResta));
       }
       // FACA (w.range): bot de faca disparava hitscan a 40m como se fosse rifle — agora só
       // "ataca" no alcance real da arma; longe disso ele avança (o approach acima já faz isso).
@@ -8013,10 +8319,10 @@ export class Game {
         const fxFull = e.isPlayer || resultado?.ent?.isPlayer || resultado?.atingiuJogadorLocal
           || (_sd < 45 && this.settings.quality !== 'low') || (fxTick % 2) === 0;
         if (fxFull) {
-          this._rastroTiroBot(from, dir, end, resultado);
+          this._rastroTiroBot(from, dir, end, resultado, b);
           this.sfx.shotWeapon(b.weapon, _sd, 0.45, _pan, Math.min(0.25, _sd / 343));   // bots MUITO mais baixos que a arma do jogador (carabina de bot estourava o mix)
         }
-        this._flash(from.clone().add(dir.clone().multiplyScalar(0.85)), dir);   // GPU-batched: 1 draw call
+        this._flash(this._bocaTiroBot(b, from, dir, 0.85), dir);   // GPU-batched: 1 draw call
         if (b.mesh.isGLB) b.mesh.ctrl.shoot();
       }
     } else if (this.ctf) {
@@ -8511,8 +8817,8 @@ export class Game {
     const resultado = this._dispararBot(b, from, dir, Wb);
     const end = resultado?.point || from.clone().addScaledVector(dir, 120);
     this.world.ambience?.onShot(from, end);
-    this._rastroTiroBot(from, dir, end, resultado);
-    this._flash(from.clone().add(dir.clone().multiplyScalar(0.85)), dir);
+    this._rastroTiroBot(from, dir, end, resultado, b);
+    this._flash(this._bocaTiroBot(b, from, dir, 0.85), dir);
     if (b.mesh.isGLB) b.mesh.ctrl.shoot();
   }
 
@@ -8764,6 +9070,8 @@ export class Game {
     slots.push({ key: 3, weapon: 'knife' });
     if (p.smokes > 0) slots.push({ key: 4, kind: 'smoke', name: 'FUMAÇA', count: p.smokes });
     if (p.frags > 0) slots.push({ key: 5, kind: 'frag', name: 'FRAG', count: p.frags });
+    // via método e não FLASH_ON: eval:vmlabhud roda este corpo recortado, fora do módulo
+    if (p.flashes > 0 && this._flashLiberada?.() !== false) slots.push({ key: 6, kind: 'flash', name: 'FLASH', count: p.flashes });
 
     const signature = slots.map((slot) => {
       const ammo = slot.weapon && p.ammo?.[slot.weapon];
@@ -8781,7 +9089,7 @@ export class Game {
       // '∞' e não o número: reserva que volta a cheia toda recarga lê-se como contador travado
       const res = this._municaoInfinita() ? '∞' : ammo?.res;
       const amount = slot.count != null ? `×${slot.count}` : (slot.weapon === 'knife' ? '' : (ammo ? `${ammo.mag}/${res}` : ''));
-      const icon = this._wpnIcon(slot.kind === 'frag' ? 'FRAG' : slot.kind === 'smoke' ? 'NADE' : weapon?.short);
+      const icon = this._wpnIcon(slot.kind === 'frag' ? 'FRAG' : slot.kind === 'smoke' || slot.kind === 'flash' ? 'NADE' : weapon?.short);
       const icon2d = slot.weapon
         ? `<img class="weapon-mask" data-weapon="${slot.weapon}" src="/img/weapons/${slot.weapon}.webp" alt=""><span class="weapon-fallback">${icon}</span>`
         : icon;
@@ -8799,6 +9107,7 @@ export class Game {
     const p = this.player;
     const weaponDef = WEAPONS[p.weapon];
     this._updateWeaponHud();
+    this._compra?.tick();
     const hpText = String(Math.max(0, Math.ceil(p.hp)));
     if (this.el.hpNum.textContent !== hpText) this.el.hpNum.textContent = hpText;
     const hpWidth = Math.max(0, p.hp) + '%';
@@ -8806,6 +9115,7 @@ export class Game {
     const hpLow = p.hp <= 35;
     if (this.el.hpFill.classList.contains('low') !== hpLow) this.el.hpFill.classList.toggle('low', hpLow);
     if (this.el.hpNum.classList.contains('low') !== hpLow) this.el.hpNum.classList.toggle('low', hpLow);
+    this._updateArmaduraHud(p);
     /* `player.kills` (partida), não `roundKills` (time, zera na virada). Escrito só quando
        muda porque este método roda por quadro. Régua: tools/eval/abateshud-check.mjs */
     const abates = p.kills | 0;
@@ -8983,6 +9293,7 @@ export class Game {
     // 57 operações de Canvas2D por quadro exibido a 5 FPS (régua tools/eval/passo-sim-check.mjs).
     this._updateHud();
     this._updateRadar();
+    this._sincronizarArmaduraVisual();
     // hint de pointer lock: visível só quando o jogo está ativo mas sem lock
     if (this.el.lockHint)
       this.el.lockHint.classList.toggle('hidden',
@@ -8998,6 +9309,7 @@ export class Game {
       r.render(this.vmScene, this.vmCamera);
       r.autoClear = true;
     }
+    if (this._flashCapturar) { this._tickCegueiraJogador(); this._capturarRetida(); }
     this._tickDolly(dt);
     this.world.ambience?.update(dt, this.player.pos);
     const mapSound = this.sfx.pack?.mapSoundscapes?.[this._mapId] || this.world.sound;
@@ -9009,6 +9321,8 @@ export class Game {
   /* ================= teardown ================= */
   dispose() {
     this._disposed = true;
+    this._limparCegueira();
+    this._flashBranco?.remove(); this._flashRetida?.remove();
     clearInterval(this._vmPrecisionQaTimer); this._vmPrecisionQaTimer = null;
     document.getElementById('vm-precision-qa')?.remove();
     if (window.__vmPrecisionQa === this._vmPrecisionQa) delete window.__vmPrecisionQa;
@@ -9029,6 +9343,7 @@ export class Game {
     document.removeEventListener('pointerlockchange', this._plc);
     window.removeEventListener('blur', this._blur);
     if (this._touchUi) { this._touchUi.remove(); this._touchUi = null; }   // overlay de toque some com a partida
+    this._compra?.descartar();
     this._soltaAtalhos();   // fora da partida os atalhos do navegador voltam a ser do navegador
     this.el.hud.classList.add('hidden');
     this.el.pause.classList.add('hidden');

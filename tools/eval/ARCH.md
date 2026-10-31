@@ -66,10 +66,13 @@ Cobertura: **3856 de 9063 linhas (43%)** do `game.js` têm dono declarado. O res
 
 | Linha | Símbolo | Linhas |
 |---:|---|---:|
+| 54 | `HS_CAIXA` | 12 |
 | 59 | `ANNOUNCER_LAB` | 4 |
 | 63 | `VMLAB` | 3 |
 | 68 | `VM_QA_CICLO` | 3 |
 | 72 | `VM_QA_ADS` | 8 |
+| 87 | `FLASH_DEBUG_N` | 3 |
+| 90 | `NADE_ESTOQUE` | 8 |
 | 80 | `VM_MAT_LEGACY` | 4 |
 | 86 | `DROP_TTL` | 8 |
 | 94 | `ROUNDS_MAX` | 27 |
@@ -95,9 +98,14 @@ Cobertura: **3856 de 9063 linhas (43%)** do `game.js` têm dono declarado. O res
 | 317 | `MANTLE_GRID` | 5 |
 | 322 | `RACK_OLD` | 4 |
 | 326 | `RACK_RETA` | 25 |
+| 369 | `REGEN` | 3 |
+| 375 | `ARMADURA_DEBUG` | 3 |
 | 353 | `RADIO` | 5 |
 | 359 | `MK_LABELS` | 5 |
 | 364 | `GUNFEEL` | 4 |
+| 395 | `PUNCH_ZOOM` | 3 |
+| 398 | `BOCA_CORPO` | 3 |
+| 401 | `bocaLocalDaArma` | 22 |
 | 371 | `TRACER_STYLE` | 6 |
 | 381 | `ADS_RAMPA_S` | 3 |
 | 385 | `aberturaCone` | 16 |
@@ -241,6 +249,7 @@ Cobertura: **3856 de 9063 linhas (43%)** do `game.js` têm dono declarado. O res
 | 4089 | `_distanceDamage()` | 7 |
 | 4096 | `_shotDamage()` | 10 |
 | 4106 | `_consultarTiro()` | 13 |
+| 4213 | `_perfilCabeca()` | 7 |
 | 4119 | `_origemTiroBot()` | 4 |
 | 4123 | `_miraTiroBot()` | 5 |
 | 4128 | `_participanteHumano()` | 4 |
@@ -254,6 +263,11 @@ Cobertura: **3856 de 9063 linhas (43%)** do `game.js` têm dono declarado. O res
 | 4257 | `_penetrationExit()` | 8 |
 | 4265 | `_surfaceOf()` | 27 |
 | 4292 | `_armoredTarget()` | 3 |
+| 4392 | `_aplicaArmadura()` | 10 |
+| 4402 | `_armaduraLigada()` | 1 |
+| 4403 | `_equiparArmadura()` | 8 |
+| 4411 | `_updateArmaduraHud()` | 13 |
+| 4424 | `_sincronizarArmaduraVisual()` | 6 |
 | 4295 | `_fleshImpact()` | 38 |
 | 4333 | `_fxVoice()` | 9 |
 | 4342 | `_impactSfx()` | 17 |
@@ -281,6 +295,9 @@ Cobertura: **3856 de 9063 linhas (43%)** do `game.js` têm dono declarado. O res
 | 4861 | `_flash()` | 61 |
 | 4922 | `_vmTetoTela()` | 10 |
 | 4932 | `_muzzleWorld()` | 30 |
+| 5112 | `_bocaLigada()` | 13 |
+| 5125 | `_bocaTiroBot()` | 5 |
+| 5130 | `_origemTracerJogador()` | 25 |
 | 4962 | `_aimOrigin()` | 5 |
 | 4967 | `_updateDoors()` | 10 |
 | 4977 | `_updateFx()` | 57 |
@@ -298,9 +315,18 @@ Cobertura: **3856 de 9063 linhas (43%)** do `game.js` têm dono declarado. O res
 | 5220 | `_throwNade()` | 27 |
 | 5247 | `_throwSmoke()` | 1 |
 | 5248 | `_throwFrag()` | 2 |
+| 5450 | `_flashLiberada()` | 2 |
 | 5250 | `_equipNade()` | 16 |
 | 5266 | `_unequipNade()` | 11 |
 | 5277 | `_explodeFrag()` | 40 |
+| 5506 | `_carregarFlashMint()` | 13 |
+| 5519 | `_flashProvisoria()` | 17 |
+| 5536 | `_cegueiraDe()` | 9 |
+| 5545 | `_popFlash()` | 32 |
+| 5577 | `_cegarJogador()` | 7 |
+| 5584 | `_limparCegueira()` | 6 |
+| 5590 | `_tickCegueiraJogador()` | 18 |
+| 5608 | `_capturarRetida()` | 27 |
 | 5317 | `_corDaFumaca()` | 16 |
 | 5333 | `_popSmoke()` | 23 |
 | 5356 | `_updateGrenades()` | 35 |
@@ -352,6 +378,8 @@ Cobertura: **3856 de 9063 linhas (43%)** do `game.js` têm dono declarado. O res
 | 7150 | `_botWeapon()` | 10 |
 | 7160 | `_municaoInfinita()` | 1 |
 | 7161 | `_pickupAllowed()` | 9 |
+| 7490 | `_slotPrimaria()` | 1 |
+| 7491 | `_largarArma()` | 3 |
 | 7170 | `_grabNearPickup()` | 10 |
 | 7180 | `_grabPickup()` | 35 |
 | 7215 | `_assentarNoChao()` | 10 |

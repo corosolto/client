@@ -61,7 +61,7 @@
 import * as THREE from 'three';
 import { aplicarTintaRecortada } from './decal_ink.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { medirParede } from './map_decals.js';
+import { medirParede, offsetTinta } from './map_decals.js';
 import { GRAFITE } from './graffiti_layout.js';
 import { criarSuporteGrafite, superficieGrafitavel } from './graffiti_surface.js';
 
@@ -568,7 +568,7 @@ export function pintarParedes(opts) {
    ============================================================================ */
 function materialMural(nome, map) {
   return new THREE.MeshLambertMaterial({
-    map, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5,
+    map, ...offsetTinta(-5, -5),   // só unidades: ver map_decals.js (offsetTinta)
     ...(nome === 'pixo-lajes-01.png' ? { transparent: true, alphaTest: 0.24, depthWrite: false } : {}),
   });
 }
@@ -1043,7 +1043,7 @@ function _juntar(porArquivo, T, root, postas) {
     const tex = cartaz ? (T.posterImgs || [])[i] : T.decals[i];
     if (!tex) continue;
     const m = new THREE.MeshLambertMaterial(Object.assign({
-      map: tex, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+      map: tex, ...offsetTinta(-4, -4),   // só unidades: ver map_decals.js (offsetTinta)
     }, cartaz ? {} : { transparent: true, alphaTest: 0.24 }));
     const mesh = new THREE.Mesh(g, m);
     /* PNG que dá 404 some junto com a peça. Em prod (clone puro do git) 197 dos 209
