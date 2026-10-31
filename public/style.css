@@ -917,12 +917,15 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 #char-select{justify-content:flex-start;gap:var(--s-4);padding:clamp(56px,7vh,88px) var(--s-5) var(--s-5)}
 /* Ficha + preview são as duas únicas colunas. O elenco ocupa uma segunda linha inteira. */
 .char-stage{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);
-  --char-thumb:114px;grid-template-rows:minmax(0,1fr) var(--char-thumb);grid-template-areas:"sheet preview" "rail rail";
+  --char-thumb:114px;grid-template-rows:minmax(0,1fr) auto;grid-template-areas:"sheet preview" "rail rail";
   gap:var(--s-4) var(--s-5);align-items:stretch;flex:1 1 auto;min-height:0;width:min(1280px,95vw)}
-.char-filmstrip{grid-area:rail;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:var(--s-2);min-width:0}
-.char-list{display:flex;flex:0 1 auto;flex-direction:row;gap:var(--s-2);min-width:0;width:max-content;
-  max-width:calc(100% - 104px);overflow-x:auto;overflow-y:hidden;
-  overscroll-behavior:contain;padding-bottom:3px;
+.char-filmstrip{grid-area:rail;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:var(--s-2);min-width:0;min-height:0}
+/* GRADE DO ELENCO (relato do dono, 31/10: "são muitos personagens, está difícil
+   escolher assim" numa faixa horizontal): a fileira única vira grade multilinha com
+   rolagem própria; thumbs de 72 px mostram o elenco inteiro de uma vez. */
+.char-list{--char-thumb:72px;display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--char-thumb),1fr));gap:var(--s-2);min-width:0;width:100%;max-width:100%;
+  max-height:calc(var(--char-thumb) * 3 + var(--s-2) * 2 + 12px);overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;padding:2px 3px 6px;
   scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 .char-list::-webkit-scrollbar{height:6px}
 .char-list::-webkit-scrollbar-thumb{background:var(--line-2)}

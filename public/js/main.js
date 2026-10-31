@@ -624,7 +624,11 @@ startVisibleRotation(async () => {
   _wallK = next;
   try { localStorage.setItem('cs_wallK', String(_wallK)); } catch {}
   refreshWallpapers();
-}, () => !MOBILE_AUTO && ['main-menu', 'team-select', 'char-select'].some(id => !$(id)?.classList.contains('hidden')));
+/* Sem char-select na condição (relato do dono, 31/10 — "flickering no lobby"): o preview
+   é um canvas TRANSPARENTE sobre o wallpaper; girar o fundo sob o personagem troca a
+   cena inteira a cada intervalo e lê como flicker. No menu principal e no team-select
+   a rotação continua. */
+}, () => !MOBILE_AUTO && ['main-menu', 'team-select'].some(id => !$(id)?.classList.contains('hidden')));
 startVisibleRotation(async () => {
   const next = (_loadWallI + 1) % LOADING_WALLS.length;
   const preload = new Image();
@@ -1172,7 +1176,7 @@ function pvSetChar(def) {
       // (era o "posturas bizarras" de 05/08). Ângulos por classe em glbchars.js. No jogo,
       // nada muda.
       const m = hasModel(def.id) ? buildCharacterModel(def, { weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, gloveSkinId: arma.gloveSkinId, preview: true }) : null;
-      if (!m) { showBox(); return; }
+      if (!m) { if (!p.model) showBox(); return; }   // já há um personagem na tela: manter, nunca piscar a caixa
       if (p.model) p.scene.remove(p.model);
       // Evidência do que foi montado na mão (régua LB20): os valores saem do objeto 3D,
       // não da intenção - canvas não se lê e intenção não prova nada.
@@ -1198,7 +1202,7 @@ function pvSetChar(def) {
       // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
       // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.
       if (PV_CAM_MAOS) enquadrarMaos(p, m);
-    }).catch(() => { if (my === pvToken) showBox(); });
+    }).catch(() => { if (my === pvToken && !p.model) showBox(); });
   } else {
     showBox();
   }
@@ -3949,8 +3953,8 @@ function pickTeam(faction) {
       // Avatar = busto cortado da ARTE APROVADA (molde/neutro), não do GLB low-poly —
       // referência 03: a coluna da esquerda é uma fileira de retratos, não de modelos 3D.
       const thumb0 = `/img/chars/avatars/${c.id}.webp?v=${VERSION}`;
-      row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false');
-      row.innerHTML = `<img src="${thumb0}" alt="${c.name}"><span>${c.name}</span>`;
+      row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false'); row.title = c.name;
+      row.innerHTML = `<img src="${thumb0}" alt="${c.name}" loading="lazy"><span>${c.name}</span>`;
       row.onmouseenter = () => ui.hover();
       // A faixa é horizontal, mas ↑↓ continuam aceitos para quem já usava o fluxo antigo.
       row.onkeydown = (e) => {
