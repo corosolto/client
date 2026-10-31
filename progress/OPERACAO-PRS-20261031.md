@@ -11,3 +11,5 @@ Próximo: conferir hashes/literais, aplicar patch, rodar régua independente e m
 Recebido GLM14: 5 cenários Game reais verdes: rounds1/4/7, CTF e arena;2 mutantes sem-alvo/alvo-par aplicados e reprovados. ARM2 separado, QA browser pendente. Hash/base/literais conferidos; sem push/merge.
 
 Checkpoint local: eval:formatomelhorde completo passou, incluindo cinco cenários e dois mutantes reais. ARCH.md regenerado; docs em modo PR sem alterações. Branch mantida; ARM2, QA visual, CodeRabbit e revisão final ainda pendentes. Próximo: reproduzir ARM2 com assets reais antes de push.
+
+2026-10-31T00:54:07.864173+00:00 — GitHub confirmou remoto c1fdbbdb53cf9c8393e99944c4ec5d35ec5b34fd, com merge de main e autofix de docs. fetch verificou apenas nosso6032b4b30 exclusivo local. Checkpoint preservado; rebase apenas dos nossos commits sobre remoto, antes de nova validação. Não sobrescrever avanço externo.
