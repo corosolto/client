@@ -1,0 +1,71 @@
+# Consistência visual e release, 31/10/2026
+
+## Missão completa e pronto
+
+Ruben autorizou uma janela de dez horas em worktree novo para acompanhar os
+merges e o release, reaproveitar PRs abertos e investigar/corrigir inconsistências
+de mapas, interface, personagens, skins e animação 1P/3P. Operação Flávio está
+excluída desta missão. A melhoria posterior dos fluxos UI e páginas sociais só
+começa depois da estabilidade visual. Não reduzir a missão à triagem ou a um mapa.
+
+Direção: PDF `COROSOLTO - Planos e Ideias.pdf`, ROADMAP existente, plano de
+30/10, referências públicas e vídeos locais de Complexo Favela. Consistência,
+leitura em combate e acabamento humano, respeitando mobile e identidade cultural.
+
+Requisitos explícitos: grafites sem repetição; Ferro Velho só na casa de respawn
+B; Piscina só em parede branca, incluindo posters; melhor acabamento das favelas;
+personagens fiéis, superfície menos facetada, poses e movimentos realistas;
+arma reage ao andar; ADS/tiro da AK alinhados; skins legíveis no jogo e mapas.
+
+Pronto por correção: defeito reproduzido, régua antes/depois e mutante quando
+aplicável, captura real comparável em 3:2 e móvel, revisão independente e
+regressões relevantes verdes. Pronto na integração: head atual revisado, dívida
+acionável resolvida, CI verde e merge rastreável. Release exige SHA implantado,
+health e caminho real do jogador verificados. Evidência parcial fica declarada.
+
+## Checkout e ownership
+
+- Lane: `worktrees/consistencia-visual-release-20261031`.
+- Branch: `codex/consistencia-visual-release-20261031`.
+- Base inicial: `364be45bb0e380dc67db6171282db8fb8ff12066` (main).
+- Ego: TaskSpace 32, `Codex consistencia visual e release 20261031`, p1.
+- Run Estragacodigo: `worktrees/estragacodigo-review-gate-20261031`, leitura.
+- Run Javaporcos: `worktrees/modo-javalis-20261028`, leitura; PR #1160.
+- Personagens: #1179, head observado `fd553b310bbe92743db6db0b19d07c615f9d9d82`,
+  incorpora #1171 e #1155. Ruben apontou explicitamente para este PR e autorizou
+  empilhar novos PRs com microcommits.
+- Não escrever em lanes alheias nem disputar arma/mão/ADS/HUD entre agentes.
+- GLM usa `zai/glm-5.3` pelo OMP; nada de fallback silencioso pago.
+
+## Fontes recuperadas e marcos validados
+
+- Agregador não é repo Git; nova lane criada limpa por `git worktree add`.
+- Regras: AGENTS.md, docs/LICOES.md, skills regua/bug-hunt/gauntlet-fps,
+  BAR-CONSISTENCIA.md e ref-measure.py. Skills Ego/PDF/PR-hardening aplicadas.
+- PDF localizado em `/Volumes/Zenith/Archives/downloads/Downloads/` (três páginas,
+  texto extraído; revisão visual das páginas ainda pendente nesta missão).
+- Plano anterior: `progress/docs/DIRECAO-PROCESSO-CONTINUATION-20261030.md` e
+  `corosolto-roadmap/reports/2026-10-30-revisao/CONTINUATION.md`.
+- Fila remota coletada; #1179 lido. Estado é snapshot, reconsultar antes de merge.
+- Javaporcos tem release autorizada após gates, integração local em curso e CI
+  MAPAUD sob diagnóstico; não iniciar segundo integrador nessa lane.
+- Referência pública encontrada no Ego: Google Play
+  `https://play.google.com/store/apps/details?id=com.BrunoSanta.OComplexo` e
+  gameplay `https://www.youtube.com/watch?v=bx8DlVC0uFY`.
+
+## Aceites, rejeições e limites
+
+Nenhuma correção de produto ou aprovação visual nova ainda. Head do #1179 contém
+afirmações de melhorias e limitações contraditórias no corpo: tratar como pistas,
+nunca como aceite. Não usar status histórico alpha.7 como versão atual.
+Não há permissão inferida para interromper processos, remover locks, comprar
+recursos ou publicar mensagens externas. Merge/release scoped pelo pedido atual;
+gates e ownership continuam obrigatórios. Não chamar resultado técnico de visual.
+
+## Próximo passo concreto
+
+Publicar métrica operacional por mapa/UI/personagem com inventário de defeitos,
+fontes e estados PASS/FAIL/UNKNOWN. Delegar reconhecimento de mapas e da stack
+visual ao GLM somente leitura, preparar baseline local completo e acompanhar
+owners/revisões dos PRs sem disputar escrita. Capturar referência e jogo no Ego,
+então aplicar primeira correção pequena com RED → GREEN e checkpoint.
