@@ -275,15 +275,68 @@ try {
       return {
         protocolo: g._mp.net.ws?.protocol || '',
         snapshotHz: g._mp.net.stats?.hz | 0,
-        objetivo: g.objective?.netState?.() || null,
       };
     });
     cobra(estadoObjetivo.protocolo === 'coro-snapshot-v7',
       `OBJ1 · o navegador negociou snapshots com objetivo (${estadoObjetivo.protocolo || 'nenhum'})`);
     cobra(estadoObjetivo.snapshotHz > 0,
       `OBJ2 · o cliente recebeu snapshots autoritativos (${estadoObjetivo.snapshotHz} Hz)`);
-    cobra(estadoObjetivo.objetivo && Object.keys(estadoObjetivo.objetivo).length > 0,
-      'OBJ3 · o estado objetivo autoritativo chegou ao modo no cliente');
+    // OBJ3 prova a CHAMADA REAL: wrapper em applyNetState, sentinela antes, medida depois.
+    const recibo = await page.evaluate(() => {
+      const g = window.__game, owner = g && g.objective;
+      const original = owner && owner.applyNetState;
+      if (typeof original !== 'function') return false;
+      const r = { called: false, received: false, applied: false, campo: '',
+        tick0: (g._mp && g._mp.net && g._mp.net.snap && g._mp.net.snap.tick) || 0,
+        owner, original, wrapper: null };
+      const wrapper = function (payload) {
+        r.called = true;
+        const snap = g._mp && g._mp.net && g._mp.net.snap;
+        const campo = payload && typeof payload === 'object'
+          && (typeof payload.checkpoint === 'number' ? 'checkpoint'
+            : typeof payload.wave === 'number' ? 'wave' : '');
+        if (!snap || !campo || !(snap.tick > r.tick0) || snap.objective !== payload) {
+          return original.apply(this, arguments);
+        }
+        r.received = true; r.campo = campo;
+        const antes = owner.state ? owner.state[campo] : undefined;
+        if (owner.state) owner.state[campo] = -9180;
+        try {
+          const retorno = original.call(this, payload);
+          if (owner.state && owner.netState && payload[campo] !== -9180
+            && owner.state[campo] === payload[campo]
+            && owner.netState()[campo] === payload[campo]) r.applied = true;
+          return retorno;
+        } finally {
+          if (owner.state && owner.state[campo] === -9180) owner.state[campo] = antes;
+        }
+      };
+      r.wrapper = wrapper; owner.applyNetState = wrapper; g.__qaObjectiveReceipt = r;
+      return true;
+    });
+    let obj3 = null;
+    try {
+      await page.waitForFunction(() => {
+        const r = window.__game && window.__game.__qaObjectiveReceipt;
+        return !!(r && r.received && r.called && r.applied);
+      }, null, { timeout: 15_000, polling: 100 }).catch(() => {});
+      obj3 = await page.evaluate(() => {
+        const r = (window.__game && window.__game.__qaObjectiveReceipt) || {};
+        return { received: !!r.received, called: !!r.called, applied: !!r.applied,
+          sameOwner: !!(r.owner && r.wrapper && r.owner.applyNetState === r.wrapper
+            && window.__game && window.__game.objective === r.owner), campo: r.campo || '' };
+      });
+    } finally {
+      await page.evaluate(() => {
+        const g = window.__game, r = g && g.__qaObjectiveReceipt;
+        if (r && r.owner && typeof r.wrapper === 'function' && r.owner.applyNetState === r.wrapper) {
+          r.owner.applyNetState = r.original;
+        }
+        if (g) delete g.__qaObjectiveReceipt;
+      }).catch(() => {});
+    }
+    cobra(!!obj3 && obj3.received && obj3.called && obj3.applied && obj3.sameOwner,
+      `OBJ3 · o estado objetivo autoritativo chegou e o modo aplicou (${obj3 && obj3.received && obj3.called && obj3.applied && obj3.sameOwner ? `campo ${obj3.campo}` : 'sem aplicação real'})`);
     cobra(erros.length === 0, `OBJ4 · nenhuma exceção no console durante a entrada${erros.length ? `: ${erros[0]}` : ''}`);
     await page.screenshot({ path: FOTO });
   } else {

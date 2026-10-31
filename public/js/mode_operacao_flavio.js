@@ -263,6 +263,7 @@ export class OperacaoFlavio {
       plano.position.z = this._planeOrigin.z;
     }
     this.game.timeLeft = 360;
+    this._waveEpoch = this.game.time;
     this.vip.alive = true;
     this.vip.hp = 100;
     this.vip.respawnAt = Infinity;
@@ -273,6 +274,52 @@ export class OperacaoFlavio {
     this._vipMoveSpeed = 0;
     if (this.game.vmScene) this.game.vmScene.visible = true;
     if (this.hud) this.hud.hidden = false;
+  }
+
+  /* Onda de 8 s desde o epoch da rodada (docs/maps/operacao-decola.md §Respawn): morte na
+     borda perde a onda atual; devolve tempo ABSOLUTO (ent.respawnAt); VIP não renasce. */
+  respawnAt(ent, now) {
+    if (this.game.online && !this.game.dedicated) return undefined;
+    if (ent === this.vip) return Infinity;
+    const epoch = this._waveEpoch ?? (this._waveEpoch = now);
+    return epoch + (Math.floor((now - epoch) / 8) + 1) * 8;
+  }
+
+  _alcancaveis(indice) {
+    this._alcance ??= new Map();
+    let reach = this._alcance.get(indice);
+    if (reach) return reach;
+    const { adj } = this.game.world.waypoints;
+    reach = new Uint8Array(adj.length); reach[indice] = 1;
+    const fila = [indice];
+    for (let i = 0; i < fila.length; i++) for (const viz of adj[fila[i]]) if (!reach[viz]) { reach[viz] = 1; fila.push(viz); }
+    this._alcance.set(indice, reach);
+    return reach;
+  }
+
+  spawnCandidates(team) {
+    const game = this.game, path = game.world.escortPath;
+    if (!this.vip || game.state !== 'live' || !Array.isArray(path) || !path.length) return null;
+    const k = Math.max(0, Math.min(this.state.checkpoint, path.length - 1));
+    const anchor = path[Math.max(0, k - 1)], vipZ = this.vip.pos.z;
+    const nodes = game.world.waypoints.nodes;
+    const reach = this._alcancaveis(game.world.nearestWaypoint(anchor.x, anchor.z));
+    const atras = [];
+    for (let i = 0; i < nodes.length; i++) {
+      if (nodes[i].z >= vipZ || !reach[i]) continue;
+      atras.push({ x: nodes[i].x, z: nodes[i].z, dist: Math.hypot(nodes[i].x - anchor.x, nodes[i].z - anchor.z), lateral: Math.abs(nodes[i].x - anchor.x) });
+    }
+    if (atras.length) {
+      const pool = atras.filter((p) => p.dist <= 18);
+      const escolha = pool.length ? pool : atras;
+      escolha.sort(team === 'B' ? (a, b) => a.dist - b.dist || a.lateral - b.lateral : (a, b) => b.lateral - a.lateral || a.dist - b.dist);
+      return escolha.slice(0, 8);
+    }
+    const baseB = (game.world.spawns.B || []).slice().sort((a, b) => a.z - b.z);
+    const livre = (p) => p.z < vipZ && !game.world.colliders.some((c) => c.minY < 1.8 && c.maxY > 0.1 && p.x > c.minX - 0.4 && p.x < c.maxX + 0.4 && p.z > c.minZ - 0.4 && p.z < c.maxZ + 0.4);
+    const rota = (p) => { const de = game.world.nearestWaypoint(p.x, p.z), para = game.world.nearestWaypoint(anchor.x, anchor.z); return de === para || game.world.findPath(de, para).at(-1) === para; };
+    const provados = baseB.filter(livre).filter(rota);
+    return provados.length ? provados : (baseB.length ? [baseB[0]] : null);
   }
 
   ameacaMaisPerto() {

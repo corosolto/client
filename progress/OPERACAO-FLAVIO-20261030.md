@@ -74,3 +74,19 @@ GLM18 recebido com envelope Markdown removido só para parse; bruto preservado. 
 GLM19 integrado após hashes/literais conferidos. Codex ajustou log para dizer aplicada somente quando contador==1. Régua independente: ambos scripts cobrem todos mapas comuns, omitem objetivo dedicado, e mutante vaza aplicado1x reprova CTFL1 na Piscina. Três casos verdes em /tmp/corosolto-ctf-coverage-green.log. Integração em eval:ctflabels; condições de vitória/mapas intocadas.
 
 Checkpoint de apresentação/cobertura: eval:operacao-online completo passou (oito casos anteriores+mutantes, sete novos+cinco mutantes). Syntax, arch:check e docs:check passaram. Gerador atualizou três blocos estruturais (AGENTS e comecando PT/EN), sem números manuais. Próximo: OBJ3/respawn e investigação de tpanim3p; gate amplo ainda não verde.
+
+### GLM21 reservado: respawn
+2026-10-31T00:50:55.976470+00:00 — RED real em _kill/_pickSpawn: atraso2.2s individual, VIP entra na fila, E à frente e B preso base. Lease modo Flávio e só duas linhas de hooks Game._kill/_pickSpawn. Regra8s desde prepareRound, retaguarda em respawn live para ambos times, entradas/countdown originais preservadas. Régua inclui geometria/rota e dedicado; sem reduzir escopo da spec.
+
+GLM20 rejeitado antes de aplicar: sentinela entre frames podia ser apagada por update local, risco admitido no parecer. GLM22 recebe régua com update real e desenho de wrapper observando chamada autoritativa síncrona, com restauração obrigatória. Lease permanece apenas tiro-mp-browser; base intacta.
+
+GLM21 rejeitado antes de aplicar: retornou delay relativo para campo respawnAt absoluto, e checkpoint0 mantinha E à frente. GLM23 recebe mesmas bases e régua ampliada aos13 checkpoints; hooks absolutos e retaguarda também no início. Runtime continua intacto.
+
+GLM22 recebido/aplicado com hashes/literais conferidos: quatro cenários do bloco browser real verdes, Game/Netcode reais+update entre frames; ausência de payload, chamada removida e noop reprovam OBJ3. É transporte controlado, não WS.
+GLM23 recebido com prosa+JSON: extraído único bloco sem alterar valores; schema path normalizado, hashes/literais conferidos. Game editado só por apply_patch em duas linhas. Comentário de4linhas removido por convenção.60 casos normais verdes (13 checkpoints, dois times, offline/dedicado), incluindo colisão/rota/ondas/VIP/countdown. Régua ampliada para fallback2.2s sem objetivo; mutantes em curso. Limitações de fallback fora da geometria esperada declaradas pelo GLM, não afirmar QA humano/produção.
+
+2026-10-31T01:03:12.597731+00:00 — check:fast exploratório interrompido após falha registrada eval:tpanim3p453.8s e demora em emotes. Não verde; detalhes da falha ainda precisam reprodução focada. Somente árvore de processos própria runner86894 encerrada após verificação de cwd/comando, recibo HQ runtime/flavio-fast-interrupted.json. Alterações de runtime ocorreram durante rodada: não atribuir resultado a um head único. Priorizar check:deploy normal e casos tocados; não pular hooks.
+
+GLM24 reservado após novo RED independente: OBJ3 aceita owner antigo quando g.objective troca após aplicação. Lease só tiro-mp-browser.mjs, exigir owner atual e preservar finally. Outros quatro casos verdes; não alterar runtime nem testes.
+
+2026-10-31T01:08:11.173541+00:00 — GLM23: eval:operacao-reset completo62 casos normais+4 mutantes reais verdes, incluindo fallback comum2.2s; eval:operacao-npc passou, eval:operacao-online anterior passou e GLM24 agora endurece owner atual com5 cenários verdes. GLM24 JSON puro/hash/literal conferidos antes de aplicar. eval:operacao-flavio passou normal e mutante contestação. Syntax/arch/docs verdes após geração normal sem delta. Logs /tmp/corosolto-flavio-{online-final,npc-final,respawn-focused,mode-focused}.log e /tmp/corosolto-objective-owner-green.log. Próximo: checkpoint, pin fixture e prova WS, diagnosticar tpanim3p e obter revisão/push normais. Não pronto para merge nem QA humano.

@@ -4441,7 +4441,7 @@ export class Game {
     ent.alive = false; ent.hp = 0; ent.deaths++;
     if (ent.isPlayer) this._emoteStop();   // ninguém dança morto
     ent._killedBy = attacker ? (attacker.name || null) : null;   // tela de morte do multiplayer (vai no snapshot)
-    ent.respawnAt = this.time + RESPAWN_DELAY;
+    ent.respawnAt = this.objective?.respawnAt?.(ent, this.time) ?? (this.time + RESPAWN_DELAY);
     /* MODO ARENA: quem morre vai pro time do assassino. A troca é aplicada no
        respawn (não aqui) pra não quebrar o killfeed nem o estado do frame atual. */
     if (this.arena && attacker && attacker.team !== ent.team) {
@@ -7316,7 +7316,7 @@ export class Game {
     return spawn.yaw + (bot ? Math.PI : 0);
   }
   _pickSpawn(team) {
-    const list = this.world.spawns[team] || [];
+    const list = this.objective?.spawnCandidates?.(team) || this.world.spawns[team] || [];
     if (!list.length) return { x: 0, z: 0 };
     const foes = this.combatants.filter(c => c.alive && c.team !== team);
     if (!foes.length) return list[(Math.random() * list.length) | 0];
