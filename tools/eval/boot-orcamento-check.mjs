@@ -84,7 +84,7 @@ if (!MUTANTES.has(MUTANTE)) {
 const TETO_BYTES = 8_200_000;
 const TETO_REQS = 340;
 
-const JS_LOCAIS = ['js/main.js', 'js/textures.js'];
+const JS_LOCAIS = ['js/main.js', 'js/client-id.js', 'js/textures.js'];
 /* O pool ansioso é a REFERÊNCIA do ORC2, e também o mutante. A mesma transformação
    serve aos dois papéis de propósito: se ela parar de casar com o código, o portão
    morre barulhento (`throw`) em vez de passar em silêncio. */
@@ -139,6 +139,10 @@ async function mede({ refPoolAnsioso = false } = {}) {
       corpo = instrumentaCausaSplash(corpo);
     }
     await context.route(`**/${rel}*`, async (rota) => {
+      if (rel === 'js/client-id.js') {
+        await rota.fulfill({ status: 200, contentType: 'text/javascript', body: corpo });
+        return;
+      }
       const r = await rota.fetch();
       await rota.fulfill({ response: r, body: corpo });
     });
@@ -176,11 +180,9 @@ async function mede({ refPoolAnsioso = false } = {}) {
     .then((h) => h.jsonValue()).catch(() => null);
   if (portao === null) throw new Error('a splash não liberou a entrada em 180 s');
   const causa = await page.evaluate(() => window.__csSplashCause || null);
-  /* O instante absoluto varia com CPU, GPU e CDP. A própria função de produção sabe
-     se o primeiro desbloqueio veio dos assets ou do timer, então a régua carimba essa
-     causa na cópia de main.js servida só neste navegador. */
+  /* A causa marcada no main.js servido distingue assets do failsafe,
+     sem inferir pelo tempo absoluto de CPU, GPU ou CDP. */
   if (causa !== 'assets') throw new Error(`a splash liberou em ${Math.round(portao)} ms por ${causa || 'causa desconhecida'}, não pelo caminho dos assets`);
-
   const ate = [...reqs.values()].filter((r) => r.fim !== null && r.fim <= portao + 50);
   const patchado = (u) => JS_LOCAIS.some((p) => u.includes(p));
   const resultado = {
