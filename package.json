@@ -294,6 +294,7 @@
     "eval:nosgemeos": "node tools/eval/nos-gemeos-check.mjs",
     "eval:hurtfx": "node tools/eval/hurtfx-check.mjs",
     "eval:netcode": "node tools/eval/netcode-check.mjs",
+    "eval:netrate": "node tools/eval/net-rate-check.mjs && node tools/eval/net-rate-check.mjs --mutante=eixo-de-quadros && node tools/eval/net-rate-check.mjs --mutante=conta-sem-dividir && node tools/eval/net-rate-check.mjs --mutante=janela-parada && node tools/eval/net-rate-frozen-check.mjs && node tools/eval/net-rate-frozen-proof.mjs --autoteste && node tools/eval/net-rate-frozen-proof.mjs",
     "eval:chat": "node tools/eval/chat-check.mjs",
     "eval:nick": "node tools/eval/nick-limit-check.mjs",
     "eval:nick32-cards": "node tools/eval/nick32-cards.mjs",
@@ -446,7 +447,7 @@
     "eval:devport": "node tools/eval/dev-port-check.mjs",
     "eval:mitico": "node tools/eval/mythic-character-check.mjs",
     "eval:deathcam": "node tools/eval/death-camera-check.mjs",
-    "eval:menuprops": "node tools/eval/menu-map-props-check.mjs",
+    "eval:menuprops": "node tools/eval/menu-map-props-check.mjs && node tools/eval/menu-map-props-check.mjs --mutantes && node tools/eval/menu-map-props-check.mjs --autoteste",
     "eval:landmark": "node tools/eval/landmark-material-check.mjs",
     "eval:maptex": "node tools/eval/map-texture-check.mjs",
     "eval:map-evidence": "node tools/eval/map-evidence-contract-check.mjs",
@@ -712,7 +713,7 @@
     "//eval:tpjumpownership": "Ownership de salto interrompido e retorno com guards reais; CPU sem aprovação de pose, física ou Gamewire.",
     "eval:tplocalshot": "node tools/eval/tp-local-shot-check.mjs",
     "//eval:tplocalshot": "Evento local de tiro TP, fase original, retorno parado e expiração no Game/controlador reais; prova CPU limitada sem aceite de arte.",
-    "eval:tpbackpedal": "node tools/eval/tp-local-backpedal-check.mjs",
+    "eval:tpbackpedal": "node tools/eval/tp-local-backpedal-proof.mjs --autoteste && node tools/eval/tp-local-backpedal-proof.mjs",
     "//eval:tpbackpedal": "Sentido de recuo local no controlador real, preservando autoridade e poses fora do recuo; mutantes no-back, wrong-sign e player."
   },
   "repository": {

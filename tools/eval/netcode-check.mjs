@@ -816,7 +816,16 @@ console.log('\n· nova partida do servidor (`partida`) e viewmodel montado depoi
   const net = fs.readFileSync('public/js/net.js', 'utf8');
   const main = fs.readFileSync('public/js/main.js', 'utf8');
   const game = fs.readFileSync('public/js/game.js', 'utf8');
-  cobra(/m\.type === 'partida'[\s\S]{0,400}this\.meta = m;[\s\S]{0,400}this\.onPartida\?\.\(m\)/.test(net),   // janela: entre a meta e o aviso entrou o zerar dos eventos
+  // Régua executável com o NetClient REAL: janela de regex quebra com resets legítimos do ramo.
+  const { NetClient } = await import('../../public/js/net.js');
+  const cli = new NetClient('ws://fixture.invalid/ws'); let hooks;
+  const conectando = cli._conectar(1000, () => ({ abrir(v) { hooks = v; }, fechar() {}, enviar() {} }));
+  hooks.mensagem(JSON.stringify({ type: 'welcome', yourEnt: 1, yourTeam: 'E', espectador: false }), false, 100);
+  await conectando;
+  cli.proximo = { map: 'velho' };
+  let aviso = null; cli.onPartida = (m) => { aviso = m; };
+  hooks.mensagem(JSON.stringify({ type: 'partida', yourEnt: 2, yourTeam: 'B', espectador: false, map: 'novo' }), false, 100);
+  cobra(!!aviso && aviso === cli.meta && aviso.map === 'novo' && cli.yourEnt === 2 && cli.yourTeam === 'B' && !cli.espectador && cli.proximo === null,
     'net.js troca a meta (roster/ids/mapa) e avisa em `partida` — sem isto o cliente fica no mapa velho com ids mortos');
   cobra(/net\.onPartida = async \(m\) => \{[\s\S]{0,400}mpMontarPartida\(net, m\)/.test(main),
     'main.js remonta a partida por cima quando o servidor gira o mapa');
@@ -1113,7 +1122,10 @@ console.log('\n· granada online: o 5 pede ao servidor e não spawna local; `nad
   g.state = 'live';
   const p = g.player; p.frags = 1; p.smokes = 1; p._nextNade = 0;
   g._kd({ code: 'Digit5', preventDefault() {} });
-  cobra(g._grenades.length === 0 && p.frags === 0, 'o 5 online NÃO spawna granada local e desconta o HUD (predição)');
+  cobra(p.nade === 'frag' && g._grenades.length === 0, 'o 5 EQUIPA o frag sem spawnar nada local');
+  // O arremesso é do mouse (direito = curto): este é o gatilho que pede ao servidor.
+  g._md({ button: 2 });
+  cobra(g._grenades.length === 0 && p.frags === 0, 'o arremesso online NÃO spawna granada local e desconta o HUD (predição)');
   net.enviados.length = 0;
   g._mp.stepPlayer(p, { ax: 0, az: 0, crouch: false, shift: false, jump: false });
   g._mp.stepPlayer(p, { ax: 0, az: 0, crouch: false, shift: false, jump: false });
