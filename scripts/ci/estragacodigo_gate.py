@@ -36,11 +36,11 @@ def decide(payload: dict) -> dict:
     request_review = bool(head_oid) and not reviewer_requested and not reviewed_head
 
 
-    precisa = has_estragacodigo_review or has_estragacodigo_check
+    precisa = request_review or has_estragacodigo_review or has_estragacodigo_check
     return {
         "needs_resolution": precisa,
         "labels_add": ["needs-estragacodigo-resolution"] if precisa else [],
-        "labels_remove": ["estragacodigo-resolved"] if precisa else [],
+        "labels_remove": ["estragacodigo-resolved"] if request_review else [],
         "request_review": request_review,
     }
 
@@ -89,17 +89,37 @@ def selftest() -> int:
          ]}, True),
         ("payload sem head não dispara pedido", {}, False),
     ]
+    transicoes = [
+        ("pedido inicial fecha janela do automerge",
+         {"headRefOid": "abc", "reviews": [], "reviewRequests": []},
+         {"needs_resolution": True,
+          "labels_add": ["needs-estragacodigo-resolution"],
+          "labels_remove": ["estragacodigo-resolved"]}),
+        ("review atual preserva resolução já confirmada",
+         {"headRefOid": "abc", "reviews": [
+             {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
+              "state": "COMMENTED"}
+         ]},
+         {"needs_resolution": True,
+          "labels_add": ["needs-estragacodigo-resolution"],
+          "labels_remove": []}),
+    ]
     erros = 0
     for nome, payload, esperado in casos:
         d = decide(payload)
         labels_ok = d["labels_add"] == (["needs-estragacodigo-resolution"] if esperado else [])
-        remove_ok = d["labels_remove"] == (["estragacodigo-resolved"] if esperado else [])
+        remove_ok = d["labels_remove"] == []
         ok = d["needs_resolution"] == esperado and labels_ok and remove_ok
         erros += 0 if ok else 1
         print(f"  {'ok  ' if ok else 'FALHOU'} {nome}: {d}")
     for nome, payload, esperado in pedidos:
         d = decide(payload)
         ok = d.get("request_review") == esperado
+        erros += 0 if ok else 1
+        print(f"  {'ok  ' if ok else 'FALHOU'} {nome}: {d}")
+    for nome, payload, esperado in transicoes:
+        d = decide(payload)
+        ok = all(d.get(chave) == valor for chave, valor in esperado.items())
         erros += 0 if ok else 1
         print(f"  {'ok  ' if ok else 'FALHOU'} {nome}: {d}")
     return 0 if not erros else 1
