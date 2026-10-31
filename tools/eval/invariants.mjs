@@ -2468,7 +2468,7 @@ PRE_DISPARO = false;
   const out = await runNode('vm-presence-check.mjs', {}, ['--mutantes'], 60000);
   let report;
   try { report = JSON.parse(out.split('\n').find((line) => line.startsWith('{"ok":'))); } catch {}
-  put('AUD1V', 'construção e apresentação reais mantêm arma visível no mobile e desktop',
+  put('AUD1V', 'mobile e desktop habilitam autorado com mãos e mantêm arma durante falha de assets',
     report?.ok === true && !out.includes('__ERRO__'),
     report ? `${report.samples} verificações; ${report.failures} falhas` : out.slice(-300));
 }
