@@ -33,3 +33,9 @@ Base efba93ff1. GLM propõe patch em game.js::_updateHud, netgame.js::transicaoD
 ### GLM-03 recebido e verificado em lógica local
 Quatro casos online passaram no HUD/transições reais com DOM stubado; três mutações (sem HUD/cinemática/reset) aplicadas e reprovaram. Relógio do servidor preservado. Fonte GLM estática não executou testes. Riscos ainda abertos: transição ocorre antes das entidades do snapshot (morte do VIP pode receber título errado); fontes de áudio precisam encerrar no reset; contrato binário diverge de Javaporcos/backend. Não declarar MP validado. Push efba interrompido localmente antes do envio para integrar e testar o conjunto.
 Primeira visita Ego Lite Space13/p2 carregou Flávio vivo com objetivo/checkpoints/avião. Captura inicial em /tmp/corosolto-flavio-live-first.png; enquadramento de spawn voltado à parede não serve como arte. Preview JPG existente é arte conceitual, não captura do motor.
+
+### GLM-05 reservado: codec comum
+SHA de Java pinado cf2348b4449a6a17b6532867a3210cdc509f989f; backend df6ab491eb4a21890439d7bcb3464479d5acb1ba. Codec backend resolve fisicamente para worktree Java: não escrever nesse caminho. Régua independente objective-codec-contract-check.mjs vermelha com team J e limite80; compatibilidade E/B v2..v6 verde. GLM-05 propõe patch apenas no codec desta lane. Não alterar game/netgame até receber outro pacote.
+
+### GLM-05 recebido e verificado
+Codec v7 agora preserva time J (bit16) e80 slots em encode/decode. Seis casos locais verdes, três mutações aplicadas/reprovadas. Hashes binários de frames E/B v2..v6 conferem exatamente com codec anterior8248164; formatos antigos seguem limite64 e rejeitam J. Régua preexistente netcodec:30ok,0falhas. Main consultada via GitHub ainda declaraCURRENT_VERSION6: não confundir extensõesv7 abertas em PR com produção. Falta consumo do NPC no cliente e negociação/backend completo; nenhuma escrita externa.

@@ -123,7 +123,7 @@ export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
   if (!snapshot || snapshot.type !== 'snapshot') throw new TypeError('snapshot_required');
   if (version < 2 || version > 7) throw new TypeError('snapshot_version');
   const ents = Array.isArray(snapshot.ents) ? snapshot.ents : [];
-  if (ents.length > MAX_ENTITIES) throw new RangeError('too_many_entities');
+  if (ents.length > (version >= 7 ? 80 : MAX_ENTITIES)) throw new RangeError('too_many_entities');
   const w = new Writer();
   w.u8(0x43); w.u8(0x53); w.u8(0x42); w.u8(0x32); w.u8(version); w.u8(KIND_SNAPSHOT);
   w.str(snapshot.room); w.u32(integer(snapshot.tick, 0xffffffff, 'tick')); w.f64(snapshot.t);
@@ -161,7 +161,7 @@ export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
   if (version >= 7) w.json(snapshot.objective);
   w.u8(ents.length);
   for (const ent of ents) {
-    if (ent.team !== 'E' && ent.team !== 'B') throw new RangeError('team');
+    if (ent.team !== 'E' && ent.team !== 'B' && !(version >= 7 && ent.team === 'J')) throw new RangeError('team');
     const weapon = ent.weapon == null ? 255 : WEAPON_INDEX.get(ent.weapon);
     const primary = ent.primary == null ? 255 : WEAPON_INDEX.get(ent.primary);
     const secondary = ent.secondary == null ? 255 : WEAPON_INDEX.get(ent.secondary);
@@ -172,7 +172,7 @@ export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
       /* v5: posição do vizinho quantizada, `fire` e `voice` viram CONTADOR (bandeira de um
          snapshot só some quando o pacote se perde), e o bloco privado saiu daqui. */
       w.u32(integer(ent.id, 0xffffffff, 'entity_id')); w.str(ent.name);
-      w.u8((ent.team === 'B' ? 1 : 0) | (ent.bot ? 2 : 0) | (ent.alive ? 4 : 0));
+      w.u8((ent.team === 'J' ? 16 : ent.team === 'B' ? 1 : 0) | (ent.bot ? 2 : 0) | (ent.alive ? 4 : 0));
       w.u16(q16(ent.x, POS_MIN, POS_MAX)); w.u16(q16(ent.y, ALT_MIN, ALT_MAX)); w.u16(q16(ent.z, POS_MIN, POS_MAX));
       w.u16(qAng(ent.yaw > Math.PI || ent.yaw < -Math.PI ? Math.atan2(Math.sin(ent.yaw), Math.cos(ent.yaw)) : ent.yaw, Math.PI));
       w.u16(qAng(ent.pitch || 0, Math.PI / 2));
@@ -237,7 +237,7 @@ export function decodeSnapshot(data) {
   }
   if (version >= 7) snapshot.objective = r.json();
   const count = r.u8();
-  if (count > MAX_ENTITIES) throw new RangeError('too_many_entities');
+  if (count > (version >= 7 ? 80 : MAX_ENTITIES)) throw new RangeError('too_many_entities');
   for (let i = 0; i < count; i++) {
     if (version >= 5) {
       const id = r.u32(), name = r.str(), flags = r.u8();
@@ -248,7 +248,7 @@ export function decodeSnapshot(data) {
       if (weaponId !== 255 && !WEAPON_IDS[weaponId]) throw new RangeError('weapon');
       const vt = voiceByte & 3;
       snapshot.ents.push({
-        id, name, team: flags & 1 ? 'B' : 'E', bot: flags & 2 ? 1 : 0,
+        id, name, team: version >= 7 && flags & 16 ? 'J' : flags & 1 ? 'B' : 'E', bot: flags & 2 ? 1 : 0,
         x, y, z, yaw, pitch, hp, alive: !!(flags & 4),
         weapon: weaponId === 255 ? null : WEAPON_IDS[weaponId],
         fireN, voice: vt === 1 ? 'radio' : vt === 2 ? 'voice' : 0, voiceN: voiceByte >> 2,
