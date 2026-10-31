@@ -66,6 +66,26 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
 - Artefatos e logs fora do Git em `../../audits/2026-10-31-visual-consistency/`:
   scouts GLM, PDF, referência local, setup e primeira captura Piscina. Captura
   inicial inclui overlay de debug e tamanho não 3:2; não conta como aceite.
+- #1179 no jogo real: Piscina aplica 451 peças/46 malhas, captura 1320×880 vista,
+  ainda com repetição visual forte. Overlay Vite local registrado e ocultado na
+  captura; não é evidência de produção. Régua cruzada de curadoria em construção.
+- Lease GLM de motion: somente `public/js/authoredvm.js`, contexto de movimento no
+  `_updatePlayer` de `public/js/game.js` e `tools/eval/authored-locomotion-check.mjs`.
+  Não mudar ADS, tiro, HUD, assets ou package.json. Root mantém mapas/grafite;
+  um único navegador em TaskSpace 32. GLM devolve RED/GREEN/mutantes, sem commit.
+- #1173 reaproveitado: cherry-pick do hardening `c097933d7` em `a63182820`, preserva
+  autoria e cancela bake com entrada faltante. Revisão/execução desta integração
+  ainda pendente. Não incorporamos o mapa antigo inteiro por cima do #1179.
+- Régua real de curadoria RED: Piscina 465 peças/49 artes, 45 artes repetidas,
+  165 fora do branco previsto; Ferro 207/38, 30 repetidas, 172 fora da casa.
+  JSONs `*-1179-curation-red.json` nos audits. Primeira correção local Ferro
+  mediu 21 peças/21 artes, zero fora e zero sem suporte, ainda sem novo bake.
+- #1179 CI falha na economia: EJ22 ainda espera 30 s, runtime oferece 50 s;
+  EJ12 também vermelho, investigar no log. Revisão CodeRabbit solicitada para o
+  head atual sem review. Não está pronto para merge remoto.
+- Lease GLM de testes grafite: `tools/eval/graffiti-curation-check.mjs` (novo),
+  fixtures afetadas de `graffiti-support-check.mjs` e
+  `piscina-graffiti-batch-check.mjs`; sem produto, package, browser ou commit.
 
 ## Aceites, rejeições e limites
 
