@@ -1319,6 +1319,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <button id="strip-down" class="strip-arrow" type="button" aria-label="próximo personagem">›</button>
     </div>
     <div class="char-sheet">
+      <div class="char-sheet-body" tabindex="0" role="region" aria-labelledby="char-info-name">
       <div id="char-faction-tag" class="char-faction-tag"> - </div>
       <div class="char-info-head">
         <div id="char-info-name"> - </div>
@@ -1333,6 +1334,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <div class="char-attrs-block">
         <small>ATRIBUTOS</small>
         <div id="char-attrs"></div>
+      </div>
       </div>
       <button id="char-confirm" class="btn btn-big">USAR PERSONAGEM</button>
     </div>

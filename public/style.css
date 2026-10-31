@@ -917,9 +917,13 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 #char-select{justify-content:flex-start;gap:var(--s-4);padding:clamp(56px,7vh,88px) var(--s-5) var(--s-5)}
 /* Ficha + preview são as duas únicas colunas. O elenco ocupa uma segunda linha inteira. */
 .char-stage{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);
-  --char-thumb:114px;grid-template-rows:minmax(0,1fr) auto;grid-template-areas:"sheet preview" "rail rail";
+  /* rail tem PISO de 1 fileira (thumb72+12, mesmo 84px do coarse≤560 #1179): sem piso
+     a ficha empurra e corta a lista em vez de rolar dentro dela */
+  --char-thumb:114px;grid-template-rows:auto minmax(84px,1fr);grid-template-areas:"sheet preview" "rail rail";
   gap:var(--s-4) var(--s-5);align-items:stretch;flex:1 1 auto;min-height:0;width:min(1280px,95vw)}
 .char-filmstrip{grid-area:rail;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;
+  /* a grade rola DENTRO da grid-area do rail — igual ao fix #1179 do coarse≤560 */
+  grid-template-rows:minmax(0,1fr);
   align-items:center;gap:var(--s-2);min-width:0;min-height:0}
 /* GRADE DO ELENCO (relato do dono, 31/10: "são muitos personagens, está difícil
    escolher assim" numa faixa horizontal): a fileira única vira grade multilinha com
@@ -927,7 +931,8 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 .char-list{--char-thumb:72px;display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--char-thumb),1fr));gap:var(--s-2);min-width:0;width:100%;max-width:100%;
   /* mínimo de 1 fileira inteira: em tela baixa o trilho encolhe, mas a thumb não corta (#1179) */
   min-height:calc(var(--char-thumb) + 12px);
-  max-height:calc(var(--char-thumb) * 3 + var(--s-2) * 2 + 12px);overflow-y:auto;overflow-x:hidden;
+  /* teto = área do rail (não 3 fileiras fixas): o rail só tem o que sobrar da ficha */
+  max-height:100%;overflow-y:auto;overflow-x:hidden;
   overscroll-behavior:contain;padding:2px 3px 6px;
   scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 .char-list::-webkit-scrollbar{height:6px}
@@ -952,9 +957,12 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
    Na referência a coluna do meio termina onde o conteúdo termina. O gap sobe pra s-4
    porque agora ele é o que dá o ritmo entre os blocos. */
 .char-sheet{grid-area:sheet;align-self:start;max-height:100%;
-  display:flex;flex-direction:column;gap:var(--s-4);min-height:0;overflow-y:auto;
+  display:flex;flex-direction:column;gap:var(--s-4);min-height:0;overflow:hidden;
   background:rgba(var(--bg-800-rgb),.9);border:1px solid var(--line);padding:var(--s-5);clip-path:var(--cut);
-  position:relative;text-align:left;scrollbar-width:thin}
+  position:relative;text-align:left}
+/* Rodapé reservado: só o body rola; o CTA nunca cai na área cortada do scroller. */
+.char-sheet-body{flex:1 1 auto;min-height:0;overflow-y:auto;
+  display:flex;flex-direction:column;gap:var(--s-4);scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 /* nome e raridade EMPILHADOS: na referência o "ÉPICO" cai numa linha própria embaixo do
    "PALHAÇO DO MAL" — lado a lado a pastilha disputava a linha do título e apertava o nome */
 .char-info-head{display:flex;flex-direction:column;align-items:flex-start;gap:var(--s-2)}
@@ -973,7 +981,7 @@ html[data-ui="legacy"] .char-spec small::before,html[data-ui="legacy"] .char-att
    ~280px de conteúdo, e o texto vinha em --fs-600 com tracking de título. Na referência
    é uma linha só. O `nowrap` é o contrato — se o corpo crescer de novo, estoura visível
    em vez de dobrar em silêncio. Preenchimento e cor vêm do `.btn-big`. */
-#char-confirm{margin-top:auto;align-self:stretch;white-space:nowrap;
+#char-confirm{flex:0 0 auto;margin-top:auto;align-self:stretch;white-space:nowrap;
   font-size:var(--fs-400);letter-spacing:var(--tr-2);padding:var(--s-3) var(--s-4)}
 /* SEM MOLDURA (referência 03): lá o personagem ocupa o terço direito inteiro, sangrando
    pro fundo da página. No jogo eram DUAS bordas concêntricas — a caixa e o canvas — e o
@@ -981,6 +989,9 @@ html[data-ui="legacy"] .char-spec small::before,html[data-ui="legacy"] .char-att
    da tela. Tirando as duas o canvas ganha os 58→72vh e o personagem vira o assunto. */
 .char-preview-box{grid-area:preview;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s-2);
   min-width:0;min-height:0;position:relative;background:none;border:0;padding:0;overflow:hidden}
+/* contain:size só no palco de seleção (filho direto, altura definida pela linha do grid):
+   o mesmo box movido pro #hub-character pelo syncHomeCharacter() não casa o seletor. */
+.char-stage > .char-preview-box{contain:size}
 /* Canvas fluido: cresce com a janela (a altura aperta primeiro em 3:2). Backing 640². */
 #char-preview{flex:0 1 auto;cursor:grab;touch-action:none;
   background:
@@ -3125,6 +3136,8 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
     grid-template-rows: auto minmax(84px, 1fr); }
   .char-sheet { flex-direction: row; align-items: center; gap: 14px; max-height: none;
     overflow: visible; padding: var(--s-2) var(--s-4); align-self: start; }
+  /* contents devolve os filhos ao flex-row compacto acima, sem reestilizá-los */
+  .char-sheet-body { display: contents; overflow: visible; }
   /* faixa do meio mais baixa: menos respiro em volta e teto no palco pra não invadir os
      retratos da fileira de baixo */
   .char-stage { gap: var(--s-2) var(--s-4); }
