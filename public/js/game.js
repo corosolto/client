@@ -774,6 +774,7 @@ export class Game {
     this._mapId = resolveMapId(mapId);
     grafiteNoDedicado(dedicated);   // antes do build: a passada roda dentro dele
     this.world = MAPS[this._mapId].build(this.scene, textures);
+    this.sfx.setGameMode?.(this.world.mode);
     this._buildEnv();   // IBL: env map de gradiente dusk -> materiais PBR (Standard) ganham ambiente/reflexo
     this.flashTex = textures.flash;
     /* modo de armas também muda o mapa: pickups fora do modo somem (e suas meshes)

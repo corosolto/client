@@ -83,6 +83,16 @@ export class Sfx {
     this.reverbOn = false;       // send de reverb leve (opt-in: ?reverb=1) — OFF por padrão
     this.onDuck = null;          // hook externo (main.js: abaixa a música do menu)
   }
+  setGameMode(mode) {
+    if (this.gameMode === mode) return;
+    this.gameMode = mode;
+    if (mode !== 'horde') return;
+    this.stopRound(0);
+    for (const key of ['_radioAudio','_characterAudio','_characterSelectAudio','_announcerAudio']) {
+      try { this[key]?.pause(); } catch {}
+      this[key] = null;
+    }
+  }
   async loadManifest(revision = '') {
     // Local pack first (audio/manifest.json, gitignored — dev's own CS samples);
     // fall back to the committed CC0 pack (real gun recordings, public domain) so
@@ -134,6 +144,7 @@ export class Sfx {
   }
   _pick(arr) { return arr && arr.length ? arr[(Math.random() * arr.length) | 0] : null; }
   _voicePool(team) {
+    if (this.gameMode === 'horde') return [];
     const pool = this.pack?.voice?.[team];
     if (!Array.isArray(pool)) return [];
     const allowlist = LEGACY_VOICE_ALLOWLIST[team];
@@ -166,6 +177,7 @@ export class Sfx {
   }
   // Fala autoral do personagem. Sem take próprio ou pool curado, não há voz substituta.
   characterVoice(characterId, event, { fallbackFaction = null, interrupt = false } = {}) {
+    if (this.gameMode === 'horde') return false;
     if (!this.speechEnabled) return false;
     const now = performance.now();
     if (event === 'kill' && this._lastKillVoice > 0 && now - this._lastKillVoice < 3500) return false;
@@ -188,6 +200,7 @@ export class Sfx {
     return false;
   }
   characterSelectVoice(characterId, faction, rosterIds) {
+    if (this.gameMode === 'horde') return false;
     if (!this.speechEnabled) return false;
     const rosterSlot = rosterIds?.indexOf(characterId) ?? -1;
     if (rosterSlot < 0) return false;
@@ -239,6 +252,7 @@ export class Sfx {
          entrar por cima da rodada nova.
      Fade e não corte seco: som que some no talo lê como bug de áudio. */
   roundSound(team) {
+    if (this.gameMode === 'horde') return false;
     const f = this._pick(this.pack?.round?.[team]);
     if (!f) return false;
     this.stopRound(0);                       // vinheta anterior nunca acumula com a nova
@@ -273,6 +287,7 @@ export class Sfx {
   }
   csSound(key) { const f = this._cs(key); if (f) { this._sample(f); return true; } return false; }
   _announcer(pool, vol = 0.78) {
+    if (this.gameMode === 'horde') return false;
     const f = this._pick(pool);
     if (!f) return false;
     if (this._announcerAudio) { try { this._announcerAudio.pause(); } catch {} }
@@ -286,7 +301,7 @@ export class Sfx {
   roundNumber(number) {
     return this._announcer(this.pack?.roundNumbers?.[String(number)], 0.72);
   }
-  captureSound(faction) { const arr = (faction && this.pack?.captureByTeam?.[faction]) || this.pack?.capture; const f = this._pick(arr); if (f) { this._sample(f); return true; } return false; }   // captura de bandeira (CTF): pool por facção (captureByTeam) c/ fallback global
+  captureSound(faction) { if (this.gameMode === 'horde') return false; const arr = (faction && this.pack?.captureByTeam?.[faction]) || this.pack?.capture; const f = this._pick(arr); if (f) { this._sample(f); return true; } return false; }
   _cs(key) { const v = this.pack?.cs?.[key]; return v && v.length ? this._pick(v) : null; }
 
   ensure() {
