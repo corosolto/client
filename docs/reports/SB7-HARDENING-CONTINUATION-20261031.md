@@ -132,3 +132,6 @@ independente deste diff, então Root decide commit, push normal e novo Estraga.
 
 
 18:31 UTC — Crítico independente014e6981 CLEAN:51asserçõespróprias, ENOBUFSrealstatus0/signalnull eTEXELrealbefore0MATOU→after78semMATOU/restauraçãoexata, semântico1+skip+REDantesSKIPpreservados. Quatrohashesestáveis. Fonteaprovadaparacheckpoint/pushnormal; fullsuite/mainintegration/CI/EstragaSHAatualpendentes.
+
+
+2026-10-31T18:31:15.273211+00:00 — Mergealpha132 críticoindependentebd67657f CLEAN743asserções:716aliasesmain,sequencesfast/deploy+sonda1×,12normaispaths/lock132preservados. Rootfullsondafilho/docs/normalquality/equivalence4/4GREEN15s; próximaaçãopushnormalcomhooksobrigatórios, EstragaactualSHApending.
