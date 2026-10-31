@@ -1,10 +1,10 @@
 name: csbrasil-bot-pr-classify
 
 on:
-  # `pull_request_target` dispara no PUSH — e o CodeRabbit comenta DEPOIS do push. Com
-  # só esses gatilhos o rotulador rodava antes de existir comentário, não achava nada
-  # e nunca mais rodava: era estruturalmente cego para o que devia detectar. Medido na
-  # PR #240, que fechou com 4 fios do revisor abertos e NENHUMA etiqueta.
+  # `pull_request_target` dispara no PUSH, e o estraga-codigo revisa DEPOIS do push.
+  # Sem os gatilhos de review, o rotulador roda cedo demais, não vê o revisor e nunca
+  # volta para bloquear a pendência. Medido na PR #373, cujo autor real dos reviews é
+  # `estraga-codigo`.
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
   pull_request_review:
@@ -14,8 +14,8 @@ on:
   # Varredura: em PR vindo de FORK, os dois gatilhos de review acima rodam SEM os
   # secrets do repositório (regra do GitHub), e o job abaixo não pode nem se
   # identificar. O sweep roda no contexto base, com token, e reclassifica os PRs
-  # abertos pelo `workflow_dispatch` — é o que devolve a cobertura pós-CodeRabbit
-  # que os gatilhos de review davam nos PRs de casa.
+  # abertos pelo `workflow_dispatch` — é o que devolve a cobertura pós-estraga-codigo
+  # que os gatilhos de review dão nos PRs de casa.
   schedule:
     - cron: '7,37 * * * *'
   workflow_dispatch:
@@ -73,7 +73,7 @@ jobs:
         with:
           python-version: '3.13'
       - name: Ensure labels exist
-        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-coderabbit-resolution coderabbit-resolved
+        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-estragacodigo-resolution estragacodigo-resolved
       - name: Fetch PR metadata
         run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
       - name: Route PR and set assignee
@@ -114,19 +114,19 @@ jobs:
         run: |
           python3 scripts/ci/pr_classify.py --selftest
           python3 scripts/ci/pr_classify.py < /tmp/pr.json > /tmp/pr-labels.json
-      - name: Gate on CodeRabbit presence
+      - name: Gate on estraga-codigo review
         run: |
-          gh pr view "$PR_NUMBER" --json comments,statusCheckRollup > /tmp/pr-coderabbit.json
-          python3 scripts/ci/coderabbit_gate.py --selftest
-          python3 scripts/ci/coderabbit_gate.py < /tmp/pr-coderabbit.json > /tmp/pr-coderabbit-labels.json
+          gh pr view "$PR_NUMBER" --json reviews,statusCheckRollup > /tmp/pr-estragacodigo.json
+          python3 scripts/ci/estragacodigo_gate.py --selftest
+          python3 scripts/ci/estragacodigo_gate.py < /tmp/pr-estragacodigo.json > /tmp/pr-estragacodigo-labels.json
       - name: Apply labels
         run: |
           python3 - <<'PY'
           import json, os, subprocess
           data = json.load(open('/tmp/pr-labels.json'))
-          coderabbit = json.load(open('/tmp/pr-coderabbit-labels.json'))
-          add = sorted(set(data.get('labels_add', []) + coderabbit.get('labels_add', [])))
-          remove = sorted(set(data.get('labels_remove', []) + coderabbit.get('labels_remove', [])))
+          review_gate = json.load(open('/tmp/pr-estragacodigo-labels.json'))
+          add = sorted(set(data.get('labels_add', []) + review_gate.get('labels_add', [])))
+          remove = sorted(set(data.get('labels_remove', []) + review_gate.get('labels_remove', [])))
           repo = os.environ['GITHUB_REPOSITORY']
           n = os.environ['PR_NUMBER']
           if add:
@@ -143,14 +143,14 @@ jobs:
           pr = json.load(open('/tmp/pr.json'))
           labels = json.load(open('/tmp/pr-labels.json'))
           route = json.load(open('/tmp/pr-route.json'))
-          coderabbit = json.load(open('/tmp/pr-coderabbit-labels.json'))
+          review_gate = json.load(open('/tmp/pr-estragacodigo-labels.json'))
           payload = {
               # Sem `or []`: `files: null` (PR grande demais para a API) precisa chegar
               # NULO no pr_comment.py, que declara a lista incompleta em vez de fingir
               # que o PR não mudou nada.
               'files': pr.get('files'),
               'changedFiles': pr.get('changedFiles'),
-              'labels_add': sorted(set(labels.get('labels_add', []) + coderabbit.get('labels_add', []))),
+              'labels_add': sorted(set(labels.get('labels_add', []) + review_gate.get('labels_add', []))),
               'baseRefName': pr.get('baseRefName'),
               'author_login': ((pr.get('author') or {}).get('login')),
               'add_assignee': route.get('add_assignee'),
