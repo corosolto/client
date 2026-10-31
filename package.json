@@ -243,7 +243,7 @@
     "changelog:check": "node scripts/sync-changelog.mjs --check",
     "eval:grafite": "node tools/eval/graffiti-census.mjs",
     "eval:grafite:ar": "node tools/eval/graffiti-audit.mjs",
-    "check:web": "node tools/eval/runner.mjs eval:grafite-atual:prova eval:select",
+    "check:web": "node tools/eval/runner.mjs eval:grafite-atual eval:grafite-atual:prova eval:select",
     "audio": "node tools/gen-audio-manifest.mjs",
     "audio:check": "node tools/gen-audio-manifest.mjs --check",
     "feet": "node tools/gen-foot-offsets.mjs",
