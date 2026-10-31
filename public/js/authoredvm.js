@@ -14,6 +14,7 @@ import { weaponCFG } from './weapons.js';
 import { applyTeamHandMaterial, refreshTeamHands, handLayoutOfMesh } from './vmhands.js';
 import { extendSleeveOpenings, capSleeveOpenings, SLEEVE_MATERIAL } from './vmsleeve.js';
 import { applyWeaponSkinCandidate } from './weapon-skins.js';
+import { approach, VM_TIMES } from './springs.js';
 
 const DEG2RAD = Math.PI / 180;
 
@@ -89,6 +90,8 @@ const GOLDEN_QS = new Set((_QS?.get('vmgolden') || '').split(',').filter((w) => 
 const GOLDEN_ADS = AUTHORED_VM_ENABLED && _QS?.get('vmgoldenads') !== '0';
 // ADS 1P pela linha de mira (adsEfetivo em vmconfig.js); ?ads1pfix=0 volta ao foco.
 const ADS1P_FIX = _QS?.get('ads1pfix') !== '0';
+// ?vmlocomotion=0: kill-switch do gait/sway 1P para A/B sem deploy (espírito ?vmkick).
+const VM_LOCOMOTION = _QS?.get('vmlocomotion') !== '0';
 
 // Fail-closed: sem a chave (ou revisão) tudo permanece no legado; `vmready`/`vmweapon`
 // só abrem armas numa sessão de revisão.
@@ -473,6 +476,8 @@ export class AuthoredViewModels {
     this.profile = profile;
     this.adsAmount = 0;
     this._ctx = {};
+    this._gaitEnv = 0;
+    this._gait = { x: 0, y: 0, rz: 0 };
     this._time = 0;
     this.recoil = new VmRecoil();
     this._recoilParams = null;
@@ -683,10 +688,32 @@ export class AuthoredViewModels {
     this.adsAmount = Math.min(1, Math.max(0, Number(amount) || 0));
     return this.active(id);
   }
+  // Gait 1P (P3 da METRICA): Lissajous 1:2 travado no stepPhase do som de passo;
+  // ganhos, taus e limites com procedência em docs/visual-consistency/MOVIMENTO-1P.md.
+  _stepGait(step, ctx) {
+    // A guarda serve ao mutante fixture-sem-estado: sem ctor o estado falta como NaN
+    // visível ao gate (mounts-finitos), não como crash.
+    const gait = this._gait || (this._gait = { x: 0, y: 0, rz: 0 });
+    if (!VM_LOCOMOTION) { gait.x = 0; gait.y = 0; gait.rz = 0; return; }
+    const speed = Math.max(0, Number(ctx.speed) || 0);
+    const want = (ctx.grounded === false || ctx.moving === false) ? 0 : Math.min(1, speed / 6.6);
+    this._gaitEnv = approach(this._gaitEnv, want, want > this._gaitEnv ? 0.10 : VM_TIMES.bobStopTau, step);
+    const phase = Number(ctx.stepPhase) || 0;
+    const amp = this._gaitEnv * (1 - this.adsAmount);
+    gait.x = Math.sin(phase) * 0.008 * amp;
+    gait.y = Math.sin(phase * 2) * 0.010 * amp;
+    gait.rz = Math.sin(phase) * 0.030 * amp;
+  }
+
+  // Reset de lifecycle (morte/respawn — MOVIMENTO-1P): a vida nova não herda envelope/fase.
+  resetLocomotion() { this._gaitEnv = 0; this._gait = { x: 0, y: 0, rz: 0 }; }
+
 
   update(dt, ctx = {}) {
     const step = Math.min(0.05, Math.max(0, Number(dt) || 0));
     this._ctx = ctx;
+    // Envelope sempre viva (porte de granada/mount oculto): sem estado perdido na volta.
+    this._stepGait(step, ctx);
     if (this.utility) {
       const utility = this.utility;
       this._stepEntry(utility.entry, step);
@@ -801,6 +828,15 @@ export class AuthoredViewModels {
       active.mount.rotation.x += adsConfig.rotDeg[0] * DEG2RAD * ads;
       active.mount.rotation.y += adsConfig.rotDeg[1] * DEG2RAD * ads;
       active.mount.rotation.z += adsConfig.rotDeg[2] * DEG2RAD * ads;
+    }
+    // LOCOMOTION 1P: aditivo sobre frame∘draw∘recoil∘ADS; o envelope (1-ADS) também
+    // no sway garante zero EXATO no ADS cheio — molas do rig são assintóticas.
+    if (VM_LOCOMOTION && !this.held) {
+      const hip = 1 - this.adsAmount;
+      const sway = ctx.sway;
+      active.mount.position.x += this._gait.x + (sway?.swayX?.value || 0) * hip;
+      active.mount.position.y += this._gait.y + (sway?.swayY?.value || 0) * hip;
+      active.mount.rotation.z += this._gait.rz + (sway?.swayR?.value || 0) * hip;
     }
   }
 

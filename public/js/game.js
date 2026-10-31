@@ -3090,6 +3090,8 @@ export class Game {
     // BUG-04: início de round/respawn zera o rig e SACA — sem isso o viewmodel podia
     // reaparecer no meio de uma recarga interrompida pela morte.
     this.vm.rig.reset();
+    this.vm.authored?.resetLocomotion?.();
+    this.player.stepPhase = 0;   // Game é o único dono da fase: reposicionamento de round zera
     if (this.vm.melee?.active) this.vm.melee.draw();
     else if (this.vm.authored?.active(this.player.weapon)) this.vm.authored.draw(this.player.weapon, 0.38);
     else this.vm.rig.startDraw();
@@ -3897,13 +3899,19 @@ export class Game {
     p._nextNade = 0;
     this.vm.authored?.abortUtility?.();
     this.vm.rig?.reset?.();
+    this.vm.authored?.resetLocomotion?.();
     this._applyVmVisibility();
     this._updateWeaponHud();
   }
   /* Renasce no idle e SACA, em vez de retomar o quadro congelado da morte. Vale pro
      respawn local e pro revive do servidor (netgame), que não passa pelo _respawnPlayer. */
   _voltarPraBase() {
-    const w = this.player.weapon;
+    const p = this.player;
+    const w = p.weapon;
+    this.vm.authored?.resetLocomotion?.();
+    p.stepPhase = 0;   // reposicionamento (respawn/revive) zera a fase do ciclo
+    // Revive sem _kill (netgame) não herda granada/arremesso da vida anterior (R6 P2-1)
+    p.nade = null; p.nadeBusyUntil = 0; p._nextNade = 0;
     this.vm.authored?.abortUtility?.();
     this.vm.rig?.reset?.();
     this._applyVmVisibility();
@@ -6988,8 +6996,13 @@ export class Game {
       p.pos.x = nx; p.pos.z = nz;
       if (MOVE2 && p.grounded && rise > 0.02 && rise <= STEP_H && p.pos.y < g) { p.pos.y = g; if (p.vel.y < 0) p.vel.y = 0; }
     };
+    const px0 = p.pos.x, pz0 = p.pos.z;
     tryAxis(p.vel.x * dt, 0, 0); tryAxis(0, p.vel.z * dt, 1);
     this._collide(p.pos, 0.38);
+    // Velocidade EFETIVA = deslocamento XZ real dentro da física (integração + correção
+    // de colisão)/dt: corpo preso em parede/bounds não vira gait e teleporte do chamador
+    // (reconciliação) fica fora da medição. Limitado ao maxSp já calculado.
+    const effectiveSp = Math.min(maxSp, dt > 0 ? Math.hypot(p.pos.x - px0, p.pos.z - pz0) / dt : 0);
     p.pos.y += p.vel.y * dt;
     const g2 = this.world.groundHeightAt(p.pos.x, p.pos.z, p.pos.y);
     // Opt-in para escadaria íngreme: acompanha um passo descendente sem lançar o corpo
@@ -6998,10 +7011,10 @@ export class Game {
       p.pos.y = g2; p.vel.y = 0; p.grounded = true;
     }
     if (p.pos.y <= g2) {
-      if (!p.grounded && p.vel.y < -4) { this.sfx.land(); p.landDip = Math.min(1, -p.vel.y / 14); } // landing dip, sized by impact
+      if (!p.grounded && p.vel.y < -4) { this.sfx.land(); p.landDip = Math.min(1, -p.vel.y / 14); }
       p.pos.y = g2; p.vel.y = 0; p.grounded = true;
     } else if (p.pos.y > g2 + 0.05) p.grounded = false;
-    return { sp, walking, sprint };
+    return { sp: effectiveSp, walking, sprint };
   }
 
 
@@ -7262,8 +7275,13 @@ export class Game {
     this.vm.authored?.setAim(p.weapon, a);
     // O rig procedural (rg) e o estado do frame viram contexto do mount autorado:
     // sway/ADS/recoil compõem lá dentro (dono único do transform — M5/M6 do BUG-75).
+    // `_moveEntity` devolve o deslocamento XZ medido DENTRO da física (pós-colisão):
+    // parede/bounds bloqueados e teleporte do chamador não viram marcha.
+    const spEf = Number.isFinite(sp) ? Math.max(0, sp) : 0;
+    const movingEf = spEf > 0.6 && p.grounded;
     this.vm.authored?.update(dt, {
-      ads: a, sway: rg, speed: sp, grounded: p.grounded !== false, scoped: !!p.scoped,
+      ads: a, sway: rg, speed: spEf, grounded: p.grounded !== false, scoped: !!p.scoped,
+      stepPhase: p.stepPhase, moving: movingEf,
     });
     if (authoredActive || meleeActive) {
       // O clipe já inclui perspectiva e movimento; somar IK ou offsets quebraria contatos.
