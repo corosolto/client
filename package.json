@@ -441,7 +441,7 @@
     "eval:devport": "node tools/eval/dev-port-check.mjs",
     "eval:mitico": "node tools/eval/mythic-character-check.mjs",
     "eval:deathcam": "node tools/eval/death-camera-check.mjs",
-    "eval:menuprops": "node tools/eval/menu-map-props-check.mjs",
+    "eval:menuprops": "node tools/eval/menu-map-props-check.mjs && node tools/eval/menu-map-props-check.mjs --mutantes && node tools/eval/menu-map-props-check.mjs --autoteste",
     "eval:landmark": "node tools/eval/landmark-material-check.mjs",
     "eval:maptex": "node tools/eval/map-texture-check.mjs",
     "eval:map-evidence": "node tools/eval/map-evidence-contract-check.mjs",

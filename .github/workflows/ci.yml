@@ -61,6 +61,12 @@ jobs:
         run: npm run syntax
       - name: Taxa de rede (FPS, travada, relógio congelado e mutantes)
         run: npm run eval:netrate
+      - name: Dependências e reconstrução do fundo do menu
+        run: npm run eval:menuprops
+      - name: Mutantes do orçamento exigem a falha correta
+        run: node tools/eval/boot-mutant-verdict-check.mjs --mutantes
+      - name: Assets válidos e mutante entregue no orçamento
+        run: node tools/eval/boot-assets-check.mjs --mutantes
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         run: npm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o

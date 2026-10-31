@@ -273,6 +273,7 @@ if (!urlMap) { settings.map = currentMap; saveSettings(); }
 /* ---------------- menu backdrop (orbiting map) ---------------- */
 // Mint building/statue GLBs used by the Brasília map (loaded once, cloned per placement).
 const MAP_PROPS = COMMON_MAP_PROPS;   // props do Piscinão de Ramos (Mint); carros/estátua do Havan carregam por-mapa   // Havan (estátua + carros + carrinho)
+const MENU_PROPS_COMPLETOS = new Set([MAPS.praca_poderes]);
 let menuScene = new THREE.Scene();
 
 const menuCam = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 400);
@@ -447,7 +448,8 @@ function rebuildMenuBackdrop(mapa) {
   ajustarAnisotropia(menuScene, settings.quality);
 }
 function menuProps(mapa) {
-  return [...MAP_PROPS, ...(mapa.props || [])];
+  const props = mapa.props || [];
+  return MENU_PROPS_COMPLETOS.has(mapa) ? props : [...MAP_PROPS, ...props];
 }
 let _menuLoadSeq = 0;
 async function loadMenuBackdrop() {

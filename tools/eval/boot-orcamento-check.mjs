@@ -89,26 +89,43 @@ const JS_LOCAIS = ['js/main.js', 'js/textures.js'];
    morre barulhento (`throw`) em vez de passar em silêncio. */
 const ANSIOSO = /( {2})T\.posterImgs = \[\];\n {2}POSTER_FILES\.forEach\(\(\[f\], i\) => \{[\s\S]*?\n {2}\}\);\n/;
 function poolAnsioso(corpo) {
-  if (!ANSIOSO.test(corpo)) throw new Error('não achei o bloco de getters de T.posterImgs em textures.js');
-  return corpo.replace(ANSIOSO, '  T.posterImgs = POSTER_FILES.map(([f]) => _cartaz(f));\n');
+  const ansioso = '  T.posterImgs = POSTER_FILES.map(([f]) => _cartaz(f));\n';
+  const nBloco = [...corpo.matchAll(new RegExp(ANSIOSO.source, 'g'))].length;
+  if (nBloco !== 1) throw new Error(`esperava 1 bloco de getters de T.posterImgs em textures.js, achei ${nBloco}`);
+  const depois = corpo.replace(ANSIOSO, ansioso);
+  if ([...depois.matchAll(new RegExp(ANSIOSO.source, 'g'))].length !== 0 || depois.split(ansioso).length !== 2) throw new Error('pool ansioso não aplicou exatamente uma vez');
+  return depois;
 }
 /* Ancorado em NOME, não em número de linha: a ordem do boot já mudou antes e cegou
    régua ancorada em posição. */
 const FAUNA_ADIADA = '      preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});\n';
 function faunaCedo(corpo) {
-  if (!corpo.includes(FAUNA_ADIADA)) throw new Error('não achei a chamada adiada de preloadAmbientLife em main.js');
-  return corpo
+  const paralela = '    preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});\n';
+  const retorno = '    return propsReady.then(() => {';
+  const nAdiada = corpo.split(FAUNA_ADIADA).length - 1;
+  const nRetorno = corpo.split(retorno).length - 1;
+  if (nAdiada !== 1) throw new Error(`esperava 1 chamada adiada de preloadAmbientLife em main.js, achei ${nAdiada}`);
+  if (nRetorno !== 1) throw new Error(`esperava 1 âncora return propsReady.then em main.js, achei ${nRetorno}`);
+  const depois = corpo
     .replace(FAUNA_ADIADA, '')
-    .replace('    return propsReady.then(() => {', `    preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});\n    return propsReady.then(() => {`);
+    .replace(retorno, `${paralela}${retorno}`);
+  if (depois.split(FAUNA_ADIADA).length !== 1 || depois.split(paralela).length !== 2) throw new Error('fauna cedo não aplicou exatamente uma vez');
+  return depois;
 }
 
+let mutacaoAplicada = false;
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
+/* Hipótese a medir: no macOS deixar o Chrome escolher o backend gráfico;
+   não-macOS mantém SwiftShader explícito. */
+const softwareGLArgs = process.platform === 'darwin'
+  ? []
+  : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio', '--disable-dev-shm-usage'],
+  args: [...softwareGLArgs, '--headless=new', '--mute-audio', '--disable-dev-shm-usage'],
 });
 
 /* `refPoolAnsioso` liga a referência do ORC2; o mutante `cartaz-ansioso` liga a MESMA
@@ -124,11 +141,20 @@ async function mede({ refPoolAnsioso = false } = {}) {
   });
   for (const rel of JS_LOCAIS) {
     let corpo = readFileSync(new URL(`../../public/${rel}`, import.meta.url), 'utf8');
-    if (rel === 'js/textures.js' && (refPoolAnsioso || MUTANTE === 'cartaz-ansioso')) corpo = poolAnsioso(corpo);
-    if (rel === 'js/main.js' && MUTANTE === 'fauna-cedo') corpo = faunaCedo(corpo);
+    let mutou = false;
+    if (rel === 'js/textures.js' && (refPoolAnsioso || MUTANTE === 'cartaz-ansioso')) {
+      corpo = poolAnsioso(corpo);
+      mutou = true;
+    }
+    if (rel === 'js/main.js' && MUTANTE === 'fauna-cedo') {
+      corpo = faunaCedo(corpo);
+      mutou = true;
+    }
     await context.route(`**/${rel}*`, async (rota) => {
       const r = await rota.fetch();
       await rota.fulfill({ response: r, body: corpo });
+      /* Mutante confirmado só após fulfill real na rota alvo do candidato (cartaz em textures, fauna em main). */
+      if (mutou && !refPoolAnsioso) mutacaoAplicada = true;
     });
   }
 
@@ -137,16 +163,33 @@ async function mede({ refPoolAnsioso = false } = {}) {
   await cdp.send('Network.enable');
 
   const reqs = new Map();
+  /* Papel (props/ambient/posters) fixado na URL de ORIGEM: redirect do CDP reusa requestId.
+     Sem isto, URL final cdn/hash.bin perde a classificação da origem na cadeia. */
+  const papelDe = (u) => /\/models\/props\//.test(u) ? 'props' : /\/models\/ambient\//.test(u) ? 'ambient' : /\/posters\//.test(u) ? 'posters' : null;
   const t0 = Date.now();
   cdp.on('Network.requestWillBeSent', (e) => {
-    reqs.set(e.requestId, { url: e.request.url, inicio: Date.now() - t0, fim: null, bytes: 0 });
+    /* Redirect reusa requestId: mutar o MESMO objeto do snapshot naJanela (início e papel da origem preservados). */
+    const r = reqs.get(e.requestId);
+    if (r && e.redirectResponse) {
+      r.url = e.request.url;
+      if (r.papel === null) { r.papel = papelDe(r.url); r.origem = r.url; }
+      r.fim = null; r.bytes = 0; r.status = null; r.falhou = false;
+      return;
+    }
+    reqs.set(e.requestId, { url: e.request.url, origem: e.request.url, papel: papelDe(e.request.url), inicio: Date.now() - t0, fim: null, bytes: 0, status: null, falhou: false });
+  });
+  cdp.on('Network.responseReceived', (e) => {
+    const r = reqs.get(e.requestId); if (r) r.status = e.response.status;
   });
   const fecha = (e) => {
     const r = reqs.get(e.requestId); if (!r) return;
     r.bytes = e.encodedDataLength || 0; r.fim = Date.now() - t0;
   };
   cdp.on('Network.loadingFinished', fecha);
-  cdp.on('Network.loadingFailed', fecha);
+  cdp.on('Network.loadingFailed', (e) => {
+    const r = reqs.get(e.requestId); if (!r) return;
+    r.falhou = true; fecha(e);
+  });
 
   const erros = [];
   page.on('pageerror', (e) => erros.push(e.message));
@@ -167,15 +210,28 @@ async function mede({ refPoolAnsioso = false } = {}) {
      seria medir o failsafe, e o orçamento sairia pequeno por motivo errado. */
   if (portao > 19000) throw new Error(`a splash liberou em ${Math.round(portao)} ms — isso é o failsafe de 20 s, não o caminho dos assets`);
 
-  const ate = [...reqs.values()].filter((r) => r.fim !== null && r.fim <= portao + 50);
+  // O orçamento mantém o corte do portão; falha de transporte invalida a medição.
+  const naJanela = [...reqs.values()].filter((r) => r.inicio <= portao + 50);
+  const limite = Date.now() + 180000;
+  while (naJanela.some((r) => r.papel !== null && r.fim === null) && Date.now() < limite) {
+    await page.waitForTimeout(100);
+  }
+  for (const r of naJanela.filter((r) => r.papel !== null)) {
+    if (r.falhou || r.fim === null || r.status === null || r.status >= 400) {
+      const causa = r.falhou ? 'loadingFailed' : r.fim === null ? 'corpo incompleto' : r.status === null ? 'sem resposta' : `HTTP ${r.status}`;
+      throw new Error(`asset de boot inválido: ${r.url} (${causa})`);
+    }
+  }
+  const ate = naJanela.filter((r) => r.fim !== null && r.fim <= portao + 50);
   const patchado = (u) => JS_LOCAIS.some((p) => u.includes(p));
   const resultado = {
     portao,
     bytes: ate.reduce((s, r) => s + (patchado(r.url) ? 0 : r.bytes), 0),
     reqs: ate.length,
-    cartazes: new Set(ate.filter((r) => /\/posters\//.test(r.url)).map((r) => r.url.split('?')[0])).size,
-    ultimoProp: Math.max(-1, ...ate.filter((r) => /\/models\/props\//.test(r.url)).map((r) => r.fim)),
-    primeiraFauna: Math.min(Infinity, ...[...reqs.values()].filter((r) => /\/models\/ambient\//.test(r.url)).map((r) => r.inicio)),
+    cartazes: new Set(ate.filter((r) => r.papel === 'posters').map((r) => r.origem.split('?')[0])).size,
+    /* ORC3 olha o término de TODOS os props iniciados na janela (naJanela), não só `ate`. */
+    ultimoProp: Math.max(-1, ...naJanela.filter((r) => r.papel === 'props').map((r) => r.fim)),
+    primeiraFauna: Math.min(Infinity, ...[...reqs.values()].filter((r) => r.papel === 'ambient').map((r) => r.inicio)),
     erros,
   };
   await context.close();
@@ -209,8 +265,11 @@ try {
   /* Convenção do repo (perfil-mobile-check): COM mutante, a régua passa quando a
      mutação foi VISTA. Mutação que escapa é o único resultado inaceitável. */
   if (MUTANTE) {
-    if (falhas.length) { console.log(`\nmutante ${MUTANTE} reprovado como devia: ${falhas.join(', ')}`); saida = 0; }
-    else console.error(`\nMUTAÇÃO PASSOU — ${MUTANTE} não foi visto pela régua.`);
+    /* Morte válida: transformação REAL no candidato + a ORC exigida falhou, sem pageerror. */
+    const exigida = MUTANTE === 'cartaz-ansioso' ? 'ORC2' : 'ORC3';
+    const morteValida = mutacaoAplicada && !erros.length && falhas.includes(exigida);
+    if (morteValida) { console.log(`\nmutante ${MUTANTE} reprovado como devia: ${falhas.join(', ')}`); saida = 0; }
+    else console.error(`\nMUTAÇÃO PASSOU — ${MUTANTE} sem morte válida (aplicada=${mutacaoAplicada}, exigia ${exigida}${erros.length ? ' +pageerror' : ''})`);
   } else if (falhas.length) {
     console.error(`\n✗ orçamento de boot estourado: ${falhas.join(', ')}`);
   } else {
