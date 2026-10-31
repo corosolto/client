@@ -572,3 +572,17 @@ Helper/gate/caller de equivalência normal-only copiados exatamente do PR1184SHA
 TP-WORLD nominal13/13+6mutantes reais pelo CLI GREEN em root-tp-world-R3-wired.log, críticaR3 CLEAN509b3877. Game usa perfil analítico em _consultarTiro; a prova de proxy não é prova geral de hitscan alinhado a toda animação. DeathR5 nominal25/25+3mutantes+CAMMORTE nominal passaram no comando integrado, críticaCLEAN8d03ef8b. CSSgradeR3 Ego confirmou semsobreposição e seleção real49º/volta47º.
 
 CensoR5 mediu os14mapas/465peças, todos com contadores0 e semerrosporpágina. Porém filhoEgo saiu1 ANTES do recibo final: o conjunto NÃO está aprovado; diagnóstico isoladoPosto preservando stdoutcompleto em curso. Não confundir inventáriosindividuais com portãoGREEN. CampoR8 críticoCLEAN2995d2f7, próximaação migrar explicitamente4guards→40fixtureM3 sem mudarinterior. Córrego gateR5 rejeitado pelo crítico por NaN UV/sampler; produtoPBRR4 continuaaceito4poses eUVhelperCLEAN, gates em revisão.
+
+### 14:58 UTC — mapas e UI com prova local, regressão de instrumento corrigida
+
+CampoR8 CLEAN2995d2f7; migração FV-M1 GLM concluiu (4guardas→40,95interiores verbatim), nominal5/5 e5mutantesRED esperados, crítico independente em curso. UIgradeR3 crítico visual1a89a3bf aceitou somente poses desktop/landscape/portraitrotate e lastitem; nominal+5mutantes CLIGREEN, wrapperCLEAN9a061264.
+
+CensoR5 falhou por evaluate(string,arg) incompatível na restauração, não por cena. Callback agorafunção; Posto isoladoGREEN real apóscorreção. R6 persiste preferênciasantes+reciboigualdadefinal e stdoutcompletoemfalha; censo14 repetindo p2. Chave manual deQA recuperada da referência bake14-R1 (null), demais chaves preservadas. DeathR1real2vídeos13,5s1320×880/844×390, Game.update real comAI congelada/HUDoculta/semMP:808/791updates medidos finitos,8estados cada, nenhumaexceção. Sem aprovaçãovisualaté sheets/crítico. Nenhumaescrita prefs no vídeo; onCamViewChange deQA desativado paraevitar corrida comcenso.
+
+F2 diagnóstico GLMmotion era contrafactual: faca NÃO temlayout demarca, logo NÃO háplano flutuante atual. Crítico confirmou zero marcas atuais Caveira/MAGA e histograma5262/5262peso1CoroWeapon. 3Pconsumidor0,30m apósCFG;~1m eraassetraw e GLMerroueixo. Plano knife-only emelaboração, produto nãoeditado. Normais1184 eSB71181CIverdes/CLEAN, semreviewefetivodoEstraga. #1179fd553 requeridoCHANGES_REQUESTED noHEAD; baseempilhável é lote/gauntlet-personagens-20261031 no client. Últimoreleasealpha13003:59Z, nenhummergenossorealizado.
+
+### 14:58 UTC — checkpoint da grade e contraprova de enquadramento morto
+
+Grade72px: nominal+5mutantes exatos GREEN após CSSfinal, fotos/interação EgoR3 e crítico visual1a89a3bf aceitos nas poses locais. WrapperR2crítico9a061264. Checkpoint inclui somente CSS/gate/contratoUI+ledger; nenhum claim mobilefísico/FPS. Migração FV-M1 críticoCLEAN6d07d81f:4→40guards,95interiores e demais snapshots iguais, nominal5/5+mutantefisicaFV-M1RED.
+
+DeathR1 real rejeitado para aceitevisualcompleto: cabeça do cadáverY1,2246, corpoY0,945..1,36, câmeraTPY2,8 presa ao olho vivo; só52/1373vértices do corpo emNDC. Problema é enquadramento, não cadáverausente. Crítico avalia fix mínimo morto-only; produto Game ainda não mexido após R4.
