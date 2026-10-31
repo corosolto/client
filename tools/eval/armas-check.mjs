@@ -161,7 +161,7 @@ try {
       isMobile: true, hasTouch: true }) : page;
     if (mobile) {
       await target.goto(`${BASE}/?debug=1&auto=E&map=piscina_treta&vmweapon=awp`,
-        { waitUntil: 'load', timeout: 180000 });
+        { waitUntil: 'commit', timeout: 180000 });
       await target.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
     }
     const presence = await target.evaluate(() => {
@@ -181,7 +181,7 @@ try {
     if (presence.mobile !== mobile || presence.samples.some((sample) => !sample.meshes)) {
       falhas.push(`ARM7 arma invisível no ${mobile ? 'mobile' : 'desktop'}`);
     }
-    if (mobile) await target.close();
+    await target.close();
   }
 } catch (e) {
   falhas.push(`ARM não deu para medir: ${String(e).split('\n')[0]}`);
