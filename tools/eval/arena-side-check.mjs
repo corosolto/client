@@ -11,8 +11,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CHECK = path.join(HERE, 'arena-side-check.mjs');
 const LOADER = path.join(HERE, 'arena-side-loader.mjs');
 const MAIN = path.resolve(HERE, '../../public/js/main.js');
-const MUTANTES = ['lado-antigo', 'halo-congelado'];
-const CLAUSULA = { 'lado-antigo': 'SIDE_MELEE', 'halo-congelado': 'SIDE_HALO' };
+const MUTANTES = ['lado-antigo', 'halo-congelado', 'mapping-antigo'];
+const CLAUSULA = { 'lado-antigo': 'SIDE_MELEE', 'halo-congelado': 'SIDE_HALO', 'mapping-antigo': 'SIDE_FACTION' };
 
 /* handlers globais ANTES de qualquer import dinâmico: nenhum erro é embrulhado como AssertionError. */
 const reporta = (err) => {
@@ -132,11 +132,14 @@ async function prova() {
     assert.equal(alvos.length, 1, `SIDE_MELEE _meleeHit atingiu ${alvos.length} alvos (esperado só o foe)`);
     assert.ok(alvos[0] === foe, 'SIDE_MELEE golpe escolheu alguém que não é o foe (aliado mais perto dentro da mira)');
     /* M manual APÓS conversão, sem charId: identidade do jogador é preservada */
+    const facE = g._factionOf('E'), facB = g._factionOf('B');
     const idAntes = g.playerDef.id, defAntes = g.player.def;
     g._switchTeam();
     assert.notEqual(g.player.team, alvo, 'A: M manual sem charId não trocou o lado');
     assert.equal(g.playerDef.id, idAntes, 'A: M manual sem charId trocou a identidade (playerDef)');
     assert.equal(g.player.def, defAntes, 'A: M manual sem charId trocou a identidade (player.def)');
+    assert.equal(g._factionOf('E'), facE, 'SIDE_FACTION M pós-conversão corrompeu a facção do lado E');
+    assert.equal(g._factionOf('B'), facB, 'SIDE_FACTION M pós-conversão corrompeu a facção do lado B');
     g.dispose?.();
   }
 

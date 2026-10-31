@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Script as VMScript } from 'node:vm';
 import sharp from 'sharp';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
@@ -42,6 +43,7 @@ const alvoPorMutante = {
   'mount-sem-resize': 'UIR8',
   'gerador-engole-erro': 'UIR9',
   'i18n-dinamica-restante': 'UIR10',
+  'setup-sem-i18n': 'UIR10',
   'video-vaza': 'UIR11',
   'preview-sem-interacao': 'UIR12',
   'selecao-tres-colunas': 'UIR13',
@@ -71,6 +73,7 @@ const alvoPorMutante = {
   'killfeed-volta-svg': 'UIR25',
   'modo-volta-setup': 'UIR26',
   'ctf-some-home': 'UIR26',
+  'toggle-sem-arena': 'UIR26',
   'personagem-dificuldade-volta': 'UIR27',
   'punk-avatar-nao-auditado': 'UIR28',
   'perfil-volta-iniciais': 'UIR29',
@@ -88,6 +91,7 @@ const alvoPorMutante = {
   'backend-aviso-volta': 'UIR38',
   'faccao-mostra-antes-da-arte': 'UIR39',
   'troca-m-abre-pausa': 'UIR40',
+  'm-lado-antigo': 'UIR40',
   'resultado-emenda-volta': 'UIR41',
   'versao-menu-volta-rodape': 'UIR42',
   'sem-autoria': 'UIR43',
@@ -213,6 +217,9 @@ videoGenerator = muta('gerador-engole-erro', videoGenerator,
 main = muta('i18n-dinamica-restante', main,
   "$('char-info-blurb').textContent = tr(c.blurb);",
   "$('char-info-blurb').textContent = c.blurb;");
+main = muta('setup-sem-i18n', main,
+  "if (st) st.textContent = tr(matchMode === 'arena' ? 'PASSO 1 · VIRA-CASACA' : (matchMode === 'ctf' ? 'PASSO 1 · A PARTIDA (CTF)' : 'PASSO 1 · A PARTIDA'));",
+  "if (st) st.textContent = (matchMode === 'arena' ? 'PASSO 1 · VIRA-CASACA' : (matchMode === 'ctf' ? 'PASSO 1 · A PARTIDA (CTF)' : 'PASSO 1 · A PARTIDA'));");
 astro = muta('video-vaza', astro,
   '<div id="load-overlay" class="hidden">',
   '<div id="load-overlay" class="hidden"><video id="load-char" autoplay></video>');
@@ -381,6 +388,12 @@ main = muta('faccao-mostra-antes-da-arte', main,
 main = muta('troca-m-abre-pausa', main,
   "game.setPaused(true);\n    switchMode = true;",
   "if (document.pointerLockElement) document.exitPointerLock();\n    switchMode = true;");
+main = muta('toggle-sem-arena', main,
+  "if (!['rounds', 'ctf', 'arena'].includes(mode)) return;",
+  "if (!['rounds', 'ctf'].includes(mode)) return;");
+main = muta('m-lado-antigo', main,
+  "pickTeam(game._factionOf(game.player.team === 'E' ? 'B' : 'E'));",
+  "pickTeam(game.enemyFaction);");
 
 function literalIds() {
   const bloco = characters.match(/export const CHARACTERS = \[([\s\S]*?)\n\];\nexport const byId/);
@@ -728,8 +741,85 @@ const geradorFalhaFechado = /const pageErrors = \[\]/.test(videoGenerator)
   && /page\.on\('pageerror',[\s\S]{0,120}pageErrors\.push/.test(videoGenerator)
   && /catch \{ throw new Error\(`\$\{id\}: mounttest não ficou pronto`\); \}/.test(videoGenerator)
   && /if \(pageErrors\.length\) throw new Error\(`Falhas no browser:/.test(videoGenerator);
-const i18nRestante = /textContent = tr\('PASSO À PARTE · NOME NA CAMISA'\)/.test(main)
-  && /textContent = tr\(matchMode === 'ctf' \? 'PASSO 1 · A PARTIDA \(CTF\)' : 'PASSO 1 · A PARTIDA'\)/.test(main)
+/* UIR10 — o título da etapa do setup deixou de ser checagem estática: o corpo REAL de
+   setSetupStep, extraído do main pelo helper blocoFuncao (âncora única, sem cópia falsa),
+   é EXECUTADO num node:vm com timeout 1s e contexto mínimo (menuSetup/$/trspy/matchMode/
+   setupTitle), nos dois idiomas, nos passos 'match' e 'profile' dos modos rounds/ctf/arena.
+   O trspy registra cada chave que pediu tradução: sem tr() no st.textContent do bloco REAL
+   o passo EN devolve PT cru e reprova — nada de aprovar por fallback/substring. */
+let setupTraduzOk = false;
+const setupEvidencia = [];
+try {
+  const corpoSetSetupStep = blocoFuncao(main, 'setSetupStep');
+  const corpoDict = (i18n.match(/const DICT = (\{[\s\S]*?\n\});/) || [])[1];
+  if (!corpoSetSetupStep) throw new Error('setSetupStep ausente no main');
+  if (main.split('function setSetupStep(').length !== 2) throw new Error('setSetupStep duplicada no main');
+  if (!corpoDict) throw new Error('DICT ilegível no i18n');
+  const dict = new VMScript(`(${corpoDict})`).runInNewContext({}, { timeout: 1000 });
+  const cenarios = [
+    { passo: 'match', modo: 'rounds', titulo: 'MATA-MATA' },
+    { passo: 'match', modo: 'ctf', titulo: 'CAPTURE THE FLAG' },
+    { passo: 'match', modo: 'arena', titulo: 'VIRA-CASACA' },
+    { passo: 'profile', modo: 'rounds', titulo: 'MATA-MATA' },
+    { passo: 'profile', modo: 'ctf', titulo: 'CAPTURE THE FLAG' },
+    { passo: 'profile', modo: 'arena', titulo: 'VIRA-CASACA' },
+  ];
+  const trspy = new Set();
+  const saidas = {};
+  for (const lang of ['pt', 'en']) {
+    saidas[lang] = {};
+    for (const c of cenarios) {
+      const elementos = {};
+      const ctx = {
+        menuSetup: { dataset: {} },
+        $: (id) => (elementos[id] ??= { textContent: '' }),
+        tr: (s) => { trspy.add(s); return lang === 'pt' ? s : (dict[s] ?? s); },
+        matchMode: c.modo,
+        setupTitle: c.titulo,
+      };
+      ctx.setSetupStep = new VMScript(`(${corpoSetSetupStep})`).runInNewContext(ctx, { timeout: 1000 });
+      new VMScript(`setSetupStep(${JSON.stringify(c.passo)})`).runInNewContext(ctx, { timeout: 1000 });
+      saidas[lang][`${c.modo}:${c.passo}`] = {
+        step: elementos['setup-step'].textContent,
+        title: elementos['setup-title'].textContent,
+        dataStep: ctx.menuSetup.dataset.step,
+      };
+    }
+  }
+  const esperado = {
+    pt: {
+      'rounds:match': ['PASSO 1 · A PARTIDA', 'MATA-MATA'],
+      'ctf:match': ['PASSO 1 · A PARTIDA (CTF)', 'CAPTURE THE FLAG'],
+      'arena:match': ['PASSO 1 · VIRA-CASACA', 'VIRA-CASACA'],
+      'rounds:profile': ['PASSO À PARTE · NOME NA CAMISA', 'SEU PERFIL'],
+      'ctf:profile': ['PASSO À PARTE · NOME NA CAMISA', 'SEU PERFIL'],
+      'arena:profile': ['PASSO À PARTE · NOME NA CAMISA', 'SEU PERFIL'],
+    },
+    en: {
+      'rounds:match': ['STEP 1 · THE MATCH', 'DEATHMATCH'],
+      'ctf:match': ['STEP 1 · THE MATCH (CTF)', 'CAPTURE THE FLAG'],
+      'arena:match': ['STEP 1 · TURNCOAT', 'TURNCOAT'],
+      'rounds:profile': ['SIDE STEP · NAME ON THE JERSEY', 'YOUR PROFILE'],
+      'ctf:profile': ['SIDE STEP · NAME ON THE JERSEY', 'YOUR PROFILE'],
+      'arena:profile': ['SIDE STEP · NAME ON THE JERSEY', 'YOUR PROFILE'],
+    },
+  };
+  for (const cenario of Object.keys(esperado.en)) {
+    for (const lang of ['pt', 'en']) {
+      const [step, title] = esperado[lang][cenario];
+      if (saidas[lang][cenario].step !== step) setupEvidencia.push(`${lang} ${cenario} step=${JSON.stringify(saidas[lang][cenario].step)}≠${JSON.stringify(step)}`);
+      if (saidas[lang][cenario].title !== title) setupEvidencia.push(`${lang} ${cenario} title=${JSON.stringify(saidas[lang][cenario].title)}≠${JSON.stringify(title)}`);
+    }
+    if (saidas.pt[cenario].dataStep !== cenario.split(':')[1]) setupEvidencia.push(`data-step ${cenario}=${JSON.stringify(saidas.pt[cenario].dataStep)}`);
+  }
+  const chavesSpy = ['PASSO 1 · A PARTIDA', 'PASSO 1 · A PARTIDA (CTF)', 'PASSO 1 · VIRA-CASACA',
+    'PASSO À PARTE · NOME NA CAMISA', 'SEU PERFIL', 'MATA-MATA', 'CAPTURE THE FLAG', 'VIRA-CASACA'];
+  for (const chave of chavesSpy) if (!trspy.has(chave)) setupEvidencia.push(`trspy sem ${JSON.stringify(chave)}`);
+  setupTraduzOk = setupEvidencia.length === 0;
+} catch (erro) {
+  setupEvidencia.push(`execução falhou: ${erro && erro.message}`);
+}
+const i18nRestante = setupTraduzOk
   && (main.match(/nick \|\| tr\('SEM NICK'\)/g) || []).length >= 1
   && /char-info-blurb'\)\.textContent = tr\(c\.blurb\)/.test(main)
   && blurbsSemIngles.length === 0;
@@ -824,6 +914,41 @@ const killfeedArma2D = /_killfeedWeaponIcon\(short\) \{/.test(game)
   && /\.kf-weapon-mask\{[^}]*background:currentColor[^}]*mask:var\(--weapon-mask\) center\/contain no-repeat/.test(css)
   && /\.kf-weapon-2d:has\(\.kf-weapon-mask\) \.kf-fallback\{display:none\}/.test(css);
 const funcAttrs = blocoFuncao(main, 'renderCharAttrs');
+// Executa o select e o listener reais; o DOM abaixo só captura o registro do clique.
+let modoCicloOk = false;
+const modoCicloEvid = [];
+try {
+  const corpoSelect = blocoFuncao(main, 'selectMatchMode');
+  const ancora = "\n{\n  const mm = $('map-mode');";
+  const inicio = main.indexOf(ancora);
+  if (!corpoSelect || (main.match(/function selectMatchMode\(/g) || []).length !== 1
+      || inicio < 0 || main.indexOf(ancora, inicio + 1) !== -1) throw new Error('modo sem âncora única');
+  let nivel = 0, fim = -1;
+  for (let i = inicio + 1; i < main.length; i++) {
+    if (main[i] === '{') nivel++;
+    else if (main[i] === '}' && --nivel === 0) { fim = i + 1; break; }
+  }
+  if (fim < 0) throw new Error('listener de modo incompleto');
+  const vistos = [], passos = [], sons = [];
+  let renders = 0;
+  const ctx = {
+    matchMode: 'rounds', modoEscolhido: false, setupTitle: '', handler: null,
+    $: (id) => id === 'map-mode' ? { addEventListener: (tipo, fn) => {
+      if (tipo !== 'click') throw new Error('evento de modo errado');
+      ctx.handler = fn;
+    } } : null,
+    ui: { click: () => sons.push('click') },
+    setMapMode: () => vistos.push([ctx.matchMode, ctx.modoEscolhido, ctx.setupTitle]),
+    setSetupStep: (passo) => passos.push(passo), renderMapScreen: () => renders++,
+  };
+  new VMScript(`${corpoSelect}\n${main.slice(inicio + 1, fim)}\nfor (let i=0;i<3;i++) handler(); selectMatchMode('abate', false);`)
+    .runInNewContext(ctx, { timeout: 1000 });
+  const esperado = [['ctf', true, 'CAPTURE THE FLAG'], ['arena', true, 'VIRA-CASACA'], ['rounds', true, 'MATA-MATA']];
+  if (JSON.stringify(vistos) !== JSON.stringify(esperado)) modoCicloEvid.push(`ciclo/estado=${JSON.stringify(vistos)}`);
+  if (ctx.matchMode !== 'rounds' || !ctx.modoEscolhido || ctx.setupTitle !== 'MATA-MATA'
+      || renders !== 3 || sons.length !== 3 || JSON.stringify(passos) !== '["match","match","match"]') modoCicloEvid.push('fluxo de mapa/estado inválido');
+  modoCicloOk = modoCicloEvid.length === 0;
+} catch (erro) { modoCicloEvid.push(`execução falhou: ${erro.message}`); }
 /* Multiplayer abre direto. Single Player abre seu submenu, que contém os dois modos locais.
    O relato de 06/09 confirmou que CTF não pode virar uma terceira entrada solta na home.
    O mutante ctf-some-home remove o acesso do submenu. */
@@ -835,8 +960,10 @@ const modoMapaPadrao = /<button class="cs-item cs-prime" data-act="mp"[^>]*>[\s\
   && /function openModeMap\(mode, title, act\) \{[\s\S]{0,180}openSetup\(mode, title, act\);[\s\S]{0,100}renderMapScreen\(\);[\s\S]{0,80}show\('map-screen'\);/.test(main)
   && /case 'sp':\s+openModeMap\('rounds', 'MATA-MATA', 'sp'\); break;/.test(main)
   && /case 'ctf':\s+openModeMap\('ctf', 'CAPTURE THE FLAG', 'ctf'\); break;/.test(main)
-  // o modo continua alternável pelo jogador, senão o CTF vira inalcançável ao sair do menu
-  && /matchMode = matchMode === 'ctf' \? 'rounds' : 'ctf';/.test(main);
+  && /case 'arena':\s+openModeMap\('arena', 'VIRA-CASACA', 'arena'\); break;/.test(main)
+  // o modo continua alternável pelo jogador nos TRÊS modos (ciclo provado por EXECUÇÃO acima),
+  // senão o CTF vira inalcançável ao sair do menu
+  && modoCicloOk;
 const personagemSemDificuldade = !!funcAttrs && !/attr-dif|DIFICULDADE|undefined/.test(funcAttrs);
 const perfilComAvatar = /const PLAYER_AVATAR_KEY = 'awpbr_player_avatar'/.test(main)
   && /function fallbackPlayerAvatar\(seed\)[\s\S]{0,420}\/img\/chars\/avatars\/\$\{character\.id\}\.webp/.test(main)
@@ -917,9 +1044,43 @@ const faccaoPreloadBloqueante = /const TEAM_ART_URLS = \[[^\]]*time-e\.webp[^\]]
   && /const factionArtReady = Promise\.all\(teamArtImages\.map/.test(main)
   && /\$\('btn-jogar'\)\.onclick = async \(\) => \{[\s\S]{0,900}await factionArtReady;[\s\S]{0,120}show\('team-select'\)/.test(main)
   && /target\.screen === 'faction'[\s\S]{0,80}await factionArtReady;[\s\S]{0,120}show\('team-select'\)/.test(main);
-const trocaMConsistente = /game\.onRequestSwitch = \(\) => \{[\s\S]{0,180}game\.setPaused\(true\);[\s\S]{0,120}pickTeam\(game\.enemyFaction\)/.test(main)
-  && /\$\('char-back'\)\.onclick = \(\) => \{[\s\S]{0,400}if \(switchMode && game\)[\s\S]{0,300}game\.resume\(\)/.test(main)
-  && /const oldFaction = this\.playerFaction;[\s\S]{0,160}this\.playerFaction = this\.enemyFaction;[\s\S]{0,80}this\.enemyFaction = oldFaction;/.test(game);
+// O hook real usa o lado atual; o mapeamento real do Game continua fixo ao lado inicial.
+let trocaExecOk = false;
+const trocaExecEvid = [];
+try {
+  const corpoHook = blocoFuncao(main, 'armSwitchHook');
+  const faccoes = [...game.matchAll(/^  _factionOf\(side\) \{[^\n]+\}$/gm)];
+  if (!corpoHook || (main.match(/function armSwitchHook\(/g) || []).length !== 1 || faccoes.length !== 1) throw new Error('hook/facção sem âncora única');
+  for (const mapa of [{ inicial: 'E', propria: 'P', inimiga: 'B' }, { inicial: 'B', propria: 'U', inimiga: 'F' }]) {
+    for (const atual of ['E', 'B']) {
+      const ordem = [];
+      const oposto = atual === 'E' ? 'B' : 'E';
+      const esperado = oposto === mapa.inicial ? mapa.propria : mapa.inimiga;
+      const ctx = {
+        mpSessao: null, switchMode: false, pick: null, pausado: false,
+        pickTeam: (f) => { ctx.pick = f; ordem.push(ctx.pausado ? 'pick-pausado' : 'pick-ativo'); },
+        abrirTrocaOnline: () => ordem.push('online'),
+        document: { pointerLockElement: null, exitPointerLock: () => ordem.push('exitlock') },
+        game: { player: { team: atual }, playerTeam: mapa.inicial, playerFaction: mapa.propria, enemyFaction: mapa.inimiga,
+          setPaused: (valor) => { ctx.pausado = valor; ordem.push('pausa'); } },
+      };
+      new VMScript(`game._factionOf = ({${faccoes[0][0]}})._factionOf; ${corpoHook}\narmSwitchHook(); game.onRequestSwitch();`)
+        .runInNewContext(ctx, { timeout: 1000 });
+      if (JSON.stringify(ordem) !== '["pausa","pick-pausado"]' || ctx.pick !== esperado || ctx.switchMode !== true) {
+        trocaExecEvid.push(`${mapa.inicial}/${atual}: ordem=${ordem.join(',')} pick=${ctx.pick} esperado=${esperado}`);
+      }
+    }
+  }
+  const ordemOnline = [];
+  const ctx = { mpSessao: {}, switchMode: false, game: { setPaused: () => ordemOnline.push('pausa') },
+    pickTeam: () => ordemOnline.push('pick'), abrirTrocaOnline: () => ordemOnline.push('online') };
+  new VMScript(`${corpoHook}\narmSwitchHook(); game.onRequestSwitch();`).runInNewContext(ctx, { timeout: 1000 });
+  if (JSON.stringify(ordemOnline) !== '["online"]' || ctx.switchMode !== false) trocaExecEvid.push('hook online não delegou exclusivamente');
+  trocaExecOk = trocaExecEvid.length === 0;
+} catch (erro) { trocaExecEvid.push(`execução falhou: ${erro.message}`); }
+const trocaMConsistente = trocaExecOk
+  // VOLTAR durante a troca retoma a partida em vez de abandonar o fluxo.
+  && /\$\('char-back'\)\.onclick = \(\) => \{[\s\S]{0,400}if \(switchMode && game\)[\s\S]{0,300}game\.resume\(\)/.test(main);
 const resultadoFundoContinuo = !/\.me-(?:wrap|hero)::after\{/.test(css)
   && !/--me-accent-rgb/.test(`${css}\n${main}\n${game}`);
 /* UIR44 — a escalação embrulha cada card numa célula (card + chip ＋). Sem o card ocupar a
@@ -978,7 +1139,11 @@ const resultados = [
   ['UIR9', 'gerador falha fechado em timeout e pageerror', geradorFalhaFechado,
     'falha de captura não pode preservar artefato velho com saída zero'],
   ['UIR10', 'strings dinâmicas restantes passam por i18n', i18nRestante,
-    blurbsSemIngles.length ? `blurbs sem inglês: ${blurbsSemIngles.slice(0, 3).join(' · ')}` : 'setup, nick vazio e todo blurb do elenco'],
+    [setupTraduzOk ? '' : setupEvidencia.slice(0, 3).join(' · '),
+      blurbsSemIngles.length ? `blurbs sem inglês: ${blurbsSemIngles.slice(0, 3).join(' · ')}` : '',
+      (main.match(/nick \|\| tr\('SEM NICK'\)/g) || []).length >= 1 ? '' : 'SEM NICK cru',
+      /char-info-blurb'\)\.textContent = tr\(c\.blurb\)/.test(main) ? '' : 'blurb sem tr',
+    ].filter(Boolean).join(' · ') || 'setSetupStep executada de verdade (pt+en · match/profile · rounds/ctf/arena), nick vazio e todo blurb do elenco'],
   ['UIR11', 'só o fallback da seleção mantém decoder de vídeo', cicloVideos,
     'entrada, loading e resultado não têm vídeo; fallback 3D pausa ao sair'],
   ['UIR12', 'vídeo de seleção é fallback e preserva o preview 3D interativo', previewInterativo,
@@ -1009,8 +1174,9 @@ const resultados = [
     'vida e munição 42px; nome 11px; vinheta e vermelho crítico medidos na tela 05'],
   ['UIR25', 'killfeed usa a mesma silhueta 2D alfa da arma que realizou o abate', killfeedArma2D,
     'short da arma resolve o WebP publicado; máscara monocromática substitui o SVG no evento real'],
-  ['UIR26', 'Single Player abre o submenu de mata-mata e CTF; os dois modos entram pela seleção de mapas', modoMapaPadrao,
-    'os dois modos preservam seu estado no setup e abrem a tela 04 antes de facção/personagem'],
+  ['UIR26', 'Single Player abre o submenu com mata-mata, CTF e vira-casaca; os três modos entram pela seleção de mapas', modoMapaPadrao,
+    [modoCicloOk ? 'ciclo rounds→ctf→arena→rounds EXECUTADO no handler real do #map-mode (node:vm 1s)' : modoCicloEvid.slice(0, 2).join(' · '),
+      'os três modos preservam estado no setup e abrem a tela 04 antes de facção/personagem'].filter(Boolean).join(' · ')],
   ['UIR27', 'ficha do personagem não inventa dificuldade sem contrato', personagemSemDificuldade,
     'renderCharAttrs publica somente VIDA, VELOCIDADE, PRECISÃO e MEME; nenhum undefined'],
   ['UIR28', 'avatares de Punk e Gotinha correspondem às identidades 3D auditadas', avatarIdentidadeOk,
@@ -1038,7 +1204,8 @@ const resultados = [
   ['UIR39', 'as duas artes de time terminam de decodificar antes da tela aparecer', faccaoPreloadBloqueante,
     'o preload começa no boot e o primeiro acesso aguarda o mesmo Promise antes de mostrar team-select'],
   ['UIR40', 'troca com M pausa uma única camada e mantém facção, lado e volta coerentes', trocaMConsistente,
-    'o jogo pausa antes do pointer lock sair; seleção usa enemyFaction e VOLTAR retoma a partida'],
+    [trocaExecOk ? 'hook e mapeamento reais: pausa antes do pick, quatro casos lado inicial/atual; online delega abrirTrocaOnline' : trocaExecEvid.slice(0, 2).join(' · '),
+      'VOLTAR retoma a partida'].filter(Boolean).join(' · ')],
   ['UIR41', 'resultado usa um único fundo preto contínuo atrás da arte alpha', resultadoFundoContinuo,
     'nenhum halo ou degradê limitado à metade direita pode criar emenda no palco do personagem'],
   ['UIR42', 'menu preenche o viewport e fixa a versão no canto inferior direito', versaoMenuNoCanto,
