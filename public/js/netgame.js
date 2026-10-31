@@ -319,7 +319,7 @@ class Netcode {
     /* Com identidade autoritativa, o corpo do VIP fica reservado mesmo se um humano
        usar o mesmo personagem. Sem essa extensão, permanece o casamento legado. */
     const vipId = snap.objective?.vipId;
-    const vipValido = Number.isInteger(vipId) && vipId >= 0 && vipId <= 65535;
+    const vipValido = Number.isInteger(vipId) && vipId >= 0 && vipId <= 0xffffffff;
     const vipLocal = vipValido ? game.objective?.vip : null;
     if (vipLocal) {
       const iv = livres.indexOf(vipLocal);

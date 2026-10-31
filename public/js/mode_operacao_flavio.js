@@ -595,7 +595,7 @@ export class OperacaoFlavio {
   netState() {
     const snap = snapshotEscolta(this.state);
     const nid = this.vip?._nid;
-    if (Number.isInteger(nid) && nid >= 0 && nid <= 65535) snap.vipId = nid;   // id autoritativo do NPC: cliente reserva o corpo dele antes do casamento
+    if (Number.isInteger(nid) && nid >= 0 && nid <= 0xffffffff) snap.vipId = nid;   // id autoritativo do NPC: cliente reserva o corpo dele antes do casamento
     return snap;
   }
 

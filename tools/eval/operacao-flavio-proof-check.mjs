@@ -40,6 +40,8 @@ const familias = {
   npc: ['operacao-flavio-npc-check.mjs', {
     'sem-id': '✗ snapshot do objetivo identifica VIP pelo id autoritativo:',
     'sem-reserva': '✗ corpos com o mesmo personagem preservam NPC e humano, ordem humano primeiro:',
+    'limite-id16': '✗ estado publica apenas identificadores inteiros dentro do contrato:',
+    'limite-reserva16': '✗ recepção uint32 reserva VIP mesmo com humano de mesma skin, ordem humano primeiro:',
   }],
   marcha: ['operacao-flavio-marcha-check.mjs', {
     'marcha-curta': 'spec docs/maps/operacao-decola.md: marcha18–24s, medida=',
