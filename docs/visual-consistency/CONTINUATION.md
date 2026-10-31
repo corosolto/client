@@ -625,3 +625,8 @@ GLM F2 encerrou no limite de20min, exit1/Deadline exceeded e sem relatório: pro
 ### 15:30 UTC — checkpoint dos mapas e wrapper
 
 Campo R5 tem40 trechos no perímetro, quatro capturas locais aceitas, interior preservado e delta físico perimetral declarado. Gate Campo R8 CLEAN2995d2f7, baseline extraída da fonte pré-R5 imutável e NaN distinto de Infinity. Migração FV-M1 CLEAN6d07d81f:95 interiores verbatim e todo Córrego intacto, somente4→40 guardas. Root executou nominal+9 mutantes Campo e nominal+5 Favela com conjuntos RED exatos. Córrego materiais8 e UV4 também passaram. Wrapper R4 crítico CLEAN21a161d6, stdout JSON único e timeout com error/signal sempre infra3. Checkpoint inclui apenas mapas/gates/baselines/contrato e ledger; package/CI e curadoria final ficam para a próxima entrega. Não há merge/publicação dessas mudanças.
+
+
+### 15:35 UTC — alpha131 integrado na entrega
+
+Entrega em `codex/visual-release-review-20261031`, merge dos checkpoints `2e085a237` e main `5d1e52d347` em fechamento. Conflitos de docs/índices regenerados pelos produtores; CHANGELOG preserva as duas notas. Package usa main alpha131 e união de scripts/runner tokens, preservando vm-presence, mutantes-anunciados e community-inbox atuais. Gatilho de browser preserva selected-weapon-probe e os dois módulos do censo. CI recebe comandos Node já revisados para visual/contratos; browser/private gates1179 aguardam a correção e wiring sustentável. F2/Canarinho/gates1179/curadoria corrente ainda não entraram nesta entrega. Próximo: crítica focal da integração e check:deploy completo com logs preservados, sem bypass.

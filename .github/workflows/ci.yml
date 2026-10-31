@@ -88,6 +88,8 @@ jobs:
         run: npm run eval:economia-jogo
       # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
       # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
+      - name: Contratos visuais de mapas, personagens, câmera e equipamento
+        run: node tools/eval/runner.mjs eval:authored-locomotion eval:character-normal-quality eval:grafite-curation eval:map-material-finish eval:ferro-balcao eval:match-pickups eval:net-flash-disable eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:visual-map-contracts
       - name: Todo mapa devolve o que o game.js consome
         run: npm run eval:mapcontrato
       - name: Pichação colada na parede e sem vazar pela quina da frente
@@ -235,6 +237,8 @@ jobs:
         run: npm run eval:melee-vm
       - name: Chave tudo-ou-nada do viewmodel (sem ativação parcial)
         run: npm run eval:vm-launch
+      - name: Arma visível no mobile e desktop, inclusive sem assets
+        run: npm run eval:vm-presence
       # As réguas de imagem (mira, cobertura, pistola-ref, mãos, carregador) pedem o
       # catálogo privado e navegador; aqui o CI cobra o RESULTADO assado delas.
       - name: Placar das réguas de imagem do viewmodel em dia
