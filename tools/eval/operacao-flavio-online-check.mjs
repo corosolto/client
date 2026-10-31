@@ -14,7 +14,9 @@ async function moduloMutado(path, edits) {
     'from '+JSON.stringify(spec.startsWith('.') ? new URL(spec, url).href : import.meta.resolve(spec)));
   return import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 }
-const netEdits = mutante === 'sem-placar'
+const netEdits = mutante === 'prazo-reescrito'
+  ? [['game.objective?.startCinematic?.(winner);', 'game.objective?.startCinematic?.(winner);\n          game.stateUntil = game.time + 4.5;']]
+  : mutante === 'sem-placar'
   ? [['game._resultadoDaRodada(fim.title, fim.detail, false);', 'game._resultadoDaRodada(fim.title, fim.detail);']]
   : mutante === 'sem-ordem'
   ? [["if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes, snap.objective?.winner);", ''],
@@ -75,11 +77,15 @@ else if (mutante === 'sem-reset') {
     this.cinematic = cinematic;
     this.game.world.objectivePlane.position.copy(plane);
   };
-} else if (mutante && !['sem-placar','sem-ordem','sem-parar','sem-retomada','sem-reancora','sem-limpar-drops','sem-fim-identidade','reset-match-end','empate-desconhecido','sem-winner-atual','winner-persistido'].includes(mutante)) throw new Error('Mutante desconhecido: '+mutante);
+} else if (mutante && !['sem-placar','sem-ordem','sem-parar','sem-retomada','sem-reancora','sem-limpar-drops','sem-fim-identidade','reset-match-end','empate-desconhecido','sem-winner-atual','winner-persistido','prazo-reescrito'].includes(mutante)) throw new Error('Mutante desconhecido: '+mutante);
 if (mutante) console.log('Mutação aplicada: '+mutante);
 let failures = 0;
+const failed = [];
 const check = (name, fn) => {
-  try { fn(); console.log('✓ '+name); } catch (e) { failures++; console.error('✗ '+name+': '+e.message); }
+  try { fn(); console.log('✓ '+name); } catch (e) {
+    failures++; failed.push({ clause: name, type: e.name, message: e.message });
+    console.error('✗ '+name+': '+e.name+': '+e.message);
+  }
 };
 try {
   check('HUD online reflete snapshot autoritativo e relógio atual', () => {
@@ -93,7 +99,10 @@ try {
   });
   check('vitória online dispara cinemática e título do objetivo', () => {
     game.roundsWon.B = 1;
+    const serverDeadline = game.time + game.objective.roundResult('B').duration;
+    game.stateUntil = serverDeadline;
     mp.transicaoDeEstado('live', 'roundEnd', { E: 0, B: 0 });
+    assert.equal(game.stateUntil, serverDeadline, 'transição preserva prazo autoritativo de nove segundos');
     assert.equal(game.objective.cinematic?.winner, 'B');
     assert.equal(result.at(-1)?.[0], 'FLÁVIO EMBARCOU');
     assert.equal(result.at(-1)?.[2], false, 'placar não cobre a cinemática do objetivo');
@@ -298,4 +307,5 @@ try {
     } finally { game.objective.prepareRound = prepare; }
   });
 } finally { mp.dispose(); game.objective.dispose(); }
+console.log(JSON.stringify({ mutant: mutante || null, failed }));
 if (failures) process.exitCode = 1;

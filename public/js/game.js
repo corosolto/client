@@ -3147,7 +3147,7 @@ export class Game {
       if (!this.sfx.roundSound(this._voiceKey(winner))) mine ? this.sfx.roundWin() : this.sfx.roundLose();
     }
     if (this._fimDaPartida())
-      this.stateUntil = this.time + 4.5; // then match end
+      this.stateUntil = this.time + (objectiveResult?.duration || 4.5); // then match end
   }
   _roundWinnerVoice(team) {
     const characterId = team === this.playerTeam
