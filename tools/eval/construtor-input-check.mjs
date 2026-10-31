@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import vm from 'node:vm';
-import { buildMapFromJSON, planFromJSON, propIdsFromSpec } from '../../public/js/map_json.js';
+import { buildMapFromJSON, planFromJSON, validatePlan, propIdsFromSpec } from '../../public/js/map_json.js';
 import * as THREE from '../../public/vendor/three.module.js';
 import { registerPropTemplate } from '../../public/js/mapprops.js';
 
@@ -155,6 +155,7 @@ for (const [old, replacement] of [
     addEventListener: (event, handler) => { if (!listeners.has(event)) listeners.set(event, []); listeners.get(event).push(handler); },
     __modules: { textures: { initTextures: () => ({}) }, props: { preloadMapProps: async () => {} } },
     propIdsFromSpec,
+    revalidate() { context.problemas = validatePlan(planFromJSON(candidate)); },
     buildMapFromJSON(scene, textures, spec) {
       const world = buildMapFromJSON(scene, textures, spec);
       const resources = new Set(), disposed = new Set(), disposeCounts = new Map();
@@ -194,6 +195,36 @@ for (const [old, replacement] of [
     `owned=${scenes[0].disposed.size} shadow=${scenes[0].shadowDisposals()}/${scenes[0].shadowPassDisposals()}`);
   check('preview-preserves-shared-props', sharedDisposed === 0, `shared disposals=${sharedDisposed}`);
   registerPropTemplate('qa-sdk-preview', null);
+}
+
+{
+  const id = 'qa-sdk-preview-solid', elements = new Map(), alerts = [];
+  const template = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial());
+  const candidate = structuredClone(fixture), spawn = candidate.spawns.E[0];
+  candidate.props = [{ id, x: spawn.x, z: spawn.z, h: 2, solid: true, cw: 4, cd: 4 }];
+  registerPropTemplate(id, null);
+  const prev = { style: { display: 'none' }, appendChild() {}, getBoundingClientRect: () => ({ width: 800, height: 600 }) };
+  let builds = 0;
+  class Renderer {
+    constructor() { this.shadowMap = {}; this.domElement = { addEventListener() {} }; }
+    setSize() {} render() {}
+  }
+  const context = { THREE: { ...THREE, WebGLRenderer: Renderer }, spec: candidate,
+    problemas: validatePlan(planFromJSON(candidate)), cv: { style: {} }, clean: () => candidate,
+    $: id => { if (id === 'prev') return prev; if (!elements.has(id)) elements.set(id, {}); return elements.get(id); },
+    alert: message => alerts.push(message), requestAnimationFrame() {}, addEventListener() {},
+    __modules: { textures: { initTextures: () => ({}) },
+      props: { preloadMapProps: async () => registerPropTemplate(id, template) } },
+    propIdsFromSpec, revalidate() { context.problemas = validatePlan(planFromJSON(candidate)); },
+    buildMapFromJSON(...args) { builds++; return buildMapFromJSON(...args); },
+  };
+  try {
+    vm.createContext(context); vm.runInContext(previewSource, context);
+    await context.$('prev-btn').onclick();
+    check('preview-revalidates-loaded-prop', builds === 0 && alerts.some(message => /R3 spawn E dentro de sólido/.test(message))
+      && prev.style.display === 'none' && context.cv.style.display === 'block',
+      `builds=${builds} alerts=${JSON.stringify(alerts)}`);
+  } finally { registerPropTemplate(id, null); template.geometry.dispose(); template.material.dispose(); }
 }
 
 const start = html.indexOf("addEventListener('keydown',");

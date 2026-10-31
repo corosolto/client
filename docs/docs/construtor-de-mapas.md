@@ -78,6 +78,8 @@ O arquivo exportado usa esta estrutura. Os arrays podem ser vazios; spawns de am
 `dir` aceita `+x`, `-x`, `+z` e `-z`, indicando o sentido de subida da rampa.
 `slow` aplica lentidão dentro do retângulo. Props com `solid: true` usam `cw × h × cd`
 como colisor quando o GLB existe; a ausência da malha também impede criar o colisor.
+O plano inclui esse colisor na validação de spawns e na navegação. A prévia revalida
+o mapa depois de carregar os props e recusa um spawn que passou a estar dentro de um sólido.
 
 ## Relevo: uma superfície por coluna
 

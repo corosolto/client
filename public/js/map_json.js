@@ -2,7 +2,7 @@
 // Formato, relevo e validação: docs/docs/construtor-de-mapas.md.
 import * as THREE from 'three';
 import { aplicaSombraSol } from './mapquality.js';
-import { placeProp } from './mapprops.js';
+import { hasProp, placeProp } from './mapprops.js';
 
 const num = (v, def) => (typeof v === 'number' && isFinite(v) ? v : def);
 const clamp01 = (t) => (t < 0 ? 0 : t > 1 ? 1 : t);
@@ -92,12 +92,21 @@ export function planFromJSON(spec) {
   const slowRects = (spec.slow || []).map((s) => ({ x: num(s.x, 0), z: num(s.z, 0), w: num(s.w, 2), d: num(s.d, 2) }));
   const slowAtXZ = (x, z) => slowRects.some((s) => x > s.x - s.w / 2 && x < s.x + s.w / 2 && z > s.z - s.d / 2 && z < s.z + s.d / 2);
 
-  // props GLB: passthrough; malha + colisor são resolvidos no build, CONDICIONADOS ao GLB
+  // props GLB: passthrough; a malha é assentada no build, CONDICIONADA ao GLB
   // carregado (placeProp devolve null sem asset). Colisor sem malha reprovaria o MAP4.
   const props = (spec.props || []).map((p) => ({
     id: p.id, x: num(p.x, 0), z: num(p.z, 0), yaw: num(p.yaw, 0),
     h: num(p.h, 2.4), solid: !!p.solid, cw: num(p.cw, 0), cd: num(p.cd, 0),
   }));
+
+  // Invariante (mapjson-props-check): prop sólido CARREGADO bloqueia AQUI, uma única vez,
+  // em colliders E navColliders (mundo, spawn e grafo); asset ausente não vira parede fantasma.
+  for (const p of props)
+    if (p.solid && p.cw > 0 && p.cd > 0 && hasProp(p.id)) {
+      const y = heightAt(p.x, p.z);
+      const c = { minX: p.x - p.cw / 2, maxX: p.x + p.cw / 2, minY: y, maxY: y + p.h, minZ: p.z - p.cd / 2, maxZ: p.z + p.cd / 2 };
+      colliders.push(c); navColliders.push(c);
+    }
 
   // grade de waypoints — bloqueio só por navColliders; altura pelo campo; continuidade ≤ DEGRAU.
   const blocked = (x, z, inflate) => {
@@ -280,9 +289,6 @@ export function buildMapFromJSON(scene, _T, spec) {
     const mesh = placeProp(p.id, { x: p.x, y, z: p.z, ry: p.yaw, targetH: p.h });
     if (!mesh) continue;
     root.add(mesh); occluders.push(mesh);
-    if (p.solid && p.cw > 0 && p.cd > 0) {
-      plan.colliders.push({ minX: p.x - p.cw / 2, maxX: p.x + p.cw / 2, minY: y, maxY: y + p.h, minZ: p.z - p.cd / 2, maxZ: p.z + p.cd / 2 });
-    }
   }
 
   const pickups = plan.pickups.map((p) => {

@@ -387,6 +387,8 @@ $('prev-btn').onclick=async()=>{
     const { initTextures } = await import('./js/textures.js');
     const { preloadMapProps } = await import('./js/mapprops.js');
     await preloadMapProps(propIdsFromSpec(spec)).catch(()=>{});
+    revalidate();
+    if (problemas.length) throw new Error('Corrija a validação antes de pré-ver:\n'+problemas.join('\n'));
     const scene=new THREE.Scene(); scene.background=new THREE.Color('#8fb7e0');
     const world=buildMapFromJSON(scene, initTextures(), clean());
     three.world?.dispose?.();   // build anterior solta só o que criou; props/template compartilhados ficam
