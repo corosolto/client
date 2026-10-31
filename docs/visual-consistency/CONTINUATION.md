@@ -828,3 +828,21 @@ CríticoaliasR1 2dbe676e semP1/P2, produtor/medidor reais+guardoff+874vias/fresh
 Hostdiscointerno100%/swap33.7GB. Temporáriopróprio critico-texel-baseline-r1 preservadonoaudit/symlinkoriginal. Modelostemporários antigos108hsemopenFD model-svc.pt/sd2.pt transferidossemperdasaoZenith apósSHAigual/recheckinodo+mtime+openFD; manifest /Volumes/Zenith/HostTempPreserved/20261031-visual-mission/manifest.json, pathsoriginais preservadosporsymlinks. Nãoalteradosconteúdo/cacheperfil/nemprocessosdeoutrosowners. ChromeR12launch180stimeout/R2EgoSIGTERMUNKNOWN, nenhumGREEN. Novosprofiles/outputsTMPDIRZenith.
 
 QA pinworkflowantigoP1GLMR4fechadocomteste6/6+ops79/79 ecríticaindependenteca30538c (removernovo/usarvelhoREDexato). GLMR5timeoutsemreportNÃOaceito. BootR11P2snapshotentrepassadas/P3cleanupachadoscritb1500a47emcorreção; nenhumwaiverprops. POSTanonymousinvite-healthpadrãobootforwardingREALautorizadonoescopoQA combodyestrito/versionlocal/semcookie/auth/semoutrosPOST; sideeffectRPCheartbeatobservado, SQLtabelaUNKNOWN. Merges/release e missãointegralaté18:45continuam.
+
+
+## 17:20 UTC — normais mescladas e curadoria atual comprovada no runtime CI
+
+PR#1184 HEAD72e80d366874445184173995d11f2c4689dc72c0 recebeu Estraga real17:11 limpo, zero threads e checks completos verdes; merge normal com match-head17:19:14, commit8f1c04a188fac1b1dff1633e57a67b90828da838. Ainda não é novo release. PR#1181 nova review real17:09 apontou P2 válido statusnull/signalnull/ENOBUFS na sonda; reparoGLM isolado em curso no WTconsistencia-review-1167, original1167 intocado.
+
+Curadoriaidentidade R6 terminou exit0:71medições/14nominais458peças incluindoartesmanuais, controlescausais e draw-groupsGREEN, log audits/2026-10-31-visual-consistency/curation-identity-CI-R6.log. Layoutbake437peças fp161c4394b4a2247a, demaisartesruntimepreservadas. Fontecríticaalias2dbe676e/adapteree0ec016/fixture20d25bc6/wiringca30538c+5f100783. Aliasatual Egovisualpendente; segundo bakefísicoR2interrompido semaceite.
+
+BootR15 nominal7,077,423B/318requests/227corposSHA e mutantes foram DIAGNÓSTICOS: crítica390348cd confirmou2P2 relógiosincompatíveis e freezeantescutoff,38controles próprios. R16 privado usaepochCDPwallTime/timeOrigin, espera fimjanela, conjuntonovo declones/barreira; obrigatório repetirnominal/ref+2mutantes e crítica independente antespromover. Tetos8.2MB/340 e3isençõeshistóricas intactos. EgoLite globalindisponível, tentativasprópriasinterrompidas semmexeroutrosowners; AKbrowserR2INVÁLIDO, semaprovaçãode30tiros. Missãointegralaté18:45UTCcontinua.
+
+
+## 17:44 UTC — preview limitado à arma escolhida
+
+GLM entregou1linha em main.js pvSetChar: preloadCharacterAssets recebe weapons:[arma.weaponId], evitadefault26apesardo previewusar1. Prova3seleções+negativo; críticoindependente4ddb0d79 conferiu14asserções+20.412decisões reais(63chars×11packs/26equipamentos), armassempreválidas, token/skin/glove/eyewearpreservados. Escopodepedido1vs26; NÃOémedição debytesnemEgovisual. Fonte/artefatos GLM-PREVIEW-ASSET-SCOPE-R1* no auditexterno.
+
+Main8f1cmergeQA recebeu mesma crítica4ddb0d79 CLEAN:12normais/ref/docbytesmain,modo755/aliases/prefixos/assetrevpreservados; focais5/5GREEN71.4s. GLMRO3mintimeoutNÃOaceito. Releaseworkflow41224203557 SUCCESS, aguardaidentificartag/deploy.
+
+BootR18 privado fechouexit1 realcontratoporFIM:8.456.735B/326req (256.735Bacimateto), READY/ORC2/ORC3GREEN,235corposSHA; referênciapesada11.208.352B/337req. MutantesbloqueadospelnominalRED. Vaca+tatuqueconcluírammaiscedoexplicamvariância; investigam-se carimborealREADY vs pollingantesalterarproduto. Teto8.2MB/340intacto, nenhumbootrejeitadopromovido. EgohealthR3tambémtimeout20s/124,nenhumaoperaçãoemoutrasSpaces. Missãoaté18:45continua.

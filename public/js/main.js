@@ -1165,7 +1165,7 @@ function pvSetChar(def) {
     // Keep the PREVIOUS model visible while the real GLB streams in — never flash the
     // blocky placeholder for a character that has a real model (the pop-in bug).
     const arma = armaDoPreview(def.id);
-    Promise.all([preloadCharacterAssets([def.id]),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
+    Promise.all([preloadCharacterAssets([def.id], { weapons:[arma.weaponId] }),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
       preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId),
       arma.gloveSkinId ? preloadGloveAssets([def.id]) : null]).then(() => {
       if (my !== pvToken) return;
