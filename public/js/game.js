@@ -49,9 +49,6 @@ export { perfilArma };
 import { saidaPenetracao, direcaoDesviada, resolverRaio } from './ballistics.js';
 import { entradaCombatente, ALCANCE_TIRO, alturaDoOlho } from './hitboxes.js';
 import { CABECAS_HITBOX, CABECA_PADRAO } from './data/cabecas-hitbox.js';
-// Cabeça justa à malha (régua: tools/eval/headshot-hitbox-check.mjs). ?hscaixa=0 volta à
-// esfera de 0,50 m, que o servidor de MP ainda usa.
-const HS_CAIXA = new URLSearchParams(location.search).get('hscaixa') !== '0';
 import { cegueiraFlash, brancoEm, retidaEm, FLASH_ERRO_MIRA } from './flashbang.js';
 import { assetUrl } from './data/asseturl.js';
 export { saidaPenetracao, resolverRaio };
@@ -64,6 +61,9 @@ export { WEAPONS };
    ?killcam=0 -> sem painel/câmera de morte
    Motivo: as três mudam COMPORTAMENTO sentido pelo jogador; o dono precisa do A/B. */
 const QS = new URLSearchParams(location.search);
+// Cabeça justa à malha (régua: tools/eval/headshot-hitbox-check.mjs). ?hscaixa=0 volta à
+// esfera de 0,50 m, que o servidor de MP ainda usa.
+const HS_CAIXA = QS.get('hscaixa') !== '0';
 const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
 const PLAYER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ANNOUNCER_LAB = ['kills', 'rounds', 'all'].includes(QS.get('announcerlab')) ? QS.get('announcerlab') : '';

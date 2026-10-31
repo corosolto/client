@@ -66,7 +66,7 @@ Cobertura: **3864 de 9087 linhas (43%)** do `game.js` têm dono declarado. O res
 
 | Linha | Símbolo | Linhas |
 |---:|---|---:|
-| 54 | `HS_CAIXA` | 12 |
+| 63 | `QS` | 3 |
 | 59 | `ANNOUNCER_LAB` | 4 |
 | 63 | `VMLAB` | 3 |
 | 68 | `VM_QA_CICLO` | 3 |
