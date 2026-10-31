@@ -418,7 +418,7 @@
     "eval:vm-ciclo": "node tools/eval/vm-ciclo-check.mjs",
     "check:vm": "node tools/eval/runner.mjs eval:vmrecoil eval:vm-recoil-tracking eval:vm-target-tracking eval:vm-moving-target eval:vm-moving-third eval:vm-moving-shoulder eval:vm-parallax eval:vm-parallax-far eval:melee-vm eval:vm-catalog eval:vm-serving eval:vm-identity eval:vm-ads eval:vm-launch eval:vm-placar eval:vm-reguas",
     "eval:ambience-registry": "node tools/eval/ambience-registry-check.mjs",
-    "eval:soundscape-contract": "node tools/eval/soundscape-contract-check.mjs && node tools/eval/soundscape-contract-check.mjs --mutante=path-no-lugar-de-src",
+    "eval:soundscape-contract": "node tools/eval/soundscape-contract-check.mjs && node tools/eval/soundscape-contract-check.mjs --mutante=path-no-lugar-de-src && node tools/eval/soundscape-contract-check.mjs --mutante=posicao-sem-z",
     "eval:mapanovo": "node tools/eval/mapa-novo-gate.mjs",
     "eval:cs16": "node tools/eval/vm-cs16-check.mjs",
     "eval:goldsrc": "node tools/eval/vm-goldsrc-check.mjs",
