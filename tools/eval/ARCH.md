@@ -3,13 +3,13 @@
 <!-- BEGIN:GERADO — não edite à mão, rode `npm run arch` -->
 
 > Gerado por `node tools/gen-arch.mjs`. **Não edite este bloco à mão.**
-> Versão do jogo: 2.1.0-alpha.130 · `npm run arch` para regenerar · `npm run arch:check` no CI.
+> Versão do jogo: 2.1.0-alpha.132 · `npm run arch` para regenerar · `npm run arch:check` no CI.
 
 ## Tamanho dos arquivos indexados
 
 | Arquivo | Linhas | Símbolos |
 |---|---:|---:|
-| `public/js/game.js` | 9063 | 379 |
+| `public/js/game.js` | 9066 | 379 |
 | `public/js/main.js` | 5285 | 400 |
 | `public/js/glbchars.js` | 1309 | 92 |
 | `public/js/characters.js` | 1143 | 42 |
@@ -23,21 +23,21 @@ Os 15 maiores somam **3269 linhas (36% do arquivo)**. Método grande = PR irrevi
 
 | Linhas | Início | Método | |
 |---:|---:|---|---|
-| 823 | 7589 | `_updateBot()` | ⚠️ candidato a extração |
+| 823 | 7592 | `_updateBot()` | ⚠️ candidato a extração |
 | 649 | 730 | `constructor()` | 🔴 append-only |
-| 344 | 6628 | `_updatePlayer()` | ⚠️ candidato a extração |
-| 267 | 2820 | `_resetPositions()` |  |
-| 158 | 6985 | `_updatePickups()` |  |
-| 137 | 5790 | `_botCtf()` |  |
-| 134 | 2270 | `_touchControls()` |  |
-| 122 | 8798 | `_updateHud()` |  |
-| 105 | 6344 | `_updatePlayerTP()` |  |
-| 101 | 6527 | `_moveEntity()` |  |
-| 95 | 3933 | `_tryShoot()` |  |
-| 90 | 8920 | `update()` | 🔴 append-only |
-| 86 | 5501 | `_initCTF()` |  |
-| 79 | 3473 | `_ensureVmPrecisionQa()` |  |
-| 79 | 4517 | `_dmgArc()` |  |
+| 344 | 6631 | `_updatePlayer()` | ⚠️ candidato a extração |
+| 267 | 2821 | `_resetPositions()` |  |
+| 158 | 6988 | `_updatePickups()` |  |
+| 137 | 5793 | `_botCtf()` |  |
+| 134 | 2271 | `_touchControls()` |  |
+| 122 | 8801 | `_updateHud()` |  |
+| 105 | 6347 | `_updatePlayerTP()` |  |
+| 101 | 6530 | `_moveEntity()` |  |
+| 95 | 3936 | `_tryShoot()` |  |
+| 90 | 8923 | `update()` | 🔴 append-only |
+| 86 | 5504 | `_initCTF()` |  |
+| 79 | 3476 | `_ensureVmPrecisionQa()` |  |
+| 79 | 4520 | `_dmgArc()` |  |
 
 ## Tabela de CONFLITO — resolvida para as linhas de hoje
 
@@ -47,20 +47,20 @@ faixas disjuntas simultaneamente com zero conflito de conteúdo.
 
 | Frente | Faixas em `game.js` | Arquivos exclusivos |
 |---|---|---|
-| **ARMAS / VIEWMODEL** | `364–367` `443–537` `567–588` `1483–1769` `3439–3472` `3720–3821` `3887–4027` `4042–4057` `4202–4247` `4788–4813` `4861–4961` `5034–5051` | `public/js/vmattach.js` `public/js/springs.js` `public/js/weapons.js` `public/js/fparms.js` `public/js/handik.js` `public/js/recoil.js` `public/js/vmlab.js` |
-| **BOTS / JOGABILIDADE** | `196–199` `250–250` `283–294` `630–641` `4376–4486` `5440–5500` `5672–5926` `6009–6031` `6628–6971` `7372–7389` `7523–7553` `7589–8411` | — |
-| **MAPAS / MUNDO** | `1426–1482` `2820–3086` `5501–5647` `6985–7142` | `public/js/maps.js` `public/js/mapprops.js` `public/js/map_brasilia.js` `public/js/map_havan.js` `public/js/map_piscina.js` `public/js/map_piscinao_ramos.js` `public/js/map_ferrovelho.js` |
-| **GRÁFICOS / FX** | `1926–1935` `2051–2089` `3339–3352` `4814–4852` `4977–5033` | `public/js/bloom.js` `public/js/textures.js` `public/js/vao.js` `public/js/stylize.js` `public/js/gpuparticles.js` |
-| **UI / HUD / MENU** | `1379–1425` `3291–3313` `3329–3338` `3353–3372` `4517–4595` `4655–4708` `4724–4787` `8598–8645` `8703–8756` `8798–8919` | `public/js/main.js` `public/style.css` `src/pages/index.astro` |
+| **ARMAS / VIEWMODEL** | `364–367` `443–537` `567–588` `1483–1770` `3440–3475` `3723–3824` `3890–4030` `4045–4060` `4205–4250` `4791–4816` `4864–4964` `5037–5054` | `public/js/vmattach.js` `public/js/springs.js` `public/js/weapons.js` `public/js/fparms.js` `public/js/handik.js` `public/js/recoil.js` `public/js/vmlab.js` |
+| **BOTS / JOGABILIDADE** | `196–199` `250–250` `283–294` `630–641` `4379–4489` `5443–5503` `5675–5929` `6012–6034` `6631–6974` `7375–7392` `7526–7556` `7592–8414` | — |
+| **MAPAS / MUNDO** | `1426–1482` `2821–3087` `5504–5650` `6988–7145` | `public/js/maps.js` `public/js/mapprops.js` `public/js/map_brasilia.js` `public/js/map_havan.js` `public/js/map_piscina.js` `public/js/map_piscinao_ramos.js` `public/js/map_ferrovelho.js` |
+| **GRÁFICOS / FX** | `1927–1936` `2052–2090` `3340–3353` `4817–4855` `4980–5036` | `public/js/bloom.js` `public/js/textures.js` `public/js/vao.js` `public/js/stylize.js` `public/js/gpuparticles.js` |
+| **UI / HUD / MENU** | `1379–1425` `3292–3314` `3330–3339` `3354–3373` `4520–4598` `4658–4711` `4727–4790` `8601–8648` `8706–8759` `8801–8922` | `public/js/main.js` `public/style.css` `src/pages/index.astro` |
 | **ÁUDIO** | — | `public/js/audio.js` |
 | **PERSONAGENS** | — | `public/js/characters.js` `public/js/glbchars.js` |
 | **SITE / BACKEND** | — | `src/` `supabase/` |
 
-**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 8920–9009 · `_dom()` 1379–1425 · `constructor()` 730–1378
+**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 8923–9012 · `_dom()` 1379–1425 · `constructor()` 730–1378
 
 Nenhuma sobreposição entre frentes — todas as faixas são disjuntas. ✓
 
-Cobertura: **3856 de 9063 linhas (43%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
+Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
 
 <details><summary><strong>Índice completo de <code>game.js</code> (todos os símbolos)</strong></summary>
 
