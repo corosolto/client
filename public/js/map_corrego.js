@@ -133,7 +133,7 @@ export function buildCorrego(scene, T) {
     TEX.asphalt = lam({ map: load('/img/textures/asphalt_br.webp', 5, 8) });
     TEX.concrete = lam({ map: load('/img/textures/concrete_br.webp', 3, 5) });
     TEX.agua = lam({ map: load('/img/textures/tex_agua_poluida.webp', 2, 6), color: 0x42543b, roughness: 0.24, metalness: 0.12 });
-    TEX.pixo = lam({ map: load('/img/textures/corrego_streetart_pixo.webp', 2, 2), roughness: 0.98 });
+    TEX.pixo = lam({ map: load('/img/textures/corrego_streetart_pixo.webp', 1, 1), roughness: 0.98 });
   }
 
   /* ── SUPERFÍCIE: um material COMPARTILHADO por família, todo com `map` do catálogo
@@ -1702,10 +1702,10 @@ export function buildCorrego(scene, T) {
   }
 
   // A pintura é um plano sem colisão; o muro preserva a superfície física.
-  // Montagem: tools/eval/corrego-graffiti-mount-check.mjs.
+  // Contrato arte única (SURVEY4): 1 aplicação, repeat 1,1 — régua tools/eval/corrego-graffiti-mount-check.mjs.
   if (TEX.pixo) {
     const suporte = criarSuporteGrafite(root);
-    for (const [lado, z] of [[1, -28], [-1, 24], [1, 8], [-1, -12]]) {
+    for (const [lado, z] of [[1, -28]]) {
       // A faixa 3,4–7 m fica acima dos beirais da fileira C e dentro do muro.
       const piece = { x: lado * (HALF_X - .25 - .012), y: 5.2, z,
         ry: -lado * Math.PI / 2, w: 6, h: 3.6 };

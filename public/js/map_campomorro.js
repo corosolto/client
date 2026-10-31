@@ -5,6 +5,7 @@ import { PropBatch, InstBatch, mergeParts, hasProp, placeProp } from './mapprops
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { detailFor } from './textures.js';
+import { soilSurface } from './map_surface_finish.js';
 import { applyLook } from './map_sky.js';
 import { aplicaSombraSol } from './mapquality.js';
 import { aplicaVento, updateVento } from './wind.js';
@@ -90,9 +91,11 @@ export function buildCampoMorro(scene, T = {}) {
   const texturaPisoGalpao = texturaSuperficie(0x7d796f, 0x625f59, 5, 4);
   const texturaForroGalpao = texturaSuperficie(0x67777a, 0x4b5d61, 4, 3);
   const MAT = {
-    dirt: lam({ map: T.dirt || T.grass, color: 0x9a7a4c }),
+    /* Tint mineral local: paridade de MÉDIA LINEAR com o baseline 1179 (dirt_field média
+       sRGB 150,101,54 × tint 0x9a7a4c ÷ base #786D5F do canvas) — Ferro segue sem tint. */
+    dirt: lam({ map: T.dirt || T.grass, color: 0xc0702d }),
     asphalt: lam({ map: T.asphalt, color: 0x77736c }),
-    wall: lam({ map: T.concrete, color: 0x9b8268 }),
+    wall: lam({ map: T.concrete, color: 0xc0a78c }),
     concrete: lam({ map: T.concrete, color: 0x8b8b83 }),
     steel: lam({ color: 0x536069, metalness: 0.35, roughness: 0.7 }),
     steelRust: lam({ color: 0x6f4935, metalness: 0.28, roughness: 0.84 }),
@@ -111,26 +114,50 @@ export function buildCampoMorro(scene, T = {}) {
   };
   if (typeof document !== 'undefined') {
     const loader = new THREE.TextureLoader();
+    /* Fallback até o onLoad; clones do `repetido` e o detalhe explícito do reboco são
+       atualizados pelo callback — contrato: tools/eval/external-surface-binding-check.mjs */
     const external = (mat, url, rx, ry) => {
       const tex = loader.load(url, () => {
         mat.map = tex;
-        const det = detailFor(tex);
-        mat.normalMap = det?.normalMap || null;
-        mat.roughnessMap = det?.roughnessMap || null;
+        const det = mat.userData.detalhe || detailFor(tex) || {};
+        mat.normalMap = det.normalMap || null;
+        mat.roughnessMap = det.roughnessMap || null;
         if (mat.normalMap) { const scale = mat.roughness >= .8 && mat.metalness < .2 ? .4 : .55; mat.normalScale.set(scale, scale); }
         mat.needsUpdate = true;
+        for (const c of mat.userData.clones || []) {
+          c.map = tex.clone();
+          c.map.wrapS = c.map.wrapT = THREE.RepeatWrapping;
+          c.map.repeat.copy(c.userData.baseRepeat); c.map.needsUpdate = true;
+          const cd = det.normalMap || det.roughnessMap ? { normalMap: det.normalMap ? det.normalMap.clone() : null, roughnessMap: det.roughnessMap ? det.roughnessMap.clone() : null } : (detailFor(c.map) || {});
+          c.normalMap = cd.normalMap || null;
+          c.roughnessMap = cd.roughnessMap || null;
+          for (const d of [c.normalMap, c.roughnessMap]) {
+            if (!d) continue;
+            d.wrapS = d.wrapT = THREE.RepeatWrapping; d.repeat.copy(c.map.repeat); d.offset.copy(c.map.offset); d.needsUpdate = true;
+          }
+          if (c.normalMap) c.normalScale.copy(mat.normalScale);
+          c.needsUpdate = true;
+        }
       });
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
       tex.repeat.set(rx, ry);
     };
-    external(MAT.dirt, '/img/textures/dirt_field.webp', 8, 7);
+    /* Solo na MESMA família do Ferro (soilSurface, sem normalMap) e na densidade dele:
+       72/52 = 1,38 m/tile contra 64/46 = 1,39 m do Ferro (M2: dirt_field de 9 m/tile). */
+    MAT.dirt.map = soilSurface(52, 43); MAT.dirt.normalMap = null; MAT.dirt.roughnessMap = null; MAT.dirt.needsUpdate = true;
     external(MAT.asphalt, '/img/textures/asphalt_br.webp', 5, 5);
-    external(MAT.wall, '/img/textures/favela_wall.webp', 3, 3);
+    /* Reboco no período do Lajes (tile 2 m, default do material() em lajes_houses.js:20;
+       UV métrico por face no addBox): o favela_wall 3x3 era papel de parede (M2). */
+    external(MAT.wall, '/img/textures/pbr_paintedplaster017_color.webp', 1, 1);
+    const rebocoDetalhe = (arq) => { const t = loader.load(`/img/textures/${arq}`); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+    // par normal+rough do próprio plaster, explícito e registrado ANTES do callback assíncrono
+    MAT.wall.userData.detalhe = { normalMap: rebocoDetalhe('pbr_paintedplaster017_normal.webp'), roughnessMap: rebocoDetalhe('pbr_paintedplaster017_rough.webp') };
+    MAT.wall.name = 'campo-reboco'; MAT.wall.needsUpdate = true;
     external(MAT.concrete, '/img/textures/concrete_br.webp', 3, 3);
     external(MAT.roof, '/img/textures/tex_zinco.webp', 3, 3);
     MAT.baile = lam({ map: MAT.wall.map, roughness: 1 });
-    external(MAT.baile, '/img/textures/campomorro_streetart_baile.webp', 1.5, 1);
+    external(MAT.baile, '/img/textures/campomorro_streetart_baile.webp', 1, 1);
   } else MAT.baile = MAT.wall;
 
   /* Superfície grande usa material próprio com repetição ajustada (TEXEL2): o clone
@@ -142,13 +169,36 @@ export function buildCampoMorro(scene, T = {}) {
       t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.needsUpdate = true;
       m.map = t; m.needsUpdate = true;
     }
+    m.userData.baseRepeat = new THREE.Vector2(rx, ry);
+    (base.userData.clones ||= []).push(m);   // external troca o mapa no onLoad: o clone entra junto
     return m;
   };
   MAT.muralha = repetido(MAT.concrete, 20, 3);
-  MAT.morroFundo = repetido(MAT.wall, 3, 2);
+  // com UV em metros por face, o clone de densidade 3x2 quebraria o período: é o mesmo reboco
+  MAT.morroFundo = MAT.wall;
+  /* UV do reboco EM METROS por face (grupos da BoxGeometry): tile de 2,0 m igual ao
+     Lajes — independe do tamanho da caixa, acaba com o papel de parede por repeat. */
+  const REBOCO_TILE = 2.0;
+  const uvRebocoMetros = (geo, w, h, d) => {
+    geo.userData.texelEscalada = true;   // trava a 2ª escala do vao.js, igual ao uvTijoloMetros
+    const uv = geo.attributes.uv, idx = geo.index;
+    const EXT = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+    const visto = new Uint8Array(uv.count);
+    for (const g of geo.groups) {
+      const [eu, ev] = EXT[g.materialIndex | 0] || [0, 0];
+      if (!eu || !ev) continue;
+      for (let k = g.start; k < g.start + g.count; k++) {
+        const i = idx.getX(k); if (visto[i]) continue; visto[i] = 1;
+        uv.setXY(i, uv.getX(i) * eu / REBOCO_TILE, uv.getY(i) * ev / REBOCO_TILE);
+      }
+    }
+    uv.needsUpdate = true;
+  };
 
   const addBox = (w, h, d, mat, x, y, z, opts = {}) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    const geo = new THREE.BoxGeometry(w, h, d);
+    if (mat === MAT.wall) uvRebocoMetros(geo, w, h, d);
+    const m = new THREE.Mesh(geo, mat);
     m.position.set(x, y + h / 2, z);
     m.castShadow = opts.cast !== false; m.receiveShadow = true;
     root.add(m);
@@ -509,9 +559,10 @@ export function buildCampoMorro(scene, T = {}) {
   }
   // Marquise e letreiro enfatizam que este volume pertence ao baile e está acima do campo.
   addBox(8.4, 0.18, 1.35, MAT.steelRust, 28, 3.55, -15.55, { collide: false });
-  addBox(6.8, 0.85, 0.08, MAT.baile, 28, 2.35, -15.29, { collide: false, cast: false });
-  addBox(0.05, 2.65, 6.2, MAT.baile, GALPAO.x1 - 0.2, GALPAO.y + 0.25, -21, { collide: false, cast: false });
-  addBox(5.1, 2.4, 0.05, MAT.baile, -32, 0.45, 20.26, { collide: false, cast: false });
+  const muralBaile = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 2.65), MAT.baile);
+  muralBaile.position.set(GALPAO.x1 - .175 - .03, GALPAO.y + .25 + 2.65 / 2, -21);
+  muralBaile.rotation.y = -Math.PI / 2; muralBaile.receiveShadow = true;
+  muralBaile.name = 'mural:campomorro-baile'; root.add(muralBaile);
   // A fachada oeste encara o campo: duas torres de som prolongam as paredes existentes,
   // enquanto o letreiro alto cruza somente o vazio acima da passagem jogável.
   for (const z of [-24.15, -17.85]) {
@@ -525,7 +576,6 @@ export function buildCampoMorro(scene, T = {}) {
     }
   }
   addBox(0.34, 0.32, 9.8, MAT.steelRust, GALPAO.x0, GALPAO.y + 6.0, -21, { collide: false });
-  addBox(0.06, 1.25, 5.4, MAT.baile, GALPAO.x0 - 0.2, GALPAO.y + 4.85, -21, { collide: false, cast: false });
   for (const z of [-24.3, -17.7])
     addBox(0.6, 1.05, 0.6, MAT.roof, GALPAO.x0, GALPAO.y + 6.28, z, { collide: false });
   prop('caixa_som_baile', { x: 26, y: GALPAO.y, z: -21, targetH: 2.8 }, [2.4, 2.8, 4.4]);
@@ -550,7 +600,6 @@ export function buildCampoMorro(scene, T = {}) {
   // Norte: portal enferrujado e cartaz de baile.
   for (const x of [-2.48, 2.48]) addBox(0.5, 3.0, 0.42, MAT.steelRust, x, FIELD_Y, -FIELD_Z, { collide: false });
   addBox(5.45, 0.3, 0.52, MAT.steelRust, 0, 2.35, -FIELD_Z, { collide: false });
-  addBox(3.3, 0.62, 0.06, MAT.baile, 0, 2.58, -FIELD_Z + 0.24, { collide: false, cast: false });
   // Sul: concreto pintado e marquise amarela.
   for (const x of [-2.48, 2.48]) addBox(0.5, 2.6, 0.42, MAT.concrete, x, FIELD_Y, FIELD_Z, { collide: false, bala: true });
   addBox(5.45, 0.34, 0.68, MAT.concrete, 0, 1.92, FIELD_Z, { collide: false });
@@ -567,7 +616,6 @@ export function buildCampoMorro(scene, T = {}) {
   for (const [x, h, mat] of [[9.92, 2.75, MAT.wall], [15.08, 3.65, MAT.concrete]])
     addBox(0.5, h, 0.42, mat, x, FIELD_Y, -FIELD_Z, { collide: false });
   addBox(5.7, 0.3, 0.58, MAT.roof, 12.5, 2.62, -FIELD_Z, { collide: false });
-  addBox(2.8, 0.64, 0.06, MAT.baile, 12.5, 2.86, -FIELD_Z + 0.26, { collide: false, cast: false });
 
   /* GUARDA DA BORDA: cada trecho assenta na cota MÍNIMA do seu pedaço e sobra 3 m acima
      da MÁXIMA, com sobreposição entre trechos — sem fresta na guarda (MAP6). */
@@ -583,7 +631,7 @@ export function buildCampoMorro(scene, T = {}) {
     guardaBorda(sx, 0, 0.5, HALF_Z * 2);
     for (let z = -26; z <= 26; z += 6.5) {
       const i = Math.round((z + 26) / 6.5), base = morroBase(sx, z), h = 3.2 + (i % 3) * 0.72;
-      addBox(0.12, h, 5.9, i % 2 ? MAT.wall : MAT.baile, sx - Math.sign(sx) * 0.31, base, z, { collide: false });
+      addBox(0.12, h, 5.9, MAT.wall, sx - Math.sign(sx) * 0.31, base, z, { collide: false });
       addBox(0.38, 0.1, 6.15, MAT.roof, sx - Math.sign(sx) * 0.25, base + h, z, { collide: false });
       addBox(0.05, 0.82, 1.15, MAT.glass, sx - Math.sign(sx) * 0.39, base + 1.25 + (i % 2) * 0.42, z - 1.25, { collide: false, cast: false });
       addBox(0.05, 1.92, 0.82, MAT.door, sx - Math.sign(sx) * 0.39, base + 0.02, z + 1.45, { collide: false, cast: false });

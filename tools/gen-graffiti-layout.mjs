@@ -29,6 +29,7 @@
      node tools/gen-graffiti-layout.mjs            # todos os MAP_SOURCES
      node tools/gen-graffiti-layout.mjs quebrada
      node tools/gen-graffiti-layout.mjs --checkpoint=/tmp/graffiti-bake-state.json
+     EGO_TASK_SPACE=32 node tools/gen-graffiti-layout.mjs  # reutiliza p2 no Ego
 
    Entrada que falta (GLB, decalque, erro da página) cancela o bake daquele mapa.
    `GRAFITE_DERRUBA=<regex>` derruba as requisições que casam: é o gancho da régua
@@ -40,6 +41,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { impressao, MAP_SOURCES } from './eval/graffiti-fingerprint.mjs';
+import { capturarGrafiteEgo } from './eval/ego-graffiti-bake.mjs';
 
 const BASE = process.env.BASE;
 const SAIDA = 'public/js/graffiti_layout.js';
@@ -48,6 +50,10 @@ const ARGS = process.argv.slice(2);
 const ONLY = ARGS.find((a) => !a.startsWith('--'));
 const CHECKPOINT = ARGS.find(a => a.startsWith('--checkpoint='))?.slice(13);
 const CHECKPOINT_ONLY = ARGS.includes('--checkpoint-only');
+const EGO_SPACE = Number(process.env.EGO_TASK_SPACE || 0);
+if (process.env.EGO_TASK_SPACE !== undefined && (!Number.isSafeInteger(EGO_SPACE) || EGO_SPACE <= 0)) {
+  throw Error('EGO_TASK_SPACE deve ser um inteiro positivo; bake cancelado');
+}
 const checkpoint = CHECKPOINT && existsSync(CHECKPOINT) ? JSON.parse(readFileSync(CHECKPOINT, 'utf8')) : { maps: {} };
 const inputSources = ['public/js/textures.js', 'public/js/mapprops.js'];
 const inputDigest = () => createHash('sha256').update(inputSources.map(file => file + '\0' + readFileSync(file, 'utf8')).join('\0')).digest('hex');
@@ -115,17 +121,19 @@ if (SO_IMPRESSAO) {
   process.exit(0);
 }
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = _pw.chromium || _pw.default?.chromium;
-
 const inputFingerprint = impressao();
 if (ONLY && !CHECKPOINT_ONLY && previousFingerprint?.pass !== inputFingerprint.pass)
   throw Error('A passada mudou: regerar um mapa não pode reassinar os demais. Regere todos ou use --checkpoint-only para diagnosticar.');
-const browser = await chromium.launch({
+let browser;
+if (!EGO_SPACE) {
+const gRoot = execSync('npm root -g').toString().trim();
+const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+const chromium = _pw.chromium || _pw.default?.chromium;
+browser = await chromium.launch({
   ...(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : { channel: 'chrome' }), headless: true,
   args: ['--mute-audio'],
 });
+}
 
 try {
 for (const id of MAPAS) {
@@ -136,25 +144,30 @@ for (const id of MAPAS) {
     anterior[id] = saved.layout; console.log(`  ${id}: checkpoint validado (${saved.layout.pecas.length} peças)`); continue;
   }
   console.log(`  ${id}: iniciando passada viva`);
+  let g, actualMap, faltas = [];
+  const viewId = id;
+  if (EGO_SPACE) {
+    ({ g, actualMap, faltas } = capturarGrafiteEgo({ base: BASE, id, space: EGO_SPACE,
+      page: process.env.EGO_PAGE || 'p2', block: process.env.GRAFITE_DERRUBA || '' }));
+  } else {
   const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
   /* ENTRADA QUE FALTA CANCELA O BAKE (#1109). A passada é determinística sobre a cena que
      recebe; o que varia entre rodadas é a cena. `preloadMapProps` engole GLB que não
      carregou e o mapa sobe sem ele: só a `statue_liberty.glb` faltando leva a loja_h de
      186 a 200 peças, sem erro nenhum. Requisição perdida, erro da página e prop que não
      decodificou viram falha alta, com a lista, em vez de um layout diferente. */
-  const faltas = [];
   page.on('pageerror', (e) => { console.log('  [pageerror]', e.message); faltas.push(`pageerror: ${e.message}`); });
   page.on('requestfailed', (r) => faltas.push(`falhou: ${r.url()} (${r.failure()?.errorText || '?'})`));
   page.on('response', (r) => { if (r.status() >= 400) faltas.push(`${r.status()}: ${r.url()}`); });
   page.on('console', (m) => { if (/load failed/.test(m.text())) faltas.push(`console: ${m.text().slice(0, 160)}`); });
   if (process.env.GRAFITE_DERRUBA) await page.route(new RegExp(process.env.GRAFITE_DERRUBA), (route) => route.abort());
   // `grafite=vivo`: manda o mapa RODAR a passada em vez de aplicar o layout assado
-  const viewId = id;
   await page.goto(`${BASE}/mapview.html?map=${viewId}&grafite=vivo`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction('window.MAPEVAL && window.MAPEVAL.ready===true', null, { timeout: 1200000 });
-  const g = await page.evaluate(() => window.__grafite || null);
-  const actualMap = await page.evaluate(() => window.__mapId);
+  g = await page.evaluate(() => window.__grafite || null);
+  actualMap = await page.evaluate(() => window.__mapId);
   await page.close();
+  }
   if (faltas.length) {
     throw Error(`${id}: ${faltas.length} entrada(s) faltando na cena; bake cancelado, layout anterior preservado:\n    `
       + [...new Set(faltas)].slice(0, 20).join('\n    '));
@@ -178,7 +191,7 @@ for (const id of MAPAS) {
   console.log(`  ${id}: ${anterior[id].pecas.length} peças · ${anterior[id].arquivos.length} arquivos · `
     + `${anterior[id].murais.length} murais · ${g.ms} ms de passada`);
 }
-} finally { await browser.close(); }
+} finally { await browser?.close(); }
 
 if (CHECKPOINT_ONLY) {
   console.log('Checkpoint de diagnóstico concluído; layout público não foi escrito.');

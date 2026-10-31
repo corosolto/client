@@ -253,6 +253,7 @@ export function buildPoolDay(scene, T) {
     if (opts.rx) m.rotation.x = opts.rx;
     if (opts.rz) m.rotation.z = opts.rz;
     m.userData.piscinaStaticBox = true;
+    m.userData.graffitiWhiteWall = mat === MAT.wall;
     root.add(m);
     if (opts.collide !== false) {
       const pad = opts.pad || 0;
@@ -323,6 +324,7 @@ export function buildPoolDay(scene, T) {
       // O lote perde nomes e ancestrais dos membros; preserva a permissão de
       // pintura separadamente, sem alterar a colisão física.
       batch.userData.graffitiSupportExcluded = !superficieGrafitavel(first);
+      batch.userData.graffitiWhiteWall = !!first.userData.graffitiWhiteWall;
       list.forEach((mesh, i) => {
         mesh.updateMatrix();
         batch.setMatrixAt(i, mesh.matrix);
@@ -356,7 +358,7 @@ export function buildPoolDay(scene, T) {
       child.traverse((node) => { if (node.isMesh) meshes.push(node); });
       if (meshes.length !== 1 || Array.isArray(meshes[0].material)) continue;
       const mesh = meshes[0];
-      const key = `${child.name}:${mesh.geometry.uuid}:${mesh.material.uuid}`;
+      const key = `${child.name}:${mesh.geometry.uuid}:${mesh.material.uuid}:${superficieGrafitavel(mesh)}`;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push({ child, mesh });
     }
@@ -366,6 +368,8 @@ export function buildPoolDay(scene, T) {
       const first = list[0].mesh;
       const batch = new THREE.InstancedMesh(first.geometry, first.material, list.length);
       batch.name = `${list[0].child.name}:batch`;
+      batch.userData.graffitiSupportExcluded = !superficieGrafitavel(first);
+      batch.userData.graffitiWhiteWall = !!first.userData.graffitiWhiteWall;
       const matrix = new THREE.Matrix4();
       list.forEach(({ child, mesh }, index) => {
         mesh.updateWorldMatrix(true, false);
@@ -667,7 +671,7 @@ export function buildPoolDay(scene, T) {
         const h = HBASE * escP;
         const y = graffitiMutant === 'faixa' ? 2.6 : FAIXA_AZUL_Y1 + 0.15 + h / 2;
         const poster = addPlane(h * A, h, lam({ map: imgs[ti], side: THREE.DoubleSide }), px, y, pz, ry);
-        poster.name = 'poster:piscina';
+        poster.name = 'decal:poster:' + T.posterFiles[ti];
       });
     }
   }
@@ -1214,6 +1218,9 @@ export function buildPoolDay(scene, T) {
   if (graffitiMutant !== 'repeticao') graffitiLayout = filtrarRepeticoesGrafite(graffitiLayout);
   if (graffitiMutant !== 'faixa') graffitiLayout = filtrarFaixaGrafite(graffitiLayout);
   GRAFITE.piscina_treta = graffitiLayout;
+  root.traverse(mesh => {
+    if (mesh.isMesh && !mesh.userData.graffitiWhiteWall) mesh.userData.graffitiSupportExcluded = true;
+  });
   batchAuthoredProps();
   batchStaticBoxes();
   grafitar({

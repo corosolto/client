@@ -49,7 +49,7 @@ export const MAPS = {
   // (seed no startGame). `ctfMode: true` = ABRE em CTF, mas o jogador pode trocar.
   loja_h: { name: 'Loja H (Estacionamento)', ctfMode: true },
   ferro_velho: { name: 'Ferro Velho do Zé', ctfMode: true,
-    props: ['muro_carros', 'fileira_carros', 'monte_carros', 'guindaste', 'prensa_carros', 'pilha_pneus', 'abandoned_car', 'broken_car', 'broken_car_2', 'carro_danificado', 'destroyed_car', 'junk_car', 'dumpster', 'jersey_barrier', 'sandbags', 'concrete_roadblock'],
+    props: ['muro_carros', 'fileira_carros', 'monte_carros', 'guindaste', 'prensa_carros', 'pilha_pneus', 'ferro_balcao', 'abandoned_car', 'broken_car', 'broken_car_2', 'carro_danificado', 'destroyed_car', 'junk_car', 'dumpster', 'jersey_barrier', 'sandbags', 'concrete_roadblock'],
   },
   quebrada: { name: 'Quebrada (Rua do Baile)', ctfMode: true,
     props: ['pilha_pneus', 'tires', 'jersey_barrier', 'stall', 'tent', 'caixa_som', 'arquibancada', 'churrasqueira', 'mesa_guardasol', 'guarda_sol', 'moto_cg', 'kombi', 'uno_mille', 'fusca', 'saveiro', 'dumpster', 'arara_roupas', 'drinkstand', 'fav_house', 'fav_brasileira', 'fav_modular', 'tiara_gt83', 'botijao_gas', 'vw_9150', 'fachada_comercio', 'onibus_sptrans', 'caixa_som_baile'],

@@ -1481,6 +1481,8 @@ export const ASSET_REV = Object.freeze({
   "models/props/fav_brasileira.glb": "e0c3f445e1",
   "models/props/fav_house.glb": "d937bbec49",
   "models/props/fav_modular.glb": "5e4bc7dac2",
+  "models/props/ferro-balcao-mint-assets.json": "a689e18086",
+  "models/props/ferro_balcao.glb": "dabc0f95b5",
   "models/props/fiat_toro.glb": "53025e3f14",
   "models/props/fiat_uno.glb": "f9235c71bc",
   "models/props/fileira_carros.glb": "871e5dfd13",
