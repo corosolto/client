@@ -5,9 +5,10 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Game, THREE, renderer, initTextures, sfx, CHARACTERS, PCHAR } from './harness.mjs';
 import { WEAPON_IDS } from '../../public/js/weapons.js';
+import { probeSelectedWeapon } from './selected-weapon-probe.mjs';
 
 const mutation = process.argv.find((arg) => arg.startsWith('--mutante='))?.split('=')[1];
-const mutations = ['raiz-vazia', 'fallback-oculto', 'fallback-duplo', 'fora-do-quadro'];
+const mutations = ['raiz-vazia', 'fallback-oculto', 'fallback-duplo', 'fora-do-quadro', 'malha-alheia'];
 if (mutation && !mutations.includes(mutation)) throw new Error(`mutante desconhecido: ${mutation}`);
 const errors = [];
 let samples = 0;
@@ -18,13 +19,15 @@ const meshes = (root) => {
   return count;
 };
 const inFrame = (game) => {
+  const selected = game.vm.models[game.player.weapon];
+  if (!selected?.visible || !game.vm.root.visible) return false;
   game.vmCamera.updateProjectionMatrix();
   game.vmCamera.updateMatrixWorld(true);
   game.vm.root.updateWorldMatrix(true, true);
   const frustum = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4()
     .multiplyMatrices(game.vmCamera.projectionMatrix, game.vmCamera.matrixWorldInverse));
   let visible = false;
-  game.vm.root.traverseVisible((node) => {
+  selected.traverseVisible((node) => {
     if (node.isMesh && node.geometry?.attributes.position?.count && frustum.intersectsObject(node)) visible = true;
   });
   return visible;
@@ -47,6 +50,15 @@ for (const mobile of [true, false]) {
   game.vm.authored?.dispose();
   game.vm.authored = null;
   if (mutation === 'fora-do-quadro') game.vm.root.position.x = 10000;
+  if (mutation === 'malha-alheia') {
+    game.vm.root.add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial()));
+    const sync = game._syncVmPresentation;
+    game._syncVmPresentation = function (...args) {
+      const state = sync.apply(this, args);
+      if (this.vm.models[this.player.weapon]) this.vm.models[this.player.weapon].visible = false;
+      return state;
+    };
+  }
   if (mutation === 'raiz-vazia') {
     const build = game._buildViewModels;
     game._buildViewModels = function (...args) {
@@ -73,30 +85,31 @@ for (const mobile of [true, false]) {
       game.player.weapon = weapon;
       game._applyVmVisibility();
       const label = `${mobile ? 'mobile' : 'desktop'} ${width}x${height} ${weapon}`;
-      check(game._vmVisibility.fallback && meshes(game.vm.root) > 0, 'VMP1', label);
+      check(game._vmVisibility.fallback && probeSelectedWeapon({ game }).meshes > 0, 'VMP1', label);
       check(inFrame(game), 'VMP9', `${label}: malha dentro do quadro`);
       check(Object.values(game.vm.models).filter((model) => model.visible).length === 1,
         'VMP2', `${label}: exatamente uma arma alternativa`);
       game._syncVmPresentation(true, 1);
       check(meshes(game.vm.root) === 0, 'VMP3', `${label}: luneta cobre a arma`);
       game._syncVmPresentation(true, 0);
-      check(meshes(game.vm.root) > 0, 'VMP4', `${label}: sai da luneta com arma`);
+      check(probeSelectedWeapon({ game }).meshes > 0, 'VMP4', `${label}: sai da luneta com arma`);
     }
   }
   game.player.weapon = 'awp';
   const authoredRoot = new THREE.Group();
   authoredRoot.add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.5), new THREE.MeshBasicMaterial()));
   game.vm.root.add(authoredRoot);
-  game.vm.authored = { setWeapon: () => { authoredRoot.visible = true; return true; },
+  game.vm.authored = { setWeapon(weapon) { this.weapon = weapon; authoredRoot.visible = true; return true; },
+    entry: () => ({ mount: authoredRoot, weaponMeshes: authoredRoot.children }),
     fov: () => 62, utilityReady: () => false, dispose() {} };
   game._applyVmVisibility();
-  check(game._vmVisibility.authored && authoredRoot.visible
+  check(game._vmVisibility.authored && authoredRoot.visible && probeSelectedWeapon({ game }).meshes > 0
     && !Object.values(game.vm.models).some((model) => model.visible),
   'VMP5', `${mobile}: autorado pronto substitui alternativa sem duplicação`);
   authoredRoot.visible = false;
   game.vm.authored.setWeapon = () => false;
   game._applyVmVisibility();
-  check(game._vmVisibility.fallback && meshes(game.vm.root) > 0,
+  check(game._vmVisibility.fallback && probeSelectedWeapon({ game }).meshes > 0,
     'VMP6', `${mobile}: falha do autorado mantém arma`);
   for (const mode of ['dead', 'third']) {
     game.player.alive = mode !== 'dead'; game.camView = mode === 'third' ? 'third' : 'first';
