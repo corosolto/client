@@ -30,19 +30,37 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import net from 'node:net';
+import { miraVeredito } from './gate-accept.mjs';
 import { chromium } from 'playwright';
 import { adsEfetivo, VM_FABRICA, VM_WEAPON } from '../../public/js/data/vmconfig.js';
 
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const arg = (n, d = '') => { const h = process.argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.slice(n.length + 3) : d; };
-const ARMAS = arg('armas', 'ak,m4,mp5,p90,shotgun,pistol,deagle').split(',').filter(Boolean);
-const CAMS = arg('cams', 'first,third').split(',').filter(Boolean);
-const MUT = arg('mutante');
-if (MUT && MUT !== 'foco') throw new Error(`mutante desconhecido: ${MUT}`);
+const argvMira = process.argv.slice(2);
+const USO_MIRA = '[--armas=ak,m4] [--cams=first,third] [--mutante=foco] [--qs=a=1] [--json=arq] [--fotos=dir] [--porta=N]';
+const uso = (msg) => { console.error(`uso: ${USO_MIRA} — ${msg}`); process.exit(2); };
+const CHAVES_ARG = ['armas', 'cams', 'mutante', 'qs', 'json', 'fotos', 'porta'];
+if (argvMira.some((a) => !CHAVES_ARG.some((c) => a.startsWith(`--${c}=`)))) uso('opção desconhecida ou sem =valor');
+const arg = (n, d = '') => {
+  const v = argvMira.filter((a) => a.startsWith(`--${n}=`)).map((a) => a.slice(n.length + 3));
+  if (v.length > 1) uso(`--${n}= duplicado`);
+  if (v.length === 1 && !v[0]) uso(`--${n}= vazio`);
+  return v[0] ?? d;
+};
+const ARMAS = arg('armas', 'ak,m4,mp5,p90,shotgun,pistol,deagle').split(',');
+const CAMS = arg('cams', 'first,third').split(',');
+if (!ARMAS.length || !CAMS.length) uso('armas/cams vazio não mede nada');
+if (new Set(ARMAS).size !== ARMAS.length || new Set(CAMS).size !== CAMS.length) uso('armas/cams duplicados');
+if (!CAMS.every((c) => ['first', 'third'].includes(c))) uso('cams desconhecidos (first,third)');
+if (!ARMAS.every((a) => Object.hasOwn(VM_WEAPON, a))) uso('arma desconhecida');
+const MUT = arg('mutante', '');
+if (MUT && MUT !== 'foco') uso('mutante desconhecido (foco)');
 const QS = [arg('qs'), MUT === 'foco' ? 'ads1pfix=0' : ''].filter(Boolean).join('&');
 const FOTOS = arg('fotos');
 const JSON_OUT = arg('json');
-const PORTA = Number(arg('porta', process.env.PORTA || '8515'));
+const portaArg = arg('porta', process.env.PORTA || '8515');
+const PORTA = Number(portaArg);
+if (!/^\d+$/.test(portaArg) || !Number.isSafeInteger(PORTA) || PORTA < 1 || PORTA > 65535) uso('porta inválida (1–65535)');
 const BASE = process.env.BASE || `http://127.0.0.1:${PORTA}`;
 // Viewport à metade do nominal (SwiftShader); px reportados na escala nominal.
 const ASPECTOS = { '16x9': { w: 960, h: 540, k: 2 }, '3x2': { w: 900, h: 600, k: 2 } };
@@ -52,14 +70,20 @@ if (!process.env.BASE) await new Promise((ok, falha) => { const s = net.createSe
 const servidor = process.env.BASE ? null : spawn(process.execPath, ['tools/eval/serve.mjs', String(PORTA)], { cwd: root, stdio: 'ignore' });
 process.on('exit', () => servidor?.kill());
 let pronto = false;
-servidor?.once('exit', (c) => { if (!pronto) { console.error(`serve.mjs saiu (${c}) antes de responder`); process.exit(1); } });
+servidor?.once('exit', (c) => { if (!pronto) { console.error(`serve.mjs saiu (${c}) antes de responder`); process.exit(3); } });
 for (let i = 0; i < 120 && !pronto; i++) {
   try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
   if (!pronto) await new Promise((r) => setTimeout(r, 500));
 }
-if (!pronto) throw new Error(`servidor não respondeu em ${BASE}`);
+if (!pronto) { console.error(`infra: servidor não respondeu em ${BASE}`); process.exit(3); }
+let browser;
+try {
+  browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
+} catch (e) {
+  console.error(`infra: browser não subiu (${e.message})`);
+  process.exit(3);
+}
 
-const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const linhas = [];
 try {
   for (const [nomeAsp, asp] of Object.entries(ASPECTOS)) {
@@ -139,21 +163,21 @@ try {
   await browser.close();
   servidor?.kill();
 }
-if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify(linhas, null, 1));
-const ok = linhas.filter((l) => !l.erro);
-const pior = (f) => ok.filter(f).sort((a, b) => b.ang - a.ang)[0];
-for (const cam of CAMS) for (const ads of [false, true]) {
-  const p = pior((l) => l.cam === cam && l.ads === ads);
-  if (p) console.log(`PIOR ${cam} ${ads ? 'ADS' : 'quadril'}: ${p.arma} ${p.asp} ${p.ang.toFixed(1)}° ${p.px.toFixed(0)} px`);
-}
 const emLinha = (arma) => adsEfetivo((VM_WEAPON[arma]?.golden ? VM_WEAPON : VM_FABRICA)[arma]?.ads, !QS.includes('ads1pfix=0'))?.estilo === 'linha';
-const ma1 = ok.filter((l) => l.cam === 'first' && l.ads).filter((l) => l.ang > 1 || l.px > 4 || (emLinha(l.arma) && l.massa > 4));
-for (const l of ma1) console.log(`✗ MA1 ${l.asp} ${l.arma}: cano ${l.ang.toFixed(1)}° ${l.px.toFixed(0)} px, boca ${l.massa.toFixed(0)} px`);
-const faltou = linhas.filter((l) => l.erro && l.cam === 'first');
-for (const l of faltou) console.log(`✗ ${l.asp} ${l.arma}: ${l.erro}`);
+if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify(linhas, null, 1));
+const v = miraVeredito(linhas, { aspectos: Object.keys(ASPECTOS), cams: CAMS, armas: ARMAS, emLinha });
+for (const l of v.ma1) console.log(`✗ MA1 ${l.asp} ${l.arma}: cano ${l.ang.toFixed(1)}° ${l.px.toFixed(0)} px, boca ${l.massa.toFixed(0)} px`);
+for (const l of v.faltou) console.log(`✗ ${l.asp} ${l.arma}: ${l.erro}`);
+for (const l of v.invalidas) console.log(`✗ ${l.asp} ${l.arma}: medida não finita (ang=${l.ang} px=${l.px} massa=${l.massa})`);
+if (v.cob.dup.length || v.cob.missing.length || v.cob.extra.length)
+  console.log(`✗ cobertura: dup=${v.cob.dup.length} faltando=${v.cob.missing.length} extra=${v.cob.extra.length}`);
 if (MUT) {
-  console.log(ma1.length ? `mutante ${MUT}: reprovou MA1 — a régua morde` : `mutante ${MUT}: NÃO reprovou — régua cega`);
-  process.exit(ma1.length ? 0 : 1);
+  if (!v.prontas) {
+    console.log(`mutante ${MUT}: matriz incompleta/inválida (faltou=${v.faltou.length} inválidas=${v.invalidas.length} cobertura=${JSON.stringify(v.cob.missing.length + v.cob.dup.length + v.cob.extra.length)}) — MA1 não resgata cenário faltante`);
+    process.exit(1);
+  }
+  console.log(v.ma1.length ? `mutante ${MUT}: reprovou MA1 — a régua morde` : `mutante ${MUT}: NÃO reprovou — régua cega`);
+  process.exit(v.ma1.length ? 0 : 1);
 }
-console.log(ma1.length || faltou.length ? `REPROVA: ${ma1.length + faltou.length}` : 'APROVA: no ADS 1P o cano aponta para a cruz');
-process.exit(ma1.length || faltou.length ? 1 : 0);
+console.log(v.aprovado ? 'APROVA: no ADS 1P o cano aponta para a cruz' : `REPROVA: ${v.ma1.length + v.faltou.length + v.invalidas.length}`);
+process.exit(v.aprovado ? 0 : 1);

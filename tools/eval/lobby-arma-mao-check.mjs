@@ -50,8 +50,17 @@
    Um Chrome por vez na máquina: segure a trava antes (ver preâmbulo de PR). */
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-
 import { spawn } from 'node:child_process';
+import { cobertura, lobbyFalhas } from './gate-accept.mjs';
+const argvLobby = process.argv.slice(2);
+const MUT = (argvLobby.find((a) => a.startsWith('--mutante=')) || '').slice(10);
+const ESPERADO = { 'sem-pulso': ['LA1'] };
+const usoLobby = (m) => { console.error(`uso: [BASE=...] node tools/eval/lobby-arma-mao-check.mjs [--mutante=sem-pulso] [--json] — ${m}`); process.exit(2); };
+if (argvLobby.filter((a) => a.startsWith('--mutante=')).length > 1) usoLobby('--mutante= duplicado');
+if (argvLobby.some((a) => a.startsWith('--mutante=') && !a.slice(10)) || (MUT && !Object.hasOwn(ESPERADO, MUT))) usoLobby('mutante vazio/desconhecido');
+if (argvLobby.filter((a) => a === '--json').length > 1) usoLobby('--json duplicado');
+if (argvLobby.some((a) => a !== '--json' && !a.startsWith('--mutante='))) usoLobby('opção desconhecida');
+
 // Sem BASE, sobe o próprio servidor (nunca a 8123 compartilhada, que pode ser de outra sessão).
 import { createServer } from 'node:net';
 // Porta LIVRE do sistema: porta fixa deixava a 2ª execução (mutante) cair no servidor alheio.
@@ -67,12 +76,9 @@ if (servidor) {
     try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
     if (!pronto) await new Promise((r) => setTimeout(r, 500));
   }
-  if (!pronto || morreu !== null) throw new Error(`servidor próprio não subiu em ${BASE} (saída ${morreu})`);
+  if (!pronto || morreu !== null) { console.error(`infra: servidor próprio não subiu em ${BASE} (saída ${morreu})`); process.exit(3); }
 }
-const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const JSON_OUT = process.argv.includes('--json');
-const ESPERADO = { 'sem-pulso': ['LA1'] };
-if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
 /* [personagem, arma, pintura de arma, skin de personagem]. Cobre: arma de vibe padrão
    (2 mãos e 1 mão, rig de 24 e de 28 juntas), arma EQUIPADA diferente da vibe (o
@@ -100,10 +106,16 @@ const TETO = { pegadaGraus: 10, palmaM: 0.10, caixaM: 0.02, canoZmin: 0.594, der
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
-const browser = await chromium.launch({
-  executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio'],
-});
+let browser;
+try {
+  browser = await chromium.launch({
+    executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio'],
+  });
+} catch (e) {
+  console.error(`infra: browser não subiu (${e.message})`);
+  process.exit(3);
+}
 const page = await browser.newPage({ viewport: { width: 320, height: 320 } });
 page.on('pageerror', (e) => console.error('[pageerror]', e.message));
 await page.goto(`${BASE}/eval-character.html?debug=1${MUT === 'sem-pulso' ? '&pvpulso=0' : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
@@ -223,24 +235,26 @@ for (const caso of CASOS) {
 await browser.close();
 
 const max = (a, k) => Math.max(...a.map((x) => x[k]));
-const min = (a, k) => Math.min(...a.map((x) => x[k]));
 const linhas = [];
 const vermelhas = new Set();
 let erros = 0;
+const cobCasos = cobertura(out.map((r) => r.caso.join('|')), CASOS.map((c) => c.join('|')));
+if (cobCasos.dup.length || cobCasos.missing.length || cobCasos.extra.length)
+  erros++, linhas.push(`✗ cobertura: dup=${cobCasos.dup.length} faltando=${cobCasos.missing.length} extra=${cobCasos.extra.length}`);
 for (const r of out) {
   const [cid, wid, wskin, cskin] = r.caso;
   const rot = `${cid}${cskin ? `(${cskin})` : ''} ${wid}${wskin ? `+${wskin}` : ''}`;
-  if (r.erro) { erros++; linhas.push(`✗ ${rot.padEnd(46)} ERRO: ${r.erro}`); continue; }
+  const { falhas, invalidas } = lobbyFalhas(r, TETO, TETO_PEGADA);
+  if (invalidas.length) {
+    r.invalido = invalidas;
+    erros++;
+    linhas.push(`✗ ${rot.padEnd(46)} MEDIDA INVÁLIDA: ${invalidas.join('; ')}`);
+    continue;
+  }
   const a = r.amostras;
-  const f = [];
-  if (max(a, 'pegada') > (TETO_PEGADA[cid] ?? TETO.pegadaGraus)) f.push('LA1');
-  if (max(a, 'palma') > TETO.palmaM) f.push('LA2');
-  if (max(a, 'caixa') > Math.max(TETO.caixaM, (r.caixaJogo ?? 0) + 0.005)) f.push('LA3');
-  if (min(a, 'canoZ') < TETO.canoZmin) f.push('LA4');
-  if (max(a, 'pegada') - min(a, 'pegada') > TETO.derivaGraus || max(a, 'palma') - min(a, 'palma') > TETO.derivaM) f.push('LA5');
-  f.forEach((x) => vermelhas.add(x));
-  r.falhas = f;
-  linhas.push(`${f.length ? '✗' : ' '} ${rot.padEnd(46)} pegada ${String(max(a, 'pegada')).padStart(5)}°  palma ${max(a, 'palma').toFixed(3)}  caixa ${max(a, 'caixa').toFixed(3)}  canoZ ${min(a, 'canoZ').toFixed(3)}  [caixa jogo ${r.caixaJogo}]  ${f.join(',') || 'ok'}`);
+  falhas.forEach((x) => vermelhas.add(x));
+  r.falhas = falhas;
+  linhas.push(`${falhas.length ? '✗' : ' '} ${rot.padEnd(46)} pegada ${String(max(a, 'pegada')).padStart(5)}°  palma ${max(a, 'palma').toFixed(3)}  caixa ${max(a, 'caixa').toFixed(3)}  canoZ ${Math.min(...a.map((x) => x.canoZ)).toFixed(3)}  [caixa jogo ${r.caixaJogo}]  ${falhas.join(',') || 'ok'}`);
 }
 if (JSON_OUT) console.log(JSON.stringify({ teto: TETO, mutante: MUT || null, casos: out }, null, 1));
 console.log(`\n=== ARMA NA MÃO DO LOBBY ${MUT ? `(mutante=${MUT})` : ''} ===`);
@@ -253,6 +267,6 @@ if (MUT) {
   console.log(certo ? `MUTANTE MORDE: ${ESPERADO[MUT].join(',')} vermelha(s) com ${MUT}` : `MUTANTE NÃO MORDEU: ${faltou.join(',')} seguiu verde (régua cega)`);
   process.exit(certo ? 0 : 1);
 }
-const reprovados = out.filter((r) => r.erro || r.falhas?.length).length;
+const reprovados = out.filter((r) => r.erro || r.invalido || r.falhas?.length).length + (cobCasos.dup.length || cobCasos.missing.length || cobCasos.extra.length ? 1 : 0);
 console.log(`\nREPROVADOS: ${reprovados}/${out.length}`);
 process.exit(reprovados ? 1 : 0);

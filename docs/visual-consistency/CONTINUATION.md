@@ -676,3 +676,49 @@ fotos e wrapper já tinham críticas CLEAN (30e88...), custo+4draws/+36tri expl�
 Checkpoint seletivo leva só outdoor, layout oficial fresco/determinístico e suas
 réguas/doc/ledger. Package/CI em escrita do Root não entram neste checkpoint;
 censo atualR11 continua separado em curso, sem alegar aceite de todas14cenas.
+
+
+## 15:46 UTC — revisão SB7 refutada e gates1179 R4
+
+Estraga1181 revisou3de33b4f5 às15:37:56 e pediu mudanças por dois arquivos
+supostamente ausentes. Crítico independente d4b94ade confirmou ambos comoadded
+no próprio SHA/API/Contents e bytes idênticos; exports e runner→eval:sondafilho
+GREEN36,3s. Respostas técnicas4432287596/4432287674 publicadas, dois fios
+resolvidos com evidência e nova revisão real solicitada. Não equivalem a aprovação
+nova nem merge; decisãoCHANGES_REQUESTED ainda precisa reconsulta.
+
+Gates1179R3 mantinha umP2 de resumo flash contraditório e doisP3. RootR4 exige
+inventário/passboolean/resumo derivado, fechaCLI e separaSyntaxError deRED1.
+CríticoR4CLEAN4c588c19; flash nominal30/30 e movimento real+mutante GREEN.
+Onze mutantes flash em curso. Nada de browser/CI anunciado verde. Wiring público
+separará Node/AKpública de browser, poispistol/deagle1P usam catálogo privado;
+não publicar assets nem fingir matriz privada disponível em fork.
+
+CanarinhoGLM15min encerrou deadlineexit1 sem relatório final, fonte/gate em
+crítica nativa; nominalNode8casos exit0 mediu faseCanarinho0,326°, ainda sem
+aceite visual. KnifeF2GLM publicou parcial real: dois perfis/fingerprints/4nominais
+attached; gate e docs ainda em execução. TPfixturesGLM novo escreve somente2gates
+para usar helperreal de câmera e manter autoridade/contraprovas. PushQA integral
+atual ainda rodando; bootorcamento e2fixtures falharam, sem bypass/merge.
+
+
+## 16:00 UTC — gates herdados e fixtures TP fechados
+
+FlashR5 mantém o predicado e serializa observação booleana; nominal30/30 e
+onze mutantes exatos GREEN, controlador exit0. Crítico CLEAN b490e134, além do
+R4 completo 4c588c19. Lobby/mira/helper/movimento revisados R4; wiring público
+CLEAN0179ea07 preservado no candidato privado, ainda não aplicado ao QA.
+
+FixturesTP crítico CLEAN aa971ee5: helper real ligado, shot179/179,
+backpedal36/36, três contraprovas semânticas e lateral sexto argumento
+preservado. São correções do arnês, sem delta na fórmula de câmera.
+Checkpoint seletivo desses gates/doc. Browser completo lobby/mira ainda
+pendente; não declarar PR/CI completo nem publicação.
+
+CuradoriaR11 runtime14mapas465peças GREEN; R12wireframe retorna RED1 com
+unknownwireframe2 esperado, prefs restauradas. R13canalUV em curso.
+CanarinhoR4 nominal8 GREEN após correção da régua, crítica e contraprovas
+em curso. F2R2 crítica achou lacunas na cobertura causal e integridade
+da instância aplicada; produto e gate ainda NÃO aceitos. Campo novoTEXEL3
+localizado nos UV de guardas/acabamento; candidato privado fecha1.4244≤1.5,
+sem apagarTEXEL3b antigo. Produto ainda intacto até transferência.
