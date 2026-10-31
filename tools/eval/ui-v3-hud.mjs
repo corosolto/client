@@ -79,6 +79,7 @@ async function preparar(page, mutante) {
   if (mutante === 'atira-mudo') await reescreve(js, (t) => t.replace('g.mouseDown0 = true;', ''));
   if (mutante === 'ping-surdo') await reescreve(js, (t) => t.replace("e.code === 'KeyF'", "e.code === 'KeyF9'"));
   if (mutante === 'sem-cache-avatar') await reescreve(js, (t) => t.replace('const acerto = avatarCache.get(pid);', 'const acerto = null;'));
+  if (mutante === 'cache-falha-preso') await reescreve(js, (t) => t.replace('avatarCache.delete(pid);', ''));
 }
 
 const aoVivo = async (page) => {
@@ -326,6 +327,36 @@ async function medir(mutante = '', alvo = '') {
   add('HU17', avatarRequests === 1,
     `cinco reconstruções do placar fizeram ${avatarRequests} chamada(s) para o mesmo avatar (quer 1)`);
 
+  /* Falha transitória não pode envenenar o cache da sessão: a próxima abertura tenta de novo. */
+  let avatarRetryRequests = 0;
+  await p.route(/\/api\/social-avatar/, async (route) => {
+    avatarRetryRequests++;
+    if (avatarRetryRequests === 1) return route.fulfill({ status: 500, body: 'falha transitória' });
+    await route.fulfill({
+      status: 200,
+      headers: { 'content-type': 'image/gif', 'cache-control': 'no-store' },
+      body: Buffer.from('R0lGODlhAQABAAAAACw=', 'base64'),
+    });
+  });
+  await p.evaluate(async () => {
+    const g = window.__game;
+    const alvo = g.combatants.find((c) => !c.isPlayer);
+    const salvo = { playerId: alvo._playerId, netBot: alvo._netBot };
+    alvo._playerId = '22222222-2222-4222-8222-222222222222';
+    alvo._netBot = false;
+    g._showScoreboard(true);
+    await new Promise((resolve) => setTimeout(resolve, 180));
+    g._showScoreboard(false);
+    g._showScoreboard(true);
+    await new Promise((resolve) => setTimeout(resolve, 180));
+    alvo._playerId = salvo.playerId;
+    alvo._netBot = salvo.netBot;
+    g._showScoreboard(false);
+  });
+  await p.unroute(/\/api\/social-avatar/);
+  add('HU18', avatarRetryRequests === 2,
+    `avatar com primeira resposta 500 fez ${avatarRetryRequests} tentativa(s) em duas aberturas (quer 2)`);
+
   /* ---------- ping ---------- */
   const ping = await p.evaluate(async () => {
     const g = window.__game;
@@ -511,7 +542,7 @@ const MUT = [['retrato-vivo', 'HU1'], ['placar-cinza', 'HU2'], ['xp-falso', 'HU3
   ['dica-eterna', 'HU6'], ['badge-solto', 'HU7'], ['dica-na-mira', 'HU8'], ['dica-sem-en', 'HU9'], ['legado-vazado', 'HU10'],
   ['ping-mentiroso', 'HU11'], ['hs-errado', 'HU11'], ['abas-mudas', 'HU12'], ['tab-foco', 'HU12'], ['chat-eterno', 'HU12'], ['sem-silenciar', 'HU12'],
   ['pula-pequeno', 'HU13'], ['atira-mudo', 'HU13'], ['ping-surdo', 'HU14'], ['placar-abates', 'HU15'], ['plural-fixo', 'HU15'], ['bot-texto', 'HU15'],
-  ['chips-esquerda', 'HU15'], ['slots-soltos', 'HU15'], ['alt-surdo', 'HU16'], ['sem-cache-avatar', 'HU17']];
+  ['chips-esquerda', 'HU15'], ['slots-soltos', 'HU15'], ['alt-surdo', 'HU16'], ['sem-cache-avatar', 'HU17'], ['cache-falha-preso', 'HU18']];
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO.split(',').includes(m))) {

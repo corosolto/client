@@ -51,7 +51,7 @@ function avatarUrl(pid) {
       return res.blob();
     })
     .then(comoDataUrl)
-    .catch(() => VAZIO);
+    .catch(() => { avatarCache.delete(pid); return VAZIO; });
   avatarCache.set(pid, pendente);
   return pendente;
 }
