@@ -700,6 +700,7 @@ class Netcode {
      preso num defunto é o defeito clássico do modo espectador. */
   cameraEspectador() {
     const game = this.game;
+    if (game.objective?.cinematicActive) return;   // a cena manda na câmera; follow retoma após o pulo
     const vivos = game.bots.filter((b) => b.alive && b._remote && b._remote !== 'ghost');
     if (!vivos.length) return;
     if (!this._alvoSpec || !this._alvoSpec.alive || !vivos.includes(this._alvoSpec)) {

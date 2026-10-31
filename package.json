@@ -101,7 +101,7 @@
     "eval:vminspect": "node tools/eval/vm-inspect-check.mjs",
     "eval:pegada": "node tools/eval/pegada-check.mjs",
     "eval:dmgdir": "node tools/eval/dmgdir-check.mjs",
-    "eval:ctflabels": "node tools/eval/ctf-labels-check.mjs",
+    "eval:ctflabels": "node tools/eval/ctf-coverage-check.mjs",
     "eval:faccao": "node tools/eval/faccao-paleta-check.mjs",
     "eval:mapid": "node tools/eval/mapa-id-check.mjs",
     "eval:maprotate": "node tools/eval/map-rotation-check.mjs",
@@ -717,7 +717,7 @@
     "eval:operacao-reset": "node tools/eval/operacao-flavio-reset-check.mjs && ! node tools/eval/operacao-flavio-reset-check.mjs --mutante=sem-reset",
     "eval:mode-announcements": "node tools/eval/mode-announcements-check.mjs && node tools/eval/mode-announcements-entry-check.mjs && ! node tools/eval/mode-announcements-entry-check.mjs --mutante=gesto-vaza && ! node tools/eval/mode-announcements-entry-check.mjs --mutante=import-tardio && ! node tools/eval/mode-announcements-check.mjs --mutante=modo-ausente",
     "eval:operacao-npc": "node tools/eval/operacao-flavio-npc-check.mjs && ! node tools/eval/operacao-flavio-npc-check.mjs --mutante=sem-id && ! node tools/eval/operacao-flavio-npc-check.mjs --mutante=sem-reserva",
-    "eval:operacao-online": "node tools/eval/operacao-flavio-online-check.mjs && for m in sem-hud sem-cinematica sem-reset; do ! node tools/eval/operacao-flavio-online-check.mjs --mutante=$m || exit 1; done && ! node tools/eval/operacao-flavio-online-check.mjs --mutante=sem-placar && ! node tools/eval/operacao-flavio-online-check.mjs --mutante=sem-ordem && ! node tools/eval/operacao-flavio-online-check.mjs --mutante=sem-parar",
+    "eval:operacao-online": "node tools/eval/operacao-flavio-online-check.mjs && for m in sem-hud sem-cinematica sem-reset; do ! node tools/eval/operacao-flavio-online-check.mjs --mutante=$m || exit 1; done && ! node tools/eval/operacao-flavio-online-check.mjs --mutante=sem-placar && ! node tools/eval/operacao-flavio-online-check.mjs --mutante=sem-ordem && ! node tools/eval/operacao-flavio-online-check.mjs --mutante=sem-parar && node tools/eval/operacao-flavio-presentation-check.mjs && node tools/eval/operacao-flavio-presentation-check.mjs --mutantes",
     "eval:objective-codec-contract": "node tools/eval/objective-codec-contract-check.mjs && for m in sem-time-j limite-64 j-legado; do ! node tools/eval/objective-codec-contract-check.mjs --mutante=$m || exit 1; done"
   },
   "repository": {

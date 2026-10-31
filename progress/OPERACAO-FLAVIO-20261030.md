@@ -55,3 +55,22 @@ JSON veio com cercas Markdown, removidas só do envelope; versão bruta preserva
 QA pareada local passou: fixture runtime/flavio-pair/ no HQ usa game/ e api/_lib do backend182 df6ab491, public/tools da lane cliente, sem modificar symlink backend→Java. Room e Game reais, codec binário v7, humano com mesmo personagem sem tomar VIP, morte atual/resultado sem placar e countdown preservando relógio. É fixture sem WebSocket nem participantes humanos; não é produção ou partida humana. Script/check/result e pins preservados no runtime. Avisos de instâncias Three/GLTF anotados no log, sem falha de contrato.
 
 Checagem ampla check:fast segue rodando; eval:tpanim3p já falhou e precisa diagnóstico antes de qualquer declaração de gate verde. Não atribuir automaticamente à lane nem ignorar como dívida. Falta revisão independente no head final, CodeRabbit atual, push normal com hooks e QA WebSocket/browser pareada.
+
+
+### GLM18 reservado: recebimento do crítico e52
+Régua independente de apresentação mediu RED no pulo online (stateUntil alterado), câmera do espectador e winner ausente no timeout; antes de2s e pulo offline já passam. Lease apenas mode_operacao_flavio.js e netgame.js. Game.update permanece append-only; guarda em cameraEspectador cobre seus dois chamadores. Crítico segue lendo ponto fixo e52, não as mudanças posteriores.
+
+### GLM19 reservado: cobertura CTF
+2026-10-31T00:44:42.342523+00:00: mutante vaza anterior saiu0 sem atingir Piscina; régua independente reproduziu omissão de Praça. Lease apenas tools/eval/ctf-labels-check.mjs e ctf-win-check.mjs. Proposta deve excluir só objectiveMode e comprovar aplicação. Codex mantém testes independentes.
+
+### Crítico independente do checkpoint e52 — sete itens abertos no recebimento
+Revisão antecipada exigida por AGENTS; não substitui a revisão final após CodeRabbit. Itens: pulo online altera relógio; follow sobrescreve câmera; filtros CTF omitem mapas opcionais/mutante; OBJ3 mede estado local em vez de recepção/aplicação; timeout sem winner; respawn8s/retaguarda ausente; blocos derivados de scripts desatualizados.
+
+GLM18 recebido com envelope Markdown removido só para parse; bruto preservado. Allowlist/hashes/literais conferidos antes de aplicar. Sete casos de apresentação verdes; cinco mutantes reais aplicados e reprovados (pulo, relógio, câmera, vencedor, áudio). Reentrada verificada; clock autoritativo preservado. Sem alegar WS/humano nem conclusão dos outros quatro itens. Logs /tmp/corosolto-flavio-presentation-*.log; runtime GLM-18-PATCH.json no HQ. Próximo: reparar CTF/OBJ3/respawn, gerar docs e terminar gate amplo antes de push/revisão.
+
+### GLM20 reservado: prova OBJ3
+2026-10-31T00:47:37.273089+00:00 — RED independente: bloco browser real fica verde sem payload, sem aplicar e noop. Lease só tools/eval/tiro-mp-browser.mjs. Sonda temporária de campo local exige próximo snapshot e aplicação real; sempre restaurar sentinela em falha. Sem afirmar WS.
+
+GLM19 integrado após hashes/literais conferidos. Codex ajustou log para dizer aplicada somente quando contador==1. Régua independente: ambos scripts cobrem todos mapas comuns, omitem objetivo dedicado, e mutante vaza aplicado1x reprova CTFL1 na Piscina. Três casos verdes em /tmp/corosolto-ctf-coverage-green.log. Integração em eval:ctflabels; condições de vitória/mapas intocadas.
+
+Checkpoint de apresentação/cobertura: eval:operacao-online completo passou (oito casos anteriores+mutantes, sete novos+cinco mutantes). Syntax, arch:check e docs:check passaram. Gerador atualizou três blocos estruturais (AGENTS e comecando PT/EN), sem números manuais. Próximo: OBJ3/respawn e investigação de tpanim3p; gate amplo ainda não verde.

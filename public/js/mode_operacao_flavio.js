@@ -217,7 +217,12 @@ export class OperacaoFlavio {
       this.hud.style.cssText = 'position:fixed;left:50%;top:5.7rem;transform:translateX(-50%);z-index:12;padding:.55rem .9rem;background:#09101cdd;border:1px solid #d8b765;color:#fff;font:700 13px/1.2 system-ui;letter-spacing:.04em;pointer-events:none';
       game.el.hud?.append?.(this.hud);
       this._key = (event) => {
-        if (this.cinematic && this.game.time - this.cinematic.startedAt >= 2 && (event.code === 'Space' || event.code === 'Escape')) this.game.stateUntil = this.game.time;
+        if (!this.cinematic || this.game.time - this.cinematic.startedAt < 2) return;
+        if (event.code !== 'Space' && event.code !== 'Escape') return;
+        // Pulo local: cala a cena e solta a câmera; só o offline adianta a própria rodada.
+        if (!this.game.online) this.game.stateUntil = this.game.time;
+        this.cinematic.skipped = true;
+        this._encerrarFontes();
       };
       window.addEventListener('keydown', this._key);
     }
@@ -236,6 +241,9 @@ export class OperacaoFlavio {
     const ameacas = this.game.combatants.filter((ent) => ent.team === 'E' && ent.alive !== false);
     return destinoProtecaoEscolta(bot, this.vip, this.game.bots, ameacas, bot._escortDestination || (bot._escortDestination = {}));
   }
+
+  // Apresentação de fato no comando da câmera: updatePresentation e câmera de espectador.
+  get cinematicActive() { return !!this.cinematic && !this.cinematic.skipped; }
 
   // Fontes agendadas também precisam parar ao pular ou substituir a cena.
   _encerrarFontes() {
@@ -375,6 +383,8 @@ export class OperacaoFlavio {
   }
 
   roundResult(winner) {
+    // Timeout também publica o vencedor autoritativo no estado replicado do objetivo.
+    if (winner === 'E' || winner === 'B') this.state.winner = winner;
     const morto = winner === 'E' && (!this.vip?.alive || this.deathAnnounced);
     return {
       duration: 9,
@@ -387,7 +397,7 @@ export class OperacaoFlavio {
 
   startCinematic(winner) {
     this._encerrarFontes();   // cena nova substitui a marcha anterior, não dobra com ela
-    this.cinematic = { winner, startedAt: this.game.time };
+    this.cinematic = { winner, startedAt: this.game.time, skipped: false };
     if (this.game.vmScene) this.game.vmScene.visible = false;
     this.fontes = marchaMilitar(this.game.sfx);
     if (this.hud) this.hud.textContent = winner === 'B'
@@ -396,7 +406,7 @@ export class OperacaoFlavio {
   }
 
   updatePresentation() {
-    if (!this.cinematic || this.game.dedicated) return;
+    if (!this.cinematicActive || this.game.dedicated) return;
     const t = Math.min(1, (this.game.time - this.cinematic.startedAt) / 9);
     const cam = this.game.camera;
     const ganhou = this.cinematic.winner === 'B';
