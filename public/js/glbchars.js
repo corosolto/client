@@ -188,13 +188,14 @@ const P1H_SKIP = new Set(['canarinho', 'bonzo']);
 /* Esquerdomacho alternava entre clipe 1H e overlay. Usa locomotiva base + um único overlay. */
 const P1H_BASE_CLIP = new Set(['esquerdomacho']);
 /* TETO DE FRENTE POR CORPO (31/10): o idle/idle1h retargetado do humano deixa corpos
- * não-humanos com a mão MUITO à frente — canarinho (asa) 0,50 m e lobisomem (braços
- * longos) 0,49 m à frente do tronco, contra 0,23-0,26 dos elogiados: a arma lê como
- * flutuando longe do corpo ("o canarinho de pistola é o pior de todos", dono 31/10).
- * O clamp puxa a MÃO de volta pelo MESMO CCD do piso (TP_FRONT_MIN), arma colada.
- * Primeira tentativa (clipe base pro canarinho) foi revertida: afundava 1,2 cm no chão
- * no idle (CHR7) — clipes têm calibração de pé própria. */
-const TP_FRONT_MAX_CHAR = { canarinho: 0.20, lobisomem: 0.30 };
+ * não-humanos com a mão MUITO à frente — canarinho (asa) a 0,50 m do tronco, contra
+ * 0,23-0,26 dos elogiados: a arma lê como flutuando longe do corpo ("o canarinho de
+ * pistola é o pior de todos", dono 31/10). O clamp puxa a MÃO de volta pelo MESMO CCD
+ * do piso (TP_FRONT_MIN), arma colada. Só o canarinho: o lobisomem (0,49-0,80 m) passa
+ * em NA-CABECA no porte alto e o puxão derrubava a arma abaixo da cabeça (postura
+ * 187/189); o defeito dele era dedo (curl), não distância. Primeira tentativa do
+ * canarinho (clipe base) foi revertida: afundava 1,2 cm no idle (CHR7). */
+const TP_FRONT_MAX_CHAR = { canarinho: 0.20 };
 const loader = new GLTFLoader();
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 
