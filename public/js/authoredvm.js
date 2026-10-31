@@ -863,7 +863,8 @@ export class AuthoredViewModels {
   // 10,9 m atrás da câmera. Média dos vértices deformados mais à frente (−Z), índices em cache.
   _frontMuzzle(entry) {
     const v = new THREE.Vector3();
-    entry.scene.updateWorldMatrix(true, true);
+    entry.scene.updateWorldMatrix(true, false);
+    entry.scene.updateMatrixWorld(true);
     if (!entry.muzzleIdx) {
       const all = [];
       let minZ = Infinity;

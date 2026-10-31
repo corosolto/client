@@ -2824,6 +2824,7 @@ export class Game {
     }, 2300 * (i + 1)));
   }
   _startRound() {
+    this._fxTiroPendente = null;
     /* A vinheta do round anterior SEGUE por ~10 s dentro do round novo (dono, 07/08:
        "deixa a música tocar uns 15 s" — 4,5 s já correram na pausa de fim de round).
        A regra antiga ("nada passa de ~5 s do fim do round") caiu. Sair pro menu continua
@@ -4328,7 +4329,7 @@ export class Game {
       else if (Math.random() < 0.3) this.sfx.ricochet();
     }
     this.world.ambience?.onShot(from, end);
-    if (byPlayer && tracer) this._tracer(this._origemTracerJogador(from, dir), end);
+    if (byPlayer && tracer) this._tracer(this._origemTracerJogador(from, dir), end, this.camView === 'first');
     return end;
   }
   _targetFromHit(hit) {
@@ -4916,7 +4917,11 @@ export class Game {
   }
 
   /* ================= fx ================= */
-  _tracer(a, b) {
+  _tracer(a, b, jogadorFp = false) {
+    if (jogadorFp && this.vm.authored?.active(this.player?.weapon)) {
+      (this._fxTiroPendente ||= []).push({ arma: this.player.weapon, alvo: b.clone() });
+      return;
+    }
     const len = a.distanceTo(b);
     if (len < 0.5) return;
     // pooled mesh: shared unit cylinder, own material cloned once (never disposed per shot).
@@ -4989,7 +4994,11 @@ export class Game {
     if (!cache[surf]) { const m = this._holeMat.clone(); m.color.setHex(C); cache[surf] = m; }
     return cache[surf];
   }
-  _flash(pos, dir, fpCls) {
+  _flash(pos, dir, fpCls, poseFinal = false) {
+    if (fpCls && !poseFinal && this.camView === 'first' && this.vm.authored?.active(this.player?.weapon)) {
+      (this._fxTiroPendente ||= []).push({ arma: this.player.weapon, classe: fpCls });
+      return;
+    }
     // muzzle flash: estrela irregular + núcleo branco-quente (sprites), point light pulsante,
     // faíscas com velocidade e fumacinha. dir opcional (default = frente da câmera).
     // fpCls (classe do VM) = tiro do PRÓPRIO jogador: a estrela nasce na vmScene como FILHA
@@ -5003,6 +5012,7 @@ export class Game {
         let off = this._vmMuzzle[this.player?.weapon] || this._vmMuzzle[fpCls] || this._vmMuzzle.rifle;   // arma (supressor) → classe → fallback
         const bocaVm = this.vm.authored?.muzzleVm?.(this.player?.weapon);   // arma autorada visível: boca real
         if (bocaVm) { this.vm.root.updateWorldMatrix(true, false); off = this.vm.root.worldToLocal(bocaVm.clone()); }
+        m.armaFp = bocaVm ? this.player?.weapon : null;
         m.grp.position.copy(off);
         // a point light do flash também vai pra BOCA MEDIDA (era um ponto fixo em view space:
         // com 26 armas de comprimentos diferentes ela iluminava o vazio ao lado do cano).
@@ -5160,6 +5170,15 @@ export class Game {
     }
   }
   _updateFx(dt) {
+    // A balística já terminou; só a emissão visual espera câmera, mixer e ADS do frame.
+    const pendentes = this._fxTiroPendente;
+    this._fxTiroPendente = null;
+    if (pendentes && this.camView === 'first' && this.player.alive) for (const fx of pendentes) {
+      if (fx.arma !== this.player.weapon) continue;
+      const dir = this.camera.getWorldDirection(new THREE.Vector3());
+      if (fx.classe) this._flash(this._muzzleWorld(fx.classe), dir, fx.classe, true);
+      else this._tracer(this._origemTracerJogador(this._aimOrigin(new THREE.Vector3()), dir), fx.alvo);
+    }
     for (let i = this.tracers.length - 1; i >= 0; i--) {
       const t = this.tracers[i];
       t.t += dt; t.ttl -= dt;
@@ -5193,9 +5212,18 @@ export class Game {
       const op = 1 - k; m.jetMat.opacity = op; m.coreMat.opacity = op * op;
       m.jet.scale.setScalar(m.jetS * (1 + k * 0.5)); m.core.scale.setScalar(m.coreS * (1 + k * 0.2));
     }
-    // flash de 1ª pessoa (filho do vm.root): mesmo fade — a posição acompanha o kick sozinha
+    // Clarão FP acompanha a pose enquanto vivo; o traçante já emitido continua no mundo.
     for (let i = this._vmMzActive.length - 1; i >= 0; i--) {
-      const m = this._vmMzActive[i]; m.t += dt; const k = m.t / m.life;
+      const m = this._vmMzActive[i];
+      if (m.armaFp) {
+        const boca = m.armaFp === this.player.weapon && this.camView === 'first'
+          ? this.vm.authored?.muzzleVm?.(m.armaFp) : null;
+        if (!boca) { m.grp.visible = false; this._vmMzActive.splice(i, 1); this._vmMzPool.push(m); continue; }
+        this.vm.root.updateWorldMatrix(true, false);
+        m.grp.position.copy(this.vm.root.worldToLocal(boca.clone()));
+        if (this._vmFlashLight) this._vmFlashLight.position.copy(boca);
+      }
+      m.t += dt; const k = m.t / m.life;
       if (k >= 1) { m.grp.visible = false; this._vmMzActive.splice(i, 1); this._vmMzPool.push(m); continue; }
       const op = 1 - k; m.jetMat.opacity = op; m.coreMat.opacity = op * op;
       m.jet.scale.setScalar(m.jetS * (1 + k * 0.5)); m.core.scale.setScalar(m.coreS * (1 + k * 0.2));
@@ -9511,6 +9539,7 @@ export class Game {
 
   /* ================= teardown ================= */
   dispose() {
+    this._fxTiroPendente = null;
     this._disposed = true;
     this._limparCegueira();
     this._flashBranco?.remove(); this._flashRetida?.remove();
