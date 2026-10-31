@@ -31,3 +31,6 @@ Locators: runtime `.name` vazio; símbolos `matGuarda`/`uvGuarda`. Centrais x[-5
 Preparação do serve: node_modules é diretório real, não symlink, contendo apenas shim `three` criado pelo harness. Import verificado resolve para o `public/vendor/three.module.js` desta WT e map_corrego para esta WT. `astro` e `.bin/astro` ausentes; serve Astro não foi iniciado nem validado, nenhuma dependência instalada. Root prepara o servidor e Ego39.
 
 Texture.clone compartilha Source e needsUpdate pode incrementar sua versão; não há alegação de custo de upload/shader/FPS idêntico. Sem browser, decode real, mobile, MP ou aceite artístico nesta lane. O próximo dono é Root para captura A/B e crítico; a missão de release principal permanece independente.
+
+
+Root adotou o material/UV na QA comoe692854f1 após A/B EgoAB-R2 válido e crítico visual independente CLEANfocal; não é publicação. Estado integral e limites atuais em VISUAL-RELEASE-CONTINUATION-20261031.md. Root conferiu seis capturas e dois contratos consolidados, exit0. A tentativaAB-R1 semdecalsfoirejeitada e mantida comoinfra; referências finais citadas no ledger principal.

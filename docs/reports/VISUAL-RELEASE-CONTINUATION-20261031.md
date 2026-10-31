@@ -113,3 +113,14 @@ Canarinho: causa funcional comprovada é captura antes de ligar ctrl.torso/corpo
 Parapeitos Córrego: candidato ae0c2e0de isolado, contratos técnicos verdes, sem adoção/aceite artístico. Root preparou252symlinks de dependências ignoradas, preservando shimthree próprio, e servidor4375/session13632 comcache próprio; servidor começou, captura A/B pendente. Space39ativo/p1continua próprio. Três mutantes3P restantes em execução separada; não declarar verde antes de exits.
 
 Próximo: concluir fase/gate/Ego e crítico, mutantes3P/boot/build pertinentes; congelar checkpoint e fazer pushnormalcomhook, revisão atualEstraga, CI e adversarialwholePRposterior. #1182/#1186 seguem sem review publicado, requests existentes sem duplicação. Objetivo integral/definição de pronto mantidos; arte/mobilefísico/MP/skins autenticadas ainda não aceitos.
+
+
+### Córrego adotado localmente e bateria 3P restante encerrada
+
+Candidato ae0c2e0de integrado comoe692854f1 após Root abrir seisPNG e crítico fresco independente CLEANfocal (CORREGO-GUARD-CRITICO-VISUAL-R1.md). Veios acompanham o comprimento das guardas inclinadas; faixas centrais leem como madeira também do canal, sem nova cor dominar a vista geral. Aceite somente desse material/UV/poses med/raw, não do mapa inteiro, faces ocultas, movimento ou custoGPU. Primeira captura AB-R1 inválida27decal404; AB-R2 exit0,352PNGs byteidênticos àQA, seis câmeras3:2/FOV66/zero texturas pendentes/contexto/crashok/prefsrestauradas. Fonte de mapa da baseQA antes é a mesma6a5; actor/CTF ocultos para comparar superfície. Source compartilhada; sampler novo não prova custo idêntico.
+
+Root repetiu QA-CORREGO-GUARD-R2.log exit0/2de2(superficie/ponte). Provas anteriores med/low fria/quente preservam geometria/física, contratos9focais. Servidor4375/session13632 permanece próprio, dependências/decal links ignorados; nenhuma mudança de asset público binário.
+
+Três mutantes3P restantes terminaramexit0 como detectores: ar-correndo acendeAN8 (a mensagem histórica lista conjunto permitidoAN8+AN9, não implica ambas); quadril-coladoAN9; lod-cegoAN10. Logs TP-REMAINING-*-R1. AN7 pareado continua medindo recuo causal1,9–2cm e controle~0,05cm, sem falso positivo da transição. Essa bateria complementa nominal+sete contraprovas anteriores; não substitui CIhosted do head final.
+
+Fixtures a7/7f passaram crítico independente BOOT-INSTRUMENT-RO-R1: nenhum blocker, Node22/26 menu6/6 e dois mutantes retargetados falham causalmente sem erro de setup. Fase preview segue em construção/testeGLM; alias preliminar detectou infraestrutura de JSONpipe, ainda sem fechar arte ou declarar todos checks verdes.
