@@ -108,8 +108,40 @@ const MUTADOR = `async (id, mutante) => {
   if (bbox.isEmpty()) throw Error('peça sem bbox p/ ' + mutante);
   const sz = bbox.getSize(new THREE.Vector3());
   const eixo = sz.z < sz.x ? 2 : 0;   // 2: peça fina em z (parede ao longo de x)
-  if (mutante === 'duplicada') { alvo.parent.add(alvo.clone()); return 1; }
-  if (mutante === 'peca-no-ar') { const c = alvo.clone(); c.position.y += 3; alvo.parent.add(c); return 1; }
+  if (mutante === 'duplicada') {
+    const imagem = m => material(m)?.map?.source?.data || material(m)?.map?.image;
+    const origem = pecas.find(m => !Array.isArray(m.material) && imagem(m));
+    const chave = m => imagem(m)?.src || imagem(m);
+    const destino = origem && pecas.find(m => !Array.isArray(m.material) && imagem(m) && chave(m) !== chave(origem));
+    if (!destino) throw Error('sem duas artes distintas existentes p/ duplicada');
+    destino.material = destino.material.clone();
+    destino.material.map = material(origem).map;
+    destino.material.needsUpdate = true;
+    return 1;
+  }
+  if (mutante === 'peca-no-ar') {
+    const cena = new THREE.Box3().setFromObject(root);
+    const dy = cena.max.y + 10 - bbox.min.y;
+    if (!Number.isFinite(dy) || !(dy > 0)) throw Error('altura da cena inválida p/ peca-no-ar');
+    let meta = null;
+    if (alvo.userData.pecas) {
+      if (alvo.userData.pecas !== 1) throw Error('peça assada não é quad único p/ peca-no-ar');
+      const centro = bbox.getCenter(new THREE.Vector3());
+      const imagem = material(alvo).map?.source?.data || material(alvo).map?.image;
+      const arquivo = imagem?.src && decodeURIComponent(new URL(imagem.src, location.href).pathname).split('/').pop();
+      const candidatas = [];
+      root.traverse(n => { for (const p of n.userData.graffitiPecas || [])
+        if (arquivo && String(p.f).replace(/^poster:/, '') === arquivo
+          && Math.abs(p.x - centro.x) <= .002 && Math.abs(p.y - centro.y) <= .002 && Math.abs(p.z - centro.z) <= .002) candidatas.push(p); });
+      if (candidatas.length !== 1) throw Error('metadado único da peça ausente p/ peca-no-ar');
+      meta = candidatas[0];
+    }
+    const destino = alvo.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, dy, 0));
+    alvo.position.copy(alvo.parent.worldToLocal(destino));
+    alvo.updateMatrix(); alvo.updateMatrixWorld(true);
+    if (meta) meta.y += dy;
+    return 1;
+  }
   if (mutante === 'wireframe') { const ms = Array.isArray(alvo.material) ? alvo.material : [alvo.material]; ms.forEach(m => m.wireframe = true); return ms.length; }
   if (mutante === 'canal-uv') { const map = material(alvo).map; if (!map) throw Error('peça sem map'); map.channel = 1; return 1; }
   if (mutante === 'draw-groups') {
