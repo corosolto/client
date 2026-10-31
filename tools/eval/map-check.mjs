@@ -39,6 +39,7 @@ import path from 'node:path';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { THREE, MAPS, initTextures, bootGame } from './harness.mjs';
+import { amostraBaricentrica } from './map-audit-samples.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ONLY = process.argv[2] || 'all';
@@ -555,6 +556,7 @@ for (const mapId of MAP_IDS) {
       const ms = Array.isArray(o.material) ? o.material : [o.material];
       return ms.some((m) => m && m.visible !== false && (m.transparent !== true || (m.opacity ?? 1) > 0.05));
     };
+    const uv = { u: 0, v: 0 };
     const vA = new THREE.Vector3(), vB = new THREE.Vector3(), vC = new THREE.Vector3();
     const e1 = new THREE.Vector3(), e2 = new THREE.Vector3(), nW = new THREE.Vector3(), pW = new THREE.Vector3();
     for (const oc of (W.occluders || [])) {
@@ -581,10 +583,9 @@ for (const mapId of MAP_IDS) {
         if (Math.abs(nW.y) > 0.7) continue;                        // topo/base não é "parede"
         const n = Math.min(orc, Math.max(1, Math.round(area / (PASSO_MALHA * PASSO_MALHA))));
         for (let k = 0; k < n; k++) {
-          // amostra baricêntrica regular (centroide quando n=1; grade rala quando n>1)
-          let u = ((k % 7) + 0.5) / 7, v = ((Math.floor(k / 7) % 7) + 0.5) / 7;
-          if (u + v > 1) { u = 1 - u; v = 1 - v; }
-          pW.copy(vA).addScaledVector(e1, u).addScaledVector(e2, v);
+          // Grade baricêntrica regular, com amostras no interior da face.
+          amostraBaricentrica(k, uv);
+          pW.copy(vA).addScaledVector(e1, uv.u).addScaledVector(e2, uv.v);
           if (pW.y < 0.15) continue;                               // rente ao chão: o chão é a malha
           total++; amostrasOcc++; orc--;
           ray.set(pW.clone().addScaledVector(nW, TOL_MALHA), nW.clone().negate());

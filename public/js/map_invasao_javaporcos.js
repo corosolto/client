@@ -292,7 +292,7 @@ export function buildInvasaoJavaporcos(scene, T, ambiente='cidade') {
   /* Spawns no eixo da avenida, longe da fila de carros: o MAP2B cobra 1,20 m de folga de
      parede e 40 m² de chão contíguo, e nascer encostado em lataria reprova os dois. */
   const spawns = {
-    E: [[-2.0, 10.6], [2.0, 10.6], [-2.0, 14.2], [2.0, 14.2], [0, 12.4], [0, 17.0]]
+    E: [[-2.0, 10.6], [2.0, 10.6], [-2.0, 14.2], [2.0, 14.2], [0, 12.4], [0, ambiente === 'vila' ? 16.4 : 17.0]]
       .map(([x, z]) => ({ x, z, yaw: Math.PI })),
     B: [[-2.0, -10.6], [2.0, -10.6], [-2.0, -14.2], [2.0, -14.2]].map(([x, z]) => ({ x, z, yaw: 0 })),
   };

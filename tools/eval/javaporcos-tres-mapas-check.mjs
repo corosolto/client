@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {bootGame,initTextures,MAPS,THREE} from './harness.mjs';
 const mutant=process.argv.find(a=>a.startsWith('--mutante='))?.slice(10)||'';
-assert.ok(['','layout-copiado','sem-horda','silo-transparente','via-obstruida','terreno-deslocado'].includes(mutant));
+assert.ok(['','layout-copiado','sem-horda','silo-transparente','via-obstruida','terreno-deslocado','spawn-desnivelado'].includes(mutant));
 const ids=['invasao_javaporcos','distrito_rural','vila_da_mata'],assinaturas=new Set();
 let falha='';
 try {
@@ -33,6 +33,11 @@ try {
    }
   }
   if(id==='vila_da_mata'){
+   if(mutant==='spawn-desnivelado')w.spawns.E.at(-1).z=17;
+   for(const slots of Object.values(w.spawns)){
+    const heights=slots.map(s=>w.groundHeightAt(s.x,s.z,0));
+    assert.ok(Math.max(...heights)-Math.min(...heights)<=.3,'slots do mesmo time em alturas diferentes');
+   }
    const terrenos=w.root.children.filter(m=>m.name==='chao-terreno');
    if(mutant==='terreno-deslocado'){for(const m of terrenos)m.position.y+=.5;g.scene.updateMatrixWorld(true);}
    for(const [x,z] of [...Array.from({length:8},(_,i)=>[22+i,-11]),[7,-8],[7,-7]]){
@@ -57,5 +62,5 @@ try {
  }
  assert.equal(assinaturas.size,3,'layouts não diferem');
 }catch(e){falha=e.message;console.log('✗ TRES-MAPAS: '+e.message);}
-const esperado={'layout-copiado':'layouts não diferem','sem-horda':'mecânica errada','silo-transparente':'tiro atravessa telhado','via-obstruida':'via bloqueada','terreno-deslocado':'relevo visível diverge do chão'}[mutant];
+const esperado={'layout-copiado':'layouts não diferem','sem-horda':'mecânica errada','silo-transparente':'tiro atravessa telhado','via-obstruida':'via bloqueada','terreno-deslocado':'relevo visível diverge do chão','spawn-desnivelado':'slots do mesmo time em alturas diferentes'}[mutant];
 process.exitCode=mutant?(falha.includes(esperado)?0:1):(falha?1:0);

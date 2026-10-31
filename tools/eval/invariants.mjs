@@ -1994,9 +1994,8 @@ PRE_DISPARO = false;
     const respawnBecoValido = !beco.includes('__ERRO__') && beco.includes('✓ LSP1');
     put('LSP1', 'Lajes: slots térreos distintos, espaço para corpos e saída física até o campo',
       respawnBecoValido, beco.split('\n').find(linha => linha.includes('LSP1')) || beco.slice(-400));
-    // A medição completa de 18 mapas levou quase 10 min no runner do CI; mantenha
-    // a falha explícita, mas dê tempo para o relatório fresco terminar (900 s, no
-    // pré-disparo).
+    // O pré-disparo reserva 1500 s para os 21 mapas; relatório ausente continua falha.
+    // Perfil e comparação dos critérios: docs/maps/javaporcos-continuacao-20261030.md.
     const { data: j, error } = await REL_MAP;
     if (error || !Array.isArray(j?.mapas) || j.mapas.length === 0) {
       put('MAPAUD', 'map-check.mjs gera relatório fresco e válido de geometria',
