@@ -31,3 +31,5 @@ Objetivo integral: Operação Flávio com GLM/OMP + crítico independente e reso
 2026-10-31T08:51:09.068073+00:00 — Merge main364 checkpoint57e3f728a concluído. Replay seletivo das4fixtures107/108 +alias/CI em execução, gitapplycheck casou exatamente; não inclui ledger/câmera runtime de outra lane. Próximo resultado/crítico/push normal.
 
 2026-10-31T08:52:59.685647+00:00 — Fixtures107/108 compartilhadas:4arquivos idênticos byte a byte ao870167 da câmera, Game semdiff desde57e3; alias/CI explícitos próprios. Nove gates verdes7.9s, novo docs/arch apósstaging2/2verdes1.1s. Próximo checkpoint/crítico readonly final antespushnormal. Áudio/GUI/pacoteprivado ainda pendentes.
+
+2026-10-31T08:53:48.507984+00:00 — Crítico readonly revisão cumulativa inteira378ae30e contra364be45 FINAL CLEAN:23files996+/144−,4fixtures idênticas870167 e runtime intacto57e3. Próximo push normal preservando hooks. Gate local não é QAvisual/escuta/produção; áudio privado aindaausente.
