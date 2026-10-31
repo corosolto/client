@@ -1,4 +1,8 @@
+import hashlib
 import importlib.util
+import os
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -62,6 +66,43 @@ class PreflightTests(unittest.TestCase):
         (self.build / 'game').chmod(0o644)
         with self.assertRaisesRegex(ValueError, 'permissão'):
             self.run_plan()
+
+    def test_output_symlinks_are_refused_and_targets_kept_intact(self):
+        for name in ('manifest.json', 'app-preview.vdf'):
+            for dangling in (False, True):
+                with self.subTest(name=name, dangling=dangling):
+                    out = self.root / (name + str(dangling))
+                    out.mkdir()
+                    target = self.root / ('missing-' + name) if dangling else self.build / 'game'
+                    before = None if dangling else target.read_bytes()
+                    other = out / ('app-preview.vdf' if name == 'manifest.json' else 'manifest.json')
+                    other.write_text('existing-output-must-stay')
+                    (out / name).symlink_to(target)
+                    with self.assertRaisesRegex(ValueError, 'arquivo comum'):
+                        self.run_plan(output=out)
+                    self.assertTrue((out / name).is_symlink())
+                    self.assertEqual(other.read_text(), 'existing-output-must-stay')
+                    self.assertFalse(target.exists()) if dangling else self.assertEqual(target.read_bytes(), before)
+
+    def test_special_fifo_in_depot_is_rejected_synchronously(self):
+        os.mkfifo(self.build / 'pipe')
+        result = subprocess.run([sys.executable, module.__file__, '--content', str(self.build),
+                                 '--output', str(self.root / 'out'), '--launch', 'game',
+                                 '--platform', 'linux', '--app-id', '123', '--depot-id', '456'],
+                                capture_output=True, text=True, timeout=3)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('especial', result.stderr)
+        self.assertFalse((self.root / 'out').exists())
+
+    def test_digest_is_real_sha256_and_follows_bytes(self):
+        payload = b'\x7fELFdigest-fixture-bytes'
+        (self.build / 'game').write_bytes(payload)
+        (self.build / 'game').chmod(0o755)
+        result = self.run_plan()
+        self.assertEqual(result['files'][0]['sha256'], hashlib.sha256(payload).hexdigest())
+        (self.build / 'game').write_bytes(payload + b'x')
+        (self.build / 'game').chmod(0o755)
+        self.assertNotEqual(self.run_plan()['files'][0]['sha256'], hashlib.sha256(payload).hexdigest())
 
 
 if __name__ == '__main__':
