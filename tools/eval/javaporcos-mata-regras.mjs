@@ -14,7 +14,7 @@
 
    O QUE ELE MEDE
      TRILHA3 cada retalho `mata-trilha-pisada` encosta no chão: os 4 cantos, os 4 meios de
-             aresta e o centro ficam a ≤ 0,12 m de `groundHeightAt`.
+             aresta e o centro ficam a ≤ 0,12 m de `terrainHeightAt` (sem lajes).
      MATA5   cada árvore do mapa tem copa começando a ≤ 45% da altura do tronco em ≥ 90% das
              árvores; o andar mais alto de cada árvore tem raio ≥ 1,5 m; a copa impostora
              alta (y > 8 m) do horizonte tem raio ≥ 3,5 m.
@@ -114,6 +114,7 @@ export function regrasMata({ W, THREE, MUT, regra, exige }) {
 
   /* ---------------------------------------------------------------- TRILHA3 */
   regra('TRILHA3 retalho de trilha deita no chão, sem degrau no barranco', () => {
+    exige(typeof W.terrainHeightAt === 'function', 'mapa não expõe a altura do terreno sob as lajes');
     exige(pis?.count >= 60, `${pis?.count || 0} retalhos de trilha (piso 60)`);
     const pts = [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5], [0, -0.5], [0, 0.5], [-0.5, 0], [0.5, 0], [0, 0]];
     const v = new THREE.Vector3();
@@ -123,7 +124,7 @@ export function regrasMata({ W, THREE, MUT, regra, exige }) {
       let p = 0;
       for (const [a, b] of pts) {
         v.set(a, 0, b).applyMatrix4(m4);
-        p = Math.max(p, Math.abs(v.y - gh(v.x, v.z)));
+        p = Math.max(p, Math.abs(v.y - W.terrainHeightAt(v.x, v.z)));
       }
       if (p > 0.12) ruins++;
       if (p > pior) { pior = p; m4.decompose(p3, q4, s3); onde = `(${p3.x.toFixed(1)}, ${p3.z.toFixed(1)})`; }

@@ -1243,3 +1243,23 @@ Revisor independente confirmou ambas as refutações e as duas correções docum
 Régua completa de mapa agora repetida: CHAO1/HORDA1 verdes; JANELA1/TRILHA3 vermelhas.
 Investigação em curso: janelas reais substituíram decorativas e consulta de terreno
 sem yRef pode retornar laje. Não declarar régua integral verde enquanto não corrigida.
+
+## Régua atualizada para casas abertas e refúgios
+
+RED preservado em review2-mapa.log: 31 janelas decorativas contra piso40; sete
+retalhos comparados à superfície elevada, pior3,93m. Causa confirmada por fonte e
+sondas: quatro casas acessíveis substituem decorativas por20 aberturas físicas.
+JANELA1 agora verifica nove raios livres por vão e testemunhos sólidos no peitoril
+/verga; mantém piso40 no total, vidro1:1 nas decorativas, grades/recuo/passo intactos.
+TRILHA3 consulta terrainHeightAt, o mesmo campo de altura que constrói os decalques,
+sem confundir chão sob refúgio com laje. groundHeightAt/física existentes preservados.
+Novo contrato documentado. Nove sondas e tolerância0,12m mantidas.
+Régua completa exit0: 31 decorativas+20 vãos,25 gradeadas,834 retalhos,pior0,080m.
+Mutantes janela-real-cega,janela-cega e trilha-degrau detectados: o último deixou
+729/834 retalhos fora, pior1,84m. Logs no diretório ignorado de release.
+Diagnóstico separado por raycast da malha visual coarser chegou a0,147m em dez
+retalhos; não é o contrato de campo testado por TRILHA3 nem aprovação visual exata.
+Ficha também atualizada com quantidades medidas: seis lojas,25 comidas(11 ração)
+e11.832 nós/21.158 arestas. Revisor read-only sem achados nesta correção.
+SIM_HASH regenerado oficialmente:4eb60379c5b2650a. Servidor dedicado antigo precisa
+acompanhar esse ref antes de build/deploy posterior. Merge/release ainda pendentes.

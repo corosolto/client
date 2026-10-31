@@ -302,6 +302,7 @@ export function buildInvasaoJavaporcos(scene, T, ambiente='cidade') {
     jumpImpulse: 10,
     crossingFloor: true,
     groundHeightAt,
+    terrainHeightAt: (x,z) => campo.amostra(x,z),
     ceilingHeightAt:(x,z,y,altura)=>tetoDosInteriores(root,x,z,y,altura),
     hordeRefuges,
     stairs: [...hordeRefuges.map(r=>({nome:`escada refúgio ${r.team}`,x0:r.x-1,x1:r.x+1,z0:r.z+4.66,z1:r.z+9.98,topo:r.y-.45})),

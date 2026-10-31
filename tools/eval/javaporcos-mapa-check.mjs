@@ -24,7 +24,7 @@
             além de LIMITE_ESCAPE em `max(|x|,|z|)`. É a tradução literal de "não pode ser
             possível pros players irem até o limite do mapa".
      MATA2  DENSIDADE E BOCAS: o cinturão tem de ter mata instanciada de verdade, parede de
-            colisor, e 3 bocas em 3 lados, a ≥ 40 m uma da outra (eram 10 até 30/10).
+            colisor, e 6 bocas nos 4 lados, a ≥ 40 m uma da outra (eram 10 até 30/10).
      CHAO1  RELEVO: `groundHeightAt` tem de separar rua, calçada, soleira de loja, barranco
             e leito do córrego — e, nos pontos andáveis, a altura que ele devolve tem de
             bater com a malha visível (sonda vertical, mesma do MAP1). Chão constante é o
@@ -36,7 +36,7 @@
      TRILHA2 E chega DENTRO das quatro lojas: sem a costura da porta na grade de 1,5 m a
             invasão para na calçada, que é o defeito que o dono viu.
 
-   LAYOUT DE 30/10/2026 (decisões do dono: pasto entre cidade e mata, 3 frentes, becos):
+   LAYOUT DE 30/10/2026 (decisões do dono: pasto entre cidade e mata, seis frentes, becos):
      MATA3  FRENTES FECHADAS: anel de sondas a pé na ENTRADA da parede (v = 55 m, os quatro
             lados). Os arcos livres contíguos são as bocas de verdade — tem de haver
             EXATAMENTE 3, cada um sobre uma frente declarada. Declarar 3 e deixar furo
@@ -48,7 +48,7 @@
      PASTO2 GRAMA DE VERDADE: capim em cartão ≥ 2,5 por m² do anel, touceira ≥ 150 com
             altura ≥ 0,9 m, ≥ 8 cupinzeiros com colisor, ≥ 60 mourões, e o chão do pasto
             com cor por vértice variando (desvio do canal mais variado > 0,03) — não um plano verde liso.
-     HORDA1 CONTRATO `world.horda.frentes`: 3 frentes ≥ 40 m uma da outra, boca no fio da
+     HORDA1 CONTRATO `world.horda.frentes`: 6 frentes ≥ 40 m uma da outra, boca no fio da
             mata (53 a 55 m), rota da mata (≥ 56 m) até a borda da cidade (35,5 a 36,6 m).
             A rota é caminhada a cada 0,25 m: corpo de 0,45 m sem colisor, degrau ≤ 0,3 m
             por passo e sonda de chão ≤ 0,30 m (o bicho não afunda). A navegação liga a

@@ -25,8 +25,8 @@ Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
   de 0,15 m; viela de terra de 3,5 m em |x| = 22 e |z| = 22; anel perimetral de terra
   entre 31,5 e 36 m. A calçada PARA no cruzamento — ela não atravessa a pista.
 - **Quarteirões:** 16 blocos de 12,25 m (internos) e 7,75 m (externos). 29 edificações:
-  casa térrea de 3,00 m, sobrado de 6,00 m, 4 lojas com interior acessível (mercearia,
-  padaria, boteco, loja de ração), igrejinha com campanário de 9,8 m e torre de caixa
+  casa térrea de 3,00 m, sobrado de 6,00 m, 6 lojas com interior acessível (mercearia,
+  padaria, boteco, armazém de ração, farmácia e açougue), igrejinha com campanário de 9,8 m e torre de caixa
   d'água de 8,5 m. 15% a 25% das massas giradas de 2° a 14°.
 - **Pasto:** capim denso em cartão, touceira alta, cupinzeiro, cerca de mourão com
   arame a 37,2 m e trilha de terra batida da boca até a cidade. Linha de tiro aberta da
@@ -43,7 +43,7 @@ Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
 - **Objetivos:** feira (corredor da praça), mercearia (porta) e igreja (adro). Cada um
   leva `r`, que é a distância em que o bando já encosta — objetivo no miolo do prédio
   deixava a horda empacada na parede a 6,6 m.
-- **Lixo e comida:** 16 `foodSpots` (7 lixo, 3 caçamba, 4 feira, 2 ração), todos dentro
+- **Lixo e comida:** 25 `foodSpots` (7 lixo, 3 caçamba, 4 feira, 11 ração), todos dentro
   de `cityBounds`, cada um com dois estados de malha (íntegro e revirado).
 
 ## Contrato do mundo
@@ -56,6 +56,8 @@ Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
   de busca. A horda chama dezenas de vezes por quadro e NÃO precisa cachear. A malha do
   terreno é amostrada da MESMA grade, então o chão desenhado e o chão medido são o mesmo
   número — é o conserto do "javaporco indo por baixo da terra".
+- `terrainHeightAt(x, z)` — amostra do mesmo campo de terreno, sem pisos elevados;
+  a régua de decalques usa esta consulta para medir o chão sob refúgios.
 - `cityBounds` — `{minX:-36, maxX:36, minZ:-36, maxZ:36}`.
 - `boarEntrances` — 6 clareiras `{id, lado, trilha, x, z}`, com os ids das frentes:
   `norte`, `leste`, `sudoeste`, `oeste`, `nordeste`, `sudeste`.
@@ -75,7 +77,7 @@ Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
 - `lojas` — `[{papel, eixo, sinal, porta:{x,z,dentro}, interior:[x,z]}]`.
 - `waypoints:{nodes,adj}`, `nearestWaypoint(x,z)` (índice de célula, O(1)) e
   `findPath(a,b)` (BFS com buffers do mapa, zero alocação por chamada). Grade de 1,0 m,
-  5.595 nós e 10.014 arestas, com costura explícita na porta de cada loja e teste de
+  11.832 nós e 21.158 arestas, com costura explícita na porta de cada loja e teste de
   meio de aresta — em 1,5 m existiam arestas atravessando muro de 0,15 m.
 
 ## Cobertura (cover)

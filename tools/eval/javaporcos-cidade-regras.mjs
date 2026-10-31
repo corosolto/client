@@ -12,7 +12,7 @@
    O QUE ELE MEDE
      ICO1    nenhuma malha de icosaedro/poliedro dentro da cidade (ou com nome de lixo,
              beco, cidade, food) e o fonte da cidade não constrói IcosahedronGeometry.
-     JANELA1 ≥ 40 vãos de janela, um vidro por vão; ≥ 8 janelas gradeadas com barra de
+     JANELA1 ≥ 40 vãos reais/decorativos, vidro nos decorativos; ≥ 8 janelas gradeadas com barra de
              ≥ 0,035 m, passo ≤ 0,13 m e o vidro ≥ 0,07 m atrás da grade.
      CARRO1  ≥ 16 carros em `root.userData.carros`, só ids de licença comercial, folga
              lateral até a guia entre 0,15 e 0,45 m e nenhum dentro do cruzamento.
@@ -102,7 +102,7 @@
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'beiral-preto', 'lampada-fraca', 'sem-halo', 'guia-rasa', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-real-cega', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'beiral-preto', 'lampada-fraca', 'sem-halo', 'guia-rasa', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -243,7 +243,30 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
 
   regra('JANELA1 janela com vidro recuado e grade de barra ≥ 0,04 a cada ≤ 0,13 m', () => {
     const vidros = [...instancias(porNome('beco-vidro')), ...instancias(porNome('beco-vidro-aceso'))], barras = instancias(porNome('beco-grade')), vaos = instancias(porNome('beco-janela'));
-    exige(vaos.length >= 40, `só ${vaos.length} vãos de janela instanciados (piso 40: casas + becos)`);
+    let abertas = 0;
+    const raio = new THREE.Raycaster();
+    for (const c of W.root.userData.interiores || []) {
+      const cs = Math.cos(c.ry), sn = Math.sin(c.ry);
+      for (const [x,y,z,nx,nz] of [[0,1.7,-c.d/2,0,-1],[0,4.7,-c.d/2,0,-1],[c.w/2,1.7,0,1,0],[c.w/2,4.7,0,1,0],[0,4.7,c.d/2,0,1]]) {
+        const centro = new THREE.Vector3(c.x+x*cs+z*sn,c.y+y,c.z-x*sn+z*cs);
+        const normal = new THREE.Vector3(nx*cs+nz*sn,0,-nx*sn+nz*cs), lateral = new THREE.Vector3(normal.z,0,-normal.x);
+        if (MUT === 'janela-real-cega' && abertas === 0) {
+          const tampa = new THREE.Mesh(new THREE.BoxGeometry(1.6,1.4,.2),new THREE.MeshBasicMaterial());
+          tampa.position.copy(centro); tampa.rotation.y=c.ry; W.root.add(tampa); W.root.updateMatrixWorld(true);
+        }
+        const acertos = (dx,dy) => {
+          const origem = centro.clone().addScaledVector(lateral,dx).addScaledVector(normal,-.3); origem.y+=dy;
+          raio.set(origem,normal); raio.far=.6;
+          return raio.intersectObject(W.root,true).length;
+        };
+        for (const dx of [-.5,0,.5]) for (const dy of [-.4,0,.4]) {
+          exige(acertos(dx,dy)===0, `janela real fechada em (${centro.x},${centro.y},${centro.z})`);
+        }
+        exige(acertos(0,-.9)>0 && acertos(0,.9)>0, 'vão real sem peitoril ou verga');
+        abertas++;
+      }
+    }
+    exige(vaos.length+abertas >= 40, `só ${vaos.length} janelas decorativas + ${abertas} vãos reais (piso total 40)`);
     exige(vidros.length === vaos.length, `${vidros.length} vidros para ${vaos.length} vãos: janela sem vidro é buraco preto`);
     let gradeadas = 0, recuoMin = Infinity, passoMax = 0;
     const n = new THREE.Vector3(), lat = new THREE.Vector3(), d = new THREE.Vector3();
@@ -260,7 +283,7 @@ export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
     exige(gradeadas >= 8, `só ${gradeadas} janela(s) gradeada(s) (piso 8: todas as dos becos)`);
     exige(recuoMin >= 0.07, `vidro só ${recuoMin.toFixed(3)} m atrás da grade (piso 0,07)`);
     exige(passoMax <= 0.13, `vão entre barras de ${passoMax.toFixed(3)} m (teto 0,13)`);
-    return `${vaos.length} janelas com vidro, ${gradeadas} gradeadas, vidro ≥ ${recuoMin.toFixed(2)} m atrás da grade, passo ≤ ${passoMax.toFixed(2)} m`;
+    return `${vaos.length} janelas com vidro + ${abertas} vãos reais, ${gradeadas} gradeadas, vidro ≥ ${recuoMin.toFixed(2)} m atrás da grade, passo ≤ ${passoMax.toFixed(2)} m`;
   });
 
   regra('CARRO1 ≥ 16 carros, só licença comercial, na guia e fora do cruzamento', () => {
