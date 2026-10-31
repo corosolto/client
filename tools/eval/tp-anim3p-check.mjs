@@ -157,6 +157,7 @@ const m = await page.evaluate(async () => {
   const m6 = escolhe((x) => x.an6.picoCm >= 3 && x.an6.voltaCm <= 1.5);
   const m7 = escolhe((x) => x.an7.recuoCm >= 0.5 && /crouch/.test(x.an7.estado || ''));
   const m8 = escolhe((x) => x.an8.noAr === 'jump' && x.an8.noPouso === 'crouch');
+  const m9 = escolhe((x) => x.an9.lagImediato >= 0.25 && x.an9.lagDepois <= 0.08);
   const m11 = escolhe((x) => x.an11 && x.an11.estado === 'jump' && x.an11.tempo > 0);
   return {
     charId: m1.charId,

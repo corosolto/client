@@ -28,8 +28,8 @@ if (!images.length) { console.error('uso: --images a.png,b.png --rubric map'); p
 const RUBRIC = arg('rubric', 'map');
 const OUT = arg('out');
 const TIMEOUT = parseInt(arg('timeout', '240'), 10) * 1000;
-const MODEL = arg('model', 'opencode/muse-spark-1.3-contributor-free');
-const FALLBACK_MODEL = 'opencode/mimo-v2.5-free';
+const MODEL = arg('model', 'opencode/nemotron-3.5-super-vl-free');
+const FALLBACK_MODEL = 'opencode/nemotron-3.5-super-vl-free';
 const EXTRA = arg('extra');
 
 /* Rubricas: perguntas fechadas, saída JSON estrita. Mesmo contrato da RUBRIC.md. */

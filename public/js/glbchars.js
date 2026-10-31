@@ -185,12 +185,16 @@ const CANARINHO_P1H_FORE = -16 * Math.PI / 180;
 const P1H_MAO_L = [-0.19, -0.06, 0.02];
 /* Corpos onde o clipe 1H autorado já resolve a anatomia e não aceita o overlay genérico. */
 const P1H_SKIP = new Set(['canarinho', 'bonzo']);
-/* Esquerdomacho alternava entre clipe 1H e overlay. Usa locomotiva base + um único overlay.
- * CANARINHO (31/10, "a pistola do canarinho é o pior de todos"): o idle1h retargetado do
- * humano estica a ASA 0,50 m à frente do corpo (frenteZ medido 0,499 vs 0,26 dos
- * elogiados) — a pistola lê como flutuando longe do corpo. No clipe base a asa fica ao
- * lado do corpo e o porte curto dele (32°/-16°) segura a arma baixa, leitura de mascote. */
-const P1H_BASE_CLIP = new Set(['esquerdomacho', 'canarinho']);
+/* Esquerdomacho alternava entre clipe 1H e overlay. Usa locomotiva base + um único overlay. */
+const P1H_BASE_CLIP = new Set(['esquerdomacho']);
+/* TETO DE FRENTE POR CORPO (31/10): o idle/idle1h retargetado do humano deixa corpos
+ * não-humanos com a mão MUITO à frente — canarinho (asa) 0,50 m e lobisomem (braços
+ * longos) 0,49 m à frente do tronco, contra 0,23-0,26 dos elogiados: a arma lê como
+ * flutuando longe do corpo ("o canarinho de pistola é o pior de todos", dono 31/10).
+ * O clamp puxa a MÃO de volta pelo MESMO CCD do piso (TP_FRONT_MIN), arma colada.
+ * Primeira tentativa (clipe base pro canarinho) foi revertida: afundava 1,2 cm no chão
+ * no idle (CHR7) — clipes têm calibração de pé própria. */
+const TP_FRONT_MAX_CHAR = { canarinho: 0.20, lobisomem: 0.30 };
 const loader = new GLTFLoader();
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 
@@ -1165,20 +1169,24 @@ class CharController {
       // ("arma por trás" — jozo/trapfunk/coach). Empurrar só o MOUNT foi tentado e
       // reprovado no olho: a arma descolava da mão (esbirro: 11 cm). Aqui a MÃO inteira
       // vem pra frente (CCD em Arm→ForeArm, o mesmo solver da mão de apoio) e a arma,
-      // filha do osso, vem colada. SÓ em porte parado (idle/idle1h/crouch): no walk/run
-      // a mão balança pra trás por natureza. Nota de ordem: este bloco roda ANTES da
-      // orientação do cano (acima), então na 1ª chamada a orientação usa a mão pré-IK e
-      // converge no quadro seguinte — o assentamento da seleção roda 60 quadros.
       if (t.palmLocal && t.rArm && t.rFore && TP_FRONT_MIN > -Infinity
           && /^(idle|idle1h|crouch)$/.test(this.curName || '')) {
         _v.copy(t.palmLocal);
         t.handBone.localToWorld(_v);
         t.model.worldToLocal(_v);
+        /* TETO por corpo (ver TP_FRONT_MAX_CHAR): mesma mecânica do piso, espelhada —
+         * puxa a mão de VOLTA quando o clipe humano estica demais o braço/asa. */
+        const fzMax = TP_FRONT_MAX_CHAR[this.bodyId] ?? Infinity;
         if (_v.z < TP_FRONT_MIN) {
           _v.z = TP_FRONT_MIN;
           t.model.localToWorld(_v);
           solveCCDIK([t.rArm, t.rFore], t.handBone, _v, { iterations: 6, endOffset: t.palmLocal });
           orientTpMount(t);   // reorienta o cano pós-IK
+        } else if (_v.z > fzMax) {
+          _v.z = fzMax;
+          t.model.localToWorld(_v);
+          solveCCDIK([t.rArm, t.rFore], t.handBone, _v, { iterations: 6, endOffset: t.palmLocal });
+          orientTpMount(t);
         }
       }
     }
