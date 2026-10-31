@@ -41,6 +41,7 @@ if (MUT === 'anuncia-fantasma') {
   scripts['//eval:__mutante_fake__'] = 'Régua fake só desta prova. Mutante: real.';
   scripts['eval:__mutante_fake__'] = 'node tools/eval/__nao_existe__.mjs --mutant=real && node tools/eval/__nao_existe__.mjs --mutant=fantasma-extra';
 }
+if (MUT) console.log('Mutação aplicada: ' + MUT);
 
 
 /* `"Mutantes: a, b e c."` → ['a','b','c']. Tolera o conector "e" antes do
@@ -78,7 +79,7 @@ for (const [chave, valor] of Object.entries(scripts)) {
   const scriptKey = chave.slice(2);
   const scriptVal = scripts[scriptKey] || '';
   if (!scripts[scriptKey]) {
-    falhas.push(`MA0 \`${chave}\` descreve mutantes mas \`${scriptKey}\` não existe em scripts`);
+    falhas.push({clause:'MA0',type:'ContractViolation',message:`MA0 \`${chave}\` descreve mutantes mas \`${scriptKey}\` não existe em scripts`});
     continue;
   }
 
@@ -89,21 +90,24 @@ for (const [chave, valor] of Object.entries(scripts)) {
 
   for (const m of declarados) {
     if (!executadosSet.has(m))
-      falhas.push(`MA1 ${scriptKey} anuncia \`${m}\` no cabeçalho mas a cadeia não roda --mutant(e)=${m} — mutante fantasma`);
+      falhas.push({clause:'MA1',type:'ContractViolation',message:`MA1 ${scriptKey} anuncia \`${m}\` no cabeçalho mas a cadeia não roda --mutant(e)=${m} — mutante fantasma`});
   }
   for (const m of executados) {
     if (!declaradosSet.has(m)) {
-      falhas.push(`MA2 ${scriptKey} roda --mutant(e)=${m} mas o cabeçalho não anuncia esse mutante — cobertura real escondida de quem lê o package.json`);
+      falhas.push({clause:'MA2',type:'ContractViolation',message:`MA2 ${scriptKey} roda --mutant(e)=${m} mas o cabeçalho não anuncia esse mutante — cobertura real escondida de quem lê o package.json`});
     }
   }
 }
 
-if (!auditados) falhas.push('MA0 nenhum cabeçalho `//eval:X` com "Mutante(s):" encontrado — a varredura perdeu o alvo');
-
-for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
-if (!falhas.length)
-  console.log(`  \x1b[32m✓\x1b[0m MA ${auditados} cabeçalho(s) com "Mutante(s):" batem com o que a cadeia executa`);
+if (!auditados) falhas.push({clause:'MA0',type:'ContractViolation',message:'MA0 nenhum cabeçalho `//eval:X` com "Mutante(s):" encontrado — a varredura perdeu o alvo'});
 
 const mutacaoCega = MUT && !falhas.length;
-if (mutacaoCega) console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
-process.exit(falhas.length || mutacaoCega ? 1 : 0);
+if (mutacaoCega) {
+  const message = `MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`;
+  falhas.push({clause:'MUT',type:'ContractViolation',message});
+}
+for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f.message}`);
+if (!falhas.length)
+  console.log(`  \x1b[32m✓\x1b[0m MA ${auditados} cabeçalho(s) com "Mutante(s):" batem com o que a cadeia executa`);
+console.log(JSON.stringify({mutant:MUT||null,cases:auditados,failed:falhas}));
+process.exit(falhas.length ? 1 : 0);
