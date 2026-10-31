@@ -106,10 +106,37 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
   bloqueado por CHANGES_REQUESTED/checks em fila. Não mergear por status antigo.
   Nesta branch são ancestrais os heads #1179/#1171/#1165/#1162/#1161/#1156/#1155/
   #1152/#1150; isso não comprova revisão/aceite dessas mudanças.
+- 09:21 UTC: bake real dos 14 mapas concluído pelo Ego (445 peças), inclusive
+  checkpoints de entradas e erro por asset ausente. `graffiti-layout-check`
+  fresco; não é aceite visual. Baseline imutável `ad696fb87` servido em 4368,
+  worktree `consistencia-visual-baseline-1179-20261031`; lane atual em 4367.
+- Capturas comparáveis 1320×880: Ferro passou de 207 peças/38 artes, 30 artes
+  repetidas e 172 peças fora da casa B para 24/24, zero repetição/fora/sem suporte.
+  Piscina passou de 465/49, 45 artes repetidas para 52/52, zero fora do branco e
+  sem suporte. Refinamento da régua usa a textura branca real e cobertura inteira:
+  baseline são 100 fora do branco; 165 era proxy geométrico impreciso, descartado.
+  O batch de props perdia exclusão e foi corrigido, não apenas o batch de paredes.
+- Inventário independente cruza todas as texturas de arte, inclusive malhas sem
+  nomes decal/mural/poster: encontrou Campo do Morro com a mesma colagem em 16
+  superfícies que a régua anterior não enxergava. RED salvo em
+  `campomorro-full-inventory-red.json`. Correção local mantém um mural no galpão,
+  remove cópias decorativas sem colisão e conserva a geometria das paredes; bake
+  do Campo concluído, nova captura/cobertura e verificação de física pendentes.
+- Crítico visual independente examinou 14 capturas: nenhuma aprovação integral.
+  Piscina está coerente no recorte; Ferro precisa escala/acabamento de tijolos;
+  Campo precisa solo/reboco; Escadão tem padrão diagonal suspeito nos parapeitos;
+  Lajes repete coroamentos e tijolo em topo; Córrego repete desgaste/torres;
+  Quebrada repete pneus. Quatro câmeras inválidas serão recapturadas; não inferir
+  defeito de navegação a partir de foto dentro de parede. M4 permanece UNKNOWN.
+- Primeiro builder de motion terminou; refinamento GLM exclusivo dos mesmos
+  arquivos acrescenta prova com sway real e tolerâncias derivadas da dinâmica.
+  Sem aceite ADS/contato/tiro por browser ainda. Economia e censo seguem ativos.
+  Builder de testes grafite atingiu deadline com diff parcial: retomar e validar,
+  nunca tratar saída parcial como sucesso.
 
 ## Aceites, rejeições e limites
 
-Nenhuma correção de produto ou aprovação visual nova ainda. Head do #1179 contém
+Correções de produto locais acima ainda sem commit ou aprovação integral. Head do #1179 contém
 afirmações de melhorias e limitações contraditórias no corpo: tratar como pistas,
 nunca como aceite. Não usar status histórico alpha.7 como versão atual.
 Não há permissão inferida para interromper processos, remover locks, comprar
@@ -118,8 +145,8 @@ gates e ownership continuam obrigatórios. Não chamar resultado técnico de vis
 
 ## Próximo passo concreto
 
-Concluir bake completo, rodar curadoria em cena e fotografar antes/depois 3:2.
-Receber os dois builders GLM e validar RED/GREEN/mutantes; só então checkpoints
-de produto. Investigar EJ12/EJ22 contra a decisão atual de economia do #1179.
+Confirmar Campo com inventário completo, repetir Ferro/Piscina na régua refinada,
+retomar testes GLM interrompidos e validar RED/GREEN/mutantes; então checkpoints
+de produto. Receber economia/motion/censo e conferir evidência real dos contratos.
 Seguir acabamento favela, personagens/skins e ADS, sem abandonar acompanhamento
 de PRs/release nem disputar as lanes dos outros dois runs.
