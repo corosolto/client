@@ -164,6 +164,16 @@ function caminhoDe(arma, cfg) {
 }
 const PRIV = '/Users/ruben/csbrasil-private-assets/generated/viewmodels';
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+const argv = process.argv.slice(2);
+const permitidos = new Set([...MUT_CAIXA, ...MUT_ASSADO, 'goldenvazio', 'listadivergente']);
+const selftestMode = argv.includes('--selftest');
+if ((selftestMode && (argv.length !== 1 || argv[0] !== '--selftest'))
+    || argv.some((arg) => arg !== '--selftest' && arg !== '--json' && !(arg.startsWith('--mutante=') && permitidos.has(arg.slice(10))))
+    || argv.filter((arg) => arg === '--json').length > 1
+    || argv.filter((arg) => arg.startsWith('--mutante=')).length > 1) {
+  console.error('uso: vm-consistencia-check [--json] [--mutante=nome] | --selftest'); process.exit(2);
+}
+
 
 /* Nós de peça móvel que a animação de recarga costuma mexer. Lista aberta: o
    pack nomeia em inglês e varia (Mag, Magazine, Charger, Charge, Bolt…). */
@@ -555,7 +565,10 @@ export async function medir() {
     if (VM_FAMILY[familia]?.ready !== true) continue;
     if (!JOGAVEIS.has(arma)) continue;
     const caminho = caminhoDe(arma, cfg);
-    const movidas = pecasMovidas(familia) ?? [];
+    const movidasRef = pecasMovidas(familia);
+    // Referência ausente é diferente de uma família medida sem peça móvel.
+    const semRefFamilia = movidasRef === null;
+    const movidas = movidasRef ?? [];
     let parts = cfg.parts;
     if (MUT === 'semparts' && arma === 'ak') parts = null;
     if (MUT === 'caixavazia' && arma === 'ak') parts = { mag: { box: { min: [0, 0, 0], max: [0, 0, 0] }, bone: 'Mag' } };
@@ -588,13 +601,13 @@ export async function medir() {
 
     // `peca: true` recorta por componente conexo e dispensa caixa — a caixa leva
     // geometria alheia junto (medido: 373 intrusos na ak). Ver BUG-90.
-    linhas.push({ arma, familia, caminho, movidas, skin, peca, porPeca: Boolean(parts?.mag?.peca),
+    linhas.push({ arma, familia, caminho, movidas, semRefFamilia, skin, peca, porPeca: Boolean(parts?.mag?.peca),
       temParts: Boolean(parts?.mag?.box || parts?.mag?.peca), fracao: frac?.fracao ?? null });
   }
   return linhas;
 }
 
-function avaliar(linhas) {
+export function avaliar(linhas) {
   const falhas = [];
   const semMedida = [];
 
@@ -626,7 +639,12 @@ function avaliar(linhas) {
     }
   }
   for (const l of linhas) {
-    if (l.movidas.length === 0) continue; // família sem peça móvel não deve nada
+    if (l.movidas.length === 0) {
+      if (l.semRefFamilia === true) {
+        semMedida.push({ arma: l.arma, msg: `referência da família ausente (${l.familia}-runtime.glb) — peça móvel não medida` });
+      }
+      continue; // família lida sem peça móvel não deve nada
+    }
     /* Golden traz o pente skinnado no próprio GLB — mas a isenção é MEDIDA, não
        assumida: sem VM-C4, marcar `golden: true` calaria a régua. */
     if (l.caminho === 'golden') {
@@ -703,11 +721,93 @@ function avaliar(linhas) {
   return { falhas, semMedida };
 }
 
+/* ---------------------------------------------------------------------------
+   --selftest — prova EXCLUSIVA da métrica de ausência (GLM-173 / P2).
+   Roda o avaliador REAL sobre controles derivados, sem tocar no filesystem
+   (nenhum pin privado é escrito) e sem mutante. Modo estrito: rejeita
+   combinação com --mutante. ----------------------------------------------- */
+async function selftest() {
+  const erros = [];
+  // (a) família INEXISTENTE em caminho único: `pecasMovidas` retorna null,
+  //     sem editar nada no fs — a ausência é lida, nunca inventada.
+  const FANTASMA = `glm173-fantasma-${process.pid}`;
+  const pm = pecasMovidas(FANTASMA);
+  if (pm !== null) {
+    erros.push(`pecasMovidas('${FANTASMA}') devolveu ${JSON.stringify(pm)}; esperado null para referência ausente`);
+  }
+
+  const linhaControle = (arma, semRefFamilia) => ({ arma, familia: FANTASMA, caminho: 'assado',
+    movidas: [], semRefFamilia, skin: null, peca: null, porPeca: false, temParts: false, fracao: null });
+
+  // (b) referência AUSENTE (null convertido em [] + semRefFamilia): o avaliador
+  //     real tem de registrar exatamente UMA semMedida para a arma, com motivo.
+  const rSemRef = avaliar([linhaControle('glm173-semref', true)]);
+  const sm = rSemRef.semMedida.filter((s) => s.arma === 'glm173-semref');
+  if (sm.length !== 1 || typeof sm[0]?.msg !== 'string' || sm[0].msg.trim().length === 0) {
+    erros.push(`referência ausente: esperava exatamente 1 semMedida legível para glm173-semref; veio ${JSON.stringify(sm)}`);
+  }
+
+  // (c) referência PRESENTE sem peça móvel (`[]` verdadeiro): NÃO é semMedida
+  //     e não gera falha — ausência de peça não pode ser inferida de lista vazia.
+  const rVazia = avaliar([linhaControle('glm173-vazia', false)]);
+  if (rVazia.semMedida.some((s) => s.arma === 'glm173-vazia')) {
+    erros.push('família lida com [] virou semMedida — ausência inferida de lista vazia, exatamente o P2');
+  }
+  if (rVazia.falhas.some((f) => f.arma === 'glm173-vazia')) {
+    erros.push(`família lida com [] gerou falha de produto: ${JSON.stringify(rVazia.falhas.filter((f) => f.arma === 'glm173-vazia'))}`);
+  }
+
+  // A máscara passa pelo produtor real; só a referência da AK fica ausente.
+  const { VM_WEAPON, VM_FAMILY: VMF } = await import(
+    pathToFileURL(path.join(RAIZ, 'public/js/data/vmconfig.js')).href);
+  const akCfg = VM_WEAPON.ak;
+  if (!akCfg?.family) {
+    erros.push('controle (d): VM_WEAPON.ak sem family — sem alvo real');
+  } else if (VMF[akCfg.family]?.ready !== true || !JOGAVEIS.has('ak')) {
+    erros.push(`controle (d): ak não jogável/pronta (family=${akCfg.family}, ready=${VMF[akCfg.family]?.ready}) — sem alvo real, sem desvio`);
+  } else {
+    const alvoRef = path.join(PRIV, akCfg.family, `${akCfg.family}-runtime.glb`);
+    const existeOriginal = fs.existsSync;
+    let hits = 0;
+    fs.existsSync = (p) => {
+      if (p === alvoRef) { hits += 1; return false; }
+      return existeOriginal(p);
+    };
+    let linhasReais;
+    try {
+      linhasReais = await medir();
+    } finally {
+      fs.existsSync = existeOriginal;
+    }
+    const rReal = avaliar(linhasReais);
+    if (hits < 1) erros.push(`controle (d): medir real não consultou existsSync pela referência da ak (${hits} hits)`);
+    const akLinhas = linhasReais.filter((l) => l.arma === 'ak');
+    if (akLinhas.length !== 1) erros.push(`controle (d): ak apareceu ${akLinhas.length}x nas linhas reais; esperado 1`);
+    const smAk = rReal.semMedida.filter((s) => s.arma === 'ak');
+    if (smAk.length !== 1 || !/referência da família ausente/.test(smAk[0]?.msg || '')) {
+      erros.push(`controle (d): esperava exatamente 1 semMedida por referência ausente para a ak; veio ${JSON.stringify(smAk)}`);
+    }
+    const fAk = rReal.falhas.filter((f) => f.arma === 'ak');
+    if (fAk.length) erros.push(`controle (d): ak virou falha de produto: ${JSON.stringify(fAk)}`);
+  }
+
+  if (erros.length) {
+    console.error(`--selftest FALHOU:\n${erros.map((e) => `  ✗ ${e}`).join('\n')}`);
+    process.exit(1);
+  }
+  console.log('selftest vm-consistencia: ausência de referência ≠ família sem peça móvel — ok');
+}
+
+if (process.argv.includes('--selftest')) {
+  await selftest();
+  process.exit(0);
+}
+
 const linhas = await medir();
 const { falhas, semMedida } = avaliar(linhas);
 
 if (process.argv.includes('--json')) {
-  console.log(JSON.stringify({ mutante: MUT || null, armas: linhas.length, falhas, semMedida }, null, 2));
+  console.log(JSON.stringify({ mutante: MUT || null, armas: linhas.length, armasMedidas: linhas.length - new Set(semMedida.map((s) => s.arma)).size, armasSemMedida: new Set(semMedida.map((s) => s.arma)).size, falhas, semMedida }, null, 2));
 } else {
   console.log('\n  arma         família    caminho     peças movidas na recarga   parts  caixa    skin  peça no osso (assado)');
   console.log('  ' + '-'.repeat(116));
@@ -728,7 +828,7 @@ if (process.argv.includes('--json')) {
   for (const s of semMedida) console.log(`  ? SEM MEDIDA ${s.arma}: ${s.msg}`);
   const julgadas = linhas.length - semMedida.length;
   console.log(`\n  ${julgadas - new Set(falhas.map((f) => f.arma)).size}/${julgadas} armas MEDIDAS com o vínculo de peça móvel íntegro`
-    + `${semMedida.length ? ` · ${semMedida.length} sem medida (produto não construído aqui)` : ''}\n`);
+    + `${semMedida.length ? ` · ${semMedida.length} sem medida (referência ou produto ausente)` : ''}\n`);
 }
 
 if (MUT) {
