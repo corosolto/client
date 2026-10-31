@@ -1,5 +1,6 @@
 export const JAVAPORCO_RETRATO = '/img/javaporco-card.webp';
 export const JAVAPORCOS_WALLS = Object.freeze([
+  '/img/javaporcos-cidade-gpt-20261031.webp',
   '/img/javaporcos-ataque-cidade.webp',
   '/img/loading-javaporcos.webp',
   '/img/map-previews/ref-javaporcos-parede-mata.webp',

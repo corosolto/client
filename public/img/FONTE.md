@@ -80,3 +80,12 @@ para WebP 1024 (cor e rugosidade q80, normal q88). Nome: `textures/pbr_<id>_{col
 | [`leafy_grass`](https://polyhaven.com/a/leafy_grass) | grama de pasto |
 | [`sparse_grass`](https://polyhaven.com/a/sparse_grass) | grama rala com terra (beira de calçada) |
 | [`forest_leaves_02`](https://polyhaven.com/a/forest_leaves_02) | chão de mata com folha seca |
+
+## Wallpaper GPT — Cidade Invadida (31/10/2026)
+
+- Pedido: wallpaper de javaporcos atacando a cidade, card do lobby e anúncio do modo.
+- Asset: `javaporcos-cidade-gpt-20261031.webp`, 1920×1080, SHA256 `a72d3a87b99ebecff0dd4fe0180cd0b67e38fd6137f217e871171e1c35074f78`.
+- Geração: ferramenta GPT Image desta sessão, saída original preservada em `$CODEX_HOME/generated_images/01a18e41-15a8-7852-81fa-61673d6b611b/exec-786fc305-3d63-42e5-a288-f27ed18a9033.png`. O identificador exato do modelo não é exposto pela ferramenta.
+- Duas tentativas anteriores com `openai/gpt-5-image` via OpenRouter terminaram `finish_reason=error`, sem imagem; não são a origem desta arte.
+- Prompt-base em `docs/maps/javaporcos-gauntlet-cidade-20261031/wallpaper-prompt.txt`; nenhuma foto, marca, pessoa ou asset de terceiros fornecido como referência. Conversão local para WebP com recorte16:9; original preservado.
+- Inspeção do arquivo: três animais em primeiro plano, lixo/frutas à esquerda, casario brasileiro, mata e torre ao fundo; sem texto, políticos ou gore. Revisão independente e leitura no tamanho real do modal ainda pendentes.
