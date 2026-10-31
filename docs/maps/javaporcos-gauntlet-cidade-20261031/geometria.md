@@ -88,3 +88,42 @@ Logs: `/tmp/jav-cidade-rotas-baseline-final.log`,
 `/tmp/jav-cidade-rotas-porta-fix.log`,
 `/tmp/jav-cidade-rotas-final-{torre-sem-piso,janela-fechada,armas-centrais,rampa-lisa}.log`
 e `/tmp/jav-interiores-porta-fix.log`.
+
+## MAP6: saída do segundo lance e patamar superior
+
+A varredura ampla da integração encontrou duas transições de 6,20 m na saída do
+último degrau, em [-17.5,-9.25] e [-17.25,-9.25]. Corpo em sólido continuava zero,
+e os seis lances declarados passavam na medição física. A nova cláusula focada
+reproduziu exatamente a queda informada antes do ajuste, no log
+`/tmp/jav-torre-bordas-red.log`.
+
+A plataforma física existia após a saída, mas o chão padrão sem `yRef` ignorava a
+laje. Fechar essa saída com uma guarda atravessaria o caminho da escada. O ajuste
+foi declarar os pisos superiores para consultas sem referência de corpo e abrir
+um vão sobre cada lance, evitando que a medição da escada inferior passasse a
+medir a laje acima. Os dois vãos receberam guardas; a abertura do lance inferior
+é fechada também na face da frente. A chegada do segundo lance continua livre.
+
+A plataforma agora tem 6 m de largura, com corredores laterais e faixa frontal
+contínua. Colunas, tanque, altura e luzes foram preservados. O helper
+`pisosElevados` reconhece `pisoDeclarado` apenas quando não há `yRef`; um corpo
+informado abaixo da laje continua recebendo o solo inferior. Não houve mudança
+na régua global ou nos limiares do MAP6.
+
+A sexta cláusula mede as duas posições reportadas, quatro bordas de guarda,
+preservação do solo inferior e uma varredura local em grade de 0,25 m ao redor
+da torre. Ela usa os mesmos parâmetros físicos de `tools/eval/map-check.mjs`:
+corpo de 0,38 m, transição de 2 m e deslocamento mínimo de 0,02 m. Essa varredura
+local não substitui a verificação ampla do mapa pelo agente integrador.
+
+Baseline final: seis cláusulas verdes, mantendo subida e descida sem pulo,
+três linhas de tiro, percursos completos das quatro casas, armas e texturas.
+Seis mutantes foram detectados isoladamente, incluindo `torre-sem-guarda`, que
+remove somente os colisores de guarda identificados no módulo da torre.
+A régua restaura alterações de chão e array de colisores entre cláusulas para
+que um mutante não contamine a medição seguinte.
+Logs: `/tmp/jav-torre-bordas-final-baseline.log` e
+`/tmp/jav-torre-bordas-final-{torre-sem-guarda,torre-sem-piso,janela-fechada,casa-porta-bloqueada,armas-centrais,rampa-lisa}.log`.
+O estado só poderá ser chamado de MAP6 amplo aprovado após o novo MAPCHECK do
+integrador. Captura em navegador e orçamento visual continuam sendo gates
+separados.

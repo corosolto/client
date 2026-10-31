@@ -4,9 +4,9 @@ import {bootGame,initTextures,THREE} from './harness.mjs';
 const g=bootGame('invasao_javaporcos',{textures:initTextures(),seed:77}),w=g.world;
 g.state='live';g.paused=false;g.scene.updateMatrixWorld(true);
 const mutant=process.argv.find(a=>a.startsWith('--mutante='))?.slice(10)||'';
-assert.ok(['','torre-sem-piso','janela-fechada','armas-centrais','rampa-lisa','casa-porta-bloqueada'].includes(mutant));
+assert.ok(['','torre-sem-piso','janela-fechada','armas-centrais','rampa-lisa','casa-porta-bloqueada','torre-sem-guarda'].includes(mutant));
 const failures=[];
-function test(name,fn){try{fn();console.log('✓ CIDADE '+name);}catch(e){failures.push(name);console.log('✗ CIDADE '+name+': '+e.message);}}
+function test(name,fn){const gh=w.groundHeightAt,colliders=w.colliders;try{fn();console.log('✓ CIDADE '+name);}catch(e){failures.push(name);console.log('✗ CIDADE '+name+': '+e.message);}finally{w.groundHeightAt=gh;w.colliders=colliders;}}
 const mover=(p,x,z,max=1800)=>{for(let i=0;i<max;i++){const dx=x-p.pos.x,dz=z-p.pos.z;if(Math.hypot(dx,dz)<.09)return;g.time+=1/120;g._moveEntity(p,{ax:dx,az:dz,jump:false,crouch:false,sprint:false},1/120);}assert.fail(`rota bloqueada em ${p.pos.x.toFixed(2)},${p.pos.y.toFixed(2)},${p.pos.z.toFixed(2)}`);};
 test('torre sobe sem salto e permite tiro para três lados',()=>{
  const t=w.root.userData.torre;assert.ok(t,'torre ainda é decoração sem escada');
@@ -20,6 +20,31 @@ test('torre sobe sem salto e permite tiro para três lados',()=>{
  for(const alvo of [...t.rota].reverse().slice(1))mover(p,alvo.x,alvo.z);
  assert.ok(Math.abs(p.pos.y-t.base)<.08,'torre não permite descer pela escada');
  console.log(`  torre ${(t.y-t.base).toFixed(2)}m, ${t.degraus.length}degraus,3linhas de tiro`);
+});
+test('torre tem patamar contínuo e guarda nas bordas alcançáveis',()=>{
+ const t=w.root.userData.torre;assert.ok(t,'sem torre para medir bordas');
+ if(mutant==='torre-sem-guarda'){
+  const antes=w.colliders.length;w.colliders=w.colliders.filter(c=>!c.guardaTorre);assert.ok(w.colliders.length<antes,'mutante não removeu guarda');
+ }
+ for(const x of [-17.5,-17.25]){
+  const z=-9.25,h=w.groundHeightAt(x,z),vizinho=w.groundHeightAt(x,z+.25),p={x,y:Math.max(h,vizinho),z:z+.25},antes={...p};g._collide(p,.38);
+  assert.ok(Math.abs(h-vizinho)<2||Math.hypot(p.x-antes.x,p.z-antes.z)>.02,`patamar deixa queda de ${Math.abs(h-vizinho).toFixed(2)}m na saída ${x},${z}`);
+ }
+ for(const [dx,dz]of [[-.8,.75],[-3.25,1.8],[3.25,1.8],[0,3.45]]){
+  const p={x:t.x+dx,y:t.y,z:t.z+dz},antes={...p};g._collide(p,.38);
+  assert.ok(Math.hypot(p.x-antes.x,p.z-antes.z)>.02,'guarda não impede corpo na borda de queda');
+ }
+ let transicoes=0;
+ for(let x=Math.floor((t.x0-.5)*4)/4;x<=t.x1+.5;x+=.25)for(let z=Math.floor((t.z0-.5)*4)/4;z<=t.z1+.5;z+=.25)for(const [dx,dz]of [[.25,0],[0,.25]]){
+  const a={x,y:w.groundHeightAt(x,z),z},b={x:x+dx,y:w.groundHeightAt(x+dx,z+dz),z:z+dz};
+  if(Math.abs(a.y-b.y)<2)continue;const alto=a.y>b.y?a:b,baixo=a.y>b.y?b:a,corpo={...alto};g._collide(corpo,.38);
+  if(Math.abs(corpo.x-alto.x)>=1e-6||Math.abs(corpo.z-alto.z)>=1e-6)continue;
+  const borda={x:baixo.x,y:alto.y,z:baixo.z};g._collide(borda,.38);transicoes++;
+  assert.ok(Math.hypot(borda.x-baixo.x,borda.z-baixo.z)>.02,`borda local sem guarda em ${alto.x},${alto.z}`);
+ }
+ assert.ok(transicoes>0,'não mediu bordas altas da torre');
+ const inferior=w.groundHeightAt(t.x-.8,t.z+1.5,t.base);assert.ok(Math.abs(inferior-t.base)<.03,'patamar elevado teleporta corpo por baixo');
+ console.log('  duas transições sem queda falsa,quatro bordas protegidas,solo inferior preservado');
 });
 test('quatro casas acessíveis têm janelas abertas em três fachadas',()=>{
  const casas=w.root.userData.interiores||[];assert.ok(casas.length>=4,`somente ${casas.length} casas abertas`);
@@ -61,5 +86,5 @@ test('pisos laterais têm textura de superfície com escala por metro',()=>{
  const pisos=[];w.root.traverse(m=>{if(m.name.startsWith('laje-refugio-')||m.name==='escada-refugio')pisos.push(m);});assert.ok(pisos.length>4);
  for(const m of pisos){if(mutant==='rampa-lisa')m.material.map=null;assert.ok(m.material.map?.name?.includes('madeira'),'refúgio ainda usa concreto genérico');const uv=m.geometry.attributes.uv;assert.ok(Array.from(uv.array).some(v=>v>1),'textura esticada sobre toda a peça');}
 });
-const esperado={'torre-sem-piso':'torre sobe','janela-fechada':'quatro casas','armas-centrais':'armas cobrem','rampa-lisa':'pisos laterais','casa-porta-bloqueada':'casas permitem'}[mutant];
+const esperado={'torre-sem-piso':'torre sobe','janela-fechada':'quatro casas','armas-centrais':'armas cobrem','rampa-lisa':'pisos laterais','casa-porta-bloqueada':'casas permitem','torre-sem-guarda':'torre tem patamar'}[mutant];
 process.exitCode=mutant?(failures.length===1&&failures[0].startsWith(esperado)?0:1):(failures.length?1:0);

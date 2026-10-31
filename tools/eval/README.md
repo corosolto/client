@@ -250,7 +250,7 @@ TTK condicional e dispersão com cinco disparos; método e limites em
 
 ### Cidade Invadida — gauntlet31/10/2026
 
-- `npm run eval:javaporcoscidadeacessivel`: torre por escada real nos dois sentidos, três linhas de tiro, percurso rua/andar/janela/rua nas quatro casas, 24 armas fora do centro e UV das rampas; cinco mutantes.
+- `npm run eval:javaporcoscidadeacessivel`: torre por escada real nos dois sentidos, três linhas de tiro, percurso rua/andar/janela/rua nas quatro casas, 24 armas fora do centro e UV das rampas e proteção das bordas; seis mutantes.
 - `npm run eval:javaporcosdirecao`: percurso curvo, desvio de muro, flancos/antecipação, bando com separação, patas apoiadas e planejamento FIFO sem starvation; cinco mutantes.
 - `npm run eval:javaporcoscidadeinterface`: seleção só Cidade, silêncio de falas/vinhetas no modo com recarga preservada, elenco real4–8 no solo, coop explícito/MP legado e kills/avatar da horda; três mutantes.
 - `npm run eval:javaporcosnetpersonagem`: eventos e roster J preservam o NPC, troca humana continua; mutante personagem-humano.

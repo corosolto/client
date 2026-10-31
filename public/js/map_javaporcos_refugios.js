@@ -60,7 +60,7 @@ export function pisosElevados(colliders, root, materiais) {
   return (x,z,yRef,solo) => {
     let y=solo;
     for(const c of cells.get(key(x,z)) || []) {
-      if((!c.superficieEscada&&(!Number.isFinite(yRef)||yRef<c.maxY-.22)) || c.maxY<=y || x<c.minX || x>c.maxX || z<c.minZ || z>c.maxZ) continue;
+      if((!c.superficieEscada&&(Number.isFinite(yRef)?yRef<c.maxY-.22:!c.pisoDeclarado)) || c.maxY<=y || x<c.minX || x>c.maxX || z<c.minZ || z>c.maxZ) continue;
       const dx=x-c.cx,dz=z-c.cz;
       if(c.ry && (Math.abs(dx*c.cos-dz*c.sin)>c.hx || Math.abs(dx*c.sin+dz*c.cos)>c.hz)) continue;
       y=c.maxY;
