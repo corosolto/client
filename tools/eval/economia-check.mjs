@@ -77,10 +77,11 @@ async function medir(dir) {
   }
   const { ECONOMIA } = E;
 
-  // os números do doc presos aqui: régua que mede contra a própria constante não vê ela mudar
-  const doc = { saldoInicial: 800, teto: 16000, tempoCompraS: 30, raioCompraM: 9, vitoria: 3250 };
+  // os números do doc presos aqui: régua que mede contra a própria constante não vê ela mudar.
+  // 30 -> 50 s por decisão do dono (31/10), docs/ECONOMIA-PARTIDA.md atualizado junto.
+  const doc = { saldoInicial: 800, teto: 16000, tempoCompraS: 50, raioCompraM: 9, vitoria: 3250 };
   const fora = Object.entries(doc).filter(([k, v]) => ECONOMIA[k] !== v).map(([k]) => `${k}=${ECONOMIA[k]}`);
-  check('EC1', 'números do doc: 800, 16000, 30 s, 9 m, 3250', E.novaCarteira().saldo === 800 && !fora.length, { fora });
+  check('EC1', 'números do doc: 800, 16000, 50 s, 9 m, 3250', E.novaCarteira().saldo === 800 && !fora.length, { fora });
 
   const ids = C.CATALOGO_COMPRA.map((i) => i.id), grupos = C.GRUPOS_COMPRA.map((g) => g.id);
   const ruins = C.CATALOGO_COMPRA.filter((i) => !WEAPONS[i.id] || !grupos.includes(i.grupo) || !C.SLOTS_COMPRA.includes(i.slot)

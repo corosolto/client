@@ -32,7 +32,7 @@ mesma do CS porque a partida começa com o mesmo saldo e tem o mesmo teto.
 | vitória de rodada | 3250 | 3250 (eliminação) |
 | derrota em sequência | 1400, 1900, 2400, 2900, 3400 | idem; satura na 5ª |
 | empate | conta como derrota para os dois times | CS não tem empate; aqui a rodada pode empatar |
-| tempo de compra | 30 s, contados depois da contagem de início | 20 s depois do freeze time; ampliado por decisão do dono |
+| tempo de compra | 50 s; a janela reabre a CADA renascimento (rodada e arena) com banner avisando | 20 s depois do freeze time; 30 s até 31/10; 50 s e reabertura por decisão do dono (31/10: "mostrar que ele tem 50 segs pra comprar arma") |
 | zona de compra | 9 m do ponto de spawn mais próximo do próprio time | buy zone |
 | assinatura do personagem | 10% de desconto, arredondado a 50 | não existe no CS |
 
