@@ -191,7 +191,7 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
 
 ## Aceites, rejeições e limites
 
-### Conferência de 09:53–09:56 UTC
+### Conferência de 09:54 UTC
 
 - Escadão: as faixas diagonais vistas no mapview NÃO se reproduzem no renderer
   real do jogo. `escadao-real-game-original.png` usa PCFSoft + normalBias .03
@@ -229,6 +229,19 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
   a `249ffac6c`, classify falha; #1160 segue `ff0a52097` com MAPAUD/aggregator RED.
   #1167 `d4e0ccfda` CLEAN, revisão GLM integral ativa antes do crítico e possível
   integração. Respeitar owners e reconsultar head/CI antes de merge.
+
+- 09:58 UTC: revisão GLM integral #1167 achou um P2 (SKIP sobrescreve falha já
+  medida), dois itens menores (prioridade no mutante SB7, timeout/sinal) e cleanup
+  de temporários antes do exit. Não integrar só pelo CI verde. Nova lane isolada
+  `consistencia-review-1167-20261031` corrige/revalida esses itens antes do crítico
+  integral no ponto final. Não tocar na branch original do autor.
+- Crítico independente dos quatro personagens liberou a candidata de normais
+  para validação de movimento, incluindo rostos aceitáveis e corpo mais contínuo.
+  Comparação rigorosa usa SkeletonUtils com MESMA pose, capturas front/back/face
+  individuais e `character-normals-*-identical-contact-sheet.jpg`; não usar os
+  pair.png posteriores à primeira câmera (reset ausente). Ferramenta offline GLM
+  em curso, sem escrever GLBs; versão final deve preservar singleton/arestas e
+  repetir imagens/movimento antes de aplicação. Corpo estático não é aceite final.
 
 Correções de produto locais acima ainda sem commit ou aprovação integral. Head do #1179 contém
 afirmações de melhorias e limitações contraditórias no corpo: tratar como pistas,
