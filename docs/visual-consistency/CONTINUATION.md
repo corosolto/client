@@ -318,3 +318,14 @@ skins, mapas restantes e acompanhamento de merges/release durante a janela compl
 - Normais builder deadline: lease devolvida,20/20 gate repetido Root GREEN em root-normal-tool-check.log. Nenhum GLB de produto alterado. Tool/doc/régua inteiros em revisão GLM readonly; repetir A/B nos outputs e movimento antes de aplicar.
 - SB7 builder devolveu lease,10/10 gate Root GREEN, wire novo eval:sondafilho em fast/deploy no WT isolado. Revisão GLM do PR inteiro+fix em curso.
 - Revisões GLM readonly14min para acabamento, normais e SB7 iniciadas10:20; writers AK/posters/curadoria ainda ativos. Crítico achou UV repetida e textura sem pixels além do winding; relatório R2 disponível à curadoria.
+
+### Conferência Root 10:38 UTC
+
+- Main remoto `00e746b5ad91526d498060c07811c5e36e58cf31` inclui #1180; Estraga-código voltou a reviewer padrão. Skill nova lida no Git: review no SHA atual, zero achado válido aberto, checks verdes e smoke real antes de merge. Release consultado permanece alpha.130, sem release novo confirmado.
+- GLM curadoria devolveu lease: régua42/42 inclui winding, UV repetida, imagem sem pixels e duas faixas físicas com duas faces legíveis cada. Revisão independente R3 ativa; repetir survey real dos14 mapas. Nada aprovado só pelo Node.
+- Normais: comparação real dos outputs v3 tem72PNGs (9vistas ×2variantes ×4personagens), hashes conferidos. Crítico prefere weld60 no corpo e não achou regressão nova nos frames; rostos preservados. Movimento contínuo/transições/cintilação UNKNOWN. Nenhum GLB de produto trocado. R2 GLM corrige guardas, fixtures, docs da ferramenta, sem mudar algoritmo dos4outputs.
+- AK GLM devolveu lease e régua6/6: socket corrigido para topo real da massa e linha:true; tiro/hip/GLB não alterados. Revisão integral e ADS no Ego ainda pendentes. Writer sequencial de arma/mãos/movimento segue GLM-MOTION-FECHAR-R3, lease22933; Root não edita esses arquivos.
+- SB7 no WT isolado segue GLM-SB7-FECHAR-R2 (40849), corrigindo achados integrais inclusive docs geradas e prioridade falha→SKIP. Normais60196; curadoria terminou87263. Não sobrepor writers.
+- Acabamento visual: Ferro tijolo melhora; Campo solo bege rejeitado por perda de identidade vermelha. Crítico apontou vegetação atravessando balcão Ferro; probe de triângulos reais confirmou RED em med e low. Ainda não corrigido. Revisão GLM integral de acabamento expirou sem relatório: não conta como revisão limpa.
+- Posters: builder expirou parcial. Root reproduziu ReferenceError norte e corrigiu declaração; gate passou a cinco SUPORTE RED. Probe investiga auto-interseção do cartaz no raycaster antes de deslocar geometria. Fonte das paredes e suporte físico precisam ser conferidos no jogo real.
+- Baseline1179 agora possui node_modules isolado por clone APFS e serve4368 novamente. esbuild nativo/API JS verificados. WT principal ainda tem symlink de dependências e será isolado com writers quietos. Não atribuir falha HMR anterior a essa causa sem prova.
