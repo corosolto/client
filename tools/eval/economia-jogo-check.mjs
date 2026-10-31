@@ -535,25 +535,30 @@ const MUTANTES = {
     const r = g._resetPositions.bind(g);
     g._resetPositions = () => { const c = g._compra; g._compra = null; r(); g._compra = c; };
   } },
+  // Causal do CANT_TEST: boot que explode tem que ser classificado, nunca contado como mordida.
+  'boot-explode': { causal: true, boot: () => { throw new Error('mutante causal: boot explodiu antes do start'); } },
 };
 const mutanteAlvo = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice('--mutante='.length) || null;
 if (mutanteAlvo && !MUTANTES[mutanteAlvo]) throw new Error(`Mutante desconhecido: ${mutanteAlvo}`);
-const mutantesExecutados = mutanteAlvo ? [[mutanteAlvo, MUTANTES[mutanteAlvo]]] : Object.entries(MUTANTES);
+const mutantesExecutados = mutanteAlvo ? [[mutanteAlvo, MUTANTES[mutanteAlvo]]] : Object.entries(MUTANTES).filter(([, m]) => !m.causal);
 
 const print = (rows) => rows.map((r) => `${r.pass ? 'ok ' : 'XX '} ${r.id} ${r.nome}${r.pass ? '' : ' ' + JSON.stringify(r.obs)}`).join('\n');
 const real = comEspiao(() => medir());
 console.log(print(real));
 const falhas = real.filter((r) => !r.pass);
-const cegos = [];
+const cegos = [], cantTest = [];
 for (const [nome, m] of mutantesExecutados) {
-  let vermelhas;
+  let vermelhas, erro = null;
   try {
     // o obs acompanha o vermelho: prova que a cláusula certa mordeu, não vermelho por acaso
     vermelhas = comEspiao(() => medir(m)).filter((r) => !r.pass).map((r) => `${r.id} ${JSON.stringify(r.obs)}`);
-  } catch (e) { vermelhas = [`exceção: ${e.message}`]; }
-  console.log(`mutante ${nome}: ${vermelhas.length ? 'VERMELHO (' + vermelhas.join(' | ') + ')' : 'VERDE, régua cega'}`);
-  if (!vermelhas.length) cegos.push(nome);
+  } catch (e) { erro = e; }
+  if (erro) { console.log(`mutante ${nome}: CANT_TEST — exceção do arnês sob mutante (NÃO conta mordida): ${erro.message}`); cantTest.push(nome); }
+  else {
+    console.log(`mutante ${nome}: ${vermelhas.length ? 'DETECTADO (' + vermelhas.join(' | ') + ')' : 'VERDE, régua cega'}`);
+    if (!vermelhas.length) cegos.push(nome);
+  }
 }
-console.log(`\neconomia no jogo: ${real.length - falhas.length}/${real.length} verdes; mutantes cegos: ${cegos.length ? cegos.join(',') : 'nenhum'}`);
-if (falhas.length || cegos.length) process.exitCode = 1;
+console.log(`\neconomia no jogo: ${real.length - falhas.length}/${real.length} verdes; mutantes cegos: ${cegos.length ? cegos.join(',') : 'nenhum'}; cant_test: ${cantTest.length ? cantTest.join(',') : 'nenhum'}`);
+if (falhas.length || cegos.length || cantTest.length) process.exitCode = 1;
 process.exit();
