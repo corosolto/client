@@ -627,9 +627,6 @@ GLM F2 encerrou no limite de20min, exit1/Deadline exceeded e sem relatório: pro
 Campo R5 tem40 trechos no perímetro, quatro capturas locais aceitas, interior preservado e delta físico perimetral declarado. Gate Campo R8 CLEAN2995d2f7, baseline extraída da fonte pré-R5 imutável e NaN distinto de Infinity. Migração FV-M1 CLEAN6d07d81f:95 interiores verbatim e todo Córrego intacto, somente4→40 guardas. Root executou nominal+9 mutantes Campo e nominal+5 Favela com conjuntos RED exatos. Córrego materiais8 e UV4 também passaram. Wrapper R4 crítico CLEAN21a161d6, stdout JSON único e timeout com error/signal sempre infra3. Checkpoint inclui apenas mapas/gates/baselines/contrato e ledger; package/CI e curadoria final ficam para a próxima entrega. Não há merge/publicação dessas mudanças.
 
 
-### 15:35 UTC — alpha131 integrado na entrega
-
-Entrega em `codex/visual-release-review-20261031`, merge dos checkpoints `2e085a237` e main `5d1e52d347` em fechamento. Conflitos de docs/índices regenerados pelos produtores; CHANGELOG preserva as duas notas. Package usa main alpha131 e união de scripts/runner tokens, preservando vm-presence, mutantes-anunciados e community-inbox atuais. Gatilho de browser preserva selected-weapon-probe e os dois módulos do censo. CI recebe comandos Node já revisados para visual/contratos; browser/private gates1179 aguardam a correção e wiring sustentável. F2/Canarinho/gates1179/curadoria corrente ainda não entraram nesta entrega. Próximo: crítica focal da integração e check:deploy completo com logs preservados, sem bypass.
 ### 15:32 UTC — calibração do preview em correção isolada
 
 Diagnóstico Canarinho/Deagle CLEAN causal5a958a81:50,5069° reproduzido no fd553 e no atual; o clamp de frente assenta a mão depois da captura inicial. Contraprova privada pós-pose reduz0,0258° sem elevar teto nem remover clamp; ainda não há produto nem aceite visual. GLM recebe somente hunks do build/calibração de glbchars e gate/contrato novos, preservando headproxy e handik. F2 continua congelado para crítica, e GLM1179 escreve somente gates.
@@ -776,6 +773,38 @@ grafo híbrido. É causa candidata verificável, sem tetoORC afrouxado. Próximo
 no checkout QA: integrar somente checkpoints até69641c9f3 e wiring público
 CLEAN0179ea07, preservar main5d/ec7; não copiar dirtyF2/CampoUV antes do aceite.
 Missão até18:45UTC continua incluindo merges/release e todos os defeitos visuais.
+
+
+## Campo UV — regressão de densidade encerrada, cauda antiga preservada
+
+Guardas usam UV métrico4m/repeat1; acabamento2m com lock pósmerge. Produto sóUV/material/lock, mesma volumetria/física nas quatroposes1320×880 Ego. TEXEL3p95/mediana5.1584→1.4244≤1.5, caudaTEXEL3b5.6403 antiga continuaREDexplicitamente; nãoafrouxartexel-check. BakeoficialCampoR9 real4peças/4arquivos,14mapas444peçasfresh e --duploverde.
+
+GateCU7cláusulas passou10casosnominal+9mutações exatas. R1/R2críticosrecusaram razãoaresta falsa,NaN,facesausentes/inventário11/13compensado eparserextras; RootR3SVDortonormal/drawRange12trisúnicos/2porface/7idsestritos fecha. CríticoR3CLEANff78b7cd,21probeswrapper+9selftest. Quatroposesantes/depoissemregressãoevidenteatribuívelUV; animaçãovaca/vegetaçãoimpedediffglobalserprovaUV. CuradoriaEgoCampoapósbakeemcurso; nãoafirmartransportenovoCIverde.
+
+QA4c5c3dce5integroucheckpointsaté1732e/wiringpúblicoCLEAN0179, cincofocais5/5 ecrítico6276b27b; ainda semnovoPR/push. BootR3emrevisãoconserva8.2MB/340masruntimeINFRA3encodedundefinedemeventoabortado;diagnósticocausalpendente,sembypass. F2R3críticoachoumais3lacunasnarégua,nãoproduto; aindaNãoaceito. RigCanarinhoGLMprivadorecusado20ossos/0pesos,nãocopiado. Missãocompletaaté18:45UTCpermanece.
+
+
+## F2 — marcas de faca aceitas tecnicamente; leitura visual permanece parcial
+
+Doisperfis explícitosknifeFP/TPcomfingerprints reais, coberturacontínuaretângulo/uniãodetriângulos e anexosnoossoCoroWeaponFP/meshTP. Caveira2/MAGA4marcasattached nos4casos. Produto mantémGLBs/mãos/rig/clips. RootR4gatecomparainversasósseasexatas e getVertexPositionrealporíndice; nan-bind sófaca+rigRED, mãoscorretamenteGREEN. Nomesherdadosrecusados2antesassets; baselineRED1/infra3. Nominal+9mutantesexatosGREEN, críticoR4CLEAN3513b9f1com11contraprovas,doccorpoantigosincronizado.
+
+EgoR3realConsumerPiscinamedraw2×9.6s558/567updates: Idle/Draw/QuickThrust/HeavyStab/walk/TPidle/TPwalk,finitoemamostras,vídeos2.28/2.66MB efolhade14quadros. R2vídeoinválido110bytesdescartado(desenhofalsedesligadorender), nuncaaceito. Marcasacompanhamlâminanasamostras; leituradotexto/desenhoàdistâncianormal efluxocatálogo/comprar/equiparNÃOaprovados,nãochamarskinsconcluídas. Gategeométricoaprovadoécheckpointrecuperável, nãoestética/releases.
+
+CampoCuradoriaR9nominalGREEN5peças,contadoreszero/prefsantesdepoisiguais; R10repetiuGREEN. QAaindasemnovoPR. BootR4falhacorretamenteINFRA3faviconERR_ABORTED;trilhadiagnósticaR5(semaceite)mostra2cancelamentossemresponse/dataantesREADYassets3s. NãoisentarURLnemsuporduplicaçãoHTML:homerealtemUMlinkicon,indexnãousaLayout. Fixturefaviconpass-throughhostbyteexact/cargaRAWconservadoraemsóprotótipoprivado,semadotar.
+
+
+## 16:34 UTC — nominal boot medido; pendências explícitas
+
+BootR8 terminou READYassets2487ms,325requests,9.07MiB; ORC1REDlegítimo, ORC2/3GREEN. Nenhum mutante rodou após nominalRED. Tetos8.2MB/340 intactos. R8fecha redirect/reusedID e trata Responseprovisório vs Finishedfinal; crítica emcurso. PróximoR9 candidato: arquivosbyte-idênticos devem seguir requestrealvia continue emvezfulfillRAW, medindoencodedCDP; sóchangednewJS cobradoRAW. Sem isenção nova/fixtures.
+
+CIcuradoriaR3 fontecríticaCLEANee0ec016, mas runtime parou intencionalmente após14nominais465peçasGREEN: clones dos mutantes introduziamdivergência e algumaspeçasnãoficavamnoar. Não há GREENintegral nemwiringaprovado. Lease exclusivaMUTADOR críticobalcao para fixturesfísicascausais, semalterarpredicado. CanarinhoR3 candidato privado40juntas16novas/416verticesemvalidação, ainda NÃOadotado. #1184continua semreviewreal; #1181últimareviewCHANGES_REQUESTED com2refutaçõesdocumentadasenovopedidopendente. Missãocompletaaté18:45UTCcontinua.
+
+
+## F2 longitudinal — legibilidade melhorada e checkpoint
+
+Root corrigiu dimensões do slogan para usar comprimento da lâmina e UV90°, mantendo símbolos/cobertura/bones/GLBs. R1nativepegoutexto invertido e expectedguard-offantigo; R3fechaamboscomprovas. Nominal4+11mutantesexatosGREEN, native16f02405. ActualEgoCaveiraR5eMAGAR6válidos7estágios574/575updates; MAGAR5interrompidoporoutranavegaçãofoirejeitado. IdleMAGAR6legívelcorreto, leituraemdistâncias/catálogo/mobileaindaparcial.
+
+CIcuradoriaR4fullterminou0:71medições,14nominais465peças,mutantesisolados,draw-groupscontroleGREEN. Criticalfixture20d25bc6CLEAN34probes+9JSONs,adapterR3ee0ecCLEAN. CheckpointCIseparadosemwireaindapendente;egorepresentantesnovosmutadorespendente. BootR10gzipfulfillREJEITADO:Chromiumnãodescomprimeessecaminho;barreirarecusou3corretamente. PrototipoR11HTTPgziprealemleaseprivadacritgates,sóGETpúblico+geo-langsemcookie/auth. Nadaabaixa8.2MB/340.
 
 
 ## QA — integração seletiva c4754bf6b iniciada
