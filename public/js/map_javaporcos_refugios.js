@@ -1,3 +1,4 @@
+import { escalaTexturaCaixa } from './map_javaporcos_torre.js';
 export function construirRefugios(kit, campo) {
   const refugios = [];
   for (const [team, inicial, extra] of [['E', -42, false], ['B', 42, false], ['E', -42, true], ['B', 42, true]]) {
@@ -15,7 +16,7 @@ export function construirRefugios(kit, campo) {
     }
     if (z == null) throw new Error(`JAV-REFUGIO: sem área livre para ${team}`);
     const y = Math.max(campo.amostra(x, z) + 3.8, campo.amostra(x, z + 9.7) + 3.55);
-    kit.caixa(6, .25, 6, kit.MAT.calcada, x, y - .25, z, {nome:`laje-refugio-${team}`});
+    escalaTexturaCaixa(kit.caixa(6,.25,6,kit.MAT.madeira,x,y-.25,z,{nome:`laje-refugio-${team}`}),6,.25,6);
     for (const dx of [-3,3]) kit.caixa(.2,1.15,6.2,kit.MAT.calcada,x+dx,y,z,{nome:'guarda-refugio'});
     kit.caixa(6,1.15,.2,kit.MAT.calcada,x,y,z-3,{nome:'guarda-refugio'});
     for (const dx of [-2.1,2.1]) kit.caixa(1.8,1.15,.2,kit.MAT.calcada,x+dx,y,z+3,{nome:'guarda-refugio'});
@@ -29,7 +30,7 @@ export function construirRefugios(kit, campo) {
     const baseEscada = campo.amostra(x, z + 9.7), passo = (y - .45 - baseEscada) / 18;
     for (let i = 0; i < 18; i++) {
       const cz = z + 9.56 - i * .28, topo = baseEscada + (i + 1) * passo;
-      kit.caixa(2, .2, .28, kit.MAT.calcada, x, topo - .2, cz, {collide:false,cast:false,nome:'escada-refugio'});
+      escalaTexturaCaixa(kit.caixa(2,.2,.28,kit.MAT.madeira,x,topo-.2,cz,{collide:false,cast:false,nome:'escada-refugio'}),2,.2,.28);
       degraus.push({z0:cz-.14,z1:cz+.14,y:topo});
       for (const dx of [-1.12,1.12]) kit.caixa(.2,1.15,.28,kit.MAT.calcada,x+dx,topo,cz,{nome:'guarda-escada-refugio'});
     }
@@ -46,7 +47,7 @@ export function pisosElevados(colliders, root, materiais) {
     return {minX:cx-ax,maxX:cx+ax,minZ:cz-az,maxZ:cz+az,minY:c.y+s.y-.125,maxY:c.y+s.y,ry:c.ry,cx,cz,hx,hz,cos,sin,superficieEscada:s.superficieEscada};
   }));
   const key = (x,z) => `${Math.floor(x/8)},${Math.floor(z/8)}`;
-  for (const c of [...colliders,...degraus]) {
+  for (const c of [...colliders,...degraus,...(root.userData.superficiesElevadas||[])]) {
     if (c.maxY > 10 || c.maxY < .05) continue;
     for (let x=Math.floor(c.minX/8);x<=Math.floor(c.maxX/8);x++) for(let z=Math.floor(c.minZ/8);z<=Math.floor(c.maxZ/8);z++) {
       const k=`${x},${z}`; if(!cells.has(k)) cells.set(k,[]); cells.get(k).push(c);
@@ -86,6 +87,7 @@ export function tetoDosInteriores(root,x,z,yRef,altura) {
     const dx=x-c.x,dz=z-c.z,lx=dx*Math.cos(c.ry)-dz*Math.sin(c.ry),lz=dx*Math.sin(c.ry)+dz*Math.cos(c.ry);
     for(const p of c.pisos) if(Math.abs(lx-p.x)<=p.hx+.3&&Math.abs(lz-p.z)<=p.hz+.3&&yRef<c.y+p.base-.3) teto=Math.min(teto,c.y+p.base-altura);
   }
+  for(const p of root.userData.torre?.pisos||[])if(x>=p.minX-.3&&x<=p.maxX+.3&&z>=p.minZ-.3&&z<=p.maxZ+.3&&yRef<p.minY-.3)teto=Math.min(teto,p.minY-altura);
   return teto;
 }
 

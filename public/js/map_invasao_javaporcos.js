@@ -277,15 +277,17 @@ export function buildInvasaoJavaporcos(scene, T, ambiente='cidade') {
   // ── Navegação
   const hordeRefuges = construirRefugios(kit, campo);
   agruparConstrucoes(root, occluders);
-  const nav = navegacao(colliders, campo, cidade.portas, hordeRefuges);
+  const nav = navegacao(colliders, campo, cidade.portas, hordeRefuges,root.userData.torre);
 
   const groundHeightAt = (x, z, yRef) => pisoDosRefugios(hordeRefuges, x, z, yRef, pisoElevado(x,z,yRef,campo.amostra(x, z)));
   const armasCampo = ['ak','m4','shotgun','mp5','awp','svd','scar','lmg','deagle','carbine','sks','p90'];
-  for (let i=0;i<armasCampo.length;i++) {
-    const ang=i*Math.PI/6, n=nav.nodes[nav.nearestWaypoint(Math.sin(ang)*44,Math.cos(ang)*44)];
+  const pontosArmas=Array.from({length:12},(_,i)=>[Math.sin(i*Math.PI/6)*44,Math.cos(i*Math.PI/6)*44]);
+  if(ambiente==='cidade')pontosArmas.push([-28,-22],[28,-22],[-28,22],[28,22],[-6,-28],[6,28],[-6,12],[6,-12],[-18,-6],[18,6],[-6,-18],[6,18]);
+  for (let i=0;i<pontosArmas.length;i++) {
+    const [x,z]=pontosArmas[i],n=nav.nodes[nav.nearestWaypoint(x,z)],arma=armasCampo[i%armasCampo.length];
     const mesh=new THREE.Mesh(new THREE.BoxGeometry(.14,.12,1),MAT.metal);
     mesh.position.set(n.x,campo.amostra(n.x,n.z)+.1,n.z);root.add(mesh);
-    pickups.push({x:n.x,z:n.z,weapon:armasCampo[i],kind:armasCampo[i],readyAt:0,mesh});
+    pickups.push({x:n.x,z:n.z,weapon:arma,kind:arma,readyAt:0,mesh});
   }
   /* Spawns no eixo da avenida, longe da fila de carros: o MAP2B cobra 1,20 m de folga de
      parede e 40 m² de chão contíguo, e nascer encostado em lataria reprova os dois. */
@@ -302,7 +304,8 @@ export function buildInvasaoJavaporcos(scene, T, ambiente='cidade') {
     groundHeightAt,
     ceilingHeightAt:(x,z,y,altura)=>tetoDosInteriores(root,x,z,y,altura),
     hordeRefuges,
-    stairs: hordeRefuges.map(r=>({nome:`escada refúgio ${r.team}`,x0:r.x-1,x1:r.x+1,z0:r.z+4.66,z1:r.z+9.98,topo:r.y-.45})),
+    stairs: [...hordeRefuges.map(r=>({nome:`escada refúgio ${r.team}`,x0:r.x-1,x1:r.x+1,z0:r.z+4.66,z1:r.z+9.98,topo:r.y-.45})),
+      ...(root.userData.torre?[-.8,.8].map((dx,i)=>({nome:`escada torre ${i+1}`,x0:root.userData.torre.x+dx-.675,x1:root.userData.torre.x+dx+.675,z0:root.userData.torre.z-4.24,z1:root.userData.torre.z+.8,topo:root.userData.torre.base+(i+1)*3.1})):[])],
     waypoints: { nodes: nav.nodes, adj: nav.adj },
     nearestWaypoint: nav.nearestWaypoint,
     findPath: nav.findPath,
@@ -598,8 +601,9 @@ function propsOpcionais(root, occluders, campo, rnd, cidade, PB) {
 
 /* NAVEGAÇÃO — grade de 1,5 m, costura explícita na porta de cada loja e índice de célula
    para `nearestWaypoint` sair de O(n) para O(1). O modo chama isso ~180×/s. */
-function navegacao(colliders, campo, portas, refugios) {
+function navegacao(colliders, campo, portas, refugios,torre) {
   const livre = (x, z) => {
+    if(torre&&x>torre.x0-.4&&x<torre.x1+.4&&z>torre.z0-.4&&z<torre.z1+.4)return false;
     if (refugios.some(r=>Math.abs(x-r.x)<3.5 && z>r.z-3.5 && z<r.z+10.5)) return false;
     const y = campo.amostra(x, z);
     for (const c of colliders) {

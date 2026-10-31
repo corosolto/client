@@ -7,8 +7,16 @@ export function construirInterior(kit,{x,z,y,w,d,ry,parede}) {
   const esp=.2,vao=1.6;
   for(const s of [-1,1])box(s*(w+vao)/4,d/2,(w-vao)/2,esp,0,6);
   box(0,d/2,vao,esp,2.4,.6);box(0,d/2,vao,esp,3,1);box(0,d/2,vao,esp,5.4,.6);
-  box(0,-d/2,w,esp,0,6);
-  for(const s of [-1,1])box(s*w/2,0,esp,d,0,6);
+  const janelaFundo=(base)=>{
+    box(0,-d/2,w,esp,base,1);box(0,-d/2,w,esp,base+2.4,.6);
+    for(const lado of [-1,1])box(lado*(w+vao)/4,-d/2,(w-vao)/2,esp,base+1,1.4);
+  };
+  for(const base of [0,3])janelaFundo(base);
+  box(-w/2,0,esp,d,0,6);
+  for(const base of [0,3]){
+    box(w/2,0,esp,d,base,1);box(w/2,0,esp,d,base+2.4,.6);
+    for(const lado of [-1,1])box(w/2,lado*(d+vao)/4,esp,(d-vao)/2,base+1,1.4);
+  }
   box(0,0,w-.2,d-.2,0,.06,MAT.ceramica,'piso-interior');
   const sx=-w/2+1,largura=1.4,run=d-1.6,passo=run/24;
   const faceEscada=(px,pz,hx,hz,topo)=>{

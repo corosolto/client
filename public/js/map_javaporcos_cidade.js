@@ -5,6 +5,7 @@ import { hasProp, placeProp, PropBatch, mergeParts } from './mapprops.js';
 import { LETREIRO_UV } from './map_javaporcos_texturas.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { construirInterior } from './map_javaporcos_interiores.js';
+import { construirTorre } from './map_javaporcos_torre.js';
 
 export const AV = 6;             // meia-largura da avenida (12 m de asfalto)
 export const CAL = 2;            // calçada
@@ -138,7 +139,7 @@ export function construirCidade(kit, campo, rnd, ambiente='cidade') {
     ['lixo-perim-n', 'lixo', -19.6, -33.4], ['lixo-perim-l', 'lixo', 33.2, -14.6],
     ['lixo-perim-s', 'lixo', 8.4, 33.1],
     ['cacamba-obra', 'cacamba', -33.1, -11.2], ['cacamba-viela', 'cacamba', 22, -22],
-    ['cacamba-perim', 'cacamba', 27.6, 33.2],
+    ['cacamba-perim', 'cacamba', 31.2, 33.2],
     ['racao-galpao', 'racao', -33.4, 12.6],
   ];
   pracaInfo.feira.forEach(([x, z], i) => pontos.push([`feira-${i + 1}`, 'feira', x, z]));
@@ -308,7 +309,7 @@ function quarteiraoCasas(kit, campo, rnd, b, sobrados) {
   const largura = b.x1 - b.x0, fundo = b.z1 - b.z0;
   const cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2;
   let n = 0;
-  const primeiraAberta=['OS-oo','LS-oo'].includes(b.id);
+  const primeiraAberta=['OS-oo','LS-oo','OS-oi','LS-io'].includes(b.id);
   const construirCasa=(...args)=>{
     if(!primeiraAberta)return casa(...args,null,false);
     if(n===0){args.splice(3,6,cx,cz,largura-1.2,fundo-1.2,0,6);return casa(...args,null,true);}
@@ -525,7 +526,7 @@ function praca(kit, campo, rnd, b) {
      foodSpots de feira, então a banca que o bicho revira É uma banca da feira. */
   const feira = [];
   for (const s of [-1, 1]) for (let i = 0; i < 4; i++) {
-    const bx = cx + s * 3.3, bz = cz - 4.6 + i * 2.5;
+    const bx = cx + (s<0?-.6:3.3), bz = cz - 4.6 + i * 2.5;
     if (i % 2) { feira.push([bx, bz]); continue; }
     banca(kit, bx, bz, y, s > 0 ? Math.PI / 2 : -Math.PI / 2, MAT.toldo[(i + (s > 0 ? 1 : 0)) % 3]);
   }
@@ -533,10 +534,7 @@ function praca(kit, campo, rnd, b) {
     caixa(1.7, 0.45, 0.5, MAT.madeira, cx + ox, y, cz + oz, { ry: (rnd() - 0.5) * 0.3 });
   // torre da caixa d'água: o marco alto que a referência de arte pede no miolo
   const tx = b.x0 + 2.0, tz = b.z1 - 2.0, ty = campo.amostra(tx, tz);
-  for (const [ox, oz] of [[-0.8, -0.8], [0.8, -0.8], [-0.8, 0.8], [0.8, 0.8]])
-    kit.placa(0.18, 8.5, 0.18, MAT.metal, tx + ox, ty, tz + oz, 0);
-  kit.placa(2.4, 2.1, 2.4, MAT.caixaDagua, tx, ty + 8.5, tz, rnd() * 0.3);
-  colisorRedondo(kit, tx, tz, 1.1, ty, ty + 8.5);
+  construirTorre(kit,campo,tx,tz,rnd()*.3);
   // luz de verdade só nos quatro postes da praça; os da rua só brilham (emissivo)
   for (const [lx, lz] of [[b.x0 + 0.7, b.z0 + 0.7], [b.x1 - 0.7, b.z0 + 0.7], [b.x1 - 0.7, b.z1 - 0.7], [b.x0 + 0.7, b.z1 - 0.7]]) {
     const luz = new THREE.PointLight(0xffb070, 8, 11, 2);
