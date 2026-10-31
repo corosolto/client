@@ -1,5 +1,6 @@
 import { apresentarJavaporcos } from './javaporcos_intro.js';
 import { sincronizarOpcoesJavaporcos } from './javaporcos_opcoes.js';
+import { equipeJavaporcos } from './javaporcos_equipe.js';
 import { nomeTimeJavaporcos, wallpaperJavaporcos } from './javaporcos_apresentacao.js';
 // Boot, menus, settings, logo, main loop.
 import * as THREE from 'three';
@@ -1966,6 +1967,11 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
      corpos e o casamento de ids fica adivinhando). No single player é LIVRE: bots do seu
      lado + bots inimigos (1v4, solo vs 8, 5v5…). */
   const tamanhoTime = sessao ? sessao.net.meta.teamSize : 0;
+  const cooperativo = sessao?.net.meta.cooperative === true;
+  const settingsDaPartida = sessao
+    ? {...settings, bots: tamanhoTime, allyBots: Math.max(0, tamanhoTime - 1), enemyBots: cooperativo ? 0 : tamanhoTime,
+      javaporcos: {...settings.javaporcos, coop: cooperativo}}
+    : ehMapaJavaporcos(currentMap) ? equipeJavaporcos(settings) : settings;
   /* ELENCO: no multiplayer ele vem PRONTO do servidor (welcome.roster). Sortear o próprio faria
      cada jogador da mesma sala ver bonecos diferentes, e o nome do killfeed não bateria com o
      rosto que apareceu na tela. Fora do multiplayer, sorteio normal — com a ESCALAÇÃO do
@@ -1979,11 +1985,11 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   };
   const matchRoster = sessao
     ? rosterDoServidor(side, charId)
-    : pickMatchRoster(faction, enemyFac, { allies: settings.allyBots, enemies: settings.enemyBots }, charId, false, _pinned);
+    : pickMatchRoster(faction, enemyFac, { allies: settingsDaPartida.allyBots, enemies: settingsDaPartida.enemyBots }, charId, false, _pinned);
   /* Treta Pop: o carregamento VS mostra o elenco sorteado; o global cobre o ?auto=, que lança antes de tp/ligar.js chegar */
   if (document.documentElement.dataset.ui === 'v3') {
     window.__tpElenco = {
-      javaporcosTimes: sessao || settings.javaporcos?.times === 3 ? 3 : 2,
+      javaporcosTimes: cooperativo ? 2 : sessao || settingsDaPartida.javaporcos?.times === 3 ? 3 : 2,
       lado: side, eu: CHARACTERS.find((c) => c.id === charId), aliados: matchRoster.allyDefs, inimigos: matchRoster.enemyDefs,
       online: !!sessao, tamanho: tamanhoTime || 0, ctf: matchMode === 'ctf', rounds: sessao ? sanitizeRounds(sessao.net.meta.roundsMax) : matchRounds(),
       mapa: MAPS[currentMap].name, desc: MAP_DESC[currentMap] || '', arte: mapPreviewPoster(currentMap, VERSION) };
@@ -2056,7 +2062,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   game = new Game({
     /* MP: o servidor manda no tamanho — sobrescreve AMBOS os campos do formato local
        (o allyBots/enemyBots do save não pode vencer o teamSize da sala). */
-    settings: sessao ? { ...settings, bots: tamanhoTime, allyBots: Math.max(0, tamanhoTime - 1), enemyBots: tamanhoTime } : settings,
+    settings: settingsDaPartida,
     renderer, textures, sfx,
     playerCharId: charId, playerSkinId, playerEyewearId, playerGloveId, playerWeaponSkins, playerKnifeSkinId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
@@ -2872,9 +2878,12 @@ function matchRounds() {
 const hubSels = [];
 function syncHubSels() { for (const s of hubSels) s.sync(); }
 function setMapMeta() {
+  sfx.setGameMode(ehMapaJavaporcos(currentMap) ? 'horde' : '');
   const el = $('map-meta'); if (!el) return;
   const modo = modoObjetivoAtual() ? resumoObjetivoAtual() : frase(matchMode === 'ctf' ? 'ctfMelhorDeN' : 'melhorDeN', matchRounds());
-  el.textContent = frase('resumoPartida', modo, 1 + settings.allyBots, settings.enemyBots, tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS'));
+  el.textContent = ehMapaJavaporcos(currentMap)
+    ? `${modo} · ${equipeJavaporcos(settings).javaporcos.defensores} DEFENSORES (VOCÊ + BOTS) × JAVAPORCOS`
+    : frase('resumoPartida', modo, 1 + settings.allyBots, settings.enemyBots, tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS'));
   syncHubSels();
 }
 function setMapMode() {
@@ -3177,9 +3186,10 @@ if (msAlly) for (let n = 0; n <= 7; n++) { const o = document.createElement('opt
 if (msEnemy) for (let n = 1; n <= 8; n++) { const o = document.createElement('option'); o.value = String(n); o.textContent = botsLabel(n); msEnemy.appendChild(o); }
 function syncMapOptions() {
   const horda = ehMapaJavaporcos(currentMap);
-  sincronizarOpcoesJavaporcos($('ms-match-options'), horda, settings, saveSettings);
+  sincronizarOpcoesJavaporcos($('ms-match-options'), horda, settings, () => {saveSettings(); setMapMeta();});
   if (msRounds?.parentElement) msRounds.parentElement.hidden = horda;
-  if (msEnemy?.parentElement) msEnemy.parentElement.hidden = horda && settings.javaporcos?.times !== 3;
+  if (msEnemy?.parentElement) msEnemy.parentElement.hidden = horda;
+  if (msAlly?.parentElement) msAlly.parentElement.hidden = horda;
   if (msWpnMode) msWpnMode.value = settings.wpnMode || 'all';
   if (msAlly) msAlly.value = String(settings.allyBots);
   if (msEnemy) msEnemy.value = String(settings.enemyBots);
@@ -4426,7 +4436,7 @@ function rosterDoServidor(lado, charId) {
   const def = (r) => ({...(CHARACTERS.find((c) => c.id === r.char) || CHARACTERS[0]), skinId:r.skinId || null,eyewearId:r.eyewearId || null});
   return {
     allyDefs: roster.filter((r) => r.team === lado && r.id !== meu).map(def),
-    enemyDefs: roster.filter((r) => r.team !== lado).map(def),
+    enemyDefs: roster.filter((r) => r.team !== lado && r.team !== 'J' && !r.objectiveNpc).map(def),
   };
 }
 
@@ -4722,7 +4732,8 @@ async function mpAtualizarSalas() {
     /* sem emoji (regra do redesign): PRIVADA e espectador viram texto/tag */
     const tags = (r.oficial ? '<span class="mp-tag" data-t="oficial">OFICIAL</span>' : '')
       + (r.private ? '<span class="mp-tag" data-t="privada">PRIVADA</span>' : '')
-      + (r.ctf ? '<span class="mp-tag">CTF</span>' : '');
+      + (r.ctf ? '<span class="mp-tag">CTF</span>' : '')
+      + (r.mode === 'horde' ? '<span class="mp-tag">JAVAPORCOS · 4–8</span>' : '');
     /* lotação como BARRA além do número: sala meio cheia e sala lotada se distinguem
        de longe, sem ler fração nenhuma */
     const frac = r.max ? Math.min(1, r.players / r.max) : 0;
@@ -4730,7 +4741,8 @@ async function mpAtualizarSalas() {
       `<div class="mp-sala-top"><div class="mp-sala-nome">${r.name}${tags}</div>`
       + `<div class="mp-lot"><span class="mp-lot-bar"><i style="width:${Math.round(frac * 100)}%"></i></span>`
       + `<b>${r.players}</b>/${r.max}${r.spectators ? `<span class="mp-lot-spec">+${r.spectators} assistindo</span>` : ''}</div></div>`
-      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${FACTION_NAME.E} × ${FACTION_NAME.B}`
+      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.cooperative ? 'DEFENSORES × JAVAPORCOS' : `${FACTION_NAME.E} × ${FACTION_NAME.B}`}`
+      + (r.cooperative && r.waitingForPlayers ? ` · aguardando ${Math.max(0,4-r.players)} defensor(es)` : '')
       + (Array.isArray(r.mapas) && r.mapas.length
         ? ` · ${r.mapas.length === 1 ? 'mapa fixo' : `${r.mapas.length} mapas na fila`}` : '')
       + '</div>'
@@ -4739,12 +4751,12 @@ async function mpAtualizarSalas() {
     /* UM BOTÃO POR LADO, e não um "ENTRAR" que balanceia sozinho: o jogador quer escolher com
        quem joga, e a facção é metade da graça do jogo. O número é a vaga daquele lado — lado
        cheio apaga em vez de sumir, senão a sala parece ter menos opção do que tem. */
-    for (const lado of ['E', 'B']) {
+    for (const lado of r.cooperative ? ['E'] : ['E', 'B']) {
       const livres = (r.livre && r.livre[lado]) || 0;
       const b = document.createElement('button');
       b.className = 'mp-entrar'; b.type = 'button';
       b.dataset.lado = lado;
-      b.textContent = `${FACTION_NAME[lado]} ${livres}`;
+      b.textContent = `${r.cooperative ? 'DEFENDER A CIDADE' : FACTION_NAME[lado]} ${livres}`;
       b.title = livres ? `Entrar no ${FACTION_NAME[lado]} (${livres} vaga(s))` : 'Esse time está cheio';
       b.disabled = !livres;
       b.onclick = () => { ui.click(); mpEntrar(r, lado); };

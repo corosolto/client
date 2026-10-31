@@ -199,16 +199,7 @@ export const MAPAS: Mapa[] = [
     resumo: 'Bandos saem da mata e se espalham entre lojas e quarteirões.',
     detalhe: 'Retome setores, proteja seu time e explore sobrados, lajes e mercearia. O domínio cai quando você limpa as áreas.',
   },
-  {
-    id: 'distrito_rural', nome: 'Distrito Rural', modo: 'Caça ao Javaporco', ctf: false,
-    resumo: 'Fazendas, celeiros e pátios de alimento cercados pela mata.',
-    detalhe: 'Dispute os depósitos de ração e use os interiores e coberturas como abrigo.',
-  },
-  {
-    id: 'vila_da_mata', nome: 'Vila da Mata', modo: 'Caça ao Javaporco', ctf: false,
-    resumo: 'Casas portuguesas, praça e ruelas em uma encosta junto à mata.',
-    detalhe: 'Explore sobrados com janelas, pátios e telhados de duas águas para defender a vila.',
-  },
+
 ];
 
 export interface Personagem { id: string; grupo: string; nome: string; blurb: string; }

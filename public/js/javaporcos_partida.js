@@ -2,7 +2,7 @@ const natural = (value, fallback = 0) => Number.isSafeInteger(Number(value)) && 
 export function regrasDaInvasao(raw = {}, multiplayer = false) {
   const fim = ['infinito', 'abates', 'mortes', 'tempo'].includes(raw.fim) ? raw.fim : 'infinito';
   return {
-    times: multiplayer || raw.times === 3 ? 3 : 2,
+    times: raw.coop === true ? 2 : multiplayer || raw.times === 3 ? 3 : 2,
     abates: multiplayer ? natural(raw.abates, 1000) || 1000 : fim === 'abates' ? natural(raw.abates, 1000) || 1000 : 0,
     mortes: !multiplayer && fim === 'mortes' ? natural(raw.mortes, 20) || 20 : 0,
     segundos: multiplayer ? (natural(raw.minutos, 30) || 30) * 60 : fim === 'tempo' ? (natural(raw.minutos, 30) || 30) * 60 : 0,

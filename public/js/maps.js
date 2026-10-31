@@ -202,6 +202,8 @@ export const DEFAULT_MAP = 'praca_poderes';
 /* Mapas fora do jogo para retrabalho: saem do menu, não do registro (é dele que ~50
    réguas vivem). Contrato e volta: docs/maps/MAPAS-PARADOS.md. */
 export const MAPAS_PARADOS = new Set([
+  'distrito_rural',
+  'vila_da_mata',
   'mansao',
   'parque_treta',
   'campomorro',
