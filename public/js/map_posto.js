@@ -524,11 +524,21 @@ export function buildPosto(scene, T) {
     const A = pi >= 0 && imgs.length ? (asp[pi] || 0.7) : 2.2;
     const H = 5;
     const moldura = addBox(0.3, 6, H * A + 1, MAT.aco, wX - 0.4, 3, -18, { collide: false });   // moldura
+    moldura.name = 'posto-outdoor-moldura';
     const bm = new THREE.Mesh(new THREE.PlaneGeometry(H * A, H), board);
     /* 2,5 cm da face REAL oeste da moldura (era 5 cm nominais: fronteira do float no
        suporte de 5 cm). A moldura (y 3–9) cobre a peça inteira. */
     bm.position.set(moldura.position.x - 0.15 - 0.025, 5.5, -18); bm.rotation.y = -Math.PI / 2; root.add(bm);
     bm.name = 'poster:' + ARQUIVO;
+    /* O guarda-corpo leste termina em y=1,4 e a moldura começa em y=3: sem isto o
+       painel flutua (CRITICO-POSTERS-REAL-R2). Pernas finas de aço, SEM colisor. */
+    const suporte = new THREE.Group(); suporte.name = 'posto-outdoor-suporte'; root.add(suporte);
+    [-2.9, 2.9].forEach((dz, i) => {
+      const perna = addBox(0.16, 3, 0.16, MAT.aco, wX - 0.4, 0, -18 + dz, { collide: false });
+      perna.name = `posto-outdoor-perna-${i}`; suporte.add(perna);
+    });
+    const travessa = addBox(0.14, 0.14, 6.1, MAT.aco, wX - 0.4, 0.05, -18, { collide: false });
+    travessa.name = 'posto-outdoor-travessa'; suporte.add(travessa);
   }
 
   /* ---------------- GREVE DOS CAMINHONEIROS (reflete o Brasil: preço alto → greve → protesto) ----------------

@@ -630,3 +630,149 @@ Campo R5 tem40 trechos no perímetro, quatro capturas locais aceitas, interior p
 ### 15:35 UTC — alpha131 integrado na entrega
 
 Entrega em `codex/visual-release-review-20261031`, merge dos checkpoints `2e085a237` e main `5d1e52d347` em fechamento. Conflitos de docs/índices regenerados pelos produtores; CHANGELOG preserva as duas notas. Package usa main alpha131 e união de scripts/runner tokens, preservando vm-presence, mutantes-anunciados e community-inbox atuais. Gatilho de browser preserva selected-weapon-probe e os dois módulos do censo. CI recebe comandos Node já revisados para visual/contratos; browser/private gates1179 aguardam a correção e wiring sustentável. F2/Canarinho/gates1179/curadoria corrente ainda não entraram nesta entrega. Próximo: crítica focal da integração e check:deploy completo com logs preservados, sem bypass.
+### 15:32 UTC — calibração do preview em correção isolada
+
+Diagnóstico Canarinho/Deagle CLEAN causal5a958a81:50,5069° reproduzido no fd553 e no atual; o clamp de frente assenta a mão depois da captura inicial. Contraprova privada pós-pose reduz0,0258° sem elevar teto nem remover clamp; ainda não há produto nem aceite visual. GLM recebe somente hunks do build/calibração de glbchars e gate/contrato novos, preservando headproxy e handik. F2 continua congelado para crítica, e GLM1179 escreve somente gates.
+
+
+### 15:34 UTC — integração de entrega em checkout separado
+
+O checkpoint aceito mais recente é83696cded (mapas/contratos). O checkout visual-release-review-20261031 está limpo em4c1e5057c e contém somente snapshots já aceitos. Root vai avançá-lo por merge do checkpoint83696cded e do main alpha1315d1e52d347 para validar/pedir revisão da integração enquanto os writers ficam isolados nesta lane. Não levar dirty F2/Canarinho/gates1179/curadoria final antes de crítica e prova. Package/CI serão unidos explicitamente aos scripts novos de main, preservando vm-presence. Essa mudança de checkout não transfere ownership dos writers nem encerra a missão.
+
+
+### 15:33 UTC — faca R1 recusada, nova iteração focal
+
+Crítico knife R1 REJECT8f0fa930: quatro P2 (suporte incompleto, perfil não vinculado à representação, clones/skeleton/casos do gate incorretos e mutantes aceitando crashes). A base de attach no osso é aproveitável:30 poses e5262 vértices finitos no probe privado, mas isso não aprova footprint nem imagem. GLM R2 recebe somente faca/aplicador/callers/gate/contrato; exige suporte contínuo por união de triângulos, dois perfis conhecidos, consumidores reais e aceite causal único. Nenhum arquivo parcial vai para entrega antes de nova crítica e prova.
+
+
+## 15:40 UTC — integração alpha.131 e fechamento em curso
+
+Missão e exclusões originais preservadas; janela até18:45UTC. Produção publicou
+alpha.131/main5d1e52d347c (hotfix1183/ec7). Prod-watch e preview-deploy SUCCESS.
+Ego Space32p1 abriu partida real na produção; pistola e mãos visíveis em1P,
+HUD/estado live confirmados em release131-prod-game-R1.png. Isso não publica os
+ajustes desta lane nem prova MP/mobile físico/FPS.
+
+Checkpoint83696cded contém Campo/favelas e wrapper comum revisados. QA separado
+visual-release-review-20261031 HEAD8dc87d31d integrou esse checkpoint e main5d1,
+preservando exatamente o patch do hotfix. Crítico integração CLEAN b3e9ae4a;
+portões focais verdes, push com hook integral em curso e logs retidos. Nenhum PR
+consolidado publicado ainda. Normais1184 head72e80d366 eSB7/1181 head3de33b4f
+pushed após hooks integrais; Estraga real solicitado nos dois heads, pendente.
+
+Curation R10 fechou transporte nominal.unknownMotivos; produtor→main nominal0,
+RED1 e33+11 controles CLEAN fe65baa3. Censo real14R11 em curso p2; não declarar
+GREEN antes do recibo. Layout oficial CampoR8/PostoR6/CorgR7:14mapas444peças,
+frescor e determinismo --duplo GREEN (layout-current-R9.log). Posto teste final
+R4/R5 INFRA3 por syntax export em weapon-skins.js, arquivo sob lease F2GLM;
+não é uma reprovação geométrica do outdoor nem resultado aceito. Repetir quando
+writer F2 liberar fonte parseável. PreviewCanarinho eKnifeF2 ainda em leasesGLM,
+não aceitos; gates1179R3 em crítica sem relatórioGLMfinal, nada chamado completo.
+
+
+## 15:43 UTC — outdoor Posto e bake oficial recuperáveis
+
+Após fonte F2 voltar a compilar, PostoR6 nominal6/6 e7mutantes com conjuntos
+exatos passaram; wrapper7controles tambémGREEN, logposto-support-final-R6.log.
+As falhasR4/R5 eram infraestrutura transitória e ficam rejeitadas. Produto/duas
+fotos e wrapper já tinham críticas CLEAN (30e88...), custo+4draws/+36tri explícito.
+Checkpoint seletivo leva só outdoor, layout oficial fresco/determinístico e suas
+réguas/doc/ledger. Package/CI em escrita do Root não entram neste checkpoint;
+censo atualR11 continua separado em curso, sem alegar aceite de todas14cenas.
+
+
+## 15:46 UTC — revisão SB7 refutada e gates1179 R4
+
+Estraga1181 revisou3de33b4f5 às15:37:56 e pediu mudanças por dois arquivos
+supostamente ausentes. Crítico independente d4b94ade confirmou ambos comoadded
+no próprio SHA/API/Contents e bytes idênticos; exports e runner→eval:sondafilho
+GREEN36,3s. Respostas técnicas4432287596/4432287674 publicadas, dois fios
+resolvidos com evidência e nova revisão real solicitada. Não equivalem a aprovação
+nova nem merge; decisãoCHANGES_REQUESTED ainda precisa reconsulta.
+
+Gates1179R3 mantinha umP2 de resumo flash contraditório e doisP3. RootR4 exige
+inventário/passboolean/resumo derivado, fechaCLI e separaSyntaxError deRED1.
+CríticoR4CLEAN4c588c19; flash nominal30/30 e movimento real+mutante GREEN.
+Onze mutantes flash em curso. Nada de browser/CI anunciado verde. Wiring público
+separará Node/AKpública de browser, poispistol/deagle1P usam catálogo privado;
+não publicar assets nem fingir matriz privada disponível em fork.
+
+CanarinhoGLM15min encerrou deadlineexit1 sem relatório final, fonte/gate em
+crítica nativa; nominalNode8casos exit0 mediu faseCanarinho0,326°, ainda sem
+aceite visual. KnifeF2GLM publicou parcial real: dois perfis/fingerprints/4nominais
+attached; gate e docs ainda em execução. TPfixturesGLM novo escreve somente2gates
+para usar helperreal de câmera e manter autoridade/contraprovas. PushQA integral
+atual ainda rodando; bootorcamento e2fixtures falharam, sem bypass/merge.
+
+
+## Rodada de gates herdados e fixtures TP fechados
+
+FlashR5 mantém o predicado e serializa observação booleana; nominal30/30 e
+onze mutantes exatos GREEN, controlador exit0. Crítico CLEAN b490e134, além do
+R4 completo 4c588c19. Lobby/mira/helper/movimento revisados R4; wiring público
+CLEAN0179ea07 preservado no candidato privado, ainda não aplicado ao QA.
+
+FixturesTP crítico CLEAN aa971ee5: helper real ligado, shot179/179,
+backpedal36/36, três contraprovas semânticas e lateral sexto argumento
+preservado. São correções do arnês, sem delta na fórmula de câmera.
+Checkpoint seletivo desses gates/doc. Browser completo lobby/mira ainda
+pendente; não declarar PR/CI completo nem publicação.
+
+CuradoriaR11 runtime14mapas465peças GREEN; R12wireframe retorna RED1 com
+unknownwireframe2 esperado, prefs restauradas. R13canalUV em curso.
+CanarinhoR4 nominal8 GREEN após correção da régua, crítica e contraprovas
+em curso. F2R2 crítica achou lacunas na cobertura causal e integridade
+da instância aplicada; produto e gate ainda NÃO aceitos. Campo novoTEXEL3
+localizado nos UV de guardas/acabamento; candidato privado fecha1.4244≤1.5,
+sem apagarTEXEL3b antigo. Produto ainda intacto até transferência.
+
+
+## 15:59 UTC — curadoria runtime aceita no contrato vigente
+
+R11 mediu14mapas/465peças, zero duplicate/outside/unsupported/unknown/divergent.
+Recibo privado curation-current-R14-receipt.json com hashes por mapa; prefs antes
+e depois iguais nas rodadas11–14. R12 recusado: wireframe torna a mesma peça
+também nao-medido; não era falha do produto. R14 exige exatamente os dois motivos
+acoplados com contagens iguais/soma correta, outras cláusulaszero; runtime exit0.
+CanalUV R13 exige só uv-canal e passou0. Crítico focal R14 CLEANa4c7d0d,
+27controles, combinado ao R10 integral CLEANfe65baa3. Checkpoint seletivo do
+controlador Ego/doc. O censo antigo de saturação fica intacto e vermelho; adaptação
+CI explícita ao contrato atual em lease GLM separada, sem waiver de META.
+
+PreviewR4 crítico semP1/P2 f9976d65, três mutantes exatos e baselinequebrado
+bloqueado; únicoP3 de comentário reduzido. Aceite visual da pegada/dedos permanece
+parcial; zoomdiagnóstico pvcam entra na malha e NÃO serve como evidência visual.
+Candidato CampoUV transferido ao produto, régua causal nova em lease GLM. F2R3
+escreve apenas gate/doc, sem produto, para lacunas apontadas em d5773902.
+
+
+## Preview — fase funcional corrigida, dedos ainda recusados visualmente
+
+Canarinho preview captura pegada depois de torso/corpo e assentamento único
+60×1/30s, sem mudar caminho de jogo nem clamp0.20m. Fase real50.5069°→0.3264°,
+nominal8×8amostrasGREEN e3contraprovas com conjuntos exatosGREEN. CríticoR3
+f9976d65 semP1/P2; únicoP3 de comentário reduzido a2linhas. O checkpoint
+protege essa correção numérica; NÃO aprova dedos/anatomia nem qualidade geral.
+
+EgoR7 quatro quadros de giro real (turn-R7-0…3.png) mostram dedos abertos e
+pegada visual ruim mesmo com alinhamento correto. Zoompvcam entra na malha
+e foi rejeitado como captura útil. Diagnóstico de rig/pesos/curl em crítica
+read-only; manter esse defeito aberto para nova correção. Nenhuma mudança de
+GLB/topologia/identidade foi inventada para esconder a lacuna.
+
+
+## Integração QA — primeiro push bloqueado, sem bypass
+
+QA8dc87d31d terminou hook com exit1; nenhum branch consolidado foi publicado.
+Falharam bootorcamento(timeout180s), fixturesTP e comentárioCampo4linhas;
+fixtures já corrigidas no checkpoint4c66e4093, comentário reduzido no candidato
+CampoUV ainda não checkpointado. Demaisportões finais de mapa/morte/skinsTP
+verdes no log retido, mas a cauda final do runner não foi preservada pelo monitor
+antes do unlink; não declarar placar integral. Monitor do retry manterá fdaberto.
+
+Crítico boot em leitura identificou main local importando exportaguardarPreloads
+ausente no Game de produção e móduloeconomia ausente: overlay3arquivos cria
+grafo híbrido. É causa candidata verificável, sem tetoORC afrouxado. Próximo passo
+no checkout QA: integrar somente checkpoints até69641c9f3 e wiring público
+CLEAN0179ea07, preservar main5d/ec7; não copiar dirtyF2/CampoUV antes do aceite.
+Missão até18:45UTC continua incluindo merges/release e todos os defeitos visuais.

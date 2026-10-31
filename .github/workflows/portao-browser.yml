@@ -157,6 +157,24 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run eval:select
 
+      - name: Pegada do lobby nos 11 casos públicos
+        if: ${{ !cancelled() }}
+        run: npm run eval:lobbyarmamao
+
+      - name: Mira1P da AK pública
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p artifacts
+          npm run eval:mira-public
+
+      - name: Guarda a medição da mira pública
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mira-public
+          path: artifacts/mira-public.json
+          if-no-files-found: warn
+
       # A porta de entrada do funil: o gesto que tira a splash não pode apertar o menu
       # por baixo (medido no runner do #368 — ver tools/eval/entrada-check.mjs).
       - name: eval:entrada (o gesto que entra não aperta botão do menu)

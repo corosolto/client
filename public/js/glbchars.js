@@ -785,17 +785,6 @@ export function buildCharacterModel(def, opts = {}) {
         handBone.localToWorld(carryPalm);model.worldToLocal(carryPalm);
         ctrl.tpMount.carryPalmModel=carryPalm;
       }
-      // PV_PULSO: guarda a pegada de JOGO e gira o pulso. Só depois da palma/folga (antes,
-      // desviava a folga do corpo nos mascotes). Faca fora: mesmo porte no jogo e na vitrine.
-      if (PV_PULSO && opts.preview && !faca && ctrl.tpMount) {
-        const funcional = new THREE.Quaternion().setFromEuler(new THREE.Euler(TP_CARRY_PITCH, TP_CARRY_YAW, 0, 'YXZ'));
-        const pegada = handBone.getWorldQuaternion(new THREE.Quaternion()).invert()
-          .multiply(model.getWorldQuaternion(new THREE.Quaternion()).multiply(funcional));
-        ctrl.tpMount.pegada = pegada;
-        ctrl.tpMount.pegadaInv = pegada.clone().invert();
-        ctrl.tpMount.pegadaAtiva = true;
-        orientTpMount(ctrl.tpMount);
-      }
     } else if (mount) {
       // --- caminho antigo (?tpmount=0): direção do cano pela linha antebraço->mão ---
       const dirAvg = new THREE.Vector3();
@@ -905,6 +894,25 @@ export function buildCharacterModel(def, opts = {}) {
     'LeftUpLeg', 'RightUpLeg', 'LeftLeg', 'RightLeg', 'LeftFoot', 'RightFoot']);
   model.traverse(o => { if (o.isBone && QUERO.has(o.name) && !corpo.has(o.name)) corpo.set(o.name, o); });
   ctrl.corpo = corpo;
+  /* PV_PULSO: guarda a pegada de JOGO e gira o pulso — mas só DEPOIS de torso/corpo
+     (o overlay 1H precisa deles) e da pose funcional assentada (#1179, crítico 31/10). */
+  if (PV_PULSO && opts.preview && withWeapon && ctrl.tpMount && !BLADES.has(opts.weaponId)) {
+    const funcional = new THREE.Quaternion().setFromEuler(new THREE.Euler(TP_CARRY_PITCH, TP_CARRY_YAW, 0, 'YXZ'));
+    // A pegada funcional é a POSE ASSENTADA (clamp de frente + overlay 1H): assenta o
+    // porte real uma vez aqui no build, com o carry de jogo, só onde o clamp existe.
+    if (TP_FRONT_MAX_CHAR[ctrl.bodyId] !== undefined) {
+      const vitrine = ctrl.tpMount.carry;
+      ctrl.tpMount.carry = funcional;
+      for (let i = 0; i < 60; i++) ctrl.update(1 / 30, 0, false, 0);
+      ctrl.tpMount.carry = vitrine;
+    }
+    const pegada = handBone.getWorldQuaternion(new THREE.Quaternion()).invert()
+      .multiply(model.getWorldQuaternion(new THREE.Quaternion()).multiply(funcional));
+    ctrl.tpMount.pegada = pegada;
+    ctrl.tpMount.pegadaInv = pegada.clone().invert();
+    ctrl.tpMount.pegadaAtiva = true;
+    orientTpMount(ctrl.tpMount);
+  }
   return { group, parts: { head }, isGLB: true, mixer, ctrl };
 }
 
