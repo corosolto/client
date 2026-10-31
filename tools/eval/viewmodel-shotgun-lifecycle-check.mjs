@@ -23,8 +23,8 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad, m
   }
   return { errors, samples };
 }
-check(AUTHORED_VM_ENABLED === false, 'ativação global continua desligada sem opt-in');
-check(VM_FAMILY.shotgun.ready === false, 'família shotgun continua ready:false');
+check(AUTHORED_VM_ENABLED === true, 'runtime autorado publicado está ativo');
+check(VM_FAMILY.shotgun.ready === true, 'família shotgun publicada está ready:true');
 check(VM_WEAPON.shotgun.baked === true && VM_WEAPON.shotgun.runtime !== 'family', 'shotgun usa produto baked próprio');
 const baseline = matrix(); check(baseline.errors.length === 0, 'shotgun atravessa lifecycle 30x em 3:2 e 16:9', `${baseline.samples} amostras`);
 const stale = matrix({ accepts: ({ key, activeKey, utility }) => key === activeKey && !utility }); check(stale.errors.length > 0, 'mutante que aceita Promise obsoleta reprova');

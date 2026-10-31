@@ -24,8 +24,8 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad, m
   }
   return { errors, samples };
 }
-check(AUTHORED_VM_ENABLED === false, 'ativação global continua desligada sem opt-in');
-check(VM_FAMILY.lmg.ready === false, 'família lmg continua ready:false');
+check(AUTHORED_VM_ENABLED === true, 'runtime autorado publicado está ativo');
+check(VM_FAMILY.lmg.ready === true, 'família lmg publicada está ready:true');
 check(VM_FAMILY.lmg.reloadStyle === 'belt', 'LMG recarrega por cinto, sem laço de pente');
 check(VM_WEAPON.lmg.baked === true && VM_WEAPON.lmg.runtime !== 'family', 'LMG usa produto baked próprio');
 const baseline = matrix(); check(baseline.errors.length === 0, 'LMG atravessa lifecycle 30x em 3:2 e 16:9', `${baseline.samples} amostras`);

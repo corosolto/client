@@ -48,8 +48,8 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
   return { errors, samples };
 }
 
-check(AUTHORED_VM_ENABLED === false, 'ativação global continua desligada sem opt-in');
-check(VM_FAMILY.g3.ready === false, 'família G3 continua ready:false');
+check(AUTHORED_VM_ENABLED === true, 'runtime autorado publicado está ativo');
+check(VM_FAMILY.g3.ready === true, 'família G3 publicada está ready:true');
 check(VM_WEAPON.g3.baked === true, 'G3 usa candidato baked por arma');
 const baseline = matrix();
 check(baseline.errors.length === 0, 'G3 atravessa lifecycle 30x em 3:2 e 16:9', `${baseline.samples} amostras`);

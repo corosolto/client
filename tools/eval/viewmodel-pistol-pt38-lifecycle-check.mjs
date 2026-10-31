@@ -48,8 +48,8 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
   return { errors, samples };
 }
 
-check(AUTHORED_VM_ENABLED === false, 'ativação global continua desligada sem opt-in');
-check(VM_FAMILY.pistol.ready === false, 'família pistol continua ready:false');
+check(AUTHORED_VM_ENABLED === true, 'runtime autorado publicado está ativo');
+check(VM_FAMILY.pistol.ready === true, 'família pistol publicada está ready:true');
 check(VM_WEAPON.pistol.baked === true && VM_WEAPON.pistol.runtime === 'family',
   'PT-38 usa produto baked canônico da família');
 const baseline = matrix();

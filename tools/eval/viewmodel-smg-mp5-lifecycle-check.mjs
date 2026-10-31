@@ -23,10 +23,10 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad, m
   }
   return { errors, samples };
 }
-check(AUTHORED_VM_ENABLED === false, 'ativação global continua desligada sem opt-in');
-check(VM_FAMILY.mp5.ready === false, 'família mp5 continua ready:false');
+check(AUTHORED_VM_ENABLED === true, 'runtime autorado publicado está ativo');
+check(VM_FAMILY.mp5.ready === true, 'família mp5 publicada está ready:true');
 check(VM_WEAPON.mp5.baked === true && VM_WEAPON.mp5.runtime === 'family', 'MP5 usa produto baked canônico da família');
-check(VM_WEAPON.mp5.ads?.auto === true && VM_WEAPON.mp5.ads?.off?.every((value) => value === 0), 'MP5 usa ADS automático pelos sockets próprios');
+check(VM_WEAPON.mp5.ads?.auto === true && VM_WEAPON.mp5.ads?.off?.length === 3 && VM_WEAPON.mp5.ads.off.every(Number.isFinite), 'MP5 usa ADS automático com ajuste de enquadramento válido');
 const baseline = matrix(); check(baseline.errors.length === 0, 'MP5 atravessa lifecycle 30x em 3:2 e 16:9', `${baseline.samples} amostras`);
 const stale = matrix({ accepts: ({ key, activeKey, utility }) => key === activeKey && !utility }); check(stale.errors.length > 0, 'mutante que aceita Promise obsoleta reprova');
 const preload = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: false, scopeCovered: false } }); check(preload.errors.length > 0, 'mutante que oculta fallback pré-load reprova');

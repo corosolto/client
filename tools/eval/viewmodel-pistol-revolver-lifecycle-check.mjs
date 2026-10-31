@@ -23,8 +23,8 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad, m
   }
   return { errors, samples };
 }
-check(AUTHORED_VM_ENABLED === false, 'ativação global continua desligada sem opt-in');
-check(VM_FAMILY.revolver.ready === false, 'família revolver continua ready:false');
+check(AUTHORED_VM_ENABLED === true, 'runtime autorado publicado está ativo');
+check(VM_FAMILY.revolver.ready === true, 'família revolver publicada está ready:true');
 check(VM_WEAPON.revolver38.baked === true && VM_WEAPON.revolver38.runtime === 'family', 'Revólver .38 usa produto baked canônico da família');
 const baseline = matrix(); check(baseline.errors.length === 0, 'Revólver .38 atravessa lifecycle 30x em 3:2 e 16:9', `${baseline.samples} amostras`);
 const stale = matrix({ accepts: ({ key, activeKey, utility }) => key === activeKey && !utility }); check(stale.errors.length > 0, 'mutante que aceita Promise obsoleta reprova');

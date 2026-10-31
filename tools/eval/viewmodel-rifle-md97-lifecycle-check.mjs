@@ -48,8 +48,8 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
   return { errors, samples };
 }
 
-check(AUTHORED_VM_ENABLED === false, 'ativação global continua desligada sem opt-in');
-check(VM_FAMILY.ar.ready === false, 'família AR continua ready:false');
+check(AUTHORED_VM_ENABLED === true, 'runtime autorado publicado está ativo');
+check(VM_FAMILY.ar.ready === true, 'família AR publicada está ready:true');
 check(VM_WEAPON.md97.baked === true, 'MD97 usa candidato baked por arma');
 const baseline = matrix();
 check(baseline.errors.length === 0, 'MD97 atravessa lifecycle 30x em 3:2 e 16:9', `${baseline.samples} amostras`);
