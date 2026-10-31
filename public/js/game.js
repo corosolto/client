@@ -7738,7 +7738,12 @@ export class Game {
     p.yaw = this._spawnYaw(s, p.team); p.pitch = 0;
     if (this._compra) {
       this._compra.rearmar(p);
-      if (this.arena) this._compra.abrirJanela();   // sem rodada, compra a cada renascimento
+      /* RELATO DO DONO (31/10): "quando o usuário volta pro respawn depois de morrer,
+         mostrar que ele tem 50 segs pra comprar arma". A janela de compra volta a abrir
+         a CADA renascimento — também no modo de rodadas, não só na arena. O banner diz o
+         tempo; a dica do HUD (#hud-treta) mantém o countdown correndo. */
+      this._compra.abrirJanela();
+      this._banner(frase('compraPrepare', ECONOMIA.tempoCompraS), frase('compraDica', this.mobile, ECONOMIA.tempoCompraS));
     }
     // Top off the CURRENT loadout's mags (primary could be any weapon now, not just AWP).
     // #268: em modo arma-única só recarrega slot PERMITIDO pelo modo (pistola não sai de

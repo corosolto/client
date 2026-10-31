@@ -11,6 +11,10 @@ import { frase, tr } from './i18n.js';
 
 const fmt = (v) => String(Math.max(0, v | 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 const GANHO_MS = 1600;
+/* Moeda TRETA$ (relato do dono, 31/10: valor com a moedinha perto das armas). Mesma
+   arte Saci que a loja usa (tp/loja.js). */
+const COIN = '/img/treta/coin-classic-saci.webp';
+const MOEDA_IMG = (cls) => `<img class="${cls}" src="${COIN}" alt="" aria-hidden="true" draggable="false">`;
 
 export class CompraPartida {
   constructor(game) {
@@ -48,7 +52,7 @@ export class CompraPartida {
     for (const id of ['hud-treta', 'compra-menu']) document.getElementById(id)?.remove?.();
     this.elSaldo = document.createElement('div');
     this.elSaldo.id = 'hud-treta';
-    this.elSaldo.innerHTML = '<span class="ht-moeda">TRETA$</span><b>0</b><em class="ht-ganho"></em><small class="ht-dica"></small>';
+    this.elSaldo.innerHTML = `${MOEDA_IMG('ht-coin')}<b>0</b><em class="ht-ganho"></em><small class="ht-dica"></small>`;
     hud?.appendChild?.(this.elSaldo);
     this.elMenu = document.createElement('div');
     this.elMenu.id = 'compra-menu';
@@ -197,7 +201,7 @@ export class CompraPartida {
       for (const c of this.game.combatants) {
         if (c.team !== t || !c.carteira) continue;
         const v = creditar(c.carteira, valor);
-        if (c === this.game.player && v) this._ganho(`+${fmt(v)}`);
+        if (c === this.game.player && v) this._ganho(`+${fmt(v)}`, { moeda: res === 'vitoria' });
       }
     }
   }
@@ -224,7 +228,10 @@ export class CompraPartida {
   aoRenascerBot(b) {
     if (b._remote) return;
     this._rearmarBot(b);
-    if (this.game.arena) this._botCompra(b);
+    /* A janela de compra reabre pra QUEM RENASCE no meio da rodada (relato do dono,
+       31/10) — o bot rearma com a mesma regra do jogador, senão só um lado volta
+       armado depois da morte. */
+    this._botCompra(b);
   }
 
   _rearmarBot(b, malha = true) {
@@ -255,13 +262,23 @@ export class CompraPartida {
     b.reloadUntil = 0;
   }
 
-  _ganho(txt) {
+  _ganho(txt, { moeda = false } = {}) {
     const em = this.elSaldo?.querySelector?.('.ht-ganho');
     if (!em) return;
     em.textContent = txt;
     em.classList?.add('on');
     clearTimeout(this._ganhoT);
     this._ganhoT = setTimeout(() => em.classList?.remove('on'), GANHO_MS);
+    if (!moeda) return;
+    /* MOEDA VIRANDO (relato do dono, 31/10): ao ganhar a rodada a moeda dá uma volta
+       (CSS 3D, sem JS por frame) e toca o som de moeda. */
+    this.elSaldo?.querySelector?.('.ht-moeda-anim')?.remove?.();
+    const img = document.createElement('img');
+    img.src = COIN; img.alt = ''; img.className = 'ht-moeda-anim';
+    img.setAttribute('aria-hidden', 'true');
+    this.elSaldo?.appendChild?.(img);
+    setTimeout(() => img.remove?.(), 1300);
+    this.game.sfx?.moeda?.();
   }
 
   tick() {
@@ -301,7 +318,8 @@ export class CompraPartida {
     const recusa = motivoRecusa({ id: it.id, saldo, agora: g.time, compraAte: this.compraAte, distSpawn: this.distSpawn(), vivo: g.player.alive, equip });
     const qtd = it.limite ? ` <small>${equip.flashes}/${it.limite}</small>` : '';
     return `<button type="button" class="cm-linha cm-item cm-equip${recusa ? ' off' : ''}" data-n="${i + 1}"><i>${i + 1}</i>`
-      + `<span>${tr(it.rotulo)}${qtd}</span><b>${fmt(preco)}</b></button>`;
+      + `<img src="${it.icone}" alt="" draggable="false">`
+      + `<span>${tr(it.rotulo)}${qtd}</span><b>${MOEDA_IMG('cm-moeda')}${fmt(preco)}</b></button>`;
   }
 
   _linhaMunicao(it, i, saldo) {
@@ -313,7 +331,8 @@ export class CompraPartida {
     });
     const qtd = arma ? `<small>${municao.atual}/${municao.max}</small>` : '';
     return `<button type="button" class="cm-linha cm-item cm-municao${recusa ? ' off' : ''}" data-n="${i + 1}"><i>${i + 1}</i>`
-      + `<span>${tr(it.rotulo)}${arma ? ` · ${arma.short}` : ''} ${qtd}</span><b>${fmt(it.preco)}</b></button>`;
+      + `<img src="${it.icone}" alt="" draggable="false">`
+      + `<span>${tr(it.rotulo)}${arma ? ` · ${arma.short}` : ''} ${qtd}</span><b>${MOEDA_IMG('cm-moeda')}${fmt(it.preco)}</b></button>`;
   }
 
   _render() {
@@ -321,11 +340,11 @@ export class CompraPartida {
     if (!m) return;
     if (!this.aberto) { m.classList.add('hidden'); return; }
     const saldo = this.carteira.saldo, p = this.game.player, assin = this.assinatura();
-    const cab = `<div class="cm-cabeca"><span>${frase('compraTitulo')}</span><b>TRETA$ ${fmt(saldo)}</b></div>`;
+    const cab = `<div class="cm-cabeca"><span>${frase('compraTitulo')}</span><b>${MOEDA_IMG('cm-moeda')}TRETA$ ${fmt(saldo)}</b></div>`;
     let corpo;
     if (!this.grupo) {
       corpo = this.grupos().map((g, i) =>
-        `<button type="button" class="cm-linha" data-n="${i + 1}"><i>${i + 1}</i><span>${tr(g.rotulo)}</span></button>`).join('');
+        `<button type="button" class="cm-linha" data-n="${i + 1}"><i>${i + 1}</i><img src="${g.icone}" alt="" draggable="false"><span>${tr(g.rotulo)}</span></button>`).join('');
     } else {
       const desl = this.desligados(), equip = this.equipDe(p);
       corpo = itensDoGrupo(this.grupo, { desligados: desl }).map((it, i) => {
@@ -340,7 +359,7 @@ export class CompraPartida {
         return `<button type="button" class="${cls}" data-n="${i + 1}"><i>${i + 1}</i>`
           + `<img src="/img/weapons/${it.id}.webp" alt="" draggable="false">`
           + `<span>${WEAPONS[it.id].short}${destaque ? ` <em>${frase('compraSuaArma')}</em>` : ''}</span>`
-          + `<b>${cheio}${fmt(preco)}</b></button>`;
+          + `<b>${cheio}${MOEDA_IMG('cm-moeda')}${fmt(preco)}</b></button>`;
       }).join('');
     }
     const pe = `<div class="cm-pe">${this.aviso ? `<span class="cm-aviso">${this.aviso}</span>` : ''}`

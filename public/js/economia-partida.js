@@ -6,7 +6,9 @@ import { WEAPONS } from './data/weapons.js';
 export const ECONOMIA = Object.freeze({
   saldoInicial: 800,
   teto: 16000,
-  tempoCompraS: 30,
+  /* 30 -> 50 s (relato do dono, 31/10): janela maior para comprar ao renascer no meio
+     da rodada; as réguas eval:economia e eval:economia-jogo leem daqui. */
+  tempoCompraS: 50,
   raioCompraM: 9,
   vitoria: 3250,
   derrotaSeguida: Object.freeze([1400, 1900, 2400, 2900, 3400]),

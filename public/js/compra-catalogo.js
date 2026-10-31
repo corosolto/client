@@ -2,14 +2,17 @@
 // Preços e recompensas seguem o CS2; procedência e regras em docs/ECONOMIA-PARTIDA.md.
 
 // Grupos na ordem do menu: a tecla do grupo é o índice + 1, como no menu de compra do CS.
+/* `icone`: imagem representativa do botão (relato do dono, 31/10: "os botões de opções
+   com imagens representativas"). Armas usam a arte lateral de /img/weapons; equipamento
+   e munição usam os SVGs de /img/compra/. */
 export const GRUPOS_COMPRA = Object.freeze([
-  { id: 'pistolas', rotulo: 'PISTOLAS' },
-  { id: 'pesadas', rotulo: 'PESADAS' },
-  { id: 'smg', rotulo: 'SUBMETRALHADORAS' },
-  { id: 'fuzis', rotulo: 'FUZIS' },
-  { id: 'precisao', rotulo: 'SNIPERS' },
-  { id: 'equipamento', rotulo: 'EQUIPAMENTO' },
-  { id: 'municao', rotulo: 'MUNIÇÃO' },
+  { id: 'pistolas', rotulo: 'PISTOLAS', icone: '/img/weapons/deagle.webp' },
+  { id: 'pesadas', rotulo: 'PESADAS', icone: '/img/weapons/shotgun.webp' },
+  { id: 'smg', rotulo: 'SUBMETRALHADORAS', icone: '/img/weapons/mp5.webp' },
+  { id: 'fuzis', rotulo: 'FUZIS', icone: '/img/weapons/ak.webp' },
+  { id: 'precisao', rotulo: 'SNIPERS', icone: '/img/weapons/awp.webp' },
+  { id: 'equipamento', rotulo: 'EQUIPAMENTO', icone: '/img/compra/colete.svg' },
+  { id: 'municao', rotulo: 'MUNIÇÃO', icone: '/img/compra/municao.svg' },
 ]);
 
 // `slot` diz o destino: equipamento soma proteção/flash; munição repõe a reserva, sem trocar arma.
@@ -45,14 +48,15 @@ const equip = (id, preco, rotulo, chave, extra = {}) =>
   Object.freeze({ id, grupo: 'equipamento', slot: 'equipamento', preco, recompensaKill: 0, rotulo, chave, ...extra });
 
 export const EQUIPAMENTO_COMPRA = Object.freeze([
-  equip('colete', 650, 'COLETE', 'armadura'),
-  equip('colete-capacete', 1000, 'COLETE + CAPACETE', 'armadura'),
-  equip('capacete', 350, 'CAPACETE', 'armadura'),
-  equip('flash', 200, 'FLASH', 'flash', { limite: 2 }),
+  equip('colete', 650, 'COLETE', 'armadura', { icone: '/img/compra/colete.svg' }),
+  equip('colete-capacete', 1000, 'COLETE + CAPACETE', 'armadura', { icone: '/img/compra/colete-capacete.svg' }),
+  equip('capacete', 350, 'CAPACETE', 'armadura', { icone: '/img/compra/capacete.svg' }),
+  equip('flash', 200, 'FLASH', 'flash', { limite: 2, icone: '/img/compra/flash.svg' }),
 ]);
 
 const municao = (id, preco, rotulo, armaSlot) =>
-  Object.freeze({ id, grupo: 'municao', slot: 'municao', preco, recompensaKill: 0, rotulo, armaSlot });
+  Object.freeze({ id, grupo: 'municao', slot: 'municao', preco, recompensaKill: 0, rotulo, armaSlot, icone: '/img/compra/municao.svg' });
+
 
 export const MUNICAO_COMPRA = Object.freeze([
   municao('municao-primaria', 200, 'MUNIÇÃO PRIMÁRIA', 'primary'),
