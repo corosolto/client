@@ -2128,11 +2128,11 @@ export class Game {
       if (e.code === 'KeyZ') { this._radioShow('z'); return; }
       if (e.code === 'KeyX') { this._radioShow('x'); return; }
       if (e.code === 'KeyV') { this._radioShow('c'); return; }
-      if (e.code === 'KeyB' && !e.repeat) {
+      if (e.code === 'KeyN' && !e.repeat) {
         if (e.shiftKey) this._swapShoulder();
         else this._toggleCamView();
         return;
-      }   // B: 1ª → 3ª → ombro · Shift+B: troca o ombro
+      }   // N: 1ª → 3ª → ombro · Shift+N: troca o ombro
       if (e.code === 'KeyT' && !e.repeat) { this._emoteToggle(); return; }   // roda de dança
       if (this.emoteOpen) {
         const n = /^Digit([1-8])$/.exec(e.code);

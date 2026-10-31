@@ -189,29 +189,33 @@ const passo = (g, n = 1, eye = 1.62) => { for (let i = 0; i < n; i++) Game.proto
     { chamadas: targets.length, mesmoArray: targets.every((target) => target === targets[0]) });
 }
 
-/* ---- (4) B e Shift+B passam pela camada real de teclado ---- */
+/* ---- (4) N e Shift+N passam pelo teclado; B fica reservado à compra ---- */
 {
   const g = boot({});
-  const teclaB = ({ shiftKey = false, repeat = false } = {}) => g._kd({
-    code: 'KeyB', shiftKey, repeat, target: null, preventDefault() {},
+  const teclaN = ({ shiftKey = false, repeat = false } = {}) => g._kd({
+    code: 'KeyN', shiftKey, repeat, target: null, preventDefault() {},
   });
   g.setCamView('third');
-  teclaB();
-  check('B sem Shift alterna o modo', g.camView === 'shoulder', { camView: g.camView });
+  teclaN();
+  check('N sem Shift alterna o modo', g.camView === 'shoulder', { camView: g.camView });
   passo(g, 1);
   const eye = eyePos(g);
   const ladoAntes = g.camera.position.clone().sub(eye).dot(g._tpRight);
-  teclaB({ shiftKey: true });
+  teclaN({ shiftKey: true });
   passo(g, 1);
   const ladoDepois = g.camera.position.clone().sub(eye).dot(g._tpRight);
-  check('Shift+B mantém câmera de ombro', g.camView === 'shoulder', { camView: g.camView });
-  check('Shift+B inverte lado do enquadramento',
+  check('Shift+N mantém câmera de ombro', g.camView === 'shoulder', { camView: g.camView });
+  check('Shift+N inverte lado do enquadramento',
     ladoAntes > 0.2 && ladoDepois < -0.2,
     { ladoAntes: +ladoAntes.toFixed(3), ladoDepois: +ladoDepois.toFixed(3) });
   const ladoAposTroca = g._tpShoulderSide;
-  teclaB({ shiftKey: true, repeat: true });
-  check('repeat de Shift+B não troca de novo', g._tpShoulderSide === ladoAposTroca,
+  teclaN({ shiftKey: true, repeat: true });
+  check('repeat de Shift+N não troca de novo', g._tpShoulderSide === ladoAposTroca,
     { antes: ladoAposTroca, depois: g._tpShoulderSide });
+  const mode = g.camView, side = g._tpShoulderSide;
+  for (const shiftKey of [false,true]) g._kd({code:'KeyB',shiftKey,repeat:false,target:null,preventDefault(){}});
+  check('B e Shift+B não mexem na câmera',g.camView===mode && g._tpShoulderSide===side,
+    {mode,givenMode:g.camView,side,givenSide:g._tpShoulderSide});
 }
 
 const result = {

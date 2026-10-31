@@ -44,15 +44,19 @@ const trials = [
       'ombro: malhas próprias somem só dentro da cápsula', REUSE]],
   ['ombro-fixo', source.replace(
     'this._tpShoulderSide = -(this._tpShoulderSide || 1);',
-    'this._tpShoulderSide = 1;'), ['Shift+B inverte lado do enquadramento']],
+    'this._tpShoulderSide = 1;'), ['Shift+N inverte lado do enquadramento']],
   ['shift-ignorado', source.replace(
     'if (e.shiftKey) this._swapShoulder();',
     'if (e.shiftKey) this._toggleCamView();'),
-    ['Shift+B mantém câmera de ombro', 'Shift+B inverte lado do enquadramento']],
+    ['Shift+N mantém câmera de ombro', 'Shift+N inverte lado do enquadramento']],
   ['repeat-aceito', source.replace(
-    "if (e.code === 'KeyB' && !e.repeat) {",
-    "if (e.code === 'KeyB') {"),
-    ['repeat de Shift+B não troca de novo']],
+    "if (e.code === 'KeyN' && !e.repeat) {",
+    "if (e.code === 'KeyN') {"),
+    ['repeat de Shift+N não troca de novo']],
+  ['volta-b', source.replace(
+    "if (e.code === 'KeyN' && !e.repeat) {",
+    "if ((e.code === 'KeyN' || e.code === 'KeyB') && !e.repeat) {"),
+    ['B e Shift+B não mexem na câmera']],
 ];
 
 const results = [];
