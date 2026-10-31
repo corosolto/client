@@ -776,3 +776,16 @@ grafo híbrido. É causa candidata verificável, sem tetoORC afrouxado. Próximo
 no checkout QA: integrar somente checkpoints até69641c9f3 e wiring público
 CLEAN0179ea07, preservar main5d/ec7; não copiar dirtyF2/CampoUV antes do aceite.
 Missão até18:45UTC continua incluindo merges/release e todos os defeitos visuais.
+
+
+## QA — integração seletiva c4754bf6b iniciada
+
+Checkpoint anterior: branch codex/visual-release-review-20261031, HEAD4c5c3dce5,
+árvore limpa. Objetivo: integrar apenas commits aceitos atéc4754bf6b
+(CampoUV675444772, F2193d0aa23, longitudinal final), preservando main5d/ec7,
+hotfix e consumidores centrais. Snapshot privado /tmp/qa-visual-integration-r3.
+Não copiar dirty Boot/CI da implementação. Depois preparar aliases públicos
+faca/CampoUV e contrato atual de grafite; wiring permanece SEM COMMIT até
+transferência explícita dos arquivos CI pelo Root. Sem push/PR/browser ou hook
+integral nesta fase; evidência Node focal limitada a5min. Aceites visuais e
+críticas anteriores são do Root e não substituem a revisão desta integração.
