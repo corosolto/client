@@ -924,10 +924,13 @@ Críticoindependente conferiu31/31arquivoshotfix idênticos ao MERGE_HEADec7cec3
 Mergeorigin/main8f1c04a18 resolveconflitoscomscriptsQA atuais preservados (zeroaliasmainfaltando), helpernormal-only idênticoembytes com modo755domain eledgerunion dasduasentregas;3docsgeradossemupdate. Node22 via npmexec confirmou identitygateexit0 (qa-node22-identity-R1.log). Release normalworkflow_dispatch solicitado após#1184merge, aguardamainCI. Nenhumversionbumpmanual. Focaispósintegração/críticadomerge/pushloteaindapendentes.
 
 
-## 17:44 UTC — preview limitado à arma escolhida
+## 17:39 UTC — preview limitado à arma escolhida
 
 GLM entregou1linha em main.js pvSetChar: preloadCharacterAssets recebe weapons:[arma.weaponId], evitadefault26apesardo previewusar1. Prova3seleções+negativo; críticoindependente4ddb0d79 conferiu14asserções+20.412decisões reais(63chars×11packs/26equipamentos), armassempreválidas, token/skin/glove/eyewearpreservados. Escopodepedido1vs26; NÃOémedição debytesnemEgovisual. Fonte/artefatos GLM-PREVIEW-ASSET-SCOPE-R1* no auditexterno.
 
 Main8f1cmergeQA recebeu mesma crítica4ddb0d79 CLEAN:12normais/ref/docbytesmain,modo755/aliases/prefixos/assetrevpreservados; focais5/5GREEN71.4s. GLMRO3mintimeoutNÃOaceito. Releaseworkflow41224203557 SUCCESS, aguardaidentificartag/deploy.
 
 BootR18 privado fechouexit1 realcontratoporFIM:8.456.735B/326req (256.735Bacimateto), READY/ORC2/ORC3GREEN,235corposSHA; referênciapesada11.208.352B/337req. MutantesbloqueadospelnominalRED. Vaca+tatuqueconcluírammaiscedoexplicamvariância; investigam-se carimborealREADY vs pollingantesalterarproduto. Teto8.2MB/340intacto, nenhumbootrejeitadopromovido. EgohealthR3tambémtimeout20s/124,nenhumaoperaçãoemoutrasSpaces. Missãoaté18:45continua.
+
+
+Merge9b03aad7f preserva ledgerQA que jácontém asduasnotasnovasimpl; alteraçãofuncionalúnica main.js1168 aprovadacrítica4ddb0d79. Release v2.1.0-alpha.132 publicado17:34:14, prod-watch41225397893SUCCESS noab3e20c75. BootR18CLEANfonte73contraprovas0f369203 masnominalRED8.456.735B/326, sempromoção.
