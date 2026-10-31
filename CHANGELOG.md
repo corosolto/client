@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.126`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.130`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -42,6 +42,7 @@
 
 ### Corrigido
 - Canarinho e suas três skins deixam de carregar uma cauda maior que quase metade do corpo. A pistola fica à frente do tronco, com cotovelo dobrado e montagem recalculada depois da pose de uma mão.
+- A contagem diária de visitantes cobre todas as páginas públicas. Antes, só a entrada do jogo emitia a visita e deixava de fora quem chegava por conteúdo, perfil ou documento legal.
 - Perfis públicos continuam visíveis quando o bootstrap da conta falha ou a sessão expira. Links do ranking usam o handle público, o histórico do navegador restaura a lista, e perfis sem totais aparecem com zero.
 - O contador online voltou ao topo em desktop e celular. O rodapé móvel usa ícones quadrados com nome acessível, e a tela de privacidade preserva a foto com checkbox de 20 px.
 - A câmera em terceira pessoa considera filhos de modelos importados e segura o último bloqueio por 80 ms. Armas autoradas não reativam malhas antigas, e o HUD volta a mostrar a arte da arma equipada.
@@ -149,6 +150,46 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.130] — 2026-10-31
+
+### Mudado
+- Conta visitantes em todas as páginas públicas (#1176)
+- fix: conte visitantes em todas as páginas
+
+## [2.1.0-alpha.129] — 2026-10-30
+
+### Mudado
+- Envie a identidade persistente ao funil (#1175)
+- Envie a identidade persistente ao funil
+
+## [2.1.0-alpha.128] — 2026-10-30
+
+### Mudado
+- Presença passa a ler cidade da Cloudflare (#1174)
+- fix: ler geolocalização da Cloudflare
+
+## [2.1.0-alpha.127] — 2026-10-29
+
+### Mudado
+- fix: granada x recarga x morte, e o braco da AK (#1103)
+- fix: chat e mensagens param de falhar em silencio (#1130)
+- Envie o funil diário de jogadores únicos (#1172)
+- Preserve o contrato das rotas geográficas
+- Mantenha contagem única no proxy do site
+- Explique a atividade autenticada no funil
+- Envie o funil diário de jogadores únicos
+- ci(portao): o filtro do PR deixa de morrer no checkout
+- feat(comunidade): mandar mensagem para qualquer cadastrado
+- docs(armas): regenera a matriz com as linhas novas de game.js
+- fix(comunidade): a DM explica qual portão barrou, e a régua volta a medir
+- fix(chat): a tecla do chat para de morrer calada
+- docs(armas): regenera a matriz com as linhas novas de game.js
+- docs(bugs): a história dos cinco relatos sai do código
+- docs(arch): regenera o mapa com os métodos novos de game.js
+- chore(eval): registra as réguas dos relatos de 26/10
+- fix(gameplay): granada, recarga e morte param de se atropelar
+- fix(viewmodel): tampa da manga colapsava a malha quantizada da AK
 
 ## [2.1.0-alpha.126] — 2026-10-25
 
