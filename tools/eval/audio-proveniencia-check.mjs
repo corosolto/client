@@ -498,10 +498,15 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
 
 /* ── PRV9: o LEGADO está catalogado, e ninguém diz que foi substituído ─────
    `public/audio/manifest.example.json` é VERSIONADO e é o que o `fetch-audio.sh`
-   copia quando o zip não traz manifest. Ele nomeia arquivos que apontam para
-   Valve (`awp-cs-1-6`, `usp_unsil`, `knife_slash`, `half-life`) e Epic
-   (`ut-double-kill`) — e o próprio `public/js/audio.js:2` diz que sample real de
-   CS não pode ser embutido. **Esta lane não substituiu nada disso.**
+   copia quando o zip não traz manifest — ou seja, ele VIRA o `manifest.json` que o
+   jogo busca em runtime (`public/js/main.js:658`, `public/js/audio.js:84`).
+
+   Até 2026-10-28 ele nomeava arquivos que apontam para Valve (`awp-cs-1-6`,
+   `usp_unsil`, `knife_slash`, `half-life`) e Epic (`ut-double-kill`) — 45 das 62
+   folhas — enquanto o próprio `public/js/audio.js:2` diz que sample real de CS não
+   pode ser embutido. O BUG-136/#1107 trocou os 45 caminhos por nomes neutros e
+   autorais. **Isso tirou a MARCA do arquivo público; NÃO substituiu nenhum byte de
+   som** — e esta cláusula continua não deixando ninguém dizer que substituiu.
 
    PRV5 casa por sha-256 e estes arquivos não existem em clone limpo: sem hash não
    há o que casar, então eles estão FORA daquela cobertura. Esta cláusula cobra o
@@ -512,8 +517,17 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
      · todo padrão declarado casa pelo menos uma folha (padrão morto vira falso
        conforto de "está catalogado").
 
+   Com o legado zerado a lista declarada fica VAZIA, e os dois sentidos seguem
+   valendo: folha suspeita que volte não casa padrão nenhum e reprova na hora. Foi
+   exatamente o segundo sentido que pegou o catálogo defasado quando os 45 nomes
+   saíram — 4 padrões viraram mortos e a cláusula ficou vermelha até o ledger contar
+   a verdade nova.
+
    A lista de arquivos NÃO é escrita à mão: ela é recomputada do manifest a cada
-   execução. Lista à mão de 45 caminhos envelhece no primeiro som novo. */
+   execução. Lista à mão de 45 caminhos envelhece no primeiro som novo.
+
+   Cláusula irmã: `tools/eval/audio-manifest-marcas-check.mjs` cobre o subconjunto
+   de MARCA de terceiro, onde catalogar não resolve — tem que sair. */
 {
   const EXEMPLO = 'public/audio/manifest.example.json';
   const leg = L.legado;
@@ -539,8 +553,16 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
 
     const padroes = (leg.padroes || []).map((p) => ({ ...p, re: new RegExp(p.padrao, 'i') }));
     /* O que "cheira" a legado, independente dos padrões declarados: é a rede que
-       pega padrão que alguém esqueceu de declarar. */
-    const SUSPEITO = /cs-1-6|cs-go|counter-strike|half-life|^audio\/game\/ut-|knife_|usp_|awp|glock18|deagle|m4a1|mp5-|p90-|galil|famas|aug-|sg55|xm1014|m249|scout_|m3-1|mac10|g3sg1|sg550|generic_reload/i;
+       pega padrão que alguém esqueceu de declarar.
+
+       FURO ENCONTRADO EM 28/10/2026 (BUG-136/#1107): faltava `ak47`. O manifest
+       tinha `audio/weapons/ak47-2.wav` em 3 chaves (`ak`, `akm`, `m92`) e esta rede
+       não via nenhuma — por isso a cláusula media "45 de 62" quando o número real
+       era 48. O sentido bidirecional não salva aqui: `semPadrao` só examina o que
+       o SUSPEITO já marcou, então furo na rede é invisível para a própria rede.
+       Lição: a rede que decide o universo da medição precisa ser revisada contra
+       uma lista externa, não contra si mesma. */
+    const SUSPEITO = /cs-1-6|cs-go|counter-strike|half-life|^audio\/game\/ut-|knife_|usp_|awp|glock18|deagle|ak47|m4a1|mp5-|p90-|galil|famas|aug-|sg55|xm1014|m249|scout_|m3-1|mac10|g3sg1|sg550|generic_reload/i;
     const suspeitas = folhas.filter((f) => SUSPEITO.test(f));
     const semPadrao = suspeitas.filter((f) => !padroes.some((p) => p.re.test(f)));
     if (semPadrao.length) {
@@ -558,9 +580,14 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
         + ' arquivos, e dizer que alcança é a régua mentindo sobre a própria cobertura.');
     }
     if (!semPadrao.length && !mortos.length) {
-      notas.push(`PRV9 ok: ${suspeitas.length} de ${folhas.length} caminhos do manifest de exemplo são`
-        + ` legado nominal CS/Valve/UT, todos catalogados como \`${leg.decisao}\`.`
-        + ' NÃO foram substituídos — e a régua não deixa dizer que foram.');
+      notas.push(suspeitas.length
+        ? `PRV9 ok: ${suspeitas.length} de ${folhas.length} caminhos do manifest de exemplo são`
+          + ` legado nominal CS/Valve/UT, todos catalogados como \`${leg.decisao}\`.`
+          + ' NÃO foram substituídos — e a régua não deixa dizer que foram.'
+        : `PRV9 ok: 0 de ${folhas.length} caminhos do manifest de exemplo cheiram a legado`
+          + ' nominal CS/Valve/UT — os nomes saíram do arquivo público (BUG-136/#1107).'
+          + ' Nenhum byte de som foi substituído, a fonte segue `proibida` e'
+          + ' `cobertoPorPRV5` segue `false`: a régua não deixa confundir renomear com trocar.');
     }
   }
 }

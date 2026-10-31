@@ -59,6 +59,16 @@ jobs:
         run: npm run eval:wfcheckout
       - name: Syntax check do jogo (public/js)
         run: npm run syntax
+      - name: Contrato de famílias e marcas do áudio
+        run: npm run eval:audiomarcas
+      - name: Dependências e reconstrução do fundo do menu
+        run: npm run eval:menuprops
+      - name: Mutantes do orçamento exigem a falha correta
+        run: node tools/eval/boot-mutant-verdict-check.mjs --mutantes
+      - name: Assets válidos e mutante entregue no orçamento
+        run: node tools/eval/boot-assets-check.mjs --mutantes
+      - name: Causa real da liberação da splash com mutantes
+        run: node tools/eval/boot-ready-check.mjs --mutantes
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         run: npm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
@@ -86,6 +96,8 @@ jobs:
       # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
       - name: Todo mapa devolve o que o game.js consome
         run: npm run eval:mapcontrato
+      - name: Backpedal preserva autoridade e lateral com mutantes
+        run: npm run eval:tpbackpedal
       - name: Amazônia acessível e bots entre palafitas
         run: npm run eval:amazonia
       - name: Escadão — circulação, estrutura e casa
