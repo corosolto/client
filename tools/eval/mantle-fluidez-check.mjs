@@ -7,11 +7,11 @@ import { THREE, bootGame, initTextures } from './harness.mjs';
 const mutanteTeleporte = process.argv.includes('--mutante=teleporte');
 const game = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 12345 });
 const player = game.player;
+assert(game._mAlc, 'grade global de território foi adiada para o primeiro quadro jogável');
 const start = new THREE.Vector3(-4.1, -1.53, -27.8);
 const dir = { x: 0, z: 1 };
 const target = game._mantleTarget(start, dir.x, dir.z);
 assert(target, 'fixture perdeu a beirada escalável do canal');
-assert(game._mAlc, 'grade global de território foi adiada para o primeiro quadro jogável');
 const candidatos = game._mantleColliders(start.x, start.z);
 assert(candidatos.length < game.world.colliders.length,
   `broadphase local não reduziu colisores (${candidatos.length}/${game.world.colliders.length})`);

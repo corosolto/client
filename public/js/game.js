@@ -2844,6 +2844,9 @@ export class Game {
       const jx = s.x + (Math.random() - .5), jz = s.z + (Math.random() - .5);
       ent.pos.set(jx, this._spawnY(jx, jz), jz);
       ent.hp = 100; ent.alive = true; ent.respawnAt = 0; ent.protUntil = 0;
+      // Rodada nova elimina a trajetória anterior e os buffers de salto em todos os slots.
+      ent.mantle = null; ent.mantleF = 0; ent._spaceHeld = false; ent._mantleScanAt = 0;
+      ent.jumpBufferedUntil = 0; ent.coyoteUntil = 0;
       return s;
     };
     const playerSpawn = place(this.player, this.playerTeam, 0);
