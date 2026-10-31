@@ -55,7 +55,7 @@ if (process.env.EGO_TASK_SPACE !== undefined && (!Number.isSafeInteger(EGO_SPACE
   throw Error('EGO_TASK_SPACE deve ser um inteiro positivo; bake cancelado');
 }
 const checkpoint = CHECKPOINT && existsSync(CHECKPOINT) ? JSON.parse(readFileSync(CHECKPOINT, 'utf8')) : { maps: {} };
-const inputSources = ['public/js/textures.js', 'public/js/mapprops.js'];
+const inputSources = ['public/js/textures.js', 'public/js/mapprops.js', 'public/js/graffiti_art_id.js'];
 const inputDigest = () => createHash('sha256').update(inputSources.map(file => file + '\0' + readFileSync(file, 'utf8')).join('\0')).digest('hex');
 const producerInputs = inputDigest();
 const hashAssets = (directory, assetHash) => {

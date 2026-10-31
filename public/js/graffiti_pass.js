@@ -64,16 +64,17 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { medirParede, offsetTinta } from './map_decals.js';
 import { GRAFITE } from './graffiti_layout.js';
 import { criarSuporteGrafite, superficieGrafitavel } from './graffiti_surface.js';
+import { identidadeArteGrafite } from './graffiti_art_id.js';
 
 const imagensGrafite = new WeakMap();
 let imagemGrafiteId = 0;
 function chaveArte(texture, fallback) {
   const image = texture?.source?.data || texture?.image;
-  if (image?.src) return decodeURIComponent(new URL(image.src, 'http://grafite.local').pathname);
-  if (texture?.userData?.decalArquivo) return '/img/decals/' + texture.userData.decalArquivo;
+  if (image?.src) return identidadeArteGrafite(String(image.src));
+  if (texture?.userData?.decalArquivo) return identidadeArteGrafite('/img/decals/' + texture.userData.decalArquivo);
   const arquivo = String(fallback || '').replace(/^decal:/, '');
-  if (arquivo.startsWith('poster:')) return '/posters/' + arquivo.slice(7);
-  if (/\.(png|jpe?g|webp)$/i.test(arquivo)) return '/img/decals/' + arquivo;
+  if (arquivo.startsWith('poster:')) return identidadeArteGrafite('/posters/' + arquivo.slice(7));
+  if (/\.(png|jpe?g|webp)$/i.test(arquivo)) return identidadeArteGrafite('/img/decals/' + arquivo);
   if (!image || typeof image !== 'object') return fallback;
   if (!imagensGrafite.has(image)) imagensGrafite.set(image, ++imagemGrafiteId);
   return `canvas:${imagensGrafite.get(image)}`;

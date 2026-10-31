@@ -3,6 +3,7 @@
 export async function medirCuradoria({ id, mutant = '', inventorySource }) {
   const THREE = await import('/vendor/three.module.js');
   const { retanguloGrafiteDesenhado, gradeEspacial } = await import('/js/graffiti_pass.js');
+  const { identidadeArteGrafite } = await import('/js/graffiti_art_id.js');
   const { criarSuporteGrafite, superficieGrafitavel } = await import('/js/graffiti_surface.js');
   const { criarCoberturaGrafite } = await import('/js/graffiti_coverage.js');
   const root = window.__game?.world?.root || window.__gworld?.root;
@@ -304,10 +305,14 @@ export async function medirCuradoria({ id, mutant = '', inventorySource }) {
   if (mutant === 'sem-arte') pieces.length = 0;
   if (mutant === 'fora-casa') pieces.push({ x: 0, y: 1, z: 35.4, ry: Math.PI, w: 2, h: 1, file: 'mutation-house' });
   if (mutant === 'faixa-azul') pieces.push({ x: 0, y: 2.3, z: -24.97, ry: 0, w: 1, h: .4, file: 'mutation-band' });
+  // Contagem por IDENTIDADE editorial (alias curado); pieces.file preserva o caminho real.
   const counts = new Map();
-  for (const piece of pieces) counts.set(piece.file, (counts.get(piece.file) || 0) + 1);
+  for (const piece of pieces) {
+    const key = identidadeArteGrafite(piece.file);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
   for (const entry of unclassified) {
-    const key = entry.artwork.path || entry.artwork.producer;
+    const key = identidadeArteGrafite(entry.artwork.path || entry.artwork.producer);
     counts.set(key, (counts.get(key) || 0) + entry.instances);
   }
   const duplicates = [...counts].filter(([, n]) => n > 1).map(([file, count]) => ({ file, count }));
