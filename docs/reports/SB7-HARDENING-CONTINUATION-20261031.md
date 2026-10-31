@@ -72,3 +72,13 @@ Root repetiu sonda-filho-check20/20, exit0, log agregado root-sb7-R3-final.log; 
 Checkpoint recuperável dos17arquivos de implementação/doc/wire e este ledger. Próximo: integrar main atual nesta lane, resolver apenas conflitos próprios, conferir se os hashes relevantes mudaram, executar pre-push/CI e pedir Estraga-código no head novo. Não alterar branch original do autor; o PR isolado deve deixar relação com1167 clara. Nenhum merge/release nosso até este marco.
 
 Main00e746b5a integrada nesta lane às11:33UTC. Quatro conflitos só nas listas geradas check:fast/check:deploy e docs: preservar listas atuais de main e inserir eval:sondafilho, chave do script preservada. docs:check pós-resolução GREEN. Fontes da sonda/callers não conflitaram. Próximo: pre-push e PR isolado sobre main, sem editar branch original.
+
+
+## 2026-10-31T15:13:58.716668+00:00 — sincronização1183
+
+PR1181HEAD03008374bb ficouDIRTY apósmainec7cec33405 hotfixarmasinvisíveis. Árvorelimpaantesmergeconfirmada. QuatroconflitossólistasgeradasAGENTS/docspt/en epackage. Resolvidospelamainrecebida+preservarevalsondafilho eappendsfast/deploy, docsregenerados. FontesSB7nãoalteradas; crítico byte-a-byte e focalnodes emcurso, mergecommit/push/novoEstragapendentes. Missãode10h noWTvisualcontinua; nãoeditarbranch1167autor.
+
+
+## 2026-10-31T15:16:00.705351+00:00 — syncvalidada
+
+Críticoindependente CRITICO-SB7-MAIN-SYNC-R1.md089fb216CLEAN:31/31hotfixidênticosMERGE_HEAD,18/18fontes/docsSB7idênticos03008374b; índice resolvido, packagepreservamain+evalsondafilho/appends. FocalRoot4/4GREEN67.8s. Próximo mergecommitpróprio/pushnormal eEstraganovoSHA; nenhumPRmerge/releaseaqui.
