@@ -764,7 +764,7 @@ class Netcode {
     for (let i = 0; i < Math.min(tetos, e.p.length); i++) {
       const a = e.p[i];
       const alvo = new THREE.Vector3(+a[0] || 0, +a[1] || 0, +a[2] || 0);
-      try { game._tracer(boca ? boca.clone() : olho.clone().lerp(alvo, 0.06), alvo); } catch { /* sem fx */ }
+      try { game._tracer(boca ? boca.clone() : olho.clone().lerp(alvo, 0.06), alvo, ent === p && game.camView === 'first' && !!boca); } catch { /* sem fx */ }
       /* POEIRA E SOM no ponto verdadeiro. Saíam do `_fireHitscan`, que o online não chama
          mais — sem isto o tiro na parede virou mudo e limpo (o furo sumiu da tela). */
       const surf = supDeCod(sup[i]);

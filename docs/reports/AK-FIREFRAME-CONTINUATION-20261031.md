@@ -21,3 +21,15 @@ Objetivo: corrigir a emissão FP que diverge da boca final após auto-fire/updat
 - Diagnóstico causal a confirmar: auto-fire ocorre antes de authored.update; shoot golden reseta mixer/pose antes da emissão; o solver ADS recompõe mount depois; flash é filho de vm.root e guarda offset anterior. Repro R6 após frame completo mantém169px em28tirosADS1. Ainda falta distinguir socket físico de pose e demonstrar correção real. Não aplicar offsets cegos ou alterar balística/recoilP, nem executar Game.update duas vezes.
 - Artefatos no auditroot: `AK-FIREFRAME-GLM-R1-PROMPT.md`, `GLM-AK-FIREFRAME-R1.log`, `AK-FIREFRAME-ROOT-NOTES.json`, `AK-FIREFRAME-R1-PARCIAL.md`; R6script/JSON/PNGs e críticasR5/prepR6 preservados. Nenhum browser operado nesta tentativa.
 - Servidor Root4373/PID17308 preservado. R7 não deve ser apresentado como conserto antes de checkpoint com prova causal RED→GREEN. Nenhum push/PR/review reply e nenhum write em impl/QA. Próximo passo: retomar nesta WT com régua do consumidor final, fixmínimo e crítico independente; Root fará comparação real na4373 quando houver resultado verificável.
+
+## Retomada autônoma após continuação
+
+- Codex reassume como único escritor de combate nesta WT; nenhuma tentativa anterior entregou produto. Investigação GLM nova é somente leitura, pergunta focal sobre emissão final; patches permanecem responsabilidade Codex até prova causal.
+- Dois revisores em lanes novas cuidam independentemente CI e head-yaw do #1188, sem game/authoredvm. Review atual21 solicitado, review b14 tem2graves. Missão integral continua ativa; produção alpha132 permanece limitada a normais.
+
+## Marco validado: pose final e skin
+
+- GLM R2 RO real exit0 produziu diagnóstico focal e recomendação fila; root implementou. Primeiro fixture rígido ficouverde, mas EgoR8 ainda98,099px: rejeitado. Crítico encontrou também compatibilidade bocacano=0.
+- Fixture corrigida para SkinnedMesh sem early-return socket reproduziu RED; hooks de matriz corrigidos e GREEN. Cinco mutantes causais detectados. EgoR9 real33shots/33tracers/33flashes,delta final0, landmarkfísico3,92451px,poolrecuperado3/retornos33,470ticks,prefsrestauradas. Root viu quatro PNGs. Documentação SHOT-FINAL-POSE.md com limites.
+- FocaisR3:4/5 passaram (gate novo+5mutantes,tracer3p,mporigem,shaderbudget). tplocalshot falhou em setup ERR_INVALID_URL no rig porque node_modules compartilhado aponta outro checkout; não declarar verde nem regressão resolvida até rodar na QA dona dos módulos. Primeira chamada tinha dois aliases inexistentes; não conta como falha de produto.
+- CríticoR1 P1hookskin/P2kill-switch corrigidos; R2 confirmafonte e pede origem legacyexata, agoraasserida. Revisão Estraga/push ainda pendentes. Próximo: commit seletivo recuperável, integrar na QA21 junto CI/yaw, focais no ambiente correto, revisão visualyaw e push normal. Space39 própria retomada (38terminou, não foi operada); servidor4373 sessão64728 ativo.
