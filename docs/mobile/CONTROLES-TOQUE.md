@@ -52,6 +52,8 @@ A morte e o respawn online vêm dos snapshots, sem passar por `_kill` local: os 
 ganchos do netcode limpam também os identificadores dos dedos. A cláusula TQ7 aplica
 snapshots reais com ATIRA e joystick pressionados, exige inatividade dos dedos antigos
 e funcionamento de um novo toque, incluindo toques iniciados enquanto morto.
+TQ8 cobre o respawn local com clique de mouse e toque iniciados na tela de morte;
+`respawn-sp-preso` remove a limpeza local e precisa reprovar a mesma cláusula.
 
 O perfil móvel mantém DPR, textura, efeitos e sombras reduzidos, mas usa os mesmos
 viewmodels autorados com mãos do desktop. `eval:vm-maos-mobile-desktop` percorre o catálogo
@@ -61,3 +63,7 @@ da função que origina o traçante. O mutante `cano-lateral` desloca só essa o
 precisa reprovar a régua.
 No CI, os assets publicados são conferidos por tamanho e SHA256 contra o manifesto;
 não há cópia de modelos privados no Git. Esses dois testes rodam no portão de navegador.
+
+TQ9 cobre a troca de rodada local e online com o jogador ainda vivo: comandos da
+rodada encerrada são cancelados antes de começar a próxima. Os mutantes `round-sp-preso`
+e `round-mp-preso` removem cada limpeza separadamente.

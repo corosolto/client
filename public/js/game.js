@@ -2832,6 +2832,7 @@ export class Game {
     if (!this.sfx.roundNumber(this.roundNum) && !this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
   }
   _resetPositions() {
+    this._releaseInput();
     /* COLOCAÇÃO NO SPAWN — deixada COMO ESTAVA, de propósito (registro de experimento).
        São 4 pontos por time e até 8 combatentes: com `slot % list.length` o 5º ao 8º nascem
        EM CIMA do 1º ao 4º (jitter de ±0,5 m). Parece o culpado óbvio do bolo do print, e as
@@ -7356,6 +7357,7 @@ export class Game {
     /* Online quem revive é o servidor. Renascer local escolheria um spawn que ele não
        escolheu, e o próximo snapshot arrastaria o jogador de volta. */
     if (this.online) return;
+    this._releaseInput();
     const p = this.player;
     /* MODO ARENA: aplica a troca de time antes de escolher o spawn. */
     if (this.arena && p._switchTeam) {

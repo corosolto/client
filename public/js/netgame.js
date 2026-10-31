@@ -573,6 +573,7 @@ class Netcode {
         }
         try { game._ensureDolly(); } catch { /* sem canvas do dollynho */ }
       } else if (depois === 'countdown') {
+        game._releaseInput?.();
         if (this._evOn) this.limparDropsDeRede();   // o servidor zera `drops` no _startRound sem mandar `gone`
         game._resultado = null;
         game._showScoreboard(false);
