@@ -358,7 +358,7 @@ const DICT = {
   'Vermelha': 'Red', 'Branca': 'White', 'Magenta': 'Magenta',
   'Média': 'Medium', 'Batata (rápido)': 'Potato (fast)', 'Padrão ouro': 'Gold standard',
   // controles (tela como-jogar do menu)
-  'Mover': 'Move', 'Mirar': 'Aim', 'Atirar': 'Shoot', 'Correr': 'Sprint',
+  'Mover': 'Move', 'Mirar': 'Aim', 'Atirar': 'Shoot', 'Correr': 'Sprint', 'Alternar câmera': 'Switch camera',
   'Pular': 'Jump', 'Recarregar': 'Reload', 'Pausar': 'Pause',
   'Agachar (mira mais estável)': 'Crouch (steadier aim)',
   'Mira telescópica (AWP)': 'Scope (AWP)',

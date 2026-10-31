@@ -169,6 +169,16 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run eval:perfilmobile:browser
 
+      - name: Controles mobile sem disparo involuntário e câmera por toque
+        if: ${{ !cancelled() }}
+        run: npm run eval:toquecontroles
+
+      - name: Todas as armas com mãos e rastro no cano em mobile e desktop
+        if: ${{ !cancelled() }}
+        env:
+          VM_PUBLIC_ASSETS: https://www.corosolto.com.br
+        run: npm run eval:vm-maos-mobile-desktop
+
       # A partida carrega as armas DELA e nenhum bot empunha caixa (medido no navegador).
       - name: eval:armas (preload de arma por partida)
         if: ${{ !cancelled() }}

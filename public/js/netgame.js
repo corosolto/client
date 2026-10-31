@@ -18,18 +18,21 @@ function rosterPlayerId(entity, row) {
 }
 function inserirAmostra(ent, t, e, semOrdem = false) {
   const at = ent._bufAt, n = at.length;
+  ent._bufMantle ||= [];
   let i = n;
   if (!semOrdem) while (i > 0 && at[i - 1] > t) i--;
   if (i > 0 && at[i - 1] === t) return;   // duplicado: datagrama repetido não vira amostra nova
   if (i === n) {
     at.push(t); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z);
     ent._bufYaw.push(e.yaw); ent._bufPitch.push(e.pitch || 0);
+    ent._bufMantle.push(Number.isFinite(e.mantleF) ? e.mantleF : -1);
   } else {
     at.splice(i, 0, t); ent._bufX.splice(i, 0, e.x); ent._bufY.splice(i, 0, e.y); ent._bufZ.splice(i, 0, e.z);
     ent._bufYaw.splice(i, 0, e.yaw); ent._bufPitch.splice(i, 0, e.pitch || 0);
+    ent._bufMantle.splice(i, 0, Number.isFinite(e.mantleF) ? e.mantleF : -1);
   }
   if (at.length > 10) {
-    at.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); ent._bufPitch.shift();
+    at.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); ent._bufPitch.shift(); ent._bufMantle.shift();
   }
 }
 
@@ -151,6 +154,11 @@ class Netcode {
       const dx = this._corrX * a, dy = this._corrY * a, dz = this._corrZ * a;
       if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > 1e-7) {
         p.pos.x += dx; p.pos.y += dy; p.pos.z += dz;
+        if (p.mantle) {
+          p.mantle.x0 += dx; p.mantle.x1 += dx;
+          p.mantle.y0 += dy; p.mantle.y1 += dy;
+          p.mantle.z0 += dz; p.mantle.z1 += dz;
+        }
         // A base local mudou; poses antigas precisam mudar junto para o próximo ack não
         // cobrar de novo a parcela que já foi aplicada.
         for (let i = 0; i < this._predSeq.length; i++) {
@@ -460,7 +468,10 @@ class Netcode {
       ent._ipSrvT = snap.t;
       const moveDt = Number.isFinite(srvDt) && srvDt > 0 ? srvDt : Math.max(0.001, (ent._ipT1 - ent._ipT0) / 1000);
       ent._netSpd = salto > 3 ? 0 : salto / Math.max(0.001, moveDt);   // alimenta a animação de andar
-      if (!ent._bufAt) { ent._bufAt = []; ent._bufX = []; ent._bufY = []; ent._bufZ = []; ent._bufYaw = []; ent._bufPitch = []; }
+      if (!ent._bufAt) {
+        ent._bufAt = []; ent._bufX = []; ent._bufY = []; ent._bufZ = [];
+        ent._bufYaw = []; ent._bufPitch = []; ent._bufMantle = [];
+      }
       /* BUFFER de amostras (BUG-87, KNOWN-BUGS.md): arrays planos, cap 10 (zero objeto no
          hot path). Teleporte esvazia — interpolar através de respawn varreria o mapa. */
       const tBuf = this._relogioSnap(snap, nowMs), nb = ent._bufAt.length;
@@ -468,7 +479,8 @@ class Netcode {
       // `__mutOrdemAntiga` é gancho da régua game/netloop-check.mjs; zero em produção.
       const recuo = this.__mutOrdemAntiga ? 0 : RELOGIO_NOVO_MS;
       if (salto > 3 || (nb && tBuf < ent._bufAt[nb - 1] - recuo)) {
-        ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0; ent._bufYaw.length = 0; ent._bufPitch.length = 0;
+        ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0;
+        ent._bufYaw.length = 0; ent._bufPitch.length = 0; ent._bufMantle.length = 0;
       }
       inserirAmostra(ent, tBuf, e, this.__mutOrdemAntiga);
       ent._netPitch = e.pitch || 0;
@@ -573,6 +585,7 @@ class Netcode {
         }
         try { game._ensureDolly(); } catch { /* sem canvas do dollynho */ }
       } else if (depois === 'countdown') {
+        game._releaseInput?.();
         if (this._evOn) this.limparDropsDeRede();   // o servidor zera `drops` no _startRound sem mandar `gone`
         game._resultado = null;
         game._showScoreboard(false);
@@ -766,6 +779,7 @@ class Netcode {
      FEEDBACK; posição, vida e instante do respawn continuam vindo do servidor. */
   playerDied(e, snap) {
     const game = this.game;
+    game._releaseInput?.();
     game._resetKillSequence();
     try { game._scope(false, true); } catch { /* sem luneta */ }
     if (game.el.respawn) game.el.respawn.classList.remove('hidden');
@@ -785,6 +799,7 @@ class Netcode {
   }
   playerRespawned() {
     const game = this.game;
+    game._releaseInput?.();
     // o corpo TP do jogador: no online o respawn NÃO passa pelo _respawnPlayer, e sem este
     // reset o corpo ficava deitado pra sempre, arrastado pelo mundo (BUG-86).
     try { game._tpRevive(); } catch { /* corpo ainda não construído */ }
@@ -832,6 +847,10 @@ class Netcode {
       let dy = b._bufYaw[k] - b._bufYaw[j]; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
       b.yaw = b._bufYaw[j] + dy * a;
       if (b._bufPitch) b._netPitch = b._bufPitch[j] + (b._bufPitch[k] - b._bufPitch[j]) * a;   // cabeça também sem degrau de 30 Hz
+      if (b._bufMantle) {
+        const m0 = b._bufMantle[j], m1 = b._bufMantle[k];
+        b.mantleF = m0 >= 0 && m1 >= 0 ? m0 + (m1 - m0) * a : (a < 0.5 ? m0 : m1);
+      }
       const s = Math.min(j, n - 2);
       if (s >= 0) {
         const segS = Math.max(1, at[s + 1] - at[s]) / 1000;
@@ -852,6 +871,10 @@ class Netcode {
         // update(dt, moving, hasTarget, speed, back): a velocidade REAL vai no 4º argumento —
         // com speed=0 o clipe rodava a 0,45× e o boneco deslizava (BUG-113).
         b.mesh.ctrl.aimPitch = Math.max(-0.6, Math.min(0.6, b._netPitch || 0));
+        // O progresso ativo alimenta a transição aérea antes da pose e do amortecimento.
+        const mMantle = Number.isFinite(b.mantleF) && b.mantleF > 0 && b.mantleF < 1;
+        b.mesh.ctrl.setAr?.(mMantle);
+        b.mesh.ctrl.setMantle?.(mMantle ? b.mantleF : null);
         b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25);
       } else poseCharacter(b.mesh.parts, spd, 0, game.time);
     } else {

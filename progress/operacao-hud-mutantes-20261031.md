@@ -1,0 +1,17 @@
+# Continuação — mutantes do HUD
+
+Objetivo completo: Operação Flávio, fila original47PRs, HQ ao vivo, anúncios fullscreen e pilotos H/V; pronto exige testes, crítico, CI e QA aplicável. Java e1167 pertencem a outros owners. Sem merge remoto, deploy, DDL, upload ou postagem presumidos.
+
+Nesta lane: reparar falsoverde do executor de mutantes do HUD, encontrado pelo crítico independente em1139/1140 já integrados externamente. Fonte mainfixadaec7, branchrepair/hud-mutantes-20261031 reutiliza checkout própria concluída deavatar; branchrea/avatar-placar-20261028 preservada emc35d, semreset/novaworktree. Runtimecache/retry/tutorial corretos preservados; somente ferramentas.
+
+AchadoP2: ui-v3-hud.mjs580 aceita erro/timeout/reescrita que não aplicou comoMORDE/exit0. GLM182 estático não o encontrou; crítico6c1d identificou, root confirmou pela fonte. GLM183proporá patchmínimo, root provaráantes/depoisCPU e caso real focal, seguido decrítico integral eCI. ArtefatosHQruntime/review1139-1140-published, ADJUDICATION.md eproveniência imutável.
+
+Próximo: receber183, adjudicar/testar exceções/ausênciaouduplicidadecláusula/aplicaçãoreal e seleçãoCLI semafrouxarHU6/HU17/HU18. EnquantoArena estánohook, semoutrotestepesado.
+
+2026-10-31T15:41:46.762440+00:00 —184 proposta apenas em artefato, rejeitada antes de aplicar por4P2 confirmados: exceção/registro nulo pode sair0 nofinally; HTTP500/MIME incorreto conta aplicação; contextos vazam após erro de medição; rota tardia escapa da cópia de recibos.185viaOMP refinará lease184. Runtime/checker real intocados noHEADec7. Próximo CPU contraprovas+crítico antesapply. Objetivo completo e owners preservados.
+
+2026-10-31T15:46:56.307214+00:00 —185 rejeitado antesapply após crítico integral4P2: Setcleanup não registractx; rejeição de rota concluída desaparece; snapshot anterior ao fechamento perde erro; erro vazio vira aplicação. Contraprova do driverREAL emVM retornouMORDE/exit0 com erro vazio (bindings controlados, sem prova browser).187refinará lifecycle sóemartefato.183/184/185/CPUoriginais preservados; realWTfonteec7intacta.
+
+2026-10-31T15:54:36.762154+00:00 —187rootadjudicado aplicado só tools/eval/ui-v3-hud.mjs após CPU35driver/22lifecycle e crítico integralFINALCLEAN noSHA4edac895b0e1c110316064e43f4b545fc2f03cc305b586a4b2ad32271614adbd. Wrapp er gerencia erro/abort/resposta resolvida ao dispatcher Playwright; mutação sóaplicada apósHTTP2xx/MIME/troca/fulfill, porcontexto. Baseline/red/Infra2/CLI/schema/lateclose/cleanupprovadoscombindingscontrolados. Controles originais antes:timeout→MORDE0;185erro-vazio→MORDE0;primeirofixturetinhaSyntaxErrorshebang corrigido antesprovas. Uma tentativa de rootadjudicação falhouassert do nome retry e nãoescreveuartifact/WT; corrigidaantes57GREEN. Fontesruntime/UI/hudcss intocadas; nativeFINALnãoéChrome/QAhumana. Próximo sintaxe/docs/arch/buildtotalcandidate e HU6/17/18 reais antescheckpoint/pushdraft.
+
+2026-10-31T16:00:12.968859+00:00 —Fullcandidatebuild0/27,32s/pinsintactos;6arquivos12GET6HEADcalibMIME/hash/length/q0green noBrotli9353. ChromeREAL fullbuild:baselinesHU6/HU17/HU18 VERDE e4mutaçõesprópriasMORDE tutorial-sem-tiro/tutorial-sem-recarga/sem-cache-avatar/cache-falha-preso, exit0/165.89s,5pinsintactos. HU17real1request→mutante6;HU18real2retry→mutante1, HTML/sourcecliente destaWT. Runtime/public/hudcssintactos, screenshotstécnicas/tmp/corosolto-hud187-real-captures; nãoéQAhumana/estética/produção. MC1/docs/arch/syntax/diff0, crítico integralFINALCLEAN. Próximo checkpoint/pushnormaldraftpróprio, semrefazer1139/1140runtimecorreto.

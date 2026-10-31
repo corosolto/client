@@ -311,10 +311,14 @@ const MANTLE_H = 1.95;
 const MANTLE_D0 = 0.58;
 const MANTLE_ALC = 1.50;
 const MANTLE_APOIO = 0.50;
-/* MANTLE_GRID = 0,75 m — passo da grade de alcance (ver `_mantleAlcance`). Menor que o
-   DIÂMETRO do corpo (0,76 m): a inundação não escorre por uma fresta por onde o corpo não
-   passaria. Maior que isso e ela vazaria; muito menor e custa tempo à toa. */
-const MANTLE_GRID = 0.75;
+const MANTLE_T_MIN = 0.30;
+const MANTLE_T_MAX = 0.44;
+const MANTLE_SCAN = 0.05;   // não pula apoios estreitos entre duas amostras de colisão
+/* Grade menor que o corpo impede frestas; 0,75 m aliasava rampas e o pontão amazônico. */
+const MANTLE_GRID = 0.50;
+const MANTLE_SCAN_DT = 0.05;
+const MANTLE_COLLIDER_GRID = 4;
+const EMPTY_COLLIDERS = Object.freeze([]);
 /* KILL-SWITCH DO ARMÁRIO DO SPAWN (P3, 01/08). `?rack=old` traz de volta o layout cego
    (2 fileiras fixas a 2,0/3,25 m atrás do spawn, x absoluto) E a seleção antiga (só a arma
    mais próxima em 1,9 m) — os dois juntos são o bug que o dono reportou às 20:38, e ficam
@@ -987,10 +991,9 @@ export class Game {
     this.vmScene.add(this.vm.root);
     // BUG-75: arma visível é o GLB do Coro Solto; mãos com pele/roupa do personagem.
     // Tudo-ou-nada (vmlaunch.js): sem a chave nenhum controlador nasce e tudo fica no fparms.
-    // No toque, o legado evita dezenas de MB e compilação assíncrona no meio do tiroteio.
     const authoredDef = byId(this.playerCharId);
     const authoredPal = authoredDef?.pal || { skin: 0xd9a066, shirt: 0x27364a };
-    this.vm.authored = AUTHORED_VM_ENABLED && !this.mobile ? createAuthoredViewModels(this.vm.root, () => {
+    this.vm.authored = AUTHORED_VM_ENABLED ? createAuthoredViewModels(this.vm.root, () => {
       if (!this._disposed && this.vm) this._applyVmVisibility();
     }, { id: this.playerCharId, faction: this.playerFaction, gloveSkinId: this.playerGloveId, weaponSkins: this.playerWeaponSkins, skin: authoredPal.skin, sleeve: authoredPal.shirt, accent: authoredPal.pants }) : null;
     {
@@ -2162,6 +2165,7 @@ export class Game {
       this.keys[e.code] = false;
     };
     this._md = e => {
+      if (e.sourceCapabilities?.firesTouchEvents || (this.mobile && e.target?.closest?.('#touch-ui'))) return;
       // com pointer lock o clique que fecha o compositor tem o canvas como alvo e chega já destravado
       if (this._entradaTravada || entradaPropria(e.target) || this._chatSeguraPausa()) return;
       if (this.radioOpen) { this.radioOpen = null; this._radioUi(); }
@@ -2248,7 +2252,8 @@ export class Game {
       this._wheelGesto = 'feito'; this._wheelAcc = 0; this._cycleWeapon(dir);
     };
     this._cc = e => e.preventDefault();
-    this._blur = () => { this.keys = {}; };   // alt-tab com tecla pressionada não deixa tecla presa
+    this._blur = () => this._releaseInput();
+    this._hiddenInput = () => { if (document.hidden) this._releaseInput(); };
     this._plc = () => {
       if (this._chatSeguraPausa()) return;
       if (!document.pointerLockElement && !this.testMode && (this.state === 'live' || this.state === 'countdown') && !this.paused)
@@ -2263,6 +2268,7 @@ export class Game {
     document.addEventListener('contextmenu', this._cc);
     document.addEventListener('pointerlockchange', this._plc);
     window.addEventListener('blur', this._blur);
+    document.addEventListener('visibilitychange', this._hiddenInput);
     if (this.mobile) this._touchControls();
   }
 
@@ -2286,10 +2292,9 @@ export class Game {
     };
     root.innerHTML =
       '<div class="touch-look"></div>' +
-      // DOIS sticks: esquerdo = andar, direito = olhar. O MIOLO de cada um é gatilho de tiro
-      // (aperta o centro sem arrastar = atira). Por isso o knob leva o ícone de fogo.
-      '<div class="touch-joy touch-joy-l"><div class="touch-joy-knob">' + IC.fire + '</div></div>' +
-      '<div class="touch-joy touch-joy-r"><div class="touch-joy-knob">' + IC.fire + '</div></div>' +
+      '<div class="touch-joy touch-joy-l"><div class="touch-joy-knob"></div></div>' +
+      '<div class="touch-joy touch-joy-r"><div class="touch-joy-knob"></div></div>' +
+      '<button class="touch-btn touch-fire" aria-label="Atirar">' + IC.fire + '</button>' +
       '<button class="touch-btn touch-ads" aria-label="Mirar">' + IC.ads + '</button>' +
       '<button class="touch-btn touch-reload" aria-label="Recarregar">' + IC.reload + '</button>' +
       '<button class="touch-btn touch-crouch" aria-label="Agachar">' + IC.crouch + '</button>' +
@@ -2311,6 +2316,7 @@ export class Game {
     const look = q('.touch-look');
     let lookId = null, lx = 0, ly = 0;
     look.addEventListener('touchstart', (e) => {
+      if (lookId !== null || !this._acceptInput()) { e.preventDefault(); return; }
       const t = e.changedTouches[0]; lookId = t.identifier; lx = t.clientX; ly = t.clientY; e.preventDefault();
     }, { passive: false });
     look.addEventListener('touchmove', (e) => {
@@ -2323,53 +2329,60 @@ export class Game {
     }, { passive: false });
     const lookEnd = (e) => { for (const t of e.changedTouches) if (t.identifier === lookId) lookId = null; };
     look.addEventListener('touchend', lookEnd); look.addEventListener('touchcancel', lookEnd);
+    (this._sticksSoltar || (this._sticksSoltar = [])).push(() => { lookId = null; });
 
     // STICKS ANALÓGICOS (esquerdo = andar, direito = mira/câmera). Helper genérico: knob segue
     // o dedo até o raio R, com zona morta; `onVec` recebe o vetor -1..1 COM magnitude.
-    //  onVec(x,y): vetor -1..1 do stick.  onCenter(dentroDaZonaMorta): miolo pressionado = tiro.
-    const stick = (sel, onVec, onCenter) => {
+    const stick = (sel, onVec) => {
       const el = q(sel), kn = el.querySelector('.touch-joy-knob'); const R = 56, DZ = 0.18;
       let id = null, cx = 0, cy = 0;
       const move = (t) => {
         const dx = t.clientX - cx, dy = t.clientY - cy;
         const d = Math.hypot(dx, dy) || 1, cl = Math.min(d, R), nx = dx / d, ny = dy / d, mag = Math.min(1, d / R);
         kn.style.transform = `translate(${nx * cl}px, ${ny * cl}px)`;
-        // dentro da zona morta o dedo está no MIOLO → não anda/olha, mas ATIRA (onCenter true)
-        if (mag < DZ) { onVec(0, 0); onCenter(true); } else { onVec(nx * mag, ny * mag); onCenter(false); }
+        if (mag < DZ) onVec(0, 0); else onVec(nx * mag, ny * mag);
       };
       el.addEventListener('touchstart', (e) => {
+        if (id !== null || !this._acceptInput()) { e.preventDefault(); return; }
         const t = e.changedTouches[0]; id = t.identifier;
         const r = el.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2;
         move(t); e.preventDefault();
       }, { passive: false });
       el.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) if (t.identifier === id) move(t); e.preventDefault(); }, { passive: false });
-      const soltar = () => { id = null; onVec(0, 0); onCenter(false); kn.style.transform = ''; el.classList.remove('firing'); };
+      const soltar = () => { id = null; onVec(0, 0); kn.style.transform = ''; };
       const end = (e) => { for (const t of e.changedTouches) if (t.identifier === id) soltar(); };
       el.addEventListener('touchend', end); el.addEventListener('touchcancel', end);
       // o chat aberto (travarEntrada) solta o dedo em curso: o toque fica preso ao alvo do touchstart
       (this._sticksSoltar || (this._sticksSoltar = [])).push(soltar);
     };
-    // TIRO PELO MIOLO DOS DOIS STICKS: cada stick tem seu flag; o gatilho real (mouseDown0) é
-    // o OU dos dois. Assim dá pra ANDAR (stick esq. p/ fora) + ATIRAR (miolo do dir.), e vice-versa.
-    this._fireStick = { l: false, r: false };
-    const setStickFire = (side, on, el) => {
-      if (this._fireStick[side] === on) return;
-      this._fireStick[side] = on;
-      el.classList.toggle('firing', on);
-      const want = this._fireStick.l || this._fireStick.r;
-      if (want && !this.mouseDown0) { if (this._acceptInput()) { this.mouseDown0 = true; this._tryShoot(); } }
-      else if (!want) { this.mouseDown0 = false; }
-    };
-    const joyL = q('.touch-joy-l'), joyR = q('.touch-joy-r');
-    stick('.touch-joy-l', (x, y) => { this.touchMove.x = x; this.touchMove.z = y; }, (c) => setStickFire('l', c, joyL)); // andar
-    stick('.touch-joy-r', (x, y) => { this.touchLook.x = x; this.touchLook.y = y; }, (c) => setStickFire('r', c, joyR)); // olhar
+    stick('.touch-joy-l', (x, y) => { this.touchMove.x = x; this.touchMove.z = y; });
+    stick('.touch-joy-r', (x, y) => { this.touchLook.x = x; this.touchLook.y = y; });
 
     // BOTÕES: cada um com touchstart/end próprios (stopPropagation implícito por serem elementos).
-    const on = (sel, start, end) => {
+    const on = (sel, start, end, aim = false) => {
       const el = q(sel);
-      el.addEventListener('touchstart', (e) => { e.preventDefault(); start(); }, { passive: false });
-      if (end) { const h = (e) => { e.preventDefault(); end(); }; el.addEventListener('touchend', h); el.addEventListener('touchcancel', h); }
+      let id = null, x = 0, y = 0;
+      const release = () => { id = null; end?.(); };
+      this._sticksSoltar.push(release);
+      el.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (id !== null) return;
+        const t = e.changedTouches[0]; id = t.identifier; x = t.clientX; y = t.clientY;
+        start();
+      }, { passive: false });
+      if (aim) el.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (const t of e.changedTouches) if (t.identifier === id) {
+          this._touchLook(t.clientX - x, t.clientY - y); x = t.clientX; y = t.clientY;
+        }
+      }, { passive: false });
+      const h = (e) => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === id) release(); };
+      el.addEventListener('touchend', h); el.addEventListener('touchcancel', h);
     };
+    on('.touch-fire', () => {
+      if (!this._acceptInput() || !this.player.alive) return;
+      this.mouseDown0 = true; this._tryShoot();
+    }, () => { this.mouseDown0 = false; }, true);
     on('.touch-reload', () => { if (this._acceptInput()) this._startReload(); });
     on('.touch-ads', () => {
       if (!this._acceptInput()) return;
@@ -2398,6 +2411,14 @@ export class Game {
       }, { passive: false });
     });
     this._syncTouchWeps();
+  }
+
+  _releaseInput() {
+    this.keys = {}; this.mouseDown0 = false;
+    for (const release of this._sticksSoltar || []) release();
+    if (this.touchMove) { this.touchMove.x = 0; this.touchMove.z = 0; }
+    if (this.touchLook) { this.touchLook.x = 0; this.touchLook.y = 0; }
+    this._touchUi?.dispatchEvent?.(new Event('touchreset'));
   }
 
   /* Mira por arrasto, em um lugar só; `sensToque` é a escala do dedo, separada da do mouse.
@@ -2508,11 +2529,7 @@ export class Game {
     if (this._entradaTravada === v) return;
     this._entradaTravada = v;
     if (v) {
-      this.keys = {}; this.mouseDown0 = false;
-      for (const soltar of this._sticksSoltar || []) soltar();
-      if (this.touchMove) { this.touchMove.x = 0; this.touchMove.z = 0; }
-      if (this.touchLook) { this.touchLook.x = 0; this.touchLook.y = 0; }
-      if (this._fireStick) { this._fireStick.l = this._fireStick.r = false; }
+      this._releaseInput();
     } else {
       this._chatDestravadoAte = this._now() + CHAT_PAUSA_GUARDA_MS;
     }
@@ -2800,6 +2817,7 @@ export class Game {
     this._matchEndShown = false;
     this._resetKillSequence();
     this._resetPositions();
+    if (MANTLE && !this._mAlc) this._mantleAlcance();
     if (this.ctf) this._initCTF();
     this.state = 'countdown';
     this.stateUntil = this.time + 3;
@@ -2822,6 +2840,7 @@ export class Game {
     if (!this.sfx.roundNumber(this.roundNum) && !this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
   }
   _resetPositions() {
+    this._releaseInput();
     /* COLOCAÇÃO NO SPAWN — deixada COMO ESTAVA, de propósito (registro de experimento).
        São 4 pontos por time e até 8 combatentes: com `slot % list.length` o 5º ao 8º nascem
        EM CIMA do 1º ao 4º (jitter de ±0,5 m). Parece o culpado óbvio do bolo do print, e as
@@ -2843,6 +2862,9 @@ export class Game {
       const jx = s.x + (Math.random() - .5), jz = s.z + (Math.random() - .5);
       ent.pos.set(jx, this._spawnY(jx, jz), jz);
       ent.hp = 100; ent.alive = true; ent.respawnAt = 0; ent.protUntil = 0;
+      // Rodada nova elimina a trajetória anterior e os buffers de salto em todos os slots.
+      ent.mantle = null; ent.mantleF = 0; ent._spaceHeld = false; ent._mantleScanAt = 0;
+      ent.jumpBufferedUntil = 0; ent.coyoteUntil = 0;
       return s;
     };
     const playerSpawn = place(this.player, this.playerTeam, 0);
@@ -2860,7 +2882,8 @@ export class Game {
     // modo de armas: aplica o loadout inicial. No modo 'all', o player entra com a arma do
     // personagem dele (a mesma da tela de seleção) em vez da AWP padrão.
     const mode = this._wpnMode();
-    const cw = charWeapon(this.playerCharId);
+    const rosterWeapon = this._mp?.net?.meta?.roster?.find((r) => r.id === this._mp.net.yourEnt)?.weapon;
+    const cw = (this.online && WEAPONS[rosterWeapon] ? rosterWeapon : null) || charWeapon(this.playerCharId);
     if (mode === 'pistols') {
       this.player.weapon = 'pistol';
       this.player.ammo.awp = { mag: 0, res: 0 };
@@ -3308,7 +3331,7 @@ export class Game {
     const entrou = v && !this.paused;
     this.paused = v;
     this.soundscape?.setPaused(v);
-    if (v) { this.keys = {}; this.touchMove.x = 0; this.touchMove.z = 0; this.mouseDown0 = false; if (this.touchLook) { this.touchLook.x = 0; this.touchLook.y = 0; } if (this._fireStick) { this._fireStick.l = this._fireStick.r = false; } }
+    if (v) this._releaseInput();
     this.el.pause.classList.toggle('hidden', !v);
     // pausado, o overlay de toque some — senão a camada de OLHAR (tela cheia) tapava o menu
     // de pausa e roubava os toques dos botões dele.
@@ -3430,6 +3453,9 @@ export class Game {
       swapBot.mesh.group.traverse(o => { o.userData.botOwner = swapBot; });
       this.scene.add(swapBot.mesh.group);
       swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot._switchTeam = null; swapBot.alive = true;
+      // O teleporte invalida a trajetória absoluta do lado anterior.
+      swapBot.mantle = null; swapBot.mantleF = 0; swapBot._spaceHeld = false;
+      swapBot._mantleScanAt = 0; swapBot.jumpBufferedUntil = 0; swapBot.coyoteUntil = 0;
       const s = this.world.spawns[oldTeam][(Math.random() * 4) | 0];
       swapBot.pos.set(s.x, this._spawnY(s.x, s.z), s.z);
       swapBot.yaw = this._spawnYaw(s, oldTeam, true);
@@ -3440,6 +3466,9 @@ export class Game {
     // respawn do jogador no lado novo
     const s = this.world.spawns[newTeam][(Math.random() * 4) | 0];
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
+    // O teleporte invalida a trajetória absoluta do lado anterior.
+    p.mantle = null; p.mantleF = 0; p._spaceHeld = false; p._mantleScanAt = 0;
+    p.jumpBufferedUntil = 0; p.coyoteUntil = 0;
     p.yaw = this._spawnYaw(s, newTeam); p.pitch = 0; p.hp = 100;
     this._scope(false, true);
     this._banner(frase('agoraVoceE', this._teamName(newTeam)), 'trocou de lado na treta — sem penalty, só julgamento');
@@ -4476,6 +4505,7 @@ export class Game {
       }
     }
     if (ent.isPlayer) {
+      this._releaseInput();
       this._scope(false, true);
       this._abortarArmaNaMorte();   // recarga e arremesso morrem com o jogador (GRM3/GRM4)
       this._unequipNade();
@@ -4948,7 +4978,9 @@ export class Game {
       const cam = this.camera.getWorldPosition(new THREE.Vector3());
       const ndc = vmPt.clone().project(this.vmCamera);
       const ray = new THREE.Vector3(ndc.x, ndc.y, 0.5).unproject(this.camera).sub(cam).normalize();
-      return cam.addScaledVector(ray, vmPt.length());
+      // A profundidade virtual não é distância física: >2 m ativava o cano de fallback.
+      // Mantém o pixel autorado na mesma profundidade de apresentação do traçante.
+      return cam.addScaledVector(ray, 1.5);
     }
     const authored = this.vm.authored?.muzzleWorld?.(this.player?.weapon, this.camera);
     if (authored) return authored;
@@ -6016,8 +6048,8 @@ export class Game {
      ainda não olham `ry`, `map-check`, `pickup-check`). Só quem passa pela rejeição paga
      o seno/cosseno, e os senos vêm precomputados do mapa. Medido no botsim (determinístico,
      60 s × 6 mapas): ver o commit desta correção. */
-  _collide(pos, r) {
-    for (const c of this.world.colliders) {
+  _collide(pos, r, colliders = this.world.colliders) {
+    for (const c of colliders) {
       const nx = Math.max(c.minX, Math.min(pos.x, c.maxX));
       const nz = Math.max(c.minZ, Math.min(pos.z, c.maxZ));
       const dx = pos.x - nx, dz = pos.z - nz;
@@ -6105,8 +6137,30 @@ export class Game {
         if (ok) { vis[d] = 1; fila.push(d); }
       }
     }
-    this._mAlc = { nx, nz, G, minX: B.minX, minZ: B.minZ, alt, vis };
+    const CG = MANTLE_COLLIDER_GRID;
+    const cnx = Math.max(1, Math.ceil((B.maxX - B.minX) / CG));
+    const cnz = Math.max(1, Math.ceil((B.maxZ - B.minZ) / CG));
+    const col = new Map();
+    for (const c of W.colliders) {
+      const i0 = Math.max(0, Math.floor((c.minX - 0.38 - B.minX) / CG));
+      const i1 = Math.min(cnx - 1, Math.floor((c.maxX + 0.38 - B.minX) / CG));
+      const k0 = Math.max(0, Math.floor((c.minZ - 0.38 - B.minZ) / CG));
+      const k1 = Math.min(cnz - 1, Math.floor((c.maxZ + 0.38 - B.minZ) / CG));
+      for (let i = i0; i <= i1; i++) for (let k = k0; k <= k1; k++) {
+        const key = i * cnz + k;
+        const bucket = col.get(key);
+        if (bucket) bucket.push(c); else col.set(key, [c]);
+      }
+    }
+    this._mAlc = { nx, nz, G, minX: B.minX, minZ: B.minZ, alt, vis, CG, cnx, cnz, col };
     return this._mAlc;
+  }
+  _mantleColliders(x, z) {
+    const M = this._mAlc || this._mantleAlcance();
+    const i = Math.floor((x - M.minX) / M.CG);
+    const k = Math.floor((z - M.minZ) / M.CG);
+    if (i < 0 || i >= M.cnx || k < 0 || k >= M.cnz) return EMPTY_COLLIDERS;
+    return M.col.get(i * M.cnz + k) || EMPTY_COLLIDERS;
   }
   /* O ponto (x, z) na cota `y` é chão que a caminhada já alcança? Olha a vizinhança de uma
      célula porque a grade é grossa de propósito; a cota tem que BATER (dentro do degrau),
@@ -6132,25 +6186,67 @@ export class Game {
     dx /= n; dz /= n;
     const chao = W.groundHeightAt(pos.x, pos.z, pos.y);
     const teto = chao + MANTLE_H;
-    const p = new THREE.Vector3();
-    for (let d = MANTLE_D0; d <= MANTLE_ALC + 1e-6; d += 0.25) {
+    const p = this._mantleProbe || (this._mantleProbe = new THREE.Vector3());
+    for (let d = MANTLE_D0; d <= MANTLE_ALC + 1e-6; d += MANTLE_SCAN) {
       const px = pos.x + dx * d, pz = pos.z + dz * d;
       const py = W.groundHeightAt(px, pz, teto + 0.5);   // Y do teto: resolve mapa multinível
-      p.set(px, py, pz); this._collide(p, 0.38);
+      p.set(px, py, pz); this._collide(p, 0.38, this._mantleColliders(px, pz));
       if (Math.abs(p.x - px) > 1e-3 || Math.abs(p.z - pz) > 1e-3) continue;
-      if (py <= chao + STEP_H) return null;
+      if (py <= chao + STEP_H) continue;   // ainda é o mesmo chão; a beirada pode estar mais adiante
       if (py > teto) return null;
       // APOIO: a superfície tem que continuar plana MANTLE_APOIO adiante, senão o corpo
       // não cabe em cima e o mantle entrega o jogador a uma queda.
       const ax = px + dx * MANTLE_APOIO, az = pz + dz * MANTLE_APOIO;
       const ay = W.groundHeightAt(ax, az, py + 0.5);
       if (Math.abs(ay - py) > STEP_H) return null;
-      p.set(ax, ay, az); this._collide(p, 0.38);
+      p.set(ax, ay, az); this._collide(p, 0.38, this._mantleColliders(ax, az));
       if (Math.abs(p.x - ax) > 1e-3 || Math.abs(p.z - az) > 1e-3) return null;
       if (!this._mantleAlcancavel(ax, az, ay)) return null;   // território novo: ver _mantleAlcance
       return { x: ax, y: ay, z: az };
     }
     return null;
+  }
+
+  /* A decisão fica em `_mantleTarget`; esta trajetória determinística é compartilhada por
+     predição e servidor e sobe antes de cruzar a parede. */
+  _beginMantle(p, target) {
+    const rise = target.y - p.pos.y;
+    p.mantle = {
+      x0: p.pos.x, y0: p.pos.y, z0: p.pos.z,
+      x1: target.x, y1: target.y, z1: target.z,
+      t: 0,
+      dur: Math.max(MANTLE_T_MIN, Math.min(MANTLE_T_MAX, 0.24 + rise * 0.10)),
+    };
+    p.mantleF = 0;
+    p.vel.set(0, 0, 0);
+    p.grounded = false;
+    p.jumpBufferedUntil = 0;
+    p.coyoteUntil = 0;
+    this.sfx.jump();
+  }
+
+  _stepMantle(p, dt) {
+    const m = p.mantle;
+    if (!m) return false;
+    m.t = Math.min(m.dur, m.t + dt);
+    const f = m.t / m.dur;
+    const smooth = (v) => v * v * (3 - 2 * v);
+    const up = smooth(Math.min(1, f / 0.68));
+    const across = smooth(Math.max(0, (f - 0.18) / 0.82));
+    p.pos.x = m.x0 + (m.x1 - m.x0) * across;
+    p.pos.z = m.z0 + (m.z1 - m.z0) * across;
+    p.pos.y = m.y0 + (m.y1 - m.y0) * up + Math.sin(f * Math.PI) * 0.04;
+    p.vel.set(0, 0, 0);
+    p.grounded = false;
+    p.mantleF = f;
+    if (f < 1) return true;
+    p.pos.set(m.x1, m.y1, m.z1);
+    p.grounded = true;
+    p.mantle = null;
+    p.mantleF = 0;
+    p.landDip = Math.max(p.landDip || 0, 0.22);
+    this.sfx.land();
+    return true;
   }
   /* PONTO ANDÁVEL MAIS PRÓXIMO (usado pelo armário do spawn).
      Empurra (x,z) pra fora de qualquer colisor/limite usando a MESMA física do jogador —
@@ -6362,6 +6458,7 @@ export class Game {
     // animação: locomoção pela velocidade + agachado + mira da cabeça pelo pitch.
     if (tp.ctrl) {
       tp.ctrl.setCrouch?.(p.crouchF > 0.5);
+      tp.ctrl.setMantle?.(p.mantle ? p.mantleF : null);
       tp.ctrl.setAr?.(p.grounded === false);
       tp.ctrl.aimPitch = p.pitch;
       const back = -(p.vel.x * Math.sin(p.yaw) + p.vel.z * Math.cos(p.yaw)) < -0.25;
@@ -6523,6 +6620,8 @@ export class Game {
      mundo (BUG-86, KNOWN-BUGS.md). Chamado pelo _respawnPlayer (SP) e pelo netgame (MP). */
   _tpRevive() {
     this._tpDead = false;
+    this.player.mantle = null;
+    this.player.mantleF = 0;
     const tp = this.playerTP;
     if (!tp) return;
     if (tp.ctrl && tp.ctrl.revive) tp.ctrl.revive();
@@ -6541,6 +6640,12 @@ export class Game {
     p.crouchF = Math.max(0, Math.min(1, p.crouchF + (wantCrouch ? dt * 7 : -dt * (MOVE2 ? 4.2 : 7))));
     const walking = MOVE2 && !!inp.shift;   // Shift = ANDAR (silencioso)
     const sprint = !MOVE2 && !!inp.shift && p.crouchF < 0.3;
+    if (p.mantle) {
+      p._spaceHeld = !!inp.jump;
+      this._stepMantle(p, dt);
+      this.sfx._quiet = true;
+      return { sp: 0, walking, sprint: false, mantling: true };
+    }
     const slowMul = this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 0.45 : 1;  // água/lago
     // velocidade base × ARMA (MOVE_MUL) × andar × ADS × agachado × água
     const wpnMul = MOVE2 ? (MOVE_MUL[p.weapon] !== undefined ? MOVE_MUL[p.weapon] : 0.9) : 1;
@@ -6556,11 +6661,9 @@ export class Game {
     const sin = Math.sin(p.yaw), cos = Math.cos(p.yaw);
     // camera: forward = (-sin, -cos), right = (cos, -sin)  →  wish = right*ix + forward*(-iz)
     const wx = ix * cos + iz * sin, wz = -ix * sin + iz * cos;
-    // CoD tuning (port tuning.js): chão 92 m/s² (velocidade cheia em ~50ms = "tight");
-    // ar = 25% de autoridade e NÃO ganha velocidade além da que saiu do chão (cap).
-    // `__mutAccel`: gancho da movimento-golden. Sem ele o `--mutar=n` era setado e nunca
-    // lido, e a régua passava verde com a física mudada. Zero em produção.
-    const accel = (p.grounded ? 92 : 23) + (this.__mutAccel || 0);
+    // 48 m/s² chega a 90% em 0,167 s; ar mantém 25% de autoridade. `__mutAccel`
+    // alimenta as réguas movimento-golden e movimento-fluidez.
+    const accel = (p.grounded ? 48 : 12) + (this.__mutAccel || 0);
     const spBefore = Math.hypot(p.vel.x, p.vel.z);
     p.vel.x += wx * accel * dt; p.vel.z += wz * accel * dt;
     if (!p.grounded) {
@@ -6589,13 +6692,29 @@ export class Game {
     if (sp > maxSp) { p.vel.x *= maxSp / sp; p.vel.z *= maxSp / sp; }
     // Shift silencioso: gate global do sfx.step (instalado no constructor) + ninguém escuta.
     this.sfx._quiet = MOVE2 && walking && sp < PLAYER_SPEED * wpnMul * (WALK_MUL + 0.06);
-    // jump: coyote time (90ms) + jump buffer (130ms) — tuning CoD/MW: pular logo depois de
-    // sair da borda ou logo antes de tocar o chão ainda funciona (feel moderno, zero risco)
+    // jump: coyote time (90ms) + jump buffer (130ms). Segurar Espaço mantém a intenção
+    // de mantle durante o arco: o jogador pode pular cedo e agarrar a beirada ao alcançá-la.
     p.coyoteUntil = p.grounded ? this.time + 0.09 : (p.coyoteUntil || 0);
     if (inp.jump && !p._spaceHeld) p.jumpBufferedUntil = this.time + 0.13;
     p._spaceHeld = !!inp.jump;
-    if ((p.jumpBufferedUntil || 0) > this.time && this.time < (p.coyoteUntil || 0) && this._acceptInput()) {
-      p.vel.y = this.world.jumpImpulse ?? 5.0; p.grounded = false; p.jumpBufferedUntil = 0; p.coyoteUntil = 0; this.sfx.jump();
+    const aceitaMovimento = this._acceptInput();
+    if (!inp.jump) p._mantleScanAt = 0;
+    const podeEscanear = aceitaMovimento && inp.jump && (ix || iz) && p.crouchF < 0.7
+      && this.time >= (p._mantleScanAt || 0);
+    const target = podeEscanear ? this._mantleTarget(p.pos, wx, wz) : null;
+    if (podeEscanear) p._mantleScanAt = this.time + MANTLE_SCAN_DT;
+    if (target) this._beginMantle(p, target);
+    else if ((p.jumpBufferedUntil || 0) > this.time && this.time < (p.coyoteUntil || 0) && aceitaMovimento) {
+      p.vel.y = this.world.jumpImpulse ?? 5.0;
+      p.grounded = false;
+      p.jumpBufferedUntil = 0;
+      p.coyoteUntil = 0;
+      this.sfx.jump();
+    }
+    if (p.mantle) {
+      this._stepMantle(p, dt);
+      this.sfx._quiet = true;
+      return { sp: 0, walking, sprint: false, mantling: true };
     }
     const followStepDown = this.world.snapDownSteps === true && p.grounded && p.vel.y <= 0;
     p.vel.y -= 20.6 * dt;   // gravidade exagerada do CoD — arco de pulo "snappy", não flutuante
@@ -7347,6 +7466,7 @@ export class Game {
     /* Online quem revive é o servidor. Renascer local escolheria um spawn que ele não
        escolheu, e o próximo snapshot arrastaria o jogador de volta. */
     if (this.online) return;
+    this._releaseInput();
     const p = this.player;
     /* MODO ARENA: aplica a troca de time antes de escolher o spawn. */
     if (this.arena && p._switchTeam) {
@@ -7578,6 +7698,8 @@ export class Game {
     const g = b.mesh.group;
     const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
     b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;
+    b.mantle = null; b.mantleF = 0; b._spaceHeld = false; b._mantleScanAt = 0;
+    b.jumpBufferedUntil = 0; b.coyoteUntil = 0;
     /* Renascem sobrepostos de propósito: jitter no spawn foi medido e reprovado. Quem
        desempilha é a despenetração do _botSeparation. Números: docs/MULTIPLAYER.md. */
     b.protUntil = this.time + SPAWN_PROT;
@@ -9044,6 +9166,7 @@ export class Game {
   /* ================= teardown ================= */
   dispose() {
     this._disposed = true;
+    this._releaseInput();
     clearInterval(this._vmPrecisionQaTimer); this._vmPrecisionQaTimer = null;
     document.getElementById('vm-precision-qa')?.remove();
     if (window.__vmPrecisionQa === this._vmPrecisionQa) delete window.__vmPrecisionQa;
@@ -9063,6 +9186,7 @@ export class Game {
     document.removeEventListener('contextmenu', this._cc);
     document.removeEventListener('pointerlockchange', this._plc);
     window.removeEventListener('blur', this._blur);
+    document.removeEventListener('visibilitychange', this._hiddenInput);
     if (this._touchUi) { this._touchUi.remove(); this._touchUi = null; }   // overlay de toque some com a partida
     this._soltaAtalhos();   // fora da partida os atalhos do navegador voltam a ser do navegador
     this.el.hud.classList.add('hidden');
