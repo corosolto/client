@@ -39,3 +39,5 @@
 
 2026-10-31T19:37 UTC — crítico_media FINALCLEAN defeito responsivo210 após seisPNGsinitial/focus. H640CTAaté350/H844até380/V360geometriabaselineidêntica, todossemrolagem/overlap/corte, foco inteiro. Logo/miniaturasHpequenosdecisãoeditorial; capturaambiente nãoatestaqualidadegameplay. 0pageerrors, requests38/15/16falham: nãofullintegração. QAestéticahumana/editorialRubenpendentes.
 Freshbuild/npm0 efontespreservadas;recibosHQruntime/flavio210-*.json,PNGsmedia/flavio-announcement210. Próximo envioNORMALcomtodoshooks/CI; não merge/deploy/post.
+
+2026-10-31T19:41:44.502369+00:00 — EnvioNORMAL210concluído: remoto5d3be536a16293a99b77ad014b3a2b824c885de2 confirmado/push217,40s0/hookoficialok211s/servidorpróprio0/pinsintactos. Semcontageminventadadealiases;log /tmp/corosolto-flavio210-normal-push.log. HQreciboflavio210-publish-status.json. AnúnciotestadoH640/H844/V360/críticoFINALCLEAN;CIremoto/coorte/conflitosmain/QAestéticahumana/editorial/rolloutpendentes. Próximo repinDockerclientatualemcontextofísicoisolado, semJava.
