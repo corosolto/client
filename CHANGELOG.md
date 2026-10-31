@@ -41,6 +41,7 @@
 - As telas de carregamento agora mostram o elenco inteiro: os 19 personagens entram em tela cheia, cada um com a sua arte e a marca CORO SOLTO no canto, no lugar do lote antigo de seis.
 
 ### Corrigido
+- A arma equipada volta a aparecer no celular. Se o modelo animado ainda estiver carregando ou falhar, uma arma alternativa continua visível também no desktop.
 - Canarinho e suas três skins deixam de carregar uma cauda maior que quase metade do corpo. A pistola fica à frente do tronco, com cotovelo dobrado e montagem recalculada depois da pose de uma mão.
 - A contagem diária de visitantes cobre todas as páginas públicas. Antes, só a entrada do jogo emitia a visita e deixava de fora quem chegava por conteúdo, perfil ou documento legal.
 - Perfis públicos continuam visíveis quando o bootstrap da conta falha ou a sessão expira. Links do ranking usam o handle público, o histórico do navegador restaura a lista, e perfis sem totais aparecem com zero.
@@ -52,6 +53,8 @@
 - Girar no lugar deixa o quadril para trás e os pés alcançam depois, em vez de o corpo inteiro teleportar junto com a mira.
 - Personagens distantes animam com menos frequência, devolvendo quadros ao celular sem mudar o que se vê de perto.
 - Recarregar ficou visível de fora: em terceira pessoa, a mão livre vai ao carregador e o corpo mergulha durante a recarga, do jogador e dos bots — dá saber quando o adversário está vulnerável.
+- O placar reaproveita cada retrato em vez de baixar o mesmo avatar seis vezes.
+- O guia inicial mostra movimento, tiro e recarga por 15 segundos; a ajuda completa continua no ALT.
 - Os spawns do Escadão e do Ferro Velho deixam a primeira rota livre; a fauna do Ferro Velho nasce fora dos colisores.
 - Andar de lado entorta o corpo na direção do movimento, em vez de deslizar de frente parado.
 - Durante a partida, o perfil móvel começa com resolução de 60%, limita a cadência a 60 FPS no jogo e 30 FPS nos menus, reduz partículas, cápsulas e marcas conforme o aparelho sofre e recupera o último degrau sustentável na sessão seguinte.
