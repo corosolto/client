@@ -1,0 +1,3 @@
+# Continuação SDK1101
+
+2026-10-31T03:10:26.718169+00:00 — Crítico independente no pontoeb1f540ae confirmou risco de travamento da UI: draw do construtor ainda itera grade com bounds inválido, e1e20 faz passo2 não avançar; investigação estática completa prossegue. Também encontrou collider de prop sólido acrescentado depois da validação/nav. Reter envio para reproduzir e corrigir. Este checkpoint documental muda HEAD deliberadamente: a fila one-shot pinada em eb1f deve parar por head_changed antes de enviar SDK. Não matar hooks alheios nem usar bypass;1157/1138 podem continuar normais. Próximo: relatório final, RED limitado que não trave browser, GLM/reparo e nova crítica. Objetivo47+Flávio/HQ/anúncios/pilotos mantido, Java externo. Sem merge/deploy/publicação.
