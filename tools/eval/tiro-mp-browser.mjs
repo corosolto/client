@@ -50,6 +50,7 @@
 import { spawn, spawnSync, execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { instrumentarObjetivo, objetivoConsumido } from './objetivo-recebido.mjs';
 
 const args = process.argv.slice(2);
 const val = (k, d) => { const v = (args.find((a) => a.startsWith(`--${k}=`)) || '').split('=')[1]; return v === undefined ? d : v; };
@@ -59,6 +60,7 @@ const FOTO = val('foto', '/tmp/tiro-mp.png');
 const MAPA = val('mapa', 'atacadao_treta');
 const IDENTIDADE = args.includes('--identidade');
 const OBJETIVO = args.includes('--objetivo');
+if (MUTANTE === 'sem-objetivo' && !OBJETIVO) throw new Error('sem-objetivo exige --objetivo');
 const LARGURA = Number(val('largura', 1280));
 const ALTURA = Number(val('altura', 800));
 if (!Number.isInteger(LARGURA) || !Number.isInteger(ALTURA) || LARGURA < 640 || ALTURA < 320) {
@@ -131,10 +133,11 @@ try {
   const ctx = page;
 
   let mutou = !MUTANTE;
-  if (MUTANTE) {
+  if (MUTANTE || OBJETIVO) {
     await ctx.route('**/js/netgame.js*', async (rota) => {
       const r = await rota.fetch(); const corpo = await r.text(); let novo = corpo;
       if (MUTANTE === 'sem-desenho') novo = novo.replace('this.tiroDeRede(att, e);', '/* MUTANTE: tela muda */');
+      if (OBJETIVO) novo = instrumentarObjetivo(novo, MUTANTE === 'sem-objetivo');
       mutou = MUTANTE !== 'sem-desenho' || novo !== corpo;
       await rota.fulfill({ response: r, body: novo });
     });
@@ -275,14 +278,16 @@ try {
       return {
         protocolo: g._mp.net.ws?.protocol || '',
         snapshotHz: g._mp.net.stats?.hz | 0,
-        objetivo: g.objective?.netState?.() || null,
+        payloadPresente: !!g._mp.net.snap?.objective,
+        snap: globalThis.__objetivoRecebido?.snapshot || null,
+        consumo: globalThis.__objetivoRecebido || null,
       };
     });
     cobra(estadoObjetivo.protocolo === 'coro-snapshot-v7',
       `OBJ1 · o navegador negociou snapshots com objetivo (${estadoObjetivo.protocolo || 'nenhum'})`);
     cobra(estadoObjetivo.snapshotHz > 0,
       `OBJ2 · o cliente recebeu snapshots autoritativos (${estadoObjetivo.snapshotHz} Hz)`);
-    cobra(estadoObjetivo.objetivo && Object.keys(estadoObjetivo.objetivo).length > 0,
+    cobra(estadoObjetivo.payloadPresente && objetivoConsumido(estadoObjetivo.consumo, estadoObjetivo.snap),
       'OBJ3 · o estado objetivo autoritativo chegou ao modo no cliente');
     cobra(erros.length === 0, `OBJ4 · nenhuma exceção no console durante a entrada${erros.length ? `: ${erros[0]}` : ''}`);
     await page.screenshot({ path: FOTO });
