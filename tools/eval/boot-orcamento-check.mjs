@@ -141,17 +141,20 @@ async function mede({ refPoolAnsioso = false } = {}) {
   });
   for (const rel of JS_LOCAIS) {
     let corpo = readFileSync(new URL(`../../public/${rel}`, import.meta.url), 'utf8');
+    let mutou = false;
     if (rel === 'js/textures.js' && (refPoolAnsioso || MUTANTE === 'cartaz-ansioso')) {
       corpo = poolAnsioso(corpo);
-      if (!refPoolAnsioso) mutacaoAplicada = true;
+      mutou = true;
     }
     if (rel === 'js/main.js' && MUTANTE === 'fauna-cedo') {
       corpo = faunaCedo(corpo);
-      if (!refPoolAnsioso) mutacaoAplicada = true;
+      mutou = true;
     }
     await context.route(`**/${rel}*`, async (rota) => {
       const r = await rota.fetch();
       await rota.fulfill({ response: r, body: corpo });
+      /* Mutante confirmado só após fulfill real na rota alvo do candidato (cartaz em textures, fauna em main). */
+      if (mutou && !refPoolAnsioso) mutacaoAplicada = true;
     });
   }
 
@@ -162,14 +165,20 @@ async function mede({ refPoolAnsioso = false } = {}) {
   const reqs = new Map();
   const t0 = Date.now();
   cdp.on('Network.requestWillBeSent', (e) => {
-    reqs.set(e.requestId, { url: e.request.url, inicio: Date.now() - t0, fim: null, bytes: 0 });
+    reqs.set(e.requestId, { url: e.request.url, inicio: Date.now() - t0, fim: null, bytes: 0, status: null, falhou: false });
+  });
+  cdp.on('Network.responseReceived', (e) => {
+    const r = reqs.get(e.requestId); if (r) r.status = e.response.status;
   });
   const fecha = (e) => {
     const r = reqs.get(e.requestId); if (!r) return;
     r.bytes = e.encodedDataLength || 0; r.fim = Date.now() - t0;
   };
   cdp.on('Network.loadingFinished', fecha);
-  cdp.on('Network.loadingFailed', fecha);
+  cdp.on('Network.loadingFailed', (e) => {
+    const r = reqs.get(e.requestId); if (!r) return;
+    r.falhou = true; fecha(e);
+  });
 
   const erros = [];
   page.on('pageerror', (e) => erros.push(e.message));
@@ -190,7 +199,20 @@ async function mede({ refPoolAnsioso = false } = {}) {
      seria medir o failsafe, e o orçamento sairia pequeno por motivo errado. */
   if (portao > 19000) throw new Error(`a splash liberou em ${Math.round(portao)} ms — isso é o failsafe de 20 s, não o caminho dos assets`);
 
-  const ate = [...reqs.values()].filter((r) => r.fim !== null && r.fim <= portao + 50);
+  // O orçamento mantém o corte do portão; falha de transporte invalida a medição.
+  const CRITICO = /\/(models\/props|models\/ambient|posters)\//;
+  const naJanela = [...reqs.values()].filter((r) => r.inicio <= portao + 50);
+  const limite = Date.now() + 180000;
+  while (naJanela.some((r) => CRITICO.test(r.url) && r.fim === null) && Date.now() < limite) {
+    await page.waitForTimeout(100);
+  }
+  for (const r of naJanela.filter((r) => CRITICO.test(r.url))) {
+    if (r.falhou || r.fim === null || r.status === null || r.status >= 400) {
+      const causa = r.falhou ? 'loadingFailed' : r.fim === null ? 'corpo incompleto' : r.status === null ? 'sem resposta' : `HTTP ${r.status}`;
+      throw new Error(`asset de boot inválido: ${r.url} (${causa})`);
+    }
+  }
+  const ate = naJanela.filter((r) => r.fim !== null && r.fim <= portao + 50);
   const patchado = (u) => JS_LOCAIS.some((p) => u.includes(p));
   const resultado = {
     portao,
