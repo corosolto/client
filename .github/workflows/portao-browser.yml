@@ -110,6 +110,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Decalques públicos completos antes do navegador
+        run: |
+          bash scripts/fetch-decals.sh
+          node tools/eval/assets-check.mjs --so=decals
 
       # graffiti-census/graffiti-audit/select-inflate fazem `import(npm root -g +
       # /playwright/index.js)`: o Playwright precisa existir no GLOBAL, na mesma versão

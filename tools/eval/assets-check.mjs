@@ -102,13 +102,18 @@ if (mutante && mutante !== 'grafite-orfa') {
   console.error(`mutante desconhecido: ${mutante}`);
   process.exit(2);
 }
+if (process.argv.includes('--so') || process.argv.filter((a) => a.startsWith('--so=')).length > 1
+  || (process.argv.some((a) => a.startsWith('--so=')) && !['audio', 'runtime-audio', 'decals'].includes(SO))) {
+  console.error(`--so=${SO} desconhecido: use audio, runtime-audio ou decals.`);
+  process.exit(2);
+}
 
 const erros = [], avisos = [];
 
 /* ---------------------------------- ÁUDIO ---------------------------------- */
-if (!existsSync(MANIFEST)) {
+if (SO !== 'decals' && !existsSync(MANIFEST)) {
   erros.push(`áudio: ${MANIFEST} não existe — \`bash scripts/fetch-audio.sh\` não rodou ou falhou.`);
-} else {
+} else if (SO !== 'decals') {
   let m = null;
   try { m = JSON.parse(readFileSync(MANIFEST, 'utf8')); } catch (e) {
     erros.push(`áudio: ${MANIFEST} não é JSON válido (${e.message}) — download truncado.`);
