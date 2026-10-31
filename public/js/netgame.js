@@ -521,7 +521,7 @@ class Netcode {
         this.morteRemota(ent, att);
       }
     }
-    if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes);
+    if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes, snap.objective?.winner);
     if (this._evOn) this._drenar(snap, primeiroSnap);
     /* Arco de dano no MP: heurística do atirador mais próximo <600 ms — o snapshot não diz
        QUEM acertou; causa, medição e pendência de protocolo no BUG-90 (KNOWN-BUGS.md). */
@@ -587,13 +587,16 @@ class Netcode {
 
   /* Transições de rodada no online: a máquina local está desligada, só o feedback é replicado
      (vencedor = diferença do placar do servidor). Sem isto: BUG-114 (KNOWN-BUGS.md). */
-  transicaoDeEstado(antes, depois, placarAntes) {
+  transicaoDeEstado(antes, depois, placarAntes, winnerAtual = null) {
     const game = this.game;
     if (this._netTick < 0) return;   // 1º snapshot: entrou no meio de algo — sem cerimônia (e sem "empate" inventado)
     try {
       if (depois === 'roundEnd') {
-        let winner = null, resultadoDesconhecido = false;
-        if (placarAntes && game.roundsWon) {
+        // Vencedor autoritativo vem do snapshot ATUAL; game.objective.state.winner pode
+        // persistir da rodada anterior. Sem ele (ou inválido), só então infere pelo placar.
+        const winnerRede = winnerAtual === 'E' || winnerAtual === 'B' ? winnerAtual : null;
+        let winner = winnerRede, resultadoDesconhecido = false;
+        if (!winnerRede && placarAntes && game.roundsWon) {
           // Salto de 2+ rodadas soma nos dois placares: sem protocolo de vencedor,
           // não encenar campeão falso — só um ÚNICO lado crescido define o winner.
           const subiuE = game.roundsWon.E > placarAntes.E, subiuB = game.roundsWon.B > placarAntes.B;
