@@ -61,7 +61,8 @@ def decide(payload: dict) -> dict:
         "needs_resolution": precisa,
         "labels_add": ["needs-estragacodigo-resolution"] if precisa else [],
         "labels_remove": ["estragacodigo-resolved"]
-        if reviewer_requested or request_review or new_estragacodigo_review
+        if reviewer_requested or request_review
+        or (new_estragacodigo_review and not current_resolution)
         or (reviewed_head and not current_resolution) else [],
         "request_review": request_review,
     }
@@ -130,6 +131,15 @@ def selftest() -> int:
              {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
               "state": "COMMENTED", "submittedAt": "2026-10-31T08:00:00Z"}
          ], "estragacodigo_resolved_at": "2026-10-31T08:05:00Z"},
+         {"needs_resolution": True,
+          "labels_add": ["needs-estragacodigo-resolution"],
+          "labels_remove": []}),
+        ("resolução posterior vence corrida do evento de review",
+         {"headRefOid": "abc", "reviews": [
+             {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
+              "state": "COMMENTED", "submittedAt": "2026-10-31T08:00:00Z"}
+         ], "estragacodigo_resolved_at": "2026-10-31T08:05:00Z",
+          "new_estragacodigo_review": True},
          {"needs_resolution": True,
           "labels_add": ["needs-estragacodigo-resolution"],
           "labels_remove": []}),
