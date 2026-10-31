@@ -28,7 +28,8 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
 - Lane: `worktrees/consistencia-visual-release-20261031`.
 - Branch: `codex/consistencia-visual-release-20261031`.
 - Base inicial: `364be45bb0e380dc67db6171282db8fb8ff12066` (main).
-- Ego: TaskSpace 32, `Codex consistencia visual e release 20261031`, p1.
+- Ego: TaskSpace 32, `Codex consistencia visual e release 20261031`, p1 referência,
+  p2 jogo local. Servidor próprio em `http://127.0.0.1:4367`.
 - Run Estragacodigo: `worktrees/estragacodigo-review-gate-20261031`, leitura.
 - Run Javaporcos: `worktrees/modo-javalis-20261028`, leitura; PR #1160.
 - Personagens: #1179, head observado `fd553b310bbe92743db6db0b19d07c615f9d9d82`,
@@ -43,7 +44,7 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
 - Regras: AGENTS.md, docs/LICOES.md, skills regua/bug-hunt/gauntlet-fps,
   BAR-CONSISTENCIA.md e ref-measure.py. Skills Ego/PDF/PR-hardening aplicadas.
 - PDF localizado em `/Volumes/Zenith/Archives/downloads/Downloads/` (três páginas,
-  texto extraído; revisão visual das páginas ainda pendente nesta missão).
+  texto extraído e três páginas renderizadas e vistas nesta missão).
 - Plano anterior: `progress/docs/DIRECAO-PROCESSO-CONTINUATION-20261030.md` e
   `corosolto-roadmap/reports/2026-10-30-revisao/CONTINUATION.md`.
 - Fila remota coletada; #1179 lido. Estado é snapshot, reconsultar antes de merge.
@@ -52,6 +53,19 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
 - Referência pública encontrada no Ego: Google Play
   `https://play.google.com/store/apps/details?id=com.BrunoSanta.OComplexo` e
   gameplay `https://www.youtube.com/watch?v=bx8DlVC0uFY`.
+- Métrica operacional em `METRICA.md`, checkpoint `8689725f1`.
+- #1179 integrado apenas nesta lane por merge `ad696fb87`, sem conflitos. Ainda
+  sem aprovação técnica/visual nova nem merge remoto desta missão.
+- Setup: Node 26 em `/opt/homebrew/bin/node`, node_modules compartilhado somente
+  como dependência, viewmodels privados por symlink; `assets-check` verde. Áudio
+  público v8 com fallback padrão de ambientes, não é aceite dos takes privados.
+- Baseline antes de #1179: Piscina 475 peças assadas/47 artes, Ferro 206/37 no
+  layout. Repetição confirmada no fonte gerado; cena e fontes manuais ainda exigem
+  inventário cruzado. GLM reconheceu mapas somente leitura; sugestões de zona
+  larga/raio de 9 m não satisfazem a regra atual de casa B/zero repetição.
+- Artefatos e logs fora do Git em `../../audits/2026-10-31-visual-consistency/`:
+  scouts GLM, PDF, referência local, setup e primeira captura Piscina. Captura
+  inicial inclui overlay de debug e tamanho não 3:2; não conta como aceite.
 
 ## Aceites, rejeições e limites
 
@@ -64,8 +78,7 @@ gates e ownership continuam obrigatórios. Não chamar resultado técnico de vis
 
 ## Próximo passo concreto
 
-Publicar métrica operacional por mapa/UI/personagem com inventário de defeitos,
-fontes e estados PASS/FAIL/UNKNOWN. Delegar reconhecimento de mapas e da stack
-visual ao GLM somente leitura, preparar baseline local completo e acompanhar
-owners/revisões dos PRs sem disputar escrita. Capturar referência e jogo no Ego,
-então aplicar primeira correção pequena com RED → GREEN e checkpoint.
+Capturar baseline do #1179 no Ego com viewport confirmado, registrar manual +
+assado + mural e medir repetição e suporte. Escrever régua que reprove esse head,
+depois corrigir curadoria sem tocar física/nav. Acompanhar GLM de personagens,
+owners/revisões dos PRs e release sem disputar escrita.
