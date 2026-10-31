@@ -3,11 +3,11 @@ import { readFileSync } from 'node:fs';
 import { Game as BaseGame, PCHAR, initTextures, renderer, sfx } from './harness.mjs';
 
 const mutations = {
-  retencao: ['if (bx * bx + bz * bz > objectiveDestination.leash * objectiveDestination.leash', 'if ((b.target.pos.x - objectiveDestination.centerX) ** 2 + (b.target.pos.z - objectiveDestination.centerZ) ** 2 > objectiveDestination.engageRadius ** 2 || bx * bx + bz * bz > objectiveDestination.leash * objectiveDestination.leash'],
+  retencao: ['|| slotSx * slotSx + slotSz * slotSz > objectiveDestination.slotRadius * objectiveDestination.slotRadius);', '|| slotSx * slotSx + slotSz * slotSz > objectiveDestination.slotRadius * objectiveDestination.slotRadius); if (formationPull && b.target) { b.target = null; b._losLost = false; b._lostAt = 0; }'],
   hold: ['const holding = this.time < (b.holdUntil || 0) || !!objectiveDestination;', 'const holding = this.time < (b.holdUntil || 0);'],
   giro: ['if (BOT_MOVE2 && !approach && Math.abs(dy) > 0.5 && !objectiveDestination) approach = 0.5;', 'if (BOT_MOVE2 && !approach && Math.abs(dy) > 0.5) approach = 0.5;'],
   legado: ['if (BOT_MOVE2 || objectiveDestination) {', 'if (BOT_MOVE2) {'],
-  reagrupar: ['|| sx * sx + sz * sz > objectiveDestination.slotRadius * objectiveDestination.slotRadius)', '|| false)'],
+  reagrupar: ['if (formationPull) {', 'if (formationPull && false) {'],
   los: ['&& Math.abs(dy) < 0.3 && !b._losLost && inRange && hasTurn;', '&& Math.abs(dy) < 0.3 && inRange && hasTurn;'],
 };
 const mutation = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10);
@@ -70,18 +70,20 @@ for (const [name, angle] of [['frente', 0], ['lateral', Math.PI / 2], ['retaguar
     const regroupSlot = game.objective.botDestination(guard);
     const beforeRegroup = Math.hypot(guard.pos.x - regroupSlot.x, guard.pos.z - regroupSlot.z);
     game.time += 1 / 60; game._updateBot(guard, 1 / 60);
-    assert.notEqual(guard.target, enemy, `${name}: VIP deslocado exige reagrupar mesmo com ameaça imediata`);
+    assert(guard.target === enemy, `${name}: reagrupar sob ameaça imediata mantém o alvo engajado`);
     let nearestRegroup = Number.POSITIVE_INFINITY;
     for (let frame = 0; frame < 360; frame++) {
       game.time += 1 / 60; game._updateBot(guard, 1 / 60);
       nearestRegroup = Math.min(nearestRegroup, Math.hypot(guard.pos.x - regroupSlot.x, guard.pos.z - regroupSlot.z));
     }
     assert(nearestRegroup < beforeRegroup, `${name}: reagrupamento se aproxima pelo caminho físico`);
+    assert(nearestRegroup <= regroupSlot.slotRadius, `${name}: reagrupamento alcança o slot sem perseguir a ameaça`);
     cases.push({ name, acquired, fired, maximumSlotDistance, beforeRegroup, nearestRegroup });
     console.log(`✓ ${name}: defesa distante conserva formação`);
   } catch (error) {
-    failures++; cases.push({ name, acquired, fired, maximumSlotDistance, failure: error.message });
-    console.error(`✗ ${error.message}`);
+    const failure = error.message.split('\n')[0];
+    failures++; cases.push({ name, acquired, fired, maximumSlotDistance, failure: `${error.name}: ${failure}` });
+    console.error(`✗ ${failure}`);
   } finally { game.dispose(); }
 }
 console.log(JSON.stringify({ controlledVisibility: true, browserQA: false, balanceProof: false, cases }));

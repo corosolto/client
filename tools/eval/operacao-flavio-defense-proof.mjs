@@ -34,11 +34,11 @@ for (const legacy of [false, true]) {
 const fire = 'frente: guarda no slot adquire e dispara contra ameaça visível distante';
 const formation = (name) => `${name}: disparar não persegue alvo nem abandona formação`;
 for (const [name, legacy, clauses] of [
-  ['retencao', false, [fire]],
+  ['retencao', false, ['frente: reagrupar sob ameaça imediata mantém o alvo engajado']],
   ['hold', false, [fire, formation('frente')]],
   ['giro', false, [formation('lateral'), formation('retaguarda')]],
   ['legado', true, [fire, formation('frente')]],
-  ['reagrupar', false, ['frente: VIP deslocado exige reagrupar mesmo com ameaça imediata']],
+  ['reagrupar', false, ['frente: reagrupamento se aproxima pelo caminho físico']],
   ['los', false, ['frente: perder LOS bloqueia novos tiros']],
 ]) {
   assert(proof(run([`--mutante=${name}`], legacy), name, clauses), `mutante sem prova semântica: ${name}`);

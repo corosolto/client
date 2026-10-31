@@ -7728,15 +7728,12 @@ export class Game {
         if (this.time - b._lostAt > grace) { b.target = null; b._losLost = false; b._lostAt = 0; }
       }
     }
-    if (objectiveDestination && b.target) {
-      const bx = b.pos.x - objectiveDestination.centerX, bz = b.pos.z - objectiveDestination.centerZ;
-      const sx = b.pos.x - objectiveDestination.x, sz = b.pos.z - objectiveDestination.z;
-      // A formação limita deslocamento; alvos visíveis continuam recebendo resposta.
-      if (bx * bx + bz * bz > objectiveDestination.leash * objectiveDestination.leash
-          || sx * sx + sz * sz > objectiveDestination.slotRadius * objectiveDestination.slotRadius) {
-        b.target = null; b._losLost = false; b._lostAt = 0;
-      }
-    }
+    // A formação limita o deslocamento sem apagar a memória de combate.
+    const slotSx = objectiveDestination ? b.pos.x - objectiveDestination.x : 0;
+    const slotSz = objectiveDestination ? b.pos.z - objectiveDestination.z : 0;
+    const formationPull = !!objectiveDestination && (
+      (b.pos.x - objectiveDestination.centerX) ** 2 + (b.pos.z - objectiveDestination.centerZ) ** 2 > objectiveDestination.leash * objectiveDestination.leash
+      || slotSx * slotSx + slotSz * slotSz > objectiveDestination.slotRadius * objectiveDestination.slotRadius);
 
     this._posturaBot(b, !!b.target && b.crouchBias);
 
@@ -7849,6 +7846,63 @@ export class Game {
         b.pos.x += Math.sin(b._coverYaw || 0) * BOT_SPEED * 0.8 * dt;
         b.pos.z += Math.cos(b._coverYaw || 0) * BOT_SPEED * 0.8 * dt;
         moving = 1;
+      }
+      // Reagrupar não muda o yaw que orienta a mira.
+      if (formationPull) {
+        const Wo = this.world;
+        if ((!b.path || this.time > b.repathAt) && this.time >= (b._repathMin || 0)) {
+          b._repathMin = this.time + 0.25;
+          b.repathAt = this.time + (objectiveDestination.repath || 2.5);
+          let fromReg = Wo.nearestWaypoint(b.pos.x, b.pos.z, b.pos.y);
+          if (!this._walkReach(b, Wo.waypoints.nodes[fromReg])) {
+            const cands = Wo.waypoints.nodes
+              .map((n, i) => ({ i, d: (n.x - b.pos.x) ** 2 + (n.z - b.pos.z) ** 2 }))
+              .sort((a, c) => a.d - c.d);
+            fromReg = -1;
+            for (let k = 0; k < Math.min(6, cands.length); k++) {
+              if (this._walkReach(b, Wo.waypoints.nodes[cands[k].i])) { fromReg = cands[k].i; break; }
+            }
+          }
+          if (fromReg >= 0) {
+            b.path = this._findPathLocal(Wo, fromReg,
+              Wo.nearestWaypoint(objectiveDestination.x, objectiveDestination.z, b.pos.y), b._banNodes);
+            b.pathIdx = 1;
+          } else {
+            b.path = null;
+            b._escapeUntil = Math.max(b._escapeUntil || 0, this.time + 0.35);
+            b._escapeYaw = this._freeYaw(b, 2.5);
+            b.repathAt = this.time + 0.3;
+          }
+        }
+        let regNode = this._walkReach(b, objectiveDestination) ? objectiveDestination : null;
+        if (!regNode && b.path && b.path.length > 1) {
+          const wpReg = Wo.waypoints.nodes;
+          while (b.pathIdx < b.path.length - 1
+            && Math.hypot(wpReg[b.path[b.pathIdx]].x - b.pos.x, wpReg[b.path[b.pathIdx]].z - b.pos.z) < 1.5) b.pathIdx++;
+          regNode = wpReg[b.path[Math.min(b.pathIdx, b.path.length - 1)]];
+        }
+        if (regNode && this._walkReach(b, regNode)) {
+          const gx = regNode.x - b.pos.x, gz = regNode.z - b.pos.z, gn = Math.hypot(gx, gz) || 1;
+          b.pos.x += (gx / gn) * BOT_SPEED * dt;
+          b.pos.z += (gz / gn) * BOT_SPEED * dt;
+          this._collide(b.pos, 0.38);
+          moving = 1;
+        } else if (b.path) {
+          // Hop bloqueado usa o banimento e o repath do fallback existente.
+          (b._banNodes || (b._banNodes = new Set())).add(b.path[Math.min(b.pathIdx, b.path.length - 1)]);
+          if (b._banNodes.size > 24) b._banNodes.clear();
+          b.path = null;
+          b._escapeUntil = Math.max(b._escapeUntil || 0, this.time + 0.35);
+          b._escapeYaw = this._freeYaw(b, 2.5);
+          b.repathAt = this.time + 0.3;
+        }
+        // Escape mantém a mira e não soma um segundo deslocamento neste frame.
+        if (this.time < (b._escapeUntil || 0) && !moving) {
+          b.pos.x += Math.sin(b._escapeYaw || 0) * BOT_SPEED * dt;
+          b.pos.z += Math.cos(b._escapeYaw || 0) * BOT_SPEED * dt;
+          this._collide(b.pos, 0.38);
+          moving = 1;
+        }
       }
       // FLANCO/AVANÇO: sem isto, com o beeline no inimigo mais próximo TODOS convergiam pro
       // centro. Quando o alvo está LONGE (>20m) o bot avança pela SUA coluna (laneX) rumo à
