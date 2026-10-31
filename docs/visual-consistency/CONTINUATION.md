@@ -252,6 +252,12 @@ gates e ownership continuam obrigatórios. Não chamar resultado técnico de vis
 
 ## Próximo passo concreto
 
+Economia fechada em 09:59 UTC: régua23/23 e24mutantes causais RED, exit0
+`root-economia-fixture-corrigida.log`, syntax/diff-check verdes. Crítico independente
+revisou diff integral dos2arquivos após fix da fixture e não achou P1/P2. Checkpoint
+seletivo somente régua+doc; nenhum comportamento novo de economia neste commit,
+nenhum aceite do PR1179 inteiro. Demais leases e validações seguem pendentes.
+
 Receber testes grafite, revisão de economia, builder AK e acabamento GLM. Corrigir
 os dois P2 de motion depois de liberar a lease de AK; validar movimento e ADS no
 jogo real. Revisar UV/acabamento, repetir física e bake dos mapas alterados e

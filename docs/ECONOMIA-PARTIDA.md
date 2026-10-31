@@ -82,13 +82,13 @@ antigas continuam medindo o mesmo jogo.
 | arma do personagem | deixa de vir de graça; aparece no menu com selo SUA ARMA e 10% de desconto |
 | armário grátis do spawn | não monta com a loja ligada (com ele ninguém compraria) |
 | pickups de mapa e drops de morte | pickups estáticos saem de todos os mapas; a arma de quem morre continua caindo |
-| compra | tecla **B** (ou botão `$` no toque) abre o menu em tela inteira no tempo e na zona; 1-9 escolhem, 0 volta, B/Esc fecham; segurar a tecla não repete |
+| compra | tecla **B** (ou botão `$` no toque) abre o menu modal central (painel de até 880×600, fundo clicável fecha) no tempo e na zona; 1-9 escolhem, 0 volta, B/Esc fecham; segurar a tecla não repete |
 | munição | `,` compra um carregador da primária por 200; `.` compra um da secundária por 100; reserva máxima = 2× a reserva padrão |
 | arma do chão | troca a do mesmo slot (primária por primária, pistola por pistola) e larga a antiga |
 | câmera | tecla **N** cicla 1ª pessoa, 3ª pessoa e ombro; B pertence só à compra |
 | morte | larga a primária comprada no chão e renasce de faca + pistola |
 | fim de rodada | quem está vivo fica com o que comprou; todo mundo recebe vitória ou derrota |
-| modo sem rodada (`?arena=1`) | a janela de compra abre a cada renascimento |
+| modo sem rodada (`?arena=1`) | a janela de compra abre a cada renascimento, como no modo de rodada |
 | HUD | saldo TRETA$ alinhado à direita acima da pilha de armas, com `+300` a cada abate e a dica `B COMPRAR · 17s` |
 
 
@@ -109,15 +109,16 @@ Mesma regra do jogador, sem tabela por dificuldade (a dificuldade já mexe na mi
 - no começo de cada rodada, quem tem saldo compra a sorteada (`compraDoBot`); quem não
   tem segura a pistola, a rodada de eco do CS. Quem sorteou DEAGLE ou .38 já compra na 1ª;
 - ganham por abate e por rodada como o jogador;
-- morreu, larga a arma e volta de pistola; só recompra na rodada seguinte (no `?arena=1`,
-  a cada renascimento);
+- morreu, larga a arma e volta de pistola; no renascimento recompra com a mesma regra do
+  jogador — a arma quando o saldo cobre, a sobra em colete (decisão do dono, 31/10);
 - primária pega do chão vale como compra feita: o bot não paga para trocá-la pela sorteada.
 
 Régua: `npm run eval:economia-jogo` sobe o `Game` real no arnês e mata mutantes de
-carteira do menu, AWP grátis, perda de arma/equipamento, compra dos bots, teclado,
-pickups estáticos, B concorrendo com a câmera, munição ausente ou sem teto e janela de
-20 segundos. O arnês não carrega CSS: tela inteira, posição do saldo e camada sobre
-`#touch-ui` são conferidas no navegador.
+carteira do menu, AWP grátis, perda de arma/equipamento, compra e recompra dos bots,
+teclado, pickups estáticos, B concorrendo com a câmera, munição ausente ou sem teto e a
+janela de compra: 50 s no começo da rodada e reaberta a cada renascimento — com recompra
+de verdade na janela reaberta —, em rodada e arena (EJ22/EJ23). O arnês não carrega CSS:
+o modal, a posição do saldo e a camada sobre `#touch-ui` são conferidos no navegador.
 
 ## Equipamento (lote de 29/10)
 

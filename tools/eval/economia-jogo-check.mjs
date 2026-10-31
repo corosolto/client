@@ -17,8 +17,9 @@
      EJ10 bots nascem de pistola com 800 e guardam a arma sorteada para comprar (a pistola
           sorteada de 600/700 já sai na rodada 1, paga)
      EJ11 começo de rodada: bot com saldo compra a sorteada e paga; sem saldo fica de pistola
-     EJ12 bot que morre perde a arma, renasce de pistola e só recompra na rodada seguinte;
-          bot que mata recebe pela classe da arma; a malha nova nasce no spawn, visível
+     EJ12 bot que morre larga a arma (1x) e renasce no spawn com malha nova visível; com saldo
+          recompra arma + equipamento e paga (preços da tabela); sem saldo fica na pistola (eco);
+          bot remoto não recompra; quem mata recebe pela classe da arma
      EJ16 bot com primária pega do chão não compra a sorteada
      EJ13 teclado: B abre a loja em qualquer posição; N muda a câmera sem conflitar
      EJ14 arma do chão troca a do mesmo slot (a comprada cai)
@@ -30,7 +31,10 @@
           guarda para a arma não gasta
      EJ20 Piscina não expõe armas estáticas; drops de morte continuam existindo
      EJ21 compra primária/secundária por cartucho, com teto e atalhos vírgula/ponto
-     EJ22 janela e aviso de compra começam em 30 segundos
+     EJ22 janela e aviso de compra começam em 50 segundos
+     EJ23 renascimento do jogador reabre a janela de 50 s com banner e aceita a RECOMPRA
+          nela (saldo garantido antes da morte), em rodada E arena (relógio avançado além
+          da janela do começo: janela que só abrisse no início acusa)
 
    Mutantes (rodam sempre; cada um TEM de acender pelo menos uma cláusula):
      carteira-menu  o crédito de abate também grava o saldo numa chave treta do localStorage
@@ -40,12 +44,16 @@
      bot-de-graca   o bot pega a arma sorteada sem pagar
      bot-sem-perda  bot que morre renasce com a arma comprada
      bot-gancho-depois-do-g    a troca de malha roda depois do posicionamento (bot invisível)
-     bot-recompra-no-renascer  bot recompra a cada renascimento no modo de rodada
      bot-troca-arma-do-chao    bot paga para trocar a primária pega do chão (EJ16)
-     sem-tecla / b-sempre-camera / repete-compra   o caminho do teclado (EJ13)
+     bot-nao-recompra-no-renascer  renascer rearma sem recomprar (a regra antiga; EJ12)
+     sem-reabertura-respawn  renascer não reabre a janela nem mostra o banner (EJ23)
      mapa-armas     os pickups estáticos do mapa voltam a aparecer (EJ20)
      sem-municao / municao-sem-teto   compra de cartuchos some ou passa do máximo (EJ21)
      compra-vinte   janela/aviso volta a 20 segundos (EJ22)
+     sem-tecla / b-sempre-camera / repete-compra  teclado: B não abre, B briga com a câmera
+                                                   e segurar a tecla repete a compra (EJ13)
+     recusa-compra-no-renascer  janela+banner reabrem, mas a recompra após renascer é
+                                recusada (EJ23)
      pickup-mao     a arma do chão larga a da mão, não a do slot (EJ14)
      awp-na-rodinha um único `primary || 'awp'` volta na rodinha (EJ15)
 
@@ -59,8 +67,7 @@ const { initTextures, renderer, sfx, seedRandom, CHARACTERS } =
   await import(pathToFileURL(path.join(ROOT, 'tools/eval/harness.mjs')));
 const { Game } = await import(pathToFileURL(path.join(ROOT, 'public/js/game.js')));
 const { charWeapon } = await import(pathToFileURL(path.join(ROOT, 'public/js/characters.js')));
-const { ECONOMIA, precoDe } = await import(pathToFileURL(path.join(ROOT, 'public/js/economia-partida.js')));
-
+const { ECONOMIA, precoDe, equipamentoDoBot } = await import(pathToFileURL(path.join(ROOT, 'public/js/economia-partida.js')));
 console.info = () => {};   // o Game anuncia a composição dos times a cada boot
 const textures = initTextures();
 const FONTE = (await import('node:fs')).readFileSync(path.join(ROOT, 'public/js/game.js'), 'utf8');
@@ -184,19 +191,44 @@ function medir(mut = {}) {
     const antes = g.drops.filter((d) => d.weapon === 'ak').length;
     matar(g, rico, g.player, 'PT-38');
     const caiu = g.drops.filter((d) => d.weapon === 'ak').length - antes;
-    rico.carteira.saldo = 5000;   // com saldo de sobra: só não recompra se a regra da rodada segurar
+    // renasce com saldo: paga a arma E o equipamento, derivado dos preços da tabela real
+    const grana = 5000;
+    rico.carteira.saldo = grana;
+    const precoArma = precoDe(rico._armaAlvo);
+    const eq = equipamentoDoBot({ saldo: grana - precoArma, armado: true, colete: 0, capacete: false });
+    const custoEq = eq ? precoDe(eq, { equip: { colete: 0, capacete: false } }) : 0;
+    const esperado = grana - precoArma - custoEq;
     // morreu longe do spawn e o corpo GLB já sumiu (deadT > 1), como no jogo
     rico.mesh.group.position.x += 40; rico.mesh.group.visible = false;
-    const saldoMorto = rico.carteira.saldo;
     g._respawnEntity(rico);
     // a malha nova tem de nascer no ponto de renascimento, visível e na cena (gancho antes do `g`)
     const malha = rico.mesh.group;
-    const malhaOk = malha.position.distanceTo(rico.pos) < 1e-6 && malha.visible && g.scene.children.includes(malha) && rico._meshWeapon === 'pistol';
+    const malhaOk = malha.position.distanceTo(rico.pos) < 1e-6 && malha.visible && g.scene.children.includes(malha);
+    // arma lógica E malha têm de coincidir com o que foi pago
+    const recompraOk = rico.weapon === rico._armaAlvo && rico._meshWeapon === rico._armaAlvo
+      && rico.carteira.saldo === esperado && rico.armor === 100 && rico.helmet === true;
     const sPobre = pobre.carteira.saldo;
     pobre.weapon = 'pistol'; matar(g, g.player, pobre, 'PT-38');
-    check('EJ12', 'bot morto larga a arma, renasce de pistola sem recomprar; bot que mata recebe',
-      caiu === 1 && rico.weapon === 'pistol' && rico.carteira.saldo === saldoMorto && malhaOk && pobre.carteira.saldo === sPobre + 300,
-      { caiu, renasceu: rico.weapon, saldo: rico.carteira.saldo, malhaOk, killer: pobre.carteira.saldo - sPobre });
+    const recompensaOk = pobre.carteira.saldo === sPobre + 300;
+    // eco: sem saldo para a sorteada renasce de pistola, sem debitar e sem saldo negativo
+    const semGrana = pobre.carteira.saldo;
+    matar(g, pobre, g.player, 'PT-38');
+    g._respawnEntity(pobre);
+    const ecoOk = pobre.weapon === 'pistol' && pobre._meshWeapon === 'pistol'
+      && pobre.carteira.saldo === semGrana && pobre.carteira.saldo >= 0;
+    // bot remoto não passa pela loja local: nem rearma, nem paga (o servidor cuida dele)
+    const remoto = bots.find((b) => b !== rico && b !== pobre);
+    g._compra._armarBot(remoto, 'pistol');
+    remoto._remote = true; remoto._armaAlvo = 'ak'; remoto.carteira.saldo = 5000;
+    matar(g, remoto, g.player, 'PT-38');
+    g._respawnEntity(remoto);
+    const remotoOk = remoto.weapon === 'pistol' && remoto._meshWeapon === 'pistol' && remoto.carteira.saldo === 5000;
+    check('EJ12', 'bot morto larga a arma; renasce: com saldo recompra (arma+kit), sem saldo fica na pistola',
+      caiu === 1 && malhaOk && recompraOk && recompensaOk && ecoOk && remotoOk,
+      { caiu, malhaOk, recompra: `${rico.weapon}/${rico._meshWeapon}/${rico.carteira.saldo}/${rico.armor}/${rico.helmet}`,
+        esperado, eco: `${pobre.weapon}/${pobre._meshWeapon}/${pobre.carteira.saldo}`,
+        remoto: `${remoto.weapon}/${remoto._meshWeapon}/${remoto.carteira.saldo}`,
+        killer: pobre.carteira.saldo - sPobre });
   }
 
   {
@@ -340,9 +372,45 @@ function medir(mut = {}) {
     const g = boot({ mut: mut.boot });
     const segundos = Math.round(g._compra.compraAte - g.stateUntil);
     const aviso = g.el?.bannerSub?.textContent || '';
-    check('EJ22', 'rodada começa com aviso e janela de compra de 30 segundos',
-      segundos === 30 && /PREPARE-SE PARA COMPRAR/i.test(aviso) && /30 SEGUNDOS/i.test(aviso),
+    check('EJ22', 'rodada começa com aviso e janela de compra de 50 segundos',
+      segundos === 50 && /PREPARE-SE PARA COMPRAR/i.test(aviso) && /50 SEGUNDOS/i.test(aviso),
       { segundos, aviso });
+  }
+
+  {
+    // Saldo garantido antes da morte; relógio além da janela inicial para medir a reabertura.
+    // A recompra só vale depois de conferir a perda da arma: docs/ECONOMIA-PARTIDA.md.
+    const renasce = (g) => {
+      const p = g.player;
+      const preco = charWeapon(PERSONAGEM.id) === 'ak' ? 2450 : 2700;   // tabela + assinatura (EJ4)
+      const sobra = 123;
+      p.carteira.saldo = 2 * preco + sobra;
+      const comprou = g._compra.comprar('ak');
+      const antes = g.drops.filter((d) => d.weapon === 'ak').length;
+      g.time = g._compra.compraAte + 7;
+      g.state = 'live';
+      matar(g, p, inimigo(g), 'AK');
+      const caiu = g.drops.filter((d) => d.weapon === 'ak').length - antes;
+      g._respawnPlayer();
+      // no renascimento o aviso vai no TÍTULO do banner (sub vazio); no começo da rodada, no sub
+      const aviso = `${g.el?.bannerTitle?.textContent || ''} ${g.el?.bannerSub?.textContent || ''}`;
+      const perdeu = !p.primary && p.weapon === 'pistol';
+      const janela = Math.round(g._compra.compraAte - g.time);
+      const recompra = g._compra.comprar('ak');
+      const recompraOk = recompra.ok && p.primary === 'ak' && saldo(g) === sobra;
+      return {
+        comprou: comprou.ok, caiu, perdeu, janela, aviso,
+        recompra: recompra.ok ? `${p.primary}/${saldo(g)}` : recompra.motivo || 'RECUSOU', recompraOk,
+      };
+    };
+    const rodada = renasce(boot({ mut: mut.boot }));
+    const ga = boot({ mut: mut.boot });
+    ga.arena = true;   // mesmo campo que ?arena=1 liga (o QS congela no import do módulo)
+    const arena = renasce(ga);
+    const clausula = (r) => r.comprou && r.caiu === 1 && r.perdeu && r.janela === 50
+      && /PREPARE-SE PARA COMPRAR/i.test(r.aviso) && /50 SEGUNDOS/i.test(r.aviso) && r.recompraOk;
+    check('EJ23', 'renascer reabre a janela de 50 s com banner e aceita a recompra nela, em rodada e arena',
+      clausula(rodada) && clausula(arena), { rodada, arena });
   }
 
   {
@@ -400,9 +468,29 @@ const MUTANTES = {
     c.aoRenascerBot = () => {};
     g._respawnEntity = (b) => { const velha = b.mesh; ren(b); const nova = b.mesh; b.mesh = velha; r0(b); b.mesh = nova; };
   } },
-  'bot-recompra-no-renascer': { boot: (g) => {
+  'bot-nao-recompra-no-renascer': { boot: (g) => {
+    // a regra ANTES de 31/10: renasce rearmando, sem recomprar
     if (!g._compra) return;
-    const c = g._compra; c.aoRenascerBot = (b) => { c._rearmarBot(b); c._botCompra(b); };
+    const c = g._compra; c.aoRenascerBot = (b) => { if (!b._remote) c._rearmarBot(b); };
+  } },
+  'sem-reabertura-respawn': { boot: (g) => {
+    if (!g._compra) return;
+    const c = g._compra, r0 = g._respawnPlayer.bind(g);
+    // renascer sem reabrir a janela nem mostrar o banner (comportamento pré-31/10)
+    g._respawnPlayer = () => {
+      const el = g.el, ate = c.compraAte, t = el?.bannerTitle?.textContent, s = el?.bannerSub?.textContent;
+      r0(); c.compraAte = ate;
+      if (el?.bannerTitle) el.bannerTitle.textContent = t;
+      if (el?.bannerSub) el.bannerSub.textContent = s;
+    };
+  } },
+  'recusa-compra-no-renascer': { boot: (g) => {
+    if (!g._compra) return;
+    const c = g._compra, comp = c.comprar.bind(c), r0 = g._respawnPlayer.bind(g);
+    // janela+banner reabrem normalmente, mas a janela REABERTA recusa a compra (EJ23)
+    let janela0 = null;
+    g._respawnPlayer = (...x) => { janela0 = c.compraAte; return r0(...x); };
+    c.comprar = (...x) => (janela0 !== null && g.time > janela0 ? { ok: false, motivo: 'tempo' } : comp(...x));
   } },
   'bot-troca-arma-do-chao': { boot: (g) => {
     if (!g._compra) return;
@@ -459,8 +547,11 @@ const falhas = real.filter((r) => !r.pass);
 const cegos = [];
 for (const [nome, m] of mutantesExecutados) {
   let vermelhas;
-  try { vermelhas = comEspiao(() => medir(m)).filter((r) => !r.pass).map((r) => r.id); } catch (e) { vermelhas = [`exceção: ${e.message}`]; }
-  console.log(`mutante ${nome}: ${vermelhas.length ? 'VERMELHO (' + vermelhas.join(',') + ')' : 'VERDE, régua cega'}`);
+  try {
+    // o obs acompanha o vermelho: prova que a cláusula certa mordeu, não vermelho por acaso
+    vermelhas = comEspiao(() => medir(m)).filter((r) => !r.pass).map((r) => `${r.id} ${JSON.stringify(r.obs)}`);
+  } catch (e) { vermelhas = [`exceção: ${e.message}`]; }
+  console.log(`mutante ${nome}: ${vermelhas.length ? 'VERMELHO (' + vermelhas.join(' | ') + ')' : 'VERDE, régua cega'}`);
   if (!vermelhas.length) cegos.push(nome);
 }
 console.log(`\neconomia no jogo: ${real.length - falhas.length}/${real.length} verdes; mutantes cegos: ${cegos.length ? cegos.join(',') : 'nenhum'}`);
