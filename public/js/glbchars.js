@@ -139,6 +139,10 @@ const TP_MOUNT_V2 = qp.get('tpmount') !== '0';
 // ?tpmountlive=0 -> mount volta a ser resolvido só uma vez, na pose de idle (ver o bloco
 // longo em buildCharacterModel). Existe pra permitir A/B do defeito, não pra uso normal.
 const TP_MOUNT_LIVE = qp.get('tpmountlive') !== '0';
+// Vitrine do lobby gira o PULSO, não a arma na mão (girar a arma deixava 37-65° fora da
+// pegada: "arma bugada na mão", 28/10). Régua eval:lobbyarmamao; ?pvpulso=0 volta ao antigo.
+const PV_PULSO = qp.get('pvpulso') !== '0';
+const PV_PIVO = qp.get('pvpivo') !== '0';   // ?pvpivo=0: gira no osso (sem CCD na palma), só p/ mutante
 const _tpc = (qp.get('tpcarry') || '').split(',').map(Number);
 const TP_CARRY_PITCH = ((_tpc.length === 2 && !isNaN(_tpc[0]) ? _tpc[0] : -6)) * Math.PI / 180;  // cano levemente pro chão (porte)
 const TP_CARRY_YAW = ((_tpc.length === 2 && !isNaN(_tpc[1]) ? _tpc[1] : 4)) * Math.PI / 180;     // levemente cruzando o corpo
@@ -491,11 +495,26 @@ const _v = new THREE.Vector3();
 const _gq = new THREE.Quaternion(), _wq = new THREE.Quaternion(), _pq = new THREE.Quaternion(), _headUpQ = new THREE.Quaternion();
 const _qLean = new THREE.Quaternion(), _axisF = new THREE.Vector3();
 const _right = new THREE.Vector3();
-const _ikTgt = new THREE.Vector3();
+const _ikTgt = new THREE.Vector3(), _ancoraPalma = new THREE.Vector3();
 function orientTpMount(t) {
   t.handBone.updateWorldMatrix(true, false);
   t.model.getWorldQuaternion(_gq);
   _wq.copy(_gq).multiply(t.carry);
+  // Só no porte parado: em corrida/tiro (tela de carregamento) a mão volta a seguir o clipe.
+  if (t.pegada && t.pegadaAtiva) {
+    // PV_PULSO: a mão segue a arma (absoluto, não acumula). Pivô na PALMA via CCD: girar
+    // no osso empurrava a palma 2 cm e esticava o braço da pistola (select-mount ESTICADO).
+    const ancora = PV_PIVO && t.palmLocal && t.rArm && t.rFore ? t.handBone.localToWorld(_ancoraPalma.copy(t.palmLocal)) : null;
+    t.mount.quaternion.copy(t.pegada);
+    for (let i = 0; i < (ancora ? 2 : 1); i++) {
+      if (i) solveCCDIK([t.rArm, t.rFore], t.handBone, ancora, { iterations: 4, endOffset: t.palmLocal });
+      t.handBone.parent.updateWorldMatrix(true, false);
+      t.handBone.parent.getWorldQuaternion(_pq).invert();
+      t.handBone.quaternion.copy(_pq.multiply(_wq).multiply(t.pegadaInv));
+      t.handBone.updateWorldMatrix(false, true);
+    }
+    return;
+  }
   t.handBone.getWorldQuaternion(_pq);
   t.mount.quaternion.copy(_pq.invert().multiply(_wq));
 }
@@ -740,6 +759,17 @@ export function buildCharacterModel(def, opts = {}) {
         const carryPalm=mount.position.clone();
         handBone.localToWorld(carryPalm);model.worldToLocal(carryPalm);
         ctrl.tpMount.carryPalmModel=carryPalm;
+      }
+      // PV_PULSO: guarda a pegada de JOGO e gira o pulso. Só depois da palma/folga (antes,
+      // desviava a folga do corpo nos mascotes). Faca fora: mesmo porte no jogo e na vitrine.
+      if (PV_PULSO && opts.preview && !faca && ctrl.tpMount) {
+        const funcional = new THREE.Quaternion().setFromEuler(new THREE.Euler(TP_CARRY_PITCH, TP_CARRY_YAW, 0, 'YXZ'));
+        const pegada = handBone.getWorldQuaternion(new THREE.Quaternion()).invert()
+          .multiply(model.getWorldQuaternion(new THREE.Quaternion()).multiply(funcional));
+        ctrl.tpMount.pegada = pegada;
+        ctrl.tpMount.pegadaInv = pegada.clone().invert();
+        ctrl.tpMount.pegadaAtiva = true;
+        orientTpMount(ctrl.tpMount);
       }
     } else if (mount) {
       // --- caminho antigo (?tpmount=0): direção do cano pela linha antebraço->mão ---
@@ -1092,6 +1122,7 @@ class CharController {
     }
     if (this.tpMount && !this.dead && !this.emotando) {
       const t = this.tpMount;
+      if (t.pegada) t.pegadaAtiva = /^(idle|idle1h|crouch)$/.test(this.curName || '');
       orientTpMount(t);
       if(t.stabilizeCarry && t.carryPalmModel && t.rArm && t.rFore && /^(walk|run|walk1h|walkfire)$/.test(this.curName || '')){
         _v.copy(t.carryPalmModel);t.model.localToWorld(_v);
