@@ -520,3 +520,22 @@ MotionR5 devolvido: AKnovaL1v realmenteRED +7px nas2proporções, nãoUNKNOWN. S
 - Root wrappers npm eval:match-pickups e eval:net-flash-disable terminam naturalmente0: nominal6/6 e7/7, mutantes exatamentePM2-PM5/NF1,NF3; controles positivos continuamGREEN. Ambos ligados a fast/deploy, docs geradas.
 - Crítico PICKUPS-FLASH-R3 CLEAN focal SHA5965d1ad46c3ac31837ec2cda06a5f1859beabaae40adefecda319c7d504f0a6: exceções sãoinfra3, suprimir_popFlash/owneracendeNF7. Nenhuma alegação de partidaMP real.
 - Checkpoint seletivo Game contém só dois hunks de constructor pickups; skins/câmera de morte continuam fora deste commit.
+
+
+### 13:57 UTC — entrega separada e leases
+
+- Normais isoladas sobre main00e746: branch codex/normais-personagens-20261031, HEADf1178901f; quatro GLBs/NORMAL, gate causal e crítico CLEAN. Push bloqueado por check:deploy cujo hook removeu o log; rerun explícito em normais-delivery-check-deploy-R2.log. Não há PR novo nem merge/release nosso.
+- Snapshot consolidado antigo deployR2:80/86 verdes; seis RED (boot, matriz gerada, mutante bot fuga, redesign, tr ausente no harness treta e gatilhos do censo). Não publicar consolidado como CI verde; tratar deltas próprios antes da integração com pais atuais.
+- Posto suporteR3 crítico focal CLEAN (30e88fc9): wrapper rejeita allPASS/exit1 ou4; produto local duas fotos aceitas, +4draw/+36tri. Wiring/checkpoint e bake oficial ainda pendentes.
+- GLM3P R1 liberou handik/glbchars: palma em unidades mundiais e proxy final após overlays; gate12/12 e três mutantes reportados, crítica e runtime pendentes. Outerclamp.95 preservado.
+- M3R4 liberou gate/doc: Jacobiano UV e NaN/OBB corrigidos, crítico pendente. Pixels R2 permanecem recusados no C2 e CórregoR1; sem bake novo. Skins R3 liberou gate/doc com nominal/infra separados; crítico focal em curso. Morte gateR2 ainda writer, GameR1 rejeitado por transição morto first→third/shoulder; produtoR2 inicia agora em Game apenas.
+- Objetivo10h integral até18:45UTC; Operação Flávio excluída, UI fluxos/social depois.
+
+
+### 14:00 UTC — provas focais e favelas
+
+- Treta VM harness passou após injetar tr+frase reais de i18n (imports do produto removidos pelo extractor); nominalOFF e5mutantesGREEN. Gatilho portão cobre agora os dois módulos do censo; PGfecho246/219GREEN. Matriz de armas regenerada oficialmente, só linhas de referência mudaram; reexecutar após morteGameR2 terminar.
+- Posto wiring npm nominal+7causais8/8GREEN, selftest7/7; bake final mapa ainda pendente antescheckpoint produto.
+- M3R4 crítico focal CLEAN (1ba14d94), comentário3→2Rootsemsemântica. CampoR5 inicia produto sóguarda perimetral, novo gate separado e seção doc: guarda atual única porlado vira trechos acompanhandoencosta. DeltaFÍSICOintencional somente perímetro; fixtureM3 congelada, FV-M1deveREDatéconciliação explícita. Não encobrir com baseline regravada.
+- Córrego A/B runtime concluído12fotos base/foto/PBR×4poses1320×880 medraw mesmasluz/geo; JSON corrego-material-prototype-R1.json, sourceStable/restoredtrue. Primeiratentativa erro404PBRnomeerrado zeroFotos; retrycomnomepbr_paintedplaster017 correto. Crítico julga12fotos. Nenhumproduto/material público adotado.
+- Normais standalonecheckdeployR2 boot ebotmutantesGREEN, suiteaindaemcurso; pushanteriorfalhousomentecheckdeploysemdiagnósticopreservado. NãoháPR/releasevisualnovo.
