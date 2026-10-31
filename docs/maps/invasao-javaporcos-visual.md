@@ -1,6 +1,13 @@
-# Invasão dos Javaporcos — brief visual (o que o modelador precisa, em número)
+# Invasão dos Javaporcos — brief visual histórico de 29/10/2026
 
-Documento de ARTE. A ficha de modo continua em `docs/maps/invasao-javaporcos.md`.
+**SUPERADO: arquivo histórico, não é o contrato do mapa atual.** As medidas e
+contagens abaixo registram o layout de 29/10/2026. Para implementar ou validar,
+use [a ficha atual](invasao-javaporcos.md) e [o layout atual](invasao-javaporcos-layout.md):
+arena de 136 × 136 m (`bounds` ±68), seis frentes, cidade até r = 36,
+pasto de r = 36 a 54 e mata até r = 68. As áreas, densidades e dez bocas deste
+arquivo pertencem à versão histórica e não devem ser aplicadas ao runtime atual.
+
+Documento histórico de ARTE. A ficha de modo continua em `docs/maps/invasao-javaporcos.md`.
 Aqui só entra o que tem medida: cor, altura, largura, densidade, contagem e teto de
 desenho. Adjetivo ("bonito", "fechado", "vivo") não é especificação — onde aparecer
 adjetivo neste arquivo, ele vem seguido do número que o define.

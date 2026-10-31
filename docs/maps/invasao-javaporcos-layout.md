@@ -1,7 +1,7 @@
 # Invasão dos Javaporcos — layout de 30/10/2026: pasto, seis frentes e becos
 
 Decisões do dono de 30/10/2026, traduzidas em geometria. A ficha do mapa é
-[`invasao-javaporcos.md`](invasao-javaporcos.md); o brief visual é
+[`invasao-javaporcos.md`](invasao-javaporcos.md); o brief visual histórico, superado pelo layout atual, é
 [`invasao-javaporcos-visual.md`](invasao-javaporcos-visual.md); o alvo visual são as
 artes-conceito em [`arte-javaporcos/`](arte-javaporcos/README.md) (`conceito-a-aerea` é a
 planta macro).
@@ -89,9 +89,12 @@ chão visível acima do `groundHeightAt` (HORDA1).
 | `norte` | Trilha do Norte | (−10, −54) | (−19, −59,6) → (−14,95, −59,4) → (−10, −57,4) → (−10, −54) → (−4,9, −45,2) → (−3, −36,4) |
 | `leste` | Trilha do Leste | (54, 12) | (59,6, 21) → (59,4, 16,95) → (57,4, 12) → (54, 12) → (45,2, 6,1) → (36,4, 3) |
 | `sudoeste` | Trilha do Sudoeste | (−24, 54) | (−33, 59,6) → (−28,95, 59,4) → (−24, 57,4) → (−24, 54) → (−21,8, 45,2) → (−22, 36,4) |
+| `oeste` | Trilha do Oeste | (−54, 18) | (−59,6, 25) → (−59,4, 21,85) → (−57,4, 18) → (−54, 18) → (−45,2, 15,8) → (−36,4, 16) |
+| `nordeste` | Trilha do Nordeste | (34, −54) | (38, −59,6) → (36,2, −59,4) → (34, −57,4) → (34, −54) → (30,7, −45,2) → (25, −36,4) |
+| `sudeste` | Trilha do Sudeste | (28, 54) | (35, 59,6) → (31,85, 59,4) → (28, 57,4) → (28, 54) → (23,8, 45,2) → (22, 36,4) |
 
 Norte chega na ponta da avenida norte, leste na avenida leste, sudoeste na viela oeste
-pelo anel sul. `boarEntrances` são as três clareiras, com o mesmo `id`.
+pelo anel sul. `boarEntrances` são as seis clareiras, com o mesmo `id`.
 
 ## Becos
 

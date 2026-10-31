@@ -1198,3 +1198,12 @@ Gol G2/Fusca legados dos outros mapas não foram alterados; seguem excluídos de
 PAC6 reproduziu vermelho antes da retirada; baseline com 75 props passou depois.
 Mutantes nc-publicado e sem-licenca reprovaram. Manifesto de assetrev atualizado
 pelo gerador oficial e --check verde. Não é uma declaração de licença do acervo inteiro.
+
+## Revisão estraga-codigo: contrato documental
+
+4431420704: ficha corrigida para 136×136 m e bounds ±68, iguais a HALF=68 do relevo.
+4431420709: tabela completada com oeste/nordeste/sudeste, mantendo as seis frentes
+reais e suas rotas derivadas de EIXOS; nenhuma frente foi removida do runtime.
+4431420715: brief de 29/10 explicitamente histórico/superado, com aviso de que áreas,
+densidades e dez bocas antigas não são contrato atual; links levam à ficha/layout
+ativos com seis frentes e arena ±68. spec check da ficha e diff --check verdes.

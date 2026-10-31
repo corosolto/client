@@ -19,7 +19,7 @@ controle. O cenário não reproduz uma propriedade ou município específico.
 Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
 [`invasao-javaporcos-layout.md`](invasao-javaporcos-layout.md).
 
-- **Pegada:** 116 × 116 m (`bounds` ±58), com r = max(|x|, |z|). Miolo urbano em
+- **Pegada:** 136 × 136 m (`bounds` ±68), com r = max(|x|, |z|). Miolo urbano em
   `cityBounds` ±36; pasto de r = 36 a 54; mata de 54 a 68.
 - **Malha urbana:** avenida em cruz de 12 m (x = 0 e z = 0) com calçada de 2 m e meio-fio
   de 0,15 m; viela de terra de 3,5 m em |x| = 22 e |z| = 22; anel perimetral de terra
@@ -66,7 +66,7 @@ Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
 - `hordeObjectives` — `[{id, x, z, hp, r}]`, três, todos em ponto alcançável. O modo
   NÃO usa mais (o domínio substituiu os objetivos com vida em 30/10/2026).
 - `horda` — o contrato da mecânica de domínio (ver "Domínio"):
-  `frentes: [{id, nome, boca:{x,z}, rota:[{x,z},...]}]` (3; `boca` é a saída da trilha
+  `frentes: [{id, nome, boca:{x,z}, rota:[{x,z},...]}]` (6; `boca` é a saída da trilha
   no pasto, `rota` vai da mata à borda da cidade), `becos: [{id, nome, de:{x,z},
   ate:{x,z}, abreNaOnda}]` (`de` no pasto, `ate` na rua) e `setores: [{id, nome, x0, z0,
   x1, z1, peso}]` (retângulos dentro de `cityBounds`; `peso` = área relativa). Sem ele o
@@ -146,7 +146,7 @@ Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
 - Mutante que duplica o crédito de assistência reprova a soma de pontos.
 - Mutante que remove uma entrada reprova a conectividade das bocas de mata.
 - Mapa passa em `node tools/eval/javaporcos-mapa-check.mjs` (MATA1 cerco, MATA2
-  densidade e 3 bocas, MATA3 mata só abre nas frentes, CHAO1 relevo, COMIDA1 lixo na
+  densidade e 6 bocas, MATA3 mata só abre nas frentes, CHAO1 relevo, COMIDA1 lixo na
   cidade, NAV1 grade limpa, TRILHA1 e TRILHA2 rota até dentro da loja, PASTO1 linha de
   tiro, PASTO2 grama, HORDA1 frentes, BECO1 becos, SETOR1 setores, PROPS1 catálogo) e
   nos 12 mutantes listados no cabeçalho dela.
