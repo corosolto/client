@@ -40,7 +40,7 @@ const falhas = [];
 const linhas = [];
 
 const textures = initTextures();
-const IDS = Object.keys(MAPS).filter((id) => MAPS[id].ctfMode);
+const IDS = Object.keys(MAPS).filter((id) => !MAPS[id].objectiveMode);
 
 for (const id of IDS) {
   const g = bootGame(id, { textures, ctf: true, seed: 4242 });

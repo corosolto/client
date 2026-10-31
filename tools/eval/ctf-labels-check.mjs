@@ -28,7 +28,7 @@ const BRASILIA = new Set(['CONGRESSO', 'ÔNIBUS', 'CATEDRAL']);
 
 const T = initTextures();
 let vermelho = 0;
-for (const [id, def] of Object.entries(MAPS).filter(([, map]) => map.ctfMode)) {
+for (const [id, def] of Object.entries(MAPS).filter(([, map]) => !map.objectiveMode)) {
   const W = def.build(new THREE.Scene(), T);
   if (MUT === 'vaza' && id === 'piscina_treta') delete W.ctfPoints;
   const pts = W.ctfPoints || [];
