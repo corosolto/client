@@ -57,7 +57,7 @@ function comandosPendentes(repo, comentarios, processados) {
       number: Number(String(comentario.issue_url || '').match(/\/issues\/(\d+)$/)?.[1]),
     }))
     .filter((comando) => Number.isInteger(comando.number) && comando.number > 0)
-    .sort((a, b) => a.id - b.id);
+    .sort((a, b) => b.id - a.id);
 }
 const PERSONA = carregarPersona(RAIZ);
 /* Estado FORA do volume externo: sob launchd o node leva EPERM ao abrir para

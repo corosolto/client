@@ -122,6 +122,12 @@ export async function testar(t, { dir }) {
     0,
     'comentário processado não dispara review duplicado',
   );
+  const maisNovo = { ...comentarios[0], id: 14, issue_url: 'https://api.github.com/repos/corosolto/client/issues/1177' };
+  t.igual(
+    comandosPendentes('corosolto/client', [comentarios[0], maisNovo], new Set())[0].id,
+    14,
+    'comando mais novo entra primeiro para não atrasar o head atual',
+  );
 }
 
 const bordaoDo = (corpo) => corpo.split('\n').find((l) => l.startsWith('— *')) || '';
