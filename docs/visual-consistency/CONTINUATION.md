@@ -81,11 +81,23 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
   JSONs `*-1179-curation-red.json` nos audits. Primeira correção local Ferro
   mediu 21 peças/21 artes, zero fora e zero sem suporte, ainda sem novo bake.
 - #1179 CI falha na economia: EJ22 ainda espera 30 s, runtime oferece 50 s;
-  EJ12 também vermelho, investigar no log. Revisão CodeRabbit solicitada para o
-  head atual sem review. Não está pronto para merge remoto.
+  EJ12 também vermelho, investigar no log. Não está pronto para merge remoto.
+- Protocolo vigente recuperado em `operations/corosolto-hq-20261026/ledger/REVIEW-PROTOCOL-20261031.md`:
+  CodeRabbit não está habilitado; Ruben autorizou GLM via OMP + crítico independente.
+  O pedido anterior ao CodeRabbit foi redundante, não repetir. Estraga-codigo é o
+  revisor real em restauração. Dispensa não significa revisão recebida ou limpa.
 - Lease GLM de testes grafite: `tools/eval/graffiti-curation-check.mjs` (novo),
   fixtures afetadas de `graffiti-support-check.mjs` e
   `piscina-graffiti-batch-check.mjs`; sem produto, package, browser ou commit.
+- Gerador ganhou backend Ego que reutiliza apenas Space 32/p2. Régua original
+  de fidelidade passou: Loja H 43 peças idênticas byte a byte em duas rodadas;
+  bloquear statue_liberty.glb cancela. Mutante real removendo a trava reprovou G2
+  (43 peças com entrada faltante), arquivo temporário restaurado pelo arnês.
+- Diagnósticos vivos: Ferro 24 peças/24 arquivos únicos, Piscina 42/42, antes de
+  gravar novo layout. Bake completo em curso no Ego, log `ego-bake-all.log`.
+  Não alterar produtor/mapas durante esse bake. Fotos finais ainda pendentes.
+- Auditoria SHA-256 dos arquivos de decals/posters: nenhum arquivo binário
+  duplicado com outro nome. Não equivale a inspeção semântica de todas as artes.
 
 ## Aceites, rejeições e limites
 
@@ -98,7 +110,8 @@ gates e ownership continuam obrigatórios. Não chamar resultado técnico de vis
 
 ## Próximo passo concreto
 
-Capturar baseline do #1179 no Ego com viewport confirmado, registrar manual +
-assado + mural e medir repetição e suporte. Escrever régua que reprove esse head,
-depois corrigir curadoria sem tocar física/nav. Acompanhar GLM de personagens,
-owners/revisões dos PRs e release sem disputar escrita.
+Concluir bake completo, rodar curadoria em cena e fotografar antes/depois 3:2.
+Receber os dois builders GLM e validar RED/GREEN/mutantes; só então checkpoints
+de produto. Investigar EJ12/EJ22 contra a decisão atual de economia do #1179.
+Seguir acabamento favela, personagens/skins e ADS, sem abandonar acompanhamento
+de PRs/release nem disputar as lanes dos outros dois runs.
