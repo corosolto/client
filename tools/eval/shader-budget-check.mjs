@@ -366,15 +366,17 @@ const expectedPublishedModules = filesOnDisk
   .sort();
 const publishedGraphComplete = cachedModules.length === expectedPublishedModules.length
   && expectedPublishedModules.every((module, index) => cachedModules[index] === module);
-const moduleCache = buildCacheContract
+/* Contrato estático é medido neste processo e vale sozinho: probe HTTP morto
+   não pode apagar defeito já medido (issue #1133). */
+const staticCacheContract = buildCacheContract
   && injectedCacheContract(indexPage)
   && (!/\/js\/|__MANIFESTO_JS__/.test(layoutPage) || injectedCacheContract(layoutPage))
-  && evalCacheContract
   && [...reachableModules].every((module) => cachedModules.includes(module))
   && publishedModulesOnly
   && publishedGraphComplete
   && cacheMutationApplied
   && contentRevisionChanged;
+const moduleCache = staticCacheContract && evalCacheContract;
 
 const checks = [
   ['SB1', fixtureOk && loaderSplitsMetalRough && allFeaturesBudgeted, `todas as primitivas da urna têm features contabilizadas; caso-base usa ${uvVaryings} UVs`],
@@ -383,10 +385,9 @@ const checks = [
   ['SB4', triUsesBase && !triAddsVarying, 'triplanar reutiliza posição e normal do MeshStandard'],
   ['SB5', fogInstalled && fallbackFogSymmetric, 'quatro chunks de fog e fallback não iluminado são simétricos'],
   ['SB6', triNonFlat, 'triplanar aceita apenas MeshStandard sem flatShading'],
-  /* null = não medida. A sonda do cache HTTP roda um servidor Astro de verdade;
-     sem dependência instalada ela morre antes de medir, e um portão não pode
-     dar veredito sobre o que não mediu (issue #1133). */
-  ['SB7', evalCacheProbe.mediu ? moduleCache : null, 'módulos locais mudam de URL junto com o conteúdo'],
+  /* null = não medida: a sonda do cache HTTP morre sem dependência — mas só
+     quando o contrato estático não reprova por si (issue #1133). */
+  ['SB7', staticCacheContract ? (evalCacheProbe.mediu ? moduleCache : null) : false, 'módulos locais mudam de URL junto com o conteúdo'],
 ];
 const failed = checks.filter(([, ok]) => ok === false);
 const naoMedidas = checks.filter(([, ok]) => ok === null);
@@ -422,11 +423,13 @@ const mutantClause = {
   'cache-layout-site': 'SB7',
   'cache-serve-constante': 'SB7',
 };
-if (mutant && naoMedidas.some(([id]) => id === mutantClause[mutant])) {
+/* Mutante sobre cláusula não medida só é SKIP se NADA reprovou: vermelho medido vence. */
+if (mutant && !failed.length && naoMedidas.some(([id]) => id === mutantClause[mutant])) {
   console.error(`\x1b[33mSHADER-BUDGET não medida: mutação ${mutant} alveja ${mutantClause[mutant]}, que não rodou\x1b[0m`);
   process.exit(SAIDA_SKIP);
 }
-if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
+if (mutant && !naoMedidas.some(([id]) => id === mutantClause[mutant])
+  && !failed.some(([id]) => id === mutantClause[mutant])) {
   failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);
 }
 if (failed.length) {

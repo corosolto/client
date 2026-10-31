@@ -117,15 +117,16 @@ function restaura() {
 }
 for (const s of ['SIGINT', 'SIGTERM']) process.on(s, () => { restaura(); process.exit(130); });
 process.on('uncaughtException', (e) => { restaura(); throw e; });
-
+/* Vermelho medido em trial anterior atravessa o SKIP posterior (issue #1133). */
+let vermelhoPendente = false;
 function rodaRegua() {
   const r = sonda([path.join(HERE, 'texel-check.mjs'), `--mapa=${MAPA}`], {
     cwd: ROOT, maxBuffer: 64 * 1024 * 1024,
   });
-  /* Sem medir, `acusa()` devolveria conjunto vazio dos dois lados e TODO mutante
-     apareceria como SOBREVIVEU — diagnóstico de régua fraca para um defeito de
-     ambiente (issue #1133). */
-  if (!r.mediu) { restaura(); pula(r.causa, 'régua TEXEL'); }
+  /* Sem medir, `acusa()` devolve vazio dos dois lados e TODO mutante
+     "sobrevive" — defeito de ambiente lido como régua fraca (issue #1133).
+     Vermelho já medido em trial anterior atravessa o pula: falha vence SKIP. */
+  if (!r.mediu) { restaura(); if (vermelhoPendente) process.exitCode = 1; pula(r.causa, 'régua TEXEL'); }
   return { code: r.status, txt: (r.stdout || '') + (r.stderr || '') };
 }
 
@@ -182,7 +183,7 @@ for (const m of alvo) {
   const certo = novas.some((x) => m.espera.test(x.split(' ')[0]));
   const veredito = novas.length === 0 ? 'SOBREVIVEU' : (certo ? 'MATOU' : 'PARCIAL');
   if (veredito === 'MATOU') mortos++;
-  linhas.push({ nome: m.nome, veredito, acendeu: novas.join(',') || '—' });
+  if (veredito !== 'MATOU') vermelhoPendente = true;
   console.log(`  ${veredito.padEnd(11)} ${m.nome.padEnd(14)} acendeu do zero: ${novas.join(', ') || '(nada)'}`);
   if (veredito !== 'MATOU') console.log(`              ${m.porque}`);
 }

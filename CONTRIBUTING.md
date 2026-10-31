@@ -97,8 +97,8 @@ minuto e custa um dia:
 Hoje esse segundo caso sai como `⊘ SKIP` com a causa e o comando que conserta, e
 o processo encerra com **78** (`EX_CONFIG`), que não é verde nem vermelho. Se um
 gate seu pular com 78, a leitura é "não medi": rode `npm ci` e rode de novo. O
-mecanismo mora em `tools/eval/sonda-filho.mjs`, e o cabeçalho dele explica por que
-SKIP tem código próprio em vez de virar 0 ou 1.
+mecanismo mora em `tools/eval/sonda-filho.mjs`, e o porquê de SKIP ter código
+próprio em vez de virar 0 ou 1 está em `docs/docs/sonda-processos.md`.
 
 ## As duas zonas
 

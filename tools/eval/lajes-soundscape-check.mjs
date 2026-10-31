@@ -45,6 +45,7 @@ for (const invalid of [undefined, {}, { synth: { kind: 'indoor-hum' } }, { loops
 console.log('PASS LSA1–LSA6 helper puro: Lajes, isolamento, escopo, autorado, legado e doador válido');
 
 const temp = mkdtempSync(join(tmpdir(), 'lajes-audio-fetch-'));
+let causaLSA = '';
 try {
   for (const dir of ['scripts', 'tools/audio', 'public/audio', 'public/js', 'bin', 'pack']) mkdirSync(join(temp, dir), { recursive: true });
   // `fetch-audio.sh` termina em `ensure-map-soundscapes.mjs` (issue #696), que lê os ids
@@ -83,11 +84,24 @@ try {
     writeFileSync(path, JSON.stringify(value));
     return sonda([join(root, 'tools/eval/assets-check.mjs'), `--raiz=${join(temp, 'public')}`, `--ledger=${ledger}`, '--so=runtime-audio'], { cwd: root });
   };
-  /* assets-check importa three; filho morto daria "vermelho" sem medir nada. */
-  const red = gate(full); if (!red.mediu) pula(red.causa, 'LSA9');
-  assert.notEqual(red.status, 0); assert.match(red.stderr + red.stdout, /lajes/);
-  const green = gate(completeLajesSoundscape(full)); assert.equal(green.status, 0, green.stderr + green.stdout);
-  delete full.mapSoundscapes.corrego;
-  const missingOther = gate(completeLajesSoundscape(full)); assert.notEqual(missingOther.status, 0); assert.match(missingOther.stderr + missingOther.stdout, /corrego/);
-  console.log('PASS LSA9–LSA10 ASSETS-CHECK real: 13/14 vermelho → 14/14 verde; outro mapa ausente continua vermelho');
+  /* assets-check importa three; filho morto daria "vermelho" sem medir nada.
+     A causa decide DEPOIS do finally: pula com process.exit não roda o finally. */
+  const red = gate(full);
+  if (!red.mediu) causaLSA = red.causa;
+  else {
+    assert.notEqual(red.status, 0); assert.match(red.stderr + red.stdout, /lajes/);
+    const green = gate(completeLajesSoundscape(full));
+    if (!green.mediu) causaLSA = green.causa;
+    else {
+      assert.equal(green.status, 0, green.stderr + green.stdout);
+      delete full.mapSoundscapes.corrego;
+      const missingOther = gate(completeLajesSoundscape(full));
+      if (!missingOther.mediu) causaLSA = missingOther.causa;
+      else {
+        assert.notEqual(missingOther.status, 0); assert.match(missingOther.stderr + missingOther.stdout, /corrego/);
+        console.log('PASS LSA9–LSA10 ASSETS-CHECK real: 13/14 vermelho → 14/14 verde; outro mapa ausente continua vermelho');
+      }
+    }
+  }
 } finally { rmSync(temp, { recursive: true, force: true }); }
+if (causaLSA) pula(causaLSA, 'LSA9');

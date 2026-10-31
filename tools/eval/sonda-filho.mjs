@@ -1,80 +1,12 @@
-/* ============================================================================
-   sonda-filho.mjs — TRÊS DESFECHOS, NÃO DOIS. (issue #1133)
-   ----------------------------------------------------------------------------
-   POR QUE EXISTE
-
-   Portão que roda um processo filho e lê só `status === 0` conhece dois
-   desfechos: passou e não passou. Mas existem TRÊS:
-
-     1. ok            — medi, e o conteúdo está certo.
-     2. reprovou      — medi, e o conteúdo está errado.
-     3. não consegui medir — o filho morreu antes de medir coisa alguma.
-
-   Colapsar (3) em (2) produz o pior tipo de saída de portão: um veredito
-   confiante sobre a coisa errada. Foi o que a SB7 fez em 2026-10-28. Numa
-   worktree recém-criada, sem `npm ci`, ela imprimia:
-
-       ✗ SB7 módulos locais mudam de URL junto com o conteúdo
-
-   quando a causa real, duas camadas abaixo, era:
-
-       Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'astro'
-         imported from tools/eval/serve.mjs
-
-   Ninguém tinha mexido em cache-bust. O que faltava era dependência. A régua
-   acusou o réu errado, e quem batia nisso ia procurar bug de versionamento de
-   URL por horas. Pior: a regra da casa é worktree por feature, então TODA lane
-   nova pagava esse pedágio — e o caminho natural de quem paga pedágio demais é
-   concluir que o portão é chato e contorná-lo.
-
-   O colapso simétrico é ainda pior e também existia aqui: num arquivo de
-   mutantes, que espera `status !== 0` para declarar o mutante MORTO, um filho
-   que morre por dependência ausente vira mutante "detectado". Aí o colapso não
-   produz vermelho mentiroso, produz VERDE mentiroso — a régua declara que ainda
-   morde sem ter encostado no código. Falso-verde é a lei nº 1 da casa.
-
-   ── POR QUE SKIP NÃO É VERDE, E TAMBÉM NÃO É VERMELHO ───────────────────────
-
-   A tentação é mapear "não consegui medir" para um dos dois códigos que já
-   existem. As duas opções são erradas, por motivos opostos:
-
-   • SKIP como 0 (verde) é falso-verde. O portão desapareceria exatamente no
-     ambiente onde ele é mais necessário: o mal configurado. Um CI com cache de
-     node_modules quebrado passaria a aprovar tudo, em silêncio, para sempre.
-
-   • SKIP como 1 (vermelho) é o defeito original de volta. O veredito fica de
-     novo indistinguível de "o conteúdo está quebrado", e a lane é bloqueada por
-     algo que não é defeito dela.
-
-   Então SKIP tem código próprio: 78. Não é número inventado — é EX_CONFIG do
-   sysexits.h, cuja definição ("configuration error") é literalmente o caso:
-   o ambiente está errado, o código não. Com um terceiro código, cada consumidor
-   decide a política sabendo sobre o que está decidindo — o runner pinta de
-   amarelo e conta à parte, o CI trata como falha de infraestrutura — e nenhum
-   deles precisa adivinhar a partir de um 1 ambíguo.
-
-   A mensagem de SKIP carrega sempre a causa e o comando que conserta. Portão
-   que não passou e não diz o que fazer é só uma forma mais lenta de ser inútil.
-
-   ── USO ─────────────────────────────────────────────────────────────────────
-
-     import { sonda, pulaSeNaoMediu, SAIDA_SKIP } from './sonda-filho.mjs';
-
-     const r = sonda([ 'tools/eval/social-serve-check.mjs' ]);
-     pulaSeNaoMediu(r, 'SB7');            // sai com 78 se o filho não mediu
-     const clausula = r.status === 0;     // aqui o status já significa conteúdo
-
-   Para quem chama `execFileSync` dentro de try/catch, `causaNaoMedivel` também
-   aceita a exceção lançada — ela carrega `status`, `stdout` e `stderr`.
-   ============================================================================ */
+/* Três desfechos de filho — ok, reprovou e "não consegui medir" (SKIP=EX_CONFIG):
+   por quê, uso e limites da heurística em docs/docs/sonda-processos.md (issue #1133). */
 import { spawnSync } from 'node:child_process';
 
 /* EX_CONFIG do sysexits.h: o ambiente está mal configurado, não o código. */
 export const SAIDA_SKIP = 78;
 
-/* Um módulo que não resolve, um .node que não carrega, um binário que não
-   existe. Todos significam "o filho morreu antes de medir", nunca "o conteúdo
-   que eu deveria medir está errado". */
+/* Módulo que não resolve, .node que não carrega ou binário ausente: o filho
+   morreu antes de medir — nunca veredito de conteúdo. */
 const FALTA_MODULO = /ERR_MODULE_NOT_FOUND|ERR_DLOPEN_FAILED|MODULE_NOT_FOUND|Cannot find package|Cannot find module/;
 const NOME_PACOTE = /Cannot find (?:package|module) '([^']+)'/;
 
@@ -84,6 +16,13 @@ const CONSERTO = 'rode `npm ci` na raiz desta worktree';
    Aceita tanto o objeto de retorno de spawnSync quanto a exceção de execFileSync. */
 export function causaNaoMedivel(resultado) {
   if (!resultado) return null;
+  /* Filho que rodou até o fim e saiu 0 mediu: erro citado na saída é dado, não causa. */
+  if (resultado.status === 0) return null;
+  /* Morto por sinal (timeout, OOM, kill externo) não mediu nada — nunca veredito. */
+  if (resultado.status === null && resultado.signal) {
+    const timeout = resultado.error?.code === 'ETIMEDOUT' ? ' (timeout)' : '';
+    return `filho morto por ${resultado.signal} antes de medir${timeout}`;
+  }
   const falha = resultado.error || resultado;
   if (falha && falha.code === 'ENOENT' && !resultado.stderr) {
     return `executável ausente (${falha.path || falha.syscall || 'desconhecido'})`;
@@ -91,8 +30,10 @@ export function causaNaoMedivel(resultado) {
   const texto = `${resultado.stderr || ''}${resultado.stdout || ''}${resultado.error?.message || ''}`;
   if (!FALTA_MODULO.test(texto)) return null;
   const pacote = texto.match(NOME_PACOTE)?.[1] || '';
-  const alvo = pacote.startsWith('/') ? pacote : pacote && `'${pacote}'`;
-  return `dependência ausente${alvo ? `: ${alvo}` : ''} — ${CONSERTO}`;
+  /* Especificador de arquivo ('./x', '/x') é import quebrado no próprio
+     conteúdo; bare é pacote npm ausente — só ele é infra (issue #1133). */
+  if (/^(?:\.{1,2}\/|\/|file:|[A-Za-z]:[\\/])/.test(pacote)) return null;
+  return `dependência ausente${pacote ? `: '${pacote}'` : ''} — ${CONSERTO}`;
 }
 
 /* Roda o filho e anexa o diagnóstico. `desfecho` já vem resolvido nos três
@@ -104,14 +45,10 @@ export function sonda(args, opcoes = {}) {
   return { ...resultado, causa, desfecho, mediu: !causa };
 }
 
-/* Imprime o SKIP no formato que o runner reconhece e encerra com 78. */
+/* Imprime o SKIP no formato que o runner reconhece e encerra com 78 — a menos que
+   um veredito de conteúdo (exitCode≠0) já exista: falha medida vence SKIP. */
 export function pula(causa, clausula = '') {
   const etiqueta = clausula ? `${clausula} ` : '';
   console.error(`\x1b[33m⊘ SKIP ${etiqueta}não medido: ${causa}\x1b[0m`);
-  process.exit(SAIDA_SKIP);
-}
-
-export function pulaSeNaoMediu(resultado, clausula = '') {
-  if (resultado?.causa) pula(resultado.causa, clausula);
-  return resultado;
+  process.exit(process.exitCode || SAIDA_SKIP);
 }

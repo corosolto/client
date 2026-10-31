@@ -45,9 +45,8 @@ for (const p of passos) {
   const r = spawnSync('npm', ['run', '--silent', p], { encoding: 'utf8' });
   const s = (Date.now() - t) / 1000;
   const saida = ((r.stdout || '') + (r.stderr || '')).trim();
-  /* 78 = EX_CONFIG: o passo não mediu nada (ver tools/eval/sonda-filho.mjs).
-     Não é verde — some do placar seria falso-verde — e não é vermelho, porque
-     o conteúdo da lane não foi julgado. Terceira cor, contagem própria. */
+  /* 78 = EX_CONFIG: nada foi medido — nem verde, nem vermelho (o conteúdo
+     não foi julgado). Terceira cor, contagem própria. */
   const pulou = r.status === SAIDA_SKIP;
   const ok = r.status === 0;
   console.log(pulou ? `${AMAR}PULOU${OFF} ${CINZA}${s.toFixed(1)}s${OFF}`

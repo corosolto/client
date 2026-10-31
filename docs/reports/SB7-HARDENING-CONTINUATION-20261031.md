@@ -64,3 +64,9 @@ aponta texel, ponteiro CONTRIBUTING e cobertura file:/drive. Corrigir TODOS os
 casos concretos; diferença de severidade não refuta evidência. Próxima lease
 builder R3 só callers/fixtures/doc, sem tocar branch autor ou package. Mutantes
 devem usar tmp/memória ou finally com hashantes/depois, nunca deixarresíduo.
+
+## Marco validado — 11:38 UTC
+
+Root repetiu sonda-filho-check20/20, exit0, log agregado root-sb7-R3-final.log; docs25blocos/32marcadores, exit0 em root-sb7-R3-docs.log. Revisão GLM-SB7-INTEGRAL-R4-RESULTADO.md CLEAN e CRITICO-SB7-INTEGRAL-R4.md CLEAN por leitura integral independente,18hashes estáveis; não houve smoke de produto nesta mudança de ferramentas. Regra fail medido vence SKIP fechada nos callers SB7/PRV/texel, packs só afirmam PASS integral com filhos medidos.
+
+Checkpoint recuperável dos17arquivos de implementação/doc/wire e este ledger. Próximo: integrar main atual nesta lane, resolver apenas conflitos próprios, conferir se os hashes relevantes mudaram, executar pre-push/CI e pedir Estraga-código no head novo. Não alterar branch original do autor; o PR isolado deve deixar relação com1167 clara. Nenhum merge/release nosso até este marco.
