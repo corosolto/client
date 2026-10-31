@@ -25,3 +25,7 @@ Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual
 Concluir prova visual yaw na QA4374/Space39, aguardar correção medida da economia, integrar seletivamente e regenerar docs. Depois push normal (hook completo, sem bypass), atualizar PR/threads com evidência e solicitar uma revisão integral no novo head. Acompanhar checks/revisão até zero dívida; crítico integral posterior, merge normal e release somente quando todas as condições aplicáveis passarem.
 
 Audit externo: `audits/2026-10-31-visual-consistency/` na raiz agregadora. Space38 foi finalizada e não reaberta; Space39 é a continuidade própria. Servidores4373(AK) e4374(QA) temporários ativos, além dos antigos4367–4372 preservados; conferir PID/CWD antes de parar. Não tocar Spaces do usuário1/25. O objetivo permanece ativo e incompleto.
+
+### Atualização pós-crítico yaw
+
+Microfix61afae0ad integra undo também em die antes do próximo update. Nominal33casos/31.500updates e13mutantes; wiring substitui lista manual por nominal+autoteste. Ego7chars×600standingupdates/proxies~7e-15; capturaR2 em1320×880 vista. A morte ainda não tem aceite visual novo. Novos reds hosted21: AUD1C(ctxfilho),VM14(53flutuantes em5mapas), grafite-atual(404decalassets), select(referência0.675/23.6 vs atual0.689/28.6). Investigações próprias separadas, sem tetos afrouxados. Remoto ainda21; próximo gate de publicação exige fix/prova desses reds além do OOM.
