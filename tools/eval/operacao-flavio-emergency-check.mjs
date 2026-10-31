@@ -11,7 +11,7 @@ const mutants = {
   'sirene-ausente': ['this.fontes.push(...sireneEmergencia(this.game.sfx));', '', /sirene varre frequência/],
   'sem-restaurar': ['const estado = this._amb;', 'const estado = null;', /intensidade original restaurada/],
   'material-vaza': ['const escuro = original.clone();', 'const escuro = original;', /terminal e perímetro preservados|intensidade original restaurada/],
-  'audio-dedicated': ['if (!this.game.dedicated) this.fontes = marchaMilitar(this.game.sfx);', 'this.fontes = marchaMilitar(this.game.sfx);', /nenhum oscilador no servidor/],
+  'audio-dedicated': ['if (!this.game.dedicated || this.game.online) this.fontes = marchaMilitar(this.game.sfx);', 'this.fontes = marchaMilitar(this.game.sfx);', /nenhum oscilador no servidor/],
 };
 if (process.argv.includes('--mutantes')) {
   for (const [name, [, , clause]] of Object.entries(mutants)) {

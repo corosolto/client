@@ -365,7 +365,7 @@ class Netcode {
     const snap = net.snap;
     if (this._netMap.size === 0) {
       this._casar(snap);
-      if (Number.isFinite(snap.roundNum)) this._netRodada = snap.roundNum;   // quem entra no meio herda a rodada em curso
+      if (this._netTick < 0 && Number.isFinite(snap.roundNum)) this._netRodada = snap.roundNum;   // só o 1º snapshot herda a rodada em curso
       if (this._evOn && Array.isArray(net.meta?.drops)) for (const d of net.meta.drops) this._dropDeRede(d);   // quem entra no meio vê os drops vivos
     }
 

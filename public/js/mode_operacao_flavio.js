@@ -237,7 +237,7 @@ export class OperacaoFlavio {
     game._trocarPersonagem(this.vip, vipDef, true);
     this.vip.name = game.online || game.dedicated ? 'Flávio Bolsonaro' : '[VIP] Flávio Bolsonaro';
     this.travarArmaVip();
-    if (!game.dedicated && typeof document !== 'undefined') {
+    if ((!game.dedicated || game.online) && typeof document !== 'undefined') {
       this.hud = document.createElement('div');
       this.hud.id = 'escort-objective';
       this.hud.style.cssText = 'position:fixed;left:50%;top:5.7rem;transform:translateX(-50%);z-index:12;padding:.55rem .9rem;background:#09101cdd;border:1px solid #d8b765;color:#fff;font:700 13px/1.2 system-ui;letter-spacing:.04em;pointer-events:none';
@@ -342,6 +342,7 @@ export class OperacaoFlavio {
     this.travarArmaVip();
     this.cinematic = null;
     this.deathAnnounced = false;
+    if (this.hud) { this.hud.style.background = '#09101cdd'; this.hud.style.borderColor = '#d8b765'; }
     this._vipMoveSpeed = 0;
     if (this.game.vmScene) this.game.vmScene.visible = true;
     if (this.hud) this.hud.hidden = false;
@@ -350,7 +351,7 @@ export class OperacaoFlavio {
   /* Onda de 8 s desde o epoch da rodada (docs/maps/operacao-decola.md §Respawn): morte na
      borda perde a onda atual; devolve tempo ABSOLUTO (ent.respawnAt); VIP não renasce. */
   respawnAt(ent, now) {
-    if (this.game.online && !this.game.dedicated) return undefined;
+    if (this.game.online) return undefined;
     if (ent === this.vip) return Infinity;
     const epoch = this._waveEpoch ?? (this._waveEpoch = now);
     return epoch + (Math.floor((now - epoch) / 8) + 1) * 8;
@@ -431,7 +432,7 @@ export class OperacaoFlavio {
   update(dt) {
     if (!this.vip || this.game.state !== 'live') return;
     this.travarArmaVip();
-    if (!this.game.online || this.game.dedicated) {
+    if (!this.game.online) {
       const antes = { x: this.vip.pos.x, z: this.vip.pos.z };
       passoEscolta(this.state, {
         defensores: this.game.combatants.filter((ent) => ent !== this.vip && ent.team === 'B'),
@@ -467,7 +468,7 @@ export class OperacaoFlavio {
   }
 
   updateBot(bot, dt) {
-    if (bot !== this.vip || (this.game.online && !this.game.dedicated)) return false;
+    if (bot !== this.vip || this.game.online) return false;
     const group = bot.mesh?.group;
     if (!group) return true;
     bot.mesh.ctrl?.setCrouch?.(Boolean(this.state.threatened));
@@ -518,8 +519,8 @@ export class OperacaoFlavio {
     this._restaurarAmbiente();   // ambiente da cena anterior não vaza para a nova
     this.cinematic = { winner, startedAt: this.game.time, skipped: false };
     if (this.game.vmScene) this.game.vmScene.visible = false;
-    if (!this.game.dedicated) this.fontes = marchaMilitar(this.game.sfx);
-    if (winner === 'E' && !this.game.dedicated) {
+    if (!this.game.dedicated || this.game.online) this.fontes = marchaMilitar(this.game.sfx);
+    if (winner === 'E' && (!this.game.dedicated || this.game.online)) {
       this._aplicarAmbienteE();
       this.fontes.push(...sireneEmergencia(this.game.sfx));
     }
@@ -529,7 +530,7 @@ export class OperacaoFlavio {
   }
 
   updatePresentation() {
-    if (!this.cinematicActive || this.game.dedicated) return;
+    if (!this.cinematicActive || (this.game.dedicated && !this.game.online)) return;
     const t = Math.min(1, (this.game.time - this.cinematic.startedAt) / 9);
     const cam = this.game.camera;
     const ganhou = this.cinematic.winner === 'B';
@@ -555,7 +556,7 @@ export class OperacaoFlavio {
   }
 
   applyNetState(net) {
-    if (!this.game.online || this.game.dedicated) return;
+    if (!this.game.online) return;
     aplicarSnapshotEscolta(this.state, net);
   }
 
