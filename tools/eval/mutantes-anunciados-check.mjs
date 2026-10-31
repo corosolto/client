@@ -102,7 +102,10 @@ for (const [chave, valor] of Object.entries(scripts)) {
 if (!auditados) falhas.push({clause:'MA0',type:'ContractViolation',message:'MA0 nenhum cabeçalho `//eval:X` com "Mutante(s):" encontrado — a varredura perdeu o alvo'});
 
 const mutacaoCega = MUT && !falhas.length;
-if (mutacaoCega) falhas.push({clause:'MUT',type:'ContractViolation',message:`MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`});
+if (mutacaoCega) {
+  const message = `MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`;
+  falhas.push({clause:'MUT',type:'ContractViolation',message});
+}
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f.message}`);
 if (!falhas.length)
   console.log(`  \x1b[32m✓\x1b[0m MA ${auditados} cabeçalho(s) com "Mutante(s):" batem com o que a cadeia executa`);
