@@ -545,7 +545,7 @@ const KNIFE_MARK_PROFILES = Object.freeze({
     blade: Object.freeze({ fromGrip: 0.50, toTip: 0.96, minSlenderness: 2.2 }),
     roles: Object.freeze({
       symbol: Object.freeze({ along: 0.40, sizeFrac: 0.62 }),
-      slogan: Object.freeze({ along: 0.82, sizeFrac: 0.34 }),
+      slogan: Object.freeze({ along: 0.76, sizeFrac: 0.62, longitudinal: true }),
     }),
     liftFrac: 0.05,
     coverage: FOOTPRINT_TOLERANCE,
@@ -557,7 +557,7 @@ const KNIFE_MARK_PROFILES = Object.freeze({
     blade: Object.freeze({ fromGrip: 0.50, toTip: 0.96, minSlenderness: 2.2 }),
     roles: Object.freeze({
       symbol: Object.freeze({ along: 0.40, sizeFrac: 0.62 }),
-      slogan: Object.freeze({ along: 0.82, sizeFrac: 0.34 }),
+      slogan: Object.freeze({ along: 0.76, sizeFrac: 0.62, longitudinal: true }),
     }),
     liftFrac: 0.05,
     coverage: FOOTPRINT_TOLERANCE,
@@ -724,10 +724,11 @@ function knifeSupportedPlacement(frame, profile, height, width, centerU, priors)
 function knifePlacement(frame, profile, aspect, role, priors) {
   const tExtent = frame.transHigh - frame.transLow;
   const uExtent = frame.regionUMax - frame.regionUMin;
-  let baseHeight = role.sizeFrac * tExtent;
-  let baseWidth = baseHeight * aspect;
-  if (baseWidth > tExtent * 0.9) { baseWidth = tExtent * 0.9; baseHeight = baseWidth / aspect; }
-  if (baseWidth > uExtent * 0.8) { baseWidth = uExtent * 0.8; baseHeight = baseWidth / aspect; }
+  let baseHeight = role.sizeFrac * tExtent * (role.longitudinal ? aspect : 1);
+  let baseWidth = role.sizeFrac * tExtent * (role.longitudinal ? 1 : aspect);
+  const fit = Math.min(1, (tExtent * 0.9) / baseWidth, (uExtent * 0.8) / baseHeight);
+  baseHeight *= fit;
+  baseWidth *= fit;
   if (!(baseHeight > 0) || !Number.isFinite(baseHeight) || !Number.isFinite(baseWidth)) return null;
   // `along` é preferência: a lâmina real tem vazios — procura centro e escala suportados.
   for (const scale of [1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6]) {
@@ -746,6 +747,10 @@ function knifePlacement(frame, profile, aspect, role, priors) {
 
 function addKnifePair(model, skinId, role, texture, frame, placement, context) {
   const geometry = new THREE.PlaneGeometry(placement.width, placement.height);
+  if (KNIFE_MARK_PROFILES[context].roles[role].longitudinal) {
+    const uv = geometry.attributes.uv;
+    for (let i = 0; i < uv.count; i++) { const u = uv.getX(i); uv.setXY(i, 1 - uv.getY(i), u); }
+  }
   const material = paintedMaterial(texture, skinId, role);
   const longVector = frame.long.clone().multiplyScalar(frame.longSign);
   for (const [side, n, flip] of [['right', placement.rightN, false], ['left', placement.leftN, true]]) {

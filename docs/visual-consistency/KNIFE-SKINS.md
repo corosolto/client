@@ -83,3 +83,12 @@ Pendente fora do lease do writer: registrar o gate em `package.json`/`check:fast
 
 ## R4 Root — integridade e finitude do objeto aplicado
 Inversas ósseas são comparadas exatamente no snapshot antes/depois; bindMatrixInverse é atualizado pelo consumidor e não recebe uma isenção de boneInverses. O getter real getVertexPosition carrega cada posição antes do skinning; não há vetor acumulando NaN entre malhas. nan-bind exige somente faca nãofinita+rig alterado, nunca mãos saudáveis vermelhas. inverse-shift desloca CoroWeapon e exige somente rig-intact por pack. Nomes herdados são uso2 antes de carregar assets; baseline/selftestREDé1.
+
+
+## Leitura longitudinal do slogan
+
+O slogan passa a ocupar o comprimento da lâmina com proporção preservada, em vez de ser reduzido à largura estreita. O UV gira90° e orienta o texto para leitura no idle do jogador. Símbolos mantêm sua orientação. O ajuste continua sujeito à mesma cobertura contínua e separação entre marcas. O oráculo independente verifica dimensão física inversa do aspecto e os quatro UVs de ambos os lados. Duas contraprovas novas removem a rotação e devolvem o texto transversal; ambas exigem somente as duas cláusulas aspect do MAGA.
+
+O novo posicionamento fica integralmente coberto em MAGA_FP mesmo ao remover a guarda. Por isso o mutante guard-off exige agora Caveira_FP e MAGA_TP: a prova independente mediu área ausente0 e quatro cantos cobertos nas quatro marcas MAGA_FP. Não há supressão de uma violação observada. Full nominal+11mutantes passou; crítico longitudinalR3CLEAN16f02405.
+
+Ego capturou CaveiraR5 e MAGAR6,7estágios cada,574/575updates finitos. O primeiro R5 do MAGA foi interrompido por navegação concorrente e rejeitado; R6 substitui essa captura. IdleR6 mostra MAGA legível na orientação correta. Isso não aprova ainda todo catálogo/equipar nem texto em todas as distâncias e dispositivos.

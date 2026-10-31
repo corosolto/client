@@ -791,3 +791,17 @@ Doisperfis explícitosknifeFP/TPcomfingerprints reais, coberturacontínuaretâng
 EgoR3realConsumerPiscinamedraw2×9.6s558/567updates: Idle/Draw/QuickThrust/HeavyStab/walk/TPidle/TPwalk,finitoemamostras,vídeos2.28/2.66MB efolhade14quadros. R2vídeoinválido110bytesdescartado(desenhofalsedesligadorender), nuncaaceito. Marcasacompanhamlâminanasamostras; leituradotexto/desenhoàdistâncianormal efluxocatálogo/comprar/equiparNÃOaprovados,nãochamarskinsconcluídas. Gategeométricoaprovadoécheckpointrecuperável, nãoestética/releases.
 
 CampoCuradoriaR9nominalGREEN5peças,contadoreszero/prefsantesdepoisiguais; R10repetiuGREEN. QAaindasemnovoPR. BootR4falhacorretamenteINFRA3faviconERR_ABORTED;trilhadiagnósticaR5(semaceite)mostra2cancelamentossemresponse/dataantesREADYassets3s. NãoisentarURLnemsuporduplicaçãoHTML:homerealtemUMlinkicon,indexnãousaLayout. Fixturefaviconpass-throughhostbyteexact/cargaRAWconservadoraemsóprotótipoprivado,semadotar.
+
+
+## 16:34 UTC — nominal boot medido; pendências explícitas
+
+BootR8 terminou READYassets2487ms,325requests,9.07MiB; ORC1REDlegítimo, ORC2/3GREEN. Nenhum mutante rodou após nominalRED. Tetos8.2MB/340 intactos. R8fecha redirect/reusedID e trata Responseprovisório vs Finishedfinal; crítica emcurso. PróximoR9 candidato: arquivosbyte-idênticos devem seguir requestrealvia continue emvezfulfillRAW, medindoencodedCDP; sóchangednewJS cobradoRAW. Sem isenção nova/fixtures.
+
+CIcuradoriaR3 fontecríticaCLEANee0ec016, mas runtime parou intencionalmente após14nominais465peçasGREEN: clones dos mutantes introduziamdivergência e algumaspeçasnãoficavamnoar. Não há GREENintegral nemwiringaprovado. Lease exclusivaMUTADOR críticobalcao para fixturesfísicascausais, semalterarpredicado. CanarinhoR3 candidato privado40juntas16novas/416verticesemvalidação, ainda NÃOadotado. #1184continua semreviewreal; #1181últimareviewCHANGES_REQUESTED com2refutaçõesdocumentadasenovopedidopendente. Missãocompletaaté18:45UTCcontinua.
+
+
+## F2 longitudinal — legibilidade melhorada e checkpoint
+
+Root corrigiu dimensões do slogan para usar comprimento da lâmina e UV90°, mantendo símbolos/cobertura/bones/GLBs. R1nativepegoutexto invertido e expectedguard-offantigo; R3fechaamboscomprovas. Nominal4+11mutantesexatosGREEN, native16f02405. ActualEgoCaveiraR5eMAGAR6válidos7estágios574/575updates; MAGAR5interrompidoporoutranavegaçãofoirejeitado. IdleMAGAR6legívelcorreto, leituraemdistâncias/catálogo/mobileaindaparcial.
+
+CIcuradoriaR4fullterminou0:71medições,14nominais465peças,mutantesisolados,draw-groupscontroleGREEN. Criticalfixture20d25bc6CLEAN34probes+9JSONs,adapterR3ee0ecCLEAN. CheckpointCIseparadosemwireaindapendente;egorepresentantesnovosmutadorespendente. BootR10gzipfulfillREJEITADO:Chromiumnãodescomprimeessecaminho;barreirarecusou3corretamente. PrototipoR11HTTPgziprealemleaseprivadacritgates,sóGETpúblico+geo-langsemcookie/auth. Nadaabaixa8.2MB/340.

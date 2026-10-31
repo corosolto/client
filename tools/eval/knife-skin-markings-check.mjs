@@ -10,7 +10,7 @@ const usageExit = (msg) => {
   console.error(`USO knife-skin-markings: ${msg} — invocação: [--mutante=<nome>]`);
   process.exit(2);
 };
-const NOMES_MUTANTES=new Set(['remove-branch-knife','parent-root-1p','remove-maga-slogan','footprint-fora','profile-units-wrong','footprint-guard-off','nan-bind','nan-hand','inverse-shift']);
+const NOMES_MUTANTES=new Set(['remove-branch-knife','parent-root-1p','remove-maga-slogan','footprint-fora','profile-units-wrong','footprint-guard-off','nan-bind','nan-hand','inverse-shift','slogan-uv-off','slogan-transversal']);
 const onlyArgs = [];
 for (const arg of process.argv.slice(2)) {
   if (!arg.startsWith('--mutante=')) usageExit(`argumento desconhecido \`${arg}\``);
@@ -412,6 +412,20 @@ function deformedFinite(scene, animations) {
   return { knife: rawBad.knife + deformedBad.knife === 0, hands: rawBad.hand + deformedBad.hand === 0 };
 }
 
+// Contrato visual independente: texto horizontal no bitmap percorre o comprimento da lâmina.
+function aspectAndUv(marks, role, aspect) {
+  const sides = marks.filter(m => m.userData.markingRole === role);
+  if (sides.length !== 2) return false;
+  const longitudinal = role === 'slogan';
+  const expected = longitudinal ? 1 / aspect : aspect;
+  const coords = longitudinal ? [[0,0],[0,1],[1,0],[1,1]] : [[0,1],[1,1],[0,0],[1,0]];
+  return sides.every(m => {
+    const {width,height} = m.geometry.parameters, uv = m.geometry.attributes.uv;
+    return Number.isFinite(width/height) && Math.abs(width/height-expected)/expected < .01
+      && uv?.count === 4 && coords.every(([u,v],i) => Math.abs(uv.getX(i)-u)<1e-7 && Math.abs(uv.getY(i)-v)<1e-7);
+  });
+}
+
 // A MESMA função valida nominal e mutantes: retorna mapa cláusula→bool por caso.
 async function evaluate(skin, { fpGltfFactory, tpFactory }) {
   const clauses = {};
@@ -430,12 +444,7 @@ async function evaluate(skin, { fpGltfFactory, tpFactory }) {
     clauses[`${tag}#fp:attached`] = vm.packageRoot !== null && report?.status === 'attached';
     clauses[`${tag}#fp:roles-exact`] = JSON.stringify(report?.roles) === JSON.stringify(c.roles);
     clauses[`${tag}#fp:count`] = marks.length === c.roles.length * 2;
-    clauses[`${tag}#fp:aspect`] = c.roles.every((role) => {
-      const sides = marks.filter((m) => m.userData.markingRole === role);
-      if (sides.length !== 2) return false;
-      const { width, height } = sides[0].geometry.parameters;
-      return Number.isFinite(width / height) && Math.abs(width / height - c.aspects[role]) / c.aspects[role] < 0.01;
-    });
+    clauses[`${tag}#fp:aspect`] = c.roles.every(role => aspectAndUv(marks,role,c.aspects[role]));
     clauses[`${tag}#fp:parent`] = marks.length > 0 && bone !== null && marks.every((m) => m.parent === bone && bone.parent !== null && scene.getObjectById(bone.id) === bone);
     clauses[`${tag}#fp:footprint`] = footprintClause(skin, scene, 'knife-fp', marks);
     clauses[`${tag}#fp:rig-intact`] = rigIntact(before, rigSnapshot(scene, fp.animations));
@@ -454,12 +463,7 @@ async function evaluate(skin, { fpGltfFactory, tpFactory }) {
     clauses[`${tag}#tp:attached`] = wrap.userData.weaponSkin === c.id && tpReport?.status === 'attached';
     clauses[`${tag}#tp:roles-exact`] = JSON.stringify(tpReport?.roles) === JSON.stringify(c.roles);
     clauses[`${tag}#tp:count`] = tpMarks.length === c.roles.length * 2;
-    clauses[`${tag}#tp:aspect`] = c.roles.every((role) => {
-      const sides = tpMarks.filter((m) => m.userData.markingRole === role);
-      if (sides.length !== 2) return false;
-      const { width, height } = sides[0].geometry.parameters;
-      return Math.abs(width / height - c.aspects[role]) / c.aspects[role] < 0.01;
-    });
+    clauses[`${tag}#tp:aspect`] = c.roles.every(role => aspectAndUv(tpMarks,role,c.aspects[role]));
     clauses[`${tag}#tp:parent`] = tpMarks.length > 0 && tpMarks.every((m) => m.parent === wrap);
     clauses[`${tag}#tp:rigid`] = tpSkins === 0;
     clauses[`${tag}#tp:footprint`] = footprintClause(skin, wrap, 'knife-tp', tpMarks);
@@ -599,7 +603,15 @@ try {
     },
     'footprint-guard-off': {
       mutate: (s) => s.replace('  if (!footprintFullyCovered(centerU, centerT, halfH, halfW, overlapping, profile.coverage)) return null;\n', ''),
-      expect: ['pack-caveira-urbana-knife#fp:footprint', 'pack-maga-47-knife#fp:footprint', 'pack-maga-47-knife#tp:footprint'],
+      expect: ['pack-caveira-urbana-knife#fp:footprint', 'pack-maga-47-knife#tp:footprint'],
+    },
+    'slogan-uv-off': {
+      mutate: s => s.replace('if (KNIFE_MARK_PROFILES[context].roles[role].longitudinal)', 'if (false)'),
+      expect: ['pack-maga-47-knife#fp:aspect','pack-maga-47-knife#tp:aspect'],
+    },
+    'slogan-transversal': {
+      mutate: s => s.replaceAll('longitudinal: true','longitudinal: false'),
+      expect: ['pack-maga-47-knife#fp:aspect','pack-maga-47-knife#tp:aspect'],
     },
     'nan-bind': {
       mutate: (s) => s.replace(APPLY_ANCHOR, `${APPLY_ANCHOR}\n${NAN_BIND}`),
