@@ -14,7 +14,7 @@ const supported=['google','discord','twitter','linkedin_oidc'];
 let helperSource=existsSync(helperPath)?readFileSync(helperPath,'utf8'):null;
 let communitySource=read('public/js/community.js');
 const mutation=(source,before,after)=>{
-  assert(source.includes(before),'MUTANTE NÃO APLICOU: trecho ausente');
+  assert.equal(source.split(before).length-1,1,'MUTANTE NÃO APLICOU: trecho ausente ou repetido');
   const changed=source.replace(before,after);
   assert.notEqual(changed,source,'MUTANTE NÃO APLICOU');
   return changed;
@@ -68,6 +68,7 @@ if(mutant && helperMutants[mutant]){
 }else if(mutant==='ignore-message-badge'){
   communitySource=mutation(communitySource,'(state?.inbox?.unread_count || 0)','0');
 }else if(mutant)assert.fail('Mutante desconhecido: '+mutant);
+if(mutant)console.log('Mutação aplicada: '+mutant);
 
 const tests=[];
 const test=(name,run)=>tests.push({name,run});
@@ -136,7 +137,7 @@ class Element {
   constructor(tag){this.tagName=tag;this.children=[];this._text='';this.dataset={};this.attributes={};this.listeners={};this.disabled=false;}
   set textContent(value){this._text=String(value??'');this.children=[];}
   get textContent(){return this._text+this.children.map(child=>child.textContent||'').join(' ');}
-  set innerHTML(value){throw new Error('HTML inseguro entregue ao DOM: '+String(value).slice(0,70));}
+  set innerHTML(value){assert.fail('HTML inseguro entregue ao DOM: '+String(value).slice(0,70));}
   setAttribute(key,value){this.attributes[key]=String(value);}
   append(...nodes){this.children.push(...nodes);}
   appendChild(node){this.append(node);return node;}
@@ -368,7 +369,8 @@ test('a mensagem vale em qualquer perfil, e a flag desligada se explica',async()
   assert.equal(matches(amigo.nodes(),/^MANDAR MENSAGEM$/).length,1,'Perfil de amigo perdeu a entrada de DM');
 });
 
-let passed=0;
-for(const {name,run} of tests){try{await run();passed++;console.log('PASS '+name);}catch(error){console.error('RED '+name+': '+error.message.split('\n')[0]);}}
+let passed=0;const failed=[];
+for(const {name,run} of tests){try{await run();passed++;console.log('PASS '+name);}catch(error){failed.push({clause:name,type:error?.name||'Error',message:String(error?.message||error).split('\n')[0]});console.error('RED '+name+': '+error.message.split('\n')[0]);}}
 console.log(`community inbox: ${passed}/${tests.length} contratos; mutante=${mutant||'nenhum'}; DOM Node, aparência não avaliada`);
+console.log(JSON.stringify({mutant:mutant||null,cases:tests.length,failed}));
 if(passed!==tests.length)process.exitCode=1;
