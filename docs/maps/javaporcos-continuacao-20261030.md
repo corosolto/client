@@ -990,3 +990,53 @@ não baixados. Previews JPG novos ainda artecompartilhada temporária, semcaptur
 Próximo: usuário testa o preview; com autorização de recuperação Ego, retomar
 Mint+QAvisual/orçamento dos3mapas; depoismultiplayer realE/B/J e restante do
 objetivo amplo no topo do ledger. Semmerge, semdeploybackend/producão.
+
+## Nova prioridade do dono — Gauntlet Cidade (31/10/2026)
+Substitui a frente de3mapas: Rural/Vila ficam adiados e fora da seleção/rotação,
+preservados no registro/oficina. Trabalhar só Cidade Invadida.
+Objetivo completo: torre existente acessível por escada e tiro3lados; casas com
+entrada/janelas úteis; materiais das rampas laterais melhores; armas espalhadas
+na cidade; horda inteligente com trajetória curva/imprevisível e animação viva;
+silenciar falas políticas/vinhetas nesse modo; card visível no lobby, wallpaper
+novo com GPT, modal de anúncio na entrada; sala oficial exclusiva Javaporcos,
+4–8jogadores, kills+avatar da horda no placar. SP4–8defensores com bots explícitos,
+MP4–8humanos conforme contrato backend. Publicar preview ao concluir marcos.
+Definition of done: RED→fix→GREEN+mutantes, revisão crítica independente, QA
+real3:2/movimento (não só Node), previewREADY/JS servido confirmado; sala real
+validada com clientes e sem anunciar disponível quando protocolo incompatível.
+Baseline ef8d4ab75, preview runtime dce8b50a2. Três frentes isoladas por símbolo:
+cidade_geometria possui módulos cidade/interiores/refúgios/map_invasao integração;
+horda_inteligencia possui moverPara/steering/animação mode_javaporcos; root possui
+UI/áudio/maps/main/game integração/placar(montarHudDominio/atualizaHud/renderScoreboard).
+servidor_javaporcos prepara backend em csbrasil-backend/wt/javaporcos-oficial-20261031,
+branch feat/javaporcos-oficial-20261031 baseadaorigin/main2e96f71+3commitsNPClegados.
+Backendroot sujo e laneNPC pronta são preservados. Sembackendprodução até revisão.
+Servidor ativo observado temprotocolos1–6, cliente horda exige7: não confundir
+previewfrontend com sala funcionando. Nova autorização Ego solicitada (espaço16
+perdido); aguardar resposta, sem recriar/tocar outro espaço como atalho.
+
+### Marco de integração local — Cidade31/10, antes do checkpoint
+
+Geometria: torre36degraus/2lances/plataforma6.20m com subida+descida sem salto e3raios livres;4casas abertas. Novo percurso físico completo das4casas expôs caçamba diante da LS-oo; deslocada x27.6→31.2 com saque ainda alcançável. Baseline5/5+5mutantes e interiores7/7 verdes; relatório `docs/maps/javaporcos-gauntlet-cidade-20261031/geometria.md`.24pickups/10zonas, rampas madeira comUVpor metro. Ainda sem aceitação visual real.
+
+Root: seleção/rotação pública sóCidade; Rural/Vila preservados parados. Sfx por modo silencia falas/vinhetas sem desativar efeitos; restauração do modo normal testada. Placar coop temJ comavatar/reais kills; MPwelcome.cooperative configura2lados e roster ignoraJ nos personagens humanos. Novidade do lobby+card usam novo wallpaperGPT. SP4–8 explícitos você+bots com corpos reais4/8 medidos, sem alterar settings de outros modos.
+
+Validação root:6/6 syntax/mapasparados/mapcontrato/sonda/personagem-escolhido/audiofurollback, `npx astro build`20.41s verde, interface com corpos4/8/avatar/kills/silêncio/seleção verde e3mutantes detectados, redepersonagemJ baseline/mutante verdes. Logs `/tmp/jav-cidade-focused.log`, `/tmp/jav-cidade-ui-corpos.log`, `/tmp/jav-cidade-netpersonagem-final.log`, `/tmp/jav-cidade-astro-build.log`.
+
+IA: percurso/flancos/obstáculos/apoios e intenção verdes, corrigido teste de rumo que comparava destinos diferentes. Perf integrada `/tmp/jav-cidade-perf-integrada.log` REPROVADA(.784ms média,1.670ms p95 com64); reaberta otimização estrutural, semafrouxar limites. Não aceitar só repetição verde.
+
+Arte: `public/img/javaporcos-cidade-gpt-20261031.webp`1920×1080/hash emFONTE.md. OpenRouterGPTfalhou2vezes; saída verdadeira éGPTImage nativo da sessão, modelo exato nãoexposto, original preservado. Inspeção de arquivo concluída; ainda falta asset-review comcaptura naUI.
+
+Backend preparado em943f4a3e67a20d80620f092ee399d1fbdfec3157 (local,sem push/deploy), árvoreprópria limpa, contrato salaJAVA/cidade/E8/NPC64/min4/pausa/v7 ecompatnormal1–6. TestesHTTP+9WSverdes, revisãoadversarial emcurso. GCP inventário falhou Reauthenticationfailed; usuário avisado para `gcloud auth login`. NóBRnormal permaneceintacto. TelemetriaDBainda normaliza horda comorounds, nãoalegar lançamento completo.
+
+Bloqueios: recuperação EgoTaskSpace16 ainda aguarda autorização já solicitada; sem criarspace substituto/tocaralheios. Nãoequivaler Node/astro a captura real3:2/GLBsmovendo/orçamentoWebGL. Próximo: findings dos2críticos, perf IA, MAPCHECK Cidade amplo preservando consolidado, docsgerados, checkpoints/microcommits, gates/push/previewREADY.
+
+Checkpoint áudio: `3ae3ae3a2`, política Sfx por modo + integração Game. Gate focado de áudio/interface e restauração normal verdes. Sem push ainda. Logs root preservados em `artifacts/javaporcos-cidade-gauntlet-20261031/integracao/`.
+
+Checkpoint cidade: `1c41cc026`, geometria+teste5/5/5mutantes, independenteP2resolvido. MAPCHECKamploCidade emexecução; backup consolidado em `artifacts/javaporcos-cidade-gauntlet-20261031/map_check-before.json`. Checkpoint opções/solo/catálogo segueHEADatual, testeGamecorpos4/8verde; P3 resumoatualizado confirmado porreviewer.
+
+Checkpointsroot: `af2ec6df1` seleçãoCidade/elenco4–8/settingscoop; `be1aed6d4` arteGPT/anúncio/card. CapturaUIreal/asset-reviewaindapendentes, commits preservam trabalho semdeclaração deaceite. Integraçãorede+personagensJ emcheckpointseguinte. Crítico clientconcluiu todosruntime+direçãoFIFO semfindingadicional, P3resolvido. PerfIApareada baseline1.336/p953.608 versusnova1.051/p952.365ambasRED; hostbunOMPexterno~700%. Não repetir atépassar, manterRED/UNKNOWN. FIFO4planos evita starvation64/64atéframe15; gatepersistenteemfinalização.
+
+Checkpoint rede: `ebb7f985d`, roster/eventos J mantêm javaporcos e coop sóentradaE/DEFENSORES. Checkpoint IA/HUD/gates noHEADseguinte: direção7/7,horda36/36,5mutantesFIFO incluído; revisãoindependentefinal zeroachados pendentes. Teto deplanejamento4/quadro,FIFO64/64em16quadros. PerfRED/UNKNOWNpreservada, semaceitefinal/merge. UIcontroleB/aliadosgenéricos oculto no modo paraelenco4–8próprio.
+
+Checkpoint IA/HUD: `00b4fa4b6`,7/7direção+36/36horda+5mutantes, FIFO persistente emteste. Gateinterface final incluindo3mutantes ecorpos4/8 passou69.9s na integração. RootMAPCHECKamploemexecução; suítes deacesso/interiores/intenção/passada emsequência. Autenticação Ego inventariada novamente: espaço16ausente, apenasspacesusuário/alheios; nãoadotados. Bloqueio visualpermanece.
