@@ -1,0 +1,7 @@
+# Pickups iniciais: malha carregada e apoio
+
+O stack1171/1179 retirou a troca inicial de malhas junto com a remoção do arsenal. Restaurar apenas o array deixou caixas do mapa mesmo quando as sete famílias já estavam em cache. O Ego confirmou22/22 caixas na Piscina com `armaslazy=0`; a flag desliga o refresh ocioso. O constructor agora chama o refresh síncrono existente, sem novo download, e assenta também modelos ainda indisponíveis. Quantidade e X/Z permanecem; malha, escala e roll passam a seguir o caminho existente de modelo real. Economia continua retirando os pickups antes dessa etapa.
+
+`pickup-initial-model-check.mjs --autoteste` carrega sete GLBs locais reais com textura1px, usa Game/weaponModel de produção e exige22 pickups, origem correta em cada família, vão real contra chão no teto0,05m já vigente de VM14, roll/visibilidade, sete geometrias distintas e economia com zero pickups. O mutante remove somente o refresh inicial: exige RED em PIM2/PIM4, com o assentamento ainda GREEN. CLI inválida sai2; falta de asset/setup sai3. O teste não aprova textura, arte, FPS ou mobile.
+
+Provas externas da missão31/10: PICKUP-CACHE-RED-R2.log e GREEN-R2.log. GLM R2 implementou patch/gate, mas atingiu deadline sem relatório final, portanto sua execução parcial não conta como prova. Root corrigiu a medição do vão para usar o mesmo chão de VM14, limitou workers e rodou RED causal→nominal/autoteste GREEN. A figura final de malha real no Ego e a revisão integral seguem obrigatórias.

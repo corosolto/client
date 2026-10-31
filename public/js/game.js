@@ -1410,6 +1410,8 @@ export class Game {
     if (this._mpPend) { this._mp = this._mpPend.mpFactory(this, this._mpPend.net); this._mpPend = null; }
     // chat de sala (#686): quem abre é o main.js; travarEntrada(v) liga e desliga a trava
     this.onAbrirChat = null; this._entradaTravada = false; this._chatDestravadoAte = 0;
+    // Armas já em cache vestem o pickup agora; o refresh ocioso do main.js nunca roda com ?armaslazy=0.
+    this.refreshPickupModels();
     // Placeholders também assentam antes do preload; prova em VISUAL-CI-PARITY-CONTINUATION-20261031.md.
     for (const pk of this.world.pickups || []) {
       if (pk.mesh) this._assentarNoChao(pk.mesh, pk.x, pk.z, pk.folga ?? 0.01);
