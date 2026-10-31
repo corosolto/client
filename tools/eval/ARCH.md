@@ -152,8 +152,10 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 2233 | `_wh` | 17 |
 | 2250 | `_cc` | 1 |
 | 2251 | `_blur` | 1 |
+| 2252 | `_hiddenInput` | 1 |
 | 2252 | `_plc` | 19 |
 | 2271 | `_touchControls()` | 134 |
+| 2412 | `_releaseInput()` | 10 |
 | 2405 | `_touchLook()` | 12 |
 | 2417 | `_syncTouchWeps()` | 16 |
 | 2433 | `_aimAssist()` | 28 |
