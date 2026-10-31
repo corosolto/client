@@ -1,9 +1,16 @@
 import { aplicarSnapshotEscolta, criarEstadoEscolta, destinoProtecaoEscolta, passoEscolta, snapshotEscolta } from '../../public/js/mode_operacao_flavio.js';
 
-const mutante = process.argv.includes('--mutante=sem-contestacao') ? 'sem-contestacao' : '';
+const flags = process.argv.slice(2);
+const unicos = new Set(flags);
+const mutante = unicos.size === 1 && unicos.has('--mutante=sem-contestacao') ? 'sem-contestacao' : '';
+if (flags.length !== unicos.size || (flags.length > 0 && !mutante)) {
+  process.exit(2);
+}
 let falhas = 0;
+const resultados = [];
 const cobra = (ok, texto) => {
   console.log(`${ok ? '✓' : '✗'} ${texto}`);
+  resultados.push({ texto, ok: ok === true });
   if (!ok) falhas++;
 };
 const caminho = [{ x: 0, z: 0 }, { x: 0, z: 4 }, { x: 0, z: 8 }];
@@ -75,7 +82,8 @@ cobra(JSON.stringify(snapshotEscolta(cliente)) === JSON.stringify(snapshotEscolt
   'snapshot autoritativo replica a escolta completa entre servidor e cliente');
 
 if (mutante) {
-  const acendeu = falhas > 0;
+  const proprioResultado = resultados.find((resultado) => resultado.texto === 'atacante no raio interrompe a escolta');
+  const acendeu = Boolean(proprioResultado) && proprioResultado.ok === false;
   console.log(`${acendeu ? '✓' : '✗'} mutante sem contestação acendeu a régua`);
   process.exit(acendeu ? 0 : 1);
 }

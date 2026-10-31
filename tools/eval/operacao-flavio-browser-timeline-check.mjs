@@ -6,7 +6,7 @@ import {usePresentationClock} from './presentation-clock-fixture.mjs';
 const source=readFileSync(new URL('./operacao-flavio-browser.mjs',import.meta.url),'utf8');
 const anchor="    g._endRound('B');\n  });";
 assert.equal(source.split(anchor).length,2,'unique victory probe');
-const end=source.indexOf('\n\n  assert.deepEqual(errors',source.indexOf(anchor));
+const end=source.indexOf('\n\n  await context.close();',source.indexOf(anchor));
 const start=source.lastIndexOf('  await page.evaluate(',source.indexOf(anchor));
 assert(start>0 && end>start);
 const body=source.slice(start,end);
@@ -46,7 +46,7 @@ for(const [scenario,reject] of scenarios){
  };
  try{
   let error=null;try{await run(page,assert,'/tmp/no-browser-capture');}catch(e){error=e;}
-  if(reject){assert(error instanceof assert.AssertionError,'invalid timeline must fail a semantic assertion: '+scenario);}
+  if(reject){const expectedPrefix={'taxi-cedo':'FB_PRE_DOOR','sem-taxi':'FB_TAXI_ADVANCE','original-oculto-move':'FB_TAXI_ADVANCE','prazo-curto':'FB_DURATION'}[scenario];assert(error instanceof assert.AssertionError && typeof error.message==='string' && error.message.startsWith(expectedPrefix),'invalid timeline must fail the expected assertion ('+scenario+'=>'+expectedPrefix+'): '+(error&&error.message));}
   else if(error)throw error;
   rows.push({clause:scenario,pass:true});console.log('ok browser timeline '+scenario);
  }catch(e){rows.push({clause:scenario,pass:false,type:e.name,message:e.message});console.error('FALHA browser timeline '+scenario+': '+e.message);}

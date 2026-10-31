@@ -17,7 +17,7 @@ const mutations=[
     'walk enters cabin before door moves or taxi starts'],
   ['sem-restaurar','for(const [object,visible] of session.hidden)object.visible=visible;','',
     'stop restores remounted VIP and disposes only actor resources once'],
-  ['sem-recursos-ator','release(session.owned);','session.owned.clear();',
+  ['sem-recursos-ator','releaseOwned(session.owned);','session.owned.clear();',
     'stop restores remounted VIP and disposes only actor resources once'],
   ['sem-recursos-estagio','this.stage?.removeFromParent();release(this.resources);','this.stage?.removeFromParent();',
     'final disposal releases unique stage resources exactly once'],
@@ -31,7 +31,7 @@ const mutations=[
     'stale predicate before ready never allocates actor or hides originals'],
   ['refresh-por-vertice','bounds.expandByPoint(mesh.getVertexPosition(index,new THREE.Vector3()).applyMatrix4(mesh.matrixWorld));','mesh.skeleton.update();bounds.expandByPoint(mesh.getVertexPosition(index,new THREE.Vector3()).applyMatrix4(mesh.matrixWorld));',
     'pose queries avoid skeleton refresh per sampled vertex'],
-  ['sem-recheck-preparo','if(!isCurrent()){this.stop();return false;}','',
+  ['sem-recheck-preparo','if(!isCurrent()){this._rollback(session);return false;}','',
     'deadline expiring during real pose preparation restores presentation immediately'],
 ];
 const absoluteImports=(text,from)=>text.replace(/from\s+(['"])([^'"]+)\1/g,(_,quote,spec)=>{

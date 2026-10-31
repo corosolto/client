@@ -29,6 +29,7 @@ const views = [
   { id: '04-apron', camera: [27, 5.2, 61], target: [0, 2.2, 55], description: 'avião nivelado, balizamento, escada e equipamentos detalhados do pátio' },
 ];
 
+let closed = false;
 try {
   await page.addInitScript(() => {
     localStorage.setItem('awpbr_settings', JSON.stringify({ quality: 'med', allyBots: 3, enemyBots: 4, bots: 4, vol: 0, speech: false }));
@@ -318,9 +319,9 @@ try {
   await waitForElapsed(7.4);
   const taxi = await sampleBoardingPlane();
   await page.screenshot({ path: `${out}/06-cinematica-vitoria.png` });
-  assert.ok(preDoorA.planeZ === 55 && preDoorB.planeZ === 55, `avião de embarque deve permanecer em z=55 antes da porta (A ${preDoorA.planeZ}, B ${preDoorB.planeZ})`);
+  assert.ok(preDoorA.planeZ === 55 && preDoorB.planeZ === 55, `FB_PRE_DOOR avião de embarque deve permanecer em z=55 antes da porta (A ${preDoorA.planeZ}, B ${preDoorB.planeZ})`);
   assert.equal(preDoorA.planeZ, preDoorB.planeZ, `avião de embarque deve ficar imóvel antes do fechamento da porta (${preDoorA.planeZ} vs ${preDoorB.planeZ})`);
-  assert.ok(taxi.planeZ > 55, `avião deve avançar além de z=55 após o início do táxi em 6.8s (z ${taxi.planeZ})`);
+  assert.ok(taxi.planeZ > 55, `FB_TAXI_ADVANCE avião deve avançar além de z=55 após o início do táxi em 6.8s (z ${taxi.planeZ})`);
   const cinematic = await page.evaluate(() => {
     const g = window.__game;
     const c = g.objective?.cinematic;
@@ -341,9 +342,12 @@ try {
   cinematic.samples = { preDoorA, preDoorB, taxi };
   assert.equal(cinematic.active, true);
   assert.equal(cinematic.winner, 'B');
-  assert.ok(cinematic.duration >= 8.9);
+  assert.ok(cinematic.duration >= 8.9, `FB_DURATION duração da cinemática deve ser >= 8.9 (dur ${cinematic.duration})`);
   assert.ok(cinematic.planeZ > 55);
 
+  await context.close();
+  await browser.close();
+  closed = true;
   assert.deepEqual(errors, [], `erros no browser: ${errors.join(' | ')}`);
   const featureFailed = failed.filter(([, url]) => /operacao_flavio|operacao_decola|senador\\.glb/.test(url));
   assert.deepEqual(featureFailed, [], `assets da operação falharam: ${JSON.stringify(featureFailed)}`);
@@ -354,5 +358,5 @@ try {
   writeFileSync(`${out}/receipt.json`, `${JSON.stringify(receipt, null, 2)}\n`);
   console.log(JSON.stringify(receipt, null, 2));
 } finally {
-  await browser.close();
+  if (!closed) await browser.close();
 }

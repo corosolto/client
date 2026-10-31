@@ -6,6 +6,8 @@ import {solveCCDIK} from './handik.js';
 
 const WALK_END=5.4, DOOR_END=6.8;
 const release = resources => {for(const resource of resources)resource.dispose();resources.clear();};
+// Fault-tolerant owned release: each resource is removed from the set BEFORE dispose so a throwing dispose cannot re-enter or block the remaining ones; other resources still release.
+const releaseOwned = resources => {for(const resource of [...resources]){resources.delete(resource);try{resource.dispose();}catch{}}};
 
 export class FlavioBoarding {
   constructor(game) {
@@ -17,7 +19,7 @@ export class FlavioBoarding {
   }
 
   _load() {
-    this.ready ??= new GLTFLoader().loadAsync(assetUrl('models/cinematics/operacao_flavio_boarding.glb')).then(gltf=>{
+    const pending=this.ready ??= new GLTFLoader().loadAsync(assetUrl('models/cinematics/operacao_flavio_boarding.glb')).then(gltf=>{
       const stage=gltf.scene;
       stage.traverse(object=>{
         if(!object.isMesh)return;
@@ -31,7 +33,7 @@ export class FlavioBoarding {
       if(this.disposed){release(this.resources);return null;}
       const content=stage.getObjectByName('boarding-stage') || stage;
       this.door=stage.getObjectByName('boarding-door-pivot');
-      if(!this.door){release(this.resources);return null;}
+      if(!this.door){release(this.resources);this._invalidate(pending);return null;}
       this.openDoor=this.door.quaternion.clone();
       this.plane=new THREE.Group();this.plane.name='flavio-boarding-plane';content.add(this.plane);
       for(const child of [...content.children]) {
@@ -42,8 +44,14 @@ export class FlavioBoarding {
       this.stage=stage;this.content=content;
       stage.name='flavio-boarding-stage';stage.position.set(0,.08,55);stage.visible=false;
       return stage;
-    }).catch(()=>null);
+    }).catch(()=>{release(this.resources);this._invalidate(pending);return null;});
     return this.ready;
+  }
+
+  _invalidate(pending) {
+    // Negative cache: a failed load frees own resources and drops only that pending promise so a later start reattempts the loader.
+    // Identity guard preserves concurrent shared loads; a disposed board stays terminal (no resurrection).
+    if(this.ready===pending && !this.disposed)this.ready=null;
   }
 
   start(vip,def,isCurrent=()=>true) {
@@ -62,11 +70,18 @@ export class FlavioBoarding {
       for(const object of [originalPlane,stairs])if(object){session.hidden.set(object,object.visible);object.visible=false;}
       this.game.world.root.add(stage);stage.visible=true;
       this._buildProfile();
-      if(!this._prepareFeet(session,actor)){this.stop();return false;}
-      if(!isCurrent()){this.stop();return false;}
+      if(!this._prepareFeet(session,actor)){this._rollback(session);return false;}
+      if(!isCurrent()){this._rollback(session);return false;}
       this._hideVip(session);
       return true;
-    }).catch(()=>false);
+    }).catch(()=>{this._rollback(session);return false;});
+  }
+
+  _rollback(session) {
+    // Rollback runs only while the captured session still owns this board: a stale failure must not tear down a newer session on the same instance.
+    // World/actor/owned restore happens exactly once; cleanup errors are contained so start() keeps resolving false instead of rejecting.
+    if(this.session!==session)return;
+    try{this.stop();}catch{}
   }
 
   _hideVip(session) {
@@ -288,10 +303,12 @@ export class FlavioBoarding {
     if(session) {
       for(const [object,visible] of session.hidden)object.visible=visible;
       if(session.actor) {
-        session.actor.mixer.stopAllAction();session.actor.mixer.uncacheRoot(session.actor.ctrl.model);
+        // Independent cleanup actions: a throwing mixer hook must not skip actor removal, owned release, stage hide/detach, or world restore (session is already cleared above).
+        try{session.actor.mixer.stopAllAction();}catch{}
+        try{session.actor.mixer.uncacheRoot(session.actor.ctrl.model);}catch{}
         session.actor.group.removeFromParent();
       }
-      release(session.owned);
+      releaseOwned(session.owned);
     }
     if(this.stage){this.stage.visible=false;this.stage.removeFromParent();}
     if(this.plane)this.plane.position.z=0;
