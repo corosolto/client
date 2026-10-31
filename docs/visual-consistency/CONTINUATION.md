@@ -353,7 +353,7 @@ skins, mapas restantes e acompanhamento de merges/release durante a janela compl
 - Leases novas: acabamento70567 nos2mapas/binding/finish/doc; normaisR5 49828 tool/régua/doc; postersR3 43346 nos2mapas/manualgate/doc (R2 deixou SyntaxError confirmado); curadoria83711 ainda ativa. Córrego31438 devolvido:1painel/UV1x1, med+low/selftest3causais GREEN declarados, Root/crítico pendentes. SB739989 review integral readonly e crítico independente em paralelo; crítico achou3P2 de fail→SKIP e1P3 de mensagem, não integrar ainda.
 - Fila remota: #1160 avançou00cede9c6c, checks reexecutando e CHANGES_REQUESTED. #1179 fd553b310b DIRTY/3gatesRED/reviewchanges; #1167 d4e0ccfda3CLEAN/CIgreen/reviewerEstraga solicitado mas semreviewentregue. Última release seguealpha.130.
 
-### Fechamentos e próximas integrações — 11:20 UTC
+### Fechamentos e próximas integrações — 11:15 UTC
 
 - MANGA40044 devolvida exit0: GLB real reproduz293/5090 normais zero antes e0 depois, sem mudar material/atlas. Float32 no acumulador; MT8 nova. Crítico independente revisa fonte completa; Root ainda repetirá visual real. Não aceitar a guarda por nome do mutante MT8 como causalidade: retirar se confirmada redundância.
 - Writer sequencial seguinte89302: motion+AK/game/invariants/réguas/docs, fecha crítico R3 (3P2+3P3) e review AK (2P2+5P3). vmsleeve/manga congelados durante revisão. Economia/flash#1179 e3P aguardam devolução.
@@ -362,3 +362,10 @@ skins, mapas restantes e acompanhamento de merges/release durante a janela compl
 - Acabamento70567 já relata solo Campo com tint baseado na referência e grama Ferro movida para fora do balcão,7mutantes e binding15 verdes; aguardar saída real e repetir fotos/física antes de integrar prop. NormaisR5 49828 ainda writer; não trocar4GLBs até revisão final.
 - SB7 próprio isolado checkpoint7169fc5b9 sóledger;10309 fecha3P2 fail→SKIP e docs/coberturaP3, sem tocar autor. Córrego60840 fecha aceitação/mutantes, produto já1painelUV1x1.
 - Outro owner B2 tem checkpoints locais em lote-gustavo-20261029 (7baa88385), sem push recente: PR1171 ainda7e60e8ff remoto. Ler/reusar commits focados e suas provas; não editar lane alheia nem importar remoção de racks sem avaliar escopo/decisão do dono. UI visual inicial encontrou overlay de erro no dev baseline4368; diagnóstico antes de captura.
+
+### Marco validado: mangas, 11:19 UTC
+
+- Fix Float32 confirmado no jogo1320×880 em hip/ADS, material original e demais5meshes quantizados preservados; JSON manga-fix-real registra5090normais/zero0/bad0. Root olhou fotos clean. Overlay HMR Vite fechado por clique; não era o bug de produto.
+- MT8 perdeu rejeição por nome: cópia audit sem aplicar mutação mantém nome e sai0; antes saía1 (logs Root RED→GREEN). Mutante aplicado sai1/36zeros, npm baseline+3mutantes exit0; vm-manga-oca26armas tambémGREEN. GLM revisão integral R2 CLEAN semP1/P2, residual descrição npm corrigida; crítico independente R1 não encontrou regressão de produto e seus3achados foram fechados.
+- Checkpoint seletivo desta frente inclui só vmsleeve/MT8/doc e duas chaves npm; motion/AK continuam uncommitted do writer89302. Não confundir checkpoint com merge/release. SCRIPTS.md está no repo progress de outro owner: não editado nesta lane; descrição canônica está no package/doc.
+- Normais31115 concluiu26/26 e4outputs-v5 iguaisv3; crítico independente R5 em curso. Balcão63169 integra visual/fallback/colisão e procedência; termos seção4 confirmados ao vivo viaEgo em31/10, sem nova geração ou compra. Posters57329 sógate/doc; curadoria70409 devolvida73/73, críticoR6 em curso.
