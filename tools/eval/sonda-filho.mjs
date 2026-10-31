@@ -16,14 +16,19 @@ const CONSERTO = 'rode `npm ci` na raiz desta worktree';
    Aceita tanto o objeto de retorno de spawnSync quanto a exceção de execFileSync. */
 export function causaNaoMedivel(resultado) {
   if (!resultado) return null;
-  /* Filho que rodou até o fim e saiu 0 mediu: erro citado na saída é dado, não causa. */
-  if (resultado.status === 0) return null;
-  /* Morto por sinal (timeout, OOM, kill externo) não mediu nada — nunca veredito. */
-  if (resultado.status === null && resultado.signal) {
-    const timeout = resultado.error?.code === 'ETIMEDOUT' ? ' (timeout)' : '';
-    return `filho morto por ${resultado.signal} antes de medir${timeout}`;
-  }
   const falha = resultado.error || resultado;
+  const erroExecucao = resultado.error || (resultado instanceof Error && typeof resultado.code === 'string');
+  // ENOBUFS pode coexistir com status0; erro do executor e saída parcial não medem.
+  if (erroExecucao || resultado.status === null) {
+    if (falha.code === 'ENOENT' && !resultado.stderr) {
+      return `executável ausente (${falha.path || falha.syscall || 'desconhecido'})`;
+    }
+    const estado = resultado.signal ? `morto por ${resultado.signal}` : 'sem resultado completo';
+    const detalhes = [falha.code, falha.code === 'ETIMEDOUT' ? 'timeout' : ''].filter(Boolean).join(', ');
+    return `filho ${estado} antes de medir${detalhes ? ` (${detalhes})` : ''}`;
+  }
+  /* Exit0 sem erro do executor mediu: erro citado na saída é dado, não causa. */
+  if (resultado.status === 0) return null;
   if (falha && falha.code === 'ENOENT' && !resultado.stderr) {
     return `executável ausente (${falha.path || falha.syscall || 'desconhecido'})`;
   }

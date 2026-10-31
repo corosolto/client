@@ -82,3 +82,53 @@ PR1181HEAD03008374bb ficouDIRTY apósmainec7cec33405 hotfixarmasinvisíveis. Ár
 ## 2026-10-31T15:16:00.705351+00:00 — syncvalidada
 
 Críticoindependente CRITICO-SB7-MAIN-SYNC-R1.md089fb216CLEAN:31/31hotfixidênticosMERGE_HEAD,18/18fontes/docsSB7idênticos03008374b; índice resolvido, packagepreservamain+evalsondafilho/appends. FocalRoot4/4GREEN67.8s. Próximo mergecommitpróprio/pushnormal eEstraganovoSHA; nenhumPRmerge/releaseaqui.
+
+
+## 2026-10-31 — revisão PR1181 ENOBUFS / lease focal
+
+Objetivo: impedir que status null sem signal (ENOBUFS/maxBuffer) seja classificado
+como medido e vire detecção TEXEL. Estado inicial limpo confirmado em
+`3de33b4f55a6047978508d4d21c9bf09fad4c7ab`, branch
+`codex/harden-sb7-1167-20261031`. Root autorizou OMP GLM-5.3 para reproduzir
+maxBuffer1 real, corrigir null não-medível e acrescentar provas causais; nenhum
+commit/push/resposta ou edição na branch original1167. Lease limitada a
+sonda-filho.mjs/check, doc do contrato e este ledger; produto/package intocados.
+Definição de pronto: RED antes, GREEN depois, caller TEXEL sem falso PASS,
+sinal/código/timeout e prioridade de falha preservados, revisão independente
+posterior pelo Root. Próximo: builder GLM focal e repetição Node.
+
+### Marco causal antes do fix — ENOBUFS
+
+Root aprovou ampliar guarda para erro real de execução antes de status0:
+filho com handlerSIGTERM sai0 após maxBuffer1 e produz ENOBUFS/signalnull.
+Prova Node própria no caller real texel-mutantes, em árvore privada:
+antes saiu0 com MATOU uv-fixa/1mutanteMORTO apesar de erro ENOBUFS.
+Artefatos externos `sb7-enobufs-r1-root/{before.json,texel-before.json,
+texel-probe.mjs,before-sonda.mjs}` no audit da missão. Não aceitar apenas
+guarda statusnull; status0 semerro e REDsemântico1 semerro devem continuar
+medidos. Próximo: incorporar correção+regressões e exigir78/nãoMATOU depois.
+
+### Fechamento focal ENOBUFS — 2026-10-31T17:37:17.297088+00:00
+
+OMP `zai/glm-5.3` sessão92046 terminou1 DeadlineExceeded8min sem alteração
+nem relatório: tentativa rejeitada, não aprovada como entrega GLM. Codex concluiu
+o guard mínimo autorizado Root: null sempre não-medível e erro real do executor
+vence status0; código/sinal/timeout permanecem no diagnóstico. Sem erro real,
+0 e REDsemântico1 continuam medidos. Doc atualizada; só helper/check/doc/ledger
+modificados nesta WT. Nenhum caller/produto/package/branch1167 original tocado.
+
+Régua nova antes do fix: SFS8a/SFS8b RED; caller TEXEL real privado exit0/MATOU
+com ENOBUFS. Repetição extensa before interrompida por orientação Root após
+provas focais (não é placar integral). After:10cláusulas de sonda+2de TEXEL
+extraídas literalmente do gate GREEN12/12; caller privado agora78, ENOBUFS,
+semMATOU, arquivo restaurado. SFS18 preserva fail→skip1, skiplimpo78 e
+positivos de detecção0. Node--check2 e gitdiff--check GREEN. Não houve suíte
+completa/visual/browser/prepush.
+
+Relatório `SB7-ENOBUFS-FIX-R1.md`, patch e provas em auditroot externo
+2026-10-31-visual-consistency/sb7-enobufs-r1-root. Fontes congeladas para
+crítico independente Root; sem commit/push/resolve/reply. Próximo: review
+independente deste diff, então Root decide commit, push normal e novo Estraga.
+
+
+18:31 UTC — Crítico independente014e6981 CLEAN:51asserçõespróprias, ENOBUFSrealstatus0/signalnull eTEXELrealbefore0MATOU→after78semMATOU/restauraçãoexata, semântico1+skip+REDantesSKIPpreservados. Quatrohashesestáveis. Fonteaprovadaparacheckpoint/pushnormal; fullsuite/mainintegration/CI/EstragaSHAatualpendentes.

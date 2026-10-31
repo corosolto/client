@@ -90,9 +90,18 @@ Regras que o gate `eval:sondafilho` (`tools/eval/sonda-filho-check.mjs`) cobra:
 | `Cannot find module './x.js'`, `'/caminho/x.js'`, `'file:///…'` ou `'C:\x.js'` | **conteúdo** — import quebrado no projeto, `npm ci` não conserta; é veredito medido |
 | `ERR_DLOPEN_FAILED` (binário `.node` não carrega) | infra |
 | ENOENT do executável, morte por sinal/timeout | infra |
+| `status === null`, mesmo sem sinal/código | infra: o executor não forneceu um resultado completo |
+| Erro real do executor (`resultado.error`, como ENOBUFS), inclusive junto de status 0 | infra: saída parcial não é medição |
 
 A distinção é pelo **especificador real citado na mensagem**, não por whitelist
 de nomes: `./`, `/`, `file:` e drive (`C:\`) são arquivo do projeto; o resto é pacote.
+
+Erro do executor tem prioridade sobre o status: um filho pode tratar SIGTERM e
+sair 0 depois de estourar `maxBuffer`, mas `spawnSync` ainda devolve ENOBUFS e saída
+incompleta. A causa conserva sinal, código e indicação de timeout. O gate prova
+esse caso com processos reais e com o caller TEXEL numa árvore privada: ele deve
+sair 78, restaurar a fixture e não anunciar mutante morto. Saída 1 de conteúdo sem
+erro do executor continua medida; vermelho anterior continua vencendo SKIP.
 
 ## Limites declarados da heurística (não prometa perfeito)
 
@@ -103,8 +112,8 @@ de nomes: `./`, `/`, `file:` e drive (`C:\`) são arquivo do projeto; o resto é
   melhorar isso exige atualizar esta doc e a cláusula juntas.
 - Mensagem de módulo ausente **sem especificador capturável** entre aspas cai
   no lado infra.
-- Filho que roda e sai 0 nunca é SKIP, mesmo citando erro (erro citado em
-  verde é dado, não causa).
+- Filho que roda e sai 0 **sem erro do executor** nunca é SKIP, mesmo citando erro
+  (erro citado em verde é dado; `resultado.error` real é falha da execução).
 
 A régua destes contratos toda vive em `tools/eval/sonda-filho-check.mjs`;
 a cronologia do PR que introduziu está em `docs/reports/` e no audit da missão.

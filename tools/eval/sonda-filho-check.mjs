@@ -58,6 +58,21 @@ clausula('SFS8 status numérico é veredito concreto, não unknown', () => {
   assert.equal(causaNaoMedivel({ status: 3, stderr: 'x' }), null);
   assert.equal(causaNaoMedivel({ status: 0 }), null);
 });
+clausula('SFS8a status null sem sinal nunca é medido', () => {
+  assert.ok(causaNaoMedivel({ status: null, signal: null }));
+  assert.match(causaNaoMedivel({ status: null, signal: null, error: { code: 'ENOBUFS' } }), /ENOBUFS/);
+});
+clausula('SFS8b ENOBUFS real vence status zero e preserva código/sinal', () => {
+  const r = sonda(['-e', "process.on('SIGTERM',()=>process.exit(0));require('fs').writeSync(1,'saída parcial\\n');setInterval(()=>{},1000)"], { maxBuffer: 1 });
+  assert.equal(r.error?.code, 'ENOBUFS'); assert.equal(r.status, 0); assert.equal(r.signal, null);
+  assert.equal(r.mediu, false); assert.equal(r.desfecho, 'nao-medi'); assert.match(r.causa, /ENOBUFS/);
+  const morto = sonda(['-e', "require('fs').writeSync(1,'saída parcial\\n');setInterval(()=>{},1000)"], { maxBuffer: 1 });
+  assert.equal(morto.mediu, false); assert.match(morto.causa, /ENOBUFS/); assert.match(morto.causa, /SIGTERM/);
+  const timeout = sonda(['-e', 'setInterval(()=>{},1000)'], { timeout: 150 });
+  assert.match(timeout.causa, /ETIMEDOUT/); assert.match(timeout.causa, /timeout/);
+  const conteudo = sonda(['-e', "console.error('ENOBUFS citado como dado');process.exit(1)"]);
+  assert.equal(conteudo.status, 1); assert.equal(conteudo.mediu, true);
+});
 
 /* pula chama process.exit: o veredito de saída só se prova em filho de verdade. */
 const saiCom = (corpo) => spawnSync(process.execPath, ['--input-type=module', '-e',
@@ -231,6 +246,34 @@ clausula('SFS19 escadeão/mansão: PASS integral só com todos os filhos medidos
   const esc0 = rodarCaller('tools/eval/escadao-audio-pack-check.mjs');
   assert.equal(esc0.status, 0, `escadeão real saiu ${esc0.status}: ${esc0.stderr}`);
   assert.ok(/\bPASS\b/.test(esc0.stdout || ''), 'PASS integral ausente na execução completa');
+});
+clausula('SFS20 TEXEL: ENOBUFS real não conta como mutante morto', () => {
+  const fix = join(TMP, 'texel-enobufs');
+  mkdirSync(join(fix, 'tools/eval'), { recursive: true });
+  mkdirSync(join(fix, 'public/js'), { recursive: true });
+  cpSync(join(ROOT, 'tools/eval/texel-mutantes.mjs'), join(fix, 'tools/eval/texel-mutantes.mjs'));
+  cpSync(SONDA, join(fix, 'tools/eval/sonda-filho.mjs'));
+  writeFileSync(join(fix, 'tools/eval/texel-check.mjs'), '// executado pelo shim controlado\n');
+  const vao = 'if (p) escalaUVporMundo(p.geo, p.w, p.h, p.d,\n';
+  writeFileSync(join(fix, 'public/js/vao.js'), vao);
+  writeFileSync(join(fix, 'public/js/textures.js'), 'fixture');
+  const records = join(fix, 'children.jsonl'), shim = join(fix, 'shim.mjs');
+  writeFileSync(records, '');
+  const child = "process.on('SIGTERM',()=>process.exit(0));require('fs').writeSync(1,'✗ TEXEL1 quebrada: medição incompleta\\n');setInterval(()=>{},1000)";
+  writeFileSync(shim, [
+    "import cp from 'node:child_process';import fs from 'node:fs';import{syncBuiltinESMExports}from'node:module';",
+    'const real=cp.spawnSync;let calls=0;',
+    `cp.spawnSync=function(bin,args,opts){if(args[0]?.endsWith('texel-check.mjs')){calls++;const r=calls===1?real(bin,['-e',"console.log('baseline clean')"],opts):real(bin,['-e',${JSON.stringify(child)}],{...opts,maxBuffer:1});fs.appendFileSync(${JSON.stringify(records)},JSON.stringify({status:r.status,signal:r.signal,code:r.error?.code})+'\\n');return r;}return real(bin,args,opts);};syncBuiltinESMExports();`,
+  ].join('\n'));
+  const r = spawnSync(process.execPath, [join(fix, 'tools/eval/texel-mutantes.mjs'), '--so=uv-fixa'], {
+    cwd: fix, encoding: 'utf8', timeout: 30000,
+    env: { ...process.env, NODE_OPTIONS: `--import ${pathToFileURL(shim).href}` },
+  });
+  const measured = readFileSync(records, 'utf8').trim().split('\n').map(JSON.parse);
+  assert.equal(measured[1].code, 'ENOBUFS'); assert.equal(measured[1].status, 0); assert.equal(measured[1].signal, null);
+  assert.equal(r.status, SAIDA_SKIP, `TEXEL ENOBUFS saiu ${r.status}: ${r.stderr}`);
+  assert.match(r.stderr, /ENOBUFS/); assert.doesNotMatch(r.stdout, /MATOU|mutantes MORTOS|a régua morde todos/);
+  assert.equal(readFileSync(join(fix, 'public/js/vao.js'), 'utf8'), vao, 'fixture não restaurada');
 });
 
 rmSync(TMP, { recursive: true, force: true });
