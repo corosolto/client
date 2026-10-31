@@ -43,20 +43,23 @@ def decide(pr: dict) -> dict:
     lista_incompleta = arquivos_brutos is None or changed_files > len(files)
     desconhecido = lista_incompleta or rollup_bruto is None
     touches_workflows = any(path.startswith(".github/workflows/") for path in files)
-    coderabbit_blocked = "needs-coderabbit-resolution" in labels and "coderabbit-resolved" not in labels
+    estragacodigo_blocked = (
+        "needs-estragacodigo-resolution" in labels
+        and "estragacodigo-resolved" not in labels
+    )
     eligible = (
         not desconhecido
         and not pr.get("isDraft", False)
         and "safe-automerge" in labels
         and not touches_workflows
-        and not coderabbit_blocked
+        and not estragacodigo_blocked
         and pr.get("reviewDecision") != "CHANGES_REQUESTED"
         and pr.get("mergeStateStatus") in {"CLEAN", "HAS_HOOKS"}
         and check_rollup_ok(rollup_bruto or [])
     )
     return {
         "eligible": eligible,
-        "coderabbit_blocked": coderabbit_blocked,
+        "estragacodigo_blocked": estragacodigo_blocked,
         "touches_workflows": touches_workflows,
         "lista_incompleta": lista_incompleta,
     }
@@ -88,11 +91,13 @@ def selftest() -> int:
         ("draft não mescla", com(isDraft=True), False),
         ("sem o label safe-automerge não mescla", com(labels=[]), False),
         ("PR que toca workflow não mescla", com(files=[{"path": ".github/workflows/ci.yml"}]), False),
-        ("coderabbit pendente bloqueia",
-         com(labels=[{"name": "safe-automerge"}, {"name": "needs-coderabbit-resolution"}]), False),
-        ("coderabbit resolvido libera",
-         com(labels=[{"name": "safe-automerge"}, {"name": "needs-coderabbit-resolution"},
-                     {"name": "coderabbit-resolved"}]), True),
+        ("estragacodigo pendente bloqueia",
+         com(labels=[{"name": "safe-automerge"}, {"name": "needs-estragacodigo-resolution"}]), False),
+        ("estragacodigo resolvido libera",
+         com(labels=[{"name": "safe-automerge"}, {"name": "needs-estragacodigo-resolution"},
+                     {"name": "estragacodigo-resolved"}]), True),
+        ("label morto do coderabbit não bloqueia",
+         com(labels=[{"name": "safe-automerge"}, {"name": "needs-coderabbit-resolution"}]), True),
         ("mudança pedida não mescla", com(reviewDecision="CHANGES_REQUESTED"), False),
         ("conflito não mescla", com(mergeStateStatus="DIRTY"), False),
         ("check vermelho não mescla",

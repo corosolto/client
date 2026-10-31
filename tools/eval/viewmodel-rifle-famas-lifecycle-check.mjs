@@ -23,7 +23,7 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
     }
     const loading = decide({ alive: true, firstPerson: true, authoredMode: true, authoredReady: false });
     samples += 1;
-    if (!loading.root || loading.authored || loading.fallback) errors.push(`${aspect} ciclo ${cycle}: lacuna pré-load`);
+    if (!loading.root || loading.authored || !loading.fallback) errors.push(`${aspect} ciclo ${cycle}: lacuna pré-load`);
     if (!accepts({ request: activeRequest, activeRequest, key: 'ar#famas', activeKey: 'ar#famas', utility: false })) {
       errors.push(`${aspect} ciclo ${cycle}: promise atual recusada`);
     }
@@ -48,16 +48,16 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
   return { errors, samples };
 }
 
-check(AUTHORED_VM_ENABLED === false, 'ativação global continua desligada sem opt-in');
-check(VM_FAMILY.ar.ready === false, 'família AR continua ready:false');
+check(AUTHORED_VM_ENABLED === true, 'runtime autorado publicado está ativo');
+check(VM_FAMILY.ar.ready === true, 'família AR publicada está ready:true');
 check(VM_WEAPON.famas.baked === true, 'FAMAS usa candidato baked por arma');
 const baseline = matrix();
 check(baseline.errors.length === 0, 'FAMAS atravessa lifecycle 30x em 3:2 e 16:9', `${baseline.samples} amostras`);
 
 const stale = matrix({ accepts: ({ key, activeKey, utility }) => key === activeKey && !utility });
 check(stale.errors.length > 0, 'mutante que aceita Promise obsoleta reprova');
-const preload = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: true, scopeCovered: false } });
-check(preload.errors.length > 0, 'mutante que exibe fallback pré-load reprova');
+const preload = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: false, scopeCovered: false } });
+check(preload.errors.length > 0, 'mutante que oculta fallback pré-load reprova');
 for (const event of ['equip-end', 'reload-empty-end', 'inspect-end', 'ads-out']) {
   const hidden = matrix({ mutateEvent: (current, state) => current === event
     ? { ...state, root: false, authored: false, fallback: false } : state });

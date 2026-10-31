@@ -6,7 +6,7 @@ const NO_BACKEND = new Set([
   'treta',
   'social','social-auth','social-avatar','gameplay-upload','acquisition', 'avatar', 'clans', 'count', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
   'leaderboard', 'live-map', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
-  'submit-match', 'telemetry', 'train-frames',
+  'submit-match', 'telemetry', 'train-frames', 'unique',
 ]);
 
 /* Estas gravam país/cidade e usam o IP no rate limit: o run.app não tem borda que injete geo,
