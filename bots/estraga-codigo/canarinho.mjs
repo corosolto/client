@@ -516,18 +516,22 @@ async function processaComandos(repo, numerosAbertos) {
   }
 }
 
+async function pollRepo(repo) {
+  try {
+    const prs = gh(['pr', 'list', '-R', repo, '--state', 'open', '--limit', '100', '--json', 'number'], { json: true });
+    const numerosAbertos = new Set(prs.map(({ number }) => number));
+    await processaComandos(repo, numerosAbertos);
+    for (const { number } of prs) await reviewPr(repo, number);
+    await reviewCommits(repo);
+  } catch (e) {
+    console.error(`poll ${repo}:`, String(e.message).split('\n')[0]);
+  }
+}
+
 async function poll() {
   console.log(`canarinho poll: ${REPOS.join(', ')} a cada ${CFG.intervalo_min} min (Ctrl+C para)`);
   for (;;) {
-    for (const repo of REPOS) {
-      try {
-        const prs = gh(['pr', 'list', '-R', repo, '--state', 'open', '--limit', '100', '--json', 'number'], { json: true });
-        const numerosAbertos = new Set(prs.map(({ number }) => number));
-        await processaComandos(repo, numerosAbertos);
-        for (const { number } of prs) await reviewPr(repo, number);
-        await reviewCommits(repo);
-      } catch (e) { console.error(`poll ${repo}:`, String(e.message).split('\n')[0]); }
-    }
+    await Promise.all(REPOS.map(pollRepo));
     await new Promise((r) => setTimeout(r, CFG.intervalo_min * 60_000));
   }
 }
