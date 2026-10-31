@@ -205,6 +205,7 @@ try {
   const ref = await mede({ refPoolAnsioso: true });
 
   const ok = {
+    READY: cand.causa === 'assets' && ref.causa === 'assets',
     ORC1: cand.bytes <= TETO_BYTES && cand.reqs <= TETO_REQS,
     ORC2: cand.cartazes < ref.cartazes,
     /* Sem props no lobby o ORC3 não tem o que ordenar; sem fauna ele passaria de graça.
@@ -223,11 +224,12 @@ try {
 
   const falhas = Object.entries(ok).filter(([, v]) => !v).map(([k]) => k);
   if (erros.length) falhas.push('pageerror');
-  /* Convenção do repo (perfil-mobile-check): COM mutante, a régua passa quando a
-     mutação foi VISTA. Mutação que escapa é o único resultado inaceitável. */
+  // GLM63: só o ORC específico prova o mutante; failsafe/pageerror invalidam a medição.
+  const ORC_DO_MUTANTE = { 'cartaz-ansioso': 'ORC2', 'fauna-cedo': 'ORC3' }[MUTANTE];
   if (MUTANTE) {
-    if (falhas.length) { console.log(`\nmutante ${MUTANTE} reprovado como devia: ${falhas.join(', ')}`); saida = 0; }
-    else console.error(`\nMUTAÇÃO PASSOU — ${MUTANTE} não foi visto pela régua.`);
+    if (!ok.READY || erros.length) console.error(`\n✗ medição inválida com mutante ${MUTANTE}: ${falhas.join(', ')} — mutação não avaliada`);
+    else if (!ok[ORC_DO_MUTANTE]) { console.log(`\nmutante ${MUTANTE} reprovado como devia: ${ORC_DO_MUTANTE}`); saida = 0; }
+    else console.error(`\nMUTAÇÃO PASSOU — ${MUTANTE} não foi visto pela régua (${ORC_DO_MUTANTE} segue ok; falhas: ${falhas.join(', ') || 'nenhuma'}).`);
   } else if (falhas.length) {
     console.error(`\n✗ orçamento de boot estourado: ${falhas.join(', ')}`);
   } else {
