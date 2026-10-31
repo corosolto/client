@@ -1217,38 +1217,37 @@ export function buildPoolDay(scene, T) {
   let graffitiLayout = graffitiLayoutSalvo;
   if (graffitiMutant !== 'repeticao') graffitiLayout = filtrarRepeticoesGrafite(graffitiLayout);
   if (graffitiMutant !== 'faixa') graffitiLayout = filtrarFaixaGrafite(graffitiLayout);
-  GRAFITE.piscina_treta = graffitiLayout;
   root.traverse(mesh => {
     if (mesh.isMesh && !mesh.userData.graffitiWhiteWall) mesh.userData.graffitiSupportExcluded = true;
   });
   batchAuthoredProps();
   batchStaticBoxes();
-  grafitar({
-    id: 'piscina_treta',
-    root, T, waypoints: nodes, seed: 7717, passo: 0.9, alcance: 9, cobre: 0.06, minLarg: 0.3,
-    bandas: [
-      /* CARTAZ DA COLEÇÃO (07/08). Reprovação: "tem diversos posters da minha coleção
-         e tb que vc gerou que não estão em nenhum mapa". Eram 30 arquivos vivendo em
-         2 dos 5 mapas, e mesmo nesses só ~6 entravam por rodada (a vaga era fixa).
-         Aqui eles entram como lambe-lambe: banda do olho, tamanho de papel colado, e
-         `chance` baixa de propósito — cartaz é tempero, parede de cartaz vira outdoor. */
-      { y0: 0.4, y1: 2.6, larg: 1.9, alturas: [1.5, 1.15, 0.85], chance: 28, fonte: 'poster', margem: 1.0,
-        pool: (T.posterFiles || []).map((_, i) => i) },
-      // banda do olho: azulejo e concreto do deck — tag, cartaz e letra
-      { y0: 0.3, y1: 2.5, larg: 3.4, alturas: [2.0, 1.5, 1.1, 0.8, 0.6],
-        pool: POOLS.D_TAG.concat(POOLS.D_CARTAZ, POOLS.D_LETRA) },
-      // banda alta das 4 paredes do salão: bomba, que é o que lê do outro lado da piscina
-      { y0: 2.4, y1: 4.6, larg: 4.6, alturas: [2.2, 1.6, 1.1],
-        pool: POOLS.D_BOMBA.concat(POOLS.D_TAG) },
-      { y0: 4.5, y1: 7.4, larg: 4.8, alturas: [2.2, 1.5, 1.0], chance: 75,
-        pool: POOLS.D_BOMBA },
-      // resgate: canto de armário, pilastra fina, lateral de bloco de partida
-      { y0: 0.3, y1: 2.9, larg: 1.6, alturas: [0.9, 0.7, 0.5, 0.38], planura: 0.5,
-        pool: POOLS.D_ADESIVO.concat(POOLS.D_TAG) },
-    ],
-    murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 53, separacao: 11 },
-  });
-  GRAFITE.piscina_treta = graffitiLayoutSalvo;
+  GRAFITE.piscina_treta = graffitiLayout;
+  try {
+    grafitar({
+      id: 'piscina_treta',
+      root, T, waypoints: nodes, seed: 7717, passo: 0.9, alcance: 9, cobre: 0.06, minLarg: 0.3,
+      bandas: [
+        // Lambe-lambe na banda do olho, sem virar outdoor; curadoria em GRAFITE-REGUA.md.
+        { y0: 0.4, y1: 2.6, larg: 1.9, alturas: [1.5, 1.15, 0.85], chance: 28, fonte: 'poster', margem: 1.0,
+          pool: (T.posterFiles || []).map((_, i) => i) },
+        // banda do olho: azulejo e concreto do deck — tag, cartaz e letra
+        { y0: 0.3, y1: 2.5, larg: 3.4, alturas: [2.0, 1.5, 1.1, 0.8, 0.6],
+          pool: POOLS.D_TAG.concat(POOLS.D_CARTAZ, POOLS.D_LETRA) },
+        // banda alta das 4 paredes do salão: bomba, que é o que lê do outro lado da piscina
+        { y0: 2.4, y1: 4.6, larg: 4.6, alturas: [2.2, 1.6, 1.1],
+          pool: POOLS.D_BOMBA.concat(POOLS.D_TAG) },
+        { y0: 4.5, y1: 7.4, larg: 4.8, alturas: [2.2, 1.5, 1.0], chance: 75,
+          pool: POOLS.D_BOMBA },
+        // resgate: canto de armário, pilastra fina, lateral de bloco de partida
+        { y0: 0.3, y1: 2.9, larg: 1.6, alturas: [0.9, 0.7, 0.5, 0.38], planura: 0.5,
+          pool: POOLS.D_ADESIVO.concat(POOLS.D_TAG) },
+      ],
+      murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 53, separacao: 11 },
+    });
+  } finally {
+    GRAFITE.piscina_treta = graffitiLayoutSalvo;
+  }
 
   /* BUG-57: pombo de borda de piscina + rato de vestiário. */
   const ambience = createFavelaAmbience(root, {

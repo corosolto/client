@@ -250,6 +250,26 @@ const gitBase = (path) => {
   return r.stdout;
 };
 
+function rollbackLayoutPiscina(build) {
+  const salvo = GRAFITE.piscina_treta, original = THREE.Object3D.prototype.traverse;
+  const marcador = new Error('falha explícita durante empréstimo do layout');
+  let injetada = false, recebida = null;
+  THREE.Object3D.prototype.traverse = function (...args) {
+    if (!injetada && GRAFITE.piscina_treta !== salvo) { injetada = true; throw marcador; }
+    return original.apply(this, args);
+  };
+  try { build(new THREE.Scene(), initTextures()); }
+  catch (error) { recebida = error; }
+  finally { THREE.Object3D.prototype.traverse = original; }
+  const restaurado = GRAFITE.piscina_treta === salvo;
+  GRAFITE.piscina_treta = salvo;
+  return { name: 'Piscina restaura layout compartilhado após exceção',
+    ok: injetada && recebida === marcador && restaurado,
+    injetada, excecaoOriginal: recebida === marcador, restaurado,
+    error: !injetada ? 'injeção não alcançou empréstimo' : recebida !== marcador
+      ? 'exceção original não atravessou' : !restaurado ? 'referência compartilhada vazou' : '' };
+}
+
 const modo = process.argv.find((a) => a.startsWith('--')) || '';
 const bytesAntes = [passURL, piscinaURL, ferroURL].map((u) => sha256(readFileSync(u, 'utf8')));
 
@@ -283,6 +303,7 @@ if (modo === '--baseline') {
 } else {
   const api = production;
   const fixturesCases = fixtures(api);
+  fixturesCases.push(rollbackLayoutPiscina((s, T) => MAPS.piscina_treta.build(s, T)));
   const mapaPiscina = medirMapa('piscina_treta', (s, T) => MAPS.piscina_treta.build(s, T));
   const mapaFerro = medirMapa('ferro_velho', (s, T) => MAPS.ferro_velho.build(s, T));
   let determinismo = { name: 'determinismo manual×assado na piscina real', ok: true, error: '' };
@@ -325,8 +346,15 @@ if (modo === '--baseline') {
     assert.ok(m2.fora.length > 0, 'M2 tem que deixar arte fora da allowlist');
     assert.ok(m2.pieces.length > 0, 'M2 sem arte não prova nada');
     console.log(JSON.stringify({ mutante: 'M2 allowlist do mapa desligada', pecas: m2.pieces.length, fora: m2.fora.length }));
+    const restauracao = '  } finally {\n    GRAFITE.piscina_treta = graffitiLayoutSalvo;\n  }';
+    assert.equal(piscinaSource.split(restauracao).length - 1, 1, 'M3 NÃO APLICOU: restauração única não encontrada');
+    const m3Pool = (await import(dataURL(absoluteImports(piscinaSource.replace(restauracao, '  } finally {}'), piscinaURL)))).buildPoolDay;
+    const m3 = rollbackLayoutPiscina(m3Pool);
+    assert.ok(m3.injetada && m3.excecaoOriginal && !m3.restaurado && !m3.ok,
+      'M3 deve vazar a referência após a mesma exceção real');
+    console.log(JSON.stringify({ mutante: 'M3 restauração do layout desligada', ...m3 }));
     const bytesDepois = [passURL, piscinaURL, ferroURL].map((u) => sha256(readFileSync(u, 'utf8')));
     assert.deepEqual(bytesDepois, bytesAntes, 'mutação vazou para o repositório');
-    console.log(JSON.stringify({ selfTest: 'passed', mutacoes: ['M1 usadas.has', 'M2 allowlist mapa'], repoIntacto: true }));
+    console.log(JSON.stringify({ selfTest: 'passed', mutacoes: ['M1 usadas.has', 'M2 allowlist mapa', 'M3 restauração layout'], repoIntacto: true }));
   }
 }
