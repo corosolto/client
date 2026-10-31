@@ -143,11 +143,36 @@ for (const id of MAPAS) {
      186 a 200 peças, sem erro nenhum. Requisição perdida, erro da página e prop que não
      decodificou viram falha alta, com a lista, em vez de um layout diferente. */
   const faltas = [];
-  page.on('pageerror', (e) => { console.log('  [pageerror]', e.message); faltas.push(`pageerror: ${e.message}`); });
-  page.on('requestfailed', (r) => faltas.push(`falhou: ${r.url()} (${r.failure()?.errorText || '?'})`));
-  page.on('response', (r) => { if (r.status() >= 400) faltas.push(`${r.status()}: ${r.url()}`); });
-  page.on('console', (m) => { if (/load failed/.test(m.text())) faltas.push(`console: ${m.text().slice(0, 160)}`); });
-  if (process.env.GRAFITE_DERRUBA) await page.route(new RegExp(process.env.GRAFITE_DERRUBA), (route) => route.abort());
+  const falta = (tipo, url, reason) => faltas.push({ tipo, url, reason });
+  const vista = f => f.tipo === 'pageerror' ? `pageerror: ${f.reason}` : f.tipo === 'requestfailed' ? `falhou: ${f.url} (${f.reason})` : f.tipo === 'console' ? `console: ${f.reason}` : `${f.reason}: ${f.url}`;
+  // Só auxiliares conhecidos podem faltar; código, geometria e arte continuam fatais.
+  const classifica = (url, tipo = 'other') => {
+    let u; try { u = new URL(url); } catch { return 'essencial'; }
+    if (!['http:', 'https:'].includes(u.protocol)) return 'essencial';
+    if (['document', 'script', 'stylesheet'].includes(tipo) || /\.(glb|gltf|bin|m?js|css)$/i.test(u.pathname)) return 'essencial';
+    if (/^\/(?:favicon(?:-[\w-]+)?\.(?:ico|png|svg)|apple-touch-icon\.png)$/i.test(u.pathname)) return 'auxiliar';
+    if (/\.(png|jpe?g|webp)$/i.test(u.pathname) || /^\/(models|img\/decals|posters)\//.test(u.pathname)) return 'essencial';
+    if (u.pathname.startsWith('/audio/')) return 'auxiliar';
+    if (['fetch', 'xhr', 'ping', 'other'].includes(tipo) && (/^\/api\/(analytics|telemetry)(\/|$)/.test(u.pathname) || /(^|\.)google-analytics\.com$/i.test(u.hostname))) return 'auxiliar';
+    return 'essencial';
+  };
+  page.on('pageerror', e => { console.log('  [pageerror]', e.message); falta('pageerror', '', e.message); });
+  page.on('requestfailed', r => { const url = r.url(); if (classifica(url, r.resourceType()) !== 'auxiliar') falta('requestfailed', url, r.failure()?.errorText || '?'); });
+  page.on('response', r => { if (r.status() >= 400 && classifica(r.url(), r.request().resourceType()) !== 'auxiliar') falta('response', r.url(), String(r.status())); });
+  page.on('console', m => {
+    const text = m.text(); if (!/load failed/i.test(text)) return;
+    const url = text.match(/https?:\/\/[^\s"'<>\[\]]+/)?.[0] || '';
+    if (!url || classifica(url) !== 'auxiliar') falta('console', url, text.slice(0, 160));
+  });
+  if (process.env.GRAFITE_DERRUBA) {
+    const padrao = process.env.GRAFITE_DERRUBA;
+    await page.route(new RegExp(padrao), async route => {
+      const url = route.request().url();
+      await route.abort();
+      console.log('GRAFITE-ABORT ' + JSON.stringify({ tool: 'gen-graffiti-layout', mapa: id, padrao, url, aplicado: true }));
+    });
+  }
+
   // `grafite=vivo`: manda o mapa RODAR a passada em vez de aplicar o layout assado
   const viewId = id;
   await page.goto(`${BASE}/mapview.html?map=${viewId}&grafite=vivo`, { waitUntil: 'domcontentloaded', timeout: 120000 });
@@ -156,8 +181,10 @@ for (const id of MAPAS) {
   const actualMap = await page.evaluate(() => window.__mapId);
   await page.close();
   if (faltas.length) {
+    const vistas = [...new Set(faltas.map(vista))].slice(0, 20);
+    console.log('GRAFITE-ENTRADA ' + JSON.stringify({ tool: 'gen-graffiti-layout', mapa: id, clausula: 'GRAFITE_ENTRADA', total: faltas.length, truncado: faltas.length > 20, faltas: faltas.slice(0, 20) }));
     throw Error(`${id}: ${faltas.length} entrada(s) faltando na cena; bake cancelado, layout anterior preservado:\n    `
-      + [...new Set(faltas)].slice(0, 20).join('\n    '));
+      + vistas.join('\n    '));
   }
   if (actualMap !== viewId || g?.mapa !== id || !g?.pass?.layout?.pecas?.length) {
     throw Error(`${id}: mapa/passada inválidos (${actualMap}/${g?.mapa}); bake cancelado`);

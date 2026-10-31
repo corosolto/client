@@ -5,6 +5,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { THREE, MAPS, initTextures, seedRandom } from './harness.mjs';
 import { GRAFITE } from '../../public/js/graffiti_layout.js';
 import { criarSuporteGrafite, superficieGrafitavel } from '../../public/js/graffiti_surface.js';
@@ -17,8 +19,52 @@ const marker = '  batchStaticBoxes();\n  grafitar({';
 assert.equal(source.split(marker).length, 2, 'actual map must batch before placement');
 const lateMarker = '  return {\n    ambience,\n    root, colliders,';
 assert.equal(source.split(lateMarker).length, 2, 'order mutant must identify one map return');
-const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (MUT && MUT !== 'lote-sem-permissao') { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
+const invalido = (mensagem) => { console.error(mensagem); process.exit(2); };
+const ARGS = process.argv.slice(2);
+if (new Set(ARGS).size !== ARGS.length) invalido('argumento duplicado');
+const mutanteArgs = ARGS.filter((a) => a.startsWith('--mutante='));
+for (const a of ARGS) {
+  if (a === '--verificar-mutantes' || a.startsWith('--mutante=')) continue;
+  invalido(`argumento desconhecido ou posicional: ${a}`);
+}
+const DRIVER = ARGS.includes('--verificar-mutantes');
+if (DRIVER && mutanteArgs.length) invalido('driver não aceita --mutante junto');
+if (mutanteArgs.length > 1) invalido('mutante duplicado');
+const MUT = mutanteArgs.length === 1 ? mutanteArgs[0].slice('--mutante='.length) : '';
+if (mutanteArgs.length === 1 && MUT === '') invalido('mutante vazio');
+if (MUT && MUT !== 'lote-sem-permissao') invalido(`mutante desconhecido: ${MUT}`);
+if (DRIVER) {
+  const args = ARGS.filter((a) => a !== '--verificar-mutantes');
+  const executa = (mutante) => spawnSync(process.execPath,
+    [fileURLToPath(import.meta.url), ...args, ...(mutante ? [`--mutante=${mutante}`] : [])],
+    { encoding: 'utf8', timeout: 4800000, env: process.env });
+  const leRecibo = (r, esperado) => {
+    if (r.error || r.signal || r.status === null) invalido('driver: filho em erro, sinal ou status nulo');
+    const linhas = `${r.stdout || ''}\n${r.stderr || ''}`.split(/\r?\n/).filter((l) => l.startsWith('PISCINA-BATCH '));
+    if (linhas.length !== 1) invalido('driver: recibo ausente, duplicado ou cego');
+    let rec;
+    try { rec = JSON.parse(linhas[0].slice('PISCINA-BATCH '.length)); } catch { invalido('driver: recibo JSON inválido'); }
+    if (!rec || typeof rec !== 'object' || Array.isArray(rec)) invalido('driver: recibo não é objeto');
+    if (rec.tool !== 'piscina-graffiti-batch') invalido('driver: recibo com ID de ferramenta errado');
+    if (rec.mutante !== esperado.mutante) invalido('driver: recibo com mutante errado');
+    if (r.status !== esperado.status) invalido(esperado.status === 1 ? 'driver: mutante sem defeito — recibo BlindMutation' : `driver: baseline com saída ${r.status}`);
+    if (rec.error !== esperado.error || rec.clausula !== 'authored-batch-permission') invalido('driver: recibo com erro ou cláusula errada');
+    if (!Number.isInteger(rec.lotes) || rec.lotes <= 0) invalido('driver: recibo sem lotes inteiros positivos');
+    if (!Array.isArray(rec.pintaveis)) invalido('driver: recibo sem pintaveis em array');
+    if (esperado.status === 0 && rec.aplicado !== false) invalido('driver: baseline marcado como mutante');
+    if (rec.pintaveis.length > rec.lotes || new Set(rec.pintaveis).size !== rec.pintaveis.length) invalido('driver: contagem ou nomes de lotes inconsistentes');
+    if (esperado.status === 0 && rec.pintaveis.length) invalido('driver: baseline não pode ter lote pintável');
+    if (esperado.status === 1) {
+      if (rec.aplicado !== true) invalido('driver: mutante sem marca de aplicação real');
+      if (!rec.pintaveis.length || !rec.pintaveis.every((n) => typeof n === 'string' && /^piscina:piscina_.*:batch$/.test(n))) invalido('driver: mutante sem lotes pintáveis instanciados');
+    }
+    return rec;
+  };
+  const baseline = leRecibo(executa(''), { status: 0, mutante: '', error: null });
+  const mutado = leRecibo(executa('lote-sem-permissao'), { status: 1, mutante: 'lote-sem-permissao', error: 'ContractViolation' });
+  if (baseline.lotes !== mutado.lotes) invalido('driver: populações de lotes divergentes');
+  process.exit(0);
+}
 async function importaMapa(texto) {
   const resolvido = texto.replace(/(\bfrom\s*)(['"])([^'"\n]+)\2/g, (_full, prefix, _quote, specifier) =>
     prefix + JSON.stringify(specifier.startsWith('.') ? new URL(specifier, mapURL).href : import.meta.resolve(specifier)));
@@ -89,22 +135,34 @@ const marcaLote = '      batch.userData.graffitiSupportExcluded = !superficieGra
 assert.equal(source.split(marcaLote).length, 2, 'authored batch must carry the paint permission');
 const geoProp = new THREE.BoxGeometry(1, 1, 1), matProp = new THREE.MeshLambertMaterial();
 for (const id of AUTORAIS) { const g = new THREE.Group(); g.add(new THREE.Mesh(geoProp, matProp)); registerPropTemplate(id, g); }
-let lotes;
+let lotes, alvoMutante = false;
 try {
-  const alvo = MUT === 'lote-sem-permissao'
-    ? await importaMapa(source.replace(marcaLote, '      const matrix = new THREE.Matrix4();'))
-    : { buildPoolDay: MAPS.piscina_treta.build };
+  let alvo = { buildPoolDay: MAPS.piscina_treta.build };
+  if (MUT === 'lote-sem-permissao') {
+    const alterado = source.replace(marcaLote, '      const matrix = new THREE.Matrix4();');
+    assert.notEqual(alterado, source, 'authored permission mutation must apply');
+    alvo = await importaMapa(alterado);
+    alvoMutante = true;
+  }
+
   seedRandom(12345); const w = alvo.buildPoolDay(new THREE.Scene(), textures);
   lotes = w.root.children.filter((o) => o.isInstancedMesh && /^piscina:piscina_.*:batch$/.test(o.name));
 } finally { for (const id of AUTORAIS) registerPropTemplate(id, null); }
 assert.ok(lotes.length > 0, 'authored props must batch when their GLB exists');
 const pintaveis = lotes.filter((o) => superficieGrafitavel(o)).map((o) => o.name);
 console.log(JSON.stringify({ gate: 'authored-batch-permission', lotes: lotes.length, pintaveis }));
+assert.equal(readFileSync(mapURL, 'utf8'), source, 'production map was never patched by mutant');
 if (pintaveis.length) {
   console.log(`  ✗ lote de prop autoral pintável: ${pintaveis.join(', ')}`);
+  console.log('PISCINA-BATCH ' + JSON.stringify({ tool: 'piscina-graffiti-batch', mutante: MUT, error: 'ContractViolation', clausula: 'authored-batch-permission', aplicado: alvoMutante && lotes.length > 0, lotes: lotes.length, pintaveis }));
   process.exit(1);
 }
-if (MUT) { console.log(`  ✗ MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`); process.exit(1); }
+if (MUT) {
+  const mutacaoCega = true;
+  console.log('PISCINA-BATCH ' + JSON.stringify({ tool: 'piscina-graffiti-batch', mutante: MUT, error: 'BlindMutation', clausula: 'authored-batch-permission', aplicado: alvoMutante && lotes.length > 0, lotes: lotes.length, pintaveis }));
+  console.log(`  ✗ MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
+  process.exit(mutacaoCega ? 2 : 0);
+}
 
-assert.equal(readFileSync(mapURL, 'utf8'), source, 'production map was never patched by mutant');
+console.log('PISCINA-BATCH ' + JSON.stringify({ tool: 'piscina-graffiti-batch', mutante: MUT, error: null, clausula: 'authored-batch-permission', aplicado: false, lotes: lotes.length, pintaveis }));
 console.log('Piscina batch gate: real geometry, order mutation, exclusion, authored batch permission and physics parity passed');
