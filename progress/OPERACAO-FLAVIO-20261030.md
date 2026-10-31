@@ -26,3 +26,10 @@ Node v26.12.1, `node tools/eval/operacao-flavio-reset-check.mjs` falhou na asser
 
 ### GLM-02 recebido e verificado
 OMP zai/glm-5.3 concluiu 23:52:44 UTC, sem fallback, leitura apenas, patch JSON. Base e trecho literal conferidos antes da aplicação. Régua ficou verde offline/online, duas rodadas por origem padrão/não padrão, derrota e prop ausente. Mutante que preserva posição deslocada aplicou e voltou a falhar na asserção z=68 versus z=55. Validação lógica local, sem alegar captura visual ou multiplayer humano.
+
+### Pacote GLM-03 reservado
+Base efba93ff1. GLM propõe patch em game.js::_updateHud, netgame.js::transicaoDeEstado e mode_operacao_flavio.js::atualizaHud. Codex não escreve nesses arquivos durante o pacote. Régua independente operacao-flavio-online-check.mjs reproduziu HUD vazio, cinemática ausente e countdown sem reset; primeiro snapshot sem cerimônia passa. Hashes de entrada registrados no prompt local. Ordenamento anterior à aplicação das entidades permanece sob investigação, sem alegar solução.
+
+### GLM-03 recebido e verificado em lógica local
+Quatro casos online passaram no HUD/transições reais com DOM stubado; três mutações (sem HUD/cinemática/reset) aplicadas e reprovaram. Relógio do servidor preservado. Fonte GLM estática não executou testes. Riscos ainda abertos: transição ocorre antes das entidades do snapshot (morte do VIP pode receber título errado); fontes de áudio precisam encerrar no reset; contrato binário diverge de Javaporcos/backend. Não declarar MP validado. Push efba interrompido localmente antes do envio para integrar e testar o conjunto.
+Primeira visita Ego Lite Space13/p2 carregou Flávio vivo com objetivo/checkpoints/avião. Captura inicial em /tmp/corosolto-flavio-live-first.png; enquadramento de spawn voltado à parede não serve como arte. Preview JPG existente é arte conceitual, não captura do motor.

@@ -8937,6 +8937,9 @@ export class Game {
       const protText = String(Math.ceil(protLeft));
       if (this.el.protCount.textContent !== protText) this.el.protCount.textContent = protText;
     }
+    // HUD do objetivo (Operação Flávio online): o letreiro da escolta acompanha o HUD comum.
+    // A mensagem da cinemática vence — atualizaHud se cala enquanto this.cinematic existir.
+    this.objective?.atualizaHud?.();
   }
 
   /* ================= main update ================= */

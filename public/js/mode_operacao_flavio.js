@@ -354,7 +354,7 @@ export class OperacaoFlavio {
   }
 
   atualizaHud() {
-    if (!this.hud || this.deathAnnounced) return;
+    if (!this.hud || this.deathAnnounced || this.cinematic) return;
     const total = this.state.caminho.length - 1;
     const status = this.state.threatened
       ? this.state.inCover ? 'EM COBERTURA' : 'BUSCANDO COBERTURA'

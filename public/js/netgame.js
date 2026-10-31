@@ -568,7 +568,13 @@ class Netcode {
         if (!winner) { game._resultadoDaRodada('EMPATE NA TRETA', 'ninguém convenceu ninguém'); game.sfx.roundLose(); }
         else {
           const mine = winner === game.playerTeam;
-          game._resultadoDaRodada(`${game._teamName(winner)} LEVARAM O ROUND`, mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche');
+          if (game.objective?.roundResult) {
+            const fim = game.objective.roundResult(winner);
+            game._resultadoDaRodada(fim.title, fim.detail);
+          } else {
+            game._resultadoDaRodada(`${game._teamName(winner)} LEVARAM O ROUND`, mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche');
+          }
+          game.objective?.startCinematic?.(winner);
           game._roundWinnerVoice?.(winner);
           if (!game.sfx.roundSound(game._voiceKey(winner))) mine ? game.sfx.roundWin() : game.sfx.roundLose();
         }
@@ -577,8 +583,16 @@ class Netcode {
         if (this._evOn) this.limparDropsDeRede();   // o servidor zera `drops` no _startRound sem mandar `gone`
         game._resultado = null;
         game._showScoreboard(false);
+        if (game.objective?.prepareRound) {
+          // Religar a apresentação da rodada (cinemática/avião/viewmodel do round anterior).
+          // prepareRound escreve timeLeft=360: o relógio autoritativo já veio do snapshot.
+          const relogioDoServidor = game.timeLeft;
+          game.objective.prepareRound();
+          if (Number.isFinite(relogioDoServidor)) game.timeLeft = relogioDoServidor;
+        }
         const subRound = game.ctf
           ? frase('alvoBandeiras', game.capsToWin)
+          : game.objective?.roundIntro ? game.objective.roundIntro()
           : (game.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta'));
         game._banner(frase('round', game.roundNum),
           game.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', game.roundsMax, game.roundsToWin)}` : subRound);
