@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.131`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.132`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -155,6 +155,17 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.132] — 2026-10-31
+
+### Mudado
+- Suaviza a iluminação de quatro personagens sem mudar geometria (#1184)
+- Registra sincronização das normais com hotfix de armas
+- Preserva equivalência histórica dos corpos com normais corrigidas
+- docs: registra revisão da entrega de normais
+- docs: gera comandos da entrega de normais
+- docs: registra evidência contínua dos quatro personagens
+- Suaviza costuras de iluminação em quatro personagens
 
 ## [2.1.0-alpha.131] — 2026-10-31
 
