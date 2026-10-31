@@ -65,6 +65,8 @@ jobs:
         run: node tools/eval/boot-mutant-verdict-check.mjs --mutantes
       - name: Assets válidos e mutante entregue no orçamento
         run: node tools/eval/boot-assets-check.mjs --mutantes
+      - name: Causa real da liberação da splash com mutantes
+        run: node tools/eval/boot-ready-check.mjs --mutantes
       - name: Origem da versão nos payloads reais de perf e match
         run: npm run eval:versaoorigem
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)

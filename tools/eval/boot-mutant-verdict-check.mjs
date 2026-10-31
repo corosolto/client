@@ -5,10 +5,12 @@ import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const mutations={
- 'qualquer-falha':['mutacaoAplicada && !erros.length && falhas.includes(exigida)','falhas.length > 0','cartaz exige ORC2'],
- 'sem-aplicacao':['mutacaoAplicada && !erros.length && falhas.includes(exigida)','!erros.length && falhas.includes(exigida)','transformação ausente não prova mutante'],
- 'pageerror-aceito':['mutacaoAplicada && !erros.length && falhas.includes(exigida)','mutacaoAplicada && falhas.includes(exigida)','erro de página não prova mutante'],
+ "qualquer-falha":["mutacaoAplicada && !erros.length && !falhas.includes('READY') && falhas.includes(exigida)", "falhas.length > 0", "cartaz exige ORC2"],
+ "sem-aplicacao":["mutacaoAplicada && !erros.length && !falhas.includes('READY') && falhas.includes(exigida)", "!erros.length && !falhas.includes('READY') && falhas.includes(exigida)", "transformação ausente não prova mutante"],
+ "pageerror-aceito":["mutacaoAplicada && !erros.length && !falhas.includes('READY') && falhas.includes(exigida)", "mutacaoAplicada && !falhas.includes('READY') && falhas.includes(exigida)", "erro de página não prova mutante"],
+ "ready-ignorado":["mutacaoAplicada && !erros.length && !falhas.includes('READY') && falhas.includes(exigida)", "mutacaoAplicada && !erros.length && falhas.includes(exigida)", "READY inválido recusa cartaz"],
 };
+
 if(process.argv.includes('--mutantes')){
  const run=args=>spawnSync(process.execPath,[fileURLToPath(import.meta.url),...args],{encoding:'utf8',timeout:30000,maxBuffer:2000000});
  const baseline=run([]);assert(baseline.status===0&&!baseline.error&&!baseline.signal,'baseline válido');
@@ -57,6 +59,8 @@ for(const [name,MUTANTE,falhas,erros,mutacaoAplicada,expected] of [
  ['controle cartaz','cartaz-ansioso',['ORC2'],[],true,0],
  ['controle fauna','fauna-cedo',['ORC3'],[],true,0],
  ['ORC1 pode acompanhar a falha esperada','cartaz-ansioso',['ORC1','ORC2'],[],true,0],
+ ['READY inválido recusa cartaz','cartaz-ansioso',['READY','ORC2'],[],true,1],
+ ['READY inválido recusa fauna','fauna-cedo',['READY','ORC3'],[],true,1],
  ['baseline verde','',[],[],false,0],
  ['baseline erro','',['pageerror'],['crash'],false,1],
 ]){

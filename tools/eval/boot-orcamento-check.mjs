@@ -76,10 +76,8 @@ if (!MUTANTES.has(MUTANTE)) {
   process.exit(2);
 }
 
-/* TETO. Com o lobby fixado na Praça dos Três Poderes, o candidato mede 6,31 MB em 301
-   req (25/10, cabo). O teto fica ~14% acima: folga para um prop novo no lobby, não para
-   um pool inteiro voltar — o pool ansioso mede 10,24 MB e o ORC1 o pega sozinho.
-   Mexer no teto é decisão: escreva no commit QUAL asset novo justificou. */
+/* TETO medido nesta lane após reduzir os props da Praça: boot de 5,73 MiB e
+   teto de 340 requisições preservado; 7.200.000 bytes equivalem a 6,87 MiB. */
 const TETO_BYTES = 7_200_000;
 const TETO_REQS = 340;
 
@@ -111,6 +109,11 @@ function faunaCedo(corpo) {
     .replace(retorno, `${paralela}${retorno}`);
   if (depois.split(FAUNA_ADIADA).length !== 1 || depois.split(paralela).length !== 2) throw new Error('fauna cedo não aplicou exatamente uma vez');
   return depois;
+}
+const SPLASH_READY = 'function _splashSetReady() {';
+function instrumentaCausaSplash(corpo) {
+  if (!corpo.includes(SPLASH_READY)) throw new Error('não achei _splashSetReady em main.js');
+  return corpo.replace(SPLASH_READY, `${SPLASH_READY}\n  window.__csSplashCause ||= _splashPorFailsafe ? 'failsafe' : 'assets';`);
 }
 
 let mutacaoAplicada = false;
@@ -146,9 +149,12 @@ async function mede({ refPoolAnsioso = false } = {}) {
       corpo = poolAnsioso(corpo);
       mutou = true;
     }
-    if (rel === 'js/main.js' && MUTANTE === 'fauna-cedo') {
-      corpo = faunaCedo(corpo);
-      mutou = true;
+    if (rel === 'js/main.js') {
+      if (MUTANTE === 'fauna-cedo') {
+        corpo = faunaCedo(corpo);
+        mutou = true;
+      }
+      corpo = instrumentaCausaSplash(corpo);
     }
     await context.route(`**/${rel}*`, async (rota) => {
       if (rel === 'js/client-id.js') {
@@ -209,10 +215,26 @@ async function mede({ refPoolAnsioso = false } = {}) {
   });
   const portao = await page.waitForFunction(() => window.__csPortao, null, { timeout: 180000, polling: 100 })
     .then((h) => h.jsonValue()).catch(() => null);
-  if (portao === null) throw new Error('a splash não liberou a entrada em 180 s');
+  if (portao === null) {
+    const estado = await page.evaluate(() => {
+      const splash = document.getElementById('splash-enter');
+      return {
+        readyState: document.readyState,
+        splash: splash?.className || null,
+        href: location.href,
+      };
+    }).catch(() => null);
+    const pendentes = [...reqs.values()]
+      .filter((r) => r.fim === null)
+      .slice(-8)
+      .map((r) => r.url);
+    throw new Error(`a splash não liberou a entrada em 180 s; estado=${JSON.stringify(estado)}; pendentes=${pendentes.join(', ') || 'nenhum'}; erros=${erros.join(' | ') || 'nenhum'}`);
+  }
   /* O failsafe de 20 s solta a splash com o cenário pela metade (main.js): medir ali
      seria medir o failsafe, e o orçamento sairia pequeno por motivo errado. */
-  if (portao > 19000) throw new Error(`a splash liberou em ${Math.round(portao)} ms; erros: ${erros.join(' | ') || 'nenhum'}`);
+  if (portao > 19000) throw new Error(`a splash liberou em ${Math.round(portao)} ms — failsafe de 20 s; erros: ${erros.join(' | ') || 'nenhum'}`);
+  const causa = await page.evaluate(() => window.__csSplashCause || null);
+
   // O orçamento mantém o corte do portão; falha de transporte invalida a medição.
   const naJanela = [...reqs.values()].filter((r) => r.inicio <= portao + 50);
   const limite = Date.now() + 180000;
@@ -221,14 +243,15 @@ async function mede({ refPoolAnsioso = false } = {}) {
   }
   for (const r of naJanela.filter((r) => r.papel !== null)) {
     if (r.falhou || r.fim === null || r.status === null || r.status >= 400) {
-      const causa = r.falhou ? 'loadingFailed' : r.fim === null ? 'corpo incompleto' : r.status === null ? 'sem resposta' : `HTTP ${r.status}`;
-      throw new Error(`asset de boot inválido: ${r.url} (${causa})`);
+      const causaReq = r.falhou ? 'loadingFailed' : r.fim === null ? 'corpo incompleto' : r.status === null ? 'sem resposta' : `HTTP ${r.status}`;
+      throw new Error(`asset de boot inválido: ${r.url} (${causaReq})`);
     }
   }
   const ate = naJanela.filter((r) => r.fim !== null && r.fim <= portao + 50);
   const patchado = (u) => JS_LOCAIS.some((p) => u.includes(p));
   const resultado = {
     portao,
+    causa,
     bytes: ate.reduce((s, r) => s + (patchado(r.url) ? 0 : r.bytes), 0),
     reqs: ate.length,
     cartazes: new Set(ate.filter((r) => r.papel === 'posters').map((r) => r.origem.split('?')[0])).size,
@@ -247,6 +270,7 @@ try {
   const ref = await mede({ refPoolAnsioso: true });
 
   const ok = {
+    READY: cand.causa === 'assets',
     ORC1: cand.bytes <= TETO_BYTES && cand.reqs <= TETO_REQS,
     ORC2: cand.cartazes < ref.cartazes,
     /* Sem props no lobby o ORC3 não tem o que ordenar; sem fauna ele passaria de graça.
@@ -256,7 +280,8 @@ try {
   };
 
   console.log(`base      ${BASE}${MUTANTE ? `  (mutante=${MUTANTE})` : ''}`);
-  console.log(`portão    splash liberou em ${Math.round(cand.portao)} ms`);
+  console.log(`portão    splash liberou em ${Math.round(cand.portao)} ms por ${cand.causa}`);
+  console.log(`READY     caminho dos assets  ${ok.READY ? 'ok' : 'FALHA'}`);
   console.log(`ORC1      ${(cand.bytes / 1048576).toFixed(2)} MB em ${cand.reqs} req  (teto ${(TETO_BYTES / 1048576).toFixed(2)} MB / ${TETO_REQS} req)  ${ok.ORC1 ? 'ok' : 'FALHA'}`);
   console.log(`ORC2      ${cand.cartazes} cartaz(es) sob demanda vs ${ref.cartazes} com o pool ansioso  ${ok.ORC2 ? 'ok' : 'FALHA'}`);
   console.log(`ORC3      último prop em ${cand.ultimoProp} ms, 1ª fauna pedida em ${Number.isFinite(cand.primeiraFauna) ? cand.primeiraFauna : '—'} ms  ${ok.ORC3 ? 'ok' : 'FALHA'}`);
@@ -270,7 +295,7 @@ try {
   if (MUTANTE) {
     /* Morte válida: transformação REAL no candidato + a ORC exigida falhou, sem pageerror. */
     const exigida = MUTANTE === 'cartaz-ansioso' ? 'ORC2' : 'ORC3';
-    const morteValida = mutacaoAplicada && !erros.length && falhas.includes(exigida);
+    const morteValida = mutacaoAplicada && !erros.length && !falhas.includes('READY') && falhas.includes(exigida);
     if (morteValida) { console.log(`\nmutante ${MUTANTE} reprovado como devia: ${falhas.join(', ')}`); saida = 0; }
     else console.error(`\nMUTAÇÃO PASSOU — ${MUTANTE} sem morte válida (aplicada=${mutacaoAplicada}, exigia ${exigida}${erros.length ? ' +pageerror' : ''})`);
   } else if (falhas.length) {
