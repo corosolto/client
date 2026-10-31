@@ -4609,13 +4609,20 @@ function mpCartaoNoHTML(n) {
 let mpMapasDoNo = [];
 let mpMapasEscolhidos = new Set();
 
+/* Operação Flávio (escolta) só roda em rounds com 2+ por time — o servidor recusa
+   CTF/X1, e a grade não pode deixar marcado o que a sala criada vai derrubar. */
+const mpMapaCompativel = (id) => MAPS[id]?.objectiveMode !== 'escort'
+  || (mpEl('mp-modo')?.value !== 'ctf' && +(mpEl('mp-teamsize')?.value || 5) >= 2);
+
 function mpPintarMapas() {
   const grade = mpEl('mp-mapas-grade'), conta = mpEl('mp-mapas-conta');
   if (!grade || !conta) return;
   const ctf = mpEl('mp-modo') && mpEl('mp-modo').value === 'ctf';
+  for (const id of [...mpMapasEscolhidos]) if (!mpMapaCompativel(id)) mpMapasEscolhidos.delete(id);
   grade.innerHTML = mpMapasDoNo.map((id) => {
     const on = mpMapasEscolhidos.has(id);
-    return `<button class="mp-mapa${on ? ' on' : ''}" type="button" data-id="${id}" aria-pressed="${on}" title="${MAPS[id].name}">`
+    const travado = !mpMapaCompativel(id);
+    return `<button class="mp-mapa${on ? ' on' : ''}" type="button" data-id="${id}"${travado ? ' disabled' : ''} aria-pressed="${on}" title="${travado ? 'Operação Flávio exige rounds e pelo menos 2 por time' : MAPS[id].name}">`
       + `<img class="mp-mapa-img" loading="lazy" decoding="async" src="${mapPreviewPoster(id, VERSION)}" alt="">`
       // o crachá CAPTURA só informa quando o modo É captura; senão é ruído em quase todo cartão
       + (ctf && MAPS[id].ctfMode ? '<span class="mp-mapa-ctf">CAPTURA</span>' : '')
@@ -4632,11 +4639,13 @@ function mpPintarMapas() {
   });
   const n = mpMapasEscolhidos.size;
   const fora = MAPAS_MENU.filter((id) => !mpMapasDoNo.includes(id)).length;
+  const flavioTravado = mpMapasDoNo.some((id) => !mpMapaCompativel(id));
   conta.textContent = (!mpMapasDoNo.length ? 'esse servidor não respondeu a lista de mapas'
     : n === 0 ? 'marque pelo menos um mapa'
       : n === 1 ? 'só 1 mapa: a sala não gira, joga sempre nele'
         : `${n} mapas na fila, sorteados a cada partida`)
-    + (fora ? ` · ${fora} do jogo ainda não estão neste servidor` : '');
+    + (fora ? ` · ${fora} do jogo ainda não estão neste servidor` : '')
+    + (flavioTravado ? ' · Operação Flávio exige rounds e pelo menos 2 por time' : '');
 }
 
 async function mpCarregarMapasDoNo() {
@@ -4860,8 +4869,9 @@ function mpMontarFormulario() {
   if (rot && !rot._ok) {
     rot._ok = true;
     rot.onchange = () => { ui.click(); mpSincronizarMapas(); };
-    mpEl('mp-modo').addEventListener('change', () => mpSincronizarMapas());   // o crachá CAPTURA depende do modo
-    mpEl('mp-mapas-todos').onclick = () => { ui.click(); mpMapasEscolhidos = new Set(mpMapasDoNo); mpPintarMapas(); };
+    mpEl('mp-modo').addEventListener('change', () => mpSincronizarMapas());   // o crachá CAPTURA e o travamento do Flávio dependem do modo
+    mpEl('mp-teamsize').addEventListener('change', () => mpSincronizarMapas());   // Flávio exige rounds com 2+ por time
+    mpEl('mp-mapas-todos').onclick = () => { ui.click(); mpMapasEscolhidos = new Set(mpMapasDoNo.filter(mpMapaCompativel)); mpPintarMapas(); };
     mpEl('mp-mapas-limpar').onclick = () => { ui.click(); mpMapasEscolhidos.clear(); mpPintarMapas(); };
   }
   mpSincronizarMapas();
@@ -4875,6 +4885,8 @@ function mpMontarFormulario() {
     const aDedo = mpEl('mp-rotacao').value === 'escolher';
     const escolhidos = [...mpMapasEscolhidos];
     if (aDedo && !escolhidos.length) return mpErro('Escolha pelo menos um mapa pra sua sala.');
+    if (aDedo && escolhidos.some((id) => !mpMapaCompativel(id)))
+      return mpErro('Operação Flávio exige rounds e pelo menos 2 por time. Ajuste modo/tamanho ou desmarque o mapa.');
     try {
       const ticket = await obterMpTicket('create');
       const sala = await createRoom(mpNoAtual.http, {
