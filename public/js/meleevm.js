@@ -103,7 +103,7 @@ export class KnifeMeleeViewModel {
         ? object.material.map((material) => approvedGloveMaterial(material, this.profile))
         : approvedGloveMaterial(object.material, this.profile);
     });
-    if (this.knifeSkinId) applyWeaponSkinCandidate(scene, 'knife', this.knifeSkinId);
+    if (this.knifeSkinId) applyWeaponSkinCandidate(scene, 'knife', this.knifeSkinId, { knifeContext: 'knife-fp' });
     // A raiz recebe tracks do mixer (que restauraria a escala a cada frame):
     // o enquadramento vive no wrapper não animado, mãos e faca como unidade.
     const packageRoot = new THREE.Group();
