@@ -59,10 +59,10 @@ export const VM_WEAPON = {
   // <família>/<arma>-baked-runtime.glb; `runtime:'family'` usa <família>/<família>-runtime.glb.
   awp: W('sniper', { baked: true, frame: 'family' }),
   // AK = golden aprovada no quadril (rota gold#ak, eval:vm-launch VL7).
-  // ADS de foco deixa a cruz livre; alça/massa são medidas no Rifle_metarig (VM-FABRICA §8.3).
+  // ADS em linha: `linha:true` centra alça/massa (?ads1pfix=0 volta ao foco) — docs/visual-consistency/AK-ADS.md.
   ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } },
-    ads: { auto: true, off: [0, -0.10, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.35, estilo: 'foco',
-      golden: { osso: 'Rifle_metarig', alca: [-0.0064, 0.167, 0.0588], massa: [-0.0064, 0.507, 0.0546], cima: [0, 0, 1] } } }),
+    ads: { auto: true, off: [0, -0.10, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.35, estilo: 'foco', linha: true,
+      golden: { osso: 'Rifle_metarig', alca: [-0.0064, 0.167, 0.0603], massa: [-0.0064, 0.5128, 0.0577], cima: [0, 0, 1] } } }),
   // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
   // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   m4: W('ar', { baked: true, ads: { auto: true, off: [-0.0053, -0.0533, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),

@@ -487,3 +487,10 @@ MotionR5 devolvido: AKnovaL1v realmenteRED +7px nas2proporções, nãoUNKNOWN. S
 - Pickups/flash produto passou pelo crítico, quatro P2 dos instrumentos em correção GLM64461. Skins F1/F3/F4 em lease sequencial Game/main GLM23945; armas/ADS congelados. Faca marcas/layout ainda não corrigida nem aprovada.
 - Censo R3 fechou silêncio, mas crítico achou erro tardio depois da última evaluate escapando da coleta final: P2 aberto, não pronto. Cobertura histórica Piscina continua RED contra direção atual de mapa limpo; manter dado e definir contrato explícito antes de alterar entrada CI.
 - GitHub13:20: #1181 SHA03008374b CLEAN, CI verde, sem review atual Estraga-código. Não houve merge/release nosso; release segue alpha.130. #1158 excluído, rootclient e lanes alheias preservados.
+
+### Checkpoint AK e censo — 13:24 UTC
+
+- AK R11: crítico reproduziu mount finito mas socket z=0 gerando Infinity/NaN em projeção e falsa mordida; fechado exigindo projeções finitas antes do raster. Mesmo probe e NaN pós-update agora exit5 no checker/wrapper, baselineAK4aspectos preservada. Root confirmou baseline12/12, vertical3L1v com wideUNKNOWN legítimo, z0 eNaN5. ConfigR7 entra em checkpoint com consumer real, após aceite estático local; não alegar novo conserto do tiro nem pistolas visualmente alinhadas.
+- Censo R4: crítico final focal CLEAN, cinco controles incluindo erro/404 tardio durante leitura mapId e silêncio insuficiente com zero pendentes. Root repetiu Ego Piscina:52peças102/91011,2% RED contra piso59,2 antigo. Dados e META/TETO preservados. Novo contrato runtime derivado do pedido atual (limpo, único, branco/casaB) em escrita GLM92313, sem diminuir metas antigas.
+- Correção de evidência motion:803/634 são updates contados no vídeo, não todos verificados quanto à finitude. A instrumentação R2 verifica números apenas nas amostras ~20Hz (JSON), todas finitas. Critério de revisão contínua ainda em andamento; não anunciar finitude de cada quadro.
+- Grass close R1: primeira chamada excedeu15s do Ego enquanto carregava assets; não produziu fotos e não é aceite. Recuperar página e agendar boot assíncrono antes de repetir. Nenhum asset público trocado.
