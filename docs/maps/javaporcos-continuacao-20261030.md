@@ -958,3 +958,35 @@ ela foi preservada e npx astro build validou páginas sem remover a montagem.
 Nova MAPCHECK ampla Vila terreno corrigido ativa sessão22355, log
 /tmp/jav-map-vila-terreno-final.log, JSON futuro /tmp/jav-map-vila-terreno-final.json;
 wrapper restaura consolidado. Próximo: commit+push normal+READY+verificar servido.
+
+Milestone validado: MAPCHECK amplo Vila corrigida exit0(sessão22355), corpo0,
+submersos0 e4escadas no contrato. Relatórios persistidos em
+artifacts/javaporcos-feedback-20261031/mapcheck-distrito-rural-49eb66e58.json
+(12655B SHA2568d8b068842fa72fc1906da2842a81128b142bae52fb3f35a828d3bedf9b352f6)
+e mapcheck-vila-da-mata-dce8b50a2.json
+(13185B SHA256953a6657d64f1d23dd475dbf6297a10ed3b4478a29c8db93541b65219dab7032).
+Consolidado map_check.json preservado integralmente. Ambos amplos exit0;
+MAP5 ainda registra avisos de espaçamento/densidade nos terrenos abertos, sem
+alterar limiares; não é aceite visual ou de orçamento global. Novo HEADdce8b50a2,
+push em execução sessão73650/hook84283, /tmp/jav-push-terreno-final-20261031.log.
+
+ENTREGA PARA TESTE: pushdce8b50a2 aprovado396s/remoto SHA confirmado.
+Vercel Git não criou novo deploy automaticamente; preview-build41163863637
+verde e preview-deploy41164006709 verde (pipeline padrão). Para manter o alias
+habitual do projeto csbrasil, criado preview via conexão Git pelo MCP, do mesmo
+SHA dce8b50a2cb227ae31af33e65705459cd95b1009, semuploadlocal nemprodução.
+Deploy dpl_Be3p7qSESU5F2mLtUj7PvZLVYWMU READY:
+https://csbrasil-9ilpxlgox-rubenmarcus-projects.vercel.app
+Alias https://csbrasil-git-v2-invasao-javaporcos-rubenmarcus-projects.vercel.app
+Verificação autenticada via Vercel MCP:200 em maps.js deambos, conteúdoJS
+idêntico18617caracteres com3ids/helper; alias serve wrappersRural/Vila200,
+refúgios comcota3.55 e superfíciesescada200, terreno comPASSO200, /maps200
+comRural District/Forest Village. Nenhumsharetoken/credencial salvo noGit.
+Técnico pronto para teste do usuário; NÃO aceite visual/fps global ou MP real.
+Pendentes preservadas: recuperação do EgoTaskSpace16 aguarda resposta já pedida;
+semcriaroutro/tocarspacesalheios. Isso bloqueia inspeção/integração dos3pilotos
+Mint e capturas reais3:2 dosnovosmapas/mobileloading. Pilotos apenas solicitados,
+não baixados. Previews JPG novos ainda artecompartilhada temporária, semcapturas.
+Próximo: usuário testa o preview; com autorização de recuperação Ego, retomar
+Mint+QAvisual/orçamento dos3mapas; depoismultiplayer realE/B/J e restante do
+objetivo amplo no topo do ledger. Semmerge, semdeploybackend/producão.
