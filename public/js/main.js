@@ -1983,6 +1983,11 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // selecionar uma arma de teste cujo GLB não tinha entrado nesta partida reduzida.
   const _qaVmWeapon = testMode && WEAPON_IDS.includes(params.get('vmweapon')) ? params.get('vmweapon') : null;
   const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon])].filter(Boolean);
+  const _vmStartWeapon = _qaVmWeapon || (sessao
+    ? sessao.net.meta.roster.find((r) => r.id === sessao.net.yourEnt)?.weapon || charWeapon(charId)
+    : settings.wpnMode === 'awp' ? 'awp' : settings.wpnMode === 'knife' ? 'knife'
+      : settings.wpnMode === 'pistols' ? 'pistol' : charWeapon(charId));
+  const _vmBootWeapons = POINTER_COARSE ? [_vmStartWeapon] : _armasDaPartida;
   try {
     if (!navOnly) {
       await Promise.all([
@@ -1995,7 +2000,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         MOBILE_AUTO ? null : preloadAmbientLife(mapaPartida.ambience || []),
         mapaPartida.preload ? mapaPartida.preload() : null,
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
-        preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida, playerWeaponSkins)),
+        preloadAuthoredFamilies(authoredBootFamilies(_vmBootWeapons, playerWeaponSkins)),
       ]);
     }
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
@@ -5055,8 +5060,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
 }
 
 /* PRÓXIMO MAPA NO PLACAR: os mesmos carregadores essenciais do _startGame, em segundo
-   plano, com os ids anunciados pelo nó; o perfil móvel deixa fauna/viewmodels decorativos
-   no fallback. A tela de fim mostra nome e contagem; VOLTAR AO MENU segue ao lado. */
+   plano, com os ids anunciados pelo nó; o perfil móvel adia fauna e armas não equipadas. A tela de fim mostra nome e contagem; VOLTAR AO MENU segue ao lado. */
 let mpContagemProximo = null;
 function mpPararContagemProximo() {
   clearInterval(mpContagemProximo); mpContagemProximo = null;
@@ -5083,7 +5087,7 @@ function mpPreCarregarProximo(m) {
     mapaReady.then((mapa) => preloadMapProps([...MAP_PROPS, ...(mapa.props || [])])),
     MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadAmbientLife(mapa.ambience || [])),
     mapaReady.then((mapa) => mapa.preload ? mapa.preload() : null),
-    preloadAuthoredFamilies(authoredBootFamilies(armas)),
+    preloadAuthoredFamilies(authoredBootFamilies(POINTER_COARSE ? [charWeapon(currentChar)] : armas)),
   ]).catch((e) => console.warn('[mp] pré-carga do próximo mapa falhou (a virada carrega):', e && e.message));
 }
 

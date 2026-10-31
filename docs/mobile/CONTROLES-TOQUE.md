@@ -67,3 +67,11 @@ não há cópia de modelos privados no Git. Esses dois testes rodam no portão d
 TQ9 cobre a troca de rodada local e online com o jogador ainda vivo: comandos da
 rodada encerrada são cancelados antes de começar a próxima. Os mutantes `round-sp-preso`
 e `round-mp-preso` removem cada limpeza separadamente.
+
+No mobile o boot espera só a arma inicialmente equipada e os recursos compartilhados,
+incluindo a granada; os demais viewmodels entram no primeiro uso. O mesmo limite vale
+na pré-carga do próximo mapa. A régua de catálogo registra chaves e requisições antes
+de trocar de arma: só aceita a entrada equipada, utilitários e bytes previstos no
+manifesto. `boot-catalogo` restaura a carga do elenco inteiro e precisa reprovar esse
+orçamento, mantendo a montagem e as mãos corretas. A varredura seguinte das armas
+continua exigindo mãos e cano corretos quando cada modelo chega sob demanda.

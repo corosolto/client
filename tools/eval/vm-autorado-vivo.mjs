@@ -20,6 +20,7 @@
  *   --mutante=semfiacao   serve o game.js sem o `authored?.setWeapon` → 0 armas
  *   --mutante=maos-ocultas   oculta as mãos reais
  *   --mutante=cano-lateral  desloca só a origem do traçante, mantendo o modelo
+ *   --mutante=boot-catalogo  volta a bloquear o mobile com modelos não equipados
  *
  *   node tools/eval/vm-autorado-vivo.mjs --porta=4361
  *   node tools/eval/vm-autorado-vivo.mjs --porta=4361 --todas   # as 25 armas de fogo
@@ -36,7 +37,7 @@ const arg = (n, d) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `=${
   .split('=').slice(1).join('=');
 const PORTA = arg('porta', '4361');
 const MUTANTE = arg('mutante', '');
-if (MUTANTE && !['semfiacao', 'maos-ocultas', 'cano-lateral'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
+if (MUTANTE && !['semfiacao', 'maos-ocultas', 'cano-lateral', 'boot-catalogo'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 const SO = arg('armas', '').split(',').filter(Boolean);
 const TODAS = process.argv.includes('--todas');
 const SEM_FLAGS = process.argv.includes('--sem-flags');
@@ -55,6 +56,26 @@ console.log('VMH: navegador aberto');
 const pag = await nav.newPage({ viewport: MOBILE ? { width: 844, height: 390 } : { width: 1440, height: 960 },
   ...(MOBILE ? { isMobile: true, hasTouch: true } : {}) });
 await installViewmodelAssets(pag);
+const bootPaths = new Set();
+pag.on('request', (r) => {
+  const path = new URL(r.url()).pathname;
+  if (path.startsWith('/private-assets/viewmodels/')) bootPaths.add(path);
+});
+if (MOBILE && SEM_FLAGS) await pag.route('**/js/main.js*', async (route) => {
+  const res = await route.fetch();
+  const before = await res.text();
+  let source = before.replace(
+    "import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';",
+    "import { preloadAuthoredFamilies as preloadVmReal, authoredBootFamilies } from './authoredvm.js'; const preloadAuthoredFamilies = (keys) => { (globalThis.__vmBootKeys ||= []).push([...keys]); return preloadVmReal(keys); };");
+  if (source === before) throw new Error('instrumentação do boot não aplicou');
+  if (MUTANTE === 'boot-catalogo') {
+    const mutated = source.replace('authoredBootFamilies(_vmBootWeapons, playerWeaponSkins)', 'authoredBootFamilies(_armasDaPartida, playerWeaponSkins)');
+    if (mutated === source) throw new Error('boot-catalogo não aplicou');
+    source = mutated;
+  }
+  await route.fulfill({ response: res, body: source });
+});
+
 await pag.route(/\.astro\/eval-vite|dev-toolbar|@vite\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: 'export default {};export const createHotContext=()=>({accept(){},dispose(){},prune(){},on(){},off(){},send(){},invalidate(){},data:{}});export const updateStyle=()=>{};export const removeStyle=()=>{};export const injectQuery=u=>u;export class ErrorOverlay{}' }));
 const erros = [];
 pag.on('pageerror', (e) => { const text = String(e).split('\n')[0].slice(0, 140); erros.push(text); console.error(text); });
@@ -106,6 +127,21 @@ if (!ALVO.length) {
   await nav.close();
   console.log('\n  VERMELHO — nenhuma arma pronta no vmconfig\n');
   process.exit(1);
+}
+
+let bootOk = true;
+if (MOBILE && SEM_FLAGS) {
+  const boot = await pag.evaluate(async () => { const weapon = window.__game.player.weapon; return { keys: globalThis.__vmBootKeys?.[0], weapon, source: (await import('/js/authoredvm.js')).vmFonteDe(weapon) }; });
+  const manifest = JSON.parse(fs.readFileSync('tools/viewmodels/vm-assets.manifest.json'));
+  const root = manifest.servedRoot + '/';
+  const allowed = new Map(manifest.files.filter((f) => /^(?:shared\/|melee\/|grenade\/|recoil\.json$)/.test(f.path) || root + f.path === new URL(boot.source.url, BASE).pathname)
+    .map((f) => [root + f.path, f.bytes]));
+  const unrelated = [...bootPaths].filter((p) => !allowed.has(p));
+  const bytes = [...bootPaths].reduce((sum, p) => sum + (manifest.files.find((f) => root + f.path === p)?.bytes || 0), 0);
+  const budget = [...allowed.values()].reduce((a, b) => a + b, 0);
+  bootOk = boot.keys?.length === 2 && boot.keys.includes(boot.source.chave)
+    && boot.keys.includes('grenade') && !unrelated.length && bytes > 0 && bytes <= budget;
+  console.log(`VMH boot mobile: ${JSON.stringify({ ...boot, bytes, budget, unrelated, ok: bootOk })}`);
 }
 
 const linhas = [];
@@ -213,9 +249,9 @@ console.log(`\n  ${bons}/${ALVO.length} armas montam o viewmodel autorado COM m�
 if (legado.length) console.log(`  caíram no legado: ${legado.join(' ')}`);
 if (semMao.length) console.log(`  autoradas mas SEM mão: ${semMao.join(' ')}`);
 if (erros.length) console.log(`  erros de página: ${[...new Set(erros)].slice(0, 3).join(' | ')}`);
-const ok = MUTANTE ? bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave
+const ok = MUTANTE === 'boot-catalogo' ? !bootOk && bons === ALVO.length : MUTANTE ? bootOk && bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave
   : MUTANTE === 'cano-lateral' ? l.visiveis > 0 && l.emQuadro && l.canoEmQuadro && l.autorada && !l.fallback && l.mobile === MOBILE && Number.isFinite(l.rastroPx) && l.rastroPx > 1
-  : !l.visiveis) : bons === ALVO.length;
+  : !l.visiveis) : bootOk && bons === ALVO.length;
 if (MUTANTE) console.log(`  mutante ${MUTANTE}: ${ok ? 'detectado' : 'sobreviveu ou falhou por outro motivo'}`);
 console.log(ok ? (MUTANTE ? '\n  VERDE — regressão provocada detectada\n' : '\n  VERDE — o caminho autorado está ligado\n')
                : '\n  VERMELHO — o jogo não está montando o viewmodel novo\n');
