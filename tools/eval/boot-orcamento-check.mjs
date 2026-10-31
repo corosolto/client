@@ -112,12 +112,15 @@ const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
+/* SwiftShader forçado no M4 consumia o mesmo CPU da aplicação: 88–150 s até o portão
+   e quedas no failsafe. Com o backend padrão do Chrome: 1,6–1,8 s. No runner Linux
+   sem GPU, mantém o software GL explícito. */
+const softwareGLArgs = process.platform === 'darwin'
+  ? []
+  : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  args: [
-    ...(process.platform === 'darwin' ? [] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']),
-    '--headless=new', '--mute-audio', '--disable-dev-shm-usage',
-  ],
+  args: [...softwareGLArgs, '--headless=new', '--mute-audio', '--disable-dev-shm-usage'],
 });
 
 /* `refPoolAnsioso` liga a referência do ORC2; o mutante `cartaz-ansioso` liga a MESMA
@@ -178,11 +181,23 @@ async function mede({ refPoolAnsioso = false } = {}) {
   });
   const portao = await page.waitForFunction(() => window.__csPortao, null, { timeout: 180000, polling: 100 })
     .then((h) => h.jsonValue()).catch(() => null);
-  if (portao === null) throw new Error('a splash não liberou a entrada em 180 s');
+  if (portao === null) {
+    const estado = await page.evaluate(() => {
+      const splash = document.getElementById('splash-enter');
+      return {
+        readyState: document.readyState,
+        splash: splash?.className || null,
+        href: location.href,
+      };
+    }).catch(() => null);
+    const pendentes = [...reqs.values()]
+      .filter((r) => r.fim === null)
+      .slice(-8)
+      .map((r) => r.url);
+    throw new Error(`a splash não liberou a entrada em 180 s; estado=${JSON.stringify(estado)}; pendentes=${pendentes.join(', ') || 'nenhum'}; erros=${erros.join(' | ') || 'nenhum'}`);
+  }
   const causa = await page.evaluate(() => window.__csSplashCause || null);
-  /* A causa marcada no main.js servido distingue assets do failsafe,
-     sem inferir pelo tempo absoluto de CPU, GPU ou CDP. */
-  if (causa !== 'assets') throw new Error(`a splash liberou em ${Math.round(portao)} ms por ${causa || 'causa desconhecida'}, não pelo caminho dos assets`);
+  // A comparação só vale quando candidato e referência completam os assets.
   const ate = [...reqs.values()].filter((r) => r.fim !== null && r.fim <= portao + 50);
   const patchado = (u) => JS_LOCAIS.some((p) => u.includes(p));
   const resultado = {
@@ -216,6 +231,7 @@ try {
 
   console.log(`base      ${BASE}${MUTANTE ? `  (mutante=${MUTANTE})` : ''}`);
   console.log(`portão    splash liberou em ${Math.round(cand.portao)} ms por ${cand.causa}`);
+  console.log(`READY     caminho dos assets  ${ok.READY ? 'ok' : 'FALHA'}`);
   console.log(`ORC1      ${(cand.bytes / 1048576).toFixed(2)} MB em ${cand.reqs} req  (teto ${(TETO_BYTES / 1048576).toFixed(2)} MB / ${TETO_REQS} req)  ${ok.ORC1 ? 'ok' : 'FALHA'}`);
   console.log(`ORC2      ${cand.cartazes} cartaz(es) sob demanda vs ${ref.cartazes} com o pool ansioso  ${ok.ORC2 ? 'ok' : 'FALHA'}`);
   console.log(`ORC3      último prop em ${cand.ultimoProp} ms, 1ª fauna pedida em ${Number.isFinite(cand.primeiraFauna) ? cand.primeiraFauna : '—'} ms  ${ok.ORC3 ? 'ok' : 'FALHA'}`);
