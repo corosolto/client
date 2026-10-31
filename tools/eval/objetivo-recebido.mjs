@@ -24,3 +24,13 @@ export function objetivoConsumido(evidence, snap) {
     && JSON.stringify(evidence.recebido) === JSON.stringify(received)
     && ['wave', 'clock', 'dominio', 'kills'].every(key => applied[key] === received[key]);
 }
+
+export function capturarObjetivoAtual() {
+  const net = window.__game._mp.net;
+  return {
+    protocolo: net.ws?.protocol || '', snapshotHz: net.stats?.hz | 0,
+    payloadPresente: !!net.snap?.objective,
+    snap: net.snap ? { tick: net.snap.tick, objective: net.snap.objective } : null,
+    consumo: globalThis.__objetivoRecebido || null,
+  };
+}

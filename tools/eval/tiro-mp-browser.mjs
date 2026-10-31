@@ -50,7 +50,7 @@
 import { spawn, spawnSync, execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { instrumentarObjetivo, objetivoConsumido } from './objetivo-recebido.mjs';
+import { instrumentarObjetivo, objetivoConsumido, capturarObjetivoAtual } from './objetivo-recebido.mjs';
 
 const args = process.argv.slice(2);
 const val = (k, d) => { const v = (args.find((a) => a.startsWith(`--${k}=`)) || '').split('=')[1]; return v === undefined ? d : v; };
@@ -71,7 +71,7 @@ const NO_QUERY = NO === 'localhost:8787' ? '1' : NO;
 const BASE = `http://localhost:${PORTA}`;
 const MAIN_LOCAL = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
 
-const MUTANTES = new Set(['', 'sem-desenho', 'cone-local']);
+const MUTANTES = new Set(['', 'sem-desenho', 'cone-local', 'sem-objetivo']);
 if (!MUTANTES.has(MUTANTE)) { console.error(`✗ TB0  mutante desconhecido: ${MUTANTE}`); process.exit(1); }
 
 let ok = 0, falhas = 0;
@@ -273,16 +273,13 @@ try {
   if (OBJETIVO) {
     await page.waitForFunction(() => (window.__game?._mp?.net?.stats?.hz || 0) > 0,
       null, { timeout: 15_000, polling: 250 }).catch(() => {});
-    const estadoObjetivo = await page.evaluate(() => {
-      const g = window.__game;
-      return {
-        protocolo: g._mp.net.ws?.protocol || '',
-        snapshotHz: g._mp.net.stats?.hz | 0,
-        payloadPresente: !!g._mp.net.snap?.objective,
-        snap: globalThis.__objetivoRecebido?.snapshot || null,
-        consumo: globalThis.__objetivoRecebido || null,
-      };
-    });
+    let estadoObjetivo;
+    const limiteObjetivo = Date.now() + 15_000;
+    do {
+      estadoObjetivo = await page.evaluate(capturarObjetivoAtual);
+      if (objetivoConsumido(estadoObjetivo.consumo, estadoObjetivo.snap)) break;
+      await new Promise(resolve => setTimeout(resolve, 250));
+    } while (Date.now() < limiteObjetivo);
     cobra(estadoObjetivo.protocolo === 'coro-snapshot-v7',
       `OBJ1 · o navegador negociou snapshots com objetivo (${estadoObjetivo.protocolo || 'nenhum'})`);
     cobra(estadoObjetivo.snapshotHz > 0,

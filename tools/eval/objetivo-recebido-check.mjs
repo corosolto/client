@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { instrumentarObjetivo, objetivoConsumido } from './objetivo-recebido.mjs';
+import { instrumentarObjetivo, objetivoConsumido, capturarObjetivoAtual } from './objetivo-recebido.mjs';
 
 const source = fs.readFileSync(new URL('../../public/js/netgame.js', import.meta.url), 'utf8');
 for (const omitir of [false, true]) {
@@ -18,7 +18,15 @@ for (const omitir of [false, true]) {
   assert.equal(calls, omitir ? 0 : 1);
   assert.equal(objetivoConsumido(context.__objetivoRecebido, net.snap), !omitir,
     'OBJ3 confundiu estado local pré-existente com consumo de snapshot');
-  if (!omitir) assert.equal(objetivoConsumido(context.__objetivoRecebido, { ...net.snap, tick: 8 }), false);
+  if (!omitir) {
+    const consumo = context.__objetivoRecebido;
+    const stale = vm.runInNewContext(`(${capturarObjetivoAtual.toString()})()`, {
+      window: { __game: { _mp: { net: { snap: { ...net.snap, tick: 8 } } } } },
+      __objetivoRecebido: consumo,
+    });
+    assert.equal(stale.snap.tick, 8);
+    assert.equal(objetivoConsumido(stale.consumo, stale.snap), false);
+  }
   assert.equal(objetivoConsumido({ tick: 1, recebido: {}, aplicado: {} }, { tick: 1, objective: {} }), false);
 }
 console.log('OBJ3 verde: consumo real, tick atual e omissão detectados');
