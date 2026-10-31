@@ -34,7 +34,36 @@ function arte(img, fontes) {
 const artePersonagem = (img, id) => arte(img, id
   ? [`/img/chars-hero/${id}.webp`, `/img/chars/${id}.webp`, `/img/chars/avatars/${id}.webp`]
   : []);
-const arteJogador = (img, pid) => arte(img, PLAYER_ID.test(pid || '') ? [`/api/social-avatar?id=${pid}`] : []);
+const avatarCache = new Map();
+const comoDataUrl = (blob) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(String(reader.result));
+  reader.onerror = () => reject(reader.error || new Error('avatar inválido'));
+  reader.readAsDataURL(blob);
+});
+function avatarUrl(pid) {
+  if (!PLAYER_ID.test(pid || '')) return Promise.resolve(VAZIO);
+  const acerto = avatarCache.get(pid);
+  if (acerto) return acerto;
+  const pendente = fetch(`/api/social-avatar?id=${encodeURIComponent(pid)}`, { credentials: 'same-origin' })
+    .then((res) => {
+      if (!res.ok) throw new Error(`http ${res.status}`);
+      return res.blob();
+    })
+    .then(comoDataUrl)
+    .catch(() => { avatarCache.delete(pid); return VAZIO; });
+  avatarCache.set(pid, pendente);
+  return pendente;
+}
+function arteJogador(img, pid) {
+  const token = String((Number(img.dataset.arteToken) || 0) + 1);
+  img.dataset.arteToken = token;
+  img.onerror = null;
+  img.src = VAZIO;
+  avatarUrl(pid).then((src) => {
+    if (img.dataset.arteToken === token) img.src = src;
+  });
+}
 const livre = (t) => !(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || t.closest?.('[data-entrada-propria]')));
 
 let jogo = null;
