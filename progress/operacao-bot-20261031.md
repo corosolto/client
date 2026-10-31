@@ -1,0 +1,5 @@
+# Continuação — PR1134
+
+Objetivo: concluir o reparo de retriagem/bootstrap com GLM via OMP e crítico independente, sem dispatch ou reativação do bot. Integra a operação Flávio/47PRs/HQ/anúncios/pilotos; Javaporcos é outra lane e permanece intocado. Pronto exige correção, provas offline, crítico e CI; não autoriza merge remoto ou publicação.
+
+2026-10-31T14:23:39.385958+00:00 — Branch fix/bot-fixable-criterio, origem66f0e0ba6c94d7d8a5e035f96360a7e43bbbe7dc. Main local fixada00e746b5ad91526d498060c07811c5e36e58cf31 integrada sem conflitos;94arquivos vindos da main, três blobs originais do reparo preservados. Selftests issue_review.py e issue_sweep.py exit0. actionlint detecta SC2251 preexistente em ci.yml:163; não declarar lint completo verde. Recibos HQruntime/bot1134-{local-main-merge176,gates-before176}.json. Crítico e52 confirma correção sequencial e encontra P2 preexistente de dois eventos simultâneos consultarem zeroPRs antes de force-push. Próximo GLM176: serialização por repo/issue, sem cancelar execução ativa e push normal, seguida de provas offline do bloco real e revisão. Nenhum evento/ghissuecomment/PRcriado/workflow executado.
