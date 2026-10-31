@@ -764,8 +764,8 @@ function dismissSplash(e) {
   const entrarNoLobby = () => {
     if (lobbyMarcado) return; lobbyMarcado = true;
     marcoFunil('splash_enter');   // funil (084): o lobby ficou visível de verdade
-    _lobbyEntrou();               // e o relógio de permanência no lobby começa aqui
-    setTimeout(focusMenu, 120);   // pós-splash: dá foco ao 1º botão pra ↑/↓ navegarem SEM precisar de Tab
+    _lobbyEntrou();
+    setTimeout(focusMenu, 120);
   };
   const soltaSplash = () => {   // splash some SÓ com anúncio aberto de verdade ou lobby liberado — nunca no limbo
     sp.classList.add('gone');
@@ -779,8 +779,8 @@ function dismissSplash(e) {
       .then((m) => {
         if (prazo) { clearTimeout(prazo); prazo = null; }
         if (lobbyMarcado) { soltaSplash(); return; }   // timeout/jogo já mudaram de fase: anúncio tardio não abre
-        if (m.mostrarNovidadesModos({ mapIds: menuIds, onDone: entrarNoLobby })) soltaSplash(); // modal aberto de verdade: splash sai agora, lobby só no onDone
-        else { soltaSplash(); entrarNoLobby(); }   // sem UI: onDone já rodou no módulo; a guarda evita 2ª marcação
+        if (m.mostrarNovidadesModos({ mapIds: menuIds, onDone: entrarNoLobby })) soltaSplash();
+        else { soltaSplash(); entrarNoLobby(); }
       })
       .catch(() => { if (prazo) { clearTimeout(prazo); prazo = null; } soltaSplash(); entrarNoLobby(); });   // módulo falhou: lobby liberado como no fluxo atual, splash nunca presa
   }
