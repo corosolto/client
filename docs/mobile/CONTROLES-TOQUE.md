@@ -38,8 +38,8 @@ fator de luneta valem igual nos dois.
 ## Régua
 
 `npm run eval:toquecontroles` roda a base e os mutantes de arte, sensibilidade, arrasto,
-joystick que atira, foco preso, dedo alheio e câmera morta, cada um acendendo exatamente
-uma cláusula. Ela sobe o próprio servidor quando
+joystick que atira, foco preso, dedo alheio, câmera morta e entrada presa em morte/respawn
+online, acendendo exatamente as cláusulas afetadas. Ela sobe o próprio servidor quando
 `BASE` não é passado e mede toque de verdade, não a leitura do fonte.
 
 Relato de 31/10/2026: o centro do joystick gastava uma bala sem ATIRA (pistola12→11,
@@ -48,6 +48,10 @@ botão do Game, decorado pelo Treta Pop, com um único dono por identificador; a
 continua mirando. Soltar, cancelar, perder foco, ocultar a página, pausar, abrir chat,
 morrer ou sair da partida limpa a entrada. PING no toque foi substituído pelo ícone de
 câmera, que chama a mesma alternância primeira→terceira→ombro da tecla B.
+A morte e o respawn online vêm dos snapshots, sem passar por `_kill` local: os dois
+ganchos do netcode limpam também os identificadores dos dedos. A cláusula TQ7 aplica
+snapshots reais com ATIRA e joystick pressionados, exige inatividade dos dedos antigos
+e funcionamento de um novo toque, incluindo toques iniciados enquanto morto.
 
 O perfil móvel mantém DPR, textura, efeitos e sombras reduzidos, mas usa os mesmos
 viewmodels autorados com mãos do desktop. `eval:vm-maos-mobile-desktop` percorre o catálogo

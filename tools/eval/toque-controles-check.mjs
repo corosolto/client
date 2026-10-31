@@ -23,13 +23,16 @@
      TQ4  o caminho novo preserva inversão de eixo e o teto de pitch.
      TQ5  joystick não atira; gatilho tem dono e solta em cancelamento, blur e pausa.
      TQ6  o botão de câmera percorre as três vistas sem atirar.
+     TQ7  snapshots de morte/respawn limpam os dedos e exigem um novo gatilho.
 
    MUTANTES (reescrevem o arquivo SERVIDO, o disco não é tocado):
      --mutante=glifo-cru     volta o slot para SVG                  -> TQ1
      --mutante=mira-lenta    devolve 0,0024 rad/px                  -> TQ2
      --mutante=gatilho-mudo  tira o arrasto do gatilho              -> TQ3
-     --mutante=joystick-atira, foco-preso, dedo-alheio              -> TQ5
+     --mutante=joystick-atira, foco-preso                          -> TQ5
+     --mutante=dedo-alheio                                        -> TQ5 e TQ7
      --mutante=camera-morta  desliga a alternância de câmera       -> TQ6
+     --mutante=morte-mp-presa, respawn-mp-preso                    -> TQ7
 
    Uso: BASE=http://127.0.0.1:9321 node tools/eval/toque-controles-check.mjs
    ============================================================================ */
@@ -41,7 +44,7 @@ const PORTA = process.env.PORTA || '9322';
 const BASE = BASE_EXTERNA || `http://127.0.0.1:${PORTA}`;
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const ESPERADO = { 'glifo-cru': 'TQ1', 'mira-lenta': 'TQ2', 'gatilho-mudo': 'TQ3',
-  'joystick-atira': 'TQ5', 'foco-preso': 'TQ5', 'dedo-alheio': 'TQ5', 'camera-morta': 'TQ6' };
+  'joystick-atira': 'TQ5', 'foco-preso': 'TQ5', 'dedo-alheio': ['TQ5', 'TQ7'], 'camera-morta': 'TQ6', 'morte-mp-presa': 'TQ7', 'respawn-mp-preso': 'TQ7' };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
 const PARTIDA = 'ui=v3&debug=1&auto=E,esquerdomacho&map=praca_poderes&lang=pt';
@@ -107,6 +110,12 @@ async function abrir() {
   }
   if (MUT === 'camera-morta') {
     await reescreve(/\/js\/tp\/hud\.js/, (t) => t.replace('(g) => g._toggleCamView()', '(g) => void g'));
+  }
+  if (MUT === 'morte-mp-presa' || MUT === 'respawn-mp-preso') {
+    const metodo = MUT === 'morte-mp-presa' ? 'playerDied(e, snap)' : 'playerRespawned()';
+    await reescreve(/\/js\/netgame\.js/, (t) => t.replace(
+      `${metodo} {\n    const game = this.game;\n    game._releaseInput?.();`,
+      `${metodo} {\n    const game = this.game;`));
   }
   await page.goto(`${BASE}/?${PARTIDA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
@@ -230,12 +239,67 @@ const medido = await page.evaluate(async () => {
   }
   const cameraSemTiro = !g.mouseDown0;
 
+  // TQ7 usa o consumidor real do snapshot, inclusive o retorno antecipado da killcam.
+  const { makeNetcode } = await import('/js/netgame.js');
+  const net = { yourEnt: 7, meta: { events: true }, startPing() {}, stopPing() {} };
+  const nc = makeNetcode(g, net);
+  nc._netMap.set(7, g.player);
+  let tick = 0;
+  const snapshot = (alive) => {
+    net.snap = { tick: ++tick, t: tick / 20, state: 'live', ents: [{ id: 7, alive,
+      hp: alive ? 100 : 0, x: g.player.pos.x, y: g.player.pos.y, z: g.player.pos.z,
+      killedBy: 'TQ7', respawnIn: alive ? 0 : 1 }] };
+    nc.applySnapshot();
+  };
+  const semEntrada = () => !g.mouseDown0 && !Object.values(g.keys).some(Boolean)
+    && g.touchMove.x === 0 && g.touchMove.z === 0 && g.touchLook.x === 0 && g.touchLook.y === 0;
+  const mp = {};
+  try {
+    snapshot(true);
+    toque('.tp-toque-atira', 'touchstart', ...gatilho, 40);
+    toque('.touch-joy-l', 'touchstart', ...joy, 41);
+    toque('.touch-joy-l', 'touchmove', joy[0], joy[1] - 45, 41);
+    toque('.touch-look', 'touchstart', 600, 160, 42);
+    g.keys.KeyW = true;
+    mp.antesDaMorte = g.mouseDown0 && Math.abs(g.touchMove.z) > 0 && g.keys.KeyW;
+    g._lastHit = { name: 'TQ7', at: g.time };
+    snapshot(false);
+    mp.morteLimpou = semEntrada();
+    snapshot(true);
+    const yaw = g.player.yaw;
+    toque('.tp-toque-atira', 'touchmove', gatilho[0] - 15, gatilho[1], 40);
+    toque('.touch-joy-l', 'touchmove', joy[0], joy[1] - 45, 41);
+    toque('.touch-look', 'touchmove', 580, 160, 42);
+    mp.dedosAntigosInativos = semEntrada() && g.player.yaw === yaw;
+    toque('.tp-toque-atira', 'touchstart', ...gatilho, 43);
+    toque('.touch-joy-l', 'touchstart', ...joy, 44);
+    toque('.touch-joy-l', 'touchmove', joy[0], joy[1] - 45, 44);
+    soltar('.tp-toque-atira', ...gatilho, 40);
+    soltar('.touch-joy-l', ...joy, 41);
+    mp.novosDedosFuncionam = g.mouseDown0 && Math.abs(g.touchMove.z) > 0;
+    soltar('.tp-toque-atira', ...gatilho, 43);
+    soltar('.touch-joy-l', ...joy, 44);
+    snapshot(false);
+    toque('.tp-toque-atira', 'touchstart', ...gatilho, 45);
+    toque('.touch-joy-l', 'touchstart', ...joy, 46);
+    toque('.touch-joy-l', 'touchmove', joy[0], joy[1] - 45, 46);
+    snapshot(true);
+    mp.respawnLimpou = semEntrada();
+    toque('.tp-toque-atira', 'touchmove', gatilho[0] - 15, gatilho[1], 45);
+    toque('.touch-joy-l', 'touchmove', joy[0], joy[1] - 45, 46);
+    mp.toquesDaMorteInativos = semEntrada();
+    toque('.tp-toque-atira', 'touchstart', ...gatilho, 47);
+    mp.novoGatilhoPosRespawn = g.mouseDown0;
+  } finally {
+    nc.dispose(); g._releaseInput();
+  }
+
   return {
     antesTroca, depoisTroca, imagensOk,
     giro300, grau300: giro300 * 180 / Math.PI, pxMeiaVolta: Math.PI / (giro300 / 300), giroMetade,
     giroNoGatilho, atirandoDurante, soltouGatilho,
     pitchNormal, pitchInvertido, pitchTeto,
-    movimentoAtirou, donoMantido, cancelou, perdeuFoco, pausou, cameras, cameraSemTiro,
+    movimentoAtirou, donoMantido, cancelou, perdeuFoco, pausou, cameras, cameraSemTiro, mp,
   };
 });
 await fechar();
@@ -264,13 +328,16 @@ cobra('TQ5', !medido.movimentoAtirou && medido.donoMantido && medido.cancelou &&
 cobra('TQ6', medido.cameras.join(',') === 'third,shoulder,first' && medido.cameraSemTiro,
   `TQ6 · câmera ${medido.cameras.join(' → ')}, sem disparo ${medido.cameraSemTiro}`);
 
+cobra('TQ7', Object.values(medido.mp).every(Boolean), `TQ7 · snapshots MP ${JSON.stringify(medido.mp)}`);
+
 for (const c of r) console.log(`  ${c.ok ? 'ok  ' : 'FALHA'} ${c.msg}`);
 const falhou = r.filter((c) => !c.ok).map((c) => c.id);
 await browser.close();
 servidor?.kill();
 
 if (MUT) {
-  const morde = falhou.length === 1 && falhou[0] === ESPERADO[MUT];
+  const esperadas = [ESPERADO[MUT]].flat();
+  const morde = falhou.length === esperadas.length && esperadas.every((id) => falhou.includes(id));
   console.log(morde ? `\nmutante ${MUT} reprovado como devia (${ESPERADO[MUT]})` : `\nMUTAÇÃO PASSOU — ${MUT} não acendeu ${ESPERADO[MUT]} (falhas: ${falhou.join(', ') || 'nenhuma'})`);
   process.exit(morde ? 0 : 1);
 }

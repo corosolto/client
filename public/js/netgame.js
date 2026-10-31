@@ -766,6 +766,7 @@ class Netcode {
      FEEDBACK; posição, vida e instante do respawn continuam vindo do servidor. */
   playerDied(e, snap) {
     const game = this.game;
+    game._releaseInput?.();
     game._resetKillSequence();
     try { game._scope(false, true); } catch { /* sem luneta */ }
     if (game.el.respawn) game.el.respawn.classList.remove('hidden');
@@ -785,6 +786,7 @@ class Netcode {
   }
   playerRespawned() {
     const game = this.game;
+    game._releaseInput?.();
     // o corpo TP do jogador: no online o respawn NÃO passa pelo _respawnPlayer, e sem este
     // reset o corpo ficava deitado pra sempre, arrastado pelo mundo (BUG-86).
     try { game._tpRevive(); } catch { /* corpo ainda não construído */ }
