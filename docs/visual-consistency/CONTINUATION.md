@@ -871,3 +871,12 @@ QA prova pública agora executa gate de identidade real antes do self-test de tr
 
 
 QA R6 provaidentidade+wiring4/4GREEN17s, docs0alterações, críticoindependente5f100783CLEAN. Contraprova privada aliasoff fazgate/alias/runnerRED1 eimpedesegundocomando; públicossemprivados, browser14separado. Gate helper compatNode22 emverificação. Boot/R11janela/bodyruntimeaindapendente; Egoquery3minsemmesmoexecutarJS e inspeçãonativa29stimeout confirmamhostindisponível, nãoQAvisualaprovado.
+
+
+## 17:20 UTC — normais mescladas e curadoria atual comprovada no runtime CI
+
+PR#1184 HEAD72e80d366874445184173995d11f2c4689dc72c0 recebeu Estraga real17:11 limpo, zero threads e checks completos verdes; merge normal com match-head17:19:14, commit8f1c04a188fac1b1dff1633e57a67b90828da838. Ainda não é novo release. PR#1181 nova review real17:09 apontou P2 válido statusnull/signalnull/ENOBUFS na sonda; reparoGLM isolado em curso no WTconsistencia-review-1167, original1167 intocado.
+
+Curadoriaidentidade R6 terminou exit0:71medições/14nominais458peças incluindoartesmanuais, controlescausais e draw-groupsGREEN, log audits/2026-10-31-visual-consistency/curation-identity-CI-R6.log. Layoutbake437peças fp161c4394b4a2247a, demaisartesruntimepreservadas. Fontecríticaalias2dbe676e/adapteree0ec016/fixture20d25bc6/wiringca30538c+5f100783. Aliasatual Egovisualpendente; segundo bakefísicoR2interrompido semaceite.
+
+BootR15 nominal7,077,423B/318requests/227corposSHA e mutantes foram DIAGNÓSTICOS: crítica390348cd confirmou2P2 relógiosincompatíveis e freezeantescutoff,38controles próprios. R16 privado usaepochCDPwallTime/timeOrigin, espera fimjanela, conjuntonovo declones/barreira; obrigatório repetirnominal/ref+2mutantes e crítica independente antespromover. Tetos8.2MB/340 e3isençõeshistóricas intactos. EgoLite globalindisponível, tentativasprópriasinterrompidas semmexeroutrosowners; AKbrowserR2INVÁLIDO, semaprovaçãode30tiros. Missãointegralaté18:45UTCcontinua.
