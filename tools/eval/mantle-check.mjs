@@ -59,17 +59,60 @@
                                   depende mais de rampa nenhuma para ser reversível.
    ============================================================================ */
 import path from 'node:path';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, writeSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { THREE, MAPS, initTextures, bootGame } from './harness.mjs';
+/* Alias legítimo sai do registro dono (maps.js:ALIAS_MAPA), nunca de cópia aqui. */
+const { ALIAS_MAPA } = await import('../../public/js/maps.js');
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ONLY = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : 'all';
-const JSON_OUT = process.argv.includes('--json');
-const MUT_CANAL = process.argv.includes('--mutante=canal-fechado');
-const MUT_BAIXA = process.argv.includes('--mutante=beirada-baixa');
-const MUT_ALTA = process.argv.includes('--mutante=beirada-alta');
-const DETALHE = process.argv.includes('--detalhe');
+
+
+/* Prova terminal para o driver estrito: UMA linha JSON em fd2 com marca única, emitida
+   só DEPOIS das medições reais — BASE na baseline, EVID/POST só com mutante aplicado. */
+const EVID_MARCA = '__MANTLE_MUT_EVIDENCE__';
+const POST_MARCA = '__MANTLE_MUT_POST__';
+const BASE_MARCA = '__MANTLE_MUT_BASE__';
+const provas = [];
+function evidencia(mapId, extra) {
+  provas.push(mapId);
+  writeSync(2, EVID_MARCA + JSON.stringify({ tool: 'mantle-check', map: mapId, mutant: mutanteAtivo, ...extra }) + '\n');
+}
+function infra(msg) {
+  console.error('INFRA (exit 2): ' + msg);
+  process.exit(2);
+}
+
+/* CLI estrita: argv.slice(2) INTEIRO validado aqui, antes de boot/texture; desvio é infra 2. */
+/* Só 0/1 posicional de mapa + --json/--detalhe (1x cada) + --mutante=<válido> (1x), ordem livre. */
+const argv = process.argv.slice(2);
+const MUT_VALIDOS = ['canal-fechado', 'beirada-baixa', 'beirada-alta'];
+const vistos = { '--json': 0, '--detalhe': 0 };
+let ONLY = 'all', mutanteArg = null, mapaInformado = false;
+for (const a of argv) {
+  if (a.startsWith('--mutante')) {
+    if (!a.startsWith('--mutante=')) infra('mutante sem valor: ' + a);
+    const v = a.slice('--mutante='.length);
+    if (!MUT_VALIDOS.includes(v)) infra('mutante desconhecido: ' + v);
+    if (mutanteArg) infra('mutante duplicado: ' + mutanteArg + ',' + v);
+    mutanteArg = v;
+  } else if (a === '--json' || a === '--detalhe') {
+    if (vistos[a]++) infra('flag duplicada: ' + a);
+  } else if (a.startsWith('--')) infra('opção desconhecida: ' + a);
+  else {
+    if (mapaInformado) infra('mapa duplicado na linha de comando: ' + ONLY + ',' + a);
+    ONLY = a; mapaInformado = true;
+  }
+}
+const MUT_CANAL = mutanteArg === 'canal-fechado';
+const MUT_BAIXA = mutanteArg === 'beirada-baixa';
+const MUT_ALTA = mutanteArg === 'beirada-alta';
+const mutanteAtivo = MUT_CANAL ? 'canal-fechado' : MUT_BAIXA ? 'beirada-baixa' : MUT_ALTA ? 'beirada-alta' : null;
+const JSON_OUT = vistos['--json'] > 0;
+const DETALHE = vistos['--detalhe'] > 0;
+/* Alias legítimo (ALIAS_MAPA) vira id canônico JÁ NO CLI; desconhecido é infra 2, nunca DEFAULT. */
+const MAPA = ONLY === 'all' || MAPS[ONLY] ? ONLY : ALIAS_MAPA[ONLY];
+if (ONLY !== 'all' && !MAPS[MAPA]) infra(`mapa desconhecido: ${ONLY} — id canônico ou alias legítimo de maps.js`);
 
 /* ---- CONSTANTES DE CORPO: as MESMAS do jogo, e não uma segunda opinião sobre elas.
    R_BODY 0,38 é o raio que o `_collide` usa (game.js:_updatePlayer). STEP_H 0,55 é o
@@ -141,7 +184,7 @@ const T_MAX = 2.0;
 const VEL = 4.8;
 
 const textures = initTextures();
-const MAP_IDS = ONLY === 'all' ? Object.keys(MAPS) : [ONLY];
+const MAP_IDS = ONLY === 'all' ? Object.keys(MAPS) : [MAPA];
 
 const relatorio = [];
 const falhas = [];
@@ -149,13 +192,14 @@ const falhas = [];
 for (const mapId of MAP_IDS) {
   let g;
   try { g = bootGame(mapId, { textures, ctf: true, seed: 12345 }); }
-  catch (e) { falhas.push(`${mapId}: não construiu — ${e.message}`); continue; }
+  /* Sem boot não há medição: infra 2 nos dois modos, nunca falha MNT medida. */
+  catch (e) { infra(`${mapId}: bootGame — ${(e && e.stack) || e}`); }
 
   const W = g.world, B = W.bounds;
   /* MUTANTE canal-fechado: apaga as rampas de acesso do Córrego devolvendo o topo da
      parede na faixa |x| ∈ [3,5]. O canal continua com piso, e sem rampa não há saída
      nenhuma a pé — é o defeito exato que MNT1 tem que enxergar. */
-  if (MUT_CANAL && mapId === 'fy_corrego') {
+  if (MUT_CANAL && mapId === 'corrego') {
     const orig = W.groundHeightAt;
     W.groundHeightAt = (x, z, y) => {
       const ax = Math.abs(x);
@@ -175,10 +219,14 @@ for (const mapId of MAP_IDS) {
       if (!a) return null;
       return (a.y - gh(pos.x, pos.z, pos.y) > 0.60) ? null : a;
     };
-  }
+    /* Evidência só após substituir _mantleTarget no Game de verdade. */
+    evidencia(mapId, { applied: true, clauses: ['MNT2'], teto: 0.60 });
+  } else if (MUT_BAIXA) infra(`${mapId}: beirada-baixa sem _mantleTarget no Game — nada aplicado`);
   /* Mutante de segurança: remove NO MOTOR a prova de que o apoio já pertence ao território
      caminhável. A ilha determinística que dá dente à cláusula é inserida depois de `livre`. */
-  if (MUT_ALTA && typeof g._mantleAlcancavel === 'function') g._mantleAlcancavel = () => true;
+  let altaGuardaFora = false;
+  if (MUT_ALTA && typeof g._mantleAlcancavel === 'function') { g._mantleAlcancavel = () => true; altaGuardaFora = true; }
+  else if (MUT_ALTA) infra(`${mapId}: beirada-alta sem _mantleAlcancavel no Game — guarda intacta, nada aplicado`);
 
   /* Teto de mantle EFETIVO. A régua NÃO reimplementa a decisão: chama `_mantleTarget`. */
   const temMantle = typeof g._mantleTarget === 'function';
@@ -259,7 +307,7 @@ for (const mapId of MAP_IDS) {
       fixture = { x: sx, z: sz, y, dx, dz };
       break;
     }
-    if (!fixture) throw new Error(`${mapId}: selftest MNT3 não encontrou piso livre junto ao spawn`);
+    if (!fixture) infra(`${mapId}: selftest MNT3 não encontrou piso livre junto ao spawn`);
     const orig = W.groundHeightAt.bind(W);
     W.groundHeightAt = (x, z, y) => {
       const rx = x - fixture.x, rz = z - fixture.z;
@@ -270,6 +318,9 @@ for (const mapId of MAP_IDS) {
         : orig(x, z, y);
     };
     g._mantleReach = null;
+    /* Evidência só com as DUAS mutações feitas: guarda fora E ilha injetada. */
+    if (!altaGuardaFora) infra(`${mapId}: beirada-alta aplicado pela metade`);
+    evidencia(mapId, { applied: true, clauses: ['MNT3'], ilha: 1.20 });
   }
 
   /* ---------- GRADE ANDÁVEL ---------- */
@@ -357,7 +408,7 @@ for (const mapId of MAP_IDS) {
     const i = Math.round((s.x - B.minX) / GRID - 0.5), k = Math.round((s.z - B.minZ) / GRID - 0.5);
     if (dentro(i, k)) sementes.push([i, k]);
   }
-  if (!sementes.length) { falhas.push(`${mapId}: sem spawn na grade — instrumento cego`); continue; }
+  if (!sementes.length) infra(`${mapId}: sem spawn na grade — instrumento cego`);
 
   const A = flood(sementes, false);          // alcançável SEM mantle
   const Bm = flood(sementes, true);          // alcançável COM mantle
@@ -577,7 +628,8 @@ function andaContra(g, b) {
         const alvo = g._mantleTarget?.(p.pos, b.dx, b.dz);
         tentativas.push(`${n}@${p.pos.x.toFixed(2)},${p.pos.y.toFixed(2)},${p.pos.z.toFixed(2)}=>${alvo ? alvo.y.toFixed(2) : '-'}`);
       }
-      try { g._updatePlayer(1 / 60); } catch { break; }
+      try { g._updatePlayer(1 / 60); }
+      catch (e) { infra(`MNT2 runtime — ${(e && e.stack) || e}`); }
       viuMantle ||= !!p.mantle;
       maxY = Math.max(maxY, p.pos.y);
       if (p.pos.y >= b.ty - 0.12) { ok = true; break; }
@@ -634,6 +686,14 @@ for (const r of ruins) {
   if (r.MNT2 === 'FALHA') falhas.push(`${r.map}: MNT2 — ${r.amostradas - r.subiram} de ${r.amostradas} beiradas de escala humana NÃO são escaláveis`);
   if (r.MNT3 === 'FALHA') falhas.push(`${r.map}: MNT3 — mantle abriu TERRITÓRIO NOVO: ${r.celulasNovas} células que não se alcança a pé (pior cota ${r.piorCotaNova} m; cota máxima ${r.cotaComMantle} m contra ${r.cotaSemMantle} m sem mantle)`);
 }
+/* UM POST por corrida de mutante, só depois da medição real do mapa mutado. */
+if (mutanteAtivo && provas.length === 1 && relatorio[0] && relatorio[0].map === provas[0]) {
+  const r = relatorio[0];
+  writeSync(2, POST_MARCA + JSON.stringify({ tool: 'mantle-check', map: r.map, mutant: mutanteAtivo, celulas: r.celulas, mnt1: r.MNT1, mnt2: r.MNT2, mnt3: r.MNT3 }) + '\n');
+}
+/* UM relatório terminal por baseline: mapa canônico, contagem e estados MNT medidos. */
+if (!mutanteAtivo && relatorio.length === 1)
+  writeSync(2, BASE_MARCA + JSON.stringify({ tool: 'mantle-check', map: relatorio[0].map, mutant: null, celulas: relatorio[0].celulas, mnt1: relatorio[0].MNT1, mnt2: relatorio[0].MNT2, mnt3: relatorio[0].MNT3 }) + '\n');
 if (falhas.length) {
   console.error('\nVERMELHO:');
   for (const f of falhas) console.error('  · ' + f);

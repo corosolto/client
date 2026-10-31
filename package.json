@@ -434,7 +434,7 @@
     "eval:build": "npm run build && npm run eval:ssr",
     "eval:mantle": "node tools/eval/mantle-check.mjs all",
     "//mut:mantle": "MNT2 recusa teto de 0,60 m e MNT3 detecta ilha sintética aberta sem a trava de território.",
-    "mut:mantle": "! node tools/eval/mantle-check.mjs corrego --mutante=beirada-baixa && ! node tools/eval/mantle-check.mjs fy_lajes --mutante=beirada-alta",
+    "mut:mantle": "node tools/eval/mantle-mutants-check.mjs",
     "//eval:mantle-fluidez": "MF1 a MF5: Espaço + frente atravessa beirada aprovada em 18 a 28 quadros, sobe antes de avançar, limita deslocamento por quadro, pousa no apoio seguro e encerra o estado no chão. Mutante teleporte.",
     "eval:mantle-fluidez": "node tools/eval/fluidez-mutantes-check.mjs mantle",
     "//eval:mantle-network": "MN1 a MN3: respawn limpa travessia antiga, ack desloca a base absoluta e snapshot remoto anima progresso interpolado.",
