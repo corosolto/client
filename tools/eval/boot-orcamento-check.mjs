@@ -106,9 +106,14 @@ const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
+/* Hipótese a medir: no macOS deixar o Chrome escolher o backend gráfico;
+   não-macOS mantém SwiftShader explícito. */
+const softwareGLArgs = process.platform === 'darwin'
+  ? []
+  : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio', '--disable-dev-shm-usage'],
+  args: [...softwareGLArgs, '--headless=new', '--mute-audio', '--disable-dev-shm-usage'],
 });
 
 /* `refPoolAnsioso` liga a referência do ORC2; o mutante `cartaz-ansioso` liga a MESMA
