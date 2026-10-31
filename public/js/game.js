@@ -990,10 +990,9 @@ export class Game {
     this.vmScene.add(this.vm.root);
     // BUG-75: arma visível é o GLB do Coro Solto; mãos com pele/roupa do personagem.
     // Tudo-ou-nada (vmlaunch.js): sem a chave nenhum controlador nasce e tudo fica no fparms.
-    // No toque, o legado evita dezenas de MB e compilação assíncrona no meio do tiroteio.
     const authoredDef = byId(this.playerCharId);
     const authoredPal = authoredDef?.pal || { skin: 0xd9a066, shirt: 0x27364a };
-    this.vm.authored = AUTHORED_VM_ENABLED && !this.mobile ? createAuthoredViewModels(this.vm.root, () => {
+    this.vm.authored = AUTHORED_VM_ENABLED ? createAuthoredViewModels(this.vm.root, () => {
       if (!this._disposed && this.vm) this._applyVmVisibility();
     }, { id: this.playerCharId, faction: this.playerFaction, gloveSkinId: this.playerGloveId, weaponSkins: this.playerWeaponSkins, skin: authoredPal.skin, sleeve: authoredPal.shirt, accent: authoredPal.pants }) : null;
     {
@@ -2166,6 +2165,7 @@ export class Game {
       this.keys[e.code] = false;
     };
     this._md = e => {
+      if (e.sourceCapabilities?.firesTouchEvents || (this.mobile && e.target?.closest?.('#touch-ui'))) return;
       // com pointer lock o clique que fecha o compositor tem o canvas como alvo e chega já destravado
       if (this._entradaTravada || entradaPropria(e.target) || this._chatSeguraPausa()) return;
       if (this.radioOpen) { this.radioOpen = null; this._radioUi(); }
@@ -2252,7 +2252,8 @@ export class Game {
       this._wheelGesto = 'feito'; this._wheelAcc = 0; this._cycleWeapon(dir);
     };
     this._cc = e => e.preventDefault();
-    this._blur = () => { this.keys = {}; };   // alt-tab com tecla pressionada não deixa tecla presa
+    this._blur = () => this._releaseInput();
+    this._hiddenInput = () => { if (document.hidden) this._releaseInput(); };
     this._plc = () => {
       if (this._chatSeguraPausa()) return;
       if (!document.pointerLockElement && !this.testMode && (this.state === 'live' || this.state === 'countdown') && !this.paused)
@@ -2267,6 +2268,7 @@ export class Game {
     document.addEventListener('contextmenu', this._cc);
     document.addEventListener('pointerlockchange', this._plc);
     window.addEventListener('blur', this._blur);
+    document.addEventListener('visibilitychange', this._hiddenInput);
     if (this.mobile) this._touchControls();
   }
 
@@ -2290,10 +2292,9 @@ export class Game {
     };
     root.innerHTML =
       '<div class="touch-look"></div>' +
-      // DOIS sticks: esquerdo = andar, direito = olhar. O MIOLO de cada um é gatilho de tiro
-      // (aperta o centro sem arrastar = atira). Por isso o knob leva o ícone de fogo.
-      '<div class="touch-joy touch-joy-l"><div class="touch-joy-knob">' + IC.fire + '</div></div>' +
-      '<div class="touch-joy touch-joy-r"><div class="touch-joy-knob">' + IC.fire + '</div></div>' +
+      '<div class="touch-joy touch-joy-l"><div class="touch-joy-knob"></div></div>' +
+      '<div class="touch-joy touch-joy-r"><div class="touch-joy-knob"></div></div>' +
+      '<button class="touch-btn touch-fire" aria-label="Atirar">' + IC.fire + '</button>' +
       '<button class="touch-btn touch-ads" aria-label="Mirar">' + IC.ads + '</button>' +
       '<button class="touch-btn touch-reload" aria-label="Recarregar">' + IC.reload + '</button>' +
       '<button class="touch-btn touch-crouch" aria-label="Agachar">' + IC.crouch + '</button>' +
@@ -2315,6 +2316,7 @@ export class Game {
     const look = q('.touch-look');
     let lookId = null, lx = 0, ly = 0;
     look.addEventListener('touchstart', (e) => {
+      if (lookId !== null || !this._acceptInput()) { e.preventDefault(); return; }
       const t = e.changedTouches[0]; lookId = t.identifier; lx = t.clientX; ly = t.clientY; e.preventDefault();
     }, { passive: false });
     look.addEventListener('touchmove', (e) => {
@@ -2327,53 +2329,60 @@ export class Game {
     }, { passive: false });
     const lookEnd = (e) => { for (const t of e.changedTouches) if (t.identifier === lookId) lookId = null; };
     look.addEventListener('touchend', lookEnd); look.addEventListener('touchcancel', lookEnd);
+    (this._sticksSoltar || (this._sticksSoltar = [])).push(() => { lookId = null; });
 
     // STICKS ANALÓGICOS (esquerdo = andar, direito = mira/câmera). Helper genérico: knob segue
     // o dedo até o raio R, com zona morta; `onVec` recebe o vetor -1..1 COM magnitude.
-    //  onVec(x,y): vetor -1..1 do stick.  onCenter(dentroDaZonaMorta): miolo pressionado = tiro.
-    const stick = (sel, onVec, onCenter) => {
+    const stick = (sel, onVec) => {
       const el = q(sel), kn = el.querySelector('.touch-joy-knob'); const R = 56, DZ = 0.18;
       let id = null, cx = 0, cy = 0;
       const move = (t) => {
         const dx = t.clientX - cx, dy = t.clientY - cy;
         const d = Math.hypot(dx, dy) || 1, cl = Math.min(d, R), nx = dx / d, ny = dy / d, mag = Math.min(1, d / R);
         kn.style.transform = `translate(${nx * cl}px, ${ny * cl}px)`;
-        // dentro da zona morta o dedo está no MIOLO → não anda/olha, mas ATIRA (onCenter true)
-        if (mag < DZ) { onVec(0, 0); onCenter(true); } else { onVec(nx * mag, ny * mag); onCenter(false); }
+        if (mag < DZ) onVec(0, 0); else onVec(nx * mag, ny * mag);
       };
       el.addEventListener('touchstart', (e) => {
+        if (id !== null || !this._acceptInput()) { e.preventDefault(); return; }
         const t = e.changedTouches[0]; id = t.identifier;
         const r = el.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2;
         move(t); e.preventDefault();
       }, { passive: false });
       el.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) if (t.identifier === id) move(t); e.preventDefault(); }, { passive: false });
-      const soltar = () => { id = null; onVec(0, 0); onCenter(false); kn.style.transform = ''; el.classList.remove('firing'); };
+      const soltar = () => { id = null; onVec(0, 0); kn.style.transform = ''; };
       const end = (e) => { for (const t of e.changedTouches) if (t.identifier === id) soltar(); };
       el.addEventListener('touchend', end); el.addEventListener('touchcancel', end);
       // o chat aberto (travarEntrada) solta o dedo em curso: o toque fica preso ao alvo do touchstart
       (this._sticksSoltar || (this._sticksSoltar = [])).push(soltar);
     };
-    // TIRO PELO MIOLO DOS DOIS STICKS: cada stick tem seu flag; o gatilho real (mouseDown0) é
-    // o OU dos dois. Assim dá pra ANDAR (stick esq. p/ fora) + ATIRAR (miolo do dir.), e vice-versa.
-    this._fireStick = { l: false, r: false };
-    const setStickFire = (side, on, el) => {
-      if (this._fireStick[side] === on) return;
-      this._fireStick[side] = on;
-      el.classList.toggle('firing', on);
-      const want = this._fireStick.l || this._fireStick.r;
-      if (want && !this.mouseDown0) { if (this._acceptInput()) { this.mouseDown0 = true; this._tryShoot(); } }
-      else if (!want) { this.mouseDown0 = false; }
-    };
-    const joyL = q('.touch-joy-l'), joyR = q('.touch-joy-r');
-    stick('.touch-joy-l', (x, y) => { this.touchMove.x = x; this.touchMove.z = y; }, (c) => setStickFire('l', c, joyL)); // andar
-    stick('.touch-joy-r', (x, y) => { this.touchLook.x = x; this.touchLook.y = y; }, (c) => setStickFire('r', c, joyR)); // olhar
+    stick('.touch-joy-l', (x, y) => { this.touchMove.x = x; this.touchMove.z = y; });
+    stick('.touch-joy-r', (x, y) => { this.touchLook.x = x; this.touchLook.y = y; });
 
     // BOTÕES: cada um com touchstart/end próprios (stopPropagation implícito por serem elementos).
-    const on = (sel, start, end) => {
+    const on = (sel, start, end, aim = false) => {
       const el = q(sel);
-      el.addEventListener('touchstart', (e) => { e.preventDefault(); start(); }, { passive: false });
-      if (end) { const h = (e) => { e.preventDefault(); end(); }; el.addEventListener('touchend', h); el.addEventListener('touchcancel', h); }
+      let id = null, x = 0, y = 0;
+      const release = () => { id = null; end?.(); };
+      this._sticksSoltar.push(release);
+      el.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (id !== null) return;
+        const t = e.changedTouches[0]; id = t.identifier; x = t.clientX; y = t.clientY;
+        start();
+      }, { passive: false });
+      if (aim) el.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (const t of e.changedTouches) if (t.identifier === id) {
+          this._touchLook(t.clientX - x, t.clientY - y); x = t.clientX; y = t.clientY;
+        }
+      }, { passive: false });
+      const h = (e) => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === id) release(); };
+      el.addEventListener('touchend', h); el.addEventListener('touchcancel', h);
     };
+    on('.touch-fire', () => {
+      if (!this._acceptInput() || !this.player.alive) return;
+      this.mouseDown0 = true; this._tryShoot();
+    }, () => { this.mouseDown0 = false; }, true);
     on('.touch-reload', () => { if (this._acceptInput()) this._startReload(); });
     on('.touch-ads', () => {
       if (!this._acceptInput()) return;
@@ -2402,6 +2411,14 @@ export class Game {
       }, { passive: false });
     });
     this._syncTouchWeps();
+  }
+
+  _releaseInput() {
+    this.keys = {}; this.mouseDown0 = false;
+    for (const release of this._sticksSoltar || []) release();
+    if (this.touchMove) { this.touchMove.x = 0; this.touchMove.z = 0; }
+    if (this.touchLook) { this.touchLook.x = 0; this.touchLook.y = 0; }
+    this._touchUi?.dispatchEvent?.(new Event('touchreset'));
   }
 
   /* Mira por arrasto, em um lugar só; `sensToque` é a escala do dedo, separada da do mouse.
@@ -2512,11 +2529,7 @@ export class Game {
     if (this._entradaTravada === v) return;
     this._entradaTravada = v;
     if (v) {
-      this.keys = {}; this.mouseDown0 = false;
-      for (const soltar of this._sticksSoltar || []) soltar();
-      if (this.touchMove) { this.touchMove.x = 0; this.touchMove.z = 0; }
-      if (this.touchLook) { this.touchLook.x = 0; this.touchLook.y = 0; }
-      if (this._fireStick) { this._fireStick.l = this._fireStick.r = false; }
+      this._releaseInput();
     } else {
       this._chatDestravadoAte = this._now() + CHAT_PAUSA_GUARDA_MS;
     }
@@ -2824,6 +2837,7 @@ export class Game {
     if (!this.sfx.roundNumber(this.roundNum) && !this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
   }
   _resetPositions() {
+    this._releaseInput();
     /* COLOCAÇÃO NO SPAWN — deixada COMO ESTAVA, de propósito (registro de experimento).
        São 4 pontos por time e até 8 combatentes: com `slot % list.length` o 5º ao 8º nascem
        EM CIMA do 1º ao 4º (jitter de ±0,5 m). Parece o culpado óbvio do bolo do print, e as
@@ -2865,7 +2879,8 @@ export class Game {
     // modo de armas: aplica o loadout inicial. No modo 'all', o player entra com a arma do
     // personagem dele (a mesma da tela de seleção) em vez da AWP padrão.
     const mode = this._wpnMode();
-    const cw = charWeapon(this.playerCharId);
+    const rosterWeapon = this._mp?.net?.meta?.roster?.find((r) => r.id === this._mp.net.yourEnt)?.weapon;
+    const cw = (this.online && WEAPONS[rosterWeapon] ? rosterWeapon : null) || charWeapon(this.playerCharId);
     if (mode === 'pistols') {
       this.player.weapon = 'pistol';
       this.player.ammo.awp = { mag: 0, res: 0 };
@@ -3302,7 +3317,7 @@ export class Game {
     const entrou = v && !this.paused;
     this.paused = v;
     this.soundscape?.setPaused(v);
-    if (v) { this.keys = {}; this.touchMove.x = 0; this.touchMove.z = 0; this.mouseDown0 = false; if (this.touchLook) { this.touchLook.x = 0; this.touchLook.y = 0; } if (this._fireStick) { this._fireStick.l = this._fireStick.r = false; } }
+    if (v) this._releaseInput();
     this.el.pause.classList.toggle('hidden', !v);
     // pausado, o overlay de toque some — senão a camada de OLHAR (tela cheia) tapava o menu
     // de pausa e roubava os toques dos botões dele.
@@ -4470,6 +4485,7 @@ export class Game {
       }
     }
     if (ent.isPlayer) {
+      this._releaseInput();
       this._scope(false, true);
       this._abortarArmaNaMorte();   // recarga e arremesso morrem com o jogador (GRM3/GRM4)
       this._unequipNade();
@@ -4949,7 +4965,9 @@ export class Game {
       const cam = this.camera.getWorldPosition(new THREE.Vector3());
       const ndc = vmPt.clone().project(this.vmCamera);
       const ray = new THREE.Vector3(ndc.x, ndc.y, 0.5).unproject(this.camera).sub(cam).normalize();
-      return cam.addScaledVector(ray, vmPt.length());
+      // A profundidade virtual não é distância física: >2 m ativava o cano de fallback.
+      // Mantém o pixel autorado na mesma profundidade de apresentação do traçante.
+      return cam.addScaledVector(ray, 1.5);
     }
     const authored = this.vm.authored?.muzzleWorld?.(this.player?.weapon, this.camera);
     if (authored) return authored;
@@ -7435,6 +7453,7 @@ export class Game {
     /* Online quem revive é o servidor. Renascer local escolheria um spawn que ele não
        escolheu, e o próximo snapshot arrastaria o jogador de volta. */
     if (this.online) return;
+    this._releaseInput();
     const p = this.player;
     /* MODO ARENA: aplica a troca de time antes de escolher o spawn. */
     if (this.arena && p._switchTeam) {
@@ -9109,6 +9128,7 @@ export class Game {
   /* ================= teardown ================= */
   dispose() {
     this._disposed = true;
+    this._releaseInput();
     clearInterval(this._vmPrecisionQaTimer); this._vmPrecisionQaTimer = null;
     document.getElementById('vm-precision-qa')?.remove();
     if (window.__vmPrecisionQa === this._vmPrecisionQa) delete window.__vmPrecisionQa;
@@ -9128,6 +9148,7 @@ export class Game {
     document.removeEventListener('contextmenu', this._cc);
     document.removeEventListener('pointerlockchange', this._plc);
     window.removeEventListener('blur', this._blur);
+    document.removeEventListener('visibilitychange', this._hiddenInput);
     if (this._touchUi) { this._touchUi.remove(); this._touchUi = null; }   // overlay de toque some com a partida
     this._soltaAtalhos();   // fora da partida os atalhos do navegador voltam a ser do navegador
     this.el.hud.classList.add('hidden');
