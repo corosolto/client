@@ -18,7 +18,7 @@ LABEL_REASONS = {
     "needs-human-gameplay": "toca gameplay/render/HUD/mapa/personagem — decisão de humano",
     "needs-human-backend": "toca API/Supabase/anti-cheat/ranking — decisão de humano",
     "safe-automerge": "pequena e reversível, fora de superfície sensível — elegível a merge automático",
-    "needs-coderabbit-resolution": "há apontamento de revisor automático pendente — não mergear sem `coderabbit-resolved`",
+    "needs-estragacodigo-resolution": "há apontamento do estraga-codigo pendente — não mergear sem `estragacodigo-resolved`",
     "crash-auto": "veio do report automático de crash em produção",
 }
 
@@ -118,9 +118,9 @@ def render(payload: dict) -> str:
     elif acoes or entradas:
         linhas += ["### Labels", "", "nenhuma label adicional sugerida — PR fora dos critérios de roteamento.", ""]
 
-    if "needs-coderabbit-resolution" in labels_add:
+    if "needs-estragacodigo-resolution" in labels_add:
         linhas += ["> [!CAUTION]",
-                   "> Há apontamento de revisor automático **pendente**. Não mergear sem aplicar `coderabbit-resolved`.", ""]
+                   "> O estraga-codigo deixou apontamento **pendente**. Não mergear sem aplicar `estragacodigo-resolved`.", ""]
 
     if acoes:
         linhas += ["### Ações do bot", "", *acoes, ""]
@@ -154,10 +154,12 @@ def selftest() -> int:
         ("caixa NOTE presente", "> [!NOTE]" in p),
     ]
     q = render({"files": [], "changedFiles": 0, "baseRefName": "staging",
-                "labels_add": ["needs-coderabbit-resolution"]})
+                "labels_add": ["needs-estragacodigo-resolution"]})
     casos += [
         ("sem arquivo não quebra", "0 arquivo(s)" in q),
-        ("bloqueio coderabbit em CAUTION", "> [!CAUTION]" in q),
+        ("bloqueio estragacodigo em CAUTION", "> [!CAUTION]" in q),
+        ("rótulo resolvido correto aparece", "`estragacodigo-resolved`" in q),
+        ("coderabbit não aparece", "coderabbit" not in q.lower()),
     ]
     r = render({"files": None, "changedFiles": 1720, "baseRefName": "main",
                 "author_login": "ruben", "labels_add": ["needs-staging"]})

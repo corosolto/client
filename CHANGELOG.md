@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.127`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.130`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -42,6 +42,7 @@
 
 ### Corrigido
 - Canarinho e suas três skins deixam de carregar uma cauda maior que quase metade do corpo. A pistola fica à frente do tronco, com cotovelo dobrado e montagem recalculada depois da pose de uma mão.
+- A contagem diária de visitantes cobre todas as páginas públicas. Antes, só a entrada do jogo emitia a visita e deixava de fora quem chegava por conteúdo, perfil ou documento legal.
 - Perfis públicos continuam visíveis quando o bootstrap da conta falha ou a sessão expira. Links do ranking usam o handle público, o histórico do navegador restaura a lista, e perfis sem totais aparecem com zero.
 - O contador online voltou ao topo em desktop e celular. O rodapé móvel usa ícones quadrados com nome acessível, e a tela de privacidade preserva a foto com checkbox de 20 px.
 - A câmera em terceira pessoa considera filhos de modelos importados e segura o último bloqueio por 80 ms. Armas autoradas não reativam malhas antigas, e o HUD volta a mostrar a arte da arma equipada.
@@ -51,6 +52,9 @@
 - Girar no lugar deixa o quadril para trás e os pés alcançam depois, em vez de o corpo inteiro teleportar junto com a mira.
 - Personagens distantes animam com menos frequência, devolvendo quadros ao celular sem mudar o que se vê de perto.
 - Recarregar ficou visível de fora: em terceira pessoa, a mão livre vai ao carregador e o corpo mergulha durante a recarga, do jogador e dos bots — dá saber quando o adversário está vulnerável.
+- O placar reaproveita cada retrato em vez de baixar o mesmo avatar seis vezes.
+- O guia inicial mostra movimento, tiro e recarga por 15 segundos; a ajuda completa continua no ALT.
+- Os spawns do Escadão e do Ferro Velho deixam a primeira rota livre; a fauna do Ferro Velho nasce fora dos colisores.
 - Andar de lado entorta o corpo na direção do movimento, em vez de deslizar de frente parado.
 - Durante a partida, o perfil móvel começa com resolução de 60%, limita a cadência a 60 FPS no jogo e 30 FPS nos menus, reduz partículas, cápsulas e marcas conforme o aparelho sofre e recupera o último degrau sustentável na sessão seguinte.
 - No celular, a barra de armas mostra a arma de verdade em vez de um desenho genérico, e a imagem muda junto com o que está na mão.
@@ -149,6 +153,24 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.130] — 2026-10-31
+
+### Mudado
+- Conta visitantes em todas as páginas públicas (#1176)
+- fix: conte visitantes em todas as páginas
+
+## [2.1.0-alpha.129] — 2026-10-30
+
+### Mudado
+- Envie a identidade persistente ao funil (#1175)
+- Envie a identidade persistente ao funil
+
+## [2.1.0-alpha.128] — 2026-10-30
+
+### Mudado
+- Presença passa a ler cidade da Cloudflare (#1174)
+- fix: ler geolocalização da Cloudflare
 
 ## [2.1.0-alpha.127] — 2026-10-29
 
