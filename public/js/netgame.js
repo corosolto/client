@@ -283,8 +283,9 @@ class Netcode {
         this.game.el?.reloadNote?.classList.remove('hidden');
       }
       p.reloadUntil = this.game.time + reloadIn;
+      p.reloadWeapon = e.weapon || p.weapon;   // a conclusão serve SÓ esta arma (game _armasServidasPelaRecarga)
     } else if (estava) {
-      p.reloadUntil = 0;
+      p.reloadUntil = 0; p.reloadWeapon = '';
       this.game.el?.reloadNote?.classList.add('hidden');
     }
   }
@@ -794,6 +795,10 @@ class Netcode {
     const p = game.player;
     for (const w of [p.primary, p.secondary]) if (w && WEAPONS[w] && p.ammo[w]) p.ammo[w] = { mag: WEAPONS[w].mag, res: WEAPONS[w].reserve };
     p._lifeDmg = 0; p.crouchF = 0;
+    // Mesma limpeza do _respawnPlayer: nada da vida passada (recarga/arremesso congelados na
+    // morte) pode descongelar na base — o viewmodel volta no idle e SACA.
+    p.reloadUntil = 0; p.reloadWeapon = ''; p.nadeBusyUntil = 0; p._nextNade = 0;
+    game._voltarPraBase?.();
     p.smokes = 5; p.frags = 1; game._updateSmokeHud?.();   // como o _startRound (fase 3 do `ev`)
     if (game.camera) game.camera.rotation.z = 0;
     try { game.sfx.respawn(); } catch { /* ctx mudo */ }
