@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import * as THREE from 'three';
 import { Game, initTextures, renderer, sfx, PCHAR, CHARACTERS } from './harness.mjs';
 
 const mutants = {
+  'mira-estatica': ['mode_operacao_flavio.js', 'cam.lookAt(alvo.x, 2.1, alvo.z);', 'cam.lookAt(0, 2.1, ganhou ? 54 : 38);', /avião permanece no viewport real/],
+  'camera-na-viga': ['mode_operacao_flavio.js', '{ x: 16, y: 7, z: 50 }', '{ x: 16, y: 6.7, z: 35 }', /câmera fora da geometria de travessa-hangar/],
   'sem-pulo': ['mode_operacao_flavio.js', 'this.cinematic.skipped = true;', '', /apresentação pulada não continua/],
   'relogio-local': ['mode_operacao_flavio.js', 'if (!this.game.online) this.game.stateUntil = this.game.time;', 'this.game.stateUntil = this.game.time;', /gesto local não adianta/],
   'camera-follow': ['netgame.js', 'if (game.objective?.cinematicActive) return;', '', /follow não sobrescreve/],
@@ -57,6 +60,32 @@ const begin = () => {
   g.objective.startCinematic('B');
 };
 try {
+  for (const winner of ['B', 'E']) check('avião enquadrado sem câmera nas vigas: '+winner, () => {
+    g.objective.prepareRound(); g.time = 10;
+    g.objective.startCinematic(winner);
+    const vigas = [];
+    g.world.root.traverse(o => {
+      if (o.isMesh && /^(tesoura-hangar-|travessa-hangar|cobertura-hangar-|claraboia-hangar)/.test(o.name)) vigas.push(o);
+    });
+    assert.ok(vigas.length, 'geometria real das vigas presente');
+    const alvo = new THREE.Vector3(), ray = new THREE.Raycaster();
+    for (let i = 0; i <= 36; i++) {
+      g.time = 10 + i / 4; g.objective.updatePresentation();
+      g.world.root.updateMatrixWorld(true); g.camera.updateMatrixWorld(true);
+      alvo.copy(g.world.objectivePlane.position); alvo.y += 2.1;
+      const ndc = alvo.clone().project(g.camera);
+      assert.ok(ndc.z >= -1 && ndc.z <= 1 && Math.abs(ndc.x) <= 1 && Math.abs(ndc.y) <= 1,
+        'avião permanece no viewport real em '+(i / 4)+'s');
+      for (const mesh of vigas) {
+        mesh.geometry.computeBoundingBox();
+        assert.ok(!mesh.geometry.boundingBox.containsPoint(mesh.worldToLocal(g.camera.position.clone())),
+          'câmera fora da geometria de '+mesh.name+' em '+(i / 4)+'s');
+      }
+      const direction = alvo.clone().sub(g.camera.position);
+      ray.set(g.camera.position, direction.clone().normalize()); ray.far = direction.length();
+      assert.equal(ray.intersectObjects(vigas, false).length, 0, 'linha central sem viga em '+(i / 4)+'s');
+    }
+  });
   check('antes de2s o gesto não pula apresentação', () => {
     begin(); g.time = 11.9;
     g.objective._key({ code: 'Space' });

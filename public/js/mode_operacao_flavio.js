@@ -457,14 +457,16 @@ export class OperacaoFlavio {
     const t = Math.min(1, (this.game.time - this.cinematic.startedAt) / 9);
     const cam = this.game.camera;
     const ganhou = this.cinematic.winner === 'B';
-    const a = ganhou ? { x: 17, y: 8, z: 35 } : { x: -15, y: 6, z: 29 };
-    const b = ganhou ? { x: 4, y: 5, z: 59 } : { x: 0, y: 4, z: 43 };
-    const smooth = t * t * (3 - 2 * t);
-    cam.position.set(a.x + (b.x - a.x) * smooth, a.y + (b.y - a.y) * smooth, a.z + (b.z - a.z) * smooth);
-    cam.lookAt(0, 2.1, ganhou ? 54 : 38);
+    // O pátio mantém o trajeto da câmera fora das vigas do hangar.
     if (ganhou && this.game.world.objectivePlane) {
       this.game.world.objectivePlane.position.z = 55 + Math.max(0, t - 0.35) * 20;
     }
+    const alvo = this.game.world.objectivePlane ? this.game.world.objectivePlane.position : { x: 0, z: 55 };
+    const a = ganhou ? { x: 16, y: 7, z: 50 } : { x: -15, y: 6, z: 50 };
+    const b = ganhou ? { x: 10, y: 5, z: 62 } : { x: -7, y: 4, z: 56 };
+    const smooth = t * t * (3 - 2 * t);
+    cam.position.set(a.x + (b.x - a.x) * smooth, a.y + (b.y - a.y) * smooth, a.z + (b.z - a.z) * smooth);
+    cam.lookAt(alvo.x, 2.1, alvo.z);
   }
 
   netState() {
