@@ -134,6 +134,40 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
   Builder de testes grafite atingiu deadline com diff parcial: retomar e validar,
   nunca tratar saída parcial como sucesso.
 
+
+- 09:35 UTC: inventário cruzado no Ego concluído nos 14 mapas. Todas as artes
+  conhecidas estão classificadas, sem duplicação por mapa e sem suporte inválido;
+  Ferro 24/24, Piscina 52/52, Campo 5/5. Logs `all-map-curation-ego.log` e
+  `curation-full-inventory-ego.log`; não equivalem a aceite visual integral.
+- Campo após mural único: comparação física normalizada preservou 99 colliders,
+  125 occluders e 11 contratos (spawns, pickups, CTF, rotas, terreno e bounds).
+  `campomorro-physical-normalized.json` é a prova válida; comparação anterior
+  divergia por UUID de material dos pickups e foi rejeitada como comparação final.
+- Economia: GLM alinhou somente documentação/régua ao contrato do #1179, sem
+  mudar produto. 23/23 casos, 20/20 mutantes e economia pura 14/14 passaram.
+  Revisão GLM independente e crítico independente dos dois arquivos em curso.
+- Motion 1P: régua com sway real e cinco mutantes passou, mas crítico encontrou
+  dois P2: contribuição de gait fica presa ao entrar em throw segurando utilitário;
+  fixture de transição não inicia gait e deixa NaN passar. Não aceito ainda.
+  Correções ficam na fila até o único writer de AK devolver sua lease.
+- AK no jogo real baseline: traçante coincide com muzzle, mas alça/massa ficam em
+  y=591/485 para cruz y=440 em 1320x880. Experimento apenas em memória com
+  `ads.linha=true` centralizou ambas sem mudar hip/tiro físico. Builder GLM
+  exclusivo vmconfig AK + ads1p-linha-check + AK-ADS.md deve provar geometria real
+  e mutante, sem relaxar limites. Fotos pretas descartadas; captura contínua válida
+  `ak-linha-experiment-continuous.png`. Correção de produto ainda em curso.
+- Leases adicionais: acabamento GLM somente map_campomorro/map_ferrovelho e doc,
+  mantendo curadoria/física; testes grafite retomados em três arquivos de testes.
+  Antes de novo bake aguardar devolução dos dois mapas e validar UV/assíncrono.
+- Censo somente leitura: 63 personagens registrados/arquivos, 26 skins e 56 luvas;
+  faltas de normal/rough em quatro personagens e caminhos de luva sem flags/FX
+  são pistas, não defeitos visuais comprovados. Resultados nos audits GLM-PERSONAGENS-*.
+- Main avançou a 602c0fe35 (#1169). #1179 remoto agora DIRTY; integrar main após
+  checkpoint dos componentes e revisão, sem disputar owners #1180/#1160.
+  #1160 ainda falha em relatório MAPAUD fresco; owner possui correções locais.
+  Gate select-inflate do #1179 acusa drift de referência: investigar causa,
+  sem elevar teto congelado ou dívida apenas para obter verde.
+
 ## Aceites, rejeições e limites
 
 Correções de produto locais acima ainda sem commit ou aprovação integral. Head do #1179 contém
@@ -145,8 +179,9 @@ gates e ownership continuam obrigatórios. Não chamar resultado técnico de vis
 
 ## Próximo passo concreto
 
-Confirmar Campo com inventário completo, repetir Ferro/Piscina na régua refinada,
-retomar testes GLM interrompidos e validar RED/GREEN/mutantes; então checkpoints
-de produto. Receber economia/motion/censo e conferir evidência real dos contratos.
-Seguir acabamento favela, personagens/skins e ADS, sem abandonar acompanhamento
-de PRs/release nem disputar as lanes dos outros dois runs.
+Receber testes grafite, revisão de economia, builder AK e acabamento GLM. Corrigir
+os dois P2 de motion depois de liberar a lease de AK; validar movimento e ADS no
+jogo real. Revisar UV/acabamento, repetir física e bake dos mapas alterados e
+recapturar os quatro pontos inválidos. Fechar checkpoints por componente, revisar
+diff inteiro e integrar main antes de abrir PRs empilhados. Continuar personagens,
+skins, mapas restantes e acompanhamento de merges/release durante a janela completa.
