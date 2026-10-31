@@ -129,6 +129,9 @@ const m = await page.evaluate(async () => {
     const an6 = { picoCm: antesFlinch.distanceTo(pos(cabeca)) * 100 };
     roda(45); an6.voltaCm = antesFlinch.distanceTo(pos(cabeca)) * 100;
     ctrl.setCrouch(true); roda(12);
+    ctrl.setMantle(0.5); roda(1);
+    const an11 = { estado: ctrl.curName, tempo: ctrl.actions.jump?.time || 0 };
+    ctrl.setMantle(null); roda(1);
     const antesTiro = pos(cabeca); ctrl.shoot(); roda(3);
     const an7 = { recuoCm: antesTiro.distanceTo(pos(cabeca)) * 100, estado: ctrl.curName };
     roda(20); ctrl.setCrouch(false); roda(12);
@@ -142,7 +145,7 @@ const m = await page.evaluate(async () => {
     const an1 = { foiCm: base.mao.distanceTo(meio.mao) * 100, aoPenteCm: meio.mao.distanceTo(magAlvo) * 100, basePenteCm: base.mao.distanceTo(magAlvo) * 100, voltouCm: fim.mao.distanceTo(base.mao) * 100, kMeio: meio.k, durFim: fim.dur };
     const an2 = { quedaCm: (base.cabeca.y - meio.cabeca.y) * 100, frenteCm: Math.abs((meio.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100, voltaCm: Math.abs((fim.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100 };
     const an3 = { leanK, deslocCm: Math.abs((cabecaLean.clone().sub(base.cabeca)).dot(direita())) * 100, voltaCm: Math.abs((cabecaVolta.clone().sub(base.cabeca)).dot(direita())) * 100, mortoDeslocCm: Math.abs((mortoCom.clone().sub(morto0)).dot(direita())) * 100 };
-    medidos.push({ charId: ctrl.charId, an1, an2, an3, an6, an7, an8, an9 });
+    medidos.push({ charId: ctrl.charId, an1, an2, an3, an6, an7, an8, an9, an11 });
   }
   if (!medidos.length) return { erro: 'sem bot com arma de 2 mãos' };
   const escolhe = (pred) => medidos.find(pred) || medidos[0];
@@ -154,11 +157,12 @@ const m = await page.evaluate(async () => {
   const m6 = escolhe((x) => x.an6.picoCm >= 3 && x.an6.voltaCm <= 1.5);
   const m7 = escolhe((x) => x.an7.recuoCm >= 0.5 && /crouch/.test(x.an7.estado || ''));
   const m8 = escolhe((x) => x.an8.noAr === 'jump' && x.an8.noPouso === 'crouch');
-  const m9 = escolhe((x) => x.an9.lagImediato >= 0.25 && x.an9.lagDepois <= 0.08);
+  const m11 = escolhe((x) => x.an11 && x.an11.estado === 'jump' && x.an11.tempo > 0);
   return {
     charId: m1.charId,
     an1: m1.an1, an2: m2.an2, an3: m3.an3,
     an6: m6.an6, an7: m7.an7, an8: m8.an8, an9: m9.an9,
+    an11: m11.an11,
   };
 });
 await fechar();
@@ -234,6 +238,8 @@ if (!m.erro) {
     `AN8 · no ar o estado é ${m.an8.noAr} (não locomoção) e o pouso amortece em ${m.an8.noPouso}`);
   cobra('AN9', m.an9.lagImediato >= 0.25 && m.an9.lagDepois <= 0.08,
     `AN9 · giro de 2 rad deixou o quadril ${m.an9.lagImediato.toFixed(2)} rad atrás e ele alcançou em ${m.an9.lagDepois.toFixed(3)} rad`);
+  cobra('AN11', m.an11.estado === 'jump' && m.an11.tempo > 0,
+    `AN11 · mantle vence o agachamento na pose ${m.an11.estado}, com tempo ${m.an11.tempo.toFixed(3)} s`);
 }
 if (an4.dados) {
   cobra('AN4', an4.dados.jogadorRecarregando && an4.dados.botRecarregou,

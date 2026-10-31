@@ -329,10 +329,14 @@ const MANTLE_H = 1.95;
 const MANTLE_D0 = 0.58;
 const MANTLE_ALC = 1.50;
 const MANTLE_APOIO = 0.50;
-/* MANTLE_GRID = 0,75 m — passo da grade de alcance (ver `_mantleAlcance`). Menor que o
-   DIÂMETRO do corpo (0,76 m): a inundação não escorre por uma fresta por onde o corpo não
-   passaria. Maior que isso e ela vazaria; muito menor e custa tempo à toa. */
-const MANTLE_GRID = 0.75;
+const MANTLE_T_MIN = 0.30;
+const MANTLE_T_MAX = 0.44;
+const MANTLE_SCAN = 0.05;   // não pula apoios estreitos entre duas amostras de colisão
+/* Grade menor que o corpo impede frestas; 0,75 m aliasava rampas e o pontão amazônico. */
+const MANTLE_GRID = 0.50;
+const MANTLE_SCAN_DT = 0.05;
+const MANTLE_COLLIDER_GRID = 4;
+const EMPTY_COLLIDERS = Object.freeze([]);
 /* KILL-SWITCH DO ARMÁRIO DO SPAWN (P3, 01/08). `?rack=old` traz de volta o layout cego
    (2 fileiras fixas a 2,0/3,25 m atrás do spawn, x absoluto) E a seleção antiga (só a arma
    mais próxima em 1,9 m) — os dois juntos são o bug que o dono reportou às 20:38, e ficam
@@ -2831,6 +2835,7 @@ export class Game {
     this._roundOverPedido = false;
     this._resetKillSequence();
     this._resetPositions();
+    if (MANTLE && !this._mAlc) this._mantleAlcance();
     if (this.ctf) this._initCTF();
     this.state = 'countdown';
     this.stateUntil = this.time + 3;
@@ -6290,8 +6295,8 @@ export class Game {
      ainda não olham `ry`, `map-check`, `pickup-check`). Só quem passa pela rejeição paga
      o seno/cosseno, e os senos vêm precomputados do mapa. Medido no botsim (determinístico,
      60 s × 6 mapas): ver o commit desta correção. */
-  _collide(pos, r) {
-    for (const c of this.world.colliders) {
+  _collide(pos, r, colliders = this.world.colliders) {
+    for (const c of colliders) {
       const nx = Math.max(c.minX, Math.min(pos.x, c.maxX));
       const nz = Math.max(c.minZ, Math.min(pos.z, c.maxZ));
       const dx = pos.x - nx, dz = pos.z - nz;
@@ -6379,8 +6384,30 @@ export class Game {
         if (ok) { vis[d] = 1; fila.push(d); }
       }
     }
-    this._mAlc = { nx, nz, G, minX: B.minX, minZ: B.minZ, alt, vis };
+    const CG = MANTLE_COLLIDER_GRID;
+    const cnx = Math.max(1, Math.ceil((B.maxX - B.minX) / CG));
+    const cnz = Math.max(1, Math.ceil((B.maxZ - B.minZ) / CG));
+    const col = new Map();
+    for (const c of W.colliders) {
+      const i0 = Math.max(0, Math.floor((c.minX - 0.38 - B.minX) / CG));
+      const i1 = Math.min(cnx - 1, Math.floor((c.maxX + 0.38 - B.minX) / CG));
+      const k0 = Math.max(0, Math.floor((c.minZ - 0.38 - B.minZ) / CG));
+      const k1 = Math.min(cnz - 1, Math.floor((c.maxZ + 0.38 - B.minZ) / CG));
+      for (let i = i0; i <= i1; i++) for (let k = k0; k <= k1; k++) {
+        const key = i * cnz + k;
+        const bucket = col.get(key);
+        if (bucket) bucket.push(c); else col.set(key, [c]);
+      }
+    }
+    this._mAlc = { nx, nz, G, minX: B.minX, minZ: B.minZ, alt, vis, CG, cnx, cnz, col };
     return this._mAlc;
+  }
+  _mantleColliders(x, z) {
+    const M = this._mAlc || this._mantleAlcance();
+    const i = Math.floor((x - M.minX) / M.CG);
+    const k = Math.floor((z - M.minZ) / M.CG);
+    if (i < 0 || i >= M.cnx || k < 0 || k >= M.cnz) return EMPTY_COLLIDERS;
+    return M.col.get(i * M.cnz + k) || EMPTY_COLLIDERS;
   }
   /* O ponto (x, z) na cota `y` é chão que a caminhada já alcança? Olha a vizinhança de uma
      célula porque a grade é grossa de propósito; a cota tem que BATER (dentro do degrau),
@@ -6406,25 +6433,67 @@ export class Game {
     dx /= n; dz /= n;
     const chao = W.groundHeightAt(pos.x, pos.z, pos.y);
     const teto = chao + MANTLE_H;
-    const p = new THREE.Vector3();
-    for (let d = MANTLE_D0; d <= MANTLE_ALC + 1e-6; d += 0.25) {
+    const p = this._mantleProbe || (this._mantleProbe = new THREE.Vector3());
+    for (let d = MANTLE_D0; d <= MANTLE_ALC + 1e-6; d += MANTLE_SCAN) {
       const px = pos.x + dx * d, pz = pos.z + dz * d;
       const py = W.groundHeightAt(px, pz, teto + 0.5);   // Y do teto: resolve mapa multinível
-      p.set(px, py, pz); this._collide(p, 0.38);
+      p.set(px, py, pz); this._collide(p, 0.38, this._mantleColliders(px, pz));
       if (Math.abs(p.x - px) > 1e-3 || Math.abs(p.z - pz) > 1e-3) continue;
-      if (py <= chao + STEP_H) return null;
+      if (py <= chao + STEP_H) continue;   // ainda é o mesmo chão; a beirada pode estar mais adiante
       if (py > teto) return null;
       // APOIO: a superfície tem que continuar plana MANTLE_APOIO adiante, senão o corpo
       // não cabe em cima e o mantle entrega o jogador a uma queda.
       const ax = px + dx * MANTLE_APOIO, az = pz + dz * MANTLE_APOIO;
       const ay = W.groundHeightAt(ax, az, py + 0.5);
       if (Math.abs(ay - py) > STEP_H) return null;
-      p.set(ax, ay, az); this._collide(p, 0.38);
+      p.set(ax, ay, az); this._collide(p, 0.38, this._mantleColliders(ax, az));
       if (Math.abs(p.x - ax) > 1e-3 || Math.abs(p.z - az) > 1e-3) return null;
       if (!this._mantleAlcancavel(ax, az, ay)) return null;   // território novo: ver _mantleAlcance
       return { x: ax, y: ay, z: az };
     }
     return null;
+  }
+
+  /* A decisão fica em `_mantleTarget`; esta trajetória determinística é compartilhada por
+     predição e servidor e sobe antes de cruzar a parede. */
+  _beginMantle(p, target) {
+    const rise = target.y - p.pos.y;
+    p.mantle = {
+      x0: p.pos.x, y0: p.pos.y, z0: p.pos.z,
+      x1: target.x, y1: target.y, z1: target.z,
+      t: 0,
+      dur: Math.max(MANTLE_T_MIN, Math.min(MANTLE_T_MAX, 0.24 + rise * 0.10)),
+    };
+    p.mantleF = 0;
+    p.vel.set(0, 0, 0);
+    p.grounded = false;
+    p.jumpBufferedUntil = 0;
+    p.coyoteUntil = 0;
+    this.sfx.jump();
+  }
+
+  _stepMantle(p, dt) {
+    const m = p.mantle;
+    if (!m) return false;
+    m.t = Math.min(m.dur, m.t + dt);
+    const f = m.t / m.dur;
+    const smooth = (v) => v * v * (3 - 2 * v);
+    const up = smooth(Math.min(1, f / 0.68));
+    const across = smooth(Math.max(0, (f - 0.18) / 0.82));
+    p.pos.x = m.x0 + (m.x1 - m.x0) * across;
+    p.pos.z = m.z0 + (m.z1 - m.z0) * across;
+    p.pos.y = m.y0 + (m.y1 - m.y0) * up + Math.sin(f * Math.PI) * 0.04;
+    p.vel.set(0, 0, 0);
+    p.grounded = false;
+    p.mantleF = f;
+    if (f < 1) return true;
+    p.pos.set(m.x1, m.y1, m.z1);
+    p.grounded = true;
+    p.mantle = null;
+    p.mantleF = 0;
+    p.landDip = Math.max(p.landDip || 0, 0.22);
+    this.sfx.land();
+    return true;
   }
   /* PONTO ANDÁVEL MAIS PRÓXIMO (usado pelo armário do spawn).
      Empurra (x,z) pra fora de qualquer colisor/limite usando a MESMA física do jogador —
@@ -6636,6 +6705,7 @@ export class Game {
     // animação: locomoção pela velocidade + agachado + mira da cabeça pelo pitch.
     if (tp.ctrl) {
       tp.ctrl.setCrouch?.(p.crouchF > 0.5);
+      tp.ctrl.setMantle?.(p.mantle ? p.mantleF : null);
       tp.ctrl.setAr?.(p.grounded === false);
       tp.ctrl.aimPitch = p.pitch;
       const back = -(p.vel.x * Math.sin(p.yaw) + p.vel.z * Math.cos(p.yaw)) < -0.25;
@@ -6798,6 +6868,8 @@ export class Game {
      mundo (BUG-86, KNOWN-BUGS.md). Chamado pelo _respawnPlayer (SP) e pelo netgame (MP). */
   _tpRevive() {
     this._tpDead = false;
+    this.player.mantle = null;
+    this.player.mantleF = 0;
     const tp = this.playerTP;
     if (!tp) return;
     if (tp.ctrl && tp.ctrl.revive) tp.ctrl.revive();
@@ -6816,6 +6888,12 @@ export class Game {
     p.crouchF = Math.max(0, Math.min(1, p.crouchF + (wantCrouch ? dt * 7 : -dt * (MOVE2 ? 4.2 : 7))));
     const walking = MOVE2 && !!inp.shift;   // Shift = ANDAR (silencioso)
     const sprint = !MOVE2 && !!inp.shift && p.crouchF < 0.3;
+    if (p.mantle) {
+      p._spaceHeld = !!inp.jump;
+      this._stepMantle(p, dt);
+      this.sfx._quiet = true;
+      return { sp: 0, walking, sprint: false, mantling: true };
+    }
     const slowMul = this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 0.45 : 1;  // água/lago
     // velocidade base × ARMA (MOVE_MUL) × andar × ADS × agachado × água
     const wpnMul = MOVE2 ? (MOVE_MUL[p.weapon] !== undefined ? MOVE_MUL[p.weapon] : 0.9) : 1;
@@ -6831,11 +6909,9 @@ export class Game {
     const sin = Math.sin(p.yaw), cos = Math.cos(p.yaw);
     // camera: forward = (-sin, -cos), right = (cos, -sin)  →  wish = right*ix + forward*(-iz)
     const wx = ix * cos + iz * sin, wz = -ix * sin + iz * cos;
-    // CoD tuning (port tuning.js): chão 92 m/s² (velocidade cheia em ~50ms = "tight");
-    // ar = 25% de autoridade e NÃO ganha velocidade além da que saiu do chão (cap).
-    // `__mutAccel`: gancho da movimento-golden. Sem ele o `--mutar=n` era setado e nunca
-    // lido, e a régua passava verde com a física mudada. Zero em produção.
-    const accel = (p.grounded ? 92 : 23) + (this.__mutAccel || 0);
+    // 48 m/s² chega a 90% em 0,167 s; ar mantém 25% de autoridade. `__mutAccel`
+    // alimenta as réguas movimento-golden e movimento-fluidez.
+    const accel = (p.grounded ? 48 : 12) + (this.__mutAccel || 0);
     const spBefore = Math.hypot(p.vel.x, p.vel.z);
     p.vel.x += wx * accel * dt; p.vel.z += wz * accel * dt;
     if (!p.grounded) {
@@ -6864,13 +6940,29 @@ export class Game {
     if (sp > maxSp) { p.vel.x *= maxSp / sp; p.vel.z *= maxSp / sp; }
     // Shift silencioso: gate global do sfx.step (instalado no constructor) + ninguém escuta.
     this.sfx._quiet = MOVE2 && walking && sp < PLAYER_SPEED * wpnMul * (WALK_MUL + 0.06);
-    // jump: coyote time (90ms) + jump buffer (130ms) — tuning CoD/MW: pular logo depois de
-    // sair da borda ou logo antes de tocar o chão ainda funciona (feel moderno, zero risco)
+    // jump: coyote time (90ms) + jump buffer (130ms). Segurar Espaço mantém a intenção
+    // de mantle durante o arco: o jogador pode pular cedo e agarrar a beirada ao alcançá-la.
     p.coyoteUntil = p.grounded ? this.time + 0.09 : (p.coyoteUntil || 0);
     if (inp.jump && !p._spaceHeld) p.jumpBufferedUntil = this.time + 0.13;
     p._spaceHeld = !!inp.jump;
-    if ((p.jumpBufferedUntil || 0) > this.time && this.time < (p.coyoteUntil || 0) && this._acceptInput()) {
-      p.vel.y = this.world.jumpImpulse ?? 5.0; p.grounded = false; p.jumpBufferedUntil = 0; p.coyoteUntil = 0; this.sfx.jump();
+    const aceitaMovimento = this._acceptInput();
+    if (!inp.jump) p._mantleScanAt = 0;
+    const podeEscanear = aceitaMovimento && inp.jump && (ix || iz) && p.crouchF < 0.7
+      && this.time >= (p._mantleScanAt || 0);
+    const target = podeEscanear ? this._mantleTarget(p.pos, wx, wz) : null;
+    if (podeEscanear) p._mantleScanAt = this.time + MANTLE_SCAN_DT;
+    if (target) this._beginMantle(p, target);
+    else if ((p.jumpBufferedUntil || 0) > this.time && this.time < (p.coyoteUntil || 0) && aceitaMovimento) {
+      p.vel.y = this.world.jumpImpulse ?? 5.0;
+      p.grounded = false;
+      p.jumpBufferedUntil = 0;
+      p.coyoteUntil = 0;
+      this.sfx.jump();
+    }
+    if (p.mantle) {
+      this._stepMantle(p, dt);
+      this.sfx._quiet = true;
+      return { sp: 0, walking, sprint: false, mantling: true };
     }
     const followStepDown = this.world.snapDownSteps === true && p.grounded && p.vel.y <= 0;
     p.vel.y -= 20.6 * dt;   // gravidade exagerada do CoD — arco de pulo "snappy", não flutuante
@@ -7853,6 +7945,8 @@ export class Game {
     const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
     b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;
     this._equiparArmadura(b);
+    b.mantle = null; b.mantleF = 0; b._spaceHeld = false; b._mantleScanAt = 0;
+    b.jumpBufferedUntil = 0; b.coyoteUntil = 0;
     /* Renascem sobrepostos de propósito: jitter no spawn foi medido e reprovado. Quem
        desempilha é a despenetração do _botSeparation. Números: docs/MULTIPLAYER.md. */
     b.protUntil = this.time + SPAWN_PROT;

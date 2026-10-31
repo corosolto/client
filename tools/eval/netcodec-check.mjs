@@ -1,12 +1,11 @@
-/* Snapshot binário v6: round-trip do codec real, totais autoritativos de abates por rodada,
-   reboque privado, CTF, compatibilidade v5/v4/v3/v2, limites hostis e integração do NetClient.
-   O formato roda como ES module puro em public/, sem bundler nem dependência de runtime.
+/* Snapshot binário v7: round-trip do codec real, progresso de mantle remoto, totais
+   autoritativos de abates por rodada, reboque privado, CTF, compatibilidade v6..v2,
+   limites hostis e integração do NetClient.
 
-   O QUE MUDOU NA v5 (e por quê): o bloco privado — ack, pente, reserva, recarga e os dois
-   slots — ia em TODAS as entidades e só era lido para a PRÓPRIA. Agora viaja uma vez, num
-   reboque de 30 bytes endereçado a quem recebe, junto com a posição EXATA do dono. E a
-   posição dos vizinhos passou a u16: 15,6 mm de passo é invisível num corpo de 1,8 m, e o
-   servidor continua acertando tiro com a posição de f64 que nunca sai dele. */
+   O QUE MUDOU NA v5: o bloco privado de ack, munição, recarga e slots saiu de cada
+   entidade e virou reboque de 30 bytes para o dono. Posição de vizinho virou u16,
+   com passo de 15,6 mm. A v6 somou placar da rodada; a v7 soma um byte opcional
+   de progresso de mantle por entidade. */
 import fs from 'node:fs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
@@ -34,7 +33,7 @@ if (MUT === 'sem-negociacao') {
   console.log(`mutante desconhecido: ${MUT}`); process.exit(1);
 }
 
-cobra(/new WebSocket\(this\.url, SNAPSHOT_PROTOCOLS\)/.test(tpSrc), 'cliente negocia v6/v5/v4/v3/v2 binário com fallback v1 JSON');
+cobra(/new WebSocket\(this\.url, SNAPSHOT_PROTOCOLS\)/.test(tpSrc), 'cliente negocia v7/v6/v5/v4/v3/v2 binário com fallback v1 JSON');
 cobra(/binaryType\s*=\s*['"]arraybuffer['"]/.test(tpSrc), 'frames binários chegam como ArrayBuffer, não Blob');
 cobra(/decodeSnapshot\(dados\)/.test(netSrc), 'o caminho de produção chama o decoder real');
 cobra(/MAX_SNAPSHOT_BYTES/.test(tpSrc), 'o transporte limita frame antes de alocar/decodificar');
@@ -50,6 +49,7 @@ if (codec) {
     id: 100 + i, name: `JOGADOR_${i}`, team: i < 5 ? 'E' : 'B', bot: i === 0 ? 0 : 1,
     x: i * 3.125 - 12, y: 0.2, z: 40 - i * 4.25, yaw: i * 0.2, pitch: -0.1,
     hp: i === 9 ? 0 : 100 - i, alive: i !== 9, weapon: i % 2 ? 'ak' : 'awp',
+    mantleF: i === 2 ? 0.62 : null,
     fire: i === 3 ? 1 : 0, fireN: i === 3 ? 7 : 0, voice: i === 4 ? 'radio' : 0,
     voiceN: i === 4 ? 5 : 0, k: i, d: 9 - i,
     respawnIn: i === 9 ? 2.25 : 0, killedBy: i === 9 ? 'JOGADOR_1' : undefined,
@@ -83,7 +83,9 @@ if (codec) {
   cobra(out.type === 'snapshot' && out.room === sample.room && out.tick === sample.tick,
     'envelope sobrevive ao round-trip');
   cobra(out.roundKillsE === 7 && out.roundKillsB === 4,
-    'v6 preserva os totais autoritativos de abates da rodada');
+    'v7 preserva os totais autoritativos de abates introduzidos na v6');
+  cobra(perto(out.ents[2].mantleF, 0.62, 1 / 254) && !('mantleF' in out.ents[1]),
+    'v7 preserva progresso do mantle remoto em um byte e distingue ausência');
   cobra(out.ents.length === 10 && out.ents.every((e, i) => e.id === ents[i].id && e.name === ents[i].name),
     'identidade das 10 entidades sobrevive');
   /* A precisão é DIFERENTE por papel, e é essa diferença que paga a banda: o vizinho é
@@ -109,10 +111,13 @@ if (codec) {
   const semPrivado = codec.decodeSnapshot(comum);
   cobra(!('ackSeq' in semPrivado.ents[0]) && !('mag' in semPrivado.ents[0]),
     'e nenhuma entidade carrega bloco privado de ninguém (era 14 bytes × N por snapshot)');
+  const outV6 = codec.decodeSnapshot(codec.encodeSnapshot(sample, 6));
+  cobra(outV6.roundKillsE === 7 && outV6.roundKillsB === 4 && !('mantleF' in outV6.ents[2]),
+    'snapshot v6 continua decodificável e omite somente o mantle remoto da v7');
   const outV5 = codec.decodeSnapshot(codec.encodeSnapshot(sample, 5));
   cobra(!('roundKillsE' in outV5) && !('roundKillsB' in outV5)
       && outV5.ents[3].fireN === 7,
-    'snapshot v5 continua decodificável sem inventar os campos exclusivos da v6');
+    'snapshot v5 continua decodificável sem inventar campos exclusivos de v6/v7');
   const v4bin = codec.encodeSnapshot(sample, 4);
   cobra(bin.byteLength < v4bin.byteLength * 0.75,
     `v6 preserva o corte de banda da v5: ${bin.byteLength} contra ${v4bin.byteLength} bytes da v4 (${Math.round((1 - bin.byteLength / v4bin.byteLength) * 100)}% menos)`);
@@ -135,13 +140,14 @@ if (codec) {
   const jsonBytes = Buffer.byteLength(JSON.stringify(sample));
   cobra(bin.byteLength < jsonBytes * 0.45,
     `payload binário fica abaixo de 45% do JSON (${bin.byteLength}/${jsonBytes} bytes)`);
-  cobra(codec.SNAPSHOT_PROTOCOLS[0] === 'coro-snapshot-v6'
-      && codec.SNAPSHOT_PROTOCOLS[1] === 'coro-snapshot-v5'
-      && codec.SNAPSHOT_PROTOCOLS[2] === 'coro-snapshot-v4'
-      && codec.SNAPSHOT_PROTOCOLS[3] === 'coro-snapshot-v3'
-      && codec.SNAPSHOT_PROTOCOLS[4] === 'coro-snapshot-v2'
+  cobra(codec.SNAPSHOT_PROTOCOLS[0] === 'coro-snapshot-v7'
+      && codec.SNAPSHOT_PROTOCOLS[1] === 'coro-snapshot-v6'
+      && codec.SNAPSHOT_PROTOCOLS[2] === 'coro-snapshot-v5'
+      && codec.SNAPSHOT_PROTOCOLS[3] === 'coro-snapshot-v4'
+      && codec.SNAPSHOT_PROTOCOLS[4] === 'coro-snapshot-v3'
+      && codec.SNAPSHOT_PROTOCOLS[5] === 'coro-snapshot-v2'
       && codec.SNAPSHOT_PROTOCOLS.includes('coro-json-v1'),
-    'ordem de negociação prefere v6 e preserva fallbacks v5/v4/v3/v2/JSON');
+    'ordem de negociação prefere v7 e preserva fallbacks v6/v5/v4/v3/v2/JSON');
 
   for (const ruim of [bin.slice(0, 12), new Uint8Array([0, 1, 2, 3]), new Uint8Array(codec.MAX_SNAPSHOT_BYTES + 1)]) {
     let recusou = false; try { codec.decodeSnapshot(ruim); } catch { recusou = true; }

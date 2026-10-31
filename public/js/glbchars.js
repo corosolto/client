@@ -887,7 +887,7 @@ class CharController {
     this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
     this._emoteId = null; this._emoteT = 0; this._emoteK = 0; this._emoteDip = 0;
     this.emotando = false; this._emoteOssos = [];
-    this._ar = false; this._landT = 0; this._yawAtraso = null; this._deathTilt = 0; this.lod = 0;
+    this._ar = false; this._mantleF = null; this._landT = 0; this._yawAtraso = null; this._deathTilt = 0; this.lod = 0;
     this.shadow = null; this._airK = 0;   // sombra de contato + fator "está no ar" (0..1, suavizado)
     this.oneHanded = false; // arma de 1 mão: idle/walk trocam p/ idle1h/walk1h (setado em buildCharacterModel)
     this._loco = 'idle'; // current locomotion state (hysteresis memory for walk/run choice)
@@ -957,6 +957,12 @@ class CharController {
     this._ar = novo;
   }
 
+  /* O mantle reutiliza o clipe de pulo, mas o tempo vem do progresso físico. Deixar o
+     mixer tocar livre fazia braços e corpo terminarem antes de o jogador cruzar a borda. */
+  setMantle(f) {
+    this._mantleF = Number.isFinite(f) ? Math.max(0, Math.min(1, f)) : null;
+  }
+
   jump() {
     if (this.dead || this.crouch || this.jumping || !this.actions.jump) return;
     this.jumping = true;
@@ -992,7 +998,7 @@ class CharController {
     // Viés de tombo pela direção do disparo: o mesmo clipe deixa de cair sempre igual.
     this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
     this._deathDir = dir ? { x: dir.x, z: dir.z } : null;
-    this.dead = true; this.shooting = false; this._ar = false;
+    this.dead = true; this.shooting = false; this._ar = false; this._mantleF = null;
     this._to('death', true);
     if (this.actions.death) this.actions.death.timeScale = 1.8; // snappy fall, not slow-mo
   }
@@ -1002,7 +1008,7 @@ class CharController {
   // character does everything on top of the fallen pose (the "walking while falling
   // backward" bug). Then start idle clean.
   revive() {
-    this.dead = false; this.shooting = false; this.jumping = false;
+    this.dead = false; this.shooting = false; this.jumping = false; this._ar = false; this._mantleF = null;
     this.mixer.stopAllAction();
     this.cur = null;
     this._to('idle');
@@ -1016,7 +1022,13 @@ class CharController {
   update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
     if (!this.dead) {
       if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
-      if (this.crouch) {
+      if (this._mantleF !== null && this.actions.jump) {
+        if (this.cur !== this.actions.jump) { this._to('jump'); this.jumping = false; }
+        const jump = this.actions.jump;
+        jump.paused = true;
+        jump.time = jump.getClip().duration * (0.08 + this._mantleF * 0.88);
+        this.curName = 'jump';
+      } else if (this.crouch) {
         this._to(moving > 0.05 ? 'crouchwalk' : 'crouch');
       } else if (this.shooting && moving > 0.05 && this.actions.walkfire) {
         // Atirar EM MOVIMENTO: o clipe combinado (walk+fire) mantém as pernas andando —
@@ -1028,9 +1040,9 @@ class CharController {
         this.actions.shoot.paused = false;
         this._to('shoot', true, false);
       } else if (this._ar && this.actions.jump) {
-        // no ar: segura a pose do pulo em vez de voltar a andar/correr
         if (this.cur !== this.actions.jump) { this._to('jump'); this.jumping = false; }
-        this.actions.jump.paused = this.actions.jump.time >= this.actions.jump.getClip().duration - 0.02;
+        const jump = this.actions.jump;
+        jump.paused = jump.time >= jump.getClip().duration - 0.02;
         this.curName = 'jump';
       } else if (this._landT > 0 && this.actions.crouch) {
         this._landT = Math.max(0, this._landT - dt);
@@ -1093,7 +1105,7 @@ class CharController {
     // (o corpo está mais perto do chão); morto, alivia — o corpo tombou e a mancha sob
     // o eixo do grupo deixaria de fazer sentido se ficasse cheia.
     if (this.shadow) {
-      const air = this.jumping ? 1 : 0;
+      const air = this._ar ? 1 : 0;
       this._airK += (air - this._airK) * Math.min(1, dt * 8);
       const k = 1 - this._airK;
       const s = this.shadow, base = s.userData.csBase || 0.9;

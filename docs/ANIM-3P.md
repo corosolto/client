@@ -1,4 +1,4 @@
-# Animação 3P: recarga visível e inclinação lateral
+# Animação 3P: recarga, locomoção e travessia
 
 Decisões e números dos overlays de tronco do `CharController` (`public/js/glbchars.js`).
 A régua é `tools/eval/tp-anim3p-check.mjs` (`npm run eval:tpanim3p`).
@@ -63,7 +63,7 @@ Jogador 3P e bots clássicos alimentam; caminho NN segue sem (flag de laboratór
 |---|---|---|
 | Levar tiro não movia nada | `ctrl.flinch(dir, forca)`: cede na direção do disparo por 0,18 s (AN6) | cabeça desloca 13–18 cm e volta a <0,3 cm |
 | Agachado atirando era estátua (`shoot()` saía cedo no crouch) | recuo aditivo de 0,12 s sem trocar de clipe (AN7) | 2,4 cm de recuo mantendo a pose `crouch` |
-| No ar o clipe acabava e o corpo voltava a CORRER | `setAr()` segura a pose de salto e amortece 0,14 s no pouso (AN8) | estado `jump` no ar, `crouch` no pouso |
+| No ar o clipe acabava e o corpo voltava a CORRER | `setAr()` segura a pose de salto; no mantle, `setMantle(f)` amarra o tempo do clipe ao progresso físico e amortece 0,14 s no pouso (AN8) | estado `jump` no ar, sombra abre no salto, `crouch` no pouso |
 | Giro instantâneo (manequim girando) | quadril atrasa até 0,61 rad e alcança a ~3,2/s (AN9) | 0,48 rad de atraso após giro de 2 rad, alcança em 0,01 |
 | Mira vertical só na cabeça | coluna assume 45% do `aimPitch` (teto 0,35 rad) | cabeça percorre 9 cm com `aimPitch` 0,5 |
 | Todo mundo caía igual | `die(dir)` enviesa o tombo pela direção do tiro | tombo medido em 1,4 m de deslocamento |
@@ -71,6 +71,18 @@ Jogador 3P e bots clássicos alimentam; caminho NN segue sem (flag de laboratór
 
 O LOD é o item que paga no celular: com 8 bots, a maior parte deles passa o tempo longe da
 câmera, e cada um custava mixer + IK de mão + malha fechada de cabeça a 60 Hz.
+
+### Mantle com progresso físico (28/10)
+
+`Espaço + direção` diante de uma beirada aprovada por `_mantleTarget` agora cria uma
+travessia de 0,30 a 0,44 s no mesmo `_moveEntity` usado pela predição local e pelo servidor.
+O corpo sobe antes de avançar, pousa apenas no apoio que a trava anti-exploit já validou e
+devolve `grounded` no último quadro. O controlador 3P recebe `mantleF` e percorre o clipe
+de pulo no mesmo relógio; a sombra de contato lê `_ar`, não o flag transitório `jumping`.
+
+A régua funcional continua sendo `npm run eval:mantle` (alcance, beiradas e território).
+`npm run eval:mantle-fluidez` adiciona o contrato visual: 18 a 28 quadros a 60 Hz, no máximo
+0,18 m por quadro, subida antes do avanço e mutante que volta a teleportar.
 
 ## Fallbacks declarados (AN5)
 
@@ -134,7 +146,7 @@ nova, não parâmetro. Armas de 2 mãos não foram tocadas.
 ## Fora de escopo, declarado
 
 Morte segue sendo o clipe `death` a 1,8× (sem ragdoll — escolha estilística vigente).
-Strafe com clipe autoral e pitch de torso na mira continuam abertos como decisão de custo.
+Strafe com clipe autoral continua aberto como decisão de custo.
 
 ## O contrato de postura (23/10): o padrão que personagem novo tem que cumprir
 
