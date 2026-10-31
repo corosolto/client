@@ -86,6 +86,22 @@ function editorIO() {
     `parsed=${!error} name=${JSON.stringify(actual?.name)}`);
 }
 
+for (const id of ['arena_ok', 'arena2', 'arena-treta', 7, 0, false, '', {}, 'x;alert(1)']) {
+  const e = editorIO(); e.scope.spec.id = id;
+  let error;
+  try { await e.scope.$('snippet-btn').onclick(); } catch (caught) { error = caught; }
+  const accepted = typeof id === 'string' && /^arena(?:_ok|2)$/.test(id);
+  if (accepted) {
+    const module = e.clipboard()?.replace(/\/\* cole aqui o conteúdo do .*?\.json \*\//, JSON.stringify(e.scope.spec));
+    const result = spawnSync(process.execPath, ['--check', '--input-type=module'], { input: module, encoding: 'utf8', timeout: 2000 });
+    check('snippet-module-'+id, !error && !!module && !result.error && result.status === 0,
+      `parse=${result.status} error=${error?.message ?? result.error?.message ?? 'none'}`);
+  } else {
+    check('snippet-rejects-id-'+JSON.stringify(id), !error && e.clipboard() === undefined && e.alerts.length === 1,
+      `clipboard=${e.clipboard() !== undefined} alerts=${e.alerts.length} error=${error?.message ?? 'none'}`);
+  }
+}
+
 const drawStart = html.indexOf('function draw(){');
 const drawEnd = html.indexOf('function rect(', drawStart);
 if (drawStart < 0 || drawEnd < 0) throw new Error('editor draw not found');

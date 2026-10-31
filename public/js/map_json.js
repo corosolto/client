@@ -110,8 +110,10 @@ export function planFromJSON(spec) {
 
   // grade de waypoints — bloqueio só por navColliders; altura pelo campo; continuidade ≤ DEGRAU.
   const blocked = (x, z, inflate) => {
+    // faixa do corpo relativa ao chão local (heightAt): sólido assentado em plataforma elevada também bloqueia
+    const h = heightAt(x, z);
     for (const c of navColliders)
-      if (x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < 1.6 && c.maxY > 0.15) return true;
+      if (x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < h + 1.6 && c.maxY > h + 0.15) return true;
     return false;
   };
   const nodes = [], adj = [];
@@ -178,7 +180,9 @@ export function validatePlan(plan) {
 
   const dentroBounds = (x, z) => x > plan.bounds.minX && x < plan.bounds.maxX && z > plan.bounds.minZ && z < plan.bounds.maxZ;
   // "dentro de sólido" = dentro de muro/caixa NÃO-walkable. Spawn no TOPO de caixa walkable é válido.
-  const dentroSolido = (x, z) => plan.navColliders.some((c) => x > c.minX && x < c.maxX && z > c.minZ && z < c.maxZ && c.maxY > 0.15);
+  // Mesma faixa do blocked relativa ao chão: spawn sob colisor elevado com folga é válido.
+  const dentroSolido = (x, z) => { const h = plan.heightAt(x, z);
+    return plan.navColliders.some((c) => x > c.minX && x < c.maxX && z > c.minZ && z < c.maxZ && c.minY < h + 1.6 && c.maxY > h + 0.15); };
   for (const lado of ['E', 'B']) {
     const arr = plan.spawns[lado] || [];
     if (arr.length === 0) { problemas.push(`R3 lado ${lado} sem spawn`); continue; }

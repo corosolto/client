@@ -38,6 +38,18 @@ try {
   const badNodes = world.waypoints.nodes.filter(point => inside(point, corridor.props[0], .5));
   check('loaded-graph-avoids-prop', badNodes.length === 0, `nodes inside inflated collider=${badNodes.length}`);
   world.dispose();
+  const elevated = structuredClone(corridor);
+  elevated.boxes = [{ x: 0, z: 0, w: 24, d: 24, h: 2, walkable: true }];
+  const elevatedPlan = planFromJSON(elevated);
+  check('elevated-graph-avoids-prop', elevatedPlan.nodes.filter(point => inside(point, elevated.props[0], .5)).length === 0,
+    `nodes inside elevated solid=${elevatedPlan.nodes.filter(point => inside(point, elevated.props[0], .5)).length}`);
+  const underpass = structuredClone(corridor);
+  underpass.boxes = [{ x: 0, z: 0, w: 2, d: 2, h: 3, walkable: true }];
+  underpass.props[0].cw = underpass.props[0].cd = 6;
+  underpass.spawns.E = [{ x: 2, z: 0 }];
+  const underPlan = planFromJSON(underpass);
+  check('spawn-below-elevated-collider', !validatePlan(underPlan).some(problem => /R3 spawn E dentro de sólido/.test(problem)),
+    `spawnY=${underPlan.heightAt(2, 0)} colliderY=${underPlan.navColliders.at(-1).minY}`);
 } finally {
   registerPropTemplate(id, null); template.geometry.dispose(); template.material.dispose();
 }
