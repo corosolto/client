@@ -10,6 +10,13 @@ const { makeNetcode } = await import('../../public/js/netgame.js');
 const SEED = 44031;
 const DT = 1 / 60;
 
+function construirGame(criar) {
+  const { log, info } = console;
+  console.log = console.info = (...args) => console.error(...args);
+  try { return criar(); }
+  finally { console.log = log; console.info = info; }
+}
+
 // Entrada sintética (mesma forma do fixture do locomotion-check): em node o GLB da
 // família não carrega; callers, runtime e update exercitados são os reais do produto.
 function entradaSintetica(vm, key, comUtility = false) {
@@ -39,11 +46,11 @@ async function bootMutado(fonte) {
   const { Game } = await import(`data:text/javascript;base64,${Buffer.from(fonte).toString('base64')}`);
   seedRandom(SEED);
   const def = CHARACTERS.find((c) => c.id === PCHAR) || CHARACTERS[0];
-  const g = new Game({
+  const g = construirGame(() => new Game({
     renderer, textures: initTextures(), sfx, settings: { bots: 0, quality: 'low', difficulty: 'normal', sens: 1 },
     playerCharId: def.id, playerTeam: 'E', playerFaction: def.team, enemyFaction: 'B',
     nickname: 'SIM', mapId: 'ferro_velho', ctf: false, testMode: true, onQuit() {}, onMatchEnd() {},
-  });
+  }));
   g._ensureDolly = () => {};
   g.killsToWin = Infinity;
   g.start ? g.start() : g._startRound();
@@ -282,7 +289,7 @@ if (alvo || process.argv.includes('--mutantes')) {
   }
   console.log(JSON.stringify(resultado, null, 2));
 } else {
-  const g = bootGame('ferro_velho', { textures: initTextures(), bots: 0, seed: SEED });
+  const g = construirGame(() => bootGame('ferro_velho', { textures: initTextures(), bots: 0, seed: SEED }));
   const result = aceitacao(g);
   console.log(JSON.stringify(result, null, 2));
   if (!result.ok) process.exitCode = 1;
