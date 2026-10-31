@@ -66,6 +66,35 @@ function validate(j) {
   return typeof j.nota_geral === 'number';
 }
 
+/* OPENROUTER (31/10, chave do dono): com OPENROUTER_API_KEY no env, o juiz usa um VL
+ * forte via API em vez dos free do opencode (que alucinam em close). A chave NUNCA vai
+ * para arquivo versionado: env apenas. Modelo default: gemini-2.5-flash (bom em visão,
+ * barato); troque com --or_model=. */
+const OR_KEY = process.env.OPENROUTER_API_KEY || '';
+const OR_MODEL = arg('or_model', 'google/gemini-2.5-flash');
+
+async function askOr(model, extraInstr = '') {
+  const content = [{ type: 'text', text: rub.instr + extraInstr + (EXTRA ? `\nContexto: ${EXTRA}` : '') }];
+  for (const img of images) {
+    content.push({ type: 'image_url', image_url: { url: `data:image/png;base64,${readFileSync(img).toString('base64')}` } });
+  }
+  let j = null;
+  try {
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${OR_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ model, messages: [{ role: 'user', content }], max_tokens: 2048 }),
+    });
+    j = await r.json();
+  } catch (e) {
+    return { err: `openrouter(${model}) rede: ${String(e && e.message || e).slice(0, 160)}` };
+  }
+  if (j?.error) return { err: `openrouter(${model}): ${JSON.stringify(j.error).slice(0, 160)}` };
+  const parsed = extractJson(j?.choices?.[0]?.message?.content || '');
+  if (!validate(parsed)) return { err: `JSON inválido de openrouter(${model})` };
+  return { j: parsed };
+}
+
 function ask(model, extraInstr = '') {
   const prompt = rub.instr + extraInstr + (EXTRA ? `\nContexto: ${EXTRA}` : '');
   const args = ['run', '--pure', '-m', model, prompt];
@@ -78,18 +107,19 @@ function ask(model, extraInstr = '') {
   return { j };
 }
 
-let res = ask(MODEL);
+const ESTRICTO = '\nRESPOSTA ANTERIOR INVÁLIDA. Devolva APENAS o objeto JSON, nada mais.';
+let res = OR_KEY ? await askOr(OR_MODEL) : ask(MODEL);
 if (res.err) {
   console.error(`[vision-judge] ${res.err} — retry com instrução estrita`);
-  res = ask(MODEL, '\nRESPOSTA ANTERIOR INVÁLIDA. Devolva APENAS o objeto JSON, nada mais.');
+  res = OR_KEY ? await askOr(OR_MODEL, ESTRICTO) : ask(MODEL, ESTRICTO);
 }
-if (res.err) {
+if (res.err && !OR_KEY) {
   console.error(`[vision-judge] ${res.err} — fallback ${FALLBACK_MODEL}`);
   res = ask(FALLBACK_MODEL);
 }
 if (res.err) { console.error(`[vision-judge] FALHOU: ${res.err}`); process.exit(1); }
 
-res.j._meta = { rubric: RUBRIC, model: MODEL, images: images.length, ts: new Date().toISOString() };
+res.j._meta = { rubric: RUBRIC, model: OR_KEY ? OR_MODEL : MODEL, images: images.length, ts: new Date().toISOString() };
 const out = JSON.stringify(res.j, null, 2);
 if (OUT) writeFileSync(OUT, out);
 console.log(out);

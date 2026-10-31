@@ -198,6 +198,33 @@ const P1H_BASE_CLIP = new Set(['esquerdomacho']);
 const TP_FRONT_MAX_CHAR = { canarinho: 0.20 };
 const loader = new GLTFLoader();
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
+/* Temporários da guarda de alcance do IK (zero alocação por quadro). */
+const _alcA = new THREE.Vector3(), _alcB = new THREE.Vector3(), _upY = new THREE.Vector3(0, 1, 0);
+/* GUARDA DE ALCANCE DO IK (31/10, dono: recarga do Juiz com "o braço indo pra trás"):
+ * CCD sem limite contorce ombro/cotovelo quando o alvo está além do braço — o cotovelo
+ * sobe e o braço cruza o corpo por trás. O alvo vem PRA DENTRO do alcance (95%) e o
+ * braço alcança o que dá, sem contorção. Vale pra mão de apoio, porte 1H e recarga. */
+function clampAlcanceIK(chain, end, alvo) {
+  if (!chain || chain.length < 2 || !alvo) return alvo;
+  chain[0].getWorldPosition(_alcA);          // ombro
+  chain[1].getWorldPosition(_alcB);          // cotovelo
+  const braco = _alcA.distanceTo(_alcB);     // comprimento de osso: invariante à pose
+  end.getWorldPosition(_alcA);               // mão
+  const alcance = (braco + _alcB.distanceTo(_alcA)) * 0.95;
+  chain[0].getWorldPosition(_alcB);          // ombro de novo (base do clamp)
+  const dx = alvo.x - _alcB.x, dy = alvo.y - _alcB.y, dz = alvo.z - _alcB.z;
+  const d = Math.hypot(dx, dy, dz);
+  if (d <= alcance || d < 1e-6) return alvo;
+  const k = alcance / d;
+  alvo.set(_alcB.x + dx * k, _alcB.y + dy * k, _alcB.z + dz * k);
+  return alvo;
+}
+/* TINT 3P por personagem (31/10, dono: capa do Juiz "esbranquiçada demais e feia"):
+ * multiplica a cor do material (a textura do robe é clara e lavada). Caso-a-caso,
+ * declarado aqui; o crivo final é a contact sheet. */
+const TINT_3P = {
+  juiz: [{ material: /Navy Broadshoulder/i, color: 0x98a3c6 }],
+};
 
 let _clips = null;                 // { idle: AnimationClip, ... } shared fallback
 const _clipsByChar = {};           // id -> per-character retargeted clip set (fallback to _clips)
@@ -833,6 +860,25 @@ export function buildCharacterModel(def, opts = {}) {
     for (const b of curlRs) b.rotation.x += curl;
     const supportCurl = skin?.gripProfile === 'mint24-curl-v1' && ['lula-drip', 'senador-drip', 'zero-um-mandrake'].includes(def.skinId) ? 2.5 : curl;
     if (twoHanded) for (const b of curlLs) b.rotation.x += supportCurl;
+    /* TINT 3P (ver TINT_3P): multiplicador de cor sobre a textura, clonando o material
+     * só dos meshes atingidos (o resto do elenco não toca em nada). */
+    const tints = TINT_3P[def.id];
+    if (tints?.length) {
+      model.traverse((o) => {
+        if (!o.isMesh || !o.material) return;
+        const lista = Array.isArray(o.material) ? o.material : [o.material];
+        let trocou = false;
+        for (let i = 0; i < lista.length; i++) {
+          const t = tints.find((tt) => lista[i]?.name && tt.material.test(lista[i].name));
+          if (!t) continue;
+          const c = lista[i].clone();
+          c.color = new THREE.Color(t.color);
+          lista[i] = c;
+          trocou = true;
+        }
+        if (trocou) o.material = Array.isArray(o.material) ? lista : lista[0];
+      });
+    }
     // IK da mão de apoio (FASE 2): em armas de 2 mãos, o CharController trava a palma L
     // no guarda-mão depois de cada mixer.update — vale pra idle/walk dos bots E pro
     // preview da tela de seleção (mesmo ctrl.update). Posicional apenas: os clipes já
@@ -1115,6 +1161,27 @@ class CharController {
         this.headBone.updateWorldMatrix(false, true);
       }
     }
+    /* RECENTRO DE YAW da cabeça (31/10, dono: "personagens em postura torta, com rosto
+       e cabeça pra um lado e corpo pro outro" — o Esquerdomacho é o pior). Clipes
+       retargetados deixam a cabeça virada CONTRA o torso parado. Mesma malha fechada do
+       pitch, no eixo vertical do grupo, só em porte parado (não briga com mira/locomoção). */
+    if (this.headBone && !this.dead && this.lod < 2
+        && /^(idle|idle1h|crouch)$/.test(this.curName || '')) {
+      this.group.getWorldQuaternion(_gq);
+      _v.set(0, 0, 1).applyQuaternion(_gq);            // frente do corpo em mundo
+      const fx = _v.x, fz = _v.z;
+      this.headBone.getWorldQuaternion(_wq);
+      _v.set(0, 0, 1).applyQuaternion(_wq);            // olhar da cabeça em mundo
+      const curYaw = Math.atan2(fx * _v.z - fz * _v.x, fx * _v.x + fz * _v.z);
+      const corr = Math.max(-AIM_CORR_CLAMP, Math.min(AIM_CORR_CLAMP, curYaw * 0.8));
+      this._yawCorr = (this._yawCorr || 0) + (corr - (this._yawCorr || 0)) * Math.min(1, dt * 6);
+      if (Math.abs(this._yawCorr) > 1e-4) {
+        _headUpQ.setFromAxisAngle(_upY, this._yawCorr);
+        this.headBone.parent.getWorldQuaternion(_pq);
+        this.headBone.quaternion.copy(_pq.invert().multiply(_headUpQ).multiply(_wq));
+        this.headBone.updateWorldMatrix(false, true);
+      }
+    }
     if (this.headBone) {
       this.group.updateMatrixWorld(true);
       this.head.position.copy(this.group.worldToLocal(this.headBone.getWorldPosition(_v)));
@@ -1199,6 +1266,7 @@ class CharController {
       ik.gun.updateWorldMatrix(true, false);
       _ikTgt.copy(ik.fore);
       ik.gun.localToWorld(_ikTgt);
+      clampAlcanceIK(ik.chain, ik.end, _ikTgt);
       solveCCDIK(ik.chain, ik.end, _ikTgt, { iterations: 8, endOffset: ik.endOffset });
     }
     /* Overlays de tronco por ÚLTIMO; eixo em MUNDO via quadro do pai e undo antes do
@@ -1293,6 +1361,7 @@ class CharController {
           this.model.worldToLocal(_ikTgt);
           _ikTgt.set(_ikTgt.x + P1H_MAO_L[0], _ikTgt.y + P1H_MAO_L[1], _ikTgt.z + P1H_MAO_L[2]);
           this.model.localToWorld(_ikTgt);
+          clampAlcanceIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt);
           solveCCDIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt, { iterations: 8 });
         }
       }
@@ -1349,10 +1418,12 @@ class CharController {
         if (this.ikL && torso.magLocal && torso.gun) {
           _ikTgt.copy(this.ikL.fore).lerp(torso.magLocal, k);
           torso.gun.localToWorld(_ikTgt);
+          clampAlcanceIK(this.ikL.chain, this.ikL.end, _ikTgt);
           solveCCDIK(this.ikL.chain, this.ikL.end, _ikTgt, { iterations: 12, endOffset: this.ikL.endOffset });
         } else if (torso.lArm && torso.lFore && torso.lHand && this.model) {
           _ikTgt.copy(torso.beltLocal);
           this.model.localToWorld(_ikTgt);
+          clampAlcanceIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt);
           solveCCDIK([torso.lArm, torso.lFore], torso.lHand, _ikTgt, { iterations: 8 });
         }
       }
