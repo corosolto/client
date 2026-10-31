@@ -35,9 +35,9 @@
 
    Uso: BASE=http://127.0.0.1:9321 node tools/eval/tp-anim3p-check.mjs
    ============================================================================ */
-import { execSync, spawn } from 'node:child_process';
+import { execFileSync, execSync, spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const BASE_EXTERNA = process.env.BASE;
 const PORTA = process.env.PORTA || '9326';
@@ -46,6 +46,7 @@ const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('
 const ESPERADO = { 'pega-morta': ['AN1'], 'torso-mudo': ['AN1', 'AN2'], 'lean-morto': ['AN3'], 'reload-mudo': ['AN4'], 'opcional-fantasma': ['AN5'],
   'flinch-mudo': ['AN6'], 'agachado-estatua': ['AN1', 'AN7'], 'ar-correndo': ['AN8', 'AN9'], 'quadril-colado': ['AN9'], 'lod-cego': ['AN10'] };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
+if (!MUT) execFileSync(process.execPath, [fileURLToPath(new URL('./tp-reload-paired-check.mjs', import.meta.url)), '--self-test'], { stdio: 'inherit' });
 
 const PARTIDA = 'debug=1&auto=E,esquerdomacho&map=praca_poderes';
 const gRoot = execSync('npm root -g').toString().trim();
@@ -103,24 +104,38 @@ const { page, fechar } = await abrir();
 const m = await page.evaluate(async () => {
   const g = window.__game;
   const T = await import('/vendor/three.module.js');
+  const { buildCharacterModel } = await import('/js/glbchars.js');
   const V = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
   const cand = (g.bots || []).filter(x => x.mesh?.ctrl?.ikL && x.mesh?.ctrl?.torso?.spines?.length && x.alive).slice(0, 8);
   let melhor = null;
   for (const b of cand) {
-    const ctrl = b.mesh.ctrl, grupo = b.mesh.group, torso = ctrl.torso;
+    // Corpos reais gêmeos isolam a recarga do tiro/lean anterior do bot vivo.
+    const medido = buildCharacterModel(b.def, { weaponId: b.weapon });
+    const controle = buildCharacterModel(b.def, { weaponId: b.weapon });
+    if (!medido || !controle) throw new Error(`sem par de controle para ${b.def.id}`);
+    for (const corpo of [medido, controle]) {
+      corpo.group.position.copy(b.mesh.group.position);
+      corpo.group.quaternion.copy(b.mesh.group.quaternion);
+      corpo.ctrl.lod = b.mesh.ctrl.lod;
+      corpo.ctrl.aimPitch = b.mesh.ctrl.aimPitch;
+    }
+    const ctrl = medido.ctrl, grupo = medido.group, torso = ctrl.torso;
     let cabeca = null; grupo.traverse(o => { if (!cabeca && o.isBone && /head/i.test(o.name)) cabeca = o; });
     const maoEsq = torso.lHand || ctrl.ikL.end;
     const roda = (n, lat = 0) => { for (let i = 0; i < n; i++) ctrl.update(1 / 60, 0, false, 0, false, lat); };
+    const rodaControle = (n) => { for (let i = 0; i < n; i++) controle.ctrl.update(1 / 60, 0, false, 0, false, 0); };
     const pos = (osso) => { grupo.updateMatrixWorld(true); return osso.getWorldPosition(V()); };
     const direita = () => { const y = grupo.rotation.y; return V(Math.cos(y), 0, -Math.sin(y)); };
     const frente = () => { const y = grupo.rotation.y; return V(-Math.sin(y), 0, -Math.cos(y)); };
-    roda(20);
+    roda(120); rodaControle(120);
     const base = { mao: pos(maoEsq), cabeca: pos(cabeca) };
-    ctrl.reload(1.2); roda(36);
+    ctrl.reload(1.2); roda(36); rodaControle(36);
     const magAlvo = torso.gun.localToWorld(torso.magLocal.clone());
     const meio = { mao: pos(maoEsq), cabeca: pos(cabeca), k: ctrl.reloadK };
-    roda(90);
+    roda(90); rodaControle(90);
     const fim = { mao: pos(maoEsq), cabeca: pos(cabeca), dur: ctrl._reloadDur };
+    controle.group.updateMatrixWorld(true);
+    const maoControle = (controle.ctrl.torso.lHand || controle.ctrl.ikL.end).getWorldPosition(V());
     roda(60, 3.5); const cabecaLean = pos(cabeca); const leanK = ctrl.leanK;
     roda(60, 0); const cabecaVolta = pos(cabeca);
     roda(30);
@@ -139,10 +154,11 @@ const m = await page.evaluate(async () => {
     const an9 = { lagImediato: Math.abs(ctrl.yawLag || 0) };
     roda(70); an9.lagDepois = Math.abs(ctrl.yawLag || 0); grupo.rotation.y = yaw0; roda(30);
     ctrl.die(); roda(90, 0); const morto0 = pos(cabeca); roda(30, 3.5); const mortoCom = pos(cabeca);
-    const an1 = { foiCm: base.mao.distanceTo(meio.mao) * 100, aoPenteCm: meio.mao.distanceTo(magAlvo) * 100, basePenteCm: base.mao.distanceTo(magAlvo) * 100, voltouCm: fim.mao.distanceTo(base.mao) * 100, kMeio: meio.k, durFim: fim.dur };
+    const an1 = { foiCm: base.mao.distanceTo(meio.mao) * 100, aoPenteCm: meio.mao.distanceTo(magAlvo) * 100, basePenteCm: base.mao.distanceTo(magAlvo) * 100, voltouCm: fim.mao.distanceTo(maoControle) * 100, derivaIdleCm: maoControle.distanceTo(base.mao) * 100, kMeio: meio.k, durFim: fim.dur };
     const an2 = { quedaCm: (base.cabeca.y - meio.cabeca.y) * 100, frenteCm: Math.abs((meio.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100, voltaCm: Math.abs((fim.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100 };
     const an3 = { leanK, deslocCm: Math.abs((cabecaLean.clone().sub(base.cabeca)).dot(direita())) * 100, voltaCm: Math.abs((cabecaVolta.clone().sub(base.cabeca)).dot(direita())) * 100, mortoDeslocCm: Math.abs((mortoCom.clone().sub(morto0)).dot(direita())) * 100 };
     const cumpre = an1.foiCm >= 8 && an1.aoPenteCm <= an1.basePenteCm - 10 && an2.frenteCm >= 5 && an3.deslocCm >= 4;
+    ctrl.mixer.stopAllAction(); controle.ctrl.mixer.stopAllAction();
     if (cumpre || !melhor) melhor = { charId: ctrl.charId, an1, an2, an3, an6, an7, an8, an9 };
     if (cumpre) break;
   }
@@ -206,7 +222,7 @@ if (m.erro) {
   cobra('AN3', false, `AN3 · ${m.erro}`);
 } else {
   cobra('AN1', m.an1.foiCm >= 8 && m.an1.aoPenteCm <= m.an1.basePenteCm - 10 && m.an1.voltouCm <= 2 && m.an1.kMeio > 0.9 && m.an1.durFim === 0,
-    `AN1 · ${m.charId}: mão esquerda foi ${m.an1.foiCm.toFixed(1)} cm, de ${m.an1.basePenteCm.toFixed(1)} cm do pente a ${m.an1.aoPenteCm.toFixed(1)} cm, e voltou a ${m.an1.voltouCm.toFixed(2)} cm do ponto de partida`);
+    `AN1 · ${m.charId}: mão esquerda foi ${m.an1.foiCm.toFixed(1)} cm, de ${m.an1.basePenteCm.toFixed(1)} cm do pente a ${m.an1.aoPenteCm.toFixed(1)} cm, e voltou a ${m.an1.voltouCm.toFixed(2)} cm do controle sem recarga (idle ${m.an1.derivaIdleCm.toFixed(2)} cm)`);
   cobra('AN2', m.an2.frenteCm >= 5 && m.an2.voltaCm <= 1.5,
     `AN2 · o mergulho levou a cabeça ${m.an2.frenteCm.toFixed(1)} cm à frente (e ${m.an2.quedaCm.toFixed(1)} cm abaixo) no pico, e ela voltou a ${m.an2.voltaCm.toFixed(2)} cm da posição original`);
   cobra('AN3', m.an3.leanK > 0.07 && m.an3.deslocCm >= 4 && m.an3.voltaCm <= 1.5 && m.an3.mortoDeslocCm <= 0.5,
