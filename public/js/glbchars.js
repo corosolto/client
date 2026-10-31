@@ -999,6 +999,15 @@ class CharController {
     this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
     this._deathDir = dir ? { x: dir.x, z: dir.z } : null;
     this.dead = true; this.shooting = false; this._ar = false; this._mantleF = null;
+    /* MORRER NO MEIO DA RECARREGA (relato do dono, 31/10: "quando morre o personagem
+       fica se debatendo pra trás"): o envelope reloadK não era guardado por `dead` e o
+       mergulho do tronco (spine k*0.20 pra trás) continuava aplicado SOBRE o clipe
+       death clampado — o cadáver ficava arcado, se contorcendo. Os overlays de vida
+       (reload/flinch/lean/pitch) morrem junto. */
+    this.cancelReload();
+    this._flinchDur = 0;
+    this._leanK = 0;
+    this.aimPitch = 0;
     this._to('death', true);
     if (this.actions.death) this.actions.death.timeScale = 1.8; // snappy fall, not slow-mo
   }
