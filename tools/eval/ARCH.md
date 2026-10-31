@@ -95,6 +95,8 @@ Cobertura: **3856 de 9063 linhas (43%)** do `game.js` têm dono declarado. O res
 | 317 | `MANTLE_GRID` | 5 |
 | 322 | `RACK_OLD` | 4 |
 | 326 | `RACK_RETA` | 25 |
+| 353 | `REGEN` | 3 |
+| 357 | `ARMADURA_DEBUG` | 3 |
 | 353 | `RADIO` | 5 |
 | 359 | `MK_LABELS` | 5 |
 | 364 | `GUNFEEL` | 4 |
@@ -254,6 +256,10 @@ Cobertura: **3856 de 9063 linhas (43%)** do `game.js` têm dono declarado. O res
 | 4257 | `_penetrationExit()` | 8 |
 | 4265 | `_surfaceOf()` | 27 |
 | 4292 | `_armoredTarget()` | 3 |
+| 4310 | `_aplicaArmadura()` | 6 |
+| 4316 | `_equiparArmadura()` | 6 |
+| 4322 | `_updateArmaduraHud()` | 13 |
+| 4335 | `_sincronizarArmaduraVisual()` | 6 |
 | 4295 | `_fleshImpact()` | 38 |
 | 4333 | `_fxVoice()` | 9 |
 | 4342 | `_impactSfx()` | 17 |
