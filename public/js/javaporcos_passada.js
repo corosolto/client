@@ -21,8 +21,11 @@ function geometriaPatas(original) {
     if (y < feet[q].y) feet[q].set(x, y, z);
     const t = THREE.MathUtils.clamp((y - box.min.y - height * .12) / (height * .26), 0, 1);
     const rootWeight = t * t * (3 - 2 * t);
+    const headWeight = THREE.MathUtils.smoothstep(z, midZ + (box.max.z - midZ) * .4, box.max.z) * rootWeight;
+    indices[i * 4 + 2] = 5;
+    weights[i * 4 + 2] = headWeight;
     indices[i * 4 + 1] = q + 1;
-    weights[i * 4] = rootWeight;
+    weights[i * 4] = rootWeight - headWeight;
     weights[i * 4 + 1] = 1 - rootWeight;
   }
   geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(indices, 4));
@@ -45,16 +48,17 @@ export function prepararPassada(pivo) {
     mesh.geometry = data.geometry;
     const root = new THREE.Bone();
     const bones = data.feet.map(() => { const bone = new THREE.Bone(); root.add(bone); return bone; });
+    const head = new THREE.Bone(); head.position.set(0, data.geometry.boundingBox.min.y + data.height * .55, 0); root.add(head);
     mesh.add(root);
     source.parent.add(mesh);
     source.removeFromParent();
-    mesh.bind(new THREE.Skeleton([root, ...bones]));
+    mesh.bind(new THREE.Skeleton([root, ...bones, head]));
     data.geometry.computeBoundingSphere();
     mesh.boundingSphere = data.geometry.boundingSphere.clone();
     mesh.boundingSphere.radius += data.stride + data.height * .15;
     mesh.frustumCulled = true;
     const distante = distantes.has(source.geometry) ? geometriaPatas(distantes.get(source.geometry)).geometry : null;
-    rigs.push({ mesh, bones, ...data, distante, pinned: [false, false, false, false],
+    rigs.push({ mesh, bones, head, ...data, distante, pinned: [false, false, false, false],
       anchors: data.feet.map(() => new THREE.Vector3()), local: new THREE.Vector3(), scale: new THREE.Vector3() });
   }
   pivo.userData.passada = { rigs, previous: new THREE.Vector3(), ready: false, phase: 0 };

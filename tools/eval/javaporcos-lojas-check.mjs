@@ -21,8 +21,9 @@ for (const nome of nomes) {
     const centro = new THREE.Vector3(shop.porta.vao[0], mesh.position.y + 1.6, shop.porta.vao[1]);
     const ray = new THREE.Raycaster(centro.clone().add(normal), normal.clone().negate(), 0, 1.2);
     const fechada = mesh.getObjectByName('porta-fechada');
-    if (mutante === 'porta-fora') { fechada.position.addScaledVector(normal, 1.21); game.scene.updateMatrixWorld(true); applied = true; }
-    assert.ok(ray.intersectObjects(world.occluders, false).some(h => h.object === fechada), 'porta intacta não bloqueia o raio');
+    if (mutante === 'porta-fora' && !shop.aberta) { fechada.position.addScaledVector(normal, 1.21); game.scene.updateMatrixWorld(true); applied = true; }
+    if(shop.aberta) assert.equal(ray.intersectObjects(world.occluders,false).length,0,'mercearia aberta tampada');
+    else assert.ok(ray.intersectObjects(world.occluders, false).some(h => h.object === fechada), 'porta intacta não bloqueia o raio');
     const before = [...mode.state.controle];
     mode.state.foodHp[spot.id] = spot.hp;
     if (mutante === 'loja-muda') { spot.loja = null; applied = true; }
@@ -33,7 +34,8 @@ for (const nome of nomes) {
     if (mutante === 'saque-sem-dominio') { mode.saquearLoja = () => {}; applied = true; }
     mode.aterrar = () => {}; mode.rosnar = () => {}; mode.emitir = () => {};
     const alvo = { kind: 'comida', spot, x: spot.x, z: spot.z };
-    bot.pos.x = spot.porta.x + normal.x; bot.pos.z = spot.porta.z + normal.z;
+    const porta=spot.porta||{x:shop.porta.vao[0],z:shop.porta.vao[1]};
+    bot.pos.x = porta.x + normal.x; bot.pos.z = porta.z + normal.z;
     if (mutante === 'atravessa-porta') { mode.arrombar = () => false; applied = true; }
     const contexto = mode.contexto.bind(mode), mover = mode.moverPara.bind(mode);
     mode.contexto = () => ({ world: { ...world, foodSpots: [spot] }, state: mode.state, jogadores: [], tempo: 0 });
@@ -43,8 +45,10 @@ for (const nome of nomes) {
     mode.game.time = 0;
     mode.updateBot(bot, 1 / 60);
     mode.contexto = contexto; mode.moverPara = mover;
-    assert.equal(moveu, false, 'avançou antes de arrombar o vão');
-    assert.ok(mode.state.foodHp[spot.id] < spot.hp, 'updateBot não atingiu porta a partir de fora');
+    if(!shop.aberta){
+      assert.equal(moveu, false, 'avançou antes de arrombar o vão');
+      assert.ok(mode.state.foodHp[spot.id] < spot.hp, 'updateBot não atingiu porta a partir de fora');
+    } else assert.equal(moveu,true,'mercearia aberta não deixa avançar');
     assert.equal(mode.arrombar(bot, alvo, 1), false, 'porta já arrombada segura o avanço para o interior');
     for (let i = 0; i < 20; i++) mode.revirar(bot, { spot, x: spot.x, z: spot.z }, i);
     assert.equal(mode.state.foodHp[spot.id], 0, 'loja não pode ser consumida');

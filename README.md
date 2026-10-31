@@ -285,7 +285,7 @@ projeto.
 | Regra | Valor | Constante |
 |---|---|---|
 | Grupos · personagens | 7 · 63 (B 9 · C 9 · E 8 · F 9 · M 9 · P 10 · U 9) | `CHARACTERS` |
-| Mapas no menu | 13 — 3 abrem em rodadas, **10 em captura** | `MAPS` menos `MAPAS_PARADOS` |
+| Mapas no menu | 15 — 5 abrem em rodadas, **10 em captura** | `MAPS` menos `MAPAS_PARADOS` |
 | Respawn | 2,2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 vitórias | `ROUND_TIME` / `ROUNDS_TO_WIN` |
 | Captura | alvo = **todas as bandeiras do mapa**, 2 rodadas (rede de segurança 480 s) | `capsToWin = ctfPts.length` / `CTF_ROUNDS_TO_WIN` |
@@ -324,9 +324,11 @@ Os mapas registrados, e em que modo cada um abre:
 | `posto_treta` | Posto da Treta | **captura** | `—` | — |
 | `upa_24h` | UPA 24h da Treta | **captura** | `—` | — |
 | `velho_oeste` | Sertão da Treta | **captura** | `—` | — |
-| `invasao_javaporcos` | Invasão dos Javaporcos | rodadas | `—` | — |
+| `invasao_javaporcos` | Cidade Invadida | rodadas | `—` | — |
+| `distrito_rural` | Distrito Rural | rodadas | `—` | — |
+| `vila_da_mata` | Vila da Mata | rodadas | `—` | — |
 
-**13 mapas no menu** — 3 abrem em rodadas e 10 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 25 arquivos `map_*.js` em `public/js/`; mapas em `MAPAS_PARADOS` ficam fora do menu.
+**15 mapas no menu** — 5 abrem em rodadas e 10 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 25 arquivos `map_*.js` em `public/js/`; mapas em `MAPAS_PARADOS` ficam fora do menu.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS menos MAPAS_PARADOS de public/js/maps.js`
 

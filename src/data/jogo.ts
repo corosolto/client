@@ -195,11 +195,19 @@ export const MAPAS: Mapa[] = [
   {"id": "posto_treta", "nome": "Posto da Treta", "modo": "CTF · rounds opcional", "ctf": true, "resumo": "Posto de gasolina de beira de estrada, com bombas, marquise e loja.", "detalhe": "Bombas, marquise e loja dividem as áreas de combate. Abre em Capture the Flag; também aceita rounds."},
   {"id": "velho_oeste", "nome": "Sertão da Treta", "modo": "CTF · rounds opcional", "ctf": true, "resumo": "Arena no sertão, com construções e paisagem da caatinga.", "detalhe": "Explore as rotas da arena do sertão. Abre em Capture the Flag; escolha o modo no menu antes de jogar."},
   {
-    id: 'invasao_javaporcos', nome: 'Invasão dos Javaporcos', modo: 'Hordas cooperativas', ctf: false,
-    resumo: 'Oito ondas de javalis invasores avançam da mata sobre uma cidade do interior.',
-    detalhe: 'A defesa começa no campo, cruza milho, curral, silo e posto rural e termina no portão do bairro. ' +
-      'Jovens, adultos, matriarcas e um aríete têm vida, velocidade e pontuação próprias. ' +
-      'O time vence ao limpar as oito ondas antes que os três objetivos percam toda a integridade.',
+    id: 'invasao_javaporcos', nome: 'Cidade Invadida', modo: 'Caça ao Javaporco', ctf: false,
+    resumo: 'Bandos saem da mata e se espalham entre lojas e quarteirões.',
+    detalhe: 'Retome setores, proteja seu time e explore sobrados, lajes e mercearia. O domínio cai quando você limpa as áreas.',
+  },
+  {
+    id: 'distrito_rural', nome: 'Distrito Rural', modo: 'Caça ao Javaporco', ctf: false,
+    resumo: 'Fazendas, celeiros e pátios de alimento cercados pela mata.',
+    detalhe: 'Dispute os depósitos de ração e use os interiores e coberturas como abrigo.',
+  },
+  {
+    id: 'vila_da_mata', nome: 'Vila da Mata', modo: 'Caça ao Javaporco', ctf: false,
+    resumo: 'Casas portuguesas, praça e ruelas em uma encosta junto à mata.',
+    detalhe: 'Explore sobrados com janelas, pátios e telhados de duas águas para defender a vila.',
   },
 ];
 

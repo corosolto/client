@@ -249,6 +249,12 @@ function desenharQuests(painel) {
 function montarEsquerda(play) {
   const esq = no('aside', 'tp-lobby-esq');
   esq.setAttribute('aria-label', tr('Quests e novidades'));
+  const invasao = no('button', 'tp-lobby-painel tp-lobby-invasao');
+  invasao.type='button';invasao.id='tp-lobby-invasao';
+  const arte=no('img');arte.src='/img/javaporcos-ataque-cidade.webp';arte.alt='';arte.loading='lazy';arte.decoding='async';
+  invasao.append(arte,no('span','tp-chip tp-chip--novo',tr('INVASÃO')),no('strong','tp-disp',tr('JAVAPORCOS')),no('span','',tr('Defenda a cidade ou dispute entre três times')),no('span','tp-lobby-link',tr('JOGAR INVASÃO ▸')));
+  invasao.addEventListener('click',()=>{$('hub-sp')?.click();window.__tpModos?.irMapa('invasao_javaporcos');$('hub-map-change')?.click();});
+  esq.appendChild(invasao);
   const quests = no('section', 'tp-lobby-painel tp-lobby-quests');
   quests.id = 'tp-lobby-quests';
   const cab = no('div', 'tp-lobby-painel__cab');
@@ -568,6 +574,16 @@ function montar() {
   montarDireita(play);
   montarPlacar();
   montarPartida();
+  const invasao=$('tp-lobby-invasao'),esquerda=document.querySelector('.tp-lobby-esq');
+  const adaptarInvasao=()=>{
+    const compacto=innerHeight<=500 || innerWidth<=600 || menu()?.dataset.hubNet==='mp';
+    const destino=compacto?document.querySelector('.tp-lobby-partida')?.parentElement:esquerda;
+    if(destino && invasao.parentElement!==destino) destino.prepend(invasao);
+    invasao.classList.toggle('tp-lobby-invasao--compacto',compacto);
+  };
+  addEventListener('resize',adaptarInvasao);
+  new MutationObserver(adaptarInvasao).observe(menu(),{attributes:true,attributeFilter:['data-hub-net']});
+  adaptarInvasao();
   ligarJogarDireto();
   montarGire();
 }

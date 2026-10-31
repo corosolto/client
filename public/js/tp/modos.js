@@ -1,3 +1,4 @@
+import { ehMapaJavaporcos } from '../maps.js';
 /* Treta Pop · 03 modo e mapa, 19 mobile. Carregado por tp/ligar.js só com ?ui=v3. */
 import { tr } from '../i18n.js';
 
@@ -218,7 +219,7 @@ function grade() {
 function pintar() {
   if (!tela || !api()) return;
   const est = api().estado();
-  const horda = est.mapa === 'invasao_javaporcos';
+  const horda = ehMapaJavaporcos(est.mapa);
   api().opcoesJavaporcos?.(tela.regras, pintar);
   tela.regras.hidden = !horda;
   const mapa = api().mapas().find((m) => m.id === est.mapa);

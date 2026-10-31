@@ -1,4 +1,4 @@
-import { wallpaperJavaporcos, nomeTimeJavaporcos } from '../javaporcos_apresentacao.js';
+import { wallpaperJavaporcos, nomeTimeJavaporcos, JAVAPORCO_RETRATO } from '../javaporcos_apresentacao.js';
 /* Treta Pop · 04 VS até 5, 14 VS 6 a 8, 20 mobile. Carregado por tp/ligar.js só com ?ui=v3.
    Espelha o #load-overlay (barra, status, dica) e o elenco que o main.js sorteia (evento tp:elenco). */
 import { tr, frase, LANG } from '../i18n.js';
@@ -36,7 +36,7 @@ function cartao(p, i) {
   } else {
     if (p.voce) { c.dataset.voce = ''; vaga.dataset.voce = ''; }
     const portrait = p.javaporco ? el('img') : retrato(p.id);
-    if (p.javaporco) { portrait.src = wallpaperJavaporcos(i % 3); portrait.alt = 'Javaporco'; portrait.style.objectPosition = 'center'; }
+    if (p.javaporco) { c.dataset.javaporco = ''; portrait.src = JAVAPORCO_RETRATO; portrait.alt = 'Javaporco'; }
     c.append(portrait, el('span', 'tp-carga__sombra'));
     const nm = el('span', 'tp-carga__nm');
     if (p.rotulo) nm.append(el('span', 'tp-carga__k', p.rotulo));
@@ -51,7 +51,8 @@ function cartao(p, i) {
 function cabecalho(lado, n, forma, times = 2) {
   const cab = el('div', 'tp-carga__cab');
   const bras = el('img');
-  bras.alt = ''; bras.src = document.getElementById('load-overlay')?.dataset.mode === 'horde' && lado === 'B' && times === 2 ? wallpaperJavaporcos(0) : urlDoBrasao(lado.toLowerCase());
+  bras.alt = ''; bras.src = document.getElementById('load-overlay')?.dataset.mode === 'horde' && lado === 'B' && times === 2 ? JAVAPORCO_RETRATO : urlDoBrasao(lado.toLowerCase());
+  if (bras.src.includes(JAVAPORCO_RETRATO)) bras.dataset.javaporco = '';
   const nome = tr(nomeTimeJavaporcos(document.getElementById('load-overlay')?.dataset.mode, lado, times) || NOME_LADO[lado]);
   const texto = forma === 'grade' ? (lado === 'E' ? `${nome} · ${n}` : `${n} · ${nome}`) : nome;
   const disp = el('span', 'tp-disp');
@@ -143,7 +144,7 @@ export function ligar() {
     const vs = q('.tp-carga__vs');
     vs.replaceChildren();
     if (horde && times === 3) {
-      const img = el('img'); img.src=wallpaperJavaporcos(0); img.alt='Javaporcos';
+      const img = el('img'); img.src=JAVAPORCO_RETRATO; img.alt='Javaporcos';
       vs.append(img,el('span','tp-ital','E × B × JAVAPORCOS'));
     } else vs.append(el('span','tp-ital','VS'));
     const deles = horde && times === 2 ? [{ id: 'javaporco', nome: 'Javaporcos', rotulo: 'PRAGA INVASORA', javaporco: true }] : gente(d.inimigos || []);

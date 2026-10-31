@@ -355,7 +355,7 @@ export function lerHorda(world) {
   const frentes = (h.frentes?.length ? h.frentes : frentesDasBocas(world)).map((f, i) => {
     const id = f.id || `frente${i}`;
     const rota = f.rota?.length ? f.rota : [f.boca];
-    return { id, nome: f.nome || id, boca: ponto(f.boca || rota[rota.length - 1]), plano: rota.map((p, k) => ponto(p, `r:${id}:${k}`)), viaBeco: new Map() };
+    return { id, nome: f.nome || id, boca: ponto(f.boca || rota[rota.length - 1]), plano: rota.map((p, k) => ponto(p, `r:${id}:${k}`)), viaBeco: new Map(), variantes: new Map() };
   });
   const becos = (h.becos || []).filter((b) => b?.de && b?.ate).map((b, i) => {
     const id = b.id || `beco${i}`;
@@ -394,9 +394,11 @@ function comidaMaisProxima(bot, world, state, tempo, saida, perto = null, raioMa
     if (perto && Math.hypot(spot.x - perto.x, spot.z - perto.z) > raioMax) continue;
     if (evitando(bot, chaveDaComida(spot.id), tempo)) continue;
     const d = Math.hypot(spot.x - bot.pos.x, spot.z - bot.pos.z);
+    if (spot.id === bot._boarComidaId) { melhor = d; alvo = spot; break; }
     if (d < melhor) { melhor = d; alvo = spot; }
   }
   if (!alvo) return null;
+  bot._boarComidaId = alvo.id;
   /* `r` do mapa já é "distância do centro em que o focinho alcança" (meia-extensão do
      colisor + 0,40), então entra cru; sem `r`, 1,6 m serve de palpite. */
   const raio = Number(alvo.r) > 0 ? Number(alvo.r) : AGGRO.comida;
@@ -453,8 +455,7 @@ function setoresDe(ctx) {
   return lista;
 }
 
-/* Prioridade da horda: jogador perto > rota da frente/beco > explorar o quarteirão > lixo > setor.
-   É a comida que faz o bando REVIRAR a cidade antes de tomar setor. */
+// Comida próxima interrompe o trajeto; contato ou provocação ainda permitem defesa.
 export function escolherAlvo(bot, ctx, saida = {}) {
   const { world, state, jogadores = [], tempo = 0 } = ctx;
   const raio = raioDeAgressao(state);
@@ -466,8 +467,13 @@ export function escolherAlvo(bot, ctx, saida = {}) {
     if (d < perto) { perto = d; ent = alvo; }
   }
   const puxado = state.mutante !== 'focinho-curto' && (bot._boarAlertaAte || 0) > tempo;
-  if (ent && (perto <= (state.mutante === 'persegue-tudo' ? raio : Math.min(6, raio)) || (puxado && perto <= AGGRO.ouvido)))
+  const comidaPerto = state.mutante === 'ignora-comida' || state.mutante === 'lixo-depois' ? null : comidaMaisProxima(bot, world, state, tempo, saida, bot.pos, 14);
+  if (ent && (perto <= (state.mutante === 'persegue-tudo' ? raio : comidaPerto ? AGGRO.ataque : Math.min(6, raio)) || (puxado && perto <= AGGRO.ouvido)))
     return alvoEm(saida, 'jogador', ent.pos.x, ent.pos.z, perto, ent._chaveDeFluxo ||= `j:${ent._playerId || ent.name || 'p'}`, ent, null, -1, 0);
+  if (comidaPerto) {
+    if (bot._boarPlano && dentroDaCidade(world,bot.pos.x,bot.pos.z)) bot._boarPasso=bot._boarPlano.length;
+    return comidaPerto;
+  }
   const plano = state.mutante === 'sem-rota' ? null : bot._boarPlano;
   if (plano && (bot._boarPasso || 0) < plano.length) {
     const p = plano[bot._boarPasso || 0];
@@ -639,6 +645,10 @@ function visualAnimal(type, mutante = '', ordinal = 0) {
   pivo.userData.variante = variante;
   if (template) prepararPassada(pivo);
   return pivo;
+}
+
+export function criarPreviewJavaporco() {
+  return visualAnimal('adulto', '', 1);
 }
 
 function marchaRural(sfx) {
@@ -891,7 +901,7 @@ class InvasaoJavaporcos {
     bot._boarNoAte = 0; bot._boarNo = -1; bot._boarAttackAt = 0;
     bot._boarAlertaAte = 0; bot._boarDashAte = 0; bot._boarDashLivre = this.game.time + DASH.espera * this.jitter;
     bot._boarRosnarAte = this.game.time + 1 + this.jitter * 3;
-    bot._boarFocinhoAte = 0; bot._boarEvitar = null; bot._boarCansaco = 0; bot._boarMelhorEm = this.game.time;
+    bot._boarFocinhoAte = 0; bot._boarGolpeAte = 0; bot._boarComidaId = null; bot._boarEvitar = null; bot._boarCansaco = 0; bot._boarMelhorEm = this.game.time;
     bot._boarAlvoChave = null; bot._boarAvancoEm = 0; bot._boarDeslizeAte = 0;
     bot._boarVisual = visualAnimal(animal.type, this.state.mutante, Number(animal.id.split('.')[1]) || 0);
     this.game.scene.add(bot._boarVisual);
@@ -901,15 +911,35 @@ class InvasaoJavaporcos {
 
   /* Rota da frente; com `beco`, emenda o beco aberto mais perto da boca (o jitter alterna entre os dois mais perto). */
   planoDe(frente, animal) {
+    let base = frente.plano;
+    const nodes = this.game.world.waypoints?.nodes;
+    if (nodes?.length && this.state.mutante !== 'entrada-fixa') {
+      const ordinal = Number(animal.id.split('.')[1]) || 0;
+      const variante = (this.state.seed + this.state.wave * 5 + grupoJavaporco(ordinal) * 7) % 12;
+      if (!frente.variantes.has(variante)) {
+        const inicio = base[0], fim = base[base.length - 1];
+        const eixo = Math.abs(inicio.x) > Math.abs(inicio.z) ? 'x' : 'z';
+        const lateral = eixo === 'x' ? 'z' : 'x', sinal = Math.sign(inicio[eixo]);
+        const saidas = nodes.filter(n => n[eixo] * sinal >= 48 && Math.hypot(n.x - inicio.x, n.z - inicio.z) <= 14);
+        const chegadas = nodes.filter(n => n[eixo] * sinal >= 30 && n[eixo] * sinal <= 39 && Math.abs(n[lateral] - fim[lateral]) <= 9);
+        if (saidas.length && chegadas.length) {
+          const de = saidas[Math.floor(variante * saidas.length / 12)];
+          const ate = chegadas.reduce((best, n) => Math.abs(n[lateral] - de[lateral]) < Math.abs(best[lateral] - de[lateral]) ? n : best);
+          frente.variantes.set(variante, [ponto(de, `v:${frente.id}:${variante}:0`), ponto(ate, `v:${frente.id}:${variante}:1`)]);
+        } else frente.variantes.set(variante, base);
+      }
+      base = frente.variantes.get(variante);
+    }
     const abertos = animal.beco ? this.horda.becos.filter((b) => b.abreNaOnda <= this.state.wave) : [];
-    if (!abertos.length) return frente.plano;
+    if (!abertos.length) return base;
     abertos.sort((a, b) => Math.hypot(a.de.x - frente.boca.x, a.de.z - frente.boca.z) - Math.hypot(b.de.x - frente.boca.x, b.de.z - frente.boca.z));
     const beco = abertos[abertos.length > 1 && grupoJavaporco(Number(animal.id.split('.')[1]) || 0) % 2 ? 1 : 0];
-    let plano = frente.viaBeco.get(beco.id);
+    const chave = `${base[0].chave}:${beco.id}`;
+    let plano = frente.viaBeco.get(chave);
     if (!plano) {
-      plano = [...frente.plano, beco.de, beco.ate];
+      plano = [...base, beco.de, beco.ate];
       plano.beco = beco.ate;
-      frente.viaBeco.set(beco.id, plano);
+      frente.viaBeco.set(chave, plano);
     }
     return plano;
   }
@@ -1232,13 +1262,16 @@ class InvasaoJavaporcos {
       this.rosnar(bot, alvo.distance, tempo);
       if (alvo.distance < AGGRO.ataque && tempo >= bot._boarAttackAt) {
         bot._boarAttackAt = tempo + (bot._boarType === 'ariete' ? 1.5 : 1.05);
+        bot._boarGolpeAte = tempo + .42;
+        bot.vel.set(0, 0, 0);
+        bot.yaw = Math.atan2(alvo.x - bot.pos.x, alvo.z - bot.pos.z);
         bot._boarDashAte = 0;
         this.game._damage(alvo.ent, Math.round(danoDoJavaporco(this.state, bot._boarType, 'jogador')), bot, 'PRESA');
         this.atualizaVisual(bot);
         return true;
       }
-      this.investir(bot, alvo, tempo);
-      this.moverPara(bot, alvo, dt);
+      if (tempo < (bot._boarGolpeAte || 0)) bot.vel.set(0,0,0);
+      else { this.investir(bot, alvo, tempo); this.moverPara(bot, alvo, dt); }
     } else if (alvo.kind === 'comida' && (alvo.distance < alvo.raio || encostou)) {
       this.revirar(bot, alvo, tempo);
     } else if (alvo.kind === 'rota' && (alvo.distance < alvo.raio || encostou)) {
@@ -1377,7 +1410,14 @@ class InvasaoJavaporcos {
       visual.traverse(node=>{if(node.isMesh)node.castShadow=sombra;});
     }
     visual.rotation.y = bot.yaw;
-    visual.rotation.x = tempo < (bot._boarFocinhoAte || 0) ? Math.sin(tempo * 15) * .13 - .12 : 0;
+    const golpe = this.state.mutante !== 'sem-ataque' ? Math.max(0, (bot._boarGolpeAte || 0) - tempo) / .42 : 0;
+    const fucar = tempo < (bot._boarFocinhoAte || 0);
+    visual.rotation.x = golpe ? -Math.sin(golpe * Math.PI) * .28 : 0;
+    visual.rotation.z = fucar ? Math.sin(tempo * 7 + (bot._boarJitter || 0)) * .025 : 0;
+    for (const rig of visual.userData.passada?.rigs || []) {
+      rig.head.rotation.x = golpe ? Math.sin(golpe * Math.PI) * -.4 : fucar ? .3 + Math.sin(tempo * 12) * .18 : 0;
+      rig.head.rotation.y = fucar ? Math.sin(tempo * 6) * .16 : 0;
+    }
     atualizarPassada(visual, bot.pos, this.game.world, tempo, this.state.mutante);
   }
 
@@ -1459,8 +1499,13 @@ class InvasaoJavaporcos {
 
   safeSpawn(team, entity = null) {
     if (entity && !entity.isPlayer && !entity._remote) return null;
-    const refugio = this.game.world.hordeRefuges?.find(r=>r.team === team);
-    return refugio ? {x:refugio.x,z:refugio.z,yaw:team === 'E' ? -Math.PI / 2 : Math.PI / 2} : null;
+    const refugios = this.game.world.hordeRefuges?.filter(r=>r.team === team);
+    if (!refugios?.length) return null;
+    const contagem = this.spawnSeguro ||= {};
+    const refugio = refugios[(contagem[team] || 0) % refugios.length];
+    contagem[team] = (contagem[team] || 0) + 1;
+    const deslocamento = ((contagem[team]-1) % 3 - 1) * 1.2;
+    return {x:refugio.x+deslocamento,z:refugio.z,yaw:team === 'E' ? -Math.PI / 2 : Math.PI / 2};
   }
 
   roundResult(winner) {
@@ -1535,6 +1580,9 @@ class InvasaoJavaporcos {
     for (const animal of snap.alive) {
       const bot = this.slots.get(animal.id), id = bot?._nid ?? bot?._netId;
       if (id != null) animal.entityId = id;
+      const golpe=Math.max(0,Math.round(((bot?._boarGolpeAte || 0)-this.game.time)*1000));
+      const focinho=Math.max(0,Math.round(((bot?._boarFocinhoAte || 0)-this.game.time)*1000));
+      if(golpe || focinho) animal.acao=[Math.min(420,golpe),Math.min(500,focinho)];
     }
     return snap;
   }
@@ -1565,6 +1613,11 @@ class InvasaoJavaporcos {
     this.state.winner = net.winner || null;
     this.state.alive = (net.alive || []).map((animal) => ({ ...animal, damage: {} }));
     this.sincronizarSlots();
+    for(const animal of this.state.alive) {
+      const bot=this.slots.get(animal.id);if(!bot) continue;
+      bot._boarGolpeAte=this.game.time+Math.min(.42,Math.max(0,Number(animal.acao?.[0])||0)/1000);
+      bot._boarFocinhoAte=this.game.time+Math.min(.5,Math.max(0,Number(animal.acao?.[1])||0)/1000);
+    }
   }
 
   dispose() {

@@ -11,7 +11,7 @@ import { setMapSky } from './map_sky.js';
 import { CampoDeAltura, malhaTerreno, HALF, CIDADE, MATA_R, EIXOS, CORREGO_MEIA, corregoZ, corteCorrego, distPasto, PASSO } from './map_javaporcos_relevo.js';
 import { construirMata, construirPasto } from './map_javaporcos_mata.js';
 import { construirCidade, amassaSaco, CIDADE_R, AV, CAL } from './map_javaporcos_cidade.js';
-import { construirRefugios, pisoDosRefugios } from './map_javaporcos_refugios.js';
+import { construirRefugios, pisoDosRefugios, pisosElevados, tetoDosInteriores } from './map_javaporcos_refugios.js';
 import { agruparConstrucoes } from './map_javaporcos_lotes.js';
 import * as TX from './map_javaporcos_texturas.js';
 
@@ -40,7 +40,7 @@ const PASSO_NAV = 1.0;             // grade de navegação: 1,5 m deixava aresta
 const RAIO_NAV = 0.45;             // meio corpo de javaporco adulto, com folga
 const semente = (s) => () => ((s = Math.imul(s, 1664525) + 1013904223 >>> 0) / 4294967296);
 
-export function buildInvasaoJavaporcos(scene, T) {
+export function buildInvasaoJavaporcos(scene, T, ambiente='cidade') {
   const root = new THREE.Group();
   root.name = 'invasao-javaporcos';
   scene.add(root);
@@ -228,7 +228,8 @@ export function buildInvasaoJavaporcos(scene, T) {
   const kit = { root, colliders, occluders, MAT, caixa, piso, placa, colisor, orlaGLB, aoMat: VAO_BANDS ? aoMat : null };
 
   // ── Relevo. A malha do terreno sai da MESMA grade que o groundHeightAt lê.
-  const campo = new CampoDeAltura();
+  const campo = new CampoDeAltura(ambiente==='vila'?(x,z,h)=>h+Math.max(0,1-Math.max(0,Math.max(Math.abs(x),Math.abs(z))-36)/16)*Math.min(3.6,Math.max(0,(z+36)*.05)):null);
+  const cidade = construirCidade(kit,campo,rnd,ambiente);
   const P = MATA_R, C = CIDADE;
   const terreno = [
     [-HALF, HALF, -HALF, -P, MAT.grama], [-HALF, HALF, P, HALF, MAT.grama],
@@ -247,12 +248,14 @@ export function buildInvasaoJavaporcos(scene, T) {
   agua(root, campo);
 
   // ── Cidade primeiro (ela escreve as plataformas no campo), depois a mata.
-  const cidade = construirCidade(kit, campo, rnd);
+  const pisoElevado = pisosElevados(colliders, root, [MAT.telha, MAT.fibrocimento]);
   const mata = construirMata(kit, campo, rnd);
   const pasto = construirPasto(kit, campo, rnd);
   const PB = GLB_ON && typeof document !== 'undefined' ? new PropBatch({ bucket: 16, cortes: { tampa_bueiro: 40, lata_enferrujada: 30, saco_lixo: 28, caixa_papelao: 28, cadeira_plastico: 45, engradado_plastico: 45, pneu_velho: 40, toco_arvore: 45, tronco_caido: 50, galhos_secos: 30, pedra_mata: 45 } }) : null;
-  carros(kit, campo, rnd, PB);
-  vegetacaoUrbana(kit, campo, rnd, cidade.becoAreas);
+  if(ambiente==='cidade') {
+    carros(kit, campo, rnd, PB);
+    vegetacaoUrbana(kit, campo, rnd, cidade.becoAreas);
+  }
   if (SKIRT.build) SKIRT.build(root);
   propsOpcionais(root, occluders, campo, rnd, cidade, PB);
 
@@ -276,7 +279,14 @@ export function buildInvasaoJavaporcos(scene, T) {
   agruparConstrucoes(root, occluders);
   const nav = navegacao(colliders, campo, cidade.portas, hordeRefuges);
 
-  const groundHeightAt = (x, z, yRef) => pisoDosRefugios(hordeRefuges, x, z, yRef, campo.amostra(x, z));
+  const groundHeightAt = (x, z, yRef) => pisoDosRefugios(hordeRefuges, x, z, yRef, pisoElevado(x,z,yRef,campo.amostra(x, z)));
+  const armasCampo = ['ak','m4','shotgun','mp5','awp','svd','scar','lmg','deagle','carbine','sks','p90'];
+  for (let i=0;i<armasCampo.length;i++) {
+    const ang=i*Math.PI/6, n=nav.nodes[nav.nearestWaypoint(Math.sin(ang)*44,Math.cos(ang)*44)];
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(.14,.12,1),MAT.metal);
+    mesh.position.set(n.x,campo.amostra(n.x,n.z)+.1,n.z);root.add(mesh);
+    pickups.push({x:n.x,z:n.z,weapon:armasCampo[i],kind:armasCampo[i],readyAt:0,mesh});
+  }
   /* Spawns no eixo da avenida, longe da fila de carros: o MAP2B cobra 1,20 m de folga de
      parede e 40 m² de chão contíguo, e nascer encostado em lataria reprova os dois. */
   const spawns = {
@@ -287,7 +297,10 @@ export function buildInvasaoJavaporcos(scene, T) {
 
   return {
     mode: 'horde', root, colliders, occluders, pickups, sun, hemi, spawns,
+    jumpImpulse: 10,
+    crossingFloor: true,
     groundHeightAt,
+    ceilingHeightAt:(x,z,y,altura)=>tetoDosInteriores(root,x,z,y,altura),
     hordeRefuges,
     stairs: hordeRefuges.map(r=>({nome:`escada refúgio ${r.team}`,x0:r.x-1,x1:r.x+1,z0:r.z+4.66,z1:r.z+9.98,topo:r.y-.45})),
     waypoints: { nodes: nav.nodes, adj: nav.adj },

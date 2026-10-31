@@ -1,6 +1,7 @@
 import { nomeTimeJavaporcos } from './javaporcos_apresentacao.js';
 // Core game: FPS controller, weapons, bots, rounds, HUD.
 import * as THREE from 'three';
+import {alturaOlhos,alturaCabeca} from './player_height.js';
 import { escapeClanName } from './clan-label.js';
 import { ajustarAnisotropia } from './textures.js';
 import { MAPS, resolveMapId } from './maps.js';
@@ -6624,8 +6625,11 @@ export class Game {
     };
     tryAxis(p.vel.x * dt, 0, 0); tryAxis(0, p.vel.z * dt, 1);
     this._collide(p.pos, 0.38);
+    const teto=this.world.ceilingHeightAt?.(p.pos.x,p.pos.z,p.pos.y,alturaCabeca(p.crouchF))??Infinity;
     p.pos.y += p.vel.y * dt;
-    const g2 = this.world.groundHeightAt(p.pos.x, p.pos.z, p.pos.y);
+    if(p.pos.y>teto){p.pos.y=teto;p.vel.y=Math.min(0,p.vel.y);}
+    const referenciaPiso = this.world.crossingFloor ? p.pos.y - Math.min(0,p.vel.y * dt) : p.pos.y;
+    const g2 = this.world.groundHeightAt(p.pos.x, p.pos.z, referenciaPiso);
     // Opt-in para escadaria íngreme: acompanha um passo descendente sem lançar o corpo
     // no ar. Pulo já desarmou grounded; quedas maiores que STEP_H continuam livres.
     if (followStepDown && oldG >= g2 && oldG - g2 <= STEP_H && p.pos.y > g2 && p.pos.y - g2 <= STEP_H) {
@@ -6697,7 +6701,7 @@ export class Game {
     // base 0.06/s + 2.0×recoilP → punch visível ~5-8 frames (~120ms), recupera SEMPRE
     // (termo proporcional limita o acúmulo da rajada — sobe um pouco e volta, não escala).
     p.recoilP = Math.max(0, (p.recoilP || 0) - dt * (0.06 + (p.recoilP || 0) * 2.0));
-    const eye = 1.62 - 0.52 * p.crouchF - p.landDip * 0.09;
+    const eye = alturaOlhos(p.crouchF) - p.landDip * 0.09;
     // HEADBOB da CÂMERA (não existia: só o viewmodel balançava, então correr não tinha peso).
     // Calibrado SUTIL — 1.3cm vertical / 0.9cm lateral no talo, travado na cadência do passo
     // (stepPhase, o mesmo que dispara o som) e zerado parado/no ar. Andando silencioso cai

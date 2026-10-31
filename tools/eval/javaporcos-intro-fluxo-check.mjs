@@ -1,3 +1,4 @@
+import {ehMapaJavaporcos} from '../../public/js/maps.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -11,6 +12,8 @@ assert.ok(!mutant || code !== prefix, 'mutante não aplicou');
 let failures = 0;
 for (const [label, overrides, expected] of [
   ['nova SP', {}, 1],
+  ['Distrito Rural', {currentMap:'distrito_rural'}, 1],
+  ['Vila da Mata', {currentMap:'vila_da_mata'}, 1],
   ['nova MP', { online: true }, 1],
   ['remontagem MP', { online: true, telemetryGameContext: { gameType: 'multiplayer', roomId: 'sala1' }, game: { _mapId: 'invasao_javaporcos' } }, 0],
   ['outro mapa', { currentMap: 'praca_poderes' }, 0],
@@ -18,7 +21,7 @@ for (const [label, overrides, expected] of [
   ['debug forçado', { testMode: true }, 1],
 ]) {
   let calls = 0;
-  const ctx = vm.createContext({ window: { __javaporcosIntroAbort: new AbortController() }, hideLoading: () => {}, continuaPartida: false, meuLancamento: 1, AbortController, currentMap: 'invasao_javaporcos', testMode: false, params: new URLSearchParams('hordeintro=1'),
+  const ctx = vm.createContext({ ehMapaJavaporcos, window: { __javaporcosIntroAbort: new AbortController() }, hideLoading: () => {}, continuaPartida: false, meuLancamento: 1, AbortController, currentMap: 'invasao_javaporcos', testMode: false, params: new URLSearchParams('hordeintro=1'),
     telemetryGameContext: {}, mpSessao: { net: { meta: { room: 'sala1' } } }, game: null,
     novoLancamento: () => 1, lancamentoPerdeu: () => false, apresentarJavaporcos: async () => { calls++; }, ...overrides, continuaPartida: label === 'remontagem MP' });
   await vm.runInContext(`${code}\n return true; }\nfluxo(${!!overrides.online})`, ctx);

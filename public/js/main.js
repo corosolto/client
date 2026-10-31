@@ -20,7 +20,7 @@ import { preloadFPArms } from './fparms.js';
 import { preloadMapProps, COMMON_MAP_PROPS } from './mapprops.js';
 import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
 import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
-import { MAPS, DEFAULT_MAP, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS, comMapaCarregado, defineSeedHavan } from './maps.js';
+import { MAPS, DEFAULT_MAP, ehMapaJavaporcos, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS, comMapaCarregado, defineSeedHavan } from './maps.js';
 import { PALETA } from './paleta.js';
 import { preloadWeapons, WEAPON_IDS } from './weapons.js';
 import {preloadWeaponSkinCandidate} from './weapon-skins.js';
@@ -424,18 +424,18 @@ function showLoading(label, status = 'CARREGANDO MODELOS 3D…', mapName = '') {
   if (vs) {
     const a = $('load-vs-a'), b = $('load-vs-b');
     if (mapName && currentEnemyFaction) {
-      a.textContent = tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'E') || FACTION_NAME[currentTeam] || ''); a.style.color = (PALETA[currentTeam] || {}).base || '#e0762a';
+      a.textContent = tr(nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'E') || FACTION_NAME[currentTeam] || ''); a.style.color = (PALETA[currentTeam] || {}).base || '#e0762a';
       const ladoDele = currentTeam === 'B' ? 'E' : 'B';
-      b.textContent = tr(currentMap === 'invasao_javaporcos' && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || ''); b.style.color = (PALETA[ladoDele] || {}).base || '#8258d8';
+      b.textContent = tr(ehMapaJavaporcos(currentMap) && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || ''); b.style.color = (PALETA[ladoDele] || {}).base || '#8258d8';
       vs.classList.remove('hidden');
     } else vs.classList.add('hidden');
   }
-  _lo.box.dataset.mode = currentMap === 'invasao_javaporcos' ? 'horde' : '';
+  _lo.box.dataset.mode = ehMapaJavaporcos(currentMap) ? 'horde' : '';
   _loadWallModoI = 0;
   _loadWallFixa = (mapName && MAPS[currentMap]?.loadingWall) || '';
   try { _lo.box.style.setProperty('--loading-wall', _loadWallFixa ? `url('${_loadWallFixa}')` : loadingWallUrl(_loadWallI++)); } catch {}
   _lo.box.classList.remove('hidden');
-  if (!LEAN) loadingStage.show(currentFaction).catch(() => {});   // mobile mantém a tela 2D; nenhum segundo renderer/GLB durante o boot
+  if (!LEAN) loadingStage.show(ehMapaJavaporcos(currentMap) ? 'J' : currentFaction).catch(() => {});   // mobile mantém a tela 2D; nenhum segundo renderer/GLB durante o boot
   _giraDica();
   clearInterval(_dicaT); _dicaT = setInterval(_giraDica, 5000);
   _mkPhase(_lo.fill, _lo.pct, _lo.status);
@@ -1910,7 +1910,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   if (sessao) team = ladoOnline(team, sessao.net);
   const charDef = CHARACTERS.find(c => c.id === charId) || {};
   if (!online && !podeNoLado(charDef, team)) team = ladosDe(charDef)[0];
-  if (!online && currentMap === 'invasao_javaporcos') team = 'E';
+  if (!online && ehMapaJavaporcos(currentMap)) team = 'E';
   let faction = charDef.team || team || 'E';
   const side = resolvePlayerSide(team, faction, online);
   if (!online) faction = side;
@@ -2027,7 +2027,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         preloadEyewearAssets(matchEyewear),
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
         sfx.preloadWeaponSamples(_armasDaPartida),
-        currentMap === 'invasao_javaporcos' ? sfx.preloadJavaporcos().catch(e => console.error('JAV-AUDIO: preload falhou', e)) : null,
+        ehMapaJavaporcos(currentMap) ? sfx.preloadJavaporcos().catch(e => console.error('JAV-AUDIO: preload falhou', e)) : null,
         preloadMapProps([...MAP_PROPS, ...(mapaPartida.props || [])]),   // + props do mapa (Havan: carros/estátua)
         /* Desktop preserva a fauna GLB do BUG-57 e os viewmodels autorados. No perfil
            móvel, ambos têm fallback procedural/legado e ficam fora do caminho crítico:
@@ -2042,7 +2042,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   if (lancamentoPerdeu(meuLancamento)) return;
   if (sessao) await preloadMapProps(mapaPartida.props || [], { required: true });
   if (introAbort.signal.aborted || lancamentoPerdeu(meuLancamento)) return;
-  if (currentMap === 'invasao_javaporcos' && !continuaPartida && (!testMode || params.get('hordeintro') === '1')) {
+  if (ehMapaJavaporcos(currentMap) && !continuaPartida && (!testMode || params.get('hordeintro') === '1')) {
     window.__gameLaunch?.ready('partida');
     hideLoading();
     await apresentarJavaporcos(introAbort.signal);
@@ -2068,7 +2068,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     dedicated: !!(sessao && sessao.net.espectador),
     /* online: o teto é o da sala (meta.roundsMax do servidor; nó antigo sem o campo = padrão
        5 / 3) e o fim vem do servidor; o teto local (1–15) só vale offline. */
-    roundsMax: currentMap === 'invasao_javaporcos' ? 1 : (sessao ? (sanitizeRounds(sessao.net.meta.roundsMax) || undefined) : matchRounds()),
+    roundsMax: ehMapaJavaporcos(currentMap) ? 1 : (sessao ? (sanitizeRounds(sessao.net.meta.roundsMax) || undefined) : matchRounds()),
     onMatchEnd: recordMatchStats,
     recordTraining: trainingEnabled(),
     onTrainingFrames: sendTrainingFrames,
@@ -2761,7 +2761,7 @@ function openHubQuick(updateRoute = true) {
   const fields = [
     ['TIPO', 'SINGLEPLAYER'],
     ['MAPA', MAPS[currentMap].name],
-    ['MODO', currentMap === 'invasao_javaporcos' ? 'HORDAS' : (matchMode === 'ctf' ? 'CAPTURE A BANDEIRA' : 'MATA-MATA')],
+    ['MODO', ehMapaJavaporcos(currentMap) ? 'HORDAS' : (matchMode === 'ctf' ? 'CAPTURE A BANDEIRA' : 'MATA-MATA')],
     ['ARMAS', tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS')],
     ['FORMATO', formatoPartida()],
     ['ROUNDS', String(matchRounds())],
@@ -2860,7 +2860,7 @@ function setMapThumb() {
 // ficha do cartaz e o dropdown têm que dizer a mesma coisa com as mesmas palavras.
 const WPN_MODE_LABEL = { all: 'TODAS', pistols: 'SÓ PISTOLAS', knife: 'SÓ FACA', awp: 'SÓ AWP' };
 function matchRounds() {
-  if (currentMap === 'invasao_javaporcos') return 1;
+  if (ehMapaJavaporcos(currentMap)) return 1;
   /* 1–15 (ROUNDS_CUSTOM_MAX do game.js — uma régua só). Salvo fora do intervalo cai no
      padrão do modo; par é permitido: empate no teto vai pro desempate por abates. */
   const fallback = matchMode === 'ctf' ? 3 : 5;
@@ -2971,6 +2971,8 @@ const MAP_DESC = {
   campomorro: 'Campo de várzea cercado pelo morro: oito becos, arquibancada com torcida e galpão do baile.',
   parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
   velho_oeste: 'Duelo na cidade empoeirada: saloon, banco, carroças e tumbleweeds cruzando três rotas entre casas de madeira.',
+  distrito_rural: 'Defenda fazendas e depósitos de ração. Entre nos celeiros e procure abrigo nas coberturas.',
+  vila_da_mata: 'Defenda uma vila de casas portuguesas. Explore a praça, os sobrados e as ruelas da encosta.',
   invasao_javaporcos: 'Dispute a cidade contra bandos que saem da mata por seis frentes. Retome setores, explore o pasto e mantenha seu time vivo. Escolha defesa contra a horda ou três times em disputa.',
   penitenciaria: 'Rebelião no pátio: celas abertas, concreto gasto, guaritas e barricadas policiais entre três rotas de confronto.',
   upa_24h: 'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.',
@@ -3174,7 +3176,7 @@ if (msRounds) for (let n = 1; n <= ROUNDS_CUSTOM_MAX; n++) { const o = document.
 if (msAlly) for (let n = 0; n <= 7; n++) { const o = document.createElement('option'); o.value = String(n); o.textContent = botsLabel(n); msAlly.appendChild(o); }
 if (msEnemy) for (let n = 1; n <= 8; n++) { const o = document.createElement('option'); o.value = String(n); o.textContent = botsLabel(n); msEnemy.appendChild(o); }
 function syncMapOptions() {
-  const horda = currentMap === 'invasao_javaporcos';
+  const horda = ehMapaJavaporcos(currentMap);
   sincronizarOpcoesJavaporcos($('ms-match-options'), horda, settings, saveSettings);
   if (msRounds?.parentElement) msRounds.parentElement.hidden = horda;
   if (msEnemy?.parentElement) msEnemy.parentElement.hidden = horda && settings.javaporcos?.times !== 3;
@@ -3277,7 +3279,7 @@ if (HUB_ENABLED) montarHubSels();
 if (document.documentElement.dataset.ui === 'v3') window.__tpModos = {
   mapas: () => MAPAS_MENU.map((id) => ({ id, nome: MAPS[id].name, poster: mapPreviewPoster(id, VERSION), cats: catsDe(id), data: MAP_DATA[id] || '', desc: tr(MAP_DESC[id] || ''), parado: MAPAS_PARADOS.has(id) })),
   estado: () => ({ mapa: currentMap, modo: matchMode, armas: settings.wpnMode || 'all', aliados: settings.allyBots, inimigos: settings.enemyBots, rounds: matchRounds(), dificuldade: settings.difficulty || 'normal', escalados: [...settings.pinnedChars], javaporcos: {...settings.javaporcos} }),
-  opcoesJavaporcos: (host, mudou) => sincronizarOpcoesJavaporcos(host, currentMap === 'invasao_javaporcos', settings, () => { saveSettings(); syncMapOptions(); setMapMeta(); mudou?.(); }),
+  opcoesJavaporcos: (host, mudou) => sincronizarOpcoesJavaporcos(host, ehMapaJavaporcos(currentMap), settings, () => { saveSettings(); syncMapOptions(); setMapMeta(); mudou?.(); }),
   irMapa: (id) => { if (MAPAS_MENU.includes(id)) gotoMap(MAPAS_MENU.indexOf(id)); },
 };
 if (diffSel) {
@@ -5142,7 +5144,7 @@ function mpPreCarregarProximo(m) {
   Promise.all([
     plano.chars.length ? preloadCharacterAssets(plano.chars, { weapons: armas }) : null,
     sfx.preloadWeaponSamples(armas),
-    plano.mapId === 'invasao_javaporcos' ? sfx.preloadJavaporcos().catch(e => console.error('JAV-AUDIO: preload falhou', e)) : null,
+    ehMapaJavaporcos(plano.mapId) ? sfx.preloadJavaporcos().catch(e => console.error('JAV-AUDIO: preload falhou', e)) : null,
     mapaReady.then((mapa) => preloadMapProps([...MAP_PROPS, ...(mapa.props || [])])),
     MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadAmbientLife(mapa.ambience || [])),
     mapaReady.then((mapa) => mapa.preload ? mapa.preload() : null),

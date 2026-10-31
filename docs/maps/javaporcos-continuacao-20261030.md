@@ -803,3 +803,37 @@ os mesmos bytes do URL único. Proteção Vercel preservada. EgoTaskSpace16 ause
 impediu repetir QA visual remoto nesta rodada; revisão visual local já registrada.
 Estado entregue: correção da morte publicada; três mapas não estão prontos,
 Cidade Invadida é o único jogável e dois layouts novos seguem pendentes.
+
+Produção autorizada pelo dono: produzir os três mapas e atualizar preview antes
+do teste humano. Interiores locais agora têm dois sobrados(OS-oo/LS-oo), escada,
+janela e mercearia aberta, mais quatro polos baixos de alimento. Baseline da
+régua nova falhou por0 interiores/mercearia fechada; após implementação cinco
+casos passam incluindo percurso real até janela e salto sob loft. Crítico
+review_interiores encontrou expulsão6.255m no salto e pilha visual0.418m com
+colisor0.25m. Corrigidos com superfícies/teto opt-in e escala por Box3; nova
+revisão solicitada. Sem-teto reproduz cabeça atravessando loft, removendo a
+correção. Imagens atuais de interiores ainda pendentes, não entregar como
+visualmente aprovado. Pedido assíncrono ao dono autoriza recriar EgoSpace
+perdido16; resposta ainda não chegou. Avançar código independente desse acesso.
+
+Checkpoint de produção31/10 (ainda não publicado): os três mapas existem no
+registro e carregam a mecânica horde. Cidade11845 nós/25 alimentos; Rural13126/10;
+Vila12919/11. Régua diferencia ocupação física AABB/OBB, não rótulo do layout.
+Rural usa celeiros/pátios/silos; Vila usa encosta, casas brancas com cantos azuis,
+praça e telhados de duas águas. Mesma família de materiais existente. Nenhum dos
+três pilotos Mint foi baixado/integrado nesta rodada; acesso ao Ego ainda pendente.
+Main, loading, intro e opções reconhecem objectiveMode=horde nos três IDs.
+Interiores:5/5 testes funcionais na cidade; revisão independente repetiu5/5 no
+Rural e Vila, sem novo bloqueador. Olho/cabeça compartilham altura com câmera,
+teto limita subida/queda e levantar de agachamento. Redesign verde. Loading
+exercita cache, ramo frio, hide e resposta atrasada após trocar J→E; mutante humano
+é detectado. Mutantes de interiores e três mapas e contratos amplos em execução,
+resultados finais ainda não declarados. Logs /tmp/jav-{interiores,tres,lojas,intro,
+contratos,map-rural,map-vila}.log. Docs/assetrev regenerados; arch em execução.
+Objetivo completo preservado: três mapas com QA visual real3:2, modelos Mint
+inspecionados se disponíveis, preview atualizado e teste humano; demais pendências
+anteriores de multiplayer real e parâmetros de partida continuam abertas.
+Próximo: terminar réguas/revisão crítica, corrigir achados, obter autorização
+pendente para novo EgoSpace, inspecionar três mapas + loading móvel, revisar assets,
+e então push/confirmar READY e bytes publicados. Não confundir checkpoint local
+com entrega pronta ou aprovação visual. Último preview ainda SHA0b2fee102.

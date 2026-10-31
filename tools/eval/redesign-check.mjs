@@ -161,11 +161,11 @@ loading3d = muta('loading-uma-faccao', loading3d,
 
 main = muta('loading-sem-tr', main, 'a.textContent = tr(nomeTimeJavaporcos', 'a.textContent = (nomeTimeJavaporcos');
 main = muta('loading-fallback-fora-tr', main,
-  "a.textContent = tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'E') || FACTION_NAME[currentTeam] || '')",
+  "a.textContent = tr(nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'E') || FACTION_NAME[currentTeam] || '')",
   "a.textContent = tr('') || (FACTION_NAME[currentTeam] || '')");
 main = muta('loading-triplo-fora-tr', main,
-  "b.textContent = tr(currentMap === 'invasao_javaporcos' && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || '')",
-  "b.textContent = currentMap === 'invasao_javaporcos' && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : tr(nomeTimeJavaporcos(currentMap === 'invasao_javaporcos' ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || '')");
+  "b.textContent = tr(ehMapaJavaporcos(currentMap) && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || '')",
+  "b.textContent = ehMapaJavaporcos(currentMap) && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : tr(nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || '')");
 main = muta('sem-i18n', main,
   "`${tr('MAPA')} ${MAPAS_MENU.indexOf(currentMap) + 1} ${tr('DE')} ${MAPAS_MENU.length}`",
   "`MAPA ${MAPAS_MENU.indexOf(currentMap) + 1} DE ${MAPAS_MENU.length}`");
@@ -610,8 +610,8 @@ const loadingAcoes3d = new Set(loadingActions).size >= 6
 const funcLoop = blocoFuncao(main, 'loop');
 const funcShow = blocoFuncao(main, 'show');
 const funcMap = blocoFuncao(main, 'renderMapScreen');
-const mainLoadingI18n = main.replace(/nomeTimeJavaporcos\(currentMap === 'invasao_javaporcos' \? 'horde' : '', '[EB]'\) \|\| /g, '')
-  .replace("tr(currentMap === 'invasao_javaporcos' && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : ", 'tr(');
+const mainLoadingI18n = main.replace(/nomeTimeJavaporcos\(ehMapaJavaporcos\(currentMap\) \? 'horde' : '', '[EB]'\) \|\| /g, '')
+  .replace("tr(ehMapaJavaporcos(currentMap) && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : ", 'tr(');
 const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main)
   && /tr\(FACTION_NAME\[c\.team\] \|\| ''\)[\s\S]{0,160}tr\('PERSONAGENS'\)/.test(main)
   && /a\.textContent = tr\(FACTION_NAME\[currentTeam\] \|\| ''\)/.test(mainLoadingI18n)
@@ -786,7 +786,7 @@ const loadingWallpaper = /const loadingWallUrl = \(i\) =>/.test(main)
   && /splash\.style\.setProperty\('--loading-wall', loadingWallUrl\(_wallK\)\)/.test(main)
   && loadingCharacterIds.length === 5 && new Set(loadingCharacterIds).size === 5
   && /E: 'gotinha'[\s\S]*?B: 'canarinho'[\s\S]*?U: 'blackmetal'[\s\S]*?C: 'bonzo'[\s\S]*?F: 'mandrake'/.test(loading3d)
-  && /loadingStage\.show\(currentFaction\)/.test(main)
+  && /loadingStage\.show\(ehMapaJavaporcos\(currentMap\) \? 'J' : currentFaction\)/.test(main)
   && /loadingStage\.hide\(\)/.test(main)
   && !/loading-runner/.test(astro)
   && !/loading-runner-frames/.test(css);
@@ -898,7 +898,7 @@ const opcoesPartidaNoMapa = /id="ms-wpn-mode"/.test(astro)
   && /settings\[matchMode === 'ctf' \? 'ctfRounds' : 'rounds'\] = sanitizeRounds\(msRounds\.value\)(?: \|\| \(matchMode === 'ctf' \? 3 : 5\))?;/.test(main)
   && /function matchRounds\(\)[\s\S]{0,400}settings\.ctfRounds[\s\S]{0,400}settings\.rounds/.test(main)
   && /roundsMax:[^\n]*sanitizeRounds\(sessao\.net\.meta\.roundsMax\)[^\n]*matchRounds\(\)/.test(main)
-  && /roundsMax:[^\n]*currentMap === 'invasao_javaporcos' \? 1/.test(main)
+  && /roundsMax:[^\n]*ehMapaJavaporcos\(currentMap\) \? 1/.test(main)
   && /constructor\(\{[^\n]*\broundsMax\b/.test(game)
   && /export const sanitizeRounds[\s\S]{0,200}ROUNDS_CUSTOM_MAX \? n : 0;/.test(game)
   && /const requestedRounds = sanitizeRounds\(roundsMax\);/.test(game)

@@ -83,7 +83,7 @@ Prompt Mint:
 Após login do dono em31/10 foram enviados três pilotos individuais no Mint:
 mercearia aberta, celeiro/ração e casa portuguesa de dois pisos. Sessões e estado
 em javaporcos-continuacao-20261030.md, ficha em
-plans/02-CACA-JAVAPORCO-PILOTOS-ARQUITETURA-20261031.md. Usam referência visual
+docs/maps/javaporcos-arquitetura-20261031/ficha.md. Usam referência visual
 comum conceito-a-aerea.webp e nível Medium, com limite de8.000 créditos por pedido.
 Os kits completos permanecem planejados; não foram enviados lotes duplicados dos
 assets existentes. Nenhum resultado novo foi aprovado ou integrado ainda.

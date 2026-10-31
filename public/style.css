@@ -1702,6 +1702,7 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard .horde-avatar{width:48px;height:48px;object-fit:cover;border-radius:50%;margin-right:10px;vertical-align:middle}
 @media(max-width:800px){#scoreboard .sb-cols:has(.horde-team){grid-template-columns:1fr;max-height:68dvh;overflow:auto}}
 #hud[data-objective="horde"] #score-e{min-width:72px;flex-direction:column;gap:2px}
+#hud[data-objective="horde"] #hud-top{padding:5px 8px;background:rgba(13,14,17,.94);border:1px solid #61513c;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.35)}
 #hud[data-objective="horde"] #score-e::after{content:"ABATES";font:700 10px/1 system-ui;margin:0 8px}
 #hud[data-objective="horde"][data-human-teams="2"] #score-e::after{content:"TIME E · ABATES"}
 #hud[data-objective="horde"][data-human-teams="2"] #score-b{order:1;flex-direction:column;gap:2px;min-width:72px}
@@ -1725,6 +1726,9 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard .sb-center{position:absolute;inset:0 64px;display:flex;flex-direction:column;justify-content:center;gap:48px}
 #scoreboard .sb-center>h3{position:static;left:auto;right:auto;top:auto;width:100%;margin:0}
 #scoreboard .sb-center>.sb-cols{position:static;left:auto;right:auto;top:auto;width:100%;margin:0}
+#scoreboard:has(.horde-team,.horde-score) .sb-center{inset:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1180px,calc(100% - 32px));max-height:calc(100dvh - 100px);box-sizing:border-box;overflow:auto;justify-content:flex-start;gap:24px;padding:24px;background:rgba(13,14,17,.96);border:1px solid #61513c;border-radius:12px;box-shadow:0 12px 48px rgba(0,0,0,.5)}
+#scoreboard:has(.horde-team,.horde-score) .sb-center>h3{font-size:clamp(14px,2vw,22px);line-height:1.3;text-align:center}
+@media(max-width:800px){#scoreboard:has(.horde-team,.horde-score) .sb-center{padding:12px;gap:12px}}
 
 /* ---------- match end ----------
    Três blocos com hierarquia declarada, em vez de um painel único com tudo do mesmo
@@ -2152,6 +2156,7 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
   width:min(86px,6.8vw);height:min(144px,15.2vh);pointer-events:none;
   filter:drop-shadow(0 28px 24px rgba(0,0,0,.58))}
 #load-character-3d{display:block;width:100%;height:100%;background:transparent}
+#load-overlay[data-mode="horde"] #load-character-stage{width:min(300px,26vw);height:min(280px,30vh)}
 #load-character-action{position:absolute;right:8px;bottom:18px;padding:5px 9px;
   border-left:3px solid var(--br-faixa);background:rgba(var(--bg-900-rgb),.72);
   font:700 10px/1 var(--mono);letter-spacing:var(--tr-3);color:var(--ink-200);display:none}

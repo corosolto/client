@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { hasProp, placeProp, PropBatch, mergeParts } from './mapprops.js';
 import { LETREIRO_UV } from './map_javaporcos_texturas.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { construirInterior } from './map_javaporcos_interiores.js';
 
 export const AV = 6;             // meia-largura da avenida (12 m de asfalto)
 export const CAL = 2;            // calçada
@@ -41,7 +42,8 @@ const PAPEL = {
   'ON-io': 'farmacia', 'LN-oi': 'acougue', 'ON-oo': 'racao', 'LN-oo': 'igreja', 'OS-oo': 'sobrados', 'LS-oo': 'sobrados',
 };
 
-export function construirCidade(kit, campo, rnd) {
+export function construirCidade(kit, campo, rnd, ambiente='cidade') {
+  if(ambiente!=='cidade')return construirAmbiente(kit,campo,rnd,ambiente);
   const { MAT, caixa, piso, placa, root, colliders } = kit;
   const foodSpots = [], foodMeshes = new Map(), foodColliders = new Map();
   const portas = [], lojas = [], becos = [];
@@ -112,8 +114,10 @@ export function construirCidade(kit, campo, rnd) {
         `saque-${comercio}`, 'racao', l.porta.dentro[0] + (l.eixo === 'z' ? 1.1 : 0), l.porta.dentro[1] + (l.eixo === 'x' ? 1.1 : 0));
       const spot = foodSpots[foodSpots.length - 1], mesh = foodMeshes.get(spot.id);
       spot.loja = comercio; spot.r = 1.15;
-      spot.porta = { x: l.porta.vao[0], z: l.porta.vao[1] };
-      portaSaque(kit, l, mesh);
+      if (!l.aberta) {
+        spot.porta = { x: l.porta.vao[0], z: l.porta.vao[1] };
+        portaSaque(kit, l, mesh);
+      }
       continue;
     }
     if (BECOS[b.id]) {
@@ -138,7 +142,15 @@ export function construirCidade(kit, campo, rnd) {
     ['racao-galpao', 'racao', -33.4, 12.6],
   ];
   pracaInfo.feira.forEach(([x, z], i) => pontos.push([`feira-${i + 1}`, 'feira', x, z]));
-  for (const [id, kind, x, z] of pontos) criarFood(kit, campo, foodSpots, foodMeshes, foodColliders, id, kind, x, z);
+  for(const [id,x,z] of [['hortifruti',12.5,-3.5],['padaria',-12.5,3.5],['refeitorio',-3.5,-28.5],['racao',28.5,3.5]]) pontos.push([`alimento-${id}`,'racao',x,z]);
+  for (const [id, kind, x, z] of pontos) {
+    criarFood(kit, campo, foodSpots, foodMeshes, foodColliders, id, kind, x, z);
+    if(id.startsWith('alimento-')) {
+      const mesh=foodMeshes.get(id),box=new THREE.Box3().setFromObject(mesh);
+      mesh.scale.y=.25/(box.max.y-mesh.position.y);
+      const col=foodColliders.get(id);col.maxY=col.minY+.25;
+    }
+  }
 
   lixoSolto(kit, campo, rnd, extras.glb);
   lixoDeRua(kit, campo, extras, pontos);
@@ -195,26 +207,40 @@ function porta(ex, cx, cy, cz, ry) {
 }
 
 /* ── CASA TÉRREA / SOBRADO ─────────────────────────────────────────────────────────── */
-function casa(kit, campo, rnd, x, z, w, d, ry, alt, cor, paredeMat = null) {
+function casa(kit, campo, rnd, x, z, w, d, ry, alt, cor, paredeMat = null, aberta = false) {
   const { MAT, caixa, placa } = kit;
-  const y = campo.amostra(x, z);
+  const y = kit.ambiente ? Math.max(...[-1,1].flatMap(a=>[-1,1].map(b=>campo.amostra(x+a*w/2,z+b*d/2)))) : campo.amostra(x,z);
+  if(kit.ambiente)campo.plataforma(x-w/2-.4,x+w/2+.4,z-d/2-.4,z+d/2+.4,y);
   const parede = paredeMat || MAT.reboco[cor % MAT.reboco.length];
-  caixa(w, alt, d, parede, x, y, z, { ry });
-  caixa(w + 0.04, 1.1, d + 0.04, MAT.barra, x, y, z, { ry, collide: false, cast: false });
+  if(aberta) construirInterior(kit,{x,z,y,w,d,ry,parede});
+  else {
+    caixa(w, alt, d, parede, x, y, z, { ry });
+    caixa(w + 0.04, 1.1, d + 0.04, MAT.barra, x, y, z, { ry, collide: false, cast: false });
+  }
   const cume = alt > 5 ? 1.3 : 1.1;
+  if(kit.ambiente==='vila'){
+    const geo=new THREE.BufferGeometry(),a=w/2+.5,b=d/2+.5;
+    geo.setAttribute('position',new THREE.Float32BufferAttribute([-a,0,-b,a,0,-b,0,cume,-b,-a,0,b,0,cume,b,a,0,b,-a,0,-b,0,cume,-b,0,cume,b,-a,0,-b,0,cume,b,-a,0,b,a,0,-b,a,0,b,0,cume,b,a,0,-b,0,cume,b,0,cume,-b],3));
+    geo.setIndex(Array.from({length:6},(_,i)=>[i*3,i*3+2,i*3+1]).flat());
+    geo.setAttribute('uv',new THREE.Float32BufferAttribute(Array.from({length:18},(_,i)=>[i%3===1?1:0,i%3===2?1:0]).flat(),2));geo.computeVertexNormals();
+    const roof=new THREE.Mesh(geo,MAT.telha);roof.position.set(x,y+alt,z);roof.rotation.y=ry;roof.castShadow=true;roof.receiveShadow=true;kit.root.add(roof);kit.occluders.push(roof);
+    (kit.root.userData.coberturas ||= []).push({tipo:'duas-aguas',x,z,y:y+alt,h:cume,w:a,d:b,cos:Math.cos(ry),sin:Math.sin(ry)});
+    for(const sx of [-w/2,w/2])kit.caixa(.18,alt,.24,MAT.reboco[1],x+sx*Math.cos(ry)+d/2*Math.sin(ry),y,z-sx*Math.sin(ry)+d/2*Math.cos(ry),{ry,nome:'cunhal-portugues'});
+  }
   const telhado = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w, d) * 0.76, cume, 4), rnd() < 0.15 ? MAT.fibrocimento : MAT.telha);
   telhado.position.set(x, y + alt + cume / 2, z);
   telhado.rotation.y = ry + Math.PI / 4;
   telhado.castShadow = true; telhado.receiveShadow = true;
-  kit.root.add(telhado); kit.occluders.push(telhado);
+  if(kit.ambiente!=='vila'){kit.root.add(telhado); kit.occluders.push(telhado);}
   const cs = Math.cos(ry), sn = Math.sin(ry);
   const frente = (ox, oy, oz) => [x + ox * cs + oz * sn, y + oy, z - ox * sn + oz * cs];
   const ex = kit.ex;
   const [px, py, pz] = frente(0, 1.1, d / 2);
-  porta(ex, px, py, pz, ry);
+  if(!aberta) porta(ex, px, py, pz, ry);
   for (const ox of [-w / 4 - 0.4, w / 4 + 0.4]) {
     const [jx, jy, jz] = frente(ox, 1.65, d / 2);
-    janela(ex, jx, jy, jz, ry, 1.1, 1.0, ex.rr() < 0.7);
+    const acesa=ex.rr()<.7;
+    if(!aberta) janela(ex, jx, jy, jz, ry, 1.1, 1.0, acesa);
   }
   if (alt > 5) {
     const [lx, ly, lz] = frente(0, alt * 0.52, d / 2 + 0.02);
@@ -223,22 +249,76 @@ function casa(kit, campo, rnd, x, z, w, d, ry, alt, cor, paredeMat = null) {
   return 1;
 }
 
+function construirAmbiente(kit,campo,rnd,ambiente){
+  const {MAT,caixa,piso,root}=kit,foodSpots=[],foodMeshes=new Map(),foodColliders=new Map(),lojas=[],portas=[];
+  kit.ambiente=ambiente;kit.ex=novosExtras();
+  root.userData.layoutAmbiente=ambiente==='rural'?'fazendas-patios':'vila-praca-ruelas';
+  const via=(pts,largura,mat)=>{
+    for(let i=1;i<pts.length;i++){
+      const a=pts[i-1],b=pts[i],n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/.6);
+      for(let j=0;j<=n;j++){const t=j/n,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;piso(largura,.75,mat,x,z,campo.amostra(x,z)+.025,'chao-caminho');}
+    }
+  };
+  if(ambiente==='rural'){
+    via([[-36,-12],[-8,-12],[4,0],[5,25],[24,36]],7,MAT.terra);
+    via([[-36,20],[-12,20],[5,10],[36,10]],5,MAT.terra);
+    for(const [x,z] of [[-19,-2],[19,-17]])casa(kit,campo,rnd,x,z,9,10,0,6,0,MAT.madeira,true);
+    for(const [x,z,ry] of [[-24,-25,0],[22,25,Math.PI],[-25,23,Math.PI/2]])casa(kit,campo,rnd,x,z,6,6,ry,3,0);
+    for(const [x,z] of [[23,-29],[29,-29]]){
+      const y=campo.amostra(x,z),silo=new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.2,7,16),MAT.medidor);
+      silo.position.set(x,y+3.5,z);silo.castShadow=true;silo.receiveShadow=true;root.add(silo);kit.occluders.push(silo);kit.colisor(x,z,2.2,2.2,y,y+7,0);
+      const topo=new THREE.Mesh(new THREE.ConeGeometry(2.4,1.5,16),MAT.zinco);topo.position.set(x,y+7.75,z);root.add(topo);
+    }
+    for(const [x,z] of [[-15,-27],[17,24],[-24,13]])for(const side of [-1,1]){
+      for(let i=-4;i<=4;i+=2){const px=x+i,pz=z+side*4,y=campo.amostra(px,pz);caixa(.15,1.3,.15,MAT.madeira,px,y,pz,{nome:'mourao-curral'});}
+      caixa(9,.14,.14,MAT.madeira,x,campo.amostra(x,z)+.65,z+side*4,{nome:'travessa-curral'});
+    }
+  }else{
+    via([[-36,-10],[-6,-10],[0,0],[8,13],[36,18]],4,MAT.bloquete);
+    via([[-8,-36],[-8,-10],[0,0],[-8,18],[-8,36]],4,MAT.bloquete);
+    for(let x=-5;x<=5;x+=1)for(let z=-5;z<=5;z+=1)piso(1,1,MAT.bloquete,x,z,campo.amostra(x,z)+.025,'chao-praca-vila');
+    const casas=[[-23,-24,0],[-10,-24,0],[9,-26,.08],[25,-20,-Math.PI/2],[-24,-3,Math.PI/2],[24,4,-Math.PI/2],[-24,17,Math.PI/2],[-10,25,Math.PI],[10,25,Math.PI],[26,24,Math.PI]];
+    casas.forEach(([x,z,ry],i)=>casa(kit,campo,rnd,x,z,6.5,6.5,ry,6,i%2,MAT.rebocoIgreja,i<2));
+    for(const [x,z] of [[-15,9],[14,-12],[16,16]]){
+      const y=campo.amostra(x,z);caixa(6,.95,.22,MAT.bloco,x,y,z,{nome:'muro-patio'});
+      for(const dx of [-3,3])caixa(.22,.95,4,MAT.bloco,x+dx,y,z+2,{nome:'muro-patio'});
+    }
+  }
+  const pontosLojas=ambiente==='rural'?[['racao',-13,12],['mercearia',17,2]]:[['mercearia',-13,1],['padaria',12,-6],['boteco',8,14]];
+  for(const [papel,x,z] of pontosLojas){
+    const b={x0:x-5,x1:x+5,z0:z-4.5,z1:z+4.5,ax:'i',az:'i',sx:Math.sign(x)||1,sz:Math.sign(z)||1};
+    const l=loja(kit,campo,rnd,b,papel);l.aberta=true;l.comercio=papel;lojas.push(l);portas.push(l.porta);
+    criarFood(kit,campo,foodSpots,foodMeshes,foodColliders,`saque-${papel}`,'racao',...l.porta.dentro);
+    foodSpots.at(-1).loja=papel;foodSpots.at(-1).r=1.15;
+  }
+  const comidas=ambiente==='rural'?[[-18.5,-9.5],[17.5,-8.5],[-10.5,23.5],[11.5,27.5],[-28.5,-13.5],[27.5,13.5],[2.5,-24.5],[1.5,16.5]]:[[-.5,-7.5],[7.5,1.5],[-5.5,7.5],[17.5,-15.5],[-17.5,14.5],[16.5,21.5],[-18.5,-15.5],[3.5,-20.5]];
+  comidas.forEach(([x,z],i)=>{
+    const id=`alimento-${ambiente}-${i}`;criarFood(kit,campo,foodSpots,foodMeshes,foodColliders,id,'racao',x,z);
+    const m=foodMeshes.get(id),box=new THREE.Box3().setFromObject(m);m.scale.y=.25/(box.max.y-m.position.y);const c=foodColliders.get(id);c.maxY=c.minY+.25;
+  });
+  construirExtras(kit,kit.ex);telhadosEmLote(kit);
+  const hordeObjectives=foodSpots.slice(0,3).map((s,i)=>({id:`polo-${i}`,x:s.x,z:s.z,hp:1200,r:3}));
+  return {foodSpots,foodMeshes,foodColliders,lojas,portas,hordeObjectives,becos:[],becoAreas:[],glb:kit.ex.glb,setores:setores(),censo:{edificacoes:lojas.length+(ambiente==='rural'?5:10),postes:0,calcadas:0,becos:0,colisores:kit.colliders.length},root};
+}
+
 function quarteiraoCasas(kit, campo, rnd, b, sobrados) {
   const { MAT, caixa } = kit;
   const largura = b.x1 - b.x0, fundo = b.z1 - b.z0;
   const cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2;
   let n = 0;
+  const primeiraAberta=['OS-oo','LS-oo'].includes(b.id);
+  const construirCasa=(...args)=>casa(...args,null,primeiraAberta&&n===0);
   const giro = () => (rnd() < 0.22 ? (rnd() - 0.5) * 0.49 : 0);
   if (largura >= 11 && fundo >= 11) {
-    n += casa(kit, campo, rnd, b.x0 + 3.5, b.z0 + 4.2, 6.4, 7.6, giro(), sobrados ? 6 : 3, (rnd() * 4) | 0);
-    n += casa(kit, campo, rnd, b.x1 - 3.4, b.z1 - 3.9, 6.2, 7.0, giro() + Math.PI, 3, (rnd() * 4) | 0);
-    n += casa(kit, campo, rnd, b.x1 - 3.0, b.z0 + 3.4, 4.6, 5.2, giro() + Math.PI / 2, sobrados > 1 ? 6 : 3, (rnd() * 4) | 0);
+    n += construirCasa(kit, campo, rnd, b.x0 + 3.5, b.z0 + 4.2, 6.4, 7.6, giro(), sobrados ? 6 : 3, (rnd() * 4) | 0);
+    n += construirCasa(kit, campo, rnd, b.x1 - 3.4, b.z1 - 3.9, 6.2, 7.0, giro() + Math.PI, 3, (rnd() * 4) | 0);
+    n += construirCasa(kit, campo, rnd, b.x1 - 3.0, b.z0 + 3.4, 4.6, 5.2, giro() + Math.PI / 2, sobrados > 1 ? 6 : 3, (rnd() * 4) | 0);
   } else if (largura >= fundo) {
-    n += casa(kit, campo, rnd, cx - largura / 4, cz, 5.4, fundo - 2.6, giro(), sobrados ? 6 : 3, (rnd() * 4) | 0);
-    n += casa(kit, campo, rnd, cx + largura / 4, cz, 5.0, fundo - 3.2, giro(), 3, (rnd() * 4) | 0);
+    n += construirCasa(kit, campo, rnd, cx - largura / 4, cz, 5.4, fundo - 2.6, giro(), sobrados ? 6 : 3, (rnd() * 4) | 0);
+    n += construirCasa(kit, campo, rnd, cx + largura / 4, cz, 5.0, fundo - 3.2, giro(), 3, (rnd() * 4) | 0);
   } else {
-    n += casa(kit, campo, rnd, cx, cz - fundo / 4, largura - 2.6, 5.4, giro() + Math.PI / 2, sobrados ? 6 : 3, (rnd() * 4) | 0);
-    n += casa(kit, campo, rnd, cx, cz + fundo / 4, largura - 3.2, 5.0, giro() + Math.PI / 2, 3, (rnd() * 4) | 0);
+    n += construirCasa(kit, campo, rnd, cx, cz - fundo / 4, largura - 2.6, 5.4, giro() + Math.PI / 2, sobrados ? 6 : 3, (rnd() * 4) | 0);
+    n += construirCasa(kit, campo, rnd, cx, cz + fundo / 4, largura - 3.2, 5.0, giro() + Math.PI / 2, 3, (rnd() * 4) | 0);
   }
   muroDeFundo(kit, campo, rnd, b);
   quintal(kit, campo, rnd, b);
@@ -301,11 +381,12 @@ function loja(kit, campo, rnd, b, papel) {
   const mundo = (n, l) => (eixo === 'z' ? [cx + l, cz + n] : [cx + n, cz + l]);
   const dims = (dn, dl) => (eixo === 'z' ? [dl, dn] : [dn, dl]);
 
-  const y = campo.amostra(cx, cz);
   const [mw, md] = dims(D, W);
-  campo.plataforma(cx - mw / 2, cx + mw / 2, cz - md / 2, cz + md / 2, SOLEIRA);
+  const y = kit.ambiente?Math.max(...[-1,1].flatMap(a=>[-1,1].map(b=>campo.amostra(cx+a*mw/2,cz+b*md/2)))):campo.amostra(cx,cz);
+  const soleira=y+SOLEIRA;
+  campo.plataforma(cx - mw / 2, cx + mw / 2, cz - md / 2, cz + md / 2, soleira);
   const [pw, pd] = dims(D - 0.3, W - 0.3);
-  piso(pw, pd, MAT.ceramica, cx, cz, SOLEIRA + 0.004, 'chao-loja');
+  piso(pw, pd, MAT.ceramica, cx, cz, soleira + 0.004, 'chao-loja');
 
   const parede = (n, l, h, dn, dl, base = y) => {
     const [px, pz] = mundo(n, l);
@@ -349,11 +430,11 @@ function loja(kit, campo, rnd, b, papel) {
   // balcão e prateleiras: é o que dá leitura de loja ao interior, em vez de caixa oca
   const [bx, bz] = mundo(-sinal * 1.9, 0);
   const [bw, bd] = dims(0.7, 3.0);
-  caixa(bw, 1.05, bd, MAT.madeira, bx, SOLEIRA, bz, {});
+  caixa(bw, 1.05, bd, MAT.madeira, bx, soleira, bz, {});
   for (const s of [-1, 1]) {
     const [sx, sz] = mundo(-sinal * (D / 2 - 0.8), s * (W / 2 - 1.3));
     const [sw, sd] = dims(0.42, 2.0);
-    caixa(sw, 1.8, sd, MAT.prateleira, sx, SOLEIRA, sz, {});
+    caixa(sw, 1.8, sd, MAT.prateleira, sx, soleira, sz, {});
   }
   if (rnd() < 0.8) {
     const [tx, tz] = mundo(sinal * (D / 2 + 0.7), 0);
@@ -371,7 +452,7 @@ function loja(kit, campo, rnd, b, papel) {
   /* `dentro` fica entre a porta e o balcão: a 2,1 m do centro ele caía DENTRO do colisor
      do balcão, e nó dentro de sólido é destino que ninguém alcança (relato do modo). */
   const [dentroX, dentroZ] = mundo(sinal * (D / 2 - 1.1), 0);
-  return { papel, eixo, sinal, fundo: D, largura: W, porta: { x: portaX, z: portaZ, vao: mundo(face, 0), dentro: [dentroX, dentroZ] }, interior: [cx, cz] };
+  return { papel, aberta: papel === 'mercearia', eixo, sinal, fundo: D, largura: W, porta: { x: portaX, z: portaZ, vao: mundo(face, 0), dentro: [dentroX, dentroZ] }, interior: [cx, cz] };
 }
 
 function portaSaque(kit, loja, grupo) {
@@ -881,6 +962,8 @@ function telhadosEmLote(kit) {
   const porMat = new Map(), base = new THREE.Matrix4().copy(kit.root.matrixWorld).invert(), m4 = new THREE.Matrix4();
   kit.root.traverse((o) => {
     if (!o.isMesh || o.geometry.type !== 'ConeGeometry' || o.geometry.parameters.radialSegments !== 4) return;
+    const p=o.geometry.parameters;
+    (kit.root.userData.coberturas ||= []).push({x:o.position.x,z:o.position.z,y:o.position.y-p.height/2,h:p.height,r:p.radius,cos:Math.cos(o.rotation.y),sin:Math.sin(o.rotation.y)});
     if (!porMat.has(o.material)) porMat.set(o.material, []);
     porMat.get(o.material).push(o);
   });

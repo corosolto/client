@@ -1,12 +1,18 @@
 export function construirRefugios(kit, campo) {
   const refugios = [];
-  for (const [team, x] of [['E', -42], ['B', 42]]) {
+  for (const [team, inicial, extra] of [['E', -42, false], ['B', 42, false], ['E', -42, true], ['B', 42, true]]) {
+    let x=inicial;
     const livre = z => !kit.colliders.some(c => {
       if (c.minY > campo.amostra(x,z)+2) return false;
       return (c.maxX > x-3 && c.minX < x+3 && c.maxZ > z-3 && c.minZ < z+3)
         || (c.maxX > x-1.4 && c.minX < x+1.4 && c.maxZ > z+3 && c.minZ < z+11);
     });
-    const z = [-16,-12,-8,-4,4,8,12].find(livre);
+    let z;
+    for (const cx of extra ? [38,40,44,46,48].map(v=>v*Math.sign(inicial)) : [inicial]) {
+      x=cx;
+      z=(extra ? [-32,-28,-24,24,28,32,-20,20] : [-16,-12,-8,-4,4,8,12]).find(cz=>livre(cz)&&refugios.every(r=>Math.abs(r.x-x)>6||Math.abs(r.z-cz)>14));
+      if(z!=null) break;
+    }
     if (z == null) throw new Error(`JAV-REFUGIO: sem área livre para ${team}`);
     const y = campo.amostra(x, z) + 3.8;
     kit.caixa(6, .25, 6, kit.MAT.calcada, x, y - .25, z, {nome:`laje-refugio-${team}`});
@@ -30,6 +36,57 @@ export function construirRefugios(kit, campo) {
     refugios.push({team,x,z,y,x0:x-3,x1:x+3,z0:z-3,z1:z+3,degraus});
   }
   return refugios;
+}
+
+export function pisosElevados(colliders, root, materiais) {
+  const cells = new Map(), coberturas = [...(root.userData.coberturas || [])];
+  const degraus=(root.userData.interiores||[]).flatMap(c=>[...c.escada,...c.pisos].map(s=>{
+    const cos=Math.cos(c.ry),sin=Math.sin(c.ry),{hx,hz}=s;
+    const cx=c.x+s.x*cos+s.z*sin,cz=c.z-s.x*sin+s.z*cos,ax=Math.abs(hx*cos)+Math.abs(hz*sin),az=Math.abs(hx*sin)+Math.abs(hz*cos);
+    return {minX:cx-ax,maxX:cx+ax,minZ:cz-az,maxZ:cz+az,minY:c.y+s.y-.125,maxY:c.y+s.y,ry:c.ry,cx,cz,hx,hz,cos,sin};
+  }));
+  const key = (x,z) => `${Math.floor(x/8)},${Math.floor(z/8)}`;
+  for (const c of [...colliders,...degraus]) {
+    if (c.maxY > 10 || c.maxY < .05) continue;
+    for (let x=Math.floor(c.minX/8);x<=Math.floor(c.maxX/8);x++) for(let z=Math.floor(c.minZ/8);z<=Math.floor(c.maxZ/8);z++) {
+      const k=`${x},${z}`; if(!cells.has(k)) cells.set(k,[]); cells.get(k).push(c);
+    }
+  }
+  root.traverse(m => {
+    const p=m.geometry?.parameters;
+    if (p?.radialSegments===4 && materiais.includes(m.material)) coberturas.push({x:m.position.x,z:m.position.z,y:m.position.y-p.height/2,h:p.height,r:p.radius,cos:Math.cos(m.rotation.y),sin:Math.sin(m.rotation.y)});
+  });
+  return (x,z,yRef,solo) => {
+    if (!Number.isFinite(yRef)) return solo;
+    let y=solo;
+    for(const c of cells.get(key(x,z)) || []) {
+      if(yRef<c.maxY-.22 || c.maxY<=y || x<c.minX || x>c.maxX || z<c.minZ || z>c.maxZ) continue;
+      const dx=x-c.cx,dz=z-c.cz;
+      if(c.ry && (Math.abs(dx*c.cos-dz*c.sin)>c.hx || Math.abs(dx*c.sin+dz*c.cos)>c.hz)) continue;
+      y=c.maxY;
+    }
+    for(const r of coberturas) {
+      if(r.tipo==='duas-aguas'){
+        const dx=x-r.x,dz=z-r.z,lx=dx*r.cos-dz*r.sin,lz=dx*r.sin+dz*r.cos;
+        if(Math.abs(lx)<=r.w&&Math.abs(lz)<=r.d){const topo=r.y+r.h*(1-Math.abs(lx)/r.w);if(yRef>=topo-.22)y=Math.max(y,topo);}
+        continue;
+      }
+      const dx=x-r.x,dz=z-r.z, d=Math.abs(dx*r.cos-dz*r.sin)+Math.abs(dx*r.sin+dz*r.cos);
+      if(d>r.r) continue;
+      const topo=r.y+r.h*(1-d/r.r);
+      if(yRef>=topo-.22) y=Math.max(y,topo);
+    }
+    return y;
+  };
+}
+
+export function tetoDosInteriores(root,x,z,yRef,altura) {
+  let teto=Infinity;
+  for(const c of root.userData.interiores||[]){
+    const dx=x-c.x,dz=z-c.z,lx=dx*Math.cos(c.ry)-dz*Math.sin(c.ry),lz=dx*Math.sin(c.ry)+dz*Math.cos(c.ry);
+    for(const p of c.pisos) if(Math.abs(lx-p.x)<=p.hx+.3&&Math.abs(lz-p.z)<=p.hz+.3&&yRef<c.y+p.base-.3) teto=Math.min(teto,c.y+p.base-altura);
+  }
+  return teto;
 }
 
 export function pisoDosRefugios(refugios, x, z, yRef, solo) {

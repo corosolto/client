@@ -126,12 +126,15 @@ export function alturaTerreno(x, z) {
 /* Plataforma construída: calçada, soleira de loja, piso de praça. Entra no campo por
    `max`, então ela nunca afunda o terreno — só levanta onde o concreto existe. */
 export class CampoDeAltura {
-  constructor() {
+  constructor(perfil=null) {
     this.n = Math.round((2 * HALF) / PASSO) + 1;
     this.h = new Float32Array(this.n * this.n);
     for (let i = 0; i < this.n; i++) {
       const x = -HALF + i * PASSO;
-      for (let j = 0; j < this.n; j++) this.h[i * this.n + j] = alturaTerreno(x, -HALF + j * PASSO);
+      for (let j = 0; j < this.n; j++) {
+        const z=-HALF+j*PASSO,h=alturaTerreno(x,z);
+        this.h[i*this.n+j]=perfil?perfil(x,z,h):h;
+      }
     }
   }
 
