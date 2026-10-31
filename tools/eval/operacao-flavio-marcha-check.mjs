@@ -14,7 +14,7 @@ const master = {};
 const currentTime = 100;
 const ctx = { currentTime,
   createOscillator() {
-    const node = { frequency: { value: 0 }, stops: [],
+    const node = { frequency: { value: 0, setValueAtTime() {}, linearRampToValueAtTime() {} }, stops: [],
       connect(gain) { this.gain = gain; }, start(t) { this.started = t; }, stop(t) { this.stops.push(t); } };
     nodes.push(node); return node;
   },

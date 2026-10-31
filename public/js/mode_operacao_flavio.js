@@ -193,6 +193,32 @@ function marchaMilitar(sfx) {
   } catch { return []; }
 }
 
+// Sirene da vitória E: varredura procedural de frequência no master, cancelável como a marcha.
+function sireneEmergencia(sfx) {
+  try {
+    sfx.ensure();
+    const ctx = sfx.ctx;
+    if (!ctx || !sfx.master) return [];
+    const agora = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const vol = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = 620;
+    for (let i = 0; i < 6; i++) {
+      const t = agora + i * 1.5;
+      osc.frequency.setValueAtTime(620, t);
+      osc.frequency.linearRampToValueAtTime(1240, t + 0.75);
+      osc.frequency.linearRampToValueAtTime(620, t + 1.5);
+    }
+    vol.gain.setValueAtTime(0.0001, agora);
+    vol.gain.exponentialRampToValueAtTime(0.06, agora + 0.06);
+    vol.gain.setValueAtTime(0.06, agora + 8.5);
+    vol.gain.exponentialRampToValueAtTime(0.0001, agora + 9);
+    osc.connect(vol); vol.connect(sfx.master); osc.start(agora); osc.stop(agora + 9);
+    return [osc];
+  } catch { return []; }
+}
+
 export class OperacaoFlavio {
   constructor(game, vipDef) {
     this.game = game;
@@ -223,6 +249,7 @@ export class OperacaoFlavio {
         if (!this.game.online) this.game.stateUntil = this.game.time;
         this.cinematic.skipped = true;
         this._encerrarFontes();
+        this._restaurarAmbiente();
       };
       window.addEventListener('keydown', this._key);
     }
@@ -251,9 +278,53 @@ export class OperacaoFlavio {
     this.fontes = [];
   }
 
+  // Vitória E: escurece só as luzes reais do hangar e pendura a sirene vermelha na cena.
+  _aplicarAmbienteE() {
+    const root = this.game.world?.root;
+    if (!root || this._amb) return;
+    const luzes = [], lampadas = [];
+    root.traverse((o) => {
+      if (o.isPointLight && /^luz-hangar-\d+$/.test(o.name)) luzes.push(o);
+      else if (o.isMesh && o.name === 'luz-hangar') lampadas.push(o);
+    });
+    if (!luzes.length) return;
+    const estado = { luzes: luzes.map((luz) => ({ luz, intensidade: luz.intensity })), clones: [], vermelha: null };
+    for (const { luz } of estado.luzes) luz.intensity *= 0.08;
+    for (const mesh of lampadas) {
+      const original = mesh.material;
+      const escuro = original.clone();
+      escuro.emissiveIntensity *= 0.05;
+      mesh.material = escuro;
+      estado.clones.push({ mesh, original, escuro });
+    }
+    const vermelha = luzes[0].clone();
+    vermelha.name = 'sirene-vermelha-flavio';
+    vermelha.color.setRGB(1, 0.05, 0.05);
+    vermelha.intensity = 2.4;
+    vermelha.distance = 26;
+    vermelha.position.set(0, 6.4, 55);
+    root.add(vermelha);
+    estado.vermelha = vermelha;
+    this._amb = estado;
+  }
+
+  // Restaura intensidades e o material compartilhado, e retira a luz temporária (idempotente).
+  _restaurarAmbiente() {
+    const estado = this._amb;
+    if (!estado) return;
+    for (const { luz, intensidade } of estado.luzes) luz.intensity = intensidade;
+    for (const { mesh, original, escuro } of estado.clones) {
+      mesh.material = original;
+      escuro.dispose?.();
+    }
+    estado.vermelha?.removeFromParent?.();
+    this._amb = null;
+  }
+
   prepareRound() {
     if (!this.vip) return;
     this._encerrarFontes();
+    this._restaurarAmbiente();
     this.state = criarEstadoEscolta(this.game.world.escortPath);
     const plano = this.game.world.objectivePlane;
     if (plano?.position) {
@@ -444,9 +515,14 @@ export class OperacaoFlavio {
 
   startCinematic(winner) {
     this._encerrarFontes();   // cena nova substitui a marcha anterior, não dobra com ela
+    this._restaurarAmbiente();   // ambiente da cena anterior não vaza para a nova
     this.cinematic = { winner, startedAt: this.game.time, skipped: false };
     if (this.game.vmScene) this.game.vmScene.visible = false;
-    this.fontes = marchaMilitar(this.game.sfx);
+    if (!this.game.dedicated) this.fontes = marchaMilitar(this.game.sfx);
+    if (winner === 'E' && !this.game.dedicated) {
+      this._aplicarAmbienteE();
+      this.fontes.push(...sireneEmergencia(this.game.sfx));
+    }
     if (this.hud) this.hud.textContent = winner === 'B'
       ? 'EMBARQUE CONCLUÍDO'
       : !this.vip?.alive || this.deathAnnounced ? 'FLÁVIO FOI MORTO · ESCOLTA FRACASSOU' : 'OPERAÇÃO INTERROMPIDA';
@@ -467,6 +543,8 @@ export class OperacaoFlavio {
     const smooth = t * t * (3 - 2 * t);
     cam.position.set(a.x + (b.x - a.x) * smooth, a.y + (b.y - a.y) * smooth, a.z + (b.z - a.z) * smooth);
     cam.lookAt(alvo.x, 2.1, alvo.z);
+    const sirene = this._amb?.vermelha;
+    if (sirene) sirene.intensity = 2.4 + 2.2 * Math.sin((this.game.time - this.cinematic.startedAt) * 8.2 - Math.PI / 2);
   }
 
   netState() {
@@ -485,6 +563,7 @@ export class OperacaoFlavio {
     if (this._key) window.removeEventListener('keydown', this._key);
     this.hud?.remove();
     this._encerrarFontes();
+    this._restaurarAmbiente();
   }
 }
 

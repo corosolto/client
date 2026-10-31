@@ -406,6 +406,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
   for (const [z, cor, intensidade, altura] of [[-46,0xffd39a,0.7,3.1],[-34,0xffd39a,0.7,3.1],[-22,0xffd39a,0.7,3.1],[-2,0xd6efff,0.6,4.2],[29,0xcbe9ff,0.82,7.1],[42,0xcbe9ff,0.82,7.1]]) {
     const light = new THREE.PointLight(cor, intensidade, 21, 2);
     light.position.set(0, altura, z); root.add(light);
+    if (z === 29 || z === 42) light.name = `luz-hangar-${z}`;   // nomes estáveis p/ cinemática E
   }
 
   const blocked = (x, z, inflate = 0.55) => colliders.some((c) => x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < 1.8 && c.maxY > 0.1);

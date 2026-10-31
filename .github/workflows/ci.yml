@@ -86,6 +86,8 @@ jobs:
       # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
       - name: Todo mapa devolve o que o game.js consome
         run: npm run eval:mapcontrato
+      - name: Operação Flávio, objetivo, autoridade e anúncio
+        run: node tools/eval/runner.mjs eval:operacao-flavio eval:operacao-reset eval:operacao-online eval:objective-codec-contract eval:operacao-npc eval:mode-announcements
       - name: Amazônia acessível e bots entre palafitas
         run: npm run eval:amazonia
       - name: Escadão — circulação, estrutura e casa
