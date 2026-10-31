@@ -177,7 +177,6 @@ export class NetClient {
     this.proximo = null; this.onProximo = null;   // próximo mapa anunciado no placar (nó antigo nunca manda)
     this.onPersonagem = null;
     this.onChat = null; this._chatFila = [];
-    // ── diagnóstico de rede (snapshots/s e banda) ──
     // Taxa estimada pelo tempo de simulação; relógio parado publica indisponibilidade.
     // Chegada local mede silêncio; quadros de render não definem emissão.
     this.stats = { hz: 0, kbps: 0, gapMax: 0, sinceLast: 0, ents: 0, tick: 0, ping: 0, snaps: 0, bytes: 0 };
