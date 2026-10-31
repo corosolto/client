@@ -825,3 +825,24 @@ faca/CampoUV e contrato atual de grafite; wiring permanece SEM COMMIT até
 transferência explícita dos arquivos CI pelo Root. Sem push/PR/browser ou hook
 integral nesta fase; evidência Node focal limitada a5min. Aceites visuais e
 críticas anteriores são do Root e não substituem a revisão desta integração.
+
+
+## QA — merge e wiring público preparados para crítica
+
+QA HEAD621783539 integra be1661126 após a53d7a8c3/c4754bf6b; ambos os
+merges têm Signed-off-by/Agent e preservam as entradas de continuação.
+Hotfix35caminhos foi byte-idêntico ao QA anterior antes do wiring; Game,
+vmvisibility e invariants continuam intactos. Só3consumidoresF2+Campo
+receberam os blobs aceitos do alvo. Sem dirty Boot copiado.
+Wiring de4arquivos e docs gerados está SEM COMMIT, aguardando crítica
+independente do Root. Aliases faca e CampoUV passaram (2/2,29.1s);
+prova pura da curadoria e portao-gatilho passaram após transferência CI.
+Runtime ativo preparado para14nominais; censo/audit históricos mantêm
+seus aliases/META/TETO e saíram do fast Node. Não rodei browser/hook/push.
+Root informa trabalho editorial tag-fina/tag-larga e bake futuro separado;
+o runtime71GREEN do checkpoint anterior não prova esses insumos futuros.
+
+
+## QA wiring — crítica independente e pin histórico corrigido
+
+R3 quatrofocaisGREEN/972refs. GLMR4achouP1pinworkflowantigoemops:test; Rootmudouapenaspinparaeval:grafite-atual+headerdecontrato. Node6/6 eops79/79GREEN; críticoROindependenteca30538c validoucontraprovas: removernovo/substituirporvelhoREDexato, demais5cláusulasincluindoSertãoparaleloGREEN. GLMR5timeoutsemreportNÃOaceito. Wiringpúblico checkpointadoantesmergeidentidadeb24; nãoéaceitebrowser/hook/push/produção. Preservadasaliases/METAhistórica e auditoriaemfalha;0pathsprivadosemCIpúblico. BootR11privadoaindapendente; nãoadotarR10gzipfulfill.

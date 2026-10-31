@@ -59,14 +59,14 @@ export const GATILHOS = {
     workflow: '.github/workflows/portao-browser.yml',
     padroes: [
       ...COMUM,
-      /^tools\/eval\/(serve|harness|graffiti-census|graffiti-census-accept|ego-graffiti-census|graffiti-audit|select-inflate|entrada-check|armas-check|selected-weapon-probe|boot-check|perfil-mobile-browser|sertao-livestock-runtime-check|treta-vitrine-browser|lobby-arma-mao-check|mira-alinhada-check|gate-accept)\.mjs$/,
+      /^tools\/eval\/(serve|harness|graffiti-census|graffiti-census-accept|ego-graffiti-census|graffiti-current-ci-check|graffiti-current-accept|graffiti-current-browser-check|graffiti-curation-measure|graffiti-art-inventory|graffiti-audit|select-inflate|entrada-check|armas-check|selected-weapon-probe|boot-check|perfil-mobile-browser|sertao-livestock-runtime-check|treta-vitrine-browser|lobby-arma-mao-check|mira-alinhada-check|gate-accept)\.mjs$/,
       /^tools\/eval\/(graffiti_census|graffiti_audit|select_inflate|select_inflate_debt)\.json$/,
       /^tools\/ops\//,
       /^\.github\/workflows\/portao-browser\.yml$/,
     ],
     /* `npm run` que o workflow chama. A régua cobra os dois lados: passo novo sem
        entrada aqui é vermelho, e entrada aqui sem passo também (passo que sumiu). */
-    passos: ['eval:serve', 'eval:grafite', 'eval:select', 'eval:lobbyarmamao', 'eval:mira-public', 'eval:entrada', 'eval:perfilmobile:browser', 'eval:armas', 'eval:boot', 'eval:sertao-livestock-runtime', 'eval:grafite:ar'],
+    passos: ['eval:serve', 'eval:grafite-atual', 'eval:select', 'eval:lobbyarmamao', 'eval:mira-public', 'eval:entrada', 'eval:perfilmobile:browser', 'eval:armas', 'eval:boot', 'eval:sertao-livestock-runtime', 'eval:grafite:ar'],
   },
   smoke: {
     workflow: '.github/workflows/smoke-web.yml',
