@@ -3399,7 +3399,7 @@ export class Game {
     this.vm.melee?.setProfile(handProfile);
     p.team = newTeam;
     // rebalanceia 4×4: um bot do time novo deserta pro time velho
-    const candidates = this.bots.filter(b => b.team === newTeam);
+    const candidates = this.bots.filter(b => b.team === newTeam && !b._objectiveNpc);
     const swapBot = candidates[(Math.random() * candidates.length) | 0];
     if (swapBot) {
       swapBot.team = oldTeam;
