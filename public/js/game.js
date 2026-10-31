@@ -839,7 +839,7 @@ export class Game {
     this._mp = null;
     this._mpPend = this.online ? { mpFactory, net } : null;
 
-    // Câmera 3ª pessoa (tecla B): modo de VISÃO, não de combate - mira e tiro seguem saindo
+    // Câmera 3ª pessoa (tecla N): modo de VISÃO, não de combate - mira e tiro seguem saindo
     // da câmera. Modos, rig, grip e pré-carga do corpo: docs/RIG-PEGA-ARMA.md.
     this.camView = ['first', 'third', 'shoulder'].includes(settings.camView) ? settings.camView : 'first';
     this.playerTP = null;
@@ -853,7 +853,7 @@ export class Game {
     this._tpOrbitYaw = 0;
     this._tpOrbitPitch = 0;
     this._eyeWorld = new THREE.Vector3();   // posição do OLHO — origem de tiro/fumaça em 3ª pessoa
-    /* Só o CORPO do jogador (tecla B) — sem `weapons` o glbchars pré-carrega as 26 armas
+    /* Só o CORPO do jogador (tecla N) — sem `weapons` o glbchars pré-carrega as 26 armas
        BLOQUEANDO e desfaz o lazy da partida (ARM1/ARM3). BUG-85. */
     /* O dedicado usa `testMode`: sem browser/GLB, preload inútil compete com snapshots.
        No browser, main.js já aguarda o preload antes do `new Game`. */
@@ -2129,7 +2129,11 @@ export class Game {
       if (e.code === 'KeyZ') { this._radioShow('z'); return; }
       if (e.code === 'KeyX') { this._radioShow('x'); return; }
       if (e.code === 'KeyV') { this._radioShow('c'); return; }
-      if (e.code === 'KeyB') { this._toggleCamView(); return; }   // 1ª → 3ª → ombro
+      if (e.code === 'KeyN' && !e.repeat) {
+        if (e.shiftKey) this._swapShoulder();
+        else this._toggleCamView();
+        return;
+      }   // N: 1ª → 3ª → ombro · Shift+N: troca o ombro
       if (e.code === 'KeyT' && !e.repeat) { this._emoteToggle(); return; }   // roda de dança
       if (this.emoteOpen) {
         const n = /^Digit([1-8])$/.exec(e.code);
@@ -6277,13 +6281,20 @@ export class Game {
       c.rotation.x += (wantPitch - c.rotation.x) * Math.min(1, dt * 3.5);
     }
   }
-  // Cicla 1ª → 3ª (longe) → ombro (perto, vê braços) → 1ª (tecla B). Constrói o corpo
+  // Cicla 1ª → 3ª (longe) → ombro (perto, vê braços) → 1ª (tecla N). Constrói o corpo
   // 3ª pessoa na 1ª vez (lazy).
   _toggleCamView() {
     // first = 1ª pessoa (só-arma, padrão do jogo) · third = OTS SOCOM (cintura pra cima) ·
     // shoulder = OTS colado (vê a arma de perto). A 1ª-pessoa-com-corpo (fpbody) foi removida.
     const order = ['first', 'third', 'shoulder'];
     this.setCamView(order[(order.indexOf(this.camView) + 1) % order.length]);
+  }
+  _swapShoulder() {
+    this._tpShoulderSide = -(this._tpShoulderSide || 1);
+    this._tpBoomClear = undefined;
+    this._tpBoomBlockedGrace = 0;
+    this._tpBoomLastBlocked = undefined;
+    return this._tpShoulderSide;
   }
   setCamView(mode) {
     if (!['first', 'third', 'shoulder'].includes(mode)) return false;
@@ -6381,7 +6392,7 @@ export class Game {
     const TP_DIST = (shoulder ? 0.85 : 1.7) + (shoulder ? 0.30 : 0.50) * ads + (shoulder ? 0.85 : 0) * orbitBlend + 1.5 * danca;
     const TP_UP = shoulder ? 0.10 : 0.18;
     const TP_SIDE = (shoulder ? 0.34 : 0.28) + (shoulder ? 0.16 : 0.22) * ads;
-    cam.position.set(p.pos.x, p.pos.y + eye, p.pos.z).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE);
+    cam.position.set(p.pos.x, p.pos.y + eye, p.pos.z).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE * (this._tpShoulderSide || 1));
     cam.position.y += TP_UP - 0.45 * orbitBlend + 0.35 * danca;
     const gy = this.world.groundHeightAt(cam.position.x, cam.position.z, cam.position.y) + 0.2;
     if (cam.position.y < gy) cam.position.y = gy;   // não atravessa o chão
@@ -6395,18 +6406,33 @@ export class Game {
     if (boomLen > 1e-4) {
       boom.multiplyScalar(1 / boomLen);
       let claro = boomLen;
-      if (this.world.occluders?.length) {
-        this.ray.set(eyePos, boom);
+      // Cinco probes paralelos dão 12 cm de volume à lente e seguram quinas que o raio
+      // central atravessava, sem criar geometria ou outra convenção de collider.
+      const probeOrigin = this._tpBoomProbe || (this._tpBoomProbe = new THREE.Vector3());
+      const probeRight = this._tpBoomProbeRight || (this._tpBoomProbeRight = new THREE.Vector3());
+      const probeUp = this._tpBoomProbeUp || (this._tpBoomProbeUp = new THREE.Vector3());
+      probeRight.copy(right).addScaledVector(boom, -right.dot(boom)).normalize();
+      probeUp.crossVectors(boom, probeRight).normalize();
+      const hits = this._tpBoomHits || (this._tpBoomHits = []);
+      const pt = this._tpBoxPt || (this._tpBoxPt = new THREE.Vector3());
+      for (let probe = 0; probe < 5; probe++) {
+        const lateral = probe === 1 ? 0.12 : probe === 2 ? -0.12 : 0;
+        const vertical = probe === 3 ? 0.10 : probe === 4 ? -0.10 : 0;
+        probeOrigin.copy(eyePos).addScaledVector(probeRight, lateral).addScaledVector(probeUp, vertical);
+        this.ray.set(probeOrigin, boom);
         this.ray.far = boomLen;
-        const hit = this.ray.intersectObjects(this.world.occluders, true)[0];
-        if (hit && hit.distance < claro) claro = hit.distance;
-      }
-      if (this.world.camBlockers?.length) {
-        const pt = this._tpBoxPt || (this._tpBoxPt = new THREE.Vector3());
-        for (const box of this.world.camBlockers) {
-          if (this.ray.ray.intersectBox(box, pt)) {
-            const d = eyePos.distanceTo(pt);
-            if (d < claro) claro = d;
+        if (this.world.occluders?.length) {
+          hits.length = 0;
+          this.ray.intersectObjects(this.world.occluders, true, hits);
+          const hit = hits[0];
+          if (hit && hit.distance < claro) claro = hit.distance;
+        }
+        if (this.world.camBlockers?.length) {
+          for (const box of this.world.camBlockers) {
+            if (this.ray.ray.intersectBox(box, pt)) {
+              const d = probeOrigin.distanceTo(pt);
+              if (d < claro) claro = d;
+            }
           }
         }
       }

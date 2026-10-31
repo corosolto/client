@@ -148,7 +148,7 @@ function montarHud(hud) {
   dica('MOUSE 1', 'Atirar', 1);
   dica('R', 'Recarregar', 2);
   dica('E', 'pegar');
-  dica('B', 'câmera');
+  dica('N', 'câmera');
   dica('F', 'ping');
   dica('Z/X/V', 'rádio');
   dica('Y/U', 'chat').dataset.chat = '';
@@ -162,7 +162,7 @@ const CAMERA = { first: '1ª PESSOA', third: '3ª PESSOA', shoulder: 'OMBRO' };
 function atualizarCamera(g) {
   const chip = document.querySelector('#hud-actions .tp-hud-cam');
   if (!chip) return;
-  const txt = `${tr(CAMERA[g.camView] || CAMERA.first)} · B`;
+  const txt = `${tr(CAMERA[g.camView] || CAMERA.first)} · N`;
   if (chip.textContent !== txt) chip.textContent = txt;
 }
 
