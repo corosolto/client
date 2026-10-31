@@ -558,11 +558,17 @@ regra('alvo cercado não prende o bando: ele desiste do ponto e vai tomar setor'
   abrirOnda(ctx, 2);
   const bando = vivos(ctx.modo);
   soltar(bando);
-  for (const bot of bando) bot.pos.set(preso.x + 3.2, 0, preso.z + .5);
+  for (const spot of mundo.foodSpots.slice(1)) atacarComida(ctx.modo.state, spot, 9999);
+  for (const bot of bando) {
+    bot.pos.set(preso.x + 3.2, 0, preso.z + .5);
+    bot._boarComidaId = preso.id; bot._boarEvitar = null; bot._boarRumo = null;
+    bot._boarCansaco = 0; bot._boarMelhorEm = ctx.game.time; bot._boarAlvoChave = null;
+  }
   const desistiu = new Set();
   for (let i = 0; i < 60 * 20; i++) {
     passo(ctx, 1 / 60);
-    for (const bot of vivos(ctx.modo)) if (['setor', 'vagar'].includes(bot._boarAlvo?.kind)) desistiu.add(bot);
+    for (const bot of bando) if (bot._boarEvitar?.has(`c:${preso.id}`)
+      && ['setor', 'vagar'].includes(bot._boarAlvo?.kind)) desistiu.add(bot);
   }
   assert.ok(comidaRestante(ctx.modo.state, preso) > 0, 'o ponto cercado foi comido através do muro');
   assert.ok(desistiu.size >= Math.ceil(bando.length * 0.8), `só ${desistiu.size}/${bando.length} largaram o ponto cercado e foram tomar setor em 20 s`);
