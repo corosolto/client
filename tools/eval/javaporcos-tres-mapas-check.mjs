@@ -14,6 +14,12 @@ try {
   const g=bootGame(id,{textures:initTextures(),seed:77}),w=g.world;
   assert.ok(g.objective,'modo não iniciou');assert.equal(w.horda.frentes.length,6);
   assert.ok(w.hordeRefuges.length>=4);assert.ok(w.pickups.length>=12);
+  g.scene.updateMatrixWorld(true);
+  for(const r of w.hordeRefuges){
+   const alturas=[];
+   for(const d of r.degraus){const z=(d.z0+d.z1)/2,raio=new THREE.Raycaster(new THREE.Vector3(r.x,d.y+.1,z),new THREE.Vector3(0,-1,0),0,.3),hit=raio.intersectObject(w.root,true).find(h=>h.object.name==='escada-refugio');assert.ok(hit&&Math.abs(hit.point.y-d.y)<.005,'degrau físico diverge da malha');alturas.push(hit.point.y);}
+   for(let i=1;i<alturas.length;i++){const espelho=alturas[i]-alturas[i-1],piso=r.degraus[i].z1-r.degraus[i].z0;assert.ok(espelho>=.16&&espelho<=.19&&2*espelho+piso>=.62&&2*espelho+piso<=.66,`${id}: proporção inválida no refúgio ${r.team}`);}
+  }
   assert.ok(w.root.userData.interiores?.length>=2,'sem abrigos interiores');
   assert.ok(w.foodSpots.length>=8,'comida concentrada em poucos destinos');
   for(const s of w.foodSpots){const n=w.waypoints.nodes[w.nearestWaypoint(s.x,s.z)];if(s.id.startsWith('alimento-'))assert.ok(Math.hypot(n.x-s.x,n.z-s.z)<=s.r,`${id}/${s.id}: alimento inalcançável`);}

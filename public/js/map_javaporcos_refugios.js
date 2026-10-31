@@ -14,7 +14,7 @@ export function construirRefugios(kit, campo) {
       if(z!=null) break;
     }
     if (z == null) throw new Error(`JAV-REFUGIO: sem área livre para ${team}`);
-    const y = campo.amostra(x, z) + 3.8;
+    const y = Math.max(campo.amostra(x, z) + 3.8, campo.amostra(x, z + 9.7) + 3.55);
     kit.caixa(6, .25, 6, kit.MAT.calcada, x, y - .25, z, {nome:`laje-refugio-${team}`});
     for (const dx of [-3,3]) kit.caixa(.2,1.15,6.2,kit.MAT.calcada,x+dx,y,z,{nome:'guarda-refugio'});
     kit.caixa(6,1.15,.2,kit.MAT.calcada,x,y,z-3,{nome:'guarda-refugio'});

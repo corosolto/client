@@ -909,3 +909,35 @@ novo bloqueador funcional. Suite baseline+7mutantes em curso sessão88214;
 mutante escada-sem-lateral remove somente faces físicas mantendo o piso. Nova
 checagem3mapas+intencao/refugios/lojas sessão12670. Matriz de armas regenerada:
 apenas referências game.js4053→4054 e4107→4108, sem mudança de dano/arsenal.
+Suite final de interiores baseline+7mutantes terminou verde(exit0), sessão88214.
+Inclui escada-sem-lateral detectando só folga da cápsula e vizinha-invasora só
+sala térrea. Três mapas/intencao/refugios/lojas após replanejamento também
+terminaram verdes(exit0), sessão12670. Docs/arch/assetrev regenerados sem novo
+diff. Checkpoint corrigido5a6748534. Novo push com BASE4333 está ativo na
+sessão71046, log /tmp/jav-push-final-20261031.log; hook42589/log interno
+/tmp/prepush-42589.log. Ainda não enviado nem READY; aguardar resultado real.
+
+MAPCHECK amplo iniciado antes de5a terminou: relatório Rural rejeitado em
+/tmp/jav-map-rural-result.json; Vila rejeitada em /tmp/jav-map-vila-pre5a-result.json.
+Vila antiga:14corpos em sólido e2escadas de refúgio com Blondel0.612/0.616
+(contrato0.62), portanto não aprovada. Correção5a cobre interiores, não altera
+a proporção dos refúgios na encosta; este ajuste permanece pendente. Restaurado
+o consolidado tools/eval/map_check.json a partir de /tmp/jav-map-check-before.json
+para preservar todos os outros mapas. Não publicar relatório parcial como aceite.
+Preview desta entrega é versão para teste, sem aceite visual/varredura ampla atual.
+
+Push5a terminou verde816s, remoto confirmado. Deploy dpl_AzBYG1V4k13ikMViDxFKCRA9j971
+ERRO: assert:assets no pack de build não cobre distrito_rural/vila_da_mata.
+Correção tools/audio/extend-map-soundscapes.mjs preenche os dois somente ausentes
+com clone da ambiência existente da invasão; configs curadas preservadas.
+Nova régua javaporcos-audio-pack-check reproduz RED e GREEN pelo mesmo assets-check,
+com idempotência/preservação/sem doador. Escadão e Mansão regressões verdes.
+Local public/audio/manifest.json é instalação antiga incompleta73refs sem
+mapSoundscapes; assert:assets local e audio:check reprovam por essa instalação,
+não pelo pack que a Vercel baixa. Não alterar/gravar pacote privado no Git.
+Refúgios agora y>=baseEscada+3.55: subida útil>=3.10, espelho>=.1722,
+Blondel>=.6244. Régua três mapas mede18degraus por12refúgios com raycast real,
+proporção e piso coincidindo com malha; verde. Régua refúgios movimento verde.
+Revisão crítica independente dos2fixes sem bloqueios. Docs/arch/assetrev
+regenerados sem diff. Próximo: commit e push normal BASE4333, aguardar READY
+novo, verificar JS real do preview; não considerar deploy5a publicado.
