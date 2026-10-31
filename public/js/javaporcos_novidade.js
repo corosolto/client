@@ -8,7 +8,7 @@ export function anunciarJavaporcos({jogar, multiplayer} = {}) {
   dialog.id = 'javaporcos-novidade';
   dialog.setAttribute('aria-labelledby','javaporcos-novidade-titulo');
   dialog.innerHTML = `<style>
-#javaporcos-novidade{padding:0;border:1px solid #a8b17a;background:#121c17;color:#f7f1dc;width:min(920px,92vw);max-height:92dvh;overflow:auto;box-shadow:0 24px 120px #000c}
+#javaporcos-novidade{position:fixed;inset:0;margin:auto;padding:0;border:1px solid #a8b17a;background:#121c17;color:#f7f1dc;width:min(920px,92vw);max-height:92dvh;overflow:auto;box-shadow:0 24px 120px #000c}
 #javaporcos-novidade::backdrop{background:#030b09dc}
 #javaporcos-novidade .jn-art{width:100%;aspect-ratio:16/7;object-fit:cover;display:block}
 #javaporcos-novidade .jn-copy{padding:clamp(20px,4vw,36px)}

@@ -3230,6 +3230,12 @@ function montarHubSels() {
     box.append(btn, lista); host.appendChild(box);
     const sel = {
       sync() {
+        const horda = ehMapaJavaporcos(currentMap);
+        box.hidden = horda && (id === 'inimigos' || id === 'rounds');
+        btn.disabled = horda && id === 'modo';
+        btn.querySelector('small').textContent = tr(horda && id === 'time' ? 'DEFENSORES' : rotulo);
+        lista.setAttribute('aria-label', tr(horda && id === 'time' ? 'DEFENSORES' : rotulo));
+        if (box.hidden || btn.disabled) sel.abrir(false);
         const v = atual(), op = opcoes().find((o) => o.v === v);
         btn.querySelector('strong').textContent = op ? op.t : v;
       },
@@ -3272,11 +3278,17 @@ function montarHubSels() {
   const faixa = (de, ate, rot) => Array.from({ length: ate - de + 1 }, (_, k) => ({ v: String(de + k), t: rot(de + k) }));
   montar('mapa', 'MAPA', () => MAPAS_MENU.map((id) => ({ v: id, t: MAPS[id].name, img: mapPreviewPoster(id, VERSION) })),
     () => currentMap, (v) => { ui.click(); gotoMap(MAPAS_MENU.indexOf(v)); });
-  montar('modo', 'MODO', () => [{ v: 'rounds', t: tr('MATA-MATA') }, { v: 'ctf', t: tr('CAPTURA') }],
-    () => matchMode, (v) => $(v === 'ctf' ? 'hub-mode-ctf' : 'hub-mode-rounds').click());
+  montar('modo', 'MODO', () => ehMapaJavaporcos(currentMap) ? [{v:'horde',t:'CAÇA AO JAVAPORCO'}] : [{ v: 'rounds', t: tr('MATA-MATA') }, { v: 'ctf', t: tr('CAPTURA') }],
+    () => ehMapaJavaporcos(currentMap) ? 'horde' : matchMode, (v) => $(v === 'ctf' ? 'hub-mode-ctf' : 'hub-mode-rounds').click());
   montar('armas', 'ARMAS', () => WPN_MODES.map((m) => ({ v: m.id, t: tr(m.label) })),
     () => settings.wpnMode || 'all', (v) => { msWpnMode.value = v; msWpnMode.onchange(); });
-  montar('time', 'SEU TIME', () => faixa(0, 7, botsLabel), () => String(settings.allyBots), (v) => { msAlly.value = v; msAlly.onchange(); });
+  montar('time', 'SEU TIME', () => ehMapaJavaporcos(currentMap) ? faixa(4,8,n=>`${n} · VOCÊ + BOTS`) : faixa(0, 7, botsLabel),
+    () => String(ehMapaJavaporcos(currentMap) ? equipeJavaporcos(settings).javaporcos.defensores : settings.allyBots), (v) => {
+      if (ehMapaJavaporcos(currentMap)) {
+        settings.javaporcos = {...settings.javaporcos,defensores:Number(v)};
+        saveSettings(); syncMapOptions(); setMapMeta(); ui.click();
+      } else { msAlly.value = v; msAlly.onchange(); }
+    });
   montar('inimigos', 'INIMIGOS', () => faixa(1, 8, botsLabel), () => String(settings.enemyBots), (v) => { msEnemy.value = v; msEnemy.onchange(); });
   montar('rounds', 'ROUNDS', () => faixa(1, ROUNDS_CUSTOM_MAX, String), () => String(matchRounds()), (v) => { msRounds.value = v; msRounds.onchange(); });
   document.addEventListener('click', () => fechar(null));
