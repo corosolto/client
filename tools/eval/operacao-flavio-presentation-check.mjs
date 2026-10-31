@@ -1,3 +1,4 @@
+import { usePresentationClock } from './presentation-clock-fixture.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -9,10 +10,10 @@ const mutants = {
   'mira-estatica': ['mode_operacao_flavio.js', 'cam.lookAt(alvo.x, 2.1, alvo.z);', 'cam.lookAt(0, 2.1, ganhou ? 54 : 38);', /avião permanece no viewport real/],
   'camera-na-viga': ['mode_operacao_flavio.js', '{ x: 16, y: 7, z: 50 }', '{ x: 16, y: 6.7, z: 35 }', /câmera fora da geometria de travessa-hangar/],
   'sem-pulo': ['mode_operacao_flavio.js', 'this.cinematic.skipped = true;', '', /apresentação pulada não continua/],
-  'relogio-local': ['mode_operacao_flavio.js', 'if (!this.game.online) this.game.stateUntil = this.game.time;', 'this.game.stateUntil = this.game.time;', /gesto local não adianta/],
+  'relogio-local': ['mode_operacao_flavio.js', "if (!this.game.online && this.game.state === 'roundEnd') this.game.stateUntil = this.game.time;", "if (this.game.state === 'roundEnd') this.game.stateUntil = this.game.time;", /gesto local não adianta/],
   'camera-follow': ['netgame.js', 'if (game.objective?.cinematicActive) return;', '', /follow não sobrescreve/],
   'sem-vencedor': ['mode_operacao_flavio.js', "if (winner === 'E' || winner === 'B') this.state.winner = winner;", '', /snapshot do resultado por tempo/],
-  'audio-continua': ['mode_operacao_flavio.js', 'this.cinematic.skipped = true;\n        this._encerrarFontes();', 'this.cinematic.skipped = true;', /áudio da cena pulada é interrompido/],
+  'audio-continua': ['mode_operacao_flavio.js', 'this.cinematic.skipped = true;\n    this._encerrarFontes();', 'this.cinematic.skipped = true;', /áudio da cena pulada é interrompido/],
 };
 if (process.argv.includes('--mutantes')) {
   for (const [name, [, , , failure]] of Object.entries(mutants)) {
@@ -49,6 +50,7 @@ if (mutants[mutant]?.[0] === 'mode_operacao_flavio.js') {
   g.objective = new OperacaoFlavio(g, CHARACTERS.find(c => c.id === 'senador'));
 }
 g.start();
+const restoreClock = usePresentationClock(() => g.time * 1000);
 g.online = true;
 const net = { meta: {}, yourEnt: null, startPing() {}, stopPing() {} };
 const mp = makeNetcode(g, net);
@@ -61,7 +63,7 @@ const begin = () => {
 };
 try {
   for (const winner of ['B', 'E']) check('avião enquadrado sem câmera nas vigas: '+winner, () => {
-    g.objective.prepareRound(); g.time = 10;
+    g.objective.prepareRound(); g.time = 10; g.state = 'roundEnd';
     g.objective.startCinematic(winner);
     const vigas = [];
     g.world.root.traverse(o => {
@@ -132,5 +134,5 @@ try {
     assert.equal(g.state, 'roundEnd');
     assert.equal(g.objective.netState().winner, 'E', 'snapshot do resultado por tempo tem vencedor');
   });
-} finally { mp.dispose(); g.dispose(); }
+} finally { mp.dispose(); g.dispose(); restoreClock(); }
 if (failed) process.exitCode = 1;

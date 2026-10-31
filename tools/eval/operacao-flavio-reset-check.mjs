@@ -1,3 +1,4 @@
+import { usePresentationClock } from './presentation-clock-fixture.mjs';
 import assert from 'node:assert/strict';
 import { OperacaoFlavio } from '../../public/js/mode_operacao_flavio.js';
 
@@ -24,7 +25,7 @@ for (const online of [false, true]) {
   for (const origem of [new Position(0, 0.08, 55), new Position(3, 2, 61)]) {
     const vip = { team: 'B', pos: new Position(), _meshWeapon: 'knife' };
     const game = {
-      online, dedicated: false, time: 0, bots: [vip],
+      online, dedicated: false, time: 0, state: 'roundEnd', bots: [vip],
       world: {
         escortPath: [{ x: 0, z: 0 }, { x: 0, z: 8 }],
         groundHeightAt: () => 0,
@@ -35,12 +36,13 @@ for (const online of [false, true]) {
       _trocarPersonagem() {},
       _syncRemoteWeapon() {},
     };
+    const restoreClock = usePresentationClock(() => game.time * 1000);
     const modo = new OperacaoFlavio(game, {});
     const duracao = modo.roundResult('B').duration;
     modo.prepareRound();
     for (let rodada = 0; rodada < 2; rodada++) {
       modo.startCinematic('B');
-      game.time += duracao;
+      game.time += duracao * .9;
       modo.updatePresentation();
       assert.notDeepEqual(game.world.objectivePlane.position, origem, 'cinemática precisa mover o avião antes de testar o reset');
       modo.prepareRound();
@@ -56,7 +58,7 @@ for (const online of [false, true]) {
     assert.deepEqual(game.world.objectivePlane.position, origem, 'derrota também preserva a origem do avião');
     delete game.world.objectivePlane;
     assert.doesNotThrow(() => modo.prepareRound(), 'ausência do prop opcional não impede nova rodada');
-    modo.dispose();
+    modo.dispose(); restoreClock();
   }
 }
 console.log('✓ avião reinicia entre rodadas offline/online, incluindo origem não padrão e prop ausente');

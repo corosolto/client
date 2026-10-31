@@ -1,3 +1,4 @@
+import { usePresentationClock } from './presentation-clock-fixture.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Game, THREE, mkEl } from './harness.mjs';
@@ -64,6 +65,7 @@ const game = {
 game.objective = new OperacaoFlavio(game, {});
 game.objective.prepareRound();
 const net = { meta: {}, startPing() {}, stopPing() {} };
+const restoreClock = usePresentationClock(() => game.time * 1000);
 const mp = makeNetcode(game, net);
 mp._netTick = 1;
 if (mutante === 'sem-hud') game.objective.atualizaHud = () => {};
@@ -98,6 +100,7 @@ try {
     assert.match(game.objective.hud.textContent, /304s$/);
   });
   check('vitória online dispara cinemática e título do objetivo', () => {
+    game.state = 'roundEnd';
     game.roundsWon.B = 1;
     const serverDeadline = game.time + game.objective.roundResult('B').duration;
     game.stateUntil = serverDeadline;
@@ -112,7 +115,7 @@ try {
   });
   check('nova rodada online restaura apresentação sem reescrever o relógio do servidor', () => {
     game.objective.startCinematic('B');
-    game.time += game.objective.roundResult('B').duration;
+    game.time += game.objective.roundResult('B').duration * .9;
     game.objective.updatePresentation();
     assert.notEqual(game.world.objectivePlane.position.z, 55, 'pré-condição: avião moveu antes do reset');
     game.timeLeft = 357;
@@ -306,6 +309,6 @@ try {
       assert.equal(resets,0);
     } finally { game.objective.prepareRound = prepare; }
   });
-} finally { mp.dispose(); game.objective.dispose(); }
+} finally { mp.dispose(); game.objective.dispose(); restoreClock(); }
 console.log(JSON.stringify({ mutant: mutante || null, failed }));
 if (failures) process.exitCode = 1;

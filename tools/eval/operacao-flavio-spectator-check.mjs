@@ -1,3 +1,4 @@
+import { usePresentationClock } from './presentation-clock-fixture.mjs';
 // O main cria espectadores com dedicated+mpFactory+net; headless não recebe mpFactory/net.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -59,6 +60,7 @@ if (mutations[mutant]?.[0] === 'mode_operacao_flavio.js') {
 assert.equal(g.online, true); assert.equal(g.dedicated, true);
 assert.equal(server.online, false); assert.equal(server.dedicated, true);
 g.start();server.start();local.start();
+const restoreClock=usePresentationClock(()=>g.time*1000);
 let failures = 0;
 const check = (name, fn) => { try { fn(); console.log('PASS '+name); } catch(e) { failures++; console.error('FAIL '+name+': '+e.message); } };
 const nodes = [];
@@ -145,5 +147,5 @@ try {
     assert.equal(nodes.length, count, 'headless não agenda áudio');
     assert.equal(server.world.root.getObjectByName('sirene-vermelha-flavio'), undefined);
   });
-} finally { g.dispose();server.dispose();local.dispose(); }
+} finally { g.dispose();server.dispose();local.dispose();restoreClock(); }
 process.exitCode = failures ? 1 : 0;

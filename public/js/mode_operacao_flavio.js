@@ -243,13 +243,9 @@ export class OperacaoFlavio {
       this.hud.style.cssText = 'position:fixed;left:50%;top:5.7rem;transform:translateX(-50%);z-index:12;padding:.55rem .9rem;background:#09101cdd;border:1px solid #d8b765;color:#fff;font:700 13px/1.2 system-ui;letter-spacing:.04em;pointer-events:none';
       game.el.hud?.append?.(this.hud);
       this._key = (event) => {
-        if (!this.cinematic || this.game.time - this.cinematic.startedAt < 2) return;
+        if (!this.cinematic || this._elapsedCinematic() < 2) return;
         if (event.code !== 'Space' && event.code !== 'Escape') return;
-        // Pulo local: cala a cena e solta a câmera; só o offline adianta a própria rodada.
-        if (!this.game.online) this.game.stateUntil = this.game.time;
-        this.cinematic.skipped = true;
-        this._encerrarFontes();
-        this._restaurarAmbiente();
+        this._finalizarCinematic();
       };
       window.addEventListener('keydown', this._key);
     }
@@ -271,6 +267,20 @@ export class OperacaoFlavio {
 
   // Apresentação de fato no comando da câmera: updatePresentation e câmera de espectador.
   get cinematicActive() { return !!this.cinematic && !this.cinematic.skipped; }
+
+  // docs/maps/operacao-decola.md exige tempo real, independente da simulação.
+  _elapsedCinematic() {
+    if (!this.cinematic) return 0;
+    return Math.max(0, (performance.now() - this.cinematic.anchorAt) / 1000);
+  }
+
+  _finalizarCinematic() {
+    if (!this.cinematic || this.cinematic.skipped) return;
+    if (!this.game.online && this.game.state === 'roundEnd') this.game.stateUntil = this.game.time;
+    this.cinematic.skipped = true;
+    this._encerrarFontes();
+    this._restaurarAmbiente();
+  }
 
   // Fontes agendadas também precisam parar ao pular ou substituir a cena.
   _encerrarFontes() {
@@ -517,7 +527,7 @@ export class OperacaoFlavio {
   startCinematic(winner) {
     this._encerrarFontes();   // cena nova substitui a marcha anterior, não dobra com ela
     this._restaurarAmbiente();   // ambiente da cena anterior não vaza para a nova
-    this.cinematic = { winner, startedAt: this.game.time, skipped: false };
+    this.cinematic = { winner, startedAt: this.game.time, anchorAt: performance.now(), skipped: false };
     if (this.game.vmScene) this.game.vmScene.visible = false;
     if (!this.game.dedicated || this.game.online) this.fontes = marchaMilitar(this.game.sfx);
     if (winner === 'E' && (!this.game.dedicated || this.game.online)) {
@@ -531,7 +541,10 @@ export class OperacaoFlavio {
 
   updatePresentation() {
     if (!this.cinematicActive || (this.game.dedicated && !this.game.online)) return;
-    const t = Math.min(1, (this.game.time - this.cinematic.startedAt) / 9);
+    if (this.game.state !== 'roundEnd') { this._finalizarCinematic(); return; }
+    const elapsed = this._elapsedCinematic();
+    if (elapsed >= 9) { this._finalizarCinematic(); return; }
+    const t = Math.min(1, elapsed / 9);
     const cam = this.game.camera;
     const ganhou = this.cinematic.winner === 'B';
     // O pátio mantém o trajeto da câmera fora das vigas do hangar.
@@ -545,7 +558,7 @@ export class OperacaoFlavio {
     cam.position.set(a.x + (b.x - a.x) * smooth, a.y + (b.y - a.y) * smooth, a.z + (b.z - a.z) * smooth);
     cam.lookAt(alvo.x, 2.1, alvo.z);
     const sirene = this._amb?.vermelha;
-    if (sirene) sirene.intensity = 2.4 + 2.2 * Math.sin((this.game.time - this.cinematic.startedAt) * 8.2 - Math.PI / 2);
+    if (sirene) sirene.intensity = 2.4 + 2.2 * Math.sin(elapsed * 8.2 - Math.PI / 2);
   }
 
   netState() {

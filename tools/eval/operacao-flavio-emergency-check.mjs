@@ -1,3 +1,4 @@
+import { usePresentationClock } from './presentation-clock-fixture.mjs';
 // Spec docs/maps/operacao-decola.md: vitória E apaga hangar e aciona sirene vermelha.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -7,7 +8,7 @@ import { Game, initTextures, renderer, sfx, PCHAR, CHARACTERS } from './harness.
 
 const mutants = {
   'hangar-aceso': ['luz.intensity *= 0.08;', 'luz.intensity *= 1;', /luz do hangar reduzida/],
-  'pulso-parado': ['if (sirene) sirene.intensity = 2.4 + 2.2 * Math.sin((this.game.time - this.cinematic.startedAt) * 8.2 - Math.PI / 2);', 'if (sirene) sirene.intensity = 2.4;', /pulso varia no tempo/],
+  'pulso-parado': ['if (sirene) sirene.intensity = 2.4 + 2.2 * Math.sin(elapsed * 8.2 - Math.PI / 2);', 'if (sirene) sirene.intensity = 2.4;', /pulso varia no tempo/],
   'sirene-ausente': ['this.fontes.push(...sireneEmergencia(this.game.sfx));', '', /sirene varre frequência/],
   'sem-restaurar': ['const estado = this._amb;', 'const estado = null;', /intensidade original restaurada/],
   'material-vaza': ['const escuro = original.clone();', 'const escuro = original;', /terminal e perímetro preservados|intensidade original restaurada/],
@@ -40,6 +41,7 @@ if (mutant) {
   console.log('Mutação aplicada: '+mutant);
 }
 g.start();g.state='roundEnd';g.time=10;
+const restoreClock=usePresentationClock(()=>g.time*1000);
 const mode=g.objective, nodes=[];
 const param=()=>({value:0,events:[],
   setValueAtTime(v,t){this.events.push(['set',v,t]);this.value=v;},
@@ -112,5 +114,5 @@ try{
     const n=nodes.length;mode.startCinematic('E');g.time=13;mode.updatePresentation();
     restored();assert.equal(nodes.length,n,'nenhum oscilador no servidor');g.dedicated=false;
   });
-}finally{g.dedicated=false;g.dispose();}
+}finally{g.dedicated=false;g.dispose();restoreClock();}
 process.exitCode=failed?1:0;
