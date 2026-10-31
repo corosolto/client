@@ -157,13 +157,15 @@ const down = new THREE.Vector3(0, -1, 0);
 
 const mapas = [];
 for (const mapId of MAP_IDS) {
+  const inicioMapa = performance.now();
+  console.error(`[MAPAUD] início ${mapId}`);
   let g = null;
   try {
     // ctf:true = as bandeiras que o jogo REALMENTE usa (mapa sem ctfPoints cai no layout
     // padrão do game.js). As malhas de CTF vão pra `scene`, não pro `world.root`, então a
     // sonda vertical do MAP1 não as enxerga — de propósito: bandeira não é chão.
     g = bootGame(mapId, { textures, ctf: true, seed: SEED });
-  } catch (e) { mapas.push({ map: mapId, err: e.message }); continue; }
+  } catch (e) { mapas.push({ map: mapId, err: e.message }); console.error(`[MAPAUD] erro ${mapId}: ${e.message}`); continue; }
 
   const W = g.world;
   /* MATRIZES DE MUNDO: sem render ninguém chama updateMatrixWorld, e o Raycaster do three
@@ -760,6 +762,7 @@ for (const mapId of MAP_IDS) {
     // CTF1
     bandeiras, alturaTrianguloMin: +alturaTrianguloMin.toFixed(2),
   });
+  console.error(`[MAPAUD] fim ${mapId}: ${((performance.now() - inicioMapa) / 1000).toFixed(2)}s`);
 }
 
 const saida = {
