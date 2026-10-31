@@ -173,7 +173,7 @@ export function buildCampoMorro(scene, T = {}) {
     (base.userData.clones ||= []).push(m);   // external troca o mapa no onLoad: o clone entra junto
     return m;
   };
-  MAT.muralha = repetido(MAT.concrete, 20, 3);
+  MAT.muralha = repetido(MAT.concrete, 1, 1);
   // com UV em metros por face, o clone de densidade 3x2 quebraria o período: é o mesmo reboco
   MAT.morroFundo = MAT.wall;
   /* UV do reboco EM METROS por face (grupos da BoxGeometry): tile de 2,0 m igual ao
@@ -213,7 +213,7 @@ export function buildCampoMorro(scene, T = {}) {
   /* Acabamento M3 R1: peças mescladas (juntas, vergas, peitoris, coroas) — uma malha,
      zero colisor. Contrato em tools/eval/favela-finish-check.mjs (FV-M1/FV-M2). */
   const pecasFim = [];
-  const fim = (w, h, d, x, y, z) => pecasFim.push(new THREE.BoxGeometry(w, h, d).translate(x, y + h / 2, z));
+  const fim = (w, h, d, x, y, z) => { const geo = new THREE.BoxGeometry(w, h, d); uvRebocoMetros(geo, w, h, d); pecasFim.push(geo.translate(x, y + h / 2, z)); };
 
   // Planos rasos: não criam colisão nem obstáculo. `base` é a cota do terreno sob a
   // casa — sem ela, porta e janela flutuam na encosta ou afundam na baixada.
@@ -640,6 +640,10 @@ export function buildCampoMorro(scene, T = {}) {
       min = Math.min(min, g); max = Math.max(max, g);
     }
     const m = addBox(w, (max - min) + 3, d, MAT.muralha, cx, min, cz);
+    uvRebocoMetros(m.geometry, w, (max - min) + 3, d);
+    const uvBorda = m.geometry.attributes.uv;
+    for (let i = 0; i < uvBorda.count; i++) uvBorda.setXY(i, uvBorda.getX(i) * .5, uvBorda.getY(i) * .5);
+    uvBorda.needsUpdate = true;
     m.userData.guardaBorda = Math.abs(w) < Math.abs(d) ? 'z' : 'x';
     return m;
   };
@@ -669,10 +673,10 @@ export function buildCampoMorro(scene, T = {}) {
       const yv = base + 1.25 + (i % 2) * 0.42;
       addBox(0.05, 0.82, 1.15, MAT.glass, sx - Math.sign(sx) * 0.39, yv, z - 1.25, { collide: false, cast: false });
       addBox(0.05, 1.92, 0.82, MAT.door, sx - Math.sign(sx) * 0.39, base + 0.02, z + 1.45, { collide: false, cast: false });
-      fim(0.18, 0.09, 1.32, fx, yv + 0.82, z - 1.25);   // verga: base = topo REAL do vidro
-      fim(0.2, 0.07, 1.32, fx, yv - 0.07, z - 1.25);    // peitoril: topo = base REAL do vidro
-      fim(0.16, 0.6, 5.9, fx, base - 0.05, z);          // embasamento de contenção: encontro com o chão
-      for (const borda of [-1, 1]) fim(0.22, h + 0.12, 0.5, fx, base, z + borda * 2.95);   // pilar de divisa
+      fim(0.18, 0.09, 1.32, fx, yv + 0.82, z - 1.25);
+      fim(0.2, 0.07, 1.32, fx, yv - 0.07, z - 1.25);
+      fim(0.16, 0.6, 5.9, fx, base - 0.05, z);
+      for (const borda of [-1, 1]) fim(0.22, h + 0.12, 0.5, fx, base, z + borda * 2.95);
     }
   }
   for (const sz of [-HALF_Z, HALF_Z]) {
@@ -694,6 +698,7 @@ export function buildCampoMorro(scene, T = {}) {
     }
   }
   const malhaAcabamento = new THREE.Mesh(mergeParts(pecasFim), matJunta);
+  malhaAcabamento.geometry.userData.texelEscalada = true;
   malhaAcabamento.userData.favelaFinish = 'campo';
   malhaAcabamento.castShadow = malhaAcabamento.receiveShadow = true;
   root.add(malhaAcabamento);

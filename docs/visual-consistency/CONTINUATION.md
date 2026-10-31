@@ -773,3 +773,12 @@ grafo híbrido. É causa candidata verificável, sem tetoORC afrouxado. Próximo
 no checkout QA: integrar somente checkpoints até69641c9f3 e wiring público
 CLEAN0179ea07, preservar main5d/ec7; não copiar dirtyF2/CampoUV antes do aceite.
 Missão até18:45UTC continua incluindo merges/release e todos os defeitos visuais.
+
+
+## Campo UV — regressão de densidade encerrada, cauda antiga preservada
+
+Guardas usam UV métrico4m/repeat1; acabamento2m com lock pósmerge. Produto sóUV/material/lock, mesma volumetria/física nas quatroposes1320×880 Ego. TEXEL3p95/mediana5.1584→1.4244≤1.5, caudaTEXEL3b5.6403 antiga continuaREDexplicitamente; nãoafrouxartexel-check. BakeoficialCampoR9 real4peças/4arquivos,14mapas444peçasfresh e --duploverde.
+
+GateCU7cláusulas passou10casosnominal+9mutações exatas. R1/R2críticosrecusaram razãoaresta falsa,NaN,facesausentes/inventário11/13compensado eparserextras; RootR3SVDortonormal/drawRange12trisúnicos/2porface/7idsestritos fecha. CríticoR3CLEANff78b7cd,21probeswrapper+9selftest. Quatroposesantes/depoissemregressãoevidenteatribuívelUV; animaçãovaca/vegetaçãoimpedediffglobalserprovaUV. CuradoriaEgoCampoapósbakeemcurso; nãoafirmartransportenovoCIverde.
+
+QA4c5c3dce5integroucheckpointsaté1732e/wiringpúblicoCLEAN0179, cincofocais5/5 ecrítico6276b27b; ainda semnovoPR/push. BootR3emrevisãoconserva8.2MB/340masruntimeINFRA3encodedundefinedemeventoabortado;diagnósticocausalpendente,sembypass. F2R3críticoachoumais3lacunasnarégua,nãoproduto; aindaNãoaceito. RigCanarinhoGLMprivadorecusado20ossos/0pesos,nãocopiado. Missãocompletaaté18:45UTCpermanece.
