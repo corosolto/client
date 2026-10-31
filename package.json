@@ -713,7 +713,7 @@
     "//eval:tpjumpownership": "Ownership de salto interrompido e retorno com guards reais; CPU sem aprovação de pose, física ou Gamewire.",
     "eval:tplocalshot": "node tools/eval/tp-local-shot-check.mjs",
     "//eval:tplocalshot": "Evento local de tiro TP, fase original, retorno parado e expiração no Game/controlador reais; prova CPU limitada sem aceite de arte.",
-    "eval:tpbackpedal": "node tools/eval/tp-local-backpedal-check.mjs",
+    "eval:tpbackpedal": "node tools/eval/tp-local-backpedal-proof.mjs --autoteste && node tools/eval/tp-local-backpedal-proof.mjs",
     "//eval:tpbackpedal": "Sentido de recuo local no controlador real, preservando autoridade e poses fora do recuo; mutantes no-back, wrong-sign e player."
   },
   "repository": {

@@ -29,7 +29,7 @@ const localFetch = async url => {
 };
 Object.defineProperty(globalThis, 'fetch', {configurable: true, get: () => localFetch, set() {}});
 const {THREE, Game, CHARACTERS} = await import(pathToFileURL(path.join(root, 'tools/eval/harness.mjs')));
-const {GLTFLoader} = await import(pathToFileURL(path.join(root, 'public/vendor/addons/loaders/GLTFLoader.js')));
+const {GLTFLoader} = await import('three/addons/loaders/GLTFLoader.js');
 Object.defineProperty(globalThis, 'fetch', {configurable: true, writable: true, value: localFetch});
 GLTFLoader.prototype.load = function(url, done, progress, fail) {
   const loader = new GLTFLoader();
@@ -44,8 +44,8 @@ GLTFLoader.prototype.load = function(url, done, progress, fail) {
   }).catch(error => fail?.(error));
 };
 const G = await import(pathToFileURL(path.join(root, 'public/js/glbchars.js')));
-const oldCall = 'tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, false);';
-const newCall = 'const back = -(p.vel.x * Math.sin(p.yaw) + p.vel.z * Math.cos(p.yaw)) < -0.25;\n      tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back);';
+const oldCall = 'tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, false, lateral);';
+const newCall = 'tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back, lateral);';
 const actual = Game.prototype._updatePlayerTP;
 function replaceOnce(source, from, to) {
   assert.equal(source.split(from).length, 2, 'patch/mutante não aplicou exatamente uma vez');
@@ -55,13 +55,15 @@ function replaceOnce(source, from, to) {
 }
 const compile = source => Function('THREE', `return ({${source}})._updatePlayerTP`)(THREE);
 const originalText = actual.toString();
+assert(originalText.includes(newCall) || originalText.includes(oldCall), 'chamada de locomoção reconhecida');
 const legacy = originalText.includes(newCall) ? compile(replaceOnce(originalText, newCall, oldCall)) : actual;
 let selected = actual;
 if (preview) selected = compile(replaceOnce(originalText, oldCall, newCall));
 if (mutant === 'no-back' || mutant === 'wrong-sign') {
-  selected = compile(replaceOnce(selected.toString(), 'sp, back)', mutant === 'no-back' ? 'sp, false)' : 'sp, !back)'));
+  selected = compile(replaceOnce(selected.toString(), 'sp, back, lateral)', mutant === 'no-back' ? 'sp, false, lateral)' : 'sp, !back, lateral)'));
 }
 if (mutant === 'player') selected = compile(replaceOnce(selected.toString(), 'const tp = this.playerTP, p = this.player;', 'const tp = this.playerTP, p = this.player; p.pos.x += 0.001;'));
+if (mutant) console.log(`Mutação aplicada: ${mutant}`);
 const dt = 1 / 60;
 const cases = [
   {name: 'forward', yaw: 0, ax: 0, az: -1, back: false},
@@ -81,7 +83,7 @@ function fixture(id, weapon, c) {
   const built = G.buildCharacterModel(CHARACTERS.find(d => d.id === id), {weaponId: weapon});
   assert.ok(built?.ctrl?.actions.walk && built.ctrl.actions.run, 'GLB/clipes não carregaram');
   const player = {pos: new THREE.Vector3(), vel: new THREE.Vector3(...(c.vel || [0, 0, 0])), yaw: c.yaw, pitch: .1, crouchF: 0, scoped: false, grounded: true, weapon};
-  const game = {_ensurePlayerTP() {}, playerTP: built, player, _tpEul: new THREE.Euler(), _tpFwd: new THREE.Vector3(), _tpRight: new THREE.Vector3(), _tpOrbitPitch: .2, _tpOrbitYaw: .4, _eyeWorld: new THREE.Vector3(), camView: 'third', camera: new THREE.PerspectiveCamera(70, 1.5, .08, 400), world: {groundHeightAt: () => 0}, sfx: {jump() {}, land() {}}, _collide() {}, _acceptInput: () => true, time: 0};
+  const game = {_ensurePlayerTP() {}, playerTP: built, player, _tpEul: new THREE.Euler(), _tpFwd: new THREE.Vector3(), _tpRight: new THREE.Vector3(), _tpOrbitPitch: .2, _tpOrbitYaw: .4, _eyeWorld: new THREE.Vector3(), camView: 'third', camera: new THREE.PerspectiveCamera(70, 1.5, .08, 400), ray: new THREE.Raycaster(), world: {groundHeightAt: () => 0}, sfx: {jump() {}, land() {}}, _collide() {}, _acceptInput: () => true, time: 0};
   const update = built.ctrl.update.bind(built.ctrl);
   const state = {built, game, args: null};
   built.ctrl.update = (...args) => {state.args = args; return update(...args);};
@@ -118,9 +120,9 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
       }));
       clips[id] = Object.fromEntries(Object.entries(clipDetails[id]).map(([name, clip]) => [name, {name: clip.name, duration: clip.duration, trackNames: clip.tracks.map(t => t.name), payloadSHA256: digest(JSON.stringify(clip))}]));
     }
-    const errors = [], samples = [];
+    const errors = [], failureTypes = [], samples = [];
     let authorityFrames = 0, negativeFrames = 0;
-    const check = fn => {try {fn();} catch (e) {if (!errors.includes(e.message)) errors.push(e.message);}};
+    const check = fn => {try {fn();} catch (e) {failureTypes.push(e.name); if (!errors.includes(e.message)) errors.push(e.message);}};
     try {
       for (let frame = 0; frame < 60; frame++) {
         const a = step(tested, c, selected), b = step(reference, c, legacy);
@@ -146,13 +148,13 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
         const a = samples[1], b = samples[2], time = ((a.time + (b.frame - a.frame) * dt * a.rate) % a.duration + a.duration) % a.duration;
         assert.ok(Math.abs(time - b.time) < 1e-9, 'trajetória temporal difere do rate assinado');
       }
-    } catch (e) {errors.push(e.message);}
-    rows.push({id, weapon, case: c.name, pass: !errors.length, errors, authorityFrames, negativeFrames, samples});
+    } catch (e) {failureTypes.push(e.name); errors.push(e.message);}
+    rows.push({id, weapon, case: c.name, pass: !errors.length, errors, failureTypes, authorityFrames, negativeFrames, samples});
   }
 }
 for (const [file, sha] of Object.entries(loadedInputs)) assert.equal(digest(fs.readFileSync(path.join(root, file))), sha, 'asset mudou durante gate');
 const report = {preview, mutant, scope: 'CPU real GLB/CharController; physics plana sintética; sem render', passed: rows.filter(r => r.pass).length, total: rows.length, rows, clips, loadedInputs};
 if (option('--out')) fs.writeFileSync(path.resolve(option('--out')), JSON.stringify(report, null, 2) + '\n');
 if (option('--clip-out')) fs.writeFileSync(path.resolve(option('--clip-out')), JSON.stringify(clipDetails) + '\n');
-console.log(JSON.stringify({preview, mutant, passed: report.passed, total: report.total, failed: rows.filter(r => !r.pass).map(r => [r.id, r.case, r.errors[0]]), authorityFrames: rows.reduce((n, r) => n + r.authorityFrames, 0), negativeFrames: rows.reduce((n, r) => n + r.negativeFrames, 0), loadedFiles: Object.keys(loadedInputs).length}));
+console.log(JSON.stringify({preview, mutant, passed: report.passed, total: report.total, failed: rows.filter(r => !r.pass).map(r => [r.id, r.case, r.errors[0]]), failureTypes: [...new Set(rows.flatMap(r => r.failureTypes))], authorityFrames: rows.reduce((n, r) => n + r.authorityFrames, 0), negativeFrames: rows.reduce((n, r) => n + r.negativeFrames, 0), loadedFiles: Object.keys(loadedInputs).length}));
 process.exitCode = report.passed === report.total ? 0 : 1;
