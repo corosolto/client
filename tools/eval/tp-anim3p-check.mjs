@@ -69,7 +69,10 @@ const STUB = 'export default {};export const createHotContext=()=>({accept(){},d
 
 const browser = await chromium.launch({
   ...(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : { executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' }),
-  args: ['--headless=new', '--mute-audio', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+  /* Regra do boot-orcamento: no Darwin usa a GPU real (args vazios); nas demais
+     plataformas mantém o software GL explícito (2 flags SwiftShader). Isto é infra
+     de lançamento — o perfil efetivo pode variar e não garante verde por si só. */
+  args: [...(process.platform === 'darwin' ? [] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']), '--headless=new', '--mute-audio'],
 });
 
 async function abrir() {
@@ -220,9 +223,29 @@ const m = await page.evaluate(async () => {
     ctrl.setAr(true); roda(40);
     const an8 = { noAr: ctrl.curName };
     ctrl.setAr(false); roda(4); an8.noPouso = ctrl.curName; roda(25);
-    const yaw0 = grupo.rotation.y; grupo.rotation.y = yaw0 + 2.0; roda(2);
-    const an9 = { lagImediato: Math.abs(ctrl.yawLag || 0) };
-    roda(70); an9.lagDepois = Math.abs(ctrl.yawLag || 0); grupo.rotation.y = yaw0; roda(30);
+    // AN9: o quadril fica para trás no giro de 2 rad e alcança. LOD 0 SOMENTE nesta
+    // janela (restaurado ao LOD original do bot ao final); rig sem osso hips vira
+    // FALHA visível — a seleção do rig acima é pelos critérios de contrato dos
+    // candidatos, nunca pelo resultado do AN9.
+    const an9 = { origLOD: ctrl.lod, hips: !!torso.hips };
+    const finito = (x) => typeof x === 'number' && Number.isFinite(x);
+    // Sem `|| 0`: NaN precisa aparecer como NaN, não virar zero.
+    const lagAbs = () => { const l = ctrl.yawLag; return finito(l) ? Math.abs(l) : NaN; };
+    if (an9.hips) {
+      an9.prePrime = { yawLag: ctrl.yawLag ?? null, _yawAtraso: ctrl._yawAtraso ?? null };
+      ctrl.lod = 0;
+      roda(1); // prime no yaw antigo: estabelece _yawAtraso antes do giro
+      const yaw0 = grupo.rotation.y;
+      an9.antes = { yawLag: ctrl.yawLag ?? null, _yawAtraso: ctrl._yawAtraso ?? null };
+      grupo.rotation.y = yaw0 + 2.0; roda(2); // giro de 2 rad em 2 ticks
+      an9.lagImediato = lagAbs();
+      an9.giro = { yawLag: ctrl.yawLag ?? null, _yawAtraso: ctrl._yawAtraso ?? null };
+      roda(70); an9.lagDepois = lagAbs(); // 70 ticks para alcançar
+      grupo.rotation.y = yaw0; roda(30); // restaura o yaw e observa o retorno
+      an9.retorno = { yawLag: ctrl.yawLag ?? null, _yawAtraso: ctrl._yawAtraso ?? null };
+      ctrl.lod = an9.origLOD; // restaura o LOD copiado do bot
+      an9.bounded = ['antes', 'giro', 'retorno'].every((k) => finito(an9[k].yawLag) && finito(an9[k]._yawAtraso));
+    } else { an9.lagImediato = NaN; an9.lagDepois = NaN; an9.semHips = true; }
     ctrl.die(); roda(90, 0); const morto0 = pos(cabeca); roda(30, 3.5); const mortoCom = pos(cabeca);
     const an1 = { foiCm: base.mao.distanceTo(meio.mao) * 100, aoPenteCm: meio.mao.distanceTo(magAlvo) * 100, basePenteCm: base.mao.distanceTo(magAlvo) * 100, voltouCm: fim.mao.distanceTo(maoControle) * 100, derivaIdleCm: maoControle.distanceTo(base.mao) * 100, kMeio: meio.k, durFim: fim.dur };
     const an2 = { quedaCm: (base.cabeca.y - meio.cabeca.y) * 100, frenteCm: Math.abs((meio.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100, voltaCm: Math.abs((fim.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100 };
@@ -305,8 +328,8 @@ if (!m.erro) {
     `AN7 · tiro agachado deu ${m.an7.recuoCm.toFixed(2)} cm de recuo mantendo a pose ${m.an7.estado}`);
   cobra('AN8', m.an8.noAr === 'jump' && m.an8.noPouso === 'crouch',
     `AN8 · no ar o estado é ${m.an8.noAr} (não locomoção) e o pouso amortece em ${m.an8.noPouso}`);
-  cobra('AN9', m.an9.lagImediato >= 0.25 && m.an9.lagDepois <= 0.08,
-    `AN9 · giro de 2 rad deixou o quadril ${m.an9.lagImediato.toFixed(2)} rad atrás e ele alcançou em ${m.an9.lagDepois.toFixed(3)} rad`);
+  cobra('AN9', m.an9.hips && m.an9.bounded && m.an9.lagImediato >= 0.25 && m.an9.lagDepois <= 0.08,
+    `AN9 · giro de 2 rad deixou o quadril ${Number.isFinite(m.an9.lagImediato) ? m.an9.lagImediato.toFixed(2) : 'NaN'} rad atrás e ele alcançou em ${Number.isFinite(m.an9.lagDepois) ? m.an9.lagDepois.toFixed(3) : 'NaN'} rad (origLOD ${m.an9.origLOD}, hips ${m.an9.hips}, bounded ${!!m.an9.bounded}, prePrime ${JSON.stringify(m.an9.prePrime ?? null)}, antes ${JSON.stringify(m.an9.antes ?? null)}, giro ${JSON.stringify(m.an9.giro ?? null)}, retorno ${JSON.stringify(m.an9.retorno ?? null)})`);
 }
 if (an4.dados) {
   cobra('AN4', an4.dados.jogadorRecarregando && an4.dados.botRecarregou,
