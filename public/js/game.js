@@ -4728,6 +4728,7 @@ export class Game {
     return `<svg class="kf-ic kf-skull" viewBox="0 0 14 13" width="18" height="17"><path d="${d}" fill="currentColor" fill-rule="evenodd"/></svg>`;
   }
   _killfeedWeaponIcon(short) {
+    if (String(short).toUpperCase() === 'PRESA') return '<svg class="kf-ic" role="img" aria-label="Ataque de javaporco" viewBox="0 0 24 14" width="34" height="20"><path fill="currentColor" d="M2 2c0 7 3 11 8 10C5 10 5 6 6 3L2 2zm20 0c0 7-3 11-8 10 5-2 5-6 4-9l4-1z"/></svg>';
     const id = Object.entries(WEAPONS).find(([, weapon]) => weapon.short === short)?.[0];
     const fallback = this._wpnIcon(short);
     if (!id) return fallback;
