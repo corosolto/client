@@ -200,7 +200,7 @@
     "capture:escadaopreview": "node tools/capture-escadao-preview.mjs",
     "eval:redesign": "node tools/eval/redesign-check.mjs",
     "//eval:ui-v3": "Treta Pop (UI v3): tokens, fontes, padrão sem query, rollback ?ui=legacy e componentes contra o pacote design/treta-pop-2026-10-14; --mutantes prova que cada cláusula morde.",
-    "eval:ui-v3": "node tools/eval/ui-v3-check.mjs && node tools/eval/ui-v3-check.mjs --mutantes",
+    "eval:ui-v3": "node tools/eval/resultado-estado-check.mjs && node tools/eval/ui-v3-check.mjs && node tools/eval/ui-v3-check.mjs --mutantes",
     "eval:ui-v3:browser": "node tools/eval/ui-v3-browser.mjs && node tools/eval/ui-v3-browser.mjs --mutantes",
     "//eval:ui-v3:splash": "Splash Treta Pop (tela 01) no Chrome: arte em cover no primeiro quadro sem JS, etapas iguais aos sinais reais, JOGAR/ENTER, PT e EN, 4 telas e logo inteiro nas 6 artes; --mutantes prova cada cláusula.",
     "eval:ui-v3:splash": "node tools/eval/ui-v3-splash.mjs && node tools/eval/ui-v3-splash.mjs --mutantes",

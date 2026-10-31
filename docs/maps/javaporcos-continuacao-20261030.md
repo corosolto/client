@@ -1207,3 +1207,20 @@ reais e suas rotas derivadas de EIXOS; nenhuma frente foi removida do runtime.
 4431420715: brief de 29/10 explicitamente histórico/superado, com aviso de que áreas,
 densidades e dez bocas antigas não são contrato atual; links levam à ficha/layout
 ativos com seis frentes e arena ±68. spec check da ficha e diff --check verdes.
+
+## Revisão estraga-codigo: resultado e regressão de empate
+
+4431420689 refutado no fluxo real: _endMatch resolve objective.state.winner antes
+ de roundsWon e sincroniza win/lose/draw antes de expor a tela. No preview, winner E
+com rounds E0/B9 mostrou VITÓRIA e Defensores venceram; dados() não calcula vitória
+pelas rodadas. Porém a investigação revelou outro defeito: observer v3 ignorava draw.
+Régua resultado-estado-check executa o callback real extraído: vermelho antes,
+verde depois; mutante sem-empate reprova. Compartilhar empate também reproduzido
+vermelho e corrigido, com tradução EN. Régua ligada ao eval:ui-v3.
+No jogo local real via Ego31/p1, _endMatch draw exibiu card visível EMPATE em 1320×880;
+captura empate-local-depois.png no diretório ignorado de release. Tentativa anterior
+de hotpatch blob no preview foi bloqueada por CSP e NÃO é evidência de sucesso.
+UI-v3 revelou duas cores do card novo fora da paleta: substituídas pelos tokens
+existentes painel/âmbar, sem mudar geometria. Baseline UI 10/10 e dez mutantes
+passaram. Revisão independente achou compartilhamento e quebra de tabela; ambos corrigidos.
+Merge/release ainda não feitos; aguardam push, CI e revisão do novo HEAD.

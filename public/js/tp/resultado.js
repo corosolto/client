@@ -242,7 +242,7 @@ export function ligar() {
   const partilha = q('.tp-res__partilha');
   partilha.addEventListener('click', async () => {
     const mapa = window.__game?._mapId || new URLSearchParams(location.search).get('map') || '';
-    const texto = tr(fim.classList.contains('win') ? 'Ganhei uma treta no CORO SOLTO. Bora jogar?' : 'Perdi uma treta no CORO SOLTO. Bora jogar?');
+    const texto = tr(fim.classList.contains('draw') ? 'Empate no CORO SOLTO. Bora jogar?' : fim.classList.contains('win') ? 'Ganhei uma treta no CORO SOLTO. Bora jogar?' : 'Perdi uma treta no CORO SOLTO. Bora jogar?');
     const url = linkCompartilhavel(mapa ? `/?map=${encodeURIComponent(mapa)}` : '/', 'fim-de-partida');
     const aviso = AVISO[await compartilhar({ titulo: 'CORO SOLTO', texto, url })];
     if (!aviso) return;
@@ -251,7 +251,7 @@ export function ligar() {
   });
 
   new MutationObserver(() => {
-    if (!fim.classList.contains('hidden') && (fim.classList.contains('win') || fim.classList.contains('lose'))) pintar();
+    if (!fim.classList.contains('hidden') && (fim.classList.contains('win') || fim.classList.contains('lose') || fim.classList.contains('draw'))) pintar();
     else { delete fim.dataset.tpRes; raiz.hidden = true; encerrar(); }
   }).observe(fim, { attributes: true, attributeFilter: ['class'] });
   const proximo = $('match-next');
