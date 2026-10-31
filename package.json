@@ -144,7 +144,7 @@
     "eval:cameraoclusao": "node tools/eval/camera-oclusao-check.mjs",
     "eval:pistolacadencia": "node tools/eval/pistola-cadencia-check.mjs",
     "eval:fragrestock": "node tools/eval/frag-restock-check.mjs",
-    "eval:formatomelhorde": "node tools/eval/formato-melhorde-check.mjs",
+    "eval:formatomelhorde": "node tools/eval/formato-melhorde-check.mjs && node tools/eval/round-format-regression-check.mjs && node tools/eval/round-format-regression-check.mjs --mutantes",
     "mut:formatomelhorde": "node tools/eval/formato-melhorde-mutate.mjs",
     "mut:fragrestock": "node tools/eval/frag-restock-mutate.mjs",
     "mut:pistolacadencia": "node tools/eval/pistola-cadencia-mutate.mjs",

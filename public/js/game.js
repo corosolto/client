@@ -3164,6 +3164,7 @@ export class Game {
   }
   // teto de rodadas do modo em jogo — o HUD conta "RODADA n/N" com este número
   get roundsMax() { return this._roundsMax; }
+  get roundsToWin() { return Math.floor(this._roundsMax / 2) + 1; }
 
   _modeId() { return this.arena ? 'arena' : (this.ctf ? 'ctf' : 'rounds'); }
   _teamPopulation(side) {
