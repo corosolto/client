@@ -90,6 +90,8 @@ jobs:
         run: npm run eval:amazonia
       - name: Escadão — circulação, estrutura e casa
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
+      - name: Validar fluidez, território e rede do mantle
+        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network
       - name: Escadão — compatibilidade com pacote de áudio publicado
         run: node tools/eval/escadao-audio-pack-check.mjs
       # eval:lajes-spawn-space e eval:lajes-raycast saíram daqui porque as invariantes
