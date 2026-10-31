@@ -234,7 +234,7 @@ try {
       ordem,
       navOnly: false,
       aguardarPreloads: (loads) => { cargas.push([...loads]); return fonte.aguardarPreloads(loads); },
-      preloadCharacterAssets: () => Promise.resolve(), _charsToLoad: [], _armasDaPartida: [],
+      preloadCharacterAssets: () => Promise.resolve(), _charsToLoad: [], _armasDaPartida: [], _vmBootWeapons: [],
       preloadCosmeticAssets: () => Promise.resolve(), matchSkins: [],
       preloadEyewearAssets: () => Promise.resolve(), matchEyewear: [],
       playerWeaponSkins: {},
