@@ -868,7 +868,10 @@ class Netcode {
         // update(dt, moving, hasTarget, speed, back): a velocidade REAL vai no 4º argumento —
         // com speed=0 o clipe rodava a 0,45× e o boneco deslizava (BUG-113).
         b.mesh.ctrl.aimPitch = Math.max(-0.6, Math.min(0.6, b._netPitch || 0));
-        b.mesh.ctrl.setMantle?.(b.mantleF >= 0 ? b.mantleF : null);
+        // O progresso ativo alimenta a transição aérea antes da pose e do amortecimento.
+        const mMantle = Number.isFinite(b.mantleF) && b.mantleF > 0 && b.mantleF < 1;
+        b.mesh.ctrl.setAr?.(mMantle);
+        b.mesh.ctrl.setMantle?.(mMantle ? b.mantleF : null);
         b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25);
       } else poseCharacter(b.mesh.parts, spd, 0, game.time);
     } else {
