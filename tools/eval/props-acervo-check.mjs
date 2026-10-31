@@ -42,7 +42,7 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { TETO } from '../javaporcos-realista-assets.mjs';
 
 const FONTE = 'public/models/props/FONTE.md';
-const MUTANTES = new Set(['sem-fonte', 'sem-sha', 'arquivo-sumido', 'id-quebrado', 'sem-licenca', 'acima-do-teto']);
+const MUTANTES = new Set(['sem-fonte', 'sem-sha', 'arquivo-sumido', 'id-quebrado', 'sem-licenca', 'acima-do-teto', 'nc-publicado']);
 const FRENTES = new Set(['v21-e-models', 'javaporcos-realista', 'javaporcos-mint-packs']);
 const JP = 'javaporcos-realista';
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10);
@@ -59,6 +59,11 @@ const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 
 const fonte = existsSync(FONTE) ? readFileSync(FONTE, 'utf8') : '';
 const erros = [];
+for (const id of ['saveiro_robust', 'byd_dolphin']) {
+  if (existsSync(`public/models/props/${id}.glb`) || mutante === 'nc-publicado') {
+    erros.push(`${id}: PAC6 — asset NC sem autorização não pode estar em public/`);
+  }
+}
 
 if (!entradas.length) {
   if (mutante) {

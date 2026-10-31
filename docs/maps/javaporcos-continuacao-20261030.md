@@ -1186,3 +1186,15 @@ Suíte integral da horda no HEAD30aadb487 terminou exit0: baseline,28mutantes e 
 
 - O hook seguinte aprovou boot e demais checagens, mas PG1 bloqueou o novo helper: o fecho de imports do portão passou a incluir `three-node.mjs`. Incluído no gatilho do portão em `scripts/ci/gatilho.mjs`. Reprodução PG1 vermelha antes; baseline verde depois (261 arquivos do portão/235 do smoke), controle `tira-caminho` continua vermelho PG1/PG2.
 - A `main` avançou para `00e746b5` via PR1180: removeu configuração CodeRabbit e restaurou `estraga-codigo` como reviewer padrão. Seguir a skill do projeto `.claude/skills/estragacodigo-loop/SKILL.md` do novo `main`: revisão real do HEAD, zero threads válidas e checks verdes. A solicitação de `estraga-codigo` já existe no PR1160; renovar após push. Crítico independente permanece como verificação adicional após revisão limpa.
+
+## Revisão estraga-codigo 5722378083: publicação NC
+
+Achado 4431420700 confirmado: embora sem uso no runtime, Saveiro Robust e BYD
+novos estavam em public/. Ambos retirados da publicação, de mint-assets.json,
+assetver e JOBS do gerador. Originais preservados somente na quarentena ignorada
+artifacts/javaporcos-release-20261031/quarentena-nc/ com registro e SHA originais.
+FONTE mantém autor, licença e URL, agora marcando uso não autorizado/quarentena.
+Gol G2/Fusca legados dos outros mapas não foram alterados; seguem excluídos deste modo.
+PAC6 reproduziu vermelho antes da retirada; baseline com 75 props passou depois.
+Mutantes nc-publicado e sem-licenca reprovaram. Manifesto de assetrev atualizado
+pelo gerador oficial e --check verde. Não é uma declaração de licença do acervo inteiro.

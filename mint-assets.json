@@ -2565,52 +2565,6 @@
         "finalSha256": "0ab8a6eb9005ad148bd1682296fa6add00a1f5b3a6e0d9ab58d25c380791c952"
       }
     },
-    "jp-saveiro-robust": {
-      "artifactType": "model/gltf-binary",
-      "files": [
-        "public/models/props/saveiro_robust.glb"
-      ],
-      "source": {
-        "kind": "sketchfab-model",
-        "url": "https://sketchfab.com/3d-models/2022-volkswagen-saveiro-16-robust-bd312f832dd64eb8acb01923b85283de",
-        "displayName": "2022 Volkswagen Saveiro 1.6 Robust",
-        "author": "Sketchfab: Ddiaz Design",
-        "license": "CC-BY-NC-SA-4.0",
-        "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
-        "frente": "javaporcos-realista",
-        "classe": "carro",
-        "notes": "Invasão dos Javaporcos (rua). 16093 tris (bruto 290097), 1.88 x 1.51 x 4.49 m, pivô no chão."
-      },
-      "processing": {
-        "tools": [
-          "tools/javaporcos-realista-assets.mjs"
-        ],
-        "finalSha256": "bd216d60642665987f7a7f2ee1cd1bea42e50cdf3b3c479b19798b8902e91da5"
-      }
-    },
-    "jp-byd-dolphin": {
-      "artifactType": "model/gltf-binary",
-      "files": [
-        "public/models/props/byd_dolphin.glb"
-      ],
-      "source": {
-        "kind": "sketchfab-model",
-        "url": "https://sketchfab.com/3d-models/2024-byd-dolphin-e8f3cf54c0e545b1b290d7a55ca77fca",
-        "displayName": "2024 BYD Dolphin",
-        "author": "Sketchfab: Ddiaz Design",
-        "license": "CC-BY-NC-SA-4.0",
-        "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
-        "frente": "javaporcos-realista",
-        "classe": "carro",
-        "notes": "Invasão dos Javaporcos (rua). 19992 tris (bruto 112804), 1.99 x 1.54 x 4.29 m, pivô no chão."
-      },
-      "processing": {
-        "tools": [
-          "tools/javaporcos-realista-assets.mjs"
-        ],
-        "finalSha256": "9e7229c6b36e5824d34a8bd6631e5bc0ad179621d133e7bff9cb8290580ddab5"
-      }
-    },
     "jp-carro-batido-scan-03": {
       "artifactType": "model/gltf-binary",
       "files": [

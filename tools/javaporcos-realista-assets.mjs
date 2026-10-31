@@ -17,7 +17,6 @@ const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 await MeshoptSimplifier.ready;
 
 const LIB = '/Volumes/Zenith/Assets/game/corosolto/glb';
-const DL = '/Volumes/Zenith/Archives/downloads/Downloads';
 const PH = 'references/polyhaven';
 const OUT = 'public/models/props';
 const CC0 = { license: 'CC0 1.0', licenseUrl: 'https://polyhaven.com/license' };
@@ -32,17 +31,12 @@ export const TETO = {
 };
 
 const sk = (file, autor, licenca, url, titulo) => ({ src: `${LIB}/${file}`, kind: 'sketchfab-model', autor, licenca, url, titulo });
-const dl = (file, autor, licenca, url, titulo) => ({ ...sk(file, autor, licenca, url, titulo), src: `${DL}/${file}` });
 const ph = (asset, autor) => ({ src: `${PH}/${asset}/${asset}.gltf`, ph: asset, kind: 'polyhaven-model', autor, licenca: CC0.license, url: `https://polyhaven.com/a/${asset}`, titulo: asset });
 
 export const JOBS = [
   // --- carros (rua) ---
   { id: 'chevette_sl76', classe: 'carro', comp: 4.12, tex: 512, alvo: 38000, uso: 'rua',
     ...sk('chevrolet_chevette_sl_76.glb', 'Laerte.Hubaleque', 'CC-BY-4.0', 'https://sketchfab.com/3d-models/chevrolet-chevette-sl-76-2322139894c545b6838000f08d853662', 'Chevrolet Chevette sl 76') },
-  { id: 'saveiro_robust', classe: 'carro', permissivo: true, comp: 4.49, tex: 512, alvo: 16000, uso: 'rua',
-    ...dl('2022_volkswagen_saveiro_1.6_robust.glb', 'Ddiaz Design', 'CC-BY-NC-SA-4.0', 'https://sketchfab.com/3d-models/2022-volkswagen-saveiro-16-robust-bd312f832dd64eb8acb01923b85283de', '2022 Volkswagen Saveiro 1.6 Robust') },
-  { id: 'byd_dolphin', classe: 'carro', permissivo: true, comp: 4.29, tex: 256, alvo: 8000, uso: 'rua',
-    ...dl('2024_byd_dolphin.glb', 'Ddiaz Design', 'CC-BY-NC-SA-4.0', 'https://sketchfab.com/3d-models/2024-byd-dolphin-e8f3cf54c0e545b1b290d7a55ca77fca', '2024 BYD Dolphin') },
   { id: 'carro_batido_scan_03', classe: 'carro', permissivo: true, comp: 4.2, tex: 1024, alvo: 40000, uso: 'rua/beco',
     ...sk('destroyed_car_03_raw_scan.glb', 'Renafox', 'CC-BY-4.0', 'https://sketchfab.com/3d-models/destroyed-car-03-raw-scan-483fe7f26336463fba66638ca4200c5a', 'Destroyed Car 03 (Raw Scan)') },
   { id: 'carro_batido_scan_07', classe: 'carro', permissivo: true, comp: 4.0, tex: 1024, alvo: 40000, uso: 'rua/beco',
