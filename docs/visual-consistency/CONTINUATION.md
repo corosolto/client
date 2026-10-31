@@ -756,3 +756,20 @@ pegada visual ruim mesmo com alinhamento correto. Zoompvcam entra na malha
 e foi rejeitado como captura útil. Diagnóstico de rig/pesos/curl em crítica
 read-only; manter esse defeito aberto para nova correção. Nenhuma mudança de
 GLB/topologia/identidade foi inventada para esconder a lacuna.
+
+
+## Integração QA — primeiro push bloqueado, sem bypass
+
+QA8dc87d31d terminou hook com exit1; nenhum branch consolidado foi publicado.
+Falharam bootorcamento(timeout180s), fixturesTP e comentárioCampo4linhas;
+fixtures já corrigidas no checkpoint4c66e4093, comentário reduzido no candidato
+CampoUV ainda não checkpointado. Demaisportões finais de mapa/morte/skinsTP
+verdes no log retido, mas a cauda final do runner não foi preservada pelo monitor
+antes do unlink; não declarar placar integral. Monitor do retry manterá fdaberto.
+
+Crítico boot em leitura identificou main local importando exportaguardarPreloads
+ausente no Game de produção e móduloeconomia ausente: overlay3arquivos cria
+grafo híbrido. É causa candidata verificável, sem tetoORC afrouxado. Próximo passo
+no checkout QA: integrar somente checkpoints até69641c9f3 e wiring público
+CLEAN0179ea07, preservar main5d/ec7; não copiar dirtyF2/CampoUV antes do aceite.
+Missão até18:45UTC continua incluindo merges/release e todos os defeitos visuais.
