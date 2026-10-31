@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
-import { setMapSky } from './map_sky.js';
+import { applyLook } from './map_sky.js';
 import { aplicaSombraSol } from './mapquality.js';
 
 const HALF_X = 38;
@@ -328,11 +328,7 @@ export function buildPenitenciaria(scene, T) {
 
   /* Look de fim de tarde azul-chumbo (LOOK.penitenciaria): céu/fog/sol/hemi de uma
      fonte só; o shadow fica no builder porque ele conhece os limites do mapa. */
-  setMapSky(scene, T, '/img/textures/sky_sp.webp', 0x9aa7a8);
-  scene.fog = new THREE.Fog(0x8f9698, 90, 175);
-  const hemi = new THREE.HemisphereLight(0xb9cad8, 0x4b514d, 1.05);
-  const sun = new THREE.DirectionalLight(0xffd7a8, 1.15);
-  sun.position.set(-28, 38, -42); scene.add(hemi); scene.add(sun); scene.add(sun.target);
+  const { hemi, sun } = applyLook(scene, T, 'penitenciaria');
   aplicaSombraSol(sun);   // orçamento único de sombra (mapquality) — QMAP1/QMAP3
   sun.shadow.camera.left = -50; sun.shadow.camera.right = 50;
   sun.shadow.camera.top = 58; sun.shadow.camera.bottom = -58;

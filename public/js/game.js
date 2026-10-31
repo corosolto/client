@@ -373,6 +373,13 @@ const PUNCH = new URLSearchParams(location.search).get('punch') !== '0';
 const PUNCH_ZOOM = 0.014, PUNCH_DECAY = 13;
 // BUG-187: .0115 m / 58 ms era ~1 px por 3 quadros — o dono não via o traçado. Ver eval:smoke SMK3b.
 const TRACER_STYLE = Object.freeze({ radius: .03, speed: 180, minTravel: .06, fade: .07, segment: 5 });
+const LANDING_FX_STYLE = Object.freeze({
+  water: ['agua', 0x9fd0e0], agua: ['agua', 0x9fd0e0],
+  dirt: ['terra', 0xc39b68], areia: ['areia', 0xd0ad78],
+  gravel: ['cascalho', 0xb7ada0], grass: ['grama', 0x9caf78],
+  wood: ['madeira', 0x8a6033], metal: ['metal', 0xbfc6cc],
+  concrete: ['concreto', 0xaaa6a0], concreto: ['concreto', 0xaaa6a0],
+});
 
 /* CONE DO DISPARO — a MESMA conta no cliente (que desenha) e no servidor (que decide o dano).
    Duas implementações separadas foi o que deixou a arma laser no multiplayer: docs/MULTIPLAYER.md. */
@@ -3356,6 +3363,7 @@ export class Game {
     // qualidade muda mapSize/bias, então invalida o cache pra ele reconfigurar.
     delete this.scene.userData.__sf;
     if (shadows) this.renderer.shadowMap.needsUpdate = true;
+    for (const fx of this._landingFxSystems || []) if (fx?.points) fx.points.visible = q !== 'low';
     this.scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
   }
   onResize() {
@@ -4818,6 +4826,33 @@ export class Game {
     m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), t.dir);
     this.scene.add(m);
     this.tracers.push(t);
+  }
+  _landingFx(pos, strength) {
+    const k = Math.max(0, Math.min(1, strength || 0));
+    if (!k) return 0;
+    const surface = this._footstepSurface(pos);
+    const style = LANDING_FX_STYLE[surface] || LANDING_FX_STYLE.concrete;
+    const key = `_fx_land_${style[0]}`;
+    const low = this.settings?.quality === 'low';
+    let fx = low ? this.puffFx : this[key];
+    if (!fx) {
+      fx = this._tintFx(style[1], false, 64);
+      this[key] = fx;
+      (this._landingFxSystems || (this._landingFxSystems = [])).push(fx);
+    }
+    const count = 3 + Math.round(k * 3);
+    const waterY = surface === 'water' ? this.world.waterSurfaceAt?.(pos.x, pos.z) : null;
+    const y = Number.isFinite(waterY) ? waterY : pos.y;
+    const at = pos.clone();
+    const vel = new THREE.Vector3();
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.45 + k * (0.55 + Math.random() * 0.65);
+      at.set(pos.x + Math.cos(angle) * 0.14, y + 0.05, pos.z + Math.sin(angle) * 0.14);
+      vel.set(Math.cos(angle) * speed, 0.65 + k * (0.7 + Math.random() * 0.55), Math.sin(angle) * speed);
+      fx.spawn(at, { vel, life: 0.38 + k * 0.25, size: 0.18 + k * 0.16, grow: 0.8 + k * 0.8 });
+    }
+    return count;
   }
   _puff(pos, normal, surf = null, fumaca = true) {
     // impact smoke: one GPU particle (batched, no allocation)
@@ -6600,6 +6635,7 @@ export class Game {
   /* Física do corpo do jogador. O servidor aplica ESTA função ao slot remoto — duas
      implementações divergiriam e o jogo viveria em rubber-band. Ver docs/MULTIPLAYER.md. */
   _moveEntity(p, inp, dt) {
+    let landImpact = 0;
     // Crouch (CTRL/C) vale NO AR também, e a transição é assimétrica como no CS2.
     // Números e motivo: docs/MULTIPLAYER.md.
     const wantCrouch = !!inp.crouch;
@@ -6610,7 +6646,7 @@ export class Game {
       p._spaceHeld = !!inp.jump;
       this._stepMantle(p, dt);
       this.sfx._quiet = true;
-      return { sp: 0, walking, sprint: false, mantling: true };
+      return { sp: 0, walking, sprint: false, mantling: true, landImpact };
     }
     const slowMul = this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 0.45 : 1;  // água/lago
     // velocidade base × ARMA (MOVE_MUL) × andar × ADS × agachado × água
@@ -6680,7 +6716,7 @@ export class Game {
     if (p.mantle) {
       this._stepMantle(p, dt);
       this.sfx._quiet = true;
-      return { sp: 0, walking, sprint: false, mantling: true };
+      return { sp: 0, walking, sprint: false, mantling: true, landImpact };
     }
     const followStepDown = this.world.snapDownSteps === true && p.grounded && p.vel.y <= 0;
     p.vel.y -= 20.6 * dt;   // gravidade exagerada do CoD — arco de pulo "snappy", não flutuante
@@ -6713,10 +6749,14 @@ export class Game {
       p.pos.y = g2; p.vel.y = 0; p.grounded = true;
     }
     if (p.pos.y <= g2) {
-      if (!p.grounded && p.vel.y < -4) { this.sfx.land(); p.landDip = Math.min(1, -p.vel.y / 14); } // landing dip, sized by impact
+      if (!p.grounded && p.vel.y < -4) {
+        landImpact = Math.min(1, Math.max(0, (-p.vel.y - 4) / 10));
+        this.sfx.land(landImpact);
+        p.landDip = Math.min(1, -p.vel.y / 14);
+      }
       p.pos.y = g2; p.vel.y = 0; p.grounded = true;
     } else if (p.pos.y > g2 + 0.05) p.grounded = false;
-    return { sp, walking, sprint };
+    return { sp, walking, sprint, landImpact };
   }
 
 
@@ -6764,7 +6804,8 @@ export class Game {
       jump: !!this.keys.Space,
     };
     this._emoteTick(_inp);   // andar/atirar/morrer derruba a danca (ver _emoteTick)
-    const { sp, walking, sprint } = this._moveEntity(p, _inp, dt);
+    const { sp, walking, sprint, landImpact } = this._moveEntity(p, _inp, dt);
+    if (landImpact > 0) this._landingFx(p.pos, landImpact);
     /* O movimento acima já aconteceu na tela (predição). Aqui o netcode reconcilia e manda o
        input pro servidor, que roda esta MESMA função. */
     if (this.online) this._mp?.stepPlayer(p, _inp, dt);
@@ -9154,6 +9195,14 @@ export class Game {
     this._pickupFallbackTpl?.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     this.renderer.liberaPosDaCena?.(this.scene);
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+    // Partículas de pouso são donas do material e da textura; o puff permanece compartilhado.
+    for (const fx of this._landingFxSystems || []) {
+      if (fx === this.puffFx) continue;
+      fx.points?.material?.dispose();
+      fx.uniforms?.uTex?.value?.dispose?.();
+    }
+    this._landingFxSystems = [];
+    for (const k of Object.keys(this)) if (k.startsWith('_fx_land_')) delete this[k];
     this.scene.clear();
   }
 }

@@ -878,7 +878,11 @@ export class Sfx {
     this._burst(0.14, 0.34 * vol, 220, 0.8, 'lowpass', propDelay, out);
   }
   jump()      { this.ensure(); this._beep('sine', 220, 330, .08, .1); }
-  land()      { this.ensure(); this._burst(.08, .18, 400); }
+  land(strength = 0.5) {
+    const k = Math.max(0, Math.min(1, strength));
+    this.ensure();
+    this._burst(0.08 + k * 0.03, 0.11 + k * 0.13, 320 + k * 180);
+  }
   // passos: round-robin nos samples (nunca repete o anterior) + playbackRate ±8% +
   // volume ±15%. Fallback synth: timbre por surface (água do piscinão = splash grave+ruído,
   // metal = brilho agudo, concreto = seco). surface vem do game.js (world.slowAt).
