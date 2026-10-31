@@ -205,6 +205,10 @@ jobs:
 
   bootstrap:
     needs: bot-token
+    # Um bootstrap ativo por issue; pedidos repetidos não cancelam o ativo.
+    concurrency:
+      group: issues-bot-bootstrap-${{ github.repository }}-${{ github.event.issue.number }}
+      cancel-in-progress: false
     if: >
       github.event_name == 'issue_comment' &&
       needs.bot-token.outputs.available == 'true' &&
@@ -269,7 +273,8 @@ jobs:
           git commit --allow-empty -m "chore(bot): bootstrap fix for #${ISSUE_NUMBER}" \
                      -m "Agent: csbrasil-bot (issues-bot)" \
                      -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>"
-          git push -u origin "$branch" --force
+          # Preserve uma branch remota que avançou após uma tentativa anterior.
+          git push -u origin "$branch"
           echo "BRANCH=$branch" >> "$GITHUB_ENV"
       - name: Open draft PR
         if: steps.ja_tem_pr.outputs.pular == 'false'
