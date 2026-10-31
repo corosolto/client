@@ -8,7 +8,8 @@ import {estadoDaUrl,urlDoEstado,ABAS_LOJA} from './rotas.js';
 import {ligarCompartilhar,linkCompartilhavel} from './compartilhar.js';
 import {eyewearFitCount,eyewearProfile,loadEyewearFitData} from './eyewear.js';
 import {VERSION} from './version.js';
-import {assetUrl} from './data/asseturl.js';
+import { tr, frase } from './i18n.js';
+import { assetUrl } from './data/asseturl.js';
 
 const STORE_SKINS=Object.freeze([...TRETA_SKINS,...TRETA_WEAPON_SKINS,...TRETA_GLOVES,...TRETA_PACKS]);
 
@@ -184,8 +185,8 @@ function draw() {
   else{
     // Visitante nao tem saldo: falha de consulta vira o convite de sempre, nunca ERRO.
     const visitante=!account?.authenticated;
-    $('hub-treta-total').textContent=visitante?'T$ · ENTRAR':refreshFailed?'T$ · ERRO':'T$ · …';
-    $('hub-treta-wallet').setAttribute('aria-label',visitante?'Entre para ver seu saldo TRETA$':refreshFailed?'Carteira TRETA$ indisponível. Abra a loja para tentar novamente.':'Consultando carteira TRETA$');
+    $('hub-treta-total').textContent=visitante?`T$ · ${tr('ENTRAR')}`:refreshFailed?tr('T$ · ERRO'):'T$ · …';
+    $('hub-treta-wallet').setAttribute('aria-label',visitante?frase('carteiraEntrarAria'):refreshFailed?frase('carteiraErroAria'):frase('carteiraConsultandoAria'));
   }
   $('treta-balance-value').textContent=state?.wallet?money(state.wallet.balance):loading?'CARREGANDO…':!account?.authenticated?'ENTRE NA CONTA':refreshFailed?'INDISPONÍVEL':'ENTRE NA CONTA';
   for(const id of ['treta-grid','treta-characters-grid','treta-gloves-grid','treta-packs-grid'])$(id).setAttribute('aria-busy',String(loading));

@@ -404,3 +404,23 @@ MotionR5 devolvido: AKnovaL1v realmenteRED +7px nas2proporções, nãoUNKNOWN. S
 - UI: medição realRED42×41 emcoarse844×390 confirmou críticoR2. Root corrigiu borda/halo/topright e estadoT$ERROR emEN; captura6layouts+toquerealaindaemcurso. Mouseemulado escolheuavatar: diagnóstico comCDPtouch isTrusted acertouhalo do pin; testes seguintes usamtoquenativo. Escalação/charQArestaurados.
 - Servidor4367 originalserve.mjs sórepassava parte doAstrodev, gerando404devtoolbar eViteerro. Substituído sóservidorpróprio (PID44005 confirmadoWT) por wrapperaudit/serve-visual-clean.mjs, toolbaroff/semHMR/cacheisolado; sessão54591. Produto/configrepo intactos. HTML200142KB e toolbarfalse. Capturasnovasdevemrejeitarqualquercrash.
 - Leases: GLMcuradoria/CórregoR4 terminouporprazo46985 com alteraçõesparciais, semrelatório; repetirantesaceitar. MotionR689802 terminouexit0 massemrelatóriofinal; gateslogsexistem ecríticointegraR6agora, AKaguardaliberação. Acabamento/balcãoR374307aindawriterexclusivo. Readonly1179gatesA60186/B48461devolvemincrementais.
+
+### Fechamentos em curso — 12:12 UTC
+
+- UI R7:8capturas PT/EN desktop/paisagem/retrato, alvo real44×44/45×44 e toque nativo isTrusted nohalo funcionando e restaurado. Retrato coarse temoverlayrotate conforme política explícita v3PLAY; preservar fluxo e não declarar rosterusávelnesseestado. Crítico integralR3readonly emcurso; U4temporalpendente.
+- Normais: J1headshot detectou corretamente4SHAs antigos nas medidas. Remedição das4cabeças pelo corpo exato da ferramenta oficial noEgo emcurso; não atualizar hashsemmedir. J2–J6jáverdes noREDdeJ1.
+- MotionR6 crítico2P2+1P3: restauração abortUtility/visibilidade no revive, aceitefinitekill-switchtardio e comparação diagonal antesdeclamp. GLM1086R7writerexclusivo sómotion/2gates/doc,11min; AKaguarda.
+- GLM9513 fecha gates1179golden/netcodec/economia-jogo/mantle,14min, semproduto/package. ReadonlyA+B concluíram21corpos; baseline truncado/mutantenãoaplicado/bootthrow ewrappers`!node` são achados a fechar, não baixar contratos.
+- AcabamentoR3 devolvido semrelatóriofinal daúltimalease (arquivoantigoR3temHEADantigo e não prova fechamentoatual). Crítico independente lê fontes finais; Root repete finish/binding/balcão. Novosdefeitos da própriarégua identificados pelo crítico; nãoaceitarainda.
+- #1181 SHA03008374b temCIverde e requestedreviewerEstraga-código, ainda semreview atual; nenhummergeours.
+
+### Contraprovas e remedição — 12:19 UTC
+
+- Quatro cabeças remediadas no Ego com o corpo exato de cabeca-malha-medir.mjs. Repetição sobre GLBs antigos em4368, mesmo glbchars, produziu campos idênticos aos novos em4367: normais não mudaram geometria/cabeça. Tabela histórica tinha diferenças submilimétricas; atualizadas somente4linhas/SHAs,59preservadas. Geradoroficial não alterou cabecas-hitbox.js. Gatecompleto/mutantes emcurso; provas headshot-four-{real,baseline}-Ego.json e freshness-provenance.json.
+- Acabamento: Root reproduziu2falsosGREEN emcópias temporárias da régua (baselinebindingpassfalseexit0; caixa comclearGroups+UV0omitida). Após conserto ambas saem1. Bindingagora propaga failed aoexit; controledoorchestratorbalcão chama processo sem--probe; parede sóisentaPlaneGeometry, caixa semgroups reprova. Novo wrapper exige baselineGREEN+11mutantes comexit1+JSONRED+cláusulaalvo, todosGREEN na execução Root. Crítico integralR4emcurso. LogsRootantesforam sobrescritos pelo runnerdenomesR3; saídaspré-fix observadas neste turno, não declararlogpré-fixpreservado.
+- Curadoria: drawncheck80/80GREEN e curation11/11+2mutantesGREEN; Córrego low13mutantesGREEN. CríticoR4 ainda encontrouUVfold manual global eoffsetNaN noCórrego: nãoaceitarfechamentoatéconsertar. Opacity0opaco/precondiçõesDoubleSide+instancedfechadospelafonte.
+- GLM42383 adapta só ferro-graffiti-quality ao briefatual (arte sócasaB), preservando paridade física/subsetsmedlow. GLM8695readonly prepara direçãoM4/coordenadasdefotosparaCampo/Córrego/Quebrada/Escadão; semaprovaçãobaseadaemfonte.
+- UI críticoR3CLEAN5fontes+8fotos; U4nativo antes/pin/despin emcurso. Nenhum novo fluxo ou mudança na política de orientação.
+
+- UI U4local concluído:5células, diálogo e scroll exatamente estáveis antes/pin/despin em844×390 PT;3fotos+JSON. Dimensão U4global continuaUNKNOWN, inclusiveprévia3D eoutrosestados. CheckpointUI técnico agora, críticoR3CLEAN e sintaxe/diffcheckGREEN.
+- Retificação de rótulo: arquitetura“menoscaixa”é **M3** emMETRICA.md; “M4”emnomesinternosdascouts/trechosanterioreseraetiquetadefrente, nãoa dimensão oficial. M4oficial éleitura/custo e exige medição apropriada.

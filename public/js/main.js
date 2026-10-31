@@ -1342,7 +1342,7 @@ function openHubRoster(updateRoute = true) {
         // Voltar ao personagem base com skin equipada TIRA a skin no servidor antes de trocar.
         if (equipada) {
           try { if (!await desequiparTretaSkin()) throw new Error('unequip_recusado'); }
-          catch { $('hub-roster-selected').textContent = 'Não deu para tirar a skin agora. Tente de novo em instantes.'; return; }
+          catch { $('hub-roster-selected').textContent = frase('skinTirarErro'); return; }
         }
         escolher(def.id);
       };
@@ -1350,10 +1350,10 @@ function openHubRoster(updateRoute = true) {
       if (def.id !== currentChar) {
         const pin = document.createElement('button'); pin.type = 'button';
         const ehPin = settings.pinnedChars.includes(def.id);
-        const papel = podeNoLado(def, currentTeam) ? 'ALIADO' : 'INIMIGO';
+        const papel = podeNoLado(def, currentTeam) ? tr('ALIADO') : tr('INIMIGO');
         pin.className = 'hub-roster-pin';
         pin.setAttribute('aria-pressed', String(ehPin));
-        pin.title = ehPin ? `Escalado como ${papel} — clique para tirar` : `Escalar como ${papel} na próxima partida`;
+        pin.title = ehPin ? frase('pinTituloTravado', papel) : frase('pinTituloEscalar', papel);
         pin.textContent = ehPin ? papel : '＋';
         pin.onclick = (ev) => {
           ev.stopPropagation();
@@ -1376,7 +1376,7 @@ function openHubRoster(updateRoute = true) {
         skinButton.onclick = async () => {
           ui.click();
           try { if (!await equiparTretaSkin(skin.id)) throw new Error('equip_recusado'); }
-          catch { $('hub-roster-selected').textContent = 'Não deu para equipar esta skin agora. Tente de novo em instantes.'; return; }
+          catch { $('hub-roster-selected').textContent = frase('skinEquiparErro'); return; }
           escolher(def.id);
         };
         skinCell.appendChild(skinButton);
@@ -1385,7 +1385,7 @@ function openHubRoster(updateRoute = true) {
     }
     const selected = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
     const skinAtual = armario.find((s) => s.equipped && s.character === selected.id) || null;
-    $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[ladoValido(selected, currentTeam)])} · ${selected.name}${skinAtual ? ` · ${skinAtual.name}` : ''}`;
+    $('hub-roster-selected').textContent = frase('selecionado', tr(FACTION_NAME[ladoValido(selected, currentTeam)]), selected.name, skinAtual ? skinAtual.name : '');
     /* ESCALAÇÃO travada: contagem por papel contra as VAGAS do formato escolhido —
        passar do limite não quebra nada (pickMatchRoster corta), mas o jogador vê. */
     const papelDe = (id) => { const c = CHARACTERS.find((x) => x.id === id); return c && podeNoLado(c, currentTeam) ? 'ally' : 'enemy'; };
@@ -1394,8 +1394,8 @@ function openHubRoster(updateRoute = true) {
     const linha = $('hub-roster-escalacao');
     if (linha) {
       linha.textContent = nAlly || nEnemy
-        ? `ESCALAÇÃO: ${Math.min(nAlly, settings.allyBots)} de ${settings.allyBots} aliados · ${Math.min(nEnemy, settings.enemyBots)} de ${settings.enemyBots} inimigos` + ((nAlly > settings.allyBots || nEnemy > settings.enemyBots) ? ' — escalados além das vagas são descartados' : ' — resto sorteado')
-        : 'ESCALAÇÃO: automática (clique no ＋ de um personagem pra travá-lo)';
+        ? frase('escalacaoVagas', Math.min(nAlly, settings.allyBots), settings.allyBots, Math.min(nEnemy, settings.enemyBots), settings.enemyBots, nAlly > settings.allyBots || nEnemy > settings.enemyBots)
+        : frase('escalacaoAuto');
     }
     const limpar = $('hub-roster-clear');
     if (limpar) {

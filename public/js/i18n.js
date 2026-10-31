@@ -35,6 +35,7 @@ export async function resolveGeoLang() {
 
 /* PT -> EN. Ordena por tela pra manutenção; a chave é o texto EXATO (trim) do DOM. */
 const DICT = {
+  'T$ · ERRO': 'T$ · ERROR',
   // splash / boot
   'CLIQUE OU PRESSIONE QUALQUER TECLA': 'CLICK OR PRESS ANY KEY',
   'CARREGANDO ARENA…': 'LOADING ARENA…',
@@ -321,6 +322,9 @@ const DICT = {
   'Entrar no time': 'Join team',
   'os seus': 'your crew',
   'TRIBOS URBANAS': 'URBAN TRIBES', 'PALHAÇOS': 'CLOWNS', 'FUNKEIROS': 'FUNKEIROS', 'MÍTICO': 'MYTHIC',
+  'PALHACOS': 'CLOWNS', 'MITICOS': 'MYTHIC',
+  'ALIADO': 'ALLY', 'INIMIGO': 'ENEMY', 'Fechar': 'Close', 'Lados': 'Sides', 'Categorias': 'Categories',
+  'ESCALAÇÃO': 'LINEUP', 'LADO E PERSONAGEM': 'SIDE AND CHARACTER', 'LIMPAR ESCALAÇÃO': 'CLEAR LINEUP',
   '"A treta se faz na praça!"': '"The fight is at the square!"',
   '"A treta se faz na rodovia!"': '"The fight is on the highway!"',
   '"A treta se faz na quebrada!"': '"The fight is in the hood!"',
@@ -867,6 +871,27 @@ const FRASES = {
       'ja-tem': 'You already have it', morto: 'Dead players cannot buy', item: 'Item unavailable',
       'sem-colete': 'Helmet needs kevlar', limite: 'Already at the limit' }[m] || 'Purchase refused'),
   },
+  // seleção de lado/personagem (main.js) e carteira TRETA$ (treta-rewards/treta-store)
+  selecionado: {
+    pt: (lado, nome, skin) => `Selecionado: ${lado} · ${nome}${skin ? ` · ${skin}` : ''}`,
+    en: (lado, nome, skin) => `Selected: ${lado} · ${nome}${skin ? ` · ${skin}` : ''}`,
+  },
+  escalacaoVagas: {
+    pt: (a, ca, e, ce, estouro) => `ESCALAÇÃO: ${a} de ${ca} aliados · ${e} de ${ce} inimigos` + (estouro ? ' — escalados além das vagas são descartados' : ' — resto sorteado'),
+    en: (a, ca, e, ce, estouro) => `LINEUP: ${a} of ${ca} allies · ${e} of ${ce} enemies` + (estouro ? ' — picks beyond the slots are discarded' : ' — rest is random'),
+  },
+  escalacaoAuto: {
+    pt: () => 'ESCALAÇÃO: automática (clique no ＋ de um personagem pra travá-lo)',
+    en: () => 'LINEUP: automatic (click the ＋ on a character to lock them in)',
+  },
+  pinTituloTravado: { pt: (p) => `Escalado como ${p} — clique para tirar`, en: (p) => `Pinned as ${p} — click to unpin` },
+  pinTituloEscalar: { pt: (p) => `Escalar como ${p} na próxima partida`, en: (p) => `Pin as ${p} in the next match` },
+  skinTirarErro: { pt: () => 'Não deu para tirar a skin agora. Tente de novo em instantes.', en: () => 'Could not remove this outfit right now. Try again in a moment.' },
+  skinEquiparErro: { pt: () => 'Não deu para equipar esta skin agora. Tente de novo em instantes.', en: () => 'Could not equip this outfit right now. Try again in a moment.' },
+  carteiraSaldoAria: { pt: (v) => `Carteira TRETA$, saldo T$ ${v}`, en: (v) => `TRETA$ wallet, T$ ${v} balance` },
+  carteiraEntrarAria: { pt: () => 'Entre para ver seu saldo TRETA$', en: () => 'Sign in to see your TRETA$ balance' },
+  carteiraErroAria: { pt: () => 'Carteira TRETA$ indisponível. Abra a loja para tentar novamente.', en: () => 'TRETA$ wallet unavailable. Open the store to try again.' },
+  carteiraConsultandoAria: { pt: () => 'Consultando carteira TRETA$', en: () => 'Checking TRETA$ wallet' },
 };
 export const frase = (id, ...args) => {
   const f = FRASES[id];
