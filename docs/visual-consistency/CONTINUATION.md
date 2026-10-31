@@ -807,6 +807,13 @@ Root corrigiu dimensões do slogan para usar comprimento da lâmina e UV90°, ma
 CIcuradoriaR4fullterminou0:71medições,14nominais465peças,mutantesisolados,draw-groupscontroleGREEN. Criticalfixture20d25bc6CLEAN34probes+9JSONs,adapterR3ee0ecCLEAN. CheckpointCIseparadosemwireaindapendente;egorepresentantesnovosmutadorespendente. BootR10gzipfulfillREJEITADO:Chromiumnãodescomprimeessecaminho;barreirarecusou3corretamente. PrototipoR11HTTPgziprealemleaseprivadacritgates,sóGETpúblico+geo-langsemcookie/auth. Nadaabaixa8.2MB/340.
 
 
+## Transporte CI de curadoria — checkpoint antes da identidade editorial
+
+AdapterR3 e fixturesR4 aceitos tecnicamente:71mediçõesexit0/14nominais465peças,criticalee0ec016+20d25bc6. EgoR15 FerroduplicadaGREENnominalprimeiro,prefsrestauradas. Nãohámudançadepredicados/tetos/censohistórico. QAa53d7a8c3 integrouc475com35hotfixpathsiguais; wiringpreparadodirty,precisa3fontesCIagoracheckpointados.
+
+Folhade52artesPiscinaidentificouduplicaçãoeditorial tag-fina/tag-larga(recortediferente,RGBAhashdistinto). GateantigoporarquivoeraGREENinsuficiente. GLMescrevealiascuradoprodutor+medidor+gateemleaseexclusiva; bakeallrealnovoecríticarequeridosantesdeclararcuradoriaconcluída. CanarinhoR3independentee2446a74 recusoupegadafinalapesarpreservação+actuadorescorretos,candidatopermaneceprivado. BootR11HTTPgziprealprivadoemcurso,semaceiteainda.
+
+
 ## QA — integração seletiva c4754bf6b iniciada
 
 Checkpoint anterior: branch codex/visual-release-review-20261031, HEAD4c5c3dce5,
