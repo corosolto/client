@@ -554,7 +554,7 @@ const DICT = {
   // tp:hud
   'ABATES': 'KILLS', 'SEQUÊNCIA': 'STREAK', 'vivo': 'alive', 'morto': 'dead',
   'pegar': 'pick up', 'câmera': 'camera', 'time': 'team', 'órbita': 'orbit', 'RECARREGAR': 'RELOAD',
-  '1ª PESSOA': '1ST PERSON', '3ª PESSOA': '3RD PERSON', 'OMBRO': 'SHOULDER', 'Comandos: somem em 60 s, voltam com ALT': 'Controls: hide after 60 s, back with ALT',
+  '1ª PESSOA': '1ST PERSON', '3ª PESSOA': '3RD PERSON', 'OMBRO': 'SHOULDER', 'Guia inicial: três ações, comandos completos com ALT': 'Quick guide: three actions, full controls with ALT',
   'rádio': 'radio', 'placar': 'scoreboard', 'Ó O CARA ALI!': 'ENEMY THERE!', 'OLHA AQUI': 'LOOK HERE',
   'Você marcou um inimigo': 'You marked an enemy', 'Você marcou um ponto': 'You marked a spot',
   'CHAT DA SALA': 'ROOM CHAT', 'Filtrar mensagens': 'Filter messages', 'envia': 'send', 'time / sala': 'team / room', 'fecha': 'close',

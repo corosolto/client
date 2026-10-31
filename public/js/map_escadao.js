@@ -1108,9 +1108,12 @@ export function buildEscadao(scene, T) {
   }
 
   /* ===================== SPAWNS ===================== */
-  // Orienta os spawns E para o vão central: W sai do abrigo sem bater na parede.
+  // Cada slot E aponta para o vão central visível: os externos precisam de
+  // 75° para não abrir contra a empena; os internos usam a diagonal de 45°.
   const spawns = {
-    E: [-2.4, -0.8, 0.8, 2.4].map(x => ({ x, z: 26, yaw: x < 0 ? -Math.PI / 4 : Math.PI / 4 })),
+    E: [-2.4, -0.8, 0.8, 2.4].map(x => ({
+      x, z: 26, yaw: Math.sign(x) * (Math.abs(x) > 1 ? Math.PI * 5 / 12 : Math.PI / 4),
+    })),
     B: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: -35.5, yaw: Math.PI })),
   };
 
