@@ -1,5 +1,5 @@
 {
- "gerado": "2026-10-30T23:05:56.888Z",
+ "gerado": "2026-10-31T05:43:03.913Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -12044,9 +12044,9 @@
   },
   {
    "map": "invasao_javaporcos",
-   "celulasAlcancadas": 204224,
-   "amostrasChao": 12626,
-   "observadores": 3176,
+   "celulasAlcancadas": 204172,
+   "amostrasChao": 12606,
+   "observadores": 3194,
    "corpoDentroDeSolido": 0,
    "submersosAcimaDoPeito": 0,
    "piorPenetracao": 0,
@@ -12129,15 +12129,15 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.1851,
+     "fracMedia": 0.1815,
      "maiorVisada": 87.7
     },
     {
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.2142,
-     "maiorVisada": 77.5
+     "fracMedia": 0.2073,
+     "maiorVisada": 78.6
     }
    ],
    "exposicaoPorSpawn": [
@@ -12146,9 +12146,9 @@
      "x": -2,
      "z": 10.6,
      "chao": 0,
-     "obsLonge": 2846,
-     "obsVendo": 610,
-     "frac": 0.2143,
+     "obsLonge": 2857,
+     "obsVendo": 601,
+     "frac": 0.2104,
      "maiorVisada": 78.4
     },
     {
@@ -12156,9 +12156,9 @@
      "x": 2,
      "z": 10.6,
      "chao": 0,
-     "obsLonge": 2848,
-     "obsVendo": 612,
-     "frac": 0.2149,
+     "obsLonge": 2851,
+     "obsVendo": 603,
+     "frac": 0.2115,
      "maiorVisada": 83.2
     },
     {
@@ -12166,19 +12166,19 @@
      "x": -2,
      "z": 14.2,
      "chao": 0,
-     "obsLonge": 2832,
-     "obsVendo": 463,
-     "frac": 0.1635,
-     "maiorVisada": 84.3
+     "obsLonge": 2837,
+     "obsVendo": 453,
+     "frac": 0.1597,
+     "maiorVisada": 83.4
     },
     {
      "team": "E",
      "x": 2,
      "z": 14.2,
      "chao": 0,
-     "obsLonge": 2836,
-     "obsVendo": 488,
-     "frac": 0.1721,
+     "obsLonge": 2839,
+     "obsVendo": 478,
+     "frac": 0.1684,
      "maiorVisada": 82.5
     },
     {
@@ -12186,9 +12186,9 @@
      "x": 0,
      "z": 12.4,
      "chao": 0,
-     "obsLonge": 2838,
-     "obsVendo": 554,
-     "frac": 0.1952,
+     "obsLonge": 2847,
+     "obsVendo": 546,
+     "frac": 0.1918,
      "maiorVisada": 83.5
     },
     {
@@ -12196,9 +12196,9 @@
      "x": 0,
      "z": 17,
      "chao": 0,
-     "obsLonge": 2824,
-     "obsVendo": 426,
-     "frac": 0.1508,
+     "obsLonge": 2831,
+     "obsVendo": 416,
+     "frac": 0.1469,
      "maiorVisada": 87.7
     },
     {
@@ -12206,9 +12206,9 @@
      "x": -2,
      "z": -10.6,
      "chao": 0,
-     "obsLonge": 2861,
-     "obsVendo": 662,
-     "frac": 0.2314,
+     "obsLonge": 2885,
+     "obsVendo": 651,
+     "frac": 0.2256,
      "maiorVisada": 73.9
     },
     {
@@ -12216,9 +12216,9 @@
      "x": 2,
      "z": -10.6,
      "chao": 0,
-     "obsLonge": 2855,
-     "obsVendo": 654,
-     "frac": 0.2291,
+     "obsLonge": 2879,
+     "obsVendo": 645,
+     "frac": 0.224,
      "maiorVisada": 73.7
     },
     {
@@ -12226,19 +12226,19 @@
      "x": -2,
      "z": -14.2,
      "chao": 0,
-     "obsLonge": 2860,
-     "obsVendo": 582,
-     "frac": 0.2035,
-     "maiorVisada": 77.5
+     "obsLonge": 2884,
+     "obsVendo": 561,
+     "frac": 0.1945,
+     "maiorVisada": 78.6
     },
     {
      "team": "B",
      "x": 2,
      "z": -14.2,
      "chao": 0,
-     "obsLonge": 2850,
-     "obsVendo": 550,
-     "frac": 0.193,
+     "obsLonge": 2874,
+     "obsVendo": 532,
+     "frac": 0.1851,
      "maiorVisada": 76.9
     }
    ],
@@ -12394,13 +12394,109 @@
      "okLargura": true,
      "okInclinacao": true,
      "okDesvio": true
+    },
+    {
+     "nome": "escada refúgio E",
+     "x0": -41,
+     "x1": -39,
+     "z0": 24.66,
+     "z1": 29.98,
+     "degraus": 18,
+     "espelhoMed": 0.1864,
+     "espelhoMin": 0.1864,
+     "espelhoMax": 0.1864,
+     "pisoMed": 0.28,
+     "larguraMedida": 2,
+     "subida": 3.356,
+     "corrida": 4.78,
+     "inclinacaoGraus": 35.07,
+     "blondel": 0.653,
+     "desvioChaoDegrau": 0,
+     "okEspelho": true,
+     "okPiso": true,
+     "okBlondel": true,
+     "okLargura": true,
+     "okInclinacao": true,
+     "okDesvio": true
+    },
+    {
+     "nome": "escada refúgio B",
+     "x0": 43,
+     "x1": 45,
+     "z0": -27.34,
+     "z1": -22.02,
+     "degraus": 18,
+     "espelhoMed": 0.1816,
+     "espelhoMin": 0.1816,
+     "espelhoMax": 0.1818,
+     "pisoMed": 0.28,
+     "larguraMedida": 2,
+     "subida": 3.27,
+     "corrida": 4.78,
+     "inclinacaoGraus": 34.37,
+     "blondel": 0.643,
+     "desvioChaoDegrau": 0.001,
+     "okEspelho": true,
+     "okPiso": true,
+     "okBlondel": true,
+     "okLargura": true,
+     "okInclinacao": true,
+     "okDesvio": true
+    },
+    {
+     "nome": "escada torre 1",
+     "x0": -19.725,
+     "x1": -18.375,
+     "z0": -14.24,
+     "z1": -9.2,
+     "degraus": 17,
+     "espelhoMed": 0.1722,
+     "espelhoMin": 0.1722,
+     "espelhoMax": 0.1722,
+     "pisoMed": 0.28,
+     "larguraMedida": 1.4,
+     "subida": 2.928,
+     "corrida": 4.5,
+     "inclinacaoGraus": 33.05,
+     "blondel": 0.624,
+     "desvioChaoDegrau": 0,
+     "okEspelho": true,
+     "okPiso": true,
+     "okBlondel": true,
+     "okLargura": true,
+     "okInclinacao": true,
+     "okDesvio": true
+    },
+    {
+     "nome": "escada torre 2",
+     "x0": -18.125,
+     "x1": -16.775,
+     "z0": -14.24,
+     "z1": -9.2,
+     "degraus": 17,
+     "espelhoMed": 0.1722,
+     "espelhoMin": 0.1722,
+     "espelhoMax": 0.1722,
+     "pisoMed": 0.28,
+     "larguraMedida": 1.4,
+     "subida": 2.928,
+     "corrida": 4.5,
+     "inclinacaoGraus": 33.05,
+     "blondel": 0.624,
+     "desvioChaoDegrau": 0,
+     "okEspelho": true,
+     "okPiso": true,
+     "okBlondel": true,
+     "okLargura": true,
+     "okInclinacao": true,
+     "okDesvio": true
     }
    ],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 195,
+   "occMedidos": 221,
    "occPulados": 7,
-   "fracSemMalha": 0.0038,
+   "fracSemMalha": 0.0037,
    "quadrantes": [
     {
      "q": "0,0",
@@ -12412,7 +12508,7 @@
      "densProp": 13.18,
      "densWp": 91.65,
      "espacamento": 2.75,
-     "razaoProp": 1.63,
+     "razaoProp": 1.18,
      "razaoWp": 0.98
     },
     {
@@ -12425,21 +12521,21 @@
      "densProp": 9.97,
      "densWp": 94.15,
      "espacamento": 3.17,
-     "razaoProp": 1.23,
+     "razaoProp": 0.89,
      "razaoWp": 1
     },
     {
      "q": "0,2",
      "x0": -68,
      "z0": 0,
-     "areaAndavel": 878,
-     "props": 93,
-     "waypoints": 800,
-     "densProp": 10.59,
-     "densWp": 91.11,
-     "espacamento": 3.07,
-     "razaoProp": 1.31,
-     "razaoWp": 0.97
+     "areaAndavel": 829,
+     "props": 140,
+     "waypoints": 705,
+     "densProp": 16.89,
+     "densWp": 85.04,
+     "espacamento": 2.43,
+     "razaoProp": 1.51,
+     "razaoWp": 0.91
     },
     {
      "q": "0,3",
@@ -12451,7 +12547,7 @@
      "densProp": 11.9,
      "densWp": 91.21,
      "espacamento": 2.9,
-     "razaoProp": 1.47,
+     "razaoProp": 1.06,
      "razaoWp": 0.97
     },
     {
@@ -12464,34 +12560,34 @@
      "densProp": 5.72,
      "densWp": 95.96,
      "espacamento": 4.18,
-     "razaoProp": 0.71,
+     "razaoProp": 0.51,
      "razaoWp": 1.02
     },
     {
      "q": "1,1",
      "x0": -34,
      "z0": -34,
-     "areaAndavel": 755,
-     "props": 64,
-     "waypoints": 702,
-     "densProp": 8.48,
-     "densWp": 93.01,
-     "espacamento": 3.43,
-     "razaoProp": 1.05,
-     "razaoWp": 0.99
+     "areaAndavel": 732,
+     "props": 221,
+     "waypoints": 647,
+     "densProp": 30.2,
+     "densWp": 88.41,
+     "espacamento": 1.82,
+     "razaoProp": 2.7,
+     "razaoWp": 0.94
     },
     {
      "q": "1,2",
      "x0": -34,
      "z0": 0,
-     "areaAndavel": 790,
-     "props": 44,
-     "waypoints": 761,
-     "densProp": 5.57,
-     "densWp": 96.32,
-     "espacamento": 4.24,
-     "razaoProp": 0.69,
-     "razaoWp": 1.03
+     "areaAndavel": 839,
+     "props": 161,
+     "waypoints": 730,
+     "densProp": 19.18,
+     "densWp": 86.97,
+     "espacamento": 2.28,
+     "razaoProp": 1.71,
+     "razaoWp": 0.93
     },
     {
      "q": "1,3",
@@ -12503,7 +12599,7 @@
      "densProp": 5.93,
      "densWp": 96.96,
      "espacamento": 4.11,
-     "razaoProp": 0.73,
+     "razaoProp": 0.53,
      "razaoWp": 1.03
     },
     {
@@ -12516,7 +12612,7 @@
      "densProp": 7.17,
      "densWp": 93.57,
      "espacamento": 3.73,
-     "razaoProp": 0.89,
+     "razaoProp": 0.64,
      "razaoWp": 1
     },
     {
@@ -12529,21 +12625,21 @@
      "densProp": 7.68,
      "densWp": 95.85,
      "espacamento": 3.61,
-     "razaoProp": 0.95,
+     "razaoProp": 0.69,
      "razaoWp": 1.02
     },
     {
      "q": "2,2",
      "x0": 0,
      "z0": 0,
-     "areaAndavel": 775,
-     "props": 47,
-     "waypoints": 722,
-     "densProp": 6.07,
-     "densWp": 93.22,
-     "espacamento": 4.06,
-     "razaoProp": 0.75,
-     "razaoWp": 0.99
+     "areaAndavel": 843,
+     "props": 161,
+     "waypoints": 811,
+     "densProp": 19.1,
+     "densWp": 96.22,
+     "espacamento": 2.29,
+     "razaoProp": 1.71,
+     "razaoWp": 1.03
     },
     {
      "q": "2,3",
@@ -12555,34 +12651,34 @@
      "densProp": 6.85,
      "densWp": 95.86,
      "espacamento": 3.82,
-     "razaoProp": 0.85,
+     "razaoProp": 0.61,
      "razaoWp": 1.02
     },
     {
      "q": "3,0",
      "x0": 34,
      "z0": -68,
-     "areaAndavel": 688,
-     "props": 80,
-     "waypoints": 614,
-     "densProp": 11.62,
-     "densWp": 89.21,
-     "espacamento": 2.93,
-     "razaoProp": 1.44,
+     "areaAndavel": 682,
+     "props": 83,
+     "waypoints": 607,
+     "densProp": 12.17,
+     "densWp": 89,
+     "espacamento": 2.87,
+     "razaoProp": 1.09,
      "razaoWp": 0.95
     },
     {
      "q": "3,1",
      "x0": 34,
      "z0": -34,
-     "areaAndavel": 830,
-     "props": 107,
-     "waypoints": 761,
-     "densProp": 12.89,
-     "densWp": 91.7,
-     "espacamento": 2.78,
-     "razaoProp": 1.6,
-     "razaoWp": 0.98
+     "areaAndavel": 787,
+     "props": 151,
+     "waypoints": 670,
+     "densProp": 19.18,
+     "densWp": 85.12,
+     "espacamento": 2.28,
+     "razaoProp": 1.71,
+     "razaoWp": 0.91
     },
     {
      "q": "3,2",
@@ -12594,7 +12690,7 @@
      "densProp": 4.97,
      "densWp": 98.56,
      "espacamento": 4.49,
-     "razaoProp": 0.62,
+     "razaoProp": 0.44,
      "razaoWp": 1.05
     },
     {
@@ -12607,14 +12703,14 @@
      "densProp": 10.47,
      "densWp": 96.52,
      "espacamento": 3.09,
-     "razaoProp": 1.3,
+     "razaoProp": 0.94,
      "razaoWp": 1.03
     }
    ],
-   "medianaProp": 8.08,
+   "medianaProp": 11.185,
    "medianaWp": 93.86,
-   "piorRazaoProp": 0.62,
-   "piorRazaoWp": 0.95,
+   "piorRazaoProp": 0.44,
+   "piorRazaoWp": 0.91,
    "piorEspacamento": 4.49,
    "bordasSemGuarda": [],
    "rotasSpawnBandeira": [],
