@@ -722,3 +722,48 @@ Não declarar PR pronto ou multiplayer publicado. Próximo passo: consultar os j
 no HEAD. Backend objetivo/NPC e teste real WS de dois clientes seguem pendentes.
 Runtime remoto permanece cf2348b4449a6a17b6532867a3210cdc509f989f; este checkpoint
 é apenas documentação local e não inicia outro push/preview. Nenhum merge realizado.
+
+Rodada nova autorizada em 31/10: dono aprovou visual e pede foco no lixo antes da
+perseguição, animações legíveis de ataque/fuçar, entradas diferentes no mesmo lado,
+mais pontos de armas e respawn, salto/acesso a telhados e muros, wallpaper de ataque
+à cidade, card de Invasão no lobby e multiplayer real. Definição de pronto: caminho
+real exercitado, evidência visual 3:2, invariantes/mutantes afetados e crítico externo;
+MP requer dois clientes WS e backend compatível, não apenas fixture. Preservar
+limites de dano/onda/64NPCs e demais armas; sem merge ou publicação de backend implícita.
+Base runtime publicada cf2348b44, documentação local 4d6aac2c8. Próximo: medir
+prioridade do lixo/variação de entradas e animação antes de mudar o comportamento.
+
+Ampliação e esclarecimento do dono em31/10: três mapas do mesmo modo Caça ao
+Javaporco, com padrão visual comum; Cidade Invadida, Distrito Rural e Vila da Mata
+(casas portuguesas). Mint autorizado para edifícios/estruturas das cidades, não
+um pedido novo de modelos de javaporcos. Direção e prompts preparados em
+docs/maps/caca-javaporco-direcao-visual.md. Casas com interior/andar superior,
+mercearia aberta/polos de comida, placar em contêiner, card do javaporco no loading
+e comportamento intencional da horda permanecem no objetivo. Nenhum mapa novo
+ou lote Mint gerado nesta etapa. Consulta pelo EgoTaskSpace16/p2 ao resultado
+Mint exibiu Sign in to view results; login deve ser feito pelo dono. Não contornar
+autenticação. Próximo: completar validação do diff de movimentação e mostrar
+javaporco no LoadingCharacterStage, que ainda recebe currentFaction; integrar
+casas/mercearia/placar, depois expansão dos mapas e prova MP de dois clientes.
+
+Login Mint confirmado pelo dono e retomado no EgoTaskSpace16 em31/10. Antigo
+pacote Cidade do interior está succeeded. Três pilotos de arquitetura enviados
+com referência conceito-a-aerea.webp e qualidade Medium (até8.000 créditos cada):
+- Mercearia: https://mint.gg/app?session=rh79dvjgfvavgjz3kdtey1yax18haf1k
+- Celeiro/ração: https://mint.gg/app?session=rh74z2tyc8phr2eh4adahej1658hbhaj
+- Casa portuguesa: https://mint.gg/app?session=rh78kz6zkxad8ragw7qr54y4kx8hb72n
+Todos aceitos/Generating, ainda sem GLB inspecionado ou integrado. Reserva de
+24.000 créditos; UI mostrou27.089 disponíveis depois do terceiro pedido. Não
+comprar créditos nem regenerar automaticamente. Prompts exatos em
+prompts/caca-javaporco-arquitetura-20261031.json; ficha
+plans/02-CACA-JAVAPORCO-PILOTOS-ARQUITETURA-20261031.md passou spec:check.
+Primeira tentativa de anexar conceito-d-rua foi rejeitada pelo site com This
+content cannot be submitted; não houve geração. Referência aérea foi aceita.
+FONTE local em references/caca-javaporco-arquitetura/FONTE.md.
+
+Revalidação local da intenção: seis casos verdes, incluindo queda sobre telhado
+a20/30/60/120Hz. Três mutantes finais lixo-depois/entrada-fixa/sem-ataque derrubam
+somente o caso esperado e são detectados. Isto não substitui revisão visual de
+animação ou validação MP. Próximo imediato: javaporco no LoadingCharacterStage;
+manter o restante do objetivo acima, acompanhar os três pedidos e inspecionar os
+modelos antes de considerá-los aproveitáveis.
