@@ -3,9 +3,22 @@
    Reprodução e contratos: docs/visual-consistency/HEAD-YAW.md. */
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-const MUTANTS = ['sem-undo', 'undo-tardio', 'sinal-invertido', 'sem-clamp', 'sem-yaw', 'yaw-emote', 'estado-persistente', 'revive-pendente'];
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+const MUTANTS = ['sem-undo', 'undo-tardio', 'sinal-invertido', 'sem-clamp', 'sem-yaw', 'yaw-emote', 'estado-persistente', 'revive-pendente', 'undo-to-ausente', 'undo-shoot-ausente', 'undo-emote-ausente', 'undo-die-ausente', 'revive-sem-reset'];
 const args = process.argv.slice(2);
+if (args.length === 1 && args[0] === '--autoteste') {
+  for (const m of MUTANTS) {
+    const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), `--mutante=${m}`], { encoding: 'utf8', maxBuffer: 32768 });
+    let result;
+    try { result = JSON.parse(r.stdout); } catch { console.error(`mutante ${m}: saída inválida`); process.exit(3); }
+    if (r.error || r.status !== 0 || result.status !== 'RED' || !(result.failedCases > 0)) {
+      console.error(`mutante ${m} não foi detectado: exit=${r.status}, status=${result.status}`); process.exit(1);
+    }
+    console.log(`✓ ${m}: ${result.failedCases} caso(s) RED, erro máximo ${result.maxError.toFixed(6)}rad`);
+  }
+  process.exit(0);
+}
 if (args.length > 1 || (args.length && !MUTANTS.some((m) => args[0] === `--mutante=${m}`))) {
   console.error(`Use --mutante=${MUTANTS.join('|')} ou nenhum argumento`); process.exit(2);
 }
@@ -38,6 +51,14 @@ try {
     'if (this.headBone && !this.dead && !this.emotando && this.lod < 2', 'if (this.headBone && !this.dead && this.lod < 2');
   if (mutant === 'estado-persistente') candidate = replace(candidate, '} else this._yawCorr = 0;', '}');
   if (mutant === 'revive-pendente') candidate = replace(candidate, '    this._undoHeadYaw(); this._yawCorr = 0;\n', '');
+  const withoutUndo = (anchor) => replace(candidate, `${anchor}\n    this._undoHeadYaw();`, anchor);
+  if (mutant === 'undo-to-ausente') candidate = withoutUndo('    if (!a || this.cur === a) return;');
+  if (mutant === 'undo-shoot-ausente') candidate = withoutUndo('  shoot() {\n    if (this.dead) return;');
+  if (mutant === 'undo-emote-ausente') candidate = withoutUndo('  emote(id) {\n    if (this.dead || !id) return false;');
+  if (mutant === 'undo-die-ausente') candidate = withoutUndo('  die(dir = null) {\n    this._emoteId = null;\n    if (this.dead) return;');
+  if (mutant === 'revive-sem-reset') candidate = replace(candidate,
+    '    this._undoHeadYaw(); this._yawCorr = 0;\n', '    this._undoHeadYaw();\n');
+
   async function load(text, label) {
     const exp = replace(text, 'class CharController {', 'export class CharController {');
     const tmp = path.resolve(`public/js/.head-yaw-${process.pid}-${label}.mjs`);
@@ -64,19 +85,24 @@ try {
     const track = type === 'untracked' ? new THREE.VectorKeyframeTrack('Head.position', [0, 1], [...head.position.toArray(), ...head.position.toArray()])
       : new THREE.QuaternionKeyframeTrack('Head.quaternion', [0, .5, 1], [...q(yaw), ...q(type === 'animated' ? yaw + .12 : yaw), ...q(yaw)]);
     const clip = new THREE.AnimationClip('idle', 1, [track]), mixer = new THREE.AnimationMixer(model), actions = {};
-    for (const name of ['idle', 'idle1h', 'crouch', 'walk', 'run']) actions[name] = mixer.clipAction(clip.clone());
+    for (const name of ['idle', 'idle1h', 'crouch', 'walk', 'run', 'shoot']) {
+      const actionClip = name === 'walk' ? new THREE.AnimationClip('walk', 1, [new THREE.QuaternionKeyframeTrack('Head.quaternion',
+        [0, .5, 1], [...q(yaw), ...q(yaw + .12), ...q(yaw)])]) : clip.clone();
+      actions[name] = mixer.clipAction(actionClip);
+    }
     const ctrl = new Controller(mixer, actions, group, head, proxy, 'probe', model);
     scene.updateMatrixWorld(true);
     return { ctrl, group, head, proxy, actions };
   }
   const rows = [], failures = [];
+  let updates = 0;
   for (const type of ['untracked', 'constant', 'animated', 'paused']) for (const yaw of [-.5, .5, 1.2]) {
     for (const [bodyYaw, neckPitch, scale] of [[0, 0, 1], [2.4, .22, .01]]) {
       const a = make(Actual, type, yaw, bodyYaw, neckPitch, scale);
       const n = make(Natural, type, yaw, bodyYaw, neckPitch, scale);
       let correction = 0, maxError = 0, proxyError = 0, maxCorrection = 0, worstFrame = 0;
       for (let i = 0; i < 1200; i++) {
-        const dt = i % 3 === 0 ? 1 / 30 : i % 3 === 1 ? 1 / 60 : 1 / 120;
+        const dt = i % 200 === 0 ? 0 : i === 599 ? .3 : i % 3 === 0 ? 1 / 30 : i % 3 === 1 ? 1 / 60 : 1 / 120;
         const phase = Math.floor(i / 120);
         if (i === 350 || i === 375) correction = 0;
         for (const r of [a, n]) {
@@ -91,7 +117,7 @@ try {
           if (type === 'paused') for (const action of Object.values(r.actions)) action.paused = true;
         }
         const moving = phase === 4 ? 1 : 0;
-        a.ctrl.update(dt, moving, false, moving * 2);
+        a.ctrl.update(dt, moving, false, moving * 2); updates++;
         n.ctrl.update(dt, moving, false, moving * 2);
         const raw = angle(n.group, n.head);
         const active = !n.ctrl.dead && !n.ctrl.emotando && n.ctrl.lod < 2 && /^(idle|idle1h|crouch)$/.test(n.ctrl.curName || '');
@@ -109,8 +135,27 @@ try {
       if (![maxError, proxyError, maxCorrection].every(Number.isFinite) || maxError > tol || proxyError > tol || maxCorrection > clamp + tol) failures.push(row);
     }
   }
+  for (const action of ['_to', 'shoot', 'emote', 'die', 'revive']) {
+    const a = make(Actual, 'untracked', .5, .7, .2, .01), n = make(Natural, 'untracked', .5, .7, .2, .01);
+    for (let i = 0; i < 60; i++) { a.ctrl.update(1 / 60, 0, false); n.ctrl.update(1 / 60, 0, false); updates++; }
+    for (const r of [a, n]) {
+      if (action === '_to') r.ctrl._to('walk');
+      else if (action === 'emote') r.ctrl.emote('test');
+      else r.ctrl[action]();
+    }
+    const row = { type: `callsite/${action}`, maxError: Math.abs(angle(a.group, a.head) - angle(n.group, n.head)),
+      proxyError: 0, maxCorrection: Math.abs(a.ctrl._yawCorr), applied: a.ctrl._yawApplied };
+    rows.push(row); if (row.maxError > tol || row.applied) failures.push(row);
+  }
+  for (const type of ['untracked', 'constant']) for (const yaw of [-.5, .5]) {
+    const r = make(Actual, type, yaw, 0, 0, 1), headings = [];
+    for (let i = 0; i < 600; i++) { r.ctrl.update(1 / 60, 0, false); updates++; if (i >= 540) headings.push(angle(r.group, r.head)); }
+    const row = { type: `steady/${type}/${yaw}`, maxError: Math.max(...headings.map((h) => Math.abs(h - Math.sign(yaw) * .1))),
+      proxyError: 0, maxCorrection: Math.abs(r.ctrl._yawCorr) };
+    rows.push(row); if (row.maxError > tol) failures.push(row);
+  }
   const status = failures.length ? 'RED' : 'GREEN';
-  console.log(JSON.stringify({ status, mutant: mutant || null, cases: rows.length, frames: rows.length * 1200,
+  console.log(JSON.stringify({ status, mutant: mutant || null, cases: rows.length, frames: updates,
     maxError: Math.max(...rows.map((r) => r.maxError)), maxProxyError: Math.max(...rows.map((r) => r.proxyError)),
     failedCases: failures.length, failures: failures.slice(0, 2) }, null, 2));
   process.exitCode = mutant ? (failures.length ? 0 : 1) : (failures.length ? 1 : 0);

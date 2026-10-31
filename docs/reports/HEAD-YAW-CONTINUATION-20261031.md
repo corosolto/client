@@ -23,3 +23,17 @@ Próximo: oito mutantes atuais, focais finais, GLM R3 sobre transições corrigi
 Oito mutantes atuais detectados com exit0/statusRED, relatório `HEAD-YAW-MUTANTS-R3-verdict.json`; nominal `HEAD-YAW-GREEN-R4.json` GREEN. `eval:shaderbudget` R3 exit0, SB1–SB7 verdes com dependências completas compartilhadas; R1/R2 são tentativas infra rejeitadas, não regressão do produto. ARCH regenerado/check verde, sintaxe e diff-check verdes. `eval:tp-world-contract` R2 ainda aguardando completion; não presumir resultado. GLM R3 revisão final focada em execução, sem browser.
 
 TP-WORLD R2 completou exit0 (nominal e todos os mutantes previstos). Gate R5 acrescenta aimPitch variável e mantém GREEN24/28.800, max8.37e-9rad/proxy0; oito mutantes R4 detectados, exits0, em `HEAD-YAW-MUTANTS-R4-verdict.json`. CLI inválida sai2. Saída padrão limita exemplos vermelhos a dois casos, preservando failedCases e máximos; dados detalhados da rodada R4 ficam no audit. Pronto para checkpoint local; GLM R3 ainda em execução.
+
+## Microcommit após GLM R3
+
+Checkpoint produto anterior:5d0548a9a0f2c11d5bc9fa59110cdd9fda34674a, integrado pelo root na QA como6cc50. GLM R3 real terminou exit0, sem bloqueador; seus menores foram verificados, não aceitos só pelo rótulo.
+
+- A1 confirmado em fallback sem clipe death: probe lê imediatamente após die, antes de update; RED1caso/29, erro0,406rad. Agora die chama undo diretamente. Outros probes isolam _to/shoot/emote/revive.
+- A2 matriz do pai velha rejeitado: public/vendor/three.module.js:getWorldQuaternion chama updateWorldMatrix(true,false), atualizando ancestrais. Giro dinâmico com yaw/pitch/escala concorda ao oráculo em erro<1e-8rad.
+- A3 comentário de mount corrigido para duas linhas, separando mão e cabeça final.
+- Pontos cegos fechados: ponto fixo medido diretamente, dt0/hitch, troca untracked→animated e probes entre callsite/update com mutantes isolados. Mutante revive-sem-undo sobreviveu porque _to contém undo redundante; foi rejeitado como mutante equivalente e substituído por revive-sem-reset, que reprova24casos.
+- NominalR7 GREEN33casos/31.500updates, max8,37e-9rad/proxy0. AutotesteR2 detecta13/13mutantes, exit0. Provas HEAD-YAW-DIE-RED-R1.json, HEAD-YAW-GREEN-R7.json, HEAD-YAW-AUTOTESTE-R2.log. Gate limita exemplos e distingue exit1/2/3.
+- Wiring recomendado ao integrador: acrescentar `node tools/eval/head-yaw-check.mjs && node tools/eval/head-yaw-check.mjs --autoteste` ao eval:tp-world-contract, substituindo a lista manual nova dos oito mutantes. Package continua intocado nesta lane.
+- Root relatou prova Ego QA do produto5d05:7personagens×600updates, poses finitas e proxies~7e-15, captura3:2 head-yaw-Ego-QA-R2.png vista por ele. Isso cobre standing antes deste microcommit de die, não morte nem aprovação artística. Observação pendente P3: Professor parece apoiar pistola na palma, pegada estranha e face ao lado/acima; falta A/B para atribuir causa. Não esconder essa dívida geral da missão.
+
+Próximo: root integra microcommit, valida die no consumidor visual se necessário, termina gate wiring e revisão do head atual do #1188. Nenhum push/review remoto/resolução de thread feito por esta lane. Objetivo integral de mapas/AK/skins/MP/mobile permanece com o root; esta entrega cobre somente yaw.

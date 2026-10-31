@@ -34,15 +34,22 @@ e deadzone0,0001rad. A tolerância1e-6rad é numérica, sem aprovação estétic
 
 Cobre osso sem track, track constante, track animado e ação pausada, duas cadeias
 com yaw/pitch/escala diferentes, mira vertical variando no retorno ao idle,
-frames alternados30/60/120Hz e transições entre
+frames alternados30/60/120Hz, dt zero e hitch, troca de track ausente para
+track animado e transições entre
 idle, crouch, idle1h, movimento, morte, LOD e emote, seguidas de retorno ao idle. Inclui `revive()` durante o porte e morte/respawn
 sem uma atualização intermediária; esse caso foi RED antes do helper de transição.
-Também compara o proxy à posição final do osso a cada atualização.
+Também compara o proxy à posição final do osso a cada atualização. Probes
+separados leem a cabeça logo após cada método de transição, antes de `update()`,
+e o ponto fixo do porte é conferido diretamente em +0,1/-0,1rad para offset de
++0,5/-0,5rad, sem depender do oráculo dinâmico.
 
+`node tools/eval/head-yaw-check.mjs --autoteste` executa todos os mutantes e
+reprova se qualquer um sobreviver ou não produzir a resposta RED esperada.
 Cada `--mutante=<nome>` modifica somente a cópia temporária e deve imprimir RED
 com exit0 (mutante morto). Nominal RED ou mutante não detectado sai1; argumento
 inválido sai2; incapacidade de medir sai3. Variantes: `sem-undo`, `undo-tardio`,
-`sinal-invertido`, `sem-clamp`, `sem-yaw`, `yaw-emote`, `estado-persistente`, `revive-pendente`.
+`sinal-invertido`, `sem-clamp`, `sem-yaw`, `yaw-emote`, `estado-persistente`, `revive-pendente`, `undo-to-ausente`, `undo-shoot-ausente`,
+`undo-emote-ausente`, `undo-die-ausente`, `revive-sem-reset`.
 O teste recusa substituição que não aplique uma única vez.
 
 A régua não mede os pixels, os GLB de todo elenco, compra/skins ou mobile físico.

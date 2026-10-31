@@ -1058,6 +1058,7 @@ class CharController {
   die(dir = null) {
     this._emoteId = null;
     if (this.dead) return;
+    this._undoHeadYaw();
     // Viés de tombo pela direção do disparo: o mesmo clipe deixa de cair sempre igual.
     this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
     this._deathDir = dir ? { x: dir.x, z: dir.z } : null;
@@ -1181,10 +1182,8 @@ class CharController {
       s.material.opacity = CHAR_FX.csOp * (0.12 + 0.88 * k) * (this.crouch ? 1.15 : 1) * (this.dead ? 0.5 : 1);
       s.visible = s.material.opacity > 0.02;
     }
-    // ORIENTAÇÃO DO MOUNT, POR QUADRO (ver o bloco em buildCharacterModel): sem isto o
-    // cano acompanha a rotação da mão do clipe e a arma sai apontando pra qualquer lado
-    // fora do idle. Roda DEPOIS do mixer e depois da correção de cabeça — as duas mexem
-    // em osso e a conta aqui depende da matriz de mundo já resolvida.
+    // Mount usa a mão após o mixer; a correção final da cabeça fica antes do proxy.
+    // Contrato de orientação: docs/ANIM-3P.md.
     /* Dançando, a arma some: o cano acompanha a mão do passo e cruza o rosto, e o mount
        briga com a coreografia. Guarda e devolve, sem tocar no inventário. */
     if (this.emotando !== this._armaGuardada) {
