@@ -21,11 +21,15 @@
           ≤480 px, com `sensToque` escalando proporcionalmente;
      TQ3  arrastar a partir do ATIRA mira E continua atirando (um dedo só);
      TQ4  o caminho novo preserva inversão de eixo e o teto de pitch.
+     TQ5  joystick não atira; gatilho tem dono e solta em cancelamento, blur e pausa.
+     TQ6  o botão de câmera percorre as três vistas sem atirar.
 
    MUTANTES (reescrevem o arquivo SERVIDO, o disco não é tocado):
      --mutante=glifo-cru     volta o slot para SVG                  -> TQ1
      --mutante=mira-lenta    devolve 0,0024 rad/px                  -> TQ2
      --mutante=gatilho-mudo  tira o arrasto do gatilho              -> TQ3
+     --mutante=joystick-atira, foco-preso, dedo-alheio              -> TQ5
+     --mutante=camera-morta  desliga a alternância de câmera       -> TQ6
 
    Uso: BASE=http://127.0.0.1:9321 node tools/eval/toque-controles-check.mjs
    ============================================================================ */
@@ -36,7 +40,8 @@ const BASE_EXTERNA = process.env.BASE;
 const PORTA = process.env.PORTA || '9322';
 const BASE = BASE_EXTERNA || `http://127.0.0.1:${PORTA}`;
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const ESPERADO = { 'glifo-cru': 'TQ1', 'mira-lenta': 'TQ2', 'gatilho-mudo': 'TQ3' };
+const ESPERADO = { 'glifo-cru': 'TQ1', 'mira-lenta': 'TQ2', 'gatilho-mudo': 'TQ3',
+  'joystick-atira': 'TQ5', 'foco-preso': 'TQ5', 'dedo-alheio': 'TQ5', 'camera-morta': 'TQ6' };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
 const PARTIDA = 'ui=v3&debug=1&auto=E,esquerdomacho&map=praca_poderes&lang=pt';
@@ -89,7 +94,19 @@ async function abrir() {
     await reescreve(/\/js\/game\.js/, (t) => t.replace('const TOUCH_LOOK_RAD_PX = 0.0078;', 'const TOUCH_LOOK_RAD_PX = 0.0024;'));
   }
   if (MUT === 'gatilho-mudo') {
-    await reescreve(/\/js\/tp\/hud\.js/, (t) => t.replace('window.__game?._touchLook?.(dx, dy);', 'void dx; void dy;'));
+    await reescreve(/\/js\/game\.js/, (t) => t.replace('this._touchLook(t.clientX - x, t.clientY - y);', 'void x; void y;'));
+  }
+  if (MUT === 'joystick-atira') {
+    await reescreve(/\/js\/game\.js/, (t) => t.replace('if (mag < DZ) onVec(0, 0);', 'if (mag < DZ) { onVec(0, 0); this.mouseDown0 = true; this._tryShoot(); }'));
+  }
+  if (MUT === 'foco-preso') {
+    await reescreve(/\/js\/game\.js/, (t) => t.replace('this._blur = () => this._releaseInput();', 'this._blur = () => { this.keys = {}; };'));
+  }
+  if (MUT === 'dedo-alheio') {
+    await reescreve(/\/js\/game\.js/, (t) => t.replace('if (t.identifier === id) release();', 'release();'));
+  }
+  if (MUT === 'camera-morta') {
+    await reescreve(/\/js\/tp\/hud\.js/, (t) => t.replace('(g) => g._toggleCamView()', '(g) => void g'));
   }
   await page.goto(`${BASE}/?${PARTIDA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
@@ -171,11 +188,54 @@ const medido = await page.evaluate(async () => {
   g._touchLook(0, -5000);
   const pitchTeto = g.player.pitch;
 
+  // TQ5: movimento nunca é gatilho; só o dedo dono do ATIRA pode mantê-lo ativo.
+  g.player.pitch = 0;
+  const tentativas = [];
+  const shoot = g._tryShoot;
+  g._tryShoot = (...args) => { tentativas.push(g.mouseDown0); return shoot.apply(g, args); };
+  g.mouseDown0 = false;
+  const centro = (sel) => { const b = document.querySelector(sel).getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2]; };
+  const joy = centro('.touch-joy-l');
+  toque('.touch-joy-l', 'touchstart', ...joy, 20);
+  toque('.touch-joy-l', 'touchmove', joy[0], joy[1] - 45, 20);
+  toque('.touch-joy-l', 'touchmove', ...joy, 20);
+  const movimentoAtirou = g.mouseDown0 || tentativas.length > 0;
+  soltar('.touch-joy-l', ...joy, 20);
+  const gatilho = centro('.tp-toque-atira');
+  toque('.tp-toque-atira', 'touchstart', ...gatilho, 21);
+  toque('.tp-toque-atira', 'touchstart', ...gatilho, 22);
+  soltar('.tp-toque-atira', ...gatilho, 22);
+  const donoMantido = g.mouseDown0;
+  toque('.tp-toque-atira', 'touchcancel', ...gatilho, 21);
+  const cancelou = !g.mouseDown0;
+  toque('.tp-toque-atira', 'touchstart', ...gatilho, 23);
+  window.dispatchEvent(new Event('blur'));
+  toque('.tp-toque-atira', 'touchmove', gatilho[0] - 10, gatilho[1], 23);
+  const perdeuFoco = !g.mouseDown0;
+  soltar('.tp-toque-atira', ...gatilho, 23);
+  toque('.tp-toque-atira', 'touchstart', ...gatilho, 24);
+  g.setPaused(true); g.setPaused(false);
+  toque('.tp-toque-atira', 'touchmove', gatilho[0] - 10, gatilho[1], 24);
+  const pausou = !g.mouseDown0;
+  soltar('.tp-toque-atira', ...gatilho, 24);
+  g._tryShoot = shoot;
+
+  // TQ6: o antigo PING é a mesma troca de câmera da tecla B, sem disparar.
+  g.setCamView('first'); g.mouseDown0 = false;
+  const cameras = [];
+  for (let i = 0; i < 3; i++) {
+    toque('.tp-toque-camera', 'touchstart', 650, 230, 30 + i);
+    soltar('.tp-toque-camera', 650, 230, 30 + i);
+    cameras.push(g.camView);
+  }
+  const cameraSemTiro = !g.mouseDown0;
+
   return {
     antesTroca, depoisTroca, imagensOk,
     giro300, grau300: giro300 * 180 / Math.PI, pxMeiaVolta: Math.PI / (giro300 / 300), giroMetade,
     giroNoGatilho, atirandoDurante, soltouGatilho,
     pitchNormal, pitchInvertido, pitchTeto,
+    movimentoAtirou, donoMantido, cancelou, perdeuFoco, pausou, cameras, cameraSemTiro,
   };
 });
 await fechar();
@@ -198,6 +258,11 @@ cobra('TQ3', medido.giroNoGatilho > 0.3 && medido.atirandoDurante && medido.solt
 
 cobra('TQ4', medido.pitchNormal < 0 && medido.pitchInvertido > 0 && medido.pitchTeto <= 1.45 + 1e-9 && medido.pitchTeto >= 1.44,
   `TQ4 · eixo normal ${medido.pitchNormal.toFixed(2)}, invertido ${medido.pitchInvertido.toFixed(2)}, teto de pitch ${medido.pitchTeto.toFixed(2)}`);
+
+cobra('TQ5', !medido.movimentoAtirou && medido.donoMantido && medido.cancelou && medido.perdeuFoco && medido.pausou,
+  `TQ5 · ${JSON.stringify({ movimentoAtirou: medido.movimentoAtirou, donoMantido: medido.donoMantido, cancelou: medido.cancelou, perdeuFoco: medido.perdeuFoco, pausou: medido.pausou })}`);
+cobra('TQ6', medido.cameras.join(',') === 'third,shoulder,first' && medido.cameraSemTiro,
+  `TQ6 · câmera ${medido.cameras.join(' → ')}, sem disparo ${medido.cameraSemTiro}`);
 
 for (const c of r) console.log(`  ${c.ok ? 'ok  ' : 'FALHA'} ${c.msg}`);
 const falhou = r.filter((c) => !c.ok).map((c) => c.id);

@@ -1992,13 +1992,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
         sfx.preloadWeaponSamples(_armasDaPartida),
         preloadMapProps([...MAP_PROPS, ...(mapaPartida.props || [])]),   // + props do mapa (Havan: carros/estátua)
-        /* Desktop preserva a fauna GLB do BUG-57 e os viewmodels autorados. No perfil
-           móvel, ambos têm fallback procedural/legado e ficam fora do caminho crítico:
-           eram dezenas de MB e compilavam enquanto o jogador já tentava mirar. */
         MOBILE_AUTO ? null : preloadAmbientLife(mapaPartida.ambience || []),
         mapaPartida.preload ? mapaPartida.preload() : null,
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
-        POINTER_COARSE ? null : preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida, playerWeaponSkins)),
+        preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida, playerWeaponSkins)),
       ]);
     }
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
@@ -5086,7 +5083,7 @@ function mpPreCarregarProximo(m) {
     mapaReady.then((mapa) => preloadMapProps([...MAP_PROPS, ...(mapa.props || [])])),
     MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadAmbientLife(mapa.ambience || [])),
     mapaReady.then((mapa) => mapa.preload ? mapa.preload() : null),
-    POINTER_COARSE ? null : preloadAuthoredFamilies(authoredBootFamilies(armas)),
+    preloadAuthoredFamilies(authoredBootFamilies(armas)),
   ]).catch((e) => console.warn('[mp] pré-carga do próximo mapa falhou (a virada carrega):', e && e.message));
 }
 

@@ -9,7 +9,7 @@ partida viva no recorte deitado do Galaxy A25 (780×360, Pixel 5 emulado):
 | Slots com render real da arma | 0 de 3 | 3 de 3 | `game.js` `_syncTouchWeps()` |
 | Giro por arrasto de 300 px | 41° | 134° | `game.js` `TOUCH_LOOK_RAD_PX` |
 | Passada para meia-volta | 1309 px (3,4 telas) | 403 px | idem |
-| Giro arrastando a partir do ATIRA | 0,0003 rad | 1,17 rad | `tp/hud.js`, botão ATIRA |
+| Giro arrastando a partir do ATIRA | 0,0003 rad | 1,17 rad | `game.js`, botão `.touch-fire` |
 
 ## Por que cada decisão
 
@@ -37,6 +37,20 @@ fator de luneta valem igual nos dois.
 
 ## Régua
 
-`npm run eval:toquecontroles` roda a base e três mutantes (`glifo-cru`, `mira-lenta`,
-`gatilho-mudo`), cada um acendendo exatamente uma cláusula. Ela sobe o próprio servidor quando
+`npm run eval:toquecontroles` roda a base e os mutantes de arte, sensibilidade, arrasto,
+joystick que atira, foco preso, dedo alheio e câmera morta, cada um acendendo exatamente
+uma cláusula. Ela sobe o próprio servidor quando
 `BASE` não é passado e mede toque de verdade, não a leitura do fonte.
+
+Relato de 31/10/2026: o centro do joystick gastava uma bala sem ATIRA (pistola12→11,
+produção, Ego/Android844×390). Movimento e mira agora não escrevem o gatilho. ATIRA é um
+botão do Game, decorado pelo Treta Pop, com um único dono por identificador; arrastar
+continua mirando. Soltar, cancelar, perder foco, ocultar a página, pausar, abrir chat,
+morrer ou sair da partida limpa a entrada. PING no toque foi substituído pelo ícone de
+câmera, que chama a mesma alternância primeira→terceira→ombro da tecla B.
+
+O perfil móvel mantém DPR, textura, efeitos e sombras reduzidos, mas usa os mesmos
+viewmodels autorados com mãos do desktop. `eval:vm-maos-mobile-desktop` percorre o catálogo
+real nos dois recortes e verifica mãos dentro do quadro e traçante no pixel do cano.
+No CI, os assets publicados são conferidos por tamanho e SHA256 contra o manifesto;
+não há cópia de modelos privados no Git. Esses dois testes rodam no portão de navegador.

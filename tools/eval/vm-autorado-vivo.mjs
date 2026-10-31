@@ -26,50 +26,70 @@
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
+import { WEAPON_IDS } from '../../public/js/weapons.js';
+import { installViewmodelAssets } from './viewmodel-network-fixture.mjs';
 
 const arg = (n, d) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `=${d}`)
   .split('=').slice(1).join('=');
 const PORTA = arg('porta', '4361');
 const MUTANTE = arg('mutante', '');
+if (MUTANTE && !['semfiacao', 'maos-ocultas'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 const SO = arg('armas', '').split(',').filter(Boolean);
 const TODAS = process.argv.includes('--todas');
 const SEM_FLAGS = process.argv.includes('--sem-flags');
+const MOBILE = process.argv.includes('--mobile');
+const FOTOS = arg('fotos', '');
+const BASE = process.env.BASE || `http://localhost:${PORTA}`;
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
-const nav = await chromium.launch();
-const pag = await nav.newPage({ viewport: { width: SEM_FLAGS ? 1200 : 1280, height: 800 } });
+console.log(`VMH: ${MOBILE ? 'mobile' : 'desktop'} abre navegador`);
+const nav = await chromium.launch(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : {});
+console.log('VMH: navegador aberto');
+const pag = await nav.newPage({ viewport: MOBILE ? { width: 844, height: 390 } : { width: 1440, height: 960 },
+  ...(MOBILE ? { isMobile: true, hasTouch: true } : {}) });
+await installViewmodelAssets(pag);
+await pag.route(/\.astro\/eval-vite|dev-toolbar|@vite\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: 'export default {};export const createHotContext=()=>({accept(){},dispose(){},prune(){},on(){},off(){},send(){},invalidate(){},data:{}});export const updateStyle=()=>{};export const removeStyle=()=>{};export const injectQuery=u=>u;export class ErrorOverlay{}' }));
 const erros = [];
-pag.on('pageerror', (e) => erros.push(String(e).split('\n')[0].slice(0, 140)));
+pag.on('pageerror', (e) => { const text = String(e).split('\n')[0].slice(0, 140); erros.push(text); console.error(text); });
 
 if (MUTANTE === 'semfiacao') {
   // Reproduz EXATAMENTE o defeito do merge: a troca some, o resto fica.
   const fonte = fs.readFileSync('public/js/game.js', 'utf8')
     .replace('const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);',
              'const authored = false;');
+  if (fonte === fs.readFileSync('public/js/game.js', 'utf8')) throw new Error('semfiacao não aplicou');
   await pag.route('**/js/game.js*', (r) =>
     r.fulfill({ contentType: 'application/javascript; charset=utf-8', body: fonte }));
 }
+if (MUTANTE === 'maos-ocultas') {
+  const antes = fs.readFileSync('public/js/authoredvm.js', 'utf8');
+  const fonte = antes.replace('handMeshes.push(object);', 'object.visible = false; handMeshes.push(object);');
+  if (fonte === antes) throw new Error('maos-ocultas não aplicou');
+  await pag.route('**/js/authoredvm.js*', (r) => r.fulfill({ contentType: 'application/javascript', body: fonte }));
+}
 
 const FAMILIAS = 'ak,ar,mp5,smg,p90,g3,marksman,svd,sniper,bolt,deagle,pistol,revolver,shotgun,lmg,grenade';
-await pag.goto(`http://localhost:${PORTA}/?debug=1&auto=E&map=brasilia&armaslazy=0${SEM_FLAGS ? '' : `&vmauthored=1${TODAS ? `&vmready=${FAMILIAS}` : ''}`}`,
-  { waitUntil: 'load', timeout: 180000 });
+console.log('VMH: carrega partida');
+await pag.goto(`${BASE}/?ui=v3&debug=1&auto=E,esquerdomacho&map=piscina_treta&armaslazy=0${SEM_FLAGS ? '' : `&vmauthored=1${TODAS ? `&vmready=${FAMILIAS}` : ''}`}`,
+  { waitUntil: 'commit', timeout: 180000 });
 await pag.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
+console.log('VMH: partida viva');
 await pag.waitForTimeout(2500);
+await pag.evaluate(() => { document.getElementById('crash-overlay')?.remove(); window.__game.timeLeft = Infinity; });
 
 /* A lista golden sai do vmconfig LIDO PELA PÁGINA, não de regex no arquivo: o
    parser à mão já falhou aqui e devolveu zero armas com o arquivo correto.
    Só entram as que o portão de rollout deixa passar (família ready + arma não
    segurada): as demais caem no legado DE PROPÓSITO e não são defeito. */
-const ALVO = SO.length ? SO : await pag.evaluate(async (todas) => {
+const ALVO = SO.length ? SO : SEM_FLAGS ? WEAPON_IDS : await pag.evaluate(async (todas) => {
   const vm = await import('/js/data/vmconfig.js');
   return Object.entries(vm.VM_WEAPON || {})
     .filter(([, c]) => todas || (c.ready !== false && vm.VM_FAMILY?.[c.family]?.ready === true))
     .map(([k]) => k);
 }, TODAS);
-if (SEM_FLAGS && !SO.length) ALVO.push('knife');
 if (!ALVO.length) {
   await nav.close();
   console.log('\n  VERMELHO — nenhuma arma pronta no vmconfig\n');
@@ -80,6 +100,7 @@ const linhas = [];
 for (const arma of ALVO) {
   const r = await pag.evaluate(async (a) => {
     const g = window.__game;
+    g.player.alive = true; g.player.hp = 100; g.setCamView('first');
     g._switchWeapon(a);
     if (a === 'knife') {
       for (let i = 0; i < 60 && !g.vm.melee?.active; i += 1) {
@@ -101,16 +122,42 @@ for (const arma of ALVO) {
     const ent = g.vm.authored?.entry?.(a);
     const visivel = (o) => { let v = o.visible; let p = o.parent; while (v && p) { v = p.visible; p = p.parent; } return v; };
     const maos = ent?.handMeshes || [];
-    return { arma: a, chave: ent?.key || null, maos: maos.length, visiveis: maos.filter(visivel).length };
+    let emQuadro = false;
+    for (const hand of maos.filter(visivel)) {
+      g.vm.root.updateWorldMatrix(true, true); hand.skeleton?.update();
+      g.vmCamera.updateMatrixWorld(true);
+      const p = g.player.pos.clone();
+      for (let i = 0; i < hand.geometry.attributes.position.count; i += 1) {
+        hand.getVertexPosition(i, p).applyMatrix4(hand.matrixWorld).project(g.vmCamera);
+        if (Math.abs(p.x) < 1 && Math.abs(p.y) < 1 && Math.abs(p.z) < 1) { emQuadro = true; break; }
+      }
+      if (emQuadro) break;
+    }
+    let rastroPx = Infinity;
+    if (ent && g._vmVisibility?.authored) {
+      const muzzle = g._muzzleWorld('rifle').clone().project(g.camera);
+      const tracer = g._tracer, consultar = g._consultarTiro;
+      let start;
+      try {
+        g._consultarTiro = () => null;
+        g._tracer = (from) => { start = from.clone().project(g.camera); };
+        g._fireHitscan(g.player, g._aimOrigin(g.player.pos.clone()),
+          g.camera.getWorldDirection(g.player.pos.clone()), 1, true, a, a, true);
+        if (start) rastroPx = Math.hypot((start.x - muzzle.x) * innerWidth / 2, (start.y - muzzle.y) * innerHeight / 2);
+      } finally { g._tracer = tracer; g._consultarTiro = consultar; }
+    }
+    return { arma: a, chave: ent?.key || null, maos: maos.length, visiveis: maos.filter(visivel).length,
+      emQuadro, rastroPx, mobile: g.mobile, autorada: g._vmVisibility?.authored, fallback: g._vmVisibility?.fallback };
   }, arma);
-  if (SEM_FLAGS && ['m4', 'ak', 'pistol', 'knife'].includes(arma)) {
-    const dir = 'artifacts/vm-hands-default';
+  if (FOTOS && ['awp', 'ak', 'pistol', 'knife'].includes(arma)) {
+    const dir = FOTOS;
     fs.mkdirSync(dir, { recursive: true });
     await pag.screenshot({ path: `${dir}/${arma}.png` });
   }
-  const ok = Boolean(r.chave?.includes('#')) && r.visiveis > 0;
+  const ok = Boolean(r.chave?.includes('#')) && r.visiveis > 0
+    && (arma === 'knife' || (r.autorada && !r.fallback && r.emQuadro && r.mobile === MOBILE && r.rastroPx <= 1));
   linhas.push({ ...r, ok });
-  console.log(`  ${r.arma.padEnd(10)} ${String(r.chave || 'LEGADO').padEnd(22)} maos ${r.visiveis}/${r.maos}  ${ok ? 'ok' : 'FALHA'}`);
+  console.log(`  ${r.arma.padEnd(10)} ${String(r.chave || 'LEGADO').padEnd(22)} maos ${r.visiveis}/${r.maos} emQuadro=${r.emQuadro} rastroPx=${r.rastroPx?.toFixed(2)} ${ok ? 'ok' : 'FALHA'}`);
 }
 await nav.close();
 
@@ -121,7 +168,8 @@ console.log(`\n  ${bons}/${ALVO.length} armas montam o viewmodel autorado COM m�
 if (legado.length) console.log(`  caíram no legado: ${legado.join(' ')}`);
 if (semMao.length) console.log(`  autoradas mas SEM mão: ${semMao.join(' ')}`);
 if (erros.length) console.log(`  erros de página: ${[...new Set(erros)].slice(0, 3).join(' | ')}`);
-const ok = bons === ALVO.length;
+const ok = MUTANTE ? bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave : !l.visiveis) : bons === ALVO.length;
+if (MUTANTE) console.log(`  mutante ${MUTANTE}: ${ok ? 'detectado' : 'sobreviveu ou falhou por outro motivo'}`);
 console.log(ok ? '\n  VERDE — o caminho autorado está ligado\n'
                : '\n  VERMELHO — o jogo não está montando o viewmodel novo\n');
 process.exit(ok ? 0 : 1);
