@@ -26,7 +26,7 @@
 // shower stalls, a glass skylight roof — and rows of weapons on the deck.
 // Same buildWorld contract as map.js.
 import * as THREE from 'three';
-import { decalIds, paredeAtras } from './map_decals.js';
+import { decalIds, paredeAtras, offsetTinta } from './map_decals.js';
 import { superficieGrafitavel } from './graffiti_surface.js';
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
 import { setMapSky } from './map_sky.js';
@@ -766,7 +766,7 @@ export function buildPoolDay(scene, T) {
       if (!m) {
         m = new THREE.MeshLambertMaterial({
           map: T.decals[i], transparent: true, alphaTest: 0.22,
-          polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+          ...offsetTinta(-4, -4),   // só unidades: ver map_decals.js (offsetTinta)
         });
         _dmat.set(i, m);
       }
