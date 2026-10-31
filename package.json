@@ -731,7 +731,7 @@
     "eval:operacao-flavio-online": "node tools/eval/operacao-flavio-online-check.mjs && node tools/eval/operacao-flavio-proof-check.mjs online",
     "eval:operacao-duration": "node tools/eval/operacao-flavio-duration-proof.mjs --autoteste && node tools/eval/operacao-flavio-duration-proof.mjs",
     "eval:operacao-clock": "node tools/eval/operacao-flavio-clock-proof.mjs --autoteste && node tools/eval/operacao-flavio-clock-proof.mjs",
-    "eval:operacao-boarding": "node tools/eval/operacao-flavio-boarding-order-check.mjs && node tools/eval/operacao-flavio-boarding-lifecycle-proof.mjs && node tools/eval/operacao-flavio-boarding-assets-proof.mjs"
+    "eval:operacao-boarding": "node tools/eval/operacao-flavio-boarding-order-check.mjs && node tools/eval/operacao-flavio-boarding-lifecycle-proof.mjs && node tools/eval/operacao-flavio-boarding-assets-proof.mjs && node tools/eval/operacao-flavio-browser-timeline-check.mjs"
   },
   "repository": {
     "type": "git",

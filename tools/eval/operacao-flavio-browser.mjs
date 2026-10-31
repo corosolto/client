@@ -289,22 +289,60 @@ try {
     g.paused = false;
     g._endRound('B');
   });
-  await page.waitForTimeout(4000);
+  const sampleBoardingPlane = () => page.evaluate(() => {
+    const g = window.__game;
+    const cinematic = g.objective?.cinematic;
+    const owner = cinematic?.owner || g.objective;
+    const boarding = owner?._boarding;
+    const session = owner?._boardingSession;
+    const boardPlane = cinematic && boarding?.session && boarding.stage?.visible && session === cinematic && boarding.plane
+      ? boarding.plane
+      : g.world.objectivePlane;
+    boardPlane.updateWorldMatrix(true, false);
+    return {
+      elapsed: owner?._elapsedCinematic(),
+      planeZ: boardPlane.getWorldPosition(boardPlane.position.clone()).z,
+      activeIsBoardingPlane: boardPlane === boarding?.plane,
+    };
+  });
+  const waitForElapsed = (target) => page.waitForFunction((t) => {
+    const owner = window.__game?.objective?.cinematic?.owner || window.__game?.objective;
+    const elapsed = owner?._elapsedCinematic();
+    return !!owner?.cinematic && Number.isFinite(elapsed) && elapsed >= t && elapsed < 9;
+  }, target, { timeout: 9000 });
+  await waitForElapsed(1.0);
+  const preDoorA = await sampleBoardingPlane();
+  await waitForElapsed(6.1);
+  const preDoorB = await sampleBoardingPlane();
+  await page.screenshot({ path: `${out}/06-cinematica-vitoria-porta.png` });
+  await waitForElapsed(7.4);
+  const taxi = await sampleBoardingPlane();
+  await page.screenshot({ path: `${out}/06-cinematica-vitoria.png` });
+  assert.ok(preDoorA.planeZ === 55 && preDoorB.planeZ === 55, `avião de embarque deve permanecer em z=55 antes da porta (A ${preDoorA.planeZ}, B ${preDoorB.planeZ})`);
+  assert.equal(preDoorA.planeZ, preDoorB.planeZ, `avião de embarque deve ficar imóvel antes do fechamento da porta (${preDoorA.planeZ} vs ${preDoorB.planeZ})`);
+  assert.ok(taxi.planeZ > 55, `avião deve avançar além de z=55 após o início do táxi em 6.8s (z ${taxi.planeZ})`);
   const cinematic = await page.evaluate(() => {
     const g = window.__game;
+    const c = g.objective?.cinematic;
+    const owner = c?.owner || g.objective;
+    const boarding = owner?._boarding;
+    const boardPlane = c && boarding?.session && boarding.stage?.visible && owner?._boardingSession === c && boarding.plane
+      ? boarding.plane
+      : g.world.objectivePlane;
+    boardPlane.updateWorldMatrix(true, false);
     return {
-      active: !!g.objective?.cinematic,
-      winner: g.objective?.cinematic?.winner,
-      duration: g.stateUntil - g.objective.cinematic.startedAt,
-      planeZ: g.world.objectivePlane?.position.z,
+      active: !!c,
+      winner: c?.winner,
+      duration: g.stateUntil - c?.startedAt,
+      planeZ: boardPlane.getWorldPosition(boardPlane.position.clone()).z,
       result: g._resultado,
     };
   });
+  cinematic.samples = { preDoorA, preDoorB, taxi };
   assert.equal(cinematic.active, true);
   assert.equal(cinematic.winner, 'B');
   assert.ok(cinematic.duration >= 8.9);
   assert.ok(cinematic.planeZ > 55);
-  await page.screenshot({ path: `${out}/06-cinematica-vitoria.png` });
 
   assert.deepEqual(errors, [], `erros no browser: ${errors.join(' | ')}`);
   const featureFailed = failed.filter(([, url]) => /operacao_flavio|operacao_decola|senador\\.glb/.test(url));
