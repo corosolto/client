@@ -277,7 +277,7 @@ try {
         snapshotHz: g._mp.net.stats?.hz | 0,
       };
     });
-    cobra(estadoObjetivo.protocolo === 'coro-snapshot-v7',
+    cobra(estadoObjetivo.protocolo === 'coro-snapshot-v8',
       `OBJ1 · o navegador negociou snapshots com objetivo (${estadoObjetivo.protocolo || 'nenhum'})`);
     cobra(estadoObjetivo.snapshotHz > 0,
       `OBJ2 · o cliente recebeu snapshots autoritativos (${estadoObjetivo.snapshotHz} Hz)`);
@@ -426,7 +426,7 @@ try {
      20,8 KB/s contra 13,8 KB/s. O teto é o número novo com folga — ele existe para que
      ninguém volte a mandar o bloco privado de todo mundo para todo mundo sem perceber. */
   const TETO_KBPS = 17;
-  cobra(medida.rede.protocolo === 'coro-snapshot-v7',
+  cobra(medida.rede.protocolo === 'coro-snapshot-v8',
     `TB10 · o navegador negociou o protocolo novo (${medida.rede.protocolo || 'nenhum'})`);
   cobra(medida.rede.ents <= 10 && medida.rede.kbps > 0 && medida.rede.kbps <= TETO_KBPS,
     `TB10b · ${medida.rede.kbps} KB/s com ${medida.rede.ents} entidades (teto ${TETO_KBPS}; a v4 media 20,8)`);

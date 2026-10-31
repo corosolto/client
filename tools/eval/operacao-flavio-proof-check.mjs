@@ -47,8 +47,8 @@ const familias = {
     'marcha-curta': 'spec docs/maps/operacao-decola.md: marcha18–24s, medida=',
   }, 'Mutante marcha-curta aplicado'],
   codec: ['objective-codec-contract-check.mjs', {
-    'sem-time-j': '✗ v7 preserva NPC do terceiro time:',
-    'limite-64': '✗ v7 comporta os 80 slots do contrato comum:',
+    'sem-time-j': '✗ v8 preserva NPC do terceiro time:',
+    'limite-64': '✗ v8 comporta os 80 slots do contrato comum:',
     'j-legado': '✗ formatos anteriores continuam recusando terceiro time:',
   }],
   entrada: ['mode-announcements-entry-check.mjs', {

@@ -16,7 +16,7 @@ const g = new Game({ renderer, textures: initTextures(), sfx,
   mapId: 'operacao_flavio', testMode: true, dedicated: true, onQuit() {}, onMatchEnd() {} });
 g.start(); g.online = true; g.dedicated = false;
 g._ensureDolly = () => {};
-const net = { meta: {}, startPing() {}, stopPing() {}, stats: { hz: 20 }, ws: { protocol: 'coro-snapshot-v7' } };
+const net = { meta: {}, startPing() {}, stopPing() {}, stats: { hz: 20 }, ws: { protocol: 'coro-snapshot-v8' } };
 const mp = makeNetcode(g, net); g._mp = mp;
 let failed = 0;
 try {
@@ -51,6 +51,7 @@ try {
     try {
       await probe(page, (ok, label) => clauses.push({ ok: !!ok, label }), [], '/tmp/nao-gerado.png');
       const measured = clauses.find(c => c.label.startsWith('OBJ3'));
+      assert.equal(clauses.find(c=>c.label.startsWith('OBJ1'))?.ok,true,'par v8 passa negociação exigida pelo smoke');
       assert.ok(measured, 'OBJ3 foi medida');
       assert.equal(measured.ok, scenario === 'recebe-aplica', 'OBJ3 deve rejeitar '+scenario);
       assert.notEqual(originalObjective.state.checkpoint, -9180, 'instrumentação restaura estado se não chega aplicação');

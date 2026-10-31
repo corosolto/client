@@ -547,14 +547,20 @@ class Netcode {
       for (const e of lote.list) { try { this._evento(e); } catch { /* HUD ainda não montado */ } }
     }
   }
+  // IDs uint32 de eventos não podem truncar para signed nem coagir inválidos em zero.
+  _idDeRede(id) {
+    return Number.isInteger(id) && id >= 0 && id <= 0xffffffff ? id : null;
+  }
   _evento(e) {
     const game = this.game, p = game.player, meu = this.net.yourEnt;
     if (!e || typeof e !== 'object') return;
-    const att = this._netMap.get(e.a | 0) || null, vic = this._netMap.get(e.v | 0) || null;
+    const aId = this._idDeRede(e.a), vId = this._idDeRede(e.v);
+    const att = aId == null ? null : (this._netMap.get(aId) || null);
+    const vic = vId == null ? null : (this._netMap.get(vId) || null);
     const d = Math.max(0, Math.min(999, e.d | 0)), h = e.h === 1 || e.h === true, w = String(e.w || '').slice(0, 8);
     const dist = (a) => (a && a.pos && p && p.pos) ? Math.hypot(a.pos.x - p.pos.x, a.pos.z - p.pos.z) : 0;
     if (e.k === 'hit') {
-      if (!att || this.espectador || (e.v | 0) !== meu) return;
+      if (!att || this.espectador || vId !== meu) return;
       try { game._dmgArc(att, p, d); } catch { /* HUD */ }
       game._noteHit(att, w, d, h, dist(att));
     } else if (e.k === 'kill') {
@@ -572,7 +578,8 @@ class Netcode {
     } else if (e.k === 'nade') {
       if (!Number.isInteger(e.i) || game._grenades.some((x) => x._nid === e.i)) return;
       const kind = e.kind === 'smoke' ? 'smoke' : 'frag';
-      const dono = this._netMap.get(e.o | 0) || ((e.o | 0) === meu ? p : null);
+      const oId = this._idDeRede(e.o);
+      const dono = oId == null ? null : (this._netMap.get(oId) || (oId === meu ? p : null));
       const origem = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0), dir = new THREE.Vector3(+e.vx || 0, +e.vy || 0, +e.vz || 0);
       game._spawnGrenade(origem, dir.lengthSq() ? dir.clone().normalize() : new THREE.Vector3(0, 0, -1), kind, dono);
       const gr = game._grenades[game._grenades.length - 1];
@@ -581,7 +588,9 @@ class Netcode {
       const i = game._grenades.findIndex((x) => x._nid === e.i);
       if (i >= 0) { game.scene.remove(game._grenades[i].mesh); game._grenades.splice(i, 1); }
       const pos = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0);
-      if (e.kind === 'smoke') game._popSmoke(pos); else game._explodeFrag(pos, this._netMap.get(e.o | 0) || null);
+      const oId = this._idDeRede(e.o);
+      const dono = oId == null ? null : (this._netMap.get(oId) || null);
+      if (e.kind === 'smoke') game._popSmoke(pos); else game._explodeFrag(pos, dono);
     }
   }
 
