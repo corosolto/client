@@ -159,11 +159,11 @@ for (const id of alvos) {
           X.renderer.render(X.scene, cam);
           return X.renderer.domElement.toDataURL('image/png');
         };
-        const frente = shot(0, 2.75, 1.15, 1.0, 37);
-        const tresQuartos = shot(38, 2.75, 1.15, 1.0, 37);
+        const frente = shot(0, 3.0, 1.1, 0.92, 37);
+        const tresQuartos = shot(38, 3.0, 1.1, 0.92, 37);
         const mp = tp.mount.getWorldPosition(new THREE.Vector3());
         const azC = 28 * Math.PI / 180;
-        cam.fov = 30; cam.updateProjectionMatrix();
+        cam.fov = 30; cam.aspect = 560 / 760; cam.updateProjectionMatrix();
         cam.position.set(mp.x + Math.sin(azC) * 1.15, mp.y + 0.12, mp.z + Math.cos(azC) * 1.15);
         cam.lookAt(mp.x, mp.y + 0.02, mp.z);
         X.renderer.render(X.scene, cam);
