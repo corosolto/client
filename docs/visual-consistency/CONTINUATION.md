@@ -223,6 +223,20 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
   preservar proteção de recarga/Juiz, comprovar porte e contato reais.
 - GLM acabamento atingiu deadline novamente; escreveu binding-clones e nova
   régua, não entregou doc. Root assume fechamento e verifica antes do bake.
+- Root fechou UV/solo com tolerância numérica Float32 e contagem inteira mais
+  próxima da densidade, eliminando tetos de custo arbitrários. Gate GREEN;
+  cinco mutantes saem 1 pelas respectivas cláusulas. Binding + mutantes GREEN.
+  Comparação física final mantém spawns/colliders/occluders/pickups dos dois mapas
+  em relação ao PRE e POST2 (`root-map-finish-physical-final.log`). Contagem de
+  navNodes/pickups do snapshot antigo usa campos ausentes: não serve como prova
+  de navegação; preservar essa limitação. Fotos reais A/B em execução.
+- GLM motion revisão completa não achou P1/P2, mas deixou cinco P3 acionáveis
+  (comentários, citação, alocação, fixture, cobertura declarada). Fila sequencial
+  após AK: corrigir os válidos, repetir gates e obter crítico no ponto final.
+- Crítico da curadoria achou nova lacuna concreta: reconstrução canônica perde
+  winding original de um triângulo e pode contar um quad parcialmente culled.
+  GLM-CURADORIA-FACES assume measure/inventory/drawn-check/doc GRAFITE-REGUA para
+  provar mutante causal e tratar as duas faces das faixas sem isenção por nome.
 
 ### Conferência de 09:54 UTC
 
