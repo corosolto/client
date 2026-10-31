@@ -8036,6 +8036,9 @@ export class Game {
         this._flash(from.clone().add(dir.clone().multiplyScalar(0.85)), dir);   // GPU-batched: 1 draw call
         if (b.mesh.isGLB) b.mesh.ctrl.shoot();
       }
+    } else if (objectiveDestination
+        && Math.hypot(objectiveDestination.x - b.pos.x, objectiveDestination.z - b.pos.z) <= objectiveDestination.slotRadius) {
+      moving = 0;
     } else if (this.ctf) {
       // --- CTF: procurar e segurar um ponto capturável (o combate acima ainda tem prioridade)
       this._botCtf(b, dt);
@@ -8251,7 +8254,11 @@ export class Game {
       // MIRA no nó atual do path (não +2): com o A* reto, seguir o path fielmente contorna os
       // obstáculos. O look-ahead +2 cortava a quina PRA DENTRO do obstáculo -> o bot batia e
       // oscilava fwd/back sem desviar. Agora ele acompanha a curva do path ao redor da geometria.
-      const node = b.path ? _wp[b.path[Math.min(b.pathIdx, b.path.length - 1)]] : null;
+      let node = b.path ? _wp[b.path[Math.min(b.pathIdx, b.path.length - 1)]] : null;
+      // O waypoint conduz ao trecho final; a formação termina no ponto físico do slot.
+      if (objectiveDestination && b.pathIdx >= b.path.length - 1
+          && Math.hypot(objectiveDestination.x - b.pos.x, objectiveDestination.z - b.pos.z) <= objectiveDestination.leash
+          && this._walkReach(b, objectiveDestination)) node = objectiveDestination;
       if (node && !this._walkReach(b, node)) {
         // Hop fisicamente intransitável (aresta que passou no segClear do mapa mas não
         // cabe o bot r=0.38 — ex.: quina do muro das ilhotas): bane o nó e rerroteia.
