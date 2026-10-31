@@ -189,3 +189,31 @@ na documentação.
 O WT integral também contém a medição de cabeças do PR#1179, ausente da main usada nesta entrega isolada. Nele, os quatro GLBs antigos e novos foram medidos no Ego com o corpo exato do gerador: geometria e silhueta deram o mesmo resultado. Apenas quatro registros de SHA/frescor precisaram atualizar; hitboxes públicas permaneceram iguais.
 
 Essa atualização da tabela pertence à integração com#1179; não há tabela nova nem mudança de hitbox nesta branch. Provas na auditoria privada: headshot-four-{real,baseline}-Ego.json, headshot-four-freshness-provenance.json e root-headshot-normal-all-final.log.
+
+## Exceção de equivalência NORMAL-only no fit de eyewear (31/10/2026, R1)
+
+A entrega dos outputs v5 trocou os bytes de `esquerdomacho.glb` e deixou o
+`face-landmarks.json` histórico apontando o corpo antigo (`51bd7a1a…`), quebrando a
+identidade `bodyId+bodySha256` do `eyewear-fit-check`. A identidade permanece o default;
+a única exceção aceita é a declarada em `tools/characters/normal-only-equivalence.mjs`:
+legacy == sha do ORIGINAL congelado na ref v2 (`character-normal-smooth-groups.json`,
+arquivo verificado por sha próprio), público atual == output EXATO aprovado
+(`5a615784…`), e fingerprints `protectedSha`/`normalSha`/contagem iguais aos da ref —
+ou seja, byte-idêntico fora de NORMAL. O gate `normal-only-fit-equivalence-check.mjs`
+prova isso e mata mutantes de 1 byte em POSITION, JOINTS, JSON, NORMAL (primeira e
+última), além de legacy retargetado e bodyId desconhecido. Qualquer outra divergência
+recusa com motivo específico; nada de "NORMAL não importa". Capturas históricas do
+fit-matrix continuam declarando o hash original.
+
+R1 do crítico fechou duas brechas de integração (2 P2): o `eyewear-fit-check` agora exige
+`landmark.bodyId === character:<chave>` e o caminho exato esperado do corpo (o declarado na
+tabela congelada para a exceção; `/models/characters/<chave>.glb` para os demais), e chama
+`proveNormalOnlyEquivalence` **sempre** que o modelo tem exceção declarada — inclusive quando
+o sha do landmark já iguala o atual, o que mata o retarget coerente de landmark+perfis+rows.
+Para os demais corpos, identidade estrita `bodySha256 == hash do público` permanece. Mutantes
+integrados novos: `integrated-retarget-historical-shas` e `exception-borrowed-by-barbudo`.
+O positivo "old" do gate de equivalência extrai o ORIGINAL do commit de proveniência
+`ad696fb87` via `git show` (sha conferido contra o legacySha antes de provar identidade);
+em clone shallow sem o objeto o gate registra a nota `legacy-buffer-unavailable-shallow-clone`
+e informa `identity-positive-not-exercised` com `identityVerified: false`. O positivo de identidade
+não é exercitado nesse clone; o gate nunca fabrica o sha do original.

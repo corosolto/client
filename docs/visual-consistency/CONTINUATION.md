@@ -14,3 +14,10 @@ Próximo: adaptar dependências Node com shim local ao checkout, rodar gate de n
 - Root e crítico independente confirmaram8/8GLBs/tools/ref idênticos à implementação já revista. JSON/tamanho e bytes fora deNORMAL preservados. Package da main preservado salvo2entradas equalitynosgates.
 - Quality público4/4GREEN; originaisREDpeloNORMALcompleto; weldrecusaorigemjáalterada. CríticoCLEANfocal em2e8154d2e, relatórioCRITICO-NORMAIS-DELIVERY-R1.md SHAa1932b88da300eeee71052ee221e436e6966a5e165466db48b6114fffc2f0b99 no auditroot da missão.
 - Próximo concreto: pushnormalcomprepushobrigatório, abrir PR próprio e conferir review/checks doSHApublicado. Nenhummerge/releasefeito nesta lane.
+
+### 14:27 UTC — equivalência histórica do fit fechada
+
+- O check:deploy anterior passou82/83; a única reprovação era o hash histórico do corpo Esquerdomacho após a suavização de NORMAL. O histórico dos landmarks, capturas e fit-matrix foi preservado.
+- A exceção agora exige corpo e caminho exatos, hash original e hash de saída congelados, hash da referência e igualdade dos bytes protegidos. O caller não aceita retargetar o histórico para o hash atual.
+- Root confirmou os gates de eyewear e equivalência, incluindo12 mutantes integrados e8 mutantes de bytes/identidade. O crítico R3 confirmou causalidade real do retarget em4 rows e código CLEAN. Relatório CRITICO-NORMAIS-FIT-EQUIVALENCE-R3.md SHA b7c9ca67493c0ca3c6cc6a8b392639676ff35c031d37a05ef227a392c11915a8 no auditroot da missão.
+- A nota do clone shallow agora informa corretamente que o positivo histórico não foi exercitado quando o objeto original não existe. Gate dedicado ligado a check:fast e check:deploy; próximo passo é regenerar documentação, checkpoint assinado e push com o hook completo, seguido do PR.
