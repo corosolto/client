@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import vm from 'node:vm';
+import { planFromJSON, propIdsFromSpec } from '../../public/js/map_json.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const fixture = JSON.parse(readFileSync(new URL('./mapjson_fixture.json', import.meta.url), 'utf8'));
@@ -40,6 +41,49 @@ try {
 } finally { rmSync(scratch, { recursive: true, force: true }); }
 
 const html = readFileSync(new URL('../../public/construtor.html', import.meta.url), 'utf8');
+const ioStart = html.indexOf("$('snippet-btn').onclick=");
+const ioEnd = html.indexOf("$('reset').onclick=", ioStart);
+const normalizeStart = html.indexOf('function normaliza(');
+const normalizeEnd = html.indexOf('// ---- preview 3D', normalizeStart);
+if ([ioStart, ioEnd, normalizeStart, normalizeEnd].some(i => i < 0)) throw new Error('editor I/O handlers not found');
+const ioSource = html.slice(ioStart, ioEnd) + html.slice(normalizeStart, normalizeEnd);
+function editorIO() {
+  const elements = new Map(), alerts = []; let clipboard;
+  const scope = { spec: structuredClone(fixture), sel: { type: 'boxes', index: 0 },
+    $: id => { if (!elements.has(id)) elements.set(id, {}); return elements.get(id); },
+    pushTop() {}, renderInsp() {}, alert: message => alerts.push(message), setTimeout() {},
+    planFromJSON, propIdsFromSpec, navigator: { clipboard: { writeText: async value => { clipboard = value; } } },
+    revalidate: () => planFromJSON(scope.spec),
+  };
+  vm.runInNewContext(ioSource, scope);
+  return { scope, elements, alerts, clipboard: () => clipboard };
+}
+{
+  const e = editorIO(), prior = JSON.stringify(e.scope.spec), selection = e.scope.sel;
+  e.elements.get('io') ?? e.scope.$('io');
+  e.scope.$('io').value = JSON.stringify({ ...fixture, boxes: [null] });
+  e.scope.$('imp').onclick();
+  check('invalid-import-preserves-map', JSON.stringify(e.scope.spec) === prior && e.scope.sel === selection
+    && e.alerts.length === 1, `preserved=${JSON.stringify(e.scope.spec) === prior} alerts=${e.alerts.length}`);
+}
+{
+  const e = editorIO(), candidate = { ...structuredClone(fixture), name: 'Mapa importado' };
+  e.scope.$('io').value = JSON.stringify(candidate);
+  e.scope.$('imp').onclick();
+  check('valid-import-commits-map', e.scope.spec.name === candidate.name && e.scope.sel === null
+    && e.alerts.length === 0, `name=${e.scope.spec.name} alerts=${e.alerts.length}`);
+}
+{
+  const e = editorIO(); e.scope.spec.name = "Arena D'Água\nCom barra \\ e acento";
+  await e.scope.$('snippet-btn').onclick();
+  const line = e.clipboard().split('\n').find(line => line.startsWith('//  MAPS.'));
+  let actual, error;
+  try { actual = vm.runInNewContext('(' + line.slice(line.indexOf('=') + 1).trim().replace(/;$/, '') + ')'); }
+  catch (caught) { error = caught; }
+  check('snippet-name-is-js-string', !error && actual.name === e.scope.spec.name,
+    `parsed=${!error} name=${JSON.stringify(actual?.name)}`);
+}
+
 const drawStart = html.indexOf('function draw(){');
 const drawEnd = html.indexOf('function rect(', drawStart);
 if (drawStart < 0 || drawEnd < 0) throw new Error('editor draw not found');
