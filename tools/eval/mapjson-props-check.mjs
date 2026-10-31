@@ -41,6 +41,9 @@ try {
   const elevated = structuredClone(corridor);
   elevated.boxes = [{ x: 0, z: 0, w: 24, d: 24, h: 2, walkable: true }];
   const elevatedPlan = planFromJSON(elevated);
+  check('elevated-graph-remains-playable', validatePlan(elevatedPlan).length === 0
+    && elevatedPlan.nodes.some(point => !inside(point,elevated.props[0],.5) && elevatedPlan.heightAt(point.x,point.z) === 2),
+    `nodes=${elevatedPlan.nodes.length} problems=${JSON.stringify(validatePlan(elevatedPlan))}`);
   check('elevated-graph-avoids-prop', elevatedPlan.nodes.filter(point => inside(point, elevated.props[0], .5)).length === 0,
     `nodes inside elevated solid=${elevatedPlan.nodes.filter(point => inside(point, elevated.props[0], .5)).length}`);
   const underpass = structuredClone(corridor);
