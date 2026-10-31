@@ -783,3 +783,23 @@ placar, movimentação e arquitetura continuam em andamento; não confundir com
 esta validação. Próximo: fechar cobertura de carregamento frio/cancelamento e
 revisão visual móvel do loading, acompanhar os três pilotos Mint e seguir as
 pendências de interiores/mapas/MP registradas acima.
+
+31/10 — instrução persistente do dono: sempre atualizar o preview após validar
+cada entrega para permitir teste no jogo, sem pedir nova autorização de push.
+Não implica merge nem publicação do backend. Push da correção0b2fee102 em curso;
+diffs ainda não validados permanecem locais. Estado dos mapas: Cidade Invadida
+jogável; Distrito Rural e Vila da Mata ainda não implementados, com pilotos de
+arquitetura pedidos ao Mint. Reabertura do EgoTaskSpace16 falhou com task space
+not found; não abrir outro espaço para contornar, nem afirmar status novo do Mint.
+Push0b2fee102 confirmado após pre-push completo verde(757s). Deploy Vercel
+DZYd4FrQQShGEDM8fzKF5E41Bs8V, SHA0b2fee102b6ccd0cd2df96ef6e51f299c80e136e,
+em BUILDING na consulta inicial; URL própria
+https://csbrasil-pau16p6n8-rubenmarcus-projects.vercel.app e alias fixo
+https://csbrasil-git-v2-invasao-javaporcos-rubenmarcus-projects.vercel.app.
+Não considerar READY antes de confirmar o estado e o JS servido.
+Deploy confirmado READY. HTTP autenticado por vercel curl confirmou a correção
+_restaurarPoseMorte no glbchars.js publicado(77.559 caracteres); alias fixo serve
+os mesmos bytes do URL único. Proteção Vercel preservada. EgoTaskSpace16 ausente
+impediu repetir QA visual remoto nesta rodada; revisão visual local já registrada.
+Estado entregue: correção da morte publicada; três mapas não estão prontos,
+Cidade Invadida é o único jogável e dois layouts novos seguem pendentes.
