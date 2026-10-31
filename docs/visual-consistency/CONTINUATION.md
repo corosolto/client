@@ -606,3 +606,22 @@ MaterialprodutoR4: crítico2e4ef660CLEAN e4capturasreaispósUV,9fixtureshelper. 
 ### 2026-10-31T15:14:33.729366+00:00 — morte e perfil equipadovalidados
 
 DeathR8 crítico CRITICO-DEATH-CAMERA-R8.md SHA59a447a076e9cb72152c131ce2288c42945a47d7c880f0475a79e4507e1df205 semP1/P2; R3localvisualaceito emquadrosamostrados2ratios,defaultvivo128casosigual. P3doccorrigido: fixtureNodeomiteimagens E substituimateriais; nãoaprovamaterialrender. Node27PASS+4mutantesexatos0, legacyCAMMORTE3mapsGREENprecedente. SkinsF1/F3/F4críticoR3CLEAN77173881,12cláusulas+4mutanteswiredGREEN: persisteweaponSkins, knife3pusa playerKnifeSkinId, preloadesperatodas. CheckpointprodutoGame/main e2gates/docs; F2writerknifeprossegueindependente semtocarGame. Package/CIwirefinal/mergedmain/hook/PRaindapendentes.
+
+
+### 15:25 UTC — release131, sincronia e contraprovas
+
+Main5d1e52d347 publicou alpha.131 às15:13:44Z, incluindohotfix1183ec7. prod-watch41214040852 epreview-deploy41214238759SUCCESS; EgoSpace32p1homeexibealpha131,partidarealaindaemverificação. Não érelease dasmudanças visuaisdesta lane. Normais1184HEAD72e80d366 mergeec7,31fonteshotfixiguais e12fontesnormaispreservadas; críticoCLEANa7f30dae,5gatesfocaisGREEN, pushnormal485sGREEN, Estragarepedidoatual72e; CIaindaemcurso. SB71181HEAD3de33b4f5 equivalente31+18fontes, críticoCLEAN089fb216 e4focaisGREEN; pushR1canceladosóárvoreprópriaparaserializar, retryR2hookemcurso, sempublicaçãonovoconfirmada.
+
+CurationR6all14GREEN465peças; PiscinaR7mutanteazulGREEN comoutside1+unsupported1causaispoiswall-bandexcluído, prefsRestoredtrue; FerroR7falhoufixturematrixAutoUpdatefalse/metayfaltante. RootcorrigiuupdateMatrixeXYZ, retesteR8p2emcurso; semalterarproduto/extrator. WrappermapasR2trêsP2antigosfechadosmasnovoP2stdoutlogboot eP3timeout. RootR3classificaerror/signalinfra3; stdoutaindaprecisaredirectconsole.infoalém.log duranteboot, semrelaxarJSONestrito. R3nãoaceito.
+
+GLM1179gatesR2entregouflash30/30+11mutantes ewrappermovimento; críticoindependenteachouimportsremovidosnolobby/mira, nãoaceitaratéfecho. R1mediçãoCanarinhoDeagle50,5grausLA1nominalREDemdianósticonativoread-only. GLMF2éúnicoescritorweapon-skins/meleevm/weapons, semGame. Objetivo10h18:45Zmantidointeiro, Flávio1158excluído, fluxosUI/socialposteriores.
+
+
+### 15:28 UTC — leases de correção
+
+GLM F2 encerrou no limite de20min, exit1/Deadline exceeded e sem relatório: produto parcial NÃO aceito. weapon-skins/meleevm/weapons e gate de faca congelados para crítica antes de novo escritor. Gates1179 R2 crítico REJECT ff19ad72: cinco P2 (imports, massa ausente, oito amostras, status filho flash e espera de boot) e três P3. Próxima lease GLM R3 somente cinco gates/helper e contrato, sem produto/package/browser. Wrapper mapas R4 CLEAN21a161d6, Root confirmou8 variantes de materiais e Campo9/Favela5/UV4; checkpoint em preparação.
+
+
+### 15:30 UTC — checkpoint dos mapas e wrapper
+
+Campo R5 tem40 trechos no perímetro, quatro capturas locais aceitas, interior preservado e delta físico perimetral declarado. Gate Campo R8 CLEAN2995d2f7, baseline extraída da fonte pré-R5 imutável e NaN distinto de Infinity. Migração FV-M1 CLEAN6d07d81f:95 interiores verbatim e todo Córrego intacto, somente4→40 guardas. Root executou nominal+9 mutantes Campo e nominal+5 Favela com conjuntos RED exatos. Córrego materiais8 e UV4 também passaram. Wrapper R4 crítico CLEAN21a161d6, stdout JSON único e timeout com error/signal sempre infra3. Checkpoint inclui apenas mapas/gates/baselines/contrato e ledger; package/CI e curadoria final ficam para a próxima entrega. Não há merge/publicação dessas mudanças.

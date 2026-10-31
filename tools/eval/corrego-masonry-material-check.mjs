@@ -37,7 +37,12 @@ try {
   const { bootGame, initTextures } = harness;
   THREE = harness.THREE;
   src = readFileSync(new URL('../../public/js/map_corrego.js', import.meta.url), 'utf8');
-  const game = bootGame('corrego', { textures: initTextures(), seed: 8012 });
+  const bootLog = console.log, bootInfo = console.info;
+  let game;
+  try {
+    console.log = console.info = (...args) => console.error(...args);
+    game = bootGame('corrego', { textures: initTextures(), seed: 8012 });
+  } finally { console.log = bootLog; console.info = bootInfo; }
   W = game.world;
   W.root.updateMatrixWorld(true);
   const coletar = () => {
