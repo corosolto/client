@@ -35,6 +35,19 @@ def decide(payload: dict) -> dict:
         and (review.get("state") or "").upper() != "DISMISSED"
         for review in reviews
     )
+    current_review_times = [
+        review.get("submittedAt") or ""
+        for review in reviews
+        if ((review.get("author") or {}).get("login") or "").lower() == "estraga-codigo"
+        and ((review.get("commit") or {}).get("oid") or "") == head_oid
+        and (review.get("state") or "").upper() != "DISMISSED"
+    ]
+    latest_current_review_at = max(current_review_times, default="")
+    resolved_at = str(payload.get("estragacodigo_resolved_at") or "")
+    current_resolution = bool(
+        latest_current_review_at and resolved_at
+        and resolved_at >= latest_current_review_at
+    )
     request_review = bool(head_oid) and not reviewer_requested and not reviewed_head
 
 
@@ -48,7 +61,8 @@ def decide(payload: dict) -> dict:
         "needs_resolution": precisa,
         "labels_add": ["needs-estragacodigo-resolution"] if precisa else [],
         "labels_remove": ["estragacodigo-resolved"]
-        if reviewer_requested or request_review or new_estragacodigo_review else [],
+        if reviewer_requested or request_review or new_estragacodigo_review
+        or (reviewed_head and not current_resolution) else [],
         "request_review": request_review,
     }
 
@@ -111,11 +125,11 @@ def selftest() -> int:
          {"needs_resolution": True,
           "labels_add": ["needs-estragacodigo-resolution"],
           "labels_remove": ["estragacodigo-resolved"]}),
-        ("review atual preserva resolução já confirmada",
+        ("review atual preserva resolução confirmada depois dela",
          {"headRefOid": "abc", "reviews": [
              {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
-              "state": "COMMENTED"}
-         ]},
+              "state": "COMMENTED", "submittedAt": "2026-10-31T08:00:00Z"}
+         ], "estragacodigo_resolved_at": "2026-10-31T08:05:00Z"},
          {"needs_resolution": True,
           "labels_add": ["needs-estragacodigo-resolution"],
           "labels_remove": []}),
@@ -124,6 +138,14 @@ def selftest() -> int:
              {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
               "state": "COMMENTED"}
          ], "new_estragacodigo_review": True},
+         {"needs_resolution": True,
+          "labels_add": ["needs-estragacodigo-resolution"],
+          "labels_remove": ["estragacodigo-resolved"]}),
+        ("sweep invalida resolução anterior à review atual",
+         {"headRefOid": "abc", "reviews": [
+             {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
+              "state": "COMMENTED", "submittedAt": "2026-10-31T08:05:00Z"}
+         ], "estragacodigo_resolved_at": "2026-10-31T08:00:00Z"},
          {"needs_resolution": True,
           "labels_add": ["needs-estragacodigo-resolution"],
           "labels_remove": ["estragacodigo-resolved"]}),
