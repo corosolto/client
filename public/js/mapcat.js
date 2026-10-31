@@ -18,6 +18,7 @@ const MAP_CATS = {
   piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],
   parque_treta: ['ARENA', 'COMUNIDADE'],
   velho_oeste: ['ARENA', 'COMUNIDADE'],
+  operacao_flavio: ['CIDADES', 'AI'],
   penitenciaria: ['ARENA', 'COMUNIDADE'],
   upa_24h: ['ARENA', 'COMUNIDADE'],
   obras_prefeitura: ['ARENA', 'COMUNIDADE'],
@@ -32,6 +33,7 @@ const MAP_AUTOR = {
   corrego: 'Ruben Marcus',
   piscina_treta: 'Dalton Fontes', posto_treta: 'Emerson Garrido',
   parque_treta: 'Ubiracy Santos', velho_oeste: 'Ubiracy Santos', penitenciaria: 'Ubiracy Santos',
+  operacao_flavio: 'Ruben Marcus',
   upa_24h: 'Emerson Garrido', obras_prefeitura: 'Emerson Garrido',
 };
 const MAP_DATA = {
@@ -42,6 +44,7 @@ const MAP_DATA = {
   campomorro: '07/09/2026', mansao: '10/09/2026', escadao: '06/09/2026', lajes: '25/09/2026',
   piscina_treta: '17/07/2026', posto_treta: '13/08/2026',
   parque_treta: '17/08/2026', velho_oeste: '17/08/2026', penitenciaria: '17/08/2026',
+  operacao_flavio: '28/10/2026',
   upa_24h: '13/08/2026', obras_prefeitura: '13/08/2026',
 };
 const CAT_DESC = {

@@ -35,9 +35,9 @@
 
    Uso: BASE=http://127.0.0.1:9321 node tools/eval/tp-anim3p-check.mjs
    ============================================================================ */
-import { execSync, spawn } from 'node:child_process';
+import { execFileSync, execSync, spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const BASE_EXTERNA = process.env.BASE;
 const PORTA = process.env.PORTA || '9326';
@@ -46,6 +46,7 @@ const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('
 const ESPERADO = { 'pega-morta': ['AN1'], 'torso-mudo': ['AN1', 'AN2'], 'lean-morto': ['AN3'], 'reload-mudo': ['AN4'], 'opcional-fantasma': ['AN5'],
   'flinch-mudo': ['AN6'], 'agachado-estatua': ['AN1', 'AN7'], 'ar-correndo': ['AN8', 'AN9'], 'quadril-colado': ['AN9'], 'lod-cego': ['AN10'] };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
+if (!MUT) execFileSync(process.execPath, [fileURLToPath(new URL('./tp-reload-paired-check.mjs', import.meta.url)), '--self-test'], { stdio: 'inherit' });
 
 const PARTIDA = 'debug=1&auto=E,esquerdomacho&map=praca_poderes';
 const gRoot = execSync('npm root -g').toString().trim();
@@ -68,7 +69,10 @@ const STUB = 'export default {};export const createHotContext=()=>({accept(){},d
 
 const browser = await chromium.launch({
   ...(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : { executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' }),
-  args: ['--headless=new', '--mute-audio', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+  /* Regra do boot-orcamento: no Darwin usa a GPU real (args vazios); nas demais
+     plataformas mantém o software GL explícito (2 flags SwiftShader). Isto é infra
+     de lançamento — o perfil efetivo pode variar e não garante verde por si só. */
+  args: [...(process.platform === 'darwin' ? [] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']), '--headless=new', '--mute-audio'],
 });
 
 async function abrir() {
@@ -91,8 +95,78 @@ async function abrir() {
   if (MUT === 'quadril-colado') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('const teto = 0.61;', 'const teto = 0;'));
   if (MUT === 'lod-cego') await reescreve(/\/js\/game\.js/, (t) => t.replace('const passo = distCam > 45 ? 0.1 : (distCam > 25 ? 0.05 : 0);', 'const passo = 0;'));
   if (MUT === 'reload-mudo') await reescreve(/\/js\/game\.js/, (t) => t.split('b.mesh?.ctrl?.reload?.(Wb.reload || 2.4); ').join('').split(' b.mesh?.ctrl?.reload?.(Wb.reload || 2.4);').join(''));
-  await page.goto(`${BASE}/?${PARTIDA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
-  await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 240000 });
+  // Diagnóstico de boot somente na falha; limites do teste permanecem os mesmos.
+  const cap = (s) => String(s ?? '').replace(/https?:\/\/[^\s"'<>]+/g, (u) => {
+    try { return new URL(u).pathname; } catch { return '(url)'; }
+  }).slice(0, 300);
+  const local = (u) => { try { const x = new URL(u); return x.origin === new URL(BASE).origin ? cap(x.pathname) : null; } catch { return null; } };
+  const pend = new Set(), erros = [], http = [];
+  const addErro = (e) => { if (erros.length < 12) erros.push(e); };
+  const onReq = (r) => { const p = local(r.url()); if (p && pend.size < 32) pend.add(p); };
+  const onFim = (r) => { const p = local(r.url()); if (p) pend.delete(p); };
+  const onFalha = (r) => { const p = local(r.url()); if (p) addErro({ path: p, falha: cap(r.failure()?.errorText) }); };
+  const onPageErr = (e) => addErro({ pageError: cap(e?.message) });
+  const onConsole = (m) => { if (m.type() === 'error') addErro({ console: cap(m.text()) }); };
+  const onResp = (r) => { const p = local(r.url()); if (p && r.status() >= 400 && http.length < 12) http.push({ status: r.status(), path: p }); };
+  const ouvintes = [['request', onReq], ['requestfinished', onFim], ['requestfailed', onFim], ['requestfailed', onFalha],
+    ['pageerror', onPageErr], ['console', onConsole], ['response', onResp]];
+  for (const [ev, fn] of ouvintes) page.on(ev, fn);
+  let fase = 'DOM';
+  try {
+    await page.goto(`${BASE}/?${PARTIDA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    fase = 'LIVE';
+    await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 240000 });
+  } catch (e) {
+    let dom = null, timer;
+    try {
+      dom = await Promise.race([
+        page.evaluate(() => ({ state: String(window.__game?.state ?? '').slice(0, 100), readyState: document.readyState })),
+        new Promise((r) => { timer = setTimeout(() => r('timeout-3s'), 3000); }),
+      ]);
+    } catch { dom = 'indisponível'; } finally { clearTimeout(timer); }
+    // Amostra opcional só depois da falha; cada espera inclui o prazo do diagnóstico.
+    let pilha = null, sess, timerPilha, timerLimpeza, expirou = false;
+    const amostra = (async () => {
+      sess = await ctx.newCDPSession(page);
+      if (expirou) { void sess.detach().catch(() => {}); return null; }
+      await sess.send('Debugger.enable');
+      if (expirou) return null;
+      const pausado = new Promise((res) => sess.once('Debugger.paused', res));
+      await sess.send('Debugger.pause');
+      const ev = await pausado;
+      return (ev?.callFrames || []).slice(0, 10).map((f) => ({
+        fn: cap(f.functionName).slice(0, 100), url: cap(String(f.url || '').split(/[?#]/)[0]),
+        line: Number.isInteger(f.location?.lineNumber) ? f.location.lineNumber : null,
+        column: Number.isInteger(f.location?.columnNumber) ? f.location.columnNumber : null,
+      }));
+    })().catch(() => null);
+    try {
+      pilha = await Promise.race([amostra, new Promise((r) => { timerPilha = setTimeout(() => r(null), 3000); })]);
+    } finally { expirou = true; clearTimeout(timerPilha); }
+    if (sess) {
+      try {
+        await Promise.race([
+          Promise.allSettled([sess.send('Debugger.resume'), sess.detach()]),
+          new Promise((r) => { timerLimpeza = setTimeout(r, 2000); }),
+        ]);
+      } catch { /* diagnóstico nunca substitui a falha original */ }
+      finally { clearTimeout(timerLimpeza); }
+    }
+    const dados = { fase, erro: cap(e?.message), pendentes: [...pend], erros, http, dom, pilha };
+    while (Buffer.byteLength(JSON.stringify(dados)) > 8000) {
+      if (dados.pendentes.length) dados.pendentes.pop();
+      else if (dados.erros.length) dados.erros.pop();
+      else if (dados.http.length) dados.http.pop();
+      else if (dados.pilha?.length) dados.pilha.pop();
+      else break;
+    }
+    console.log('TP_BOOT_DIAGNOSTIC ' + JSON.stringify(dados));
+    try { await ctx.close(); } catch { /* preserva a falha original */ }
+    try { await browser.close(); } catch { /* só o browser criado por este teste */ }
+    throw e;
+  } finally {
+    for (const [ev, fn] of ouvintes) page.off(ev, fn);
+  }
   await page.waitForTimeout(2500);
   await page.evaluate(() => document.getElementById('crash-overlay')?.remove());
   return { page, fechar: () => ctx.close() };
@@ -103,24 +177,38 @@ const { page, fechar } = await abrir();
 const m = await page.evaluate(async () => {
   const g = window.__game;
   const T = await import('/vendor/three.module.js');
+  const { buildCharacterModel } = await import('/js/glbchars.js');
   const V = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
   const cand = (g.bots || []).filter(x => x.mesh?.ctrl?.ikL && x.mesh?.ctrl?.torso?.spines?.length && x.alive).slice(0, 8);
   let melhor = null;
   for (const b of cand) {
-    const ctrl = b.mesh.ctrl, grupo = b.mesh.group, torso = ctrl.torso;
+    // Corpos reais gêmeos isolam a recarga do tiro/lean anterior do bot vivo.
+    const medido = buildCharacterModel(b.def, { weaponId: b.weapon });
+    const controle = buildCharacterModel(b.def, { weaponId: b.weapon });
+    if (!medido || !controle) throw new Error(`sem par de controle para ${b.def.id}`);
+    for (const corpo of [medido, controle]) {
+      corpo.group.position.copy(b.mesh.group.position);
+      corpo.group.quaternion.copy(b.mesh.group.quaternion);
+      corpo.ctrl.lod = b.mesh.ctrl.lod;
+      corpo.ctrl.aimPitch = b.mesh.ctrl.aimPitch;
+    }
+    const ctrl = medido.ctrl, grupo = medido.group, torso = ctrl.torso;
     let cabeca = null; grupo.traverse(o => { if (!cabeca && o.isBone && /head/i.test(o.name)) cabeca = o; });
     const maoEsq = torso.lHand || ctrl.ikL.end;
     const roda = (n, lat = 0) => { for (let i = 0; i < n; i++) ctrl.update(1 / 60, 0, false, 0, false, lat); };
+    const rodaControle = (n) => { for (let i = 0; i < n; i++) controle.ctrl.update(1 / 60, 0, false, 0, false, 0); };
     const pos = (osso) => { grupo.updateMatrixWorld(true); return osso.getWorldPosition(V()); };
     const direita = () => { const y = grupo.rotation.y; return V(Math.cos(y), 0, -Math.sin(y)); };
     const frente = () => { const y = grupo.rotation.y; return V(-Math.sin(y), 0, -Math.cos(y)); };
-    roda(20);
+    roda(120); rodaControle(120);
     const base = { mao: pos(maoEsq), cabeca: pos(cabeca) };
-    ctrl.reload(1.2); roda(36);
+    ctrl.reload(1.2); roda(36); rodaControle(36);
     const magAlvo = torso.gun.localToWorld(torso.magLocal.clone());
     const meio = { mao: pos(maoEsq), cabeca: pos(cabeca), k: ctrl.reloadK };
-    roda(90);
+    roda(90); rodaControle(90);
     const fim = { mao: pos(maoEsq), cabeca: pos(cabeca), dur: ctrl._reloadDur };
+    controle.group.updateMatrixWorld(true);
+    const maoControle = (controle.ctrl.torso.lHand || controle.ctrl.ikL.end).getWorldPosition(V());
     roda(60, 3.5); const cabecaLean = pos(cabeca); const leanK = ctrl.leanK;
     roda(60, 0); const cabecaVolta = pos(cabeca);
     roda(30);
@@ -135,14 +223,35 @@ const m = await page.evaluate(async () => {
     ctrl.setAr(true); roda(40);
     const an8 = { noAr: ctrl.curName };
     ctrl.setAr(false); roda(4); an8.noPouso = ctrl.curName; roda(25);
-    const yaw0 = grupo.rotation.y; grupo.rotation.y = yaw0 + 2.0; roda(2);
-    const an9 = { lagImediato: Math.abs(ctrl.yawLag || 0) };
-    roda(70); an9.lagDepois = Math.abs(ctrl.yawLag || 0); grupo.rotation.y = yaw0; roda(30);
+    // AN9: o quadril fica para trás no giro de 2 rad e alcança. LOD 0 SOMENTE nesta
+    // janela (restaurado ao LOD original do bot ao final); rig sem osso hips vira
+    // FALHA visível — a seleção do rig acima é pelos critérios de contrato dos
+    // candidatos, nunca pelo resultado do AN9.
+    const an9 = { origLOD: ctrl.lod, hips: !!torso.hips };
+    const finito = (x) => typeof x === 'number' && Number.isFinite(x);
+    // Sem `|| 0`: NaN precisa aparecer como NaN, não virar zero.
+    const lagAbs = () => { const l = ctrl.yawLag; return finito(l) ? Math.abs(l) : NaN; };
+    if (an9.hips) {
+      an9.prePrime = { yawLag: ctrl.yawLag ?? null, _yawAtraso: ctrl._yawAtraso ?? null };
+      ctrl.lod = 0;
+      roda(1); // prime no yaw antigo: estabelece _yawAtraso antes do giro
+      const yaw0 = grupo.rotation.y;
+      an9.antes = { yawLag: ctrl.yawLag ?? null, _yawAtraso: ctrl._yawAtraso ?? null };
+      grupo.rotation.y = yaw0 + 2.0; roda(2); // giro de 2 rad em 2 ticks
+      an9.lagImediato = lagAbs();
+      an9.giro = { yawLag: ctrl.yawLag ?? null, _yawAtraso: ctrl._yawAtraso ?? null };
+      roda(70); an9.lagDepois = lagAbs(); // 70 ticks para alcançar
+      grupo.rotation.y = yaw0; roda(30); // restaura o yaw e observa o retorno
+      an9.retorno = { yawLag: ctrl.yawLag ?? null, _yawAtraso: ctrl._yawAtraso ?? null };
+      ctrl.lod = an9.origLOD; // restaura o LOD copiado do bot
+      an9.bounded = ['antes', 'giro', 'retorno'].every((k) => finito(an9[k].yawLag) && finito(an9[k]._yawAtraso));
+    } else { an9.lagImediato = NaN; an9.lagDepois = NaN; an9.semHips = true; }
     ctrl.die(); roda(90, 0); const morto0 = pos(cabeca); roda(30, 3.5); const mortoCom = pos(cabeca);
-    const an1 = { foiCm: base.mao.distanceTo(meio.mao) * 100, aoPenteCm: meio.mao.distanceTo(magAlvo) * 100, basePenteCm: base.mao.distanceTo(magAlvo) * 100, voltouCm: fim.mao.distanceTo(base.mao) * 100, kMeio: meio.k, durFim: fim.dur };
+    const an1 = { foiCm: base.mao.distanceTo(meio.mao) * 100, aoPenteCm: meio.mao.distanceTo(magAlvo) * 100, basePenteCm: base.mao.distanceTo(magAlvo) * 100, voltouCm: fim.mao.distanceTo(maoControle) * 100, derivaIdleCm: maoControle.distanceTo(base.mao) * 100, kMeio: meio.k, durFim: fim.dur };
     const an2 = { quedaCm: (base.cabeca.y - meio.cabeca.y) * 100, frenteCm: Math.abs((meio.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100, voltaCm: Math.abs((fim.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100 };
     const an3 = { leanK, deslocCm: Math.abs((cabecaLean.clone().sub(base.cabeca)).dot(direita())) * 100, voltaCm: Math.abs((cabecaVolta.clone().sub(base.cabeca)).dot(direita())) * 100, mortoDeslocCm: Math.abs((mortoCom.clone().sub(morto0)).dot(direita())) * 100 };
     const cumpre = an1.foiCm >= 8 && an1.aoPenteCm <= an1.basePenteCm - 10 && an2.frenteCm >= 5 && an3.deslocCm >= 4;
+    ctrl.mixer.stopAllAction(); controle.ctrl.mixer.stopAllAction();
     if (cumpre || !melhor) melhor = { charId: ctrl.charId, an1, an2, an3, an6, an7, an8, an9 };
     if (cumpre) break;
   }
@@ -206,7 +315,7 @@ if (m.erro) {
   cobra('AN3', false, `AN3 · ${m.erro}`);
 } else {
   cobra('AN1', m.an1.foiCm >= 8 && m.an1.aoPenteCm <= m.an1.basePenteCm - 10 && m.an1.voltouCm <= 2 && m.an1.kMeio > 0.9 && m.an1.durFim === 0,
-    `AN1 · ${m.charId}: mão esquerda foi ${m.an1.foiCm.toFixed(1)} cm, de ${m.an1.basePenteCm.toFixed(1)} cm do pente a ${m.an1.aoPenteCm.toFixed(1)} cm, e voltou a ${m.an1.voltouCm.toFixed(2)} cm do ponto de partida`);
+    `AN1 · ${m.charId}: mão esquerda foi ${m.an1.foiCm.toFixed(1)} cm, de ${m.an1.basePenteCm.toFixed(1)} cm do pente a ${m.an1.aoPenteCm.toFixed(1)} cm, e voltou a ${m.an1.voltouCm.toFixed(2)} cm do controle sem recarga (idle ${m.an1.derivaIdleCm.toFixed(2)} cm)`);
   cobra('AN2', m.an2.frenteCm >= 5 && m.an2.voltaCm <= 1.5,
     `AN2 · o mergulho levou a cabeça ${m.an2.frenteCm.toFixed(1)} cm à frente (e ${m.an2.quedaCm.toFixed(1)} cm abaixo) no pico, e ela voltou a ${m.an2.voltaCm.toFixed(2)} cm da posição original`);
   cobra('AN3', m.an3.leanK > 0.07 && m.an3.deslocCm >= 4 && m.an3.voltaCm <= 1.5 && m.an3.mortoDeslocCm <= 0.5,
@@ -219,8 +328,8 @@ if (!m.erro) {
     `AN7 · tiro agachado deu ${m.an7.recuoCm.toFixed(2)} cm de recuo mantendo a pose ${m.an7.estado}`);
   cobra('AN8', m.an8.noAr === 'jump' && m.an8.noPouso === 'crouch',
     `AN8 · no ar o estado é ${m.an8.noAr} (não locomoção) e o pouso amortece em ${m.an8.noPouso}`);
-  cobra('AN9', m.an9.lagImediato >= 0.25 && m.an9.lagDepois <= 0.08,
-    `AN9 · giro de 2 rad deixou o quadril ${m.an9.lagImediato.toFixed(2)} rad atrás e ele alcançou em ${m.an9.lagDepois.toFixed(3)} rad`);
+  cobra('AN9', m.an9.hips && m.an9.bounded && m.an9.lagImediato >= 0.25 && m.an9.lagDepois <= 0.08,
+    `AN9 · giro de 2 rad deixou o quadril ${Number.isFinite(m.an9.lagImediato) ? m.an9.lagImediato.toFixed(2) : 'NaN'} rad atrás e ele alcançou em ${Number.isFinite(m.an9.lagDepois) ? m.an9.lagDepois.toFixed(3) : 'NaN'} rad (origLOD ${m.an9.origLOD}, hips ${m.an9.hips}, bounded ${!!m.an9.bounded}, prePrime ${JSON.stringify(m.an9.prePrime ?? null)}, antes ${JSON.stringify(m.an9.antes ?? null)}, giro ${JSON.stringify(m.an9.giro ?? null)}, retorno ${JSON.stringify(m.an9.retorno ?? null)})`);
 }
 if (an4.dados) {
   cobra('AN4', an4.dados.jogadorRecarregando && an4.dados.botRecarregou,

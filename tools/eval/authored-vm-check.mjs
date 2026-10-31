@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { WEAPONS } from '../../public/js/data/weapons.js';
 import { VM_FABRICA, VM_FAMILY, VM_WEAPON } from '../../public/js/data/vmconfig.js';
 import { AUTHORED_VM_MODELS, AUTHORED_VM_URLS, vmFonteDe } from '../../public/js/authoredvm.js';
+import { viewmodelVisibility } from '../../public/js/vmvisibility.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
@@ -96,6 +97,15 @@ check(/muzzleWorld\(id = this\.weapon/.test(runtime) && /authored\?\.muzzleWorld
   'flash/tracer nascem no cano da arma visível, não na legada oculta');
 check(/preloadAuthoredFamilies/.test(runtime) && /GLTF_CACHE/.test(runtime),
   'boot pode aquecer famílias do loadout num cache de módulo');
+const assetPendente = viewmodelVisibility({
+  alive: true,
+  firstPerson: true,
+  authoredMode: true,
+  authoredReady: false,
+});
+check(assetPendente.root && assetPendente.fallback && !assetPendente.authored,
+  'arma legada permanece visível enquanto o GLB autorado não carregou',
+  JSON.stringify(assetPendente));
 
 console.log(JSON.stringify({ mutant, weapons: gameplay.length, families: families.size, failures }, null, 2));
 process.exit(failures ? 1 : 0);

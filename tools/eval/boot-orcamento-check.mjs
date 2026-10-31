@@ -197,10 +197,7 @@ async function mede({ refPoolAnsioso = false } = {}) {
     throw new Error(`a splash não liberou a entrada em 180 s; estado=${JSON.stringify(estado)}; pendentes=${pendentes.join(', ') || 'nenhum'}; erros=${erros.join(' | ') || 'nenhum'}`);
   }
   const causa = await page.evaluate(() => window.__csSplashCause || null);
-  /* O instante absoluto varia com CPU, GPU e CDP. A própria função de produção sabe
-     se o primeiro desbloqueio veio dos assets ou do timer, então a régua carimba essa
-     causa na cópia de main.js servida só neste navegador. A decisão fica no candidato:
-     a referência deliberadamente pesada pode cair no failsafe sem invalidar a contagem. */
+  // A comparação só vale quando candidato e referência completam os assets.
   const ate = [...reqs.values()].filter((r) => r.fim !== null && r.fim <= portao + 50);
   const patchado = (u) => JS_LOCAIS.some((p) => u.includes(p));
   const resultado = {
@@ -223,7 +220,7 @@ try {
   const ref = await mede({ refPoolAnsioso: true });
 
   const ok = {
-    READY: cand.causa === 'assets',
+    READY: cand.causa === 'assets' && ref.causa === 'assets',
     ORC1: cand.bytes <= TETO_BYTES && cand.reqs <= TETO_REQS,
     ORC2: cand.cartazes < ref.cartazes,
     /* Sem props no lobby o ORC3 não tem o que ordenar; sem fauna ele passaria de graça.
@@ -243,11 +240,12 @@ try {
 
   const falhas = Object.entries(ok).filter(([, v]) => !v).map(([k]) => k);
   if (erros.length) falhas.push('pageerror');
-  /* Convenção do repo (perfil-mobile-check): COM mutante, a régua passa quando a
-     mutação foi VISTA. Mutação que escapa é o único resultado inaceitável. */
+  // GLM63: só o ORC específico prova o mutante; failsafe/pageerror invalidam a medição.
+  const ORC_DO_MUTANTE = { 'cartaz-ansioso': 'ORC2', 'fauna-cedo': 'ORC3' }[MUTANTE];
   if (MUTANTE) {
-    if (falhas.length) { console.log(`\nmutante ${MUTANTE} reprovado como devia: ${falhas.join(', ')}`); saida = 0; }
-    else console.error(`\nMUTAÇÃO PASSOU — ${MUTANTE} não foi visto pela régua.`);
+    if (!ok.READY || erros.length) console.error(`\n✗ medição inválida com mutante ${MUTANTE}: ${falhas.join(', ')} — mutação não avaliada`);
+    else if (!ok[ORC_DO_MUTANTE]) { console.log(`\nmutante ${MUTANTE} reprovado como devia: ${ORC_DO_MUTANTE}`); saida = 0; }
+    else console.error(`\nMUTAÇÃO PASSOU — ${MUTANTE} não foi visto pela régua (${ORC_DO_MUTANTE} segue ok; falhas: ${falhas.join(', ') || 'nenhuma'}).`);
   } else if (falhas.length) {
     console.error(`\n✗ orçamento de boot estourado: ${falhas.join(', ')}`);
   } else {

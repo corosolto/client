@@ -56,22 +56,14 @@ function bloco(fonte, ancora, abre = '{', fecha = '}') {
   throw new Error(`chaves desbalanceadas após: ${ancora}`);
 }
 
-// inicialização: da linha `let matchMode` até a última linha seguida que ainda fala de modo
+// Inicialização: `matchMode` e seu contrato terminam imediatamente antes de `menuSetup`.
+// A fronteira nomeada preserva helpers multilinha de modos objetivos sem capturar o menu inteiro.
 function blocoInicial() {
   const linhas = SRC.split('\n');
   const i = linhas.findIndex((l) => /^let matchMode\s*=/.test(l));
-  if (i < 0) throw new Error('não achei `let matchMode =` no topo do main.js');
-  const out = [linhas[i]];
-  let emComentario = false;   // um /* ... */ no meio do bloco não pode ser cortado ao meio
-  for (let k = i + 1; k < linhas.length; k++) {
-    const l = linhas[k];
-    if (emComentario) { out.push(l); if (l.includes('*/')) emComentario = false; continue; }
-    if (/^\s*\/\*/.test(l)) { out.push(l); if (!l.includes('*/')) emComentario = true; continue; }
-    if (/^\s*\/\//.test(l)) { out.push(l); continue; }
-    if (/matchMode|modoEscolhido/.test(l) && /^(let|const|if|var)\b/.test(l.trim())) { out.push(l); continue; }
-    break;
-  }
-  return out.join('\n');
+  const fim = linhas.findIndex((l, k) => k > i && /^const menuSetup\b/.test(l));
+  if (i < 0 || fim < 0) throw new Error('não achei o bloco `matchMode` → `menuSetup` no topo do main.js');
+  return linhas.slice(i, fim).join('\n');
 }
 
 const INIT = blocoInicial();
@@ -88,13 +80,30 @@ const BADGE = (() => {
 // a expressão que vai pro Game
 const CTF_EXPR = (SRC.match(/^\s*ctf:\s*([^,]+),/m) || [])[1];
 if (!CTF_EXPR) throw new Error('não achei a propriedade `ctf:` passada ao Game');
+const contrato = (pattern, name) => {
+  const expression = SRC.match(pattern)?.[1];
+  if (!expression) throw new Error('consumidor de modo ausente: '+name);
+  return expression;
+};
+const CONTRATOS = {
+  evento: contrato(/map: currentMap, mode: ([^\n,]+),/, 'evento'),
+  inicio: contrato(/contagem\.partidaIniciada\(\{ map: currentMap, mode: ([^\n,]+),/, 'início'),
+  elenco: contrato(/online: !!sessao, tamanho: tamanhoTime \|\| 0, ctf: ([^\n,]+),/, 'elenco'),
+  sala: contrato(/mapId: currentMap, mapas: \[currentMap\], ctf: ([^\n,]+),/, 'sala'),
+  confirmacao: contrato(/\['MODO', (.+)\],/, 'confirmação'),
+  analytics: contrato(/name: 'game_start', data: \{ team, character: charId, map: currentMap, mode: ([^\n}]+) \}/, 'analytics'),
+};
 
-/* ---- registro de mapas: lido do maps.js, sem importar (evita puxar three) ---- */
-const MAP_IDS = [...MAPSRC.matchAll(/^\s{2}(\w+):\s*\{/gm)].map((m) => m[1]);
+/* ---- registro de mapas: isola MAPS para não confundir outros registros do mesmo arquivo ---- */
+const MAPS_REGISTRY = bloco(MAPSRC, 'export const MAPS =');
+const MAP_IDS = [...MAPS_REGISTRY.matchAll(/^\s{2}(\w+):\s*\{/gm)].map((m) => m[1]);
 const MAPS = Object.fromEntries(MAP_IDS.map((id) => {
-  const i = MAPSRC.indexOf(`\n  ${id}:`);
-  const linha = MAPSRC.slice(i, MAPSRC.indexOf('\n', i + 1) + 1);
-  return [id, { name: id, ctfMode: /ctfMode:\s*true/.test(linha) }];
+  const corpo = bloco(MAPS_REGISTRY, `  ${id}:`);
+  return [id, {
+    name: id,
+    ctfMode: /ctfMode:\s*true/.test(corpo),
+    objectiveMode: /objectiveMode:\s*['"][^'"]+['"]/.test(corpo),
+  }];
 }));
 const DEFAULT_MAP = (MAPSRC.match(/export const DEFAULT_MAP = '(\w+)'/) || [])[1] || MAP_IDS[0];
 
@@ -119,6 +128,7 @@ function novoMenu(mapaInicial) {
     return {
       // o que o Game receberia em ctf: — a EXPRESSÃO literal do startGame
       jogar: () => (${CTF_EXPR}) ? 'ctf' : 'rounds',
+      contratos: () => ({${Object.entries(CONTRATOS).map(([key, expression]) => JSON.stringify(key)+': ('+expression+')').join(',')}}),
       modo: () => matchMode,
       mapa: () => currentMap,
       idx: () => mapIdx,
@@ -143,7 +153,8 @@ for (const alvo of MAP_IDS) {
     const destino = MAP_IDS.indexOf(alvo);
     for (let i = 0; i < MAP_IDS.length; i++) { if (m.idx() === destino) break; m.gotoMap(m.idx() + 1); }
     const jogado = m.jogar();
-    casos.push({ mapa: alvo, escolhido: escolha, jogado, ok: jogado === escolha, via: 'carrossel' });
+    const esperado = MAPS[alvo].objectiveMode ? 'rounds' : escolha;
+    casos.push({ mapa: alvo, escolhido: escolha, jogado, ok: jogado === esperado, via: 'carrossel' });
   }
 }
 /* caso extra: alternar no badge DEPOIS de já estar no mapa também tem que valer, e navegar
@@ -158,7 +169,8 @@ for (const alvo of MAP_IDS) {
   const escolha = antes === 'ctf' ? 'rounds' : 'ctf';
   m.gotoMap(m.idx() + 1); m.gotoMap(m.idx() - 1);       // vai e volta no carrossel
   const jogado = m.jogar();
-  casos.push({ mapa: alvo, escolhido: escolha, jogado, ok: jogado === escolha, via: 'badge+carrossel' });
+  const esperado = MAPS[alvo].objectiveMode ? 'rounds' : escolha;
+  casos.push({ mapa: alvo, escolhido: escolha, jogado, ok: jogado === esperado, via: 'badge+carrossel' });
 }
 /* caso extra: SEM escolha nenhuma, o padrão do mapa TEM que continuar valendo (senão o
    conserto teria matado o `ctfMode`, que é comportamento pedido pelo dono). */
@@ -172,6 +184,21 @@ for (const alvo of MAP_IDS) {
   casos.push({ mapa: alvo, escolhido: esperado, jogado, ok: jogado === esperado, via: 'padrao-do-mapa' });
 }
 
+for (const alvo of MAP_IDS) {
+  const m = novoMenu(DEFAULT_MAP);
+  m.openSetup('ctf', 'CAPTURE THE FLAG', 'ctf');
+  m.gotoMap(MAP_IDS.indexOf(alvo));
+  const values = m.contratos(), expected = MAPS[alvo].objectiveMode ? 'rounds' : 'ctf';
+  for (const key of ['evento', 'inicio', 'analytics', 'elenco', 'sala', 'confirmacao']) {
+    const value = values[key];
+    const ok = key === 'confirmacao'
+      ? (MAPS[alvo].objectiveMode ? /ESCOLTA|OPERAÇÃO FLÁVIO/.test(value) : value === 'CAPTURE A BANDEIRA')
+      : (typeof value === 'boolean' ? value === (expected === 'ctf') : value === expected);
+    casos.push({ mapa: alvo, escolhido: expected, jogado: String(value), ok, via: key });
+  }
+  m.gotoMap(MAP_IDS.indexOf(DEFAULT_MAP));
+  casos.push({ mapa: alvo, escolhido: 'ctf', jogado: m.modo(), ok: m.modo() === 'ctf', via: 'preferencia' });
+}
 const falhas = casos.filter((c) => !c.ok);
 const saida = { gerado: new Date().toISOString(), total: casos.length, falhas: falhas.length, casos };
 if (JSON_OUT) console.log(JSON.stringify(saida, null, 1));

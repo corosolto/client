@@ -1,0 +1,7 @@
+# Continuidade da base1157 / operação47
+
+Objetivo completo: Flávio+47PRs+HQ+anúncios/pilotos manuais, Java em outro terminal. Semmerge main/deployprodução/banco/upload/publicação.
+
+2026-10-31T02:13:11.677231+00:00 — Reutiliza WTsb7 após checkpointB4 11481c32f (B4 preservado branch fix/sb7-dependencia-ausente-20261028). Branchlocal codex/boot-main-sync-20261031, HEAD47b7462b1, PR1157 remotoigual. Merge origin/main4c9dc88b4 emcurso, único conflito tools/eval/boot-orcamento-check.mjs. Mainnovo traz client-id na lista/route fulfillment; manter. PR1157 trocaheurísticatempo19s porcausa real assets/failsafe; manter. Teto8.2MB jáexistente noPR ecompartilhado porFlávio nãoalterado nesta resolução; claim5passadasfrias doautor ainda semrawverificado. GLM37 lease sómarcadoresbloco179-190, comentário<=2linhas. Próximo syntax/docs/arch/bootreal quandohooks liberarem, checkpointmerge,pushnormal eCR atual. Sem novaWT/escritaJava/descarteB4.
+
+2026-10-31T02:22:10.300861+00:00 — GLM37 recebido e único conflito resolvido mantendo causa real, client-id e tetos8.2MB/340 preexistentes. Syntax/docs geradas/docs:check/arch:check/privacy9mutantes saíram0; logs /tmp/corosolto-1157-{docs,docs-check,arch-check,privacy}.log. Checkpoint do merge local antes de enfileirar push normal; gate real de boot e seus mutantes ainda pendentes e serão exercitados pelos hooks, sem bypass. Outros terminais têm hooks ativos; não iniciar browser concorrente. B4 permanece salvo em11481c32f, retorno ao branch após conclusão. Não confundir checkpoint com aceite/revisão/merge main.

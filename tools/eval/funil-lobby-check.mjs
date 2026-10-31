@@ -23,7 +23,8 @@ const MUTANTES = {
   'sem-guarda-hidden': ['if (!_noLobby || document.hidden) return;   // relógio parado; volta no visibilitychange', 'if (!_noLobby) return;'],
   'lobby-sem-saida': ["  if (_noLobby) marcoFunil('lobby_exit');", ''],
   'marco-duplicado': ['    _marcosEnviados.add(step);\n', ''],
-  'splash-sem-marco': ["  marcoFunil('splash_enter');   // funil (084): o lobby ficou visível de verdade\n  _lobbyEntrou();               // e o relógio de permanência no lobby começa aqui\n", ''],
+  'splash-sem-marco': [/(const entrarNoLobby = \(\) => \{[\s\S]*?)marcoFunil\('splash_enter'\);/, '$1'],
+  'splash-sem-relogio': [/(const entrarNoLobby = \(\) => \{[\s\S]*?)_lobbyEntrou\(\);/, '$1'],
   'relogio-nao-pausa': ['if (_lobbyDesde !== null) { _lobbyMs += performance.now() - _lobbyDesde; _lobbyDesde = null; }', 'if (_lobbyDesde !== null) { _lobbyMs += performance.now() - _lobbyDesde; }'],
   'partida-sem-aviso': ["  _lobbySaiuPraPartida();    // funil (084): quem entrou em partida não é mais \"parado no lobby\"\n", ''],
   'partida-nao-para': ['function _lobbySaiuPraPartida() { _noLobby = false; _lobbyDesde = null; clearTimeout(_lobbyTimer); _lobbyTimer = 0; }', 'function _lobbySaiuPraPartida() {}'],
@@ -247,7 +248,7 @@ if (falhas.length) {
 let vivos = 0;
 const linhas = [];
 for (const nome of NOMES) {
-  const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), `--mutante=${nome}`], { encoding: 'utf8' });
+  const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), `--mutante=${nome}`, ...(arg('fonte') ? [`--fonte=${arg('fonte')}`] : [])], { encoding: 'utf8' });
   if (r.status !== 0) vivos++;
   linhas.push(`  ${r.status === 0 ? 'morto' : 'VIVO '} ${nome}`);
 }

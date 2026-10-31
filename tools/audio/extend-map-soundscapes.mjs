@@ -15,6 +15,10 @@ export function extendMapSoundscapes(manifest) {
     const donor=maps.parque_treta||maps.corrego||maps.quebrada;
     if(donor){maps.mansao=structuredClone(donor);changed=true;}
   }
+  if(!Object.hasOwn(maps,'operacao_flavio')) {
+    const donor=maps.loja_h||maps.mansao;
+    if(donor){maps.operacao_flavio=structuredClone(donor);changed=true;}
+  }
   return changed;
 }
 

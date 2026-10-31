@@ -82,6 +82,10 @@ export const MAPS = {
     props: ['sertao_macambira', 'sertao_juazeiro', 'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'caixa_som_baile', 'casa_pedra', 'casa_geminada', 'igrejinha', 'caminhao_antigo'],
     ambience: ['rat', 'pigeonGround', 'parrot', 'calango', 'lagarto', 'sertaoGoat', 'sertaoHen', 'sertaoChick'],
   },
+  operacao_flavio: { name: 'Operação Flávio',
+    objectiveMode: 'escort',
+    props: [],
+  },
   penitenciaria: { name: 'CARANDIRU', ctfMode: true,
     props: [],
     ambience: ['rat', 'pigeonGround'],
@@ -109,6 +113,7 @@ const MODULOS = {
   atacadao_treta: () => import('./map_atacadao.js'),
   parque_treta: () => import('./map_parque.js'),
   velho_oeste: () => import('./map_velho_oeste.js'),
+  operacao_flavio: () => import('./map_operacao_flavio.js'),
   penitenciaria: () => import('./map_penitenciaria.js'),
 };
 
@@ -131,6 +136,7 @@ const EXPORTS = {
   atacadao_treta: { build: 'buildAtacadao', props: 'ATACADAO_PROPS' },
   parque_treta: { build: 'buildParque', props: 'PARQUE_PROPS', ambience: 'PARQUE_AMBIENCE' },
   velho_oeste: { build: 'buildVelhoOeste', props: 'VELHO_OESTE_PROPS', ambience: 'VELHO_OESTE_AMBIENCE' },
+  operacao_flavio: { build: 'buildOperacaoFlavio', props: 'OPERACAO_FLAVIO_PROPS', preload: 'preloadOperacaoFlavio' },
   penitenciaria: { build: 'buildPenitenciaria', props: 'PENITENCIARIA_PROPS', ambience: 'PENITENCIARIA_AMBIENCE' },
 };
 
