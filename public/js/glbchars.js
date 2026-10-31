@@ -808,7 +808,7 @@ export function buildCharacterModel(def, opts = {}) {
        fina ou os dedos atravessam a arma grossa; nos dois casos lê como "mão solta".
        Aqui o ângulo sai da própria arma: `gripPoints` dá o ponto do guarda-mão e o
        weaponModel dá a caixa, então a espessura no grip é MEDIDA e não tabelada.
-       Faixa 0,55-1,10 rad (31/10, juiz visual nos 13 flagrados: 7 com "dedos planos/
+       Faixa 0,55-0,95 rad (31/10, afinada em 2 rodadas de juiz nos 13 flagrados: 7 com "dedos planos/
        bloco que não envolvem o cabo" — jozo, bonzo, esquerdomacho, cadequinha, juiz,
        canarinho, lobisomem): a faixa antiga 0,35-0,80 era conservadora e a mão lia
        como espalmada na arma. Acima disso os dedos entram na palma em arma grossa;
@@ -819,8 +819,8 @@ export function buildCharacterModel(def, opts = {}) {
       new THREE.Box3().setFromObject(obj).getSize(sz);
       const esp = Math.min(sz.x, sz.y, sz.z);            // menor dimensão = espessura do corpo da arma
       if (!isFinite(esp) || esp <= 0) return 0.7;
-      // mão humana fecha ~1,1 rad em volta de 3 cm e ~0,55 rad em volta de 9 cm
-      return Math.max(0.55, Math.min(1.10, 1.10 - (esp - 0.03) * (0.55 / 0.06)));
+      // mão humana fecha ~0,95 rad em volta de 3 cm e ~0,55 rad em volta de 9 cm
+      return Math.max(0.55, Math.min(0.95, 0.95 - (esp - 0.03) * (0.40 / 0.06)));
     };
     /* Teto de curl por personagem: a faixa do `curlPara` é calibrada em mão HUMANA e o lobo
        tem pata. Não morde hoje (shotgun já dá 0,35); varredura e porquê em BUG-149. */
