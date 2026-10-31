@@ -78,13 +78,15 @@ class Netcode {
     this._prevOnPersonagem = net.onPersonagem;
     this._cosmeticRevisions = new Map();
     this._onPersonagem = (m, notify = true) => {
+      const corpo = m.ent === net.yourEnt && !this.espectador ? this.game.player : this._netMap.get(m.ent);
+      if (m.team === 'J' || corpo?._objectiveNpc || net.meta?.roster?.some(r => r.id === m.ent && r.team === 'J')) return;
       const def = byId(m.char);
       const revision = (this._cosmeticRevisions.get(m.ent) || 0) + 1;
       this._cosmeticRevisions.set(m.ent,revision);
       const apply = (reload = false) => {
         if (!def || this._cosmeticRevisions.get(m.ent) !== revision || net.onPersonagem !== this._onPersonagem) return;
         const alvo = m.ent === net.yourEnt && !this.espectador ? this.game.player : this._netMap.get(m.ent);
-        if (alvo) this.game._trocarPersonagem(alvo,{...def,skinId:m.skinId || null,eyewearId:m.eyewearId || null},reload);
+        if (alvo && !alvo._objectiveNpc) this.game._trocarPersonagem(alvo,{...def,skinId:m.skinId || null,eyewearId:m.eyewearId || null},reload);
       };
       if (m.skinId || m.eyewearId) void Promise.all([preloadCosmeticAssets([m.skinId]),preloadEyewearAssets([m.eyewearId])]).then(()=>apply(true)); else apply();
       if (notify) this._prevOnPersonagem?.(m);
