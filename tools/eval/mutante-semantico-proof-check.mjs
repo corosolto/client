@@ -3,6 +3,7 @@ import {mkdtempSync,writeFileSync,readFileSync,rmSync,chmodSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {aceitaResultado} from './mutante-semantico-proof.mjs';
 const expected={mutant:'retry-new-key',clause:'falha de envio preserva rascunho e a mesma chave no retry',cases:25};
 const row={clause:expected.clause,type:'AssertionError',message:'Retry trocou chave idempotente'};
@@ -34,7 +35,10 @@ try{
    const calls=readFileSync(trace,'utf8').trim().split('\n').filter(Boolean);assert.equal(calls.length,code?1:count,'todos os mutantes entram e erro interrompe: '+name);
   }
  }
- const cli=spawnSync(process.execPath,[new URL('./mutante-semantico-proof.mjs',import.meta.url).pathname,'script-ausente','--mutant=retry-new-key'],{encoding:'utf8',timeout:5000});
- assert.equal(cli.status,2,'CLI recusa script fora da whitelist');
+ const proofPath=fileURLToPath(new URL('./mutante-semantico-proof.mjs',import.meta.url));
+ for(const [script,name] of [['script-ausente','retry-new-key'],['constructor','retry-new-key'],['__proto__','retry-new-key'],['community-inbox','constructor'],['community-inbox','__proto__']]){
+  const cli=spawnSync(process.execPath,[proofPath,script,'--mutant='+name],{encoding:'utf8',timeout:5000});
+  assert.equal(cli.status,2,'CLI recusa '+script+' / '+name+' antes de executar child');
+ }
  console.log('PASS semantic-proof: quatro cadeias reais de alias e CLI inválido');
 }finally{rmSync(dir,{recursive:true,force:true});}

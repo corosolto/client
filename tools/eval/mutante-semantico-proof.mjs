@@ -50,8 +50,9 @@ export function aceitaResultado(result,expected){
 if(import.meta.url===pathToFileURL(process.argv[1]||'').href){
   const [script,flag]=process.argv.slice(2);
   const name=String(flag||'').replace(/^--mutant[e]?=/,'');
-  const entry=WHITELIST[script];
-  const clause=entry&&entry.mutants[name];
+  // hasOwn nos dois níveis: `constructor`/`__proto__` herdados não são script/mutante válido.
+  const entry=Object.hasOwn(WHITELIST,script)?WHITELIST[script]:undefined;
+  const clause=entry&&Object.hasOwn(entry.mutants,name)?entry.mutants[name]:undefined;
   if(!entry||!clause){console.error('uso: node tools/eval/mutante-semantico-proof.mjs <'+Object.keys(WHITELIST).join('|')+'> --mutant(e)=<nome da whitelist>');process.exit(2);}
   const cwd=fileURLToPath(new URL('../../',import.meta.url));
   execFile(process.execPath,[entry.script,entry.flag+name],{cwd,timeout:180000,maxBuffer:8*1024*1024,encoding:'utf8'},(error,stdout,stderr)=>{
