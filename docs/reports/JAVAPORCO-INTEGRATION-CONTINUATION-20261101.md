@@ -111,3 +111,17 @@ de arma, detectando remoção do mount. main/Game não mudaram nesta unidade.
 Geradores docs/arch passaram sem delta. BackendR847 checkpointa31cfd está
 isolado, com WS/Room/index/WT local validado; publicação, CLIENT_REF combinado,
 migração remota e aceite Game/visual/mobile/MP humano continuam pendentes.
+
+## Terreno R866
+
+R862 adotado em2f8779d5d: três checkers reparados, teto0.30m/amostragem intactos.
+O produtor ainda era byte-exato55685b e o nominal correto mediu0.521539m/0miss
+em6.072pontos. O strip[1,P]×[-45,-38] saltava os vales da grade de0.5m com
+células1m. Só esse strip passou a PASSO: campo físico, navegação, limites e
+texturas permanecem. Geometria medida passou432→1605vértices/742→2968triângulos
+(+1173/+2226), sem draw call novo. Alias pasto completo baixou máximo para0.116m
+e detectou seus três mutantes; três-mapas nominal+cinco mutantes e morte nominal+
+acumulação PASS. O sexto mutante existente de terreno deslocado foi ligado ao
+alias e detectado à parte após nominal verde. Reverter só1linha do produtor numa
+cópia carregada externamente restauraRED0.522m em31.5,-42, sem erroINFRA.
+Recibos JAVAPORCO-TERRAIN-R866-* na auditoria; ainda sem aceite visual/Game/mobile.
