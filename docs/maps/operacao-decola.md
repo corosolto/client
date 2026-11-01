@@ -2,7 +2,7 @@
 # 02 - Operação Flávio
 
 Modo assimétrico de escolta em um aeroporto executivo. O time bolsonarista
-protege Flávio Bolsonaro durante a fuga do escritório até um avião; o outro
+protege o senador Zero Um durante a fuga do escritório até um avião; o outro
 time precisa interromper a evacuação. O personagem jogável `senador`, já
 existente no elenco como Zero Um, representa Flávio dentro da sátira do jogo.
 

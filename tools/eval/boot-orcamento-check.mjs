@@ -1,100 +1,41 @@
-/* boot-orcamento-check.mjs — O QUE O JOGADOR BAIXA ANTES DE PODER JOGAR.
-   ═══════════════════════════════════════════════════════════════════════════════════
-   O DEFEITO QUE COMPROU ESTA RÉGUA (medido em 25/10/2026, contra produção)
-
-   O painel do dono mostrava "24/10: chegaram 173, jogaram 3". Medindo o boot real da
-   home de desktop contra `https://www.csbrasil.online` (v2.1.0-alpha.123, cache frio,
-   `tools/medir-boot.mjs --cenario=desktop-cabo --repeticoes=3`), o que o navegador
-   baixa ANTES de a splash liberar a entrada:
-
-     16,07 MB em 409 requisições, dos quais
-       4.870 KB (30%)  posters/*          — pool INTEIRO de cartazes, 24 arquivos
-       4.083 KB (25%)  models/props/*     — cenário do lobby (é o que o portão espera)
-       2.568 KB (16%)  img/decals/*       — grafite das empenas
-       1.588 KB (10%)  models/ambient/*   — fauna decorativa
-
-   Duas coisas ali eram pedágio, e nenhuma delas muda um pixel do que o jogador vê:
-
-     · O pool de cartazes descia INTEIRO porque `T.posterImgs` era
-       `POSTER_FILES.map(load)` — o custo não seguia o uso. Instrumentando o getter com
-       um stack (`tools/sonda-cartazes.mjs`), o lobby medido (Piscinão, `buildPoolDay`)
-       lê 25 cartazes de verdade: cartaz é CONTEÚDO. Mas o pool é global e o lobby é
-       por sessão (`mapaDaSessao`): quem cola seis cartazes pagava vinte e quatro.
-     · A fauna era pedida EM PARALELO com os props, disputando banda com exatamente o
-       que segura o portão — apesar de a cena só ser reconstruída com ela DEPOIS que os
-       props terminam. Ela nunca aparecia antes, e atrapalhava assim mesmo.
-
-   Depois dos dois cortes, no mesmo cenário e no mesmo dia: 13,29 MB em 358 req
-   (−2.721 KB, −16,7%); em 4G rápido, 23,30 s → 21,10 s até jogável.
-
-   POR QUE NENHUM PORTÃO EXISTENTE PEGOU
-     · `eval:glbpeso`     — pesa GLB no disco, um a um; não sabe quantos o boot pede.
-     · `eval:assetfetch`  — confere que o asset RESPONDE, não quanto ele custa.
-     · `eval:edgecache`   — mede cache do edge, não volume de boot.
-     · `eval:perfilmobile`— orçamento de QUADRO (draw calls, memória), depois de entrar.
-     · `eval:boot`        — pergunta se o jogo ABRE. Abria: em 16 MB e 11 s.
-   Nenhum media o custo do CAMINHO ATÉ O JOGÁVEL, que é onde o funil perde gente.
-
-   O QUE ELA MEDE (no navegador, na rota real `/`, com os arquivos DESTA árvore
-   servidos por cima do host — mesma CDN, mesmo HTML, mesmo import map)
-     ORC1 · bytes que terminam de baixar antes de `#splash-enter` sair do `.hidden`
-            ficam sob o teto. Os arquivos servidos do disco saem da conta DOS DOIS
-            LADOS: `fulfill` não comprime e a CDN comprime, e comparar compressão com
-            asset não é comparar nada.
-     ORC2 · DIFERENCIAL, sem número mágico: a árvore candidata baixa ESTRITAMENTE menos
-            arquivos de `posters/` que a mesma árvore com o pool ansioso. É a prova de
-            que o custo segue o uso, e ela se recalibra sozinha quando o lobby muda de
-            mapa — que é justamente o que um teto fixo de contagem não faz.
-     ORC3 · nenhum `models/ambient/*` (fauna) é PEDIDO antes de o último
-            `models/props/*` (cenário) ter TERMINADO. Ordem de prioridade, não volume.
-
-   A MUTAÇÃO QUE A DEIXA VERMELHA (executada; mutação em MEMÓRIA, disco intacto)
-     --mutante=cartaz-ansioso  devolve `T.posterImgs` ao `POSTER_FILES.map(_cartaz)`:
-                               candidato e referência ficam IGUAIS -> ORC2 (e ORC1).
-     --mutante=fauna-cedo      devolve o `preloadAmbientLife` para o paralelo -> ORC3.
-
-   NÃO ESCREVE NO FUNIL. O `cs_privacy` entra com `analytics:false` de propósito: um
-   portão de browser que roda a cada PR é exatamente o tipo de sessão que inflava o
-   `land` do painel (24/10: 167 das 173 chegadas tinham `cohort='automacao'`).
-
-   USO
-     node tools/eval/boot-orcamento-check.mjs
-     node tools/eval/boot-orcamento-check.mjs --mutante=cartaz-ansioso
-     node tools/eval/boot-orcamento-check.mjs --base=http://127.0.0.1:9123
-   ═══════════════════════════════════════════════════════════════════════════════════ */
+// Transporte HTTP real e contrato: docs/visual-consistency/BOOT-COHERENT-OVERLAY.md.
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { startBootOrigin,snapshotPublicJs,assertSnapshotLive } from './boot-network-origin.mjs';
+import {freezeWindow,awaitWindow,validateReadyExact} from './boot-network-window.mjs';
+import {verifyDecoded,verifyResponseRecord,awaitBodies} from './boot-network-body.mjs';
+import {writeFileSync,mkdirSync} from 'node:fs';
+import {randomUUID} from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { chaveDeCarga, InfraError, JS_EXCLUSOS, somaCargas, aceitaMutante, cancelaUi, prefixoRecebido, validaEnc } from './boot-overlay.mjs';
+import {createGuestProfileObserver,readGuestPageIdentity} from './boot-guest-profile.mjs';
 
-const args = process.argv.slice(2);
-const val = (k, d) => { const v = (args.find((a) => a.startsWith(`--${k}=`)) || '').split('=').slice(1).join('='); return v === '' || v === undefined ? d : v; };
-const MUTANTE = val('mutante', '');
-const BASE = val('base', process.env.BASE || 'https://www.csbrasil.online');
-const MUTANTES = new Set(['', 'cartaz-ansioso', 'fauna-cedo']);
-if (!MUTANTES.has(MUTANTE)) {
-  console.error(`mutante desconhecido: ${MUTANTE}\nconhecidos: ${[...MUTANTES].filter(Boolean).join(', ')}`);
-  process.exit(2);
+const args = process.argv.slice(2), vistos = new Set(), opcoes = {};
+for (const a of args) {
+  const m=a.match(/^--(base|mutante)=(.+)$/);
+  const k=a==='--self-test'?'self-test':m?.[1];
+  if (!k || vistos.has(k)) { console.error('uso: --base=URL --mutante=cartaz-ansioso|fauna-cedo --self-test (sem duplicatas)'); process.exit(2); }
+  vistos.add(k); opcoes[k]=m?.[2] ?? true;
+}
+const MUTANTE=opcoes.mutante || '', BASE=opcoes.base || process.env.BASE || 'https://www.csbrasil.online';
+if (!['','cartaz-ansioso','fauna-cedo'].includes(MUTANTE)) { console.error('mutante desconhecido');process.exit(2); }
+try { if (!['http:','https:'].includes(new URL(BASE).protocol)) throw Error(); }
+catch { console.error('BASE inválida');process.exit(2); }
+if (opcoes['self-test']) {
+  if (args.length !== 1) { console.error('--self-test exige uso isolado');process.exit(2); }
+  const {selfTest}=await import('./boot-overlay.mjs');process.exit(selfTest().length?1:0);
 }
 
-/* TETO. Cinco passadas frias sobre o origin/main em 28/10 mediram 6,32–7,38 MiB e
-   302–314 requisições no mesmo código, variando com a compressão e o edge da CDN.
-   O teto deixa 5,9% sobre o maior valor observado; ainda reprova o pool ansioso,
-   medido em 10,56 MiB, e a contagem continua com folga de só 26 requisições.
-   Mexer no teto exige uma nova série fria e o intervalo medido no commit. */
+// Tetos e procedência: docs/visual-consistency/BOOT-COHERENT-OVERLAY.md.
 const TETO_BYTES = 8_200_000;
 const TETO_REQS = 340;
 
-const JS_LOCAIS = ['js/main.js', 'js/client-id.js', 'js/textures.js'];
-/* O pool ansioso é a REFERÊNCIA do ORC2, e também o mutante. A mesma transformação
-   serve aos dois papéis de propósito: se ela parar de casar com o código, o portão
-   morre barulhento (`throw`) em vez de passar em silêncio. */
+// Referência e mutante compartilham a transformação e recusam âncora ausente.
 const ANSIOSO = /( {2})T\.posterImgs = \[\];\n {2}POSTER_FILES\.forEach\(\(\[f\], i\) => \{[\s\S]*?\n {2}\}\);\n/;
 function poolAnsioso(corpo) {
   if (!ANSIOSO.test(corpo)) throw new Error('não achei o bloco de getters de T.posterImgs em textures.js');
   return corpo.replace(ANSIOSO, '  T.posterImgs = POSTER_FILES.map(([f]) => _cartaz(f));\n');
 }
-/* Ancorado em NOME, não em número de linha: a ordem do boot já mudou antes e cegou
-   régua ancorada em posição. */
+// A chamada real é a âncora da mutação.
 const FAUNA_ADIADA = '      preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});\n';
 function faunaCedo(corpo) {
   if (!corpo.includes(FAUNA_ADIADA)) throw new Error('não achei a chamada adiada de preloadAmbientLife em main.js');
@@ -105,83 +46,154 @@ function faunaCedo(corpo) {
 const SPLASH_READY = 'function _splashSetReady() {';
 function instrumentaCausaSplash(corpo) {
   if (!corpo.includes(SPLASH_READY)) throw new Error('não achei _splashSetReady em main.js');
-  return corpo.replace(SPLASH_READY, `${SPLASH_READY}\n  window.__csSplashCause ||= _splashPorFailsafe ? 'failsafe' : 'assets';`);
+  const token="  if (se) se.classList.remove('hidden');";
+  if(corpo.split(token).length!==2)throw new Error('âncora READY DOM ausente/duplicada');
+  const marked=corpo.replace(token,"  if (se) {se.classList.remove('hidden');if(window.__csReadyExact!==undefined)throw Error('READY exact duplicado');window.__csReadyExact={time:performance.now(),timeOrigin:performance.timeOrigin,cause:_splashPorFailsafe?'failsafe':'assets',hidden:se.classList.contains('hidden')};}");
+  return marked.replace(SPLASH_READY, `${SPLASH_READY}\n  window.__csSplashCause ||= _splashPorFailsafe ? 'failsafe' : 'assets';`);
 }
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = _pw.chromium || _pw.default?.chromium;
+const PUBLIC_ROOT=new URL('../../public/',import.meta.url);
+let SNAPSHOT;
+try {SNAPSHOT=snapshotPublicJs(PUBLIC_ROOT);}catch(e){console.error('INFRA3 snapshot: '+e.message);process.exit(3);}
+const RUN_ID=randomUUID();
+let browser;
+try {
+  const gRoot=execSync('npm root -g').toString().trim();
+  const pw=await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+  const chromium=pw.chromium||pw.default?.chromium;
+  const softwareGLArgs=process.platform==='darwin'?[]:['--use-angle=swiftshader','--enable-unsafe-swiftshader'];
+  browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    args:[...softwareGLArgs,'--headless=new','--mute-audio','--disable-dev-shm-usage']});
+} catch(e) {console.error(`INFRA3 browser indisponível: ${e.message}`);process.exit(3);}
 
-/* SwiftShader forçado no M4 consumia o mesmo CPU da aplicação: 88–150 s até o portão
-   e quedas no failsafe. Com o backend padrão do Chrome: 1,6–1,8 s. No runner Linux
-   sem GPU, mantém o software GL explícito. */
-const softwareGLArgs = process.platform === 'darwin'
-  ? []
-  : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
-const browser = await chromium.launch({
-  executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  args: [...softwareGLArgs, '--headless=new', '--mute-audio', '--disable-dev-shm-usage'],
-});
-
-/* `refPoolAnsioso` liga a referência do ORC2; o mutante `cartaz-ansioso` liga a MESMA
-   coisa no candidato, e aí os dois lados empatam e o portão fica vermelho. */
-async function mede({ refPoolAnsioso = false } = {}) {
-  const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
+async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
+  assertSnapshotLive(SNAPSHOT);
+  const label=refPoolAnsioso?'reference':mutante||'nominal',passId=label+'-'+randomUUID(),proofDir=process.env.BOOT_PROOF_DIR?process.env.BOOT_PROOF_DIR+'/'+RUN_ID+'/'+passId:null;
+  if(proofDir)mkdirSync(proofDir,{recursive:true});
+  console.log('BOOT_PASS '+JSON.stringify({runId:RUN_ID,passId,label,proofDir,snapshot:SNAPSHOT.fingerprint}));
+  let context,origin,page,guest,terminalCapture=null,diagnostic=()=>({});
+  try {
+  context = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
   await context.addInitScript(() => {
     try { localStorage.setItem('cs_privacy', JSON.stringify({ version: 'corosolto-analytics-v1', analytics: false, updatedAt: new Date(0).toISOString() })); } catch {}
-    /* Lobby FIXO: sem isto `mapaDaSessao` roda a fila a cada visita (maps.js:268) e as
-       duas passadas do ORC2 comparariam CENAS diferentes. `mapPinned` é o mesmo campo
-       que o carrossel grava quando o jogador escolhe — não é porta de teste. */
+    // MapPinned preserva a mesma cena em todas as passadas.
     try { localStorage.setItem('awpbr_settings', JSON.stringify({ map: 'praca_poderes', mapPinned: true })); } catch {}
   });
-  for (const rel of JS_LOCAIS) {
-    let corpo = readFileSync(new URL(`../../public/${rel}`, import.meta.url), 'utf8');
-    if (rel === 'js/textures.js' && (refPoolAnsioso || MUTANTE === 'cartaz-ansioso')) corpo = poolAnsioso(corpo);
-    if (rel === 'js/main.js') {
-      if (MUTANTE === 'fauna-cedo') corpo = faunaCedo(corpo);
-      corpo = instrumentaCausaSplash(corpo);
-    }
-    await context.route(`**/${rel}*`, async (rota) => {
-      if (rel === 'js/client-id.js') {
-        await rota.fulfill({ status: 200, contentType: 'text/javascript', body: corpo });
-        return;
-      }
-      const r = await rota.fetch();
-      await rota.fulfill({ response: r, body: corpo });
-    });
-  }
-
-  const page = await context.newPage();
+  await context.addInitScript(()=>{
+    const trace=window.__bootTrace=[];window.__bootFetchBodies=[];window.__bootFetchPromises=[];window.__bootFetchProofById=new Map();const now=()=>performance.now();const note=(event,data)=>{if(trace.length<200)trace.push({event,time:now(),...data});};
+    const originalAbort=AbortController.prototype.abort;
+    AbortController.prototype.abort=function(...args){note('controller.abort',{stack:new Error().stack,reason:String(args[0]||'')});return originalAbort.apply(this,args);};
+    const originalFetch=window.fetch;
+    window.fetch=function(input,init){const url=typeof input==='string'?input:input?.url;const relevant=/models\/props\//.test(url||'');
+      if(relevant){note('prop-fetch',{url,stack:new Error().stack});const signal=init?.signal||input?.signal;signal?.addEventListener('abort',()=>note('prop-signal-abort',{url,stack:new Error().stack,reason:String(signal.reason)}),{once:true});}
+      const result=originalFetch.apply(this,arguments);
+      result.then(response=>{const resolved=new URL(response.url,location.href);if(resolved.origin!==location.origin||!/^https?:$/.test(resolved.protocol))return;
+       const row={url:response.url,id:response.headers.get('x-boot-response-id'),state:'pending'};window.__bootFetchBodies.push(row);
+       const proof=response.clone().arrayBuffer().then(async body=>{const hash=await crypto.subtle.digest('SHA-256',body);row.bytes=body.byteLength;row.sha256=[...new Uint8Array(hash)].map(n=>n.toString(16).padStart(2,'0')).join('');row.state='checked';},e=>{row.state='error';row.error=e.message;});window.__bootFetchPromises.push(proof);window.__bootFetchProofById.set(row.id,proof);
+      },()=>{});
+      if(relevant)result.then(r=>note('prop-response',{url,status:r.status,type:r.type}),e=>note('prop-fetch-reject',{url,name:e.name,message:e.message,stack:e.stack}));return result;};
+    for(const event of ['beforeunload','pagehide','unload'])window.addEventListener(event,()=>note(event,{url:location.href}));
+  });
+  const isentas=new Set(),sobrepostos=new Map(),corposEsperados=new Map(),verificados=new Set(),verificacoes=new Map();
+  const bodyChecks=new Map(),bodyRecords=new Map(),servedPayloads=new Map(),serverIds=new Set();
+  let reportProxyError=null;const pendingProxyErrors=[];
+  origin=await startBootOrigin({BASE,snapshot:SNAPSHOT,transformJs:(rel,original)=>{
+    let corpo=original;
+    if(rel==='js/textures.js'&&(refPoolAnsioso||mutante==='cartaz-ansioso'))corpo=poolAnsioso(corpo);
+    if(rel==='js/main.js'){if(mutante==='fauna-cedo')corpo=faunaCedo(corpo);corpo=instrumentaCausaSplash(corpo);}
+    return corpo;
+  },onError:e=>{const m='HTTP proxy: '+e.message;pendingProxyErrors.push(m);reportProxyError?.(m);},authorizeProfile:meta=>guest?guest.authorizeProfile(meta):null});
+  const navigation=new URL(origin.url+new URL(BASE).pathname+new URL(BASE).search);navigation.searchParams.set('api',origin.url);const PAGE_BASE=navigation.href;
+  page = await context.newPage();
+  page.on('request',request=>{
+    const local=origin.lookup(request.url());if(!local)return;
+    corposEsperados.set(request,local.body);
+    const key=chaveDeCarga(request.url());if(JS_EXCLUSOS.includes(local.rel))isentas.add(key);else sobrepostos.set(key,local.payloadBytes);
+  });
   const cdp = await context.newCDPSession(page);
   await cdp.send('Network.enable');
 
-  const reqs = new Map();
-  const t0 = Date.now();
+  const reqs = new Map(),navs=[],consoleErrors=[];let frozenCutoff=null;
+  page.on("framenavigated",f=>{if(f===page.mainFrame())navs.push({url:f.url(),time:Date.now()});});
+  page.on("console",m=>{if(["warning","error"].includes(m.type())&&consoleErrors.length<30)consoleErrors.push({type:m.type(),text:m.text()});});
   cdp.on('Network.requestWillBeSent', (e) => {
-    reqs.set(e.requestId, { url: e.request.url, inicio: Date.now() - t0, fim: null, bytes: 0 });
+    if (e.redirectResponse || reqs.has(e.requestId)) {
+      marcaInfra(`redirect/reuso de requestId sem contabilidade de hops: ${e.requestId}`); return;
+    }
+    if(!Number.isFinite(e.wallTime)||e.wallTime<=0||!Number.isFinite(e.timestamp)||e.timestamp<=0){marcaInfra('clock CDP request inválido');return;}
+    const startEpoch=e.wallTime*1000;
+    reqs.set(e.requestId, { startMonotonic:e.timestamp,requestId:e.requestId,loaderId:e.loaderId,type:e.type,documentURL:e.documentURL,method:e.request.method,initiator:e.initiator, url: e.request.url, inicio: startEpoch, fim: null, bytes: 0, erro: null, recebidoResposta: 0, recebidoChunks: 0, canceladaUi: false });
   });
   const fecha = (e) => {
-    const r = reqs.get(e.requestId); if (!r) return;
-    r.bytes = e.encodedDataLength || 0; r.fim = Date.now() - t0;
+    const r = reqs.get(e.requestId); if (!r) {marcaInfra('finish sem request: '+e.requestId);return;}
+    r.bytes = e.encodedDataLength;
+    if (!Number.isFinite(r.bytes) || r.bytes < 0) marcaInfra(`encodedDataLength inválido: ${r.bytes}`);
+    if(!Number.isFinite(e.timestamp)||e.timestamp<r.startMonotonic){marcaInfra('clock CDP finish inválido');return;}
+    r.fim = r.inicio+(e.timestamp-r.startMonotonic)*1000;
+    if(frozenCutoff!==null&&r.fim<=frozenCutoff)marcaInfra('conclusão tardia dentro da janela após freeze: '+r.url);
+    r.erro = e.errorText || null;
   };
+  cdp.on('Network.responseReceived',e=>{
+    const r=reqs.get(e.requestId);if(!r)return;
+    // Response é provisório; Finished fornece o total autoritativo, cancelamento exige prefixo válido.
+    r.recebidoResposta=e.response.encodedDataLength;r.serverID=Object.entries(e.response.headers).find(([k])=>k.toLowerCase()==='x-boot-response-id')?.[1];r.response={url:e.response.url,status:e.response.status,mimeType:e.response.mimeType,protocol:e.response.protocol,fromDiskCache:e.response.fromDiskCache,headers:Object.fromEntries(Object.entries(e.response.headers).filter(([k])=>['content-type','content-length','content-encoding','cache-control','connection','transfer-encoding','x-boot-origin','content-disposition'].includes(k.toLowerCase())))};
+  });
+  cdp.on('Network.dataReceived',e=>{
+    const r=reqs.get(e.requestId);if(!r)return;
+    try{r.recebidoChunks+=validaEnc(e.encodedDataLength);}catch(err){marcaInfra(err.message);}
+  });
   cdp.on('Network.loadingFinished', fecha);
-  cdp.on('Network.loadingFailed', fecha);
+
 
   const erros = [];
-  page.on('pageerror', (e) => erros.push(e.message));
-  await page.goto(BASE, { waitUntil: 'commit', timeout: 180000 });
-  await page.evaluate(() => {
-    window.__csPortao = null;
-    const marca = () => {
-      const se = document.getElementById('splash-enter');
-      if (se && !se.classList.contains('hidden')) { window.__csPortao = performance.now(); return; }
-      setTimeout(marca, 25);
-    };
-    marca();
+  const infra = [];
+  let infraRej = null;
+  const infraP = new Promise((_, rej) => { infraRej = rej; });
+  infraP.catch(() => {});
+  const marcaInfra = (msg) => { infra.push(msg); infraRej?.(new InfraError(msg)); infraRej = null; };
+  diagnostic=()=>({infra,navs,consoleErrors,bodyRecords:[...bodyRecords.values()],requests:[...reqs.values()],served:origin.requests,guestProfile:guest?.summary()});
+  reportProxyError=marcaInfra;for(const msg of pendingProxyErrors)marcaInfra(msg);
+  page.on('pageerror', (e) => {
+    erros.push(e.message);
+    marcaInfra(`pageerror ${e.name || 'Error'}: ${e.message}`);
   });
-  const portao = await page.waitForFunction(() => window.__csPortao, null, { timeout: 180000, polling: 100 })
-    .then((h) => h.jsonValue()).catch(() => null);
-  if (portao === null) {
+  guest=createGuestProfileObserver({origin:()=>origin.url,identity:()=>readGuestPageIdentity(page),onInfra:marcaInfra});
+  page.on('request',request=>guest.observeRequest({key:request,url:request.url(),method:request.method(),resourceType:request.resourceType()}));
+  page.on('requestfailed',request=>guest.observeFailure({key:request,error:request.failure()?.errorText||'requestfailed'}));
+  page.on('response', (res) => {
+    const deferred404=guest.observeResponse({key:res.request(),url:res.url(),method:res.request().method(),status:res.status(),id:res.headers()['x-boot-response-id'],record:origin.byId.get(res.headers()['x-boot-response-id']),contentType:res.headers()['content-type'],getBody:()=>res.body()});
+    if (!deferred404&&res.status() >= 400) marcaInfra(`HTTP ${res.status()} ${res.url()}`);
+    const request = res.request();
+    if(/^https?:$/.test(new URL(res.url()).protocol)&&new URL(res.url()).origin===origin.url){
+      const id=res.headers()['x-boot-response-id'];let record;
+      try{record=verifyResponseRecord({url:res.url(),id,status:res.status(),record:origin.byId.get(id),seen:serverIds});}catch(e){marcaInfra(e.message);return;}
+      const row={id,url:res.url(),record,state:'pending'};bodyRecords.set(request,row);
+      const check=res.body().then(body=>{try{row.proof=verifyDecoded(body,record);row.state='checked';}catch(e){row.state='mismatch';row.error=e.message;}},e=>{row.state='read-error';row.error=e.message;});bodyChecks.set(id,check);
+    }
+    if (corposEsperados.has(request)) {
+      const check = res.text().then(body => {
+        if (body !== corposEsperados.get(request)) throw new InfraError(`módulo entregue divergiu do local: ${res.url()}`);
+        verificados.add(request);
+      }).catch(e => { marcaInfra(`resposta entregue: ${e.message}`); });
+      verificacoes.set(request,check);
+    }
+  });
+  cdp.on('Network.loadingFailed',e=>{
+    const r=reqs.get(e.requestId);if(r)r.failure=e;
+    if(r&&(!Number.isFinite(e.timestamp)||e.timestamp<r.startMonotonic)){marcaInfra('clock CDP failed inválido');return;}
+    if(r&&cancelaUi(r,e,PAGE_BASE)){
+      try{r.bytes=prefixoRecebido(r);r.fim=r.inicio+(e.timestamp-r.startMonotonic)*1000;r.canceladaUi=true;if(frozenCutoff!==null&&r.fim<=frozenCutoff)marcaInfra('cancelamento UI tardio dentro da janela após freeze: '+r.url);return;}
+      catch(err){marcaInfra(err.message);return;}
+    }
+    if(r){r.erro=e.errorText||'loadingFailed';r.fim=r.inicio+(e.timestamp-r.startMonotonic)*1000;}
+    marcaInfra(`loadingFailed ${e.type||'?'} ${r?.url||e.requestId}: ${e.errorText||'sem causa'}`);
+  });
+  await page.goto(PAGE_BASE, { waitUntil: 'commit', timeout: 180000 });
+  const readyExact = await Promise.race([
+    page.waitForFunction(() => window.__csReadyExact, null, { timeout: 180000, polling: 100 }).then((h) => h.jsonValue()),
+    infraP,
+  ]).catch((e) => { if (e instanceof InfraError) throw e; return null; });
+  if (readyExact === null) {
     const estado = await page.evaluate(() => {
       const splash = document.getElementById('splash-enter');
       return {
@@ -196,65 +208,137 @@ async function mede({ refPoolAnsioso = false } = {}) {
       .map((r) => r.url);
     throw new Error(`a splash não liberou a entrada em 180 s; estado=${JSON.stringify(estado)}; pendentes=${pendentes.join(', ') || 'nenhum'}; erros=${erros.join(' | ') || 'nenhum'}`);
   }
-  const causa = await page.evaluate(() => window.__csSplashCause || null);
-  // A comparação só vale quando candidato e referência completam os assets.
-  const ate = [...reqs.values()].filter((r) => r.fim !== null && r.fim <= portao + 50);
-  const patchado = (u) => JS_LOCAIS.some((p) => u.includes(p));
+  const currentReady=await page.evaluate(()=>({cause:window.__csSplashCause,timeOrigin:performance.timeOrigin,now:performance.now(),hidden:document.getElementById('splash-enter')?.classList.contains('hidden')}));
+  const {portao,causa,timeOrigin}=validateReadyExact(readyExact,currentReady);
+  const gateEpoch=timeOrigin+portao,cutoff=gateEpoch+50;
+  await page.waitForFunction(epoch=>performance.timeOrigin+performance.now()>=epoch,cutoff,{timeout:30000,polling:10});
+  await cdp.send('Runtime.evaluate',{expression:'0',returnByValue:true});
+  const gateRequests=freezeWindow([...reqs.values()],gateEpoch),gateObjects=new Set(gateRequests);frozenCutoff=cutoff;
+  await Promise.race([awaitWindow(gateRequests),infraP]);
+  const requiredIds=new Set(gateRequests.filter(r=>!r.canceladaUi&&new URL(r.url).origin===origin.url&&/^https?:$/.test(new URL(r.url).protocol)).map(r=>String(r.serverID)));
+  const absentBodies=[];
+  for(const network of gateRequests){
+    if(!/^https?:$/.test(new URL(network.url).protocol)||new URL(network.url).origin!==origin.url||network.fim===null||network.canceladaUi)continue;
+    if([...bodyRecords.values()].some(row=>row.id===String(network.serverID)))continue;
+    const id=String(network.serverID),record=verifyResponseRecord({url:network.url,id,status:network.response?.status,record:origin.byId.get(id),seen:serverIds});
+    const row={id,url:network.url,record,state:'pending',transport:'CDP-requestId'};bodyRecords.set(network,row);
+    absentBodies.push(cdp.send('Network.getResponseBody',{requestId:network.requestId}).then(value=>{try{row.proof=verifyDecoded(Buffer.from(value.body,value.base64Encoded?'base64':'utf8'),record);row.state='checked';}catch(e){row.state='mismatch';row.error=e.message;}},e=>{row.state='read-error';row.error=e.message;}));
+  }
+  await awaitBodies([...requiredIds].filter(id=>bodyChecks.has(id)).map(id=>bodyChecks.get(id)).concat(absentBodies));
+  const selectedBodies=[...bodyRecords.values()].filter(row=>requiredIds.has(row.id));
+  const selectedLocals=[...bodyRecords].filter(([,row])=>requiredIds.has(row.id)&&row.record.kind==='local-js');
+  await awaitBodies(selectedLocals.filter(([request])=>verificacoes.has(request)).map(([request])=>verificacoes.get(request)));
+  for(const row of selectedBodies){
+    const network=[...reqs.values()].find(r=>String(r.serverID)===row.id);
+    if(row.state!=='checked'){
+      if(network?.canceladaUi&&row.state==='read-error')continue;
+      throw new InfraError('payload não validado: '+row.url+' '+(row.error||row.state));
+    }
+    servedPayloads.set(chaveDeCarga(row.url),row.record.payloadBytes);
+  }
+  for(const r of gateRequests){
+    if(!/^https?:$/.test(new URL(r.url).protocol)||new URL(r.url).origin!==origin.url||r.fim===null||r.canceladaUi)continue;
+    if(![...bodyRecords.values()].some(row=>row.id===String(r.serverID)&&row.state==='checked'))throw new InfraError('request completo sem prova de corpo: '+r.url);
+  }
+  const expectedFetchIds=gateRequests.filter(r=>r.type==='Fetch'&&requiredIds.has(String(r.serverID))).map(r=>String(r.serverID));
+  const [fetchProof]=await awaitBodies([page.evaluate(async ({ids,expected})=>{
+    const selected=new Set(ids),required=new Set(expected),deadline=performance.now()+29000;
+    while(true) {
+      const rows=window.__bootFetchBodies.filter(row=>selected.has(row.id));
+      if(new Set(rows.map(row=>row.id)).size!==rows.length)throw Error('clone fetch ID duplicado');
+      await Promise.all(rows.map(row=>{const p=window.__bootFetchProofById.get(row.id);if(!p)throw Error('clone fetch sem promessa');return p;}));
+      await new Promise(resolve=>setTimeout(resolve,0));
+      const current=window.__bootFetchBodies.filter(row=>selected.has(row.id));
+      const observed=new Set(current.map(row=>row.id));
+      if(current.length===rows.length&&current.every(row=>row.state!=='pending')&&[...required].every(id=>observed.has(id)))return current;
+      if(performance.now()>=deadline)throw Error('clone fetch da janela ausente/pendente');
+      await new Promise(resolve=>setTimeout(resolve,5));
+    }
+  },{ids:[...requiredIds],expected:expectedFetchIds})]);
+  for(const f of fetchProof){const record=origin.byId.get(f.id);if(f.state!=='checked'||!record||record.sha256!==f.sha256||record.decodedBytes!==f.bytes)throw new InfraError('clone fetch divergiu/pendente: '+f.url+' '+JSON.stringify({state:f.state,id:f.id,bytes:f.bytes,sha256:f.sha256,expectedBytes:record?.decodedBytes,expectedSHA:record?.sha256}));}
+  for(const [request,row]of selectedLocals)if(corposEsperados.has(request)&&!verificados.has(request))throw new InfraError('request local da janela sem verificação integral: '+row.url);
+  // READY aceita a causa assets, nunca o failsafe; ver contrato do portão.
+  for (const r of gateRequests) if (r.erro) marcaInfra(`loadingFailed ${r.url}: ${r.erro}`);
+  const guestResult=await guest.seal({
+    readFetchClones:(ids,timeoutMs)=>page.evaluate(async({ids,timeoutMs})=>{
+      const selected=new Set(ids),deadline=performance.now()+timeoutMs;
+      while(true){
+        const rows=window.__bootFetchBodies.filter(row=>selected.has(row.id));
+        if(new Set(rows.map(row=>row.id)).size!==rows.length)throw Error('clone fetch semântico duplicado');
+        await Promise.all(rows.map(row=>{const promise=window.__bootFetchProofById.get(row.id);if(!promise)throw Error('clone semântico sem promessa');return promise;}));
+        await new Promise(resolve=>setTimeout(resolve,0));
+        const current=window.__bootFetchBodies.filter(row=>selected.has(row.id));
+        if(current.length===rows.length&&current.every(row=>row.state!=='pending')&&ids.every(id=>current.some(row=>row.id===id)))return current;
+        if(performance.now()>=deadline)throw Error('clone fetch semântico ausente/pendente');
+        await new Promise(resolve=>setTimeout(resolve,5));
+      }
+    },{ids,timeoutMs}),
+    closeObservation:async()=>{
+      terminalCapture={abortTrace:await page.evaluate(()=>window.__bootTrace||[]),fetchBodies:await page.evaluate(()=>window.__bootFetchBodies||[]),readyExact:await page.evaluate(()=>window.__csReadyExact||null)};
+      await cdp.send('Network.disable');
+      await context.close();context=null;
+    },
+  });
+  if(!guestResult.ok)throw new InfraError('contrato de perfil convidado: '+guestResult.reason);
+  if (infra.length) throw new InfraError(`INFRA: ${infra.slice(0, 3).join(' | ')}${infra.length > 3 ? ` (+${infra.length - 3})` : ''}`);
+  const ate=gateRequests,depois=[...reqs.values()].filter(r=>!gateObjects.has(r));
+  let total=0;const cargas=new Map();const checkedIds=new Set(selectedBodies.filter(row=>row.state==='checked').map(row=>row.id));
+  for(const request of ate){const key=chaveDeCarga(request.url),record=origin.byId.get(String(request.serverID));const payloads=record&&checkedIds.has(record.id)?new Map([[key,record.payloadBytes]]):new Map();const part=somaCargas({ate:[request],isentas,sobrepostos:payloads});total+=part.total+(record?.requestBodyBytes||0);cargas.set(key,(cargas.get(key)||0)+part.total);}
   const resultado = {
     portao,
     causa,
-    bytes: ate.reduce((s, r) => s + (patchado(r.url) ? 0 : r.bytes), 0),
+    bytes: total,
     reqs: ate.length,
+    sobrepostos: [...sobrepostos.keys()].filter((k) => cargas.has(k)).length,
+    isentas: [...ate].filter((r) => isentas.has(chaveDeCarga(r.url))).length,
+    depoisPortao: depois.length,
     cartazes: new Set(ate.filter((r) => /\/posters\//.test(r.url)).map((r) => r.url.split('?')[0])).size,
-    ultimoProp: Math.max(-1, ...ate.filter((r) => /\/models\/props\//.test(r.url)).map((r) => r.fim)),
-    primeiraFauna: Math.min(Infinity, ...[...reqs.values()].filter((r) => /\/models\/ambient\//.test(r.url)).map((r) => r.inicio)),
+    ultimoProp: Math.max(-1, ...ate.filter((r) => /\/models\/props\//.test(r.url)).map((r) => r.fim-timeOrigin)),
+    primeiraFauna: Math.min(Infinity, ...[...reqs.values()].filter((r) => /\/models\/ambient\//.test(r.url)).map((r) => r.inicio-timeOrigin)),
     erros,
+    guestProfile:{...guestResult,profileDenials:origin.profileDenials.length},
+    networkProof:{timeOrigin,gateEpoch,cutoffEpoch:cutoff,clock:"CDP-wallTime/monotonic+document-timeOrigin",snapshotFingerprint:SNAPSHOT.fingerprint,snapshotModules:SNAPSHOT.entries.length,requestBodyBytes:ate.reduce((n,r)=>n+(origin.byId.get(String(r.serverID))?.requestBodyBytes||0),0),localRequests:origin.requests.filter(r=>r.kind==='local-js').length,verifiedBodies:selectedLocals.filter(([request])=>verificados.has(request)).length,expectedBodies:selectedLocals.length,allRegisteredBeforeWrite:origin.requests.every(r=>r.registeredBeforeWrite),windowFinishedBeforeGate:true,windowRequests:gateRequests.length,allBodyRecords:selectedBodies.length,allBodiesChecked:selectedBodies.filter(r=>r.state==="checked").length,fetchClones:fetchProof.length,localPayloadBytes:origin.requests.filter(r=>r.kind==='local-js').reduce((n,r)=>n+r.payloadBytes,0)},
+    canceladasUi: ate.filter(r=>r.canceladaUi).map(r=>({path:new URL(r.url).pathname,inicio:r.inicio-timeOrigin,fim:r.fim-timeOrigin,bytes:r.bytes})),
   };
-  await context.close();
+  if(proofDir)writeFileSync(proofDir+'/measure.json',JSON.stringify({runId:RUN_ID,passId,label,origin:origin.url,resultado,requests:[...reqs.values()],served:origin.requests},null,2));
+  assertSnapshotLive(SNAPSHOT);
   return resultado;
-}
-
-let saida = 1;
-try {
-  const cand = await mede();
-  const ref = await mede({ refPoolAnsioso: true });
-
-  const ok = {
-    READY: cand.causa === 'assets' && ref.causa === 'assets',
-    ORC1: cand.bytes <= TETO_BYTES && cand.reqs <= TETO_REQS,
-    ORC2: cand.cartazes < ref.cartazes,
-    /* Sem props no lobby o ORC3 não tem o que ordenar; sem fauna ele passaria de graça.
-       Os dois casos são falha: o mapa do lobby TEM as duas coisas, e portão que passa
-       porque não achou o que medir é pior que portão nenhum. */
-    ORC3: cand.ultimoProp > 0 && Number.isFinite(cand.primeiraFauna) && cand.primeiraFauna >= cand.ultimoProp,
-  };
-
-  console.log(`base      ${BASE}${MUTANTE ? `  (mutante=${MUTANTE})` : ''}`);
-  console.log(`portão    splash liberou em ${Math.round(cand.portao)} ms por ${cand.causa}`);
-  console.log(`READY     caminho dos assets  ${ok.READY ? 'ok' : 'FALHA'}`);
-  console.log(`ORC1      ${(cand.bytes / 1048576).toFixed(2)} MB em ${cand.reqs} req  (teto ${(TETO_BYTES / 1048576).toFixed(2)} MB / ${TETO_REQS} req)  ${ok.ORC1 ? 'ok' : 'FALHA'}`);
-  console.log(`ORC2      ${cand.cartazes} cartaz(es) sob demanda vs ${ref.cartazes} com o pool ansioso  ${ok.ORC2 ? 'ok' : 'FALHA'}`);
-  console.log(`ORC3      último prop em ${cand.ultimoProp} ms, 1ª fauna pedida em ${Number.isFinite(cand.primeiraFauna) ? cand.primeiraFauna : '—'} ms  ${ok.ORC3 ? 'ok' : 'FALHA'}`);
-  const erros = [...cand.erros, ...ref.erros];
-  if (erros.length) console.log(`erros de página: ${erros.join(' | ')}`);
-
-  const falhas = Object.entries(ok).filter(([, v]) => !v).map(([k]) => k);
-  if (erros.length) falhas.push('pageerror');
-  // GLM63: só o ORC específico prova o mutante; failsafe/pageerror invalidam a medição.
-  const ORC_DO_MUTANTE = { 'cartaz-ansioso': 'ORC2', 'fauna-cedo': 'ORC3' }[MUTANTE];
-  if (MUTANTE) {
-    if (!ok.READY || erros.length) console.error(`\n✗ medição inválida com mutante ${MUTANTE}: ${falhas.join(', ')} — mutação não avaliada`);
-    else if (!ok[ORC_DO_MUTANTE]) { console.log(`\nmutante ${MUTANTE} reprovado como devia: ${ORC_DO_MUTANTE}`); saida = 0; }
-    else console.error(`\nMUTAÇÃO PASSOU — ${MUTANTE} não foi visto pela régua (${ORC_DO_MUTANTE} segue ok; falhas: ${falhas.join(', ') || 'nenhuma'}).`);
-  } else if (falhas.length) {
-    console.error(`\n✗ orçamento de boot estourado: ${falhas.join(', ')}`);
-  } else {
-    console.log('\n✓ orçamento de boot dentro do teto');
-    saida = 0;
+  } finally {
+    try {
+      if(proofDir) {
+        const abortTrace=terminalCapture?terminalCapture.abortTrace:page?await page.evaluate(()=>window.__bootTrace||[]).catch(e=>({error:e.message})):null;
+        const fetchBodies=terminalCapture?terminalCapture.fetchBodies:page?await page.evaluate(()=>window.__bootFetchBodies||[]).catch(e=>({error:e.message})):null;
+        writeFileSync(proofDir+'/diagnostic.json',JSON.stringify({runId:RUN_ID,passId,label,origin:origin?.url,...diagnostic(),abortTrace,fetchBodies,readyExact:terminalCapture?.readyExact??null},null,2));
+      }
+    } finally {await context?.close().catch(()=>{});await origin?.close();}
   }
-} catch (e) {
-  console.error(`✗ ${e.message}`);
-} finally {
-  await browser.close().catch(() => {});
 }
+
+let saida=1;
+const veredito=(cand,ref)=>({READY:cand.causa==='assets'&&ref.causa==='assets',ORC1:cand.bytes<=TETO_BYTES&&cand.reqs<=TETO_REQS,
+  ORC2:cand.cartazes<ref.cartazes,ORC3:cand.ultimoProp>0&&Number.isFinite(cand.primeiraFauna)&&cand.primeiraFauna>=cand.ultimoProp});
+const relatar=(cand,ref,ok,rotulo)=>{
+ console.log(`base ${BASE} · ${rotulo}`);
+ console.log(`portão ${Math.round(cand.portao)}ms por ${cand.causa}; overlay ${cand.sobrepostos} js; isentas ${cand.isentas}; depois ${cand.depoisPortao}`);
+ console.log(`canceladasUI contabilizadas ${JSON.stringify(cand.canceladasUi)}`);
+ console.log('HTTPgzipProof '+JSON.stringify(cand.networkProof));
+ console.log(`READY ${ok.READY?'ok':'FALHA'}`);
+ console.log(`ORC1 ${(cand.bytes/1048576).toFixed(2)} MiB / ${cand.reqs} req (teto ${TETO_BYTES} / ${TETO_REQS}) ${ok.ORC1?'ok':'FALHA'}`);
+ console.log(`ORC2 ${cand.cartazes} vs ${ref.cartazes} cartazes ${ok.ORC2?'ok':'FALHA'}`);
+ console.log(`ORC3 último prop ${cand.ultimoProp}ms, primeira fauna ${cand.primeiraFauna}ms ${ok.ORC3?'ok':'FALHA'}`);
+};
+try {
+ const nominal=await mede(),ref=await mede({refPoolAnsioso:true}),nomOk=veredito(nominal,ref);
+ relatar(nominal,ref,nomOk,'nominal');
+ if (!Object.values(nomOk).every(Boolean)) console.error('RED nominal; mutante não aplicado');
+ else if (!MUTANTE) {console.log('✓ orçamento de boot dentro do teto');saida=0;}
+ else {
+  const cand=await mede({mutante:MUTANTE}),ok=veredito(cand,ref);relatar(cand,ref,ok,MUTANTE);
+  const falhas=Object.entries(ok).filter(([,v])=>!v).map(([k])=>k).sort();
+  if (aceitaMutante(MUTANTE,falhas)) {console.log(`mutante ${MUTANTE} capturado exatamente: ${falhas.join(',')}`);saida=0;}
+  else console.error(`RED controle causal ${MUTANTE}: conjunto inesperado ${JSON.stringify(falhas)}`);
+ }
+} catch(e) {console.error(`INFRA3 sem veredito: ${e.message}`);saida=3;}
+finally {await browser.close().catch(()=>{});}
+try{assertSnapshotLive(SNAPSHOT);}catch(e){console.error('INFRA3 snapshot final: '+e.message);saida=3;}
 process.exit(saida);

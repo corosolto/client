@@ -15,7 +15,7 @@ import { EMOTES_ENABLED } from './emote-features.js';
 import { preloadEyewearAssets } from './eyewear.js';
 import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
-import { preloadMapProps, COMMON_MAP_PROPS } from './mapprops.js';
+import { preloadMapProps, mapPropIds } from './mapprops.js';
 import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
 import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, DEFAULT_MAP, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS, comMapaCarregado, defineSeedHavan } from './maps.js';
@@ -24,7 +24,8 @@ import { preloadWeapons, WEAPON_IDS } from './weapons.js';
 import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
 import { Sfx } from './audio.js';
-import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons, sanitizeRounds, ROUNDS_CUSTOM_MAX } from './game.js';
+import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons, sanitizeRounds, ROUNDS_CUSTOM_MAX, aguardarPreloads } from './game.js';
+import { economiaLigada } from './economia-partida.js';
 import { VERSION } from './version.js';
 import { bindMapPreview, stopMapPreviews, previewRevision } from './amazonia_map_preview.js';
 import { mapPreviewPoster as escadaoMapPreviewPoster, bindMapPreviews, stopMapPreview } from './escadao_preview.js';
@@ -272,8 +273,7 @@ let currentMap = mapaDaSessao({ urlMap, savedMap: settings.map, pinned: settings
 if (!urlMap) { settings.map = currentMap; saveSettings(); }
 
 /* ---------------- menu backdrop (orbiting map) ---------------- */
-// Mint building/statue GLBs used by the Brasília map (loaded once, cloned per placement).
-const MAP_PROPS = COMMON_MAP_PROPS;   // props do Piscinão de Ramos (Mint); carros/estátua do Havan carregam por-mapa   // Havan (estátua + carros + carrinho)
+
 let menuScene = new THREE.Scene();
 
 const menuCam = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 400);
@@ -448,7 +448,7 @@ function rebuildMenuBackdrop(mapa) {
   ajustarAnisotropia(menuScene, settings.quality);
 }
 function menuProps(mapa) {
-  return [...MAP_PROPS, ...(mapa.props || [])];
+  return mapPropIds(mapa);
 }
 let _menuLoadSeq = 0;
 async function loadMenuBackdrop() {
@@ -624,7 +624,8 @@ startVisibleRotation(async () => {
   _wallK = next;
   try { localStorage.setItem('cs_wallK', String(_wallK)); } catch {}
   refreshWallpapers();
-}, () => !MOBILE_AUTO && ['main-menu', 'team-select', 'char-select'].some(id => !$(id)?.classList.contains('hidden')));
+/* Rotação de wallpaper fora do char-select (dono, 31/10): fundo girando sob o preview lê como flicker. */
+}, () => !MOBILE_AUTO && ['main-menu', 'team-select'].some(id => !$(id)?.classList.contains('hidden')));
 startVisibleRotation(async () => {
   const next = (_loadWallI + 1) % LOADING_WALLS.length;
   const preload = new Image();
@@ -1101,7 +1102,9 @@ function enquadrarMaos(p, m) {
   let mao = null;
   m.group.traverse((o) => { if (!mao && o.isBone && /right.?hand|hand.?r\b|rhand|r_hand/i.test(o.name)) mao = o; });
   if (!mao) return;
-  if (p.mixer) { p.mixer.update(0); p.mixer.timeScale = 0; }
+  // mede a pose que o loop() de fato desenha: ctrl (idle+IK) restaura o overlay que mixer.update(0) desfaz
+  if (p.ctrl) p.ctrl.update(0, 0, false, 0); else if (p.mixer) p.mixer.update(0);
+  if (p.mixer) p.mixer.timeScale = 0;
   m.group.updateMatrixWorld(true);
   const alvo = new THREE.Vector3().setFromMatrixPosition(mao.matrixWorld);
   p.cam.position.set(alvo.x + 0.42, alvo.y + 0.12, alvo.z + 0.52);
@@ -1186,7 +1189,7 @@ function pvSetChar(def) {
     // Keep the PREVIOUS model visible while the real GLB streams in — never flash the
     // blocky placeholder for a character that has a real model (the pop-in bug).
     const arma = armaDoPreview(def.id);
-    Promise.all([preloadCharacterAssets([def.id]),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
+    Promise.all([preloadCharacterAssets([def.id], { weapons:[arma.weaponId] }),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
       preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId),
       arma.gloveSkinId ? preloadGloveAssets([def.id]) : null]).then(() => {
       if (my !== pvToken) return;
@@ -1195,7 +1198,7 @@ function pvSetChar(def) {
       // (era o "posturas bizarras" de 05/08). Ângulos por classe em glbchars.js. No jogo,
       // nada muda.
       const m = hasModel(def.id) ? buildCharacterModel(def, { weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, gloveSkinId: arma.gloveSkinId, preview: true }) : null;
-      if (!m) { showBox(); return; }
+      if (!m) { if (!p.model) showBox(); return; }   // já há um personagem na tela: manter, nunca piscar a caixa
       if (p.model) p.scene.remove(p.model);
       // Evidência do que foi montado na mão (régua LB20): os valores saem do objeto 3D,
       // não da intenção - canvas não se lê e intenção não prova nada.
@@ -1221,7 +1224,7 @@ function pvSetChar(def) {
       // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
       // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.
       if (PV_CAM_MAOS) enquadrarMaos(p, m);
-    }).catch(() => { if (my === pvToken) showBox(); });
+    }).catch(() => { if (my === pvToken && !p.model) showBox(); });
   } else {
     showBox();
   }
@@ -1363,7 +1366,7 @@ function openHubRoster(updateRoute = true) {
         // Voltar ao personagem base com skin equipada TIRA a skin no servidor antes de trocar.
         if (equipada) {
           try { if (!await desequiparTretaSkin()) throw new Error('unequip_recusado'); }
-          catch { $('hub-roster-selected').textContent = 'Não deu para tirar a skin agora. Tente de novo em instantes.'; return; }
+          catch { $('hub-roster-selected').textContent = frase('skinTirarErro'); return; }
         }
         escolher(def.id);
       };
@@ -1371,10 +1374,10 @@ function openHubRoster(updateRoute = true) {
       if (def.id !== currentChar) {
         const pin = document.createElement('button'); pin.type = 'button';
         const ehPin = settings.pinnedChars.includes(def.id);
-        const papel = podeNoLado(def, currentTeam) ? 'ALIADO' : 'INIMIGO';
+        const papel = podeNoLado(def, currentTeam) ? tr('ALIADO') : tr('INIMIGO');
         pin.className = 'hub-roster-pin';
         pin.setAttribute('aria-pressed', String(ehPin));
-        pin.title = ehPin ? `Escalado como ${papel} — clique para tirar` : `Escalar como ${papel} na próxima partida`;
+        pin.title = ehPin ? frase('pinTituloTravado', papel) : frase('pinTituloEscalar', papel);
         pin.textContent = ehPin ? papel : '＋';
         pin.onclick = (ev) => {
           ev.stopPropagation();
@@ -1397,7 +1400,7 @@ function openHubRoster(updateRoute = true) {
         skinButton.onclick = async () => {
           ui.click();
           try { if (!await equiparTretaSkin(skin.id)) throw new Error('equip_recusado'); }
-          catch { $('hub-roster-selected').textContent = 'Não deu para equipar esta skin agora. Tente de novo em instantes.'; return; }
+          catch { $('hub-roster-selected').textContent = frase('skinEquiparErro'); return; }
           escolher(def.id);
         };
         skinCell.appendChild(skinButton);
@@ -1406,7 +1409,7 @@ function openHubRoster(updateRoute = true) {
     }
     const selected = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
     const skinAtual = armario.find((s) => s.equipped && s.character === selected.id) || null;
-    $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[ladoValido(selected, currentTeam)])} · ${selected.name}${skinAtual ? ` · ${skinAtual.name}` : ''}`;
+    $('hub-roster-selected').textContent = frase('selecionado', tr(FACTION_NAME[ladoValido(selected, currentTeam)]), selected.name, skinAtual ? skinAtual.name : '');
     /* ESCALAÇÃO travada: contagem por papel contra as VAGAS do formato escolhido —
        passar do limite não quebra nada (pickMatchRoster corta), mas o jogador vê. */
     const papelDe = (id) => { const c = CHARACTERS.find((x) => x.id === id); return c && podeNoLado(c, currentTeam) ? 'ally' : 'enemy'; };
@@ -1415,8 +1418,8 @@ function openHubRoster(updateRoute = true) {
     const linha = $('hub-roster-escalacao');
     if (linha) {
       linha.textContent = nAlly || nEnemy
-        ? `ESCALAÇÃO: ${Math.min(nAlly, settings.allyBots)} de ${settings.allyBots} aliados · ${Math.min(nEnemy, settings.enemyBots)} de ${settings.enemyBots} inimigos` + ((nAlly > settings.allyBots || nEnemy > settings.enemyBots) ? ' — escalados além das vagas são descartados' : ' — resto sorteado')
-        : 'ESCALAÇÃO: automática (clique no ＋ de um personagem pra travá-lo)';
+        ? frase('escalacaoVagas', Math.min(nAlly, settings.allyBots), settings.allyBots, Math.min(nEnemy, settings.enemyBots), settings.enemyBots, nAlly > settings.allyBots || nEnemy > settings.enemyBots)
+        : frase('escalacaoAuto');
     }
     const limpar = $('hub-roster-clear');
     if (limpar) {
@@ -2010,21 +2013,24 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // A sonda de QA do viewmodel inclui a arma pedida no preload; sem isso a HUD podia
   // selecionar uma arma de teste cujo GLB não tinha entrado nesta partida reduzida.
   const _qaVmWeapon = testMode && WEAPON_IDS.includes(params.get('vmweapon')) ? params.get('vmweapon') : null;
-  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon])].filter(Boolean);
+  // TRETA$ da partida: todo mundo nasce de pistola, então ela entra no preload junto com as sorteadas
+  const economia = economiaLigada({ busca: location.search, online: !!sessao, wpnMode: settings.wpnMode });
+  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon, economia ? 'pistol' : null])].filter(Boolean);
   const _vmStartWeapon = _qaVmWeapon || (sessao
     ? sessao.net.meta.roster.find((r) => r.id === sessao.net.yourEnt)?.weapon || charWeapon(charId)
-    : settings.wpnMode === 'awp' ? 'awp' : settings.wpnMode === 'knife' ? 'knife'
+    : economia ? 'pistol' : settings.wpnMode === 'awp' ? 'awp' : settings.wpnMode === 'knife' ? 'knife'
       : settings.wpnMode === 'pistols' ? 'pistol' : charWeapon(charId));
   const _vmBootWeapons = POINTER_COARSE ? [_vmStartWeapon] : _armasDaPartida;
   try {
     if (!navOnly) {
-      await Promise.all([
+      await aguardarPreloads([
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
         preloadCosmeticAssets(matchSkins),
         preloadEyewearAssets(matchEyewear),
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
+        playerKnifeSkinId ? preloadWeaponSkinCandidate(playerKnifeSkinId) : null,
         sfx.preloadWeaponSamples(_armasDaPartida),
-        preloadMapProps([...MAP_PROPS, ...(mapaPartida.props || [])]),   // + props do mapa (Havan: carros/estátua)
+        preloadMapProps(mapPropIds(mapaPartida)),
         MOBILE_AUTO ? null : preloadAmbientLife(mapaPartida.ambience || []),
         mapaPartida.preload ? mapaPartida.preload() : null,
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
@@ -2045,7 +2051,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     settings: sessao ? { ...settings, bots: tamanhoTime, allyBots: Math.max(0, tamanhoTime - 1), enemyBots: tamanhoTime } : settings,
     renderer, textures, sfx,
     playerCharId: charId, playerSkinId, playerEyewearId, playerGloveId, playerWeaponSkins, playerKnifeSkinId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
-    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
+    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons, economia,
     ctf: modoEfetivoAtual() === 'ctf',
     /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
        sobrariam nove corpos locais para dez entidades e um jogador ficaria invisível. */
@@ -3973,8 +3979,8 @@ function pickTeam(faction) {
       // Avatar = busto cortado da ARTE APROVADA (molde/neutro), não do GLB low-poly —
       // referência 03: a coluna da esquerda é uma fileira de retratos, não de modelos 3D.
       const thumb0 = `/img/chars/avatars/${c.id}.webp?v=${VERSION}`;
-      row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false');
-      row.innerHTML = `<img src="${thumb0}" alt="${c.name}"><span>${c.name}</span>`;
+      row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false'); row.title = c.name;
+      row.innerHTML = `<img src="${thumb0}" alt="${c.name}" loading="lazy"><span>${c.name}</span>`;
       row.onmouseenter = () => ui.hover();
       // A faixa é horizontal, mas ↑↓ continuam aceitos para quem já usava o fluxo antigo.
       row.onkeydown = (e) => {
@@ -4316,7 +4322,9 @@ function loop(agoraMs = performance.now()) {
       const pvDt = pv.travado ? 0 : Math.min(0.05, dtReal);   // ?pvcam=maos congela pose e giro
       if (!pvDrag && !pv.travado) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
       // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
-      if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
+      if (!pv.travado) {
+        if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
+      }
       pv.r.render(pv.scene, pv.cam);
     }
   }
@@ -5137,7 +5145,7 @@ function mpPreCarregarProximo(m) {
   Promise.all([
     plano.chars.length ? preloadCharacterAssets(plano.chars, { weapons: armas }) : null,
     sfx.preloadWeaponSamples(armas),
-    mapaReady.then((mapa) => preloadMapProps([...MAP_PROPS, ...(mapa.props || [])])),
+    mapaReady.then((mapa) => preloadMapProps(mapPropIds(mapa))),
     MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadAmbientLife(mapa.ambience || [])),
     mapaReady.then((mapa) => mapa.preload ? mapa.preload() : null),
     preloadAuthoredFamilies(authoredBootFamilies(POINTER_COARSE ? [] : armas)),

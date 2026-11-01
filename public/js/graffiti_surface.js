@@ -17,11 +17,11 @@ export function superficieGrafitavel(mesh) {
 // 3 cm de montagem + arredondamento do bake; qualquer ponto sem parede reprova.
 export const GRAFFITI_SUPPORT_DISTANCE = 0.05;
 
-export function criarSuporteGrafite(root, grade) {
+export function criarSuporteGrafite(root, grade, ignorarMesh = null) {
   root.updateMatrixWorld(true);
   const walls = [];
   root.traverse((mesh) => {
-    if (!mesh.isMesh || !mesh.geometry || !mesh.material || !(mesh.layers.mask & 1)) return;
+    if (mesh === ignorarMesh || !mesh.isMesh || !mesh.geometry || !mesh.material || !(mesh.layers.mask & 1)) return;
     for (let node = mesh; node; node = node.parent) {
       if (!node.visible || /^(decal:|mural:)/.test(node.name)) return;
     }

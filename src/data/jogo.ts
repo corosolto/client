@@ -196,7 +196,7 @@ export const MAPAS: Mapa[] = [
   {"id": "velho_oeste", "nome": "Sertão da Treta", "modo": "CTF · rounds opcional", "ctf": true, "resumo": "Arena no sertão, com construções e paisagem da caatinga.", "detalhe": "Explore as rotas da arena do sertão. Abre em Capture the Flag; escolha o modo no menu antes de jogar."},
   {
     id: 'operacao_flavio', nome: 'Operação Flávio', modo: 'Escolta', ctf: false,
-    resumo: 'Escolte Flávio Bolsonaro do escritório ao avião executivo antes do fim dos 6 minutos.',
+    resumo: 'Escolte o senador Zero Um do escritório ao avião executivo antes do fim dos 6 minutos.',
     detalhe: 'A rota cruza o anel de escritórios, o controle de segurança, o pátio de serviço e o hangar. ' +
       'Flávio só avança com ao menos um defensor a até 6 metros; um atacante a até 4 metros contesta o objetivo. ' +
       'O time B vence após 3 segundos na escada de embarque. O time E vence ao abater o alvo.',

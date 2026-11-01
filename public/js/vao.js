@@ -60,17 +60,19 @@ function fator(r, px, ext, puro) {
   return 1;
 }
 
-function escalaUVporMundo(geo, w, h, d, mat) {
+export function escalaUVporMundo(geo, w, h, d, mat) {
   if (!TEXEL_ON || !geo || geo.userData.texelEscalada) return false;
   const t = mat && mat.map;
-  if (!t || !t.image || !t.image.width || !t.image.height) return false;
+  // Referência autorada mantém o tile estável enquanto a imagem real carrega.
+  const referencia = t?.userData?.texelReference, image = referencia || t?.image;
+  if (!image || !Number.isFinite(image.width) || image.width <= 0 || !Number.isFinite(image.height) || image.height <= 0) return false;
   // guarda (a): o autor do mapa declarou que esta textura não tila
   if (t.wrapS !== THREE.RepeatWrapping || t.wrapT !== THREE.RepeatWrapping) return false;
   const uv = geo.attributes.uv, idx = geo.index;
   if (!uv || !idx || !geo.groups.length) return false;
 
-  const pxU = t.image.width * (t.repeat ? t.repeat.x : 1);
-  const pxV = t.image.height * (t.repeat ? t.repeat.y : 1);
+  const pxU = image.width * (t.repeat ? t.repeat.x : 1);
+  const pxV = image.height * (t.repeat ? t.repeat.y : 1);
   if (!(pxU > 0) || !(pxV > 0)) return false;
   const tileU = pxU / ALVO_PXM, tileV = pxV / ALVO_PXM;   // metros por volta de UV
 
@@ -95,7 +97,8 @@ function escalaUVporMundo(geo, w, h, d, mat) {
     }
     mudou = true;
   }
-  if (mudou) { uv.needsUpdate = true; geo.userData.texelEscalada = true; }
+  if (mudou) uv.needsUpdate = true;
+  if (mudou || referencia) geo.userData.texelEscalada = true;
   return mudou;
 }
 

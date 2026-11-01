@@ -44,7 +44,7 @@ for (const reverse of [false, true]) {
     check('snapshot do objetivo identifica VIP pelo id autoritativo', () => assert.equal(game.objective.netState().vipId, 3));
     check('corpos com o mesmo personagem preservam NPC e humano, ordem '+(reverse ? 'VIP primeiro' : 'humano primeiro'), () => {
       const ents = [{ id: 2, team: 'B', bot: false, name: 'Jogador', x: 9, y: 0, z: 8, yaw: 0 },
-        { id: 3, team: 'B', bot: true, name: 'Flávio Bolsonaro', x: 0, y: 0, z: 1, yaw: 0 }];
+        { id: 3, team: 'B', bot: true, name: 'Zero Um', x: 0, y: 0, z: 1, yaw: 0 }];
       if (reverse) ents.reverse();
       mp._casar({ objective: { vipId: 3 }, ents });
       assert.equal(mp._netMap.get(3), vip, 'entidade VIP usa o corpo reservado');
@@ -61,7 +61,7 @@ for (const reverse of [false, true]) {
       for (const id of [65536, 0xffffffff]) {
         mp._netMap.clear();
         const ents=[{id:2,team:'B',bot:false,name:'Jogador',x:9,y:0,z:8,yaw:0},
-          {id,team:'B',bot:true,name:'Flávio Bolsonaro',x:0,y:0,z:1,yaw:0}];
+          {id,team:'B',bot:true,name:'Zero Um',x:0,y:0,z:1,yaw:0}];
         if(reverse)ents.reverse();
         mp._casar({objective:{vipId:id},ents});
         assert.equal(mp._netMap.get(id),vip,'uint32 authoritativo reserva o NPC');

@@ -1,4 +1,4 @@
-# Animação 3P: recarga visível e inclinação lateral
+# Animação 3P: recarga, locomoção e travessia
 
 Decisões e números dos overlays de tronco do `CharController` (`public/js/glbchars.js`).
 A régua é `tools/eval/tp-anim3p-check.mjs` (`npm run eval:tpanim3p`).
@@ -63,7 +63,7 @@ Jogador 3P e bots clássicos alimentam; caminho NN segue sem (flag de laboratór
 |---|---|---|
 | Levar tiro não movia nada | `ctrl.flinch(dir, forca)`: cede na direção do disparo por 0,18 s (AN6) | cabeça desloca 13–18 cm e volta a <0,3 cm |
 | Agachado atirando era estátua (`shoot()` saía cedo no crouch) | recuo aditivo de 0,12 s sem trocar de clipe (AN7) | 2,4 cm de recuo mantendo a pose `crouch` |
-| No ar o clipe acabava e o corpo voltava a CORRER | `setAr()` segura a pose de salto e amortece 0,14 s no pouso (AN8) | estado `jump` no ar, `crouch` no pouso |
+| No ar o clipe acabava e o corpo voltava a CORRER | `setAr()` segura a pose de salto; no mantle, `setMantle(f)` amarra o tempo do clipe ao progresso físico e amortece 0,14 s no pouso (AN8) | estado `jump` no ar, sombra abre no salto, `crouch` no pouso |
 | Giro instantâneo (manequim girando) | quadril atrasa até 0,61 rad e alcança a ~3,2/s (AN9) | 0,48 rad de atraso após giro de 2 rad, alcança em 0,01 |
 | Mira vertical só na cabeça | coluna assume 45% do `aimPitch` (teto 0,35 rad) | cabeça percorre 9 cm com `aimPitch` 0,5 |
 | Todo mundo caía igual | `die(dir)` enviesa o tombo pela direção do tiro | tombo medido em 1,4 m de deslocamento |
@@ -71,6 +71,18 @@ Jogador 3P e bots clássicos alimentam; caminho NN segue sem (flag de laboratór
 
 O LOD é o item que paga no celular: com 8 bots, a maior parte deles passa o tempo longe da
 câmera, e cada um custava mixer + IK de mão + malha fechada de cabeça a 60 Hz.
+
+### Mantle com progresso físico (28/10)
+
+`Espaço + direção` diante de uma beirada aprovada por `_mantleTarget` agora cria uma
+travessia de 0,30 a 0,44 s no mesmo `_moveEntity` usado pela predição local e pelo servidor.
+O corpo sobe antes de avançar, pousa apenas no apoio que a trava anti-exploit já validou e
+devolve `grounded` no último quadro. O controlador 3P recebe `mantleF` e percorre o clipe
+de pulo no mesmo relógio; a sombra de contato lê `_ar`, não o flag transitório `jumping`.
+
+A régua funcional continua sendo `npm run eval:mantle` (alcance, beiradas e território).
+`npm run eval:mantle-fluidez` adiciona o contrato visual: 18 a 28 quadros a 60 Hz, no máximo
+0,18 m por quadro, subida antes do avanço e mutante que volta a teleportar.
 
 ## Fallbacks declarados (AN5)
 
@@ -134,7 +146,7 @@ nova, não parâmetro. Armas de 2 mãos não foram tocadas.
 ## Fora de escopo, declarado
 
 Morte segue sendo o clipe `death` a 1,8× (sem ragdoll — escolha estilística vigente).
-Strafe com clipe autoral e pitch de torso na mira continuam abertos como decisão de custo.
+Strafe com clipe autoral continua aberto como decisão de custo.
 
 ## O contrato de postura (23/10): o padrão que personagem novo tem que cumprir
 
@@ -182,3 +194,14 @@ A fila de revisão, com o que cada um quebra hoje:
 Os três de tremor são os mesmos corpos que o `EMOTES-BR.md` já apontava por dependerem do
 pack de animação compartilhado: o tremor está no CLIPE, não no mount — consertar é re-autorar
 ou filtrar, e cada um desses caminhos é decisão de custo, não de parâmetro.
+
+## Rodada 31/10 — gauntlet do lote #1171
+
+Histórico e causa dos fixes desta rodada (o código aponta pra cá; comentário inline tem teto de 2 linhas).
+
+- **Teto de frente por corpo — retirado na integração #1188**: o clamp humano da asa do Canarinho e o warm-up dependente de60updates deformavam a pele (P99 0,739/57,9 ruins por10mil arestas). A ablação sem os dois recuperou0,655/33,2. O piso legado `TP_FRONT_MIN`, orientação do mount e solver mundial permanecem. A redução isolada de frenteZ não era aceite suficiente.
+- **Curl dos dedos**: a faixa0,55–0,95 rad continua nos demais62corpos. O Zumbi volta à fórmula legada completa: fallback0,5, faixa0,35–0,80 e inclinação0,45/0,06. Na AK de espessura0,189066m, o novo mínimo0,55 elevava P99 para0,685; o mínimo legado0,35 recupera0,655. Limitar só o máximo a0,80 não corrigia esse caso. Não há aprovação de todas as armas/skins por esta medição.
+- **Recentro de YAW da cabeça — retirado na integração #1188**: a correção automática de80% alterava a pose autorada e causava onze regressões no roster. A retirada preserva pitch, emotes, atraso do torso e cópia final do proxy de cabeça. O contrato em `visual-consistency/HEAD-YAW.md` passa a proteger a pose autorada com um AnimationMixer independente; não exige recentro artificial.
+- **Guarda extra de alcance do IK — retirada na integração #1188**: o wrapper de95% ignorava o offset mundial da palma e puxava para dentro alvos ainda alcançáveis. O teto das referências subia de0,675/23,6 para0,689/28,6. O `solveCCDIK` mantém sua proteção mundial com palma, reserva0,98 e passo angular máximo0,6; as quatro chamadas preservam seus alvos. A retirada não acrescenta limite anatômico de junta.
+- **Tint 3P (`TINT_3P`)**: capa do Juiz "esbranquiçada demais" — a textura do robe é clara de fábrica (PBR verde em 74/74). Multiplicador 0x98a3c6 no material da toga; crivo final na contact sheet.
+- **Morrer no meio da recarga**: `die()` cancela reload/flinch/lean/pitch. O envelope `reloadK` não era guardado por `dead` e o mergulho do tronco (spine k*0.20 pra trás) continuava sobre o clipe death clampado: o "cadáver se debatendo pra trás" do dono. Medido: reloadK 0 no cadáver.

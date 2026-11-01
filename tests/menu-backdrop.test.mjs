@@ -93,11 +93,15 @@ test('ready props release the menu while decorative fauna is still pending', { i
 test('props pending means no fauna requested; ordering is props before fauna', { id: 'mb-backdrop-02-props-before-fauna' }, async () => {
   const w = world(), run = w.load();
   assert.equal(w.loads.has('rat'), false, 'fauna must not be requested while props are still pending');
+  await flush();
+  assert.equal(run.ready, false);
+  assert.deepEqual(w.rebuilt, ['a']);
   w.take('a:props').resolve();
   await flush();
   assert.equal(w.loads.has('rat'), true, 'resolving props requests the decorative fauna');
   assert.equal(run.ready, true);
   assert.deepEqual(w.rebuilt, ['a', 'a'], 'map draws immediately and again with ready props');
+  assert.equal(w.loads.has('rat'), true, 'ready props must start the deferred fauna load');
   w.take('rat').resolve();
   await flush();
   assert.deepEqual(w.rebuilt, ['a', 'a', 'a'], 'late fauna still refines the same arena');
@@ -107,7 +111,9 @@ test('a failed optional fauna load does not discard ready scenery or reject entr
   const w = world(), run = w.load();
   w.take('a:props').resolve();
   await flush();   // fauna só é pedida depois dos props resolverem
-  w.take('rat').reject(new Error('synthetic optional download failure'));
+  w.loads.set('rat', w.take('rat'));
+  await flush();
+  w.loads.get('rat').reject(new Error('synthetic optional download failure'));
   await flush();
   assert.equal(run.error, null);
   assert.equal(run.ready, true);
@@ -130,6 +136,7 @@ test('old props and fauna cannot rebuild a newly selected map', { id: 'mb-backdr
   const currentBuilds = [...w.rebuilt];
   w.take('a:props').resolve();
   await flush();   // a fauna antiga só é pedida quando os props antigos resolvem
+  assert.deepEqual(w.rebuilt, currentBuilds, 'old props must not redraw the selected map');
   w.take('rat').resolve();
   await flush();
   assert.deepEqual(w.rebuilt, currentBuilds);
@@ -155,9 +162,14 @@ test('old callbacks from A cannot redraw after switching A to B and back to A', 
   const currentBuilds = [...w.rebuilt];
   assert.ok(currentBuilds.length > 0);
   oldProps.resolve();
+  await flush();
+  assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A props');
   bProps.resolve();
   await flush();   // callbacks velhos ainda pedem fauna, mas não podem redesenhar
-  for (const key of ['rat', 'bird']) while (w.loads.has(key)) w.take(key).resolve();
+  while (w.loads.has('rat')) w.take('rat').resolve();
+  await flush();
+  assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A fauna');
+  while (w.loads.has('bird')) w.take('bird').resolve();
   await flush();
   assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A');
 });
@@ -169,6 +181,7 @@ test('callbacks cannot redraw when map changes without starting a new preload', 
   w.context.currentMap = 'b';
   w.take('a:props').resolve();
   await flush();   // fauna do mapa antigo é pedida aqui
+  assert.deepEqual(w.rebuilt, ['a'], 'old props must not redraw after selection changes');
   w.take('rat').resolve();
   await flush();
   assert.deepEqual(w.rebuilt, ['a'], 'callbacks from the old map must not redraw after selection changes');

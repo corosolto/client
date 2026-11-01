@@ -140,7 +140,7 @@ try {
     mp._netMap.set(7, vip);
     net.snap = { tick: 21, t: 1, state: 'roundEnd', scoreE: 1, scoreB: 0,
       timeLeft: 90, objective: { checkpoint: 0 },
-      ents: [{ id: 7, team: 'B', bot: true, name: 'Flávio Bolsonaro', alive: false,
+      ents: [{ id: 7, team: 'B', bot: true, name: 'Zero Um', alive: false,
         hp: 0, x: 0, y: 0, z: 0, yaw: 0, k: 0, d: 1, weapon: 'knife' }] };
     mp.applySnapshot();
     assert.equal(vip.alive, false, 'pré-condição: snapshot aplicado');

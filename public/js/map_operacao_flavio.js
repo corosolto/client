@@ -218,12 +218,12 @@ export function buildOperacaoFlavio(scene, T = {}) {
   // Ligação render-only da lacuna central: 4 vértices, 2 triângulos, winding com normal +Y,
   // derivada apenas de position/BoxGeometry.parameters dos dois blocos vizinhos preservados.
   const pA = soloAeroporto.geometry.parameters, pP = pistaDistante.geometry.parameters;
-  const z0 = soloAeroporto.position.z + pA.depth / 2; // borda norte do solo (62)
-  const z1 = pistaDistante.position.z - pP.depth / 2; // borda sul da pista (66.5)
-  const x0 = Math.max(soloAeroporto.position.x - pA.width / 2, pistaDistante.position.x - pP.width / 2); // interseção X mínima (-47)
-  const x1 = Math.min(soloAeroporto.position.x + pA.width / 2, pistaDistante.position.x + pP.width / 2); // interseção X máxima (47)
-  const y0 = soloAeroporto.position.y + pA.height / 2; // topo do solo (0)
-  const y1 = pistaDistante.position.y + pP.height / 2; // topo da pista (-0.09), interpolação linear 0 → -0.09
+  const z0 = soloAeroporto.position.z + pA.depth / 2;
+  const z1 = pistaDistante.position.z - pP.depth / 2;
+  const x0 = Math.max(soloAeroporto.position.x - pA.width / 2, pistaDistante.position.x - pP.width / 2);
+  const x1 = Math.min(soloAeroporto.position.x + pA.width / 2, pistaDistante.position.x + pP.width / 2);
+  const y0 = soloAeroporto.position.y + pA.height / 2;
+  const y1 = pistaDistante.position.y + pP.height / 2;
   // UV por extrapolação do topface original do solo-aeroporto: u=(x+47)/94, v=(62-z)/124.
   const uvTopo = (x, z) => [(x - soloAeroporto.position.x) / pA.width + 0.5, (z0 - z) / pA.depth];
   const posConector = new Float32Array([

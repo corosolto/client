@@ -235,7 +235,7 @@ export class OperacaoFlavio {
     this.vip.secondary = 'knife';
     this.vip._objectiveNpc = 'flavio';
     game._trocarPersonagem(this.vip, vipDef, true);
-    this.vip.name = game.online || game.dedicated ? 'Flávio Bolsonaro' : '[VIP] Flávio Bolsonaro';
+    this.vip.name = game.online || game.dedicated ? vipDef.name : '[VIP] ' + vipDef.name;
     this.travarArmaVip();
     if ((!game.dedicated || game.online) && typeof document !== 'undefined') {
       this.hud = document.createElement('div');
