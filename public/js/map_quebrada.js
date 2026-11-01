@@ -1329,26 +1329,37 @@ export function buildQuebrada(scene, T) {
       b.position.set(lx, 5.0 - 0.55 * Math.sin(Math.PI * t) - 0.18, lz); root.add(b);
     }
   }
-  // MATO nas frestas: capim no pé dos muros das vielas e nas quinas do campinho. Cruzeta de
-  // dois quads com alpha; sem colisor, sem sombra — é o detalhe que tira o ar de maquete.
+  // MATO nas frestas: manchas separadas no pé dos muros, sem colisor e sem sombra.
   if (QP.get('mato') !== '0' && !LOWQ) {
     const S = 64, cv = document.createElement('canvas'); cv.width = cv.height = S; const cx2 = cv.getContext('2d');
     let sd = 401; const rn = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
-    for (let i = 0; i < 22; i++) {
-      cx2.strokeStyle = rn() > 0.85 ? 'rgba(178,166,86,0.95)' : `rgba(${62 + rn() * 40 | 0},${112 + rn() * 52 | 0},${52 + rn() * 30 | 0},0.95)`;
-      cx2.lineWidth = 1.4 + rn() * 1.8; cx2.lineCap = 'round';
-      const px = 4 + rn() * (S - 8), h = S * (0.45 + rn() * 0.45);
-      cx2.beginPath(); cx2.moveTo(px, S); cx2.quadraticCurveTo(px + (rn() - 0.5) * 10, S - h * 0.5, px + (rn() - 0.5) * 20, S - h); cx2.stroke();
+    for (let i = 0; i < 26; i++) {
+      cx2.strokeStyle = rn() > 0.55 ? `rgba(${150 + rn() * 40 | 0},${132 + rn() * 30 | 0},${70 + rn() * 24 | 0},0.95)`
+        : `rgba(${70 + rn() * 22 | 0},${96 + rn() * 30 | 0},${54 + rn() * 20 | 0},0.95)`;
+      cx2.lineWidth = 1.2 + rn() * 1.6; cx2.lineCap = 'round';
+      const px = 4 + rn() * (S - 8), h = S * (0.4 + rn() * 0.4);
+      cx2.beginPath(); cx2.moveTo(px, S); cx2.quadraticCurveTo(px + (rn() - 0.5) * 12, S - h * 0.5, px + (rn() - 0.5) * 22, S - h); cx2.stroke();
     }
     const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
     const matoMat = new THREE.MeshStandardMaterial({ map: tx, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide, roughness: 1 });
-    const geo = new THREE.PlaneGeometry(0.9, 0.65);
+    const geo = new THREE.PlaneGeometry(0.75, 0.45);
+    const touceiras = [
+      [-21.4, -35.0, 3, 1.4], [-24.6, -27.5, 2, 1.0], [-21.4, -19.0, 4, 1.6],
+      [-24.6, -8.0, 2, 0.9], [-21.4, 1.5, 3, 1.2], [-24.6, 13.0, 2, 1.0], [-21.4, 24.0, 3, 1.3],
+      [21.4, -32.0, 2, 1.0], [24.6, -22.5, 3, 1.3], [21.4, -11.0, 2, 0.9],
+      [24.6, 0.5, 3, 1.4], [21.4, 11.5, 2, 1.0], [24.6, 21.0, 3, 1.2],
+    ];
     let ms = 9161; const rr = () => (ms = (ms * 48271) % 2147483647) / 2147483647;
-    for (let i = 0; i < 190; i++) {
-      const lado = rr();
-      const x = lado < 0.5 ? (rr() < 0.5 ? -21.4 : -24.6) : (rr() < 0.5 ? 21.4 : 24.6);
-      const z = -38 + rr() * 66, y = 0.32;
-      for (const rot of [0, Math.PI / 2]) { const m = new THREE.Mesh(geo, matoMat); m.position.set(x + (rr() - 0.5) * 0.5, y, z); m.rotation.y = rot + rr(); m.userData.nonSolidSurface = true; root.add(m); }
+    for (const [cx3, cz3, n, lz] of touceiras) for (let i = 0; i < n; i++) {
+      const x = cx3 + (rr() - 0.5) * 0.25, z = cz3 + (i - (n - 1) / 2) * (lz / Math.max(1, n - 1)) + (rr() - 0.5) * 0.3;
+      const s = 0.55 + rr() * 0.4, ry = rr() * Math.PI;
+      for (const rot of [0, Math.PI / 2]) {
+        const m = new THREE.Mesh(geo, matoMat);
+        m.position.set(x + (rr() - 0.5) * 0.14, 0.32, z); m.rotation.y = rot + ry * 0.6;
+        m.scale.set(s, 0.6 + rr() * 0.45, 1);
+        m.position.y = geo.parameters.height * m.scale.y / 2 - 0.01;
+        m.userData.nonSolidSurface = true; root.add(m);
+      }
     }
   }
 
