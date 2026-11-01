@@ -146,3 +146,9 @@ Root lê/rebinda e adota esta composição, depois coordena publicação normal 
 ciclos formal/whole no head publicado. Sem browser/headless/fullgate nesta lease;
 Game3:2, contato/material/motion, MP e mobile continuam pendentes. A missão
 integral, #1158 excluído, UI/social depois e owners preservados continuam.
+
+RootR974: merge normalHands c2cff432 incorpora staging0a28/ambiênciaPiscina e
+cabeçalhoMA1 corrigido, mantendo3unidadesJS S4 e aliases dospais. A laneS4
+continua semJava nempatchdearma. MA1/soundscape/manifesto/docs/archPASS.
+JavafinalherdaráesteHEADpara manterancestry daPR1210. Gatesnormais e reviews
+atuaissobRootseguempendentes; nenhumaceitearteGame/mobile/MP/release.

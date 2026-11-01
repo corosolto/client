@@ -220,3 +220,19 @@ aliases de identidade/origem; medir a alteração de timing nos focais indicados
 Autoria de composição, sem crítico independente, browser, fullgate, publicação,
 backend, aceite de arte/Game3:2/mobile/MP ou release. A missão integral e as
 exclusões/owners descritos acima permanecem.
+
+
+### R958: staging atual pela ancestry de S4
+
+Recebido por merge normal o S4 Root R974
+`845644c2a47cb787270ebe261753c5b1cabbac4e`, que contém Hands c2 e staging
+0a28/#1137. Conflito somente na linha check:fast; conservado o superset Java/S4
+com os argumentos dos pais e a formatação recebida. Cinco módulos congelados
+permanecem idênticos, incluindo os três JS de S4/Java e authoredvm/weapons.
+Soundscape completo PASS33,239s, grafite PASS2,337s, MA1 PASS0,837s e docs/arch
+PASS. O problema de metadata de MA1 foi corrigido pela origem Root recebida,
+sem edição do scanner. A ancestry mantém #1210 separado de Java.
+
+Próximo: receber d46cf515 R944 autorizado por Root R968, medir seus focais e
+aguardar o S4 final com F2/Factory atuais antes de congelar a entrega completa.
+Não há R970/skin nesta composição; browser/fullgate/publicação permanecem Root.

@@ -110,6 +110,9 @@ jobs:
       - name: Todo mapa devolve o que o game.js consome
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:mapcontrato
+      - name: Loops de áudio de todos os mapas usam src carregável
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:soundscape-contract
       - name: Pichação colada na parede e sem vazar pela quina da frente
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:pichacao-parede
