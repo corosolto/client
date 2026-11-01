@@ -5,7 +5,7 @@ import { ajustarAnisotropia } from './textures.js';
 import { MAPS, resolveMapId } from './maps.js';
 import { atualizaCortes } from './mapprops.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon, podeNoLado } from './characters.js';
-import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver } from './glbchars.js';
+import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver, hasGloveModel, preloadGloveAssets, GloveManifestUnavailable } from './glbchars.js';
 import { weaponModel, weaponCFG, hasWeapon, preloadWeapons, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
 import { gloveSkinStyle } from './data/glove-skin-definitions.js';
@@ -6746,12 +6746,53 @@ export class Game {
   // (Re)constrói o corpo TP com a arma ATUAL na mão, pelo mesmo caminho dos bots. Sem GLB
   // ainda, cai no box e faz upgrade quando o asset chegar. Ver docs/RIG-PEGA-ARMA.md.
   _ensurePlayerTP() {
+    if (this._disposed || this.dedicated) return;
     const w = this.player.weapon, def = this._defNoLado(this.playerDef, this.playerTeam);
     // A pintura equipada também vale em 3ª pessoa; a faca vive em campo próprio (pack). Kill-switch: ?skin3p=0.
     const skinTP = QS.get('skin3p') === '0' ? null : (w === 'knife' ? (this.playerKnifeSkinId || null) : (this.playerWeaponSkins?.[w] || null));
+    const gloveId = gloveSkinStyle(this.playerGloveId)?.id || null;
+    const demandKey = JSON.stringify([def.id, gloveId]);
+    if (this._tpGloveDemand?.key !== demandKey) {
+      this._tpGloveDemand = { key: demandKey, retried: false };
+      this._tpGloveAsked?.clear();
+    }
+    const demand = this._tpGloveDemand;
+    const gloveReady = Boolean(gloveId && hasGloveModel(def.id));
+    if (gloveId && hasModel(def.id) && !gloveReady) {
+      const asked = this._tpGloveAsked ||= new Set();
+      if (!asked.has(def.id)) {
+        asked.add(def.id);
+        void preloadGloveAssets([def.id]).catch((e) => {
+          if (e instanceof GloveManifestUnavailable) {
+            e.warn();
+            if (!this._disposed && this._tpGloveDemand === demand && !demand.retried) {
+              demand.retried = true;
+              asked.delete(def.id);
+            }
+          } else console.warn('[luvas] pacote TP indisponível');
+        });
+      }
+    }
+    const gloveChanged = this.playerTP?.isGLB && !this._tpDead
+      && (this._tpGloveId !== gloveId || this._tpGloveReady !== gloveReady);
     const weaponChanged = this.playerTP && (this._tpWeapon !== w || this._tpDefId !== def.id || this._tpSkinId !== (def.skinId || null) || this._tpEyewearId !== (def.eyewearId || null) || this._tpArmaSkin !== skinTP);
     const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id);
-    if (this.playerTP && !weaponChanged && !wantUpgrade) return;
+    if (gloveChanged && !weaponChanged && !wantUpgrade && this.playerTP.setGloveSkin) {
+      const tp = this.playerTP;
+      const { removed, added } = tp.setGloveSkin(this.playerGloveId);
+      const old = new Set(removed);
+      tp.selfMeshes = tp.selfMeshes.filter(item => !old.has(item.object));
+      for (const mesh of added) {
+        mesh.userData.noHit = true;
+        mesh.userData.selfBody = true;
+        tp.selfMeshes.push({ object: mesh, visible: mesh.visible });
+        if (tp.selfOccluded) mesh.visible = false;
+      }
+      this._tpGloveId = gloveId;
+      this._tpGloveReady = gloveReady;
+      return;
+    }
+    if (this.playerTP && !weaponChanged && !wantUpgrade && !gloveChanged) return;
     // Tenta o GLB (grip real). Se ainda não carregou e já temos algo, mantém o atual —
     // evita reconstruir o box a cada frame enquanto os clips não chegam.
     const glb = buildCharacterModel(def, { weaponId: w, weaponSkinId: skinTP, gloveSkinId: this.playerGloveId });
@@ -6770,6 +6811,8 @@ export class Game {
     tp.group.visible = (this.camView === 'third');
     this.scene.add(tp.group);
     this.playerTP = tp;
+    this._tpGloveId = gloveId;
+    this._tpGloveReady = gloveReady;
     this._tpWeapon = w;
     this._tpDefId = def.id; this._tpSkinId = def.skinId || null; this._tpEyewearId = def.eyewearId || null;
     this._tpArmaSkin = skinTP;

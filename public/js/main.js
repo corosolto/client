@@ -13,7 +13,7 @@ import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { EMOTES_ENABLED } from './emote-features.js';
 import { preloadEyewearAssets } from './eyewear.js';
-import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver } from './glbchars.js';
+import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver, GloveManifestUnavailable } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps, mapPropIds } from './mapprops.js';
 import { preloadMapAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
@@ -1310,7 +1310,7 @@ function pvSetChar(def) {
     const arma = armaDoPreview(def.id);
     Promise.all([preloadCharacterAssets([def.id], { weapons:[arma.weaponId] }),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
       preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId),
-      arma.gloveSkinId ? preloadGloveAssets([def.id]) : null]).then(() => {
+      arma.gloveSkinId ? preloadGloveAssets([def.id]).catch((e) => { if (!(e instanceof GloveManifestUnavailable)) throw e; e.warn(); }) : null]).then(() => {
       if (my !== pvToken || !previewHeroVisible()) return;
       // preview: porte de EXIBIÇÃO — arma atravessada no peito (estilo vitrine do CS) em
       // vez do porte funcional que aponta o cano pra câmera e esconde a silhueta da arma

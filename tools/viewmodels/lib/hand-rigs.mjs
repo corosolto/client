@@ -169,8 +169,8 @@ const inStar = (x, y) => { let hit = false; for (let i = 0, j = 9; i < 10; j = i
   const [a, b] = star[i], [c, d] = star[j]; if ((b > y) !== (d > y) && x < (c - a) * (y - b) / (d - b) + a) hit = !hit;
 } return hit; };
 
-// Pintura idêntica à dos atlas de 05–06/09; `pintura` é o papel antigo (glove/cloth/skin/combined).
-export function pintar({ fields, size }, pintura, style) {
+// Chamadores sem layout preservam a pintura legada dos atlas aprovados.
+export function pintar({ fields, size }, pintura, style, layout = '') {
   const glove = parse(style.glove), sleeve = parse(style.sleeve), accent = parse(style.accent);
   const pixels = Buffer.alloc(size * size * 3), heights = Buffer.alloc(size * size);
   const skin = SKIN;
@@ -318,7 +318,8 @@ export function pintar({ fields, size }, pintura, style) {
     }
     // Identidade na luva inteira, dedos inclusive: é o que aparece em toda arma (a pistola quase
     // não mostra punho nem manga; crítico cego, rodada 2).
-    if (!exposed && !isSleeve && !noEixo && !cuff && !handPanel && style.motif === 'star') {
+    if (!exposed && !isSleeve && !noEixo && !cuff && !handPanel && style.motif === 'star'
+      && !(layout === 'pistol' && pintura === 'glove' && style.id === 'E')) {
       const u = volta / 0.3 + (Math.floor(y / 0.3) % 2) * 0.5, v = y / 0.3;
       const fu = u - Math.floor(u) - 0.5, fv = v - Math.floor(v) - 0.5;
       if (inStar(fu * 0.62, fv * 0.62)) color = accent;
