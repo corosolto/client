@@ -19,7 +19,7 @@
 import * as THREE from 'three';
 import { aplicaSombraSol } from './mapquality.js';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
-import { decalIds, paredeAtras, medirParede } from './map_decals.js';   // pool por NOME + medição de parede
+import { decalIds, paredeAtras, medirParede, offsetTinta } from './map_decals.js';   // pool por NOME + medição de parede
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';
@@ -390,7 +390,7 @@ export function buildQuebrada(scene, T) {
     if (!m) {
       m = new THREE.MeshStandardMaterial({
         map: T.decals[i], transparent: true, alphaTest: 0.22, roughness: 0.98, metalness: 0,
-        polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+        ...offsetTinta(-4, -4),   // só unidades: ver map_decals.js (offsetTinta)
       });
       _dmat.set(i, m);
     }

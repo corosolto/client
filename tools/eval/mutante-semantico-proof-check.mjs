@@ -21,6 +21,19 @@ const bad=[{...good,status:0},{...good,status:2},{...good,status:78},{...good,si
 for(const [i,r] of bad.entries())assert.equal(aceitaResultado(r,expected),false,'rejeitar falsoverde '+i);
 console.log('PASS semantic-proof: controle válido e'+bad.length+' falsos positivos rejeitados');
 
+// mutantes-anunciados: casos esperados são independentes do child (9 nominais + 1 injetado).
+for(const fix of [{mutant:'anuncia-fantasma',clause:'MA1',cases:10},{mutant:'executa-fantasma',clause:'MA2',cases:10}]){
+ const row={clause:fix.clause,type:'ContractViolation',message:'Anunciado sem execução: '+fix.mutant};
+ const base={status:1,stdout:'Mutação aplicada: '+fix.mutant+'\n'+JSON.stringify({mutant:fix.mutant,cases:fix.cases,failed:[row]}),stderr:''};
+ assert.equal(aceitaResultado(base,fix),true,'mutantes-anunciados aceita rejeição semântica de '+fix.mutant);
+ const v=overrides=>({...base,...overrides,stdout:overrides.stdout??('Mutação aplicada: '+fix.mutant+'\n'+JSON.stringify({mutant:fix.mutant,cases:fix.cases,failed:[row],...(overrides.report||{})}))});
+ const rejeitar=[v({status:0}),v({status:2}),v({stdout:base.stdout.replace('Mutação aplicada: ','Sem aplicação: ')}),
+  v({report:{mutant:'outro'}}),v({report:{cases:9}}),v({report:{cases:11}}),v({report:{failed:[]}}),
+  v({report:{failed:[{...row,clause:'MA9'}]}}),v({report:{failed:[{...row,type:'TypeError'}]}}),
+  {...base,stderr:'SyntaxError: setup'},{...base,stdout:'Mutação aplicada: '+fix.mutant+'\n{quebrado'}];
+ for(const [i,r] of rejeitar.entries())assert.equal(aceitaResultado(r,fix),false,'mutantes-anunciados rejeita falso-verde '+fix.mutant+' caso '+i);
+}
+
 // Executa as cadeias reais do package com child isolado: mede a polaridade do shell.
 const dir=mkdtempSync(join(tmpdir(),'corosolto-proof132-'));
 try{
