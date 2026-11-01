@@ -349,6 +349,8 @@ async function worker(fixture, mutant) {
       };
       const noop = () => Promise.resolve();
       const cosmeticError = fixture === 'reject-other' ? new Error('controlled different optional load') : null;
+      const { ehMapaJavaporcos } = await import('../../public/js/maps.js');
+      const settingsOffline = { ...settings };
       const env = {
         navOnly, aguardarPreloads: ls => { loads = ls; return actual.aguardarPreloads(ls); },
         preloadCharacterAssets: G.preloadCharacterAssets, _charsToLoad: ['barbudo', 'capitao'], _armasDaPartida: ['pistol', 'awp', 'ak'],
@@ -364,7 +366,8 @@ async function worker(fixture, mutant) {
         playerWeaponSkins: {}, preloadWeaponSkinCandidate: noop, playerKnifeSkinId: null, sfx: H.sfx,
         preloadMapProps: noop, mapPropIds: () => [], mapaPartida: {}, MOBILE_AUTO: true, preloadMapAmbientLife: noop,
         preloadFPArms: noop, preloadAuthoredFamilies: noop, authoredBootFamilies: () => [], _vmBootWeapons: ['pistol'],
-        lancamentoPerdeu: () => false, meuLancamento: 1, sessao: null, _lstat: {}, Game, settings: { ...settings }, tamanhoTime: 1,
+        lancamentoPerdeu: () => false, meuLancamento: 1, sessao: null, _lstat: {}, Game, settings: settingsOffline, tamanhoTime: 1,
+        settingsDaPartida: settingsOffline, introAbort: new AbortController(), continuaPartida: false, ehMapaJavaporcos, MAPS: H.MAPS,
         renderer: H.renderer, textures, playerSkinId: null, playerEyewearId: null, side: 'E', faction: 'E', enemyFac: 'B',
         currentMap: 'posto_treta', $: () => ({ value: 'SIM' }), testMode: true, TOUCH: false, matchRoster: roster,
         matchWeapons: ['pistol'], economia: false, matchMode: 'dm', sanitizeRounds: () => 5, matchRounds: () => 5,
