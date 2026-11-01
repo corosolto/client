@@ -275,6 +275,7 @@ if (!urlMap) { settings.map = currentMap; saveSettings(); }
 /* ---------------- menu backdrop (orbiting map) ---------------- */
 
 let menuScene = new THREE.Scene();
+let menuBackdropWorld = null;
 
 const menuCam = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 400);
 /* ---------------- loading real (barra via LoadingManager compartilhado) ---------------- */
@@ -442,9 +443,11 @@ function hideLoading() {
   _lo.box.classList.add('hidden');
 }
 function rebuildMenuBackdrop(mapa) {
+  menuBackdropWorld?.ambience?.dispose?.();
+  menuBackdropWorld = null;
   renderer.liberaPosDaCena?.(menuScene);
   menuScene = new THREE.Scene();
-  mapa.build(menuScene, textures);
+  menuBackdropWorld = mapa.build(menuScene, textures);
   ajustarAnisotropia(menuScene, settings.quality);
 }
 function menuProps(mapa) {

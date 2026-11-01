@@ -215,3 +215,47 @@ test('missing boot dependency and omitted payload charge fail their actual runti
   assert.ok(expected>0);assert.throws(()=>assert.equal(missing,expected));
  });
 });
+
+
+const menuRebuildStart=main.indexOf('function rebuildMenuBackdrop(mapa) {');
+const menuRebuildEnd=main.indexOf('// Rotas compartilhadas',menuRebuildStart);
+const menuLifecycleSource=main.slice(menuRebuildStart,menuRebuildEnd);
+async function exerciseMenuFaunaLifecycle(production=menuLifecycleSource){
+ const builds=[],loads=new Map(),sharedDisposals=[];
+ const deferred=()=>{let resolve;const promise=new Promise(yes=>{resolve=yes;});return {promise,resolve};};
+ const maps=Object.fromEntries(['escadao','lajes'].map(id=>[id,{...MAPS[id],build(scene,textures){
+  const world=MAPS[id].build(scene,textures),shadow=world.ambience.animals.find(a=>a.type===(id==='escadao'?'chicken':'cat')).contactShadow;
+  const record={id,world,shadow,disposals:0};builds.push(record);
+  shadow.material.addEventListener('dispose',()=>record.disposals++);
+  for(const resource of [shadow.geometry,shadow.material.map])resource.addEventListener('dispose',()=>sharedDisposals.push(resource));
+  return world;
+ }}]));
+ const context=vm.createContext({THREE,menuScene:new THREE.Scene(),menuBackdropWorld:null,textures:initTextures(),settings:{quality:'low'},currentMap:'escadao',MAPS:maps,mapPropIds,
+  renderer:{liberaPosDaCena(){}},ajustarAnisotropia(){},comMapaCarregado:(id,use)=>Promise.resolve(use(maps[id])),
+  preloadMapProps:ids=>{const d=deferred();loads.set('props',d);return d.promise;},
+  preloadMapAmbientLife:map=>{const d=deferred();loads.set('fauna',d);return d.promise;}
+ });
+ vm.runInContext(production,context);
+ const flush=()=>new Promise(resolve=>setImmediate(resolve));
+ const assertRetired=()=>{for(const record of builds)assert.equal(record.disposals,record===builds.at(-1)?0:1,'only retired backdrop shadow materials must be disposed exactly once');assert.equal(sharedDisposals.length,0,'shared shadow geometry/texture must survive rebuilds');};
+ context.loadMenuBackdrop();assertRetired();
+ loads.get('props').resolve();await flush();assertRetired();
+ const oldFauna=loads.get('fauna');
+ context.currentMap='lajes';context.loadMenuBackdrop();assertRetired();
+ const current=builds.at(-1),count=builds.length;oldFauna.resolve();await flush();
+ assert.equal(builds.length,count,'stale fauna cannot replace or dispose current backdrop');assert.equal(current.disposals,0);
+ loads.get('props').resolve();await flush();assertRetired();
+ loads.get('fauna').resolve();await flush();assertRetired();
+ context.currentMap='escadao';context.loadMenuBackdrop();assertRetired();
+ loads.get('props').resolve();await flush();assertRetired();
+ loads.get('fauna').resolve();await flush();assertRetired();
+ context.menuBackdropWorld.ambience.dispose();assert.equal(builds.at(-1).disposals,1);assert.equal(sharedDisposals.length,0);
+}
+test('real menu rebuilds dispose retired fauna shadow materials without touching shared resources',()=>exerciseMenuFaunaLifecycle());
+for(const [name,old,replacement] of [
+ ['missing-dispose','  menuBackdropWorld?.ambience?.dispose?.();','  // removed dispose'],
+ ['missing-world','  menuBackdropWorld = mapa.build(menuScene, textures);','  mapa.build(menuScene, textures);']
+])test(`menu lifecycle causal control catches ${name}`,async()=>{
+ const changed=replaceOnce(menuLifecycleSource,old,replacement);
+ await assert.rejects(exerciseMenuFaunaLifecycle(changed),/retired backdrop shadow materials/);
+});

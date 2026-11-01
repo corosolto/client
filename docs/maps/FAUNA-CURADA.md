@@ -20,3 +20,5 @@ O comando reusa a Space fornecida e navega a página indicada. Não cria nem esc
 O mapview preloada fauna por conta própria: ele não prova a partida mobile. A aceitação inclui iniciar a partida pela UI com o perfil automático mobile ativo e conferir o modelo/material e o movimento no RAF natural. Toque emulado, conta local controlada, aparelho físico, produção e multiplayer humano são evidências distintas.
 
 A amostra cobre galinha do Escadão e gato de Lajes. Outros animais, props e superfícies sem textura continuam no censo e precisam de referências e avaliação próprias. Material simples de metal/vidro não falha apenas por não ter albedo. Ausência de medição não recebe aprovação global.
+
+O menu guarda o mundo do cenário atual e descarta a ambiência ao reconstruí-lo. Cada material de sombra anterior é liberado, preservando textura e geometria compartilhadas; callbacks de mapas antigos não descartam o cenário atual. O contrato usa os builders reais dos dois mapas e controles que removem o descarte ou a retenção do mundo.
