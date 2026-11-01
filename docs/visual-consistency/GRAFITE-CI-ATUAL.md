@@ -83,7 +83,22 @@ Controles de paridade: `--prova` (19 cláusulas de aceite + 10 contraprovas de p
 `--self-test` (CLI/uso/2/infra-3 acima), e a bateria `--mutantes` real no Chromium, que
 exige nominal 14/14 GREEN antes de qualquer mutante.
 
-## Estado
+## Estado vigente: identidade editorial pós-alias
+
+O nominal Ego14 R21 pós-alias registrou 14 mapas, 458 peças e os cinco contadores zero,
+com preferências restauradas. Veredito e raw: `audits/2026-10-31-visual-consistency/curation-Ego-14-R21*`.
+A crítica independente `CRITICO-CURATION-EGO14-R21-COERENCIA-R1.md` conferiu 597 relações
+e a igualdade de contagens/distribuição com os 14 nominais `curation-identity-CI-R6/*.json`.
+Os seis pins atuais e os 14 hashes raw foram reconferidos contra `8ee224e48` em
+`review-r71-fixes-r73/preflight-r21-pins.json` no mesmo diretório de auditoria.
+
+O log R21 conserva GREEN, mas não o envelope bruto nem hashes dos JS servidos na
+navegação. Essa limitação impede certificar retrospectivamente esses bytes; não
+transforma UNKNOWN em GREEN nem constitui aprovação estética geral ou de produção.
+O transporte CI e os checkpoints anteriores descritos abaixo são históricos;
+seus GREEN anteriores ao alias não provam ausência de repetição editorial.
+
+## Histórico de implementação
 
 Implementado e verificado **offline apenas** (`--self-test`, `--prova`, contraprovas de
 CLI/exit codes; nenhum navegador, mapa ou servidor foi aberto nesta rodada — lease
@@ -98,4 +113,4 @@ A barreira verifica erros/protocolo ANTES de qualquer mutador, tanto na bateria 
 
 R3 fonte CLEANee0ec016 fecha precedência de infra, barreira antes de mutar e caminho JSON por realpath. A bateria R4 realizou71medições:14nominais465peças, duplicação e peça no ar isoladas, zonas com efeito acoplado, wireframe/canalUV e draw-groups como controle positivo. Exit0. As fixtures duplicada/peca-no-ar agora alteram uma peça existente e preservam reconciliação geométrica; não criam clone sem metadado. Crítico independente20d25bc6 passou34controles e9JSONs. EgoR15 confirmou duplicada em Ferro com prefs restauradas.
 
-Esta rodada ainda contava identidade por arquivo. Revisão visual posterior encontrou tag-fina/tag-larga como a mesma arte com recortes diferentes; o contrato de identidade editorial e novo bake entram em checkpoint separado. O GREEN anterior não prova ausência dessa repetição semântica.
+Esta rodada ainda contava identidade por arquivo. Revisão visual posterior encontrou tag-fina/tag-larga como a mesma arte com recortes diferentes. Alias e bake posterior já foram concluídos, conforme `GRAFITE-IDENTIDADE.md`; a prova nominal pós-alias é a R21 acima. O GREEN anterior não prova ausência dessa repetição semântica.

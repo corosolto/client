@@ -530,6 +530,7 @@ function orientTpMount(t) {
 export function buildCharacterModel(def, opts = {}) {
   const cosmetic = _skins.get(def.skinId);
   const skin = cosmetic?.character === def.id ? cosmetic : null;
+  if (opts.preview && def.skinId && !skin) return null;
   const template = skin?.model || _base.get(def.id);
   if (!template || !_clips) return null;
   const withWeapon = opts.weapon !== false; // menu showcase passes weapon:false
@@ -889,7 +890,7 @@ export function buildCharacterModel(def, opts = {}) {
     ctrl.tpMount.pegadaAtiva = true;
     orientTpMount(ctrl.tpMount);
   }
-  return { group, parts: { head }, isGLB: true, mixer, ctrl };
+  return { group, parts: { head }, isGLB: true, mixer, ctrl, skinId: skin ? def.skinId : null };
 }
 
 /* O driver de coreografia (public/js/emotes.js) é injetado, nunca importado aqui:

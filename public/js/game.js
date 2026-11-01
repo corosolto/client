@@ -838,13 +838,20 @@ export class Game {
     this.world = MAPS[this._mapId].build(this.scene, textures);
     this._buildEnv();   // IBL: env map de gradiente dusk -> materiais PBR (Standard) ganham ambiente/reflexo
     this.flashTex = textures.flash;
-    // TRETA$ (docs/ECONOMIA-PARTIDA.md): a loja substitui o arsenal do mapa; sem ela
-    // (offline/dedicado/modo especial/?economia=0) os pickups estáticos FICAM (#1179).
+    // TRETA$ substitui o arsenal; sem loja ficam apenas os pickups válidos do modo.
+    // Contrato e contraprovas: docs/visual-consistency/PICKUPS-FLASH.md.
     this.dedicated = !!dedicated;
     this._ecoLigada = !!economia && economiaLigada({ busca: location.search, online: this.online, dedicado: this.dedicated, wpnMode: this._wpnMode() });
     if (this._ecoLigada) {
       for (const pk of this.world.pickups || []) pk.mesh?.removeFromParent?.();
       this.world.pickups = [];
+    }
+    if (!this._ecoLigada) {
+      this.world.pickups = (this.world.pickups || []).filter((pk) => {
+        if (Object.prototype.hasOwnProperty.call(WEAPONS, pk.weapon) && this._pickupAllowed(pk.weapon)) return true;
+        pk.mesh?.removeFromParent?.();
+        return false;
+      });
     }
 
     // teams & rosters. playerTeam = LADO físico (P/B) — dirige tudo (spawns/placar/killfeed/CTF/
@@ -5557,7 +5564,7 @@ export class Game {
       if (!mint) return;
       mint.traverse((object) => { object.castShadow = true; });
       this._grenTemplates.flash = mint;
-    }, undefined, () => {});
+    }, undefined, () => { console.warn('Flash pública indisponível; usando modelo provisório.'); });
   }
   // Casco provisório da flash: clona o da fumaça (cilindro M18), pinta de alumínio e põe
   // duas faixas amarelas. Sai quando o modelo do Mint chegar.
