@@ -173,6 +173,10 @@ export function buildCampoMorro(scene, T = {}) {
     (base.userData.clones ||= []).push(m);   // external troca o mapa no onLoad: o clone entra junto
     return m;
   };
+  // O clone recebe o zinco assíncrono pelo mesmo registro; as coroas mantêm seu material.
+  const modoFachadaQP = QP.get('campoFachadas');
+  const folhaF7R23 = modoFachadaQP !== '0' && modoFachadaQP !== '1' ? repetido(MAT.roof, 3, 3) : null;
+  if (folhaF7R23) { folhaF7R23.roughness = 0.9; folhaF7R23.metalness = 0; }
   MAT.muralha = repetido(MAT.concrete, 1, 1);
   // com UV em metros por face, o clone de densidade 3x2 quebraria o período: é o mesmo reboco
   MAT.morroFundo = MAT.wall;
@@ -679,11 +683,170 @@ export function buildCampoMorro(scene, T = {}) {
       for (const borda of [-1, 1]) fim(0.22, h + 0.12, 0.5, fx, base, z + borda * 2.95);
     }
   }
+  // Requadros fechados preservam a guarda; ?campoFachadas=0 mantém a montagem anterior.
+  const pilotoBatches = new Map();
+  const pecaPiloto = (mat, w, h, d, x, y, z) => {
+    const geo = new THREE.BoxGeometry(w, h, d);
+    if (mat === MAT.wall || mat.userData?.rebocoMetros) uvRebocoMetros(geo, w, h, d);
+    if (!pilotoBatches.has(mat)) pilotoBatches.set(mat, []);
+    pilotoBatches.get(mat).push(geo.translate(x, y + h / 2, z));
+  };
+  const vaoPiloto = (cx, cy, w, hh, porta) => {
+    pecaPiloto(porta ? MAT.door : MAT.glass, w, hh, 0.05, cx, cy, 29.65);
+    fim(w + 0.26, 0.09, 0.28, cx, cy + hh, 29.70);
+    for (const l of [-1, 1]) fim(0.13, hh, 0.24, cx + l * (w / 2 + 0.065), cy, 29.68);
+    if (!porta) fim(w + 0.34, 0.09, 0.34, cx, cy - 0.09, 29.73);
+  };
+  const fachadaPiloto = (x, base, h, i) => {
+    const pz = 29.69, pz2 = pz;
+    pecaPiloto(MAT.concrete, 6.4, 0.18, 0.2, x, base, 29.67);
+    if (i === 6) {
+      pecaPiloto(MAT.wall, 3.5, h, 0.12, x - 1.35, base, pz);
+      pecaPiloto(MAT.concrete, 2.7, h - 0.3, 0.12, x + 1.75, base, pz2);
+      pecaPiloto(MAT.concrete, 3.6, 0.13, 0.28, x - 1.35, base + 2.08, 29.70);
+      pecaPiloto(MAT.roof, 3.6, 0.12, 0.38, x - 1.35, base + h - 0.12, 29.75);
+      pecaPiloto(MAT.roof, 2.9, 0.12, 0.38, x + 1.75, base + h - 0.42, 29.75);
+      fim(0.26, h, 0.16, x + 0.4, base, 29.65);
+      vaoPiloto(x - 1.9, base + 0.02, 0.95, 1.95, true);
+      vaoPiloto(x - 0.9, base + 2.5, 0.95, 0.6, false);
+      vaoPiloto(x + 1.2, base + 0.02, 0.9, 1.9, true);
+      vaoPiloto(x + 1.2, base + 2.45, 0.8, 0.6, false);
+    } else if (i === 7) {
+      pecaPiloto(TINTA_Z[7], 6.4, h, 0.12, x, base, pz);
+      for (const l of [-1, 1]) pecaPiloto(MAT.concrete, 0.55, h, 0.22, x + l * 2.9, base, 29.68);
+      pecaPiloto(MAT.concrete, 5.25, 0.16, 0.28, x, base + 2.08, 29.70);
+      pecaPiloto(MAT.wall, 2.125, h - 2.4, 0.16, x + 1.5625, base + 2.35, 29.65);
+      pecaPiloto(MAT.roof, 6.4, 0.12, 0.38, x, base + h - 0.12, 29.75);
+      vaoPiloto(x - 1.0, base + 0.02, 1.6, 1.95, true);
+      vaoPiloto(x + 1.1, base + 0.45, 1.5, 1.5, false);
+    } else {
+      pecaPiloto(TINTA_Z[3], 3.5, h, 0.12, x - 1.35, base, pz);
+      pecaPiloto(MAT.wall, 2.7, h - 0.3, 0.12, x + 1.75, base, pz2);
+      pecaPiloto(MAT.concrete, 3.6, 0.13, 0.28, x - 1.35, base + 2.08, 29.70);
+      pecaPiloto(MAT.roof, 3.6, 0.12, 0.38, x - 1.35, base + h - 0.12, 29.75);
+      pecaPiloto(MAT.roof, 2.9, 0.12, 0.38, x + 1.75, base + h - 0.42, 29.75);
+      fim(0.26, h, 0.16, x + 0.4, base, 29.65);
+      vaoPiloto(x - 1.9, base + 0.02, 0.95, 1.95, true);
+      vaoPiloto(x - 1.9, base + 2.4, 0.9, 0.7, false);
+      vaoPiloto(x + 1.5, base + 0.02, 1.6, 1.95, true);
+      vaoPiloto(x + 1.5, base + 2.35, 1.5, 0.5, false);
+    }
+  };
+
+  /* FACHADAS R23 (?campoFachadas=2 default · =1 R22 · =0 baseline): parede segmentada
+     em caixas positivas, infills recuados (29.70..29.75), quadros `fim` 29.56..29.63. */
+  const batchR23 = new Map();
+  /* UV do pano dividido no REFERENCIAL do painel integral (fase/período preservados):
+     wall usa métrico 2 m; concrete divide pelo pano inteiro (família 3×3 do external). */
+  const uvPanoR23 = (geo, mat, P) => {
+    geo.userData.texelEscalada = true;
+    const metric = mat === MAT.wall || mat.userData?.rebocoMetros;
+    const dX = metric ? 0.5 : 1 / (P.x1 - P.x0);
+    const dY = metric ? 0.5 : 1 / (P.y1 - P.y0);
+    // Retornos (±X/±Y): densidade física 2 m — concrete 3×3 ⇒ 1/6×3 = 0.5.
+    const rD = metric ? 0.5 : 1 / 6;
+    const pos = geo.attributes.position, uv = geo.attributes.uv, idx = geo.index;
+    for (const g of geo.groups) {
+      const f = g.materialIndex | 0;
+      for (let k = g.start; k < g.start + g.count; k++) {
+        const i = idx.getX(k), X = pos.getX(i), Y = pos.getY(i), Z = pos.getZ(i);
+        let u, v;
+        if (f === 4) { u = (X - P.x0) * dX; v = (Y - P.y0) * dY; }
+        else if (f === 5) { u = (P.x1 - X) * dX; v = (Y - P.y0) * dY; }
+        else if (f <= 1) { u = (Z - 29.63) * rD; v = (Y - P.y0) * rD; }
+        else { u = (X - P.x0) * rD; v = (Z - 29.63) * rD; }
+        uv.setXY(i, u, v);
+      }
+    }
+    uv.needsUpdate = true;
+  };
+  const pecaR23 = (mat, w, h, d, x, y, z, opts = {}, P = null) => {
+    const geo = new THREE.BoxGeometry(w, h, d).translate(x, y + h / 2, z);
+    if (P) uvPanoR23(geo, mat, P);
+    else if (mat === MAT.wall || mat.userData?.rebocoMetros) uvRebocoMetros(geo, w, h, d);
+    const cast = opts.cast !== false, key = mat.uuid + '|' + (cast ? 1 : 0);
+    if (!batchR23.has(key)) batchR23.set(key, { mat, cast, geos: [] });
+    batchR23.get(key).geos.push(geo);
+  };
+  // Vãos empilhados: 2 faixas + 3 travessas; lado a lado: 3 faixas + 2 travessas por vão.
+  const PAREDE_Z = 29.69;
+  const panoColunaR23 = (mat, P, vx0, vx1, vaos) => {
+    if (vx0 > P.x0) pecaR23(mat, vx0 - P.x0, P.y1 - P.y0, 0.12, (P.x0 + vx0) / 2, P.y0, PAREDE_Z, {}, P);
+    if (P.x1 > vx1) pecaR23(mat, P.x1 - vx1, P.y1 - P.y0, 0.12, (vx1 + P.x1) / 2, P.y0, PAREDE_Z, {}, P);
+    let y = P.y0;
+    for (const v of vaos) {
+      if (v.y > y) pecaR23(mat, vx1 - vx0, v.y - y, 0.12, (vx0 + vx1) / 2, y, PAREDE_Z, {}, P);
+      y = v.y + v.h;
+    }
+    if (P.y1 > y) pecaR23(mat, vx1 - vx0, P.y1 - y, 0.12, (vx0 + vx1) / 2, y, PAREDE_Z, {}, P);
+  };
+  const panoLadoR23 = (mat, P, vaos) => {
+    const e = [P.x0, vaos[0].x0, vaos[0].x1, vaos[1].x0, vaos[1].x1, P.x1];
+    for (let s = 0; s < 3; s++)
+      if (e[s * 2 + 1] > e[s * 2]) pecaR23(mat, e[s * 2 + 1] - e[s * 2], P.y1 - P.y0, 0.12, (e[s * 2] + e[s * 2 + 1]) / 2, P.y0, PAREDE_Z, {}, P);
+    for (const v of vaos) {
+      if (v.y > P.y0) pecaR23(mat, v.x1 - v.x0, v.y - P.y0, 0.12, (v.x0 + v.x1) / 2, P.y0, PAREDE_Z, {}, P);
+      if (P.y1 > v.y + v.h) pecaR23(mat, v.x1 - v.x0, P.y1 - v.y - v.h, 0.12, (v.x0 + v.x1) / 2, v.y + v.h, PAREDE_Z, {}, P);
+    }
+  };
+  // Infill fechado em recesso; quadros fim 29.56..29.63, flush na face frontal 29.63.
+  const vaoR23 = (cx, cy, w, hh, porta, matFolha = null) => {
+    pecaR23(matFolha || (porta ? MAT.door : MAT.glass), w, hh, 0.05, cx, cy, 29.725, { cast: false });
+    fim(w + 0.26, 0.09, 0.07, cx, cy + hh, 29.595);
+    for (const l of [-1, 1]) fim(0.13, hh, 0.07, cx + l * (w / 2 + 0.065), cy, 29.595);
+    if (!porta) fim(w + 0.34, 0.09, 0.07, cx, cy - 0.09, 29.595);
+  };
+  const fachadaPilotoR23 = (x, base, h, i) => {
+    pecaR23(MAT.concrete, 6.4, 0.18, 0.2, x, base, 29.67);
+    if (i === 6) {
+      panoColunaR23(MAT.wall, { x0: x - 3.1, x1: x + 0.4, y0: base, y1: base + h }, x - 2.375, x - 1.425,
+        [{ y: base + 0.02, h: 1.95 }, { y: base + 3.05, h: 0.6 }]);
+      panoColunaR23(MAT.concrete, { x0: x + 0.4, x1: x + 3.1, y0: base, y1: base + h - 0.3 }, x + 0.75, x + 1.65,
+        [{ y: base + 0.02, h: 1.9 }, { y: base + 3.05, h: 0.6 }]);
+      pecaR23(MAT.concrete, 3.6, 0.13, 0.28, x - 1.35, base + 2.08, 29.7);
+      pecaR23(MAT.roof, 3.6, 0.12, 0.38, x - 1.35, base + h - 0.12, 29.75);
+      pecaR23(MAT.roof, 2.9, 0.12, 0.38, x + 1.75, base + h - 0.42, 29.75);
+      fim(0.26, h, 0.16, x + 0.4, base, 29.65);
+      vaoR23(x - 1.9, base + 0.02, 0.95, 1.95, true);
+      vaoR23(x - 1.9, base + 3.05, 0.95, 0.6, false);
+      vaoR23(x + 1.2, base + 0.02, 0.9, 1.9, true);
+      vaoR23(x + 1.2, base + 3.05, 0.9, 0.6, false);
+    } else if (i === 7) {
+      panoLadoR23(TINTA_Z[7], { x0: x - 3.2, x1: x + 3.2, y0: base, y1: base + h }, [
+        { x0: x - 1.8, x1: x - 0.2, y: base + 0.02, h: 1.95 },
+        { x0: x + 0.35, x1: x + 1.85, y: base + 0.45, h: 1.5 }]);
+      for (const l of [-1, 1]) pecaR23(MAT.concrete, 0.55, h, 0.22, x + l * 2.9, base, 29.68);
+      pecaR23(MAT.concrete, 5.25, 0.16, 0.28, x, base + 2.08, 29.7);
+      pecaR23(MAT.roof, 6.4, 0.12, 0.38, x, base + h - 0.12, 29.75);
+      vaoR23(x - 1.0, base + 0.02, 1.6, 1.95, true, folhaF7R23);
+      vaoR23(x + 1.1, base + 0.45, 1.5, 1.5, false);
+    } else {
+      panoColunaR23(TINTA_Z[3], { x0: x - 3.1, x1: x + 0.4, y0: base, y1: base + h }, x - 2.375, x - 1.425,
+        [{ y: base + 0.02, h: 1.95 }, { y: base + 2.4, h: 0.7 }]);
+      panoColunaR23(MAT.wall, { x0: x + 0.4, x1: x + 3.1, y0: base, y1: base + h - 0.3 }, x + 0.7, x + 2.3,
+        [{ y: base + 0.02, h: 1.95 }, { y: base + 2.35, h: 0.5 }]);
+      pecaR23(MAT.concrete, 3.6, 0.13, 0.28, x - 1.35, base + 2.08, 29.7);
+      pecaR23(MAT.roof, 3.6, 0.12, 0.38, x - 1.35, base + h - 0.12, 29.75);
+      pecaR23(MAT.roof, 2.9, 0.12, 0.38, x + 1.75, base + h - 0.42, 29.75);
+      fim(0.26, h, 0.16, x + 0.4, base, 29.65);
+      vaoR23(x - 1.9, base + 0.02, 0.95, 1.95, true);
+      vaoR23(x - 1.9, base + 2.4, 0.95, 0.7, false);
+      vaoR23(x + 1.5, base + 0.02, 1.6, 1.95, true);
+      vaoR23(x + 1.5, base + 2.35, 1.6, 0.5, false);
+    }
+  };
+
   for (const sz of [-HALF_Z, HALF_Z]) {
     guardaLado(sz, false, -HALF_X, HALF_X);
     for (let x = -31.5; x <= 31.5; x += 7) {
       const i = Math.round((x + 31.5) / 7), base = morroBase(x, sz), h = 3.0 + ((i + (sz > 0 ? 1 : 0)) % 4) * 0.55;
       const fz = sz - Math.sign(sz) * 0.31;
+      // Modos: 0 baseline original · 1 R22 · default/2 R23 (query desconhecido cai na R23).
+      const modoFachada = QP.get('campoFachadas');
+      if (sz > 0 && i >= 6 && i <= 8 && modoFachada !== '0') {
+        if (modoFachada === '1') fachadaPiloto(x, base, h, i); else fachadaPilotoR23(x, base, h, i);
+        continue;
+      }
       addBox(3.5, h, 0.12, TINTA_Z[i] || MAT.wall, x - 1.35, base, fz, { collide: false });
       addBox(2.7, h - 0.3, 0.12, i % 3 ? MAT.wall : MAT.concrete, x + 1.75, base, fz, { collide: false });
       addBox(3.7, 0.1, 0.38, MAT.roof, x - 1.35, base + h, sz - Math.sign(sz) * 0.25, { collide: false });
@@ -697,6 +860,25 @@ export function buildCampoMorro(scene, T = {}) {
       for (const borda of [-1, 1]) fim(0.5, h + 0.12, 0.22, x + borda * 2.95, base, fz);
     }
   }
+  for (const [mat, geos] of pilotoBatches) {
+    const malha = new THREE.Mesh(mergeParts(geos), mat);
+    malha.geometry.userData.texelEscalada = true;
+    malha.userData.campoFachadaPiloto = true;
+    malha.castShadow = mat !== MAT.glass && mat !== MAT.door;
+    malha.receiveShadow = true;
+    root.add(malha);
+  }
+  pilotoBatches.clear();
+  // Separar por sombra mantém a folha de zinco sem projetar sombra junto com as coroas.
+  for (const b of batchR23.values()) {
+    const malha = new THREE.Mesh(mergeParts(b.geos), b.mat);
+    malha.geometry.userData.texelEscalada = true;
+    malha.userData.campoFachadaPiloto = true;
+    malha.castShadow = b.cast;
+    malha.receiveShadow = true;
+    root.add(malha);
+  }
+  batchR23.clear();
   const malhaAcabamento = new THREE.Mesh(mergeParts(pecasFim), matJunta);
   malhaAcabamento.geometry.userData.texelEscalada = true;
   malhaAcabamento.userData.favelaFinish = 'campo';
