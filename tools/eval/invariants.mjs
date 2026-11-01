@@ -1954,7 +1954,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
     } else {
       const ok = +m[1], tot = +m[2];
       const falhas = (out.match(/FALHAS: (.*)$/m) || [])[1] || '';
-      put('MOD2', 'o modo escolhido é o modo jogado nos 5 mapas (5 mapas × 2 modos + badge + padrão do mapa)',
+      put('MOD2', 'o modo escolhido é o modo jogado; mapas de objetivo prevalecem sobre rounds/CTF',
         ok === tot, `${ok}/${tot} casos` + (falhas ? ` | ${falhas.slice(0, 240)}` : ' | 0 falhas'));
     }
   }

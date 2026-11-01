@@ -47,9 +47,9 @@ function hingeZ(array,box) {
   for(let i=0;i<array.length;i+=3)if(Math.abs(array[i]-center)<half*.6){const bin=Math.min(99,Math.floor((box.max.z-array[i+2])/depth*100));bins[bin]=true;}
   let bin=0;while(bin<100&&bins[bin])bin++;return box.max.z-depth*bin/100;
 }
-function deformTemples(accessory,profile) {
+function deformTemples(accessory,profile,owned) {
   let mesh;accessory.traverse(object=>{if(!mesh&&object.isMesh)mesh=object;});if(!mesh)return null;
-  mesh.geometry=mesh.geometry.clone();const source=mesh.geometry.getAttribute('position'),original=new Float32Array(source.count*3);
+  mesh.geometry=mesh.geometry.clone();if(owned)owned.add(mesh.geometry);const source=mesh.geometry.getAttribute('position'),original=new Float32Array(source.count*3);
   for(let i=0;i<source.count;i++){original[i*3]=source.getX(i);original[i*3+1]=source.getY(i);original[i*3+2]=source.getZ(i);}
   const position=new THREE.BufferAttribute(original.slice(),3);mesh.geometry.setAttribute('position',position);
   const box=new THREE.Box3();for(let i=0;i<original.length;i+=3)box.expandByPoint(new THREE.Vector3(original[i],original[i+1],original[i+2]));
@@ -69,10 +69,10 @@ function headBounds(body,index) {
   for(let i=0;i<position.count;i++){let weight=0;for(let channel=0;channel<4;channel++)if(skinIndex[CHANNELS[channel]](i)===index)weight+=skinWeight[CHANNELS[channel]](i);if(weight>.65)bounds.expandByPoint(point.fromBufferAttribute(position,i));}
   return bounds.isEmpty()?null:bounds;
 }
-export function mountEyewearCandidate(model,accessory,profile,landmark,itemId='candidate') {
+export function mountEyewearCandidate(model,accessory,profile,landmark,itemId='candidate',owned) {
   let body;model.traverse(object=>{if(!body&&object.isSkinnedMesh&&object.skeleton.bones.some(bone=>bone.name==='Head'))body=object;});if(!body)return null;
   const index=body.skeleton.bones.findIndex(bone=>bone.name==='Head'),head=body.skeleton.bones[index],bounds=headBounds(body,index);if(!bounds)return null;
-  const size=bounds.getSize(new THREE.Vector3()),deformation=deformTemples(accessory,profile);if(!deformation)return null;
+  const size=bounds.getSize(new THREE.Vector3()),deformation=deformTemples(accessory,profile,owned);if(!deformation)return null;
   const assetBox=new THREE.Box3().setFromObject(accessory),fitBox=profile.frontFrameFit===true?frontFitBox(accessory,deformation):assetBox,fitSize=fitBox.getSize(new THREE.Vector3());if(fitSize.x<=0)return null;
   const scale=size.x*profile.width/fitSize.x,heightScale=scale*(profile.frameHeightScale??1),center=fitBox.getCenter(new THREE.Vector3()),lensY=fitBox.min.y+fitSize.y*profile.lensY;
   accessory.scale.set(scale,heightScale,scale);accessory.position.set(-center.x*scale,-lensY*heightScale,-assetBox.max.z*scale);
@@ -83,9 +83,9 @@ export function mountEyewearCandidate(model,accessory,profile,landmark,itemId='c
   anchor.updateMatrix();anchor.matrix.premultiply(new THREE.Matrix4().copy(body.skeleton.boneInverses[index]).multiply(body.bindMatrix));anchor.matrixAutoUpdate=false;anchor.add(accessory);head.add(anchor);
   return {anchor,accessory,body,head,headIndex:index,bounds,deformation,profile,landmark};
 }
-export function mountEyewear(model,def) {
+export function mountEyewear(model,def,owned) {
   if(!TRETA_ITEMS_ENABLED)return null;
   const template=templates.get(def.eyewearId),context=eyewearCandidateProfile(template?.entry,def);
   if(!context || template.entry.approved!==true || context.profile.certified!==true)return null;
-  return mountEyewearCandidate(model,template.model.clone(true),context.profile,context.landmark,def.eyewearId)?.anchor || null;
+  return mountEyewearCandidate(model,template.model.clone(true),context.profile,context.landmark,def.eyewearId,owned)?.anchor || null;
 }

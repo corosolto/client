@@ -12,7 +12,11 @@
 import { readFileSync } from 'node:fs';
 
 const mut = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = ['manda-id', 'duracao-exata', 'partidas-exatas', 'com-cookie', 'usa-storage', 'retenta', 'sem-gate-telemetria', 'sem-gate-funil'];
+const cli = process.argv.slice(2);
+if (cli.length > 1 || cli.some((a) => a !== '--prova-main' && !/^--mutante=[a-z-]+$/.test(a))) {
+  console.error('argumento desconhecido ou combinação inválida'); process.exit(2);
+}
+const MUTANTES = ['manda-id', 'duracao-exata', 'partidas-exatas', 'com-cookie', 'usa-storage', 'retenta', 'sem-gate-telemetria', 'sem-gate-funil', 'modo-preferido', 'repete-continuacao', 'mp-como-sp'];
 if (mut && !MUTANTES.includes(mut)) { console.error(`mutante desconhecido: ${mut}`); process.exit(2); }
 
 const ler = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -33,6 +37,68 @@ if (mut === 'usa-storage') fonte = troca(fonte, 'const enviarDeVerdade = (corpo)
 if (mut === 'retenta') fonte = troca(fonte, '}).catch(() => {});\n};', '}).catch(() => setTimeout(() => enviarDeVerdade(corpo), 1000));\n};');
 if (mut === 'sem-gate-telemetria') main = troca(main, 'function sendTelemetry() {\n  if (!analyticsAllowed()) return;', 'function sendTelemetry() {');
 if (mut === 'sem-gate-funil') main = troca(main, 'function _funnel(step, gameType = null) {\n  if (!analyticsAllowed()) return;', 'function _funnel(step, gameType = null) {');
+/* Mutantes do CT9 (prova executável do _startGame): âncora na string REAL, 1 ocorrência obrigatória,
+ * marcador só depois de a troca aplicar. Cláusulas distintas: modo / continuação / tipo (sp|mp). */
+const trocaUnica = (alvo, velho, novo) => {
+  const k = alvo.split(velho).length - 1;
+  if (k !== 1) { console.error(`MUTANTE ${mut} NAO APLICOU: âncora apareceu ${k}x (exige 1)`); process.exit(2); }
+  return troca(alvo, velho, novo);
+};
+if (mut === 'modo-preferido') {
+  main = trocaUnica(main, "if (!continuaPartida) contagem.partidaIniciada({ map: currentMap, mode: modoEfetivoAtual(), game: sessao ? 'mp' : 'sp' });", "if (!continuaPartida) contagem.partidaIniciada({ map: currentMap, mode: matchMode, game: sessao ? 'mp' : 'sp' });");
+  console.log('CT9_MUTACAO_APLICADA:modo-preferido');
+}
+if (mut === 'repete-continuacao') {
+  main = trocaUnica(main, "if (!continuaPartida) contagem.partidaIniciada({ map: currentMap, mode: modoEfetivoAtual(), game: sessao ? 'mp' : 'sp' });", "contagem.partidaIniciada({ map: currentMap, mode: modoEfetivoAtual(), game: sessao ? 'mp' : 'sp' });");
+  console.log('CT9_MUTACAO_APLICADA:repete-continuacao');
+}
+if (mut === 'mp-como-sp') {
+  main = trocaUnica(main, "mode: modoEfetivoAtual(), game: sessao ? 'mp' : 'sp' });", "mode: modoEfetivoAtual(), game: 'sp' });");
+  console.log('CT9_MUTACAO_APLICADA:mp-como-sp');
+}
+
+/* --prova-main: mata a prova executável do CT9 em filhos do MESMO arquivo — baseline verde
+ * (status 0) e os 3 mutantes vermelhos (status 1, marcador aplicado, só a própria cláusula).
+ * Rejeita spawn error/signal/timeout, status 2 e crash de preparação/execução. */
+if (process.argv.includes('--prova-main') && !mut) {
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const eu = fileURLToPath(import.meta.url);
+  const CLAUSULAS = {
+    'modo-preferido': 'mode esperado',
+    'repete-continuacao': 'continuação chamou partidaIniciada',
+    'mp-como-sp': 'game esperado',
+  };
+  const problemas = [];
+  const roda = (args) => spawnSync(process.execPath, [eu, ...args], { timeout: 120_000, maxBuffer: 8 * 1024 * 1024, encoding: 'utf8' });
+  const base = roda([]);
+  if (base.error) problemas.push(`baseline spawn: ${base.error.message}`);
+  else if (base.signal) problemas.push(`baseline signal ${base.signal}`);
+  else if (base.status !== 0) problemas.push(`baseline status ${base.status}: ${`${base.stderr || ''}\n${base.stdout || ''}`.trim().slice(0, 400)}`);
+  for (const [nome, clausula] of Object.entries(CLAUSULAS)) {
+    const r = roda([`--mutante=${nome}`]);
+    const saida = `${r.stdout || ''}\n${r.stderr || ''}`;
+    if (r.error) problemas.push(`${nome} spawn: ${r.error.message}`);
+    else if (r.signal) problemas.push(`${nome} signal ${r.signal}`);
+    else if (r.status === null) problemas.push(`${nome} timeout`);
+    else if (r.status !== 1) problemas.push(`${nome} status ${r.status} (esperado 1, não falsa regressão nem crash)`);
+    else if (!saida.includes(`CT9_MUTACAO_APLICADA:${nome}`)) problemas.push(`${nome} sem marcador CT9_MUTACAO_APLICADA`);
+    else if (/TypeError|ReferenceError|SyntaxError|CT9 preparação/.test(saida)) problemas.push(`${nome} saiu por erro de preparação/execução, não falha semântica`);
+    else {
+      const doMal = saida.split('\n').filter((l) => l.includes('✗'));
+      if (!doMal.some((l) => l.includes(clausula))) problemas.push(`${nome} sem a própria cláusula (${clausula})`);
+      const estranhas = doMal.filter((l) => !l.includes(clausula));
+      if (estranhas.length) problemas.push(`${nome} falhou fora da própria cláusula: ${estranhas.join(' / ').slice(0, 300)}`);
+    }
+  }
+  if (problemas.length) {
+    console.error(`prova-main: ${problemas.length} PROBLEMA(S)`);
+    for (const p of problemas) console.error(`  ✗ ${p}`);
+    process.exit(1);
+  }
+  console.log('prova-main: baseline verde e 3 mutantes do CT9 vermelhos (modo/continuação/tipo)');
+  process.exit(0);
+}
 
 const falhas = [];
 const cobra = (ok, msg) => { if (!ok) falhas.push(msg); };
@@ -176,7 +242,39 @@ async function mundo({ webdriver = false, search = '', fetchFalha = false, agora
   cobra(/^import \{ contagem \} from '\.\/contagem\.js';/m.test(main), 'CT9 main.js não importa a contagem');
   cobra(/window\.__CS_MAIN_READY__ = true;\nwindow\.__gameLaunch\?\.ready\('boot'\);\ncontagem\.evento\('game_loaded'\);/.test(main), 'CT9 game_loaded não sai no boot pronto');
   cobra(/ready\('entrada'\);\n\s+contagem\.evento\('splash_enter'\);/.test(main), 'CT9 splash_enter não sai ao sair da splash');
-  cobra(/if \(!continuaPartida\) contagem\.partidaIniciada\(\{ map: currentMap, mode: matchMode, game: sessao \? 'mp' : 'sp' \}\);/.test(main), 'CT9 match_start (SP e MP) ausente do _startGame');
+  /* match_start: prova EXECUTÁVEL do bloco REAL — extrai _startGame (âncora: async function
+     até } na coluna 0), a ÚNICA linha if (!continuaPartida) contagem.partidaIniciada(...) e os
+     helpers de uma linha modoObjetivoAtual/modoEfetivoAtual, e roda esse código em cenários
+     fixos. Mapa de objetivo (escolta) joga rounds sem tocar na preferência matchMode. */
+  const prepara9 = (ok, msg) => { if (!ok) { console.error(`CT9 preparação: ${msg}`); process.exit(2); } };
+  const fnStart = main.match(/^async function _startGame\([^{]*\) \{[\s\S]*?\n\}/m);
+  prepara9(fnStart, 'função _startGame não achada (async function ... até } na coluna 0)');
+  const linhasStart = fnStart ? fnStart[0].split('\n').filter((l) => l.includes('contagem.partidaIniciada(')) : [];
+  prepara9(linhasStart.length === 1, `linha partidaIniciada do _startGame não é única (${linhasStart.length})`);
+  const helperObj = main.match(/^const modoObjetivoAtual = \(\) => .*;$/m);
+  const helperEfe = main.match(/^const modoEfetivoAtual = \(\) => .*;$/m);
+  prepara9(helperObj && helperEfe, 'helpers modoObjetivoAtual/modoEfetivoAtual não achados (uma linha cada)');
+  if (fnStart && linhasStart.length === 1 && helperObj && helperEfe) {
+    const MAPS9 = { mapaNormal: {}, mapaObjetivo: { objectiveMode: 'escolta' } };
+    const casos9 = [['mapaNormal', 'rounds', 'rounds'], ['mapaNormal', 'ctf', 'ctf'], ['mapaObjetivo', 'ctf', 'rounds'], ['mapaObjetivo', 'rounds', 'rounds']];
+    for (const [mapa, pref, modoEsperado] of casos9) for (const online of [false, true]) for (const continua of [false, true]) {
+      const chamadas = [];
+      const contagem9 = { partidaIniciada: (c) => chamadas.push(c) };
+      const prova = new Function('MAPS', 'currentMap', 'matchMode', 'continuaPartida', 'sessao', 'contagem', `${helperObj[0]}\n${helperEfe[0]}\n${linhasStart[0].trim()}\nreturn [matchMode, MAPS];`);
+      const depois = prova(MAPS9, mapa, pref, continua, online ? { sala: 'sala-fixa' } : null, contagem9);
+      const rotulo = `${mapa}/${pref}/${online ? 'mp' : 'sp'}/continua=${continua}`;
+      if (continua) {
+        cobra(chamadas.length === 0, `CT9 match_start ${rotulo}: continuação chamou partidaIniciada (${chamadas.length}x)`);
+      } else {
+        cobra(chamadas.length === 1, `CT9 match_start ${rotulo}: esperava exatamente 1 chamada nova, veio ${chamadas.length}`);
+        const c = chamadas[0];
+        cobra(!!c && c.map === mapa, `CT9 match_start ${rotulo}: map esperado ${mapa}, veio ${c && c.map}`);
+        cobra(!!c && c.mode === modoEsperado, `CT9 match_start ${rotulo}: mode esperado ${modoEsperado}, veio ${c && c.mode}`);
+        cobra(!!c && c.game === (online ? 'mp' : 'sp'), `CT9 match_start ${rotulo}: game esperado ${online ? 'mp' : 'sp'}, veio ${c && c.game}`);
+      }
+      cobra(depois[0] === pref && depois[1] === MAPS9, `CT9 match_start ${rotulo}: a linha real alterou a preferência (${pref}→${depois[0]}) ou o MAPS`);
+    }
+  }
   cobra(/function recordMatchStats[\s\S]{0,600}contagem\.partidaTerminada\(/.test(main), 'CT9 match_end ausente do recordMatchStats');
   cobra(/modoEscolhido = true;\n\s+contagem\.entrouNoMp\(/.test(main), 'CT9 mp_join ausente do welcome do MP');
   cobra(/if \(testMode\) contagem\.desligar\(\);/.test(main), 'CT9 testMode não desliga a contagem');

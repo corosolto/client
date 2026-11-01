@@ -328,6 +328,15 @@ class Netcode {
     const roster = (net.meta && net.meta.roster) || [];
     const rosterById = new Map(roster.map((row) => [row.id, row]));
     const charDe = (id) => rosterById.get(id)?.char;
+    /* Com identidade autoritativa, o corpo do VIP fica reservado mesmo se um humano
+       usar o mesmo personagem. Sem essa extensão, permanece o casamento legado. */
+    const vipId = snap.objective?.vipId;
+    const vipValido = Number.isInteger(vipId) && vipId >= 0 && vipId <= 0xffffffff;
+    const vipLocal = vipValido ? game.objective?.vip : null;
+    if (vipLocal) {
+      const iv = livres.indexOf(vipLocal);
+      if (iv >= 0) livres.splice(iv, 1);   // corpo reservado ao NPC: ninguém mais o recebe
+    }
     const pega = (team, id) => {
       const alvo = charDe(id);
       let i = alvo ? livres.findIndex((b) => b.def && b.def.id === alvo && b.team === team) : -1;
@@ -344,7 +353,7 @@ class Netcode {
         this._netMap.set(e.id, game.player);
         continue;
       }
-      const bot = pega(e.team, e.id);
+      const bot = (vipValido && e.id === vipId && vipLocal) ? vipLocal : pega(e.team, e.id);
       if (!bot) continue;
       bot._remote = e.id; bot._netId = e.id;
       bot.team = e.team;                      // o lado do corpo passa a ser o do servidor
@@ -368,6 +377,7 @@ class Netcode {
     const snap = net.snap;
     if (this._netMap.size === 0) {
       this._casar(snap);
+      if (this._netTick < 0 && Number.isFinite(snap.roundNum)) this._netRodada = snap.roundNum;   // só o 1º snapshot herda a rodada em curso
       if (this._evOn && Array.isArray(net.meta?.drops)) for (const d of net.meta.drops) this._dropDeRede(d);   // quem entra no meio vê os drops vivos
     }
 
@@ -386,7 +396,28 @@ class Netcode {
       game.roundKills.E = snap.roundKillsE;
       game.roundKills.B = snap.roundKillsB;
     }
-    if (game.state !== estadoAntes) this.transicaoDeEstado(estadoAntes, game.state, placarAntes);
+    /* roundEnd lê as entidades atuais; countdown reseta antes de recebê-las.
+       A guarda anterior ao incremento do tick mantém a entrada sem cerimônia. */
+    const fimPorTroca = game.state !== estadoAntes && this._netTick >= 0;
+    if (fimPorTroca && game.state !== 'roundEnd') this.transicaoDeEstado(estadoAntes, game.state, placarAntes);
+    // Rodada nova por IDENTIDADE (roundNum) vale em countdown/live/roundEnd; matchEnd não é
+    // rodada de jogo. O countdown da transição acima já resetou e selou _netRodada da rodada.
+    const rodadaNova = this._netTick >= 0 && game.state !== 'matchEnd'
+      && ((Number.isFinite(snap.roundNum) && snap.roundNum !== this._netRodada)
+        || (game.state === 'live' && estadoAntes === 'roundEnd' && !Number.isFinite(snap.roundNum)));
+    // roundEnd de OUTRA rodada: reset acima antes das entidades e a cerimônia do resultado
+    // ATUAL uma única vez, adiada para depois do laço de entidades.
+    const fimDeRound = game.state === 'roundEnd' && this._netTick >= 0 && (fimPorTroca || rodadaNova);
+    if (rodadaNova) {
+      // O servidor zera `drops` no _startRound sem mandar `gone`: a retomada sem
+      // countdown recebe a mesma limpeza do countdown, antes das entidades.
+      if (this._evOn) this.limparDropsDeRede();
+      const relogioDoServidor = game.timeLeft;   // prepareRound escreve 360: o relógio é do servidor
+      game._resultado = null; game._showScoreboard(false);
+      game.objective?.prepareRound?.();
+      this._netRodada = Number.isFinite(snap.roundNum) ? snap.roundNum : game.roundNum;
+      if (Number.isFinite(relogioDoServidor)) game.timeLeft = relogioDoServidor;
+    }
     this.vagas = snap.livre || null;
 
     if (snap.tick === this._netTick) return;
@@ -408,6 +439,7 @@ class Netcode {
 
     const primeiroSnap = this._tAt.length <= 1;   // no casamento inicial, alive true->false é estado herdado, não morte
     if (game.ctf && snap.ctf) this.applyCtfState(snap.ctf);
+    if (snap.objective) game.objective?.applyNetState?.(snap.objective);
     let dorDoJogador = 0;
     for (const e of snap.ents) {
       const ent = this._netMap.get(e.id);
@@ -444,7 +476,9 @@ class Netcode {
         /* O cliente também cria um spawn local. No primeiro snapshot e no respawn ele não é
            uma predição adiantada: é uma posição concorrente, às vezes de outro slot/mapa.
            Nestes dois marcos a autoridade precisa vencer imediatamente, inclusive no Y. */
-        const imediato = primeiroSnap || renasceu || viradaDeRound;
+        // Retomada live→live (roundNum+1) não muda estado: a detecção ÚNICA de rodada
+        // nova também reancora o jogador — o servidor teleportou todos (BUG-155).
+        const imediato = primeiroSnap || renasceu || viradaDeRound || (!this.__mutSemVirada && rodadaNova);
         // teleporte invalida toda pose predita: sem zerar, o ack seguinte cobra a distância
         // dele como divergência (BUG-153).
         if (imediato) { ent.pos.set(e.x, e.y, e.z); ent.vel.set(0, 0, 0); this._clearPrediction(); }
@@ -503,6 +537,7 @@ class Netcode {
         this.morteRemota(ent, att);
       }
     }
+    if (fimDeRound) this.transicaoDeEstado(estadoAntes, 'roundEnd', placarAntes, snap.objective?.winner);
     if (this._evOn) this._drenar(snap, primeiroSnap);
     /* Arco de dano no MP: heurística do atirador mais próximo <600 ms — o snapshot não diz
        QUEM acertou; causa, medição e pendência de protocolo no BUG-90 (KNOWN-BUGS.md). */
@@ -528,14 +563,20 @@ class Netcode {
       for (const e of lote.list) { try { this._evento(e); } catch { /* HUD ainda não montado */ } }
     }
   }
+  // IDs uint32 de eventos não podem truncar para signed nem coagir inválidos em zero.
+  _idDeRede(id) {
+    return Number.isInteger(id) && id >= 0 && id <= 0xffffffff ? id : null;
+  }
   _evento(e) {
     const game = this.game, p = game.player, meu = this.net.yourEnt;
     if (!e || typeof e !== 'object') return;
-    const att = this._netMap.get(e.a | 0) || null, vic = this._netMap.get(e.v | 0) || null;
+    const aId = this._idDeRede(e.a), vId = this._idDeRede(e.v);
+    const att = aId == null ? null : (this._netMap.get(aId) || null);
+    const vic = vId == null ? null : (this._netMap.get(vId) || null);
     const d = Math.max(0, Math.min(999, e.d | 0)), h = e.h === 1 || e.h === true, w = String(e.w || '').slice(0, 8);
     const dist = (a) => (a && a.pos && p && p.pos) ? Math.hypot(a.pos.x - p.pos.x, a.pos.z - p.pos.z) : 0;
     if (e.k === 'hit') {
-      if (!att || this.espectador || (e.v | 0) !== meu) return;
+      if (!att || this.espectador || vId !== meu) return;
       try { game._dmgArc(att, p, d); } catch { /* HUD */ }
       game._noteHit(att, w, d, h, dist(att));
     } else if (e.k === 'kill') {
@@ -554,7 +595,8 @@ class Netcode {
       if (!Number.isInteger(e.i) || game._grenades.some((x) => x._nid === e.i)) return;
       if (e.kind === 'flash' && !this.flashOn) return;   // flash desligado não vira frag local (#1179)
       const kind = e.kind === 'smoke' || e.kind === 'flash' ? e.kind : 'frag';
-      const dono = this._netMap.get(e.o | 0) || ((e.o | 0) === meu ? p : null);
+      const oId = this._idDeRede(e.o);
+      const dono = oId == null ? null : (this._netMap.get(oId) || (oId === meu ? p : null));
       const origem = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0), dir = new THREE.Vector3(+e.vx || 0, +e.vy || 0, +e.vz || 0);
       game._spawnGrenade(origem, dir.lengthSq() ? dir.clone().normalize() : new THREE.Vector3(0, 0, -1), kind, dono);
       const gr = game._grenades[game._grenades.length - 1];
@@ -563,31 +605,47 @@ class Netcode {
       const i = game._grenades.findIndex((x) => x._nid === e.i);
       if (i >= 0) { game.scene.remove(game._grenades[i].mesh); game._grenades.splice(i, 1); }
       const pos = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0);
+      const oId = this._idDeRede(e.o);
+      const dono = oId == null ? null : (this._netMap.get(oId) || null);
       if (e.kind === 'smoke') game._popSmoke(pos);
       // cegueira é LOCAL: cada cliente mede a do próprio olho; a dos bots quem mede é o servidor
-      else if (e.kind === 'flash') { if (this.flashOn) game._popFlash(pos, this._netMap.get(e.o | 0) || null); }
-      else game._explodeFrag(pos, this._netMap.get(e.o | 0) || null);
+      else if (e.kind === 'flash') { if (this.flashOn) game._popFlash(pos, dono); }
+      else game._explodeFrag(pos, dono);
     }
   }
 
   /* Transições de rodada no online: a máquina local está desligada, só o feedback é replicado
      (vencedor = diferença do placar do servidor). Sem isto: BUG-114 (KNOWN-BUGS.md). */
-  transicaoDeEstado(antes, depois, placarAntes) {
+  transicaoDeEstado(antes, depois, placarAntes, winnerAtual = null) {
     const game = this.game;
     if (this._netTick < 0) return;   // 1º snapshot: entrou no meio de algo — sem cerimônia (e sem "empate" inventado)
     try {
       if (depois === 'roundEnd') {
-        let winner = null;
-        if (placarAntes && game.roundsWon) {
-          if (game.roundsWon.E > placarAntes.E) winner = 'E';
-          else if (game.roundsWon.B > placarAntes.B) winner = 'B';
+        // Vencedor autoritativo vem do snapshot ATUAL; game.objective.state.winner pode
+        // persistir da rodada anterior. Sem ele (ou inválido), só então infere pelo placar.
+        const winnerRede = winnerAtual === 'E' || winnerAtual === 'B' ? winnerAtual : null;
+        let winner = winnerRede, resultadoDesconhecido = false;
+        if (!winnerRede && placarAntes && game.roundsWon) {
+          // Salto de 2+ rodadas soma nos dois placares: sem protocolo de vencedor,
+          // não encenar campeão falso — só um ÚNICO lado crescido define o winner.
+          const subiuE = game.roundsWon.E > placarAntes.E, subiuB = game.roundsWon.B > placarAntes.B;
+          resultadoDesconhecido = subiuE && subiuB;
+          if (subiuE !== subiuB) winner = subiuE ? 'E' : 'B';
         }
         game.player.scoped = false; game.el.scope?.classList.remove('on');
         game.radioOpen = null; game._radioUi?.();
-        if (!winner) { game._resultadoDaRodada('EMPATE NA TRETA', 'ninguém convenceu ninguém'); game.sfx.roundLose(); }
+        if (resultadoDesconhecido) game._resultadoDaRodada('RESULTADO ATUALIZADO', 'a sala avançou durante a reconexão');
+        else if (!winner) { game._resultadoDaRodada('EMPATE NA TRETA', 'ninguém convenceu ninguém'); game.sfx.roundLose(); }
         else {
           const mine = winner === game.playerTeam;
-          game._resultadoDaRodada(`${game._teamName(winner)} LEVARAM O ROUND`, mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche');
+          if (game.objective?.roundResult) {
+            const fim = game.objective.roundResult(winner);
+            // O placar não pode cobrir a cinemática, como no _endRound local.
+            game._resultadoDaRodada(fim.title, fim.detail, false);
+          } else {
+            game._resultadoDaRodada(`${game._teamName(winner)} LEVARAM O ROUND`, mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche');
+          }
+          game.objective?.startCinematic?.(winner);
           game._roundWinnerVoice?.(winner);
           if (!game.sfx.roundSound(game._voiceKey(winner))) mine ? game.sfx.roundWin() : game.sfx.roundLose();
         }
@@ -597,8 +655,17 @@ class Netcode {
         if (this._evOn) this.limparDropsDeRede();   // o servidor zera `drops` no _startRound sem mandar `gone`
         game._resultado = null;
         game._showScoreboard(false);
+        if (game.objective?.prepareRound) {
+          // Religar a apresentação da rodada (cinemática/avião/viewmodel do round anterior).
+          // prepareRound escreve timeLeft=360: o relógio autoritativo já veio do snapshot.
+          const relogioDoServidor = game.timeLeft;
+          game.objective.prepareRound();
+          this._netRodada = game.roundNum;   // countdown já preparou: o 'live' da rodada não repete o reset
+          if (Number.isFinite(relogioDoServidor)) game.timeLeft = relogioDoServidor;
+        }
         const subRound = game.ctf
           ? frase('alvoBandeiras', game.capsToWin)
+          : game.objective?.roundIntro ? game.objective.roundIntro()
           : (game.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta'));
         game._banner(frase('round', game.roundNum),
           game.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', game.roundsMax, game.roundsToWin)}` : subRound);
@@ -692,6 +759,7 @@ class Netcode {
      preso num defunto é o defeito clássico do modo espectador. */
   cameraEspectador() {
     const game = this.game;
+    if (game.objective?.cinematicActive) return;   // a cena manda na câmera; follow retoma após o pulo
     const vivos = game.bots.filter((b) => b.alive && b._remote && b._remote !== 'ghost');
     if (!vivos.length) return;
     if (!this._alvoSpec || !this._alvoSpec.alive || !vivos.includes(this._alvoSpec)) {

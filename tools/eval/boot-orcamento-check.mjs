@@ -315,7 +315,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
 }
 
 let saida=1;
-const veredito=(cand,ref)=>({READY:cand.causa==='assets',ORC1:cand.bytes<=TETO_BYTES&&cand.reqs<=TETO_REQS,
+const veredito=(cand,ref)=>({READY:cand.causa==='assets'&&ref.causa==='assets',ORC1:cand.bytes<=TETO_BYTES&&cand.reqs<=TETO_REQS,
   ORC2:cand.cartazes<ref.cartazes,ORC3:cand.ultimoProp>0&&Number.isFinite(cand.primeiraFauna)&&cand.primeiraFauna>=cand.ultimoProp});
 const relatar=(cand,ref,ok,rotulo)=>{
  console.log(`base ${BASE} · ${rotulo}`);

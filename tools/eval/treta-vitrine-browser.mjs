@@ -101,6 +101,9 @@ async function abrir(name,{viewport,touch=false,loja='on',caminho='/'}) {
   if(caminho==='/'){
     await page.locator('#splash-enter:not(.hidden)').waitFor({timeout:90000});
     await page.locator('#boot-splash').dispatchEvent('pointerdown');
+    await page.waitForFunction(()=>{const s=document.getElementById('boot-splash');return !s || s.classList.contains('gone');},null,{timeout:90000});
+    const anuncio=page.locator('dialog.cs-modes-dialog[open]');
+    if(await anuncio.count()){await anuncio.locator('.cs-modes-primario').click();await anuncio.waitFor({state:'detached',timeout:20000});}
   }
   await page.locator('#hub-ui:not([hidden])').waitFor({timeout:90000});
   if(loja==='on')await page.waitForFunction(()=>document.querySelectorAll('#treta-vitrine:not([hidden]) .treta-vitrine-card').length>0,null,{timeout:20000}).catch(()=>{});

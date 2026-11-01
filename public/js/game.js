@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { escapeClanName } from './clan-label.js';
 import { ajustarAnisotropia } from './textures.js';
 import { MAPS, resolveMapId } from './maps.js';
+import { criarOperacaoFlavio } from './mode_operacao_flavio.js';
 import { atualizaCortes } from './mapprops.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon, podeNoLado } from './characters.js';
 import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver } from './glbchars.js';
@@ -1360,7 +1361,7 @@ export class Game {
     this._smokeTex = this._makeSmokeTex();
     // modo Capture the Flag (?ctf=1): 3 pontos (2 spawns + meio); time vence o round segurando
     // os 3 ao mesmo tempo. Rounds SEM FIM (sem _endMatch). Captura = ~3s na zona sem inimigo.
-    this.ctf = !!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1');   // menu (Capture the Flag) ou ?ctf=1
+    this.ctf = this.world.mode === 'escort' ? false : (!!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1'));
     /* TETO DE RODADAS LIVRE (1–15, ROUNDS_CUSTOM_MAX): era whitelist [1,3,5,7] — o dono
        pediu número customizado. Fora do intervalo cai no padrão do modo. Empate em teto
        PAR (2×2 no melhor de 4) segue pro desempate por abates (já existente no _endMatch). */
@@ -1411,6 +1412,7 @@ export class Game {
       const on = this.onToggleSpeech?.();
       this.el.hudSpeech.textContent = on ? '🔊' : '🔇';
     };
+    this.objective = criarOperacaoFlavio(this, byId('senador'));
     /* O netcode nasce por ÚLTIMO: ele lê `player`, `bots` e `el`, que só existem agora.
        Construí-lo junto com o resto era pegar metade do jogo montada. */
     if (this._mpPend) { this._mp = this._mpPend.mpFactory(this, this._mpPend.net); this._mpPend = null; }
@@ -2874,6 +2876,7 @@ export class Game {
     this._roundOverPedido = false;
     this._resetKillSequence();
     this._resetPositions();
+    this.objective?.prepareRound();
     if (MANTLE && !this._mAlc) this._mantleAlcance();
     if (this.ctf) this._initCTF();
     this.state = 'countdown';
@@ -2888,10 +2891,10 @@ export class Game {
        relógio: dizer "primeiro a 2 bandeiras" é o que substitui o cronômetro que saiu. */
     // O ROUND 1 ainda declara o FORMATO (melhor de N, primeiro a X): o teto só vivia no
     // menu/HUD e jogador achava que não existia (relato out/2026).
-    const subRound = this.ctf
+    const subRound = this.objective?.roundIntro?.() || (this.ctf
       ? frase('alvoBandeiras', this.capsToWin)
       : (PACE ? frase('alvoAbates', this.killsToWin)
-        : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta')));
+        : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta'))));
     const compraAviso = this._compra ? frase('compraPrepare', ECONOMIA.tempoCompraS) : '';
     const detalhe = this.roundNum === 1 ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound;
     this._banner(frase('round', this.roundNum), [compraAviso, detalhe].filter(Boolean).join(' · '));
@@ -3206,27 +3209,29 @@ export class Game {
     }
     if (lead >= tgt) this.timeLeft = 0;   // update() enxerga timeLeft<=0 e chama _endRound
   }
-  _endRound() {
+  _endRound(forcedWinner = null) {
     const p = this.roundKills.E, b = this.roundKills.B;
-    let winner = null;
+    let winner = forcedWinner;
     /* NO CAPTURA quem leva o round é quem CAPTUROU MAIS naquele round — abate só desempata.
        Antes o modo não tinha `_endRound` nenhum (o relógio nem corria): o único jeito de um
        round acabar era dominar as 3 bandeiras ao mesmo tempo, e é por isso que o placar de
        abates do topo ia a 65 × 53 (defeito 3 do dono) — ele NUNCA era zerado. */
-    if (this.ctf) {
+    if (!winner && this.ctf) {
       const cp = this.roundCaps.E, cb = this.roundCaps.B;
       if (cp > cb) winner = 'E'; else if (cb > cp) winner = 'B';
       else if (p > b) winner = 'E'; else if (b > p) winner = 'B';
-    } else if (p > b) winner = 'E'; else if (b > p) winner = 'B';
+    } else if (!winner && p > b) winner = 'E'; else if (!winner && b > p) winner = 'B';
     if (winner) this.roundsWon[winner]++;
     this._compra?.aoFimDaRodada(winner);
     this.state = 'roundEnd';
-    this.stateUntil = this.time + 4;
+    const objectiveResult = this.objective?.roundResult?.(winner);
+    this.stateUntil = this.time + (objectiveResult?.duration || 4);
     this.player.scoped = false; this.el.scope.classList.remove('on');
     this.radioOpen = null; this._radioUi();
-    this._showScoreboard(true);   // CS-style: scoreboard pops at round end
-    this._ensureDolly();          // dollynho comemora dançando no placar
-    const placar = this.ctf ? `${this.roundCaps.E} × ${this.roundCaps.B} bandeiras` : `${p} × ${b}`;
+    this._showScoreboard(!this.objective);   // modos de objetivo guardam a tela para a cinemática
+    if (this.objective) this.objective.startCinematic(winner);
+    else this._ensureDolly();
+    const placar = objectiveResult?.detail || (this.ctf ? `${this.roundCaps.E} × ${this.roundCaps.B} bandeiras` : `${p} × ${b}`);
     if (!winner) {
       this._resultadoDaRodada('EMPATE NA TRETA', `${placar} — ninguém convenceu ninguém`);
       this.sfx.roundLose();
@@ -3234,12 +3239,12 @@ export class Game {
       const mine = winner === this.playerTeam;
       // fechou no ALVO de abates (antes do tempo) vs ganhou no relógio — informação diferente
       const byTarget = PACE && !this.ctf && Math.max(p, b) >= this.killsToWin;
-      this._resultadoDaRodada(`${this._teamName(winner)} LEVARAM O ROUND`, `${placar} ` + (byTarget ? '— fecharam no alvo' : mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche'));
+      this._resultadoDaRodada(objectiveResult?.title || `${this._teamName(winner)} LEVARAM O ROUND`, objectiveResult ? placar : `${placar} ` + (byTarget ? '— fecharam no alvo' : mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche'), !objectiveResult);
       this._roundWinnerVoice(winner);
       if (!this.sfx.roundSound(this._voiceKey(winner))) mine ? this.sfx.roundWin() : this.sfx.roundLose();
     }
     if (this._fimDaPartida())
-      this.stateUntil = this.time + 4.5; // then match end
+      this.stateUntil = this.time + (objectiveResult?.duration || 4.5); // then match end
   }
   _roundWinnerVoice(team) {
     const characterId = team === this.playerTeam
@@ -3493,7 +3498,7 @@ export class Game {
     this.vm.melee?.setProfile(handProfile);
     p.team = newTeam;
     // rebalanceia 4×4: um bot do time novo deserta pro time velho
-    const candidates = this.bots.filter(b => b.team === newTeam);
+    const candidates = this.bots.filter(b => b.team === newTeam && !b._objectiveNpc);
     const swapBot = candidates[(Math.random() * candidates.length) | 0];
     if (swapBot) {
       swapBot.team = oldTeam;
@@ -4594,7 +4599,7 @@ export class Game {
     ent.alive = false; ent.hp = 0; ent.deaths++;
     if (ent.isPlayer) this._emoteStop();   // ninguém dança morto
     ent._killedBy = attacker ? (attacker.name || null) : null;   // tela de morte do multiplayer (vai no snapshot)
-    ent.respawnAt = this.time + RESPAWN_DELAY;
+    ent.respawnAt = this.objective?.respawnAt?.(ent, this.time) ?? (this.time + RESPAWN_DELAY);
     /* MODO ARENA: quem morre vai pro time do assassino. A troca é aplicada no
        respawn (não aqui) pra não quebrar o killfeed nem o estado do frame atual. */
     if (this.arena && attacker && attacker.team !== ent.team) {
@@ -7847,7 +7852,7 @@ export class Game {
     return spawn.yaw + (bot ? Math.PI : 0);
   }
   _pickSpawn(team) {
-    const list = this.world.spawns[team] || [];
+    const list = this.objective?.spawnCandidates?.(team) || this.world.spawns[team] || [];
     if (!list.length) return { x: 0, z: 0 };
     const foes = this.combatants.filter(c => c.alive && c.team !== team);
     if (!foes.length) return list[(Math.random() * list.length) | 0];
@@ -8139,6 +8144,7 @@ export class Game {
 
   _updateBot(b, dt) {
 
+    if (this.objective?.updateBot(b, dt)) return;
     if (b._remote) {
       /* Corpo com dono: cliente interpola do snapshot; servidor cuida do ciclo de vida dele.
          O respawn é chamado AQUI porque corpo de gente não passa pela IA. Ver docs/MULTIPLAYER.md. */
@@ -8151,12 +8157,14 @@ export class Game {
       if (b._netInput) this._moveEntity(b, b._netInput, dt);
       return;
     }
+    const objectiveDestination = this.objective?.botDestination?.(b) || null;
     // `__mutBotYaw`: gancho da botsim-golden (mesmo precedente do __mutAccel) — deriva o rumo
     // do bot pra régua provar que morde. Zero em produção.
     if (this.__mutBotYaw && b.alive) b.yaw += this.__mutBotYaw * dt;
     const g = b.mesh.group;
     // Sem alvo no CTF, mantém a navegação roteirizada até o objetivo.
     if (this._botBrain && this._botBrain.ready && this.botBrainMix > 0 && b.alive && this.state === 'live'
+        && !objectiveDestination
         && (!this.ctf || b.target)
         && (!this._botBrainTeam || b.team === this._botBrainTeam)) {   // régua NN contra roteiro
       return this._updateBotNN(b, dt);
@@ -8274,6 +8282,12 @@ export class Game {
         if (this.time - b._lostAt > grace) { b.target = null; b._losLost = false; b._lostAt = 0; }
       }
     }
+    // A formação limita o deslocamento sem apagar a memória de combate.
+    const slotSx = objectiveDestination ? b.pos.x - objectiveDestination.x : 0;
+    const slotSz = objectiveDestination ? b.pos.z - objectiveDestination.z : 0;
+    const formationPull = !!objectiveDestination && (
+      (b.pos.x - objectiveDestination.centerX) ** 2 + (b.pos.z - objectiveDestination.centerZ) ** 2 > objectiveDestination.leash * objectiveDestination.leash
+      || slotSx * slotSx + slotSz * slotSz > objectiveDestination.slotRadius * objectiveDestination.slotRadius);
 
     this._posturaBot(b, !!b.target && b.crouchBias);
 
@@ -8339,7 +8353,7 @@ export class Game {
          de si mesmo". Gente não faz isso: quando o alvo sai muito do eixo (>40°), você
          REPOSICIONA. Aqui, sair do eixo cancela o hold e o bot volta a andar enquanto vira. */
       if (Math.abs(dy) > 0.5) b.holdUntil = 0;
-      const holding = this.time < (b.holdUntil || 0);
+      const holding = this.time < (b.holdUntil || 0) || !!objectiveDestination;
       /* A banda de distância é a única dona do avanço/recuo; movimento aleatório
          no miolo voltava a cruzar seus próprios limiares. */
       if (BOT_MOVE2 && !this.__mutBotMidWander) {
@@ -8375,7 +8389,7 @@ export class Game {
          é, na tela, a pirueta — e a métrica confirma (voltas/min sobe quando o bot para de
          derivar de lado). Gente que é surpreendida pelo flanco DÁ UM PASSO enquanto vira.
          Então: enquanto o alvo estiver a mais de ~29° do eixo, o passo é pra frente. */
-      if (BOT_MOVE2 && !approach && Math.abs(dy) > 0.5) approach = 0.5;
+      if (BOT_MOVE2 && !approach && Math.abs(dy) > 0.5 && !objectiveDestination) approach = 0.5;
       const strafe = holding ? 0 : (b._lat || 0);
       const fdx = Math.sin(b.yaw), fdz = Math.cos(b.yaw);   // forward (mesh facing)
       const rdx = Math.cos(b.yaw), rdz = -Math.sin(b.yaw);  // right
@@ -8386,6 +8400,63 @@ export class Game {
         b.pos.x += Math.sin(b._coverYaw || 0) * BOT_SPEED * 0.8 * dt;
         b.pos.z += Math.cos(b._coverYaw || 0) * BOT_SPEED * 0.8 * dt;
         moving = 1;
+      }
+      // Reagrupar não muda o yaw que orienta a mira.
+      if (formationPull) {
+        const Wo = this.world;
+        if ((!b.path || this.time > b.repathAt) && this.time >= (b._repathMin || 0)) {
+          b._repathMin = this.time + 0.25;
+          b.repathAt = this.time + (objectiveDestination.repath || 2.5);
+          let fromReg = Wo.nearestWaypoint(b.pos.x, b.pos.z, b.pos.y);
+          if (!this._walkReach(b, Wo.waypoints.nodes[fromReg])) {
+            const cands = Wo.waypoints.nodes
+              .map((n, i) => ({ i, d: (n.x - b.pos.x) ** 2 + (n.z - b.pos.z) ** 2 }))
+              .sort((a, c) => a.d - c.d);
+            fromReg = -1;
+            for (let k = 0; k < Math.min(6, cands.length); k++) {
+              if (this._walkReach(b, Wo.waypoints.nodes[cands[k].i])) { fromReg = cands[k].i; break; }
+            }
+          }
+          if (fromReg >= 0) {
+            b.path = this._findPathLocal(Wo, fromReg,
+              Wo.nearestWaypoint(objectiveDestination.x, objectiveDestination.z, b.pos.y), b._banNodes);
+            b.pathIdx = 1;
+          } else {
+            b.path = null;
+            b._escapeUntil = Math.max(b._escapeUntil || 0, this.time + 0.35);
+            b._escapeYaw = this._freeYaw(b, 2.5);
+            b.repathAt = this.time + 0.3;
+          }
+        }
+        let regNode = this._walkReach(b, objectiveDestination) ? objectiveDestination : null;
+        if (!regNode && b.path && b.path.length > 1) {
+          const wpReg = Wo.waypoints.nodes;
+          while (b.pathIdx < b.path.length - 1
+            && Math.hypot(wpReg[b.path[b.pathIdx]].x - b.pos.x, wpReg[b.path[b.pathIdx]].z - b.pos.z) < 1.5) b.pathIdx++;
+          regNode = wpReg[b.path[Math.min(b.pathIdx, b.path.length - 1)]];
+        }
+        if (regNode && this._walkReach(b, regNode)) {
+          const gx = regNode.x - b.pos.x, gz = regNode.z - b.pos.z, gn = Math.hypot(gx, gz) || 1;
+          b.pos.x += (gx / gn) * BOT_SPEED * dt;
+          b.pos.z += (gz / gn) * BOT_SPEED * dt;
+          this._collide(b.pos, 0.38);
+          moving = 1;
+        } else if (b.path) {
+          // Hop bloqueado usa o banimento e o repath do fallback existente.
+          (b._banNodes || (b._banNodes = new Set())).add(b.path[Math.min(b.pathIdx, b.path.length - 1)]);
+          if (b._banNodes.size > 24) b._banNodes.clear();
+          b.path = null;
+          b._escapeUntil = Math.max(b._escapeUntil || 0, this.time + 0.35);
+          b._escapeYaw = this._freeYaw(b, 2.5);
+          b.repathAt = this.time + 0.3;
+        }
+        // Escape mantém a mira e não soma um segundo deslocamento neste frame.
+        if (this.time < (b._escapeUntil || 0) && !moving) {
+          b.pos.x += Math.sin(b._escapeYaw || 0) * BOT_SPEED * dt;
+          b.pos.z += Math.cos(b._escapeYaw || 0) * BOT_SPEED * dt;
+          this._collide(b.pos, 0.38);
+          moving = 1;
+        }
       }
       // FLANCO/AVANÇO: sem isto, com o beeline no inimigo mais próximo TODOS convergiam pro
       // centro. Quando o alvo está LONGE (>20m) o bot avança pela SUA coluna (laneX) rumo à
@@ -8408,7 +8479,7 @@ export class Game {
          o bot anda de frente pra onde vai. Em combate o bot avança, recua, segura ou
          reposiciona — sempre com a animação certa. */
       const off = b.laneX - b.pos.x;
-      if (BOT_MOVE2) {
+      if (BOT_MOVE2 || objectiveDestination) {
         /* sem deslocamento lateral em combate — ver o bloco acima */
       } else if (dist > 20) {
         const lz = Math.sign(dz) || 1, ln = Math.hypot(off, lz) || 1;
@@ -8577,6 +8648,9 @@ export class Game {
         this._flash(this._bocaTiroBot(b, from, dir, 0.85), dir);   // GPU-batched: 1 draw call
         if (b.mesh.isGLB) b.mesh.ctrl.shoot();
       }
+    } else if (objectiveDestination
+        && Math.hypot(objectiveDestination.x - b.pos.x, objectiveDestination.z - b.pos.z) <= objectiveDestination.slotRadius) {
+      moving = 0;
     } else if (this.ctf) {
       // --- CTF: procurar e segurar um ponto capturável (o combate acima ainda tem prioridade)
       this._botCtf(b, dt);
@@ -8590,7 +8664,7 @@ export class Game {
       // (a caminhada de escape cobre a espera, então o bot não congela).
       if ((!b.path || this.time > b.repathAt) && this.time >= (b._repathMin || 0)) {
         b._repathMin = this.time + 0.25;
-        b.repathAt = this.time + 2.5;
+        b.repathAt = this.time + (objectiveDestination?.repath || 2.5);
         const W = this.world;
         // G2-R6A: o `from` = nearestWaypoint podia estar ATRÁS de uma parede (nó (-8.4,34)
         // do piscinão fica do outro lado do muro das ilhotas) — o bot nunca alcançava
@@ -8623,7 +8697,11 @@ export class Game {
         }
         // INVESTIGAR (ver SENTIDOS DO BOT): ouviu o jogador há <4 s e está sem alvo → o destino
         // vira o nó ALCANÇÁVEL (mesmo componente do grafo) mais perto do som, por até 6 s.
-        if (BOT_SENTIDOS && !pocket && b._heardAt && b._heardUsed !== b._heardAt && this.time - b._heardAt < 4) {
+        if (!pocket && objectiveDestination) {
+          b.roamIdx = W.nearestWaypoint(objectiveDestination.x, objectiveDestination.z, b.pos.y);
+          b.roamUntil = this.time + objectiveDestination.repath;
+        }
+        if (!objectiveDestination && BOT_SENTIDOS && !pocket && b._heardAt && b._heardUsed !== b._heardAt && this.time - b._heardAt < 4) {
           b._heardUsed = b._heardAt;
           const nodes = W.waypoints.nodes, comp = this._wpComp();
           const myComp = comp && comp.length ? comp[from] : -1;
@@ -8636,7 +8714,7 @@ export class Game {
           }
           if (hi >= 0 && hi !== from) { b.roamIdx = hi; b.roamUntil = this.time + 6; }
         }
-        if (!pocket && (this.time > (b.roamUntil || 0) || b.roamIdx === undefined)) {
+        if (!objectiveDestination && !pocket && (this.time > (b.roamUntil || 0) || b.roamIdx === undefined)) {
           // Enemy direction derived from the spawn LAYOUT (not hardcoded — the spawn
           // swap P<->B would otherwise silently flip the roam side and keep bots home).
           const sP = this.world.spawns.E[0], sB = this.world.spawns.B[0];
@@ -8788,7 +8866,11 @@ export class Game {
       // MIRA no nó atual do path (não +2): com o A* reto, seguir o path fielmente contorna os
       // obstáculos. O look-ahead +2 cortava a quina PRA DENTRO do obstáculo -> o bot batia e
       // oscilava fwd/back sem desviar. Agora ele acompanha a curva do path ao redor da geometria.
-      const node = b.path ? _wp[b.path[Math.min(b.pathIdx, b.path.length - 1)]] : null;
+      let node = b.path ? _wp[b.path[Math.min(b.pathIdx, b.path.length - 1)]] : null;
+      // O waypoint conduz ao trecho final; a formação termina no ponto físico do slot.
+      if (objectiveDestination && b.pathIdx >= b.path.length - 1
+          && Math.hypot(objectiveDestination.x - b.pos.x, objectiveDestination.z - b.pos.z) <= objectiveDestination.leash
+          && this._walkReach(b, objectiveDestination)) node = objectiveDestination;
       if (node && !this._walkReach(b, node)) {
         // Hop fisicamente intransitável (aresta que passou no segClear do mapa mas não
         // cabe o bot r=0.38 — ex.: quina do muro das ilhotas): bane o nó e rerroteia.
@@ -9227,9 +9309,9 @@ export class Game {
      se cruzando). O #round-banner continua existindo pros avisos que NÃO coexistem com o
      placar (ROUND N, VALENDO!, MATCH POINT), e o CSS ainda garante `#hud.sb-on
      #round-banner{display:none}` pra que nenhuma futura chamada volte a cruzar o painel. */
-  _resultadoDaRodada(titulo, sub) {
+  _resultadoDaRodada(titulo, sub, mostrarPlacar = true) {
     this._resultado = { titulo, sub };
-    this._showScoreboard(true);
+    this._showScoreboard(mostrarPlacar);
   }
   _botaoAmigo(c) {
     if (document.documentElement.dataset.ui !== 'v3' || !this.online || c.isPlayer || !c._playerId || this._amigosPedidos?.has(c._playerId)) return '';
@@ -9476,6 +9558,9 @@ export class Game {
       const protText = String(Math.ceil(protLeft));
       if (this.el.protCount.textContent !== protText) this.el.protCount.textContent = protText;
     }
+    // HUD do objetivo (Operação Flávio online): o letreiro da escolta acompanha o HUD comum.
+    // A mensagem da cinemática vence — atualizaHud se cala enquanto this.cinematic existir.
+    this.objective?.atualizaHud?.();
   }
 
   /* ================= main update ================= */
@@ -9502,20 +9587,23 @@ export class Game {
          dono viu e reclamou ("captura estava com cronometragem — isso não acontece em
          CTF"). Antes DISSO, o CAPTURA não fechava partida nenhuma. As duas coisas estão
          cobradas agora pela UI4, cada uma com a sua mutação. */
-      if (this.ctf) {
+      if (this.objective) {
+        this.objective.update(dt);
+        if (this.state === 'live') {
+          this.timeLeft -= dt;
+          if (this.timeLeft <= 0) this._endRound('E');
+        }
+      } else if (this.ctf) {
         this._updateCTF(dt);
         this.ctfMatchLeft -= dt;
-        /* `this.state === 'live'` de novo AQUI, e não é redundância: `_updateCTF` pode ter
-           chamado `_ctfWin` (dominação das bandeiras) no meio deste mesmo frame, e o
-           `_ctfWin` já credita a rodada e muda o estado. Sem a guarda, `_endRound` credita
-           uma SEGUNDA vitória na mesma rodada — medido: a partida de CTF do praca_old
-           fechava em 56 s com `rounds=1` porque um round valia 2 pontos. */
+        /* `_updateCTF` pode fechar o round neste quadro; a guarda evita crédito duplo. */
         if (this.state === 'live' && (this._roundOverPedido || this.ctfMatchLeft <= 0)) {
           this._roundOverPedido = false;
           this._endRound();
         }
       } else {
-        this.timeLeft -= dt; if (this.timeLeft <= 0) this._endRound();
+        this.timeLeft -= dt;
+        if (this.timeLeft <= 0) this._endRound();
       }
     } else if (this.state === 'roundEnd' && this.time >= this.stateUntil) {
       if (this._fimDaPartida()) this._endMatch();
@@ -9531,6 +9619,7 @@ export class Game {
       if (this._recorder.count >= 300) this._flushTraining();
     }
     for (const b of this.bots) this._updateBot(b, dt);
+    this.objective?.updatePresentation(dt);
     if (this.espectando()) this._mp.cameraEspectador();   // segue o corpo interpolado a cada quadro, não a cada snapshot (BUG-117)
     this._updatePickups();
     this._updateFx(dt);
@@ -9585,6 +9674,8 @@ export class Game {
     this._announcerLabTimers = [];
     try { this._mp?.dispose(); } catch { /* já foi */ }
     this._mp = null;
+    try { this.objective?.dispose(); } catch {}
+    this.objective = null;
     try { this.sfx.stopRound(); } catch {}   // vinheta não sobrevive ao fim da partida   // lazy-load de VM em voo (_ensureStaticVm) aborta no then
     if (this._envRT) { this._envRT.dispose(); this._envRT = null; this._vmEnv = null; this.scene.environment = null; if (this.vmScene) this.vmScene.environment = null; }   // libera o env map (IBL)
     document.removeEventListener('keydown', this._kd);

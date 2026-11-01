@@ -534,8 +534,12 @@ export function buildCharacterModel(def, opts = {}) {
   const template = skin?.model || _base.get(def.id);
   if (!template || !_clips) return null;
   const withWeapon = opts.weapon !== false; // menu showcase passes weapon:false
+  // ownedResources: coleta recursos próprios do actor p/ descarte sem tocar caches compartilhados.
+  const owned = opts.ownedResources;
+  if (owned && (opts.weapon !== false || opts.gloveSkinId)) return null;
 
   const model = skeletonClone(template);
+  if (owned) model.traverse(o => { if (o.isSkinnedMesh && o.skeleton) owned.add(o.skeleton); });
   // Luva equipada: entra ANTES do passe de materiais para herdar sombra/rim como o corpo.
   if (opts.gloveSkinId) attachGloves(model, def.id, opts.gloveSkinId);
 
@@ -557,6 +561,7 @@ export function buildCharacterModel(def, opts = {}) {
   const finishMaterial=(m)=>{
     const next=upgradeCharMaterial(m,rimCol);
     if(skin?.metalFinish==='matte' && 'roughness' in next){next.roughness=Math.max(next.roughness ?? 1,.82);next.needsUpdate=true;}
+    if (owned) owned.add(next);
     return next;
   };
   model.traverse((o) => {
@@ -585,9 +590,9 @@ export function buildCharacterModel(def, opts = {}) {
   // conta e custaria caro sem acrescentar informação — o acompanhamento do piso vem
   // de graça; o "sumir no ar" vem do estado de pulo, tratado no CharController.
   const shadow = CHAR_FX.shadow ? makeContactShadow() : null;
-  if (shadow) group.add(shadow);
+  if (shadow) { if (owned) owned.add(shadow.material); group.add(shadow); }
 
-  mountEyewear(model,def);
+  mountEyewear(model,def,owned);
 
   // Head hitbox: an invisible (unrendered) but raycastable box tracked to the head bone
   // each frame, so headshots stay accurate through the animation.
@@ -597,6 +602,7 @@ export function buildCharacterModel(def, opts = {}) {
     new THREE.BoxGeometry(0.26, 0.30, 0.26),
     new THREE.MeshBasicMaterial({ visible: false }),
   );
+  if (owned) { owned.add(head.geometry); owned.add(head.material); }
   group.add(head);
 
   // Rifle in the right hand: a scale-compensated mount parented to the hand bone so

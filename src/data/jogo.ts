@@ -194,6 +194,13 @@ export const MAPAS: Mapa[] = [
   {"id": "corrego", "nome": "Córrego (Favela de SP)", "modo": "CTF · rounds opcional", "ctf": true, "resumo": "Favela de São Paulo organizada em torno de um córrego.", "detalhe": "O córrego faz parte da paisagem e das rotas de travessia. Escolha Capture the Flag ou rounds antes da partida."},
   {"id": "posto_treta", "nome": "Posto da Treta", "modo": "CTF · rounds opcional", "ctf": true, "resumo": "Posto de gasolina de beira de estrada, com bombas, marquise e loja.", "detalhe": "Bombas, marquise e loja dividem as áreas de combate. Abre em Capture the Flag; também aceita rounds."},
   {"id": "velho_oeste", "nome": "Sertão da Treta", "modo": "CTF · rounds opcional", "ctf": true, "resumo": "Arena no sertão, com construções e paisagem da caatinga.", "detalhe": "Explore as rotas da arena do sertão. Abre em Capture the Flag; escolha o modo no menu antes de jogar."},
+  {
+    id: 'operacao_flavio', nome: 'Operação Flávio', modo: 'Escolta', ctf: false,
+    resumo: 'Escolte o senador Zero Um do escritório ao avião executivo antes do fim dos 6 minutos.',
+    detalhe: 'A rota cruza o anel de escritórios, o controle de segurança, o pátio de serviço e o hangar. ' +
+      'Flávio só avança com ao menos um defensor a até 6 metros; um atacante a até 4 metros contesta o objetivo. ' +
+      'O time B vence após 3 segundos na escada de embarque. O time E vence ao abater o alvo.',
+  },
 ];
 
 export interface Personagem { id: string; grupo: string; nome: string; blurb: string; }

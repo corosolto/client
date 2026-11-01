@@ -105,6 +105,8 @@ jobs:
       - name: Todo mapa devolve o que o game.js consome
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:mapcontrato
+      - name: Operação Flávio, objetivo, autoridade e anúncio
+        run: node tools/eval/runner.mjs eval:operacao-flavio eval:operacao-reset eval:operacao-online eval:operacao-duration eval:operacao-clock eval:operacao-boarding eval:character-owned eval:objective-codec-contract eval:operacao-npc eval:mode-announcements eval:ctflabels eval:tpreloadpaired
       - name: Pichação colada na parede e sem vazar pela quina da frente
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:pichacao-parede

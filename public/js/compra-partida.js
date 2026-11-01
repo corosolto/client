@@ -217,7 +217,9 @@ export class CompraPartida {
   // Começo de rodada: bot morto volta de pistola; quem tem saldo compra a arma dele.
   botsCompram() {
     for (const b of this.game.bots) {
-      if (b._remote) continue;
+      // NPC reservado ao objetivo (VIP da Operação Flávio, _objectiveNpc) não entra na
+      // economia: a arma dele é do OperacaoFlavio (travarArmaVip), igual ao corpo remoto.
+      if (b._remote || b._objectiveNpc) continue;
       // morto que vai comprar remonta a malha uma vez só (pistola e já a comprada custaria dois clones)
       this._rearmarBot(b, false);
       this._botCompra(b);
@@ -226,7 +228,8 @@ export class CompraPartida {
   }
 
   aoRenascerBot(b) {
-    if (b._remote) return;
+    // mesma guarda do loop de compra: renascer não rearma/compra o NPC reservado.
+    if (b._remote || b._objectiveNpc) return;
     this._rearmarBot(b);
     /* A janela de compra reabre pra QUEM RENASCE no meio da rodada (relato do dono,
        31/10) — o bot rearma com a mesma regra do jogador, senão só um lado volta
