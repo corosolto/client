@@ -2,6 +2,10 @@
 // Uso: node tools/eval/mutante-semantico-proof.mjs <script> --mutant(e)=<nome da whitelist>
 import {execFile} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
+import {readFileSync} from 'node:fs';
+
+const mutantHeaderCount=Object.entries(JSON.parse(readFileSync(new URL('../../package.json',import.meta.url),'utf8')).scripts)
+  .filter(([key,comment])=>key.startsWith('//')&&/mutantes?:/i.test(String(comment))).length;
 
 // Whitelist fixa: script -> child local conhecido, tipos semânticos aceitos e cláusula exata por mutante.
 // Cláusula vem daqui, nunca derivada do próprio resultado do child (senão o mutante se auto-atesta).
@@ -25,7 +29,7 @@ const WHITELIST={
     },
   },
   'mutantes-anunciados':{
-    script:'tools/eval/mutantes-anunciados-check.mjs',flag:'--mutante=',types:['ContractViolation'],cases:10,
+    script:'tools/eval/mutantes-anunciados-check.mjs',flag:'--mutante=',types:['ContractViolation'],cases:mutantHeaderCount+1,
     mutants:{'anuncia-fantasma':'MA1','executa-fantasma':'MA2'},
   },
   'grafite-fiel':{
