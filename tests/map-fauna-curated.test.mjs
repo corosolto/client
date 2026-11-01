@@ -60,6 +60,11 @@ for(const map of ['escadao','lajes'])for(const next of [false,true])test(`${map}
  assert.deepEqual(await mobileCalls(MAPS[map],{next}),[MAPS[map].ambience]);
 });
 test('mobile keeps unrelated maps out of the fauna preload',async()=>assert.deepEqual(await mobileCalls(MAPS.praca_poderes),[]));
+for(const next of [false,true])test(`desktop ${next?'MP next-map':'match launch'} still preloads fauna without mobile opt-in`,async()=>{
+ assert.notEqual(MAPS.praca_poderes.mobileAmbience,true);assert.ok(MAPS.praca_poderes.ambience.length);
+ assert.deepEqual(await mobileCalls(MAPS.praca_poderes,{next,mobileAuto:false}),[MAPS.praca_poderes.ambience]);
+});
+
 function replaceOnce(source,old,value){assert.equal(source.split(old).length-1,1);return source.replace(old,value);}
 test('control mutation restores the mobile match skip and fails the caller contract',async()=>{
  const source=replaceOnce(main,'preloadMapAmbientLife(mapaPartida, { mobileAuto: MOBILE_AUTO })','MOBILE_AUTO ? null : preloadMapAmbientLife(mapaPartida, { mobileAuto: MOBILE_AUTO })');
@@ -194,6 +199,24 @@ test('control mutation removing the Lajes flee area restores the tank crossing',
  const p=a.root.position.clone();ambience.onShot(p.clone().add(new THREE.Vector3(1,0,0)),p);
  let blocked=0;for(let i=0;i<1200;i++){ambience.update(1/60,null);if(lajesFootprintBlocked(world,a))blocked++;}
  assert.ok(blocked>0,'the collision oracle must reject the original escape');ambience.dispose();
+});
+test('bounded cat already farthest from a threat waits safely and then rejoins, rather than moving toward the threat',()=>{
+ const world=MAPS.lajes.build(new THREE.Scene(),initTextures()),ambience=world.ambience,a=ambience.animals.find(a=>a.type==='cat'),area=a.fleeArea;
+ a.root.position.set(area.maxX,a.origin.y,area.maxZ);const corner=a.root.position.clone();
+ ambience.onShot(new THREE.Vector3(area.minX,a.origin.y,area.minZ),corner);assert.equal(a.fleeDistance,0);
+ let waited=0,rejoined=false;for(let i=0;i<2400;i++){
+  ambience.update(1/60,null);
+  if(ambience.time<a.alertUntil){assert.equal(a.root.position.distanceTo(corner),0);waited++;}
+  assert.equal(lajesFootprintBlocked(world,a),false);
+  if(a.alertUntil===0){rejoined=true;break;}
+ }
+ assert.ok(waited>0&&rejoined,'bounded waiting must end and recovery must complete');ambience.dispose();
+});
+test('quad turn rates cannot consume the entire species alert before escape',()=>{
+ for(const [key,window] of [['cats',2.4],['chickens',2.8]]){
+  for(const turnRate of [1,Math.PI/window])assert.throws(()=>createFavelaAmbience(new THREE.Group(),{map:'slow-pivot', [key]:[{pos:[0,0,0],turnRate}]}),/ambient_turn_rate/);
+  const ambience=createFavelaAmbience(new THREE.Group(),{map:'curated-pivot',[key]:[{pos:[0,0,0],turnRate:6}]});assert.equal(ambience.animals[0].turnRate,6);ambience.dispose();
+ }
 });
 test('authored flee areas reject invalid bounds or a route outside the area',()=>{
  const root=new THREE.Group(),bounds={minX:0,maxX:2,minZ:0,maxZ:2};

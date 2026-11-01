@@ -2,6 +2,208 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
+## Checkpoint R82: matriz gerada e nova tentativa de publicação
+
+Esta seção supera o estado pré-push R77 abaixo. O push normal de ecf6320dd
+foi BLOQUEADO:106/107 em680,7s, exit1 natural, sem timeout ou bypass. QA
+permaneceu limpa; remotos QA/staging continuaram8ee224e e main4cf8dd99.
+O log completo e seus hashes estão em QA-NORMAL-PUSH-R77-RESULT.json na
+auditoria2026-10-31-visual-consistency. Nenhum novo review ou release foi
+reivindicado. O único RED foi eval:weapon-matrix, documento desatualizado.
+
+Root leu o gerador completo e executou o gerador canônico no WT próprio.
+O diff contém somente dois links: _shotDamage4203 para4210 e _meleeHit4149
+para4156. Todos os valores gerados do arsenal permanecem byteiguais;
+game.js continua952dc9d7. Checks do documento em Node22/26 passaram.
+ROOT-WEAPON-MATRIX-ADJUDICATION-R82.json registra comandos, hashes e limites.
+Este checkpoint acrescenta somente a matriz gerada e esta continuidade.
+O próximo push normal terá bateria107 completa; ainda não está publicado.
+
+O preparo externo de luvas R75 teve P2 de cleanup parcial promovido por
+retry. R79 corrige o latch terminal; crítico fresco R80 leu o derivado e
+não demonstrou novo P1/P2 no recorte. Root leu relatório/manifesto e
+conferiu11pins. ROOT-PISTOL-CLEANUP-ADJUDICATION-R80.json aceita somente a
+correção estática. Drafts bloqueados, execução/fator/arte/teardownGPU
+continuam UNKNOWN; nenhum asset canônico mudou. R81 trouxe uma chamada
+GLM80,918s/exit0 e plano de ablação de cor do Campo, ainda não executado
+nem adjudicado pelo Root. Forma e faixa cinzenta continuam dívidas visuais.
+
+Fila leve R82:33abertos/32sem1158, mesmos heads de1155/1160/1191/1192;
+metadados não aprovam merge. Javaporco, fauna e demais owners preservados.
+Próximo concreto: rebind/FF e push normal atômico QA/staging do checkpoint;
+depois tratar os três itens R71, obter bot atual, CI e preview desse SHA.
+Crítico integral fresco somente após bot sem dívida, então merge elegível
+e release com tag/READY/servedSHA/smoke. Missão visual integral permanece
+ativa; acabamento global, palma/faceting, skins, físico e MP sem aceite.
+
+## Checkpoint R77 antes da nova publicação, 01/11
+
+Esta seção supera os estados pendentes de R70/R63 abaixo; eles são históricos.
+O push normal R70 publicou QA e staging em `8ee224e48` após107/107 em665,7s.
+No head público8ee, os quatro checks obrigatórios e o portão de navegador
+41272561347/124748249825 terminaram SUCCESS. O portão incluiu grafite14mapas,
+AK pública, mãos desktop/mobile, entrada e boot. Classify automático antigo
+falhou422 por executar a base main anterior; o dispatch no8ee confirmou o
+no-op staging=head. Isso não converte review ou produção em aprovação.
+
+O review atual5726420184 teve três observações, incluindo as filtradas.
+A documentação promovia SURVEY6/465 por arquivo como prova vigente: agora
+separa esse histórico da identidade pós-alias e do Ego14 R21,14mapas/458peças,
+cinco contadores zero. Root conferiu20pins atuais/raw; os limites de envelope
+bruto e de JS efetivamente servido emR21 permanecem explícitos. Não foi
+inventado novo bake ou aceite artístico. O áudio foi refutado: o sétimo
+argumento de _beep aceita AudioNode via _bus; inserir um oitavo alteraria o
+roteamento. Fonte de áudio intacta.
+
+O filtro OFF de pickups era uma regressão real: o modo AWP conservava os
+12pickups de Quebrada,11proibidos anexados à cena. O constructor agora exige
+chave própria de WEAPONS e permissão do modo, removendo lista e malha antes
+do refresh real. _pickupAllowed global e a limpeza ecoON ficam byteiguais.
+A medição anterior e a nova régua RED antecederam o fix. Nominal22/26 confirma
+all12/AWP1/pistolas2/faca0; unknowns incluindo chaves herdadas são removidos.
+Contraprovas baseline/clear-all/sem-filtro e retorno nominal estão preservadas.
+A dispensa temporal do baseline vale somente para o constructor histórico
+f4bc, que ainda não chamava o refresh; não afrouxa o nominal atual.
+
+GLM R73 atingiu o prazo360s com diff0 e foi marcado REJECTED_INCOMPLETE.
+O fallback Codex Native autorizado entregou dd197f5c+1dc24b7c, integrados por
+9f0c5c41; e2bcf333 esclarece o CLI e registra a adjudicação. O crítico focal
+R75 leu os sete arquivos e fronteiras: nenhum P1/P2 de produto demonstrado,
+um P3 documental corrigido. Root conferiu56pins da entrega e17da crítica,
+aceitando seus seis limites de prova sem ampliar o crédito. Root repetiu
+sem-filtro no schema final22/26: nominal GREEN e RED exato detectado.
+
+No Ego real, fluxo normal Quebrada/SÓAWP/JOGAR em e2bcf333 mostrou uma AWP
+permitida com malha na cena, zero proibidos na lista, testModefalse/ecoOFF.
+Root abriu o PNG e conferiu respostas200 de game952dc9d7 e main07ee531e.
+A origem local difere do before hospedado; não é par raster nem prova de
+movimento ou censo de órfãos. Fixtures reais e fonte cobrem a remoção de
+referências rejeitadas. O marcador local veio do Git real antes de iniciar
+Astro, não de um deploy. Três falhas de driver/metadado foram rejeitadas,
+sem crédito de produto. Sertão/TODAS foram restaurados pela UI e Ego50/p1
+ficou about:blank,1320x880DPR1,touchfalse, sem bloqueios/cache/media extras.
+Este checkpoint muda somente documentação após esse browser focal.
+
+A fila R77 tem33PRs totais/32sem1158; acréscimo comparável de um,1192.
+REA1155 avançou apenas um commit de instrumento e está com contratoNode26
+incompatível comCI22.1192fauna tem owner ativo, review e compatB9 pendentes;
+seu WIP não foi absorvido. Root leu o relatório e conferiu33pins. #1179 e
+heads de1190/1191 continuam incluídos; Javaporco e demais donos preservados.
+Main permanece4cf8, produção confirmada alpha133/49fd69f, sem novo release.
+
+Na frente visual, a primeira CPU externa de luva falhou no seletor e não
+gerou candidatos. Derivado Native R76 corrigido e criticado reproduziu o
+WebP-base byte a byte,12âncoras e seis hashes geométricos/campo; quatro PNGs
+com máscara/delta/overflow corretos foram preparados. Root viu apenas os
+atlas: nenhum fator ou asset foi adotado. O controlador/transporte R75 é
+preparação não executada, sob crítica RO R78; fingerprints ativos, ordem de
+stop antes de dispose e binding do proxy ainda precisam de adjudicação.
+Sem mudança canônica, gasto Mint ou aprovação artística. Campo continua
+piloto focal; acabamento global de favela, faceting, palma, fidelidade,
+leitura de skins, mobile físico e MP continuam sem aceite. M/U/P e a missão
+integral permanecem ativas; fluxos UI/redes sociais seguem posteriores.
+
+Próximo concreto: rebind integral e FF de QA; um push normal atômico
+QA/staging com107serial e sem Ego concorrente. Depois publicar evidência,
+responder/resolver todos os itens R71 e obter review do novo head. Conferir
+CI/preview desse SHA; somente após bot sem dívida, crítico fresco integral,
+merge elegível e release com tag/READY/servedSHA/smoke de produção. Nada aqui
+afirma publicação nova, PR limpa ou release concluído.
+
+## Checkpoint R70 da composição antes do push, 01/11
+
+A composição local `d4a388648e7707695c42c7715a6be447247abef4` une
+`d7e10f141096dba5bb04bbb44f032283d2fcc663` e o checkpoint de preview
+`e35077009bdd927daf9081201bb23e76e1961037`. O tip atual de #1191,
+`2c09846fcaac62afbf4b4724a03955b7c3120e74`, entrou por bf3a; #1179
+`fd553b31`, #1190 affb e CU-8 permanecem ancestrais. QA/staging ainda
+publicam FAA8, recebido por push normal atômico com 107/107 em660,5s.
+Esta seção supera o estado pendente de R63; não afirma novo push ou release.
+
+O preview mantém identidade e mídia disponíveis, limpa recursos ocultos e
+não força render repetido quando a pose está travada ou em reduced-motion.
+O primeiro crítico focal encontrou R65-S1: o CSS do hero escondia o aviso
+quando GLB e ambos os retratos falhavam. O controle real de rede em Ego
+reproduziu o palco vazio. A correção exige estado de falha sem vídeo visível,
+restaura só o aviso e limpa esse estado em recuperação/seleção/navegação.
+A ordem reversa — vídeo válido primeiro e erro de retrato depois — foi
+reprovada no parcial e passou após a correção com o mesmo probe externo.
+R65 e R65B foram rejeitados por limite/guard; R65C terminou exit0 em32,236s.
+Produto e testes finais são exatos ao freeze GLM; Native apenas orquestração,
+ledger e verificação. Os dois asserts de contagem de render alterados emR64
+continuam qualificados, sem alegar preservação byte a byte desses asserts.
+
+No Ego real convidado, R69 conferiu treze estados PT/EN: canvas3D nominal,
+aviso visível com ancestral flex na falha controlada de três assets públicos,
+SHOP limpando estado/mídia, PLAY restaurando aviso e reload sem bloqueio
+recuperando o personagem. O retrato compacto carregou e foi limpo/restaurado.
+Root abriu as imagens. Reduced-motion produziu zero pixels alterados na
+região do personagem; o modo normal mudou. O ticker mudou o chrome, portanto
+não se afirma estabilidade da página inteira nem qualidade da animação.
+CRITICO-SKINS-OWNER1191-FIX-R69 leu todos os oito caminhos e fronteiras,
+conferiu88 logs e não encontrou P1/P2/P3. Root leu o parecer inteiro e
+conferiu133 vínculos sem divergência. Posse, compra/equip autenticados,
+vídeo de skin possuída, mobile físico e MP continuam sem prova real.
+
+A revisão atual do Estraga sobre FAA8,5726255656, teve seis observações,
+incluindo as filtradas. O diagnóstico numérico da faca usa o asset público e
+o caller real antes do mixer: vértices seguem o bind existente nas seis
+animações; deslocar causalmente a inverse-bind em0,5 rompe essa equivalência.
+Isso refuta o finding somente nesse asset/caller, sem regra geral de bind
+ou aceite artístico. Replies4434282473 e4434282631 refutam respectivamente
+o pin CSS e a inversão de absorção do colete; ambos os fios estão resolvidos.
+A tecla N de câmera permanece coerente com B de compra. A flash ganhou aviso
+local sem URL/erro bruto ou telemetria; o README histórico distingue p90/awp
+não pareados e os erros Astro das capturas AK. JSON e JPG originais continuam
+byteidênticos. CRITICO-REVIEW-OBSERVABILITY-R65 leu o delta completo e não
+achou P1/P2/P3; Root conferiu33 vínculos na adoção local. Nada disso antecipa
+a revisão atual do próximo head ou a crítica final de toda a PR.
+
+O pr-fast de FAA8 concluiu reguas e os quatro checks obrigatórios, incluindo
+build124742215641. O portão de browser falhou legitimamente em B9:
+Object.hasOwn ausente interrompia main.js:934. A chamada agora usa
+Object.prototype.hasOwnProperty.call, preservando own-null/undefined e o
+fallback de propriedade herdada/ausente. O anchor do mutante existente foi
+retargetado sem trocar sua asserção. R68 pareado viu um erro da origem do
+jogo antes e zero depois, com a mesma API ausente. Os mesmos cinco erros de
+extensões foram mantidos e atribuídos às origens chrome-extension, sem
+extensões desativadas ou erros engolidos. R66 inicial parou cedo numa
+extensão e não comprovou a atribuição ao jogo; o init inválido posterior foi
+rejeitado. O R70 repetiu no cliente combinado: clique normal, GLB visível,
+zero erros da origem do jogo/outros e cinco de extensões. Root abriu o PNG;
+isso é aceite focal de boot, sem alegação de browser globalmente sem erros.
+O B9 hospedado só será revalidado no novo head publicado.
+
+ROOT-COMPOSITION-SOURCES-R69 liga os onze caminhos combinados às fontes
+revisadas, com exceção de main/anchor equivalentes ao único delta de
+compatibilidade. A combinação passou153/153 preview e49/49 readiness em
+Node22/26. docs e arch foram regenerados sem diferença. Os controles e
+limites anteriores de mapas, CU-8 e consumidores CI continuam preservados.
+
+A fotografia MERGE-RELEASE-QUEUE-R66 acompanha31 PRs do recorte, excluindo
+Flávio antes de persistir. #1190 já está merged em staging. Main continua
+4cf8dd99; produção READY ainda é alpha133/49fd69f. O último workflow de
+release terminou com embarque/bump pulados, sem nova publicação. Javaporco
+#1160 e itens de outros owners continuam preservados. Não fechar PR ancestral
+nem inferir aprovação por checks verdes ou ausência de fios.
+
+A métrica M/U/P em docs/visual-consistency/METRICA.md continua orientando a
+missão completa. Campo tem piloto focal de acabamento, não aceite global de
+mapas. Faceting, palma de apoio, fidelidade global e leitura do padrão de
+luvas continuam dívidas. A fase0 R64 atribuiu três pontos da mancha creme ao
+repeat/accent da textura de base, com guards e limites de amostragem; não
+escolheu escala nem adotou asset/protótipo. Uma proposta GLM somente leitura
+investiga como restringir um futuro experimento à pistola E/default, sem
+alterar cuff/panel, outros personagens, rig, pose ou normal/bump. Sem gasto
+ou geração Mint. Fluxos UI/redes sociais continuam para a fase posterior.
+
+Próximo concreto: checkpoint e rebind completo; FF da QA e um push normal
+atômico QA/staging com107 serial, sem Ego concorrente. Depois review atual
+com todas as observações adjudicadas, CI/preview do mesmo SHA e crítico
+independente final de toda a PR após o bot. Só então merge elegível e release
+rastreável com tag, READY/servedSHA e smoke de produção. A missão integral
+permanece ativa/incompleta, com as exclusões da abertura.
+
 ## Checkpoint R63 antes do push composto, 01/11
 
 A composição local `4ffb6dccdaf9ed4c0fcff31d2cbc50950eb5e6cc` preserva
