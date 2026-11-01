@@ -31,8 +31,9 @@ function fixture({ inventory = equipped, accountReady = Promise.resolve(), readI
     AbortController: class extends AbortController { constructor(){super();controllers.push(this);} },
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options?.detail; } },
     AbortSignal: timeoutAPI ? { timeout: ms => { const controller = new AbortController(); controllers.push(controller); deadlines.push(ms); return controller.signal; } } : {},
-    TRETA_ITEMS_ENABLED: false, VERSION: 'fixture', TRETA_SKINS: [{ id: 'lula-cyborg', slot: 'character', character: 'barbudo' }],
-    TRETA_WEAPON_SKINS: [], TRETA_GLOVES: [], TRETA_PACKS: [], TRETA_COINS: [], TRETA_EYEWEAR: [],
+    TRETA_ITEMS_ENABLED: false, VERSION: 'fixture', TRETA_SKINS: [{ id: 'lula-cyborg', name: 'Barbudo Cyborg', slot: 'character', character: 'barbudo' }],
+    TRETA_WEAPON_SKINS: [{ id: 'ouro-ak', name: 'AK Ouro', slot: 'weapon', weapon: 'ak', model: '/models/weapons/ak.glb', ready: true }],
+    TRETA_GLOVES: [], TRETA_PACKS: [{ id: 'pack-fixture', name: 'Pack Fixture', slot: 'pack', model: '/packs/pack-fixture', ready: true, weaponSkins: { ak: 'pack-fixture-ak' } }], TRETA_COINS: [], TRETA_EYEWEAR: [],
     TRETA_DEFAULT_REWARDS: {}, TRETA_COIN_ART: { poster: '/fixture.webp' },
     initTretaRewards: noop, updateTretaRewards: noop, ligarCompartilhar: noop,
     estadoDaUrl: () => null, loadAccount: async () => ({ authenticated: true }),
@@ -44,7 +45,7 @@ function fixture({ inventory = equipped, accountReady = Promise.resolve(), readI
       return media.promise;
     },
   });
-  const api = new vm.Script(mutate(source) + '\ndraw=()=>{};initProposals=()=>{};updateBuy=()=>{};({initTretaStore,equippedTretaSkin,desequiparTretaSkin});').runInContext(context);
+  const api = new vm.Script(mutate(source) + '\ndraw=()=>{};initProposals=()=>{};updateBuy=()=>{};({initTretaStore,equippedTretaSkin,desequiparTretaSkin,tretaSkinPresentation,tretaWeaponPresentation});').runInContext(context);
   let settled = false;
   const ready = api.initTretaStore().then(() => { settled = true; });
   return { api, ready, media, deadlines, controllers, timers, fetches, settled: () => settled, emit: type => context.document.dispatchEvent({ type }), accountChanged: detail => context.document.dispatchEvent({ type: 'cs-account-change', detail }) };
@@ -61,6 +62,63 @@ async function ownedWaits(mutate) {
 }
 
 test('owned character waits for its manifest before readiness settles', () => ownedWaits());
+const skinMedia={poster:'/img/skins/lula-cyborg.webp',video:{webm:'/video/skins/lula-cyborg.webm',mp4:'/video/skins/lula-cyborg.mp4',poster:'/video/skins/lula-cyborg.webp'}};
+async function skinPresentation({inventory=equipped,extra=skinMedia,mutate}={}){
+  const f=fixture({inventory,mutate});
+  f.media.resolve({ok:true,json:async()=>({skins:{'lula-cyborg':{...manifest.skins['lula-cyborg'],...extra}}})});await f.ready;await tick();return f;
+}
+test('presentation shares the actual approved availability and character checks',async()=>{
+  const f=await skinPresentation();
+  assert.equal(f.api.tretaSkinPresentation('lula-cyborg','barbudo').poster,skinMedia.poster);
+  assert.equal(f.api.tretaSkinPresentation('lula-cyborg','barbudo').name,'Barbudo Cyborg');
+  assert.equal(f.api.tretaSkinPresentation('lula-cyborg','canarinho'),null);
+  const unavailable=await skinPresentation({inventory:{...equipped,catalog:[{...equipped.catalog[0],available:false}]}});
+  assert.equal(unavailable.api.tretaSkinPresentation('lula-cyborg','barbudo'),null);
+});
+test('unapproved presentation is unavailable and foreign media paths are excluded',async()=>{
+  const rejected=await skinPresentation({extra:{...skinMedia,approved:false}});
+  assert.equal(rejected.api.tretaSkinPresentation('lula-cyborg','barbudo'),null);
+  const f=await skinPresentation({extra:{poster:'https://other.invalid/base.webp',video:{...skinMedia.video,webm:'https://other.invalid/base.webm'}}});
+  assert.equal(f.api.tretaSkinPresentation('lula-cyborg','barbudo').poster,null);
+  assert.equal(f.api.tretaSkinPresentation('lula-cyborg','barbudo').video,null);
+});
+test('weapon presentation uses an available matching weapon or the equipped pack',async()=>{
+  const f=await skinPresentation({inventory:{...equipped,inventory:[{skin_id:'ouro-ak',equipped:true}],catalog:[{id:'ouro-ak',available:true,slot:'weapon',weapon_id:'ak',model_path:'/models/weapons/ak.glb'}]}});
+  assert.equal(f.api.tretaWeaponPresentation('ak','ouro-ak').name,'AK Ouro');
+  assert.equal(f.api.tretaWeaponPresentation('pistol','ouro-ak'),null);
+  assert.equal(f.api.tretaWeaponPresentation('ak',null),null);
+  assert.equal(f.api.tretaWeaponPresentation(),null);
+  const pack=await skinPresentation({inventory:{...equipped,inventory:[{skin_id:'pack-fixture',equipped:true}],catalog:[{id:'pack-fixture',available:true,slot:'pack',model_path:'/packs/pack-fixture'}]}});
+  assert.equal(pack.api.tretaWeaponPresentation('ak','pack-fixture-ak').name,'Pack Fixture');
+  assert.equal(pack.api.tretaWeaponPresentation('ak','ouro-ak'),null);
+});
+test('weapon presentation excludes an available paint absent from the inventory',async()=>{
+  const f=await skinPresentation({inventory:{...equipped,inventory:[],catalog:[{id:'ouro-ak',available:true,slot:'weapon',weapon_id:'ak',model_path:'/models/weapons/ak.glb'}]}});
+  assert.equal(f.api.tretaWeaponPresentation('ak','ouro-ak'),null);
+});
+test('control mutation rejects paint presentation without inventory ownership',async()=>{
+  const anchor=' && owned(skinId))return';assert.equal(source.split(anchor).length-1,1);
+  const f=await skinPresentation({inventory:{...equipped,inventory:[],catalog:[{id:'ouro-ak',available:true,slot:'weapon',weapon_id:'ak',model_path:'/models/weapons/ak.glb'}]},mutate:value=>value.replace(anchor,')return')});
+  assert.throws(()=>assert.equal(f.api.tretaWeaponPresentation('ak','ouro-ak'),null),{name:'AssertionError'});
+});
+test('control mutation rejects presentation that skips server availability',async()=>{
+  const anchor="if(!available(id) || !owned(id) || skin?.slot!=='character'";assert.equal(source.split(anchor).length-1,1);
+  await assert.rejects(async()=>{
+    const f=await skinPresentation({inventory:{...equipped,catalog:[{...equipped.catalog[0],available:false}]},mutate:value=>{
+      return value.replace(anchor,"if(false || !owned(id) || skin?.slot!=='character'");
+    }});
+    assert.equal(f.api.tretaSkinPresentation('lula-cyborg','barbudo'),null);
+  },{name:'AssertionError'});
+});
+test('an explicit available skin from an unowned catalog entry has no equipped presentation',async()=>{
+  const f=await skinPresentation({inventory:{...equipped,inventory:[]}});
+  assert.equal(f.api.tretaSkinPresentation('lula-cyborg','barbudo'),null);
+});
+test('control mutation rejects explicit presentation without inventory ownership',async()=>{
+  const anchor="if(!available(id) || !owned(id) || skin?.slot";assert.equal(source.split(anchor).length-1,1);
+  const f=await skinPresentation({inventory:{...equipped,inventory:[]},mutate:value=>value.replace(anchor,"if(!available(id) || false || skin?.slot")});
+  assert.throws(()=>assert.equal(f.api.tretaSkinPresentation('lula-cyborg','barbudo'),null),{name:'AssertionError'});
+});
 test('manifest first still waits for account inventory', async () => {
   const account = deferred(), f = fixture({ accountReady: account.promise });
   f.media.resolve({ ok: true, json: async () => manifest });
