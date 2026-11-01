@@ -82,3 +82,32 @@ antes de conciliar o reparo. R841 normalpush S4 falhou apenas no controle de boo
 ORC2 compara posters concluídos em janelas de rede independentes e premiou20vs21
 mesmo com pool ansioso. R854 investiga medição causal sem afrouxar janela ou teto.
 R848 push de mãos segue separado, com dependências locais reparadas e focais verdes.
+
+## Negociação R859
+
+Produto R853 adjudicado e normalizado por Root: oferta exclusivamente8, seleção WS
+nativa e ack8 no welcome/partida, tentativa terminal antes do close e fallback
+WT→WS com a mesma versão. Root acrescentou fechamento antes do callback que lança
+e ausência de onClose antes de sessão aceita. Controle real importado mediu16RED
+antes,21GREEN depois, com oito mutantes causais em failsets exatos. Candidato e
+arquivos adotados conferem por SHA; setup dos controles legados recebeu protocolo8
+sem mudar seus próprios assuntos. Gate e contrato estão em
+docs/visual-consistency/CLIENT-SNAPSHOT-NEGOTIATION.md.
+
+R855 aliases completos: onzePASS e três falhas retidas. Pasto compara terreno
+com groundHeightAt que agora inclui refúgios; mutante de layout cai em vias antes
+do alvo; âncora do mutante de morte não inclui o resetFP atual. R862 corrige os
+instrumentos numa WT própria, preservando assertions, mutações e os tetos.
+O nominal de morte e dos três mapas havia passado; não confundir erro de mutação
+com regressão visual. R848 terminou108/108 e foi publicado como draft1213,
+sobre1208; formal solicitado uma vez. Produção135/API/MP seguemHTTP200 emR861.
+
+R859 focais no produto adotado: codecbin (inclui21casos/8mutantes), netcode211/0,
+chat, mp-proximo e mp-paridade PASS. Duas assertions de fonte do netcode já
+falhavam no merge imutável55685b: settings passou a binding guardado e o método
+de visibilidade ganhou lógica antes do mount. A régua agora cobra declaração/uso
+do binding com mutante próprio e executa o método Game real com troca/repetição
+de arma, detectando remoção do mount. main/Game não mudaram nesta unidade.
+Geradores docs/arch passaram sem delta. BackendR847 checkpointa31cfd está
+isolado, com WS/Room/index/WT local validado; publicação, CLIENT_REF combinado,
+migração remota e aceite Game/visual/mobile/MP humano continuam pendentes.

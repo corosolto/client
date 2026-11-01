@@ -211,7 +211,7 @@ async function cc1(cobra, { chat }) {
 
 /* ============================== CC2 · NetClient ============================== */
 class WsFalso {
-  constructor() { WsFalso.ultimo = this; this.readyState = 1; this.OPEN = 1; this.enviados = []; }
+  constructor() { this.protocol = 'coro-snapshot-v8'; WsFalso.ultimo = this; this.readyState = 1; this.OPEN = 1; this.enviados = []; }
   send(p) { this.enviados.push(p); }
   close() { this.readyState = 3; }
 }
@@ -222,7 +222,7 @@ async function conectar(NetClient, welcome) {
     const conectando = cli.connect();
     const ws = WsFalso.ultimo;
     ws.onopen && ws.onopen();
-    ws.onmessage({ data: JSON.stringify({ type: 'welcome', yourEnt: 1, yourTeam: 'E', espectador: false, events: 1, snapshotHz: 30, clientSha: 'abc', ...welcome }) });
+    ws.onmessage({ data: JSON.stringify({ type: 'welcome', protocolVersion: 8, yourEnt: 1, yourTeam: 'E', espectador: false, events: 1, snapshotHz: 30, clientSha: 'abc', ...welcome }) });
     await conectando;
     const tp = cli.tp, enviar0 = tp.enviar.bind(tp);
     const seguros = [], inseguros = [];
@@ -251,7 +251,7 @@ async function cc2(cobra, { net }) {
       `CC2a sem meta.chat: enviarChat=${a}, denunciarChat=${b}, frames de chat enviados=${soChat(seguros).length + soChat(inseguros).length}`);
     cobra(recebidos.length === 0 && (cli._chatFila || []).length === 0, 'CC2a sem meta.chat: frame `chat` que chega é descartado');
     cobra(cli.chatLigado() === false, 'CC2a chatLigado() é false sem meta.chat');
-    chega({ type: 'partida', yourEnt: 2, yourTeam: 'E', espectador: false, events: 1, chat: { ...META_CHAT, v: 2 } });
+    chega({ type: 'partida', protocolVersion: 8, yourEnt: 2, yourTeam: 'E', espectador: false, events: 1, chat: { ...META_CHAT, v: 2 } });
     cobra(cli.enviarChat('sala', 'oi', 'c1') === false, 'CC2a meta.chat com versão desconhecida (v:2) é tratada como ausente');
   }
   // 2b/2c · nó com chat: só pelo canal confiável, com a forma do contrato
@@ -311,11 +311,11 @@ async function cc2(cobra, { net }) {
     const drenados = cli.drenarChat();
     cobra(drenados.length === 64 && cli._chatFila.length === 0 && cli.drenarChat().length === 0, 'CC2e drenarChat() devolve a fila e a esvazia');
     // 2f · partida sem meta de chat desliga; com meta, religa
-    chega({ type: 'partida', yourEnt: 2, yourTeam: 'E', espectador: false, events: 1 });
+    chega({ type: 'partida', protocolVersion: 8, yourEnt: 2, yourTeam: 'E', espectador: false, events: 1 });
     cobra(cli.enviarChat('sala', 'oi', 'c9') === false && cli.chatLigado() === false, 'CC2f depois de `partida` sem chat o cliente fica inerte');
-    chega({ type: 'partida', yourEnt: 2, yourTeam: 'E', espectador: false, events: 1, chat: META_CHAT });
+    chega({ type: 'partida', protocolVersion: 8, yourEnt: 2, yourTeam: 'E', espectador: false, events: 1, chat: META_CHAT });
     cobra(cli.enviarChat('sala', 'oi', 'c9') === true, 'CC2f `partida` com chat religa');
-    chega({ type: 'partida', yourEnt: 2, yourTeam: 'E', espectador: false, events: 1, chat: { ...META_CHAT, pode: 0 } });
+    chega({ type: 'partida', protocolVersion: 8, yourEnt: 2, yourTeam: 'E', espectador: false, events: 1, chat: { ...META_CHAT, pode: 0 } });
     cobra(cli.enviarChat('sala', 'oi', 'c9') === false && cli.denunciarChat(1, 'spam') === true,
       'CC2f com pode:0 não fala, mas ainda denuncia');
   }

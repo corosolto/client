@@ -94,7 +94,7 @@ const transporteFalso = (versao, simHash) => {
     abrir({ aberto, mensagem }) {
       aberto?.();
       setTimeout(() => mensagem(JSON.stringify({
-        type: 'welcome', yourEnt: 1, yourTeam: 'E', map: 'praca_poderes',
+        type: 'welcome', protocolVersion: 8, yourEnt: 1, yourTeam: 'E', map: 'praca_poderes',
         roster: [], clientVersion: versao, ...(simHash ? { simHash } : {}),
       }), false, 0), 0);
     },
