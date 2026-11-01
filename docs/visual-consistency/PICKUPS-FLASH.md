@@ -89,7 +89,7 @@ de `Netcode._evento` com Game real do harness:
   faltante é recusa; NF7 fecha o buraco do "boom flashOn sem efeito passa verde".
 - CLI estrita: só `[]`, `--baseline` ou `--mutante=reintroduz` (valor exato, sem
   prefixo/substring); qualquer outra combinação sai 2 **antes** de importar o arnês.
-  Mesma regra no gate PM.
+  Mesma estriteza no gate PM, que também aceita `--mutante=sem-filtro-off`.
 
 ## Não verificado aqui
 

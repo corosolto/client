@@ -108,3 +108,15 @@ A definição de pronto desta lane inclui essa crítica e a adjudicação do Roo
 pendentes; testes locais verdes não encerram a missão integral. Esta lane não abriu browser/headless,
 não rodou full107, não fez push/PR/GitHub mutation/Mint e não tocou outros worktrees.
 Sem aprovação artística geral, produção/mobile/MP/FPS ou autorização inferida de release.
+
+## Adjudicação focal Root R77
+
+O crítico independente `CRITICO-REVIEW-FIXES-R75.md` leu os sete arquivos e todas
+as fronteiras afetadas; não evidenciou P1/P2 de produto. Root conferiu 17 bindings
+do relatório/manifesto e aceitou os seis limites do instrumento sem ampliar o crédito.
+O único P3, ambiguidade da lista de CLI PM, foi corrigido explicitando
+`--mutante=sem-filtro-off`. Fonte do jogo e régua permanecem byte a byte no freeze.
+Root repetiu essa contraprova no schema final em Node22/26: nominal anterior GREEN,
+RED exato PM5/PM7/PM8/PM9–PM12 detectado, exit0 natural e WT limpo
+(`A/ROOT-PICKUP-FINAL-SCHEMA-R76.json`). Browser final e revisão atual da PR
+ainda pendem; esta crítica focal não substitui a crítica final integral.
