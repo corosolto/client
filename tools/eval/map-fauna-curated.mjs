@@ -12,7 +12,7 @@ export function auditCuratedFauna(sample, references) {
       const id=`${ref.map}/${a.id}`;
       if(a.source!=='gltf')fail('source',`${id}: fallback em vez do GLB curado.`);
       if(a.assetId!==ref.assetId||a.assetPath!==ref.path)fail('identity',`${id}: ${a.assetId} / ${a.assetPath}; esperado ${ref.assetId} / ${ref.path}.`);
-      if(!(sample.preload||[]).includes(ref.assetId))fail('preload',`${id}: modelo instanciado fora do preload declarado.`);
+      if(!(sample.declaredPreload||[]).includes(ref.assetId))fail('declaredPreload',`${id}: modelo instanciado fora do preload declarado.`);
       const mats=(a.meshes||[]).flatMap(m=>m.materials||[]);
       if(!mats.length)fail('materials',`${id}: nenhum material medido.`);
       for(const [i,mat] of mats.entries())for(const [channel,size] of Object.entries(ref.textures)){

@@ -17,7 +17,7 @@ for(const [map,type] of [['escadao','chicken'],['lajes','cat']]){
   }
   world.ambience.reset();a.root.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(a.root),p=a.root.position.toArray(),center=box.getCenter(new THREE.Vector3()).toArray();window.MAPEVAL.view([p[0]+1.5,p[1]+1.62,p[2]+2.7],center);
   animals.push({id:a.id,type:a.type,source:a.source,assetId:a.root.userData.assetId,assetPath:a.root.userData.assetPath,speed:a.speed,position:p,bounds:{min:box.min.toArray(),max:box.max.toArray(),size:box.getSize(new THREE.Vector3()).toArray()},actions:Object.fromEntries(Object.entries(a.actions).map(([k,v])=>[k,v.getClip().name])),meshes,motion:{distance,localPoseChanges,walkFrames,activeClip,steps:600,dt:1/60,method:'actual controller+mixer deterministic virtual ticks, not normal-speed video'},camera:{from:window.MAPEVAL.cam.position.toArray(),look:center,fov:window.MAPEVAL.cam.fov}});
-  }return{map,preload:MAPS[map].ambience,animals};
+  }return{map,declaredPreload:MAPS[map].ambience,animals};
  },{map,type});
  const animal=record.animals[0];if(animal&&results.length<fotos){await page.screenshot({path:dir+'/map-fauna-curated-'+map+'-'+type+'-player.png'});await page.evaluate(({p,look})=>window.MAPEVAL.view([p[0]+.8,p[1]+.75,p[2]+1.2],look),{p:animal.position,look:animal.camera.look});await page.screenshot({path:dir+'/map-fauna-curated-'+map+'-'+type+'-close.png'});}results.push(record);
 }
