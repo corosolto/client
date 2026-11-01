@@ -93,3 +93,12 @@ A tentativa normal do checkpoint 96c10e83 terminou com exit 1: 106 de 107 checks
 Adicionada somente a regex literal desse helper em scripts/ci/gatilho.mjs (54 bytes; SHA 9205c157). Nominal oficial eval:portaogatilho passou (portão 266 arquivos, smoke 222). O mutante oficial tira-caminho terminou com exit 1 e as quatro falhas causais esperadas. A CLI com apenas o helper em stdin NUL retornou rodar=true e a razão exata em stderr. Crítica independente ce61ee8c, bindings b234a16e (27 pins conferidos) e aceite ROOT d698be8d641e aceitam esses três controles, sem aprovar o push anterior.
 
 Produto/public permanecem idênticos às provas CPU/build/post/DI/runtime já aceitas; trata-se de transferência delimitada dessas provas, não de novas execuções. Próximos passos: checkpoint normal CI+ledger filho de 96c1, CM default origin/main e uma nova tentativa de push com hooks normais, novos artefatos e lease remoto 0a7bf. Integração, CI GitHub, QA humana/editorial, áudio, backend e produção continuam pendentes.
+
+
+## Custo dos fixtures de fauna — 2026-11-01T19:02:36.063358+00:00
+
+O CI Linux/Node22 do head9b84 falhou por spawnSync ETIMEDOUT aos30,06s no nominal, com23subtestes PASS parciais e sem rodapé. Isso não identifica deadlock no teste24. O job separado de mantle terminou SUCCESS em6min42s; os três apontamentos posteriores foram respondidos e refutados com crítico independente, preservando os reviews e a falha real de CI.
+
+Alteração limitada a tests/map-fauna-curated.test.mjs: as consultas de leitura de densidade/censo/sombra usam snapshots independentes de cinco mapas reais, reduzindo21construções para5. Mundos mutáveis, asserções, seis causas e timeout30s continuam iguais. Candidatoe469b6c7 revisado independentemente por6c67bac595; nenhum valor esperado substitui observação.
+
+O alias canônico eval:map-fauna-curated terminou0 em15,8s locais/Node26; wrapper21,884s,7153fontes idênticas antes/depois, erros/cancelamentos/resíduos próprios vazios. Result96b34afd e raw83101e1b no HQ runtime/mantle1155-9b84-fauna-fixture-cost-canonical-actual; o runner reteve o resultado integral do alias, sem TAP individual. Isto ainda não prova a duração no runnerLinux/Node22. Próximo: checkpoint DCO, CM default origin/main, push com hooks e CI atuais. Flávio,47PRs,anúncios,PCM,backend e produção permanecem pendentes; Javaporcos mantém outro owner.

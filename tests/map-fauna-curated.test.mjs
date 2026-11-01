@@ -33,11 +33,25 @@ const ambient=read('public/js/ambientlife.js'),main=read('public/js/main.js');
 const uniqueMaps=[...new Set(references.map(r=>r.map))];
 await Promise.all(uniqueMaps.map(carregaMapa));
 const registry=JSON.parse(read('mint-assets.json')).assets;
+// Read-only authored facts are measured from each real map builder once. No live world
+// escapes this fixture; every query gets an independent snapshot. Mutation/update tests below
+// still construct and own fresh worlds, and keep all their original clauses.
+const authoredFaunaSnapshots=new Map();
+function authoredFaunaSnapshot(map){
+ if(!authoredFaunaSnapshots.has(map)){
+  const world=MAPS[map].build(new THREE.Scene(),initTextures());
+  try{
+   const animals=world.ambience.animals.map(a=>({id:a.id,type:a.type,assetId:a.root.userData.assetId,
+    speed:a.speed,contactShadow:!!a.root.getObjectByName('FAUNA_CONTACT_SHADOW')}));
+   authoredFaunaSnapshots.set(map,structuredClone(animals));
+  }finally{world.ambience.dispose();}
+ }
+ return structuredClone(authoredFaunaSnapshots.get(map));
+}
 for(const ref of references)test(`${ref.map}/${ref.type} binds the curated file and keeps its authored density`,()=>{
- const world=MAPS[ref.map].build(new THREE.Scene(),initTextures());
- const animals=world.ambience.animals.filter(a=>a.type===ref.type);
+ const animals=authoredFaunaSnapshot(ref.map).filter(a=>a.type===ref.type);
  assert.equal(animals.length,ref.count);
- assert.ok(animals.every(a=>a.root.userData.assetId===ref.assetId));
+ assert.ok(animals.every(a=>a.assetId===ref.assetId));
  if(ref.speed)assert.deepEqual(animals[0].speed,ref.speed);
  if(ref.map==='escadao')assert.deepEqual(MAPS.escadao.ambience,ESCADAO_AMBIENCE);
  if(ref.map==='lajes')assert.deepEqual(MAPS.lajes.ambience,LAJES_AMBIENCE);
@@ -46,17 +60,13 @@ for(const ref of references)test(`${ref.map}/${ref.type} binds the curated file 
  const record=registry[ref.registryId];assert.ok(record.files.includes('public/'+ref.path));
  assert.equal(record.processing.finalSha256,ref.sha256);
  assert.equal(createHash('sha256').update(fs.readFileSync(new URL('../public/'+ref.path,import.meta.url))).digest('hex'),ref.sha256);
- world.ambience.dispose();
 });
 test('census includes every authored cat and chicken on each covered map; omitting a type is detected',()=>{
  for(const map of uniqueMaps){
-  const world=MAPS[map].build(new THREE.Scene(),initTextures());
-  try{
-   const targets=world.ambience.animals.filter(a=>['cat','chicken'].includes(a.type));assert.ok(targets.length);
-   const check=refs=>{for(const a of targets){const ref=refs.find(r=>r.map===map&&r.type===a.type);assert.ok(ref,`${map}/${a.type} outside census`);assert.ok(ref.animalIds.includes(a.id));}};
-   check(references);
-   const omitted=targets[0].type;assert.throws(()=>check(references.filter(r=>r.map!==map||r.type!==omitted)));
-  }finally{world.ambience.dispose();}
+  const targets=authoredFaunaSnapshot(map).filter(a=>['cat','chicken'].includes(a.type));assert.ok(targets.length);
+  const check=refs=>{for(const a of targets){const ref=refs.find(r=>r.map===map&&r.type===a.type);assert.ok(ref,`${map}/${a.type} outside census`);assert.ok(ref.animalIds.includes(a.id));}};
+  check(references);
+  const omitted=targets[0].type;assert.throws(()=>check(references.filter(r=>r.map!==map||r.type!==omitted)));
  }
 });
 function mobileCalls(map,{source=main,ambientSource=ambient,next=false,mobileAuto=true}={}){
@@ -350,8 +360,7 @@ for(const low of [false,true])test(`curated ground fauna keeps a non-hittable co
  let disposed=false;shadow.material.addEventListener('dispose',()=>{disposed=true;});ambience.dispose();assert.equal(disposed,true);
 });
 for(const ref of references)test(`${ref.map}/${ref.type} actually opts into contact shading`,()=>{
- const world=MAPS[ref.map].build(new THREE.Scene(),initTextures());
- assert.ok(world.ambience.animals.filter(a=>a.type===ref.type).every(a=>a.root.getObjectByName('FAUNA_CONTACT_SHADOW')));world.ambience.dispose();
+ assert.ok(authoredFaunaSnapshot(ref.map).filter(a=>a.type===ref.type).every(a=>a.contactShadow));
 });
 
 test('boot budget mutation still moves the actual fauna preload before props',()=>{
