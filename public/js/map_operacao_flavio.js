@@ -208,13 +208,40 @@ export function buildOperacaoFlavio(scene, T = {}) {
   };
 
   // O terminal deixa de ser um labirinto neutro: materiais, sinalização e horizonte formam quatro zonas legíveis.
-  bloco('solo-aeroporto', 0, -0.2, 0, 94, 0.4, 124, mats.asfalto);
+  const soloAeroporto = bloco('solo-aeroporto', 0, -0.2, 0, 94, 0.4, 124, mats.asfalto);
   bloco('gramado-oeste', -56, -0.23, 0, 18, 0.34, 146, mats.grama, false);
   bloco('gramado-leste', 56, -0.23, 0, 18, 0.34, 146, mats.grama, false);
   bloco('piso-terminal-executivo', 0, 0.02, -34, 58, 0.08, 36, mats.piso, false);
   bloco('piso-controle-acesso', 0, 0.035, 1, 70, 0.07, 30, mats.concreto, false);
   bloco('piso-hangar', 0, 0.04, 35, 72, 0.12, 27, mats.concreto, false);
-  bloco('pista-distante', 0, -0.14, 78, 118, 0.1, 23, mats.preto, false, false);
+  const pistaDistante = bloco('pista-distante', 0, -0.14, 78, 118, 0.1, 23, mats.preto, false, false);
+  // Ligação render-only da lacuna central: 4 vértices, 2 triângulos, winding com normal +Y,
+  // derivada apenas de position/BoxGeometry.parameters dos dois blocos vizinhos preservados.
+  const pA = soloAeroporto.geometry.parameters, pP = pistaDistante.geometry.parameters;
+  const z0 = soloAeroporto.position.z + pA.depth / 2; // borda norte do solo (62)
+  const z1 = pistaDistante.position.z - pP.depth / 2; // borda sul da pista (66.5)
+  const x0 = Math.max(soloAeroporto.position.x - pA.width / 2, pistaDistante.position.x - pP.width / 2); // interseção X mínima (-47)
+  const x1 = Math.min(soloAeroporto.position.x + pA.width / 2, pistaDistante.position.x + pP.width / 2); // interseção X máxima (47)
+  const y0 = soloAeroporto.position.y + pA.height / 2; // topo do solo (0)
+  const y1 = pistaDistante.position.y + pP.height / 2; // topo da pista (-0.09), interpolação linear 0 → -0.09
+  // UV por extrapolação do topface original do solo-aeroporto: u=(x+47)/94, v=(62-z)/124.
+  const uvTopo = (x, z) => [(x - soloAeroporto.position.x) / pA.width + 0.5, (z0 - z) / pA.depth];
+  const posConector = new Float32Array([
+    x0, y0, z0, x0, y1, z1, x1, y1, z1,
+    x0, y0, z0, x1, y1, z1, x1, y0, z0,
+  ]);
+  const uvConector = new Float32Array([
+    ...uvTopo(x0, z0), ...uvTopo(x0, z1), ...uvTopo(x1, z1),
+    ...uvTopo(x0, z0), ...uvTopo(x1, z1), ...uvTopo(x1, z0),
+  ]);
+  const geoConector = new THREE.BufferGeometry();
+  geoConector.setAttribute('position', new THREE.BufferAttribute(posConector, 3));
+  geoConector.setAttribute('uv', new THREE.BufferAttribute(uvConector, 2));
+  geoConector.computeVertexNormals();
+  const conector = new THREE.Mesh(geoConector, soloAeroporto.material); // mesmo mats.asfalto, sem novo material/textura/repeat
+  conector.name = 'ligacao-piso-central';
+  conector.receiveShadow = true; conector.castShadow = false;
+  root.add(conector); // sem bloco(): render-only, não registra colisor nem occluder
   for (let x = -52; x <= 52; x += 13) {
     bloco('marca-pista-distante', x, -0.07, 78, 7, 0.03, 0.34, mats.branco, false, false);
   }
