@@ -44,6 +44,7 @@ for (const [name, angle] of [['frente', 0], ['lateral', Math.PI / 2], ['retaguar
   const slot = game.objective.botDestination(guard);
   guard.pos.set(slot.x, 0, slot.z); guard.yaw = 0; guard.think = 0;
   guard.weapon = 'ak'; guard.mag = 30; guard.nextShotAt = 0;
+  guard.holdUntil = 0; guard._holdDecide = Number.POSITIVE_INFINITY;
   // Visibilidade é controlada; aquisição, giro, cadência, movimento e colisão são reais.
   game._losClear = () => true;
   let maximumSlotDistance = 0, fired = false, acquired = false;

@@ -1,21 +1,259 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { lstatSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 
 const option = (name, fallback) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.split('=').slice(1).join('=') || fallback;
 const base = option('base', 'http://127.0.0.1:9326');
 const out = option('out', 'artifacts/operacao-flavio');
-mkdirSync(out, { recursive: true });
 
-const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
-const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+class EnvironmentUnavailable extends Error {}
+
+const supportedPlatform = (platform) => platform === 'darwin';
+const classifyGpuEnvironment = (platform, gpu, webgl2) => {
+  if (!supportedPlatform(platform)) return { ok: false, stage: 'platform', reason: 'platform_not_supported' };
+  if (webgl2 !== true) return { ok: false, stage: 'webgl2', reason: 'webgl2_unavailable' };
+  if (!gpu) return { ok: false, stage: 'gpu', reason: 'gpu_absent' };
+  if (/swiftshader|software|llvmpipe/i.test(gpu)) return { ok: false, stage: 'gpu', reason: 'gpu_software' };
+  if (!/Apple M4 Pro|Metal/i.test(gpu)) return { ok: false, stage: 'gpu', reason: 'gpu_not_supported' };
+  return { ok: true, stage: 'profile' };
+};
+const instanceOfSafe = (value, type) => {
+  try { return value instanceof type; } catch { return false; }
+};
+const isNativeAssertion = (error) => instanceOfSafe(error, assert.AssertionError);
+const exitCodeFor = (error) => (isNativeAssertion(error) ? 1 : 2);
+const physicalOutDirectory = (stats) => Boolean(stats && stats.isDirectory() && !stats.isSymbolicLink());
+const freshOutState = (stats, entries) => physicalOutDirectory(stats) && Array.isArray(entries) && entries.length === 0;
+const sameOutIdentity = (stats, identity) => physicalOutDirectory(stats)
+  && stats.dev === identity?.dev && stats.ino === identity?.ino;
+let outReservation = null;
+const reserveOut = () => {
+  let stats;
+  try { stats = lstatSync(out); } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    mkdirSync(out, { recursive: true });
+    stats = lstatSync(out);
+  }
+  const entries = physicalOutDirectory(stats) ? readdirSync(out) : null;
+  if (!freshOutState(stats, entries)) {
+    throw new Error(`stage=out reason=out_not_fresh: ${out} deve ser diretorio fisico novo ou vazio do supervisor`);
+  }
+  outReservation = { dev: stats.dev, ino: stats.ino };
+};
+const requireOwnedOut = () => {
+  if (!outReservation || !sameOutIdentity(lstatSync(out), outReservation)) {
+    throw new Error('stage=out reason=out_identity_changed: diretorio nao reservado ou substituido');
+  }
+};
+const runWithCleanup = async (primary, cleanup, afterCleanup = () => {}) => {
+  let hasPrimaryError = false, primaryError, hasCleanupFailure = false, cleanupErrors = [];
+  try { await primary(); } catch (error) { hasPrimaryError = true; primaryError = error; }
+  try { await cleanup(); } catch (error) {
+    hasCleanupFailure = true;
+    cleanupErrors = Array.isArray(error) ? error : [error];
+  }
+  if (!hasPrimaryError) {
+    try { await afterCleanup(); } catch (error) { hasPrimaryError = true; primaryError = error; }
+  }
+  const exitCode = hasCleanupFailure ? 2 : (hasPrimaryError ? exitCodeFor(primaryError) : 0);
+  return { hasPrimaryError, primaryError, hasCleanupFailure, cleanupErrors, exitCode };
+};
+const closeResources = async (context, browser) => {
+  const closeErrors = [];
+  try { await context?.close(); } catch (error) { closeErrors.push(error); }
+  try { await browser?.close(); } catch (error) { closeErrors.push(error); }
+  if (closeErrors.length) throw closeErrors;
+};
+const describeThrowable = (error) => {
+  const field = (name) => { try { return error?.[name]; } catch { return undefined; } };
+  const text = (value) => { try { return String(value); } catch { return '[valor sem representacao textual]'; } };
+  const name = field('name'), message = field('message'), stack = field('stack');
+  return {
+    kind: isNativeAssertion(error) ? 'feature_assert'
+      : instanceOfSafe(error, EnvironmentUnavailable) ? 'environment_unavailable' : 'infra',
+    type: error === null ? 'null' : typeof error,
+    name: typeof name === 'string' ? name : null,
+    message: typeof message === 'string' ? message : text(error),
+    stack: typeof stack === 'string' ? stack : null,
+  };
+};
+const describeFailure = (outcome) => ({
+  hasPrimaryError: outcome.hasPrimaryError,
+  primary: outcome.hasPrimaryError ? describeThrowable(outcome.primaryError) : null,
+  hasCleanupFailure: outcome.hasCleanupFailure,
+  cleanups: outcome.cleanupErrors.map(describeThrowable),
+});
+const terminalFailureJSON = (outcome, receipt, exitCode) => JSON.stringify({
+  ...describeFailure(outcome), receipt, exitCode,
+}, null, 2);
+const verifyBrowserEvents = (errors, failed) => {
+  assert.deepEqual(errors, [], `erros no browser: ${errors.join(' | ')}`);
+  const featureFailed = failed.filter(([, url]) => /operacao_flavio|operacao_decola|senador\\.glb/.test(url));
+  assert.deepEqual(featureFailed, [], `assets da operação falharam: ${JSON.stringify(featureFailed)}`);
+};
+
+if (process.argv.includes('--selftest-env')) {
+  const failures = [];
+  let cases = 0;
+  const check = (condition, label) => { cases++; if (!condition) failures.push(label); };
+  const gpu = (...args) => classifyGpuEnvironment(...args);
+  check(gpu('darwin', 'Apple M4 Pro (Metal)', true).ok, 'darwin+apple+webgl2 deve ser aceito');
+  check(!gpu('darwin', null, true).ok, 'gpu ausente deve ser EnvironmentUnavailable');
+  check(!gpu('darwin', 'SwiftShader (software)', true).ok, 'gpu software deve ser EnvironmentUnavailable');
+  check(!gpu('darwin', 'Metal via SwiftShader software', true).ok, 'software precede perfil na classificacao');
+  check(!gpu('darwin', 'ANGLE (NVIDIA GeForce RTX)', true).ok, 'gpu nao Apple deve ser EnvironmentUnavailable');
+  check(!gpu('darwin', 'Apple M4 Pro', false).ok, 'sem WebGL2 deve ser EnvironmentUnavailable');
+  check(!gpu('linux', 'Apple M4 Pro', true).ok, 'linux deve ser EnvironmentUnavailable');
+  check(!gpu('win32', 'Apple M4 Pro', true).ok, 'windows deve ser EnvironmentUnavailable');
+  check(exitCodeFor(new assert.AssertionError({ message: 'mapa' })) === 1, 'assert nativa deve sair 1');
+  check(exitCodeFor(Object.assign(new Error('forjada'), { name: 'AssertionError' })) === 2, 'nome forjado deve sair 2');
+  check(exitCodeFor(new EnvironmentUnavailable('env')) === 2, 'indisponibilidade deve sair 2');
+  check(exitCodeFor(new Error('chrome nao instalado')) === 2, 'infra deve sair 2');
+  check(exitCodeFor(null) === 2, 'null lancado deve sair 2');
+  check(exitCodeFor('boom') === 2, 'string lancada deve sair 2');
+  check(exitCodeFor({ name: 'AssertionError', message: 'forjado' }) === 2, 'objeto plain com nome forjado deve sair 2');
+  const native = new assert.AssertionError({ message: 'mapa' });
+  const closeContext = new Error('context.close falhou');
+  const closeBrowser = new Error('browser.close falhou');
+  const combined = await runWithCleanup(() => { throw native; }, () => { throw [closeContext, closeBrowser]; });
+  check(combined.exitCode === 2 && combined.primaryError === native && combined.cleanupErrors.length === 2
+    && combined.cleanupErrors[0] === closeContext && combined.cleanupErrors[1] === closeBrowser,
+  'cleanup failure exige exit 2 mantendo primary nativa e ambos closes independentes');
+  const cleanRun = await runWithCleanup(() => {}, () => {});
+  check(cleanRun.exitCode === 0 && cleanRun.hasPrimaryError === false && cleanRun.hasCleanupFailure === false
+    && cleanRun.cleanupErrors.length === 0, 'sucesso limpo deve sair 0');
+  const infraRun = await runWithCleanup(() => { throw new Error('launch falhou'); }, () => {});
+  check(infraRun.exitCode === 2 && infraRun.primaryError.message === 'launch falhou', 'infra sem cleanup failure deve sair 2');
+  const acquired = { closed: false };
+  const setupRun = await runWithCleanup(
+    () => { acquired.created = true; throw new Error('newPage falhou'); },
+    () => { acquired.closed = true; },
+  );
+  check(setupRun.exitCode === 2 && acquired.created && acquired.closed, 'falha de setup apos aquisicao deve disparar cleanup');
+  for (const value of [null, undefined, false, 0, '']) {
+    const caught = await runWithCleanup(() => { throw value; }, () => {});
+    check(caught.exitCode === 2 && caught.hasPrimaryError && Object.is(caught.primaryError, value)
+      && caught.hasCleanupFailure === false && caught.cleanupErrors.length === 0,
+    `throwable falsy ${describeThrowable(value).type}/${describeThrowable(value).message} deve permanecer infra2 no adapter real`);
+  }
+  const forged = { name: 'AssertionError', message: 'forjada no adapter' };
+  const forgedRun = await runWithCleanup(() => { throw forged; }, () => {});
+  check(forgedRun.exitCode === 2 && forgedRun.hasPrimaryError && forgedRun.primaryError === forged,
+    'nome forjado deve permanecer infra2 no adapter real');
+  const nativeRun = await runWithCleanup(() => { throw native; }, () => {});
+  check(nativeRun.exitCode === 1 && nativeRun.hasPrimaryError && nativeRun.primaryError === native,
+    'assert nativa sem cleanup failure deve permanecer1 no adapter real');
+  const lateErrors = [], lateOrder = [];
+  const lateRun = await runWithCleanup(
+    () => { lateOrder.push('coleta'); },
+    () => closeResources({ close: async () => { lateOrder.push('context'); lateErrors.push('erro tardio no close'); } },
+      { close: async () => { lateOrder.push('browser'); } }),
+    () => { lateOrder.push('veredito'); verifyBrowserEvents(lateErrors, []); },
+  );
+  check(lateRun.exitCode === 1 && lateRun.hasPrimaryError && isNativeAssertion(lateRun.primaryError)
+    && JSON.stringify(lateOrder) === JSON.stringify(['coleta', 'context', 'browser', 'veredito']),
+  'erro tardio deve falhar pelo verificador real somente apos ambos closes');
+  const closeOrder = [], lateAndCloseErrors = [];
+  const closeRun = await runWithCleanup(
+    () => {},
+    () => closeResources({ close: async () => { closeOrder.push('context'); lateAndCloseErrors.push('tardio'); throw closeContext; } },
+      { close: async () => { closeOrder.push('browser'); throw closeBrowser; } }),
+    () => verifyBrowserEvents(lateAndCloseErrors, []),
+  );
+  check(closeRun.exitCode === 2 && closeRun.hasPrimaryError && isNativeAssertion(closeRun.primaryError)
+    && closeRun.hasCleanupFailure && closeRun.cleanupErrors[0] === closeContext && closeRun.cleanupErrors[1] === closeBrowser
+    && JSON.stringify(closeOrder) === JSON.stringify(['context', 'browser']),
+  'ambos closes reais tentados, ambos erros retidos e cleanup2 prevalece sobre assert tardia');
+  const falsyClose = await runWithCleanup(() => {}, () => closeResources({ close: async () => { throw null; } }, null));
+  check(falsyClose.exitCode === 2 && falsyClose.hasCleanupFailure && falsyClose.cleanupErrors.length === 1
+    && falsyClose.cleanupErrors[0] === null, 'erro falsy de close permanece cleanup2');
+  // Fixtures de metadados exercem os mesmos predicados da reserva; nao criam diretorios.
+  const stats = (directory, symlink, dev = 1, ino = 2) => ({ isDirectory: () => directory, isSymbolicLink: () => symlink, dev, ino });
+  check(freshOutState(stats(true, false), []), 'diretorio fisico vazio pode ser reservado');
+  check(!freshOutState(stats(true, false), ['01-terminal.png']), 'captura antiga sem receipt deve ser recusada');
+  check(!freshOutState(stats(true, false), ['receipt.json']), 'receipt antigo deve ser recusado');
+  check(!freshOutState(stats(true, true), []), 'diretorio symlink deve ser recusado');
+  check(!freshOutState(stats(false, false), []), 'arquivo regular nao e diretorio de captura');
+  check(sameOutIdentity(stats(true, false), { dev: 1, ino: 2 }), 'identidade fisica reservada deve conferir');
+  check(!sameOutIdentity(stats(true, false, 1, 3), { dev: 1, ino: 2 }), 'troca de inode invalida ownership');
+  const checkUnknownThrowable = async (value, label, reads = null) => {
+    const closed = [];
+    let valid = false;
+    try {
+      const caught = await runWithCleanup(() => { throw value; }, () => closeResources(
+        { close: async () => { closed.push('context'); } }, { close: async () => { closed.push('browser'); } },
+      ));
+      const before = reads ? { ...reads } : null;
+      const encoded = JSON.parse(terminalFailureJSON(caught, { written: false, reason: 'fixture_cpu_sem_io' }, caught.exitCode));
+      const description = encoded.primary;
+      valid = caught.hasPrimaryError && Object.is(caught.primaryError, value) && caught.exitCode === 2
+        && caught.hasCleanupFailure === false && JSON.stringify(closed) === JSON.stringify(['context', 'browser'])
+        && encoded.hasPrimaryError === true && encoded.exitCode === 2 && Number.isFinite(encoded.exitCode)
+        && description && description.kind === 'infra' && typeof description.type === 'string'
+        && (description.name === null || typeof description.name === 'string')
+        && typeof description.message === 'string' && (description.stack === null || typeof description.stack === 'string')
+        && (!reads || ['name', 'message', 'stack'].every((key) => reads[key] - before[key] === 1));
+    } catch { valid = false; }
+    check(valid, label);
+  };
+  const revoked = Proxy.revocable({}, {});
+  revoked.revoke();
+  await checkUnknownThrowable(revoked.proxy, 'Proxy revogado permanece infra2 com cleanup e terminal serializavel');
+  await checkUnknownThrowable(new Proxy({}, { getPrototypeOf() { throw new Error('fixture getPrototypeOf'); } }),
+    'getPrototypeOf lancador permanece infra2 com cleanup e terminal serializavel');
+  for (const variant of ['cyclic', 'bigint']) {
+    const reads = { name: 0, message: 0, stack: 0 };
+    const value = {};
+    value.self = value;
+    for (const key of Object.keys(reads)) Object.defineProperty(value, key, { get() {
+      reads[key]++;
+      return reads[key] % 2 ? `fixture ${key}` : variant === 'cyclic' ? value : 42n;
+    } });
+    await checkUnknownThrowable(value, `getters alternantes ${variant}: uma leitura/campo e terminal primitivo`, reads);
+  }
+  if (failures.length) { console.error(JSON.stringify({ selftest: 'env', cases, failures })); process.exit(1); }
+  console.log(JSON.stringify({ selftest: 'env', ok: true, cases }));
+  process.exit(0);
+}
+
+let browser = null, context = null, closed = false, observedGpu = null, stage = 'setup';
+let receiptData = null;
+const errors = [], failed = [], glbs = [];
+const writeReceipt = (value) => {
+  requireOwnedOut();
+  writeFileSync(`${out}/receipt.json`, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+};
+const writeFailureReceipt = (outcome) => {
+  if (!outReservation) return { written: false, reason: 'out_not_reserved' };
+  try {
+    writeReceipt({
+      generatedAt: new Date().toISOString(),
+      failure: {
+        ...describeFailure(outcome), stage, platform: process.platform,
+        actualGPU: observedGpu, testExecuted: false, exitCode: outcome.exitCode,
+      },
+    });
+    return { written: true };
+  } catch (error) { return { written: false, error: describeThrowable(error) }; }
+};
+const cleanup = async () => {
+  if (closed) return;
+  try { await closeResources(context, browser); } finally { closed = true; }
+};
+const primary = async () => {
+  reserveOut();
+  if (!supportedPlatform(process.platform)) {
+    throw new EnvironmentUnavailable(`stage=platform platform=${process.platform} reason=platform_not_supported: perfil suportado deste ensaio e Mac nativo atual (Apple M4 Pro|Metal + WebGL2)`);
+  }
+  browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
+  stage = 'browser';
+context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
 const page = await context.newPage();
 await page.route(/\.astro\/eval-vite|dev-toolbar/, (route) => route.fulfill({
   contentType: 'text/javascript',
   body: 'export default {};',
 }));
-const errors = [], failed = [], glbs = [];
 page.on('pageerror', (error) => errors.push(error.message));
 page.on('response', (response) => {
   if (response.status() >= 400) failed.push([response.status(), response.url()]);
@@ -29,11 +267,10 @@ const views = [
   { id: '04-apron', camera: [27, 5.2, 61], target: [0, 2.2, 55], description: 'avião nivelado, balizamento, escada e equipamentos detalhados do pátio' },
 ];
 
-let closed = false;
-try {
   await page.addInitScript(() => {
     localStorage.setItem('awpbr_settings', JSON.stringify({ quality: 'med', allyBots: 3, enemyBots: 4, bots: 4, vol: 0, speech: false }));
   });
+  stage = 'page';
   await page.goto(`${base}/?debug=1&auto=B,senador&map=operacao_flavio&perfilauto=0`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
   await page.waitForTimeout(3200);
@@ -112,6 +349,13 @@ try {
       objectiveLabel: document.getElementById('escort-objective')?.textContent,
     };
   });
+  stage = 'profile';
+  observedGpu = runtime.gpu ?? null;
+  const profile = classifyGpuEnvironment(process.platform, runtime.gpu, runtime.webgl2);
+  if (!profile.ok) {
+    throw new EnvironmentUnavailable(`stage=${profile.stage} platform=${process.platform} reason=${profile.reason} gpu=${runtime.gpu ?? null} webgl2=${runtime.webgl2}: ambiente fora do perfil suportado (Apple M4 Pro|Metal + WebGL2), nao e falha do mapa`);
+  }
+  stage = 'feature';
   assert.equal(runtime.map, 'operacao_flavio');
   assert.equal(runtime.mode, 'escort');
   assert.equal(runtime.ctf, false);
@@ -141,8 +385,6 @@ try {
   assert.deepEqual(runtime.blockedCheckpoints, [], `checkpoints dentro de colisores: ${runtime.blockedCheckpoints.join(', ')}`);
   assert.deepEqual(runtime.blockedRouteSamples, [], `rota física atravessa colisores: ${runtime.blockedRouteSamples.join(', ')}`);
   assert.deepEqual(runtime.disconnectedRouteSegments, [], `trechos sem navegação: ${runtime.disconnectedRouteSegments.join(', ')}`);
-  assert.equal(runtime.webgl2, true);
-  assert.match(runtime.gpu || '', /Apple M4 Pro|Metal/i);
   assert.match(runtime.objectiveLabel || '', /OPERAÇÃO FLÁVIO/);
   for (const file of [
     'aviao_executivo.glb', 'trator_bagagem.glb', 'carrinho_ferramentas.glb', 'arco_seguranca.glb', 'escada_embarque.glb',
@@ -254,6 +496,7 @@ try {
       g.camera.lookAt(...target);
       g.renderer.render(g.scene, g.camera);
     }, view);
+    requireOwnedOut();
     await page.screenshot({ path: `${out}/${view.id}.png` });
   }
 
@@ -281,6 +524,7 @@ try {
   assert.equal(death.result?.titulo, 'FLÁVIO FOI MORTO');
   assert.match(death.result?.sub || '', /escolta fracassou/i);
   assert.match(death.hud, /FLÁVIO FOI MORTO · ESCOLTA FRACASSOU/);
+  requireOwnedOut();
   await page.screenshot({ path: `${out}/05-morte-flavio.png` });
 
   await page.evaluate(() => {
@@ -315,9 +559,11 @@ try {
   const preDoorA = await sampleBoardingPlane();
   await waitForElapsed(6.1);
   const preDoorB = await sampleBoardingPlane();
+  requireOwnedOut();
   await page.screenshot({ path: `${out}/06-cinematica-vitoria-porta.png` });
   await waitForElapsed(7.4);
   const taxi = await sampleBoardingPlane();
+  requireOwnedOut();
   await page.screenshot({ path: `${out}/06-cinematica-vitoria.png` });
   assert.ok(preDoorA.planeZ === 55 && preDoorB.planeZ === 55, `FB_PRE_DOOR avião de embarque deve permanecer em z=55 antes da porta (A ${preDoorA.planeZ}, B ${preDoorB.planeZ})`);
   assert.equal(preDoorA.planeZ, preDoorB.planeZ, `avião de embarque deve ficar imóvel antes do fechamento da porta (${preDoorA.planeZ} vs ${preDoorB.planeZ})`);
@@ -345,18 +591,25 @@ try {
   assert.ok(cinematic.duration >= 8.9, `FB_DURATION duração da cinemática deve ser >= 8.9 (dur ${cinematic.duration})`);
   assert.ok(cinematic.planeZ > 55);
 
-  await context.close();
-  await browser.close();
-  closed = true;
-  assert.deepEqual(errors, [], `erros no browser: ${errors.join(' | ')}`);
-  const featureFailed = failed.filter(([, url]) => /operacao_flavio|operacao_decola|senador\\.glb/.test(url));
-  assert.deepEqual(featureFailed, [], `assets da operação falharam: ${JSON.stringify(featureFailed)}`);
-  const receipt = {
+  receiptData = {
     generatedAt: new Date().toISOString(), base, runtime, escortTrace,
     threatBefore, threatAfter, death, cinematic, views, errors, failed, glbs,
   };
-  writeFileSync(`${out}/receipt.json`, `${JSON.stringify(receipt, null, 2)}\n`);
-  console.log(JSON.stringify(receipt, null, 2));
-} finally {
-  if (!closed) await browser.close();
+};
+// Eventos finais e recibo terminal somente depois das duas tentativas de close.
+let outcome = await runWithCleanup(primary, cleanup, () => verifyBrowserEvents(errors, failed));
+if (!outcome.hasPrimaryError && !outcome.hasCleanupFailure) {
+  try {
+    if (!receiptData) throw new Error('stage=receipt reason=missing_collected_data');
+    writeReceipt(receiptData);
+    console.log(JSON.stringify(receiptData, null, 2));
+  } catch (error) {
+    outcome = { ...outcome, hasPrimaryError: true, primaryError: error, exitCode: exitCodeFor(error) };
+  }
+}
+if (outcome.hasPrimaryError || outcome.hasCleanupFailure) {
+  const receipt = writeFailureReceipt(outcome);
+  const exitCode = receipt.error ? 2 : outcome.exitCode;
+  console.error(terminalFailureJSON(outcome, receipt, exitCode));
+  process.exit(exitCode);
 }

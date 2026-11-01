@@ -28,7 +28,9 @@ if (process.argv.includes('--autoteste')) {
 }
 for (const legacy of [false, true]) {
   const result = run([], legacy);
-  assert(result.status === 0 && !result.error && !result.signal, `baseline inválido, legado=${legacy}`);
+  assert(result.status === 0 && !result.error && !result.signal, `baseline inválido, legado=${legacy} ` + JSON.stringify({
+    status: result.status, signal: result.signal, error: result.error && result.error.message,
+    stdoutTail: `${result.stdout}`.slice(-4096), stderrTail: `${result.stderr}`.slice(-2048) }));
   console.log(`defense-proof: frente/lateral/retaguarda e controles normais, legado=${legacy}`);
 }
 const fire = 'frente: guarda no slot adquire e dispara contra ameaça visível distante';
@@ -41,6 +43,10 @@ for (const [name, legacy, clauses] of [
   ['reagrupar', false, ['frente: reagrupamento se aproxima pelo caminho físico']],
   ['los', false, ['frente: perder LOS bloqueia novos tiros']],
 ]) {
-  assert(proof(run([`--mutante=${name}`], legacy), name, clauses), `mutante sem prova semântica: ${name}`);
+  // Diagnóstico limitado só na falha do child; nenhuma retentativa.
+  const mutant = run([`--mutante=${name}`], legacy);
+  assert(proof(mutant, name, clauses), `mutante sem prova semântica: ${name} ` + JSON.stringify({
+    status: mutant.status, signal: mutant.signal, error: mutant.error && mutant.error.message,
+    stdoutTail: `${mutant.stdout}`.slice(-4096), stderrTail: `${mutant.stderr}`.slice(-2048) }));
   console.log(`defense-proof: aplicado e detectado ${name}`);
 }
