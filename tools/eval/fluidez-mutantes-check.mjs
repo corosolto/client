@@ -66,5 +66,22 @@ if (args[0] === '--selftest') {
   assert.ok(veredito(baseline, alvo, false), `baseline inválida: ${alvo.helper}, status=${baseline.status}`);
   const mutante = executar([`--mutante=${alvo.mutante}`]);
   assert.ok(veredito(mutante, alvo), `mutante sem prova: ${alvo.mutante}, status=${mutante.status}, ${String(mutante.stderr).slice(-2500)}`);
+  /* GLM-392 (lease 8988df95): append-only, SOMENTE no alias mantle, após baseline0/mutante1
+     confirmados — o companheiro portátil normal0 cobre 50ms com seus próprios baseline,
+     3 mutantes causais e controles; alias movimento e --selftest permanecem byte-idênticos. */
+  if (args[0] === 'mantle') {
+    const portatil = spawnSync(process.execPath,
+      [fileURLToPath(new URL('mantle-dt-check.mjs', import.meta.url))],
+      { timeout: 180000, maxBuffer: 4 * 1024 * 1024, encoding: 'utf8' });
+    assert.ok(portatil.status === 0 && !portatil.error && !portatil.signal && portatil.stderr === '',
+      `mantle portátil 50ms falhou/infra: status=${portatil.status}, ${String(portatil.stderr).slice(-2500)}`);
+    const linhas = String(portatil.stdout || '').split('\n');
+    assert.ok(linhas.length === 3 && linhas[2] === '' && linhas[0].startsWith('DT50_392_PAIRS:')
+      && linhas[1].startsWith('VERDE mantle-dt-check.mjs:'), 'protocolo integral do companheiro obrigatório');
+    const cobertura = JSON.parse(linhas[0].slice('DT50_392_PAIRS:'.length));
+    assert.ok(cobertura.tool === 'mantle-dt-check.mjs' && cobertura.baseline.A.dt === 1 / 60
+      && cobertura.baseline.B.dt === 0.05 && cobertura.commonTimes.length === cobertura.baseline.B.updates
+      && cobertura.wrongBaselineControl.death.clausula === 'MF50_DT', 'identidade/contraprova da cobertura ausentes');
+  }
   console.log(`VERDE fluidez ${args[0]}: baseline0, mutante1/${alvo.clausula}, POST e resultado únicos; metaprova verde`);
 }
