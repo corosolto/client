@@ -114,3 +114,33 @@ ao encontrar esse conflito no gate focal, sem publicar ou alterar hooks.
 O cabeçalho do alias agora aponta para o controlador e sua fonte de casos;
 nenhum caso, recibo, predicado, veredito ou guard do scanner foi alterado.
 Prova nominal+controles do scanner em `TP-HANDS-MUTANT-HEADER-R831-*`.
+
+### R873: formal atual de #1213
+
+Review `5729673868` no head `3ed5ab67bf1c8665fa3e7fc2f18241b6a9cd7e7c`:
+os dois achados foram verificados na fonte e em subprocessos Node22 reais.
+O item `4436868171` é aceito quanto ao novo vínculo de `check:vm` com a régua
+estrita privada. Root remove somente `eval:vm-maos-armas-catalogo` desse alias,
+mantendo o comando estrito separado e sua classificação de assets ausentes.
+O CI atual chama `eval:melee-vm`, que executa o controlador não estrito;
+nenhum workflow atual chama `check:vm`. O runner completo não recebeu nova
+certificação sem catálogo, pois os demais gates históricos continuam iguais.
+
+O item `4436868174` é refutado. `refreshTeamHands` retorna o mesmo material
+quando `teamHands` está ausente. O `setProfile` não reidrata o metadata apagado
+pelo mutante `luva-crua`. No catálogo autorizado, o nominal passou 1.037
+cláusulas e o mutante M4 gerou 48 falhas, incluindo as 12 MÃO4 esperadas.
+Sem catálogo, são 24 falhas, incluindo seis MÃO4; o controlador completo de
+sete corridas passou nos dois ambientes. Preservar o failset MÃO1 a MÃO4.
+A dívida `RIG:pistol@pintura` permanece declarada, sem alterar seus predicados.
+
+Relatório e recibos: `VM-HANDS-BOT-R873-*` na auditoria agregada. Manifesto
+SHA256 `728f9a22c6eb714018161cee12aa2e0470f3b1bacf7913b4fe85ef28a2fad091`.
+Root leu o relatório inteiro. Nenhum asset foi copiado ou publicado e o produto
+público permanece idêntico ao pai desta integração. Essa triagem não fornece
+crítica independente, anatomia, browser, mobile, MP ou aprovação de release.
+
+Próximo passo: validar o delta de configuração, checkpoint, push normal com
+hooks, responder os dois fios e obter formal do head novo. O crítico whole
+independente deve ocorrer depois de limpar os achados do bot. A missão integral
+continua; Flávio/#1158 fica excluído e os novos fluxos UI/social ficam para depois.
