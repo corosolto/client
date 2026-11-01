@@ -44,6 +44,7 @@ export const PEGADA_CORPO = {
 export const PEGADA_BUS = { hx: 4.6, hz: 1.0, ryCorr: 0.3263 };
 
 export const BRASILIA_PROPS = ['congresso', 'catedral', 'ministerio', 'palacio', 'justica', 'tires', 'stall', 'tent', 'bus', 'drinkstand', 'urna', 'towner'];
+export const BRASILIA_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'armadillo']);
 
 export function buildBrasilia(scene, T) {
   const colliders = [];   // {minX,minY,minZ,maxX,maxY,maxZ}

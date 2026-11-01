@@ -41,6 +41,7 @@ export const MAPS = {
   },
   praca_poderes: { name: 'Praça dos Três Poderes',   // Brasília fiel (substitui o clássico)
     props: ['congresso', 'catedral', 'ministerio', 'palacio', 'justica', 'tires', 'stall', 'tent', 'bus', 'drinkstand', 'urna', 'towner'],
+    ambience: ['rat', 'pigeonGround', 'armadillo'],
   },
   piscina_treta: { name: 'Piscina da Treta',   // salão fechado do CS 1.6; a versão Piscinão está em map_piscinao_ramos.js, fora do registro
     props: ['piscina_armarios', 'piscina_banco', 'piscina_espreguicadeira', 'piscina_escada'],
@@ -118,7 +119,7 @@ const EXPORTS = {
   mansao: { build: 'buildMansao', props: 'MANSAO_PROPS', ambience: 'MANSAO_AMBIENCE', preload: 'preloadMansaoAmbience' },
   amazonia: { build: 'buildAmazonia', props: 'AMAZONIA_PROPS', ambience: 'AMAZONIA_AMBIENCE' },
   escadao: { build: 'buildEscadao', props: 'ESCADAO_PROPS', ambience: 'ESCADAO_AMBIENCE' },
-  praca_poderes: { build: 'buildBrasilia', props: 'BRASILIA_PROPS' },
+  praca_poderes: { build: 'buildBrasilia', props: 'BRASILIA_PROPS', ambience: 'BRASILIA_AMBIENCE' },
   piscina_treta: { build: 'buildPoolDay', props: 'PISCINA_PROPS' },
   loja_h: { build: 'buildHavan', propsGetter: 'havanPropsForMatch' },
   ferro_velho: { build: 'buildFerroVelho', props: 'FERRO_PROPS' },
