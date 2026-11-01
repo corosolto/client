@@ -2,6 +2,44 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
+## Checkpoint R61 antes do novo push, 01/11
+
+O push normal R60 de d20f53c foi recusado: 106/107 checks passaram em
+629,9s. A única falha foi `eval:map-material-finish`, que supunha grupos de
+BoxGeometry em uma malha mesclada. As refs remotas QA/staging permanecem em
+618fc78; nenhum merge ou release novo foi publicado.
+
+Foi adotado por fast-forward local o checkpoint
+`0e5a75fd56df56401248d0ee0aa5eed2f636f273`. O verificador agora mede os
+triângulos efetivamente desenhados de malhas mescladas, com índices, UV e
+transformação mundial válidos. As tolerâncias e os caminhos Box/Plane antigos
+foram preservados; não houve alteração adicional em public/. O nominal mede
+604 casos em vez de 484, incluindo 120 triângulos mesclados, com o mesmo
+custo Campo de 1096 meshes, 103 materiais e 20 texturas. Os 22 mutantes e o
+nominal passaram nos dois Node. Crítico independente leu as quatro fontes,
+o diff inteiro e as fronteiras: zero achados acionáveis. Root reconferiu
+33 vínculos de tamanho/hash. Parecer focal, sem aprovação final do PR.
+
+No preview publicado 618fc78, a entrada normal sem nav/debug foi testada
+no Ego em 780×360 com toque emulado. Eventos reais moveram o personagem
+2,655m, giraram a câmera, acionaram ADS até 1 e consumiram munição 12→11.
+O mount autoral exibiu movimento ao andar e zerou esse movimento em ADS.
+Quatro capturas foram inspecionadas. Isso não valida aparelho físico,
+MP, desempenho ou o acabamento das mãos; a dívida visual permanece.
+
+A composição isolada dos PRs 1190→1191 foi preservada no checkpoint
+a32b31b3, sem adotar suas fontes nesta QA. Revisão integral encontrou um
+P3 de legendas novas em português com lang=en; correção GLM está em curso.
+No Astro local, o fluxo de convidado mostrou o retrato compacto, limpou-o
+ao abrir LOJA e recriou-o ao voltar a JOGAR. Manifesto e retratos responderam
+200; inventário respondeu 403, portanto posse/equipamento não foi validado.
+
+Próximo: push normal atômico desta QA e staging; depois classificador
+hospedado corrigido, revisão atual do Estraga Código, rebind integral final,
+CI e preview no SHA integrado antes de merge/release. Produção segue
+alpha133/49fd69f. Missão completa e exclusões da abertura permanecem ativas.
+Recibos operacionais e limitações estão no ledger agregado indicado abaixo.
+
 ## Checkpoint R60 antes do próximo push, 01/11
 
 O head publicado é `618fc78b3c8a25bfff1526d8de130957ebbb6f86`.

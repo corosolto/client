@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').slice(10);
-const MUTANTES = new Set(['tijolo-8m', 'reboco-3x', 'solo-losango', 'reboco-sem-detalhe', 'ao-branco', 'solo-sem-tint', 'capim-no-balcao', 'capim-mesh-no-balcao', 'tijolo-face-colapsada', 'reboco-face-nan', 'tijolo-sem-grupos', 'reboco-grupo-truncado', 'tijolo-repeat', 'tijolo-offset-nan', 'tijolo-matriz', 'tijolo-canal']);
+const MUTANTES = new Set(['tijolo-8m', 'reboco-3x', 'solo-losango', 'reboco-sem-detalhe', 'ao-branco', 'solo-sem-tint', 'capim-no-balcao', 'capim-mesh-no-balcao', 'tijolo-face-colapsada', 'reboco-face-nan', 'tijolo-sem-grupos', 'reboco-grupo-truncado', 'tijolo-repeat', 'tijolo-offset-nan', 'tijolo-matriz', 'tijolo-canal', 'reboco-mesclado-periodo', 'reboco-mesclado-nan', 'reboco-mesclado-cisalha', 'reboco-mesclado-indice', 'reboco-mesclado-drawrange', 'reboco-mesclado-posicao']);
 if (MUT && !MUTANTES.has(MUT)) throw Error(`Mutante desconhecido: ${MUT}`);
 const SOLO_VEG = process.argv.includes('--solo-vegetacao');
 const QUALITY = (process.argv.find((a) => a.startsWith('--quality=')) || '').slice(10) || null;
@@ -41,10 +41,88 @@ const texturaMetrica = (m, rotulo) => {
       out.falhas.push(`${rotulo}: textura ${slot} altera UV métrico — transformação/canal não identidade`);
   }
 };
+// Malha mesclada REAL (BufferGeometry sem parameters, material único): material único desenha
+// o drawRange inteiro — sem groups é legítimo aqui; o contrato de caixa/grupos segue em medeParede.
+const medeMesclada = (m, rotulo) => {
+  texturaMetrica(m, rotulo);
+  const geo = m.geometry, pos = geo.attributes.position, uv = geo.attributes.uv, idx = geo.index;
+  const id = `${rotulo} malha mesclada ${m.uuid.slice(0, 8)}`;
+  if (!pos || !uv || pos.itemSize !== 3 || uv.itemSize !== 2 || (idx && idx.itemSize !== 1)) {
+    out.falhas.push(`${id}: atributos posição/UV/índice ausentes ou com itemSize inválido`); return [];
+  }
+  const total = idx ? idx.count : pos.count;
+  const inicio = geo.drawRange.start, conta = geo.drawRange.count;
+  if (!Number.isInteger(inicio) || inicio < 0 || inicio > total
+    || !(conta === Infinity || (Number.isInteger(conta) && conta >= 0))) {
+    out.falhas.push(`${id}: drawRange inválido`); return [];
+  }
+  const fim = Math.min(total, inicio + conta);
+  if (geo.groups?.length) {   // valida partição, não confia: material único desenha o range todo
+    const cobertura = new Uint8Array(fim - inicio);
+    let particao = true;
+    for (const grupo of geo.groups) {
+      if (!Number.isInteger(grupo.start) || !Number.isInteger(grupo.count)
+        || grupo.start < 0 || grupo.count < 0 || grupo.start % 3 || grupo.count % 3
+        || grupo.start + grupo.count > total) { particao = false; continue; }
+      for (let k = Math.max(inicio, grupo.start); k < Math.min(fim, grupo.start + grupo.count); k++) {
+        if (cobertura[k - inicio]) particao = false;
+        cobertura[k - inicio] = 1;
+      }
+    }
+    if (!particao || cobertura.some(n => n !== 1)) out.falhas.push(`${id}: grupos sem partição exata — cobertura incompleta/sobreposta`);
+  }
+  const n = fim - inicio;
+  if (n < 3 || n % 3) { out.falhas.push(`${id}: drawRange não fecha triângulos completos (${n} índices)`); return []; }
+  m.updateWorldMatrix(true, false);
+  const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3();
+  const pu = new THREE.Vector3(), pv = new THREE.Vector3();
+  const vertice = (k) => {
+    const i = idx ? idx.getX(k) : k;
+    if (!Number.isInteger(i) || i < 0 || i >= pos.count || i >= uv.count)
+      throw { msg: `${id}: índice desenhado inválido (${i})` };
+    const u = uv.getX(i), v = uv.getY(i);
+    if (!Number.isFinite(u) || !Number.isFinite(v)) throw { msg: `${id}: UV desenhado não finito` };
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z))
+      throw { msg: `${id}: posição desenhada não finita` };
+    return { u, v, x, y, z };
+  };
+  const achados = [];
+  try {
+    for (let k = inicio; k < fim; k += 3) {
+      const t = (k - inicio) / 3;
+      const v0 = vertice(k), v1 = vertice(k + 1), v2 = vertice(k + 2);
+      A.set(v0.x, v0.y, v0.z).applyMatrix4(m.matrixWorld);
+      B.set(v1.x, v1.y, v1.z).applyMatrix4(m.matrixWorld);
+      C.set(v2.x, v2.y, v2.z).applyMatrix4(m.matrixWorld);
+      const ax = B.x - A.x, ay = B.y - A.y, az = B.z - A.z;
+      const bx = C.x - A.x, by = C.y - A.y, bz = C.z - A.z;
+      const cx = ay * bz - az * by, cy = az * bx - ax * bz, cz = ax * by - ay * bx;
+      const area2 = cx * cx + cy * cy + cz * cz;
+      if (!Number.isFinite(area2) || area2 === 0) { out.falhas.push(`${id}: triângulo ${t} de área zero/não finita`); continue; }
+      const du1 = v1.u - v0.u, du2 = v2.u - v0.u, dv1 = v1.v - v0.v, dv2 = v2.v - v0.v;
+      const det = du1 * dv2 - du2 * dv1;
+      if (!Number.isFinite(det) || det === 0) { out.falhas.push(`${id}: triângulo ${t} com UV de rank colapsado (det=${det})`); continue; }
+      pu.set((ax * dv2 - bx * dv1) / det, (ay * dv2 - by * dv1) / det, (az * dv2 - bz * dv1) / det);
+      pv.set((bx * du1 - ax * du2) / det, (by * du1 - ay * du2) / det, (bz * du1 - az * du2) / det);
+      const lu = pu.length(), lv = pv.length();
+      if (!(Number.isFinite(lu) && lu > 0) || !(Number.isFinite(lv) && lv > 0)) {
+        out.falhas.push(`${id}: triângulo ${t} com período U/V não finito/zero`); continue;
+      }
+      const cos = pu.dot(pv) / (lu * lv);
+      if (Math.abs(cos) > epsilonUV(1))
+        out.falhas.push(`${id}: triângulo ${t} com cisalhamento UV (cos=${cos.toFixed(6)}) — U/V não ortogonais no mundo`);
+      achados.push({ tileU_m: lu, tileV_m: lv, tri: t });
+    }
+  } catch (e) { if (!e?.msg) throw e; out.falhas.push(e.msg); return []; }
+  if (!achados.length) out.falhas.push(`${id}: nenhum triângulo mensurável — cauda não pode sair em silêncio`);
+  return achados;
+};
 // Medição por parede: as 4 faces verticais ESPERADAS precisam de grupo presente, UV finito e
 // span finito > 0 — face colapsada/NaN reprova com identificação, não sai da lista em silêncio.
 const medeParede = (m, rotulo) => {
   if (m.geometry.type === 'PlaneGeometry') return [];   // mural tem contrato próprio
+  if (!Array.isArray(m.material) && !m.geometry.parameters) return medeMesclada(m, rotulo);
   texturaMetrica(m, rotulo);
   if (!m.geometry.groups?.length) { out.falhas.push(`${rotulo}: parede sem grupos — cobertura incompleta`); return []; }
   const geo = m.geometry, idx = geo.index, uv = geo.attributes.uv;
@@ -287,6 +365,35 @@ let vegMed = null;
     const vistos = new Set();
     for (let k = g.start; k < g.start + g.count; k++) { const i = idx.getX(k); if (vistos.has(i)) continue; vistos.add(i); uv.setY(i, NaN); }
     uv.needsUpdate = true;
+  }
+  // Mutantes de malha mesclada: alvo é BufferGeometry real sem groups, selecionado por
+  // estrutura — nunca por nome/tag de piloto. Sem alvo real, NAOAPLICOU.
+  if (MUT.startsWith('reboco-mesclado-')) {
+    const m = reboco.find((mm) => mm.geometry.type === 'BufferGeometry' && !mm.geometry.groups?.length);
+    if (!m) throw Error(`${MUT} NAOAPLICOU: nenhuma malha reboco mesclada real`);
+    const geo = m.geometry, pos = geo.attributes.position, uv = geo.attributes.uv, idx = geo.index;
+    if (!pos || !uv || !idx) throw Error(`${MUT} NAOAPLICOU: malha mesclada sem posição/UV/índice`);
+    const fim = Math.min(idx.count, geo.drawRange.start + geo.drawRange.count);
+    if (fim - geo.drawRange.start < 3) throw Error(`${MUT} NAOAPLICOU: drawRange vazio`);
+    const a = idx.getX(fim - 3), b = idx.getX(fim - 2), c = idx.getX(fim - 1);
+    if (MUT === 'reboco-mesclado-periodo') {
+      if (!(Math.abs(uv.getX(b) - uv.getX(a)) > 0)) throw Error('reboco-mesclado-periodo NAOAPLICOU: último triângulo sem variação de U');
+      for (const i of [a, b, c]) uv.setX(i, uv.getX(i) / 3);
+      uv.needsUpdate = true;
+    } else if (MUT === 'reboco-mesclado-nan') {
+      if (!Number.isFinite(uv.getY(c))) throw Error('reboco-mesclado-nan NAOAPLICOU: último UV já não finito');
+      uv.setY(c, NaN); uv.needsUpdate = true;
+    } else if (MUT === 'reboco-mesclado-cisalha') {
+      for (const i of [a, b, c]) uv.setX(i, uv.getX(i) + 0.25 * uv.getY(i));
+      uv.needsUpdate = true;
+    } else if (MUT === 'reboco-mesclado-indice') {
+      idx.setX(fim - 1, pos.count + 7); idx.needsUpdate = true;
+    } else if (MUT === 'reboco-mesclado-drawrange') {
+      geo.drawRange.count = fim - geo.drawRange.start - 1;
+    } else if (MUT === 'reboco-mesclado-posicao') {
+      if (!Number.isFinite(pos.getZ(c))) throw Error('reboco-mesclado-posicao NAOAPLICOU: última posição já não finita');
+      pos.setZ(c, NaN); pos.needsUpdate = true;
+    }
   }
   if (MUT === 'reboco-sem-detalhe') game.scene.traverse((o) => {
     for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m?.name === 'campo-reboco') m.userData.detalhe = null;

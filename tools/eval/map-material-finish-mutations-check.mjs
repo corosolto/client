@@ -21,6 +21,12 @@ const casos = [
   ['tijolo-offset-nan', /textura normalMap altera UV métrico/],
   ['tijolo-matriz', /textura normalMap altera UV métrico/],
   ['tijolo-canal', /textura normalMap altera UV métrico/],
+  ['reboco-mesclado-periodo', /reboco.*período|período.*reboco/],
+  ['reboco-mesclado-nan', /UV desenhado não finito/],
+  ['reboco-mesclado-cisalha', /cisalhamento UV/],
+  ['reboco-mesclado-indice', /índice desenhado inválido/],
+  ['reboco-mesclado-drawrange', /drawRange não fecha triângulos completos/],
+  ['reboco-mesclado-posicao', /posição desenhada não finita/],
 ];
 function rodar(mutante) {
   const r = spawnSync(process.execPath, [gate, ...(mutante ? ['--mutante=' + mutante] : [])],
