@@ -2,40 +2,51 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
-## Checkpoint R58 antes do próximo push, 01/11
+## Checkpoint R60 antes do próximo push, 01/11
 
 O head publicado é `618fc78b3c8a25bfff1526d8de130957ebbb6f86`.
 Seu push normal R56 passou 107/107 checks, incluindo as oito passadas de boot
 sem INFRA. Janela, orçamento e exceções permanecem intactos. Os nove fios
 antigos do bot foram respondidos e resolvidos; a revisão do head atual foi
-solicitada e ainda não chegou. CI permanece em andamento.
+solicitada e ainda não chegou. CI e portão browser desse SHA passaram;
+o classificador falhou no retarget para o mesmo commit, corrigido abaixo.
 
 O preview READY desse SHA foi conferido por HTTP autenticado e no Ego.
 Menu/ranking/mapa/time/personagem/HUD passaram em nav=1, com esse limite
 registrado. Depois, sem debug/nav, Piscina ficou live por mais de 30 segundos,
 com sete bots e assets carregados. Captura 1320×880 inspecionada pelo Root.
-Pointer lock permaneceu falso após um clique: entrada de movimento não foi
-validada. Mão/pistola ainda mostram dívida visual; isso não é aceite de arte,
+Em R59, a pistola ativa foi confirmada como fab#pistol/K, sem skin nem luva
+equipada; atlas E carregados. A troca de rota foi rejeitada como correção.
+Novo clique real produziu pointerlockerror com página focada e visível:
+entrada de movimento continua sem validação. Mão/pistola ainda mostram
+dívida visual; isso não é aceite de arte,
 inventário, MP ou dispositivo físico. O workflow staging anterior pulou sua
 verificação por falta de STAGING_URL; não foi contado como aprovação.
 
 Os três suplementos de fronteira do rebind R55 foram fechados em R56 sem
 achados acionáveis. A consolidação local avançou linearmente até
-`ac5156767fd68be2fae7e63e8918f6b7e72183da`, incorporando:
+`3bb13ada12c0ce87c069bd43d0d71428510514d7`, incorporando:
 
 - Roteamento R58: não tenta trocar a base por uma ref com o mesmo SHA.
   BEFORE5/13 → AFTER13/13; mutante volta a11/13. Crítico independente inteiro
   lido pelo Root, sem P1/P2/P3 acionáveis. Erros/ancestralidade diferentes
   conservam as limitações declaradas; o job hospedado ainda precisa rodar.
-- G2: fontes do checkpoint aceito eb8b0cd, com prova de cancelamento e
-  isolamento de processos. O alias próprio ainda será executado nesta base.
+- G2: checkpoint aceito eb8b0cd, com isolamento de processos, mais correção
+  R59 de uma linha whitespace-only na stack. BEFORE/AFTER/mutante em ambos
+  Node preservam 13 controles negativos. Alias real completo R60: exit0 em
+  27,424s; duas rodadas de 42 peças byteiguais, cancelamento correto e mutante
+  engole-falta recusado semanticamente por G2. Crítico independente R59 leu
+  o diff inteiro e fronteiras: zero achados acionáveis; Root leu o parecer.
 - Campo: fontes do checkpoint aceito e5ec755, com acabamento de três fachadas.
   M2/M3=2 permanece focal; não aprova o mapa inteiro. Doze hashes e a única
   alteração de package foram reconferidos após o rebase, sem conflitos.
 
-Próximo: portão G2 e push normal QA+staging no mesmo SHA, rebind integral do
+Próximo: push normal QA+staging no mesmo SHA, rebind integral do
 diff final, CI/revisão atual do bot e preview desse SHA antes de merge/release.
-1190/1191 estão em auditoria de reuso, sem adoção ou elegibilidade presumida.
+Reuso 1190→1191 foi auditado; preservar freeze+reducedMotion, boot e i18n.
+1190 agora aponta a staging e conflita; 1191 tem um fio atual aberto. Nenhum
+deles foi adotado ou considerado elegível. #1179 segue ancestral desta QA;
+o PR remoto continua aberto/conflitante, sem merge separado nesta rodada.
 Produção confirmada em alpha133/49fd69f; nenhum release novo desta missão.
 O estado operacional posterior a este checkpoint fica em
 `audits/2026-10-31-visual-consistency/CURRENT-STATE-20261031.json` do workspace
