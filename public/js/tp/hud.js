@@ -133,7 +133,7 @@ function montarHud(hud) {
   }
   const acoes = $('hud-actions');
   if (acoes) acoes.prepend(el('span', 'tp-hud-cam'));
-  /* Teclas lidas do game.js (_input) e do ping deste módulo; nenhuma muda aqui. */
+  /* Teclas lidas do game.js (_input) e do ping deste módulo. */
   const dicas = el('div', 'tp-hud-dicas');
   dicas.title = tr('Guia inicial: três ações, comandos completos com ALT');
   const dica = (teclas, txt, passo = null) => {
@@ -148,7 +148,9 @@ function montarHud(hud) {
   dica('MOUSE 1', 'Atirar', 1);
   dica('R', 'Recarregar', 2);
   dica('E', 'pegar');
-  dica('B', 'câmera');
+  dica('B', 'comprar');
+  dica(',/.', 'munição');
+  dica('N', 'câmera');
   dica('F', 'ping');
   dica('Z/X/V', 'rádio');
   dica('Y/U', 'chat').dataset.chat = '';
@@ -162,7 +164,7 @@ const CAMERA = { first: '1ª PESSOA', third: '3ª PESSOA', shoulder: 'OMBRO' };
 function atualizarCamera(g) {
   const chip = document.querySelector('#hud-actions .tp-hud-cam');
   if (!chip) return;
-  const txt = `${tr(CAMERA[g.camView] || CAMERA.first)} · B`;
+  const txt = `${tr(CAMERA[g.camView] || CAMERA.first)} · N`;
   if (chip.textContent !== txt) chip.textContent = txt;
 }
 
@@ -498,6 +500,7 @@ function montarToque(raiz) {
   botao('tp-toque-pula', tr('PULA'), tr('Pular'), (g) => { g.keys.Space = true; }, (g) => { g.keys.Space = false; });
   botao('tp-toque-camera', '', tr('Alternar câmera'), (g) => g._toggleCamView());
   raiz.querySelector('.tp-toque-camera').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>';
+  botao('tp-toque-ping', 'PING', 'Ping', () => marcarPing());
   botao('tp-toque-placar', '', tr('Placar'), (g) => g._showScoreboard?.(!!g.el?.scoreboard?.classList.contains('hidden')));
   raiz.querySelector('.tp-toque-placar').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
   raiz.append(el('span', 'tp-toque-mira-dica', tr('ARRASTE AQUI PRA MIRAR')));

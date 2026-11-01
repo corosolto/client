@@ -74,7 +74,7 @@ const fundoVelho = new THREE.Scene();
 fundoVelho.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial()));
 renderer.render(fundoVelho, g.camera);
 const menuAntes = alvoDoPos(fundoVelho);
-const ctx = vm.createContext({ renderer, THREE, menuScene: fundoVelho, currentMap: 'm', textures: null, MAPS: { m: { build() {} } }, settings: { quality: 'med' }, ajustarAnisotropia() {} });
+const ctx = vm.createContext({ renderer, THREE, menuScene: fundoVelho, menuBackdropWorld: null, currentMap: 'm', textures: null, MAPS: { m: { build() {} } }, settings: { quality: 'med' }, ajustarAnisotropia() {} });
 vm.runInContext(`${rebuild}\nrebuildMenuBackdrop(MAPS.m);`, ctx);
 const menuDepois = alvoDoPos(fundoVelho);
 
