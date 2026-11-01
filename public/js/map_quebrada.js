@@ -1615,6 +1615,42 @@ export function buildQuebrada(scene, T) {
   const preLote = new Set(root.children);
   PBC.build(root);      // carros pintados por instância
   PB.build(root);       // instancia barraco e fachada: 1 draw call por (material, bloco de 24 m)
+  // Piloto R85: só o tijolo das duas frentes medidas; ?qfinish=0 preserva o UV autorado.
+  // A geometria é privada do bucket, sem alterar o template ou os materiais compartilhados.
+  if (QP.get('qfinish') !== '0') {
+    const alvos = [
+      [-28.0225, 0.197114, -35.432097, -24.977499, 3.945789, -31.556766],
+      [-27.977499, 0.191288, -32.728827, -25.022499, 3.829165, -28.968038],
+    ];
+    const local = new THREE.Box3(), mundo = new THREE.Box3(), matriz = new THREE.Matrix4();
+    for (const m of root.children) {
+      if (!m.isInstancedMesh || m.userData.mapPropId !== 'fav_brasileira' || m.count !== 2
+        || Array.isArray(m.material) || m.material?.name !== 'Materiais') continue;
+      const g = m.geometry, pos = g.attributes.position, uv = g.attributes.uv;
+      if (pos?.count !== 275 || uv?.count !== 275 || uv.itemSize !== 2 || g.index?.count !== 666) continue;
+      const dadosUV = uv.array || uv.data?.array, textura = m.material.map;
+      if (uv.normalized || !(dadosUV instanceof Float32Array || dadosUV instanceof Float64Array)) continue;
+      if (textura?.wrapS !== THREE.RepeatWrapping || textura.wrapT !== THREE.RepeatWrapping) continue;
+      const imagem = textura.image;
+      if (imagem?.width !== 1024 || imagem.height !== 1024) continue;
+      m.updateWorldMatrix(true, false);
+      local.setFromBufferAttribute(pos);
+      const encontrados = new Set();
+      for (let i = 0; i < m.count; i++) {
+        m.getMatrixAt(i, matriz); matriz.premultiply(m.matrixWorld);
+        mundo.copy(local).applyMatrix4(matriz);
+        const box = [...mundo.min.toArray(), ...mundo.max.toArray()];
+        const alvo = alvos.findIndex(a => a.every((v, k) => Math.abs(v - box[k]) < 1e-3));
+        if (alvo >= 0) encontrados.add(alvo);
+      }
+      if (encontrados.size !== alvos.length) continue;
+      const geo = g.clone(), u = geo.attributes.uv;
+      for (let i = 0; i < u.count; i++) u.setXY(i, u.getX(i) * 2, u.getY(i) * 2);
+      u.needsUpdate = true;
+      m.geometry = geo;
+      m.userData.quebradaFinishR85 = true;
+    }
+  }
   SKIRT.build(root);
   /* O lote nasce InstancedMesh visível em root e FORA de `occluders`: sem isto a bala
      atravessaria barraco/fachada/carro que o corpo respeita — e era isso que o proxy

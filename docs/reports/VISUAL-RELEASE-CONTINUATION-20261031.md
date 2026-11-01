@@ -2,6 +2,21 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
+## Checkpoint R92: Quebrada focal validada e adotada localmente
+
+Composição isolada sobre a173ff48d recebe a fonte Quebrada7be5b81, sem alterar
+helpers/assets/física. CPU25/25 e5selfchecks, crítico estáticoR90 e A/B real
+UV2/metade/restauração passaram. Root e críticoR92 viram as três imagens:
+escala do tijolo melhor nas duas frentes; M2=2 só nessa vista. M1/M3/M4 UNKNOWN.
+Viewport1320×880, canvas660×440 med; não é nova baseline-world ou aceite global.
+Detalhes em QUEBRADA-FINISH-CONTINUATION-20261101.md. Arquitetura continua pendente.
+
+PR1192 e74: Root leu a adjudicação completa do formal e quatro filtrados,
+conferiu111pins sem divergência. Preparação/runtime real do head passaram;
+crítico adversarial integralR93 está ativo, CI restante/review formal pendentes.
+Nenhum merge, label ou review duplicado. BootB4 e1a9 estático CLEAN_SCOPED;
+instrumento causal dos12casos congelados sendo preparado, ainda sem execução.
+
 ## Checkpoint R91: três correções focais salvas, integração ainda local
 
 Esta seção supera as pendências de publicação R82 abaixo. O push normal R82
