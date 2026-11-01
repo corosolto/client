@@ -51,7 +51,7 @@ function montaJogo(net, { dedicated = false, teamSize = 5, ctf = false } = {}) {
 // snapshot com `yourEnt` no time E e o resto dividido 5/5, como o servidor manda
 function snapshot(t, tick, {
   yourEnt = 1, mover = 0, matarVoce = false, hpVoce = 100,
-  jogadorX = null, jogadorY = null, jogadorZ = null, ctfState = null,
+  jogadorX = null, jogadorY = null, jogadorZ = null, ctfState = null, objective = null,
   ackSeq = null, mag = null, res = null, reloadIn = null,
   weapon = 'ak', primary = null, secondary = null,
 } = {}) {
@@ -81,16 +81,17 @@ function snapshot(t, tick, {
   return {
     type: 'snapshot', room: 'r1', tick, t, state: 'live', owner: null, players: 1, spectators: 0,
     livre: { E: 4, B: 5 }, timeLeft: 77, roundNum: 3, scoreE: 2, scoreB: 1,
-    ...(ctfState ? { ctf: ctfState } : {}), ents,
+    ...(ctfState ? { ctf: ctfState } : {}), ...(objective ? { objective } : {}), ents,
   };
 }
 
 const TEX = initTextures();
-
 console.log('\n· ack e loadout autoritativos do slot (BUG-126/127)');
 {
   const net = fakeNet(1, 5, false, 30);
   const g = montaJogo(net);
+  let objetivoRecebido = null;
+  g.objective = { applyNetState: (state) => { objetivoRecebido = state; } };
   const authored = g.vm.authored;
   const active0 = authored.active, reload0 = authored.reload;
   const reloads = [];
@@ -99,8 +100,11 @@ console.log('\n· ack e loadout autoritativos do slot (BUG-126/127)');
   net.snap = snapshot(50, 1, {
     ackSeq: 0, weapon: 'm4', mag: 11, res: 47, reloadIn: 1.2,
     primary: 'm4', secondary: 'pistol', jogadorX: 0, jogadorY: 0, jogadorZ: 0,
+    objective: { wave: 5, phase: 'combat' },
   });
   g._mp.applySnapshot();
+  cobra(objetivoRecebido?.wave === 5 && objetivoRecebido?.phase === 'combat',
+    'snapshot entrega o objetivo ao modo ativo antes da apresentação local');
   cobra(g.player.weapon === 'm4' && g.player.primary === 'm4' && g.player.secondary === 'pistol',
     'snapshot v4 corrige arma atual e slots locais pela autoridade do servidor');
   cobra(g.player.ammo.m4.mag === 11 && g.player.ammo.m4.res === 47,
@@ -536,7 +540,7 @@ console.log('\n· connect() tem PRAZO: nó que aceita e não responde vira erro,
   const { NetClient } = await import('../../public/js/net.js');
   // WebSocket de mentira: abre e fica MUDO (o modo de falha do relato)
   globalThis.WebSocket = class {
-    constructor() { setTimeout(() => this.onopen && this.onopen(), 1); }
+    constructor() { this.protocol = 'coro-snapshot-v8'; setTimeout(() => this.onopen && this.onopen(), 1); }
     send() {} close() { setTimeout(() => this.onclose && this.onclose(), 1); }
   };
   const net = new NetClient('ws://x/ws', { nome: 'EU' });
@@ -722,7 +726,8 @@ console.log('\n· multiplayer→sair→single player não reaproveita a sessão 
     /const tamanhoTime = sessao \?/,
     /const matchRoster = sessao\s*\?/,
     /const matchWeapons = sessao\s*\?/,
-    /settings: sessao \?/,
+    /const settingsDaPartida = sessao\s*\?/,
+    /settings: settingsDaPartida,/,
     /mpFactory: sessao \?/,
     /net: sessao \?/,
     /dedicated: !!\(sessao && sessao\.net\.espectador\)/,
@@ -732,6 +737,9 @@ console.log('\n· multiplayer→sair→single player não reaproveita a sessão 
   const mutRoster = main.replace(/const matchRoster = sessao(\s*)\?/, 'const matchRoster = mpSessao$1?');
   cobra(mutRoster !== main && !usosGuardados.every((re) => re.test(mutRoster)),
     'MUTANTE com o roster lendo mpSessao direto deixa a cláusula do BUG-101 vermelha');
+  const mutSettings = main.replace(/const settingsDaPartida = sessao(\s*)\?/, 'const settingsDaPartida = mpSessao$1?');
+  cobra(mutSettings !== main && !usosGuardados.every((re) => re.test(mutSettings)),
+    'MUTANTE com os ajustes lendo mpSessao direto deixa a cláusula do BUG-101 vermelha');
 
   const encerraAntes = /function mpEncerrarSessao\(\)\s*{[\s\S]{0,160}const s = mpSessao; mpSessao = null;[\s\S]{0,220}s\?\.net\.close\(\)/;
   const quitLimpa = /function quitToMenu\(\)\s*{[\s\S]{0,3200}mpEncerrarSessao\(\);/;
@@ -823,8 +831,26 @@ console.log('\n· nova partida do servidor (`partida`) e viewmodel montado depoi
   cobra(/mpMontarPartida\(net, welcome\)/.test(main), 'e o welcome usa o MESMO caminho (uma montagem só)');
   cobra(/this\._vmMontarTardio = \(id\) => \{[\s\S]{0,300}mountRw\(g, id\)[\s\S]{0,600}this\._vmFrame\(true\)/.test(game),   // janela: entre o mount e o enquadramento entrou o esconder da caixa (BUG-121)
     'game.js monta o GLB do viewmodel que chegou depois do construtor e re-enquadra');
-  cobra(/_applyVmVisibility\(\) \{[\s\S]{0,120}this\._vmMontarTardio\?\.\(w\)/.test(game),
-    'a troca de arma tenta a montagem tardia (idempotente)');
+  const testaMontagemTardia = (apply) => {
+    const chamadas = [];
+    const receiver = {
+      player: { weapon: 'ak' }, vm: { models: { ak: {}, pistol: {} } },
+      _vmMontarTardio: (id) => chamadas.push(id),
+      _utilidadeNaMao: () => false, _syncVmPresentation() {},
+    };
+    apply.call(receiver);
+    receiver.player.weapon = 'pistol';
+    apply.call(receiver);
+    apply.call(receiver);
+    return chamadas.join(',') === 'ak,pistol,pistol';
+  };
+  cobra(testaMontagemTardia(Game.prototype._applyVmVisibility),
+    'a troca de arma tenta a montagem tardia com a arma atual, inclusive chamadas repetidas');
+  const metodo = Game.prototype._applyVmVisibility.toString();
+  const chamadaTardia = 'this._vmMontarTardio?.(w);';
+  if (metodo.split(chamadaTardia).length !== 2) throw new Error('INFRA: âncora da montagem tardia ausente ou ambígua');
+  const semMontagem = Function(`return ({${metodo.replace(chamadaTardia, '')}})._applyVmVisibility;`)();
+  cobra(!testaMontagemTardia(semMontagem), 'MUTANTE sem montagem tardia acende a régua da troca de arma');
   cobra(/meuJogo\._applyVmVisibility\?\.\(\)/.test(main), 'o preload ocioso das 26 armas também tenta montar a arma na mão');
   cobra(/else if \(this\.vm && this\.vm\.root\) this\.vm\.root\.visible = false;/.test(game),
     'espectador (dedicated) não vê viewmodel parado na pose de construção');
@@ -1014,13 +1040,13 @@ console.log('\n· eventos antes do primeiro snapshot, fora de ordem e para espec
 console.log('\n· NetClient: `ev` entra no buffer, `partida` zera, lote grande é cortado');
 {
   const { NetClient } = await import('../../public/js/net.js');
-  class WsFalso { constructor() { WsFalso.ultimo = this; this.readyState = 1; this.OPEN = 1; } send() {} close() {} }
+  class WsFalso { constructor() { this.protocol = 'coro-snapshot-v8'; WsFalso.ultimo = this; this.readyState = 1; this.OPEN = 1; } send() {} close() {} }
   const ws0 = globalThis.WebSocket; globalThis.WebSocket = WsFalso;
   const cli = new NetClient('ws://x/ws');
   const conectando = cli.connect();
   const ws = WsFalso.ultimo;
   ws.onopen && ws.onopen();
-  ws.onmessage({ data: JSON.stringify({ type: 'welcome', yourEnt: 1, yourTeam: 'E', espectador: false, events: 1, snapshotHz: 30 }) });
+  ws.onmessage({ data: JSON.stringify({ type: 'welcome', protocolVersion: 8, yourEnt: 1, yourTeam: 'E', espectador: false, events: 1, snapshotHz: 30 }) });
   await conectando;
   cli._lastSnapT = performance.now() - 33;
   ws.onmessage({ data: JSON.stringify({ type: 'snapshot', tick: 1, ents: [] }) });
@@ -1031,7 +1057,7 @@ console.log('\n· NetClient: `ev` entra no buffer, `partida` zera, lote grande �
   cobra(cli.events.length === 1 && cli.events[0].list.length === 32, `lote de 40 vira 32 no cliente (${cli.events[0] && cli.events[0].list.length})`);
   ws.onmessage({ data: JSON.stringify({ type: 'ev', tick: 'x', list: [] }) });
   cobra(cli.events.length === 1, 'lote sem tick inteiro é ignorado');
-  ws.onmessage({ data: JSON.stringify({ type: 'partida', yourEnt: 2, yourTeam: 'E', espectador: false, events: 1 }) });
+  ws.onmessage({ data: JSON.stringify({ type: 'partida', protocolVersion: 8, yourEnt: 2, yourTeam: 'E', espectador: false, events: 1 }) });
   cobra(cli.events.length === 0, '`partida` zera o buffer de eventos (junto com snap/prev)');
   globalThis.WebSocket = ws0;
 }
@@ -1113,7 +1139,9 @@ console.log('\n· granada online: o 5 pede ao servidor e não spawna local; `nad
   g.state = 'live';
   const p = g.player; p.frags = 1; p.smokes = 1; p._nextNade = 0;
   g._kd({ code: 'Digit5', preventDefault() {} });
-  cobra(g._grenades.length === 0 && p.frags === 0, 'o 5 online NÃO spawna granada local e desconta o HUD (predição)');
+  cobra(p.nade === 'frag' && p.frags === 1, 'o 5 equipa a frag sem lançar antes do clique');
+  g._md({ button: 0, target: null, preventDefault() {} });
+  cobra(g._grenades.length === 0 && p.frags === 0, 'o clique online não spawna granada local e desconta o HUD');
   net.enviados.length = 0;
   g._mp.stepPlayer(p, { ax: 0, az: 0, crouch: false, shift: false, jump: false });
   g._mp.stepPlayer(p, { ax: 0, az: 0, crouch: false, shift: false, jump: false });

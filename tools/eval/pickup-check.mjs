@@ -71,7 +71,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 import { writeFileSync } from 'node:fs';
 
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (MUTANTE && MUTANTE !== 'torre-bloco') throw new Error(`Mutante desconhecido: ${MUTANTE}`);
+if (MUTANTE && !['torre-bloco', 'carro-no-armario'].includes(MUTANTE)) throw new Error(`Mutante desconhecido: ${MUTANTE}`);
 const ONLY = process.argv.slice(2).find((a) => !a.startsWith('--')) || 'all';
 const R_WP = 3.0;      // diagnóstico do critério VELHO (waypoint mais próximo) — não reprova mais
 const H_MIN = -0.10;   // (b) piso: nada pode estar abaixo disto
@@ -118,6 +118,13 @@ for (const mapId of MAP_IDS) {
     const apoios = W.colliders.filter((c) => String(c.tag).startsWith('torre-muro-apoio-'));
     if (apoios.length !== 8) throw new Error(`Mutante impossível: esperava 8 apoios de guarita, recebeu ${apoios.length}`);
     W.colliders.push({ minX: 6.2, maxX: 11.8, minY: 0, maxY: 8.2, minZ: 43.9, maxZ: 46.8, tag: 'mutante-torre-muro-bloco' });
+    g._resetPositions();
+    mutanteAplicado = true;
+  }
+  if (MUTANTE === 'carro-no-armario' && mapId === 'invasao_javaporcos') {
+    const carros = W.colliders.filter(c => Math.abs(c.cx + 4.8) < 0.01 && Math.abs(c.cz + 9.9) < 0.01);
+    if (carros.length !== 1) throw Error(`mutante sem o carro esperado: ${carros.length}`);
+    for (const c of carros) { c.cz -= 1; c.minZ -= 1; c.maxZ -= 1; }
     g._resetPositions();
     mutanteAplicado = true;
   }
@@ -372,8 +379,8 @@ for (const m of mapas) {
 }
 console.log(`PICKUPCHECK total ${saida.totalPickups} | semAlcance ${saida.semAlcance} | abaixoDoPiso ${saida.abaixoDoPiso} | flutuando ${saida.flutuando}`);
 if (MUTANTE) {
-  const alvo = mapas.flatMap((m) => m.itens || []).find((i) => i.arma === 'carbine' && i.fonte === 'rack' && !i.okAlcance);
-  if (!mutanteAplicado || !alvo) throw new Error(`Mutante ${MUTANTE} não reproduziu a carbine inalcançável do rack`);
-  console.log(`Mutante ${MUTANTE} aplicado e detectado: carbine a ${alvo.distAndavel} m do chão alcançável`);
+  const alvo = mapas.flatMap((m) => m.itens || []).find((i) => i.arma === (MUTANTE === 'carro-no-armario' ? 'svd' : 'carbine') && i.fonte === 'rack' && !i.okAlcance);
+  if (!mutanteAplicado || !alvo) throw new Error(`Mutante ${MUTANTE} não reproduziu a arma inalcançável do rack`);
+  console.log(`Mutante ${MUTANTE} aplicado e detectado: ${alvo.arma} a ${alvo.distAndavel} m do chão alcançável`);
 }
 process.exitCode = saida.semAlcance || saida.abaixoDoPiso || saida.flutuando ? 1 : 0;

@@ -5,15 +5,16 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { renderer, sfx, initTextures, CHARACTERS, seedRandom } from './harness.mjs';
+import { ehMapaJavaporcos } from '../../public/js/maps.js';
 
 const RAIZ = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
 const JS = path.join(RAIZ, 'public/js');
 const WS = Object.freeze({ ak: 'pack-caveira-urbana-ak', pistol: 'pack-caveira-urbana-pistol' });
 const KNIFE = 'pack-caveira-urbana-knife';
 const VALIDOS = new Set(['f1', 'f3', 'f4-earlyall', 'f4-missingawait']);
-const PROBAS = new Set(['f3-entrega', 'throw-f4']);
+const PROBAS = new Set(['f3-entrega', 'throw-f4', 'reference-f4']);
 const ESPERADO = { '': [], f1: ['F1a', 'F1b'], f3: ['F3a', 'F3d'], 'f4-earlyall': ['F4a'], 'f4-missingawait': ['F4c'] };
-const ESPERADO_PROBE = { 'f3-entrega': ['F3d', 'F3e'], 'throw-f4': [] };
+const ESPERADO_PROBE = { 'f3-entrega': ['F3d', 'F3e'], 'throw-f4': [], 'reference-f4': [] };
 
 let MUT = '';
 let PROBE = '';
@@ -226,14 +227,20 @@ try {
     const bf = mainSrc.indexOf(abertura);
     const bt = bf < 0 ? -1 : mainSrc.indexOf('\n  if (lancamentoPerdeu', bf);
     if (bf < 0 || bt < 0) throw new Error('bloco de boot do main.js não encontrado');
-    const bloco = mainSrc.slice(bf, bt);
+    let bloco = mainSrc.slice(bf, bt);
+    if (PROBE === 'reference-f4') {
+      assertUma(bloco, '    if (!navOnly) {');
+      bloco = bloco.replace('    if (!navOnly) {', '    if (!navOnly) {\n      skinflowReferenciaAusente();');
+    }
     const { mapPropIds } = await import(pathToFileURL(path.join(JS, 'mapprops.js')).href);
     const ordem = [];
     const cargas = [];
-    let liberarFaca; const promesaFaca = new Promise((r) => (liberarFaca = () => { ordem.push('faca pronta'); r(); }));
+    let liberarFaca, facaPronta = false;
+    const promesaFaca = new Promise((r) => (liberarFaca = () => { if (!facaPronta) { facaPronta = true; ordem.push('faca pronta'); r(); } }));
     const env = {
       ordem,
       navOnly: false,
+      ehMapaJavaporcos, currentMap: 'posto_treta',
       aguardarPreloads: (loads) => { cargas.push([...loads]); return fonte.aguardarPreloads(loads); },
       preloadCharacterAssets: () => Promise.resolve(), _charsToLoad: [], _armasDaPartida: [], _vmBootWeapons: [],
       preloadCosmeticAssets: () => Promise.resolve(), matchSkins: [],
@@ -248,14 +255,26 @@ try {
       preloadFPArms: () => Promise.resolve(), POINTER_COARSE: true,
       preloadAuthoredFamilies: () => Promise.resolve(), authoredBootFamilies: () => [],
     };
-    const rodar = new Function(...Object.keys(env), `return (async()=>{\n${bloco}\nordem.push('new Game');\n})();`);
-    const p = rodar(...Object.values(env));
-    /* Probe throw-f4: o bloco real roda e o throw vem no meio do calc — infra (3), não detecção. */
-    if (PROBE === 'throw-f4') { await drena(); throw new Error('probe: throw injetado no calc do bloco F4'); }
-    await drena();
-    const antesDeLiberar = [...ordem];
-    liberarFaca();
-    await p;
+    const errosBoot = [], errOriginal = console.error;
+    let p, antesDeLiberar;
+    console.error = (...args) => { errosBoot.push(args); errOriginal(...args); };
+    try {
+      const rodar = new Function(...Object.keys(env), `return (async()=>{\n${bloco}\nordem.push('new Game');\n})();`);
+      p = rodar(...Object.values(env));
+      /* Probe throw-f4: o bloco real roda e o throw vem no meio do calc — infra (3), não detecção. */
+      if (PROBE === 'throw-f4') { await drena(); throw new Error('probe: throw injetado no calc do bloco F4'); }
+      await drena();
+      antesDeLiberar = [...ordem];
+      liberarFaca();
+      await p;
+      await Promise.allSettled(cargas.flat());
+      await drena();
+    } finally {
+      liberarFaca();
+      try { await p?.catch(() => {}); await Promise.allSettled(cargas.flat()); await drena(); } finally { console.error = errOriginal; }
+    }
+    if (errosBoot.length) throw new Error('erro inesperado no boot F4cd: ' + errosBoot.map(args => args
+      .map(arg => arg instanceof Error ? `${arg.name}: ${arg.message}` : String(arg)).join(' ')).join(' | '));
     reg('F4c', !antesDeLiberar.includes('new Game') && ordem.includes('new Game'), `ordem antes de liberar a última promessa = ${JSON.stringify(antesDeLiberar)}; ordem final = ${JSON.stringify(ordem)}`, 'o bloco REAL de boot não nasce Game enquanto a última promessa da barreira está pendente (sem await = falha)');
     reg('F4d', cargas.length === 1 && cargas[0].includes(promesaFaca), `loads efetivamente entregues à barreira = ${cargas.length}×, promessa da faca entre eles = ${cargas[0]?.includes(promesaFaca)}`, 'a promessa de preloadWeaponSkinCandidate(playerKnifeSkinId) ENTRA na barreira (medido no argumento, não no texto)');
   })().catch((e) => regInfra('F4cd', e));

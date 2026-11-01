@@ -582,6 +582,7 @@ const DICT = {
   'Compartilhado': 'Shared', 'Link copiado': 'Link copied', 'Copie o link': 'Copy the link',
   'Ganhei uma treta no CORO SOLTO. Bora jogar?': 'I won a fight in CORO SOLTO. Wanna play?',
   'Perdi uma treta no CORO SOLTO. Bora jogar?': 'I lost a fight in CORO SOLTO. Wanna play?',
+  'Empate no CORO SOLTO. Bora jogar?': 'A draw in CORO SOLTO. Wanna play?',
   // tp:fim-resultado
 
   // tp:loja

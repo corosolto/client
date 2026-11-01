@@ -244,6 +244,7 @@ function banco() {
     renderPlayerPlate() {},
     va: (_tipo, ev) => eventos.push(ev),
     currentMap: 'upa_24h',
+    MAPS: { upa_24h: {} },
     matchMode: 'rounds',
     game: null,
     /* o nascimento: `Game` é contado, não simulado — o que a LR7 pergunta é SE ele nasce */

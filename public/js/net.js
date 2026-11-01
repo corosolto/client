@@ -6,7 +6,7 @@
 // Registro de nós em nos.js: a página de convite do site lê a MESMA lista.
 export { NOS, parseConvite, linkDeConvite, httpDoNo, NO_RE, ordenarNos, FAIXA_PING_MS, melhorNoParaJogar, TETO_COMPANHIA_MS } from './nos.js';
 import { NOS } from './nos.js';
-import { decodeSnapshot, MAX_SNAPSHOT_BYTES, SNAPSHOT_PROTOCOLS } from './netcodec.js';
+import { decodeSnapshot, MAX_SNAPSHOT_BYTES, CLIENT_SNAPSHOT_PROTOCOL } from './netcodec.js';
 import { TransporteWS, TransporteWT } from './transporte.js';
 import * as versao from './version.js';
 const { VERSION } = versao;
@@ -145,7 +145,7 @@ export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
     if (!h) return { ...no, http, ping: null, online: false, jogadores: 0, salas: 0 };
     /* `salaConvite`: o nó guarda sala privada SEM senha só para quem tem o código (backend#62).
        Nó sem o campo listaria essa sala aberta, então o JOGAR COM AMIGOS não a cria nele. */
-    return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0, salaConvite: h.salaConvite === true, soloVerified: h.soloVerified === true };
+    return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0, salaConvite: h.salaConvite === true, soloVerified: h.soloVerified === true, horde: h.horde || null, nodeMode: h.nodeMode, roomCreation: h.roomCreation };
   }));
 }
 
@@ -156,7 +156,7 @@ export class NetClient {
     // `pronto=1`: este cliente avisa quando montou o mapa novo (o nó segura o round 1, com teto)
     const qs = new URLSearchParams({ team, ...(codigo ? { codigo } : room ? { room } : {}), ...(pw ? { pw } : {}), ...(nome ? { nome } : {}), ...(ticket ? { ticket } : {}), ...(/^[a-f0-9]{7,40}$/.test(csha) ? { csha } : {}), pronto: '1' });
     this.url = `${url}${url.includes('?') ? '&' : '?'}${qs}`;
-    this.wtUrl = wt ? `${wt}${wt.includes('?') ? '&' : '?'}${qs}&sp=${encodeURIComponent(SNAPSHOT_PROTOCOLS[0])}` : '';
+    this.wtUrl = wt ? `${wt}${wt.includes('?') ? '&' : '?'}${qs}&sp=${encodeURIComponent(CLIENT_SNAPSHOT_PROTOCOL)}` : '';
     this.wtHashes = wtHashes;
     this.tp = null;
     this.connected = false;
@@ -223,28 +223,24 @@ export class NetClient {
 
   _conectar(timeoutMs, fabrica) {
     return new Promise((resolve, reject) => {
-      let done = false;
-      /* Welcome tem PRAZO: um nó que aceita o TCP e nunca responde deixava o connect()
-         pendente pra sempre — sem erro, sem mensagem, o clique em ENTRAR "não fazia nada"
-         (BUG-88). Régua: tools/eval/netcode-check.mjs. */
-      const prazo = Number.isFinite(timeoutMs)
-        ? setTimeout(() => { if (!done) { done = true; this.tp?.fechar(); reject(new Error('timeout')); } }, timeoutMs)
-        : null;
+      let done = false, ended = false, tp = null, prazo = null;
+      const ativo = () => !ended && this.tp === tp;
       const assenta = (fn, v) => { if (done) return; done = true; if (prazo) clearTimeout(prazo); fn(v); };
-      try {
-        this.tp = fabrica();
-        this.tp.abrir({
-          aberto: () => { this.connected = true; },
-          erro: (e) => assenta(reject, e),
-          fechado: () => { this.connected = false; this.onClose?.(); assenta(reject, new Error('closed')); },
-          mensagem: (dados, binario, bytes) => trata(dados, binario, bytes),
-        });
-      } catch (e) { assenta(reject, e); return; }
+      const falha = (e, codigo = 1002, motivo = 'protocolo_incompativel') => {
+        if (!ativo()) return;
+        ended = true; this.connected = false;
+        const accepted = done;
+        assenta(reject, e);
+        tp.fechar(codigo, motivo);
+        if (accepted) this.onClose?.();
+      };
       const trata = (dados, binary, bytes) => {
+        if (!ativo()) return;
         let m;
         try { m = binary ? decodeSnapshot(dados) : JSON.parse(dados); }
-        catch { if (binary) this.tp.fechar(1002, 'snapshot_invalid'); return; }
+        catch { if (binary) falha(new Error('snapshot_invalid'), 1002, 'snapshot_invalid'); return; }
         if (m.type === 'welcome') {
+          if (m.protocolVersion !== 8) { falha(new Error('protocolo_incompativel')); return; }
           // Versão diferente do nó não tira ninguém da partida (decisão do dono, 13/10);
           // ?mpversao=1 volta a recusar, para diagnóstico.
           this.versaoDiferente = versaoCompativel(m.clientVersion, VERSION, m.simHash)
@@ -252,8 +248,7 @@ export class NetClient {
           if (this.versaoDiferente && new URLSearchParams(globalThis.location?.search || '').get('mpversao') === '1') {
             const e = new Error('versao_incompativel');
             e.detalhe = this.versaoDiferente;
-            this.tp?.fechar(1002, 'versao_incompativel');
-            assenta(reject, e);
+            falha(e, 1002, 'versao_incompativel');
             return;
           }
           if (this.versaoDiferente) console.warn('[mp] nó em outra versão, entrando mesmo assim', this.versaoDiferente);
@@ -270,6 +265,7 @@ export class NetClient {
             if (this._rttSamples.length > 32) this._rttSamples.shift();
           }
         } else if (m.type === 'partida') {
+          if (m.protocolVersion !== 8) { falha(new Error('protocolo_incompativel')); return; }
           // o servidor girou o mapa: meta NOVA (roster, ids, mapa, facções) + o seu slot (BUG-112)
           this.meta = m; this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
           this.snap = null; this.prev = null;   // snapshots do jogo velho não servem para o novo
@@ -326,6 +322,23 @@ export class NetClient {
           if (this.chatLigado() && Number.isInteger(m.id) && typeof m.estado === 'string') this._entregaChat(m);
         }
       };
+      try {
+        tp = fabrica(); this.tp = tp;
+        prazo = Number.isFinite(timeoutMs)
+          ? setTimeout(() => falha(new Error('timeout'), 1000, 'timeout'), timeoutMs) : null;
+        tp.abrir({
+          aberto: () => { if (ativo()) this.connected = true; },
+          erro: (e) => falha(e),
+          fechado: () => {
+            if (!ativo()) return;
+            ended = true; this.connected = false;
+            const accepted = done;
+            assenta(reject, new Error('closed'));
+            if (accepted) this.onClose?.();
+          },
+          mensagem: trata,
+        });
+      } catch (e) { if (tp) falha(e); else assenta(reject, e); }
     });
   }
 

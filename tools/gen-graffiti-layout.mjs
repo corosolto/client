@@ -122,10 +122,6 @@ if (SO_IMPRESSAO) {
   process.exit(0);
 }
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = _pw.chromium || _pw.default?.chromium;
-
 const inputFingerprint = impressao();
 if (ONLY && !CHECKPOINT_ONLY && previousFingerprint?.pass !== inputFingerprint.pass)
   throw Error('A passada mudou: regerar um mapa não pode reassinar os demais. Regere todos ou use --checkpoint-only para diagnosticar.');

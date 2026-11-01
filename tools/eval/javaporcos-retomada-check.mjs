@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import { criarHorda, passoDominio, DOMINIO } from '../../public/js/mode_javaporcos.js';
+const state = criarHorda({ setores: 4 });
+state.controle = [.8, .4, 0, 0];
+const setores = Array.from({ length: 4 }, () => ({ peso: 1 }));
+passoDominio(state, setores, [0, 3, 0, 0], [0, 0, 0, 0], 1);
+assert.ok(state.controle[0] < .8, 'limpar o setor à distância deve reduzir o domínio');
+assert.ok(state.controle[1] > .4, 'setor ocupado deve continuar sendo invadido');
+assert.equal(state.controle[2], 0, 'tempo sozinho não cria ocupação');
+assert.equal(state.dominio, state.controle.reduce((a,b) => a+b,0)/4);
+state.controle = [.6, .6, 0, 0];
+for (let t=0;t<Math.ceil(1/DOMINIO.desce);t++) passoDominio(state,setores,[],[],1);
+assert.equal(state.dominio,0,'mapa limpo deve retornar a zero sem exigir defensor em cada setor');
+const mutant=criarHorda({setores:1,mutante:'sem-retomada'});mutant.controle=[.5];
+passoDominio(mutant,[{peso:1}],[],[],1);
+assert.equal(mutant.controle[0],.5,'mutante sem-retomada deve conservar o defeito');
+console.log('RET1–5: limpeza remota, ocupação, área, mapa vazio e mutante conferidos.');

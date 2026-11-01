@@ -24,7 +24,7 @@
    verdade e cobra em QUAL delas a rodada fecha.
 
    CLÁUSULAS
-     CTF-W1  alvo da rodada == nº de bandeiras que o mapa realmente tem (todos os mapas)
+     CTF-W1  alvo da rodada == nº de bandeiras que o mapa realmente tem (todos os mapas CTF)
      CTF-W2  simulando: com (N−1) capturas a rodada NÃO fecha; na N-ésima ela fecha
      CTF-W3  o alvo é DERIVADO da contagem de bandeiras, não de constante (leitura do fonte)
 
@@ -40,7 +40,7 @@ const falhas = [];
 const linhas = [];
 
 const textures = initTextures();
-const IDS = Object.keys(MAPS);
+const IDS = Object.keys(MAPS).filter((id) => !MAPS[id].objectiveMode);
 
 for (const id of IDS) {
   const g = bootGame(id, { textures, ctf: true, seed: 4242 });

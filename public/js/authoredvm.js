@@ -460,10 +460,19 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
   };
 }
 
-/* Peças que a pintura tem de alcançar: na golden `mint.active` é só o corpo e pente/
-   ferrolho são malhas irmãs; a Mint assada ainda tira o pente no `splitParts`. */
+const GOLDEN_PAINT_BODY = Object.freeze({
+  'gold#pistol': 'coro_solto_project_pistol',
+  'gold#ak': 'coro_solto_project_ak_body',
+});
+
+/* Pintura usa body golden explícito sem criar wrap de montagem Mint; peças irmãs
+   recebem o acabamento e somente o body recebe marcas. */
 export function pecasDaPintura(entry) {
-  const corpo = entry?.mint?.active;
+  let corpo = entry?.mint?.active;
+  if (!corpo && entry?.golden && GOLDEN_PAINT_BODY[entry.key]) {
+    const bodies = (entry.weaponMeshes || []).filter(mesh => mesh?.name === GOLDEN_PAINT_BODY[entry.key]);
+    if (bodies.length === 1) [corpo] = bodies;
+  }
   if (!corpo) return [];
   const irmas = [...(entry.weaponMeshes || []), ...(corpo.userData?.mintParts || [])];
   const fora = irmas.filter((peca) => peca && peca !== corpo && !corpo.getObjectById?.(peca.id));
@@ -927,6 +936,7 @@ export class AuthoredViewModels {
     const entry = this.entry(id);
     if (!entry) return false;
     const cs16 = VM_FAMILY[entry.family]?.cs16;
+    const useGameplayTiming = cfgArma(id)?.timing === 'gameplay';
     // Fuzis sacam com o clipe autoral do pack; o arco procedural fica para as
     // famílias de pistola (o pack não traz equip de pistola) e como fallback.
     if ((entry.golden || VM_FAMILY[entry.family]?.equip !== 'pistol')
@@ -934,18 +944,18 @@ export class AuthoredViewModels {
       // Arco procedural junto do clipe quando a arma declara drawDrop: o
       // equip_rifle da UZI nasce com a pose já dentro do quadro (P6).
       entry.drawTime = entry.frame?.drawDrop ? 0 : entry.drawDuration;
+      const drawDuration = cs16 && !useGameplayTiming ? cs16.draw : Math.max(0.3, duration);
       const tocou = this._play(entry, 'equip_rifle', {
-        duration: cs16 ? cs16.draw : Math.max(0.3, duration), fade: 0.03,
+        duration: drawDuration, fade: 0.03,
       });
       if (tocou) {
         entry.state = 'draw';
-        if (entry.frame?.drawDrop) entry.drawDuration = cs16 ? cs16.draw : Math.max(0.3, duration);
+        if (entry.frame?.drawDrop) entry.drawDuration = drawDuration;
       }
       return tocou;
     }
     // Pistolas cs16: o arco procedural É o estado draw — cadência do QC e
     // expiração no update (não há clipe para "terminar"). Revisão 29/08.
-    const useGameplayTiming = cfgArma(id)?.timing === 'gameplay';
     entry.drawDuration = cs16 && !useGameplayTiming ? cs16.draw : Math.max(0.12, duration || 0.32);
     entry.drawTime = 0;
     entry.state = 'draw';
