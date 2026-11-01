@@ -259,3 +259,22 @@ independente desta união. Skin R970 está fora até aprovação explícita. Pr�
 aguardar o S4 final com F2/Factory atuais, recebê-lo normalmente, provar os três
 JS invariantes e congelar a entrega. Fullgate/publicação/backend/Game3:2,
 contato/pintura/anatomia/mobile/MP continuam gates de Root.
+
+
+### R958: ancestry final de F2/Factory/S4
+
+Merge normal de S4 `8ab5b9fd0d5539aaa48f3781142e9e7ae64a2759`, descendente de
+845644 e Factory c5f68ba/F2 b2d252e. Public/ inteiro e package ficaram literais
+do checkpoint anterior Java; entraram somente os ledgers recebidos. Os três
+JS permanecem byte-exatos ao primeiro checkpoint R958. Docs/arch PASS; não foi
+repetida a suíte de identidade/origem por mudança de ledger/ancestry.
+
+A higiene autorizada por Root está em 91d2cadd: remove somente um LF extra no
+EOF do checker R944. Os demais bytes são exatos a d46, que continua ancestral.
+Node --check e diff --check PASS; a fonte de runtime R944 continua literal.
+O aviso anterior de whitespace fica preservado, sem falso PASS histórico.
+
+Antes do freeze final, aguardar a decisão explícita de Root sobre skin R970,
+ainda sob crítico R978. Nenhum código de skin foi importado. O próximo passo
+segue publicação/gates formais/whole sob Root, sem confundir foco por checkpoint
+com um check:deploy final ou aprovação visual/MP/mobile/release.
