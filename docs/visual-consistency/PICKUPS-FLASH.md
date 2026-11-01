@@ -2,37 +2,57 @@
 
 Dois defeitos da #1179, corrigidos no worktree `consistencia-visual-release-20261031` a partir do HEAD `f4bcffdf2`.
 
-## P1 — pickups estáticos sumiam SEM economia
+## P1 — pickups estáticos e filtro por modo
 
-`game.js` (constructor, ~833) removia **todos** os `world.pickups` do mapa antes de
-calcular `_ecoLigada` (~860). Resultado: qualquer boot fora da loja — arnês, nó
-dedicado, modo especial de arma, `?economia=0` — nascia sem arsenal, quebrando o
-loadout legado prometido por `docs/ECONOMIA-PARTIDA.md` (EJ2) e derrubando gates
-existentes (campinho-integration "arsenal: 12", pickup-arma-check, invariants).
+A correção #1179 recuperou os pickups sem economia: o antecedente `f4bcffdf2`
+removia todo o arsenal antes de calcular `_ecoLigada`. O clear ficou condicionado à
+loja ligada; drops de abate continuaram em `this.drops`. Esse histórico permanece válido.
+Aquela prova, porém, aceitava incorretamente todos os pickups no modo AWP: seu GREEN
+com PM5=12 não demonstrava o contrato de modos restritos.
 
-Conserto: `this.dedicated` e `this._ecoLigada` calculados **antes** da limpeza, com as
-mesmas entradas de sempre (`location.search`, `online`, `dedicado`, `_wpnMode()`); o
-clear só roda com `_ecoLigada === true`. Drops de abate (`this.drops`) nunca foram
-tocados e continuam intactos.
+A revisão de `8ee224e48` restaurou também o filtro legado de IDs/modo no boot OFF,
+antes de `refreshPickupModels`. A fonte histórica `origin/main` local
+`4cf8dd99d813fe7caa323b5e9567df3c86957f1a` já consultava `WEAPONS` e `_pickupAllowed`
+no constructor antes de conservar o pickup. O filtro atual exige chave própria de
+`WEAPONS` e permissão do modo: remove a malha da cena e a entrada da lista quando
+qualquer requisito falha. `toString`, `__proto__` e `constructor` não são IDs de armas.
+A decisão global `_pickupAllowed`, o clear da loja e a economia não foram alterados.
 
-Contraprovas medidas (Game de produção, mapa `quebrada`, build = 12 pickups):
-economia ON → 0; sem economia → 12; `?economia=0` → 12; `dedicated` → 12;
-`wpnMode:'awp'` → 12; drop de abate nasce com economia off (38→39).
+Medição anterior ao conserto (01/11, Game real `8ee224e48`, Quebrada): 12 pickups,
+com uma AWP e duas deagle. Com o modo AWP o código anterior conservava os outros 11.
+As expectativas 12/1/2/0 vêm dessa medição anterior e do contrato dos modos, não do
+resultado filtrado. Prova: `audits/2026-10-31-visual-consistency/review-r71-fixes-r73/before-pickup-quebrada.json`.
+A prova Ego complementar do Root, `PICKUP-AWP-ACTUAL-BEFORE-R73.json/png`, confirmou
+12 pickups e as 11 malhas proibidas na cena normal do modo AWP; não prova movimento
+nem que as 11 apareciam simultaneamente na câmera.
 
-Régua: `tools/eval/match-pickup-mode-check.mjs` — contratos **PM1–PM6**:
+Régua: `tools/eval/match-pickup-mode-check.mjs`:
 
-- PM1 economia ligada → 0 pickups; PM2–PM5 (sem economia, `?economia=0`, dedicado,
-  wpnMode especial) → 12; PM6 drop de abate nasce com economia OFF (só o nascimento do
-  drop — o arsenal já é cláusula do PM2).
-- **Nominal primeiro em todo modo**: o gate mede o game.js atual e exige verde ANTES de
-  avaliar qualquer variante. Nominal vermelho = instrumento quebrado = exit 1, nunca
-  "detecção".
-- `--baseline` sobe o game.js do antecedente `f4bcffdf2` (`git show` + imports
-  absolutos em módulo em memória) pela **mesma medição** dos cenários reais de boot, e
-  exige acender **exatamente** PM2–PM5 (com PM1 e PM6 verdes).
-- `--mutante=reintroduz` aplica, **na guarda real do constructor** (âncora única: o
-  bloco `if (this._ecoLigada) { …clear… }`), um clear incondicional em memória e repete
-  a mesma medição — exige exatamente PM2–PM5. Cláusula extra ou faltante = recusa.
+- PM1: economia ON limpa o arsenal. PM2–PM4: sem economia, `?economia=0` e dedicado
+  preservam os 12 legítimos no modo todas. PM5: somente a AWP medida. PM7: as duas
+  pistolas medidas. PM8: nenhum pickup na faca. PM6 preserva o nascimento do drop de abate.
+- PM9–PM12: Game real nos modos todas/AWP/pistolas/faca, com oito malhas reais anexadas
+  pelo builder do mapa (quatro IDs válidos e quatro inválidos, incluindo chaves herdadas).
+  Exigem referências válidas conservadas e remoção de lista + malha dos demais, já na
+  entrada de `refreshPickupModels`; o wrapper chama o método original integralmente.
+- Antes do fix, a régua nova ficou RED em PM5/PM7/PM8/PM9–PM12, sem falha do instrumento.
+  Depois, o nominal precisa passar em TODO modo antes de avaliar variante; nominal RED
+  é contrato violado, não detecção de mutante.
+- `--baseline` carrega `f4bcffdf2` e `--mutante=reintroduz` mantém a âncora ecoON original,
+  tornando seu clear incondicional em memória. Ambos exigem falhas exatas em
+  PM2/PM3/PM4/PM5/PM7/PM9/PM10/PM11; PM1, PM6 e cenários de faca permanecem verdes.
+  No subconjunto preexistente PM1–PM6, as falhas continuam exatamente PM2–PM5;
+  as cláusulas adicionais registram a extensão do contrato sem reescrever a prova antiga.
+  O constructor do antecedente não chamava `refreshPickupModels` (o método já
+  existia): nele a mesma fixture mede lista, malha e referências finais, sem alegar
+  uma chamada inicial inexistente. No nominal e nos
+  mutantes atuais a chamada ao refresh real e a observação anterior são obrigatórias.
+- `--mutante=sem-filtro-off` remove somente o filtro OFF em memória e exige as mesmas
+  falhas do RED anterior: PM5/PM7/PM8/PM9–PM12. Âncora ausente/ambígua reprova.
+  O arquivo de produção permanece nominal; nova execução nominal comprova o retorno GREEN.
+
+Autoria, comandos, resultados, limites e continuidade:
+[`REVIEW-R71-FIXES-20261101.md`](REVIEW-R71-FIXES-20261101.md).
 
 ## P2 — flash desligada virava FRAG local no online
 
