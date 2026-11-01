@@ -7,6 +7,7 @@ import {writeFileSync,mkdirSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { chaveDeCarga, InfraError, JS_EXCLUSOS, somaCargas, aceitaMutante, cancelaUi, prefixoRecebido, validaEnc } from './boot-overlay.mjs';
+import {createGuestProfileObserver,readGuestPageIdentity} from './boot-guest-profile.mjs';
 
 const args = process.argv.slice(2), vistos = new Set(), opcoes = {};
 for (const a of args) {
@@ -70,7 +71,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   const label=refPoolAnsioso?'reference':mutante||'nominal',passId=label+'-'+randomUUID(),proofDir=process.env.BOOT_PROOF_DIR?process.env.BOOT_PROOF_DIR+'/'+RUN_ID+'/'+passId:null;
   if(proofDir)mkdirSync(proofDir,{recursive:true});
   console.log('BOOT_PASS '+JSON.stringify({runId:RUN_ID,passId,label,proofDir,snapshot:SNAPSHOT.fingerprint}));
-  let context,origin,page,diagnostic=()=>({});
+  let context,origin,page,guest,terminalCapture=null,diagnostic=()=>({});
   try {
   context = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
   await context.addInitScript(() => {
@@ -101,7 +102,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
     if(rel==='js/textures.js'&&(refPoolAnsioso||mutante==='cartaz-ansioso'))corpo=poolAnsioso(corpo);
     if(rel==='js/main.js'){if(mutante==='fauna-cedo')corpo=faunaCedo(corpo);corpo=instrumentaCausaSplash(corpo);}
     return corpo;
-  },onError:e=>{const m='HTTP proxy: '+e.message;pendingProxyErrors.push(m);reportProxyError?.(m);}});
+  },onError:e=>{const m='HTTP proxy: '+e.message;pendingProxyErrors.push(m);reportProxyError?.(m);},authorizeProfile:meta=>guest?guest.authorizeProfile(meta):null});
   const navigation=new URL(origin.url+new URL(BASE).pathname+new URL(BASE).search);navigation.searchParams.set('api',origin.url);const PAGE_BASE=navigation.href;
   page = await context.newPage();
   page.on('request',request=>{
@@ -150,14 +151,18 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   const infraP = new Promise((_, rej) => { infraRej = rej; });
   infraP.catch(() => {});
   const marcaInfra = (msg) => { infra.push(msg); infraRej?.(new InfraError(msg)); infraRej = null; };
-  diagnostic=()=>({infra,navs,consoleErrors,bodyRecords:[...bodyRecords.values()],requests:[...reqs.values()],served:origin.requests});
+  diagnostic=()=>({infra,navs,consoleErrors,bodyRecords:[...bodyRecords.values()],requests:[...reqs.values()],served:origin.requests,guestProfile:guest?.summary()});
   reportProxyError=marcaInfra;for(const msg of pendingProxyErrors)marcaInfra(msg);
   page.on('pageerror', (e) => {
     erros.push(e.message);
     marcaInfra(`pageerror ${e.name || 'Error'}: ${e.message}`);
   });
+  guest=createGuestProfileObserver({origin:()=>origin.url,identity:()=>readGuestPageIdentity(page),onInfra:marcaInfra});
+  page.on('request',request=>guest.observeRequest({key:request,url:request.url(),method:request.method(),resourceType:request.resourceType()}));
+  page.on('requestfailed',request=>guest.observeFailure({key:request,error:request.failure()?.errorText||'requestfailed'}));
   page.on('response', (res) => {
-    if (res.status() >= 400) marcaInfra(`HTTP ${res.status()} ${res.url()}`);
+    const deferred404=guest.observeResponse({key:res.request(),url:res.url(),method:res.request().method(),status:res.status(),id:res.headers()['x-boot-response-id'],record:origin.byId.get(res.headers()['x-boot-response-id']),contentType:res.headers()['content-type'],getBody:()=>res.body()});
+    if (!deferred404&&res.status() >= 400) marcaInfra(`HTTP ${res.status()} ${res.url()}`);
     const request = res.request();
     if(/^https?:$/.test(new URL(res.url()).protocol)&&new URL(res.url()).origin===origin.url){
       const id=res.headers()['x-boot-response-id'];let record;
@@ -254,7 +259,27 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   for(const [request,row]of selectedLocals)if(corposEsperados.has(request)&&!verificados.has(request))throw new InfraError('request local da janela sem verificação integral: '+row.url);
   // READY aceita a causa assets, nunca o failsafe; ver contrato do portão.
   for (const r of gateRequests) if (r.erro) marcaInfra(`loadingFailed ${r.url}: ${r.erro}`);
-  await cdp.send('Network.disable');
+  const guestResult=await guest.seal({
+    readFetchClones:(ids,timeoutMs)=>page.evaluate(async({ids,timeoutMs})=>{
+      const selected=new Set(ids),deadline=performance.now()+timeoutMs;
+      while(true){
+        const rows=window.__bootFetchBodies.filter(row=>selected.has(row.id));
+        if(new Set(rows.map(row=>row.id)).size!==rows.length)throw Error('clone fetch semântico duplicado');
+        await Promise.all(rows.map(row=>{const promise=window.__bootFetchProofById.get(row.id);if(!promise)throw Error('clone semântico sem promessa');return promise;}));
+        await new Promise(resolve=>setTimeout(resolve,0));
+        const current=window.__bootFetchBodies.filter(row=>selected.has(row.id));
+        if(current.length===rows.length&&current.every(row=>row.state!=='pending')&&ids.every(id=>current.some(row=>row.id===id)))return current;
+        if(performance.now()>=deadline)throw Error('clone fetch semântico ausente/pendente');
+        await new Promise(resolve=>setTimeout(resolve,5));
+      }
+    },{ids,timeoutMs}),
+    closeObservation:async()=>{
+      terminalCapture={abortTrace:await page.evaluate(()=>window.__bootTrace||[]),fetchBodies:await page.evaluate(()=>window.__bootFetchBodies||[]),readyExact:await page.evaluate(()=>window.__csReadyExact||null)};
+      await cdp.send('Network.disable');
+      await context.close();context=null;
+    },
+  });
+  if(!guestResult.ok)throw new InfraError('contrato de perfil convidado: '+guestResult.reason);
   if (infra.length) throw new InfraError(`INFRA: ${infra.slice(0, 3).join(' | ')}${infra.length > 3 ? ` (+${infra.length - 3})` : ''}`);
   const ate=gateRequests,depois=[...reqs.values()].filter(r=>!gateObjects.has(r));
   let total=0;const cargas=new Map();const checkedIds=new Set(selectedBodies.filter(row=>row.state==='checked').map(row=>row.id));
@@ -271,6 +296,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
     ultimoProp: Math.max(-1, ...ate.filter((r) => /\/models\/props\//.test(r.url)).map((r) => r.fim-timeOrigin)),
     primeiraFauna: Math.min(Infinity, ...[...reqs.values()].filter((r) => /\/models\/ambient\//.test(r.url)).map((r) => r.inicio-timeOrigin)),
     erros,
+    guestProfile:{...guestResult,profileDenials:origin.profileDenials.length},
     networkProof:{timeOrigin,gateEpoch,cutoffEpoch:cutoff,clock:"CDP-wallTime/monotonic+document-timeOrigin",snapshotFingerprint:SNAPSHOT.fingerprint,snapshotModules:SNAPSHOT.entries.length,requestBodyBytes:ate.reduce((n,r)=>n+(origin.byId.get(String(r.serverID))?.requestBodyBytes||0),0),localRequests:origin.requests.filter(r=>r.kind==='local-js').length,verifiedBodies:selectedLocals.filter(([request])=>verificados.has(request)).length,expectedBodies:selectedLocals.length,allRegisteredBeforeWrite:origin.requests.every(r=>r.registeredBeforeWrite),windowFinishedBeforeGate:true,windowRequests:gateRequests.length,allBodyRecords:selectedBodies.length,allBodiesChecked:selectedBodies.filter(r=>r.state==="checked").length,fetchClones:fetchProof.length,localPayloadBytes:origin.requests.filter(r=>r.kind==='local-js').reduce((n,r)=>n+r.payloadBytes,0)},
     canceladasUi: ate.filter(r=>r.canceladaUi).map(r=>({path:new URL(r.url).pathname,inicio:r.inicio-timeOrigin,fim:r.fim-timeOrigin,bytes:r.bytes})),
   };
@@ -280,8 +306,9 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   } finally {
     try {
       if(proofDir) {
-        const abortTrace=page?await page.evaluate(()=>window.__bootTrace||[]).catch(e=>({error:e.message})):null;
-        writeFileSync(proofDir+'/diagnostic.json',JSON.stringify({runId:RUN_ID,passId,label,origin:origin?.url,...diagnostic(),abortTrace,fetchBodies:page?await page.evaluate(()=>window.__bootFetchBodies||[]).catch(e=>({error:e.message})):null},null,2));
+        const abortTrace=terminalCapture?terminalCapture.abortTrace:page?await page.evaluate(()=>window.__bootTrace||[]).catch(e=>({error:e.message})):null;
+        const fetchBodies=terminalCapture?terminalCapture.fetchBodies:page?await page.evaluate(()=>window.__bootFetchBodies||[]).catch(e=>({error:e.message})):null;
+        writeFileSync(proofDir+'/diagnostic.json',JSON.stringify({runId:RUN_ID,passId,label,origin:origin?.url,...diagnostic(),abortTrace,fetchBodies,readyExact:terminalCapture?.readyExact??null},null,2));
       }
     } finally {await context?.close().catch(()=>{});await origin?.close();}
   }

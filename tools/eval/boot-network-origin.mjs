@@ -37,10 +37,11 @@ export function assertSnapshotLive(snapshot) {
  if(current.fingerprint!==snapshot.fingerprint)throw Error('snapshot public/js mudou entre passadas: '+snapshot.fingerprint+' -> '+current.fingerprint);
  return true;
 }
-export async function startBootOrigin({BASE,publicRoot,snapshot=snapshotPublicJs(publicRoot),transformJs=(rel,body)=>body,onError=()=>{}}) {
+export async function startBootOrigin({BASE,publicRoot,snapshot=snapshotPublicJs(publicRoot),transformJs=(rel,body)=>body,onError=()=>{},authorizeProfile=null,profileAuthorizationTimeoutMs=5000}) {
+ if(!Number.isFinite(profileAuthorizationTimeoutMs)||profileAuthorizationTimeoutMs<=0||profileAuthorizationTimeoutMs>5000)throw Error('timeout de autorização inválido');
  const upstream=new URL(BASE);
  if(!['http:','https:'].includes(upstream.protocol)||upstream.username||upstream.password)throw Error('BASE pública HTTP(S) sem credenciais exigida');
- const modules=new Map(),requests=[],byId=new Map(),active=new Set(),sockets=new Set();let closing=false,nextId=0;
+ const modules=new Map(),requests=[],byId=new Map(),active=new Set(),sockets=new Set(),profileDenials=[];let closing=false,nextId=0;
  if(snapshot.fingerprint!==sha(Buffer.from(JSON.stringify(snapshot.entries))))throw Error('snapshot inconsistente');
  for(const {rel,body:original} of snapshot.entries) {
   const body=transformJs(rel,original);if(typeof body!=='string')throw Error('transformJs não retornou texto');
@@ -94,7 +95,16 @@ export async function startBootOrigin({BASE,publicRoot,snapshot=snapshotPublicJs
     if(!parsed||Object.keys(parsed).length!==2||!Object.hasOwn(parsed,'action')||!Object.hasOwn(parsed,'version')||parsed.action!=='invite-health'||parsed.version!==expectedVersion||JSON.stringify(parsed)!==requestBody.toString('utf8')){res.writeHead(400);res.end('heartbeat fora do snapshot');return;}
    }
    const publicApi=(['/api/geo-lang','/api/online','/api/map-plays','/api/treta'].includes(pathname)&&!query)||(pathname==='/api/social-auth'&&['','?action=providers'].includes(query))||(pathname==='/api/social-avatar'&&/^\?id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(query))||(pathname==='/api/social'&&query==='?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all');
-   if(!publicApi&&/^\/(?:api|auth|rest|functions|graphql|\.env|\.git)(?:\/|$)/i.test(pathname)){res.writeHead(403,{'cache-control':'no-store'});res.end('public GET only');return;}
+   // Autorização own-profile precede getWire; sem callback ou sem identidade própria, mantém 403.
+   const PROFILE_RE=/^\?action=profile&id=([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/;
+   let profileOk=false;
+   if(pathname==='/api/social'&&req.url==='/api/social'+query&&req.method==='GET'&&PROFILE_RE.test(query)) {
+    const id=query.match(PROFILE_RE)[1];let own=null;
+    if(typeof authorizeProfile==='function'){let timer;try{own=await Promise.race([Promise.resolve().then(()=>authorizeProfile({path:req.url,method:req.method,id,origin:url,originHeader:req.headers.origin||null,referer:req.headers.referer||null,fetchSite:req.headers['sec-fetch-site']||null})),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('autorização de perfil timeout')),profileAuthorizationTimeoutMs);})]);}catch(e){own=null;if(!closing)onError(e);}finally{clearTimeout(timer);}}
+    if(own!==id){profileDenials.push({path:req.url});res.writeHead(403,{'cache-control':'no-store'});res.end('own guest profile required');return;}
+    profileOk=true;
+   }
+   if(!publicApi&&!profileOk&&/^\/(?:api|auth|rest|functions|graphql|\.env|\.git)(?:\/|$)/i.test(pathname)){res.writeHead(403,{'cache-control':'no-store'});res.end('public GET only');return;}
    const rel=pathname.slice(1),local=modules.get(rel);
    if(pathname.startsWith('/js/')&&!local){res.writeHead(404,{'cache-control':'no-store'});res.end('módulo local ausente');return;}
    if(local) {
@@ -116,5 +126,5 @@ export async function startBootOrigin({BASE,publicRoot,snapshot=snapshotPublicJs
  server.on('connection',socket=>{sockets.add(socket);socket.once('close',()=>sockets.delete(socket));});
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
  const url='http://127.0.0.1:'+server.address().port;
- return {url,snapshotFingerprint:snapshot.fingerprint,modules,requests,byId,lookup(requestUrl){const u=new URL(requestUrl);if(u.origin!==url)return undefined;try{return modules.get(decodeURIComponent(u.pathname).slice(1));}catch{return undefined;}},async close(){closing=true;for(const request of active)request.destroy();for(const socket of sockets)socket.destroy();await new Promise(resolve=>server.close(resolve));}};
+ return {url,snapshotFingerprint:snapshot.fingerprint,modules,requests,byId,profileDenials,lookup(requestUrl){const u=new URL(requestUrl);if(u.origin!==url)return undefined;try{return modules.get(decodeURIComponent(u.pathname).slice(1));}catch{return undefined;}},async close(){closing=true;for(const request of active)request.destroy();for(const socket of sockets)socket.destroy();await new Promise(resolve=>server.close(resolve));}};
 }

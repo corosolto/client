@@ -2,14 +2,23 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
-## Estado atual, 01/11 R54: revisão de produto e correção do checker Ferro
+## Estado atual, 01/11 R55: perfil de visitante validado e adotado
+
+BootR55 adotado nesta QA:72cenários porNode22/26 e mesmo diagnósticoChrome
+próprio real403antes→404esperado depois, prova de corpo/SHA/clones, semINFRA.
+CríticosR54/R55 integrais lidosRoot: CLEANfocal. Prefixo focal emeval:bootorcamento;
+janela/tetos/produto/R33 preservados. Oito passadas frescas do hook ainda pendem.
+Esse diagnóstico HTTP não afirma açãoUI nem consulta automática de perfil.
+As ferramentas opcionais char-gauntlet/vision-judge têm quatro P2 reproduzidos
+por fixtures controladas, em correção isolada; sem chamadas externas ou render.
 
 Correção documental posterior: SKINS-FLOW agora reconhece o aceite focal F2 de
 Caveira/MAGA já descrito em KNIFE-SKINS; a pendência antiga de registrar o alias
 foi substituída pelo registro real em fast/deploy e pelo resultado técnicoR52.
 Nenhum runtime, arte ou alcance do aceite foi alterado.
 
-QA continua sobre80830d13faaca4e84434f18d8a9171e95dbb4dae, ainda não publicada.
+A consolidação partiu de80830d13faaca4e84434f18d8a9171e95dbb4dae e recebeu
+checkpointsFerro21380a0/docs0cc29dfe9; continua não publicada.
 A revisão preparatória dos60arquivos PRODUCT encontrou umP2: eval:ferro-estrutura
 importava FERRO_AMBIENCE removido do mapa. Baseline real Node22/26 EXIT1 antes de
 qualquer cláusula. Root retirou somente o import morto e passou FVE7 a exigir
