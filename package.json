@@ -111,6 +111,7 @@
     "eval:mapasparados": "node tools/eval/mapas-parados-check.mjs",
     "eval:submitguard": "node tools/eval/submit-guard-check.mjs",
     "eval:ctrlw": "node tools/eval/ctrlw-check.mjs",
+    "eval:ctrlwlifecycle": "node tools/eval/ctrlw-lifecycle-check.mjs --mutantes",
     "eval:bootorcamento": "node tools/eval/boot-guest-profile-check.mjs && node tools/eval/boot-orcamento-check.mjs && node tools/eval/boot-orcamento-check.mjs --mutante=cartaz-ansioso && node tools/eval/boot-orcamento-check.mjs --mutante=fauna-cedo",
     "eval:boot": "node tools/eval/boot-check.mjs",
     "eval:ssr": "node tools/eval/ssr-render-check.mjs",

@@ -2564,10 +2564,24 @@ export class Game {
      Chromium só. Firefox e Safari caem na segunda camada — a confirmação de saída do
      `beforeunload` no main.js. Régua: `tools/eval/ctrlw-check.mjs`. */
   _travaAtalhos() {
-    if (this.testMode || !document.fullscreenElement) return;
-    try { navigator.keyboard?.lock?.(['KeyW', 'KeyT', 'KeyN', 'KeyB', 'KeyR', 'KeyI', 'Comma', 'Period', 'Digit1', 'Digit2', 'Digit3'])?.catch?.(() => {}); } catch {}
+    if (this.testMode || this._disposed || this.paused
+        || (this.state !== 'live' && this.state !== 'countdown')) return;
+    // Cada pedido pertence à sessão que o iniciou. Pausa e dispose a invalidam.
+    const gen = (this._atalhosGen = (this._atalhosGen || 0) + 1);
+    const trava = () => {
+      if (gen !== this._atalhosGen || this.testMode || this._disposed || this.paused
+          || (this.state !== 'live' && this.state !== 'countdown')
+          || !document.fullscreenElement) return;   // sem tela cheia não há Keyboard Lock
+      this._tevemosTelaCheia = true;
+      try { navigator.keyboard?.lock?.(['KeyW', 'KeyT', 'KeyN', 'KeyB', 'KeyR', 'KeyI', 'Comma', 'Period', 'Digit1', 'Digit2', 'Digit3'])?.catch?.(() => {}); } catch {}
+    };
+    if (document.fullscreenElement) { trava(); return; }
+    // Recupera somente a tela cheia que já tivemos (CW5 em ctrlw-check.mjs).
+    if (!this._tevemosTelaCheia) return;
+    try { document.documentElement.requestFullscreen?.()?.then?.(trava, () => {}); } catch {}
   }
   _soltaAtalhos() {
+    this._atalhosGen = (this._atalhosGen || 0) + 1;
     try { navigator.keyboard?.unlock?.(); } catch {}
   }
   /* Está ASSISTINDO? No multiplayer o servidor pode não ter dado corpo (sala cheia, ou o
