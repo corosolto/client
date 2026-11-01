@@ -1,4 +1,5 @@
 // Só a Praça teve dependências completas auditadas; outros mapas preservam o pool legado.
+// O pool vive no mapPropIds() real (mapprops.js), delegado por menuProps() no main.js.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -54,7 +55,7 @@ if (reporter) {
   process.exit(1);
 }
 const { MAPS } = await import('./harness.mjs');
-const { COMMON_MAP_PROPS } = await import('../../public/js/mapprops.js');
+const { COMMON_MAP_PROPS, mapPropIds } = await import('../../public/js/mapprops.js');
 let source = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
 const begin = source.indexOf('function menuProps(mapa) {'), end = source.indexOf('// Rotas compartilhadas,', begin);
 const gotoBegin = source.indexOf('function gotoMap('), gotoEnd = source.indexOf('function stepMap(', gotoBegin);
@@ -64,7 +65,8 @@ if (mutation) {
   const edits = {
     'pool-global': [body, 'function menuProps(mapa) { return [...MAP_PROPS, ...(mapa.props || [])]; }\n'],
     'todos-explicitos': [body, 'function menuProps(mapa) { const props = mapa.props; return Array.isArray(props) ? props : MAP_PROPS; }\n'],
-    'sem-praca': ['const MENU_PROPS_COMPLETOS = new Set([MAPS.praca_poderes]);', 'const MENU_PROPS_COMPLETOS = new Set();'],
+    // sem-praca: derruba o marcador propsComplete da Praça → ela voltaria a herdar o pool.
+    'sem-praca': ['return mapPropIds(mapa);', 'return mapPropIds({ props: mapa.props });'],
     'sem-props-mapa': ['preloadMapProps(menuProps(mapa))', 'preloadMapProps(MAP_PROPS)'],
     'sem-rebuild': ['return propsReady.then(() => {\n      rebuildCurrent();', 'return propsReady.then(() => {'],
     'sem-troca': ['setMapMode();\n  void loadMenuBackdrop();\n  renderMapScreen();', 'setMapMode();\n  renderMapScreen();'],
@@ -80,15 +82,15 @@ const fixture = () => {
   const events = []; let release;
   const pending = new Promise(resolve => { release = resolve; });
   const context = vm.createContext({ MAP_PROPS: COMMON_MAP_PROPS, MAPS, currentMap: 'praca_poderes', events,
+    mapPropIds,   // o main.js importa o módulo real; a régua testa a mesma dependência de produção
     comMapaCarregado: (id, callback) => callback(MAPS[id]),
     preloadMapProps: ids => { events.push({ kind: 'preload', ids: [...ids] }); return pending; },
     rebuildMenuBackdrop: map => events.push({ kind: 'build', map }),
-    preloadAmbientLife: () => { events.push({ kind: 'fauna' }); return Promise.resolve(); },
+    preloadMapAmbientLife: () => { events.push({ kind: 'fauna' }); return Promise.resolve(); },
     MAPAS_MENU: Object.keys(MAPS), mapIdx: 0, settings: {}, mapNameEl: {}, modoEscolhido: true,
     resolveMapId: id => id, saveSettings() {}, setMapThumb() {}, setMapMode() {}, renderMapScreen() {}, hubNavigate() {},
   });
-  const complete = source.match(/^const MENU_PROPS_COMPLETOS = .*;$/m)?.[0] || '';
-  vm.runInContext(complete + '\n' + block + '\n' + go, context);
+  vm.runInContext(block + '\n' + go, context);
   return { context, events, release };
 };
 await check('deps: Praça carrega somente seus props declarados', () => {
