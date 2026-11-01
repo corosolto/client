@@ -5,7 +5,8 @@ import { chromium } from 'playwright';
 import { captureCuratedFauna } from './map-fauna-curated-collector.mjs';
 import { auditCuratedFaunaCensus } from './map-fauna-curated.mjs';
 
-const base=new URL(process.env.BASE||'http://127.0.0.1:8123');
+if(!process.env.BASE)throw Error('BASE ausente: informe a origem do servidor desta execução.');
+const base=new URL(process.env.BASE);
 if(!['http:','https:'].includes(base.protocol))throw Error('Base HTTP(S) obrigatória.');
 // Cada tentativa tem diretório próprio: um JSON antigo não pode suprir uma captura ausente.
 const out=path.resolve(process.env.FAUNA_OUT||'artifacts/map-fauna-curated');
