@@ -86,7 +86,48 @@ entradas inválidas com exit2 e zero recibos parciais; o alias com ambiente herd
 agora sai2, antes de medir. Os oito controles do parser extraído também passam.
 Produto e GLBs não mudaram nesses reparos de entrada do instrumento.
 
-Próximo passo: revisar o ponto atualizado inteiro e os reparos medidos,
-checkpoint seletivo e
-PR empilhado. CI, release, boot pela UI com inventário equipado, MP, mobile físico
-e aceite visual globais continuam pendentes.
+#1194 entrou por merge normal em staging; #1197 foi retargetado para staging.
+#1198 é a correção das duas partes, empilhada depois. O bot de #1197 alegou runner
+fail-fast; R370 executou mapid RED seguido de identidade GREEN, conservando o
+agregado vermelho. O fio foi refutado e resolvido, sem afrouxar o portão.
+
+O CI de #1197 também encontrou uma fixture do bloco real de preload sem o novo
+binding playerGloveId. R391 reproduziu quatro falhas locais por ReferenceError;
+a fixture passou a declarar explicitamente null, como o cenário sem luva que já
+exercita. Produto e predicados de fauna permanecem iguais. R376 revisara o ponto
+anterior inteiro; o CI posterior impede usar aquele parecer como aprovação deste
+reparo. Próximo passo: validar a fixture corrigida, revisar todo o novo ponto,
+checkpoint seletivo, push normal e CI atual. Release, boot pela UI com inventário
+equipado, MP, mobile físico e aceite visual globais continuam pendentes.
+
+R392/R399 validaram a fixture e o alias de fauna; R400 publicou e82019b pelos hooks
+normais. O review formal 5728477024 no head atual não trouxe achados, mas a decisão
+agregada do GitHub ainda conserva o CHANGES_REQUESTED histórico. O fio segue
+resolvido; isso não foi descrito como decisão agregada limpa.
+
+R586 Native pós-bot cobriu os doze deltas e encontrou P3 de I/O fora do classificador
+INFRA. R587 GLM inteiro terminou; seu P2 sobre desligar luvas com skin3p=0 foi
+refutado pelo contrato de pintura de arma/faca. A leitura do operador encontrou
+SC5 nominal incompatível com o argumento adicional de luva. Root leu os pareceres
+integrais e reconferiu os pins em R608; nenhum patch especulativo de produto.
+
+R607 reproduziu os três erros de I/O com exit1 e sem resumo INFRA: fonte inicial
+ausente no pai/worker e destino JSON apontando para diretório. Também reproduziu
+SC5 RED no checker real. A mesma saída também tinha SC6 RED: sua regex ignorava
+knifeContext, já presente em weapon-skins desde a base973. É dívida anterior,
+identificada ao validar SC5; não foi atribuída ao GLM nem ao forward de luva.
+O reparo corrente protege leitura inicial e gravação de recibo e aceita esses
+argumentos adicionais explícitos, conservando weaponSkinId, o kill-switch e a
+guarda marcas. Produto, predicados e failsets TP não mudaram.
+R609 confirmou os três erros de I/O como INFRA/exit3 e escrita JSON válida, mas
+seu controlador parou numa âncora ampla antes dos controles SC5. R611 mostrou
+SC6 RED anterior, sem crédito de aprovação. R612 passou dezesseis resultados:
+os quatro controles de I/O, sete casos SC5/SC6, dois mutantes legados de cobertura
+e os aliases públicos de cobertura/identidade mais docs:check. Retirar a entrega
+ou o kill-switch dá somente SC5 RED; retirar guarda/default de marcas dá somente
+SC6 RED. As chamadas anteriores permanecem aceitas. TP conserva nominal e quatro
+mutantes exatos; não houve mudança em produto, assets ou predicados TP.
+
+Próximo: checkpoint DCO/Agent, crítica integral dos treze caminhos e fronteiras
+atuais, push normal e novo review formal no head. R607/R608/R612 ficam na auditoria
+externa. Não são provas novas de raster, loja, animação, mobile ou multiplayer.
