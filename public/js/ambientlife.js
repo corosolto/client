@@ -334,6 +334,9 @@ class FavelaAmbience {
   }
 
   _add(type, config, index) {
+    const turnRate = Number.isFinite(config.turnRate) && config.turnRate > 0 ? config.turnRate : 0;
+    if (QUADS.has(type) && turnRate && Math.PI / turnRate >= (ALERT_TIME[type] || 3.2))
+      throw new RangeError('ambient_turn_rate');
     const fleeArea = config.fleeArea ? { ...config.fleeArea } : null;
     if (fleeArea && (!QUADS.has(type) || !['minX', 'maxX', 'minZ', 'maxZ'].every(key => Number.isFinite(fleeArea[key]))
       || fleeArea.minX >= fleeArea.maxX || fleeArea.minZ >= fleeArea.maxZ
@@ -413,7 +416,7 @@ class FavelaAmbience {
     const to = new THREE.Vector3(...(config.to || config.pos));
     this.animals.push({
       id: `${type}-${index}`, type, mode: type === 'pigeon' ? 'ground' : (config.mode || 'ground'), root: animalRoot, model,
-      origin, to, speed: config.speed, turnRate: Number.isFinite(config.turnRate) && config.turnRate > 0 ? config.turnRate : 0, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
+      origin, to, speed: config.speed, turnRate, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
       source: loaded ? 'gltf' : 'fallback', contactShadow, mixer, actions, action: 'idle', state: 'idle', alertUntil: 0,
       alertAt: 0, alertTurnDelay: 0, alertOrigin: origin.clone(), flee: new THREE.Vector3(1, 0, 0), fleeArea, fleeDistance: Infinity,
       routine: origin.clone(), recoverAt: 0, recoverUntil: 0, recoverFrom: origin.clone(),
