@@ -995,6 +995,12 @@ html[data-ui="legacy"] .char-spec small::before,html[data-ui="legacy"] .char-att
 .char-preview-box.has-video #char-preview,.char-preview-box.has-video #char-preview-static{display:none}
 .pv-equipment{position:absolute;bottom:var(--s-2);max-width:100%;display:flex;flex-direction:column;gap:var(--s-1);align-items:center;text-align:center;pointer-events:none}
 .pv-equipment span:not([hidden]){padding:var(--s-1) var(--s-2);background:var(--bg-900);color:var(--ink-100);font-size:var(--fs-100);border-radius:var(--s-1)}
+.pv-compact-portrait,.pv-compact-equipment{display:none}
+@media(max-width:760px),(pointer:coarse) and (max-height:560px){
+  .hub-character-card .pv-compact-portrait:not([hidden]),.hub-character-card .pv-compact-equipment:not([hidden]){display:block}
+  .hub-character-card #hub-character-crest{display:none}
+  .hub-character-card .pv-compact-equipment{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+}
 .pv-hints{display:flex;flex:0 0 auto;min-height:20px;align-items:center;gap:var(--s-5);font-family:var(--mono);font-size:var(--fs-50);
   letter-spacing:var(--tr-2);color:var(--ink-300)}
 
@@ -3123,6 +3129,11 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   .char-spec p { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
     overflow: hidden; }
   .char-info-head { flex: 1 1 auto; min-width: 0; }
+  .char-info-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 var(--s-2);align-items:center}
+  .char-info-head .pv-compact-portrait:not([hidden]){display:block;width:38px;height:38px;object-fit:contain;grid-column:1;grid-row:1/3}
+  .char-info-head .pv-compact-equipment:not([hidden]){display:block;grid-column:2;font-size:var(--fs-50);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .char-info-head #char-rarity{display:none}
+  .char-info-head #char-info-name{grid-column:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #char-info-name { font-size: clamp(18px, 4vw, 26px); }
   /* "TRIBOS URBANAS · 9 PERSONAGENS" em 2 linhas: some o "·" e a contagem cai pra linha de baixo */
   #char-faction-tag .cft-sep { display: none; }

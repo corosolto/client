@@ -922,12 +922,18 @@ let pvStaticKey = '';
 let pvPosterFailure = null;
 const pvReducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
 pvReducedMotion.addEventListener?.('change',event=>{if(event.matches)pvStopVideo();});
+const pvCompact=matchMedia('(pointer: coarse) and (max-height: 560px)');
+const pvNarrow=matchMedia('(max-width: 760px)');
+pvCompact.addEventListener?.('change',()=>refreshMenuEquipment());
 function resolvePreviewCharacter(def) {
   const skinId=Object.hasOwn(def,'skinId')?def.skinId:equippedTretaSkin(def.id);
   return {...def,skinId:tretaSkinPresentation(skinId,def.id)?.id || null,eyewearId:equippedTretaEyewear()};
 }
 function previewVideoVisible() {
   return document.querySelector('.char-preview-box')?.classList.contains('has-video') === true;
+}
+function previewModelActive(selectionOpen,hubOpen) {
+  return !pvCompact.matches && (selectionOpen || (hubOpen && !pvNarrow.matches)) && !previewVideoVisible();
 }
 function pvStopVideo() {
   pvVidToken++;
@@ -950,7 +956,7 @@ function pvSetVideo(def) {
   def=resolvePreviewCharacter(def);
   const skin=tretaSkinPresentation(def.skinId,def.id);
   const src=skin?(skin.video?.webm || skin.video?.mp4):`/video/chars/${def.id}.webm`;
-  if(!src || pvReducedMotion.matches){pvStopVideo();return;}
+  if(!src || pvReducedMotion.matches || pvCompact.matches || box.checkVisibility?.()===false){pvStopVideo();return;}
   const url=`${src}?v=${VERSION}`;
   if(video.dataset.previewSrc===url && video.onloadeddata)return;
   pvStopVideo();
@@ -993,6 +999,21 @@ function showStaticPreview(def) {
     if(src)image.src=src;else unavailable();
   }
   if (hints) hints.classList.add('hidden');
+}
+function syncCompactPreview(def) {
+  const skin=tretaSkinPresentation(def.skinId,def.id),weapon=armaDoPreview(def.id);
+  const paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId),names={ak:'AK-47',m4:'M4',scar:'SCAR',pistol:'Pistola'};
+  const caption=[skin?.name,paint?`Pintura: ${names[weapon.weaponId] || weapon.weaponId} · ${paint.name}`:null].filter(Boolean).join(' · ');
+  const src=portraitUrl(def),key=JSON.stringify([def.id,def.skinId,src,caption]);
+  for(const [imageId,labelId] of [['hub-character-portrait','hub-character-equipment'],['char-select-portrait','char-select-equipment']]){
+    const image=$(imageId),label=$(labelId);if(!image || !label || image.dataset.previewKey===key)continue;
+    image.dataset.previewKey=key;let fallback=false;
+    label.textContent=caption;label.hidden=!caption;image.alt=skin?.name || def.name;image.hidden=false;
+    const unavailable=()=>{image.hidden=true;label.hidden=false;label.textContent=`Prévia indisponível: ${skin?.name || def.name}${paint?` · ${paint.name}`:''}`;};
+    image.onload=()=>{if(image.dataset.previewKey!==key)return;image.hidden=false;label.textContent=caption;label.hidden=!caption;};
+    image.onerror=()=>{if(image.dataset.previewKey!==key)return;if(!skin && !fallback){fallback=true;image.src=portraitFallbackUrl(def);}else unavailable();};
+    if(src)image.src=src;else unavailable();
+  }
 }
 function ensurePreview() {
   if (staticPreviews) return null;
@@ -1184,7 +1205,8 @@ religaAbrirEmotes();
 function pvSetChar(def) {
   def = resolvePreviewCharacter(def);
   const my = ++pvToken;
-  if (staticPreviews) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
+  syncCompactPreview(def);
+  if (staticPreviews || pvCompact.matches || (pvNarrow.matches && !$('main-menu')?.classList.contains('hidden'))) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
   pvImageToken++;pvStaticKey='';pvStopVideo();
@@ -4316,7 +4338,7 @@ function loop(agoraMs = performance.now()) {
   const hubPreviewOpen = HUB_ENABLED && hubMenu?.classList.contains('hidden') === false
     && hubMenu?.dataset.hubTab === 'jogar' && hubMenu?.dataset.hubNet === 'sp';
   if (!splashAtiva) {
-    if ((csOpen || hubPreviewOpen) && pv && pv.model && !previewVideoVisible()) {
+    if (pv && pv.model && previewModelActive(csOpen,hubPreviewOpen)) {
       const pvDt = pv.travado ? 0 : Math.min(0.05, dtReal);   // ?pvcam=maos congela pose e giro
       if (!pvDrag && !pv.travado) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
       // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
