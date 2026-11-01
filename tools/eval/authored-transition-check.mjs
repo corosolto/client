@@ -8,8 +8,8 @@ const THREE = await import('three');
 const { AuthoredViewModels } = await import('../../public/js/authoredvm.js');
 const { readFile } = await import('node:fs/promises');
 
-function fixture(Runtime, golden) {
-  const vm = Object.create(Runtime.prototype);
+function fixture(Runtime, golden, semEstado = false) {
+  const vm = semEstado ? Object.create(Runtime.prototype) : new Runtime();
   vm.entries = new Map();
   vm.profile = {};
   vm.weapon = 'deagle';
@@ -40,10 +40,24 @@ function fixture(Runtime, golden) {
   return vm;
 }
 
+// P2: _gait/_gaitEnv ausentes viravam NaN no mount sem o gate perceber — todo
+// update é auditado por finitude de position/quaternion/scale (MOVIMENTO-1P).
+let naoFinitos = [];
+function auditarFinitos(vm) {
+  for (const [key, entry] of vm.entries) {
+    const alvos = [['position', 'xyz'], ['scale', 'xyz'], ['quaternion', 'xyzw']];
+    for (const [prop, eixos] of alvos) for (const eixo of eixos)
+      if (!Number.isFinite(entry.mount[prop][eixo])) naoFinitos.push(`${key}.mount.${prop}.${eixo}`);
+  }
+}
+function tick(vm, dt) {
+  vm.update(dt);
+  auditarFinitos(vm);
+}
 function advance(vm, frames, observe = () => {}) {
   for (let i = 0; i < frames; i++) {
     observe();
-    vm.update(0.01);
+    tick(vm, 0.01);
   }
 }
 
@@ -56,10 +70,11 @@ function idlePose(entry, pose = snapshot(entry)) {
   return pose.action === 'Idle' && Math.abs(pose.position - entry.idlePosition) < 1e-6 && pose.queue === 0;
 }
 
-function audit(Runtime) {
+function audit(Runtime, semEstado = false) {
+  naoFinitos = [];
   const checks = [];
   {
-    const vm = fixture(Runtime, true), entry = vm.entry(), magazine = new THREE.Bone();
+    const vm = fixture(Runtime, true, semEstado), entry = vm.entry(), magazine = new THREE.Bone();
     magazine.name = 'replacement'; entry.scene.add(magazine);
     const geometry = new THREE.BoxGeometry(1, 1, 1), count = geometry.attributes.position.count;
     geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(count * 4), 4));
@@ -73,9 +88,9 @@ function audit(Runtime) {
     const cycles = [];
     const bound = (8 - entry.idlePosition) / 0.2 * 0.00002 * 2;
     for (let cycle = 0; cycle < 10; cycle++) {
-      vm._play(entry, 'reload'); advance(vm, 19); vm.update(0.00999);
+      vm._play(entry, 'reload'); advance(vm, 19); tick(vm, 0.00999);
       const before = entry.bone.position.x;
-      vm.update(0.00002);
+      tick(vm, 0.00002);
       const jump = Math.abs(entry.bone.position.x - before);
       let weightError = 0, magazineError = 0;
       const observeBlend = () => {
@@ -107,18 +122,18 @@ function audit(Runtime) {
     geometry.dispose(); mesh.material.dispose();
   }
   for (const golden of [true, false]) {
-    const vm = fixture(Runtime, golden), entry = vm.entry();
+    const vm = fixture(Runtime, golden, semEstado), entry = vm.entry();
     vm._play(entry, 'reload');
     advance(vm, 19);
-    vm.update(0.00999);
+    tick(vm, 0.00999);
     const before = entry.bone.position.x;
-    vm.update(0.00002);
+    tick(vm, 0.00002);
     const jump = Math.abs(entry.bone.position.x - before);
     const bound = (8 - entry.idlePosition) / 0.2 * 0.00002 * 2;
     checks.push({ name: `${golden ? 'golden' : 'private'}-idle-continuity`, ok: jump <= bound, jump, bound });
   }
   for (const golden of [true, false]) for (const mode of ['visible', 'hidden', 'utility']) {
-    const vm = fixture(Runtime, golden), entry = vm.entry();
+    const vm = fixture(Runtime, golden, semEstado), entry = vm.entry();
     entry.mount.visible = mode !== 'hidden';
     vm._sequence(entry, ['reload', 'end'], 0.4);
     if (mode === 'utility') vm.utility = { entry, elapsed: 0, releaseAt: 10, duration: 20 };
@@ -129,7 +144,7 @@ function audit(Runtime) {
   }
   for (const golden of [true, false]) {
     for (const frames of [10, 20, 30, 40, 43, 48]) {
-      const vm = fixture(Runtime, golden), original = vm.entry(), other = vm.entries.get('revolver#revolver38');
+      const vm = fixture(Runtime, golden, semEstado), original = vm.entry(), other = vm.entries.get('revolver#revolver38');
       vm._sequence(original, ['reload', 'end'], 0.4);
       advance(vm, frames);
       const before = snapshot(original), switched = vm.setWeapon('revolver38'), hidden = snapshot(original);
@@ -141,7 +156,7 @@ function audit(Runtime) {
           && idlePose(other, selected) && selected.visible && idlePose(original) && original.mount.visible,
         before, hidden, selected, returned: snapshot(original) });
     }
-    const vm = fixture(Runtime, golden), original = vm.entry(), grenade = vm.entries.get('grenade');
+    const vm = fixture(Runtime, golden, semEstado), original = vm.entry(), grenade = vm.entries.get('grenade');
     vm._sequence(original, ['reload', 'end'], 0.4);
     advance(vm, 43);
     let releases = 0, completions = 0, switched = false, visibleAtRelease = false;
@@ -162,6 +177,8 @@ function audit(Runtime) {
       releases, completions, visibleAtRelease, visited: [...visited],
       selected: snapshot(selected), grenade: snapshot(grenade) });
   }
+  checks.push({ name: 'mounts-finitos', ok: naoFinitos.length === 0,
+    violacoes: [...new Set(naoFinitos)].slice(0, 6), total: naoFinitos.length });
   return { ok: checks.every(c => c.ok), checks };
 }
 
@@ -177,7 +194,7 @@ if (process.argv.includes('--mutantes')) {
     ['transicao-dentro-do-mixer', 'if (entry.updatingMixer) {', 'if (false) {'],
     ['fila-preservada-na-troca', 'if (!visible && entry.mount.visible) this._idle(entry);', ''],
     ['release-repetido', 'utility.released = true;', 'utility.released = false;'],
-    ['arma-oculta-apos-granada', 'if (weaponEntry) weaponEntry.mount.visible = true;', ''],
+    ['arma-oculta-apos-granada', "if (!this.held) {\n          const weaponEntry = this.entry();\n          if (weaponEntry) weaponEntry.mount.visible = true;\n        }", "if (!this.held) {\n          const weaponEntry = this.entry();\n        }"],
   ];
   result.mutations = [];
   for (const [name, before, after] of mutations) {
@@ -189,6 +206,10 @@ if (process.argv.includes('--mutantes')) {
     result.mutations.push({ name, detected: !check.ok, failed: check.checks.filter(c => !c.ok).map(c => c.name) });
     result.ok &&= !check.ok;
   }
+  const quebrado = audit(AuthoredViewModels, true);
+  result.mutations.push({ name: 'fixture-sem-estado', detected: !quebrado.ok,
+    failed: quebrado.checks.filter(c => !c.ok).map(c => c.name) });
+  result.ok &&= !quebrado.ok;
 }
 console.log(JSON.stringify(result, null, 2));
 if (!result.ok) process.exitCode = 1;

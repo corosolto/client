@@ -60,7 +60,7 @@ if (modo === 'killswitch') {
   g.player.flashes = 5;
   check('?flash=0: tecla 6 não equipa', g._equipNade('flash') === false, { nade: g.player.nade });
   const r = g._popFlash(new THREE.Vector3(0, 1, 0), null);
-  check('?flash=0: estouro não cega ninguém', r === undefined && !g._cegoJ, { r: r ?? null });
+  check('?flash=0: estouro não cega ninguém', r === undefined && !g._cegoJ, { retornou: r !== undefined, cego: !!g._cegoJ });
   g._resetPositions?.();
   check('?flash=0: flash desligada (sem slot nem equipar) mesmo com estoque', g._flashLiberada() === false, {});
   fim('kill-switch');
@@ -151,17 +151,19 @@ check('parede zera tudo', Object.keys(M).filter((k) => k.endsWith('parede')).eve
   const olharEPiscar = (costas) => {
     const h = boot();
     h.state = 'live';
+    h.player.pos.set(0, 60, 0);   // espaço livre a 60 m: o spawn do ferro tem parede a 0,18 m do estouro
     const cam = h.camera, eye = h.player.pos.clone(); eye.y += 1.6;
     cam.position.copy(eye);
     const estouro = eye.clone().add(new THREE.Vector3(0, -0.15, 2));
     cam.lookAt(eye.clone().add(new THREE.Vector3(0, 0, costas ? -1 : 1)));
     cam.updateMatrixWorld(true);
+    const losLivre = h._losClear(estouro, eye);   // LOS física é precondição do positivo
     h._popFlash(estouro, null);
-    return h._cegoJ ? { dur: r2(h._cegoJ.dur), pico: r2(h._cegoJ.pico) } : { dur: 0, pico: 0 };
+    return { los: losLivre, ...(h._cegoJ ? { dur: r2(h._cegoJ.dur), pico: r2(h._cegoJ.pico) } : { dur: 0, pico: 0 }) };
   };
   const f = olharEPiscar(false), c = olharEPiscar(true);
-  check('jogador de frente a 2 m: ≥ 4 s com branco cheio', f.dur >= 4.0 && f.pico === 1, f);
-  check('jogador de costas a 2 m: ≤ 0,5 s', c.dur <= 0.5, c);
+  check('jogador de frente a 2 m: ≥ 4 s com branco cheio', f.los && f.dur >= 4.0 && f.pico === 1, f);
+  check('jogador de costas a 2 m: ≤ 0,5 s', c.los && c.dur <= 0.5, c);
 }
 
 /* ---------- (4c) curva da tela e reset no respawn/rodada ---------- */
@@ -237,18 +239,46 @@ function duelo(comFlash) {
 }
 
 /* ---------- (7) flags de URL: processos filhos ---------- */
-const filho = (qs, args) => {
+const filho = (qs, args, rowsEsperadas) => {
   const r = spawnSync(process.execPath, [SELF, ...args, ...(gameArg ? [`--game-module=${gameArg}`] : []), ...(flashArg ? [`--flash-module=${flashArg}`] : [])],
     { encoding: 'utf8', env: { ...process.env, SIM_QS: qs } });
-  try { return JSON.parse(r.stdout.slice(r.stdout.indexOf('{'))); } catch { return { failed: ['<sem json>'], erro: r.stderr.slice(-400) }; }
+  const infra = (m) => ({ infra: `filho ${qs}: ${m} (status=${r.status} signal=${r.signal ?? null})` });
+  if (r.error) return infra(r.error.message);
+  if (r.signal) return infra(`morto por sinal`);
+  if (r.status !== 0 && r.status !== 1) return infra(`status ${r.status}`);
+  let j;
+  try { j = JSON.parse(r.stdout.slice(r.stdout.indexOf('{'))); } catch { return infra(`sem json (stderr: ${r.stderr.slice(-200)})`); }
+  if (!Number.isSafeInteger(j.total) || !Array.isArray(j.rows) || j.rows.length !== j.total || j.rows.length !== rowsEsperadas)
+    return infra(`schema: total=${j.total} rows=${j.rows?.length}, esperadas ${rowsEsperadas}`);
+  const nomes = args.includes('--modo=killswitch') ? [
+    '?flash=0: tecla 6 não equipa', '?flash=0: estouro não cega ninguém',
+    '?flash=0: flash desligada (sem slot nem equipar) mesmo com estoque',
+  ] : [`${qs}: estoque da rodada`];
+  if (j.rows.some((x) => !x || typeof x.name !== 'string' || !x.name || typeof x.pass !== 'boolean')
+    || new Set(j.rows.map((x) => x.name)).size !== j.rows.length
+    || JSON.stringify(j.rows.map((x) => x.name).sort()) !== JSON.stringify(nomes.sort()))
+    return infra('rows sem veredito booleano ou inventário divergente');
+  if (!Array.isArray(j.failed) || !j.failed.every((f) => typeof f === 'string'))
+    return infra('failed não é lista de strings');
+  const falhas = j.rows.filter((x) => !x.pass).map((x) => x.name).sort();
+  const passCount = j.rows.length - falhas.length;
+  if (!Number.isSafeInteger(j.passed) || j.passed !== passCount
+    || JSON.stringify([...j.failed].sort()) !== JSON.stringify(falhas))
+    return infra(`resumo diverge das rows: total=${j.total} passed=${j.passed} failed=${j.failed.length}`);
+  if (r.status === 0 && j.failed.length) return infra('status 0 com failed não vazio');
+  if (r.status === 1 && !j.failed.length) return infra('status 1 sem falha declarada');
+  return j;
 };
 {
-  const k = filho('?flash=0', ['--modo=killswitch']);
-  check('?flash=0 remove a flash', k.failed?.length === 0 && k.total > 0, { failed: k.failed });
-  const d = filho('?debug=1&flashes=2', ['--modo=debug', '--espera=2']);
-  check('?debug=1&flashes=2 dá 2 por rodada', d.failed?.length === 0, { failed: d.failed });
-  const n = filho('?flashes=2', ['--modo=debug', '--espera=0']);
-  check('?flashes=2 sem debug não dá nada', n.failed?.length === 0, { failed: n.failed });
+  const k = filho('?flash=0', ['--modo=killswitch'], 3);
+  if (k.infra) { console.error(`infra: ${k.infra}`); process.exit(3); }
+  check('?flash=0 remove a flash', k.failed.length === 0 && k.total === 3, { failed: k.failed });
+  const d = filho('?debug=1&flashes=2', ['--modo=debug', '--espera=2'], 1);
+  if (d.infra) { console.error(`infra: ${d.infra}`); process.exit(3); }
+  check('?debug=1&flashes=2 dá 2 por rodada', d.failed.length === 0, { failed: d.failed });
+  const n = filho('?flashes=2', ['--modo=debug', '--espera=0'], 1);
+  if (n.infra) { console.error(`infra: ${n.infra}`); process.exit(3); }
+  check('?flashes=2 sem debug não dá nada', n.failed.length === 0, { failed: n.failed });
 }
 
 fim('cegueira da flash medida em Node; sem aceite de feel, de áudio nem de MP real');

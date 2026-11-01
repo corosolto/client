@@ -820,6 +820,11 @@ export class Sfx {
     this._beep('square', 1240, 1240, .02, .04, 0, true); return false; }
   uiBack()    { this.ensure(); this.duck(0.5, 0.1); if (this._uiAction('back', .26)) return true;
     this._beep('square', 560, 400, .06, .10, 0, true); return false; }
+  moeda()     { this.ensure(); this.duck(0.5, 0.14);
+    /* Som de moeda (relato do dono, 31/10): blip clássico de duas notas — B5 curto
+       subindo pra E6 com cauda. Sem sample no pack; 100% synth como o uiClick. */
+    this._beep('square', 988, 988, .07, .16, 0, true);
+    this._beep('square', 1319, 1319, .30, .14, .07, true); }
   levelUp()   { this.ensure(); this.duck(0.72, 0.4);
     [523, 659, 784, 1047].forEach((f, i) => this._beep(i < 3 ? 'triangle' : 'sine', f, f * 1.04, .18, .22, i * .09, true)); }
   scopeIn()   { const s = this._cs('scope'); if (s) { this._sample(s); return; }

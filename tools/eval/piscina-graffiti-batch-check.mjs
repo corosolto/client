@@ -23,11 +23,114 @@ const mutantSource = source.replace(marker, '  grafitar({')
 let mutant;
 try { mutant = await import(`data:text/javascript,${encodeURIComponent(mutantSource)}`); }
 catch (error) { throw new Error(`Order mutant import failed: ${error.message.slice(0, 200)}`); }
+
+/* Relato #1171: nenhuma peça cruza a faixa azul perimetral (plano atrás + faixa
+ * à frente produziam z-fighting). Contrato 31/10: zero arte repetida no mapa
+ * inteiro, manual+assado pela identidade do asset — ver docs/visual-consistency/GRAFITE-REGUA.md. */
+const pecasDo = (world) => world.root.userData.graffitiPecas || [];
+const cruzaFaixa = (p) => p.y - p.h / 2 < 2.6 && p.y + p.h / 2 > 2
+  && (Math.abs(Math.abs(p.x) - 16.97) < 0.2
+    || Math.abs(Math.abs(p.x) - 20.97) < 0.2
+    || Math.abs(Math.abs(p.z) - 24.97) < 0.2);
+const artesNaFaixa = (world) => {
+  const nomes = [];
+  world.root.traverse((o) => {
+    if (!o.isMesh || o.userData?.pecas || !/^(?:decal:|mural:|poster:)/.test(o.name || '')) return;
+    const box = new THREE.Box3().setFromObject(o);
+    if (box.min.y < 2.6 && box.max.y > 2) nomes.push(o.name);
+  });
+  return nomes;
+};
+const buildPiscina = (mutante = '') => {
+  const antes = process.env.PISCINA_GRAFFITI_MUTANT;
+  if (mutante) process.env.PISCINA_GRAFFITI_MUTANT = mutante; else delete process.env.PISCINA_GRAFFITI_MUTANT;
+  try {
+    seedRandom(12345);
+    const world = MAPS.piscina_treta.build(new THREE.Scene(), initTextures());
+    world.root.updateMatrixWorld(true);
+    return world;
+  } finally {
+    if (antes === undefined) delete process.env.PISCINA_GRAFFITI_MUTANT;
+    else process.env.PISCINA_GRAFFITI_MUTANT = antes;
+  }
+};
+/* Mutante de runtime: guardas `usadas.has` do graffiti_pass DESLIGADOS em memória
+ * (data: URL, repo intacto), mapa real construído por módulo que importa o pass
+ * mutado. Cruzamento manual×assado é provado no graffiti-curation-check
+ * (determinismoReal); aqui os pools manual e assado do mapa são disjuntos. */
+const passURL = new URL('../../public/js/graffiti_pass.js', import.meta.url);
+const passSource = readFileSync(passURL, 'utf8');
+const guardas = passSource.split('usadas.has(').length - 1;
+assert.ok(guardas > 0, 'mutante de repetição NÃO APLICOU: sem guardas usadas.has no pass');
+const passMutante = passSource.replaceAll('usadas.has(', '(()=>false)(');
+assert.ok(!passMutante.includes('usadas.has(') && passMutante !== passSource,
+  'mutante de repetição NÃO APLICOU: substituição não casou');
+const absoluteImports = (text, owner, overrides = {}) => text.replace(
+  /(\bfrom\s*|\bimport\s*)(['"])([^'"\n]+)\2/g,
+  (full, prefix, quote, specifier) => {
+    const target = overrides[specifier]
+      || (specifier.startsWith('.') ? new URL(specifier, owner).href : import.meta.resolve(specifier));
+    return `${prefix}${JSON.stringify(target)}`;
+  });
+const passMutanteURL = `data:text/javascript,${encodeURIComponent(absoluteImports(passMutante, passURL))}`;
+const mapaMutanteURL = `data:text/javascript,${encodeURIComponent(
+  absoluteImports(source, mapURL, { './graffiti_pass.js': passMutanteURL }))}`;
+const chaveDaArte = (p) => String(p.f || '').startsWith('poster:') ? 'poster:' + String(p.f).slice(7) : String(p.f);
+const chaveManual = (name) => name.startsWith('decal:poster:') ? 'poster:' + name.slice(12) : name.replace(/^(?:decal|mural|poster):/, '');
+const duplicadasGlobais = (world) => {
+  const artes = new Map();
+  const conta = (key, fonte) => {
+    const e = artes.get(key) || { n: 0, fontes: new Set() };
+    e.n++; e.fontes.add(fonte); artes.set(key, e);
+  };
+  for (const p of pecasDo(world)) conta(chaveDaArte(p), 'assado');
+  world.root.traverse((o) => {
+    if (o.isMesh && !o.userData?.pecas && /^(?:decal:|mural:|poster:)/.test(o.name || ''))
+      conta(chaveManual(o.name), 'manual');
+  });
+  return [...artes].filter(([, e]) => e.n > 1).map(([key, e]) => ({ key, n: e.n, fontes: [...e.fontes] }));
+};
+const producao = buildPiscina();
+const buildMutante = (await import(mapaMutanteURL)).buildPoolDay;
+seedRandom(12345);
+const mundoMutante = buildMutante(new THREE.Scene(), initTextures());
+mundoMutante.root.updateMatrixWorld(true);
+const dupMutante = duplicadasGlobais(mundoMutante);
+/* Mutante de curadoria: allowlist graffitiWhiteWall do mapa desligada em memória
+ * + ganchos de colocação 'faixa' que o produto expõe — a arte manual volta à faixa. */
+const allowlist = '  root.traverse(mesh => {\n    if (mesh.isMesh && !mesh.userData.graffitiWhiteWall) mesh.userData.graffitiSupportExcluded = true;\n  });\n';
+assert.equal(source.split(allowlist).length, 2, 'faixa mutant must identify the allowlist traverse');
+const buildFaixaMutante = (await import(`data:text/javascript,${encodeURIComponent(
+  absoluteImports(source.replace(allowlist, ''), mapURL))}`)).buildPoolDay;
+const envFaixa = process.env.PISCINA_GRAFFITI_MUTANT;
+process.env.PISCINA_GRAFFITI_MUTANT = 'faixa';
+let mutFaixa;
+try {
+  seedRandom(12345);
+  mutFaixa = buildFaixaMutante(new THREE.Scene(), initTextures());
+  mutFaixa.root.updateMatrixWorld(true);
+} finally {
+  if (envFaixa === undefined) delete process.env.PISCINA_GRAFFITI_MUTANT;
+  else process.env.PISCINA_GRAFFITI_MUTANT = envFaixa;
+}
+assert.deepEqual(duplicadasGlobais(producao), [], 'produção não repete arte no mapa inteiro (manual+assado)');
+assert.ok(dupMutante.length > 0, `mutante sem usadas.has reproduz arte repetida no mapa inteiro (got ${JSON.stringify(dupMutante.slice(0, 2))})`);
+assert.ok(dupMutante.some((d) => d.n > 1 && d.fontes.includes('manual')),
+  'mutante sem usadas.has reintroduz repetição na colocação manual do próprio mapa');
+assert.equal(pecasDo(producao).filter(cruzaFaixa).length, 0, 'produção não pinta por cima da faixa azul');
+assert.equal(artesNaFaixa(producao).length, 0, 'cartaz, mural ou decal manual não invade a faixa azul');
+/* Arte assada na faixa não volta: layout limpo e nenhuma superfície a aceita;
+ * a mordida viva do mutante é a arte MANUAL sobre a faixa. */
+assert.ok(artesNaFaixa(mutFaixa).length > 0, 'mutante recoloca arte manual sobre a faixa azul');
+console.log(JSON.stringify({ gate: 'piscina-editorial', pecas: pecasDo(producao).length,
+  duplicadasMutante: dupMutante.length, arteManualMutante: artesNaFaixa(mutFaixa).length }));
 const textures = initTextures(), savedLayout = GRAFITE.piscina_treta;
-assert.ok(textures.decalFiles.includes('tags-treino-04.png'), 'fixture uses real artwork');
-GRAFITE.piscina_treta = { arquivos: ['tags-treino-04.png'], pecas: [
+const [arteSeam, arteControle] = ['tags-treino-04.png', 'tags-treino-02.png'];
+assert.ok(textures.decalFiles.includes(arteSeam) && textures.decalFiles.includes(arteControle),
+  'fixture uses two real distinct artworks (uniqueness guard must not mask the order mutation)');
+GRAFITE.piscina_treta = { arquivos: [arteSeam, arteControle], pecas: [
   [0, -18.03, 5.948, -12.519, -1.571, 4.8, 1.604], // crosses Float32 seam
-  [0, -16.97, 5.65, -18, 1.571, 2, 2], // wholly backed by one actual wall
+  [1, -16.97, 5.65, -18, 1.571, 2, 2], // wholly backed by one actual wall
 ], murais: [] };
 window.__grafiteLive = false;
 let good, old;
@@ -39,6 +142,7 @@ good.root.updateMatrixWorld(true); old.root.updateMatrixWorld(true);
 const pieces = good.root.userData.graffitiPecas || [], oldPieces = old.root.userData.graffitiPecas || [];
 assert.equal(pieces.length, 1, 'real batched scene keeps supported control only');
 assert.equal(oldPieces.length, 2, 'late-batch mutant still emits invalid seam-crossing art');
+assert.equal(pieces.filter((p) => p.z === -12.519).length, 0, 'batched scene drops exactly the seam-crossing piece');
 const independent = criarSuporteGrafite(good.root);
 for (const p of pieces) {
   assert.ok(independent(p), 'retained art meets final production coverage');

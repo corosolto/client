@@ -3,14 +3,14 @@
 <!-- BEGIN:GERADO — não edite à mão, rode `npm run arch` -->
 
 > Gerado por `node tools/gen-arch.mjs`. **Não edite este bloco à mão.**
-> Versão do jogo: 2.1.0-alpha.131 · `npm run arch` para regenerar · `npm run arch:check` no CI.
+> Versão do jogo: 2.1.0-alpha.133 · `npm run arch` para regenerar · `npm run arch:check` no CI.
 
 ## Tamanho dos arquivos indexados
 
 | Arquivo | Linhas | Símbolos |
 |---|---:|---:|
-| `public/js/game.js` | 9066 | 379 |
-| `public/js/main.js` | 5285 | 400 |
+| `public/js/game.js` | 9087 | 381 |
+| `public/js/main.js` | 5286 | 400 |
 | `public/js/glbchars.js` | 1309 | 92 |
 | `public/js/characters.js` | 1143 | 42 |
 | `public/js/vmattach.js` | 353 | 3 |
@@ -19,25 +19,25 @@
 
 ## Maiores métodos de `game.js` — onde o conflito mora
 
-Os 15 maiores somam **3269 linhas (36% do arquivo)**. Método grande = PR irrevisável e merge conflitante.
+Os 15 maiores somam **3275 linhas (36% do arquivo)**. Método grande = PR irrevisável e merge conflitante.
 
 | Linhas | Início | Método | |
 |---:|---:|---|---|
-| 823 | 7592 | `_updateBot()` | ⚠️ candidato a extração |
-| 649 | 730 | `constructor()` | 🔴 append-only |
-| 344 | 6631 | `_updatePlayer()` | ⚠️ candidato a extração |
-| 267 | 2821 | `_resetPositions()` |  |
-| 158 | 6988 | `_updatePickups()` |  |
-| 137 | 5793 | `_botCtf()` |  |
-| 134 | 2271 | `_touchControls()` |  |
-| 122 | 8801 | `_updateHud()` |  |
-| 105 | 6347 | `_updatePlayerTP()` |  |
-| 101 | 6530 | `_moveEntity()` |  |
-| 95 | 3936 | `_tryShoot()` |  |
-| 90 | 8923 | `update()` | 🔴 append-only |
-| 86 | 5504 | `_initCTF()` |  |
-| 79 | 3476 | `_ensureVmPrecisionQa()` |  |
-| 79 | 4520 | `_dmgArc()` |  |
+| 823 | 7611 | `_updateBot()` | ⚠️ candidato a extração |
+| 648 | 730 | `constructor()` | 🔴 append-only |
+| 344 | 6649 | `_updatePlayer()` | ⚠️ candidato a extração |
+| 269 | 2834 | `_resetPositions()` |  |
+| 158 | 7006 | `_updatePickups()` |  |
+| 139 | 2273 | `_touchControls()` |  |
+| 137 | 5811 | `_botCtf()` |  |
+| 122 | 8820 | `_updateHud()` |  |
+| 105 | 6365 | `_updatePlayerTP()` |  |
+| 101 | 6548 | `_moveEntity()` |  |
+| 95 | 3951 | `_tryShoot()` |  |
+| 90 | 8942 | `update()` | 🔴 append-only |
+| 86 | 5522 | `_initCTF()` |  |
+| 79 | 3491 | `_ensureVmPrecisionQa()` |  |
+| 79 | 4536 | `_dmgArc()` |  |
 
 ## Tabela de CONFLITO — resolvida para as linhas de hoje
 
@@ -47,31 +47,32 @@ faixas disjuntas simultaneamente com zero conflito de conteúdo.
 
 | Frente | Faixas em `game.js` | Arquivos exclusivos |
 |---|---|---|
-| **ARMAS / VIEWMODEL** | `364–367` `443–537` `567–588` `1483–1770` `3440–3475` `3723–3824` `3890–4030` `4045–4060` `4205–4250` `4791–4816` `4864–4964` `5037–5054` | `public/js/vmattach.js` `public/js/springs.js` `public/js/weapons.js` `public/js/fparms.js` `public/js/handik.js` `public/js/recoil.js` `public/js/vmlab.js` |
-| **BOTS / JOGABILIDADE** | `196–199` `250–250` `283–294` `630–641` `4379–4489` `5443–5503` `5675–5929` `6012–6034` `6631–6974` `7375–7392` `7526–7556` `7592–8414` | — |
-| **MAPAS / MUNDO** | `1426–1482` `2821–3087` `5504–5650` `6988–7145` | `public/js/maps.js` `public/js/mapprops.js` `public/js/map_brasilia.js` `public/js/map_havan.js` `public/js/map_piscina.js` `public/js/map_piscinao_ramos.js` `public/js/map_ferrovelho.js` |
-| **GRÁFICOS / FX** | `1927–1936` `2052–2090` `3340–3353` `4817–4855` `4980–5036` | `public/js/bloom.js` `public/js/textures.js` `public/js/vao.js` `public/js/stylize.js` `public/js/gpuparticles.js` |
-| **UI / HUD / MENU** | `1379–1425` `3292–3314` `3330–3339` `3354–3373` `4520–4598` `4658–4711` `4727–4790` `8601–8648` `8706–8759` `8801–8922` | `public/js/main.js` `public/style.css` `src/pages/index.astro` |
+| **ARMAS / VIEWMODEL** | `364–367` `443–537` `567–588` `1482–1769` `3455–3490` `3738–3839` `3905–4045` `4060–4075` `4220–4265` `4807–4832` `4880–4982` `5055–5072` | `public/js/vmattach.js` `public/js/springs.js` `public/js/weapons.js` `public/js/fparms.js` `public/js/handik.js` `public/js/recoil.js` `public/js/vmlab.js` |
+| **BOTS / JOGABILIDADE** | `196–199` `250–250` `283–294` `630–641` `4394–4505` `5461–5521` `5693–5947` `6030–6052` `6649–6992` `7394–7411` `7545–7575` `7611–8433` | — |
+| **MAPAS / MUNDO** | `1425–1481` `2834–3102` `5522–5668` `7006–7163` | `public/js/maps.js` `public/js/mapprops.js` `public/js/map_brasilia.js` `public/js/map_havan.js` `public/js/map_piscina.js` `public/js/map_piscinao_ramos.js` `public/js/map_ferrovelho.js` |
+| **GRÁFICOS / FX** | `1926–1935` `2051–2089` `3355–3368` `4833–4871` `4998–5054` | `public/js/bloom.js` `public/js/textures.js` `public/js/vao.js` `public/js/stylize.js` `public/js/gpuparticles.js` |
+| **UI / HUD / MENU** | `1378–1424` `3307–3329` `3345–3354` `3369–3388` `4536–4614` `4674–4727` `4743–4806` `8620–8667` `8725–8778` `8820–8941` | `public/js/main.js` `public/style.css` `src/pages/index.astro` |
 | **ÁUDIO** | — | `public/js/audio.js` |
 | **PERSONAGENS** | — | `public/js/characters.js` `public/js/glbchars.js` |
 | **SITE / BACKEND** | — | `src/` `supabase/` |
 
-**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 8923–9012 · `_dom()` 1379–1425 · `constructor()` 730–1378
+**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 8942–9031 · `_dom()` 1378–1424 · `constructor()` 730–1377
 
 Nenhuma sobreposição entre frentes — todas as faixas são disjuntas. ✓
 
-Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
+Cobertura: **3864 de 9087 linhas (43%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
 
 <details><summary><strong>Índice completo de <code>game.js</code> (todos os símbolos)</strong></summary>
 
 | Linha | Símbolo | Linhas |
 |---:|---|---:|
+| 63 | `QS` | 3 |
 | 59 | `ANNOUNCER_LAB` | 4 |
 | 63 | `VMLAB` | 3 |
 | 68 | `VM_QA_CICLO` | 3 |
 | 72 | `VM_QA_ADS` | 8 |
-| 79 | `FLASH_DEBUG_N` | 3 |
-| 82 | `NADE_ESTOQUE` | 8 |
+| 87 | `FLASH_DEBUG_N` | 3 |
+| 90 | `NADE_ESTOQUE` | 8 |
 | 80 | `VM_MAT_LEGACY` | 4 |
 | 86 | `DROP_TTL` | 8 |
 | 94 | `ROUNDS_MAX` | 27 |
@@ -93,13 +94,17 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 295 | `MOVE_MUL` | 6 |
 | 302 | `MOVE2` | 4 |
 | 306 | `STEP_H` | 3 |
-| 313 | `MANTLE_APOIO` | 4 |
-| 317 | `MANTLE_GRID` | 5 |
+| 339 | `EMPTY_COLLIDERS` | 5 |
 | 322 | `RACK_OLD` | 4 |
 | 326 | `RACK_RETA` | 25 |
+| 373 | `REGEN` | 3 |
+| 379 | `ARMADURA_DEBUG` | 3 |
 | 353 | `RADIO` | 5 |
 | 359 | `MK_LABELS` | 5 |
 | 364 | `GUNFEEL` | 4 |
+| 399 | `PUNCH_ZOOM` | 3 |
+| 402 | `BOCA_CORPO` | 3 |
+| 405 | `bocaLocalDaArma` | 22 |
 | 371 | `TRACER_STYLE` | 6 |
 | 381 | `ADS_RAMPA_S` | 3 |
 | 385 | `aberturaCone` | 16 |
@@ -127,6 +132,7 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 692 | `pickMatchRoster` | 21 |
 | 713 | `BOT_WEAPON_POOL` | 5 |
 | 718 | `pickMatchWeapons` | 9 |
+| 783 | `aguardarPreloads` | 9 |
 | 730 | `constructor()` | 649 |
 | 1379 | `_dom()` | 47 |
 | 1426 | `_buildEnv()` | 57 |
@@ -154,8 +160,10 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 2233 | `_wh` | 17 |
 | 2250 | `_cc` | 1 |
 | 2251 | `_blur` | 1 |
-| 2252 | `_plc` | 19 |
-| 2271 | `_touchControls()` | 134 |
+| 2252 | `_hiddenInput` | 1 |
+| 2253 | `_plc` | 20 |
+| 2273 | `_touchControls()` | 139 |
+| 2412 | `_releaseInput()` | 10 |
 | 2405 | `_touchLook()` | 12 |
 | 2417 | `_syncTouchWeps()` | 16 |
 | 2433 | `_aimAssist()` | 28 |
@@ -243,6 +251,7 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 4092 | `_distanceDamage()` | 7 |
 | 4099 | `_shotDamage()` | 10 |
 | 4109 | `_consultarTiro()` | 13 |
+| 4205 | `_perfilCabeca()` | 7 |
 | 4122 | `_origemTiroBot()` | 4 |
 | 4126 | `_miraTiroBot()` | 5 |
 | 4131 | `_participanteHumano()` | 4 |
@@ -256,6 +265,11 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 4260 | `_penetrationExit()` | 8 |
 | 4268 | `_surfaceOf()` | 27 |
 | 4295 | `_armoredTarget()` | 3 |
+| 4384 | `_aplicaArmadura()` | 10 |
+| 4394 | `_armaduraLigada()` | 1 |
+| 4395 | `_equiparArmadura()` | 8 |
+| 4403 | `_updateArmaduraHud()` | 13 |
+| 4416 | `_sincronizarArmaduraVisual()` | 6 |
 | 4298 | `_fleshImpact()` | 38 |
 | 4336 | `_fxVoice()` | 9 |
 | 4345 | `_impactSfx()` | 17 |
@@ -283,6 +297,9 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 4864 | `_flash()` | 61 |
 | 4925 | `_vmTetoTela()` | 10 |
 | 4935 | `_muzzleWorld()` | 30 |
+| 5104 | `_bocaLigada()` | 13 |
+| 5117 | `_bocaTiroBot()` | 5 |
+| 5122 | `_origemTracerJogador()` | 25 |
 | 4965 | `_aimOrigin()` | 5 |
 | 4970 | `_updateDoors()` | 10 |
 | 4980 | `_updateFx()` | 57 |
@@ -300,18 +317,18 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 5223 | `_throwNade()` | 27 |
 | 5250 | `_throwSmoke()` | 1 |
 | 5251 | `_throwFrag()` | 2 |
-| 5284 | `_flashLiberada()` | 2 |
+| 5442 | `_flashLiberada()` | 2 |
 | 5253 | `_equipNade()` | 16 |
 | 5269 | `_unequipNade()` | 11 |
 | 5280 | `_explodeFrag()` | 40 |
-| 5340 | `_carregarFlashMint()` | 13 |
-| 5353 | `_flashProvisoria()` | 17 |
-| 5370 | `_cegueiraDe()` | 9 |
-| 5379 | `_popFlash()` | 32 |
-| 5411 | `_cegarJogador()` | 7 |
-| 5418 | `_limparCegueira()` | 6 |
-| 5424 | `_tickCegueiraJogador()` | 18 |
-| 5442 | `_capturarRetida()` | 27 |
+| 5498 | `_carregarFlashMint()` | 13 |
+| 5511 | `_flashProvisoria()` | 17 |
+| 5528 | `_cegueiraDe()` | 9 |
+| 5537 | `_popFlash()` | 32 |
+| 5569 | `_cegarJogador()` | 7 |
+| 5576 | `_limparCegueira()` | 6 |
+| 5582 | `_tickCegueiraJogador()` | 18 |
+| 5600 | `_capturarRetida()` | 27 |
 | 5320 | `_corDaFumaca()` | 16 |
 | 5336 | `_popSmoke()` | 23 |
 | 5359 | `_updateGrenades()` | 35 |
@@ -340,8 +357,11 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 6012 | `_collide()` | 23 |
 | 6035 | `_collideRot()` | 22 |
 | 6057 | `_mantleAlcance()` | 50 |
+| 6428 | `_mantleColliders()` | 10 |
 | 6107 | `_mantleAlcancavel()` | 12 |
 | 6119 | `_mantleTarget()` | 35 |
+| 6482 | `_beginMantle()` | 16 |
+| 6498 | `_stepMantle()` | 29 |
 | 6154 | `_freeSpot()` | 30 |
 | 6184 | `_retaAndavel()` | 20 |
 | 6204 | `_walkDepth()` | 16 |
@@ -352,6 +372,7 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 6307 | `_syncCamViewVis()` | 8 |
 | 6315 | `_ensurePlayerTP()` | 32 |
 | 6347 | `_updatePlayerTP()` | 105 |
+| 6746 | `_updatePlayerTPCamera()` | 90 |
 | 6452 | `_updateCrosshairParallax()` | 47 |
 | 6499 | `_tpDeath()` | 18 |
 | 6517 | `_tpRevive()` | 13 |
@@ -363,6 +384,8 @@ Cobertura: **3859 de 9066 linhas (43%)** do `game.js` têm dono declarado. O res
 | 7153 | `_botWeapon()` | 10 |
 | 7163 | `_municaoInfinita()` | 1 |
 | 7164 | `_pickupAllowed()` | 9 |
+| 7641 | `_slotPrimaria()` | 1 |
+| 7642 | `_largarArma()` | 3 |
 | 7173 | `_grabNearPickup()` | 10 |
 | 7183 | `_grabPickup()` | 35 |
 | 7218 | `_assentarNoChao()` | 10 |
