@@ -101,8 +101,57 @@ concluiu 40 máscaras por aspecto; seus handles e preload foram removidos e a
 navegação descartou todo o diagnóstico. R171 confirmou menu normal sem jogo e
 restauração exata das seis preferências locais da tarefa.
 
-Próximo passo: verificar o gate dos placares, revisar o delta, fazer checkpoint
-assinado e push normal com hooks; depois conferir CI e review no head novo.
-Merge/release continuam pendentes. Mobile físico, MP e aprovação artística global
-não foram validados. O merge #1188 usou bypass e esse erro permanece registrado;
-esta lane não autoriza repetir bypass, alterar regras ou retirar reviews.
+O checkpoint `a56efb57` teve push normal R185 com hooks ativos. GLM R173 e Native
+R178 cobriram o diff inteiro. O review formal corrente foi publicado e adjudicado
+em R230, sem retirar reviews. O CI desse head reprovou o passo de todas as armas:
+mobile 25/26, apenas P90 com zero mãos e traçante a 130,91px do socket; AK passou.
+Desktop e os mutantes seguintes do alias não rodaram. O log não contém arma
+atual, hp/alive ou imagem da P90, portanto sua causa histórica continua UNKNOWN.
+
+R248 reproduziu um defeito do instrumento no Ego: P90 ativa, três mãos e diferença
+de 7,52e-13px; após `_kill` real e respawn natural na mesma rodada, pistola ativa,
+P90 cacheada oculta, zero mãos e diferença de 132,20px. Não houve alteração de
+hp, relógio ou bots nesse controle. A aquisição foi diagnóstica, não compra normal.
+Isso não prova retroativamente a causa daquela execução de CI nem pede ajuste
+do frame da P90. R250 vinculou cinco fontes HTTP ao disco, sem divergência.
+
+O checker agora ancora o Game do boot e verifica estado, vida finita, câmera,
+arma e rodada após as esperas, antes do oráculo. Não reescreve alive/hp por arma.
+Permite uma única tentativa extra somente após morte nova documentada, alvo já
+confirmado, mesmo Game e mesma rodada. Outros inputs inválidos fecham o navegador
+com exit3 antes de classificar qualquer mutante. Binding, visibilidade e origem
+continuam asserções semânticas, sem espera ou retry para obter verde. A faca tem
+binding próprio; o controle de mão oculta exige pais visíveis, para não aceitar
+um mount ou ancestral oculto como se tivesse detectado a mutação dos meshes.
+O denominador publicado e o teto de 1px permanecem.
+
+GLM R247 propôs separar input e semântica; o diff literal foi rejeitado por quebrar
+a faca e deixar lacunas no classificador. Native R255 encontrou dois defeitos no
+primeiro candidato: rodada recapturada na tentativa extra e crédito por ancestral
+oculto. Ambos foram corrigidos e relidos no ponto SHA256 `c637692781123dd3fa0620c67acec6623083bc9f3af6f23f280764d0a96639c1`.
+
+R258 executou o callback e o veredito exatos desse checker no Ego mobile: 26/26,
+sem tentativa inválida. R259 executou dez controles, incluindo baseline antigo,
+morte/respawn com recuperação limitada, duas mortes com exit3, rodada divergente,
+switch no-op, identidade de Game divergente, mãos ocultas, mount/ancestral ocultos
+sem crédito indevido e origem lateral. Todos passaram; métodos, visibilidade,
+timeLeft e handles próprios foram restaurados. O lateral foi injetado no consumidor
+da origem; isso não é execução do mutante canônico por interceptação de módulo.
+Os testes usam equipagem e timeLeft infinito de fixture, sem aceite de aquisição
+normal, HUD ou arte. PNGs e recibos estão nos prefixos `VM-SAMPLER-R258`,
+`VM-SAMPLER-EGO-R258` e `VM-INPUT-CONTROLS-R259` da auditoria externa.
+
+R265 repetiu o callback e o veredito exatos no desktop 1440×960 (3:2): 26/26,
+sem tentativa inválida, Game normal, mobile=false, fixture e handles restaurados.
+Root olhou AK e pistola: ambas aparecem com as mãos; os PNGs ainda mostram o HUD
+Infinity:NaN produzido pelo timeLeft de fixture. Não há aceite de arte ou input
+normal nessas capturas. A frase `Not normal acquisition/desktop 3:2` do recibo
+foi copiada do teste anterior; setup e PNGs documentam o desktop 3:2 realizado.
+O adendo externo R267 preserva o recibo original e registra essa correção factual.
+
+Próximo passo: crítica completa do ponto atualizado, checkpoint assinado e push
+normal com hooks; depois CI e review no head novo.
+Boot seletivo frio, MP e os cinco mutantes canônicos continuam obrigações do alias,
+sem antecipar resultado pelo controle local. Merge/release, mobile físico e aceite
+artístico global permanecem pendentes. O bypass de #1188 permanece registrado;
+esta lane não autoriza repeti-lo, alterar regras ou retirar reviews.
