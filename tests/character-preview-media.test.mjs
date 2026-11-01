@@ -20,6 +20,9 @@ for(const [name,lines,expected] of [
   ['missing catch',['try{await video.play();}finally{stop();}'],false],
   ['unrelated catch',['try{other();}catch{} await video.play();'],false],
   ['second unguarded play',['try{await video.play();}catch{} audio.play();'],false],
+  ['catch not closed',['try{await video.play();}catch{'],false],
+  ['catch returns rejection',['try{await video.play();}catch(error){return Promise.reject(error);}'],false],
+  ['catch awaits another rejection',['try{await video.play();}catch{await retry();}'],false],
   ['direct promise handler',['video.play().catch(()=>{});'],true],
 ])test('media guard recognizes the actual containment: '+name,()=>assert.equal(playGuard(lines,0),expected));
 
@@ -287,3 +290,8 @@ for(const [name,mutate,probe,options={}] of [
   const f=fixture({...options,mutate});
   await assert.rejects(async()=>probe(f),{name:'AssertionError'});
 });
+
+for(const transition of ['screen','tab','network'])test('hero image invalidated: '+transition,()=>{const f=fixture({screen:'hub'});f.api.showStaticPreview(base);const img=f.node('char-preview-static');assert.ok(img.src);if(transition==='screen')f.api.show('team-select');if(transition==='tab')f.api.setHubTab('ranking');if(transition==='network')f.api.setHubNet('mp');assert.equal(img.src,'');assert.equal(img.onload,null);assert.equal(img.onerror,null);});
+test('stale hero error cannot start hidden fallback',()=>{const f=fixture({screen:'hub'});f.api.showStaticPreview(base);const img=f.node('char-preview-static'),error=img.onerror;f.api.show('team-select');error();assert.equal(img.src,'');});
+test('returning hero gets a fresh callback and request',()=>{const f=fixture();f.api.showStaticPreview(base);const img=f.node('char-preview-static'),error=img.onerror;f.api.show('team-select');f.api.show('char-select');f.api.showStaticPreview(base);assert.ok(img.src);assert.notEqual(img.onerror,error);});
+test('catch that rethrows is not a contained play',()=>assert.equal(playGuard(['try{await video.play();}catch{throw new Error("play failed");}'],0),false));

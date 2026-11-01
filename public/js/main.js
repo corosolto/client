@@ -501,6 +501,7 @@ function show(id) {
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
   clearCompactPreviews();
+  stopHiddenPreview();
   if (id !== 'char-select') pvStopVideo();
   if (id !== 'map-screen') stopMapPreview();
   // ao navegar pra qualquer tela, fecha o painel de setup do menu CS (não fica aberto after)
@@ -956,6 +957,16 @@ function clearCompactPreviews() {
     if(label)label.hidden=true;
   }
 }
+function clearStaticPreview() {
+  pvImageToken++;pvStaticKey='';pvPosterFailure=null;
+  const image=$('char-preview-static');
+  if(image){image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');}
+  for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label){label.hidden=true;label.textContent='';}}
+}
+function stopHiddenPreview() {
+  if(previewHeroVisible())return;
+  clearStaticPreview();pvStopVideo();
+}
 function pvStopVideo() {
   pvVidToken++;
   const box = document.querySelector('.char-preview-box');
@@ -1232,14 +1243,13 @@ function pvSetChar(def) {
   const my = ++pvToken;
   syncCompactPreview(def);
   if(!previewHeroVisible()){
-    pvImageToken++;pvStaticKey='';pvPosterFailure=null;pvStopVideo();
-    const image=$('char-preview-static');if(image){image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');}
+    clearStaticPreview();pvStopVideo();
     $('char-preview')?.classList.add('hidden');sincronizaBarraEmotes();return;
   }
   if (previewUsesStills()) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
-  pvImageToken++;pvStaticKey='';pvStopVideo();
+  clearStaticPreview();pvStopVideo();
   $('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');
   document.querySelector('.pv-hints')?.classList.remove('hidden');
   for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label)label.hidden=true;}
@@ -2619,6 +2629,7 @@ if (HUB_ENABLED) {
     if ($('main-menu').dataset.socialPaused === 'true' && tab !== 'comunidade') return;
     $('main-menu').dataset.hubTab = tab;
     clearCompactPreviews();
+    stopHiddenPreview();
     updateHubTip();
     if (tab !== 'jogar' && menuSetup.dataset.step === 'profile') setSetupStep('match');
     for (const button of tabs) {
@@ -2695,6 +2706,7 @@ if (HUB_ENABLED) {
   const setHubNet = (net, updateRoute = true) => {
     $('main-menu').dataset.hubNet = net;
     clearCompactPreviews();
+    stopHiddenPreview();
     updateHubTip();
     if (net === 'mp' && menuSetup.dataset.step === 'profile') setSetupStep('match');
     $('hub-sp').setAttribute('aria-pressed', String(net === 'sp'));
