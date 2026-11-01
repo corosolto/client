@@ -55,7 +55,7 @@ jobs:
       # check:fast, que roda na máquina de quem lembra: PR que quebrasse workflow passava
       # aqui verde. O runner roda todas e só reprova no fim (PI3 cobra esta lista).
       - name: Réguas de workflow, release, privacidade e escolha (node puro)
-        run: node tools/eval/runner.mjs eval:wfsecret eval:wflocal eval:wftimeout eval:wfconcurrency eval:deploygate eval:autofix eval:mutcega eval:portaointeiro eval:release eval:privacy eval:noescolha eval:contagens-pr eval:mergequeue
+        run: node tools/eval/runner.mjs eval:wfsecret eval:wflocal eval:wftimeout eval:wfconcurrency eval:deploygate eval:autofix eval:mutcega eval:portaointeiro eval:release eval:privacy eval:noescolha eval:contagens-pr eval:mergequeue eval:sondafilho
       # Job que só lê histórico ou poucos arquivos faz checkout leve (CL1). Node puro.
       - name: Checkout leve nos jobs que só leem histórico
         run: npm run eval:wfcheckout

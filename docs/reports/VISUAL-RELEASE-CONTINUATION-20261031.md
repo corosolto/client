@@ -2,7 +2,19 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
-## Estado atual, 01/11 00:30 UTC (R48)
+## Estado atual, 01/11 R49: H2 em checkpoint, integração da main
+
+H2 foi registrado em35b5a8bde94bf445a257ff6802dfa9c7644c8423 (oito arquivos,
+revisão independente focal CLEAN e provasR46–R48). Root confirmou checkout limpo,
+fetch main4cf8dd99d813fe7caa323b5e9567df3c86957f1a e leu o delta integral dos
+quatro arquivos de1189. Merge local automático sem conflitos, preservando o
+workflow QA e acrescentando eval:sondafilho. Produto H2 não mudou. Próximo:
+fechar checkpoint do merge, push normal atômico QA+staging após conferir refs,
+CI/bot atuais, wholePR pósbot, staging efetivamente verificada e merge/release.
+G2/Campo continuam isolados; não atrasar esta publicação por candidatos novos.
+O objetivo integral e todos os limites da seção R48 continuam vigentes.
+
+### Estado anterior, 01/11 00:30 UTC (R48)
 
 - H2 Praça aceito focalmente após Root ler CRITICO-PRACA-H2-R47.md inteiro: CLEAN dos sete arquivos/fronteiras. BootR46 real GREEN3nominais+controles exatos,96observações selector/callers nos2Nodes. Ego A/B+sameH2reload preserva seis digests/raw de física, props, fauna, geometria, materiais e cena;15GLBs iguais,12IDs/10animais presentes. Pixels44Canvas variam também no mesmo H2, sem igualdade artificial; arte inteira/mobile/MP não aprovados. NegativoCongress real acusa falta e requiredrejeita com esperado12intacto; restauração completa. Transição do loader12→23→12GREEN, não UI/MP. Consolidado PRACA-H2-RUNTIME-VALIDATION-R48.json. Docs/arch EXIT0; seis fontes H2 congeladas. Próximo checkpoint e integrar main4cf, push normal completo, bot/headCI/wholePR/staging/merge/release. Sem publicação ainda.
 - Campo alpha R47 passou126execuções/14NA,86selftests e4causais antes0→depois1/CU8. Crítico atual fechou alpha/ledgerstale, mas achou P2 adicional na família rasterstateCPU (customblending/depthFunc). Produto064 não tem defeito observado; contrato candidato ainda não aceito/integrado. GLM prepara desenho RO independente dos defaults, sem tocar QA. Mapa inteiro/mobile continuam pendentes.
