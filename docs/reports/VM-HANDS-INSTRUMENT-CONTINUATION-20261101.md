@@ -82,3 +82,25 @@ nesta lease.
 - `tools/eval/vm-hand-continuity-control.mjs`: `a2e52427ec61a226bd819586a44b7350351d79bfa7062d43a4b766cb80ef5629`.
 - `tests/vm-hand-continuity-control.test.mjs`: `e4e99b65b18ee82d96509d0f831caeea7097c0749371f32673de585335845bc4`.
 - `package.json`: `ee886d7fabceec06ab98ad5a71bbd810a19b9e57529bd0305aba2708aa151b67`.
+
+## Integração Root R821/R826
+
+- Nova WT `worktrees/tp-hands-integration-r821-20261101`, branch
+  `codex/tp-hands-integration-r821-20261101`; a WT autoral R805 permaneceu intacta.
+- Composição com `fa521531b976faaee6c007660c5cfb1fd2a504ae` (#1208).
+  O package preserva todos os campos/aliases atuais e aplica somente os cinco
+  scripts intencionais de #1170/R805; produto público byte-exato ao pai atual.
+- R826 Node22: 21 focais PASS (2,038s), controlador nominal+seis mutantes PASS
+  (10,704s), nominal estrito PASS (1,441s). O controlador usou também as rotas
+  privadas reais, sem copiar/montar assets. Estrito: 1.037 cláusulas, 26 armas,
+  40 rotas medidas, zero não medida, zero vermelho novo e a mesma dívida nomeada
+  `RIG:pistol@pintura` / `f468adc9279d`.
+- R822 vinculou as 24 rotas fab por SHA completo/bytes/URL em
+  `/Volumes/Zenith/Assets/game/corosolto/private-assets/generated`; o catálogo
+  geral de 63 permanece parcial e o overlay default tem AWP/SVD antigos.
+  Essa fonte foi definida somente no ambiente dos comandos, sem assets no Git.
+- Evidências externas `TP-HANDS-INTEGRATION-R821-*`,
+  `TP-HANDS-INTEGRATION-R826-*` e `VM-PRIVATE-CATALOG-R822-*`.
+- Falta: publicação ordinária da integração, review atual e crítica independente.
+  Este resultado mede consistência estrutural; não aprova anatomia/contato visual,
+  movimento, mobile físico, MP ou lançamento, e não fecha a dívida #1128.

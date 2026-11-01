@@ -60,8 +60,8 @@ const mutacoes = {
   ],
   'manifesto-cru': [
     'public/js/treta-store.js',
-    "fetch(assetUrl('models/skins/manifest.json'))",
-    "fetch('/models/skins/manifest.json')",
+    "fetch(assetUrl('models/skins/manifest.json')",
+    "fetch('models/skins/manifest.json'",
     'AR6:',
   ],
   'mapa-defasado': [null, null, null, 'AR1:'],
@@ -72,6 +72,8 @@ const especificacao = mutante ? mutacoes[mutante] : null;
 const alvo = especificacao?.[0] ? join(ROOT, especificacao[0]) : null;
 const original = alvo ? readFileSync(alvo, 'utf8') : null;
 if (alvo) {
+  const ocorrencias = original.split(especificacao[1]).length - 1;
+  if (ocorrencias !== 1) throw new Error(`mutante exige âncora única: ${mutante} (${ocorrencias})`);
   const src = original.replace(especificacao[1], especificacao[2]);
   if (src === original) throw new Error(`mutante não aplicou: ${mutante}`);
   writeFileSync(alvo, src);
@@ -127,7 +129,7 @@ try {
   for (const caminho of consumidoresManifesto) {
     const fonte = readFileSync(join(ROOT, caminho), 'utf8');
     const usaRevisao = fonte.includes(`assetUrl('${manifestoSkins}')`) || fonte.includes(`assetUrl("${manifestoSkins}")`);
-    const buscaCrua = /fetch\(\s*['"]\/?models\/skins\/manifest\.json['"]\s*\)/.test(fonte);
+    const buscaCrua = /fetch\(\s*['"]\/?models\/skins\/manifest\.json['"]\s*(?:,|\))/.test(fonte);
     if (!usaRevisao || buscaCrua) {
       falhas.push(`AR6: ${caminho} busca o manifesto de skins sem revisão por conteúdo — navegador pode guardar catálogo velho por um ano`);
     }

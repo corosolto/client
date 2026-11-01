@@ -1,4 +1,6 @@
 // O CI usa Chromium instalado pelo portão; QA local continua na TaskSpace Ego.
+// Os mapas vêm das referências: o CI captura explicitamente TODOS os mapas curados
+// (hoje 5), sem atalho de lista fixa no wrapper.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { chromium } from 'playwright';
@@ -18,7 +20,7 @@ try {
   browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage']});
   const page=await browser.newPage({viewport:{width:960,height:640}});
   page.setDefaultTimeout(90000);
-  const data=await captureCuratedFauna(page,{base:base.href.replace(/\/$/,''),dir,fotos:2});
+  const data=await captureCuratedFauna(page,{base:base.href.replace(/\/$/,''),dir,fotos:new Set(references.map(r=>r.map)).size,references});
   await fs.writeFile(path.join(dir,'map-fauna-curated-runtime.json'),JSON.stringify(data,null,2)+'\n');
   // Releitura obrigatória do arquivo desta execução, não de uma fixture ou run anterior.
   const actual=JSON.parse(await fs.readFile(path.join(dir,'map-fauna-curated-runtime.json'),'utf8'));
