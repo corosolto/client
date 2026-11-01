@@ -407,7 +407,7 @@ class FavelaAmbience {
     const to = new THREE.Vector3(...(config.to || config.pos));
     this.animals.push({
       id: `${type}-${index}`, type, mode: type === 'pigeon' ? 'ground' : (config.mode || 'ground'), root: animalRoot, model,
-      origin, to, speed: config.speed, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
+      origin, to, speed: config.speed, turnRate: Number.isFinite(config.turnRate) && config.turnRate > 0 ? config.turnRate : 0, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
       source: loaded ? 'gltf' : 'fallback', contactShadow, mixer, actions, action: 'idle', state: 'idle', alertUntil: 0,
       alertAt: 0, alertOrigin: origin.clone(), flee: new THREE.Vector3(1, 0, 0),
       routine: origin.clone(), recoverAt: 0, recoverUntil: 0, recoverFrom: origin.clone(),
@@ -504,12 +504,21 @@ class FavelaAmbience {
     animal.action = name;
   }
 
-  _updateQuad(animal) {
+  _turnQuad(animal, target, dt) {
+    if (!animal.turnRate) { animal.root.rotation.y = target; return; }
+    // A ida/volta trocava 180° num único frame. Percorrer o menor arco evita o salto e a volta longa em ±π.
+    const current = animal.root.rotation.y;
+    const delta = Math.atan2(Math.sin(target - current), Math.cos(target - current));
+    const step = animal.turnRate * Math.max(0, Math.min(.05, Number.isFinite(dt) ? dt : 0));
+    animal.root.rotation.y = current + THREE.MathUtils.clamp(delta, -step, step);
+  }
+
+  _updateQuad(animal, dt) {
     const speed = animal.speed || QUAD_SPEED[animal.type] || QUAD_SPEED.dog;
     if (this.time < animal.alertUntil) {
       const elapsed = this.time - animal.alertAt;
       animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, Math.min(speed.flee * 1.4, elapsed * speed.flee));
-      animal.root.rotation.y = Math.atan2(animal.flee.x, animal.flee.z);
+      this._turnQuad(animal, Math.atan2(animal.flee.x, animal.flee.z), dt);
       animal.state = 'flee';
       this._dogAction(animal, 'run');
       return;
@@ -531,7 +540,7 @@ class FavelaAmbience {
       direction = animal.origin.clone().sub(animal.to);
     }
     const recovering = this._recoverToRoute(animal, animal.routine, 2);
-    if (direction && direction.lengthSq() > .001) animal.root.rotation.y = Math.atan2(direction.x, direction.z);
+    if (direction && direction.lengthSq() > .001) this._turnQuad(animal, Math.atan2(direction.x, direction.z), dt);
     animal.state = recovering ? 'recover' : moving ? 'walk' : 'idle';
     this._dogAction(animal, recovering || moving ? 'walk' : 'idle');
   }

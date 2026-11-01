@@ -39,6 +39,7 @@ export function auditCuratedFauna(sample, references) {
       if(ref.speed&&(!a.speed||a.speed.walk!==ref.speed.walk||a.speed.flee!==ref.speed.flee))fail('speed',`${id}: cadência diferente do rig de referência.`);
       const motion=a.motion;
       if(!motion||!Number.isFinite(motion.distance)||motion.distance<=0||!Number.isInteger(motion.localPoseChanges)||motion.localPoseChanges<=0||!/walk$/i.test(motion.activeClip||''))fail('motion',`${id}: deslocamento com Walk e mudança local do rig não demonstrados.`);
+      if(ref.turnRate&&(a.turnRate!==ref.turnRate||!Number.isFinite(motion?.maxYawDelta)||motion.maxYawDelta<0||motion.maxYawDelta>ref.turnRate/60+1e-9))fail('turn',`${id}: giro excede o limite por tick 1/60 ou não foi medido.`);
     }
   }
   return {pass:failures.length===0,scope:sample?.map,failures};

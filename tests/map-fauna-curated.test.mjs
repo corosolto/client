@@ -66,7 +66,7 @@ test('control mutation restores the mobile next-map skip and fails the caller co
  const source=replaceOnce(main,'mapaReady.then((mapa) => preloadMapAmbientLife(mapa, { mobileAuto: MOBILE_AUTO }))','MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadMapAmbientLife(mapa, { mobileAuto: MOBILE_AUTO }))');
  await assert.rejects(async()=>assert.deepEqual(await mobileCalls(MAPS.lajes,{source,next:true}),[MAPS.lajes.ambience]));
 });
-function validSample(ref){return {map:ref.map,declaredPreload:[ref.assetId],animals:[{id:ref.type+'-0',type:ref.type,source:'gltf',assetId:ref.assetId,assetPath:ref.path,speed:ref.speed,actions:{idle:'Idle',walk:'Walk',run:'Run'},meshes:[{materials:[Object.fromEntries(Object.entries(ref.textures).map(([key,size])=>[key,{width:size[0],height:size[1],colorSpace:key==='albedo'?'srgb':''}]))]}],motion:{distance:1,localPoseChanges:1,activeClip:'Walk'}}]};}
+function validSample(ref){return {map:ref.map,declaredPreload:[ref.assetId],animals:[{id:ref.type+'-0',type:ref.type,source:'gltf',assetId:ref.assetId,assetPath:ref.path,speed:ref.speed,turnRate:ref.turnRate,actions:{idle:'Idle',walk:'Walk',run:'Run'},meshes:[{materials:[Object.fromEntries(Object.entries(ref.textures).map(([key,size])=>[key,{width:size[0],height:size[1],colorSpace:key==='albedo'?'srgb':''}]))]}],motion:{distance:1,localPoseChanges:1,activeClip:'Walk',maxYawDelta:.1}}]};}
 test('runtime census requires exactly one result per expected map before auditing',()=>{
  const samples=references.map(validSample);
  assert.equal(auditCuratedFaunaCensus({results:samples},references).pass,true);
@@ -81,11 +81,35 @@ test('runtime census requires exactly one result per expected map before auditin
 });
 for(const ref of references)test(`${ref.map}: runtime auditor accepts complete evidence and rejects causal corruptions`,()=>{
  const sample=validSample(ref);assert.equal(auditCuratedFauna(sample,references).pass,true);
- const mutations=[['count',s=>s.animals=[]],['count',s=>s.animals.push(structuredClone(s.animals[0]))],['source',s=>s.animals[0].source='fallback'],['identity',s=>s.animals[0].assetId='old'],['identity',s=>s.animals[0].assetPath='models/ambient/old.glb'],['declaredPreload',s=>s.declaredPreload=[]],['materials',s=>s.animals[0].meshes=[]],['texture',s=>s.animals[0].meshes[0].materials[0].albedo=null],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.width=0],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.colorSpace=''],['clips',s=>s.animals[0].actions.walk='Idle'],['motion',s=>s.animals[0].motion.localPoseChanges=0],['motion',s=>s.animals[0].motion.activeClip='Idle'],['motion',s=>s.animals[0].motion.distance=0]];
+ const mutations=[['turn',s=>s.animals[0].turnRate=0],['turn',s=>s.animals[0].motion.maxYawDelta=Math.PI],['turn',s=>delete s.animals[0].motion.maxYawDelta],['count',s=>s.animals=[]],['count',s=>s.animals.push(structuredClone(s.animals[0]))],['source',s=>s.animals[0].source='fallback'],['identity',s=>s.animals[0].assetId='old'],['identity',s=>s.animals[0].assetPath='models/ambient/old.glb'],['declaredPreload',s=>s.declaredPreload=[]],['materials',s=>s.animals[0].meshes=[]],['texture',s=>s.animals[0].meshes[0].materials[0].albedo=null],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.width=0],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.colorSpace=''],['clips',s=>s.animals[0].actions.walk='Idle'],['motion',s=>s.animals[0].motion.localPoseChanges=0],['motion',s=>s.animals[0].motion.activeClip='Idle'],['motion',s=>s.animals[0].motion.distance=0]];
  if(ref.speed)mutations.push(['speed',s=>s.animals[0].speed={walk:1.1,flee:3.6}]);
  for(const [family,mutate] of mutations){const changed=structuredClone(sample);mutate(changed);const audit=auditCuratedFauna(changed,references);assert.equal(audit.pass,false);assert.ok(audit.failures.some(f=>f.family===family),family);}
 });
 test('unknown or unmeasured map is not a visual approval',()=>assert.equal(auditCuratedFauna({map:'unknown',animals:[]},references).pass,false));
+test('curated map fauna reverses and flees without a one-frame half turn',()=>{
+ for(const map of ['escadao','lajes']){
+  const world=MAPS[map].build(new THREE.Scene(),initTextures()),ambience=world.ambience;
+  const targets=ambience.animals.filter(a=>['escadaoCat','sertaoHen'].includes(a.root.userData.assetId));
+  assert.ok(targets.length);assert.ok(targets.every(a=>a.turnRate===6));
+  for(let frame=0;frame<1500;frame++){
+   const before=targets.map(a=>a.root.rotation.y);ambience.update(1/60,null);
+   for(const [i,a] of targets.entries())assert.ok(Math.abs(Math.atan2(Math.sin(a.root.rotation.y-before[i]),Math.cos(a.root.rotation.y-before[i])))<=.100000001);
+  }
+  const a=targets[0];ambience.onShot(a.root.position.clone().add(new THREE.Vector3(1,0,0)),a.root.position.clone());
+  const before=a.root.rotation.y;ambience.update(1/60,null);
+  assert.equal(a.state,'flee');assert.ok(Math.abs(Math.atan2(Math.sin(a.root.rotation.y-before),Math.cos(a.root.rotation.y-before)))<=.100000001);
+  ambience.dispose();
+ }
+});
+test('curated turning follows the shortest arc, scales with time, and preserves opt-out behavior',()=>{
+ const ambience=createFavelaAmbience(new THREE.Group(),{map:'turn-contract',cats:[{pos:[0,0,0],turnRate:6}]});
+ const a=ambience.animals[0];a.root.rotation.y=Math.PI-.02;
+ ambience._turnQuad(a,-Math.PI+.02,1/60);assert.ok(Math.abs(a.root.rotation.y-(Math.PI+.02))<1e-12);
+ for(const fps of [30,60,120]){a.root.rotation.y=0;for(let i=0;i<fps;i++)ambience._turnQuad(a,Math.PI,1/fps);assert.ok(Math.abs(a.root.rotation.y-Math.PI)<1e-12);}
+ for(const dt of [0,-1,NaN,undefined]){a.root.rotation.y=.2;ambience._turnQuad(a,2,dt);assert.equal(a.root.rotation.y,.2);}
+ a.root.rotation.y=0;ambience._turnQuad(a,2,1);assert.ok(Math.abs(a.root.rotation.y-.3)<1e-12);
+ a.turnRate=0;ambience._turnQuad(a,2,1/60);assert.equal(a.root.rotation.y,2);ambience.dispose();
+});
 for(const low of [false,true])test(`curated ground fauna keeps a non-hittable contact shadow in ${low?'low':'full'} quality`,()=>{
  const ambience=createFavelaAmbience(new THREE.Group(),{map:'contact-fixture',low,cats:[{pos:[2,3,4],to:[2,3,5],contactShadow:true}]});
  const animal=ambience.animals[0],shadow=animal.root.getObjectByName('FAUNA_CONTACT_SHADOW');

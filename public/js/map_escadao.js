@@ -1308,8 +1308,8 @@ export function buildEscadao(scene, T) {
     ],
     /* O gato mudou de faixa: a casa de molde do mirante leste ocupou a planta antiga e o
        AR3 do ambience-registry acendeu. Agora anda entre a mureta e a caçamba. */
-    cats: [{ assetId: 'escadaoCat', contactShadow: true, speed: { walk: .55, flee: 1.5 }, pos: [10.8, groundHeightAt(10.8, -22.8), -22.8], to: [11.9, groundHeightAt(11.9, -20.9), -20.9], phase: .65 }],
-    chickens: [{ assetId: 'sertaoHen', contactShadow: true, pos: [-9.4, groundHeightAt(-9.4, -30), -30], to: [-7.8, groundHeightAt(-7.8, -32), -32], phase: 1.9 }],
+    cats: [{ assetId: 'escadaoCat', contactShadow: true, turnRate: 6, speed: { walk: .55, flee: 1.5 }, pos: [10.8, groundHeightAt(10.8, -22.8), -22.8], to: [11.9, groundHeightAt(11.9, -20.9), -20.9], phase: .65 }],
+    chickens: [{ assetId: 'sertaoHen', contactShadow: true, turnRate: 6, pos: [-9.4, groundHeightAt(-9.4, -30), -30], to: [-7.8, groundHeightAt(-7.8, -32), -32], phase: 1.9 }],
     /* Duas espécies novas do acervo `models/ambient/`: caramelo na calçada e no mirante,
        barata onde tem lixo (caçamba do topo e beco leste). */
     dogs: [
