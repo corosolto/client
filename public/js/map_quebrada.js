@@ -538,6 +538,10 @@ export function buildQuebrada(scene, T) {
      `fav_house` é a casa de dois pavimentos com escada externa e laje; `fav_brasileira` é o
      bloco de tijolo cru, que é o que preenche fundo de quarteirão sem chamar atenção. */
   const BARRACOS_GLB = ['fav_house', 'fav_brasileira'].filter(useGlb);
+  // R98: 3 fav_house do quarteirão oeste (-21,-12.5,-38,-12,301) nasciam de costas pra
+  // viela; identidade = lote exato + col/linha + yaw original 0 (ROOT-CONTRACT-R98).
+  const frenteVielaR98 = (x0, x1, z0, z1, i, j) => x0 === -21 && x1 === -12.5 && i === 0
+    && ((z0 === -38 && z1 === -32.8 && j < 2) || (z0 === -32.8 && z1 === -27.6 && j === 0));
   function barracoGlb(x0, x1, z0, z1, k) {
     const w = x1 - x0, d = z1 - z0;
     const nx = Math.max(1, Math.round(w / 4.6));               // ~4,6 m de frente por casa
@@ -551,12 +555,15 @@ export function buildQuebrada(scene, T) {
          não um número sorteado — e é o que faz o quarteirão ter recorte de altura de verdade. */
       const s = w / nx / a.w;                                  // altura = escala (aspecto medido a targetH=1)
       const nz = Math.max(1, Math.ceil(d / (s * a.d)));
-      for (let j = 0; j < nz; j++)
+      for (let j = 0; j < nz; j++) {
+        let ry = ((k >> (7 + i + j)) & 1) ? Math.PI : 0;
+        if (!ry && id === 'fav_house' && frenteVielaR98(x0, x1, z0, z1, i, j)) ry = Math.PI;
         pbAdd(PB, id, {
           x: x0 + w * (i + 0.5) / nx, z: z0 + d * (j + 0.5) / nz,
           targetH: s * (1 + (((k >> (5 + j)) & 3) - 1.5) * 0.03),   // ±4,5% de gabarito
-          ry: ((k >> (7 + i + j)) & 1) ? Math.PI : 0,
+          ry,
         });
+      }
     }
   }
   /* QUARTEIRÃO: fatia um lote comprido em módulos de ~5,6 m. É o que impede o "mesmo módulo
