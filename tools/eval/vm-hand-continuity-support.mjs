@@ -14,7 +14,8 @@ export const HAND_INPUTS = ['tools/eval/vm-hand-continuity-check.mjs', 'tools/ev
   'tools/eval/vm-hand-continuity-control.mjs', 'public/js/authoredvm.js', 'public/js/meleevm.js', 'public/js/vmhands.js',
   'public/js/weapons.js', 'public/js/factions.js', 'public/js/game.js', 'public/js/data/vmconfig.js',
   'public/js/data/vmfabrica.js', 'public/js/data/goldenver.js', 'public/vendor/three.module.js',
-  'public/vendor/addons/loaders/GLTFLoader.js', 'public/vendor/addons/utils/SkeletonUtils.js'];
+  'public/vendor/addons/loaders/GLTFLoader.js', 'public/vendor/addons/utils/SkeletonUtils.js',
+  'tools/eval/vm-hand-three-hooks.mjs', 'tools/eval/vm-hand-three-register.mjs'];
 export const hashHandInputs = root => Object.fromEntries(HAND_INPUTS.map(file => [file,
   crypto.createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex')]));
 export function parseHandOptions(args) {
@@ -35,54 +36,12 @@ export function readHandWeaponIds(root) {
   return JSON.parse(matches[0][1].replaceAll("'", '"').replace(/,\s*\]/, ']'));
 }
 const lstat = file => { try { return fs.lstatSync(file); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
-const fail = why => { throw Error(`INFRA: three local ownership: ${why}`); };
-const schema = 'csbrasil-owned-three-shim/1';
-const packageText = JSON.stringify({ name: 'three', version: '0.160.0', type: 'module', main: 'index.js', exports: { '.': './index.js', './addons/*': './addons/*' } });
+const fail = why => { throw Error(`INFRA: three vendor local: ${why}`); };
 export function ensureLocalThree(inputRoot) {
   const root = fs.realpathSync(inputRoot), vendor = path.join(root, 'public/vendor');
   for (const [file, directory] of [['three.module.js', false], ['addons', true], ['addons/loaders/GLTFLoader.js', false], ['addons/utils/SkeletonUtils.js', false]]) {
     const target = path.join(vendor, file), st = lstat(target);
     if (!st || st.isSymbolicLink() || (directory ? !st.isDirectory() : !st.isFile()) || fs.realpathSync(target) !== target) fail(`vendor local inválido: ${file}`);
   }
-  const modules = path.join(root, 'node_modules'), moduleStat = lstat(modules);
-  if (moduleStat && (!moduleStat.isDirectory() || moduleStat.isSymbolicLink() || fs.realpathSync(modules) !== modules)) fail('node_modules não é diretório próprio');
-  const shim = path.join(modules, 'three'), current = lstat(shim);
-  if (current && (!current.isDirectory() || current.isSymbolicLink())) fail('three é link/pacote externo; nada foi alterado');
-  const marker = path.join(shim, '.csbrasil-owned-shim.json'), pkg = path.join(shim, 'package.json');
-  const expectedLinks = { 'index.js': '../../public/vendor/three.module.js', addons: '../../public/vendor/addons' };
-  if (current) {
-    const st = lstat(marker);
-    if (!st) {
-      // Pontes locais de harness/invariants são somente leitura; nunca adotar ou reparar legado.
-      if (JSON.stringify(fs.readdirSync(shim).sort()) !== JSON.stringify(['addons', 'index.js', 'package.json'])) fail('shim sem marcador de posse');
-      const ps = lstat(pkg);
-      if (!ps?.isFile() || ps.isSymbolicLink() || fs.realpathSync(pkg) !== pkg || fs.readFileSync(pkg, 'utf8') !== packageText) fail('package legado desconhecido');
-      for (const [name, target] of Object.entries(expectedLinks)) {
-        const entry = path.join(shim, name), link = lstat(entry);
-        if (!link?.isSymbolicLink() || path.resolve(shim, fs.readlinkSync(entry)) !== path.resolve(shim, target)
-          || fs.realpathSync(entry) !== path.resolve(shim, target)) fail(`legado estrangeiro/incompleto: ${name}`);
-      }
-      return { owner: 'verified-local-legacy-readonly/1', index: 'public/vendor/three.module.js', addons: 'public/vendor/addons' };
-    }
-    if (!st.isFile() || st.isSymbolicLink() || fs.realpathSync(marker) !== marker) fail('marcador de posse inválido');
-    const owner = JSON.parse(fs.readFileSync(marker, 'utf8'));
-    if (owner.schema !== schema || Object.keys(owner).length !== 1) fail('marcador desconhecido');
-    if (fs.readdirSync(shim).some(name => !['package.json', '.csbrasil-owned-shim.json', 'index.js', 'addons'].includes(name))) fail('filhos desconhecidos');
-    const ps = lstat(pkg);
-    if (ps && (!ps.isFile() || ps.isSymbolicLink() || fs.realpathSync(pkg) !== pkg || fs.readFileSync(pkg, 'utf8') !== packageText)) fail('package desconhecido');
-    for (const [name, target] of Object.entries(expectedLinks)) {
-      const entry = path.join(shim, name), st = lstat(entry);
-      if (st && (!st.isSymbolicLink() || path.resolve(shim, fs.readlinkSync(entry)) !== path.resolve(shim, target))) fail(`entrada desconhecida: ${name}`);
-    }
-  }
-  // Todas as fronteiras são validadas antes de criar somente os filhos ausentes do shim próprio.
-  if (!moduleStat) fs.mkdirSync(modules);
-  if (!current) {
-    fs.mkdirSync(shim);
-    fs.writeFileSync(marker, JSON.stringify({ schema }), { flag: 'wx' });
-  }
-  if (!lstat(pkg)) fs.writeFileSync(pkg, packageText, { flag: 'wx' });
-  for (const [name, target] of Object.entries(expectedLinks)) if (!lstat(path.join(shim, name))) fs.symlinkSync(target, path.join(shim, name), name === 'addons' ? 'dir' : 'file');
-  for (const [name, target] of Object.entries(expectedLinks)) if (fs.realpathSync(path.join(shim, name)) !== path.resolve(shim, target)) fail(`resolução estrangeira: ${name}`);
-  return { owner: schema, index: 'public/vendor/three.module.js', addons: 'public/vendor/addons' };
+  return { owner: 'vendor-hooks-readonly/1', index: 'public/vendor/three.module.js', addons: 'public/vendor/addons' };
 }

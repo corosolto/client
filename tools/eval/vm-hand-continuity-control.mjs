@@ -92,7 +92,7 @@ export function runHandControl({ strict = false, invoke } = {}) {
   let weapons;
   const execute = spec => {
     const nonce = crypto.randomUUID();
-    const argv = ['tools/eval/vm-hand-continuity-check.mjs', '--json', ...(strict ? ['--exigir-catalogo'] : []),
+    const argv = ['--import', './tools/eval/vm-hand-three-register.mjs', 'tools/eval/vm-hand-continuity-check.mjs', '--json', ...(strict ? ['--exigir-catalogo'] : []),
       ...(spec ? [`--mutante=${spec.name}`, `--arma=${spec.arma}`] : [])];
     const result = invoke ? invoke({ spec, nonce, argv }) : spawnSync(process.execPath, argv, { cwd: ROOT, encoding: 'utf8', timeout: 120000,
       maxBuffer: 8 * 1024 * 1024, env: { ...process.env, CSBR_VM_HANDS_NONCE: nonce } });

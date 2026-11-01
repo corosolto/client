@@ -5,13 +5,14 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ensureLocalThree, hashHandInputs, readHandWeaponIds } from '../tools/eval/vm-hand-continuity-support.mjs';
 import { HAND_CASES, expectedHandMutation, runHandControl } from '../tools/eval/vm-hand-continuity-control.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const child = (args, options = {}) => spawnSync(process.execPath, args, { cwd: ROOT, encoding: 'utf8', timeout: 10000, ...options });
+const REGISTER = path.join(ROOT, 'tools/eval/vm-hand-three-register.mjs');
+const child = (args, options = {}) => spawnSync(process.execPath, ['--import', REGISTER, ...args], { cwd: ROOT, encoding: 'utf8', timeout: 10000, ...options });
 const ownFixture = fn => {
-  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vm-hands-owner-')));
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vm-hands-vendor-')));
   const wt = path.join(root, 'wt'), external = path.join(root, 'external');
   for (const dir of [wt, external]) fs.mkdirSync(dir);
   for (const file of ['three.module.js', 'addons/loaders/GLTFLoader.js', 'addons/utils/SkeletonUtils.js']) {
@@ -29,54 +30,44 @@ const snapshot = root => {
   } };
   walk(root); return out;
 };
-const refusesUnchanged = ({ root, wt }) => { const before = snapshot(root); assert.throws(() => ensureLocalThree(wt), /ownership/); assert.deepEqual(snapshot(root), before); };
-
-test('ownership: creates local marked shim, repeat is inert, missing own link can be restored', () => ownFixture(({ root, wt }) => {
-  const topology = ensureLocalThree(wt), before = snapshot(root);
-  assert.equal(topology.index, 'public/vendor/three.module.js'); ensureLocalThree(wt); assert.deepEqual(snapshot(root), before);
-  fs.unlinkSync(path.join(wt, 'node_modules/three/index.js')); ensureLocalThree(wt); assert.deepEqual(snapshot(root), before);
-  assert.equal(fs.realpathSync(path.join(wt, 'node_modules/three/index.js')), path.join(wt, topology.index));
-}));
-test('ownership: exact local legacy shim is used read-only without adoption', () => ownFixture(f => {
-  ensureLocalThree(f.wt); const shim = path.join(f.wt, 'node_modules/three');
-  fs.unlinkSync(path.join(shim, '.csbrasil-owned-shim.json'));
-  for (const [name, vendor] of [['index.js', 'three.module.js'], ['addons', 'addons']]) {
-    fs.unlinkSync(path.join(shim, name)); fs.symlinkSync(path.join(f.wt, 'public/vendor', vendor), path.join(shim, name));
-  }
-  const before = snapshot(f.root), topology = ensureLocalThree(f.wt);
-  assert.equal(topology.owner, 'verified-local-legacy-readonly/1'); assert.deepEqual(snapshot(f.root), before);
-}));
-for (const entry of ['index.js', 'addons']) test(`ownership: incomplete or foreign legacy ${entry} is refused read-only`, () => ownFixture(f => {
-  ensureLocalThree(f.wt); const shim = path.join(f.wt, 'node_modules/three');
-  fs.unlinkSync(path.join(shim, '.csbrasil-owned-shim.json')); fs.unlinkSync(path.join(shim, entry));
-  refusesUnchanged(f); fs.symlinkSync(f.external, path.join(shim, entry)); refusesUnchanged(f);
-}));
-for (const existingIndex of [false, true]) test(`ownership: external three package is untouched (index=${existingIndex})`, () => ownFixture(f => {
-  fs.writeFileSync(path.join(f.external, 'package.json'), '{"name":"unknown"}');
-  fs.mkdirSync(path.join(f.external, 'addons')); fs.writeFileSync(path.join(f.external, 'addons/keep'), 'keep');
-  if (existingIndex) fs.writeFileSync(path.join(f.external, 'index.js'), 'keep');
-  fs.mkdirSync(path.join(f.wt, 'node_modules')); fs.symlinkSync(f.external, path.join(f.wt, 'node_modules/three'));
-  refusesUnchanged(f);
-}));
-test('ownership: node_modules symlink is untouched', () => ownFixture(f => {
-  fs.symlinkSync(f.external, path.join(f.wt, 'node_modules')); refusesUnchanged(f);
-}));
-test('ownership: real unknown installed package is untouched', () => ownFixture(f => {
-  fs.mkdirSync(path.join(f.wt, 'node_modules/three'), { recursive: true });
-  fs.writeFileSync(path.join(f.wt, 'node_modules/three/package.json'), '{"name":"three","version":"unknown"}'); refusesUnchanged(f);
-}));
-for (const entry of ['index.js', 'addons']) test(`ownership: marked shim with foreign ${entry} is untouched`, () => ownFixture(f => {
-  ensureLocalThree(f.wt); const link = path.join(f.wt, 'node_modules/three', entry);
-  fs.unlinkSync(link); fs.symlinkSync(f.external, link); refusesUnchanged(f);
-}));
-test('ownership: marked shim with real addons directory is never removed', () => ownFixture(f => {
-  ensureLocalThree(f.wt); const addons = path.join(f.wt, 'node_modules/three/addons');
-  fs.unlinkSync(addons); fs.mkdirSync(addons); fs.writeFileSync(path.join(addons, 'keep'), 'keep'); refusesUnchanged(f);
-}));
-test('ownership: invalid vendor is refused even when index already exists', () => ownFixture(f => {
-  ensureLocalThree(f.wt); fs.unlinkSync(path.join(f.wt, 'public/vendor/three.module.js'));
-  fs.writeFileSync(path.join(f.external, 'module.js'), '// foreign');
-  fs.symlinkSync(path.join(f.external, 'module.js'), path.join(f.wt, 'public/vendor/three.module.js')); refusesUnchanged(f);
+const packageAt = dir => {
+  fs.mkdirSync(path.join(dir, 'addons/loaders'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'addons/utils'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'three', version: '999.0.0', type: 'module', exports: { '.': './index.js', './addons/*': './addons/*' } }));
+  for (const file of ['index.js', 'addons/loaders/GLTFLoader.js', 'addons/utils/SkeletonUtils.js'])
+    fs.writeFileSync(path.join(dir, file), "throw Error('foreign package must not be loaded');");
+};
+for (const kind of ['missing', 'npm-directory', 'three-symlink', 'modules-symlink', 'foreign-addons', 'modules-file'])
+  test(`vendor hooks accept ${kind} without changing any package`, () => ownFixture(f => {
+    const modules = path.join(f.wt, 'node_modules');
+    if (kind === 'npm-directory' || kind === 'foreign-addons') packageAt(path.join(modules, 'three'));
+    if (kind === 'foreign-addons') fs.writeFileSync(path.join(modules, 'three/addons/keep'), 'must survive');
+    if (kind === 'three-symlink') { packageAt(f.external); fs.mkdirSync(modules); fs.symlinkSync(f.external, path.join(modules, 'three')); }
+    if (kind === 'modules-symlink') { packageAt(path.join(f.external, 'three')); fs.symlinkSync(f.external, modules); }
+    if (kind === 'modules-file') fs.writeFileSync(modules, 'unrelated file');
+    const specifiers = ['three', 'three/addons/loaders/GLTFLoader.js', 'three/addons/utils/SkeletonUtils.js'];
+    const files = ['three.module.js', 'addons/loaders/GLTFLoader.js', 'addons/utils/SkeletonUtils.js'].map(s => path.join(ROOT, 'public/vendor', s));
+    const entry = path.join(f.wt, 'probe.mjs');
+    fs.writeFileSync(entry, `import assert from 'node:assert/strict';import {fileURLToPath} from 'node:url';
+      const specs=${JSON.stringify(specifiers)}, files=${JSON.stringify(files)};
+      const resolved=specs.map(s=>fileURLToPath(import.meta.resolve(s)));assert.deepEqual(resolved,files);
+      const bare=await Promise.all(specs.map(s=>import(s)));
+      const direct=await Promise.all(${JSON.stringify(files.map(f => pathToFileURL(f).href))}.map(s=>import(s)));
+      for(let i=0;i<bare.length;i++)assert.equal(bare[i],direct[i]);console.log(JSON.stringify(resolved));`);
+    const before = snapshot(f.root); ensureLocalThree(f.wt);
+    const result = child([entry]); assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), files); assert.deepEqual(snapshot(f.root), before);
+  }));
+for (const entry of ['three.module.js', 'addons/loaders/GLTFLoader.js', 'addons/utils/SkeletonUtils.js'])
+  test(`vendor rejects missing or foreign ${entry} before writes`, () => ownFixture(f => {
+    const file = path.join(f.wt, 'public/vendor', entry); fs.unlinkSync(file);
+    let before = snapshot(f.root); assert.throws(() => ensureLocalThree(f.wt), /vendor local/); assert.deepEqual(snapshot(f.root), before);
+    const foreign = path.join(f.external, 'module.js'); fs.writeFileSync(foreign, '// foreign'); fs.symlinkSync(foreign, file);
+    before = snapshot(f.root); assert.throws(() => ensureLocalThree(f.wt), /vendor local/); assert.deepEqual(snapshot(f.root), before);
+  }));
+test('vendor rejects a foreign addons directory before writes', () => ownFixture(f => {
+  const addons = path.join(f.wt, 'public/vendor/addons'); fs.rmSync(addons, { recursive: true }); fs.symlinkSync(f.external, addons);
+  const before = snapshot(f.root); assert.throws(() => ensureLocalThree(f.wt), /vendor local/); assert.deepEqual(snapshot(f.root), before);
 }));
 test('CLI validation precedes all bootstrap writes', () => ownFixture(f => {
   fs.mkdirSync(path.join(f.wt, 'tools/eval'), { recursive: true }); fs.mkdirSync(path.join(f.wt, 'public/js'), { recursive: true });

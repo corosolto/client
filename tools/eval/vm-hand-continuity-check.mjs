@@ -51,7 +51,8 @@
      luva-crua      a arma de --arma= (padrão m4) sai sem identidade de time (MÃO1)
      divida-paga    a pistola golden recebe o braço da AK: a dívida quitada e ainda
                     declarada tem de reprovar
-   Uso: node tools/eval/vm-hand-continuity-check.mjs [--mutante=…] [--arma=m4] [--exigir-catalogo] [--json]
+   Uso: node --import ./tools/eval/vm-hand-three-register.mjs tools/eval/vm-hand-continuity-check.mjs
+        [--mutante=…] [--arma=m4] [--exigir-catalogo] [--json]
    ============================================================================ */
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -79,9 +80,12 @@ if (!weaponsBefore.includes(MUT_ARMA)) { emitFailure('CLI_ERROR', '--arma descon
 if (Number(process.versions.node.split('.')[0]) < 22) throw Error('Node22 ou superior necessário');
 sourceBefore = hashHandInputs(ROOT);
 const topology = ensureLocalThree(ROOT);
-const resolvedThree = fileURLToPath(import.meta.resolve('three'));
-if (![path.join(ROOT, 'node_modules/three/index.js'), path.join(ROOT, topology.index)].includes(resolvedThree)
-  || fs.realpathSync(resolvedThree) !== path.join(fs.realpathSync(ROOT), topology.index)) throw Error('Resolução three fora do vendor local');
+for (const [specifier, local] of [['three', topology.index],
+  ['three/addons/loaders/GLTFLoader.js', 'public/vendor/addons/loaders/GLTFLoader.js'],
+  ['three/addons/utils/SkeletonUtils.js', 'public/vendor/addons/utils/SkeletonUtils.js']]) {
+  const resolved = fileURLToPath(import.meta.resolve(specifier));
+  if (fs.realpathSync(resolved) !== path.join(fs.realpathSync(ROOT), local)) throw Error(`Resolução ${specifier} fora do vendor local`);
+}
 const THREE = await import('three');
 const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
 const { clone: skeletonClone } = await import('three/addons/utils/SkeletonUtils.js');
