@@ -925,6 +925,7 @@ pvReducedMotion.addEventListener?.('change',event=>{if(event.matches)pvStopVideo
 const pvCompact=matchMedia('(pointer: coarse) and (max-height: 560px)');
 const pvNarrow=matchMedia('(max-width: 760px)');
 pvCompact.addEventListener?.('change',()=>refreshMenuEquipment());
+pvNarrow.addEventListener?.('change',()=>refreshMenuEquipment());
 function resolvePreviewCharacter(def) {
   const skinId=Object.hasOwn(def,'skinId')?def.skinId:equippedTretaSkin(def.id);
   return {...def,skinId:tretaSkinPresentation(skinId,def.id)?.id || null,eyewearId:equippedTretaEyewear()};
@@ -937,6 +938,11 @@ function previewModelActive(selectionOpen,hubOpen) {
 }
 function previewUsesStills() {
   return staticPreviews || pvCompact.matches || (pvNarrow.matches && !$('main-menu')?.classList.contains('hidden'));
+}
+function previewHeroVisible() {
+  const selection=$('char-select')?.classList.contains('hidden')===false;
+  const hub=$('main-menu')?.classList.contains('hidden')===false;
+  return !pvCompact.matches && (selection || (hub && !pvNarrow.matches)) && document.querySelector('.char-preview-box')?.checkVisibility?.()!==false;
 }
 function pvStopVideo() {
   pvVidToken++;
@@ -959,7 +965,7 @@ function pvSetVideo(def) {
   def=resolvePreviewCharacter(def);
   const skin=tretaSkinPresentation(def.skinId,def.id);
   const src=skin?(skin.video?.webm || skin.video?.mp4):`/video/chars/${def.id}.webm`;
-  if(!src || pvReducedMotion.matches || pvCompact.matches || box.checkVisibility?.()===false){pvStopVideo();return;}
+  if(!src || pvReducedMotion.matches || !previewHeroVisible()){pvStopVideo();return;}
   const url=`${src}?v=${VERSION}`;
   if(video.dataset.previewSrc===url && video.onloadeddata)return;
   pvStopVideo();
@@ -1008,8 +1014,12 @@ function syncCompactPreview(def) {
   const paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId),names={ak:'AK-47',m4:'M4',scar:'SCAR',pistol:'Pistola'};
   const caption=[skin?.name,paint?`Pintura: ${names[weapon.weaponId] || weapon.weaponId} · ${paint.name}`:null].filter(Boolean).join(' · ');
   const src=portraitUrl(def),key=JSON.stringify([def.id,def.skinId,src,caption]);
-  for(const [imageId,labelId] of [['hub-character-portrait','hub-character-equipment'],['char-select-portrait','char-select-equipment']]){
-    const image=$(imageId),label=$(labelId);if(!image || !label || image.dataset.previewKey===key)continue;
+  const hub=(pvCompact.matches || pvNarrow.matches) && $('main-menu')?.classList.contains('hidden')===false;
+  const selection=pvCompact.matches && $('char-select')?.classList.contains('hidden')===false;
+  for(const [imageId,labelId,active] of [['hub-character-portrait','hub-character-equipment',hub],['char-select-portrait','char-select-equipment',selection]]){
+    const image=$(imageId),label=$(labelId);if(!image || !label)continue;
+    if(!active){image.dataset.previewKey='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;label.hidden=true;continue;}
+    if(image.dataset.previewKey===key)continue;
     image.dataset.previewKey=key;let fallback=false;
     label.textContent=caption;label.hidden=!caption;image.alt=skin?.name || def.name;image.hidden=false;
     const unavailable=()=>{image.hidden=true;label.hidden=false;label.textContent=`Prévia indisponível: ${skin?.name || def.name}${paint?` · ${paint.name}`:''}`;};
@@ -1209,6 +1219,11 @@ function pvSetChar(def) {
   def = resolvePreviewCharacter(def);
   const my = ++pvToken;
   syncCompactPreview(def);
+  if(!previewHeroVisible()){
+    pvImageToken++;pvStaticKey='';pvPosterFailure=null;pvStopVideo();
+    const image=$('char-preview-static');if(image){image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');}
+    $('char-preview')?.classList.add('hidden');sincronizaBarraEmotes();return;
+  }
   if (previewUsesStills()) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
@@ -1233,7 +1248,7 @@ function pvSetChar(def) {
     Promise.all([preloadCharacterAssets([def.id]),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
       preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId),
       arma.gloveSkinId ? preloadGloveAssets([def.id]) : null]).then(() => {
-      if (my !== pvToken) return;
+      if (my !== pvToken || !previewHeroVisible()) return;
       // preview: porte de EXIBIÇÃO — arma atravessada no peito (estilo vitrine do CS) em
       // vez do porte funcional que aponta o cano pra câmera e esconde a silhueta da arma
       // (era o "posturas bizarras" de 05/08). Ângulos por classe em glbchars.js. No jogo,
@@ -1265,7 +1280,7 @@ function pvSetChar(def) {
       // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
       // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.
       if (PV_CAM_MAOS) enquadrarMaos(p, m);
-    }).catch(() => { if (my === pvToken) showBox(); });
+    }).catch(() => { if (my === pvToken && previewHeroVisible()) showBox(); });
   } else {
     showBox();
   }
@@ -4022,8 +4037,8 @@ function pickTeam(faction) {
       if (i === 0) firstRow = row;
     });
     // seleciona DEPOIS de gerar todos os thumbs — senão o preview fica com o último
-    if (firstRow) selectChar(chars[0], firstRow);
     show('char-select');
+    if (firstRow) selectChar(chars[0], firstRow);
   };
   if (navOnly || previewUsesStills()) { mountCharList(); return; }
   // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
@@ -4344,10 +4359,10 @@ function loop(agoraMs = performance.now()) {
     && hubMenu?.dataset.hubTab === 'jogar' && hubMenu?.dataset.hubNet === 'sp';
   if (!splashAtiva) {
     if (pv && pv.model && previewModelActive(csOpen,hubPreviewOpen)) {
-      const pvDt = pv.travado ? 0 : Math.min(0.05, dtReal);   // ?pvcam=maos congela pose e giro
+      const pvDt = pv.travado || pvReducedMotion.matches ? 0 : Math.min(0.05, dtReal);   // ?pvcam=maos congela pose e giro
       if (!pvDrag && !pv.travado) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
       // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
-      if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
+      if (!pvReducedMotion.matches) { if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt); }
       pv.r.render(pv.scene, pv.cam);
     }
   }
