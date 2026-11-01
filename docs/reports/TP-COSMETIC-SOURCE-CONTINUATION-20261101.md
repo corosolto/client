@@ -120,3 +120,17 @@ do CI inteiro corrigido ainda precisa ser medida. Próximo: revisão do ajuste,
 checkpoint e push normal, formal/CI do head novo e crítica pós-bot. #1207 continua
 draft e a pergunta de recuperação do Ego permanece pendente; QA visual atual,
 fit, movimento, compra/equipagem, MP e mobile físico conservam gates próprios.
+
+## Root R965 — composição com staging atual
+
+Basee1e357445 e staging0a28b603 compostos por merge normal emworktreeprópria
+f2-staging-compose-r965-20261101. W600original preservada. Conflito apenas
+package: a diferença semântica do bloco era eval:tp-cosmetic-source, conservado
+com todos aliases/tokens dos dois pais. Game e glbchars automergeados, sem
+resolução autoral. Cosmetic/manifesto/soundscape/docs/archPASS Node22.
+Duas chaves grafite duplicadas recebidas#1211 continuamherdadas; correção própria
+Hands será incorporada depois, sem confundir este gate com aquela dívida.
+R961tentativademerge anteriorfoirecusada/nadaentrou e draftrestaurado.
+Próximo: Root lê delta/pins, adotaFFW600, gates/pushnormais/formalnovohead e
+wholeindependentedepoisbotlimpo. QA Game3:2/material/motion/mobile/MP/release
+permanecempendentes. Missãointegra/Flavioexcluído/UI-socialdepois preservados.
