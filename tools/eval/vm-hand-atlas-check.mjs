@@ -10,6 +10,8 @@ const root = path.resolve(import.meta.dirname, '../..');
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.split('=')[1];
 if (mutant && !['punho-descoberto', 'dedos-cobertos'].includes(mutant)) throw Error('mutante desconhecido');
 const landmarks = [
+  { layout: 'pistol', role: 'glove', part: 'distal-unmarked-lr', face: 2333,
+    uv: [.09654478232065837, .9323899348576864], style: 'E', palette: 'glove' },
   { layout: 'pistol', role: 'skin', part: 'wrist-r', face: 26, uv: [.908698, .753654] },
   { layout: 'pistol', role: 'skin', part: 'wrist-l', face: 976, uv: [.903908, .748036] },
   { layout: 'pistol', role: 'glove', part: 'tip-lr', face: 6569, uv: [.536971, .528138] },
@@ -32,10 +34,11 @@ const distance = (a, b) => {
 const checks = [], cache = new Map();
 let mutations = 0;
 const styles = [
-  ...['F', 'U'].map((faction) => ({ id: faction, style: TEAM_HANDS[faction] })),
+  ...['E', 'F', 'U'].map((faction) => ({ id: faction, style: TEAM_HANDS[faction] })),
   ...Object.values(GLOVE_SKINS).map((style) => ({ id: style.id, style })),
 ];
 for (const { id, style } of styles) for (const point of landmarks) {
+  if (point.style && point.style !== id) continue;
   const file = `public/models/viewmodels/coro/hands/${point.layout}/${point.role}-${style.id}.webp`;
   if (!cache.has(file)) cache.set(file, await sharp(path.join(root, file)).removeAlpha().raw().toBuffer({ resolveWithObject: true }));
   const { data, info } = cache.get(file);
@@ -49,8 +52,10 @@ for (const { id, style } of styles) for (const point of landmarks) {
   const clothDistance = Math.min(...['glove', 'sleeve', 'accent'].map(k => distance(pixel, rgb(style[k]))));
   const exposed = skinDistance < 8;
   const expectExposed = tip && style.fingerless;
-  checks.push({ name: `${id}/${point.layout}/${point.part}: ${expectExposed ? 'dedos expostos' : 'tecido coberto'}`,
-    ok: exposed === expectExposed, file, uv: point.uv, face: point.face, pixel, skinDistance, clothDistance });
+  const palette = point.palette ? { glove: distance(pixel, rgb(style.glove)), accent: distance(pixel, rgb(style.accent)) } : null;
+  checks.push({ name: `${id}/${point.layout}/${point.part}: ${point.palette ? 'cor da luva sem estrela no dedo' : expectExposed ? 'dedos expostos' : 'tecido coberto'}`,
+    ok: exposed === expectExposed && (!palette || palette.glove < palette.accent),
+    file, uv: point.uv, face: point.face, pixel, skinDistance, clothDistance, ...(palette ? { palette } : {}) });
 }
 if (mutant && !mutations) throw Error('mutação não aplicada');
 const ok = checks.every(c => c.ok);

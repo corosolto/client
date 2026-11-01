@@ -5,7 +5,7 @@ import { ajustarAnisotropia } from './textures.js';
 import { MAPS, resolveMapId } from './maps.js';
 import { atualizaCortes } from './mapprops.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon, podeNoLado } from './characters.js';
-import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver } from './glbchars.js';
+import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver, hasGloveModel, preloadGloveAssets, GloveManifestUnavailable } from './glbchars.js';
 import { weaponModel, weaponCFG, hasWeapon, preloadWeapons, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
 import { gloveSkinStyle } from './data/glove-skin-definitions.js';
@@ -2926,6 +2926,9 @@ export class Game {
       const jx = s.x + (Math.random() - .5), jz = s.z + (Math.random() - .5);
       ent.pos.set(jx, this._spawnY(jx, jz), jz);
       ent.hp = 100; ent.alive = true; ent.respawnAt = 0; ent.protUntil = 0;
+      // Rodada nova elimina a trajetória anterior e os buffers de salto em todos os slots.
+      ent.mantle = null; ent.mantleF = 0; ent._spaceHeld = false; ent._mantleScanAt = 0;
+      ent.jumpBufferedUntil = 0; ent.coyoteUntil = 0;
       this._equiparArmadura(ent);
       return s;
     };
@@ -3520,6 +3523,9 @@ export class Game {
       swapBot.mesh.group.traverse(o => { o.userData.botOwner = swapBot; });
       this.scene.add(swapBot.mesh.group);
       swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot.alive = true;
+      // O teleporte invalida a trajetória absoluta do lado anterior.
+      swapBot.mantle = null; swapBot.mantleF = 0; swapBot._spaceHeld = false;
+      swapBot._mantleScanAt = 0; swapBot.jumpBufferedUntil = 0; swapBot.coyoteUntil = 0;
       this._equiparArmadura(swapBot);
       const s = this.world.spawns[oldTeam][(Math.random() * 4) | 0];
       swapBot.pos.set(s.x, this._spawnY(s.x, s.z), s.z);
@@ -3531,6 +3537,9 @@ export class Game {
     // respawn do jogador no lado novo
     const s = this.world.spawns[newTeam][(Math.random() * 4) | 0];
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
+    // O teleporte invalida a trajetória absoluta do lado anterior.
+    p.mantle = null; p.mantleF = 0; p._spaceHeld = false; p._mantleScanAt = 0;
+    p.jumpBufferedUntil = 0; p.coyoteUntil = 0;
     p.yaw = this._spawnYaw(s, newTeam); p.pitch = 0; p.hp = 100;
     this._equiparArmadura(p);
     this._scope(false, true);
@@ -6759,12 +6768,53 @@ export class Game {
   // (Re)constrói o corpo TP com a arma ATUAL na mão, pelo mesmo caminho dos bots. Sem GLB
   // ainda, cai no box e faz upgrade quando o asset chegar. Ver docs/RIG-PEGA-ARMA.md.
   _ensurePlayerTP() {
+    if (this._disposed || this.dedicated) return;
     const w = this.player.weapon, def = this._defNoLado(this.playerDef, this.playerTeam);
     // A pintura equipada também vale em 3ª pessoa; a faca vive em campo próprio (pack). Kill-switch: ?skin3p=0.
     const skinTP = QS.get('skin3p') === '0' ? null : (w === 'knife' ? (this.playerKnifeSkinId || null) : (this.playerWeaponSkins?.[w] || null));
+    const gloveId = gloveSkinStyle(this.playerGloveId)?.id || null;
+    const demandKey = JSON.stringify([def.id, gloveId]);
+    if (this._tpGloveDemand?.key !== demandKey) {
+      this._tpGloveDemand = { key: demandKey, retried: false };
+      this._tpGloveAsked?.clear();
+    }
+    const demand = this._tpGloveDemand;
+    const gloveReady = Boolean(gloveId && hasGloveModel(def.id));
+    if (gloveId && hasModel(def.id) && !gloveReady) {
+      const asked = this._tpGloveAsked ||= new Set();
+      if (!asked.has(def.id)) {
+        asked.add(def.id);
+        void preloadGloveAssets([def.id]).catch((e) => {
+          if (e instanceof GloveManifestUnavailable) {
+            e.warn();
+            if (!this._disposed && this._tpGloveDemand === demand && !demand.retried) {
+              demand.retried = true;
+              asked.delete(def.id);
+            }
+          } else console.warn('[luvas] pacote TP indisponível');
+        });
+      }
+    }
+    const gloveChanged = this.playerTP?.isGLB && !this._tpDead
+      && (this._tpGloveId !== gloveId || this._tpGloveReady !== gloveReady);
     const weaponChanged = this.playerTP && (this._tpWeapon !== w || this._tpDefId !== def.id || this._tpSkinId !== (def.skinId || null) || this._tpEyewearId !== (def.eyewearId || null) || this._tpArmaSkin !== skinTP);
     const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id);
-    if (this.playerTP && !weaponChanged && !wantUpgrade) return;
+    if (gloveChanged && !weaponChanged && !wantUpgrade && this.playerTP.setGloveSkin) {
+      const tp = this.playerTP;
+      const { removed, added } = tp.setGloveSkin(this.playerGloveId);
+      const old = new Set(removed);
+      tp.selfMeshes = tp.selfMeshes.filter(item => !old.has(item.object));
+      for (const mesh of added) {
+        mesh.userData.noHit = true;
+        mesh.userData.selfBody = true;
+        tp.selfMeshes.push({ object: mesh, visible: mesh.visible });
+        if (tp.selfOccluded) mesh.visible = false;
+      }
+      this._tpGloveId = gloveId;
+      this._tpGloveReady = gloveReady;
+      return;
+    }
+    if (this.playerTP && !weaponChanged && !wantUpgrade && !gloveChanged) return;
     // Tenta o GLB (grip real). Se ainda não carregou e já temos algo, mantém o atual —
     // evita reconstruir o box a cada frame enquanto os clips não chegam.
     const glb = buildCharacterModel(def, { weaponId: w, weaponSkinId: skinTP, gloveSkinId: this.playerGloveId });
@@ -6783,6 +6833,8 @@ export class Game {
     tp.group.visible = (this.camView === 'third');
     this.scene.add(tp.group);
     this.playerTP = tp;
+    this._tpGloveId = gloveId;
+    this._tpGloveReady = gloveReady;
     this._tpWeapon = w;
     this._tpDefId = def.id; this._tpSkinId = def.skinId || null; this._tpEyewearId = def.eyewearId || null;
     this._tpArmaSkin = skinTP;
