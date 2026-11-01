@@ -2,9 +2,8 @@ import * as THREE from 'three';
 import { VM_WEAPON } from './data/vmconfig.js';
 import { GOLDEN_VER } from './data/goldenver.js';
 
-// R106/R107: o fallback por vértices próximos da ponta emitia fora da face do
-// cano. Este ponto é medido no espaço do Rifle, por revisão, separado da mira.
-// Asset/rig diferente conserva o fallback; precisa de uma nova calibração.
+// Boca medida na face do cano, no espaço do Rifle e fixada à revisão do asset.
+// R106/R107: rig/revisão diferente conserva o fallback e exige nova calibração.
 export function attachGoldenBarrel(entry) {
   if (entry?.key !== 'gold#ak' || entry.golden !== true) return null;
   const spec = VM_WEAPON.ak.bocaGolden;

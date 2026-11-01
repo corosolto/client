@@ -42,12 +42,29 @@ configuração e espaços de coordenadas incorretos. O patch foi feito pelo owne
 da arma. A primeira tentativa CPU R114 falhou por ausência de Image no arnês;
 R114B/R115 corrigiram o arnês, sem tratar essa falha como defeito do jogo.
 
-Pendente: crítico independente do patch, checks focais e portão aplicável,
-captura normal no Ego com flash/socket/face na mesma atualização, fases de
-tiro/recarga/ADS, revisão visual e PR em stack. Mobile físico e MP não foram
-validados. O merge #1188 usou bypass e esse erro permanece registrado; esta
-lane não autoriza repetir bypass, alterar regras ou retirar reviews.
+O crítico independente R116 cobriu os sete arquivos e os consumidores, com
+resultado CLEAN_SCOPED. Os cinco checks focais passaram. No Ego, R122 vinculou
+os cinco módulos carregados ao disco e R123 comprou a AK pela loja normal,
+capturando o corpo completo do GLB e o mesmo SHA256 acima.
 
-Próximo passo: revisar o diff deste checkpoint e executar a captura atual do
-produto isolado, mantendo dados antigos congelados. Resultado técnico verde
-não encerra a missão nem constitui aprovação artística.
+R124 registrou cinco tiros em ADS completo a 5,58m. Os endpoints coincidem com
+os impactos. Dois flashes e três sockets foram mensuráveis na mesma atualização
+da face física, com diferença máxima de 1,14e-13 CSS px. As outras observações
+dessas duas medidas são UNKNOWN. A captura usou SP normal, toque emulado,
+qualidade low e buffer adaptativo 660×440 em viewport 1320×880.
+
+R125C verificou tiro de quadril, clip Reload e reposição de 29 para 30 balas,
+troca para faca e retorno com clip Equip. R126 saiu pelo menu normal e restaurou
+exatamente as seis preferências locais pertencentes à tarefa. As falhas anteriores
+R125A/B foram do instrumento e ficam preservadas. Recibos e PNGs estão na mesma
+auditoria externa de projeto, pelos prefixos R122 a R126.
+
+O primeiro push normal R121 terminou exit1 após 679s: CM1 recusou um comentário
+de três linhas. A correção seguinte encurta esse comentário para duas linhas.
+O push será repetido com hooks ativos. PR, revisão hospedada e merge continuam
+pendentes. Mobile físico, MP e aprovação artística global não foram validados.
+O merge #1188 usou bypass e esse erro permanece registrado; esta lane não autoriza
+repetir bypass, alterar regras ou retirar reviews.
+
+Próximo passo: conferir CM1 no novo commit e concluir o push normal antes de abrir
+o PR. Resultado técnico verde não encerra a missão de consistência visual.
