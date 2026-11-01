@@ -169,6 +169,7 @@ function envelopeCancelamento(saida) {
   for (let j = i + 1; j < linhas.length; j++) {
     const l = linhas[j];
     if (/^\s+at\s/.test(l)) continue;
+    if (/^\s*$/.test(l)) continue;
     if (!l.startsWith('    ')) continue;
     const mF = l.match(/^    falhou: (\S+) \((.*)\)$/);
     const mA = l.match(/^    console: map prop load failed (\S+) TypeError: Failed to fetch$/);

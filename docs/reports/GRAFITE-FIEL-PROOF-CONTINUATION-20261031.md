@@ -313,3 +313,18 @@ Quatro módulos instrumentais têm SHA byteigual ao freeze; próprio ledger rece
 este append. QA continua sem G2, permitindo que boot/release avancem separados.
 Próximo: docs/arch, checkpoint seletivo, publicação normal da stack após a base,
 PR/bot atual/crítico integral posterior e portões próprios. Sem push ou release.
+
+## R59: linha vazia na stack do cancelamento
+
+- Faixa isolada `fix/grafite-cancel-blank-r59`, base `7b19b63dff5a1c49898e1468afb924acb5bbd11c`. Objetivo: aceitar a formatação whitespace-only da stack real, preservando contagem, associação URL/origem/prop, FATAL e status/checkpoint. Lease: este ledger e `tools/eval/graffiti-bake-fiel-check.mjs`.
+- BEFORE congelado em `audits/2026-10-31-visual-consistency/GRAFITE-BLANK-R59-BEFORE-FREEZE.json` no aggregate. Raw do Root R59 lido integralmente: produtor exit1, checkpoint ausente, duas entradas válidas e uma linha de quatro espaços entre frames. Raw SHA256 `acf22d37c99ecf89ba7277a2954121ec699c2d8d5c514264ce85b3f3877a729e`; checker anterior `6189865d77d79c1a084a7932da32ba2b466f847f24344c036abb077cda6b8d2e`.
+- Driver privado extrai literalmente envelope, sanitização e ramo G2. Node22.23.4/26.12.1: 16 expectativas BEFORE por Node confirmadas; raw produz infra3 na linha `"    "`, o mesmo raw removendo apenas essa linha produz0. Variantes fatais, entrada desconhecida, contagem, URL/origem/prop, checkpoint e outro exit continuam3. Primeira tentativa do driver omitiu URL no contexto VM; erro e freeze inicial preservados com sufixo DRIVER-ERROR, corrigidos antes do BEFORE válido e sem alteração do SUT.
+- Próximo: chamada única e limitada a GLM-5.3 via OMP para autorar o patch mínimo, validação AFTER e mutação causal. Root é o único escritor de QA/browser e fará produtor real e crítico independente. Sem aceite visual ou release.
+
+### R59: validação focal e entrega ao Root
+
+- GLM-5.3 via OMP `openrouter/z-ai/glm-5.3`, sem ferramentas, autorou uma única linha no envelope: ignorar linhas somente whitespace. Chamada única exit0 em21,008s, prazo Popen270s sem renovação; prompt, resposta e metadados preservados em `GRAFITE-BLANK-R59-GLM-*`. Supervisão aplicou o diff exato, sem outro byte de código. Checker AFTER SHA256 `21d95c5fed84edbd29c43fd9259b443f0085103ae569b634b6f68e57bdd555c0`.
+- Node22.23.4/26.12.1: 16/16 expectativas AFTER em cada Node. Raw original e whitespace com tab produzem0; 13 controles recusam com3, incluindo FATAL após branco e antes do cabeçalho, entrada desconhecida, contagem divergente, origem/alvo/URL inválidos, warning de outro prop, checkpoint presente e outro exit. FATAL do status0 usa a saída original; do status1 usa toda a saída sanitizada. Nenhum texto da stack foi removido pela guarda nova.
+- Mutação causal privada remove apenas a linha autorada: fonte mutada byteigual ao BEFORE `6189865d...`. Ambos Node restauram infra3 no raw pela linha `"    "`, preservam0 no controle sem branco e3 nos controles negativos; 16/16 expectativas de mutação por Node. Refutada a hipótese de erro fatal no raw: só o TypeError esperado do warning é sanitizado, e a stack sem a linha vazia já era aceita antes.
+- `node --check` do checker em ambos Node, `node tools/gen-docs.mjs --check`, `node tools/gen-arch.mjs --check` e `git diff --check`: exit0. Checkpoint seletivo leva apenas checker e este ledger. Artefatos privados ficam no audit do aggregate, prefixo `GRAFITE-BLANK-R59`; nenhum browser, headless, build ou checkdeploy executado nesta faixa.
+- Concluído: conserto mínimo e provas CPU extraídas do código real. Próximo do Root: integrar o checkpoint isolado, rodar o produtor real no checker novo e crítico independente integral. Permanecem pendentes aceite operacional, avaliação visual e release; sem push ou GitHub nesta faixa.
