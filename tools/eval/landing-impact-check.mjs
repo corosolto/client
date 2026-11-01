@@ -9,14 +9,14 @@ import { Sfx } from '../../public/js/audio.js';
 /* Erro estruturado em linha JSON: o driver de mutação distingue asserção do contrato
    (exit 1) de erro de preparação/infra (exit 2) sem advinhar pelo texto do stack. */
 const estruturar = (err) => ({
-  assert: err?.name === 'AssertionError' ? 'assertion' : 'infra',
-  name: err?.name || 'Error',
+  assert: err instanceof assert.AssertionError ? 'assertion' : 'infra',
+  name: err instanceof assert.AssertionError ? 'AssertionError' : (err?.name || 'Error'),
   clause: String(err?.message ?? err ?? '').split('\n')[0],
 });
 for (const ev of ['uncaughtException', 'unhandledRejection']) {
   process.on(ev, (err) => {
     console.error('ERRO-ESTRUTURADO ' + JSON.stringify(estruturar(err)));
-    process.exit(err?.name === 'AssertionError' ? 1 : 2);
+    process.exit(err instanceof assert.AssertionError ? 1 : 2);
   });
 }
 
