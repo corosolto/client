@@ -69,8 +69,8 @@ function parseArgv() {
   throw new InfraError('cli', `uso: node tools/eval/${TOOL} [--autoteste|--mutante=<id>] | A | B [--mutante=<id>|--controle=baseline-60hz]`);
 }
 function preflight() {
-  infra(process.version.startsWith('v26.') && !process.env.NODE_OPTIONS && !process.env.SIM_QS && !process.execArgv.length,
-    'env', 'Node26 sem NODE_OPTIONS/SIM_QS/execArgv obrigatório');
+  infra((process.version.startsWith('v22.') || process.version.startsWith('v26.')) && !process.env.NODE_OPTIONS && !process.env.SIM_QS && !process.execArgv.length,
+    'env', 'Node22/26 sem NODE_OPTIONS/SIM_QS/execArgv obrigatório');
 }
 const plain = (o) => o !== null && typeof o === 'object' && Object.getPrototypeOf(o) === Object.prototype;
 const finite = (n) => typeof n === 'number' && Number.isFinite(n);

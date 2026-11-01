@@ -10,9 +10,26 @@ import fs from 'node:fs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 let falhas = 0, ok = 0;
+const resultado = {};
 const cobra = (cond, msg) => {
+  resultado[msg] = !!cond;
   if (cond) { ok++; console.log(`  ok   ${msg}`); }
   else { falhas++; console.log(`  FALHA ${msg}`); }
+};
+
+const ALVO_DO_MUTANTE = {
+  'sem-negociacao': 'cliente negocia v7/v6/v5/v4/v3/v2 binário com fallback v1 JSON',
+  'sem-decoder': 'o caminho de produção chama o decoder real',
+};
+/* Aplicação de mutante é estado SEPARADO da detecção: âncora ausente ou duplicada é erro
+   de arnês (exit 2), nunca mordida — a falha de replace não pode virar "DETECTADO". */
+const aplicaMutacao = (nome, src, ancora, troca) => {
+  const n = src.split(ancora).length - 1;
+  if (n !== 1) {
+    console.error(`mutante ${nome} NÃO APLICOU: âncora presente ${n} vez(es) — exige exatamente 1 (${ancora})`);
+    process.exit(2);
+  }
+  return src.replace(ancora, troca);
 };
 
 /* A abertura do socket saiu do net.js e virou `TransporteWS` (public/js/transporte.js) —
@@ -21,17 +38,9 @@ const cobra = (cond, msg) => {
    net.js, que é quem decide o que fazer com os bytes. */
 let netSrc = fs.readFileSync('public/js/net.js', 'utf8');
 let tpSrc = fs.readFileSync('public/js/transporte.js', 'utf8');
-if (MUT === 'sem-negociacao') {
-  const before = tpSrc;
-  tpSrc = tpSrc.replace('new WebSocket(this.url, SNAPSHOT_PROTOCOLS)', 'new WebSocket(this.url)');
-  cobra(tpSrc !== before, 'mutação sem-negociacao aplicou');
-} else if (MUT === 'sem-decoder') {
-  const before = netSrc;
-  netSrc = netSrc.replace('decodeSnapshot(dados)', 'JSON.parse(dados)');
-  cobra(netSrc !== before, 'mutação sem-decoder aplicou');
-} else if (MUT && !['sem-negociacao', 'sem-decoder'].includes(MUT)) {
-  console.log(`mutante desconhecido: ${MUT}`); process.exit(1);
-}
+if (MUT === 'sem-negociacao') tpSrc = aplicaMutacao(MUT, tpSrc, 'new WebSocket(this.url, SNAPSHOT_PROTOCOLS)', 'new WebSocket(this.url)');
+else if (MUT === 'sem-decoder') netSrc = aplicaMutacao(MUT, netSrc, 'decodeSnapshot(dados)', 'JSON.parse(dados)');
+else if (MUT && !ALVO_DO_MUTANTE[MUT]) { console.log(`mutante desconhecido: ${MUT}`); process.exit(1); }
 
 cobra(/new WebSocket\(this\.url, SNAPSHOT_PROTOCOLS\)/.test(tpSrc), 'cliente negocia v7/v6/v5/v4/v3/v2 binário com fallback v1 JSON');
 cobra(/binaryType\s*=\s*['"]arraybuffer['"]/.test(tpSrc), 'frames binários chegam como ArrayBuffer, não Blob');
@@ -156,9 +165,13 @@ if (codec) {
 }
 
 if (MUT) {
-  const acendeu = falhas > 0;
-  console.log(acendeu ? `\nmutante "${MUT}" DETECTADO — a régua morde` : `\nmutante "${MUT}" NÃO detectado`);
-  process.exit(acendeu ? 0 : 1);
+  const alvo = ALVO_DO_MUTANTE[MUT];
+  const perdidas = Object.keys(resultado).filter((m) => !resultado[m]);
+  const extras = perdidas.filter((m) => m !== alvo);
+  if (!perdidas.includes(alvo)) { console.log(`\nmutante "${MUT}" NÃO detectado — a cláusula alvo seguiu verde`); process.exit(1); }
+  if (extras.length) { console.log(`\nmutante "${MUT}" REPROVADO — acendeu cláusulas além da alvo: ${extras.join(' | ')}`); process.exit(1); }
+  console.log(`\nmutante "${MUT}" DETECTADO — só a cláusula alvo apagou; ${ok} positivo(s) mantido(s)`);
+  process.exit(0);
 }
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

@@ -45,6 +45,10 @@ class Netcode {
     this._alvoSpec = null;      // quem o espectador está seguindo
     this.specDist = 1.7;        // câmera do espectador: metros atrás do ombro do alvo (BUG-117)
     this._evOn = !!(net.meta && net.meta.events);   // servidor manda `ev`; sem a flag, heurística velha (BUG-90)
+    /* FLASH online: o servidor de hoje só aceita `nade` 'smoke'|'frag' e não emite `boom` da
+       flash. Até ele anunciar `meta.flash` (com `ev`), o jogo recusa equipar a flash online
+       (game._flashLiberada) em vez de gastar o estoque num pedido que o servidor descarta. */
+    this.flashOn = this._evOn && !!(net.meta && net.meta.flash);
     /* Buffer base ~2,4 snapshots; gaps repetidos ampliam até 140 ms para o remoto
        não congelar, e a rede estável volta ao atraso mínimo (BUG-87). */
     this.snapshotHz = Math.max(1, Number(net.meta?.snapshotHz) || 20);
@@ -548,7 +552,8 @@ class Netcode {
       if (i >= 0) game._sumirDrop(i);
     } else if (e.k === 'nade') {
       if (!Number.isInteger(e.i) || game._grenades.some((x) => x._nid === e.i)) return;
-      const kind = e.kind === 'smoke' ? 'smoke' : 'frag';
+      if (e.kind === 'flash' && !this.flashOn) return;   // flash desligado não vira frag local (#1179)
+      const kind = e.kind === 'smoke' || e.kind === 'flash' ? e.kind : 'frag';
       const dono = this._netMap.get(e.o | 0) || ((e.o | 0) === meu ? p : null);
       const origem = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0), dir = new THREE.Vector3(+e.vx || 0, +e.vy || 0, +e.vz || 0);
       game._spawnGrenade(origem, dir.lengthSq() ? dir.clone().normalize() : new THREE.Vector3(0, 0, -1), kind, dono);
@@ -558,7 +563,10 @@ class Netcode {
       const i = game._grenades.findIndex((x) => x._nid === e.i);
       if (i >= 0) { game.scene.remove(game._grenades[i].mesh); game._grenades.splice(i, 1); }
       const pos = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0);
-      if (e.kind === 'smoke') game._popSmoke(pos); else game._explodeFrag(pos, this._netMap.get(e.o | 0) || null);
+      if (e.kind === 'smoke') game._popSmoke(pos);
+      // cegueira é LOCAL: cada cliente mede a do próprio olho; a dos bots quem mede é o servidor
+      else if (e.kind === 'flash') { if (this.flashOn) game._popFlash(pos, this._netMap.get(e.o | 0) || null); }
+      else game._explodeFrag(pos, this._netMap.get(e.o | 0) || null);
     }
   }
 
@@ -740,12 +748,24 @@ class Netcode {
       : ent.pos.clone().setY(ent.pos.y + 1.45);   // compatibilidade com nó anterior
     const dist = p && p.pos ? Math.hypot(ent.pos.x - p.pos.x, ent.pos.z - p.pos.z) : 0;
     const cheio = ent === p || (dist < 45 && game.settings.quality !== 'low');
+    // Boca da arma na tela (eval:boca-cano): remoto só se a ≤1,5 m da origem do evento (pose
+    // adiantada volta ao olho, MPT1); eu mesmo uso a origem do traçante do jogo local.
+    const primeiroP = e.p[0];
+    const dirP = primeiroP ? new THREE.Vector3(+primeiroP[0] || 0, +primeiroP[1] || 0, +primeiroP[2] || 0).sub(olho).normalize() : null;
+    let boca = null;
+    try {
+      if (ent === p) boca = dirP && game._bocaLigada?.() ? game._origemTracerJogador(olho, dirP) : null;
+      else {
+        const b = game._bocaDaArmaDoCorpo?.(ent.mesh?.group);
+        if (b && b.distanceTo(olho) <= 1.5) boca = b;
+      }
+    } catch { boca = null; }
     const tetos = cheio ? 4 : 1;   // shotgun não vira 9 traçantes na tela de ninguém
     const sup = typeof e.s === 'string' ? e.s : '';
     for (let i = 0; i < Math.min(tetos, e.p.length); i++) {
       const a = e.p[i];
       const alvo = new THREE.Vector3(+a[0] || 0, +a[1] || 0, +a[2] || 0);
-      try { game._tracer(olho.clone().lerp(alvo, 0.06), alvo); } catch { /* sem fx */ }
+      try { game._tracer(boca ? boca.clone() : olho.clone().lerp(alvo, 0.06), alvo, ent === p && game.camView === 'first' && !!boca); } catch { /* sem fx */ }
       /* POEIRA E SOM no ponto verdadeiro. Saíam do `_fireHitscan`, que o online não chama
          mais — sem isto o tiro na parede virou mudo e limpo (o furo sumiu da tela). */
       const surf = supDeCod(sup[i]);
@@ -759,7 +779,12 @@ class Netcode {
     const primeiro = e.p[0];
     if (primeiro) {
       const dir = new THREE.Vector3(+primeiro[0] || 0, +primeiro[1] || 0, +primeiro[2] || 0).sub(olho).normalize();
-      try { game._flash(olho.clone().addScaledVector(dir, 0.35), dir); } catch { /* sem fx */ }
+      // Eco do meu tiro: se o _tryShoot já acendeu na boca há <0,5 s (RTT), não acende um segundo;
+      // tiro que só o nó deu (dessincronia de cadência) ainda ganha clarão.
+      const ecoLocal = ent === p && boca && game.time - (game._claraoLocalEm ?? -Infinity) < 0.5;
+      if (!ecoLocal) {
+        try { game._flash(boca ? boca.clone() : olho.clone().addScaledVector(dir, 0.35), dir); } catch { /* sem fx */ }
+      }
     }
   }
 
@@ -771,7 +796,12 @@ class Netcode {
     const yaw = game.camera.rotation.y;
     const pan = Math.max(-1, Math.min(1, (dx * Math.cos(yaw) - dz * Math.sin(yaw)) / (sd || 1)));
     try { game.sfx.shotWeapon(ent.weapon || 'ak', sd, 0.5, pan, Math.min(0.25, sd / 343)); } catch { /* ctx mudo */ }
-    try { game._flash(ent.pos.clone().setY(ent.pos.y + 1.4), new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw))); } catch { /* sem fx */ }
+    // Com `ev`, o tiroDeRede já acende na mesma boca: dois clarões sobrepostos dobravam brilho e custo.
+    if (this._evOn && game._bocaLigada?.()) return;
+    // clarão na boca da arma do corpo (eval:boca-cano); sem corpo, o ponto antigo no peito
+    let boca = null;
+    try { boca = game._bocaDaArmaDoCorpo?.(ent.mesh?.group) || null; } catch { boca = null; }
+    try { game._flash(boca || ent.pos.clone().setY(ent.pos.y + 1.4), new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw))); } catch { /* sem fx */ }
   }
 
   /* MORTE do jogador local no MULTIPLAYER: quem mata é o servidor (alive true->false no

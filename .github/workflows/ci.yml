@@ -38,7 +38,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
       - name: Python CI scripts syntax
         run: python3 -m py_compile scripts/ci/*.py
       - name: Bash scripts syntax
@@ -53,7 +55,7 @@ jobs:
       # check:fast, que roda na máquina de quem lembra: PR que quebrasse workflow passava
       # aqui verde. O runner roda todas e só reprova no fim (PI3 cobra esta lista).
       - name: Réguas de workflow, release, privacidade e escolha (node puro)
-        run: node tools/eval/runner.mjs eval:wfsecret eval:wflocal eval:wftimeout eval:wfconcurrency eval:deploygate eval:autofix eval:mutcega eval:portaointeiro eval:release eval:privacy eval:noescolha eval:contagens-pr eval:mergequeue
+        run: node tools/eval/runner.mjs eval:wfsecret eval:wflocal eval:wftimeout eval:wfconcurrency eval:deploygate eval:autofix eval:mutcega eval:portaointeiro eval:release eval:privacy eval:noescolha eval:contagens-pr eval:mergequeue eval:sondafilho
       # Job que só lê histórico ou poucos arquivos faz checkout leve (CL1). Node puro.
       - name: Checkout leve nos jobs que só leem histórico
         run: npm run eval:wfcheckout
@@ -74,6 +76,10 @@ jobs:
         run: npm run eval:treta-fila
       - name: Sete moedas da loja com arte própria
         run: npm run eval:treta-coins
+      - name: Skin equipada aguarda manifesto e conta vigente no boot
+        run: npm run eval:treta-manifest-ready
+      - name: Preview mobile preserva skin e propriedade da mídia
+        run: npm run eval:character-preview-media
       - name: Acúmulo de armas no chão tem teto
         run: npm run eval:drop
       - name: Loja sem nome de político real
@@ -82,17 +88,37 @@ jobs:
         run: npm run eval:capturecodex
       - name: Aba da loja no hub diz só LOJA
         run: npm run eval:hub-loja
+      - name: TRETA$ da partida segue o CS e não toca a carteira do menu
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:economia
+      - name: TRETA$ da partida dentro do Game real (compra, morte, rodada)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:economia-jogo
       # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
       # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
+      - name: Contratos visuais de mapas, personagens, câmera e equipamento
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:grafite-curation eval:map-material-finish eval:ferro-balcao eval:match-pickups eval:net-flash-disable eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:visual-map-contracts eval:knife-skin-markings eval:campo-uv eval:grafite-atual:prova
+      - name: Flash, fluidez e ADS da AK pública
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:flashbang mut:flashbang eval:movimento-fluidez eval:ads1p-public eval:posto-board-support eval:preview-grip-phase eval:armadura eval:ads1p-runtime-public
       - name: Todo mapa devolve o que o game.js consome
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:mapcontrato
+      - name: Pichação colada na parede e sem vazar pela quina da frente
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:pichacao-parede
       - name: Amazônia acessível e bots entre palafitas
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:amazonia
       - name: Escadão — circulação, estrutura e casa
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
       - name: Validar fluidez, território e rede do mantle
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network
       - name: Escadão — compatibilidade com pacote de áudio publicado
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/escadao-audio-pack-check.mjs
       # eval:lajes-spawn-space e eval:lajes-raycast saíram daqui porque as invariantes
       # rodam os MESMOS scripts (LSP1 e LRP1, críticas e fora do KNOWN-RED) e reprovam

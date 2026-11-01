@@ -194,3 +194,14 @@ A fila de revisão, com o que cada um quebra hoje:
 Os três de tremor são os mesmos corpos que o `EMOTES-BR.md` já apontava por dependerem do
 pack de animação compartilhado: o tremor está no CLIPE, não no mount — consertar é re-autorar
 ou filtrar, e cada um desses caminhos é decisão de custo, não de parâmetro.
+
+## Rodada 31/10 — gauntlet do lote #1171
+
+Histórico e causa dos fixes desta rodada (o código aponta pra cá; comentário inline tem teto de 2 linhas).
+
+- **Teto de frente por corpo — retirado na integração #1188**: o clamp humano da asa do Canarinho e o warm-up dependente de60updates deformavam a pele (P99 0,739/57,9 ruins por10mil arestas). A ablação sem os dois recuperou0,655/33,2. O piso legado `TP_FRONT_MIN`, orientação do mount e solver mundial permanecem. A redução isolada de frenteZ não era aceite suficiente.
+- **Curl dos dedos**: a faixa0,55–0,95 rad continua nos demais62corpos. O Zumbi volta à fórmula legada completa: fallback0,5, faixa0,35–0,80 e inclinação0,45/0,06. Na AK de espessura0,189066m, o novo mínimo0,55 elevava P99 para0,685; o mínimo legado0,35 recupera0,655. Limitar só o máximo a0,80 não corrigia esse caso. Não há aprovação de todas as armas/skins por esta medição.
+- **Recentro de YAW da cabeça — retirado na integração #1188**: a correção automática de80% alterava a pose autorada e causava onze regressões no roster. A retirada preserva pitch, emotes, atraso do torso e cópia final do proxy de cabeça. O contrato em `visual-consistency/HEAD-YAW.md` passa a proteger a pose autorada com um AnimationMixer independente; não exige recentro artificial.
+- **Guarda extra de alcance do IK — retirada na integração #1188**: o wrapper de95% ignorava o offset mundial da palma e puxava para dentro alvos ainda alcançáveis. O teto das referências subia de0,675/23,6 para0,689/28,6. O `solveCCDIK` mantém sua proteção mundial com palma, reserva0,98 e passo angular máximo0,6; as quatro chamadas preservam seus alvos. A retirada não acrescenta limite anatômico de junta.
+- **Tint 3P (`TINT_3P`)**: capa do Juiz "esbranquiçada demais" — a textura do robe é clara de fábrica (PBR verde em 74/74). Multiplicador 0x98a3c6 no material da toga; crivo final na contact sheet.
+- **Morrer no meio da recarga**: `die()` cancela reload/flinch/lean/pitch. O envelope `reloadK` não era guardado por `dead` e o mergulho do tronco (spine k*0.20 pra trás) continuava sobre o clipe death clampado: o "cadáver se debatendo pra trás" do dono. Medido: reloadK 0 no cadáver.
