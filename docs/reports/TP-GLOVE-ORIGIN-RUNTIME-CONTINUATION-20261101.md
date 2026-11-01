@@ -171,3 +171,16 @@ skin novo, asset write, publicação ou aprovação Game3:2/mobile/MP.
 Missão integral mapas/personagens/skins/motion/ADS e release/backend continua
 ativa, Flavio1158 excluído e UI/social depois. Próximo: Java herdar este merge;
 publicar pilha via push normal e obter CI/formal/whole pós-bot atuais por PR.
+
+## Root R984 — ancestry remota F2 preservada
+
+Merge normal de8ab5b9fd comFactoryb4aebcbe, que contém F243275a47 e o autofix
+remoto7544555e. Toda árvore public/ e package conservam bytes exatos8ab.
+A entrada Factory tem objeto JSON efetivo idêntico ao seu pai c5, comprovado
+por parse, logo a única resolução mantém o package S4 integral já medido;
+nenhum alias/teto/worker/runtime foi reescrito. Só continuações importadas.
+
+Docs/arch/diff conferidos; sem repetição de suíte de produto com bytes iguais.
+Java herda este checkpoint antes do freeze/publicação normal atomic de4refs.
+CI/formal/whole pós-bot atuais seguem porPR; nenhuma aprovação artística,
+Game3:2/mobile/MP ou release novo. Missão integral ativa/Flavio1158 excluído.

@@ -278,3 +278,13 @@ Antes do freeze final, aguardar a decisão explícita de Root sobre skin R970,
 ainda sob crítico R978. Nenhum código de skin foi importado. O próximo passo
 segue publicação/gates formais/whole sob Root, sem confundir foco por checkpoint
 com um check:deploy final ou aprovação visual/MP/mobile/release.
+
+
+### R958: remoto F2 reconciliado antes do freeze
+
+Recebido por merge normal o S4 final Root
+`a81d3120dc71c208904e0e581fce903fcffe2f29`, contendo Factory b4aebcbe, F2
+43275a47 e o remoto F2 7544555e. Public/ inteiro e package permanecem literais
+do checkpoint f496 pré-skin; nenhum CPU longo foi repetido por ledger/ancestry.
+Root agora aprovou R970/ca44 após FULLread e crítico independente R978 sem
+achados; próximo passo é a merge normal desse candidato e seus focais novos.

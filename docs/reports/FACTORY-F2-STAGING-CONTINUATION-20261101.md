@@ -23,3 +23,18 @@ Evidências externas: audits/2026-10-31-visual-consistency/FACTORY-F2-STAGING-R9
 ## Próximo passo e limites
 
 Root lê diff/manifest e adota o checkpoint por ancestry, preservando os dois pais. S4 herda o novo HEAD e Java a composição final; só o HEAD final recebe crédito de portão completo em push normal, sem no-verify/bypass. Cada PR conserva formal no novo head e whole independente pós-bot. QA Game3:2/fit/material/motion/anatomia/mobile/MP e release pareado continuam pendentes. Root é o único publisher e dono da decisão de integração; não houve anúncio de fonte local como produção.
+
+## Root R983 — F2 remoto reconciliado
+
+Merge normal de c5f68ba9 com F2 43275a47, que preserva o autofix remoto7544555e.
+Public/ inteiro é byte-exato c5. O objeto JSON efetivo do package também é
+idêntico c5; conservado check:fast com Drip, aliases cosméticos movidos para
+o local recebido de F2, e deduplicadas cópias de valores iguais. A dívida
+textual de duplicação grafite herdada foi removida na base F2, sem atribuir
+a Root a correção do bot. Fonte runtime e todos shippingassets intocados.
+
+Docs/arch/diff conferidos; sem repetirDrip/manifest por ancestry/layoutJSON.
+S4→Java herdarão este checkpoint antes do push normal atomic; CI/formal/whole
+atuais continuam porPR e gate integral terá crédito só no Java final.
+Missão integral visual/release ativa, Flavio1158 excluído, owners preservados;
+sem browser/arte/mobile/MP/publicação/deploy nesta composição.
