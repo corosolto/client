@@ -12,7 +12,7 @@ limpeza — número que **não autoriza baixar a META** do censo histórico para
 
 | comando | instrumento | contrato | resultado esperado hoje |
 |---|---|---|---|
-| `tools/eval/graffiti-current-browser-check.mjs` (este, ainda não ligado no `package.json` — o Root liga e roda no browser real) | Ego + `medirCuradoria()` na cena real (`__gworld.root`) | contrato ATUAL: `duplicates`/`outside`/`unsupported`/`unknown`/`divergent` todos **zero**, fail-closed | **GREEN** — 14/14 mapas abertos (prova SURVEY6, abaixo) |
+| `tools/eval/graffiti-current-browser-check.mjs` | Ego + `medirCuradoria()` na cena real (`__gworld.root`) | contrato ATUAL: `duplicates`/`outside`/`unsupported`/`unknown`/`divergent` todos **zero**, fail-closed | **GREEN nominal pós-alias** — prova Ego14 R21, abaixo |
 | `eval:grafite` (censo histórico, `graffiti-census.mjs`) | Ego/Playwright | tetos de META de cobertura % de 07–30/10 | **RED sem waiver** até a cobertura voltar à meta — é o passivo histórico, não erro do gate |
 
 O gate atual **não codifica contagem mínima estética**: zero arte num mapa só reprova quando
@@ -22,14 +22,25 @@ Mapa limpo sem arte esperada é GREEN; vacuidade total da medição não é crit
 
 ## Escopo
 
-Os **14 mapas abertos** medidos no SURVEY6 (31/10) — não apenas os 11 legados do censo:
+Os **14 mapas abertos** medidos no Ego14 R21 pós-alias — não apenas os 11 legados do censo:
 `ferro_velho, campomorro, loja_h, mansao, upa_24h, obras_prefeitura, atacadao_treta,
 escadao, lajes, corrego, quebrada, piscina_treta, praca_poderes, posto_treta`.
 
-Prova de baseline: `audits/2026-10-31-visual-consistency/all-map-curation-drawn-survey6-ego.mjs`
-(Root, TaskSpace 32/p2) — 14/14 `pass:true`, zero duplicata/fora/sem-suporte/unknown/divergente
-(`all-map-curation-SURVEY6-summary.json` e `*-drawn-curation-SURVEY6.json`). Fixtures Node
-não são evidência de GLB; a cena do browser é.
+Prova vigente: `audits/2026-10-31-visual-consistency/curation-Ego-14-R21-verdict.json`
+e os 14 `curation-Ego-14-R21.<mapa>.json`: 458 peças, todos os cinco contadores zero,
+preferências restauradas. A crítica independente
+`CRITICO-CURATION-EGO14-R21-COERENCIA-R1.md` conferiu 597 relações, os hashes dos raw
+e a coerência com os nominais CI identity R6. Os seis pins de fonte em
+`critico-curation-ego14-r21/coherence.json` conferem com a base `8ee224e48` nesta revisão
+(`review-r71-fixes-r73/preflight-r21-pins.json`).
+
+Limite de proveniência: o log R21 retém somente GREEN; não conserva o envelope bruto
+`BROWSER_CHECK_RESULT` nem hashes dos JS respondidos naquela navegação. Os pins atuais
+não certificam retrospectivamente bytes servidos. Esta prova fecha o nominal pós-alias
+do contrato medido; não aprova estética geral, produção, mobile, MP ou FPS. UNKNOWN
+continua sem aceite. SURVEY6 e os resultados R6/R4 anteriores ao alias são históricos:
+o GREEN por arquivo não demonstra identidade editorial única. Fixtures Node não são
+evidência de GLB; a cena do browser é.
 
 ## Ordem da prova (R3): nominal antes da mutação, vermelho não muta
 
@@ -114,7 +125,10 @@ mutante) · `2` uso/config inválido (antes de qualquer launch) · `3` infra (c�
 serializado que não parseia, erro Ego, resposta vazia/parcial/divergente do filho, erro de
 página, falha de limpeza, mutante que aplicou 0, medição que não terminou).
 
-## Estado
+## Histórico de implementação
+
+O nominal vigente é o Ego14 R21 descrito acima. As rodadas abaixo documentam a evolução
+do instrumento e não substituem a prova pós-alias.
 
 Implementado e verificado offline em duas rodadas. R2 (31/10): mutador consertado (ramo
 `draw-groups` fechado, `bbox`/`eixo` definidos, ramo `piscina-azul` existente), parse
@@ -151,7 +165,7 @@ a outra falhar. O produtor emite `erros: []` sempre; o main recusa erros de pág
 independentemente de `invalidado`, valida amostras como strings e classifica shapes
 malformados como INFRA3. Novas provas offline e execução real ainda pendentes de Root.
 
-### R6: encerramento real no Ego
+### R6: encerramento real no Ego, anterior ao alias
 
 A execução R5 coletou14mapas/465peças com contadores zerados, mas terminou INFRA3 ao restaurar prefs: Ego não aceita argumento para evaluate de string. O callback agora é função real. Falha continua fechada; não aproveitar o exit3 como GREEN. Com --out, snapshot de preferências é persistido antes da escrita e stdout/stderr completo em erro; o encerramento compara também o recibo final com o snapshot. Diagnóstico Posto após fix retornou GREEN real. O censo14R6 terminou GREEN no Ego:14/14mapas,465peças, todos os contadores de erro zero; o recibo final de preferências foi igual ao snapshot. A recuperação da chave manual de QA usa a referência persistida bake14-R1-settings-before.json (manual=null), sem regravar outras preferências.
 
