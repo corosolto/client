@@ -11,7 +11,8 @@ const base=new URL(values.base);if(!['http:','https:'].includes(base.protocol))t
 fs.mkdirSync(values.out,{recursive:true});
 const config={space:Number(values.space),dir:values.out,base:base.href.replace(/\/$/,''),pageId:values.page,fotos};
 const source=fs.readFileSync(new URL('./map-fauna-curated-capture.mjs',import.meta.url),'utf8');
-const script='const FAUNA_CAPTURE_CONFIG='+JSON.stringify(config)+';\n'+source;
+const collector=fs.readFileSync(new URL('./map-fauna-curated-collector.mjs',import.meta.url),'utf8').replace(/^export /gm,'');
+const script='const FAUNA_CAPTURE_CONFIG='+JSON.stringify(config)+';\n'+collector+'\n'+source;
 const result=spawnSync('ego-browser',['nodejs'],{input:script,encoding:'utf8',maxBuffer:2*1024*1024,timeout:120000});
 fs.writeFileSync(path.join(values.out,'map-fauna-capture.log'),(result.stdout||'')+(result.stderr||''));
 if(result.error||result.status!==0)throw Error('Captura Ego falhou; veja map-fauna-capture.log. '+(result.error?.message||'exit '+result.status));

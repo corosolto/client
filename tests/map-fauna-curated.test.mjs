@@ -131,7 +131,7 @@ test('contact shadow omission and lifetime mutations fail the actual controller 
 });
 
 test('actual browser collector sees extra target animals; restoring find is detected',async()=>{
- const source=read('tools/eval/map-fauna-curated-capture.mjs'),start=source.indexOf('const record=await page.evaluate(')+'const record=await page.evaluate('.length,end=source.indexOf('\n },{map,type});',start);
+ const source=read('tools/eval/map-fauna-curated-collector.mjs'),start=source.indexOf('const record=await page.evaluate(')+'const record=await page.evaluate('.length,end=source.indexOf('\n },{map,type});',start);
  assert.ok(start>0&&end>start);
  const callback=source.slice(start,end+3).replace("await import('three')",'THREE_STUB').replace("await import('/js/maps.js')",'MAPS_STUB');
  const ref=references[0];

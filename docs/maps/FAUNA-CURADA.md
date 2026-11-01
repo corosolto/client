@@ -15,6 +15,8 @@ npm run eval:serve -- 8545
 node tools/eval/map-fauna-curated-browser.mjs --space ID --page p2 --base http://127.0.0.1:8545 --out /caminho/absoluto --fotos 2
 ```
 
+No CI, `eval:map-fauna-curated:runtime` roda no `portao-browser` com Chromium/SwiftShader e servidor reais. Usa exatamente o mesmo coletor do Ego, carrega os dois mapas e audita os JSONs produzidos nesta execução. Captura ausente, erro de navegador, fallback, textura não decodificada ou rig parado reprovam o passo; artefatos incluem os quatro PNGs e os relatórios. As réguas unitárias permanecem no `pr-fast`; não substituem esse portão runtime. O censo exige uma única amostra de cada mapa esperado e recusa mapas desconhecidos, duplicados ou ausentes antes da auditoria individual.
+
 O comando reusa a Space fornecida e navega a página indicada. Não cria nem escolhe outra Space. `--fotos` limita quantos mapas recebem um par de imagens; 2 cobre ambos e 1 cobre só o primeiro. Mede materiais e texturas decodificadas, origem do clone, clipes e deslocamento com alterações locais nos ossos pelo controlador real. Gera JSON e capturas em distância de jogador e close. Os ticks determinísticos não provam pisada em velocidade normal. Uma crítica independente deve olhar as imagens e um vídeo em velocidade normal antes da aceitação visual.
 
 O mapview preloada fauna por conta própria: ele não prova a partida mobile. A aceitação inclui iniciar a partida pela UI com o perfil automático mobile ativo e conferir o modelo/material e o movimento no RAF natural. Toque emulado, conta local controlada, aparelho físico, produção e multiplayer humano são evidências distintas.
