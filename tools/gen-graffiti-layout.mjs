@@ -81,8 +81,8 @@ if (ONLY && !MAP_SOURCES[ONLY]) throw Error(`Mapa de grafite desconhecido: ${ONL
 /* SÓ A IMPRESSÃO: reassina as entradas SEM reassar a colocação. Duas rodadas na mesma árvore
    já deram 2769 e 2767 peças (loja_h 300 e 298). A passada é determinística sobre a cena que
    recebe; o que pode variar é a cena (um prop que não carrega some em silêncio). O bake agora
-   cancela quando falta entrada (#1109), mas para mudança que PROVADAMENTE não move parede
-   (tamanho de sombra, por exemplo), reassar ainda troca arte aprovada por churn. Exige
+   cancela quando falta entrada (#1109). Com os suportes da curadoria PROVADAMENTE
+   preservados, é possível atualizar a impressão sem trocar a arte aprovada. Exige
    motivo, e o motivo fica gravado no arquivo. Ver KNOWN-BUGS BUG-158. */
 const SO_IMPRESSAO = ARGS.includes('--so-impressao');
 const MOTIVO = (ARGS.find((a) => a.startsWith('--motivo=')) || '').slice(9);
@@ -112,8 +112,8 @@ if (SO_IMPRESSAO) {
   const fpNovo = impressao();
   const txt = readFileSync(SAIDA, 'utf8');
   const marca = `\n/* REASSINADO SEM REASSAR em ${new Date().toISOString().slice(0, 10)} — ${MOTIVO}\n`
-    + `   A colocação não foi tocada: a mudança não move parede, e reassar trocaria arte\n`
-    + `   aprovada por churn. */\n`;
+    + `   As colocações existentes foram preservadas; o motivo delimita a revalidação\n`
+    + `   das fontes e dos suportes. */\n`;
   const semFp = txt.replace(/\n\/\* REASSINADO SEM REASSAR[\s\S]*?\*\/\n/g, '')
     .replace(/export const GRAFITE_FP = .*;\n/, '');
   writeFileSync(SAIDA, semFp + marca + `export const GRAFITE_FP = ${JSON.stringify(fpNovo)};\n`);
