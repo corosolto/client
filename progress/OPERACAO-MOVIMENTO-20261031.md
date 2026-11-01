@@ -84,3 +84,12 @@ Runtime próprio em9413: resultado293163ca/49.062s e fonte7129 estável, crític
 Os ticks são determinísticos; não representam vídeo em velocidade normal, partida humana, aparelho físico, multiplayer, aprovação editorial ou produção. A prova de corpo exercitou finished/getResponseBody, sem afirmar identidade do ArrayBuffer consumidor ou caminho de stream abortado. Os539arquivos públicos ignorados foram comparados na DI, sem guarda contínua posterior. Nenhuma prova Flávio foi atribuída a MOV.
 
 Próximo: checkpoint DCO com escopo11paths, comentário canônico usando origin/main atual, push normal com hooks, CI e respostas aos dois fios de revisão. Merges/release/produção, Operação Flávio, os47destinos, backend e mídia/áudio permanecem no objetivo; nenhum deles é aceito por este registro local.
+
+
+## 2026-11-01 — cobertura CI do helper de resposta
+
+A tentativa normal do checkpoint 96c10e83 terminou com exit 1: 106 de 107 checks passaram em 668,8 s. PG1 detectou que tools/eval/map-fauna-response-proof.mjs estava no fecho do job e fora do gatilho. O remoto permaneceu 0a7bf36f nas três leituras; fonte e índice permaneceram íntegros. Não houve publicação nessa tentativa. Status ab86595e, log completo c73909a4 e crítica independente 1eeeeabd preservados no HQ.
+
+Adicionada somente a regex literal desse helper em scripts/ci/gatilho.mjs (54 bytes; SHA 9205c157). Nominal oficial eval:portaogatilho passou (portão 266 arquivos, smoke 222). O mutante oficial tira-caminho terminou com exit 1 e as quatro falhas causais esperadas. A CLI com apenas o helper em stdin NUL retornou rodar=true e a razão exata em stderr. Crítica independente ce61ee8c, bindings b234a16e (27 pins conferidos) e aceite ROOT d698be8d641e aceitam esses três controles, sem aprovar o push anterior.
+
+Produto/public permanecem idênticos às provas CPU/build/post/DI/runtime já aceitas; trata-se de transferência delimitada dessas provas, não de novas execuções. Próximos passos: checkpoint normal CI+ledger filho de 96c1, CM default origin/main e uma nova tentativa de push com hooks normais, novos artefatos e lease remoto 0a7bf. Integração, CI GitHub, QA humana/editorial, áudio, backend e produção continuam pendentes.
