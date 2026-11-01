@@ -13,7 +13,7 @@ const config={space:Number(values.space),dir:values.out,base:base.href.replace(/
 const source=fs.readFileSync(new URL('./map-fauna-curated-capture.mjs',import.meta.url),'utf8');
 const collector=fs.readFileSync(new URL('./map-fauna-curated-collector.mjs',import.meta.url),'utf8').replace(/^export /gm,'');
 const script='const FAUNA_CAPTURE_CONFIG='+JSON.stringify(config)+';\n'+collector+'\n'+source;
-const result=spawnSync('ego-browser',['nodejs'],{input:script,encoding:'utf8',maxBuffer:2*1024*1024,timeout:120000});
+const result=spawnSync('ego-browser',['nodejs'],{input:script,encoding:'utf8',maxBuffer:2*1024*1024,timeout:240000});
 fs.writeFileSync(path.join(values.out,'map-fauna-capture.log'),(result.stdout||'')+(result.stderr||''));
 if(result.error||result.status!==0)throw Error('Captura Ego falhou; veja map-fauna-capture.log. '+(result.error?.message||'exit '+result.status));
 const data=JSON.parse(fs.readFileSync(path.join(values.out,'map-fauna-curated-runtime.json'),'utf8'));
