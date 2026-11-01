@@ -84,6 +84,15 @@ No R23, a folha F7 usa material distinto do roof das coroas, roughness.9 e
 metalness0; quando há textura, mantém Source/sampler/repeat3×3 correspondentes.
 Isso mede identidade material CPU; não prova o bitmap ou a leitura em pixels.
 
+Contrato de aridade de atributos (R61): cada caixa de finish/std exige exatamente
+`position.itemSize=3`, `normal.itemSize=3`, `uv.itemSize=2` e `index.itemSize=1`,
+verificado em `blocos()` antes de qualquer leitura de counts/getters, para fim e std.
+A contagem CPU (`count`) e os getters (`getX/Y/Z`) podem esconder esse contrato
+inválido: um
+`InterleavedBufferAttribute` com itemSize1 sobre o array original preserva count e
+todos os valores lidos, mas o vendor three.module.js usa `itemSize` para o binding do
+atributo na GPU. O sintoma GPU é inferência de fonte, não medição em browser.
+
 Default real sem query deve produzir SHA estrutural idêntico a `--query=2` em
 processos distintos. O digest inclui atributos/índices raw, morphs, instâncias,
 matrizes, materiais/texturas, flags e dados físicos com16.497amostras de chão;
@@ -135,6 +144,23 @@ continuam iguais. Cada NA fica explícito e não é contado como execução.
 | `fim-raster-blend-zero`, `fim-raster-depth-never` (autoria R49, execução R53) | original, r22, r23 |
 | `std-compensado`, `std-oculto`, `std-face-duplicada`, `std-drawrange`, `std-grupo-oculto` | r22, r23 |
 | `folha-f7-metal` | r23 |
+| `fim-position-itemsize1`, `fim-normal-itemsize1`, `fim-uv-itemsize1`, `fim-index-itemsize2` (R61, validação CPU abaixo) | original, r22, r23 |
+| `std-position-itemsize1`, `std-normal-itemsize1`, `std-uv-itemsize1`, `std-index-itemsize2` (R61, validação CPU abaixo) | r22, r23 (NA no original) |
+
+Os oito controles de aridade substituem o atributo real do mesh construído por um
+objeto THREE real que preserva count e todos os getters por vértice com aridade
+inválida: position/normal/uv→1 via InterleavedBufferAttribute; index→2 com pares
+`[índiceOriginal,0]`. O formato do buffer de índice também muda; não se afirma
+identidade de bytes ou apenas uma mudança de metadado. Exigem conjunto exatamente
+`[CU-8]` vermelho, nominal verde
+prévio e marcador `CAMPO-MUTANTE aplicado` com digest estrutural alterado; std ausente
+no original é NA explícito no wrapper, não no-op. R61 executou a matriz específica
+Campo em Node22/26, BEFORE/AFTER com fonte externa e reversão causal da guarda.
+Recibos, hashes, resultados medidos e limites estão no
+[`ledger R61`](../reports/CAMPO-ATTRIBUTE-CONTRACT-CONTINUATION-20261101.md)
+e em `CAMPO-ATTRIBUTE-R61-FINAL.json` no audit agregado. Nenhuma contagem histórica
+acima (R44/R47/R49/R53) foi alterada ou re-rotulada como atual; revisão independente
+nova permanece com o Root.
 
 `--self-test` do wrapper verifica43casos de protocolo/status/perfil/query/SHA,
 sem subir o mapa. Essa prova não substitui a matriz real (R53 validada69/7NA por Node). Os13controles

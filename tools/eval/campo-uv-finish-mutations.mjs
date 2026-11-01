@@ -25,6 +25,10 @@ const NOVOS = Object.freeze([
   ['folha-f7-metal', Object.freeze([2])], ['std-drawrange', SO_STD],
   ['std-grupo-oculto', SO_STD], ['fim-alpha-test', TODOS], ['fim-alpha-blend', TODOS],
   ['fim-raster-blend-zero', TODOS], ['fim-raster-depth-never', TODOS],
+  ['fim-position-itemsize1', TODOS], ['fim-normal-itemsize1', TODOS],
+  ['fim-uv-itemsize1', TODOS], ['fim-index-itemsize2', TODOS],
+  ['std-position-itemsize1', SO_STD], ['std-normal-itemsize1', SO_STD],
+  ['std-uv-itemsize1', SO_STD], ['std-index-itemsize2', SO_STD],
 ]);
 
 const shaPadrao = 'a'.repeat(64);
