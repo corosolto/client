@@ -948,20 +948,20 @@ let pvCompactToken = 0;
 let pvStaticKey = '';
 let pvPosterFailure = null;
 const pvReducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
-pvReducedMotion.addEventListener?.('change',event=>{if(event.matches)pvStopVideo();});
+pvReducedMotion.addEventListener?.('change',event=>{if(event.matches){pvStopVideo();pv?.ctrl?.pararEmote?.();}if(pv)pv.renderDirty=true;sincronizaBarraEmotes();});
 const pvCompact=matchMedia('(pointer: coarse) and (max-height: 560px)');
 const pvNarrow=matchMedia('(max-width: 760px)');
 pvCompact.addEventListener?.('change',()=>refreshMenuEquipment());
 pvNarrow.addEventListener?.('change',()=>refreshMenuEquipment());
 function resolvePreviewCharacter(def) {
-  const skinId=Object.hasOwn(def,'skinId')?def.skinId:equippedTretaSkin(def.id);
+  const skinId=Object.prototype.hasOwnProperty.call(def,'skinId')?def.skinId:equippedTretaSkin(def.id);
   return {...def,skinId:tretaSkinPresentation(skinId,def.id)?.id || null,eyewearId:equippedTretaEyewear()};
 }
 function previewVideoVisible() {
   return document.querySelector('.char-preview-box')?.classList.contains('has-video') === true;
 }
 function previewModelActive(selectionOpen,hubOpen) {
-  return !pvCompact.matches && (selectionOpen || (hubOpen && !pvNarrow.matches)) && !previewVideoVisible();
+  return !pvCompact.matches && (selectionOpen || (hubOpen && !pvNarrow.matches)) && !$('char-preview')?.classList.contains('hidden') && !previewVideoVisible();
 }
 function previewUsesStills() {
   return staticPreviews || pvCompact.matches || (pvNarrow.matches && !$('main-menu')?.classList.contains('hidden'));
@@ -982,10 +982,20 @@ function clearCompactPreviews() {
     if(label)label.hidden=true;
   }
 }
-function clearStaticPreview() {
-  pvImageToken++;pvStaticKey='';pvPosterFailure=null;
+function pvSetFailureUi(active) {
+  // R65-S1: o hub esconde .pv-equipment por CSS; só a classe de erro expõe o aviso.
+  document.querySelector('.char-preview-box')?.classList.toggle('preview-failure', active && !previewVideoVisible());
+}
+function clearStaticPreview({finishPending=false}={}) {
+  const my=++pvImageToken;pvStaticKey='';pvPosterFailure=null;pvSetFailureUi(false);
   const image=$('char-preview-static');
-  if(image){image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');}
+  if(image){
+    const release=()=>{if(my!==pvImageToken)return;image.onload=image.onerror=null;image.removeAttribute('src');};
+    image.onload=image.onerror=null;image.classList.add('hidden');
+    // Na troca para o GLB, conclui o pedido já iniciado. Sair da tela cancela na hora.
+    if(finishPending && image.src && !image.complete)image.onload=image.onerror=release;
+    else release();
+  }
   for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label){label.hidden=true;label.textContent='';}}
 }
 function stopHiddenPreview() {
@@ -1011,6 +1021,7 @@ function pvStopVideo() {
   box?.classList.remove('has-video');
   const label=$('char-preview-skin');
   if(label && pvPosterFailure){label.hidden=false;label.textContent=previewUnavailableCaption(pvPosterFailure);}
+  pvSetFailureUi(Boolean(pvPosterFailure));
 }
 function pvSetVideo(def) {
   const box = document.querySelector('.char-preview-box');
@@ -1035,6 +1046,7 @@ function pvSetVideo(def) {
     try{await video.play();}catch{if(my===pvVidToken)pvStopVideo();return;}
     if(my!==pvVidToken)return;
     box.classList.add('has-video');
+    pvSetFailureUi(false);
     video.classList.remove('hidden');
     const label=$('char-preview-skin');if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
     if (hints) hints.classList.add('hidden');
@@ -1048,18 +1060,18 @@ function showStaticPreview(def) {
   const weapon=armaDoPreview(def.id),paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId);
   const key=JSON.stringify([def.id,def.skinId,skin?.poster,skin?.name,skin?.video,def.eyewearId,weapon,paint?.name]);
   if(key===pvStaticKey)return;
-  pvStaticKey=key;pvPosterFailure=null;pvStopVideo();
+  pvStaticKey=key;pvPosterFailure=null;pvStopVideo();pvSetFailureUi(false);
   if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
   if(weaponLabel){weaponLabel.textContent=paint?previewPaintCaption(weapon,paint):'';weaponLabel.hidden=!paint;}
   if (canvas) canvas.classList.add('hidden');
   if (image) {
     const my=++pvImageToken;
     image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');
-    const unavailable=()=>{pvPosterFailure=skin?.name || def.name;image.classList.add('hidden');if(label && !previewVideoVisible()){label.hidden=false;label.textContent=previewUnavailableCaption(pvPosterFailure);}};
+    const unavailable=()=>{pvPosterFailure=skin?.name || def.name;image.classList.add('hidden');pvSetFailureUi(true);if(label && !previewVideoVisible()){label.hidden=false;label.textContent=previewUnavailableCaption(pvPosterFailure);}};
     const src=portraitUrl(def);
     image.alt = skin?.name || def.name;
     if(src){
-      image.onload=()=>{if(my!==pvImageToken)return;image.classList.remove('hidden');pvPosterFailure=null;if(label && !previewVideoVisible()){label.textContent=skin?.name || '';label.hidden=!skin;}};
+      image.onload=()=>{if(my!==pvImageToken)return;image.classList.remove('hidden');pvPosterFailure=null;pvSetFailureUi(false);if(label && !previewVideoVisible()){label.textContent=skin?.name || '';label.hidden=!skin;}};
       image.onerror = () => {if(my!==pvImageToken)return;image.onerror=null;if(skin)unavailable();else{image.onerror=()=>{if(my===pvImageToken)unavailable();};image.src=portraitFallbackUrl(def);}};
       image.src=src;
     }else unavailable();
@@ -1075,7 +1087,11 @@ function syncCompactPreview(def) {
   const selection=pvCompact.matches && $('char-select')?.classList.contains('hidden')===false;
   for(const [imageId,labelId,active] of [['hub-character-portrait','hub-character-equipment',hub],['char-select-portrait','char-select-equipment',selection]]){
     const image=$(imageId),label=$(labelId);if(!image || !label)continue;
-    if(!active){image.dataset.previewKey='';image.dataset.previewToken='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;label.hidden=true;continue;}
+    if(!active){
+      image.dataset.previewKey='';image.dataset.previewToken='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
+      const desktopHub=imageId==='hub-character-portrait' && previewHubVisible();
+      label.textContent=desktopHub?caption:'';label.hidden=!desktopHub || !caption;continue;
+    }
     if(image.dataset.previewKey===key)continue;
     image.dataset.previewKey=key;const my=String(++pvCompactToken);image.dataset.previewToken=my;let fallback=false;
     image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
@@ -1125,18 +1141,19 @@ function ensurePreview() {
   cam.position.set(0, 1.3, 3.2); cam.lookAt(0, 0.92, 0);
   pv = { r, scene, cam, model: null };
   // GIRAR/ZOOM de verdade — a dica embaixo do canvas não pode ser enfeite.
-  // Arrastar gira o modelo; scroll aproxima. Durante o arraste o giro automático pausa (ver loop()).
+  // Arrastar gira o modelo; scroll aproxima.
   canvas.addEventListener('pointerdown', e => {
     pvDrag = { x: e.clientX, yaw: pv.model ? pv.model.rotation.y : 0 };
     canvas.setPointerCapture(e.pointerId);
   });
   canvas.addEventListener('pointermove', e => {
-    if (pvDrag && pv.model) pv.model.rotation.y = pvDrag.yaw + (e.clientX - pvDrag.x) * 0.012;
+    if (pvDrag && pv.model) { pv.model.rotation.y = pvDrag.yaw + (e.clientX - pvDrag.x) * 0.012; pv.renderDirty = true; }
   });
   canvas.addEventListener('pointerup', () => { pvDrag = null; });
   canvas.addEventListener('wheel', e => {
     e.preventDefault();
     pv.cam.position.z = Math.min(4.6, Math.max(2.2, pv.cam.position.z + e.deltaY * 0.002));
+    pv.renderDirty = true;
   }, { passive: false });
   return pv;
 }
@@ -1184,6 +1201,7 @@ function snapThumb(obj, fallbackUrl) {
   x.drawImage(p.r.domElement, 0, 0, THUMB_PX, THUMB_PX);   // backing 640² -> 128²: downscale = antialias de graça
   p.scene.remove(obj);
   if (p.model) p.model.visible = prevVis;
+  p.renderDirty = true;
   return c.toDataURL();
 }
 // Each character shows off a weapon that fits their vibe (not everyone with an AK).
@@ -1233,7 +1251,7 @@ async function carregaEmotes() {
 function sincronizaBarraEmotes() {
   const barra = document.getElementById('pv-emotes');
   if (!barra) return;
-  const temBoneco = !staticPreviews && !!(pv && pv.ctrl);
+  const temBoneco = !staticPreviews && !pvReducedMotion.matches && !!(pv && pv.ctrl);
   barra.hidden = !temBoneco;
   if (!temBoneco) { emotesMontados = false; barra.innerHTML = '<button id="pv-emote-abrir" class="pv-emote-btn pv-emote-abrir" type="button">DANÇAR</button>'; religaAbrirEmotes(); }
 }
@@ -1244,7 +1262,7 @@ function religaAbrirEmotes() {
 }
 function pvTocaEmote(id, botao) {
   const ctrl = pv && pv.ctrl;
-  if (!ctrl) return;
+  if (!ctrl || pvReducedMotion.matches) return;
   const barra = document.getElementById('pv-emotes');
   const ligado = ctrl.emoteAtual() === id;
   barra?.querySelectorAll('.pv-emote-btn[aria-pressed]')?.forEach((b) => b.setAttribute('aria-pressed', 'false'));
@@ -1288,10 +1306,14 @@ function pvSetChar(def) {
   if (previewUsesStills()) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
-  clearStaticPreview();pvStopVideo();
-  $('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');
-  document.querySelector('.pv-hints')?.classList.remove('hidden');
-  for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label)label.hidden=true;}
+  const showCanvas=()=>{
+    p.renderDirty = true;
+    clearStaticPreview({finishPending:true});pvStopVideo();
+    $('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');
+    document.querySelector('.pv-hints')?.classList.remove('hidden');
+    for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label)label.hidden=true;}
+  };
+  showStaticPreview(def);
   // Swap to the real rigged GLB (idle) once loaded, if this is still the selection.
   const showBox = () => {   // procedural fallback (only when there's no GLB at all)
     if (p.model) p.scene.remove(p.model);
@@ -1299,12 +1321,12 @@ function pvSetChar(def) {
     p.model = buildCharacter(def).group;
     p.model.rotation.y = -0.4;
     p.scene.add(p.model);
+    showCanvas();
   };
   // ?nav=1 mantém o preview procedural; web-assets.spec.js cobre o GLB real.
   if (navOnly) { showBox(); return; }
   if (GLB_CHARS.has(def.id)) {
-    // Keep the PREVIOUS model visible while the real GLB streams in — never flash the
-    // blocky placeholder for a character that has a real model (the pop-in bug).
+    // O retrato mantém a identidade selecionada enquanto o GLB carrega ou falha.
     const arma = armaDoPreview(def.id);
     Promise.all([preloadCharacterAssets([def.id], { weapons:[arma.weaponId] }),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
       preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId),
@@ -1315,7 +1337,8 @@ function pvSetChar(def) {
       // (era o "posturas bizarras" de 05/08). Ângulos por classe em glbchars.js. No jogo,
       // nada muda.
       const m = hasModel(def.id) ? buildCharacterModel(def, { weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, gloveSkinId: arma.gloveSkinId, preview: true }) : null;
-      if (!m) { if (!p.model) showBox(); return; }   // já há um personagem na tela: manter, nunca piscar a caixa
+      if (!m) return;
+      showCanvas();
       if (p.model) p.scene.remove(p.model);
       // Evidência do que foi montado na mão (régua LB20): os valores saem do objeto 3D,
       // não da intenção - canvas não se lê e intenção não prova nada.
@@ -1327,6 +1350,7 @@ function pvSetChar(def) {
         if (!luvaNaMao && o.userData?.gloveSkin) luvaNaMao = o.userData.gloveSkin;
       });
       cv.dataset.glb = '1';
+      cv.dataset.skin = m.skinId || '';
       cv.dataset.arma = armaNaMao ? arma.weaponId : '';
       cv.dataset.armaSkin = pinturaNaMao;
       cv.dataset.luva = luvaNaMao;
@@ -1341,7 +1365,7 @@ function pvSetChar(def) {
       // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
       // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.
       if (PV_CAM_MAOS) enquadrarMaos(p, m);
-    }).catch(() => { if (my === pvToken && !p.model && previewHeroVisible()) showBox(); });
+    }).catch(() => { if (my === pvToken && previewHeroVisible()) showStaticPreview(def); });
   } else {
     showBox();
   }
@@ -4060,15 +4084,16 @@ function glbThumb(def) {
 }
 /* Previews 3D dos dois times: quatro personagens disponíveis por lado, cacheados
    uma vez por visita. Grupos do catálogo não ganham cards nesta tela. */
-let teamPreviewsDone = false;
+const teamPreviewsDone = new Set();
+const teamPreviewsPending = new Set();
 function ensureTeamPreviews() {
-  if (teamPreviewsDone) return;
   for (const [btn, lado] of [['btn-team-e', 'E'], ['btn-team-b', 'B']]) {
     const box = document.querySelector(`#${btn} .team-chars`);
-    if (!box || box.checkVisibility?.() !== true) continue;
-    teamPreviewsDone = true;
+    if (!box || !(box.checkVisibility?.() ?? box.getClientRects().length > 0)) continue;
+    if (teamPreviewsDone.has(lado) || teamPreviewsPending.has(lado)) continue;
     const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id)).slice(0, 4);
     if (!chars.length) continue;
+    teamPreviewsPending.add(lado);
     box.innerHTML = chars.map(() => '<span class="tc-slot"></span>').join('');
     const slots = [...box.children];
     const ready = previewUsesStills() ? Promise.resolve() : preloadCharacterAssets(chars.map(c => c.id));
@@ -4077,7 +4102,8 @@ function ensureTeamPreviews() {
         const url = glbThumb(c);
         if (url && slots[i]) slots[i].innerHTML = `<img src="${url}" alt="${c.name}" title="${c.name}">`;
       });
-    }).catch(() => {});
+      teamPreviewsDone.add(lado);
+    }).catch(() => {}).finally(() => teamPreviewsPending.delete(lado));
   }
 }
 function pickTeam(faction) {
@@ -4450,6 +4476,8 @@ function loop(agoraMs = performance.now()) {
       if (!pv.travado && !pvReducedMotion.matches) {
         if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
       }
+      if (pvReducedMotion.matches && pv.renderDirty === false) return;
+      pv.renderDirty = false;
       pv.r.render(pv.scene, pv.cam);
     }
   }

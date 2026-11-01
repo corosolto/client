@@ -83,6 +83,7 @@
   max-width:min(560px,calc(100vw - 2 * var(--tp-lobby-coluna) - 4 * var(--tp-lobby-margem)));min-height:var(--tp-lobby-toque);padding:2px 10px;
   transform:translateX(-50%);flex-direction:column;justify-content:center;gap:6px;text-align:center;border:0;background:none;color:var(--tp-tinta-1)}
 :root[data-ui="v3"] #hub-ui .hub-character-card>img,:root[data-ui="v3"] #hub-ui .hub-character-card small{display:none}
+:root[data-ui="v3"] #hub-ui .hub-character-card .pv-compact-equipment:not([hidden]){display:block}
 :root[data-ui="v3"] #hub-ui .hub-character-card>span{align-items:center;gap:6px}
 :root[data-ui="v3"] #hub-ui .hub-character-card strong{display:inline-block;transform:var(--tp-skew);white-space:normal;font:400 clamp(26px,2.5vw,38px)/.92 var(--tp-display);letter-spacing:.01em;text-transform:uppercase}
 :root[data-ui="v3"] #hub-ui .hub-character-card .hub-character-change{margin:0;color:var(--tp-tinta-2);font:700 14px/1 var(--tp-ui);letter-spacing:.08em}
