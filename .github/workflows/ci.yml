@@ -297,7 +297,7 @@ jobs:
       - name: Dependências (npm ci)
         id: deps
         run: npm ci
-      - name: Validar fluidez, território, rede e pouso do mantle
+      - name: Validar fluidez, território e rede do mantle
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network eval:landing-impact
       - name: Penitenciária liga o look do próprio mapa (mutante corrego)
