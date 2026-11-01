@@ -31,6 +31,7 @@
      node tools/gen-graffiti-layout.mjs --checkpoint=/tmp/graffiti-bake-state.json
      EGO_TASK_SPACE=32 node tools/gen-graffiti-layout.mjs  # reutiliza p2 no Ego
 
+
    Entrada que falta (GLB, decalque, erro da página) cancela o bake daquele mapa.
    `GRAFITE_DERRUBA=<regex>` derruba as requisições que casam: é o gancho da régua
    `eval:grafite-fiel`, que prova que a trava morde.
@@ -120,6 +121,10 @@ if (SO_IMPRESSAO) {
   console.log(`-> ${SAIDA}  impressão reassinada, ${pecas} peças INTACTAS (motivo: ${MOTIVO})`);
   process.exit(0);
 }
+
+const gRoot = execSync('npm root -g').toString().trim();
+const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+const chromium = _pw.chromium || _pw.default?.chromium;
 
 const inputFingerprint = impressao();
 if (ONLY && !CHECKPOINT_ONLY && previousFingerprint?.pass !== inputFingerprint.pass)

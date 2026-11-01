@@ -368,6 +368,10 @@ export function buildPoolDay(scene, T) {
       const first = list[0].mesh;
       const batch = new THREE.InstancedMesh(first.geometry, first.material, list.length);
       batch.name = `${list[0].child.name}:batch`;
+      // Como no lote estático: o lote nasce na raiz, sem o grupo do prop, então leva
+      // a permissão de pintura medida antes de tirar os membros da árvore.
+      batch.userData.mapPropId = list[0].child.userData.mapPropId;
+      batch.userData.graffitiNomeDoAsset = !!list[0].child.userData.graffitiNomeDoAsset;
       batch.userData.graffitiSupportExcluded = !superficieGrafitavel(first);
       batch.userData.graffitiWhiteWall = !!first.userData.graffitiWhiteWall;
       const matrix = new THREE.Matrix4();
