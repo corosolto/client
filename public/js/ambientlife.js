@@ -340,6 +340,12 @@ class FavelaAmbience {
       || [config.pos, config.to || config.pos].some(p => !Number.isFinite(p[0]) || !Number.isFinite(p[2])
         || p[0] < fleeArea.minX || p[0] > fleeArea.maxX || p[2] < fleeArea.minZ || p[2] > fleeArea.maxZ)))
       throw new RangeError('ambient_flee_area');
+    /* heightAt é exclusivo de quad: função + resultado finito nos pontos autorados,
+       senão RangeError — dado autorado inválido falha fechado, não afunda no mapa. */
+    const heightAt = config.heightAt == null ? null : config.heightAt;
+    if (heightAt !== null && (!QUADS.has(type) || typeof heightAt !== 'function'
+      || [config.pos, config.to || config.pos].some((p) => !Number.isFinite(heightAt(p[0], p[2])))))
+      throw new RangeError('ambient_height_at');
     if (type === 'pigeon' && config.mode === 'flight') {
       /* v2.1 (BUG-57): pombo não voa mais — o GLB de voo era estático com asas abertas
          (dono: "deveria ficar so na ponta das lajes ou no chao"). Config não migrada cai
@@ -415,7 +421,8 @@ class FavelaAmbience {
       id: `${type}-${index}`, type, mode: type === 'pigeon' ? 'ground' : (config.mode || 'ground'), root: animalRoot, model,
       origin, to, speed: config.speed, turnRate: Number.isFinite(config.turnRate) && config.turnRate > 0 ? config.turnRate : 0, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
       source: loaded ? 'gltf' : 'fallback', contactShadow, mixer, actions, action: 'idle', state: 'idle', alertUntil: 0,
-      alertAt: 0, alertTurnDelay: 0, alertOrigin: origin.clone(), flee: new THREE.Vector3(1, 0, 0), fleeArea, fleeDistance: Infinity,
+      alertAt: 0, alertTurnDelay: 0, alertOrigin: origin.clone(),
+      flee: new THREE.Vector3(1, 0, 0), fleeArea, fleeDistance: Infinity, heightAt,
       routine: origin.clone(), recoverAt: 0, recoverUntil: 0, recoverFrom: origin.clone(),
       calangoGait: 0,
     });
@@ -433,8 +440,9 @@ class FavelaAmbience {
       animal.recoverAt = 0;
       animal.recoverUntil = .8;
       animal.recoverFrom.copy(animal.origin);
-      animal.state = 'idle';
       animal.root.position.copy(animal.origin);
+      this._projectSupport(animal);
+      animal.state = 'idle';
       animal.root.rotation.set(0, animal.phase, 0);
       if (animal.actions?.idle) {
         animal.mixer.stopAllAction();
@@ -487,6 +495,7 @@ class FavelaAmbience {
       else if (animal.type === 'macaco') this._updateMacaco(animal);
       else if (animal.type === 'onca') this._updateOnca(animal);
       else this._updateQuad(animal, dt);
+      this._projectSupport(animal);
       animal.mixer?.update(dt);
     }
   }
@@ -564,6 +573,16 @@ class FavelaAmbience {
     return false;
   }
 
+  _supportY(animal, x, z) {
+    const y = animal.heightAt(x, z);
+    if (!Number.isFinite(y)) throw new RangeError('ambient_height_at');
+    return y;
+  }
+
+  _projectSupport(animal) {
+    if (animal.heightAt) animal.root.position.y = this._supportY(animal, animal.root.position.x, animal.root.position.z);
+  }
+
   _updateQuad(animal, dt) {
     const speed = animal.speed || QUAD_SPEED[animal.type] || QUAD_SPEED.dog;
     if (this.time < animal.alertUntil) {
@@ -598,6 +617,9 @@ class FavelaAmbience {
       moving = span > .05;
       direction = animal.origin.clone().sub(animal.to);
     }
+    /* rotina apoiada ANTES do recovery: lerp linear persegue para sempre o Y
+       interpolado quando o terreno é não linear em XZ */
+    if (animal.heightAt) animal.routine.y = this._supportY(animal, animal.routine.x, animal.routine.z);
     const recovering = animal.turnRate && animal.alertUntil > 0
       ? this._recoverCuratedQuad(animal, animal.routine, direction, speed.walk, dt)
       : this._recoverToRoute(animal, animal.routine, 2);
