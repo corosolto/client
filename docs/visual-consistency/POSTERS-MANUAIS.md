@@ -2,6 +2,14 @@
 
 Gate: `node tools/eval/manual-poster-placement-check.mjs` (mapas `praca_poderes`, `posto_treta`).
 
+Praça também é medida em default, `?bigscale=0` e `?minsq=0`, com geometria real
+do ministério: quatro arquivos originais, uma posição por arquivo e dois cartazes
+por lado. Essa cobertura adicional cobra inventário, unicidade e forma/nome;
+não aprova suporte ou overlap no small, que ainda conserva o afastamento legado
+de0,3m. Os checks completos de suporte/overlap do nominal permanecem separados.
+O fallback sem ministério é medido antes de carregar a fixture: zero cartazes
+significa ausência de geometria, sem aceite de arte ou inventário vazio verde.
+
 ## Contrato
 - **CONTAGEM_MANUAL** — mínimo 4 cartazes na Praça, 1 outdoor no Posto.
 - **NOME_CANONICO** — mesh nomeada `poster:<arquivo>`; é assim que o `graffiti_pass`
@@ -42,6 +50,7 @@ Gate: `node tools/eval/manual-poster-placement-check.mjs` (mapas `praca_poderes`
 | `sobreposto` | teleporta um cartaz de Praça sobre outro; a re-coleta mede o novo plano | `SEM_OVERLAP` |
 | `peca-encolhida` | acrescenta no metadata produtor um bake do mesmo arquivo/centro com w/h menores | `SEM_OVERLAP` |
 | `material-escondido` | esconde o material dos cartazes manuais da Praça e re-coleta a cena | `CONTAGEM_MANUAL` |
+| `modulo-ministerios` | reintroduz na fonte a seleção por módulo; o small volta a desenhar8cartazes com arquivos repetidos | `UNICO_ARQUIVO` |
 
 Mutante que não aplica (throw), que passa verde ou desconhecido → exit 1. Sem
 `--mutante`, baseline: VERDE exit 0, reprovações exit 1. Opção não reconhecida,
@@ -56,3 +65,9 @@ sobreviver; remover material.visible deixou `material-escondido` sobreviver.
 Ambos falharam por `PASSOU VERDE`, sem precondição circular de coleta. As guardas
 de aplicação conferem o estado físico mutado antes do aceite. Fotos reais e bake
 final ainda pendentes nesta conferência.
+
+Rodada R88 de01/11: antes, small com8cartazes e quatro arquivos duplicados;
+depois, quatro artes únicas e balanço2/2 nas três queries. Descritores default
+e minsq0 permaneceram exatos. O mutante de fonte reproduziu os seis REDs do
+small, e o controle herdado arte-repetida continuou detectado. São provas Node22
+com imagens da fixture representadas por metadata, sem aprovação visual.

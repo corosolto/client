@@ -1201,7 +1201,10 @@ export function buildBrasilia(scene, T) {
       const fy = Math.min(bb.max.y - H / 2 - 0.4, 3.5);
       addPlane(H * A, H, lam({ map: imgs[ti], side: THREE.DoubleSide }), fx, fy, cz, lane > 0 ? Math.PI / 2 : -Math.PI / 2).name = nome;
     };
-    ministries.forEach((b, i) => putPoster(b, ARQUIVOS[i % ARQUIVOS.length]));
+    const limite = Math.min(ARQUIVOS.length, ministries.length);
+    for (let i = 0; i < limite; i++) {
+      putPoster(ministries[Math.floor(i * ministries.length / limite)], ARQUIVOS[i]);
+    }
 
     /* ---------------- DECALQUE DE RUA nas fachadas dos ministérios ----------------
        Pedido do dono (04/08): aplicar os 179 recortes de `public/img/decals` "na textura de
