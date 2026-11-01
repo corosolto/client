@@ -16,6 +16,7 @@ import { LAJES_AMBIENCE } from '../public/js/map_lajes_authored.js';
 import { createFavelaAmbience } from '../public/js/ambientlife.js';
 import { makeContactShadow } from '../public/js/contact-shadow.js';
 import { aguardarPreloads } from '../public/js/game.js';
+import { ehMapaJavaporcos } from '../public/js/maps.js';
 import { mapPropIds } from '../public/js/mapprops.js';
 import { snapshotPublicJs, startBootOrigin } from '../tools/eval/boot-network-origin.mjs';
 import { somaCargas, chaveDeCarga, JS_EXCLUSOS } from '../tools/eval/boot-overlay.mjs';
@@ -73,7 +74,7 @@ function mobileCalls(map,{source=main,ambientSource=ambient,next=false,mobileAut
  const calls=[],errors=[];
  const noop=()=>Promise.resolve();
  const context=vm.createContext({console:{error:(...a)=>errors.push(a),warn:(...a)=>errors.push(a)},Promise,Set,Math,
-  MAPS,mapPropIds,aguardarPreloads,playerKnifeSkinId:null,playerGloveId:null,MAP_PROPS:[],MOBILE_AUTO:mobileAuto,POINTER_COARSE:true,_vmStartWeapon:'ak',_armasDaPartida:['ak'],navOnly:false,_charsToLoad:[],matchSkins:[],matchEyewear:[],playerWeaponSkins:{},mapaPartida:map,
+  MAPS,ehMapaJavaporcos,currentMap:Object.keys(MAPS).find(id=>MAPS[id]===map),mapPropIds,aguardarPreloads,playerKnifeSkinId:null,playerGloveId:null,MAP_PROPS:[],MOBILE_AUTO:mobileAuto,POINTER_COARSE:true,_vmStartWeapon:'ak',_armasDaPartida:['ak'],navOnly:false,_charsToLoad:[],matchSkins:[],matchEyewear:[],playerWeaponSkins:{},mapaPartida:map,
   preloadAmbientLife:ids=>{calls.push([...ids]);return Promise.resolve();},
   preloadCharacterAssets:noop,preloadCosmeticAssets:noop,preloadEyewearAssets:noop,preloadWeaponSkinCandidate:noop,preloadMapProps:noop,preloadFPArms:noop,preloadAuthoredFamilies:noop,authoredBootFamilies:()=>[],sfx:{preloadWeaponSamples:noop},
   planoPreload:()=>({mapId:Object.keys(MAPS).find(id=>MAPS[id]===map),chars:[],weapons:[]}),GLB_CHARS:[],WEAPON_IDS:[],tr:x=>x,$:()=>null,LANG:'pt',textoProximo:()=>'',segundosAteVirada:()=>0,mpPararContagemProximo(){},mpContagemProximo:null,setInterval:()=>1,clearInterval(){},charWeapon:()=> 'ak',currentChar:'barbudo',comMapaCarregado:(_id,fn)=>Promise.resolve(fn(map)),defineSeedHavan:()=>Promise.resolve(map)});
