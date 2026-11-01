@@ -1,0 +1,47 @@
+{
+  "schema": "surface-floor-uv-baseline/1",
+  "sourceRef": "9414b56cedcdc80383becb448b6fc621ab6a3339",
+  "sourcePins": [
+    {
+      "path": "public/js/map_escadao.js",
+      "baseRef": "9414b56cedcdc80383becb448b6fc621ab6a3339",
+      "sha256": "12f335ddd372441d77540da3f7ca3201f319d34993efa00d211c7786e5ae71eb"
+    },
+    {
+      "path": "public/js/map_quebrada.js",
+      "baseRef": "9414b56cedcdc80383becb448b6fc621ab6a3339",
+      "sha256": "549f2abd8ac3cbc643988c6d82a9bdf0be918284bc578556e1a625269564e146"
+    }
+  ],
+  "method": "Actual MAPS builders/harness, deterministic RNG1153; TextureLoader boundary delayed; no renderer/GLB/pixel approval. Hash excludes only the UV attributes of the three identified private floors.",
+  "expected": {
+    "quebrada": {
+      "fallback": {
+        "nonTargetUVGeometryAndMaterials": "d83f73572d6034188b65bc54b508a0a51425a6ad63383bf0f8531cefbb885908",
+        "contracts": "580faf1784fb521e84bf6239acc4ab60a519416fffffe8b21a8ab9ae35c867fd",
+        "sharedGroundTextures": "018cc4fb3a4aa4c65e413052cb994f576b44a538bfc886fa7a925d1cc6846b6d",
+        "nextRandom": 0.802038204157725
+      }
+    },
+    "escadao": {
+      "fallback": {
+        "nonTargetUVGeometryAndMaterials": "6bdb89e57607292afffcab787ff69ca858138346352df115bc2c944e7a0cb46a",
+        "contracts": "1abf68cb19f71bda2c4e773b5bf214dbd4e15443f50ff9dee09130f1103fd390",
+        "sharedGroundTextures": "018cc4fb3a4aa4c65e413052cb994f576b44a538bfc886fa7a925d1cc6846b6d",
+        "nextRandom": 0.31686190073378384
+      },
+      "external": {
+        "nonTargetUVGeometryAndMaterials": "02c56b333b4a1f6eec258622e9bcaab10b40a82e38c6e058098bef9c086e4728",
+        "contracts": "1abf68cb19f71bda2c4e773b5bf214dbd4e15443f50ff9dee09130f1103fd390",
+        "sharedGroundTextures": "018cc4fb3a4aa4c65e413052cb994f576b44a538bfc886fa7a925d1cc6846b6d",
+        "nextRandom": 0.31686190073378384
+      },
+      "changedSampler": {
+        "nonTargetUVGeometryAndMaterials": "b269eafb447f3bdcf9627d95cfcf02c0dbd0cb3c0a27a5da75a9cdb2ad00080d",
+        "contracts": "1abf68cb19f71bda2c4e773b5bf214dbd4e15443f50ff9dee09130f1103fd390",
+        "sharedGroundTextures": "018cc4fb3a4aa4c65e413052cb994f576b44a538bfc886fa7a925d1cc6846b6d",
+        "nextRandom": 0.31686190073378384
+      }
+    }
+  }
+}
