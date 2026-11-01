@@ -35,7 +35,7 @@ Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
   peças de sub-bosque, cipó e capim. A faixa de 54 a 63 m é explorável, com colisor por tronco;
   o limite externo de 63 a 68 m fecha a arena.
 - **Entradas:** seis frentes nos quatro lados (norte, leste, sul e oeste). Cada uma é uma trilha de 3,5 m que
-  entra na mata, DOBRA e morre numa clareira de 3 m de raio; o resto da mata é fechado.
+  entra na mata, DOBRA e morre numa clareira de 3 m de raio.
 - **Becos:** 4, um por lado, de 2,5 m entre fundos de casa, do anel perimetral à viela.
 - **Relevo:** pasto subindo 0,45 m até a mata, barranco de 2,6 m até o platô, córrego de
   1,1 m de corte no pasto norte com aterro na trilha, calçada a 0,15 m e soleira de loja a

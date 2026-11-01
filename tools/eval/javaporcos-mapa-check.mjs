@@ -128,7 +128,7 @@ const PEN_MAX = 0.30;        // penetração máxima da sonda vertical (MAP1 do 
 /* 64 m: a clareira mais funda fica a 62,6 m do centro (59,6 + raio 3,0), e a borda do
    mapa está em 68. Entre 62,6 e 68 sobram 5,4 m de mata que ninguém atravessa. */
 const LIMITE_ESCAPE = 64;
-const CIDADE_R = 36, MATA_R = 54, V_SONDA_PAREDE = 63.8;   // 0,4 m dentro do começo da parede (54,6)
+const CIDADE_R = 36, MATA_R = 54, V_SONDA_PAREDE = 63.8;   // sonda na parede que começa em 63 m
 const SEED = 13007;
 let falhas = 0;
 const relatorio = {};

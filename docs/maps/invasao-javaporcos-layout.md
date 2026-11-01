@@ -23,8 +23,8 @@ fica a 62,6 m; MATA1 mantém 5,4 m de mata fechada entre clareira e borda.
 | --- | --- |
 | 0 a 36 | cidade: avenida em cruz, vielas em ±22, anel perimetral de terra 31,5–36 |
 | 36 a 54 | pasto: sobe 0,45 m em rampa ondulada; cerca a 37,2; córrego no lado norte |
-| 53,4 a 54,6 | orla: primeira fileira de árvore, com colisor por tronco |
-| 54,6 a 68 | parede de mata: colisor em colunas de 0,5 m, aberto só nas trilhas |
+| 53,4 a 63 | orla e mata explorável, com colisor por tronco |
+| 63 a 68 | parede de mata: colisor em colunas de 0,5 m, aberto só nas trilhas |
 
 ## Cotas do relevo
 
@@ -51,7 +51,7 @@ Em `public/js/map_javaporcos_mata.js`.
 
 | constante | valor | o que decide |
 | --- | --- | --- |
-| `V_ANDAVEL` / `V_PAREDE0` | 54,6 m | 0,6 m de orla caminhável; dali para fora é parede. |
+| `V_ANDAVEL` / `V_PAREDE0` | 63 m | 9 m de mata explorável a partir de `MATA_R`; dali para fora é parede. |
 | `V_PAREDE1` | 68 m | a parede vai até a borda. |
 | `COLUNA` | 0,5 m | coluna de parede. Com 2,5 m a coluna vizinha da trilha caía inteira e deixava bolsões de 5 m entre troncos: a MATA3 mediu 9 arcos abertos onde devia haver 3. |
 | corrida mínima | 0,5 m | trecho de parede menor que 1,4 m era descartado e virava furo ao lado da curva da trilha. |
