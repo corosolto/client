@@ -61,15 +61,15 @@ chk('SC3', nomes[0] === corpo.name, `primeira peça (a que leva o decalque) = ${
 chk('SC4', !nomes.includes('parafuso_do_corpo'), 'malha que já é filha do corpo não é pintada de novo');
 
 const game = readFileSync(new URL('../../public/js/game.js', import.meta.url), 'utf8');
-chk('SC5', /buildCharacterModel\(def, \{ weaponId: w, weaponSkinId: skinTP \}\)/.test(game)
+chk('SC5', /buildCharacterModel\(def, \{ weaponId: w, weaponSkinId: skinTP(?:, gloveSkinId: this\.playerGloveId)? \}\)/.test(game)
   && /QS\.get\('skin3p'\)/.test(game),
 'corpo de 3ª pessoa recebe a skin equipada, com kill-switch ?skin3p=0');
 
 const skins = readFileSync(new URL('../../public/js/weapon-skins.js', import.meta.url), 'utf8');
-const assinatura = /applyWeaponSkinCandidate\(model, weaponId, skinId, \{ marcas = true \} = \{\}\)/.test(skins);
+const assinatura = /applyWeaponSkinCandidate\(model, weaponId, skinId, \{ marcas = true(?:, knifeContext = null)? \} = \{\}\)/.test(skins);
 const marcaCondicional = MUTANTE === 'marca-em-tudo'
   ? /attachSkinMark\(model, weaponId, skinId\);/.test(skins) && false
-  : /if \(marcas\) attachSkinMark\(model, weaponId, skinId\);/.test(skins);
+  : /if \(marcas\) attachSkinMark\(model, weaponId, skinId(?:, knifeContext)?\);/.test(skins);
 chk('SC6', assinatura && marcaCondicional, `assinatura com marcas=${assinatura}, marca condicional=${marcaCondicional}`);
 if (MUTANTE === 'marca-em-tudo') chk('SC3', false, 'mutante: decalque em toda peça duplicaria o selo');
 

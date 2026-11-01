@@ -11,7 +11,7 @@ import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGroun
 import { detailFor } from './textures.js';
 import { applyLook } from './map_sky.js';
 import { createWater } from './water.js';
-import { createFavelaAmbience, placeFauna, CORREGO_FAUNA_ASSETS } from './ambientlife.js';
+import { createFavelaAmbience, placeFauna } from './ambientlife.js';
 import { createSkyLife, SKY_KITE_ASSET, SKY_HELI_ASSET } from './skylife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
@@ -19,7 +19,7 @@ const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
 export const HALF_X = 24, HALF_Z = 40;
-export const CORREGO_AMBIENCE = CORREGO_FAUNA_ASSETS;   // + jacare/capivara (só este mapa baixa)
+export const CORREGO_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'cockroach', 'escadaoCat', 'sertaoHen', 'jacare', 'capivara']);   // + jacare/capivara (só este mapa baixa)
 const CORREGO_W = 10;         // eixo largo o bastante para dominar a leitura aérea e em FPS
 const CORREGO_X0 = -CORREGO_W / 2, CORREGO_X1 = CORREGO_W / 2;
 
@@ -1825,9 +1825,12 @@ export function buildCorrego(scene, T) {
       { mode: 'ground', pos: [8.2, groundHeightAt(8.2, -15), -15], phase: .6 },
       { mode: 'ground', pos: [6.6, groundHeightAt(6.6, -13.6), -13.6], phase: 1.3 },
     ],
-    /* BUG-57 v2.1 (frente D — só o bloco AMBIENCE): gato da margem + galinha de quintal */
-    cats: [{ pos: [12, groundHeightAt(12, 8), 8], to: [14.5, groundHeightAt(14.5, 10), 10], phase: .9 }],
-    chickens: [{ pos: [10.5, groundHeightAt(10.5, 12), 12], to: [12, groundHeightAt(12, 13.5), 13.5], phase: 2.2 }],
+    cats: [{ assetId: 'escadaoCat', contactShadow: true, turnRate: 6, speed: { walk: .55, flee: 1.5 }, heightAt: groundHeightAt,
+      pos: [12, groundHeightAt(12, 8), 8], to: [12, groundHeightAt(12, 10), 10], phase: .9,
+      fleeArea: { minX: 11.4, maxX: 12.4, minZ: 7.4, maxZ: 10.6 } }],
+    chickens: [{ assetId: 'sertaoHen', contactShadow: true, turnRate: 6, heightAt: groundHeightAt,
+      pos: [10.5, groundHeightAt(10.5, 12), 12], to: [12, groundHeightAt(12, 13.5), 13.5], phase: 2.2,
+      fleeArea: { minX: 10, maxX: 12.5, minZ: 11.5, maxZ: 14 } }],
   });
 
   /* Vida de céu (skylife.js): o córrego não tinha nada acima da linha dos telhados.

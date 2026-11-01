@@ -137,7 +137,11 @@ await pag.goto(`${BASE}/?ui=v3&debug=1&auto=E,esquerdomacho&map=piscina_treta&ar
 await pag.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
 console.log('VMH: partida viva');
 await pag.waitForTimeout(2500);
-await pag.evaluate(() => { document.getElementById('crash-overlay')?.remove(); window.__game.timeLeft = Infinity; });
+await pag.evaluate(() => {
+  document.getElementById('crash-overlay')?.remove();
+  window.__game.timeLeft = Infinity;
+  globalThis.__vmSampleGame = window.__game;
+});
 
 /* A lista golden sai do vmconfig LIDO PELA PÁGINA, não de regex no arquivo: o
    parser à mão já falhou aqui e devolveu zero armas com o arquivo correto.
@@ -179,35 +183,72 @@ if (MOBILE && SEM_FLAGS) {
   }
 }
 
-const linhas = [];
-for (const arma of ALVO) {
-  const r = await pag.evaluate(async (a) => {
-    const g = window.__game;
-    g.player.alive = true; g.player.hp = 100; g.setCamView('first');
+const medirArma = async ({ arma: a, round: roundEsperado }) => {
+    const g = globalThis.__vmSampleGame;
+    let confirmouAlvo = false, round, mortes, killT;
+    const invalida = (fase, equipada = true) => {
+      const p = g?.player;
+      const motivo = !g || window.__game !== g ? 'game-trocado'
+        : g.state !== 'live' || g.paused ? 'estado'
+        : !p?.alive || !Number.isFinite(p.hp) || !(p.hp > 0) ? 'vida'
+        : (roundEsperado !== undefined && g.roundNum !== roundEsperado) || (equipada && g.roundNum !== round) ? 'round'
+        : equipada && g.camView !== 'first' ? 'camera'
+        : equipada && p.weapon !== a ? 'arma-atual' : null;
+      if (!motivo) return null;
+      const morteNova = p && (p.deaths > mortes || (Number.isFinite(p._killT) && p._killT !== killT));
+      return { arma: a, inputInvalid: { fase, motivo, sameGame: window.__game === g,
+        state: g?.state, paused: g?.paused, round: g?.roundNum, roundInicial: round, time: g?.time,
+        alive: p?.alive, hp: p?.hp, weapon: p?.weapon, primary: p?.primary,
+        authoredWeapon: g?.vm?.authored?.weapon, activeKey: g?.vm?.authored?.entry?.()?.key,
+        targetKey: g?.vm?.authored?.entry?.(a)?.key, camView: g?.camView, frames: g?._rafFrames,
+        deaths: p?.deaths, killT: p?._killT, respawnAt: p?.respawnAt,
+        retryable: Boolean(confirmouAlvo && window.__game === g && g.state === 'live'
+          && !g.paused && g.roundNum === round && morteNova && ['vida', 'arma-atual'].includes(motivo)) } };
+    };
+    if (!g || window.__game !== g || g.state !== 'live' || g.paused
+      || (roundEsperado !== undefined && g.roundNum !== roundEsperado)) return invalida('preparacao', false);
+    for (let i = 0; i < 60 && !g.player.alive; i += 1) {
+      await new Promise((r) => setTimeout(r, 120));
+      if (window.__game !== g || g.state !== 'live' || g.paused
+        || (roundEsperado !== undefined && g.roundNum !== roundEsperado)) return invalida('respawn', false);
+    }
+    const antes = invalida('antes-equipar', false);
+    if (antes) return antes;
+    round = g.roundNum; mortes = g.player.deaths; killT = g.player._killT;
+    g.setCamView('first');
     g._switchWeapon(a);
+    const equipada = invalida('pos-equipar');
+    if (equipada) return equipada;
+    confirmouAlvo = true;
     if (a === 'knife') {
       for (let i = 0; i < 60 && !g.vm.melee?.active; i += 1) {
         await new Promise((r2) => setTimeout(r2, 120));
+        const inv = invalida('faca-espera'); if (inv) return inv;
       }
+      const inv = invalida('faca-oraculo'); if (inv) return inv;
       const visivel = (o) => { let v = o.visible; let p = o.parent; while (v && p) { v = p.visible; p = p.parent; } return v; };
       const maos = [];
       g.vm.melee?.scene?.traverse((o) => {
         if (o.isMesh && (Array.isArray(o.material) ? o.material : [o.material])
           .some((m) => /CoroSolto_FP_(?:Hand|Glove|Cloth)/i.test(m?.name || ''))) maos.push(o);
       });
-      return { arma: a, chave: g.vm.melee?.active ? 'melee#knife' : null,
+      return { arma: a, chave: g.vm.melee?.active ? 'melee#knife' : null, ligada: Boolean(g.vm.melee?.active),
         maos: maos.length, visiveis: maos.filter(visivel).length };
     }
     for (let i = 0; i < 60 && !g.vm.authored?.entry?.(a); i += 1) {
       await new Promise((r2) => setTimeout(r2, 120));     // espera o GLB chegar
+      const inv = invalida('entrada-espera'); if (inv) return inv;
     }
     for (let i = 0; i < 120; i += 1) {
       const e = g.vm.authored?.entry?.(a);
       if (!e || (g.vm.authored.state(a) === 'idle' && e.drawTime >= e.drawDuration)) break;
       await new Promise((r2) => setTimeout(r2, 120));
+      const inv = invalida('draw-espera'); if (inv) return inv;
     }
     await new Promise((r2) => setTimeout(r2, 250));
+    const inv = invalida('pre-oraculo'); if (inv) return inv;
     const ent = g.vm.authored?.entry?.(a);
+    const ligada = Boolean(ent && g.vm.authored.weapon === a && ent === g.vm.authored.entry() && ent.mount.visible);
     const visivel = (o) => { let v = o.visible; let p = o.parent; while (v && p) { v = p.visible; p = p.parent; } return v; };
     const maos = ent?.handMeshes || [];
     let emQuadro = false;
@@ -261,16 +302,33 @@ for (const arma of ALVO) {
         if (start && muzzle) rastroPx = Math.hypot((start.x - muzzle.x) * innerWidth / 2, (start.y - muzzle.y) * innerHeight / 2);
       } finally { g._tracer = tracer; g._consultarTiro = consultar; }
     }
-    return { arma: a, chave: ent?.key || null, maos: maos.length, visiveis: maos.filter(visivel).length,
+    const paisVisiveis = maos.length > 0 && maos.every((h) => h.parent && visivel(h.parent));
+    return { arma: a, chave: ent?.key || null, ligada, paisVisiveis, maos: maos.length, visiveis: maos.filter(visivel).length,
       emQuadro, canoEmQuadro, fonteCano, rastroPx, mobile: g.mobile, autorada: g._vmVisibility?.authored, fallback: g._vmVisibility?.fallback };
-  }, arma);
+};
+
+const linhas = [];
+for (const arma of ALVO) {
+  let r, roundInicial;
+  for (let tentativa = 0; tentativa < 2; tentativa += 1) {
+    r = await pag.evaluate(medirArma, { arma, round: roundInicial });
+    if (!r.inputInvalid) break;
+    console.error(`VMH STATE_DRIFT ${JSON.stringify({ arma, tentativa: tentativa + 1, ...r.inputInvalid })}`);
+    if (!r.inputInvalid.retryable) break;
+    roundInicial = r.inputInvalid.roundInicial;
+  }
+  if (r.inputInvalid) {
+    await nav.close();
+    console.error('VMH INPUT INVALIDO — nenhuma asserção ou mutante recebe crédito');
+    process.exit(3);
+  }
   if (FOTOS) {
     const dir = FOTOS;
     fs.mkdirSync(dir, { recursive: true });
     await pag.screenshot({ path: `${dir}/${arma}.png` });
     await pag.screenshot({ path: `${dir}/${arma}-sem-hud.png`, style: '#touch-ui, #hud, #tp-hud, #vm-precision-qa { visibility: hidden !important; }' });
   }
-  const ok = Boolean(r.chave?.includes('#')) && r.visiveis > 0
+  const ok = Boolean(r.chave?.includes('#')) && r.ligada && r.visiveis > 0
     && (arma === 'knife' || (r.autorada && !r.fallback && r.emQuadro && r.canoEmQuadro && r.mobile === MOBILE && r.rastroPx <= 1));
   linhas.push({ ...r, ok });
   console.log(`  ${r.arma.padEnd(10)} ${String(r.chave || 'LEGADO').padEnd(22)} maos ${r.visiveis}/${r.maos} emQuadro=${r.emQuadro} cano=${r.fonteCano}/${r.canoEmQuadro} rastroPx=${r.rastroPx?.toFixed(2)} ${ok ? 'ok' : 'FALHA'}`);
@@ -285,8 +343,9 @@ if (legado.length) console.log(`  caíram no legado: ${legado.join(' ')}`);
 if (semMao.length) console.log(`  autoradas mas SEM mão: ${semMao.join(' ')}`);
 if (erros.length) console.log(`  erros de página: ${[...new Set(erros)].slice(0, 3).join(' | ')}`);
 const ok = nextOk && (['boot-catalogo', 'boot-mp-local'].includes(MUTANTE) ? !bootOk && bons === ALVO.length : MUTANTE ? bootOk && bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave
-  : MUTANTE === 'cano-lateral' ? l.visiveis > 0 && l.emQuadro && l.canoEmQuadro && l.autorada && !l.fallback && l.mobile === MOBILE && Number.isFinite(l.rastroPx) && l.rastroPx > 1
-  : !l.visiveis) : bootOk && bons === ALVO.length);
+  : MUTANTE === 'cano-lateral' ? l.ligada && l.visiveis > 0 && l.emQuadro && l.canoEmQuadro && l.autorada && !l.fallback && l.mobile === MOBILE && Number.isFinite(l.rastroPx) && l.rastroPx > 1
+  : l.ligada && l.paisVisiveis && Boolean(l.chave?.includes('#')) && l.maos > 0
+    && l.autorada && !l.fallback && l.mobile === MOBILE && !l.visiveis) : bootOk && bons === ALVO.length);
 if (MUTANTE) console.log(`  mutante ${MUTANTE}: ${ok ? 'detectado' : 'sobreviveu ou falhou por outro motivo'}`);
 console.log(ok ? (MUTANTE ? '\n  VERDE — regressão provocada detectada\n' : '\n  VERDE — o caminho autorado está ligado\n')
                : '\n  VERMELHO — o jogo não está montando o viewmodel novo\n');

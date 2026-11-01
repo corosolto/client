@@ -77,13 +77,17 @@ for (const nome of ['mpSair', 'mpDesconectou']) {
 // DT2 + DT3: a função real, com o mundo mínimo em volta.
 const fnEnvia = corpo(main, 'function sendTelemetry() {');
 const fnInicio = corpo(main, 'function sendGameStarted() {');
+const fnModo = corpo(main, 'function modoTelemetria(');
 if (!fnEnvia) cobra(false, 'DT2 sendTelemetry() não encontrada — a régua não sabe medir');
+else if ((fnEnvia.includes('modoTelemetria(') || fnInicio?.includes('modoTelemetria(')) && !fnModo)
+  cobra(false, 'DT3 emissor chama modoTelemetria sem helper real extraído');
 else {
   const mundo = new Function('mundo', `
     let { testMode, game, telemetrySent, currentMap, matchMode, registeredNick, telemetryGameContext, _matchEventId } = mundo;
     const getAnonId = () => '11111111-1111-4111-8111-111111111111';
     const analyticsAllowed = () => mundo.analyticsConsent;
     const sendJsonKeepalive = (rota, payload) => mundo.envios.push({ rota, payload });
+    ${fnModo || ''}
     ${fnEnvia}
     ${fnInicio || 'function sendGameStarted() {}'}
     return { sendTelemetry, sendGameStarted, novaPartida() { telemetrySent = false; } };

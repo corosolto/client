@@ -1610,6 +1610,10 @@ function sendJsonKeepalive(path, payload) {
     return true;
   } catch { return false; }
 }
+function modoTelemetria(g) {
+  if (g?.arena) return 'arena';
+  return g?.ctf ? 'ctf' : 'rounds';
+}
 let telemetrySent = true;
 function sendTelemetry() {
   if (!analyticsAllowed()) return;
@@ -1619,7 +1623,7 @@ function sendTelemetry() {
   const payload = {
     anonId: getAnonId(),
     map: g._mapId || currentMap,
-    mode: g.ctf ? 'ctf' : 'rounds',
+    mode: modoTelemetria(g),
     seconds: Math.round(g.time || 0),
     rounds: (g.roundsWon?.E || 0) + (g.roundsWon?.B || 0),
     nick: registeredNick || null,
@@ -1632,7 +1636,7 @@ function sendGameStarted() {
   if (!analyticsAllowed()) return;
   if (testMode || !game) return;
   sendJsonKeepalive('/api/telemetry', {
-    anonId: getAnonId(), map: game._mapId || currentMap, mode: game.ctf ? 'ctf' : 'rounds',
+    anonId: getAnonId(), map: game._mapId || currentMap, mode: modoTelemetria(game),
     nick: registeredNick || null,
     event: 'game_started', gameType: telemetryGameContext.gameType, matchEventId: _matchEventId,
   });
@@ -1859,7 +1863,7 @@ function sendMatchEvent(result) {
     anonId: getAnonId(),
     sessionId: getSessionId(), eventId: _matchEventId, version: versaoComOrigem(VERSION),
     ...telemetryGameContext, ...sinaisDeBuild(),
-    map: currentMap, mode: matchMode === 'ctf' ? 'ctf' : 'rounds',
+    map: currentMap, mode: modoTelemetria(g),
     character: currentChar, team: g.playerTeam,
     faction: g.playerFaction || currentFaction,
     result: result || 'quit',
@@ -2148,6 +2152,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
         preloadCosmeticAssets(matchSkins),
         preloadEyewearAssets(matchEyewear),
+        playerGloveId ? preloadGloveAssets([charId]) : null,
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
         playerKnifeSkinId ? preloadWeaponSkinCandidate(playerKnifeSkinId) : null,
         sfx.preloadWeaponSamples(_armasDaPartida),
