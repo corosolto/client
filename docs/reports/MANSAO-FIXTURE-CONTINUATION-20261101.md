@@ -39,3 +39,39 @@ O autor refutou F1 como defeito introduzido: assert de hash e saída1 já existi
 ## Próximo passo
 
 Root deve revisar o checkpoint completo com Native independente. O alias agregado Node22 continua exit1 no contrato herdado de rótulo do teste de carga (passos1-3 passam; passos5-11 UNRUN), sem alterar aquele arquivo nesta frente. Sem push/GH/browser/produto/asset. A branch isolada e o relatório externo registram o checkpoint DCO/Agent; nada nesta frente aprova visual, MP ou release.
+
+## Continuação Root R651/R655/R657/R664
+
+Root ampliou a frente para os dois instrumentos herdados seguintes, mantendo
+mapa, física, assets e predicados numéricos intactos. R651 reproduziu o rótulo
+TME/TMB antigo; botsim fixa jogadorE e o produtor Game imprime E/B. O matcher
+agora exige a linha completa com os tamanhos reais e pedidos correspondentes.
+Carga5×5/8×8 passou; times-fixos continua RED1 por placar incorreto.
+
+A primeira cadeia pós-rótulo passou quatro passos e parou por dependência local
+@gltf-transform/core ausente (INFRA, sem crédito de produto). npm ci normal em
+Node22.23.4 resolveu a instalação. R655 então passou cinco passos e encontrou
+G4 do jardim: o matcher reconhecia PB.add e ignorava PB_FOLHAS.add real.
+R657 leu produtor/fábrica, carregou os oito GLBs locais reais em CPU e comprovou
+os dois lotes e a publicação de todas as espécies. Remover o template heliconia
+impede seu add/build; remover todos os usos de cada espécie produz exatamente
+uma ausência nos oito controles. Os cinco comandos restantes também passaram
+individualmente. Nenhuma alteração de produto foi necessária.
+
+A consulta GLM R657 propôs reconhecer o segundo lote. Root leu a resposta inteira
+e rejeitou o alias genérico PB[A-Z_]* e o mínimo arbitrário de duas ocorrências;
+foram preservados os limites existentes. A sugestão de que carga não foi medida
+contradiz JOA CARGA no log; contagens imprecisas do modelo não foram adotadas.
+O reparo aceita somente PB e PB_FOLHAS, mantendo preload e disco/material.
+
+R664: jardim nominal passou; jardim-primitivo saiu RED1 somente em G4/preload.
+O controller esperava incorretamente DETECTED/0 e marcou expected:false; o recibo
+original foi preservado. A adjudicação R666 fixa o exit e failset reais conforme
+o footer do instrumento, sem transformar erro de protocolo em detecção.
+A cadeia oficial completa eval:mansao finalmente passou em Node22.23.4, todos
+os onze comandos, em39,356s. Recibos externos R651/R655/R657/R664/R666 em
+`audits/2026-10-31-visual-consistency/` na raiz agregadora.
+
+Próximo: crítica Native independente dos cinco paths atuais e publicação normal
+sobre Lajes. O alias verde é técnico; não concede aprovação visual, browser,
+mobile físico, MP ou release. A missão integral e os owners continuam preservados.
