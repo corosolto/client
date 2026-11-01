@@ -9,8 +9,8 @@
    com Math.random semeado, e grava a pose a cada 10 ticks. `--write` grava o baseline;
    sem flag, compara contra ele e reprova em qualquer divergência acima de 1e-6.
 
-   A régua só vale se ela MORDE: `--mutar=<n>` injeta uma mudança minúscula na física
-   (accel do chão 92 -> 92+n). Com n pequeno a trajetória tem que divergir mesmo assim. */
+   A régua só vale se ela MORDE: `--mutar=<n>` injeta uma mudança na aceleração física.
+   Com n pequeno a trajetória tem que divergir mesmo assim; o baseline vigente usa 48 m/s². */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,7 +20,22 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const BASELINE = path.join(HERE, 'movimento-golden.json');
 const args = process.argv.slice(2);
 const WRITE = args.includes('--write');
-const MUT = Number((args.find((a) => a.startsWith('--mutar=')) || '').split('=')[1] || 0);
+const mutArg = args.find((a) => a.startsWith('--mutar='));
+let MUT = 0;
+if (mutArg) {
+  MUT = Number(mutArg.slice(8));
+  if (!Number.isFinite(MUT) || MUT === 0) {
+    console.error(`[movimento-golden] --mutar=<n> exige número finito não nulo (recebi "${mutArg.slice(8)}")`);
+    process.exit(2);
+  }
+}
+const MUTANTES_COMPARACAO = ['truncado', 'caso-extra', 'nao-finito'];
+const MUTANTE = (args.find((a) => a.startsWith('--mutante=')) || '').slice(10) || null;
+if (MUTANTE && !MUTANTES_COMPARACAO.includes(MUTANTE)) {
+  console.error(`[movimento-golden] mutante desconhecido: ${MUTANTE} (válido: ${MUTANTES_COMPARACAO.join(', ')})`);
+  process.exit(2);
+}
+if (MUTANTE && WRITE) { console.error('[movimento-golden] --mutante com --write: baseline não é gravado sob mutante'); process.exit(2); }
 
 // Roteiro de teclas: cobre andar, strafe, counter-strafe, correr, agachar, pular e parar.
 // Cada entrada é [até que tick, teclas].
@@ -42,6 +57,8 @@ const POS0 = {
   praca_poderes: [-8.999258, 0, 61.568891],
   piscinao_ramos: [-9.123785, 0, 62.462876],
 };
+/* piscinao_ramos é chave legada: resolve para a Praça; os casos usam seeds/POS0 distintos.
+   Este golden cobre um mapa efetivo, sem alegar cobertura do Piscinão fora do registro. */
 
 function rodar(mapId, seed) {
   seedRandom(seed);
@@ -84,9 +101,16 @@ function rodar(mapId, seed) {
 }
 
 const TEX = initTextures();
-const CASOS = [['praca_poderes', 12345], ['piscinao_ramos', 777]];
+const CASOS = [['praca_poderes', 12345], ['piscinao_ramos', 777]];   // caso 2: legado, efetivo Praça (fallback DEFAULT_MAP)
 const atual = {};
 for (const [mapId, seed] of CASOS) atual[`${mapId}#${seed}`] = rodar(mapId, seed);
+// Mutantes causais da COMPARAÇÃO: mutam `atual` em memória — o baseline em disco nunca é regravado.
+if (MUTANTE) {
+  const k1 = Object.keys(atual)[0];
+  if (MUTANTE === 'truncado') atual[k1] = atual[k1].slice(0, Math.ceil(atual[k1].length / 2));
+  else if (MUTANTE === 'caso-extra') atual[`st-${k1}`] = atual[k1].slice();
+  else atual[k1][atual[k1].length - 1][2] = NaN;
+}
 
 if (WRITE) {
   fs.writeFileSync(BASELINE, JSON.stringify(atual, null, 1));
@@ -100,19 +124,41 @@ let falhas = 0;
    o caso inteiro no 13º erro: `praca_poderes` sozinho gastava a cota, e `piscinao_ramos`
    aparecia com UMA divergência quando na verdade divergia nas 36 amostras. Régua que
    mente sobre o escopo do estrago custou meia hora de diagnóstico. */
+const COLS = 8;
+for (const k of Object.keys(atual)) if (!(k in base)) {
+  console.error(`[movimento-golden] caso sem baseline (rode --write): ${k}`);
+  falhas++;
+}
 for (const k of Object.keys(base)) {
   const a = base[k], b = atual[k];
   if (!b) { console.error(`[movimento-golden] caso sumiu: ${k}`); falhas++; continue; }
-  let doCaso = 0, impressas = 0;
-  for (let i = 0; i < a.length; i++) {
-    for (let j = 0; j < a[i].length; j++) {
-      if (Math.abs(a[i][j] - b[i][j]) > 1e-6) {
-        doCaso++; falhas++;
-        if (impressas < 6) { console.error(`[movimento-golden] ${k} amostra ${i} campo ${j}: ${a[i][j]} -> ${b[i][j]}`); impressas++; }
+  if (!Array.isArray(b) || b.length !== a.length) {
+    console.error(`[movimento-golden] ${k}: comprimento de amostras divergiu — baseline ${a.length}, atual ${Array.isArray(b) ? b.length : 'ausente'}`);
+    falhas++;
+    continue;
+  }
+  let doCaso = 0, impressas = 0, abortou = false;
+  const acusa = (msg) => {
+    doCaso++; falhas++;
+    if (impressas < 6) { console.error(`[movimento-golden] ${k} ${msg}`); impressas++; }
+  };
+  for (let i = 0; i < a.length && !abortou; i++) {
+    const ra = a[i], rb = b[i];
+    if (!Array.isArray(ra) || !Array.isArray(rb) || ra.length !== COLS || rb.length !== COLS) {
+      console.error(`[movimento-golden] ${k} amostra ${i}: linha com ${Array.isArray(ra) ? ra.length : '?'}×${Array.isArray(rb) ? rb.length : '?'} campos (exige ${COLS})`);
+      falhas++; abortou = true; break;
+    }
+    for (let j = 0; j < COLS; j++) {
+      const va = ra[j], vb = rb[j];
+      if (!Number.isFinite(va) || !Number.isFinite(vb)) {
+        falhas++; doCaso++;
+        console.error(`[movimento-golden] ${k} amostra ${i} campo ${j}: valor não finito (${va} -> ${vb})`);
+        continue;
       }
+      if (Math.abs(va - vb) > 1e-6) acusa(`amostra ${i} campo ${j}: ${va} -> ${vb}`);
     }
   }
-  if (doCaso) console.error(`[movimento-golden] ${k}: ${doCaso} divergência(s) em ${a.length} amostras${doCaso > impressas ? ` (${impressas} impressas)` : ''}`);
+  if (doCaso && !abortou) console.error(`[movimento-golden] ${k}: ${doCaso} divergência(s) em ${a.length} amostras${doCaso > impressas ? ` (${impressas} impressas)` : ''}`);
 }
 if (falhas) { console.error(`[movimento-golden] REPROVADO — ${falhas} divergência(s)`); process.exit(1); }
 console.log(`[movimento-golden] OK — ${Object.keys(base).length} casos, trajetória idêntica`);

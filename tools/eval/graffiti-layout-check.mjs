@@ -124,9 +124,9 @@ function avaliar() {
   if (!FP_GRAVADO) {
     falhas.push('F1 layout não tem GRAFITE_FP gravado — rode \'npm run grafite\' para gravar a impressão das entradas');
   } else {
-    if (FP_GRAVADO.pass !== FP_ATUAL.pass) falhas.push(`F1 graffiti_pass.js mudou (${FP_GRAVADO.pass} → ${FP_ATUAL.pass}) e o layout não foi regerado — rode 'npm run grafite'`);
+    if (FP_GRAVADO.pass !== FP_ATUAL.pass) falhas.push(`F1 graffiti_pass.js mudou (${FP_GRAVADO.pass} → ${FP_ATUAL.pass}) e o layout não foi regerado. Se a mudança move parede, assar ('npm run grafite', com o acervo completo) e revisar a diferença de peças; se não move, reassinar sem reassar ('npm run grafite -- --so-impressao --motivo="…"'), que não toca arte aprovada`);
     for (const id of mapasFonte) {
-      if (FP_GRAVADO.maps?.[id] !== FP_ATUAL.maps[id]) falhas.push(`F2 ${id} (map_*.js) mudou (${FP_GRAVADO.maps?.[id]} → ${FP_ATUAL.maps[id]}) e o layout não foi regerado — geometria ou banda velha. Rode 'npm run grafite ${id}'`);
+      if (FP_GRAVADO.maps?.[id] !== FP_ATUAL.maps[id]) falhas.push(`F2 ${id} (map_*.js) mudou (${FP_GRAVADO.maps?.[id]} → ${FP_ATUAL.maps[id]}) e o layout não foi regerado. Se a mudança move parede, assar ('npm run grafite ${id}', com o acervo completo) e revisar a diferença de peças; se não move, reassinar sem reassar ('npm run grafite -- --so-impressao --motivo="…"'), que não toca arte aprovada`);
     }
   }
   return falhas;

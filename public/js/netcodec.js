@@ -176,6 +176,10 @@ export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
       w.u16(q16(ent.x, POS_MIN, POS_MAX)); w.u16(q16(ent.y, ALT_MIN, ALT_MAX)); w.u16(q16(ent.z, POS_MIN, POS_MAX));
       w.u16(qAng(ent.yaw > Math.PI || ent.yaw < -Math.PI ? Math.atan2(Math.sin(ent.yaw), Math.cos(ent.yaw)) : ent.yaw, Math.PI));
       w.u16(qAng(ent.pitch || 0, Math.PI / 2));
+      if (version >= 7) {
+        const mantle = Number.isFinite(ent.mantleF) ? Math.max(0, Math.min(1, ent.mantleF)) : null;
+        w.u8(mantle == null ? 0 : 1 + Math.round(mantle * 254));
+      }
       w.u8(Math.max(0, Math.min(255, Math.round(Number(ent.hp) || 0)))); w.u8(weapon);
       w.u8(integer(ent.fireN ?? ent.fire ?? 0, 255, 'fire') & 255);
       const vt = ent.voice === 'radio' ? 1 : ent.voice ? 2 : 0;
@@ -243,6 +247,7 @@ export function decodeSnapshot(data) {
       const id = r.u32(), name = r.str(), flags = r.u8();
       const x = d16(r.u16(), POS_MIN, POS_MAX), y = d16(r.u16(), ALT_MIN, ALT_MAX), z = d16(r.u16(), POS_MIN, POS_MAX);
       const yaw = dAng(r.u16(), Math.PI), pitch = dAng(r.u16(), Math.PI / 2);
+      const mantleByte = version >= 7 ? r.u8() : 0;
       const hp = r.u8(), weaponId = r.u8(), fireN = r.u8(), voiceByte = r.u8();
       const k = r.u16(), d = r.u16(), respawnIn = r.u8() / 10, killedBy = r.str();
       if (weaponId !== 255 && !WEAPON_IDS[weaponId]) throw new RangeError('weapon');
@@ -252,7 +257,8 @@ export function decodeSnapshot(data) {
         x, y, z, yaw, pitch, hp, alive: !!(flags & 4),
         weapon: weaponId === 255 ? null : WEAPON_IDS[weaponId],
         fireN, voice: vt === 1 ? 'radio' : vt === 2 ? 'voice' : 0, voiceN: voiceByte >> 2,
-        k, d, respawnIn, ...(killedBy ? { killedBy } : {}),
+        k, d, respawnIn, ...(mantleByte ? { mantleF: (mantleByte - 1) / 254 } : {}),
+        ...(killedBy ? { killedBy } : {}),
       });
       continue;
     }

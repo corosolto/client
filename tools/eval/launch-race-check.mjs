@@ -106,7 +106,8 @@
    uso: node tools/eval/launch-race-check.mjs [--mutante=<nome>]
      semguarda    arranca a guarda da cauda: o código de alpha.261 de volta
                   -> LR1, LR2 e LR6; a LR1 reproduz a mensagem da issue
-     sempreload   arranca a guarda do preload (o Game zumbi)         -> LR6 e LR7
+     sempreload   arranca a guarda do nascimento (o Game zumbi)     -> LR7
+                  LR6 ainda vê a guarda redundante anterior ao nascimento
      semepoca     `soltarPartida` não invalida mais o lançamento     -> LR1, LR4 e LR7
      semtela      `soltarPartida` não baixa mais a tela de loading   -> LR4 e LR8b
      guardafalsa  guarda com o token vivo e o efeito morto           -> LR1, LR2 e LR7
@@ -255,7 +256,7 @@ function banco() {
       this._requestLock = () => { chamadas.requestLock++; };
     },
     _lstat: { phase: null },
-    renderer: null, textures: null, sfx: null, settings: { bots: 4 },
+    renderer: null, textures: null, sfx: null, settings: { bots: 4 }, economia: false,
     TOUCH: false, makeNetcode: null,
     matchRounds: () => 5,
     recordMatchStats() {},

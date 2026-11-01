@@ -161,8 +161,10 @@
   .tp-modos__fav{opacity:1}
 }
 
-/* Cartão da escalação: o ＋ e o selo ALIADO/INIMIGO sobem para o canto do retrato e deixam o nome livre. */
+/* Cartão da escalação: o ＋ e o selo ALIADO/INIMIGO sobem para o canto do retrato e deixam o nome livre.
+   Em coarse/height520 o VISUAL continua 28 px (não cobre o rosto); o alvo de 44×44 vem do ::after estendido. */
 :root[data-ui="v3"] .hub-roster-pin{top:6px;bottom:auto;right:6px;display:flex;align-items:center;justify-content:center;min-width:28px;min-height:28px;box-sizing:border-box;border-radius:6px}
 :root[data-ui="v3"] .hub-roster-pin[aria-pressed="false"]{background:rgba(9,7,4,.6)}
-@media (max-height:520px),(pointer:coarse){:root[data-ui="v3"] .hub-roster-pin{min-width:44px;min-height:44px}}
+:root[data-ui="v3"] .hub-roster-pin::after{content:'';position:absolute;inset:0;border-radius:6px}
+@media (max-height:520px),(pointer:coarse){:root[data-ui="v3"] .hub-roster-pin{top:8px;right:8px}:root[data-ui="v3"] .hub-roster-pin::after{inset:-9px}}
 :root[data-ui="v3"] .hub-roster-grid span{white-space:normal;text-overflow:clip;line-height:1.1;min-height:2.2em;display:flex;align-items:center;justify-content:center;overflow-wrap:anywhere}
