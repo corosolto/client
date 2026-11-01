@@ -2,6 +2,7 @@
 // Uso: node tools/eval/mutante-semantico-proof.mjs <script> --mutant(e)=<nome da whitelist>
 import {execFile} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
+import {readFileSync} from 'node:fs';
 
 // Whitelist fixa: script -> child local conhecido, tipos semânticos aceitos e cláusula exata por mutante.
 // Cláusula vem daqui, nunca derivada do próprio resultado do child (senão o mutante se auto-atesta).
@@ -25,7 +26,7 @@ const WHITELIST={
     },
   },
   'mutantes-anunciados':{
-    script:'tools/eval/mutantes-anunciados-check.mjs',flag:'--mutante=',types:['ContractViolation'],cases:10,
+    script:'tools/eval/mutantes-anunciados-check.mjs',flag:'--mutante=',types:['ContractViolation'],
     mutants:{'anuncia-fantasma':'MA1','executa-fantasma':'MA2'},
   },
   'grafite-fiel':{
@@ -60,10 +61,14 @@ if(import.meta.url===pathToFileURL(process.argv[1]||'').href){
   const clause=entry&&Object.hasOwn(entry.mutants,name)?entry.mutants[name]:undefined;
   if(!entry||!clause){console.error('uso: node tools/eval/mutante-semantico-proof.mjs <'+Object.keys(WHITELIST).join('|')+'> --mutant(e)=<nome da whitelist>');process.exit(2);}
   const cwd=fileURLToPath(new URL('../../',import.meta.url));
+  const cases=script==='mutantes-anunciados'
+    ? Object.entries(JSON.parse(readFileSync(new URL('../../package.json',import.meta.url),'utf8')).scripts)
+      .filter(([key,value])=>key.startsWith('//')&&/mutantes?:/i.test(String(value))).length+1
+    : entry.cases;
   execFile(process.execPath,[entry.script,entry.flag+name],{cwd,timeout:180000,maxBuffer:8*1024*1024,encoding:'utf8'},(error,stdout,stderr)=>{
     const numericExit=error&&Number.isInteger(error.code);
     const result={status:error?(numericExit?error.code:null):0,signal:error?.signal??null,error:error&&!numericExit?error:null,stdout,stderr};
-    if(aceitaResultado(result,{mutant:name,clause,cases:entry.cases})){console.log('PASS mutante-semantico '+script+' '+name+': cláusula "'+clause+'" reprovou semanticamente');return;}
+    if(aceitaResultado(result,{mutant:name,clause,cases})){console.log('PASS mutante-semantico '+script+' '+name+': cláusula "'+clause+'" reprovou semanticamente');return;}
     console.error('RED mutante-semantico '+script+' '+name+': falso-verde recusado (setup/crash) ou mutante não aplicou');
     process.exitCode=1;
   });

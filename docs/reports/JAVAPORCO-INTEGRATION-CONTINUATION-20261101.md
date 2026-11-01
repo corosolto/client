@@ -142,3 +142,30 @@ anunciarem e negociarem8 com CLIENT_REF publicado pareado. BackendAPI/SQL, CI,
 revisão formal/whole e Game/Ego3:2/mobile/MP continuam gates distintos. O reparo
 de retry das luvas1208 está em andamento noutra WT, com recuperação focal verde;
 não foi importado silenciosamente nesta composição. Missão completa permanece.
+
+
+## R880 — metadata e censo depois do push R868
+
+R868 terminou sem publicação:106/111 gates, exit1,874.356s. Cinco bloqueios:
+bootorcamento404 de imagem inédita no BASE de produção; matrix gerada com links
+antigos; dois cabeçalhos de mutantes divergentes; duas fixtures de boot legadas
+(skin-profile-flow falso F4 RED e tp-identity INFRA introAbort). Nenhum desses
+resultados aprova/reprova arte ou o runtime Game em navegador.
+
+Root corrigiu só os dois cabeçalhos para os nomes já executados, regenerou a
+matrix pelo gerador (somente dois números de linha) e removeu o censo fixo10 do
+wrapper semântico. Agora o pai lê o catálogo package e soma um cabeçalho injetado,
+antes de executar o filho; não usa report.cases para definir o esperado. Mantém
+cláusulas/tipos/exit/setup/crash e os controles negativos existentes. A primeira
+execução após metadata passou nominal15 e falhou no wrapper com esperado10;
+com censo derivado, eval:weapon-matrix e eval:mutantes-anunciados completos PASS
+(2/2,1.0s), incluindo os dois mutantes reais e controles do wrapper.
+
+Candidato Astro real em http://127.0.0.1:4342, W842, daemon74449 (launcher74398):
+HTML200 e imagem javaporcos-cidade-gpt-20261031.webp200/447778B/SHA exato ao Git.
+Esse BASE ainda NÃO recebeu medição boot; não há intercept/fill/404-exception.
+R877 detém slot headless. R876 owns duas fixtures; R874 checker de callers
+checkpoint668da65413752a0cc2b406232fc6a9fd21fc469f mediu23/11RED12PASS antes de
+qualquer produto. Próximo: adotar fixtures/checker e corrigir callers, depois
+full gate com BASE coerente ao candidato, sem relaxar tetos.
+Missão integral segue ativa; nenhuma publicação/visual/browser/MP/mobile aprovada.
