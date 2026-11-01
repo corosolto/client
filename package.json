@@ -306,7 +306,7 @@
     "eval:analytics": "node tools/eval/player-analytics-check.mjs",
     "eval:telemetrytransport": "node tools/eval/telemetry-transport-check.mjs",
     "eval:online": "node tools/eval/online-counter-check.mjs",
-    "eval:netcodecbin": "node tools/eval/netcodec-check.mjs && node tools/eval/netcodec-mutants-check.mjs",
+    "eval:netcodecbin": "node tools/eval/netcodec-check.mjs && node tools/eval/netcodec-mutants-check.mjs && npm run -s eval:netcodec-v8",
     "eval:assetfetch": "node tools/eval/asset-fetch-check.mjs",
     "eval:vercelbuild": "node tools/eval/vercel-build-check.mjs",
     "eval:movimento": "node tools/eval/movimento-golden.mjs && node tools/eval/movimento-golden-mutants-check.mjs",
@@ -793,7 +793,9 @@
     "eval:sondafilho": "node tools/eval/sonda-filho-check.mjs",
     "//eval:map-fauna-curated": "Acervo Mint usado no mapa: binding, textura, rig e preload mobile; mutantes recusam fallback e fauna removida.",
     "eval:map-fauna-curated": "node --test tests/map-fauna-curated.test.mjs tests/map-fauna-support.test.mjs tests/map-fauna-supported-maps.test.mjs tests/menu-backdrop.test.mjs && for m in fauna-gates stale-map ignore-seq ignore-map no-late-fauna; do ! MENU_BACKDROP_MUTANT=$m node --test tests/menu-backdrop.test.mjs >/dev/null 2>&1 || exit 1; done",
-    "eval:map-fauna-curated:runtime": "node tools/eval/map-fauna-curated-ci.mjs"
+    "eval:map-fauna-curated:runtime": "node tools/eval/map-fauna-curated-ci.mjs",
+    "//eval:netcodec-v8": "Javaporcos usa wire v8 distinto; preserva bytes antigos/default7 e recusa JSON com perda.",
+    "eval:netcodec-v8": "node tools/eval/netcodec-v8-control.mjs"
   },
   "repository": {
     "type": "git",

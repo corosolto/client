@@ -149,14 +149,10 @@ if (codec) {
   const jsonBytes = Buffer.byteLength(JSON.stringify(sample));
   cobra(bin.byteLength < jsonBytes * 0.45,
     `payload binário fica abaixo de 45% do JSON (${bin.byteLength}/${jsonBytes} bytes)`);
-  cobra(codec.SNAPSHOT_PROTOCOLS[0] === 'coro-snapshot-v7'
-      && codec.SNAPSHOT_PROTOCOLS[1] === 'coro-snapshot-v6'
-      && codec.SNAPSHOT_PROTOCOLS[2] === 'coro-snapshot-v5'
-      && codec.SNAPSHOT_PROTOCOLS[3] === 'coro-snapshot-v4'
-      && codec.SNAPSHOT_PROTOCOLS[4] === 'coro-snapshot-v3'
-      && codec.SNAPSHOT_PROTOCOLS[5] === 'coro-snapshot-v2'
-      && codec.SNAPSHOT_PROTOCOLS.includes('coro-json-v1'),
-    'ordem de negociação prefere v7 e preserva fallbacks v6/v5/v4/v3/v2/JSON');
+  cobra(JSON.stringify(codec.SNAPSHOT_PROTOCOLS) === JSON.stringify([
+      'coro-snapshot-v8', 'coro-snapshot-v7', 'coro-snapshot-v6', 'coro-snapshot-v5',
+      'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']),
+    'capacidade do codec inclui v8 e preserva os nomes canônicos v7..v2/JSON');
 
   for (const ruim of [bin.slice(0, 12), new Uint8Array([0, 1, 2, 3]), new Uint8Array(codec.MAX_SNAPSHOT_BYTES + 1)]) {
     let recusou = false; try { codec.decodeSnapshot(ruim); } catch { recusou = true; }

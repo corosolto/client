@@ -42,3 +42,19 @@ compatível. Schema/API verificados, servidor/gateway8 antes do cliente público
 EgoSpace56 ausente e recuperação pendente: sem nova aprovação visual/mobile
 físico/MP humano. Prefixos externos JAVAPORCO-INTEGRATION-R842,
 JAVAPORCO-INTEGRATION-ROUTE-R828, javaporcos-v8-r816-private e R840.
+
+## Codec canônico R850
+
+Adotado candidato privado R816 por hash, mantendo default7 para produtores sem
+negociação explícita e suporte8 separado. Objective/J exigem8. Nome exportado
+CLIENT_SNAPSHOT_PROTOCOL será usado pela oferta do navegador na próxima unidade.
+O catálogo de capacidade8..2/JSON não é a oferta do cliente público.
+Antes:25RED/6PASS; depois:31PASS, incluindo seis hashes wire canônicos e trailer
+medidos no produtor original exato. O primeiro nominal30/31 teve erro do próprio
+instrumento (referência privada staging ausente), rejeitado; corrigido com hash
+do mesmo produtor. Controle default8 perde só o teste correspondente; remover
+guarda−0 perde as12 negativas. Sem INFRA/alteração de bytes no produto pelos mutantes.
+Testes privados384 históricos preservados, sem repetição; nova amostra canônica
+mais o check existente cobrem a adoção/default, sem substituir QA de rede.
+R849 prepara oferta/seleção cliente, R847 assume Room/index/WS/WT/backend em outra
+WT sobre R840cdec. Java055 ainda NÃO merged. Evidência A/JAVAPORCO-CODEC-R850-*.
