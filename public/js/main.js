@@ -1046,7 +1046,11 @@ function syncCompactPreview(def) {
   const selection=pvCompact.matches && $('char-select')?.classList.contains('hidden')===false;
   for(const [imageId,labelId,active] of [['hub-character-portrait','hub-character-equipment',hub],['char-select-portrait','char-select-equipment',selection]]){
     const image=$(imageId),label=$(labelId);if(!image || !label)continue;
-    if(!active){image.dataset.previewKey='';image.dataset.previewToken='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;label.hidden=true;continue;}
+    if(!active){
+      image.dataset.previewKey='';image.dataset.previewToken='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
+      const desktopHub=imageId==='hub-character-portrait' && previewHubVisible();
+      label.textContent=desktopHub?caption:'';label.hidden=!desktopHub || !caption;continue;
+    }
     if(image.dataset.previewKey===key)continue;
     image.dataset.previewKey=key;const my=String(++pvCompactToken);image.dataset.previewToken=my;let fallback=false;
     image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
@@ -1302,6 +1306,7 @@ function pvSetChar(def) {
         if (!luvaNaMao && o.userData?.gloveSkin) luvaNaMao = o.userData.gloveSkin;
       });
       cv.dataset.glb = '1';
+      cv.dataset.skin = m.skinId || '';
       cv.dataset.arma = armaNaMao ? arma.weaponId : '';
       cv.dataset.armaSkin = pinturaNaMao;
       cv.dataset.luva = luvaNaMao;

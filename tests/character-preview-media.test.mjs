@@ -450,3 +450,10 @@ test('causal mutant rejects rendering the previous GLB behind a fallback poster'
  const f=fixture({lean:false,threeD:true,realModel:true,cosmeticAvailable:false,mutate:replace(" && !$('char-preview')?.classList.contains('hidden')",'')});
  f.api.pvSetChar(cyborg);await tick();assert.throws(()=>assert.equal(f.api.previewModelActive(true,false),false));
 });
+
+test('desktop hub keeps equipment identity in the character card without a duplicate portrait request',()=>{
+ const f=fixture({lean:false,threeD:true,realModel:true,screen:'hub'});f.api.pvSetChar(cyborg);
+ const label=f.node('hub-character-equipment');assert.equal(label.hidden,false);assert.match(label.textContent,/Cyborg.*Ouro/);
+ assert.equal(f.node('hub-character-portrait').src,'');
+ f.api.setHubTab('loja');assert.equal(label.hidden,true);
+});

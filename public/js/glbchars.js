@@ -890,7 +890,7 @@ export function buildCharacterModel(def, opts = {}) {
     ctrl.tpMount.pegadaAtiva = true;
     orientTpMount(ctrl.tpMount);
   }
-  return { group, parts: { head }, isGLB: true, mixer, ctrl };
+  return { group, parts: { head }, isGLB: true, mixer, ctrl, skinId: skin ? def.skinId : null };
 }
 
 /* O driver de coreografia (public/js/emotes.js) é injetado, nunca importado aqui:
