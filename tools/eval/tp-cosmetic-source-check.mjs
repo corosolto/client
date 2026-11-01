@@ -39,7 +39,11 @@ async function worker(fixture, mutant) {
   const games = [], tasks = [], targetParts = [];
   let tmp;
   let release = () => {}, calls = 0, gloveCalls = 0, manifestCalls = 0;
-  const deadline = setTimeout(() => { console.error('Cosmetic fixture deadline'); process.exit(3); }, 45000);
+  const deadline = setTimeout(() => {
+    console.error('Cosmetic fixture deadline');
+    try { if (tmp) fs.rmSync(tmp, { recursive: true, force: true }); }
+    finally { process.exit(3); }
+  }, 45000);
   try {
     out.sources = sources();
     const file = u => path.join(ROOT, 'public', new URL(String(u), 'http://fixture/').pathname);
