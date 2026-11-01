@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { assetUrl } from './data/asseturl.js';
+import { makeContactShadow } from './contact-shadow.js';
 
 const loader = new GLTFLoader();
 const templates = new Map();
@@ -372,6 +373,13 @@ class FavelaAmbience {
       object.castShadow = !this.low;
       object.receiveShadow = true;
     });
+    let contactShadow = null;
+    if (config.contactShadow) {
+      const height = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()).y;
+      contactShadow = makeContactShadow(height);
+      contactShadow.name = 'FAUNA_CONTACT_SHADOW';
+      animalRoot.add(contactShadow);
+    }
     this.group.add(animalRoot);
     const clips = loaded?.clips || [];
     let mixer = null;
@@ -400,7 +408,7 @@ class FavelaAmbience {
     this.animals.push({
       id: `${type}-${index}`, type, mode: type === 'pigeon' ? 'ground' : (config.mode || 'ground'), root: animalRoot, model,
       origin, to, speed: config.speed, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
-      source: loaded ? 'gltf' : 'fallback', mixer, actions, action: 'idle', state: 'idle', alertUntil: 0,
+      source: loaded ? 'gltf' : 'fallback', contactShadow, mixer, actions, action: 'idle', state: 'idle', alertUntil: 0,
       alertAt: 0, alertOrigin: origin.clone(), flee: new THREE.Vector3(1, 0, 0),
       routine: origin.clone(), recoverAt: 0, recoverUntil: 0, recoverFrom: origin.clone(),
       calangoGait: 0,
@@ -750,7 +758,10 @@ class FavelaAmbience {
   }
 
   dispose() {
-    for (const animal of this.animals) animal.mixer?.stopAllAction();
+    for (const animal of this.animals) {
+      animal.mixer?.stopAllAction();
+      animal.contactShadow?.material.dispose();
+    }
     this.group.removeFromParent();
   }
 }

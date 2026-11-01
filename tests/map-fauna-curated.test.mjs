@@ -7,6 +7,8 @@ import { THREE, MAPS, initTextures, carregaMapa } from '../tools/eval/harness.mj
 import { auditCuratedFauna } from '../tools/eval/map-fauna-curated.mjs';
 import { ESCADAO_AMBIENCE } from '../public/js/map_escadao.js';
 import { LAJES_AMBIENCE } from '../public/js/map_lajes_authored.js';
+import { createFavelaAmbience } from '../public/js/ambientlife.js';
+import { makeContactShadow } from '../public/js/contact-shadow.js';
 const read=path=>fs.readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const references=JSON.parse(read('tools/eval/map-fauna-curated.json'));
 const ambient=read('public/js/ambientlife.js'),main=read('public/js/main.js');
@@ -61,8 +63,67 @@ test('control mutation restores the mobile next-map skip and fails the caller co
 function validSample(ref){return {map:ref.map,preload:[ref.assetId],animals:[{id:ref.type+'-0',type:ref.type,source:'gltf',assetId:ref.assetId,assetPath:ref.path,speed:ref.speed,actions:{idle:'Idle',walk:'Walk',run:'Run'},meshes:[{materials:[Object.fromEntries(Object.entries(ref.textures).map(([key,size])=>[key,{width:size[0],height:size[1],colorSpace:key==='albedo'?'srgb':''}]))]}],motion:{distance:1,localPoseChanges:1,activeClip:'Walk'}}]};}
 for(const ref of references)test(`${ref.map}: runtime auditor accepts complete evidence and rejects causal corruptions`,()=>{
  const sample=validSample(ref);assert.equal(auditCuratedFauna(sample,references).pass,true);
- const mutations=[['count',s=>s.animals=[]],['source',s=>s.animals[0].source='fallback'],['identity',s=>s.animals[0].assetId='old'],['identity',s=>s.animals[0].assetPath='models/ambient/old.glb'],['preload',s=>s.preload=[]],['materials',s=>s.animals[0].meshes=[]],['texture',s=>s.animals[0].meshes[0].materials[0].albedo=null],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.width=0],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.colorSpace=''],['clips',s=>s.animals[0].actions.walk='Idle'],['motion',s=>s.animals[0].motion.localPoseChanges=0],['motion',s=>s.animals[0].motion.activeClip='Idle'],['motion',s=>s.animals[0].motion.distance=0]];
+ const mutations=[['count',s=>s.animals=[]],['count',s=>s.animals.push(structuredClone(s.animals[0]))],['source',s=>s.animals[0].source='fallback'],['identity',s=>s.animals[0].assetId='old'],['identity',s=>s.animals[0].assetPath='models/ambient/old.glb'],['preload',s=>s.preload=[]],['materials',s=>s.animals[0].meshes=[]],['texture',s=>s.animals[0].meshes[0].materials[0].albedo=null],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.width=0],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.colorSpace=''],['clips',s=>s.animals[0].actions.walk='Idle'],['motion',s=>s.animals[0].motion.localPoseChanges=0],['motion',s=>s.animals[0].motion.activeClip='Idle'],['motion',s=>s.animals[0].motion.distance=0]];
  if(ref.speed)mutations.push(['speed',s=>s.animals[0].speed={walk:1.1,flee:3.6}]);
  for(const [family,mutate] of mutations){const changed=structuredClone(sample);mutate(changed);const audit=auditCuratedFauna(changed,references);assert.equal(audit.pass,false);assert.ok(audit.failures.some(f=>f.family===family),family);}
 });
 test('unknown or unmeasured map is not a visual approval',()=>assert.equal(auditCuratedFauna({map:'unknown',animals:[]},references).pass,false));
+for(const low of [false,true])test(`curated ground fauna keeps a non-hittable contact shadow in ${low?'low':'full'} quality`,()=>{
+ const ambience=createFavelaAmbience(new THREE.Group(),{map:'contact-fixture',low,cats:[{pos:[2,3,4],to:[2,3,5],contactShadow:true}]});
+ const animal=ambience.animals[0],shadow=animal.root.getObjectByName('FAUNA_CONTACT_SHADOW');
+ assert.ok(shadow,'a shadow map cannot resolve contact at this animal scale');
+ assert.equal(shadow.geometry.index.count,6);assert.equal(shadow.material.opacity,.45);
+ assert.equal(shadow.material.depthWrite,false);assert.equal(shadow.userData.noHit,true);
+ const hits=[];shadow.raycast(new THREE.Raycaster(),hits);assert.deepEqual(hits,[]);
+ ambience.update(1/60,null);animal.root.updateMatrixWorld(true);
+ assert.equal(shadow.getWorldPosition(new THREE.Vector3()).y,animal.root.position.y+.02);
+ let disposed=false;shadow.material.addEventListener('dispose',()=>{disposed=true;});ambience.dispose();assert.equal(disposed,true);
+});
+for(const ref of references)test(`${ref.map}/${ref.type} actually opts into contact shading`,()=>{
+ const world=MAPS[ref.map].build(new THREE.Scene(),initTextures());
+ assert.ok(world.ambience.animals.filter(a=>a.type===ref.type).every(a=>a.root.getObjectByName('FAUNA_CONTACT_SHADOW')));world.ambience.dispose();
+});
+
+test('boot budget mutation still moves the actual fauna preload before props',()=>{
+ const gate=read('tools/eval/boot-orcamento-check.mjs'),a=gate.indexOf('const FAUNA_ADIADA ='),b=gate.indexOf('const SPLASH_READY =',a);
+ assert.ok(a>=0&&b>a);const context=vm.createContext({});new vm.Script(gate.slice(a,b)).runInContext(context);
+ const changed=context.faunaCedo(main),call='preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});';
+ const load=source=>source.slice(source.indexOf('async function loadMenuBackdrop()'),source.indexOf('// Rotas compartilhadas'));
+ assert.ok(load(main).indexOf(call)>load(main).indexOf('return propsReady.then'));
+ assert.ok(load(changed).indexOf(call)<load(changed).indexOf('return propsReady.then'));
+ assert.equal(load(changed).split(call).length-1,1);
+});
+
+test('contact shadow omission and lifetime mutations fail the actual controller contract',()=>{
+ for(const [old,value] of [['if (config.contactShadow) {','if (false) {'],['animal.contactShadow?.material.dispose();',';']]){
+  const changed=replaceOnce(ambient,old,value).replace(/^import .+;$/gm,'').replace(/^export /gm,'');
+  const context=vm.createContext({THREE,makeContactShadow,GLTFLoader:class{},skeletonClone:x=>x,assetUrl:x=>x});
+  new vm.Script(changed).runInContext(context);
+  assert.throws(()=>{
+   const ambience=context.createFavelaAmbience(new THREE.Group(),{map:'mutant',cats:[{pos:[0,0,0],contactShadow:true}]});
+   const shadow=ambience.animals[0].root.getObjectByName('FAUNA_CONTACT_SHADOW');assert.ok(shadow);
+   let disposed=false;shadow.material.addEventListener('dispose',()=>{disposed=true;});ambience.dispose();assert.equal(disposed,true);
+  });
+ }
+});
+
+test('actual browser collector sees extra target animals; restoring find is detected',async()=>{
+ const source=read('tools/eval/map-fauna-curated-capture.mjs'),start=source.indexOf('const record=await page.evaluate(')+'const record=await page.evaluate('.length,end=source.indexOf('\n },{map,type});',start);
+ assert.ok(start>0&&end>start);
+ const callback=source.slice(start,end+3).replace("await import('three')",'THREE_STUB').replace("await import('/js/maps.js')",'MAPS_STUB');
+ const ref=references[0];
+ async function collect(code){
+  const root=new THREE.Group(),animals=[0,1].map(i=>{
+   const a={...validSample(ref).animals[0],id:'chicken-'+i,root:new THREE.Group(),model:new THREE.Group(),action:'walk'};
+   const bone=new THREE.Bone();a.model.add(bone);a.root.add(a.model);root.add(a.root);
+   a.root.userData.assetId=ref.assetId;a.root.userData.assetPath=ref.path;
+   a.actions={idle:{getClip:()=>({name:'Idle'})},walk:{getClip:()=>({name:'Walk'}),getEffectiveWeight:()=>1}};return a;
+  });
+  const world={ambience:{animals,update(){for(const a of animals){a.root.position.x+=.01;a.model.children[0].rotation.z+=.01;}},reset(){for(const a of animals)a.root.position.set(0,0,0);}}};
+  const context=vm.createContext({THREE_STUB:THREE,MAPS_STUB:{MAPS},window:{__gworld:world,MAPEVAL:{cam:new THREE.PerspectiveCamera(),view(){}}}});
+  return new vm.Script('('+code+')').runInContext(context)({map:ref.map,type:ref.type});
+ }
+ const actual=await collect(callback);assert.equal(actual.animals.length,2);assert.ok(auditCuratedFauna(actual,references).failures.some(f=>f.family==='count'));
+ const mutant=replaceOnce(callback,'world.ambience.animals.filter(a=>a.type===type)','[world.ambience.animals.find(a=>a.type===type)]');
+ await assert.rejects(async()=>assert.equal((await collect(mutant)).animals.length,2));
+});

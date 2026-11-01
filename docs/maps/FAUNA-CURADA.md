@@ -4,6 +4,8 @@ O Escadão usava `galinha_campo.glb` sem albedo; Lajes usava `cat_telhado.glb` c
 
 As referências em `tools/eval/map-fauna-curated.json` vinculam conceito, mapa, arquivo, hash, registro de origem, canais de textura e cadência do rig. Elas escolhem o material desta rodada; não certificam beleza por quantidade de triângulos. Os GLBs permanecem intactos. O gato mantém caminhada0,55m/s e fuga1,5m/s. As listas dos dois mapas carregam somente espécies instanciadas, incluindo pipas em Lajes. Os outros mapas mantêm sua política anterior.
 
+Os dois animais curados usam a mesma sombra radial de contato dos personagens (`public/js/contact-shadow.js`), com a opacidade e o afastamento do piso já usados no jogo. O diâmetro acompanha a altura normalizada do modelo. Cada sombra acrescenta um plano de dois triângulos, acompanha a raiz e não recebe raycast. Seu material é descartado com a ambiência; textura e geometria compartilhadas permanecem reutilizáveis. A sombra melhora a referência visual de apoio e não certifica contato físico nem corrige o rig.
+
 `npm run eval:map-fauna-curated` confere os builders reais, registros de preload e procedência. Executa os trechos reais de início de partida e pré-carga do próximo mapa para detectar o retorno do skip mobile. Mutações do auditor recusam modelo antigo, fallback, remoção da fauna, textura ausente/não decodificada, clipe ausente e movimento sem deformação local. Os dados sintéticos desses testes exercitam o auditor; não aprovam a qualidade do jogo.
 
 Para medir os GLBs realmente carregados, leia o guia atual com `ego-browser skill`, use a TaskSpace desta tarefa e o servidor real do checkout:

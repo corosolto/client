@@ -95,12 +95,12 @@ function poolAnsioso(corpo) {
 }
 /* Ancorado em NOME, não em número de linha: a ordem do boot já mudou antes e cegou
    régua ancorada em posição. */
-const FAUNA_ADIADA = '      preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});\n';
+const FAUNA_ADIADA = '      preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});\n';
 function faunaCedo(corpo) {
-  if (!corpo.includes(FAUNA_ADIADA)) throw new Error('não achei a chamada adiada de preloadAmbientLife em main.js');
+  if (!corpo.includes(FAUNA_ADIADA)) throw new Error('não achei a chamada adiada de preloadMapAmbientLife em main.js');
   return corpo
     .replace(FAUNA_ADIADA, '')
-    .replace('    return propsReady.then(() => {', `    preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});\n    return propsReady.then(() => {`);
+    .replace('    return propsReady.then(() => {', `    preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});\n    return propsReady.then(() => {`);
 }
 const SPLASH_READY = 'function _splashSetReady() {';
 function instrumentaCausaSplash(corpo) {
