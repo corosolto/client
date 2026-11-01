@@ -657,6 +657,22 @@ export function buildCharacterModel(def, opts = {}) {
   ctrl.shadow = shadow;   // antes do settle loop abaixo (ctrl.update já a atualiza)
   // Arma de 1 mão (pistol/deagle/revolver38/knife): usa idle1h/walk1h quando carregados.
   ctrl.oneHanded = !!(opts.weaponId && ONE_HANDED.has(opts.weaponId));
+  if (opts.preview === true && !skin && withWeapon && def.id === 'esquerdomacho'
+      && opts.weaponId === 'pistol' && lhandBone) {
+    const target = `${lhandBone.name}.quaternion`;
+    const rest = clips.idle1h, idle = clips.idle;
+    const restTracks = rest?.tracks.filter(t => t.name === target) || [];
+    const idleTracks = idle?.tracks.filter(t => t.name === target) || [];
+    const valid = t => t?.getValueSize() === 4 && t.times.length > 0
+      && t.values.length === t.times.length * 4 && t.values.every(Number.isFinite)
+      && t.times.every(Number.isFinite);
+    if (restTracks.length === 1 && idleTracks.length === 1 && valid(restTracks[0]) && valid(idleTracks[0])
+        && Number.isFinite(rest.duration) && rest.duration > 0 && Number.isFinite(idle.duration) && idle.duration > 0) {
+      ctrl._previewFreeHand = { bone: lhandBone, sample: restTracks[0].createInterpolant(),
+        duration: rest.duration, idleDuration: idle.duration,
+        before: new THREE.Quaternion(), target: new THREE.Quaternion(), applied: false };
+    }
+  }
 
   if (handBone && withWeapon) {
     // A pose tem que estar ASSENTADA antes de medir qualquer coisa: o mixer acabou de
@@ -1054,6 +1070,9 @@ class CharController {
   // so the feet plant instead of ice-skating (root-motion-free clips have no built-in
   // stride, so we drive the cycle rate from how fast the body is really moving).
   update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
+    const freeHand = this._previewFreeHand;
+    // Restaura antes do mixer: uma pose idêntica pode não reescrever a propriedade em dt=0.
+    if (freeHand?.applied) { freeHand.bone.quaternion.copy(freeHand.before); freeHand.applied = false; }
     if (!this.dead) {
       if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
       if (this._mantleF !== null && this.actions.jump) {
@@ -1216,6 +1235,15 @@ class CharController {
       // emote de uma vez só se apaga sozinho no fim (laço continua até mandarem parar)
       if (_emoteDriver && !_emoteDriver.laco(this._emoteId)
           && this._emoteT >= _emoteDriver.duracao(this._emoteId)) this._emoteId = null;
+    }
+    if (freeHand && this.cur === this.actions.idle && !this.dead && this._emoteK < 1
+        && this._reloadDur === 0 && this.reloadK === 0 && !this.crouch && !this.jumping
+        && !this._ar && this._mantleF === null && !this.shooting && this._fireDur === 0) {
+      freeHand.before.copy(freeHand.bone.quaternion);
+      freeHand.target.fromArray(freeHand.sample.evaluate(
+        this.cur.time / freeHand.idleDuration * freeHand.duration)).normalize();
+      freeHand.bone.quaternion.copy(freeHand.before).slerp(freeHand.target, 1 - this._emoteK);
+      freeHand.applied = true;
     }
     if (this._emoteK > 0.004 && _emoteDriver && this.corpo?.size) {
       const lista = this._emoteOssos;
