@@ -69,3 +69,17 @@ Freshbuild/npm0 efontespreservadas;recibosHQruntime/flavio210-*.json,PNGsmedia/f
 ## Checkpoint candidato 2026-11-01
 
 419FAILED6.24s somenteCM1: a régua usa origin/main...HEAD e ainda leu mapab280 doHEAD875, não WT2955. Nenhum reparo adicional de mapa/teto/base foi feito.423 executou SOMENTE SIMwrite/read oficiais sobNode26, hash observado bb43b61aeaad4979/143arquivos, avisos exatos porPID, readbacke7196demaisfontes intactas. Este checkpoint LOCAL torna o candidato revisado disponível à réguaHEAD; não é merge remoto nem aceite final. CM1/formal12/economia/build/páginas/GPU/CI/pareamento atuais ainda devem passar.
+
+
+## Composição atual e correção mecânica das fixtures (2026-11-01)
+
+424 preservado FAILED: CM passou e oito dos12 contratos passaram; os quatro REDs vieram de três fixtures incompatíveis com os produtores integrados. O crítico independente confirmou essa delimitação. Economia, build e pós-build ainda não foram executados. GLM427 via OMP terminou sem proposta por pedido de leitura fora do pacote, sem aplicação, retry ou fallback.
+
+As três fixtures foram reparadas nativamente pelo agente6c1d em428 e revisadas pelo root em8a7dd76e: veredito real de boot com controles nominais/causais e erros de medição, dependência real do HUD de armadura no cenário online e extração da timeline até a borda atual do recibo. Mantidas as asserções de autoridade e duração, regras, políticas e tetos. Nenhuma alteração de Game ou autoria GLM foi atribuída a esses ajustes mecânicos. Execução após adoção ainda pendente.
+
+A staging avançou de5732 a faa8d6fb239c2f668d5a03579c244633fe79167c. A composição automática dos22 caminhos foi revisada independentemente em429/a6ad284a: preserva entrada/anúncio, aliases e mudanças próprias, incorporando skins/mobile e contratos visuais. Merge LOCAL normal sem commit, árvore de índice ebf51afbae74ecbdebcb86dbccfcda5c702325b9, sem conflito. Game, modo, compra, boarding, mapa, rede, SIM e assetver permanecem byteidênticos. Não é merge remoto nem comprovação de execução.
+
+Próximo: produtores canônicos afetados pelo package; checkpoint local recuperável; gates pertinentes e build atual; crítica independente;40 seeds e capturas nativas/anúncio em três formatos; push normal/CI. Depois fixar o cliente publicado e executar o par dedicado local. Nada de deploy, registry, DDL ou publicação social. Dívidas de áudio, estética/humano e pacote adicional407 permanecem explícitas.
+
+
+2026-11-01T04:43:41.271883+00:00 Marco434b, checkpoint LOCAL WIP da operação Flávio/47PRs/HQ/anúncios fullscreen/pilotosH/V com áudio. SIM canônico medido bb43b61aeaad4979/143 por scripts/sim-hash.mjs --write e leitura simples, com avisosNode26 originais validados porPID.433 continuaFAILED:integridade2PASS,repair4interrompida pelo prazo, sem crédito integral;437 continuaFAILED:alias isolado encontrou âncora sem-colisao obsoleta.439 foi adotado no checker após STATIC75b56abf, singleline d870e70b; sua execução e morte causal permanecemPENDING. Este commit normal comDCO preserva merge57f19+faa8 e ajustes428; não afirma testes439/GREEN/build/publicabilidade. Próximo: CM sobre HEADnovo, execução439/core e gates/build/capturas425 após críticas próprias; repin/backend somente cliente final publicado. Nenhum push/merge remoto/deploy/DDL/escuta ou aprovação humana. Java1167/Javaporcos e18worktrees alheios preservados. RecibosHQruntime/flavio434b-canonical-sim-receipt.json e flavio434b-checkpoint-receipt.json;433/437 originais preservados.

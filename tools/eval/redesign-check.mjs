@@ -192,8 +192,8 @@ main = muta('sem-i18n', main,
   "`${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`",
   "`MAPA ${MAP_IDS.indexOf(currentMap) + 1} DE ${MAP_IDS.length}`");
 main = muta('preview-render', main,
-  "if ((csOpen || hubPreviewOpen) && pv && pv.model && !previewVideoVisible()) {",
-  "if ((csOpen || hubPreviewOpen) && pv && pv.model) {");
+  "if (pv && pv.model && previewModelActive(csOpen,hubPreviewOpen)) {",
+  "if (pv && pv.model && (csOpen || hubPreviewOpen)) {");
 main = muta('preview-decode', main,
   "if (id !== 'char-select') pvStopVideo();",
   '');
@@ -252,8 +252,8 @@ main = muta('preview-sem-interacao', main,
   'if (staticPreviews) pvSetVideo(c); else pvStopVideo();',
   'pvSetVideo(c);');
 main = muta('preview-gira-sozinho', main,
-  'if (pv.ctrl) pv.ctrl.update(dt, 0, false, 0); else if (pv.mixer) pv.mixer.update(dt);',
-  'if (!pvDrag) pv.model.rotation.y += dt * 0.9;\n    if (pv.ctrl) pv.ctrl.update(dt, 0, false, 0); else if (pv.mixer) pv.mixer.update(dt);');
+  "if (!pv.travado && !pvReducedMotion.matches) {\n        if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);",
+  "if (!pvDrag) pv.model.rotation.y += pvDt * 0.9;\n      if (!pv.travado && !pvReducedMotion.matches) {\n        if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);");
 main = muta('mapa-esconde-um', main,
   "return mapCategory === 'TODOS' ? MAP_IDS : MAP_IDS.filter((id) => MAP_CAT[id] === mapCategory);",
   "return mapCategory === 'TODOS' ? MAP_IDS.slice(0, -1) : MAP_IDS.filter((id) => MAP_CAT[id] === mapCategory);");
@@ -655,10 +655,11 @@ const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main
   && /const FACTION_NAME = \{ E: 'TIME E', B: 'TIME B'/.test(main)
   && /rEl\.textContent = tr\(RARITIES\[tier\]\[0\]\)/.test(main)
   && /char-spec-name'\)\.textContent = tr\(specName\)/.test(main);
-const previewUso = /if \(\(csOpen \|\| hubPreviewOpen\) && pv && pv\.model && !previewVideoVisible\(\)\)/.test(funcLoop)
-  && /function previewVideoVisible\(\)[\s\S]*classList\.contains\('has-video'\)/.test(main);
+const previewUso = /if \(pv && pv\.model && previewModelActive\(csOpen,hubPreviewOpen\)\)/.test(funcLoop)
+  && /!previewVideoVisible\(\)/.test(blocoFuncao(main, 'previewModelActive'))
+  && /classList\.contains\('has-video'\)/.test(blocoFuncao(main, 'previewVideoVisible'));
 const previewPausa = /id !== 'char-select'[\s\S]{0,60}pvStopVideo\(\)/.test(funcShow)
-  && /function pvStopVideo\(\)[\s\S]{0,180}video\.pause\(\)/.test(main);
+  && /video\.pause\(\)/.test(blocoFuncao(main, 'pvStopVideo'));
 const strip = (css.match(/\.ms-strip\{([^}]*)\}/) || [])[1] || '';
 const fundoMapa = (css.match(/\.ms-bg\{([^}]*)\}/) || [])[1] || '';
 const autoriaNaFicha = /const MAP_AUTOR = \{/.test(mapcat)
@@ -782,7 +783,7 @@ const cicloVideos = !/id="(?:splash-video|me-video)"/.test(astro)
   && !/video\/resultado|meVideo/.test(game)
   && !/\.me-hero video/.test(css)
   && previewPausa;
-const previewInterativo = /function pvStopVideo\(\)[\s\S]{0,400}removeAttribute\('src'\)/.test(main)
+const previewInterativo = /removeAttribute\('src'\)/.test(blocoFuncao(main, 'pvStopVideo'))
   && /if \(staticPreviews\) pvSetVideo\(c\); else pvStopVideo\(\);/.test(main);
 const charStage = (css.match(/\.char-stage\{([^}]*)\}/) || [])[1] || '';
 const charFilmstrip = (css.match(/\.char-filmstrip\{([^}]*)\}/) || [])[1] || '';
@@ -810,7 +811,7 @@ const selecaoDuasColunas = /grid-template-columns:minmax\(280px,360px\) minmax\(
   && /width:var\(--char-thumb\)/.test(charRow) && /height:var\(--char-thumb\)/.test(charRow)
   && /max-height:calc\(100% - 28px\)/.test(charPreview)
   && /\.pv-hints\{[^}]*flex:0 0 auto/.test(css);
-const previewSobControle = !/pv\.model\.rotation\.y \+= dt/.test(funcLoop)
+const previewSobControle = !/pv\.model\.rotation\.y \+= (?:pvDt|dt)/.test(funcLoop)
   && /pointermove[\s\S]{0,180}pv\.model\.rotation\.y = pvDrag\.yaw/.test(main);
 const resultadoEstatico = /--me-art/.test(game)
   && !/video\/resultado|meVideo/.test(game)

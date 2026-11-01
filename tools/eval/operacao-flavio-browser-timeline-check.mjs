@@ -6,11 +6,13 @@ import {usePresentationClock} from './presentation-clock-fixture.mjs';
 const source=readFileSync(new URL('./operacao-flavio-browser.mjs',import.meta.url),'utf8');
 const anchor="    g._endRound('B');\n  });";
 assert.equal(source.split(anchor).length,2,'unique victory probe');
-const end=source.indexOf('\n\n  await context.close();',source.indexOf(anchor));
+const receiptAnchor='\n  receiptData = {';
+assert.equal(source.split(receiptAnchor).length,2,'unique victory receipt');
+const end=source.indexOf(receiptAnchor,source.indexOf(anchor));
 const start=source.lastIndexOf('  await page.evaluate(',source.indexOf(anchor));
 assert(start>0 && end>start);
 const body=source.slice(start,end);
-const run=new (Object.getPrototypeOf(async function(){}).constructor)('page','assert','out',body+'\nreturn cinematic;');
+const run=new (Object.getPrototypeOf(async function(){}).constructor)('page','assert','out','requireOwnedOut',body+'\nreturn cinematic;');
 const positivesOnly=process.argv.includes('--positivos');
 const scenarios=[['boarding',false],['fallback',false],...positivesOnly?[]:[
  ['taxi-cedo',true],['sem-taxi',true],['original-oculto-move',true],['prazo-curto',true],
@@ -45,7 +47,10 @@ for(const [scenario,reject] of scenarios){
   async screenshot(){},
  };
  try{
-  let error=null;try{await run(page,assert,'/tmp/no-browser-capture');}catch(e){error=e;}
+  let ownedChecks=0;
+  const requireOwnedOut=()=>{ownedChecks++;}; // dependência explícita, sem IO nesta fixture
+  let error=null;try{await run(page,assert,'/tmp/no-browser-capture',requireOwnedOut);}catch(e){error=e;}
+  assert.equal(ownedChecks,2,'victory probe keeps both owned-output guards');
   if(reject){const expectedPrefix={'taxi-cedo':'FB_PRE_DOOR','sem-taxi':'FB_TAXI_ADVANCE','original-oculto-move':'FB_TAXI_ADVANCE','prazo-curto':'FB_DURATION'}[scenario];assert(error instanceof assert.AssertionError && typeof error.message==='string' && error.message.startsWith(expectedPrefix),'invalid timeline must fail the expected assertion ('+scenario+'=>'+expectedPrefix+'): '+(error&&error.message));}
   else if(error)throw error;
   rows.push({clause:scenario,pass:true});console.log('ok browser timeline '+scenario);

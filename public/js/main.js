@@ -7,7 +7,7 @@ import {initLoginPrompt,noteLoginPromptMatch} from './login-prompt.js';
 import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
 import { clientUuid, getAnonId } from './client-id.js';
-import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
+import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
 import {tretaPack} from './data/pack-definitions.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
@@ -500,6 +500,8 @@ function show(id) {
   stopMapPreviews();
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
+  clearCompactPreviews();
+  stopHiddenPreview();
   if (id !== 'char-select') pvStopVideo();
   if (id !== 'map-screen') stopMapPreview();
   // ao navegar pra qualquer tela, fecha o painel de setup do menu CS (não fica aberto after)
@@ -931,57 +933,163 @@ let pv = null, pvDrag = null;
    404 por personagem faltando.
    Uma função só alimenta prévia estática, fallback do snapshot 3D e modo de
    qualidade baixa — trocar aqui melhora os três de uma vez. */
-const portraitUrl = (def) => `/img/chars-hero/${def.id}.webp?v=${VERSION}`;
+const portraitUrl = (def) => {
+  const skin=tretaSkinPresentation(def.skinId,def.id);
+  return skin?(skin.poster?`${skin.poster}?v=${VERSION}`:null):`/img/chars-hero/${def.id}.webp?v=${VERSION}`;
+};
 /* O antigo continua no repo e vira a rede de segurança: se o hero não carregar, a
    imagem cai para o recorte do modelo em vez de ficar quebrada. */
 const portraitFallbackUrl = (def) => `/img/chars/${def.id}.webp?v=${VERSION}`;
 /* VÍDEO DO PERSONAGEM (tela 03 do redesign): captura do próprio modelo, rig e clipe
    do jogo por tools/eval/char-native-vids.mjs. Falha de rede mantém o canvas/GLB. */
 let pvVidToken = 0;
+let pvImageToken = 0;
+let pvCompactToken = 0;
+let pvStaticKey = '';
+let pvPosterFailure = null;
+const pvReducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+pvReducedMotion.addEventListener?.('change',event=>{if(event.matches)pvStopVideo();});
+const pvCompact=matchMedia('(pointer: coarse) and (max-height: 560px)');
+const pvNarrow=matchMedia('(max-width: 760px)');
+pvCompact.addEventListener?.('change',()=>refreshMenuEquipment());
+pvNarrow.addEventListener?.('change',()=>refreshMenuEquipment());
+function resolvePreviewCharacter(def) {
+  const skinId=Object.hasOwn(def,'skinId')?def.skinId:equippedTretaSkin(def.id);
+  return {...def,skinId:tretaSkinPresentation(skinId,def.id)?.id || null,eyewearId:equippedTretaEyewear()};
+}
 function previewVideoVisible() {
   return document.querySelector('.char-preview-box')?.classList.contains('has-video') === true;
 }
+function previewModelActive(selectionOpen,hubOpen) {
+  return !pvCompact.matches && (selectionOpen || (hubOpen && !pvNarrow.matches)) && !previewVideoVisible();
+}
+function previewUsesStills() {
+  return staticPreviews || pvCompact.matches || (pvNarrow.matches && !$('main-menu')?.classList.contains('hidden'));
+}
+function previewHeroVisible() {
+  const selection=$('char-select')?.classList.contains('hidden')===false;
+  const hub=previewHubVisible();
+  return !pvCompact.matches && (selection || (hub && !pvNarrow.matches)) && document.querySelector('.char-preview-box')?.checkVisibility?.()!==false;
+}
+function previewHubVisible() {
+  const menu=$('main-menu');
+  return menu?.classList.contains('hidden')===false && menu.dataset.hubTab==='jogar' && menu.dataset.hubNet==='sp';
+}
+function clearCompactPreviews() {
+  for(const prefix of ['hub-character','char-select']){
+    const image=$(prefix+'-portrait'),label=$(prefix+'-equipment');
+    if(image){image.dataset.previewKey='';image.dataset.previewToken='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;}
+    if(label)label.hidden=true;
+  }
+}
+function clearStaticPreview() {
+  pvImageToken++;pvStaticKey='';pvPosterFailure=null;
+  const image=$('char-preview-static');
+  if(image){image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');}
+  for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label){label.hidden=true;label.textContent='';}}
+}
+function stopHiddenPreview() {
+  if(previewHeroVisible())return;
+  clearStaticPreview();pvStopVideo();
+}
+const previewCopy = (pt, en) => LANG === 'en' ? en : pt;
+const previewUnavailableCaption = name => `${previewCopy('Prévia indisponível', 'Preview unavailable')}: ${name}`;
+function previewPaintCaption(weapon, paint) {
+  const names = { ak:'AK-47', m4:'M4', scar:'SCAR', pistol:previewCopy('Pistola', 'Pistol') };
+  return `${previewCopy('Pintura', 'Paint')}: ${names[weapon.weaponId] || weapon.weaponId} · ${paint.name}`;
+}
 function pvStopVideo() {
+  pvVidToken++;
   const box = document.querySelector('.char-preview-box');
   const video = $('char-preview-video');
   if (!video) return;
+  video.onloadeddata=null;video.onerror=null;
   video.pause();
   video.removeAttribute('src');
   video.load();
   video.classList.add('hidden');
   box?.classList.remove('has-video');
+  const label=$('char-preview-skin');
+  if(label && pvPosterFailure){label.hidden=false;label.textContent=previewUnavailableCaption(pvPosterFailure);}
 }
 function pvSetVideo(def) {
   const box = document.querySelector('.char-preview-box');
   const video = $('char-preview-video'), hints = document.querySelector('.pv-hints');
   if (!box || !video) return;
-  const my = ++pvVidToken;
+  def=resolvePreviewCharacter(def);
+  const skin=tretaSkinPresentation(def.skinId,def.id);
+  const src=skin?(skin.video?.webm || skin.video?.mp4):`/video/chars/${def.id}.webm`;
+  if(!src || pvReducedMotion.matches || !previewHeroVisible()){pvStopVideo();return;}
+  const url=`${src}?v=${VERSION}`;
+  if(video.dataset.previewSrc===url && video.onloadeddata)return;
+  pvStopVideo();
+  const my = pvVidToken;
+  video.dataset.previewSrc=url;
   box.classList.remove('has-video');
   video.classList.add('hidden');
   // no modo estático (sem WebGL) as dicas de GIRAR/ZOOM nunca aparecem — nem quando o vídeo falta
   if (hints) hints.classList.toggle('hidden', staticPreviews);
-  video.onerror = () => { if (my === pvVidToken) { box.classList.remove('has-video'); video.classList.add('hidden'); } };
-  video.onloadeddata = () => {
+  video.onerror = () => {if(my===pvVidToken)pvStopVideo();};
+  video.onloadeddata = async () => {
     if (my !== pvVidToken) return;
-    video.play().catch(() => {});
+    try{await video.play();}catch{if(my===pvVidToken)pvStopVideo();return;}
+    if(my!==pvVidToken)return;
     box.classList.add('has-video');
     video.classList.remove('hidden');
+    const label=$('char-preview-skin');if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
     if (hints) hints.classList.add('hidden');
   };
-  video.src = `/video/chars/${def.id}.webm?v=${VERSION}`;
+  video.src = url;
   video.load();
 }
 function showStaticPreview(def) {
   const canvas = $('char-preview'), image = $('char-preview-static'), hints = document.querySelector('.pv-hints');
+  const skin=tretaSkinPresentation(def.skinId,def.id),label=$('char-preview-skin'),weaponLabel=$('char-preview-weapon');
+  const weapon=armaDoPreview(def.id),paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId);
+  const key=JSON.stringify([def.id,def.skinId,skin?.poster,skin?.name,skin?.video,def.eyewearId,weapon,paint?.name]);
+  if(key===pvStaticKey)return;
+  pvStaticKey=key;pvPosterFailure=null;pvStopVideo();
+  if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
+  if(weaponLabel){weaponLabel.textContent=paint?previewPaintCaption(weapon,paint):'';weaponLabel.hidden=!paint;}
   if (canvas) canvas.classList.add('hidden');
   if (image) {
-    image.onerror = () => { image.onerror = null; image.src = portraitFallbackUrl(def); };
-    image.src = portraitUrl(def); image.alt = def.name; image.classList.remove('hidden');
+    const my=++pvImageToken;
+    image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');
+    const unavailable=()=>{pvPosterFailure=skin?.name || def.name;image.classList.add('hidden');if(label && !previewVideoVisible()){label.hidden=false;label.textContent=previewUnavailableCaption(pvPosterFailure);}};
+    const src=portraitUrl(def);
+    image.alt = skin?.name || def.name;
+    if(src){
+      image.onload=()=>{if(my!==pvImageToken)return;image.classList.remove('hidden');pvPosterFailure=null;if(label && !previewVideoVisible()){label.textContent=skin?.name || '';label.hidden=!skin;}};
+      image.onerror = () => {if(my!==pvImageToken)return;image.onerror=null;if(skin)unavailable();else{image.onerror=()=>{if(my===pvImageToken)unavailable();};image.src=portraitFallbackUrl(def);}};
+      image.src=src;
+    }else unavailable();
   }
   if (hints) hints.classList.add('hidden');
 }
+function syncCompactPreview(def) {
+  const skin=tretaSkinPresentation(def.skinId,def.id),weapon=armaDoPreview(def.id);
+  const paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId);
+  const caption=[skin?.name,paint?previewPaintCaption(weapon,paint):null].filter(Boolean).join(' · ');
+  const src=portraitUrl(def),key=JSON.stringify([def.id,def.skinId,src,caption]);
+  const hub=(pvCompact.matches || pvNarrow.matches) && previewHubVisible();
+  const selection=pvCompact.matches && $('char-select')?.classList.contains('hidden')===false;
+  for(const [imageId,labelId,active] of [['hub-character-portrait','hub-character-equipment',hub],['char-select-portrait','char-select-equipment',selection]]){
+    const image=$(imageId),label=$(labelId);if(!image || !label)continue;
+    if(!active){image.dataset.previewKey='';image.dataset.previewToken='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;label.hidden=true;continue;}
+    if(image.dataset.previewKey===key)continue;
+    image.dataset.previewKey=key;const my=String(++pvCompactToken);image.dataset.previewToken=my;let fallback=false;
+    image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
+    label.textContent=caption;label.hidden=!caption;image.alt=skin?.name || def.name;
+    const unavailable=()=>{image.hidden=true;label.hidden=false;label.textContent=`${previewUnavailableCaption(skin?.name || def.name)}${paint?` · ${paint.name}`:''}`;};
+    if(src){
+      image.onload=()=>{if(image.dataset.previewToken!==my)return;image.hidden=false;label.textContent=caption;label.hidden=!caption;};
+      image.onerror=()=>{if(image.dataset.previewToken!==my)return;if(!skin && !fallback){fallback=true;image.src=portraitFallbackUrl(def);}else unavailable();};
+      image.src=src;
+    }else unavailable();
+  }
+}
 function ensurePreview() {
-  if (staticPreviews) return null;
+  if (previewUsesStills()) return null;
   if (pv) return pv;
   const canvas = $('char-preview');
   const r = criaRenderer({ canvas, alpha: true }, { optional: true });
@@ -1170,12 +1278,21 @@ async function montaBarraEmotes() {
 religaAbrirEmotes();
 
 function pvSetChar(def) {
-  def = {...def, skinId:equippedTretaSkin(def.id),eyewearId:equippedTretaEyewear()};
-  if (staticPreviews) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
+  def = resolvePreviewCharacter(def);
+  const my = ++pvToken;
+  syncCompactPreview(def);
+  if(!previewHeroVisible()){
+    clearStaticPreview();pvStopVideo();
+    $('char-preview')?.classList.add('hidden');sincronizaBarraEmotes();return;
+  }
+  if (previewUsesStills()) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
+  clearStaticPreview();pvStopVideo();
+  $('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');
+  document.querySelector('.pv-hints')?.classList.remove('hidden');
+  for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label)label.hidden=true;}
   // Swap to the real rigged GLB (idle) once loaded, if this is still the selection.
-  const my = ++pvToken;
   const showBox = () => {   // procedural fallback (only when there's no GLB at all)
     if (p.model) p.scene.remove(p.model);
     p.mixer = null; p.ctrl = null;
@@ -1192,7 +1309,7 @@ function pvSetChar(def) {
     Promise.all([preloadCharacterAssets([def.id], { weapons:[arma.weaponId] }),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
       preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId),
       arma.gloveSkinId ? preloadGloveAssets([def.id]) : null]).then(() => {
-      if (my !== pvToken) return;
+      if (my !== pvToken || !previewHeroVisible()) return;
       // preview: porte de EXIBIÇÃO — arma atravessada no peito (estilo vitrine do CS) em
       // vez do porte funcional que aponta o cano pra câmera e esconde a silhueta da arma
       // (era o "posturas bizarras" de 05/08). Ângulos por classe em glbchars.js. No jogo,
@@ -1224,13 +1341,13 @@ function pvSetChar(def) {
       // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
       // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.
       if (PV_CAM_MAOS) enquadrarMaos(p, m);
-    }).catch(() => { if (my === pvToken && !p.model) showBox(); });
+    }).catch(() => { if (my === pvToken && !p.model && previewHeroVisible()) showBox(); });
   } else {
     showBox();
   }
 }
 function pvThumb(def) {
-  if (staticPreviews) return portraitUrl(def);
+  if (previewUsesStills()) return portraitUrl(def);
   // Box-only thumbnail (tiny icon) — never triggers a GLB load.
   // Passa pelo MESMO snapThumb do GLB: antes esta versão ainda destruía o preview
   // grande (p.model = null) e gravava com outro enquadramento — duas miniaturas com
@@ -1252,7 +1369,7 @@ function returnPreviewToSelection() {
   if (box && marker && box.parentElement !== marker.parentElement) marker.parentElement.insertBefore(box, marker.nextSibling);
 }
 function syncHomeCharacter() {
-  if (!HUB_ENABLED || $('main-menu')?.dataset.hubTab !== 'jogar' || $('main-menu')?.dataset.hubNet !== 'sp') return;
+  if (!HUB_ENABLED || $('main-menu')?.classList.contains('hidden') || $('main-menu')?.dataset.hubTab !== 'jogar' || $('main-menu')?.dataset.hubNet !== 'sp') return;
   const box = document.querySelector('.char-preview-box');
   const host = $('hub-character');
   if (box && host && box.parentElement !== host) host.appendChild(box);
@@ -1262,6 +1379,11 @@ function syncHomeCharacter() {
   $('hub-character-crest').src = `/img/brasoes/${lado.toLowerCase()}.png`;
   $('hub-change-character').style.setProperty('--hub-faction', PALETA[lado]?.base || '#b4d92e');
   pvSetChar(def);
+}
+function refreshMenuEquipment() {
+  if(selChar && !$('char-select')?.classList.contains('hidden')){pvSetChar(selChar);if(staticPreviews)pvSetVideo(selChar);}
+  else syncHomeCharacter();
+  if(!$('hub-roster-modal')?.hidden)hubRosterRender?.();
 }
 let hubMapReturnQuick = false;
 let hubRosterLado = 'E', hubRosterCat = null;
@@ -2558,6 +2680,8 @@ if (HUB_ENABLED) {
   const setHubTab = (tab, updateRoute = true) => {
     if ($('main-menu').dataset.socialPaused === 'true' && tab !== 'comunidade') return;
     $('main-menu').dataset.hubTab = tab;
+    clearCompactPreviews();
+    stopHiddenPreview();
     updateHubTip();
     if (tab !== 'jogar' && menuSetup.dataset.step === 'profile') setSetupStep('match');
     for (const button of tabs) {
@@ -2633,6 +2757,8 @@ if (HUB_ENABLED) {
   });
   const setHubNet = (net, updateRoute = true) => {
     $('main-menu').dataset.hubNet = net;
+    clearCompactPreviews();
+    stopHiddenPreview();
     updateHubTip();
     if (net === 'mp' && menuSetup.dataset.step === 'profile') setSetupStep('match');
     $('hub-sp').setAttribute('aria-pressed', String(net === 'sp'));
@@ -3924,7 +4050,7 @@ async function renderGlobal(nick) {
 
 // GLB idle thumbnail (no weapon), rendered off the shared preview renderer.
 function glbThumb(def) {
-  if (staticPreviews) return portraitUrl(def);
+  if (previewUsesStills()) return portraitUrl(def);
   if (!hasModel(def.id)) return null;
   const m = buildCharacterModel(def, { weapon: false });
   if (!m) return null;
@@ -3937,15 +4063,15 @@ function glbThumb(def) {
 let teamPreviewsDone = false;
 function ensureTeamPreviews() {
   if (teamPreviewsDone) return;
-  teamPreviewsDone = true;
   for (const [btn, lado] of [['btn-team-e', 'E'], ['btn-team-b', 'B']]) {
     const box = document.querySelector(`#${btn} .team-chars`);
-    if (!box) continue;
+    if (!box || box.checkVisibility?.() !== true) continue;
+    teamPreviewsDone = true;
     const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id)).slice(0, 4);
     if (!chars.length) continue;
     box.innerHTML = chars.map(() => '<span class="tc-slot"></span>').join('');
     const slots = [...box.children];
-    const ready = staticPreviews ? Promise.resolve() : preloadCharacterAssets(chars.map(c => c.id));
+    const ready = previewUsesStills() ? Promise.resolve() : preloadCharacterAssets(chars.map(c => c.id));
     ready.then(() => {
       chars.forEach((c, i) => {
         const url = glbThumb(c);
@@ -3997,10 +4123,10 @@ function pickTeam(faction) {
       if (i === 0) firstRow = row;
     });
     // seleciona DEPOIS de gerar todos os thumbs — senão o preview fica com o último
-    if (firstRow) selectChar(chars[0], firstRow);
     show('char-select');
+    if (firstRow) selectChar(chars[0], firstRow);
   };
-  if (navOnly || staticPreviews) { mountCharList(); return; }
+  if (navOnly || previewUsesStills()) { mountCharList(); return; }
   // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
   // nada de thumbnails de caixa montando aos poucos (o "minecraft" que o dono viu)
   showLoading('CARREGANDO PERSONAGENS…');
@@ -4318,11 +4444,10 @@ function loop(agoraMs = performance.now()) {
   const hubPreviewOpen = HUB_ENABLED && hubMenu?.classList.contains('hidden') === false
     && hubMenu?.dataset.hubTab === 'jogar' && hubMenu?.dataset.hubNet === 'sp';
   if (!splashAtiva) {
-    if ((csOpen || hubPreviewOpen) && pv && pv.model && !previewVideoVisible()) {
-      const pvDt = pv.travado ? 0 : Math.min(0.05, dtReal);   // ?pvcam=maos congela pose e giro
-      if (!pvDrag && !pv.travado) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
+    if (pv && pv.model && previewModelActive(csOpen,hubPreviewOpen)) {
+      const pvDt = pv.travado || pvReducedMotion.matches ? 0 : Math.min(0.05, dtReal);   // ?pvcam=maos congela pose e giro
       // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
-      if (!pv.travado) {
+      if (!pv.travado && !pvReducedMotion.matches) {
         if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
       }
       pv.r.render(pv.scene, pv.cam);
@@ -5319,7 +5444,7 @@ void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params
 // Logar com a aba RANKING aberta tira o convite de nick na hora, sem refazer a lista.
 document.addEventListener('cs-account-change',(e)=>{contaNick=e.detail?.profile?.nick || '';const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);});
 tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
-document.addEventListener('cs-treta-inventory-change',()=>{syncHomeCharacter();if(!$('hub-roster-modal')?.hidden)hubRosterRender?.();});
+document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
 // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
 if (directRoute) document.getElementById('boot-splash')?.remove();
 const abrirVitrine=()=>{if(!tretaVitrine()?.length)return;document.removeEventListener('cs-treta-state',abrirVitrine);void import('./treta-vitrine.js').then(m=>m.iniciarVitrine()).catch(()=>{});};

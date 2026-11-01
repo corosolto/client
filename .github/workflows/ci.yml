@@ -76,6 +76,10 @@ jobs:
         run: npm run eval:treta-fila
       - name: Sete moedas da loja com arte própria
         run: npm run eval:treta-coins
+      - name: Skin equipada aguarda manifesto e conta vigente no boot
+        run: npm run eval:treta-manifest-ready
+      - name: Preview mobile preserva skin e propriedade da mídia
+        run: npm run eval:character-preview-media
       - name: Acúmulo de armas no chão tem teto
         run: npm run eval:drop
       - name: Loja sem nome de político real
@@ -97,7 +101,7 @@ jobs:
         run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:grafite-curation eval:map-material-finish eval:ferro-balcao eval:match-pickups eval:net-flash-disable eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:visual-map-contracts eval:knife-skin-markings eval:campo-uv eval:grafite-atual:prova
       - name: Flash, fluidez e ADS da AK pública
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:flashbang mut:flashbang eval:movimento-fluidez eval:ads1p-public eval:posto-board-support eval:preview-grip-phase
+        run: node tools/eval/runner.mjs eval:flashbang mut:flashbang eval:movimento-fluidez eval:ads1p-public eval:posto-board-support eval:preview-grip-phase eval:armadura eval:ads1p-runtime-public
       - name: Todo mapa devolve o que o game.js consome
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:mapcontrato

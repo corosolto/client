@@ -22,7 +22,7 @@ if (mutation) {
     'apaga-alvo': ['} else if (b.path) {\n          // Hop bloqueado', '} else if (b.path) {\n          b.target = null;\n          // Hop bloqueado'],
     'para-apos-dois-passos': ['if (formationPull) {', 'if (formationPull && this.time < 12 + 2 / 60) {'],
     'para-apos-lateral': ['if (formationPull) {', 'if (formationPull && this.time < 14) {'],
-    'sem-colisao': ['  _collide(pos, r) {', '  _collide(pos, r) { return;'],
+    'sem-colisao': ['  _collide(pos, r, colliders = this.world.colliders) {', '  _collide(pos, r, colliders = this.world.colliders) { return;'],
     'sem-rearme': ['          } else {\n            b.path = null;\n            b._escapeUntil = Math.max(b._escapeUntil || 0, this.time + 0.35);', '          } else {\n            b.path = null;\n            b._escapeUntil = b._escapeUntil || 0;'],
   };
   const start = source.indexOf('      // Reagrupar não muda o yaw que orienta a mira.');

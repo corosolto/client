@@ -58,6 +58,7 @@ const game = {
   vmScene: { visible: true }, camera: { position: new THREE.Vector3(), lookAt() {} },
   sfx: new Proxy({}, { get: () => () => false }),
   _trocarPersonagem() {}, _syncRemoteWeapon() {}, _updateWeaponHud() {}, _updateKillSequenceHud() {},
+  _updateArmaduraHud: Game.prototype._updateArmaduraHud,
   _uiV3: () => false, _teamTag: t => t, _plaqueta() {}, _teamColor: () => '#fff',
   _radioUi() {}, _teamName: t => t, _voiceKey: t => t, _roundWinnerVoice() {}, _ensureDolly() {},
   _showScoreboard() {}, _banner() {}, _resultadoDaRodada: (...args) => result.push(args),

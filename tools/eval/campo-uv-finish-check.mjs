@@ -9,7 +9,9 @@ const MUTANTES = ['guardrepeat20x3', 'removerguardUV', 'guardperiod2m', 'remover
   'fim-compensado', 'std-compensado', 'fim-oculto', 'std-oculto', 'fim-ancestral-oculto',
   'fim-face-duplicada', 'std-face-duplicada', 'fim-translado', 'folha-f7-metal',
   'std-drawrange', 'std-grupo-oculto', 'fim-alpha-test', 'fim-alpha-blend',
-  'fim-raster-blend-zero', 'fim-raster-depth-never'];
+  'fim-raster-blend-zero', 'fim-raster-depth-never',
+  'fim-position-itemsize1', 'fim-normal-itemsize1', 'fim-uv-itemsize1', 'fim-index-itemsize2',
+  'std-position-itemsize1', 'std-normal-itemsize1', 'std-uv-itemsize1', 'std-index-itemsize2'];
 const USO = 'uso: campo-uv-finish-check.mjs [--self-test-raster | [--perfil=original|r22|r23|0|1|2] '
   + '[--query=0|1|2|default] [--mutar=<nome>] [--fonte=<dir readonly>]]\n'
   + `--self-test-raster é modo único (não combinável)\nmutantes: ${MUTANTES.join('|')}`;
@@ -334,6 +336,9 @@ const PALAVRA = Object.freeze({
 function blocos(mesh, errs, rot) {
   const g = mesh.geometry, pos = g.attributes.position, nor = g.attributes.normal, idx = g.index, uv = g.attributes.uv;
   if (!pos || !nor || !idx || !uv) { errs.push(`${rot}: geometry sem position/normal/uv/index`); return []; }
+  if (pos.itemSize !== 3 || nor.itemSize !== 3 || uv.itemSize !== 2 || idx.itemSize !== 1) {
+    errs.push(`${rot}: itemSize inválido (pos=${pos.itemSize}, nor=${nor.itemSize}, uv=${uv.itemSize}, idx=${idx.itemSize}; exigido 3/3/2/1)`); return [];
+  }
   if (pos.count % 24 || idx.count % 36 || pos.count / 24 !== idx.count / 36 || nor.count !== pos.count || uv.count !== pos.count) {
     errs.push(`${rot}: counts fora do formato 24v/36idx (pos=${pos.count}, idx=${idx.count})`); return [];
   }
@@ -750,6 +755,33 @@ if (MUTANTE) {
     gs[0].material.map.repeat.x=NaN;
   } else if (MUTANTE === 'removerlock') {
     delete fim.geometry.userData.texelEscalada;
+  } else if (/^(?:fim|std)-(position|normal|uv)-itemsize1$|^(?:fim|std)-index-itemsize2$/.test(MUTANTE)) {
+    const m = MUTANTE.match(/^(fim|std)-(position|normal|uv|index)-itemsize(\d)$/);
+    const familia = m[1], attr = m[2];
+    const alvoMesh = familia === 'fim' ? fim : (exigeStd(), inv.stds[0]);
+    const g = alvoMesh.geometry;
+    alvoInfo = `${familia}:${attr}:itemSize${m[3]}`;
+    if (attr === 'index') {
+      const orig = g.index, Dados = orig.array.constructor;
+      const data = new Dados(orig.count * 2);
+      for (let i = 0; i < orig.count; i++) { data[i * 2] = orig.getX(i); data[i * 2 + 1] = 0; }
+      const novo = new THREE.BufferAttribute(data, 2, orig.normalized);
+      g.setIndex(novo);
+      if (g.index !== novo || g.index.itemSize !== 2 || g.index.count !== orig.count) infra(`${MUTANTE}: index não substituído`);
+      for (let i = 0; i < orig.count; i++) if (g.index.getX(i) !== orig.getX(i)) infra(`${MUTANTE}: getX do index divergiu`);
+    } else {
+      const esperado = attr === 'uv' ? 2 : 3;
+      const orig = g.attributes[attr];
+      if (!orig || orig.itemSize !== esperado || !orig.array || orig.array.length % esperado !== 0)
+        infra(`${MUTANTE}: aridade/fonte nominal de ${attr} ausente`);
+      const novo = new THREE.InterleavedBufferAttribute(new THREE.InterleavedBuffer(orig.array, esperado), 1, 0, orig.normalized);
+      g.setAttribute(attr, novo);
+      if (g.attributes[attr] !== novo || novo.itemSize !== 1 || novo.count !== orig.count) infra(`${MUTANTE}: ${attr} não substituído`);
+      for (let i = 0; i < orig.count; i++) {
+        if (novo.getX(i) !== orig.getX(i) || novo.getY(i) !== orig.getY(i)
+          || (esperado === 3 && novo.getZ(i) !== orig.getZ(i))) infra(`${MUTANTE}: getter de ${attr} divergiu no vértice ${i}`);
+      }
+    }
   } else if (MUTANTE === 'fim-compensado') {
     const dst = alvo('fim:xneg:i4:borda-'), src = alvo('fim:xneg:i4:borda+');
     const g = fim.geometry, pos = g.attributes.position, nor = g.attributes.normal, uv = g.attributes.uv, idx = g.index;

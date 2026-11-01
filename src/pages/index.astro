@@ -843,7 +843,8 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <div id="hub-character" class="hub-character" aria-label="Personagem escolhido"></div>
       <button id="hub-change-character" class="hub-character-card" type="button">
         <img id="hub-character-crest" src={brasaoE} width="38" height="38" alt="">
-        <span><small>SEU CORO · SEU PERSONAGEM</small><strong id="hub-character-name">ESCOLHA SEU PERSONAGEM</strong><span class="hub-character-change">TROCAR PERSONAGEM ▸</span></span>
+        <img id="hub-character-portrait" class="pv-compact-portrait" width="38" height="38" alt="" hidden>
+        <span><small>SEU CORO · SEU PERSONAGEM</small><strong id="hub-character-name">ESCOLHA SEU PERSONAGEM</strong><small id="hub-character-equipment" class="pv-compact-equipment" hidden></small><span class="hub-character-change">TROCAR PERSONAGEM ▸</span></span>
       </button>
       <div id="hub-multiplayer-entry" class="hub-multiplayer-entry" hidden={initialNetwork !== 'mp'}>
         <div class="hub-mp-tabs" role="tablist" aria-label="Tipo de servidor">
@@ -1322,8 +1323,10 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <div class="char-sheet-body" tabindex="0" role="region" aria-labelledby="char-info-name">
       <div id="char-faction-tag" class="char-faction-tag"> - </div>
       <div class="char-info-head">
+        <img id="char-select-portrait" class="pv-compact-portrait" width="38" height="38" alt="" hidden>
         <div id="char-info-name"> - </div>
         <span id="char-rarity" class="rarity">COMUM</span>
+        <span id="char-select-equipment" class="pv-compact-equipment" hidden></span>
       </div>
       <div id="char-info-blurb"> - </div>
       <div class="char-spec">
@@ -1343,6 +1346,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <canvas id="char-preview" width="640" height="640"></canvas>
       <img id="char-preview-static" class="hidden" alt="">
       <video id="char-preview-video" class="hidden" muted loop playsinline></video>
+      <div class="pv-equipment"><span id="char-preview-skin" hidden></span><span id="char-preview-weapon" hidden></span></div>
       <div class="pv-hints"><span>ARRASTE · GIRAR</span><span>SCROLL · ZOOM</span></div>
       {EMOTES_ENABLED && (
       <div class="pv-emotes" id="pv-emotes">
