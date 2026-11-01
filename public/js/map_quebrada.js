@@ -19,7 +19,7 @@
 import * as THREE from 'three';
 import { aplicaSombraSol } from './mapquality.js';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
-import { decalIds, paredeAtras, medirParede } from './map_decals.js';   // pool por NOME + medição de parede
+import { decalIds, paredeAtras, medirParede, offsetTinta } from './map_decals.js';   // pool por NOME + medição de parede
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';
@@ -35,6 +35,8 @@ const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settin
 export const HALF_X = 28, HALF_Z = 47;
 // props GLB reaproveitados (o mapa NUNCA depende deles: todo `gprop` tem fallback procedural,
 // senão o mapa quebraria em node — onde nenhum GLB carrega — e nas réguas).
+export const QUEBRADA_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'dog', 'escadaoCat']);
+
 export const QUEBRADA_PROPS = ['pilha_pneus', 'tires', 'jersey_barrier', 'stall', 'tent', 'caixa_som',
   'arquibancada', 'churrasqueira', 'mesa_guardasol', 'guarda_sol', 'moto_cg', 'kombi', 'uno_mille',
   'fusca', 'saveiro', 'dumpster', 'arara_roupas', 'drinkstand',
@@ -390,7 +392,7 @@ export function buildQuebrada(scene, T) {
     if (!m) {
       m = new THREE.MeshStandardMaterial({
         map: T.decals[i], transparent: true, alphaTest: 0.22, roughness: 0.98, metalness: 0,
-        polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+        ...offsetTinta(-4, -4),   // só unidades: ver map_decals.js (offsetTinta)
       });
       _dmat.set(i, m);
     }
@@ -538,6 +540,10 @@ export function buildQuebrada(scene, T) {
      `fav_house` é a casa de dois pavimentos com escada externa e laje; `fav_brasileira` é o
      bloco de tijolo cru, que é o que preenche fundo de quarteirão sem chamar atenção. */
   const BARRACOS_GLB = ['fav_house', 'fav_brasileira'].filter(useGlb);
+  // R98: 3 fav_house do quarteirão oeste (-21,-12.5,-38,-12,301) nasciam de costas pra
+  // viela; identidade = lote exato + col/linha + yaw original 0 (ROOT-CONTRACT-R98).
+  const frenteVielaR98 = (x0, x1, z0, z1, i, j) => x0 === -21 && x1 === -12.5 && i === 0
+    && ((z0 === -38 && z1 === -32.8 && j < 2) || (z0 === -32.8 && z1 === -27.6 && j === 0));
   function barracoGlb(x0, x1, z0, z1, k) {
     const w = x1 - x0, d = z1 - z0;
     const nx = Math.max(1, Math.round(w / 4.6));               // ~4,6 m de frente por casa
@@ -551,12 +557,15 @@ export function buildQuebrada(scene, T) {
          não um número sorteado — e é o que faz o quarteirão ter recorte de altura de verdade. */
       const s = w / nx / a.w;                                  // altura = escala (aspecto medido a targetH=1)
       const nz = Math.max(1, Math.ceil(d / (s * a.d)));
-      for (let j = 0; j < nz; j++)
+      for (let j = 0; j < nz; j++) {
+        let ry = ((k >> (7 + i + j)) & 1) ? Math.PI : 0;
+        if (!ry && id === 'fav_house' && frenteVielaR98(x0, x1, z0, z1, i, j)) ry = Math.PI;
         pbAdd(PB, id, {
           x: x0 + w * (i + 0.5) / nx, z: z0 + d * (j + 0.5) / nz,
           targetH: s * (1 + (((k >> (5 + j)) & 3) - 1.5) * 0.03),   // ±4,5% de gabarito
-          ry: ((k >> (7 + i + j)) & 1) ? Math.PI : 0,
+          ry,
         });
+      }
     }
   }
   /* QUARTEIRÃO: fatia um lote comprido em módulos de ~5,6 m. É o que impede o "mesmo módulo
@@ -1322,26 +1331,37 @@ export function buildQuebrada(scene, T) {
       b.position.set(lx, 5.0 - 0.55 * Math.sin(Math.PI * t) - 0.18, lz); root.add(b);
     }
   }
-  // MATO nas frestas: capim no pé dos muros das vielas e nas quinas do campinho. Cruzeta de
-  // dois quads com alpha; sem colisor, sem sombra — é o detalhe que tira o ar de maquete.
+  // MATO nas frestas: manchas separadas no pé dos muros, sem colisor e sem sombra.
   if (QP.get('mato') !== '0' && !LOWQ) {
     const S = 64, cv = document.createElement('canvas'); cv.width = cv.height = S; const cx2 = cv.getContext('2d');
     let sd = 401; const rn = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
-    for (let i = 0; i < 22; i++) {
-      cx2.strokeStyle = rn() > 0.85 ? 'rgba(178,166,86,0.95)' : `rgba(${62 + rn() * 40 | 0},${112 + rn() * 52 | 0},${52 + rn() * 30 | 0},0.95)`;
-      cx2.lineWidth = 1.4 + rn() * 1.8; cx2.lineCap = 'round';
-      const px = 4 + rn() * (S - 8), h = S * (0.45 + rn() * 0.45);
-      cx2.beginPath(); cx2.moveTo(px, S); cx2.quadraticCurveTo(px + (rn() - 0.5) * 10, S - h * 0.5, px + (rn() - 0.5) * 20, S - h); cx2.stroke();
+    for (let i = 0; i < 26; i++) {
+      cx2.strokeStyle = rn() > 0.55 ? `rgba(${150 + rn() * 40 | 0},${132 + rn() * 30 | 0},${70 + rn() * 24 | 0},0.95)`
+        : `rgba(${70 + rn() * 22 | 0},${96 + rn() * 30 | 0},${54 + rn() * 20 | 0},0.95)`;
+      cx2.lineWidth = 1.2 + rn() * 1.6; cx2.lineCap = 'round';
+      const px = 4 + rn() * (S - 8), h = S * (0.4 + rn() * 0.4);
+      cx2.beginPath(); cx2.moveTo(px, S); cx2.quadraticCurveTo(px + (rn() - 0.5) * 12, S - h * 0.5, px + (rn() - 0.5) * 22, S - h); cx2.stroke();
     }
     const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
     const matoMat = new THREE.MeshStandardMaterial({ map: tx, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide, roughness: 1 });
-    const geo = new THREE.PlaneGeometry(0.9, 0.65);
+    const geo = new THREE.PlaneGeometry(0.75, 0.45);
+    const touceiras = [
+      [-21.4, -35.0, 3, 1.4], [-24.6, -27.5, 2, 1.0], [-21.4, -19.0, 4, 1.6],
+      [-24.6, -8.0, 2, 0.9], [-21.4, 1.5, 3, 1.2], [-24.6, 13.0, 2, 1.0], [-21.4, 24.0, 3, 1.3],
+      [21.4, -32.0, 2, 1.0], [24.6, -22.5, 3, 1.3], [21.4, -11.0, 2, 0.9],
+      [24.6, 0.5, 3, 1.4], [21.4, 11.5, 2, 1.0], [24.6, 21.0, 3, 1.2],
+    ];
     let ms = 9161; const rr = () => (ms = (ms * 48271) % 2147483647) / 2147483647;
-    for (let i = 0; i < 190; i++) {
-      const lado = rr();
-      const x = lado < 0.5 ? (rr() < 0.5 ? -21.4 : -24.6) : (rr() < 0.5 ? 21.4 : 24.6);
-      const z = -38 + rr() * 66, y = 0.32;
-      for (const rot of [0, Math.PI / 2]) { const m = new THREE.Mesh(geo, matoMat); m.position.set(x + (rr() - 0.5) * 0.5, y, z); m.rotation.y = rot + rr(); m.userData.nonSolidSurface = true; root.add(m); }
+    for (const [cx3, cz3, n, lz] of touceiras) for (let i = 0; i < n; i++) {
+      const x = cx3 + (rr() - 0.5) * 0.25, z = cz3 + (i - (n - 1) / 2) * (lz / Math.max(1, n - 1)) + (rr() - 0.5) * 0.3;
+      const s = 0.55 + rr() * 0.4, ry = rr() * Math.PI;
+      for (const rot of [0, Math.PI / 2]) {
+        const m = new THREE.Mesh(geo, matoMat);
+        m.position.set(x + (rr() - 0.5) * 0.14, 0.32, z); m.rotation.y = rot + ry * 0.6;
+        m.scale.set(s, 0.6 + rr() * 0.45, 1);
+        m.position.y = geo.parameters.height * m.scale.y / 2 - 0.01;
+        m.userData.nonSolidSurface = true; root.add(m);
+      }
     }
   }
 
@@ -1615,6 +1635,42 @@ export function buildQuebrada(scene, T) {
   const preLote = new Set(root.children);
   PBC.build(root);      // carros pintados por instância
   PB.build(root);       // instancia barraco e fachada: 1 draw call por (material, bloco de 24 m)
+  // Piloto R85: só o tijolo das duas frentes medidas; ?qfinish=0 preserva o UV autorado.
+  // A geometria é privada do bucket, sem alterar o template ou os materiais compartilhados.
+  if (QP.get('qfinish') !== '0') {
+    const alvos = [
+      [-28.0225, 0.197114, -35.432097, -24.977499, 3.945789, -31.556766],
+      [-27.977499, 0.191288, -32.728827, -25.022499, 3.829165, -28.968038],
+    ];
+    const local = new THREE.Box3(), mundo = new THREE.Box3(), matriz = new THREE.Matrix4();
+    for (const m of root.children) {
+      if (!m.isInstancedMesh || m.userData.mapPropId !== 'fav_brasileira' || m.count !== 2
+        || Array.isArray(m.material) || m.material?.name !== 'Materiais') continue;
+      const g = m.geometry, pos = g.attributes.position, uv = g.attributes.uv;
+      if (pos?.count !== 275 || uv?.count !== 275 || uv.itemSize !== 2 || g.index?.count !== 666) continue;
+      const dadosUV = uv.array || uv.data?.array, textura = m.material.map;
+      if (uv.normalized || !(dadosUV instanceof Float32Array || dadosUV instanceof Float64Array)) continue;
+      if (textura?.wrapS !== THREE.RepeatWrapping || textura.wrapT !== THREE.RepeatWrapping) continue;
+      const imagem = textura.image;
+      if (imagem?.width !== 1024 || imagem.height !== 1024) continue;
+      m.updateWorldMatrix(true, false);
+      local.setFromBufferAttribute(pos);
+      const encontrados = new Set();
+      for (let i = 0; i < m.count; i++) {
+        m.getMatrixAt(i, matriz); matriz.premultiply(m.matrixWorld);
+        mundo.copy(local).applyMatrix4(matriz);
+        const box = [...mundo.min.toArray(), ...mundo.max.toArray()];
+        const alvo = alvos.findIndex(a => a.every((v, k) => Math.abs(v - box[k]) < 1e-3));
+        if (alvo >= 0) encontrados.add(alvo);
+      }
+      if (encontrados.size !== alvos.length) continue;
+      const geo = g.clone(), u = geo.attributes.uv;
+      for (let i = 0; i < u.count; i++) u.setXY(i, u.getX(i) * 2, u.getY(i) * 2);
+      u.needsUpdate = true;
+      m.geometry = geo;
+      m.userData.quebradaFinishR85 = true;
+    }
+  }
   SKIRT.build(root);
   /* O lote nasce InstancedMesh visível em root e FORA de `occluders`: sem isto a bala
      atravessaria barraco/fachada/carro que o corpo respeita — e era isso que o proxy
@@ -1684,6 +1740,7 @@ export function buildQuebrada(scene, T) {
   /* BUG-57: rua de baile tem caramelo em dupla, rato de esquina e pombo de fiação. */
   const ambience = createFavelaAmbience(root, {
     map: 'quebrada',
+    low: LOWQ,
     rats: [
       { pos: [-1, 0, -15.5], to: [1.5, 0, -13], phase: .3 }, { pos: [4, 0, 13.5], to: [6, 0, 15.5], phase: 1.2 },
       { pos: [-15, 0, 4], to: [-13, 0, 6.5], phase: 2.2 },
@@ -1696,8 +1753,9 @@ export function buildQuebrada(scene, T) {
       { pos: [-6.5, 0, -23.5], to: [-2.5, 0, -23.5], phase: .5 },
       { pos: [9.5, 0, -33.5], to: [6, 0, -33.5], phase: 2.1 },
     ],
-    /* BUG-57 v2.1: gato de telhado da rua do baile (Quaternius CC0) */
-    cats: [{ pos: [-12, 0, -12], to: [-11, 0, -10], phase: 1.8 }],
+    cats: [{ assetId: 'escadaoCat', contactShadow: true, turnRate: 6, speed: { walk: .55, flee: 1.5 }, heightAt: groundHeightAt,
+      pos: [-11.8, groundHeightAt(-11.8, -12.4), -12.4], to: [-11, groundHeightAt(-11, -11), -11], phase: 1.8,
+      fleeArea: { minX: -11.9, maxX: -10.2, minZ: -13.5, maxZ: -10.6 } }],
   });
 
   return {

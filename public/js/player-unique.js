@@ -1,4 +1,5 @@
 import { privacyChoice } from './privacy-preferences.js';
+import { getAnonId } from './client-id.js';
 
 const ETAPAS = Object.freeze({
   page_view: 'visit',
@@ -27,13 +28,14 @@ export function atribuirVisita({ search = '', referrer = '' } = {}) {
 
 const estadoDoConsentimento = (choice) => choice?.analytics === true ? 'granted' : choice?.analytics === false ? 'denied' : 'unknown';
 
-export function criarJogadoresUnicos({ enviar, escolha = privacyChoice, aquisicao }) {
+export function criarJogadoresUnicos({ enviar, escolha = privacyChoice, aquisicao, identidade = getAnonId }) {
   let visitou = false;
   let ultimaVersao = '';
   const manda = (stage, version) => {
     const attr = aquisicao();
     try {
       enviar(JSON.stringify({
+        anonId: identidade(),
         stage,
         consent: estadoDoConsentimento(escolha()),
         source: attr.source,
