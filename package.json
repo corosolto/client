@@ -767,6 +767,8 @@
     "eval:death-camera-consistency": "node tools/eval/death-camera-check.mjs && node tools/eval/death-camera-self-check.mjs && node tools/eval/death-camera-self-check.mjs --mutante=camera-mudo && node tools/eval/death-camera-self-check.mjs --mutante=cam-nan && node tools/eval/death-camera-self-check.mjs --mutante=cam-nan-primeiro && node tools/eval/death-camera-self-check.mjs --mutante=olho-vivo",
     "eval:visual-map-contracts": "node tools/eval/visual-map-mutations.mjs campo && node tools/eval/visual-map-mutations.mjs favela && node tools/eval/visual-map-mutations.mjs materiais && node tools/eval/visual-map-mutations.mjs uv",
     "eval:ads1p-public": "node tools/eval/ads1p-linha-check.mjs --armas=ak && node tools/eval/ads1p-linha-check.mjs --armas=ak --mutante=foco && node tools/eval/ads1p-linha-check.mjs --armas=ak --mutante=lateral && node tools/eval/ads1p-linha-check.mjs --armas=ak --mutante=vertical",
+    "eval:ads1p-runtime-public": "node tools/eval/ads1p-runtime-consumer-check.mjs --armas=ak && node tools/eval/ads1p-runtime-consumer-check.mjs --armas=ak --mutante=consumidor",
+    "//eval:ads1p-runtime-public": "Consumidor de runtime do ADS 1P na AK pública (GLB público, sem ativos privados): nominal mais mutante consumidor, ambos têm de passar.",
     "eval:mira-public": "node -e \"require('node:fs').mkdirSync('artifacts',{recursive:true})\" && node tools/eval/mira-alinhada-check.mjs --cams=first --armas=ak --json=artifacts/mira-public.json",
     "eval:posto-board-support": "node tools/eval/posto-board-support-mutations.mjs --self-test && node tools/eval/posto-board-support-mutations.mjs",
     "check:visual:browser": "node tools/eval/runner.mjs eval:lobbyarmamao eval:mira-public",

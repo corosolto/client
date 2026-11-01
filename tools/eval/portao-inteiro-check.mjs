@@ -32,7 +32,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = { 'passo-orfao': 'PI1', 'regua-fantasma': 'PI2', 'regua-fora-do-pr-fast': 'PI3', 'sucesso-implicito': 'PI4', 'always': 'PI4', 'erro-ignorado': 'PI4', 'setup': 'PI4' };
+const MUTANTES = { 'passo-orfao': 'PI1', 'regua-fantasma': 'PI2', 'regua-fora-do-pr-fast': 'PI3', 'sucesso-implicito': 'PI4', 'always': 'PI4', 'erro-ignorado': 'PI4', 'setup': 'PI4', 'sem-armadura-ci': 'PI4', 'sem-ads1p-runtime-ci': 'PI4' };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -78,6 +78,23 @@ if (MUT === 'sucesso-implicito') ci = ci.replace(/(- name: Contratos visuais[^\n
 if (MUT === 'always') ci = ci.replace(/(- name: Contratos visuais[^\n]*\n        if: )[^\n]*/, '$1${{ always() }}');
 if (MUT === 'setup') ci = ci.replace(/(- name: Contratos visuais[^\n]*\n        if: )[^\n]*/, "$1${{ !cancelled() }}");
 if (MUT === 'erro-ignorado') ci = ci.replace(/(- name: TRETA\$ da partida segue o CS[^\n]*\n)/, '$1        continue-on-error: true\n');
+const CI_CRU = existsSync('.github/workflows/ci.yml') ? readFileSync('.github/workflows/ci.yml', 'utf8') : '';
+const ALVO_ALIAS = { 'sem-armadura-ci': 'eval:armadura', 'sem-ads1p-runtime-ci': 'eval:ads1p-runtime-public' }[MUT] || '';
+if (ALVO_ALIAS) {
+  const esc = ALVO_ALIAS.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  let aplicacoes = 0;
+  ci = ci.replace(/^        run:.*$/gm, (linha) => {
+    return linha.replace(new RegExp(`\\s${esc}(?=\\s|$)`, 'g'), () => {
+      aplicacoes++;
+      return '';
+    });
+  });
+  if (aplicacoes !== 1 || ci === CI_CRU) {
+    console.error(`PI-MUTANTE ${JSON.stringify({ name: MUT, aplicado: false, removed: ALVO_ALIAS })} MUTAÇÃO NÃO APLICADA`);
+    process.exit(4);
+  }
+  console.log(`PI-MUTANTE ${JSON.stringify({ name: MUT, aplicado: true, removed: ALVO_ALIAS })}`);
+}
 const CI_MUTADO = MUTANTES[MUT] === 'PI4' && ci === (existsSync('.github/workflows/ci.yml') ? readFileSync('.github/workflows/ci.yml', 'utf8') : '');
 if (MUT === 'regua-fora-do-pr-fast') ci = ci.replace(/ eval:wfsecret\b/g, '');
 /* Só linha de comando conta: o nome citado em comentário não roda. */
@@ -95,7 +112,7 @@ const GRUPOS_PI4 = [
   ['TRETA$ da partida segue o CS', ['eval:economia']],
   ['TRETA$ da partida dentro do Game real', ['eval:economia-jogo']],
   ['Contratos visuais de mapas', ['eval:shot-final-pose', 'eval:authored-locomotion', 'eval:character-normal-quality', 'eval:grafite-curation', 'eval:map-material-finish', 'eval:ferro-balcao', 'eval:match-pickups', 'eval:net-flash-disable', 'eval:normal-only-fit-equivalence', 'eval:tp-world-contract', 'eval:skin-profile-flow', 'eval:death-camera-consistency', 'eval:visual-map-contracts', 'eval:knife-skin-markings', 'eval:campo-uv', 'eval:grafite-atual:prova']],
-  ['Flash, fluidez e ADS da AK pública', ['eval:flashbang', 'mut:flashbang', 'eval:movimento-fluidez', 'eval:ads1p-public', 'eval:posto-board-support', 'eval:preview-grip-phase']],
+  ['Flash, fluidez e ADS da AK pública', ['eval:flashbang', 'mut:flashbang', 'eval:movimento-fluidez', 'eval:ads1p-public', 'eval:posto-board-support', 'eval:preview-grip-phase', 'eval:armadura', 'eval:ads1p-runtime-public']],
   ['Todo mapa devolve o que o game.js consome', ['eval:mapcontrato']],
   ['Pichação colada na parede', ['eval:pichacao-parede']],
   ['Amazônia acessível', ['eval:amazonia']],
@@ -161,7 +178,8 @@ try {
   const grupos = GRUPOS_PI4.map(([prefixo, comandos]) => {
     const i = unico((p) => p.name.startsWith(prefixo), prefixo);
     const tokens = (passos[i].run || '').split(/\s+/);
-    for (const cmd of comandos) if (!tokens.includes(cmd)) throw new Error(`PI4 ${prefixo}: consumidor ${cmd} não executa no run`);
+    const faltantes = comandos.filter((cmd) => !tokens.includes(cmd));
+    if (faltantes.length) throw new Error(`PI4 ${prefixo}: consumidores ${faltantes.join(', ')} não executam no run`);
     return i;
   });
   const deps = unico((p) => p.run?.trim() === 'npm ci', 'npm ci');
