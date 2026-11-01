@@ -57,3 +57,43 @@ nenhum derivado cosmético, runtime por origem ou asset adicional entra aqui.
 Release135/backend e convergência do nó têm provas próprias. Os artefatos de
 R756/R762 e da missão vivem em `audits/2026-10-31-visual-consistency` no agregado;
 este ledger guarda a continuação recuperável desta branch.
+
+## R871: recuperação do manifesto no ciclo atual de #1208
+
+O formal de `1e69c84949d8b7d91e4d6ad9d4da0a02df00107c` apontou que
+`_tpGloveAsked` impedia recuperar uma falha temporária. A causa também incluía
+o manifesto rejeitado convertido em `packages: []` permanente. R857 mudou os
+três consumidores: manifesto compartilhado, Game e preview. A promessa rejeitada
+é removida somente se ainda é a atual; erros HTTP, rede, JSON e shape são
+distintos da ausência legítima de pacote e da falha definitiva do GLB.
+
+A política é uma recuperação automática por demanda efetiva (origem e estilo).
+Após duas falhas, ensures não repetem I/O. Off/on, estilo e origem rearmam esse
+orçamento. O callback de uma demanda antiga não altera a nova. Não há timer.
+O mesmo erro compartilhado recebe um único diagnóstico. O preview conserva o
+corpo quando só o manifesto está indisponível.
+
+O checker R864 foi adotado em `eb43037c4`; sua origem é
+`7c90d182c61caf6172c6abe8178467781a56f45d`. Root leu o checker inteiro e o relatório.
+Os produtos antigos BASE/S4 reprovaram 16 cláusulas sem INFRA. BASE aplicado e S4
+em cópia privada passaram 19 cláusulas em 11 processos; oito mutantes por estágio
+foram detectados pelos failsets exatos, e nove controles CLI/âncora passaram.
+W770 permaneceu intocada. O relatório é `GLOVE-MANIFEST-RETRY-R864-REPORT.md`
+na auditoria agregada; o manifesto selado tem SHA256
+`787b64079733f74834578497e11e00c341013b0503af7c212e382b1ce2d3dd26`.
+
+Root executou `npm run eval:tp-identity` sobre a composição aplicada: PASS
+em 149,809 s, incluindo os controles antigos e o alias novo com os oito mutantes.
+Recibo `TP-GLOVE-RETRY-ROOT-R871-FOCAL.json`; log SHA256
+`9a9c4e4ed70a6ec4ba06135595828122cebce7e681f23622f8f9294fb46519e9`.
+Os três produtos mantêm exatamente os hashes registrados no relatório R864.
+R854 também está incorporado, com instrumentação causal de boot; seu ledger
+guarda os resultados e os descartes de infraestrutura.
+
+Geradores docs/ARCH e os gates syntax, docs:check, arch:check e
+eval:mutantes-anunciados passaram no ponto aplicado. Próximo passo: checkpoint
+DCO/Agent, push normal com hooks e novo formal. Responder o fio `4436781498` com o commit publicado e resolver após
+a evidência; obter crítico independente do head novo depois de bot limpo.
+Essa correção ainda não tem aceite de preview DOM/browser/arte/MP/mobile.
+A missão integral continua ativa; #1158 excluído e novos fluxos UI/social ficam
+para depois. Nenhum resultado CPU equivale à aprovação visual do jogo em3:2.
