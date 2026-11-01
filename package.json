@@ -785,7 +785,7 @@
     "eval:map-fauna-curated": "node --test tests/map-fauna-curated.test.mjs tests/menu-backdrop.test.mjs && for m in fauna-gates stale-map ignore-seq ignore-map no-late-fauna; do ! MENU_BACKDROP_MUTANT=$m node --test tests/menu-backdrop.test.mjs >/dev/null 2>&1 || exit 1; done",
     "eval:map-fauna-curated:runtime": "node tools/eval/map-fauna-curated-ci.mjs",
     "//eval:vm-maos-armas": "mãos do time iguais em toda arma (BUG-85, #1128): as 26 armas de WEAPON_IDS em cada rota servida (padrão e com pintura) e a faca, GLB real; identidade por facção e rig de mão da linha (A golden, K fábrica, L faca), com a pistola golden como dívida declarada de arte. Sem catálogo privado as rotas fab# saem NÃO MEDIDAS; eval:vm-maos-armas-catalogo as exige. Mutantes: luva-por-arma, pbr-por-arma, troca-rig, luva-crua, divida-paga",
-    "eval:vm-maos-armas": "node tools/eval/vm-hand-continuity-check.mjs && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=luva-por-arma && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=pbr-por-arma && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=troca-rig --arma=m4 && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=troca-rig --arma=knife && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=luva-crua --arma=m4 && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=divida-paga",
+    "eval:vm-maos-armas": "node tools/eval/vm-hand-continuity-control.mjs",
     "eval:vm-maos-armas-catalogo": "node tools/eval/vm-hand-continuity-check.mjs --exigir-catalogo"
   },
   "repository": {

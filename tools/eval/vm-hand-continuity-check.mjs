@@ -57,27 +57,31 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { HAND_DEBT, hashHandInputs, parseHandOptions, readHandWeaponIds, ensureLocalThree } from './vm-hand-continuity-support.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-/* `three` nu resolve, como no import map do jogo, para public/vendor: a mesma ponte (e a
-   mesma guarda) do harness.mjs, dentro do projeto. Sem ela o node acha o atalho de um
-   checkout vizinho e mede com o GLTFLoader de outra base. */
-{
-  const shim = path.join(ROOT, 'node_modules', 'three');
-  const liga = (de, para, tipo) => {
-    try { fs.lstatSync(de); fs.rmSync(de, { recursive: true, force: true }); } catch { /* não existe */ }
-    fs.symlinkSync(para, de, tipo);
-  };
-  if (!fs.existsSync(path.join(shim, 'index.js'))) {
-    fs.mkdirSync(shim, { recursive: true });
-    fs.writeFileSync(path.join(shim, 'package.json'), JSON.stringify({
-      name: 'three', version: '0.160.0', type: 'module', main: 'index.js',
-      exports: { '.': './index.js', './addons/*': './addons/*' },
-    }));
-    liga(path.join(shim, 'index.js'), path.join(ROOT, 'public/vendor/three.module.js'));
-    liga(path.join(shim, 'addons'), path.join(ROOT, 'public/vendor/addons'), 'dir');
-  }
-}
+let options;
+const nonce = process.env.CSBR_VM_HANDS_NONCE || crypto.randomUUID();
+const emitFailure = (status, error, exit) => {
+  console.log(JSON.stringify({ schema: 'vm-hands/2', nonce, status, error: String(error), mutante: options?.mutante || null, arma: options?.arma || null }));
+  process.exitCode = exit;
+};
+try {
+  options = parseHandOptions(process.argv.slice(2));
+  if (!/^[a-f0-9-]{36}$/.test(nonce)) throw Error('CLI: nonce inválido');
+} catch (e) { emitFailure('CLI_ERROR', e.message, 2); }
+if (process.exitCode === 2) process.exit(2);
+const mutante = options.mutante, MUT_ARMA = options.arma, EXIGIR_CATALOGO = options.strict, JSON_OUT = options.json;
+let sourceBefore;
+try {
+const weaponsBefore = readHandWeaponIds(ROOT);
+if (!weaponsBefore.includes(MUT_ARMA)) { emitFailure('CLI_ERROR', '--arma desconhecida', 2); process.exit(2); }
+if (Number(process.versions.node.split('.')[0]) < 22) throw Error('Node22 ou superior necessário');
+sourceBefore = hashHandInputs(ROOT);
+const topology = ensureLocalThree(ROOT);
+const resolvedThree = fileURLToPath(import.meta.resolve('three'));
+if (![path.join(ROOT, 'node_modules/three/index.js'), path.join(ROOT, topology.index)].includes(resolvedThree)
+  || fs.realpathSync(resolvedThree) !== path.join(fs.realpathSync(ROOT), topology.index)) throw Error('Resolução three fora do vendor local');
 const THREE = await import('three');
 const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
 const { clone: skeletonClone } = await import('three/addons/utils/SkeletonUtils.js');
@@ -90,17 +94,6 @@ const quiet = (fn) => (...args) => !/Couldn't load texture|THREE\.GLTFLoader/.te
 console.warn = quiet(console.warn);
 console.error = quiet(console.error);
 
-const MUTANTES = ['luva-por-arma', 'pbr-por-arma', 'troca-rig', 'luva-crua', 'divida-paga'];
-const FLAGS = ['mutante', 'arma', 'exigir-catalogo', 'json'];
-for (const a of process.argv.slice(2)) {
-  const nome = a.replace(/^--/, '').split('=')[0];
-  if (!a.startsWith('--') || !FLAGS.includes(nome)) throw new Error(`flag desconhecida: ${a}`);
-}
-const arg = (n) => process.argv.find((a) => a.startsWith(`--${n}=`))?.split('=').slice(1).join('=') || '';
-const mutante = arg('mutante');
-if (mutante && !MUTANTES.includes(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
-const EXIGIR_CATALOGO = process.argv.includes('--exigir-catalogo');
-const JSON_OUT = process.argv.includes('--json');
 const ASSETS = path.resolve(process.env.CSBRASIL_VM_ASSET_ROOT
   ? path.join(process.env.CSBRASIL_VM_ASSET_ROOT, 'viewmodels') : path.join(ROOT, 'public/private-assets/viewmodels'));
 
@@ -117,6 +110,7 @@ const { AuthoredViewModels, cameraSpacePackage, skinnedEntryKey, urlForKey, vmFo
 const { applyTeamHandMaterial, teamHandStyle, handLayoutOfMesh, refreshTeamHands, TEAM_HANDS } = await import('../../public/js/vmhands.js');
 const { KnifeMeleeViewModel } = await import('../../public/js/meleevm.js');
 const { WEAPON_IDS } = await import('../../public/js/weapons.js');
+if (JSON.stringify(WEAPON_IDS) !== JSON.stringify(weaponsBefore)) throw Error('WEAPON_IDS mudou entre CLI e runtime');
 const { FACTIONS } = await import('../../public/js/factions.js');
 const { VM_WEAPON, VM_FABRICA } = await import('../../public/js/data/vmconfig.js');
 const { GOLDEN_VER } = await import('../../public/js/data/goldenver.js');
@@ -124,15 +118,10 @@ const { MeshoptDecoder } = await import('../../public/vendor/meshopt_decoder.mod
 
 /* Dívida de ARTE, com número. Chave = `<cláusula>:<arma>@<rota>`; `rigHash` = o rig ERRADO medido
    hoje. Reprovar com outro rig também reprova: a dívida é deste defeito, não de qualquer um. */
-const DIVIDA = Object.freeze({
-  'RIG:pistol@pintura': Object.freeze({
-    rigHash: 'f468adc9279d',
-    motivo: '#1128 — coro/pistol-hires.glb (gold#pistol, servido quando o jogador pinta a pistola) '
-      + 'traz a malha armmesh_Mat_0 do rig L da faca (R_wrist_026) com o material CoroSolto_FP_Gloves; a linha '
-      + 'golden é o rig A da AK (Requests_Studio_Hands + .001). Conserto é re-rig do GLB no Blender, não arnês.',
-  }),
-});
+const DIVIDA = HAND_DEBT;
 
+let mutacoes = 0;
+const appliedRoutes = new Set();
 const checks = [];
 const check = (id, ok, evidence) => checks.push({ id, ok: Boolean(ok), ...(evidence === undefined ? {} : { evidence }) });
 
@@ -150,13 +139,13 @@ for (const faction of ['E', 'B', 'C', 'F', 'U']) {
   const gunMaterial = material.clone(); gunMaterial.name = 'CoroSolto_FP_Glove';
   const pistol = tintHandMaterial(gunMaterial, profile), second = tintHandMaterial(gunMaterial, { ...profile, id: 'player-b', sleeve: 0x0000ff, accent: 0xff0000 });
   const expected = teamHandStyle(faction);
-  if (mutante === 'luva-por-arma') delete mesh.material.userData.teamHands;
+  if (mutante === 'luva-por-arma' && Object.hasOwn(mesh.material.userData, 'teamHands')) { delete mesh.material.userData.teamHands; mutacoes++; appliedRoutes.add(mutante); }
   check(`${faction}: faca e pistola usam identidade do time`, mesh.material.userData.teamHands?.faction === faction && pistol.userData.teamHands?.faction === faction);
   check(`${faction}: personagem não muda luva`, JSON.stringify(pistol.userData.teamHands) === JSON.stringify(second.userData.teamHands) && pistol.color.equals(second.color));
   check(`${faction}: dedos seguem direção aprovada`, mesh.material.userData.teamHands?.fingerless === expected.fingerless && pistol.userData.teamHands?.fingerless === expected.fingerless);
   const teamMap = new THREE.Texture(), donor = new THREE.Texture(), normal = new THREE.Texture(), orm = new THREE.Texture();
   pistol.map = teamMap;
-  if (mutante === 'pbr-por-arma') delete pistol.userData.teamHands;
+  if (mutante === 'pbr-por-arma' && Object.hasOwn(pistol.userData, 'teamHands')) { delete pistol.userData.teamHands; mutacoes++; appliedRoutes.add(mutante); }
   bindSharedArmTextures([{ material: pistol }], new Map([['T_Glove01_B', donor], ['T_Glove01_N', normal], ['T_Glove01_ORM', orm]]));
   check(`${faction}: donor tardio não troca atlas nem acabamento por time`, pistol.map === teamMap && pistol.normalMap === null && pistol.roughnessMap === null);
   const viewmodels = new AuthoredViewModels(new THREE.Group(), null, profile);
@@ -255,10 +244,8 @@ const resumoRig = (s) => s.map((x) => `${x.mesh} [${x.materiais}] ${x.vertices} 
 
 /* Doador do mutante troca-rig: o braço (malhas + armadura) de um GLB de OUTRO rig, com os
    materiais renomeados para os da arma alvo — o defeito da pistola. */
-const MUT_ARMA = arg('arma') || 'm4';
 if ((mutante === 'troca-rig' || mutante === 'luva-crua') && !WEAPON_IDS.includes(MUT_ARMA)) throw new Error(`--arma desconhecida: ${MUT_ARMA}`);
 let doadores = null;
-let mutacoes = 0;
 async function doadorPara(signatureAlvo) {
   if (!doadores) {
     doadores = [];
@@ -299,7 +286,8 @@ for (const r of rotas) {
     if (privado && !EXIGIR_CATALOGO) { linha.estado = 'NAO_MEDIDA'; linha.motivo = 'catálogo privado ausente'; continue; }
     linha.estado = 'ERRO'; linha.falhas.push(`GLB ausente: ${linha.file}`); continue;
   }
-  const bytes = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex').slice(0, 10);
+  linha.assetSHA256 = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+  const bytes = linha.assetSHA256.slice(0, 10);
   if (bytes !== v) { linha.estado = 'ERRO'; linha.falhas.push(`bytes ${bytes} ≠ ?v=${v} da URL: o arquivo local não é o servido`); continue; }
   const gltf = await parseFile(file);
   const mutaAqui = r.weapon === MUT_ARMA;
@@ -307,13 +295,13 @@ for (const r of rotas) {
     const doador = await doadorPara(assinaturaTexto(assinatura(handMeshesOf(gltf.scene))));
     plantaRig(gltf.scene, doador);
     linha.mutante = `malha de mão de ${doador.f}`;
-    mutacoes += 1;
+    mutacoes += 1; appliedRoutes.add(`${r.weapon}@${r.rota}`);
   }
   if (mutante === 'divida-paga' && r.key === 'gold#pistol') {
     // O conserto de arte simulado: a pistola golden recebe o braço da AK como ele é.
     await doadorPara('');
     plantaRig(gltf.scene, doadores.find((d) => d.f.endsWith('/ak-hires.glb')), { renomeia: false });
-    mutacoes += 1;
+    mutacoes += 1; appliedRoutes.add(`${r.weapon}@${r.rota}`);
   }
   /* Sobe o pacote como o runtime sobe: clone do parse, cameraSpacePackage, bind das
      texturas compartilhadas; faca pelo KnifeMeleeViewModel._accept. */
@@ -334,6 +322,7 @@ for (const r of rotas) {
     const fora = handMeshesOf(scene).filter((m) => !visual.handMeshes.includes(m));
     return { scene, meshes: handMeshesOf(scene), fora, setProfile: (p) => viewmodels.setProfile(p), dispose: () => {} };
   };
+  linha.handMaterialCount = handMaterialsOf(handMeshesOf(gltf.scene)).length;
   const sig = assinatura(handMeshesOf(gltf.scene));
   linha.rig = resumoRig(sig);
   linha.assinatura = assinaturaTexto(sig);
@@ -346,7 +335,7 @@ for (const r of rotas) {
     const style = teamHandStyle(faction);
     const a = await sobe({ id: 'player-a', faction, skin: 0xb78968, sleeve: 0xaa3333, accent: 0xdd2222 });
     const b = await sobe({ id: 'player-b', faction, skin: 0x5a3a28, sleeve: 0x0000ff, accent: 0xff0000 });
-    if (mutante === 'luva-crua' && mutaAqui) for (const { m } of handMaterialsOf(a.meshes)) { delete m.userData.teamHands; mutacoes += 1; }
+    if (mutante === 'luva-crua' && mutaAqui) for (const { m } of handMaterialsOf(a.meshes)) { if (Object.hasOwn(m.userData, 'teamHands')) { delete m.userData.teamHands; mutacoes += 1; appliedRoutes.add(`${r.weapon}@${r.rota}`); } }
     const ma = handMaterialsOf(a.meshes), mb = handMaterialsOf(b.meshes);
     const semId = ma.filter(({ mesh, m }) => !(m.userData.teamHands?.faction === faction && m.userData.teamHands.style === style.id
       && m.userData.teamHands.layout && m.userData.teamHands.layout === handLayoutOfMesh(mesh)));
@@ -401,11 +390,16 @@ for (const chave of Object.keys(DIVIDA)) {
 }
 const naoMedidas = linhas.filter((l) => l.estado === 'NAO_MEDIDA');
 const ok = !vermelhos.length && !quitados.length;
-/* Mutante que não achou onde morder sai 0: o `!` do package.json então reprova (verde cego). */
+/* Aplicação ausente ou survivor não recebe crédito do controlador. */
 const naoAplicado = ['troca-rig', 'luva-crua', 'divida-paga'].includes(mutante) && !mutacoes;
 
 if (JSON_OUT) {
-  console.log(JSON.stringify({ ok, mutante: mutante || null, rotas: linhas.map(({ assinatura: _, ...l }) => l), vermelhos, declarados, quitados, checks }, null, 2));
+  const status = linhas.some(l => l.estado === 'ERRO') ? 'INFRA' : naoAplicado ? 'NOT_APPLIED' : ok ? 'GREEN' : 'RED';
+  if (JSON.stringify(hashHandInputs(ROOT)) !== JSON.stringify(sourceBefore)) throw Error('Fontes mudaram durante a medição');
+  console.log(JSON.stringify({ schema: 'vm-hands/2', nonce, status, sources: sourceBefore, topology, weaponIds: WEAPON_IDS, faccoes: FACCOES,
+    ok, mutante: mutante || null, arma: MUT_ARMA, strict: EXIGIR_CATALOGO,
+    application: { count: mutacoes, routes: [...appliedRoutes].sort(), notApplied: naoAplicado },
+    rotas: linhas.map(({ assinatura: _, ...l }) => l), vermelhos, declarados, quitados, checks }, null, 2));
 } else {
   const porRota = (l) => {
     const prefixo = `${l.weapon}@${l.rota}`;
@@ -439,4 +433,5 @@ if (JSON_OUT) {
     : `  ✗ ${vermelhos.length} vermelho(s) fora da dívida, ${quitados.length} dívida(s) a remover`);
 }
 if (naoAplicado) console.error(`  ✗ MUTANTE ${mutante} NÃO APLICADO: ${MUT_ARMA} não tem rota medida nesta corrida`);
-process.exitCode = naoAplicado ? 0 : ok ? 0 : 1;
+process.exitCode = linhas.some(l => l.estado === 'ERRO') ? 3 : naoAplicado ? 0 : ok ? 0 : 1;
+} catch (e) { emitFailure('INFRA', e.stack || e, 3); }
