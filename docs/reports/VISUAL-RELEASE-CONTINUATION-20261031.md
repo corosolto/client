@@ -2,17 +2,46 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
-## Estado atual, 01/11 R49: H2 em checkpoint, integração da main
+## Estado atual, 01/11 R54: revisão de produto e correção do checker Ferro
 
-H2 foi registrado em35b5a8bde94bf445a257ff6802dfa9c7644c8423 (oito arquivos,
-revisão independente focal CLEAN e provasR46–R48). Root confirmou checkout limpo,
-fetch main4cf8dd99d813fe7caa323b5e9567df3c86957f1a e leu o delta integral dos
-quatro arquivos de1189. Merge local automático sem conflitos, preservando o
-workflow QA e acrescentando eval:sondafilho. Produto H2 não mudou. Próximo:
-fechar checkpoint do merge, push normal atômico QA+staging após conferir refs,
-CI/bot atuais, wholePR pósbot, staging efetivamente verificada e merge/release.
-G2/Campo continuam isolados; não atrasar esta publicação por candidatos novos.
-O objetivo integral e todos os limites da seção R48 continuam vigentes.
+QA continua sobre80830d13faaca4e84434f18d8a9171e95dbb4dae, ainda não publicada.
+A revisão preparatória dos60arquivos PRODUCT encontrou umP2: eval:ferro-estrutura
+importava FERRO_AMBIENCE removido do mapa. Baseline real Node22/26 EXIT1 antes de
+qualquer cláusula. Root retirou somente o import morto e passou FVE7 a exigir
+as quatro espécies reais do mundo, preservando loops/arquivos e FVE1–6.
+Nominal+oito mutantes reais passaram nos dois Nodes (nominal0, mutantes1,
+cláusulas esperadas presentes; beco também reprovaFVE5). Contraprova adicional
+troca ratos por espécie inesperada, mantendo quatro tipos: sóFVE7 reprova nos
+doisNodes. Provas FERRO-ESTRUTURA-RESULT-R54.json e MISSING-FAMILY-RESULT-R54.
+Root leu CRITICO-FERRO-ESTRUTURA-R54.md inteiro: CLEANfocal, fonte6bae2566.
+Não há prova de regressão procedural: preload([]) já usa o catálogo padrão;
+essa hipótese foi refutada, sem alterar runtime ou asset.
+
+R52 integral deu106/107aliases verdes; só bootorcamento falhou por proxy403
+local em perfil próprio de visitante, antes do upstream. Candidata isolada
+boot-guest-contract-20261101 trata autorização própria e R33 estrito, sem
+alterar produto/janela/tetos. R54B:69cenários HTTP/evento porNode e oito
+passadas reais verdes, controles cartazORC1+ORC2/faunaORC3 exatos. Essas passadas
+rápidas só observaram auth; aceitação real do perfil ainda é UNKNOWN e está
+em diagnóstico separado, assim como a revisão independente integral.
+
+Campo fechado em checkpoint local separado e5ec7551b59b86673a15896565292841311a73fd:
+sete arquivos,138execuções/14NA e crítica integral CLEANfocal R53. G2 eb8b0cd28
+permanece em stack separada. Ambos entram após publicação da base. #1179fd553
+foi verificado ancestral da QA; seu trabalho está reaproveitado. Mint privado
+foi rejeitado como matriz fiel de mão, sem adoção, compra ou nova geração.
+
+Próximo: críticoFerro/checkpoint, completar perfil real/crítico boot e integrar
+candidata validada; docs/arch, push normal atômico QA+staging, revisão atual/CI,
+revisão integral273arquivos com delta do head, staging real e merge/release.
+Produção última confirmaçãoalpha133/49fd69f; nenhum release novo executado.
+Objetivo integral ativo, limites de arte/mobile/MP e Flávio excluído preservados.
+
+### Estado anterior, 01/11 R49: H2 e integração da main
+
+H2checkpoint35b5 e merge main4cf produziram80830, sem conflito e sem alteração
+do produtoH2. O pushR49 falhou sem publicar; o resumo do hook não estabelece
+regressão nominal9.91MiB. R52 preservou o log integral e isolou a recusa403.
 
 ### Estado anterior, 01/11 00:30 UTC (R48)
 
