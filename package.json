@@ -783,7 +783,7 @@
     "eval:grafite-atual:prova": "node tools/eval/graffiti-art-identity-check.mjs && node tools/eval/graffiti-current-ci-check.mjs --self-test",
     "eval:sondafilho": "node tools/eval/sonda-filho-check.mjs",
     "//eval:map-fauna-curated": "Acervo Mint usado no mapa: binding, textura, rig e preload mobile; mutantes recusam fallback e fauna removida.",
-    "eval:map-fauna-curated": "node --test tests/map-fauna-curated.test.mjs tests/menu-backdrop.test.mjs && for m in fauna-gates stale-map ignore-seq ignore-map no-late-fauna; do ! MENU_BACKDROP_MUTANT=$m node --test tests/menu-backdrop.test.mjs >/dev/null 2>&1 || exit 1; done",
+    "eval:map-fauna-curated": "node --test tests/map-fauna-curated.test.mjs tests/menu-backdrop.test.mjs && node tools/eval/map-fauna-curated-mutantes-check.mjs",
     "eval:map-fauna-curated:runtime": "node tools/eval/map-fauna-curated-ci.mjs"
   },
   "repository": {

@@ -26,6 +26,7 @@ export function auditCuratedFauna(sample, references) {
     for(const a of animals){
       const id=`${ref.map}/${a.id}`;
       if(a.source!=='gltf')fail('source',`${id}: fallback em vez do GLB curado.`);
+      if(ref.sha256&&a.assetSha256!==ref.sha256)fail('sha256',`${id}: ${a.assetSha256||'sha256 ausente no registro'}; esperado ${ref.sha256}.`);
       if(a.assetId!==ref.assetId||a.assetPath!==ref.path)fail('identity',`${id}: ${a.assetId} / ${a.assetPath}; esperado ${ref.assetId} / ${ref.path}.`);
       if(!(sample.declaredPreload||[]).includes(ref.assetId))fail('declaredPreload',`${id}: modelo instanciado fora do preload declarado.`);
       const mats=(a.meshes||[]).flatMap(m=>m.materials||[]);
