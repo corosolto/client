@@ -69,3 +69,21 @@ ancestralidade atual e coordenará publicação/novo pinbackend/H. Nenhum push,
 GH, browser/Ego/Chromium, build ou fullgate foi executado nesta lease. Assets e
 proveniência desconhecida do WebP preservados; visual/MUP/Game/mobile/MP humano
 continuam UNKNOWN. Próximo: Root lê diff/recibos/pins e decide adoção do checkpoint.
+
+## Composição Root R1188
+
+Root leu o diff final integral e o relatório do autor. O recibo
+A/SURFACE-UV-SCALE-ROOT-R1187.json confere todos os artefatos, blobs de origem,
+contratos e grafo publicado sem divergência. Isso é revisão para adoção local;
+formal do bot, crítico independente e QA visual do jogo ainda estão pendentes.
+
+O merge normal f5ed6744a860d963dc99e818297c98f7fdb665f4 incorpora o pai atual
+a555a255f8bd9a2eef24c6b64333d68e6d53be3d. Apenas a fixture mobile e seu ledger
+entram por essa ancestralidade. A árvore public/ continua byte-exata ao checkpoint
+autoral b60c4b520d571236d2cd5621e4e3430452ded5ec, com SIM_HASH
+6adc8f9a35cf3eb1. Nenhum arquivo do worktree W842 foi alterado.
+
+Próximo: gates normais e publicação em stack sobre o PR1214, depois review atual
+e crítico independente. O backend ainda fixa BD/H713; a mudança de hash deste
+filho exige repin e validação pareada antes de qualquer rollout. Sem push,
+migração persistente, merge em produção ou release desta composição até aqui.
