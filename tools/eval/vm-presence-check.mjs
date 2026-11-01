@@ -8,7 +8,7 @@ import { WEAPON_IDS } from '../../public/js/weapons.js';
 import { probeSelectedWeapon } from './selected-weapon-probe.mjs';
 
 const mutation = process.argv.find((arg) => arg.startsWith('--mutante='))?.split('=')[1];
-const mutations = ['raiz-vazia', 'fallback-oculto', 'fallback-duplo', 'fora-do-quadro', 'malha-alheia'];
+const mutations = ['raiz-vazia', 'fallback-oculto', 'fallback-duplo', 'fora-do-quadro', 'malha-alheia', 'mobile-legado', 'cano-lateral'];
 if (mutation && !mutations.includes(mutation)) throw new Error(`mutante desconhecido: ${mutation}`);
 const errors = [];
 let samples = 0;
@@ -45,6 +45,8 @@ for (const mobile of [true, false]) {
     nickname: 'SIM', mapId: 'piscina_treta', testMode: false, onQuit() {}, onMatchEnd() {} });
   game.player.alive = true;
   game.camView = 'first';
+  if (mutation === 'mobile-legado' && mobile) { game.vm.authored?.dispose(); game.vm.authored = null; }
+  check(!!game.vm.authored, 'VMP10', `${mobile ? 'mobile' : 'desktop'}: controlador com mãos habilitado`);
   game.vm.melee?.dispose();
   game.vm.melee = null;
   game.vm.authored?.dispose();
@@ -101,11 +103,32 @@ for (const mobile of [true, false]) {
   game.vm.root.add(authoredRoot);
   game.vm.authored = { setWeapon(weapon) { this.weapon = weapon; authoredRoot.visible = true; return true; },
     entry: () => ({ mount: authoredRoot, weaponMeshes: authoredRoot.children }),
+    muzzleVm: () => new THREE.Vector3(0.8, -0.3, -8),
     fov: () => 62, utilityReady: () => false, dispose() {} };
   game._applyVmVisibility();
   check(game._vmVisibility.authored && authoredRoot.visible && probeSelectedWeapon({ game }).meshes > 0
     && !Object.values(game.vm.models).some((model) => model.visible),
   'VMP5', `${mobile}: autorado pronto substitui alternativa sem duplicação`);
+  game.camera.updateMatrixWorld(true);
+  game.vmCamera.updateMatrixWorld(true);
+  if (mutation === 'cano-lateral') {
+    const muzzle = game._muzzleWorld;
+    game._muzzleWorld = function (...args) {
+      const cam = this.camera.getWorldPosition(new THREE.Vector3());
+      return muzzle.apply(this, args).sub(cam).multiplyScalar(8).add(cam);
+    };
+  }
+  const expectedMuzzle = game.vm.authored.muzzleVm().project(game.vmCamera);
+  const consultar = game._consultarTiro, tracer = game._tracer;
+  let traceStart;
+  game._consultarTiro = () => null;
+  game._tracer = (from) => { traceStart = from.clone().project(game.camera); };
+  game._fireHitscan(game.player, game._aimOrigin(new THREE.Vector3()),
+    game.camera.getWorldDirection(new THREE.Vector3()), 1, true, 'AWP', 'awp', true);
+  const muzzlePixelError = traceStart ? Math.hypot((traceStart.x - expectedMuzzle.x) * 960,
+    (traceStart.y - expectedMuzzle.y) * 540) : Infinity;
+  check(muzzlePixelError <= 1, 'VMP11', `${mobile}: traçante desviado ${muzzlePixelError.toFixed(2)} px do cano`);
+  game._consultarTiro = consultar; game._tracer = tracer;
   authoredRoot.visible = false;
   game.vm.authored.setWeapon = () => false;
   game._applyVmVisibility();
@@ -123,7 +146,7 @@ if (process.argv.includes('--mutantes') && !errors.length) {
   for (const name of mutations) {
     const result = spawnSync(process.execPath, [fileURLToPath(import.meta.url), `--mutante=${name}`],
       { encoding: 'utf8', timeout: 60000 });
-    check(result.status === 1 && /VMP[1259]/.test(result.stdout), 'VMP8', `mutante ${name} detectado`);
+    check(result.status === 1 && /VMP(?:1[01]|[1259]):/.test(result.stdout), 'VMP8', `mutante ${name} detectado`);
   }
 }
 console.log(JSON.stringify({ ok: errors.length === 0, samples, mutation: mutation || null, errors: errors.slice(0, 12), failures: errors.length }));

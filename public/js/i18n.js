@@ -35,6 +35,7 @@ export async function resolveGeoLang() {
 
 /* PT -> EN. Ordena por tela pra manutenção; a chave é o texto EXATO (trim) do DOM. */
 const DICT = {
+  'T$ · ERRO': 'T$ · ERROR',
   // splash / boot
   'CLIQUE OU PRESSIONE QUALQUER TECLA': 'CLICK OR PRESS ANY KEY',
   'CARREGANDO ARENA…': 'LOADING ARENA…',
@@ -321,6 +322,9 @@ const DICT = {
   'Entrar no time': 'Join team',
   'os seus': 'your crew',
   'TRIBOS URBANAS': 'URBAN TRIBES', 'PALHAÇOS': 'CLOWNS', 'FUNKEIROS': 'FUNKEIROS', 'MÍTICO': 'MYTHIC',
+  'PALHACOS': 'CLOWNS', 'MITICOS': 'MYTHIC',
+  'ALIADO': 'ALLY', 'INIMIGO': 'ENEMY', 'Fechar': 'Close', 'Lados': 'Sides', 'Categorias': 'Categories',
+  'ESCALAÇÃO': 'LINEUP', 'LADO E PERSONAGEM': 'SIDE AND CHARACTER', 'LIMPAR ESCALAÇÃO': 'CLEAR LINEUP',
   '"A treta se faz na praça!"': '"The fight is at the square!"',
   '"A treta se faz na rodovia!"': '"The fight is on the highway!"',
   '"A treta se faz na quebrada!"': '"The fight is in the hood!"',
@@ -349,7 +353,7 @@ const DICT = {
   'Vermelha': 'Red', 'Branca': 'White', 'Magenta': 'Magenta',
   'Média': 'Medium', 'Batata (rápido)': 'Potato (fast)', 'Padrão ouro': 'Gold standard',
   // controles (tela como-jogar do menu)
-  'Mover': 'Move', 'Mirar': 'Aim', 'Atirar': 'Shoot', 'Correr': 'Sprint',
+  'Mover': 'Move', 'Mirar': 'Aim', 'Atirar': 'Shoot', 'Correr': 'Sprint', 'Alternar câmera': 'Switch camera',
   'Pular': 'Jump', 'Recarregar': 'Reload', 'Pausar': 'Pause',
   'Agachar (mira mais estável)': 'Crouch (steadier aim)',
   'Mira telescópica (AWP)': 'Scope (AWP)',
@@ -534,6 +538,8 @@ const DICT = {
   'Marque a estrela de um mapa para ele aparecer aqui.': 'Star a map to see it here.', 'Nenhum mapa com esse filtro.': 'No map matches this filter.',
   'Configurar partida': 'Match setup', 'Menos bots no seu time': 'Fewer bots on your team', 'Mais bots no seu time': 'More bots on your team',
   'Menos inimigos': 'Fewer enemies', 'Mais inimigos': 'More enemies', 'Menos rounds': 'Fewer rounds', 'Mais rounds': 'More rounds',
+  'PESADAS': 'HEAVY', 'SUBMETRALHADORAS': 'SMGS', 'FUZIS': 'RIFLES', 'Comprar': 'Buy',
+  'EQUIPAMENTO': 'GEAR', 'COLETE': 'KEVLAR', 'COLETE + CAPACETE': 'KEVLAR + HELMET', 'CAPACETE': 'HELMET',
   'PISTOLAS': 'PISTOLS', 'FACA': 'KNIFE', 'DE BOA': 'CHILL', 'TRETA': 'TOUGH', 'INSANO': 'INSANE', 'você': 'you', 'só você': 'just you',
   'Escalação': 'Lineup', 'travado, resto sorteado': 'locked, the rest drawn at random', 'travados, resto sorteado': 'locked, the rest drawn at random',
   'Escalação automática, todos sorteados': 'Automatic lineup, everyone drawn at random', 'EDITAR': 'EDIT',
@@ -850,6 +856,42 @@ const FRASES = {
   chatIndisponivel: { pt: () => 'Chat indisponível agora', en: () => 'Chat unavailable right now' },
   chatPropria: { pt: () => 'Essa mensagem é sua', en: () => 'That is your own message' },
   chatDenunciaEnviada: { pt: () => 'Denúncia enviada', en: () => 'Report sent' },
+  // TRETA$ da partida (compra-partida.js): menu de compra e dica do HUD
+  compraTitulo: { pt: () => 'COMPRAR', en: () => 'BUY' },
+  compraDica: { pt: (toque, s) => `${toque ? '$' : 'B'} COMPRAR · ${s}s`, en: (toque, s) => `${toque ? '$' : 'B'} BUY · ${s}s` },
+  compraPrepare: { pt: (s) => `PREPARE-SE PARA COMPRAR, VOCÊ TEM ${s} SEGUNDOS`, en: (s) => `GET READY TO BUY, YOU HAVE ${s} SECONDS` },
+  compraSuaArma: { pt: () => 'SUA ARMA', en: () => 'YOUR GUN' },
+  compraVoltar: { pt: () => 'VOLTAR', en: () => 'BACK' },
+  compraFechar: { pt: () => 'FECHAR', en: () => 'CLOSE' },
+  compraRecusa: {
+    pt: (m) => ({ tempo: 'Acabou o tempo de compra', zona: 'Volte pro spawn pra comprar', saldo: 'TRETA$ insuficiente',
+      'ja-tem': 'Você já tem essa', morto: 'Morto não compra', item: 'Item indisponível',
+      'sem-colete': 'Capacete só com colete', limite: 'Já está no máximo' }[m] || 'Compra recusada'),
+    en: (m) => ({ tempo: 'Buy time is over', zona: 'Go back to spawn to buy', saldo: 'Not enough TRETA$',
+      'ja-tem': 'You already have it', morto: 'Dead players cannot buy', item: 'Item unavailable',
+      'sem-colete': 'Helmet needs kevlar', limite: 'Already at the limit' }[m] || 'Purchase refused'),
+  },
+  // seleção de lado/personagem (main.js) e carteira TRETA$ (treta-rewards/treta-store)
+  selecionado: {
+    pt: (lado, nome, skin) => `Selecionado: ${lado} · ${nome}${skin ? ` · ${skin}` : ''}`,
+    en: (lado, nome, skin) => `Selected: ${lado} · ${nome}${skin ? ` · ${skin}` : ''}`,
+  },
+  escalacaoVagas: {
+    pt: (a, ca, e, ce, estouro) => `ESCALAÇÃO: ${a} de ${ca} aliados · ${e} de ${ce} inimigos` + (estouro ? ' — escalados além das vagas são descartados' : ' — resto sorteado'),
+    en: (a, ca, e, ce, estouro) => `LINEUP: ${a} of ${ca} allies · ${e} of ${ce} enemies` + (estouro ? ' — picks beyond the slots are discarded' : ' — rest is random'),
+  },
+  escalacaoAuto: {
+    pt: () => 'ESCALAÇÃO: automática (clique no ＋ de um personagem pra travá-lo)',
+    en: () => 'LINEUP: automatic (click the ＋ on a character to lock them in)',
+  },
+  pinTituloTravado: { pt: (p) => `Escalado como ${p} — clique para tirar`, en: (p) => `Pinned as ${p} — click to unpin` },
+  pinTituloEscalar: { pt: (p) => `Escalar como ${p} na próxima partida`, en: (p) => `Pin as ${p} in the next match` },
+  skinTirarErro: { pt: () => 'Não deu para tirar a skin agora. Tente de novo em instantes.', en: () => 'Could not remove this outfit right now. Try again in a moment.' },
+  skinEquiparErro: { pt: () => 'Não deu para equipar esta skin agora. Tente de novo em instantes.', en: () => 'Could not equip this outfit right now. Try again in a moment.' },
+  carteiraSaldoAria: { pt: (v) => `Carteira TRETA$, saldo T$ ${v}`, en: (v) => `TRETA$ wallet, T$ ${v} balance` },
+  carteiraEntrarAria: { pt: () => 'Entre para ver seu saldo TRETA$', en: () => 'Sign in to see your TRETA$ balance' },
+  carteiraErroAria: { pt: () => 'Carteira TRETA$ indisponível. Abra a loja para tentar novamente.', en: () => 'TRETA$ wallet unavailable. Open the store to try again.' },
+  carteiraConsultandoAria: { pt: () => 'Consultando carteira TRETA$', en: () => 'Checking TRETA$ wallet' },
 };
 export const frase = (id, ...args) => {
   const f = FRASES[id];

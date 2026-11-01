@@ -1,0 +1,31 @@
+{
+  "asset": "ferro_balcao",
+  "source": {
+    "provider": "Mint",
+    "workflow": "Modeler",
+    "preset": "LOW",
+    "generationDate": "2026-10-31",
+    "session": "https://mint.gg/app?session=rh78vegyvs9jay0cqdgfger7zs8ha2k9",
+    "termsVerifiedDate": "2026-10-31",
+    "termsReference": "Mint Terms of Service, section 4, last updated 2026-05-07",
+    "rightsNote": "Mint assigns output rights to the user subject to its terms, payment status, third-party rights, and applicable law; this asset is not declared CC0."
+  },
+  "output": {
+    "file": "ferro_balcao.glb",
+    "sha256": "dabc0f95b5e31ecd8460358f6ce247c443d2aa9b7c6dccf00a0df5d40b4f5b57",
+    "bytes": 58616,
+    "meshes": 24,
+    "primitives": 24,
+    "triangles": 608,
+    "vertices": 1224,
+    "pbrMaterials": 5,
+    "images": 0,
+    "externalUris": 0,
+    "animations": 0,
+    "skins": 0,
+    "envelopeMeters": { "width": 3.20000005, "height": 1.0, "depth": 1.39999998, "note": "medido COM as transformações dos nós (mundo desenhado); é este o envelope do contrato" },
+    "rawAccessorBboxMeters": { "width": 3.164, "height": 0.95, "depth": 1.387, "note": "bbox cru dos accessors POSITION, IGNORA transformações dos nós — NÃO é envelope válido" },
+    "base": "y=0; x/z centered"
+  },
+  "editorial": "Original in-game prop; no real person, third-party logo, or copyrighted reference."
+}
