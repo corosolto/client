@@ -2,6 +2,40 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
+## Checkpoint R82: matriz gerada e nova tentativa de publicação
+
+Esta seção supera o estado pré-push R77 abaixo. O push normal de ecf6320dd
+foi BLOQUEADO:106/107 em680,7s, exit1 natural, sem timeout ou bypass. QA
+permaneceu limpa; remotos QA/staging continuaram8ee224e e main4cf8dd99.
+O log completo e seus hashes estão em QA-NORMAL-PUSH-R77-RESULT.json na
+auditoria2026-10-31-visual-consistency. Nenhum novo review ou release foi
+reivindicado. O único RED foi eval:weapon-matrix, documento desatualizado.
+
+Root leu o gerador completo e executou o gerador canônico no WT próprio.
+O diff contém somente dois links: _shotDamage4203 para4210 e _meleeHit4149
+para4156. Todos os valores gerados do arsenal permanecem byteiguais;
+game.js continua952dc9d7. Checks do documento em Node22/26 passaram.
+ROOT-WEAPON-MATRIX-ADJUDICATION-R82.json registra comandos, hashes e limites.
+Este checkpoint acrescenta somente a matriz gerada e esta continuidade.
+O próximo push normal terá bateria107 completa; ainda não está publicado.
+
+O preparo externo de luvas R75 teve P2 de cleanup parcial promovido por
+retry. R79 corrige o latch terminal; crítico fresco R80 leu o derivado e
+não demonstrou novo P1/P2 no recorte. Root leu relatório/manifesto e
+conferiu11pins. ROOT-PISTOL-CLEANUP-ADJUDICATION-R80.json aceita somente a
+correção estática. Drafts bloqueados, execução/fator/arte/teardownGPU
+continuam UNKNOWN; nenhum asset canônico mudou. R81 trouxe uma chamada
+GLM80,918s/exit0 e plano de ablação de cor do Campo, ainda não executado
+nem adjudicado pelo Root. Forma e faixa cinzenta continuam dívidas visuais.
+
+Fila leve R82:33abertos/32sem1158, mesmos heads de1155/1160/1191/1192;
+metadados não aprovam merge. Javaporco, fauna e demais owners preservados.
+Próximo concreto: rebind/FF e push normal atômico QA/staging do checkpoint;
+depois tratar os três itens R71, obter bot atual, CI e preview desse SHA.
+Crítico integral fresco somente após bot sem dívida, então merge elegível
+e release com tag/READY/servedSHA/smoke. Missão visual integral permanece
+ativa; acabamento global, palma/faceting, skins, físico e MP sem aceite.
+
 ## Checkpoint R77 antes da nova publicação, 01/11
 
 Esta seção supera os estados pendentes de R70/R63 abaixo; eles são históricos.
