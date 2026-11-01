@@ -1,16 +1,73 @@
-/** Actual Piscina geometry must be finalized before graffiti is validated.
- * The in-memory order mutant restores batching after grafitar and reproduces
- * the real 0.596 micrometer wall seam, even after future bakes remove that tag.
- */
+/** Contrato e limites: docs/reports/GRAFITE-GATES-CONTINUATION-20261101.md. */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
-import { THREE, MAPS, initTextures, seedRandom } from './harness.mjs';
-import { GRAFITE } from '../../public/js/graffiti_layout.js';
-import { criarSuporteGrafite, superficieGrafitavel } from '../../public/js/graffiti_surface.js';
-import { measureGraffitiArea } from './graffiti-area-audit.mjs';
-import { identidadeArteGrafite } from '../../public/js/graffiti_art_id.js';
+import { createHash, randomUUID } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
+const PREFIX = 'PISCINA-BATCH ';
+const PASS_LEGADO = 'Piscina batch gate: real geometry, order mutation, exclusion and physics parity passed';
+const MUTANTE = 'lote-sem-permissao';
+const CLAUSULA = 'authored-batch-permission';
+const GATES = Object.freeze(['piscina-editorial', 'actual-final-geometry', 'colliders-parity',
+  'spawns-parity', 'pickups-parity', 'shot-parity', CLAUSULA]);
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
+const SOURCES = Object.freeze(Object.fromEntries(Object.entries({
+  checker: './piscina-graffiti-batch-check.mjs', map: '../../public/js/map_piscina.js',
+  layout: '../../public/js/graffiti_layout.js', pass: '../../public/js/graffiti_pass.js',
+  surface: '../../public/js/graffiti_surface.js', identity: '../../public/js/graffiti_art_id.js',
+  harness: './harness.mjs', area: './graffiti-area-audit.mjs',
+}).map(([key, path]) => [key, new URL(path, import.meta.url)])));
+const sha = value => createHash('sha256').update(value).digest('hex');
+const bindings = () => Object.fromEntries(Object.entries(SOURCES).map(([key, url]) => [key, sha(readFileSync(url))]));
+const iguais = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+export function avaliarFilho(r, esperado) {
+  const recusa = (reason, kind = 'InfrastructureError') => ({ ok: false, kind, reason });
+  if (r.error || r.signal || !Number.isInteger(r.status)) return recusa('filho indisponível/interrompido');
+  if (String(r.stderr || '').trim()) return recusa('stderr inesperado');
+  const linhas = String(r.stdout || '').trimEnd().split(/\r?\n/);
+  const recibos = linhas.filter(l => l.startsWith(PREFIX));
+  if (recibos.length !== 1 || linhas.at(-1) !== recibos[0]) return recusa('recibo final único ausente');
+  if (linhas.filter(l => l === PASS_LEGADO).length !== 1
+    || linhas.some(l => l && l !== PASS_LEGADO && !l.startsWith(PREFIX) && !l.trimStart().startsWith('{')))
+    return recusa('saída fora do protocolo');
+  let rec, gates;
+  try {
+    rec = JSON.parse(recibos[0].slice(PREFIX.length));
+    gates = linhas.filter(l => l.trimStart().startsWith('{')).map(l => JSON.parse(l));
+  } catch { return recusa('JSON inválido'); }
+  if (!rec || rec.schema !== 'cs-piscina-batch/1' || rec.nonce !== esperado.nonce || rec.mutante !== esperado.mutante)
+    return recusa('identidade/nonce divergente');
+  if (!iguais(rec.sourcesBefore, esperado.sources) || !iguais(rec.sourcesAfter, esperado.sources))
+    return recusa('binding de fonte divergente');
+  if (gates.some(g => !g || typeof g !== 'object' || Array.isArray(g))) return recusa('gate JSON não é objeto');
+  if (!iguais(rec.cases, GATES) || !iguais(gates.map(g => g.gate), GATES)) return recusa('censo de gates divergente');
+  if (!Array.isArray(rec.batches) || !rec.batches.length || new Set(rec.batches).size !== rec.batches.length
+    || !rec.batches.every(n => typeof n === 'string' && /^piscina:piscina_(escada|armarios|banco|espreguicadeira):batch$/.test(n)))
+    return recusa('população de lotes inválida');
+  if (!Array.isArray(rec.pintaveis) || new Set(rec.pintaveis).size !== rec.pintaveis.length
+    || !rec.pintaveis.every(n => rec.batches.includes(n))) return recusa('lotes pintáveis inválidos');
+  const a = rec.application;
+  if (!a || a.target !== 'batchAuthoredProps.graffitiSupportExcluded' || a.sourceBefore !== esperado.sources.map
+    || !/^[a-f0-9]{64}$/.test(a.sourceAfter)) return recusa('aplicação sem procedência');
+  const mutado = esperado.mutante === MUTANTE;
+  if (a.count !== (mutado ? 1 : 0) || (a.sourceAfter !== a.sourceBefore) !== mutado) return recusa('aplicação ausente/duplicada/cega');
+  const failures = mutado ? [CLAUSULA] : [];
+  if (r.status !== (mutado ? 1 : 0) || rec.error !== (mutado ? 'ContractViolation' : null)
+    || !iguais(rec.failed, failures) || (rec.pintaveis.length > 0) !== mutado)
+    return recusa('resultado semântico inexato/survivor', 'ContractViolation');
+  const medido = gates.at(-1);
+  if (medido.lotes !== rec.batches.length || !iguais(medido.pintaveis, rec.pintaveis)) return recusa('recibo diverge da medição');
+  return { ok: true, rec };
+}
+
+async function medir(MUT) {
+  const { THREE, MAPS, initTextures, seedRandom } = await import('./harness.mjs');
+  const { GRAFITE } = await import('../../public/js/graffiti_layout.js');
+  const { criarSuporteGrafite, superficieGrafitavel } = await import('../../public/js/graffiti_surface.js');
+  const { measureGraffitiArea } = await import('./graffiti-area-audit.mjs');
+  const { identidadeArteGrafite } = await import('../../public/js/graffiti_art_id.js');
 const mapURL = new URL('../../public/js/map_piscina.js', import.meta.url);
 const source = readFileSync(mapURL, 'utf8');
 const marker = '  batchStaticBoxes();\n';
@@ -211,3 +268,81 @@ assert.equal(criarSuporteGrafite(root)({ x: 0, y: 2, z: .13, ry: 0, w: 2, h: 2 }
 assert.equal(excluded.userData.nonSolidSurface, undefined);
 assert.equal(readFileSync(mapURL, 'utf8'), source, 'production map was never patched by mutant');
 console.log('Piscina batch gate: real geometry, order mutation, exclusion and physics parity passed');
+
+const { registerPropTemplate } = await import('../../public/js/mapprops.js');
+const AUTORAIS = ['piscina_escada', 'piscina_armarios', 'piscina_banco', 'piscina_espreguicadeira'];
+const permissao = '      batch.userData.graffitiSupportExcluded = !superficieGrafitavel(first);\n';
+const ancora = '      batch.userData.graffitiNomeDoAsset = !!list[0].child.userData.graffitiNomeDoAsset;\n'
+  + permissao + '      batch.userData.graffitiWhiteWall = !!first.userData.graffitiWhiteWall;\n';
+let texto = source, count = 0;
+if (MUT) {
+  if (source.split(ancora).length !== 2) throw Error('aplicação authored: âncora ausente ou duplicada');
+  texto = source.replace(ancora, ancora.replace(permissao, '')); count = 1;
+  if (texto === source) throw Error('aplicação authored não mudou a fonte');
+}
+let build = MAPS.piscina_treta.build;
+if (MUT) build = (await import(`data:text/javascript,${encodeURIComponent(absoluteImports(texto, mapURL))}`)).buildPoolDay;
+const geometry = new THREE.BoxGeometry(1, 1, 1), material = new THREE.MeshLambertMaterial();
+let batches, pintaveis;
+try {
+  for (const id of AUTORAIS) { const g = new THREE.Group(); g.add(new THREE.Mesh(geometry, material)); registerPropTemplate(id, g); }
+  seedRandom(12345); const world = build(new THREE.Scene(), initTextures());
+  const lotes = world.root.children.filter(o => o.isInstancedMesh && /^piscina:piscina_.*:batch$/.test(o.name));
+  if (!lotes.length) throw Error('fixture authored não construiu lotes');
+  batches = lotes.map(o => o.name).sort(); pintaveis = lotes.filter(o => superficieGrafitavel(o)).map(o => o.name).sort();
+} finally {
+  for (const id of AUTORAIS) registerPropTemplate(id, null);
+  geometry.dispose(); material.dispose();
+}
+console.log(JSON.stringify({ gate: CLAUSULA, lotes: batches.length, pintaveis }));
+return { batches, pintaveis, application: { target: 'batchAuthoredProps.graffitiSupportExcluded', count,
+  sourceBefore: sha(source), sourceAfter: sha(texto) } };
+}
+
+async function worker(mutante, nonce) {
+  let sourcesBefore = null, sourcesAfter = null, measurement = {}, failed = [], error = null, exit = 0;
+  try {
+    sourcesBefore = bindings(); measurement = await medir(mutante); sourcesAfter = bindings();
+    if (!iguais(sourcesBefore, sourcesAfter)) throw Error('fontes mudaram durante a medição');
+    if (measurement.pintaveis.length) { failed = [CLAUSULA]; error = 'ContractViolation'; exit = 1; }
+    else if (mutante) { error = 'BlindMutation'; exit = 1; }
+  } catch (e) {
+    error = e instanceof assert.AssertionError ? 'ContractViolation' : 'InfrastructureError';
+    failed = error === 'ContractViolation' ? ['legacy-control'] : []; exit = error === 'ContractViolation' ? 1 : 3;
+    console.error(error + ': ' + String(e.message).slice(0, 600));
+  }
+  console.log(PREFIX + JSON.stringify({ schema: 'cs-piscina-batch/1', nonce, mutante, cases: GATES,
+    sourcesBefore, sourcesAfter, ...measurement, error, failed }));
+  return exit;
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  if (new Set(args).size !== args.length || args.some(a => !['--verificar-mutantes', '--mutante=' + MUTANTE].includes(a))
+    || args.length > 1) { console.error('CLI inválida: use --verificar-mutantes OU --mutante=' + MUTANTE); return 2; }
+  const nonce = process.env.PISCINA_BATCH_NONCE || randomUUID();
+  if (!/^[0-9a-f-]{36}$/.test(nonce)) { console.error('nonce de processo inválido'); return 3; }
+  if (!args.includes('--verificar-mutantes')) return worker(args.length ? MUTANTE : '', nonce);
+  let sources;
+  try { sources = bindings(); } catch (e) { console.error('INFRA fonte: ' + e.message); return 3; }
+  let baseline;
+  for (const mutante of ['', MUTANTE]) {
+    const requestNonce = randomUUID();
+    const env = { PATH: process.env.PATH, LANG: 'C', PISCINA_BATCH_NONCE: requestNonce };
+    if (process.env.TMPDIR) env.TMPDIR = process.env.TMPDIR;
+    const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), ...(mutante ? ['--mutante=' + mutante] : [])],
+      { cwd: ROOT, env, encoding: 'utf8', timeout: 180000, maxBuffer: 8 * 1024 * 1024 });
+    const verdict = avaliarFilho(r, { nonce: requestNonce, mutante, sources });
+    if (!verdict.ok) { console.error(verdict.kind + ': ' + verdict.reason); return verdict.kind === 'ContractViolation' ? 1 : 3; }
+    if (!mutante) baseline = verdict.rec.batches;
+    else if (!iguais(baseline, verdict.rec.batches)) { console.error('INFRA populações divergentes'); return 3; }
+    console.log('PASS piscina-batch ' + (mutante || 'nominal') + ': resultado próprio exato');
+  }
+  try { if (!iguais(sources, bindings())) throw Error('binding divergente'); }
+  catch (e) { console.error('INFRA fonte após filhos: ' + e.message); return 3; }
+  return 0;
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  try { process.exitCode = await main(); }
+  catch (e) { console.error('InfrastructureError: ' + e.message); process.exitCode = 3; }
+}
