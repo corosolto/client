@@ -925,7 +925,7 @@ let pvCompactToken = 0;
 let pvStaticKey = '';
 let pvPosterFailure = null;
 const pvReducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
-pvReducedMotion.addEventListener?.('change',event=>{if(event.matches)pvStopVideo();});
+pvReducedMotion.addEventListener?.('change',event=>{if(event.matches)pvStopVideo();if(pv)pv.renderDirty=true;});
 const pvCompact=matchMedia('(pointer: coarse) and (max-height: 560px)');
 const pvNarrow=matchMedia('(max-width: 760px)');
 pvCompact.addEventListener?.('change',()=>refreshMenuEquipment());
@@ -1100,18 +1100,19 @@ function ensurePreview() {
   cam.position.set(0, 1.3, 3.2); cam.lookAt(0, 0.92, 0);
   pv = { r, scene, cam, model: null };
   // GIRAR/ZOOM de verdade — a dica embaixo do canvas não pode ser enfeite.
-  // Arrastar gira o modelo; scroll aproxima. Durante o arraste o giro automático pausa (ver loop()).
+  // Arrastar gira o modelo; scroll aproxima.
   canvas.addEventListener('pointerdown', e => {
     pvDrag = { x: e.clientX, yaw: pv.model ? pv.model.rotation.y : 0 };
     canvas.setPointerCapture(e.pointerId);
   });
   canvas.addEventListener('pointermove', e => {
-    if (pvDrag && pv.model) pv.model.rotation.y = pvDrag.yaw + (e.clientX - pvDrag.x) * 0.012;
+    if (pvDrag && pv.model) { pv.model.rotation.y = pvDrag.yaw + (e.clientX - pvDrag.x) * 0.012; pv.renderDirty = true; }
   });
   canvas.addEventListener('pointerup', () => { pvDrag = null; });
   canvas.addEventListener('wheel', e => {
     e.preventDefault();
     pv.cam.position.z = Math.min(4.6, Math.max(2.2, pv.cam.position.z + e.deltaY * 0.002));
+    pv.renderDirty = true;
   }, { passive: false });
   return pv;
 }
@@ -1159,6 +1160,7 @@ function snapThumb(obj, fallbackUrl) {
   x.drawImage(p.r.domElement, 0, 0, THUMB_PX, THUMB_PX);   // backing 640² -> 128²: downscale = antialias de graça
   p.scene.remove(obj);
   if (p.model) p.model.visible = prevVis;
+  p.renderDirty = true;
   return c.toDataURL();
 }
 // Each character shows off a weapon that fits their vibe (not everyone with an AK).
@@ -1264,6 +1266,7 @@ function pvSetChar(def) {
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
   const showCanvas=()=>{
+    p.renderDirty = true;
     clearStaticPreview();pvStopVideo();
     $('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');
     document.querySelector('.pv-hints')?.classList.remove('hidden');
@@ -4027,7 +4030,7 @@ const teamPreviewsPending = new Set();
 function ensureTeamPreviews() {
   for (const [btn, lado] of [['btn-team-e', 'E'], ['btn-team-b', 'B']]) {
     const box = document.querySelector(`#${btn} .team-chars`);
-    if (!box || box.checkVisibility?.() !== true) continue;
+    if (!box || !(box.checkVisibility?.() ?? box.getClientRects().length > 0)) continue;
     if (teamPreviewsDone.has(lado) || teamPreviewsPending.has(lado)) continue;
     const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id)).slice(0, 4);
     if (!chars.length) continue;
@@ -4412,6 +4415,8 @@ function loop(agoraMs = performance.now()) {
       const pvDt = pv.travado || pvReducedMotion.matches ? 0 : Math.min(0.05, dtReal);   // ?pvcam=maos congela pose e giro
       // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
       if (!pv.travado && !pvReducedMotion.matches) { if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt); }
+      if (pvReducedMotion.matches && pv.renderDirty === false) return;
+      pv.renderDirty = false;
       pv.r.render(pv.scene, pv.cam);
     }
   }

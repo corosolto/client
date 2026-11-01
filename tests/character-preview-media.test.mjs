@@ -36,7 +36,7 @@ for(const [name,lines,expected] of [
   ['direct promise handler',['video.play().catch(()=>{});'],true],
 ])test('media guard recognizes the actual containment: '+name,()=>assert.equal(playGuard(lines,0),expected));
 
-function fixture({ reduced = false, compact = false, narrow = false, lean = true, threeD = false, realModel = false, previousModel = null, modelAvailable = true, cosmeticAvailable = true, teamVisible = false, preload = () => Promise.resolve(), screen = 'selection', play = () => Promise.resolve(), mutate = value => value, pack = false, vibe = 'ak', paints = {ak:'ouro-ak'} } = {}) {
+function fixture({ reduced = false, compact = false, narrow = false, lean = true, threeD = false, realModel = false, previousModel = null, modelAvailable = true, cosmeticAvailable = true, teamVisible = false, teamVisibilityAPI = true, preload = () => Promise.resolve(), screen = 'selection', play = () => Promise.resolve(), mutate = value => value, pack = false, vibe = 'ak', paints = {ak:'ouro-ak'} } = {}) {
   let equippedSkin='lula-cyborg',homeRefreshes=0,rendererCalls=0,preloads=0,thumbnailRenders=0,modelBuilds=0,boxBuilds=0;
   const query=matches=>{const q=new EventTarget();q.matches=matches;q.change=value=>{q.matches=value;const event=new Event('change');event.matches=value;q.dispatchEvent(event);};return q;};
   const motion=query(reduced),compactQuery=query(compact),narrowQuery=query(narrow);
@@ -61,7 +61,7 @@ function fixture({ reduced = false, compact = false, narrow = false, lean = true
     + '\n' + raw.slice(raw.indexOf('  const setHubNet ='),raw.indexOf("  $('hub-sp').onclick"))
     + '\nfunction frame(dtReal){' + raw.slice(raw.indexOf('      const pvDt = pv.travado'),raw.indexOf('      pv.r.render(pv.scene, pv.cam);')+'      pv.r.render(pv.scene, pv.cam);'.length)+'\n}';
   const context = vm.createContext({ VERSION: 'fixture', staticPreviews: lean, $: node,
-    document: { getElementById:node,dispatchEvent(){},querySelector: selector => {if(selector==='.char-preview-box')return box;if(selector.includes('.team-chars')){const team=node(selector);team.checkVisibility=()=>typeof teamVisible==='object'?teamVisible[selector.includes('team-e')?'E':'B']:teamVisible;return team;}return hints;},querySelectorAll:()=>[],createElement:()=>node('row-'+nodes.size) },
+    document: { getElementById:node,dispatchEvent(){},querySelector: selector => {if(selector==='.char-preview-box')return box;if(selector.includes('.team-chars')){const team=node(selector);const visible=()=>typeof teamVisible==='object'?teamVisible[selector.includes('team-e')?'E':'B']:teamVisible;team.checkVisibility=teamVisibilityAPI?visible:undefined;team.getClientRects=()=>visible()?[{}]:[];return team;}return hints;},querySelectorAll:()=>[],createElement:()=>node('row-'+nodes.size) },
     matchMedia: query => query.includes('pointer: coarse')?compactQuery:query.includes('max-width')?narrowQuery:motion,
     tretaSkinPresentation: (id, character) => id === 'lula-cyborg' && character === 'barbudo' ? presentation : null,
     equippedTretaSkin: () => equippedSkin, equippedTretaEyewear: () => null,
@@ -84,7 +84,7 @@ function fixture({ reduced = false, compact = false, narrow = false, lean = true
   });
   const api = new vm.Script(mutate(block) + '\n({showStaticPreview,pvStopVideo,pvSetVideo,portraitUrl,pvSetChar,refreshMenuEquipment,armaDoPreview,previewModelActive,ensureTeamPreviews,pvThumb,glbThumb,pickTeam,show,setHubTab,setHubNet,frame,preview:value=>{pv=value;}});').runInContext(context);
   context.fixtureApi=api;
-  return { api, node, box, video, mountedModel:()=>previewState.model,rendererCalls:()=>rendererCalls,preloads:()=>preloads,thumbnailRenders:()=>thumbnailRenders,modelBuilds:()=>modelBuilds,boxBuilds:()=>boxBuilds,show:api.show,compact:value=>compactQuery.change(value),narrow:value=>narrowQuery.change(value),homeRefreshes:()=>homeRefreshes,accountSkin:id=>{equippedSkin=id;},selection:def=>{context.selChar=def;},teamVisibility:value=>{teamVisible=value;},reduceMotion:()=>motion.change(true) };
+  return { api, node, box, video, mountedModel:()=>previewState.model,previewDescriptor:()=>previewState,renderDirty:()=>previewState.renderDirty,rendererCalls:()=>rendererCalls,preloads:()=>preloads,thumbnailRenders:()=>thumbnailRenders,modelBuilds:()=>modelBuilds,boxBuilds:()=>boxBuilds,show:api.show,compact:value=>compactQuery.change(value),narrow:value=>narrowQuery.change(value),homeRefreshes:()=>homeRefreshes,accountSkin:id=>{equippedSkin=id;},selection:def=>{context.selChar=def;},teamVisibility:value=>{teamVisible=value;},reduceMotion:()=>motion.change(true) };
 }
 
 test('static preview uses the validated equipped skin poster', () => {
@@ -294,7 +294,7 @@ for(const [name,mutate,probe,options={}] of [
   ['reduced motion still advances idle',replace('if (!pv.travado && !pvReducedMotion.matches) { if (pv.ctrl)','if (!pv.travado) { if (pv.ctrl)'),f=>{let updates=0;f.api.preview({model:{rotation:{y:0}},ctrl:{update(){updates++;}},r:{render(){}}});f.api.frame(0.05);assert.equal(updates,0);},{reduced:true}],
   ['late GLB mounts in a hidden preview',replace('if (my !== pvToken || !previewHeroVisible()) return;','if (my !== pvToken) return;'),async f=>{f.api.pvSetChar(base);f.show('team-select');await tick();assert.equal(f.modelBuilds(),0);},{lean:false,threeD:true,realModel:true}],
   ['late fallback mounts in a hidden preview',replace('if (my === pvToken && previewHeroVisible()) showStaticPreview(def);','if (my === pvToken) showStaticPreview(def);'),async f=>{f.api.pvSetChar(base);f.show('team-select');await tick();assert.equal(f.node('char-preview-static').src,'');},{lean:false,threeD:true,realModel:true,preload:()=>Promise.reject(new Error('fixture failed'))}],
-  ['hidden team slots are populated',replace('if (!box || box.checkVisibility?.() !== true) continue;','if (!box) continue;'),async f=>{f.api.ensureTeamPreviews();await tick();assert.equal(f.node('#btn-team-e .team-chars').innerHTML,'');},{lean:false}],
+  ['hidden team slots are populated',replace('if (!box || !(box.checkVisibility?.() ?? box.getClientRects().length > 0)) continue;','if (!box) continue;'),async f=>{f.api.ensureTeamPreviews();await tick();assert.equal(f.node('#btn-team-e .team-chars').innerHTML,'');},{lean:false}],
   ['screen change keeps compact media',replace("if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');\n  clearCompactPreviews();","if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');"),f=>{f.api.pvSetChar(base);f.api.show('team-select');assert.equal(f.node('hub-character-portrait').src,'');},{compact:true,screen:'hub'}],
   ['tab change keeps compact media',replace("$('main-menu').dataset.hubTab = tab;\n    clearCompactPreviews();","$('main-menu').dataset.hubTab = tab;"),f=>{f.api.pvSetChar(base);f.api.setHubTab('ranking');assert.equal(f.node('hub-character-portrait').src,'');},{compact:true,screen:'hub'}],
   ['network change keeps compact media',replace("$('main-menu').dataset.hubNet = net;\n    clearCompactPreviews();","$('main-menu').dataset.hubNet = net;"),f=>{f.api.pvSetChar(base);f.api.setHubNet('mp');assert.equal(f.node('hub-character-portrait').src,'');},{compact:true,screen:'hub'}],
@@ -456,4 +456,64 @@ test('desktop hub keeps equipment identity in the character card without a dupli
  const label=f.node('hub-character-equipment');assert.equal(label.hidden,false);assert.match(label.textContent,/Cyborg.*Ouro/);
  assert.equal(f.node('hub-character-portrait').src,'');
  f.api.setHubTab('loja');assert.equal(label.hidden,true);
+});
+
+for(const visible of [false,true])test('team thumbnails use actual layout when checkVisibility is absent: '+visible,async()=>{
+ const f=fixture({lean:false,teamVisible:visible,teamVisibilityAPI:false});f.api.ensureTeamPreviews();await tick();
+ assert.equal(f.preloads(),visible?2:0);
+ assert.equal(f.node('#btn-team-e .team-chars').innerHTML!=='',visible);
+});
+test('reduced-motion preview only redraws after invalidation',()=>{
+ const f=fixture({reduced:true,lean:false});let renders=0;
+ const p={model:{rotation:{y:0}},r:{render(){renders++;}}};f.api.preview(p);
+ f.api.frame(.05);f.api.frame(.05);assert.equal(renders,1);
+ p.renderDirty=true;f.api.frame(.05);f.api.frame(.05);assert.equal(renders,2);
+});
+
+test('causal mutant rejects redrawing an unchanged reduced-motion frame',()=>{
+ const f=fixture({reduced:true,lean:false,mutate:replace('      if (pvReducedMotion.matches && pv.renderDirty === false) return;\n','')});let renders=0;
+ f.api.preview({model:{rotation:{y:0}},r:{render(){renders++;}}});f.api.frame(.05);f.api.frame(.05);
+ assert.throws(()=>assert.equal(renders,1),{name:'AssertionError'});
+});
+test('new model invalidates an already rendered reduced-motion preview',async()=>{
+ const f=fixture({reduced:true,lean:false,threeD:true,realModel:true});let renders=0;
+ const p=f.previewDescriptor();p.r={render(){renders++;}};f.api.preview(p);f.api.frame(.05);
+ f.api.pvSetChar(cyborg);await tick();assert.equal(f.renderDirty(),true);
+ f.api.frame(.05);f.api.frame(.05);assert.equal(renders,2);
+});
+
+function previewInput(mutate=value=>value){
+ const handlers={},canvas={addEventListener(name,fn){handlers[name]=fn;},setPointerCapture(){}},p={model:{rotation:{y:.2}},cam:{position:{z:3.2}},renderDirty:false};
+ const input=raw.slice(raw.indexOf("  canvas.addEventListener('pointerdown'"),raw.indexOf('  return pv;',raw.indexOf("  canvas.addEventListener('pointerdown'")));
+ vm.runInNewContext(mutate(input),{pv:p,canvas,pvDrag:null});return {p,handlers};
+}
+for(const event of ['pointermove','wheel'])test('actual '+event+' handler invalidates reduced-motion frame',()=>{
+ const {p,handlers}=previewInput();handlers.pointerdown({clientX:0,pointerId:1});
+ handlers[event]({clientX:20,deltaY:100,preventDefault(){}});assert.equal(p.renderDirty,true);
+});
+for(const [event,anchor] of [['pointermove','pv.renderDirty = true; }'],['wheel','    pv.renderDirty = true;']])test('causal mutant rejects lost '+event+' invalidation',()=>{
+ const {p,handlers}=previewInput(replace(anchor,anchor.replace('pv.renderDirty = true;','')));
+ handlers.pointerdown({clientX:0,pointerId:1});handlers[event]({clientX:20,deltaY:100,preventDefault(){}});
+ assert.throws(()=>assert.equal(p.renderDirty,true),{name:'AssertionError'});
+});
+function thumbnailInvalidation(mutate=value=>value){
+ const p={model:{visible:true},scene:{add(){},remove(){}},r:{render(){},domElement:{}},renderDirty:false};
+ const code=raw.slice(raw.indexOf('function snapThumb('),raw.indexOf('// Each character shows off a weapon'));
+ vm.runInNewContext(mutate(code)+'\nsnapThumb({},"fallback");',{ensurePreview:()=>p,thumbCam(){},THUMB_PX:128,document:{createElement:()=>({getContext:()=>({fillRect(){},drawImage(){}}),toDataURL:()=>''})}});
+ return p;
+}
+test('thumbnail rendering restores an invalidated hero frame',()=>assert.equal(thumbnailInvalidation().renderDirty,true));
+test('causal mutant rejects a thumbnail left on the shared hero canvas',()=>{
+ const p=thumbnailInvalidation(replace('  p.renderDirty = true;\n',''));
+ assert.throws(()=>assert.equal(p.renderDirty,true),{name:'AssertionError'});
+});
+test('causal mutant rejects checkVisibility-only team thumbnails on older browsers',async()=>{
+ const f=fixture({lean:false,teamVisible:true,teamVisibilityAPI:false,mutate:replace('if (!box || !(box.checkVisibility?.() ?? box.getClientRects().length > 0)) continue;','if (!box || box.checkVisibility?.() !== true) continue;')});
+ f.api.ensureTeamPreviews();await tick();assert.throws(()=>assert.equal(f.preloads(),2),{name:'AssertionError'});
+});
+
+test('causal mutant rejects mounting a new model without invalidating its frame',async()=>{
+ const f=fixture({reduced:true,lean:false,threeD:true,realModel:true,mutate:replace('    p.renderDirty = true;\n','')});
+ const p=f.previewDescriptor();p.r={render(){}};f.api.preview(p);f.api.frame(.05);
+ f.api.pvSetChar(cyborg);await tick();assert.throws(()=>assert.equal(f.renderDirty(),true),{name:'AssertionError'});
 });
