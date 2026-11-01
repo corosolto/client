@@ -55,7 +55,7 @@ o PC alvo falhou; Root exige nominal anterior verde e failset exato para dar cr�
 - `--mutar=sem-contexto` e `--mutar=dpr-dispositivo`: exit1, somente PCAMPO3 RED,
   aplicação1x e zeroINFRA. `--mutar=sem-mapa`: exit1, somente PCAMPO1 RED,
   PCAMPO3 continuou passando. Alvos e fontes foram mutados apenas em memória.
-- Dezenove controles em fixtures externas: declarações0/2, assinatura ausente,
+- Dezessete dos dezenove controles em fixtures externas: declarações0/2, assinatura ausente,
   fronteiras0/2, compilação inválida, throw inesperado e timeout da VM deram
   INFRA/exit2 nas fases esperadas, sem crédito semântico. Alvos de mutação0/2
   foram recusados antes da execução das funções mutadas.
