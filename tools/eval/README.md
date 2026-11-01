@@ -249,3 +249,5 @@ raios, respawn e round dos bots locais, incluindo três mutantes. O ensaio opcio
 `node tools/eval/ballistics-range-playtest.mjs [--fixed-five]` produz dados de
 TTK condicional e dispersão com cinco disparos; método e limites em
 `docs/qa/balistica/autorado/README.md`. Ele não impõe tuning ou teto novo ao gate.
+
+`npm run eval:authored-draw-timing` cobre o saque declarado gameplay com Game/callbacks e GLB público reais: o clique antes do deploy é bloqueado e, depois dele, Equip terminou e o corpo está no frustum antes do tiro. O ramo com drawDrop compartilha a duração do clipe; AK/non-gameplay e fallback conservam seus tempos. Os três mutantes em memória exigem as falhas causais exatas. A ponte de carga Node e o DOM/renderer do harness são explícitos: não é aceite de raster, pintura, anatomia, mobile ou MP. É chamado por `eval:authored-transition`, na cadeia `check:vm`.
