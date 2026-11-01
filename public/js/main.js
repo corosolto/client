@@ -2147,7 +2147,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
       const bodyPreloads = Promise.allSettled([
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
         preloadCosmeticAssets(matchSkins),
-      ]);
+      ]).then((rs) => {
+        rs.forEach((r) => { if (r.status === 'rejected') console.error('preload da partida falhou parcialmente', r.reason); });
+        return rs;
+      });
       await aguardarPreloads([
         bodyPreloads,
         preloadEyewearAssets(matchEyewear),

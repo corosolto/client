@@ -32,6 +32,8 @@ cache. As outras cargas terminam antes da observação; tempo não é prova da
 barreira. O primeiro corpo é registrado no nascimento, antes de liberar o latch.
 Outra carga rejeitada não pode antecipar esse nascimento. Sem seleção e navOnly
 não pedem luva; navOnly não é prova de corpo GLB carregado.
+C6 também observa o logger real: a rejeição opcional é registrada uma vez com o mesmo Error, antes da consulta ao handle.
+
 O corpo base continua elegível quando o preload cosmético opcional rejeita:
 a resolução do handle ocorre depois de ambos terminarem, usando allSettled.
 
@@ -65,7 +67,8 @@ real de MP, GPU, materiais/pixels ou custo por frame.
 | own-glove: remove a seleção no builder e na atualização própria | O1, C4, S1, S3, S4, S5, S7, S10, S11, S12, S13, S14, N2 |
 | glove-preload: remove a entrada na barreira | C1, C2, C3, C4, C6 |
 | boot-await: remove o await da barreira | C2, C3, C4, C6 |
-| body-preload-failfast: rejeição cosmética encerra a resolução do handle cedo | C6 |
+| body-preload-failfast: preserva envelopes de sucesso e rejeita cedo, impedindo a resolução do handle | C6 |
+| boot-diag-silent: silencia o diagnóstico de rejeição opcional, mantendo a barreira | C6 |
 | glove-first-part: conserva só a primeira parte no cache | O1, O4, C4, S1, S3, S4, S5, S7, S10, S11, S12, S13, S14, N2 |
 | glove-partial-bind: anexa partes válidas de pacote incompatível | O4 |
 | glove-ready-upgrade: ignora seleção/prontidão no retorno | S1, S4, S5, S7, S10, S11, S12, S13, S14, N2 |

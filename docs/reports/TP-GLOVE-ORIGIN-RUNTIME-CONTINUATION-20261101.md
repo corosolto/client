@@ -41,3 +41,29 @@ O alias eval:tp-glove-origin foi acrescentado a check:fast, check:deploy e ao jo
 R793 publicou normalmente F2 e fábrica, com hooks e sem force: heads e1e357445cfb0e9dcefb544e76e35bbc8c3b283b e a4bb086b26d8b64e7a8ac70a10a7ce6e830f4e67, conferidos no remoto. A consolidação das quatro primeiras camadas está no PR #1208, fa521531b976faaee6c007660c5cfb1fd2a504ae → staging; CI e formal atuais ainda pendentes. #1207 só deve ser redirecionado a staging depois dessa consolidação, sem merge em branch de pai fechado.
 
 Em paralelo, o instrumento útil de #1170 receberá correção de protocolo e ownership numa lane nova; isso não altera esta implementação ou aprova arte da pistola. #1160 está sob triagem de compatibilidade e handoff do outro run, preservando seu protótipo privado. A missão integral segue ativa.
+
+## Diagnóstico do boot R834/R838
+
+#1210 recebeu review formal no head ac11c0d. A tese de que o corpo antes
+interrompia o boot é refutada pela barreira tolerante já existente. A diferença
+menor de diagnóstico N1 foi aceita: allSettled ocultava rejeições inesperadas do
+logger externo. A chamada GLM5.3 R834 propôs o reparo e a instrumentação; Root
+aplicou a versão normalizada que encadeia o logger no próprio bodyPreloads.
+Não se promove esse trabalho a revisão independente.
+
+Régua primeiro: C6 RED apenas, com barreira/nascimento/duas luvas corretos e
+diag vazio (R838 BEFORE, 6,272s). Após o produto: nominal GREEN (6,491s);
+boot-diag-silent detectado só por C6 (12,462s). O failfast antigo deu INFRA
+porque Promise.all entrega valores sem envelope de settled; esse resultado foi
+rejeitado sem crédito de detecção e está preservado. Root ajustou somente o
+mutante para conservar envelopes de sucesso e alterar a ordem de rejeição.
+FAILFAST-V2: nominal GREEN e mutante detectado exatamente por C6 (13,560s).
+Nenhum predicado anterior de C6 foi removido ou enfraquecido. O alias público
+passou a incluir boot-diag-silent. O produto só acrescenta diagnóstico preservando
+allSettled, reasons e o encadeamento do handle; game/glbchars e assets não mudaram.
+
+Prefixos externos TP-GLOVE-OBSERVABILITY-GLM-R834 e
+TP-GLOVE-OBSERVABILITY-R838. O freeze de main R790 foi sucedido por este reparo
+observado; os recibos históricos continuam vinculados aos seus próprios bytes.
+Próximo: gates normais/push sem bypass, review do novo head, resposta ao fio e
+crítico whole pós-bot. Game3:2, contato/material/motion/mobile/MP seguem abertos.

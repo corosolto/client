@@ -29,6 +29,7 @@ const EXPECTED = {
   'glove-preload': ['C1', 'C2', 'C3', 'C4', 'C6'],
   'boot-await': ['C2', 'C3', 'C4', 'C6'],
   'body-preload-failfast': ['C6'],
+  'boot-diag-silent': ['C6'],
   'glove-first-part': ['O1', 'O4', 'C4', 'S1', 'S3', 'S4', 'S5', 'S7', 'S10', 'S11', 'S12', 'S13', 'S14', 'N2'],
   'glove-partial-bind': ['O4'],
   'glove-ready-upgrade': ['S1', 'S4', 'S5', 'S7', 'S10', 'S11', 'S12', 'S13', 'S14', 'N2'],
@@ -320,8 +321,12 @@ async function worker(fixture, mutant) {
       if (G.hasGloveModel('barbudo')) throw Error('Worker frio já tinha pacote');
       let source = fs.readFileSync(path.join(JS, 'main.js'), 'utf8');
       if (mutant === 'glove-preload') source = replaceOne(source, '        bodyPreloads.then(() => playerGloveId ? getGloveHandle(charId, playerSkinId)?.preload() : null),\n', '');
-      if (mutant === 'body-preload-failfast') source = replaceOne(source, 'const bodyPreloads = Promise.allSettled([', 'const bodyPreloads = Promise.all([');
+      if (mutant === 'body-preload-failfast') {
+        source = replaceOne(source, 'const bodyPreloads = Promise.allSettled([', 'const bodyPreloads = Promise.all([');
+        source = replaceOne(source, '      ]).then((rs) => {', "      ].map(load => Promise.resolve(load).then(value => ({ status: 'fulfilled', value })))).then((rs) => {");
+      }
       if (mutant === 'boot-await') source = replaceOne(source, '      await aguardarPreloads([', '      aguardarPreloads([');
+      if (mutant === 'boot-diag-silent') source = replaceOne(source, "if (r.status === 'rejected') console.error('preload da partida falhou parcialmente', r.reason)", "if (r.status === 'rejected' && false) console.error('preload da partida falhou parcialmente', r.reason)");
       const start = '  try {\n    if (!navOnly) {', end = '  /* RÉGUA:launch-race nascimento fim */';
       for (const a of [start, end]) if (source.split(a).length !== 2) throw Error('Recorte real do nascimento não único');
       let block = source.slice(source.indexOf(start), source.indexOf(end) + end.length); out.birthSlice = sha(block);
@@ -329,6 +334,7 @@ async function worker(fixture, mutant) {
       if (mutant !== 'glove-preload') block = replaceOne(block, chain, `captureGloveBarrier(${chain})`);
       out.observedBirthSlice = sha(block);
       const born = []; let loads, glovePromise, gloveBarrier;
+      let seq = 0, diagOrder = -1, gloveOrder = -1; const diag = [];
       const hasSelection = fixture !== 'no-glove', navOnly = fixture === 'nav-only';
       const Game = new Proxy(actual.Game, { construct(target, args) {
         const ready = G.hasGloveModel('barbudo'), g = Reflect.construct(target, args, target); games.push(g);
@@ -339,15 +345,18 @@ async function worker(fixture, mutant) {
       console.error = (...a) => {
         errorOriginal(...a);
         if (String(a[0]).includes('preload da partida falhou parcialmente') && !a.some(x => x?.message === 'controlled different optional load')) unexpected.push(a.map(String).join(' '));
+        if (a[0] === 'preload da partida falhou parcialmente' && a.includes(cosmeticError)) { diagOrder = seq++; diag.push({ args: a.length, reason: a[a.length - 1] }); }
       };
       const noop = () => Promise.resolve();
+      const cosmeticError = fixture === 'reject-other' ? new Error('controlled different optional load') : null;
       const env = {
         navOnly, aguardarPreloads: ls => { loads = ls; return actual.aguardarPreloads(ls); },
         preloadCharacterAssets: G.preloadCharacterAssets, _charsToLoad: ['barbudo', 'capitao'], _armasDaPartida: ['pistol', 'awp', 'ak'],
-        preloadCosmeticAssets: () => fixture === 'reject-other' ? Promise.reject(new Error('controlled different optional load')) : Promise.resolve(),
+        preloadCosmeticAssets: () => cosmeticError ? Promise.reject(cosmeticError) : Promise.resolve(),
         matchSkins: [], preloadEyewearAssets: noop, matchEyewear: [], playerGloveId: hasSelection ? 'luvas-brasil' : null, charId: 'barbudo',
         captureGloveBarrier: promise => { gloveBarrier = promise; return promise; },
         getGloveHandle: (id, skin) => {
+          gloveOrder = seq++;
           if (id !== 'barbudo' || skin) throw Error('Preload pediu origem errada');
           const handle = G.getGloveHandle(id, skin);
           return handle && { preload() { glovePromise = handle.preload(); return glovePromise; } };
@@ -380,7 +389,8 @@ async function worker(fixture, mutant) {
         check('C3', readyBirth, born);
         check('C4', born.length === 1 && born[0].completeGloves, born);
       } else if (fixture === 'reject-other') {
-        check('C6', before.gloveCalled && before.inBarrier && before.gloveAtIO && !before.cacheReady && before.births === 0 && readyBirth, { before, born });
+        check('C6', before.gloveCalled && before.inBarrier && before.gloveAtIO && !before.cacheReady && before.births === 0 && readyBirth
+          && diag.length === 1 && diag[0].args >= 2 && diag[0].reason === cosmeticError && diagOrder >= 0 && gloveOrder > diagOrder, { before, born, diag, diagOrder, gloveOrder });
       } else check(navOnly ? 'C5b' : 'C5a', !before.gloveCalled && !before.gloveAtIO && born.length === 1 && born[0].gloves === 0, { before, born });
     }
     out.status = out.rows.every(r => r.ok) ? 'GREEN' : 'RED';
