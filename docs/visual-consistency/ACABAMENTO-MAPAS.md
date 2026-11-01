@@ -101,6 +101,32 @@ caixa sem grupos reprova. Os grupos devem particionar exatamente o index range
 desenhado, sem lacunas/sobreposição/ranges inválidos. Todos os UVs referenciados
 nesse range precisam ser finitos, inclusive fora dos grupos: material único
 desenha o range inteiro no renderer. Não se fixa uma ordem artificial de índices.
+
+**Malhas estáticas mescladas (material único)**: as fachadas R23 juntam muitas caixas por material
+(`pecaR23`/`batchR23` → `mergeParts`), e `normalizeGeo` descarta groups sem recriá-los —
+sem groups é legítimo nesse caso, porque material único desenha o drawRange inteiro no
+renderer. O contrato usa atributos Three com `position.itemSize=3`, `uv.itemSize=2` e índice
+escalar quando existe; aridades incompatíveis reprovam. A régua lê TODOS os triângulos efetivamente desenhados
+(indexado ou não, respeitando o drawRange, inclusive as últimas peças — cauda não cai em
+silêncio), valida drawRange inteiro/limites, índice dentro de posição/UV, posição e UV
+finitos, rejeita triângulo de área zero e UV de rank colapsado, e mede por triângulo o
+Jacobiano UV→mundo com `updateWorldMatrix(true,false)` e a `matrixWorld` real: os módulos
+de p_u/p_v dão os períodos físicos U/V e o cosseno entre eles detecta cisalhamento com a
+mesma folga `epsilonUV(1)` (sem novo épsilon geométrico arbitrário; zero e não-finito
+exatos são RED). Atributos ausentes, aridades incompatíveis e geometria vazia ou degenerada reprovam.
+Esse aceite cobre as Mesh estáticas construídas pelo R23; instancing, skinning e morphs
+ficam fora desta medição.
+Se groups existem nessa malha, exige a mesma partição exata do contrato de caixa — não
+confia nem ignora ranges inválidos. Nenhum nome de malha ou tag de piloto isenta nada;
+malha multi-material segue exigindo groups como antes. Limites: node é contrato métrico —
+não acrescenta aceitação de arte, iluminação nem desempenho móvel (esses continuam
+UNKNOWN até foto/dispositivo). Seis mutantes novos agem sobre uma malha reboco mesclada
+REAL, selecionada por estrutura (BufferGeometry sem groups): `reboco-mesclado-periodo`
+(período num triângulo da última peça), `reboco-mesclado-nan` (UV NaN no último desenhado),
+`reboco-mesclado-cisalha` (U/V não ortogonais no mundo), `reboco-mesclado-indice`
+(último índice fora dos limites), `reboco-mesclado-drawrange` (range incompleto) e
+`reboco-mesclado-posicao` (posição desenhada não finita); sem alvo real o mutante aborta
+NAOAPLICOU, não fabrica RED.
 O UV métrico baked pressupõe canal0 e matriz de textura identidade em cor, normal e
 roughness realmente usados. A régua atualiza a matriz como o renderer quando
 auto-update está ativo e verifica parâmetros/matriz finitos; repeat, matriz manual
@@ -109,12 +135,13 @@ usa64 ULPs de Float64, sem banda visual. O mutante repeat3 foi GREEN antes
 desta aceitação e passa a RED pela transformação real do sampler.
 Exige AO finito e variável, detalhe
 explícito, família/densidade do solo, tint mineral do Campo, solo do Ferro
-sem tint e capim (instanced E Mesh comum) fora do volume do balcão em med e
-low. Os dezesseis mutantes são `tijolo-8m`, `reboco-3x`, `solo-losango`,
+sem tint e capim (instanced E Mesh comum) fora do volume do balcão em med e low.
+Os vinte e dois mutantes são `tijolo-8m`, `reboco-3x`, `solo-losango`,
 `reboco-sem-detalhe`, `ao-branco`, `solo-sem-tint`, `capim-no-balcao`,
 `capim-mesh-no-balcao`, `tijolo-face-colapsada`, `reboco-face-nan`,
 `tijolo-sem-grupos`, `reboco-grupo-truncado`, `tijolo-repeat`,
-`tijolo-offset-nan`, `tijolo-matriz` e `tijolo-canal`; cada um deve sair1 pela cláusula
+`tijolo-offset-nan`, `tijolo-matriz` e `tijolo-canal` — mais os seis
+`reboco-mesclado-*` da malha mesclada real acima; cada um deve sair1 pela cláusula
 correspondente. O wrapper `map-material-finish-mutations-check.mjs` exige baseline
 GREEN, exit1+JSON RED e cláusula específica de cada mutante; crash não é detecção.
 Mutante desconhecido é erro.
