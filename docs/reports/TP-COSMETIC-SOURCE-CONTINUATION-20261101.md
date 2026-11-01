@@ -99,3 +99,24 @@ foram preservados por desenho. As demais observações não mostraram quebra de
 contrato. A adjudicação externa R670 conserva os doze itens literais do GLM.
 Próximo: crítico do pós-ajuste e normalpush/PR empilhado sobre S1; QA Ego corrente
 continua pendente, sem transformar as medições técnicas em aprovação de arte.
+
+R717/R750: push normal da stack passou com hooks habilitados. O formal no head
+a8f246 apontou ausência de variante cosmética; a resposta comprovou que F2 recusa
+essa combinação por contrato, e que a factory/runtime Drip são etapas seguintes.
+Thread respondida e resolvida, sem tratar a ausência deliberada como entrega de S3.
+
+R767/R771: o CI de F2 falhou no preview mobile por uma dependência omitida na
+fixture `templateDecision`, que extrai parte real de buildCharacterModel para VM.
+O trecho agora lê `_bodyOrigins`, declarado corretamente no módulo de produção;
+o contexto parcial não o fornecia. Dois testes lançavam ReferenceError diretamente
+e seis observavam os fallbacks/tentativas decorrentes. Não houve prova desse erro
+no runtime real. Em Node22.23.4, antes do ajuste:153 testes,145PASS/8FAIL,0cancelados.
+Adicionar somente um WeakMap ao contexto da fixture deixou153PASS/0FAIL em275,492ms.
+As asserções, produto, limites de CI e assets permaneceram intactos. Recibos BEFORE
+e AFTER estão em `PREVIEW-ORIGIN-FIX-R771-*`, na auditoria externa da missão.
+
+O run que falhou levou21m39s, abaixo de25min; isso não foi um timeout. A duração
+do CI inteiro corrigido ainda precisa ser medida. Próximo: revisão do ajuste,
+checkpoint e push normal, formal/CI do head novo e crítica pós-bot. #1207 continua
+draft e a pergunta de recuperação do Ego permanece pendente; QA visual atual,
+fit, movimento, compra/equipagem, MP e mobile físico conservam gates próprios.
