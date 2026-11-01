@@ -99,3 +99,35 @@ anterior inteiro; o CI posterior impede usar aquele parecer como aprovação des
 reparo. Próximo passo: validar a fixture corrigida, revisar todo o novo ponto,
 checkpoint seletivo, push normal e CI atual. Release, boot pela UI com inventário
 equipado, MP, mobile físico e aceite visual globais continuam pendentes.
+
+R392/R399 validaram a fixture e o alias de fauna; R400 publicou e82019b pelos hooks
+normais. O review formal 5728477024 no head atual não trouxe achados, mas a decisão
+agregada do GitHub ainda conserva o CHANGES_REQUESTED histórico. O fio segue
+resolvido; isso não foi descrito como decisão agregada limpa.
+
+R586 Native pós-bot cobriu os doze deltas e encontrou P3 de I/O fora do classificador
+INFRA. R587 GLM inteiro terminou; seu P2 sobre desligar luvas com skin3p=0 foi
+refutado pelo contrato de pintura de arma/faca. A leitura do operador encontrou
+SC5 nominal incompatível com o argumento adicional de luva. Root leu os pareceres
+integrais e reconferiu os pins em R608; nenhum patch especulativo de produto.
+
+R607 reproduziu os três erros de I/O com exit1 e sem resumo INFRA: fonte inicial
+ausente no pai/worker e destino JSON apontando para diretório. Também reproduziu
+SC5 RED no checker real. A mesma saída também tinha SC6 RED: sua regex ignorava
+knifeContext, já presente em weapon-skins desde a base973. É dívida anterior,
+identificada ao validar SC5; não foi atribuída ao GLM nem ao forward de luva.
+O reparo corrente protege leitura inicial e gravação de recibo e aceita esses
+argumentos adicionais explícitos, conservando weaponSkinId, o kill-switch e a
+guarda marcas. Produto, predicados e failsets TP não mudaram.
+R609 confirmou os três erros de I/O como INFRA/exit3 e escrita JSON válida, mas
+seu controlador parou numa âncora ampla antes dos controles SC5. R611 mostrou
+SC6 RED anterior, sem crédito de aprovação. R612 passou dezesseis resultados:
+os quatro controles de I/O, sete casos SC5/SC6, dois mutantes legados de cobertura
+e os aliases públicos de cobertura/identidade mais docs:check. Retirar a entrega
+ou o kill-switch dá somente SC5 RED; retirar guarda/default de marcas dá somente
+SC6 RED. As chamadas anteriores permanecem aceitas. TP conserva nominal e quatro
+mutantes exatos; não houve mudança em produto, assets ou predicados TP.
+
+Próximo: checkpoint DCO/Agent, crítica integral dos treze caminhos e fronteiras
+atuais, push normal e novo review formal no head. R607/R608/R612 ficam na auditoria
+externa. Não são provas novas de raster, loja, animação, mobile ou multiplayer.

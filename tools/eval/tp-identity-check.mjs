@@ -34,13 +34,14 @@ const replaceOne = (s, a, b) => {
 const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 async function worker(fixture, mutant) {
-  const out = { version: 1, fixture, mutant, sources: sources(), rows: [], loaded: [] };
+  const out = { version: 1, fixture, mutant, sources: null, rows: [], loaded: [] };
   const games = [];
   let releaseGlove = () => {};
   const check = (id, ok, detail) => out.rows.push({ id, ok: Boolean(ok), detail });
   const deadline = setTimeout(() => { console.error('TP fixture deadline'); process.exit(3); }, 45000);
   const errorOriginal = console.error, unexpected = [];
   try {
+    out.sources = sources();
     const filename = (u) => path.join(ROOT, 'public', new URL(String(u), 'http://fixture/').pathname.replace(/^\//, ''));
     const localFetch = async (u) => fs.existsSync(filename(u)) ? new Response(fs.readFileSync(filename(u))) : new Response('', { status: 404 });
     Object.defineProperty(globalThis, 'fetch', { configurable: true, get: () => localFetch, set() {} });
@@ -232,8 +233,9 @@ for (const arg of args) {
   else if (arg.startsWith('--json=') && !jsonPath && path.isAbsolute(arg.slice(7))) jsonPath = arg.slice(7);
   else { console.error(`CLI inválida: ${arg}; use --mutante=${Object.keys(EXPECTED).join('|')} e/ou --json=/caminho/absoluto`); process.exit(2); }
 }
-const report = { at: new Date().toISOString(), sources: sources(), mutant, runs: [], scope: 'Game/GLTF reais, texturas CPU1×1, recorte real do nascimento; sem raster/UI/arte/persistência/MP' };
+const report = { at: new Date().toISOString(), sources: null, mutant, runs: [], scope: 'Game/GLTF reais, texturas CPU1×1, recorte real do nascimento; sem raster/UI/arte/persistência/MP' };
 try {
+  report.sources = sources();
   const run = (selected) => {
     const failed = [];
     for (const [fixture, ids] of Object.entries(CASES)) {
@@ -262,6 +264,11 @@ try {
     report.status = equal([...report.failed].sort(), [...report.expected].sort()) ? 'DETECTED' : 'RED';
   } else report.status = 'GREEN';
 } catch (e) { report.status = 'INFRA'; report.error = String(e.stack || e); }
-if (jsonPath) fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2) + '\n');
+try {
+  if (jsonPath) fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2) + '\n');
+} catch (e) {
+  report.status = 'INFRA';
+  report.error = [report.error, `Falha ao gravar recibo JSON: ${String(e.message || e)}`].filter(Boolean).join('\n');
+}
 console.log(JSON.stringify({ status: report.status, mutant, failed: report.failed || [], expected: report.expected, cases: report.runs.length, error: report.error }));
 process.exit(report.status === 'INFRA' ? 3 : ['GREEN', 'DETECTED'].includes(report.status) ? 0 : 1);
