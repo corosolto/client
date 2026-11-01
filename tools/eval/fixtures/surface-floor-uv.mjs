@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { THREE, MAPS, initTextures, seedRandom } from '../harness.mjs';
-import { planoUV, metrosPorUV, TEXEL_ALVO } from '../../../public/js/map_uv.js';
+import { planoUV, metrosPorUV } from '../../../public/js/map_uv.js';
+import { TEXEL_ALVO } from '../texel-tetos.mjs';
 
 const digest = value => createHash('sha256').update(value).digest('hex');
 const encoded = value => JSON.stringify(value);

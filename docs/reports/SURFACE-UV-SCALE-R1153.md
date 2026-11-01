@@ -11,7 +11,7 @@ codex/surface-uv-scale-r1153-20261101; W842/backend/owners não recebem writes.
 Probe executa MAPS.build reais pelo harness e captura TextureLoader na fronteira,
 sem renderer/rede/asset privado. Medição antes do fix, em2,059s: sete cláusulas UV
 vermelhas nos três planos e ramos externos, exit1 esperado. Quebrada46,545/5,818pxm;
-mirante fallback7,111/7,407pxm. Um warning herdado de múltiplas instâncias Three foi
+mirante fallback7,111/7,407pxm. Um warning de inicialização do harness/imports Three foi
 preservado. Nenhum score MUP ou relação pixel/causa é inferido.
 
 A fixture versionada guarda os hashes reais de geometria/UV nãoalvo/material
@@ -33,3 +33,39 @@ external-surface-binding, provar nominal e mutantes causais sem alterar asserç�
 anteriores e atualizar este ledger. WebP de proveniência desconhecida permanece.
 Root publica; nenhuma publicação nesta lease. Missão visual/PR/release integral,
 Flavio1158 excluído/UI-social depois, Game3:2/Ego/mobile/MP humano/arte UNKNOWN.
+
+## Milestone2: reparo e guarda ligada
+
+Só as duas fontes de mapa mudam o UV: planoUV/metrosPorUV existentes nas calçadas;
+no mirante, a UVbase0–1 é restaurada antes de cada recomposição. O callback local
+no material conserva a assinatura external4args e captura apenas a geometria,
+sem reter o Mesh/parent scene. Nada muda no material/textura global compartilhado.
+
+O checker external-surface-binding existente, já no check:fast, agora importa o
+probe real e exige as12cláusulas UV/lifecycle mais os fingerprints exatos da
+baseline. Os seis controles causais desativam UV das calçadas, inicialização do
+mirante, callback onLoad, reset da base, leitura de repeat e leitura de dimensões.
+Cada um exige failset semântico exato; exceção/NAOAPLICOU não vira detecção.
+Os probes anteriores de Campomorro/Escadão/clones/Ferro não foram afrouxados;
+o NAOAPLICOU honesto legado do onError ausente continua explícito.
+
+Foco final no código congelado: exit0 em32,064s, doze cláusulas e preservação
+PASS, seis mutantes novos RED exatos. Os três planos medem128px/m nos dois eixos,
+inclusive fallback, onLoad, notificação duplicada e1024×256/repeat2×3. Fonte do
+alvo é texel-tetos, independente do export usado pela implementação. Final
+SB1–SB7/cache de conteúdo: exit0 em36,332s. Ambos stdout/stderr preservados em A,
+zero timeout/stderr; executados concorrentemente, tempos não são benchmark.
+Docs geradas em modoPR:0arquivos alterados; docs --check PASS3,019s (estrutura,
+contagens/autoria de main/release ficam para seu fluxo). Diff --check PASS.
+
+SIM_HASH oficial: release.yml chama scripts/sim-hash.mjs --write. Depois do
+freeze, gerador oficial e --list entregaram6adc8f9a35cf3eb1/160arquivos, conferido
+independentemente por SHA256(path\0bytes\0). O literal713a9105f2c02115 anterior e
+recibo intermediário2ee2 foram preservados. VERSIONalpha135 não muda; não há
+repinbackend. O filho com Hnovo não herda aceite runtime/CI do pai713.
+
+Este filho parte de9414 e não incorpora a555. Root fará merge normal dessa
+ancestralidade atual e coordenará publicação/novo pinbackend/H. Nenhum push,
+GH, browser/Ego/Chromium, build ou fullgate foi executado nesta lease. Assets e
+proveniência desconhecida do WebP preservados; visual/MUP/Game/mobile/MP humano
+continuam UNKNOWN. Próximo: Root lê diff/recibos/pins e decide adoção do checkpoint.
