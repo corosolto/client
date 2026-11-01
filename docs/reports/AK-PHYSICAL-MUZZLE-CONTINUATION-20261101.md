@@ -60,11 +60,49 @@ R125A/B foram do instrumento e ficam preservadas. Recibos e PNGs estão na mesma
 auditoria externa de projeto, pelos prefixos R122 a R126.
 
 O primeiro push normal R121 terminou exit1 após 679s: CM1 recusou um comentário
-de três linhas. A correção seguinte encurta esse comentário para duas linhas.
-O push será repetido com hooks ativos. PR, revisão hospedada e merge continuam
-pendentes. Mobile físico, MP e aprovação artística global não foram validados.
-O merge #1188 usou bypass e esse erro permanece registrado; esta lane não autoriza
-repetir bypass, alterar regras ou retirar reviews.
+de três linhas. `2ca4eff2` encurtou o comentário para duas linhas, mantendo o
+corpo do helper. O push normal R136 passou com hooks ativos em 689,969s. O PR
+#1194 foi aberto e o bot o reencaminhou para staging. GLM R144 e crítico Native
+R150 revisaram o diff inteiro e fronteiras sem novo defeito de produto. Dois
+apontamentos do bot sobre imports/const duplicada foram refutados com o auditor
+real: dez checks e quatro mutantes detectados em R160. Respostas e resolução dos
+dois fios estão em R163; o review formal negativo permanece registrado.
 
-Próximo passo: conferir CM1 no novo commit e concluir o push normal antes de abrir
-o PR. Resultado técnico verde não encerra a missão de consistência visual.
+O CI encontrou P1 real: os placares de imagem usavam o fingerprint antigo
+`461f62f4a4861d8b`. A única entrada alterada é `ak.bocaGolden` em vmconfig;
+as outras seis entradas são byteiguais, e retirar exatamente essas quatro linhas
+recompõe todo vmconfig da base. A chamada nova retorna antes de qualquer mutação
+para outras armas. Isso sustenta conservar as outras 25 linhas, sem afirmá-las
+remedidas. Os dois JSONs marcam explicitamente `parcial`, armas=['ak'] e a data
+de origem das linhas retidas, 2026-10-31. Limiares, referências aprovadas, dívidas,
+aceites e função de fingerprint não foram alterados.
+
+R169 remediu AK nas cinco réguas, em 3:2 (1440×960) e 16:9 (1440×810), no Ego
+55/p1. O transporte foi extraído do palco existente: corpos de coleta, juízes e
+limiares são byteiguais; não houve outro navegador. Os sete módulos realmente
+carregados foram vinculados aos bytes de `2ca4eff2`, embora o header do servidor
+ainda declare `c0a4bfd5` (a diferença é comentário/documentação). O GLB observado
+é a revisão 4094c0534f, 2.001.872 bytes; mesh de 4.869 vértices e socket novo
+foram verificados no runtime. GPU observada: ANGLE Metal/Apple M4 Pro; não foi
+presumida equivalência de raster com o SwiftShader do launcher anterior.
+
+Mira, cobertura, mãos e carregador ficaram VERDE nos dois aspectos; pistola-ref
+é N/A para AK. A massa da mira está a 4 px da cruz; ADS cobre 14,2% em 3:2 e
+11,7% em 16:9, dentro dos tetos existentes. Root olhou os quatro PNGs normais:
+arma no quadril e ADS central legíveis, mão de apoio presente. Isso não aprova
+globalmente skins, personagens, mapas ou todos os quadros de animação.
+
+Recibos e PNGs originais: auditoria externa de projeto,
+`VM-EGO-REMEASURE-R158-ROOT-{3x2,16x9}-R169/`; proveniência dos corpos/input em
+`VM-EGO-REMEASURE-R158-BUNDLE-PINS.json`; fusão parcial e hashes em
+`AK-PLACAR-PARTIAL-ADJUDICATION-R172.json`. As primeiras tentativas R167/R168
+falharam no transporte/identidade do instrumento e não promovem placar. R169
+concluiu 40 máscaras por aspecto; seus handles e preload foram removidos e a
+navegação descartou todo o diagnóstico. R171 confirmou menu normal sem jogo e
+restauração exata das seis preferências locais da tarefa.
+
+Próximo passo: verificar o gate dos placares, revisar o delta, fazer checkpoint
+assinado e push normal com hooks; depois conferir CI e review no head novo.
+Merge/release continuam pendentes. Mobile físico, MP e aprovação artística global
+não foram validados. O merge #1188 usou bypass e esse erro permanece registrado;
+esta lane não autoriza repetir bypass, alterar regras ou retirar reviews.
