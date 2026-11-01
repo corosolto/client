@@ -108,7 +108,28 @@ test('curated turning follows the shortest arc, scales with time, and preserves 
  for(const fps of [30,60,120]){a.root.rotation.y=0;for(let i=0;i<fps;i++)ambience._turnQuad(a,Math.PI,1/fps);assert.ok(Math.abs(a.root.rotation.y-Math.PI)<1e-12);}
  for(const dt of [0,-1,NaN,undefined]){a.root.rotation.y=.2;ambience._turnQuad(a,2,dt);assert.equal(a.root.rotation.y,.2);}
  a.root.rotation.y=0;ambience._turnQuad(a,2,1);assert.ok(Math.abs(a.root.rotation.y-.3)<1e-12);
- a.turnRate=0;ambience._turnQuad(a,2,1/60);assert.equal(a.root.rotation.y,2);ambience.dispose();
+ a.turnRate=0;ambience._turnQuad(a,2,1/60);assert.equal(a.root.rotation.y,2);
+ let action;ambience._dogAction=(_a,name)=>{action=name;};
+ const origin=a.root.position.clone();ambience.onShot(origin.clone().add(new THREE.Vector3(0,0,1)),origin);
+ assert.equal(a.alertTurnDelay,0);ambience._updateQuad(a,0);assert.equal(action,'run');ambience.dispose();
+});
+test('curated route turns happen during idle and flee waits for heading alignment',()=>{
+ const ambience=createFavelaAmbience(new THREE.Group(),{map:'heading-contract',cats:[{pos:[0,0,0],to:[0,0,2],phase:1.2,turnRate:6,speed:{walk:.55,flee:1.5}}]});
+ const a=ambience.animals[0];let walks=0,flees=0,turns=0;
+ const aligned=(previous)=>{
+  const displacement=a.root.position.clone().sub(previous);if(displacement.length()<1e-8)return false;
+  const heading=new THREE.Vector3(Math.sin(a.root.rotation.y),0,Math.cos(a.root.rotation.y));
+  assert.ok(heading.dot(displacement.normalize())>1-1e-8,'translation must follow the body heading');return true;
+ };
+ for(let i=0;i<1500;i++){const previous=a.root.position.clone();ambience.update(1/60,null);if(a.state==='walk'&&aligned(previous))walks++;}
+ // Uma ameaça à frente exige uma meia-volta; a posição fica fixa durante o pivô.
+ a.root.rotation.y=0;const origin=a.root.position.clone();ambience.onShot(origin.clone().add(new THREE.Vector3(0,0,1)),origin);
+ assert.ok(Math.abs(a.alertTurnDelay-Math.PI/6)<1e-12);
+ for(let i=0;i<100;i++){
+  const previous=a.root.position.clone();ambience.update(1/60,null);
+  if(a.state==='flee'){if(ambience.time-a.alertAt<=a.alertTurnDelay){assert.ok(a.root.position.distanceTo(origin)<1e-12);turns++;}else if(aligned(previous))flees++;}
+ }
+ assert.ok(walks>0&&flees>0&&turns>0);ambience.dispose();
 });
 for(const low of [false,true])test(`curated ground fauna keeps a non-hittable contact shadow in ${low?'low':'full'} quality`,()=>{
  const ambience=createFavelaAmbience(new THREE.Group(),{map:'contact-fixture',low,cats:[{pos:[2,3,4],to:[2,3,5],contactShadow:true}]});

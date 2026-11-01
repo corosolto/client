@@ -409,7 +409,7 @@ class FavelaAmbience {
       id: `${type}-${index}`, type, mode: type === 'pigeon' ? 'ground' : (config.mode || 'ground'), root: animalRoot, model,
       origin, to, speed: config.speed, turnRate: Number.isFinite(config.turnRate) && config.turnRate > 0 ? config.turnRate : 0, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
       source: loaded ? 'gltf' : 'fallback', contactShadow, mixer, actions, action: 'idle', state: 'idle', alertUntil: 0,
-      alertAt: 0, alertOrigin: origin.clone(), flee: new THREE.Vector3(1, 0, 0),
+      alertAt: 0, alertTurnDelay: 0, alertOrigin: origin.clone(), flee: new THREE.Vector3(1, 0, 0),
       routine: origin.clone(), recoverAt: 0, recoverUntil: 0, recoverFrom: origin.clone(),
       calangoGait: 0,
     });
@@ -422,6 +422,7 @@ class FavelaAmbience {
     for (const animal of this.animals) {
       animal.alertUntil = 0;
       animal.alertAt = 0;
+      animal.alertTurnDelay = 0;
       animal.recoverAt = 0;
       animal.recoverUntil = .8;
       animal.recoverFrom.copy(animal.origin);
@@ -451,6 +452,8 @@ class FavelaAmbience {
       animal.flee.copy(position).sub(start).setY(0);
       if (animal.flee.lengthSq() < .01) animal.flee.set(Math.sin(animal.phase + 1), 0, Math.cos(animal.phase + 1));
       animal.flee.normalize();
+      const target = Math.atan2(animal.flee.x, animal.flee.z), delta = target - animal.root.rotation.y;
+      animal.alertTurnDelay = animal.turnRate ? Math.abs(Math.atan2(Math.sin(delta), Math.cos(delta))) / animal.turnRate : 0;
       /* pombo foge a pé pela superfície onde nasceu (v2.1: sem takeoff/flight) */
       animal.state = 'flee';
       reacted++;
@@ -516,11 +519,12 @@ class FavelaAmbience {
   _updateQuad(animal, dt) {
     const speed = animal.speed || QUAD_SPEED[animal.type] || QUAD_SPEED.dog;
     if (this.time < animal.alertUntil) {
-      const elapsed = this.time - animal.alertAt;
+      // A fauna curada pivota antes de fugir: girar devagar enquanto já corre causava deslizamento lateral.
+      const elapsed = Math.max(0, this.time - animal.alertAt - animal.alertTurnDelay);
       animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, Math.min(speed.flee * 1.4, elapsed * speed.flee));
       this._turnQuad(animal, Math.atan2(animal.flee.x, animal.flee.z), dt);
       animal.state = 'flee';
-      this._dogAction(animal, 'run');
+      this._dogAction(animal, animal.turnRate && elapsed <= 0 ? 'walk' : 'run');
       return;
     }
     const span = animal.origin.distanceTo(animal.to);
@@ -528,12 +532,18 @@ class FavelaAmbience {
     const cycle = (this.time + animal.phase) % (2 * (DOG_IDLE_TIME + leg));
     let moving = false;
     let direction = null;
-    if (cycle < DOG_IDLE_TIME) animal.routine.copy(animal.origin);
+    if (cycle < DOG_IDLE_TIME) {
+      animal.routine.copy(animal.origin);
+      if (animal.turnRate) direction = animal.to.clone().sub(animal.origin);
+    }
     else if (cycle < DOG_IDLE_TIME + leg) {
       animal.routine.lerpVectors(animal.origin, animal.to, (cycle - DOG_IDLE_TIME) / leg);
       moving = span > .05;
       direction = animal.to.clone().sub(animal.origin);
-    } else if (cycle < 2 * DOG_IDLE_TIME + leg) animal.routine.copy(animal.to);
+    } else if (cycle < 2 * DOG_IDLE_TIME + leg) {
+      animal.routine.copy(animal.to);
+      if (animal.turnRate) direction = animal.origin.clone().sub(animal.to);
+    }
     else {
       animal.routine.lerpVectors(animal.to, animal.origin, (cycle - 2 * DOG_IDLE_TIME - leg) / leg);
       moving = span > .05;
