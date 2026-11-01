@@ -8,6 +8,8 @@ import {randomUUID} from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { chaveDeCarga, InfraError, JS_EXCLUSOS, somaCargas, aceitaMutante, cancelaUi, prefixoRecebido, validaEnc } from './boot-overlay.mjs';
 import {createGuestProfileObserver,readGuestPageIdentity} from './boot-guest-profile.mjs';
+import {instrumentPosterIntent,collectPosterProof,lazyPosterSubset} from './boot-poster-intent.mjs';
+import {awaitLocalModuleProof} from './boot-local-proof.mjs';
 
 const args = process.argv.slice(2), vistos = new Set(), opcoes = {};
 for (const a of args) {
@@ -71,7 +73,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   const label=refPoolAnsioso?'reference':mutante||'nominal',passId=label+'-'+randomUUID(),proofDir=process.env.BOOT_PROOF_DIR?process.env.BOOT_PROOF_DIR+'/'+RUN_ID+'/'+passId:null;
   if(proofDir)mkdirSync(proofDir,{recursive:true});
   console.log('BOOT_PASS '+JSON.stringify({runId:RUN_ID,passId,label,proofDir,snapshot:SNAPSHOT.fingerprint}));
-  let context,origin,page,guest,terminalCapture=null,diagnostic=()=>({});
+  let context,origin,page,guest,terminalCapture=null,localProof=null,diagnostic=()=>({});
   try {
   context = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
   await context.addInitScript(() => {
@@ -100,6 +102,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   origin=await startBootOrigin({BASE,snapshot:SNAPSHOT,transformJs:(rel,original)=>{
     let corpo=original;
     if(rel==='js/textures.js'&&(refPoolAnsioso||mutante==='cartaz-ansioso'))corpo=poolAnsioso(corpo);
+    if(rel==='js/textures.js')corpo=instrumentPosterIntent(corpo);
     if(rel==='js/main.js'){if(mutante==='fauna-cedo')corpo=faunaCedo(corpo);corpo=instrumentaCausaSplash(corpo);}
     return corpo;
   },onError:e=>{const m='HTTP proxy: '+e.message;pendingProxyErrors.push(m);reportProxyError?.(m);},authorizeProfile:meta=>guest?guest.authorizeProfile(meta):null});
@@ -122,6 +125,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
     }
     if(!Number.isFinite(e.wallTime)||e.wallTime<=0||!Number.isFinite(e.timestamp)||e.timestamp<=0){marcaInfra('clock CDP request inválido');return;}
     const startEpoch=e.wallTime*1000;
+    if(frozenCutoff!==null&&startEpoch<=frozenCutoff&&new URL(e.request.url).origin===origin.url&&new URL(e.request.url).pathname.startsWith('/posters/'))marcaInfra('início de cartaz tardio dentro da janela após freeze: '+e.request.url);
     reqs.set(e.requestId, { startMonotonic:e.timestamp,requestId:e.requestId,loaderId:e.loaderId,type:e.type,documentURL:e.documentURL,method:e.request.method,initiator:e.initiator, url: e.request.url, inicio: startEpoch, fim: null, bytes: 0, erro: null, recebidoResposta: 0, recebidoChunks: 0, canceladaUi: false });
   });
   const fecha = (e) => {
@@ -214,6 +218,8 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   await page.waitForFunction(epoch=>performance.timeOrigin+performance.now()>=epoch,cutoff,{timeout:30000,polling:10});
   await cdp.send('Runtime.evaluate',{expression:'0',returnByValue:true});
   const gateRequests=freezeWindow([...reqs.values()],gateEpoch),gateObjects=new Set(gateRequests);frozenCutoff=cutoff;
+  const posterObservation=await page.evaluate(()=>({trace:window.__bootPosterIntent,current:{timeOrigin:performance.timeOrigin,now:performance.now()}}));
+  const posterProof=collectPosterProof({...posterObservation,requests:[...reqs.values()],origin:origin.url,timeOrigin,cutoffEpoch:cutoff});
   await Promise.race([awaitWindow(gateRequests),infraP]);
   const requiredIds=new Set(gateRequests.filter(r=>!r.canceladaUi&&new URL(r.url).origin===origin.url&&/^https?:$/.test(new URL(r.url).protocol)).map(r=>String(r.serverID)));
   const absentBodies=[];
@@ -274,6 +280,10 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
       }
     },{ids,timeoutMs}),
     closeObservation:async()=>{
+      localProof=await awaitLocalModuleProof({requests:()=>corposEsperados.keys(),verification:request=>{
+        const row=bodyRecords.get(request),text=verificacoes.get(request),body=row&&bodyChecks.get(row.id);
+        return text&&body?Promise.all([text,body]):null;
+      },verified:request=>verificados.has(request)&&bodyRecords.get(request)?.state==='checked',failure:request=>bodyRecords.get(request)?.error||'módulo sem corpo integral: '+request.url(),barrier:()=>cdp.send('Runtime.evaluate',{expression:'0',returnByValue:true})});
       terminalCapture={abortTrace:await page.evaluate(()=>window.__bootTrace||[]),fetchBodies:await page.evaluate(()=>window.__bootFetchBodies||[]),readyExact:await page.evaluate(()=>window.__csReadyExact||null)};
       await cdp.send('Network.disable');
       await context.close();context=null;
@@ -293,6 +303,8 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
     isentas: [...ate].filter((r) => isentas.has(chaveDeCarga(r.url))).length,
     depoisPortao: depois.length,
     cartazes: new Set(ate.filter((r) => /\/posters\//.test(r.url)).map((r) => r.url.split('?')[0])).size,
+    posterProof,
+    localBootstrapProof:localProof,
     ultimoProp: Math.max(-1, ...ate.filter((r) => /\/models\/props\//.test(r.url)).map((r) => r.fim-timeOrigin)),
     primeiraFauna: Math.min(Infinity, ...[...reqs.values()].filter((r) => /\/models\/ambient\//.test(r.url)).map((r) => r.inicio-timeOrigin)),
     erros,
@@ -316,7 +328,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
 
 let saida=1;
 const veredito=(cand,ref)=>({READY:cand.causa==='assets',ORC1:cand.bytes<=TETO_BYTES&&cand.reqs<=TETO_REQS,
-  ORC2:cand.cartazes<ref.cartazes,ORC3:cand.ultimoProp>0&&Number.isFinite(cand.primeiraFauna)&&cand.primeiraFauna>=cand.ultimoProp});
+  ORC2:lazyPosterSubset(cand.posterProof,ref.posterProof),ORC3:cand.ultimoProp>0&&Number.isFinite(cand.primeiraFauna)&&cand.primeiraFauna>=cand.ultimoProp});
 const relatar=(cand,ref,ok,rotulo)=>{
  console.log(`base ${BASE} · ${rotulo}`);
  console.log(`portão ${Math.round(cand.portao)}ms por ${cand.causa}; overlay ${cand.sobrepostos} js; isentas ${cand.isentas}; depois ${cand.depoisPortao}`);
@@ -324,7 +336,7 @@ const relatar=(cand,ref,ok,rotulo)=>{
  console.log('HTTPgzipProof '+JSON.stringify(cand.networkProof));
  console.log(`READY ${ok.READY?'ok':'FALHA'}`);
  console.log(`ORC1 ${(cand.bytes/1048576).toFixed(2)} MiB / ${cand.reqs} req (teto ${TETO_BYTES} / ${TETO_REQS}) ${ok.ORC1?'ok':'FALHA'}`);
- console.log(`ORC2 ${cand.cartazes} vs ${ref.cartazes} cartazes ${ok.ORC2?'ok':'FALHA'}`);
+ console.log(`ORC2 ${cand.posterProof.started.length} vs ${ref.posterProof.started.length} inícios por identidade (concluídos ${cand.cartazes} vs ${ref.cartazes}) ${ok.ORC2?'ok':'FALHA'}`);
  console.log(`ORC3 último prop ${cand.ultimoProp}ms, primeira fauna ${cand.primeiraFauna}ms ${ok.ORC3?'ok':'FALHA'}`);
 };
 try {
