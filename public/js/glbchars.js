@@ -227,7 +227,7 @@ export async function preloadCosmeticAssets(ids = []) {
 
 /* LUVAS EM 3ª PESSOA (20/10): a fábrica já recortava a mão de cada personagem em
    `models/gloves/3p/`; aqui o pacote é re-bindado por nome de osso e pintado. */
-const _gloveMesh = new Map();      // charId -> SkinnedMesh template (ou null se não há pacote)
+const _gloveMeshes = new Map();    // charId -> templates SkinnedMesh (ou null se não há pacote)
 let _gloveManifest = null;
 function gloveManifest() {
   if (!_gloveManifest) _gloveManifest = fetch(assetUrl('data/gloves-manifest.json'))
@@ -244,43 +244,45 @@ function glovePath(manifest, charId) {
   return null;
 }
 export async function preloadGloveAssets(ids = []) {
-  const alvos = [...new Set(ids.filter((id) => GLB_CHARS.has(id) && !_gloveMesh.has(id)))];
+  const alvos = [...new Set(ids.filter((id) => GLB_CHARS.has(id) && !_gloveMeshes.has(id)))];
   if (!alvos.length) return;
   const manifest = await gloveManifest();
   await Promise.all(alvos.map(async (id) => {
     const url = glovePath(manifest, id);
-    if (!url) { _gloveMesh.set(id, null); return; }
+    if (!url) { _gloveMeshes.set(id, null); return; }
     try {
       const g = await loadGLB(assetUrl(url.replace(/^\//, '')));
-      let mesh = null;
-      g.scene.traverse((o) => { if (!mesh && o.isSkinnedMesh) mesh = o; });
-      _gloveMesh.set(id, mesh || null);
-    } catch (e) { _gloveMesh.set(id, null); }
+      const meshes = [];
+      g.scene.traverse((o) => { if (o.isSkinnedMesh) meshes.push(o); });
+      _gloveMeshes.set(id, meshes.length ? meshes : null);
+    } catch (e) { _gloveMeshes.set(id, null); }
   }));
 }
-export function hasGloveModel(id) { return !!_gloveMesh.get(id); }
-/* Anexa a luva ao personagem JÁ CLONADO. Devolve a malha anexada (ou null). */
+export function hasGloveModel(id) { return !!_gloveMeshes.get(id); }
+/* Anexa o pacote inteiro ao personagem JÁ CLONADO, ou recusa a família divergente. */
 function attachGloves(model, charId, gloveSkinId) {
   const estilo = gloveSkinStyle(gloveSkinId);
-  const template = _gloveMesh.get(charId);
-  if (!estilo || !template) return null;
+  const templates = _gloveMeshes.get(charId);
+  if (!estilo || !templates) return null;
   let corpo = null;
   model.traverse((o) => { if (!corpo && o.isSkinnedMesh) corpo = o; });
   if (!corpo) return null;
   const ossos = new Map();
   corpo.skeleton.bones.forEach((b) => ossos.set(b.name, b));
-  const alvo = template.skeleton.bones.map((b) => ossos.get(b.name));
-  if (alvo.some((b) => !b)) return null;    // família divergente: não force o bind
-  const luva = new THREE.SkinnedMesh(template.geometry, new THREE.MeshStandardMaterial({
-    color: new THREE.Color(estilo.glove), roughness: 0.86, metalness: 0,
-  }));
-  luva.name = 'luvas-3p';
-  luva.userData.gloveSkin = estilo.id;
-  luva.bind(new THREE.Skeleton(alvo, template.skeleton.boneInverses), template.bindMatrix);
-  luva.bindMode = template.bindMode;
-  luva.frustumCulled = false;
-  corpo.parent.add(luva);
-  return luva;
+  const binds = templates.map(template => ({ template, bones: template.skeleton.bones.map(b => ossos.get(b.name)) }));
+  if (binds.some(({ bones }) => bones.some(b => !b))) return null;
+  return binds.map(({ template, bones }) => {
+    const luva = new THREE.SkinnedMesh(template.geometry, new THREE.MeshStandardMaterial({
+      color: new THREE.Color(estilo.glove), roughness: 0.86, metalness: 0,
+    }));
+    luva.name = 'luvas-3p';
+    luva.userData.gloveSkin = estilo.id;
+    luva.bind(new THREE.Skeleton(bones, template.skeleton.boneInverses), template.bindMatrix);
+    luva.bindMode = template.bindMode;
+    luva.frustumCulled = false;
+    corpo.parent.add(luva);
+    return luva;
+  });
 }
 
 

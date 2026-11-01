@@ -1,4 +1,4 @@
-/* R276/R280: bot pistol/MP5 recebia AWP; corpo próprio perdia luva, inclusive no boot.
+/* R276/R280/R307: bot pistol/MP5 recebia AWP; corpo perdia seleção ou metade da luva.
    Game e GLBs reais em CPU; contrato e limites em docs/visual-consistency/TP-IDENTITY.md. */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,9 +24,11 @@ const EXPECTED = {
   'own-glove': ['O1', 'C4'],
   'glove-preload': ['C1', 'C2', 'C3', 'C4', 'C6'],
   'boot-await': ['C2', 'C3', 'C4', 'C6'],
+  'glove-first-part': ['O1', 'O4', 'C4'],
+  'glove-partial-bind': ['O4'],
 };
 const sha = (v) => createHash('sha256').update(v).digest('hex');
-const sources = () => Object.fromEntries(['game.js', 'main.js'].map(f => [f, sha(fs.readFileSync(path.join(JS, f)))]));
+const sources = () => Object.fromEntries(['game.js', 'main.js', 'glbchars.js'].map(f => [f, sha(fs.readFileSync(path.join(JS, f)))]));
 const replaceOne = (s, a, b) => {
   if (s.split(a).length !== 2 || a === b) throw Error(`Âncora não única/mutação inerte: ${a.slice(0, 80)}`);
   return s.replace(a, b);
@@ -51,7 +53,7 @@ async function worker(fixture, mutant) {
     let enteredGlove;
     const entered = new Promise(r => { enteredGlove = r; });
     const isCold = ['cold', 'reject-other', 'no-glove', 'nav-only'].includes(fixture);
-    let gloveAtIO = false, changedBone = null;
+    let gloveAtIO = false, changedBone = null, gloveParts = [];
     GLTFLoader.prototype.load = function (u, done, progress, fail) {
       const loader = new GLTFLoader();
       loader.register(() => ({ name: 'EXT_texture_webp', async loadTexture() {
@@ -62,34 +64,48 @@ async function worker(fixture, mutant) {
         const g = await loader.parseAsync(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength), '');
         if (new URL(String(u), 'http://fixture/').pathname === '/models/gloves/3p/barbudo-b2013bcf639a.glb') {
           gloveAtIO = true;
+          g.scene.traverse(o => { if (o.isSkinnedMesh) gloveParts.push(o); });
+          if (gloveParts.length !== 2 || new Set(gloveParts.map(o => o.geometry)).size !== 2) throw Error('Pacote R307 mudou; conferir os dois primitivos publicados');
           if (fixture === 'incompatible') {
-            let mesh; g.scene.traverse(o => { if (!mesh && o.isSkinnedMesh) mesh = o; });
-            const bone = mesh?.skeleton?.bones[0];
+            const mesh = gloveParts[1], bone = mesh?.skeleton?.bones[0];
             if (!bone || changedBone) throw Error('Pacote incompatível: aplicação não única');
-            changedBone = { before: bone.name, after: '__tp_incompatible_bone__' }; bone.name = changedBone.after;
+            const bones = [...mesh.skeleton.bones], bad = bone.clone(false);
+            changedBone = { part: 1, before: bone.name, after: '__tp_incompatible_bone__' }; bad.name = changedBone.after; bones[0] = bad;
+            mesh.skeleton = new H.THREE.Skeleton(bones, mesh.skeleton.boneInverses);
+            if (gloveParts[0].skeleton.bones.some(b => b.name === changedBone.after)) throw Error('Controle contaminou a primeira parte');
           }
           enteredGlove(); if (isCold) await held;
         }
         out.loaded.push({ url: String(u), bytes: b.length, sha256: sha(b) }); done(g);
       }).catch(e => fail?.(e));
     };
-    const G = await import('../../public/js/glbchars.js');
     const weapons = await import('../../public/js/weapons.js');
-    let actual = await import('../../public/js/game.js');
-    if (['swap-weapon', 'own-glove'].includes(mutant)) {
+    let G, actual;
+    if (['swap-weapon', 'own-glove', 'glove-first-part', 'glove-partial-bind'].includes(mutant)) {
       let s = fs.readFileSync(path.join(JS, 'game.js'), 'utf8');
-      s = mutant === 'swap-weapon'
-        ? replaceOne(s, 'buildCharacterModel(veste, { weaponId: swapBot.weapon })', 'buildCharacterModel(veste)')
-        : replaceOne(s, 'buildCharacterModel(def, { weaponId: w, weaponSkinId: skinTP, gloveSkinId: this.playerGloveId })', 'buildCharacterModel(def, { weaponId: w, weaponSkinId: skinTP })');
-      out.mutatedGame = sha(s);
+      if (mutant === 'swap-weapon') s = replaceOne(s, 'buildCharacterModel(veste, { weaponId: swapBot.weapon })', 'buildCharacterModel(veste)');
+      if (mutant === 'own-glove') s = replaceOne(s, 'buildCharacterModel(def, { weaponId: w, weaponSkinId: skinTP, gloveSkinId: this.playerGloveId })', 'buildCharacterModel(def, { weaponId: w, weaponSkinId: skinTP })');
       const tmp = fs.mkdtempSync(path.join(ROOT, 'node_modules', '.tp-identity-'));
       try {
         const prefix = pathToFileURL(JS).href;
-        s = s.replace(/from '(\.\/[^']+)'/g, (_, rel) => `from ${JSON.stringify(prefix + rel.slice(1))}`)
+        const absoluteImports = text => text.replace(/from '(\.\/[^']+)'/g, (_, rel) => `from ${JSON.stringify(prefix + rel.slice(1))}`)
           .replace(/import\('\.\//g, `import('${prefix}/`);
+        let gloveModule = pathToFileURL(path.join(JS, 'glbchars.js')).href;
+        if (mutant.startsWith('glove-')) {
+          let gs = fs.readFileSync(path.join(JS, 'glbchars.js'), 'utf8');
+          if (mutant === 'glove-first-part') gs = replaceOne(gs, '_gloveMeshes.set(id, meshes.length ? meshes : null);', '_gloveMeshes.set(id, meshes.length ? meshes.slice(0, 1) : null);');
+          else {
+            gs = replaceOne(gs, '  if (binds.some(({ bones }) => bones.some(b => !b))) return null;', '  const validBinds = binds.filter(({ bones }) => bones.every(Boolean));');
+            gs = replaceOne(gs, '  return binds.map(({ template, bones }) => {', '  return validBinds.map(({ template, bones }) => {');
+          }
+          out.mutatedGlbchars = sha(gs);
+          const gf = path.join(tmp, 'glbchars.mjs'); fs.writeFileSync(gf, absoluteImports(gs)); gloveModule = pathToFileURL(gf).href;
+          s = replaceOne(s, "from './glbchars.js'", `from ${JSON.stringify(gloveModule)}`);
+        }
+        G = await import(gloveModule); out.mutatedGame = sha(s); s = absoluteImports(s);
         const f = path.join(tmp, 'game.mjs'); fs.writeFileSync(f, s); actual = await import(pathToFileURL(f).href);
       } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
-    }
+    } else { G = await import('../../public/js/glbchars.js'); actual = await import('../../public/js/game.js'); }
     const textures = H.initTextures();
     const settings = { bots: 1, allyBots: 0, enemyBots: 1, quality: 'low', difficulty: 'normal', sens: 1 };
     const roster = { allyDefs: [], enemyDefs: [H.CHARACTERS.find(c => c.id === 'capitao')] };
@@ -101,6 +117,13 @@ async function worker(fixture, mutant) {
       g._ensureDolly = () => {}; g.killsToWin = Infinity; g.start(); g.state = 'live'; return g;
     };
     const meshes = (model, name) => { const a = []; model.group.traverse(o => { if (o.name === name) a.push(o); }); return a; };
+    const completeGloves = (model, luvas) => {
+      let body; model.group.traverse(o => { if (!body && o.isSkinnedMesh && o.name !== 'luvas-3p') body = o; });
+      return model.isGLB && gloveParts.length === 2 && luvas.length === gloveParts.length
+        && gloveParts.every(part => luvas.filter(l => l.geometry === part.geometry).length === 1)
+        && luvas.every(l => l.userData.gloveSkin === 'luvas-brasil' && l.parent === body?.parent
+          && l.skeleton.bones.every(b => body.skeleton.bones.includes(b)));
+    };
     const warm = async () => {
       await G.preloadCharacterAssets(['barbudo', 'capitao'], { weapons: ['pistol', 'mp5', 'awp'] });
       await G.preloadGloveAssets(['barbudo']);
@@ -129,9 +152,8 @@ async function worker(fixture, mutant) {
         check('W7', controls, 'Ownership, cena, cache e chamadas únicas sem rebuild; morto/estado inválido recusados');
       } else if (fixture === 'own') {
         const g = boot('luvas-brasil'); g.setCamView('third'); const tp = g.playerTP, luvas = meshes(tp, 'luvas-3p');
-        let body; tp.group.traverse(o => { if (!body && o.isSkinnedMesh && o.name !== 'luvas-3p') body = o; });
-        check('O1', tp.isGLB && luvas.length === 1 && luvas[0].userData.gloveSkin === 'luvas-brasil'
-          && luvas[0].skeleton.bones.every(b => body?.skeleton.bones.includes(b)), { isGLB: tp.isGLB, gloves: luvas.length });
+        check('O1', completeGloves(tp, luvas), { isGLB: tp.isGLB, gloves: luvas.length, publishedParts: gloveParts.length,
+          parts: gloveParts.map(part => ({ name: part.name, attached: luvas.some(l => l.geometry === part.geometry), triangles: part.geometry.index.count / 3 })) });
         g._ensurePlayerTP(); check('O2', g.playerTP === tp && g.playerTP.group === tp.group, 'ensure repetido conserva identidade');
         const plain = boot(null); plain.setCamView('third');
         check('O3', G.hasGloveModel('barbudo') && plain.playerTP.isGLB && meshes(plain.playerTP, 'luvas-3p').length === 0, 'Cache quente sem luva selecionada');
@@ -143,6 +165,7 @@ async function worker(fixture, mutant) {
       } else {
         const template = G.getCharTemplate('barbudo'); const names = new Set(); template.traverse(o => { if (o.isBone) names.add(o.name); });
         if (!changedBone || !names.has(changedBone.before) || names.has(changedBone.after)) throw Error('Incompatibilidade do pacote não comprovada');
+        if (!gloveParts[0].skeleton.bones.every(b => names.has(b.name)) || gloveParts[1].skeleton.bones.every(b => names.has(b.name))) throw Error('Controle deve preservar primeira parte válida e segunda incompatível');
         const g = boot('luvas-brasil'); g.setCamView('third');
         check('O4', g.playerTP.isGLB && G.hasGloveModel('barbudo') && meshes(g.playerTP, 'luvas-3p').length === 0, changedBone);
       }
@@ -159,7 +182,8 @@ async function worker(fixture, mutant) {
       const Game = new Proxy(actual.Game, { construct(target, args) {
         const ready = G.hasGloveModel('barbudo'), g = Reflect.construct(target, args, target); games.push(g);
         g._ensureDolly = () => {}; g.setCamView('third'); const luvas = meshes(g.playerTP, 'luvas-3p');
-        born.push({ ready, isGLB: g.playerTP.isGLB, gloves: luvas.length, skin: luvas[0]?.userData.gloveSkin }); return g;
+        born.push({ ready, isGLB: g.playerTP.isGLB, gloves: luvas.length, skin: luvas[0]?.userData.gloveSkin,
+          completeGloves: completeGloves(g.playerTP, luvas) }); return g;
       } });
       console.error = (...a) => {
         errorOriginal(...a);
@@ -201,7 +225,7 @@ async function worker(fixture, mutant) {
       const readyBirth = born.length === 1 && born[0].ready;
       if (fixture === 'cold') {
         check('C3', readyBirth, born);
-        check('C4', born.length === 1 && born[0].isGLB && born[0].gloves === 1 && born[0].skin === 'luvas-brasil', born);
+        check('C4', born.length === 1 && born[0].completeGloves, born);
       } else if (fixture === 'reject-other') {
         check('C6', before.gloveCalled && before.inBarrier && before.gloveAtIO && !before.cacheReady && before.births === 0 && readyBirth, { before, born });
       } else check(navOnly ? 'C5b' : 'C5a', !before.gloveCalled && !before.gloveAtIO && born.length === 1 && born[0].gloves === 0, { before, born });

@@ -12,10 +12,13 @@ A seleção da luva no início é o contrato; troca dinâmica no mesmo Game fica
 
 Cada fixture roda em processo fresco. W mede arma solicitada, porte de uma/duas
 mãos, ownership, cena, cache e ausência de rebuild numa única sincronização.
-O mede luva própria vinculada aos ossos do corpo por identidade; cache estável;
+O mede todas as geometrias publicadas da luva, uma vez cada, com estilo e vínculo
+aos ossos do corpo por identidade; cache estável;
 nenhuma luva sem seleção mesmo com pacote quente; bot Barbudo compatível distinto
-sem herdar luva, no swap e rebuild. Um pacote deliberadamente incompatível é
-recusado pelo helper existente, preservando o corpo GLB.
+sem herdar luva, no swap e rebuild. O controle incompatível clona somente o esqueleto da segunda parte, deixando a
+primeira válida. O pacote inteiro deve ser recusado, preservando o corpo GLB.
+R307 mediu os dois primitivos Barbudo publicados (384/379 triângulos); identidade
+de geometria impede que duplicar a mão esquerda finja cobertura da direita.
 
 C executa o recorte real de preload e nascimento de main, usando o construtor
 real e aguardarPreloads. Um latch segura a conclusão do parse da luva antes do
@@ -30,10 +33,14 @@ não pedem luva; navOnly não é prova de corpo GLB carregado.
 | own-glove: remove a luva no builder próprio | O1, C4 |
 | glove-preload: remove a entrada na barreira | C1, C2, C3, C4, C6 |
 | boot-await: remove o await da barreira | C2, C3, C4, C6 |
+| glove-first-part: conserva só a primeira parte no cache | O1, O4, C4 |
+| glove-partial-bind: anexa partes válidas de pacote incompatível | O4 |
 
 Nominal verde vem antes de cada mutante. A cópia mutada vive em diretório único
 gitignored, removido no finally; produto no disco não é alterado. Falha de âncora,
 asset, processo, recibo ou fonte divergente é infra3, sem crédito de detecção.
+As duas mutações novas usam glbchars real em cópia única: preload e Game importam
+o mesmo URL/cache mutado. Game, main e glbchars são vinculados antes e depois.
 O pai exige versão, fixture, mutante, hashes, IDs únicos na ordem, booleanos e
 coerência entre exit e cláusulas. RED de filho não pode sumir no agregador.
 Ambiente herdado de worker sem marcador interno explícito é recusado; opções
