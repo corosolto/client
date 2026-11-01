@@ -2,6 +2,62 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
+## Checkpoint R62 da composição, 01/11
+
+O head `5732b65df8283b8cbbb19e74bad4e705b1c85470` chegou por push normal
+atômico à QA e staging. O hook passou 107/107 em 677,6s, sem bypass; recibo
+`QA-NORMAL-PUSH-R61-RESULT.json`. O classificador hospedado
+`41266836875` passou e registrou o caso real de staging já apontar para o
+mesmo SHA, mantendo main. O preview `csbrasil-n6urysjk2-rubenmarcus-projects.vercel.app`
+está READY nesse SHA; isso ainda não é smoke do preview. Main continua
+`4cf8dd99d813fe7caa323b5e9567df3c86957f1a` e produção alpha133/49fd69f.
+
+A revisão preparatória vinculou os 287 caminhos e encontrou um P2 real:
+CU-8 aceitava itemSize inválido com count/getters CPU preservados. A correção
+isolada `b700b63b80e8f6beb2cb7912c516897e414aac60` exige 3/3/2/1 antes
+dos getters em fim/std. Foram observados 16 falsos verdes antes, 16 recusas
+somente CU-8 depois e 16 controles causais ao remover apenas a guarda externa.
+A matriz específica passou 89 execuções/11 NA em cada Node22/26; controles
+legados, produto, fixture, pins e tolerâncias permanecem preservados.
+Autoria de código GLM-5.3 congelada; Native somente docs. O crítico independente
+CRITICO-CAMPO-ATTRIBUTE-R61 leu os quatro arquivos e conferiu 89 artefatos,
+zero achados novos. Root leu o parecer inteiro e integrou sem conflito em
+`c571cabb02f18fcff972f127dfe08726590ca448`, preservando os quatro hashes.
+Colapso GPU foi inferido da fonte
+do vendor, não medido no browser; não é defeito de render nominal demonstrado.
+
+Os heads originais de 1190 e 1191 estão preservados na composição isolada
+`0488f3bde3a21ffa4c8d83c19cfd893e51bd7859`, junto da QA5732. Crítico
+integral e rebind do microfix EN fecharam SC61-P3-1, sem outro achado acionável.
+Root reconferiu fontes e logs; não alterou código. A API anônima local
+recuperou para 200, inventário0/catalog76: o403 anterior é histórico, e posse
+com conta autenticada continua UNKNOWN.
+
+No Astro real com os bytes revisados, o convidado mobile exibiu retrato,
+limpou a mídia ao ir para SHOP e restaurou ao voltar. Em inglês, o bloqueio
+controlado dos dois retratos exibiu "Preview unavailable: Esquerdomacho";
+o cleanup e a recuperação após liberar a rede passaram. Em desktop1320×880,
+o canvas3D apareceu; a preferência reduced-motion real produziu raster idêntico
+em duas capturas, enquanto o modo normal mudou. Recibos SKINS-EN-GUEST-R61,
+SKINS-EN-FAILURE-R61 e SKINS-REDUCED-R62. A palma aberta de apoio e o
+acabamento facetado continuam como dívida visual; não há aprovação global de
+personagem, skins equipadas, dispositivo físico, desempenho ou MP.
+
+O Estraga Código entregou review atual `5726170574` sobre5732, CHANGES_REQUESTED,
+com dois fios novos. O pedido de pôr verificadores CPU no workflow browser não
+corresponde ao contrato do gatilho, mas a falta de duas ligações no pr-fast é
+válida: armadura e wrapper do consumidor ADS. Correção GLM mínima está isolada em
+`ci-visual-consumers-20261101`, basec571, sem mudar produto. A Praça é reconhecida
+pelo gen-docs atual; nominal e controles de gatilho foram medidos nos dois Node.
+Adjudicação completa e replies/resolução dos fios seguem pendentes.
+
+Próximo: concluir e criticar a ligação CI, integrar fontes exatas e atualizar o
+rebind integral; executar um único push normal desta composição.
+Depois, revisão atual e todos os fios do Estraga Código, checks obrigatórios,
+preview no SHA integrado e crítico final pós-bot antes de merge/release.
+Operação Flávio excluída; Javaporco e itens de outros owners preservados.
+Fluxos de UI e redes sociais continuam para a fase posterior.
+
 ## Checkpoint R61 antes do novo push, 01/11
 
 O push normal R60 de d20f53c foi recusado: 106/107 checks passaram em
