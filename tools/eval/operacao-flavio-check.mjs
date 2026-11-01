@@ -83,7 +83,8 @@ cobra(JSON.stringify(snapshotEscolta(cliente)) === JSON.stringify(snapshotEscolt
 
 if (mutante) {
   const proprioResultado = resultados.find((resultado) => resultado.texto === 'atacante no raio interrompe a escolta');
-  const acendeu = Boolean(proprioResultado) && proprioResultado.ok === false;
+  const acendeu = Boolean(proprioResultado) && proprioResultado.ok === false
+    && resultados.filter((resultado) => resultado.ok === false).length === 1;
   console.log(`${acendeu ? '✓' : '✗'} mutante sem contestação acendeu a régua`);
   process.exit(acendeu ? 0 : 1);
 }

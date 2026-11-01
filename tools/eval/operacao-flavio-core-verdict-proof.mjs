@@ -35,7 +35,7 @@ for (const modo of [{ id: '', rotulo: 'baseline' }, { id: 'sem-contestacao', rot
         nome: `${modo.rotulo}:propria-${propriaOk ? 'ok' : 'falha'}:outra-${outraOk ? 'ok' : 'falha'}`,
         mutante: modo.id,
         fixtures: [{ texto: propria, ok: propriaOk }, { texto: outra, ok: outraOk }],
-        esperado: modo.id ? (propriaOk ? 1 : 0) : (propriaOk && outraOk ? 0 : 1),
+        esperado: modo.id ? (!propriaOk && outraOk ? 0 : 1) : (propriaOk && outraOk ? 0 : 1),
       });
     }
   }

@@ -114,6 +114,9 @@
      quedacega    o `catch` volta a limpar a tela sem perguntar de quem é o lançamento
                                                                      -> LR8
      modalfora    só o `fail` escapa da guarda do `catch`            -> LR8
+     modopreferencia  substitui SÓ a declaração extraída modoEfetivoAtual por leitura
+                      direta da preferência (sem mapa de objetivo)   -> LR9 (caso
+                      operacao_flavio + preferência ctf)
 
    Nos sete mutantes a LR3 e a LR7b têm que continuar VERDES: são elas que impedem
    "consertar" a corrida desligando o lançamento.
@@ -122,10 +125,11 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { MAPS } from '../../public/js/maps.js';   // registro real leve (único import: shot_surfaces); sem carregaMapa, sem main
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = ['', 'semguarda', 'sempreload', 'semepoca', 'semtela', 'guardafalsa', 'quedacega', 'modalfora'];
+const MUTANTES = ['', 'semguarda', 'sempreload', 'semepoca', 'semtela', 'guardafalsa', 'quedacega', 'modalfora', 'modopreferencia'];
 if (!MUTANTES.includes(MUT)) throw new Error(`mutante desconhecido: ${MUT}`);
 const MAIN = path.join(RAIZ, 'public/js/main.js');
 const FONTE = fs.readFileSync(MAIN, 'utf8');
@@ -150,6 +154,27 @@ const SRC_ESTADO = regiao('launch-race');
 const SRC_CAUDA = regiao('launch-race cauda');
 const SRC_NASCIMENTO = regiao('launch-race nascimento');
 const SRC_QUEDA = regiao('launch-race queda');
+
+/* Helpers de modo REAIS do MESMO main congelado (nativo302, itens B/C): âncora única de
+   linha `const ... = () =>`, fronteira exata até o fim da linha. Âncora ausente/duplicada
+   ou forma que deixou de ser const de linha única = INFRAESTRUTURA: para fechado, nunca
+   GREEN e nunca conta como mutante morto. O `let matchMode` NÃO é extraído — os helpers
+   leem o binding do sandbox que os cenários controlam. Mutante causal declarado
+   `modopreferencia`: SÓ a leitura de modoEfetivoAtual vira a preferência direta,
+   perdendo exclusivamente o caso objetivo+ctf da LR9. */
+const linhaHelper = (prefixo) => {
+  const ini = FONTE.indexOf(prefixo);
+  if (ini < 0 || FONTE.indexOf(prefixo, ini + 1) >= 0) throw new Error(`INFRA: âncora de helper ausente ou duplicada (${prefixo})`);
+  const fim = FONTE.indexOf('\n', ini);
+  const linha = FONTE.slice(ini, fim < 0 ? FONTE.length : fim);
+  if (!linha.endsWith(';')) throw new Error(`INFRA: helper deixou de ser const de linha única (${prefixo})`);
+  return linha;
+};
+const SRC_MODO_OBJETIVO = linhaHelper('const modoObjetivoAtual = () =>');
+const SRC_MODO_EFETIVO = linhaHelper('const modoEfetivoAtual = () =>');
+const MODO_EFETIVO_EXEC = MUT === 'modopreferencia'
+  ? 'const modoEfetivoAtual = () => matchMode;'   // MUTANTE CAUSAL: preferência sem mapa de objetivo -> LR9 (operacao_flavio/ctf)
+  : SRC_MODO_EFETIVO;
 
 const REGIOES = { estado: SRC_ESTADO, cauda: SRC_CAUDA, nascimento: SRC_NASCIMENTO, queda: SRC_QUEDA };
 const faltando = Object.entries(REGIOES).filter(([, v]) => !v).map(([k]) => k);
@@ -243,6 +268,7 @@ function banco() {
     renderPlayerPlate() {},
     va: (_tipo, ev) => eventos.push(ev),
     currentMap: 'upa_24h',
+    MAPS,
     matchMode: 'rounds',
     game: null,
     /* o nascimento: `Game` é contado, não simulado — o que a LR7 pergunta é SE ele nasce */
@@ -284,9 +310,13 @@ function banco() {
      a ponte explícita é o que deixa a régua chamar o código real de fora (mesma linha do
      `window.__gameLaunch = lancamento` do launch-watchdog-check). */
   vm.runInContext(`${fonteEstado}
+    ${SRC_MODO_OBJETIVO}
+    ${MODO_EFETIVO_EXEC}
     window.novoLancamento = novoLancamento;
     window.lancamentoPerdeu = lancamentoPerdeu;
-    window.soltarPartida = soltarPartida;`, ctx);
+    window.soltarPartida = soltarPartida;
+    window.__modoObjetivo = modoObjetivoAtual;
+    window.__modoEfetivo = modoEfetivoAtual;`, ctx);
 
   let fonteCauda = SRC_CAUDA;
   let fonteNasc = SRC_NASCIMENTO;
@@ -476,6 +506,47 @@ function banco() {
   else nok('LR8b', 'abertura quebrada corrente volta pro menu e reporta (antivacuidade da LR8)', `${d}   esperado null / 1× / 1× / main-menu / modal 1×`);
 }
 
+/* LR9 — matriz modo/mapa com os helpers REAIS extraídos e MAPS real (nativo302, prova 3):
+   mapa de objetivo (operacao_flavio, objectiveMode 'escort') joga ESCOLTA (rounds) mesmo
+   com preferência ctf; mapa normal (upa_24h, sem objectiveMode) segue a escolha; e a
+   preferência do sandbox sai intacta. Os consumers são os de produção: `ctf:` do
+   construtor no nascimento real e `mode:` do game_start na cauda real. Erro de setup
+   (ReferenceError/TypeError/Syntax/crash) é classificado INFRA e reprova — nunca vira
+   detecção nem GREEN. Designado do mutante causal `modopreferencia`: este bloco. */
+{
+  const casos = [
+    { mapa: 'upa_24h', pref: 'rounds', esperado: 'rounds', ctf: false },
+    { mapa: 'upa_24h', pref: 'ctf', esperado: 'ctf', ctf: true },
+    { mapa: 'operacao_flavio', pref: 'rounds', esperado: 'rounds', ctf: false },
+    { mapa: 'operacao_flavio', pref: 'ctf', esperado: 'rounds', ctf: false },
+  ];
+  const tracos = [];
+  let certa = true, infra = null;
+  for (const c of casos) {
+    try {
+      const b = banco();
+      b.estado.currentMap = c.mapa;
+      b.estado.matchMode = c.pref;
+      const n = b.estado.novoLancamento();
+      b.estado.__nascimento(n, null, 'ruben', 'E', 'E', 'B', 4, { allyDefs: [], enemyDefs: [] }, []);
+      const ctfNasc = b.estado.game && b.estado.game.opcoes ? b.estado.game.opcoes.ctf : undefined;
+      const erro = await b.lancar(null);
+      if (erro) throw erro;
+      const ev = b.eventos.find((e) => e.name === 'game_start');
+      tracos.push(`${c.mapa}/${c.pref} → mode ${ev ? ev.data.mode : 'sem game_start'} ctf ${ctfNasc} (esperado ${c.esperado}/${c.ctf}) pref após ${b.estado.matchMode}`);
+      if (!ev || ev.data.mode !== c.esperado || ctfNasc !== c.ctf || b.estado.matchMode !== c.pref) certa = false;
+    } catch (e) {
+      infra = e;
+      certa = false;
+      tracos.push(`${c.mapa}/${c.pref} → INFRA ${e && e.constructor ? e.constructor.name : '?'}: ${e && e.message}`);
+    }
+  }
+  const d = tracos.join(' | ');
+  if (certa) ok('LR9', 'helpers reais: objetivo força rounds e a preferência fica intacta', d);
+  else if (infra) nok('LR9', 'helpers reais: objetivo força rounds e a preferência fica intacta', `${d}   INFRAESTRUTURA (setup), não é detecção`);
+  else nok('LR9', 'helpers reais: objetivo força rounds e a preferência fica intacta', `${d}   mutante modopreferencia: perde o caso designado operacao_flavio/ctf`);
+}
+
 /* LR6 — a cláusula que pega o await de AMANHÃ. Não basta as duas guardas de hoje estarem no
    lugar: a invariante é que, depois de cada `await` de `_startGame`, ninguém volte a tocar em
    `game` sem antes perguntar se o lançamento ainda é o corrente. Lê o USO, não a declaração —
@@ -493,7 +564,11 @@ function banco() {
   if (MUT === 'sempreload') {
     /* MUTANTE: só a guarda do preload sai — a do fim da cauda fica. É o Game zumbi nascendo
        depois da desconexão, sem nenhum TypeError para delatar. */
-    corpo = corpo.replace(/\n[^\n]*if \(lancamentoPerdeu\(meuLancamento\)\) return;(?=[\s\S]*game = new Game)/, '');
+    if (!SRC_NASCIMENTO || corpo.split(SRC_NASCIMENTO).length !== 2
+      || [...SRC_NASCIMENTO.matchAll(new RegExp(GUARDA_CAUDA.source, 'g'))].length !== 1) {
+      throw new Error('INFRAESTRUTURA: nascimento/guarda do mutante sempreload não é único');
+    }
+    corpo = corpo.replace(SRC_NASCIMENTO, SRC_NASCIMENTO.replace(GUARDA_CAUDA, ''));
   }
   /* `game` do módulo: exclui `window.__game`, `gameType` e afins. */
   const USO = /(?<![\w.$])game\b/g;
@@ -533,6 +608,6 @@ function banco() {
 console.log(`\n${linhas.join('\n\n')}\n`);
 if (MUT) console.log(`mutante aplicado: --mutante=${MUT}\n`);
 console.log(falhas.length === 0
-  ? 'PASSA (launch-race-check) — 10/10 cláusulas'
+  ? 'PASSA (launch-race-check) — 11/11 cláusulas'
   : `REPROVA (launch-race-check) — ${falhas.join(', ')}`);
 process.exit(falhas.length === 0 ? 0 : 1);
