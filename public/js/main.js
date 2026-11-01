@@ -931,7 +931,7 @@ const pvNarrow=matchMedia('(max-width: 760px)');
 pvCompact.addEventListener?.('change',()=>refreshMenuEquipment());
 pvNarrow.addEventListener?.('change',()=>refreshMenuEquipment());
 function resolvePreviewCharacter(def) {
-  const skinId=Object.hasOwn(def,'skinId')?def.skinId:equippedTretaSkin(def.id);
+  const skinId=Object.prototype.hasOwnProperty.call(def,'skinId')?def.skinId:equippedTretaSkin(def.id);
   return {...def,skinId:tretaSkinPresentation(skinId,def.id)?.id || null,eyewearId:equippedTretaEyewear()};
 }
 function previewVideoVisible() {
