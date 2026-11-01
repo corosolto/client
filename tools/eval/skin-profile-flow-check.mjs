@@ -243,7 +243,7 @@ try {
       playerKnifeSkinId: KNIFE,
       sfx: { preloadWeaponSamples: () => Promise.resolve() },
       preloadMapProps: () => Promise.resolve(), mapPropIds, mapaPartida: {},
-      MOBILE_AUTO: true, preloadAmbientLife: () => Promise.resolve(),
+      MOBILE_AUTO: true, preloadMapAmbientLife: () => Promise.resolve(),
       preloadFPArms: () => Promise.resolve(), POINTER_COARSE: true,
       preloadAuthoredFamilies: () => Promise.resolve(), authoredBootFamilies: () => [],
     };
