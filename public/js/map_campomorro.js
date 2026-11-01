@@ -9,7 +9,7 @@ import { soilSurface } from './map_surface_finish.js';
 import { applyLook } from './map_sky.js';
 import { aplicaSombraSol } from './mapquality.js';
 import { aplicaVento, updateVento } from './wind.js';
-import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
+import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -49,7 +49,7 @@ export const CAMPOMORRO_PROPS = [
   // RC4: grama da frente E (e-models) — o piloto do vento mora nela
   'grama_corrego_01', 'grama_corrego_02', 'planta_corrego_taboa', 'planta_corrego_taioba',
 ];
-export const CAMPOMORRO_AMBIENCE = FAVELA_AMBIENCE_ASSETS;
+export const CAMPOMORRO_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'dog', 'escadaoCat', 'sertaoHen', 'cow', 'armadillo', 'parrot']);
 
 function laneHeight(x, z) {
   for (const l of LANES) {
@@ -1050,6 +1050,14 @@ export function buildCampoMorro(scene, T = {}) {
     ],
   });
 
+  // O teto visível do molde fica abaixo do topo do proxy; o gato usa a superfície real.
+  const casaGato = casario[2], suporteGato = root.getObjectByName('campomorro-casa-2');
+  root.updateMatrixWorld(true);
+  const tetoGato = casaGato.glb
+    ? new THREE.Raycaster(new THREE.Vector3(-25.5, casaGato.base + casaGato.alturaTotal + 1, 23), new THREE.Vector3(0, -1, 0)).intersectObject(suporteGato, true)[0]?.point.y
+    : casaGato.base + casaGato.alturaTotal;
+  if (!Number.isFinite(tetoGato)) throw new Error('campomorro_cat_support');
+
   /* BUG-57: campo de várzea tem caramelo na lateral, pombo na arquibancada e rato no galpão. */
   const ambience = createFavelaAmbience(root, {
     map: 'campomorro',
@@ -1062,16 +1070,24 @@ export function buildCampoMorro(scene, T = {}) {
       { mode: 'ground', pos: [2.2, 0, 15], phase: .8 },
     ],
     dogs: [{ pos: [-17, 0, 21], to: [-13, 0, 21], phase: .6 }],
-    /* BUG-57 v2.1: galinha do campinho e vaca da várzea (Quaternius CC0) */
+    // Rotas no terreno acompanham a cota local; a segunda galinha fica à frente dos bancos.
     chickens: [
-      { pos: [8, 0, 18], to: [10.5, 0, 19.5], phase: .3 }, { pos: [-8, 0, 19], to: [-5.5, 0, 20.5], phase: 1.9 },
+      { assetId: 'sertaoHen', contactShadow: true, turnRate: 6, heightAt: groundHeightAt,
+        pos: [8, groundHeightAt(8, 18), 18], to: [10.5, groundHeightAt(10.5, 19.5), 19.5], phase: .3,
+        fleeArea: { minX: 7, maxX: 11, minZ: 17.5, maxZ: 20.5 } },
+      { assetId: 'sertaoHen', contactShadow: true, turnRate: 6, heightAt: groundHeightAt,
+        pos: [-8, groundHeightAt(-8, 16), 16], to: [-5.5, groundHeightAt(-5.5, 16.8), 16.8], phase: 1.9,
+        fleeArea: { minX: -9, maxX: -4.5, minZ: 15.5, maxZ: 17.3 } },
     ],
     cows: [{ pos: [-20, 0, 17], to: [-15, 0, 17], phase: 1.1 }],
-    /* +2 tipos (vida 1): gato na laje da casa 2 e na arquibancada; papagaio no varal
-       do beco noroeste e no poste do galpão. AR4 do ambience-registry cobra os dois. */
+    // O primeiro gato fica na faixa livre da laje; o segundo contorna a arquibancada pelo lado oeste.
     cats: [
-      { pos: [-24.5, groundHeightAt(-24.5, 23) + 5.4, 20.4], to: [-21.5, groundHeightAt(-24.5, 23) + 5.4, 20.4], phase: .7 },
-      { pos: [-13.5, groundHeightAt(-13.5, 20.6), 20.6], to: [-10.5, groundHeightAt(-10.5, 20.6), 20.6], phase: 2.2 },
+      { assetId: 'escadaoCat', contactShadow: true, turnRate: 6, speed: { walk: .55, flee: 1.5 },
+        pos: [-25.25, tetoGato, 23], to: [-25.25, tetoGato, 23.7], phase: .7,
+        fleeArea: { minX: -25.5, maxX: -25, minZ: 22.9, maxZ: 23.8 } },
+      { assetId: 'escadaoCat', contactShadow: true, turnRate: 6, speed: { walk: .55, flee: 1.5 }, heightAt: groundHeightAt,
+        pos: [-14.1, groundHeightAt(-14.1, 19), 19], to: [-14.1, groundHeightAt(-14.1, 20.5), 20.5], phase: 2.2,
+        fleeArea: { minX: -14.5, maxX: -13.7, minZ: 18.3, maxZ: 21 } },
     ],
     parrots: [
       { pos: [-19, groundHeightAt(-19, 23.5) + 2.05, 23.5], phase: .5 },
