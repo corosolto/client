@@ -13,6 +13,7 @@ import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
+const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
 export const HALF_X = 36, HALF_Z = 30;
 // Piso jogável da VM14: chão ≥ −0,10 m sob todo pickup — FIELD_Y não pode descer mais.
@@ -1061,6 +1062,7 @@ export function buildCampoMorro(scene, T = {}) {
   /* BUG-57: campo de várzea tem caramelo na lateral, pombo na arquibancada e rato no galpão. */
   const ambience = createFavelaAmbience(root, {
     map: 'campomorro',
+    low: LOWQ,
     rats: [
       { pos: [24, 1, -18], to: [26.5, 1, -16], phase: .4 },
       { pos: [-25, 0, 12], to: [-22.5, 0, 14.5], phase: 1.5 },

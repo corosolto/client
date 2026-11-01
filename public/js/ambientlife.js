@@ -294,8 +294,11 @@ class FavelaAmbience {
     const ratList = low ? rats.slice(0, 1) : rats;
     const pigeonList = low ? pigeons.slice(0, 1) : pigeons;
     const dogList = low ? dogs.slice(0, 1) : dogs;
-    const catList = low ? cats.slice(0, 1) : cats;
-    const chickenList = low ? chickens.slice(0, 1) : chickens;
+    /* Fauna curada (assetId explícito) é conteúdo do mapa, não rebanho ambiente: o corte
+       de custo low aparava o censo curado no aparelho real (QA mobile 3 mapas mediu
+       campomorro 1+1 em vez de 2+2). Legado continua no máximo 1, ordem original. */
+    const catList = apararFaunaLow(cats, low);
+    const chickenList = apararFaunaLow(chickens, low);
     const cowList = low ? cows.slice(0, 1) : cows;
     const armadilloList = low ? armadillos.slice(0, 1) : armadillos;
     const cockroachList = low ? cockroaches.slice(0, 1) : cockroaches;
@@ -869,6 +872,15 @@ class FavelaAmbience {
 export function createFavelaAmbience(root, options = {}) {
   const low = options.low ?? Boolean(globalThis.__CS_TEXTURA_MAX__);
   return new FavelaAmbience(root, { ...options, low });
+}
+
+/* Corte de custo low: cada tipo ambiente fica no máximo 1 instância, mas configs
+   curadas (assetId explícito) são conteúdo autoral do mapa e seguem inteiras.
+   Ordem original preservada; sem low, devolve a lista intacta. */
+export function apararFaunaLow(list, low) {
+  if (!low) return list;
+  const primeiraLegada = list.find((c) => !c.assetId);
+  return list.filter((c) => c.assetId || c === primeiraLegada);
 }
 
 /* FAUNA ESTÁTICA POSICIONÁVEL (BUG-57, região append-only): GLB sem rig, escala por

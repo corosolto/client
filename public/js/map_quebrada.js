@@ -1686,6 +1686,7 @@ export function buildQuebrada(scene, T) {
   /* BUG-57: rua de baile tem caramelo em dupla, rato de esquina e pombo de fiação. */
   const ambience = createFavelaAmbience(root, {
     map: 'quebrada',
+    low: LOWQ,
     rats: [
       { pos: [-1, 0, -15.5], to: [1.5, 0, -13], phase: .3 }, { pos: [4, 0, 13.5], to: [6, 0, 15.5], phase: 1.2 },
       { pos: [-15, 0, 4], to: [-13, 0, 6.5], phase: 2.2 },

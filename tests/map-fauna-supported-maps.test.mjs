@@ -17,6 +17,19 @@ for(const [map,counts] of [['campomorro',{cat:2,chicken:2}],['corrego',{cat:1,ch
  }finally{world.ambience.dispose();}
 });
 
+test('low keeps the curated census and caps only legacy ambient fauna', async () => {
+  const { apararFaunaLow } = await import('../public/js/ambientlife.js');
+  const curada = (id) => ({ assetId: id });
+  assert.deepEqual(apararFaunaLow([curada('a'), {}, curada('b'), {}], true).map((c) => c.assetId || 'legacy'), ['a', 'legacy', 'b']);
+  assert.equal(apararFaunaLow([{}, {}, {}], true).length, 1);
+  assert.equal(apararFaunaLow([{}, {}, {}], false).length, 3);
+  const fs = await import('node:fs/promises');
+  for (const mapa of ['campomorro', 'quebrada']) {
+    const fonte = await fs.readFile(new URL(`../public/js/map_${mapa}.js`, import.meta.url), 'utf8');
+    assert.match(fonte, /createFavelaAmbience\(root,\s*\{[^}]*low: LOWQ/, `${mapa}: ambience precisa seguir a qualidade real (LOWQ), não o teto de textura`);
+  }
+});
+
 test('Escadao curated cat and hen follow the rendered terrace rather than the lower collision datum',()=>{
  const world=MAPS.escadao.build(new THREE.Scene(),initTextures()),ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0);
  try{
