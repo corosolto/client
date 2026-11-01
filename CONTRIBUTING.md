@@ -70,6 +70,36 @@ e rode `node --version` e `npm --version` no terminal que vai instalar as depend
 não o jogo. (A versão anterior deste arquivo mandava justamente pro lugar
 errado.)
 
+### Worktree por feature: `npm ci` é passo obrigatório
+
+A regra da casa é uma worktree nova por feature, criada a partir de `origin/main`:
+
+```bash
+git fetch origin main
+git worktree add -b fix/meu-defeito ../worktrees/meu-defeito origin/main
+cd ../worktrees/meu-defeito
+npm ci                    # obrigatório, uma vez por worktree
+```
+
+**Nunca** faça `ln -s ../outra-worktree/node_modules .`. O atalho economiza um
+minuto e custa um dia:
+
+1. **Contaminação cruzada.** Os dois braços passam a medir a mesma árvore de
+   dependências. Em 28/10 isso produziu a issue #1135 (aberta e fechada no mesmo
+   dia): um pareamento A/B ficou com três gates vermelhos dos **dois** lados,
+   porque os dois lados liam o `node_modules` errado. Pareamento com árvore
+   compartilhada não mede diff nenhum.
+2. **Veredito sobre a coisa errada.** Sem dependência instalada, um portão que
+   roda processo filho pode reprovar acusando conteúdo. Era o defeito da issue
+   #1133: a SB7 imprimia `✗ SB7 módulos locais mudam de URL junto com o conteúdo`
+   quando a causa real, duas camadas abaixo, era `Cannot find package 'astro'`.
+
+Hoje esse segundo caso sai como `⊘ SKIP` com a causa e o comando que conserta, e
+o processo encerra com **78** (`EX_CONFIG`), que não é verde nem vermelho. Se um
+gate seu pular com 78, a leitura é "não medi": rode `npm ci` e rode de novo. O
+mecanismo mora em `tools/eval/sonda-filho.mjs`, e o porquê de SKIP ter código
+próprio em vez de virar 0 ou 1 está em `docs/docs/sonda-processos.md`.
+
 ## As duas zonas
 
 | | `public/` — o JOGO | `src/` — o SITE |

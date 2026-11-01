@@ -33,6 +33,9 @@ try {
   Math.random = () => .5;
   {
     const { g, b, alvo, danos, direcoes, rastros } = fixture();
+    // Com Math.random fixo o cone desvia 1,2°: a 10 m passa 21 cm ao lado do queixo, ar
+    // desde a cabeça justa (hitboxes.js). A 5 m ele entra na cabeça, que é o que este caso usa.
+    alvo.pos.z = -5;
     g._botShootNN(b, alvo);
     cobrar(direcoes.length === 9 && direcoes.every(d => Math.abs(d.length() - 1) < 1e-9), 'NN consulta nove raios normalizados por cartucho');
     cobrar(danos.length === 1 && b.mag === 7, 'cartucho cobra munição e aplica dano uma vez por ator');

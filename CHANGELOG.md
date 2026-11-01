@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.126`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.133`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -41,7 +41,10 @@
 - As telas de carregamento agora mostram o elenco inteiro: os 19 personagens entram em tela cheia, cada um com a sua arte e a marca CORO SOLTO no canto, no lugar do lote antigo de seis.
 
 ### Corrigido
+- A Piscina deixa de repetir grafites ou pintá-los sobre a faixa azul; armários não engolem a câmera, e armas estáticas deixam os mapas com a loja ligada. Esquerdomacho segura pistola e faca sem disputar duas poses, recebe colete proporcional, e a AK volta ao tamanho certo em primeira pessoa. O menu de compra ocupa a tela, B fica exclusivo da loja, N troca a câmera, o saldo vai para a direita, a janela de compra fica mais longa e vírgula/ponto compram munição extra.
+- A arma equipada volta a aparecer no celular. Se o modelo animado ainda estiver carregando ou falhar, uma arma alternativa continua visível também no desktop.
 - Canarinho e suas três skins deixam de carregar uma cauda maior que quase metade do corpo. A pistola fica à frente do tronco, com cotovelo dobrado e montagem recalculada depois da pose de uma mão.
+- A contagem diária de visitantes cobre todas as páginas públicas. Antes, só a entrada do jogo emitia a visita e deixava de fora quem chegava por conteúdo, perfil ou documento legal.
 - Perfis públicos continuam visíveis quando o bootstrap da conta falha ou a sessão expira. Links do ranking usam o handle público, o histórico do navegador restaura a lista, e perfis sem totais aparecem com zero.
 - O contador online voltou ao topo em desktop e celular. O rodapé móvel usa ícones quadrados com nome acessível, e a tela de privacidade preserva a foto com checkbox de 20 px.
 - A câmera em terceira pessoa considera filhos de modelos importados e segura o último bloqueio por 80 ms. Armas autoradas não reativam malhas antigas, e o HUD volta a mostrar a arte da arma equipada.
@@ -51,6 +54,9 @@
 - Girar no lugar deixa o quadril para trás e os pés alcançam depois, em vez de o corpo inteiro teleportar junto com a mira.
 - Personagens distantes animam com menos frequência, devolvendo quadros ao celular sem mudar o que se vê de perto.
 - Recarregar ficou visível de fora: em terceira pessoa, a mão livre vai ao carregador e o corpo mergulha durante a recarga, do jogador e dos bots — dá saber quando o adversário está vulnerável.
+- O placar reaproveita cada retrato em vez de baixar o mesmo avatar seis vezes.
+- O guia inicial mostra movimento, tiro e recarga por 15 segundos; a ajuda completa continua no ALT.
+- Os spawns do Escadão e do Ferro Velho deixam a primeira rota livre; a fauna do Ferro Velho nasce fora dos colisores.
 - Andar de lado entorta o corpo na direção do movimento, em vez de deslizar de frente parado.
 - Durante a partida, o perfil móvel começa com resolução de 60%, limita a cadência a 60 FPS no jogo e 30 FPS nos menus, reduz partículas, cápsulas e marcas conforme o aparelho sofre e recupera o último degrau sustentável na sessão seguinte.
 - No celular, a barra de armas mostra a arma de verdade em vez de um desenho genérico, e a imagem muda junto com o que está na mão.
@@ -149,6 +155,93 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.133] — 2026-10-31
+
+### Mudado
+- Corrige SB7 e preserva reprovações antes de SKIP (#1181)
+- Corrige mãos e traçante nas 26 armas mobile/desktop, posse exclusiva do gatilho e reset de entrada em todo ciclo de vida. PING passa a alternar câmera. Boot móvel aguarda a arma equipada e compartilhados, com regressões obrigatórias no CI. (#1187)
+- Assenta arma do servidor antes de ativar viewmodel
+- Limita carga inicial móvel à arma equipada
+- Corrige fixture de lançamento com cosméticos atuais
+- Cancela entrada entre vidas e rodadas locais e online
+- Libera gatilho e dedos ao morrer e renascer online
+- Mede o cano do modelo sem reutilizar a origem do traçante
+- Trata saída truncada do executor como teste não medido
+- Lê catálogo de armas no navegador do gate de mãos
+- Executa liberação real de entrada na régua de pausa
+- Atualiza matriz gerada para o runtime mobile
+- Permite renderização por software no gate de mãos
+- Mede mãos após terminar a animação de equipar
+- Corrige mãos e disparo involuntário no mobile
+- fix(eval): preservar reprovações medidas quando um filho não executa
+- docs: preservar estado da revisao integral SB7
+- docs(contributing): npm ci é passo obrigatório por worktree
+- fix(eval): aplica os três desfechos nos outros 13 pontos da classe
+- fix(sb7): para de acusar cache-bust quando falta dependência
+- feat(eval): separa "não consegui medir" de "medi e reprovou"
+
+## [2.1.0-alpha.132] — 2026-10-31
+
+### Mudado
+- Suaviza a iluminação de quatro personagens sem mudar geometria (#1184)
+- Registra sincronização das normais com hotfix de armas
+- Preserva equivalência histórica dos corpos com normais corrigidas
+- docs: registra revisão da entrega de normais
+- docs: gera comandos da entrega de normais
+- docs: registra evidência contínua dos quatro personagens
+- Suaviza costuras de iluminação em quatro personagens
+
+## [2.1.0-alpha.131] — 2026-10-31
+
+### Mudado
+- fix(ci): mede a causa da splash sem travar o M4 (#1177)
+- [REA] Liberar a primeira rota dos spawns (#1142)
+- Liga os mutantes que o cabeçalho da central de mensagens prometia (#1169)
+- [REA] Encurtar o guia inicial (#1140)
+- [REA] Deduplicar avatares no placar (#1139)
+- fix(ci): restaura o estraga-codigo como reviewer padrão (#1180)
+- fix: mantém arma visível no mobile e desktop (#1183)
+
+## [2.1.0-alpha.130] — 2026-10-31
+
+### Mudado
+- Conta visitantes em todas as páginas públicas (#1176)
+- fix: conte visitantes em todas as páginas
+
+## [2.1.0-alpha.129] — 2026-10-30
+
+### Mudado
+- Envie a identidade persistente ao funil (#1175)
+- Envie a identidade persistente ao funil
+
+## [2.1.0-alpha.128] — 2026-10-30
+
+### Mudado
+- Presença passa a ler cidade da Cloudflare (#1174)
+- fix: ler geolocalização da Cloudflare
+
+## [2.1.0-alpha.127] — 2026-10-29
+
+### Mudado
+- fix: granada x recarga x morte, e o braco da AK (#1103)
+- fix: chat e mensagens param de falhar em silencio (#1130)
+- Envie o funil diário de jogadores únicos (#1172)
+- Preserve o contrato das rotas geográficas
+- Mantenha contagem única no proxy do site
+- Explique a atividade autenticada no funil
+- Envie o funil diário de jogadores únicos
+- ci(portao): o filtro do PR deixa de morrer no checkout
+- feat(comunidade): mandar mensagem para qualquer cadastrado
+- docs(armas): regenera a matriz com as linhas novas de game.js
+- fix(comunidade): a DM explica qual portão barrou, e a régua volta a medir
+- fix(chat): a tecla do chat para de morrer calada
+- docs(armas): regenera a matriz com as linhas novas de game.js
+- docs(bugs): a história dos cinco relatos sai do código
+- docs(arch): regenera o mapa com os métodos novos de game.js
+- chore(eval): registra as réguas dos relatos de 26/10
+- fix(gameplay): granada, recarga e morte param de se atropelar
+- fix(viewmodel): tampa da manga colapsava a malha quantizada da AK
 
 ## [2.1.0-alpha.126] — 2026-10-25
 
