@@ -59,25 +59,6 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-/* `three` nu resolve, como no import map do jogo, para public/vendor: a mesma ponte (e a
-   mesma guarda) do harness.mjs, dentro do projeto. Sem ela o node acha o atalho de um
-   checkout vizinho e mede com o GLTFLoader de outra base. */
-{
-  const shim = path.join(ROOT, 'node_modules', 'three');
-  const liga = (de, para, tipo) => {
-    try { fs.lstatSync(de); fs.rmSync(de, { recursive: true, force: true }); } catch { /* não existe */ }
-    fs.symlinkSync(para, de, tipo);
-  };
-  if (!fs.existsSync(path.join(shim, 'index.js'))) {
-    fs.mkdirSync(shim, { recursive: true });
-    fs.writeFileSync(path.join(shim, 'package.json'), JSON.stringify({
-      name: 'three', version: '0.160.0', type: 'module', main: 'index.js',
-      exports: { '.': './index.js', './addons/*': './addons/*' },
-    }));
-    liga(path.join(shim, 'index.js'), path.join(ROOT, 'public/vendor/three.module.js'));
-    liga(path.join(shim, 'addons'), path.join(ROOT, 'public/vendor/addons'), 'dir');
-  }
-}
 const THREE = await import('three');
 const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
 const { clone: skeletonClone } = await import('three/addons/utils/SkeletonUtils.js');

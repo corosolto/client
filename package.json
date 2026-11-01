@@ -424,7 +424,7 @@
     "eval:vm-maos-mobile-desktop": "node tools/eval/vm-autorado-vivo.mjs --sem-flags --mobile && node tools/eval/vm-autorado-vivo.mjs --sem-flags && node tools/eval/vm-autorado-vivo.mjs --sem-flags --mobile --armas=pistol --mutante=maos-ocultas && node tools/eval/vm-autorado-vivo.mjs --sem-flags --armas=pistol --mutante=semfiacao && node tools/eval/vm-autorado-vivo.mjs --sem-flags --mobile --armas=pistol --mutante=cano-lateral && node tools/eval/vm-autorado-vivo.mjs --sem-flags --mobile --armas=pistol --mutante=boot-catalogo && node tools/eval/vm-autorado-vivo.mjs --sem-flags --mobile --mp --armas=awp && node tools/eval/vm-autorado-vivo.mjs --sem-flags --mobile --mp --armas=awp --mutante=boot-mp-local",
     "eval:vm-bancada": "node tools/eval/vm-bancada-check.mjs",
     "eval:vm-ciclo": "node tools/eval/vm-ciclo-check.mjs",
-    "check:vm": "node tools/eval/runner.mjs eval:vmrecoil eval:vm-recoil-tracking eval:vm-target-tracking eval:vm-moving-target eval:vm-moving-third eval:vm-moving-shoulder eval:vm-parallax eval:vm-parallax-far eval:melee-vm eval:vm-catalog eval:vm-serving eval:vm-identity eval:vm-ads eval:vm-launch eval:vm-placar eval:vm-reguas eval:authored-transition eval:authored-locomotion eval:authored-game-ctx eval:vm-maos-armas-catalogo",
+    "check:vm": "node tools/eval/runner.mjs eval:vmrecoil eval:vm-recoil-tracking eval:vm-target-tracking eval:vm-moving-target eval:vm-moving-third eval:vm-moving-shoulder eval:vm-parallax eval:vm-parallax-far eval:melee-vm eval:vm-catalog eval:vm-serving eval:vm-identity eval:vm-ads eval:vm-launch eval:vm-placar eval:vm-reguas eval:authored-transition eval:authored-locomotion eval:authored-game-ctx",
     "eval:ambience-registry": "node tools/eval/ambience-registry-check.mjs",
     "eval:mapanovo": "node tools/eval/mapa-novo-gate.mjs",
     "eval:cs16": "node tools/eval/vm-cs16-check.mjs",
@@ -786,7 +786,7 @@
     "eval:map-fauna-curated:runtime": "node tools/eval/map-fauna-curated-ci.mjs",
     "//eval:vm-maos-armas": "mãos do time iguais em toda arma (BUG-85, #1128): as 26 armas de WEAPON_IDS em cada rota servida (padrão e com pintura) e a faca, GLB real; identidade por facção e rig de mão da linha (A golden, K fábrica, L faca), com a pistola golden como dívida declarada de arte. Sem catálogo privado as rotas fab# saem NÃO MEDIDAS; eval:vm-maos-armas-catalogo as exige. Mutantes: luva-por-arma, pbr-por-arma, troca-rig, luva-crua, divida-paga",
     "eval:vm-maos-armas": "node tools/eval/vm-hand-continuity-check.mjs && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=luva-por-arma && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=pbr-por-arma && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=troca-rig --arma=m4 && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=troca-rig --arma=knife && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=luva-crua --arma=m4 && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=divida-paga",
-    "eval:vm-maos-armas-catalogo": "node tools/eval/vm-hand-continuity-check.mjs --exigir-catalogo"
+    "eval:vm-maos-armas-catalogo": "node --import ./tools/eval/vm-hand-three-register.mjs tools/eval/vm-hand-continuity-check.mjs --exigir-catalogo"
   },
   "repository": {
     "type": "git",
