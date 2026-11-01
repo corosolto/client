@@ -726,7 +726,7 @@
     "eval:economia-jogo": "node tools/eval/economia-jogo-check.mjs && node tools/eval/economia-jogo-mutants-check.mjs",
     "mut:flashbang": "node tools/eval/flashbang-mutate.mjs",
     "//eval:grafite-fiel": "Assar o mesmo mapa duas vezes dá o mesmo grafite (#1109): G1 duas rodadas do gerador com checkpoint novo dão o layout byte a byte; G2 com um GLB derrubado o bake cancela e lista a falta, em vez de gravar outro layout. Precisa de BASE e navegador, como o gerador, por isso fica fora do check:fast. Mutantes: engole-falta.",
-    "eval:grafite-fiel": "node tools/eval/graffiti-bake-fiel-check.mjs && ! node tools/eval/graffiti-bake-fiel-check.mjs --mutante=engole-falta",
+    "eval:grafite-fiel": "node tools/eval/graffiti-bake-fiel-check.mjs && node tools/eval/mutante-semantico-proof.mjs grafite-fiel --mutante=engole-falta",
     "eval:boca-cano": "node tools/eval/boca-cano-check.mjs && node tools/eval/boca-cano-check.mjs --mutante=antigo && node tools/eval/boca-cano-check.mjs --mutante=centro-arma && node tools/eval/boca-cano-check.mjs --mutante=sem-norm",
     "//eval:boca-cano": "BC1-BC4 (Gustavo, 28/10): clarão e traçante nascem a ≤3 cm da boca da arma do corpo em 3ª pessoa, nos bots e nos remotos, e no mesmo pixel (≤2 px) da boca do viewmodel em 1ª pessoa. Mutantes antigo (?bocacano=0), centro-arma e sem-norm.",
     "//eval:movimento-fluidez": "MVF1 a MVF3: 90% da velocidade em 0,14 a 0,24 s, soltar dissipa 90% em 0,16 a 0,28 s e contra-strafe estabiliza em até 0,13 s. Mutante acel-dura restaura 92 m/s².",

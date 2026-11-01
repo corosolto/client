@@ -28,9 +28,13 @@ const WHITELIST={
     script:'tools/eval/mutantes-anunciados-check.mjs',flag:'--mutante=',types:['ContractViolation'],cases:10,
     mutants:{'anuncia-fantasma':'MA1','executa-fantasma':'MA2'},
   },
+  'grafite-fiel':{
+    script:'tools/eval/graffiti-bake-fiel-check.mjs',flag:'--mutante=',types:['ContractViolation'],cases:1,
+    mutants:{'engole-falta':'G2'},
+  },
 };
 const TYPE_BY_MUTANT=Object.fromEntries(Object.values(WHITELIST).flatMap(({types,mutants})=>Object.keys(mutants).map(name=>[name,types])));
-const RUIM=/SyntaxError|TypeError|ReferenceError|MUTANTE NÃO APLICOU|ETIMEDOUT|timeout|setup/i;
+const RUIM=/SyntaxError|TypeError|ReferenceError|MUTANTE NÃO APLICOU|ETIMEDOUT|timeout|setup|ECONNREFUSED|ERR_MODULE_NOT_FOUND|ERR_UNKNOWN_FILE_EXTENSION|ENOBUFS/i;
 
 export function aceitaResultado(result,expected){
   if(!result||result.error||result.signal)return false;
@@ -41,6 +45,7 @@ export function aceitaResultado(result,expected){
   let report;
   try{report=JSON.parse(lines[lines.length-1]);}catch{return false;}
   if(!report||report.mutant!==expected.mutant||report.cases!==expected.cases)return false;
+  if(report.error || report.infra)return false;
   if(!Array.isArray(report.failed)||!report.failed.length)return false;
   const types=TYPE_BY_MUTANT[expected.mutant]||[];
   const todosSemanticos=report.failed.every(f=>f&&typeof f==='object'&&types.includes(f.type)&&typeof f.message==='string'&&f.message.length>0);
