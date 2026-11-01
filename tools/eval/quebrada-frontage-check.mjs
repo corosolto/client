@@ -12,6 +12,7 @@ const SELF=fileURLToPath(import.meta.url),W=path.resolve(path.dirname(SELF),'../
 const H=x=>createHash('sha256').update(typeof x==='string'?x:Buffer.from(x.buffer??x,x.byteOffset??0,x.byteLength??x.length)).digest('hex');
 const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const EXPECTED={"2":[-0.5051103830337524,0.0,-6.185818086327111e-17,0.0,0.0,0.5051103830337524,0.0,0.0,6.185818086327111e-17,0.0,-0.5051103830337524,0.0,-18.761844635009766,0.10604283958673477,-36.48775863647461,1.0],"3":[-0.5051103830337524,0.0,-6.185818086327111e-17,0.0,0.0,0.5051103830337524,0.0,0.0,6.185818086327111e-17,0.0,-0.5051103830337524,0.0,-18.761844635009766,0.10604283958673477,-33.887760162353516,1.0],"6":[-0.5368450284004211,0.0,-6.574455993117596e-17,0.0,0.0,0.5368450284004211,0.0,0.0,6.574455993117596e-17,0.0,-0.5368450284004211,0.0,-18.754735946655273,0.11270522326231003,-31.274425506591797,1.0]};
+const MAPPROPS_SHA='d2338a65e84265f7b20d8f8e4be9012f11e929eef0c12c21fdc34265f6b59ee2';
 const BASE_BUCKET='bdf8d481f44191830602ddc605dc2d7328c72d5637316b9fc7462adfc029fb81';
 if(process.argv[2]!=='--capture'){
  const opts=Object.fromEntries(process.argv.slice(2).map(a=>{const m=/^--(baseline|out|candidate)=(.+)$/.exec(a);if(!m)throw Error('expected --baseline= --out= [--candidate=]');return[m[1],m[2]];}));
@@ -25,6 +26,13 @@ if(process.argv[2]!=='--capture'){
   snapshots.push(JSON.parse(fs.readFileSync(output,'utf8')));
  }
  const [b,c]=snapshots,failures=[];const check=(ok,id)=>{if(!ok)failures.push(id);};
+ for(const [name,s] of [['baseline',b],['candidate',c]])check(s.inputs?.['public/js/mapprops.js']===MAPPROPS_SHA,'MAPPROPS_HELPER_PIN_'+name);
+ for(const [name,s] of [['baseline',b],['candidate',c]]){
+  check(Array.isArray(s.art?.inventory)&&s.art.inventory.length>0,'ART_INVENTORY_MISSING_'+name);
+  check(Array.isArray(s.art?.meshes)&&s.art.meshes.length>0,'ART_MESHES_MISSING_'+name);
+  check(Array.isArray(s.support)&&s.support.length>0,'SUPPORT_ROWS_MISSING_'+name);
+  check(Array.isArray(s.support)&&s.support.length>0&&s.support.every(r=>r?.supported===true),'SUPPORT_ALL_TRUE_'+name);
+ }
  const parts=b.meshes.filter(m=>m.mapPropId==='fav_house'&&m.count===12&&m.nonUV.instances?.matrix.sha===BASE_BUCKET);
  check(parts.length===10&&new Set(parts.map(m=>m.nonUV.material.name)).size===10,'BASE_TEN_PARTS');
  if(parts.length!==10)throw Error('baseline target missing or ambiguous; cannot compare');
@@ -55,7 +63,7 @@ if(process.argv[2]!=='--capture'){
  check(b.physicsSHA===c.physicsSHA,'BODY_ROUTES_OCCLUDER_MEMBERSHIP');
  check(equal(b.templates,c.templates)&&b.templatesUnchanged&&c.templatesUnchanged,'TEMPLATES');check(equal(b.stats,c.stats),'CPU_STRUCTURE_COST');
  check(equal(b.art,c.art),'ART_EMISSION');check(equal(b.support,c.support),'BAKED_SUPPORT');
- const result={ok:failures.length===0,failures,baselineSHA:b.sourceSHA,candidateSHA:c.sourceSHA,changed,tenParts:parts.map(p=>({ordinal:p.ordinal,material:p.nonUV.material.name})),envelopes,maxEnvelopeDelta,physicsSHA:c.physicsSHA,art:{count:c.art.inventory?.length??0,meshCount:c.art.meshes.length,nonempty:c.art.meshes.length>0},support:{baseline:b.support,candidate:c.support},stats:c.stats,scope:c.scope};
+ const result={ok:failures.length===0,failures,baselineSHA:b.sourceSHA,candidateSHA:c.sourceSHA,changed,tenParts:parts.map(p=>({ordinal:p.ordinal,material:p.nonUV.material.name})),envelopes,maxEnvelopeDelta,physicsSHA:c.physicsSHA,art:{count:Array.isArray(c.art?.inventory)?c.art.inventory.length:0,meshCount:Array.isArray(c.art?.meshes)?c.art.meshes.length:0,nonempty:Array.isArray(c.art?.inventory)&&c.art.inventory.length>0&&Array.isArray(c.art?.meshes)&&c.art.meshes.length>0},support:{baseline:b.support,candidate:c.support},stats:c.stats,scope:c.scope};
  fs.writeFileSync(path.join(opts.out,'RESULT.json'),JSON.stringify(result,null,2)+'\n');
  console.log(JSON.stringify({ok:result.ok,failures,changed:changed.length,maxEnvelopeDelta,out:opts.out}));process.exit(result.ok?0:1);
 }
@@ -82,6 +90,8 @@ globalThis.fetch=async(url,opts)=>{const u=String(url);if(!u.startsWith('blob:')
 globalThis.createImageBitmap=async(blob)=>{const b=Buffer.from(await blob.arrayBuffer()),[width,height]=webp(b),encodedSHA=H(b);images.push({width,height,encodedSHA});return{width,height,encodedSHA,metadataOnly:true,close(){}};};
 const THREE=await import(pathToFileURL(W+'public/vendor/three.module.js'));
 const {GLTFLoader}=await import(pathToFileURL(W+'public/vendor/addons/loaders/GLTFLoader.js'));
+const mapPropsSHA=H(fs.readFileSync(W+'public/js/mapprops.js'));
+if(mapPropsSHA!==MAPPROPS_SHA)throw Error('MAPPROPS_HELPER_PIN mismatch: helper drifted from base d2338a65; refusing to build map with unpinned helper');
 const MP=await import(pathToFileURL(W+'public/js/mapprops.js'));
 const {initTextures}=await import(pathToFileURL(W+'public/js/textures.js'));
 const array=a=>a?{ctor:(a.array??a.data?.array)?.constructor.name,count:a.count,itemSize:a.itemSize,normalized:a.normalized,offset:a.offset??0,stride:a.data?.stride??null,sha:H(a.array??a.data.array)}:null;
