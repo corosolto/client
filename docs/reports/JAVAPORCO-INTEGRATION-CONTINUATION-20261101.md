@@ -125,3 +125,20 @@ acumulação PASS. O sexto mutante existente de terreno deslocado foi ligado ao
 alias e detectado à parte após nominal verde. Reverter só1linha do produtor numa
 cópia carregada externamente restauraRED0.522m em31.5,-42, sem erroINFRA.
 Recibos JAVAPORCO-TERRAIN-R866-* na auditoria; ainda sem aceite visual/Game/mobile.
+
+## Checkpoint para publicação R867
+
+BootR854 integrado em95487b49f/7fde7ec15, mantendo os tetos e a janela.
+Geradores passaram sem delta após os checkpoints rastreados. R863 exercitou os
+NetClients reais desta negociação contra HTTP/WS local do backenda31cfd:16/16 e
+2.369comparações de frames reais, quatroJAVA8, pausa3/retoma4, ack e humanosE+J;
+PvP8/7 passaram e JAVA7 foi recusado antes do welcome. GameCPU servidor era55685b;
+não é Game cliente renderizado, QUIC, humanos autenticados ou rotação futura/ready.
+O artefato NETCLIENT-REAL-R863-REPORT.md preserva escopo e pins sem drift.
+
+Próximo: push normal/hooks e draft empilhado em1210, preservando1160 original.
+NÃO ativar o cliente que exige8 em produção antes de todos os nós/gateway
+anunciarem e negociarem8 com CLIENT_REF publicado pareado. BackendAPI/SQL, CI,
+revisão formal/whole e Game/Ego3:2/mobile/MP continuam gates distintos. O reparo
+de retry das luvas1208 está em andamento noutra WT, com recuperação focal verde;
+não foi importado silenciosamente nesta composição. Missão completa permanece.
