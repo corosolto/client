@@ -115,7 +115,8 @@ test('curated turning follows the shortest arc, scales with time, and preserves 
 });
 test('curated route turns happen during idle and flee waits for heading alignment',()=>{
  const ambience=createFavelaAmbience(new THREE.Group(),{map:'heading-contract',cats:[{pos:[0,0,0],to:[0,0,2],phase:1.2,turnRate:6,speed:{walk:.55,flee:1.5}}]});
- const a=ambience.animals[0];let walks=0,flees=0,turns=0;
+ const a=ambience.animals[0];let walks=0,flees=0,turns=0,pivotAction;
+ const dogAction=ambience._dogAction.bind(ambience);ambience._dogAction=(animal,action)=>{pivotAction=action;dogAction(animal,action);};
  const aligned=(previous)=>{
   const displacement=a.root.position.clone().sub(previous);if(displacement.length()<1e-8)return false;
   const heading=new THREE.Vector3(Math.sin(a.root.rotation.y),0,Math.cos(a.root.rotation.y));
@@ -127,7 +128,7 @@ test('curated route turns happen during idle and flee waits for heading alignmen
  assert.ok(Math.abs(a.alertTurnDelay-Math.PI/6)<1e-12);
  for(let i=0;i<100;i++){
   const previous=a.root.position.clone();ambience.update(1/60,null);
-  if(a.state==='flee'){if(ambience.time-a.alertAt<=a.alertTurnDelay){assert.ok(a.root.position.distanceTo(origin)<1e-12);turns++;}else if(aligned(previous))flees++;}
+  if(a.state==='flee'){if(ambience.time-a.alertAt<=a.alertTurnDelay){assert.ok(a.root.position.distanceTo(origin)<1e-12);assert.equal(pivotAction,'walk');turns++;}else if(aligned(previous))flees++;}
  }
  assert.ok(walks>0&&flees>0&&turns>0);ambience.dispose();
 });
