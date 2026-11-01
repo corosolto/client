@@ -6,7 +6,7 @@ import {solveCCDIK} from './handik.js';
 
 const WALK_END=5.4, DOOR_END=6.8;
 const release = resources => {for(const resource of resources)resource.dispose();resources.clear();};
-// Fault-tolerant owned release: each resource is removed from the set BEFORE dispose so a throwing dispose cannot re-enter or block the remaining ones; other resources still release.
+// Remova o recurso antes de dispose: uma exceção não pode impedir as demais liberações.
 const releaseOwned = resources => {for(const resource of [...resources]){resources.delete(resource);try{resource.dispose();}catch{}}};
 
 export class FlavioBoarding {
@@ -49,8 +49,7 @@ export class FlavioBoarding {
   }
 
   _invalidate(pending) {
-    // Negative cache: a failed load frees own resources and drops only that pending promise so a later start reattempts the loader.
-    // Identity guard preserves concurrent shared loads; a disposed board stays terminal (no resurrection).
+    // Falhas invalidam só a promessa atual; dispose permanece terminal.
     if(this.ready===pending && !this.disposed)this.ready=null;
   }
 
@@ -78,8 +77,7 @@ export class FlavioBoarding {
   }
 
   _rollback(session) {
-    // Rollback runs only while the captured session still owns this board: a stale failure must not tear down a newer session on the same instance.
-    // World/actor/owned restore happens exactly once; cleanup errors are contained so start() keeps resolving false instead of rejecting.
+    // Falha antiga não desmonta sessão nova; rollback contém erros e mantém start() resolvendo false.
     if(this.session!==session)return;
     try{this.stop();}catch{}
   }
@@ -303,7 +301,7 @@ export class FlavioBoarding {
     if(session) {
       for(const [object,visible] of session.hidden)object.visible=visible;
       if(session.actor) {
-        // Independent cleanup actions: a throwing mixer hook must not skip actor removal, owned release, stage hide/detach, or world restore (session is already cleared above).
+        // Cada limpeza é independente: falha no mixer não pode impedir a restauração do palco.
         try{session.actor.mixer.stopAllAction();}catch{}
         try{session.actor.mixer.uncacheRoot(session.actor.ctrl.model);}catch{}
         session.actor.group.removeFromParent();
