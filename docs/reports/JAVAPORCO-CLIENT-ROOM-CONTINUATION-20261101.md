@@ -25,3 +25,36 @@ Dependency: parser acorn8.17.0 already exists in package-lock as a transitive de
 ## Pending / next concrete step
 
 Checkpoint this checker/contract before public edits. Root reads and rebinds it, applies the minimal public main/net changes on its own lane, then runs nominal and `--mutantes` against that exact candidate. Current source-anchor matches are strict and unmeasured on that future candidate; missing/duplicate matches stay INFRA, not a reason to loosen the semantic contract. Root wires CI/package and assigns independent whole review. There is no afterGREEN, runtime/UI/MP/visual/art/release approval here. This checker checkpoint deliberately contains a verified semantic RED before the product correction, as authorized.
+
+
+## Root R881 — correção e integração dos callers
+
+Checker adotado em f9a32282c974247786aab31b771d21914c2d9368. Root leu o arquivo
+inteiro e o relatório, rebindou49pins sem drift e repetiu o baseline contra os
+quatro consumidores atuais:23cláusulas/11RED12PASS, exit1/stderr0 em0.591s; os
+10controles ficaram UNRUN. R870 já havia usado GLM para a proposta e Root
+rejeitou o filtro CTF restritivo e a conversão silenciosa de solo em horda.
+
+Produto mudou somente main/net: health conserva nodeMode/roomCreation literais;
+helper único recusa horde ou roomCreationfalse sem inferir de horde metadata.
+Solo Java retorna antes de probe/ticket; catálogo PvP exclui objectiveModehorde;
+seleção explícita é revalidada contra catálogo; quatro payloads enviam mode
+consistente com ctf. Quick usa o ranking existente só em nós elegíveis, retorna
+erro quando não há alvo e filtra três sinais positivos de horda na sala.
+Mantém SP/oficina, entrada deliberada JAVA/E, private/full, CTF em Praça, legacy,
+mixed+horde e o teto150ms. Mesmo nó recebe metadata nova sem reconstruir o menu.
+
+Fonte final23/23GREEN e10mutantes com failsets exatos em8.783s, exit0/stderr0.
+Sete focais PASS30.549s: syntax, mp-proximo, sonda, nosgemeos, mpRoomOptions,
+netcode e chat. Novo alias eval:javaporcos-client-room (--mutantes) ligado a
+check:deploy/check:fast; acorn8.17.0 explicitamente dev, lock mudou só uma linha,
+sem nova dependência no runtime público. Gens docs/arch e alias/scanner:4/4PASS
+9.707s. Docs geradas alteram só o token do novo alias, sem contagem inventada.
+
+Artefatos ROOT-R881-BASELINE/FINAL/FOCALS e CALLERS-GENS-ROOT-R881 na auditoria.
+O runner usa DOM/fetch controlados: não é UI real, Game renderizado, MP humano,
+mobile ou QUIC. R876 fixtures de boot foi adotado em359aee5f8 e o teste integrado
+R882 está em curso; não recebe crédito antecipado. Próximo: publicar candidato
+só após full gate com BASE Astro real coerente e parear backend8 antes de
+qualquer frontend8. Formal do head final e crítico whole pósbot continuam gates.
+Missão integral de mapas/personagens/skins/motion/ADS/PR/release permanece ativa.

@@ -4842,11 +4842,15 @@ function mpPintarMapas() {
     + (fora ? ` · ${fora} do jogo ainda não estão neste servidor` : '');
 }
 
+function mpNoPermitePvp(no) {
+  return !!no && no.nodeMode !== 'horde' && no.roomCreation !== false;
+}
+
 async function mpCarregarMapasDoNo() {
   if (!mpNoAtual) return;
   // Mapa PARADO não entra na grade do multiplayer nem se o nó ainda o servir: fora da
   // oficina ele não existe para o jogador, e um nó desatualizado não pode reintroduzi-lo.
-  try { mpMapasDoNo = (await listMaps(mpNoAtual.http)).filter((id) => MAPS[id] && MAPAS_MENU.includes(id)); }
+  try { mpMapasDoNo = (await listMaps(mpNoAtual.http)).filter((id) => MAPS[id] && MAPAS_MENU.includes(id) && MAPS[id].objectiveMode !== 'horde'); }
   catch { mpMapasDoNo = []; }
   // mapa que o nó não tem não pode continuar marcado de uma seleção feita noutra região
   for (const id of [...mpMapasEscolhidos]) if (!mpMapasDoNo.includes(id)) mpMapasEscolhidos.delete(id);
@@ -5042,15 +5046,17 @@ document.addEventListener('cs-treta-solo', async () => {
   show('mp-panel');
   mpEstado('conectando', 'PREPARANDO SUA PARTIDA SOLO…');
   try {
+    if (ehMapaJavaporcos(currentMap)) return mpErro('Javaporcos tem partida cooperativa na lista de salas. Para treinar sozinho, use JOGAR.');
     mpNos = ordenarNos(await sondarNos(NOS));
-    const no = mpNos.find(n => n.online && n.soloVerified);
+    const no = mpNos.find(n => n.online && n.soloVerified && mpNoPermitePvp(n));
     if (!no) return mpErro('Nenhum servidor de partidas solo premiadas está disponível agora. Você pode jogar no menu JOGAR.');
     mpSelecionarNo(no);
     const ticket = await obterMpTicket('create');
     const senha = clientUuid();
+    const ctf = matchMode === 'ctf';
     const sala = await createRoom(no.http, {
       name: 'SOLO TRETA$', solo: true, private: true, password: senha,
-      mapId: currentMap, mapas: [currentMap], ctf: matchMode === 'ctf',
+      mapId: currentMap, mapas: [currentMap], ctf, mode: ctf ? 'ctf' : 'rounds',
       teamSize: Math.max(2, settings.bots || 4), creatorNick: (nickEl.value || '').trim(),
     }, ticket);
     await mpEntrar({...sala, id: sala.room || sala.id}, 'E', senha);
@@ -5074,12 +5080,14 @@ function mpMontarFormulario() {
   if (criar) criar.onclick = async () => {
     ui.click(); mpErro('');
     if (!mpNoAtual) return mpErro('Escolha um servidor primeiro.');
+    if (!mpNoPermitePvp(mpNoAtual)) return mpErro('Este servidor não cria salas PvP. Escolha outro servidor.');
     const privada = mpEl('mp-privada').checked;
     const senha = mpEl('mp-senha').value.trim();
     if (privada && !senha) return mpErro('Sala privada precisa de senha.');
     const aDedo = mpEl('mp-rotacao').value === 'escolher';
     const escolhidos = [...mpMapasEscolhidos];
-    if (aDedo && !escolhidos.length) return mpErro('Escolha pelo menos um mapa pra sua sala.');
+    if (aDedo && (!escolhidos.length || escolhidos.some((id) => !mpMapasDoNo.includes(id) || !MAPS[id] || MAPS[id].objectiveMode === 'horde'))) return mpErro('Escolha pelo menos um mapa disponível para sua sala.');
+    const ctf = mpEl('mp-modo').value === 'ctf';
     try {
       const ticket = await obterMpTicket('create');
       const sala = await createRoom(mpNoAtual.http, {
@@ -5087,7 +5095,7 @@ function mpMontarFormulario() {
         // com a lista a dedo a rotação vira só o plano B do servidor (lista inválida = recorte)
         rotacao: aDedo ? 'todos' : mpEl('mp-rotacao').value,
         ...(aDedo ? { mapas: escolhidos, mapId: escolhidos[0] } : {}),
-        ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
+        ctf, mode: ctf ? 'ctf' : 'rounds', private: privada, password: senha, maxPlayers: 10,
         teamSize: +mpEl('mp-teamsize').value || 5,   // teamSize do criador: 1 = X1 sem bots (backend #29, relato 21/09)
         creatorNick: ($('nick-input').value || '').trim() || null,
       }, ticket);
@@ -5116,7 +5124,7 @@ function mpMontarFormulario() {
     if (!mpNoAtual) return mpErro(tr('Escolha um servidor primeiro.'));
     /* nó sem `salaConvite` listaria a sala com o código e abriria pelo id: só nó que anuncia;
        nenhum = o formulário, que exige senha */
-    const no = mpNoAtual.salaConvite ? mpNoAtual : mpNos.find((n) => n.online && n.salaConvite);
+    const no = mpNoAtual.salaConvite && mpNoPermitePvp(mpNoAtual) ? mpNoAtual : mpNos.find((n) => n.online && n.salaConvite && mpNoPermitePvp(n));
     if (!no) {
       const criar = mpEl('mp-panel').querySelector('.mp-criar');
       if (criar) criar.open = true;
@@ -5131,7 +5139,7 @@ function mpMontarFormulario() {
         // vazio = o nó dá nome ("SALA R7"); o tamanho de time fica no padrão do servidor
         name: nick ? `SALA DE ${nick}`.toUpperCase().slice(0, 24) : '',
         rotacao: 'todos',
-        ctf: false, private: true, password: '', maxPlayers: 10,
+        ctf: false, mode: 'rounds', private: true, password: '', maxPlayers: 10,
         creatorNick: nick || null,
       }, ticket);
       mpModalSalaCriada({ ...sala, id: sala.room || sala.id });
@@ -5156,20 +5164,21 @@ function mpMontarFormulario() {
     // lista pode ter minutos) e vai para o nó onde há alguém, até o teto de 150 ms.
     mpEstado('conectando', 'PROCURANDO GENTE…');
     try { mpNos = ordenarNos(await sondarNos(NOS)); mpDesenharNos(); } catch { /* segue com a lista que tem */ }
-    const alvo = melhorNoParaJogar(mpNos);
-    if (alvo && alvo.id !== mpNoAtual.id) mpSelecionarNo(alvo);
+    const alvo = melhorNoParaJogar(mpNos.filter(mpNoPermitePvp));
+    if (!alvo) return mpErro('Nenhum servidor de salas PvP está disponível agora.');
+    if (alvo.id !== mpNoAtual.id) mpSelecionarNo(alvo); else mpNoAtual = alvo;
     mpEstado('conectando', 'PROCURANDO SALA…');
     let salas = [];
     try { salas = await listRooms(mpNoAtual.http); } catch { /* lista fora = cria sala */ }
     const aberta = salas
-      .filter((r) => !r.private && ((r.livre?.E || 0) + (r.livre?.B || 0)) > 0)
+      .filter((r) => !r.private && r.mode !== 'horde' && r.cooperative !== true && MAPS[r.mapId || r.map]?.objectiveMode !== 'horde' && ((r.livre?.E || 0) + (r.livre?.B || 0)) > 0)
       .sort((a, b) => (b.oficial - a.oficial) || (b.players - a.players))[0];
     if (aberta) return mpEntrar(aberta, 'auto');
     try {
       const ticket = await obterMpTicket('create');
       const sala = await createRoom(mpNoAtual.http, {
         name: 'TRETA RÁPIDA', rotacao: 'todos',
-        ctf: false, private: false, password: '', maxPlayers: 10,
+        ctf: false, mode: 'rounds', private: false, password: '', maxPlayers: 10,
         creatorNick: ($('nick-input').value || '').trim() || null,
       }, ticket);
       mpEntrar({ ...sala, id: sala.room || sala.id }, 'auto');
