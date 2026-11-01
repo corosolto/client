@@ -169,3 +169,25 @@ checkpoint668da65413752a0cc2b406232fc6a9fd21fc469f mediu23/11RED12PASS antes de
 qualquer produto. Próximo: adotar fixtures/checker e corrigir callers, depois
 full gate com BASE coerente ao candidato, sem relaxar tetos.
 Missão integral segue ativa; nenhuma publicação/visual/browser/MP/mobile aprovada.
+
+
+## R881/R882 — candidato pronto para nova medição completa
+
+Root adotou checker668da654→f9a32282 e fixturesf3a8f94→359aee5f8. Callers PvP
+corrigidos em cefd7eb0ae20e6bb08452d58c2a475b8d4244f86: nominal23GREEN e
+10mutantes exatos,7focais e4geradores/alias PASS, sem CTF-only e sem retirarJAVA
+local/listagem deliberada. Contrato detalhado no ledger JAVAPORCO-CLIENT-ROOM.
+
+R882 repetiu os dois aliases das fixtures contra esse main/net final:
+2/2PASS165.564s (skin4.4s eTP161.2s), incluindo seus quatro/dezesseis mutantes.
+Nenhum binding faltante foi tratado como defeito de Game; o probeReferenceError
+R876 permanece INFRA3. Fonte pública ficou estável durante essa execução.
+
+Próximo: push normal/hooks com BASE=http://127.0.0.1:4342 (Astro real desteWT,
+HTML e imagem rastreada retornaram200; boot ainda UNRUN nesseBASE), após liberar
+o slot técnico R877/Hands. O check:deploy agora contém112aliases, incluindo o
+novo contrato de callers. Não dispensar nenhum gate/teto nem mascarar404.
+Backend wiring R879 e readiness remotoRO R883 estão isolados; nenhum SQL/deploy
+ou frontend8 foi ativado. Pin backend só depois do cliente publicado/reachable.
+Formal do head final, whole pósbot e navegador/Ego/Game3:2 continuam pendentes.
+Missão completa ativa; UI/social depois eFlavio1158 excluído.
