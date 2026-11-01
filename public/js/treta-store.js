@@ -534,11 +534,11 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   });
   draw();
   const manifestsReady=()=>{draw();notifyEquipment();if(selected && $('treta-detail').open)void detail(selected,false);};
-  let skinManifestSettled=false;
-  const skinManifestReady=Promise.resolve().then(()=>fetch(assetUrl('models/skins/manifest.json'),{signal:AbortSignal.timeout(12000)})).then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();}).then(data=>{
+  let skinManifestSettled=false,manifestTimer;
+  const skinManifestReady=Promise.resolve().then(()=>{const controller=new AbortController();manifestTimer=setTimeout(()=>controller.abort(),12000);return fetch(assetUrl('models/skins/manifest.json'),{signal:controller.signal});}).then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();}).then(data=>{
     if(!data || typeof data!=='object' || !data.skins || typeof data.skins!=='object' || Array.isArray(data.skins))throw new Error('manifest_invalid');
     manifest=data;manifestsReady();
-  }).catch(()=>{}).finally(()=>{skinManifestSettled=true;});
+  }).catch(()=>{}).finally(()=>{clearTimeout(manifestTimer);skinManifestSettled=true;});
   if(TRETA_ITEMS_ENABLED)void loadEyewearFitData().then(data=>{eyeManifest=data.manifest;manifestsReady();});
   void loadAccount().then(auth=>{account=auth;}).catch(()=>{});
   return (async()=>{
@@ -547,7 +547,7 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
       epoch=accountEpoch;const changed=accountChanged;
       await Promise.race([refresh(),changed]);
       if(epoch!==accountEpoch)continue;
-      while(!skinManifestSettled && epoch===accountEpoch && state?.inventory?.some(s=>s.equipped && (item(s.skin_id)?.slot || 'character')==='character')){
+      while(!skinManifestSettled && epoch===accountEpoch && state?.inventory?.some(s=>s.equipped && product(s.skin_id)?.slot==='character' && item(s.skin_id)?.available===true && (item(s.skin_id)?.slot || 'character')==='character')){
         let wake;
         const inventoryChanged=new Promise(resolve=>{wake=resolve;inventoryWaiters.add(resolve);});
         try{await Promise.race([skinManifestReady,changed,inventoryChanged]);}finally{inventoryWaiters.delete(wake);}
