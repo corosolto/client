@@ -47,7 +47,7 @@ async function worker(fixture, mutant) {
       if (!fs.existsSync(file(u))) return new Response('', { status: 404 });
       if (file(u).endsWith('/data/gloves-manifest.json') && ['missing-source', 'wrong-source', 'wrong-path', 'wrong-family', 'cosmetic-wrong-sha'].includes(fixture)) {
         const data = JSON.parse(fs.readFileSync(file(u), 'utf8'));
-        for (const p of data.packages) for (const v of p.sourceVariants || []) if (v.characterIds.includes('capitao')) {
+        for (const p of data.packages) if (p.perspective === '3p') for (const v of p.sourceVariants || []) if (v.characterIds.includes('capitao')) {
           if (fixture === 'missing-source') delete v.source;
           else if (fixture === 'wrong-source') v.source.sha256 = '0'.repeat(64);
           else if (fixture === 'wrong-path') v.source.path = 'public/models/characters/barbudo.glb';

@@ -77,3 +77,25 @@ antes de qualquer SUT ou recibo semântico. Os pacotes base do catálogo agora b
 integralmente com SHA da fonte, revisão e família (incluindo os quatro reparados).
 Essas provas não equivalem a hash de resposta de rede nem aprovação de aparência.
 Próximo: revisão GLM de código/fronteiras declaradas, Native integral e QA visual.
+
+R659/R661/R669: GLM revisou código e fronteiras declaradas (escopo limitado, sem
+alegar revisão dos dezesseis paths de assets); Native independente revisou os
+dezesseis deltas e fronteiras, inclusive bytes dos derivados, sem achados. Root
+leu os relatórios e a resposta GLM integralmente; os sessenta pins Native bateram.
+A fábrica também atualiza o SHA de Lampião na lista incompatível, conservando o
+mesmo motivo e status bloqueado, sem pacote ou elegibilidade nova.
+
+Uma observação GLM era válida: as mutações de catálogo do instrumento também
+alteravam o registro FP. A extração literal de localFetch reproduziu isso nos
+cinco modos, embora só 3P fosse consumido. A guarda de perspectiva agora limita
+a mutação ao registro 3P. Os cinco controles em dados mantêm FP intacto; a matriz
+pública completa passou novamente em52,425s. A primeira cópia externa abortou por
+marcador final não único, antes de medir dados; V1 preservada como INFRA e V2 usa
+o primeiro terminador após o início único. Nenhum produto mudou nessa correção.
+
+Sugestões de warning em toda recusa e ampliação de thumbnails não são defeitos
+do contrato F2: a recusa base/Drip sem variante é esperada e os callers base-only
+foram preservados por desenho. As demais observações não mostraram quebra de
+contrato. A adjudicação externa R670 conserva os doze itens literais do GLM.
+Próximo: crítico do pós-ajuste e normalpush/PR empilhado sobre S1; QA Ego corrente
+continua pendente, sem transformar as medições técnicas em aprovação de arte.
