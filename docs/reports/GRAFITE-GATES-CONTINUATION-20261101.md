@@ -31,3 +31,12 @@ PASS. Stderr zero nos workers/alias. Prefixo externo GRAFITE-GATES-ROOT-R915-
 contém rebind, medições, recibos e controles. Estes controles são do instrumento,
 sem crédito de Game/arte/MP/mobile. Review formal do head final publicado e
 whole independente ainda pendem. Evolução do bake1185 continua fora desta correção.
+
+## Root R963 — descrição do controlador
+
+Push normalR941 terminou107/108PASS; somenteMA1 rejeitou o cabeçalho antigo
+que anunciava uma flaginline, enquanto o alias agregado executa o controlador.
+A descrição agora aponta para o contrato real nominal-first/failset/aplicação4/4,
+como o controlador Hands. Nenhum alias, worker, caso, scanner, teto ou produto
+foi alterado. A falha anterior permanece preservada, sem crédito de push verde.
+Próximo: herdar stagingatual/validarcomposição e repetir push normalsem bypass.
