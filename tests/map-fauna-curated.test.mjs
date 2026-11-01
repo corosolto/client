@@ -7,7 +7,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { THREE, MAPS, initTextures, carregaMapa } from '../tools/eval/harness.mjs';
-import { auditCuratedFauna, auditCuratedFaunaCensus } from '../tools/eval/map-fauna-curated.mjs';
+import { auditCuratedFauna as auditFaunaActual, auditCuratedFaunaCensus as auditCensusActual } from '../tools/eval/map-fauna-curated.mjs';
+import { captureCuratedFauna } from '../tools/eval/map-fauna-curated-collector.mjs';
+import { assetUrl } from '../public/js/data/asseturl.js';
+import { createPlaywrightFaunaObserver, createEgoFaunaObserver, faunaDocumentURL, faunaResponseError } from '../tools/eval/map-fauna-response-proof.mjs';
 import { ESCADAO_AMBIENCE } from '../public/js/map_escadao.js';
 import { LAJES_AMBIENCE } from '../public/js/map_lajes_authored.js';
 import { createFavelaAmbience } from '../public/js/ambientlife.js';
@@ -20,18 +23,35 @@ import http from 'node:http';
 import { gzipSync, gunzipSync } from 'node:zlib';
 const read=path=>fs.readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const references=JSON.parse(read('tools/eval/map-fauna-curated.json'));
+const refsFor=map=>references.filter(r=>r.map===map);
+const AUDIT_BASE='https://fauna.synthetic.invalid';
+const auditCuratedFauna=(sample,refs)=>auditFaunaActual(sample,refs,{base:AUDIT_BASE});
+const auditCuratedFaunaCensus=(data,refs)=>auditCensusActual(data,refs,{base:AUDIT_BASE});
 const ambient=read('public/js/ambientlife.js'),main=read('public/js/main.js');
 // Referências agora têm mapas repetidos (campomorro/corrego: gato E galinha).
 // O censo é por mapa único; uma amostra cobre todos os tipos referenciados daquele mapa.
 const uniqueMaps=[...new Set(references.map(r=>r.map))];
-const refsFor=map=>references.filter(r=>r.map===map);
 await Promise.all(uniqueMaps.map(carregaMapa));
 const registry=JSON.parse(read('mint-assets.json')).assets;
+// Read-only authored facts are measured from each real map builder once. No live world
+// escapes this fixture; every query gets an independent snapshot. Mutation/update tests below
+// still construct and own fresh worlds, and keep all their original clauses.
+const authoredFaunaSnapshots=new Map();
+function authoredFaunaSnapshot(map){
+ if(!authoredFaunaSnapshots.has(map)){
+  const world=MAPS[map].build(new THREE.Scene(),initTextures());
+  try{
+   const animals=world.ambience.animals.map(a=>({id:a.id,type:a.type,assetId:a.root.userData.assetId,
+    speed:a.speed,contactShadow:!!a.root.getObjectByName('FAUNA_CONTACT_SHADOW')}));
+   authoredFaunaSnapshots.set(map,structuredClone(animals));
+  }finally{world.ambience.dispose();}
+ }
+ return structuredClone(authoredFaunaSnapshots.get(map));
+}
 for(const ref of references)test(`${ref.map}/${ref.type} binds the curated file and keeps its authored density`,()=>{
- const world=MAPS[ref.map].build(new THREE.Scene(),initTextures());
- const animals=world.ambience.animals.filter(a=>a.type===ref.type);
+ const animals=authoredFaunaSnapshot(ref.map).filter(a=>a.type===ref.type);
  assert.equal(animals.length,ref.count);
- assert.ok(animals.every(a=>a.root.userData.assetId===ref.assetId));
+ assert.ok(animals.every(a=>a.assetId===ref.assetId));
  if(ref.speed)assert.deepEqual(animals[0].speed,ref.speed);
  if(ref.map==='escadao')assert.deepEqual(MAPS.escadao.ambience,ESCADAO_AMBIENCE);
  if(ref.map==='lajes')assert.deepEqual(MAPS.lajes.ambience,LAJES_AMBIENCE);
@@ -40,17 +60,13 @@ for(const ref of references)test(`${ref.map}/${ref.type} binds the curated file 
  const record=registry[ref.registryId];assert.ok(record.files.includes('public/'+ref.path));
  assert.equal(record.processing.finalSha256,ref.sha256);
  assert.equal(createHash('sha256').update(fs.readFileSync(new URL('../public/'+ref.path,import.meta.url))).digest('hex'),ref.sha256);
- world.ambience.dispose();
 });
 test('census includes every authored cat and chicken on each covered map; omitting a type is detected',()=>{
  for(const map of uniqueMaps){
-  const world=MAPS[map].build(new THREE.Scene(),initTextures());
-  try{
-   const targets=world.ambience.animals.filter(a=>['cat','chicken'].includes(a.type));assert.ok(targets.length);
-   const check=refs=>{for(const a of targets){const ref=refs.find(r=>r.map===map&&r.type===a.type);assert.ok(ref,`${map}/${a.type} outside census`);assert.ok(ref.animalIds.includes(a.id));}};
-   check(references);
-   const omitted=targets[0].type;assert.throws(()=>check(references.filter(r=>r.map!==map||r.type!==omitted)));
-  }finally{world.ambience.dispose();}
+  const targets=authoredFaunaSnapshot(map).filter(a=>['cat','chicken'].includes(a.type));assert.ok(targets.length);
+  const check=refs=>{for(const a of targets){const ref=refs.find(r=>r.map===map&&r.type===a.type);assert.ok(ref,`${map}/${a.type} outside census`);assert.ok(ref.animalIds.includes(a.id));}};
+  check(references);
+  const omitted=targets[0].type;assert.throws(()=>check(references.filter(r=>r.map!==map||r.type!==omitted)));
  }
 });
 function mobileCalls(map,{source=main,ambientSource=ambient,next=false,mobileAuto=true}={}){
@@ -103,8 +119,8 @@ function fleeCases(ref,id){
  return undefined;
 }
 function validSample(ref){
- const refs=refsFor(ref.map);
- return {map:ref.map,declaredPreload:[...new Set(refs.map(r=>r.assetId))],animals:refs.flatMap(r=>Array.from({length:r.count},(_,i)=>({id:r.type+'-'+i,type:r.type,source:'gltf',assetId:r.assetId,assetPath:r.path,speed:r.speed,turnRate:r.turnRate,actions:{idle:'Idle',walk:'Walk',run:'Run'},meshes:[{materials:[Object.fromEntries(Object.entries(r.textures).map(([key,size])=>[key,{width:size[0],height:size[1],colorSpace:key==='albedo'?'srgb':''}]))]}],motion:{distance:1,localPoseChanges:1,activeClip:'Walk',maxYawDelta:.1},fleeSpace:fleeCases(r,r.type+'-'+i)})).flat())};
+ const refs=refsFor(ref.map),document={url:faunaDocumentURL(AUDIT_BASE,ref.map),requestId:'synthetic-document-'+ref.map,frameId:'synthetic-frame-'+ref.map,loaderId:'synthetic-loader-'+ref.map};
+ return {map:ref.map,document,declaredPreload:[...new Set(refs.map(r=>r.assetId))],animals:refs.flatMap(r=>{const assetURL=new URL(assetUrl(r.path),document.url).href;return Array.from({length:r.count},(_,i)=>({id:r.type+'-'+i,type:r.type,source:'gltf',assetId:r.assetId,assetPath:r.path,assetURL,response:{complete:true,requestId:'synthetic-'+r.assetId,frameId:document.frameId,loaderId:document.loaderId,documentURL:document.url,url:assetURL,responseURL:assetURL,status:200,sha256:r.sha256,byteLength:123,body:{complete:true,source:'Network.getResponseBody',sha256:r.sha256,byteLength:123},transportTerminal:{kind:'finished'}},speed:r.speed,turnRate:r.turnRate,actions:{idle:'Idle',walk:'Walk',run:'Run'},meshes:[{materials:[Object.fromEntries(Object.entries(r.textures).map(([key,size])=>[key,{width:size[0],height:size[1],colorSpace:key==='albedo'?'srgb':''}]))]}],motion:{distance:1,localPoseChanges:1,activeClip:'Walk',maxYawDelta:.1},fleeSpace:fleeCases(r,r.type+'-'+i)})).flat();})};
 }
 test('fauna CI requires an explicit origin before creating output or launching a browser',()=>{
  const dir=fs.mkdtempSync(join(tmpdir(),'coro-fauna-ci-no-base-')),out=join(dir,'output');
@@ -134,7 +150,14 @@ test('runtime census requires exactly one result per expected map before auditin
 for(const ref of references)test(`${ref.map}/${ref.type}: runtime auditor accepts complete evidence and rejects causal corruptions`,()=>{
  const sample=validSample(ref);assert.equal(auditCuratedFauna(sample,references).pass,true);
  const target=s=>s.animals.find(a=>a.type===ref.type);
- const mutations=[['turn',s=>target(s).turnRate=0],['turn',s=>target(s).motion.maxYawDelta=Math.PI],['turn',s=>delete target(s).motion.maxYawDelta],['count',s=>s.animals=[]],['count',s=>s.animals=s.animals.filter(a=>a.type!==ref.type)],['count',s=>s.animals.push(structuredClone(target(s)))],['source',s=>target(s).source='fallback'],['identity',s=>target(s).assetId='old'],['identity',s=>target(s).assetPath='models/ambient/old.glb'],['declaredPreload',s=>s.declaredPreload=[]],['materials',s=>target(s).meshes=[]],['texture',s=>target(s).meshes[0].materials[0].albedo=null],['texture',s=>target(s).meshes[0].materials[0].albedo.width=0],['texture',s=>target(s).meshes[0].materials[0].albedo.colorSpace=''],['clips',s=>target(s).actions.walk='Idle'],['motion',s=>target(s).motion.localPoseChanges=0],['motion',s=>target(s).motion.activeClip='Idle'],['motion',s=>target(s).motion.distance=0]];
+ const mutations=[['turn',s=>target(s).turnRate=0],['turn',s=>target(s).motion.maxYawDelta=Math.PI],['turn',s=>delete target(s).motion.maxYawDelta],['count',s=>s.animals=[]],['count',s=>s.animals=s.animals.filter(a=>a.type!==ref.type)],['count',s=>s.animals.push(structuredClone(target(s)))],['source',s=>target(s).source='fallback'],['identity',s=>target(s).assetId='old'],['identity',s=>target(s).assetPath='models/ambient/old.glb'],['declaredPreload',s=>s.declaredPreload=[]],['materials',s=>target(s).meshes=[]],['texture',s=>target(s).meshes[0].materials[0].albedo=null],['texture',s=>target(s).meshes[0].materials[0].albedo.width=0],['texture',s=>target(s).meshes[0].materials[0].albedo.colorSpace=''],['clips',s=>target(s).actions.walk='Idle'],['motion',s=>target(s).motion.localPoseChanges=0],['motion',s=>target(s).motion.activeClip='Idle'],['motion',s=>target(s).motion.distance=0],
+   ...[null,{},[],false,'not-response'].map(value=>['response',s=>target(s).response=value]),
+   ['response',s=>target(s).response.sha256='0'.repeat(64)],['response',s=>target(s).response.sha256='zz'],
+   ['response',s=>target(s).response.byteLength=0],['response',s=>target(s).response.status=404],['response',s=>target(s).response.complete=false],
+   ['response',s=>target(s).response.requestId=''],['response',s=>target(s).response.loaderId='other'],['response',s=>target(s).response.frameId='other'],
+   ['response',s=>target(s).response.documentURL+='&old=1'],['response',s=>target(s).response.responseURL+='&wrong=1'],
+   ['response',s=>target(s).response.url=target(s).response.url.replace('?v=','?wrong=')],
+   ['response',s=>{const a=target(s);a.assetURL=a.response.url=a.response.responseURL=a.assetURL.replace(/\?v=.*/,'?v=wrong-valid-revision');}]];
  if(ref.speed)mutations.push(['speed',s=>target(s).speed={walk:1.1,flee:3.6}]);
  if(ref.fleeSpace===true)for(const change of [s=>delete target(s).fleeSpace,s=>target(s).fleeSpace.cases.pop(),s=>target(s).fleeSpace.cases[1]=structuredClone(target(s).fleeSpace.cases[0]),
   s=>target(s).fleeSpace.cases[0].obstacleOverlaps=1,s=>target(s).fleeSpace.cases[0].supportMisses=1,s=>target(s).fleeSpace.cases[0].maxHalfExtent=.51,
@@ -337,8 +360,7 @@ for(const low of [false,true])test(`curated ground fauna keeps a non-hittable co
  let disposed=false;shadow.material.addEventListener('dispose',()=>{disposed=true;});ambience.dispose();assert.equal(disposed,true);
 });
 for(const ref of references)test(`${ref.map}/${ref.type} actually opts into contact shading`,()=>{
- const world=MAPS[ref.map].build(new THREE.Scene(),initTextures());
- assert.ok(world.ambience.animals.filter(a=>a.type===ref.type).every(a=>a.root.getObjectByName('FAUNA_CONTACT_SHADOW')));world.ambience.dispose();
+ assert.ok(authoredFaunaSnapshot(ref.map).filter(a=>a.type===ref.type).every(a=>a.contactShadow));
 });
 
 test('boot budget mutation still moves the actual fauna preload before props',()=>{
@@ -369,7 +391,7 @@ test('contact shadow omission and lifetime mutations fail the actual controller 
 for(const map of ['escadao','campomorro'])test(`${map}: actual collector includes all target types and instances; restoring find is detected`,async()=>{
  const source=read('tools/eval/map-fauna-curated-collector.mjs'),start=source.indexOf('const record=await page.evaluate(')+'const record=await page.evaluate('.length,end=source.indexOf('\n },{map,types:[...types.keys()]});',start);
  assert.ok(start>0&&end>start);
- const callback=source.slice(start,end+3).replace("await import('three')",'THREE_STUB').replace("await import('/js/maps.js')",'MAPS_STUB');
+ const callback=source.slice(start,end+3).replace("await import('three')",'THREE_STUB').replace("await import('/js/maps.js')",'MAPS_STUB').replace("await import('/js/data/asseturl.js')",'ASSET_URL_STUB');
  const specs=validSample(refsFor(map)[0]).animals;
  if(map==='escadao')specs.push({...specs.find(a=>a.type==='chicken'),id:'chicken-99'});
  const expected=specs.map(a=>a.id).sort();
@@ -381,7 +403,7 @@ for(const map of ['escadao','campomorro'])test(`${map}: actual collector include
    a.actions={idle:{getClip:()=>({name:'Idle'})},walk:{getClip:()=>({name:'Walk'}),getEffectiveWeight:()=>1}};return a;
   });
   const world={ambience:{animals,update(){for(const a of animals){a.root.position.x+=.01;a.model.children[0].rotation.z+=.01;}},reset(){for(const a of animals)a.root.position.set(0,0,0);}}};
-  const context=vm.createContext({THREE_STUB:THREE,MAPS_STUB:{MAPS},window:{__gworld:world,MAPEVAL:{cam:new THREE.PerspectiveCamera(),view(){}}}});
+  const context=vm.createContext({THREE_STUB:THREE,MAPS_STUB:{MAPS},ASSET_URL_STUB:{assetUrl},URL,location:{href:faunaDocumentURL(AUDIT_BASE,map)},window:{__gworld:world,MAPEVAL:{cam:new THREE.PerspectiveCamera(),view(){}}}});
   return new vm.Script('('+code+')').runInContext(context)({map,types:refsFor(map).map(r=>r.type)});
  }
  const actual=await collect(callback);assert.deepEqual(Array.from(actual.animals,a=>a.id).sort(),expected);
@@ -509,4 +531,403 @@ for(const [name,old,replacement] of [
 ])test(`menu lifecycle causal control catches ${name}`,async()=>{
  const changed=replaceOnce(menuLifecycleSource,old,replacement);
  await assert.rejects(exerciseMenuFaunaLifecycle(changed),/retired backdrop shadow materials/);
+});
+
+// Transportes explicitamente sintéticos; executam os mesmos adapters/observer, sem browser nem alegação runtime.
+function fakeBodyTransport(kind, options={}){
+ const calls=[],listeners=new Map(),queue=[],docs=new Set(),order=[];let drains=0,maxDrains=0,stamp=0;
+ const fake={map:'one',frame:{id:'frame-A',loaderId:'loader-A',url:faunaDocumentURL(AUDIT_BASE,'one')},body:Buffer.from('synthetic original GLB body'),calls};
+ const send=async(method,params={})=>{
+  calls.push({method,...params});order.push('send:'+method+':'+(params.requestId||''));
+  if(method==='Network.disable'&&options.disableError)throw Error('synthetic disable failure');
+  if(method==='Network.disable'&&options.onDisable)options.onDisable(fake);
+  if(method==='Page.getFrameTree')return {frameTree:{frame:{...structuredClone(fake.frame),...(options.currentDocumentChanged&&calls.filter(c=>c.method===method).length>1?{loaderId:'changed-during-proof'}:{})}}};
+  if(method==='Network.streamResourceContent'){
+   if(options.streamUnsupported)throw Error('synthetic stream unsupported');
+   if(options.streamPending)return new Promise(resolve=>{fake.resolveACK=resolve;});if(options.streamACK)return options.streamACK;
+   return {bufferedData:fake.body.subarray(0,options.prefixBytes||0).toString('base64')};
+  }
+  if(method==='Network.getResponseBody'){
+   if(options.bodyError)throw Error('synthetic body unavailable');
+   return options.malformedBody?{body:'@@@@',base64Encoded:true}:{body:fake.body.toString('base64'),base64Encoded:true};
+  }
+  return {};
+ };
+ const cdp={send,on(method,fn){if(!listeners.has(method))listeners.set(method,new Set());listeners.get(method).add(fn);},off(method,fn){listeners.get(method)?.delete(fn);}};
+ const page={cdp:send,async events(){drains++;maxDrains=Math.max(maxDrains,drains);try{await Promise.resolve();return queue.splice(0);}finally{drains--;}}};
+ const observer=(kind==='PW'?createPlaywrightFaunaObserver(cdp,options.paths||['models/fake.glb'],{base:AUDIT_BASE,...options}):createEgoFaunaObserver(page,options.paths||['models/fake.glb'],{base:AUDIT_BASE,...options}));
+ fake.observer=observer;fake.order=order;fake.listenerCount=()=>[...listeners.values()].reduce((n,set)=>n+set.size,0);fake.maxDrains=()=>maxDrains;
+ fake.emit=(method,params)=>{order.push('event:'+method+':'+(params.requestId||''));if(kind==='PW'){for(const fn of listeners.get(method)||[])fn(params);}else queue.push({method,params});};
+ fake.requirement=()=>({url:'https://fauna.synthetic.invalid/models/fake.glb?v=synthetic',path:'models/fake.glb',assetId:'synthetic',sha256:createHash('sha256').update(fake.body).digest('hex')});
+
+ fake.documentLoad=()=>{
+  if(docs.has(fake.frame.loaderId))return;docs.add(fake.frame.loaderId);
+  const meta={requestId:'doc-'+fake.frame.loaderId,frameId:fake.frame.id,loaderId:fake.frame.loaderId,sessionId:options.sessionId};
+  fake.emit('Network.requestWillBeSent',{...meta,type:'Document',request:{url:fake.frame.url,method:'GET'},...(options.documentRedirect?{redirectResponse:{status:302}}:{})});
+  fake.emit('Network.responseReceived',{...meta,response:{url:fake.frame.url,status:200}});fake.emit('Network.loadingFinished',meta);
+ };
+ fake.load=(changes={})=>{
+  fake.documentLoad();
+  const request={requestId:'req-'+fake.frame.loaderId,frameId:fake.frame.id,loaderId:fake.frame.loaderId,sessionId:options.sessionId,documentURL:fake.frame.url,request:{url:fake.requirement().url,method:'GET'},...changes.request};
+  const response={requestId:request.requestId,frameId:request.frameId,loaderId:request.loaderId,sessionId:request.sessionId,response:{url:request.request.url,status:200},...changes.response};
+  fake.emit('Network.requestWillBeSent',request);fake.emit('Network.responseReceived',response);
+  const prefix=options.prefixBytes||0;
+  if(prefix)fake.emit('Network.dataReceived',{requestId:request.requestId,timestamp:++stamp,dataLength:prefix,encodedDataLength:prefix});
+  const chunk=options.partial?fake.body.subarray(prefix,-1):fake.body.subarray(prefix);
+  const data={requestId:request.requestId,timestamp:++stamp,dataLength:chunk.length,encodedDataLength:chunk.length,data:chunk.toString('base64'),...options.chunkEvent};if(!options.noChunks)fake.emit('Network.dataReceived',data);if(options.duplicateChunk)fake.emit('Network.dataReceived',data);
+  if(options.gap)fake.emit('Network.dataReceived',{requestId:request.requestId,timestamp:++stamp,dataLength:1,encodedDataLength:1});
+  fake.emit(changes.failed?'Network.loadingFailed':'Network.loadingFinished',{requestId:changes.terminalId||request.requestId,errorText:'synthetic failure',...changes.terminal});
+ };
+ fake.persistRecord=()=>{
+  const dir=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'coro-fauna-body-preproof-'))),path=join(dir,'map-fauna-preproof-'+fake.map+'.json'),ref=fake.requirement();
+  const record={map:fake.map,documentURL:fake.frame.url,declaredPreload:[ref.assetId],animals:[{id:'synthetic-0',source:'gltf',assetId:ref.assetId,assetPath:ref.path,assetURL:ref.url}]};
+  const text=JSON.stringify({scope:'GLTF record before network proof; not acceptance',record})+'\n';fs.writeFileSync(path,text,{flag:'wx'});
+  fake.preproof={dir,path,sha256:createHash('sha256').update(text).digest('hex'),byteLength:Buffer.byteLength(text)};return fake.preproof;
+ };
+ fake.removePreproof=()=>{if(fake.preproof)fs.rmSync(fake.preproof.dir,{recursive:true,force:true});};
+ fake.prove=(req=fake.requirement())=>observer.prove({map:fake.map,documentURL:fake.frame.url,requirements:[req],preproof:fake.preproof});
+ return fake;
+}
+for(const kind of ['PW','Ego']){
+ test(`${kind}: original body observer binds current document and measures bytes once, across two documents`,async()=>{
+  const f=fakeBodyTransport(kind);await f.observer.start();
+  try{
+   f.load();const first=await f.prove();assert.equal(first.proofs[f.requirement().url].byteLength,f.body.length);assert.equal(first.proofs[f.requirement().url].sha256,f.requirement().sha256);
+   f.map='two';f.frame={...f.frame,loaderId:'loader-B',url:faunaDocumentURL(AUDIT_BASE,'two')};f.load();
+   const second=await f.prove();assert.equal(second.proofs[f.requirement().url].requestId,'req-loader-B');assert.notEqual(second.document.loaderId,first.document.loaderId);
+  }finally{await f.observer.close();}
+  assert.equal(f.calls.filter(c=>c.method==='Network.getResponseBody').length,2);assert.equal(f.calls.filter(c=>c.method==='Network.disable').length,1);
+  assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().closed,true);assert.ok(f.maxDrains()<=1);
+ });
+ for(const [name,changes,expected] of [
+  ['wrong request terminal',{terminalId:'alien'},/pendente/],['wrong request document',{request:{documentURL:'https://fauna.synthetic.invalid/old'}},/documentURL/],
+  ['wrong frame',{request:{frameId:'alien'}},/pendente/],['wrong loader',{request:{loaderId:'alien'}},/pendente/],
+  ['wrong response loader',{response:{loaderId:'alien'}},/loader/],['HTTPbad',{response:{response:{url:'https://fauna.synthetic.invalid/models/fake.glb?v=synthetic',status:404}}},/falhou/],
+  ['query wrong',{request:{request:{url:'https://fauna.synthetic.invalid/models/fake.glb?v=wrong',method:'GET'}}},/URL\/status/],
+  ['failed original',{failed:true},/loadingFailed/],
+ ])test(`${kind}: real observer rejects ${name}`,async()=>{
+  const f=fakeBodyTransport(kind,{deadlineMs:12});await f.observer.start();
+  try{f.load(changes);await assert.rejects(f.prove(),expected);}
+  finally{
+   if(name==='wrong request document'){
+    try{await f.observer.close();}catch(error){assert.equal(error.constructor,Error);assert.equal(error.message,'fauna body cleanup: pending body/ACK work at close');}
+   }else await f.observer.close();
+  }
+  if(name==='wrong request document'){
+   assert.equal(f.observer.diagnostics().closed,true);assert.equal(f.calls.at(-1).method,'Network.disable');assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().timers,0);assert.equal(f.observer.diagnostics().heldBytes,0);
+  }
+ });
+ for(const [name,options,pattern] of [['body unavailable',{bodyError:true},/body unavailable/],['malformed body',{malformedBody:true},/base64/],['digest failure',{digest:()=>{throw Error('synthetic digest failure');}},/digest failure/],['digest pending',{digest:()=>new Promise(()=>{})},/deadline/]])test(`${kind}: ${name} stays closed/red`,async()=>{
+  const f=fakeBodyTransport(kind,{deadlineMs:12,...options});await f.observer.start();try{f.load();await assert.rejects(f.prove(),pattern);}finally{await f.observer.close();}
+  assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.listenerCount(),0);
+ });
+ test(`${kind}: valid-shaped but wrong SHA and ambiguous original requests are rejected`,async()=>{
+  for(const mode of ['sha','duplicate']){
+   const f=fakeBodyTransport(kind);await f.observer.start();try{
+    f.load();if(mode==='duplicate')f.load({request:{requestId:'req-duplicate'}});
+    const req=f.requirement();if(mode==='sha')req.sha256='0'.repeat(64);
+    await assert.rejects(f.prove(req),mode==='sha'?/SHA256/:/ambígua/);
+   }finally{
+    if(mode==='duplicate'){
+     try{await f.observer.close();}catch(error){assert.equal(error.constructor,Error);assert.equal(error.message,'fauna body cleanup: pending body/ACK work at close');}
+    }else await f.observer.close();
+   }
+   assert.equal(f.observer.diagnostics().closed,true);assert.equal(f.calls.at(-1).method,'Network.disable');assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().timers,0);assert.equal(f.observer.diagnostics().heldBytes,0);
+  }
+ });
+ test(`${kind}: cleanup runs after boot failure and cleanup failure cannot become success`,async()=>{
+  const f=fakeBodyTransport(kind);await f.observer.start();let primary;
+  try{throw Error('synthetic boot failure');}catch(error){primary=error;}finally{await f.observer.close();}
+  assert.match(primary.message,/boot failure/);assert.equal(f.listenerCount(),0);assert.equal(f.calls.at(-1).method,'Network.disable');
+  const broken=fakeBodyTransport(kind,{disableError:true});await broken.observer.start();await assert.rejects(broken.observer.close(),/disable failure/);assert.equal(broken.listenerCount(),0);assert.equal(broken.observer.diagnostics().closed,true);
+ });
+ test(`${kind}: failure arriving before cleanup invalidates an already selected body`,async()=>{
+  const f=fakeBodyTransport(kind);await f.observer.start();f.load();await f.prove();
+  f.emit('Network.loadingFailed',{requestId:'req-loader-A',errorText:'synthetic late failure'});
+  await assert.rejects(f.observer.close(),/late failure/);assert.equal(f.listenerCount(),0);
+ });
+}
+
+for(const kind of ['PW','Ego'])test(`${kind}: closing pending body work still disables observation and removes owned timers`,async()=>{
+ const f=fakeBodyTransport(kind,{deadlineMs:30,digest:()=>new Promise(()=>{})});await f.observer.start();f.load();
+ await assert.rejects(f.observer.close(),/pending body|observer closed/);assert.equal(f.calls.at(-1).method,'Network.disable');assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().pending,0);
+});
+
+
+for(const kind of ['PW','Ego'])test(`${kind}: closing after digest entry refuses actual pending body work`,async()=>{
+ let markEntered;const entered=new Promise(resolve=>{markEntered=resolve;});
+ const f=fakeBodyTransport(kind,{deadlineMs:30,digest:()=>{markEntered();return new Promise(()=>{});}});await f.observer.start();f.load();
+ const observedProof=f.prove().then(value=>({value}),error=>({error}));
+ try{
+  await Promise.race([entered,observedProof.then(()=>{throw Error('proof settled before pending digest entry');})]);
+  assert.ok(f.observer.diagnostics().pending>0);
+  await assert.rejects(f.observer.close(),error=>{assert.equal(error.message,'fauna body cleanup: pending body/ACK work at close');return true;});
+  const outcome=await observedProof;assert.ok(outcome.error instanceof Error);assert.ok(['Observador não está ativo','Page.getFrameTree: observer closed','preproof: observer closed','event drain: observer closed'].includes(outcome.error.message),outcome.error.message);
+ }finally{if(!f.observer.diagnostics().closed)await assert.rejects(f.observer.close(),error=>{assert.equal(error.message,'fauna body cleanup: pending body/ACK work at close');return true;});}
+ assert.equal(f.calls.at(-1).method,'Network.disable');assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().timers,0);assert.equal(f.observer.diagnostics().heldBytes,0);
+});
+
+for(const kind of ['PW','Ego'])test(`${kind}: reused request ID and navigation during proof are rejected`,async()=>{
+ for(const mode of ['reused','navigation']){
+  const f=fakeBodyTransport(kind,{currentDocumentChanged:mode==='navigation'});await f.observer.start();
+  try{f.load();if(mode==='reused')f.load();await assert.rejects(f.prove(),mode==='reused'?/requestId/:/Documento mudou/);}
+  finally{if(mode==='reused'&&kind==='PW')await assert.rejects(f.observer.close(),error=>{assert.match(error.message,/^fauna body cleanup: (?:pending body\/ACK work at close; )?fauna body: requestId reutilizado\/redirect$/);return true;});else await f.observer.close();}
+  assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().timers,0);assert.equal(f.observer.diagnostics().heldBytes,0);
+ }
+});
+
+for(const kind of ['PW','Ego'])for(const timing of ['before-close','disable-ack'])for(const state of ['pending','404'])test(`${kind}: late second request (${timing}/${state}) invalidates all proved bindings`,async()=>{
+ const second=f=>{
+  const meta={requestId:'late-second',frameId:f.frame.id,loaderId:f.frame.loaderId};
+  f.emit('Network.requestWillBeSent',{...meta,documentURL:f.frame.url,request:{url:f.requirement().url,method:'GET'}});
+  if(state==='404'){f.emit('Network.responseReceived',{...meta,response:{url:f.requirement().url,status:404}});f.emit('Network.loadingFinished',meta);}
+ };
+ const f=fakeBodyTransport(kind,timing==='disable-ack'?{onDisable:second}:{});await f.observer.start();f.load();await f.prove();
+ if(timing==='before-close')second(f);
+ await assert.rejects(f.observer.close(),/tardia ambígua/);assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().closed,true);
+});
+for(const kind of ['PW','Ego'])for(const mode of ['nominal','other-map','other-origin','redirect-same-final','preproof-exists','preproof-cap','preproof-fs'])test(`${kind}: actual collector/proof/auditor bind requested BASE/path/map (${mode})`,async()=>{
+  const options={paths:refsFor('escadao').map(r=>r.path),documentRedirect:mode==='redirect-same-final'};
+  const f=fakeBodyTransport(kind,options);f.map='escadao';
+  const expected=faunaDocumentURL(AUDIT_BASE,'escadao'),dir=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'coro-fauna-collector-preproof-')));let requested,proveCalls=0;
+  const refs=structuredClone(refsFor('escadao')).map(r=>({...r,sha256:createHash('sha256').update(f.body).digest('hex')}));
+  const page={
+   async goto(url){
+    requested=url;f.frame.url=mode==='other-map'?faunaDocumentURL(AUDIT_BASE,'corrego'):mode==='other-origin'?faunaDocumentURL('https://wrong.synthetic.invalid','escadao'):url;
+    f.documentLoad();
+    for(const [i,ref] of refs.entries()){
+     const meta={requestId:'asset-'+i,frameId:f.frame.id,loaderId:f.frame.loaderId},assetURL=new URL(assetUrl(ref.path),f.frame.url).href;
+     f.emit('Network.requestWillBeSent',{...meta,documentURL:f.frame.url,request:{url:assetURL,method:'GET'}});
+     f.emit('Network.responseReceived',{...meta,response:{url:assetURL,status:200}});f.emit('Network.dataReceived',{requestId:meta.requestId,timestamp:i+1,dataLength:f.body.length,encodedDataLength:f.body.length,data:f.body.toString('base64')});f.emit('Network.loadingFinished',meta);
+    }
+   },
+   async waitForFunction(){},
+   // Synthetic scene-data transport only; the actual outercollector/proof/audit are executed.
+   async evaluate(){const result=validSample(refs[0]);delete result.document;result.documentURL=f.frame.url;for(const a of result.animals){delete a.response;a.assetURL=new URL(assetUrl(a.assetPath),f.frame.url).href;}
+    if(mode==='preproof-exists')fs.writeFileSync(join(dir,'map-fauna-preproof-escadao.json'),'existing',{flag:'wx'});
+    if(mode==='preproof-cap')result.padding='x'.repeat(2*1024*1024);
+    if(mode==='preproof-fs')fs.rmSync(dir,{recursive:true,force:true});return result;},
+  };
+  await f.observer.start();
+  try{
+   const capture=()=>captureCuratedFauna(page,{base:AUDIT_BASE,dir,fotos:0,references:refs,network:{...f.observer,prove:async value=>{proveCalls++;const saved=JSON.parse(fs.readFileSync(value.preproof.path,'utf8'));assert.equal(saved.record.documentURL,f.frame.url);assert.equal(saved.record.animals.length,validSample(refs[0]).animals.length);assert.ok(saved.record.animals.every(a=>a.response===undefined));return f.observer.prove(value);},navigationURL:map=>faunaDocumentURL(AUDIT_BASE,map)}});
+   if(mode==='nominal'){
+    const data=await capture();assert.equal(auditCensusActual(data,refs,{base:AUDIT_BASE}).pass,true);const saved=JSON.parse(fs.readFileSync(join(dir,'map-fauna-preproof-escadao.json'),'utf8'));assert.equal(saved.scope,'GLTF record before network proof; not acceptance');assert.equal(saved.record.map,'escadao');assert.equal(saved.record.documentURL,expected);assert.equal(saved.record.document,undefined);assert.equal(proveCalls,1);
+   }else{await assert.rejects(capture(),mode==='redirect-same-final'?/redirect/:mode==='preproof-exists'?/EEXIST/:mode==='preproof-cap'?/2MiB/:mode==='preproof-fs'?/ENOENT/:/navegação esperada/);if(mode.startsWith('preproof-'))assert.equal(proveCalls,0);}
+   assert.equal(requested,expected);
+  }finally{
+   try{
+    if(['other-map','other-origin','preproof-exists','preproof-cap','preproof-fs'].includes(mode)){
+     await f.observer.close().then(()=>{},error=>assert.match(error.message,/^fauna body cleanup: pending body\/ACK work at close$/));
+    }else await f.observer.close();
+   }finally{fs.rmSync(dir,{recursive:true,force:true});}
+  }
+  assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().closed,true);assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().timers,0);assert.equal(f.observer.diagnostics().heldBytes,0);
+});
+test('actual auditor requires trusted BASE',()=>{
+ const sample=validSample(refsFor('escadao')[0]);assert.equal(auditFaunaActual(sample,references,{base:AUDIT_BASE}).pass,true);assert.equal(auditFaunaActual(sample,references).pass,false);
+});
+for(const [name,target] of [['other-map',faunaDocumentURL(AUDIT_BASE,'corrego')],['other-origin',faunaDocumentURL('https://wrong.synthetic.invalid','escadao')],['wrong-path',AUDIT_BASE+'/other.html?map=escadao&hud=0&capture']])test(`actual auditor rejects bound bodies from ${name}`,()=>{
+ const sample=validSample(refsFor('escadao')[0]);assert.equal(auditFaunaActual(sample,references,{base:AUDIT_BASE}).pass,true);
+ const wrong=structuredClone(sample);wrong.document.url=target;
+ for(const a of wrong.animals){a.assetURL=new URL(assetUrl(a.assetPath),target).href;a.response.documentURL=target;a.response.url=a.response.responseURL=a.assetURL;}
+ const audit=auditFaunaActual(wrong,references,{base:AUDIT_BASE});assert.equal(audit.pass,false);assert.ok(audit.failures.some(f=>f.family==='response'));
+});
+
+const syntheticAbort={errorText:'net::ERR_ABORTED',canceled:true};
+for(const prefixBytes of [0,5,27])test(`PW: original stream prefix${prefixBytes} and queued chunks prove BODY, not EOF`,async()=>{
+ const f=fakeBodyTransport('PW',{prefixBytes,streamPending:true,deadlineMs:1000});await f.observer.start();
+ try{
+  f.persistRecord();f.load({failed:true,terminal:syntheticAbort});
+  const armIndex=f.order.indexOf('send:Network.streamResourceContent:req-loader-A'),responseIndex=f.order.indexOf('event:Network.responseReceived:req-loader-A');
+  assert.ok(armIndex>=0&&responseIndex>armIndex);
+  assert.equal(f.calls.filter(c=>c.method==='Network.streamResourceContent').length,1);
+  f.resolveACK({bufferedData:f.body.subarray(0,prefixBytes).toString('base64')});
+  const result=await f.prove(),ref=f.requirement(),proof=result.proofs[ref.url];
+  assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().heldBytes,0);
+  assert.equal(proof.body.complete,true);assert.equal(proof.body.source,'Network.streamResourceContent');assert.equal(proof.sha256,ref.sha256);assert.equal(proof.byteLength,f.body.length);
+  assert.deepEqual(proof.transportTerminal,{kind:'failed',...syntheticAbort,blockedReason:null,corsErrorStatus:null});
+  assert.equal(proof.body.accounting.prefixBytes,Math.min(prefixBytes,f.body.length));assert.equal(proof.body.accounting.decodedDataLength,f.body.length);
+  assert.equal(proof.gltfRecord.sha256,f.preproof.sha256);assert.equal(proof.gltfRecord.documentURL,f.frame.url);assert.equal(proof.gltfRecord.path,f.preproof.path);
+  assert.equal(faunaResponseError(proof,ref,{source:'gltf',assetId:ref.assetId,assetPath:ref.path,assetURL:ref.url},result.document,ref.url,f.frame.url),'');
+  for(const change of [p=>delete p.body,p=>p.body.accounting.ackComplete=false,p=>p.body.accounting.prefixBytes++,p=>p.transportTerminal.canceled=false,p=>p.transportTerminal.blockedReason='inspector',p=>p.transportTerminal.corsErrorStatus={},p=>delete p.gltfRecord]){
+   const wrong=structuredClone(proof);change(wrong);assert.notEqual(faunaResponseError(wrong,ref,{source:'gltf',assetId:ref.assetId,assetPath:ref.path,assetURL:ref.url},result.document,ref.url,f.frame.url),'');
+  }
+  assert.equal(f.calls.filter(c=>c.method==='Network.getResponseBody').length,0);
+ }finally{try{await f.observer.close();}finally{f.removePreproof();}}
+ assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().timers,0);assert.equal(f.observer.diagnostics().heldBytes,0);
+});
+
+for(const [name,options,changes,pattern,cleanupError] of [
+ ['no GLTF preproof',{}, {},/preproof|registro GLTF/,false],
+ ['partial body',{partial:true},{},/SHA256/,false],
+ ['gap after stream data',{gap:true},{},/contabilidade|gap/,false],
+ ['no decoded bytes',{noChunks:true},{},/contabilidade|gap/,false],
+ ['unsupported early command',{streamUnsupported:true},{},/unsupported/,false],
+ ['ACK missing',{streamPending:true},{},/deadline/,false],
+ ['ACK malformed',{streamACK:{bufferedData:'@@@@'}},{},/base64/,false],
+ ['ACK prefix not covered',{streamACK:{bufferedData:'YQ=='}},{},/contabilidade|gap/,false],
+ ['forged digest',{partial:true,digest:()=>createHash('sha256').update(Buffer.from('synthetic original GLB body')).digest('hex')},{},/SHA256 real/,false],
+ ['chunk malformed',{chunkEvent:{data:'@@@@'}},{},/base64/,true],
+ ['chunk length mismatch',{chunkEvent:{dataLength:1}},{},/dataLength/,true],
+ ['chunk timestamp reversed',{prefixBytes:5,chunkEvent:{timestamp:0}},{},/ordem/,true],
+ ['duplicate chunk',{duplicateChunk:true},{},/duplicado/,true],
+ ['decoded8MiB cap',{chunkEvent:{dataLength:8*1024*1024+1}},{},/cap/,true],
+ ['unsafe encoded count',{chunkEvent:{encodedDataLength:Number.MAX_SAFE_INTEGER+1}},{},/contadores/,true],
+ ['abort canceled false',{}, {terminal:{...syntheticAbort,canceled:false}},/loadingFailed/,false],
+ ['abort missing canceled',{}, {terminal:{errorText:'net::ERR_ABORTED'}},/loadingFailed/,false],
+ ['CORS',{}, {terminal:{...syntheticAbort,corsErrorStatus:{corsError:'DisallowedByMode'}}},/loadingFailed/,false],
+ ['blocked',{}, {terminal:{...syntheticAbort,blockedReason:'inspector'}},/loadingFailed/,false],
+ ['another failure',{}, {terminal:{errorText:'net::ERR_FAILED',canceled:true}},/loadingFailed/,false],
+])test(`PW: stream rejects ${name}`,async()=>{
+ const f=fakeBodyTransport('PW',{deadlineMs:15,...options});await f.observer.start();
+ try{
+  if(name!=='no GLTF preproof')f.persistRecord();f.load({failed:true,terminal:syntheticAbort,...changes});await assert.rejects(f.prove(),pattern);
+ }finally{
+  try{if(cleanupError)await assert.rejects(f.observer.close(),pattern);else await f.observer.close();}
+  finally{f.removePreproof();}
+ }
+ assert.equal(f.listenerCount(),0);const d=f.observer.diagnostics();assert.equal(d.pending,0);assert.equal(d.timers,0);assert.equal(d.heldBytes,0);
+ assert.equal(f.calls.filter(c=>c.method==='Network.getResponseBody').length,0);
+});
+
+for(const terminal of ['finished','failed'])for(const next of ['Network.loadingFinished','Network.loadingFailed','Network.dataReceived'])test(`PW: late ${next} cannot revive ${terminal}`,async()=>{
+ const f=fakeBodyTransport('PW');await f.observer.start();
+ try{
+  f.persistRecord();f.load(terminal==='failed'?{failed:true,terminal:syntheticAbort}:{});const result=await f.prove(),proof=result.proofs[f.requirement().url];
+  f.emit(next,{requestId:'req-loader-A',timestamp:99,dataLength:1,encodedDataLength:1,data:'YQ==',errorText:'synthetic late failure'});
+  assert.equal(proof.transportTerminal.kind,terminal);
+  await assert.rejects(f.observer.close(),next==='Network.dataReceived'?/chunk após terminal/:/terminal duplicado/);
+ }finally{if(!f.observer.diagnostics().closed)await f.observer.close();f.removePreproof();}
+ assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().heldBytes,0);
+});
+
+for(const kind of ['PW','Ego'])test(`${kind}: SHA injection cannot turn another original body into curated bytes`,async()=>{
+ const f=fakeBodyTransport(kind,{digest:()=> '1'.repeat(64)});await f.observer.start();
+ try{f.load();const req={...f.requirement(),sha256:'1'.repeat(64)};await assert.rejects(f.prove(req),/SHA256 real/);}finally{await f.observer.close();}
+ assert.equal(f.observer.diagnostics().heldBytes,0);
+});
+
+test('Ego: batched aborted body never starts a late stream fallback',async()=>{
+ const f=fakeBodyTransport('Ego');await f.observer.start();
+ try{f.persistRecord();f.load({failed:true,terminal:syntheticAbort});await assert.rejects(f.prove(),/loadingFailed/);}finally{try{await f.observer.close();}finally{f.removePreproof();}}
+ assert.equal(f.calls.filter(c=>c.method==='Network.streamResourceContent'||c.method==='Network.getResponseBody').length,0);
+});
+
+test('PW: ACK timeout is sticky; late RPC cannot recreate a completed proof or retain bytes',async()=>{
+ const f=fakeBodyTransport('PW',{streamPending:true,deadlineMs:12});await f.observer.start();
+ try{
+  f.persistRecord();f.load({failed:true,terminal:syntheticAbort});await assert.rejects(f.prove(),/deadline/);
+  f.resolveACK({bufferedData:f.body.toString('base64')});await Promise.resolve();await assert.rejects(f.prove(),/deadline/);
+ }finally{try{await f.observer.close();}finally{f.removePreproof();}}
+ assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().timers,0);assert.equal(f.observer.diagnostics().heldBytes,0);
+});
+
+test('PW: closing pending ACK cancels owned work, disables observation, and refuses acceptance',async()=>{
+ const f=fakeBodyTransport('PW',{streamPending:true,deadlineMs:30});await f.observer.start();f.load({failed:true,terminal:syntheticAbort});
+ await assert.rejects(f.observer.close(),/pending body\/ACK/);f.resolveACK({bufferedData:''});await Promise.resolve();
+ assert.equal(f.calls.at(-1).method,'Network.disable');assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().timers,0);assert.equal(f.observer.diagnostics().heldBytes,0);
+});
+
+test('PW:16MiB includes all original chunk queues before ACK',async()=>{
+ const f=fakeBodyTransport('PW',{streamPending:true,deadlineMs:100});f.body=Buffer.alloc(8*1024*1024,7);await f.observer.start();
+ try{
+  for(let i=0;i<3;i++)f.load({request:{requestId:'cap-'+i},terminalId:'absent-'+i});
+  await assert.rejects(f.prove(),/16MiB total/);await assert.rejects(f.observer.close(),/16MiB total/);
+ }finally{if(!f.observer.diagnostics().closed)await f.observer.close();}
+ assert.equal(f.observer.diagnostics().heldBytes,0);assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().timers,0);
+});
+
+test('PW: target request census caps early stream arms at16',async()=>{
+ const f=fakeBodyTransport('PW',{deadlineMs:100});await f.observer.start();
+ try{for(let i=0;i<17;i++)f.load({request:{requestId:'request-'+i},terminalId:'absent-'+i});await assert.rejects(f.prove(),/censo16/);await assert.rejects(f.observer.close(),/censo16/);}
+ finally{if(!f.observer.diagnostics().closed)await f.observer.close();}
+ assert.equal(f.calls.filter(c=>c.method==='Network.streamResourceContent').length,16);assert.equal(f.observer.diagnostics().heldBytes,0);
+});
+
+for(const mode of ['wrong-map','wrong-document','wrong-source','missing-preload','wrong-hash','symlink','late-tamper'])test(`PW: persisted GLTF preproof refuses ${mode}`,async()=>{
+ const f=fakeBodyTransport('PW');await f.observer.start();
+ try{
+  f.persistRecord();f.load({failed:true,terminal:syntheticAbort});
+  if(mode==='late-tamper'){await f.prove();fs.appendFileSync(f.preproof.path,' ');await assert.rejects(f.observer.close(),/preproof/);}
+  else{
+   if(mode==='symlink'){fs.renameSync(f.preproof.path,f.preproof.path+'.original');fs.symlinkSync(f.preproof.path+'.original',f.preproof.path);}
+   else if(mode==='wrong-hash')f.preproof.sha256='0'.repeat(64);
+   else{
+    const value=JSON.parse(fs.readFileSync(f.preproof.path,'utf8'));
+    if(mode==='wrong-map')value.record.map='another';if(mode==='wrong-document')value.record.documentURL+='&old=1';
+    if(mode==='wrong-source')value.record.animals[0].source='fallback';if(mode==='missing-preload')value.record.declaredPreload=[];
+    const text=JSON.stringify(value);fs.writeFileSync(f.preproof.path,text);f.preproof.sha256=createHash('sha256').update(text).digest('hex');f.preproof.byteLength=Buffer.byteLength(text);
+   }
+   await assert.rejects(f.prove(),mode==='symlink'?/ELOOP/:/preproof/);await f.observer.close();
+  }
+ }finally{if(!f.observer.diagnostics().closed)await f.observer.close();f.removePreproof();}
+ assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().heldBytes,0);
+});
+
+for(const changed of [false,true])test(`PW: session identity when exposed remains bound (${changed?'mismatch':'nominal'})`,async()=>{
+ const f=fakeBodyTransport('PW',{sessionId:'synthetic-session'});await f.observer.start();
+ try{f.load(changed?{response:{sessionId:'another-session'}}:{});if(changed)await assert.rejects(f.prove(),/session/);else{const r=await f.prove();assert.equal(r.document.sessionId,'synthetic-session');assert.equal(r.proofs[f.requirement().url].sessionId,r.document.sessionId);}}finally{await f.observer.close();}
+});
+
+
+for(const [payload,dataLength]of [['AB==',1],['AAB=',2],['AA=A',3]])test(`PW: noncanonical base64 ${payload} is refused before signature hashing`,async()=>{
+ const proto=Object.getPrototypeOf(createHash('sha256')),descriptor=Object.getOwnPropertyDescriptor(proto,'update');let payloadHashes=0;
+ Object.defineProperty(proto,'update',{...descriptor,value:function(value,...args){if(value===payload)payloadHashes++;return Reflect.apply(descriptor.value,this,[value,...args]);}});
+ const f=fakeBodyTransport('PW',{chunkEvent:{data:payload,dataLength},deadlineMs:1000});
+ try{
+  await f.observer.start();f.load({failed:true,terminal:syntheticAbort});await assert.rejects(f.prove(),/base64/);assert.equal(payloadHashes,0);await assert.rejects(f.observer.close(),/base64/);
+ }finally{try{if(!f.observer.diagnostics().closed)await f.observer.close();}finally{Object.defineProperty(proto,'update',descriptor);}}
+ assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().timers,0);assert.equal(f.observer.diagnostics().heldBytes,0);
+});
+
+test('PW: a canonical original 8MiB body reaches SHA/proof with constant-stack base64 validation',async()=>{
+ const f=fakeBodyTransport('PW',{deadlineMs:1000});f.body=Buffer.alloc(8*1024*1024,7);f.persistRecord();await f.observer.start();
+ try{
+  f.load({failed:true,terminal:syntheticAbort});const result=await f.prove(),proof=result.proofs[f.requirement().url];
+  assert.equal(proof.byteLength,8*1024*1024);assert.equal(proof.sha256,f.requirement().sha256);assert.equal(proof.body.complete,true);assert.equal(proof.transportTerminal.kind,'failed');
+  assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().heldBytes,0);assert.equal(f.calls.filter(c=>c.method==='Network.getResponseBody').length,0);
+ }finally{try{await f.observer.close();}finally{f.removePreproof();}}
+ assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().timers,0);assert.equal(f.observer.diagnostics().heldBytes,0);
+});
+
+for(const kind of ['wrong-type','oversized'])test(`PW: chunk ${kind} is rejected before any signature hash`,async()=>{
+ const payload=kind==='wrong-type'?{unexpected:true}:'A'.repeat(Math.ceil(8*1024*1024/3)*4+4),proto=Object.getPrototypeOf(createHash('sha256')),descriptor=Object.getOwnPropertyDescriptor(proto,'update');let payloadHashes=0;
+ assert.equal(typeof descriptor.value,'function');
+ Object.defineProperty(proto,'update',{...descriptor,value:function(value,...args){if(value===payload)payloadHashes++;return Reflect.apply(descriptor.value,this,[value,...args]);}});
+ const f=fakeBodyTransport('PW',{chunkEvent:{data:payload},deadlineMs:1000});
+ try{
+  await f.observer.start();f.load({failed:true,terminal:syntheticAbort});await assert.rejects(f.prove(),/base64 inválido\/excessivo/);assert.equal(payloadHashes,0);
+  await assert.rejects(f.observer.close(),/base64 inválido\/excessivo/);
+ }finally{try{if(!f.observer.diagnostics().closed)await f.observer.close();}finally{Object.defineProperty(proto,'update',descriptor);}}
+ assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().heldBytes,0);assert.equal(f.observer.diagnostics().pending,0);
+});
+
+test('PW: preproof growth after stat never invokes unbounded readFile or reads beyond expected+1',async()=>{
+ const f=fakeBodyTransport('PW',{deadlineMs:1000});f.persistRecord();await f.observer.start();
+ const probe=await fs.promises.open(f.preproof.path,'r'),proto=Object.getPrototypeOf(probe);await probe.close();
+ const original=Object.fromEntries(['stat','read','readFile'].map(key=>[key,Object.getOwnPropertyDescriptor(proto,key)])),identity=fs.statSync(f.preproof.path),fds=new Set();let grew=false,reads=0,unbounded=0,maxRequested=0;
+ try{
+  Object.defineProperty(proto,'stat',{...original.stat,value:async function(...args){const value=await Reflect.apply(original.stat.value,this,args);if(value.dev===identity.dev&&value.ino===identity.ino){fds.add(this.fd);if(!grew){grew=true;fs.appendFileSync(f.preproof.path,Buffer.alloc(2*1024*1024+1,120));}}return value;}});
+  Object.defineProperty(proto,'read',{...original.read,value:function(buffer,offset,length,position){if(fds.has(this.fd)){reads++;maxRequested=Math.max(maxRequested,buffer.length,length);assert.ok(buffer.length<=f.preproof.byteLength+1&&length<=f.preproof.byteLength+1);}return Reflect.apply(original.read.value,this,[buffer,offset,length,position]);}});
+  Object.defineProperty(proto,'readFile',{...original.readFile,value:function(...args){if(fds.has(this.fd)){unbounded++;throw Error('synthetic unbounded preproof readFile forbidden');}return Reflect.apply(original.readFile.value,this,args);}});
+  f.load({failed:true,terminal:syntheticAbort});await assert.rejects(f.prove(),/preproof alterado\/SHA divergente/);
+  assert.equal(grew,true);assert.ok(reads>0);assert.equal(unbounded,0);assert.ok(maxRequested<=f.preproof.byteLength+1);
+ }finally{
+  for(const [key,descriptor]of Object.entries(original))Object.defineProperty(proto,key,descriptor);
+  try{await f.observer.close();}finally{f.removePreproof();}
+ }
+ assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().timers,0);assert.equal(f.observer.diagnostics().heldBytes,0);
+});
+
+test('PW: a FIFO without a writer is rejected as nonregular without a pending blocking open',async()=>{
+ const f=fakeBodyTransport('PW',{deadlineMs:1000});f.persistRecord();fs.unlinkSync(f.preproof.path);
+ const created=spawnSync('mkfifo',[f.preproof.path],{encoding:'utf8',timeout:1000});assert.equal(created.status,0,created.stderr);assert.equal(fs.lstatSync(f.preproof.path).isFIFO(),true);
+ let rescueWriter=false;await f.observer.start();
+ try{f.load({failed:true,terminal:syntheticAbort});await assert.rejects(f.prove(),/preproof tamanho inválido/);}
+ finally{
+  try{let fd;try{fd=fs.openSync(f.preproof.path,fs.constants.O_WRONLY|fs.constants.O_NONBLOCK);rescueWriter=true;}catch(error){if(error.code!=='ENXIO')throw error;}finally{if(fd!==undefined)fs.closeSync(fd);}}
+  finally{try{await f.observer.close();}finally{f.removePreproof();}}
+ }
+ assert.equal(rescueWriter,false);assert.equal(f.listenerCount(),0);assert.equal(f.observer.diagnostics().pending,0);assert.equal(f.observer.diagnostics().timers,0);assert.equal(f.observer.diagnostics().heldBytes,0);
 });
