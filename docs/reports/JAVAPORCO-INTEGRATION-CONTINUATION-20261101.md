@@ -58,3 +58,27 @@ Testes privados384 históricos preservados, sem repetição; nova amostra canôn
 mais o check existente cobrem a adoção/default, sem substituir QA de rede.
 R849 prepara oferta/seleção cliente, R847 assume Room/index/WS/WT/backend em outra
 WT sobre R840cdec. Java055 ainda NÃO merged. Evidência A/JAVAPORCO-CODEC-R850-*.
+
+## Composição local R851/R855
+
+Merge ordinário Java055 aberto sobre52068, com todos os conflitos conciliados por
+símbolo. Game conserva armadura, economia, mantle, movimento e S4; glbchars combina
+reset de morte com os resets atuais; main conserva props/fauna sob demanda e
+telemetria arena. Codec/checker ficam no canônico R850, com os produtores Java dos
+checks passando explicitamente8. Boot conserva o snapshot completo e a prova gzip.
+Manga combina Float32 para normais e atributos normalizados, mantendo MT8 e MT9.
+Metadados R852/R855 unidos por chave: assets atuais intactos, hashes Java conferidos;
+aliases atuais preservados junto aos novos, sem sobrescrever fast/deploy/web antigos.
+
+R855 executou dez focais com saída0: codec completo, horda, disputa Game real em
+CPU, morte, manga, lajes, locomoção, origem TP, cosméticos e preview. São medidas
+técnicas de composição, sem aceite visual/Game no navegador. Fonte dos eventos:
+A/JAVAPORCO-COMPOSITION-R855-RUNS.json e logs por etapa. Oferta/seleção8 do cliente,
+backend integrado, gates completos e publicação continuam pendentes; este merge
+nunca deve ativar cliente8-only antes de todos os destinos suportarem8.
+
+#1208 recebeu novo achado de retry do manifesto; Root está verificando a causa
+antes de conciliar o reparo. R841 normalpush S4 falhou apenas no controle de boot:
+ORC2 compara posters concluídos em janelas de rede independentes e premiou20vs21
+mesmo com pool ansioso. R854 investiga medição causal sem afrouxar janela ou teto.
+R848 push de mãos segue separado, com dependências locais reparadas e focais verdes.

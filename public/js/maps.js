@@ -22,6 +22,16 @@ import { withVisibleShotOccluders } from './shot_surfaces.js';
 
    Ver `ALIAS_MAPA` logo abaixo do registro: id antigo continua resolvendo, e o motivo
    de isso não ser opcional está lá. */
+const JAVAPORCOS_META = { ctfMode: false, objectiveMode: 'horde',
+    loadingWall: '/img/loading-javaporcos.webp',
+    props: ['carro_batido_scan_03', 'perua_pichada_scan', 'junk_car', 'carro_batido_scan_07',
+      'dumpster', 'porta_aco', 'arvore_mata', 'shopping_cart', 'capim_touceira_a', 'capim_touceira_b',
+      'arbusto_mata_a', 'arbusto_mata_b', 'samambaia_mata', 'calathea_mata', 'galhos_secos', 'toco_arvore',
+      'tronco_caido', 'pedra_mata', 'saco_lixo', 'caixa_papelao', 'engradado_plastico', 'cadeira_plastico',
+      'pneu_velho', 'tambor_metal', 'tampa_bueiro', 'lixeira_metal', 'lata_enferrujada', 'poste_luz_praca',
+      'caixote_madeira'],
+    ambience: ['rat', 'pigeonGround', 'dog', 'parrot'],
+  };
 export const MAPS = {
   campomorro: { name: 'Campinho do Morro', ctfMode: true,
     props: ['arquibancada', 'junkyard_container', 'caixa_som_baile', 'stall', 'fav_house', 'pilha_pneus', 'moto_cg', 'fusca', 'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas', 'grama_corrego_01', 'grama_corrego_02', 'planta_corrego_taboa', 'planta_corrego_taioba'],
@@ -90,6 +100,9 @@ export const MAPS = {
     props: ['sertao_macambira', 'sertao_juazeiro', 'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'caixa_som_baile', 'casa_pedra', 'casa_geminada', 'igrejinha', 'caminhao_antigo'],
     ambience: ['rat', 'pigeonGround', 'parrot', 'calango', 'lagarto', 'sertaoGoat', 'sertaoHen', 'sertaoChick'],
   },
+  invasao_javaporcos: { name: 'Cidade Invadida', ...JAVAPORCOS_META },
+  distrito_rural: { name: 'Distrito Rural', ...JAVAPORCOS_META },
+  vila_da_mata: { name: 'Vila da Mata', ...JAVAPORCOS_META },
   penitenciaria: { name: 'CARANDIRU', ctfMode: true,
     props: [],
     ambience: ['rat', 'pigeonGround'],
@@ -117,6 +130,9 @@ const MODULOS = {
   atacadao_treta: () => import('./map_atacadao.js'),
   parque_treta: () => import('./map_parque.js'),
   velho_oeste: () => import('./map_velho_oeste.js'),
+  invasao_javaporcos: () => import('./map_invasao_javaporcos.js'),
+  distrito_rural: () => import('./map_javaporcos_rural.js'),
+  vila_da_mata: () => import('./map_javaporcos_vila.js'),
   penitenciaria: () => import('./map_penitenciaria.js'),
 };
 
@@ -139,6 +155,9 @@ const EXPORTS = {
   atacadao_treta: { build: 'buildAtacadao', props: 'ATACADAO_PROPS' },
   parque_treta: { build: 'buildParque', props: 'PARQUE_PROPS', ambience: 'PARQUE_AMBIENCE' },
   velho_oeste: { build: 'buildVelhoOeste', props: 'VELHO_OESTE_PROPS', ambience: 'VELHO_OESTE_AMBIENCE' },
+  invasao_javaporcos: { build: 'buildInvasaoJavaporcos', props: 'INVASAO_JAVAPORCOS_PROPS', preload: 'preloadJavaporcos' },
+  distrito_rural: {build:'buildDistritoRural',props:'DISTRITO_RURAL_PROPS',preload:'preloadJavaporcos'},
+  vila_da_mata: {build:'buildVilaDaMata',props:'VILA_DA_MATA_PROPS',preload:'preloadJavaporcos'},
   penitenciaria: { build: 'buildPenitenciaria', props: 'PENITENCIARIA_PROPS', ambience: 'PENITENCIARIA_AMBIENCE' },
 };
 
@@ -191,6 +210,8 @@ export const DEFAULT_MAP = 'praca_poderes';
 /* Mapas fora do jogo para retrabalho: saem do menu, não do registro (é dele que ~50
    réguas vivem). Contrato e volta: docs/maps/MAPAS-PARADOS.md. */
 export const MAPAS_PARADOS = new Set([
+  'distrito_rural',
+  'vila_da_mata',
   'mansao',
   'parque_treta',
   'campomorro',
@@ -286,3 +307,5 @@ export function mapaDaSessao({ urlMap, savedMap, pinned, oficina = false } = {})
   if (pinned) return guarda(savedMap, 'mapa fixado');
   return nextMapId(savedMap);
 }
+
+export const ehMapaJavaporcos = id => MAPS[resolveMapId(id)]?.objectiveMode === 'horde';
