@@ -73,3 +73,14 @@ Depois deste checkpoint recuperável e de seu ACTUAL independente: focais CPU/al
 Prova real493:26comandos em3,97s (PTY52891exit0), nominalPI10grupos/25cenários/423citações;9mutantes originais/2duplicatas reais fora dos donos simulados/7nominaisworkflow/4DG5/3WT causais. status0f1e1581 e26raws rehashados pelo supervisor; crítico leu todos. Pré-imagens do HEAD898 e pós-imagensCIe0d994e5/PIe6c48791 exatas. Game/package/asset/golden/SIM4d14d67384bfde37/140 preservados; sem repetir gameplay já aceito. Campos sem inventárioPID não recebem crédito de zeroresíduos.
 
 Este checkpoint só inclui CI,checkerPI e este registro. Hooks normais/checkfast/build/BOOTorçamento8pares no push e CI Linux25min ainda precisam passar no novo head; nenhuma aprovação de gameplay humano/visual universal/rede produtiva/merge/release. Próximo: publicação normal e leitura dos checks/fioV6eY no head atual. Objetivo integral47/Flávio/HQ/anúncios/pilotos e owners externos preservados.
+
+
+### QA própria de fauna e movimento — 2026-11-01T15:41:17.564010+00:00
+
+Port QA nativo do Codex sobre a fonte desta worktree: dois arquivos nominais e seis contraprovas passaram (CPU5a937693, críticoff130aab, ROOTa614b856). Build27127a67 e pós-build0a3d7af4 passaram, com revisão independente. Node26 foi executado; a configuração de destinoNode24 não equivale a execução nessa versão. A distribuição atualdd74b0ab compara4097arquivos públicos:206JS,3888assets e3exclusões já previstas; crítico872ec53a e ROOT4eed1fb8.
+
+Runtime próprio em9413: resultado293163ca/49.062s e fonte7129 estável, crítico31570dd3 e ROOTf82a3183. Escadão e Lajes têm dois animais GLTF e duas respostas originais concluídas, com corpo SHA/tamanho exatos e preproofs vinculados. Quatro capturas960×640 foram inspecionadas. Cada animal cumpriu600ticks; os16casos de fuga em Lajes cumpriram1200frames sem sobreposição ou falta de suporte e retornaram ao percurso. Servidor e12processos próprios encerrados sem resíduos; HTTP207 confirma HTML e206JS atuais.
+
+Os ticks são determinísticos; não representam vídeo em velocidade normal, partida humana, aparelho físico, multiplayer, aprovação editorial ou produção. A prova de corpo exercitou finished/getResponseBody, sem afirmar identidade do ArrayBuffer consumidor ou caminho de stream abortado. Os539arquivos públicos ignorados foram comparados na DI, sem guarda contínua posterior. Nenhuma prova Flávio foi atribuída a MOV.
+
+Próximo: checkpoint DCO com escopo11paths, comentário canônico usando origin/main atual, push normal com hooks, CI e respostas aos dois fios de revisão. Merges/release/produção, Operação Flávio, os47destinos, backend e mídia/áudio permanecem no objetivo; nenhum deles é aceito por este registro local.

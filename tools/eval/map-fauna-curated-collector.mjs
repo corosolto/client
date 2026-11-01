@@ -1,10 +1,25 @@
 // Um único coletor para Ego local e Chromium de CI; dados vêm dos modelos instanciados.
-export async function captureCuratedFauna(page,{base,dir,fotos=2}) {
+// Mapas e tipos vêm das referências curadas (passadas via config pelos wrappers): o
+// coletor não escolhe mapa por conta própria. Por mapa, coleta TODOS os animais de
+// todos os tipos referenciados (filter, nunca find).
+export async function captureCuratedFauna(page,{base,dir,fotos,references,network}) {
+if(!Array.isArray(references)||!references.length)throw Error('Referências curadas ausentes: sem elas o coletor não sabe o que medir.');
+const preproofFS=await import('node:fs/promises'),preproofPath=await import('node:path'),preproofCrypto=await import('node:crypto');
+if(typeof dir!=='string'||!preproofPath.isAbsolute(dir)||await preproofFS.realpath(dir)!==dir||(await preproofFS.readdir(dir)).length)throw Error('Preproof exige diretório autorizado físico e novo/vazio.');
+if(!network||typeof network.prove!=='function'||typeof network.navigationURL!=='function')throw Error('Observador de corpo original obrigatório antes do goto.');
+const byMap=new Map();
+for(const ref of references){
+ if(!byMap.has(ref.map))byMap.set(ref.map,new Map());
+ if(byMap.get(ref.map).has(ref.type))throw Error(`Referência duplicada ${ref.map}/${ref.type}.`);
+ byMap.get(ref.map).set(ref.type,ref);
+}
+const photoMaps=fotos??byMap.size;
 const results=[];
-for(const [map,type] of [['escadao','chicken'],['lajes','cat']]){
- await page.goto(base+'/mapview.html?map='+map+'&hud=0&capture');await page.waitForFunction(()=>window.MAPEVAL?.ready,undefined,{timeout:90000});
- const record=await page.evaluate(async({map,type})=>{
-  const THREE=await import('three'),{MAPS}=await import('/js/maps.js'),world=window.__gworld,targets=world.ambience.animals.filter(a=>a.type===type),animals=[];
+for(const [mapIndex,[map,types]] of [...byMap].entries()){
+ const expectedDocumentURL=network.navigationURL(map);
+ await page.goto(expectedDocumentURL);await page.waitForFunction(()=>window.MAPEVAL?.ready,undefined,{timeout:90000});
+ const record=await page.evaluate(async({map,types})=>{
+  const THREE=await import('three'),{MAPS}=await import('/js/maps.js'),{assetUrl}=await import('/js/data/asseturl.js'),world=window.__gworld,wanted=new Set(types),targets=world.ambience.animals.filter(a=>wanted.has(a.type)),animals=[];
   for(const a of targets){
   const texture=t=>t?{width:t.image?.naturalWidth||t.image?.videoWidth||t.image?.width||0,height:t.image?.naturalHeight||t.image?.videoHeight||t.image?.height||0,colorSpace:t.colorSpace||''}:null;
   const meshes=[];a.model.traverse(o=>{if(o.isMesh)meshes.push({name:o.name,skinned:!!o.isSkinnedMesh,triangles:(o.geometry.index?.count||o.geometry.attributes.position.count)/3,materials:(Array.isArray(o.material)?o.material:[o.material]).map(m=>({name:m.name,albedo:texture(m.map),normal:texture(m.normalMap),roughness:texture(m.roughnessMap)}))});});
@@ -17,11 +32,51 @@ for(const [map,type] of [['escadao','chicken'],['lajes','cat']]){
    previousPose=current;previousPosition.copy(a.root.position);
   }
   world.ambience.reset();a.root.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(a.root),p=a.root.position.toArray(),center=box.getCenter(new THREE.Vector3()).toArray();window.MAPEVAL.view([p[0]+1.5,p[1]+1.62,p[2]+2.7],center);
-  animals.push({id:a.id,type:a.type,source:a.source,assetId:a.root.userData.assetId,assetPath:a.root.userData.assetPath,speed:a.speed,turnRate:a.turnRate,position:p,bounds:{min:box.min.toArray(),max:box.max.toArray(),size:box.getSize(new THREE.Vector3()).toArray()},actions:Object.fromEntries(Object.entries(a.actions).map(([k,v])=>[k,v.getClip().name])),meshes,motion:{distance,localPoseChanges,walkFrames,activeClip,maxYawDelta,steps:600,dt:1/60,method:'actual controller+mixer deterministic virtual ticks, not normal-speed video'},camera:{from:window.MAPEVAL.cam.position.toArray(),look:center,fov:window.MAPEVAL.cam.fov}});
-  }return{map,declaredPreload:MAPS[map].ambience,animals};
- },{map,type});
- const animal=record.animals[0];if(animal&&results.length<fotos){await page.screenshot({path:dir+'/map-fauna-curated-'+map+'-'+type+'-player.png'});await page.evaluate(({p,look})=>window.MAPEVAL.view([p[0]+.8,p[1]+.75,p[2]+1.2],look),{p:animal.position,look:animal.camera.look});await page.screenshot({path:dir+'/map-fauna-curated-'+map+'-'+type+'-close.png'});}
- if(map==='lajes'&&animal)animal.fleeSpace=await captureLajesCatEscapeSpace(page);
+  animals.push({id:a.id,type:a.type,source:a.source,assetId:a.root.userData.assetId,assetPath:a.root.userData.assetPath,assetURL:new URL(assetUrl(a.root.userData.assetPath),location.href).href,speed:a.speed,turnRate:a.turnRate,position:p,bounds:{min:box.min.toArray(),max:box.max.toArray(),size:box.getSize(new THREE.Vector3()).toArray()},actions:Object.fromEntries(Object.entries(a.actions).map(([k,v])=>[k,v.getClip().name])),meshes,motion:{distance,localPoseChanges,walkFrames,activeClip,maxYawDelta,steps:600,dt:1/60,method:'actual controller+mixer deterministic virtual ticks, not normal-speed video'},camera:{from:window.MAPEVAL.cam.position.toArray(),look:center,fov:window.MAPEVAL.cam.fov}});
+  }return{map,documentURL:location.href,declaredPreload:MAPS[map].ambience,animals};
+ },{map,types:[...types.keys()]});
+  const requirements=new Map();
+  for(const animal of record.animals){
+   const ref=types.get(animal.type);
+   if(!ref||animal.source!=='gltf'||animal.assetId!==ref.assetId||animal.assetPath!==ref.path)throw Error('Animal real não corresponde à referência curada');
+   requirements.set(animal.assetURL,{url:animal.assetURL,path:ref.path,assetId:ref.assetId,sha256:ref.sha256});
+  }
+  if(!/^[a-z][a-z0-9_]*$/.test(map))throw Error('Mapa inválido para preproof.');
+  const preproofLimit=2*1024*1024;let preproofBudget=1,preproofRoot=true;const members=new WeakMap();
+  const add=bytes=>{preproofBudget+=bytes;if(preproofBudget>preproofLimit)throw Error('Preproof excede2MiB de serialização bounded.');};
+  const stringBytes=value=>{add(2);for(let i=0;i<value.length;i++){
+   const c=value.charCodeAt(i);if(c===34||c===92)add(2);else if(c<32)add([8,9,10,12,13].includes(c)?2:6);
+   else if(c>=0xd800&&c<=0xdbff&&value.charCodeAt(i+1)>=0xdc00&&value.charCodeAt(i+1)<=0xdfff){add(4);i++;}
+   else add(c>=0xd800&&c<=0xdfff?6:c<128?1:c<2048?2:3);
+  }};
+  const preproofText=JSON.stringify({scope:'GLTF record before network proof; not acceptance',record},function(key,value){
+   const omitted=value===undefined||typeof value==='function'||typeof value==='symbol';
+   if(omitted&&!Array.isArray(this))return value;
+   if(!preproofRoot){const n=members.get(this)||0;members.set(this,n+1);if(n)add(1);if(!Array.isArray(this)){stringBytes(key);add(1);}}else preproofRoot=false;
+   if(typeof value==='string')stringBytes(value);else if(value&&typeof value==='object'){const proto=Object.getPrototypeOf(value);if(!Array.isArray(value)&&proto!==Object.prototype&&proto!==null)throw Error('Preproof exige registro JSON simples.');members.set(value,0);add(2);}
+   else add(value===null||omitted||typeof value==='number'&&!Number.isFinite(value)?4:String(value).length);
+   return value;
+  })+'\n';
+  const preproofBytes=Buffer.byteLength(preproofText);if(preproofBytes>preproofLimit)throw Error('Preproof excede2MiB.');
+  const preproof={dir,path:preproofPath.join(dir,'map-fauna-preproof-'+map+'.json'),byteLength:preproofBytes,sha256:preproofCrypto.createHash('sha256').update(preproofText).digest('hex')};
+  await preproofFS.writeFile(preproof.path,preproofText,{flag:'wx'});
+  const measured=await network.prove({map,documentURL:record.documentURL,requirements:[...requirements.values()],preproof});
+  record.document=measured.document;delete record.documentURL;
+  for(const animal of record.animals){
+   if(!measured.proofs[animal.assetURL])throw Error('Corpo original não comprovado para '+map+'/'+animal.id);
+   animal.response={...measured.proofs[animal.assetURL]};
+  }
+ for(const animal of record.animals){
+  const ref=types.get(animal.type);
+  if(ref?.fleeSpace===true&&map==='lajes'&&animal.type==='cat')animal.fleeSpace=await captureLajesCatEscapeSpace(page);
+ }
+ // Compatibilidade CLI: fotos limita quantos mapas recebem duas vistas por animal.
+ if(mapIndex<photoMaps)for(const animal of record.animals){
+  await page.evaluate(({p,look})=>window.MAPEVAL.view([p[0]+1.5,p[1]+1.62,p[2]+2.7],look),{p:animal.position,look:animal.camera.look});
+  await page.screenshot({path:dir+'/map-fauna-curated-'+map+'-'+animal.id+'-player.png'});
+  await page.evaluate(({p,look})=>window.MAPEVAL.view([p[0]+.8,p[1]+.75,p[2]+1.2],look),{p:animal.position,look:animal.camera.look});
+  await page.screenshot({path:dir+'/map-fauna-curated-'+map+'-'+animal.id+'-close.png'});
+ }
  results.push(record);
 }
 async function captureLajesCatEscapeSpace(page){
