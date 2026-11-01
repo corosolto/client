@@ -11,7 +11,7 @@ function templateDecision(def,opts,{available=true,mutate=value=>value}={}){
   const end=source.indexOf('  const withWeapon =',start);
   assert.ok(start>=0&&end>start,'real GLB template boundary missing');
   return vm.runInNewContext(source.slice(start,end).replace('export ','')+'return template;\n}\nbuildCharacterModel(def,opts)',{
-    def,opts,_clips:{},_base:new Map([['barbudo',{kind:'base'}]]),
+    def,opts,_clips:{},_base:new Map([['barbudo',{kind:'base'}]]),_bodyOrigins:new WeakMap(),
     _skins:new Map(available?[['lula-cyborg',{character:'barbudo',model:{kind:'skin'}}]]:[]),
   });
 }
