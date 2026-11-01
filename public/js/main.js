@@ -938,7 +938,7 @@ function previewVideoVisible() {
   return document.querySelector('.char-preview-box')?.classList.contains('has-video') === true;
 }
 function previewModelActive(selectionOpen,hubOpen) {
-  return !pvCompact.matches && (selectionOpen || (hubOpen && !pvNarrow.matches)) && !previewVideoVisible();
+  return !pvCompact.matches && (selectionOpen || (hubOpen && !pvNarrow.matches)) && !$('char-preview')?.classList.contains('hidden') && !previewVideoVisible();
 }
 function previewUsesStills() {
   return staticPreviews || pvCompact.matches || (pvNarrow.matches && !$('main-menu')?.classList.contains('hidden'));
@@ -1259,10 +1259,13 @@ function pvSetChar(def) {
   if (previewUsesStills()) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
-  clearStaticPreview();pvStopVideo();
-  $('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');
-  document.querySelector('.pv-hints')?.classList.remove('hidden');
-  for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label)label.hidden=true;}
+  const showCanvas=()=>{
+    clearStaticPreview();pvStopVideo();
+    $('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');
+    document.querySelector('.pv-hints')?.classList.remove('hidden');
+    for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label)label.hidden=true;}
+  };
+  showStaticPreview(def);
   // Swap to the real rigged GLB (idle) once loaded, if this is still the selection.
   const showBox = () => {   // procedural fallback (only when there's no GLB at all)
     if (p.model) p.scene.remove(p.model);
@@ -1270,12 +1273,12 @@ function pvSetChar(def) {
     p.model = buildCharacter(def).group;
     p.model.rotation.y = -0.4;
     p.scene.add(p.model);
+    showCanvas();
   };
   // ?nav=1 mantém o preview procedural; web-assets.spec.js cobre o GLB real.
   if (navOnly) { showBox(); return; }
   if (GLB_CHARS.has(def.id)) {
-    // Keep the PREVIOUS model visible while the real GLB streams in — never flash the
-    // blocky placeholder for a character that has a real model (the pop-in bug).
+    // O retrato mantém a identidade selecionada enquanto o GLB carrega ou falha.
     const arma = armaDoPreview(def.id);
     Promise.all([preloadCharacterAssets([def.id], { weapons:[arma.weaponId] }),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
       preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId),
@@ -1286,7 +1289,8 @@ function pvSetChar(def) {
       // (era o "posturas bizarras" de 05/08). Ângulos por classe em glbchars.js. No jogo,
       // nada muda.
       const m = hasModel(def.id) ? buildCharacterModel(def, { weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, gloveSkinId: arma.gloveSkinId, preview: true }) : null;
-      if (!m) { if (!p.model) showBox(); return; }   // já há um personagem na tela: manter, nunca piscar a caixa
+      if (!m) return;
+      showCanvas();
       if (p.model) p.scene.remove(p.model);
       // Evidência do que foi montado na mão (régua LB20): os valores saem do objeto 3D,
       // não da intenção - canvas não se lê e intenção não prova nada.
@@ -1312,7 +1316,7 @@ function pvSetChar(def) {
       // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
       // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.
       if (PV_CAM_MAOS) enquadrarMaos(p, m);
-    }).catch(() => { if (my === pvToken && previewHeroVisible() && !p.model) showBox(); });
+    }).catch(() => { if (my === pvToken && previewHeroVisible()) showStaticPreview(def); });
   } else {
     showBox();
   }
@@ -4014,14 +4018,15 @@ function glbThumb(def) {
 /* Previews 3D dos dois times: quatro personagens disponíveis por lado, cacheados
    uma vez por visita. Grupos do catálogo não ganham cards nesta tela. */
 const teamPreviewsDone = new Set();
+const teamPreviewsPending = new Set();
 function ensureTeamPreviews() {
   for (const [btn, lado] of [['btn-team-e', 'E'], ['btn-team-b', 'B']]) {
     const box = document.querySelector(`#${btn} .team-chars`);
     if (!box || box.checkVisibility?.() !== true) continue;
-    if (teamPreviewsDone.has(lado)) continue;
-    teamPreviewsDone.add(lado);
+    if (teamPreviewsDone.has(lado) || teamPreviewsPending.has(lado)) continue;
     const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id)).slice(0, 4);
     if (!chars.length) continue;
+    teamPreviewsPending.add(lado);
     box.innerHTML = chars.map(() => '<span class="tc-slot"></span>').join('');
     const slots = [...box.children];
     const ready = previewUsesStills() ? Promise.resolve() : preloadCharacterAssets(chars.map(c => c.id));
@@ -4030,7 +4035,8 @@ function ensureTeamPreviews() {
         const url = glbThumb(c);
         if (url && slots[i]) slots[i].innerHTML = `<img src="${url}" alt="${c.name}" title="${c.name}">`;
       });
-    }).catch(() => {});
+      teamPreviewsDone.add(lado);
+    }).catch(() => {}).finally(() => teamPreviewsPending.delete(lado));
   }
 }
 function pickTeam(faction) {

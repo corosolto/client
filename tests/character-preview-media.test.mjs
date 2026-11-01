@@ -5,6 +5,16 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 const raw = fs.readFileSync(new URL('../public/js/main.js', import.meta.url), 'utf8');
+const glbRaw=fs.readFileSync(new URL('../public/js/glbchars.js',import.meta.url),'utf8');
+function templateDecision(def,opts,{available=true,mutate=value=>value}={}){
+  const source=mutate(glbRaw),start=source.indexOf('export function buildCharacterModel(def, opts = {}) {');
+  const end=source.indexOf('  const withWeapon =',start);
+  assert.ok(start>=0&&end>start,'real GLB template boundary missing');
+  return vm.runInNewContext(source.slice(start,end).replace('export ','')+'return template;\n}\nbuildCharacterModel(def,opts)',{
+    def,opts,_clips:{},_base:new Map([['barbudo',{kind:'base'}]]),
+    _skins:new Map(available?[['lula-cyborg',{character:'barbudo',model:{kind:'skin'}}]]:[]),
+  });
+}
 const base = { id: 'barbudo', name: 'Barbudo' };
 const cyborg = { ...base, skinId: 'lula-cyborg' };
 const presentation = { id: 'lula-cyborg', name: 'Barbudo Cyborg', poster: '/img/skins/lula-cyborg.webp', video: { webm: '/video/skins/lula-cyborg.webm' } };
@@ -26,7 +36,7 @@ for(const [name,lines,expected] of [
   ['direct promise handler',['video.play().catch(()=>{});'],true],
 ])test('media guard recognizes the actual containment: '+name,()=>assert.equal(playGuard(lines,0),expected));
 
-function fixture({ reduced = false, compact = false, narrow = false, lean = true, threeD = false, realModel = false, previousModel = null, modelAvailable = true, teamVisible = false, preload = () => Promise.resolve(), screen = 'selection', play = () => Promise.resolve(), mutate = value => value, pack = false, vibe = 'ak', paints = {ak:'ouro-ak'} } = {}) {
+function fixture({ reduced = false, compact = false, narrow = false, lean = true, threeD = false, realModel = false, previousModel = null, modelAvailable = true, cosmeticAvailable = true, teamVisible = false, preload = () => Promise.resolve(), screen = 'selection', play = () => Promise.resolve(), mutate = value => value, pack = false, vibe = 'ak', paints = {ak:'ouro-ak'} } = {}) {
   let equippedSkin='lula-cyborg',homeRefreshes=0,rendererCalls=0,preloads=0,thumbnailRenders=0,modelBuilds=0,boxBuilds=0;
   const query=matches=>{const q=new EventTarget();q.matches=matches;q.change=value=>{q.matches=value;const event=new Event('change');event.matches=value;q.dispatchEvent(event);};return q;};
   const motion=query(reduced),compactQuery=query(compact),narrowQuery=query(narrow);
@@ -69,7 +79,7 @@ function fixture({ reduced = false, compact = false, narrow = false, lean = true
     tr:x=>x,FACTION_NAME:{},renderCharAttrs(){},sfxReady:Promise.resolve(),sfx:{characterVoice(){}},
     preloadCharacterAssets:()=>{preloads++;return preload();},hasModel:()=>modelAvailable,
     preloadCosmeticAssets:async()=>{},preloadEyewearAssets:async()=>{},preloadWeapons:async()=>{},preloadWeaponSkinCandidate:async()=>{},
-    buildCharacterModel:()=>{modelBuilds++;return {group:{rotation:{},traverse(){}},mixer:{update(){}}};},snapThumb:()=>{thumbnailRenders++;return 'data:fixture';},
+    buildCharacterModel:(def,opts)=>{modelBuilds++;if(!templateDecision(def,opts,{available:cosmeticAvailable}))return null;return {group:{rotation:{},traverse(){}},mixer:{update(){}}};},snapThumb:()=>{thumbnailRenders++;return 'data:fixture';},
     selChar:base,syncHomeCharacter:()=>{homeRefreshes++;context.fixtureApi.pvSetChar(base);},hubRosterRender:()=>{},
   });
   const api = new vm.Script(mutate(block) + '\n({showStaticPreview,pvStopVideo,pvSetVideo,portraitUrl,pvSetChar,refreshMenuEquipment,armaDoPreview,previewModelActive,ensureTeamPreviews,pvThumb,glbThumb,pickTeam,show,setHubTab,setHubNet,frame,preview:value=>{pv=value;}});').runInContext(context);
@@ -168,6 +178,8 @@ test('landscape coarse uses stills without creating or rendering 3D or loading a
   const narrow=fixture({narrow:true,lean:false,screen:'hub'});narrow.api.pvSetChar(base);
   assert.equal(narrow.rendererCalls(),0);
   assert.equal(narrow.api.previewModelActive(false,true),false);
+  assert.equal(narrow.api.previewModelActive(true,false),false);
+  narrow.node('char-preview').classList.remove('hidden');
   assert.equal(narrow.api.previewModelActive(true,false),true);
 });
 test('returning from compact to 3D restores the canvas instead of leaving a static image over it',()=>{
@@ -281,7 +293,7 @@ for(const [name,mutate,probe,options={}] of [
   ['idle overwrites the selected angle',replace('if (!pv.travado && !pvReducedMotion.matches) { if (pv.ctrl)','pv.model.rotation.y += pvDt * 0.9; if (!pv.travado && !pvReducedMotion.matches) { if (pv.ctrl)'),f=>{const model={rotation:{y:0}};f.api.preview({model,r:{render(){}}});f.api.frame(0.05);assert.equal(model.rotation.y,0);}],
   ['reduced motion still advances idle',replace('if (!pv.travado && !pvReducedMotion.matches) { if (pv.ctrl)','if (!pv.travado) { if (pv.ctrl)'),f=>{let updates=0;f.api.preview({model:{rotation:{y:0}},ctrl:{update(){updates++;}},r:{render(){}}});f.api.frame(0.05);assert.equal(updates,0);},{reduced:true}],
   ['late GLB mounts in a hidden preview',replace('if (my !== pvToken || !previewHeroVisible()) return;','if (my !== pvToken) return;'),async f=>{f.api.pvSetChar(base);f.show('team-select');await tick();assert.equal(f.modelBuilds(),0);},{lean:false,threeD:true,realModel:true}],
-  ['late fallback mounts in a hidden preview',replace('if (my === pvToken && previewHeroVisible() && !p.model) showBox();','if (my === pvToken && !p.model) showBox();'),async f=>{f.api.pvSetChar(base);f.show('team-select');await tick();assert.equal(f.boxBuilds(),0);},{lean:false,threeD:true,realModel:true,preload:()=>Promise.reject(new Error('fixture failed'))}],
+  ['late fallback mounts in a hidden preview',replace('if (my === pvToken && previewHeroVisible()) showStaticPreview(def);','if (my === pvToken) showStaticPreview(def);'),async f=>{f.api.pvSetChar(base);f.show('team-select');await tick();assert.equal(f.node('char-preview-static').src,'');},{lean:false,threeD:true,realModel:true,preload:()=>Promise.reject(new Error('fixture failed'))}],
   ['hidden team slots are populated',replace('if (!box || box.checkVisibility?.() !== true) continue;','if (!box) continue;'),async f=>{f.api.ensureTeamPreviews();await tick();assert.equal(f.node('#btn-team-e .team-chars').innerHTML,'');},{lean:false}],
   ['screen change keeps compact media',replace("if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');\n  clearCompactPreviews();","if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');"),f=>{f.api.pvSetChar(base);f.api.show('team-select');assert.equal(f.node('hub-character-portrait').src,'');},{compact:true,screen:'hub'}],
   ['tab change keeps compact media',replace("$('main-menu').dataset.hubTab = tab;\n    clearCompactPreviews();","$('main-menu').dataset.hubTab = tab;"),f=>{f.api.pvSetChar(base);f.api.setHubTab('ranking');assert.equal(f.node('hub-character-portrait').src,'');},{compact:true,screen:'hub'}],
@@ -360,7 +372,7 @@ async function teamSideProbe(f){
 test('team thumbnails remember completed sides separately when visibility changes',async()=>teamSideProbe(fixture({lean:false,teamVisible:{E:true,B:false}})));
 
 test('causal mutation restoring global team completion loses the later visible side',async()=>{
- const mutate=value=>value.replace('const teamPreviewsDone = new Set();','let teamPreviewsDone = false;').replace('function ensureTeamPreviews() {','function ensureTeamPreviews() {\n  if(teamPreviewsDone)return;').replace('    if (teamPreviewsDone.has(lado)) continue;\n    teamPreviewsDone.add(lado);','    teamPreviewsDone = true;');
+ const mutate=value=>[['const teamPreviewsDone = new Set();','let teamPreviewsDone = false;'],['teamPreviewsDone.has(lado) || teamPreviewsPending.has(lado)','teamPreviewsDone || teamPreviewsPending.has(lado)'],['teamPreviewsDone.add(lado);','teamPreviewsDone = true;']].reduce((source,pair)=>replace(...pair)(source),value);
  await assert.rejects(()=>teamSideProbe(fixture({lean:false,teamVisible:{E:true,B:false},mutate})));
 });
 
@@ -377,16 +389,64 @@ async function failedPreloadPreservesModel({previous=true,hidden=false,mutate}={
  const pending=new Promise((_r,no)=>{fail=no;});
  const f=fixture({lean:false,threeD:true,realModel:true,previousModel:old,preload:()=>pending,mutate});
  f.api.pvSetChar(base);if(hidden)f.show('team-select');fail(new Error('fixture preload failed'));await tick();
- const expected=previous||hidden?0:1;
+ const expected=0;
  assert.equal(f.boxBuilds(),expected,'failed preload replaced an existing or hidden model');
  if(previous)assert.equal(f.mountedModel(),old,'failed preload lost the previous model');
 }
 for(const [previous,hidden] of [[true,false],[true,true],[false,false],[false,true]])test('preload failure respects model and visibility: '+previous+'/'+hidden,()=>failedPreloadPreservesModel({previous,hidden}));
-test('control mutation rejects replacing an existing model on preload failure',()=>assert.rejects(failedPreloadPreservesModel({mutate:replace('my === pvToken && previewHeroVisible() && !p.model','my === pvToken && previewHeroVisible()')}),/failed preload replaced/));
+test('control mutation rejects replacing an existing model on preload failure',()=>assert.rejects(failedPreloadPreservesModel({mutate:replace('if (my === pvToken && previewHeroVisible()) showStaticPreview(def);','if (my === pvToken && previewHeroVisible()) showBox();')}),/failed preload replaced/));
 test('obsolete preload failure cannot mount a fallback for the new selection',async()=>{
  let failOld,finishNew,calls=0;
  const old=new Promise((_r,no)=>{failOld=no;}),next=new Promise(resolve=>{finishNew=resolve;});
  const f=fixture({lean:false,threeD:true,realModel:true,preload:()=>++calls===1?old:next});
  f.api.pvSetChar(base);f.api.pvSetChar({...base,skinId:null});failOld(new Error('old failure'));await tick();
  const boxes=f.boxBuilds();finishNew();await tick();assert.equal(boxes,0,'obsolete failure mounted fallback');assert.equal(f.modelBuilds(),1);
+});
+
+test('preview GLB template rejects a missing equipped cosmetic while game fallback remains available',()=>{
+ assert.equal(templateDecision(cyborg,{preview:true},{available:false}),null);
+ assert.equal(templateDecision(cyborg,{},{available:false}).kind,'base');
+ assert.equal(templateDecision(cyborg,{preview:true}).kind,'skin');
+ assert.equal(templateDecision({...base,skinId:null},{preview:true},{available:false}).kind,'base');
+});
+test('failed cosmetic preload never presents the base GLB as the equipped preview',async()=>{
+ const f=fixture({lean:false,threeD:true,realModel:true,cosmeticAvailable:false});
+ f.api.pvSetChar(cyborg);await tick();
+ assert.equal(f.mountedModel(),null,'base model falsely represents equipped skin');
+ assert.equal(f.node('char-preview').classList.contains('hidden'),true);
+ assert.equal(f.node('char-preview-static').src,presentation.poster+'?v=fixture');
+});
+test('failed replacement keeps the previous object hidden behind the correct poster',async()=>{
+ const old={rotation:{y:.73}},f=fixture({lean:false,threeD:true,realModel:true,previousModel:old,preload:()=>Promise.reject(new Error('failed'))});
+ f.api.pvSetChar(cyborg);await tick();
+ assert.equal(f.mountedModel(),old);assert.equal(f.node('char-preview').classList.contains('hidden'),true,'wrong previous model is visible');
+ const image=f.node('char-preview-static');assert.equal(image.src,presentation.poster+'?v=fixture');image.onload();assert.equal(image.classList.contains('hidden'),false);
+});
+test('failed team preload is retried without duplicating a pending request',async()=>{
+ let fail,calls=0;const pending=new Promise((_r,no)=>{fail=no;});
+ const f=fixture({lean:false,teamVisible:{E:true,B:false},preload:()=>++calls===1?pending:Promise.resolve()});
+ f.api.ensureTeamPreviews();f.api.ensureTeamPreviews();assert.equal(f.preloads(),1);
+ fail(new Error('failed'));await tick();f.api.ensureTeamPreviews();await tick();assert.equal(f.preloads(),2,'failed side permanently marked complete');
+ f.api.ensureTeamPreviews();await tick();assert.equal(f.preloads(),2);
+});
+
+test('causal mutant rejects silently replacing a missing cosmetic with the base GLB',()=>{
+ const changed=replace('  if (opts.preview && def.skinId && !skin) return null;\n','')(glbRaw);
+ const wrong=templateDecision(cyborg,{preview:true},{available:false,mutate:()=>changed});
+ assert.throws(()=>assert.equal(wrong,null),/Expected values/);
+});
+test('causal mutant rejects caching a failed team before completion',async()=>{
+ let fail,calls=0;const pending=new Promise((_r,no)=>{fail=no;});
+ const f=fixture({lean:false,teamVisible:{E:true,B:false},preload:()=>++calls===1?pending:Promise.resolve(),mutate:replace('    teamPreviewsPending.add(lado);','    teamPreviewsPending.add(lado);teamPreviewsDone.add(lado);')});
+ f.api.ensureTeamPreviews();fail(new Error('failed'));await tick();f.api.ensureTeamPreviews();await tick();
+ assert.throws(()=>assert.equal(f.preloads(),2,'failed side not retried'),/failed side not retried/);
+});
+
+test('poster fallback suspends the hidden previous GLB render loop',async()=>{
+ const f=fixture({lean:false,threeD:true,realModel:true,cosmeticAvailable:false});
+ f.api.pvSetChar(cyborg);await tick();assert.equal(f.api.previewModelActive(true,false),false);
+});
+test('causal mutant rejects rendering the previous GLB behind a fallback poster',async()=>{
+ const f=fixture({lean:false,threeD:true,realModel:true,cosmeticAvailable:false,mutate:replace(" && !$('char-preview')?.classList.contains('hidden')",'')});
+ f.api.pvSetChar(cyborg);await tick();assert.throws(()=>assert.equal(f.api.previewModelActive(true,false),false));
 });
