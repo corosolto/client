@@ -114,9 +114,6 @@ jobs:
       - name: Escadão — circulação, estrutura e casa
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
-      - name: Validar fluidez, território e rede do mantle
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network
       - name: Escadão — compatibilidade com pacote de áudio publicado
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/escadao-audio-pack-check.mjs
@@ -279,8 +276,29 @@ jobs:
   # `if: always()` é o que impede o pulo: sem ele, job necessário vermelho deixa este
   # SKIPPED, e o ruleset aceita contexto obrigatório pulado como verde. Cancelado,
   # pulado ou vermelho em qualquer `needs` reprova.
+  # Família lenta do mantle em job próprio: no run 41286765480 o passo serial
+  # 'Validar fluidez, território e rede do mantle' consumiu o teto de 25 min
+  # (movimento-fluidez ok 5,4 s; mantle-fluidez ok 41,5 s; mut:mantle terminado
+  # no cleanup sem veredito; mantle-network não alcançado). Nenhum comando,
+  # ordem interna, semente ou CLI mudou — só trocou o dono do passo.
+  mantle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Validar fluidez, território e rede do mantle
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network
+
   build:
-    needs: [reguas-e-site, invariantes]
+    needs: [reguas-e-site, invariantes, mantle]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
