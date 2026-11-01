@@ -4,6 +4,11 @@ Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual
 
 ## Estado atual, 01/11 R54: revisão de produto e correção do checker Ferro
 
+Correção documental posterior: SKINS-FLOW agora reconhece o aceite focal F2 de
+Caveira/MAGA já descrito em KNIFE-SKINS; a pendência antiga de registrar o alias
+foi substituída pelo registro real em fast/deploy e pelo resultado técnicoR52.
+Nenhum runtime, arte ou alcance do aceite foi alterado.
+
 QA continua sobre80830d13faaca4e84434f18d8a9171e95dbb4dae, ainda não publicada.
 A revisão preparatória dos60arquivos PRODUCT encontrou umP2: eval:ferro-estrutura
 importava FERRO_AMBIENCE removido do mapa. Baseline real Node22/26 EXIT1 antes de

@@ -77,8 +77,9 @@ Validado em Node puro: geometria, cobertura contínua, rig, clips, footprint, fi
 e follow no espaço do osso. **Não** valida legibilidade, render, mãos em jogo, motion em browser
 — a rota equipada (Idle/Draw/Slash/HeavyStab + 3P) é revisada pelo Root com Ego após o Node GREEN.
 Imagens dos GLBs e canvas de slogan são stubs no gate (nenhum pixel é lido).
-Pendente fora do lease do writer: registrar o gate em `package.json`/`check:fast`
-(arquivo sob lease de outra frente neste WT).
+Integração posterior: `eval:knife-skin-markings` já está registrado em `package.json`
+e participa de `check:fast` e `check:deploy`. O alias passou na rodada integral R52;
+esta execução técnica não amplia o aceite visual focal descrito abaixo.
 
 
 ## R4 Root — integridade e finitude do objeto aplicado

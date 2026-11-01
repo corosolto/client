@@ -1,8 +1,10 @@
-# Fluxo de skins — F1/F3/F4 (CRITICO-SKINS-FLUXO-R1)
+# Fluxo de skins — F1/F2/F3/F4
 
 2026-10-31, WT `consistencia-visual-release-20261031`. Escopo desta entrega: F1, F3 e F4 do
-`CRITICO-SKINS-FLUXO-R1.md`. **F2 (layout de marca em faca) ficou fora** — é decisão de arte
-pendente; a pintura base do pack no 3P (F3) independe dela.
+`CRITICO-SKINS-FLUXO-R1.md`. F2 foi integrada posteriormente para as facas Caveira/MAGA
+em 1P/3P: cobertura da lâmina, rig e orientação longitudinal estão descritos em
+[KNIFE-SKINS.md](KNIFE-SKINS.md), com revisão Ego por representação. Esse aceite focal
+não aprova todo o catálogo, distâncias ou dispositivos; F1/F3/F4 continuam válidas.
 
 ## F1 — trocar lado/personagem perdia o mapa de skins do controlador autorado
 
@@ -27,8 +29,8 @@ montava a faca com acabamento default.
 armas comuns seguem pelo mapa. O kill-switch `?skin3p=0` continua valendo para os dois
 caminhos, e o critério de reconstrução (`_tpArmaSkin !== skinTP`) já cobre a troca.
 Bots/remotos não recebem a skin do jogador (ownership inalterado). O boot agora também
-pré-carrega `preloadWeaponSkinCandidate(playerKnifeSkinId)` — a marca da faca (quando F2
-existir) precisa da textura no 3P frio.
+pré-carrega `preloadWeaponSkinCandidate(playerKnifeSkinId)` — as marcas dos perfis de faca
+precisam da textura no 3P frio.
 
 ## F4 — rejeição cedo no `Promise.all` do boot derrubava a barreira com loads pendentes
 
