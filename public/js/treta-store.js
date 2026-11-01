@@ -532,7 +532,7 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
       epoch=accountEpoch;const changed=accountChanged;
       await Promise.race([refresh(),changed]);
       if(epoch!==accountEpoch)continue;
-      while(!skinManifestSettled && epoch===accountEpoch && state?.inventory?.some(s=>s.equipped && (item(s.skin_id)?.slot || 'character')==='character')){
+      while(!skinManifestSettled && epoch===accountEpoch && state?.inventory?.some(s=>s.equipped && product(s.skin_id)?.slot==='character' && item(s.skin_id)?.available===true && (item(s.skin_id)?.slot || 'character')==='character')){
         let wake;
         const inventoryChanged=new Promise(resolve=>{wake=resolve;inventoryWaiters.add(resolve);});
         try{await Promise.race([skinManifestReady,changed,inventoryChanged]);}finally{inventoryWaiters.delete(wake);}

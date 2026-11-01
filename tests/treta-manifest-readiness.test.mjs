@@ -103,13 +103,14 @@ for (const [name, data] of [
   const f = fixture(); f.media.resolve({ ok: true, json: async () => data }); await f.ready;
   assert.equal(f.api.equippedTretaSkin('barbudo'), null);
 });
-test('manifest fetch has a deadline and timeout releases readiness', async () => {
-  const f = fixture(); await tick();
+async function deadlineReleasesReadiness(mutate) {
+  const f = fixture({mutate}); await tick();
   assert.equal(f.deadlines.length, 1, 'manifest fetch needs a bounded request');
-  assert.ok(f.deadlines[0] > 0);
+  assert.equal(f.deadlines[0],12000);
   f.controllers[0].abort(new Error('fixture timeout')); await f.ready;
   assert.equal(f.api.equippedTretaSkin('barbudo'), null);
-});
+}
+test('manifest fetch has a deadline and timeout releases readiness',()=>deadlineReleasesReadiness());
 test('missing timeout API cannot throw synchronously during boot', async () => {
   const f = fixture({ timeoutAPI: false }); await f.ready;
   assert.equal(f.api.equippedTretaSkin('barbudo'), null);
@@ -177,3 +178,9 @@ test('control mutation detects omitted inventory wake-up', async () => {
   assert.equal(source.split(anchor).length - 1, 1);
   await assert.rejects(unequippedDuringInit({ mutate: value => value.replace(anchor, '') }), /readiness still waits for cosmetic media/);
 });
+
+async function impossibleEquipmentDoesNotWait({kind='unknown-client',mutate}={}){const inventory={...equipped,inventory:kind==='unknown-client'?[{skin_id:'unknown-character',equipped:true}]:equipped.inventory,catalog:kind==='unknown-client'?[{...equipped.catalog[0],id:'unknown-character'}]:kind==='missing-server'?[]:[{...equipped.catalog[0],available:false}]};const f=fixture({inventory,mutate});await tick();const settled=f.settled();f.media.resolve({ok:true,json:async()=>manifest});await f.ready;assert.equal(settled,true,'unusable equipment still waits for the manifest');assert.equal(f.api.equippedTretaSkin('barbudo'),null);}
+for(const kind of ['unknown-client','missing-server','server-unavailable'])test('unusable equipment does not delay readiness: '+kind,()=>impossibleEquipmentDoesNotWait({kind}));
+
+for(const ms of [1,120000])test('control mutation rejects changed manifest deadline: '+ms,async()=>{const anchor='AbortSignal.timeout(12000)';assert.equal(source.split(anchor).length-1,1);await assert.rejects(deadlineReleasesReadiness(value=>value.replace(anchor,'AbortSignal.timeout('+ms+')')),{name:'AssertionError'});});
+for(const [kind,anchor] of [['unknown-client',"product(s.skin_id)?.slot==='character' && "],['server-unavailable',"item(s.skin_id)?.available===true && "]])test('control mutation rejects wait for unusable equipment: '+kind,async()=>{assert.equal(source.split(anchor).length-1,1);await assert.rejects(impossibleEquipmentDoesNotWait({kind,mutate:value=>value.replace(anchor,'')}),/unusable equipment still waits for the manifest/);});
