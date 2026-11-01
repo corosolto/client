@@ -104,3 +104,13 @@ nesta lease.
 - Falta: publicação ordinária da integração, review atual e crítica independente.
   Este resultado mede consistência estrutural; não aprova anatomia/contato visual,
   movimento, mobile físico, MP ou lançamento, e não fecha a dívida #1128.
+
+### Integração do cabeçalho R831
+
+O gate estático `eval:mutantes-anunciados` somente reconhece flags literais na
+string do alias. O novo alias chama um controlador serial, que valida os casos
+reais de `HAND_CASES`. A primeira tentativa de push foi interrompida pelo Root
+ao encontrar esse conflito no gate focal, sem publicar ou alterar hooks.
+O cabeçalho do alias agora aponta para o controlador e sua fonte de casos;
+nenhum caso, recibo, predicado, veredito ou guard do scanner foi alterado.
+Prova nominal+controles do scanner em `TP-HANDS-MUTANT-HEADER-R831-*`.
