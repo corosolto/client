@@ -6752,7 +6752,7 @@ export class Game {
     const skinTP = QS.get('skin3p') === '0' ? null : (w === 'knife' ? (this.playerKnifeSkinId || null) : (this.playerWeaponSkins?.[w] || null));
     const gloveId = gloveSkinStyle(this.playerGloveId)?.id || null;
     const gloveReady = Boolean(gloveId && hasGloveModel(def.id));
-    if (gloveId && hasModel(def.id) && !gloveReady) {
+    if (gloveId && hasModel(def.id, def.skinId) && !gloveReady) {
       const asked = this._tpGloveAsked ||= new Set();
       if (!asked.has(def.id)) {
         asked.add(def.id);
@@ -6762,7 +6762,7 @@ export class Game {
     const gloveChanged = this.playerTP?.isGLB && !this._tpDead
       && (this._tpGloveId !== gloveId || this._tpGloveReady !== gloveReady);
     const weaponChanged = this.playerTP && (this._tpWeapon !== w || this._tpDefId !== def.id || this._tpSkinId !== (def.skinId || null) || this._tpEyewearId !== (def.eyewearId || null) || this._tpArmaSkin !== skinTP);
-    const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id);
+    const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id, def.skinId);
     if (gloveChanged && !weaponChanged && !wantUpgrade && this.playerTP.setGloveSkin) {
       const tp = this.playerTP;
       const { removed, added } = tp.setGloveSkin(this.playerGloveId);
