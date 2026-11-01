@@ -1,5 +1,5 @@
-/* MATCH_PICKUP_MODE — #1179: pickups estáticos só saem com TRETA$ ligada.
- * Contratos, baseline e mutante: docs/visual-consistency/PICKUPS-FLASH.md */
+/* MATCH_PICKUP_MODE — loja substitui; OFF conserva somente os pickups permitidos.
+ * Contratos, medições anteriores e mutantes: docs/visual-consistency/PICKUPS-FLASH.md */
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,22 +8,29 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const JS = path.join(ROOT, 'public/js');
 const SHA = 'f4bcffdf2';
-const ARSENAL = 12;   // medido: MAPS.quebrada.build -> 12 pickups (campinho-integration ARM/arsenal)
-const ALVO_VARIANTE = ['PM2', 'PM3', 'PM4', 'PM5'];   // cláusulas que o antecedente/mutante têm que acender
+const ARSENAL = 12;
+const AWP = 1, PISTOLS = 2; // Game8ee antes do fix: REVIEW-R71-FIXES-20261101.md.
+const ALVO_VARIANTE = ['PM2', 'PM3', 'PM4', 'PM5', 'PM7', 'PM9', 'PM10', 'PM11'];
+const ALVO_SEM_FILTRO = ['PM5', 'PM7', 'PM8', 'PM9', 'PM10', 'PM11', 'PM12'];
+const FIXTURE_IDS = ['awp', 'pistol', 'deagle', 'ak', '__unknown_pickup__', 'toString', '__proto__', 'constructor'];
+const PERMITIDOS = { all: ['awp', 'pistol', 'deagle', 'ak'], awp: ['awp'], pistols: ['pistol', 'deagle'], knife: [] };
 
 const CENARIOS = [
   { id: 'PM1', nome: 'economia ligada esvazia arsenal', opts: { economia: true }, espera: 0 },
   { id: 'PM2', nome: 'sem economia mantém arsenal', opts: {}, espera: ARSENAL },
   { id: 'PM3', nome: '?economia=0 mantém arsenal', opts: { economia: true }, qs: '?economia=0', espera: ARSENAL },
   { id: 'PM4', nome: 'dedicado mantém arsenal', opts: { economia: true, dedicated: true }, espera: ARSENAL },
-  { id: 'PM5', nome: 'wpnMode awp mantém arsenal', opts: { economia: true, settings: { wpnMode: 'awp' } }, espera: ARSENAL },
+  { id: 'PM5', nome: 'awp mantém apenas a AWP medida', opts: { economia: true, settings: { wpnMode: 'awp' } }, espera: AWP, permitidos: ['awp'] },
+  { id: 'PM7', nome: 'pistols mantém apenas pistolas medidas', opts: { settings: { wpnMode: 'pistols' } }, espera: PISTOLS, permitidos: ['pistol', 'deagle'] },
+  { id: 'PM8', nome: 'knife não mantém pickups', opts: { settings: { wpnMode: 'knife' } }, espera: 0, permitidos: [] },
 ];
 
 function parseCLI(argv) {
   if (argv.length === 0) return 'nominal';
   if (argv.length === 1 && argv[0] === '--baseline') return 'baseline';
   if (argv.length === 1 && argv[0] === '--mutante=reintroduz') return 'mutante';
-  console.error(`uso: node tools/eval/match-pickup-mode-check.mjs [--baseline|--mutante=reintroduz] — recebido: ${JSON.stringify(argv)}`);
+  if (argv.length === 1 && argv[0] === '--mutante=sem-filtro-off') return 'sem-filtro';
+  console.error(`uso: node tools/eval/match-pickup-mode-check.mjs [--baseline|--mutante=reintroduz|--mutante=sem-filtro-off] — recebido: ${JSON.stringify(argv)}`);
   process.exit(2);
 }
 const GUARDA = `if (this._ecoLigada) {\n      for (const pk of this.world.pickups || []) pk.mesh?.removeFromParent?.();\n      this.world.pickups = [];\n    }`;
@@ -32,6 +39,19 @@ const GUARDA_INCONDICIONAL = GUARDA.replace('if (this._ecoLigada) {', '{ /* muta
 export function fonteMutante(src) {
   if (src.split(GUARDA).length !== 2) throw new Error('mutante: guarda do constructor não é âncora única');
   return src.replace(GUARDA, GUARDA_INCONDICIONAL);
+}
+
+const FILTRO_OFF = `    if (!this._ecoLigada) {
+      this.world.pickups = (this.world.pickups || []).filter((pk) => {
+        if (Object.prototype.hasOwnProperty.call(WEAPONS, pk.weapon) && this._pickupAllowed(pk.weapon)) return true;
+        pk.mesh?.removeFromParent?.();
+        return false;
+      });
+    }`;
+
+function fonteSemFiltro(src) {
+  if (src.split(FILTRO_OFF).length !== 2) throw new Error('mutante: filtro OFF não é âncora única');
+  return src.replace(FILTRO_OFF, '');
 }
 
 /* Módulo-variante em memória: fonte reescrita com imports absolutos, dentro de
@@ -65,9 +85,8 @@ function boot(GameClass, h, { economia, dedicated = false, settings = {} } = {})
   });
 }
 
-/* A MESMA medição (boot real nos cenários + drop de abate) serve nominal,
-   baseline e mutante — não existe aceitação que não passe por aqui. */
-export function medir(GameClass, h) {
+// Baseline e mutantes atravessam os mesmos boots e fixtures de produção.
+export function medir(GameClass, h, { refreshObrigatorio = true } = {}) {
   const falhas = [];
   const linhas = [];
   for (const c of CENARIOS) {
@@ -78,12 +97,19 @@ export function medir(GameClass, h) {
     g.start ? g.start() : g._startRound();
     try {
       const n = g.world.pickups.length;
-      const pass = n === c.espera;
+      const ids = g.world.pickups.map((pk) => pk.weapon);
+      const pass = n === c.espera && (!c.permitidos || ids.every((id) => c.permitidos.includes(id)));
       if (!pass) falhas.push(c.id);
-      linhas.push(`${pass ? 'ok ' : 'XX '} ${c.id} ${c.nome}: ${n} (esperado ${c.espera})`);
+      linhas.push(`${pass ? 'ok ' : 'XX '} ${c.id} ${c.nome}: ${n} (esperado ${c.espera}); ids=${ids.join(',') || '-'}`);
     } finally {
       g.dispose?.();
     }
+  }
+  for (const [i, mode] of ['all', 'awp', 'pistols', 'knife'].entries()) {
+    const id = `PM${i + 9}`;
+    const result = medirFixture(GameClass, h, mode, refreshObrigatorio);
+    if (!result.pass) falhas.push(id);
+    linhas.push(`${result.pass ? 'ok ' : 'XX '} ${id} fixture ${mode}: ${JSON.stringify(result)}`);
   }
   // PM6: drop de abate (fluxo legado) continua nascendo com economia OFF.
   globalThis.location.search = '';
@@ -105,6 +131,46 @@ export function medir(GameClass, h) {
   return { falhas, linhas };
 }
 
+function medirFixture(GameClass, h, mode, refreshObrigatorio) {
+  const build = h.MAPS.quebrada.build;
+  const refresh = GameClass.prototype.refreshPickupModels;
+  const temRefresh = typeof refresh === 'function';
+  let fixtures = [], validos = [], snapshots = [], builds = 0, game;
+  h.MAPS.quebrada.build = function (scene, textures) {
+    const world = build.call(this, scene, textures);
+    builds++;
+    validos = world.pickups.filter((pk) => mode === 'all' || (mode === 'awp' && pk.weapon === 'awp') || (mode === 'pistols' && ['pistol', 'deagle'].includes(pk.weapon)));
+    fixtures = FIXTURE_IDS.map((weapon) => {
+      const mesh = new h.THREE.Mesh(new h.THREE.BoxGeometry(.1, .1, .1), new h.THREE.MeshBasicMaterial());
+      scene.add(mesh);
+      return { ...world.pickups[0], weapon, mesh };
+    });
+    world.pickups.push(...fixtures);
+    return world;
+  };
+  if (temRefresh) {
+    GameClass.prototype.refreshPickupModels = function (...args) {
+      snapshots.push(fixtures.map((pk) => ({ weapon: pk.weapon, retained: this.world.pickups.includes(pk), attached: pk.mesh.parent !== null })));
+      return refresh.apply(this, args);
+    };
+  }
+  globalThis.location.search = '';
+  try {
+    game = boot(GameClass, h, { settings: { wpnMode: mode } });
+    const esperados = PERMITIDOS[mode];
+    const fixtureOK = (snapshot) => snapshot.every((pk) => pk.retained === esperados.includes(pk.weapon) && pk.attached === esperados.includes(pk.weapon));
+    const final = fixtures.map((pk) => ({ weapon: pk.weapon, retained: game.world.pickups.includes(pk), attached: pk.mesh.parent !== null }));
+    const refsOK = validos.every((pk) => game.world.pickups.includes(pk));
+    const quantidade = game.world.pickups.length === validos.length + esperados.length;
+    const tempoOK = !refreshObrigatorio || snapshots.length > 0;
+    return { pass: builds === 1 && tempoOK && snapshots.every(fixtureOK) && fixtureOK(final) && refsOK && quantidade, builds, temRefresh, refreshObrigatorio, beforeRealRefresh: snapshots, final, refsOK, retained: game.world.pickups.length, expected: validos.length + esperados.length };
+  } finally {
+    h.MAPS.quebrada.build = build;
+    if (temRefresh) GameClass.prototype.refreshPickupModels = refresh;
+    game?.dispose?.();
+  }
+}
+
 export function clausulasExatamente(falhas, alvo) {
   const f = new Set(falhas), a = new Set(alvo);
   return f.size === a.size && [...a].every((c) => f.has(c));
@@ -117,7 +183,7 @@ async function main() {
     console.info = () => {};
     return {
       renderer: mod.renderer, sfx: mod.sfx, seedRandom: mod.seedRandom,
-      textures: mod.initTextures(), PERSONAGEM: mod.CHARACTERS.find((c) => c.team === 'E'),
+      textures: mod.initTextures(), PERSONAGEM: mod.CHARACTERS.find((c) => c.team === 'E'), MAPS: mod.MAPS, THREE: mod.THREE,
     };
   })();
 
@@ -126,13 +192,13 @@ async function main() {
   const nominal = medir(GameAtual, h);
   console.log(nominal.linhas.join('\n'));
   if (nominal.falhas.length) {
-    console.error(`x NOMINAL vermelho (${nominal.falhas.join(',')}) — instrumento quebrado, variante não é detecção`);
+    console.error(`x NOMINAL vermelho (${nominal.falhas.join(',')}) — contrato violado; variante não avaliada`);
     process.exit(1);
   }
 
   if (modo === 'baseline') {
     const src = execSync(`git show ${SHA}:public/js/game.js`, { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 });
-    const res = medir(await gameClasseDe(src, `baseline-${SHA}`), h);
+    const res = medir(await gameClasseDe(src, `baseline-${SHA}`), h, { refreshObrigatorio: false });
     console.log(res.linhas.join('\n'));
     console.log(`baseline ${SHA}: falhas=${res.falhas.join(',') || '-'}`);
     if (!clausulasExatamente(res.falhas, ALVO_VARIANTE)) {
@@ -148,13 +214,25 @@ async function main() {
     console.log(res.linhas.join('\n'));
     console.log(`mutante reintroduz: falhas=${res.falhas.join(',') || '-'}`);
     if (!clausulasExatamente(res.falhas, ALVO_VARIANTE)) {
-      console.error(`x MUTANTE tem que acender exatamente ${ALVO_VARIANTE.join(',')} — PM2-PM5 cega ou cláusula extra`);
+      console.error(`x MUTANTE tem que acender exatamente ${ALVO_VARIANTE.join(',')} — régua cega ou cláusula extra`);
       process.exit(1);
     }
     console.log(`ok MUTANTE reintroduz detectado (exatamente ${ALVO_VARIANTE.join(',')}; PM1+PM6 verdes)`);
     return;
   }
-  console.log(`MATCH_PICKUP_MODE ok · quebrada arsenal=${ARSENAL} · TRETA$ substitui, resto preserva`);
+  if (modo === 'sem-filtro') {
+    const mut = fonteSemFiltro(fs.readFileSync(path.join(JS, 'game.js'), 'utf8'));
+    const res = medir(await gameClasseDe(mut, 'mutante-sem-filtro-off'), h);
+    console.log(res.linhas.join('\n'));
+    console.log(`mutante sem-filtro-off: falhas=${res.falhas.join(',') || '-'}`);
+    if (!clausulasExatamente(res.falhas, ALVO_SEM_FILTRO)) {
+      console.error(`x MUTANTE OFF tem que acender exatamente ${ALVO_SEM_FILTRO.join(',')}`);
+      process.exit(1);
+    }
+    console.log('ok MUTANTE sem-filtro-off detectado; nominal preservado no disco');
+    return;
+  }
+  console.log(`MATCH_PICKUP_MODE ok · all=${ARSENAL} awp=${AWP} pistols=${PISTOLS} knife=0 · inválidos removidos antes do refresh real`);
 }
 
 const chamadoDireto = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
