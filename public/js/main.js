@@ -1023,12 +1023,15 @@ function showStaticPreview(def) {
   if (canvas) canvas.classList.add('hidden');
   if (image) {
     const my=++pvImageToken;
+    image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');
     const unavailable=()=>{pvPosterFailure=skin?.name || def.name;image.classList.add('hidden');if(label && !previewVideoVisible()){label.hidden=false;label.textContent=`Prévia indisponível: ${pvPosterFailure}`;}};
-    image.onload=()=>{if(my!==pvImageToken)return;pvPosterFailure=null;if(label && !previewVideoVisible()){label.textContent=skin?.name || '';label.hidden=!skin;}};
-    image.onerror = () => {if(my!==pvImageToken)return;image.onerror=null;if(skin)unavailable();else{image.onerror=()=>{if(my===pvImageToken)unavailable();};image.src=portraitFallbackUrl(def);}};
     const src=portraitUrl(def);
-    image.alt = skin?.name || def.name;image.classList.remove('hidden');
-    if(src)image.src=src;else unavailable();
+    image.alt = skin?.name || def.name;
+    if(src){
+      image.onload=()=>{if(my!==pvImageToken)return;image.classList.remove('hidden');pvPosterFailure=null;if(label && !previewVideoVisible()){label.textContent=skin?.name || '';label.hidden=!skin;}};
+      image.onerror = () => {if(my!==pvImageToken)return;image.onerror=null;if(skin)unavailable();else{image.onerror=()=>{if(my===pvImageToken)unavailable();};image.src=portraitFallbackUrl(def);}};
+      image.src=src;
+    }else unavailable();
   }
   if (hints) hints.classList.add('hidden');
 }
@@ -1044,11 +1047,14 @@ function syncCompactPreview(def) {
     if(!active){image.dataset.previewKey='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;label.hidden=true;continue;}
     if(image.dataset.previewKey===key)continue;
     image.dataset.previewKey=key;let fallback=false;
-    label.textContent=caption;label.hidden=!caption;image.alt=skin?.name || def.name;image.hidden=false;
+    image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
+    label.textContent=caption;label.hidden=!caption;image.alt=skin?.name || def.name;
     const unavailable=()=>{image.hidden=true;label.hidden=false;label.textContent=`Prévia indisponível: ${skin?.name || def.name}${paint?` · ${paint.name}`:''}`;};
-    image.onload=()=>{if(image.dataset.previewKey!==key)return;image.hidden=false;label.textContent=caption;label.hidden=!caption;};
-    image.onerror=()=>{if(image.dataset.previewKey!==key)return;if(!skin && !fallback){fallback=true;image.src=portraitFallbackUrl(def);}else unavailable();};
-    if(src)image.src=src;else unavailable();
+    if(src){
+      image.onload=()=>{if(image.dataset.previewKey!==key)return;image.hidden=false;label.textContent=caption;label.hidden=!caption;};
+      image.onerror=()=>{if(image.dataset.previewKey!==key)return;if(!skin && !fallback){fallback=true;image.src=portraitFallbackUrl(def);}else unavailable();};
+      image.src=src;
+    }else unavailable();
   }
 }
 function ensurePreview() {

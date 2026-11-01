@@ -245,7 +245,7 @@ test('inventory refresh through the real caller keeps an unchanged video loaded'
 });
 test('an image failure callback queued for another character cannot hide its replacement', () => {
   const f=fixture();f.api.showStaticPreview(cyborg);const failed=f.node('char-preview-static').onerror;
-  f.api.showStaticPreview(base);failed();
+  f.api.showStaticPreview(base);f.node('char-preview-static').onload();failed();
   assert.equal(f.node('char-preview-static').classList.contains('hidden'),false);
   assert.equal(f.node('char-preview-static').src,'/img/chars-hero/barbudo.webp?v=fixture');
 });
@@ -266,7 +266,7 @@ for(const [name,mutate,probe,options={}] of [
   ['video stop loses ownership token',replace('pvVidToken++;',''),async f=>{f.api.pvSetVideo(cyborg);const old=f.video.onloadeddata;f.api.pvStopVideo();old();await tick();assert.equal(f.box.classList.contains('has-video'),false);}],
   ['reduced motion ignored',replace('if(!src || pvReducedMotion.matches','if(!src || false'),f=>{f.api.pvSetVideo(cyborg);assert.equal(f.video.src,'');},{reduced:true}],
   ['same presentation reloads',replace('if(key===pvStaticKey)return;',''),f=>{f.api.pvSetChar(base);f.api.pvSetVideo(base);const n=f.video.loads;f.api.pvSetChar(base);f.api.pvSetVideo(base);assert.equal(f.video.loads,n);}],
-  ['old image failure retained',replace('image.onerror = () => {if(my!==pvImageToken)return;','image.onerror = () => {'),f=>{f.api.showStaticPreview(cyborg);const old=f.node('char-preview-static').onerror;f.api.showStaticPreview(base);old();assert.equal(f.node('char-preview-static').classList.contains('hidden'),false);}],
+  ['old image failure retained',replace('image.onerror = () => {if(my!==pvImageToken)return;','image.onerror = () => {'),f=>{f.api.showStaticPreview(cyborg);const old=f.node('char-preview-static').onerror;f.api.showStaticPreview(base);f.node('char-preview-static').onload();old();assert.equal(f.node('char-preview-static').classList.contains('hidden'),false);}],
   ['explicit base trial overwritten',replace("Object.hasOwn(def,'skinId')?def.skinId:equippedTretaSkin(def.id)",'equippedTretaSkin(def.id)'),f=>{f.api.pvSetChar({...base,skinId:null});assert.equal(f.node('char-preview-static').src,'/img/chars-hero/barbudo.webp?v=fixture');}],
   ['poster failure forgotten when video stops',replace('if(label && pvPosterFailure){','if(false){'),async f=>{f.api.showStaticPreview(cyborg);f.api.pvSetVideo(cyborg);f.video.onloadeddata();await tick();f.node('char-preview-static').onerror();f.reduceMotion();assert.match(f.node('char-preview-skin').textContent,/indisponível/);}],
   ['failed play promotes video',replace('try{await video.play();}catch{if(my===pvVidToken)pvStopVideo();return;}','void video.play().catch(()=>{});'),async f=>{f.api.pvSetVideo(cyborg);f.video.onloadeddata();await tick();assert.equal(f.box.classList.contains('has-video'),false);},{play:()=>Promise.reject(new Error('fixture blocked'))}],
@@ -295,3 +295,24 @@ for(const transition of ['screen','tab','network'])test('hero image invalidated:
 test('stale hero error cannot start hidden fallback',()=>{const f=fixture({screen:'hub'});f.api.showStaticPreview(base);const img=f.node('char-preview-static'),error=img.onerror;f.api.show('team-select');error();assert.equal(img.src,'');});
 test('returning hero gets a fresh callback and request',()=>{const f=fixture();f.api.showStaticPreview(base);const img=f.node('char-preview-static'),error=img.onerror;f.api.show('team-select');f.api.show('char-select');f.api.showStaticPreview(base);assert.ok(img.src);assert.notEqual(img.onerror,error);});
 test('catch that rethrows is not a contained play',()=>assert.equal(playGuard(['try{await video.play();}catch{throw new Error("play failed");}'],0),false));
+
+function unavailableAfterPending(compact,mutate){
+  const old=presentation.poster;
+  try{
+    const f=fixture({compact,screen:compact?'hub':'selection',mutate});
+    if(compact)f.api.pvSetChar({...base,skinId:null});else f.api.showStaticPreview(base);
+    const img=f.node(compact?'hub-character-portrait':'char-preview-static'),label=f.node(compact?'hub-character-equipment':'char-preview-skin'),loaded=img.onload,failed=img.onerror;
+    assert.ok(img.src.includes('/img/chars'));presentation.poster=null;
+    if(compact)f.api.pvSetChar(cyborg);else f.api.showStaticPreview(cyborg);
+    assert.equal(img.src,'','previous request still installed for a skin without poster');assert.equal(img.onload,null);assert.equal(img.onerror,null);
+    loaded();failed();assert.match(label.textContent,/indisponível.*Cyborg/i);assert.equal(compact?img.hidden:img.classList.contains('hidden'),true);
+  }finally{presentation.poster=old;}
+}
+for(const compact of [false,true])test('skin without poster cancels the previous pending image: '+compact,()=>unavailableAfterPending(compact));
+for(const compact of [false,true])test('new portrait stays hidden until its own load completes: '+compact,()=>{
+  const f=fixture({compact,screen:compact?'hub':'selection'});if(compact)f.api.pvSetChar(cyborg);else f.api.showStaticPreview(cyborg);
+  const img=f.node(compact?'hub-character-portrait':'char-preview-static');assert.equal(compact?img.hidden:img.classList.contains('hidden'),true);img.onload();assert.equal(compact?img.hidden:img.classList.contains('hidden'),false);
+});
+for(const [compact,anchor] of [[false,"const my=++pvImageToken;\n    image.onload=image.onerror=null;image.removeAttribute('src');"],[true,"image.dataset.previewKey=key;let fallback=false;\n    image.onload=image.onerror=null;image.removeAttribute('src');"]])test('causal mutant rejects a retained pending image: '+compact,()=>{
+  assert.equal(raw.split(anchor).length-1,1);assert.throws(()=>unavailableAfterPending(compact,value=>value.replace(anchor,anchor.replace("image.removeAttribute('src');",''))),/previous request still installed/);
+});
