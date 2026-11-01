@@ -193,7 +193,7 @@ const vegSrc = mapSrc.match(/const JARDIM_VEG = \[([\s\S]*?)\];/)?.[1] || '';
 const vegIds = [...vegSrc.matchAll(/'([^']+)'/g)].map((m) => m[1]);
 const propsBlk = mapSrc.match(/export const MANSAO_PROPS = \[([\s\S]*?)\];/)?.[1] || '';
 const vegPreload = propsBlk.includes('...JARDIM_VEG') || vegIds.every((id) => propsBlk.includes(`'${id}'`));
-const vegSemUso = vegIds.filter((id) => !new RegExp(`(?:PB\\.add|placeProp|jardimProp)\\(\\s*'${id}'`).test(mapSrc));
+const vegSemUso = vegIds.filter((id) => !new RegExp(`(?:PB(?:_FOLHAS)?\\.add|placeProp|jardimProp)\\(\\s*'${id}'`).test(mapSrc));
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const vegGlb = {};
 for (const id of vegIds) {
