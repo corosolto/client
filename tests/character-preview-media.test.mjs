@@ -145,6 +145,59 @@ for(const stop of ['error','reduced'])test('failed poster remains identified aft
   assert.equal(f.box.classList.contains('has-video'),false);
   assert.match(f.node('char-preview-skin').textContent,/indisponível.*Cyborg/i);
 });
+const failureAdvertised = f => f.box.classList.contains('preview-failure');
+const requirePosterFailure = f => assert.equal(failureAdvertised(f), true, 'poster failure state missing');
+test('poster error advertises the failure state and a new selection clears it', () => {
+  const f = fixture({ screen: 'hub' }); f.api.showStaticPreview(cyborg);
+  f.node('char-preview-static').onerror();
+  requirePosterFailure(f);
+  assert.equal(f.node('char-preview-skin').hidden, false);
+  f.api.showStaticPreview(base); f.node('char-preview-static').onload();
+  assert.equal(failureAdvertised(f), false);
+});
+test('stale poster callbacks from a superseded request cannot flag the failure state', () => {
+  const f = fixture(); f.api.showStaticPreview(cyborg);
+  const stale = f.node('char-preview-static').onerror;
+  f.api.showStaticPreview(base); f.node('char-preview-static').onload();
+  stale();
+  assert.equal(failureAdvertised(f), false);
+});
+test('a visible video covers the failure state and stopping it restores the warning', async () => {
+  const f = fixture({ screen: 'hub' });
+  f.api.showStaticPreview(cyborg); f.node('char-preview-static').onerror();
+  f.api.pvSetVideo(cyborg); f.video.onloadeddata(); await tick();
+  assert.equal(f.box.classList.contains('has-video'), true);
+  assert.equal(failureAdvertised(f), false);
+  f.api.pvStopVideo();
+  assert.equal(failureAdvertised(f), true);
+  assert.match(f.node('char-preview-skin').textContent, /indisponível.*Cyborg/i);
+});
+test('poster failing after a visible video keeps the video and hides the warning until stopped', async () => {
+  const f = fixture({ screen: 'hub' }); f.api.showStaticPreview(cyborg);
+  const fail = f.node('char-preview-static').onerror;
+  f.api.pvSetVideo(cyborg); f.video.onloadeddata(); await tick();
+  assert.equal(f.box.classList.contains('has-video'), true);
+  fail();
+  assert.equal(f.box.classList.contains('has-video'), true);
+  assert.equal(failureAdvertised(f), false);
+  f.api.pvStopVideo();
+  requirePosterFailure(f);
+  assert.match(f.node('char-preview-skin').textContent, /indisponível.*Cyborg/i);
+});
+test('en skin gets the localized failure warning with the advertised error state', () => {
+  const f = fixture({ lang: 'en', screen: 'hub' }); f.api.showStaticPreview(cyborg);
+  f.node('char-preview-static').onerror();
+  assert.equal(f.node('char-preview-skin').textContent, 'Preview unavailable: Barbudo Cyborg');
+  assert.equal(failureAdvertised(f), true);
+});
+test('mutation: dropping the failure-state update on poster error silences the hub warning', () => {
+  const anchor = 'pvSetFailureUi(true);';
+  assert.equal(raw.split(anchor).length - 1, 1, 'mutation anchor missing or ambiguous');
+  const f = fixture({ screen: 'hub', mutate: replace(anchor, '') });
+  f.api.showStaticPreview(cyborg); f.node('char-preview-static').onerror();
+  assert.equal(f.node('char-preview-skin').textContent, 'Prévia indisponível: Barbudo Cyborg');
+  assert.throws(() => requirePosterFailure(f), /poster failure state missing/);
+});
 test('refresh with the same video does not reload its decoder', () => {
   const f = fixture(); f.api.pvSetVideo(cyborg); const count = f.video.loads;
   f.api.pvSetVideo(cyborg); assert.equal(f.video.loads, count);

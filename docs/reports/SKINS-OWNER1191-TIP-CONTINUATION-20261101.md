@@ -36,3 +36,30 @@ Não houve browser, render, headless, build, pacote completo de gates, push, mut
 ## Próximo passo
 
 Entregar o checkpoint de merge local com ancestry de FAA8 e2c, fontes e artefatos ligados por SHA. O coordenador ainda deve executar o crítico focal independente, verificar os fluxos visíveis no navegador, adjudicar o fio atual do bot e compor o próximo head de QA antes de qualquer push normal, merge remoto ou release. As demais frentes da missão permanecem no ledger principal `VISUAL-RELEASE-CONTINUATION-20261031.md`.
+
+
+## Continuação R65: aviso de falha no hub
+
+O checkpoint `bf3a326484425329993ec16b40efbaf78f3a459b` ficou pendente e não foi adotado pelo QA. O crítico independente `CRITICO-SKINS-OWNER1191-R65.md` leu o recorte inteiro e encontrou R65-S1, P2: `.hub-character .pv-equipment{display:none}` oculta o único aviso quando modelos/retratos falham. O coordenador confirmou em Ego desktop EN convidado, bloqueando temporariamente os três assets públicos selecionados. JSON e imagem BEFORE foram lidos nesta frente: o texto estava correto e o ancestral estava oculto. Isso é controle de falha de rede, não uma corrida nominal.
+
+A correção adiciona estado de falha no hero e uma exceção CSS restrita a esse estado. O aviso ocupa o centro do palco vazio, mantendo captions normais no card e a legenda de arma do hero oculta para evitar duplicação. Sucesso do retrato/GLB, troca e limpeza da tela removem o estado. Vídeo válido cobre o erro; parar o vídeo restaura o aviso do retrato ainda indisponível. Tokens e textos PT/EN permanecem nos caminhos existentes. A função de compatibilidade `resolvePreviewCharacter` continua byteigual a bf3a; `Object.hasOwn` e seus anchors são de outra lane.
+
+### Autoria e resultados rejeitados
+
+- R65: GLM-5.3 low encerrou no limite interno com exit1 em140,765s (prazo150/140s). O parcial de três arquivos foi congelado e não foi aceito. A inspeção e um probe externo de funções reais encontraram uma ordem ainda incorreta: vídeo válido primeiro, erro do retrato atual depois reativava a área de erro. O BEFORE falhou1/1; não é captura de browser.
+- R65B: uma rodada nova90/80s terminou exit1 em81,1s sem alterar nenhum arquivo. O guard deste agente permitia ler só o contexto, enquanto o editor hashline do OMP exige snapshot do arquivo alvo. Essa falha de preparação não recebeu crédito de conserto. Fontes e patch ficaram idênticos ao parcial anterior.
+- R65C: o orquestrador Native foi corrigido e testado sem modelo nem edição. Leituras reais limitadas geraram os dois snapshots; o guard permitiu os ranges e recusou arquivos inteiros, ranges fora da área, mais de180 linhas e outro worktree. A última autoria GLM60/50s terminou exit0 em32,236s, com duas leituras limitadas e dois edits. O helper passou a exigir falha ativa e ausência de vídeo visível; o teste reverso e o controle negativo foram completados. Não houve alteração Native de produto ou teste após esse freeze.
+
+A diferença final de código foi lida inteira. Os153 casos atuais contêm os147 herdados; removendo apenas o bloco novo de seis casos, o arquivo de teste volta aos bytes de bf3a. A qualificação histórica R64 dos dois contadores de render permanece. A chamada exit0 não transforma os parciais rejeitados em sucessos retroativos.
+
+### Verificação final de CPU
+
+`SKINS-OWNER1191-ERROR-R65C-FOCUSED.json` registra153/153 preview e49/49 readiness em Node22/26, syntax dos dois arquivos JS/MJS, redesign nominal e `git diff --check`, todos verdes. O controle negativo exige anchor único fora do assert causal e viola a mesma asserção de estado usada pelo nominal. Não há crédito para replace que não aplica.
+
+O probe externo mantém exatamente os mesmos bytes de teste (`c414abb62c1c1595ac3838548a2c39434cff09c8c2f1e93709fe01509a385456`): BEFORE Node22 falhou1/1; AFTER Node22 e26 passaram1/1 com o vídeo já visível quando o erro atual chega. Fonte/estado e descarte de callbacks foram medidos em CPU. Esses testes não calculam CSS nem certificam visibilidade de ancestrais.
+
+Os artefatos R65, R65B e R65C ficam no audit externo, sem raw, logs ou binários no commit. A resposta pública anterior do #1191 já foi feita pelo dono: o coordenador reconferiu a API às03:49 e confirmou o fio `PRRT_kwDOTbwe3M6yW8_f` resolvido, reply `4434269143`, review `5726252684`. O texto R64 acima conserva a fotografia inicial; não repetir resposta/resolução.
+
+### Próximo passo R65
+
+Entregar o microcommit local sobre bf3a com os quatro caminhos desta correção e hashes. O coordenador ainda deve conferir falha e recuperação reais no Ego em PT/EN, incluindo todos os ancestrais CSS, e obter crítico focal fresco. Não houve browser, headless, build, full gates, push, alteração de PR, QA ou release por este agente. A missão integral permanece no ledger principal.

@@ -959,8 +959,12 @@ function clearCompactPreviews() {
     if(label)label.hidden=true;
   }
 }
+function pvSetFailureUi(active) {
+  // R65-S1: o hub esconde .pv-equipment por CSS; só a classe de erro expõe o aviso.
+  document.querySelector('.char-preview-box')?.classList.toggle('preview-failure', active && !previewVideoVisible());
+}
 function clearStaticPreview({finishPending=false}={}) {
-  const my=++pvImageToken;pvStaticKey='';pvPosterFailure=null;
+  const my=++pvImageToken;pvStaticKey='';pvPosterFailure=null;pvSetFailureUi(false);
   const image=$('char-preview-static');
   if(image){
     const release=()=>{if(my!==pvImageToken)return;image.onload=image.onerror=null;image.removeAttribute('src');};
@@ -994,6 +998,7 @@ function pvStopVideo() {
   box?.classList.remove('has-video');
   const label=$('char-preview-skin');
   if(label && pvPosterFailure){label.hidden=false;label.textContent=previewUnavailableCaption(pvPosterFailure);}
+  pvSetFailureUi(Boolean(pvPosterFailure));
 }
 function pvSetVideo(def) {
   const box = document.querySelector('.char-preview-box');
@@ -1018,6 +1023,7 @@ function pvSetVideo(def) {
     try{await video.play();}catch{if(my===pvVidToken)pvStopVideo();return;}
     if(my!==pvVidToken)return;
     box.classList.add('has-video');
+    pvSetFailureUi(false);
     video.classList.remove('hidden');
     const label=$('char-preview-skin');if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
     if (hints) hints.classList.add('hidden');
@@ -1031,18 +1037,18 @@ function showStaticPreview(def) {
   const weapon=armaDoPreview(def.id),paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId);
   const key=JSON.stringify([def.id,def.skinId,skin?.poster,skin?.name,skin?.video,def.eyewearId,weapon,paint?.name]);
   if(key===pvStaticKey)return;
-  pvStaticKey=key;pvPosterFailure=null;pvStopVideo();
+  pvStaticKey=key;pvPosterFailure=null;pvStopVideo();pvSetFailureUi(false);
   if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
   if(weaponLabel){weaponLabel.textContent=paint?previewPaintCaption(weapon,paint):'';weaponLabel.hidden=!paint;}
   if (canvas) canvas.classList.add('hidden');
   if (image) {
     const my=++pvImageToken;
     image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');
-    const unavailable=()=>{pvPosterFailure=skin?.name || def.name;image.classList.add('hidden');if(label && !previewVideoVisible()){label.hidden=false;label.textContent=previewUnavailableCaption(pvPosterFailure);}};
+    const unavailable=()=>{pvPosterFailure=skin?.name || def.name;image.classList.add('hidden');pvSetFailureUi(true);if(label && !previewVideoVisible()){label.hidden=false;label.textContent=previewUnavailableCaption(pvPosterFailure);}};
     const src=portraitUrl(def);
     image.alt = skin?.name || def.name;
     if(src){
-      image.onload=()=>{if(my!==pvImageToken)return;image.classList.remove('hidden');pvPosterFailure=null;if(label && !previewVideoVisible()){label.textContent=skin?.name || '';label.hidden=!skin;}};
+      image.onload=()=>{if(my!==pvImageToken)return;image.classList.remove('hidden');pvPosterFailure=null;pvSetFailureUi(false);if(label && !previewVideoVisible()){label.textContent=skin?.name || '';label.hidden=!skin;}};
       image.onerror = () => {if(my!==pvImageToken)return;image.onerror=null;if(skin)unavailable();else{image.onerror=()=>{if(my===pvImageToken)unavailable();};image.src=portraitFallbackUrl(def);}};
       image.src=src;
     }else unavailable();
