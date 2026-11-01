@@ -13,3 +13,21 @@ Uma consulta GLM5.3/OMP tools0/MCPfalse respondeu394palavras em18,407s; RAW/ANSW
 Artefatos privados no aggregate audits/2026-10-31-visual-consistency/GRAFITE-GATES-R906-*. Validação final em2026-11-01: nominal0/1,075s, mutante1/1,063s com failset único authored-batch-permission e4lotes pintáveis, alias0/2,230s nominal-first. Seis CLIs inválidas retornam2 antes de medir. Duas aplicações controladas reais (somente leitura FS no processo próprio) deixam âncora0/2 e retornamINFRA3 após os controles legados. Validador real passou20casos de protocolo (2positivos/18recusas); parentCLI real com spawn controlado passou5casos, incluindo interrupção após nominalINFRA, survivor e extraRED. Esses fakes não são crédito de produto. Sintaxe2, docs:check e arch:check passaram. Todas entradas protegidas e public/ ficaram byte-exatas; censo estático do layout14mapas/437peças não é novo bake/visual. Corpo legado inclui os800raios e foi rebindado inteiro, sem assertion/teto removido. Nenhum browser/Chrome/servidor/bake/fullgate foi iniciado.
 
 Próximo: Root lê/rebind e crítico whole-current, depois decide adoção e publicação ordinária. Checkpoint DCO/Agent desta lane não publica nada. Evolução grande do recibo de bake1185 permanece outra lease; não fechar1185 nem alegar incorporação integral.
+
+## Root R915 — composição e população completa
+
+Root FULLread report e WHOLE.diff R906,125pins0drift; merge normal25c90f3 em
+W8216cab130 preservou todos os arquivos públicos. Uma lacuna adicional do
+validador aceitava três recibos parciais coerentes: somente1de4lotes, nominal
+ou mutante, e permissão perdida em1de4lotes. Os três falsos aceites foram
+reproduzidos chamando a exportação real antiga com recibos reais reduzidos.
+A fixture e o parent agora exigem os quatro ids ordenados; o mutante exige
+os quatro pintáveis. Os três controles são recusados, sem modificar o corpo
+legado, permissões do mapa ou critérios de física/arte.
+
+Node22 Root: nominal0/1,087s; mutante1/1,075s com failset próprio; alias0/2,141s;
+20controles de protocolo anteriores PASS e três novos controles de população
+PASS. Stderr zero nos workers/alias. Prefixo externo GRAFITE-GATES-ROOT-R915-
+contém rebind, medições, recibos e controles. Estes controles são do instrumento,
+sem crédito de Game/arte/MP/mobile. Review formal do head final publicado e
+whole independente ainda pendem. Evolução do bake1185 continua fora desta correção.

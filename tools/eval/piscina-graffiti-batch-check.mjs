@@ -11,6 +11,8 @@ const MUTANTE = 'lote-sem-permissao';
 const CLAUSULA = 'authored-batch-permission';
 const GATES = Object.freeze(['piscina-editorial', 'actual-final-geometry', 'colliders-parity',
   'spawns-parity', 'pickups-parity', 'shot-parity', CLAUSULA]);
+const AUTORAIS = Object.freeze(['piscina_escada', 'piscina_armarios', 'piscina_banco', 'piscina_espreguicadeira']);
+const LOTES_ESPERADOS = Object.freeze(AUTORAIS.map(id => 'piscina:' + id + ':batch').sort());
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const SOURCES = Object.freeze(Object.fromEntries(Object.entries({
   checker: './piscina-graffiti-batch-check.mjs', map: '../../public/js/map_piscina.js',
@@ -43,8 +45,7 @@ export function avaliarFilho(r, esperado) {
     return recusa('binding de fonte divergente');
   if (gates.some(g => !g || typeof g !== 'object' || Array.isArray(g))) return recusa('gate JSON não é objeto');
   if (!iguais(rec.cases, GATES) || !iguais(gates.map(g => g.gate), GATES)) return recusa('censo de gates divergente');
-  if (!Array.isArray(rec.batches) || !rec.batches.length || new Set(rec.batches).size !== rec.batches.length
-    || !rec.batches.every(n => typeof n === 'string' && /^piscina:piscina_(escada|armarios|banco|espreguicadeira):batch$/.test(n)))
+  if (!iguais(rec.batches, LOTES_ESPERADOS))
     return recusa('população de lotes inválida');
   if (!Array.isArray(rec.pintaveis) || new Set(rec.pintaveis).size !== rec.pintaveis.length
     || !rec.pintaveis.every(n => rec.batches.includes(n))) return recusa('lotes pintáveis inválidos');
@@ -55,7 +56,7 @@ export function avaliarFilho(r, esperado) {
   if (a.count !== (mutado ? 1 : 0) || (a.sourceAfter !== a.sourceBefore) !== mutado) return recusa('aplicação ausente/duplicada/cega');
   const failures = mutado ? [CLAUSULA] : [];
   if (r.status !== (mutado ? 1 : 0) || rec.error !== (mutado ? 'ContractViolation' : null)
-    || !iguais(rec.failed, failures) || (rec.pintaveis.length > 0) !== mutado)
+    || !iguais(rec.failed, failures) || !iguais(rec.pintaveis, mutado ? LOTES_ESPERADOS : []))
     return recusa('resultado semântico inexato/survivor', 'ContractViolation');
   const medido = gates.at(-1);
   if (medido.lotes !== rec.batches.length || !iguais(medido.pintaveis, rec.pintaveis)) return recusa('recibo diverge da medição');
@@ -270,7 +271,6 @@ assert.equal(readFileSync(mapURL, 'utf8'), source, 'production map was never pat
 console.log('Piscina batch gate: real geometry, order mutation, exclusion and physics parity passed');
 
 const { registerPropTemplate } = await import('../../public/js/mapprops.js');
-const AUTORAIS = ['piscina_escada', 'piscina_armarios', 'piscina_banco', 'piscina_espreguicadeira'];
 const permissao = '      batch.userData.graffitiSupportExcluded = !superficieGrafitavel(first);\n';
 const ancora = '      batch.userData.graffitiNomeDoAsset = !!list[0].child.userData.graffitiNomeDoAsset;\n'
   + permissao + '      batch.userData.graffitiWhiteWall = !!first.userData.graffitiWhiteWall;\n';
@@ -288,8 +288,8 @@ try {
   for (const id of AUTORAIS) { const g = new THREE.Group(); g.add(new THREE.Mesh(geometry, material)); registerPropTemplate(id, g); }
   seedRandom(12345); const world = build(new THREE.Scene(), initTextures());
   const lotes = world.root.children.filter(o => o.isInstancedMesh && /^piscina:piscina_.*:batch$/.test(o.name));
-  if (!lotes.length) throw Error('fixture authored não construiu lotes');
   batches = lotes.map(o => o.name).sort(); pintaveis = lotes.filter(o => superficieGrafitavel(o)).map(o => o.name).sort();
+  if (!iguais(batches, LOTES_ESPERADOS)) throw Error('fixture authored não construiu os quatro lotes esperados');
 } finally {
   for (const id of AUTORAIS) registerPropTemplate(id, null);
   geometry.dispose(); material.dispose();
