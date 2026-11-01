@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { stripVTControlCharacters } from 'node:util';
 import { sonda, pula, causaNaoMedivel, SAIDA_SKIP } from './sonda-filho.mjs';
 
 const SONDA = fileURLToPath(new URL('./sonda-filho.mjs', import.meta.url));
@@ -274,6 +275,73 @@ clausula('SFS20 TEXEL: ENOBUFS real não conta como mutante morto', () => {
   assert.equal(r.status, SAIDA_SKIP, `TEXEL ENOBUFS saiu ${r.status}: ${r.stderr}`);
   assert.match(r.stderr, /ENOBUFS/); assert.doesNotMatch(r.stdout, /MATOU|mutantes MORTOS|a régua morde todos/);
   assert.equal(readFileSync(join(fix, 'public/js/vao.js'), 'utf8'), vao, 'fixture não restaurada');
+});
+
+clausula('SFS21 RUNNER REAL: ENOBUFS com status0 é 78, FAIL medido vence', () => {
+  /* O runner (tools/eval/runner.mjs) só provou o contrato com helper até aqui.
+     Aqui é o processo REAL: spawnSync do shim limita maxBuffer do filho node
+     (mesma fixture SIGTERM do SFS8b/SFS20) — ENOBUFS verdadeiro, status 0,
+     signal null na fronteira de spawnSync que o runner lê. */
+  const fix = join(TMP, 'runner-enobufs');
+  mkdirSync(fix, { recursive: true });
+  const records = join(fix, 'runner.jsonl'), shim = join(fix, 'shim.mjs');
+  writeFileSync(records, '');
+  const gordo = "process.on('SIGTERM',()=>process.exit(0));require('fs').writeSync(1,'saída parcial\\n');setInterval(()=>{},1000)";
+  writeFileSync(shim, [
+    "import cp from 'node:child_process';import fs from 'node:fs';import{syncBuiltinESMExports}from'node:module';",
+    'const real=cp.spawnSync;',
+    `cp.spawnSync=function(bin,args,opts={}){const passo=args&&String(args[0]).includes('run')&&args[1]==='passo'?null:args&&String(args[0]).includes('run')?args[2]:null;if(!passo)return real(bin,args,opts);`,
+    `const r=passo==='passo-ruim'?real(process.execPath,['-e',"console.error('medido: conteúdo fora da régua');process.exit(1)"],opts):real(process.execPath,['-e',${JSON.stringify(gordo)}],{...opts,maxBuffer:1});`,
+    `fs.appendFileSync(${JSON.stringify(records)},JSON.stringify({passo,status:r.status,signal:r.signal,code:r.error?.code})+'\\n');return r;};syncBuiltinESMExports();`,
+  ].join('\n'));
+  const env = { ...process.env, NODE_OPTIONS: `--import ${pathToFileURL(shim).href}` };
+  const sozinho = spawnSync(process.execPath, [join(ROOT, 'tools/eval/runner.mjs'), 'passo'],
+    { cwd: fix, encoding: 'utf8', timeout: 30000, env });
+  const medido = readFileSync(records, 'utf8').trim().split('\n').map(JSON.parse).pop();
+  assert.equal(medido.code, 'ENOBUFS'); assert.equal(medido.status, 0); assert.equal(medido.signal, null);
+  assert.equal(sozinho.status, SAIDA_SKIP, `runner ENOBUFS+status0 saiu ${sozinho.status}`);
+  assert.match(sozinho.stdout, /PULOU/);
+  /* ANSI real no stdout: compara sem ANSI apenas na fronteira do assert; saída bruta intacta. */
+  assert.match(stripVTControlCharacters(sozinho.stdout), /não medido: passo/);
+  assert.doesNotMatch(sozinho.stdout, /ok\u001b\[0m/, 'status0 com ENOBUFS contou como medido ok');
+  assert.doesNotMatch(sozinho.stdout, /1\/1 passaram/);
+  /* Precedência: vermelho medido antes do passo não medido → sai 1, não 78. */
+  writeFileSync(records, '');
+  const ambos = spawnSync(process.execPath, [join(ROOT, 'tools/eval/runner.mjs'), 'passo-ruim', 'passo'],
+    { cwd: fix, encoding: 'utf8', timeout: 30000, env });
+  assert.equal(ambos.status, 1, `fail→skip saiu ${ambos.status}`);
+  assert.match(ambos.stdout, /FALHOU/);
+  assert.match(stripVTControlCharacters(ambos.stdout), /não medido: passo/);
+});
+
+clausula('SFS22 RUNNER REAL: filho limpo status0 é 1/1 passaram, nunca PULOU', () => {
+  /* Controle do próprio runner com processo filho REAL: código 0, sem signal,
+     sem error — mesma fronteira de spawnSync que o SFS21 lê, sem helper e sem
+     objeto fabricado. Mutante causal (pulou passa a contar status 0 como SKIP)
+     morre aqui: o passo verde real viraria PULOU, sumiria o 1/1 passaram e a
+     saída deixaria de ser 0. */
+  const fix = join(TMP, 'runner-limpo');
+  mkdirSync(fix, { recursive: true });
+  const records = join(fix, 'runner.jsonl'), shim = join(fix, 'shim.mjs');
+  writeFileSync(records, '');
+  const verde = "console.log('verde de verdade');process.exitCode=0";
+  writeFileSync(shim, [
+    "import cp from 'node:child_process';import fs from 'node:fs';import{syncBuiltinESMExports}from'node:module';",
+    'const real=cp.spawnSync;',
+    `cp.spawnSync=function(bin,args,opts={}){const passo=args&&String(args[0]).includes('run')?args[2]:null;if(!passo)return real(bin,args,opts);`,
+    `const r=real(process.execPath,['-e',${JSON.stringify(verde)}],opts);`,
+    `fs.appendFileSync(${JSON.stringify(records)},JSON.stringify({passo,status:r.status,signal:r.signal,code:r.error?.code})+'\\n');return r;};syncBuiltinESMExports();`,
+  ].join('\n'));
+  const env = { ...process.env, NODE_OPTIONS: `--import ${pathToFileURL(shim).href}` };
+  const r = spawnSync(process.execPath, [join(ROOT, 'tools/eval/runner.mjs'), 'passo'],
+    { cwd: fix, encoding: 'utf8', timeout: 30000, env });
+  const m = readFileSync(records, 'utf8').trim().split('\n').map(JSON.parse).pop();
+  /* Prova que o filho foi um processo real e mediu verde de verdade. */
+  assert.equal(m.status, 0); assert.equal(m.signal, null); assert.equal(m.code, undefined);
+  assert.equal(r.status, 0, `runner limpo saiu ${r.status}: ${(r.stdout || '') + (r.stderr || '')}`);
+  assert.match(r.stdout, /1\/1 passaram/);
+  assert.doesNotMatch(r.stdout, /PULOU/, 'status0 limpo contou como SKIP');
+  assert.doesNotMatch(r.stdout, /não medido/);
 });
 
 rmSync(TMP, { recursive: true, force: true });
