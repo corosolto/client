@@ -13,12 +13,12 @@ const model = '/models/skins/lula-cyborg.glb';
 const manifest = { skins: { 'lula-cyborg': { approved: true, character: 'barbudo', model } } };
 const equipped = { authenticated: true, accountId: 'fixture', inventory: [{ skin_id: 'lula-cyborg', equipped: true }], catalog: [{ id: 'lula-cyborg', slot: 'character', available: true, character_id: 'barbudo', model_path: model }] };
 
-function fixture({ inventory = equipped, accountReady = Promise.resolve(), readInventory, timeoutAPI = true, mutate = value => value } = {}) {
+function fixture({ inventory = equipped, accountReady = Promise.resolve(), readInventory, timeoutAPI = true, weaponSkins = [{ id: 'ouro-ak', name: 'AK Ouro', slot: 'weapon', weapon: 'ak', model: '/models/weapons/ak.glb', ready: true }], mutate = value => value } = {}) {
   const media = deferred(), controllers = [], deadlines = [], nodes = new Map(), listeners = new Map(), timers=new Map(), fetches=[];
   let timerID=0;
-  const node = id => ({ id, open: false, textContent: '', dataset: {}, classList: { add: noop, remove: noop, contains: () => false }, setAttribute: noop, append: noop, replaceChildren: noop, addEventListener: noop });
+  const node = id => ({ id, open: false, close(){this.open=false;}, textContent: '', dataset: {}, classList: { add: noop, remove: noop, contains: () => false }, setAttribute: noop, append: noop, replaceChildren: noop, addEventListener: noop });
   const context = vm.createContext({
-    URLSearchParams, URL, console,
+    URLSearchParams, URL, console, crypto: {randomUUID:()=>'fixture-purchase'},
     document: {
       getElementById: id => { if (!nodes.has(id)) nodes.set(id, node(id)); return nodes.get(id); },
       createElement: () => node(''), querySelectorAll: () => [], querySelector: () => null,
@@ -32,8 +32,7 @@ function fixture({ inventory = equipped, accountReady = Promise.resolve(), readI
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options?.detail; } },
     AbortSignal: timeoutAPI ? { timeout: ms => { const controller = new AbortController(); controllers.push(controller); deadlines.push(ms); return controller.signal; } } : {},
     TRETA_ITEMS_ENABLED: false, VERSION: 'fixture', TRETA_SKINS: [{ id: 'lula-cyborg', name: 'Barbudo Cyborg', slot: 'character', character: 'barbudo' }],
-    TRETA_WEAPON_SKINS: [{ id: 'ouro-ak', name: 'AK Ouro', slot: 'weapon', weapon: 'ak', model: '/models/weapons/ak.glb', ready: true }],
-    TRETA_GLOVES: [], TRETA_PACKS: [{ id: 'pack-fixture', name: 'Pack Fixture', slot: 'pack', model: '/packs/pack-fixture', ready: true, weaponSkins: { ak: 'pack-fixture-ak' } }], TRETA_COINS: [], TRETA_EYEWEAR: [],
+    TRETA_WEAPON_SKINS: weaponSkins, TRETA_GLOVES: [], TRETA_PACKS: [{ id: 'pack-fixture', name: 'Pack Fixture', slot: 'pack', model: '/packs/pack-fixture', ready: true, weaponSkins: { ak: 'pack-fixture-ak' } }], TRETA_COINS: [], TRETA_EYEWEAR: [],
     TRETA_DEFAULT_REWARDS: {}, TRETA_COIN_ART: { poster: '/fixture.webp' },
     initTretaRewards: noop, updateTretaRewards: noop, ligarCompartilhar: noop,
     estadoDaUrl: () => null, loadAccount: async () => ({ authenticated: true }),
@@ -45,7 +44,7 @@ function fixture({ inventory = equipped, accountReady = Promise.resolve(), readI
       return media.promise;
     },
   });
-  const api = new vm.Script(mutate(source) + '\ndraw=()=>{};initProposals=()=>{};updateBuy=()=>{};({initTretaStore,equippedTretaSkin,desequiparTretaSkin,tretaSkinPresentation,tretaWeaponPresentation});').runInContext(context);
+  const api = new vm.Script(mutate(source) + '\ndraw=()=>{};initProposals=()=>{};updateBuy=()=>{};({initTretaStore,equippedTretaSkin,desequiparTretaSkin,tretaSkinPresentation,tretaWeaponPresentation,buyForTest:async skin=>{selected=skin;previewReady=true;visual=async()=>({dispose(){}});openDialog=()=>{};await buy();}});').runInContext(context);
   let settled = false;
   const ready = api.initTretaStore().then(() => { settled = true; });
   return { api, ready, media, deadlines, controllers, timers, fetches, settled: () => settled, emit: type => context.document.dispatchEvent({ type }), accountChanged: detail => context.document.dispatchEvent({ type: 'cs-account-change', detail }) };
@@ -264,6 +263,34 @@ test('deadline stays active while the manifest body is pending',async()=>{
   body.resolve(manifest);await f.ready;
   assert.equal(f.timers.size,0);assert.equal(f.api.equippedTretaSkin('barbudo'),'lula-cyborg');
 });
+async function deadlineDuringBodyReleasesReadiness(mutate) {
+  const body=deferred(),f=fixture({timeoutAPI:false,mutate});
+  f.media.resolve({ok:true,json:()=>{
+    const signal=f.fetches[0].signal;
+    if(signal.aborted)body.reject(signal.reason);
+    else signal.addEventListener('abort',()=>body.reject(signal.reason),{once:true});
+    return body.promise;
+  }});
+  await tick();
+  const active=f.timers.size,waiting=!f.settled();
+  for(const {callback} of f.timers.values())callback();
+  await tick();
+  const released=f.settled(),aborted=f.fetches[0].signal.aborted;
+  // Mutantes também terminam: limpeza posterior não pode tornar o snapshot verde.
+  body.resolve(manifest);await f.ready;
+  assert.equal(waiting,true,'readiness did not wait for the pending body');
+  assert.equal(active,1,'manifest deadline ended before body consumption');
+  assert.equal(released,true,'expired manifest body still blocks readiness');
+  assert.equal(aborted,true,'pending body did not receive the manifest abort');
+  assert.equal(f.api.equippedTretaSkin('barbudo'),null);
+  assert.equal(f.timers.size,0,'manifest body deadline leaked');
+}
+test('manifest deadline aborts a pending body and releases readiness',()=>deadlineDuringBodyReleasesReadiness());
+test('control mutation rejects clearing the deadline before the body',async()=>{
+  const anchor=".then(r=>{if(!r.ok)throw new Error('manifest_unavailable');return r.json();})";
+  assert.equal(source.split(anchor).length-1,1);
+  await assert.rejects(deadlineDuringBodyReleasesReadiness(value=>value.replace(anchor,anchor.replace('if(!r.ok)','clearTimeout(manifestTimer);if(!r.ok)'))),/deadline ended before body consumption/);
+});
 for(const [name,anchor,replacement,check] of [
   ['static-only timeout',"const controller=new AbortController();manifestTimer=setTimeout(()=>controller.abort(),12000);return fetch(assetUrl('models/skins/manifest.json'),{signal:controller.signal});","return fetch(assetUrl('models/skins/manifest.json'),{signal:AbortSignal.timeout(12000)});",withoutTimeoutAPILoads],
   ['omitted timer cleanup','clearTimeout(manifestTimer);','',withoutTimeoutAPILoads],
@@ -272,4 +299,27 @@ for(const [name,anchor,replacement,check] of [
 ])test('control mutation rejects '+name,async()=>{
   assert.equal(source.split(anchor).length-1,1);
   await assert.rejects(check(value=>value.replace(anchor,replacement)),{name:'AssertionError'});
+});
+
+async function purchaseInventoryReleasesReadiness(mutate) {
+  const weapon={id:'fixture-weapon',name:'Fixture',slot:'weapon',weapon:'ak',model:'/models/weapons/ak.glb',poster:'/fixture.webp',ready:true};
+  const inventory={...equipped,wallet:{balance:1000},catalog:[...equipped.catalog,{id:weapon.id,slot:'weapon',weapon_id:'ak',model_path:weapon.model,available:true,price:1}]};
+  let purchases=0;
+  const f=fixture({mutate,weaponSkins:[weapon],readInventory:async(_path,body)=>{
+    if(body?.action!=='purchase')return inventory;
+    purchases++;
+    return {...inventory,inventory:[],purchase:{owned:false,spent:1},wallet:{balance:999}};
+  }});
+  await tick();assert.equal(f.settled(),false);
+  await f.api.buyForTest(weapon);await tick();const released=f.settled();
+  f.media.resolve({ok:true,json:async()=>manifest});await f.ready;
+  assert.equal(purchases,1,'fixture did not exercise the purchase response');
+  assert.equal(released,true,'purchase inventory replacement still waits for removed equipment');
+  assert.equal(f.api.equippedTretaSkin('barbudo'),null);
+}
+test('purchase inventory replacement removing equipped character releases readiness',()=>purchaseInventoryReleasesReadiness());
+test('control mutation rejects purchase replacement without inventory wake-up',async()=>{
+  const anchor="state=result;draw();notifyEquipment();$('treta-detail').close();";
+  assert.equal(source.split(anchor).length-1,1);
+  await assert.rejects(purchaseInventoryReleasesReadiness(value=>value.replace(anchor,anchor.replace('notifyEquipment();',''))),/purchase inventory replacement still waits/);
 });
