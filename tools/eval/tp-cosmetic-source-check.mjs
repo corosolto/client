@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 const SELF = fileURLToPath(import.meta.url);
 const ROOT = path.resolve(path.dirname(SELF), '../..');
@@ -10,13 +10,16 @@ const PREFIX = 'TP-COSMETIC/1 ';
 const CASES = { cosmetic: ['K1', 'K2', 'K3', 'K4'], fallback: ['K5'], 'missing-source': ['K6'], 'wrong-source': ['K7'],
   'wrong-path': ['K8'], 'wrong-family': ['K9'], 'skin-fallback': ['K10', 'K11'], 'cosmetic-wrong-sha': ['K12'] };
 const MUTANTS = {
-  'glove-availability': { from: 'return _base.has(id) || _skins.get(skinId)?.character === id;', to: 'return _base.has(id);', failed: ['K1'] },
-  'glove-source-bypass': { from: 'if (!estilo || !templates || !matches) return null;', to: 'if (!estilo || !templates) return null;', failed: ['K2', 'K3', 'K6', 'K7', 'K8', 'K9', 'K12'] },
-  'glove-origin-live': { from: 'attachGloves(model, def.id, id, bodyOrigin)', to: 'attachGloves(model, def.id, id, _bodyOrigins.get(_skins.get(def.skinId)?.model || _base.get(def.id)))', failed: ['K5'] },
-  'glove-source-path': { from: 'origin?.character === charId && source?.path === origin.path', to: 'origin?.character === charId && Boolean(source)', failed: ['K8'] },
+  'glove-availability': { target: 'game.js', from: 'void gloveHandle.preload()', to: 'void Promise.resolve()', failed: ['K1'] },
+  'glove-source-bypass': { edits: [
+    ["|| source?.path !== origin.path || !/^[a-f0-9]{64}$/.test(source.sha256 || '')\n        || source.skeletonFamilySha256 !== family", ''],
+    ["const sameSource = origin.kind === 'cosmetic' ? source.sha256 === origin.sha256\n        : origin.kind === 'base' && /^[a-f0-9]{10}$/.test(origin.revision || '') && source.sha256.startsWith(origin.revision);", 'const sameSource = true;'],
+  ], failed: ['K1', 'K2', 'K3', 'K4', 'K6', 'K7', 'K8', 'K9', 'K12'] },
+  'glove-origin-live': { from: 'attachGloves(model, id, gloveHandle)', to: 'attachGloves(model, id, getGloveHandle(def.id, def.skinId))', failed: ['K5'] },
+  'glove-source-path': { from: 'source?.path !== origin.path', to: 'false', failed: ['K8'] },
   'glove-source-base-sha': { from: 'source.sha256.startsWith(origin.revision)', to: 'true', failed: ['K7'] },
   'glove-source-cosmetic-sha': { from: 'source.sha256 === origin.sha256', to: 'true', failed: ['K12'] },
-  'glove-source-family': { from: " && source.skeletonFamilySha256 === family", to: '', failed: ['K9'] },
+  'glove-source-family': { from: 'source.skeletonFamilySha256 !== family', to: 'false', failed: ['K9'] },
 };
 const sha = b => createHash('sha256').update(b).digest('hex');
 const INPUTS = ['public/js/game.js', 'public/js/glbchars.js', 'public/js/data/assetver.js', 'public/data/gloves-manifest.json', 'public/models/skins/manifest.json'];
@@ -24,15 +27,18 @@ const sources = () => Object.fromEntries(INPUTS.map(f => [f, sha(fs.readFileSync
 const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 function mutate(source, mutant) {
   const m = MUTANTS[mutant];
-  if (source.split(m.from).length !== 2) throw Error(`${mutant}: exige uma única âncora`);
-  return source.replace(m.from, m.to);
+  for (const [from, to] of m.edits || [[m.from, m.to]]) {
+    if (source.split(from).length !== 2 || from === to) throw Error(`${mutant}: exige uma única âncora não inerte`);
+    source = source.replace(from, to);
+  }
+  return source;
 }
 
 async function worker(fixture, mutant) {
-  const out = { schema: 'tp-cosmetic/1', fixture, mutant, sources: null, applied: null, rows: [], loaded: [] };
+  const out = { schema: 'tp-cosmetic/1', fixture, mutant, nonce: process.env.COROSOLTO_COSMETIC_NONCE, sources: null, applied: null, rows: [], loaded: [] };
   const games = [], tasks = [], targetParts = [];
   let tmp;
-  let release = () => {}, calls = 0;
+  let release = () => {}, calls = 0, gloveCalls = 0, manifestCalls = 0;
   const deadline = setTimeout(() => { console.error('Cosmetic fixture deadline'); process.exit(3); }, 45000);
   try {
     out.sources = sources();
@@ -44,6 +50,7 @@ async function worker(fixture, mutant) {
     const { pack, variant } = variants[0];
     const target = `/models/gloves/3p/${variant.id}-${pack.skeletonFamily.fingerprintSha256.slice(0, 12)}.glb`;
     const localFetch = async u => {
+      if (new URL(String(u), 'http://fixture/').pathname === '/data/gloves-manifest.json') manifestCalls++;
       if (!fs.existsSync(file(u))) return new Response('', { status: 404 });
       if (file(u).endsWith('/data/gloves-manifest.json') && ['missing-source', 'wrong-source', 'wrong-path', 'wrong-family', 'cosmetic-wrong-sha'].includes(fixture)) {
         const data = JSON.parse(fs.readFileSync(file(u), 'utf8'));
@@ -66,6 +73,7 @@ async function worker(fixture, mutant) {
     GLTFLoader.prototype.load = function (u, done, progress, fail) {
       const isTarget = new URL(String(u), 'http://fixture/').pathname === target;
       if (isTarget) calls++;
+      if (new URL(String(u), 'http://fixture/').pathname.startsWith('/models/gloves/3p/')) gloveCalls++;
       const loader = new GLTFLoader();
       loader.register(() => ({ name: 'EXT_texture_webp', async loadTexture() {
         const t = new H.THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); t.needsUpdate = true; return t;
@@ -83,16 +91,17 @@ async function worker(fixture, mutant) {
     };
     let G, actual;
     if (mutant) {
-      const js = path.join(ROOT, 'public/js'), gs = mutate(fs.readFileSync(path.join(js, 'glbchars.js'), 'utf8'), mutant);
+      const js = path.join(ROOT, 'public/js');
+      const gs = MUTANTS[mutant].target === 'game.js' ? fs.readFileSync(path.join(js, 'glbchars.js'), 'utf8') : mutate(fs.readFileSync(path.join(js, 'glbchars.js'), 'utf8'), mutant);
       const absoluteImports = s => s.replace(/(from\s*['"]|import\s*\(\s*['"])(\.[^'"]+)(['"])/g,
         (_, a, spec, z) => a + new URL(spec, pathToFileURL(path.join(js, 'module.js'))).href + z);
       tmp = fs.mkdtempSync(path.join(ROOT, 'node_modules', '.tp-cosmetic-'));
       const gf = path.join(tmp, 'glbchars.mjs'), game = path.join(tmp, 'game.mjs');
       fs.writeFileSync(gf, absoluteImports(gs));
-      const gameSource = fs.readFileSync(path.join(js, 'game.js'), 'utf8');
+      const gameSource = MUTANTS[mutant].target === 'game.js' ? mutate(fs.readFileSync(path.join(js, 'game.js'), 'utf8'), mutant) : fs.readFileSync(path.join(js, 'game.js'), 'utf8');
       if (gameSource.split("'./glbchars.js'").length !== 2) throw Error('Game exige um único import glbchars');
       fs.writeFileSync(game, absoluteImports(gameSource.replace("'./glbchars.js'", `'${pathToFileURL(gf).href}'`)));
-      out.applied = { mutant, rawSha256: sha(gs), moduleSha256: sha(fs.readFileSync(gf)) };
+      out.applied = { mutant, rawSha256: sha(MUTANTS[mutant].target === 'game.js' ? gameSource : gs), moduleSha256: sha(fs.readFileSync(gf)) };
       G = await import(pathToFileURL(gf).href); actual = await import(pathToFileURL(game).href);
     } else {
       G = await import('../../public/js/glbchars.js'); actual = await import('../../public/js/game.js');
@@ -120,8 +129,10 @@ async function worker(fixture, mutant) {
       await G.preloadCosmeticAssets(['bolsonaro-drip']);
       const g = boot('bolsonaro-drip'), tp = g.playerTP, ctrl = tp.ctrl, mixer = tp.mixer;
       if (G.hasModel('capitao') || !tp.isGLB || tp.skinId !== 'bolsonaro-drip') throw Error('Pré-condição cosmetic-only não atingida');
-      await flush(); stable(g);
-      check('K1', calls === 1, { ownRequestCount: calls, baseReady: G.hasModel('capitao') });
+      await flush(); const negativeStable = stable(g); await flush();
+      check('K1', manifestCalls === 1 && gloveCalls === 0 && calls === 0 && negativeStable
+        && g.playerTP === tp && tp.ctrl === ctrl && tp.mixer === mixer,
+      { manifestCalls, gloveCalls, wrongOriginCalls: calls, negativeStable, ensures: 20, baseReady: G.hasModel('capitao') });
       const previewRequest = G.preloadGloveAssets(['capitao']);
       release(); await previewRequest; await drain(); g._ensurePlayerTP();
       check('K2', calls === 1 && G.hasGloveModel('capitao') && meshes(g.playerTP).length === 0 && g.playerTP === tp
@@ -153,9 +164,16 @@ async function worker(fixture, mutant) {
       if (fixture === 'cosmetic-wrong-sha') await G.preloadCosmeticAssets(['bolsonaro-drip']);
       await G.preloadCharacterAssets(['capitao'], { weapons: ['pistol'] });
       release(); await G.preloadGloveAssets(['capitao']); await drain();
+      let checkedOrigin = null;
+      if (fixture === 'cosmetic-wrong-sha') {
+        const handle = G.getGloveHandle('capitao', 'bolsonaro-drip');
+        if (!handle) throw Error('Actual cosmetic handle unavailable for K12');
+        await handle.preload(); await drain();
+        checkedOrigin = { key: handle.key, ready: handle.ready, ownPreloadSettled: true };
+      }
       const g = boot(fixture === 'cosmetic-wrong-sha' ? 'bolsonaro-drip' : null);
       const id = { 'missing-source': 'K6', 'wrong-source': 'K7', 'wrong-path': 'K8', 'wrong-family': 'K9', 'cosmetic-wrong-sha': 'K12' }[fixture];
-      check(id, g.playerTP.isGLB && meshes(g.playerTP).length === 0 && stable(g), 'Descriptor de procedência ausente/divergente recusa o pacote inteiro');
+      check(id, g.playerTP.isGLB && meshes(g.playerTP).length === 0 && stable(g), { reason: 'Descriptor de procedência ausente/divergente recusa o pacote inteiro', checkedOrigin, calls, gloveCalls });
     }
     out.status = out.rows.every(r => r.ok) ? 'GREEN' : 'RED';
   } catch (e) { out.status = 'INFRA'; out.error = String(e.stack || e); }
@@ -164,9 +182,9 @@ async function worker(fixture, mutant) {
 }
 
 const args = process.argv.slice(2), selected = process.env.COROSOLTO_COSMETIC_CASE;
-if (selected !== undefined || Object.hasOwn(process.env, 'COROSOLTO_COSMETIC_MUTANT') || args.includes('--cosmetic-worker-internal')) {
+if (selected !== undefined || Object.hasOwn(process.env, 'COROSOLTO_COSMETIC_MUTANT') || Object.hasOwn(process.env, 'COROSOLTO_COSMETIC_NONCE') || args.includes('--cosmetic-worker-internal')) {
   const mutant = process.env.COROSOLTO_COSMETIC_MUTANT;
-  if (!equal(args, ['--cosmetic-worker-internal']) || !Object.hasOwn(CASES, selected)
+  if (!/^[a-f0-9-]{36}$/.test(process.env.COROSOLTO_COSMETIC_NONCE || '') || !equal(args, ['--cosmetic-worker-internal']) || !Object.hasOwn(CASES, selected)
     || (mutant !== '' && !Object.hasOwn(MUTANTS, mutant))) process.exit(2);
   await worker(selected, mutant);
 }
@@ -177,15 +195,16 @@ const report = { schema: 'tp-cosmetic/1', at: new Date().toISOString(), sources:
 try {
   report.sources = sources();
   runs: for (const selectedMutant of mutant ? ['', mutant] : ['']) for (const [fixture, ids] of Object.entries(CASES)) {
+    const nonce = randomUUID();
     const p = spawnSync(process.execPath, [SELF, '--cosmetic-worker-internal'], { encoding: 'utf8', timeout: 60000, maxBuffer: 8 * 1024 * 1024,
-      env: { ...process.env, COROSOLTO_COSMETIC_CASE: fixture, COROSOLTO_COSMETIC_MUTANT: selectedMutant } });
+      env: { ...process.env, COROSOLTO_COSMETIC_CASE: fixture, COROSOLTO_COSMETIC_MUTANT: selectedMutant, COROSOLTO_COSMETIC_NONCE: nonce } });
     const lines = (p.stdout || '').split('\n').filter(l => l.startsWith(PREFIX));
     if (p.error || p.signal || lines.length !== 1) throw Error(`${fixture}: filho sem recibo único (${p.status}/${p.signal}); ${p.stderr?.slice(-700)}`);
     const data = JSON.parse(lines[0].slice(PREFIX.length));
     if (data.status === 'INFRA') throw Error(`${fixture}: ${data.error}`);
-    if (data.schema !== report.schema || data.fixture !== fixture || data.mutant !== selectedMutant || !equal(data.sources, report.sources) || !Array.isArray(data.rows)
+    if (data.schema !== report.schema || data.nonce !== nonce || data.fixture !== fixture || data.mutant !== selectedMutant || !equal(data.sources, report.sources) || !Array.isArray(data.rows)
       || !equal(data.rows.map(r => r.id), ids) || data.rows.some(r => typeof r.ok !== 'boolean')) throw Error(`${fixture}: protocolo divergente`);
-    const expectedHash = selectedMutant ? sha(mutate(fs.readFileSync(path.join(ROOT, 'public/js/glbchars.js'), 'utf8'), selectedMutant)) : null;
+    const expectedHash = selectedMutant ? sha(mutate(fs.readFileSync(path.join(ROOT, 'public/js', MUTANTS[selectedMutant].target || 'glbchars.js'), 'utf8'), selectedMutant)) : null;
     if (selectedMutant ? data.applied?.mutant !== selectedMutant || data.applied.rawSha256 !== expectedHash || !/^[a-f0-9]{64}$/.test(data.applied.moduleSha256 || '') : data.applied !== null) throw Error(`${fixture}: aplicação divergente`);
     const red = data.rows.some(r => !r.ok);
     if (p.status !== (red ? 1 : 0) || data.status !== (red ? 'RED' : 'GREEN')) throw Error(`${fixture}: exit/veredito divergente`);

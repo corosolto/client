@@ -13,7 +13,7 @@ import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { EMOTES_ENABLED } from './emote-features.js';
 import { preloadEyewearAssets } from './eyewear.js';
-import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver, GloveManifestUnavailable } from './glbchars.js';
+import { preloadCharacterAssets, preloadCosmeticAssets, getGloveHandle, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver, GloveManifestUnavailable } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps, mapPropIds } from './mapprops.js';
 import { preloadMapAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
@@ -1309,14 +1309,17 @@ function pvSetChar(def) {
     // O retrato mantém a identidade selecionada enquanto o GLB carrega ou falha.
     const arma = armaDoPreview(def.id);
     Promise.all([preloadCharacterAssets([def.id], { weapons:[arma.weaponId] }),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
-      preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId),
-      arma.gloveSkinId ? preloadGloveAssets([def.id]).catch((e) => { if (!(e instanceof GloveManifestUnavailable)) throw e; e.warn(); }) : null]).then(() => {
+      preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId)])
+      .then(() => {
+        const pending = arma.gloveSkinId ? getGloveHandle(def.id, def.skinId)?.preload() : null;
+        return pending?.catch((e) => { if (!(e instanceof GloveManifestUnavailable)) throw e; e.warn(); });
+      }).then(() => {
       if (my !== pvToken || !previewHeroVisible()) return;
       // preview: porte de EXIBIÇÃO — arma atravessada no peito (estilo vitrine do CS) em
       // vez do porte funcional que aponta o cano pra câmera e esconde a silhueta da arma
       // (era o "posturas bizarras" de 05/08). Ângulos por classe em glbchars.js. No jogo,
       // nada muda.
-      const m = hasModel(def.id) ? buildCharacterModel(def, { weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, gloveSkinId: arma.gloveSkinId, preview: true }) : null;
+      const m = hasModel(def.id, def.skinId) ? buildCharacterModel(def, { weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, gloveSkinId: arma.gloveSkinId, preview: true }) : null;
       if (!m) return;
       showCanvas();
       if (p.model) p.scene.remove(p.model);
@@ -2148,11 +2151,17 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const _vmBootWeapons = POINTER_COARSE ? [_vmStartWeapon] : _armasDaPartida;
   try {
     if (!navOnly) {
-      await aguardarPreloads([
+      const bodyPreloads = Promise.allSettled([
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
         preloadCosmeticAssets(matchSkins),
+      ]).then((rs) => {
+        rs.forEach((r) => { if (r.status === 'rejected') console.error('preload da partida falhou parcialmente', r.reason); });
+        return rs;
+      });
+      await aguardarPreloads([
+        bodyPreloads,
         preloadEyewearAssets(matchEyewear),
-        playerGloveId ? preloadGloveAssets([charId]) : null,
+        bodyPreloads.then(() => playerGloveId ? getGloveHandle(charId, playerSkinId)?.preload() : null),
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
         playerKnifeSkinId ? preloadWeaponSkinCandidate(playerKnifeSkinId) : null,
         sfx.preloadWeaponSamples(_armasDaPartida),
