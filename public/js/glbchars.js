@@ -228,6 +228,7 @@ export async function preloadCosmeticAssets(ids = []) {
 /* LUVAS EM 3ª PESSOA (20/10): a fábrica já recortava a mão de cada personagem em
    `models/gloves/3p/`; aqui o pacote é re-bindado por nome de osso e pintado. */
 const _gloveMeshes = new Map();    // charId -> templates SkinnedMesh (ou null se não há pacote)
+const _gloveRequests = new Map();
 let _gloveManifest = null;
 function gloveManifest() {
   if (!_gloveManifest) _gloveManifest = fetch(assetUrl('data/gloves-manifest.json'))
@@ -248,14 +249,20 @@ export async function preloadGloveAssets(ids = []) {
   if (!alvos.length) return;
   const manifest = await gloveManifest();
   await Promise.all(alvos.map(async (id) => {
-    const url = glovePath(manifest, id);
-    if (!url) { _gloveMeshes.set(id, null); return; }
-    try {
-      const g = await loadGLB(assetUrl(url.replace(/^\//, '')));
-      const meshes = [];
-      g.scene.traverse((o) => { if (o.isSkinnedMesh) meshes.push(o); });
-      _gloveMeshes.set(id, meshes.length ? meshes : null);
-    } catch (e) { _gloveMeshes.set(id, null); }
+    if (_gloveMeshes.has(id)) return;
+    if (_gloveRequests.has(id)) return _gloveRequests.get(id);
+    const request = (async () => {
+      const url = glovePath(manifest, id);
+      if (!url) { _gloveMeshes.set(id, null); return; }
+      try {
+        const g = await loadGLB(assetUrl(url.replace(/^\//, '')));
+        const meshes = [];
+        g.scene.traverse((o) => { if (o.isSkinnedMesh) meshes.push(o); });
+        _gloveMeshes.set(id, meshes.length ? meshes : null);
+      } catch (e) { _gloveMeshes.set(id, null); }
+    })().finally(() => _gloveRequests.delete(id));
+    _gloveRequests.set(id, request);
+    return request;
   }));
 }
 export function hasGloveModel(id) { return !!_gloveMeshes.get(id); }
@@ -539,7 +546,7 @@ export function buildCharacterModel(def, opts = {}) {
 
   const model = skeletonClone(template);
   // Luva equipada: entra ANTES do passe de materiais para herdar sombra/rim como o corpo.
-  if (opts.gloveSkinId) attachGloves(model, def.id, opts.gloveSkinId);
+  let gloveMeshes = opts.gloveSkinId ? attachGloves(model, def.id, opts.gloveSkinId) || [] : [];
 
   // Normalize: scale to target height, drop feet to y=0, apply facing fix.
   // Update world matrices first so the bounding box reflects the real transforms.
@@ -561,7 +568,7 @@ export function buildCharacterModel(def, opts = {}) {
     if(skin?.metalFinish==='matte' && 'roughness' in next){next.roughness=Math.max(next.roughness ?? 1,.82);next.needsUpdate=true;}
     return next;
   };
-  model.traverse((o) => {
+  const finishMesh = (o) => {
     if (!o.isMesh) return;
     o.castShadow = true;
     // receiveShadow: sem isto a sombra do sol NUNCA escurecia o personagem — parte do
@@ -575,7 +582,8 @@ export function buildCharacterModel(def, opts = {}) {
     o.material = Array.isArray(o.material)
       ? o.material.map(finishMaterial)
       : finishMaterial(o.material);
-  });
+  };
+  model.traverse(finishMesh);
 
   const group = new THREE.Group();
   group.add(model);
@@ -908,7 +916,23 @@ export function buildCharacterModel(def, opts = {}) {
     ctrl.tpMount.pegadaAtiva = true;
     orientTpMount(ctrl.tpMount);
   }
-  return { group, parts: { head }, isGLB: true, mixer, ctrl, skinId: skin ? def.skinId : null };
+  return { group, parts: { head }, isGLB: true, mixer, ctrl, skinId: skin ? def.skinId : null,
+    setGloveSkin(id) {
+      const removed = gloveMeshes;
+      for (const mesh of removed) {
+        mesh.removeFromParent();
+        mesh.material.dispose();
+        mesh.skeleton.dispose();
+      }
+      gloveMeshes = attachGloves(model, def.id, id) || [];
+      for (const mesh of gloveMeshes) {
+        const rawMaterial = mesh.material;
+        finishMesh(mesh);
+        if (mesh.material !== rawMaterial) rawMaterial.dispose();
+      }
+      return { removed, added: gloveMeshes };
+    },
+  };
 }
 
 /* O driver de coreografia (public/js/emotes.js) é injetado, nunca importado aqui:
