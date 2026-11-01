@@ -148,7 +148,7 @@ jobs:
           cat /tmp/eval-serve.log
           exit 1
 
-      - name: Fauna curada — GLBs, texturas decodificadas e rig dos dois mapas
+      - name: Fauna curada — GLBs, texturas decodificadas e rig dos cinco mapas
         if: ${{ !cancelled() }}
         run: npm run eval:map-fauna-curated:runtime
 

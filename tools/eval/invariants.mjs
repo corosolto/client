@@ -1360,6 +1360,11 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
   return { ok: audit.ok === true && !execFalha, checks };
 }
 {
+  const audit = aud1Classifica(await aud1Filho(join(ROOT, 'tools/eval/golden-barrel-check.mjs'), ['--mutantes']), 'execução da boca golden');
+  put('AUD1D', 'AK golden: socket físico acompanha rig no consumidor real; factory, escopo e regressão do slab têm contraprova', audit.ok,
+    audit.checks.filter(c => !c.ok).map(c => c.name).join(' | ') || 'contrato de coordenadas e quatro mutantes conferem; geometria GLB/render exigem QA real');
+}
+{
   let audit, ctxAudit;
   const ctx = await aud1Filho(join(ROOT, 'tools/eval/authored-game-ctx-check.mjs'));
   ctxAudit = ctx.audit && !ctx.execFalha ? ctx.audit : { ...ctx.audit, ok: false };

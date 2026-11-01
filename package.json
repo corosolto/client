@@ -28,6 +28,8 @@
     "eval:docsautoria": "node tools/eval/docs-autoria-check.mjs",
     "syntax": "for f in public/js/*.js public/js/botbrain/*.js; do node --input-type=module --check < \"$f\" || exit 1; done",
     "eval:invariants": "node tools/eval/invariants.mjs",
+    "//eval:golden-barrel": "Boca física da AK separada da mira; contrato causal no CI e --asset para o GLB real, sem aceite artístico.",
+    "eval:golden-barrel": "node tools/eval/golden-barrel-check.mjs --mutantes",
     "prod:coherence": "node tools/eval/prod-coherence.mjs",
     "eval:modgraph": "node tools/eval/module-graph-check.mjs && node tools/eval/module-graph-check.mjs --mutante=06-09",
     "eval:glbpeso": "node tools/eval/glb-peso-check.mjs && node tools/eval/glb-peso-check.mjs --mutante=bruto",
@@ -782,7 +784,7 @@
     "eval:grafite-atual:prova": "node tools/eval/graffiti-art-identity-check.mjs && node tools/eval/graffiti-current-ci-check.mjs --self-test",
     "eval:sondafilho": "node tools/eval/sonda-filho-check.mjs",
     "//eval:map-fauna-curated": "Acervo Mint usado no mapa: binding, textura, rig e preload mobile; mutantes recusam fallback e fauna removida.",
-    "eval:map-fauna-curated": "node --test tests/map-fauna-curated.test.mjs tests/menu-backdrop.test.mjs && for m in fauna-gates stale-map ignore-seq ignore-map no-late-fauna; do ! MENU_BACKDROP_MUTANT=$m node --test tests/menu-backdrop.test.mjs >/dev/null 2>&1 || exit 1; done",
+    "eval:map-fauna-curated": "node --test tests/map-fauna-curated.test.mjs tests/map-fauna-support.test.mjs tests/map-fauna-supported-maps.test.mjs tests/menu-backdrop.test.mjs && for m in fauna-gates stale-map ignore-seq ignore-map no-late-fauna; do ! MENU_BACKDROP_MUTANT=$m node --test tests/menu-backdrop.test.mjs >/dev/null 2>&1 || exit 1; done",
     "eval:map-fauna-curated:runtime": "node tools/eval/map-fauna-curated-ci.mjs"
   },
   "repository": {
