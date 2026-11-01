@@ -1,3 +1,15 @@
+# Runtime R94 — checker real passou B1–B9
+
+Root leu o log completo e o processo terminou exit0. B4 real observou automática
+seq1, barreira2, manualseq3, clique1,0esperas pendentes e ack da UI. As nove
+cláusulas nominais passaram contra servidor próprio4396. Main servido07ee e
+index localaaf foram pinados antes; o marcador69eb não identifica todo o head.
+A rota de relatório recebe204 por interceptação do checker, sem prova de backend.
+Matriz controlada12/12 e críticoR91 complementam esse nominal; causa do CI segue
+UNKNOWN. Recibo ROOT-BOOT-COLLECTOR-ADJUDICATION-R94.json contém10pins e limites.
+Checkpoint produto3efc2d372; próximo é integrar na QA própria e executar os gates
+ordinários, sem mudar a composição OWN durante sua bateria ativa.
+
 # Checkpoint R94 — matriz causal executada pelo Root
 
 Esta seção supera o estado UNRUN histórico abaixo. Missão integral de visual,
