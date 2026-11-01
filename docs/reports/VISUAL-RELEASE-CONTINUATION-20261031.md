@@ -2,6 +2,36 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
+## Checkpoint R95: composição QA local, gates em andamento
+
+QA recebeu por merges ordinários a composição056cf677b e o checkpoint de boot
+4cda2617d (produto3efc2d372). Os13arquivos resultantes coincidem byte a byte com
+as lanes revisadas; #1179 segue ancestral e #1158 continua ausente. QA ainda
+não foi publicada nesta rodada. OWN permanece em056cf, sem mutação durante
+check:fast R93B; o resultado dessa bateria ainda está pendente.
+
+Boot:12cenários controlados passaram, incluindo oldRED/newPASS na automática
+posterior ao modal e rejeição de identidade/recibo/ack ausentes. Checker real
+B1–B9 exit0, B4 auto.seq1<=base2<manual.seq3, clique1,0esperas. CríticoR91 limpo.
+Causa exata do CI continua UNKNOWN. Fonte do jogo não foi mudada por esse fix.
+
+A primeira bateria OWN foi interrompida por dependência Three cruzada entre
+worktrees. Só o node_modules ignorado foi isolado em252links e Three próprio;
+os três testes afetados passaram no mesmo fonte. A nova bateria R93B está
+rodando; não converter a tentativa interrompida em verde ou regressão de jogo.
+
+PR1192e74: adjudicação formal1+filtrados4 e crítico integralR93 sem novos itens.
+Root aplicou estragacodigo-resolved depois do review atual; threads3resolvidas,
+formal CHANGES_REQUESTED e dois jobs ainda pendentes na última consulta. Nenhum
+review descartado ou merge executado. Antes de publicar, conferir staging real:
+se avançar, integrar a ancestry sem sobrescrever ou forçar o remoto.
+
+Próximo: build/checks da QA, conclusão da bateria OWN e CI1192, push ordinário107
+com refs verificados, review atual completo e crítico integral do head final.
+Depois merge elegível, CI de main, release/tag/READY/SHA servido/smoke de produção.
+Mapa global, arquitetura, personagens/dedos/movimento, skinsP4 e mobile/MP seguem
+incompletos. A missão integral permanece ativa; fluxos UI/redes sociais depois.
+
 ## Checkpoint R92: Quebrada focal validada e adotada localmente
 
 Composição isolada sobre a173ff48d recebe a fonte Quebrada7be5b81, sem alterar
