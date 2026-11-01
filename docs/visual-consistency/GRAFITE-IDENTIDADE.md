@@ -26,7 +26,7 @@ identidadeArteGrafite('/img/decals/tag-larga.png') === '/img/decals/tag-fina.png
   `pieces.file` continua carregando o **caminho real** para auditoria; `duplicates`
   reporta o alias canônico com a contagem real — nada de contador forjado.
 - Dedup do produtor (runtime/fresh-bake) já passava por `chaveArte` e herda o alias.
-  `graffiti_layout.js` **não** foi tocado: o layout assado será refeito pelo Root.
+  O layout assado já foi refeito no bake pós-alias descrito abaixo.
 
 **Portão.** `node tools/eval/graffiti-art-identity-check.mjs` (node puro, sem browser):
 extrai a `chaveArte` **real** do fonte, injeta o helper **real** e prova:
@@ -47,7 +47,16 @@ canônica. Remover só o alias volta a produzir 3 e reproduz falso GREEN. Demais
 
 Bake ALL14 R1 real concluiu 437 peças, fingerprint `161c4394b4a2247a`;
 `graffiti-layout-check.mjs --duplo` confirmou freshness e determinismo da impressão
-(não é uma segunda execução física). Runtime completo após o bake é uma aceitação
-separada. A segunda passada física foi interrompida durante a crise do host; não
+(não é uma segunda execução física). O nominal runtime após o alias/bake foi medido
+no Ego14 R21: 14 mapas, 458 peças e cinco contadores zero, com preferências restauradas.
+O crítico `CRITICO-CURATION-EGO14-R21-COERENCIA-R1.md` conferiu 597 relações e a coerência
+com os nominais CI identity R6; raw e pins vivem em
+`audits/2026-10-31-visual-consistency/critico-curation-ego14-r21/coherence.json`.
+Os seis pins de fonte e os 14 hashes raw conferem com `8ee224e48` nesta revisão
+(`review-r71-fixes-r73/preflight-r21-pins.json`). O log R21 só retém GREEN, sem envelope
+bruto ou hashes dos JS servidos naquela navegação; não há certificação retrospectiva
+desses bytes nem aprovação artística geral, de produção, mobile, MP ou FPS.
+SURVEY6 e os GREEN R6/R4 anteriores ao alias são históricos e não aprovam identidade.
+A segunda passada física foi interrompida durante a crise do host; não
 conta como determinismo comprovado. Arte singular editorial é válida para este par
 conhecido; revisão visual continua necessária para descobrir novos aliases.

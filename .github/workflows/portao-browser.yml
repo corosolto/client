@@ -148,6 +148,18 @@ jobs:
           cat /tmp/eval-serve.log
           exit 1
 
+      - name: Fauna curada — GLBs, texturas decodificadas e rig dos dois mapas
+        if: ${{ !cancelled() }}
+        run: npm run eval:map-fauna-curated:runtime
+
+      - name: Guarda captura e auditoria runtime da fauna
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: map-fauna-curated
+          path: artifacts/map-fauna-curated/
+          if-no-files-found: error
+
       # Contrato vigente: 14 nominais completos, sem meta histórica de saturação.
       - name: eval:grafite-atual (arte única e suporte real, 14 mapas)
         run: npm run eval:grafite-atual
