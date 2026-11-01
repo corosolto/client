@@ -935,6 +935,9 @@ function previewVideoVisible() {
 function previewModelActive(selectionOpen,hubOpen) {
   return !pvCompact.matches && (selectionOpen || (hubOpen && !pvNarrow.matches)) && !previewVideoVisible();
 }
+function previewUsesStills() {
+  return staticPreviews || pvCompact.matches || (pvNarrow.matches && !$('main-menu')?.classList.contains('hidden'));
+}
 function pvStopVideo() {
   pvVidToken++;
   const box = document.querySelector('.char-preview-box');
@@ -1016,7 +1019,7 @@ function syncCompactPreview(def) {
   }
 }
 function ensurePreview() {
-  if (staticPreviews) return null;
+  if (previewUsesStills()) return null;
   if (pv) return pv;
   const canvas = $('char-preview');
   const r = criaRenderer({ canvas, alpha: true }, { optional: true });
@@ -1206,10 +1209,12 @@ function pvSetChar(def) {
   def = resolvePreviewCharacter(def);
   const my = ++pvToken;
   syncCompactPreview(def);
-  if (staticPreviews || pvCompact.matches || (pvNarrow.matches && !$('main-menu')?.classList.contains('hidden'))) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
+  if (previewUsesStills()) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
   pvImageToken++;pvStaticKey='';pvStopVideo();
+  $('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');
+  document.querySelector('.pv-hints')?.classList.remove('hidden');
   for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label)label.hidden=true;}
   // Swap to the real rigged GLB (idle) once loaded, if this is still the selection.
   const showBox = () => {   // procedural fallback (only when there's no GLB at all)
@@ -1266,7 +1271,7 @@ function pvSetChar(def) {
   }
 }
 function pvThumb(def) {
-  if (staticPreviews) return portraitUrl(def);
+  if (previewUsesStills()) return portraitUrl(def);
   // Box-only thumbnail (tiny icon) — never triggers a GLB load.
   // Passa pelo MESMO snapThumb do GLB: antes esta versão ainda destruía o preview
   // grande (p.model = null) e gravava com outro enquadramento — duas miniaturas com
@@ -3944,7 +3949,7 @@ async function renderGlobal(nick) {
 
 // GLB idle thumbnail (no weapon), rendered off the shared preview renderer.
 function glbThumb(def) {
-  if (staticPreviews) return portraitUrl(def);
+  if (previewUsesStills()) return portraitUrl(def);
   if (!hasModel(def.id)) return null;
   const m = buildCharacterModel(def, { weapon: false });
   if (!m) return null;
@@ -3965,7 +3970,7 @@ function ensureTeamPreviews() {
     if (!chars.length) continue;
     box.innerHTML = chars.map(() => '<span class="tc-slot"></span>').join('');
     const slots = [...box.children];
-    const ready = staticPreviews ? Promise.resolve() : preloadCharacterAssets(chars.map(c => c.id));
+    const ready = previewUsesStills() ? Promise.resolve() : preloadCharacterAssets(chars.map(c => c.id));
     ready.then(() => {
       chars.forEach((c, i) => {
         const url = glbThumb(c);
@@ -4020,7 +4025,7 @@ function pickTeam(faction) {
     if (firstRow) selectChar(chars[0], firstRow);
     show('char-select');
   };
-  if (navOnly || staticPreviews) { mountCharList(); return; }
+  if (navOnly || previewUsesStills()) { mountCharList(); return; }
   // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
   // nada de thumbnails de caixa montando aos poucos (o "minecraft" que o dono viu)
   showLoading('CARREGANDO PERSONAGENS…');

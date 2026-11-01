@@ -10,20 +10,22 @@ const cyborg = { ...base, skinId: 'lula-cyborg' };
 const presentation = { id: 'lula-cyborg', name: 'Barbudo Cyborg', poster: '/img/skins/lula-cyborg.webp', video: { webm: '/video/skins/lula-cyborg.webm' } };
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
-function fixture({ reduced = false, compact = false, narrow = false, lean = true, play = () => Promise.resolve(), mutate = value => value, pack = false, vibe = 'ak', paints = {ak:'ouro-ak'} } = {}) {
-  let equippedSkin='lula-cyborg',homeRefreshes=0,rendererCalls=0;
+function fixture({ reduced = false, compact = false, narrow = false, lean = true, threeD = false, play = () => Promise.resolve(), mutate = value => value, pack = false, vibe = 'ak', paints = {ak:'ouro-ak'} } = {}) {
+  let equippedSkin='lula-cyborg',homeRefreshes=0,rendererCalls=0,preloads=0,thumbnailRenders=0;
   let motionChange;
   const motion={matches:reduced,addEventListener:(type,callback)=>{motionChange=callback;}};
   const compactQuery={matches:compact,addEventListener:()=>{}};
   const narrowQuery={matches:narrow};
   const classes = () => { const values = new Set(); return { add: value => values.add(value), remove: value => values.delete(value), contains: value => values.has(value), toggle(value, force) { if (force ?? !values.has(value)) values.add(value); else values.delete(value); } }; };
   const nodes = new Map();
-  const node = id => { if (!nodes.has(id)) nodes.set(id, { id, dataset: {}, classList: classes(), src: '', alt: '', textContent: '', hidden: false, loads: 0, pause() {}, play, load() { this.loads++; }, removeAttribute(name) { this[name] = ''; } }); return nodes.get(id); };
+  const node = id => { if (!nodes.has(id)) nodes.set(id, { id, dataset: {}, children: [], classList: classes(), src: '', alt: '', textContent: '', hidden: false, loads: 0, pause() {}, play, load() { this.loads++; }, removeAttribute(name) { this[name] = ''; } }); return nodes.get(id); };
   const box = node('box'), video = node('char-preview-video'), hints = node('hints');
   const block = raw.slice(raw.indexOf('const ORDEM_ARMA_EQUIPADA'),raw.indexOf('let pvToken ='))
     + '\n' + raw.slice(raw.indexOf('const portraitUrl ='), raw.indexOf('function ensurePreview()'))
     + '\nlet pvToken=0;\n' + raw.slice(raw.indexOf('function pvSetChar(def)'), raw.indexOf('function pvThumb(def)'))
-    + '\n' + raw.slice(raw.indexOf('function refreshMenuEquipment()'),raw.indexOf('let hubMapReturnQuick'));
+    + '\n' + raw.slice(raw.indexOf('function refreshMenuEquipment()'),raw.indexOf('let hubMapReturnQuick'))
+    + '\n' + raw.slice(raw.indexOf('function pvThumb(def)'),raw.indexOf('/* ---------------- game lifecycle'))
+    + '\n' + raw.slice(raw.indexOf('function glbThumb(def)'),raw.indexOf('function pickTeam(faction)'));
   const context = vm.createContext({ VERSION: 'fixture', staticPreviews: lean, $: node,
     document: { querySelector: selector => selector === '.char-preview-box' ? box : hints },
     matchMedia: query => query.includes('pointer: coarse')?compactQuery:query.includes('max-width')?narrowQuery:motion,
@@ -34,11 +36,15 @@ function fixture({ reduced = false, compact = false, narrow = false, lean = true
     equippedTretaWeaponSkin:id=>paints[id] || null,equippedTretaGlove:()=>null,
     tretaWeaponPresentation:(weapon,id)=>id?.startsWith('pack-')?{name:'Pack Fixture'}:id?{name:'Ouro'}:null,
     sincronizaBarraEmotes: () => {},
-    ensurePreview:()=>{rendererCalls++;return null;},
+    ensurePreview:()=>{rendererCalls++;return threeD?{scene:{add(){},remove(){}},model:null}:null;},
+    navOnly:true,buildCharacter:()=>({group:{rotation:{}}}),
+    CHARACTERS:[base],podeNoLado:()=>true,GLB_CHARS:new Set(['barbudo']),
+    preloadCharacterAssets:async()=>{preloads++;},hasModel:()=>true,
+    buildCharacterModel:()=>({group:{rotation:{}},mixer:{update(){}}}),snapThumb:()=>{thumbnailRenders++;return 'data:fixture';},
     selChar:base,syncHomeCharacter:()=>{homeRefreshes++;},hubRosterRender:()=>{},
   });
-  const api = new vm.Script(mutate(block) + '\n({showStaticPreview,pvStopVideo,pvSetVideo,portraitUrl,pvSetChar,refreshMenuEquipment,armaDoPreview,previewModelActive});').runInContext(context);
-  return { api, node, box, video,rendererCalls:()=>rendererCalls,homeRefreshes:()=>homeRefreshes,accountSkin:id=>{equippedSkin=id;},selection:def=>{context.selChar=def;},reduceMotion:()=>{motion.matches=true;motionChange?.(motion);} };
+  const api = new vm.Script(mutate(block) + '\n({showStaticPreview,pvStopVideo,pvSetVideo,portraitUrl,pvSetChar,refreshMenuEquipment,armaDoPreview,previewModelActive,ensureTeamPreviews,pvThumb,glbThumb});').runInContext(context);
+  return { api, node, box, video,rendererCalls:()=>rendererCalls,preloads:()=>preloads,thumbnailRenders:()=>thumbnailRenders,compact:value=>{compactQuery.matches=value;},homeRefreshes:()=>homeRefreshes,accountSkin:id=>{equippedSkin=id;},selection:def=>{context.selChar=def;},reduceMotion:()=>{motion.matches=true;motionChange?.(motion);} };
 }
 
 test('static preview uses the validated equipped skin poster', () => {
@@ -132,6 +138,19 @@ test('landscape coarse uses stills without creating or rendering 3D or loading a
   assert.equal(narrow.api.previewModelActive(false,true),false);
   assert.equal(narrow.api.previewModelActive(true,false),true);
 });
+test('returning from compact to 3D restores the canvas instead of leaving a static image over it',()=>{
+  const f=fixture({compact:true,lean:false,threeD:true});f.api.pvSetChar(base);
+  assert.equal(f.node('char-preview').classList.contains('hidden'),true);
+  f.compact(false);f.api.refreshMenuEquipment();
+  assert.equal(f.node('char-preview').classList.contains('hidden'),false);
+  assert.equal(f.node('char-preview-static').classList.contains('hidden'),true);
+});
+test('team and character thumbnail callers avoid GLB preloads and renders in compact mode',async()=>{
+  const f=fixture({compact:true,lean:false});f.api.ensureTeamPreviews();await tick();
+  assert.equal(f.api.pvThumb(base),'/img/chars-hero/barbudo.webp?v=fixture');
+  assert.equal(f.api.glbThumb(base),'/img/chars-hero/barbudo.webp?v=fixture');
+  assert.equal(f.preloads(),0);assert.equal(f.thumbnailRenders(),0);
+});
 test('inventory refresh through the real caller keeps an unchanged video loaded', () => {
   const f=fixture();f.api.pvSetChar(base);f.api.pvSetVideo(base);const count=f.video.loads;
   f.api.pvSetChar(base);f.api.pvSetVideo(base);
@@ -154,7 +173,7 @@ test('inventory and account refresh retain the open selection and clear the old 
   f.selection({...base,skinId:null});f.accountSkin('lula-cyborg');f.api.refreshMenuEquipment();
   assert.equal(f.node('char-preview-static').src,'/img/chars-hero/barbudo.webp?v=fixture');
 });
-const replace=(from,to)=>value=>{assert.ok(value.includes(from),'mutation anchor missing');return value.replace(from,to);};
+const replace=(from,to)=>value=>{assert.equal(value.split(from).length-1,1,'mutation anchor missing or ambiguous');return value.replace(from,to);};
 for(const [name,mutate,probe,options={}] of [
   ['base poster substituted',replace('return skin?(skin.poster?', 'return false?(skin.poster?'),f=>{f.api.showStaticPreview(cyborg);assert.equal(f.node('char-preview-static').src,presentation.poster+'?v=fixture');}],
   ['video stop loses ownership token',replace('pvVidToken++;',''),async f=>{f.api.pvSetVideo(cyborg);const old=f.video.onloadeddata;f.api.pvStopVideo();old();await tick();assert.equal(f.box.classList.contains('has-video'),false);}],
@@ -165,6 +184,9 @@ for(const [name,mutate,probe,options={}] of [
   ['poster failure forgotten when video stops',replace('if(label && pvPosterFailure){','if(false){'),async f=>{f.api.showStaticPreview(cyborg);f.api.pvSetVideo(cyborg);f.video.onloadeddata();await tick();f.node('char-preview-static').onerror();f.reduceMotion();assert.match(f.node('char-preview-skin').textContent,/indisponível/);}],
   ['failed play promotes video',replace('try{await video.play();}catch{if(my===pvVidToken)pvStopVideo();return;}','void video.play().catch(()=>{});'),async f=>{f.api.pvSetVideo(cyborg);f.video.onloadeddata();await tick();assert.equal(f.box.classList.contains('has-video'),false);},{play:()=>Promise.reject(new Error('fixture blocked'))}],
   ['compact path creates a hidden renderer',replace('staticPreviews || pvCompact.matches','staticPreviews'),f=>{f.api.pvSetChar(base);assert.equal(f.rendererCalls(),0);},{compact:true,lean:false}],
+  ['3D return leaves canvas hidden',replace("$('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');",''),f=>{f.api.pvSetChar(base);f.compact(false);f.api.refreshMenuEquipment();assert.equal(f.node('char-preview').classList.contains('hidden'),false);},{compact:true,lean:false,threeD:true}],
+  ['team preview preloads hidden models',replace('const ready = previewUsesStills() ?','const ready = false ?'),async f=>{f.api.ensureTeamPreviews();await tick();assert.equal(f.preloads(),0);},{compact:true,lean:false}],
 ])test('causal mutant is rejected: '+name,async()=>{
-  await assert.rejects(async()=>probe(fixture({...options,mutate})),{name:'AssertionError'});
+  const f=fixture({...options,mutate});
+  await assert.rejects(async()=>probe(f),{name:'AssertionError'});
 });

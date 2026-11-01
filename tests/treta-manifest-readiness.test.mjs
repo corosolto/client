@@ -90,9 +90,9 @@ test('weapon presentation uses an available matching weapon or the equipped pack
   assert.equal(pack.api.tretaWeaponPresentation('ak','ouro-ak'),null);
 });
 test('control mutation rejects presentation that skips server availability',async()=>{
+  const anchor="if(!available(id) || skin?.slot!=='character'";assert.equal(source.split(anchor).length-1,1);
   await assert.rejects(async()=>{
     const f=await skinPresentation({inventory:{...equipped,catalog:[{...equipped.catalog[0],available:false}]},mutate:value=>{
-      const anchor="if(!available(id) || skin?.slot!=='character'";assert.ok(value.includes(anchor));
       return value.replace(anchor,"if(false || skin?.slot!=='character'");
     }});
     assert.equal(f.api.tretaSkinPresentation('lula-cyborg','barbudo'),null);
