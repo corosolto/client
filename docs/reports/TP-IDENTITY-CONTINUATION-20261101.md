@@ -86,7 +86,16 @@ entradas inválidas com exit2 e zero recibos parciais; o alias com ambiente herd
 agora sai2, antes de medir. Os oito controles do parser extraído também passam.
 Produto e GLBs não mudaram nesses reparos de entrada do instrumento.
 
-Próximo passo: revisar o ponto atualizado inteiro e os reparos medidos,
-checkpoint seletivo e
-PR empilhado. CI, release, boot pela UI com inventário equipado, MP, mobile físico
-e aceite visual globais continuam pendentes.
+#1194 entrou por merge normal em staging; #1197 foi retargetado para staging.
+#1198 é a correção das duas partes, empilhada depois. O bot de #1197 alegou runner
+fail-fast; R370 executou mapid RED seguido de identidade GREEN, conservando o
+agregado vermelho. O fio foi refutado e resolvido, sem afrouxar o portão.
+
+O CI de #1197 também encontrou uma fixture do bloco real de preload sem o novo
+binding playerGloveId. R391 reproduziu quatro falhas locais por ReferenceError;
+a fixture passou a declarar explicitamente null, como o cenário sem luva que já
+exercita. Produto e predicados de fauna permanecem iguais. R376 revisara o ponto
+anterior inteiro; o CI posterior impede usar aquele parecer como aprovação deste
+reparo. Próximo passo: validar a fixture corrigida, revisar todo o novo ponto,
+checkpoint seletivo, push normal e CI atual. Release, boot pela UI com inventário
+equipado, MP, mobile físico e aceite visual globais continuam pendentes.
