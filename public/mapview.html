@@ -29,6 +29,8 @@ const hud = document.getElementById('hud');
 
 const renderer = new THREE.WebGLRenderer({ antialias:true });
 renderer.setSize(W,H); renderer.setPixelRatio(1); renderer.shadowMap.enabled = true;
+// O mesmo filtro do jogo: o default PCF deixa blocos nas capturas de fauna.
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // a mesma curva e exposição do jogo (bloom.js LOOKS), senão a captura mede outro jogo
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = lookAtual().expAces;
