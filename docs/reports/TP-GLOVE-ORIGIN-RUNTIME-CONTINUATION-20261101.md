@@ -67,3 +67,50 @@ TP-GLOVE-OBSERVABILITY-R838. O freeze de main R790 foi sucedido por este reparo
 observado; os recibos históricos continuam vinculados aos seus próprios bytes.
 Próximo: gates normais/push sem bypass, review do novo head, resposta ao fio e
 crítico whole pós-bot. Game3:2, contato/material/motion/mobile/MP seguem abertos.
+
+
+## Composição local R928
+
+A worktree isolada `s4-retry-integration-r928-20261101`, branch
+`codex/s4-retry-integration-r928-20261101`, parte de
+`b3cf08314fc60cae97202c780cc9e1f31f062222` e mescla normalmente staging
+`00808bb494ccca055593740947fa5a7240772a33`, que recebeu #1208. W770 continua
+intocada. Os conflitos de Game, loader, main e package foram resolvidos por
+unidade, preservando S4 e a origem efetiva do corpo. Game e loader são literais
+do candidato privado S4 validado em R864. Main conserva também a telemetria de
+arena recebida de staging, a barreira N1 e o coletor BOOT R854.
+
+A rejeição tipada do manifesto fica fora do catch que negativa pacote/GLB. A
+requisição compartilhada sai do mapa em finally; demanda usa origem efetiva e
+estilo, token por objeto e a recuperação automática única definida por Root.
+Off/on, estilo ou origem rearma; a segunda falha da mesma demanda suprime I/O
+por frame. O catch opcional do preview permite construir sem luva quando o
+manifesto falha; demais erros continuam no tratamento anterior. Não há timer,
+teto visual novo ou fallback entre origens.
+
+O baseline b3cf, medido em cópia externa dos três módulos, ficou RED em 16 das
+19 cláusulas, sem INFRA. A composição passou o nominal completo do manifesto,
+os aliases integrais de identidade (incluindo C6/N1 e manifesto), origem S4,
+origem cosmética, fábrica Drip, preload e publicação por conteúdo. Os testes
+CPU de preview/BOOT passaram 163/163. Os mutantes conservaram seus failsets;
+nenhum instrumento ou limiar foi alterado. Docs e índice passaram seus checks.
+Os bytes de produto permaneceram estáveis durante as medições.
+
+Todos os aliases e os argumentos dos portões dos pais foram conservados. A
+dívida de batch/aliases de #1211 permanece literal de staging; a correção de
+Root virá pela composição posterior de Hands. Os checkpoints posteriores de
+Hands e grafite não foram mesclados aqui. Os ancestrais #1211/#1212 de 00808
+continuam presentes por construção do merge normal.
+
+Autoria: Codex compôs e mediu; uma consulta GLM5.3 de autoria, limitada a 600
+tokens, retornou 119 palavras, sem ferramentas/retry. Native conferiu as decisões.
+Isso não é crítico independente pós-bot. Relatório, diffs completos, fontes e
+recibos selados: `audits/2026-10-31-visual-consistency/S4-RETRY-INTEGRATION-R928-*`
+na raiz agregadora. O probe adicional do trecho real de preview usa fronteiras
+simuladas; não substitui DOM/WebGL real.
+
+Próximo: Root lê e adota por fast-forward em W770, depois conduz os gates e push
+normais, review formal do head publicado e crítico independente após bot limpo.
+Browser/Game 3:2, material/contato/motion, mobile, MP humano, CI desta composição
+e release seguem sem medição nesta lease. A missão integral e a exclusão de
+#1158 permanecem; UI/social seguem para depois.

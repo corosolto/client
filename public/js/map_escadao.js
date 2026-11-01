@@ -40,6 +40,8 @@ const ESC = { larg: 3.6, espelho: 0.21, piso: 0.29, n: 12 };
 const RISE = ESC.espelho * ESC.n;
 const RUN  = ESC.piso   * ESC.n;
 const H_TOP = RISE * 3;
+// A pele visível do mirante fica 2 cm acima da cota física.
+const MIRANTE_SURFACE_Y = H_TOP + .02;
 
 // fronteiras dos lances (z diminui subindo)
 const F1 = { z0: 14 - RUN, z1: 14 };
@@ -337,7 +339,7 @@ export function buildEscadao(scene, T) {
   /* ===================== CHÃO BASE ===================== */
   addFloor(HALF_X * 2, HALF_Z * 2, 0, 0, MAT.dirt, -0.01);
   addFloor(HALF_X * 2, 40 - 14, 0, (14 + 40) / 2, MAT.asphalt, 0.01);
-  addFloor(HALF_X * 2, 40 - Math.abs(TOP_Z), 0, (TOP_Z + (-40)) / 2, MAT.concrete, H_TOP + 0.02);
+  addFloor(HALF_X * 2, 40 - Math.abs(TOP_Z), 0, (TOP_Z + (-40)) / 2, MAT.concrete, MIRANTE_SURFACE_Y);
   // O mirante é terreno elevado, não uma folha transparente vista do vale. A contenção
   // termina na chegada dos lances; não preenche vãos sob os patamares/conexões.
   const aterro = addBox(HALF_X * 2, H_TOP, HALF_Z + TOP_Z, MAT.concreteDark,
@@ -1308,8 +1310,8 @@ export function buildEscadao(scene, T) {
     ],
     /* O gato mudou de faixa: a casa de molde do mirante leste ocupou a planta antiga e o
        AR3 do ambience-registry acendeu. Agora anda entre a mureta e a caçamba. */
-    cats: [{ assetId: 'escadaoCat', contactShadow: true, turnRate: 6, speed: { walk: .55, flee: 1.5 }, pos: [10.8, groundHeightAt(10.8, -22.8), -22.8], to: [11.9, groundHeightAt(11.9, -20.9), -20.9], phase: .65 }],
-    chickens: [{ assetId: 'sertaoHen', contactShadow: true, turnRate: 6, pos: [-9.4, groundHeightAt(-9.4, -30), -30], to: [-7.8, groundHeightAt(-7.8, -32), -32], phase: 1.9 }],
+    cats: [{ assetId: 'escadaoCat', contactShadow: true, turnRate: 6, speed: { walk: .55, flee: 1.5 }, pos: [10.8, MIRANTE_SURFACE_Y, -22.8], to: [11.9, MIRANTE_SURFACE_Y, -20.9], phase: .65 }],
+    chickens: [{ assetId: 'sertaoHen', contactShadow: true, turnRate: 6, pos: [-9.4, MIRANTE_SURFACE_Y, -30], to: [-7.8, MIRANTE_SURFACE_Y, -32], phase: 1.9 }],
     /* Duas espécies novas do acervo `models/ambient/`: caramelo na calçada e no mirante,
        barata onde tem lixo (caçamba do topo e beco leste). */
     dogs: [

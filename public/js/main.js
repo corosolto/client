@@ -13,7 +13,7 @@ import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { EMOTES_ENABLED } from './emote-features.js';
 import { preloadEyewearAssets } from './eyewear.js';
-import { preloadCharacterAssets, preloadCosmeticAssets, getGloveHandle, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver } from './glbchars.js';
+import { preloadCharacterAssets, preloadCosmeticAssets, getGloveHandle, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver, GloveManifestUnavailable } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps, mapPropIds } from './mapprops.js';
 import { preloadMapAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
@@ -1310,7 +1310,10 @@ function pvSetChar(def) {
     const arma = armaDoPreview(def.id);
     Promise.all([preloadCharacterAssets([def.id], { weapons:[arma.weaponId] }),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
       preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId)])
-      .then(() => arma.gloveSkinId ? getGloveHandle(def.id, def.skinId)?.preload() : null).then(() => {
+      .then(() => {
+        const pending = arma.gloveSkinId ? getGloveHandle(def.id, def.skinId)?.preload() : null;
+        return pending?.catch((e) => { if (!(e instanceof GloveManifestUnavailable)) throw e; e.warn(); });
+      }).then(() => {
       if (my !== pvToken || !previewHeroVisible()) return;
       // preview: porte de EXIBIÇÃO — arma atravessada no peito (estilo vitrine do CS) em
       // vez do porte funcional que aponta o cano pra câmera e esconde a silhueta da arma
@@ -1610,6 +1613,10 @@ function sendJsonKeepalive(path, payload) {
     return true;
   } catch { return false; }
 }
+function modoTelemetria(g) {
+  if (g?.arena) return 'arena';
+  return g?.ctf ? 'ctf' : 'rounds';
+}
 let telemetrySent = true;
 function sendTelemetry() {
   if (!analyticsAllowed()) return;
@@ -1619,7 +1626,7 @@ function sendTelemetry() {
   const payload = {
     anonId: getAnonId(),
     map: g._mapId || currentMap,
-    mode: g.ctf ? 'ctf' : 'rounds',
+    mode: modoTelemetria(g),
     seconds: Math.round(g.time || 0),
     rounds: (g.roundsWon?.E || 0) + (g.roundsWon?.B || 0),
     nick: registeredNick || null,
@@ -1632,7 +1639,7 @@ function sendGameStarted() {
   if (!analyticsAllowed()) return;
   if (testMode || !game) return;
   sendJsonKeepalive('/api/telemetry', {
-    anonId: getAnonId(), map: game._mapId || currentMap, mode: game.ctf ? 'ctf' : 'rounds',
+    anonId: getAnonId(), map: game._mapId || currentMap, mode: modoTelemetria(game),
     nick: registeredNick || null,
     event: 'game_started', gameType: telemetryGameContext.gameType, matchEventId: _matchEventId,
   });
@@ -1859,7 +1866,7 @@ function sendMatchEvent(result) {
     anonId: getAnonId(),
     sessionId: getSessionId(), eventId: _matchEventId, version: versaoComOrigem(VERSION),
     ...telemetryGameContext, ...sinaisDeBuild(),
-    map: currentMap, mode: matchMode === 'ctf' ? 'ctf' : 'rounds',
+    map: currentMap, mode: modoTelemetria(g),
     character: currentChar, team: g.playerTeam,
     faction: g.playerFaction || currentFaction,
     result: result || 'quit',

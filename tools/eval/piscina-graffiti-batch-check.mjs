@@ -9,14 +9,18 @@ import { THREE, MAPS, initTextures, seedRandom } from './harness.mjs';
 import { GRAFITE } from '../../public/js/graffiti_layout.js';
 import { criarSuporteGrafite, superficieGrafitavel } from '../../public/js/graffiti_surface.js';
 import { measureGraffitiArea } from './graffiti-area-audit.mjs';
+import { identidadeArteGrafite } from '../../public/js/graffiti_art_id.js';
 
 const mapURL = new URL('../../public/js/map_piscina.js', import.meta.url);
 const source = readFileSync(mapURL, 'utf8');
-const marker = '  batchStaticBoxes();\n  grafitar({';
-assert.equal(source.split(marker).length, 2, 'actual map must batch before placement');
+const marker = '  batchStaticBoxes();\n';
+const placement = '    grafitar({';
+assert.equal(source.split(marker).length, 2, 'order mutant must identify one batch call');
+assert.equal(source.split(placement).length, 2, 'order mutant must identify one graffiti call');
+assert.ok(source.indexOf(marker) < source.indexOf(placement), 'actual map must batch before placement');
 const lateMarker = '  return {\n    ambience,\n    root, colliders,';
 assert.equal(source.split(lateMarker).length, 2, 'order mutant must identify one map return');
-const mutantSource = source.replace(marker, '  grafitar({')
+const mutantSource = source.replace(marker, '')
   .replace(lateMarker, '  batchStaticBoxes();\n' + lateMarker)
   .replace(/(\bfrom\s*)(['"])([^'"\n]+)\2/g, (_full, prefix, _quote, specifier) =>
     prefix + JSON.stringify(specifier.startsWith('.') ? new URL(specifier, mapURL).href : import.meta.resolve(specifier)));
@@ -75,8 +79,11 @@ const absoluteImports = (text, owner, overrides = {}) => text.replace(
 const passMutanteURL = `data:text/javascript,${encodeURIComponent(absoluteImports(passMutante, passURL))}`;
 const mapaMutanteURL = `data:text/javascript,${encodeURIComponent(
   absoluteImports(source, mapURL, { './graffiti_pass.js': passMutanteURL }))}`;
-const chaveDaArte = (p) => String(p.f || '').startsWith('poster:') ? 'poster:' + String(p.f).slice(7) : String(p.f);
-const chaveManual = (name) => name.startsWith('decal:poster:') ? 'poster:' + name.slice(12) : name.replace(/^(?:decal|mural|poster):/, '');
+const chaveDaArte = (p) => {
+  const file = String(p.f || '');
+  return identidadeArteGrafite(file.startsWith('poster:') ? '/posters/' + file.slice(7) : '/img/decals/' + file);
+};
+const chaveManual = (name) => chaveDaArte({ f: name.replace(/^(?:decal|mural):/, '') });
 const duplicadasGlobais = (world) => {
   const artes = new Map();
   const conta = (key, fonte) => {
@@ -125,6 +132,30 @@ assert.ok(artesNaFaixa(mutFaixa).length > 0, 'mutante recoloca arte manual sobre
 console.log(JSON.stringify({ gate: 'piscina-editorial', pecas: pecasDo(producao).length,
   duplicadasMutante: dupMutante.length, arteManualMutante: artesNaFaixa(mutFaixa).length }));
 const textures = initTextures(), savedLayout = GRAFITE.piscina_treta;
+const posterFiles = [...new Set(textures.posterFiles)];
+assert.ok(posterFiles.length >= 2, 'poster identity control requires two distinct real artworks');
+const posterRoot = new THREE.Group(), posterMesh = new THREE.Mesh();
+posterRoot.userData.graffitiPecas = [{ f: 'poster:' + posterFiles[0] }];
+posterMesh.name = 'decal:poster:' + posterFiles[0];
+posterRoot.add(posterMesh);
+assert.deepEqual(duplicadasGlobais({ root: posterRoot }), [
+  { key: '/posters/' + posterFiles[0], n: 2, fontes: ['assado', 'manual'] },
+], 'same poster manual and baked must count as one repeated artwork');
+posterMesh.name = 'decal:poster:' + posterFiles[1];
+assert.deepEqual(duplicadasGlobais({ root: posterRoot }), [], 'distinct posters must stay distinct');
+const [aliasLarga, aliasFina, decalDistinto] = ['tag-larga.png', 'tag-fina.png', 'tags-treino-02.png'];
+assert.ok([aliasLarga, aliasFina, decalDistinto].every(f => textures.decalFiles.includes(f)),
+  'alias identity control requires real catalog decals');
+for (const [assada, manual] of [[aliasLarga, aliasFina], [aliasFina, aliasLarga]]) {
+  posterRoot.userData.graffitiPecas = [{ f: assada }];
+  posterMesh.name = 'decal:' + manual;
+  assert.deepEqual(duplicadasGlobais({ root: posterRoot }), [
+    { key: '/img/decals/tag-fina.png', n: 2, fontes: ['assado', 'manual'] },
+  ], 'editorial aliases manual and baked must count as one repeated artwork');
+}
+posterMesh.name = 'decal:' + decalDistinto;
+assert.deepEqual(duplicadasGlobais({ root: posterRoot }), [], 'distinct decals must stay distinct');
+posterMesh.geometry.dispose(); posterMesh.material.dispose();
 const [arteSeam, arteControle] = ['tags-treino-04.png', 'tags-treino-02.png'];
 assert.ok(textures.decalFiles.includes(arteSeam) && textures.decalFiles.includes(arteControle),
   'fixture uses two real distinct artworks (uniqueness guard must not mask the order mutation)');
