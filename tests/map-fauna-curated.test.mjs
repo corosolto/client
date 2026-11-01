@@ -127,3 +127,20 @@ test('actual browser collector sees extra target animals; restoring find is dete
  const mutant=replaceOnce(callback,'world.ambience.animals.filter(a=>a.type===type)','[world.ambience.animals.find(a=>a.type===type)]');
  await assert.rejects(async()=>assert.equal((await collect(mutant)).animals.length,2));
 });
+
+function assertBootOverlay(source){
+ const declaration=source.match(/const JS_LOCAIS = (\[[^;]+\]);/);assert.ok(declaration);
+ const local=new vm.Script(declaration[1]).runInNewContext();
+ const helper=main.match(/import \{ preloadMapAmbientLife \} from '\.\/([^']+)'/);assert.ok(helper);
+ assert.ok(local.includes('js/'+helper[1]),'the actual new main import must resolve to the candidate provider');
+ const shadow=ambient.match(/import \{ makeContactShadow \} from '\.\/([^']+)'/);assert.ok(shadow);
+ assert.ok(local.includes('js/'+shadow[1]),'the candidate provider must resolve its new shadow dependency locally');
+}
+test('boot budget overlays the real new helper and shadow dependency with main',()=>assertBootOverlay(read('tools/eval/boot-orcamento-check.mjs')));
+test('omitting either new boot dependency is detected',()=>{
+ const source=read('tools/eval/boot-orcamento-check.mjs');
+ for(const rel of ['js/ambientlife.js','js/contact-shadow.js']){
+  assert.ok(source.includes("'"+rel+"'"));
+  assert.throws(()=>assertBootOverlay(source.replace("'"+rel+"', ",'')));
+ }
+});
