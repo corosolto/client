@@ -4,6 +4,11 @@ Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual
 
 ## Estado atual, 01/11 R55: perfil de visitante validado e adotado
 
+Os doisP3 do preflightDOCS foram corrigidos: changelog descreve a janela
+de compra ampliada e qualifica pickups pela loja; ROSTER-GATE acompanha
+as linhas elásticas e o teto real da área do rail. Somente prosa, conferida
+com economia/CSS e com os contratos UI já validados; nenhum produto mudou.
+
 BootR55 adotado nesta QA:72cenários porNode22/26 e mesmo diagnósticoChrome
 próprio real403antes→404esperado depois, prova de corpo/SHA/clones, semINFRA.
 CríticosR54/R55 integrais lidosRoot: CLEANfocal. Prefixo focal emeval:bootorcamento;

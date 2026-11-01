@@ -11,11 +11,11 @@ o rail horizontal de 114 px é estado antigo e NÃO é mais aceito.
 ## Contrato UIR13 (id preservado)
 
 - **Duas colunas preservadas**: `.char-stage` mantém `grid-template-columns:minmax(280px,360px) minmax(0,1fr)`
-  e áreas `"sheet preview" "rail rail"`; a segunda linha é `auto` (elástica), não `var(--char-thumb)`.
+  e áreas `"sheet preview" "rail rail"`; as linhas usam `auto minmax(84px,1fr)`, com piso para uma fileira do elenco.
 - **Grade elástica**: `.char-list` com `--char-thumb:72px`, `display:grid`,
   `grid-template-columns:repeat(auto-fill,minmax(var(--char-thumb),1fr))`, `width:100%;max-width:100%`.
-- **Rolagem vertical limitada**: `max-height:calc(var(--char-thumb) * 3 + var(--s-2) * 2 + 12px)`
-  (máx. 3 fileiras) com `overflow-y:auto`, `overflow-x:hidden`, `overscroll-behavior:contain`.
+- **Rolagem vertical limitada à área do rail**: `max-height:100%`, com
+  `overflow-y:auto`, `overflow-x:hidden` e `overscroll-behavior:contain`.
 - **Controles laterais**: `.char-filmstrip` usa grid `44px minmax(0,1fr) 44px`;
   as setas44×44 deixam a altura disponível para a grade. A lista tem mínimo de uma
   fileira, e o palco touch usa `auto minmax(84px,1fr)` em vez de travar a rail em114px.
