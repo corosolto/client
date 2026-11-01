@@ -1,64 +1,5 @@
-/* ============================================================================
-   mantle-check.mjs — A RÉGUA DE SUBIR EM BEIRADA (MANTLING).
-   ----------------------------------------------------------------------------
-   POR QUE EXISTE
-   O dono jogou o Córrego reconstruído e disse, com estas palavras:
-
-     "uma vez q o cara cai no corrego e dificil sair porque ele nao pula em cima
-      dos objetos"
-
-   O canal do Córrego acabou de ganhar profundidade REAL (piso em −1,75 m, paredes
-   verticais de concreto). O corpo do jogador sobe DEGRAU de 0,55 m (`STEP_H` em
-   game.js) e nada acima disso — não existe mantling. Então a melhoria virou
-   armadilha: cair no canal é fácil, sair é um problema de orientação dentro de um
-   corredor de 5,2 m de largura e 1,75 m de parede (13 cm acima da linha do olho,
-   que é 1,62 m: de dentro do canal NÃO SE VÊ a rampa).
-
-   Esta régua é escrita ANTES do conserto e tem que ficar VERMELHA no `fy_corrego`
-   antes dele. As três cláusulas:
-
-     MNT1  SAIR DE ONDE SE CAI. Onde existe QUEDA DE MÃO ÚNICA de escala humana — uma
-           aresta em que o corpo desce mais que STEP_H e até LEDGE_MAX, porque o motor
-           deixa descer qualquer altura e só deixa subir 0,55 m — a volta a pé tem que
-           custar <= T_MAX. Sem volta nenhuma é reprovação dura. Queda maior que
-           LEDGE_MAX fica FORA: pular de uma laje de 3,5 m nas Lajes é mudança de andar,
-           decidida pelo jogador, e a volta é pela escada por projeto.
-     MNT2  SUBIR O QUE DEVE SUBIR. Toda beirada de escala humana (subida em
-           (STEP_H, LEDGE_MAX]) com APOIO no topo e cujo topo a caminhada já alcança é
-           escalável — verificado ANDANDO O MOTOR (`_updatePlayer` com W e Espaço), não
-           simulando por fora.
-     MNT3  NÃO SUBIR O QUE NÃO DEVE. Esta é a cláusula que protege o jogo: mantling é a
-           forma clássica de sair do mapa. Duas condições, e a segunda é a que tem dente:
-           a cota máxima alcançável não pode subir, E o mantle não pode abrir NENHUMA
-           célula nova. Só a primeira não morde — medido, um mantle de 4 m abriu 4.360
-           células de telhado nas Lajes com a cota máxima PARADA, porque aquelas lajes já
-           eram alcançáveis por outro caminho. Zero célula nova também é o que mantém o
-           jogador e o bot no mesmo mapa: o A* dos bots não tem camada de mantle.
-
-   INSTRUMENTO: o motor de verdade. `groundHeightAt` e `_collide` do jogo definem o
-   que é chão e o que é andável; a decisão de mantle é lida de `Game._mantleTarget`
-   (produção) — se o método não existir, o mantle está ausente e a régua mede
-   exatamente esse estado. Nada é reimplementado aqui.
-
-   Uso:  node tools/eval/mantle-check.mjs [mapId|all] [--json] [--detalhe]
-         SIM_QS='?mantle=0' node tools/eval/mantle-check.mjs all   (o A/B do conserto)
-
-   MUTANTES — o teste do teste. Um por cláusula, todos verificados vermelhos:
-     --mutante=beirada-baixa   teto do mantle recortado em 0,60 m DENTRO do motor.
-                               -> MNT1 vermelha (24 células sem volta em 3 mapas)
-                               -> MNT2 vermelha (32 beiradas em 6 mapas)
-                               Recortar só do lado da régua NÃO bastava: o MNT2 anda o
-                               `_updatePlayer` de verdade e passava verde.
-     --mutante=beirada-alta    aceita qualquer superfície até 4 m, ignorando a trava de
-                               alcance. -> MNT3 vermelha (fy_lajes 514 células novas,
-                               fy_escadao 4).
-     --mutante=canal-fechado   apaga as 4 rampas do canal do Córrego.
-                               -> com `SIM_QS='?mantle=0'`: MNT1 vermelha, 264 células
-                                  sem saída nenhuma.
-                               -> com o mantle LIGADO: VERDE. Isso não é o mutante
-                                  falhando, é o conserto medido: depois dele o canal não
-                                  depende mais de rampa nenhuma para ser reversível.
-   ============================================================================ */
+// Mede reversibilidade, apoio finito e território no motor real.
+// Contrato e mutantes: docs/visual-consistency/MANTLE-GATE.md.
 import path from 'node:path';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -70,7 +11,17 @@ const JSON_OUT = process.argv.includes('--json');
 const MUT_CANAL = process.argv.includes('--mutante=canal-fechado');
 const MUT_BAIXA = process.argv.includes('--mutante=beirada-baixa');
 const MUT_ALTA = process.argv.includes('--mutante=beirada-alta');
+const MUT_EXPLODE = process.argv.includes('--mutante=motor-explode');
+const MUT_XZ = process.argv.includes('--mutante=travessia-congelada');
+const MUT_NAN = process.argv.includes('--mutante=pouso-nan');
 const DETALHE = process.argv.includes('--detalhe');
+const MUTS_CONHECIDOS = ['canal-fechado', 'beirada-baixa', 'beirada-alta', 'motor-explode', 'travessia-congelada', 'pouso-nan'];
+for (const a of process.argv) {
+  if (a.startsWith('--mutante=') && !MUTS_CONHECIDOS.includes(a.slice(10))) {
+    console.error(`mutante desconhecido: ${a.slice(10)} (conhecidos: ${MUTS_CONHECIDOS.join(', ')})`);
+    process.exit(2);
+  }
+}
 
 /* ---- CONSTANTES DE CORPO: as MESMAS do jogo, e não uma segunda opinião sobre elas.
    R_BODY 0,38 é o raio que o `_collide` usa (game.js:_updatePlayer). STEP_H 0,55 é o
@@ -146,17 +97,21 @@ const MAP_IDS = ONLY === 'all' ? Object.keys(MAPS) : [ONLY];
 
 const relatorio = [];
 const falhas = [];
+let canalAplicou = 0;
+let nanAplicou = 0;
+let nanCausal = null;
 
 for (const mapId of MAP_IDS) {
   let g;
   try { g = bootGame(mapId, { textures, ctf: true, seed: 12345 }); }
   catch (e) { falhas.push(`${mapId}: não construiu — ${e.message}`); continue; }
+  if (MUT_EXPLODE) g._updatePlayer = () => { throw new Error('mutante causal: _updatePlayer explodiu'); };
 
   const W = g.world, B = W.bounds;
-  /* MUTANTE canal-fechado: apaga as rampas de acesso do Córrego devolvendo o topo da
-     parede na faixa |x| ∈ [3,5]. O canal continua com piso, e sem rampa não há saída
-     nenhuma a pé — é o defeito exato que MNT1 tem que enxergar. */
-  if (MUT_CANAL && mapId === 'fy_corrego') {
+  /* MUTANTE canal-fechado: apaga as rampas do Córrego (topo |x|∈[3,5] → 0). Sem rampa
+     não há saída a pé — é o defeito que MNT1 tem que enxergar. `canalAplicou` é fail-closed. */
+  if (MUT_CANAL && (mapId === 'corrego' || mapId === 'fy_corrego')) {
+    canalAplicou++;
     const orig = W.groundHeightAt;
     W.groundHeightAt = (x, z, y) => {
       const ax = Math.abs(x);
@@ -165,10 +120,8 @@ for (const mapId of MAP_IDS) {
     };
   }
   const gh = W.groundHeightAt ? (x, z, y) => W.groundHeightAt(x, z, y) : () => 0;
-  /* MUTANTE beirada-baixa: recorta o teto do mantle em 0,60 m (altura de meio-fio) DENTRO
-     DO MOTOR, envolvendo `_mantleTarget`. Recortar só no lado da régua seria mutar o
-     instrumento e não o jogo: o MNT2 anda o `_updatePlayer` de verdade, então ele não veria
-     defeito nenhum e passaria verde — foi o que aconteceu na primeira versão. */
+  /* MUTANTE beirada-baixa: teto de 0,60 m recortado DENTRO do motor (`_mantleTarget`),
+     senão o MNT2 anda o `_updatePlayer` real e não vê o recorte da régua. */
   if (MUT_BAIXA && typeof g._mantleTarget === 'function') {
     const orig = g._mantleTarget.bind(g);
     g._mantleTarget = (pos, dx, dz) => {
@@ -177,37 +130,38 @@ for (const mapId of MAP_IDS) {
       return (a.y - gh(pos.x, pos.z, pos.y) > 0.60) ? null : a;
     };
   }
+  /* Mutante de segurança: remove NO MOTOR a prova de que o apoio já pertence ao território
+     caminhável. A ilha determinística que dá dente à cláusula é inserida depois de `livre`. */
+  if (MUT_ALTA && typeof g._mantleAlcancavel === 'function') g._mantleAlcancavel = () => true;
 
-  /* Teto de mantle EFETIVO. A régua NÃO reimplementa a decisão: ela chama o
-     `_mantleTarget` de produção. Os mutantes de teto entram por aqui, envolvendo o
-     método real — assim eles injetam o defeito no MESMO caminho que o jogo usa. */
+  /* MUTANTE travessia-congelada: `_stepMantle` preserva Y mas congela XZ — MNT2 reprova. */
+  if (MUT_XZ && typeof g._stepMantle === 'function') {
+    const orig = g._stepMantle.bind(g);
+    g._stepMantle = (p, dt) => {
+      const x = p.pos.x, z = p.pos.z, ativo = !!p.mantle;
+      orig(p, dt);
+      if (ativo || p.mantle) { p.pos.x = x; p.pos.z = z; }
+    };
+  }
+  /* MUTANTE pouso-nan: mantle completo de verdade e pose XZ NaN no pouso; `nanAplicou`
+     fail-closed prova que o NaN nasceu de update real no alvo (branch viva). */
+  if (MUT_NAN && typeof g._stepMantle === 'function') {
+    const orig = g._stepMantle.bind(g);
+    g._stepMantle = (p2, dt) => {
+      const ativo = !!p2.mantle;
+      const antes = { x: p2.pos.x, z: p2.pos.z };
+      orig(p2, dt);
+      if (ativo && !p2.mantle && Number.isFinite(p2.pos.x)) { p2.pos.x = NaN; p2.pos.z = NaN; nanAplicou++; nanCausal = { antes: { ...antes }, depois: { x: p2.pos.x, y: p2.pos.y, z: p2.pos.z } }; }
+    };
+  }
+  /* Teto de mantle EFETIVO. A régua NÃO reimplementa a decisão: chama `_mantleTarget`. */
   const temMantle = typeof g._mantleTarget === 'function';
-  let mantleTeto = LEDGE_MAX;
-  if (MUT_BAIXA) mantleTeto = 0.60;
-  if (MUT_ALTA) mantleTeto = 4.00;
-  /* alvoMantle(x, z, dirX, dirZ, yPes) -> {x, y, z} do POUSO, ou null.
-     A régua não decide nada: quem decide é o `_mantleTarget` de produção. Sem ele no jogo
-     (estado ANTES do conserto) o retorno é sempre null — é o jogo sem a mecânica, medido
-     como tal, e não uma régua desligada. */
+  const mantleTeto = MUT_BAIXA ? 0.60 : LEDGE_MAX;
   const alvoMantle = (x, z, dx, dz, y) => {
     const chao = gh(x, z, y);
-    /* O mutante beirada-alta NÃO depende de o jogo já ter a mecânica: ele INJETA o defeito.
-       Se dependesse, ele só provaria a régua depois do conserto — e mutante que só morde
-       depois é mutante que nunca provou nada. */
-    if (MUT_ALTA) {
-      /* MUTANTE beirada-alta: o teto do motor é ignorado e QUALQUER superfície andável até
-         4 m acima vira pouso. É o defeito clássico do mantle — o jogador chega no telhado. */
-      for (let d = R_BODY + 0.2; d <= ALCANCE; d += 0.25) {
-        const px = x + dx * d, pz = z + dz * d;
-        const py = gh(px, pz, chao + 4.5);
-        if (py - chao > STEP_H && py - chao <= 4.0 && livre(px, pz, py)) return { x: px, y: py, z: pz };
-      }
-      return null;
-    }
     if (!temMantle) return null;
     const alvo = g._mantleTarget(new THREE.Vector3(x, y, z), dx, dz);
     if (!alvo) return null;
-    // MUTANTE beirada-baixa: recorta o resultado do motor num teto de cintura.
     if (MUT_BAIXA && alvo.y - chao > mantleTeto) return null;
     return alvo;
   };
@@ -265,6 +219,54 @@ for (const mapId of MAP_IDS) {
     return Math.abs(p.x - x) < 1e-3 && Math.abs(p.z - z) < 1e-3;
   };
 
+  /* SELFTEST de MNT3: injeta junto ao spawn uma plataforma-ilha de 1,20 m, profunda
+     o bastante para pouso. O chão de partida pertence ao componente caminhável; sem o
+     defeito a ilha fica fechada, e com a guarda removida o mantle abre células novas. */
+  if (MUT_ALTA) {
+    let fixture = null;
+    const sx = g.player.pos.x, sz = g.player.pos.z;
+    const spawnsLista = [];
+    for (const lista of Object.values(W.spawns || {})) spawnsLista.push(...(lista || []));
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const y = gh(sx, sz, g.player.pos.y + STEP_H);
+      if (!Number.isFinite(y) || !livre(sx, sz, y)) continue;
+      // corredor plano e livre até além da ilha; a ilha fica em along ∈ [2.55, 4.35]
+      let plano = true;
+      for (const d of [1.0, 2.0, 3.0, 4.8]) {
+        const px = sx + dx * d, pz = sz + dz * d;
+        if (Math.abs(gh(px, pz, y + STEP_H) - y) > 0.05 || !livre(px, pz, y)) { plano = false; break; }
+      }
+      if (!plano) continue;
+      // nenhum spawn dentro da pegada: seed dentro da ilha a torna caminhável de nascença
+      const pisaSpawn = spawnsLista.some((s) => {
+        const rx = s.x - sx, rz = s.z - sz;
+        const along = rx * dx + rz * dz, side = -rx * dz + rz * dx;
+        return along >= 2.3 && along <= 4.6 && Math.abs(side) <= 0.9;
+      });
+      if (pisaSpawn) continue;
+      fixture = { x: sx, z: sz, y, dx, dz };
+      break;
+    }
+    if (!fixture) { falhas.push(`${mapId}: selftest MNT3 não achou corredor livre junto ao spawn — falha de ARNÊS, não do jogo`); continue; }
+    /* Ilha profunda (1,80 m a partir de 2,55 m): scan do motor (MANTLE_D0 0,58 + APOIO
+       0,50) tem que caber nela, senão o mutante nunca se aplica (verde falso, fy_lajes). */
+    const orig = W.groundHeightAt.bind(W);
+    W.groundHeightAt = (x, z, y) => {
+      const rx = x - fixture.x, rz = z - fixture.z;
+      const along = rx * fixture.dx + rz * fixture.dz;
+      const side = -rx * fixture.dz + rz * fixture.dx;
+      return along >= 2.55 && along <= 4.35 && Math.abs(side) <= 0.55
+        ? fixture.y + 1.20
+        : orig(x, z, y);
+    };
+    // Precondição de aplicação REAL: o motor tem que enxergar a ilha a partir do corredor.
+    const alvoIlha = g._mantleTarget(new THREE.Vector3(sx + fixture.dx * 2.0, fixture.y, sz + fixture.dz * 2.0), fixture.dx, fixture.dz);
+    if (!alvoIlha || Math.abs(alvoIlha.y - (fixture.y + 1.20)) > 1e-3) {
+      falhas.push(`${mapId}: selftest MNT3 — ilha injetada mas o motor NÃO a vê como alvo de mantle — falha de ARNÊS, não do jogo`);
+      continue;
+    }
+    g._mantleReach = null;
+  }
   /* ---------- GRADE ANDÁVEL ---------- */
   const nx = Math.floor((B.maxX - B.minX) / GRID), nz = Math.floor((B.maxZ - B.minZ) / GRID);
   const X = (i) => B.minX + (i + 0.5) * GRID, Z = (k) => B.minZ + (k + 0.5) * GRID;
@@ -344,7 +346,6 @@ for (const mapId of MAP_IDS) {
     }
     return { vis };
   }
-
   const sementes = [];
   for (const lista of Object.values(W.spawns || {})) for (const s of (lista || [])) {
     const i = Math.round((s.x - B.minX) / GRID - 0.5), k = Math.round((s.z - B.minZ) / GRID - 0.5);
@@ -463,10 +464,10 @@ for (const mapId of MAP_IDS) {
     : (semSaida.length === 0 && piorT <= T_MAX) ? 'OK' : 'FALHA';
 
   /* ================= MNT2 — SUBIR O QUE DEVE SUBIR =================
-     Amostra as beiradas de escala humana e ANDA O MOTOR contra cada uma: o corpo é posto
-     0,9 m antes da beirada, virado pra ela, e o `_updatePlayer` roda 2,5 s com W (e Espaço,
-     porque o mantle é uma continuação natural do pulo). Passou = os pés terminam na cota
-     de cima. Reimplementar a física aqui daria uma régua que mede a régua. */
+     Amostra as beiradas de escala humana e ANDA O MOTOR contra cada uma: o corpo parte
+     da célula andável que detectou a borda, virado para ela, e `_updatePlayer` roda 2,5 s
+     com W e Espaço segurado em janelas. Passou = os pés terminam na cota de cima.
+     Reimplementar a física aqui daria uma régua que mede a régua. */
   const beiradas = [], todasSubidas = [];
   let ilhas = 0;
   for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) {
@@ -493,13 +494,14 @@ for (const mapId of MAP_IDS) {
   for (let n = 0; n < beiradas.length && amostra.length < 12; n += passo) amostra.push(beiradas[n]);
 
   const subiu = [];
-  for (const b of amostra) subiu.push(andaContra(g, b));
-  const mnt2 = amostra.length === 0 ? 'N/A' : (subiu.every(Boolean) ? 'OK' : 'FALHA');
+  for (const b of amostra) subiu.push(andaContra(g, b, mapId));
+  const abortes = subiu.filter((v) => v === null).length;
+  const mnt2 = abortes ? 'ARNÊS' : amostra.length === 0 ? 'N/A' : subiu.every(Boolean) ? 'OK' : 'FALHA';
   if (DETALHE) {
     for (let n = 0; n < amostra.length; n++) if (!subiu[n]) {
       const b = amostra[n];
       const alvo = g._mantleTarget ? g._mantleTarget(new THREE.Vector3(b.x, b.y, b.z), b.dx, b.dz) : null;
-      console.log(`  [MNT2 ${mapId}] beirada em (${b.x.toFixed(1)}, ${b.z.toFixed(1)}) y=${b.y.toFixed(2)} sobe ${b.sobe.toFixed(2)} -> alvo ${alvo ? `(${alvo.x.toFixed(1)}, ${alvo.y.toFixed(2)}, ${alvo.z.toFixed(1)})` : 'NULL'}`);
+      console.log(`  [MNT2 ${mapId}] beirada em (${b.x.toFixed(3)}, ${b.z.toFixed(3)}) y=${b.y.toFixed(3)} dir=(${b.dx},${b.dz}) sobe ${b.sobe.toFixed(3)} -> alvo ${alvo ? `(${alvo.x.toFixed(3)}, ${alvo.y.toFixed(3)}, ${alvo.z.toFixed(3)})` : 'NULL'}`);
     }
     for (let c = 0; c < nx * nz; c++) if (emDep[c] && saidaComp[c] / VEL > T_MAX) {
       console.log(`  [MNT1 ${mapId}] fundo em (${repX[c].toFixed(1)}, ${repZ[c].toFixed(1)}) y=${alt[c].toFixed(2)} caiu de ${reqDe[c].toFixed(2)} -> volta ${Number.isFinite(saidaComp[c]) ? saidaComp[c].toFixed(1) + ' m' : 'IMPOSSÍVEL'}`);
@@ -541,39 +543,68 @@ for (const mapId of MAP_IDS) {
   });
 }
 
-/* Anda o motor de verdade contra uma beirada. Devolve true se os pés terminarem na cota
-   de cima. Sem mantle no jogo isto é sempre false para subida > STEP_H — que é
-   exatamente o estado ANTES do conserto. */
-function andaContra(g, b) {
+/* Fail-closed dos mutantes de injeção: rótulo no CLI não é prova de aplicação. */
+if (MUT_CANAL && !canalAplicou) falhas.push('mutante canal-fechado solicitado e NÃO aplicado em nenhum mapa — falha de ARNÊS (mapa corrego ausente da execução?)');
+if (MUT_NAN && !nanAplicou) falhas.push('mutante pouso-nan solicitado e NENHUM pouso de mantle ocorreu — falha de ARNÊS (defeito nunca injetado em branch viva)');
+if (MUT_NAN && DETALHE && nanCausal) console.log(`  [MNT2 nan] update real encerrou mantle; pose antes=(${nanCausal.antes.x.toFixed(2)},${nanCausal.antes.z.toFixed(2)}) depois=(${nanCausal.depois.x},${nanCausal.depois.z}) grounded-alvo=true`);
+
+// Anda o motor real e exige pouso apoiado e avanço XZ; exceção é falha de arnês.
+function andaContra(g, b, mapId) {
   const p = g.player;
-  const rec = { x: p.pos.x, y: p.pos.y, z: p.pos.z, vx: p.vel.x, vy: p.vel.y, vz: p.vel.z, yaw: p.yaw };
-  /* ESCALADA EM CURSO É ESTADO, e estado vaza entre amostras: a versão anterior saía do
-     laço assim que o corpo chegava em cima e deixava `p.mantle` armado, então a amostra
-     SEGUINTE começava com uma escalada pela metade sobrescrevendo a posição — ela reprovava
-     uma beirada que o motor sobe em 10 quadros (medido à parte, no fy_lajes). */
-  p.mantle = null;
+  const rec = {
+    x: p.pos.x, y: p.pos.y, z: p.pos.z, vx: p.vel.x, vy: p.vel.y, vz: p.vel.z, yaw: p.yaw,
+    grounded: p.grounded, spaceHeld: p._spaceHeld, mantleScanAt: p._mantleScanAt,
+    jumpBufferedUntil: p.jumpBufferedUntil, coyoteUntil: p.coyoteUntil,
+  };
+  /* Mantle, borda do Espaço e buffers são estado. Qualquer um vazando entre amostras faz
+     a seguinte começar no meio da ação ou ignorar o primeiro toque. */
+  p.mantle = null; p.mantleF = 0; p._spaceHeld = false; p._mantleScanAt = 0; p.jumpBufferedUntil = 0; p.coyoteUntil = 0;
+  /* POUSO FINITO: mantle encerrado, grounded, avanço XZ >= 0,25 m e chão coerente e
+     finito. `ty` vem de sonda de grade (±0,25 m); a camada certa é a cláusula do chão. */
+  const apoia = () => {
+    if (p.mantle || !p.grounded) return false;
+    const avanco = b.dx * (p.pos.x - b.x) + b.dz * (p.pos.z - b.z);
+    const chao = g.world.groundHeightAt(p.pos.x, p.pos.z, p.pos.y + STEP_H);
+    if (![p.pos.x, p.pos.y, p.pos.z, avanco, chao, b.ty].every(Number.isFinite)) return false;
+    if (p.pos.y < b.ty - 0.12) return false;
+    if (avanco < 0.25) return false;
+    return Math.abs(chao - p.pos.y) <= 0.12 && Math.abs(chao - b.ty) <= STEP_H;
+  };
+  let keys0 = null, erroMotor = null;
   try {
-    // 0,9 m antes da beirada, virado pra ela
+    // A célula é livre; recuar às cegas pode nascer dentro do colisor atrás dela.
     p.pos.set(b.x, b.y, b.z);
     p.vel.set(0, 0, 0); p.grounded = true;
     // yaw do jogo: forward = (−sin, −cos)
     p.yaw = Math.atan2(-b.dx, -b.dz);
-    const keys = g.keys;
+    keys0 = g.keys;
     g.keys = { KeyW: true, Space: false };
-    let ok = false;
+    let ok = false, viuMantle = false, maxY = p.pos.y;
+    const tentativas = [];
     for (let n = 0; n < 150; n++) {                 // 2,5 s a 60 Hz
-      g.keys.Space = n > 20 && n % 30 < 3;          // toques de espaço: mantle é continuação do pulo
-      try { g._updatePlayer(1 / 60); } catch { break; }
-      if (p.pos.y >= b.ty - 0.12) { ok = true; break; }
+      g.keys.Space = n % 30 < 17;                    // segurar permite pular cedo e agarrar ao alcançar
+      if (DETALHE && g.keys.Space && !p._spaceHeld) {
+        const alvo = g._mantleTarget?.(p.pos, b.dx, b.dz);
+        tentativas.push(`${n}@${p.pos.x.toFixed(2)},${p.pos.y.toFixed(2)},${p.pos.z.toFixed(2)}=>${alvo ? alvo.y.toFixed(2) : '-'}`);
+      }
+      // Exceção do motor aborta a amostra como ARNÊS — não vira "não subiu" do MNT2.
+      try { g._updatePlayer(1 / 60); } catch (e) { erroMotor = e; break; }
+      viuMantle ||= !!p.mantle;
+      maxY = Math.max(maxY, p.pos.y);
+      if (apoia()) { ok = true; break; }
     }
-    g.keys = keys;
-    return ok;
+    if (!ok && DETALHE) console.log(`  [MNT2 runtime] final=(${p.pos.x.toFixed(2)},${p.pos.y.toFixed(2)},${p.pos.z.toFixed(2)}) maxY=${maxY.toFixed(2)} mantle=${p.mantle ? 1 : 0}/${viuMantle} grounded=${p.grounded} avanco=${(b.dx * (p.pos.x - b.x) + b.dz * (p.pos.z - b.z)).toFixed(2)} ty=${b.ty.toFixed(2)} tentativas=${tentativas.join(';')}`);
+    return erroMotor ? null : ok;
   } finally {
-    p.mantle = null;
+    if (keys0) g.keys = keys0;
+    p.mantle = null; p.mantleF = 0;
+    p.grounded = rec.grounded;
+    p._spaceHeld = rec.spaceHeld; p._mantleScanAt = rec.mantleScanAt;
+    p.jumpBufferedUntil = rec.jumpBufferedUntil; p.coyoteUntil = rec.coyoteUntil;
     p.pos.set(rec.x, rec.y, rec.z); p.vel.set(rec.vx, rec.vy, rec.vz); p.yaw = rec.yaw;
+    if (erroMotor) falhas.push(`${mapId}: MNT2 — amostra abortada por EXCEÇÃO do motor (falha de ARNÊS, não cláusula): ${erroMotor.message}`);
   }
 }
-
 /* Histograma das subidas: inclui as ALTAS (acima de LEDGE_MAX) de propósito — é ele que
    mostra o VÃO medido entre a beirada humana mais alta e a laje de prédio mais baixa, que
    é de onde o teto sai. Sem as altas no mesmo gráfico o teto vira palpite. */
@@ -594,9 +625,9 @@ function histo(lista) {
 if (JSON_OUT) {
   writeFileSync(path.join(HERE, 'mantle_check.json'), JSON.stringify({ gerado: new Date().toISOString(), LEDGE_MAX, PROF_DEP, T_MAX, mapas: relatorio }, null, 2));
 }
+const MUT_NOME = MUT_CANAL ? 'canal-fechado' : MUT_BAIXA ? 'beirada-baixa' : MUT_ALTA ? 'beirada-alta' : MUT_EXPLODE ? 'motor-explode' : MUT_XZ ? 'travessia-congelada' : MUT_NAN ? 'pouso-nan' : '';
 const larg = (s, n) => String(s).padEnd(n);
-console.log(`MANTLE-CHECK — LEDGE_MAX ${LEDGE_MAX} m · PROF_DEP ${PROF_DEP} m · T_MAX ${T_MAX} s` +
-  (MUT_CANAL || MUT_BAIXA || MUT_ALTA ? `  [MUTANTE ${MUT_CANAL ? 'canal-fechado' : MUT_BAIXA ? 'beirada-baixa' : 'beirada-alta'}]` : ''));
+console.log(`MANTLE-CHECK — LEDGE_MAX ${LEDGE_MAX} m · PROF_DEP ${PROF_DEP} m · T_MAX ${T_MAX} s` + (MUT_NOME ? `  [MUTANTE ${MUT_NOME}]` : ''));
 console.log(larg('mapa', 16) + larg('MNT1', 7) + larg('dep', 6) + larg('s/saída', 8) + larg('piorS', 7) +
   larg('MNT2', 7) + larg('beir', 6) + larg('sobe', 7) + larg('ilha', 6) + larg('MNT3', 7) + larg('cotaA', 7) + larg('cotaB', 7) + 'novas');
 for (const r of relatorio) {

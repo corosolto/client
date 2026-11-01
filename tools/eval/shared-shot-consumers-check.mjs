@@ -1,4 +1,5 @@
 import { Game, THREE, bootGame, initTextures } from './harness.mjs';
+import { alturaDoOlho } from '../../public/js/hitboxes.js';
 const mutante = process.argv.find(a => a.startsWith('--mutante='))?.split('=')[1];
 if (mutante) {
   const nome = mutante === 'camera' ? '_miraTiroBot' : '_participanteHumano';
@@ -8,7 +9,7 @@ if (mutante) {
     : mutante === 'remoto' ? original.replace("(ent._remote && ent._remote !== 'ghost' && ent._netBot !== true)", 'false')
     : mutante === 'proxy' ? original.replace("ent._remote !== 'ghost' && ent._netBot !== true", "ent._remote !== 'ghost'") : original;
   if (alterado === original) throw Error('mutante não aplicou');
-  Game.prototype[nome] = new Function('THREE', `return function ${alterado}`)(THREE);
+  Game.prototype[nome] = new Function('THREE', 'alturaDoOlho', `return function ${alterado}`)(THREE, alturaDoOlho);
 }
 let falhas = 0;
 const cobrar = (ok, msg) => { console.log(`${ok ? 'OK' : 'FALHA'} ${msg}`); if (!ok) falhas++; };

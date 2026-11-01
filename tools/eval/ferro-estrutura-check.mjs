@@ -5,7 +5,7 @@
 import { existsSync } from 'node:fs';
 import { THREE, bootGame, initTextures } from './harness.mjs';
 import { rotasSeparadas } from './rotas-separadas.mjs';
-import { FERRO_PROPS, FERRO_AMBIENCE } from '../../public/js/map_ferrovelho.js';
+import { FERRO_PROPS } from '../../public/js/map_ferrovelho.js';
 
 const MUTANTES = new Set(['sem-identidade', 'sem-passarela', 'rota-fechada', 'beco-fechado', 'ctf-convergente', 'spawn-apertado', 'sem-cobertura-leste', 'sem-ambiencia']);
 const MUT = (process.argv.find((a) => a.startsWith('--mutar=')) || '').split('=')[1] || '';
@@ -106,7 +106,8 @@ clause('FVE6', W.spawns.E.length === 8 && W.spawns.B.length === 8 && unique.size
 const animals = fauna(), types = new Set(animals.map((o) => o.userData.fauna)), loops = W.sound?.loops || [];
 const faunaFiles = ['rat_animated.glb', 'pigeon_ground.glb', 'dog_caramelo.glb', 'barata_urbana.glb'];
 const missingFauna = faunaFiles.filter((file) => !existsSync(new URL(`../../public/models/ambient/${file}`, import.meta.url)));
-clause('FVE7', FERRO_AMBIENCE.length === 4 && types.size >= 4 && loops.length === 2 && !missingFauna.length,
+const requiredFauna = ['rato', 'pomba', 'cachorro', 'barata'];
+clause('FVE7', types.size >= 4 && requiredFauna.every((type) => types.has(type)) && loops.length === 2 && !missingFauna.length,
   `${animals.length} animais (${[...types].join('/') || 'nenhum'}); ${loops.length} loops; ausentes ${missingFauna.join(',') || 'nenhum'}`);
 
 const failures = results.filter((ok) => !ok).length;

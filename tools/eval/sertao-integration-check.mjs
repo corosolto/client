@@ -30,11 +30,14 @@ function pause(mutant = false) {
   const source = read('game.js'), start = source.indexOf('  setPaused(v) {'), end = source.indexOf('\n  _now()', start);
   if (start < 0 || end < 0) throw Error('Método de pausa não localizado');
   let method = source.slice(start, end);
+  const release = source.match(/\n  _releaseInput\(\) \{[\s\S]*?\n  \}/)?.[0];
+  if (!release) throw Error('Liberação de entrada não localizada');
   if (mutant) method = method.replace('this.soundscape?.setPaused(v);', '');
   const calls = [], game = { state: 'live', touchMove: {}, el: { pause: { classList: { toggle() {} } } },
     soundscape: { setPaused(v) { calls.push(v); } }, _soltaAtalhos() {}, _now() { return 0; }, _syncPauseArm() {} };
-  const fn = vm.runInNewContext(`({ ${method} }).setPaused`, { document: {}, PAUSE_ARM_MS: 300 });
-  fn.call(game, true); fn.call(game, false);
+  const api = vm.runInNewContext(`({ ${release}, ${method} })`, { document: {}, PAUSE_ARM_MS: 300 });
+  Object.assign(game, api);
+  game.setPaused(true); game.setPaused(false);
   return calls.length === 2 && calls[0] === true && calls[1] === false;
 }
 const base = await preload();
