@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { inspectBindBytes } from '../bind-inspector.mjs';
+import { parseMeshPartsJSON } from '../mesh-parts.mjs';
+import { parseCosmeticSelections } from './cosmetics.mjs';
 import {
   FAMILY_SCHEMA,
   MANIFEST_SCHEMA,
@@ -28,6 +30,7 @@ export function resolveRepositoryPaths(root) {
     characterDir: path.join(root, 'public/models/characters'),
     fpvmPath: path.join(root, 'public/models/viewmodels/fpvm_hands.glb'),
     selectionsPath: path.join(root, 'tools/character-kit/gloves/selections.json'),
+    cosmeticSelectionsPath: path.join(root, 'tools/character-kit/gloves/cosmetic-selections.json'),
     manifestPath: path.join(root, 'public/data/gloves-manifest.json'),
     outputDir: path.join(root, 'public/models/gloves'),
   };
@@ -49,7 +52,8 @@ function technicalFlags() {
   return { visualApproved: false, runtimeEnabled: false, unverified: ['visual-fit', 'contact', 'clipping', 'material-art-direction', 'runtime-integration'] };
 }
 
-export function buildRepositoryArtifacts(root, { selectionBytes } = {}) {
+export function buildRepositoryArtifacts(root, { selectionBytes, includeCosmetics = false, cosmeticSelectionBytes } = {}) {
+  must(typeof includeCosmetics === 'boolean', 'includeCosmetics must be boolean');
   const paths = resolveRepositoryPaths(root);
   const sources = listCharacterSources(root);
   const census = sources.map(source => inspectThirdPersonCandidate({ ...source, bytes: fs.readFileSync(source.absolutePath) }));
@@ -141,6 +145,61 @@ export function buildRepositoryArtifacts(root, { selectionBytes } = {}) {
   }
   const supported3p = compatible.map(candidate => candidate.id).sort();
   const blocked3p = incompatible.map(entry => entry.id).sort();
+  const cosmetics = [];
+  if (includeCosmetics) {
+    const raw = cosmeticSelectionBytes ?? fs.readFileSync(paths.cosmeticSelectionsPath);
+    const records = parseCosmeticSelections(raw).entries;
+    const catalog = parseMeshPartsJSON(fs.readFileSync(path.join(root, 'public/models/skins/manifest.json'), 'utf8'));
+    for (const record of records) {
+      const { id, characterId, skinId, source, selection } = record;
+      const approved = catalog.skins?.[skinId];
+      must(approved?.approved === true && approved.character === characterId
+        && `public${approved.model}` === source.path && approved.sha256 === source.sha256, `cosmetic catalog mismatch for ${id}`);
+      must(sources.some(candidate => candidate.id === characterId), `unknown cosmetic character ${characterId}`);
+      const absolute = path.join(root, source.path);
+      must(fs.lstatSync(absolute).isFile(), `cosmetic source must be a local file: ${id}`);
+      const sourceBytes = fs.readFileSync(absolute);
+      must(sha256(sourceBytes) === source.sha256, `cosmetic source digest mismatch for ${id}`);
+      const before = inspectBindBytes(sourceBytes, source.sha256);
+      must(before.bindFingerprintSha256 === source.skeletonFamilySha256, `cosmetic source family mismatch for ${id}`);
+      const built = buildThirdPersonPackage(sourceBytes, selection);
+      must(built.report.bindFingerprintSha256 === source.skeletonFamilySha256, `cosmetic output bind changed for ${id}`);
+      const family = source.skeletonFamilySha256;
+      const outputRelative = `public/models/gloves/3p/${id}-${family.slice(0, 12)}.glb`;
+      const packageId = `tp-cosmetic-${family.slice(0, 12)}-${id}`;
+      must(!artifacts.has(outputRelative) && !packages.some(pack => pack.id === packageId
+        || pack.sourceVariants.some(variant => variant.id === id)), `duplicate cosmetic variant ${id}`);
+      artifacts.set(outputRelative, built.bytes);
+      packages.push({
+        id: packageId,
+        perspective: '3p',
+        packageVersion: 1,
+        skeletonFamily: { schema: FAMILY_SCHEMA, id: packageId, fingerprintSha256: family },
+        supportedCharacterIds: [characterId],
+        sourceVariants: [{
+          id,
+          characterIds: [characterId],
+          source: { kind: 'cosmetic', skinId, path: source.path, sha256: source.sha256,
+            skeletonFamilySha256: family, geometrySha256: before.geometryFingerprintSha256, weightsSha256: before.weightsFingerprintSha256 },
+          selection: { path: 'tools/character-kit/gloves/cosmetic-selections.json', fileSha256: sha256(raw),
+            recordSha256: canonicalHash(selection), schema: selection.schema, meshPartsSchema: MESH_PARTS_SCHEMA },
+          mesh: { path: outputRelative, sha256: sha256(built.bytes), bindFingerprintSha256: built.report.bindFingerprintSha256,
+            geometryFingerprintSha256: built.report.geometryFingerprintSha256, weightsFingerprintSha256: built.report.weightsFingerprintSha256 },
+          metrics: { before: {
+            vertices: before.primitives.reduce((sum, primitive) => sum + primitive.vertices, 0),
+            joints: parseGLB(sourceBytes).document.skins[0].joints.length,
+            nonzeroWeights: before.primitives.reduce((sum, primitive) => sum + primitive.weightedJoints.reduce((part, joint) => part + joint.nonzeroInfluences, 0), 0),
+            primitives: before.primitives.length,
+          }, after: built.metrics },
+        }],
+        materialVariantIds: materialIds(),
+        handOwnership: { baseHandsOwner: 'character-body', gloveSurfaceRole: 'derived-overlay', sourceHandRemovalCount: 0 },
+        animationOwnership: { owner: 'character-rig', mode: 'inherit-live-skeleton', animationsEmbedded: false, poseOverrides: false, teleport: false },
+        ...technicalFlags(),
+      });
+      cosmetics.push({ skinId, characterId, sourcePath: source.path, sourceSha256: source.sha256, skeletonFamilySha256: family });
+    }
+  }
   const manifest = {
     schema: MANIFEST_SCHEMA,
     manifestVersion: 1,
@@ -155,6 +214,7 @@ export function buildRepositoryArtifacts(root, { selectionBytes } = {}) {
       firstPersonSupportedCharacterIds: characterIds,
       thirdPersonSupportedCharacterIds: supported3p,
       thirdPersonBlockedCharacterIds: blocked3p,
+      ...(includeCosmetics ? { cosmetics } : {}),
     },
     ...technicalFlags(),
   };

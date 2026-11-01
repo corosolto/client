@@ -232,6 +232,20 @@ jobs:
       - name: Smoke do site (13 rotas, contrato + JSON-LD)
         run: node tools/eval/site-smoke.mjs
 
+  equipamento-tp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        run: npm ci
+      - name: Corpo, luvas e procedência em processos CPU reais
+        run: node tools/eval/runner.mjs eval:tp-identity eval:tp-cosmetic-source eval:tp-drip-source eval:tp-glove-origin
+
   # O bloco do viewmodel e das invariantes, na MESMA ordem de antes: o vm-mint-audit escreve
   # o tools/eval/vm_mint_audit.json que as invariantes e o vm-kick-sim leem.
   invariantes:
@@ -283,7 +297,7 @@ jobs:
   # SKIPPED, e o ruleset aceita contexto obrigatório pulado como verde. Cancelado,
   # pulado ou vermelho em qualquer `needs` reprova.
   build:
-    needs: [reguas-e-site, invariantes]
+    needs: [reguas-e-site, invariantes, equipamento-tp]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
