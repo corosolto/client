@@ -35,6 +35,8 @@ const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settin
 export const HALF_X = 28, HALF_Z = 47;
 // props GLB reaproveitados (o mapa NUNCA depende deles: todo `gprop` tem fallback procedural,
 // senão o mapa quebraria em node — onde nenhum GLB carrega — e nas réguas).
+export const QUEBRADA_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'dog', 'escadaoCat']);
+
 export const QUEBRADA_PROPS = ['pilha_pneus', 'tires', 'jersey_barrier', 'stall', 'tent', 'caixa_som',
   'arquibancada', 'churrasqueira', 'mesa_guardasol', 'guarda_sol', 'moto_cg', 'kombi', 'uno_mille',
   'fusca', 'saveiro', 'dumpster', 'arara_roupas', 'drinkstand',
@@ -1738,6 +1740,7 @@ export function buildQuebrada(scene, T) {
   /* BUG-57: rua de baile tem caramelo em dupla, rato de esquina e pombo de fiação. */
   const ambience = createFavelaAmbience(root, {
     map: 'quebrada',
+    low: LOWQ,
     rats: [
       { pos: [-1, 0, -15.5], to: [1.5, 0, -13], phase: .3 }, { pos: [4, 0, 13.5], to: [6, 0, 15.5], phase: 1.2 },
       { pos: [-15, 0, 4], to: [-13, 0, 6.5], phase: 2.2 },
@@ -1750,8 +1753,9 @@ export function buildQuebrada(scene, T) {
       { pos: [-6.5, 0, -23.5], to: [-2.5, 0, -23.5], phase: .5 },
       { pos: [9.5, 0, -33.5], to: [6, 0, -33.5], phase: 2.1 },
     ],
-    /* BUG-57 v2.1: gato de telhado da rua do baile (Quaternius CC0) */
-    cats: [{ pos: [-12, 0, -12], to: [-11, 0, -10], phase: 1.8 }],
+    cats: [{ assetId: 'escadaoCat', contactShadow: true, turnRate: 6, speed: { walk: .55, flee: 1.5 }, heightAt: groundHeightAt,
+      pos: [-11.8, groundHeightAt(-11.8, -12.4), -12.4], to: [-11, groundHeightAt(-11, -11), -11], phase: 1.8,
+      fleeArea: { minX: -11.9, maxX: -10.2, minZ: -13.5, maxZ: -10.6 } }],
   });
 
   return {
