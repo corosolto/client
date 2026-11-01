@@ -313,6 +313,40 @@ for(const compact of [false,true])test('new portrait stays hidden until its own 
   const f=fixture({compact,screen:compact?'hub':'selection'});if(compact)f.api.pvSetChar(cyborg);else f.api.showStaticPreview(cyborg);
   const img=f.node(compact?'hub-character-portrait':'char-preview-static');assert.equal(compact?img.hidden:img.classList.contains('hidden'),true);img.onload();assert.equal(compact?img.hidden:img.classList.contains('hidden'),false);
 });
-for(const [compact,anchor] of [[false,"const my=++pvImageToken;\n    image.onload=image.onerror=null;image.removeAttribute('src');"],[true,"image.dataset.previewKey=key;let fallback=false;\n    image.onload=image.onerror=null;image.removeAttribute('src');"]])test('causal mutant rejects a retained pending image: '+compact,()=>{
+for(const [compact,anchor] of [[false,"const my=++pvImageToken;\n    image.onload=image.onerror=null;image.removeAttribute('src');"],[true,"image.dataset.previewToken=my;let fallback=false;\n    image.onload=image.onerror=null;image.removeAttribute('src');"]])test('causal mutant rejects a retained pending image: '+compact,()=>{
   assert.equal(raw.split(anchor).length-1,1);assert.throws(()=>unavailableAfterPending(compact,value=>value.replace(anchor,anchor.replace("image.removeAttribute('src');",''))),/previous request still installed/);
 });
+
+// Captured callbacks exercise ownership; natural browser delivery across A→exit→A
+// has not been reproduced. A content key may be reused, a request token may not.
+function compactReturnCallback(event,mutate){
+  const f=fixture({compact:true,screen:'hub',mutate});f.api.pvSetChar(cyborg);
+  const img=f.node('hub-character-portrait'),old=img[event==='load'?'onload':'onerror'];
+  f.api.show('team-select');f.api.show('main-menu');f.api.pvSetChar(cyborg);
+  if(event==='error')img.onload();old();
+  assert.equal(img.hidden,event==='load','old same-key callback changed current visibility');
+}
+for(const event of ['load','error']){
+  test('old compact callback stays invalid after returning to the same key: '+event,()=>compactReturnCallback(event));
+  test('causal mutant rejects content key reuse as callback ownership: '+event,()=>{
+    const anchor=event==='load'?'image.onload=()=>{if(image.dataset.previewToken!==my)return;':'image.onerror=()=>{if(image.dataset.previewToken!==my)return;';
+    const mutate=replace(anchor,anchor.replace('image.dataset.previewToken!==my','image.dataset.previewKey!==key'));
+    assert.throws(()=>compactReturnCallback(event,mutate),/old same-key callback changed current visibility/);
+  });
+}
+function baseFallbackVisible(compact,mutate){
+  const f=fixture({compact,screen:compact?'hub':'selection',mutate});
+  if(compact)f.api.pvSetChar({...base,skinId:null});else f.api.showStaticPreview(base);
+  const img=f.node(compact?'hub-character-portrait':'char-preview-static'),loaded=img.onload;
+  img.onerror();assert.equal(img.src,'/img/chars/barbudo.webp?v=fixture');
+  assert.equal(img.onload,loaded,'fallback retains its current request handler');img.onload?.();
+  assert.equal(compact?img.hidden:img.classList.contains('hidden'),false,'loaded base fallback is hidden');
+}
+for(const compact of [false,true]){
+  test('successful base fallback becomes visible through its retained load handler: '+compact,()=>baseFallbackVisible(compact));
+  test('causal mutant rejects a lost base fallback load handler: '+compact,()=>{
+    const anchor=compact?'fallback=true;image.src=portraitFallbackUrl(def);':'image.src=portraitFallbackUrl(def);}};';
+    const mutate=replace(anchor,anchor.replace('image.src=','image.onload=null;image.src='));
+    assert.throws(()=>baseFallbackVisible(compact,mutate),/fallback retains its current request handler/);
+  });
+}

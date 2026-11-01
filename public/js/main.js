@@ -920,6 +920,7 @@ const portraitFallbackUrl = (def) => `/img/chars/${def.id}.webp?v=${VERSION}`;
    do jogo por tools/eval/char-native-vids.mjs. Falha de rede mantém o canvas/GLB. */
 let pvVidToken = 0;
 let pvImageToken = 0;
+let pvCompactToken = 0;
 let pvStaticKey = '';
 let pvPosterFailure = null;
 const pvReducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -953,7 +954,7 @@ function previewHubVisible() {
 function clearCompactPreviews() {
   for(const prefix of ['hub-character','char-select']){
     const image=$(prefix+'-portrait'),label=$(prefix+'-equipment');
-    if(image){image.dataset.previewKey='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;}
+    if(image){image.dataset.previewKey='';image.dataset.previewToken='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;}
     if(label)label.hidden=true;
   }
 }
@@ -1044,15 +1045,15 @@ function syncCompactPreview(def) {
   const selection=pvCompact.matches && $('char-select')?.classList.contains('hidden')===false;
   for(const [imageId,labelId,active] of [['hub-character-portrait','hub-character-equipment',hub],['char-select-portrait','char-select-equipment',selection]]){
     const image=$(imageId),label=$(labelId);if(!image || !label)continue;
-    if(!active){image.dataset.previewKey='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;label.hidden=true;continue;}
+    if(!active){image.dataset.previewKey='';image.dataset.previewToken='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;label.hidden=true;continue;}
     if(image.dataset.previewKey===key)continue;
-    image.dataset.previewKey=key;let fallback=false;
+    image.dataset.previewKey=key;const my=String(++pvCompactToken);image.dataset.previewToken=my;let fallback=false;
     image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
     label.textContent=caption;label.hidden=!caption;image.alt=skin?.name || def.name;
     const unavailable=()=>{image.hidden=true;label.hidden=false;label.textContent=`Prévia indisponível: ${skin?.name || def.name}${paint?` · ${paint.name}`:''}`;};
     if(src){
-      image.onload=()=>{if(image.dataset.previewKey!==key)return;image.hidden=false;label.textContent=caption;label.hidden=!caption;};
-      image.onerror=()=>{if(image.dataset.previewKey!==key)return;if(!skin && !fallback){fallback=true;image.src=portraitFallbackUrl(def);}else unavailable();};
+      image.onload=()=>{if(image.dataset.previewToken!==my)return;image.hidden=false;label.textContent=caption;label.hidden=!caption;};
+      image.onerror=()=>{if(image.dataset.previewToken!==my)return;if(!skin && !fallback){fallback=true;image.src=portraitFallbackUrl(def);}else unavailable();};
       image.src=src;
     }else unavailable();
   }
