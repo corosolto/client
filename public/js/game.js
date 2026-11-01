@@ -8,7 +8,7 @@ import { MAPS, resolveMapId } from './maps.js';
 import { criarInvasaoJavaporcos } from './mode_javaporcos.js';
 import { atualizaCortes } from './mapprops.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon, podeNoLado } from './characters.js';
-import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver, getGloveHandle } from './glbchars.js';
+import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver, getGloveHandle, GloveManifestUnavailable } from './glbchars.js';
 import { weaponModel, weaponCFG, hasWeapon, preloadWeapons, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
 import { gloveSkinStyle } from './data/glove-skin-definitions.js';
@@ -6772,12 +6772,26 @@ export class Game {
     const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id, def.skinId);
     const gloveHandle = this.playerTP?.isGLB && !weaponChanged ? this.playerTP.gloveHandle : getGloveHandle(def.id, def.skinId);
     const gloveKey = gloveHandle?.key || null;
+    const demandKey = JSON.stringify([gloveKey, gloveId]);
+    if (this._tpGloveDemand?.key !== demandKey) {
+      this._tpGloveDemand = { key: demandKey, retried: false };
+      this._tpGloveAsked?.clear();
+    }
+    const demand = this._tpGloveDemand;
     const gloveReady = Boolean(gloveId && gloveHandle?.ready);
     if (gloveId && gloveHandle && !gloveReady) {
       const asked = this._tpGloveAsked ||= new Set();
       if (!asked.has(gloveKey)) {
         asked.add(gloveKey);
-        void gloveHandle.preload().catch(() => console.warn('[luvas] pacote TP indisponível'));
+        void gloveHandle.preload().catch((e) => {
+          if (e instanceof GloveManifestUnavailable) {
+            e.warn();
+            if (!this._disposed && this._tpGloveDemand === demand && !demand.retried) {
+              demand.retried = true;
+              asked.delete(gloveKey);
+            }
+          } else console.warn('[luvas] pacote TP indisponível');
+        });
       }
     }
     const gloveChanged = this.playerTP?.isGLB && !this._tpDead

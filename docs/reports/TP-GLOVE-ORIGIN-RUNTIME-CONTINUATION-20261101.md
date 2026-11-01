@@ -67,3 +67,82 @@ TP-GLOVE-OBSERVABILITY-R838. O freeze de main R790 foi sucedido por este reparo
 observado; os recibos históricos continuam vinculados aos seus próprios bytes.
 Próximo: gates normais/push sem bypass, review do novo head, resposta ao fio e
 crítico whole pós-bot. Game3:2, contato/material/motion/mobile/MP seguem abertos.
+
+
+## Composição local R928
+
+A worktree isolada `s4-retry-integration-r928-20261101`, branch
+`codex/s4-retry-integration-r928-20261101`, parte de
+`b3cf08314fc60cae97202c780cc9e1f31f062222` e mescla normalmente staging
+`00808bb494ccca055593740947fa5a7240772a33`, que recebeu #1208. W770 continua
+intocada. Os conflitos de Game, loader, main e package foram resolvidos por
+unidade, preservando S4 e a origem efetiva do corpo. Game e loader são literais
+do candidato privado S4 validado em R864. Main conserva também a telemetria de
+arena recebida de staging, a barreira N1 e o coletor BOOT R854.
+
+A rejeição tipada do manifesto fica fora do catch que negativa pacote/GLB. A
+requisição compartilhada sai do mapa em finally; demanda usa origem efetiva e
+estilo, token por objeto e a recuperação automática única definida por Root.
+Off/on, estilo ou origem rearma; a segunda falha da mesma demanda suprime I/O
+por frame. O catch opcional do preview permite construir sem luva quando o
+manifesto falha; demais erros continuam no tratamento anterior. Não há timer,
+teto visual novo ou fallback entre origens.
+
+O baseline b3cf, medido em cópia externa dos três módulos, ficou RED em 16 das
+19 cláusulas, sem INFRA. A composição passou o nominal completo do manifesto,
+os aliases integrais de identidade (incluindo C6/N1 e manifesto), origem S4,
+origem cosmética, fábrica Drip, preload e publicação por conteúdo. Os testes
+CPU de preview/BOOT passaram 163/163. Os mutantes conservaram seus failsets;
+nenhum instrumento ou limiar foi alterado. Docs e índice passaram seus checks.
+Os bytes de produto permaneceram estáveis durante as medições.
+
+Todos os aliases e os argumentos dos portões dos pais foram conservados. A
+dívida de batch/aliases de #1211 permanece literal de staging; a correção de
+Root virá pela composição posterior de Hands. Os checkpoints posteriores de
+Hands e grafite não foram mesclados aqui. Os ancestrais #1211/#1212 de 00808
+continuam presentes por construção do merge normal.
+
+Autoria: Codex compôs e mediu; uma consulta GLM5.3 de autoria, limitada a 600
+tokens, retornou 119 palavras, sem ferramentas/retry. Native conferiu as decisões.
+Isso não é crítico independente pós-bot. Relatório, diffs completos, fontes e
+recibos selados: `audits/2026-10-31-visual-consistency/S4-RETRY-INTEGRATION-R928-*`
+na raiz agregadora. O probe adicional do trecho real de preview usa fronteiras
+simuladas; não substitui DOM/WebGL real.
+
+Próximo: Root lê e adota por fast-forward em W770, depois conduz os gates e push
+normais, review formal do head publicado e crítico independente após bot limpo.
+Browser/Game 3:2, material/contato/motion, mobile, MP humano, CI desta composição
+e release seguem sem medição nesta lease. A missão integral e a exclusão de
+#1158 permanecem; UI/social seguem para depois.
+
+
+## Composição S4 + Hands R951
+
+A worktree própria `s4-hands-composition-r951-20261101`, branch com prefixo
+`codex/`, parte de `5c458fa6817bfef7ca62587d49b32b31b86a64fb` e recebe por merge
+normal Hands `fc94596e3a80cf9c7d7ee4461382b5ac5f56f62c`. Merge automático, sem
+conflitos. Os dez caminhos de Hands foram importados; fora do package são
+literais do pai Hands. O package une os aliases sem chaves duplicadas e conserva
+os argumentos dos portões. Todo public/, inclusive os três JS de S4, permanece
+byte-exato ao pai 5c458fa. Não há Java nem reparo de pistola nesta composição.
+
+Node22: 19 focais de mãos PASS; controlador privado GREEN em 10,383s com sete
+corridas e failsets exatos; catálogo estrito GREEN em 1,540s, 26 armas/40 rotas,
+1.037 cláusulas, zero NÃO MEDIDA e zero vermelho novo. A dívida nomeada
+RIG:pistol@pintura/f468adc9279d continua. Luva-crua conserva 48 RED, incluindo
+12 MÃO4. A fonte privada foi somente generated no caminho autorizado, em
+leitura, sem copiar/montar/exportar GLBs; default AWP/SVD não foi usado.
+
+Grafite nominal PASS, mutante RED somente authored-batch-permission nos quatro
+lotes e alias PASS. População estrita e corpo legado foram recebidos literalmente.
+Manifesto nominal e origem S4 nominal GREEN; o alias de identidade completo não
+foi repetido porque seu código, alias e todo runtime permanecem iguais ao R928.
+Docs/arch e diff checks PASS. Nenhum checker, failset ou limiar foi alterado.
+
+Autoria de composição Codex; sem chamada GLM, por merge trivial. Não é crítica
+independente, aprovação artística, CI atual ou release. W770/W821 permanecem de
+Root. Evidências: A/S4-HANDS-COMPOSITION-R951-* na auditoria agregada. Próximo:
+Root lê/rebinda e adota esta composição, depois coordena publicação normal e os
+ciclos formal/whole no head publicado. Sem browser/headless/fullgate nesta lease;
+Game3:2, contato/material/motion, MP e mobile continuam pendentes. A missão
+integral, #1158 excluído, UI/social depois e owners preservados continuam.

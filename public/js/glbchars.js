@@ -234,11 +234,29 @@ export async function preloadCosmeticAssets(ids = []) {
 const _gloveMeshes = new Map();
 const _gloveRequests = new Map();
 const _gloveHandles = new Map(), _gloveOrigins = new WeakMap();
+export class GloveManifestUnavailable extends Error {
+  constructor(cause) { super('gloves_manifest_unavailable'); this.cause = cause; this.reported = false; }
+  warn() { if (!this.reported) { this.reported = true; console.warn('[luvas] manifesto TP indisponível'); } }
+}
 let _gloveManifest = null;
 function gloveManifest() {
-  if (!_gloveManifest) _gloveManifest = fetch(assetUrl('data/gloves-manifest.json'))
-    .then((r) => { if (!r.ok) throw new Error('gloves_manifest'); return r.json(); })
-    .catch(() => ({ packages: [] }));
+  if (!_gloveManifest) {
+    const request = Promise.resolve().then(() => fetch(assetUrl('data/gloves-manifest.json')))
+      .then((r) => { if (!r.ok) throw new Error('gloves_manifest'); return r.json(); })
+      .then((manifest) => {
+        const object = (v) => v && typeof v === 'object' && !Array.isArray(v);
+        if (!object(manifest) || !Array.isArray(manifest.packages) || manifest.packages.some((p) =>
+          !object(p) || typeof p.perspective !== 'string' || (p.perspective === '3p' &&
+            (!/^[a-f0-9]{64}$/.test(p.skeletonFamily?.fingerprintSha256 || '') || !Array.isArray(p.sourceVariants)
+              || p.sourceVariants.some((v) => !object(v) || typeof v.id !== 'string' || !Array.isArray(v.characterIds)
+                || v.characterIds.some((id) => typeof id !== 'string')))))) throw new Error('gloves_manifest');
+        return manifest;
+      }).catch((cause) => {
+        if (_gloveManifest === request) _gloveManifest = null;
+        throw new GloveManifestUnavailable(cause);
+      });
+    _gloveManifest = request;
+  }
   return _gloveManifest;
 }
 function glovePath(manifest, origin) {
@@ -274,14 +292,16 @@ function gloveHandleFor(origin) {
     preload() {
       if (_gloveMeshes.has(key)) return Promise.resolve();
       if (_gloveRequests.has(key)) return _gloveRequests.get(key);
-      const request = Promise.resolve().then(async () => {
-        const pack = glovePath(await gloveManifest(), origin);
-        if (!pack) { _gloveMeshes.set(key, null); return; }
-        const g = await loadGLB(assetUrl(pack.url.replace(/^\//, '')));
-        const meshes = [];
-        g.scene.traverse((o) => { if (o.isSkinnedMesh) meshes.push(o); });
-        _gloveMeshes.set(key, meshes.length ? meshes : null);
-      }).catch(() => _gloveMeshes.set(key, null)).finally(() => _gloveRequests.delete(key));
+      const request = Promise.resolve().then(() => gloveManifest()).then(async (manifest) => {
+        try {
+          const pack = glovePath(manifest, origin);
+          if (!pack) { _gloveMeshes.set(key, null); return; }
+          const g = await loadGLB(assetUrl(pack.url.replace(/^\//, '')));
+          const meshes = [];
+          g.scene.traverse((o) => { if (o.isSkinnedMesh) meshes.push(o); });
+          _gloveMeshes.set(key, meshes.length ? meshes : null);
+        } catch (e) { _gloveMeshes.set(key, null); }
+      }).finally(() => _gloveRequests.delete(key));
       _gloveRequests.set(key, request);
       return request;
     },

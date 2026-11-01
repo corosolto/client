@@ -191,3 +191,32 @@ Backend wiring R879 e readiness remotoRO R883 estão isolados; nenhum SQL/deploy
 ou frontend8 foi ativado. Pin backend só depois do cliente publicado/reachable.
 Formal do head final, whole pósbot e navegador/Ego/Game3:2 continuam pendentes.
 Missão completa ativa; UI/social depois eFlavio1158 excluído.
+
+
+## R958 — primeiro checkpoint da união final
+
+Own WT `final-java-stack-r958-20261101`, branch `codex/final-java-stack-r958-20261101`,
+parte de Java `2a25a095173977db85a745b2cf8a9c94a8f38af7` e recebe S4+Hands
+`dfd88c7c7d6878782d131b08feef36dbad5f0daf` por merge normal. Só package conflitou:
+bloco Java e aliases Hands foram unidos sem reserialização ou duplicatas. Runtime
+foi auto-mesclado; ensure TP completo, cache/handle de manifesto, preview e boot N1
+são literais de S4. Net/transporte/codec, MP9 R912 e authoredvm/weapons são literais
+do pai Java. Demais arquivos públicos Java foram conservados, salvo os dois
+arquivos Piscina/grafite recebidos literalmente de S4+Hands. Não houve GLM porque
+não apareceu conflito semântico. Nenhuma régua/failset foi editada.
+
+Focais CPU Node22 desta fonte: codec/negociação21casos+8mutantes PASS; callers
+23casos+10mutantes PASS; MP9 nominal e sete mutantes com IDs exatos PASS; horda,
+disputa e morte PASS. Identidade completa PASS166,768s, origem S4 completa
+PASS91,138s, preview/BOOT163testes PASS, publicação por hash/docs/arch PASS.
+Os cinco módulos congelados permaneceram idênticos durante a rodada. Recibos,
+comandos, fontes e stdout/stderr: A/FINAL-JAVA-STACK-R958-* no aggregate.
+
+Este marco ainda antecede R944 e o avanço externo de staging. Root R968 autorizou
+Hands novo com #1137/MA1 e R944 após estes CPUs. Para manter #1210 separado de
+Java, a próxima merge será o novo head S4 R974 que Root compõe com Hands c2,
+seguida de d46cf515 R944. Se os três JS conservarem os hashes, não repetir os
+aliases de identidade/origem; medir a alteração de timing nos focais indicados.
+Autoria de composição, sem crítico independente, browser, fullgate, publicação,
+backend, aceite de arte/Game3:2/mobile/MP ou release. A missão integral e as
+exclusões/owners descritos acima permanecem.

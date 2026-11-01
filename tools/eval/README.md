@@ -121,6 +121,7 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `vm-project.mjs`, `vm-solve.mjs` | Projeção e solução do enquadramento. |
 | `vm-verify.mjs` | Verificação final do viewmodel. |
 | `tp-mount-probe.mjs` | Mount de 3ª pessoa, com parser de GLB próprio. |
+| `tp-glove-manifest-retry-check.mjs` | Retry do manifesto TP: Game e GLTFLoader reais em CPU, orçamento por demanda, concorrência e negativos definitivos; `--source-root` e mutantes focais. Comandos e limites em [R864](../../docs/reports/GLOVE-MANIFEST-R864-CONTINUATION.md). Ferramenta focal, sem registro no CI. |
 | `fparms-capture.mjs` | Captura dos braços de 1ª pessoa. |
 | `mount-capture.mjs` | Captura do ponto de mount. |
 | `weapon-capture.mjs` | Captura arma a arma. |
