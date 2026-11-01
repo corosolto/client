@@ -84,6 +84,7 @@ async function askOr(model, extraInstr = '') {
       method: 'POST',
       headers: { authorization: `Bearer ${OR_KEY}`, 'content-type': 'application/json' },
       body: JSON.stringify({ model, messages: [{ role: 'user', content }], max_tokens: 2048 }),
+      signal: AbortSignal.timeout(TIMEOUT),
     });
     j = await r.json();
   } catch (e) {
@@ -92,7 +93,7 @@ async function askOr(model, extraInstr = '') {
   if (j?.error) return { err: `openrouter(${model}): ${JSON.stringify(j.error).slice(0, 160)}` };
   const parsed = extractJson(j?.choices?.[0]?.message?.content || '');
   if (!validate(parsed)) return { err: `JSON inválido de openrouter(${model})` };
-  return { j: parsed };
+  return { j: parsed, model };
 }
 
 function ask(model, extraInstr = '') {
@@ -104,7 +105,7 @@ function ask(model, extraInstr = '') {
   const body = semAnsi(r.stdout).split('\n').filter((l) => !/^>\s/.test(l)).join('\n');
   const j = extractJson(body);
   if (!validate(j)) return { err: `JSON inválido de ${model}` };
-  return { j };
+  return { j, model };
 }
 
 const ESTRICTO = '\nRESPOSTA ANTERIOR INVÁLIDA. Devolva APENAS o objeto JSON, nada mais.';
@@ -119,7 +120,7 @@ if (res.err && !OR_KEY) {
 }
 if (res.err) { console.error(`[vision-judge] FALHOU: ${res.err}`); process.exit(1); }
 
-res.j._meta = { rubric: RUBRIC, model: OR_KEY ? OR_MODEL : MODEL, images: images.length, ts: new Date().toISOString() };
+res.j._meta = { rubric: RUBRIC, model: res.model, images: images.length, ts: new Date().toISOString() };
 const out = JSON.stringify(res.j, null, 2);
 if (OUT) writeFileSync(OUT, out);
 console.log(out);

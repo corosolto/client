@@ -223,7 +223,7 @@ if (JUDGE) {
   const porChar = new Map();
   for (const r of resultados) {
     if (r.erro) continue;
-    if (!JUDGE_TODAS_ARMAS) {
+    if (!JUDGE_TODAS) {
       // arma de vitrine: a que a tela de seleção mostra pra este char
       const atual = porChar.get(r.id);
       const ehVitrine = !atual || r.wid !== 'knife'; // knife não é vitrine de ninguém
@@ -236,7 +236,7 @@ if (JUDGE) {
   for (const [chave, r] of porChar) {
     const imgs = Object.values(r.arquivos).map((f) => join(OUT_DIR, f)).join(',');
     const outJson = join(OUT_DIR, `judge__${chave}.json`);
-    const p = spawnSync('node', ['tools/eval/vision-judge.mjs', '--images', imgs, '--rubric', 'char', '--out', outJson], { encoding: 'utf8', timeout: 300000 });
+    const p = spawnSync('node', ['tools/eval/vision-judge.mjs', `--images=${imgs}`, '--rubric=char', `--out=${outJson}`], { encoding: 'utf8', timeout: 300000 });
     if (p.status !== 0) {
       verdictos.push({ chave, erro: (p.stderr || '').slice(0, 200) });
       console.error(`✗ judge ${chave}`);

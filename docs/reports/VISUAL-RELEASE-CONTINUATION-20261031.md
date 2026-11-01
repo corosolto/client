@@ -2,59 +2,55 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
-## Estado atual, 01/11 R55: perfil de visitante validado e adotado
+## Estado atual, 01/11 R55: checkpoints locais e ferramentas de auditoria
 
-Os doisP3 do preflightDOCS foram corrigidos: changelog descreve a janela
-de compra ampliada e qualifica pickups pela loja; ROSTER-GATE acompanha
-as linhas elásticas e o teto real da área do rail. Somente prosa, conferida
-com economia/CSS e com os contratos UI já validados; nenhum produto mudou.
+QA estava limpa em67f19eda8f4c761f034b3b8fa08fcefebf0602e3 antes da cópia
+focal das ferramentas CLI. Quatro commits locais após80830: Ferro21380a0,
+docs de facas0cc29dfe9, bootefef31c3e e textos de changelog/grade67f19eda8.
+Nenhuma publicação desta consolidação ou release novo ocorreu.
 
-BootR55 adotado nesta QA:72cenários porNode22/26 e mesmo diagnósticoChrome
-próprio real403antes→404esperado depois, prova de corpo/SHA/clones, semINFRA.
-CríticosR54/R55 integrais lidosRoot: CLEANfocal. Prefixo focal emeval:bootorcamento;
-janela/tetos/produto/R33 preservados. Oito passadas frescas do hook ainda pendem.
-Esse diagnóstico HTTP não afirma açãoUI nem consulta automática de perfil.
-As ferramentas opcionais char-gauntlet/vision-judge têm quatro P2 reproduzidos
-por fixtures controladas, em correção isolada; sem chamadas externas ou render.
+BootR55 adotado:72cenários porNode22/26 e mesmo diagnóstico Chrome próprio
+real403antes→404esperado depois, corpo/SHA/clones conferidos e semINFRA.
+CríticosR54/R55 integrais lidosRoot: CLEANfocal. Prefixo focal registrado
+em eval:bootorcamento; janela/tetos/produto/R33 preservados. Esse diagnóstico
+HTTP não afirma açãoUI nem consulta automática de perfil. As oito passadas
+frescas do hook normal ainda pendem. R52 anterior deu106/107 aliases verdes,
+com única falha de autorização local do perfil, antes do upstream.
 
-Correção documental posterior: SKINS-FLOW agora reconhece o aceite focal F2 de
-Caveira/MAGA já descrito em KNIFE-SKINS; a pendência antiga de registrar o alias
-foi substituída pelo registro real em fast/deploy e pelo resultado técnicoR52.
-Nenhum runtime, arte ou alcance do aceite foi alterado.
+Ferro: import morto removido; FVE7 exige as quatro espécies reais do mundo,
+preservando loops/arquivos e FVE1–6. BaselineNode22/26 falhava no linkage;
+nominal+oito mutantes reais e contraprova adicional da família ausente
+passaram nos doisNodes, mantendo os negativos vermelhos. Crítico integral
+CRITICO-FERRO-ESTRUTURA-R54.md lidoRoot: CLEANfocal. Sem alteração de mapa,
+preload ou asset; hipótese de nova regressão procedural foi refutada.
 
-A consolidação partiu de80830d13faaca4e84434f18d8a9171e95dbb4dae e recebeu
-checkpointsFerro21380a0/docs0cc29dfe9; continua não publicada.
-A revisão preparatória dos60arquivos PRODUCT encontrou umP2: eval:ferro-estrutura
-importava FERRO_AMBIENCE removido do mapa. Baseline real Node22/26 EXIT1 antes de
-qualquer cláusula. Root retirou somente o import morto e passou FVE7 a exigir
-as quatro espécies reais do mundo, preservando loops/arquivos e FVE1–6.
-Nominal+oito mutantes reais passaram nos dois Nodes (nominal0, mutantes1,
-cláusulas esperadas presentes; beco também reprovaFVE5). Contraprova adicional
-troca ratos por espécie inesperada, mantendo quatro tipos: sóFVE7 reprova nos
-doisNodes. Provas FERRO-ESTRUTURA-RESULT-R54.json e MISSING-FAMILY-RESULT-R54.
-Root leu CRITICO-FERRO-ESTRUTURA-R54.md inteiro: CLEANfocal, fonte6bae2566.
-Não há prova de regressão procedural: preload([]) já usa o catálogo padrão;
-essa hipótese foi refutada, sem alterar runtime ou asset.
+CLI: GLM entregou seis substituições literais em char-gauntlet/vision-judge,
+corrigindo nome indefinido, argv incompatível, procedência do fallback e
+fetch sem timeout. Root executou oito casos privados porNode22/26: todos
+verdes após quatro falhas reproduzidas antes. Fontes copiadas byteiguais
+para QA; crítico independente CRITICO-VISUAL-CLI-R55.md lido integralmente
+pelo Root: CLEAN_FOCAL_3FILES, sem achados acionáveis. Não houve render ou
+chamada real a VLM, nem nota de arte derivada dessas fixtures.
 
-R52 integral deu106/107aliases verdes; só bootorcamento falhou por proxy403
-local em perfil próprio de visitante, antes do upstream. Candidata isolada
-boot-guest-contract-20261101 trata autorização própria e R33 estrito, sem
-alterar produto/janela/tetos. R54B:69cenários HTTP/evento porNode e oito
-passadas reais verdes, controles cartazORC1+ORC2/faunaORC3 exatos. Essas passadas
-rápidas só observaram auth; aceitação real do perfil ainda é UNKNOWN e está
-em diagnóstico separado, assim como a revisão independente integral.
+Docs de skins reconhecem aceite focal Caveira/MAGA e registro real do alias;
+changelog e contrato da grade acompanham economia/CSS reais. Só prosa.
+Preflights disjuntos PRODUCT60/DOCS84/CI129 cobrem o pacote original273;
+CI ainda fecha um mioloJSON e callers em suplementoRO. Rebind preparatório
+da QA67f19 tem277paths, sem promover amostra a revisão integral concluída.
 
-Campo fechado em checkpoint local separado e5ec7551b59b86673a15896565292841311a73fd:
-sete arquivos,138execuções/14NA e crítica integral CLEANfocal R53. G2 eb8b0cd28
-permanece em stack separada. Ambos entram após publicação da base. #1179fd553
-foi verificado ancestral da QA; seu trabalho está reaproveitado. Mint privado
-foi rejeitado como matriz fiel de mão, sem adoção, compra ou nova geração.
+Campo está em checkpoint separadoe5ec7551b59b86673a15896565292841311a73fd:
+sete arquivos e crítico integral CLEANfocalR53, sem aceite do mapa inteiro.
+G2 eb8b0cd2872e3db48bb0b865b862948e11df9e2c segue em stack separada.
+Ambos entram após publicação da base. #1179fd553 é ancestral real da QA;
+seu trabalho está reaproveitado. Mint privado foi rejeitado como matriz
+fiel da mão: sem adoção, compra ou nova geração.
 
-Próximo: críticoFerro/checkpoint, completar perfil real/crítico boot e integrar
-candidata validada; docs/arch, push normal atômico QA+staging, revisão atual/CI,
-revisão integral273arquivos com delta do head, staging real e merge/release.
-Produção última confirmaçãoalpha133/49fd69f; nenhum release novo executado.
-Objetivo integral ativo, limites de arte/mobile/MP e Flávio excluído preservados.
+Docs/arch, verificações geradas, comentários e diff passaram após a cópia.
+Próximo concreto: checkpoint seletivo CLI;
+push normal atômico QA+staging com portões completos; revisão atual/bot/CI,
+fechamento integral do diff final, staging servido no mesmoSHA e merge/release.
+Produção última confirmaçãoalpha133/49fd69f. Objetivo integral ativo;
+arte de todo o catálogo, mobile físico e MP real permanecem não aprovados.
 
 ### Estado anterior, 01/11 R49: H2 e integração da main
 
