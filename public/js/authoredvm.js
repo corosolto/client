@@ -460,10 +460,19 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
   };
 }
 
-/* Peças que a pintura tem de alcançar: na golden `mint.active` é só o corpo e pente/
-   ferrolho são malhas irmãs; a Mint assada ainda tira o pente no `splitParts`. */
+const GOLDEN_PAINT_BODY = Object.freeze({
+  'gold#pistol': 'coro_solto_project_pistol',
+  'gold#ak': 'coro_solto_project_ak_body',
+});
+
+/* Pintura usa body golden explícito sem criar wrap de montagem Mint; peças irmãs
+   recebem o acabamento e somente o body recebe marcas. */
 export function pecasDaPintura(entry) {
-  const corpo = entry?.mint?.active;
+  let corpo = entry?.mint?.active;
+  if (!corpo && entry?.golden && GOLDEN_PAINT_BODY[entry.key]) {
+    const bodies = (entry.weaponMeshes || []).filter(mesh => mesh?.name === GOLDEN_PAINT_BODY[entry.key]);
+    if (bodies.length === 1) [corpo] = bodies;
+  }
   if (!corpo) return [];
   const irmas = [...(entry.weaponMeshes || []), ...(corpo.userData?.mintParts || [])];
   const fora = irmas.filter((peca) => peca && peca !== corpo && !corpo.getObjectById?.(peca.id));
