@@ -144,3 +144,45 @@ test('omitting either new boot dependency is detected',()=>{
   assert.throws(()=>assertBootOverlay(source.replace("'"+rel+"', ",'')));
  }
 });
+
+async function bootResponse(source){
+ const start=source.indexOf('    await context.route(`**/${rel}*`, async (rota) => {');
+ const end=source.indexOf('\n    });',start);assert.ok(start>=0&&end>start);
+ const code=source.slice(start,end+'\n    });'.length);
+ const localFunctionStart=source.indexOf('function serveLocalModule(');
+ const localFunctionEnd=source.indexOf('\n}',localFunctionStart)+2;
+ const helper=localFunctionStart>=0?source.slice(localFunctionStart,localFunctionEnd):'';
+ let fulfilled;
+ const context=vm.createContext({rel:'js/contact-shadow.js',corpo:'export const shadow = true;',
+  context:{route:async(_pattern,fn)=>fn({fetch:async()=>({status:()=>404}),fulfill:async options=>{fulfilled=options;}})}});
+ await new vm.Script(helper+'\n(async()=>{'+code+'})()').runInContext(context);
+ return fulfilled;
+}
+test('real boot overlay serves a new local module as JavaScript200 even when upstream is404',async()=>{
+ const response=await bootResponse(read('tools/eval/boot-orcamento-check.mjs'));
+ assert.equal(response.status,200);assert.equal(response.contentType,'text/javascript');assert.equal(response.body,'export const shadow = true;');
+});
+
+function bootBytes(source,corposLocais){
+ const declaration=source.match(/const JS_LOCAIS = (\[[^;]+\]);/)[0];
+ const start=source.indexOf('function bytesAntesDoPortao('),end=source.indexOf('\n}',start)+2;
+ const helper=start>=0?source.slice(start,end):'';
+ const expression=source.match(/    bytes: ([^\n]+),/)[1];
+ const context=vm.createContext({Buffer,URL,corposLocais,ate:[{url:'https://fixture.invalid/js/ambientlife.js?v=hash',bytes:0},{url:'https://fixture.invalid/js/contact-shadow.js',bytes:0},{url:'https://fixture.invalid/models/props/chair.glb',bytes:17}]});
+ return new vm.Script(declaration+'\n'+helper+'\nconst patchado = u => JS_LOCAIS.some(p => u.includes(p));\n'+expression).runInContext(context);
+}
+test('boot accounting charges local bodies and detects provider growth',()=>{
+ const source=read('tools/eval/boot-orcamento-check.mjs');
+ const bodies=new Map([['js/ambientlife.js','á'],['js/contact-shadow.js','shadow']]);
+ const small=bootBytes(source,bodies);bodies.set('js/ambientlife.js','á'+'x'.repeat(100000));
+ const large=bootBytes(source,bodies);assert.ok(large-small>=100000,'local provider growth must change ORC1');
+ assert.equal(small,17+Buffer.byteLength('áshadow','utf8'));
+});
+
+test('boot response and local-byte omissions are caught causally',async()=>{
+ const source=read('tools/eval/boot-orcamento-check.mjs');
+ const badStatus=replaceOnce(source,'route.fulfill({ status: 200','route.fulfill({ status: 404');
+ await assert.rejects(async()=>assert.equal((await bootResponse(badStatus)).status,200));
+ const badCount=replaceOnce(source,"Buffer.byteLength(corposLocais.get(rel), 'utf8')","0 * Buffer.byteLength(corposLocais.get(rel), 'utf8')");
+ assert.throws(()=>assert.equal(bootBytes(badCount,new Map([['js/ambientlife.js','á'],['js/contact-shadow.js','shadow']])),25));
+});

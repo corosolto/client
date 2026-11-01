@@ -38,9 +38,9 @@
    O QUE ELA MEDE (no navegador, na rota real `/`, com os arquivos DESTA árvore
    servidos por cima do host — mesma CDN, mesmo HTML, mesmo import map)
      ORC1 · bytes que terminam de baixar antes de `#splash-enter` sair do `.hidden`
-            ficam sob o teto. Os arquivos servidos do disco saem da conta DOS DOIS
-            LADOS: `fulfill` não comprime e a CDN comprime, e comparar compressão com
-            asset não é comparar nada.
+            ficam sob o teto. Módulos sobrepostos do disco entram pelo tamanho UTF-8
+            sem compressão, nos dois lados; os demais recursos usam os bytes de rede.
+            A estimativa conservadora inclui crescimento local sem aumentar o teto.
      ORC2 · DIFERENCIAL, sem número mágico: a árvore candidata baixa ESTRITAMENTE menos
             arquivos de `posters/` que a mesma árvore com o pool ansioso. É a prova de
             que o custo segue o uso, e ela se recalibra sozinha quando o lobby muda de
@@ -85,6 +85,15 @@ const TETO_BYTES = 8_200_000;
 const TETO_REQS = 340;
 
 const JS_LOCAIS = ['js/main.js', 'js/ambientlife.js', 'js/contact-shadow.js', 'js/client-id.js', 'js/textures.js'];
+function serveLocalModule(route, body) {
+  return route.fulfill({ status: 200, contentType: 'text/javascript', body });
+}
+function bytesAntesDoPortao(reqs, corposLocais) {
+  return reqs.reduce((total, req) => {
+    const rel = JS_LOCAIS.find(path => new URL(req.url).pathname === '/' + path);
+    return total + (rel ? Buffer.byteLength(corposLocais.get(rel), 'utf8') : req.bytes);
+  }, 0);
+}
 /* O pool ansioso é a REFERÊNCIA do ORC2, e também o mutante. A mesma transformação
    serve aos dois papéis de propósito: se ela parar de casar com o código, o portão
    morre barulhento (`throw`) em vez de passar em silêncio. */
@@ -134,6 +143,7 @@ async function mede({ refPoolAnsioso = false } = {}) {
        que o carrossel grava quando o jogador escolhe — não é porta de teste. */
     try { localStorage.setItem('awpbr_settings', JSON.stringify({ map: 'praca_poderes', mapPinned: true })); } catch {}
   });
+  const corposLocais = new Map();
   for (const rel of JS_LOCAIS) {
     let corpo = readFileSync(new URL(`../../public/${rel}`, import.meta.url), 'utf8');
     if (rel === 'js/textures.js' && (refPoolAnsioso || MUTANTE === 'cartaz-ansioso')) corpo = poolAnsioso(corpo);
@@ -141,13 +151,9 @@ async function mede({ refPoolAnsioso = false } = {}) {
       if (MUTANTE === 'fauna-cedo') corpo = faunaCedo(corpo);
       corpo = instrumentaCausaSplash(corpo);
     }
+    corposLocais.set(rel, corpo);
     await context.route(`**/${rel}*`, async (rota) => {
-      if (rel === 'js/client-id.js') {
-        await rota.fulfill({ status: 200, contentType: 'text/javascript', body: corpo });
-        return;
-      }
-      const r = await rota.fetch();
-      await rota.fulfill({ response: r, body: corpo });
+      await serveLocalModule(rota, corpo);
     });
   }
 
@@ -202,11 +208,10 @@ async function mede({ refPoolAnsioso = false } = {}) {
      causa na cópia de main.js servida só neste navegador. A decisão fica no candidato:
      a referência deliberadamente pesada pode cair no failsafe sem invalidar a contagem. */
   const ate = [...reqs.values()].filter((r) => r.fim !== null && r.fim <= portao + 50);
-  const patchado = (u) => JS_LOCAIS.some((p) => u.includes(p));
   const resultado = {
     portao,
     causa,
-    bytes: ate.reduce((s, r) => s + (patchado(r.url) ? 0 : r.bytes), 0),
+    bytes: bytesAntesDoPortao(ate, corposLocais),
     reqs: ate.length,
     cartazes: new Set(ate.filter((r) => /\/posters\//.test(r.url)).map((r) => r.url.split('?')[0])).size,
     ultimoProp: Math.max(-1, ...ate.filter((r) => /\/models\/props\//.test(r.url)).map((r) => r.fim)),
@@ -235,7 +240,7 @@ try {
   console.log(`base      ${BASE}${MUTANTE ? `  (mutante=${MUTANTE})` : ''}`);
   console.log(`portão    splash liberou em ${Math.round(cand.portao)} ms por ${cand.causa}`);
   console.log(`READY     caminho dos assets  ${ok.READY ? 'ok' : 'FALHA'}`);
-  console.log(`ORC1      ${(cand.bytes / 1048576).toFixed(2)} MB em ${cand.reqs} req  (teto ${(TETO_BYTES / 1048576).toFixed(2)} MB / ${TETO_REQS} req)  ${ok.ORC1 ? 'ok' : 'FALHA'}`);
+  console.log(`ORC1      ${(cand.bytes / 1048576).toFixed(2)} MB (rede + JS local sem compressão) em ${cand.reqs} req  (teto ${(TETO_BYTES / 1048576).toFixed(2)} MB / ${TETO_REQS} req)  ${ok.ORC1 ? 'ok' : 'FALHA'}`);
   console.log(`ORC2      ${cand.cartazes} cartaz(es) sob demanda vs ${ref.cartazes} com o pool ansioso  ${ok.ORC2 ? 'ok' : 'FALHA'}`);
   console.log(`ORC3      último prop em ${cand.ultimoProp} ms, 1ª fauna pedida em ${Number.isFinite(cand.primeiraFauna) ? cand.primeiraFauna : '—'} ms  ${ok.ORC3 ? 'ok' : 'FALHA'}`);
   const erros = [...cand.erros, ...ref.erros];
