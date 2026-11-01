@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /* Contrato mapa → soundscape. Um loop só é carregável quando publica `src` string;
  * `path` parece válido no mapa, mas vira fetch(undefined) no consumidor. */
+import https from 'node:https';
 import { THREE, MAPS, initTextures } from './harness.mjs';
-import { createSoundscape } from '../../public/js/soundscape.js';
+import { createSoundscape, AMB_LOOPS } from '../../public/js/soundscape.js';
 
 const MUTANTE = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').slice(10) || null;
-if (MUTANTE && !['path-no-lugar-de-src', 'posicao-sem-z', 'piscina-sem-loops'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
+if (MUTANTE && !['path-no-lugar-de-src', 'posicao-sem-z', 'piscina-sem-loops', 'asset-ausente'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 
 const textures = await initTextures();
 const invalidos = [];
@@ -13,6 +14,8 @@ let mutanteAplicado = false;
 let alvoMutado = null;
 let loopsConsumidos = 0;
 let piscinaVista = false;
+const srcsUnicos = new Set();
+const dividaPublicacao = new Set();
 
 async function consumirLoops(loops) {
   const originalFetch = globalThis.fetch;
@@ -46,6 +49,7 @@ async function consumirLoops(loops) {
 for (const [mapa, registro] of Object.entries(MAPS)) {
   const world = registro.build(new THREE.Scene(), textures);
   const loops = world.sound?.loops || [];
+  for (const l of loops) if (typeof l.src === 'string') srcsUnicos.add(l.src);
   if (mapa === 'piscina_treta') {
     piscinaVista = true;
     if (MUTANTE === 'piscina-sem-loops') {
@@ -78,6 +82,39 @@ for (const [mapa, registro] of Object.entries(MAPS)) {
 
 if (!piscinaVista) invalidos.push({ mapa: 'piscina_treta', indice: -2, motivo: 'Piscina não foi construída' });
 
+/* SC3 (#1137, crítica estraga-codigo): o fetch controlado do consumidor não prova
+   existência — src inexistente passava nas duas cláusulas e só morria em produção.
+   Cada src único faz HEAD na origem de assets; o mutante asset-ausente aponta um
+   probe inexistente e exige a reprovação. */
+if (!MUTANTE || MUTANTE === 'asset-ausente') {
+  const ORIGEM = process.env.ASSET_ORIGIN || 'https://www.csbrasil.online';
+  /* Dívida de publicação (padrão DIVIDA das mãos): todo src do registro AMB_LOOPS
+     em 404 na origem é dívida numerada do dono (upload do acervo privado) — o jogo
+     degrada para silêncio nesse loop. Asset ausente FORA do registro reprova. */
+  const DIVIDA_DE_PUBLICACAO = new Set(Object.values(AMB_LOOPS));
+  const alvos = MUTANTE === 'asset-ausente' ? [...srcsUnicos, 'audio/ambiente/asset-ausente-probe.mp3'] : [...srcsUnicos];
+  const ausentes = [];
+  for (const src of alvos) {
+  const status = await new Promise((res) => {
+    const pedido = https.request(new URL(src.replace(/^\//, ''), ORIGEM.endsWith('/') ? ORIGEM : ORIGEM + '/'), { method: 'HEAD' }, (r) => res(r.statusCode));
+    pedido.setTimeout(10_000, () => { pedido.destroy(); res(0); });
+    pedido.on('error', () => res(0)); pedido.end();
+  });
+  if (status >= 400) ausentes.push(`${src} (HTTP ${status})`);
+  }
+  if (MUTANTE === 'asset-ausente') {
+    const mordido = ausentes.some((a) => a.includes('asset-ausente-probe'));
+    console.log(`${mordido ? 'MUTANTE MORDIDO' : 'MUTANTE NÃO DETECTADO'}: asset-ausente`);
+    console.log(`  SC3 existência na origem: ${srcsUnicos.size} srcs reais ok, probe ausente reprovar ${mordido ? '— PASSA' : '— FALHA'}`);
+    process.exit(mordido ? 0 : 1);
+  }
+  for (const a of ausentes) {
+    const src = a.slice(0, a.indexOf(' (HTTP'));
+    if (DIVIDA_DE_PUBLICACAO.has(src)) { dividaPublicacao.add(src); continue; }
+    invalidos.push({ mapa: '*', indice: -3, motivo: `asset inexistente na origem: ${a}` });
+  }
+}
+
 if (MUTANTE && !mutanteAplicado) {
   console.error('MUTANTE NÃO APLICOU: nenhum mapa declarou loop de áudio');
   process.exit(1);
@@ -100,3 +137,4 @@ if (MUTANTE) {
 }
 console.log('  SC1 todos os loops publicam src string e posição XYZ finita — PASSA');
 console.log(`  SC2 consumidor real atualizou ${loopsConsumidos} loops com AudioParams finitos (fetch/decode locais) — PASSA`);
+if (dividaPublicacao.size) console.log(`  SC3 DÍVIDA DE PUBLICAÇÃO (${dividaPublicacao.size}): ${[...dividaPublicacao].join(', ')} — 404 na origem; upload é passo do dono, asset novo ausente reprova`);

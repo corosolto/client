@@ -35,47 +35,6 @@
     "nota": "intermitente: não é defeito do produto; conserto é na régua"
    }
   },
-  "cobertura": {
-   "awp": {
-    "valor": "1.43× AK",
-    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
-    "medido": "arma gigante: 143% da AK (faixa 0.8–1.25, classe longa); braço 1.47× a área do braço da AK (teto 1.4) — tamanho 1.43× AK, rolagem -17° da AK (informativa), eixo +1° da AK, braço 1.47×, cruz 0 px, olho 1.03 palma, ADS: viewmodel so",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "config (frame) — se o frame sozinho piora, pose/IK"
-   },
-   "m400": {
-    "valor": "0.91× AK",
-    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
-    "medido": "ângulo esquisito: eixo da arma na tela 133° contra 155° da AK (-22°, teto ±12°) — tamanho 0.91× AK, rolagem +44° da AK (informativa), eixo -22° da AK, braço 0.73×, cruz 0 px, olho 1.90 palma, ADS: viewmodel some (luneta). Conserto",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "config (frame) — se o frame sozinho piora, pose/IK"
-   },
-   "svd": {
-    "valor": "0.50× AK",
-    "dono": "vm-fix-mesh (escala/enquadramento do produto; z/escala em vmframe.js)",
-    "medido": "arma pequena: 50% da AK (faixa 0.8–1.25, classe longa); ângulo esquisito: eixo da arma na tela 98° contra 155° da AK (-57°, teto ±12°) — tamanho 0.50× AK, rolagem +44° da AK (informativa), eixo -57° da AK, braço 1.15×, cruz 0 px, ",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "config (frame) — se o frame sozinho piora, pose/IK"
-   },
-   "scar": {
-    "valor": "1.20× AK",
-    "dono": "vm/w3-config (fila C1: ADS da scar tombado +28°, sem aparelho de mira)",
-    "medido": "no ADS arma+braço cobrem 19.3% da tela (teto 18.5%) — era 17.9% com a mão de apoio no poço do pente; a pegada no guarda-mão (grip-support, P1/P15) põe o antebraço de apoio no quadro do ADS. Quadril: braço 1.01× AK, cruz 0 px.",
-    "aspectos": [
-     "3x2"
-    ],
-    "fila": "config (C1): o ADS da scar é reenquadrado pela vm/w3-config; re-medir depois dele"
-   }
-  },
   "maos": {
    "tavor": {
     "valor": "0.30",

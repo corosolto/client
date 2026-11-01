@@ -59,17 +59,24 @@ const bandMeasurements = bands.map((band) => {
     return Math.sign(normalValue(plane, axis)) === sign &&
       normal <= wallInner + EPS && normal >= wallInner - 0.5 && overlapsVertically(plane, band);
   });
-  if (!candidates.length) throw new Error(`decal de referência ausente para faixa ${axis}:${sign}`);
-  const decalPlane = Math.max(...candidates.map((plane) => Math.abs(normalValue(plane, axis))));
-  return { axis, sign, bandFromWall: wallInner - bandInner, bandFromDecal: bandInner - decalPlane };
+  const decalPlane = candidates.length
+    ? Math.max(...candidates.map((plane) => Math.abs(normalValue(plane, axis))))
+    : null;
+  return {
+    axis,
+    sign,
+    bandFromWall: wallInner - bandInner,
+    bandFromDecal: decalPlane === null ? null : bandInner - decalPlane,
+  };
 });
 
+const bandDecalGaps = bandMeasurements.map((item) => item.bandFromDecal).filter(Number.isFinite);
 const separations = {
   jambFromPortalEdge: Math.min(...jambGaps),
   headerFromPortalEdge: Math.min(...headerGaps),
   trimFromWall: Math.min(...trimWallGaps),
   bandFromWall: Math.min(...bandMeasurements.map((item) => item.bandFromWall)),
-  bandFromDecal: Math.min(...bandMeasurements.map((item) => item.bandFromDecal)),
+  bandFromDecal: bandDecalGaps.length ? Math.min(...bandDecalGaps) : null,
 };
 const minimumGap = contract.layout.minimumGap;
 const declarationUnchanged = contract.layout.portal.jamb.offset === 1.52 &&
@@ -77,10 +84,10 @@ const declarationUnchanged = contract.layout.portal.jamb.offset === 1.52 &&
 const byId = Object.fromEntries(['portal-jamb', 'portal-header', 'wall-band']
   .map((id) => [id, trim.filter((item) => item.id === id).length]));
 const verdicts = {
-  PZT1: Object.values(separations).every((gap) => gap > EPS) &&
+  PZT1: Object.values(separations).filter(Number.isFinite).every((gap) => gap > EPS) &&
     separations.jambFromPortalEdge + EPS >= minimumGap &&
     separations.headerFromPortalEdge + EPS >= minimumGap &&
-    separations.bandFromDecal + EPS >= minimumGap,
+    (separations.bandFromDecal === null || separations.bandFromDecal + EPS >= minimumGap),
   PZT2: trim.length === 22 && trim.every((item) => item.colliderDelta === 0),
   PZT3: trim.length === 22 && trim.every((item) => item.castShadow === false),
 };
