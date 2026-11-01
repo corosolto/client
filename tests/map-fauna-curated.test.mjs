@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { createHash } from 'node:crypto';
 import { THREE, MAPS, initTextures, carregaMapa } from '../tools/eval/harness.mjs';
-import { auditCuratedFauna } from '../tools/eval/map-fauna-curated.mjs';
+import { auditCuratedFauna, auditCuratedFaunaCensus } from '../tools/eval/map-fauna-curated.mjs';
 import { ESCADAO_AMBIENCE } from '../public/js/map_escadao.js';
 import { LAJES_AMBIENCE } from '../public/js/map_lajes_authored.js';
 import { createFavelaAmbience } from '../public/js/ambientlife.js';
@@ -67,6 +67,18 @@ test('control mutation restores the mobile next-map skip and fails the caller co
  await assert.rejects(async()=>assert.deepEqual(await mobileCalls(MAPS.lajes,{source,next:true}),[MAPS.lajes.ambience]));
 });
 function validSample(ref){return {map:ref.map,declaredPreload:[ref.assetId],animals:[{id:ref.type+'-0',type:ref.type,source:'gltf',assetId:ref.assetId,assetPath:ref.path,speed:ref.speed,actions:{idle:'Idle',walk:'Walk',run:'Run'},meshes:[{materials:[Object.fromEntries(Object.entries(ref.textures).map(([key,size])=>[key,{width:size[0],height:size[1],colorSpace:key==='albedo'?'srgb':''}]))]}],motion:{distance:1,localPoseChanges:1,activeClip:'Walk'}}]};}
+test('runtime census requires exactly one result per expected map before auditing',()=>{
+ const samples=references.map(validSample);
+ assert.equal(auditCuratedFaunaCensus({results:samples},references).pass,true);
+ assert.equal(auditCuratedFaunaCensus({results:[...samples].reverse()},references).pass,true);
+ for(const data of [null,{}, {results:null},{results:[]},{results:samples.slice(0,1)},{results:[samples[0],samples[0]]},{results:[...samples,samples[0]]},{results:[samples[0],{...samples[1],map:'unknown'}]},{results:[samples[0],null]}]){
+  const audit=auditCuratedFaunaCensus(data,references);assert.equal(audit.pass,false);assert.deepEqual(audit.reports,[]);assert.ok(audit.failures.every(f=>f.family==='census'));
+ }
+ const duplicate=auditCuratedFaunaCensus({results:[samples[0],samples[0]]},references);
+ assert.ok(duplicate.failures.some(f=>f.detail.includes('duplicado')));assert.ok(duplicate.failures.some(f=>f.detail.includes('ausente')));
+ const broken=structuredClone(samples);broken[1].animals[0].source='fallback';
+ assert.equal(auditCuratedFaunaCensus({results:broken},references).pass,false);
+});
 for(const ref of references)test(`${ref.map}: runtime auditor accepts complete evidence and rejects causal corruptions`,()=>{
  const sample=validSample(ref);assert.equal(auditCuratedFauna(sample,references).pass,true);
  const mutations=[['count',s=>s.animals=[]],['count',s=>s.animals.push(structuredClone(s.animals[0]))],['source',s=>s.animals[0].source='fallback'],['identity',s=>s.animals[0].assetId='old'],['identity',s=>s.animals[0].assetPath='models/ambient/old.glb'],['declaredPreload',s=>s.declaredPreload=[]],['materials',s=>s.animals[0].meshes=[]],['texture',s=>s.animals[0].meshes[0].materials[0].albedo=null],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.width=0],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.colorSpace=''],['clips',s=>s.animals[0].actions.walk='Idle'],['motion',s=>s.animals[0].motion.localPoseChanges=0],['motion',s=>s.animals[0].motion.activeClip='Idle'],['motion',s=>s.animals[0].motion.distance=0]];

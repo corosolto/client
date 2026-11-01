@@ -1,5 +1,20 @@
 // Escadão e Lajes usavam galinha sem albedo e gato atlas256 apesar do acervo Mint.
 // Referências identificam arquivos; aprovação visual e movimento exigem runtime real.
+export function auditCuratedFaunaCensus(data, references) {
+  const failures=[],expected=new Set(references.map(r=>r.map)),seen=new Set();
+  if(!Array.isArray(data?.results))return {pass:false,reports:[],failures:[{family:'census',detail:'Captura runtime ausente ou results inválido.'}]};
+  for(const sample of data.results){
+    const map=sample?.map;
+    if(!expected.has(map))failures.push({family:'census',detail:`Mapa inesperado: ${String(map)}.`});
+    if(seen.has(map))failures.push({family:'census',detail:`Mapa duplicado: ${String(map)}.`});
+    seen.add(map);
+  }
+  for(const map of expected)if(!seen.has(map))failures.push({family:'census',detail:`Mapa ausente: ${map}.`});
+  // Um censo incompleto não deve produzir aprovações parciais enganosas.
+  const reports=failures.length?[]:data.results.map(sample=>auditCuratedFauna(sample,references));
+  return {pass:!failures.length&&reports.every(r=>r.pass),reports,failures};
+}
+
 export function auditCuratedFauna(sample, references) {
   const failures=[];
   const fail=(family,detail)=>failures.push({family,detail});
