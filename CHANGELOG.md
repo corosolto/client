@@ -157,6 +157,425 @@
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
 
+## [2.1.0-alpha.135] — 2026-11-01
+
+### Mudado
+- fix: fauna curada 5 mapas/10 animais + censo honrado em mobile (follow-up #1192) (#1193)
+- Colete e capacete estilo CS (mecânica, sem loja) (#1159)
+- Adiciona a granada flash com cegueira estilo CS (#1163)
+- Tiro sai da boca da arma na tela (3P, bots, remotos, 1P) (#1164)
+- Ajusta a hitbox de cabeça à malha de cada personagem (#1166)
+- fix: preserva Arena nos três eventos de telemetria (#1195)
+- Quebrada: orientar fachadas e espaçar a vegetação (#1196)
+- fix: alinha origem dos efeitos ao cano físico da AK (#1194)
+- release: publicar fauna, Quebrada, AK e telemetria (#1199)
+- test(vm): rejeita amostra trocada após respawn
+- fix: valida grafites da Quebrada com a fauna integrada
+- fix: regenera grafites da Quebrada nas fachadas atuais
+- fix: mede placares da AK após calibrar a boca física
+- fix: cure manchas de mato nas vielas da Quebrada
+- test: recuse argumentos inválidos na telemetria
+- docs: registre validação da boca física da AK
+- fix: preserve modo Arena na telemetria
+- fix: ancora o flash da AK na face física do cano
+- test: rejeita prova vazia na régua da Quebrada
+- fix: orienta três casas para a viela da Quebrada
+- fix: keep curated fauna census under low quality on real devices
+- Align Escadao curated fauna with the rendered terrace
+- Expand curated fauna census to all cats and hens in five maps
+- Bind curated fauna to supported routes in three more maps
+- Fix authored fauna height during movement and recovery
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+
+## [2.1.0-alpha.134] — 2026-11-01
+
+### Mudado
+- fix(hud): separa infraestrutura de detecção de mutantes (#1186)
+- fix(issues-bot): triagem idempotente e bootstrap que pula de verdade (#1134)
+- [REA] Quitar a dívida de cobertura dos viewmodels (#1141)
+- fix(ci): exigir prova semântica dos mutantes (#1182)
+- Corrige veredito do runner para erro com status zero (#1189)
+- fix: usar fauna curada no Escadão e em Lajes (#1192)
+- Integra a composição visual b808 revisada, incluindo #1179, #1190, #1191 e #1192. Operação Flávio #1158 excluída. CI aplicável passou, revisão atual adjudicada,17 fios resolvidos e crítica independente Native CLEAN_SCOPED. Limites de arte, mobile/MP, suíte ampliada e release permanecem na descrição e no ledger. (#1188)
+- docs: registra integração revisada da fauna e próxima publicação
+- Registre a composição visual e as provas de boot
+- Registre a validação real do coletor de boot
+- Aguarde os recibos exatos do relatório de boot
+- Ajuste a escala dos tijolos nas duas fachadas da Quebrada
+- Registre as correções visuais e os gates pendentes
+- Evite repetir cartazes na Brasília pequena
+- Meça a entrega de KeyW no evento do chat
+- Ajuste o punho livre no preview do Esquerdomacho
+- Clarify runtime fauna gate browser-error coverage
+- Reject fauna turn rates that consume the full escape alert
+- Atualize links gerados após filtro de pickups
+- fix: keep Lajes cat escapes clear of roof obstacles
+- fix: require explicit server origin for fauna CI capture
+- Registre a validação do filtro e a fila visual atual
+- docs: clarify fauna menu behavior on automatic mobile
+- Esclareça o comando de contraprova de pickups
+- fix: walk curated fauna back along its recovery heading
+- Restaure o filtro de pickups por modo
+- test: pin curated fauna pivot action and rate contract
+- Atualize a prova de grafite para R21
+- fix: align curated fauna before translating into a turn
+- fix: smooth curated animal turns across route reversals
+- test: cover fauna registry and bound local capture timeout
+- test: audit instantiated fauna in the browser CI gate
+- fix: reject incomplete and duplicate fauna map census
+- Registra composição visual e prova de compatibilidade
+- fix: mostra o aviso de prévia indisponível no hub
+- fix(eval): align isolated fixtures with fauna lifecycle
+- fix: preserva preview sem Object.hasOwn
+- docs: qualifica evidência histórica de boca do cano
+- fix: avisa quando a flash pública fica indisponível
+- fix(menu): dispose retired backdrop ambience on rebuild
+- test: fechar controles da fauna e do menu
+- docs: registra composição visual e provas R63
+- fix: settle lobby poster before releasing model handoff
+- Liga armadura e consumidor real de ADS à CI pública
+- Registra composição revisada e verificação real de previews
+- fix: synchronize lobby dances with motion preference
+- Exige aridade real dos atributos nas fachadas Campo
+- fix: retain legacy preview visibility and avoid idle redraws
+- fix: mantém identificação do equipamento no cartão do lobby
+- Registra composição de skins e estado atual do inventário
+- fix: preserva a identidade da skin quando o preview 3D falha
+- Traduz as legendas dinâmicas do preview de skins
+- Registra correção do verificador e validação de toque
+- Meça o UV das fachadas mescladas do Campo
+- fix: acorda o boot após reposição do inventário na compra
+- Registra o gate de grafite e a pistola ativa no preview
+- Aceita linha vazia na stack do cancelamento
+- Mede módulos locais sem depender do status remoto
+- Serve dependências locais no orçamento de boot
+- Registra a consolidação visual e a verificação do preview
+- Atualiza a integração linear do acabamento visual
+- Registra a composição da stack de acabamento visual
+- Consolida o acabamento das fachadas do Campo
+- fix(qa): provar falhas de grafite sem aceitar erros de infraestrutura
+- Evita retarget do PR para o próprio commit
+- Ancora fauna no piso e corrige os contratos de captura
+- Usa fauna texturada do acervo em Escadão e Lajes
+- Corrige a chamada do auditor visual e o timeout de visão
+- Alinha o changelog e o contrato da grade ao jogo atual
+- Alinha fixture da loja ao cancelamento compatível
+- Corrige a prova do perfil próprio no orçamento de boot
+- Mantém manifesto de skins compatível com navegadores mobile
+- Evita esperar manifesto para equipamento inutilizável
+- Atualiza as pendências já encerradas das facas
+- Recupera o contrato estrutural do Ferro Velho
+- Invalida callbacks de ciclos anteriores do retrato compacto
+- Cancela o retrato anterior quando a skin não tem pôster
+- Evita sobreposição do personagem nos controles mobile
+- fix(ui): release hidden preview images on navigation
+- fix(mobile): restore compact equipment preview and pose control
+- Carrega só os props usados pela Praça
+- Invalida cartões ao navegar e exige posse na apresentação equipada
+- Reconcilia mídia visível e congela prévia com movimento reduzido
+- Contém renderizadores no mobile compacto e restaura o preview 3D
+- fix(boot): carregar apenas a fauna usada na Praça
+- Mostra o equipamento em cartões estáticos no mobile deitado
+- Preserva a skin no preview mobile e invalida mídia antiga
+- Fornece AbortSignal à fixture da loja
+- Aguarda manifesto da skin equipada no boot
+- test: alinha contrato da grade ao layout validado
+- docs: registra falha do contrato UI e staging pendente
+- fix(ci): classify only confirmed absent guest profiles
+- docs: record independent visual and gate findings
+- docs: checkpoint visual capture and cancellation evidence
+- fix(ui): keep character confirmation accessible in short viewports
+- docs: checkpoint visual rejections and causal proofs
+- test(vm): fechar catálogo completo em 16:9 com entradas atuais
+- fix(ci): medir salto aprovado e auditar grafite nominal no check web
+- test(vm): renovar placar completo em 3:2 sem ampliar aceites
+- docs: registrar bloqueios medidos da integração visual
+- docs: registrar integração revisada e baseline atual do Campo
+- fix(mapas): restaurar layout da Piscina após exceção
+- docs: registrar reparo isolado da ponte local Three
+- docs: checkpoint antes do push consolidado
+- fix(qa): medir e exercer armas visiveis no toque
+- Registre a integração do HUD e a validação local
+- Registre as contraprovas do colete e do pulso
+- Registra instalação própria do HUD com Node 22
+- Registre a instalação local e o reinício dos portões
+- Reutilize a leitura da flag de headshot
+- Registra revisão independente e preparo do PR de HUD
+- Valide a whitelist e decodifique o caminho do CLI
+- Alinhe a deriva do preview ao lobby
+- Registra a base integrada para revisão do seguimento HUD
+- Exige o efeito real do PING no contrato de toque
+- Restaura o PING móvel junto do controle de câmera
+- Congela a pose inteira na câmera de inspeção
+- Aponta o mutante móvel para o touch-fire real
+- Captura a pegada após ligar o porte do preview
+- Registra blocker de integração do mutante mobile do HUD
+- Registra aceite focal das guardas e contraprovas 3P
+- Prototipe acabamento das guardas do Córrego
+- Corrige fixtures de boot após integração mobile
+- Registra smoke da alpha 133 e revisões da fila
+- Registra bloqueios medidos antes de republicar o lote visual
+- Corrige comparação causal do recuo agachado
+- Corrige veredito de filhos e exige sonda no CI
+- Registra contraprova 3P sobrevivente antes da publicação
+- Registra bootstrap revisado e build da integração visual
+- Fecha os escapes de parsing e execução no portão de decalques
+- Registra rejeições e provas da seleção consolidada
+- Prepara contrato da pose de cabeça autorada
+- Preserva poses autoradas e remove deformações da seleção
+- Usa modelos em cache nos pickups iniciais
+- Instala e confere decalques públicos antes do portão
+- Assenta pickups do mapa antes do preload
+- Registra paridade de memória e contexto na QA
+- Isole mutantes de economia para evitar OOM no CI
+- Preserva stdout JSON do contexto autorado
+- test: exige autoteste causal completo do yaw
+- Limpa yaw antes da morte e prova transições
+- test: liga regressões de yaw ao contrato TP
+- Mantém réguas independentes após falha no CI
+- Evita acúmulo no recentro da cabeça
+- fix: emite efeitos FP na pose final da arma
+- docs: registrar investigação parcial do tiro AK
+- Registra a validação do boot coerente antes da integração
+- Mede o boot com grafo local coerente e instante real de entrada
+- Registra estado recuperável da missão visual e bloqueios reais
+- Preserva continuidade integral da missão visual
+- Carrega somente a arma escolhida no preview
+- Registra merge das normais e prova atual de curadoria
+- ci: preservar identidade editorial no contrato público
+- ci: ligar contratos visuais atuais ao portão público
+- fix(mapas): contar identidade editorial dos grafites
+- Mede a curadoria atual de grafite no portão de CI
+- Registra o checkpoint QA antes da integração de Campo e faca
+- Orienta o texto da faca no comprimento da lâmina
+- fix(skins): prende marcas à lâmina real em primeira e terceira pessoa
+- fix(mapas): mantém escala métrica no acabamento do Campo
+- Registra bloqueios reais do push visual e a próxima integração
+- Captura a pegada do preview após assentar a pose funcional
+- fix(hud): separa infraestrutura de deteccao de mutantes
+- Valida a curadoria atual nos mapas pelo navegador real
+- Endurece os gates visuais herdados e atualiza fixtures TP
+- Sustenta o outdoor do Posto e atualiza o bake oficial dos mapas
+- Integra os degraus do perímetro e contratos físicos das favelas
+- Preserva skins equipadas e enquadra o corpo ao morrer
+- Aplica acabamento PBR consistente no Córrego
+- Faz a grade de personagens caber em tela horizontal
+- Mantém IK e proxy de cabeça nas unidades e pose finais
+- Vincula equivalência de normais às referências de personagem
+- fix(issues-bot): serializa bootstrap e preserva branch remota
+- Registra provas visuais e bloqueios de integração da tarde
+- Registra revisão das normais e fechamento das frentes visuais
+- Atualiza imports do arnês da loja e gatilhos do censo
+- Preserva pickups fora da economia e respeita flash desligada
+- docs: sincroniza comandos gerados dos gates visuais
+- docs: sincroniza comandos gerados dos gates visuais
+- docs: registra revisão causal e próximas correções visuais
+- docs: registra entrega isolada e pendências visuais
+- test(grafite): mede contagem crua e falha de carga no Ego
+- fix(vm): alinha os sockets da AK ao ADS real
+- test: exige falha causal nas réguas de gameplay
+- Corrige a curadoria de grafites e o acabamento do Ferro e Campo
+- docs: registra bake e evidências visuais parciais
+- test: mantém a falha de mutação cega reconhecível
+- Liga movimento do viewmodel à física e limpa estados no respawn
+- Atualiza frescor das quatro cabeças remediadas
+- Corrige textos e toque na seleção de personagens
+- Corrige apoio e repetição dos cartazes manuais
+- Suaviza costuras de iluminação em quatro personagens
+- test: exigir falha semântica nos mutantes declarados
+- fix(viewmodel): preservar normais finas das mangas quantizadas
+- docs: registrar fechamento das mangas e leases visuais
+- docs: registrar causa da manga e prop em contexto
+- docs: preservar diagnostico real e retornos das leases
+- docs: registrar ficha privada e leases da rodada
+- docs: registrar review restaurado e comparacoes reais
+- docs: registrar validacoes reais e revisoes por componente
+- docs: manter pendencias de faces e validacao de acabamento
+- docs: registrar provas de curadoria e drift de pose
+- test(economia): validar recompra paga apos o renascimento
+- docs: registrar revisao do SB7 e limite do aceite de normais
+- docs: registrar provas reais e entregas parciais rejeitadas
+- Reabre régua de curadoria após mutantes no desenho real
+- Registra curadoria completa e limites de motion e ADS
+- Registra curadoria medida e crítica visual independente
+- Registra leases GLM e dependências da fila de PRs
+- Registra protocolo real de revisão e bake reproduzível no Ego
+- Registra régua vermelha e reaproveitamento do PR 1173
+- O bake de grafite cancela quando falta entrada na cena
+- Registra integração local do PR 1179 e baseline
+- Define avaliação por mapa, UI e personagem
+- Registra missão de consistência visual e release
+- style: comentários inline do clampAlcanceIK no teto da régua
+- docs: históricos da rodada 31/10 no ANIM-3P; comentários inline no teto de 2 linhas
+- fix(ci): execute every announced mutant
+- fix(personagens): cabeca alinhada, recarga sem braco atras e capa do Juiz
+- fix(personagens): banda do curl afinada no meio (0,55-0,95)
+- fix(personagens): teto de frente só no Canarinho; lobisomem volta ao porte alto
+- fix(personagens): dedos fecham de verdade na arma (curl 0,35-0,80 - 0,55-1,10)
+- fix(personagens): teto de frente por corpo puxa arma colada à mão
+- fix(personagens): pistola do Canarinho deixa de flutuar 50cm à frente
+- chore(gauntlet): enquadramento com folga (3.0 m, alvo 0.92)
+- docs(economia): 30 - 50 s de compra com reabertura por renascimento
+- feat(jogo): pulo padrão 5.0 - 5.6
+- fix(lobby+seleção): fim do flicker e grade do elenco
+- chore(gauntlet): arnês de gauntlet visual por personagem x arma
+- feat(compra): modal compacto, ícones, moeda TRETA$ e 50s no respawn
+- fix(morte): cadáver para de se debater pra trás
+- fix: recalibrar cobertura limpa da Piscina
+- feat: concluir compra e munição da partida
+- fix: corrigir personagem e Piscina
+- chore(docs): regenera bloco derivado (autofix)
+- Encurta o comentário da armadura por chumbo
+- Atualiza o HUD da flash na morte
+- Aplica o colete por parte na rajada do bot
+- Regenera matriz e ARCH depois da loja
+- Documenta o equipamento da loja
+- Faz o bot gastar a sobra em colete
+- Vende colete, capacete e flash na loja da partida
+- Regenera arquivos gerados do lote
+- test(lobby): régua cobre mascotes e usa porta livre
+- test(lobby): chave ?pvpivo=0 para o mutante do pivô
+- fix(lobby): gira o pulso só no porte parado
+- fix(lobby): mede a pegada depois da folga do corpo
+- Atualiza a prancha para o foco alinhado das pistolas
+- Liga os mutantes que o cabeçalho da central de mensagens prometia
+- Dá 3 min à captura da régua mira-alinhada
+- Re-mede o placar de viewmodel das pistolas
+- Regenera a matriz de armas
+- Registra a procedência da flash do Mint
+- Carrega a flash do Mint de public/models
+- Aponta o otimizador da armadura para models/armadura
+- Carrega colete e capacete de models/armadura
+- Versiona o modelo da flash do Mint em public/models
+- Versiona colete e capacete do Mint em models/armadura
+- Aplica a revisão na régua mira-alinhada
+- Regenera a matriz de armas com as linhas do game.js
+- Atualiza o doc dos bots com as regras novas
+- Cobre gancho de malha e recompra dos bots na régua
+- Bot não paga para trocar primária do chão
+- Deixa pistolas no foco alinhado abaixo da cruz
+- Cobra a altura da arma só no ADS em linha de mira
+- Dá _participanteHumano ao jogo falso do eyewear
+- Aperta o teto de vazamento de perfil para 0,40
+- Cobra humano, pescoço e mira do bot na régua
+- Regenera a matriz de armas com as linhas do game.js
+- Regenera o ARCH.md com as linhas novas do game.js
+- Roda a régua da economia no jogo no CI
+- Atualiza o doc da compra com as regras novas
+- Cobre teclado, pickup e varredura na régua do jogo
+- Conta só L1-L3 como mordida do mutante foco
+- Mede pistola e Desert Eagle por padrão no ads1p-linha
+- Mira o bot na base da cabeça justa do alvo
+- Gira a cabeça de humano pelo corpo também no nó
+- Ignora tecla repetida no menu de compra
+- Troca arma do chão pelo mesmo slot com loja
+- Esconde o slot de primária vazio no toque
+- Põe o menu de compra acima da mira do toque
+- Mede curva da tela e reset da cegueira na régua
+- Regenera matriz de armas
+- Cobra respawn e HUD de morto na régua do colete
+- Esconde o colete do HUD quando o jogador morre
+- Re-equipa a armadura na troca de time
+- Não mede o corpo quando ninguém veste colete
+- Esconde colete com a câmera 3P dentro do corpo
+- Regenera a matriz de armas
+- Roda a régua da economia no CI
+- Corrige o contrato do MP no doc da economia
+- Cobra eco online e ramo GLB na eval:boca-cano
+- Prende números do doc na régua de economia
+- Recusa compra sem 'vivo' explícito
+- Aceita o rótulo curto na recompensa por kill
+- Remoto com eventos acende um clarão só
+- Dá ícone ao slot da flash no HUD
+- Esconde o slot da flash quando ela está desligada
+- Limpa o overlay da flash ao sair da partida
+- Eco do tiro local só some se houve clarão local
+- Pendura a régua de pichação no portão
+- Roda a régua de pichação com caminho codificado
+- Arma escondida no emote não vira origem do tiro
+- Anexa a prancha antes e depois das cabeças
+- Cobra a cabeça justa com régua e mutante
+- Usa a cabeça justa de cada personagem no tiro
+- test(lobby): régua sobe o próprio servidor
+- style(lobby): encurta comentários do pulso no preview
+- Aceita cabeça elipsoidal na entrada do tiro
+- Mede a cabeça da malha de cada personagem
+- docs(lobby): prancha antes/depois da arma na mão
+- fix(lobby): gira o pulso em torno da palma
+- test(lobby): régua da arma na mão do preview
+- fix(lobby): gira o pulso, não a arma, no preview
+- Regenera a matriz de armas
+- Anexa prancha antes e depois da sangria da tinta
+- Regenera a matriz de armas
+- Anexa prancha e medidas da boca do cano
+- Adiciona prancha antes/depois da boca do cano
+- Anexa a prancha antes/depois do ADS das pistolas
+- Enxuga comentários da flash ao teto de duas linhas
+- Tira FLASH_ON do método recortado do HUD
+- Mantém a AK golden no ADS de foco aprovado
+- Mede no jogo o cano da arma contra o raio da mira
+- Anexa prancha antes e depois do colete
+- Troca o colete provisório pelo modelo do Mint
+- Cria otimizador do colete e capacete do Mint
+- Documenta a compra dos bots
+- Cobre a compra dos bots na régua do jogo
+- Faz os bots comprarem com o TRETA$ da partida
+- Adiciona a regra de compra dos bots
+- Anexa a prancha antes e depois da compra
+- Deixa o fundo do menu de compra opaco
+- Centraliza o menu de compra no toque
+- Adiciona prints da flash no jogo
+- Regenera o ARCH.md do game.js
+- Cobra o traçante 1P autorado na eval:boca-cano
+- Traçante 1P autorado no pixel do cano
+- Troca a flash provisória pelo modelo do Mint
+- Reassina o layout de grafite sem reassar
+- Tira o fator do offset de profundidade da tinta
+- Mede pichação descolada ou vazando da parede
+- test: isolar throttle entre beiradas
+- fix: fechar o mantle no multiplayer
+- Documenta a compra dentro do jogo
+- Adiciona régua da economia dentro do jogo
+- Liga a compra de armas na partida
+- Estiliza o menu de compra da partida
+- Adiciona as frases do menu de compra
+- Encurta o comentário de adsEfetivo para 2 linhas
+- Dá script eval:ads1p-linha com o mutante foco
+- Alinha ADS 1P da Desert Eagle à linha de mira
+- Faz eval:vm-mira ler o estilo efetivo do ADS
+- Cria régua Node do ADS 1P na linha de mira
+- Alinha ADS 1P da AK e pistola à linha de mira
+- Atualiza índice do ARCH.md
+- Adiciona régua eval:boca-cano
+- Tiro remoto sai da boca da arma do corpo
+- Traçante 1P legado no mesmo pixel do cano
+- Clarão e traçante do bot saem da boca da arma
+- Tiro em 3ª pessoa sai da boca da arma do corpo
+- Documenta a economia de partida
+- Adiciona régua da economia de partida
+- Cria regras do TRETA$ da partida
+- Cria catálogo de compra da partida
+- Adiciona régua da flash com mutantes
+- Desliga a flash online sem suporte do servidor
+- Adiciona a granada flash com cegueira estilo CS
+- Adiciona estalo e surdez da flash ao áudio
+- Cria régua de dano com armadura e mutantes
+- Regenera ARCH e matriz de armas
+- Veste colete e capacete provisórios no corpo 3P
+- Mostra colete e capacete no HUD da vida
+- Aplica colete e capacete no dano da partida local
+- Cria regra pura de dano com colete e capacete
+- Adiciona tabela de penetração de colete por arma
+- feat: soltar movimento e escalar beiradas
+- test: atualizar trajetória dourada do movimento
+- Adiciona modelo de cegueira da flashbang
+- chore(viewmodel): remover dívida de cobertura quitada
+- fix(issues-bot): triagem idempotente e bootstrap que pula de verdade
+
 ## [2.1.0-alpha.133] — 2026-10-31
 
 ### Mudado

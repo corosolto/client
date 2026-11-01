@@ -274,6 +274,7 @@ if (!urlMap) { settings.map = currentMap; saveSettings(); }
 
 /* ---------------- menu backdrop (orbiting map) ---------------- */
 
+
 let menuScene = new THREE.Scene();
 let menuBackdropWorld = null;
 
@@ -452,6 +453,7 @@ function rebuildMenuBackdrop(mapa) {
 }
 function menuProps(mapa) {
   return mapPropIds(mapa);
+
 }
 let _menuLoadSeq = 0;
 async function loadMenuBackdrop() {

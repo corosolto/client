@@ -61,6 +61,16 @@ jobs:
         run: npm run eval:wfcheckout
       - name: Syntax check do jogo (public/js)
         run: npm run syntax
+      - name: Dependências e reconstrução do fundo do menu
+        run: npm run eval:menuprops
+      - name: Mutantes do orçamento exigem a falha correta
+        run: node tools/eval/boot-mutant-verdict-check.mjs --mutantes
+      - name: Assets válidos e mutante entregue no orçamento
+        run: node tools/eval/boot-assets-check.mjs --mutantes
+      - name: Causa real da liberação da splash com mutantes
+        run: node tools/eval/boot-ready-check.mjs --mutantes
+      - name: Origem da versão nos payloads reais de perf e match
+        run: npm run eval:versaoorigem
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         run: npm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
@@ -108,6 +118,15 @@ jobs:
       - name: Todo mapa devolve o que o game.js consome
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:mapcontrato
+      - name: Câmera, atalhos e HUD com mutantes
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:cameraoclusao
+      - name: Spawns orientam jogador e bots pelo consumidor real
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:spawnface
+      - name: Backpedal preserva autoridade e lateral com mutantes
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:tpbackpedal
       - name: Loops de áudio de todos os mapas usam src carregável
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:soundscape-contract

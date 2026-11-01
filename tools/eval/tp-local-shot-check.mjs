@@ -64,7 +64,7 @@ function fixture({weapon = 'pistol', view = 'third', online = true, built, absen
     ammo: {[weapon]: {mag: 5, res: 20}}, nextShotAt: 0, reloadUntil: 0, drawUntil: 0};
   const game = {player, playerTP: absent ? undefined : built || {ctrl}, state: 'live', time: 10,
     camView: view, online, _mp: {_evOn: online, pedirReload() { calls.network++; }},
-    camera: new THREE.PerspectiveCamera(70, 1.5, .08, 400), espectando: () => false,
+    camera: new THREE.PerspectiveCamera(70, 1.5, .08, 400), ray: new THREE.Raycaster(), espectando: () => false,
     _reloading: ActualGame.prototype._reloading, _startReload() { calls.reload++; },
     _tryKnifeAttack() { calls.knife++; }, _botOuve: noop, _aimOrigin: v => v.set(0, 1.62, 0),
     _fireHitscan() { calls.hitscan++; }, _shotRecoil: noop, _muzzleWorld: () => new THREE.Vector3(),

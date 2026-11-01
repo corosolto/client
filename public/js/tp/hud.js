@@ -150,6 +150,7 @@ function montarHud(hud) {
   dica('E', 'pegar');
   dica('B', 'comprar');
   dica(',/.', 'munição');
+
   dica('N', 'câmera');
   dica('F', 'ping');
   dica('Z/X/V', 'rádio');
