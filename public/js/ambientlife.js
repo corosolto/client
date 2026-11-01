@@ -89,11 +89,16 @@ export async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {
         object.material.metalness = 0;
         object.material.roughness = Math.max(.72, object.material.roughness ?? .72);
       });
-      templates.set(id, { scene: gltf.scene, clips: gltf.animations, skinned });
+      templates.set(id, { scene: gltf.scene, clips: gltf.animations, skinned, assetPath: ASSETS[id] });
     } catch (error) {
       console.warn('[ambientlife] GLB não carregou', id, error);
     }
   }));
+}
+
+export async function preloadMapAmbientLife(map, { mobileAuto = false } = {}) {
+  if (mobileAuto && !map?.mobileAmbience) return;
+  await preloadAmbientLife(map?.ambience || []);
 }
 
 function fallbackRat(index) {
@@ -240,6 +245,7 @@ function cloneAsset(id) {  const template = templates.get(id);
   return {
     model: template.skinned ? skeletonClone(template.scene) : template.scene.clone(true),
     clips: template.clips,
+    assetPath: template.assetPath,
   };
 }
 
@@ -340,6 +346,7 @@ class FavelaAmbience {
     animalRoot.name = `${type}:${this.map}:${index}`;
     animalRoot.userData.fauna = FAUNA_NAME[type] || 'pomba';
     animalRoot.userData.assetId = assetId;
+    animalRoot.userData.assetPath = loaded?.assetPath || null;
     animalRoot.userData.nonCollider = true;
     animalRoot.userData.motion = 'deterministic-run-idle';
     animalRoot.userData.bodyLength = type === 'rat' ? .142 : undefined;

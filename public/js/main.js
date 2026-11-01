@@ -16,7 +16,7 @@ import { preloadEyewearAssets } from './eyewear.js';
 import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps, COMMON_MAP_PROPS } from './mapprops.js';
-import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
+import { preloadMapAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
 import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, DEFAULT_MAP, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS, comMapaCarregado, defineSeedHavan } from './maps.js';
 import { PALETA } from './paleta.js';
@@ -465,7 +465,7 @@ async function loadMenuBackdrop() {
        com o que o portão da splash espera. O lobby final é o mesmo, só fica alcançável antes. */
     return propsReady.then(() => {
       rebuildCurrent();
-      preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});
+      preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});
     });
   });
 }
@@ -1997,7 +1997,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
         sfx.preloadWeaponSamples(_armasDaPartida),
         preloadMapProps([...MAP_PROPS, ...(mapaPartida.props || [])]),   // + props do mapa (Havan: carros/estátua)
-        MOBILE_AUTO ? null : preloadAmbientLife(mapaPartida.ambience || []),
+        preloadMapAmbientLife(mapaPartida, { mobileAuto: MOBILE_AUTO }),
         mapaPartida.preload ? mapaPartida.preload() : null,
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
         preloadAuthoredFamilies(authoredBootFamilies(_vmBootWeapons, playerWeaponSkins)),
@@ -5085,7 +5085,7 @@ function mpPreCarregarProximo(m) {
     plano.chars.length ? preloadCharacterAssets(plano.chars, { weapons: armas }) : null,
     sfx.preloadWeaponSamples(armas),
     mapaReady.then((mapa) => preloadMapProps([...MAP_PROPS, ...(mapa.props || [])])),
-    MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadAmbientLife(mapa.ambience || [])),
+    mapaReady.then((mapa) => preloadMapAmbientLife(mapa, { mobileAuto: MOBILE_AUTO })),
     mapaReady.then((mapa) => mapa.preload ? mapa.preload() : null),
     preloadAuthoredFamilies(authoredBootFamilies(POINTER_COARSE ? [] : armas)),
   ]).catch((e) => console.warn('[mp] pré-carga do próximo mapa falhou (a virada carrega):', e && e.message));

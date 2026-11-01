@@ -95,6 +95,8 @@ jobs:
       # eval:lajes-spawn-space e eval:lajes-raycast saíram daqui porque as invariantes
       # rodam os MESMOS scripts (LSP1 e LRP1, críticas e fora do KNOWN-RED) e reprovam
       # o PR com condição mais forte que o código de saída: saída 0 E a linha ✓.
+      - name: Fauna curada no mapa e preload mobile
+        run: npm run eval:map-fauna-curated
       - name: Lajes — geometria, ambiência, integração e preview
         run: node tools/eval/runner.mjs eval:lajes-cache eval:lajes-visual eval:lajes-ruas eval:lajes-game eval:lajes-ambiencia eval:lajes-santos eval:lajes-airspace eval:lajes-soundscape eval:mappreview
       - name: Sertão (tema, rotas, criação e integração)

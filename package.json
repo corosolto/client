@@ -721,7 +721,9 @@
     "eval:character-normal-quality": "node tools/eval/character-normal-quality-check.mjs",
     "eval:character-normal-weld": "node tools/eval/character-normal-weld-check.mjs",
     "eval:normal-only-fit-equivalence": "node tools/eval/normal-only-fit-equivalence-check.mjs && node tools/eval/normal-only-fit-equivalence-check.mjs --mutate",
-    "eval:sondafilho": "node tools/eval/sonda-filho-check.mjs"
+    "eval:sondafilho": "node tools/eval/sonda-filho-check.mjs",
+    "//eval:map-fauna-curated": "Acervo Mint usado no mapa: binding, textura, rig e preload mobile; mutantes recusam fallback e fauna removida.",
+    "eval:map-fauna-curated": "node --test tests/map-fauna-curated.test.mjs"
   },
   "repository": {
     "type": "git",

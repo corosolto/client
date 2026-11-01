@@ -1,0 +1,47 @@
+[
+  {
+    "map": "escadao",
+    "type": "chicken",
+    "count": 1,
+    "assetId": "sertaoHen",
+    "path": "models/ambient/sertao_galinha.glb",
+    "sha256": "d07aa63bea9db19f4df54fe10495b08821f446706c3e253e8ceecc91f8e65b17",
+    "registryId": "sertao-galinha-animada",
+    "textures": {
+      "albedo": [
+        1024,
+        1024
+      ]
+    },
+    "provenance": "public/models/ambient/FONTE.md; mint-assets.json; tools/animate-sertao-livestock.py"
+  },
+  {
+    "map": "lajes",
+    "type": "cat",
+    "count": 1,
+    "assetId": "escadaoCat",
+    "path": "models/props/escadao_cat_r4.glb",
+    "sha256": "065988ff0eeb6adf7af962c8bff8a188867af4dfd1c636272360191b8275a9ac",
+    "registryId": "escadao_cat_r4",
+    "textures": {
+      "albedo": [
+        1024,
+        1024
+      ],
+      "normal": [
+        1024,
+        1024
+      ],
+      "roughness": [
+        1024,
+        1024
+      ]
+    },
+    "run": true,
+    "speed": {
+      "walk": 0.55,
+      "flee": 1.5
+    },
+    "provenance": "public/models/props/FONTE.md; mint-assets.json; tools/rig-escadao-cat-r4.py"
+  }
+]
