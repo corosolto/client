@@ -2,7 +2,46 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
-## Estado atual, 01/11 R55: checkpoints locais e ferramentas de auditoria
+## Checkpoint R58 antes do próximo push, 01/11
+
+O head publicado é `618fc78b3c8a25bfff1526d8de130957ebbb6f86`.
+Seu push normal R56 passou 107/107 checks, incluindo as oito passadas de boot
+sem INFRA. Janela, orçamento e exceções permanecem intactos. Os nove fios
+antigos do bot foram respondidos e resolvidos; a revisão do head atual foi
+solicitada e ainda não chegou. CI permanece em andamento.
+
+O preview READY desse SHA foi conferido por HTTP autenticado e no Ego.
+Menu/ranking/mapa/time/personagem/HUD passaram em nav=1, com esse limite
+registrado. Depois, sem debug/nav, Piscina ficou live por mais de 30 segundos,
+com sete bots e assets carregados. Captura 1320×880 inspecionada pelo Root.
+Pointer lock permaneceu falso após um clique: entrada de movimento não foi
+validada. Mão/pistola ainda mostram dívida visual; isso não é aceite de arte,
+inventário, MP ou dispositivo físico. O workflow staging anterior pulou sua
+verificação por falta de STAGING_URL; não foi contado como aprovação.
+
+Os três suplementos de fronteira do rebind R55 foram fechados em R56 sem
+achados acionáveis. A consolidação local avançou linearmente até
+`ac5156767fd68be2fae7e63e8918f6b7e72183da`, incorporando:
+
+- Roteamento R58: não tenta trocar a base por uma ref com o mesmo SHA.
+  BEFORE5/13 → AFTER13/13; mutante volta a11/13. Crítico independente inteiro
+  lido pelo Root, sem P1/P2/P3 acionáveis. Erros/ancestralidade diferentes
+  conservam as limitações declaradas; o job hospedado ainda precisa rodar.
+- G2: fontes do checkpoint aceito eb8b0cd, com prova de cancelamento e
+  isolamento de processos. O alias próprio ainda será executado nesta base.
+- Campo: fontes do checkpoint aceito e5ec755, com acabamento de três fachadas.
+  M2/M3=2 permanece focal; não aprova o mapa inteiro. Doze hashes e a única
+  alteração de package foram reconferidos após o rebase, sem conflitos.
+
+Próximo: portão G2 e push normal QA+staging no mesmo SHA, rebind integral do
+diff final, CI/revisão atual do bot e preview desse SHA antes de merge/release.
+1190/1191 estão em auditoria de reuso, sem adoção ou elegibilidade presumida.
+Produção confirmada em alpha133/49fd69f; nenhum release novo desta missão.
+O estado operacional posterior a este checkpoint fica em
+`audits/2026-10-31-visual-consistency/CURRENT-STATE-20261031.json` do workspace
+agregado. Objetivo integral e exclusões acima continuam ativos.
+
+## Checkpoint R55 (histórico): ferramentas de auditoria
 
 QA estava limpa em67f19eda8f4c761f034b3b8fa08fcefebf0602e3 antes da cópia
 focal das ferramentas CLI. Quatro commits locais após80830: Ferro21380a0,
