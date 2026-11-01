@@ -22,7 +22,7 @@ const bad=[{...good,status:0},{...good,status:2},{...good,status:78},{...good,si
 for(const [i,r] of bad.entries())assert.equal(aceitaResultado(r,expected),false,'rejeitar falsoverde '+i);
 console.log('PASS semantic-proof: controle válido e'+bad.length+' falsos positivos rejeitados');
 
-// mutantes-anunciados: casos esperados são independentes do child (9 nominais + 1 injetado).
+// mutantes-anunciados: denominador literal da fixture, independente do catálogo real e do child.
 for(const fix of [{mutant:'anuncia-fantasma',clause:'MA1',cases:10},{mutant:'executa-fantasma',clause:'MA2',cases:10}]){
  const row={clause:fix.clause,type:'ContractViolation',message:'Anunciado sem execução: '+fix.mutant};
  const base={status:1,stdout:'Mutação aplicada: '+fix.mutant+'\n'+JSON.stringify({mutant:fix.mutant,cases:fix.cases,failed:[row]}),stderr:''};
