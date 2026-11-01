@@ -1,10 +1,10 @@
 name: csbrasil-bot-pr-classify
 
 on:
-  # `pull_request_target` dispara no PUSH — e o CodeRabbit comenta DEPOIS do push. Com
-  # só esses gatilhos o rotulador rodava antes de existir comentário, não achava nada
-  # e nunca mais rodava: era estruturalmente cego para o que devia detectar. Medido na
-  # PR #240, que fechou com 4 fios do revisor abertos e NENHUMA etiqueta.
+  # `pull_request_target` dispara no PUSH, e o estraga-codigo revisa DEPOIS do push.
+  # Sem os gatilhos de review, o rotulador roda cedo demais, não vê o revisor e nunca
+  # volta para bloquear a pendência. Medido na PR #373, cujo autor real dos reviews é
+  # `estraga-codigo`.
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
   pull_request_review:
@@ -14,8 +14,8 @@ on:
   # Varredura: em PR vindo de FORK, os dois gatilhos de review acima rodam SEM os
   # secrets do repositório (regra do GitHub), e o job abaixo não pode nem se
   # identificar. O sweep roda no contexto base, com token, e reclassifica os PRs
-  # abertos pelo `workflow_dispatch` — é o que devolve a cobertura pós-CodeRabbit
-  # que os gatilhos de review davam nos PRs de casa.
+  # abertos pelo `workflow_dispatch` — é o que devolve a cobertura pós-estraga-codigo
+  # que os gatilhos de review dão nos PRs de casa.
   schedule:
     - cron: '7,37 * * * *'
   workflow_dispatch:
@@ -73,9 +73,9 @@ jobs:
         with:
           python-version: '3.13'
       - name: Ensure labels exist
-        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-coderabbit-resolution coderabbit-resolved
+        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-estragacodigo-resolution estragacodigo-resolved
       - name: Fetch PR metadata
-        run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
+        run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,headRefOid,author,assignees > /tmp/pr.json
       - name: Route PR and set assignee
         run: |
           python3 - <<'PY'
@@ -86,21 +86,38 @@ jobs:
           PY
           python3 scripts/ci/pr_route.py < /tmp/pr-route-input.json > /tmp/pr-route.json
           python3 - <<'PY'
-          import json, os, subprocess
+          import json, os, re, subprocess
+          from scripts.ci.pr_route import target_label
           route = json.load(open('/tmp/pr-route.json'))
+          pr = json.load(open('/tmp/pr.json'))
           pr_number = os.environ['PR_NUMBER']
           repo = os.environ['GITHUB_REPOSITORY']
           # REST puro: `gh pr edit` resolve nó de user/org via GraphQL e exige
           # scope read:org — PAT com repo/workflow morre aqui (vermelho da #350).
           if route.get('retarget_to'):
+              desired = route['retarget_to']
+              desired_ref = f'refs/heads/{desired}'
               exists = subprocess.run(
-                  ['git', 'ls-remote', '--exit-code', '--heads', 'origin', route['retarget_to']],
-                  stdout=subprocess.DEVNULL,
-                  stderr=subprocess.DEVNULL,
+                  ['git', 'ls-remote', '--exit-code', '--heads', 'origin', desired_ref],
+                  capture_output=True, text=True,
               )
               if exists.returncode == 0:
-                  subprocess.run(['gh', 'api', '-X', 'PATCH', f'repos/{repo}/pulls/{pr_number}', '--input', '-'],
-                                 input=json.dumps({'base': route['retarget_to']}), text=True, check=True)
+                  remote = exists.stdout.split()
+                  head_oid = pr.get('headRefOid')
+                  if (len(remote) != 2 or remote[1] != desired_ref
+                      or not re.fullmatch(r'[0-9a-f]{40}', remote[0])
+                      or not re.fullmatch(r'[0-9a-f]{40}', head_oid or '')):
+                      raise RuntimeError('routing requires exact desired ref and canonical head OIDs')
+                  if remote[0] == head_oid:
+                      route.update(retarget_to=None, effective_base=pr['baseRefName'],
+                                   target_label=target_label(pr['baseRefName']),
+                                   retarget_reason='desired-base-same-head',
+                                   retarget_evidence={'desired_ref': desired_ref, 'desired_oid': remote[0], 'head_oid': head_oid})
+                      open('/tmp/pr-route.json', 'w').write(json.dumps(route))
+                      print(f"Routing no-op: {desired_ref} already points at head {head_oid}; keeping {pr['baseRefName']}")
+                  else:
+                      subprocess.run(['gh', 'api', '-X', 'PATCH', f'repos/{repo}/pulls/{pr_number}', '--input', '-'],
+                                     input=json.dumps({'base': desired}), text=True, check=True)
               else:
                   route['retarget_to'] = None
                   open('/tmp/pr-route.json', 'w').write(json.dumps(route))
@@ -114,19 +131,78 @@ jobs:
         run: |
           python3 scripts/ci/pr_classify.py --selftest
           python3 scripts/ci/pr_classify.py < /tmp/pr.json > /tmp/pr-labels.json
-      - name: Gate on CodeRabbit presence
+      - name: Gate on estraga-codigo review
+        env:
+          NEW_ESTRAGACODIGO_REVIEW: ${{ github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.user.login == 'estraga-codigo' }}
         run: |
-          gh pr view "$PR_NUMBER" --json comments,statusCheckRollup > /tmp/pr-coderabbit.json
-          python3 scripts/ci/coderabbit_gate.py --selftest
-          python3 scripts/ci/coderabbit_gate.py < /tmp/pr-coderabbit.json > /tmp/pr-coderabbit-labels.json
+          python3 - <<'PY'
+          import json, os, subprocess
+          repo = os.environ['GITHUB_REPOSITORY']
+          number = os.environ['PR_NUMBER']
+          path = '/tmp/pr-estragacodigo.json'
+          def api(endpoint):
+              return json.loads(subprocess.check_output(['gh', 'api', endpoint], text=True))
+          def api_pages(endpoint):
+              pages = json.loads(subprocess.check_output([
+                  'gh', 'api', '--paginate', '--slurp', endpoint,
+              ], text=True))
+              return [item for page in pages for item in page]
+          pr = api(f'repos/{repo}/pulls/{number}')
+          requests = api(f'repos/{repo}/pulls/{number}/requested_reviewers')
+          payload = {
+              'headRefOid': (pr.get('head') or {}).get('sha'),
+              'reviewRequests': [
+                  {'login': user.get('login')}
+                  for user in requests.get('users') or []
+              ],
+              'reviews': [
+                  {
+                      'author': {'login': (review.get('user') or {}).get('login')},
+                      'state': review.get('state'),
+                      'commit': {'oid': review.get('commit_id')},
+                      'submittedAt': review.get('submitted_at'),
+                  }
+                  for review in api_pages(f'repos/{repo}/pulls/{number}/reviews?per_page=100')
+              ],
+              'labels': [
+                  {'name': label.get('name')}
+                  for label in pr.get('labels') or []
+              ],
+          }
+          checks = json.loads(subprocess.check_output([
+              'gh', 'api',
+              f"repos/{os.environ['GITHUB_REPOSITORY']}/commits/{payload['headRefOid']}/check-runs?per_page=100",
+          ], text=True)).get('check_runs') or []
+          payload['statusCheckRollup'] = [
+              {'__typename': 'CheckRun', 'name': check.get('name')}
+              for check in checks
+          ]
+          payload['new_estragacodigo_review'] = os.environ.get('NEW_ESTRAGACODIGO_REVIEW') == 'true'
+          labels = {label.get('name') for label in payload.get('labels') or []}
+          if 'estragacodigo-resolved' in labels:
+              pages = json.loads(subprocess.check_output([
+                  'gh', 'api', '--paginate', '--slurp',
+                  f"repos/{os.environ['GITHUB_REPOSITORY']}/issues/{os.environ['PR_NUMBER']}/events?per_page=100",
+              ], text=True))
+              applied = [
+                  event.get('created_at') or ''
+                  for page in pages for event in page
+                  if event.get('event') == 'labeled'
+                  and (event.get('label') or {}).get('name') == 'estragacodigo-resolved'
+              ]
+              payload['estragacodigo_resolved_at'] = max(applied, default='')
+          open(path, 'w').write(json.dumps(payload))
+          PY
+          python3 scripts/ci/estragacodigo_gate.py --selftest
+          python3 scripts/ci/estragacodigo_gate.py < /tmp/pr-estragacodigo.json > /tmp/pr-estragacodigo-labels.json
       - name: Apply labels
         run: |
           python3 - <<'PY'
           import json, os, subprocess
           data = json.load(open('/tmp/pr-labels.json'))
-          coderabbit = json.load(open('/tmp/pr-coderabbit-labels.json'))
-          add = sorted(set(data.get('labels_add', []) + coderabbit.get('labels_add', [])))
-          remove = sorted(set(data.get('labels_remove', []) + coderabbit.get('labels_remove', [])))
+          review_gate = json.load(open('/tmp/pr-estragacodigo-labels.json'))
+          add = sorted(set(data.get('labels_add', []) + review_gate.get('labels_add', [])))
+          remove = sorted(set(data.get('labels_remove', []) + review_gate.get('labels_remove', [])))
           repo = os.environ['GITHUB_REPOSITORY']
           n = os.environ['PR_NUMBER']
           if add:
@@ -136,6 +212,18 @@ jobs:
               import urllib.parse
               subprocess.run(['gh', 'api', '-X', 'DELETE', f'repos/{repo}/issues/{n}/labels/{urllib.parse.quote(lab)}'], check=False)
           PY
+      - name: Request estraga-codigo review
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          gate = json.load(open('/tmp/pr-estragacodigo-labels.json'))
+          if gate.get('request_review'):
+              subprocess.run([
+                  'gh', 'api', '-X', 'POST',
+                  f"repos/{os.environ['GITHUB_REPOSITORY']}/pulls/{os.environ['PR_NUMBER']}/requested_reviewers",
+                  '--input', '-',
+              ], input=json.dumps({'reviewers': ['estraga-codigo']}), text=True, check=True)
+          PY
       - name: Update bot classification comment
         run: |
           python3 - <<'PY'
@@ -143,14 +231,14 @@ jobs:
           pr = json.load(open('/tmp/pr.json'))
           labels = json.load(open('/tmp/pr-labels.json'))
           route = json.load(open('/tmp/pr-route.json'))
-          coderabbit = json.load(open('/tmp/pr-coderabbit-labels.json'))
+          review_gate = json.load(open('/tmp/pr-estragacodigo-labels.json'))
           payload = {
               # Sem `or []`: `files: null` (PR grande demais para a API) precisa chegar
               # NULO no pr_comment.py, que declara a lista incompleta em vez de fingir
               # que o PR não mudou nada.
               'files': pr.get('files'),
               'changedFiles': pr.get('changedFiles'),
-              'labels_add': sorted(set(labels.get('labels_add', []) + coderabbit.get('labels_add', []))),
+              'labels_add': sorted(set(labels.get('labels_add', []) + review_gate.get('labels_add', []))),
               'baseRefName': pr.get('baseRefName'),
               'author_login': ((pr.get('author') or {}).get('login')),
               'add_assignee': route.get('add_assignee'),

@@ -10,7 +10,7 @@ import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGroun
 import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
 import { setMapSky } from './map_sky.js';
-import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
+import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { buildEscadaoHome, escadaoHomeGround } from './map_escadao_home.js';
 import { buildEscadaoDetails } from './map_escadao_details.js';
@@ -21,7 +21,7 @@ const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
 export const HALF_X = 18, HALF_Z = 40;
-export const ESCADAO_AMBIENCE = [...FAVELA_AMBIENCE_ASSETS.filter(id => id !== 'cat'), 'escadaoCat'];
+export const ESCADAO_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'dog', 'cockroach', 'escadaoCat', 'sertaoHen']);
 
 export const ESCADAO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fusca',
   'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02',
@@ -1108,9 +1108,12 @@ export function buildEscadao(scene, T) {
   }
 
   /* ===================== SPAWNS ===================== */
-  // Orienta os spawns E para o vão central: W sai do abrigo sem bater na parede.
+  // Cada slot E aponta para o vão central visível: os externos precisam de
+  // 75° para não abrir contra a empena; os internos usam a diagonal de 45°.
   const spawns = {
-    E: [-2.4, -0.8, 0.8, 2.4].map(x => ({ x, z: 26, yaw: x < 0 ? -Math.PI / 4 : Math.PI / 4 })),
+    E: [-2.4, -0.8, 0.8, 2.4].map(x => ({
+      x, z: 26, yaw: Math.sign(x) * (Math.abs(x) > 1 ? Math.PI * 5 / 12 : Math.PI / 4),
+    })),
     B: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: -35.5, yaw: Math.PI })),
   };
 
@@ -1305,8 +1308,8 @@ export function buildEscadao(scene, T) {
     ],
     /* O gato mudou de faixa: a casa de molde do mirante leste ocupou a planta antiga e o
        AR3 do ambience-registry acendeu. Agora anda entre a mureta e a caçamba. */
-    cats: [{ assetId: 'escadaoCat', speed: { walk: .55, flee: 1.5 }, pos: [10.8, groundHeightAt(10.8, -22.8), -22.8], to: [11.9, groundHeightAt(11.9, -20.9), -20.9], phase: .65 }],
-    chickens: [{ pos: [-9.4, groundHeightAt(-9.4, -30), -30], to: [-7.8, groundHeightAt(-7.8, -32), -32], phase: 1.9 }],
+    cats: [{ assetId: 'escadaoCat', contactShadow: true, turnRate: 6, speed: { walk: .55, flee: 1.5 }, pos: [10.8, groundHeightAt(10.8, -22.8), -22.8], to: [11.9, groundHeightAt(11.9, -20.9), -20.9], phase: .65 }],
+    chickens: [{ assetId: 'sertaoHen', contactShadow: true, turnRate: 6, pos: [-9.4, groundHeightAt(-9.4, -30), -30], to: [-7.8, groundHeightAt(-7.8, -32), -32], phase: 1.9 }],
     /* Duas espécies novas do acervo `models/ambient/`: caramelo na calçada e no mirante,
        barata onde tem lixo (caçamba do topo e beco leste). */
     dogs: [

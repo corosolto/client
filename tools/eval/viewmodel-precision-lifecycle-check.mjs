@@ -24,7 +24,7 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad,
 
     const beforeLoad = decide({ alive: true, firstPerson: true, authoredMode: true, authoredReady: false });
     samples += 1;
-    if (!beforeLoad.root || beforeLoad.authored || beforeLoad.fallback) errors.push(`${aspect} ciclo ${cycle}: fallback legado pré-load`);
+    if (!beforeLoad.root || beforeLoad.authored || !beforeLoad.fallback) errors.push(`${aspect} ciclo ${cycle}: arma ausente pré-load`);
 
     const freshAccepted = accepts({ request: activeRequest, activeRequest, key: 'svd#svd',
       activeKey: 'svd#svd', utility: false });
@@ -85,8 +85,8 @@ check(thresholdMutant.errors.length > 0, 'mutante de comparação assimétrica e
 const staleMutant = matrix({ accepts: ({ key, activeKey, utility }) => key === activeKey && !utility });
 check(staleMutant.errors.length > 0, 'mutante que aceita Promise obsoleta reprova');
 
-const preLoadMutant = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: true, scopeCovered: false } });
-check(preLoadMutant.errors.length > 0, 'mutante que exibe fallback antes do load reprova');
+const preLoadMutant = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: false, scopeCovered: false } });
+check(preLoadMutant.errors.length > 0, 'mutante que oculta fallback antes do load reprova');
 
 for (const event of ['shoot-1', 'reload-tactical-end', 'reload-cancel-return']) {
   const hidden = matrix({ mutateEvent: (current, state) => current === event
