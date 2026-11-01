@@ -25,8 +25,9 @@ const EN_VAZA = /\b(HEALTH|KILLS|STREAK|ROUND|SCOREBOARD|RADIO|CLICK|LOOK HERE|m
 const MUT = [['retrato-vivo', 'HU1'], ['placar-cinza', 'HU2'], ['xp-falso', 'HU3'], ['municao-proporcional', 'HU4'], ['sem-hs', 'HU5'],
   ['dica-eterna', 'HU6'], ['tutorial-sem-tiro', 'HU6'], ['tutorial-sem-recarga', 'HU6'], ['badge-solto', 'HU7'], ['dica-na-mira', 'HU8'], ['dica-sem-en', 'HU9'], ['legado-vazado', 'HU10'],
   ['ping-mentiroso', 'HU11'], ['hs-errado', 'HU11'], ['abas-mudas', 'HU12'], ['tab-foco', 'HU12'], ['chat-eterno', 'HU12'], ['sem-silenciar', 'HU12'],
-  ['pula-pequeno', 'HU13'], ['atira-mudo', 'HU13'], ['ping-surdo', 'HU14'], ['placar-abates', 'HU15'], ['plural-fixo', 'HU15'], ['bot-texto', 'HU15'],
-  ['chips-esquerda', 'HU15'], ['slots-soltos', 'HU15'], ['alt-surdo', 'HU16'], ['sem-cache-avatar', 'HU17'], ['cache-falha-preso', 'HU18']];
+  ['pula-pequeno', 'HU13'], ['atira-mudo', 'HU13'], ['ping-toque-mudo', 'HU13'], ['ping-surdo', 'HU14'], ['placar-abates', 'HU15'], ['plural-fixo', 'HU15'], ['bot-texto', 'HU15'],
+  ['chips-esquerda', 'HU15'], ['slots-soltos', 'HU15'], ['alt-surdo', 'HU16'], ['sem-cache-avatar', 'HU17'], ['cache-falha-preso', 'HU18'],
+  ['armas-toque-ocultas', 'HU13'], ['arma-toque-muda', 'HU13']];
 const ARGV = process.argv.slice(2);
 const CONHECIDOS = new Set(['HU1', 'HU2', 'HU3', 'HU4', 'HU5', 'HU6', 'HU7', 'HU8', 'HU9', 'HU10', 'HU11', 'HU12', 'HU13', 'HU13b', 'HU14', 'HU15', 'HU16', 'HU17', 'HU18']);
 const recusa = (motivo) => { console.error(`uso: node tools/eval/ui-v3-hud.mjs [--mutantes] [--alvo=HU…] (SO=mutante,mutante) — ${motivo}`); process.exit(2); };
@@ -146,10 +147,29 @@ async function preparar(page, mutante, aplicados = null, ctx = 0, rotas = null) 
   if (mutante === 'chat-eterno') await reescreve(css, (t) => t.replace('#chat-sala:not(.aberto) #chat-log>li:not(:nth-last-child(-n+3)){display:none}', ''));
   if (mutante === 'sem-silenciar') await reescreve(js, (t) => t.replace("acoes.insertBefore(silenciar, bloquear);", ''));
   if (mutante === 'pula-pequeno') await reescreve(css, (t) => t.replace('.tp-toque-pula{right:calc(40px + var(--sr));bottom:calc(128px + var(--sb));width:56px;height:56px}', '.tp-toque-pula{right:calc(40px + var(--sr));bottom:calc(128px + var(--sb));width:36px;height:36px}'));
-  if (mutante === 'atira-mudo') await reescreve(js, (t) => t.replace('g.mouseDown0 = true;', ''));
+  if (mutante === 'atira-mudo') await reescreve(/\/js\/game\.js/, (t) => {
+    const alvo = "    on('.touch-fire', () => {\n      if (!this._acceptInput() || !this.player.alive) return;\n      this.mouseDown0 = true; this._tryShoot();";
+    if (t.split(alvo).length !== 2) throw new Error('atira-mudo: bloco touch-fire ausente ou repetido');
+    return t.replace(alvo, alvo.replace('this.mouseDown0 = true; ', ''));
+  });
+  if (mutante === 'ping-toque-mudo') await reescreve(js, (t) => {
+    const alvo = "botao('tp-toque-ping', 'PING', 'Ping', () => marcarPing());";
+    if (t.split(alvo).length !== 2) throw new Error('ping-toque-mudo: ação PING ausente ou repetida');
+    return t.replace(alvo, alvo.replace('() => marcarPing()', '() => {}'));
+  });
   if (mutante === 'ping-surdo') await reescreve(js, (t) => t.replace("e.code === 'KeyF'", "e.code === 'KeyF9'"));
   if (mutante === 'sem-cache-avatar') await reescreve(js, (t) => t.replace('const acerto = avatarCache.get(pid);', 'const acerto = null;'));
   if (mutante === 'cache-falha-preso') await reescreve(js, (t) => t.replace('avatarCache.delete(pid);', ''));
+  if (mutante === 'armas-toque-ocultas') await reescreve(css, (t) => {
+    const alvo = ':root[data-ui="v3"] #touch-ui .touch-wep{width:44px;height:44px;';
+    if (t.split(alvo).length !== 2) throw new Error('armas-toque-ocultas: regra .touch-wep 44px ausente ou repetida');
+    return t.replace(alvo, ':root[data-ui="v3"] #touch-ui .touch-wep{display:none!important;width:44px;height:44px;');
+  });
+  if (mutante === 'arma-toque-muda') await reescreve(/\/js\/game\.js/, (t) => {
+    const alvo = "const w = b.dataset.wep, p = this.player;\n        if (w === 'primary')";
+    if (t.split(alvo).length !== 2) throw new Error('arma-toque-muda: handler touchstart do .touch-wep ausente ou repetido');
+    return t.replace(alvo, "const w = b.dataset.wep, p = this.player;\n        return;\n        if (w === 'primary')");
+  });
 }
 
 const aoVivo = async (page) => {
@@ -666,9 +686,21 @@ const medirAqui = async (mutante = '', alvo = '') => {
       const g = window.__game;
       const vis = (e) => e && e.checkVisibility() && e.getBoundingClientRect().width > 0;
       const alvos = { ATIRA: '.tp-toque-atira', MIRA: '.touch-ads', PULA: '.tp-toque-pula', R: '.touch-reload', AGACHA: '.touch-crouch', PING: '.tp-toque-ping',
-        PLACAR: '.tp-toque-placar', PAUSA: '.touch-pause', ARMA: '.touch-wep' };
+        CAMERA: '.tp-toque-camera', PLACAR: '.tp-toque-placar', PAUSA: '.touch-pause', ARMA: '.touch-wep' };
       const rects = {}, faltam = [], pequenos = [];
       for (const [nome, sel] of Object.entries(alvos)) {
+        /* ARMA mede TODOS os botões de arma visíveis (primary some sem compra): um querySelector só vê o primeiro. */
+        if (nome === 'ARMA') {
+          const botes = [...document.querySelectorAll('#touch-ui .touch-wep')].filter(vis);
+          if (!botes.length) { faltam.push('ARMA'); continue; }
+          for (const e of botes) {
+            const b = e.getBoundingClientRect();
+            const chave = `ARMA:${e.dataset.wep || '?'}`;
+            rects[chave] = { l: b.left, t: b.top, r: b.right, b: b.bottom };
+            if (b.width < 44 || b.height < 44) pequenos.push(`${chave} ${b.width.toFixed(0)}×${b.height.toFixed(0)}`);
+          }
+          continue;
+        }
         const e = document.querySelector(`#touch-ui ${sel}`);
         if (!vis(e)) { faltam.push(nome); continue; }
         const b = e.getBoundingClientRect();
@@ -682,27 +714,62 @@ const medirAqui = async (mutante = '', alvo = '') => {
       }
       const olhar = document.querySelector('#touch-ui .touch-look')?.getBoundingClientRect();
       const joyR = vis(document.querySelector('#touch-ui .touch-joy-r'));
-      const toca = (sel, tipo) => {
+      const toca = (sel, tipo, identifier) => {
         const e = document.querySelector(`#touch-ui ${sel}`);
         if (!e) return;
         const b = e.getBoundingClientRect();
-        const t = new Touch({ identifier: Date.now() % 1000, target: e, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 });
+        const t = new Touch({ identifier, target: e, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 });
         e.dispatchEvent(new TouchEvent(tipo, { touches: tipo === 'touchend' ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true }));
       };
-      toca('.tp-toque-atira', 'touchstart');
+      toca('.tp-toque-atira', 'touchstart', 1);
       const atira = !!g.mouseDown0;
-      toca('.tp-toque-atira', 'touchend');
-      toca('.tp-toque-pula', 'touchstart');
+      toca('.tp-toque-atira', 'touchend', 1);
+      const soltoAtira = !g.mouseDown0;
+      toca('.tp-toque-pula', 'touchstart', 2);
       const pula = !!g.keys.Space;
-      toca('.tp-toque-pula', 'touchend');
-      return { faltam, pequenos, cruzam, olhar: olhar ? (innerWidth - olhar.left) / innerWidth : 0, joyR, atira, pula, solto: !g.keys.Space };
+      toca('.tp-toque-pula', 'touchend', 2);
+      const logAntes = new Set(document.querySelectorAll('#radio-log .tp-ping-linha'));
+      const marcaAntes = document.querySelector('.tp-hud-ping');
+      toca('.tp-toque-ping', 'touchstart', 3);
+      toca('.tp-toque-ping', 'touchend', 3);
+      await new Promise(requestAnimationFrame);
+      const marca = document.querySelector('.tp-hud-ping');
+      const pingReal = !!marca && marca !== marcaAntes && marca.checkVisibility({ opacityProperty: true, visibilityProperty: true })
+        && !!marca.querySelector('.tp-hud-ping__fala')?.textContent.trim()
+        && /^\d+ m$/.test(marca.querySelector('.tp-hud-ping__dist')?.textContent || '')
+        && [...document.querySelectorAll('#radio-log .tp-ping-linha')].some((n) => !logAntes.has(n) && n.textContent.trim());
+      /* Troca REAL de arma pela barra de toque, depois de tiro/pula/PING (que ficam com a arma original):
+         ida por TouchEvent num slot possuído e visível, volta à arma de origem por outro toque. */
+      const slots = { primary: g._slotPrimaria(), secondary: g.player.secondary || 'pistol', knife: 'knife' };
+      const visSlot = (s) => vis(document.querySelector(`#touch-ui .touch-wep[data-wep="${s}"]`));
+      const atual = g.player.weapon;
+      const origem = ['primary', 'secondary', 'knife'].find((s) => slots[s] === atual && visSlot(s));
+      const escolha = ['primary', 'secondary', 'knife'].find((s) => slots[s] && slots[s] !== atual && visSlot(s));
+      let troca = { ok: false, msg: 'sem slot possuído e visível diferente da arma atual' };
+      if (escolha && origem) {
+        toca(`.touch-wep[data-wep="${escolha}"]`, 'touchstart', 4);
+        toca(`.touch-wep[data-wep="${escolha}"]`, 'touchend', 4);
+        await new Promise(requestAnimationFrame);
+        const foi = g.player.weapon === slots[escolha];
+        const volta = origem;
+        let voltou = false;
+        if (volta) {
+          toca(`.touch-wep[data-wep="${volta}"]`, 'touchstart', 5);
+          toca(`.touch-wep[data-wep="${volta}"]`, 'touchend', 5);
+          await new Promise(requestAnimationFrame);
+          voltou = g.player.weapon === atual;
+        }
+        troca = { ok: foi && voltou, msg: `ida p/ ${escolha} (${slots[escolha]}) ${foi ? 'trocou' : `ficou ${g.player.weapon}`}${volta ? `, volta p/ ${volta} ${voltou ? 'voltou' : `ficou ${g.player.weapon}`}` : ', sem slot visível para voltar'}` };
+      }
+      return { faltam, pequenos, cruzam, rectsN: Object.keys(rects).length, armas: [...document.querySelectorAll('#touch-ui .touch-wep')].filter(vis).map((e) => e.dataset.wep),
+        olhar: olhar ? (innerWidth - olhar.left) / innerWidth : 0, joyR, atira, soltoAtira, pula, solto: !g.keys.Space, pingReal, troca };
     });
     await foto(m, `hud-21-toque-${tw}x${th}`);
     await fm();
     const id = indice ? 'HU13b' : 'HU13';
-    add(id, !toque.faltam.length && !toque.pequenos.length && !toque.cruzam.length && toque.olhar >= 0.45 && !toque.joyR && toque.atira && toque.pula && toque.solto,
+    add(id, !toque.faltam.length && !toque.pequenos.length && !toque.cruzam.length && toque.olhar >= 0.45 && !toque.joyR && toque.atira && toque.soltoAtira && toque.pula && toque.solto && toque.pingReal && toque.troca.ok,
       toque.faltam.length ? `${tw}×${th}: faltam no toque: ${toque.faltam.join(', ')}` : toque.pequenos.length ? `${tw}×${th}: alvo abaixo de 44 px: ${toque.pequenos.join(', ')}`
-        : toque.cruzam.length ? `${tw}×${th}: botões encostam: ${toque.cruzam.join(', ')}` : `${tw}×${th}: 9 alvos ≥44 px sem encosto, arraste da mira em ${(toque.olhar * 100).toFixed(0)}% da tela${toque.joyR ? ', stick direito sobrando' : ''}, ATIRA ${toque.atira ? 'atira' : 'mudo'}, PULA ${toque.pula ? 'pula' : 'mudo'}`);
+        : toque.cruzam.length ? `${tw}×${th}: botões encostam: ${toque.cruzam.join(', ')}` : `${tw}×${th}: ${toque.rectsN} rects ≥44 px sem encosto (ARMA: ${toque.armas.join('/') || 'nenhum'}), arraste da mira em ${(toque.olhar * 100).toFixed(0)}% da tela${toque.joyR ? ', stick direito sobrando' : ''}, ATIRA ${toque.atira ? 'atira' : 'mudo'} e ${toque.soltoAtira ? 'solta' : 'fica preso'}, PULA ${toque.pula ? 'pula' : 'mudo'}, PING ${toque.pingReal ? 'marca' : 'mudo'}, troca de arma ${toque.troca.ok ? 'ida/volta reais' : `falhou: ${toque.troca.msg}`}`);
   }
   }
   return { r, aplicados };

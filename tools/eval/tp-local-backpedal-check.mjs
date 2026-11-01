@@ -44,8 +44,9 @@ GLTFLoader.prototype.load = function(url, done, progress, fail) {
   }).catch(error => fail?.(error));
 };
 const G = await import(pathToFileURL(path.join(root, 'public/js/glbchars.js')));
-const oldCall = 'tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, false);';
-const newCall = 'const back = -(p.vel.x * Math.sin(p.yaw) + p.vel.z * Math.cos(p.yaw)) < -0.25;\n      tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back);';
+const prodCall = 'tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back, lateral);';
+const noBackCall = 'tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, false, lateral);';
+const wrongSignCall = 'tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, !back, lateral);';
 const actual = Game.prototype._updatePlayerTP;
 function replaceOnce(source, from, to) {
   assert.equal(source.split(from).length, 2, 'patch/mutante não aplicou exatamente uma vez');
@@ -55,12 +56,13 @@ function replaceOnce(source, from, to) {
 }
 const compile = source => Function('THREE', `return ({${source}})._updatePlayerTP`)(THREE);
 const originalText = actual.toString();
-const legacy = originalText.includes(newCall) ? compile(replaceOnce(originalText, newCall, oldCall)) : actual;
+const hasFix = originalText.includes(prodCall);
+// Referência de controle: produto sem o back, lateral preservada (6º argumento intacto).
+const legacy = hasFix ? compile(replaceOnce(originalText, prodCall, noBackCall)) : actual;
 let selected = actual;
-if (preview) selected = compile(replaceOnce(originalText, oldCall, newCall));
-if (mutant === 'no-back' || mutant === 'wrong-sign') {
-  selected = compile(replaceOnce(selected.toString(), 'sp, back)', mutant === 'no-back' ? 'sp, false)' : 'sp, !back)'));
-}
+if (preview) selected = hasFix ? actual : compile(replaceOnce(originalText, noBackCall, prodCall));
+if (mutant === 'no-back') selected = compile(replaceOnce(selected.toString(), prodCall, noBackCall));
+if (mutant === 'wrong-sign') selected = compile(replaceOnce(selected.toString(), prodCall, wrongSignCall));
 if (mutant === 'player') selected = compile(replaceOnce(selected.toString(), 'const tp = this.playerTP, p = this.player;', 'const tp = this.playerTP, p = this.player; p.pos.x += 0.001;'));
 const dt = 1 / 60;
 const cases = [
@@ -81,7 +83,7 @@ function fixture(id, weapon, c) {
   const built = G.buildCharacterModel(CHARACTERS.find(d => d.id === id), {weaponId: weapon});
   assert.ok(built?.ctrl?.actions.walk && built.ctrl.actions.run, 'GLB/clipes não carregaram');
   const player = {pos: new THREE.Vector3(), vel: new THREE.Vector3(...(c.vel || [0, 0, 0])), yaw: c.yaw, pitch: .1, crouchF: 0, scoped: false, grounded: true, weapon};
-  const game = {_ensurePlayerTP() {}, playerTP: built, player, _tpEul: new THREE.Euler(), _tpFwd: new THREE.Vector3(), _tpRight: new THREE.Vector3(), _tpOrbitPitch: .2, _tpOrbitYaw: .4, _eyeWorld: new THREE.Vector3(), camView: 'third', camera: new THREE.PerspectiveCamera(70, 1.5, .08, 400), world: {groundHeightAt: () => 0}, sfx: {jump() {}, land() {}}, _collide() {}, _acceptInput: () => true, time: 0};
+  const game = {_ensurePlayerTP() {}, _updatePlayerTPCamera: Game.prototype._updatePlayerTPCamera, playerTP: built, player, _tpEul: new THREE.Euler(), _tpFwd: new THREE.Vector3(), _tpRight: new THREE.Vector3(), _tpOrbitPitch: .2, _tpOrbitYaw: .4, _eyeWorld: new THREE.Vector3(), camView: 'third', camera: new THREE.PerspectiveCamera(70, 1.5, .08, 400), world: {groundHeightAt: () => 0}, sfx: {jump() {}, land() {}}, _collide() {}, _acceptInput: () => true, time: 0};
   const update = built.ctrl.update.bind(built.ctrl);
   const state = {built, game, args: null};
   built.ctrl.update = (...args) => {state.args = args; return update(...args);};

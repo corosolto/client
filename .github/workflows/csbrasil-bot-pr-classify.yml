@@ -75,7 +75,7 @@ jobs:
       - name: Ensure labels exist
         run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-estragacodigo-resolution estragacodigo-resolved
       - name: Fetch PR metadata
-        run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
+        run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,headRefOid,author,assignees > /tmp/pr.json
       - name: Route PR and set assignee
         run: |
           python3 - <<'PY'
@@ -86,21 +86,38 @@ jobs:
           PY
           python3 scripts/ci/pr_route.py < /tmp/pr-route-input.json > /tmp/pr-route.json
           python3 - <<'PY'
-          import json, os, subprocess
+          import json, os, re, subprocess
+          from scripts.ci.pr_route import target_label
           route = json.load(open('/tmp/pr-route.json'))
+          pr = json.load(open('/tmp/pr.json'))
           pr_number = os.environ['PR_NUMBER']
           repo = os.environ['GITHUB_REPOSITORY']
           # REST puro: `gh pr edit` resolve nó de user/org via GraphQL e exige
           # scope read:org — PAT com repo/workflow morre aqui (vermelho da #350).
           if route.get('retarget_to'):
+              desired = route['retarget_to']
+              desired_ref = f'refs/heads/{desired}'
               exists = subprocess.run(
-                  ['git', 'ls-remote', '--exit-code', '--heads', 'origin', route['retarget_to']],
-                  stdout=subprocess.DEVNULL,
-                  stderr=subprocess.DEVNULL,
+                  ['git', 'ls-remote', '--exit-code', '--heads', 'origin', desired_ref],
+                  capture_output=True, text=True,
               )
               if exists.returncode == 0:
-                  subprocess.run(['gh', 'api', '-X', 'PATCH', f'repos/{repo}/pulls/{pr_number}', '--input', '-'],
-                                 input=json.dumps({'base': route['retarget_to']}), text=True, check=True)
+                  remote = exists.stdout.split()
+                  head_oid = pr.get('headRefOid')
+                  if (len(remote) != 2 or remote[1] != desired_ref
+                      or not re.fullmatch(r'[0-9a-f]{40}', remote[0])
+                      or not re.fullmatch(r'[0-9a-f]{40}', head_oid or '')):
+                      raise RuntimeError('routing requires exact desired ref and canonical head OIDs')
+                  if remote[0] == head_oid:
+                      route.update(retarget_to=None, effective_base=pr['baseRefName'],
+                                   target_label=target_label(pr['baseRefName']),
+                                   retarget_reason='desired-base-same-head',
+                                   retarget_evidence={'desired_ref': desired_ref, 'desired_oid': remote[0], 'head_oid': head_oid})
+                      open('/tmp/pr-route.json', 'w').write(json.dumps(route))
+                      print(f"Routing no-op: {desired_ref} already points at head {head_oid}; keeping {pr['baseRefName']}")
+                  else:
+                      subprocess.run(['gh', 'api', '-X', 'PATCH', f'repos/{repo}/pulls/{pr_number}', '--input', '-'],
+                                     input=json.dumps({'base': desired}), text=True, check=True)
               else:
                   route['retarget_to'] = None
                   open('/tmp/pr-route.json', 'w').write(json.dumps(route))
