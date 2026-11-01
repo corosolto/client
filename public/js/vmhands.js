@@ -65,7 +65,8 @@ export function applyTeamHandMaterial(material, profile, layout) {
   // Os atlas têm UVs distintos; só a identidade é comum. Não colar UV de um rig no outro.
   if (typeof document !== 'undefined' && !(typeof process !== 'undefined' && process.versions?.node)) {
     if (!maps.has(key)) {
-      const map = new THREE.TextureLoader().load(`/models/viewmodels/coro/hands/${key}.webp?v=${HAND_ATLAS_VERSION}`, undefined, undefined,
+      const colorVersion = key === 'pistol/glove-E' ? 'team-hands-11' : HAND_ATLAS_VERSION;
+      const map = new THREE.TextureLoader().load(`/models/viewmodels/coro/hands/${key}.webp?v=${colorVersion}`, undefined, undefined,
         (error) => console.error(`[viewmodel-hands] ${key}`, error));
       map.flipY = false;
       map.colorSpace = THREE.SRGBColorSpace;
