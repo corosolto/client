@@ -123,8 +123,8 @@ async function abrir() {
   }
   if (MUT === 'respawn-sp-preso') {
     await reescreve(/\/js\/game\.js/, (t) => t.replace(
-      'if (this.online) return;\n    this._releaseInput();\n    const p = this.player;',
-      'if (this.online) return;\n    const p = this.player;'));
+      'if (this.online) return;\n    if (this.objective?.state?.eliminados?.includes(this.player.team)) return;\n    this._releaseInput();\n    const p = this.player;',
+      'if (this.online) return;\n    if (this.objective?.state?.eliminados?.includes(this.player.team)) return;\n    const p = this.player;'));
   }
   if (MUT === 'round-sp-preso') {
     await reescreve(/\/js\/game\.js/, (t) => t.replace(
