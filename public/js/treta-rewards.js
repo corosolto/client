@@ -1,3 +1,4 @@
+import { tr, frase } from './i18n.js';
 import {TRETA_COIN_ART} from './treta-catalog.js';
 const reason={email:'EMAIL CONFIRMADO',referral:'AMIGO NA TRETA',singleplayer:'PARTIDA SOLO CONCLUÍDA',multiplayer:'PARTIDA MULTIPLAYER CONCLUÍDA'};
 const format=amount=>new Intl.NumberFormat('pt-BR').format(amount);
@@ -25,8 +26,8 @@ export function updateTretaRewards(state){
   const nextOwner=state?.authenticated?state.accountId:null;
   if(nextOwner!==owner){if(owner)hide();owner=nextOwner;queue=[];queued.clear();seen.clear();if(owner){try{const ids=JSON.parse(localStorage.getItem(key()) || '[]');if(Array.isArray(ids))seen=new Set(ids.filter(x=>typeof x==='string'));}catch{ /* storage unavailable */ }}}
   const button=document.getElementById('hub-treta-wallet');
-  document.getElementById('hub-treta-total').textContent=state?.wallet?`T$ ${format(state.wallet.balance)}`:owner?'T$ —':'T$ · ENTRAR';
-  button.setAttribute('aria-label',state?.wallet?`Carteira TRETA$, saldo T$ ${format(state.wallet.balance)}`:'Entre para ver seu saldo TRETA$');
+  document.getElementById('hub-treta-total').textContent=state?.wallet?`T$ ${format(state.wallet.balance)}`:owner?'T$ —':`T$ · ${tr('ENTRAR')}`;
+  button.setAttribute('aria-label',state?.wallet?frase('carteiraSaldoAria',format(state.wallet.balance)):frase('carteiraEntrarAria'));
   if(!owner)return;
   for(const reward of [...(state.ledger || [])].reverse())if(reason[reward.kind] && Number.isSafeInteger(reward.amount) && reward.amount>0 && !seen.has(reward.id) && !queued.has(reward.id)){queue.push(reward);queued.add(reward.id);}
   next();

@@ -13,7 +13,7 @@ const CHECK = path.join(HERE, 'ctrlw-lifecycle-check.mjs');
 const LOADER = path.join(HERE, 'ctrlw-lifecycle-loader.mjs');
 const MUTANTES = ['sem-posse', 'sem-resume'];
 const CLAUSULA = { 'sem-posse': 'CW_OWNER', 'sem-resume': 'CW_RESUME' };
-const TECLAS = ['KeyW', 'KeyT', 'KeyN', 'KeyR', 'KeyI', 'Digit1', 'Digit2', 'Digit3'];
+const TECLAS = ['KeyW', 'KeyT', 'KeyN', 'KeyB', 'KeyR', 'KeyI', 'Comma', 'Period', 'Digit1', 'Digit2', 'Digit3'];
 
 /* handlers globais ANTES de qualquer import dinâmico: nada vira AssertionError por engano. */
 const reporta = (err) => {

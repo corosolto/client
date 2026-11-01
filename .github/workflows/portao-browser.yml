@@ -17,8 +17,8 @@
 #   scripts/ci/gatilho.mjs), como o smoke-web.yml faz para as rotas do site.
 #
 # O QUE ELE PROVA
-#   · eval:grafite  — cobertura de parede pintada por mapa contra o META declarado em
-#                     graffiti-census.mjs; o census agora SAI != 0 abaixo da meta.
+#   · eval:grafite-atual — arte única, suporte e zonas autorizadas nos 14 mapas;
+#                         o censo histórico continua disponível para auditoria.
 #   · eval:select   — a silhueta/pose da tela de seleção contra os personagens elogiados.
 #   · entrada, armas, boot e ops no mesmo job; a criação do Sertão no job `sertao`, em
 #     paralelo (era o passo mais caro).
@@ -95,8 +95,8 @@ jobs:
     needs: decide
     if: needs.decide.outputs.rodar == 'true'
     runs-on: ubuntu-latest
-    # SwiftShader é lento de propósito (é o preço do render por software); os 5 mapas
-    # + os personagens da seleção cabem folgado em 45 min, e o teto evita runner preso.
+    # SwiftShader renderiza o contrato nominal dos 14 mapas e a seleção;
+    # o teto de 45 min continua limitando o job.
     timeout-minutes: 45
     env:
       BASE: http://localhost:8123
@@ -110,6 +110,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Decalques públicos completos antes do navegador
+        run: |
+          bash scripts/fetch-decals.sh
+          node tools/eval/assets-check.mjs --so=decals
 
       # graffiti-census/graffiti-audit/select-inflate fazem `import(npm root -g +
       # /playwright/index.js)`: o Playwright precisa existir no GLOBAL, na mesma versão
@@ -144,11 +148,29 @@ jobs:
           cat /tmp/eval-serve.log
           exit 1
 
-      # JSON=1 congela os números como artefato mesmo quando passa.
-      - name: eval:grafite (cobertura de parede pintada, 5 mapas)
-        env:
-          JSON: '1'
-        run: npm run eval:grafite
+      - name: Fauna curada — GLBs, texturas decodificadas e rig dos cinco mapas
+        if: ${{ !cancelled() }}
+        run: npm run eval:map-fauna-curated:runtime
+
+      - name: Guarda captura e auditoria runtime da fauna
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: map-fauna-curated
+          path: artifacts/map-fauna-curated/
+          if-no-files-found: error
+
+      # Contrato vigente: 14 nominais completos, sem meta histórica de saturação.
+      - name: eval:grafite-atual (arte única e suporte real, 14 mapas)
+        run: npm run eval:grafite-atual
+
+      - name: Guarda o contrato atual de grafite
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: grafite-atual
+          path: artifacts/grafite-atual/
+          if-no-files-found: warn
 
       # Roda mesmo com o grafite vermelho: são réguas independentes, e com o `success()`
       # padrão uma regressão de silhueta ficaria invisível justo quando já há falha.
@@ -156,6 +178,24 @@ jobs:
       - name: eval:select (silhueta da tela de seleção)
         if: ${{ !cancelled() }}
         run: npm run eval:select
+
+      - name: Pegada do lobby nos 11 casos públicos
+        if: ${{ !cancelled() }}
+        run: npm run eval:lobbyarmamao
+
+      - name: Mira1P da AK pública
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p artifacts
+          npm run eval:mira-public
+
+      - name: Guarda a medição da mira pública
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mira-public
+          path: artifacts/mira-public.json
+          if-no-files-found: warn
 
       # A porta de entrada do funil: o gesto que tira a splash não pode apertar o menu
       # por baixo (medido no runner do #368 — ver tools/eval/entrada-check.mjs).
@@ -168,6 +208,16 @@ jobs:
       - name: eval:perfilmobile:browser (perfil leve desde o boot)
         if: ${{ !cancelled() }}
         run: npm run eval:perfilmobile:browser
+
+      - name: Controles mobile sem disparo involuntário e câmera por toque
+        if: ${{ !cancelled() }}
+        run: npm run eval:toquecontroles
+
+      - name: Todas as armas com mãos e rastro no cano em mobile e desktop
+        if: ${{ !cancelled() }}
+        env:
+          VM_PUBLIC_ASSETS: https://www.corosolto.com.br
+        run: npm run eval:vm-maos-mobile-desktop
 
       # A partida carrega as armas DELA e nenhum bot empunha caixa (medido no navegador).
       - name: eval:armas (preload de arma por partida)

@@ -204,6 +204,19 @@ function suite(api, quiet = false) {
   }
   manual('manual unsupported decal is pruned before live placement', () => { const art = plane(.13, 'decal:fixture'); return { root: grouped(art), art }; }, false);
   manual('manual supported decal is preserved', () => { const art = plane(.13, 'decal:fixture', undefined, 2, 2); return { root: grouped(box(), art), art }; }, true);
+  test('existing poster checks backing without intersecting itself', 'manual', () => {
+    const art = plane(.13, 'poster:fixture', undefined, 2, 2), root = grouped(box(), art);
+    const piece = { x: 0, y: 2, z: .13, ry: 0, w: 2, h: 2 };
+    assert.equal(criarSuporteGrafite(root, production.gradeEspacial)(piece), false, 'placement still sees occupied artwork');
+    assert.equal(criarSuporteGrafite(root, production.gradeEspacial, art)(piece), true, 'own artwork is not its backing');
+    art.position.z = .5;
+    assert.equal(criarSuporteGrafite(root, production.gradeEspacial, art)({ ...piece, z: .5 }), false, 'floating poster stays rejected');
+  });
+  test('excluding own poster still rejects a second foreground poster', 'manual', () => {
+    const art = plane(.13, 'poster:fixture', undefined, 2, 2);
+    const other = plane(.115, 'poster:other', undefined, 2, 2), root = grouped(box(), art, other);
+    assert.equal(criarSuporteGrafite(root, production.gradeEspacial, art)({ x: 0, y: 2, z: .13, ry: 0, w: 2, h: 2 }), false);
+  });
   for (const kind of ['empty-range', 'one-triangle', 'reversed-index']) {
     manual(`manual ${kind} cannot claim a complete drawn quad`, () => {
       const art = plane(.13, 'mural:fixture', undefined, 2, 2);
@@ -249,11 +262,21 @@ function suite(api, quiet = false) {
   test('live placement slides past a panel seam to a supported spot', 'live', () => {
     // Chapas de 0,997 m com fresta de 3 mm: o encaixe tolerante aceita a âncora em
     // cima da fresta, o suporte estrito recusa, e o deslize de 0,5 m acha chapa inteira.
+    // Pool com 3 artes DISTINTAS: a unicidade global (contrato 31/10) consome cada
+    // arte uma vez, e >=3 peças só é alcançável se o deslize de fato acontecer.
     const panels = Array.from({ length: 8 }, (_, i) => {
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(.997, 4, .2), new THREE.MeshLambertMaterial());
       mesh.position.set(-3.5 + i, 2, 0); mesh.name = 'fixture-panel'; return mesh;
     });
-    const root = grouped(...panels); const result = api.pintarParedes(liveConfig(root));
+    const T3 = {
+      ...T, decalFiles: ['seam-a.png', 'seam-b.png', 'seam-c.png'], decalAspects: [1, 1, 1],
+      decals: ['a', 'b', 'c'].map(s => {
+        const t = new THREE.Texture(); t.image = { src: `http://grafite.local/img/decals/seam-${s}.png` }; return t;
+      }),
+    };
+    const root = grouped(...panels);
+    const cfg = liveConfig(root);
+    const result = api.pintarParedes({ ...cfg, T: T3, bandas: cfg.bandas.map(b => ({ ...b, pool: [0, 1, 2] })) });
     assert.ok(result.pecas >= 3, `seam must not discard a slide that fits (got ${result.pecas})`);
     const independent = criarSuporteGrafite(root, production.gradeEspacial);
     assert.ok((root.userData.graffitiPecas || []).every(p => independent(p)), 'slid pieces satisfy support');
@@ -298,7 +321,7 @@ if (process.argv.includes('--self-test')) {
       const target = overrides[specifier] || (specifier.startsWith('.') ? new URL(specifier, owner).href : import.meta.resolve(specifier));
       return `${prefix}${JSON.stringify(target)}`;
     });
-  const marker = 'export function criarSuporteGrafite(root, grade) {';
+  const marker = 'export function criarSuporteGrafite(root, grade, ignorarMesh = null) {';
   assert.equal(source.split(marker).length, 2, 'mutant must patch exactly the current production support function');
   const mutatedSource = source.slice(0, source.indexOf(marker))
     + 'export function criarSuporteGrafite(root, grade) { return (piece) => true; }\n';
