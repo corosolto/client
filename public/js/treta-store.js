@@ -75,7 +75,7 @@ export function equippedTretaPack() {
 }
 export function tretaSkinPresentation(id,characterId) {
   const skin=product(id),model=asset(id);
-  if(!available(id) || skin?.slot!=='character' || skin.character!==characterId || model?.character!==characterId)return null;
+  if(!available(id) || !owned(id) || skin?.slot!=='character' || skin.character!==characterId || model?.character!==characterId)return null;
   const localPoster=/^\/(img|video)\/skins\/[a-z0-9-]+\.webp$/;
   const video=model.video;
   return {id,name:skin.name || item(id)?.name || id,poster:localPoster.test(model.poster || '')?model.poster:null,
@@ -84,7 +84,7 @@ export function tretaSkinPresentation(id,characterId) {
 export function tretaWeaponPresentation(weaponId,skinId) {
   if(!skinId)return null;
   const skin=product(skinId);
-  if(skin?.slot==='weapon' && skin.weapon===weaponId && available(skinId))return {name:skin.name};
+  if(skin?.slot==='weapon' && skin.weapon===weaponId && available(skinId) && owned(skinId))return {name:skin.name};
   const pack=product(equippedTretaPack());
   return pack && pack.weaponSkins?.[weaponId]===skinId?{name:pack.name}:null;
 }

@@ -500,6 +500,7 @@ function show(id) {
   stopMapPreviews();
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
+  clearCompactPreviews();
   if (id !== 'char-select') pvStopVideo();
   if (id !== 'map-screen') stopMapPreview();
   // ao navegar pra qualquer tela, fecha o painel de setup do menu CS (não fica aberto after)
@@ -941,8 +942,19 @@ function previewUsesStills() {
 }
 function previewHeroVisible() {
   const selection=$('char-select')?.classList.contains('hidden')===false;
-  const hub=$('main-menu')?.classList.contains('hidden')===false;
+  const hub=previewHubVisible();
   return !pvCompact.matches && (selection || (hub && !pvNarrow.matches)) && document.querySelector('.char-preview-box')?.checkVisibility?.()!==false;
+}
+function previewHubVisible() {
+  const menu=$('main-menu');
+  return menu?.classList.contains('hidden')===false && menu.dataset.hubTab==='jogar' && menu.dataset.hubNet==='sp';
+}
+function clearCompactPreviews() {
+  for(const prefix of ['hub-character','char-select']){
+    const image=$(prefix+'-portrait'),label=$(prefix+'-equipment');
+    if(image){image.dataset.previewKey='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;}
+    if(label)label.hidden=true;
+  }
 }
 function pvStopVideo() {
   pvVidToken++;
@@ -1014,7 +1026,7 @@ function syncCompactPreview(def) {
   const paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId),names={ak:'AK-47',m4:'M4',scar:'SCAR',pistol:'Pistola'};
   const caption=[skin?.name,paint?`Pintura: ${names[weapon.weaponId] || weapon.weaponId} · ${paint.name}`:null].filter(Boolean).join(' · ');
   const src=portraitUrl(def),key=JSON.stringify([def.id,def.skinId,src,caption]);
-  const hub=(pvCompact.matches || pvNarrow.matches) && $('main-menu')?.classList.contains('hidden')===false;
+  const hub=(pvCompact.matches || pvNarrow.matches) && previewHubVisible();
   const selection=pvCompact.matches && $('char-select')?.classList.contains('hidden')===false;
   for(const [imageId,labelId,active] of [['hub-character-portrait','hub-character-equipment',hub],['char-select-portrait','char-select-equipment',selection]]){
     const image=$(imageId),label=$(labelId);if(!image || !label)continue;
@@ -2606,6 +2618,7 @@ if (HUB_ENABLED) {
   const setHubTab = (tab, updateRoute = true) => {
     if ($('main-menu').dataset.socialPaused === 'true' && tab !== 'comunidade') return;
     $('main-menu').dataset.hubTab = tab;
+    clearCompactPreviews();
     updateHubTip();
     if (tab !== 'jogar' && menuSetup.dataset.step === 'profile') setSetupStep('match');
     for (const button of tabs) {
@@ -2681,6 +2694,7 @@ if (HUB_ENABLED) {
   });
   const setHubNet = (net, updateRoute = true) => {
     $('main-menu').dataset.hubNet = net;
+    clearCompactPreviews();
     updateHubTip();
     if (net === 'mp' && menuSetup.dataset.step === 'profile') setSetupStep('match');
     $('hub-sp').setAttribute('aria-pressed', String(net === 'sp'));
@@ -3977,10 +3991,10 @@ function glbThumb(def) {
 let teamPreviewsDone = false;
 function ensureTeamPreviews() {
   if (teamPreviewsDone) return;
-  teamPreviewsDone = true;
   for (const [btn, lado] of [['btn-team-e', 'E'], ['btn-team-b', 'B']]) {
     const box = document.querySelector(`#${btn} .team-chars`);
-    if (!box) continue;
+    if (!box || box.checkVisibility?.() !== true) continue;
+    teamPreviewsDone = true;
     const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id)).slice(0, 4);
     if (!chars.length) continue;
     box.innerHTML = chars.map(() => '<span class="tc-slot"></span>').join('');
