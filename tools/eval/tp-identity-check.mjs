@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const JS = path.join(ROOT, 'public/js');
@@ -28,6 +28,7 @@ const EXPECTED = {
   'own-glove': ['O1', 'C4', 'S1', 'S3', 'S4', 'S5', 'S7', 'S10', 'S11', 'S12', 'S13', 'S14', 'N2'],
   'glove-preload': ['C1', 'C2', 'C3', 'C4', 'C6'],
   'boot-await': ['C2', 'C3', 'C4', 'C6'],
+  'body-preload-failfast': ['C6'],
   'glove-first-part': ['O1', 'O4', 'C4', 'S1', 'S3', 'S4', 'S5', 'S7', 'S10', 'S11', 'S12', 'S13', 'S14', 'N2'],
   'glove-partial-bind': ['O4'],
   'glove-ready-upgrade': ['S1', 'S4', 'S5', 'S7', 'S10', 'S11', 'S12', 'S13', 'S14', 'N2'],
@@ -48,7 +49,7 @@ const replaceOne = (s, a, b) => {
 const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 async function worker(fixture, mutant) {
-  const out = { version: 1, fixture, mutant, sources: null, rows: [], loaded: [] };
+  const out = { version: 1, fixture, mutant, nonce: process.env.COROSOLTO_TP_NONCE, sources: null, rows: [], loaded: [] };
   const games = [];
   const disposed = new Set();
   let releaseGlove = () => {};
@@ -126,7 +127,7 @@ async function worker(fixture, mutant) {
       if (mutant === 'own-glove') s = replaceOne(s, 'buildCharacterModel(def, { weaponId: w, weaponSkinId: skinTP, gloveSkinId: this.playerGloveId })', 'buildCharacterModel(def, { weaponId: w, weaponSkinId: skinTP })');
       if (mutant === 'own-glove') s = replaceOne(s, 'tp.setGloveSkin(this.playerGloveId)', 'tp.setGloveSkin(null)');
       if (mutant === 'glove-ready-upgrade') s = replaceOne(s, 'const gloveChanged = this.playerTP?.isGLB', 'const gloveChanged = false && this.playerTP?.isGLB');
-      if (mutant === 'glove-lazy-load') s = replaceOne(s, 'void preloadGloveAssets([def.id])', 'void Promise.resolve()');
+      if (mutant === 'glove-lazy-load') s = replaceOne(s, 'void gloveHandle.preload()', 'void Promise.resolve()');
       if (mutant === 'glove-selection') s = replaceOne(s, 'this._tpGloveId !== gloveId || ', '');
       if (mutant === 'glove-corpse') s = replaceOne(s, 'this.playerTP?.isGLB && !this._tpDead', 'this.playerTP?.isGLB');
       if (mutant === 'glove-rebuild') s = replaceOne(s, 'if (gloveChanged && !weaponChanged && !wantUpgrade && this.playerTP.setGloveSkin)', 'if (false && gloveChanged && !weaponChanged && !wantUpgrade && this.playerTP.setGloveSkin)');
@@ -139,12 +140,12 @@ async function worker(fixture, mutant) {
         let gloveModule = pathToFileURL(path.join(JS, 'glbchars.js')).href;
         if (['glove-first-part', 'glove-partial-bind', 'glove-request-join', 'glove-material-leak'].includes(mutant)) {
           let gs = fs.readFileSync(path.join(JS, 'glbchars.js'), 'utf8');
-          if (mutant === 'glove-first-part') gs = replaceOne(gs, '_gloveMeshes.set(id, meshes.length ? meshes : null);', '_gloveMeshes.set(id, meshes.length ? meshes.slice(0, 1) : null);');
+          if (mutant === 'glove-first-part') gs = replaceOne(gs, '_gloveMeshes.set(key, meshes.length ? meshes : null);', '_gloveMeshes.set(key, meshes.length ? meshes.slice(0, 1) : null);');
           else if (mutant === 'glove-partial-bind') {
             gs = replaceOne(gs, '  if (binds.some(({ bones }) => bones.some(b => !b))) return null;', '  const validBinds = binds.filter(({ bones }) => bones.every(Boolean));');
             gs = replaceOne(gs, '  return binds.map(({ template, bones }) => {', '  return validBinds.map(({ template, bones }) => {');
           }
-          else if (mutant === 'glove-request-join') gs = replaceOne(gs, '    if (_gloveRequests.has(id)) return _gloveRequests.get(id);', '');
+          else if (mutant === 'glove-request-join') gs = replaceOne(gs, '      if (_gloveRequests.has(key)) return _gloveRequests.get(key);', '');
           else gs = replaceOne(gs, '        mesh.material.dispose();', '');
           out.mutatedGlbchars = sha(gs);
           const gf = path.join(tmp, 'glbchars.mjs'); fs.writeFileSync(gf, absoluteImports(gs)); gloveModule = pathToFileURL(gf).href;
@@ -318,12 +319,16 @@ async function worker(fixture, mutant) {
     } else {
       if (G.hasGloveModel('barbudo')) throw Error('Worker frio já tinha pacote');
       let source = fs.readFileSync(path.join(JS, 'main.js'), 'utf8');
-      if (mutant === 'glove-preload') source = replaceOne(source, '        playerGloveId ? preloadGloveAssets([charId]) : null,\n', '');
+      if (mutant === 'glove-preload') source = replaceOne(source, '        bodyPreloads.then(() => playerGloveId ? getGloveHandle(charId, playerSkinId)?.preload() : null),\n', '');
+      if (mutant === 'body-preload-failfast') source = replaceOne(source, 'const bodyPreloads = Promise.allSettled([', 'const bodyPreloads = Promise.all([');
       if (mutant === 'boot-await') source = replaceOne(source, '      await aguardarPreloads([', '      aguardarPreloads([');
       const start = '  try {\n    if (!navOnly) {', end = '  /* RÉGUA:launch-race nascimento fim */';
       for (const a of [start, end]) if (source.split(a).length !== 2) throw Error('Recorte real do nascimento não único');
-      const block = source.slice(source.indexOf(start), source.indexOf(end) + end.length); out.birthSlice = sha(block);
-      const born = []; let loads, glovePromise;
+      let block = source.slice(source.indexOf(start), source.indexOf(end) + end.length); out.birthSlice = sha(block);
+      const chain = 'bodyPreloads.then(() => playerGloveId ? getGloveHandle(charId, playerSkinId)?.preload() : null)';
+      if (mutant !== 'glove-preload') block = replaceOne(block, chain, `captureGloveBarrier(${chain})`);
+      out.observedBirthSlice = sha(block);
+      const born = []; let loads, glovePromise, gloveBarrier;
       const hasSelection = fixture !== 'no-glove', navOnly = fixture === 'nav-only';
       const Game = new Proxy(actual.Game, { construct(target, args) {
         const ready = G.hasGloveModel('barbudo'), g = Reflect.construct(target, args, target); games.push(g);
@@ -341,9 +346,11 @@ async function worker(fixture, mutant) {
         preloadCharacterAssets: G.preloadCharacterAssets, _charsToLoad: ['barbudo', 'capitao'], _armasDaPartida: ['pistol', 'awp', 'ak'],
         preloadCosmeticAssets: () => fixture === 'reject-other' ? Promise.reject(new Error('controlled different optional load')) : Promise.resolve(),
         matchSkins: [], preloadEyewearAssets: noop, matchEyewear: [], playerGloveId: hasSelection ? 'luvas-brasil' : null, charId: 'barbudo',
-        preloadGloveAssets: ids => {
-          if (!equal(ids, ['barbudo'])) throw Error('Preload pediu corpo errado');
-          glovePromise = G.preloadGloveAssets(ids); return glovePromise;
+        captureGloveBarrier: promise => { gloveBarrier = promise; return promise; },
+        getGloveHandle: (id, skin) => {
+          if (id !== 'barbudo' || skin) throw Error('Preload pediu origem errada');
+          const handle = G.getGloveHandle(id, skin);
+          return handle && { preload() { glovePromise = handle.preload(); return glovePromise; } };
         },
         playerWeaponSkins: {}, preloadWeaponSkinCandidate: noop, playerKnifeSkinId: null, sfx: H.sfx,
         preloadMapProps: noop, mapPropIds: () => [], mapaPartida: {}, MOBILE_AUTO: true, preloadMapAmbientLife: noop,
@@ -355,13 +362,13 @@ async function worker(fixture, mutant) {
         recordMatchStats() {}, trainingEnabled: () => false, sendTrainingFrames() {}, window: globalThis, game: null,
       };
       const pending = new Function(...Object.keys(env), `return (async()=>{${block}\n})();`)(...Object.values(env));
-      await Promise.allSettled((loads || []).filter(p => p !== glovePromise));
+      await Promise.allSettled((loads || []).filter(p => p !== gloveBarrier));
       for (let i = 0; i < 30; i++) await Promise.resolve();
       await new Promise(r => setImmediate(r));
       if (glovePromise) await entered;
       if (unexpected.length) throw Error(`Falha inesperada de preload: ${unexpected.join(' | ')}`);
       const before = { births: born.length, cacheReady: G.hasGloveModel('barbudo'), gloveAtIO,
-        gloveCalled: Boolean(glovePromise), inBarrier: Boolean(glovePromise) && loads.includes(glovePromise) };
+        gloveCalled: Boolean(glovePromise), inBarrier: Boolean(glovePromise) && loads.includes(gloveBarrier) };
       if (fixture === 'cold') {
         check('C1', before.gloveCalled && before.inBarrier, before);
         check('C2', before.births === 0 && !before.cacheReady && before.gloveAtIO, before);
@@ -386,10 +393,10 @@ async function worker(fixture, mutant) {
 
 const INTERNAL = '--tp-worker-internal';
 const args = process.argv.slice(2);
-const workerEnv = ['COROSOLTO_TP_CASE', 'COROSOLTO_TP_MUTANT'].some(k => Object.hasOwn(process.env, k));
+const workerEnv = ['COROSOLTO_TP_CASE', 'COROSOLTO_TP_MUTANT', 'COROSOLTO_TP_NONCE'].some(k => Object.hasOwn(process.env, k));
 if (workerEnv || args.includes(INTERNAL)) {
   const fixture = process.env.COROSOLTO_TP_CASE, selected = process.env.COROSOLTO_TP_MUTANT;
-  if (!equal(args, [INTERNAL]) || !Object.hasOwn(CASES, fixture) || typeof selected !== 'string'
+  if (!/^[a-f0-9-]{36}$/.test(process.env.COROSOLTO_TP_NONCE || '') || !equal(args, [INTERNAL]) || !Object.hasOwn(CASES, fixture) || typeof selected !== 'string'
     || (selected && !Object.hasOwn(EXPECTED, selected))) {
     console.error('Entrada interna inválida: ambiente de worker não pode substituir o CLI público'); process.exit(2);
   }
@@ -408,13 +415,14 @@ try {
   const run = (selected) => {
     const failed = [];
     for (const [fixture, ids] of Object.entries(CASES)) {
+      const nonce = randomUUID();
       const p = spawnSync(process.execPath, [SELF, INTERNAL], { encoding: 'utf8', timeout: 60000, maxBuffer: 8 * 1024 * 1024,
-        env: { ...process.env, COROSOLTO_TP_CASE: fixture, COROSOLTO_TP_MUTANT: selected } });
+        env: { ...process.env, COROSOLTO_TP_CASE: fixture, COROSOLTO_TP_MUTANT: selected, COROSOLTO_TP_NONCE: nonce } });
       const lines = (p.stdout || '').split('\n').filter(l => l.startsWith(PREFIX));
       if (p.error || p.signal || lines.length !== 1) throw Error(`${fixture}: filho sem recibo único/status válido (${p.status}/${p.signal}); ${p.stderr?.slice(-900)}`);
       const data = JSON.parse(lines[0].slice(PREFIX.length));
       if (data.status === 'INFRA') throw Error(`${fixture}: ${data.error}`);
-      if (data.version !== 1 || data.fixture !== fixture || data.mutant !== selected || !equal(data.sources, report.sources)
+      if (data.version !== 1 || data.nonce !== nonce || data.fixture !== fixture || data.mutant !== selected || !equal(data.sources, report.sources)
         || !Array.isArray(data.rows) || !equal(data.rows.map(r => r.id), ids) || data.rows.some(r => typeof r.ok !== 'boolean')
         || !Array.isArray(data.loaded) || data.loaded.some(a => !a.url || !Number.isInteger(a.bytes) || !/^[a-f0-9]{64}$/.test(a.sha256))) throw Error(`${fixture}: protocolo/fonte/denominador divergente`);
       const red = data.rows.filter(r => !r.ok).map(r => r.id);

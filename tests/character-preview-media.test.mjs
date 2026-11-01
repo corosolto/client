@@ -11,7 +11,7 @@ function templateDecision(def,opts,{available=true,mutate=value=>value}={}){
   const end=source.indexOf('  const withWeapon =',start);
   assert.ok(start>=0&&end>start,'real GLB template boundary missing');
   return vm.runInNewContext(source.slice(start,end).replace('export ','')+'return template;\n}\nbuildCharacterModel(def,opts)',{
-    def,opts,_clips:{},_base:new Map([['barbudo',{kind:'base'}]]),_bodyOrigins:new WeakMap(),
+    def,opts,_clips:{},_base:new Map([['barbudo',{kind:'base'}]]),_bodyOrigins:new WeakMap(),gloveHandleFor:()=>null,
     _skins:new Map(available?[['lula-cyborg',{character:'barbudo',model:{kind:'skin'}}]]:[]),
   });
 }
@@ -81,7 +81,7 @@ function fixture({ lang = 'pt', reduced = false, compact = false, narrow = false
     updateHubTip(){},menuSetup:node('menu-setup'),setSetupStep(){},tabs:[],panes:{},mpPanel:node('mp-panel'),renderHubRanking(){},abrirMultiplayer(){},hubNavigate(){},location:{href:'https://fixture.invalid/'},CustomEvent:class{},
     tr:x=>x,FACTION_NAME:{},renderCharAttrs(){},sfxReady:Promise.resolve(),sfx:{characterVoice(){}},
     preloadCharacterAssets:()=>{preloads++;return preload();},hasModel:()=>modelAvailable,
-    preloadCosmeticAssets:async()=>{},preloadEyewearAssets:async()=>{},preloadWeapons:async()=>{},preloadWeaponSkinCandidate:async()=>{},
+    getGloveHandle:()=>Object.freeze({key:'fixture-origin',get ready(){return true;},preload:async()=>{}}),preloadCosmeticAssets:async()=>{},preloadEyewearAssets:async()=>{},preloadWeapons:async()=>{},preloadWeaponSkinCandidate:async()=>{},
     buildCharacterModel:(def,opts)=>{modelBuilds++;if(!templateDecision(def,opts,{available:cosmeticAvailable}))return null;return {group:{rotation:{},traverse(){}},mixer:{update(){}}};},snapThumb:()=>{thumbnailRenders++;return 'data:fixture';},
     selChar:base,syncHomeCharacter:()=>{homeRefreshes++;context.fixtureApi.pvSetChar(base);},hubRosterRender:()=>{},
   });

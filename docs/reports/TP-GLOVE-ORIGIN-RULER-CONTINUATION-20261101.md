@@ -1,73 +1,75 @@
-# Régua de origem TP — continuação R780
+# Origem de luvas TP — continuação R780 e instrumentação S4
 
-Objetivo integral: consistência de mapas/personagens/skins/movimento/arma/ADS,
-integração dos PRs e release/backend conforme ledger Root. Flávio/#1158 excluído;
-UI/redes depois. Root é único autor do runtime e publisher. Esta lane escreve só
-o instrumento isolado, sem crédito Native independente do plano S3 R687.
+Missão integral: mapas/personagens/skins/movimento/arma/ADS, PRs e release/backend
+pelo ledger Root. Flávio/#1158 excluído; UI/redes depois. Root é único writer do
+runtime/publisher. Esta lane é autora dos instrumentos e auxiliou R687: não é
+crítica Native independente da arquitetura/produto. Sem aceite artístico/MP/mobile.
 
-## Ponto e definição de pronto
+## Histórico preservado e ponto atual
 
-WT tp-glove-origin-runtime-r770-20261101, branch de mesmo nome com prefixo codex/,
-HEAD a4bb086b26d8b64e7a8ac70a10a7ce6e830f4e67. Parent contém fábrica S3 e reparo
-R771 da fixture de preview; runtime ainda F2. Somente este ledger e o novo
-`tools/eval/tp-glove-origin-check.mjs` foram escritos, sem package, produto,
-shipping manifest/GLB ou checkers S1/F2 antigos. Nenhuma fixture extra necessária.
+WT tp-glove-origin-runtime-r770-20261101, base4bacbacbd. Baseline R780 em a4bb086:
+RED/O1 FEATURE_ABSENT, exit1, Node22.23.4; imports/Game/GLTF reais, base24joints e
+Drip26joints. Sete casos UNRUN explícitos; sem GREEN parcial. Fonte/recibo originais
+continuam0444. PREP12/25/15/44 é histórica UNRUN, substituída pela lease8; não é
+gate extra. Root implementou S4 e corrigiu shim localThree R787 e Promise.allSettled
+no boot R790. Esta lane não escreveu produto/package/workflow/deps/manifests/assets.
 
-A PREP R770 de12fixtures/25cláusulas/15mutantes/44workers é proposta histórica
-UNRUN, **substituída** pela lease R780 mínima. Não existe gate adicional de25.
-O instrumento corrente define8cláusulas em8processos frescos:
+## Alteração dos instrumentos
 
-|ID|Escopo|
-|---|---|
-|O1|API por template efetivo ou null; handle frozen, key distinta base/Drip, ready getter booleano dinâmico; fallback/legado base|
-|O2|Manifest base antes de Drip; cargas frias/quentes, duas geometrias próprias e um I/O por origem|
-|O3|Ordem do manifest e dos atores invertida; mesmas garantias de frio/quente|
-|O4|Clone base com skin pedida ainda ausente conserva handle quando cache cosmético aquece; corpo novo usa Drip|
-|O5|Pedidos concorrentes por key e A→B→A; resposta B antes de A não troca família/corpo atual|
-|O6|Variante Drip ausente: manifesto uma vez, zero GLB errado, negativo estável20ensures|
-|O7|SHA cosmético diverge somente no último dígito: rejeição integral, zero I/O errado, estabilidade|
-|O8|Duas variantes elegíveis em packs distintos: rejeição mesmo com mesmo URL, zero I/O errado|
+- O1 passa a pre-carregar luva Barbudo pelo legado antes do corpo Barbudo, sem
+  aquecer Capitão. API pública retorna null sem template; legado funciona antes.
+- Régua S4 conserva oito cláusulas: handle frozen/ready dinâmico, duas origens e
+  ordens frio/quente, clone base que conserva handle, corpo novo Drip, A→B→A/join,
+  missing/SHA/duplicidade entre packs negativos. Fábrica e GLTF reais, candidato RAM.
+- Novo fixtures/tp-glove-origin-mutations.mjs define nove alterações na fonte real,
+  âncoras únicas, cópia glbchars única compartilhada por Game/preload, nonce/fontes/
+  recibos vinculados. CLI mutante roda nominal8 antes de mutante8, failset exato.
+- S1 reancorado em key/handle e chain real do main. Wrapper do recorte registra o
+  Promise externo na barreira e retorna a mesma instância; o interno de preload é
+  distinto e não é aguardado durante before. Novo body-preload-failfast restaura
+  só Promise.all do boot. C6 permanece literalmente igual à base.
+- F2 K1 evolui conforme contrato: manifesto1/GLB errado0/vinte ensures estáveis.
+  K2/K3 permanecem literalmente iguais. O nome CLI legado glove-availability agora
+  remove a demanda Game real; não finge testar hasModel. Sete mutantes reancorados.
+- K12: cacheBASE não aquece cacheDrip. A fixture agora aguarda o handleDrip real
+  antes de medir recusa no nascimento, preservando o predicado zero anexo/estável.
+- Preview: apenas contexto VM adaptado a gloveHandleFor/getGloveHandle, sem alterar
+  asserts. S1/F2 também vinculam nonce por invocação interna.
 
-Reusa Game, GLTFLoader, harness e fábrica oficiais. Fábrica gera manifest e GLB
-candidato em RAM uma vez; transporte interno para filho não escreve assets.
-Partes são conferidas por identidade da geometria realmente parsed, bones do
-clone, parent, IBMs, bindMatrix e bindMode. CPU1×1 não aprova pixels, fit ou MP.
-Continuidades de emote/recarga/fire/flinch/máscara/descarte serão comprovadas
-pelos checks S1 existentes após o produto, sem duplicar toda a matriz aqui.
+## Evidências e rejeições
 
-## Baseline anterior ao produto
+R780-FOLLOWUP: S4 nominal8/8+noveDETECTEDexatos; S1 nominal39cláusulas/11fixtures
++quinzeDETECTEDexatos. C6failfast dá somenteC6RED, sem INFRA: antesbirth1/cachefalse/
+sem pedido na barreira; allSettled nominalbirth0 e primeiro corpo pronto2partes.
 
-R780 BASELINE-V1, Node v22.23.4 pelo executável22 designado, exit1:
-RED/FEATURE_ABSENT, somente O1 false, sete fixtures dependentes UNRUN. Namespace
-importado com sucesso; Game e GLTF reais carregaram corpo base24joints e
-bolsonaro-drip26joints. Não é erro de importação, timeout, processo ou asset.
-Fábrica real gerou em memória candidato98328B SHA256
-3812b3ed50bac9d6fb2b7fdb6c5306d219345d896328610f0e8bb0da240db6e9.
-Sintaxe Node22 passou. Produto/fontes/manifest shipping ficaram byte exatos
-antes/depois; recibo contém hashes. Não há nominal8/8 nem detecção de mutante.
+F2V1 foi REJEITADA em dois controles: bypass com failset divergente e SHA cosmético
+sobrevivente, semK12RED. O pai recusou ambos com exit1/RED, nenhum crédito de kill.
+A causa de K12 era observação precoce de cache separado, corrigida na fixture sem
+mexer no produto. Bypass também deve reprovar K1 e K4 por I/O errado/por origem.
+F2V2 passou nominal12cláusulas/8fixtures+setecontroles exatos. K12nominal tem próprio
+preload resolvido, readyfalse/anexo0; retirar fullSHA dá readytrue/anexo errado e
+somenteK12RED. K2/K3 e C6 comparados literalmente com4bacbacbd: iguais.
 
-API ausente é observada por namespace/typeof, sem importar um named export
-inexistente. Esse modo só é permitido em O1 RED e jamais recebe GREEN parcial.
-Import/parse/processo/fonte/recibo inválido continua INFRA3. Cli inválido sai2;
-falha semântica sai1; GREEN0 só com as8fixtures e protocolo completo. Cada
-filho tem45s/paiporfilho60s. Não esperar URL não despachado evita transformar
-omissão semântica em timeout. Não há matriz de mutantes nesta entrega.
+Preview: 153/153, fail0 (contagem do TAP completo; a referência anterior40 era
+um controle diferente). Sete controles de CLI/nonce/drift/digest/âncoras zero-dupla
+passaram; são controles de INFRA/CLI, nunca kills. Fontes/runtime/manifests iguais
+em cada rodada. S1/S4/preview deV1 são reutilizados só por identidade literal;
+apenas F2 mudou paraV2. Nenhuma suite global/browser foi executada.
 
-## Contrato futuro e próximo passo
+Uma chamada GLM de INSTRUMENTO, diferente da revisão de produto de outra lane:
+OMP SDK zai/glm-5.3 low, tools0/MCPfalse, uma dispatch, sem retry/fallback/compaction,
+context154712B/oito pins, maxTokens solicitado6000. StopReasonlength em118.909s,
+somente thinking/sem resposta final: UNKNOWN, sem parecer/CLEAN. RAW/ANSWER0444
+antes de leitura; thinking não promovido e nenhuma segunda chamada. InputF2V1,
+portanto tampouco é revisão deV2.
 
-Root deve ler fonte inteiro e baseline congelado antes de escrever runtime.
-API: getGloveHandle(charId,skinId=null), handle frozen{key,get ready(),preload()}.
-Base publicada não tem source.kind; origem vem de path/SHA/family/char existente.
-K1 evolui explicitamente para demanda de manifesto1/GLB errado0/negativo estável;
-K2/K3 de recusa no setter/nascimento sem variante cosmética permanecem. Nenhum
-checker antigo foi editado. Reancoragem S1/F2 fica em lease posterior.
+## Próximo passo e limites
 
-Depois da implementação por Root: rebind de fontes e execução8/8; só então
-provas causais/negativos de protocolo, críticos independentes e integração do
-alias. As sete branches futuras deste checker estão somente syntax-checked e
-UNRUN, portanto ainda podem precisar de reparo de instrumento. Não inferir
-GREEN ou prontidão por este baseline RED correto. Git checkpoint não feito:
-lease proibiu Git/GH writes. Artefatos recuperáveis e fonte integral ficam em
-`audits/2026-10-31-visual-consistency/TP-GLOVE-ORIGIN-R780-*` no agregador.
-
-Root checkpoint R784: li o instrumento inteiro e a baseline real antes de alterar produto. Rebind de 17 referências sem drift, incluindo os três runtimes e ambos os manifestos. O1 reprova por API ausente; sete casos continuam UNRUN. O instrumento ainda não participa dos portões automáticos. A implementação, os mutantes e a aceitação visual continuam pendentes.
+Root deve ler seis fontes/deltas/recibos completos, obter crítica independente,
+integrar aliases/package/docs/CI (inclusive S4 e novo C6), checkpoint DCO/Agent e
+publicação normais. Tais escritas não eram autorizadas nesta lease; nenhum commit
+foi feito. Worker privado antigo sem nonce agora sai2 deliberadamente.
+Artefatos e snapshots recuperáveis no agregador audits/2026-10-31-visual-consistency/
+TP-GLOVE-ORIGIN-R780-FOLLOWUP-*. Baseline original imutável. Candidato não shipping;
+sem fit/z-fighting/dedos/pega/material, equipagem/persistência, MP ou mobile físico
+aprovados. S1 continua a prova de transientes, sem nova família cosmética25/44.

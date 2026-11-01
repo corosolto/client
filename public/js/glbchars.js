@@ -231,9 +231,9 @@ export async function preloadCosmeticAssets(ids = []) {
 
 /* LUVAS EM 3ª PESSOA (20/10): a fábrica já recortava a mão de cada personagem em
    `models/gloves/3p/`; aqui o pacote é re-bindado por nome de osso e pintado. */
-const _gloveMeshes = new Map();    // charId -> templates SkinnedMesh (ou null se não há pacote)
-const _gloveSources = new Map();
+const _gloveMeshes = new Map();
 const _gloveRequests = new Map();
+const _gloveHandles = new Map(), _gloveOrigins = new WeakMap();
 let _gloveManifest = null;
 function gloveManifest() {
   if (!_gloveManifest) _gloveManifest = fetch(assetUrl('data/gloves-manifest.json'))
@@ -241,53 +241,71 @@ function gloveManifest() {
     .catch(() => ({ packages: [] }));
   return _gloveManifest;
 }
-function glovePath(manifest, charId) {
+function glovePath(manifest, origin) {
+  const matches = [];
   for (const pack of manifest.packages || []) {
     if (pack.perspective !== '3p') continue;
-    const variante = (pack.sourceVariants || []).find((v) => (v.characterIds || []).includes(charId));
-    if (variante) {
-      const family = pack.skeletonFamily?.fingerprintSha256;
-      if (!/^[a-f0-9]{64}$/.test(family || '')) return null;
+    const family = pack.skeletonFamily?.fingerprintSha256;
+    if (!/^[a-f0-9]{64}$/.test(family || '')) continue;
+    for (const variante of pack.sourceVariants || []) {
       const source = variante.source;
-      const provenance = source && /^[a-f0-9]{64}$/.test(source.sha256 || '') && source.skeletonFamilySha256 === family
-        ? Object.freeze({ path: source.path, sha256: source.sha256, family }) : null;
-      return { url: `/models/gloves/3p/${variante.id}-${family.slice(0, 12)}.glb`, source: provenance };
+      if (!(variante.characterIds || []).includes(origin.character) || !/^[a-z0-9-]+$/.test(variante.id || '')
+        || source?.path !== origin.path || !/^[a-f0-9]{64}$/.test(source.sha256 || '')
+        || source.skeletonFamilySha256 !== family) continue;
+      const sameSource = origin.kind === 'cosmetic' ? source.sha256 === origin.sha256
+        : origin.kind === 'base' && /^[a-f0-9]{10}$/.test(origin.revision || '') && source.sha256.startsWith(origin.revision);
+      if (sameSource) matches.push({ url: `/models/gloves/3p/${variante.id}-${family.slice(0, 12)}.glb` });
     }
   }
-  return null;
+  return matches.length === 1 ? matches[0] : null;
 }
-export async function preloadGloveAssets(ids = []) {
-  const alvos = [...new Set(ids.filter((id) => GLB_CHARS.has(id) && !_gloveMeshes.has(id)))];
-  if (!alvos.length) return;
-  const manifest = await gloveManifest();
-  await Promise.all(alvos.map(async (id) => {
-    if (_gloveMeshes.has(id)) return;
-    if (_gloveRequests.has(id)) return _gloveRequests.get(id);
-    const request = (async () => {
-      const pack = glovePath(manifest, id);
-      if (!pack) { _gloveMeshes.set(id, null); return; }
-      try {
+function baseGloveOrigin(id) {
+  if (!GLB_CHARS.has(id)) return null;
+  const path = `models/characters/${id}.glb`;
+  return Object.freeze({ kind: 'base', character: id, path: `public/${path}`, revision: revDe(path) });
+}
+function gloveHandleFor(origin) {
+  if (!origin) return null;
+  const key = JSON.stringify([origin.kind, origin.character, origin.path, origin.kind === 'cosmetic' ? origin.sha256 : origin.revision]);
+  if (_gloveHandles.has(key)) return _gloveHandles.get(key);
+  const handle = Object.freeze({
+    key,
+    get ready() { return !!_gloveMeshes.get(key); },
+    preload() {
+      if (_gloveMeshes.has(key)) return Promise.resolve();
+      if (_gloveRequests.has(key)) return _gloveRequests.get(key);
+      const request = Promise.resolve().then(async () => {
+        const pack = glovePath(await gloveManifest(), origin);
+        if (!pack) { _gloveMeshes.set(key, null); return; }
         const g = await loadGLB(assetUrl(pack.url.replace(/^\//, '')));
         const meshes = [];
         g.scene.traverse((o) => { if (o.isSkinnedMesh) meshes.push(o); });
-        _gloveSources.set(id, pack.source);
-        _gloveMeshes.set(id, meshes.length ? meshes : null);
-      } catch (e) { _gloveMeshes.set(id, null); }
-    })().finally(() => _gloveRequests.delete(id));
-    _gloveRequests.set(id, request);
-    return request;
-  }));
+        _gloveMeshes.set(key, meshes.length ? meshes : null);
+      }).catch(() => _gloveMeshes.set(key, null)).finally(() => _gloveRequests.delete(key));
+      _gloveRequests.set(key, request);
+      return request;
+    },
+  });
+  _gloveHandles.set(key, handle);
+  _gloveOrigins.set(handle, origin);
+  return handle;
 }
-export function hasGloveModel(id) { return !!_gloveMeshes.get(id); }
+export function getGloveHandle(charId, skinId = null) {
+  const cosmetic = _skins.get(skinId);
+  const template = cosmetic?.character === charId ? cosmetic.model : _base.get(charId);
+  return gloveHandleFor(template && _bodyOrigins.get(template));
+}
+export async function preloadGloveAssets(ids = []) {
+  await Promise.all([...new Set(ids)].map(id => gloveHandleFor(baseGloveOrigin(id))?.preload()));
+}
+export function hasGloveModel(id) {
+  return !!gloveHandleFor(baseGloveOrigin(id))?.ready;
+}
 /* Anexa o pacote inteiro ao personagem JÁ CLONADO, ou recusa a família divergente. */
-function attachGloves(model, charId, gloveSkinId, origin) {
+function attachGloves(model, gloveSkinId, handle) {
   const estilo = gloveSkinStyle(gloveSkinId);
-  const templates = _gloveMeshes.get(charId);
-  const source = _gloveSources.get(charId);
-  const matches = origin?.character === charId && source?.path === origin.path
-    && (origin.kind === 'cosmetic' ? source.sha256 === origin.sha256
-      : origin.kind === 'base' && /^[a-f0-9]{10}$/.test(origin.revision || '') && source.sha256.startsWith(origin.revision));
-  if (!estilo || !templates || !matches) return null;
+  const templates = handle && _gloveOrigins.has(handle) ? _gloveMeshes.get(handle.key) : null;
+  if (!estilo || !templates) return null;
   let corpo = null;
   model.traverse((o) => { if (!corpo && o.isSkinnedMesh) corpo = o; });
   if (!corpo) return null;
@@ -564,10 +582,11 @@ export function buildCharacterModel(def, opts = {}) {
   if (!template || !_clips) return null;
   const bodyOrigin = _bodyOrigins.get(template);
   const withWeapon = opts.weapon !== false; // menu showcase passes weapon:false
+  const gloveHandle = gloveHandleFor(bodyOrigin);
 
   const model = skeletonClone(template);
   // Luva equipada: entra ANTES do passe de materiais para herdar sombra/rim como o corpo.
-  let gloveMeshes = opts.gloveSkinId ? attachGloves(model, def.id, opts.gloveSkinId, bodyOrigin) || [] : [];
+  let gloveMeshes = opts.gloveSkinId ? attachGloves(model, opts.gloveSkinId, gloveHandle) || [] : [];
 
   // Normalize: scale to target height, drop feet to y=0, apply facing fix.
   // Update world matrices first so the bounding box reflects the real transforms.
@@ -937,7 +956,7 @@ export function buildCharacterModel(def, opts = {}) {
     ctrl.tpMount.pegadaAtiva = true;
     orientTpMount(ctrl.tpMount);
   }
-  return { group, parts: { head }, isGLB: true, mixer, ctrl, skinId: skin ? def.skinId : null,
+  return { group, parts: { head }, isGLB: true, mixer, ctrl, skinId: skin ? def.skinId : null, gloveHandle,
     setGloveSkin(id) {
       const removed = gloveMeshes;
       for (const mesh of removed) {
@@ -945,7 +964,7 @@ export function buildCharacterModel(def, opts = {}) {
         mesh.material.dispose();
         mesh.skeleton.dispose();
       }
-      gloveMeshes = attachGloves(model, def.id, id, bodyOrigin) || [];
+      gloveMeshes = attachGloves(model, id, gloveHandle) || [];
       for (const mesh of gloveMeshes) {
         const rawMaterial = mesh.material;
         finishMesh(mesh);

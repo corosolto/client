@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { MUTANTS, mutateOriginSources } from './fixtures/tp-glove-origin-mutations.mjs';
 
 const SELF = fileURLToPath(import.meta.url), ROOT = path.resolve(path.dirname(SELF), '../..');
 const PREFIX = 'TP-ORIGIN/1 ', INTERNAL = '--origin-worker-internal';
@@ -13,7 +14,7 @@ const CASES = { contract: 'O1', 'base-first': 'O2', 'drip-first': 'O3', 'live-bo
 const INPUTS = ['public/js/glbchars.js', 'public/js/game.js', 'public/js/main.js', 'public/js/data/assetver.js',
   'public/data/gloves-manifest.json', 'public/models/skins/manifest.json', 'tools/character-kit/gloves/core.mjs',
   'tools/character-kit/gloves/repository.mjs', 'tools/character-kit/gloves/cosmetic-selections.json',
-  'tools/eval/tp-glove-origin-check.mjs'];
+  'tools/eval/tp-glove-origin-check.mjs', 'tools/eval/fixtures/tp-glove-origin-mutations.mjs'];
 const sha = b => createHash('sha256').update(b).digest('hex');
 const sources = () => Object.fromEntries(INPUTS.map(f => [f, sha(fs.readFileSync(path.join(ROOT, f)))]));
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -21,10 +22,10 @@ const must = (ok, why) => { if (!ok) throw Error(why); };
 const clone = v => JSON.parse(JSON.stringify(v));
 const pathname = u => new URL(String(u), 'http://fixture/').pathname;
 
-async function worker(fixture) {
-  const out = { schema: 'tp-origin/1', fixture, sources: sources(), rows: [], loaded: [], mode: 'FULL', status: 'INFRA' };
+async function worker(fixture, mutant) {
+  const out = { schema: 'tp-origin/1', fixture, mutant, applied: null, sources: sources(), rows: [], loaded: [], mode: 'FULL', status: 'INFRA' };
   const games = [], tasks = [], parts = new Map(), calls = new Map(), released = new Set(), gates = new Map();
-  let manifestCalls = 0;
+  let manifestCalls = 0, tmp;
   const holding = ['base-first', 'drip-first', 'live-body', 'race'].includes(fixture);
   const release = url => { released.add(url); for (const resolve of gates.get(url) || []) resolve(); };
   const releaseAll = () => { for (const url of gates.keys()) release(url); };
@@ -91,10 +92,36 @@ async function worker(fixture) {
         await new Promise(r => setImmediate(r));
       }
     };
-    const G = await import('../../public/js/glbchars.js');
-    const actual = await import('../../public/js/game.js');
+    let G, actual;
+    if (mutant) {
+      const js = path.join(ROOT, 'public/js');
+      const original = Object.fromEntries(['glbchars.js', 'game.js'].map(file => [file, fs.readFileSync(path.join(js, file), 'utf8')]));
+      const changed = mutateOriginSources(original, mutant);
+      const absolute = source => source.replace(/(from\s*['"]|import\s*\(\s*['"])(\.[^'"]+)(['"])/g,
+        (_, a, spec, z) => a + new URL(spec, pathToFileURL(path.join(js, 'module.js'))).href + z);
+      tmp = fs.mkdtempSync(path.join(ROOT, 'node_modules', '.tp-origin-'));
+      const gf = path.join(tmp, 'glbchars.mjs'), gm = path.join(tmp, 'game.mjs');
+      fs.writeFileSync(gf, absolute(changed['glbchars.js']));
+      must(changed['game.js'].split("'./glbchars.js'").length === 2, 'Game must import glbchars once');
+      fs.writeFileSync(gm, absolute(changed['game.js'].replace("'./glbchars.js'", JSON.stringify(pathToFileURL(gf).href))));
+      out.applied = Object.fromEntries(Object.entries(changed).map(([file, source]) => [file, sha(source)]));
+      G = await import(pathToFileURL(gf).href); actual = await import(pathToFileURL(gm).href);
+    } else {
+      G = await import('../../public/js/glbchars.js'); actual = await import('../../public/js/game.js');
+    }
     const api = typeof G.getGloveHandle === 'function';
     const beforeBody = api ? G.getGloveHandle('capitao') : null;
+    let legacyBeforeBody = null;
+    if (api && fixture === 'contract') {
+      const matches = manifest.packages.filter(p => p.perspective === '3p').flatMap(p => p.sourceVariants.filter(v =>
+        v.characterIds.includes('barbudo') && v.source.path === 'public/models/characters/barbudo.glb'));
+      must(matches.length === 1 && !G.hasModel('barbudo') && !G.hasModel('capitao'), 'legacy cold-body precondition');
+      const url = '/' + matches[0].mesh.path.replace(/^public\//, '');
+      const publicBefore = G.getGloveHandle('barbudo');
+      await G.preloadGloveAssets(['barbudo']); await settle();
+      legacyBeforeBody = { publicNull: publicBefore === null, bodyStillAbsent: !G.hasModel('barbudo'),
+        capitaoStillAbsent: !G.hasModel('capitao'), ready: G.hasGloveModel('barbudo'), calls: calls.get(url) || 0 };
+    }
     await G.preloadCharacterAssets(['barbudo'], { weapons: ['pistol'] });
     if (!['missing', 'mismatch', 'duplicate'].includes(fixture)) await G.preloadCharacterAssets(['capitao'], { weapons: ['pistol'] });
     if (fixture !== 'live-body') await G.preloadCosmeticAssets(['bolsonaro-drip']);
@@ -134,8 +161,9 @@ async function worker(fixture) {
         && typeof h.ready === 'boolean' && typeof Object.getOwnPropertyDescriptor(h, 'ready')?.get === 'function';
       const cold = shape(base) && shape(drip) && base.key !== drip.key && !base.ready && !drip.ready;
       if (base && drip) await Promise.all([base.preload(), drip.preload()]); await settle();
-      check(beforeBody === null && cold && base?.ready && drip?.ready && G.hasGloveModel('capitao')
-        && G.getGloveHandle('capitao', 'missing-skin')?.key === base.key, { beforeBody, cold, baseReady: base?.ready, dripReady: drip?.ready });
+      check(beforeBody === null && legacyBeforeBody?.publicNull && legacyBeforeBody.bodyStillAbsent && legacyBeforeBody.capitaoStillAbsent
+        && legacyBeforeBody.ready && legacyBeforeBody.calls === 1 && cold && base?.ready && drip?.ready && G.hasGloveModel('capitao')
+        && G.getGloveHandle('capitao', 'missing-skin')?.key === base.key, { beforeBody, legacyBeforeBody, cold, baseReady: base?.ready, dripReady: drip?.ready });
     } else if (fixture === 'base-first' || fixture === 'drip-first') {
       const order = fixture === 'base-first' ? [null, 'bolsonaro-drip'] : ['bolsonaro-drip', null];
       const actors = order.map(skin => boot(skin)); await settle();
@@ -176,22 +204,25 @@ async function worker(fixture) {
     out.status = out.rows.every(r => r.ok) ? 'GREEN' : 'RED';
   } catch (e) { out.status = 'INFRA'; out.error = String(e.stack || e); }
   finally {
-    releaseAll(); for (const g of games) g.dispose(); clearTimeout(deadline);
+    releaseAll(); for (const g of games) g.dispose(); if (tmp) fs.rmSync(tmp, { recursive: true, force: true }); clearTimeout(deadline);
   }
   console.log(PREFIX + JSON.stringify(out)); process.exit(out.status === 'INFRA' ? 3 : out.status === 'GREEN' ? 0 : 1);
 }
 
-const args = process.argv.slice(2), hasWorkerEnv = ['CSBR_ORIGIN_CASE', 'CSBR_ORIGIN_NONCE'].some(k => Object.hasOwn(process.env, k));
+const args = process.argv.slice(2), hasWorkerEnv = ['CSBR_ORIGIN_CASE', 'CSBR_ORIGIN_NONCE', 'CSBR_ORIGIN_MUTANT'].some(k => Object.hasOwn(process.env, k));
 if (hasWorkerEnv || args.includes(INTERNAL)) {
   if (!same(args, [INTERNAL]) || !Object.hasOwn(CASES, process.env.CSBR_ORIGIN_CASE) || !/^[a-f0-9-]{36}$/.test(process.env.CSBR_ORIGIN_NONCE || '')) process.exit(2);
-  await worker(process.env.CSBR_ORIGIN_CASE);
+  const selected = process.env.CSBR_ORIGIN_MUTANT;
+  if (typeof selected !== 'string' || (selected && !Object.hasOwn(MUTANTS, selected))) process.exit(2);
+  await worker(process.env.CSBR_ORIGIN_CASE, selected);
 }
-let output;
+let output, mutant = '';
 for (const arg of args) {
-  if (!output && arg.startsWith('--json=') && path.isAbsolute(arg.slice(7))) output = arg.slice(7);
+  if (!mutant && arg.startsWith('--mutante=') && Object.hasOwn(MUTANTS, arg.slice(10))) mutant = arg.slice(10);
+  else if (!output && arg.startsWith('--json=') && path.isAbsolute(arg.slice(7))) output = arg.slice(7);
   else { console.error('CLI inválida; use --json=/caminho/absoluto'); process.exit(2); }
 }
-const report = { schema: 'tp-origin/1', at: new Date().toISOString(), node: process.version, sources: sources(), runs: [], unrun: [],
+const report = { schema: 'tp-origin/1', at: new Date().toISOString(), node: process.version, mutant, sources: sources(), runs: [], unrun: [],
   scope: 'actual Game/GLTF CPU; actual factory candidate in memory; no raster/fit/MP/mobile or production byte-hash certification' };
 try {
   must(process.versions.node.split('.')[0] === '22', 'Node22 required for comparable gate');
@@ -202,34 +233,45 @@ try {
   const relative = variants[0].mesh.path, bytes = built.artifacts.get(relative);
   must(bytes && sha(bytes) === variants[0].mesh.sha256, 'factory bytes/manifest mismatch');
   report.factory = { candidatePath: relative, candidateSha256: sha(bytes), candidateBytes: bytes.length, manifestSha256: sha(Buffer.from(JSON.stringify(built.manifest))) };
-  for (const [fixture, id] of Object.entries(CASES)) {
+  rounds: for (const selected of mutant ? ['', mutant] : ['']) for (const [fixture, id] of Object.entries(CASES)) {
     const nonce = randomUUID();
     const p = spawnSync(process.execPath, [SELF, INTERNAL], { encoding: 'utf8', timeout: 60000, maxBuffer: 2 * 1024 * 1024,
       input: JSON.stringify({ nonce, sources: report.sources, manifest: built.manifest, candidate: { path: relative, sha256: sha(bytes), base64: bytes.toString('base64') } }),
-      env: { ...process.env, CSBR_ORIGIN_CASE: fixture, CSBR_ORIGIN_NONCE: nonce } });
+      env: { ...process.env, CSBR_ORIGIN_CASE: fixture, CSBR_ORIGIN_NONCE: nonce, CSBR_ORIGIN_MUTANT: selected } });
     const lines = (p.stdout || '').split('\n').filter(l => l.startsWith(PREFIX));
     must(!p.error && !p.signal && lines.length === 1, `${fixture}: invalid child/unique receipt (${p.status}/${p.signal}) ${p.stderr?.slice(-700)}`);
     const data = JSON.parse(lines[0].slice(PREFIX.length));
     must(data.status !== 'INFRA', `${fixture}: ${data.error}`);
-    must(data.schema === report.schema && data.fixture === fixture && data.nonce === nonce && ['FULL', 'FEATURE_ABSENT'].includes(data.mode) && same(data.sources, report.sources)
+    must(data.schema === report.schema && data.fixture === fixture && data.mutant === selected && data.nonce === nonce && ['FULL', 'FEATURE_ABSENT'].includes(data.mode) && same(data.sources, report.sources)
       && same(data.factory, { manifestSha256: report.factory.manifestSha256, candidateSha256: report.factory.candidateSha256, candidatePath: report.factory.candidatePath })
       && Array.isArray(data.rows) && same(data.rows.map(r => r.id), [id]) && typeof data.rows[0].ok === 'boolean', `${fixture}: source/factory/row protocol mismatch`);
+    const original = Object.fromEntries(['glbchars.js', 'game.js'].map(file => [file, fs.readFileSync(path.join(ROOT, 'public/js', file), 'utf8')]));
+    const expectedApplied = selected ? Object.fromEntries(Object.entries(mutateOriginSources(original, selected)).map(([file, source]) => [file, sha(source)])) : null;
+    must(same(data.applied, expectedApplied), `${fixture}: mutation application mismatch`);
     const red = data.rows.some(r => !r.ok);
     must(p.status === (red ? 1 : 0) && data.status === (red ? 'RED' : 'GREEN'), `${fixture}: exit/semantic contradiction`);
     report.runs.push(data);
     if (data.mode === 'FEATURE_ABSENT') {
       must(fixture === 'contract' && red, 'feature-absent mode cannot satisfy other fixtures');
-      report.mode = 'FEATURE_ABSENT'; report.unrun = Object.keys(CASES).filter(f => f !== fixture); break;
+      report.mode = 'FEATURE_ABSENT'; report.unrun = Object.keys(CASES).filter(f => f !== fixture); break rounds;
     }
+    if (!selected && fixture === Object.keys(CASES).at(-1) && report.runs.some(r => r.rows.some(row => !row.ok))) break rounds;
   }
   must(same(sources(), report.sources), 'source changes during run');
-  report.failed = report.runs.flatMap(r => r.rows.filter(x => !x.ok).map(x => x.id));
-  report.status = report.failed.length ? 'RED' : 'GREEN';
-  must(report.status !== 'GREEN' || report.runs.length === Object.keys(CASES).length, 'partial proof cannot be GREEN');
+  report.nominalFailed = report.runs.filter(r => !r.mutant).flatMap(r => r.rows.filter(x => !x.ok).map(x => x.id));
+  report.failed = mutant ? report.runs.filter(r => r.mutant === mutant).flatMap(r => r.rows.filter(x => !x.ok).map(x => x.id)) : report.nominalFailed;
+  report.expected = mutant ? MUTANTS[mutant].failed : [];
+  if (mutant) {
+    must(!report.nominalFailed.length && report.runs.length === 2 * Object.keys(CASES).length, 'nominal/complete matrix required before mutation credit');
+    report.status = same(report.failed, report.expected) ? 'DETECTED' : 'RED';
+  } else {
+    report.status = report.failed.length ? 'RED' : 'GREEN';
+    must(report.status !== 'GREEN' || report.runs.length === Object.keys(CASES).length, 'partial proof cannot be GREEN');
+  }
 } catch (e) { report.status = 'INFRA'; report.error = String(e.stack || e); }
 if (output) {
   try { fs.writeFileSync(output, JSON.stringify(report, null, 2) + '\n'); }
   catch (e) { report.status = 'INFRA'; report.error = `receipt write: ${e.message}`; }
 }
-console.log(JSON.stringify({ status: report.status, mode: report.mode || 'FULL', failed: report.failed || [], cases: report.runs.length, unrun: report.unrun, error: report.error }));
-process.exit(report.status === 'INFRA' ? 3 : report.status === 'GREEN' ? 0 : 1);
+console.log(JSON.stringify({ status: report.status, mode: report.mode || 'FULL', mutant, failed: report.failed || [], expected: report.expected, cases: report.runs.length, unrun: report.unrun, error: report.error }));
+process.exit(report.status === 'INFRA' ? 3 : ['GREEN', 'DETECTED'].includes(report.status) ? 0 : 1);
