@@ -82,3 +82,19 @@ Próximo: Root lê/rebinda e adota a composição após seu ciclo de #1208, trat
 roda gates de integração e solicita review do head atual. Sem browser/headless,
 build/suíte global, nova CI, publicação, aceite de arte/anatomia/contato, movimento,
 MP, mobile físico ou release nesta lease. HEAD deve ficar estável até handoff.
+
+## Root R910: adoção e validação local
+
+Root leu integralmente o relatório e o diff whole R897, conferiu 145 pins de
+fonte/asset/artefato sem drift e cinco arquivos protegidos byte-exatos à staging
+7cb43e7. Adotou 330a6c1 via fast-forward no W821 preservando os dois pais.
+Node22: 19 focais PASS em2,415s; controlador privado PASS em10,283s; estrito
+26armas/40rotas PASS em1,467s, sem stderr. Catálogo privado generated igual
+ao contrato R826. Recibos externos VM-HANDS-HOOKS-ROOT-R910-{REBIND,ADOPTION}.json
+e três pares stdout/stderr. Nenhum GLB copiado ou alterado.
+
+A dívida RIG da pistola pintada permanece; censo anatômico read-only R909 é
+outra investigação e não muda este resultado. Antes do próximo push normal,
+incorporar o retry corrente #1208 e a correção isolada R906 do alias grafite.
+Depois recolher review formal do head publicado e crítico whole independente.
+Ainda sem aceite Game3:2, anatomia/contato, MP humano ou mobile físico.
