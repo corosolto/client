@@ -2152,6 +2152,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
         preloadCosmeticAssets(matchSkins),
         preloadEyewearAssets(matchEyewear),
+        playerGloveId ? preloadGloveAssets([charId]) : null,
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
         playerKnifeSkinId ? preloadWeaponSkinCandidate(playerKnifeSkinId) : null,
         sfx.preloadWeaponSamples(_armasDaPartida),

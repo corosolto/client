@@ -3510,7 +3510,7 @@ export class Game {
       // GLB clones share geometry with the cached template — never dispose it here.
       if (!swapBot.mesh.isGLB) swapBot.mesh.group.traverse(o => { if (o.geometry) o.geometry.dispose(); });
       const veste = this._defNoLado(newDef, oldTeam);
-      swapBot.mesh = buildCharacterModel(veste) || buildCharacter(veste);
+      swapBot.mesh = buildCharacterModel(veste, { weaponId: swapBot.weapon }) || buildCharacter(veste);
       swapBot.mesh.group.traverse(o => { o.userData.botOwner = swapBot; });
       this.scene.add(swapBot.mesh.group);
       swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot.alive = true;
@@ -6754,7 +6754,7 @@ export class Game {
     if (this.playerTP && !weaponChanged && !wantUpgrade) return;
     // Tenta o GLB (grip real). Se ainda não carregou e já temos algo, mantém o atual —
     // evita reconstruir o box a cada frame enquanto os clips não chegam.
-    const glb = buildCharacterModel(def, { weaponId: w, weaponSkinId: skinTP });
+    const glb = buildCharacterModel(def, { weaponId: w, weaponSkinId: skinTP, gloveSkinId: this.playerGloveId });
     if (!glb && this.playerTP && !weaponChanged) return;
     if (this.playerTP && this.playerTP.group) {
       this.scene.remove(this.playerTP.group);
