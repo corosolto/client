@@ -516,6 +516,27 @@ class FavelaAmbience {
     animal.root.rotation.y = current + THREE.MathUtils.clamp(delta, -step, step);
   }
 
+  _recoverCuratedQuad(animal, target, routeDirection, speed, dt) {
+    // O lerp de dois segundos arrastava o corpo de lado após um susto lateral.
+    // Nas três instâncias curadas, o retorno segue o rumo real e a velocidade de caminhada.
+    const offset = target.clone().sub(animal.root.position), distance = offset.length();
+    const direction = distance > 1e-8 ? offset : routeDirection;
+    if (direction && direction.lengthSq() > 1e-16) {
+      const heading = Math.atan2(direction.x, direction.z);
+      this._turnQuad(animal, heading, dt);
+      const delta = heading - animal.root.rotation.y;
+      if (Math.abs(Math.atan2(Math.sin(delta), Math.cos(delta))) > 1e-9) return true;
+    }
+    if (distance > 1e-8) {
+      const step = speed * Math.max(0, Math.min(.05, Number.isFinite(dt) ? dt : 0));
+      animal.root.position.addScaledVector(offset, Math.min(distance, step) / distance);
+      return true;
+    }
+    animal.alertUntil = 0;
+    animal.recoverUntil = 0;
+    return false;
+  }
+
   _updateQuad(animal, dt) {
     const speed = animal.speed || QUAD_SPEED[animal.type] || QUAD_SPEED.dog;
     if (this.time < animal.alertUntil) {
@@ -549,7 +570,14 @@ class FavelaAmbience {
       moving = span > .05;
       direction = animal.origin.clone().sub(animal.to);
     }
-    const recovering = this._recoverToRoute(animal, animal.routine, 2);
+    const recovering = animal.turnRate && animal.alertUntil > 0
+      ? this._recoverCuratedQuad(animal, animal.routine, direction, speed.walk, dt)
+      : this._recoverToRoute(animal, animal.routine, 2);
+    if (animal.turnRate && recovering && animal.alertUntil > 0) {
+      animal.state = 'recover';
+      this._dogAction(animal, 'walk');
+      return;
+    }
     if (direction && direction.lengthSq() > .001) this._turnQuad(animal, Math.atan2(direction.x, direction.z), dt);
     animal.state = recovering ? 'recover' : moving ? 'walk' : 'idle';
     this._dogAction(animal, recovering || moving ? 'walk' : 'idle');

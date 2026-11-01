@@ -132,6 +132,25 @@ test('curated route turns happen during idle and flee waits for heading alignmen
  }
  assert.ok(walks>0&&flees>0&&turns>0);ambience.dispose();
 });
+test('curated recovery from a lateral threat turns before walking and rejoins the route',()=>{
+ const speed={walk:.55,flee:1.5};
+ const ambience=createFavelaAmbience(new THREE.Group(),{map:'recover-heading-contract',cats:[{pos:[0,0,0],to:[0,0,2],turnRate:6,speed}]});
+ const a=ambience.animals[0],origin=a.root.position.clone();ambience.onShot(origin.clone().add(new THREE.Vector3(1,0,0)),origin);
+ let frames=0,moving=0,sideways=0,maxStep=0,maxTurn=0,rejoined=false;
+ for(let i=0;i<1800;i++){
+  const previous=a.root.position.clone(),yaw=a.root.rotation.y;ambience.update(1/60,null);
+  if(a.state==='recover'){
+   frames++;const displacement=a.root.position.clone().sub(previous),step=displacement.length();maxStep=Math.max(maxStep,step);
+   maxTurn=Math.max(maxTurn,Math.abs(Math.atan2(Math.sin(a.root.rotation.y-yaw),Math.cos(a.root.rotation.y-yaw))));
+   if(step>1e-8){moving++;const heading=new THREE.Vector3(Math.sin(a.root.rotation.y),0,Math.cos(a.root.rotation.y));if(heading.dot(displacement.normalize())<1-1e-8)sideways++;}
+  }
+  if(frames&&a.alertUntil===0){rejoined=true;break;}
+ }
+ assert.ok(frames>0&&moving>0&&rejoined,'lateral recovery must complete');
+ assert.equal(sideways,0,'recovery translation must follow the body heading');
+ assert.ok(maxStep<=speed.walk/60+1e-9,'recovery keeps the authored walk speed');assert.ok(maxTurn<=6/60+1e-9);
+ ambience.dispose();
+});
 for(const low of [false,true])test(`curated ground fauna keeps a non-hittable contact shadow in ${low?'low':'full'} quality`,()=>{
  const ambience=createFavelaAmbience(new THREE.Group(),{map:'contact-fixture',low,cats:[{pos:[2,3,4],to:[2,3,5],contactShadow:true}]});
  const animal=ambience.animals[0],shadow=animal.root.getObjectByName('FAUNA_CONTACT_SHADOW');
