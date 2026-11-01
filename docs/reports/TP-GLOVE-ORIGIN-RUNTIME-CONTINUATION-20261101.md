@@ -114,3 +114,35 @@ normais, review formal do head publicado e crítico independente após bot limpo
 Browser/Game 3:2, material/contato/motion, mobile, MP humano, CI desta composição
 e release seguem sem medição nesta lease. A missão integral e a exclusão de
 #1158 permanecem; UI/social seguem para depois.
+
+
+## Composição S4 + Hands R951
+
+A worktree própria `s4-hands-composition-r951-20261101`, branch com prefixo
+`codex/`, parte de `5c458fa6817bfef7ca62587d49b32b31b86a64fb` e recebe por merge
+normal Hands `fc94596e3a80cf9c7d7ee4461382b5ac5f56f62c`. Merge automático, sem
+conflitos. Os dez caminhos de Hands foram importados; fora do package são
+literais do pai Hands. O package une os aliases sem chaves duplicadas e conserva
+os argumentos dos portões. Todo public/, inclusive os três JS de S4, permanece
+byte-exato ao pai 5c458fa. Não há Java nem reparo de pistola nesta composição.
+
+Node22: 19 focais de mãos PASS; controlador privado GREEN em 10,383s com sete
+corridas e failsets exatos; catálogo estrito GREEN em 1,540s, 26 armas/40 rotas,
+1.037 cláusulas, zero NÃO MEDIDA e zero vermelho novo. A dívida nomeada
+RIG:pistol@pintura/f468adc9279d continua. Luva-crua conserva 48 RED, incluindo
+12 MÃO4. A fonte privada foi somente generated no caminho autorizado, em
+leitura, sem copiar/montar/exportar GLBs; default AWP/SVD não foi usado.
+
+Grafite nominal PASS, mutante RED somente authored-batch-permission nos quatro
+lotes e alias PASS. População estrita e corpo legado foram recebidos literalmente.
+Manifesto nominal e origem S4 nominal GREEN; o alias de identidade completo não
+foi repetido porque seu código, alias e todo runtime permanecem iguais ao R928.
+Docs/arch e diff checks PASS. Nenhum checker, failset ou limiar foi alterado.
+
+Autoria de composição Codex; sem chamada GLM, por merge trivial. Não é crítica
+independente, aprovação artística, CI atual ou release. W770/W821 permanecem de
+Root. Evidências: A/S4-HANDS-COMPOSITION-R951-* na auditoria agregada. Próximo:
+Root lê/rebinda e adota esta composição, depois coordena publicação normal e os
+ciclos formal/whole no head publicado. Sem browser/headless/fullgate nesta lease;
+Game3:2, contato/material/motion, MP e mobile continuam pendentes. A missão
+integral, #1158 excluído, UI/social depois e owners preservados continuam.
