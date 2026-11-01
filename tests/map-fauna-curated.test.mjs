@@ -9,6 +9,12 @@ import { ESCADAO_AMBIENCE } from '../public/js/map_escadao.js';
 import { LAJES_AMBIENCE } from '../public/js/map_lajes_authored.js';
 import { createFavelaAmbience } from '../public/js/ambientlife.js';
 import { makeContactShadow } from '../public/js/contact-shadow.js';
+import { aguardarPreloads } from '../public/js/game.js';
+import { mapPropIds } from '../public/js/mapprops.js';
+import { snapshotPublicJs, startBootOrigin } from '../tools/eval/boot-network-origin.mjs';
+import { somaCargas, chaveDeCarga, JS_EXCLUSOS } from '../tools/eval/boot-overlay.mjs';
+import http from 'node:http';
+import { gzipSync, gunzipSync } from 'node:zlib';
 const read=path=>fs.readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const references=JSON.parse(read('tools/eval/map-fauna-curated.json'));
 const ambient=read('public/js/ambientlife.js'),main=read('public/js/main.js');
@@ -32,7 +38,7 @@ function mobileCalls(map,{source=main,ambientSource=ambient,next=false,mobileAut
  const calls=[],errors=[];
  const noop=()=>Promise.resolve();
  const context=vm.createContext({console:{error:(...a)=>errors.push(a),warn:(...a)=>errors.push(a)},Promise,Set,Math,
-  MAPS,MAP_PROPS:[],MOBILE_AUTO:mobileAuto,POINTER_COARSE:true,_vmStartWeapon:'ak',_armasDaPartida:['ak'],navOnly:false,_charsToLoad:[],matchSkins:[],matchEyewear:[],playerWeaponSkins:{},mapaPartida:map,
+  MAPS,mapPropIds,aguardarPreloads,playerKnifeSkinId:null,MAP_PROPS:[],MOBILE_AUTO:mobileAuto,POINTER_COARSE:true,_vmStartWeapon:'ak',_armasDaPartida:['ak'],navOnly:false,_charsToLoad:[],matchSkins:[],matchEyewear:[],playerWeaponSkins:{},mapaPartida:map,
   preloadAmbientLife:ids=>{calls.push([...ids]);return Promise.resolve();},
   preloadCharacterAssets:noop,preloadCosmeticAssets:noop,preloadEyewearAssets:noop,preloadWeaponSkinCandidate:noop,preloadMapProps:noop,preloadFPArms:noop,preloadAuthoredFamilies:noop,authoredBootFamilies:()=>[],sfx:{preloadWeaponSamples:noop},
   planoPreload:()=>({mapId:Object.keys(MAPS).find(id=>MAPS[id]===map),chars:[],weapons:[]}),GLB_CHARS:[],WEAPON_IDS:[],tr:x=>x,$:()=>null,LANG:'pt',textoProximo:()=>'',segundosAteVirada:()=>0,mpPararContagemProximo(){},mpContagemProximo:null,setInterval:()=>1,clearInterval(){},charWeapon:()=> 'ak',currentChar:'barbudo',comMapaCarregado:(_id,fn)=>Promise.resolve(fn(map)),defineSeedHavan:()=>Promise.resolve(map)});
@@ -128,61 +134,79 @@ test('actual browser collector sees extra target animals; restoring find is dete
  await assert.rejects(async()=>assert.equal((await collect(mutant)).animals.length,2));
 });
 
-function assertBootOverlay(source){
- const declaration=source.match(/const JS_LOCAIS = (\[[^;]+\]);/);assert.ok(declaration);
- const local=new vm.Script(declaration[1]).runInNewContext();
- const helper=main.match(/import \{ preloadMapAmbientLife \} from '\.\/([^']+)'/);assert.ok(helper);
- assert.ok(local.includes('js/'+helper[1]),'the actual new main import must resolve to the candidate provider');
- const shadow=ambient.match(/import \{ makeContactShadow \} from '\.\/([^']+)'/);assert.ok(shadow);
- assert.ok(local.includes('js/'+shadow[1]),'the candidate provider must resolve its new shadow dependency locally');
+const publicRoot=new URL('../public/',import.meta.url);
+function assertFaunaSnapshot(snapshot){
+ const entries=new Map(snapshot.entries.map(row=>[row.rel,row.body]));
+ for(const [source,name] of [[main,'preloadMapAmbientLife'],[ambient,'makeContactShadow']]){
+  const rel=source.match(new RegExp("import \\{ "+name+" \\} from '\\./([^']+)'"))?.[1];
+  assert.ok(rel,`actual ${name} import absent`);
+  assert.equal(entries.get('js/'+rel),read('public/js/'+rel),`candidate dependency ${rel} absent/stale`);
+ }
 }
-test('boot budget overlays the real new helper and shadow dependency with main',()=>assertBootOverlay(read('tools/eval/boot-orcamento-check.mjs')));
-test('omitting either new boot dependency is detected',()=>{
+const rawGet=url=>new Promise((resolve,reject)=>{
+ http.get(url,response=>{const chunks=[];response.on('data',chunk=>chunks.push(chunk));response.on('error',reject);
+  response.on('end',()=>resolve({status:response.statusCode,headers:response.headers,body:Buffer.concat(chunks)}));
+ }).on('error',reject);
+});
+async function withBootOrigin(options,run){
+ const errors=[],origin=await startBootOrigin({BASE:'http://127.0.0.1:1',snapshot:snapshotPublicJs(publicRoot),onError:e=>errors.push(e.message),...options});
+ try {const result=await run(origin);assert.deepEqual(errors,[]);return result;}finally{await origin.close();}
+}
+function charged(origin,rel){
+ assert.ok(!JS_EXCLUSOS.includes(rel),`${rel} must remain in ORC1`);
+ const url=origin.url+'/'+rel,local=origin.lookup(url);
+ return somaCargas({ate:[{url,bytes:0,fim:1,erro:null}],isentas:new Set(),sobrepostos:new Map([[chaveDeCarga(url),local.payloadBytes]])}).total;
+}
+test('boot snapshot includes the actual fauna provider and its new shadow dependency',()=>{
  const source=read('tools/eval/boot-orcamento-check.mjs');
+ assert.match(source,/SNAPSHOT=snapshotPublicJs\(PUBLIC_ROOT\)/);
+ assert.match(source,/startBootOrigin\(\{BASE,snapshot:SNAPSHOT/);
+ assertFaunaSnapshot(snapshotPublicJs(publicRoot));
+});
+test('omitting either dependency from the real boot snapshot is detected',()=>{
+ const snapshot=snapshotPublicJs(publicRoot);
  for(const rel of ['js/ambientlife.js','js/contact-shadow.js']){
-  assert.ok(source.includes("'"+rel+"'"));
-  assert.throws(()=>assertBootOverlay(source.replace("'"+rel+"', ",'')));
+  assert.ok(snapshot.entries.some(row=>row.rel===rel));
+  assert.throws(()=>assertFaunaSnapshot({...snapshot,entries:snapshot.entries.filter(row=>row.rel!==rel)}),/absent\/stale/);
  }
 });
-
-async function bootResponse(source){
- const start=source.indexOf('    await context.route(`**/${rel}*`, async (rota) => {');
- const end=source.indexOf('\n    });',start);assert.ok(start>=0&&end>start);
- const code=source.slice(start,end+'\n    });'.length);
- const localFunctionStart=source.indexOf('function serveLocalModule(');
- const localFunctionEnd=source.indexOf('\n}',localFunctionStart)+2;
- const helper=localFunctionStart>=0?source.slice(localFunctionStart,localFunctionEnd):'';
- let fulfilled;
- const context=vm.createContext({rel:'js/contact-shadow.js',corpo:'export const shadow = true;',
-  context:{route:async(_pattern,fn)=>fn({fetch:async()=>({status:()=>404}),fulfill:async options=>{fulfilled=options;}})}});
- await new vm.Script(helper+'\n(async()=>{'+code+'})()').runInContext(context);
- return fulfilled;
-}
-test('real boot overlay serves a new local module as JavaScript200 even when upstream is404',async()=>{
- const response=await bootResponse(read('tools/eval/boot-orcamento-check.mjs'));
- assert.equal(response.status,200);assert.equal(response.contentType,'text/javascript');assert.equal(response.body,'export const shadow = true;');
+test('boot origin serves local fauna JavaScript200 without consulting an upstream404',async()=>{
+ let requests=0;const upstream=http.createServer((_req,res)=>{requests++;res.writeHead(404);res.end('missing');});
+ await new Promise(resolve=>upstream.listen(0,'127.0.0.1',resolve));
+ const BASE='http://127.0.0.1:'+upstream.address().port;
+ try{
+  assert.equal((await rawGet(BASE+'/js/contact-shadow.js')).status,404);assert.equal(requests,1);
+  await withBootOrigin({BASE},async origin=>{
+   for(const rel of ['js/ambientlife.js','js/contact-shadow.js']){
+    const response=await rawGet(origin.url+'/'+rel),local=origin.lookup(origin.url+'/'+rel);
+    assert.equal(response.status,200);assert.match(response.headers['content-type'],/^text\/javascript/);
+    assert.equal(response.headers['content-encoding'],'gzip');assert.equal(gunzipSync(response.body).toString(),read('public/'+rel));
+    assert.equal(response.body.length,local.payloadBytes);assert.equal(charged(origin,rel),response.body.length);
+   }
+   assert.equal(requests,1,'local dependencies must not inherit upstream404');
+  });
+ }finally{await new Promise(resolve=>upstream.close(resolve));}
 });
-
-function bootBytes(source,corposLocais){
- const declaration=source.match(/const JS_LOCAIS = (\[[^;]+\]);/)[0];
- const start=source.indexOf('function bytesAntesDoPortao('),end=source.indexOf('\n}',start)+2;
- const helper=start>=0?source.slice(start,end):'';
- const expression=source.match(/    bytes: ([^\n]+),/)[1];
- const context=vm.createContext({Buffer,URL,corposLocais,ate:[{url:'https://fixture.invalid/js/ambientlife.js?v=hash',bytes:0},{url:'https://fixture.invalid/js/contact-shadow.js',bytes:0},{url:'https://fixture.invalid/models/props/chair.glb',bytes:17}]});
- return new vm.Script(declaration+'\n'+helper+'\nconst patchado = u => JS_LOCAIS.some(p => u.includes(p));\n'+expression).runInContext(context);
-}
-test('boot accounting charges local bodies and detects provider growth',()=>{
- const source=read('tools/eval/boot-orcamento-check.mjs');
- const bodies=new Map([['js/ambientlife.js','á'],['js/contact-shadow.js','shadow']]);
- const small=bootBytes(source,bodies);bodies.set('js/ambientlife.js','á'+'x'.repeat(100000));
- const large=bootBytes(source,bodies);assert.ok(large-small>=100000,'local provider growth must change ORC1');
- assert.equal(small,17+Buffer.byteLength('áshadow','utf8'));
+test('boot accounting charges compressed local provider growth',async()=>{
+ const noise=Array.from({length:2048},(_,i)=>createHash('sha256').update(String(i)).digest('hex')).join('');
+ const measure=transformJs=>withBootOrigin({transformJs},async origin=>{
+  const rel='js/ambientlife.js',local=origin.lookup(origin.url+'/'+rel),response=await rawGet(origin.url+'/'+rel);
+  assert.equal(response.body.length,gzipSync(Buffer.from(local.body),{level:9}).length);
+  assert.equal(charged(origin,rel),response.body.length);return charged(origin,rel);
+ });
+ const small=await measure((_rel,body)=>body),large=await measure((rel,body)=>rel==='js/ambientlife.js'?body+'\n/*'+noise+'*/':body);
+ assert.ok(large>small,`provider growth ignored: ${small}→${large}`);
 });
-
-test('boot response and local-byte omissions are caught causally',async()=>{
- const source=read('tools/eval/boot-orcamento-check.mjs');
- const badStatus=replaceOnce(source,'route.fulfill({ status: 200','route.fulfill({ status: 404');
- await assert.rejects(async()=>assert.equal((await bootResponse(badStatus)).status,200));
- const badCount=replaceOnce(source,"Buffer.byteLength(corposLocais.get(rel), 'utf8')","0 * Buffer.byteLength(corposLocais.get(rel), 'utf8')");
- assert.throws(()=>assert.equal(bootBytes(badCount,new Map([['js/ambientlife.js','á'],['js/contact-shadow.js','shadow']])),25));
+test('missing boot dependency and omitted payload charge fail their actual runtime contracts',async()=>{
+ const snapshot=snapshotPublicJs(publicRoot),entries=snapshot.entries.filter(row=>row.rel!=='js/contact-shadow.js');
+ const omitted={...snapshot,entries,fingerprint:createHash('sha256').update(JSON.stringify(entries)).digest('hex')};
+ await withBootOrigin({snapshot:omitted},async origin=>{
+  const response=await rawGet(origin.url+'/js/contact-shadow.js');
+  assert.equal(response.status,404);assert.throws(()=>assert.equal(response.status,200));
+ });
+ await withBootOrigin({},async origin=>{
+  const rel='js/contact-shadow.js',url=origin.url+'/'+rel,expected=origin.lookup(url).payloadBytes;
+  const missing=somaCargas({ate:[{url,bytes:0,fim:1,erro:null}],isentas:new Set(),sobrepostos:new Map()}).total;
+  assert.ok(expected>0);assert.throws(()=>assert.equal(missing,expected));
+ });
 });

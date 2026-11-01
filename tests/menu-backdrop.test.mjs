@@ -11,11 +11,11 @@ let backdropSource = source.slice(start, end + 2);
 const mutant = process.env.MENU_BACKDROP_MUTANT;
 if (mutant) {
   const original = backdropSource;
-  if (mutant === 'fauna-gates') backdropSource = backdropSource.replace('return propsReady.then', 'return Promise.all([propsReady, preloadMapAmbientLife(mapa)]).then');
+  if (mutant === 'fauna-gates') backdropSource = backdropSource.replace('preloadMapAmbientLife(mapa).then(rebuildCurrent)', 'return preloadMapAmbientLife(mapa).then(rebuildCurrent)');
   else if (mutant === 'stale-map') backdropSource = backdropSource.replace('if (seq === _menuLoadSeq && id === currentMap)', 'if (true)');
   else if (mutant === 'ignore-seq') backdropSource = backdropSource.replace('seq === _menuLoadSeq && ', '');
   else if (mutant === 'ignore-map') backdropSource = backdropSource.replace(' && id === currentMap', '');
-  else if (mutant === 'no-late-fauna') backdropSource = backdropSource.replace('preloadMapAmbientLife(mapa).then(rebuildCurrent)', 'preloadMapAmbientLife(mapa).then(() => {})');
+  else if (mutant === 'no-late-fauna') backdropSource = backdropSource.replace('.then(rebuildCurrent)', '');
   else throw new Error(`Unknown mutant: ${mutant}`);
   assert.notEqual(backdropSource, original, `Mutant must apply: ${mutant}`);
 }
@@ -58,15 +58,20 @@ test('ready props release the menu while decorative fauna is still pending', asy
   assert.deepEqual(w.rebuilt, ['a', 'a', 'a'], 'late fauna must still appear');
 });
 
-test('fauna starts only after props release the menu', async () => {
+test('decorative fauna is requested only after props are ready', async () => {
   const w = world(), run = w.load();
-  assert.equal(w.loads.has('rat'), false);
+  assert.equal(w.loads.has('rat'), false, 'fauna must not compete with pending props');
+  await flush();
   assert.equal(run.ready, false);
   w.loads.get('a:props').resolve();
   await flush();
   assert.equal(run.ready, true);
   assert.equal(w.loads.has('rat'), true);
   assert.deepEqual(w.rebuilt, ['a', 'a']);
+  assert.equal(w.loads.has('rat'), true, 'ready props must start the deferred fauna load');
+  w.loads.get('rat').resolve();
+  await flush();
+  assert.deepEqual(w.rebuilt, ['a', 'a', 'a']);
 });
 
 test('a failed optional fauna load does not discard ready scenery or reject entry', async () => {
@@ -95,6 +100,7 @@ test('old props and fauna cannot rebuild a newly selected map', async () => {
   const currentBuilds = [...w.rebuilt];
   w.loads.get('a:props').resolve();
   await flush();
+  assert.deepEqual(w.rebuilt, currentBuilds, 'old props must not redraw the selected map');
   w.loads.get('rat').resolve();
   await flush();
   assert.deepEqual(w.rebuilt, currentBuilds);
@@ -120,8 +126,13 @@ test('old callbacks from A cannot redraw after switching A to B and back to A', 
   const currentBuilds = [...w.rebuilt];
   assert.ok(currentBuilds.length > 0);
   oldProps.resolve();
+  await flush();
+  assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A props');
   oldFauna.resolve();
+  await flush();
+  assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A fauna');
   bProps.resolve();
+  await flush();
   bFauna.resolve();
   await flush();
   assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A');
@@ -133,7 +144,36 @@ test('callbacks cannot redraw when map changes without starting a new preload', 
   w.context.currentMap = 'b';
   w.loads.get('a:props').resolve();
   await flush();
+  assert.deepEqual(w.rebuilt, ['a'], 'old props must not redraw after selection changes');
   w.loads.get('rat').resolve();
   await flush();
   assert.deepEqual(w.rebuilt, ['a'], 'callbacks from the old map must not redraw after selection changes');
+});
+
+test('pending old props cannot redraw after A to B to A', async () => {
+  const w = world();
+  w.load();
+  const oldProps = w.loads.get('a:props');
+  w.context.currentMap = 'b';
+  w.load();
+  const bProps = w.loads.get('b:props');
+  w.context.currentMap = 'a';
+  w.load();
+  w.loads.get('a:props').resolve();
+  await flush();
+  w.loads.get('rat').resolve();
+  await flush();
+  const currentBuilds = [...w.rebuilt];
+  assert.ok(currentBuilds.length > 0);
+  oldProps.resolve();
+  await flush();
+  assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A props');
+  w.loads.get('rat').resolve();
+  await flush();
+  assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A fauna');
+  bProps.resolve();
+  await flush();
+  w.loads.get('bird').resolve();
+  await flush();
+  assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A');
 });
