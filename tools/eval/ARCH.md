@@ -368,6 +368,7 @@ Cobertura: **3864 de 9087 linhas (43%)** do `game.js` têm dono declarado. O res
 | 6220 | `_noteHit()` | 17 |
 | 6237 | `_deathFeedback()` | 45 |
 | 6282 | `_toggleCamView()` | 6 |
+| 6727 | `_swapShoulder()` | 7 |
 | 6288 | `setCamView()` | 19 |
 | 6307 | `_syncCamViewVis()` | 8 |
 | 6315 | `_ensurePlayerTP()` | 32 |
@@ -425,7 +426,6 @@ Cobertura: **3864 de 9087 linhas (43%)** do `game.js` têm dono declarado. O res
 | 8801 | `_updateHud()` | 122 |
 | 8923 | `update()` | 90 |
 | 9013 | `dispose()` | 53 |
-
 
 </details>
 
