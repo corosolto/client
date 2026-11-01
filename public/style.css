@@ -1013,10 +1013,12 @@ html[data-ui="legacy"] .char-spec small::before,html[data-ui="legacy"] .char-att
 .pv-equipment{position:absolute;bottom:var(--s-2);max-width:100%;display:flex;flex-direction:column;gap:var(--s-1);align-items:center;text-align:center;pointer-events:none}
 .pv-equipment span:not([hidden]){padding:var(--s-1) var(--s-2);background:var(--bg-900);color:var(--ink-100);font-size:var(--fs-100);border-radius:var(--s-1)}
 .pv-compact-portrait,.pv-compact-equipment{display:none}
+.hub-character .pv-equipment{display:none}
+.hub-character-card .pv-compact-equipment:not([hidden]){display:block}
+.hub-character-card .pv-compact-equipment{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 @media(max-width:760px),(pointer:coarse) and (max-height:560px){
   .hub-character-card .pv-compact-portrait:not([hidden]),.hub-character-card .pv-compact-equipment:not([hidden]){display:block}
   .hub-character-card #hub-character-crest{display:none}
-  .hub-character-card .pv-compact-equipment{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 }
 .pv-hints{display:flex;flex:0 0 auto;min-height:20px;align-items:center;gap:var(--s-5);font-family:var(--mono);font-size:var(--fs-50);
   letter-spacing:var(--tr-2);color:var(--ink-300)}

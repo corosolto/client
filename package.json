@@ -47,7 +47,7 @@
     "eval:unique-player": "node tools/eval/unique-player-check.mjs",
     "eval:funillobby": "node tools/eval/funil-lobby-check.mjs",
     "eval:login-prompt": "node tools/eval/login-prompt-check.mjs",
-    "eval:roster-skins": "node tools/eval/roster-skins-check.mjs && for m in sem-disponivel sem-aprovado sem-posse sem-desequipar sem-redesenho; do ! node tools/eval/roster-skins-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
+    "eval:roster-skins": "node tools/eval/roster-skins-check.mjs && for m in sem-disponivel sem-aprovado sem-posse sem-desequipar sem-redesenho sem-nome-skin; do ! node tools/eval/roster-skins-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
     "ops:test": "node --test tools/ops/tests/*.test.mjs",
     "ops:aquecer": "node tools/ops/aquecer.mjs",
     "eval:release": "node tools/eval/release-check.mjs",
