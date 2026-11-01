@@ -40,3 +40,7 @@ A descrição agora aponta para o contrato real nominal-first/failset/aplicaçã
 como o controlador Hands. Nenhum alias, worker, caso, scanner, teto ou produto
 foi alterado. A falha anterior permanece preservada, sem crédito de push verde.
 Próximo: herdar stagingatual/validarcomposição e repetir push normalsem bypass.
+
+RootR966: merge normal de staging0a28 (#1137 áudioPiscina) apósR963, automático
+semconflitos. Aliases/guardsHands mantidos; soundscape usa src/xyz recebido,
+semalterar sons/assets. MA1/soundscape/grafite/docs/archPASS. Próximo pushnormal.
