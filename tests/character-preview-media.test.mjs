@@ -10,6 +10,19 @@ const cyborg = { ...base, skinId: 'lula-cyborg' };
 const presentation = { id: 'lula-cyborg', name: 'Barbudo Cyborg', poster: '/img/skins/lula-cyborg.webp', video: { webm: '/video/skins/lula-cyborg.webm' } };
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
+const mediaRule=fs.readFileSync(new URL('../tools/eval/media-net-check.mjs',import.meta.url),'utf8');
+const playGuard=new vm.Script(mediaRule.slice(mediaRule.indexOf('const CATCH_DIRETO ='),mediaRule.indexOf('function arquivosJs('))
+  +mediaRule.slice(mediaRule.indexOf('function playGuardado('),mediaRule.indexOf('function corpoApi('))+'\nplayGuardado').runInNewContext();
+for(const [name,lines,expected] of [
+  ['await enclosed by catch',['try{await video.play();}catch{stop();return;}'],true],
+  ['await catch with binding',['try { await video.play(); } catch (error) { stop(); }'],true],
+  ['bare await',['await video.play();'],false],
+  ['missing catch',['try{await video.play();}finally{stop();}'],false],
+  ['unrelated catch',['try{other();}catch{} await video.play();'],false],
+  ['second unguarded play',['try{await video.play();}catch{} audio.play();'],false],
+  ['direct promise handler',['video.play().catch(()=>{});'],true],
+])test('media guard recognizes the actual containment: '+name,()=>assert.equal(playGuard(lines,0),expected));
+
 function fixture({ reduced = false, compact = false, narrow = false, lean = true, threeD = false, realModel = false, teamVisible = false, preload = () => Promise.resolve(), screen = 'selection', play = () => Promise.resolve(), mutate = value => value, pack = false, vibe = 'ak', paints = {ak:'ouro-ak'} } = {}) {
   let equippedSkin='lula-cyborg',homeRefreshes=0,rendererCalls=0,preloads=0,thumbnailRenders=0,modelBuilds=0,boxBuilds=0;
   const query=matches=>{const q=new EventTarget();q.matches=matches;q.change=value=>{q.matches=value;const event=new Event('change');event.matches=value;q.dispatchEvent(event);};return q;};
@@ -189,10 +202,16 @@ test('compact media assigns only the visible card and leaves the hidden hero wit
   assert.equal(f.node('hub-character-portrait').src,'');
   assert.equal(f.node('char-select-portrait').src,presentation.poster+'?v=fixture');
 });
-test('reduced motion freezes automatic 3D rotation and idle while retaining a rendered frame',()=>{
+test('3D preview retains the selected angle while idle animation advances',()=>{
+  const f=fixture({lean:false});let updates=0,renders=0;
+  const model={rotation:{y:0.73}};f.api.preview({model,ctrl:{update(){updates++;}},r:{render(){renders++;}}});
+  f.api.frame(0.05);f.api.frame(0.05);
+  assert.equal(model.rotation.y,0.73);assert.equal(updates,2);assert.equal(renders,2);
+});
+test('reduced motion stops idle while retaining the selected angle and a rendered frame',()=>{
   const f=fixture({lean:false});let updates=0,renders=0;
   const model={rotation:{y:0}};f.api.preview({model,ctrl:{update(){updates++;}},r:{render(){renders++;}}});
-  f.api.frame(0.05);assert.ok(model.rotation.y>0);assert.equal(updates,1);
+  f.api.frame(0.05);assert.equal(model.rotation.y,0);assert.equal(updates,1);
   const angle=model.rotation.y;f.reduceMotion();f.api.frame(0.05);
   assert.equal(model.rotation.y,angle);assert.equal(updates,1);assert.equal(renders,2);
 });
@@ -255,7 +274,7 @@ for(const [name,mutate,probe,options={}] of [
   ['selection opens after video setup',replace("show('char-select');\n    if (firstRow) selectChar(chars[0], firstRow);","if (firstRow) selectChar(chars[0], firstRow);\n    show('char-select');"),f=>{f.api.pickTeam('E');assert.equal(f.video.src,presentation.video.webm+'?v=fixture');},{screen:'team'}],
   ['hidden hero image still loads',replace('if(!previewHeroVisible()){','if(false){'),f=>{f.api.pvSetChar(base);assert.equal(f.node('char-preview-static').src,'');},{compact:true}],
   ['inactive compact card still loads',replace('if(!active){','if(false){'),f=>{f.api.pvSetChar(base);assert.equal(f.node('hub-character-portrait').src,'');},{compact:true}],
-  ['reduced motion still rotates 3D',replace('pv.travado || pvReducedMotion.matches ?','pv.travado ?'),f=>{const model={rotation:{y:0}};f.api.preview({model,r:{render(){}}});f.api.frame(0.05);assert.equal(model.rotation.y,0);},{reduced:true}],
+  ['idle overwrites the selected angle',replace('if (!pvReducedMotion.matches) { if (pv.ctrl)','pv.model.rotation.y += pvDt * 0.9; if (!pvReducedMotion.matches) { if (pv.ctrl)'),f=>{const model={rotation:{y:0}};f.api.preview({model,r:{render(){}}});f.api.frame(0.05);assert.equal(model.rotation.y,0);}],
   ['reduced motion still advances idle',replace('if (!pvReducedMotion.matches) { if (pv.ctrl)','if (true) { if (pv.ctrl)'),f=>{let updates=0;f.api.preview({model:{rotation:{y:0}},ctrl:{update(){updates++;}},r:{render(){}}});f.api.frame(0.05);assert.equal(updates,0);},{reduced:true}],
   ['late GLB mounts in a hidden preview',replace('if (my !== pvToken || !previewHeroVisible()) return;','if (my !== pvToken) return;'),async f=>{f.api.pvSetChar(base);f.show('team-select');await tick();assert.equal(f.modelBuilds(),0);},{lean:false,threeD:true,realModel:true}],
   ['late fallback mounts in a hidden preview',replace('if (my === pvToken && previewHeroVisible()) showBox();','if (my === pvToken) showBox();'),async f=>{f.api.pvSetChar(base);f.show('team-select');await tick();assert.equal(f.boxBuilds(),0);},{lean:false,threeD:true,realModel:true,preload:()=>Promise.reject(new Error('fixture failed'))}],

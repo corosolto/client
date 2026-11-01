@@ -4374,7 +4374,6 @@ function loop(agoraMs = performance.now()) {
   if (!splashAtiva) {
     if (pv && pv.model && previewModelActive(csOpen,hubPreviewOpen)) {
       const pvDt = pv.travado || pvReducedMotion.matches ? 0 : Math.min(0.05, dtReal);   // ?pvcam=maos congela pose e giro
-      if (!pvDrag && !pv.travado) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
       // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
       if (!pvReducedMotion.matches) { if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt); }
       pv.r.render(pv.scene, pv.cam);
