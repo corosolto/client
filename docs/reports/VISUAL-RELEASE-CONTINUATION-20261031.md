@@ -2,6 +2,100 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
+## Checkpoint R70 da composição antes do push, 01/11
+
+A composição local `d4a388648e7707695c42c7715a6be447247abef4` une
+`d7e10f141096dba5bb04bbb44f032283d2fcc663` e o checkpoint de preview
+`e35077009bdd927daf9081201bb23e76e1961037`. O tip atual de #1191,
+`2c09846fcaac62afbf4b4724a03955b7c3120e74`, entrou por bf3a; #1179
+`fd553b31`, #1190 affb e CU-8 permanecem ancestrais. QA/staging ainda
+publicam FAA8, recebido por push normal atômico com 107/107 em660,5s.
+Esta seção supera o estado pendente de R63; não afirma novo push ou release.
+
+O preview mantém identidade e mídia disponíveis, limpa recursos ocultos e
+não força render repetido quando a pose está travada ou em reduced-motion.
+O primeiro crítico focal encontrou R65-S1: o CSS do hero escondia o aviso
+quando GLB e ambos os retratos falhavam. O controle real de rede em Ego
+reproduziu o palco vazio. A correção exige estado de falha sem vídeo visível,
+restaura só o aviso e limpa esse estado em recuperação/seleção/navegação.
+A ordem reversa — vídeo válido primeiro e erro de retrato depois — foi
+reprovada no parcial e passou após a correção com o mesmo probe externo.
+R65 e R65B foram rejeitados por limite/guard; R65C terminou exit0 em32,236s.
+Produto e testes finais são exatos ao freeze GLM; Native apenas orquestração,
+ledger e verificação. Os dois asserts de contagem de render alterados emR64
+continuam qualificados, sem alegar preservação byte a byte desses asserts.
+
+No Ego real convidado, R69 conferiu treze estados PT/EN: canvas3D nominal,
+aviso visível com ancestral flex na falha controlada de três assets públicos,
+SHOP limpando estado/mídia, PLAY restaurando aviso e reload sem bloqueio
+recuperando o personagem. O retrato compacto carregou e foi limpo/restaurado.
+Root abriu as imagens. Reduced-motion produziu zero pixels alterados na
+região do personagem; o modo normal mudou. O ticker mudou o chrome, portanto
+não se afirma estabilidade da página inteira nem qualidade da animação.
+CRITICO-SKINS-OWNER1191-FIX-R69 leu todos os oito caminhos e fronteiras,
+conferiu88 logs e não encontrou P1/P2/P3. Root leu o parecer inteiro e
+conferiu133 vínculos sem divergência. Posse, compra/equip autenticados,
+vídeo de skin possuída, mobile físico e MP continuam sem prova real.
+
+A revisão atual do Estraga sobre FAA8,5726255656, teve seis observações,
+incluindo as filtradas. O diagnóstico numérico da faca usa o asset público e
+o caller real antes do mixer: vértices seguem o bind existente nas seis
+animações; deslocar causalmente a inverse-bind em0,5 rompe essa equivalência.
+Isso refuta o finding somente nesse asset/caller, sem regra geral de bind
+ou aceite artístico. Replies4434282473 e4434282631 refutam respectivamente
+o pin CSS e a inversão de absorção do colete; ambos os fios estão resolvidos.
+A tecla N de câmera permanece coerente com B de compra. A flash ganhou aviso
+local sem URL/erro bruto ou telemetria; o README histórico distingue p90/awp
+não pareados e os erros Astro das capturas AK. JSON e JPG originais continuam
+byteidênticos. CRITICO-REVIEW-OBSERVABILITY-R65 leu o delta completo e não
+achou P1/P2/P3; Root conferiu33 vínculos na adoção local. Nada disso antecipa
+a revisão atual do próximo head ou a crítica final de toda a PR.
+
+O pr-fast de FAA8 concluiu reguas e os quatro checks obrigatórios, incluindo
+build124742215641. O portão de browser falhou legitimamente em B9:
+Object.hasOwn ausente interrompia main.js:934. A chamada agora usa
+Object.prototype.hasOwnProperty.call, preservando own-null/undefined e o
+fallback de propriedade herdada/ausente. O anchor do mutante existente foi
+retargetado sem trocar sua asserção. R68 pareado viu um erro da origem do
+jogo antes e zero depois, com a mesma API ausente. Os mesmos cinco erros de
+extensões foram mantidos e atribuídos às origens chrome-extension, sem
+extensões desativadas ou erros engolidos. R66 inicial parou cedo numa
+extensão e não comprovou a atribuição ao jogo; o init inválido posterior foi
+rejeitado. O R70 repetiu no cliente combinado: clique normal, GLB visível,
+zero erros da origem do jogo/outros e cinco de extensões. Root abriu o PNG;
+isso é aceite focal de boot, sem alegação de browser globalmente sem erros.
+O B9 hospedado só será revalidado no novo head publicado.
+
+ROOT-COMPOSITION-SOURCES-R69 liga os onze caminhos combinados às fontes
+revisadas, com exceção de main/anchor equivalentes ao único delta de
+compatibilidade. A combinação passou153/153 preview e49/49 readiness em
+Node22/26. docs e arch foram regenerados sem diferença. Os controles e
+limites anteriores de mapas, CU-8 e consumidores CI continuam preservados.
+
+A fotografia MERGE-RELEASE-QUEUE-R66 acompanha31 PRs do recorte, excluindo
+Flávio antes de persistir. #1190 já está merged em staging. Main continua
+4cf8dd99; produção READY ainda é alpha133/49fd69f. O último workflow de
+release terminou com embarque/bump pulados, sem nova publicação. Javaporco
+#1160 e itens de outros owners continuam preservados. Não fechar PR ancestral
+nem inferir aprovação por checks verdes ou ausência de fios.
+
+A métrica M/U/P em docs/visual-consistency/METRICA.md continua orientando a
+missão completa. Campo tem piloto focal de acabamento, não aceite global de
+mapas. Faceting, palma de apoio, fidelidade global e leitura do padrão de
+luvas continuam dívidas. A fase0 R64 atribuiu três pontos da mancha creme ao
+repeat/accent da textura de base, com guards e limites de amostragem; não
+escolheu escala nem adotou asset/protótipo. Uma proposta GLM somente leitura
+investiga como restringir um futuro experimento à pistola E/default, sem
+alterar cuff/panel, outros personagens, rig, pose ou normal/bump. Sem gasto
+ou geração Mint. Fluxos UI/redes sociais continuam para a fase posterior.
+
+Próximo concreto: checkpoint e rebind completo; FF da QA e um push normal
+atômico QA/staging com107 serial, sem Ego concorrente. Depois review atual
+com todas as observações adjudicadas, CI/preview do mesmo SHA e crítico
+independente final de toda a PR após o bot. Só então merge elegível e release
+rastreável com tag, READY/servedSHA e smoke de produção. A missão integral
+permanece ativa/incompleta, com as exclusões da abertura.
+
 ## Checkpoint R63 antes do push composto, 01/11
 
 A composição local `4ffb6dccdaf9ed4c0fcff31d2cbc50950eb5e6cc` preserva
