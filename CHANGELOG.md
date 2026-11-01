@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.134`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.135`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -155,6 +155,40 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.135] — 2026-11-01
+
+### Mudado
+- fix: fauna curada 5 mapas/10 animais + censo honrado em mobile (follow-up #1192) (#1193)
+- Colete e capacete estilo CS (mecânica, sem loja) (#1159)
+- Adiciona a granada flash com cegueira estilo CS (#1163)
+- Tiro sai da boca da arma na tela (3P, bots, remotos, 1P) (#1164)
+- Ajusta a hitbox de cabeça à malha de cada personagem (#1166)
+- fix: preserva Arena nos três eventos de telemetria (#1195)
+- Quebrada: orientar fachadas e espaçar a vegetação (#1196)
+- fix: alinha origem dos efeitos ao cano físico da AK (#1194)
+- release: publicar fauna, Quebrada, AK e telemetria (#1199)
+- test(vm): rejeita amostra trocada após respawn
+- fix: valida grafites da Quebrada com a fauna integrada
+- fix: regenera grafites da Quebrada nas fachadas atuais
+- fix: mede placares da AK após calibrar a boca física
+- fix: cure manchas de mato nas vielas da Quebrada
+- test: recuse argumentos inválidos na telemetria
+- docs: registre validação da boca física da AK
+- fix: preserve modo Arena na telemetria
+- fix: ancora o flash da AK na face física do cano
+- test: rejeita prova vazia na régua da Quebrada
+- fix: orienta três casas para a viela da Quebrada
+- fix: keep curated fauna census under low quality on real devices
+- Align Escadao curated fauna with the rendered terrace
+- Expand curated fauna census to all cats and hens in five maps
+- Bind curated fauna to supported routes in three more maps
+- Fix authored fauna height during movement and recovery
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
 
 ## [2.1.0-alpha.134] — 2026-11-01
 
