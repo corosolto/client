@@ -220,7 +220,7 @@
     "grafite": "node tools/gen-graffiti-layout.mjs",
     "eval:grafitelayout": "node tools/eval/graffiti-layout-check.mjs",
     "//eval:grafite-fiel": "Assar o mesmo mapa duas vezes dá o mesmo grafite (#1109): G1 duas rodadas do gerador com checkpoint novo dão o layout byte a byte; G2 com um GLB derrubado o bake cancela e lista a falta, em vez de gravar outro layout. Precisa de BASE e navegador, como o gerador, por isso fica fora do check:fast. Mutantes: engole-falta.",
-    "eval:grafite-fiel": "node tools/eval/graffiti-bake-fiel-check.mjs && ! node tools/eval/graffiti-bake-fiel-check.mjs --mutante=engole-falta",
+    "eval:grafite-fiel": "node tools/eval/graffiti-bake-fiel-check.mjs && node tools/eval/mutante-semantico-proof.mjs grafite-fiel --mutante=engole-falta",
     "eval:audioalcance": "node tools/eval/audio-alcance-check.mjs",
     "eval:audioespacial": "node tools/eval/audio-espacial-check.mjs",
     "eval:audioenvelope": "node tools/eval/audio-envelope-check.mjs",
@@ -733,8 +733,6 @@
     "eval:economia": "node tools/eval/economia-check.mjs",
     "eval:economia-jogo": "node tools/eval/economia-jogo-check.mjs && node tools/eval/economia-jogo-mutants-check.mjs",
     "mut:flashbang": "node tools/eval/flashbang-mutate.mjs",
-    "//eval:grafite-fiel": "Assar o mesmo mapa duas vezes dá o mesmo grafite (#1109): G1 duas rodadas do gerador com checkpoint novo dão o layout byte a byte; G2 com um GLB derrubado o bake cancela e lista a falta, em vez de gravar outro layout. Precisa de BASE e navegador, como o gerador, por isso fica fora do check:fast. Mutantes: engole-falta.",
-    "eval:grafite-fiel": "node tools/eval/graffiti-bake-fiel-check.mjs && node tools/eval/mutante-semantico-proof.mjs grafite-fiel --mutante=engole-falta",
     "eval:boca-cano": "node tools/eval/boca-cano-check.mjs && node tools/eval/boca-cano-check.mjs --mutante=antigo && node tools/eval/boca-cano-check.mjs --mutante=centro-arma && node tools/eval/boca-cano-check.mjs --mutante=sem-norm",
     "//eval:boca-cano": "BC1-BC4 (Gustavo, 28/10): clarão e traçante nascem a ≤3 cm da boca da arma do corpo em 3ª pessoa, nos bots e nos remotos, e no mesmo pixel (≤2 px) da boca do viewmodel em 1ª pessoa. Mutantes antigo (?bocacano=0), centro-arma e sem-norm.",
     "//eval:movimento-fluidez": "MVF1 a MVF3: 90% da velocidade em 0,14 a 0,24 s, soltar dissipa 90% em 0,16 a 0,28 s e contra-strafe estabiliza em até 0,13 s. Mutante acel-dura restaura 92 m/s².",
@@ -757,8 +755,6 @@
     "eval:pichacao-parede": "node tools/eval/pichacao-parede-check.mjs --self-test",
     "eval:headshot-hitbox": "node tools/eval/headshot-hitbox-check.mjs && node tools/eval/headshot-hitbox-check.mjs --mutante=esfera && node tools/eval/headshot-hitbox-check.mjs --mutante=teto-antigo && node tools/eval/headshot-hitbox-check.mjs --mutante=mira-olho && node tools/eval/headshot-hitbox-check.mjs --mutante=yaw-humano",
     "eval:cabeca-malha": "node tools/eval/cabeca-malha-medir.mjs",
-    "//eval:tp-cosmetic-source": "Corpo efetivo e origem declarada das luvas; contrato em docs/visual-consistency/TP-COSMETIC-SOURCE.md.",
-    "eval:tp-cosmetic-source": "node tools/eval/tp-cosmetic-source-check.mjs && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-availability && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-source-bypass && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-origin-live && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-source-path && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-source-base-sha && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-source-cosmetic-sha && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-source-family",
     "//eval:tp-drip-source": "Fábrica Drip opt-in em memória: seleção explícita, atributos e bind preservados;7mutantes causais, controle de reindexação e2nominais. Não ativa variante distribuída nem aprova visual.",
     "eval:tp-drip-source": "node tools/eval/tp-drip-source-mutants.mjs",
     "//eval:character-normal-quality": "Normais dos quatro personagens revisados: fingerprint completo e continuidade dos grupos; contrato em docs/visual-consistency/NORMAIS-PERSONAGENS.md.",
@@ -799,7 +795,9 @@
     "eval:map-fauna-curated:runtime": "node tools/eval/map-fauna-curated-ci.mjs",
     "//eval:vm-maos-armas": "mãos do time iguais em toda arma (BUG-85, #1128): as 26 armas de WEAPON_IDS em cada rota servida (padrão e com pintura) e a faca, GLB real; identidade por facção e rig de mão da linha (A golden, K fábrica, L faca), com a pistola golden como dívida declarada de arte. Sem catálogo privado as rotas fab# saem NÃO MEDIDAS; eval:vm-maos-armas-catalogo as exige. Mutantes: luva-por-arma, pbr-por-arma, troca-rig, luva-crua, divida-paga",
     "eval:vm-maos-armas": "node tools/eval/vm-hand-continuity-check.mjs && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=luva-por-arma && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=pbr-por-arma && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=troca-rig --arma=m4 && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=troca-rig --arma=knife && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=luva-crua --arma=m4 && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=divida-paga",
-    "eval:vm-maos-armas-catalogo": "node --import ./tools/eval/vm-hand-three-register.mjs tools/eval/vm-hand-continuity-check.mjs --exigir-catalogo"
+    "eval:vm-maos-armas-catalogo": "node --import ./tools/eval/vm-hand-three-register.mjs tools/eval/vm-hand-continuity-check.mjs --exigir-catalogo",
+    "//eval:tp-cosmetic-source": "Corpo efetivo e origem declarada das luvas; contrato em docs/visual-consistency/TP-COSMETIC-SOURCE.md.",
+    "eval:tp-cosmetic-source": "node tools/eval/tp-cosmetic-source-check.mjs && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-availability && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-source-bypass && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-origin-live && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-source-path && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-source-base-sha && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-source-cosmetic-sha && node tools/eval/tp-cosmetic-source-check.mjs --mutante=glove-source-family"
   },
   "repository": {
     "type": "git",

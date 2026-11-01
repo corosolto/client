@@ -134,3 +134,19 @@ R961tentativademerge anteriorfoirecusada/nadaentrou e draftrestaurado.
 Próximo: Root lê delta/pins, adotaFFW600, gates/pushnormais/formalnovohead e
 wholeindependentedepoisbotlimpo. QA Game3:2/material/motion/mobile/MP/release
 permanecempendentes. Missãointegra/Flavioexcluído/UI-socialdepois preservados.
+
+## Root R982 — reconciliar o autofix remoto
+
+O remoto7544555e já havia integrado e1+staging0a em01/11/2026 20:17:58Z.
+Merge normal sobre b2 conserva ancestry do bot sem force/rebase. Public/ inteiro
+é byte-exato b2. O package do bot foi lido integralmente no diff: remove duas
+chaves grafite duplicadas e move aliases, mas o objeto JSON efetivo é exatamente
+igual ao package b2. Portanto a antiga dívida de duplicação foi removida pelo
+bot neste ramo; não se atribui nova autoria/prova causal a Root. Conflito só
+package foi resolvido com esses bytes remotos equivalentes e limpos.
+
+Docs/arch e diff verificados; nenhum focal longo repetido por layout JSON e
+ancestry. F2R965 mantém seu crédito no próprio head. Factory→S4→Java herdarão
+este merge; fullgate normal só no Java final e CI/formal/whole atuais porPR.
+Missão visual/release permanece ativa, Flavio1158 excluído, owners preservados;
+sem publicação/Game3:2/mobile/MP ou aceite de arte.
