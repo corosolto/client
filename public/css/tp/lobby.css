@@ -352,3 +352,9 @@
   :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card>.pv-compact-portrait:not([hidden]),
   :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card .pv-compact-equipment:not([hidden]){display:block}
 }
+@media(max-width:760px) and (max-height:560px){
+  :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card{position:fixed;top:var(--tp-lobby-topo);bottom:auto;left:var(--tp-lobby-margem);transform:none;
+    width:min(300px,calc(100vw - var(--tp-lobby-coluna) - 3 * var(--tp-lobby-margem)));max-width:none}
+  :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card>span{flex:1;gap:3px;overflow:hidden}
+  :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card strong{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
