@@ -16,6 +16,7 @@
 //   tuning ao vivo: ?charfloor= ?charfloorfar= ?charceil= ?charsat= ?rimnear= ?rimfar=
 import * as THREE from 'three';
 import { assetUrl } from './data/asseturl.js';
+import { revDe } from './data/assetver.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { buildRifle, CHAR_FX, charRimColor, upgradeCharMaterial, makeContactShadow } from './characters.js';
@@ -197,6 +198,7 @@ const TINT_3P = {
 let _clips = null;                 // { idle: AnimationClip, ... } shared fallback
 const _clipsByChar = {};           // id -> per-character retargeted clip set (fallback to _clips)
 const _base = new Map();           // id -> THREE.Object3D template scene
+const _bodyOrigins = new WeakMap();
 const _skins = new Map(), _skinRequests = new Map();
 let _skinManifest = null;
 export async function preloadCosmeticAssets(ids = []) {
@@ -209,6 +211,7 @@ export async function preloadCosmeticAssets(ids = []) {
     if (_skins.has(id)) return;
     if (_skinRequests.has(id)) return _skinRequests.get(id);
     const request = (async () => {
+      const origin = Object.freeze({ kind: 'cosmetic', character: entry.character, path: `public${entry.model}`, sha256: entry.sha256 });
       const g = await loadGLB(entry.model); let rigged = false;
       g.scene.traverse(o => { if (o.isSkinnedMesh && o.skeleton) rigged = true; });
       if (!rigged) throw new Error('skin_requires_rig');
@@ -219,6 +222,7 @@ export async function preloadCosmeticAssets(ids = []) {
       }
       const compatible = entry.rigCompatibleWith === entry.character;
       if (!compatible && !STATES.every(name => clips[name])) throw new Error('skin_requires_animations');
+      _bodyOrigins.set(g.scene, origin);
       _skins.set(id, {character:entry.character, model:g.scene, clips:compatible?null:clips,gripProfile:entry.gripProfile,metalFinish:entry.metalFinish});
     })().catch(e => console.warn(`[skins] ${id}: ${e.message}`)).finally(() => _skinRequests.delete(id));
     _skinRequests.set(id, request); return request;
@@ -228,6 +232,7 @@ export async function preloadCosmeticAssets(ids = []) {
 /* LUVAS EM 3ª PESSOA (20/10): a fábrica já recortava a mão de cada personagem em
    `models/gloves/3p/`; aqui o pacote é re-bindado por nome de osso e pintado. */
 const _gloveMeshes = new Map();    // charId -> templates SkinnedMesh (ou null se não há pacote)
+const _gloveSources = new Map();
 const _gloveRequests = new Map();
 export class GloveManifestUnavailable extends Error {
   constructor(cause) { super('gloves_manifest_unavailable'); this.cause = cause; this.reported = false; }
@@ -258,7 +263,14 @@ function glovePath(manifest, charId) {
   for (const pack of manifest.packages || []) {
     if (pack.perspective !== '3p') continue;
     const variante = (pack.sourceVariants || []).find((v) => (v.characterIds || []).includes(charId));
-    if (variante) return `/models/gloves/3p/${variante.id}-${pack.skeletonFamily.fingerprintSha256.slice(0, 12)}.glb`;
+    if (variante) {
+      const family = pack.skeletonFamily?.fingerprintSha256;
+      if (!/^[a-f0-9]{64}$/.test(family || '')) return null;
+      const source = variante.source;
+      const provenance = source && /^[a-f0-9]{64}$/.test(source.sha256 || '') && source.skeletonFamilySha256 === family
+        ? Object.freeze({ path: source.path, sha256: source.sha256, family }) : null;
+      return { url: `/models/gloves/3p/${variante.id}-${family.slice(0, 12)}.glb`, source: provenance };
+    }
   }
   return null;
 }
@@ -270,12 +282,13 @@ export async function preloadGloveAssets(ids = []) {
     if (_gloveMeshes.has(id)) return;
     if (_gloveRequests.has(id)) return _gloveRequests.get(id);
     const request = (async () => {
-      const url = glovePath(manifest, id);
-      if (!url) { _gloveMeshes.set(id, null); return; }
+      const pack = glovePath(manifest, id);
+      if (!pack) { _gloveMeshes.set(id, null); return; }
       try {
-        const g = await loadGLB(assetUrl(url.replace(/^\//, '')));
+        const g = await loadGLB(assetUrl(pack.url.replace(/^\//, '')));
         const meshes = [];
         g.scene.traverse((o) => { if (o.isSkinnedMesh) meshes.push(o); });
+        _gloveSources.set(id, pack.source);
         _gloveMeshes.set(id, meshes.length ? meshes : null);
       } catch (e) { _gloveMeshes.set(id, null); }
     })().finally(() => _gloveRequests.delete(id));
@@ -285,10 +298,14 @@ export async function preloadGloveAssets(ids = []) {
 }
 export function hasGloveModel(id) { return !!_gloveMeshes.get(id); }
 /* Anexa o pacote inteiro ao personagem JÁ CLONADO, ou recusa a família divergente. */
-function attachGloves(model, charId, gloveSkinId) {
+function attachGloves(model, charId, gloveSkinId, origin) {
   const estilo = gloveSkinStyle(gloveSkinId);
   const templates = _gloveMeshes.get(charId);
-  if (!estilo || !templates) return null;
+  const source = _gloveSources.get(charId);
+  const matches = origin?.character === charId && source?.path === origin.path
+    && (origin.kind === 'cosmetic' ? source.sha256 === origin.sha256
+      : origin.kind === 'base' && /^[a-f0-9]{10}$/.test(origin.revision || '') && source.sha256.startsWith(origin.revision));
+  if (!estilo || !templates || !matches) return null;
   let corpo = null;
   model.traverse((o) => { if (!corpo && o.isSkinnedMesh) corpo = o; });
   if (!corpo) return null;
@@ -311,7 +328,7 @@ function attachGloves(model, charId, gloveSkinId) {
 }
 
 
-export function hasModel(id) { return _base.has(id); }
+export function hasModel(id, skinId) { return _base.has(id) || _skins.get(skinId)?.character === id; }
 // Acesso ao template já carregado (fparms.js clona daqui p/ os braços de 1ª pessoa)
 // e aos clipes compartilhados (pose base congelada). Pré-requisito: preloadCharacterAssets.
 export function getCharTemplate(id) { return _base.get(id); }
@@ -486,7 +503,10 @@ export async function preloadCharacterAssets(ids, opts = {}) {
   const wanted = [...new Set(ids)].filter((id) => GLB_CHARS.has(id) && !_base.has(id));
   await Promise.all(wanted.map(async (id) => {
     try {
-      const g = await loadGLB(assetUrl(`models/characters/${id}.glb`));
+      const path = `models/characters/${id}.glb`;
+      const origin = Object.freeze({ kind: 'base', character: id, path: `public/${path}`, revision: revDe(path) });
+      const g = await loadGLB(assetUrl(path));
+      _bodyOrigins.set(g.scene, origin);
       _base.set(id, g.scene);
     } catch (e) { console.warn('model load failed', id, e); }
     // Clipes retargetados POR PERSONAGEM (models/anims/<id>/): cada rig do Meshy tem
@@ -560,11 +580,12 @@ export function buildCharacterModel(def, opts = {}) {
   if (opts.preview && def.skinId && !skin) return null;
   const template = skin?.model || _base.get(def.id);
   if (!template || !_clips) return null;
+  const bodyOrigin = _bodyOrigins.get(template);
   const withWeapon = opts.weapon !== false; // menu showcase passes weapon:false
 
   const model = skeletonClone(template);
   // Luva equipada: entra ANTES do passe de materiais para herdar sombra/rim como o corpo.
-  let gloveMeshes = opts.gloveSkinId ? attachGloves(model, def.id, opts.gloveSkinId) || [] : [];
+  let gloveMeshes = opts.gloveSkinId ? attachGloves(model, def.id, opts.gloveSkinId, bodyOrigin) || [] : [];
 
   // Normalize: scale to target height, drop feet to y=0, apply facing fix.
   // Update world matrices first so the bounding box reflects the real transforms.
@@ -942,7 +963,7 @@ export function buildCharacterModel(def, opts = {}) {
         mesh.material.dispose();
         mesh.skeleton.dispose();
       }
-      gloveMeshes = attachGloves(model, def.id, id) || [];
+      gloveMeshes = attachGloves(model, def.id, id, bodyOrigin) || [];
       for (const mesh of gloveMeshes) {
         const rawMaterial = mesh.material;
         finishMesh(mesh);
