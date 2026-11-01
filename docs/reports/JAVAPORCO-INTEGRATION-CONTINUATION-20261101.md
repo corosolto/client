@@ -288,3 +288,40 @@ Recebido por merge normal o S4 final Root
 do checkpoint f496 pré-skin; nenhum CPU longo foi repetido por ledger/ancestry.
 Root agora aprovou R970/ca44 após FULLread e crítico independente R978 sem
 achados; próximo passo é a merge normal desse candidato e seus focais novos.
+
+
+### R958: união final congelada com skin aprovada
+
+Merge normal do aprovado Root `ca44a7fe12e183886b73ad7b3bfdb2be0b94efbf`, após
+S4 final `a81d3120dc71c208904e0e581fce903fcffe2f29`. Entrada automática sem
+conflito: authoredvm, checker/alias e ledger de skin são literais de ca44.
+R944/d46 permanece ancestral; seu draw continua literal e seu checker só difere
+pelo LF extra de EOF removido em 91d2cadd. Game/glbchars/main e weapons continuam
+byte-exatos ao primeiro checkpoint R958. Todos os nomes de aliases e argumentos
+dos gates dos quatro pais são conservados, sem chaves JSON duplicadas.
+
+Focais novos nesta fonte: golden-skin-selection PASS24,157s, nominal19cláusulas
+mais5mutantes com failsets exatos (7/2/2/1/2); catálogo estrito PASS1,575s,
+26armas/40rotas/1037cláusulas, zero NÃO MEDIDA/vermelho novo e a mesma dívida
+RIG f468. As40rotas tiveram bytes/SHA reais rechecados,24privadas somente lidas.
+SB1–SB7 PASS7,368s. Astro CLI 7.3.2 `node node_modules/astro/bin/astro.mjs build`
+PASS9,393s, MA1/docs/arch PASS. A primeira tentativa apontou para o antigo
+astro.js e saiu MODULE_NOT_FOUND antes do compilador; foi descartada como erro
+de invocação, com stdout/stderr preservados. O build direto não executou os
+wrappers npm de geração de assets/prune. Nenhum asset ou SIM_HASH foi alterado.
+
+As rodadas166/91s de identidade/origem e os testes Java foram medidas do primeiro
+checkpoint; os três JS seguem literais e as mudanças posteriores de authoredvm
+foram cobertas pelos focais R944/skin. Não se atribui um fullgate novo a todos os
+heads. Não houve GLM nesta autoria: conflitos foram textuais e resolvidos por
+união de unidades recebidas, sem inventar runtime. Não há parecer independente
+desta composição nem aceite artístico/anatômico/contato/pintura/MP/mobile.
+
+Entrega congelada: A/FINAL-JAVA-STACK-R958-{REPORT.md,MANIFEST.json,WHOLE.diff},
+FROM-JAVA.diff, recibos e stdout/stderr por fase. O relatório externo fixa o HEAD
+final, os pais e a ancestry de Java055/2a25, F2 43275a47, Factory b4aebcbe,
+S4 a81, remoto F2 7544555e, R944 e skin. Próximo passo é Root ler/rebindar,
+adotar por FF em W842 e executar seu Astro/BOOT fresco + check:deploy final,
+push normal/hooks/CI/formal/whole por PR. Backend/deploy/arte/Game3:2 e release
+continuam pendentes sob Root. Missão integral preservada, #1158 excluído,
+UI/social depois e demais owners intocados.
