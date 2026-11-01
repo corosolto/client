@@ -236,3 +236,26 @@ sem edição do scanner. A ancestry mantém #1210 separado de Java.
 Próximo: receber d46cf515 R944 autorizado por Root R968, medir seus focais e
 aguardar o S4 final com F2/Factory atuais antes de congelar a entrega completa.
 Não há R970/skin nesta composição; browser/fullgate/publicação permanecem Root.
+
+
+### R958: timing R944 recebido
+
+Merge normal do aprovado `d46cf5150ca6a48a6862f7753eea4477a3c77fcb`. Só README
+conflitou: os textos do gauntlet Java e do timing foram conservados. Runtime,
+checker e ledger R944 são literais do commit recebido; package conserva os
+aliases e os preloads. Game/glbchars/main e weapons continuam byte-exatos ao
+primeiro checkpoint R958. O reparo honra a política gameplay já declarada em
+múltiplas rotas; não é uma nova aprovação de arte/AK/skin.
+
+Authored-transition completo PASS14,584s, incluindo a régua11cláusulas e os três
+mutantes causais; cadence PASS10,554s; catálogo estrito26/40/1037 PASS1,596s,
+zero NÃO MEDIDA/vermelho novo e a mesma dívida RIG f468. Manifesto nominal19/19
+PASS4,249s. SB1–SB7 por conteúdo, MA1, docs/arch PASS. Fonte permaneceu estável.
+Somente metadata de path/bytes/SHA dos24privados gerados foi preservada, sem
+copiar/montar/exportar GLBs. Não foi repetida a rodada166/91s dos três JS literais.
+
+Root R968/R959 aceitou R944 antes desta integração; isso não é crítico whole
+independente desta união. Skin R970 está fora até aprovação explícita. Próximo:
+aguardar o S4 final com F2/Factory atuais, recebê-lo normalmente, provar os três
+JS invariantes e congelar a entrega. Fullgate/publicação/backend/Game3:2,
+contato/pintura/anatomia/mobile/MP continuam gates de Root.

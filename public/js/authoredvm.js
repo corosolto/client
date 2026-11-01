@@ -927,6 +927,7 @@ export class AuthoredViewModels {
     const entry = this.entry(id);
     if (!entry) return false;
     const cs16 = VM_FAMILY[entry.family]?.cs16;
+    const useGameplayTiming = cfgArma(id)?.timing === 'gameplay';
     // Fuzis sacam com o clipe autoral do pack; o arco procedural fica para as
     // famílias de pistola (o pack não traz equip de pistola) e como fallback.
     if ((entry.golden || VM_FAMILY[entry.family]?.equip !== 'pistol')
@@ -934,18 +935,18 @@ export class AuthoredViewModels {
       // Arco procedural junto do clipe quando a arma declara drawDrop: o
       // equip_rifle da UZI nasce com a pose já dentro do quadro (P6).
       entry.drawTime = entry.frame?.drawDrop ? 0 : entry.drawDuration;
+      const drawDuration = cs16 && !useGameplayTiming ? cs16.draw : Math.max(0.3, duration);
       const tocou = this._play(entry, 'equip_rifle', {
-        duration: cs16 ? cs16.draw : Math.max(0.3, duration), fade: 0.03,
+        duration: drawDuration, fade: 0.03,
       });
       if (tocou) {
         entry.state = 'draw';
-        if (entry.frame?.drawDrop) entry.drawDuration = cs16 ? cs16.draw : Math.max(0.3, duration);
+        if (entry.frame?.drawDrop) entry.drawDuration = drawDuration;
       }
       return tocou;
     }
     // Pistolas cs16: o arco procedural É o estado draw — cadência do QC e
     // expiração no update (não há clipe para "terminar"). Revisão 29/08.
-    const useGameplayTiming = cfgArma(id)?.timing === 'gameplay';
     entry.drawDuration = cs16 && !useGameplayTiming ? cs16.draw : Math.max(0.12, duration || 0.32);
     entry.drawTime = 0;
     entry.state = 'draw';

@@ -259,3 +259,5 @@ TTK condicional e dispersão com cinco disparos; método e limites em
 - `npm run eval:javaporcosperf`: orçamento CPU separado de render; não equivale a FPS ou aprovação visual.
 
 Captura real3:2, leitura do modal/card e avaliação dos GLBs em movimento continuam portões independentes; testes Node não os substituem.
+
+`npm run eval:authored-draw-timing` cobre o saque declarado gameplay com Game/callbacks e GLB público reais: o clique antes do deploy é bloqueado e, depois dele, Equip terminou e o corpo está no frustum antes do tiro. O ramo com drawDrop compartilha a duração do clipe; AK/non-gameplay e fallback conservam seus tempos. Os três mutantes em memória exigem as falhas causais exatas. A ponte de carga Node e o DOM/renderer do harness são explícitos: não é aceite de raster, pintura, anatomia, mobile ou MP. É chamado por `eval:authored-transition`, na cadeia `check:vm`.
