@@ -422,6 +422,37 @@ test('failed replacement keeps the previous object hidden behind the correct pos
  assert.equal(f.mountedModel(),old);assert.equal(f.node('char-preview').classList.contains('hidden'),true,'wrong previous model is visible');
  const image=f.node('char-preview-static');assert.equal(image.src,presentation.poster+'?v=fixture');image.onload();assert.equal(image.classList.contains('hidden'),false);
 });
+test('model handoff lets its pending poster finish without revealing it again',async()=>{
+ const f=fixture({lean:false,threeD:true,realModel:true});
+ f.api.pvSetChar(cyborg);const image=f.node('char-preview-static'),url=image.src;await tick();
+ assert.equal(image.src,url,'model handoff aborted an in-flight poster');
+ assert.equal(image.classList.contains('hidden'),true);assert.equal(f.node('char-preview').classList.contains('hidden'),false);
+ assert.equal(typeof image.onload,'function');image.onload();
+ assert.equal(image.src,'');assert.equal(image.onload,null);assert.equal(image.onerror,null);
+ assert.equal(image.classList.contains('hidden'),true);
+});
+test('completed poster is released immediately when its model arrives',async()=>{
+ const f=fixture({lean:false,threeD:true,realModel:true});f.node('char-preview-static').complete=true;
+ f.api.pvSetChar(cyborg);await tick();const image=f.node('char-preview-static');
+ assert.equal(image.src,'');assert.equal(image.onload,null);assert.equal(image.onerror,null);
+});
+test('leaving a model handoff still cancels its pending poster immediately',async()=>{
+ const f=fixture({lean:false,threeD:true,realModel:true});f.api.pvSetChar(cyborg);await tick();
+ const image=f.node('char-preview-static');assert.ok(image.src);const settled=image.onload;
+ f.api.show('team-select');assert.equal(image.src,'');assert.equal(image.onload,null);assert.equal(image.onerror,null);
+ settled();assert.equal(image.src,'');assert.equal(image.classList.contains('hidden'),true);
+});
+test('late poster settlement cannot clear a newer selection',async()=>{
+ const f=fixture({lean:false,threeD:true,realModel:true});f.api.pvSetChar(cyborg);await tick();
+ const image=f.node('char-preview-static');assert.ok(image.src);const settled=image.onload;
+ f.api.showStaticPreview({...base,skinId:null});const next=image.src;settled();assert.equal(image.src,next);
+});
+test('failed pending poster after model handoff never replaces the model or shows an error',async()=>{
+ const f=fixture({lean:false,threeD:true,realModel:true});f.api.pvSetChar(cyborg);await tick();
+ const image=f.node('char-preview-static');assert.ok(image.src);image.onerror();
+ assert.equal(image.src,'');assert.equal(image.classList.contains('hidden'),true);
+ assert.equal(f.node('char-preview').classList.contains('hidden'),false);assert.equal(f.node('char-preview-skin').hidden,true);
+});
 test('failed team preload is retried without duplicating a pending request',async()=>{
  let fail,calls=0;const pending=new Promise((_r,no)=>{fail=no;});
  const f=fixture({lean:false,teamVisible:{E:true,B:false},preload:()=>++calls===1?pending:Promise.resolve()});

@@ -959,10 +959,16 @@ function clearCompactPreviews() {
     if(label)label.hidden=true;
   }
 }
-function clearStaticPreview() {
-  pvImageToken++;pvStaticKey='';pvPosterFailure=null;
+function clearStaticPreview({finishPending=false}={}) {
+  const my=++pvImageToken;pvStaticKey='';pvPosterFailure=null;
   const image=$('char-preview-static');
-  if(image){image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');}
+  if(image){
+    const release=()=>{if(my!==pvImageToken)return;image.onload=image.onerror=null;image.removeAttribute('src');};
+    image.onload=image.onerror=null;image.classList.add('hidden');
+    // Na troca para o GLB, conclui o pedido já iniciado. Sair da tela cancela na hora.
+    if(finishPending && image.src && !image.complete)image.onload=image.onerror=release;
+    else release();
+  }
   for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label){label.hidden=true;label.textContent='';}}
 }
 function stopHiddenPreview() {
@@ -1267,7 +1273,7 @@ function pvSetChar(def) {
   if (!p) { showStaticPreview(def); return; }
   const showCanvas=()=>{
     p.renderDirty = true;
-    clearStaticPreview();pvStopVideo();
+    clearStaticPreview({finishPending:true});pvStopVideo();
     $('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');
     document.querySelector('.pv-hints')?.classList.remove('hidden');
     for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label)label.hidden=true;}
