@@ -2,6 +2,134 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
+## Checkpoint R96: fauna integrada, publicação ordinária a seguir
+
+#1192e74 passou nos checks atuais e foi mesclado normalmente em staging:
+55533f879, 2026-11-01 06:42:36Z. Três threads resolvidas, todos os cinco itens
+do bot adjudicados, crítico integral R93 sem achados acionáveis. O agregado
+formal continua CHANGES_REQUESTED; não houve dismiss, admin ou bypass. A
+mesclagem normal foi aceita pelo GitHub com match-head e deixou esse histórico
+explícito. QA integrou esse staging por merge ordinário979e042a4, preservando
+os fixes locais e a ancestry1179; Flávio1158 segue excluído.
+
+Build R95 passou no7caa anterior; build e push completo devem ser executados
+no novo head composto. OWN056cf continua congelada durante check:fast R93B,
+sem resultado final ainda. Suíte interrompida R93 não conta como verde.
+Publicação deve conferir remotoQA=ab4114d e staging=55533f879, ambos ancestrais
+do novo head, e usar push atômico ordinário sem desabilitar os107gates.
+
+AK R96: inventário confirma correções de ADS/pose final/motion presentes, mas
+os33tiros antigos são ensaio QA controlado, não prova normal near/far atual.
+Impacto/aim/câmeras e emissão visual precisam ser observados separadamente.
+Arquitetura Quebrada R96 rejeitada como pronta: GLM confundiu coroamento já
+existente, primitivas e limites físicos. Medição RO antes de novo desenho.
+Missão integral e release continuam pendentes; fluxos UI/redes sociais depois.
+
+## Checkpoint R95: composição QA local, gates em andamento
+
+QA recebeu por merges ordinários a composição056cf677b e o checkpoint de boot
+4cda2617d (produto3efc2d372). Os13arquivos resultantes coincidem byte a byte com
+as lanes revisadas; #1179 segue ancestral e #1158 continua ausente. QA ainda
+não foi publicada nesta rodada. OWN permanece em056cf, sem mutação durante
+check:fast R93B; o resultado dessa bateria ainda está pendente.
+
+Boot:12cenários controlados passaram, incluindo oldRED/newPASS na automática
+posterior ao modal e rejeição de identidade/recibo/ack ausentes. Checker real
+B1–B9 exit0, B4 auto.seq1<=base2<manual.seq3, clique1,0esperas. CríticoR91 limpo.
+Causa exata do CI continua UNKNOWN. Fonte do jogo não foi mudada por esse fix.
+
+A primeira bateria OWN foi interrompida por dependência Three cruzada entre
+worktrees. Só o node_modules ignorado foi isolado em252links e Three próprio;
+os três testes afetados passaram no mesmo fonte. A nova bateria R93B está
+rodando; não converter a tentativa interrompida em verde ou regressão de jogo.
+
+PR1192e74: adjudicação formal1+filtrados4 e crítico integralR93 sem novos itens.
+Root aplicou estragacodigo-resolved depois do review atual; threads3resolvidas,
+formal CHANGES_REQUESTED e dois jobs ainda pendentes na última consulta. Nenhum
+review descartado ou merge executado. Antes de publicar, conferir staging real:
+se avançar, integrar a ancestry sem sobrescrever ou forçar o remoto.
+
+Próximo: build/checks da QA, conclusão da bateria OWN e CI1192, push ordinário107
+com refs verificados, review atual completo e crítico integral do head final.
+Depois merge elegível, CI de main, release/tag/READY/SHA servido/smoke de produção.
+Mapa global, arquitetura, personagens/dedos/movimento, skinsP4 e mobile/MP seguem
+incompletos. A missão integral permanece ativa; fluxos UI/redes sociais depois.
+
+## Checkpoint R92: Quebrada focal validada e adotada localmente
+
+Composição isolada sobre a173ff48d recebe a fonte Quebrada7be5b81, sem alterar
+helpers/assets/física. CPU25/25 e5selfchecks, crítico estáticoR90 e A/B real
+UV2/metade/restauração passaram. Root e críticoR92 viram as três imagens:
+escala do tijolo melhor nas duas frentes; M2=2 só nessa vista. M1/M3/M4 UNKNOWN.
+Viewport1320×880, canvas660×440 med; não é nova baseline-world ou aceite global.
+Detalhes em QUEBRADA-FINISH-CONTINUATION-20261101.md. Arquitetura continua pendente.
+
+PR1192 e74: Root leu a adjudicação completa do formal e quatro filtrados,
+conferiu111pins sem divergência. Preparação/runtime real do head passaram;
+crítico adversarial integralR93 está ativo, CI restante/review formal pendentes.
+Nenhum merge, label ou review duplicado. BootB4 e1a9 estático CLEAN_SCOPED;
+instrumento causal dos12casos congelados sendo preparado, ainda sem execução.
+
+## Checkpoint R91: três correções focais salvas, integração ainda local
+
+Esta seção supera as pendências de publicação R82 abaixo. O push normal R82
+publicou QA e staging em `ab4114d02` após 107/107 em 671,1 s, sem bypass. O body,
+as respostas dos três itens R71 e o pedido de review atual foram publicados
+na rodada R83. Os quatro checks obrigatórios de AB passaram; chat-desktop
+e portão de browser falharam. Nenhum novo merge ou release foi executado.
+
+A composição isolada skins-visual-stack-20261101 está em `f6ea97788`. Contém
+Palm `56566e4b5`, vindo do checkpoint `76cc3144150`, e chat `69eb1d083`, vindo de
+`37c69e81c`. O punho livre usa referência autorada, limitada ao preview E/pistol;
+CPU com 265 frames e crítico focal passaram, com imagem normal vista pelo Root.
+Dedos/faceting seguem pendentes; emotes estão desativados na UI atual e a
+prova de sua transição é de API latente, sem afirmar caminho público ativo.
+
+O teste de chat agora mede entrega trusted de KeyW no evento, preservando
+foco e reabertura. Root executou sete controles no Ego normal SP: reset real
+após recibo deixou a leitura antiga RED e o recibo PASS. Mutar o campo para
+true constante produziu RED no controle sem callback Game. Cleanup e realms
+fechados; fonte Game `952dc9d7` carregada foi conferida via Debugger. O crítico
+fechou as lacunas do instrumento externo; arquivos rejeitados e autoria
+Native/GLM estão preservados. A causa concreta do CI permanece UNKNOWN.
+
+O commit `f6ea97788` de cartazes limita quatro artes sem repetição. Node mostrou antes RED,
+depois GREEN e mutante de fonte RED; o default manteve seus descritores.
+No WebGL real, as três queries têm quatro artes carregadas, duas por lado,
+uma posição por arquivo. Root viu o PNG e atualizou POSTERS-MANUAIS.md.
+Crítico focal CLEAN_SCOPED; afastamento small de 0,3 m e arte global sem aceite.
+
+Quebrada `7be5b81` está em lane separada, ainda sem commit/adoção: CPU com 25 casos
+e cinco selfchecks passaram, 176 pins conferidos, crítico focal limpo. Altera
+só UV de duas frentes, com uma geometria e 13664 B extras; física/hierarquia
+CPU preservadas no escopo de dois GLBs. Root preparou Game normal na porta 4398 em med;
+A/B real do fator 2 é o próximo passo. M3 arquitetônico continua pendente.
+Campo: ABA de densidade confirmou contribuição do véu distante em uma vista,
+com A/restore pixeliguais; densidade 0 não foi escolhida para produto. Luvas:
+sete capturas A/B/A com retorno exato na ROI, sem fator escolhido ou asset
+alterado. Esses diagnósticos não aprovam mapas, skins, mobile físico ou MP.
+
+O bot local de AB teve 0 qualificados e cinco filtrados; Root adjudicou todos,
+incluindo a unicidade condicional corrigida acima. O head processado sem
+publicação não gera review formal só por esperar. Usar o caminho canônico
+de revisão completa no head final, sem bypass, depois de compor os fixes.
+O checker de boot recebeu candidato separado com barreira de coleta/ack;
+matriz causal de 12 casos ainda UNRUN e independente da causa real da falha hospedada.
+
+Fila: #1192 avançou de `ac9` para `e74e3e9c` e recebeu review formal atual com
+CHANGES_REQUESTED às 06:10:59. Root não disparou review duplicado, reply ou
+label; nova adjudicação RO está ativa. Preservar owner e integrar por hunks,
+mantendo o fallback B9 e demais fixes AB. Javaporco #1160/REA #1155 continuam nas
+lanes próprias; #1179 permanece ancestral e #1158 continua excluído.
+
+Auditoria viva: CURRENT-STATE-20261031.json, ROOT-CHAT-INPUT-ADJUDICATION-R90,
+ROOT-POSTER-ACTUAL-INVENTORY-R91, CRITICO-MAPS-R90 e relatórios PR1192/BOOT
+na pasta de auditoria 2026-10-31-visual-consistency. Próximo: provas de boot
+e A/B Quebrada, composição/checks e push normal; review atual completo,
+crítico integral e CI/preview do head exato antes do merge elegível. Release
+exige CI de main, tag, READY, SHA servido e smoke de produção. Missão integral
+permanece ativa; fluxos UI/redes sociais seguem como fase posterior.
+
 ## Checkpoint R82: matriz gerada e nova tentativa de publicação
 
 Esta seção supera o estado pré-push R77 abaixo. O push normal de ecf6320dd

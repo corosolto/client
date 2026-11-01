@@ -1,4 +1,6 @@
 // O CI captura todos os mapas curados; não reutiliza a evidência de outro documento.
+// Os mapas vêm das referências: o CI captura explicitamente TODOS os mapas curados
+// (hoje 5), sem atalho de lista fixa no wrapper.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { chromium } from 'playwright';

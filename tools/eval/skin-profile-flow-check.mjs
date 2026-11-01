@@ -77,8 +77,8 @@ const MUTACOES_MAIN = {
 /* Probe de independência (não é mutante do placar): quebra só a entrega ao builder. */
 const PROBAS_GAME = {
   'f3-entrega': (s) => {
-    assertUma(s, '{ weaponId: w, weaponSkinId: skinTP }');
-    return s.replace('{ weaponId: w, weaponSkinId: skinTP }', '{ weaponId: w }');
+    assertUma(s, '{ weaponId: w, weaponSkinId: skinTP, gloveSkinId: this.playerGloveId }');
+    return s.replace('{ weaponId: w, weaponSkinId: skinTP, gloveSkinId: this.playerGloveId }', '{ weaponId: w, gloveSkinId: this.playerGloveId }');
   },
 };
 
@@ -238,6 +238,7 @@ try {
       preloadCharacterAssets: () => Promise.resolve(), _charsToLoad: [], _armasDaPartida: [], _vmBootWeapons: [],
       preloadCosmeticAssets: () => Promise.resolve(), matchSkins: [],
       preloadEyewearAssets: () => Promise.resolve(), matchEyewear: [],
+      playerGloveId: null, charId: 'barbudo', preloadGloveAssets: () => Promise.resolve(),
       playerWeaponSkins: {},
       preloadWeaponSkinCandidate: (id) => { ordem.push(`preload skin ${id}`); return promesaFaca; },
       playerKnifeSkinId: KNIFE,

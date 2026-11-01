@@ -28,7 +28,10 @@ const AUDIT_BASE='https://fauna.synthetic.invalid';
 const auditCuratedFauna=(sample,refs)=>auditFaunaActual(sample,refs,{base:AUDIT_BASE});
 const auditCuratedFaunaCensus=(data,refs)=>auditCensusActual(data,refs,{base:AUDIT_BASE});
 const ambient=read('public/js/ambientlife.js'),main=read('public/js/main.js');
-await Promise.all(['escadao','lajes'].map(carregaMapa));
+// Referências agora têm mapas repetidos (campomorro/corrego: gato E galinha).
+// O censo é por mapa único; uma amostra cobre todos os tipos referenciados daquele mapa.
+const uniqueMaps=[...new Set(references.map(r=>r.map))];
+await Promise.all(uniqueMaps.map(carregaMapa));
 const registry=JSON.parse(read('mint-assets.json')).assets;
 for(const ref of references)test(`${ref.map}/${ref.type} binds the curated file and keeps its authored density`,()=>{
  const world=MAPS[ref.map].build(new THREE.Scene(),initTextures());
@@ -36,7 +39,8 @@ for(const ref of references)test(`${ref.map}/${ref.type} binds the curated file 
  assert.equal(animals.length,ref.count);
  assert.ok(animals.every(a=>a.root.userData.assetId===ref.assetId));
  if(ref.speed)assert.deepEqual(animals[0].speed,ref.speed);
- assert.deepEqual(MAPS[ref.map].ambience,ref.map==='escadao'?ESCADAO_AMBIENCE:LAJES_AMBIENCE);
+ if(ref.map==='escadao')assert.deepEqual(MAPS.escadao.ambience,ESCADAO_AMBIENCE);
+ if(ref.map==='lajes')assert.deepEqual(MAPS.lajes.ambience,LAJES_AMBIENCE);
  assert.equal(MAPS[ref.map].mobileAmbience,true);
  assert.ok(MAPS[ref.map].ambience.includes(ref.assetId));
  const record=registry[ref.registryId];assert.ok(record.files.includes('public/'+ref.path));
@@ -44,11 +48,22 @@ for(const ref of references)test(`${ref.map}/${ref.type} binds the curated file 
  assert.equal(createHash('sha256').update(fs.readFileSync(new URL('../public/'+ref.path,import.meta.url))).digest('hex'),ref.sha256);
  world.ambience.dispose();
 });
+test('census includes every authored cat and chicken on each covered map; omitting a type is detected',()=>{
+ for(const map of uniqueMaps){
+  const world=MAPS[map].build(new THREE.Scene(),initTextures());
+  try{
+   const targets=world.ambience.animals.filter(a=>['cat','chicken'].includes(a.type));assert.ok(targets.length);
+   const check=refs=>{for(const a of targets){const ref=refs.find(r=>r.map===map&&r.type===a.type);assert.ok(ref,`${map}/${a.type} outside census`);assert.ok(ref.animalIds.includes(a.id));}};
+   check(references);
+   const omitted=targets[0].type;assert.throws(()=>check(references.filter(r=>r.map!==map||r.type!==omitted)));
+  }finally{world.ambience.dispose();}
+ }
+});
 function mobileCalls(map,{source=main,ambientSource=ambient,next=false,mobileAuto=true}={}){
  const calls=[],errors=[];
  const noop=()=>Promise.resolve();
  const context=vm.createContext({console:{error:(...a)=>errors.push(a),warn:(...a)=>errors.push(a)},Promise,Set,Math,
-  MAPS,mapPropIds,aguardarPreloads,playerKnifeSkinId:null,MAP_PROPS:[],MOBILE_AUTO:mobileAuto,POINTER_COARSE:true,_vmStartWeapon:'ak',_armasDaPartida:['ak'],navOnly:false,_charsToLoad:[],matchSkins:[],matchEyewear:[],playerWeaponSkins:{},mapaPartida:map,
+  MAPS,mapPropIds,aguardarPreloads,playerKnifeSkinId:null,playerGloveId:null,MAP_PROPS:[],MOBILE_AUTO:mobileAuto,POINTER_COARSE:true,_vmStartWeapon:'ak',_armasDaPartida:['ak'],navOnly:false,_charsToLoad:[],matchSkins:[],matchEyewear:[],playerWeaponSkins:{},mapaPartida:map,
   preloadAmbientLife:ids=>{calls.push([...ids]);return Promise.resolve();},
   preloadCharacterAssets:noop,preloadCosmeticAssets:noop,preloadEyewearAssets:noop,preloadWeaponSkinCandidate:noop,preloadMapProps:noop,preloadFPArms:noop,preloadAuthoredFamilies:noop,authoredBootFamilies:()=>[],sfx:{preloadWeaponSamples:noop},
   planoPreload:()=>({mapId:Object.keys(MAPS).find(id=>MAPS[id]===map),chars:[],weapons:[]}),GLB_CHARS:[],WEAPON_IDS:[],tr:x=>x,$:()=>null,LANG:'pt',textoProximo:()=>'',segundosAteVirada:()=>0,mpPararContagemProximo(){},mpContagemProximo:null,setInterval:()=>1,clearInterval(){},charWeapon:()=> 'ak',currentChar:'barbudo',comMapaCarregado:(_id,fn)=>Promise.resolve(fn(map)),defineSeedHavan:()=>Promise.resolve(map)});
@@ -63,7 +78,7 @@ function mobileCalls(map,{source=main,ambientSource=ambient,next=false,mobileAut
  new vm.Script(source.slice(start,end)+';mpPreCarregarProximo({});').runInContext(context);
  return new Promise((resolve,reject)=>setImmediate(()=>{try{assert.deepEqual(errors,[]);resolve(calls);}catch(error){reject(error);}}));
 }
-for(const map of ['escadao','lajes'])for(const next of [false,true])test(`${map}: actual ${next?'MP next-map':'match launch'} preloads fauna in automatic mobile`,async()=>{
+for(const map of uniqueMaps)for(const next of [false,true])test(`${map}: actual ${next?'MP next-map':'match launch'} preloads fauna in automatic mobile`,async()=>{
  assert.deepEqual(await mobileCalls(MAPS[map],{next}),[MAPS[map].ambience]);
 });
 test('mobile keeps unrelated maps out of the fauna preload',async()=>assert.deepEqual(await mobileCalls(MAPS.praca_poderes),[]));
@@ -81,7 +96,22 @@ test('control mutation restores the mobile next-map skip and fails the caller co
  const source=replaceOnce(main,'mapaReady.then((mapa) => preloadMapAmbientLife(mapa, { mobileAuto: MOBILE_AUTO }))','MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadMapAmbientLife(mapa, { mobileAuto: MOBILE_AUTO }))');
  await assert.rejects(async()=>assert.deepEqual(await mobileCalls(MAPS.lajes,{source,next:true}),[MAPS.lajes.ambience]));
 });
-function validSample(ref){const document={url:faunaDocumentURL(AUDIT_BASE,ref.map),requestId:'synthetic-document-'+ref.map,frameId:'synthetic-frame-'+ref.map,loaderId:'synthetic-loader-'+ref.map},assetURL=new URL(assetUrl(ref.path),document.url).href;return {map:ref.map,document,declaredPreload:[ref.assetId],animals:[{id:ref.type+'-0',type:ref.type,source:'gltf',assetId:ref.assetId,assetPath:ref.path,assetURL,response:{complete:true,requestId:'synthetic-'+ref.assetId,frameId:document.frameId,loaderId:document.loaderId,documentURL:document.url,url:assetURL,responseURL:assetURL,status:200,sha256:ref.sha256,byteLength:123,body:{complete:true,source:'Network.getResponseBody',sha256:ref.sha256,byteLength:123},transportTerminal:{kind:'finished'}},speed:ref.speed,turnRate:ref.turnRate,actions:{idle:'Idle',walk:'Walk',run:'Run'},meshes:[{materials:[Object.fromEntries(Object.entries(ref.textures).map(([key,size])=>[key,{width:size[0],height:size[1],colorSpace:key==='albedo'?'srgb':''}]))]}],motion:{distance:1,localPoseChanges:1,activeClip:'Walk',maxYawDelta:.1},fleeSpace:ref.fleeSpace?{cases:[3,8].flatMap(warmup=>Array.from({length:8},(_,angle)=>({warmup,angle,frames:1200,dt:1/60,obstacleOverlaps:0,supportMisses:0,maxHalfExtent:.45,peakDistance:2,rejoined:true})))}:undefined}]};}
+// Amostra válida por mapa: TODOS os tipos/contagens referenciados daquele mapa, não só o alvo.
+function fleeCases(ref,id){
+ if(ref.fleeSpace===true)return {cases:[3,8].flatMap(warmup=>Array.from({length:8},(_,angle)=>({warmup,angle,frames:1200,dt:1/60,obstacleOverlaps:0,supportMisses:0,maxHalfExtent:.45,peakDistance:2,rejoined:true})))};
+ if(ref.fleeSpace&&typeof ref.fleeSpace==='object'){
+  const per=(ref.fleeSpace.animals||{})[id]||{};
+  const mode=per.mode||ref.fleeSpace.mode;
+  const minEscape=Number.isFinite(per.minEscapeDistance)?per.minEscapeDistance:.5;
+  const roof=mode==='roof';
+  return {cases:[3,8].flatMap(warmup=>Array.from({length:8},(_,angle)=>({warmup,angle,frames:1200,dt:1/60,mode,obstacleOverlaps:0,supportMisses:0,maxHalfExtent:.45,peakDistance:minEscape===0?.05:minEscape+.1,maxRenderedDelta:.05,minSlopeSpan:roof?null:.05,roofTriangles:roof?2:0,rejoined:true})))};
+ }
+ return undefined;
+}
+function validSample(ref){
+ const refs=refsFor(ref.map),document={url:faunaDocumentURL(AUDIT_BASE,ref.map),requestId:'synthetic-document-'+ref.map,frameId:'synthetic-frame-'+ref.map,loaderId:'synthetic-loader-'+ref.map};
+ return {map:ref.map,document,declaredPreload:[...new Set(refs.map(r=>r.assetId))],animals:refs.flatMap(r=>{const assetURL=new URL(assetUrl(r.path),document.url).href;return Array.from({length:r.count},(_,i)=>({id:r.type+'-'+i,type:r.type,source:'gltf',assetId:r.assetId,assetPath:r.path,assetURL,response:{complete:true,requestId:'synthetic-'+r.assetId,frameId:document.frameId,loaderId:document.loaderId,documentURL:document.url,url:assetURL,responseURL:assetURL,status:200,sha256:r.sha256,byteLength:123,body:{complete:true,source:'Network.getResponseBody',sha256:r.sha256,byteLength:123},transportTerminal:{kind:'finished'}},speed:r.speed,turnRate:r.turnRate,actions:{idle:'Idle',walk:'Walk',run:'Run'},meshes:[{materials:[Object.fromEntries(Object.entries(r.textures).map(([key,size])=>[key,{width:size[0],height:size[1],colorSpace:key==='albedo'?'srgb':''}]))]}],motion:{distance:1,localPoseChanges:1,activeClip:'Walk',maxYawDelta:.1},fleeSpace:fleeCases(r,r.type+'-'+i)})).flat();})};
+}
 test('fauna CI requires an explicit origin before creating output or launching a browser',()=>{
  const dir=fs.mkdtempSync(join(tmpdir(),'coro-fauna-ci-no-base-')),out=join(dir,'output');
  try{
@@ -91,32 +121,99 @@ test('fauna CI requires an explicit origin before creating output or launching a
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 test('runtime census requires exactly one result per expected map before auditing',()=>{
- const samples=references.map(validSample);
+ const samples=uniqueMaps.map(map=>validSample(refsFor(map)[0]));
  assert.equal(auditCuratedFaunaCensus({results:samples},references).pass,true);
  assert.equal(auditCuratedFaunaCensus({results:[...samples].reverse()},references).pass,true);
- for(const data of [null,{}, {results:null},{results:[]},{results:samples.slice(0,1)},{results:[samples[0],samples[0]]},{results:[...samples,samples[0]]},{results:[samples[0],{...samples[1],map:'unknown'}]},{results:[samples[0],null]}]){
+ for(const data of [null,{}, {results:null},{results:[]},{results:samples.slice(0,1)},{results:[samples[0],samples[0]]},{results:[...samples,samples[0]]},{results:[...samples.slice(0,-1),{...samples.at(-1),map:'unknown'}]},{results:[samples[0],null]}]){
   const audit=auditCuratedFaunaCensus(data,references);assert.equal(audit.pass,false);assert.deepEqual(audit.reports,[]);assert.ok(audit.failures.every(f=>f.family==='census'));
  }
  const duplicate=auditCuratedFaunaCensus({results:[samples[0],samples[0]]},references);
  assert.ok(duplicate.failures.some(f=>f.detail.includes('duplicado')));assert.ok(duplicate.failures.some(f=>f.detail.includes('ausente')));
  const broken=structuredClone(samples);broken[1].animals[0].source='fallback';
  assert.equal(auditCuratedFaunaCensus({results:broken},references).pass,false);
+ // Censo por mapa: remover um tipo inteiro da amostra não pode virar PASS parcial.
+ const missingType=structuredClone(samples);
+ const campo=missingType.find(s=>s.map==='campomorro');campo.animals=campo.animals.filter(a=>a.type!=='chicken');
+ const missingAudit=auditCuratedFaunaCensus({results:missingType},references);
+ assert.equal(missingAudit.pass,false);assert.ok(missingAudit.failures.length===0);assert.ok(missingAudit.reports.some(r=>!r.pass));
 });
-for(const ref of references)test(`${ref.map}: runtime auditor accepts complete evidence and rejects causal corruptions`,()=>{
+for(const ref of references)test(`${ref.map}/${ref.type}: runtime auditor accepts complete evidence and rejects causal corruptions`,()=>{
  const sample=validSample(ref);assert.equal(auditCuratedFauna(sample,references).pass,true);
- const mutations=[['turn',s=>s.animals[0].turnRate=0],['turn',s=>s.animals[0].motion.maxYawDelta=Math.PI],['turn',s=>delete s.animals[0].motion.maxYawDelta],['count',s=>s.animals=[]],['count',s=>s.animals.push(structuredClone(s.animals[0]))],['source',s=>s.animals[0].source='fallback'],['identity',s=>s.animals[0].assetId='old'],['identity',s=>s.animals[0].assetPath='models/ambient/old.glb'],['declaredPreload',s=>s.declaredPreload=[]],['materials',s=>s.animals[0].meshes=[]],['texture',s=>s.animals[0].meshes[0].materials[0].albedo=null],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.width=0],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.colorSpace=''],['clips',s=>s.animals[0].actions.walk='Idle'],['motion',s=>s.animals[0].motion.localPoseChanges=0],['motion',s=>s.animals[0].motion.activeClip='Idle'],['motion',s=>s.animals[0].motion.distance=0],
-   ...[null,{},[],false,'not-response'].map(value=>['response',s=>s.animals[0].response=value]),
-   ['response',s=>s.animals[0].response.sha256='0'.repeat(64)],['response',s=>s.animals[0].response.sha256='zz'],
-   ['response',s=>s.animals[0].response.byteLength=0],['response',s=>s.animals[0].response.status=404],['response',s=>s.animals[0].response.complete=false],
-   ['response',s=>s.animals[0].response.requestId=''],['response',s=>s.animals[0].response.loaderId='other'],['response',s=>s.animals[0].response.frameId='other'],
-   ['response',s=>s.animals[0].response.documentURL+='&old=1'],['response',s=>s.animals[0].response.responseURL+='&wrong=1'],
-   ['response',s=>s.animals[0].response.url=s.animals[0].response.url.replace('?v=','?wrong=')],
-   ['response',s=>{const a=s.animals[0];a.assetURL=a.response.url=a.response.responseURL=a.assetURL.replace(/\?v=.*/,'?v=wrong-valid-revision');}]];
- if(ref.speed)mutations.push(['speed',s=>s.animals[0].speed={walk:1.1,flee:3.6}]);
- if(ref.fleeSpace)for(const change of [s=>delete s.animals[0].fleeSpace,s=>s.animals[0].fleeSpace.cases.pop(),s=>s.animals[0].fleeSpace.cases[1]=structuredClone(s.animals[0].fleeSpace.cases[0]),
-  s=>s.animals[0].fleeSpace.cases[0].obstacleOverlaps=1,s=>s.animals[0].fleeSpace.cases[0].supportMisses=1,s=>s.animals[0].fleeSpace.cases[0].maxHalfExtent=.51,
-  s=>s.animals[0].fleeSpace.cases[0].peakDistance=0,s=>s.animals[0].fleeSpace.cases[0].rejoined=false,s=>s.animals[0].fleeSpace.cases[0].frames=0])mutations.push(['space',change]);
+ const target=s=>s.animals.find(a=>a.type===ref.type);
+ const mutations=[['turn',s=>target(s).turnRate=0],['turn',s=>target(s).motion.maxYawDelta=Math.PI],['turn',s=>delete target(s).motion.maxYawDelta],['count',s=>s.animals=[]],['count',s=>s.animals=s.animals.filter(a=>a.type!==ref.type)],['count',s=>s.animals.push(structuredClone(target(s)))],['source',s=>target(s).source='fallback'],['identity',s=>target(s).assetId='old'],['identity',s=>target(s).assetPath='models/ambient/old.glb'],['declaredPreload',s=>s.declaredPreload=[]],['materials',s=>target(s).meshes=[]],['texture',s=>target(s).meshes[0].materials[0].albedo=null],['texture',s=>target(s).meshes[0].materials[0].albedo.width=0],['texture',s=>target(s).meshes[0].materials[0].albedo.colorSpace=''],['clips',s=>target(s).actions.walk='Idle'],['motion',s=>target(s).motion.localPoseChanges=0],['motion',s=>target(s).motion.activeClip='Idle'],['motion',s=>target(s).motion.distance=0],
+   ...[null,{},[],false,'not-response'].map(value=>['response',s=>target(s).response=value]),
+   ['response',s=>target(s).response.sha256='0'.repeat(64)],['response',s=>target(s).response.sha256='zz'],
+   ['response',s=>target(s).response.byteLength=0],['response',s=>target(s).response.status=404],['response',s=>target(s).response.complete=false],
+   ['response',s=>target(s).response.requestId=''],['response',s=>target(s).response.loaderId='other'],['response',s=>target(s).response.frameId='other'],
+   ['response',s=>target(s).response.documentURL+='&old=1'],['response',s=>target(s).response.responseURL+='&wrong=1'],
+   ['response',s=>target(s).response.url=target(s).response.url.replace('?v=','?wrong=')],
+   ['response',s=>{const a=target(s);a.assetURL=a.response.url=a.response.responseURL=a.assetURL.replace(/\?v=.*/,'?v=wrong-valid-revision');}]];
+ if(ref.speed)mutations.push(['speed',s=>target(s).speed={walk:1.1,flee:3.6}]);
+ if(ref.fleeSpace===true)for(const change of [s=>delete target(s).fleeSpace,s=>target(s).fleeSpace.cases.pop(),s=>target(s).fleeSpace.cases[1]=structuredClone(target(s).fleeSpace.cases[0]),
+  s=>target(s).fleeSpace.cases[0].obstacleOverlaps=1,s=>target(s).fleeSpace.cases[0].supportMisses=1,s=>target(s).fleeSpace.cases[0].maxHalfExtent=.51,
+  s=>target(s).fleeSpace.cases[0].peakDistance=0,s=>target(s).fleeSpace.cases[0].rejoined=false,s=>target(s).fleeSpace.cases[0].frames=0])mutations.push(['space',change]);
+ if(ref.fleeSpace&&typeof ref.fleeSpace==='object'){
+  for(const change of [s=>delete target(s).fleeSpace,s=>target(s).fleeSpace.cases.pop(),s=>target(s).fleeSpace.cases[1]=structuredClone(target(s).fleeSpace.cases[0]),
+   s=>target(s).fleeSpace.cases[0].obstacleOverlaps=1,s=>target(s).fleeSpace.cases[0].supportMisses=1,s=>target(s).fleeSpace.cases[0].maxHalfExtent=.51,
+   s=>target(s).fleeSpace.cases[0].peakDistance=0,s=>target(s).fleeSpace.cases[0].rejoined=false,s=>target(s).fleeSpace.cases[0].frames=0,
+   s=>target(s).fleeSpace.cases[0].mode=target(s).fleeSpace.cases[0].mode==='roof'?'ground':'roof',
+   s=>target(s).fleeSpace.cases[0].maxRenderedDelta=NaN])mutations.push(['space',change]);
+  // roofTriangles=0 só é mutação causal no modo roof (override do gato-0 do campomorro).
+  if(Object.keys(ref.fleeSpace.animals||{}).length)mutations.push(['space',s=>target(s).fleeSpace.cases[0].roofTriangles=0]);
+ }
  for(const [family,mutate] of mutations){const changed=structuredClone(sample);mutate(changed);const audit=auditCuratedFauna(changed,references);assert.equal(audit.pass,false);assert.ok(audit.failures.some(f=>f.family===family),family);}
+});
+test('campomorro roof override accepts the measured short-roof escape and rejects zero-distance or ground-claimed evidence',()=>{
+ const ref=references.find(r=>r.map==='campomorro'&&r.type==='cat');
+ const sample=validSample(ref);assert.equal(auditCuratedFauna(sample,references).pass,true);
+ const cat=sample.animals.find(a=>a.id==='cat-0');
+ assert.equal(cat.fleeSpace.cases[0].mode,'roof');
+ const roof0=s=>s.animals.find(a=>a.id==='cat-0');
+ for(const change of [
+  s=>roof0(s).fleeSpace.cases.forEach(c=>{c.peakDistance=0;}),
+  s=>roof0(s).fleeSpace.cases.forEach(c=>{c.mode='ground';c.roofTriangles=0;c.minSlopeSpan=.05;}),
+  s=>roof0(s).fleeSpace.cases.forEach(c=>{c.roofTriangles=0;}),
+  s=>roof0(s).fleeSpace.cases.forEach(c=>{c.maxRenderedDelta=Infinity;}),
+ ]){
+  const changed=structuredClone(sample);change(changed);const audit=auditCuratedFauna(changed,references);
+  assert.equal(audit.pass,false);assert.ok(audit.failures.some(f=>f.family==='space'));
+ }
+});
+test('lajes keeps the original peak > .5 rule; a .5 peak is still a rejection',()=>{
+ const sample=validSample(references.find(r=>r.map==='lajes'));
+ sample.animals.find(a=>a.type==='cat').fleeSpace.cases.forEach(c=>{c.peakDistance=.5;});
+ const audit=auditCuratedFauna(sample,references);
+ assert.equal(audit.pass,false);assert.ok(audit.failures.some(f=>f.family==='space'));
+});
+test('a map census missing one animal of a multi-count type is not a visual approval',()=>{
+ const sample=validSample(references.find(r=>r.map==='campomorro'&&r.type==='chicken'));
+ const short=structuredClone(sample);short.animals=short.animals.filter(a=>a.id!=='chicken-1');
+ const shortAudit=auditCuratedFauna(short,references);
+ assert.equal(shortAudit.pass,false);assert.ok(shortAudit.failures.some(f=>f.family==='count'));
+ const dup=structuredClone(sample);dup.animals.push(structuredClone(dup.animals.find(a=>a.id==='chicken-0')));
+ const dupAudit=auditCuratedFauna(dup,references);
+ assert.equal(dupAudit.pass,false);assert.ok(dupAudit.failures.some(f=>f.family==='identity'||f.family==='count'));
+ const alien=structuredClone(sample);alien.animals[0].type='capybara';
+ const alienAudit=auditCuratedFauna(alien,references);
+ assert.equal(alienAudit.pass,false);assert.ok(alienAudit.failures.some(f=>f.family==='count'));
+});
+test('same-count substitution cannot hide an unknown or duplicated authored animal ID',()=>{
+ const sample=validSample(references.find(r=>r.map==='campomorro'&&r.type==='cat'));
+ for(const id of ['cat-99','cat-0']){
+  const changed=structuredClone(sample);changed.animals.find(a=>a.id==='cat-1').id=id;
+  const audit=auditCuratedFauna(changed,references);
+  assert.equal(audit.pass,false);assert.ok(audit.failures.some(f=>f.family==='identity'));
+ }
+});
+test('malformed roof escape reference cannot silently inherit a permissive default',()=>{
+ const sample=validSample(references.find(r=>r.map==='campomorro'&&r.type==='cat'));
+ sample.animals.find(a=>a.id==='cat-0').fleeSpace.cases.forEach(c=>{c.peakDistance=1;});
+ for(const value of [NaN,Infinity,-1,null,'0']){
+  const changed=structuredClone(references);
+  changed.find(r=>r.map==='campomorro'&&r.type==='cat').fleeSpace.animals['cat-0'].minEscapeDistance=value;
+  const audit=auditCuratedFauna(sample,changed);
+  assert.equal(audit.pass,false);assert.ok(audit.failures.some(f=>f.family==='space'));
+ }
 });
 test('unknown or unmeasured map is not a visual approval',()=>assert.equal(auditCuratedFauna({map:'unknown',animals:[]},references).pass,false));
 test('curated map fauna reverses and flees without a one-frame half turn',()=>{
@@ -282,25 +379,28 @@ test('contact shadow omission and lifetime mutations fail the actual controller 
  }
 });
 
-test('actual browser collector sees extra target animals; restoring find is detected',async()=>{
+for(const map of ['escadao','campomorro'])test(`${map}: actual collector includes all target types and instances; restoring find is detected`,async()=>{
  const source=read('tools/eval/map-fauna-curated-collector.mjs'),start=source.indexOf('const record=await page.evaluate(')+'const record=await page.evaluate('.length,end=source.indexOf('\n },{map,types:[...types.keys()]});',start);
  assert.ok(start>0&&end>start);
  const callback=source.slice(start,end+3).replace("await import('three')",'THREE_STUB').replace("await import('/js/maps.js')",'MAPS_STUB').replace("await import('/js/data/asseturl.js')",'ASSET_URL_STUB');
- const ref=references[0];
+ const specs=validSample(refsFor(map)[0]).animals;
+ if(map==='escadao')specs.push({...specs.find(a=>a.type==='chicken'),id:'chicken-99'});
+ const expected=specs.map(a=>a.id).sort();
  async function collect(code){
-  const root=new THREE.Group(),animals=[0,1].map(i=>{
-   const a={...validSample(ref).animals[0],id:'chicken-'+i,root:new THREE.Group(),model:new THREE.Group(),action:'walk'};
+  const root=new THREE.Group(),animals=[...specs,{...specs[0],type:'rat',id:'rat-0'}].map(spec=>{
+   const a={...spec,root:new THREE.Group(),model:new THREE.Group(),action:'walk'};
    const bone=new THREE.Bone();a.model.add(bone);a.root.add(a.model);root.add(a.root);
-   a.root.userData.assetId=ref.assetId;a.root.userData.assetPath=ref.path;
+   a.root.userData.assetId=spec.assetId;a.root.userData.assetPath=spec.assetPath;
    a.actions={idle:{getClip:()=>({name:'Idle'})},walk:{getClip:()=>({name:'Walk'}),getEffectiveWeight:()=>1}};return a;
   });
   const world={ambience:{animals,update(){for(const a of animals){a.root.position.x+=.01;a.model.children[0].rotation.z+=.01;}},reset(){for(const a of animals)a.root.position.set(0,0,0);}}};
-  const context=vm.createContext({THREE_STUB:THREE,MAPS_STUB:{MAPS},ASSET_URL_STUB:{assetUrl},URL,location:{href:faunaDocumentURL(AUDIT_BASE,ref.map)},window:{__gworld:world,MAPEVAL:{cam:new THREE.PerspectiveCamera(),view(){}}}});
-  return new vm.Script('('+code+')').runInContext(context)({map:ref.map,types:[ref.type]});
+  const context=vm.createContext({THREE_STUB:THREE,MAPS_STUB:{MAPS},ASSET_URL_STUB:{assetUrl},URL,location:{href:faunaDocumentURL(AUDIT_BASE,map)},window:{__gworld:world,MAPEVAL:{cam:new THREE.PerspectiveCamera(),view(){}}}});
+  return new vm.Script('('+code+')').runInContext(context)({map,types:refsFor(map).map(r=>r.type)});
  }
- const actual=await collect(callback);assert.equal(actual.animals.length,2);assert.ok(auditCuratedFauna(actual,references).failures.some(f=>f.family==='count'));
+ const actual=await collect(callback);assert.deepEqual(Array.from(actual.animals,a=>a.id).sort(),expected);
+ if(map==='escadao')assert.ok(auditCuratedFauna(actual,references).failures.some(f=>f.family==='count'));
  const mutant=replaceOnce(callback,'world.ambience.animals.filter(a=>wanted.has(a.type))','[world.ambience.animals.find(a=>wanted.has(a.type))]');
- await assert.rejects(async()=>assert.equal((await collect(mutant)).animals.length,2));
+ await assert.rejects(async()=>assert.deepEqual(Array.from((await collect(mutant)).animals,a=>a.id).sort(),expected));
 });
 
 const publicRoot=new URL('../public/',import.meta.url);

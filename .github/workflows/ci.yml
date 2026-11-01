@@ -96,6 +96,9 @@ jobs:
         run: npm run eval:economia-jogo
       # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
       # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
+      - name: Telemetria preserva modo real e consentimento
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/telemetry-mode-check.mjs
       - name: Contratos visuais de mapas, personagens, câmera e equipamento
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:grafite-curation eval:map-material-finish eval:ferro-balcao eval:match-pickups eval:net-flash-disable eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:visual-map-contracts eval:knife-skin-markings eval:campo-uv eval:grafite-atual:prova

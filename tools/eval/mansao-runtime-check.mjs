@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { THREE, MAPS, bootGame, initTextures } from './harness.mjs';
 import { resolveMapId, ALIAS_MAPA } from '../../public/js/maps.js';
+const infra = (error) => { console.error('MANSAO-RUNTIME INFRA:', error); process.exit(2); };
 const mutant = process.argv.find(a => a.startsWith('--mutante='))?.split('=')[1];
 assert.equal(resolveMapId(Object.keys(ALIAS_MAPA).find(id => ALIAS_MAPA[id] === 'mansao')), 'mansao');
 assert.equal(MAPS.mansao?.build.name, 'buildMansao');
@@ -20,7 +21,7 @@ else if (mutant === 'sem-flanco-leste') {
   const flanco = new Set(nodes.map((node, i) => node.x >= 19.5 && node.z >= -18.1 && node.z <= 14.1 ? i : -1).filter(i => i >= 0));
   for (let i = 0; i < adj.length; i++) adj[i] = adj[i].filter(j => !flanco.has(i) && !flanco.has(j));
 }
-else if (mutant && !['parede-ausente','teto-baixo'].includes(mutant)) throw Error(`mutante desconhecido: ${mutant}`);
+else if (mutant && !['parede-ausente','teto-baixo'].includes(mutant)) infra(`mutante desconhecido: ${mutant}`);
 const failures = [], occupied = [], edges = [];
 const free = (p) => {
   const q = new THREE.Vector3(p.x, p.y, p.z); g._collide(q, .38);
@@ -123,8 +124,28 @@ const ctfMezzo = w.ctfPoints.find(point => point.id === 'P');
 assert(ctfMezzo, 'bandeira MEZZO ausente');
 const routeCount = separatedRoutes(w.nearestWaypoint(w.spawns.E[0].x, w.spawns.E[0].z), w.nearestWaypoint(ctfMezzo.x, ctfMezzo.z));
 if (routeCount < 2) failures.push(`jardim→MEZZO converge: ${routeCount}/2 rotas separadas`);
-for (const a of JSON.parse(fs.readFileSync('docs/maps/MANSAO-RECOVERY-ASSETS.json')).assets) {
-  assert.equal(crypto.createHash('sha256').update(fs.readFileSync(a.path)).digest('hex'),a.sha256,a.path);
+let assetFixture;
+try {
+  assetFixture = JSON.parse(fs.readFileSync('tools/eval/fixtures/mansao-runtime-assets.json'));
+  assert.deepEqual(assetFixture.provenance, {
+    sourceCommit: '1e84c8cc296cb5e80327e35f2245d30e266c6452',
+    sourcePath: 'docs/maps/MANSAO-RECOVERY-ASSETS.json',
+    sourceSha256: 'da599b643ff56bbb4b8e10d6c29ea368a2c67cbac651df9176383c8f8562ce1c',
+  });
+  assert.equal(assetFixture.assets?.length, 22);
+  const paths = new Set();
+  for (const a of assetFixture.assets) {
+    assert.deepEqual(Object.keys(a).sort(), ['path', 'sha256']);
+    assert.match(a.path, /^public\/(img|models)\/[\w./-]+$/);
+    assert(!a.path.split('/').some(part => part === '.' || part === '..'));
+    assert.match(a.sha256, /^[a-f0-9]{64}$/);
+    assert(!paths.has(a.path)); paths.add(a.path);
+  }
+} catch (error) { infra(error); }
+for (const a of assetFixture.assets) {
+  let bytes;
+  try { bytes = fs.readFileSync(a.path); } catch (error) { infra(error); }
+  assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), a.sha256, a.path);
 }
 const ray=new THREE.Raycaster();
 const shoot=(pos,dir,far)=>{ray.set(new THREE.Vector3(...pos),new THREE.Vector3(...dir));ray.far=far;return ray.intersectObjects(w.occluders,false);};
@@ -133,11 +154,40 @@ if(mutant==='parede-ausente') {
  w.occluders.splice(w.occluders.indexOf(hit.object),1);
 }
 for(const x of [-10,10])for(const [z,dz] of [[9,-1],[-16,1]])assert(shoot([x,1.5,z],[0,0,dz],2).length,'parede exterior ausente');
-const ceiling=shoot([8,6.15,-11],[0,1,0],5)[0];assert(ceiling);
-if(mutant==='teto-baixo'){ceiling.object.position.y-=1.52;g.scene.updateMatrixWorld(true);}
-// Olho 1.62 + ápice de pulo v=5/g=20.6 + folga .10 (Game._moveEntity/_updatePlayer).
-assert(shoot([8,6.15,-11],[0,1,0],5)[0].distance>1.62+25/41.2+.1,'teto invade olho durante pulo');
-const result={ok:!failures.length,nodes:nodes.length,edges:adj.reduce((n,a)=>n+a.length,0),spawnClearance,routeCount,occupied,blockedEdges:edges,failures};
+// Coordenadas e pulo discreto: docs/reports/MANSAO-FIXTURE-CONTINUATION-20261101.md.
+const dt = 1 / 120, samples = 120, gravity = 20.6, impulse = 5.6, eye = 1.62, margin = .10;
+const floor = w.groundHeightAt(8, -11, 4.5), rayOriginY = floor + eye;
+const ceiling = shoot([8, rayOriginY, -11], [0, 1, 0], 5)[0];
+assert(ceiling, 'teto ausente');
+if (mutant === 'teto-baixo') {
+  ceiling.object.position.y += floor + eye + margin - ceiling.point.y;
+  g.scene.updateMatrixWorld(true);
+  const changed = shoot([8, rayOriginY, -11], [0, 1, 0], 5)[0];
+  if (!changed || changed.object !== ceiling.object || !(changed.point.y < ceiling.point.y)) infra('mutante teto-baixo não aplicou');
+}
+const p = g.player, oldKeys = g.keys;
+let feetApex = floor, cameraPeak = -Infinity;
+try {
+  p.pos.set(8, floor, -11); p.vel.set(0, 0, 0); p.grounded = true; p.alive = true;
+  p.mantle = null; p.crouchF = 0; p.landDip = 0;
+  p.coyoteUntil = g.time + .09; p.jumpBufferedUntil = 0; p._spaceHeld = false;
+  g.keys = { Space: true };
+  for (let i = 0; i < samples; i++) {
+    if (i === 1) g.keys.Space = false;
+    g.time += dt; g._updatePlayer(dt);
+    feetApex = Math.max(feetApex, p.pos.y); cameraPeak = Math.max(cameraPeak, g.camera.position.y);
+  }
+  if (![floor, feetApex, cameraPeak].every(Number.isFinite)) throw Error('pulo sem medida finita');
+} catch (error) { infra(error); } finally { g.keys = oldKeys; }
+const upperApex = (impulse - gravity * dt / 2) ** 2 / (2 * gravity);
+const expectedApex = [upperApex - gravity * dt ** 2 / 8, upperApex];
+const apex = feetApex - floor;
+if (!(apex >= expectedApex[0] && apex <= expectedApex[1]
+  && cameraPeak >= floor + eye + expectedApex[0] && cameraPeak <= floor + eye + expectedApex[1])) failures.push('pulo/câmera diverge do contrato 5.6 a 1/120');
+const roof = shoot([8, rayOriginY, -11], [0, 1, 0], 5)[0];
+if (!roof || !(roof.point.y > cameraPeak + margin)) failures.push('teto invade olho durante pulo');
+const jump = { floor, dt, samples, impulse, gravity, eye, margin, apex, expectedApex, cameraPeak, roofY: roof?.point.y ?? null };
+const result={ok:!failures.length,nodes:nodes.length,edges:adj.reduce((n,a)=>n+a.length,0),spawnClearance,routeCount,occupied,blockedEdges:edges,failures,assetCount:assetFixture.assets.length,jump};
 fs.mkdirSync('artifacts/joa-recuperacao',{recursive:true});
 fs.writeFileSync(`artifacts/joa-recuperacao/runtime${mutant?'-'+mutant:''}.json`,JSON.stringify(result,null,2));
 console.log(JSON.stringify({...result,occupied:occupied.slice(0,8),blockedEdges:edges.slice(0,8),failures:failures.slice(0,12)}));

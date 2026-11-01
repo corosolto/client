@@ -168,7 +168,7 @@ function run(file, mutant = null) {
 }
 
 export function main() {
-  const files = ['map-fauna-curated', 'menu-backdrop'].map(name => fileURLToPath(new URL(`../../tests/${name}.test.mjs`, import.meta.url)));
+  const files = ['map-fauna-curated', 'map-fauna-support', 'map-fauna-supported-maps', 'menu-backdrop'].map(name => fileURLToPath(new URL(`../../tests/${name}.test.mjs`, import.meta.url)));
   for (const file of files) run(file);
   for (const mutant of Object.keys(causes)) run(files.at(-1), mutant);
 }
