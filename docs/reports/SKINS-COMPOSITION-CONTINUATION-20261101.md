@@ -69,4 +69,21 @@ Testes autor GLM, com **uma correção nativa Codex** após revisar o diff intei
 
 CPU focal Node22 e Node26: **102/102 preview em ambos**, preservando os95 casos anteriores e adicionando6 casos PT/EN e1 mutante causal de idioma; sintaxe main/test e diffcheck verdes. Fixtures executam o resolver inicial real de i18n.js com `?lang=pt/en`, depois os helpers reais de main.js; cobram legendas exatas de pintura/arma, indisponibilidade hero/stopVideo e cards compactos seleção/hub. Nomes Barbudo Cyborg e Ouro permanecem intactos. Probe do mesmo fixture com main.js pinado em a32 reproduziu as3 falhas EN antes, manteve PT correto, e passou as6 combinações de idioma/superfície atuais; sem editar o SUT para o baseline. Recibos e hashes: aggregate `audits/2026-10-31-visual-consistency/SKINS-I18N-R61-FOCUSED.json`, logs N22/N26-PREVIEW e N22/N26-BEFORE-AFTER; script audit `SKINS-I18N-R61-BASELINE-PROBE.mjs` somente extrai a fixture existente e compara os dois fontes.
 
-Root informou QA Campo adotado em `5732b65` e iniciou push normal com107 gates; essa execução não pertence à lane skins. Root também guardou o teste Ego mobile guest de a32 (`SKINS-LOCAL-MOBILE-GUEST-R61.json` e PNG): retrato visível, hero3D oculto, sem vídeo ativo, Loja remove e Jogar restaura. Equip autenticado continuou limitado pelo403 local da API; esses relatos não substituem nova revisão visual no HEAD deste marco. Próximo: Root rebind do mesmo crítico independente ao novo HEAD/freeze R61, decisão de composição sobre QA atual e gates finais após adoção. Sem browser/headless/build/fullsuite/push/PR nesta lane. Candidato continua não elegível/adotado/lançado.
+Root informou QA Campo adotado em `5732b65` e iniciou push normal com107 gates; essa execução não pertence à lane skins. Root também guardou o teste Ego mobile guest de a32 (`SKINS-LOCAL-MOBILE-GUEST-R61.json` e PNG): retrato visível, hero3D oculto, sem vídeo ativo, Loja remove e Jogar restaura. O403 inicial da API era histórico: o GET posterior respondeu200 anônimo, inventário0 e catálogo76; posse/equipamento autenticados não foram exercitados. Esses relatos não substituem nova revisão visual no HEAD deste marco. Próximo: Root rebind do mesmo crítico independente ao novo HEAD/freeze R61, decisão de composição sobre QA atual e gates finais após adoção. Sem browser/headless/build/fullsuite/push/PR nesta lane. Candidato continua não elegível/adotado/lançado.
+
+
+## Composição local na base QA R61
+
+Root criou a lane independente `codex/skins-visual-stack-20261101`, preservando
+intacta a candidata 5c522c1 e seus ancestrais #1190/#1191. Merge local ae5b787
+incorpora a QA5732b65 sem conflitos nem alteração nas14 fontes herdadas;
+o diff líquido continua nos mesmos14 caminhos. Root leu a crítica i18n
+inteira e reconferiu15 fontes e38 logs sem divergência. SC61-P3-1 fechado;
+sem aprovação final do novo PR ou release.
+
+O push normal da QA ainda está em andamento. Outra lacuna da régua CU-8
+foi reproduzida e será corrigida na lane Campo própria; nenhum produto de
+skins depende dessa mudança, mas a base deverá ser atualizada antes do merge.
+Próximo: exercício real EN/UI no Ego após o gate corrente terminar, rebind
+da composição, push normal próprio e PR empilhado, mantendo a QA imutável.
+Sem posse/equipamento autenticado, MP ou aparelho físico validados.
