@@ -16,4 +16,4 @@ Verificação focal em01/11: Node22.23.4/26.12.1 `--check public/js/game.js` EXI
 
 ## Próximo concreto
 
-Criar dois microcommits locais com Signed-off-by/Agent, source warning e doc qualifier, e entregar os hashes em CHECKPOINT.json no mesmo prefixo. Root atribuirá crítico focal RO antes de qualquer integração. Root também autorizou uma microcorreção posterior/separada de compatibilidade Object.hasOwn em main.js, por FAIL hospedado B9; ainda não faz parte destes dois checkpoints.
+Checkpoint source warning `796d770e4c1c466bcd06f2ed9ab560525642a743`. O segundo checkpoint registra o README/ledger; seu HEAD definitivo é fixado em CHECKPOINT.json no mesmo prefixo. Ambos levam Signed-off-by/Agent. Estado O5/O6: LOCAL_CHECKPOINTS / FOCAL_CRITIC_PENDING. Root atribuirá crítico focal RO antes de qualquer integração. Root também autorizou uma microcorreção posterior/separada de compatibilidade Object.hasOwn em main.js, por FAIL hospedado B9; ainda não faz parte destes dois checkpoints.
