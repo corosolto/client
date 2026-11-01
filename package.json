@@ -409,7 +409,7 @@
     "eval:vm-moving-shoulder": "node tools/eval/vm-target-tracking-check.mjs --dynamic-only --small --cam=shoulder --weapons=ak,mp5,p90",
     "eval:vm-parallax": "node tools/eval/vm-target-tracking-check.mjs --dynamic-only --stationary --small --cam=shoulder --weapons=ak --depth=2 --hit-radius=0.15",
     "eval:vm-parallax-far": "node tools/eval/vm-target-tracking-check.mjs --dynamic-only --stationary --small --cam=shoulder --weapons=ak --depth=30 --hit-radius=0.2",
-    "eval:melee-vm": "node tools/eval/melee-vm-check.mjs && node tools/eval/melee-motion-check.mjs && node tools/eval/melee-approved-attacks-check.mjs && node tools/eval/vm-hand-continuity-check.mjs && node tools/eval/vm-hand-atlas-check.mjs && node tools/eval/melee-framing-check.mjs",
+    "eval:melee-vm": "node tools/eval/melee-vm-check.mjs && node tools/eval/melee-motion-check.mjs && node tools/eval/melee-approved-attacks-check.mjs && npm run -s eval:vm-maos-armas && node tools/eval/vm-hand-atlas-check.mjs && node tools/eval/melee-framing-check.mjs",
     "eval:vm-catalog": "node tools/viewmodels/validate_paid_catalog.mjs",
     "//eval:weapon-skin-body": "WB1: toda imagem pintada fica dentro da silhueta renderizada do corpo da arma nas duas laterais; o mutante extravasar amplia os planos 2,4x e precisa reprovar.",
     "eval:weapon-skin-body": "node tools/eval/weapon-skin-body-check.mjs && node tools/eval/weapon-skin-body-check.mjs --mutante=extravasar --provar-mutante",
@@ -790,7 +790,10 @@
     "eval:sondafilho": "node tools/eval/sonda-filho-check.mjs",
     "//eval:map-fauna-curated": "Acervo Mint usado no mapa: binding, textura, rig e preload mobile; mutantes recusam fallback e fauna removida.",
     "eval:map-fauna-curated": "node --test tests/map-fauna-curated.test.mjs tests/map-fauna-support.test.mjs tests/map-fauna-supported-maps.test.mjs tests/menu-backdrop.test.mjs && for m in fauna-gates stale-map ignore-seq ignore-map no-late-fauna; do ! MENU_BACKDROP_MUTANT=$m node --test tests/menu-backdrop.test.mjs >/dev/null 2>&1 || exit 1; done",
-    "eval:map-fauna-curated:runtime": "node tools/eval/map-fauna-curated-ci.mjs"
+    "eval:map-fauna-curated:runtime": "node tools/eval/map-fauna-curated-ci.mjs",
+    "//eval:vm-maos-armas": "mãos do time iguais em toda arma (BUG-85, #1128): as 26 armas de WEAPON_IDS em cada rota servida (padrão e com pintura) e a faca, GLB real; identidade por facção e rig de mão da linha (A golden, K fábrica, L faca), com a pistola golden como dívida declarada de arte. Sem catálogo privado as rotas fab# saem NÃO MEDIDAS; eval:vm-maos-armas-catalogo as exige. Mutantes: luva-por-arma, pbr-por-arma, troca-rig, luva-crua, divida-paga",
+    "eval:vm-maos-armas": "node tools/eval/vm-hand-continuity-check.mjs && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=luva-por-arma && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=pbr-por-arma && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=troca-rig --arma=m4 && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=troca-rig --arma=knife && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=luva-crua --arma=m4 && ! node tools/eval/vm-hand-continuity-check.mjs --mutante=divida-paga",
+    "eval:vm-maos-armas-catalogo": "node --import ./tools/eval/vm-hand-three-register.mjs tools/eval/vm-hand-continuity-check.mjs --exigir-catalogo"
   },
   "repository": {
     "type": "git",
