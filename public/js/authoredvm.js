@@ -9,6 +9,7 @@ import { VM_BYTES } from './data/vmbytes.js';
 import { VM_FABRICA_BYTES } from './data/vmfabrica.js';
 import { SHARED_VER } from './data/vmsharedver.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
+import { attachGoldenBarrel } from './golden-barrel.js';
 import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
 import { applyTeamHandMaterial, refreshTeamHands, handLayoutOfMesh } from './vmhands.js';
@@ -597,8 +598,9 @@ export class AuthoredViewModels {
         if (owner) attachMintWeapon(entry, owner);
       }
       this._applyWeaponSkin(entry, entry.mint?.weaponId || bakedWeapon);
+      attachGoldenBarrel(entry);
       // AK golden: ADS pela alça e massa medidas na malha (sonda-golden.mjs), fora de sockets/mint
-      // para boca, flash e quadril seguirem os aprovados (VM-FABRICA §8.3).
+      // independente da origem física de flash/tracer; conserva o enquadramento (§8.3).
       const mira = golden && GOLDEN_ADS && adsEfetivo(VM_WEAPON[bakedWeapon]?.ads, ADS1P_FIX)?.golden;
       if (mira) {
         const osso = visual.scene.getObjectByName(mira.osso);
