@@ -5557,7 +5557,7 @@ export class Game {
       if (!mint) return;
       mint.traverse((object) => { object.castShadow = true; });
       this._grenTemplates.flash = mint;
-    }, undefined, () => {});
+    }, undefined, () => { console.warn('Flash pública indisponível; usando modelo provisório.'); });
   }
   // Casco provisório da flash: clona o da fumaça (cilindro M18), pinta de alumínio e põe
   // duas faixas amarelas. Sai quando o modelo do Mint chegar.
