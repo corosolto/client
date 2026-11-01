@@ -20,4 +20,7 @@ export const GRAFITE = {"praca_poderes":{"arquivos":["tags-treino-02.png"],"peca
 
 /* IMPRESSÃO DIGITAL DAS ENTRADAS (issue #82) — GERADA junto com o layout, ver
    tools/eval/graffiti-fingerprint.mjs. Cobrada por tools/eval/graffiti-layout-check.mjs. */
+/* REASSINADO SEM REASSAR em 2026-10-29 — o lote dos props da piscina volta a levar a permissão de pintura; o bake da piscina com a correção sai idêntico às 475 peças do layout (#1109)
+   A colocação não foi tocada: a mudança não move parede, e reassar trocaria arte
+   aprovada por churn. */
 export const GRAFITE_FP = {"pass":"161c4394b4a2247a","maps":{"campomorro":"363caed0098839fc","escadao":"6004f1eadb6c708f","praca_poderes":"9a5e423282776433","piscina_treta":"3d526727e8615dbd","loja_h":"cd052805cfdefa1e","ferro_velho":"651c21204718b9b4","quebrada":"425574945743096a","lajes":"b284fca9ffe7a580","corrego":"4997fb313ea23479","mansao":"9ec442d0909df647","upa_24h":"b580461681cd5f09","obras_prefeitura":"8d1fbcfe77d4b918","posto_treta":"692ddca62652ab3d","atacadao_treta":"cffbad8150a92b5b"}};
