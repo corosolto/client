@@ -30,3 +30,7 @@ Próximo: simhash/arch/docs pelos geradores, syntax e réguas landing-impact+loo
 2026-10-31T14:53:27.951515+00:00 — Push normal170 exit0/462,2s, HEAD8b662 confirmado no remoto/corpo atualizado. CI14:52 final18SUCCESS/8SKIP/1classifyCANCELLED, semfalha de teste. QA estética humana e integração pendentes, semmerge/produção.
 
 2026-11-01T00:28:13.762994+00:00 — Integração311 planejada contra1155final79dd (incluiBBC). Preview tem7conflitos de metadados/nenhumcódigo conflitado; proposta730scripts em revisão, quatro aliases próprios preservados. Preservado checkpoint de publicação8b e append validado acima; nenhummerge/pushnovo/QAalegado. Próximo resolver sóblocosgerados+package/version após crítica, rodargeração/gates/CI eQAaplicável.
+
+2026-11-01T00:36:15.261731+00:00 — MARCO311: mergeLOCAL79dd/e09 semcommit,730scripts exatos e Game/CI compostos revistos. Geração oficial8fases14,60s PASS, SIM89a043d8f7a593c8/alpha133, só6gerados/3034pins e índice78a7 intactos. Gates/build/QA/revisão final/checkpoint/envio pendentes. LOOK/assets/ΔE8 preservados; sem merge remoto.
+
+2026-11-01T00:48:42.764742+00:00 — MARCO323CANDIDATO: checkpoint recuperável da composição LOCAL1155final79dd com própriasmudançasLOOK/landing.158pathsherdados/7conflitosmetadadosresolvidos; geração311REAL8fases14,60s/3034pins/6gerados/SIM89a043d8f7a593c8 aprovados/críticobeee0746. Não é aceite de gameplay/build/hooks/CI. Próximo incorporar4cf congelada(4arquivosrunner/sonda/CI/progress) e realizar gates próprios do plano323; nenhum runtime/asset/ΔE8 alterado por essecheckpoint.

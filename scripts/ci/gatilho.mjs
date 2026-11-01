@@ -59,14 +59,15 @@ export const GATILHOS = {
     workflow: '.github/workflows/portao-browser.yml',
     padroes: [
       ...COMUM,
-      /^tools\/eval\/(serve|harness|graffiti-census|graffiti-audit|select-inflate|entrada-check|armas-check|boot-check|perfil-mobile-browser|sertao-livestock-runtime-check|treta-vitrine-browser)\.mjs$/,
+      /^tools\/eval\/(serve|harness|graffiti-census|graffiti-audit|select-inflate|entrada-check|armas-check|selected-weapon-probe|boot-check|perfil-mobile-browser|sertao-livestock-runtime-check|treta-vitrine-browser|toque-controles-check|vm-autorado-vivo|viewmodel-network-fixture)\.mjs$/,
       /^tools\/eval\/(graffiti_census|graffiti_audit|select_inflate|select_inflate_debt)\.json$/,
+      /^tools\/viewmodels\/vm-assets\.manifest\.json$/,
       /^tools\/ops\//,
       /^\.github\/workflows\/portao-browser\.yml$/,
     ],
     /* `npm run` que o workflow chama. A régua cobra os dois lados: passo novo sem
        entrada aqui é vermelho, e entrada aqui sem passo também (passo que sumiu). */
-    passos: ['eval:serve', 'eval:grafite', 'eval:select', 'eval:entrada', 'eval:perfilmobile:browser', 'eval:armas', 'eval:boot', 'eval:sertao-livestock-runtime', 'eval:grafite:ar'],
+    passos: ['eval:serve', 'eval:grafite', 'eval:select', 'eval:entrada', 'eval:perfilmobile:browser', 'eval:toquecontroles', 'eval:vm-maos-mobile-desktop', 'eval:armas', 'eval:boot', 'eval:sertao-livestock-runtime', 'eval:grafite:ar'],
   },
   smoke: {
     workflow: '.github/workflows/smoke-web.yml',
