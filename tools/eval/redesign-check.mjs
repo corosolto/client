@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
-const MUTANTE = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
+const cli = process.argv.slice(2);
+if (cli.length > 1 || cli.some((a) => !/^--mutante=[a-z0-9-]+$/.test(a))) {
+  console.error('uso: redesign-check.mjs [--mutante=<nome>]'); process.exit(2);
+}
+const MUTANTE = cli[0]?.slice('--mutante='.length) || '';
 const alvoPorMutante = {
   'asset-ausente': 'UIA1',
   'resultado-nao-auditado': 'UIA1',
@@ -48,6 +53,10 @@ const alvoPorMutante = {
   'selecao-thumbs-pequenos': 'UIR13',
   'selecao-rail-descentrado': 'UIR13',
   'selecao-controle-colide': 'UIR13',
+  'selecao-grade-sem-rolagem': 'UIR13',
+  'selecao-rail-sem-piso': 'UIR13',
+  'selecao-rail-linha-morta': 'UIR13',
+  'selecao-teto-fixo-volta': 'UIR13',
   'preview-gira-sozinho': 'UIR14',
   'resultado-em-video': 'UIR15',
   'resultado-personagem-antigo': 'UIR15',
@@ -98,6 +107,29 @@ const alvoPorMutante = {
 if (MUTANTE && !alvoPorMutante[MUTANTE]) {
   console.error(`mutante desconhecido: ${MUTANTE}`);
   process.exit(2);
+}
+
+// As mutações da grade exigem nominal verde e só UIR13 vermelha.
+const GRADE_MUTANTES = new Set(['selecao-tres-colunas', 'selecao-thumbs-pequenos', 'selecao-rail-descentrado', 'selecao-controle-colide', 'selecao-grade-sem-rolagem', 'selecao-rail-sem-piso', 'selecao-rail-linha-morta', 'selecao-teto-fixo-volta']);
+if (GRADE_MUTANTES.has(MUTANTE) && process.env.CSBR_REDESIGN_GRADE_CHILD !== '1') {
+  const rodar = (args, child = false) => spawnSync(process.execPath, [fileURLToPath(import.meta.url), ...args], {
+    encoding: 'utf8', env: { ...process.env, CSBR_REDESIGN_GRADE_CHILD: child ? '1' : '' }, maxBuffer: 4 * 1024 * 1024,
+  });
+  const linhas = (r) => [...(r.stdout || '').matchAll(/^([✓✗]) ([A-Z]+[0-9]+) ·/gm)].map((m) => ({ id: m[2], verde: m[1] === '✓' }));
+  const infra = (msg) => { console.error('INFRA UIR13: ' + msg); process.exit(3); };
+  const nominal = rodar([]), antes = linhas(nominal);
+  if (nominal.error || nominal.signal || nominal.status !== 0 || !antes.some((r) => r.id === 'UIR13')
+      || antes.some((r) => !r.verde) || new Set(antes.map((r) => r.id)).size !== antes.length)
+    infra('nominal não verde ou protocolo inválido; mutação não executada');
+  const variante = rodar([`--mutante=${MUTANTE}`], true), depois = linhas(variante);
+  if (variante.error || variante.signal || ![0, 1].includes(variante.status)) infra(`variante exit=${variante.status}`);
+  if (JSON.stringify(antes.map((r) => r.id)) !== JSON.stringify(depois.map((r) => r.id))) infra('cláusulas da variante diferem do nominal');
+  const vermelhas = depois.filter((r) => !r.verde).map((r) => r.id);
+  process.stdout.write(variante.stdout || '');
+  if (variante.status !== 0 || JSON.stringify(vermelhas) !== JSON.stringify(['UIR13'])) {
+    console.error(`mutante ${MUTANTE}: falhas fora do conjunto exato: ${JSON.stringify(vermelhas)}`); process.exit(1);
+  }
+  console.log(`✓ grade ${MUTANTE}: nominal verde e somente UIR13 vermelha`); process.exit(0);
 }
 
 let main = readFileSync(join(ROOT, 'public/js/main.js'), 'utf8');
@@ -285,18 +317,30 @@ main = muta('mapa-categoria-errada', main,
 astro = muta('mapa-sem-navegacao', astro,
   '<button id="ms-prev" class="ms-arrow"',
   '<button id="ms-prev-mutado" class="ms-arrow"');
-css = muta('selecao-tres-colunas', css,
+css = muta('selecao-tres-colunas', css,   // palco ganha terceira coluna: ficha perde o lugar
   'grid-template-columns:minmax(280px,360px) minmax(0,1fr);',
   'grid-template-columns:96px minmax(280px,360px) minmax(0,1fr);');
-css = muta('selecao-thumbs-pequenos', css,
-  '--char-thumb:114px;',
-  '--char-thumb:76px;');
-css = muta('selecao-rail-descentrado', css,
-  '.char-filmstrip{grid-area:rail;display:flex;flex-direction:row;align-items:center;justify-content:center;',
-  '.char-filmstrip{grid-area:rail;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;');
-css = muta('selecao-controle-colide', css,
+css = muta('selecao-thumbs-pequenos', css, // grade de 72 vira miniatura de 36 (não o stage 114)
+  '--char-thumb:72px;display:grid;',
+  '--char-thumb:36px;display:grid;');
+css = muta('selecao-rail-descentrado', css, // filmstrip deixa de esticar: a grade encolhe ao conteúdo
+  '.char-filmstrip{grid-area:rail;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;',
+  '.char-filmstrip{grid-area:rail;display:grid;grid-template-columns:44px 160px 44px;');
+css = muta('selecao-grade-sem-rolagem', css, // grade estoura sem rolagem própria
+  'overflow-y:auto;overflow-x:hidden;',
+  'overflow-y:visible;overflow-x:visible;');
+css = muta('selecao-controle-colide', css,  // preview invade a linha do elenco
   'max-height:calc(100% - 28px);',
   'max-height:none;');
+css = muta('selecao-rail-sem-piso', css,   // rail volta a auto: sem piso a ficha corta a lista (#1179)
+  'grid-template-rows:auto minmax(84px,1fr);grid-template-areas:"sheet preview" "rail rail";',
+  'grid-template-rows:auto auto;grid-template-areas:"sheet preview" "rail rail";');
+css = muta('selecao-rail-linha-morta', css, // grade estoura a grid-area do rail em vez de rolar dentro
+  '  grid-template-rows:minmax(0,1fr);\n  align-items:center',
+  '  grid-template-rows:auto;\n  align-items:center');
+css = muta('selecao-teto-fixo-volta', css,  // teto do rail volta a px fixo de fileiras
+  'max-height:100%;overflow-y:auto;overflow-x:hidden;\n  overscroll-behavior:contain;',
+  'max-height:calc(var(--char-thumb) * 3 + 48px);overflow-y:auto;overflow-x:hidden;\n  overscroll-behavior:contain;');
 game = muta('resultado-em-video', game,
   'setHeroArt(this.playerCharId || rep);',
   "setHeroArt(this.playerCharId || rep);\n    void '/video/resultado/personagem-vitoria.webm';");
@@ -746,14 +790,24 @@ const charFilmstrip = (css.match(/\.char-filmstrip\{([^}]*)\}/) || [])[1] || '';
 const charList = (css.match(/\.char-list\{([^}]*)\}/) || [])[1] || '';
 const charRow = (css.match(/\.char-row\{([^}]*)\}/) || [])[1] || '';
 const charPreview = (css.match(/(?:^|\n)#char-preview\{([^}]*)\}/) || [])[1] || '';
+/* UIR13 — GRADE do elenco (aceite R26, #1179/0e1fe896a): ficha + preview nas duas
+   colunas; o rail elástico conserva o piso de uma fileira e rola dentro da altura disponível. */
 const selecaoDuasColunas = /grid-template-columns:minmax\(280px,360px\) minmax\(0,1fr\)/.test(charStage)
   && /grid-template-areas:"sheet preview" "rail rail"/.test(charStage)
-  && /--char-thumb:114px/.test(charStage)
-  && /grid-template-rows:minmax\(0,1fr\) var\(--char-thumb\)/.test(charStage)
-  && /grid-area:rail/.test(charFilmstrip) && /flex-direction:row/.test(charFilmstrip)
-  && /justify-content:center/.test(charFilmstrip)
-  && /flex-direction:row/.test(charList) && /overflow-x:auto/.test(charList)
-  && /flex:0 1 auto/.test(charList) && /width:max-content/.test(charList)
+  && /grid-template-rows:auto minmax\(84px,1fr\)/.test(charStage)
+  && /grid-area:rail/.test(charFilmstrip) && /display:grid/.test(charFilmstrip)
+  && /grid-template-columns:44px minmax\(0,1fr\) 44px/.test(charFilmstrip) && /align-items:center/.test(charFilmstrip)
+  && /grid-template-rows:minmax\(0,1fr\)/.test(charFilmstrip) && /min-height:0/.test(charFilmstrip)
+  && /--char-thumb:72px/.test(charList) && /display:grid/.test(charList)
+  && /grid-template-columns:repeat\(auto-fill,minmax\(var\(--char-thumb\),1fr\)\)/.test(charList)
+  && /width:100%;max-width:100%/.test(charList)
+  && /min-height:calc\(var\(--char-thumb\) \+ 12px\)/.test(charList)
+  && /max-height:100%/.test(charList)
+  && /overflow-y:auto/.test(charList) && /overflow-x:hidden/.test(charList)
+  && /overscroll-behavior:contain/.test(charList)
+  && /grid-template-rows:\s*auto minmax\(84px,\s*1fr\)/.test(css)
+  && /\.char-filmstrip\s*\{\s*grid-template-rows:\s*minmax\(0,\s*1fr\)\s*;?\s*\}/.test(css)
+  && /\.char-list\s*\{\s*height:\s*100%;\s*max-height:\s*none\s*;?\s*\}/.test(css)
   && /width:var\(--char-thumb\)/.test(charRow) && /height:var\(--char-thumb\)/.test(charRow)
   && /max-height:calc\(100% - 28px\)/.test(charPreview)
   && /\.pv-hints\{[^}]*flex:0 0 auto/.test(css);
@@ -984,8 +1038,8 @@ const resultados = [
     'entrada, loading e resultado não têm vídeo; fallback 3D pausa ao sair'],
   ['UIR12', 'vídeo de seleção é fallback e preserva o preview 3D interativo', previewInterativo,
     'WebGL mantém GIRAR/ZOOM; vídeo só entra quando o renderer não existe'],
-  ['UIR13', 'seleção tem rail central de avatares 1,5× sem colidir com controles', selecaoDuasColunas,
-    'ficha + preview; rail de 114px centralizado e preview respeita a linha inferior'],
+  ['UIR13', 'seleção: ficha + preview em duas colunas e grade elástica de thumbs 72 com rolagem própria', selecaoDuasColunas,
+    'grade auto-fill minmax(72,1fr) no rail elástico (piso 84px, teto 100%); filmstrip estica; preview respeita a linha inferior'],
   ['UIR14', 'preview preserva a pose de apresentação até o jogador girar', previewSobControle,
     'animação idle continua; yaw só responde ao arraste'],
   ['UIR15', 'resultado usa exclusivamente arte estática do personagem atual', resultadoEstatico,

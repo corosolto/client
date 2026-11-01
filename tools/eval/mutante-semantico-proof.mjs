@@ -25,7 +25,7 @@ const WHITELIST={
     },
   },
   'mutantes-anunciados':{
-    script:'tools/eval/mutantes-anunciados-check.mjs',flag:'--mutante=',types:['ContractViolation'],cases:9,
+    script:'tools/eval/mutantes-anunciados-check.mjs',flag:'--mutante=',types:['ContractViolation'],cases:10,
     mutants:{'anuncia-fantasma':'MA1','executa-fantasma':'MA2'},
   },
 };

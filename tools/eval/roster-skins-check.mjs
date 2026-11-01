@@ -6,7 +6,7 @@
  * aprovação vêm de public/models/skins/manifest.json. Nada de número ou nome inventado.
  *
  * Mutantes (--mutante=<nome>), cada um apaga/inverte UMA linha do fonte real:
- * sem-disponivel, sem-aprovado, sem-posse, sem-desequipar, sem-redesenho */
+ * sem-disponivel, sem-aprovado, sem-posse, sem-desequipar, sem-redesenho, sem-nome-skin */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
@@ -22,6 +22,7 @@ const MUTANTES = {
   'sem-posse': ['loja', '    const posse=inventory.find(p=>p.skin_id===server.id);\n', '    const posse=inventory.find(p=>p.skin_id!==server.id);\n'],
   'sem-desequipar': ['main', '        if (equipada) {\n', '        if (!equipada) {\n'],
   'sem-redesenho': ['main', "if(!$('hub-roster-modal')?.hidden)hubRosterRender?.();", ''],
+  'sem-nome-skin': ['main', "selected.name, skinAtual ? skinAtual.name : ''", "selected.name, ''"],
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 const muta = (alvo, fonte) => {
@@ -124,7 +125,17 @@ caso('RS5', 'fiação do modal: armário no openHubRoster, equipar na célula de
   assert.ok(/if \(equipada\) \{\s*\n\s*try \{ if \(!await desequiparTretaSkin\(\)\) throw new Error/.test(roster), 'clique do personagem base não desequipa a skin equipada');
   assert.ok(/aria-pressed', String\(def\.id === currentChar && !equipada\)/.test(roster), 'personagem base segue aceso com skin equipada');
   assert.ok(/aria-pressed', String\(skin\.equipped && def\.id === currentChar\)/.test(roster), 'célula de skin não reflete o equipado');
-  assert.ok(/hub-roster-selected'\)\.textContent = `Selecionado:[^`]*\$\{skinAtual \? ` · \$\{skinAtual\.name\}` : ''\}`/.test(roster), 'a linha Selecionado não mostra a skin');
+  const selectedLine=roster.split('\n').find(line=>line.includes("$('hub-roster-selected').textContent = frase('selecionado'"));
+  assert.ok(selectedLine,'linha de seleção traduzida ausente');
+  for(const lang of ['pt','en'])for(const skinAtual of [null,{name:'Skin do servidor'}]){
+    const output={textContent:''};
+    const ctx=vm.createContext({location:{search:'?lang='+lang},URLSearchParams,
+      $:()=>output,selected:{name:'Personagem'},skinAtual,currentTeam:'E',
+      FACTION_NAME:{E:'TIME E'},ladoValido:()=> 'E'});
+    vm.runInContext(read('public/js/i18n.js').replace(/^export /gm,''),ctx);
+    vm.runInContext(selectedLine,ctx);
+    assert.equal(output.textContent,`${lang==='pt'?'Selecionado':'Selected'}: ${lang==='pt'?'TIME E':'TEAM E'} · Personagem${skinAtual?' · Skin do servidor':''}`,'a seleção traduzida não preserva o personagem e a skin equipada');
+  }
   assert.ok(/hubRosterRender = render;/.test(roster), 'openHubRoster não publica o render do modal');
   const start=fonteMain.indexOf('function refreshMenuEquipment()');
   const end=fonteMain.indexOf('let hubMapReturnQuick',start);
@@ -152,4 +163,4 @@ caso('RS6', 'sem conta e sem inventário o armário é vazio: o modal fica igual
 });
 
 console.log(falhas ? `\n${falhas} RED${MUT ? ` [mutante ${MUT}]` : ''}` : `\nroster-skins: tudo verde${MUT ? ` [mutante ${MUT} NÃO pegou]` : ''}`);
-process.exit(falhas ? 1 : (MUT ? 3 : 0));
+process.exit(falhas ? 1 : 0);

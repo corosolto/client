@@ -26,7 +26,7 @@ for(const [name,lines,expected] of [
   ['direct promise handler',['video.play().catch(()=>{});'],true],
 ])test('media guard recognizes the actual containment: '+name,()=>assert.equal(playGuard(lines,0),expected));
 
-function fixture({ reduced = false, compact = false, narrow = false, lean = true, threeD = false, realModel = false, teamVisible = false, preload = () => Promise.resolve(), screen = 'selection', play = () => Promise.resolve(), mutate = value => value, pack = false, vibe = 'ak', paints = {ak:'ouro-ak'} } = {}) {
+function fixture({ reduced = false, compact = false, narrow = false, lean = true, threeD = false, realModel = false, previousModel = null, modelAvailable = true, teamVisible = false, preload = () => Promise.resolve(), screen = 'selection', play = () => Promise.resolve(), mutate = value => value, pack = false, vibe = 'ak', paints = {ak:'ouro-ak'} } = {}) {
   let equippedSkin='lula-cyborg',homeRefreshes=0,rendererCalls=0,preloads=0,thumbnailRenders=0,modelBuilds=0,boxBuilds=0;
   const query=matches=>{const q=new EventTarget();q.matches=matches;q.change=value=>{q.matches=value;const event=new Event('change');event.matches=value;q.dispatchEvent(event);};return q;};
   const motion=query(reduced),compactQuery=query(compact),narrowQuery=query(narrow);
@@ -37,6 +37,7 @@ function fixture({ reduced = false, compact = false, narrow = false, lean = true
   show({selection:'char-select',hub:'main-menu',team:'team-select'}[screen]);
   node('main-menu').dataset.hubTab='jogar';node('main-menu').dataset.hubNet='sp';
   const box = node('box'), video = node('char-preview-video'), hints = node('hints');
+  const previewState={scene:{add(){},remove(){}},model:previousModel};
   box.checkVisibility=()=>!compactQuery.matches && (!node('char-select').classList.contains('hidden') || (!node('main-menu').classList.contains('hidden')&&!narrowQuery.matches));
   const block = raw.slice(raw.indexOf('const screens ='),raw.indexOf('const $ = id =>'))
     + '\n' + raw.slice(raw.indexOf('const ORDEM_ARMA_EQUIPADA'),raw.indexOf('let pvToken ='))
@@ -50,7 +51,7 @@ function fixture({ reduced = false, compact = false, narrow = false, lean = true
     + '\n' + raw.slice(raw.indexOf('  const setHubNet ='),raw.indexOf("  $('hub-sp').onclick"))
     + '\nfunction frame(dtReal){' + raw.slice(raw.indexOf('      const pvDt = pv.travado'),raw.indexOf('      pv.r.render(pv.scene, pv.cam);')+'      pv.r.render(pv.scene, pv.cam);'.length)+'\n}';
   const context = vm.createContext({ VERSION: 'fixture', staticPreviews: lean, $: node,
-    document: { getElementById:node,dispatchEvent(){},querySelector: selector => {if(selector==='.char-preview-box')return box;if(selector.includes('.team-chars')){const team=node(selector);team.checkVisibility=()=>teamVisible;return team;}return hints;},querySelectorAll:()=>[],createElement:()=>node('row-'+nodes.size) },
+    document: { getElementById:node,dispatchEvent(){},querySelector: selector => {if(selector==='.char-preview-box')return box;if(selector.includes('.team-chars')){const team=node(selector);team.checkVisibility=()=>typeof teamVisible==='object'?teamVisible[selector.includes('team-e')?'E':'B']:teamVisible;return team;}return hints;},querySelectorAll:()=>[],createElement:()=>node('row-'+nodes.size) },
     matchMedia: query => query.includes('pointer: coarse')?compactQuery:query.includes('max-width')?narrowQuery:motion,
     tretaSkinPresentation: (id, character) => id === 'lula-cyborg' && character === 'barbudo' ? presentation : null,
     equippedTretaSkin: () => equippedSkin, equippedTretaEyewear: () => null,
@@ -59,21 +60,21 @@ function fixture({ reduced = false, compact = false, narrow = false, lean = true
     equippedTretaWeaponSkin:id=>paints[id] || null,equippedTretaGlove:()=>null,
     tretaWeaponPresentation:(weapon,id)=>id?.startsWith('pack-')?{name:'Pack Fixture'}:id?{name:'Ouro'}:null,
     sincronizaBarraEmotes: () => {},
-    ensurePreview:()=>{rendererCalls++;return threeD?{scene:{add(){},remove(){}},model:null}:null;},
+    ensurePreview:()=>{rendererCalls++;return threeD?previewState:null;},
     navOnly:!realModel,PV_CAM_MAOS:false,buildCharacter:()=>{boxBuilds++;return {group:{rotation:{}}};},
     CHARACTERS:[base],podeNoLado:()=>true,GLB_CHARS:new Set(['barbudo']),
     ui:{back(){}},currentTeam:null,currentFaction:null,hideLoading(){},showLoading(){},selectCharacterFromAvatar(){},
     HUB_ENABLED:false,stopMapPreviews(){},stopMapPreview(){},applyHomeWall(){},musicArmed:false,setTimeout(){},focusMenu(){},
     updateHubTip(){},menuSetup:node('menu-setup'),setSetupStep(){},tabs:[],panes:{},mpPanel:node('mp-panel'),renderHubRanking(){},abrirMultiplayer(){},hubNavigate(){},location:{href:'https://fixture.invalid/'},CustomEvent:class{},
     tr:x=>x,FACTION_NAME:{},renderCharAttrs(){},sfxReady:Promise.resolve(),sfx:{characterVoice(){}},
-    preloadCharacterAssets:()=>{preloads++;return preload();},hasModel:()=>true,
+    preloadCharacterAssets:()=>{preloads++;return preload();},hasModel:()=>modelAvailable,
     preloadCosmeticAssets:async()=>{},preloadEyewearAssets:async()=>{},preloadWeapons:async()=>{},preloadWeaponSkinCandidate:async()=>{},
     buildCharacterModel:()=>{modelBuilds++;return {group:{rotation:{},traverse(){}},mixer:{update(){}}};},snapThumb:()=>{thumbnailRenders++;return 'data:fixture';},
     selChar:base,syncHomeCharacter:()=>{homeRefreshes++;context.fixtureApi.pvSetChar(base);},hubRosterRender:()=>{},
   });
   const api = new vm.Script(mutate(block) + '\n({showStaticPreview,pvStopVideo,pvSetVideo,portraitUrl,pvSetChar,refreshMenuEquipment,armaDoPreview,previewModelActive,ensureTeamPreviews,pvThumb,glbThumb,pickTeam,show,setHubTab,setHubNet,frame,preview:value=>{pv=value;}});').runInContext(context);
   context.fixtureApi=api;
-  return { api, node, box, video,rendererCalls:()=>rendererCalls,preloads:()=>preloads,thumbnailRenders:()=>thumbnailRenders,modelBuilds:()=>modelBuilds,boxBuilds:()=>boxBuilds,show:api.show,compact:value=>compactQuery.change(value),narrow:value=>narrowQuery.change(value),homeRefreshes:()=>homeRefreshes,accountSkin:id=>{equippedSkin=id;},selection:def=>{context.selChar=def;},reduceMotion:()=>motion.change(true) };
+  return { api, node, box, video, mountedModel:()=>previewState.model,rendererCalls:()=>rendererCalls,preloads:()=>preloads,thumbnailRenders:()=>thumbnailRenders,modelBuilds:()=>modelBuilds,boxBuilds:()=>boxBuilds,show:api.show,compact:value=>compactQuery.change(value),narrow:value=>narrowQuery.change(value),homeRefreshes:()=>homeRefreshes,accountSkin:id=>{equippedSkin=id;},selection:def=>{context.selChar=def;},teamVisibility:value=>{teamVisible=value;},reduceMotion:()=>motion.change(true) };
 }
 
 test('static preview uses the validated equipped skin poster', () => {
@@ -277,10 +278,10 @@ for(const [name,mutate,probe,options={}] of [
   ['selection opens after video setup',replace("show('char-select');\n    if (firstRow) selectChar(chars[0], firstRow);","if (firstRow) selectChar(chars[0], firstRow);\n    show('char-select');"),f=>{f.api.pickTeam('E');assert.equal(f.video.src,presentation.video.webm+'?v=fixture');},{screen:'team'}],
   ['hidden hero image still loads',replace('if(!previewHeroVisible()){','if(false){'),f=>{f.api.pvSetChar(base);assert.equal(f.node('char-preview-static').src,'');},{compact:true}],
   ['inactive compact card still loads',replace('if(!active){','if(false){'),f=>{f.api.pvSetChar(base);assert.equal(f.node('hub-character-portrait').src,'');},{compact:true}],
-  ['idle overwrites the selected angle',replace('if (!pvReducedMotion.matches) { if (pv.ctrl)','pv.model.rotation.y += pvDt * 0.9; if (!pvReducedMotion.matches) { if (pv.ctrl)'),f=>{const model={rotation:{y:0}};f.api.preview({model,r:{render(){}}});f.api.frame(0.05);assert.equal(model.rotation.y,0);}],
-  ['reduced motion still advances idle',replace('if (!pvReducedMotion.matches) { if (pv.ctrl)','if (true) { if (pv.ctrl)'),f=>{let updates=0;f.api.preview({model:{rotation:{y:0}},ctrl:{update(){updates++;}},r:{render(){}}});f.api.frame(0.05);assert.equal(updates,0);},{reduced:true}],
+  ['idle overwrites the selected angle',replace('if (!pv.travado && !pvReducedMotion.matches) { if (pv.ctrl)','pv.model.rotation.y += pvDt * 0.9; if (!pv.travado && !pvReducedMotion.matches) { if (pv.ctrl)'),f=>{const model={rotation:{y:0}};f.api.preview({model,r:{render(){}}});f.api.frame(0.05);assert.equal(model.rotation.y,0);}],
+  ['reduced motion still advances idle',replace('if (!pv.travado && !pvReducedMotion.matches) { if (pv.ctrl)','if (!pv.travado) { if (pv.ctrl)'),f=>{let updates=0;f.api.preview({model:{rotation:{y:0}},ctrl:{update(){updates++;}},r:{render(){}}});f.api.frame(0.05);assert.equal(updates,0);},{reduced:true}],
   ['late GLB mounts in a hidden preview',replace('if (my !== pvToken || !previewHeroVisible()) return;','if (my !== pvToken) return;'),async f=>{f.api.pvSetChar(base);f.show('team-select');await tick();assert.equal(f.modelBuilds(),0);},{lean:false,threeD:true,realModel:true}],
-  ['late fallback mounts in a hidden preview',replace('if (my === pvToken && previewHeroVisible()) showBox();','if (my === pvToken) showBox();'),async f=>{f.api.pvSetChar(base);f.show('team-select');await tick();assert.equal(f.boxBuilds(),0);},{lean:false,threeD:true,realModel:true,preload:()=>Promise.reject(new Error('fixture failed'))}],
+  ['late fallback mounts in a hidden preview',replace('if (my === pvToken && previewHeroVisible() && !p.model) showBox();','if (my === pvToken && !p.model) showBox();'),async f=>{f.api.pvSetChar(base);f.show('team-select');await tick();assert.equal(f.boxBuilds(),0);},{lean:false,threeD:true,realModel:true,preload:()=>Promise.reject(new Error('fixture failed'))}],
   ['hidden team slots are populated',replace('if (!box || box.checkVisibility?.() !== true) continue;','if (!box) continue;'),async f=>{f.api.ensureTeamPreviews();await tick();assert.equal(f.node('#btn-team-e .team-chars').innerHTML,'');},{lean:false}],
   ['screen change keeps compact media',replace("if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');\n  clearCompactPreviews();","if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');"),f=>{f.api.pvSetChar(base);f.api.show('team-select');assert.equal(f.node('hub-character-portrait').src,'');},{compact:true,screen:'hub'}],
   ['tab change keeps compact media',replace("$('main-menu').dataset.hubTab = tab;\n    clearCompactPreviews();","$('main-menu').dataset.hubTab = tab;"),f=>{f.api.pvSetChar(base);f.api.setHubTab('ranking');assert.equal(f.node('hub-character-portrait').src,'');},{compact:true,screen:'hub'}],
@@ -350,3 +351,42 @@ for(const compact of [false,true]){
     assert.throws(()=>baseFallbackVisible(compact,mutate),/fallback retains its current request handler/);
   });
 }
+
+async function teamSideProbe(f){
+ f.api.ensureTeamPreviews();await tick();assert.notEqual(f.node('#btn-team-e .team-chars').innerHTML,'');assert.equal(f.node('#btn-team-b .team-chars').innerHTML,'');
+ const calls=f.preloads();f.teamVisibility({E:false,B:true});f.api.ensureTeamPreviews();await tick();assert.notEqual(f.node('#btn-team-b .team-chars').innerHTML,'');assert.equal(f.preloads(),calls+1);
+ f.teamVisibility({E:true,B:true});f.api.ensureTeamPreviews();await tick();assert.equal(f.preloads(),calls+1);
+}
+test('team thumbnails remember completed sides separately when visibility changes',async()=>teamSideProbe(fixture({lean:false,teamVisible:{E:true,B:false}})));
+
+test('causal mutation restoring global team completion loses the later visible side',async()=>{
+ const mutate=value=>value.replace('const teamPreviewsDone = new Set();','let teamPreviewsDone = false;').replace('function ensureTeamPreviews() {','function ensureTeamPreviews() {\n  if(teamPreviewsDone)return;').replace('    if (teamPreviewsDone.has(lado)) continue;\n    teamPreviewsDone.add(lado);','    teamPreviewsDone = true;');
+ await assert.rejects(()=>teamSideProbe(fixture({lean:false,teamVisible:{E:true,B:false},mutate})));
+});
+
+function frozenCaptureProbe({mixer=false,mutate}={}){
+ const f=fixture({mutate}),model={rotation:{y:.73}};let updates=0,renders=0;
+ const driver={update(){updates++;}};
+ f.api.preview({travado:true,model,ctrl:mixer?null:driver,mixer:mixer?driver:null,r:{render(){renders++;}}});
+ f.api.frame(.05);assert.equal(updates,0,'frozen capture advanced the pose');assert.equal(model.rotation.y,.73);assert.equal(renders,1);
+}
+for(const mixer of [false,true])test('capture freeze preserves pose and rendering: '+(mixer?'mixer':'controller'),()=>frozenCaptureProbe({mixer}));
+test('control mutation rejects pose updates during frozen capture',()=>assert.throws(()=>frozenCaptureProbe({mutate:replace('!pv.travado && !pvReducedMotion.matches','!pvReducedMotion.matches')}),/frozen capture advanced the pose/));
+async function failedPreloadPreservesModel({previous=true,hidden=false,mutate}={}){
+ const old=previous?{rotation:{y:.73}}:null;let fail;
+ const pending=new Promise((_r,no)=>{fail=no;});
+ const f=fixture({lean:false,threeD:true,realModel:true,previousModel:old,preload:()=>pending,mutate});
+ f.api.pvSetChar(base);if(hidden)f.show('team-select');fail(new Error('fixture preload failed'));await tick();
+ const expected=previous||hidden?0:1;
+ assert.equal(f.boxBuilds(),expected,'failed preload replaced an existing or hidden model');
+ if(previous)assert.equal(f.mountedModel(),old,'failed preload lost the previous model');
+}
+for(const [previous,hidden] of [[true,false],[true,true],[false,false],[false,true]])test('preload failure respects model and visibility: '+previous+'/'+hidden,()=>failedPreloadPreservesModel({previous,hidden}));
+test('control mutation rejects replacing an existing model on preload failure',()=>assert.rejects(failedPreloadPreservesModel({mutate:replace('my === pvToken && previewHeroVisible() && !p.model','my === pvToken && previewHeroVisible()')}),/failed preload replaced/));
+test('obsolete preload failure cannot mount a fallback for the new selection',async()=>{
+ let failOld,finishNew,calls=0;
+ const old=new Promise((_r,no)=>{failOld=no;}),next=new Promise(resolve=>{finishNew=resolve;});
+ const f=fixture({lean:false,threeD:true,realModel:true,preload:()=>++calls===1?old:next});
+ f.api.pvSetChar(base);f.api.pvSetChar({...base,skinId:null});failOld(new Error('old failure'));await tick();
+ const boxes=f.boxBuilds();finishNew();await tick();assert.equal(boxes,0,'obsolete failure mounted fallback');assert.equal(f.modelBuilds(),1);
+});

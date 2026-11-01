@@ -284,6 +284,7 @@
   .tp-toque-pula{right:calc(40px + var(--sr));bottom:calc(128px + var(--sb));width:56px;height:56px}
   :root[data-ui="v3"] #touch-ui .touch-reload{right:calc(118px + var(--sr));bottom:calc(104px + var(--sb));width:48px;height:48px}
   .tp-toque-camera{right:calc(170px + var(--sr));bottom:calc(104px + var(--sb));width:48px;height:48px;border:0;color:var(--tp-tinta-1)}
+  .tp-toque-ping{right:calc(222px + var(--sr));bottom:calc(104px + var(--sb));width:48px;height:48px;border:0;color:var(--tp-tinta-1)}
   :root[data-ui="v3"] #touch-ui .touch-crouch{left:calc(176px + var(--sl));right:auto;bottom:calc(24px + var(--sb));width:52px;height:52px;
     border:0;background:rgba(9,7,4,.75);font-size:10px}
   :root[data-ui="v3"] #touch-ui .touch-pause,.tp-toque-placar{top:calc(10px + var(--st));bottom:auto;width:44px;height:44px;border-radius:10px;
