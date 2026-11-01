@@ -152,3 +152,22 @@ cabeçalhoMA1 corrigido, mantendo3unidadesJS S4 e aliases dospais. A laneS4
 continua semJava nempatchdearma. MA1/soundscape/manifesto/docs/archPASS.
 JavafinalherdaráesteHEADpara manterancestry daPR1210. Gatesnormais e reviews
 atuaissobRootseguempendentes; nenhumaceitearteGame/mobile/MP/release.
+
+## Root R977 — ancestry F2 e Factory atuais
+
+Composição normal de S4 845644c2 com Factory c5f68ba9, que contém F2 b2d252e6
+e staging0a/#1137. A resolução única de package/check:fast conserva o superset
+S4 e o arquivo final é idêntico ao pai S4: nenhum alias, token ou chave mudou.
+Todo public/ permanece byte a byte S4 845644, inclusive main/Game/glbchars,
+authoredvm e weapons; os únicos imports são as continuações Factory/F2.
+Não se repetem 170s/90s de identity/origin por ancestry/documentação sem mudança
+de bytes. Focais R974 de manifesto/soundscape e R975 Drip nominal permanecem
+atribuídos aos respectivos heads; só Java final composto terá fullgate normal.
+
+Root leu relatório completo R975 e resolução package/ledger e reconferiu
+200pins sem drift antes do FF de #1209. Não é crítico whole independente novo.
+Documentação, arquitetura e diff verificados nesta composição; sem Java/timing/
+skin novo, asset write, publicação ou aprovação Game3:2/mobile/MP.
+Missão integral mapas/personagens/skins/motion/ADS e release/backend continua
+ativa, Flavio1158 excluído e UI/social depois. Próximo: Java herdar este merge;
+publicar pilha via push normal e obter CI/formal/whole pós-bot atuais por PR.
