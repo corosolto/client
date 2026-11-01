@@ -113,3 +113,12 @@ independente integral deste diff e fronteiras. Ainda pendentes: essa revisão,
 eventual publicação/CI/merge pelo Root. Sem push/GH, browser, build geral,
 check:fast, FPS, MP, imagem, asset ou aprovação artística nesta frente.
 Root continua único autor das demais frentes; nenhuma WT alheia editada.
+
+R626 repetiu nominal e cinco mutantes uma vez em Node22.23.4: seis PASS causais,
+zero INFRA. R619 fez crítica independente integral; R626 fez revisão GLM integral
+do checkpoint final. GLM encontrou um guard herdado de escada: o acesso a z ocorria
+antes da validação de s. R637 comprovou TypeError com stairs vazio, ainda INFRA2,
+e moveu somente esse acesso para depois do guard. Não mudou LS1–5 ou a física.
+R637 preservou INFRA2 com diagnóstico específico e sem TypeError no controle
+stairs vazio; o mutante real continua RED somente LS5, outras cinco GREEN.
+Crítica independente do whole atualizado e publicação permanecem pendentes.

@@ -133,8 +133,9 @@ const probeWall=(x,z,y,sign)=>{
   return 3;
 };
 if(mutante==='escada-bloqueada'){
-  const s=W.design.stairs[0],z=s.z+s.dirZ*s.run/2;
+  const s=W.design.stairs[0];
   if(!s)throw Error('MUTANTE NÃO APLICOU: escada ausente');
+  const z=s.z+s.dirZ*s.run/2;
   W.colliders.push({minX:s.x-s.width/2,maxX:s.x+s.width/2,minZ:z-.3,maxZ:z+.3,minY:s.height/2,maxY:s.height+1.5});
 }
 const stairEvidence=W.design.stairs.map(s=>{
