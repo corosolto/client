@@ -517,3 +517,45 @@ test('causal mutant rejects mounting a new model without invalidating its frame'
  const p=f.previewDescriptor();p.r={render(){}};f.api.preview(p);f.api.frame(.05);
  f.api.pvSetChar(cyborg);await tick();assert.throws(()=>assert.equal(f.renderDirty(),true),{name:'AssertionError'});
 });
+
+async function emoteFixture({reduced=false,mutate=value=>value,mutateListener=value=>value}={}){
+ const buttons=[],attrs=new Map(),bar={hidden:false,innerHTML:'',classList:{add(){},remove(){}},querySelectorAll:()=>buttons,querySelector:()=>buttons[0],appendChild:b=>buttons.push(b)};
+ let active=null,starts=0,stops=0,sync;
+ const ctrl={emoteAtual:()=>active,emote:id=>{active=id;starts++;},pararEmote:()=>{active=null;stops++;}},motion=new EventTarget();motion.matches=reduced;
+ const node=()=>({dataset:{},setAttribute:(k,v)=>attrs.set(k,v)});
+ const start=raw.indexOf('function sincronizaBarraEmotes()'),end=raw.indexOf('\nfunction pvSetChar(def)',start);assert.ok(start>=0&&end>start);
+ const ctx={pv:{ctrl},pvReducedMotion:motion,staticPreviews:false,EMOTES_ENABLED:true,document:{getElementById:id=>id==='pv-emotes'?bar:null,createElement:node},carregaEmotes:async()=>({EMOTES:[{id:'dance',nome:'Dance',origem:'fixture'}]})};
+ const api=vm.runInNewContext('let emotesMontados=false;\n'+mutate(raw.slice(start,end))+'\n({sincronizaBarraEmotes,pvTocaEmote,montaBarraEmotes})',ctx);
+ const listenerStart=raw.indexOf("pvReducedMotion.addEventListener?.('change'");const listenerEnd=raw.indexOf('\n',listenerStart);assert.ok(listenerEnd>listenerStart);
+ vm.runInNewContext(mutateListener(raw.slice(listenerStart,listenerEnd)),{...ctx,sincronizaBarraEmotes:api.sincronizaBarraEmotes,pvStopVideo(){}});
+ const toggle=value=>{motion.matches=value;const event=new Event('change');event.matches=value;motion.dispatchEvent(event);};
+ return{api,bar,ctrl,toggle,attrs,button:node(),starts:()=>starts,stops:()=>stops};
+}
+test('reduced-motion users are not offered an inactive dance button',async()=>{
+ const f=await emoteFixture({reduced:true});f.api.sincronizaBarraEmotes();assert.equal(f.bar.hidden,true);
+ f.api.pvTocaEmote('dance',f.button);assert.equal(f.starts(),0);assert.equal(f.attrs.has('aria-pressed'),false);
+});
+test('turning reduced motion on stops the current dance and synchronizes the bar',async()=>{
+ const f=await emoteFixture();f.api.sincronizaBarraEmotes();f.api.pvTocaEmote('dance',f.button);assert.equal(f.starts(),1);
+ f.toggle(true);assert.equal(f.bar.hidden,true);assert.equal(f.ctrl.emoteAtual(),null);
+ f.toggle(false);assert.equal(f.bar.hidden,false);assert.equal(f.ctrl.emoteAtual(),null);
+});
+
+for(const [name,from,to,probe] of [
+ ['hidden bar','!staticPreviews && !pvReducedMotion.matches && !!(pv && pv.ctrl)','!staticPreviews && !!(pv && pv.ctrl)',f=>{f.api.sincronizaBarraEmotes();assert.equal(f.bar.hidden,true);}],
+ ['blocked stale click','if (!ctrl || pvReducedMotion.matches) return;','if (!ctrl) return;',f=>{f.api.pvTocaEmote('dance',f.button);assert.equal(f.starts(),0);}],
+])test('causal mutant rejects reduced-motion dance '+name,async()=>{
+ const f=await emoteFixture({reduced:true,mutate:replace(from,to)});assert.throws(()=>probe(f),{name:'AssertionError'});
+});
+
+test('reduced motion switched during emote loading cannot start a hidden dance',async()=>{
+ const f=await emoteFixture();const pending=f.api.montaBarraEmotes();f.toggle(true);await pending;
+ assert.equal(f.bar.hidden,true);assert.equal(f.starts(),0);assert.equal(f.ctrl.emoteAtual(),null);
+});
+for(const [name,from,probe] of [
+ ['stop current dance','pv?.ctrl?.pararEmote?.();',f=>assert.equal(f.ctrl.emoteAtual(),null)],
+ ['sync controls','sincronizaBarraEmotes();',f=>assert.equal(f.bar.hidden,true)],
+])test('causal mutant rejects reduced-motion toggle without '+name,async()=>{
+ const f=await emoteFixture({mutateListener:replace(from,'')});f.api.pvTocaEmote('dance',f.button);f.toggle(true);
+ assert.throws(()=>probe(f),{name:'AssertionError'});
+});

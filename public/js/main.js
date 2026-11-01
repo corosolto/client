@@ -925,7 +925,7 @@ let pvCompactToken = 0;
 let pvStaticKey = '';
 let pvPosterFailure = null;
 const pvReducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
-pvReducedMotion.addEventListener?.('change',event=>{if(event.matches)pvStopVideo();if(pv)pv.renderDirty=true;});
+pvReducedMotion.addEventListener?.('change',event=>{if(event.matches){pvStopVideo();pv?.ctrl?.pararEmote?.();}if(pv)pv.renderDirty=true;sincronizaBarraEmotes();});
 const pvCompact=matchMedia('(pointer: coarse) and (max-height: 560px)');
 const pvNarrow=matchMedia('(max-width: 760px)');
 pvCompact.addEventListener?.('change',()=>refreshMenuEquipment());
@@ -1210,7 +1210,7 @@ async function carregaEmotes() {
 function sincronizaBarraEmotes() {
   const barra = document.getElementById('pv-emotes');
   if (!barra) return;
-  const temBoneco = !staticPreviews && !!(pv && pv.ctrl);
+  const temBoneco = !staticPreviews && !pvReducedMotion.matches && !!(pv && pv.ctrl);
   barra.hidden = !temBoneco;
   if (!temBoneco) { emotesMontados = false; barra.innerHTML = '<button id="pv-emote-abrir" class="pv-emote-btn pv-emote-abrir" type="button">DANÇAR</button>'; religaAbrirEmotes(); }
 }
@@ -1221,7 +1221,7 @@ function religaAbrirEmotes() {
 }
 function pvTocaEmote(id, botao) {
   const ctrl = pv && pv.ctrl;
-  if (!ctrl) return;
+  if (!ctrl || pvReducedMotion.matches) return;
   const barra = document.getElementById('pv-emotes');
   const ligado = ctrl.emoteAtual() === id;
   barra?.querySelectorAll('.pv-emote-btn[aria-pressed]')?.forEach((b) => b.setAttribute('aria-pressed', 'false'));
