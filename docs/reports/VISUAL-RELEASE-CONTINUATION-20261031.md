@@ -2,6 +2,29 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
+## Checkpoint R96: fauna integrada, publicação ordinária a seguir
+
+#1192e74 passou nos checks atuais e foi mesclado normalmente em staging:
+55533f879, 2026-11-01 06:42:36Z. Três threads resolvidas, todos os cinco itens
+do bot adjudicados, crítico integral R93 sem achados acionáveis. O agregado
+formal continua CHANGES_REQUESTED; não houve dismiss, admin ou bypass. A
+mesclagem normal foi aceita pelo GitHub com match-head e deixou esse histórico
+explícito. QA integrou esse staging por merge ordinário979e042a4, preservando
+os fixes locais e a ancestry1179; Flávio1158 segue excluído.
+
+Build R95 passou no7caa anterior; build e push completo devem ser executados
+no novo head composto. OWN056cf continua congelada durante check:fast R93B,
+sem resultado final ainda. Suíte interrompida R93 não conta como verde.
+Publicação deve conferir remotoQA=ab4114d e staging=55533f879, ambos ancestrais
+do novo head, e usar push atômico ordinário sem desabilitar os107gates.
+
+AK R96: inventário confirma correções de ADS/pose final/motion presentes, mas
+os33tiros antigos são ensaio QA controlado, não prova normal near/far atual.
+Impacto/aim/câmeras e emissão visual precisam ser observados separadamente.
+Arquitetura Quebrada R96 rejeitada como pronta: GLM confundiu coroamento já
+existente, primitivas e limites físicos. Medição RO antes de novo desenho.
+Missão integral e release continuam pendentes; fluxos UI/redes sociais depois.
+
 ## Checkpoint R95: composição QA local, gates em andamento
 
 QA recebeu por merges ordinários a composição056cf677b e o checkpoint de boot
