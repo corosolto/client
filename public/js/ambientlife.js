@@ -334,6 +334,12 @@ class FavelaAmbience {
   }
 
   _add(type, config, index) {
+    const fleeArea = config.fleeArea ? { ...config.fleeArea } : null;
+    if (fleeArea && (!QUADS.has(type) || !['minX', 'maxX', 'minZ', 'maxZ'].every(key => Number.isFinite(fleeArea[key]))
+      || fleeArea.minX >= fleeArea.maxX || fleeArea.minZ >= fleeArea.maxZ
+      || [config.pos, config.to || config.pos].some(p => !Number.isFinite(p[0]) || !Number.isFinite(p[2])
+        || p[0] < fleeArea.minX || p[0] > fleeArea.maxX || p[2] < fleeArea.minZ || p[2] > fleeArea.maxZ)))
+      throw new RangeError('ambient_flee_area');
     if (type === 'pigeon' && config.mode === 'flight') {
       /* v2.1 (BUG-57): pombo não voa mais — o GLB de voo era estático com asas abertas
          (dono: "deveria ficar so na ponta das lajes ou no chao"). Config não migrada cai
@@ -409,7 +415,7 @@ class FavelaAmbience {
       id: `${type}-${index}`, type, mode: type === 'pigeon' ? 'ground' : (config.mode || 'ground'), root: animalRoot, model,
       origin, to, speed: config.speed, turnRate: Number.isFinite(config.turnRate) && config.turnRate > 0 ? config.turnRate : 0, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
       source: loaded ? 'gltf' : 'fallback', contactShadow, mixer, actions, action: 'idle', state: 'idle', alertUntil: 0,
-      alertAt: 0, alertTurnDelay: 0, alertOrigin: origin.clone(), flee: new THREE.Vector3(1, 0, 0),
+      alertAt: 0, alertTurnDelay: 0, alertOrigin: origin.clone(), flee: new THREE.Vector3(1, 0, 0), fleeArea, fleeDistance: Infinity,
       routine: origin.clone(), recoverAt: 0, recoverUntil: 0, recoverFrom: origin.clone(),
       calangoGait: 0,
     });
@@ -423,6 +429,7 @@ class FavelaAmbience {
       animal.alertUntil = 0;
       animal.alertAt = 0;
       animal.alertTurnDelay = 0;
+      animal.fleeDistance = Infinity;
       animal.recoverAt = 0;
       animal.recoverUntil = .8;
       animal.recoverFrom.copy(animal.origin);
@@ -452,6 +459,8 @@ class FavelaAmbience {
       animal.flee.copy(position).sub(start).setY(0);
       if (animal.flee.lengthSq() < .01) animal.flee.set(Math.sin(animal.phase + 1), 0, Math.cos(animal.phase + 1));
       animal.flee.normalize();
+      animal.fleeDistance = Infinity;
+      if (animal.fleeArea) this._boundQuadFlee(animal, this.group.worldToLocal(start.clone()));
       const target = Math.atan2(animal.flee.x, animal.flee.z), delta = target - animal.root.rotation.y;
       animal.alertTurnDelay = animal.turnRate ? Math.abs(Math.atan2(Math.sin(delta), Math.cos(delta))) / animal.turnRate : 0;
       /* pombo foge a pé pela superfície onde nasceu (v2.1: sem takeoff/flight) */
@@ -516,6 +525,24 @@ class FavelaAmbience {
     animal.root.rotation.y = current + THREE.MathUtils.clamp(delta, -step, step);
   }
 
+  _boundQuadFlee(animal, threat) {
+    const area = animal.fleeArea, origin = animal.root.position;
+    const speed = animal.speed || QUAD_SPEED[animal.type] || QUAD_SPEED.dog, limit = speed.flee * 1.4;
+    const candidates = [origin.clone(), origin.clone().addScaledVector(animal.flee, limit)];
+    for (const x of [area.minX, area.maxX]) for (const z of [area.minZ, area.maxZ]) candidates.push(new THREE.Vector3(x, origin.y, z));
+    let best = new THREE.Vector3(), score = origin.distanceToSquared(threat);
+    // A área autorada já inclui folga do corpo; seus segmentos convexos preservam a passagem livre.
+    for (const candidate of candidates) {
+      candidate.x = THREE.MathUtils.clamp(candidate.x, area.minX, area.maxX);
+      candidate.z = THREE.MathUtils.clamp(candidate.z, area.minZ, area.maxZ);
+      const offset = candidate.sub(origin).clampLength(0, limit);
+      const distance = origin.clone().add(offset).distanceToSquared(threat);
+      if (distance > score) { score = distance; best = offset; }
+    }
+    animal.fleeDistance = best.length();
+    if (animal.fleeDistance > 1e-8) animal.flee.copy(best).normalize();
+  }
+
   _recoverCuratedQuad(animal, target, routeDirection, speed, dt) {
     // O lerp de dois segundos arrastava o corpo de lado após um susto lateral.
     // Nas três instâncias curadas, o retorno segue o rumo real e a velocidade de caminhada.
@@ -542,10 +569,11 @@ class FavelaAmbience {
     if (this.time < animal.alertUntil) {
       // A fauna curada pivota antes de fugir: girar devagar enquanto já corre causava deslizamento lateral.
       const elapsed = Math.max(0, this.time - animal.alertAt - animal.alertTurnDelay);
-      animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, Math.min(speed.flee * 1.4, elapsed * speed.flee));
+      const distance = Math.min(speed.flee * 1.4, animal.fleeDistance, elapsed * speed.flee);
+      animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, distance);
       this._turnQuad(animal, Math.atan2(animal.flee.x, animal.flee.z), dt);
       animal.state = 'flee';
-      this._dogAction(animal, animal.turnRate && elapsed <= 0 ? 'walk' : 'run');
+      this._dogAction(animal, animal.turnRate && elapsed <= 0 ? 'walk' : animal.fleeArea && distance >= animal.fleeDistance ? 'idle' : 'run');
       return;
     }
     const span = animal.origin.distanceTo(animal.to);

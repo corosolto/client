@@ -40,6 +40,16 @@ export function auditCuratedFauna(sample, references) {
       const motion=a.motion;
       if(!motion||!Number.isFinite(motion.distance)||motion.distance<=0||!Number.isInteger(motion.localPoseChanges)||motion.localPoseChanges<=0||!/walk$/i.test(motion.activeClip||''))fail('motion',`${id}: deslocamento com Walk e mudança local do rig não demonstrados.`);
       if(ref.turnRate&&(a.turnRate!==ref.turnRate||!Number.isFinite(motion?.maxYawDelta)||motion.maxYawDelta<0||motion.maxYawDelta>ref.turnRate/60+1e-9))fail('turn',`${id}: giro excede o limite por tick 1/60 ou não foi medido.`);
+      if(ref.fleeSpace){
+        const cases=a.fleeSpace?.cases,expected=new Set([3,8].flatMap(w=>Array.from({length:8},(_,angle)=>`${w}/${angle}`)));
+        if(!Array.isArray(cases)||cases.length!==expected.size)fail('space',`${id}: censo de fugas espaciais ausente ou incompleto.`);
+        else for(const c of cases){
+          const key=`${c?.warmup}/${c?.angle}`;
+          if(!expected.delete(key)||c.frames!==1200||c.dt!==1/60||c.obstacleOverlaps!==0||c.supportMisses!==0
+            ||!Number.isFinite(c.maxHalfExtent)||c.maxHalfExtent<=0||c.maxHalfExtent>.5||!Number.isFinite(c.peakDistance)||c.peakDistance<=.5||c.rejoined!==true)
+            fail('space',`${id}: fuga ${key} sem passagem livre, apoio, deslocamento ou retorno comprovados.`);
+        }
+      }
     }
   }
   return {pass:failures.length===0,scope:sample?.map,failures};

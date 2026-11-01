@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { THREE, MAPS, initTextures, carregaMapa } from '../tools/eval/harness.mjs';
 import { auditCuratedFauna, auditCuratedFaunaCensus } from '../tools/eval/map-fauna-curated.mjs';
@@ -66,7 +69,15 @@ test('control mutation restores the mobile next-map skip and fails the caller co
  const source=replaceOnce(main,'mapaReady.then((mapa) => preloadMapAmbientLife(mapa, { mobileAuto: MOBILE_AUTO }))','MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadMapAmbientLife(mapa, { mobileAuto: MOBILE_AUTO }))');
  await assert.rejects(async()=>assert.deepEqual(await mobileCalls(MAPS.lajes,{source,next:true}),[MAPS.lajes.ambience]));
 });
-function validSample(ref){return {map:ref.map,declaredPreload:[ref.assetId],animals:[{id:ref.type+'-0',type:ref.type,source:'gltf',assetId:ref.assetId,assetPath:ref.path,speed:ref.speed,turnRate:ref.turnRate,actions:{idle:'Idle',walk:'Walk',run:'Run'},meshes:[{materials:[Object.fromEntries(Object.entries(ref.textures).map(([key,size])=>[key,{width:size[0],height:size[1],colorSpace:key==='albedo'?'srgb':''}]))]}],motion:{distance:1,localPoseChanges:1,activeClip:'Walk',maxYawDelta:.1}}]};}
+function validSample(ref){return {map:ref.map,declaredPreload:[ref.assetId],animals:[{id:ref.type+'-0',type:ref.type,source:'gltf',assetId:ref.assetId,assetPath:ref.path,speed:ref.speed,turnRate:ref.turnRate,actions:{idle:'Idle',walk:'Walk',run:'Run'},meshes:[{materials:[Object.fromEntries(Object.entries(ref.textures).map(([key,size])=>[key,{width:size[0],height:size[1],colorSpace:key==='albedo'?'srgb':''}]))]}],motion:{distance:1,localPoseChanges:1,activeClip:'Walk',maxYawDelta:.1},fleeSpace:ref.fleeSpace?{cases:[3,8].flatMap(warmup=>Array.from({length:8},(_,angle)=>({warmup,angle,frames:1200,dt:1/60,obstacleOverlaps:0,supportMisses:0,maxHalfExtent:.45,peakDistance:2,rejoined:true})))}:undefined}]};}
+test('fauna CI requires an explicit origin before creating output or launching a browser',()=>{
+ const dir=fs.mkdtempSync(join(tmpdir(),'coro-fauna-ci-no-base-')),out=join(dir,'output');
+ try{
+  const env={...process.env,BASE:'',FAUNA_OUT:out,CHROME_BIN:'/nonexistent-no-browser'};
+  const child=spawnSync(process.execPath,[new URL('../tools/eval/map-fauna-curated-ci.mjs',import.meta.url).pathname],{env,encoding:'utf8',timeout:15000});
+  assert.equal(child.status,1);assert.match(child.stderr,/BASE ausente/);assert.equal(fs.existsSync(out),false);
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
 test('runtime census requires exactly one result per expected map before auditing',()=>{
  const samples=references.map(validSample);
  assert.equal(auditCuratedFaunaCensus({results:samples},references).pass,true);
@@ -83,6 +94,9 @@ for(const ref of references)test(`${ref.map}: runtime auditor accepts complete e
  const sample=validSample(ref);assert.equal(auditCuratedFauna(sample,references).pass,true);
  const mutations=[['turn',s=>s.animals[0].turnRate=0],['turn',s=>s.animals[0].motion.maxYawDelta=Math.PI],['turn',s=>delete s.animals[0].motion.maxYawDelta],['count',s=>s.animals=[]],['count',s=>s.animals.push(structuredClone(s.animals[0]))],['source',s=>s.animals[0].source='fallback'],['identity',s=>s.animals[0].assetId='old'],['identity',s=>s.animals[0].assetPath='models/ambient/old.glb'],['declaredPreload',s=>s.declaredPreload=[]],['materials',s=>s.animals[0].meshes=[]],['texture',s=>s.animals[0].meshes[0].materials[0].albedo=null],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.width=0],['texture',s=>s.animals[0].meshes[0].materials[0].albedo.colorSpace=''],['clips',s=>s.animals[0].actions.walk='Idle'],['motion',s=>s.animals[0].motion.localPoseChanges=0],['motion',s=>s.animals[0].motion.activeClip='Idle'],['motion',s=>s.animals[0].motion.distance=0]];
  if(ref.speed)mutations.push(['speed',s=>s.animals[0].speed={walk:1.1,flee:3.6}]);
+ if(ref.fleeSpace)for(const change of [s=>delete s.animals[0].fleeSpace,s=>s.animals[0].fleeSpace.cases.pop(),s=>s.animals[0].fleeSpace.cases[1]=structuredClone(s.animals[0].fleeSpace.cases[0]),
+  s=>s.animals[0].fleeSpace.cases[0].obstacleOverlaps=1,s=>s.animals[0].fleeSpace.cases[0].supportMisses=1,s=>s.animals[0].fleeSpace.cases[0].maxHalfExtent=.51,
+  s=>s.animals[0].fleeSpace.cases[0].peakDistance=0,s=>s.animals[0].fleeSpace.cases[0].rejoined=false,s=>s.animals[0].fleeSpace.cases[0].frames=0])mutations.push(['space',change]);
  for(const [family,mutate] of mutations){const changed=structuredClone(sample);mutate(changed);const audit=auditCuratedFauna(changed,references);assert.equal(audit.pass,false);assert.ok(audit.failures.some(f=>f.family===family),family);}
 });
 test('unknown or unmeasured map is not a visual approval',()=>assert.equal(auditCuratedFauna({map:'unknown',animals:[]},references).pass,false));
@@ -150,6 +164,42 @@ test('curated recovery from a lateral threat turns before walking and rejoins th
  assert.equal(sideways,0,'recovery translation must follow the body heading');
  assert.ok(maxStep<=speed.walk/60+1e-9,'recovery keeps the authored walk speed');assert.ok(maxTurn<=6/60+1e-9);
  ambience.dispose();
+});
+function lajesFootprintBlocked(world,animal){
+ const p=animal.root.position,r=.5;
+ return world.colliders.some(b=>b.maxY>p.y+.02&&b.minY<p.y+.5&&p.x+r>b.minX&&p.x-r<b.maxX&&p.z+r>b.minZ&&p.z-r<b.maxZ)
+  || [-r,r].some(dx=>[-r,r].some(dz=>world.groundHeightAt(p.x+dx,p.z+dz,p.y+.1)<p.y-1e-9));
+}
+test('Lajes cat flees and recovers inside the clear roof across threat directions and frame rates',()=>{
+ const world=MAPS.lajes.build(new THREE.Scene(),initTextures()),ambience=world.ambience,a=ambience.animals.find(a=>a.type==='cat');
+ assert.ok(a.fleeArea);let scenarios=0;
+ for(const dt of [1/30,1/60,1/120])for(const warmup of [3,8])for(let angle=0;angle<8;angle++){
+  ambience.reset();for(let time=0;time<warmup;time+=dt)ambience.update(dt,null);
+  const p=a.root.position.clone(),threat=p.clone().add(new THREE.Vector3(Math.sin(angle*Math.PI/4),0,Math.cos(angle*Math.PI/4)));
+  ambience.onShot(threat,p);assert.ok(a.fleeDistance>.5,'the clear route must allow a visible escape');
+  let moved=false,rejoined=false;
+  for(let time=0;time<30;time+=dt){
+   const previous=a.root.position.clone();ambience.update(dt,null);const step=a.root.position.distanceTo(previous);
+   assert.equal(lajesFootprintBlocked(world,a),false,`threat${angle}, dt${dt}, time${time}`);
+   assert.ok(step<=a.speed.flee*dt+1e-8);moved ||= step>1e-8;
+   if(a.alertUntil===0){rejoined=true;break;}
+  }
+  assert.ok(moved&&rejoined);scenarios++;
+ }
+ assert.equal(scenarios,48);ambience.dispose();
+});
+test('control mutation removing the Lajes flee area restores the tank crossing',()=>{
+ const world=MAPS.lajes.build(new THREE.Scene(),initTextures()),ambience=world.ambience,a=ambience.animals.find(a=>a.type==='cat');
+ a.fleeArea=null;for(let i=0;i<180;i++)ambience.update(1/60,null);
+ const p=a.root.position.clone();ambience.onShot(p.clone().add(new THREE.Vector3(1,0,0)),p);
+ let blocked=0;for(let i=0;i<1200;i++){ambience.update(1/60,null);if(lajesFootprintBlocked(world,a))blocked++;}
+ assert.ok(blocked>0,'the collision oracle must reject the original escape');ambience.dispose();
+});
+test('authored flee areas reject invalid bounds or a route outside the area',()=>{
+ const root=new THREE.Group(),bounds={minX:0,maxX:2,minZ:0,maxZ:2};
+ for(const [fleeArea,pos,to] of [[{...bounds,minX:NaN},[1,0,1]],[{...bounds,maxX:0},[1,0,1]], [bounds,[-1,0,1]],[bounds,[1,0,1],[1,0,3]],[bounds,[NaN,0,1]]])
+  assert.throws(()=>createFavelaAmbience(root,{map:'bad-area',cats:[{pos,to,fleeArea}]}),/ambient_flee_area/);
+ const ambience=createFavelaAmbience(root,{map:'valid-area',cats:[{pos:[1,0,1],fleeArea:bounds}]});ambience.dispose();
 });
 for(const low of [false,true])test(`curated ground fauna keeps a non-hittable contact shadow in ${low?'low':'full'} quality`,()=>{
  const ambience=createFavelaAmbience(new THREE.Group(),{map:'contact-fixture',low,cats:[{pos:[2,3,4],to:[2,3,5],contactShadow:true}]});

@@ -393,7 +393,9 @@ export function buildLajes(scene, T) {
     pigeons: [{ mode: 'ground', pos: [-2, 0, 1], phase: .3 }, { mode: 'ground', pos: [2.5, 0, -1], phase: 1.3 },
       { mode: 'ground', pos: [-6, H, -14], phase: 2.1 }, { mode: 'ground', pos: [6, H, 14], phase: 3.5 }],
     dogs: [{ pos: [-2, 0, -2], to: [2, 0, 2], phase: .6 }],
-    cats: [{ assetId: 'escadaoCat', contactShadow: true, turnRate: 6, speed: { walk: .55, flee: 1.5 }, pos: [-10, H, 16], to: [-10, H, 18], phase: 1.2 }],
+    // Folga de meio metro ao redor do gato mantém tanque, quartos e bordas fora da fuga.
+    cats: [{ assetId: 'escadaoCat', contactShadow: true, turnRate: 6, speed: { walk: .55, flee: 1.5 },
+      fleeArea: { minX: -10, maxX: -8.5, minZ: 14.8, maxZ: 19 }, pos: [-10, H, 16], to: [-10, H, 18], phase: 1.2 }],
   });
   attachPipaSky(ambience, root, low ? LAJES_KITE_CONFIGS.slice(0, 4) : LAJES_KITE_CONFIGS);
   attachLajesKitePresentation(ambience);
