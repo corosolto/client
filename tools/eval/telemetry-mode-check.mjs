@@ -7,13 +7,29 @@ import vm from 'node:vm';
 import crypto from 'node:crypto';
 
 const args = process.argv.slice(2);
-const flag = (name) => {
-  const i = args.indexOf(name);
-  return i !== -1 ? args[i + 1] : undefined;
-};
-const mutante = flag('--mutante') || null;
+const options = new Map();
+let argumentError = null;
+for (let i = 0; i < args.length; i++) {
+  const equal = args[i].indexOf('=');
+  const key = equal < 0 ? args[i] : args[i].slice(0, equal);
+  if (!['--source', '--mutante'].includes(key)) {
+    argumentError = `argumento desconhecido: ${args[i]}`;
+    break;
+  }
+  if (options.has(key)) {
+    argumentError = `argumento duplicado: ${key}`;
+    break;
+  }
+  const value = equal < 0 ? args[++i] : args[i].slice(equal + 1);
+  if (typeof value !== 'string' || !value.length || value.startsWith('--')) {
+    argumentError = `valor obrigatório para ${key}`;
+    break;
+  }
+  options.set(key, value);
+}
+const mutante = options.get('--mutante') ?? null;
 const sourcePath =
-  flag('--source') || new URL('../../public/js/main.js', import.meta.url).pathname;
+  options.get('--source') ?? new URL('../../public/js/main.js', import.meta.url).pathname;
 
 const INFRA = (receipt, msg) => {
   receipt.infra = msg;
@@ -31,6 +47,7 @@ const receipt = {
   mismatches: [],
   modeActuals: {},
 };
+if (argumentError) INFRA(receipt, argumentError);
 
 // --- extração por casamento de chaves (corpos não contêm '{' em strings) ---
 function extractFn(src, name) {

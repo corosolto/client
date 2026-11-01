@@ -30,4 +30,30 @@ All receipts below are in `/Volumes/Zenith/Projects/game/corosolto/csbrasil/audi
 
 These are offline source-extracted payload measurements with a captured transport; they do not prove live network delivery, production DB writes, multiplayer rollout or browser behavior. The brace extractor is scoped to the inspected function bodies, not a general JavaScript parser. No browser/server/build/full316/full deploy gate/backend gate/GitHub mutation/push/deploy was run here. No other worktree was edited. Shared progress files and owner branches remain untouched.
 
-The new checker is directly runnable as `node tools/eval/telemetry-mode-check.mjs` (optional separate arguments `--source PATH` / `--mutante NAME`). It is not wired into package/CI aliases in this lease. Root should integrate its execution if adopting the candidate. Root must independently review all four changed paths, rebind onto current release/main metadata, run the authorized integration gates, and resume backend sync without blindly repeating the alpha.134 bump. Until then the candidate is local only; release/backend acceptance and runtime verification remain pending. Final commit/source/diff/check hashes are recorded externally in `R120-FINAL.json` and `R120-MANIFEST.json` after the signed-off checkpoint.
+The R120 checker was directly runnable as `node tools/eval/telemetry-mode-check.mjs` and had no CI wiring at that checkpoint. Final R120 commit/source/diff/check hashes are recorded externally in `R120-FINAL.json` and `R120-MANIFEST.json`.
+
+## Reparo do instrumento e CI R137
+
+O crítico independente R134 revisou o diff inteiro e os emissores reais no
+checkpoint `4dd102645ffe954817a6f6e246db1a5692425e92`. Encontrou um P2 no
+parser: `--mutante` sem valor virava nominal e `--mutante=legado` era ignorado.
+O Root reproduziu ambos os verdes incorretos no checker congelado, com a fonte
+de produto explicitamente fornecida. A revisão não encontrou outra regressão
+concreta no helper, consentimento, transporte ou dedupe.
+
+O reparo Native aceita formas separadas ou com `=`, exige valor e recusa nomes
+desconhecidos ou duplicados. Onze formas inválidas saíram com INFRA/exit2 e zero
+assertions. As duas formas válidas dos quatro mutantes deram exit1 sem infra,
+com mutação aplicada e payload incorreto detectado. Nominal e `--source=PATH`
+passaram as 60 assertions em Node22. O SHA do main continua `39324fcd1b63272a746541e70304887f88fd4cb84227d000d32c813b87197a82`.
+
+O job pr-fast de `.github/workflows/ci.yml` agora chama a régua diretamente,
+com a mesma condição de dependências dos gates vizinhos. Essa ligação não cria
+alias ou modifica listas de scripts. Recibos: `TELEMETRY-CLI-CHECKS-R137.json`
+e seus 23 resultados individuais na auditoria externa. Backend e TL12 continuam
+intocados. A confirmação hospedada desse novo step ainda está pendente.
+
+Próximo passo: concluir os focais de workflow, pedir nova revisão independente
+do ponto final, publicar o PR e executar os portões de integração e runtime.
+Release/backend e sincronização dos nós continuam pendentes. Alpha.134 já foi
+publicada; a falha downstream não autoriza repetir seu bump nem contornar regras.
