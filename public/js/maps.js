@@ -41,6 +41,7 @@ export const MAPS = {
   },
   praca_poderes: { name: 'Praça dos Três Poderes',   // Brasília fiel (substitui o clássico)
     props: ['congresso', 'catedral', 'ministerio', 'palacio', 'justica', 'tires', 'stall', 'tent', 'bus', 'drinkstand', 'urna', 'towner'],
+    propsComplete: true,
     ambience: ['rat', 'pigeonGround', 'armadillo'],
   },
   piscina_treta: { name: 'Piscina da Treta',   // salão fechado do CS 1.6; a versão Piscinão está em map_piscinao_ramos.js, fora do registro

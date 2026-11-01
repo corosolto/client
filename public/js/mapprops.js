@@ -36,6 +36,12 @@ function classificarParedeProp(object, id) {
 export const COMMON_MAP_PROPS = ['congresso', 'catedral', 'ministerio', 'palacio', 'justica', 'tires', 'stall', 'tent', 'bus', 'drinkstand', 'urna', 'towner',
   'quiosque', 'skate_ramp', 'lifeguard_tower', 'guarda_sol', 'arquibancada',
   'churrasqueira', 'mesa_guardasol', 'cooler', 'boia', 'placa_piscina', 'caixa_som'];
+// Mapa com propsComplete define a lista completa; os demais herdam os comuns.
+export function mapPropIds(mapa) {
+  const own = mapa.props || [];
+  const common = mapa.propsComplete === true ? [] : COMMON_MAP_PROPS;
+  return [...new Set([...common, ...own])];
+}
 
 
 /* ===================== CUSTO DE CENA (rodada 3) =====================

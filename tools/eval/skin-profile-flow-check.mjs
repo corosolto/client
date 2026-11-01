@@ -227,6 +227,7 @@ try {
     const bt = bf < 0 ? -1 : mainSrc.indexOf('\n  if (lancamentoPerdeu', bf);
     if (bf < 0 || bt < 0) throw new Error('bloco de boot do main.js não encontrado');
     const bloco = mainSrc.slice(bf, bt);
+    const { mapPropIds } = await import(pathToFileURL(path.join(JS, 'mapprops.js')).href);
     const ordem = [];
     const cargas = [];
     let liberarFaca; const promesaFaca = new Promise((r) => (liberarFaca = () => { ordem.push('faca pronta'); r(); }));
@@ -241,7 +242,7 @@ try {
       preloadWeaponSkinCandidate: (id) => { ordem.push(`preload skin ${id}`); return promesaFaca; },
       playerKnifeSkinId: KNIFE,
       sfx: { preloadWeaponSamples: () => Promise.resolve() },
-      preloadMapProps: () => Promise.resolve(), MAP_PROPS: [], mapaPartida: {},
+      preloadMapProps: () => Promise.resolve(), mapPropIds, mapaPartida: {},
       MOBILE_AUTO: true, preloadAmbientLife: () => Promise.resolve(),
       preloadFPArms: () => Promise.resolve(), POINTER_COARSE: true,
       preloadAuthoredFamilies: () => Promise.resolve(), authoredBootFamilies: () => [],

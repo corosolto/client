@@ -15,7 +15,7 @@ import { EMOTES_ENABLED } from './emote-features.js';
 import { preloadEyewearAssets } from './eyewear.js';
 import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
-import { preloadMapProps, COMMON_MAP_PROPS } from './mapprops.js';
+import { preloadMapProps, mapPropIds } from './mapprops.js';
 import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
 import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, DEFAULT_MAP, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS, comMapaCarregado, defineSeedHavan } from './maps.js';
@@ -273,8 +273,7 @@ let currentMap = mapaDaSessao({ urlMap, savedMap: settings.map, pinned: settings
 if (!urlMap) { settings.map = currentMap; saveSettings(); }
 
 /* ---------------- menu backdrop (orbiting map) ---------------- */
-// Mint building/statue GLBs used by the Brasília map (loaded once, cloned per placement).
-const MAP_PROPS = COMMON_MAP_PROPS;   // props do Piscinão de Ramos (Mint); carros/estátua do Havan carregam por-mapa   // Havan (estátua + carros + carrinho)
+
 let menuScene = new THREE.Scene();
 
 const menuCam = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 400);
@@ -449,7 +448,7 @@ function rebuildMenuBackdrop(mapa) {
   ajustarAnisotropia(menuScene, settings.quality);
 }
 function menuProps(mapa) {
-  return [...MAP_PROPS, ...(mapa.props || [])];
+  return mapPropIds(mapa);
 }
 let _menuLoadSeq = 0;
 async function loadMenuBackdrop() {
@@ -2003,7 +2002,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
         playerKnifeSkinId ? preloadWeaponSkinCandidate(playerKnifeSkinId) : null,
         sfx.preloadWeaponSamples(_armasDaPartida),
-        preloadMapProps([...MAP_PROPS, ...(mapaPartida.props || [])]),   // + props do mapa (Havan: carros/estátua)
+        preloadMapProps(mapPropIds(mapaPartida)),
         MOBILE_AUTO ? null : preloadAmbientLife(mapaPartida.ambience || []),
         mapaPartida.preload ? mapaPartida.preload() : null,
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
@@ -5093,7 +5092,7 @@ function mpPreCarregarProximo(m) {
   Promise.all([
     plano.chars.length ? preloadCharacterAssets(plano.chars, { weapons: armas }) : null,
     sfx.preloadWeaponSamples(armas),
-    mapaReady.then((mapa) => preloadMapProps([...MAP_PROPS, ...(mapa.props || [])])),
+    mapaReady.then((mapa) => preloadMapProps(mapPropIds(mapa))),
     MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadAmbientLife(mapa.ambience || [])),
     mapaReady.then((mapa) => mapa.preload ? mapa.preload() : null),
     preloadAuthoredFamilies(authoredBootFamilies(POINTER_COARSE ? [] : armas)),
