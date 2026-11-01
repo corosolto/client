@@ -969,6 +969,12 @@ function stopHiddenPreview() {
   if(previewHeroVisible())return;
   clearStaticPreview();pvStopVideo();
 }
+const previewCopy = (pt, en) => LANG === 'en' ? en : pt;
+const previewUnavailableCaption = name => `${previewCopy('Prévia indisponível', 'Preview unavailable')}: ${name}`;
+function previewPaintCaption(weapon, paint) {
+  const names = { ak:'AK-47', m4:'M4', scar:'SCAR', pistol:previewCopy('Pistola', 'Pistol') };
+  return `${previewCopy('Pintura', 'Paint')}: ${names[weapon.weaponId] || weapon.weaponId} · ${paint.name}`;
+}
 function pvStopVideo() {
   pvVidToken++;
   const box = document.querySelector('.char-preview-box');
@@ -981,7 +987,7 @@ function pvStopVideo() {
   video.classList.add('hidden');
   box?.classList.remove('has-video');
   const label=$('char-preview-skin');
-  if(label && pvPosterFailure){label.hidden=false;label.textContent=`Prévia indisponível: ${pvPosterFailure}`;}
+  if(label && pvPosterFailure){label.hidden=false;label.textContent=previewUnavailableCaption(pvPosterFailure);}
 }
 function pvSetVideo(def) {
   const box = document.querySelector('.char-preview-box');
@@ -1021,12 +1027,12 @@ function showStaticPreview(def) {
   if(key===pvStaticKey)return;
   pvStaticKey=key;pvPosterFailure=null;pvStopVideo();
   if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
-  if(weaponLabel){const names={ak:'AK-47',m4:'M4',scar:'SCAR',pistol:'Pistola'};weaponLabel.textContent=paint?`Pintura: ${names[weapon.weaponId] || weapon.weaponId} · ${paint.name}`:'';weaponLabel.hidden=!paint;}
+  if(weaponLabel){weaponLabel.textContent=paint?previewPaintCaption(weapon,paint):'';weaponLabel.hidden=!paint;}
   if (canvas) canvas.classList.add('hidden');
   if (image) {
     const my=++pvImageToken;
     image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');
-    const unavailable=()=>{pvPosterFailure=skin?.name || def.name;image.classList.add('hidden');if(label && !previewVideoVisible()){label.hidden=false;label.textContent=`Prévia indisponível: ${pvPosterFailure}`;}};
+    const unavailable=()=>{pvPosterFailure=skin?.name || def.name;image.classList.add('hidden');if(label && !previewVideoVisible()){label.hidden=false;label.textContent=previewUnavailableCaption(pvPosterFailure);}};
     const src=portraitUrl(def);
     image.alt = skin?.name || def.name;
     if(src){
@@ -1039,8 +1045,8 @@ function showStaticPreview(def) {
 }
 function syncCompactPreview(def) {
   const skin=tretaSkinPresentation(def.skinId,def.id),weapon=armaDoPreview(def.id);
-  const paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId),names={ak:'AK-47',m4:'M4',scar:'SCAR',pistol:'Pistola'};
-  const caption=[skin?.name,paint?`Pintura: ${names[weapon.weaponId] || weapon.weaponId} · ${paint.name}`:null].filter(Boolean).join(' · ');
+  const paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId);
+  const caption=[skin?.name,paint?previewPaintCaption(weapon,paint):null].filter(Boolean).join(' · ');
   const src=portraitUrl(def),key=JSON.stringify([def.id,def.skinId,src,caption]);
   const hub=(pvCompact.matches || pvNarrow.matches) && previewHubVisible();
   const selection=pvCompact.matches && $('char-select')?.classList.contains('hidden')===false;
@@ -1051,7 +1057,7 @@ function syncCompactPreview(def) {
     image.dataset.previewKey=key;const my=String(++pvCompactToken);image.dataset.previewToken=my;let fallback=false;
     image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
     label.textContent=caption;label.hidden=!caption;image.alt=skin?.name || def.name;
-    const unavailable=()=>{image.hidden=true;label.hidden=false;label.textContent=`Prévia indisponível: ${skin?.name || def.name}${paint?` · ${paint.name}`:''}`;};
+    const unavailable=()=>{image.hidden=true;label.hidden=false;label.textContent=`${previewUnavailableCaption(skin?.name || def.name)}${paint?` · ${paint.name}`:''}`;};
     if(src){
       image.onload=()=>{if(image.dataset.previewToken!==my)return;image.hidden=false;label.textContent=caption;label.hidden=!caption;};
       image.onerror=()=>{if(image.dataset.previewToken!==my)return;if(!skin && !fallback){fallback=true;image.src=portraitFallbackUrl(def);}else unavailable();};

@@ -26,7 +26,10 @@ for(const [name,lines,expected] of [
   ['direct promise handler',['video.play().catch(()=>{});'],true],
 ])test('media guard recognizes the actual containment: '+name,()=>assert.equal(playGuard(lines,0),expected));
 
-function fixture({ reduced = false, compact = false, narrow = false, lean = true, threeD = false, realModel = false, teamVisible = false, preload = () => Promise.resolve(), screen = 'selection', play = () => Promise.resolve(), mutate = value => value, pack = false, vibe = 'ak', paints = {ak:'ouro-ak'} } = {}) {
+const i18nSource = fs.readFileSync(new URL('../public/js/i18n.js', import.meta.url), 'utf8');
+const i18nResolver = new vm.Script(i18nSource.slice(0, i18nSource.indexOf('/* window.__GEO_LANG__')).replace(/export\s+/g, '') + '\nLANG');
+function resolveLang(lang) { return i18nResolver.runInNewContext(vm.createContext({ URLSearchParams, location: { search: '?lang=' + lang } })); }
+function fixture({ lang = 'pt', reduced = false, compact = false, narrow = false, lean = true, threeD = false, realModel = false, teamVisible = false, preload = () => Promise.resolve(), screen = 'selection', play = () => Promise.resolve(), mutate = value => value, pack = false, vibe = 'ak', paints = {ak:'ouro-ak'} } = {}) {
   let equippedSkin='lula-cyborg',homeRefreshes=0,rendererCalls=0,preloads=0,thumbnailRenders=0,modelBuilds=0,boxBuilds=0;
   const query=matches=>{const q=new EventTarget();q.matches=matches;q.change=value=>{q.matches=value;const event=new Event('change');event.matches=value;q.dispatchEvent(event);};return q;};
   const motion=query(reduced),compactQuery=query(compact),narrowQuery=query(narrow);
@@ -49,7 +52,7 @@ function fixture({ reduced = false, compact = false, narrow = false, lean = true
     + '\n' + raw.slice(raw.indexOf('  const setHubTab ='),raw.indexOf('  tabs.forEach((button, index)'))
     + '\n' + raw.slice(raw.indexOf('  const setHubNet ='),raw.indexOf("  $('hub-sp').onclick"))
     + '\nfunction frame(dtReal){' + raw.slice(raw.indexOf('      const pvDt = pv.travado'),raw.indexOf('      pv.r.render(pv.scene, pv.cam);')+'      pv.r.render(pv.scene, pv.cam);'.length)+'\n}';
-  const context = vm.createContext({ VERSION: 'fixture', staticPreviews: lean, $: node,
+  const context = vm.createContext({ VERSION: 'fixture', staticPreviews: lean, LANG: resolveLang(lang), $: node,
     document: { getElementById:node,dispatchEvent(){},querySelector: selector => {if(selector==='.char-preview-box')return box;if(selector.includes('.team-chars')){const team=node(selector);team.checkVisibility=()=>teamVisible;return team;}return hints;},querySelectorAll:()=>[],createElement:()=>node('row-'+nodes.size) },
     matchMedia: query => query.includes('pointer: coarse')?compactQuery:query.includes('max-width')?narrowQuery:motion,
     tretaSkinPresentation: (id, character) => id === 'lula-cyborg' && character === 'barbudo' ? presentation : null,
@@ -147,6 +150,34 @@ test('the actual weapon resolver preserves pack and character-weapon precedence'
   const g=fixture({vibe:'pistol',paints:{ak:'ouro-ak',m4:'prata-m4'}});
   assert.equal(g.api.armaDoPreview('barbudo').weaponSkinId,'ouro-ak');
 });
+const previewLangCases = [
+  ['pt', 'Pintura: Pistola · Ouro', 'Prévia indisponível: Barbudo Cyborg'],
+  ['en', 'Paint: Pistol · Ouro', 'Preview unavailable: Barbudo Cyborg'],
+];
+for(const [lang, paintCaption, unavailableCaption] of previewLangCases){
+  test('preview captions localized by the real i18n resolver: '+lang, () => {
+    const f = fixture({lang, vibe:'pistol', paints:{pistol:'ouro-pistol'}});
+    f.api.showStaticPreview(cyborg);
+    assert.equal(f.node('char-preview-weapon').textContent, paintCaption);
+    assert.equal(f.node('char-preview-weapon').hidden, false);
+    f.node('char-preview-static').onerror();
+    assert.equal(f.node('char-preview-skin').textContent, unavailableCaption);
+    assert.equal(f.node('char-preview-skin').hidden, false);
+    f.api.pvStopVideo();
+    assert.equal(f.node('char-preview-skin').textContent, unavailableCaption);
+  });
+  for(const screen of ['selection','hub']){
+    test('compact captions localized by the real i18n resolver: '+lang+' '+screen, () => {
+      const prefix = screen==='hub'?'hub-character':'char-select';
+      const f = fixture({lang, compact:true, screen, vibe:'pistol', paints:{pistol:'ouro-pistol'}});
+      f.api.pvSetChar(cyborg);
+      assert.equal(f.node(prefix+'-equipment').textContent, 'Barbudo Cyborg · '+paintCaption);
+      f.node(prefix+'-portrait').onerror();
+      assert.equal(f.node(prefix+'-equipment').textContent, unavailableCaption+' · Ouro');
+      assert.equal(f.node(prefix+'-equipment').hidden, false);
+    });
+  }
+}
 test('the real character caller resolves the equipped skin and preserves an explicit base trial', () => {
   const f=fixture();f.api.pvSetChar(base);
   assert.equal(f.node('char-preview-static').src,presentation.poster+'?v=fixture');
@@ -280,6 +311,7 @@ test('inventory and account refresh retain the open selection and clear the old 
 });
 const replace=(from,to)=>value=>{assert.equal(value.split(from).length-1,1,'mutation anchor missing or ambiguous');return value.replace(from,to);};
 for(const [name,mutate,probe,options={}] of [
+  ['hardcoded PT preview branch',replace("const previewCopy = (pt, en) => LANG === 'en' ? en : pt;",'const previewCopy = (pt, en) => pt;'),f=>{f.api.showStaticPreview(cyborg);assert.equal(f.node('char-preview-weapon').textContent,'Paint: Pistol · Ouro');},{lang:'en',vibe:'pistol',paints:{pistol:'ouro-pistol'}}],
   ['base poster substituted',replace('return skin?(skin.poster?', 'return false?(skin.poster?'),f=>{f.api.showStaticPreview(cyborg);assert.equal(f.node('char-preview-static').src,presentation.poster+'?v=fixture');}],
   ['video stop loses ownership token',replace('pvVidToken++;',''),async f=>{f.api.pvSetVideo(cyborg);const old=f.video.onloadeddata;f.api.pvStopVideo();old();await tick();assert.equal(f.box.classList.contains('has-video'),false);}],
   ['reduced motion ignored',replace('if(!src || pvReducedMotion.matches','if(!src || false'),f=>{f.api.pvSetVideo(cyborg);assert.equal(f.video.src,'');},{reduced:true}],
