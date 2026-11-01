@@ -2,6 +2,61 @@
 
 Missão integral: acompanhar PRs elegíveis e release; melhorar mapas, UI visual, personagens, skins e movimento/ADS 1P/3P conforme PDF, roadmap, plano anterior e Complexo Favela. Operação Flávio excluída. Fluxos UI/redes sociais são fase posterior. Não disputar Javaporco ou itens de outros owners. Pronto exige correção medida antes/depois, evidência real, revisão atual sem dívida, CI verde e release rastreável; técnico verde não aprova arte/mobile/MP.
 
+## Checkpoint R63 antes do push composto, 01/11
+
+A composição local `4ffb6dccdaf9ed4c0fcff31d2cbc50950eb5e6cc` preserva
+o head atual de #1179, o head atual de #1190 `affb6824`, #1191 original
+`1da0bc3` e a correção CU-8 `b700b63`. Operação Flávio continua excluída.
+QA/staging publicados ainda estão em5732; main4cf8 e produção alpha133/49fd69f.
+Esta seção supera o estado pendente dos checkpoints históricos abaixo.
+
+O owner atual de1190 entrou por merge normal no checkpoint
+`3360c1542534a4680204fd017a5a3f37709a1a18`, pais ead5+affb.
+O único delta novo de produto é notifyEquipment após a resposta de compra,
+depois dos guards de epoch/conta. GLM resolveu a fixture combinada sem perder
+os corpos herdados ou os quatro casos novos; store preservada byte a byte
+como automerge do owner. Node22/26:49/49 readiness e102/102 preview.
+No baseline ead5,45 antigos e2 novos de body passam; a compra nominal falha
+pela pendência real, e a âncora ausente do mutante recebe zero crédito.
+OFF nominal+5 controles passou. Dois erros do filtro externo foram preservados
+e rejeitados. Crítico independente CRITICO-SKINS-OWNER-R63 leu o delta inteiro,
+três arquivos e fronteiras: zero P1/P2/P3. Root leu o parecer e conferiu22
+vínculos em ROOT-SKINS-OWNER-VERIFIED-R63.json.
+
+A parte válida do fio CI foi corrigida em
+`73f647506d4646e1125a420a2d1b2b76f965acb3`, integrada sem conflitos em4ffb.
+O grupo CPU existente agora executa armadura e o consumidor real ADS da AK
+pública, com as guardas !cancelled/depssuccess preservadas. PI4 protege as
+duas ligações;32 casos PI e18 execuções de aliases/controles passaram nos
+dois Nodes. A primeira implementação GLM contava linhas; uma contraprova
+de duplicação na mesma linha a rejeitou. Native corrigiu apenas o callback,
+com freeze e autoria explícitos. Crítico CRITICO-CI-VISUAL-R63 leu o diff
+inteiro, quatro arquivos e fronteiras, conferiu50 logs e não achou P1/P2/P3.
+Root leu o parecer e conferiu67 vínculos em ROOT-CI-VISUAL-VERIFIED-R63.json.
+Nenhuma mudança adicional de produto veio desta correção CI.
+
+A Praça foi refutada com o gen-docs real e os controles de gatilho nos dois
+Nodes; reply4434207646 e fio PRRT_kwDOTbwe3M6yWyb5 resolvido. O fio CI
+PRRT_kwDOTbwe3M6yWyb4 permanece aberto até a publicação da correção.
+Revisão5726170574 refere-se somente a5732, sem antecipar o novo head.
+
+As provas locais reais de convidado, falha/recuperação EN, cleanup de abas,
+desktop3D e reduced-motion continuam no recorte registrado emR62. Os bytes
+de main/CSS correspondentes foram preservados; a compra nova só tem prova
+CPU/VM, não conta autenticada real. A fase0 da luva mapeou28 componentes e
+confirmou equivalência da luva nos três GLBs,402 hashes intactos. Root leu
+PISTOL-GLOVE-PHASE0-R62.md e o coletor inteiro; coletor não executado/testado,
+origem da mancha principal no render UNKNOWN. Não houve protótipo, geração,
+escolha de escala ou gasto Mint. Faceting, fidelidade global, físico e MP
+continuam sem aceite; isso não impede registrar os recortes já validados.
+
+Próximo: rebind completo dos caminhos, fast-forward da QA e um push normal
+atômico QA/staging, sem browser concorrente com107. Depois fechar o fio CI
+com a fonte publicada, solicitar revisão atual, verificar CI e preview do
+SHA integrado e executar crítico independente final após o bot. Só então
+merge elegível e release rastreável. Missão integral e exclusões da abertura
+continuam; fluxos de UI/redes sociais ficam na fase posterior.
+
 ## Checkpoint R62 da composição, 01/11
 
 O head `5732b65df8283b8cbbb19e74bad4e705b1c85470` chegou por push normal
