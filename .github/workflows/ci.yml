@@ -32,9 +32,11 @@ jobs:
   reguas-e-site:
     runs-on: ubuntu-latest
     # 25 min eram o verde histórico (~17,5 min), mas com a fila de runners saturada
-    # (#1185/#1217: dois runs cancelados em 25m04s/25m15s, no passo Lajes, sem chegar
-    # à Piscina) o cap virou a causa da falha, não a proteção. 35 min dá folga real.
-    timeout-minutes: 35
+    # (#1217: dois runs cancelados em 25m04s/25m15s, no passo Lajes, sem chegar à
+    # Piscina) o cap virou a causa da falha, não a proteção. O suite completo mediu
+    # 23m48s na mesma janela saturada; 30 é o teto que a régua wf-timeout admite
+    # (TETO_MAX) e dá ~6 min de folga sobre o pior caso medido.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
