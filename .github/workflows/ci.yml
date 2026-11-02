@@ -64,6 +64,8 @@ jobs:
         run: npm run syntax
       - name: Regras da horda e consumo de objetivo no cliente
         run: npm run eval:javaporcos
+      - name: Origem da versão nos payloads reais de perf e match
+        run: npm run eval:versaoorigem
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         run: npm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
