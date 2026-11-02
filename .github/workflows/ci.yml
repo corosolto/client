@@ -94,6 +94,8 @@ jobs:
         run: npm run eval:versaoorigem
       - name: Arena, formato melhor-de e preload
         run: node tools/eval/runner.mjs eval:arena-mode eval:formatomelhorde eval:preload
+      - name: Mapas JSON, construtor e boot no Game
+        run: node tools/eval/runner.mjs eval:mapjson eval:mapjsonboot
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         run: npm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
