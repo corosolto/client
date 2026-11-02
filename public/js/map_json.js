@@ -7,6 +7,14 @@ import { hasProp, placeProp } from './mapprops.js';
 const num = (v, def) => (typeof v === 'number' && isFinite(v) ? v : def);
 const clamp01 = (t) => (t < 0 ? 0 : t > 1 ? 1 : t);
 
+const dentroColisorXZ = (c, x, z, margem = 0) => {
+  if (x <= c.minX - margem || x >= c.maxX + margem || z <= c.minZ - margem || z >= c.maxZ + margem) return false;
+  if (!c.ry) return true;
+  const wx = x - c.cx, wz = z - c.cz;
+  const lx = wx * c.cos - wz * c.sin, lz = wx * c.sin + wz * c.cos;
+  return Math.abs(lx) < c.hx + margem && Math.abs(lz) < c.hz + margem;
+};
+
 // Degrau que o corpo sobe andando (game.js `_collide`/STEP_H) — o MESMO número que a
 // régua de mapa usa (map-check.mjs DEGRAU). É o critério de continuidade da navegação.
 const DEGRAU = 0.30;
@@ -94,17 +102,24 @@ export function planFromJSON(spec) {
 
   // props GLB: passthrough; a malha é assentada no build, CONDICIONADA ao GLB
   // carregado (placeProp devolve null sem asset). Colisor sem malha reprovaria o MAP4.
-  const props = (spec.props || []).map((p) => ({
-    id: p.id, x: num(p.x, 0), z: num(p.z, 0), yaw: num(p.yaw, 0),
-    h: num(p.h, 2.4), solid: !!p.solid, cw: num(p.cw, 0), cd: num(p.cd, 0),
-  }));
+  const props = (spec.props || []).map((p, indice) => {
+    const solid = !!p.solid, h = p.h === undefined ? 2.4 : p.h;
+    if (solid) for (const [chave, valor] of [['cw', p.cw], ['cd', p.cd], ['h', h]])
+      if (!Number.isFinite(valor) || valor <= 0)
+        throw new Error(`prop sólido #${indice + 1}: ${chave} precisa ser finito e positivo`);
+    return { id: p.id, x: num(p.x, 0), z: num(p.z, 0), yaw: num(p.yaw, 0),
+      h: solid ? h : num(p.h, 2.4), solid, cw: num(p.cw, 0), cd: num(p.cd, 0) };
+  });
 
   // Invariante (mapjson-props-check): prop sólido CARREGADO bloqueia AQUI, uma única vez,
   // em colliders E navColliders (mundo, spawn e grafo); asset ausente não vira parede fantasma.
   for (const p of props)
     if (p.solid && p.cw > 0 && p.cd > 0 && hasProp(p.id)) {
       const y = heightAt(p.x, p.z);
-      const c = { minX: p.x - p.cw / 2, maxX: p.x + p.cw / 2, minY: y, maxY: y + p.h, minZ: p.z - p.cd / 2, maxZ: p.z + p.cd / 2 };
+      const cs = Math.cos(p.yaw), sn = Math.sin(p.yaw), hx = p.cw / 2, hz = p.cd / 2;
+      const ex = Math.abs(cs) * hx + Math.abs(sn) * hz, ez = Math.abs(sn) * hx + Math.abs(cs) * hz;
+      const c = { minX: p.x - ex, maxX: p.x + ex, minY: y, maxY: y + p.h, minZ: p.z - ez, maxZ: p.z + ez,
+        ry: p.yaw, cx: p.x, cz: p.z, hx, hz, cos: cs, sin: sn };
       colliders.push(c); navColliders.push(c);
     }
 
@@ -113,7 +128,7 @@ export function planFromJSON(spec) {
     // faixa do corpo relativa ao chão local (heightAt): sólido assentado em plataforma elevada também bloqueia
     const h = heightAt(x, z);
     for (const c of navColliders)
-      if (x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < h + 1.6 && c.maxY > h + 0.15) return true;
+      if (dentroColisorXZ(c, x, z, inflate) && c.minY < h + 1.6 && c.maxY > h + 0.15) return true;
     return false;
   };
   const nodes = [], adj = [];
@@ -182,7 +197,7 @@ export function validatePlan(plan) {
   // "dentro de sólido" = dentro de muro/caixa NÃO-walkable. Spawn no TOPO de caixa walkable é válido.
   // Mesma faixa do blocked relativa ao chão: spawn sob colisor elevado com folga é válido.
   const dentroSolido = (x, z) => { const h = plan.heightAt(x, z);
-    return plan.navColliders.some((c) => x > c.minX && x < c.maxX && z > c.minZ && z < c.maxZ && c.minY < h + 1.6 && c.maxY > h + 0.15); };
+    return plan.navColliders.some((c) => dentroColisorXZ(c, x, z) && c.minY < h + 1.6 && c.maxY > h + 0.15); };
   for (const lado of ['E', 'B']) {
     const arr = plan.spawns[lado] || [];
     if (arr.length === 0) { problemas.push(`R3 lado ${lado} sem spawn`); continue; }
