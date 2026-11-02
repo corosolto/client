@@ -30,7 +30,11 @@ async function worker(fixture, mutant) {
   const release = url => { released.add(url); for (const resolve of gates.get(url) || []) resolve(); };
   const releaseAll = () => { for (const url of gates.keys()) release(url); };
   const check = (ok, detail) => out.rows.push({ id: CASES[fixture], ok: Boolean(ok), detail });
-  const deadline = setTimeout(() => { console.error('origin worker deadline'); process.exit(3); }, 45000);
+  const deadline = setTimeout(() => {
+    console.error('origin worker deadline');
+    try { if (tmp) fs.rmSync(tmp, { recursive: true, force: true }); }
+    finally { process.exit(3); }
+  }, 45000);
   try {
     const input = JSON.parse(fs.readFileSync(0, 'utf8'));
     must(input.nonce === process.env.CSBR_ORIGIN_NONCE && same(input.sources, out.sources), 'input identity/source drift');

@@ -7,7 +7,9 @@ import { fileURLToPath } from 'node:url';
 const sourceURL=new URL('../../public/js/transporte.js',import.meta.url);
 const source=readFileSync(sourceURL,'utf8'),sourceSHA256=createHash('sha256').update(source).digest('hex');
 const args=process.argv.slice(2),mutant=args.length===1&&args[0]==='--mutante';
-assert.ok(args.length===0||mutant||args.length===1&&args[0]==='--suite','invalid arguments');
+if(!(args.length===0||mutant||args.length===1&&args[0]==='--suite')){
+ console.error('CLI invalida; use sem argumentos, --mutante ou --suite');process.exit(2);
+}
 const own=['oversized-header','maximum-u32-header','fragmented-oversized-header','cancel-rejection'];
 if(args[0]==='--suite'){
  for(const bad of [false,true]){

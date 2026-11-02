@@ -854,6 +854,7 @@
     "eval:audiomarcas": "node --test tests/audio-manifest-migration.test.mjs && node tools/eval/audio-manifest-marcas-check.mjs && node tools/eval/audio-manifest-marcas-check.mjs --mutante=marca-volta && node tools/eval/audio-manifest-marcas-check.mjs --mutante=chave-sumida && node tools/eval/audio-manifest-marcas-check.mjs --mutante=varredor-cego && node tools/eval/audio-manifest-marcas-check.mjs --mutante=chave-marca && node tools/eval/audio-manifest-container-check.mjs",
     "eval:bootmutantverdict": "node tools/eval/boot-mutant-verdict-check.mjs --mutantes",
     "eval:arena-mode": "node tools/eval/arena-mode-check.mjs && node tools/eval/arena-mode-check.mjs --mutante=modo-descartado && node tools/eval/arena-mode-check.mjs --mutante=sem-troca-bot && node tools/eval/arena-mode-check.mjs --mutante=fim-com-sobrevivente && node tools/eval/arena-runtime-check.mjs --mutantes && node tools/eval/arena-side-check.mjs --mutantes && node tools/eval/mode-check.mjs --mutantes",
+    "//eval:transport-stream": "Enquadramento e limite do stream WebTransport com mutante de regressao; nao mede rede real.",
     "eval:transport-stream": "node tools/eval/transport-stream-check.mjs --suite"
   },
   "repository": {
