@@ -3571,7 +3571,9 @@ export class Game {
       swapBot.mantle = null; swapBot.mantleF = 0; swapBot._spaceHeld = false;
       swapBot._mantleScanAt = 0; swapBot.jumpBufferedUntil = 0; swapBot.coyoteUntil = 0;
       this._equiparArmadura(swapBot);
-      const s = this.world.spawns[oldTeam][(Math.random() * 4) | 0];
+      // Arenas do construtor podem ter 2 spawns por lado — nunca assuma 4.
+      const spawnsTroca = this.world.spawns[oldTeam] || [];
+      const s = spawnsTroca.length ? spawnsTroca[(Math.random() * spawnsTroca.length) | 0] : this._pickSpawn(oldTeam, swapBot);
       swapBot.pos.set(s.x, this._spawnY(s.x, s.z), s.z);
       swapBot.yaw = this._spawnYaw(s, oldTeam, true);
       swapBot.mesh.group.rotation.set(0, swapBot.yaw, 0);
@@ -3579,7 +3581,9 @@ export class Game {
       swapBot.mesh.group.visible = true;
     }
     // respawn do jogador no lado novo
-    const s = this.world.spawns[newTeam][(Math.random() * 4) | 0];
+    // Arenas do construtor podem ter 2 spawns por lado — nunca assuma 4.
+    const spawnsLado = this.world.spawns[newTeam] || [];
+    const s = spawnsLado.length ? spawnsLado[(Math.random() * spawnsLado.length) | 0] : this._pickSpawn(newTeam, p);
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
     // O teleporte invalida a trajetória absoluta do lado anterior.
     p.mantle = null; p.mantleF = 0; p._spaceHeld = false; p._mantleScanAt = 0;

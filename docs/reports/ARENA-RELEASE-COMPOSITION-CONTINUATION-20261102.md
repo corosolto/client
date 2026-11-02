@@ -27,3 +27,13 @@ Concluir execução focada atual, checkpoint normal da composição, incorporar 
 EntradaG `35a9442f86fd22de2e98d1d7190f03217f60e587`, com3814 ancestral, entrou sem conflitos. O Game permanece byteidêntico à composição Arena439da; os cinco módulos de arte/contrato são byteidênticos aos validados emG. O único script alterado foi `eval:map-material-finish`, que adiciona o checker permanente assíncrono de reboco. `check:fast` e o alias Arena permanecem completos. R1789 executou Campo/CVC1 e Arena no mundo combinado e ambos passaram.
 
 Arte aceita somente nos itens/vistas do relatório Campo. O snapshot versionado de tiros mantém comparação exata, com mudança explícita de um miolo e quatro batches; a física continua igual. Ver `CAMPO-ART-CONTINUATION-20261102.md`. Próxima etapa: PR1101 em lane própria, corrigindo dimensões sólidas e rotação real da colisão/navegação, depois composição final e validação de publicação. Ainda sem novo push, release ou aprovação Ego/mobile/humana.
+
+## R1806: composição do SDK
+
+PR1101 entra pelo checkpoint corrigido `f8bf96eae77e843233147b8362975d09f4ca4854`, com o head original `7ed4f61c3a99181359b378046250661ee5b98c21` como ancestral e ownerref intocado. As únicas alterações de Game são os dois sorteios de spawn que agora usam o comprimento real de cada lado, mantendo as correções Arena de facção, os perfis inteiros de mãos/skins, weaponId e resets de mantle. A validação de prop sólido exige dimensões finitas e positivas antes do carregamento. Collider rotado, navegação e spawn usam a mesma orientação; assets ausentes não criam parede fantasma. O relatório SDK registra a prova RED e os limites.
+
+O único conflito textual era o timeout de CI. Foi preservado o teto atual de 30 minutos e recusada a isenção de 40 da entrada: não há neste checkpoint uma execução completa que justifique relaxar a régua. A última execução remota 41411431006 terminou em 21m51s; falhou na fixture de rede já corrigida em J/K, e não por timeout.
+
+R1803 passou syntax, Arena completo, switchteam, fluxo de skins e mutantes, boot JSON e mutante de relevo, preload/binding e timeout. Mapjson recusou corretamente duas instâncias Three: imports estáticos dos instrumentos antigos resolveram a ponte compartilhada antes do resolvedor canônico da base. R1805 muda somente a ordem dos imports de dois instrumentos, preserva o produto byteidêntico e passa o alias inteiro sem aviso, com 110 casos e cinco mutantes semânticos. O aviso continua sendo falha de infraestrutura, nunca aceite de mutante.
+
+Checkpoint local recuperável; ainda requer regeneração oficial de documentação/índice, build, boot de origem, hooks normais, publicação e revisões atuais. Backend pareado, release e QA real continuam incompletos.

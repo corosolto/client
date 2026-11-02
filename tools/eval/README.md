@@ -16,6 +16,7 @@ com código 1 em falha crítica.
 
 | Arquivo | O que mede | Artefato |
 |---|---|---|
+| `construtor-input-check.mjs` | Entradas de grade não esgotam memória nem travam a CLI; o handler real do editor preserva objetos ao editar campos. | `npm run eval:construtor-input` (incluído em `eval:mapjson`) |
 | `ballistics-falloff-check.mjs` | Extremos e interpolação da queda de dano; mede jogador e ambas as IAs, com mutações da curva e da distância. | `npm run eval:ballistics-falloff` |
 | `firing-cadence-check.mjs` | Cadência pelo _updatePlayer real; calendário, cooldown, teto por passo, entrada e interrupções, com mutantes. | `npm run eval:firing-cadence` |
 | `recoil-contract-check.mjs` | Perfis históricos de #970; mede câmera, padrão e kick entregue ao viewmodel pelo disparo real. | `npm run eval:recoil-contract` |
