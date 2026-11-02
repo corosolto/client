@@ -114,7 +114,7 @@ export function buildCampoMorro(scene, T = {}) {
           c.map.repeat.copy(c.userData.baseRepeat); c.map.needsUpdate = true;
           const cd = det.normalMap || det.roughnessMap ? { normalMap: det.normalMap ? det.normalMap.clone() : null, roughnessMap: det.roughnessMap ? det.roughnessMap.clone() : null } : (detailFor(c.map) || {});
           c.normalMap = cd.normalMap || null;
-          c.roughnessMap = cd.roughnessMap || null;
+          c.roughnessMap = c.userData.roughnessUniforme ? null : (cd.roughnessMap || null);
           for (const d of [c.normalMap, c.roughnessMap]) {
             if (!d) continue;
             d.wrapS = d.wrapT = THREE.RepeatWrapping; d.repeat.copy(c.map.repeat); d.offset.copy(c.map.offset); d.needsUpdate = true;
@@ -161,7 +161,8 @@ export function buildCampoMorro(scene, T = {}) {
   };
   MAT.galpaoFloor = repetido(MAT.galpaoConcrete, 11.4 / 3, 9.4 / 3);
   MAT.galpaoCeiling = repetido(MAT.galpaoConcrete, 11.45 / 3, 9.45 / 3);
-  MAT.galpaoCeiling.color.setHex(0xbec7c7); MAT.galpaoCeiling.roughness = .8;
+  MAT.galpaoCeiling.color.setHex(0xbec7c7); MAT.galpaoCeiling.roughness = .92;
+  MAT.galpaoCeiling.userData.roughnessUniforme = true;
   MAT.galpaoCeiling.emissive.setHex(0x17282a); MAT.galpaoCeiling.emissiveIntensity = .18;
   // O clone recebe o zinco assíncrono pelo mesmo registro; as coroas mantêm seu material.
   const modoFachadaQP = QP.get('campoFachadas');
@@ -885,16 +886,35 @@ export function buildCampoMorro(scene, T = {}) {
 
   const encostaFundo = (x0, x1, z0, z1) => {
     const w = x1 - x0, dp = z1 - z0;
-    const g = new THREE.PlaneGeometry(w, dp, Math.round(w / 2), Math.round(dp / 2));
-    g.rotateX(-Math.PI / 2);
-    const p = g.attributes.position, uv = g.attributes.uv;
-    for (let i = 0; i < p.count; i++) {
-      const wx = x0 + w / 2 + p.getX(i), wz = z0 + dp / 2 + p.getZ(i);
-      p.setY(i, morroBase(wx, wz));
-      uv.setXY(i, (wx + 36) / 72, (30 - wz) / 60);
+    const nx = Math.round(w / 2), nz = Math.round(dp / 2), positions = [], uvs = [], indices = [], vertices = new Map();
+    const vertex = (x, z) => {
+      const key = `${x},${z}`;
+      if (vertices.has(key)) return vertices.get(key);
+      const id = positions.length / 3;
+      positions.push(x, morroBase(x, z), z); uvs.push((x + 36) / 72, (30 - z) / 60);
+      vertices.set(key, id); return id;
+    };
+    // Só a borda acompanha a grade jogável de 1 × 0,5 m; o interior continua a 2 m.
+    for (let iz = 0; iz < nz; iz++) for (let ix = 0; ix < nx; ix++) {
+      const xa = x0 + ix * w / nx, xb = x0 + (ix + 1) * w / nx;
+      const za = z0 + iz * dp / nz, zb = z0 + (iz + 1) * dp / nz;
+      const corners = [[xa, za], [xa, zb], [xb, zb], [xb, za]], ring = [];
+      let refined = false;
+      for (let e = 0; e < 4; e++) {
+        const [ax, az] = corners[e], [bx, bz] = corners[(e + 1) % 4];
+        const steps = ax === bx && ax === -36 ? 4 : az === bz && az === z1 && z1 === -30 ? 2 : 1;
+        refined ||= steps > 1;
+        for (let j = 0; j < steps; j++) ring.push(vertex(ax + (bx - ax) * j / steps, az + (bz - az) * j / steps));
+      }
+      if (refined) {
+        const center = vertex((xa + xb) / 2, (za + zb) / 2);
+        for (let e = 0; e < ring.length; e++) indices.push(center, ring[e], ring[(e + 1) % ring.length]);
+      } else indices.push(ring[0], ring[1], ring[2], ring[0], ring[2], ring[3]);
     }
-    p.needsUpdate = true; uv.needsUpdate = true; g.computeVertexNormals();
-    g.translate(x0 + w / 2, 0, z0 + dp / 2);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    g.setIndex(indices); g.computeVertexNormals();
     const m = new THREE.Mesh(g, MAT.dirt);
     m.receiveShadow = true; m.castShadow = false;
     m.userData.campoBackdrop = true; m.userData.graffitiSupportExcluded = true;
@@ -921,35 +941,67 @@ export function buildCampoMorro(scene, T = {}) {
     const [x, z, and] = CASAS_FUNDO[hi], y0 = morroBase(x, z);
     const fh = 2.8 + (hi % 3) * 0.1;
     const sul = z < -30, desl = hi % 2 ? 0.1 : -0.1;
+    const variante = hi === 5 ? 'recuo' : hi === 2 ? 'assimetrica' : hi === 9 ? 'zinco' : 'padrao';
     pecaFundo(pecasFundo.fundacao, LARGURA_FUNDO + 0.6, 2, PROFUNDIDADE_FUNDO + 0.6, x, y0 - 2, z, true);
     for (let a = 0; a < and; a++) {
-      const ox = a ? (sul ? 0 : desl) : 0, oz = a ? (sul ? desl : 0) : 0;
-      pecaFundo(pecasFundo['p' + (hi % 3)], LARGURA_FUNDO, fh, PROFUNDIDADE_FUNDO, x + ox, y0 + a * fh, z + oz, true);
-      pecaFundo(pecasFundo.esquadria, LARGURA_FUNDO + 0.3, 0.25, PROFUNDIDADE_FUNDO + 0.3, x + ox, y0 + (a + 1) * fh - 0.25, z + oz, true);
+      const recuo = variante === 'recuo' && a === and - 1;
+      const bw = recuo ? LARGURA_FUNDO - 2.4 : LARGURA_FUNDO;
+      const bd = recuo ? PROFUNDIDADE_FUNDO - 1.6 : PROFUNDIDADE_FUNDO;
+      const ox = recuo ? -0.9 : (a ? (sul ? 0 : desl) : 0), oz = a ? (sul ? desl : 0) : 0;
+      const cx = x + ox, cz = z + oz;
+      pecaFundo(pecasFundo['p' + (hi % 3)], bw, fh, bd, cx, y0 + a * fh, cz, true);
+      pecaFundo(pecasFundo.esquadria, bw + 0.3, 0.25, bd + 0.3, cx, y0 + (a + 1) * fh - 0.25, cz, true);
       const fy = y0 + a * fh + 1.05;
-      for (const s of [-1.4, 1.4]) {
-        const wx = sul ? x + ox + s : x + ox + LARGURA_FUNDO / 2;
-        const wz = sul ? z + oz + PROFUNDIDADE_FUNDO / 2 : z + oz + s;
-        pecaFundo(pecasFundo.esquadria, sul ? 1.2 : 0.14, 1.0, sul ? 0.14 : 1.2, wx, fy, wz, true);
-        pecaFundo(pecasFundo.vidro, sul ? .95 : 0.1, .78, sul ? 0.1 : .95,
+      const janelas = variante === 'assimetrica' ? [[-1.65, 1.7], [0.45, 0.85]] : recuo ? [[0, 1.2]] : [[-1.4, 1.2], [1.4, 1.2]];
+      for (const [s, largura] of janelas) {
+        const wx = sul ? cx + s : cx + bw / 2;
+        const wz = sul ? cz + bd / 2 : cz + s;
+        pecaFundo(pecasFundo.esquadria, sul ? largura : 0.14, 1.0, sul ? 0.14 : largura, wx, fy, wz, true);
+        pecaFundo(pecasFundo.vidro, sul ? largura - 0.25 : 0.1, .78, sul ? 0.1 : largura - 0.25,
           wx + (sul ? 0 : 0.03), fy + 0.1, wz + (sul ? 0.03 : 0), false);
-        pecaFundo(pecasFundo.esquadria, sul ? 1.4 : 0.3, 0.08, sul ? 0.3 : 1.4,
+        pecaFundo(pecasFundo.esquadria, sul ? largura + 0.2 : 0.3, 0.08, sul ? 0.3 : largura + 0.2,
           wx, fy - 0.08, wz + (sul ? 0.08 : 0), true);
       }
       if (a === 0) {
-        const dx = sul ? x : x + LARGURA_FUNDO / 2, dz = sul ? z + PROFUNDIDADE_FUNDO / 2 : z;
+        const off = variante === 'assimetrica' ? 1.9 : 0;
+        const dx = sul ? x + off : x + LARGURA_FUNDO / 2, dz = sul ? z + PROFUNDIDADE_FUNDO / 2 : z + off;
         pecaFundo(pecasFundo.esquadria, sul ? 1.2 : 0.14, 2.25, sul ? 0.14 : 1.2, dx, y0, dz, true);
         pecaFundo(pecasFundo.vidro, sul ? 0.95 : 0.1, 2.05, sul ? 0.1 : 0.95,
           dx + (sul ? 0 : 0.03), y0 + 0.05, dz + (sul ? 0.03 : 0), false);
       }
     }
-    const tx = sul ? x : x + (and > 1 ? desl : 0), tz = sul ? z + (and > 1 ? desl : 0) : z;
+    const topW = variante === 'recuo' ? LARGURA_FUNDO - 2.4 : LARGURA_FUNDO;
+    const topD = variante === 'recuo' ? PROFUNDIDADE_FUNDO - 1.6 : PROFUNDIDADE_FUNDO;
+    const tx = variante === 'recuo' ? x - 0.9 : (sul ? x : x + (and > 1 ? desl : 0));
+    const tz = sul ? z + (and > 1 ? desl : 0) : z;
     const ty = y0 + and * fh;
-    pecaFundo(pecasFundo.telhado, LARGURA_FUNDO + 0.5, 0.22, PROFUNDIDADE_FUNDO + 0.5, tx, ty, tz, false);
+    if (variante === 'zinco') {
+      const rw = LARGURA_FUNDO + 0.5, rd = PROFUNDIDADE_FUNDO + 0.5, rh = 1;
+      const ang = Math.atan2(rh, rd / 2), pl = Math.hypot(rd / 2, rh);
+      for (const s of [-1, 1]) {
+        const g = new THREE.BoxGeometry(rw, 0.08, pl + 0.05);
+        g.rotateX(s * ang); pecasFundo.telhado.push(g.translate(tx, ty + rh / 2, tz + s * rd / 4));
+        const px = tx + s * LARGURA_FUNDO / 2, zs = [tz - s * rd / 2, tz, tz + s * rd / 2];
+        const empena = new THREE.BufferGeometry();
+        empena.setAttribute('position', new THREE.Float32BufferAttribute([px, ty, zs[0], px, ty + rh, zs[1], px, ty, zs[2]], 3));
+        empena.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, s * rd / (2 * REBOCO_TILE), rh / REBOCO_TILE, s * rd / REBOCO_TILE, 0], 2));
+        empena.computeVertexNormals(); pecasFundo['p' + (hi % 3)].push(empena);
+      }
+      pecasFundo.telhado.push(new THREE.BoxGeometry(rw + 0.1, 0.1, 0.32).translate(tx, ty + rh, tz));
+      continue;
+    }
+    pecaFundo(pecasFundo.telhado, topW + 0.5, 0.22, topD + 0.5, tx, ty, tz, false);
     for (const [px, pz, pw, pd] of [
-      [tx, tz - PROFUNDIDADE_FUNDO / 2, LARGURA_FUNDO + 0.5, 0.18], [tx, tz + PROFUNDIDADE_FUNDO / 2, LARGURA_FUNDO + 0.5, 0.18],
-      [tx - LARGURA_FUNDO / 2, tz, 0.18, PROFUNDIDADE_FUNDO + 0.5], [tx + LARGURA_FUNDO / 2, tz, 0.18, PROFUNDIDADE_FUNDO + 0.5],
+      [tx, tz - topD / 2, topW + 0.5, 0.18], [tx, tz + topD / 2, topW + 0.5, 0.18],
+      [tx - topW / 2, tz, 0.18, topD + 0.5], [tx + topW / 2, tz, 0.18, topD + 0.5],
     ]) pecaFundo(pecasFundo.esquadria, pw, 0.45, pd, px, ty + 0.22, pz, true);
+    if (variante === 'recuo') {
+      for (const [px, pz, pw, pd] of [
+        [x, z - PROFUNDIDADE_FUNDO / 2, LARGURA_FUNDO + 0.5, 0.18],
+        [x, z + PROFUNDIDADE_FUNDO / 2, LARGURA_FUNDO + 0.5, 0.18],
+        [x + LARGURA_FUNDO / 2, z, 0.18, PROFUNDIDADE_FUNDO + 0.5],
+      ]) pecaFundo(pecasFundo.esquadria, pw, 0.5, pd, px, y0 + (and - 1) * fh, pz, true);
+    }
   }
 
   for (const [mat, lista] of [[rebocosFundo[0], pecasFundo.p0], [rebocosFundo[1], pecasFundo.p1], [rebocosFundo[2], pecasFundo.p2],
