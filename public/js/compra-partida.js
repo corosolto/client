@@ -53,7 +53,12 @@ export class CompraPartida {
     this.elSaldo = document.createElement('div');
     this.elSaldo.id = 'hud-treta';
     this.elSaldo.innerHTML = `${MOEDA_IMG('ht-coin')}<b>0</b><em class="ht-ganho"></em><small class="ht-dica"></small>`;
-    hud?.appendChild?.(this.elSaldo);
+    /* PRIMEIRO FILHO do #weapon-hud (relato do dono, 01/11: "2x maior e logo acima das
+       armas pra ficar mais agrupado"): como filho estático da pilha ele cola no topo dela
+       em qualquer resolução, sem bottom mágico. Na partida o #weapon-hud já existe no HTML;
+       no arnês (sem HTML) cai no #hud como antes. */
+    const pilha = document.getElementById('weapon-hud');
+    (pilha?.prepend ? pilha : hud)?.appendChild?.(this.elSaldo);
     this.elMenu = document.createElement('div');
     this.elMenu.id = 'compra-menu';
     this.elMenu.className = 'hidden';
@@ -133,6 +138,9 @@ export class CompraPartida {
   }
 
   comprar(id) {
+    /* MP: saldo e concessão são do nó (docs/ECONOMIA-PARTIDA.md). O menu só pede;
+       `compra-ok` entrega pelo mesmo caminho do jogo (trailer v8 + esta mensagem). */
+    if (this.game.online) return this._comprarRemota(id);
     const g = this.game, p = g.player, item = itemDaCompra(id);
     const estadoMunicao = item?.slot === 'municao' ? this.municaoDe(item.armaSlot, p) : null;
     const r = comprar(this.carteira, {
@@ -167,6 +175,60 @@ export class CompraPartida {
     this.aviso = '';
     this.fechar();
     return r;
+  }
+
+  /* ── MP: a compra é um pedido; o nó valida, debita e concede ─────────────────── */
+  _comprarRemota(id) {
+    const seq = this.game._mp?.pedirCompra?.(id) | 0;
+    if (!seq) return { ok: false, motivo: 'rede' };
+    this._seqPendente = seq;
+    return { ok: true, pendente: true };
+  }
+
+  /* Resposta do nó (`compra-ok`/`compra-nack`). O `concedido` traz o estado EXATO que o nó
+     escreveu — o cliente aplica o mesmo caminho do jogo local (ammo/arma/equipamento), sem
+     nunca debitar nem conceder por conta própria. Seq velho (resposta atrasada) ignora. */
+  respostaRemota(m) {
+    if (!m || (this._seqPendente && (m.seq | 0) < this._seqPendente)) return;
+    this.carteira.saldo = Math.max(0, m.saldo | 0);
+    const g = this.game, p = g.player, c = m.concedido || {};
+    if (m.type === 'compra-nack') {
+      this.aviso = frase('compraRecusa', m.motivo);
+      if (this.aberto) this._render();
+      return;
+    }
+    if (c.tipo === 'arma') {
+      p.ammo[c.arma] = { mag: c.mag | 0, res: c.res | 0 };
+      if (itemDaCompra(c.arma)?.slot === 'primaria') p.primary = c.arma;
+      else p.secondary = c.arma;
+      g._switchWeapon(c.arma, { pickup: true });
+      this.aviso = '';
+      this.fechar();
+    } else if (c.tipo === 'equipamento') {
+      p.armor = c.colete | 0; p.helmet = !!c.capacete; p.flashes = c.flashes | 0;
+      if (c.flashes && p.flashes) { g._carregarFlashMint?.(); g._updateSmokeHud?.(); }
+      g._updateWeaponHud?.();
+      this.aviso = '';
+      if (this.aberto) this._render();
+    } else if (c.tipo === 'municao') {
+      const ammo = p.ammo[c.arma];
+      if (ammo) ammo.res = c.res | 0;
+      g._updateWeaponHud?.();
+      this.aviso = '';
+      if (this.aberto) this._render();
+    }
+  }
+
+  /* Fim de rodada no MP: o crédito é do nó (o saldo novo chega no próximo snapshot);
+     aqui fica só a festa — moeda virando e som quando o SEU time levou. */
+  fimDeRodadaRemoto(meuTimeVenceu) {
+    if (meuTimeVenceu) this._moedaVira();
+  }
+
+  // +TRETA$ flutuando por abate confirmado pelo nó (evento `kill` com o jogador de autor).
+  ganhoAbate(rotuloArma, mesmoTime = false) {
+    const v = recompensaKill(rotuloArma, { mesmoTime });
+    if (v) this._ganho(`+${fmt(v)}`);
   }
 
   // Entrega o equipamento: o estado é o mesmo que armadura.js (#1159) e a flash (#1163) leem.
@@ -269,9 +331,12 @@ export class CompraPartida {
     em.classList?.add('on');
     clearTimeout(this._ganhoT);
     this._ganhoT = setTimeout(() => em.classList?.remove('on'), GANHO_MS);
-    if (!moeda) return;
-    /* MOEDA VIRANDO (relato do dono, 31/10): ao ganhar a rodada a moeda dá uma volta
-       (CSS 3D, sem JS por frame) e toca o som de moeda. */
+    if (moeda) this._moedaVira();
+  }
+
+  /* MOEDA VIRANDO (relato do dono, 31/10): ao ganhar a rodada a moeda dá uma volta
+     (CSS 3D, sem JS por frame) e toca o som de moeda. */
+  _moedaVira() {
     this.elSaldo?.querySelector?.('.ht-moeda-anim')?.remove?.();
     const img = document.createElement('img');
     img.src = COIN; img.alt = ''; img.className = 'ht-moeda-anim';
