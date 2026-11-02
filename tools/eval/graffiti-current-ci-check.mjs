@@ -7,6 +7,7 @@ import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { montarRanges, parseSerializados, predicadoVerde } from './graffiti-current-browser-check.mjs';
 import { carregarDoEgo, avaliar, validarResumo, prova } from './graffiti-current-accept.mjs';
+import { avaliarGrafiteGlobal } from './graffiti-global-accept.mjs';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const USO = 'uso: node tools/eval/graffiti-current-ci-check.mjs [--map=all|id[,id]] [--mutante=NOME] [--mutantes] [--json=DIR] [--self-test]\n'
@@ -188,6 +189,7 @@ async function main() {
         arteEsperada: declarada || arteEsperada.meta, silencioOk: true };
     };
 
+    const nominaisGeometricas = [];
     const executar = async (plano, id, mutar) => {
       erros.length = 0; reqs.clear(); ativos.clear(); movRede = Date.now();
       const target = new URL('/mapview.html', origin);
@@ -229,6 +231,7 @@ async function main() {
       if (args.json)
         writeFileSync(path.join(args.json, (plano.mutante ? plano.mutante + '.' : '') + id + '.json'),
           JSON.stringify({ curation: resultado, raw: { nominal: cNominal, pos: cPos } }, null, 2));
+      if (!mutar) nominaisGeometricas.push({ curation: resultado, raw: { nominal: cNominal } });
       resultados.push(resultado);
       console.log('MAPA=' + JSON.stringify(resultado));
       return resultado;
@@ -238,6 +241,11 @@ async function main() {
     const nominalViolacoes = resultados.flatMap(r => validarResumo(r, { pedidos: nominalPlano.mapas, mutante: '' }));
     if (nominalViolacoes.length) throw Error(nominalViolacoes.join(' | '));
     const nominalFalhou = resultados.some(r => !avaliar(r, MUTANTES).verde);
+    if (!nominalFalhou && alvos.length === MAPAS.length && new Set(alvos).size === MAPAS.length) {
+      const global = avaliarGrafiteGlobal(nominaisGeometricas);
+      console.log('GLOBAL=' + JSON.stringify(global));
+      if (!global.verde) { const e = Error('RED global: ' + global.violacoes.join(' | ')); e.code = 1; throw e; }
+    }
     if (!nominalFalhou) {
       for (const plano of planos.slice(1)) for (const id of plano.mapas) await executar(plano, id, true);
     } else {
