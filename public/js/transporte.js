@@ -82,7 +82,12 @@ export class TransporteWT {
       for (;;) {
         if (buf.length < 4) break;
         const n = new DataView(buf.buffer, buf.byteOffset, 4).getUint32(0);
-        if (n > MAX_SNAPSHOT_BYTES || buf.length < 4 + n) break;
+        if (n > MAX_SNAPSHOT_BYTES) {
+          this.fechar(1009, 'snapshot_too_large');
+          try { await r.cancel('snapshot_too_large'); } catch { /* transporte ja encerrado */ }
+          return;
+        }
+        if (buf.length < 4 + n) break;
         this._entrega(buf.subarray(4, 4 + n), h);
         buf = buf.subarray(4 + n);
       }

@@ -88,6 +88,8 @@ jobs:
       # poster-intent e overlay com mutantes.
       - name: Causa real da liberação da splash com mutantes
         run: node tools/eval/boot-ready-check.mjs --mutantes
+      - name: Enquadramento e limite do stream WebTransport
+        run: npm run eval:transport-stream
       - name: Regras da horda e consumo de objetivo no cliente
         run: npm run eval:javaporcos
       - name: Origem da versão nos payloads reais de perf e match
