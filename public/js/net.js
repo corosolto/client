@@ -172,7 +172,9 @@ export class NetClient {
     this.events = [];   // lotes `ev` (tick, t, list) — ver netgame._drenar
     this.prev = null;
     this.seq = 0;
+    this.seqCompra = 0;   // seq próprio dos pedidos de compra (`compra-ok`/`compra-nack`)
     this.onWelcome = null; this.onSnapshot = null; this.onSlot = null; this.onPartida = null; this.onClose = null;
+    this.onCompra = null;
     this.proximo = null; this.onProximo = null;   // próximo mapa anunciado no placar (nó antigo nunca manda)
     this.onPersonagem = null;
     this.onChat = null; this._chatFila = [];
@@ -315,6 +317,10 @@ export class NetClient {
           this._snapT.push(now); this._byteT.push({ t: now, b: bytes });
           this.stats.snaps++; this.stats.bytes += bytes;
           this.onSnapshot?.(m);
+        } else if (m.type === 'compra-ok' || m.type === 'compra-nack') {
+          // economia de partida no MP (docs/ECONOMIA-PARTIDA.md): resposta do nó ao pedido;
+          // sem _compra (nó antigo / espectador) o frame morre aqui.
+          if (Number.isInteger(m.seq)) this.onCompra?.(m);
         } else if (m.type === 'chat') {
           // chat de sala: sem meta.chat o cliente é inerte, e frame malformado é descartado
           if (this.chatLigado() && formaChat(m)) this._entregaChat(m);
@@ -351,6 +357,16 @@ export class NetClient {
   avisarPronto(partida) {
     if (!Number.isInteger(partida)) return false;
     return !!this.tp?.enviar(JSON.stringify({ type: 'pronto', partida }));
+  }
+  /* ECONOMIA DE PARTIDA no MP (docs/ECONOMIA-PARTIDA.md): o cliente só pede — preço, saldo,
+     tempo e zona o nó lê do próprio estado. Seq próprio para casar a resposta (`compra-ok`/
+     `compra-nack`); o nó também taxa (1 pedido a cada 100 ms por slot). Confiável, nunca
+     datagrama: compra perdida é compra que nunca chega. */
+  pedirCompra(id) {
+    if (typeof id !== 'string' || !id || !this.tp?.pronto) return 0;
+    const seq = ++this.seqCompra;
+    this.tp.enviar(JSON.stringify({ type: 'compra', id, seq }));
+    return seq;
   }
   // sair de campo e assistir: o corpo volta a ser bot e a partida segue cheia.
   espectar() { this.tp?.enviar(JSON.stringify({ type: 'espectar' })); }
