@@ -122,9 +122,10 @@ async function abrir() {
       `${metodo} {\n    const game = this.game;`));
   }
   if (MUT === 'respawn-sp-preso') {
+    // O mutante remove a liberação do toque sem tocar no guard de equipe eliminada.
     await reescreve(/\/js\/game\.js/, (t) => t.replace(
-      'if (this.online) return;\n    if (this.objective?.state?.eliminados?.includes(this.player.team)) return;\n    this._releaseInput();\n    const p = this.player;',
-      'if (this.online) return;\n    if (this.objective?.state?.eliminados?.includes(this.player.team)) return;\n    const p = this.player;'));
+      'if (this.online) return;\n    this._releaseInput();',
+      'if (this.online) return;'));
   }
   if (MUT === 'round-sp-preso') {
     await reescreve(/\/js\/game\.js/, (t) => t.replace(

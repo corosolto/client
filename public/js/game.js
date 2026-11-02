@@ -7952,8 +7952,8 @@ export class Game {
     /* Online quem revive é o servidor. Renascer local escolheria um spawn que ele não
        escolheu, e o próximo snapshot arrastaria o jogador de volta. */
     if (this.online) return;
-    if (this.objective?.state?.eliminados?.includes(this.player.team)) return;
     this._releaseInput();
+    if (this.objective?.state?.eliminados?.includes(this.player.team)) return;
     const p = this.player;
     /* MODO ARENA: aplica a troca de time antes de escolher o spawn. */
     if (this.arena && p._switchTeam) {
