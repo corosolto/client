@@ -6,6 +6,12 @@ O transporte usa HTTP real, sem `route.fulfill`. JS local é entregue com gzip, 
 
 Cada corpo da janela deve ser recebido integralmente pelo Chromium e coincidir com seu registro por tamanho e SHA256. Módulos também são comparados ao texto local. Um observador `Response.clone().arrayBuffer()` consome uma cópia de cada fetch medido, mantendo o Response original entregue ao consumidor; não substitui corpos nem transforma failed em sucesso. Corpo ausente, truncado, divergente ou pendente, timeout, HTTP>=400 e pageerror impedem veredito. Quando Playwright não expõe a resposta (favicon observado), a leitura usa `Network.getResponseBody` do mesmo requestId CDP, nunca uma segunda requisição.
 
+## Origem do candidato
+
+`--base` tem precedência sobre `BOOT_CANDIDATE_BASE`, depois `BASE` e a origem pública padrão. `BOOT_CANDIDATE_BASE` permite medir o HTML e os assets de um build de produção servido localmente enquanto outras réguas usam o servidor de desenvolvimento em `BASE`. A origem escolhida aparece no relatório. O build deve corresponder ao mesmo checkout congelado do snapshot JS; a opção não constrói nem publica o candidato. `BOOT_API_BASE` continua separado e não certifica o proxy de API do candidato.
+
+O servidor Vite pode embutir imagens nas constantes do cliente de desenvolvimento. Esse custo real reprova o mesmo teto quando a origem escolhida é desenvolvimento; não se excluem módulos, bytes ou requests para aprovar essa origem. A medição de produção usa o build real, sem cliente Vite, mantendo os tetos e as provas de corpo.
+
 ## Janela e custo
 
 O portão é o carimbo imediatamente após a remoção real de `hidden` do botão `splash-enter` em `_splashSetReady`, instrumentado somente na cópia de main.js entregue pelo checker. READY exige causa `assets`; failsafe continua reprovado. Não há fallback para polling: ausência, duplicação, schema inválido, DOM ainda hidden, clock não finito ou timeOrigin de outro documento são INFRA3. O carimbo não declara primeiro paint nem tempo de interação humana.
