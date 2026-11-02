@@ -21,6 +21,23 @@ RAIZ=$(git rev-parse --show-toplevel)
 falhas=()
 t0=$(date +%s)
 
+# TODO PUSH VIRA PR (dono, 02/11): main e staging só recebem merge de PR revisado —
+# push direto local é recusado aqui, barato, antes de qualquer gate. O merge do PR
+# (botão do GitHub) não passa por este hook, então quem mergeia segue com o
+# estraga-codigo e o CI na frente. Skill do agente: ~/.agents/skills/pr-ate-o-merge/.
+entrada=$(cat)
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/staging)
+      echo "" >&2
+      echo "  PUSH BLOQUEADO — ${remote_ref#refs/heads/} só recebe merge de PR revisado." >&2
+      echo "    git switch -c feat/minha-mudanca && git push -u origin feat/minha-mudanca" >&2
+      echo "    gh pr create   # e siga ~/.agents/skills/pr-ate-o-merge/ até o merge" >&2
+      exit 1
+      ;;
+  esac
+done <<< "$entrada"
+
 echo "pre-push: portões locais (syntax/docs/arch/travessão/mapcontrato via check:deploy; PREPUSH=0 pula)"
 
 # Trailer `Agent:` em TODO commit que sobe: o commit-msg não roda em rebase nem em
@@ -47,7 +64,7 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
       falhas+=("commit ${sha:0:8} com co-autoria de IA — ${linha%%$'\n'*}")
     fi
   done
-done
+done <<< "$entrada"
 
 # package.json e version.js têm que concordar (o portão versao-bumpada cobra isso).
 if [ -f package.json ] && [ -f public/js/version.js ]; then
