@@ -40,7 +40,7 @@ import { viewmodelVisibility } from './vmvisibility.js';
 import { urlDoBrasao } from './brasoes_versao.js';
 
 import { WEAPONS } from './data/weapons.js';
-import { ECONOMIA, economiaLigada } from './economia-partida.js';
+import { ECONOMIA, economiaLigada, MAPAS_PICKUP_GRATIS } from './economia-partida.js';
 import { CompraPartida } from './compra-partida.js';
 import { danoComArmadura, ARMADURA_MAX } from './armadura.js';
 import { vestirArmadura, ocultarArmadura } from './armadura-visual.js';
@@ -838,15 +838,16 @@ export class Game {
     this.world = MAPS[this._mapId].build(this.scene, textures);
     this._buildEnv();   // IBL: env map de gradiente dusk -> materiais PBR (Standard) ganham ambiente/reflexo
     this.flashTex = textures.flash;
-    // TRETA$ substitui o arsenal; sem loja ficam apenas os pickups válidos do modo.
-    // Contrato e contraprovas: docs/visual-consistency/PICKUPS-FLASH.md.
+    // TRETA$ substitui o arsenal; contraprovas em docs/visual-consistency/PICKUPS-FLASH.md.
     this.dedicated = !!dedicated;
-    this._ecoLigada = !!economia && economiaLigada({ busca: location.search, online: this.online, dedicado: this.dedicated, wpnMode: this._wpnMode() });
-    if (this._ecoLigada) {
+    this._ecoLigada = !!economia && economiaLigada({ busca: location.search, online: this.online, dedicado: this.dedicated, meta: net?.meta || null, wpnMode: this._wpnMode(), mapa: this._mapId });
+    // TRETA$ substitui o arsenal; ARMAS GRÁTIS NO CHÃO só no modo Javaporcos (economia
+    // desligada nele): fora dele o chão só entrega arma que alguém derrubou.
+    const gratisNoChao = MAPAS_PICKUP_GRATIS.has(this._mapId);
+    if (!gratisNoChao) {
       for (const pk of this.world.pickups || []) pk.mesh?.removeFromParent?.();
       this.world.pickups = [];
-    }
-    if (!this._ecoLigada) {
+    } else if (!this._ecoLigada) {
       this.world.pickups = (this.world.pickups || []).filter((pk) => {
         if (Object.prototype.hasOwnProperty.call(WEAPONS, pk.weapon) && this._pickupAllowed(pk.weapon)) return true;
         pk.mesh?.removeFromParent?.();
@@ -4603,8 +4604,10 @@ export class Game {
     }
     // Drop tem prazo e teto porque a versão sem eles foi retirada por virar lixo de mapa;
     // faca não dropa (todo mundo nasce com uma). Histórico e números: tools/eval/drop-check.mjs.
-    // com loja, quem morre larga a primária comprada mesmo segurando pistola ou faca (CS)
-    const largar = this._compra && ent.primary ? ent.primary : ent.weapon;
+    // com loja, quem morre larga a primária comprada mesmo segurando pistola ou faca (CS).
+    // `_economiaPartida`: mesmo contrato no nó dedicado, que não tem `_compra` (o dono
+    // dela é a Room, backend game/room.js) mas cobra a mesma regra de drop.
+    const largar = (this._compra || this._economiaPartida) && ent.primary ? ent.primary : ent.weapon;
     if (largar && largar !== 'knife' && this._pickupAllowed(largar)) {
       this._dropWeapon(ent.pos.x, ent.pos.z, largar, false, 0.01, this.time + DROP_TTL);
     }
