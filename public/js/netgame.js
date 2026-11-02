@@ -65,6 +65,8 @@ class Netcode {
     this._loadoutSeq = 0;
     this._armaEnviada = null;   // arma do último input enviado: separa tecla nova de pedido recusado
     this._reconcileSamples = []; this._reconcileWindow = []; this._reconcileCount = 0; this._reconcileMax = 0;
+    // economia de partida (docs/ECONOMIA-PARTIDA.md): resposta do nó vai para o menu de compra
+    net.onCompra = (m) => { try { this.game._compra?.respostaRemota(m); } catch { /* HUD */ } };
     net.startPing();
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
     this._nsTimer = setInterval(() => { this.updateStats(); this._pulsoDePausa(); }, 250);
@@ -219,6 +221,11 @@ class Netcode {
   pedirReload(w) { if (!this.espectador && WEAPONS[w]) this._reloadPendente = w; }
   // 4/5 online: pede a granada ao servidor; devolve false sem a flag (aí o local lança, como antes).
   pedirNade(kind) { if (!this._evOn || this.espectador) return false; this._nadePendente = kind; return true; }
+  // Economia de partida: repassa o pedido ao nó (seq para casar compra-ok/compra-nack).
+  pedirCompra(id) {
+    if (!this._evOn || this.espectador) return 0;
+    return this.net.pedirCompra(id);
+  }
   // Drops de rede (com `_nid`) somem; o rack do spawn fica. Chamado no countdown e no `partida`.
   limparDropsDeRede() {
     const game = this.game;
@@ -265,6 +272,15 @@ class Netcode {
   }
 
   _syncPlayerLoadout(e, p) {
+    /* ECONOMIA DE PARTIDA (v8): o saldo, a janela de compra e o equipamento são do nó —
+       chegam em TODO snapshot e valem antes da guarda de ackSeq (compra não é loadout
+       predito). Nó sem economia (v7-) não manda os campos e nada muda. */
+    const compra = this.game._compra;
+    if (compra && this.game.online) {
+      if (e.saldo != null) p.carteira.saldo = e.saldo;
+      if (e.compraRestante != null) compra.compraAte = this.game.time + e.compraRestante;
+      if (e.colete != null) { p.armor = e.colete; p.helmet = !!e.capacete; p.flashes = e.flashes | 0; }
+    }
     if (!Number.isInteger(e.ackSeq) || e.ackSeq < this._loadoutSeq) return;
     // Tecla entre este snapshot e o próximo input ainda não saiu: o servidor não a recusou.
     // Sem a guarda a troca morria antes de ser pedida (MP, 13/10). Régua: troca-arma-mp-check.
@@ -277,6 +293,9 @@ class Netcode {
     }
     this._authWeapon = e.weapon || this._authWeapon;
     if (e.primary && WEAPONS[e.primary]) p.primary = e.primary;
+    // Economia: o nó zera a primária na morte (rearmar = faca + pistola). Sem limpar, o
+    // HUD continuaria mostrando a arma comprada que o servidor já tirou do inventário.
+    else if (e.primary == null && this.game._compra && this.game.online) p.primary = null;
     if (e.secondary && WEAPONS[e.secondary]) p.secondary = e.secondary;
     if (e.weapon && WEAPONS[e.weapon] && Number.isInteger(e.mag) && Number.isInteger(e.res)) {
       p.ammo[e.weapon] ||= { mag: 0, res: 0 };
@@ -544,6 +563,7 @@ class Netcode {
     } else if (e.k === 'kill') {
       if (!vic) return;
       try { game._feed(att, vic, w, h); } catch { /* HUD */ }
+      if (att === p && game._compra) game._compra.ganhoAbate(w, vic.team === p.team);   // +TRETA$ do nó
       if (vic === p) { if (att && !this.espectador) game._noteHit(att, w, d, h, dist(att)); }
       else this.morteRemota(vic, att, h);
     } else if (e.k === 'tiro') {
@@ -587,6 +607,7 @@ class Netcode {
         }
         game.player.scoped = false; game.el.scope?.classList.remove('on');
         game.radioOpen = null; game._radioUi?.();
+        game._compra?.fimDeRodadaRemoto?.(winner === game.playerTeam);   // festa local; crédito é do nó
         if (game.objective && winner) {
           const result = game.objective.roundResult(winner);
           game._resultadoDaRodada(result.title, result.detail);
