@@ -24,8 +24,8 @@ export const MAPAS_PICKUP_GRATIS = new Set(['invasao_javaporcos']);
    no nó (backend game/room.js); o cliente só pede. Contrato: docs/ECONOMIA-PARTIDA.md. */
 export function economiaLigada({ busca = '', online = false, dedicado = false, meta = null, wpnMode = 'all', mapa = null } = {}) {
   if (dedicado) return false;   // nó dedicado: quem decide é a Room (backend game/room.js)
+  if (mapa != null && MAPAS_PICKUP_GRATIS.has(mapa)) return false;   // javaporcos: armas grátis, sem loja — online e offline
   if (online) return meta?.economia === 1 && new URLSearchParams(busca).get('economia') !== '0';
-  if (mapa != null && MAPAS_PICKUP_GRATIS.has(mapa)) return false;   // javaporcos: armas grátis, sem loja
   if ((wpnMode || 'all') !== 'all') return false;
   return new URLSearchParams(busca).get('economia') !== '0';
 }
