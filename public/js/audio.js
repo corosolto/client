@@ -1,7 +1,7 @@
 import { JAVAPORCO_GRAVACOES } from './data/javaporcos_audio.js';
+import { normalizarManifestAudio } from './audio_manifest.js';
 // Procedural WebAudio SFX + user sample packs (audio/manifest.json).
-// Real CS 1.6 samples are NOT bundled (Valve copyright) — drop your own legally-owned
-// files in audio/cs/ and register them under "cs" in audio/manifest.json.
+// Registre samples próprios e licenciados na família `jogo` de audio/manifest.json.
 /* Fator global do tiro — ver shotWeapon(). 0,42 = -7,5 dB, revisão pedida pelo dono no
    BUG-140 para a arma não cobrir voz e passo (era 1,0; depois 0,62 e 0,52).
    O duck continua independente. Tunável ao vivo: ?gunvol=N. */
@@ -103,7 +103,7 @@ export class Sfx {
     for (const url of [`audio/manifest.json${query}`, 'audio/manifest.default.json?v=1']) {
       try {
         const r = await fetch(url, { cache: 'no-cache' });
-        if (r.ok) { this.pack = await r.json(); return; }
+        if (r.ok) { this.pack = normalizarManifestAudio(await r.json()); return; }
       } catch { /* try next */ }
     }
     this.pack = null;
@@ -302,7 +302,7 @@ export class Sfx {
     return this._announcer(this.pack?.roundNumbers?.[String(number)], 0.72);
   }
   captureSound(faction) { if (this.gameMode === 'horde') return false; const arr = (faction && this.pack?.captureByTeam?.[faction]) || this.pack?.capture; const f = this._pick(arr); if (f) { this._sample(f); return true; } return false; }
-  _cs(key) { const v = this.pack?.cs?.[key]; return v && v.length ? this._pick(v) : null; }
+  _cs(key) { const v = this.pack?.jogo?.[key]; return v && v.length ? this._pick(v) : null; }
 
   ensure() {
     if (this.disabled) return;
@@ -816,26 +816,26 @@ export class Sfx {
      manifest; false deixa o game executar o synth legado sem sobrepor sample. */
   impact(surface, vol = 1, pan = 0, propDelay = 0) {
     const key = ({ concreto: 'concrete', madeira: 'wood', vidro: 'glass', areia: 'dirt', agua: 'water' })[surface] || surface;
-    const sample = this._pick(this.pack?.cs?.impactsBySurface?.[key]);
+    const sample = this._pick(this.pack?.jogo?.impactsBySurface?.[key]);
     return !!(sample && this._eventSample(sample, .34 * vol, pan, propDelay, true));
   }
   bodyImpact(armored = false, vol = 1, pan = 0, propDelay = 0) {
-    const sample = this._pick(this.pack?.cs?.characterImpact?.[armored ? 'armor' : 'body']);
+    const sample = this._pick(this.pack?.jogo?.characterImpact?.[armored ? 'armor' : 'body']);
     return !!(sample && this._eventSample(sample, (armored ? .30 : .26) * vol, pan, propDelay, true));
   }
   pickup(kind = 'weapon') {
-    const sample = this._pick(this.pack?.cs?.pickupByKind?.[kind]);
+    const sample = this._pick(this.pack?.jogo?.pickupByKind?.[kind]);
     if (sample && this._eventSample(sample, .42, 0, 0, true)) return true;
     this.reloadEnd();
     return false;
   }
   weaponSwitch(weapon, cls = 'rifle') {
-    const exact = this.pack?.cs?.weaponSwitchByWeapon?.[weapon];
-    const sample = this._pick(exact?.length ? exact : this.pack?.cs?.weaponSwitchByClass?.[cls]);
+    const exact = this.pack?.jogo?.weaponSwitchByWeapon?.[weapon];
+    const sample = this._pick(exact?.length ? exact : this.pack?.jogo?.weaponSwitchByClass?.[cls]);
     return !!(sample && this._eventSample(sample, .26, 0, 0, true));
   }
   _uiAction(action, vol) {
-    const sample = this._pick(this.pack?.cs?.uiByAction?.[action]);
+    const sample = this._pick(this.pack?.jogo?.uiByAction?.[action]);
     return !!(sample && this._eventSample(sample, vol, 0, 0, true));
   }
   uiClick()   { this.ensure(); this.duck(0.5, 0.12); if (this._uiAction('click', .30)) return true;
@@ -912,7 +912,7 @@ export class Sfx {
   // volume ±15%. Fallback synth: timbre por surface (água do piscinão = splash grave+ruído,
   // metal = brilho agudo, concreto = seco). surface vem do game.js (world.slowAt).
   step(surface = 'concrete') {
-    const arr = this.pack?.cs?.footstepsBySurface?.[surface] || this.pack?.cs?.footsteps;
+    const arr = this.pack?.jogo?.footstepsBySurface?.[surface] || this.pack?.jogo?.footsteps;
     if (arr && arr.length) {
       this._stepI = (this._stepI + 1) % arr.length;
       const a = this._sample(arr[this._stepI], 0.68 * (0.85 + Math.random() * 0.3));

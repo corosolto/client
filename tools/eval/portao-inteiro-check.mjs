@@ -32,7 +32,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = { 'passo-orfao': 'PI1', 'regua-fantasma': 'PI2', 'regua-fora-do-pr-fast': 'PI3', 'sucesso-implicito': 'PI4', 'always': 'PI4', 'erro-ignorado': 'PI4', 'setup': 'PI4', 'sem-armadura-ci': 'PI4', 'sem-ads1p-runtime-ci': 'PI4' };
+const MUTANTES = { 'passo-orfao': 'PI1', 'regua-fantasma': 'PI2', 'regua-fora-do-pr-fast': 'PI3', 'sucesso-implicito': 'PI4', 'always': 'PI4', 'erro-ignorado': 'PI4', 'setup': 'PI4', 'sem-armadura-ci': 'PI4', 'sem-ads1p-runtime-ci': 'PI4', 'sem-piscina-batch-ci': 'PI4' };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -79,7 +79,7 @@ if (MUT === 'always') ci = ci.replace(/(- name: Contratos visuais[^\n]*\n       
 if (MUT === 'setup') ci = ci.replace(/(- name: Contratos visuais[^\n]*\n        if: )[^\n]*/, "$1${{ !cancelled() }}");
 if (MUT === 'erro-ignorado') ci = ci.replace(/(- name: TRETA\$ da partida segue o CS[^\n]*\n)/, '$1        continue-on-error: true\n');
 const CI_CRU = existsSync('.github/workflows/ci.yml') ? readFileSync('.github/workflows/ci.yml', 'utf8') : '';
-const ALVO_ALIAS = { 'sem-armadura-ci': 'eval:armadura', 'sem-ads1p-runtime-ci': 'eval:ads1p-runtime-public' }[MUT] || '';
+const ALVO_ALIAS = { 'sem-armadura-ci': 'eval:armadura', 'sem-ads1p-runtime-ci': 'eval:ads1p-runtime-public', 'sem-piscina-batch-ci': 'eval:piscina-graffiti-batch' }[MUT] || '';
 if (ALVO_ALIAS) {
   const esc = ALVO_ALIAS.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   let aplicacoes = 0;
@@ -114,7 +114,7 @@ if (CI_MUTADO) falhas.push(`PI4 mutação '${MUT}' não aplicou no ci.yml — aj
 const GRUPOS_PI4 = [
   ['reguas-e-site', 'TRETA$ da partida segue o CS', ['eval:economia']],
   ['reguas-e-site', 'TRETA$ da partida dentro do Game real', ['eval:economia-jogo']],
-  ['reguas-e-site', 'Contratos visuais de mapas', ['eval:shot-final-pose', 'eval:authored-locomotion', 'eval:character-normal-quality', 'eval:grafite-curation', 'eval:map-material-finish', 'eval:ferro-balcao', 'eval:match-pickups', 'eval:net-flash-disable', 'eval:normal-only-fit-equivalence', 'eval:tp-world-contract', 'eval:skin-profile-flow', 'eval:death-camera-consistency', 'eval:visual-map-contracts', 'eval:knife-skin-markings', 'eval:campo-uv', 'eval:grafite-atual:prova']],
+  ['reguas-e-site', 'Contratos visuais de mapas', ['eval:shot-final-pose', 'eval:authored-locomotion', 'eval:character-normal-quality', 'eval:grafite-curation', 'eval:map-material-finish', 'eval:ferro-balcao', 'eval:match-pickups', 'eval:net-flash-disable', 'eval:normal-only-fit-equivalence', 'eval:tp-world-contract', 'eval:skin-profile-flow', 'eval:death-camera-consistency', 'eval:visual-map-contracts', 'eval:knife-skin-markings', 'eval:campo-uv', 'eval:grafite-atual:prova', 'eval:piscina-graffiti-batch']],
   ['reguas-e-site', 'Flash, fluidez e ADS da AK pública', ['eval:flashbang', 'mut:flashbang', 'eval:movimento-fluidez', 'eval:ads1p-public', 'eval:posto-board-support', 'eval:preview-grip-phase', 'eval:armadura', 'eval:ads1p-runtime-public']],
   ['reguas-e-site', 'Todo mapa devolve o que o game.js consome', ['eval:mapcontrato']],
   ['reguas-e-site', 'Pichação colada na parede', ['eval:pichacao-parede']],

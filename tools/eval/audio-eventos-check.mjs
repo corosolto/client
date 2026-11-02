@@ -10,7 +10,7 @@ if (mutante && mutante !== 'colapsa-pools') {
 
 const url = (nome) => mutante === 'colapsa-pools' ? 'COLAPSADO.wav' : `${nome}.wav`;
 const pack = {
-  cs: {
+  jogo: {
     impactsBySurface: {
       concrete: [url('impact-concrete')], metal: [url('impact-metal')],
       wood: [url('impact-wood')], glass: [url('impact-glass')],

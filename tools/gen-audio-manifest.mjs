@@ -19,7 +19,7 @@
  *   captureByTeam.<T> capture/<facção>/*.mp3
  *   soundtrack       soundtrack/*.mp3
  * Preservado do manifest atual (curadoria 1-para-1, onde arquivo errado = som errado):
- *   cs, weapons, general, weaponSamples
+ *   jogo, weapons, general, weaponSamples
  *
  * CODIFICAÇÃO DE URL: nomes reais aqui têm espaço e parêntese
  * (`...olodum (1).mp3`, `mc tevez - pam pam tim pam.mp3`). O caminho vira URL no
@@ -38,6 +38,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MENU_MUSIC_ACTIVE_IDS } from '../public/js/menu-music-selection.js';
 import { JAVAPORCO_GRAVACOES } from '../public/js/data/javaporcos_audio.js';
+import { normalizarManifestAudio, temFamiliaLegadaAudio } from '../public/js/audio_manifest.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 /* `--raiz=<dir>` troca a pasta de áudio inteira. Existe para a régua de alcance
@@ -56,7 +57,7 @@ const AUDIO_EXT = /\.(mp3|wav|ogg|m4a|webm)$/i;
 // Contratos curados não podem ser reconstruídos pela ordem dos arquivos no disco. Isso inclui
 // os packs locais e seus metadados: `audio:check` precisa medir o mesmo jogo instalado.
 const CURATED = [
-  '_localLab', 'cs', 'weapons', 'weaponSamples', 'weaponSamplesAuthentic',
+  '_localLab', 'jogo', 'weapons', 'weaponSamples', 'weaponSamplesAuthentic',
   'defaultWeaponPack', 'weaponCandidates', 'weaponPacks', 'general', 'roundNumbers',
   'characterPhysical', 'mapSoundscapes',
 ];
@@ -88,7 +89,8 @@ const toUrl = (abs) => relative(PUBLICO, abs).split('/').join('/');
 const used = new Set();
 const take = (files) => { files.forEach(f => used.add(f)); return files.map(toUrl); };
 
-const prev = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, 'utf8')) : {};
+const prevBruto = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, 'utf8')) : {};
+const prev = normalizarManifestAudio(prevBruto);
 
 // O pacote privado já chega com todas as folhas reescritas para audio/a/<hash>.
 // Reconstruí-lo pela estrutura do disco apagaria characterVoice e trocaria as músicas
@@ -130,6 +132,13 @@ if (prev?._privateBuild?.format === 'content-addressed-v1') {
     if (staleMenuCount) console.error(`✗ manifesto privado contém ${(prev.menuMusic || []).length} músicas; seleção atual exige ${menuExpected.length}`);
     if (staleMenuRefs) console.error('✗ manifesto privado não corresponde ao espelho instrumental');
     process.exit(1);
+  }
+  if (temFamiliaLegadaAudio(prevBruto)) {
+    if (CHECK) {
+      console.error('Manifesto privado precisa migrar a família legada para jogo.');
+      process.exit(1);
+    }
+    writeFileSync(MANIFEST, JSON.stringify(prev, null, 2) + '\n');
   }
   console.log(`✓ pacote privado íntegro; menu espelhado: ${MENU_MUSIC_ACTIVE_IDS.join(', ')}`);
   process.exit(0);

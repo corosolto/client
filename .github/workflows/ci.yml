@@ -31,7 +31,11 @@ jobs:
   # resto; agora rodam em paralelo no job `invariantes`. Nenhum passo saiu.
   reguas-e-site:
     runs-on: ubuntu-latest
-    # Run 41347684813: 25 min esgotados no SEO, antes da cauda estimada (R1019).
+    # 25 min eram o verde histórico (~17,5 min), mas com a fila de runners saturada
+    # (#1217: dois runs cancelados em 25m04s/25m15s, no passo Lajes, sem chegar à
+    # Piscina) o cap virou a causa da falha, não a proteção. O suite completo mediu
+    # 23m48s na mesma janela saturada; 30 é o teto que a régua wf-timeout admite
+    # (TETO_MAX) e dá ~6 min de folga sobre o pior caso medido.
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -64,6 +68,8 @@ jobs:
         run: npm run eval:wfcheckout
       - name: Syntax check do jogo (public/js)
         run: npm run syntax
+      - name: Contrato de famílias e marcas do áudio
+        run: npm run eval:audiomarcas
       - name: Dependências e reconstrução do fundo do menu
         run: |
           npm run eval:menuprops
@@ -124,7 +130,7 @@ jobs:
         run: node tools/eval/telemetry-mode-check.mjs
       - name: Contratos visuais de mapas, personagens, câmera e equipamento
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:grafite-curation eval:map-material-finish eval:ferro-balcao eval:match-pickups eval:net-flash-disable eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:visual-map-contracts eval:knife-skin-markings eval:campo-uv eval:grafite-atual:prova
+        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:grafite-curation eval:map-material-finish eval:ferro-balcao eval:match-pickups eval:net-flash-disable eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:visual-map-contracts eval:knife-skin-markings eval:campo-uv eval:grafite-atual:prova eval:piscina-graffiti-batch
       - name: Flash, fluidez e ADS da AK pública
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:flashbang mut:flashbang eval:movimento-fluidez eval:ads1p-public eval:posto-board-support eval:preview-grip-phase eval:armadura eval:ads1p-runtime-public

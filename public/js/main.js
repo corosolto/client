@@ -277,8 +277,6 @@ let currentMap = mapaDaSessao({ urlMap, savedMap: settings.map, pinned: settings
 if (!urlMap) { settings.map = currentMap; saveSettings(); }
 
 /* ---------------- menu backdrop (orbiting map) ---------------- */
-
-
 let menuScene = new THREE.Scene();
 let menuBackdropWorld = null;
 
