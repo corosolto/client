@@ -3,6 +3,10 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { SITE, BRAND_FULL, abs, routeOgPath } from '../lib/site';
 import { LEGAL_CONTACT, LEGAL_OPERATOR, LEGAL_UPDATED } from '../lib/legal';
+import pkg from '../../package.json';
+declare const __MANIFESTO_JS__: { revision: string };
+const V = pkg.version;
+const JS_REV = __MANIFESTO_JS__.revision;
 interface Props { title: string; description: string; noindex?: boolean; }
 const { title, description, noindex = false } = Astro.props;
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
@@ -31,6 +35,7 @@ const cssRevision = createHash('sha1').update(readFileSync('public/style.css')).
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="/favicon.ico" />
     <link rel="stylesheet" href={`/style.css?v=${cssRevision}`} />
+    <script type="module" src={`/js/site-visit.js?v=${V}-${JS_REV}`} is:inline></script>
     <script is:inline>
       if (window.self !== window.top && new URLSearchParams(location.search).get('embed') === '1') document.documentElement.dataset.embedded = 'true';
     </script>

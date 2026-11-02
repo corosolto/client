@@ -47,7 +47,7 @@ test('portao-browser.yml: Sertão em job próprio e paralelo, e nenhum passo do 
     const id = /^ {2}([\w-]+):\s*$/.exec(l);
     if (id) { atual = id[1]; jobs[atual] = ''; } else if (atual) jobs[atual] += `${l}\n`;
   }
-  const PASSOS = ['npm run eval:grafite', 'npm run eval:select', 'npm run eval:entrada', 'npm run eval:armas', 'npm run eval:boot', 'node tools/ops/selftest.mjs --so=navegador', 'npm run eval:sertao-livestock-runtime', 'npm run eval:grafite:ar'];
+  const PASSOS = ['npm run eval:grafite-atual', 'npm run eval:select', 'npm run eval:entrada', 'npm run eval:armas', 'npm run eval:boot', 'node tools/ops/selftest.mjs --so=navegador', 'npm run eval:sertao-livestock-runtime', 'npm run eval:grafite:ar'];
   const todos = Object.values(jobs).join('');
   for (const p of PASSOS) assert.ok(new RegExp(`run: ${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`).test(todos), `passo sumiu: ${p}`);
   const sertao = Object.entries(jobs).find(([, c]) => c.includes('run: npm run eval:sertao-livestock-runtime'));

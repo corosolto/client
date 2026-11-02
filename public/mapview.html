@@ -14,7 +14,7 @@
 import * as THREE from 'three';
 import { initTextures } from './js/textures.js';
 import { resolveMapId, comMapaCarregado } from './js/maps.js';
-import { preloadMapProps, COMMON_MAP_PROPS } from './js/mapprops.js';
+import { preloadMapProps, mapPropIds } from './js/mapprops.js';
 import { preloadAmbientLife } from './js/ambientlife.js';
 import { lookAtual } from './js/bloom.js';
 
@@ -29,6 +29,8 @@ const hud = document.getElementById('hud');
 
 const renderer = new THREE.WebGLRenderer({ antialias:true });
 renderer.setSize(W,H); renderer.setPixelRatio(1); renderer.shadowMap.enabled = true;
+// O mesmo filtro do jogo: o default PCF deixa blocos nas capturas de fauna.
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // a mesma curva e exposição do jogo (bloom.js LOOKS), senão a captura mede outro jogo
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = lookAtual().expAces;
@@ -36,8 +38,7 @@ document.body.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 const cam = new THREE.PerspectiveCamera(55, W/H, 0.1, 2000);
 
-// união dos props globais (main.js MAP_PROPS) + props por-mapa (Havan/Ferro Velho)
-const GLOBAL_PROPS = COMMON_MAP_PROPS;
+
 
 window.MAPEVAL = {
   ready:false,
@@ -65,7 +66,7 @@ if (qp.get('hud') === '0') hud.style.display = 'none';
 (async ()=>{
   const T = initTextures();
   const def = await comMapaCarregado(MAP, (mapa) => mapa);
-  const allProps = [...new Set([...GLOBAL_PROPS, ...(def.props || [])])];
+  const allProps = mapPropIds(def);
   await Promise.all([
     preloadMapProps(allProps),
     preloadAmbientLife(def.ambience || []),

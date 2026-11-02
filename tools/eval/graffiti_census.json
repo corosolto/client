@@ -270,46 +270,50 @@
   "waypoints": 309
  },
  "piscina_treta": {
-  "pecas": 479,
-  "arquivos": 50,
+  "pecas": 453,
+  "arquivos": 48,
   "murais": 2,
-  "hMin": 0.37,
+  "hMin": 0.36,
   "hMax": 2.3,
-  "hMed": 1.5,
+  "hMed": 1.1,
   "placas": 910,
-  "pintadas": 631,
+  "pintadas": 539,
   "bandas": [
    {
     "alt": 1.6,
     "t": 318,
-    "p": 249,
-    "pct": 78.3
+    "p": 236,
+    "pct": 74.2
    },
    {
     "alt": 3.2,
     "t": 296,
-    "p": 196,
-    "pct": 66.2
+    "p": 160,
+    "pct": 54.1
    },
    {
     "alt": 5,
     "t": 296,
-    "p": 186,
-    "pct": 62.8
+    "p": 143,
+    "pct": 48.3
    }
   ],
   "pelados": [
    [
     "piscina:static-batch[inst]",
-    229
+    323
    ],
    [
     "Mesh",
-    46
+    28
    ],
    [
-    "Six_Door_Steel_Locker_1",
-    4
+    "poster:piscina",
+    17
+   ],
+   [
+    "piscina:piscina_armarios:batch[inst]",
+    3
    ]
   ],
   "amostraPelada": [
@@ -325,6 +329,34 @@
     "y": 3.2,
     "z": -15.3,
     "ry": 3.14,
+    "quem": "piscina:static-batch[inst]"
+   },
+   {
+    "x": -17,
+    "y": 3.2,
+    "z": -17.6,
+    "ry": 1.57,
+    "quem": "piscina:static-batch[inst]"
+   },
+   {
+    "x": -16.5,
+    "y": 3.2,
+    "z": -16,
+    "ry": 1.57,
+    "quem": "piscina:static-batch[inst]"
+   },
+   {
+    "x": -12.8,
+    "y": 5,
+    "z": -25,
+    "ry": 0,
+    "quem": "piscina:static-batch[inst]"
+   },
+   {
+    "x": -15,
+    "y": 5,
+    "z": -25,
+    "ry": 0,
     "quem": "piscina:static-batch[inst]"
    },
    {
@@ -365,46 +397,42 @@
    {
     "x": -17,
     "y": 3.2,
-    "z": -12,
+    "z": -13.6,
     "ry": 1.57,
-    "quem": "piscina:static-batch[inst]"
-   },
-   {
-    "x": -17,
-    "y": 3.2,
-    "z": -10.8,
-    "ry": 1.57,
-    "quem": "piscina:static-batch[inst]"
-   },
-   {
-    "x": -10.4,
-    "y": 5,
-    "z": -14.7,
-    "ry": 0,
-    "quem": "piscina:static-batch[inst]"
-   },
-   {
-    "x": -17,
-    "y": 5,
-    "z": -12,
-    "ry": 1.57,
-    "quem": "piscina:static-batch[inst]"
-   },
-   {
-    "x": -17,
-    "y": 5,
-    "z": -10.8,
-    "ry": 1.57,
-    "quem": "piscina:static-batch[inst]"
+    "quem": "poster:piscina"
    }
   ],
-  "cobertura": 69.3,
+  "cobertura": 59.2,
   "peladas": [
+   {
+    "xz": "-24,8",
+    "t": 16,
+    "p": 1,
+    "pct": 6
+   },
    {
     "xz": "8,24",
     "t": 15,
-    "p": 2,
-    "pct": 13
+    "p": 1,
+    "pct": 7
+   },
+   {
+    "xz": "-24,0",
+    "t": 17,
+    "p": 3,
+    "pct": 18
+   },
+   {
+    "xz": "24,8",
+    "t": 17,
+    "p": 3,
+    "pct": 18
+   },
+   {
+    "xz": "0,-24",
+    "t": 18,
+    "p": 5,
+    "pct": 28
    },
    {
     "xz": "0,24",
@@ -413,7 +441,7 @@
     "pct": 29
    },
    {
-    "xz": "0,-24",
+    "xz": "-24,-8",
     "t": 18,
     "p": 6,
     "pct": 33
@@ -421,50 +449,44 @@
    {
     "xz": "-8,24",
     "t": 18,
-    "p": 8,
-    "pct": 44
+    "p": 6,
+    "pct": 33
    },
    {
-    "xz": "-24,8",
-    "t": 16,
-    "p": 8,
-    "pct": 50
+    "xz": "24,16",
+    "t": 12,
+    "p": 4,
+    "pct": 33
    },
    {
-    "xz": "8,-24",
-    "t": 14,
-    "p": 7,
-    "pct": 50
-   },
-   {
-    "xz": "16,0",
-    "t": 32,
-    "p": 17,
-    "pct": 53
-   },
-   {
-    "xz": "0,16",
-    "t": 33,
-    "p": 18,
-    "pct": 55
-   },
-   {
-    "xz": "-24,-8",
+    "xz": "24,0",
     "t": 18,
-    "p": 10,
-    "pct": 56
+    "p": 7,
+    "pct": 39
+   },
+   {
+    "xz": "-24,16",
+    "t": 12,
+    "p": 5,
+    "pct": 42
    },
    {
     "xz": "-16,0",
     "t": 30,
-    "p": 17,
-    "pct": 57
+    "p": 14,
+    "pct": 47
    },
    {
-    "xz": "-24,0",
-    "t": 17,
-    "p": 10,
-    "pct": 59
+    "xz": "16,0",
+    "t": 32,
+    "p": 16,
+    "pct": 50
+   },
+   {
+    "xz": "0,16",
+    "t": 33,
+    "p": 17,
+    "pct": 52
    }
   ],
   "usados": [
@@ -488,11 +510,9 @@
    "decal:poster:3300c39038dd97ad6a20342038c008b0.jpg",
    "decal:poster:51edbafcf2eebbb2dc157f66bb1a2d66.jpg",
    "decal:poster:574381edb80801aaff5e9a1cdd88bc4b.jpg",
-   "decal:poster:6f2bbbe03a6c5a16af15fe12ebea0d6c.jpg",
    "decal:poster:78c38b895431ac393f96036507060be1.jpg",
    "decal:poster:82f8dcbb0547719bfc4dbb27aed9f583.jpg",
    "decal:poster:8445c0ca193d22b4d6a9af66409b0dda.jpg",
-   "decal:poster:DOLLYNHO.png",
    "decal:poster:New Project (1).png",
    "decal:poster:New Project (2).png",
    "decal:poster:New Project (3).png",
@@ -526,33 +546,33 @@
    "amostra": []
   },
   "densidade": {
-   "total": 0.53,
+   "total": 0.5,
    "porBanda": [
     {
      "alt": 1.6,
-     "pecas": 252,
+     "pecas": 263,
      "placas": 318,
-     "dens": 0.79
+     "dens": 0.83
     },
     {
      "alt": 3.2,
-     "pecas": 117,
+     "pecas": 95,
      "placas": 296,
-     "dens": 0.4
+     "dens": 0.32
     },
     {
      "alt": 5,
-     "pecas": 110,
+     "pecas": 95,
      "placas": 296,
-     "dens": 0.37
+     "dens": 0.32
     }
    ]
   },
   "waypoints": 122
  },
  "loja_h": {
-  "pecas": 187,
-  "arquivos": 36,
+  "pecas": 186,
+  "arquivos": 34,
   "murais": 0,
   "hMin": 0.3,
   "hMax": 2.146,
@@ -785,12 +805,10 @@
    "decal:poster:51edbafcf2eebbb2dc157f66bb1a2d66.jpg",
    "decal:poster:574381edb80801aaff5e9a1cdd88bc4b.jpg",
    "decal:poster:82f8dcbb0547719bfc4dbb27aed9f583.jpg",
-   "decal:poster:DOLLYNHO.png",
    "decal:poster:New Project (2).png",
-   "decal:poster:ashtar-meme.jpg",
-   "decal:poster:ashtar.png",
    "decal:poster:dafac3c979a935aea80adb8b90f6ef1b.jpg",
    "decal:poster:dc58fe69ac56037026f1bf6181b7f71c.jpg",
+   "decal:poster:despisque-leao.jpg",
    "decal:poster:eabfe479653f0e9c94a618858e8667bc.jpg",
    "decal:poster:f0deec032dd1777bc681179fb74a29b0.jpg",
    "decal:poster:images.png",
@@ -815,7 +833,7 @@
    "porBanda": [
     {
      "alt": 1.6,
-     "pecas": 115,
+     "pecas": 114,
      "placas": 295,
      "dens": 0.39
     },
@@ -836,20 +854,20 @@
   "waypoints": 510
  },
  "ferro_velho": {
-  "pecas": 208,
-  "arquivos": 40,
+  "pecas": 207,
+  "arquivos": 38,
   "murais": 0,
   "hMin": 0.45,
   "hMax": 2.1,
   "hMed": 0.8,
-  "placas": 1501,
-  "pintadas": 217,
+  "placas": 1490,
+  "pintadas": 215,
   "bandas": [
    {
     "alt": 1.6,
-    "t": 825,
-    "p": 202,
-    "pct": 24.5
+    "t": 814,
+    "p": 200,
+    "pct": 24.6
    },
    {
     "alt": 3.2,
@@ -867,15 +885,15 @@
   "pelados": [
    [
     "Muro_de_carros_esmagados_1",
-    548
+    546
    ],
    [
     "Mesh[inst]",
-    441
+    435
    ],
    [
     "Mesh",
-    249
+    248
    ],
    [
     "Guindaste_com_eletroímã_1",
@@ -984,23 +1002,23 @@
     "quem": "Mesh[inst]"
    }
   ],
-  "cobertura": 14.5,
+  "cobertura": 14.4,
   "peladas": [
    {
     "xz": "-24,-24",
-    "t": 12,
+    "t": 11,
+    "p": 0,
+    "pct": 0
+   },
+   {
+    "xz": "-24,-16",
+    "t": 32,
     "p": 0,
     "pct": 0
    },
    {
     "xz": "-24,-8",
     "t": 34,
-    "p": 0,
-    "pct": 0
-   },
-   {
-    "xz": "-24,-16",
-    "t": 33,
     "p": 0,
     "pct": 0
    },
@@ -1093,10 +1111,8 @@
    "decal:poster:78c38b895431ac393f96036507060be1.jpg",
    "decal:poster:82f8dcbb0547719bfc4dbb27aed9f583.jpg",
    "decal:poster:8445c0ca193d22b4d6a9af66409b0dda.jpg",
-   "decal:poster:DOLLYNHO.png",
    "decal:poster:New Project (2).png",
    "decal:poster:New Project (3).png",
-   "decal:poster:ashtar.png",
    "decal:poster:dc58fe69ac56037026f1bf6181b7f71c.jpg",
    "decal:poster:despisque-leao.jpg",
    "decal:poster:eabfe479653f0e9c94a618858e8667bc.jpg",
@@ -1124,8 +1140,8 @@
    "porBanda": [
     {
      "alt": 1.6,
-     "pecas": 195,
-     "placas": 825,
+     "pecas": 194,
+     "placas": 814,
      "dens": 0.24
     },
     {
@@ -1145,14 +1161,14 @@
   "waypoints": 294
  },
  "quebrada": {
-  "pecas": 596,
-  "arquivos": 91,
+  "pecas": 592,
+  "arquivos": 89,
   "murais": 0,
   "hMin": 0.37,
   "hMax": 2.2,
   "hMed": 1,
   "placas": 1554,
-  "pintadas": 686,
+  "pintadas": 685,
   "bandas": [
    {
     "alt": 1.6,
@@ -1169,14 +1185,14 @@
    {
     "alt": 5,
     "t": 254,
-    "p": 72,
-    "pct": 28.3
+    "p": 71,
+    "pct": 28
    }
   ],
   "pelados": [
    [
     "Mesh[inst]",
-    675
+    676
    ],
    [
     "Mesh",
@@ -1374,10 +1390,10 @@
     "pct": 27
    },
    {
-    "xz": "-16,0",
-    "t": 44,
-    "p": 13,
-    "pct": 30
+    "xz": "-24,-24",
+    "t": 14,
+    "p": 4,
+    "pct": 29
    }
   ],
   "usados": [
@@ -1445,11 +1461,9 @@
    "decal:poster:78c38b895431ac393f96036507060be1.jpg",
    "decal:poster:82f8dcbb0547719bfc4dbb27aed9f583.jpg",
    "decal:poster:8445c0ca193d22b4d6a9af66409b0dda.jpg",
-   "decal:poster:DOLLYNHO.png",
    "decal:poster:New Project (1).png",
    "decal:poster:New Project (2).png",
    "decal:poster:New Project (3).png",
-   "decal:poster:ashtar.png",
    "decal:poster:dafac3c979a935aea80adb8b90f6ef1b.jpg",
    "decal:poster:despisque-leao.jpg",
    "decal:poster:eabfe479653f0e9c94a618858e8667bc.jpg",
@@ -1484,9 +1498,9 @@
    "porBanda": [
     {
      "alt": 1.6,
-     "pecas": 417,
+     "pecas": 414,
      "placas": 762,
-     "dens": 0.55
+     "dens": 0.54
     },
     {
      "alt": 3.2,
@@ -1496,9 +1510,9 @@
     },
     {
      "alt": 5,
-     "pecas": 47,
+     "pecas": 46,
      "placas": 254,
-     "dens": 0.19
+     "dens": 0.18
     }
    ]
   },
@@ -1511,7 +1525,7 @@
   "hMin": 0,
   "hMax": 0,
   "hMed": 0,
-  "placas": 3393,
+  "placas": 3394,
   "pintadas": 0,
   "bandas": [
    {
@@ -1522,7 +1536,7 @@
    },
    {
     "alt": 3.2,
-    "t": 995,
+    "t": 996,
     "p": 0,
     "pct": 0
    },
@@ -1561,6 +1575,10 @@
    [
     "Golden_Rosetta_Jaguar_1",
     2
+   ],
+   [
+    "Scarlet_Wing_Macaw_1",
+    1
    ]
   ],
   "amostraPelada": [
@@ -1755,7 +1773,7 @@
     {
      "alt": 3.2,
      "pecas": 0,
-     "placas": 995,
+     "placas": 996,
      "dens": 0
     },
     {
@@ -1769,20 +1787,20 @@
   "waypoints": 635
  },
  "escadao": {
-  "pecas": 238,
-  "arquivos": 57,
+  "pecas": 237,
+  "arquivos": 54,
   "murais": 0,
   "hMin": 0.38,
   "hMax": 2,
   "hMed": 1.4,
   "placas": 1522,
-  "pintadas": 167,
+  "pintadas": 168,
   "bandas": [
    {
     "alt": 1.6,
     "t": 665,
-    "p": 122,
-    "pct": 18.3
+    "p": 123,
+    "pct": 18.5
    },
    {
     "alt": 3.2,
@@ -1800,7 +1818,7 @@
   "pelados": [
    [
     "Mesh",
-    759
+    758
    ],
    [
     "Mesh[inst]",
@@ -2039,12 +2057,9 @@
    "decal:poster:78c38b895431ac393f96036507060be1.jpg",
    "decal:poster:82f8dcbb0547719bfc4dbb27aed9f583.jpg",
    "decal:poster:8445c0ca193d22b4d6a9af66409b0dda.jpg",
-   "decal:poster:DOLLYNHO.png",
    "decal:poster:New Project (1).png",
    "decal:poster:New Project (2).png",
    "decal:poster:New Project (3).png",
-   "decal:poster:ashtar-meme.jpg",
-   "decal:poster:ashtar.png",
    "decal:poster:dafac3c979a935aea80adb8b90f6ef1b.jpg",
    "decal:poster:dc58fe69ac56037026f1bf6181b7f71c.jpg",
    "decal:poster:despisque-leao.jpg",
@@ -2074,9 +2089,9 @@
    "porBanda": [
     {
      "alt": 1.6,
-     "pecas": 177,
+     "pecas": 176,
      "placas": 665,
-     "dens": 0.27
+     "dens": 0.26
     },
     {
      "alt": 3.2,
@@ -2671,29 +2686,29 @@
  },
  "posto_treta": {
   "pecas": 81,
-  "arquivos": 34,
+  "arquivos": 31,
   "murais": 0,
   "hMin": 0.8,
   "hMax": 1.5,
   "hMed": 1.4,
-  "placas": 942,
-  "pintadas": 136,
+  "placas": 948,
+  "pintadas": 137,
   "bandas": [
    {
     "alt": 1.6,
     "t": 374,
-    "p": 114,
-    "pct": 30.5
+    "p": 115,
+    "pct": 30.7
    },
    {
     "alt": 3.2,
-    "t": 261,
+    "t": 264,
     "p": 22,
-    "pct": 8.4
+    "pct": 8.3
    },
    {
     "alt": 5,
-    "t": 307,
+    "t": 310,
     "p": 0,
     "pct": 0
    }
@@ -2701,11 +2716,11 @@
   "pelados": [
    [
     "Mesh",
-    347
+    346
    ],
    [
     "posto-decor-batch[inst]",
-    149
+    155
    ],
    [
     "Object_2",
@@ -2818,7 +2833,7 @@
     "quem": "Cube_Materiais_0"
    }
   ],
-  "cobertura": 14.4,
+  "cobertura": 14.5,
   "peladas": [
    {
     "xz": "-32,-32",
@@ -2923,11 +2938,8 @@
    "decal:poster:6f2bbbe03a6c5a16af15fe12ebea0d6c.jpg",
    "decal:poster:78c38b895431ac393f96036507060be1.jpg",
    "decal:poster:82f8dcbb0547719bfc4dbb27aed9f583.jpg",
-   "decal:poster:DOLLYNHO.png",
    "decal:poster:New Project (1).png",
    "decal:poster:New Project (2).png",
-   "decal:poster:ashtar-meme.jpg",
-   "decal:poster:ashtar.png",
    "decal:poster:dc58fe69ac56037026f1bf6181b7f71c.jpg",
    "decal:poster:despisque-leao.jpg",
    "decal:poster:eabfe479653f0e9c94a618858e8667bc.jpg",
@@ -2959,13 +2971,13 @@
     {
      "alt": 3.2,
      "pecas": 7,
-     "placas": 261,
+     "placas": 264,
      "dens": 0.03
     },
     {
      "alt": 5,
      "pecas": 0,
-     "placas": 307,
+     "placas": 310,
      "dens": 0
     }
    ]

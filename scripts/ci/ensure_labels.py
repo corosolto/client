@@ -10,8 +10,8 @@ LABELS = {
     "target:main": ("0366d6", "PR apontando para a branch main"),
     "target:staging": ("0e8a16", "PR apontando para a branch staging"),
     "target:release": ("5319e7", "PR apontando para uma branch de release"),
-    "needs-coderabbit-resolution": ("b60205", "PR não pode ser mergeada enquanto houver pendência do CodeRabbit"),
-    "coderabbit-resolved": ("0e8a16", "Maintainer confirmou que os apontamentos do CodeRabbit foram resolvidos"),
+    "needs-estragacodigo-resolution": ("b60205", "PR não pode ser mergeada enquanto houver pendência do estraga-codigo"),
+    "estragacodigo-resolved": ("0e8a16", "Maintainer confirmou que os apontamentos do estraga-codigo foram resolvidos"),
     "bot-fixable": ("0e8a16", "Issue ou PR elegível para tentativa automatizada de correção"),
     "covered-by-pr": ("fbca04", "Issue já atacada por PR aberta"),
     "crash-auto": ("B60205", "crash de produção reportado por /api/jserror ou prod-watch"),
@@ -45,6 +45,10 @@ def selftest() -> int:
         ("conhecido junto de desconhecido não contamina", ["nao-existe", "bot-fixable"], ["bot-fixable"]),
         ("lista vazia não faz nada", [], []),
         ("preview-autorizado está registrado", ["preview-autorizado"], ["preview-autorizado"]),
+        ("pendência do estragacodigo está registrada",
+         ["needs-estragacodigo-resolution"], ["needs-estragacodigo-resolution"]),
+        ("resolução do estragacodigo está registrada",
+         ["estragacodigo-resolved"], ["estragacodigo-resolved"]),
     ]
     erros = 0
     for nome, pedido, esperado in casos:

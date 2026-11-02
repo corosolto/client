@@ -244,6 +244,51 @@ async function cobrarTeclaDoJogo(page, quando) {
   await page.keyboard.up('w');
   expect(s.keys.KeyW, `W precisa chegar ao jogo ${quando} (foco em ${s.ativo})`).toBeTruthy();
 }
+/* Recibo após o bubble do Game no document; resets posteriores não alteram a entrega.
+   Contrato: docs/reports/CHAT-INPUT-RECEIPT-R87-CONTINUATION-20261101.md. */
+function armChatKeyReceiptR87() {
+  const NS = '__chatInputR87';
+  const g = window.__game;
+  if (!g) return { armed: false, code: 'R87_NO_GAME' };
+  if (window[NS]) return { armed: false, code: 'R87_RECEIPT_ACTIVE' };
+  if (g.keys && g.keys.KeyW) return { armed: false, code: 'R87_STALE_KEYW' };
+  let capturado = null;
+  let expirado = false;
+  const timer = setTimeout(() => { expirado = true; parar(); }, 20000);
+  const quem = (el) => ({ tag: (el && el.tagName) || null, id: (el && el.id) || null });
+  const ouvir = (e) => {
+    if (capturado || !e.isTrusted || e.code !== 'KeyW') return;
+    const t = e.target;
+    capturado = Object.freeze({
+      trusted: e.isTrusted, code: e.code, sameGame: window.__game === g,
+      keyW: !!(g.keys && g.keys.KeyW), entradaTravada: !!g._entradaTravada,
+      alvoEntrada: quem(t),
+      propriaEntrada: !!(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable
+        || (t.closest && t.closest('[data-entrada-propria]')))),
+      ativo: quem(document.activeElement),
+    });
+    parar();
+  };
+  const remover = () => { window.removeEventListener('keydown', ouvir, false); };
+  const parar = () => { remover(); clearTimeout(timer); };
+  const limpar = () => { parar(); delete window[NS]; };
+  window.addEventListener('keydown', ouvir, false);
+  window[NS] = {
+    read() {
+      if (expirado) { limpar(); throw new Error('R87_EXPIRED'); }
+      if (!capturado) throw new Error('R87_NO_EVENT');
+      if (!capturado.sameGame || window.__game !== g) { limpar(); throw new Error('R87_GAME_CHANGED'); }
+      const c = capturado;
+      if (c.entradaTravada || c.propriaEntrada) { limpar(); throw new Error('R87_BLOCKED'); }
+      if (!c.keyW) { limpar(); throw new Error('R87_KEYW_FALSE'); }
+      limpar();
+      return c;
+    },
+    cleanup: limpar,
+  };
+  return { armed: true, ns: NS };
+}
+
 const linhas = (page) => page.locator('#chat-log .chat-linha');
 const chatAberto = (page) => page.evaluate(() => window.__chat.aberto());
 const estadoJogo = (page) => page.evaluate(() => {
@@ -604,7 +649,7 @@ test.describe('chat de sala', () => {
     /* Depois da denúncia o foco volta para a linha denunciada (fecharAcoes). Fechar com Esc
        nesse estado deixava o foco preso numa linha do painel, e entradaPropria() em game.js
        engolia toda tecla: nem Y reabria, nem W andava (achado pelo eval:chat-mp, CE5). */
-    test('depois de denunciar, Esc devolve o foco ao jogo: W anda e Y reabre', async () => {
+    test('depois de denunciar, Esc devolve o foco ao jogo: KeyW chega ao jogo e Y reabre', async () => {
       await teclaChat(page, 'y');
       await page.locator('#chat-log .chat-linha[data-id="4"]').click();
       await page.locator('#chat-denunciar').click();
@@ -614,9 +659,16 @@ test.describe('chat de sala', () => {
       await page.keyboard.press('Escape');
       expect(await chatAberto(page)).toBe(false);
       expect(await page.evaluate(() => document.getElementById('chat-sala').contains(document.activeElement)), 'o foco não pode ficar preso numa linha do painel fechado').toBe(false);
-      await page.keyboard.down('w');
-      expect((await estadoJogo(page)).keys.KeyW, 'W precisa chegar ao jogo com o chat fechado').toBeTruthy();
-      await page.keyboard.up('w');
+      try {
+        const armou = await page.evaluate(armChatKeyReceiptR87);
+        if (!armou.armed) throw new Error(`armChatKeyReceiptR87 recusou armar: ${armou.code}`);
+        await page.keyboard.down('w');
+        const recibo = await page.evaluate(() => window.__chatInputR87.read());
+        expect(recibo.keyW, 'W físico precisa chegar ao Game.keys no mesmo tick do evento, com o chat fechado').toBe(true);
+      } finally {
+        try { await page.keyboard.up('w'); }
+        finally { await page.evaluate(() => { if (window.__chatInputR87) window.__chatInputR87.cleanup(); }); }
+      }
       await teclaChat(page, 'y');
       expect(await chatAberto(page)).toBe(true);
       await page.keyboard.press('Escape');

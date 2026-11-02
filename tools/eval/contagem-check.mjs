@@ -83,7 +83,8 @@ async function mundo({ webdriver = false, search = '', fetchFalha = false, agora
   const nomes = Object.keys(g);
   const src = fonte
     .replace("import { apiUrl } from './apibase.js';", "const apiUrl = (p) => 'https://api.mock' + p;")
-    .replace("import { VERSION } from './version.js';", "const VERSION = '2.1.0-alpha.90';");
+    .replace("import { VERSION } from './version.js';", "const VERSION = '2.1.0-alpha.90';")
+    .replace("import { jogadoresUnicos } from './player-unique.js';", 'const jogadoresUnicos = { evento() {} };');
   globalThis.__mundoContagem = g;
   const prefixo = `const { ${nomes.join(', ')} } = globalThis.__mundoContagem;\n`;
   const mod = await import(`data:text/javascript;base64,${Buffer.from(prefixo + src).toString('base64')}#${++n}`);

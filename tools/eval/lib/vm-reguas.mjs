@@ -33,7 +33,9 @@ const tamanhoCurta = (q, p, arma) => Math.sqrt(q.areaArma / p.quadril.areaArma) 
 
 const ROOT = process.cwd();
 const { WEAPONS } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/weapons.js')).href);
-const { VM_WEAPON, VM_FABRICA } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/vmconfig.js')).href);
+const { adsEfetivo, VM_WEAPON, VM_FABRICA } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/vmconfig.js')).href);
+// O palco serve o ADS na linha de mira, salvo ?ads1pfix=0 em VM_PALCO_QS (o mesmo kill-switch do jogo).
+const ADS1P_FIX = !/(?:^|&)ads1pfix=0(?:&|$)/.test(process.env.VM_PALCO_QS || '');
 const { weaponCFG } = await import(pathToFileURL(path.join(ROOT, 'public/js/weapons.js')).href);
 
 export const TODAS = Object.keys(WEAPONS);   // 26, com a faca
@@ -149,7 +151,7 @@ export async function coletar(page, arma, { reguas, mut = null, fotos = '', vari
     const m = await P.mascara(page, arma, { profundidade: quer('mira') });
     c.ads = { ...A.silhueta(m), scoped: est.scoped, adsF: est.ads,
       // A AK golden continua na rota autorada mesmo com vmfabrica=1.
-      estilo: (variante?.[arma]?.ads?.estilo || (FABRICA_NA_REGUA && soFabrica(arma) && !VM_WEAPON[arma]?.golden ? VM_FABRICA[arma] : VM_WEAPON[arma])?.ads?.estilo) || 'alca',
+      estilo: (variante?.[arma]?.ads?.estilo || adsEfetivo((FABRICA_NA_REGUA && soFabrica(arma) && !VM_WEAPON[arma]?.golden ? VM_FABRICA[arma] : VM_WEAPON[arma])?.ads, ADS1P_FIX)?.estilo) || 'alca',
       cruz: pixelsNaCruz(m),
       janelaAlta: A.ocupacao(m, { x0: 0.43, x1: 0.57, y0: 0.45, y1: 0.55 }),
       janelaBaixa: A.ocupacao(m, { x0: 0.43, x1: 0.57, y0: 0.50, y1: 0.65 }),

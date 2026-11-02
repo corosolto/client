@@ -23,7 +23,7 @@ if(root) {
   function painelDaConta(){const panel=account.closest?.('details');if(!panel)return;panel.hidden=!!auth?.profile;if(!auth?.authenticated && tab==='profile' && !painelPedido)panel.open=false;}
   document.addEventListener('cs-conta-abrir',abrirPainelConta);
   // O SSR fica visível até o perfil da comunidade ser efetivamente desenhado. Falha de conta não pode apagar conteúdo público já entregue pelo servidor.
-  const errors={handle_invalid:'Use de 3 a 24 letras, números ou _. Comece com letra.',handle_taken:'Esse ID já tem dono. Escolha outro.',handle_locked:'Seu ID já foi escolhido e fica fixo para preservar os links.',nick_invalid:'Use de 2 a 32 letras, números, _ . ou -.',nick_taken:'Esse nick já está em uso. Escolha outro.',account_hidden:'Esta conta está indisponível pela moderação.',session_expired:'Sua sessão expirou. Entre de novo para continuar.',social_unavailable:'A resenha está fora do ar. Tente de novo.',social_not_configured:'A comunidade aguarda configuração do servidor.',rate_limited:'Calma, fiscal da resenha. Tente de novo em um minuto.',blocked:'Esse jogador não pode interagir com você.',room_solo:'Essa sala é solo. Entre no multiplayer para chamar amigos.',room_full:'A sala lotou. Peça outro convite.',room_closed:'Essa sala já encerrou.',room_unavailable:'O servidor da sala não respondeu.',invite_expired:'O convite venceu. Peça outro.',invite_closed:'Esse convite já foi respondido.',join_room_first:'Entre numa sala do jogo antes de convidar.',provider_unavailable:'Esse login ainda não está habilitado.',account_conflict:'Esse nick ou progresso já pertence a outra conta.',guest_invalid:'Não foi possível comprovar o convidado. Seu progresso local continua salvo.',links_invalid:'Use links HTTPS das redes indicadas.',settings_invalid:'Revise a bio e as opções de privacidade.'};
+  const errors={handle_invalid:'Use de 3 a 24 letras, números ou _. Comece com letra.',handle_taken:'Esse ID já tem dono. Escolha outro.',handle_locked:'Seu ID já foi escolhido e fica fixo para preservar os links.',nick_invalid:'Use de 2 a 32 letras, números, _ . ou -.',nick_taken:'Esse nick já está em uso. Escolha outro.',account_hidden:'Esta conta está indisponível pela moderação.',session_expired:'Sua sessão expirou. Entre de novo para continuar.',social_unavailable:'A resenha está fora do ar. Tente de novo.',social_not_configured:'A comunidade aguarda configuração do servidor.',rate_limited:'Calma, fiscal da resenha. Tente de novo em um minuto.',blocked:'Esse jogador não pode interagir com você.',room_solo:'Essa sala é solo. Entre no multiplayer para chamar amigos.',room_full:'A sala lotou. Peça outro convite.',room_closed:'Essa sala já encerrou.',room_unavailable:'O servidor da sala não respondeu.',invite_expired:'O convite venceu. Peça outro.',invite_closed:'Esse convite já foi respondido.',join_room_first:'Entre numa sala do jogo antes de convidar.',provider_unavailable:'Esse login ainda não está habilitado.',account_conflict:'Esse nick ou progresso já pertence a outra conta.',guest_invalid:'Não foi possível comprovar o convidado. Seu progresso local continua salvo.',links_invalid:'Use links HTTPS das redes indicadas.',settings_invalid:'Revise a bio e as opções de privacidade.',messages_disabled:'As mensagens ainda não estão ligadas neste servidor.',friends_required:'Esse jogador só recebe mensagem de amigos.',message_invalid:'Mensagem vazia, longa demais ou com caractere proibido (< e > não entram).',message_conflict:'Essa mensagem já foi enviada com outro texto. Recarregue a conversa.',not_found:'Esse jogador não está disponível para esta ação.',self_action:'Essa ação não vale para a sua própria conta.',target_invalid:'Esse jogador não foi reconhecido. Abra o perfil de novo.',upstream_unavailable:'A resenha está fora do ar. Tente de novo.',origin_invalid:'Recarregue a página e tente de novo.',bad_json:'Não deu pra ler o pedido. Recarregue a página.'};
   const el=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=text;if(cls)n.className=cls;return n;};
   const message=(text)=>{status.textContent=text;};
   async function api(path,body) {
@@ -180,7 +180,10 @@ if(root) {
       // Import na hora do clique: a régua do backend roda este arquivo num vm sem módulos.
       const share=button('COMPARTILHAR PERFIL',async()=>{const {compartilhar,linkCompartilhavel}=await import('./compartilhar.js');const r=await compartilhar({titulo:`${p.nick} no CORO SOLTO`,texto:`Olha o perfil de ${p.nick} no CORO SOLTO.`,url:linkCompartilhavel(p.url,'perfil')});if(r==='copiado')message('Link do perfil copiado.');});share.dataset.share='perfil';buttons.append(share);}
     if(auth?.profile && auth.profile.id!==p.id) {
-      if(p.relationship==='friend'){buttons.append(chip('AMIGOS ✓'));if(state?.messages_enabled)buttons.append(button('MANDAR MENSAGEM',()=>openConversation(p),'',notice));buttons.append(button('CHAMAR PARA A SALA',()=>action('invite',p.id),'',notice),button('REMOVER AMIGO',()=>action('remove',p.id),'',notice));}
+      // Mensagem vale para qualquer cadastrado (decisão do dono, 28/10): o portão que sobra é a
+      // flag do servidor, e com ela desligada o chip diz isso em vez de sumir calado.
+      buttons.append(state?.messages_enabled?button('MANDAR MENSAGEM',()=>openConversation(p),'',notice):chip('MENSAGENS EM PREPARAÇÃO'));
+      if(p.relationship==='friend'){buttons.append(chip('AMIGOS ✓'));buttons.append(button('CHAMAR PARA A SALA',()=>action('invite',p.id),'',notice),button('REMOVER AMIGO',()=>action('remove',p.id),'',notice));}
       else if(p.relationship==='incoming')buttons.append(button('ACEITAR AMIZADE',()=>action('accept',p.id),'',notice),button('RECUSAR',()=>action('decline',p.id),'',notice));
       else if(p.relationship==='outgoing')buttons.append(chip('PEDIDO ENVIADO'),button('CANCELAR PEDIDO',()=>action('cancel',p.id),'',notice));
       else if(!noAccountTargets.has(p.id))buttons.append(button('ADICIONAR AMIGO',()=>requestFriend(p),'social-primary',notice));
@@ -324,7 +327,7 @@ if(root) {
     if(inboxSection==='quests')await showQuests(version);else if(inboxSection==='notifications')showNotifications();else await showMessages(version);
   }
   async function showMessages(version){
-    content.append(el('h2','Mensagens da turma'),empty('Conversas privadas entre amigos. Só vocês podem abrir a conversa pela conta; a moderação pode investigar denúncias.'));
+    content.append(el('h2','Mensagens da turma'),empty('Conversas privadas entre jogadores com conta. Só vocês podem abrir a conversa pela conta; a moderação pode investigar denúncias.'));
     if(!auth?.profile){content.append(empty('Entre na conta para conversar com seus amigos.'));return;}
     if(!state?.messages_enabled){content.append(empty('As mensagens estão em preparação neste ambiente.'));return;}
     if(!conversation){
@@ -332,14 +335,14 @@ if(root) {
       for(const t of state.inbox?.conversations || []){
         const c=card(t.nick);c.append(el('p',t.last_message.body,'social-message-preview'),empty(`${date(t.last_message.created_at)}${t.unread_count?` · ${t.unread_count} não lida(s)`:''}`),button('ABRIR CONVERSA',()=>openConversation({id:t.target_id,nick:t.nick})));content.append(c);
       }
-      if(!state.inbox?.conversations?.length)content.append(empty('Sem conversas ainda. Abra o perfil de um amigo para mandar a primeira mensagem.'));
+      if(!state.inbox?.conversations?.length)content.append(empty('Sem conversas ainda. Abra o perfil de qualquer jogador para mandar a primeira mensagem.'));
       content.append(button('VER AMIGOS',async()=>{tab='friends';await render();}));return;
     }
     const peer={...conversation},owner=auth.profile.id;
     content.append(button('VOLTAR ÀS CONVERSAS',async()=>{clearConversation();await refresh();await render();}));
     let data;
     try{data=await api(`/api/social?action=conversation&target=${encodeURIComponent(peer.id)}${conversationBefore?`&before=${encodeURIComponent(conversationBefore)}`:''}`);}
-    catch(e){if(version!==loadVersion)return;content.append(empty(e.message==='friends_required'?'Adicione este jogador aos amigos para conversar.':e.message==='blocked'?'Esta conversa está bloqueada.':'Esta conversa está indisponível.'));return;}
+    catch(e){if(version!==loadVersion)return;content.append(empty(e.message==='friends_required'?'Esse jogador só recebe mensagem de amigos. Mande um pedido de amizade.':e.message==='blocked'?'Esta conversa está bloqueada.':'Esta conversa está indisponível.'));return;}
     if(version!==loadVersion || owner!==auth?.profile?.id)return;
     const c=card(data.peer.nick),actions=el('div','','social-actions');
     {const path=profilePath(data.peer);if(path)actions.append(link('VER PERFIL',path));}
@@ -361,7 +364,9 @@ if(root) {
       try{
         await api('/api/social',{action:'message_send',target:peer.id,body:attempt.body,client_id:attempt.id});
         if(owner!==auth?.profile?.id || conversation?.id!==peer.id || pendingSend!==attempt)return;
-        messageDraft='';messageClientId=null;conversationBefore=null;pendingSend=null;await refresh();await render();
+        messageDraft='';messageClientId=null;conversationBefore=null;pendingSend=null;/* A mensagem já está no servidor: uma falha do refresh não pode engolir o render, senão o
+           rascunho enviado continua na tela e parece que nada saiu. */
+        try{await refresh();}catch{}await render();
       }finally{if(pendingSend===attempt){pendingSend=null;if(owner===auth?.profile?.id && conversation?.id===peer.id)await render();}}
     });send.disabled=Boolean(pendingSend);
     form.append(field('Sua mensagem (até 1000 caracteres)',text),send);form.onsubmit=e=>{e.preventDefault();send.click();};c.append(form);content.append(c);list.scrollTop=list.scrollHeight;

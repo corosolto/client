@@ -61,9 +61,34 @@
 import * as THREE from 'three';
 import { aplicarTintaRecortada } from './decal_ink.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { medirParede } from './map_decals.js';
+import { medirParede, offsetTinta } from './map_decals.js';
 import { GRAFITE } from './graffiti_layout.js';
 import { criarSuporteGrafite, superficieGrafitavel } from './graffiti_surface.js';
+import { identidadeArteGrafite } from './graffiti_art_id.js';
+
+const imagensGrafite = new WeakMap();
+let imagemGrafiteId = 0;
+function chaveArte(texture, fallback) {
+  const image = texture?.source?.data || texture?.image;
+  if (image?.src) return identidadeArteGrafite(String(image.src));
+  if (texture?.userData?.decalArquivo) return identidadeArteGrafite('/img/decals/' + texture.userData.decalArquivo);
+  const arquivo = String(fallback || '').replace(/^decal:/, '');
+  if (arquivo.startsWith('poster:')) return identidadeArteGrafite('/posters/' + arquivo.slice(7));
+  if (/\.(png|jpe?g|webp)$/i.test(arquivo)) return identidadeArteGrafite('/img/decals/' + arquivo);
+  if (!image || typeof image !== 'object') return fallback;
+  if (!imagensGrafite.has(image)) imagensGrafite.set(image, ++imagemGrafiteId);
+  return `canvas:${imagensGrafite.get(image)}`;
+}
+
+function artesPresentes(root) {
+  const usadas = new Set();
+  root.traverse(mesh => {
+    for (let node = mesh; node; node = node.parent) if (!node.visible) return;
+    if (mesh.isMesh && mesh.visible && /^(decal:|mural:|poster:)/.test(mesh.name)
+      && !Array.isArray(mesh.material)) usadas.add(chaveArte(mesh.material.map, mesh.name));
+  });
+  return usadas;
+}
 
 /* ── POR QUE A COLOCAÇÃO É ASSADA E NÃO CALCULADA NO LOAD ────────────────────
    A passada medida custou 8,9 s na Quebrada. O build INTEIRO do Piscina custa 88 ms.
@@ -230,15 +255,18 @@ export function grafitar(cfg) {
 }
 
 function revisarGrafiteManual(root) {
-  const suporte = criarSuporteGrafite(root, gradeEspacial), pieces = [];
+  const suporte = criarSuporteGrafite(root, gradeEspacial), pieces = [], usadas = new Set();
   root.traverse((mesh) => {
     if (!mesh.isMesh || !/^(decal:|mural:)/.test(mesh.name) || mesh.userData.pecas) return;
+    for (let node = mesh; node; node = node.parent) if (!node.visible) return;
     const params = mesh.geometry.parameters;
     if (!params?.width || !params?.height) return;
     const normal = new THREE.Vector3(0, 0, 1).applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(mesh.matrixWorld));
     const up = new THREE.Vector3(0, 1, 0).transformDirection(mesh.matrixWorld);
     const piece = retanguloGrafiteDesenhado(mesh.geometry, mesh.matrixWorld);
-    if (Array.isArray(mesh.material) || !piece || Math.abs(normal.y) > 0.001 || Math.abs(up.y) < 1 - 1e-6 || !suporte(piece)) pieces.push(mesh);
+    const chave = chaveArte(mesh.material?.map, mesh.name);
+    if (Array.isArray(mesh.material) || !piece || Math.abs(normal.y) > 0.001 || Math.abs(up.y) < 1 - 1e-6 || !suporte(piece) || usadas.has(chave)) pieces.push(mesh);
+    else usadas.add(chave);
   });
   for (const mesh of pieces) {
     mesh.removeFromParent(); mesh.geometry.dispose();
@@ -449,6 +477,7 @@ export function pintarParedes(opts) {
     });
   });
   const porArquivo = new Map();                             // i -> [geometrias]
+  const usadas = artesPresentes(root);
   let n = 0;
   /* CONTADOR DE RECUSA. Cobertura baixa tem 5 causas possíveis e elas pedem
      correções OPOSTAS (banda errada × parede lombada × peça grande demais). Sem
@@ -471,12 +500,13 @@ export function pintarParedes(opts) {
       let posta = false;
       for (const alt of B.alturas) {
         if (alt > B.y1 - B.y0 + 0.6) continue;
-        const i = _escolher(B.pool, k, A.x, A.z, postas, T);
+        const cartaz = B.fonte === 'poster';
+        const i = _escolher(B.pool, k, T, cartaz, usadas);
+        if (i === undefined) break;
         /* CARTAZ É OUTRA FONTE. `T.posterImgs` é a coleção do dono (lambe-lambe de
            verdade, JPG opaco) e vive num array separado de `T.decals`. Sem isto ela
            só existia em 2 dos 5 mapas — reprovação: "tem diversos posters da minha
            coleção e tb que vc gerou que não estão em nenhum mapa". */
-        const cartaz = B.fonte === 'poster';
         const asp = (cartaz ? T.posterAspects[i] : T.decalAspects[i]) || 1;
         let h = alt, w = alt * asp;
         const teto = Math.min(maxLarg, B.larg || maxLarg);
@@ -509,6 +539,7 @@ export function pintarParedes(opts) {
         if (_cobreDemais(postas, quad.x, quad.y, quad.z, quad.ry, quad.w, quad.h, cobre)) { rec.cobria++; continue; }
         if (exigeChao && B.exigeChao !== false && !_temChao(amostra, du, quad.w, quad.y - quad.h / 2)) { rec.noAr++; continue; }
         postas.push({ i, cartaz, x: quad.x, y: quad.y, z: quad.z, ry: quad.ry, hw: quad.w / 2, hh: quad.h / 2, quem: A.quem });
+        usadas.add(chaveArte(cartaz ? T.posterImgs[i] : T.decals[i], (cartaz ? 'poster:' : 'decal:') + (cartaz ? T.posterFiles[i] : T.decalFiles[i])));
         const g = new THREE.PlaneGeometry(quad.w, quad.h);
         g.rotateY(quad.ry); g.translate(quad.x, quad.y, quad.z);
         const chave = (cartaz ? 'p' : 'd') + i;
@@ -568,7 +599,7 @@ export function pintarParedes(opts) {
    ============================================================================ */
 function materialMural(nome, map) {
   return new THREE.MeshLambertMaterial({
-    map, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5,
+    map, ...offsetTinta(-5, -5),   // só unidades: ver map_decals.js (offsetTinta)
     ...(nome === 'pixo-lajes-01.png' ? { transparent: true, alphaTest: 0.24, depthWrite: false } : {}),
   });
 }
@@ -580,6 +611,7 @@ export function aplicarGrafite(root, T, layout, muraisTex) {
   T.decalFiles.forEach((f, i) => idx.set(f, i));
   (T.posterFiles || []).forEach((f, i) => idxP.set(f, i));
   const porArquivo = new Map(), postas = [];
+  const usadas = artesPresentes(root);
   for (const [a, x, y, z, ry, w, h] of (layout.pecas || [])) {
     if (!suporte({ x, y, z, ry, w, h })) continue;
     const nome = layout.arquivos[a];
@@ -595,6 +627,8 @@ export function aplicarGrafite(root, T, layout, muraisTex) {
     const cartaz = nome.startsWith('poster:');
     const i = cartaz ? idxP.get(nome.slice(7)) : idx.get(nome);
     if (i === undefined) { console.warn('[grafite] layout cita "' + nome + '", que saiu do pacote'); continue; }
+    const chaveArteAtual = chaveArte(cartaz ? T.posterImgs[i] : T.decals[i], nome);
+    if (usadas.has(chaveArteAtual)) continue;
     const g = new THREE.PlaneGeometry(w, h);
     g.rotateY(ry); g.translate(x, y, z);
     const drawn = retanguloGrafiteDesenhado(g);
@@ -602,6 +636,7 @@ export function aplicarGrafite(root, T, layout, muraisTex) {
     const chave = (cartaz ? 'p' : 'd') + i;
     if (!porArquivo.has(chave)) porArquivo.set(chave, []);
     porArquivo.get(chave).push(g);
+    usadas.add(chaveArteAtual);
     postas.push({ x, y, z, ry, hw: w / 2, hh: h / 2, f: nome });
   }
   const malhas = _juntar(porArquivo, T, root, postas);
@@ -613,11 +648,14 @@ export function aplicarGrafite(root, T, layout, muraisTex) {
     if (!suporte(nominal) || !drawn || !suporte(drawn)) continue;
     const t = muraisTex && muraisTex[nome];
     if (!t) continue;
+    const chaveArteAtual = chaveArte(t, nome);
+    if (usadas.has(chaveArteAtual)) continue;
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), materialMural(nome, t));
     m.position.set(x, y, z); m.rotation.y = ry;
     m.renderOrder = 2; m.receiveShadow = true;
     m.name = 'mural:' + nome;
     root.add(m);
+    usadas.add(chaveArteAtual);
     murais++;
   }
   return { pecas: postas.length, malhas, murais, assado: true };
@@ -798,9 +836,16 @@ export function pendurarMurais(opts) {
   }
   notas.sort((a, b) => (b.nota - a.nota) || (mix32(Math.round(a.A.x * 7) + seed) - mix32(Math.round(b.A.x * 7) + seed)));
 
+  const usadas = artesPresentes(root);
+  const candidatas = texturas.map((texture, i) => ({ texture, nome: nomes[i] || ('homenagem-' + i) }))
+    .filter(({ texture, nome }) => {
+      const chave = chaveArte(texture, nome);
+      if (usadas.has(chave)) return false;
+      usadas.add(chave); return true;
+    });
   const postas = [], feitos = [];
   for (const c of notas) {
-    if (feitos.length >= texturas.length) break;
+    if (feitos.length >= candidatas.length) break;
     if (postas.some((p) => Math.hypot(p.x - c.A.x, p.z - c.A.z) < separacao)) continue;
     const w = Math.min(larg, c.wP - 0.5), h = Math.min(alt, w * alt / larg, c.hP - 0.7);
     if (w < minLarg || h < 1.4) continue;
@@ -814,14 +859,15 @@ export function pendurarMurais(opts) {
     const px = c.A.x - Math.sin(c.A.ry) * rec, pz = c.A.z - Math.cos(c.A.ry) * rec;
     const quad = quantizarGrafite({ x: px, y: yc, z: pz, ry: c.A.ry, w, h }, suporte, true);
     if (!quad) continue;
-    const i = feitos.length;
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(quad.w, quad.h), materialMural(nomes[i], texturas[i]));
+    const { texture, nome } = candidatas[feitos.length];
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(quad.w, quad.h), materialMural(nome, texture));
     mesh.position.set(quad.x, quad.y, quad.z); mesh.rotation.y = quad.ry;
     mesh.renderOrder = 2; mesh.receiveShadow = true;
-    mesh.name = 'mural:' + (nomes[i] || ('homenagem-' + i));
+    mesh.name = 'mural:' + nome;
     root.add(mesh);
+    usadas.add(chaveArte(texture, nome));
     postas.push({ x: quad.x, z: quad.z });
-    feitos.push([nomes[i] || ('homenagem-' + i), quad.x, quad.y, quad.z, quad.ry, quad.w, quad.h]);
+    feitos.push([nome, quad.x, quad.y, quad.z, quad.ry, quad.w, quad.h]);
   }
   return { murais: feitos.length, vagas: notas.length, layout: feitos };
 }
@@ -996,17 +1042,15 @@ function _alturaParede(alvos, rc, A) {
   return topo + 0.2;
 }
 
-/* ANTI-REPETIÇÃO LOCAL. O hash espalha, mas com pool de 10 e 6 vagas numa parede o
-   paradoxo do aniversário cobra e a MESMA arte sai 3× no mesmo muro — que lê como
-   falha de asset, não como cidade. Se a sorteada já está a menos de 9 m, anda uma
-   casa no pool. Continua 100% determinístico. */
-function _escolher(pool, k, x, z, postas, T) {
-  let i = pool[k % pool.length];
+// Cada arquivo só aparece uma vez no mapa, cruzando manual, poster e passada.
+// Pool esgotado deixa a parede limpa, sem reciclar a mesma arte.
+function _escolher(pool, k, T, cartaz, usadas) {
   for (let t = 0; t < pool.length; t++) {
     const j = pool[(k + t) % pool.length];
-    if (!postas.some((u) => u.i === j && Math.hypot(u.x - x, u.z - z) < 9)) { i = j; break; }
+    const texture = cartaz ? T.posterImgs[j] : T.decals[j];
+    const nome = (cartaz ? 'poster:' : 'decal:') + (cartaz ? T.posterFiles[j] : T.decalFiles[j]);
+    if (texture && !usadas.has(chaveArte(texture, nome))) return j;
   }
-  return i;
 }
 
 /* Cobrir até `frac` da área da vizinha é CAMADA (tag por cima de peça, que é o que
@@ -1043,7 +1087,7 @@ function _juntar(porArquivo, T, root, postas) {
     const tex = cartaz ? (T.posterImgs || [])[i] : T.decals[i];
     if (!tex) continue;
     const m = new THREE.MeshLambertMaterial(Object.assign({
-      map: tex, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+      map: tex, ...offsetTinta(-4, -4),   // só unidades: ver map_decals.js (offsetTinta)
     }, cartaz ? {} : { transparent: true, alphaTest: 0.24 }));
     const mesh = new THREE.Mesh(g, m);
     /* PNG que dá 404 some junto com a peça. Em prod (clone puro do git) 197 dos 209

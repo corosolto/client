@@ -146,6 +146,7 @@ const currentLabel = h1 ?? title.split(' | ')[0];
 <head>
 <link rel="preload" as="script" href={`/js/privacy-runtime.js?v=${V}-${JS_REV}`} />
 <script src={`/js/privacy-runtime.js?v=${V}-${JS_REV}`} is:inline></script>
+<script type="module" src={`/js/site-visit.js?v=${V}-${JS_REV}`} is:inline></script>
 {import.meta.env.DEV && import.meta.env.SOCIAL_LOCAL_GAME_URL && <meta name="cs-local-game" content={import.meta.env.SOCIAL_LOCAL_GAME_URL} />}
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">

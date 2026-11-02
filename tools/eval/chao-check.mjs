@@ -48,8 +48,8 @@
    USO
      node tools/eval/chao-check.mjs                 # elenco inteiro
      node tools/eval/chao-check.mjs lobisomem,mandrake
-     node tools/eval/chao-check.mjs --mutate=afunda # prova que a régua morde (afunda)
-     node tools/eval/chao-check.mjs --mutate=flutua # prova que ela morde para o outro lado
+     node tools/eval/chao-check.mjs --mutante=afunda # prova que a régua morde (afunda)
+     node tools/eval/chao-check.mjs --mutante=flutua # prova que ela morde para o outro lado
      node tools/eval/chao-check.mjs --escreve       # regrava a catraca (só ao MELHORAR)
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import fs from 'node:fs';
@@ -89,7 +89,7 @@ const G = await import('../../public/js/glbchars.js');
 const { charWeapon } = await import('../../public/js/characters.js');
 
 const args = process.argv.slice(2);
-const mutante = (args.find((a) => a.startsWith('--mutate=')) || '').split('=')[1];
+const mutante = (args.find((a) => a.startsWith('--mutante=')) || '').split('=')[1];
 if (mutante && !['afunda', 'flutua'].includes(mutante)) throw new Error(`Mutante desconhecido: ${mutante}`);
 const escreve = args.includes('--escreve');
 const alvoArg = args.find((a) => !a.startsWith('-'));

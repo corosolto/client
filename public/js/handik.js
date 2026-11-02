@@ -66,7 +66,11 @@ export function solveCCDIK(chain, end, targetWorld, opts = {}) {
     end.getWorldPosition(_pe);
     chain[chain.length - 1].getWorldPosition(_v1);
     alcance += _pe.distanceTo(_v1);
-    if (endOffset) alcance += endOffset.length();
+    if (endOffset) {
+      // palma em MUNDO (escala do rig entra na conta): rigs cm+scale .01 tinham a parcela local ~100× maior
+      _off.copy(endOffset); end.localToWorld(_off);
+      alcance += _off.distanceTo(_pe);   // _pe ainda carrega a origem mundial de `end`
+    }
     // 0,98: encostar no limite exato deixa a cadeia perfeitamente reta, e cadeia reta é
     // singular pro CCD (o eixo do produto vetorial vira ruído). 2% de folga mantém um
     // resíduo de flexão no cotovelo e a solução estável.

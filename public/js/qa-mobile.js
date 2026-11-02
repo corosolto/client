@@ -58,8 +58,7 @@ function toque(tipo, alvo, x, y, dedo) {
   }));
 }
 
-/* Apertar e soltar no CENTRO. Serve para botão (.touch-reload, .touch-wep, .tp-toque-atira)
-   e para o miolo dos sticks, que é o gatilho de tiro do HUD — o mesmo gesto nos dois. */
+/* Apertar e soltar um botão pelo mesmo caminho do toque do jogador. */
 async function aperta(el, ms, dedo = DEDO.botao) {
   const [x, y] = centro(el);
   toque('touchstart', el, x, y, dedo);
@@ -219,10 +218,9 @@ async function executaPasso(nome, fim, g, interacao, falhas) {
       return empurra(el, 0, nome === 'anda-frente' ? -48 : 48, fim);
     }
     case 'atira': {
-      /* Gatilho do HUD: o ATIRA do Treta Pop, senão o miolo de um stick (gatilho do legado).
-         Quatro toques, porque arma sem `segurar` dá um tiro por aperto. */
+      // Quatro toques, porque arma sem `segurar` dá um tiro por aperto.
       const el = visivel(document.querySelector('#touch-ui .tp-toque-atira'))
-        || noHud('.touch-joy-r') || noHud('.touch-joy-l');
+        || noHud('.touch-fire');
       if (!el) { falhas.push('atira: nenhum gatilho de toque visível'); return dormeAte(fim); }
       interacao.gatilho = el.className.split(/\s+/).find((c) => c.startsWith('t')) || 'toque';
       interacao.municaoAntes = leJogo(g).municao;

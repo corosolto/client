@@ -32,8 +32,12 @@ if (rows.some(([, , r]) => !r.valid)) process.exitCode = 1;
 else if (mutante) throw Error(`MUTANTE ${mutante} SOBREVIVEU`);
 const photos = process.argv.find(a => a.startsWith('--fotos='));
 if (photos) {
-  const { spawnSync } = await import('node:child_process');
-  const r = spawnSync(process.execPath, ['tools/eval/lajes-browser-check.mjs', photos,
-    ...process.argv.filter(a => a.startsWith('--base=') || a.startsWith('--out='))], { stdio: 'inherit' });
+  const { sonda, pula } = await import('./sonda-filho.mjs');
+  const r = sonda(['tools/eval/lajes-browser-check.mjs', photos,
+    ...process.argv.filter(a => a.startsWith('--base=') || a.startsWith('--out='))], { stdio: ['ignore', 'inherit', 'pipe'] });
+  /* lajes-browser-check precisa de playwright; ausente, ele morre e a régua
+     visual reprovaria por "foto errada" sem ter tirado foto (issue #1133). */
+  if (!r.mediu) pula(r.causa, 'lajes-visual --fotos');
+  if (r.stderr) process.stderr.write(r.stderr);
   if (r.status !== 0) process.exitCode = 1;
 }

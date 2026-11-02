@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { WEAPON_SKINS } from './data/weapon-skin-definitions.js';
+import { footprintFullyCovered, FOOTPRINT_TOLERANCE } from './knife-mark-support.js';
 export { WEAPON_SKINS };
 const TAMO_JUNTO_FRAGMENT = Object.freeze({
   ak: `
@@ -510,6 +511,316 @@ function addFittedPair(model, skinId, role, texture, placement, surfaces, aspect
     model.add(marking);
   }
 }
+// F2: marcas de faca por perfil explícito de representação. O fingerprint FNV liga o
+// perfil ao asset/versão conhecido do caller — representação trocada não recebe marca.
+function knifeGeometryFingerprint(model) {
+  const meshes = [];
+  model.traverse((object) => {
+    const positions = object.isMesh && !handMesh(object) && object.geometry?.attributes?.position;
+    if (!positions || object.name.startsWith('skin-') || object.name.startsWith('club-mark-')) return;
+    meshes.push(object);
+  });
+  meshes.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  let h = 0x811c9dc5;
+  const mix = (text) => {
+    for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  };
+  for (const mesh of meshes) {
+    mix(mesh.name || '');
+    mix('#');
+    const positions = mesh.geometry.attributes.position.array;
+    for (let i = 0; i < positions.length; i++) mix(positions[i].toFixed(6));
+    const index = mesh.geometry.index;
+    if (index) for (let i = 0; i < index.array.length; i++) mix(String(index.array[i]));
+    mix('|');
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
+const KNIFE_MARK_PROFILES = Object.freeze({
+  'knife-fp': Object.freeze({
+    id: 'coro-knife-fp-v2',
+    representation: 'skinned-bone',
+    fingerprint: '2b9905bf',
+    blade: Object.freeze({ fromGrip: 0.50, toTip: 0.96, minSlenderness: 2.2 }),
+    roles: Object.freeze({
+      symbol: Object.freeze({ along: 0.40, sizeFrac: 0.62 }),
+      slogan: Object.freeze({ along: 0.76, sizeFrac: 0.62, longitudinal: true }),
+    }),
+    liftFrac: 0.05,
+    coverage: FOOTPRINT_TOLERANCE,
+  }),
+  'knife-tp': Object.freeze({
+    id: 'coro-knife-tp-v2',
+    representation: 'rigid-wrap',
+    fingerprint: 'eede1583',
+    blade: Object.freeze({ fromGrip: 0.50, toTip: 0.96, minSlenderness: 2.2 }),
+    roles: Object.freeze({
+      symbol: Object.freeze({ along: 0.40, sizeFrac: 0.62 }),
+      slogan: Object.freeze({ along: 0.76, sizeFrac: 0.62, longitudinal: true }),
+    }),
+    liftFrac: 0.05,
+    coverage: FOOTPRINT_TOLERANCE,
+  }),
+});
+const KNIFE_CONTEXTS = Object.freeze(Object.keys(KNIFE_MARK_PROFILES));
+
+function knifeProfileValid(profile) {
+  const { blade, roles } = profile;
+  if (!(blade.fromGrip > 0 && blade.toTip > blade.fromGrip && blade.toTip <= 1 && blade.minSlenderness > 0)) return false;
+  for (const role of Object.values(roles)) {
+    if (!(role.along >= 0 && role.along <= 1 && role.sizeFrac > 0 && role.sizeFrac < 1)) return false;
+  }
+  return true;
+}
+
+function knifeRigidBone(meshes) {
+  let bone = null;
+  for (const mesh of meshes) {
+    const { skinIndex, skinWeight, position } = mesh.geometry.attributes;
+    if (!mesh.isSkinnedMesh || !skinIndex || !skinWeight) continue;
+    for (let i = 0; i < position.count; i++) {
+      let sum = 0, dominant = -1, dominantWeight = 0;
+      for (let k = 0; k < skinIndex.itemSize; k++) {
+        const weight = skinWeight.array[i * skinWeight.itemSize + k];
+        if (!Number.isFinite(weight) || weight < 0) return null;
+        sum += weight;
+        if (weight > 1e-6) {
+          if (dominant >= 0) return null;
+          dominant = skinIndex.array[i * skinIndex.itemSize + k];
+          dominantWeight = weight;
+        }
+      }
+      if (!Number.isFinite(sum) || Math.abs(sum - 1) > 1e-3 || dominant < 0 || dominantWeight < 0.999) return null;
+      const vertexBone = mesh.skeleton.bones[dominant];
+      if (!vertexBone) return null;
+      if (bone === null) bone = vertexBone;
+      else if (vertexBone !== bone) return null;
+    }
+  }
+  return bone;
+}
+
+function principalAxis(centered, exclude = []) {
+  // Eixo principal da covariância por potenciação, ortonormalizado contra `exclude`.
+  const axis = new THREE.Vector3(Math.SQRT1_2, Math.sqrt(1 / 3), Math.sqrt(1 - 0.5 - 1 / 3));
+  for (const fixed of exclude) axis.addScaledVector(fixed, -fixed.dot(axis)).normalize();
+  const covariance = [0, 0, 0, 0, 0, 0];
+  for (const p of centered) {
+    covariance[0] += p.x * p.x; covariance[1] += p.x * p.y; covariance[2] += p.x * p.z;
+    covariance[3] += p.y * p.y; covariance[4] += p.y * p.z; covariance[5] += p.z * p.z;
+  }
+  const apply = (v) => new THREE.Vector3(
+    covariance[0] * v.x + covariance[1] * v.y + covariance[2] * v.z,
+    covariance[1] * v.x + covariance[3] * v.y + covariance[4] * v.z,
+    covariance[2] * v.x + covariance[4] * v.y + covariance[5] * v.z,
+  );
+  for (let i = 0; i < 32; i++) {
+    const next = apply(axis);
+    for (const fixed of exclude) next.addScaledVector(fixed, -fixed.dot(next));
+    if (next.lengthSq() < 1e-18) break;
+    axis.copy(next.normalize());
+  }
+  return axis.normalize();
+}
+
+function knifeBladeFrame(model, profile) {
+  model.updateMatrixWorld(true);
+  const meshes = [];
+  model.traverse((object) => {
+    const positions = object.isMesh && !handMesh(object) && object.geometry?.attributes?.position;
+    if (!positions || object.name.startsWith('skin-') || object.name.startsWith('club-mark-')) return;
+    meshes.push(object);
+  });
+  if (!meshes.length) return { error: 'no-knife-geometry' };
+  const bone = knifeRigidBone(meshes);
+  if (meshes.some((mesh) => mesh.isSkinnedMesh) && !bone) return { error: 'mixed-rig' };
+  // Frame no espaço do osso rígido (1P): a inversa da câmera diagonaliza os eixos da cena.
+  const frameMatrix = (bone || model).matrixWorld.clone().invert();
+  const point = new THREE.Vector3();
+  const points = [];
+  const triangles = [];
+  for (const mesh of meshes) {
+    const positions = mesh.geometry.attributes.position;
+    const matrix = new THREE.Matrix4().multiplyMatrices(frameMatrix, mesh.matrixWorld);
+    for (let i = 0; i < positions.count; i++) points.push(point.fromBufferAttribute(positions, i).applyMatrix4(matrix).clone());
+    const index = mesh.geometry.index;
+    const total = index ? index.count : positions.count;
+    for (let i = 0; i < total; i += 3) {
+      const corners = [];
+      for (let j = 0; j < 3; j++) {
+        const v = index ? index.getX(i + j) : i + j;
+        corners.push(point.fromBufferAttribute(positions, v).applyMatrix4(matrix).clone());
+      }
+      triangles.push(corners);
+    }
+  }
+  if (!points.length || !triangles.length) return { error: 'no-knife-geometry' };
+  const centroid = points.reduce((acc, p) => acc.add(p), new THREE.Vector3()).divideScalar(points.length);
+  const centered = points.map((p) => p.clone().sub(centroid));
+  // A faca vive diagonal em qualquer espaço de exportação: eixos por PCA, não por eixo nominal.
+  const long = principalAxis(centered);
+  const trans = principalAxis(centered, [long]);
+  const normal = new THREE.Vector3().crossVectors(long, trans).normalize();
+  const projected = (p) => [p.dot(long), p.dot(trans), p.dot(normal)];
+  const coordinates = points.map(projected);
+  const longRange = coordinates.reduce(([lo, hi], c) => [Math.min(lo, c[0]), Math.max(hi, c[0])], [Infinity, -Infinity]);
+  const normalRange = coordinates.reduce(([lo, hi], c) => [Math.min(lo, c[2]), Math.max(hi, c[2])], [Infinity, -Infinity]);
+  const len = longRange[1] - longRange[0];
+  if (!(len >= profile.blade.minSlenderness * Math.max(normalRange[1] - normalRange[0], 1e-9))) {
+    return { error: 'unexpected-geometry' };
+  }
+  const slice = (from, to) => coordinates
+    .filter((c) => c[0] >= from && c[0] <= to)
+    .reduce((acc, c) => {
+      acc[0] = Math.min(acc[0], c[1]); acc[1] = Math.max(acc[1], c[1]);
+      acc[2] = Math.min(acc[2], c[2]); acc[3] = Math.max(acc[3], c[2]);
+      return acc;
+    }, [Infinity, -Infinity, Infinity, -Infinity]);
+  const head = slice(longRange[0] + len * 0.88, longRange[1]);
+  const tail = slice(longRange[0], longRange[0] + len * 0.12);
+  const tipAtMax = (head[1] - head[0]) + (head[3] - head[2]) <= (tail[1] - tail[0]) + (tail[3] - tail[2]);
+  const longSign = tipAtMax ? 1 : -1;
+  const gripEnd = tipAtMax ? longRange[0] : longRange[1];
+  const { fromGrip, toTip } = profile.blade;
+  const regionUMin = Math.min(gripEnd + longSign * fromGrip * len, gripEnd + longSign * toTip * len);
+  const regionUMax = Math.max(gripEnd + longSign * fromGrip * len, gripEnd + longSign * toTip * len);
+  const regionTriangles = triangles
+    .map((corners) => corners.map(projected))
+    .filter((corners) => corners.some(([u]) => u >= regionUMin && u <= regionUMax));
+  if (!regionTriangles.length) return { error: 'unexpected-geometry' };
+  const flat = regionTriangles.flat();
+  return {
+    bone, long, trans, normal, longSign, regionUMin, regionUMax,
+    triangles: regionTriangles,
+    transLow: flat.reduce((lo, c) => Math.min(lo, c[1]), Infinity),
+    transHigh: flat.reduce((hi, c) => Math.max(hi, c[1]), -Infinity),
+  };
+}
+
+function knifeSupportedPlacement(frame, profile, height, width, centerU, priors) {
+  const halfH = height / 2;
+  const halfW = width / 2;
+  if (centerU - halfH < frame.regionUMin || centerU + halfH > frame.regionUMax) return null;
+  const overlapping = frame.triangles.filter((tri) => {
+    const us = tri.map((c) => c[0]);
+    return Math.min(...us) <= centerU + halfH && Math.max(...us) >= centerU - halfH;
+  });
+  if (!overlapping.length) return null;
+  const flat = overlapping.flat();
+  const tMin = flat.reduce((lo, c) => Math.min(lo, c[1]), Infinity);
+  const tMax = flat.reduce((hi, c) => Math.max(hi, c[1]), -Infinity);
+  const centerT = (tMin + tMax) / 2;
+  // Footprint integral: retângulo menos a união dos triângulos reais (knife-mark-support).
+  if (!footprintFullyCovered(centerU, centerT, halfH, halfW, overlapping, profile.coverage)) return null;
+  if (priors.some((p) => Math.abs(p.centerU - centerU) < p.height / 2 + halfH
+    && Math.abs(p.centerT - centerT) < p.width / 2 + halfW)) return null;
+  const nMax = flat.reduce((hi, c) => Math.max(hi, c[2]), -Infinity);
+  const nMin = flat.reduce((lo, c) => Math.min(lo, c[2]), Infinity);
+  const lift = profile.liftFrac * Math.max(nMax - nMin, 1e-9);
+  return { width, height, centerU, centerT, rightN: nMax + lift, leftN: nMin - lift };
+}
+
+function knifePlacement(frame, profile, aspect, role, priors) {
+  const tExtent = frame.transHigh - frame.transLow;
+  const uExtent = frame.regionUMax - frame.regionUMin;
+  let baseHeight = role.sizeFrac * tExtent * (role.longitudinal ? aspect : 1);
+  let baseWidth = role.sizeFrac * tExtent * (role.longitudinal ? 1 : aspect);
+  const fit = Math.min(1, (tExtent * 0.9) / baseWidth, (uExtent * 0.8) / baseHeight);
+  baseHeight *= fit;
+  baseWidth *= fit;
+  if (!(baseHeight > 0) || !Number.isFinite(baseHeight) || !Number.isFinite(baseWidth)) return null;
+  // `along` é preferência: a lâmina real tem vazios — procura centro e escala suportados.
+  for (const scale of [1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6]) {
+    const height = baseHeight * scale;
+    const width = baseWidth * scale;
+    for (let delta = 0; delta <= 50; delta++) {
+      for (const sign of delta === 0 ? [1] : [1, -1]) {
+        const centerU = frame.regionUMin + (role.along + sign * delta * 0.02) * uExtent;
+        const placement = knifeSupportedPlacement(frame, profile, height, width, centerU, priors);
+        if (placement) return placement;
+      }
+    }
+  }
+  return null;
+}
+
+function addKnifePair(model, skinId, role, texture, frame, placement, context) {
+  const geometry = new THREE.PlaneGeometry(placement.width, placement.height);
+  if (KNIFE_MARK_PROFILES[context].roles[role].longitudinal) {
+    const uv = geometry.attributes.uv;
+    for (let i = 0; i < uv.count; i++) { const u = uv.getX(i); uv.setXY(i, 1 - uv.getY(i), u); }
+  }
+  const material = paintedMaterial(texture, skinId, role);
+  const longVector = frame.long.clone().multiplyScalar(frame.longSign);
+  for (const [side, n, flip] of [['right', placement.rightN, false], ['left', placement.leftN, true]]) {
+    const planeZ = flip ? frame.normal.clone().negate() : frame.normal.clone();
+    const planeX = new THREE.Vector3().crossVectors(longVector, planeZ);
+    const position = new THREE.Vector3()
+      .addScaledVector(frame.long, placement.centerU)
+      .addScaledVector(frame.trans, placement.centerT)
+      .addScaledVector(frame.normal, n);
+    const planeFrame = new THREE.Matrix4().makeBasis(planeX, longVector, planeZ).setPosition(position);
+    const marking = new THREE.Mesh(geometry, material);
+    marking.name = `skin-${role}-${skinId}-${side}`;
+    if (frame.bone) {
+      // Frame já está no espaço do osso: attach direto, conversão única na bind.
+      marking.matrixAutoUpdate = false;
+      marking.matrix.copy(planeFrame);
+    } else {
+      marking.applyMatrix4(planeFrame);
+    }
+    marking.renderOrder = 3;
+    marking.userData.weaponSkin = skinId;
+    marking.userData.markingRole = role;
+    marking.userData.fittedToMesh = true;
+    marking.userData.knifeMarkContext = context;
+    (frame.bone || model).add(marking);
+  }
+}
+
+function attachKnifeMarkings(model, skinId, context) {
+  const profile = KNIFE_MARK_PROFILES[context] || null;
+  const report = { context: context || null, profile: profile?.id || null, status: '', roles: [] };
+  const finish = (status) => { report.status = status; model.userData.knifeMarkings = report; };
+  if (!profile) return finish('missing-context');
+  const definition = WEAPON_SKINS[skinId];
+  if (!definition) return finish('unknown-skin');
+  if (definition.officialMarksIncluded) return finish('official-mark-unsupported');
+  if (!knifeProfileValid(profile)) return finish('profile-invalid');
+  const items = [];
+  if (definition.markAsset) {
+    const symbol = markTextures.get(skinId);
+    if (!symbol) return finish('mark-texture-not-ready');
+    items.push({ role: 'symbol', texture: symbol, aspect: (symbol.image?.width || 1) / (symbol.image?.height || 1) });
+  }
+  if (definition.slogan) {
+    const slogan = sloganTexture(skinId);
+    if (!slogan) return finish('slogan-texture-unavailable');
+    items.push({ role: 'slogan', texture: slogan, aspect: definition.sloganAspect || 8 });
+  }
+  if (!items.length) return finish('no-mark-asset');
+  // Representação/asset exigidos pelo perfil: fingerprint FNV antes de qualquer fit.
+  if (knifeGeometryFingerprint(model) !== profile.fingerprint) return finish('representation-mismatch');
+  const skinned = [];
+  model.traverse((object) => {
+    const positions = object.isMesh && !handMesh(object) && object.geometry?.attributes?.position;
+    if (positions && !object.name.startsWith('skin-') && !object.name.startsWith('club-mark-') && object.isSkinnedMesh) skinned.push(object);
+  });
+  if (profile.representation === 'skinned-bone' && skinned.length !== 1) return finish('representation-mismatch');
+  if (profile.representation === 'rigid-wrap' && skinned.length !== 0) return finish('representation-mismatch');
+  const frame = knifeBladeFrame(model, profile);
+  if (frame.error) return finish(frame.error);
+  const placements = [];
+  for (const item of items) {
+    const placement = knifePlacement(frame, profile, item.aspect, profile.roles[item.role], placements.map(({ placement: p }) => p));
+    if (!placement) return finish('footprint-unsupported');
+    placements.push({ item, placement });
+  }
+  placements.forEach(({ item, placement }) => addKnifePair(model, skinId, item.role, item.texture, frame, placement, context));
+  report.roles = items.map(({ role }) => role);
+  return finish('attached');
+}
 
 function attachPoliticalMarkings(model, weaponId, skinId) {
   const symbol = markTextures.get(skinId);
@@ -574,7 +885,8 @@ function attachOfficialMark(model, weaponId, skinId) {
   }
 }
 
-function attachSkinMark(model, weaponId, skinId) {
+function attachSkinMark(model, weaponId, skinId, knifeContext) {
+  if (weaponId === 'knife') return attachKnifeMarkings(model, skinId, knifeContext);
   if (WEAPON_SKINS[skinId]?.officialMarksIncluded) attachOfficialMark(model, weaponId, skinId);
   else attachPoliticalMarkings(model, weaponId, skinId);
 }
@@ -613,7 +925,7 @@ export function reviewWeaponSkinId() {
 
 // `marcas:false` pinta a peça sem repetir decalque/selo — usado nas peças IRMÃS da arma
 // (pente, ferrolho), que precisam do material da pintura mas não de um segundo adesivo.
-export function applyWeaponSkinCandidate(model, weaponId, skinId, { marcas = true } = {}) {
+export function applyWeaponSkinCandidate(model, weaponId, skinId, { marcas = true, knifeContext = null } = {}) {
   if (!skinId) return false;
   const definition = WEAPON_SKINS[skinId];
   if (!definition || !definition.targetWeapons.includes(weaponId)) return false;
@@ -627,7 +939,7 @@ export function applyWeaponSkinCandidate(model, weaponId, skinId, { marcas = tru
       ? object.material.map(skinMaterial)
       : skinMaterial(object.material);
   });
-  if (marcas) attachSkinMark(model, weaponId, skinId);
+  if (marcas) attachSkinMark(model, weaponId, skinId, knifeContext);
   model.userData.weaponSkin = skinId;
   return true;
 }

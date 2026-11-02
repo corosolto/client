@@ -6,6 +6,7 @@ export const SLEEVE_MATERIAL = /CoroSolto_FP_Cloth/i;
 const MIN_LOOP = 8;
 const RINGS = 4;
 const GET = ['getX', 'getY', 'getZ', 'getW'];
+const SET = ['setX', 'setY', 'setZ', 'setW'];
 
 function weldKey(position, index) {
   return `${Math.round(position.getX(index) * 1e4)},${Math.round(position.getY(index) * 1e4)},${Math.round(position.getZ(index) * 1e4)}`;
@@ -151,12 +152,17 @@ export function capSleeveOpenings(mesh) {
   for (const nome of nomes) {
     const attr = geo.attributes[nome];
     const item = attr.itemSize;
-    const arr = new attr.array.constructor((pos.count + extras.length) * item);
-    for (let i = 0; i < attr.count; i += 1) for (let c = 0; c < item; c += 1) arr[i * item + c] = attr[GET[c]](i);
+    // computeVertexNormals acumula por setXYZ com Math.round(x*32767) no Int16 normalizado:
+    // face de área pequena arredonda a contribuição a 0 e o PBR recebe normal (0,0,0). MANGA-NORMAIS.md.
+    const flutuante = nome === 'normal';
+    const arr = new (flutuante ? Float32Array : attr.array.constructor)((pos.count + extras.length) * item);
+    const novo = new THREE.BufferAttribute(arr, item, flutuante ? false : attr.normalized);
+    /* Pelo ACESSOR, nunca pelo array cru: `getX` desnormaliza e o golden é quantizado
+       (Int16 normalizada), então o float truncava pra 0. §5 do doc de 26/10; MT6/MT7. */
+    for (let i = 0; i < attr.count; i += 1) for (let c = 0; c < item; c += 1) novo[SET[c]](i, attr[GET[c]](i));
     extras.forEach((media, k) => {
-      for (let c = 0; c < item; c += 1) arr[(pos.count + k) * item + c] = media[nome][c];
+      for (let c = 0; c < item; c += 1) novo[SET[c]](pos.count + k, media[nome][c]);
     });
-    const novo = new THREE.BufferAttribute(arr, item, attr.normalized);
     geo.setAttribute(nome, novo);
   }
   const indices = antigos

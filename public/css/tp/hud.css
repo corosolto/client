@@ -278,12 +278,13 @@
   :root[data-ui="v3"] #touch-ui .touch-btn svg,.tp-toque svg{width:46%;height:46%}
   :root[data-ui="v3"] #touch-ui .touch-btn:active,.tp-toque:active{background:rgba(180,217,46,.55)}
   .tp-toque-rotulo~svg{display:none}
-  .tp-toque-atira{right:calc(20px + var(--sr));bottom:calc(20px + var(--sb));width:96px;height:96px;border:3px solid rgba(255,255,255,.4);
+  :root[data-ui="v3"] #touch-ui .tp-toque-atira{right:calc(20px + var(--sr));bottom:calc(20px + var(--sb));width:96px;height:96px;border:3px solid rgba(255,255,255,.4);
     background:rgba(224,50,50,.55);font:400 18px/1 var(--tp-display)}
   :root[data-ui="v3"] #touch-ui .touch-ads{right:calc(128px + var(--sr));bottom:calc(28px + var(--sb));width:64px;height:64px}
   .tp-toque-pula{right:calc(40px + var(--sr));bottom:calc(128px + var(--sb));width:56px;height:56px}
   :root[data-ui="v3"] #touch-ui .touch-reload{right:calc(118px + var(--sr));bottom:calc(104px + var(--sb));width:48px;height:48px}
-  .tp-toque-ping{right:calc(170px + var(--sr));bottom:calc(104px + var(--sb));width:48px;height:48px;border:0;color:var(--tp-tinta-1)}
+  .tp-toque-camera{right:calc(170px + var(--sr));bottom:calc(104px + var(--sb));width:48px;height:48px;border:0;color:var(--tp-tinta-1)}
+  .tp-toque-ping{right:calc(222px + var(--sr));bottom:calc(104px + var(--sb));width:48px;height:48px;border:0;color:var(--tp-tinta-1)}
   :root[data-ui="v3"] #touch-ui .touch-crouch{left:calc(176px + var(--sl));right:auto;bottom:calc(24px + var(--sb));width:52px;height:52px;
     border:0;background:rgba(9,7,4,.75);font-size:10px}
   :root[data-ui="v3"] #touch-ui .touch-pause,.tp-toque-placar{top:calc(10px + var(--st));bottom:auto;width:44px;height:44px;border-radius:10px;

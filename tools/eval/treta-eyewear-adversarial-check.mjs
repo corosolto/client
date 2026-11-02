@@ -26,7 +26,7 @@ async function headshot(source){
  const anchor=mod.mountEyewear(model,{id:'capitao',eyewearId:'test'});assert(anchor);model.remove(body);
  const head=new THREE.Mesh(new THREE.BoxGeometry(.26,.3,.26),new THREE.MeshBasicMaterial());model.add(head);model.updateMatrixWorld(true);
  const bot={alive:true,team:'B',mesh:{group:model,parts:{head}},pos:new THREE.Vector3(0,-1.6,0)};model.traverse(o=>o.userData.botOwner=bot);
- let last;const game={ray:new THREE.Raycaster(),bots:[bot],playerTeam:'E',world:{occluders:[]},_consultarTiro:Game.prototype._consultarTiro,_penetrationExit:Game.prototype._penetrationExit,_targetFromHit:target,_shotDamage:(d,w,dist,h)=>h?100:d,_damage:(b,d,s,w,h)=>{last={damage:d,head:h};},_fleshImpact(){},_armoredTarget(){return false;}};
+ let last;const game={ray:new THREE.Raycaster(),bots:[bot],playerTeam:'E',world:{occluders:[]},_consultarTiro:Game.prototype._consultarTiro,_perfilCabeca:Game.prototype._perfilCabeca,_participanteHumano:Game.prototype._participanteHumano,_penetrationExit:Game.prototype._penetrationExit,_targetFromHit:target,_shotDamage:(d,w,dist,h)=>h?100:d,_damage:(b,d,s,w,h)=>{last={damage:d,head:h};},_fleshImpact(){},_armoredTarget(){return false;}};
  const from=new THREE.Vector3(0,0,3),dir=new THREE.Vector3(0,0,-1);
  game.ray.set(from,dir);assert.equal(game.ray.intersectObjects([model],true)[0]?.object,head,'cosmetic raycast must remain disabled');
  fire.call(game,{team:'E'},from,dir,25,false,'AWP',null,false);

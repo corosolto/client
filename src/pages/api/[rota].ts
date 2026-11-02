@@ -12,7 +12,7 @@ const MIGRADAS = new Set([
   'treta',
   'social','social-auth','social-avatar','gameplay-upload','acquisition', 'avatar', 'clans', 'count', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
   'leaderboard', 'live-map', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
-  'submit-match', 'telemetry', 'train-frames',
+  'submit-match', 'telemetry', 'train-frames', 'unique',
 ]);
 
 // Social e avatar usam 404 para perfis ausentes ou privados; preservar esse status.
@@ -34,7 +34,7 @@ const handler: APIRoute = async (context) => {
     `${BACKEND.replace(/\/$/, '')}/api/${rota}${url.search}`,
     clientAddress,
     fetch,
-    { segredo: SEGREDO, session: ['treta','social','social-auth','social-avatar','gameplay-upload','register','avatar','mp-ticket','clans'].includes(rota) },
+    { segredo: SEGREDO, session: ['treta','social','social-auth','social-avatar','gameplay-upload','register','avatar','mp-ticket','clans','unique'].includes(rota), userAgent: rota === 'unique' },
   );
   if (resposta.status === 404 && (EM_ROLLOUT.includes(rota) || rota === 'gameplay-upload')) {
     await resposta.body?.cancel().catch(() => {});

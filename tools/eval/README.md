@@ -20,6 +20,7 @@ com código 1 em falha crítica.
 | `firing-cadence-check.mjs` | Cadência pelo _updatePlayer real; calendário, cooldown, teto por passo, entrada e interrupções, com mutantes. | `npm run eval:firing-cadence` |
 | `recoil-contract-check.mjs` | Perfis históricos de #970; mede câmera, padrão e kick entregue ao viewmodel pelo disparo real. | `npm run eval:recoil-contract` |
 | `tp-jump-ownership-check.mjs` | Salto interrompido: seleção real cancela ownership, recusa preserva ação e revive permite retorno; rigs reais em CPU, sem aceite visual. | `npm run eval:tpjumpownership` |
+| `tp-identity-check.mjs` | Arma do bot e luva própria no TP: Game/GLBs reais em CPU, boot frio com latch, todas as partes da luva, recusa atômica e mutantes causais; sem aceite visual. | `npm run eval:tp-identity` |
 | `ranking-home-status.mjs` | Estado real dos renderers da home: 38 casos entre loading/OFF/rede/vazio/sucesso e oito mutantes; DOM em Node, sem aceite visual. | `npm run eval:ranking-home-status` |
 | `invariants.mjs` | **O portão principal.** As invariantes permanentes: toda vez que o dono reporta um bug, ele vira uma invariante aqui e nunca mais volta. Regenera `vm_kick_sim.json` sozinho e LÊ `vm_mint_audit.json`. | `npm run eval:invariants` |
 | `vm-mint-audit.mjs` | Enquadramento do viewmodel arma por arma, nos 26 GLBs reais. Mede a seção transversal perto de cada ponta em Z pra descobrir se a arma está de ré. | `vm_mint_audit.json` (**versionado — sem ele as invariantes VM1–VM6/VM9/VM10 viram PULADAS, que é portão verde por ausência de dado**) |
@@ -120,6 +121,7 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `vm-project.mjs`, `vm-solve.mjs` | Projeção e solução do enquadramento. |
 | `vm-verify.mjs` | Verificação final do viewmodel. |
 | `tp-mount-probe.mjs` | Mount de 3ª pessoa, com parser de GLB próprio. |
+| `tp-glove-manifest-retry-check.mjs` | Retry do manifesto TP: Game e GLTFLoader reais em CPU, orçamento por demanda, concorrência e negativos definitivos; `--source-root` e mutantes focais. Comandos e limites em [R864](../../docs/reports/GLOVE-MANIFEST-R864-CONTINUATION.md). Ferramenta focal, sem registro no CI. |
 | `fparms-capture.mjs` | Captura dos braços de 1ª pessoa. |
 | `mount-capture.mjs` | Captura do ponto de mount. |
 | `weapon-capture.mjs` | Captura arma a arma. |

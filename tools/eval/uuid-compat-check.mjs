@@ -1,12 +1,13 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const file = new URL('../../public/js/main.js', import.meta.url);
-let source = fs.readFileSync(file, 'utf8');
+const mainFile = new URL('../../public/js/main.js', import.meta.url);
+const idFile = new URL('../../public/js/client-id.js', import.meta.url);
+let source = `${fs.readFileSync(idFile, 'utf8')}\n${fs.readFileSync(mainFile, 'utf8')}`;
 const mutant = process.argv.includes('--mutante=chamada-direta');
 
 if (mutant) {
-  source = source.replace('a = clientUuid()', 'a = crypto.randomUUID()');
+  source = source.replace('id = clientUuid()', 'id = crypto.randomUUID()');
   source = source.replace('t = clientUuid()', 't = crypto.randomUUID()');
 }
 

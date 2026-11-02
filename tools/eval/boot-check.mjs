@@ -120,6 +120,8 @@ try {
   // navegador de diagnóstico consente com a medição (privacy-runtime.js): desde a
   // frente social o relatório de erros é opt-in e o portão mede o caminho completo
   await context.addInitScript(() => {
+    // B3 asserts Portuguese copy: select the product's explicit language before boot.
+    try { localStorage.setItem('cs_lang', 'pt'); } catch {}
     try { localStorage.setItem('cs_privacy', JSON.stringify({ version: 'corosolto-analytics-v1', analytics: true, updatedAt: new Date(0).toISOString() })); } catch {}
   });
   const relatorios = [];
@@ -178,8 +180,37 @@ try {
     });
   }
 
+  /* B4: chegada = seq monotônica; aguarda histórico E futuro sem gap de registro
+     (varredura e cadastro síncronos no mesmo tick). Ledger R90, expectations frozen. */
+  const coletor = { seq: 0, registros: [] };
+  const aguardas = new Set();
+  function coletorRecebe(corpo) {
+    const rec = { seq: ++coletor.seq, corpo };
+    coletor.registros.push(rec);
+    for (const w of [...aguardas]) {
+      if (Date.now() >= w.prazo) {
+        clearTimeout(w.timer); aguardas.delete(w); w.resolve(null);
+      } else if (rec.seq > w.minSeq && w.casa(corpo)) {
+        clearTimeout(w.timer); aguardas.delete(w); w.resolve(rec);
+      }
+    }
+  }
+  function esperaRelatorio(casa, minSeq, prazo) {
+    if (Date.now() >= prazo) return Promise.resolve(null);
+    const noHistorico = coletor.registros.find((r) => r.seq > minSeq && casa(r.corpo));
+    if (noHistorico) return Promise.resolve(noHistorico);
+    return new Promise((resolve) => {
+      const w = { casa, minSeq, prazo, resolve, timer: null };
+      w.timer = setTimeout(() => { aguardas.delete(w); resolve(null); }, Math.max(prazo - Date.now(), 1));
+      aguardas.add(w);
+    });
+  }
+  function limpaAguardas() { for (const w of aguardas) { clearTimeout(w.timer); w.resolve(null); } aguardas.clear(); }
+
   await context.route('**/api/jserror', async (rota) => {
-    try { relatorios.push(JSON.parse(rota.request().postData() || '{}')); } catch { relatorios.push({ invalido: true }); }
+    let corpo; try { corpo = JSON.parse(rota.request().postData() || '{}'); } catch { corpo = { invalido: true }; }
+    relatorios.push(corpo);
+    coletorRecebe(corpo);
     await rota.fulfill({ status: 204, body: '' });
   });
 
@@ -245,21 +276,63 @@ try {
 
     if (FOTO) await page.screenshot({ path: FOTO, fullPage: false, timeout: 120000 });
 
-    const automaticos = relatorios.length;
-    await page.evaluate(() => document.getElementById('launch-error-report')?.click());
-    await page.waitForTimeout(350);
-    const manual = relatorios.at(-1) || {};
-    const confirmacao = await page.evaluate(() => ({
-      texto: document.getElementById('launch-error-report')?.textContent?.trim() || '',
-      status: document.getElementById('launch-error-status')?.textContent?.trim() || '',
-    }));
-    b4 = automaticos >= 1 && relatorios.length > automaticos
-      && estado.codigo.endsWith(String(manual.fingerprint || '').toUpperCase())
-      && /SEGREDO_BOOT_CHECK/.test(manual.message || '')
-      && confirmacao.texto === 'RELATÓRIO ENVIADO ✓' && /ajuda a gente/i.test(confirmacao.status);
+    /* B4 exige recibo automático exato ANTES do clique; manual só vale com seq NOVA (> base de
+       chegadas) + ack real de UI, tudo num único prazo absoluto de 15 s. Ledger R90. */
+    const b4Prazo = Date.now() + 15000;
+    const restoB4 = () => {
+      const ms = b4Prazo - Date.now();
+      if (ms <= 0) { const erro = new Error('B4_DEADLINE'); erro.code = 'B4_DEADLINE'; throw erro; }
+      return ms;
+    };
+    const fpCartao = (estado.codigo.match(/^CÓDIGO ([0-9A-F]{8})$/) || [null, null])[1];
+    const casaB4 = (r) => !!fpCartao && !!r && !r.invalido
+      && typeof r.fingerprint === 'string' && r.fingerprint.toUpperCase() === fpCartao
+      && r.kind === 'error' && r.source === 'main.js:startGame'
+      && typeof r.message === 'string' && r.message.includes('SEGREDO_BOOT_CHECK');
+    let recAuto = null, recManual = null, baseManual = -1, cliques = 0, erroB4 = '';
+    let ack = { texto: '', status: '' }, faseB4 = 'AUTO';
+    try {
+      recAuto = await esperaRelatorio(casaB4, -1, b4Prazo);
+      if (recAuto) {
+        restoB4();
+        baseManual = coletor.seq;
+        const pManual = esperaRelatorio(casaB4, baseManual, b4Prazo);
+        try {
+          faseB4 = 'MANUAL_CLICK';
+          cliques = await page.evaluate(() => {
+            const botao = document.getElementById('launch-error-report');
+            if (!botao || botao.disabled) return 0;
+            botao.click(); return 1;
+          });
+          faseB4 = 'MANUAL_REPORT';
+          recManual = await pManual;
+        } finally { limpaAguardas(); }
+        if (recManual) {
+          faseB4 = 'UI_ACK';
+          await page.waitForFunction(() => {
+            const t = document.getElementById('launch-error-report')?.textContent?.trim() || '';
+            const s = document.getElementById('launch-error-status')?.textContent?.trim() || '';
+            return t === 'RELATÓRIO ENVIADO ✓' && /ajuda a gente/i.test(s);
+          }, null, { timeout: restoB4() });
+          restoB4();
+          ack = await page.evaluate(() => ({
+            texto: document.getElementById('launch-error-report')?.textContent?.trim() || '',
+            status: document.getElementById('launch-error-status')?.textContent?.trim() || '',
+          }));
+          restoB4();
+        }
+      }
+    } catch (erro) {
+      if (erro.code !== 'B4_DEADLINE' && erro.name !== 'TimeoutError') throw erro;
+      erroB4 = erro.code || `B4_${faseB4}_TIMEOUT`;
+    } finally { limpaAguardas(); }
+    b4 = !erroB4 && Date.now() < b4Prazo && !!recAuto && !!recManual && cliques === 1
+      && ack.texto === 'RELATÓRIO ENVIADO ✓' && /ajuda a gente/i.test(ack.status);
     console.log('B4 · relatório automático + confirmação manual chegam ao coletor');
-    console.log(`   automáticos ${automaticos}   total após confirmação ${relatorios.length}   fingerprint confere ${estado.codigo.endsWith(String(manual.fingerprint || '').toUpperCase())}`);
-    console.log(`   botão ${JSON.stringify(confirmacao.texto)}`);
+    console.log(`   automático seq ${recAuto ? recAuto.seq : 'nenhum'}   manual seq ${recManual ? recManual.seq : 'nenhum'} (base ${baseManual})   cliques ${cliques}`);
+    console.log(`   total no coletor ${relatorios.length}   aguardas pendentes ${aguardas.size}   botão ${JSON.stringify(ack.texto)}`);
+    if (!b4) console.log(`   motivo ${erroB4 || (!recAuto ? 'B4_AUTO_TIMEOUT' : cliques !== 1 ? 'B4_MANUAL_CLICK_MISSING'
+      : !recManual ? 'B4_MANUAL_TIMEOUT' : Date.now() >= b4Prazo ? 'B4_DEADLINE' : 'B4_UI_ACK_INVALID')}`);
     console.log(`   ${b4 ? 'PASSA' : 'FALHA'}\n`);
 
     if (b3 && b4) {

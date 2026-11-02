@@ -21,6 +21,61 @@ const VM_TETO = Number(process.env.VM_TETO || 0.06);
 const PT_VAZA = /\b(VIDA|ABATES|SEQUÊNCIA|RODADA|PLACAR|RÁDIO|CLIQUE|OLHA AQUI|marcou)\b/;
 const EN_VAZA = /\b(HEALTH|KILLS|STREAK|ROUND|SCOREBOARD|RADIO|CLICK|LOOK HERE|marked)\b/;
 
+/* CLI estrita, validada ANTES de abrir o navegador: --alvo=HU… conhecido, SO só filtra mutantes de --mutantes. */
+const MUT = [['retrato-vivo', 'HU1'], ['placar-cinza', 'HU2'], ['xp-falso', 'HU3'], ['municao-proporcional', 'HU4'], ['sem-hs', 'HU5'],
+  ['dica-eterna', 'HU6'], ['tutorial-sem-tiro', 'HU6'], ['tutorial-sem-recarga', 'HU6'], ['badge-solto', 'HU7'], ['dica-na-mira', 'HU8'], ['dica-sem-en', 'HU9'], ['legado-vazado', 'HU10'],
+  ['ping-mentiroso', 'HU11'], ['hs-errado', 'HU11'], ['abas-mudas', 'HU12'], ['tab-foco', 'HU12'], ['chat-eterno', 'HU12'], ['sem-silenciar', 'HU12'],
+  ['pula-pequeno', 'HU13'], ['atira-mudo', 'HU13'], ['ping-toque-mudo', 'HU13'], ['ping-surdo', 'HU14'], ['placar-abates', 'HU15'], ['plural-fixo', 'HU15'], ['bot-texto', 'HU15'],
+  ['chips-esquerda', 'HU15'], ['slots-soltos', 'HU15'], ['alt-surdo', 'HU16'], ['sem-cache-avatar', 'HU17'], ['cache-falha-preso', 'HU18'],
+  ['armas-toque-ocultas', 'HU13'], ['arma-toque-muda', 'HU13']];
+const ARGV = process.argv.slice(2);
+const CONHECIDOS = new Set(['HU1', 'HU2', 'HU3', 'HU4', 'HU5', 'HU6', 'HU7', 'HU8', 'HU9', 'HU10', 'HU11', 'HU12', 'HU13', 'HU13b', 'HU14', 'HU15', 'HU16', 'HU17', 'HU18']);
+const recusa = (motivo) => { console.error(`uso: node tools/eval/ui-v3-hud.mjs [--mutantes] [--alvo=HU…] (SO=mutante,mutante) — ${motivo}`); process.exit(2); };
+for (const a of ARGV) if (!a.startsWith('--') || !['--mutantes', '--alvo', '--so'].includes(a.split('=')[0]) || a === '--alvo' || a === '--so' || a.startsWith('--mutantes=')) recusa(`argumento inválido: ${a}`);
+const COMUT = ARGV.includes('--mutantes');
+const alvoArgs = ARGV.filter((a) => a.startsWith('--alvo='));
+if (alvoArgs.length > 1) recusa(`--alvo repetido: ${alvoArgs.length} ocorrência(s)`);
+const ALVO = alvoArgs.length ? alvoArgs[0].slice(7) : '';
+if (alvoArgs.length && ALVO === '') recusa('--alvo vazio');
+if (ALVO && !CONHECIDOS.has(ALVO)) recusa(`--alvo desconhecido: ${ALVO}`);
+let SO = null;
+const soArgs = ARGV.filter((a) => a.startsWith('--so='));
+if (soArgs.length > 1) recusa(`--so repetido: ${soArgs.length} ocorrência(s)`);
+if (soArgs.length && process.env.SO !== undefined) recusa('SO ambíguo: --so junto com env SO');
+const soBruto = soArgs.length ? soArgs[0].slice(5) : (process.env.SO || '');
+if (soArgs.length || process.env.SO !== undefined) {
+  if (!COMUT) recusa('SO só filtra mutantes: use com --mutantes');
+  const itens = soBruto.split(',').map((s) => s.trim());
+  if (!itens.length || itens.some((s) => !s)) recusa('SO vazio');
+  if (new Set(itens).size !== itens.length) recusa('SO com mutante duplicado');
+  const nomes = new Set(MUT.map(([m]) => m));
+  for (const m of itens) if (!nomes.has(m)) recusa(`SO desconhecido: ${m}`);
+  SO = itens;
+}
+let SELECAO = MUT.filter(([m]) => !SO || SO.includes(m));
+if (COMUT && ALVO) SELECAO = SELECAO.filter(([, a]) => a === ALVO);
+if (COMUT && !SELECAO.length) recusa('seleção de mutantes vazia');
+const recibo = (id, status, campos = {}) => console.log(JSON.stringify({ id, status, ...campos }));
+/* Mensagem normalizada: erro de mensagem vazia NUNCA pode passar por sucesso — toda borda do driver emite texto não vazio. */
+const msgErro = (e) => {
+  const m = e && typeof e.message === 'string' ? e.message : (e === undefined || e === null ? '' : String(e));
+  return (m.split('\n')[0] || 'erro sem mensagem').trim() || 'erro sem mensagem';
+};
+/* Tarefas de rota próprias (stub Vite, mutante, avatar): o wrapper recebe o THUNK, admite o registro sincronamente ANTES de a tarefa começar,
+   guarda TODA rejeição concluída no registro permanente (mesmo depois de sair dos pendentes) e não deixa rejeição solta em Node. */
+const registar = (rotas, thunk, route) => {
+  const registro = {};
+  const t = Promise.resolve().then(thunk).catch(async (e) => {
+    registro.erro = `${rotas.prefixo} rota: ${msgErro(e)}`;
+    try { await route.abort(); } catch (aborto) { registro.erro += `; abort: ${msgErro(aborto)}`; }
+  });
+  registro.t = t;
+  rotas.registros.push(registro);
+  rotas.pendentes.add(registro);
+  t.finally(() => { rotas.pendentes.delete(registro); }).catch(() => {});
+  return t;
+};
+
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
@@ -35,8 +90,8 @@ const STUB_VITE = 'export const createHotContext=()=>({accept(){},dispose(){},pr
   + "export const updateStyle=(i,c)=>{let s=document.querySelector('style[data-vite-id=\"'+i+'\"]');if(!s){s=document.createElement('style');s.dataset.viteId=i;document.head.appendChild(s)}s.textContent=c};"
   + 'export const removeStyle=()=>{};export const injectQuery=(u)=>u;export class ErrorOverlay{}';
 
-async function preparar(page, mutante) {
-  await page.route(/\/@vite\/client|dev-toolbar\/entrypoint/, (r) => r.fulfill({ contentType: 'text/javascript', body: STUB_VITE }));
+async function preparar(page, mutante, aplicados = null, ctx = 0, rotas = null) {
+  await page.route(/\/@vite\/client|dev-toolbar\/entrypoint/, (r) => registar(rotas, () => r.fulfill({ contentType: 'text/javascript', body: STUB_VITE }), r));
   await page.addInitScript(() => {
     try { localStorage.setItem('awpbr_nick', 'ZE'); } catch { /* aba anônima */ }
     addEventListener('DOMContentLoaded', () => {
@@ -45,20 +100,36 @@ async function preparar(page, mutante) {
       document.head.appendChild(s);
     });
   });
-  const reescreve = (teste, troca) => page.route(teste, async (r) => {
-    const res = await r.fetch();
-    const antes = await res.text();
-    const depois = troca(antes);
-    if (depois === antes) throw new Error(`mutante ${mutante} não aplicou em ${r.request().url()}`);
-    await r.fulfill({ response: res, body: depois });
-  });
+  /* Cada recibo é da rota desta página: fetch real, troca com efeito provado e fulfill concluído antes de marcar. */
+  const reescreve = (teste, troca) => page.route(teste, (r) => registar(rotas, () => (async (r) => {
+    try {
+      const res = await r.fetch();
+      /* Só reescreve resposta boa e do tipo certo: erro HTTP, HTML ou MIME trocado é Infra, nunca aplicação que viraria MORDE. */
+      if (!res.ok()) throw new Error(`mutante ${mutante}: HTTP ${res.status()} em ${r.request().url()}`);
+      const mime = (res.headers()['content-type'] || '').split(';')[0].trim().toLowerCase();
+      if (teste.source.includes('.css') ? mime !== 'text/css' : mime !== 'text/javascript' && mime !== 'application/javascript')
+        throw new Error(`mutante ${mutante}: MIME "${mime}" em ${r.request().url()}`);
+      const antes = await res.text();
+      if (/^\s*<(?:!doctype|html)/i.test(antes)) throw new Error(`mutante ${mutante}: corpo HTML em ${r.request().url()}`);
+      const depois = troca(antes);
+      if (depois === antes) throw new Error(`mutante ${mutante} não aplicou em ${r.request().url()}`);
+      await r.fulfill({ response: res, body: depois });
+      aplicados?.push({ mutante, ctx, url: r.request().url() });
+    } catch (e) {
+      // O wrapper da rota registra a falha, tenta abortar e resolve para o dispatcher.
+      aplicados?.push({ mutante, ctx, url: r.request().url(), erro: msgErro(e) });
+      throw e;
+    }
+  })(r), r));
   const css = /\/css\/tp\/hud\.css/, js = /\/js\/tp\/hud\.js/;
   if (mutante === 'retrato-vivo') await reescreve(js, (t) => t.replace("toggleAttribute('data-morto', !c.alive)", "toggleAttribute('data-morto', false)"));
   if (mutante === 'placar-cinza') await reescreve(css, (t) => t.replace('#score-e{background:var(--tp-esq)', '#score-e{background:var(--tp-elevado)'));
   if (mutante === 'xp-falso') await reescreve(js, (t) => t.replace("seq.className = 'tp-hud-seq';", "seq.className = 'tp-hud-seq'; seq.insertAdjacentHTML('beforeend', '<b>+150 XP</b>');"));
   if (mutante === 'municao-proporcional') await reescreve(css, (t) => t.replace('#ammo-mag{font-variant-numeric:tabular-nums}', '#ammo-mag{font-variant-numeric:proportional-nums}'));
   if (mutante === 'sem-hs') await reescreve(js, (t) => t.replace("row.querySelector('.kf-skull')", "row.querySelector('.kf-nada')"));
-  if (mutante === 'dica-eterna') await reescreve(js, (t) => t.replace('const DICAS_S = 60;', 'const DICAS_S = 6000;'));
+  if (mutante === 'dica-eterna') await reescreve(js, (t) => t.replace('const DICAS_S = 15;', 'const DICAS_S = 6000;'));
+  if (mutante === 'tutorial-sem-tiro') await reescreve(/\/js\/game\.js/, (t) => t.replace('this.mouseDown0 = true; this._tryShoot();', 'this.mouseDown0 = true;'));
+  if (mutante === 'tutorial-sem-recarga') await reescreve(/\/js\/game\.js/, (t) => t.replace("if (e.code === 'KeyR') this._startReload();", ''));
   if (mutante === 'badge-solto') await reescreve(css, (t) => t.replace(':root[data-ui="v3"]:not([data-tp-debug]) #vm-debug-badge{display:none}', ''));
   if (mutante === 'dica-na-mira') await reescreve(css, (t) => t.replace('.tp-hud-dicas{position:absolute;left:50%;bottom:clamp(16px,2.5vh,28px)', '.tp-hud-dicas{position:absolute;left:50%;bottom:50%'));
   if (mutante === 'placar-abates') await reescreve(/\/js\/game\.js/, (t) => t.replace('this._uiV3() ? this.roundsWon[side] : this.roundKills[side]', 'this.roundKills[side]'));
@@ -76,24 +147,99 @@ async function preparar(page, mutante) {
   if (mutante === 'chat-eterno') await reescreve(css, (t) => t.replace('#chat-sala:not(.aberto) #chat-log>li:not(:nth-last-child(-n+3)){display:none}', ''));
   if (mutante === 'sem-silenciar') await reescreve(js, (t) => t.replace("acoes.insertBefore(silenciar, bloquear);", ''));
   if (mutante === 'pula-pequeno') await reescreve(css, (t) => t.replace('.tp-toque-pula{right:calc(40px + var(--sr));bottom:calc(128px + var(--sb));width:56px;height:56px}', '.tp-toque-pula{right:calc(40px + var(--sr));bottom:calc(128px + var(--sb));width:36px;height:36px}'));
-  if (mutante === 'atira-mudo') await reescreve(js, (t) => t.replace('g.mouseDown0 = true;', ''));
+  if (mutante === 'atira-mudo') await reescreve(/\/js\/game\.js/, (t) => {
+    const alvo = "    on('.touch-fire', () => {\n      if (!this._acceptInput() || !this.player.alive) return;\n      this.mouseDown0 = true; this._tryShoot();";
+    if (t.split(alvo).length !== 2) throw new Error('atira-mudo: bloco touch-fire ausente ou repetido');
+    return t.replace(alvo, alvo.replace('this.mouseDown0 = true; ', ''));
+  });
+  if (mutante === 'ping-toque-mudo') await reescreve(js, (t) => {
+    const alvo = "botao('tp-toque-ping', 'PING', 'Ping', () => marcarPing());";
+    if (t.split(alvo).length !== 2) throw new Error('ping-toque-mudo: ação PING ausente ou repetida');
+    return t.replace(alvo, alvo.replace('() => marcarPing()', '() => {}'));
+  });
   if (mutante === 'ping-surdo') await reescreve(js, (t) => t.replace("e.code === 'KeyF'", "e.code === 'KeyF9'"));
+  if (mutante === 'sem-cache-avatar') await reescreve(js, (t) => t.replace('const acerto = avatarCache.get(pid);', 'const acerto = null;'));
+  if (mutante === 'cache-falha-preso') await reescreve(js, (t) => t.replace('avatarCache.delete(pid);', ''));
+  if (mutante === 'armas-toque-ocultas') await reescreve(css, (t) => {
+    const alvo = ':root[data-ui="v3"] #touch-ui .touch-wep{width:44px;height:44px;';
+    if (t.split(alvo).length !== 2) throw new Error('armas-toque-ocultas: regra .touch-wep 44px ausente ou repetida');
+    return t.replace(alvo, ':root[data-ui="v3"] #touch-ui .touch-wep{display:none!important;width:44px;height:44px;');
+  });
+  if (mutante === 'arma-toque-muda') await reescreve(/\/js\/game\.js/, (t) => {
+    const alvo = "const w = b.dataset.wep, p = this.player;\n        if (w === 'primary')";
+    if (t.split(alvo).length !== 2) throw new Error('arma-toque-muda: handler touchstart do .touch-wep ausente ou repetido');
+    return t.replace(alvo, "const w = b.dataset.wep, p = this.player;\n        return;\n        if (w === 'primary')");
+  });
 }
 
 const aoVivo = async (page) => {
   await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 180000 });
   await page.waitForTimeout(2500);
 };
-const abrir = async (q, { w = 1536, h = 1024, toque = false, mutante = '' } = {}) => {
+let abrirSeq = 0;
+const abrir = async (q, { w = 1536, h = 1024, toque = false, mutante = '', aplicados = null } = {}) => {
+  const contexto = ++abrirSeq;
+  const aplicadosAqui = [];
+  const erros = [];
+  const rotas = { pendentes: new Set(), registros: [], prefixo: `ctx${contexto}` };
+  let fechado = false;
   const dispositivo = toque
     ? { ...devices['Pixel 5'], viewport: { width: w, height: h }, screen: { width: w, height: h }, deviceScaleFactor: 3 }
     : { viewport: { width: w, height: h } };
   const ctx = await browser.newContext(dispositivo);
-  const page = await ctx.newPage();
-  await preparar(page, mutante);
-  await page.goto(`${BASE}/?${q}`, { waitUntil: 'commit', timeout: 120000 });
-  await aoVivo(page);
-  return { page, fechar: () => ctx.close() };
+  /* TENTATIVA registra o fechador idempotente deste contexto IMEDIATAMENTE após criá-lo, capturando a referência da tentativa (não o global dinâmico). */
+  const tentativa = TENTATIVA[TENTATIVA.length - 1];
+  const sairDaTentativa = () => { tentativa?.delete(limpaCtx); };
+  const limpaCtx = async () => {
+    if (fechado) return;
+    fechado = true;
+    try { await ctx.close(); } catch (e) { throw new Error(`ctx${contexto} fechar: ${msgErro(e)}`); } finally { sairDaTentativa(); }
+  };
+  if (tentativa) tentativa.add(limpaCtx);
+  try {
+    const page = await ctx.newPage();
+    /* pageerror e crash ouvidos ANTES do goto: erro de boot/setup (JS, fetch, fulfill, timeout) é Infra, nunca vermelho de cláusula. */
+    page.on('pageerror', (e) => erros.push(`ctx${contexto} pageerror: ${msgErro(e)}`));
+    page.on('crash', () => erros.push(`ctx${contexto} crash`));
+    await preparar(page, mutante, aplicadosAqui, contexto, rotas);
+    await page.goto(`${BASE}/?${q}`, { waitUntil: 'commit', timeout: 120000 });
+    await aoVivo(page);
+    /* Recibo local desta abertura: cada página prova a própria aplicação (fetch + texto alterado + fulfill antes de marcar); a lista agregada é só auditoria. */
+    const fechar = async () => {
+      if (fechado) return;
+      fechado = true;
+      /* Para novas execuções de handler (unrouteAll wait), drena TUDO que foi admitido — inclusive o que chegou durante a drenagem —
+         e só então fecha o contexto; se unroute/drenagem/close lançar, o finally ainda fecha: nada vaza. */
+      let falhaFechar = '';
+      try {
+        try { await page.unrouteAll({ behavior: 'wait' }); } catch (e) { falhaFechar = `ctx${contexto} unrouteAll: ${msgErro(e)}`; }
+        while (rotas.pendentes.size) {
+          const lote = [...rotas.pendentes];
+          for (const reg of lote) { try { await reg.t; } catch { /* rejeição concluída já preservada em rotas.registros */ } }
+          if (lote.every((reg) => rotas.pendentes.has(reg))) break; /* nada novo admitido: sem espera infinita */
+        }
+      } finally {
+        try { await ctx.close(); } catch (e) { falhaFechar = falhaFechar ? `${falhaFechar}; ctx${contexto} fechar: ${msgErro(e)}` : `ctx${contexto} fechar: ${msgErro(e)}`; }
+        sairDaTentativa();
+      }
+      /* Inspeção só DEPOIS do close: callback tardio não muda o resultado copiado desta página. */
+      const retrato = aplicadosAqui.map((a) => ({ ...a }));
+      const rotaErro = retrato.find((a) => 'erro' in a);
+      const rotaRejeitada = rotas.registros.find((reg) => reg.erro !== undefined);
+      const provou = retrato.some((a) => !('erro' in a));
+      const errosAqui = [...erros];
+      aplicados?.push(...retrato);
+      if (falhaFechar) throw new Error(falhaFechar);
+      if (errosAqui.length) throw new Error(errosAqui[0] || 'erro vazio');
+      if (rotaErro) throw new Error(`ctx${contexto} rota do mutante: ${rotaErro.erro}`);
+      if (rotaRejeitada) throw new Error(rotaRejeitada.erro);
+      if (mutante && !provou) throw new Error(`ctx${contexto}: mutante ${mutante} não provou aplicação própria (fetch+fulfill) nesta página`);
+    };
+    return { page, contexto, erros, rotas, fechar };
+  } catch (e) {
+    try { await limpaCtx(); } catch (ef) { throw new Error(`${msgErro(e)}; ${msgErro(ef)}`); }
+    throw e;
+  }
 };
 
 /* Caixas visíveis dos blocos do HUD, para checar encosto entre eles e com a mira. */
@@ -107,19 +253,34 @@ const caixas = () => {
 };
 const cruza = (a, b) => a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b - 1 && b.t < a.b - 1;
 
+const TENTATIVA = [];
 async function medir(mutante = '', alvo = '') {
+  TENTATIVA.push(new Set());
+  let resultado, erroMedicao;
+  try { resultado = await medirAqui(mutante, alvo); } catch (e) { erroMedicao = e; }
+  /* Qualquer contexto que a tentativa deixou aberto (evaluate/screenshot lançando depois de abrir) fecha aqui, um por um;
+     falha ao fechar NÃO é engolida: tenta todos, agrega e vira Infra junto com o erro original, se houver. */
+  const abertos = TENTATIVA.pop();
+  const falhasFechar = [];
+  for (const limpaCtx of abertos) { try { await limpaCtx(); } catch (e) { falhasFechar.push(msgErro(e)); } }
+  if (falhasFechar.length) throw new Error(`${erroMedicao ? `${msgErro(erroMedicao)}; ` : ''}falha ao fechar contexto(s): ${falhasFechar.join('; ')}`);
+  if (erroMedicao) throw erroMedicao;
+  return resultado;
+}
+const medirAqui = async (mutante = '', alvo = '') => {
   const r = [];
+  const aplicados = [];
   const add = (id, ok, msg) => r.push({ id, ok: !!ok, msg });
   mkdirSync(OUT, { recursive: true });
   const foto = (p, nome) => (mutante ? null : p.screenshot({ path: `${OUT}/${nome}.png` }));
 
   /* Num mutante só roda a parte da partida que mede a cláusula dele: o navegador é dividido entre as frentes. */
-  const SECAO = { HU8: ['p05', 'telas'], HU9: ['idioma'], HU10: ['legado'], HU13: ['toque'] };
+  const SECAO = { HU8: ['p05', 'telas'], HU9: ['idioma'], HU10: ['legado'], HU13: ['toque'], HU13b: ['toque'] };
   const roda = (s) => !alvo || (SECAO[alvo] || ['p05']).includes(s);
   let g0 = { blocos: [], vw: 0, vh: 0 }, cobertura = { frac: 0, total: 0 };
   if (roda('p05')) {
   /* ---------- 05 · HUD em 3:2, PT ---------- */
-  const { page: p, fechar } = await abrir(`ui=v3&${PARTIDA}&lang=pt`, { mutante });
+  const { page: p, erros: errosP, rotas, fechar } = await abrir(`ui=v3&${PARTIDA}&lang=pt`, { mutante, aplicados });
   const topo = await p.evaluate(() => {
     const g = window.__game;
     const lados = {};
@@ -228,7 +389,8 @@ async function medir(mutante = '', alvo = '') {
   g0 = await p.evaluate(caixas);
   const dicas0 = await p.evaluate(() => {
     const d = document.querySelector('.tp-hud-dicas');
-    return { n: d ? d.querySelectorAll('kbd').length : 0, vis: !!d && d.checkVisibility({ opacityProperty: true }) };
+    const teclas = d ? [...d.querySelectorAll('span:not([hidden]) kbd')].map((kbd) => kbd.textContent) : [];
+    return { teclas, vis: !!d && d.checkVisibility({ opacityProperty: true }) };
   });
   /* VM: diferença entre o quadro com e sem a cena do viewmodel, no mesmo instante de jogo */
   const vm = await p.evaluate(() => { const g = window.__game; g._tpCongela = g.update; g.update = () => {}; return true; });
@@ -249,22 +411,49 @@ async function medir(mutante = '', alvo = '') {
     }
     return { frac: vm && (vmPx + coberto) ? coberto / (vmPx + coberto) : 0, total: vmPx + coberto };
   })();
-  await p.evaluate(() => { const g = window.__game; g.time += 61; });
-  await p.waitForTimeout(1200);
-  const dicas1 = await p.evaluate(() => { const d = document.querySelector('.tp-hud-dicas'); return !!d && d.checkVisibility({ opacityProperty: true }); });
-  const alt = await p.evaluate(async () => {
-    const vis = () => document.querySelector('.tp-hud-dicas').checkVisibility({ opacityProperty: true });
-    dispatchEvent(new KeyboardEvent('keydown', { key: 'Alt', code: 'AltLeft' }));
-    await new Promise((res) => setTimeout(res, 900));
-    const comAlt = vis();
-    dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft' }));
-    await new Promise((res) => setTimeout(res, 900));
-    return { comAlt, semAlt: vis() };
+  const tutorial = await p.evaluate(async () => {
+    const g = window.__game;
+    const barra = document.querySelector('.tp-hud-dicas');
+    const espera = (ms = 550) => new Promise((resolve) => setTimeout(resolve, ms));
+    const teclas = () => [...barra.querySelectorAll('span:not([hidden]) kbd')].map((kbd) => kbd.textContent).join(' ');
+    const vis = () => barra.checkVisibility({ opacityProperty: true });
+    const inicial = teclas();
+    g.time += 16; await espera(1200);
+    const expirou = !vis();
+    g.time -= 16; await espera(1200);
+    g.player.pos.x += 2; await espera();
+    const depoisMover = teclas();
+    const ammo = g.player.ammo[g.player.weapon];
+    if (ammo.mag < 2) ammo.mag = 2;
+    g.player.nextShotAt = 0;
+    g.player.drawUntil = 0;
+    const magAntes = ammo.mag;
+    const tiroAntes = g.player.nextShotAt || 0;
+    const canvas = g.renderer.domElement;
+    canvas.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, cancelable: true }));
+    canvas.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true, cancelable: true }));
+    await espera();
+    const tiroReal = ammo.mag === magAntes - 1 && (g.player.nextShotAt || 0) > tiroAntes;
+    const depoisAtirar = teclas();
+    const recargaAntes = g.player.reloadUntil || 0;
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', code: 'KeyR', bubbles: true }));
+    await espera(1200);
+    const recargaReal = (g.player.reloadUntil || 0) > recargaAntes;
+    const completo = !vis();
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'Alt', code: 'AltLeft' })); await espera(900);
+    const comAlt = vis(), ajuda = teclas();
+    dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft' })); await espera(1200);
+    return { inicial, expirou, depoisMover, depoisAtirar, tiroReal, recargaReal, completo, comAlt, ajuda, semAlt: vis() };
   });
-  const teclas = await p.evaluate(() => [...document.querySelectorAll('.tp-hud-dicas kbd')].map((k) => k.textContent).join(' '));
-  add('HU16', alt.comAlt && !alt.semAlt && teclas === 'E B F Z/X/V Y/U M TAB ALT',
-    `barra de comandos [${teclas}], depois de 1 min ${alt.comAlt ? 'volta' : 'não volta'} com ALT e ${alt.semAlt ? 'fica' : 'some'} ao soltar`);
-  add('HU6', dicas0.n >= 3 && dicas0.vis && !dicas1, `dicas de tecla: ${dicas0.n} teclas, ${dicas0.vis ? 'visíveis' : 'escondidas'} no começo, ${dicas1 ? 'ainda visíveis' : 'somem'} depois de 1 min`);
+  const ajudaEsperada = 'WASD MOUSE 1 R E B F Z/X/V M TAB ALT';
+  add('HU16', tutorial.comAlt && !tutorial.semAlt && tutorial.ajuda === ajudaEsperada,
+    `ALT mostra [${tutorial.ajuda}] e ${tutorial.semAlt ? 'mantém' : 'recolhe'} a ajuda ao soltar`);
+  const tutorialOk = dicas0.vis && dicas0.teclas.join(' ') === 'WASD' && tutorial.inicial === 'WASD'
+    && tutorial.expirou && tutorial.depoisMover === 'MOUSE 1' && tutorial.depoisAtirar === 'R'
+    && tutorial.tiroReal && tutorial.recargaReal && tutorial.completo;
+  add('HU6', tutorialOk,
+    `tutorial ${tutorial.inicial} → ${tutorial.depoisMover} → ${tutorial.depoisAtirar}; tiro ${tutorial.tiroReal ? 'real' : 'falso'}, recarga ${tutorial.recargaReal ? 'real' : 'falsa'}, `
+    + `${tutorial.expirou ? 'expira' : 'não expira'} em 15 s e ${tutorial.completo ? 'recolhe' : 'fica'} ao recarregar`);
 
   const badge = await p.evaluate(async () => {
     const b = document.getElementById('vm-debug-badge');
@@ -295,6 +484,69 @@ async function medir(mutante = '', alvo = '') {
   await p.evaluate(() => window.__game._showScoreboard(false));
   add('HU11', sb.n > 0 && !sb.ping && sb.av === sb.n && sb.eu === '25%' && !sb.outros && !sb.dano,
     sb.ping ? `placar mostra ${sb.ping} ping(s) inventado(s)` : `placar: ${sb.av}/${sb.n} avatares, seu HS% "${sb.eu}" (quer 25%), ${sb.outros} HS% de quem o cliente não mede${sb.dano ? ', coluna de dano sem dado' : ''}`);
+
+  /* Reabrir o placar recria as linhas, mas não pode refazer a mesma chamada de avatar.
+     A rota responde no-store para a garantia vir do HUD, não do cache do navegador. */
+  let avatarRequests = 0;
+  await p.route(/\/api\/social-avatar/, (route) => registar(rotas, () => (async (route) => {
+    avatarRequests++;
+    try {
+      await route.fulfill({
+        status: 200,
+        headers: { 'content-type': 'image/gif', 'cache-control': 'no-store' },
+        body: Buffer.from('R0lGODlhAQABAAAAACw=', 'base64'),
+      });
+    } catch (e) { errosP.push(`rota social-avatar: ${msgErro(e)}`); throw e; }
+  })(route), route));
+  await p.evaluate(async () => {
+    const g = window.__game;
+    const alvo = g.combatants.find((c) => !c.isPlayer);
+    const salvo = { playerId: alvo._playerId, netBot: alvo._netBot };
+    alvo._playerId = '11111111-1111-4111-8111-111111111111';
+    alvo._netBot = false;
+    for (let i = 0; i < 5; i++) {
+      g._showScoreboard(true);
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    }
+    alvo._playerId = salvo.playerId;
+    alvo._netBot = salvo.netBot;
+    g._showScoreboard(false);
+  });
+  await p.unroute(/\/api\/social-avatar/);
+  add('HU17', avatarRequests === 1,
+    `cinco reconstruções do placar fizeram ${avatarRequests} chamada(s) para o mesmo avatar (quer 1)`);
+
+  /* Falha transitória não pode envenenar o cache da sessão: a próxima abertura tenta de novo. */
+  let avatarRetryRequests = 0;
+  await p.route(/\/api\/social-avatar/, (route) => registar(rotas, () => (async (route) => {
+    avatarRetryRequests++;
+    try {
+      if (avatarRetryRequests === 1) return await route.fulfill({ status: 500, body: 'falha transitória' });
+      await route.fulfill({
+        status: 200,
+        headers: { 'content-type': 'image/gif', 'cache-control': 'no-store' },
+        body: Buffer.from('R0lGODlhAQABAAAAACw=', 'base64'),
+      });
+    } catch (e) { errosP.push(`rota social-avatar (retry): ${msgErro(e)}`); throw e; }
+  })(route), route));
+  await p.evaluate(async () => {
+    const g = window.__game;
+    const alvo = g.combatants.find((c) => !c.isPlayer);
+    const salvo = { playerId: alvo._playerId, netBot: alvo._netBot };
+    alvo._playerId = '22222222-2222-4222-8222-222222222222';
+    alvo._netBot = false;
+    g._showScoreboard(true);
+    await new Promise((resolve) => setTimeout(resolve, 180));
+    g._showScoreboard(false);
+    g._showScoreboard(true);
+    await new Promise((resolve) => setTimeout(resolve, 180));
+    alvo._playerId = salvo.playerId;
+    alvo._netBot = salvo.netBot;
+    g._showScoreboard(false);
+  });
+  await p.unroute(/\/api\/social-avatar/);
+  add('HU18', avatarRetryRequests === 2,
+    `avatar com primeira resposta 500 fez ${avatarRetryRequests} tentativa(s) em duas aberturas (quer 2)`);
 
   /* ---------- ping ---------- */
   const ping = await p.evaluate(async () => {
@@ -381,7 +633,7 @@ async function medir(mutante = '', alvo = '') {
   };
   checaEncosto(g0, '1536×1024');
   for (const [w, h] of VIEWPORTS.slice(1)) {
-    const { page, fechar: f } = await abrir(`ui=v3&${PARTIDA}&lang=pt`, { w, h, mutante });
+    const { page, fechar: f } = await abrir(`ui=v3&${PARTIDA}&lang=pt`, { w, h, mutante, aplicados });
     checaEncosto(await page.evaluate(caixas), `${w}×${h}`);
     await foto(page, `hud-05-${w}x${h}`);
     await f();
@@ -394,7 +646,7 @@ async function medir(mutante = '', alvo = '') {
   /* ---------- idioma: EN sem PT e PT sem EN, com o aviso da mira (só aparece fora do debug) ---------- */
   const textos = {};
   for (const lang of ['pt', 'en']) {
-    const { page, fechar: f } = await abrir(`ui=v3&${PARTIDA}&lang=${lang}`, { mutante });
+    const { page, fechar: f } = await abrir(`ui=v3&${PARTIDA}&lang=${lang}`, { mutante, aplicados });
     /* o aviso da mira não aparece com ?debug=1 (testMode); o quadro congela para mostrá-lo */
     textos[lang] = await page.evaluate(() => {
       const g = window.__game; g._tpCongela = g.update; g.update = () => {};
@@ -411,7 +663,7 @@ async function medir(mutante = '', alvo = '') {
 
   if (roda('legado')) {
   /* ---------- ?ui=legacy mantém a tela anterior ---------- */
-  const { page: leg, fechar: fl } = await abrir(`ui=legacy&${PARTIDA}`, { mutante });
+  const { page: leg, fechar: fl } = await abrir(`ui=legacy&${PARTIDA}`, { mutante, aplicados });
   const hoje = await leg.evaluate(() => ({
     tp: document.querySelectorAll('[class*="tp-hud"],[class*="tp-chat"],[class*="tp-toque"],.tp-sb-av').length,
     folha: [...document.styleSheets].some((s) => /\/css\/tp\/hud\.css/.test(s.href || '')),
@@ -429,14 +681,26 @@ async function medir(mutante = '', alvo = '') {
   if (roda('toque')) {
   /* ---------- 21 · HUD por toque, enquadramento atual e Galaxy A25 ---------- */
   for (const [indice, [tw, th]] of TOQUES.entries()) {
-    const { page: m, fechar: fm } = await abrir(`ui=v3&${PARTIDA}&lang=pt`, { w: tw, h: th, toque: true, mutante });
+    const { page: m, fechar: fm } = await abrir(`ui=v3&${PARTIDA}&lang=pt`, { w: tw, h: th, toque: true, mutante, aplicados });
     const toque = await m.evaluate(async () => {
       const g = window.__game;
       const vis = (e) => e && e.checkVisibility() && e.getBoundingClientRect().width > 0;
       const alvos = { ATIRA: '.tp-toque-atira', MIRA: '.touch-ads', PULA: '.tp-toque-pula', R: '.touch-reload', AGACHA: '.touch-crouch', PING: '.tp-toque-ping',
-        PLACAR: '.tp-toque-placar', PAUSA: '.touch-pause', ARMA: '.touch-wep' };
+        CAMERA: '.tp-toque-camera', PLACAR: '.tp-toque-placar', PAUSA: '.touch-pause', ARMA: '.touch-wep' };
       const rects = {}, faltam = [], pequenos = [];
       for (const [nome, sel] of Object.entries(alvos)) {
+        /* ARMA mede TODOS os botões de arma visíveis (primary some sem compra): um querySelector só vê o primeiro. */
+        if (nome === 'ARMA') {
+          const botes = [...document.querySelectorAll('#touch-ui .touch-wep')].filter(vis);
+          if (!botes.length) { faltam.push('ARMA'); continue; }
+          for (const e of botes) {
+            const b = e.getBoundingClientRect();
+            const chave = `ARMA:${e.dataset.wep || '?'}`;
+            rects[chave] = { l: b.left, t: b.top, r: b.right, b: b.bottom };
+            if (b.width < 44 || b.height < 44) pequenos.push(`${chave} ${b.width.toFixed(0)}×${b.height.toFixed(0)}`);
+          }
+          continue;
+        }
         const e = document.querySelector(`#touch-ui ${sel}`);
         if (!vis(e)) { faltam.push(nome); continue; }
         const b = e.getBoundingClientRect();
@@ -450,50 +714,132 @@ async function medir(mutante = '', alvo = '') {
       }
       const olhar = document.querySelector('#touch-ui .touch-look')?.getBoundingClientRect();
       const joyR = vis(document.querySelector('#touch-ui .touch-joy-r'));
-      const toca = (sel, tipo) => {
+      const toca = (sel, tipo, identifier) => {
         const e = document.querySelector(`#touch-ui ${sel}`);
         if (!e) return;
         const b = e.getBoundingClientRect();
-        const t = new Touch({ identifier: Date.now() % 1000, target: e, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 });
+        const t = new Touch({ identifier, target: e, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 });
         e.dispatchEvent(new TouchEvent(tipo, { touches: tipo === 'touchend' ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true }));
       };
-      toca('.tp-toque-atira', 'touchstart');
+      toca('.tp-toque-atira', 'touchstart', 1);
       const atira = !!g.mouseDown0;
-      toca('.tp-toque-atira', 'touchend');
-      toca('.tp-toque-pula', 'touchstart');
+      toca('.tp-toque-atira', 'touchend', 1);
+      const soltoAtira = !g.mouseDown0;
+      toca('.tp-toque-pula', 'touchstart', 2);
       const pula = !!g.keys.Space;
-      toca('.tp-toque-pula', 'touchend');
-      return { faltam, pequenos, cruzam, olhar: olhar ? (innerWidth - olhar.left) / innerWidth : 0, joyR, atira, pula, solto: !g.keys.Space };
+      toca('.tp-toque-pula', 'touchend', 2);
+      const logAntes = new Set(document.querySelectorAll('#radio-log .tp-ping-linha'));
+      const marcaAntes = document.querySelector('.tp-hud-ping');
+      toca('.tp-toque-ping', 'touchstart', 3);
+      toca('.tp-toque-ping', 'touchend', 3);
+      await new Promise(requestAnimationFrame);
+      const marca = document.querySelector('.tp-hud-ping');
+      const pingReal = !!marca && marca !== marcaAntes && marca.checkVisibility({ opacityProperty: true, visibilityProperty: true })
+        && !!marca.querySelector('.tp-hud-ping__fala')?.textContent.trim()
+        && /^\d+ m$/.test(marca.querySelector('.tp-hud-ping__dist')?.textContent || '')
+        && [...document.querySelectorAll('#radio-log .tp-ping-linha')].some((n) => !logAntes.has(n) && n.textContent.trim());
+      /* Troca REAL de arma pela barra de toque, depois de tiro/pula/PING (que ficam com a arma original):
+         ida por TouchEvent num slot possuído e visível, volta à arma de origem por outro toque. */
+      const slots = { primary: g._slotPrimaria(), secondary: g.player.secondary || 'pistol', knife: 'knife' };
+      const visSlot = (s) => vis(document.querySelector(`#touch-ui .touch-wep[data-wep="${s}"]`));
+      const atual = g.player.weapon;
+      const origem = ['primary', 'secondary', 'knife'].find((s) => slots[s] === atual && visSlot(s));
+      const escolha = ['primary', 'secondary', 'knife'].find((s) => slots[s] && slots[s] !== atual && visSlot(s));
+      let troca = { ok: false, msg: 'sem slot possuído e visível diferente da arma atual' };
+      if (escolha && origem) {
+        toca(`.touch-wep[data-wep="${escolha}"]`, 'touchstart', 4);
+        toca(`.touch-wep[data-wep="${escolha}"]`, 'touchend', 4);
+        await new Promise(requestAnimationFrame);
+        const foi = g.player.weapon === slots[escolha];
+        const volta = origem;
+        let voltou = false;
+        if (volta) {
+          toca(`.touch-wep[data-wep="${volta}"]`, 'touchstart', 5);
+          toca(`.touch-wep[data-wep="${volta}"]`, 'touchend', 5);
+          await new Promise(requestAnimationFrame);
+          voltou = g.player.weapon === atual;
+        }
+        troca = { ok: foi && voltou, msg: `ida p/ ${escolha} (${slots[escolha]}) ${foi ? 'trocou' : `ficou ${g.player.weapon}`}${volta ? `, volta p/ ${volta} ${voltou ? 'voltou' : `ficou ${g.player.weapon}`}` : ', sem slot visível para voltar'}` };
+      }
+      return { faltam, pequenos, cruzam, rectsN: Object.keys(rects).length, armas: [...document.querySelectorAll('#touch-ui .touch-wep')].filter(vis).map((e) => e.dataset.wep),
+        olhar: olhar ? (innerWidth - olhar.left) / innerWidth : 0, joyR, atira, soltoAtira, pula, solto: !g.keys.Space, pingReal, troca };
     });
     await foto(m, `hud-21-toque-${tw}x${th}`);
     await fm();
     const id = indice ? 'HU13b' : 'HU13';
-    add(id, !toque.faltam.length && !toque.pequenos.length && !toque.cruzam.length && toque.olhar >= 0.45 && !toque.joyR && toque.atira && toque.pula && toque.solto,
+    add(id, !toque.faltam.length && !toque.pequenos.length && !toque.cruzam.length && toque.olhar >= 0.45 && !toque.joyR && toque.atira && toque.soltoAtira && toque.pula && toque.solto && toque.pingReal && toque.troca.ok,
       toque.faltam.length ? `${tw}×${th}: faltam no toque: ${toque.faltam.join(', ')}` : toque.pequenos.length ? `${tw}×${th}: alvo abaixo de 44 px: ${toque.pequenos.join(', ')}`
-        : toque.cruzam.length ? `${tw}×${th}: botões encostam: ${toque.cruzam.join(', ')}` : `${tw}×${th}: 9 alvos ≥44 px sem encosto, arraste da mira em ${(toque.olhar * 100).toFixed(0)}% da tela${toque.joyR ? ', stick direito sobrando' : ''}, ATIRA ${toque.atira ? 'atira' : 'mudo'}, PULA ${toque.pula ? 'pula' : 'mudo'}`);
+        : toque.cruzam.length ? `${tw}×${th}: botões encostam: ${toque.cruzam.join(', ')}` : `${tw}×${th}: ${toque.rectsN} rects ≥44 px sem encosto (ARMA: ${toque.armas.join('/') || 'nenhum'}), arraste da mira em ${(toque.olhar * 100).toFixed(0)}% da tela${toque.joyR ? ', stick direito sobrando' : ''}, ATIRA ${toque.atira ? 'atira' : 'mudo'} e ${toque.soltoAtira ? 'solta' : 'fica preso'}, PULA ${toque.pula ? 'pula' : 'mudo'}, PING ${toque.pingReal ? 'marca' : 'mudo'}, troca de arma ${toque.troca.ok ? 'ida/volta reais' : `falhou: ${toque.troca.msg}`}`);
   }
   }
-  return r;
+  return { r, aplicados };
 }
 
-const MUT = [['retrato-vivo', 'HU1'], ['placar-cinza', 'HU2'], ['xp-falso', 'HU3'], ['municao-proporcional', 'HU4'], ['sem-hs', 'HU5'],
-  ['dica-eterna', 'HU6'], ['badge-solto', 'HU7'], ['dica-na-mira', 'HU8'], ['dica-sem-en', 'HU9'], ['legado-vazado', 'HU10'],
-  ['ping-mentiroso', 'HU11'], ['hs-errado', 'HU11'], ['abas-mudas', 'HU12'], ['tab-foco', 'HU12'], ['chat-eterno', 'HU12'], ['sem-silenciar', 'HU12'],
-  ['pula-pequeno', 'HU13'], ['atira-mudo', 'HU13'], ['ping-surdo', 'HU14'], ['placar-abates', 'HU15'], ['plural-fixo', 'HU15'], ['bot-texto', 'HU15'],
-  ['chips-esquerda', 'HU15'], ['slots-soltos', 'HU15'], ['alt-surdo', 'HU16']];
+/* Validador do resultado: r/aplicados arrays, entradas com id string/ok boolean/msg string; com alvo, exatamente 1 ocorrência.
+   Malformado/vazio/duplicado é Infra (exit 2), nunca MORDE; baseline dos mesmos alvos tem de ficar verde e sem Infra. */
+const valida = (m, erro, alvo = '') => {
+  if (erro) return { infra: `erro na medição: ${erro}` };
+  if (!m || !Array.isArray(m.r) || !Array.isArray(m.aplicados)) return { infra: 'resultado malformado: r/aplicados não são arrays' };
+  if (!m.r.length) return { infra: 'resultado vazio: nenhuma cláusula medida' };
+  for (const c of m.r) if (!c || typeof c !== 'object' || Array.isArray(c) || typeof c.id !== 'string' || typeof c.ok !== 'boolean' || typeof c.msg !== 'string' || !c.msg)
+    return { infra: `cláusula malformada: ${JSON.stringify(c) === undefined ? 'null' : JSON.stringify(c).slice(0, 120)}` };
+  for (const a of m.aplicados) if (!a || typeof a !== 'object' || Array.isArray(a) || typeof a.mutante !== 'string' || !a.mutante
+    || !Number.isInteger(a.ctx) || a.ctx < 1 || typeof a.url !== 'string' || !a.url.startsWith('http')
+    || ('erro' in a && (typeof a.erro !== 'string' || !a.erro)))
+    return { infra: `aplicado malformado: ${JSON.stringify(a) === undefined ? 'null' : JSON.stringify(a).slice(0, 120)}` };
+  const ids = m.r.map((c) => c.id);
+  if (new Set(ids).size !== ids.length) return { infra: 'cláusula duplicada no resultado' };
+  if (!alvo) return { clausulas: m.r };
+  const cs = m.r.filter((c) => c.id === alvo);
+  if (cs.length !== 1) return { infra: `cláusula ${alvo}: ${cs.length} ocorrência(s), quer exatamente 1` };
+  return { clausulas: cs };
+};
+
 let sair = 0;
-if (process.argv.includes('--mutantes')) {
-  for (const [mut, alvo] of MUT.filter(([m]) => !process.env.SO || process.env.SO.split(',').includes(m))) {
-    let c;
-    try { c = (await medir(mut, alvo)).find((x) => x.id === alvo); } catch (e) { c = { ok: false, msg: `quebrou a medição: ${e.message.split('\n')[0]}` }; }
-    if (c.ok) sair = 1;
-    console.log(`${c.ok ? 'CEGO  ' : 'MORDE '} ${alvo} (${mut})  ${c.msg}`);
+try {
+if (COMUT) {
+  /* Baseline antes dos mutantes, para os mesmos alvos: vermelho pré-existente não pode virar detecção. */
+  let infra = false, falha = false;
+  for (const alvo of [...new Set(SELECAO.map(([, a]) => a))]) {
+    let m = null, erro = '';
+    try { m = await medir('', alvo); } catch (e) { erro = msgErro(e); }
+    const v = valida(m, erro, alvo);
+    if (v.infra) { infra = true; recibo(`baseline-${alvo}`, 'INFRA', { error: v.infra, clausula: alvo, aplicado: false }); continue; }
+    const b = v.clausulas[0];
+    if (!b.ok) { falha = true; recibo(`baseline-${alvo}`, 'FALHA', { clausula: alvo, aplicado: false, msg: b.msg }); continue; }
+    recibo(`baseline-${alvo}`, 'VERDE', { clausula: alvo, aplicado: false, msg: b.msg });
   }
+  let cego = false;
+  if (!infra && !falha) for (const [mut, alvo] of SELECAO) {
+    let m = null, erro = '';
+    try { m = await medir(mut, alvo); } catch (e) { erro = msgErro(e); }
+    const v = valida(m, erro, alvo);
+    if (v.infra) { infra = true; recibo(mut, 'INFRA', { error: v.infra, clausula: alvo, aplicado: false }); continue; }
+    const doMut = m.aplicados.filter((a) => a.mutante === mut);
+    const aplicado = doMut.some((a) => !('erro' in a));
+    const rotaErro = doMut.find((a) => 'erro' in a)?.erro || '';
+    if (rotaErro) { infra = true; recibo(mut, 'INFRA', { error: `rota do mutante: ${rotaErro}`, clausula: alvo, aplicado }); continue; }
+    if (!aplicado) { infra = true; recibo(mut, 'INFRA', { error: `mutante ${mut} não aplicou em nenhuma rota fetch+fulfill`, clausula: alvo, aplicado: false }); continue; }
+    const c = v.clausulas[0];
+    if (c.ok) { cego = true; recibo(mut, 'CEGO', { clausula: alvo, aplicado: true, msg: c.msg }); }
+    else recibo(mut, 'MORDE', { clausula: alvo, aplicado: true, msg: c.msg });
+  }
+  sair = infra ? 2 : (falha || cego) ? 1 : 0;
 } else {
-  const r = await medir();
-  for (const c of r.sort((a, b) => Number(a.id.slice(2)) - Number(b.id.slice(2)))) console.log(`${c.ok ? 'VERDE   ' : 'VERMELHO'} ${c.id}  ${c.msg}`);
-  sair = r.every((c) => c.ok) ? 0 : 1;
-  console.log(`\nhud v3: ${r.filter((c) => c.ok).length}/${r.length}  (capturas em ${OUT})`);
+  let m = null, erro = '';
+  try { m = await medir('', ALVO); } catch (e) { erro = msgErro(e); }
+  const v = valida(m, erro, ALVO);
+  if (v.infra) { console.error(`INFRA: ${v.infra}`); sair = 2; } else {
+    const selecionadas = v.clausulas;
+    for (const c of selecionadas.sort((a, b) => Number(a.id.slice(2)) - Number(b.id.slice(2)))) console.log(`${c.ok ? 'VERDE   ' : 'VERMELHO'} ${c.id}  ${c.msg}`);
+    sair = selecionadas.length && selecionadas.every((c) => c.ok) ? 0 : 1;
+    console.log(`\nhud v3: ${selecionadas.filter((c) => c.ok).length}/${selecionadas.length}  (capturas em ${OUT})`);
+  }
 }
-await browser.close();
-process.exit(sair);
+} catch (e) {
+  sair = 2;
+  console.error(`INFRA: erro inesperado: ${msgErro(e)}`);
+} finally {
+  try { await browser.close(); } catch (e) { sair = 2; console.error(`INFRA: falha ao fechar o navegador: ${msgErro(e)}`); }
+  process.exit(sair);
+}

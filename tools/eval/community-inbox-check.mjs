@@ -14,7 +14,7 @@ const supported=['google','discord','twitter','linkedin_oidc'];
 let helperSource=existsSync(helperPath)?readFileSync(helperPath,'utf8'):null;
 let communitySource=read('public/js/community.js');
 const mutation=(source,before,after)=>{
-  assert(source.includes(before),'MUTANTE NÃO APLICOU: trecho ausente');
+  assert.equal(source.split(before).length-1,1,'MUTANTE NÃO APLICOU: trecho ausente ou repetido');
   const changed=source.replace(before,after);
   assert.notEqual(changed,source,'MUTANTE NÃO APLICOU');
   return changed;
@@ -54,14 +54,21 @@ if(mutant && helperMutants[mutant]){
 }else if(mutant==='stale401-clears-current-account'){
   communitySource=mutation(communitySource,"data.error==='session_expired' && requestAuth===auth","data.error==='session_expired'");
 }else if(mutant==='feature-off-entry'){
-  const before="if(state?.messages_enabled)buttons.append(button('MANDAR MENSAGEM'";
-  assert.equal(communitySource.split(before).length-1,2,'MUTANTE NÃO APLICOU: duas entradas esperadas');
-  communitySource=communitySource.replaceAll(before,"if(true)buttons.append(button('MANDAR MENSAGEM'");
+  // Duas portas de entrada da DM: o perfil (ternário com o chip de "em preparação") e a lista de amigos.
+  const perfil="state?.messages_enabled?button('MANDAR MENSAGEM'",lista="if(state?.messages_enabled)buttons.append(button('MANDAR MENSAGEM'";
+  assert.equal(communitySource.split(perfil).length-1,1,'MUTANTE NÃO APLICOU: entrada do perfil ausente');
+  assert.equal(communitySource.split(lista).length-1,1,'MUTANTE NÃO APLICOU: entrada da lista de amigos ausente');
+  communitySource=communitySource.replace(perfil,"true?button('MANDAR MENSAGEM'").replace(lista,"if(true)buttons.append(button('MANDAR MENSAGEM'");
+}else if(mutant==='portao-mudo'){
+  communitySource=mutation(communitySource,":chip('MENSAGENS EM PREPARAÇÃO')",":el('span','')");
+}else if(mutant==='refresh-engole-render'){
+  communitySource=mutation(communitySource,'try{await refresh();}catch{}await render();\n      }finally','await refresh();await render();\n      }finally');
 }else if(mutant==='read-all-rows'){
   communitySource=mutation(communitySource,'ids:unread','ids:data.messages.map(m=>m.id)');
 }else if(mutant==='ignore-message-badge'){
   communitySource=mutation(communitySource,'(state?.inbox?.unread_count || 0)','0');
 }else if(mutant)assert.fail('Mutante desconhecido: '+mutant);
+if(mutant)console.log('Mutação aplicada: '+mutant);
 
 const tests=[];
 const test=(name,run)=>tests.push({name,run});
@@ -130,7 +137,7 @@ class Element {
   constructor(tag){this.tagName=tag;this.children=[];this._text='';this.dataset={};this.attributes={};this.listeners={};this.disabled=false;}
   set textContent(value){this._text=String(value??'');this.children=[];}
   get textContent(){return this._text+this.children.map(child=>child.textContent||'').join(' ');}
-  set innerHTML(value){throw new Error('HTML inseguro entregue ao DOM: '+String(value).slice(0,70));}
+  set innerHTML(value){assert.fail('HTML inseguro entregue ao DOM: '+String(value).slice(0,70));}
   setAttribute(key,value){this.attributes[key]=String(value);}
   append(...nodes){this.children.push(...nodes);}
   appendChild(node){this.append(node);return node;}
@@ -151,12 +158,16 @@ async function runtime({auth=account,state=stateBase,tab='notifications',peer=nu
   const calls=[],navigation=[],events={};
   const gameTab=new Element('button');gameTab.onclick=()=>navigation.push('play');
   let liveState=copy(state);
-  let liveMessages=copy(messages),liveInbox=copy(inboxData),sendFailures=failSend;
-  const document={getElementById:id=>dom[id] || null,createElement:tag=>new Element(tag),createTextNode:text=>({textContent:String(text)}),querySelectorAll:selector=>selector==='.social-tabs button'?nav:[],querySelector:selector=>selector.includes('jogar')?gameTab:null,addEventListener:(name,fn)=>events[name]=fn,hidden:false};
-  const ctx=vm.createContext({document,questList,console,URL,URLSearchParams,Date,crypto:{randomUUID},AbortSignal:{timeout:()=>null},setInterval:()=>1,location:{origin:'https://fixture.test',href:'https://fixture.test/?social='+tab,search:'?social='+tab,assign:url=>navigation.push(String(url))},navigator:{clipboard:{writeText:async()=>{}}},fetch:async(path,options={})=>{
+  let liveMessages=copy(messages),liveInbox=copy(inboxData),sendFailures=failSend,estadoQuebrado=false;
+  const document={getElementById:id=>dom[id] || null,createElement:tag=>new Element(tag),createTextNode:text=>({textContent:String(text)}),querySelectorAll:selector=>selector==='.social-tabs button'?nav:[],querySelector:selector=>selector.includes('jogar')?gameTab:null,addEventListener:(name,fn)=>events[name]=fn,dispatchEvent:event=>{(events[event?.type]||(()=>{}))(event);return true;},hidden:false};
+// `cs-social-live` (lista de amigos em partida) entrou depois desta régua: sem CustomEvent e sem
+// document.dispatchEvent no contexto, `refresh()` morria no meio e levava junto contador e render.
+class CustomEvent{constructor(type,init={}){this.type=type;this.detail=init.detail;}}
+  const ctx=vm.createContext({document,questList,console,CustomEvent,URL,URLSearchParams,Date,crypto:{randomUUID},AbortSignal:{timeout:()=>null},setInterval:()=>1,location:{origin:'https://fixture.test',href:'https://fixture.test/?social='+tab,search:'?social='+tab,assign:url=>navigation.push(String(url))},navigator:{clipboard:{writeText:async()=>{}}},fetch:async(path,options={})=>{
     const body=options.body?JSON.parse(options.body):null;calls.push({path,body});
     const parsed=new URL(path,'https://fixture.test');
     const action=body?.action||parsed.searchParams.get('action');let data=liveState;
+    if(estadoQuebrado && !action)throw new Error('Fixture state offline');
     if(action==='profile')data={profile:peer&&parsed.searchParams.get('id')===peer.id?peer:liveState.profile};
     else if(action==='inbox')data=liveInbox;
     else if(action==='conversation')data={messages:copy(liveMessages),peer:copy(peer),has_more:false,next_before:null};
@@ -178,7 +189,7 @@ async function runtime({auth=account,state=stateBase,tab='notifications',peer=nu
   assert(ctx.__inboxTest,'Community não inicializou: fixture ou estrutura incompatível');
   await ctx.__inboxTest.boot();
   for(let i=0;i<5;i++)await new Promise(resolve=>setImmediate(resolve));
-  return {ctx,dom,nav,calls,navigation,events,document,setState:state=>liveState=copy(state),setInbox:value=>liveInbox=copy(value),nodes:()=>tree(dom['social-content'])};
+  return {ctx,dom,nav,calls,navigation,events,document,setState:state=>liveState=copy(state),setInbox:value=>liveInbox=copy(value),quebrarEstado:v=>{estadoQuebrado=v;},nodes:()=>tree(dom['social-content'])};
 }
 const matches=(nodes,pattern)=>nodes.filter(node=>['button','a'].includes(node.tagName) && pattern.test(node.textContent));
 test('central renderiza missões reais ao abrir avisos',async()=>{
@@ -208,7 +219,9 @@ test('avisos mantêm prova, texto seguro e leitura do servidor',async()=>{
   assert.equal(domText(ui.dom['social-unread']),'1','Contagem não usa avisos não lidos');
   const readButton=matches(ui.nodes(),/MARCAR COMO LIDOS/i)[0];assert(readButton,'Ação de leitura ausente');await readButton.click();
   assert(ui.calls.some(call=>call.body?.action==='read_notifications'),'Leitura não persistida via API existente');
-  const profile=ui.nodes().find(node=>node.tagName==='a' && node.href==='/u/22222222-2222-4222-8222-222222222222/perfil');assert(profile,'Aviso não oferece perfil do remetente');
+  // O link do aviso é a rota viva do perfil (/u/<id>); o sufixo com nick é a forma antiga, e a
+  // régua cobrava a antiga. O que importa é o aviso levar ao perfil de quem o gerou.
+  const profile=ui.nodes().find(node=>node.tagName==='a' && node.href==='/u/22222222-2222-4222-8222-222222222222');assert(profile,'Aviso não oferece perfil do remetente');
 });
 function domText(node){return node.textContent;}
 test('convidado recebe entrada de conta, sem progresso fictício',async()=>{
@@ -242,8 +255,11 @@ test('perfil e cartão de amigo abrem a conversa da identidade escolhida',async(
     const ui=await runtime({state:messageState,tab,peer,messages:[incoming,outgoing]});await openPeer(ui);
     assert.equal(ui.ctx.__inboxTest.getTab(),'notifications');assert(matches(ui.nodes(),/^ENVIAR MENSAGEM$/).length,'Conversa não chegou ao formulário de envio');
   }
+  /* A DM deixou de exigir amizade (dono, 28/10/2026): pedido pendente, recebido ou nenhum
+     vínculo continuam abrindo a conversa. Quem barra agora é o servidor (perfil fechado,
+     bloqueio, teto de primeiro contato), e a recusa chega como texto na tela. */
   for(const relation of ['none','incoming','outgoing']){
-    const ui=await runtime({state:messageState,tab:'profile',peer:{...peer,relationship:relation}});assert.equal(matches(ui.nodes(),/^MANDAR MENSAGEM$/).length,0,'Perfil não amigo apresentou envio permitido');
+    const ui=await runtime({state:messageState,tab:'profile',peer:{...peer,relationship:relation}});assert.equal(matches(ui.nodes(),/^MANDAR MENSAGEM$/).length,1,'Perfil sem amizade perdeu a entrada de DM: '+relation);
   }
 });
 test('corpo e nome do remetente são texto literal; leitura envia apenas IDs recebidos vistos',async()=>{
@@ -251,6 +267,21 @@ test('corpo e nome do remetente são texto literal; leitura envia apenas IDs rec
   assert(ui.nodes().some(node=>node.textContent===incoming.body),'Mensagem recebida não é texto literal');assert(ui.nodes().some(node=>node.textContent===peer.nick),'Nome do remetente não é texto literal');
   const read=matches(ui.nodes(),/^MARCAR ESTAS MENSAGENS COMO LIDAS$/)[0];assert(read,'Ação de leitura das mensagens exibidas ausente');await read.click();
   const request=ui.calls.find(call=>call.body?.action==='message_read');assert(request,'Leitura não chamou API');assert.equal(request.body.target,peerId);assert.deepEqual(request.body.ids,[incoming.id],'Leitura incluiu mensagem enviada ou não exibida');assert(!Object.hasOwn(request.body,'through'),'Cursor antigo de leitura ainda usado');
+});
+/* Relato de 28/10/2026: a mensagem sai, o servidor confirma, e a tela continua com o rascunho —
+   bastava o `refresh` seguinte falhar (estado fora do ar) para o render nunca acontecer. */
+test('estado fora do ar depois do envio não segura a tela no rascunho',async()=>{
+  const ui=await runtime({state:messageState,tab:'friends',peer,messages:[incoming]});await openPeer(ui);
+  const text=ui.nodes().find(node=>node.tagName==='textarea'),send=matches(ui.nodes(),/^ENVIAR MENSAGEM$/)[0];
+  text.value='Mensagem que o servidor aceitou';text.oninput();
+  ui.quebrarEstado(true);
+  await send.click();
+  ui.quebrarEstado(false);
+  const enviados=ui.calls.filter(call=>call.body?.action==='message_send');
+  assert.equal(enviados.length,1,'o envio tem de ter saído uma vez');
+  const atual=ui.nodes().find(node=>node.tagName==='textarea');
+  assert.equal(atual?.value,'','refresh quebrado segurou o rascunho enviado na tela');
+  assert.equal(atual?.disabled,false,'campo ficou bloqueado depois do envio confirmado');
 });
 test('falha de envio preserva rascunho e a mesma chave no retry',async()=>{
   const ui=await runtime({state:messageState,tab:'friends',peer,messages:[incoming],failSend:1});await openPeer(ui);
@@ -324,8 +355,22 @@ test('mensagens desabilitadas explicam indisponibilidade e não consultam conver
   const ui=await runtime({state:{...copy(messageState),messages_enabled:false},peer});const section=matches(ui.nodes(),/^MENSAGENS$/)[0];assert(section,'Central sem seção de mensagens');await section.click();
   assert(/prepara[çc][ãa]o|configura[çc][ãa]o|indispon[ií]vel/i.test(ui.dom['social-content'].textContent),'Flag desativada apresentou tela vazia');assert(!ui.calls.some(call=>new URL(call.path,'https://fixture.test').searchParams.get('action')==='conversation'),'Flag desativada consultou mensagens');assert.equal(matches(ui.nodes(),/^ENVIAR MENSAGEM$/).length,0);
 });
+/* "Mandar pra todo cadastrado" (dono, 28/10/2026): a DM deixou de exigir amizade, então o
+   botão vale em qualquer perfil. O portão que sobra é a flag do servidor, e ela se explica. */
+test('a mensagem vale em qualquer perfil, e a flag desligada se explica',async()=>{
+  const desligada=await runtime({state:{...copy(messageState),messages_enabled:false},tab:'profile',peer});
+  assert.equal(matches(desligada.nodes(),/^MANDAR MENSAGEM$/).length,0,'Flag desligada manteve o botão');
+  assert(desligada.nodes().some(node=>/^MENSAGENS EM PREPARA[ÇC][ÃA]O$/.test(node.textContent.trim())),'Flag desligada não explica no perfil');
+  const estranho={...copy(peer),relationship:null};
+  const semAmizade=await runtime({state:{...copy(messageState),friends:[],messages_enabled:true},tab:'profile',peer:estranho});
+  assert.equal(matches(semAmizade.nodes(),/^MANDAR MENSAGEM$/).length,1,'Perfil de desconhecido ficou sem entrada de DM');
+  assert.equal(matches(semAmizade.nodes(),/^ADICIONAR AMIGO$/).length,1,'O pedido de amizade sumiu do perfil de desconhecido');
+  const amigo=await runtime({state:copy(messageState),tab:'profile',peer});
+  assert.equal(matches(amigo.nodes(),/^MANDAR MENSAGEM$/).length,1,'Perfil de amigo perdeu a entrada de DM');
+});
 
-let passed=0;
-for(const {name,run} of tests){try{await run();passed++;console.log('PASS '+name);}catch(error){console.error('RED '+name+': '+error.message.split('\n')[0]);}}
+let passed=0;const failed=[];
+for(const {name,run} of tests){try{await run();passed++;console.log('PASS '+name);}catch(error){failed.push({clause:name,type:error?.name||'Error',message:String(error?.message||error).split('\n')[0]});console.error('RED '+name+': '+error.message.split('\n')[0]);}}
 console.log(`community inbox: ${passed}/${tests.length} contratos; mutante=${mutant||'nenhum'}; DOM Node, aparência não avaliada`);
+console.log(JSON.stringify({mutant:mutant||null,cases:tests.length,failed}));
 if(passed!==tests.length)process.exitCode=1;

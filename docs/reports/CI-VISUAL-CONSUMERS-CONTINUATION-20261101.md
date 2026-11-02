@@ -1,0 +1,39 @@
+# CI: consumidores visuais CPU
+
+## Objetivo e definição de pronto
+
+Fechar a parte válida do review1188/5726170574 (head5732): armadura só estava em checkfast e ads1p-runtime-consumer não tinha alias/CI. Executar eval:armadura e novo eval:ads1p-runtime-public (somenteAK pública, nominal e mutante consumidor) no grupo existente com !cancelled/depssuccess. PI4 deve proteger ambos, mantendo13réguasPI3/10gruposPI4/7mutantes legados. BEFORE contraCIpinada+candidato package, AFTER e dois mutantes reais/aplicação estrita, aliases reais Node22/26, checkpoint assinado para crítico novo.
+
+## Base e lease
+
+Branch codex/ci-visual-consumers-20261101, pai c571cabb02f18fcff972f127dfe08726590ca448 clean na entrega. Lease só ci.yml, package.json, portao-inteiro-check.mjs e este ledger. Sem produto/gatilhos/browserworkflow/maps/QA/env/Praça. Regras AGENTS/regua/bug-hunt/instrumentacao byteidênticas às já lidas; lições relevantes revisadas, fontes completas lidas. node_modules ignorado foi ligado ao QA somente após package exceto scripts/lock iguais e vendor/shim a47c verificados; nenhum conteúdo editado.
+
+## Plano e estado
+
+Seed deste ledger Native antes da autoriaGLM low hard180/internal170 <=12calls semrenew. A chamada única terminouEXIT0 em51,455s; raw/diff/hashes foram congelados antes de leitura Native inteira e CPU. O bot pediu indevidamente gatebrowser paraCPU; ADS1p linha já roda via eval:ads1p-public, preservar. Os aliases novos usam somenteAKGLBpública e a régua CPU real, sem ativos privados ou crédito de infra. Nenhum teste foi executado na preparação/autoria; resultados posteriores estão nos marcos abaixo. Crítico independente/gates normais/adopção pertencem ao Root; candidato não elegível/adotado/lançado.
+
+## Autoria GLM — 2026-11-01 (seed Native)
+
+Diff mínimo aplicado nos quatro arquivos do lease: (1) `package.json` ganhou `eval:ads1p-runtime-public` (nominal `--armas=ak` && mutante `consumidor`, ambos && normais, nenhum `!` de shell) e chave `//eval:ads1p-runtime-public` logo após `eval:ads1p-public`; nada fora de scripts alterado. (2) `ci.yml`: única linha editada é o `run` do grupo "Flash, fluidez e ADS da AK pública", agora com `eval:armadura eval:ads1p-runtime-public` no fim; condição `!cancelled() && steps.deps.outcome == 'success'`, demais steps/jobs/triggers intocados. (3) `portao-inteiro-check.mjs`: REGUAS_PR_FAST segue com 13, GRUPOS_PI4 com 10 (só a lista esperada do grupo Flash ganhou os dois aliases); BEFORE do grupo agora coleta `faltantes` e lança UM erro PI4 listando todos os ausentes; dois mutantes reais novos `sem-armadura-ci` e `sem-ads1p-runtime-ci` removem seu alias de uma linha `run:` real, com desenho de aplicação única; a primeira implementação contava linhas, e o defeito de duplicação/correção Native está provado abaixo; marcador `PI-MUTANTE {name,aplicado,removed}` impresso; os 7 mutantes legados, a simulação de status e todos os cenários preservados sem alteração. (4) este ledger.
+
+Na autoria GLM não houve testes (sem shell por lease). O plano de BEFORE/AFTER, nove mutantes e aliases reais foi executado posteriormente pela supervisão, conforme os marcos abaixo. Crítico independente Root e gates obrigatórios permanecem pendentes; sem adoção/release.
+
+## Marco Native: prova e correção da aplicação estrita
+
+Após raw/fonte/diff congelados e leitura inteira, contraprova externa duplicou eval:armadura na MESMA linha run. O código GLM contava linhas, removeu só um token e declarou aplicado:true; o portão nominal ficou verde e encerrou1 por mutação cega, em vez do4 não-semântico exigido. Essa execução é falha do instrumento, não detecção: CI-VISUAL-CONSUMERS-R61-DUPLICATE-BEFORE.json/log (SHA bfed11f57ecbf517717c24d187e709757017646c77f179a4b935b83f78cda57d).
+
+Codex Native corrigiu somente o callback do mutador para contar cada substituição global. CI e package continuam byteidênticos ao freezeGLM; produto intocado. Native-only patch1202B SHA fb8359572c998410e280fba104e16b81b681d8c7593ff048ff73593c5e2feae8, NATIVE-FROZEN antes de novos testes. Sem nova chamadaGLM.
+
+32 casos focais PI passaram (16 por Node22/26): checkerNOVO com CIpinc571 externa+package candidato reprova somentePI4 e nomeia os dois aliases; candidato nominal tem10grupos×18cenários de status verdes;7mutantes legados e2novos dão1 na cláusulaPIesperada, sem mutação-cega/infra; falta/duplicação de cada alias dão4 e aplicado:false. Os dois novos removem run real e dão aplicado:true quando únicos. CI pinada não foi editada; somente as6referências literais ao caminho CI foram reendereçadas na cópia audit do checker. Recibo CI-VISUAL-CONSUMERS-R61-PROTOCOL.json; cada execução tem log/hash. Próximo: aliases reais CPU AK e armadura5 em ambos Nodes, depois checkpoint e crítico Root.
+
+## Marco final: aliases reais e fronteiras
+
+`eval:ads1p-runtime-public` executou o comando npm real em Node22 e26: nominal e mutante consumidor retornam0 porque o wrapper prova respectivamente checkerExit0 e checkerExit1 geométrico, realUpdateCalls1, armas[ak], pass:true e browserQA:false. Controles diretos com asset-root inexistente passaram nominal/mutante nos dois Nodes, sem criar aquele caminho; comprovam que a AK usa o GLB público, não pistol/deagle ou catálogo privado. Não houve fotos/browser/GPU.
+
+`eval:armadura` real retornou0/AR1–AR14 verdes em ambos Nodes. Os cinco mutantes foram também executados individualmente: cada um retorna1 com falhas AR sem crash/infra (sem-armadura→AR8/9/10/13/14; capacete-awp→AR4; pen-plana→AR5/7; sem-equipar→AR13; chumbo-cabeca→AR14). Assim nenhum erro de setup recebeu crédito da inversão de shell legada. O alias legado de armadura foi preservado; só sua ligação à CI foi acrescentada. Recibo `CI-VISUAL-CONSUMERS-R61-ALIASES.json`:18 execuções de topo aceitas,9 por Node, com logs/hash e provas update real. Node22.23.4 e26.12.1 foram identificados nos mesmos binários usados pelos comandos e pelo PATH dos scripts filhos, em `CI-VISUAL-CONSUMERS-R61-RUNTIMES.json`; essa identificação foi registrada depois dos focais, sem instalar ou trocar runtime.
+
+Autoria: uma GLM-5.3/OMP low, EXIT0 em51,455s dentro de hard180/internal170 sem renovação; raw993913B SHA256 `6be5ebb002401fa1d261391cfdf307c1185c725da6c5900ddf3ba0acf18c8c21`. Dez tentativas read/edit, duas vetadas por header relativo, oito operações dentro da lease. Fonte/diff/raw congelados em `CI-VISUAL-CONSUMERS-R61-FROZEN.json` e AUTHORED.patch antes de qualquer execução. Native corrigiu apenas o contador de tokens comprovadamente defeituoso no portão, congelou/inspecionou esse hunk antes dos testes e atualizou este ledger; CI e package permanecem byteidênticos ao freezeGLM. Nenhuma autoria Native foi atribuída ao GLM.
+
+Foram preservados os13nomes PI3,10grupos PI4 e18cenários de status, os7mutantes históricos e seus corpos, aliases anteriores (incluindo eval:ads1p-public e armadura), package fora de scripts, lock, vendor a47c, consumidores/produto e gatilhos/browserworkflow. Diff da CI é somente uma linha run acrescentando os dois aliases, com !cancelled/depssuccess inalterado. As32 provas PI incluem BEFORE contra CI c571 externa e package candidato, AFTER,2novos+7legados e4controles de aplicação por Node; nenhum4/infra é detecção semântica. Sintaxe e diffcheck passaram.
+
+Branch atual `codex/ci-visual-consumers-20261101`, pai `c571cabb02f18fcff972f127dfe08726590ca448`. Checkpoint normal assinado somente nos quatro caminhos da lease; HEAD, patch e quatroSHA estão no aggregate `audits/2026-10-31-visual-consistency/CI-VISUAL-CONSUMERS-R61-FINAL.json`, `-FINAL-NET.patch` e `-FINAL-SOURCE-SHA256.txt`. Próximo concreto: crítico independente R63 lê o HEAD/freeze final e recibos; Root adjudica somente esta parte válida do review1188, decide adoção/composição e roda gates normais atuais. Demais achados do bot pertencem a outra lane. Sem fullsuite/build/headless/browser/push/GitHub nesta lane; candidato **não elegível/adotado/lançado**.
