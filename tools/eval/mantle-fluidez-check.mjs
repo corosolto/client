@@ -30,7 +30,7 @@ const reporta = (e) => {
 process.on('uncaughtException', reporta);
 process.on('unhandledRejection', reporta);
 
-const game = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 12345 });
+const game = bootGame('corrego', { textures: initTextures(), ctf: true, seed: 12345 });
 const player = game.player;
 assert(game._mAlc, 'grade global de território foi adiada para o primeiro quadro jogável');
 const start = new THREE.Vector3(-4.1, -1.53, -27.8);

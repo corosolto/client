@@ -39,7 +39,7 @@ const falhas = [];
 const linha = (c, t, d, ok) => { console.log(`${c} · ${t}\n   ${d}\n   ${ok ? 'PASSA' : 'FALHA'}\n`); if (!ok) falhas.push(c); };
 
 const novoJogo = () => {
-  const g = bootGame('fy_ferrovelho', { textures, bots: 2 });
+  const g = bootGame('ferro_velho', { textures, bots: 2 });
   g.state = 'live'; g.paused = false;
   g.player.alive = true;
   g.player.primary = 'ak'; g.player.secondary = 'pistol';
