@@ -1,8 +1,8 @@
 import { WEAPONS } from './data/weapons.js';
 
-export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v7', 'coro-snapshot-v6', 'coro-snapshot-v5', 'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
+export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v8', 'coro-snapshot-v7', 'coro-snapshot-v6', 'coro-snapshot-v5', 'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
 export const MAX_SNAPSHOT_BYTES = 32768;
-const CURRENT_VERSION = 7;
+const CURRENT_VERSION = 8;
 const KIND_SNAPSHOT = 1;
 const MAX_ENTITIES = 64;
 const MAX_CTF_POINTS = 16;
@@ -113,6 +113,22 @@ export function juntarV5(comum, reboque) {
   return out;
 }
 
+/* Reboque v8 (economia no MP): o v5 + saldo, janela de compra e equipamento do próprio
+   dono do slot; os 30 primeiros bytes são bit a bit o reboque v5. Docs: ECONOMIA-PARTIDA.md. */
+export const TRAILER_V8_BYTES = TRAILER_V5_BYTES + 5;
+export function encodeTrailerV8(priv = {}) {
+  const base = encodeTrailerV5(priv);
+  const out = new Uint8Array(TRAILER_V8_BYTES);
+  out.set(base);
+  const v = new DataView(out.buffer);
+  v.setUint16(30, priv.saldo == null ? 65535 : integer(priv.saldo, 65534, 'saldo'), true);
+  out[32] = priv.compraRestante == null ? 255 : integer(priv.compraRestante, 254, 'compra_restante');
+  out[33] = priv.colete == null ? 255 : integer(priv.colete, 100, 'colete');
+  const flashes = Math.max(0, Math.min(3, priv.flashes | 0));
+  out[34] = (priv.capacete ? 1 : 0) | (flashes << 1);
+  return out;
+}
+
 const integer = (value, max, name) => {
   const n = Number(value);
   if (!Number.isInteger(n) || n < 0 || n > max) throw new RangeError(name);
@@ -121,7 +137,7 @@ const integer = (value, max, name) => {
 
 export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
   if (!snapshot || snapshot.type !== 'snapshot') throw new TypeError('snapshot_required');
-  if (version < 2 || version > 7) throw new TypeError('snapshot_version');
+  if (version < 2 || version > 8) throw new TypeError('snapshot_version');
   const ents = Array.isArray(snapshot.ents) ? snapshot.ents : [];
   if (ents.length > (version >= 7 ? 80 : MAX_ENTITIES)) throw new RangeError('too_many_entities');
   const w = new Writer();
@@ -213,7 +229,7 @@ export function decodeSnapshot(data) {
   const r = new Reader(data);
   if (r.u8() !== 0x43 || r.u8() !== 0x53 || r.u8() !== 0x42 || r.u8() !== 0x32) throw new TypeError('snapshot_magic');
   const version = r.u8();
-  if (version < 2 || version > 7 || r.u8() !== KIND_SNAPSHOT) throw new TypeError('snapshot_version');
+  if (version < 2 || version > 8 || r.u8() !== KIND_SNAPSHOT) throw new TypeError('snapshot_version');
   const snapshot = {
     type: 'snapshot', room: r.str(), tick: r.u32(), t: r.f64(), state: r.str(), owner: r.str() || null,
     players: r.u8(), spectators: r.u8(), livre: { E: r.u8(), B: r.u8() },
@@ -306,6 +322,15 @@ export function decodeSnapshot(data) {
       x, y, z,
     };
     snapshot.meu = meu;
+    // v8: economia de partida — saldo, janela de compra e equipamento do dono (ver encode).
+    if (version >= 8 && r.offset + 5 <= r.bytes.byteLength) {
+      const saldo = r.u16(), compraRestante = r.u8(), colete = r.u8(), bits = r.u8();
+      if (saldo !== 65535) meu.saldo = saldo;
+      if (compraRestante !== 255) meu.compraRestante = compraRestante;
+      if (colete !== 255) meu.colete = colete;
+      if (bits & 1) meu.capacete = true;
+      if ((bits >> 1) > 0) meu.flashes = bits >> 1;
+    }
     const dono = id ? snapshot.ents.find((e) => e.id === id) : null;
     // posição do dono volta em f32: é ela que a régua de reconciliação mede em milímetros
     if (dono) Object.assign(dono, meu);

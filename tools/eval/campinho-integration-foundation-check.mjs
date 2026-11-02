@@ -6,7 +6,20 @@
  *   node tools/eval/campinho-integration-foundation-check.mjs
  *   node tools/eval/campinho-integration-foundation-check.mjs --mutante=<nome>
  */
-import { THREE, bootGame, initTextures } from './harness.mjs';
+import { THREE, bootGame, initTextures, MAPS } from './harness.mjs';
+
+/* ARMAS GRÁTIS NO CHÃO (dono, 01/11): o Game não entrega mais o arsenal do mapa; a régua
+   medea fundação (cobertura/grafo/placar), então o arsenal da Quebrada volta ao mundo do
+   teste depois do boot — quem agora entrega armas no chão é só o modo Javaporcos. */
+let arsenalDaQuebrada = [];
+{
+  const buildReal = MAPS.quebrada.build;
+  MAPS.quebrada.build = function (scene, textures) {
+    const world = buildReal.call(this, scene, textures);
+    arsenalDaQuebrada = world.pickups;
+    return world;
+  };
+}
 
 const MUTANTS = new Set([
   'cobertura-invisivel',
@@ -108,6 +121,7 @@ const scenarios = [];
 for (const teamSize of [5, 8]) {
   for (const ctf of [false, true]) {
     const game = bootGame('quebrada', { textures, ctf, seed: 53000 + teamSize * 10 + Number(ctf), bots: teamSize });
+    game.world.pickups = arsenalDaQuebrada;
     const label = `${teamSize}x${teamSize} ${ctf ? 'CTF' : 'mata-mata'}`;
     try {
       if (mutant === `time-${teamSize}x${teamSize}`) {
