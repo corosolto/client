@@ -80,7 +80,7 @@ pelo MESMO CLI; exige conjunto EXATO de falhas + IDs únicos + nominal prévio G
 
 **R3 (31/10/2026) — queda da câmera morta em chão local.** O ramo morto de
 `_updatePlayer` em `first` descia a câmera até o piso **global** `max(0.5, …)`.
-Morto no mirante do `fy_escadao` a câmera afundava até ver a laje de baixo. Agora o
+Morto no mirante do `escadao` a câmera afundava até ver a laje de baixo. Agora o
 clamp é `groundHeightAt(cam.x, cam.z, p.pos.y) + 0,5` — `yRef` = **pé do cadáver**,
 consultado antes da descida: com o `yRef` do olho (`cam.y`) o vão do córrego
 devolve o **tabuleiro** (`map_corrego.js` exige `yRef < fundo+0,9`) e a câmera
