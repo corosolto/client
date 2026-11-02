@@ -1229,7 +1229,7 @@ export function buildAmazonia(scene, T) {
   ambience.dispose = () => { for (const dispose of disposeRaycasts) dispose(); skyLife._disposed = true; faunaMotion.dispose(); disposeAmbience(); };
   return {
     // Contrato: grafo com camadas, consultas de piso/nó com yRef e curvas precisas no CTF.
-    botLayeredNavigation: true,
+    botLayeredNavigation: true, authoredSpawnYaw: true,
     rayOccluded: QP.get('amzrayindex') === '0' ? undefined : rayOccluded,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, footstepSurfaceAt,     spawns: {
       /* 0,4 m além da face da mata girada: o AABB conservador da copa com yaw

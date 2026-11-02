@@ -38,7 +38,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
       - name: Python CI scripts syntax
         run: python3 -m py_compile scripts/ci/*.py
       - name: Bash scripts syntax
@@ -53,7 +55,7 @@ jobs:
       # check:fast, que roda na máquina de quem lembra: PR que quebrasse workflow passava
       # aqui verde. O runner roda todas e só reprova no fim (PI3 cobra esta lista).
       - name: Réguas de workflow, release, privacidade e escolha (node puro)
-        run: node tools/eval/runner.mjs eval:wfsecret eval:wflocal eval:wftimeout eval:wfconcurrency eval:deploygate eval:autofix eval:mutcega eval:portaointeiro eval:release eval:privacy eval:noescolha eval:contagens-pr eval:mergequeue
+        run: node tools/eval/runner.mjs eval:wfsecret eval:wflocal eval:wftimeout eval:wfconcurrency eval:deploygate eval:autofix eval:mutcega eval:portaointeiro eval:release eval:privacy eval:noescolha eval:contagens-pr eval:mergequeue eval:sondafilho
       # Job que só lê histórico ou poucos arquivos faz checkout leve (CL1). Node puro.
       - name: Checkout leve nos jobs que só leem histórico
         run: npm run eval:wfcheckout
@@ -65,10 +67,19 @@ jobs:
         run: npm run eval:menuprops
       - name: Mutantes do orçamento exigem a falha correta
         run: node tools/eval/boot-mutant-verdict-check.mjs --mutantes
-      - name: Assets válidos e mutante entregue no orçamento
-        run: node tools/eval/boot-assets-check.mjs --mutantes
+      # boot-assets-check (--mutantes) REMOVIDO nesta PR: a régua era exclusiva da PR
+      # (1d15a6453) e ancorava na mede() anterior à base staging r844, que passou a exigir
+      # prova criptográfica de corpo (startBootOrigin + snapshot + x-boot-response-id +
+      # verifyResponseRecord/verifyDecoded). O fixture sintético não exerce esse pipeline —
+      # reconstruí-lo honestamente é follow-up (fixture novo contra boot-network-origin/
+      # boot-network-body); as réguas de boot vivas cobrem o fecho: veredicto, READY,
+      # poster-intent e overlay com mutantes.
       - name: Causa real da liberação da splash com mutantes
         run: node tools/eval/boot-ready-check.mjs --mutantes
+      - name: Origem da versão nos payloads reais de perf e match
+        run: npm run eval:versaoorigem
+      - name: Regras da horda e consumo de objetivo no cliente
+        run: npm run eval:javaporcos
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         run: npm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
@@ -84,6 +95,10 @@ jobs:
         run: npm run eval:treta-fila
       - name: Sete moedas da loja com arte própria
         run: npm run eval:treta-coins
+      - name: Skin equipada aguarda manifesto e conta vigente no boot
+        run: npm run eval:treta-manifest-ready
+      - name: Preview mobile preserva skin e propriedade da mídia
+        run: npm run eval:character-preview-media
       - name: Acúmulo de armas no chão tem teto
         run: npm run eval:drop
       - name: Loja sem nome de político real
@@ -92,21 +107,55 @@ jobs:
         run: npm run eval:capturecodex
       - name: Aba da loja no hub diz só LOJA
         run: npm run eval:hub-loja
+      - name: TRETA$ da partida segue o CS e não toca a carteira do menu
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:economia
+      - name: TRETA$ da partida dentro do Game real (compra, morte, rodada)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:economia-jogo
       # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
       # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
+      - name: Telemetria preserva modo real e consentimento
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/telemetry-mode-check.mjs
+      - name: Contratos visuais de mapas, personagens, câmera e equipamento
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:grafite-curation eval:map-material-finish eval:ferro-balcao eval:match-pickups eval:net-flash-disable eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:visual-map-contracts eval:knife-skin-markings eval:campo-uv eval:grafite-atual:prova
+      - name: Flash, fluidez e ADS da AK pública
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:flashbang mut:flashbang eval:movimento-fluidez eval:ads1p-public eval:posto-board-support eval:preview-grip-phase eval:armadura eval:ads1p-runtime-public
       - name: Todo mapa devolve o que o game.js consome
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:mapcontrato
+      - name: Câmera, atalhos e HUD com mutantes
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:cameraoclusao
+      - name: Spawns orientam jogador e bots pelo consumidor real
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:spawnface
       - name: Backpedal preserva autoridade e lateral com mutantes
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:tpbackpedal
+      - name: Loops de áudio de todos os mapas usam src carregável
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:soundscape-contract
+      - name: Pichação colada na parede e sem vazar pela quina da frente
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:pichacao-parede
       - name: Amazônia acessível e bots entre palafitas
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:amazonia
       - name: Escadão — circulação, estrutura e casa
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
       - name: Escadão — compatibilidade com pacote de áudio publicado
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/escadao-audio-pack-check.mjs
       # eval:lajes-spawn-space e eval:lajes-raycast saíram daqui porque as invariantes
       # rodam os MESMOS scripts (LSP1 e LRP1, críticas e fora do KNOWN-RED) e reprovam
       # o PR com condição mais forte que o código de saída: saída 0 E a linha ✓.
+      - name: Fauna curada no mapa e preload mobile
+        run: npm run eval:map-fauna-curated
       - name: Lajes — geometria, ambiência, integração e preview
         run: node tools/eval/runner.mjs eval:lajes-cache eval:lajes-visual eval:lajes-ruas eval:lajes-game eval:lajes-ambiencia eval:lajes-santos eval:lajes-airspace eval:lajes-soundscape eval:mappreview
       - name: Sertão (tema, rotas, criação e integração)
@@ -215,7 +264,7 @@ jobs:
   # o tools/eval/vm_mint_audit.json que as invariantes e o vm-kick-sim leem.
   invariantes:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -239,6 +288,8 @@ jobs:
         run: npm run eval:melee-vm
       - name: Chave tudo-ou-nada do viewmodel (sem ativação parcial)
         run: npm run eval:vm-launch
+      - name: Arma visível no mobile e desktop, inclusive sem assets
+        run: npm run eval:vm-presence
       # As réguas de imagem (mira, cobertura, pistola-ref, mãos, carregador) pedem o
       # catálogo privado e navegador; aqui o CI cobra o RESULTADO assado delas.
       - name: Placar das réguas de imagem do viewmodel em dia
@@ -259,8 +310,29 @@ jobs:
   # `if: always()` é o que impede o pulo: sem ele, job necessário vermelho deixa este
   # SKIPPED, e o ruleset aceita contexto obrigatório pulado como verde. Cancelado,
   # pulado ou vermelho em qualquer `needs` reprova.
+  # Família lenta do mantle em job próprio: no run 41286765480 o passo serial
+  # 'Validar fluidez, território e rede do mantle' consumiu o teto de 25 min
+  # (movimento-fluidez ok 5,4 s; mantle-fluidez ok 41,5 s; mut:mantle terminado
+  # no cleanup sem veredito; mantle-network não alcançado). Nenhum comando,
+  # ordem interna, semente ou CLI mudou — só trocou o dono do passo.
+  mantle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Validar fluidez, território e rede do mantle
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network
+
   build:
-    needs: [reguas-e-site, invariantes]
+    needs: [reguas-e-site, invariantes, mantle]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -319,6 +391,12 @@ jobs:
           python3 scripts/ci/autofix_allowlist.py --selftest
           python3 scripts/ci/dco_check.py --selftest
           python3 scripts/ci/agente_check.py --selftest
+          # O critério de `bot-fixable` e a varredura semanal decidem sozinhos
+          # o que o csbrasil-bot vai rascunhar — e os autotestes deles nunca
+          # rodavam aqui. Foi por isso que a não-idempotência sob `issues:
+          # edited` sobreviveu até 28/10.
+          python3 scripts/ci/issue_review.py --selftest
+          python3 scripts/ci/issue_sweep.py --selftest
       # No lote da fila o intervalo inclui os merges que ela escreve; o dco_check.py os isenta.
       - name: Check Signed-off-by
         env:

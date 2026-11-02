@@ -11,7 +11,7 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad, m
     const aspect = cycle % 2 ? '1440x810' : '1440x960'; const request = cycle * 3 + 1; const activeRequest = request + 1;
     if (accepts({ request, activeRequest, key: 'lmg#lmg', activeKey: 'lmg#lmg', utility: false })) errors.push(`${aspect} ciclo ${cycle}: promise obsoleta aceita`);
     const loading = decide({ alive: true, firstPerson: true, authoredMode: true, authoredReady: false }); samples += 1;
-    if (!loading.root || loading.authored || loading.fallback) errors.push(`${aspect} ciclo ${cycle}: lacuna pré-load`);
+    if (!loading.root || loading.authored || !loading.fallback) errors.push(`${aspect} ciclo ${cycle}: lacuna pré-load`);
     if (!accepts({ request: activeRequest, activeRequest, key: 'lmg#lmg', activeKey: 'lmg#lmg', utility: false })) errors.push(`${aspect} ciclo ${cycle}: promise atual recusada`);
     // Cinto de 100: o tiro automático encadeia o clipe de shoot 20 vezes.
     for (const event of ['idle','draw-start','draw-end','shoot-1','shoot-20','reload-tactical-start','reload-box-out','reload-belt-in','reload-tactical-end','reload-empty-start','reload-empty-end','inspect-start','inspect-end','ads-in','ads-out','reload-cancel-switch','reload-cancel-return']) {
@@ -24,13 +24,13 @@ function matrix({ decide = viewmodelVisibility, accepts = acceptsAuthoredLoad, m
   }
   return { errors, samples };
 }
-check(AUTHORED_VM_ENABLED === false, 'ativação global continua desligada sem opt-in');
-check(VM_FAMILY.lmg.ready === false, 'família lmg continua ready:false');
+check(AUTHORED_VM_ENABLED === true, 'runtime autorado publicado está ativo');
+check(VM_FAMILY.lmg.ready === true, 'família lmg publicada está ready:true');
 check(VM_FAMILY.lmg.reloadStyle === 'belt', 'LMG recarrega por cinto, sem laço de pente');
 check(VM_WEAPON.lmg.baked === true && VM_WEAPON.lmg.runtime !== 'family', 'LMG usa produto baked próprio');
 const baseline = matrix(); check(baseline.errors.length === 0, 'LMG atravessa lifecycle 30x em 3:2 e 16:9', `${baseline.samples} amostras`);
 const stale = matrix({ accepts: ({ key, activeKey, utility }) => key === activeKey && !utility }); check(stale.errors.length > 0, 'mutante que aceita Promise obsoleta reprova');
-const preload = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: true, scopeCovered: false } }); check(preload.errors.length > 0, 'mutante que exibe fallback pré-load reprova');
+const preload = matrix({ decide: (input) => input.authoredReady ? viewmodelVisibility(input) : { root: true, melee: false, authored: false, fallback: false, scopeCovered: false } }); check(preload.errors.length > 0, 'mutante que oculta fallback pré-load reprova');
 for (const event of ['draw-end','shoot-20','reload-box-out','reload-empty-end','inspect-end','ads-out']) {
   const hidden = matrix({ mutateEvent: (current, state) => current === event ? { ...state, root: false, authored: false, fallback: false } : state }); check(hidden.errors.length > 0, `mutante que oculta mount em ${event} reprova`);
 }

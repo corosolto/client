@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const mutations = {
   'causa-sobrescrita': ['window.__csSplashCause ||=', 'window.__csSplashCause =', 'primeira liberação por assets permanece assets'],
-  'ready-sempre': ["READY: cand.causa === 'assets',", 'READY: true,', 'READY recusa failsafe'],
+  'ready-sempre': ["READY:cand.causa==='assets',", 'READY:true,', 'READY recusa failsafe'],
 };
 if (process.argv.includes('--mutantes')) {
   const run = args => spawnSync(process.execPath, [fileURLToPath(import.meta.url), ...args], {
@@ -33,7 +33,7 @@ if (name) {
   assert.equal(source.split(before).length, 2, 'mutação única na fonte real');
   source = source.replace(before, after);
 }
-const start = source.indexOf('const ANSIOSO = '), end = source.indexOf('\nlet mutacaoAplicada =', start);
+const start = source.indexOf('const ANSIOSO = '), end = source.indexOf('\nconst PUBLIC_ROOT=', start);
 assert(start >= 0 && end > start, 'fronteira real dos transformadores');
 const helper = vm.runInNewContext(source.slice(start, end) + '\n({instrumentaCausaSplash})');
 const main = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
@@ -42,7 +42,7 @@ const begin = instrumented.indexOf('function _splashSetReady() {');
 const finish = instrumented.indexOf('\n// failsafe:', begin);
 assert(begin >= 0 && finish > begin, 'função real de liberação');
 const splash = new vm.Script(instrumented.slice(begin, finish));
-const match = source.match(/^    READY: ([^\n]+),$/m);
+const match = source.match(/READY:([^,]+),/);
 assert(match, 'expressão READY real');
 const ready = new vm.Script('(' + match[1] + ')');
 if (name) console.log('Mutação aplicada: ' + name);

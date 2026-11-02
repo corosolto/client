@@ -29,6 +29,12 @@
      node tools/gen-graffiti-layout.mjs            # todos os MAP_SOURCES
      node tools/gen-graffiti-layout.mjs quebrada
      node tools/gen-graffiti-layout.mjs --checkpoint=/tmp/graffiti-bake-state.json
+     EGO_TASK_SPACE=32 node tools/gen-graffiti-layout.mjs  # reutiliza p2 no Ego
+
+
+   Entrada que falta (GLB, decalque, erro da página) cancela o bake daquele mapa.
+   `GRAFITE_DERRUBA=<regex>` derruba as requisições que casam: é o gancho da régua
+   `eval:grafite-fiel`, que prova que a trava morde.
    ============================================================================ */
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
@@ -36,6 +42,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { impressao, MAP_SOURCES } from './eval/graffiti-fingerprint.mjs';
+import { capturarGrafiteEgo } from './eval/ego-graffiti-bake.mjs';
 
 const BASE = process.env.BASE;
 const SAIDA = 'public/js/graffiti_layout.js';
@@ -44,8 +51,12 @@ const ARGS = process.argv.slice(2);
 const ONLY = ARGS.find((a) => !a.startsWith('--'));
 const CHECKPOINT = ARGS.find(a => a.startsWith('--checkpoint='))?.slice(13);
 const CHECKPOINT_ONLY = ARGS.includes('--checkpoint-only');
+const EGO_SPACE = Number(process.env.EGO_TASK_SPACE || 0);
+if (process.env.EGO_TASK_SPACE !== undefined && (!Number.isSafeInteger(EGO_SPACE) || EGO_SPACE <= 0)) {
+  throw Error('EGO_TASK_SPACE deve ser um inteiro positivo; bake cancelado');
+}
 const checkpoint = CHECKPOINT && existsSync(CHECKPOINT) ? JSON.parse(readFileSync(CHECKPOINT, 'utf8')) : { maps: {} };
-const inputSources = ['public/js/textures.js', 'public/js/mapprops.js'];
+const inputSources = ['public/js/textures.js', 'public/js/mapprops.js', 'public/js/graffiti_art_id.js'];
 const inputDigest = () => createHash('sha256').update(inputSources.map(file => file + '\0' + readFileSync(file, 'utf8')).join('\0')).digest('hex');
 const producerInputs = inputDigest();
 const hashAssets = (directory, assetHash) => {
@@ -67,11 +78,12 @@ checkpoint.assets = assets;
 checkpoint.inputs = producerInputs;
 
 if (ONLY && !MAP_SOURCES[ONLY]) throw Error(`Mapa de grafite desconhecido: ${ONLY}`);
-/* SÓ A IMPRESSÃO: reassina as entradas SEM reassar a colocação. Existe porque assar não é
-   operação fiel — duas rodadas idênticas na mesma árvore deram 2769 e 2767 peças (loja_h 300 e
-   298), e uma árvore sem o acervo completo de decalques apaga ~180 peças em silêncio. Para
-   mudança que PROVADAMENTE não move parede (tamanho de sombra, por exemplo), reassar troca arte
-   aprovada por churn. Exige motivo, e o motivo fica gravado no arquivo. Ver KNOWN-BUGS BUG-158. */
+/* SÓ A IMPRESSÃO: reassina as entradas SEM reassar a colocação. Duas rodadas na mesma árvore
+   já deram 2769 e 2767 peças (loja_h 300 e 298). A passada é determinística sobre a cena que
+   recebe; o que pode variar é a cena (um prop que não carrega some em silêncio). O bake agora
+   cancela quando falta entrada (#1109). Com os suportes da curadoria PROVADAMENTE
+   preservados, é possível atualizar a impressão sem trocar a arte aprovada. Exige
+   motivo, e o motivo fica gravado no arquivo. Ver KNOWN-BUGS BUG-158. */
 const SO_IMPRESSAO = ARGS.includes('--so-impressao');
 const MOTIVO = (ARGS.find((a) => a.startsWith('--motivo=')) || '').slice(9);
 if (SO_IMPRESSAO && !MOTIVO) {
@@ -80,10 +92,6 @@ if (SO_IMPRESSAO && !MOTIVO) {
 }
 
 if (!BASE && !SO_IMPRESSAO) { console.error('BASE ausente: aponte para o SEU servidor (ex.: node tools/eval/serve.mjs 4510 & BASE=http://127.0.0.1:4510 npm run grafite). Sem padrão de propósito: localhost:8123 costuma ser o servidor de outra sessão, com outra árvore.'); process.exit(2); }
-
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = _pw.chromium || _pw.default?.chromium;
 
 /* Rodar um mapa preserva os demais layouts declarados. */
 const anterior = {};
@@ -104,8 +112,8 @@ if (SO_IMPRESSAO) {
   const fpNovo = impressao();
   const txt = readFileSync(SAIDA, 'utf8');
   const marca = `\n/* REASSINADO SEM REASSAR em ${new Date().toISOString().slice(0, 10)} — ${MOTIVO}\n`
-    + `   A colocação não foi tocada: assar de novo não é operação fiel (duas rodadas idênticas\n`
-    + `   dão contagens diferentes, e árvore sem o acervo completo de decalques apaga peças). */\n`;
+    + `   As colocações existentes foram preservadas; o motivo delimita a revalidação\n`
+    + `   das fontes e dos suportes. */\n`;
   const semFp = txt.replace(/\n\/\* REASSINADO SEM REASSAR[\s\S]*?\*\/\n/g, '')
     .replace(/export const GRAFITE_FP = .*;\n/, '');
   writeFileSync(SAIDA, semFp + marca + `export const GRAFITE_FP = ${JSON.stringify(fpNovo)};\n`);
@@ -114,13 +122,23 @@ if (SO_IMPRESSAO) {
   process.exit(0);
 }
 
+const gRoot = execSync('npm root -g').toString().trim();
+const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+const chromium = _pw.chromium || _pw.default?.chromium;
+
 const inputFingerprint = impressao();
 if (ONLY && !CHECKPOINT_ONLY && previousFingerprint?.pass !== inputFingerprint.pass)
   throw Error('A passada mudou: regerar um mapa não pode reassinar os demais. Regere todos ou use --checkpoint-only para diagnosticar.');
-const browser = await chromium.launch({
+let browser;
+if (!EGO_SPACE) {
+const gRoot = execSync('npm root -g').toString().trim();
+const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+const chromium = _pw.chromium || _pw.default?.chromium;
+browser = await chromium.launch({
   ...(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : { channel: 'chrome' }), headless: true,
   args: ['--mute-audio'],
 });
+}
 
 try {
 for (const id of MAPAS) {
@@ -131,15 +149,34 @@ for (const id of MAPAS) {
     anterior[id] = saved.layout; console.log(`  ${id}: checkpoint validado (${saved.layout.pecas.length} peças)`); continue;
   }
   console.log(`  ${id}: iniciando passada viva`);
-  const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
-  page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
-  // `grafite=vivo`: manda o mapa RODAR a passada em vez de aplicar o layout assado
+  let g, actualMap, faltas = [];
   const viewId = id;
+  if (EGO_SPACE) {
+    ({ g, actualMap, faltas } = capturarGrafiteEgo({ base: BASE, id, space: EGO_SPACE,
+      page: process.env.EGO_PAGE || 'p2', block: process.env.GRAFITE_DERRUBA || '' }));
+  } else {
+  const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
+  /* ENTRADA QUE FALTA CANCELA O BAKE (#1109). A passada é determinística sobre a cena que
+     recebe; o que varia entre rodadas é a cena. `preloadMapProps` engole GLB que não
+     carregou e o mapa sobe sem ele: só a `statue_liberty.glb` faltando leva a loja_h de
+     186 a 200 peças, sem erro nenhum. Requisição perdida, erro da página e prop que não
+     decodificou viram falha alta, com a lista, em vez de um layout diferente. */
+  page.on('pageerror', (e) => { console.log('  [pageerror]', e.message); faltas.push(`pageerror: ${e.message}`); });
+  page.on('requestfailed', (r) => faltas.push(`falhou: ${r.url()} (${r.failure()?.errorText || '?'})`));
+  page.on('response', (r) => { if (r.status() >= 400) faltas.push(`${r.status()}: ${r.url()}`); });
+  page.on('console', (m) => { if (/load failed/.test(m.text())) faltas.push(`console: ${m.text().slice(0, 160)}`); });
+  if (process.env.GRAFITE_DERRUBA) await page.route(new RegExp(process.env.GRAFITE_DERRUBA), (route) => route.abort());
+  // `grafite=vivo`: manda o mapa RODAR a passada em vez de aplicar o layout assado
   await page.goto(`${BASE}/mapview.html?map=${viewId}&grafite=vivo`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction('window.MAPEVAL && window.MAPEVAL.ready===true', null, { timeout: 1200000 });
-  const g = await page.evaluate(() => window.__grafite || null);
-  const actualMap = await page.evaluate(() => window.__mapId);
+  g = await page.evaluate(() => window.__grafite || null);
+  actualMap = await page.evaluate(() => window.__mapId);
   await page.close();
+  }
+  if (faltas.length) {
+    throw Error(`${id}: ${faltas.length} entrada(s) faltando na cena; bake cancelado, layout anterior preservado:\n    `
+      + [...new Set(faltas)].slice(0, 20).join('\n    '));
+  }
   if (actualMap !== viewId || g?.mapa !== id || !g?.pass?.layout?.pecas?.length) {
     throw Error(`${id}: mapa/passada inválidos (${actualMap}/${g?.mapa}); bake cancelado`);
   }
@@ -159,7 +196,7 @@ for (const id of MAPAS) {
   console.log(`  ${id}: ${anterior[id].pecas.length} peças · ${anterior[id].arquivos.length} arquivos · `
     + `${anterior[id].murais.length} murais · ${g.ms} ms de passada`);
 }
-} finally { await browser.close(); }
+} finally { await browser?.close(); }
 
 if (CHECKPOINT_ONLY) {
   console.log('Checkpoint de diagnóstico concluído; layout público não foi escrito.');

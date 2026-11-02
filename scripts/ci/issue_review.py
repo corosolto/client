@@ -11,6 +11,10 @@ SAFE_LABELS = {"documentation", "dx", "good first issue"}
 SENSITIVE_LABELS = {
     "backend", "ci", "harness", "seguranca", "personagens", "armas", "graficos", "arte"
 }
+# Labels que o PRÓPRIO bot aplica. Não são sinal humano de escopo, então não
+# entram na conta do critério: `issues: edited` re-dispara a triagem com elas
+# no payload e `labels.issubset(SAFE_LABELS)` virava False na segunda passada.
+BOT_LABELS = {"bot-fixable", "needs-repro", "covered-by-pr", "crash-auto"}
 
 LABEL_REASONS = {
     "bot-fixable": "escopo pequeno e determinístico — dá pra um bot rascunhar o conserto",
@@ -87,17 +91,20 @@ def review_issue(payload: dict) -> dict:
     issue = payload["issue"]
     prs = payload.get("prs", [])
     labels = {l["name"] for l in issue.get("labels", [])}
+    # O critério lê só o que HUMANO pôs: quem triou de verdade é quem rotulou
+    # a área. Ver BOT_LABELS.
+    humanas = labels - BOT_LABELS
     number = issue["number"]
     body = (issue.get("body") or "").strip()
 
     labels_add: list[str] = []
-    if labels and labels.issubset(SAFE_LABELS):
+    if humanas and humanas.issubset(SAFE_LABELS):
         labels_add.append("bot-fixable")
-    elif "dx" in labels and not labels.intersection(SENSITIVE_LABELS):
+    elif "dx" in humanas and not humanas.intersection(SENSITIVE_LABELS):
         labels_add.append("bot-fixable")
-    elif "documentation" in labels:
+    elif "documentation" in humanas:
         labels_add.append("bot-fixable")
-    if len(body) < 24 and "crash-auto" not in labels and not labels.intersection(SAFE_LABELS):
+    if len(body) < 24 and "crash-auto" not in labels and not humanas.intersection(SAFE_LABELS):
         labels_add.append("needs-repro")
 
     covered = None
@@ -144,6 +151,27 @@ def selftest() -> int:
         ("PR cobrinte detectada", r3["covered_pr"]["number"] == 7),
         ("covered vira caixa IMPORTANT", "> [!IMPORTANT]" in r3["comment"]),
         ("link da PR no comentário", "https://x/pull/7" in r3["comment"]),
+    ]
+
+    # `issues: edited` re-dispara a triagem com as labels que o PRÓPRIO bot já
+    # aplicou no gatilho anterior. Como elas não são do SAFE_LABELS, o
+    # `labels.issubset(SAFE_LABELS)` virava False na segunda passada: a issue
+    # continuava com `bot-fixable` grudada e o comentário (reescrito no lugar,
+    # pelo marcador) passava a dizer "fora dos critérios automáticos". Quem lia
+    # não chamava `/bot-fix` — o rótulo e o texto do bot se contradiziam.
+    retriagem = dict(base, labels=[{"name": "good first issue"}, {"name": "bot-fixable"}])
+    r4 = review_issue({"issue": retriagem, "prs": []})
+    crash_curta = {"number": 43, "title": "crash em produção: TypeError x", "url": "https://x/43",
+                   "author": None, "labels": [{"name": "crash-auto"}], "body": "boom", "state": "open"}
+    r5 = review_issue({"issue": crash_curta, "prs": []})
+    so_do_bot = dict(base, labels=[{"name": "needs-repro"}])
+    r6 = review_issue({"issue": so_do_bot, "prs": []})
+    casos += [
+        ("re-triagem mantém o veredito bot-fixable", r4["labels_add"] == ["bot-fixable"]),
+        ("re-triagem não desmente o rótulo no comentário",
+         "fora dos critérios automáticos" not in r4["comment"]),
+        ("crash-auto curta não vira needs-repro", r5["labels_add"] == []),
+        ("label só do bot não qualifica sozinha", r6["labels_add"] == []),
     ]
     erros = 0
     for nome, ok in casos:

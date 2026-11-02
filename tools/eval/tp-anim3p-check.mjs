@@ -44,10 +44,10 @@ const PORTA = process.env.PORTA || '9326';
 const BASE = BASE_EXTERNA || `http://127.0.0.1:${PORTA}`;
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const ESPERADO = { 'pega-morta': ['AN1'], 'torso-mudo': ['AN1', 'AN2'], 'lean-morto': ['AN3'], 'reload-mudo': ['AN4'], 'opcional-fantasma': ['AN5'],
-  'flinch-mudo': ['AN6'], 'agachado-estatua': ['AN1', 'AN7'], 'ar-correndo': ['AN8', 'AN9'], 'quadril-colado': ['AN9'], 'lod-cego': ['AN10'] };
+  'flinch-mudo': ['AN6'], 'agachado-estatua': ['AN7'], 'ar-correndo': ['AN8', 'AN9'], 'quadril-colado': ['AN9'], 'lod-cego': ['AN10'] };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
-const PARTIDA = 'debug=1&auto=E,esquerdomacho&map=praca_poderes';
+const PARTIDA = 'debug=1&economia=0&auto=E,esquerdomacho&map=praca_poderes';
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
@@ -98,14 +98,14 @@ async function abrir() {
   return { page, fechar: () => ctx.close() };
 }
 
-/* ---- AN1–AN3: até 3 bots, fica no primeiro que cumpre o contrato ---- */
+/* ---- AN1–AN3: até 8 bots; cada cláusula usa um rig que consiga exercê-la ---- */
 const { page, fechar } = await abrir();
 const m = await page.evaluate(async () => {
   const g = window.__game;
   const T = await import('/vendor/three.module.js');
   const V = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
   const cand = (g.bots || []).filter(x => x.mesh?.ctrl?.ikL && x.mesh?.ctrl?.torso?.spines?.length && x.alive).slice(0, 8);
-  let melhor = null;
+  const medidos = [];
   for (const b of cand) {
     const ctrl = b.mesh.ctrl, grupo = b.mesh.group, torso = ctrl.torso;
     let cabeca = null; grupo.traverse(o => { if (!cabeca && o.isBone && /head/i.test(o.name)) cabeca = o; });
@@ -129,9 +129,10 @@ const m = await page.evaluate(async () => {
     const an6 = { picoCm: antesFlinch.distanceTo(pos(cabeca)) * 100 };
     roda(45); an6.voltaCm = antesFlinch.distanceTo(pos(cabeca)) * 100;
     ctrl.setCrouch(true); roda(12);
-    const antesTiro = pos(cabeca); ctrl.shoot(); roda(3);
-    const an7 = { recuoCm: antesTiro.distanceTo(pos(cabeca)) * 100, estado: ctrl.curName };
-    roda(20); ctrl.setCrouch(false); roda(12);
+    ctrl.setMantle(0.5); roda(1);
+    const an11 = { estado: ctrl.curName, tempo: ctrl.actions.jump?.time || 0 };
+    ctrl.setMantle(null); roda(1);
+    roda(24); ctrl.setCrouch(false); roda(12);
     ctrl.setAr(true); roda(40);
     const an8 = { noAr: ctrl.curName };
     ctrl.setAr(false); roda(4); an8.noPouso = ctrl.curName; roda(25);
@@ -142,11 +143,57 @@ const m = await page.evaluate(async () => {
     const an1 = { foiCm: base.mao.distanceTo(meio.mao) * 100, aoPenteCm: meio.mao.distanceTo(magAlvo) * 100, basePenteCm: base.mao.distanceTo(magAlvo) * 100, voltouCm: fim.mao.distanceTo(base.mao) * 100, kMeio: meio.k, durFim: fim.dur };
     const an2 = { quedaCm: (base.cabeca.y - meio.cabeca.y) * 100, frenteCm: Math.abs((meio.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100, voltaCm: Math.abs((fim.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100 };
     const an3 = { leanK, deslocCm: Math.abs((cabecaLean.clone().sub(base.cabeca)).dot(direita())) * 100, voltaCm: Math.abs((cabecaVolta.clone().sub(base.cabeca)).dot(direita())) * 100, mortoDeslocCm: Math.abs((mortoCom.clone().sub(morto0)).dot(direita())) * 100 };
-    const cumpre = an1.foiCm >= 8 && an1.aoPenteCm <= an1.basePenteCm - 10 && an2.frenteCm >= 5 && an3.deslocCm >= 4;
-    if (cumpre || !melhor) melhor = { charId: ctrl.charId, an1, an2, an3, an6, an7, an8, an9 };
-    if (cumpre) break;
+    medidos.push({ charId: ctrl.charId, an1, an2, an3, an6, an8, an9, an11 });
   }
-  return melhor || { erro: 'sem bot com arma de 2 mãos' };
+  if (!medidos.length) return { erro: 'sem bot com arma de 2 mãos' };
+  const escolhe = (pred) => medidos.find(pred) || medidos[0];
+  const m1 = escolhe((x) => x.an1.foiCm >= 8 && x.an1.aoPenteCm <= x.an1.basePenteCm - 10
+    && x.an1.voltouCm <= 2 && x.an1.kMeio > 0.9 && x.an1.durFim === 0);
+  const m2 = escolhe((x) => x.an2.frenteCm >= 5 && x.an2.voltaCm <= 1.5);
+  const m3 = escolhe((x) => x.an3.leanK > 0.07 && x.an3.deslocCm >= 4
+    && x.an3.voltaCm <= 1.5 && x.an3.mortoDeslocCm <= 0.5);
+  const m6 = escolhe((x) => x.an6.picoCm >= 3 && x.an6.voltaCm <= 1.5);
+  const m8 = escolhe((x) => x.an8.noAr === 'jump' && x.an8.noPouso === 'crouch');
+  const m9 = escolhe((x) => x.an9.lagImediato >= 0.25 && x.an9.lagDepois <= 0.08);
+  const m11 = escolhe((x) => x.an11 && x.an11.estado === 'jump' && x.an11.tempo > 0);
+  return {
+    charId: m1.charId,
+    an1: m1.an1, an2: m2.an2, an3: m3.an3,
+    an6: m6.an6, an8: m8.an8, an9: m9.an9,
+    an11: m11.an11,
+  };
+});
+// AN7 compara dois controladores reais no mesmo tempo: só A dispara. O delta do
+// controle B desconta a animação natural, sem confundir o crossfade de AN11 com recuo.
+const an7 = await page.evaluate(async () => {
+  const g = window.__game;
+  const bot = (g.bots || []).find(x => x.mesh?.ctrl?.ikL && x.mesh?.ctrl?.torso?.spines?.length && x.alive);
+  if (!bot?.def) return { infra: 'sem bot com rig de 2 mãos' };
+  const G = await import('/js/glbchars.js');
+  const T = await import('/vendor/three.module.js');
+  await G.preloadCharacterAssets([bot.def.id], { weapons: ['awp'] });
+  const monta = () => G.buildCharacterModel(bot.def, { weaponId: 'awp' });
+  const A = monta(), B = monta();
+  if (!A?.ctrl?.headBone || !B?.ctrl?.headBone) return { infra: 'buildCharacterModel sem modelo/headBone (clipes ou _base ausentes)' };
+  if (!A.ctrl.torso?.gun || !B.ctrl.torso?.gun) return { infra: 'controller sem arma montada' };
+  if ([A, B].some(m => m.ctrl.torso.gun.name !== 'arma-glb')) return { infra: 'AWP real ausente; arma procedural não mede o contrato' };
+  if (A.ctrl === B.ctrl || A.mixer === B.mixer || A.ctrl.actions.crouch === B.ctrl.actions.crouch) return { infra: 'controladores/mixers/actions compartilhados' };
+  const ossosA = [], ossosB = [];
+  A.group.traverse(o => { if (o.isBone) ossosA.push(o); });
+  B.group.traverse(o => { if (o.isBone) ossosB.push(o); });
+  if (!ossosA.length || ossosA.length !== ossosB.length || ossosA.some(o => ossosB.includes(o))) return { infra: 'ossos ausentes ou compartilhados' };
+  const roda = (c) => c.update(1 / 60, false, false, 0, false, 0);
+  for (const c of [A.ctrl, B.ctrl]) { c.setCrouch(true); for (let i = 0; i < 45; i++) roda(c); }
+  const cabeca = (m) => { m.group.updateMatrixWorld(true); return m.ctrl.headBone.getWorldPosition(new T.Vector3()); };
+  const a0 = cabeca(A), b0 = cabeca(B);
+  if (A.ctrl.curName !== 'crouch' || B.ctrl.curName !== 'crouch' || a0.distanceTo(b0) > 1e-8 || A.mixer.time !== B.mixer.time) return { infra: 'par não sincronizado em crouch antes do tiro' };
+  A.ctrl.shoot();
+  for (let i = 0; i < 3; i++) { roda(A.ctrl); roda(B.ctrl); }
+  const a1 = cabeca(A), b1 = cabeca(B);
+  const finitos = [a0, a1, b0, b1].every((v) => Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z));
+  if (!finitos) return { infra: 'posição de cabeça não finita' };
+  const recuoCm = a1.clone().sub(a0).sub(b1.clone().sub(b0)).length() * 100;
+  return { charId: bot.def.id, weaponId: 'awp', tempo: A.mixer.time, recuoCm, controleCm: b1.distanceTo(b0) * 100, estadoA: A.ctrl.curName, estadoB: B.ctrl.curName };
 });
 await fechar();
 
@@ -212,15 +259,22 @@ if (m.erro) {
   cobra('AN3', m.an3.leanK > 0.07 && m.an3.deslocCm >= 4 && m.an3.voltaCm <= 1.5 && m.an3.mortoDeslocCm <= 0.5,
     `AN3 · lateral 3,5 m/s: cabeça deslocou ${m.an3.deslocCm.toFixed(1)} cm (leanK ${m.an3.leanK.toFixed(3)}), voltou a ${m.an3.voltaCm.toFixed(2)} cm sem lateral; morto deslocou ${m.an3.mortoDeslocCm.toFixed(2)} cm`);
 }
+if (an7.infra) {
+  await browser.close(); servidor?.kill();
+  console.log(`AN7 · INFRA SEM VEREDICTO — ${an7.infra}`);
+  process.exit(2);
+}
 if (!m.erro) {
   cobra('AN6', m.an6.picoCm >= 3 && m.an6.voltaCm <= 1.5,
     `AN6 · levar tiro moveu a cabeça ${m.an6.picoCm.toFixed(1)} cm no eixo do disparo e ela voltou a ${m.an6.voltaCm.toFixed(2)} cm`);
-  cobra('AN7', m.an7.recuoCm >= 0.5 && /crouch/.test(m.an7.estado || ''),
-    `AN7 · tiro agachado deu ${m.an7.recuoCm.toFixed(2)} cm de recuo mantendo a pose ${m.an7.estado}`);
+  cobra('AN7', an7.recuoCm >= 0.5 && /crouch/.test(an7.estadoA || '') && /crouch/.test(an7.estadoB || ''),
+    `AN7 · ${an7.charId}/${an7.weaponId} t=${an7.tempo.toFixed(3)}: recuo causal ${an7.recuoCm.toFixed(2)} cm; controle ${an7.controleCm.toFixed(2)} cm (A ${an7.estadoA}, B ${an7.estadoB})`);
   cobra('AN8', m.an8.noAr === 'jump' && m.an8.noPouso === 'crouch',
     `AN8 · no ar o estado é ${m.an8.noAr} (não locomoção) e o pouso amortece em ${m.an8.noPouso}`);
   cobra('AN9', m.an9.lagImediato >= 0.25 && m.an9.lagDepois <= 0.08,
     `AN9 · giro de 2 rad deixou o quadril ${m.an9.lagImediato.toFixed(2)} rad atrás e ele alcançou em ${m.an9.lagDepois.toFixed(3)} rad`);
+  cobra('AN11', m.an11.estado === 'jump' && m.an11.tempo > 0,
+    `AN11 · mantle vence o agachamento na pose ${m.an11.estado}, com tempo ${m.an11.tempo.toFixed(3)} s`);
 }
 if (an4.dados) {
   cobra('AN4', an4.dados.jogadorRecarregando && an4.dados.botRecarregou,

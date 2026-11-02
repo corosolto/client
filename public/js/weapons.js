@@ -350,7 +350,7 @@ export function weaponModel(id, skinId = reviewWeaponSkinId()) {
      é box.min.y, que ninguém lê. */
   const mag = buildMag(id);
   if (mag) { mag.scale.setScalar(1 / s); wrap.add(mag); }
-  applyWeaponSkinCandidate(wrap, id, skinId);
+  applyWeaponSkinCandidate(wrap, id, skinId, id === 'knife' ? { knifeContext: 'knife-tp' } : undefined);
   wrap.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.frustumCulled = false; } });
   wrap.userData.weaponSource = source;
   wrap.userData.weaponRequested = requested;

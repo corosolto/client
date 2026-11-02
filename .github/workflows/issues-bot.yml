@@ -205,6 +205,10 @@ jobs:
 
   bootstrap:
     needs: bot-token
+    # Um bootstrap ativo por issue; pedidos repetidos não cancelam o ativo.
+    concurrency:
+      group: issues-bot-bootstrap-${{ github.repository }}-${{ github.event.issue.number }}
+      cancel-in-progress: false
     if: >
       github.event_name == 'issue_comment' &&
       needs.bot-token.outputs.available == 'true' &&
@@ -243,12 +247,21 @@ jobs:
               sys.exit(1)
           PY
       - name: Skip if PR already exists for this issue
+        id: ja_tem_pr
         run: |
-          if gh pr list --state open --search "#${ISSUE_NUMBER}" --json number --jq 'length' | grep -qv '^0$'; then
+          # `exit 0` num step NÃO pula os de baixo — ele encerra ESTE step com
+          # sucesso e o job segue. O bot comentava "Bootstrap cancelado" e, no
+          # passo seguinte, force-pushava a branch e abria a segunda PR mesmo
+          # assim. Quem decide o pulo agora é o `if:` de cada step a jusante.
+          abertas=$(gh pr list --state open --search "#${ISSUE_NUMBER}" --json number --jq 'length')
+          if [ "${abertas:-0}" -gt 0 ]; then
             gh issue comment "$ISSUE_NUMBER" --body "Já existe PR aberta referenciando esta issue. Bootstrap cancelado."
-            exit 0
+            echo "pular=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pular=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Create bootstrap branch and empty commit
+        if: steps.ja_tem_pr.outputs.pular == 'false'
         run: |
           branch="bot/issue-${ISSUE_NUMBER}"
           git config user.name "csbrasil-bot"
@@ -260,9 +273,11 @@ jobs:
           git commit --allow-empty -m "chore(bot): bootstrap fix for #${ISSUE_NUMBER}" \
                      -m "Agent: csbrasil-bot (issues-bot)" \
                      -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>"
-          git push -u origin "$branch" --force
+          # Preserve uma branch remota que avançou após uma tentativa anterior.
+          git push -u origin "$branch"
           echo "BRANCH=$branch" >> "$GITHUB_ENV"
       - name: Open draft PR
+        if: steps.ja_tem_pr.outputs.pular == 'false'
         run: |
           python3 - <<'PY'
           import json, os, subprocess

@@ -76,6 +76,11 @@
 .tp-modos__nome{margin:0;font-size:36px}
 .tp-modos__desc{margin:4px 0 0;font-size:16px;font-weight:600;line-height:1.35;color:var(--tp-tinta-2)}
 .tp-modos__cfg{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:16px;scrollbar-width:thin;scrollbar-color:var(--tp-elevado) transparent}
+.tp-modos__regras[hidden],.tp-modos__passo[hidden],.tp-modos__gira[hidden]{display:none!important}
+.tp-modos__regras [data-javaporcos-opcoes]{flex-direction:column}
+.tp-modos__regras label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:800}
+.tp-modos__regras label[hidden]{display:none}
+.tp-modos__regras select,.tp-modos__regras input{width:100%;min-height:40px;box-sizing:border-box;border:1px solid var(--tp-tinta-3);border-radius:7px;padding:8px;background:var(--tp-fundo);color:var(--tp-tinta-1);font:600 14px var(--tp-ui)}
 .tp-modos__passo{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .tp-modos__rot{font-weight:800;font-size:16px}
 .tp-modos__ctl{display:flex;align-items:center;gap:10px}
@@ -156,8 +161,10 @@
   .tp-modos__fav{opacity:1}
 }
 
-/* Cartão da escalação: o ＋ e o selo ALIADO/INIMIGO sobem para o canto do retrato e deixam o nome livre. */
+/* Cartão da escalação: o ＋ e o selo ALIADO/INIMIGO sobem para o canto do retrato e deixam o nome livre.
+   Em coarse/height520 o VISUAL continua 28 px (não cobre o rosto); o alvo de 44×44 vem do ::after estendido. */
 :root[data-ui="v3"] .hub-roster-pin{top:6px;bottom:auto;right:6px;display:flex;align-items:center;justify-content:center;min-width:28px;min-height:28px;box-sizing:border-box;border-radius:6px}
 :root[data-ui="v3"] .hub-roster-pin[aria-pressed="false"]{background:rgba(9,7,4,.6)}
-@media (max-height:520px),(pointer:coarse){:root[data-ui="v3"] .hub-roster-pin{min-width:44px;min-height:44px}}
+:root[data-ui="v3"] .hub-roster-pin::after{content:'';position:absolute;inset:0;border-radius:6px}
+@media (max-height:520px),(pointer:coarse){:root[data-ui="v3"] .hub-roster-pin{top:8px;right:8px}:root[data-ui="v3"] .hub-roster-pin::after{inset:-9px}}
 :root[data-ui="v3"] .hub-roster-grid span{white-space:normal;text-overflow:clip;line-height:1.1;min-height:2.2em;display:flex;align-items:center;justify-content:center;overflow-wrap:anywhere}

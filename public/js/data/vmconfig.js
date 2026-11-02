@@ -59,10 +59,14 @@ export const VM_WEAPON = {
   // <família>/<arma>-baked-runtime.glb; `runtime:'family'` usa <família>/<família>-runtime.glb.
   awp: W('sniper', { baked: true, frame: 'family' }),
   // AK = golden aprovada no quadril (rota gold#ak, eval:vm-launch VL7).
-  // ADS de foco deixa a cruz livre; alça/massa são medidas no Rifle_metarig (VM-FABRICA §8.3).
+  // ADS em linha: `linha:true` centra alça/massa (?ads1pfix=0 volta ao foco) — docs/visual-consistency/AK-ADS.md.
   ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } },
-    ads: { auto: true, off: [0, -0.10, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.35, estilo: 'foco',
-      golden: { osso: 'Rifle_metarig', alca: [-0.0064, 0.167, 0.0588], massa: [-0.0064, 0.507, 0.0546], cima: [0, 0, 1] } } }),
+    // Centro dos bounds da face frontal, GLB4094c0534f; coordenadas locais do Rifle.
+    bocaGolden: { revision: '4094c0534f', mesh: 'coro_solto_project_ak_body', vertices: 4869,
+      bone: 'Rifle_metarig', boneIndex: 69,
+      point: [-0.007025681626175773, 0.5414973542972648, 0.0016889069557109795] },
+    ads: { auto: true, off: [0, -0.10, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 0.35, estilo: 'foco', linha: true,
+      golden: { osso: 'Rifle_metarig', alca: [-0.0064, 0.167, 0.0603], massa: [-0.0064, 0.5128, 0.0577], cima: [0, 0, 1] } } }),
   // `frame` aceita override manual; a medida gerada por arma vive em `vmframe.js`.
   // Evidência: docs/reports/VIEWMODEL-ENQUADRAMENTO-ESCALA-2026-09-18.md.
   m4: W('ar', { baked: true, ads: { auto: true, off: [-0.0053, -0.0533, 0], rotDeg: [0, 0, 0], pull: 0.05, fovScale: 1 } }),
@@ -187,8 +191,8 @@ export const VM_FABRICA = Object.freeze({
   p90: F('p90', 'PDW90', { recoilScale: 0.85, recoilLoc: 0.6, ads: A(0.5) }),
   lmg: F('lmg', 'MGX5', { recoilScale: 4, recoilLoc: 1.5, frame: { x: 0.335, y: -0.04, z: -0.15, rotDeg: [1.69, 0, -8] }, ads: S(0.3) }),
   shotgun: F('shotgun', 'KXG12', { recoilScale: 2.8, recoilLoc: 1.2, ads: A(0.1) }),
-  pistol: F('pistol', 'X18', { frame: CURTA, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco' } }),
-  deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco' } }),
+  pistol: F('pistol', 'X18', { frame: CURTA, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco', linha: { off: [0, -0.08, 0], estilo: 'foco' } } }),
+  deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco', linha: { off: [0, -0.08, 0], estilo: 'foco' } } }),
   revolver38: F('revolver', 'Viper-357', { frame: { ...CURTA, y: -0.07, rotDeg: [-10, 0, -5] }, ads: A(0.38) }),
   m92: F('ak', 'AK', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
   md97: F('ar', 'MX16A4', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
@@ -288,6 +292,14 @@ export const VM_SIDE_CONTRACT = Object.freeze({
   visibleMin: 0.70,
   profileMin: 0.02,
 });
+
+// Foco com `ads.linha` vira ADS automático pela alça e massa; um objeto sobrepõe os pontos.
+// ?ads1pfix=0 volta ao foco. Régua: tools/eval/ads1p-linha-check.mjs.
+export function adsEfetivo(ads, linha = true) {
+  if (!linha || ads?.estilo !== 'foco' || !ads.linha) return ads;
+  const { linha: extra, ...resto } = ads;
+  return { ...resto, auto: true, off: [0, 0, 0], rotDeg: [0, 0, 0], estilo: 'linha', ...(extra === true ? {} : extra) };
+}
 
 export function authoredFrameFor(weapon, family, sourceKey = '', cameraFov = 84) {
   if (sourceKey.startsWith('fab#')) {

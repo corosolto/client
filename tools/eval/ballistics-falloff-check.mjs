@@ -1,5 +1,6 @@
 import { Game, bootGame, initTextures, THREE } from './harness.mjs';
 import { WEAPONS } from '../../public/js/data/weapons.js';
+import { entradaCombatente } from '../../public/js/hitboxes.js';
 
 // #968: extremos da configuração em 5b5fdba7498c; mede os consumidores reais, não só a tabela.
 const curvas = [
@@ -52,12 +53,15 @@ try {
       usado = { args, valor }; return valor;
     };
     game._damage = (ent, valor) => { entregue = valor; };
+    // Entrada na cabeça do personagem do alvo (cabeça justa); com a esfera antiga era 59,75 m.
+    const entrada = entradaCombatente(new THREE.Vector3(0, 1.6, 0), new THREE.Vector3(0, 0, 1), alvo.pos, 0, game._perfilCabeca(alvo)).dist;
+    const queda = Game.prototype._distanceDamage.call(game, 36, 'ak', entrada);
     if (caminho === '_updateBot') game._updateBot(atirador, 0);
     else game._botShootNN(atirador, alvo);
-    cobrar(usado && usado.args[0] === 36 && usado.args[1] === 'ak' && Math.abs(usado.args[2] - 59.75) < 1e-9,
+    cobrar(usado && usado.args[0] === 36 && usado.args[1] === 'ak' && Math.abs(usado.args[2] - entrada) < 1e-9,
       `${caminho}: entrega dano, arma e distância efetivos à curva`);
-    cobrar(usado && Math.abs(usado.valor - 34.407) < 1e-9, `${caminho}: queda de AK na entrada da cabeça a 59,75 m`);
-    cobrar(entregue === 34, `${caminho}: preserva dano arredondado de AK contra bot`);
+    cobrar(usado && Math.abs(usado.valor - queda) < 1e-9 && queda < 36, `${caminho}: queda de AK na entrada da cabeça a ${entrada.toFixed(2)} m`);
+    cobrar(entregue === Math.round(queda), `${caminho}: preserva dano arredondado de AK contra bot`);
   }
 } finally { Math.random = randomOriginal; game.dispose(); }
 process.exitCode = falhas ? 1 : 0;

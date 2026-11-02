@@ -83,6 +83,7 @@
   max-width:min(560px,calc(100vw - 2 * var(--tp-lobby-coluna) - 4 * var(--tp-lobby-margem)));min-height:var(--tp-lobby-toque);padding:2px 10px;
   transform:translateX(-50%);flex-direction:column;justify-content:center;gap:6px;text-align:center;border:0;background:none;color:var(--tp-tinta-1)}
 :root[data-ui="v3"] #hub-ui .hub-character-card>img,:root[data-ui="v3"] #hub-ui .hub-character-card small{display:none}
+:root[data-ui="v3"] #hub-ui .hub-character-card .pv-compact-equipment:not([hidden]){display:block}
 :root[data-ui="v3"] #hub-ui .hub-character-card>span{align-items:center;gap:6px}
 :root[data-ui="v3"] #hub-ui .hub-character-card strong{display:inline-block;transform:var(--tp-skew);white-space:normal;font:400 clamp(26px,2.5vw,38px)/.92 var(--tp-display);letter-spacing:.01em;text-transform:uppercase}
 :root[data-ui="v3"] #hub-ui .hub-character-card .hub-character-change{margin:0;color:var(--tp-tinta-2);font:700 14px/1 var(--tp-ui);letter-spacing:.08em}
@@ -95,6 +96,15 @@
 /* Colunas */
 .tp-lobby-esq,.tp-lobby-dir{position:fixed;top:var(--tp-lobby-topo);width:var(--tp-lobby-coluna);display:flex;flex-direction:column;gap:14px}
 .tp-lobby-esq{left:var(--tp-lobby-margem)}
+.tp-lobby-invasao{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-height:205px;padding:16px;overflow:hidden;text-align:left;color:#fff;cursor:pointer;background:var(--tp-painel);flex-shrink:0}
+.tp-lobby-invasao>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:75% center;opacity:.5}
+.tp-lobby-invasao>span,.tp-lobby-invasao>strong{position:relative;z-index:1;text-shadow:0 2px 5px #000}
+.tp-lobby-invasao>strong{font-size:28px;margin-top:22px}
+.tp-lobby-invasao:focus-visible{outline:3px solid var(--tp-ambar);outline-offset:3px}
+.tp-lobby-invasao--compacto{min-height:58px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;width:100%;padding:8px 12px}
+.tp-lobby-invasao--compacto>strong{font-size:21px;margin:0}
+.tp-lobby-invasao--compacto>span:not(.tp-chip):not(.tp-lobby-link){display:none}
+.tp-lobby-invasao--compacto>.tp-lobby-link{grid-column:2;font-size:12px}
 .tp-lobby-dir{right:var(--tp-lobby-margem)}
 :root[data-ui="v3"] #main-menu[data-hub-net="mp"] .tp-lobby-esq,:root[data-ui="v3"] #main-menu[data-hub-net="mp"] .tp-lobby-dir,:root[data-ui="v3"] #main-menu[data-hub-net="mp"] .tp-lobby-vaga{display:none}
 :root[data-ui="v3"] #main-menu[data-hub-net="sp"] #hub-play>.hub-net{display:none}
@@ -270,7 +280,7 @@
   .tp-lobby-quest__barra{height:5px}
   .tp-lobby-vazio{font-size:12px}
   :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character{left:calc(50% - 150px);top:44px;bottom:0}
-  /* o pacote (tela 18) põe o personagem no lobby deitado; o "sem 3D no mobile" de style.css vale para a seleção */
+  /* O palco amplo é mantido aqui; a identidade estática compacta é definida abaixo. */
   :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character .char-preview-box{display:flex}
   :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character #char-preview{width:min(calc(100dvh - 40px),860px);height:min(calc(100dvh - 40px),860px)}
   :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card{bottom:8px;max-width:300px}
@@ -344,3 +354,17 @@
 :root[data-ui="v3"][data-motion="reduzido"] #hub-ui .hub-pane:not([hidden])>.social-workspace,
 :root[data-ui="v3"][data-motion="reduzido"] #hub-ui .hub-pane:not([hidden])>.tp-perfil,
 :root[data-ui="v3"][data-motion="reduzido"] #hub-ui .hub-pane:not([hidden])>.store-shell{animation:none}
+
+@media(max-width:760px),(pointer:coarse) and (max-height:560px){
+  :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character .char-preview-box{display:none}
+  :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card{flex-direction:row;gap:8px;text-align:left}
+  :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card>span{align-items:flex-start;min-width:0}
+  :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card>.pv-compact-portrait:not([hidden]),
+  :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card .pv-compact-equipment:not([hidden]){display:block}
+}
+@media(max-width:760px) and (max-height:560px){
+  :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card{position:fixed;top:var(--tp-lobby-topo);bottom:auto;left:var(--tp-lobby-margem);transform:none;
+    width:min(300px,calc(100vw - var(--tp-lobby-coluna) - 3 * var(--tp-lobby-margem)));max-width:none}
+  :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card>span{flex:1;gap:3px;overflow:hidden}
+  :root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-character-card strong{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}

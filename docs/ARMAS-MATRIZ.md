@@ -1,7 +1,7 @@
 # Matriz gerada do arsenal
 
 Gerada por `node tools/gen-weapon-matrix.mjs`; não editar os valores à mão.
-O dano vem do consumidor real em [game.js:4096](../public/js/game.js#L4096).
+O dano vem do consumidor real em [game.js:4232](../public/js/game.js#L4232).
 
 Alvo ideal de 100 HP, sem proteção/regeneração, primeiro tiro imediato, todos os
 pellets no mesmo alvo, sem erro de mira, saque ou latência. TTK usa cadência
@@ -40,7 +40,7 @@ dispersão. Luneta é equipamento do jogo e não determina o perfil de dano.
 | uzi | UZI 9 mm / 9×19 | seletiva / segurar | smg / não | 857.143 | 25 | 1 × 25 | 25 / 18.75 / 15 / 15 | 4 / 7 | 0.21 / 0.42 | 100 |
 | p90 | FN P90 / 5,7×28 | seletiva / segurar | smg / não | 923.077 | 50 | 1 × 23 | 23 / 17.25 / 13.8 / 13.8 | 5 / 8 | 0.26 / 0.455 | 92 |
 
-A faca usa [game.js:4042](../public/js/game.js#L4042), sem modelo de pellet,
+A faca usa [game.js:4178](../public/js/game.js#L4178), sem modelo de pellet,
 falloff ou headshot de tiro. Golpe rápido: 55 HP; alcance configurado
 2.4 m; intervalo 0.55 s. O golpe pesado possui seu próprio
 contrato e não é equiparado a um disparo nesta tabela.

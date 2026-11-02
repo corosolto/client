@@ -39,6 +39,7 @@ import path from 'node:path';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { THREE, MAPS, initTextures, bootGame } from './harness.mjs';
+import { amostraBaricentrica } from './map-audit-samples.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ONLY = process.argv[2] || 'all';
@@ -157,15 +158,23 @@ const down = new THREE.Vector3(0, -1, 0);
 
 const mapas = [];
 for (const mapId of MAP_IDS) {
+  const inicioMapa = performance.now();
+  console.error(`[MAPAUD] início ${mapId}`);
   let g = null;
   try {
     // ctf:true = as bandeiras que o jogo REALMENTE usa (mapa sem ctfPoints cai no layout
     // padrão do game.js). As malhas de CTF vão pra `scene`, não pro `world.root`, então a
     // sonda vertical do MAP1 não as enxerga — de propósito: bandeira não é chão.
     g = bootGame(mapId, { textures, ctf: true, seed: SEED });
-  } catch (e) { mapas.push({ map: mapId, err: e.message }); continue; }
+  } catch (e) { mapas.push({ map: mapId, err: e.message }); console.error(`[MAPAUD] erro ${mapId}: ${e.message}`); continue; }
 
   const W = g.world;
+  // Ativa o descarte exato por AABB já implementado no Mesh.raycast do Three.
+  // Malhas deformáveis ficam fora; todas as sondas e os triângulos são preservados.
+  W.root.traverse(node => {
+    if (node.isMesh && !node.isSkinnedMesh && !Object.keys(node.geometry.morphAttributes).length)
+      node.geometry.computeBoundingBox();
+  });
   /* MATRIZES DE MUNDO: sem render ninguém chama updateMatrixWorld, e o Raycaster do three
      NÃO atualiza sozinho — ele assume matrizes prontas. Sem esta linha o raio testa cada
      malha na posição LOCAL dela: a primeira versão desta régua acusou 16 pontos "dentro de
@@ -547,6 +556,7 @@ for (const mapId of MAP_IDS) {
       const ms = Array.isArray(o.material) ? o.material : [o.material];
       return ms.some((m) => m && m.visible !== false && (m.transparent !== true || (m.opacity ?? 1) > 0.05));
     };
+    const uv = { u: 0, v: 0 };
     const vA = new THREE.Vector3(), vB = new THREE.Vector3(), vC = new THREE.Vector3();
     const e1 = new THREE.Vector3(), e2 = new THREE.Vector3(), nW = new THREE.Vector3(), pW = new THREE.Vector3();
     for (const oc of (W.occluders || [])) {
@@ -573,10 +583,9 @@ for (const mapId of MAP_IDS) {
         if (Math.abs(nW.y) > 0.7) continue;                        // topo/base não é "parede"
         const n = Math.min(orc, Math.max(1, Math.round(area / (PASSO_MALHA * PASSO_MALHA))));
         for (let k = 0; k < n; k++) {
-          // amostra baricêntrica regular (centroide quando n=1; grade rala quando n>1)
-          let u = ((k % 7) + 0.5) / 7, v = ((Math.floor(k / 7) % 7) + 0.5) / 7;
-          if (u + v > 1) { u = 1 - u; v = 1 - v; }
-          pW.copy(vA).addScaledVector(e1, u).addScaledVector(e2, v);
+          // Grade baricêntrica regular, com amostras no interior da face.
+          amostraBaricentrica(k, uv);
+          pW.copy(vA).addScaledVector(e1, uv.u).addScaledVector(e2, uv.v);
           if (pW.y < 0.15) continue;                               // rente ao chão: o chão é a malha
           total++; amostrasOcc++; orc--;
           ray.set(pW.clone().addScaledVector(nW, TOL_MALHA), nW.clone().negate());
@@ -760,6 +769,7 @@ for (const mapId of MAP_IDS) {
     // CTF1
     bandeiras, alturaTrianguloMin: +alturaTrianguloMin.toFixed(2),
   });
+  console.error(`[MAPAUD] fim ${mapId}: ${((performance.now() - inicioMapa) / 1000).toFixed(2)}s`);
 }
 
 const saida = {

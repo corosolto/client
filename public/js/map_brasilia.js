@@ -10,7 +10,7 @@ import { placeProp } from './mapprops.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por direção do olhar
 import { detailFor, registerDetail } from './textures.js';   // normal+rough por Sobel (ver lam)
-import { decalIds, paredeAtras } from './map_decals.js';   // pool por NOME + raycast na MALHA
+import { decalIds, paredeAtras, medirParede, offsetTinta } from './map_decals.js';   // pool por NOME + raycast na MALHA
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';             // cobertura medida, não coordenada à mão
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
@@ -44,6 +44,7 @@ export const PEGADA_CORPO = {
 export const PEGADA_BUS = { hx: 4.6, hz: 1.0, ryCorr: 0.3263 };
 
 export const BRASILIA_PROPS = ['congresso', 'catedral', 'ministerio', 'palacio', 'justica', 'tires', 'stall', 'tent', 'bus', 'drinkstand', 'urna', 'towner'];
+export const BRASILIA_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'armadillo']);
 
 export function buildBrasilia(scene, T) {
   const colliders = [];   // {minX,minY,minZ,maxX,maxY,maxZ}
@@ -1170,20 +1171,40 @@ export function buildBrasilia(scene, T) {
   let POOLS = null;   // ponte dos pools de decalque pra passada de grafite (fim do build)
   {
     const imgs = T.posterImgs || [], aspects = T.posterAspects || [];
-    const laneOrder = [1, 4, 0, 3, 2, 5];   // priority posters land on the mid buildings first
-    const putPoster = (b, idx) => {
+    // Catálogo contém tombstones: escolher por arquivo impede repetir a mesma arte.
+    // Contrato: docs/visual-consistency/POSTERS-MANUAIS.md.
+    const ARQUIVOS = ['despisque-leao.jpg', 'New Project (1).png',
+      'or-baile.jpg', '25c9112229edfcfbb1eae4137ecc151a.jpg'];
+    const putPoster = (b, arquivo) => {
       if (!b || !imgs.length) return;
+      const ti = T.posterFiles ? T.posterFiles.indexOf(arquivo) : -1;
+      if (ti < 0 || !imgs[ti]) return;   // fora do catálogo: sem cartaz — nunca substitui repetindo
       const bb = new THREE.Box3().setFromObject(b);
       const cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2;
+      const H = 5.6 * ((T.posterEscala || [])[ti] || 1), A = aspects[ti] || 0.7;
+      const nome = 'poster:' + arquivo;   // canônico: o graffiti_pass reserva a arte (artesPresentes)
+      if (BIG) {
+        // Empena cega acima dos grafites, apoiada na parede real em vez do vidro.
+        // A posição conserva a faixa de circulação e a reserva de arte manual.
+        const norte = cz < 0;
+        let x = cx, z = norte ? bb.max.z : bb.min.z;   // nominal na face DECLARADA: o recuo do medirParede corrige a real
+        const ry = norte ? 0 : Math.PI;
+        const y = 10.7 + H / 2, w = H * A;
+        const recuo = medirParede([root], x, y, z, ry, w, H);   // cola na face real que o jogador vê
+        if (recuo === null) return;                              // sem parede na faixa: não pendura no ar
+        x -= Math.sin(ry) * recuo; z -= Math.cos(ry) * recuo;
+        addPlane(w, H, lam({ map: imgs[ti], side: THREE.DoubleSide }), x, y, z, ry).name = nome;
+        return;
+      }
       const lane = cx > 0 ? -1 : 1;
-      const fx = (lane > 0 ? bb.max.x : bb.min.x) + lane * 0.3;   // 0.3 (era 0.06): não briga em z com o vidro fumê
-      const ti = idx % imgs.length;
-      const H = 5.6 * ((T.posterEscala || [])[ti] || 1), A = aspects[ti] || 0.7;             // big posters on the lane facades
-      // Com os pilotis o térreo ficou vazado; os cartazes sobem pra primeira laje cheia.
-      const fy = BIG ? PILOTI + H / 2 + 0.8 : Math.min(bb.max.y - H / 2 - 0.4, 3.5);
-      addPlane(H * A, H, lam({ map: imgs[ti], side: THREE.DoubleSide }), fx, fy, cz, lane > 0 ? Math.PI / 2 : -Math.PI / 2);
+      const fx = (lane > 0 ? bb.max.x : bb.min.x) + lane * 0.3;
+      const fy = Math.min(bb.max.y - H / 2 - 0.4, 3.5);
+      addPlane(H * A, H, lam({ map: imgs[ti], side: THREE.DoubleSide }), fx, fy, cz, lane > 0 ? Math.PI / 2 : -Math.PI / 2).name = nome;
     };
-    ministries.forEach((b, i) => putPoster(b, laneOrder[i] ?? i));
+    const limite = Math.min(ARQUIVOS.length, ministries.length);
+    for (let i = 0; i < limite; i++) {
+      putPoster(ministries[Math.floor(i * ministries.length / limite)], ARQUIVOS[i]);
+    }
 
     /* ---------------- DECALQUE DE RUA nas fachadas dos ministérios ----------------
        Pedido do dono (04/08): aplicar os 179 recortes de `public/img/decals` "na textura de
@@ -1281,7 +1302,7 @@ export function buildBrasilia(scene, T) {
            arte. Tinta é lisa; quem tem relevo é a parede. */
         m = new THREE.MeshStandardMaterial({
           map: T.decals[i], transparent: true, alphaTest: 0.22, roughness: 0.95, metalness: 0,
-          polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+          ...offsetTinta(-4, -4),   // só unidades: ver map_decals.js (offsetTinta)
         });
         _dmat.set(i, m);
       }

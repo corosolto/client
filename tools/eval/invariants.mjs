@@ -193,7 +193,7 @@ plantarPontesThree();
 PRE_DISPARO = true;
 const MAP_JSON = join(ROOT, 'tools', 'eval', 'map_check.json');
 const REL_MAP = existsSync(join(HERE, 'map-check.mjs'))
-  ? freshReport(MAP_JSON, () => runNode('map-check.mjs', {}, [], 900000)) : null;
+  ? freshReport(MAP_JSON, () => runNode('map-check.mjs', {}, [], 1500000)) : null;
 const MAT_JSON = join(ROOT, 'tools', 'eval', 'mat_check.json');
 const REL_MAT = existsSync(join(HERE, 'mat-check.mjs'))
   ? freshReport(MAT_JSON, () => runNode('mat-check.mjs')) : null;
@@ -218,7 +218,7 @@ for (const [script, env, args, ...resto] of [
   ['vmlab-hud-check.mjs', {}, ['--json']],
   ['vm-kick-sim.mjs', {}, ['--json']],
 ]) if (existsSync(join(HERE, script))) simular(script, env, args, ...resto);
-for (const nome of ['authored-attach-check.mjs', 'authored-transition-check.mjs']) {
+for (const nome of ['authored-attach-check.mjs', 'authored-transition-check.mjs', 'authored-locomotion-check.mjs']) {
   simular(nome, {}, [], { timeout: 0, cwd: process.cwd(), caminho: join(ROOT, 'tools/eval/' + nome) });
 }
 PRE_DISPARO = false;
@@ -1338,6 +1338,59 @@ PRE_DISPARO = false;
   put('AUD1B', 'transições autoradas terminam com pose Idle real', audit.ok,
     audit.checks.filter(c => !c.ok).map(c => c.name).join(' | ') || 'fila, pose visível, oculta e utilitária conferem');
 }
+/* Aceitação de filho auditor (AUD1C e controles): stdout JSON {ok, checks}; erro de
+   execução, exit não-zero e stdout não-parseável são todos RED. Uma função só —
+   os controles AUD1C-CTL exercem a MESMA aceitação com filhos sintéticos. */
+async function aud1Filho(caminho, args = []) {
+  let audit, execFalha = '';
+  try {
+    const r = await simular(caminho, {}, args, { timeout: 0, cwd: process.cwd(), caminho });
+    if (r.erro) throw Object.assign(r.erro, { stdout: r.stdout });
+    audit = JSON.parse(r.stdout);
+  } catch (error) {
+    try { audit = JSON.parse(String(error.stdout)); } catch { audit = null; }
+    execFalha = String(error.code ?? error.message ?? 'erro').slice(0, 160);
+  }
+  return { audit, execFalha };
+}
+function aud1Classifica({ audit, execFalha }, rotuloFalha) {
+  if (!audit) return { ok: false, checks: [{ name: `${rotuloFalha}${execFalha ? ` (${execFalha})` : ''}`, ok: false }] };
+  const checks = [...(audit.checks || [])];
+  if (execFalha) checks.push({ name: `${rotuloFalha} (${execFalha})`, ok: false });
+  return { ok: audit.ok === true && !execFalha, checks };
+}
+{
+  const audit = aud1Classifica(await aud1Filho(join(ROOT, 'tools/eval/golden-barrel-check.mjs'), ['--mutantes']), 'execução da boca golden');
+  put('AUD1D', 'AK golden: socket físico acompanha rig no consumidor real; factory, escopo e regressão do slab têm contraprova', audit.ok,
+    audit.checks.filter(c => !c.ok).map(c => c.name).join(' | ') || 'contrato de coordenadas e quatro mutantes conferem; geometria GLB/render exigem QA real');
+}
+{
+  let audit, ctxAudit;
+  const ctx = await aud1Filho(join(ROOT, 'tools/eval/authored-game-ctx-check.mjs'));
+  ctxAudit = ctx.audit && !ctx.execFalha ? ctx.audit : { ...ctx.audit, ok: false };
+  const r = await aud1Filho(join(ROOT, 'tools/eval/authored-locomotion-check.mjs'));
+  audit = aud1Classifica(r, 'execução da locomotion');
+  const ctxOk = ctxAudit?.ok === true;
+  const checks = [...audit.checks];
+  if (!ctxOk) checks.push({ name: 'ctx real Game→authored.update', ok: false });
+  put('AUD1C', 'locomotion 1P causal: Game real entrega ctx efetivo isolado, gait/sway pelo ctx, ADS zero exato, finitude dos mounts e sem offset congelado', audit.ok === true && ctxOk,
+    checks.filter(c => !c.ok).map(c => c.name).join(' | ') || 'ctx real isolado, gait causal, envelope, ADS, sway, pacote rígido, granada e troca em porte conferem');
+}
+{
+  const CTL = [
+    ['verde-exit0', 'console.log(JSON.stringify({ok:true,checks:[]}))', true],
+    ['json-verde-exit1', 'console.log(JSON.stringify({ok:true,checks:[]}));process.exit(1)', false],
+    ['json-vermelho', "console.log(JSON.stringify({ok:false,checks:[{name:'mut',ok:false}]}))", false],
+    ['erro-sem-json', "throw new Error('boom')", false],
+  ];
+  const casos = [];
+  for (const [nome, code, esperado] of CTL) {
+    const c = aud1Classifica(await aud1Filho('-e', [code]), 'execução do controle');
+    casos.push(`${nome}=${c.ok === esperado ? 'ok' : `ERRO(obtido ${c.ok})`}`);
+  }
+  put('AUD1C-CTL', 'a aceitação do AUD1C classifica filho GREEN/exit0, JSON GREEN+exit1, JSON RED e erro sem JSON (mesma função, filhos sintéticos)',
+    casos.every((s) => s.endsWith('ok')), casos.join(' · '));
+}
 
 /* ── 2d. VM17 — O ADS ZERA O PITCH/YAW PRÓPRIOS DA ARMA ────────────────────────
    POR QUE ESTA INVARIANTE NASCEU JUNTO COM O PITCH: um crítico anterior provou que o ADS
@@ -1906,7 +1959,7 @@ PRE_DISPARO = false;
     } else {
       const ok = +m[1], tot = +m[2];
       const falhas = (out.match(/FALHAS: (.*)$/m) || [])[1] || '';
-      put('MOD2', 'o modo escolhido é o modo jogado nos 5 mapas (5 mapas × 2 modos + badge + padrão do mapa)',
+      put('MOD2', 'o modo escolhido é o modo jogado; mapas de objetivo prevalecem sobre rounds/CTF',
         ok === tot, `${ok}/${tot} casos` + (falhas ? ` | ${falhas.slice(0, 240)}` : ' | 0 falhas'));
     }
   }
@@ -1994,9 +2047,8 @@ PRE_DISPARO = false;
     const respawnBecoValido = !beco.includes('__ERRO__') && beco.includes('✓ LSP1');
     put('LSP1', 'Lajes: slots térreos distintos, espaço para corpos e saída física até o campo',
       respawnBecoValido, beco.split('\n').find(linha => linha.includes('LSP1')) || beco.slice(-400));
-    // A medição completa de 18 mapas levou quase 10 min no runner do CI; mantenha
-    // a falha explícita, mas dê tempo para o relatório fresco terminar (900 s, no
-    // pré-disparo).
+    // O pré-disparo reserva 1500 s para os 21 mapas; relatório ausente continua falha.
+    // Perfil e comparação dos critérios: docs/maps/javaporcos-continuacao-20261030.md.
     const { data: j, error } = await REL_MAP;
     if (error || !Array.isArray(j?.mapas) || j.mapas.length === 0) {
       put('MAPAUD', 'map-check.mjs gera relatório fresco e válido de geometria',
@@ -2462,6 +2514,15 @@ PRE_DISPARO = false;
       + ' | atualize com `npm run eval:cena`',
       'warn');
   }
+}
+
+{
+  const out = await runNode('vm-presence-check.mjs', {}, ['--mutantes'], 60000);
+  let report;
+  try { report = JSON.parse(out.split('\n').find((line) => line.startsWith('{"ok":'))); } catch {}
+  put('AUD1V', 'mobile e desktop habilitam autorado com mãos e mantêm arma durante falha de assets',
+    report?.ok === true && !out.includes('__ERRO__'),
+    report ? `${report.samples} verificações; ${report.failures} falhas` : out.slice(-300));
 }
 
 // ── 10. INVARIANTES QUE EXIGEM PIXEL (marcadas, não rodadas aqui) ───────────

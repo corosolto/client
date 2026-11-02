@@ -77,16 +77,22 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
     }).hash
     : entradasDoPlacar().hash;
   if (mut === 'placar-velho') atual = `${atual.slice(0, -1)}x`;
-  if (mut === 'chave-ligada' || mut === 'valor-pior') {
+  if (mut === 'chave-ligada') {
     VM_LAUNCH = true;
-    const x = placares[0].resultados.awp.cobertura;
+    const x = placares[0].resultados.ak.mira;
+    x.estado = 'VERMELHO';
     x.valor = `${x.valor} [mutante]`;
+    divida.mira ||= {};
+    divida.mira.ak = 'mutante com dono, sem aceite de lançamento';
   }
   if (mut === 'celula-nova') {
     VM_LAUNCH = true;
     placares[0].resultados.m4.mira = { estado: 'VERMELHO', valor: '99 px', msg: 'mutante: mira deslocada' };
   }
-  if (mut === 'sem-dono') { const r = Object.keys(divida)[0]; delete divida[r][Object.keys(divida[r])[0]]; }
+  if (mut === 'sem-dono') {
+    placares[0].resultados.ak.mira.estado = 'VERMELHO';
+    if (divida.mira) delete divida.mira.ak;
+  }
   let verm = 0;
   for (const placar of placares) {
     const asp = placar.aspecto || '3x2';

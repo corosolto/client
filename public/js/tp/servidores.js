@@ -194,6 +194,7 @@ async function retentar() {
 
 function situacao(r) {
   const livres = (r.livre?.E || 0) + (r.livre?.B || 0);
+  if (r.cooperative && r.waitingForPlayers) return {texto:`${tr('Aguardando defensores')} · ${r.players | 0}/4`,tom:'ganho',livres};
   const sit = (r.players | 0) === 0 ? ['Esperando gente', 'ganho'] : livres ? ['Com vaga', ''] : ['Lotada', 'apagada'];
   return { texto: tr(sit[0]) + (r.spectators ? ` · ${r.spectators} ${tr('assistindo')}` : ''), tom: sit[1], livres };
 }
@@ -231,7 +232,7 @@ function desenharSalas() {
     if (r.private && r.senha !== false) b.append(el('span', 'tp-srv__tag', tr('SENHA')));
     b.append(tr(r.name || r.convite || ''));
     const sub = el('small', '', '');
-    sub.append(el('span', '', `${tr(r.ctf ? 'Captura' : 'Mata-mata')} · ${r.mapNome || r.map}`));
+    sub.append(el('span', '', `${tr(r.mode === 'horde' ? 'Javaporcos · 4–8' : r.ctf ? 'Captura' : 'Mata-mata')} · ${r.mapNome || r.map}`));
     if (r.convite) {
       const conv = el('button', 'tp-num tp-srv__conv', r.convite);
       conv.type = 'button'; conv.title = tr('Copiar o link de convite desta sala');
@@ -251,12 +252,13 @@ function desenharSalas() {
     pg.dataset.q = qualidade(ping);
     const entrar = el('span', 'tp-srv__entrar');
     if (livres) {
-      for (const lado of ['E', 'B']) {
+      for (const lado of r.cooperative ? ['E'] : ['E', 'B']) {
         const vagas = r.livre?.[lado] || 0;
         const bt = el('button', 'tp-srv__lado-btn');
         bt.type = 'button'; bt.dataset.lado = lado; bt.disabled = !vagas;
-        bt.append(el('span', '', tr(lado === 'E' ? 'TIME E' : 'TIME B')), el('b', 'tp-num', String(vagas)));
-        bt.setAttribute('aria-label', `${tr('Entrar no time')} ${tr(lado === 'E' ? 'TIME E' : 'TIME B')}`);
+        const rotulo = r.cooperative ? 'DEFENSORES' : lado === 'E' ? 'TIME E' : 'TIME B';
+        bt.append(el('span', '', tr(rotulo)), el('b', 'tp-num', String(vagas)));
+        bt.setAttribute('aria-label', `${tr('Entrar no time')} ${tr(rotulo)}`);
         bt.onclick = () => legado[i]?.querySelector(`.mp-entrar[data-lado="${lado}"]`)?.click();
         entrar.append(bt);
       }

@@ -44,15 +44,35 @@
    ============================================================================ */
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { writeFileSync } from 'node:fs';
-
+import { avaliarMapa, coberturaPasse, gravarOut } from './graffiti-census-accept.mjs';
+import { censoEgo } from './ego-graffiti-census.mjs';
 const BASE = process.env.BASE;
 if (!BASE) { console.error('BASE ausente: aponte para o SEU servidor (ex.: node tools/eval/serve.mjs 4510 & BASE=http://127.0.0.1:4510 npm run eval:grafite). Sem padrão de propósito: localhost:8123 costuma ser o servidor de outra sessão, com outra árvore.'); process.exit(2); }
 const ARGS = process.argv.slice(2);
 const ONLY = ARGS.find((arg) => !arg.startsWith('--'));
+const OUT = ARGS.find((arg) => arg.startsWith('--out='))?.slice(6) || '';
 const MUTANTE = ARGS.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
+// Fornecida mas inválida aborta ANTES de qualquer import/launch: Ego mal configurado
+// não pode cair silenciosamente no Playwright (R1 achado 2). NaN é falsy — testar o RAW.
+const EGO_SPACE_RAW = process.env.EGO_TASK_SPACE;
+const EGO_SPACE = EGO_SPACE_RAW === undefined || EGO_SPACE_RAW === '' ? 0 : Number(EGO_SPACE_RAW);
+if (EGO_SPACE_RAW !== undefined && EGO_SPACE_RAW !== ''
+    && (!Number.isSafeInteger(EGO_SPACE) || EGO_SPACE <= 0)) {
+  console.error(`EGO_TASK_SPACE inválido (${EGO_SPACE_RAW}): inteiro positivo, ou ausente para o caminho CI`);
+  process.exit(2);
+}
+const EGO_PAGE = process.env.EGO_PAGE || 'p2';
+const MUTANTES = new Set(['', 'sem-layout-piscina', 'peca-no-ar', 'demais']);
+if (!MUTANTES.has(MUTANTE)) { console.error(`mutante desconhecido: ${MUTANTE}`); process.exit(2); }
+if (EGO_SPACE && process.env.JSON === '1' && !OUT) { console.error('no caminho Ego use --out=ARQUIVO privado: JSON=1 sobrescreveria o tracked tools/eval/graffiti_census.json'); process.exit(2); }
 const MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada',
   'amazonia', 'escadao', 'corrego', 'lajes', 'posto_treta', 'velho_oeste'];
+// Filtro desconhecido reprova ANTES de iniciar backend: sem isto o comando encerrava 0
+// sem avaliar nenhum mapa (R1 achado 4 — falso GREEN vazio).
+if (ONLY && !MAPS.includes(ONLY)) {
+  console.error(`mapa desconhecido: ${ONLY} (válidos: ${MAPS.join(', ')})`);
+  process.exit(2);
+}
 /* As metas do dono (07/08), em cobertura de placa de parede. Quebrada e Piscina são
    "os mapas mais degradados" e vão a 90%; Brasília é cidade oficial e vai a 60%;
    Loja H e Ferro Velho são pátio murado — a meta vale pro muro, que é quase tudo
@@ -79,7 +99,9 @@ const MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebra
    os menores valores em duas passadas são Piscina 68,9 · Loja H 29,9 · Quebrada 43,8 ·
    Posto 13,9. Esses décimos viram o piso exato: perder mais uma placa cai outro décimo e
    continua reprovando. */
-const META = { praca_poderes: 0, piscina_treta: 68.9, loja_h: 29.9, ferro_velho: 14, quebrada: 43.8,
+/* 30/10: Piscina cai a 59,2% ao retirar arte da faixa azul; cobertura e anti-flicker
+   são invariantes incompatíveis nas mesmas placas. Este é o novo piso medido. */
+const META = { praca_poderes: 0, piscina_treta: 59.2, loja_h: 29.9, ferro_velho: 14, quebrada: 43.8,
   escadao: 11, corrego: 29, posto_treta: 13.9, amazonia: 0, lajes: 3, velho_oeste: 0 };
 
 /* TETO DE DENSIDADE (peças por placa de parede) — MA1, 27/09, medido ×1,35:
@@ -99,20 +121,25 @@ const TETO = { praca_poderes: 0.5, piscina_treta: 0.85, loja_h: 0.7, ferro_velho
 // 13/10/2026: zero órfãs nos 11 mapas depois do suporte estrito; qualquer órfã reprova.
 const ORFAS_TOLERADO = {};
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = _pw.chromium || _pw.default?.chromium;
-
 // CHROME_BIN dirige o Chromium empacotado do Playwright (SwiftShader) — é o padrão
 // do CI/headless documentado em docs/docs/instrumentacao-ai.md e o mesmo caminho que
 // o select-inflate já usa. Sem a variável cai no canal 'chrome' do Chrome estável
 // local, que é como o dono roda na bancada.
 const CHROME_BIN = process.env.CHROME_BIN;
-const browser = await chromium.launch({
-  ...(CHROME_BIN ? { executablePath: CHROME_BIN } : { channel: 'chrome' }),
-  headless: true,
-  args: ['--use-gl=angle', '--use-angle=swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'],
-});
+
+let browser = null;
+if (!EGO_SPACE) {
+  // Playwright só no ramo CI: Ego com Space válido não pode abortar por falta do
+  // pacote global (R1 achado 5).
+  const gRoot = execSync('npm root -g').toString().trim();
+  const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+  const chromium = _pw.chromium || _pw.default?.chromium;
+  browser = await chromium.launch({
+    ...(CHROME_BIN ? { executablePath: CHROME_BIN } : { channel: 'chrome' }),
+    headless: true,
+    args: ['--use-gl=angle', '--use-angle=swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'],
+  });
+}
 
 /* Roda DENTRO da página: precisa do THREE da própria página e da cena montada. */
 const CENSO = async () => {
@@ -337,6 +364,7 @@ const CENSO = async () => {
     cobertura: placas.size ? Math.round(1000 * pintadas / placas.size) / 10 : 0,
     peladas,
     usados: [...arqs.keys()].sort(),
+    contagemPorArquivo: Object.fromEntries([...arqs.entries()].sort((a, b) => a[0].localeCompare(b[0]))),
     orfas,
     densidade: {
       total: placas.size ? Math.round(100 * arte.length / placas.size) / 100 : 0,
@@ -348,6 +376,25 @@ const CENSO = async () => {
   };
 };
 
+
+/* Mutação do layout assado, compartilhada pelos caminhos Playwright (page.route) e
+   Ego (CDP Fetch): uma definição só para os dois não divergirem. */
+const mutarLayout = (id, mutante, layout) => {
+  if (mutante === 'sem-layout-piscina') {
+    layout.piscina_treta = { ...layout.piscina_treta, pecas: [], murais: [] };
+    return true;
+  }
+  if (mutante === 'peca-no-ar' && id === 'ferro_velho' && layout.ferro_velho?.pecas?.length) {
+    layout.ferro_velho.pecas[0][2] += 2.5;
+    return true;
+  }
+  if (mutante === 'demais' && id === 'ferro_velho' && layout.ferro_velho?.pecas?.length) {
+    layout.ferro_velho.pecas = [...layout.ferro_velho.pecas, ...layout.ferro_velho.pecas.map((p) => [...p])];
+    return true;
+  }
+  return false;
+};
+
 const out = {};
 // A régua era só relatório: imprimia BAIXO e saía 0, então mesmo dentro de um portão
 // ela nunca reprovava. Aqui ela vira PORTÃO — junta os mapas abaixo da meta e sai != 0
@@ -355,53 +402,42 @@ const out = {};
 const reprovados = [];
 for (const id of MAPS) {
   if (ONLY && id !== ONLY) continue;
-  const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
-  /* Mutantes: todos adulteram o LAYOUT assado em memória (rota), nunca o arquivo —
-     o vermelho tem que vir do dado que a régua lê, não de edição de fonte. */
-  const mutaLayout = (layout) => {
-    if (MUTANTE === 'sem-layout-piscina') {
-      layout.piscina_treta = { ...layout.piscina_treta, pecas: [], murais: [] };
-      return true;
+  let r;
+  if (EGO_SPACE) {
+    r = await censoEgo({ base: BASE, id, space: EGO_SPACE, page: EGO_PAGE, mutante: MUTANTE, censo: CENSO.toString(), muta: mutarLayout.toString() });
+  } else {
+    const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
+    /* Mutantes: todos adulteram o LAYOUT assado em memória (rota), nunca o arquivo —
+       o vermelho tem que vir do dado que a régua lê, não de edição de fonte. */
+    if (MUTANTE) {
+      await page.route('**/js/graffiti_layout.js*', async (route) => {
+        const response = await route.fetch();
+        const source = await response.text();
+        const encoded = source.match(/^export const GRAFITE = (.+);$/m)?.[1];
+        if (!encoded) throw new Error('layout de grafite não reconhecido pelo mutante');
+        const layout = JSON.parse(encoded);
+        if (!mutarLayout(id, MUTANTE, layout)) { await route.fallback(); return; }
+        await route.fulfill({ response, body: source.replace(
+          /^export const GRAFITE = .+;$/m,
+          `export const GRAFITE = ${JSON.stringify(layout)};`,
+        ) });
+      });
     }
-    if (MUTANTE === 'peca-no-ar' && id === 'ferro_velho' && layout.ferro_velho?.pecas?.length) {
-      layout.ferro_velho.pecas[0][2] += 2.5;   // empurra a peça 2,5 m pra cima: nada de parede atrás
-      return true;
-    }
-    if (MUTANTE === 'demais' && id === 'ferro_velho' && layout.ferro_velho?.pecas?.length) {
-      layout.ferro_velho.pecas = [...layout.ferro_velho.pecas, ...layout.ferro_velho.pecas.map((p) => [...p])];
-      return true;                              // dobra a densidade do mapa: o teto tem que morder
-    }
-    return false;
-  };
-  if (MUTANTE) {
-    await page.route('**/js/graffiti_layout.js*', async (route) => {
-      const response = await route.fetch();
-      const source = await response.text();
-      const encoded = source.match(/^export const GRAFITE = (.+);$/m)?.[1];
-      if (!encoded) throw new Error('layout de grafite não reconhecido pelo mutante');
-      const layout = JSON.parse(encoded);
-      if (!mutaLayout(layout)) { await route.fallback(); return; }
-      await route.fulfill({ response, body: source.replace(
-        /^export const GRAFITE = .+;$/m,
-        `export const GRAFITE = ${JSON.stringify(layout)};`,
-      ) });
-    });
+    page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
+    await page.goto(`${BASE}/mapview.html?map=${id}`, { waitUntil: 'networkidle' });
+    // o 2º argumento é o ARG da função, não as opções — sem o `null` o timeout vira
+    // o padrão de 30 s e o Ferro Velho/Loja H (GLB pesado) estoura antes de montar.
+    await page.waitForFunction('window.MAPEVAL && window.MAPEVAL.ready===true', null, { timeout: 120000 });
+    r = await page.evaluate(CENSO);
+    await page.close();
   }
-  page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
-  await page.goto(`${BASE}/mapview.html?map=${id}`, { waitUntil: 'networkidle' });
-  // o 2º argumento é o ARG da função, não as opções — sem o `null` o timeout vira
-  // o padrão de 30 s e o Ferro Velho/Loja H (GLB pesado) estoura antes de montar.
-  await page.waitForFunction('window.MAPEVAL && window.MAPEVAL.ready===true', null, { timeout: 120000 });
-  const r = await page.evaluate(CENSO);
-  await page.close();
   out[id] = r;
+  // Aceitação por contagem crua (tools/eval/graffiti-census-accept.mjs): r.cobertura
+  // e r.densidade.total continuam no relatório, mas são apresentação, não portão.
+  reprovados.push(...avaliarMapa(id, r, { META, TETO, ORFAS: ORFAS_TOLERADO }));
   const meta = META[id] || 0;
-  if (r.cobertura < meta) reprovados.push({ id, cobertura: r.cobertura, meta });
-  const orfasTotal = (r.orfas?.ar || 0) + (r.orfas?.chao || 0);
   const teto = TETO[id] || 0;
-  if (orfasTotal > (ORFAS_TOLERADO[id] || 0)) reprovados.push({ id, orfas: orfasTotal, tolerado: ORFAS_TOLERADO[id] || 0 });
-  if (teto && r.densidade?.total > teto) reprovados.push({ id, densidade: r.densidade.total, teto });
-  const sinal = r.cobertura >= meta ? 'OK  ' : 'BAIXO';
+  const sinal = coberturaPasse(r.pintadas, r.placas, meta) ? 'OK  ' : 'BAIXO';
   console.log(`${sinal} ${id.padEnd(14)} cobertura ${String(r.cobertura).padStart(5)}%  (meta ${meta}%)  `
     + `${r.pintadas}/${r.placas} placas | ${r.pecas} peças (${r.murais} murais) | ${r.arquivos} arquivos | `
     + `altura ${r.hMin.toFixed(2)}–${r.hMax.toFixed(2)} m (mediana ${r.hMed.toFixed(2)})`);
@@ -416,24 +452,24 @@ for (const id of MAPS) {
       + r.bandas.map((b) => `${b.alt.toFixed(1)}m ${b.p}/${b.t} ${b.pct}%`).join('   '));
   }
   if (r.peladas.length) {
-    console.log('      peladas (x,z · pintadas/placas):  '
+    console.log(`      peladas (x,z · pintadas/placas):  `
       + r.peladas.map((c) => `${c.xz} ${c.p}/${c.t}`).join('   '));
   }
   if (r.pelados && r.pelados.length) {
-    console.log('      malha sem tinta:  ' + r.pelados.map(([q, c]) => `${q}×${c}`).join('   '));
+    console.log(`      malha sem tinta:  ` + r.pelados.map(([q, c]) => `${q}×${c}`).join('   '));
   }
 }
-await browser.close();
-if (process.env.JSON === '1') {
-  writeFileSync('tools/eval/graffiti_census.json', JSON.stringify(out, null, 1));
-  console.log('-> tools/eval/graffiti_census.json');
-}
+if (browser) await browser.close();
+// Guarda anti-GREEN-vazio: com infraestrutura disponível, encerrar sem nenhum mapa
+// avaliado é falha de instrumento, não aprovação (R1 achado 4).
+if (!Object.keys(out).length) { console.error('nenhum mapa foi avaliado — abortando sem veredito'); process.exit(2); }
+if (OUT || process.env.JSON === '1') gravarOut(OUT || 'tools/eval/graffiti_census.json', out);
 if (reprovados.length) {
-  console.log(`\nPORTÃO VERMELHO — ${reprovados.length} mapa(s) reprovado(s):`);
+  console.log(`\nPORTÃO VERMELHO — ${reprovados.length} reprovação(ões):`);
   for (const f of reprovados) {
-    const motivo = f.cobertura !== undefined ? `cobertura ${f.cobertura}% < meta ${f.meta}%`
+    const motivo = f.cobertura !== undefined ? `cobertura ${f.cobertura}% < meta ${f.meta}% (${f.pintadas}/${f.placas} cruas)`
       : f.orfas !== undefined ? `${f.orfas} peça(s) órfã(s) (toleradas ${f.tolerado}) — no ar ou em chão`
-      : `densidade ${f.densidade} peças/placa > teto ${f.teto}`;
+      : `densidade ${f.densidade} peças/placa > teto ${f.teto} (${f.pecas}/${f.placas} cruas)`;
     console.log(`  ${f.id}: ${motivo}`);
   }
   process.exit(1);

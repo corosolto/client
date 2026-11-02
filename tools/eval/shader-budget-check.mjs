@@ -1,7 +1,7 @@
 /* WebGL1 precisa caber no piso de oito vetores variáveis da especificação. */
 import { readdirSync, readFileSync } from 'node:fs';
 import { posix } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { sonda, SAIDA_SKIP } from './sonda-filho.mjs';
 import { moduleCacheManifest } from '../../scripts/module-cache.mjs';
 
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
@@ -344,9 +344,9 @@ const injectedCacheContract = (source) => source.includes('__MANIFESTO_JS__')
   && (source.match(/\?v=\$\{V\}-\$\{JS_REV\}/g) || []).length >= 2;
 const buildCacheContract = /const MANIFESTO_JS = moduleCacheManifest\(\)/.test(astroConfig)
   && /__MANIFESTO_JS__:\s*JSON\.stringify\(MANIFESTO_JS\)/.test(astroConfig);
-const evalCacheProbe = spawnSync(process.execPath, ['tools/eval/social-serve-check.mjs', ...(mutant === 'cache-serve-constante' ? ['--mutante=cache-gele'] : [])], { encoding: 'utf8', maxBuffer: 32768 });
+const evalCacheProbe = sonda(['tools/eval/social-serve-check.mjs', ...(mutant === 'cache-serve-constante' ? ['--mutante=cache-gele'] : [])], { maxBuffer: 32768 });
 const evalCacheContract = evalCacheProbe.status === 0;
-if (!evalCacheContract) console.error((evalCacheProbe.stderr || evalCacheProbe.error?.message || 'cache HTTP não medido').slice(-1500));
+if (!evalCacheContract && evalCacheProbe.mediu) console.error((evalCacheProbe.stderr || 'cache HTTP não medido').slice(-1500));
 const prunedJsPrefixes = [...new Set([...pruneDist.matchAll(
   /['"](?:dist\/client|\.vercel\/output\/static)\/js\/([^'"]+)['"]/g,
 )].map((match) => `${match[1].replace(/\/$/, '')}/`))];
@@ -366,15 +366,17 @@ const expectedPublishedModules = filesOnDisk
   .sort();
 const publishedGraphComplete = cachedModules.length === expectedPublishedModules.length
   && expectedPublishedModules.every((module, index) => cachedModules[index] === module);
-const moduleCache = buildCacheContract
+/* Contrato estático é medido neste processo e vale sozinho: probe HTTP morto
+   não pode apagar defeito já medido (issue #1133). */
+const staticCacheContract = buildCacheContract
   && injectedCacheContract(indexPage)
   && (!/\/js\/|__MANIFESTO_JS__/.test(layoutPage) || injectedCacheContract(layoutPage))
-  && evalCacheContract
   && [...reachableModules].every((module) => cachedModules.includes(module))
   && publishedModulesOnly
   && publishedGraphComplete
   && cacheMutationApplied
   && contentRevisionChanged;
+const moduleCache = staticCacheContract && evalCacheContract;
 
 const checks = [
   ['SB1', fixtureOk && loaderSplitsMetalRough && allFeaturesBudgeted, `todas as primitivas da urna têm features contabilizadas; caso-base usa ${uvVaryings} UVs`],
@@ -383,11 +385,16 @@ const checks = [
   ['SB4', triUsesBase && !triAddsVarying, 'triplanar reutiliza posição e normal do MeshStandard'],
   ['SB5', fogInstalled && fallbackFogSymmetric, 'quatro chunks de fog e fallback não iluminado são simétricos'],
   ['SB6', triNonFlat, 'triplanar aceita apenas MeshStandard sem flatShading'],
-  ['SB7', moduleCache, 'módulos locais mudam de URL junto com o conteúdo'],
+  /* null = não medida: a sonda do cache HTTP morre sem dependência — mas só
+     quando o contrato estático não reprova por si (issue #1133). */
+  ['SB7', staticCacheContract ? (evalCacheProbe.mediu ? moduleCache : null) : false, 'módulos locais mudam de URL junto com o conteúdo'],
 ];
-const failed = checks.filter(([, ok]) => !ok);
+const failed = checks.filter(([, ok]) => ok === false);
+const naoMedidas = checks.filter(([, ok]) => ok === null);
 for (const [id, ok, description] of checks) {
-  console.log(`${ok ? '\x1b[32m✓' : '\x1b[31m✗'} ${id} ${description}\x1b[0m`);
+  const marca = ok === null ? '\x1b[33m⊘' : ok ? '\x1b[32m✓' : '\x1b[31m✗';
+  const nota = ok === null ? ` — não medido: ${evalCacheProbe.causa}` : '';
+  console.log(`${marca} ${id} ${description}${nota}\x1b[0m`);
 }
 const mutantClause = {
   'fog-separado': 'SB2',
@@ -416,12 +423,22 @@ const mutantClause = {
   'cache-layout-site': 'SB7',
   'cache-serve-constante': 'SB7',
 };
-if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
+/* Mutante sobre cláusula não medida só é SKIP se NADA reprovou: vermelho medido vence. */
+if (mutant && !failed.length && naoMedidas.some(([id]) => id === mutantClause[mutant])) {
+  console.error(`\x1b[33mSHADER-BUDGET não medida: mutação ${mutant} alveja ${mutantClause[mutant]}, que não rodou\x1b[0m`);
+  process.exit(SAIDA_SKIP);
+}
+if (mutant && !naoMedidas.some(([id]) => id === mutantClause[mutant])
+  && !failed.some(([id]) => id === mutantClause[mutant])) {
   failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);
 }
 if (failed.length) {
   console.error(`\x1b[31mSHADER-BUDGET ${failed.length} VERMELHA(S)${mutant ? ` (mutante=${mutant})` : ''}\x1b[0m`);
   process.exitCode = 1;
+} else if (naoMedidas.length) {
+  /* Nenhuma cláusula reprovou, mas nem todas rodaram: isso não é verde. */
+  console.error(`\x1b[33mSHADER-BUDGET ${naoMedidas.length} NÃO MEDIDA(S) — ${evalCacheProbe.causa}\x1b[0m`);
+  process.exit(SAIDA_SKIP);
 } else {
   console.log('\x1b[32mSHADER-BUDGET verde: shaders críticos cabem no WebGL1 mínimo\x1b[0m');
 }

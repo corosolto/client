@@ -67,6 +67,14 @@
 import * as THREE from 'three';
 import { superficieGrafitavel } from './graffiti_surface.js';
 
+/* Tinta já fica 1-5 cm à frente da parede: fator de polygonOffset cresce com a visada rasante e a
+   desenhava por cima da quina da frente ("pichação flutuando"). ?tintaoffset=0 volta o fator. */
+const _qsTinta = (() => { try { return new URLSearchParams(location.search); } catch { return new URLSearchParams(''); } })();
+export const TINTA_OFFSET_LEGADO = _qsTinta.get('tintaoffset') === '0';
+export function offsetTinta(fatorAntigo, unidades) {
+  return { polygonOffset: true, polygonOffsetFactor: TINTA_OFFSET_LEGADO ? fatorAntigo : 0, polygonOffsetUnits: unidades };
+}
+
 /* Índices de `T.decals` a partir dos nomes de arquivo. Nome que não existe no
    pacote é AVISO ALTO e não entra no pool: pool vazio desenha nada (visível),
    pool com `undefined` desenha textura errada (invisível). */

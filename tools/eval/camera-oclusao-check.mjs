@@ -1,10 +1,10 @@
 // CONTRATO: a câmera de 3ª pessoa/ombro não entra DENTRO de prop alto atrás do jogador
 // (relato de out/2026, ferro velho/favela: "passando pelo carro ou pelo varal a mira é
 // suprimida e perde o foco"). O boom só conhecia o chão; a tela virava o prop e a cruz
-// de mira (paralaxe do raio do olho) sumia/pulava. Dois freios medidos aqui:
 //   (1) occluders (prop que também segura bala — muro de carros): câmera para ANTES do hit;
-//   (2) world.camBlockers (Box3 de PANO que não segura bala — varal da favela): a câmera
-//       para, o tiro passa.
+//   (2) world.camBlockers (volume visual que não deve segurar bala): varal e armários
+//       param a câmera sem alterar o tiro.
+// Mutante: --mutante=sem-armario remove os bloqueadores dos armários da Piscina.
 // Boot headless igual ao bootGame do harness (cópia mínima para aceitar --game-module).
 import path from 'node:path';
 import fs from 'node:fs';
@@ -13,6 +13,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const option = (n) => process.argv.find((a) => a.startsWith(n + '='))?.slice(n.length + 1);
 const gameFile = path.resolve(option('--game-module') || path.join(ROOT, 'public/js/game.js'));
+const MUT = option('--mutante') || '';
+if (MUT && MUT !== 'sem-armario') throw new Error(`mutante desconhecido: ${MUT}`);
 
 const { THREE, MAPS, initTextures, renderer, sfx, seedRandom, CHARACTERS } =
   await import(pathToFileURL(path.join(ROOT, 'tools/eval/harness.mjs')));
@@ -137,10 +139,115 @@ const passo = (g, n = 1, eye = 1.62) => { for (let i = 0; i < n; i++) Game.proto
   }
 }
 
+/* ---- (3) câmera tem volume nos quatro lados, inclusive com pitch alto ---- */
+{
+  const g = boot({});
+  g.camView = 'third';
+  g.player.yaw = 0;
+  g.player.pitch = 1.2;
+  passo(g, 3);
+  g.world.occluders.length = 0;
+  g.world.camBlockers = [];
+  const sentinel = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial());
+  sentinel.position.set(0, -100, 0);
+  sentinel.updateMatrixWorld(true);
+  g.world.occluders.push(sentinel);
+  const eye = eyePos(g);
+  const boom = g.camera.position.clone().sub(eye);
+  const dir = boom.clone().normalize();
+  const right = g._tpRight.clone().addScaledVector(dir, -g._tpRight.dot(dir)).normalize();
+  const up = new THREE.Vector3().crossVectors(dir, right).normalize();
+  const dQuina = Math.min(0.9, boom.length() * 0.55);
+  const targets = [];
+  const intersectObjects = g.ray.intersectObjects.bind(g.ray);
+  g.ray.intersectObjects = (objects, recursive, target) => {
+    targets.push(target);
+    return intersectObjects(objects, recursive, target);
+  };
+  const casos = [
+    ['direita', right, 0.12],
+    ['esquerda', right, -0.12],
+    ['topo', up, 0.10],
+    ['base', up, -0.10],
+  ];
+  for (const [nome, eixo, offset] of casos) {
+    const centro = eye.clone().addScaledVector(dir, dQuina).addScaledVector(eixo, offset);
+    const quina = new THREE.Box3(
+      centro.clone().addScalar(-0.025),
+      centro.clone().addScalar(0.025),
+    );
+    (g.world.camBlockers ||= []).push(quina);
+    g._tpBoomBlockedGrace = 0;
+    g._tpBoomLastBlocked = undefined;
+    g._tpBoomClear = undefined;
+    passo(g, 1);
+    const d = g.camera.position.distanceTo(eye);
+    check(`volume da câmera cobre ${nome}`, d < dQuina - 0.05,
+      { d: +d.toFixed(3), dQuina: +dQuina.toFixed(3), pitch: g.player.pitch });
+    g.world.camBlockers.pop();
+  }
+  check('probes reutilizam array de interseções',
+    targets.length >= 5 && targets.every((target) => target === targets[0] && Array.isArray(target)),
+    { chamadas: targets.length, mesmoArray: targets.every((target) => target === targets[0]) });
+}
+
+/* ---- (4) N e Shift+N passam pelo teclado; B fica reservado à compra ---- */
+{
+  const g = boot({});
+  const teclaN = ({ shiftKey = false, repeat = false } = {}) => g._kd({
+    code: 'KeyN', shiftKey, repeat, target: null, preventDefault() {},
+  });
+  g.setCamView('third');
+  teclaN();
+  check('N sem Shift alterna o modo', g.camView === 'shoulder', { camView: g.camView });
+  passo(g, 1);
+  const eye = eyePos(g);
+  const ladoAntes = g.camera.position.clone().sub(eye).dot(g._tpRight);
+  teclaN({ shiftKey: true });
+  passo(g, 1);
+  const ladoDepois = g.camera.position.clone().sub(eye).dot(g._tpRight);
+  check('Shift+N mantém câmera de ombro', g.camView === 'shoulder', { camView: g.camView });
+  check('Shift+N inverte lado do enquadramento',
+    ladoAntes > 0.2 && ladoDepois < -0.2,
+    { ladoAntes: +ladoAntes.toFixed(3), ladoDepois: +ladoDepois.toFixed(3) });
+  const ladoAposTroca = g._tpShoulderSide;
+  teclaN({ shiftKey: true, repeat: true });
+  check('repeat de Shift+N não troca de novo', g._tpShoulderSide === ladoAposTroca,
+    { antes: ladoAposTroca, depois: g._tpShoulderSide });
+  const mode = g.camView, side = g._tpShoulderSide;
+  for (const shiftKey of [false,true]) g._kd({code:'KeyB',shiftKey,repeat:false,target:null,preventDefault(){}});
+  check('B e Shift+B não mexem na câmera',g.camView===mode && g._tpShoulderSide===side,
+    {mode,givenMode:g.camView,side,givenSide:g._tpShoulderSide});
+
+/* ---- (3) Piscina: o volume visual do armário para o boom antes de tomar a tela ---- */
+{
+  const g = boot({ mapId: 'piscina_treta' });
+  const blocos = g.world.camBlockers || [];
+  const referencias = blocos.filter((b) => b.userData?.tipo === 'armario');
+  if (MUT === 'sem-armario') g.world.camBlockers = blocos.filter((b) => b.userData?.tipo !== 'armario');
+  const armarios = (g.world.camBlockers || []).filter((b) => b.userData?.tipo === 'armario');
+  check('Piscina expõe bloqueadores de câmera dos armários',
+    armarios.length >= 20 && armarios.every((b) => b.isBox3 && b.min.y <= 0 && b.max.y >= 2),
+    { qtd: armarios.length });
+  const box = armarios[0] || referencias[0];
+  if (box) {
+    const cx = (box.min.x + box.max.x) / 2;
+    g.camView = 'third';
+    g.player.pos.set(cx - 0.28, g.world.groundHeightAt(cx, box.min.z - 0.75), box.min.z - 0.75);
+    g.player.yaw = 0; g.player.pitch = 0; g._tpBoomClear = undefined;
+    passo(g, 1);
+    check('boom da Piscina para antes do fundo do armário',
+      g.camera.position.z <= box.min.z + 0.02 && g.camera.position.z > g.player.pos.z,
+      { cameraZ: +g.camera.position.z.toFixed(3), armarioMinZ: +box.min.z.toFixed(3), playerZ: +g.player.pos.z.toFixed(3) });
+  } else check('boom da Piscina para antes do fundo do armário', false, { armarios: 0 });
+}
+
+}
+
 const result = {
   passed: rows.filter((r) => r.pass).length, total: rows.length,
   failed: rows.filter((r) => !r.pass).map((r) => r.name), rows,
-  scope: 'contrato de câmera 3ª/ombro contra props; sem aceite visual/art',
+  scope: 'contrato de câmera 3ª/ombro contra props e armários; sem aceite visual/art',
 };
 console.log(JSON.stringify({ passed: result.passed, total: result.total, failed: result.failed }, null, 1));
 if (result.failed.length) process.exitCode = 1;

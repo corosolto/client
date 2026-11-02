@@ -2541,6 +2541,1604 @@
         "creditsAfter": 108705,
         "status": "Treze modelos, rigs e vídeos integrados; Mandrake revisado; postura, movimento e revisão visual aprovados"
       }
+    },
+    "jp-chevette-sl76": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/chevette_sl76.glb"
+      ],
+      "source": {
+        "kind": "sketchfab-model",
+        "url": "https://sketchfab.com/3d-models/chevrolet-chevette-sl-76-2322139894c545b6838000f08d853662",
+        "displayName": "Chevrolet Chevette sl 76",
+        "author": "Sketchfab: Laerte.Hubaleque",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "frente": "javaporcos-realista",
+        "classe": "carro",
+        "notes": "Invasão dos Javaporcos (rua). 37983 tris (bruto 53839), 1.61 x 1.35 x 4.12 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "0ab8a6eb9005ad148bd1682296fa6add00a1f5b3a6e0d9ab58d25c380791c952"
+      }
+    },
+    "jp-carro-batido-scan-03": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/carro_batido_scan_03.glb"
+      ],
+      "source": {
+        "kind": "sketchfab-model",
+        "url": "https://sketchfab.com/3d-models/destroyed-car-03-raw-scan-483fe7f26336463fba66638ca4200c5a",
+        "displayName": "Destroyed Car 03 (Raw Scan)",
+        "author": "Sketchfab: Renafox",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "frente": "javaporcos-realista",
+        "classe": "carro",
+        "notes": "Invasão dos Javaporcos (rua/beco). 39979 tris (bruto 2499993), 2.41 x 1.22 x 4.2 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "509d754ed00baa9ae0ddece2a9858d00c058a5274b5c723bb2b89d04d33b65ef"
+      }
+    },
+    "jp-carro-batido-scan-07": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/carro_batido_scan_07.glb"
+      ],
+      "source": {
+        "kind": "sketchfab-model",
+        "url": "https://sketchfab.com/3d-models/destroyed-car-07-raw-scan-916b51c7e5644eb2a6c9b3797ebb08cf",
+        "displayName": "Destroyed Car 07 (Raw Scan)",
+        "author": "Sketchfab: Renafox",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "frente": "javaporcos-realista",
+        "classe": "carro",
+        "notes": "Invasão dos Javaporcos (rua/beco). 39995 tris (bruto 2500000), 2.97 x 1.8 x 4 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "33f11ea2dee1ffd282a3736c9c006188fb1c63bd4a203330172d7c8949f340ca"
+      }
+    },
+    "jp-perua-pichada-scan": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/perua_pichada_scan.glb"
+      ],
+      "source": {
+        "kind": "sketchfab-model",
+        "url": "https://sketchfab.com/3d-models/graffitid-toyota-wagon-raw-scan-cb1a538a5e84460e8dfeb4cfff109653",
+        "displayName": "Graffiti'd Toyota Wagon (Raw Scan)",
+        "author": "Sketchfab: Renafox",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "frente": "javaporcos-realista",
+        "classe": "carro",
+        "notes": "Invasão dos Javaporcos (rua/pasto). 39986 tris (bruto 2499862), 1.81 x 1.47 x 4.34 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "17fc3f1d7768dc5c6e3e5805f2ef89c86a14022fb86a014747b8d59ee0cafa50"
+      }
+    },
+    "jp-saco-lixo": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/saco_lixo.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/trashbag",
+        "displayName": "trashbag",
+        "author": "Poly Haven: Benny Weimer",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (rua/beco). 4482 tris (bruto 4482), 0.53 x 0.57 x 0.46 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "8f9ee399c25fed43f088b987b2ad1addb35b36551c68479524a544f029fabb8d"
+      }
+    },
+    "jp-caixa-papelao": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/caixa_papelao.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/cardboard_box_01",
+        "displayName": "cardboard_box_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (rua/beco). 5000 tris (bruto 16952), 0.39 x 0.34 x 0.52 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "f2eaf727a82fefea489238bfd84cdd9a95770e073a3f46ba5031f027875f6a55"
+      }
+    },
+    "jp-engradado-plastico": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/engradado_plastico.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/plastic_crate_02",
+        "displayName": "plastic_crate_02",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (praça/rua). 5840 tris (bruto 5840), 0.51 x 0.25 x 0.41 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "c4290fe641b70e4b55f1f35d4968f36e9d419a8422b01b08556199c7096c5e52"
+      }
+    },
+    "jp-caixote-madeira": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/caixote_madeira.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/wooden_crate_01",
+        "displayName": "wooden_crate_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (praça (feira)). 6576 tris (bruto 6576), 0.83 x 0.35 x 0.41 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "3e652df1c0f8b4244b5fb4455095c32eab5b82a4d4b01952e72257a0c5fdf888"
+      }
+    },
+    "jp-pneu-velho": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/pneu_velho.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/old_tyre",
+        "displayName": "old_tyre",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (praça/rua). 2880 tris (bruto 2880), 0.6 x 0.6 x 0.16 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "0b433c6b3964ecc4372cca9ce2632f1059f0b1666b6e2a1a0ed7c6c454ef8ab7"
+      }
+    },
+    "jp-cadeira-plastico": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/cadeira_plastico.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/plastic_monobloc_chair_01",
+        "displayName": "plastic_monobloc_chair_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (rua (bar)). 3356 tris (bruto 3356), 0.64 x 0.88 x 0.63 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "dfc7f2432395d148864f807fe395c8b047e2e9e5828d3090b35ea2d3c7989340"
+      }
+    },
+    "jp-saco-cimento": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/saco_cimento.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/cement_bag",
+        "displayName": "cement_bag",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (beco/rua). 844 tris (bruto 844), 0.46 x 0.18 x 0.7 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "1676ab9b846d33bb661baae95d1f7c5298cd283e327a30bc9814e1d597dc6ee4"
+      }
+    },
+    "jp-tambor-metal": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/tambor_metal.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/barrel_03",
+        "displayName": "barrel_03",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (beco/pasto). 1473 tris (bruto 1473), 0.63 x 0.93 x 0.64 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "491b58bc9fa2e78e61062e76b0f98e912cba7161a053377188d142195c781138"
+      }
+    },
+    "jp-tampa-bueiro": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/tampa_bueiro.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/water_manhole_cover",
+        "displayName": "water_manhole_cover",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (rua). 2999 tris (bruto 6301), 0.69 x 0.07 x 0.69 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "10f1315dc7e4649e01bce415a5cf54c32edfa21c14ae851dfad1576b0c5c24fd"
+      }
+    },
+    "jp-lixeira-metal": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/lixeira_metal.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/metal_trash_can",
+        "displayName": "metal_trash_can",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (beco). 7532 tris (bruto 7532), 0.77 x 0.91 x 0.55 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "febd7bcb53a4e82c667c686ff8eeb50b5bbd978707bb4b4a1bf93bc906c753fe"
+      }
+    },
+    "jp-lata-enferrujada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/lata_enferrujada.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/can_rusted",
+        "displayName": "can_rusted",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (beco/rua). 1500 tris (bruto 3520), 0.12 x 0.15 x 0.12 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "331c771f37ef9ef8b7a570bade008f4eb674df9047292ab6651894302d7a45f9"
+      }
+    },
+    "jp-caixa-energia": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/caixa_energia.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/utility_box_01",
+        "displayName": "utility_box_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (beco). 4404 tris (bruto 4404), 0.52 x 1.12 x 0.43 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "2b8c722c7d70b7acb277876a77991211ddb0d7d40810f62a6989b92ea4877404"
+      }
+    },
+    "jp-porta-aco": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/porta_aco.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/rollershutter_door",
+        "displayName": "rollershutter_door",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (rua (comércio fechado)). 552 tris (bruto 552), 1.08 x 2.4 x 0.3 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "78e9de97a4a92c1b79d82a202eb8a5939466312f98300e30ec3f15c9db2a3256"
+      }
+    },
+    "jp-porta-aco-pichada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/porta_aco_pichada.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/rollershutter_door",
+        "displayName": "rollershutter_door",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (rua/beco). 552 tris (bruto 552), 1.08 x 2.4 x 0.3 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "fac91f6d7dca4ef78fdcb867ce7d4f2167c5b357b406859576f085c412fe8f1d"
+      }
+    },
+    "jp-barreira-concreto": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/barreira_concreto.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/concrete_road_barrier",
+        "displayName": "concrete_road_barrier",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (praça (barricada)). 8000 tris (bruto 60928), 1.54 x 0.83 x 0.64 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "6f36677963004786b3a8a6a009cb2c44bfbf0e1c122c0ad4d9f8f5a72477eef9"
+      }
+    },
+    "jp-luminaria-parede": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/luminaria_parede.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/street_lamp_02",
+        "displayName": "street_lamp_02",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (praça (fachada da igreja)). 8096 tris (bruto 20338), 0.39 x 1.67 x 0.81 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "f60196c2ec628650483fbf85086cd43e36697e238102e3ceaead147849d73cca"
+      }
+    },
+    "jp-poste-transformador": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/poste_transformador.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/modular_electricity_poles",
+        "displayName": "modular_electricity_poles",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "estrutura",
+        "notes": "Invasão dos Javaporcos (rua/praça). 12665 tris (bruto 31932), 1.2 x 6.13 x 1.96 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "c686408577a737aa3a23ddd41ba5be30fd4ce3c4045797bae2a7136211069156"
+      }
+    },
+    "jp-poste-fiacao": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/poste_fiacao.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/modular_electricity_poles",
+        "displayName": "modular_electricity_poles",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "estrutura",
+        "notes": "Invasão dos Javaporcos (rua/beco). 12499 tris (bruto 26466), 1.2 x 6.13 x 0.85 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "590675796500f0aeb99186adbf02835411357e72afedcb63c8ae87c21d1d361a"
+      }
+    },
+    "jp-poste-luz-praca": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/poste_luz_praca.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/street_lamp_01",
+        "displayName": "street_lamp_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "estrutura",
+        "notes": "Invasão dos Javaporcos (praça). 12095 tris (bruto 30610), 0.7 x 3.87 x 0.39 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "23a9860c2b24c4d832ed906eaeb146398fd464cddd4d20175e4208b18d419af8"
+      }
+    },
+    "jp-capim-touceira-a": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/capim_touceira_a.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/grass_medium_02",
+        "displayName": "grass_medium_02",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "vegetacao",
+        "notes": "Invasão dos Javaporcos (pasto/mata). 2489 tris (bruto 2489), 0.32 x 0.26 x 0.36 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "225d8c0b43ff29b0851d9a061a2ea8f6b38e69136682f4565c612e752b6e5b48"
+      }
+    },
+    "jp-capim-touceira-b": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/capim_touceira_b.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/grass_medium_02",
+        "displayName": "grass_medium_02",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "vegetacao",
+        "notes": "Invasão dos Javaporcos (pasto/calçada). 1760 tris (bruto 1760), 0.18 x 0.18 x 0.2 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "3f29d11c4652c36b18ec32e7b77bfe37402689cc6a7379813415c1426c9fd60e"
+      }
+    },
+    "jp-mato-erva": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/mato_erva.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/weed_plant_02",
+        "displayName": "weed_plant_02",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "vegetacao",
+        "notes": "Invasão dos Javaporcos (calçada/beco). 2967 tris (bruto 2967), 0.22 x 0.07 x 0.29 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "20692276628cb206203ea2e9be6b9133a6216b40e6456cd894bad4e7a8708b2e"
+      }
+    },
+    "jp-arbusto-mata-a": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/arbusto_mata_a.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/shrub_02",
+        "displayName": "shrub_02",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "vegetacao",
+        "notes": "Invasão dos Javaporcos (mata/pasto). 9234 tris (bruto 9234), 1.77 x 1.31 x 2.29 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "3867c84dceda0a2610c34851a10252964f39f6cd4adbe69848ce8f85a7d4f3ac"
+      }
+    },
+    "jp-arbusto-mata-b": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/arbusto_mata_b.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/shrub_02",
+        "displayName": "shrub_02",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "vegetacao",
+        "notes": "Invasão dos Javaporcos (mata/praça). 7590 tris (bruto 7590), 1.31 x 1.69 x 1.64 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "7b245cc05147accba9a66277785d6536068819e75113344a45a4e050bca6f374"
+      }
+    },
+    "jp-samambaia-mata": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/samambaia_mata.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/fern_02",
+        "displayName": "fern_02",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "vegetacao",
+        "notes": "Invasão dos Javaporcos (mata). 2384 tris (bruto 2384), 0.99 x 0.43 x 0.89 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "ebc414ceeedd13ee595c7898e1f66a6d9fa90051cd407fd9426e0691dfa32964"
+      }
+    },
+    "jp-calathea-mata": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/calathea_mata.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/calathea_orbifolia_01",
+        "displayName": "calathea_orbifolia_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "vegetacao",
+        "notes": "Invasão dos Javaporcos (mata). 5904 tris (bruto 5904), 0.6 x 0.42 x 0.53 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "52233a7beec94a3a239aa3cb9b264e73dad0b1709e094f1de45d59402ea2760e"
+      }
+    },
+    "jp-galhos-secos": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/galhos_secos.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/dry_branches_medium_01",
+        "displayName": "dry_branches_medium_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "vegetacao",
+        "notes": "Invasão dos Javaporcos (mata/pasto). 5933 tris (bruto 5933), 0.32 x 0.34 x 1.3 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "6c43a3c7957bdb6e4f5b5c784c2bbf90930711b0d5aed9df909cf6519adeecae"
+      }
+    },
+    "jp-toco-arvore": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/toco_arvore.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/tree_stump_01",
+        "displayName": "tree_stump_01",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "vegetacao",
+        "notes": "Invasão dos Javaporcos (pasto/mata). 7994 tris (bruto 41046), 1.43 x 0.57 x 1.59 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "8c930b7d869edf6998a7013d90d79e182244673d47534be93688c1e3a41b12b4"
+      }
+    },
+    "jp-tronco-caido": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/tronco_caido.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/dead_tree_trunk",
+        "displayName": "dead_tree_trunk",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "vegetacao",
+        "notes": "Invasão dos Javaporcos (mata/pasto). 7994 tris (bruto 101802), 3.05 x 0.29 x 0.28 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "d9ed1c128c5a3184b32c0cbad649959d58d66ac0defdd062faa8c111e5de1bee"
+      }
+    },
+    "jp-pedra-mata": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/pedra_mata.glb"
+      ],
+      "source": {
+        "kind": "polyhaven-model",
+        "url": "https://polyhaven.com/a/rock_07",
+        "displayName": "rock_07",
+        "author": "Poly Haven: Poly Haven",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://polyhaven.com/license",
+        "frente": "javaporcos-realista",
+        "classe": "pequeno",
+        "notes": "Invasão dos Javaporcos (pasto/mata). 3998 tris (bruto 14844), 0.17 x 0.14 x 0.32 m, pivô no chão."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-realista-assets.mjs"
+        ],
+        "finalSha256": "51d4e6fc34cf03619eed92d7350ca50661b877a871f1d0435838d19e0f8cdd81"
+      }
+    },
+    "leitao-listrado": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/enemies/javaporcos/leitao_listrado.glb",
+        "public/models/enemies/javaporcos/leitao_listrado_lod.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks72s7n7xpvss3hp3vncm5xd2h8h8w2w",
+        "assetPackId": "th7f82d138zgbc9bzs2c3032f58h9f8g",
+        "chatUrl": "https://mint.gg/chat/ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk",
+        "displayName": "leitao_listrado",
+        "notes": "Original preservado em references/glb; WebP512/quality90 e LOD local. Procedência e hashes em public/models/enemies/javaporcos/asset-manifest.json."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-variantes.mjs",
+          "tools/javaporcos-lod.mjs"
+        ],
+        "finalSha256": "92a4c72916d40becb6a5e195b829c4e79c70032017fb9cadf6869579d6d7170c"
+      }
+    },
+    "javaporco-velho-cicatrizado": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/enemies/javaporcos/javaporco_velho_cicatrizado.glb",
+        "public/models/enemies/javaporcos/javaporco_velho_cicatrizado_lod.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks70t3c3mkxgtszkhd7wb1q54n8h88xn",
+        "assetPackId": "th7f82d138zgbc9bzs2c3032f58h9f8g",
+        "chatUrl": "https://mint.gg/chat/ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk",
+        "displayName": "javaporco_velho_cicatrizado",
+        "notes": "Original preservado em references/glb; WebP512/quality90 e LOD local. Procedência e hashes em public/models/enemies/javaporcos/asset-manifest.json."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-variantes.mjs",
+          "tools/javaporcos-lod.mjs"
+        ],
+        "finalSha256": "e435fc12f991b84c9f0caf87c063c4a64c6a043605b519ddc6c8ef45d855e2a6"
+      }
+    },
+    "javaporco-ruivo": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/enemies/javaporcos/javaporco_ruivo.glb",
+        "public/models/enemies/javaporcos/javaporco_ruivo_lod.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7c1r9d83q0d6ekjd3m6747vx8h8qgm",
+        "assetPackId": "th7f82d138zgbc9bzs2c3032f58h9f8g",
+        "chatUrl": "https://mint.gg/chat/ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk",
+        "displayName": "javaporco_ruivo",
+        "notes": "Original preservado em references/glb; WebP512/quality90 e LOD local. Procedência e hashes em public/models/enemies/javaporcos/asset-manifest.json."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-variantes.mjs",
+          "tools/javaporcos-lod.mjs"
+        ],
+        "finalSha256": "5927ff415158a0921daccf6198d69b7c94151e6faa326a6308af12c3c8dfa85f"
+      }
+    },
+    "javaporco-malhado": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/enemies/javaporcos/javaporco_malhado.glb",
+        "public/models/enemies/javaporcos/javaporco_malhado_lod.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks77ht2fkgabbttc2mqq96p0x98h962g",
+        "assetPackId": "th7f82d138zgbc9bzs2c3032f58h9f8g",
+        "chatUrl": "https://mint.gg/chat/ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk",
+        "displayName": "javaporco_malhado",
+        "notes": "Original preservado em references/glb; WebP512/quality90 e LOD local. Procedência e hashes em public/models/enemies/javaporcos/asset-manifest.json."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-variantes.mjs",
+          "tools/javaporcos-lod.mjs"
+        ],
+        "finalSha256": "4d20fcc22c6dc7542d3276e30ba1679d17b0ae7ea7e734e440da143e5c3a9e3c"
+      }
+    },
+    "jp-mint-fachada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_fachada.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th753rbz1fjyvfcsypbdcfcntn8h8wr4",
+        "chatUrl": "https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc",
+        "displayName": "Fachada de comércio do interior",
+        "frente": "javaporcos-mint-packs",
+        "classe": "estrutura",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/fachada.glb",
+        "sourceSha256": "43b926a51ec32fca9b2f126d922b611041bcb637bd82433b8d3712e3604684a3",
+        "finalSha256": "a2d8e353a59693dc000597503ae60eac71d9e36f2b8b3896487bcaa9eeb454a5",
+        "tris": 4713,
+        "dimensions": [
+          5.228,
+          4,
+          4.552
+        ],
+        "bytes": 346236
+      }
+    },
+    "jp-mint-fundo-casa": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_fundo_casa.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th753rbz1fjyvfcsypbdcfcntn8h8wr4",
+        "chatUrl": "https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc",
+        "displayName": "Fundo de casa do beco",
+        "frente": "javaporcos-mint-packs",
+        "classe": "estrutura",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/fundo-casa.glb",
+        "sourceSha256": "92fd61f16b018f73447b7e96aec5a33fdf213e4df15b1a05b96bf444166fca2d",
+        "finalSha256": "221e33363dc4d1158428a9ba1ac43b3c09849a6756d50e2eef3e559a90c178f3",
+        "tris": 4674,
+        "dimensions": [
+          4.249,
+          4,
+          2.287
+        ],
+        "bytes": 318100
+      }
+    },
+    "jp-mint-cacamba": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_cacamba.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th753rbz1fjyvfcsypbdcfcntn8h8wr4",
+        "chatUrl": "https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc",
+        "displayName": "Caçamba de entulho",
+        "frente": "javaporcos-mint-packs",
+        "classe": "estrutura",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/cacamba.glb",
+        "sourceSha256": "d6bf1b3d649412ea4f1bb5ff1fb54b330666a6f43c9293da67c99d19bc6fc1c2",
+        "finalSha256": "5f9e8b3200d9e713732e77274f9de9f762d902fb379206a1eb3bbdd01e7477dc",
+        "tris": 4681,
+        "dimensions": [
+          2.281,
+          1.76,
+          3.5
+        ],
+        "bytes": 381884
+      }
+    },
+    "jp-mint-poste-trafo": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_poste_trafo.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th753rbz1fjyvfcsypbdcfcntn8h8wr4",
+        "chatUrl": "https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc",
+        "displayName": "Poste de concreto com transformador",
+        "frente": "javaporcos-mint-packs",
+        "classe": "estrutura",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/poste-trafo.glb",
+        "sourceSha256": "df20e81b9957eefd83d1920eb268343ae6b68b03c2334c250f1fbf30a6789463",
+        "finalSha256": "e1fe4326a05466679ae007afe928b376efd7c3ff6a03b830a40058119ac11fda",
+        "tris": 4863,
+        "dimensions": [
+          3.335,
+          8,
+          1.988
+        ],
+        "bytes": 447748
+      }
+    },
+    "jp-mint-padrao-luz": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_padrao_luz.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th753rbz1fjyvfcsypbdcfcntn8h8wr4",
+        "chatUrl": "https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc",
+        "displayName": "Padrão de entrada de luz",
+        "frente": "javaporcos-mint-packs",
+        "classe": "pequeno",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/padrao-luz.glb",
+        "sourceSha256": "c68bee44dbaad0a6b5b8ba824f40a08e256e38d9bae1383fe2119c8adff26fa5",
+        "finalSha256": "a467c1ee6a1bfdaf5084ff9f4e2b6dbf18421047a5ba658d4daf140104bab690",
+        "tris": 4758,
+        "dimensions": [
+          0.511,
+          1,
+          0.284
+        ],
+        "bytes": 249132
+      }
+    },
+    "jp-mint-lixeira-tombada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_lixeira_tombada.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th753rbz1fjyvfcsypbdcfcntn8h8wr4",
+        "chatUrl": "https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc",
+        "displayName": "Lixeira tombada",
+        "frente": "javaporcos-mint-packs",
+        "classe": "pequeno",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/lixeira-tombada.glb",
+        "sourceSha256": "b34fc0c83bf3977fd65b09e84b3bf0f71c2ee2cd41e70caa828a1a0ed3963afb",
+        "finalSha256": "f121a45d591e4b0455136d823c8d07e37b69b8892cc225270ade02dd536c1fe4",
+        "tris": 4790,
+        "dimensions": [
+          1.3,
+          0.674,
+          0.791
+        ],
+        "bytes": 384344
+      }
+    },
+    "jp-mint-pilha-sacos": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_pilha_sacos.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th753rbz1fjyvfcsypbdcfcntn8h8wr4",
+        "chatUrl": "https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc",
+        "displayName": "Pilha de sacos de lixo",
+        "frente": "javaporcos-mint-packs",
+        "classe": "pequeno",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/pilha-sacos.glb",
+        "sourceSha256": "26d012fce9c444455d39a25c7fffe17208edc339e437a96af818e949f63e8ddd",
+        "finalSha256": "d48d7d7f2ebb0e3a74206b9bd9edecf15e294e3558e71433bab22e14d88df468",
+        "tris": 4920,
+        "dimensions": [
+          1.491,
+          1.034,
+          1.5
+        ],
+        "bytes": 377392
+      }
+    },
+    "jp-mint-banca-feira": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_banca_feira.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th753rbz1fjyvfcsypbdcfcntn8h8wr4",
+        "chatUrl": "https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc",
+        "displayName": "Banca de feira",
+        "frente": "javaporcos-mint-packs",
+        "classe": "estrutura",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/banca-feira.glb",
+        "sourceSha256": "722a6b115d87746715ff6a888277168538c4f885c316329c4aa1b17c151ca51f",
+        "finalSha256": "e9dd1ae6f18b1f24cfea956a890a8441c8fcdfc0c361e70e537fdb2eeaa0fa3e",
+        "tris": 4428,
+        "dimensions": [
+          2.4,
+          2.4,
+          2.052
+        ],
+        "bytes": 416696
+      }
+    },
+    "jp-mint-uno-batido": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_uno_batido.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th753rbz1fjyvfcsypbdcfcntn8h8wr4",
+        "chatUrl": "https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc",
+        "displayName": "Uno batido abandonado",
+        "frente": "javaporcos-mint-packs",
+        "classe": "carro",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/uno-batido.glb",
+        "sourceSha256": "fb01ee1e87f571840f4f77b88b38f627dd693a2b518855ab5ecce0e1f7254a86",
+        "finalSha256": "88f32ce49df6a00b6af7ee5357f211432db3d9d0d11520695b36eae4f98fa1b8",
+        "tris": 4859,
+        "dimensions": [
+          1.85,
+          1.479,
+          3.65
+        ],
+        "bytes": 327220
+      }
+    },
+    "jp-mint-varal": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_varal.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th753rbz1fjyvfcsypbdcfcntn8h8wr4",
+        "chatUrl": "https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc",
+        "displayName": "Varal com roupas",
+        "frente": "javaporcos-mint-packs",
+        "classe": "estrutura",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/varal.glb",
+        "sourceSha256": "657f6475c51cb01ed66e4b19f5001d10c6bdd648c074d524f8b6d567cab161d9",
+        "finalSha256": "92d95ba610b644ea5abb29ff3b5fc0025e5bea2b60b95e0f2802e2bc0adcd864",
+        "tris": 4601,
+        "dimensions": [
+          4,
+          2.262,
+          1.01
+        ],
+        "bytes": 371756
+      }
+    },
+    "jp-mint-mesa-bar": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_mesa_bar.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th753rbz1fjyvfcsypbdcfcntn8h8wr4",
+        "chatUrl": "https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc",
+        "displayName": "Mesa e cadeiras de bar",
+        "frente": "javaporcos-mint-packs",
+        "classe": "pequeno",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/mesa-bar.glb",
+        "sourceSha256": "f1a22394cfee20a4a451139cdb94132197f187e9b7a3943f262af574a87907c6",
+        "finalSha256": "dd362024935bec66f837cc1c2cf18ce4d675be0d541899a4eb35ed66e2e97d23",
+        "tris": 4826,
+        "dimensions": [
+          1.516,
+          1,
+          1.392
+        ],
+        "bytes": 331380
+      }
+    },
+    "jp-mint-orelhao": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_orelhao.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th753rbz1fjyvfcsypbdcfcntn8h8wr4",
+        "chatUrl": "https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc",
+        "displayName": "Orelhão",
+        "frente": "javaporcos-mint-packs",
+        "classe": "pequeno",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/orelhao.glb",
+        "sourceSha256": "4cf21c6848e7fc8a6a476f648518a818c2d59c784d597124f354c6e4cf36a116",
+        "finalSha256": "137166d970db947f942331c8481b95f6d0b1057080504c151604aa032f116ad0",
+        "tris": 4515,
+        "dimensions": [
+          0.908,
+          2.2,
+          1.003
+        ],
+        "bytes": 270884
+      }
+    },
+    "jp-mint-mangueira": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_mangueira.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th7a6e6j8ex8gx7jc3btycpjdn8h8xj5",
+        "chatUrl": "https://mint.gg/chat/ph78p4ab22f3c9cmqk4qy5hx9d8h9391",
+        "displayName": "Mangueira",
+        "frente": "javaporcos-mint-packs",
+        "classe": "vegetacao",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/mangueira.glb",
+        "sourceSha256": "beba132d4ff7a63ab68689908a87d3e5340236bbc599687d03d7e4aa3fab2f11",
+        "finalSha256": "638c94db856054686a07f87237e9372fb3f171457ec2f276591e5f1b7a8ee32a",
+        "tris": 4708,
+        "dimensions": [
+          6.767,
+          7,
+          6.726
+        ],
+        "bytes": 399000
+      }
+    },
+    "jp-mint-ipe-amarelo": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_ipe_amarelo.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th7a6e6j8ex8gx7jc3btycpjdn8h8xj5",
+        "chatUrl": "https://mint.gg/chat/ph78p4ab22f3c9cmqk4qy5hx9d8h9391",
+        "displayName": "Ipê-amarelo",
+        "frente": "javaporcos-mint-packs",
+        "classe": "vegetacao",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/ipe-amarelo.glb",
+        "sourceSha256": "ada9c3f764763db898d8651f55bdbea7c28f02aedb2715a2f5b4108206f764e0",
+        "finalSha256": "7799209b94423cd9f43985d491ea880a624e3a966f3ff2c2fb4c4df4da4bd1e7",
+        "tris": 4498,
+        "dimensions": [
+          7.17,
+          8,
+          7.342
+        ],
+        "bytes": 449380
+      }
+    },
+    "jp-mint-arvore-mata": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_arvore_mata.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th7a6e6j8ex8gx7jc3btycpjdn8h8xj5",
+        "chatUrl": "https://mint.gg/chat/ph78p4ab22f3c9cmqk4qy5hx9d8h9391",
+        "displayName": "Árvore da mata atlântica",
+        "frente": "javaporcos-mint-packs",
+        "classe": "vegetacao",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/arvore-mata.glb",
+        "sourceSha256": "ffde3616d2af0ba7717ae3d43d170d1e084f6088e78704c8cccf45bab8af8e17",
+        "finalSha256": "39464c9bb6392495cf3c8ce4df922613674d4c908f80a32a32c17bdf851d1368",
+        "tris": 4057,
+        "dimensions": [
+          8.434,
+          10,
+          7.691
+        ],
+        "bytes": 393716
+      }
+    },
+    "jp-mint-embauba": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_embauba.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th7a6e6j8ex8gx7jc3btycpjdn8h8xj5",
+        "chatUrl": "https://mint.gg/chat/ph78p4ab22f3c9cmqk4qy5hx9d8h9391",
+        "displayName": "Embaúba",
+        "frente": "javaporcos-mint-packs",
+        "classe": "vegetacao",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/embauba.glb",
+        "sourceSha256": "2a7a1e2e1727235dcd9d0fec5e144f40536a5b6fa3b86c81ee2b832284f48a9c",
+        "finalSha256": "83e91dcf8e238947ac5181589c63154dfb4c42ae03fbc7835b7f9350dc80a281",
+        "tris": 4912,
+        "dimensions": [
+          6.184,
+          8,
+          6.278
+        ],
+        "bytes": 403648
+      }
+    },
+    "jp-mint-bananeira": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_bananeira.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th7a6e6j8ex8gx7jc3btycpjdn8h8xj5",
+        "chatUrl": "https://mint.gg/chat/ph78p4ab22f3c9cmqk4qy5hx9d8h9391",
+        "displayName": "Bananeira",
+        "frente": "javaporcos-mint-packs",
+        "classe": "vegetacao",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/bananeira.glb",
+        "sourceSha256": "5e4fe5fb3159fd55fae8047d0b0dc387d2c5f084bea4eb789be1a62b5495f8a2",
+        "finalSha256": "0d933654e9431f5dc7d6518bf727219c7fe2689372b254233956c90c1c159e81",
+        "tris": 4897,
+        "dimensions": [
+          4.217,
+          5,
+          4.178
+        ],
+        "bytes": 346948
+      }
+    },
+    "jp-mint-jucara": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_jucara.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th7a6e6j8ex8gx7jc3btycpjdn8h8xj5",
+        "chatUrl": "https://mint.gg/chat/ph78p4ab22f3c9cmqk4qy5hx9d8h9391",
+        "displayName": "Palmeira juçara",
+        "frente": "javaporcos-mint-packs",
+        "classe": "vegetacao",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/jucara.glb",
+        "sourceSha256": "1cc7abb907c466497cedda94d915587069ca5a9d1f68095488a934286f366554",
+        "finalSha256": "ee3dafcebcae25db431998acb4d5b5af2e4bb7c06b654c71e4ef95dfeec3341e",
+        "tris": 5460,
+        "dimensions": [
+          4.174,
+          9,
+          4.033
+        ],
+        "bytes": 448540
+      }
+    },
+    "jp-mint-capim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_capim.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th7a6e6j8ex8gx7jc3btycpjdn8h8xj5",
+        "chatUrl": "https://mint.gg/chat/ph78p4ab22f3c9cmqk4qy5hx9d8h9391",
+        "displayName": "Touceira de capim braquiária",
+        "frente": "javaporcos-mint-packs",
+        "classe": "vegetacao",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/capim.glb",
+        "sourceSha256": "f1d9108b809e728174ca9ce45d19264f0868de19865cbd2f5ec9b2c66f892e77",
+        "finalSha256": "a8ea707d73943ce674218d87dad152ab135820e1287893e5077c0a72ec356546",
+        "tris": 4249,
+        "dimensions": [
+          1.167,
+          1.2,
+          1.2
+        ],
+        "bytes": 438248
+      }
+    },
+    "jp-mint-cupinzeiro": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_cupinzeiro.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th7a6e6j8ex8gx7jc3btycpjdn8h8xj5",
+        "chatUrl": "https://mint.gg/chat/ph78p4ab22f3c9cmqk4qy5hx9d8h9391",
+        "displayName": "Cupinzeiro de pasto",
+        "frente": "javaporcos-mint-packs",
+        "classe": "pequeno",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/cupinzeiro.glb",
+        "sourceSha256": "ff06a554507976fc8b67eacacaaaca9c30348d7b51f86584feba2e3fc6cd54ed",
+        "finalSha256": "7aae88f56d21772a3d3955dcb39a75e798aeef1ce282dc7f3d1737143c644391",
+        "tris": 4349,
+        "dimensions": [
+          1.789,
+          1.6,
+          1.789
+        ],
+        "bytes": 389096
+      }
+    },
+    "jp-mint-mourao": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_mourao.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th7a6e6j8ex8gx7jc3btycpjdn8h8xj5",
+        "chatUrl": "https://mint.gg/chat/ph78p4ab22f3c9cmqk4qy5hx9d8h9391",
+        "displayName": "Mourão com arame farpado",
+        "frente": "javaporcos-mint-packs",
+        "classe": "estrutura",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/mourao.glb",
+        "sourceSha256": "2c4622e8e38c6a46183b9cf7783cae99c174a0e0e6d3ba73085dc495e5a917c9",
+        "finalSha256": "f59c4be2157e66df89a8e9fc5faff3c9a025f4ee9d720f7fce97fcc90e1d595e",
+        "tris": 4285,
+        "dimensions": [
+          0.186,
+          1.3,
+          2.433
+        ],
+        "bytes": 396548
+      }
+    },
+    "jp-mint-moita": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/javaporcos_mint_moita.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetPackId": "th7a6e6j8ex8gx7jc3btycpjdn8h8xj5",
+        "chatUrl": "https://mint.gg/chat/ph78p4ab22f3c9cmqk4qy5hx9d8h9391",
+        "displayName": "Moita de samambaia e helicônia",
+        "frente": "javaporcos-mint-packs",
+        "classe": "vegetacao",
+        "notes": "Item baixado pelo seletor do pack. Catálogo; ainda não inserido no mapa."
+      },
+      "processing": {
+        "tools": [
+          "tools/javaporcos-mint-packs.mjs"
+        ],
+        "source": "references/glb/javaporcos-mint-packs/moita.glb",
+        "sourceSha256": "a47c1f5024c510038045c2c070021164883cf057802edf2df5e581bb5e264373",
+        "finalSha256": "20639f23313b0769bd561ece9a1d9ec02fbc0173fdaffcfdf5c6d06040792212",
+        "tris": 3555,
+        "dimensions": [
+          1.931,
+          1.5,
+          1.908
+        ],
+        "bytes": 308180
+      }
+    },
+    "armadura_colete": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/armadura/colete.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "displayName": "Dustworn Olive Plate Carrier",
+        "original": {
+          "file": "mint-colete-flash-20261028/colete.glb",
+          "sha256": "bef1667ebc167da8f37410207ecad26020a9e4adc8a15951e05c4d874d6e490b",
+          "bytes": 3513828,
+          "pack": null
+        },
+        "notes": "Gerado pelo dono na conta Mint dele (28/10/2026); uso livre no jogo. Normalizado num cubo de ~1 m, frente +Z."
+      },
+      "processing": {
+        "chain": "Mint original→tools/optimize-armadura.mjs (textura 1024/512 JPEG, dedup, prune, meshopt); escala e encaixe medidos por corpo em armadura-visual.js",
+        "finalSha256": "18e41d4ef589328604835104785a0d17a1f13e2fb4f5fb4340fa78cf6d2994c9",
+        "bytes": 345048,
+        "triangles": 4877,
+        "status": "Integrado; prancha em docs/evidencias/feat-colete-20261028; revisão humana pendente"
+      }
+    },
+    "armadura_capacete": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/armadura/capacete.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "displayName": "Olive Highcut NVG Helmet",
+        "original": {
+          "file": "mint-colete-flash-20261028/capacete.glb",
+          "sha256": "0ca32b1181a11e850f3740de166307b038ef6d60894f1ec92fe3669d452e07d9",
+          "bytes": 2969572,
+          "pack": null
+        },
+        "notes": "Gerado pelo dono na conta Mint dele (28/10/2026); uso livre no jogo. Normalizado num cubo de ~1 m, frente +Z."
+      },
+      "processing": {
+        "chain": "Mint original→tools/optimize-armadura.mjs (textura 1024/512 JPEG, dedup, prune, meshopt); escala e encaixe medidos por corpo em armadura-visual.js",
+        "finalSha256": "8c54aeff35294bb38460c457491dc4a24d10f81bd622612b7c8ebe175366b839",
+        "bytes": 263976,
+        "triangles": 4578,
+        "status": "Integrado; prancha em docs/evidencias/feat-colete-20261028; revisão humana pendente"
+      }
+    },
+    "flash-granada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/granadas/flash-world.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "displayName": "Yellowband Vent Canister (flashbang)",
+        "notes": "Gerado pelo dono na conta Mint dele (28/10/2026), uso livre no jogo; assetId/chat não vieram junto do download. Original: 1 m de altura, texturas 2048, 2,2 MB. Granada flash do mundo (PR #1163); a da mão segue o UTILITY_FLASH do pacote pago."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d",
+        "tools": [
+          "mint.gg",
+          "tools/prep-flash-world.mjs"
+        ],
+        "finalSha256": "57eddb91de4f8eaf45a68af26a50c57167f4ce6cfd8ea95275b432aca35527e9"
+      }
     }
   }
 }

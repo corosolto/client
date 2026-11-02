@@ -106,7 +106,7 @@ const srcAmb = existsSync(`${ROOT}public/js/ambientlife.js`)
 const srcGame = readFileSync(`${ROOT}public/js/game.js`, 'utf8');
 const srcMain = readFileSync(`${ROOT}public/js/main.js`, 'utf8');
 const srcMaps = Object.fromEntries(MAPAS.map((id) => [id,
-  readFileSync(`${ROOT}public/js/map_${id.slice(3)}.js`, 'utf8')]));
+  readFileSync(`${ROOT}public/js/${id==='fy_lajes'?'map_lajes_authored.js':`map_${id.slice(3)}.js`}`, 'utf8')]));
 const fireBody = corpoMetodo(srcGame, '\n  _fireHitscan(');
 const updateBody = corpoMetodo(srcGame, '\n  update(dt');
 const mapasIntegrados = Object.entries(srcMaps).filter(([, src]) =>
@@ -114,9 +114,9 @@ const mapasIntegrados = Object.entries(srcMaps).filter(([, src]) =>
 put('AM2', 'os três builders instanciam o controlador comum', mapasIntegrados.length === MAPAS.length,
   `${mapasIntegrados.length}/${MAPAS.length}: ${mapasIntegrados.join(', ') || 'nenhum'}`);
 put('AM3', 'preload e hooks moram nos caminhos executados de produção',
-  srcMain.includes('preloadAmbientLife') && fireBody.includes('this.world.ambience?.onShot')
+  srcMain.includes('preloadMapAmbientLife') && fireBody.includes('this.world.ambience?.onShot')
     && updateBody.includes('this.world.ambience?.update'),
-  `preload=${srcMain.includes('preloadAmbientLife')} fire=${fireBody.includes('this.world.ambience?.onShot')} update=${updateBody.includes('this.world.ambience?.update')}`);
+  `preload=${srcMain.includes('preloadMapAmbientLife')} fire=${fireBody.includes('this.world.ambience?.onShot')} update=${updateBody.includes('this.world.ambience?.update')}`);
 
 const assetReport = {};
 if (!faltando.length) {
