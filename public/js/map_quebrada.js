@@ -99,6 +99,11 @@ export function buildQuebrada(scene, T) {
   // colisor sem malha (fecha vão entre peças que já têm malha própria); NUNCA vira occluder,
   // então não pode produzir "marca de tiro no ar" (MAP4).
   const col = (x0, x1, y0, y1, z0, z1) => colliders.push({ minX: Math.min(x0, x1), maxX: Math.max(x0, x1), minY: y0, maxY: y1, minZ: Math.min(z0, z1), maxZ: Math.max(z0, z1) });
+  const propBox = (loaded, w, h, d, mat, x, y, z, opts = {}) => {
+    if (!loaded) return addBox(w, h, d, mat, x, y, z, opts);
+    if (opts.collide !== false) col(x - w / 2, x + w / 2, y, y + h, z - d / 2, z + d / 2);
+    return null;
+  };
   const addFloor = (w, d, x, z, mat, y = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; };
   const gprop = (id, x, z, h, ry = 0) => { const o = placeProp(id, { x, z, targetH: h, ry }); if (o) { root.add(o); o.traverse((m) => { if (m.isMesh) occluders.push(m); }); } return !!o; };
 
@@ -790,13 +795,15 @@ export function buildQuebrada(scene, T) {
     if (mz < 46) { const t = addBox(0.05, 2.4, 4, MAT_TELA, sx, 0, mz + 2, { collide: false, cast: false }); t.receiveShadow = false; }
   }
   // arquibancada da margem oeste (GLB do Mint quando carrega; degraus de concreto quando não)
-  if (!gprop('arquibancada', -19.4, 36, 2.4, Math.PI / 2))
-    for (let i = 0; i < 3; i++) addBox(3.2 - i * 0.9, 0.5 + i * 0.5, 9, MAT.concreteDark, -20.6 + i * 1.05, 0, 36);
+  {
+    const loaded = gprop('arquibancada', -19.4, 36, 2.4, Math.PI / 2);
+    for (let i = 0; i < 3; i++) propBox(loaded, 3.2 - i * 0.9, 0.5 + i * 0.5, 9, MAT.concreteDark, -20.6 + i * 1.05, 0, 36);
+  }
   // pilhas de pneu marcando o encostado do campo + um par de barracas na margem leste
   for (const [tx, tz] of [[-13, 32.5], [13, 41], [-8, 45], [18.6, 33]])
-    if (!gprop('pilha_pneus', tx, tz, 1.1)) addBox(1.4, 1.1, 1.4, MAT_PNEU, tx, 0, tz);
+    propBox(gprop('pilha_pneus', tx, tz, 1.1), 1.4, 1.1, 1.4, MAT_PNEU, tx, 0, tz);
   for (const [sx2, sz2] of [[19, 39.5], [-19.4, 43.5]])
-    if (!gprop('stall', sx2, sz2, 2.3)) addBox(2.4, 2.3, 2.0, MAT_BARRACO[3], sx2, 0, sz2);
+    propBox(gprop('stall', sx2, sz2, 2.3), 2.4, 2.3, 2.0, MAT_BARRACO[3], sx2, 0, sz2);
   // Muretas baixas protegem a chegada da travessa sem fechar os dois portões.
   for (const [mx, mz, ry] of [[-16.9, 25.1, -0.16], [16.9, 25.1, 0.16]]) {
     const wall = addBox(2.8, 1.05, 0.48, MAT_MURO, mx, 0, mz, { ry });
@@ -816,7 +823,7 @@ export function buildQuebrada(scene, T) {
      não tem em que se encostar. As peças abaixo são todas de campo de várzea de verdade —
      banco de reserva, pneu de canto, monte de terra, barraca de bebida na beira. */
   for (const [tx, tz] of [[-12.5, 31.5], [-12.5, 43], [12.5, 31.5], [12.5, 43], [-6.5, 25.6], [6.5, 25.6]])
-    if (!gprop('tires', tx, tz, 0.75)) addBox(1.15, 0.75, 1.15, MAT_PNEU, tx, 0, tz);
+    propBox(gprop('tires', tx, tz, 0.75), 1.15, 0.75, 1.15, MAT_PNEU, tx, 0, tz);
   for (const bx2 of [-9.2, 9.2]) {   // banco de reserva coberto
     addBox(2.8, 0.5, 0.8, MAT.concreteDark, bx2, 0, 37.5);
     addBox(2.8, 0.62, 0.16, MAT.concreteDark, bx2, 0.5, 37.5 + (bx2 < 0 ? -0.32 : 0.32), { collide: false });
@@ -835,7 +842,7 @@ export function buildQuebrada(scene, T) {
   for (const [mx2, mz2] of [[-4.2, 34], [4.6, 33.2]])   // monte de terra/entulho no meio do campo
     addBox(1.8, 0.85, 1.8, lam({ map: T.dirt, color: 0x9a8b74 }), mx2, 0, mz2);
   for (const [sx3, sz3] of [[-11.4, 26.4], [11.4, 26.4]])
-    if (!gprop('drinkstand', sx3, sz3, 2.2)) addBox(2.2, 2.2, 1.6, MAT_BARRACO[4], sx3, 0, sz3);
+    propBox(gprop('drinkstand', sx3, sz3, 2.2), 2.2, 2.2, 1.6, MAT_BARRACO[4], sx3, 0, sz3);
   for (const [px2, pz2] of [[-16.9, 31], [16.9, 43]]) {   // refletor de campo de várzea
     addBox(0.26, 7.2, 0.26, posteMat, px2, 0, pz2);
     addBox(1.2, 0.5, 0.22, lam({ color: 0xcfc9b4 }), px2 + (px2 < 0 ? 0.6 : -0.6), 6.8, pz2, { collide: false, cast: false });
@@ -944,7 +951,7 @@ export function buildQuebrada(scene, T) {
   // engradado de cerveja empilhado e churrasqueira na porta do bar (leitura + cover)
   const MAT_ENGRADADO = lam({ color: 0xc4302b, roughness: 0.8 });
   for (let i = 0; i < 4; i++) addBox(0.5, 0.3, 0.36, MAT_ENGRADADO, 12.0, i * 0.3, 4.0, { collide: i === 0 });
-  if (!gprop('churrasqueira', 11.9, 7.6, 1.1)) addBox(1.2, 1.1, 0.8, MAT.concreteDark, 11.9, 0, 7.6);
+  propBox(gprop('churrasqueira', 11.9, 7.6, 1.1), 1.2, 1.1, 0.8, MAT.concreteDark, 11.9, 0, 7.6);
   // guarda-sol de cerveja: só silhueta, sem colisor (fica a 2,1 m)
   for (const [ux, uz] of [[9.6, 2.2], [9.6, 9.0]]) {
     addBox(0.09, 2.1, 0.09, posteMat, ux, 0.72, uz, { collide: false, cast: false });
@@ -1034,7 +1041,7 @@ export function buildQuebrada(scene, T) {
     } else addBox(larg, 1.05, 0.7, MAT_MADEIRA, cx, 0, cz);
     for (let i = 0; i < 3; i++) {
       const tx = cx - larg / 2 + 0.5 + i * (larg - 1) / 2;
-      if (!gprop('tires', tx, cz + 1.0, 0.72)) addBox(1.1, 0.72, 1.1, MAT_PNEU, tx, 0, cz + 1.0);
+      propBox(gprop('tires', tx, cz + 1.0, 0.72), 1.1, 0.72, 1.1, MAT_PNEU, tx, 0, cz + 1.0);
     }
     addBox(0.62, 0.92, 0.62, MAT_TAMBOR, cx + larg / 2 + 0.6, 0, cz);
   }
@@ -1056,7 +1063,7 @@ export function buildQuebrada(scene, T) {
      passagem livre pro corpo de 0,38 m de raio. */
   const MAT_CACAMBA = lam({ color: 0x5e6a52, roughness: 0.85, metalness: 0.25 });
   for (const [cx, cz] of [[-24.15, -30], [-24.15, -6], [-24.15, 12], [24.15, -26], [24.15, 2], [24.15, 20]])
-    if (!gprop('dumpster', cx, cz, 1.35)) addBox(1.2, 1.35, 2.6, MAT_CACAMBA, cx, 0, cz);
+    propBox(gprop('dumpster', cx, cz, 1.35), 1.2, 1.35, 2.6, MAT_CACAMBA, cx, 0, cz);
   for (const [cx, cz] of [[-24.3, -18], [-21.7, 3], [-24.3, 22], [24.3, -12], [21.7, 8.8], [24.3, -34]])
     addBox(1.0, 1.0, 1.0, MAT_BARRACO[5], cx, 0, cz);   // pilha de tijolo/sacaria, colada no muro
   // entulho na BOCA de cada beco (na calçada, não dentro dele): dá cover a quem sai do beco
@@ -1084,8 +1091,11 @@ export function buildQuebrada(scene, T) {
      ficam, porque estão no MEIO da praça e não no respawn — o pedido foi "não precisa ter",
      não "tire as barracas do mapa". Efeito medido em map-check está no relatório da rodada. */
   for (const [sx2, sz2, ry2] of [[-9.4, -24.5, 0.3], [9.6, -25.5, -0.4]])
-    if (!gprop('tent', sx2, sz2, 2.4, ry2)) { occ(addBox(3.0, 2.4, 2.4, MAT_BARRACO[2], sx2, 0, sz2, { ry: ry2, collide: false })); colRot(sx2, sz2, 3.0, 2.4, 0, 2.4, ry2, 3, 2); }
-  if (!gprop('kombi', -7.5, -21.5, 2.0, 0.1)) addBox(2.0, 2.0, 4.6, MAT_BARRACO[6], -7.5, 0, -21.5);
+    {
+      if (!gprop('tent', sx2, sz2, 2.4, ry2)) occ(addBox(3.0, 2.4, 2.4, MAT_BARRACO[2], sx2, 0, sz2, { ry: ry2, collide: false }));
+      colRot(sx2, sz2, 3.0, 2.4, 0, 2.4, ry2, 3, 2);
+    }
+  propBox(gprop('kombi', -7.5, -21.5, 2.0, 0.1), 2.0, 2.0, 4.6, MAT_BARRACO[6], -7.5, 0, -21.5);
 
   /* ===================== MERCADORIA (o dono: "as barracas não tem nada") =====================
      Barraca de camelô com o tabuleiro vazio é uma mesa com toldo — o olho lê "cenário
@@ -1124,8 +1134,7 @@ export function buildQuebrada(scene, T) {
   // (as 2 que ficavam no respawn do P saíram junto com as barracas — ver o bloco do camelô)
   for (const [sx2, sz2, ry2, k] of [[-9.4, -24.5, 0.3, 0], [9.6, -25.5, -0.4, 1]]) {
     mercadoria(sx2 + Math.sin(ry2) * 1.15, sz2 + Math.cos(ry2) * 1.15, ry2, 3 + (k % 2));
-    if (!gpropC('botijao_gas', sx2 - Math.sin(ry2) * 1.2, sz2 - Math.cos(ry2) * 1.2, 0.62, ry2 + k))
-      addBox(0.36, 0.62, 0.36, MAT_TAMBOR, sx2 - Math.sin(ry2) * 1.2, 0, sz2 - Math.cos(ry2) * 1.2);
+    propBox(gpropC('botijao_gas', sx2 - Math.sin(ry2) * 1.2, sz2 - Math.cos(ry2) * 1.2, 0.62, ry2 + k), 0.36, 0.62, 0.36, MAT_TAMBOR, sx2 - Math.sin(ry2) * 1.2, 0, sz2 - Math.cos(ry2) * 1.2);
   }
   for (const [sx2, sz2] of [[19, 39.5], [-19.4, 43.5]]) mercadoria(sx2, sz2 + 1.2, 0, 3);
   // ADEGA e LANCHONETE: engradado empilhado e botijão na porta é o que identifica os dois
@@ -1136,7 +1145,7 @@ export function buildQuebrada(scene, T) {
        (11,5 · 0,5), 1,2 m de penetração. (A pilha antiga do bar, em 12,0 · 4,0, tem o mesmo
        `collide: i === 0` e só escapa porque nenhuma amostra de 1 m cai em cima dela.) */
     for (let i = 0; i < 5; i++) addBox(0.5, 0.3, 0.36, MAT_ENGRADADO, ax, i * 0.3, az);
-    if (!gpropC('botijao_gas', ax, az + 1.0, 0.62, ary)) addBox(0.36, 0.62, 0.36, MAT_TAMBOR, ax, 0, az + 1.0);
+    propBox(gpropC('botijao_gas', ax, az + 1.0, 0.62, ary), 0.36, 0.62, 0.36, MAT_TAMBOR, ax, 0, az + 1.0);
   }
   // SORVETERIA / AÇAÍ: freezer de porta de vidro na calçada (cover baixo de 1,0 m)
   for (const [fx2, fz2] of [[-11.6, -5.2], [-11.6, 7.4]]) {
@@ -1144,7 +1153,7 @@ export function buildQuebrada(scene, T) {
     occ(addBox(0.72, 0.34, 1.3, MAT_VIDRO, fx2, 0.62, fz2, { collide: false, cast: false }));
   }
   // MÓVEIS E ELETRO: mercadoria na calçada é o cartão de visita da loja
-  if (!gprop('arara_roupas', -11.5, 12.2, 1.7)) addBox(1.1, 1.7, 1.6, MAT_CAIXOTE, -11.5, 0, 12.2);
+  propBox(gprop('arara_roupas', -11.5, 12.2, 1.7), 1.1, 1.7, 1.6, MAT_CAIXOTE, -11.5, 0, 12.2);
   addBox(0.9, 1.9, 0.6, lam({ color: 0x8a6a44, roughness: 0.9 }), -11.7, 0, 13.6);   // guarda-roupa em pé
 
   /* ===================== OS BECOS, UM POR UM =====================
@@ -1165,7 +1174,7 @@ export function buildQuebrada(scene, T) {
       // ESCADA EXTERNA de laje — o degrau é o cartão-postal do beco de favela
       // cada degrau colide: degrau em balanço sobre chão livre é MAP1 (ver `mercadoria`)
       for (let i = 0; i < 6; i++) addBox(1.0, 0.19, 0.26, MAT.concreteDark, x0 + 1.2, i * 0.19, bz + 1.28 - i * 0.26);
-      if (!gpropC('botijao_gas', x1 - 1.4, bz + 1.15, 0.62)) addBox(0.36, 0.62, 0.36, MAT_TAMBOR, x1 - 1.4, 0, bz + 1.15);
+      propBox(gpropC('botijao_gas', x1 - 1.4, bz + 1.15, 0.62), 0.36, 0.62, 0.36, MAT_TAMBOR, x1 - 1.4, 0, bz + 1.15);
     } else if (k === 1) {
       // ENGRADADO EMPILHADO ATÉ O ALTO contra a parede sul + varal baixo cruzando
       for (let i = 0; i < 6; i++) addBox(0.5, 0.3, 0.36, MAT_ENGRADADO, xm - 1.6 + (i % 2) * 0.52, ((i / 2) | 0) * 0.3, bz - 1.25);
@@ -1190,8 +1199,8 @@ export function buildQuebrada(scene, T) {
       for (const sd of [-1, 1]) addBox(0.18, 2.9, 0.18, MAT.concreteDark, xm + sd * (L / 2 - 0.4), 0, bz + sd * 1.35);
     } else {
       // MOTO E FERRAMENTA: oficina de fundo de quintal encostada na parede norte
-      if (!gprop('moto_cg', x0 + 1.6, bz + 1.15, 1.05, 1.4)) addBox(0.6, 1.05, 1.7, MAT_PNEU, x0 + 1.6, 0, bz + 1.15);
-      if (!gprop('tires', x1 - 1.3, bz - 1.2, 0.72)) addBox(1.0, 0.72, 1.0, MAT_PNEU, x1 - 1.3, 0, bz - 1.2);
+      propBox(gprop('moto_cg', x0 + 1.6, bz + 1.15, 1.05, 1.4), 0.6, 1.05, 1.7, MAT_PNEU, x0 + 1.6, 0, bz + 1.15);
+      propBox(gprop('tires', x1 - 1.3, bz - 1.2, 0.72), 1.0, 0.72, 1.0, MAT_PNEU, x1 - 1.3, 0, bz - 1.2);
       addBox(0.8, 0.75, 0.5, MAT_CAIXOTE, xm + 0.9, 0, bz - 1.2);
     }
   }
