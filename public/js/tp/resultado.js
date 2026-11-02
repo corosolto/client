@@ -50,12 +50,17 @@ function dados(fim) {
   const g = window.__game;
   if (g && g.state === 'matchEnd' && g.player && !g.arena) {
     const eu = g.playerTeam === 'B' ? 'B' : 'E', eles = eu === 'E' ? 'B' : 'E';
+    /* Em modo objetivo o veredito vem do objetivo (crítica estraga-codigo no lote
+       02/11: vencedor dizia um time e a tela mostrava DERROTA pelo placar de rodadas,
+       que não representa o modo). Sem objetivo, mantém a classe do jogo. */
+    const vencedorObjetivo = g.objective?.state?.winner;
     const abates = g.player.kills | 0;
     return {
       nomes: g.world?.mode === 'horde' ? { E: g._teamName('E'), B: g._teamName('B'), J: g._teamName('J') } : null,
-      empate: g.objective?.state?.winner === 'draw',
+      empate: vencedorObjetivo === 'draw',
       territorio: g.objective ? (g.objective.regras.times === 3 ? ['E','B','J'] : ['E','J']).map(team=>[g._teamName(team),Math.round((g.objective.state.territorio?.[team] || 0)*100)]) : null,
-      venceu, vencedor: g.objective?.state?.winner || (venceu ? eu : eles), placar: [g.roundsWon[eu] | 0, g.roundsWon[eles] | 0],
+      venceu: vencedorObjetivo ? vencedorObjetivo === eu && vencedorObjetivo !== 'draw' : venceu,
+      vencedor: vencedorObjetivo || (venceu ? eu : eles), placar: [g.roundsWon[eu] | 0, g.roundsWon[eles] | 0],
       abates, mortes: g.player.deaths | 0, hs: abates ? Math.round((100 * (g.player.headshots | 0)) / abates) : 0,
       segundos: Math.round(g.time || 0), combo: g.mk?.best | 0,
       personagem: g.playerDef?.name || '', online: !!g.online,

@@ -684,9 +684,12 @@ fetch(`/audio/manifest.json?v=${VERSION}`)
     const novas = list.map((u) => (u.startsWith('/') ? u : `/${u}`));
     if (novas.join('|') === MENU_TRACKS.join('|')) return;
     MENU_TRACKS.splice(0, MENU_TRACKS.length, ...novas);
-    // O catálogo vale na próxima criação do player. Atualizar a lista não inicia
-    // uma faixa nem interrompe a que já está tocando.
     tracksTrocadas = true;
+    /* Manifesto chegou DEPOIS do primeiro gesto (crítica estraga-codigo no lote
+       02/11): o player tocava a faixa padrão e a lista curada nunca virava a faixa
+       corrente. Recria o player com o catálogo real — interrompe a faixa uma única
+       vez, na troca padrão→curada (o próprio startMenuMusic já respeita o toggle). */
+    if (musicArmed && menuMusic) startMenuMusic();
   })
   .catch(() => {});
 let menuMusic = null, musicArmed = false, musicFade = null, tracksTrocadas = false;
