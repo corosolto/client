@@ -99,10 +99,8 @@ export function juntarV5(comum, reboque) {
   return out;
 }
 
-/* REBOQUE v8 — ECONOMIA DE PARTIDA NO MP. O v5 + o estado que o nó autoritativo mantém do
-   SEU dono de slot: saldo TRETA$ (o.kill), segundos restantes da janela de compra, colete,
-   capacete e flashes. Só o dono lê; o saldo dos outros não viaja (igual CS). O corpo dos 30
-   primeiros bytes é BIT A BIT o reboque v5, então quem decodifica v7 lê a parte comum. */
+/* Reboque v8 (economia no MP): o v5 + saldo, janela de compra e equipamento do próprio
+   dono do slot; os 30 primeiros bytes são bit a bit o reboque v5. Docs: ECONOMIA-PARTIDA.md. */
 export const TRAILER_V8_BYTES = TRAILER_V5_BYTES + 5;
 export function encodeTrailerV8(priv = {}) {
   const base = encodeTrailerV5(priv);

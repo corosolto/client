@@ -358,10 +358,7 @@ export class NetClient {
     if (!Number.isInteger(partida)) return false;
     return !!this.tp?.enviar(JSON.stringify({ type: 'pronto', partida }));
   }
-  /* ECONOMIA DE PARTIDA no MP (docs/ECONOMIA-PARTIDA.md): o cliente só pede — preço, saldo,
-     tempo e zona o nó lê do próprio estado. Seq próprio para casar a resposta (`compra-ok`/
-     `compra-nack`); o nó também taxa (1 pedido a cada 100 ms por slot). Confiável, nunca
-     datagrama: compra perdida é compra que nunca chega. */
+  // O cliente só pede; preço/saldo/tempo/zona o nó lê do próprio estado (doc ECONOMIA).
   pedirCompra(id) {
     if (typeof id !== 'string' || !id || !this.tp?.pronto) return 0;
     const seq = ++this.seqCompra;

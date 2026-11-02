@@ -53,10 +53,7 @@ export class CompraPartida {
     this.elSaldo = document.createElement('div');
     this.elSaldo.id = 'hud-treta';
     this.elSaldo.innerHTML = `${MOEDA_IMG('ht-coin')}<b>0</b><em class="ht-ganho"></em><small class="ht-dica"></small>`;
-    /* PRIMEIRO FILHO do #weapon-hud (relato do dono, 01/11: "2x maior e logo acima das
-       armas pra ficar mais agrupado"): como filho estático da pilha ele cola no topo dela
-       em qualquer resolução, sem bottom mágico. Na partida o #weapon-hud já existe no HTML;
-       no arnês (sem HTML) cai no #hud como antes. */
+    // Saldo 2x, primeiro filho da pilha de armas (dono, 01/11). Docs: ECONOMIA-PARTIDA.md.
     this._ancorarSaldo();
     this.elMenu = document.createElement('div');
     this.elMenu.id = 'compra-menu';

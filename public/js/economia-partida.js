@@ -16,10 +16,7 @@ export const ECONOMIA = Object.freeze({
   recompensaKillPadrao: 300,
 });
 
-// ARMAS GRÁTIS NO CHÃO (pedido do dono, 01/11): o único mapa/modo que mantém os pickups
-// estáticos do mapa é o da Invasão dos Javaporcos (horda PvE) — em todo o resto a arma
-// vem de compra (TRETA$) ou de nascimento. O mapa entra aqui na branch dele (PR #1160)
-// e o carve-out já vale no dia do merge. O nó dedicado lê o mesmo conjunto (room.js).
+// Armas grátis no chão SÓ no Javaporcos (dono, 01/11); o nó dedicado lê o mesmo conjunto.
 export const MAPAS_PICKUP_GRATIS = new Set(['invasao_javaporcos']);
 
 /* O MP só liga a loja quando o nó autoritativo anuncia `meta.economia === 1` no welcome

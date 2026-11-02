@@ -4604,9 +4604,7 @@ export class Game {
     }
     // Drop tem prazo e teto porque a versão sem eles foi retirada por virar lixo de mapa;
     // faca não dropa (todo mundo nasce com uma). Histórico e números: tools/eval/drop-check.mjs.
-    // com loja, quem morre larga a primária comprada mesmo segurando pistola ou faca (CS).
-    // `_economiaPartida`: mesmo contrato no nó dedicado, que não tem `_compra` (o dono
-    // dela é a Room, backend game/room.js) mas cobra a mesma regra de drop.
+    // com loja, quem morre larga a primária comprada (CS); `_economiaPartida` = nó dedicado.
     const largar = (this._compra || this._economiaPartida) && ent.primary ? ent.primary : ent.weapon;
     if (largar && largar !== 'knife' && this._pickupAllowed(largar)) {
       this._dropWeapon(ent.pos.x, ent.pos.z, largar, false, 0.01, this.time + DROP_TTL);
