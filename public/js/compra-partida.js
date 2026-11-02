@@ -57,8 +57,7 @@ export class CompraPartida {
        armas pra ficar mais agrupado"): como filho estático da pilha ele cola no topo dela
        em qualquer resolução, sem bottom mágico. Na partida o #weapon-hud já existe no HTML;
        no arnês (sem HTML) cai no #hud como antes. */
-    const pilha = document.getElementById('weapon-hud');
-    (pilha?.prepend ? pilha : hud)?.appendChild?.(this.elSaldo);
+    this._ancorarSaldo();
     this.elMenu = document.createElement('div');
     this.elMenu.id = 'compra-menu';
     this.elMenu.className = 'hidden';
@@ -346,7 +345,19 @@ export class CompraPartida {
     this.game.sfx?.moeda?.();
   }
 
+  /* O saldo vive como PRIMEIRO filho da pilha de armas. O fluxo do lobby pode montar o
+     Game antes de o #weapon-hud existir (ou recriar o HUD num recomeço): o tick recola o
+     elemento sempre que ele estiver fora da árvore. */
+  _ancorarSaldo() {
+    if (!this.elSaldo || this.elSaldo.isConnected) return;
+    const pilha = document.getElementById('weapon-hud');
+    const hud = this.game.el?.hud;
+    if (pilha?.prepend) pilha.prepend(this.elSaldo);
+    else hud?.appendChild?.(this.elSaldo);
+  }
+
   tick() {
+    this._ancorarSaldo();
     const pode = this.podeComprar();
     if (this.aberto && !pode) this.fechar();
     const resta = Math.max(0, Math.ceil(this.compraAte - this.game.time));
