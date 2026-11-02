@@ -46,15 +46,18 @@ test('live and baked murals reject foreign art before scene or layout insertion'
 });
 
 test('manual posters obey the same map ownership as painted art', () => {
-  const root = scene();
-  for (const [i, file] of ['25c9112229edfcfbb1eae4137ecc151a.jpg', 'New Project (1).png', 'or-baile.jpg'].entries()) {
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshLambertMaterial({ map: texture('/posters/' + file) }));
-    mesh.name = 'poster:' + file; mesh.position.set(i * 10, 2, .13); root.add(mesh);
+  const foreign = '6f2bbbe03a6c5a16af15fe12ebea0d6c.jpg', reserve = 'unassigned-test.png';
+  for (const owned of ['25c9112229edfcfbb1eae4137ecc151a.jpg', 'New Project (1).png', 'or-baile.jpg', 'despisque-leao.jpg']) {
+    const root = scene();
+    for (const [i, file] of [owned, foreign, reserve].entries()) {
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshLambertMaterial({ map: texture('/posters/' + file) }));
+      mesh.name = 'poster:' + file; mesh.position.set(i * 10, 2, .13); root.add(mesh);
+    }
+    root.updateMatrixWorld(true); grafitar({ id: 'praca_poderes', root, T: textures(), waypoints: [], bandas: [] });
+    assert.ok(root.getObjectByName('poster:' + owned), 'original Praca artwork must remain: ' + owned);
+    assert.ok(root.getObjectByName('poster:' + foreign) === undefined, 'Posto artwork must not remain in Praca');
+    assert.ok(root.getObjectByName('poster:' + reserve) === undefined, 'reserve art must not remain in Praca');
   }
-  root.updateMatrixWorld(true); grafitar({ id: 'praca_poderes', root, T: textures(), waypoints: [], bandas: [] });
-  assert.ok(root.getObjectByName('poster:25c9112229edfcfbb1eae4137ecc151a.jpg'));
-  assert.ok(root.getObjectByName('poster:New Project (1).png') === undefined, 'Ferro artwork must not remain in Praca');
-  assert.ok(root.getObjectByName('poster:or-baile.jpg') === undefined, 'reserve art must not remain in Praca');
 });
 
 test('declared local street art survives while its real texture is still loading', () => {

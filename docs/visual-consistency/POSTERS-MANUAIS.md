@@ -4,9 +4,9 @@ Gate: `node tools/eval/manual-poster-placement-check.mjs` (mapas `praca_poderes`
 
 Praça também é medida em default, `?bigscale=0` e `?minsq=0`, com geometria real
 do ministério: quatro arquivos originais, uma posição por arquivo e dois cartazes
-por lado. Essa cobertura adicional cobra inventário, unicidade e forma/nome;
-não aprova suporte ou overlap no small, que ainda conserva o afastamento legado
-de0,3m. Os checks completos de suporte/overlap do nominal permanecem separados.
+por lado. Todas as variantes cobram inventário, unicidade, forma/nome, suporte
+e ausência de sobreposição. No small, os cartazes seguem a proporção da empena
+opaca do mesmo GLB e o raycast os apoia na face real.
 O fallback sem ministério é medido antes de carregar a fixture: zero cartazes
 significa ausência de geometria, sem aceite de arte ou inventário vazio verde.
 
@@ -50,7 +50,7 @@ significa ausência de geometria, sem aceite de arte ou inventário vazio verde.
 | `sobreposto` | teleporta um cartaz de Praça sobre outro; a re-coleta mede o novo plano | `SEM_OVERLAP` |
 | `peca-encolhida` | acrescenta no metadata produtor um bake do mesmo arquivo/centro com w/h menores | `SEM_OVERLAP` |
 | `material-escondido` | esconde o material dos cartazes manuais da Praça e re-coleta a cena | `CONTAGEM_MANUAL` |
-| `modulo-ministerios` | reintroduz na fonte a seleção por módulo; o small volta a desenhar8cartazes com arquivos repetidos | `UNICO_ARQUIVO` |
+| `modulo-ministerios` | isola a seleção do produtor sem a deduplicação posterior: controle mantém4artes; seleção por módulo desenha8cartazes repetidos no mesmo cenário | `UNICO_ARQUIVO` |
 
 Mutante que não aplica (throw), que passa verde ou desconhecido → exit 1. Sem
 `--mutante`, baseline: VERDE exit 0, reprovações exit 1. Opção não reconhecida,
