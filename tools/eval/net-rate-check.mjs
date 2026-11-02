@@ -10,9 +10,9 @@ const FONTE = path.join(ROOT, 'public', 'js', 'netrate.js');
 const JSON_OUT = process.argv.includes('--json');
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const MUTANTES = {
-  // Volta a carimbar a amostra pelo instante da DRENAGEM — o defeito original.
+  // Volta a carimbar a amostra pelo instante da DRENAGEM, ignorado a chegada preservada.
   'eixo-de-quadros': [
-    'const tm = temSrv ? tServidorS * 1000 : tLocalMs;',
+    'const tm = temSrv ? tServidorS * 1000 : tPacoteLocalMs;',
     'const tm = tLocalMs;',
   ],
   // Volta a tomar a CONTAGEM da janela como taxa, sem dividir pela duração coberta.
@@ -24,6 +24,11 @@ const MUTANTES = {
   'janela-parada': [
     'const avanco = Number.isFinite(tLocalMs) ? Math.max(0, tLocalMs - this._ultimoLocal) : 0;',
     'const avanco = 0;',
+  ],
+  // Volta a empilhar amostras de mesmo instante: a drenagem em lote vira rajada inventada.
+  'rajada-em-um-instante': [
+    'if (!temSrv && this._tm.length > 0 && tm === this._ultimoTm) {',
+    'if (false && this._tm.length > 0 && tm === this._ultimoTm) {',
   ],
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
@@ -52,7 +57,7 @@ const ALVO_KBPS = +((R * B) / 1024).toFixed(2);
  * `fps` quadros por segundo, com uma travada opcional.
  * @returns {{leituras: Array<{t:number,hz:number,kbps:number}>, fimTravada:number}}
  */
-function simula(Medidor, { fps, travadaEmMs = null, travadaMs = 0, duracaoMs = 8000, comRelogioServidor = true, silencioApos = null }) {
+function simula(Medidor, { fps, travadaEmMs = null, travadaMs = 0, duracaoMs = 8000, comRelogioServidor = true, silencioApos = null, carimboChegada = true }) {
   const medidor = new Medidor();
   const dtQuadro = 1000 / fps;
   const intervalo = 1000 / R;
@@ -67,7 +72,9 @@ function simula(Medidor, { fps, travadaEmMs = null, travadaMs = 0, duracaoMs = 8
       const chegadaLocal = k * intervalo + LAT_MS;
       if (chegadaLocal > t) break;
       if (silencioApos != null && chegadaLocal > silencioApos) break;
-      medidor.amostra(B, comRelogioServidor ? tSrv : null, t);
+      // protocolo antigo com fila que preserva chegada carimba o pacote; sem ela,
+      // o 4º arg cai no default do medidor (= carimbo da drenagem, caso do navegador)
+      medidor.amostra(B, comRelogioServidor ? tSrv : null, t, comRelogioServidor || carimboChegada ? chegadaLocal : undefined);
       k++;
     }
     medidor.atualizar(t);
@@ -149,6 +156,17 @@ const semTEstavel = regime(semT, 2000);
 cobra(semTEstavel.every((l) => Number.isFinite(l.hz)) && Math.abs(media(semTEstavel.map((l) => l.hz)) - R) <= 0.5,
   `NR7 · snapshot sem \`t\` (protocolo antigo) cai para o relógio local e segue medindo: ${+media(semTEstavel.map((l) => l.hz)).toFixed(2)} Hz`);
 
+// NR8 — a MESMA travada no protocolo antigo: o navegador devolve o backlog do WS num
+// turno só (todas as amostras com o MESMO performance.now()); a rajada não pode virar
+// taxa nem banda inventada — é o defeito que o eixo por quadros tinha (fio #1143).
+const { leituras: loteSemT } = simula(Medidor, { fps: 2, travadaEmMs: 3000, travadaMs: TRAVADA_MS, duracaoMs: 20000, comRelogioServidor: false, carimboChegada: false });
+const picoLoteHz = Math.max(...loteSemT.map((l) => l.hz));
+const picoLoteKb = Math.max(...loteSemT.map((l) => l.kbps));
+cobra(picoLoteHz <= R * 1.1,
+  `NR8 · drenagem em lote sem carimbo de chegada não infla a taxa: pico ${picoLoteHz} Hz (teto ${+(R * 1.1).toFixed(1)}; empilhar o lote dava ~${esperadoDefeito} Hz)`);
+cobra(picoLoteKb <= ALVO_KBPS * 1.1,
+  `NR8b · o lote não infla a banda: pico ${picoLoteKb} KB/s (teto ${+(ALVO_KBPS * 1.1).toFixed(2)}; os ${Math.round((R * TRAVADA_MS) / 1000)} pacotes do backlog somariam ${Math.round((esperadoDefeito * B) / 1024)} KB/s)`);
+
 /* ---------------- saída ---------------- */
 if (JSON_OUT) {
   console.log(JSON.stringify({
@@ -163,7 +181,7 @@ if (JSON_OUT) {
 }
 
 if (MUT) {
-  const esperada = { 'eixo-de-quadros': 'NR2 ·', 'conta-sem-dividir': 'NR6 ·', 'janela-parada': 'NR5b ·' }[MUT];
+  const esperada = { 'eixo-de-quadros': 'NR2 ·', 'conta-sem-dividir': 'NR6 ·', 'janela-parada': 'NR5b ·', 'rajada-em-um-instante': 'NR8 ·' }[MUT];
   const acendeu = mutanteAplicado && falhas.some(falha => falha.startsWith(esperada));
   if (!JSON_OUT) {
     console.log(acendeu
