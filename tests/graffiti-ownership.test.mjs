@@ -44,3 +44,41 @@ test('live and baked murals reject foreign art before scene or layout insertion'
   const b = aplicarGrafite(root, T, { arquivos: [], pecas: [], murais: [[OTHER, 0, 2, .13, 0, 2, 2]] }, map, 'campomorro'); assert.equal(b.murais, 0);
   const h = pendurarMurais({ ...live(scene(), T), texturas: [T.decals[1]], nomes: [OTHER], larg: 2, alt: 2, minLarg: 1 }); assert.equal(h.murais, 0); assert.deepEqual(h.layout, []);
 });
+
+test('manual posters obey the same map ownership as painted art', () => {
+  const root = scene();
+  for (const [i, file] of ['25c9112229edfcfbb1eae4137ecc151a.jpg', 'New Project (1).png', 'or-baile.jpg'].entries()) {
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshLambertMaterial({ map: texture('/posters/' + file) }));
+    mesh.name = 'poster:' + file; mesh.position.set(i * 10, 2, .13); root.add(mesh);
+  }
+  root.updateMatrixWorld(true); grafitar({ id: 'praca_poderes', root, T: textures(), waypoints: [], bandas: [] });
+  assert.ok(root.getObjectByName('poster:25c9112229edfcfbb1eae4137ecc151a.jpg'));
+  assert.ok(root.getObjectByName('poster:New Project (1).png') === undefined, 'Ferro artwork must not remain in Praca');
+  assert.ok(root.getObjectByName('poster:or-baile.jpg') === undefined, 'reserve art must not remain in Praca');
+});
+
+test('declared local street art survives while its real texture is still loading', () => {
+  for (const [id, file] of [['campomorro', '/img/textures/campomorro_streetart_baile.webp'], ['corrego', '/img/textures/corrego_streetart_pixo.webp']]) {
+    const root = scene();
+    const material = new THREE.MeshLambertMaterial({ map: texture('/img/textures/placeholder-wall.webp') });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material); mesh.name = 'mural:pending-local-art'; mesh.userData.graffitiArquivo = file; mesh.position.set(0, 2, .13); root.add(mesh); root.updateMatrixWorld(true);
+    grafitar({ id, root, T: textures(), waypoints: [], bandas: [] });
+    assert.ok(root.getObjectByName('mural:pending-local-art'), 'curation must preserve authored art before onLoad');
+    material.map = texture(file); assert.equal(artePermitidaNoMapa(id, material.map.image.src), true);
+  }
+});
+
+test('owned posters still need an opaque wall behind the entire piece', () => {
+  for (const invalid of ['missing-wall', 'glass-in-front']) {
+    const root = scene();
+    if (invalid === 'missing-wall') root.remove(root.children[0]);
+    else {
+      const glass = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), new THREE.MeshLambertMaterial({ transparent: true, opacity: .5 }));
+      glass.name = 'glass'; glass.position.set(0, 2, .11); root.add(glass);
+    }
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshLambertMaterial({ map: texture('/posters/25c9112229edfcfbb1eae4137ecc151a.jpg') }));
+    mesh.name = 'poster:owned-but-unsupported'; mesh.position.set(0, 2, .13); root.add(mesh); root.updateMatrixWorld(true);
+    grafitar({ id: 'praca_poderes', root, T: textures(), waypoints: [], bandas: [] });
+    assert.ok(root.getObjectByName(mesh.name) === undefined, invalid + ' must reject even owned art');
+  }
+});

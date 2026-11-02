@@ -258,15 +258,18 @@ export function grafitar(cfg) {
 function revisarGrafiteManual(root, id) {
   const suporte = criarSuporteGrafite(root, gradeEspacial), pieces = [], usadas = new Set();
   root.traverse((mesh) => {
-    if (!mesh.isMesh || !/^(decal:|mural:)/.test(mesh.name) || mesh.userData.pecas) return;
+    if (!mesh.isMesh || !/^(decal:|mural:|poster:)/.test(mesh.name) || mesh.userData.pecas) return;
     for (let node = mesh; node; node = node.parent) if (!node.visible) return;
     const params = mesh.geometry.parameters;
     if (!params?.width || !params?.height) return;
     const normal = new THREE.Vector3(0, 0, 1).applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(mesh.matrixWorld));
     const up = new THREE.Vector3(0, 1, 0).transformDirection(mesh.matrixWorld);
     const piece = retanguloGrafiteDesenhado(mesh.geometry, mesh.matrixWorld);
-    const chave = chaveArte(mesh.material?.map, mesh.name);
-    if (!artePermitidaNoMapa(id, chave) || Array.isArray(mesh.material) || !piece || Math.abs(normal.y) > 0.001 || Math.abs(up.y) < 1 - 1e-6 || !suporte(piece) || usadas.has(chave)) pieces.push(mesh);
+    const chave = mesh.userData.graffitiArquivo
+      ? identidadeArteGrafite(mesh.userData.graffitiArquivo) : chaveArte(mesh.material?.map, mesh.name);
+    const suporteDaPeca = mesh.name.startsWith('poster:')
+      ? criarSuporteGrafite(root, gradeEspacial, mesh) : suporte;
+    if (!artePermitidaNoMapa(id, chave) || Array.isArray(mesh.material) || !piece || Math.abs(normal.y) > 0.001 || Math.abs(up.y) < 1 - 1e-6 || !suporteDaPeca(piece) || usadas.has(chave)) pieces.push(mesh);
     else usadas.add(chave);
   });
   for (const mesh of pieces) {

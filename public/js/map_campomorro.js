@@ -581,6 +581,7 @@ export function buildCampoMorro(scene, T = {}) {
   const muralBaile = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 2.65), MAT.baile);
   muralBaile.position.set(GALPAO.x1 - .175 - .03, GALPAO.y + .25 + 2.65 / 2, -21);
   muralBaile.rotation.y = -Math.PI / 2; muralBaile.receiveShadow = true;
+  muralBaile.userData.graffitiArquivo = '/img/textures/campomorro_streetart_baile.webp';
   muralBaile.name = 'mural:campomorro-baile'; root.add(muralBaile);
   // A fachada oeste encara o campo: duas torres de som prolongam as paredes existentes,
   // enquanto o letreiro alto cruza somente o vazio acima da passagem jogável.
