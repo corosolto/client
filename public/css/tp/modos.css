@@ -23,7 +23,7 @@
 .tp-modos .tp-modos__titulo{margin:0;font-size:48px}
 .tp-modos__titulo em{font-style:normal;color:var(--tp-ambar)}
 
-.tp-modos__modos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;flex:none}
+.tp-modos__modos{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;flex:none}
 .tp-modos__modo{position:relative;height:clamp(96px,19vh,196px);padding:0;border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,.1);background:var(--tp-painel);
   color:var(--tp-tinta-1);text-align:left;cursor:pointer;transition:transform var(--tp-d-rapido) var(--tp-ease-saida)}
 .tp-modos__modo:hover{transform:translateY(calc(-3px * var(--tp-mov)))}

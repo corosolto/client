@@ -13,8 +13,8 @@ const VIEWPORTS = [[1536, 1024], [1920, 1080], [1280, 720], [844, 390]];
 const NOVO_DIAS = 30;
 const SALVO = { map: 'praca_poderes', mapPinned: true, wpnMode: 'all', allyBots: 3, enemyBots: 4, rounds: 5, ctfRounds: 3, difficulty: 'normal', pinnedChars: ['et', 'sertanejo'] };
 /* Texto da tela em um idioma que não pode aparecer no outro. */
-const SO_PT = /\b(ESCOLHA A TRETA|FAVORITOS|NOVOS|Buscar mapa|MAPA ALEATÓRIO|SALA PRIVADA|Salas públicas|INIMIGOS|SEU TIME|ARMAS|PISTOLAS|FACA|DE BOA|INSANO|ESCALAÇÃO|Escalação|EDITAR|JOGAR|você|CAPTURA|MATA-MATA|TODOS|OFICIAIS|COMUNIDADE)\b/;
-const SO_EN = /\b(PICK YOUR FIGHT|FAVORITES|Search map|RANDOM MAP|PRIVATE ROOM|Public rooms|ENEMIES|YOUR TEAM|WEAPONS|PISTOLS|KNIFE|CHILL|INSANE|LINEUP|Lineup|EDIT|PLAY|you|CAPTURE|DEATHMATCH|ALL|OFFICIAL|COMMUNITY)\b/;
+const SO_PT = /\b(ESCOLHA A TRETA|FAVORITOS|NOVOS|Buscar mapa|MAPA ALEATÓRIO|SALA PRIVADA|Salas públicas|INIMIGOS|SEU TIME|ARMAS|PISTOLAS|FACA|DE BOA|INSANO|ESCALAÇÃO|Escalação|EDITAR|JOGAR|você|CAPTURA|MATA-MATA|VIRA-CASACA|TODOS|OFICIAIS|COMUNIDADE)\b/;
+const SO_EN = /\b(PICK YOUR FIGHT|FAVORITES|Search map|RANDOM MAP|PRIVATE ROOM|Public rooms|ENEMIES|YOUR TEAM|WEAPONS|PISTOLS|KNIFE|CHILL|INSANE|LINEUP|Lineup|EDIT|PLAY|you|CAPTURE|DEATHMATCH|TURNCOAT|ALL|OFFICIAL|COMMUNITY)\b/;
 
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
@@ -28,6 +28,7 @@ const browser = await chromium.launch({
 const MUTANTES = {
   'sem-tela-cheia': [/\/css\/tp\/modos\.css/, (t) => t.replace('#hub-map-modal{padding:0', '#hub-map-modal{padding:12vh 20vw')],
   'modo-nao-aplica': [/\/js\/tp\/modos\.js/, (t) => t.replace("document.getElementById(m.botao)?.click();", ';')],
+  'arena-nao-aplica': [/\/js\/tp\/modos\.js/, (t) => t.replace("document.getElementById(m.botao)?.click();", "if (m.id !== 'arena') document.getElementById(m.botao)?.click();")],
   'privada-nao-abre': [/\/js\/tp\/modos\.js/, (t) => t.replace("if (m.id === 'privada') $('hub-mp-private')?.click();", ';')],
   'mapa-fecha': [/\/js\/tp\/modos\.js/, (t) => t.replace('api().irMapa(id);', "api().irMapa(id); document.getElementById('hub-map-close')?.click();")],
   'busca-morta': [/\/js\/tp\/modos\.js/, (t) => t.replace('if (busca && !normal(m.nome).includes(busca)) return false;', '')],
@@ -46,7 +47,7 @@ const MUTANTES = {
   'online-inventado': [/\/js\/tp\/modos\.js/, (t) => t.replace('const n = box && !box.hidden ? parseInt(box.textContent, 10) || 0 : 0;', 'const n = 42;')],
 };
 const ALVO = {
-  'sem-tela-cheia': 'MO1', 'modo-nao-aplica': 'MO2', 'privada-nao-abre': 'MO2', 'mapa-fecha': 'MO3', 'busca-morta': 'MO4', 'favorito-volatil': 'MO5', 'novo-inventado': 'MO6',
+  'sem-tela-cheia': 'MO1', 'modo-nao-aplica': 'MO2', 'arena-nao-aplica': 'MO2', 'privada-nao-abre': 'MO2', 'mapa-fecha': 'MO3', 'busca-morta': 'MO4', 'favorito-volatil': 'MO5', 'novo-inventado': 'MO6',
   'aleatorio-repete': 'MO7', 'passo-mentiroso': 'MO8', 'dois-primarios': 'MO9', 'jogar-morto': 'MO10', 'escalacao-inventada': 'MO11',
   'online-inventado': 'MO12', 'filtros-no-celular': 'MO13', 'alvo-pequeno': 'MO14', 'en-vaza': 'MO15', 'gancho-sem-flag': 'MO16', 'pino-cobre': 'MO17',
 };
@@ -68,6 +69,7 @@ async function abrir({ w = 1536, h = 1024, lang = 'pt', flag = true, rota = '/jo
   await page.addInitScript(([s, l]) => {
     if (sessionStorage.getItem('modos-regua')) return;
     sessionStorage.setItem('modos-regua', '1');
+    sessionStorage.setItem('cs_login_prompt_seen', '1');
     localStorage.setItem('awpbr_nick', 'RUBAO'); localStorage.setItem('cs_lang', l);
     localStorage.setItem('awpbr_settings', JSON.stringify(s));
     localStorage.removeItem('tp-modos-favoritos');
@@ -85,6 +87,8 @@ async function abrir({ w = 1536, h = 1024, lang = 'pt', flag = true, rota = '/jo
     await page.waitForFunction(() => window.__CS_MAIN_READY__ === true, null, { timeout: 120000 });
   }
   await page.waitForTimeout(1500);
+  const login = page.locator('#login-prompt[open]');
+  if (await login.count()) await page.locator('#login-prompt-close').click();
   return page;
 }
 const imagensProntas = (page) => page.waitForFunction(() => [...document.querySelectorAll('.tp-modos__mapa img')].every((i) => i.complete), null, { timeout: 20000 }).catch(() => {});
@@ -106,9 +110,13 @@ async function interativo(mutante, add) {
     !raiz.tem ? '/jogar/mapas sem query não monta a tela Treta Pop' : !cheia ? `tela não ocupa a janela: ${card.map((v) => v.toFixed(0)).join(',')}` : raiz.desfoque !== 'none' ? `blur sobre o canvas: ${raiz.desfoque}` : `tela cheia, sem blur, título "${raiz.titulo.replace(/\s+/g, ' ')}"`);
   if (!raiz.tem) { await p.close(); return; }
 
-  /* MO2: o cartão de modo muda o modo de verdade (matchMode) e só um fica marcado. */
+  /* MO2: cada cartão muda o modo de verdade; Vira-Casaca é seleção de primeira classe. */
   const modos = async () => ev(() => [...document.querySelectorAll('.tp-modos__modo')].map((b) => [b.dataset.modo, b.getAttribute('aria-pressed')]));
   const m0 = await modos(), e0 = await estado();
+  const temArena = await p.locator('.tp-modos__modo[data-modo="arena"]').count() === 1;
+  if (temArena) await p.click('.tp-modos__modo[data-modo="arena"]');
+  await p.waitForTimeout(300);
+  const ea = await estado();
   await p.click('.tp-modos__modo[data-modo="ctf"]'); await p.waitForTimeout(300);
   const m1 = await modos(), e1 = await estado();
   await p.click('.tp-modos__modo[data-modo="rounds"]'); await p.waitForTimeout(300);
@@ -117,8 +125,8 @@ async function interativo(mutante, add) {
   const mp = await ev(() => ({ fechou: document.getElementById('hub-map-modal').hidden, net: document.getElementById('main-menu').dataset.hubNet, aba: document.getElementById('main-menu').dataset.hubMpTab }));
   await ev(() => { document.getElementById('hub-sp')?.click(); document.getElementById('hub-map-change')?.click(); }); await p.waitForTimeout(500);
   const marcado = (lista) => lista.filter(([, v]) => v === 'true').map(([k]) => k).join(',');
-  add('MO2', m0.length >= 4 && marcado(m0) === e0.modo && e1.modo === 'ctf' && marcado(m1) === 'ctf' && e2.modo === 'rounds' && mp.fechou && mp.net === 'mp' && mp.aba === 'private',
-    `${m0.length} cartões (${m0.map(([k]) => k).join(' ')}); marcado ${marcado(m0)} com modo ${e0.modo}; CAPTURA → ${e1.modo} (marcado ${marcado(m1)}); MATA-MATA → ${e2.modo}; SALA PRIVADA → ${mp.fechou ? '' : 'tela aberta, '}aba ${mp.net}/${mp.aba}`);
+  add('MO2', m0.length >= 5 && marcado(m0) === e0.modo && temArena && ea.modo === 'arena' && e1.modo === 'ctf' && marcado(m1) === 'ctf' && e2.modo === 'rounds' && mp.fechou && mp.net === 'mp' && mp.aba === 'private',
+    `${m0.length} cartões (${m0.map(([k]) => k).join(' ')}); VIRA-CASACA → ${ea.modo}; CAPTURA → ${e1.modo} (marcado ${marcado(m1)}); MATA-MATA → ${e2.modo}; SALA PRIVADA → ${mp.fechou ? '' : 'tela aberta, '}aba ${mp.net}/${mp.aba}`);
 
   /* MO3: um cartão por mapa do menu, arte carregada, seleção = mapa da partida, e escolher não fecha a tela. */
   await imagensProntas(p);
@@ -232,18 +240,21 @@ async function interativo(mutante, add) {
   add('MO12', (on.n ? digitos === String(on.n) : !digitos) && !inventa,
     inventa ? 'texto com número sem fonte (min ou [N])' : `online medido ${on.n || 'ausente'}; cartão MULTIPLAYER mostra "${digitos || 'sem número'}"`);
 
-  /* MO10: VOLTAR e ESC fecham; JOGAR fecha a tela e começa a partida pelo caminho de sempre. */
+  /* MO10: VOLTAR e ESC fecham; JOGAR lança o Vira-Casaca real, não só troca o cartão. */
   await p.click('#hub-map-close'); await p.waitForTimeout(300);
   const fechouVoltar = await ev(() => document.getElementById('hub-map-modal').hidden);
   await ev(() => document.getElementById('hub-map-change').click()); await p.waitForTimeout(400);
   await p.keyboard.press('Escape'); await p.waitForTimeout(300);
   const fechouEsc = await ev(() => document.getElementById('hub-map-modal').hidden);
   await ev(() => document.getElementById('hub-map-change').click()); await p.waitForTimeout(400);
+  await p.click('.tp-modos__modo[data-modo="arena"]'); await p.waitForTimeout(250);
   await ev(() => { window.__modosJogou = 0; document.getElementById('hub-quick-confirm')?.addEventListener('click', () => { window.__modosJogou++; }, { capture: true }); });
-  await p.click('.tp-modos__jogar'); await p.waitForTimeout(600);
-  const jg = await ev(() => ({ fechou: document.getElementById('hub-map-modal').hidden, jogou: window.__modosJogou }));
-  add('MO10', fechouVoltar && fechouEsc && jg.fechou && jg.jogou === 1,
-    `VOLTAR ${fechouVoltar ? 'fecha' : 'não fecha'}, ESC ${fechouEsc ? 'fecha' : 'não fecha'}, JOGAR ${jg.jogou ? 'começa a partida' : 'não começa'}${jg.fechou ? '' : ' e a tela fica'}`);
+  await p.click('.tp-modos__jogar');
+  await p.waitForFunction(() => window.__game?.arena === true, null, { timeout: 120000 }).catch(() => {});
+  await p.waitForTimeout(600);
+  const jg = await ev(() => ({ fechou: document.getElementById('hub-map-modal').hidden, jogou: window.__modosJogou, arena: window.__game?.arena, rounds: window.__game?.roundsMax, tempo: document.getElementById('round-time')?.textContent || '' }));
+  add('MO10', fechouVoltar && fechouEsc && jg.fechou && jg.jogou === 1 && jg.arena === true && jg.rounds === 1 && !/Infinity|NaN/.test(jg.tempo),
+    `VOLTAR ${fechouVoltar ? 'fecha' : 'não fecha'}, ESC ${fechouEsc ? 'fecha' : 'não fecha'}, JOGAR ${jg.jogou ? `abre Vira-Casaca arena=${jg.arena} rounds=${jg.rounds} HUD=${jg.tempo || 'vazio'}` : 'não começa'}${jg.fechou ? '' : ' e a tela fica'}`);
   await p.close();
 }
 

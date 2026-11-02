@@ -1880,7 +1880,7 @@ function sendMatchEvent(result) {
     sessionId: getSessionId(), eventId: _matchEventId, version: versaoComOrigem(VERSION),
     ...telemetryGameContext, ...sinaisDeBuild(),
     map: currentMap, mode: modoTelemetria(g),
-    character: currentChar, team: g.playerTeam,
+    character: currentChar, team: g.arena ? g.player.team : g.playerTeam,
     faction: g.playerFaction || currentFaction,
     result: result || 'quit',
     kills: p.kills || 0, deaths: p.deaths || 0, headshots: p.headshots || 0,
@@ -2063,7 +2063,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // o lote de escolha da partida — 5 contadores numa chamada (ver /api/pick)
   _picks([
     { kind: 'mapa', key: currentMap },
-    { kind: 'modo', key: matchMode === 'ctf' ? 'ctf' : 'rounds' },
+    { kind: 'modo', key: activeModeId() },
     { kind: 'faccao', key: faction },
     { kind: 'personagem', key: charId || 'aleatorio' },
     { kind: 'arma', key: settings.wpnMode || 'all' },
@@ -2134,7 +2134,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     window.__tpElenco = {
       javaporcosTimes: cooperativo ? 2 : sessao || settingsDaPartida.javaporcos?.times === 3 ? 3 : 2,
       lado: side, eu: CHARACTERS.find((c) => c.id === charId), aliados: matchRoster.allyDefs, inimigos: matchRoster.enemyDefs,
-      online: !!sessao, tamanho: tamanhoTime || 0, ctf: matchMode === 'ctf', rounds: sessao ? sanitizeRounds(sessao.net.meta.roundsMax) : matchRounds(),
+      online: !!sessao, tamanho: tamanhoTime || 0, ctf: matchMode === 'ctf', arena: !sessao && matchMode === 'arena', rounds: sessao ? sanitizeRounds(sessao.net.meta.roundsMax) : matchRounds(),
       mapa: MAPS[currentMap].name, desc: MAP_DESC[currentMap] || '', arte: mapPreviewPoster(currentMap, VERSION) };
     window.dispatchEvent(new CustomEvent('tp:elenco', { detail: window.__tpElenco }));
   }
@@ -2227,6 +2227,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     playerCharId: charId, playerSkinId, playerEyewearId, playerGloveId, playerWeaponSkins, playerKnifeSkinId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons, economia,
     ctf: MAPS[currentMap].objectiveMode ? false : matchMode === 'ctf',
+    arena: !sessao && !MAPS[currentMap].objectiveMode && matchMode === 'arena',
     /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
        sobrariam nove corpos locais para dez entidades e um jogador ficaria invisível. */
     mpFactory: sessao ? makeNetcode : null,
@@ -2327,7 +2328,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   /* `mode` faltava, e sem ele metade da pergunta não tem resposta: dá para saber QUE MAPA
      as pessoas escolhem, não SE escolhem captura ou rodadas. O `match_end` manda os quatro
      com os mesmos nomes — é o que permite comparar quem começa com quem termina. */
-  try { window.va?.('event', { name: 'game_start', data: { team, character: charId, map: currentMap, mode: matchMode === 'ctf' ? 'ctf' : 'rounds' } }); } catch {}
+  try { window.va?.('event', { name: 'game_start', data: { team, character: charId, map: currentMap, mode: activeModeId(game) } }); } catch {}
   /* UM FUNIL SÓ pra "assumir o input". Isto era um `requestPointerLock` duplicado do que
      o `game._requestLock()` já fazia — e a duplicata é que deixava a trava de atalhos sem
      lugar pra morar no começo da partida (o RETOMAR passava pelo funil, o COMEÇAR não). */
@@ -2351,7 +2352,7 @@ function quitToMenu() {
   try {
     if (game) {
       window.va?.('event', { name: 'match_abandon', data: {
-        map: game._mapId, mode: game.ctf ? 'ctf' : 'rounds',
+        map: game._mapId, mode: activeModeId(game),
         character: game.playerCharId, seconds: Math.round(game.time || 0),
       } });
       sendMatchEvent('quit');   // evento rico: abandonou pelo menu (feat/telemetria, 016)
@@ -2432,11 +2433,16 @@ const ui = {
   hover() { try { sfx.uiHover(); } catch {} },
   back()  { try { sfx.uiBack(); } catch {} },
 };
-let matchMode = 'rounds';   // 'rounds' | 'ctf' — lido em startGame (ctf)
+let matchMode = 'rounds';   // 'rounds' | 'ctf' | 'arena' — lido em startGame
 const modoObjetivoAtual = () => MAPS[currentMap]?.objectiveMode || '';
 const rotuloObjetivoAtual = () => ({ horde: 'HORDAS', escort: 'ESCOLTA' })[modoObjetivoAtual()]
   || modoObjetivoAtual().toUpperCase();
 const resumoObjetivoAtual = () => modoObjetivoAtual() === 'horde' ? 'INVASÃO · DISPUTA TERRITORIAL' : rotuloObjetivoAtual();
+function activeModeId(g = game) {
+  if (g) return g.arena ? 'arena' : (g.ctf ? 'ctf' : 'rounds');
+  return matchMode === 'arena' ? 'arena' : (matchMode === 'ctf' ? 'ctf' : 'rounds');
+}
+const modeLabel = (mode = matchMode) => mode === 'arena' ? tr('VIRA-CASACA') : (mode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA'));
 /* O JOGADOR JÁ DISSE QUAL MODO QUER? (defeito: "esse mapa está como CAPTURA, mas eu
    selecionei single player — e esse erro se repete em outros mapas")
    O `ctfMode` do mapa é PADRÃO, não ordem. Só que `gotoMap` reescrevia `matchMode` a cada
@@ -2485,7 +2491,7 @@ function setSetupStep(step) {
     if (st) st.textContent = tr('PASSO À PARTE · NOME NA CAMISA');
     if (tt) tt.textContent = tr('SEU PERFIL');
   } else {
-    if (st) st.textContent = tr(matchMode === 'ctf' ? 'PASSO 1 · A PARTIDA (CTF)' : 'PASSO 1 · A PARTIDA');
+    if (st) st.textContent = tr(matchMode === 'arena' ? 'PASSO 1 · VIRA-CASACA' : (matchMode === 'ctf' ? 'PASSO 1 · A PARTIDA (CTF)' : 'PASSO 1 · A PARTIDA'));
     if (tt) tt.textContent = tr(setupTitle);
   }
 }
@@ -2514,6 +2520,7 @@ csItems.forEach((it) => {
       case 'single-player': toggleModeMenu(); break;
       case 'sp':    openModeMap('rounds', 'MATA-MATA', 'sp'); break;
       case 'ctf':   openModeMap('ctf', 'CAPTURE THE FLAG', 'ctf'); break;
+      case 'arena': openModeMap('arena', 'VIRA-CASACA', 'arena'); break;
       case 'mp':    markCurrent('mp'); abrirMultiplayer(); break;
       /* MAPA saiu (mapa se escolhe no fluxo de partida); FEEDBACK entrou (07/08) */
       case 'feedback': markCurrent('feedback'); show('feedback-panel'); break;
@@ -2931,7 +2938,7 @@ function openHubQuick(updateRoute = true) {
   const fields = [
     ['TIPO', 'SINGLEPLAYER'],
     ['MAPA', MAPS[currentMap].name],
-    ['MODO', ehMapaJavaporcos(currentMap) ? 'HORDAS' : (matchMode === 'ctf' ? 'CAPTURE A BANDEIRA' : 'MATA-MATA')],
+    ['MODO', ehMapaJavaporcos(currentMap) ? 'HORDAS' : modeLabel()],
     ['ARMAS', tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS')],
     ['FORMATO', formatoPartida()],
     ['ROUNDS', String(matchRounds())],
@@ -3031,6 +3038,7 @@ function setMapThumb() {
 const WPN_MODE_LABEL = { all: 'TODAS', pistols: 'SÓ PISTOLAS', knife: 'SÓ FACA', awp: 'SÓ AWP' };
 function matchRounds() {
   if (ehMapaJavaporcos(currentMap)) return 1;
+  if (matchMode === 'arena') return 1;
   /* 1–15 (ROUNDS_CUSTOM_MAX do game.js — uma régua só). Salvo fora do intervalo cai no
      padrão do modo; par é permitido: empate no teto vai pro desempate por abates. */
   const fallback = matchMode === 'ctf' ? 3 : 5;
@@ -3044,7 +3052,9 @@ function syncHubSels() { for (const s of hubSels) s.sync(); }
 function setMapMeta() {
   sfx.setGameMode(ehMapaJavaporcos(currentMap) ? 'horde' : '');
   const el = $('map-meta'); if (!el) return;
-  const modo = modoObjetivoAtual() ? resumoObjetivoAtual() : frase(matchMode === 'ctf' ? 'ctfMelhorDeN' : 'melhorDeN', matchRounds());
+  const modo = modoObjetivoAtual() ? resumoObjetivoAtual()
+    : matchMode === 'arena' ? `${tr('VIRA-CASACA')} · ${tr('PARTIDA ÚNICA')}`
+    : frase(matchMode === 'ctf' ? 'ctfMelhorDeN' : 'melhorDeN', matchRounds());
   el.textContent = ehMapaJavaporcos(currentMap)
     ? `${modo} · ${equipeJavaporcos(settings).javaporcos.defensores} DEFENSORES (VOCÊ + BOTS) × JAVAPORCOS`
     : frase('resumoPartida', modo, 1 + settings.allyBots, settings.enemyBots, tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS'));
@@ -3054,8 +3064,8 @@ function setMapMode() {
   const objetivo = modoObjetivoAtual();
   const m = $('map-mode');
   if (m) {
-    m.textContent = objetivo ? rotuloObjetivoAtual() : (matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA'));
-    m.dataset.mode = objetivo || matchMode;
+    m.textContent = objetivo ? rotuloObjetivoAtual() : modeLabel();
+    m.dataset.mode = objetivo || (matchMode === 'arena' ? 'arena' : matchMode);
     m.disabled = !!objetivo;
   }
   const d = $('map-dots');
@@ -3067,31 +3077,37 @@ function setMapMode() {
     $('hub-mode-ctf').disabled = !!objetivo;
     $('hub-mode-rounds').querySelector('small').textContent = objetivo ? rotuloObjetivoAtual() : `MELHOR DE ${settings.rounds || 5}`;
     $('hub-mode-ctf').querySelector('small').textContent = objetivo ? 'INDISPONÍVEL NESTE MAPA' : `MELHOR DE ${settings.ctfRounds || 3}`;
-    $('hub-rounds-value').textContent = String(matchRounds());
+    $('hub-rounds-value').textContent = matchMode === 'arena' ? tr('ÚNICA') : String(matchRounds());
+    $('hub-mode-arena').setAttribute('aria-pressed', String(!objetivo && matchMode === 'arena'));
+    $('hub-mode-arena').disabled = !!objetivo;
+    $('hub-rounds').disabled = !!objetivo || matchMode === 'arena';
   }
   setMapMeta();
 }
-// O badge de modo virou BOTÃO: pedido do dono ("os mapas todos podem ser rounds ou CTF,
-// mas tem uns que forçam ser CTF"). Antes ele era um <span> informativo e Loja H/Ferro Velho
-// eram prisão de CTF. Agora o mapa só define o PADRÃO e o jogador alterna aqui.
+// O badge percorre os três modos locais. Mapas só definem o padrão inicial; a escolha
+// explícita do jogador continua estável ao trocar de mapa.
+function selectMatchMode(mode, sound = true) {
+  if (modoObjetivoAtual() || !['rounds', 'ctf', 'arena'].includes(mode)) return;
+  matchMode = mode;
+  modoEscolhido = true;
+  setupTitle = mode === 'arena' ? 'VIRA-CASACA' : (mode === 'ctf' ? 'CAPTURE THE FLAG' : 'MATA-MATA');
+  if (sound) ui.click();
+  setMapMode();
+  setSetupStep('match');
+  renderMapScreen();
+}
 {
   const mm = $('map-mode');
   if (mm) mm.addEventListener('click', () => {
     if (modoObjetivoAtual()) return;
-    matchMode = matchMode === 'ctf' ? 'rounds' : 'ctf';
-    modoEscolhido = true;   // alternar no badge também é escolha do jogador
-    ui.click();
-    /* O badge troca o modo INTEIRO: sem isto o título contradizia o eyebrow e a tela
-       cheia mostrava os rounds do outro modo. Medido no `eval:screenquery:browser`. */
-    setupTitle = matchMode === 'ctf' ? 'CAPTURE THE FLAG' : 'MATA-MATA';
-    setMapMode();
-    setSetupStep('match');   // o eyebrow do passo carrega o modo (PARTIDA / PARTIDA (CTF))
-    renderMapScreen();       // a tela cheia acompanha o modo (rounds por modo, ficha)
+    const modos = ['rounds', 'ctf', 'arena'];
+    selectMatchMode(modos[(modos.indexOf(matchMode) + 1) % modos.length]);
   });
 }
 if (HUB_ENABLED) {
-  $('hub-mode-rounds').onclick = () => { if (matchMode !== 'rounds') $('map-mode').click(); };
-  $('hub-mode-ctf').onclick = () => { if (!modoObjetivoAtual() && matchMode !== 'ctf') $('map-mode').click(); };
+  $('hub-mode-rounds').onclick = () => selectMatchMode('rounds');
+  $('hub-mode-ctf').onclick = () => selectMatchMode('ctf');
+  $('hub-mode-arena').onclick = () => selectMatchMode('arena');
   $('hub-rounds').onclick = () => {
     /* ciclo pelos ÍMPARES de 1–15 (o "melhor de N" usual); os pares ficam pro select da
        tela de mapa. Do valor atual, salta pro próximo ímpar MAIOR (valor par vindo do
@@ -3373,8 +3389,9 @@ if (msEnemy) msEnemy.onchange = () => {
   setMapMeta(); renderMapScreen(); sfx.uiClick();
 };
 if (msRounds) msRounds.onchange = () => {
+  if (matchMode === 'arena') { msRounds.value = '1'; return; }
   settings[matchMode === 'ctf' ? 'ctfRounds' : 'rounds'] = sanitizeRounds(msRounds.value) || (matchMode === 'ctf' ? 3 : 5);
-  saveSettings(); setMapMeta(); setMapMode(); renderMapScreen(); sfx.uiClick();   // setMapMode: o chip de ROUNDS do setup acompanha o select
+  saveSettings(); setMapMeta(); setMapMode(); renderMapScreen(); sfx.uiClick();
 };
 const diffSel = $('diff-select');
 syncMapOptions();
@@ -3442,8 +3459,8 @@ function montarHubSels() {
   const faixa = (de, ate, rot) => Array.from({ length: ate - de + 1 }, (_, k) => ({ v: String(de + k), t: rot(de + k) }));
   montar('mapa', 'MAPA', () => MAPAS_MENU.map((id) => ({ v: id, t: MAPS[id].name, img: mapPreviewPoster(id, VERSION) })),
     () => currentMap, (v) => { ui.click(); gotoMap(MAPAS_MENU.indexOf(v)); });
-  montar('modo', 'MODO', () => ehMapaJavaporcos(currentMap) ? [{v:'horde',t:'CAÇA AO JAVAPORCO'}] : [{ v: 'rounds', t: tr('MATA-MATA') }, { v: 'ctf', t: tr('CAPTURA') }],
-    () => ehMapaJavaporcos(currentMap) ? 'horde' : matchMode, (v) => $(v === 'ctf' ? 'hub-mode-ctf' : 'hub-mode-rounds').click());
+  montar('modo', 'MODO', () => ehMapaJavaporcos(currentMap) ? [{v:'horde',t:'CAÇA AO JAVAPORCO'}] : [{ v: 'rounds', t: tr('MATA-MATA') }, { v: 'ctf', t: tr('CAPTURA') }, { v: 'arena', t: tr('VIRA-CASACA') }],
+    () => ehMapaJavaporcos(currentMap) ? 'horde' : matchMode, (v) => $(`hub-mode-${v}`)?.click());
   montar('armas', 'ARMAS', () => WPN_MODES.map((m) => ({ v: m.id, t: tr(m.label) })),
     () => settings.wpnMode || 'all', (v) => { msWpnMode.value = v; msWpnMode.onchange(); });
   montar('time', 'SEU TIME', () => ehMapaJavaporcos(currentMap) ? faixa(4,8,n=>`${n} · VOCÊ + BOTS`) : faixa(0, 7, botsLabel),
@@ -3622,7 +3639,7 @@ function armSwitchHook() {
     if (mpSessao) return abrirTrocaOnline();
     game.setPaused(true);
     switchMode = true;
-    pickTeam(game.enemyFaction);
+    pickTeam(game._factionOf(game.player.team === 'E' ? 'B' : 'E'));
   };
 }
 // Online o lado é do servidor: M só troca o personagem, e só se o servidor aceitar.
@@ -3874,7 +3891,7 @@ async function recordMatchStats(s) {
   sendTelemetry();   // ANTES do guard de nick lá embaixo: telemetria cobre quem não registrou
   sendMatchEvent(s?.won ? 'won' : 'lost');   // evento rico anônimo (feat/telemetria, 016)
   _funnel('match_end', _tipoDaPartida());      // funil: terminou (017), separado por tipo
-  contagem.partidaTerminada({ map: game?._mapId || currentMap, mode: game?.ctf ? 'ctf' : 'rounds', game: telemetryGameContext.gameType === 'multiplayer' ? 'mp' : 'sp' });
+  contagem.partidaTerminada({ map: game?._mapId || currentMap, mode: activeModeId(game), game: telemetryGameContext.gameType === 'multiplayer' ? 'mp' : 'sp' });
   const st = loadStats();
   const previousXp = playerXp(st);
   st.matches++; if (s.won) st.wins++;

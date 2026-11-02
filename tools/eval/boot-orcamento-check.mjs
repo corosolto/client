@@ -37,8 +37,12 @@ const TETO_REQS = 340;
 // Referência e mutante compartilham a transformação e recusam âncora ausente.
 const ANSIOSO = /( {2})T\.posterImgs = \[\];\n {2}POSTER_FILES\.forEach\(\(\[f\], i\) => \{[\s\S]*?\n {2}\}\);\n/;
 function poolAnsioso(corpo) {
-  if (!ANSIOSO.test(corpo)) throw new Error('não achei o bloco de getters de T.posterImgs em textures.js');
-  return corpo.replace(ANSIOSO, '  T.posterImgs = POSTER_FILES.map(([f]) => _cartaz(f));\n');
+  const ansioso = '  T.posterImgs = POSTER_FILES.map(([f]) => _cartaz(f));\n';
+  const nBloco = [...corpo.matchAll(new RegExp(ANSIOSO.source, 'g'))].length;
+  if (nBloco !== 1) throw new Error(`esperava 1 bloco de getters de T.posterImgs em textures.js, achei ${nBloco}`);
+  const depois = corpo.replace(ANSIOSO, ansioso);
+  if ([...depois.matchAll(new RegExp(ANSIOSO.source, 'g'))].length !== 0 || depois.split(ansioso).length !== 2) throw new Error('pool ansioso não aplicou exatamente uma vez');
+  return depois;
 }
 // A chamada real é a âncora da mutação.
 const FAUNA_ADIADA = '      preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});\n';

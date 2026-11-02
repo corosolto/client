@@ -795,10 +795,11 @@ export function aguardarPreloads(loads) {
 const FX_CLARAO = { normal: 1, reduzido: 0.45, minimo: 0.15 };
 
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null, economia = false }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, arena = false, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null, economia = false }) {
     this._ctfOpt = ctf;
-    this._matchWeapons = matchWeapons;
+    this._arenaOpt = arena;
     this._armaN = 0;
+    this._matchWeapons = matchWeapons;
     this.renderer = renderer;
     this.sfx = sfx;
     this.settings = settings;
@@ -1365,15 +1366,16 @@ export class Game {
       }, undefined, () => {});
     }
     this._smokeTex = this._makeSmokeTex();
-    // modo Capture the Flag (?ctf=1): 3 pontos (2 spawns + meio); time vence o round segurando
-    // os 3 ao mesmo tempo. Rounds SEM FIM (sem _endMatch). Captura = ~3s na zona sem inimigo.
-    this.ctf = this.world.mode === 'horde' ? false : (!!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1'));   // menu de captura ou ?ctf=1
+    // Modos são explícitos no contrato do Game. Vira-Casaca é local: nunca divide estado
+    // com CTF nem depende de query string escondida.
+    this.arena = !!this._arenaOpt;
+    this.ctf = !this.arena && this.world.mode !== 'horde' && (!!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1'));
     /* TETO DE RODADAS LIVRE (1–15, ROUNDS_CUSTOM_MAX): era whitelist [1,3,5,7] — o dono
        pediu número customizado. Fora do intervalo cai no padrão do modo. Empate em teto
-       PAR (2×2 no melhor de 4) segue pro desempate por abates (já existente no _endMatch). */
+       PAR (2×2 no melhor de 4) segue pro desempate por abates (já existente no _endMatch).
+       Vira-Casaca é uma única disputa contínua, encerrada pela conversão do último rival. */
     const requestedRounds = sanitizeRounds(roundsMax);
-    this._roundsMax = requestedRounds || (this.ctf ? CTF_ROUNDS_MAX : ROUNDS_MAX);
-    this.roundsToWin = Math.floor(this._roundsMax / 2) + 1;
+    this._roundsMax = this.arena ? 1 : (requestedRounds || (this.ctf ? CTF_ROUNDS_MAX : ROUNDS_MAX));
     this.ctfPts = [];
     this.ctfCaps = { E: 0, B: 0 };   // total de capturas de bandeira por time (cumulativo na partida)
     this._ctfRingGeo = new THREE.TorusGeometry(1, 0.045, 8, 48);   // anel FINO de contorno (era disco gordo)
@@ -1389,11 +1391,9 @@ export class Game {
     this.roundCaps = { E: 0, B: 0 };    // capturas DESTA rodada (o ctfCaps é da partida toda)
     this.matchKills = { E: 0, B: 0 };   // abates das rodadas JÁ FECHADAS (desempate do _endMatch)
     this.timeLeft = ROUND_TIME;
-    /* MODO ARENA: mata-mata onde quem morre troca de time. O jogo corre sem rounds,
-       respawn contínuo, e a partida acaba quando um time fica com ≤ 1 jogador.
-       ?arena=1 ativa. */
-    this.arena = QS.get('arena') === '1';
-    this.arenaSwitched = 0;   // contador de trocas (pro HUD)
+    /* VIRA-CASACA: quem morre troca de time no respawn. A partida corre sem rounds
+       intermediários e termina quando a conversão deixa um dos lados vazio. */
+    this.arenaSwitched = 0;
     /* game.js:944 — RELÓGIO DE PARTIDA DO CAPTURA (não é relógio de round). Só o modo
        CTF usa; no modo de abate fica Infinity e nada o lê. Ele NÃO reinicia a cada
        rodada (é o que o diferencia do `timeLeft`) e só aparece no HUD nos últimos
@@ -2527,7 +2527,7 @@ export class Game {
     const ax = -Math.sin(p.yaw) * cp, ay = Math.sin(p.pitch), az = -Math.cos(p.yaw) * cp;   // forward = (-sin,-cos)
     let best = null, bestAng = 0.11;   // ~6,3° de cone
     for (const b of this.bots) {
-      if (!b.alive || b.team === this.playerTeam) continue;
+      if (!b.alive || b.team === p.team) continue;
       const dx = b.pos.x - from.x, dy = (b.pos.y + 1.2) - from.y, dz = b.pos.z - from.z;
       const dist = Math.hypot(dx, dy, dz); if (dist < 0.5 || dist > 60) continue;
       const nx = dx / dist, ny = dy / dist, nz = dz / dist;
@@ -2889,8 +2889,8 @@ export class Game {
     this.roundKills = { E: 0, B: 0 };
     this.roundCaps = { E: 0, B: 0 };
     this.timeLeft = ROUND_TIME;
-    /* MODO ARENA: sem timer de round — a partida só acaba quando um time fica
-       com ≤ 1 jogador (_checkArenaWin). */
+    /* VIRA-CASACA: sem timer de round — a partida acaba quando um lado fica vazio,
+       depois que a conversão pendente é aplicada no respawn. */
     if (this.arena) this.timeLeft = Infinity;
     this._matchPoint = false;    // banner de MATCH POINT dispara uma vez por round
     this._resultado = null;      // o título do placar é da RODADA que acabou, não da que começa
@@ -2898,6 +2898,7 @@ export class Game {
     // por dominação no mesmo frame em que o alvo de bandeiras foi batido, o pedido fica
     // pendurado e mataria a rodada seguinte no primeiro quadro.
     this._roundOverPedido = false;
+    this._matchEndShown = false;
     this._resetKillSequence();
     this._resetPositions();
     this.objective?.prepareRound();
@@ -2915,13 +2916,16 @@ export class Game {
        relógio: dizer "primeiro a 2 bandeiras" é o que substitui o cronômetro que saiu. */
     // O ROUND 1 ainda declara o FORMATO (melhor de N, primeiro a X): o teto só vivia no
     // menu/HUD e jogador achava que não existia (relato out/2026).
-    const subRound = this.objective?.roundIntro?.() || (this.ctf
-      ? frase('alvoBandeiras', this.capsToWin)
-      : (PACE ? frase('alvoAbates', this.killsToWin)
-        : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta'))));
+    const subRound = this.objective?.roundIntro?.() || (this.arena
+      ? tr('QUEM CAIR MUDA DE LADO')
+      : (this.ctf
+        ? frase('alvoBandeiras', this.capsToWin)
+        : (PACE ? frase('alvoAbates', this.killsToWin)
+          : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta')))));
     const compraAviso = this._compra ? frase('compraPrepare', ECONOMIA.tempoCompraS) : '';
-    const detalhe = this.roundNum === 1 && !this.objective ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound;
-    this._banner(frase('round', this.roundNum), [compraAviso, detalhe].filter(Boolean).join(' · '));
+    const detalhe = this.roundNum === 1 && !this.objective && !this.arena ? `${subRound} · ${frase('formatoMelhorDe', this.roundsMax, this.roundsToWin)}` : subRound;
+    const bannerTitle = this.arena ? tr('VIRA-CASACA') : frase('round', this.roundNum);
+    this._banner(bannerTitle, [compraAviso, detalhe].filter(Boolean).join(' · '));
     if (!this.sfx.roundNumber(this.roundNum) && !this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
   }
   _resetPositions() {
@@ -3226,7 +3230,7 @@ export class Game {
   }
   _checkPace() {
     if (!PACE || this.state !== 'live') return;
-    if (this.ctf) return;   // o CAPTURA fecha pelo _checkCtfAlvo, que roda SEMPRE
+    if (this.ctf || this.arena) return;   // CTF e Vira-Casaca têm condições próprias
     const p = this.roundKills.E, b = this.roundKills.B, tgt = this.killsToWin;
     const lead = Math.max(p, b);
     if (!this._matchPoint && lead >= tgt - 2) {
@@ -3288,22 +3292,32 @@ export class Game {
      rounds infinitos, nenhuma tela de fim, e o placar do topo subindo sem teto. */
   _fimDaPartida() {
     if (this.objective) return !!this.objective.state.winner;
+    if (this.arena) return this.state === 'matchEnd';
     if (this.ctf) return this.roundNum >= this.roundsMax || this.ctfMatchLeft <= 0;
     return this.roundNum >= this.roundsMax;
   }
   // teto de rodadas do modo em jogo — o HUD conta "RODADA n/N" com este número
   get roundsMax() { return this._roundsMax; }
+  get roundsToWin() { return Math.floor(this._roundsMax / 2) + 1; }
 
-  _endMatch() {
-    this.state = 'matchEnd';
-    /* DESEMPATE: com o teto de 5 rodadas a partida pode fechar 2 × 2 (dois empates pelo
-       caminho). `roundsWon.E > roundsWon.B ? 'E' : 'B'` dava a vitória ao lado B por
-       omissão — um vencedor sorteado pela ordem do ternário. Agora empate de rodadas vai
-       pros abates da partida INTEIRA (matchKills, somado a cada _startRound). */
-    const winner = this.objective?.state?.winner || (this.roundsWon.E !== this.roundsWon.B
+  _modeId() { return this.arena ? 'arena' : (this.ctf ? 'ctf' : 'rounds'); }
+  _teamPopulation(side) {
+    let total = 0;
+    for (const combatente of this.combatants || []) if (combatente.team === side) total++;
+    return total;
+  }
+  _endMatch(winnerOverride = null) {
+    // O snapshot pode ter aplicado o estado antes da apresentação local.
+    if (this._matchEndShown) return;
+    this._matchEndShown = true;
+    if (this.state !== 'matchEnd') this.state = 'matchEnd';
+    /* No Vira-Casaca o vencedor vem da população final. Nos modos de rodada, empate
+       segue para abates da partida inteira. */
+    const winner = winnerOverride || this.objective?.state?.winner || (this.roundsWon.E !== this.roundsWon.B
       ? (this.roundsWon.E > this.roundsWon.B ? 'E' : 'B')
       : ((this.matchKills.E + this.roundKills.E) >= (this.matchKills.B + this.roundKills.B) ? 'E' : 'B'));
-    const mine = winner === this.playerTeam;
+    const playerSide = this.arena ? this.player.team : this.playerTeam;
+    const mine = winner === playerSide;
     const draw = winner === 'draw';
     // Tela de fim estilo CoD/Valorant: VITÓRIA/DERROTA gigante, time vencedor no sub.
     this.el.matchEnd.classList.toggle('win', mine);
@@ -3315,6 +3329,8 @@ export class Game {
       : frase('perdeu', this._teamName(winner));
     this.el.matchStats.innerHTML = this.objective
       ? (this.objective.regras.times === 3 ? ['E', 'B', 'J'] : ['E', 'J']).map(team => `${this._teamName(team)}: <b>${Math.round((this.objective.state.territorio?.[team] || 0) * 100)}%</b>`).join(' · ') + `<br>${this.player.kills} abates · ${this.player.deaths} mortes`
+      : this.arena
+        ? `${tr('CONVERSÕES')}: ${this.arenaSwitched} · ${tr('SEUS ABATES')}: ${this.player.kills}`
       : frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths);
     /* Cada personagem tem duas artes estáticas: a tela mostra quem o jogador escolheu,
        na pose correspondente ao resultado. UIA1 garante o par antes do deploy. */
@@ -3339,13 +3355,13 @@ export class Game {
     try {
       window.va?.('event', { name: 'match_end', data: {
         winner, roundsP: this.roundsWon.E, roundsB: this.roundsWon.B,
-        map: this._mapId, mode: this.ctf ? 'ctf' : 'rounds',
+        map: this._mapId, mode: this._modeId(),
         character: this.playerCharId, seconds: Math.round(this.time),
       } });
     } catch {}
     try {
       this.onMatchEnd?.({
-        won: mine, team: this.playerTeam, character: this.playerDef.id,
+        won: mine, team: playerSide, mode: this._modeId(), character: this.playerDef.id,
         kills: this.player.kills, deaths: this.player.deaths,
         headshots: this.player.headshots || 0, bestStreak: this.mk.best || 0,
         roundsP: this.roundsWon.E, roundsB: this.roundsWon.B,
@@ -3507,21 +3523,21 @@ export class Game {
   _switchTeam(charId) {
     if (!this.player.alive || (this.state !== 'live' && this.state !== 'countdown')) return;
     const p = this.player;
+    const oldTeam = p.team;
+    const newTeam = oldTeam === 'E' ? 'B' : 'E';
+    const oldFaction = this._factionOf(oldTeam);
+    const newFaction = this._factionOf(newTeam);
     /* Reserva igual à da linha 712 (`byId` dá undefined fora do elenco), e da facção em que
        ele ENTRA. Sem ela o Game seguia corrompido: BUG-168, `eval:switchteam`. */
     if (charId) {
       const def = byId(charId);
       if (!def) console.warn(`[elenco] troca de lado pediu '${charId}', fora do elenco — usando a reserva do grupo`);
-      this.playerDef = def || CHARACTERS.find(_doLado(this.enemyFaction)) || this.playerDef;
+      this.playerDef = def || CHARACTERS.find(_doLado(newFaction)) || this.playerDef;
       this.playerCharId = this.playerDef.id;
       p.def = this.playerDef;
     }
-    const oldTeam = this.playerTeam;
-    const newTeam = oldTeam === 'E' ? 'B' : 'E';
-    const oldFaction = this.playerFaction;
     this.playerTeam = newTeam; this.enemyTeam = oldTeam;
-    this.playerFaction = this.enemyFaction;
-    this.enemyFaction = oldFaction;
+    this.playerFaction = newFaction; this.enemyFaction = oldFaction;
     /* F1: setProfile substitui o perfil INTEIRO — sem isto a troca de lado perdia as
        skins equipadas (docs/visual-consistency/SKINS-FLOW.md). */
     const handProfile = { id: this.playerCharId, faction: this.playerFaction, gloveSkinId: this.playerGloveId,
@@ -3550,7 +3566,7 @@ export class Game {
       swapBot.mesh = buildCharacterModel(veste, { weaponId: swapBot.weapon }) || buildCharacter(veste);
       swapBot.mesh.group.traverse(o => { o.userData.botOwner = swapBot; });
       this.scene.add(swapBot.mesh.group);
-      swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot.alive = true;
+      swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot.alive = true; swapBot._switchTeam = null;
       // O teleporte invalida a trajetória absoluta do lado anterior.
       swapBot.mantle = null; swapBot.mantleF = 0; swapBot._spaceHeld = false;
       swapBot._mantleScanAt = 0; swapBot.jumpBufferedUntil = 0; swapBot.coyoteUntil = 0;
@@ -4201,7 +4217,7 @@ export class Game {
     const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
     let best = null, bd = WEAPONS.knife.range;
     for (const b of this.bots) {
-      if (!b.alive || b.team === this.playerTeam) continue;
+      if (!b.alive || b.team === this.player.team) continue;
       const to = b.pos.clone().setY(b.pos.y + 1.2).sub(from);
       const d = to.length();
       if (d < bd && to.normalize().dot(dir) > 0.6) { best = b; bd = d; }
@@ -4685,24 +4701,17 @@ export class Game {
     // poça que cresce sob o cadáver (qualquer morte com posição — inclui bot×bot)
     if (BLOOD && ent.pos) this._bloodPoolAt(ent.pos);
     this._feed(attacker, ent, weap, head);
-    /* MODO ARENA: checa se a troca de time esvaziou um lado (≤ 1 sobrando). */
-    if (this.arena) this._checkArenaWin();
   }
-  /* ===================== MODO ARENA: condição de vitória =====================
-     Conta jogadores por time (player + bots, vivos e mortos — o morto vai
-     trocar no respawn). Se um time ficou com ≤ 1, o outro vence. */
+  /* VIRA-CASACA termina só depois do respawn aplicar a conversão. Um combatente
+     restante ainda pode lutar; zero combatentes significa que o lado foi convertido. */
   _checkArenaWin() {
-    const all = [this.player, ...this.bots];
-    const e = all.filter(e => e.team === 'E').length;
-    const b = all.filter(e => e.team === 'B').length;
-    if (e <= 1 || b <= 1) {
-      const winner = e > b ? 'E' : 'B';
-      this.state = 'matchEnd';
-      this.el.matchEnd.classList.remove('hidden');
-      this.el.matchTitle.textContent = winner === this.player.team ? 'VOCÊ SOBREVIVEU!' : 'VOCÊ FOI CONVERTIDO';
-      this.el.matchSub.textContent = `Time ${this._teamTag(winner)} venceu com ${Math.max(e, b)} jogadores`;
-      this.el.matchStats.innerHTML = `Trocas de time: ${this.arenaSwitched} · Seus abates: ${this.player.kills}`;
-    }
+    if (!this.arena || this.state !== 'live') return;
+    const e = this._teamPopulation('E'), b = this._teamPopulation('B');
+    if (e > 0 && b > 0) return;
+    // A população só é definitiva depois de aplicar as conversões no respawn.
+    if (this.player._switchTeam) return;
+    for (const c of this.combatants || []) if (c._switchTeam) return;
+    this._endMatch(e > 0 ? 'E' : 'B');
   }
   /* ===================== INDICADOR DIRECIONAL DE DANO =====================
      Dono: "matam muito fácil e o usuário não vê de onde veio o tiro". O indicador antigo era
@@ -5839,7 +5848,9 @@ export class Game {
     const num = this.el['score' + slot + 'Num'];
     /* Treta Pop (seção 2d): o número grande é round ganho; quem está vivo fica nos retratos. */
     const horda = this.objective?.state;
-    const n = String(horda?.kills != null ? this.objective.regras.times === 3 ? horda.teamKills[side] || 0 : horda.kills : this._uiV3() ? this.roundsWon[side] : this.roundKills[side]);
+    const n = String(horda?.kills != null ? (this.objective.regras.times === 3 ? horda.teamKills[side] || 0 : horda.kills)
+      : this.arena ? this._teamPopulation(side)
+      : (this._uiV3() ? this.roundsWon[side] : this.roundKills[side]));
     if (num && num.textContent !== n) num.textContent = n;
     /* minúscula porque o seletor de atributo do CSS é SENSÍVEL A CAIXA e os arquivos
        são b/c/e/f/u.png — `data-f="U"` não casaria com `[data-f="u"]` e o brasão
@@ -7025,7 +7036,7 @@ export class Game {
       el.style.visibility = 'hidden';
       return;
     }
-    const enemyGroups = this.bots.filter(b => b.alive && b.team !== this.playerTeam).map(b => b.mesh.group);
+    const enemyGroups = this.bots.filter(b => b.alive && b.team !== this.player.team).map(b => b.mesh.group);
     // A profundidade vista pela câmera evita cruz falsa atrás da cobertura.
     this.ray.set(this.camera.position, cameraDir);
     this.ray.far = 200;
@@ -8035,6 +8046,7 @@ export class Game {
     this.camera.rotation.z = 0;
     this.el.respawn.classList.add('hidden');
     this.sfx.respawn();
+    this._checkArenaWin();
   }
 
   /* ================= bots ================= */
@@ -8061,7 +8073,7 @@ export class Game {
     if (this.time < (this._radioCd || 0)) return;
     if (b.pos.distanceTo(this.player.pos) > 55) return;   // longe demais: não escutaria
     this._radioCd = this.time + 5;
-    const mine = b.team === this.playerTeam;
+    const mine = b.team === this.player.team;
     const lines = mine
       ? ['Contato!', 'Tô vendo um aqui!', 'Inimigo na minha frente!', 'Cobre eu que eu vou!']
       : ['Achei um!', 'Tá aqui, ó!'];
@@ -8122,7 +8134,7 @@ export class Game {
   }
   _makeTeamMark(bot) {
     if (QS.get('teammark') === '0') return;
-    const ally = bot.team === this.playerTeam;
+    const ally = bot.team === this.player.team;
     const col = new THREE.Color(this._teamColor(bot.team));
     this._tmHaloGeo = this._tmHaloGeo || new THREE.PlaneGeometry(1, 1);
     const halo = new THREE.Mesh(this._tmHaloGeo, new THREE.MeshBasicMaterial({
@@ -8132,7 +8144,7 @@ export class Game {
     }));
     halo.rotation.x = -Math.PI / 2; halo.scale.setScalar(1.45); halo.renderOrder = 3;
     this.scene.add(halo);
-    bot._mark = { halo, ally };   // SEM chevron/seta na cabeça (pedido do dono) — só o halo no chão
+    bot._mark = { halo, ally, col: this._teamColor(bot.team) };
   }
   /* Escolha de personagem no meio da partida (multiplayer). O servidor roda o mesmo método,
      então def, nome e malha ficam iguais nos dois lados do fio. */
@@ -8181,6 +8193,14 @@ export class Game {
   _updateTeamMark(b) {
     const m = b._mark;
     if (!m) return;
+    const ally = b.team === this.player.team;
+    if (m.ally !== ally) {
+      m.ally = ally;
+      m.halo.material.map = this._teamMarkTex(ally ? 'haloAlly' : 'haloEnemy');
+      m.halo.material.needsUpdate = true;
+    }
+    const col = this._teamColor(b.team);
+    if (m.col !== col) { m.col = col; m.halo.material.color.set(col); }
     if (!b.alive || !b.mesh.group.visible) { m.halo.visible = false; return; }
     m.halo.visible = true;
     m.halo.position.set(b.pos.x, b.pos.y + 0.05, b.pos.z);
@@ -8222,6 +8242,10 @@ export class Game {
      no multiplayer não voltava mais. Ver docs/MULTIPLAYER.md. */
   _respawnEntity(b) {
     if (b._objectiveNpc || this.objective?.state?.eliminados?.includes(b.team)) return;
+    if (this.arena && b._switchTeam) {
+      b.team = b._switchTeam;
+      b._switchTeam = null;
+    }
     this._compra?.aoRenascerBot(b);   // antes do `g`: trocar a arma remonta a malha
     const g = b.mesh.group;
     const s = this._pickSpawn(b.team, b);   // mesmo critério de segurança do jogador
@@ -8246,6 +8270,7 @@ export class Game {
     b._lp = { x: s.x, z: s.z };   // evita spike de velocidade (teleporte) no 1º frame
     g.rotation.set(0, b.yaw, 0); g.position.copy(b.pos); g.visible = true;
     if (b.mesh.isGLB) b.mesh.ctrl.revive();
+    this._checkArenaWin();
   }
 
   // Som alerta (360°) e marca o ponto ouvido para investigar; adquirir alvo ainda exige visão.
@@ -9096,7 +9121,7 @@ export class Game {
     try {
       if (!this._recorder || !this._recordEnabled || this._recorder.count === 0) return;
       const blob = this._recorder.flush({
-        map: this._mapId, mode: this.ctf ? 'ctf' : 'rounds',
+        map: this._mapId, mode: this._modeId(),
         weapon: this.player.weapon,
       });
       if (blob) this.onTrainingFrames?.(blob);
@@ -9314,7 +9339,7 @@ export class Game {
     x.shadowBlur = 5;
     for (const c of this.combatants) {
       if (!c.alive || c.isPlayer) continue;
-      const ally = c.team === this.playerTeam;
+      const ally = c.team === this.player.team;
       if (!ally && this.time - c.revealedAt > 1.6) continue;
       const col = ally ? this._teamColor(c.team) : '#ffb44d';   // inimigo revelado = âmbar (objetivo), aliado = cor do time
       x.fillStyle = col; x.shadowColor = col;
@@ -9395,13 +9420,16 @@ export class Game {
       const r = this._resultado;
       const totalRounds = this._inspectionTotalRounds || this.roundsMax;
       const clock = this.ctf ? Math.max(0, Math.ceil(this.ctfMatchLeft)) : Math.max(0, Math.ceil(this.timeLeft));
-      const clockText = `${Math.floor(clock / 60)}:${String(clock % 60).padStart(2, '0')}`;
+      const clockText = this.arena ? tr('VIRA-CASACA') : `${Math.floor(clock / 60)}:${String(clock % 60).padStart(2, '0')}`;
       const crest = (side) => String(side || 'E').toLowerCase();
+      const scoreE = this.arena ? this._teamPopulation('E') : this.roundsWon.E;
+      const scoreB = this.arena ? this._teamPopulation('B') : this.roundsWon.B;
+      const status = this.arena ? `${tr('CONVERSÕES')}: ${this.arenaSwitched}` : `RODADA ${this.roundNum}/${totalRounds}`;
       document.querySelector('#scoreboard h3').innerHTML =
         (r ? `<span class="sb-result">${r.titulo}</span><span class="sb-result-sub">${r.sub}</span>` : '') +
-        `<span class="sb-clock">RODADA ${this.roundNum}/${totalRounds} · <em>${clockText}</em></span>` +
-        `<span class="sb-score"><b class="tp"><img class="sb-crest" src="/${urlDoBrasao(crest('E'))}" alt=""><span class="sb-team-name">${this._teamName('E')}</span><strong class="sb-score-num">${this.roundsWon.E}</strong></b>` +
-        `<span class="sb-vs">VS</span><b class="tb"><strong class="sb-score-num">${this.roundsWon.B}</strong><span class="sb-team-name">${this._teamName('B')}</span><img class="sb-crest" src="/${urlDoBrasao(crest('B'))}" alt=""></b></span>`;
+        `<span class="sb-clock">${status} · <em>${clockText}</em></span>` +
+        `<span class="sb-score"><b class="tp"><img class="sb-crest" src="/${urlDoBrasao(crest('E'))}" alt=""><span class="sb-team-name">${this._teamName('E')}</span><strong class="sb-score-num">${scoreE}</strong></b>` +
+        `<span class="sb-vs">VS</span><b class="tb"><strong class="sb-score-num">${scoreB}</strong><span class="sb-team-name">${this._teamName('B')}</span><img class="sb-crest" src="/${urlDoBrasao(crest('B'))}" alt=""></b></span>`;
       // no CTF ordena por capturas (depois kills); senão por kills
       const rank = this.ctf ? (a, b) => (b.captures || 0) - (a.captures || 0) || b.kills - a.kills : (a, b) => b.kills - a.kills;
       /* DUAS COLUNAS COM BRASÃO (referência 08_placar, pedido do dono 07/08: "na tela de
@@ -9561,6 +9589,14 @@ export class Game {
       const h = this.objective.state, elapsed = Math.floor(h.clock || 0);
       this.el.roundTime.textContent = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
       this.el.roundsRow.textContent = `TEMPO DE PARTIDA · ONDA ${Math.max(1, h.wave)}`;
+    } else if (this.arena) {
+      const e = this._teamPopulation('E'), b = this._teamPopulation('B');
+      const roundText = `${e} × ${b}`;
+      if (this.el.roundTime.textContent !== roundText) this.el.roundTime.textContent = roundText;
+      if (this.el.roundTime.classList.contains('ctf')) this.el.roundTime.classList.remove('ctf');
+      if (this.el.roundTime.classList.contains('urgente')) this.el.roundTime.classList.remove('urgente');
+      const roundsText = `${tr('VIRA-CASACA')} · ${this.arenaSwitched} ${tr('CONVERSÕES')}`;
+      if (this.el.roundsRow.textContent !== roundsText) this.el.roundsRow.textContent = roundsText;
     } else if (this.ctf) {
       /* game.js:5800 — NO CAPTURA O MAIOR TIPO DO HUD MOSTRA BANDEIRA, NÃO SEGUNDO.
          O que o dono viu e reprovou foi "CAPTURA 1:32" contando pra trás a cada rodada.

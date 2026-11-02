@@ -92,6 +92,8 @@ jobs:
         run: npm run eval:javaporcos
       - name: Origem da versão nos payloads reais de perf e match
         run: npm run eval:versaoorigem
+      - name: Arena, formato melhor-de e preload
+        run: node tools/eval/runner.mjs eval:arena-mode eval:formatomelhorde eval:preload
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         run: npm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
