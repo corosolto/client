@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ownVmResource, isVmResource } from './vmownership.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 import { adsEfetivo, authoredFrameFor, VM_FAMILY, VM_WEAPON, VM_FABRICA } from './data/vmconfig.js';
@@ -348,7 +349,7 @@ const materialsOf = (object) => Array.isArray(object.material) ? object.material
 function tintHandMaterial(material, profile, legacy = false, layout = 'pistol') {
   if (!legacy) return applyTeamHandMaterial(material, profile, layout);
   // Preserva o tratamento antigo dos UVs GoldSrc/retarget até sua rodada própria.
-  const copy = material.clone();
+  const copy = ownVmResource(material.clone());
   if (copy.color) {
     const skin = /CoroSolto_FP_Hand/i.test(copy.name);
     const glove = /CoroSolto_FP_Gloves?/i.test(copy.name);
@@ -562,6 +563,7 @@ export class AuthoredViewModels {
       // Clone do cache do módulo: o pacote é mutado (câmera removida, tint) e o
       // mesmo parse pode servir outra instância de Game depois.
       const scene = await skeletonCloneOf(gltf.scene);
+      if (this._disposed) return null;
       const visual = cameraSpacePackage({ scene, animations: gltf.animations }, this.profile, this.parent, family, key);
       if (!golden) bindSharedArmTextures(visual.handMeshes, shared);
       const mixer = new THREE.AnimationMixer(visual.scene);
@@ -1287,12 +1289,17 @@ export class AuthoredViewModels {
     if (this.utility && !this.utility.released) this.utility.onRelease?.();
     this.utility = null;
     this.held = null;
+    const disposed = new Set();
+    const discard = resource => {
+      if (!isVmResource(resource) || disposed.has(resource)) return;
+      disposed.add(resource); resource.dispose();
+    };
     for (const entry of this.entries.values()) {
       entry.mixer.stopAllAction();
       entry.mount.removeFromParent();
       entry.scene.traverse((object) => {
-        if (object.geometry) object.geometry.dispose();
-        for (const material of materialsOf(object)) material?.dispose?.();
+        discard(object.geometry);
+        for (const material of materialsOf(object)) discard(material);
       });
     }
     this.entries.clear();

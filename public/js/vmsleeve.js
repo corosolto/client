@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ownVmResource } from './vmownership.js';
 
 // Manga KINEMATION termina aberta no deltoide, a poucos cm da câmera do pacote; o frame por
 // arma (z<0) traz essa boca ao quadro. Régua: tools/eval/vm-manga-oca-check.mjs.
@@ -119,10 +120,12 @@ export function extendSleeveOpenings(mesh, { space = null, length = 0.9, pose = 
 /* Fecha a boca da manga no espaço de bind (um centro por laço + leque). A extensão acima
    é do produto K e no golden sai pelo lado errado. Régua: manga-tampa-check.mjs. */
 export function capSleeveOpenings(mesh) {
-  const geo = mesh.geometry;
-  if (!geo?.attributes?.position || mesh.userData.sleeveCapped) return 0;
-  const { loops, representative } = sleeveOpenings(geo);
+  const source = mesh.geometry;
+  if (!source?.attributes?.position || mesh.userData.sleeveCapped) return 0;
+  const { loops, representative } = sleeveOpenings(source);
   if (!loops.length) return 0;
+  const geo = ownVmResource(source.clone());
+  mesh.geometry = geo;
   const pos = geo.attributes.position;
   const nomes = Object.keys(geo.attributes);
   const antigos = geo.index ? Array.from({ length: geo.index.count }, (_, i) => geo.index.getX(i)) : null;
@@ -258,7 +261,7 @@ function extendAtCurrentPose(mesh, source, loops, representative, space, length)
     ends.push(...previous, tip);
   }
   if (!ends.length) return 0;
-  const out = new THREE.BufferGeometry();
+  const out = ownVmResource(new THREE.BufferGeometry());
   for (const name of names) {
     const attribute = source.attributes[name];
     // getX já devolve valor desnormalizado; grava cru, sem `normalized`.

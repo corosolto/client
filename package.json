@@ -755,7 +755,7 @@
     "//eval:mantle-network": "MN1 a MN3: respawn limpa travessia antiga, ack desloca a base absoluta e snapshot remoto anima progresso interpolado.",
     "eval:mantle-network": "node tools/eval/mantle-network-check.mjs && node tools/eval/mantle-lifecycle-proof.mjs",
     "//eval:authored-locomotion": "LOCOMOTION 1P (docs/visual-consistency/MOVIMENTO-1P.md): gait Lissajous 1:2 causal no stepPhase do passo, ADS com zero exato, envelope exp(-dt/bobStopTau) na parada, pacote mão+arma rígido e granada/troca em porte sem offset congelado. AUD1C no invariants. 27 checks + 14 mutantes.",
-    "eval:authored-locomotion": "node tools/eval/authored-locomotion-check.mjs && node tools/eval/authored-locomotion-check.mjs --mutantes",
+    "eval:authored-locomotion": "node --test tests/authored-lifecycle.test.mjs && node tools/eval/authored-locomotion-check.mjs && node tools/eval/authored-locomotion-check.mjs --mutantes",
     "eval:authored-game-ctx": "node tools/eval/authored-game-ctx-check.mjs && node tools/eval/authored-game-ctx-check.mjs --mutantes",
     "//eval:authored-transition": "Fila de clipes, troca de arma, granada e split golden do caminho autorado terminam em pose Idle real; mounts-finitos pega fixture sem estado (NaN, não crash). AUD1B no invariants. 28 checks + 9 mutantes.",
     "eval:authored-transition": "node tools/eval/authored-transition-check.mjs && node tools/eval/authored-transition-check.mjs --mutantes && npm run -s eval:authored-draw-timing && npm run -s eval:golden-skin-selection",
