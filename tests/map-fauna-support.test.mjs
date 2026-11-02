@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { THREE } from '../tools/eval/harness.mjs';
-import { createFavelaAmbience } from '../public/js/ambientlife.js';
+const { createFavelaAmbience } = await import('../public/js/ambientlife.js');
 
 const heightAt = (x,z) => .4 + .06*x + .03*z + .02*Math.sin(x*2);
 function build(extra={}) {
