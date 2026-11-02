@@ -9,15 +9,15 @@ import { createHash } from 'node:crypto';
 import { THREE, MAPS, initTextures, carregaMapa } from '../tools/eval/harness.mjs';
 import { auditCuratedFauna as auditFaunaActual, auditCuratedFaunaCensus as auditCensusActual } from '../tools/eval/map-fauna-curated.mjs';
 import { captureCuratedFauna } from '../tools/eval/map-fauna-curated-collector.mjs';
-import { assetUrl } from '../public/js/data/asseturl.js';
+const { assetUrl } = await import('../public/js/data/asseturl.js');
 import { createPlaywrightFaunaObserver, createEgoFaunaObserver, faunaDocumentURL, faunaResponseError } from '../tools/eval/map-fauna-response-proof.mjs';
-import { ESCADAO_AMBIENCE } from '../public/js/map_escadao.js';
-import { LAJES_AMBIENCE } from '../public/js/map_lajes_authored.js';
-import { createFavelaAmbience } from '../public/js/ambientlife.js';
-import { makeContactShadow } from '../public/js/contact-shadow.js';
-import { aguardarPreloads } from '../public/js/game.js';
-import { ehMapaJavaporcos } from '../public/js/maps.js';
-import { mapPropIds } from '../public/js/mapprops.js';
+const { ESCADAO_AMBIENCE } = await import('../public/js/map_escadao.js');
+const { LAJES_AMBIENCE } = await import('../public/js/map_lajes_authored.js');
+const { createFavelaAmbience } = await import('../public/js/ambientlife.js');
+const { makeContactShadow } = await import('../public/js/contact-shadow.js');
+const { aguardarPreloads } = await import('../public/js/game.js');
+const { ehMapaJavaporcos } = await import('../public/js/maps.js');
+const { mapPropIds } = await import('../public/js/mapprops.js');
 import { snapshotPublicJs, startBootOrigin } from '../tools/eval/boot-network-origin.mjs';
 import { somaCargas, chaveDeCarga, JS_EXCLUSOS } from '../tools/eval/boot-overlay.mjs';
 import http from 'node:http';
@@ -439,7 +439,7 @@ function charged(origin,rel){
 test('boot snapshot includes the actual fauna provider and its new shadow dependency',()=>{
  const source=read('tools/eval/boot-orcamento-check.mjs');
  assert.match(source,/SNAPSHOT=snapshotPublicJs\(PUBLIC_ROOT\)/);
- assert.match(source,/startBootOrigin\(\{BASE,snapshot:SNAPSHOT/);
+ assert.match(source,/startBootOrigin\(\{BASE,API_BASE,snapshot:SNAPSHOT/);
  assertFaunaSnapshot(snapshotPublicJs(publicRoot));
 });
 test('omitting either dependency from the real boot snapshot is detected',()=>{
