@@ -36,6 +36,10 @@ const WHITELIST={
     script:'tools/eval/graffiti-bake-fiel-check.mjs',flag:'--mutante=',types:['ContractViolation'],cases:1,
     mutants:{'engole-falta':'G2'},
   },
+  'piscina-batch':{
+    script:'tools/eval/piscina-graffiti-batch-check.mjs',flag:'--mutante=',types:['ContractViolation'],cases:1,
+    mutants:{'lote-sem-permissao':'authored-batch-permission'},
+  },
 };
 const TYPE_BY_MUTANT=Object.fromEntries(Object.values(WHITELIST).flatMap(({types,mutants})=>Object.keys(mutants).map(name=>[name,types])));
 const RUIM=/SyntaxError|TypeError|ReferenceError|MUTANTE NÃO APLICOU|ETIMEDOUT|timeout|setup|ECONNREFUSED|ERR_MODULE_NOT_FOUND|ERR_UNKNOWN_FILE_EXTENSION|ENOBUFS/i;

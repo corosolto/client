@@ -31,7 +31,12 @@ jobs:
   # resto; agora rodam em paralelo no job `invariantes`. Nenhum passo saiu.
   reguas-e-site:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 25 min eram o verde histórico (~17,5 min), mas com a fila de runners saturada
+    # (#1217: dois runs cancelados em 25m04s/25m15s, no passo Lajes, sem chegar à
+    # Piscina) o cap virou a causa da falha, não a proteção. O suite completo mediu
+    # 23m48s na mesma janela saturada; 30 é o teto que a régua wf-timeout admite
+    # (TETO_MAX) e dá ~6 min de folga sobre o pior caso medido.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -65,6 +70,8 @@ jobs:
         run: npm run syntax
       - name: Taxa de rede (FPS, travada, relógio congelado e mutantes)
         run: npm run eval:netrate
+      - name: Contrato de famílias e marcas do áudio
+        run: npm run eval:audiomarcas
       - name: Dependências e reconstrução do fundo do menu
         run: npm run eval:menuprops
       - name: Mutantes do orçamento exigem a falha correta

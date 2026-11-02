@@ -56,7 +56,7 @@ const AUDIO_EXT = /\.(mp3|wav|ogg|m4a|webm)$/i;
 // Contratos curados não podem ser reconstruídos pela ordem dos arquivos no disco. Isso inclui
 // os packs locais e seus metadados: `audio:check` precisa medir o mesmo jogo instalado.
 const CURATED = [
-  '_localLab', 'cs', 'weapons', 'weaponSamples', 'weaponSamplesAuthentic',
+  '_localLab', 'jogo', 'weapons', 'weaponSamples', 'weaponSamplesAuthentic',
   'defaultWeaponPack', 'weaponCandidates', 'weaponPacks', 'general', 'roundNumbers',
   'characterPhysical', 'mapSoundscapes',
 ];
