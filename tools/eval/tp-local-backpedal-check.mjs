@@ -83,7 +83,10 @@ function fixture(id, weapon, c) {
   const built = G.buildCharacterModel(CHARACTERS.find(d => d.id === id), {weaponId: weapon});
   assert.ok(built?.ctrl?.actions.walk && built.ctrl.actions.run, 'GLB/clipes não carregaram');
   const player = {pos: new THREE.Vector3(), vel: new THREE.Vector3(...(c.vel || [0, 0, 0])), yaw: c.yaw, pitch: .1, crouchF: 0, scoped: false, grounded: true, weapon};
-  const game = {_ensurePlayerTP() {}, _updatePlayerTPCamera: Game.prototype._updatePlayerTPCamera, playerTP: built, player, _tpEul: new THREE.Euler(), _tpFwd: new THREE.Vector3(), _tpRight: new THREE.Vector3(), _tpOrbitPitch: .2, _tpOrbitYaw: .4, _eyeWorld: new THREE.Vector3(), camView: 'third', camera: new THREE.PerspectiveCamera(70, 1.5, .08, 400), world: {groundHeightAt: () => 0}, sfx: {jump() {}, land() {}}, _collide() {}, _acceptInput: () => true, time: 0};
+  const game = {_ensurePlayerTP() {}, _updatePlayerTPCamera: Game.prototype._updatePlayerTPCamera, playerTP: built, player, _tpEul: new THREE.Euler(), _tpFwd: new THREE.Vector3(), _tpRight: new THREE.Vector3(), _tpOrbitPitch: .2, _tpOrbitYaw: .4, _eyeWorld: new THREE.Vector3(), camView: 'third', camera: new THREE.PerspectiveCamera(70, 1.5, .08, 400), world: {groundHeightAt: () => 0}, sfx: {jump() {}, land() {}}, _collide() {}, _acceptInput: () => true, time: 0,
+    // A câmera de 3ª pessoa sonda oclusão do boom com o Raycaster do construtor real (game.js);
+    // sem occluders/camBlockers no stub, os probes rodam e não bloqueiam nada.
+    ray: new THREE.Raycaster()};
   const update = built.ctrl.update.bind(built.ctrl);
   const state = {built, game, args: null};
   built.ctrl.update = (...args) => {state.args = args; return update(...args);};

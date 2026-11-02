@@ -63,6 +63,23 @@ jobs:
         run: npm run eval:wfcheckout
       - name: Syntax check do jogo (public/js)
         run: npm run syntax
+      - name: Dependências e reconstrução do fundo do menu
+        run: npm run eval:menuprops
+      - name: Mutantes do orçamento exigem a falha correta
+        run: node tools/eval/boot-mutant-verdict-check.mjs --mutantes
+      # boot-assets-check (--mutantes) REMOVIDO nesta PR: a régua era exclusiva da PR
+      # (1d15a6453) e ancorava na mede() anterior à base staging r844, que passou a exigir
+      # prova criptográfica de corpo (startBootOrigin + snapshot + x-boot-response-id +
+      # verifyResponseRecord/verifyDecoded). O fixture sintético não exerce esse pipeline —
+      # reconstruí-lo honestamente é follow-up (fixture novo contra boot-network-origin/
+      # boot-network-body); as réguas de boot vivas cobrem o fecho: veredicto, READY,
+      # poster-intent e overlay com mutantes.
+      - name: Causa real da liberação da splash com mutantes
+        run: node tools/eval/boot-ready-check.mjs --mutantes
+      - name: Origem da versão nos payloads reais de perf e match
+        run: npm run eval:versaoorigem
+      - name: Regras da horda e consumo de objetivo no cliente
+        run: npm run eval:javaporcos
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         run: npm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
@@ -110,6 +127,15 @@ jobs:
       - name: Todo mapa devolve o que o game.js consome
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:mapcontrato
+      - name: Câmera, atalhos e HUD com mutantes
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:cameraoclusao
+      - name: Spawns orientam jogador e bots pelo consumidor real
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:spawnface
+      - name: Backpedal preserva autoridade e lateral com mutantes
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:tpbackpedal
       - name: Loops de áudio de todos os mapas usam src carregável
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:soundscape-contract
@@ -238,7 +264,7 @@ jobs:
   # o tools/eval/vm_mint_audit.json que as invariantes e o vm-kick-sim leem.
   invariantes:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020

@@ -193,7 +193,7 @@ plantarPontesThree();
 PRE_DISPARO = true;
 const MAP_JSON = join(ROOT, 'tools', 'eval', 'map_check.json');
 const REL_MAP = existsSync(join(HERE, 'map-check.mjs'))
-  ? freshReport(MAP_JSON, () => runNode('map-check.mjs', {}, [], 900000)) : null;
+  ? freshReport(MAP_JSON, () => runNode('map-check.mjs', {}, [], 1500000)) : null;
 const MAT_JSON = join(ROOT, 'tools', 'eval', 'mat_check.json');
 const REL_MAT = existsSync(join(HERE, 'mat-check.mjs'))
   ? freshReport(MAT_JSON, () => runNode('mat-check.mjs')) : null;
@@ -1959,7 +1959,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
     } else {
       const ok = +m[1], tot = +m[2];
       const falhas = (out.match(/FALHAS: (.*)$/m) || [])[1] || '';
-      put('MOD2', 'o modo escolhido é o modo jogado nos 5 mapas (5 mapas × 2 modos + badge + padrão do mapa)',
+      put('MOD2', 'o modo escolhido é o modo jogado; mapas de objetivo prevalecem sobre rounds/CTF',
         ok === tot, `${ok}/${tot} casos` + (falhas ? ` | ${falhas.slice(0, 240)}` : ' | 0 falhas'));
     }
   }
@@ -2047,9 +2047,8 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
     const respawnBecoValido = !beco.includes('__ERRO__') && beco.includes('✓ LSP1');
     put('LSP1', 'Lajes: slots térreos distintos, espaço para corpos e saída física até o campo',
       respawnBecoValido, beco.split('\n').find(linha => linha.includes('LSP1')) || beco.slice(-400));
-    // A medição completa de 18 mapas levou quase 10 min no runner do CI; mantenha
-    // a falha explícita, mas dê tempo para o relatório fresco terminar (900 s, no
-    // pré-disparo).
+    // O pré-disparo reserva 1500 s para os 21 mapas; relatório ausente continua falha.
+    // Perfil e comparação dos critérios: docs/maps/javaporcos-continuacao-20261030.md.
     const { data: j, error } = await REL_MAP;
     if (error || !Array.isArray(j?.mapas) || j.mapas.length === 0) {
       put('MAPAUD', 'map-check.mjs gera relatório fresco e válido de geometria',
