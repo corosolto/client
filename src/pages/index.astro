@@ -106,8 +106,8 @@ const IMPORTMAP = JSON.stringify({
    PUBLIC_SUPPORT_URL_* mudava o /apoie e não o menu do jogo (CodeRabbit, PR #284). */
 window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
 </script>
-<script is:inline define:vars={{ GIT_SHA }}>
-window.__CS_BUILD = { sha: GIT_SHA };
+<script is:inline define:vars={{ GIT_SHA, V }}>
+window.__CS_BUILD = { sha: GIT_SHA, version: V };
 </script>
 <script is:inline>
 /* Fetch do /api/geo-lang ANTES dos módulos; o i18n consome a promise no boot.
@@ -168,12 +168,10 @@ window.__GEO_LANG__ = (function () {
     return t ? t.slice(0, max).trim() : '';
   }
 
-  /* A versão sai do `?v=` do próprio HTML: ela já está aqui, já sobe junto no bump dos
-     dois lados, e assim não há terceiro lugar para esquecer de atualizar. */
   function versao(){
     try{
-      var l = document.querySelector('link[rel=stylesheet][href*="?v="]');
-      return l ? (l.getAttribute('href').split('?v=')[1] || null) : null;
+      var v = window.__CS_BUILD && window.__CS_BUILD.version;
+      return typeof v === 'string' ? v : null;
     }catch(_){ return null; }
   }
 

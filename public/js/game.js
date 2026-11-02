@@ -9752,6 +9752,8 @@ export class Game {
   dispose() {
     this._fxTiroPendente = null;
     this._disposed = true;
+    clearTimeout(this._bannerT); clearTimeout(this._bannerT2);
+    this._bannerT = this._bannerT2 = null;
     this._limparCegueira();
     this._flashBranco?.remove(); this._flashRetida?.remove();
     this._releaseInput();
