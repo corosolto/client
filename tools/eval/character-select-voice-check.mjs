@@ -24,7 +24,7 @@ if (mutante === 'sem-clique') {
 if (mutante === 'auto-fala') {
   main = main.replace('if (row) selectChar(character, row);', 'row?.click();');
 }
-if (mutante === 'pack-antigo') fetchAudio = fetchAudio.replace('audio-pack-v8', 'audio-pack-v7');
+if (mutante === 'pack-antigo') fetchAudio = fetchAudio.replace('audio-pack-v9', 'audio-pack-v8');
 if (mutante === 'manifest-antigo') main = main.replace('sfx.loadManifest(VERSION)', 'sfx.loadManifest()');
 if (mutante === 'fu-ia-volta') {
   audio = audio
@@ -50,11 +50,11 @@ expect(!/characterSelectVoice/.test(selectBody),
   'VOICE3 selectChar fala durante a montagem automática da tela');
 expect(!/row\?\.click\(\)/.test(main),
   'VOICE4 a query string simula clique humano e dispara fala');
-expect(/releases\/download\/audio-pack-v8\/audio-pack\.zip/.test(fetchAudio),
-  'VOICE12 o build não baixa o pacote com as vozes do time Mítico e o upgrade dos funkeiros (v8; inclui o Faria Limer corrigido e o menu Suno do v7)');
+expect(/releases\/download\/audio-pack-v9\/audio-pack\.zip/.test(fetchAudio),
+  'VOICE12 o build não baixa o pacote com as vozes do time Mítico, o upgrade dos funkeiros e a ambiência autoral dos mapas (v9; inclui o Faria Limer corrigido do v7 e o menu Suno do v8)');
 const packVersion = fetchAudio.match(/audio-pack-v(\d+)\/audio-pack\.zip/)?.[1];
 const manifestHeader = JSON.parse(vercel).headers?.find((entry) => entry.source === '/audio/manifest.json');
-expect(packVersion === '8' && main.includes('sfx.loadManifest(VERSION)')
+expect(packVersion === '9' && main.includes('sfx.loadManifest(VERSION)')
   && /async loadManifest\(revision = ''\)/.test(audio)
   && /audio\/manifest\.json\$\{query\}/.test(audio)
   && manifestHeader?.headers?.some((header) => header.key === 'Cache-Control' && header.value === 'public, max-age=0, must-revalidate'),
