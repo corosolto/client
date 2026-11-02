@@ -1,8 +1,10 @@
 // Escadão e Lajes usavam galinha sem albedo e gato atlas256 apesar do acervo Mint.
 // Referências identificam arquivos; aprovação visual e movimento exigem runtime real.
+import { assetUrl } from '../../public/js/data/asseturl.js';
+import { faunaResponseError, faunaDocumentURL } from './map-fauna-response-proof.mjs';
 // Um mapa pode ter vários tipos curados (campomorro/corrego: gato E galinha):
 // o censo exige uma amostra por mapa cobrindo todos os tipos referenciados.
-export function auditCuratedFaunaCensus(data, references) {
+export function auditCuratedFaunaCensus(data, references, {base}={}) {
   const failures=[],expected=new Set(references.map(r=>r.map)),seen=new Set();
   if(!Array.isArray(data?.results))return {pass:false,reports:[],failures:[{family:'census',detail:'Captura runtime ausente ou results inválido.'}]};
   for(const sample of data.results){
@@ -13,13 +15,14 @@ export function auditCuratedFaunaCensus(data, references) {
   }
   for(const map of expected)if(!seen.has(map))failures.push({family:'census',detail:`Mapa ausente: ${map}.`});
   // Um censo incompleto não deve produzir aprovações parciais enganosas.
-  const reports=failures.length?[]:data.results.map(sample=>auditCuratedFauna(sample,references));
+  const reports=failures.length?[]:data.results.map(sample=>auditCuratedFauna(sample,references,{base}));
   return {pass:!failures.length&&reports.every(r=>r.pass),reports,failures};
 }
 
-export function auditCuratedFauna(sample, references) {
+export function auditCuratedFauna(sample, references, {base}={}) {
   const failures=[];
   const fail=(family,detail)=>failures.push({family,detail});
+  let expectedDocumentURL;try{expectedDocumentURL=faunaDocumentURL(base,sample?.map);}catch{}
   const refs=references.filter(r=>r.map===sample?.map);
   if(!refs.length)fail('scope','Mapa sem referência curada; não pode receber PASS.');
   for(const a of sample?.animals||[])if(!refs.some(r=>r.type===a?.type))fail('count',`${sample?.map}/${a?.id}: tipo ${String(a?.type)} sem referência curada; não aprovar fauna fora do censo.`);
@@ -38,6 +41,9 @@ export function auditCuratedFauna(sample, references) {
       const id=`${ref.map}/${a.id}`;
       if(a.source!=='gltf')fail('source',`${id}: fallback em vez do GLB curado.`);
       if(a.assetId!==ref.assetId||a.assetPath!==ref.path)fail('identity',`${id}: ${a.assetId} / ${a.assetPath}; esperado ${ref.assetId} / ${ref.path}.`);
+      let expectedURL;try{expectedURL=new URL(assetUrl(ref.path),expectedDocumentURL).href;}catch{}
+      const responseError=faunaResponseError(a.response,ref,a,sample.document,expectedURL,expectedDocumentURL);
+      if(responseError)fail('response',`${id}: ${responseError}.`);
       if(!(sample.declaredPreload||[]).includes(ref.assetId))fail('declaredPreload',`${id}: modelo instanciado fora do preload declarado.`);
       const mats=(a.meshes||[]).flatMap(m=>m.materials||[]);
       if(!mats.length)fail('materials',`${id}: nenhum material medido.`);

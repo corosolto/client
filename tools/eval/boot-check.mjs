@@ -120,6 +120,8 @@ try {
   // navegador de diagnóstico consente com a medição (privacy-runtime.js): desde a
   // frente social o relatório de erros é opt-in e o portão mede o caminho completo
   await context.addInitScript(() => {
+    // B3 asserts Portuguese copy: select the product's explicit language before boot.
+    try { localStorage.setItem('cs_lang', 'pt'); } catch {}
     try { localStorage.setItem('cs_privacy', JSON.stringify({ version: 'corosolto-analytics-v1', analytics: true, updatedAt: new Date(0).toISOString() })); } catch {}
   });
   const relatorios = [];

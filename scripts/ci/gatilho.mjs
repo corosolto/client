@@ -63,6 +63,7 @@ export const GATILHOS = {
       /^tools\/eval\/(graffiti_census|graffiti_audit|select_inflate|select_inflate_debt)\.json$/,
       /^tools\/eval\/assets-check\.mjs$/,
       /^tools\/eval\/map-fauna-curated(?:-(?:ci|collector|browser|capture))?\.(?:mjs|json)$/,
+      /^tools\/eval\/map-fauna-response-proof\.mjs$/,
       /^mint-assets\.json$/,
       /^tools\/audio\/(politica|map-ids)\.mjs$/,
       /^scripts\/fetch-decals\.sh$/,
