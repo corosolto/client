@@ -3,13 +3,17 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 
+await import('./three-node.mjs');
+const { MAX_ALIVE } = await import('../../public/js/mode_javaporcos.js');
+const { TRILHAS } = await import('../../public/js/map_javaporcos_relevo.js');
+
 const option = (name, fallback) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.split('=').slice(1).join('=') || fallback;
 const base = option('base', 'http://127.0.0.1:9344');
 const out = option('out', 'artifacts/javaporcos');
 mkdirSync(out, { recursive: true });
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
-const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+const context = await browser.newContext({ viewport: { width: 1320, height: 880 }, deviceScaleFactor: 1 });
 const page = await context.newPage();
 await page.route(/\.astro\/eval-vite|dev-toolbar/, (route) => route.fulfill({
   contentType: 'text/javascript',
@@ -27,7 +31,7 @@ const views = [
   { id: '01-bairro', camera: [-38, 8, -57], target: [0, 1.5, -37], description: 'casas, oficina, praça e portão final do bairro' },
   { id: '02-transicao', camera: [-50, 10, -2], target: [12, 2, 0], description: 'posto rural, silo, armazém e currais' },
   { id: '03-lavoura', camera: [48, 12, 18], target: [0, 1.5, 43], description: 'quatro talhões de milho cortados por trilhas de combate' },
-  { id: '04-mata', camera: [-45, 8, 42], target: [5, 1.5, 55], description: 'córrego, mata ciliar e quatro entradas da horda' },
+  { id: '04-mata', camera: [-45, 8, 42], target: [5, 1.5, 55], description: 'córrego, mata ciliar e frentes da horda' },
 ];
 
 try {
@@ -75,8 +79,8 @@ try {
   assert.equal(runtime.objective, true);
   assert.equal(runtime.wave, 1);
   assert.ok(runtime.activeBoars.length > 0);
-  assert.equal(runtime.boarSlots, 24);
-  assert.equal(runtime.entrances, 4);
+  assert.equal(runtime.boarSlots, MAX_ALIVE);
+  assert.equal(runtime.entrances, TRILHAS.length);
   assert.equal(runtime.objectives, 3);
   assert.ok(runtime.nodes >= 500);
   assert.ok(runtime.colliders >= 20);
@@ -84,7 +88,7 @@ try {
   assert.equal(runtime.webgl2, true);
   assert.match(runtime.gpu || '', /Apple M4 Pro|Metal/i);
   assert.match(runtime.modeLabel || '', /HORDAS/);
-  assert.match(runtime.objectiveLabel || '', /ONDA 1\/8/);
+  assert.match(runtime.objectiveLabel || '', /^ONDA 1 · /);
   for (const file of ['javali_jovem.glb', 'javaporco_adulto.glb', 'matriarca_javali.glb', 'ariete_javali.glb']) {
     assert.ok(glbs.some((url) => url.includes(file)), `${file} não carregou por HTTP 200`);
   }
