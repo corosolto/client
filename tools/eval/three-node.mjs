@@ -1,27 +1,37 @@
-import path from 'node:path';
+import { register } from 'node:module';
+import { lstatSync, mkdirSync, mkdtempSync, writeFileSync, symlinkSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-// Resolve o mesmo Three.js vendorizado do navegador, sem carregar mapas ou DOM.
-{
-  const fs = await import('node:fs');
-  const raiz = path.resolve(HERE, '../..');            // a raiz do projeto
-  const shim = path.join(raiz, 'node_modules', 'three');
-  const alvoIdx = path.resolve(raiz, 'public/vendor/three.module.js');
-  const alvoAdd = path.resolve(raiz, 'public/vendor/addons');
-  const liga = (de, para, tipo) => {
-    // lstat vê o LINK; existsSync vê o DESTINO. Link pendurado só aparece pro lstat.
-    try { fs.lstatSync(de); fs.rmSync(de, { recursive: true, force: true }); } catch { /* não existe */ }
-    fs.symlinkSync(para, de, tipo);
-  };
-  if (!fs.existsSync(path.join(shim, 'index.js'))) {
-    fs.mkdirSync(shim, { recursive: true });
-    fs.writeFileSync(path.join(shim, 'package.json'), JSON.stringify({
+// Reescreve a resolução, preservando pacotes instalados e os outros ganchos do grafo.
+const vendor = new URL('../../public/vendor/', import.meta.url).href;
+const modules = fileURLToPath(new URL('../../node_modules/', import.meta.url));
+const shim = path.join(modules, 'three');
+// Instrumentos com import antecipado ainda precisam da ponte em disco.
+// A publicação por symlink recusa um destino criado por outro processo.
+let exists = false;
+try { lstatSync(shim); exists = true; } catch (error) { if (error.code !== 'ENOENT') throw error; }
+if (!exists) {
+  mkdirSync(modules, { recursive: true });
+  const stage = mkdtempSync(path.join(modules, '.cs-three-node-'));
+  let published = false;
+  try {
+    writeFileSync(path.join(stage, 'package.json'), JSON.stringify({
       name: 'three', version: '0.160.0', type: 'module', main: 'index.js',
       exports: { '.': './index.js', './addons/*': './addons/*' },
     }));
-    liga(path.join(shim, 'index.js'), alvoIdx);
-    liga(path.join(shim, 'addons'), alvoAdd, 'dir');
-  }
+    symlinkSync(fileURLToPath(new URL('three.module.js', vendor)), path.join(stage, 'index.js'));
+    symlinkSync(fileURLToPath(new URL('addons/', vendor)), path.join(stage, 'addons'), 'dir');
+    try { symlinkSync(stage, shim, 'dir'); published = true; }
+    catch (error) { if (error.code !== 'EEXIST') throw error; }
+  } finally { if (!published) rmSync(stage, { recursive: true, force: true }); }
 }
+register(`data:text/javascript,${encodeURIComponent(`
+  const vendor = ${JSON.stringify(vendor)};
+  export function resolve(specifier, context, nextResolve) {
+    const target = specifier === 'three' ? 'three.module.js'
+      : specifier.startsWith('three/addons/') ? 'addons/' + specifier.slice('three/addons/'.length) : null;
+    return nextResolve(target ? new URL(target, vendor).href : specifier, context);
+  }
+`)}`);
 export const THREE = await import('three');
