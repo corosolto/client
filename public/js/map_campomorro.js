@@ -231,7 +231,9 @@ export function buildCampoMorro(scene, T = {}) {
   const chapaCover = lam({ color: 0xaeb4a8, metalness: .08, roughness: .88 });
   const detalhe = (mat, w, h, d, x, y, z) => {
     if (!detalhes.has(mat)) detalhes.set(mat, []);
-    detalhes.get(mat).push(new THREE.BoxGeometry(w, h, d).translate(x, y + h / 2, z));
+    const geo = new THREE.BoxGeometry(w, h, d);
+    if (mat.userData.rebocoMetros) uvRebocoMetros(geo, w, h, d);
+    detalhes.get(mat).push(geo.translate(x, y + h / 2, z));
   };
   const caixilho = (eixoX, fix, u, y, w, h, porta) => {
     const peca = (a, b, c, du, dy) => detalhe(esquadria, eixoX ? c : a, b, eixoX ? a : c, eixoX ? fix : u + du, y + dy, eixoX ? u + du : fix);
@@ -247,8 +249,26 @@ export function buildCampoMorro(scene, T = {}) {
       peca(w - .11, .04, .06, 0, h * .5);
     }
   };
-  const madeiraPallet = lam({ color: 0x9c7a4e, roughness: .95, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-  const cintaCover = lam({ color: 0x353b41, metalness: .3, roughness: .72, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const madeiraPallet = lam({ color: 0xd4bc92, roughness: .95, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  madeiraPallet.name = 'campo-palete-madeira';
+  if (typeof document !== 'undefined') {
+    const t = new THREE.TextureLoader().load('/img/textures/tex_madeira.webp');
+    t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    madeiraPallet.map = t;
+  }
+  madeiraPallet.userData.rebocoMetros = true;
+  const suportePallet = madeiraPallet.clone(); suportePallet.name = 'campo-palete-apoio'; suportePallet.color.setHex(0xa38b63);
+  const juntaCarga = lam({ color: 0x817b6d, roughness: .95, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const cargaCores = (cores) => cores.map((cor) => {
+    const m = repetido(MAT.galpaoConcrete, 1, 1); m.color.setHex(cor);
+    m.name = `campo-carga-${cor.toString(16)}`;
+    m.userData.rebocoMetros = true; m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -1;
+    return m;
+  });
+  const cargaTijolos = cargaCores([0xc18a66, 0xb27c59, 0xcc9670, 0xb88566]);
+  const cargaBlocos = cargaCores([0xf3e7ce, 0xdcd2bd, 0xe9dfca, 0xf4ecd8]);
+  for (const m of cargaBlocos) m.userData.campoBloco = true;
+  const cintaCover = lam({ color: 0x353b41, metalness: .3, roughness: .72, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
 
   const paleteBase = (w, h, d, x, y, z) => {
     const hp = Math.min(.16, h * .15);
@@ -257,7 +277,7 @@ export function buildCampoMorro(scene, T = {}) {
       const fz = z + l * (d / 2 - .012);
       for (const dy of [0, hp - .03]) face(w - .1, .03, .024, x, dy, fz);
       const blocos = [[-w / 2 + .05, -w * .12], [-w * .04, w * .04], [w * .12, w / 2 - .05]];
-      for (const [a, b] of blocos) face(b - a, hp - .06, .024, x + (a + b) / 2, .03, fz);
+      for (const [a, b] of blocos) detalhe(suportePallet, b - a, hp - .06, .024, x + (a + b) / 2, y + .03, fz);
       for (const [a, b] of [[-w * .12, -w * .04], [w * .04, w * .12]])
         detalhe(cintaCover, b - a, hp - .06, .024, x + (a + b) / 2, y + .03, fz);
     }
@@ -272,7 +292,6 @@ export function buildCampoMorro(scene, T = {}) {
       detalhe(cintaCover, .05, .02, d, x + dx, y + h - .02, z);
       detalhe(cintaCover, .05, .05, .05, x + dx, y + h - .05, z - d / 2 + .03);
     }
-    for (const l of [-1, 1]) detalhe(cintaCover, .02, .05, d - .06, x + l * (w / 2 - .01), y + h * .55, z);
   };
 
   const ventilado = (w, h, d, x, y, z) => {
@@ -286,8 +305,14 @@ export function buildCampoMorro(scene, T = {}) {
     const mat = tipo === 'medicao' ? chapaCover : lam({ color: tipo === 'tijolos' ? 0xa06b4e : 0xb0a894, roughness: .94 });
     const corpo = addBox(w, h, d, mat, x, y, z);
     corpo.userData.campoCover = { tipo, x, z, w, h, d };
+    if (tipo === 'pisos') {
+      const hp = Math.min(.16, h * .15), altura = h - hp - .045;
+      corpo.scale.set((w - .024) / w, altura / h, (d - .024) / d);
+      corpo.position.y = y + hp + altura / 2;
+      corpo.userData.campoCargaMiolo = true;
+    }
     const frente = (larg, alt, dx, dy) => {
-      for (const l of [-1, 1]) detalhe(juntaCover, larg, alt, .016, x + dx, y + dy, z + l * (d / 2 - .008));
+      for (const l of [-1, 1]) detalhe(tipo === 'medicao' ? juntaCover : juntaCarga, larg, alt, .016, x + dx, y + dy, z + l * (d / 2 - .008));
     };
     if (tipo === 'medicao') {
       frente(w - .16, .025, 0, .12); frente(w - .16, .025, 0, h - .13);
@@ -303,23 +328,59 @@ export function buildCampoMorro(scene, T = {}) {
         detalhe(cintaCover, .02, .035, d, x + l * (w / 2 - .01), y + dy, z);
       }
       ventilado(w, h, d, x, y, z);
+    } else if (tipo === 'pisos') {
+      // O miolo preenche as juntas; as cavidades têm fundo real a 4,5 cm.
+      const hp = Math.min(.16, h * .15), ch = (h - hp) / 3;
+      const cw = w / 3, cd = d / 3, junta = .012, cav = .045, parede = .045;
+      for (let k = 0; k < 3; k++) for (let ix = 0; ix < 3; ix++) for (let iz = 0; iz < 3; iz++) {
+        const cx = x - w / 2 + (ix + .5) * cw, cz = z - d / 2 + (iz + .5) * cd;
+        const by = y + hp + k * ch + junta / 2, bh = ch - junta;
+        const bw = cw - junta, bd = cd - junta, m = cargaBlocos[(k + ix + iz * 3) % cargaBlocos.length];
+        detalhe(m, bw, k === 2 ? bh - cav : bh, bd, cx, by, cz);
+        if (k !== 2) continue;
+        const base = by + bh - cav, miolo = bd - 2 * parede;
+        for (const lado of [-1, 1]) {
+          detalhe(m, bw, cav, parede, cx, base, cz + lado * (bd - parede) / 2);
+          detalhe(m, parede, cav, miolo, cx + lado * (bw - parede) / 2, base, cz);
+        }
+        detalhe(m, parede, cav, miolo, cx, base, cz);
+        for (const lado of [-1, 1])
+          detalhe(juntaCarga, (bw - 3 * parede) / 2, .003, miolo,
+            cx + lado * (bw - parede) / 4, base + .001, cz);
+      }
+      paleteBase(w, h, d, x, y, z); cintas(w, h, d, x, y, z);
     } else {
       const filas = tipo === 'tijolos' ? 5 : 3, nx = tipo === 'tijolos' ? 6 : 3, nz = tipo === 'tijolos' ? 5 : 3;
       const hp = Math.min(.16, h * .15), alturaFila = (h - hp) / filas;
-      for (let k = 1; k < filas; k++) {
-        frente(w, .012, 0, hp + alturaFila * k);
-        for (const l of [-1, 1]) detalhe(juntaCover, .016, .012, d, x + l * (w / 2 - .008), y + hp + alturaFila * k, z);
-      }
-      frente(w, .018, 0, h - .018);
-      for (const l of [-1, 1]) detalhe(juntaCover, .016, .018, d, x + l * (w / 2 - .008), y + h - .018, z);
+      const cores = tipo === 'tijolos' ? cargaTijolos : cargaBlocos;
       for (let k = 0; k < filas; k++) {
         const meia = tipo === 'tijolos' && k % 2 ? .5 : 0;
-        for (let j = 1; j < nx + meia; j++) frente(.012, alturaFila - .012, -w / 2 + (j - meia) * w / nx, hp + alturaFila * k + .006);
-        for (let j = 1; j < nz + meia; j++)
-          for (const l of [-1, 1]) detalhe(juntaCover, .016, alturaFila - .012, .012, x + l * (w / 2 - .008), y + hp + alturaFila * k + .006, z - d / 2 + (j - meia) * d / nz);
+        for (const [n, tam, lateral] of [[nx, w, false], [nz, d, true]])
+          for (let j = 0; j < n + meia; j++) {
+            const a = Math.max(-tam / 2, -tam / 2 + (j - meia) * tam / n);
+            const b = Math.min(tam / 2, -tam / 2 + (j + 1 - meia) * tam / n);
+            for (const l of [-1, 1]) detalhe(cores[(k + j * 3) % cores.length], lateral ? .004 : b - a - .008, alturaFila - .008, lateral ? b - a - .008 : .004,
+              lateral ? x + l * (w / 2 - .002) : x + (a + b) / 2, y + hp + k * alturaFila + .004,
+              lateral ? z + (a + b) / 2 : z + l * (d / 2 - .002));
+          }
       }
-      for (let j = 1; j < nx; j++) detalhe(juntaCover, .012, .012, d, x - w / 2 + j * w / nx, y + h - .012, z);
-      for (let j = 1; j < nz; j++) detalhe(juntaCover, w, .012, .012, x, y + h - .012, z - d / 2 + j * d / nz);
+      for (let ix = 0; ix < nx; ix++) for (let iz = 0; iz < nz; iz++)
+        detalhe(cores[(ix + iz * 3) % cores.length], w / nx - .008, .004, d / nz - .008,
+          x - w / 2 + (ix + .5) * w / nx, y + h - .004, z - d / 2 + (iz + .5) * d / nz);
+      for (let k = 1; k < filas; k++) {
+        frente(w, .008, 0, hp + alturaFila * k);
+        for (const l of [-1, 1]) detalhe(juntaCarga, .016, .008, d, x + l * (w / 2 - .008), y + hp + alturaFila * k, z);
+      }
+      frente(w, .018, 0, h - .018);
+      for (const l of [-1, 1]) detalhe(juntaCarga, .016, .018, d, x + l * (w / 2 - .008), y + h - .018, z);
+      for (let k = 0; k < filas; k++) {
+        const meia = tipo === 'tijolos' && k % 2 ? .5 : 0;
+        for (let j = 1; j < nx + meia; j++) frente(.008, alturaFila - .008, -w / 2 + (j - meia) * w / nx, hp + alturaFila * k + .006);
+        for (let j = 1; j < nz + meia; j++)
+          for (const l of [-1, 1]) detalhe(juntaCarga, .016, alturaFila - .008, .008, x + l * (w / 2 - .008), y + hp + alturaFila * k + .006, z - d / 2 + (j - meia) * d / nz);
+      }
+      for (let j = 1; j < nx; j++) detalhe(juntaCarga, .012, .012, d, x - w / 2 + j * w / nx, y + h - .012, z);
+      for (let j = 1; j < nz; j++) detalhe(juntaCarga, w, .012, .012, x, y + h - .012, z - d / 2 + j * d / nz);
       paleteBase(w, h, d, x, y, z);
       cintas(w, h, d, x, y, z);
     }
@@ -577,26 +638,58 @@ export function buildCampoMorro(scene, T = {}) {
   const Z_FACHADA_AZUL = 279 / 1024, Z_VIDRACA_AZUL = 269 / 1024;
   const vidroAzul = MAT.glass.clone(); vidroAzul.name = 'campo-vidro-azul'; vidroAzul.side = THREE.DoubleSide;
   vidroAzul.polygonOffset = true; vidroAzul.polygonOffsetFactor = 1; vidroAzul.polygonOffsetUnits = 1;
+  const Z_PORTA_AZUL = 257 / 1024;
+  const portaAzul = MAT.door.clone(); portaAzul.name = 'campo-porta-azul'; portaAzul.side = THREE.DoubleSide;
   const acabamentoAzul = (mesh) => {
     const src = mesh.geometry, geo = src.clone(), idx = src.index.array;
     geo.clearGroups(); geo.computeVertexNormals(); mesh.updateWorldMatrix(true, false);
     const pos = geo.attributes.position, nor = geo.attributes.normal, uv = geo.attributes.uv;
-    const detalhes = [], paineis = [], vidracas = [];
+    const detTris = [], paineis = [], vidracas = [], portas = [];
+    const retangulo = () => [Infinity, -Infinity, Infinity, -Infinity];
+    const vaos = Array.from({ length: 4 }, retangulo), vaoPorta = retangulo();
+    const expandir = (r, v) => { r[0] = Math.min(r[0], v.x); r[1] = Math.max(r[1], v.x); r[2] = Math.min(r[2], v.y); r[3] = Math.max(r[3], v.y); };
     const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
     for (let t = 0; t < idx.length; t += 3) {
       a.fromBufferAttribute(pos, idx[t]); b.fromBufferAttribute(pos, idx[t + 1]); c.fromBufferAttribute(pos, idx[t + 2]);
       const plano = a.z === b.z && a.z === c.z, crossZ = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-      if (plano && a.z === Z_VIDRACA_AZUL && crossZ < 0) { vidracas.push(idx[t], idx[t + 1], idx[t + 2]); continue; }
+      if (plano && a.z === Z_VIDRACA_AZUL && crossZ < 0) {
+        vidracas.push(idx[t], idx[t + 1], idx[t + 2]);
+        for (const v of [a, b, c]) expandir(vaos[(v.x > 0 ? 1 : 0) + (v.y > 0 ? 2 : 0)], v);
+        continue;
+      }
+      if (plano && a.z === Z_PORTA_AZUL && crossZ > 0) {
+        portas.push(idx[t], idx[t + 1], idx[t + 2]); for (const v of [a, b, c]) expandir(vaoPorta, v);
+        continue;
+      }
       if (plano && a.z === Z_FACHADA_AZUL && crossZ > 0) { paineis.push(idx[t], idx[t + 1], idx[t + 2]); continue; }
       const px = (uv.getX(idx[t]) + uv.getX(idx[t + 1]) + uv.getX(idx[t + 2])) * 1024 / 3;
       const py = (uv.getY(idx[t]) + uv.getY(idx[t + 1]) + uv.getY(idx[t + 2])) * 1024 / 3;
       const pintado = PAINEIS_AZUIS.some(([x0, y0, x1, y1]) => px >= x0 && px <= x1 && py >= y0 && py <= y1);
-      (pintado ? paineis : detalhes).push(idx[t], idx[t + 1], idx[t + 2]);
+      (pintado ? paineis : detTris).push(idx[t], idx[t + 1], idx[t + 2]);
     }
-    const ordem = new (idx.constructor)(idx.length); ordem.set(detalhes); ordem.set(paineis, detalhes.length); ordem.set(vidracas, detalhes.length + paineis.length);
+    const ordem = new (idx.constructor)(idx.length); ordem.set(detTris); ordem.set(paineis, detTris.length); ordem.set(vidracas, detTris.length + paineis.length);
+    ordem.set(portas, detTris.length + paineis.length + vidracas.length);
     geo.setIndex(new THREE.BufferAttribute(ordem, 1));
-    geo.addGroup(0, detalhes.length, 0); geo.addGroup(detalhes.length, paineis.length, 1);
-    geo.addGroup(detalhes.length + paineis.length, vidracas.length, 2);
+    geo.addGroup(0, detTris.length, 0); geo.addGroup(detTris.length, paineis.length, 1);
+    geo.addGroup(detTris.length + paineis.length, vidracas.length, 2);
+    geo.addGroup(detTris.length + paineis.length + vidracas.length, portas.length, 3);
+    if (!detalhes.has(esquadria)) detalhes.set(esquadria, []);
+    const escala = new THREE.Vector3().setFromMatrixScale(mesh.matrixWorld);
+    const tx = .04 / escala.x, ty = .04 / escala.y, tz = .06 / escala.z;
+    const peca = (w, h, d, x, y, z) => detalhes.get(esquadria).push(new THREE.BoxGeometry(w, h, d).translate(x, y, z).applyMatrix4(mesh.matrixWorld));
+    const moldura = (r, zc, dividir) => {
+      const w = r[1] - r[0], h = r[3] - r[2], cx = (r[0] + r[1]) / 2, cy = (r[2] + r[3]) / 2;
+      for (const l of [-1, 1]) {
+        peca(w, ty, tz, cx, cy + l * (h / 2 - ty / 2), zc);
+        peca(tx, h - 2 * ty, tz, cx + l * (w / 2 - tx / 2), cy, zc);
+      }
+      if (dividir) peca(tx, h - 2 * ty, tz, cx, cy, zc);
+    };
+    for (const r of vaos) if (r[0] <= r[1]) moldura(r, Z_VIDRACA_AZUL, true);
+    if (vaoPorta[0] <= vaoPorta[1]) {
+      moldura(vaoPorta, Z_PORTA_AZUL, false);
+      peca(tx * .5, ty * 1.6, tz, vaoPorta[1] - tx * 1.6, (vaoPorta[2] + vaoPorta[3]) / 2, Z_PORTA_AZUL + tz * .6);
+    }
     const normalMatrix = new THREE.Matrix3().getNormalMatrix(mesh.matrixWorld);
     const ponto = new THREE.Vector3(), normal = new THREE.Vector3(), uv1 = new Float32Array(pos.count * 2);
     for (let i = 0; i < pos.count; i++) {
@@ -636,7 +729,7 @@ export function buildCampoMorro(scene, T = {}) {
         return c;
       };
       const material = Array.isArray(n.material) ? n.material[0] : n.material;
-      acabamentoAzul(n); n.material = [fosco(material), rebocoAzul, vidroAzul];
+      acabamentoAzul(n); n.material = [fosco(material), rebocoAzul, vidroAzul, portaAzul];
     });
     if (glb) {
       g.add(glb); occluders.push(glb);
@@ -1057,8 +1150,9 @@ export function buildCampoMorro(scene, T = {}) {
   for (const [mat, geos] of detalhes) {
     const malha = new THREE.Mesh(mergeParts(geos), mat);
     malha.userData.campoDetailBatch = true;
-    malha.castShadow = false; malha.receiveShadow = true;
+    malha.castShadow = !!mat.userData.campoBloco; malha.receiveShadow = true;
     root.add(malha);
+    if (mat.userData.campoBloco) occluders.push(malha);
   }
   detalhes.clear();
 
