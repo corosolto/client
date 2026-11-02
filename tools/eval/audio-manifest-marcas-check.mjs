@@ -39,12 +39,12 @@
    se o varredor ficou cego.
 
    Uso: node tools/eval/audio-manifest-marcas-check.mjs [--mutante=…]
-   Mutantes: marca-volta | chave-sumida | varredor-cego */
+   Mutantes: marca-volta | chave-sumida | varredor-cego | chave-marca */
 
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
-const MUTANTES = ['marca-volta', 'chave-sumida', 'varredor-cego'];
+const MUTANTES = ['marca-volta', 'chave-sumida', 'varredor-cego', 'chave-marca'];
 const mutante = process.argv.find((a) => a.startsWith('--mutante='))?.slice(10) || '';
 if (mutante && !MUTANTES.includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante} (conhecidos: ${MUTANTES.join(', ')})`);
@@ -65,6 +65,15 @@ const MARCAS = [
   { re: /deagle[-_]/i,                        dono: 'Valve — nome de arquivo do CS (deagle-*)' },
   { re: /(?:^|[/_-])valve(?:$|[/_.-])/i,      dono: 'Valve' },
   { re: /(?:^|[/_-])epic(?:$|[/_.-])/i,       dono: 'Epic' },
+];
+
+/* Marca no NOME DA CHAVE: a família de topo viaja pro manifest.json público igual ao
+   caminho, então herdar o nome comercial (`cs`) expõe a marca com todos os caminhos neutros. */
+const MARCAS_CHAVE = [
+  { re: /^cs$|csgo|counter[-_ ]?strike/i, dono: 'Valve — Counter-Strike' },
+  { re: /^half[-_ ]?life$/i,              dono: 'Valve — Half-Life' },
+  { re: /^unreal$|^ut\d*/i,               dono: 'Epic — Unreal Tournament' },
+  { re: /^valve$|^epic$/i,                dono: 'dona do jogo' },
 ];
 
 const EXT_AUDIO = /\.(mp3|wav|ogg|m4a|webm)$/i;
@@ -106,7 +115,7 @@ const chavesLidas = new Set([
    Cresce quando o carregador ganhar família nova; e a cláusula irmã logo abaixo
    não deixa a lista envelhecer no outro sentido: família que o runtime parou de
    ler vira contrato morto e reprova. */
-const POOLS_CONTRATO = ['voice', 'round', 'general', 'cs', 'weapons'];
+const POOLS_CONTRATO = ['voice', 'round', 'general', 'jogo', 'weapons'];
 
 const contratoMorto = POOLS_CONTRATO.filter((k) => !chavesLidas.has(k));
 if (contratoMorto.length) {
@@ -131,6 +140,16 @@ for (const alvo of alvos) {
     delete dados.weapons;
     aplicado = true;
   }
+  if (mutante === 'chave-marca') {
+    dados.cs = { marca: ['audio/game/tiro-01.mp3'] };
+    aplicado = true;
+  }
+
+  const chaves = [];
+  (function andaChaves(o) {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return;
+    for (const [k, v] of Object.entries(o)) { chaves.push(k); andaChaves(v); }
+  })(dados);
 
   const folhas = [];
   (function anda(o) {
@@ -160,6 +179,22 @@ for (const alvo of alvos) {
       + ' Catalogar no ledger não cobre marca de terceiro — o nome tem que sair.');
   } else {
     notas.push(`MARCA1 ok: ${alvo} — ${folhas.length} caminho(s), nenhum cita marca de terceiro.`);
+  }
+
+  /* ── MARCA4: nenhuma chave (de topo ou interna) carrega marca ────────────── */
+  const chavesSujas = [];
+  for (const chave of chaves) {
+    for (const { re, dono } of MARCAS_CHAVE) {
+      if (re.test(chave)) { chavesSujas.push(`${chave} (${dono})`); break; }
+    }
+  }
+  if (chavesSujas.length) {
+    reprova('MARCA4', `${alvo} tem chave(s) citando marca de terceiro: ${chavesSujas.slice(0, 5).join('; ')}`
+      + `${chavesSujas.length > 5 ? ` … +${chavesSujas.length - 5}` : ''}.`
+      + ' A chave viaja pro manifest.json público pelo mesmo fluxo do caminho (fetch-audio.sh:52):'
+      + ' renomeie a família e os consumidores runtime no mesmo change (audio.js, gen-audio-manifest).');
+  } else {
+    notas.push(`MARCA4 ok: ${alvo} — ${chaves.length} chave(s), nenhuma cita marca de terceiro.`);
   }
 
   /* ── MARCA2: o contrato que o carregador espera continua de pé ────────────
@@ -219,7 +254,7 @@ for (const nota of notas) console.log(`  ✓ ${nota}`);
 
 if (mutante) {
   /* Mutante só é detectado se aplicou E acendeu a cláusula esperada. */
-  const esperado = { 'marca-volta': 'MARCA1', 'chave-sumida': 'MARCA2', 'varredor-cego': 'MARCA3' }[mutante];
+  const esperado = { 'marca-volta': 'MARCA1', 'chave-sumida': 'MARCA2', 'varredor-cego': 'MARCA3', 'chave-marca': 'MARCA4' }[mutante];
   if (aplicado) console.log(`Mutação aplicada: ${mutante}`);
   if (aplicado && falhas.some((f) => f.startsWith(`${esperado}:`))) {
     console.log(`\nMUTANTE ${mutante} DETECTADO — ${falhas.length} cláusula(s) vermelha(s):`);
