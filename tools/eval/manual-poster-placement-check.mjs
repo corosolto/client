@@ -262,8 +262,8 @@ function medirQuery(query, build = MAPS.praca_poderes.build) {
 }
 function inventarioVariante(label, query, build = MAPS.praca_poderes.build) {
   const m = medirQuery(query, build), inicioFalhas = falhas.length;
+  const clauses = avaliar(m);
   m.id += '/' + label;
-  const clauses = avaliarUnicidade(m);
   const arquivos = m.manuais.map(p => p.arquivo).sort();
   const esquerda = m.manuais.filter(p => p.rect?.x < 0).length;
   const direita = m.manuais.filter(p => p.rect?.x > 0).length;
@@ -284,10 +284,10 @@ function inventarioVariante(label, query, build = MAPS.praca_poderes.build) {
       createHash('sha256').update(new Uint8Array(a.array.buffer,a.array.byteOffset,a.array.byteLength)).digest('hex')])) }));
   console.log('POSTER_VARIANT ' + JSON.stringify({ label, query, count: m.manuais.length, arquivos, esquerda, direita,
     descriptorSHA256: createHash('sha256').update(JSON.stringify(descritores)).digest('hex'), descritores,
-    clauses: [...clauses], errors: falhas.length - inicioFalhas, scope: 'uniqueness/inventory only; nominal physical checks stay separate' }));
+    clauses: [...clauses], errors: falhas.length - inicioFalhas, scope: 'actual inventory, support and overlap in every variant' }));
   return { m, clauses };
 }
-async function moduloBuild() {
+async function moduloBuild(repetir = true) {
   const url = new URL('../../public/js/map_brasilia.js', import.meta.url);
   const source = readFileSync(url, 'utf8');
   const fix = `    const limite = Math.min(ARQUIVOS.length, ministries.length);
@@ -295,10 +295,16 @@ async function moduloBuild() {
       putPoster(ministries[Math.floor(i * ministries.length / limite)], ARQUIVOS[i]);
     }`;
   if (source.split(fix).length !== 2) throw new Error('MUTANTE NÃO APLICOU: seleção única não encontrada uma vez');
-  const mutated = source.replace(fix, '    ministries.forEach((b, i) => putPoster(b, ARQUIVOS[i % ARQUIVOS.length]));');
-  const resolved = mutated.replace(/from '([^']+)'/g, (all,p) => p === 'three'
-    ? `from '${new URL('../../public/vendor/three.module.js', import.meta.url)}'`
-    : p.startsWith('.') ? `from '${new URL(p,url)}'` : all);
+  const mutated = repetir ? source.replace(fix, '    ministries.forEach((b, i) => putPoster(b, ARQUIVOS[i % ARQUIVOS.length]));') : source;
+  const passURL = new URL('../../public/js/graffiti_pass.js', import.meta.url);
+  const pass = readFileSync(passURL, 'utf8'), review = '  revisarGrafiteManual(root, id);';
+  if (pass.split(review).length !== 2) throw new Error('CONTROLE NÃO APLICOU: revisor manual não encontrado uma vez');
+  const resolver = (text, owner, override) => text.replace(/from '([^']+)'/g, (all, p) => p === './graffiti_pass.js' && override
+    ? `from ${JSON.stringify(override)}` : p === 'three' ? `from '${new URL('../../public/vendor/three.module.js', import.meta.url)}'`
+      : p.startsWith('.') ? `from '${new URL(p, owner)}'` : all);
+  // Isola a seleção do produtor; controle e mutante têm o mesmo consumidor.
+  const passSemRevisor = 'data:text/javascript,' + encodeURIComponent(resolver(pass.replace(review, ''), passURL));
+  const resolved = resolver(mutated, url, passSemRevisor);
   const dir = mkdtempSync(path.join(tmpdir(), 'poster-modulo-'));
   process.on('exit', () => rmSync(dir, { recursive: true, force: true }));
   const file = path.join(dir, 'map_brasilia.mjs'); writeFileSync(file, resolved);
@@ -325,6 +331,10 @@ for (const [label,query] of [['default',''],['small','?bigscale=0'],['minsq0','?
 
 if (MUTANTE === 'modulo-ministerios') {
   if (falhas.length) { console.error('modulo-ministerios: nominal não verde; mutação não executada'); process.exit(1); }
+  const controle = inventarioVariante('controle-modulo-small', '?bigscale=0', await moduloBuild(false));
+  if (controle.m.manuais.length !== 4 || controle.clauses.size || falhas.length) {
+    console.error('modulo-ministerios: controle do produtor isolado deve manter quatro artes apoiadas e únicas'); process.exit(1);
+  }
   const { m, clauses } = inventarioVariante('mutante-modulo-small','?bigscale=0',await moduloBuild());
   if (m.manuais.length !== 8 || !clauses.has('UNICO_ARQUIVO')) {
     console.error('modulo-ministerios: fonte revertida deve desenhar oito cartazes e reprovar UNICO_ARQUIVO'); process.exit(1);

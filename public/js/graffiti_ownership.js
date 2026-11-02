@@ -20,6 +20,9 @@ export const ARTE_POR_MAPA = Object.freeze({
     "/img/decals/tag-fina.png",
   ]),
   "praca_poderes": Object.freeze([
+    "/posters/despisque-leao.jpg",
+    "/posters/New Project (1).png",
+    "/posters/or-baile.jpg",
     "/posters/25c9112229edfcfbb1eae4137ecc151a.jpg",
     "/img/decals/tags-treino-02.png",
   ]),
@@ -32,7 +35,6 @@ export const ARTE_POR_MAPA = Object.freeze({
     "/img/decals/or-stencil-capivara.png",
     "/img/decals/personagens-graffiti-04.png",
     "/img/decals/tag-selvagem.png",
-    "/posters/New Project (1).png",
     "/img/decals/personagens-graffiti-03.png",
   ]),
   "piscina_treta": Object.freeze([
@@ -63,7 +65,6 @@ export const ARTE_POR_MAPA = Object.freeze({
     "/img/decals/or-graf-treta.png",
     "/posters/dc58fe69ac56037026f1bf6181b7f71c.jpg",
     "/posters/51edbafcf2eebbb2dc157f66bb1a2d66.jpg",
-    "/posters/6f2bbbe03a6c5a16af15fe12ebea0d6c.jpg",
   ]),
   "obras_prefeitura": Object.freeze([
     "/img/decals/tag-flop.png",
@@ -72,6 +73,7 @@ export const ARTE_POR_MAPA = Object.freeze({
     "/posters/or-quebrada-vive.jpg",
   ]),
   "posto_treta": Object.freeze([
+    "/posters/6f2bbbe03a6c5a16af15fe12ebea0d6c.jpg",
     "/img/decals/pra-gringo.png",
     "/img/decals/cartaz-america-latina.png",
     "/img/decals/cartaz-medo.png",
