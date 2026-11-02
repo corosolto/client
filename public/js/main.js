@@ -458,7 +458,6 @@ function rebuildMenuBackdrop(mapa) {
 }
 function menuProps(mapa) {
   return mapPropIds(mapa);
-
 }
 let _menuLoadSeq = 0;
 async function loadMenuBackdrop() {
