@@ -1,6 +1,7 @@
 // Assets do jogo permanecem estáticos; a entrada usa o mesmo renderer Astro do site.
 // Usage: node tools/eval/serve.mjs [port]
 import http from 'node:http';
+import net from 'node:net';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { dev } from 'astro';
@@ -20,7 +21,16 @@ const CHARACTER_EVAL_SHELL = `<!doctype html>
 </script>`;
 
 // PR807: o parser parcial não executa componentes. Não simular HTML ou autenticação.
-const startAstro = manifest => dev({ server: { host: '127.0.0.1', port: 0 }, logLevel: 'error', vite: { cacheDir: '.astro/eval-vite', define: { __MANIFESTO_JS__: JSON.stringify(manifest) } } });
+const startAstro = async manifest => {
+  const reservation = net.createServer();
+  await new Promise((resolve, reject) => { reservation.once('error', reject); reservation.listen(0, '127.0.0.1', resolve); });
+  const port = reservation.address().port;
+  await new Promise((resolve, reject) => reservation.close(error => error ? reject(error) : resolve()));
+  return dev({ server: { host: '127.0.0.1', port }, logLevel: 'error', vite: {
+    cacheDir: '.astro/eval-vite', define: { __MANIFESTO_JS__: JSON.stringify(manifest) },
+    server: { strictPort: true, ws: { host: '127.0.0.1', clientPort: port } },
+  } });
+};
 const initial = moduleCacheManifest();
 let revision = initial.revision;
 let astro = await startAstro(initial);
@@ -42,7 +52,7 @@ const server = http.createServer(async (req, res) => {
   try {
     const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     // Rotas fixas do hub (/loja, /jogar/multiplayer...) saem do mesmo renderer, como no build (ADR 0008).
-    if (p === '/' || rotaDoCaminho(p) || /^\/(?:@|src\/|node_modules\/)/.test(p)) {
+    if (p === '/' || rotaDoCaminho(p) || /^\/(?:api\/|@|src\/|node_modules\/|\.astro\/)/.test(p)) {
       const renderer = await currentRenderer();
       renderer.handle(req, res);
       return;

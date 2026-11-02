@@ -1,6 +1,6 @@
 // Transporte HTTP real e contrato: docs/visual-consistency/BOOT-COHERENT-OVERLAY.md.
 import { execSync } from 'node:child_process';
-import { startBootOrigin,snapshotPublicJs,assertSnapshotLive } from './boot-network-origin.mjs';
+import { startBootOrigin,snapshotPublicJs,assertSnapshotLive,publicApiOrigin } from './boot-network-origin.mjs';
 import {freezeWindow,awaitWindow,validateReadyExact} from './boot-network-window.mjs';
 import {verifyDecoded,verifyResponseRecord,awaitBodies} from './boot-network-body.mjs';
 import {writeFileSync,mkdirSync} from 'node:fs';
@@ -13,15 +13,18 @@ import {awaitLocalModuleProof} from './boot-local-proof.mjs';
 
 const args = process.argv.slice(2), vistos = new Set(), opcoes = {};
 for (const a of args) {
-  const m=a.match(/^--(base|mutante)=(.+)$/);
+  const m=a.match(/^--(base|api-base|mutante)=(.+)$/);
   const k=a==='--self-test'?'self-test':m?.[1];
-  if (!k || vistos.has(k)) { console.error('uso: --base=URL --mutante=cartaz-ansioso|fauna-cedo --self-test (sem duplicatas)'); process.exit(2); }
+  if (!k || vistos.has(k)) { console.error('uso: --base=URL --api-base=ORIGIN --mutante=cartaz-ansioso|fauna-cedo --self-test (sem duplicatas)'); process.exit(2); }
   vistos.add(k); opcoes[k]=m?.[2] ?? true;
 }
 const MUTANTE=opcoes.mutante || '', BASE=opcoes.base || process.env.BASE || 'https://www.csbrasil.online';
 if (!['','cartaz-ansioso','fauna-cedo'].includes(MUTANTE)) { console.error('mutante desconhecido');process.exit(2); }
 try { if (!['http:','https:'].includes(new URL(BASE).protocol)) throw Error(); }
 catch { console.error('BASE inválida');process.exit(2); }
+let API_BASE;
+try { API_BASE=publicApiOrigin(opcoes['api-base'] ?? process.env.BOOT_API_BASE ?? new URL(BASE).origin); }
+catch { console.error('API_BASE inválida');process.exit(2); }
 if (opcoes['self-test']) {
   if (args.length !== 1) { console.error('--self-test exige uso isolado');process.exit(2); }
   const {selfTest}=await import('./boot-overlay.mjs');process.exit(selfTest().length?1:0);
@@ -99,7 +102,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   const isentas=new Set(),sobrepostos=new Map(),corposEsperados=new Map(),verificados=new Set(),verificacoes=new Map();
   const bodyChecks=new Map(),bodyRecords=new Map(),servedPayloads=new Map(),serverIds=new Set();
   let reportProxyError=null;const pendingProxyErrors=[];
-  origin=await startBootOrigin({BASE,snapshot:SNAPSHOT,transformJs:(rel,original)=>{
+  origin=await startBootOrigin({BASE,API_BASE,snapshot:SNAPSHOT,transformJs:(rel,original)=>{
     let corpo=original;
     if(rel==='js/textures.js'&&(refPoolAnsioso||mutante==='cartaz-ansioso'))corpo=poolAnsioso(corpo);
     if(rel==='js/textures.js')corpo=instrumentPosterIntent(corpo);
