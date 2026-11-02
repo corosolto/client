@@ -3691,13 +3691,16 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
 #emote-wheel .emote-fatia.ativo b{color:#10141a}
 @media (max-width:720px){#emote-wheel .emote-fatia{min-width:84px;font-size:10px;padding:7px 9px}}
 
-/* TRETA$ da partida: saldo acima da pilha de armas; o menu ocupa a tela como no CS. */
-#hud-treta{position:absolute;right:20px;bottom:350px;z-index:22;display:flex;align-items:baseline;justify-content:flex-end;flex-wrap:wrap;gap:6px;max-width:280px;
-  font:800 20px/1 var(--tp-num,var(--aaa-font-body,sans-serif));color:#b4d92e;text-align:right;text-shadow:0 2px 6px #000}
-#hud-treta .ht-moeda{font-size:12px;letter-spacing:.12em;color:#cfd6c0}
-#hud-treta .ht-ganho{font-style:normal;font-size:14px;color:#e8ff8a;opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s}
+/* TRETA$ da partida: PRIMEIRO item da pilha de armas (#weapon-hud), 2x maior — pedido do
+   dono, 01/11: "2x maior e logo acima das armas pra ficar mais agrupado". Filho estático da
+   pilha: cola no topo dela em qualquer resolução, sem bottom mágico. position:relative só
+   para ancorar a moeda que vira (.ht-moeda-anim). */
+#hud-treta{position:relative;display:flex;align-items:baseline;justify-content:flex-end;flex-wrap:wrap;gap:6px;width:100%;
+  font:800 40px/1 var(--tp-num,var(--aaa-font-body,sans-serif));color:#b4d92e;text-align:right;text-shadow:0 2px 6px #000}
+#hud-treta .ht-moeda{font-size:20px;letter-spacing:.12em;color:#cfd6c0}
+#hud-treta .ht-ganho{font-style:normal;font-size:18px;color:#e8ff8a;opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s}
 #hud-treta .ht-ganho.on{opacity:1;transform:none}
-#hud-treta .ht-dica{flex-basis:100%;font:700 11px/1.2 var(--aaa-font-body,sans-serif);letter-spacing:.08em;color:#cfd6c0}
+#hud-treta .ht-dica{flex-basis:100%;font:700 12px/1.2 var(--aaa-font-body,sans-serif);letter-spacing:.08em;color:#cfd6c0}
 #hud-treta .ht-dica:empty{display:none}
 #compra-menu{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:20px;box-sizing:border-box;
   background:rgba(5,7,5,.62);backdrop-filter:blur(8px);pointer-events:auto;font-family:var(--aaa-font-body,sans-serif)}
@@ -3727,9 +3730,9 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
 #compra-menu .cm-cabeca b .cm-moeda{width:18px;height:18px;vertical-align:-4px}
 #compra-menu .cm-linha img{flex:none}
 /* Moeda do TRETA$ no HUD e a moeda que VIRA ao ganhar a rodada (CSS 3D, sem JS por quadro). */
-#hud-treta .ht-coin{width:22px;height:22px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+#hud-treta .ht-coin{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 @keyframes ht-moeda-flip{0%{transform:rotateY(0) translateY(6px);opacity:0}14%{opacity:1}100%{transform:rotateY(900deg) translateY(-48px);opacity:0}}
 #hud-treta .ht-moeda-anim{position:absolute;right:4px;bottom:110%;width:36px;height:36px;object-fit:contain;animation:ht-moeda-flip 1.15s cubic-bezier(.2,.7,.3,1) forwards;filter:drop-shadow(0 3px 8px rgba(0,0,0,.65));pointer-events:none}
 .touch-compra{position:fixed;left:calc(212px + env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));width:44px;height:44px;font:800 22px/1 sans-serif;color:#10141a!important;background:#b4d92e!important;border-radius:50%}
 .touch-compra.hidden{display:none}
-@media (pointer:coarse),(max-height:500px){#hud-treta{right:10px;bottom:250px}#compra-menu{padding:0}#compra-menu .cm-painel{height:100%;padding:12px}#compra-menu .cm-linha{min-height:44px}}
+@media (pointer:coarse),(max-height:500px){#hud-treta{font-size:32px}#hud-treta .ht-coin{width:36px;height:36px}#compra-menu{padding:0}#compra-menu .cm-painel{height:100%;padding:12px}#compra-menu .cm-linha{min-height:44px}}

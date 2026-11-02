@@ -2164,7 +2164,12 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // selecionar uma arma de teste cujo GLB não tinha entrado nesta partida reduzida.
   const _qaVmWeapon = testMode && WEAPON_IDS.includes(params.get('vmweapon')) ? params.get('vmweapon') : null;
   // TRETA$ da partida: todo mundo nasce de pistola, então ela entra no preload junto com as sorteadas
-  const economia = economiaLigada({ busca: location.search, online: !!sessao, wpnMode: settings.wpnMode });
+  /* MP: quem autoriza a loja é o NÓ (`meta.economia` do welcome — rollout servidor-primeiro);
+     sala online é sempre 'all' (o seletor de Armas é da partida local). Nó velho = loadout de
+     hoje. VS BOTS: regra de sempre, e o mapa Javaporcos fica sem loja (armas grátis no chão). */
+  const economia = sessao
+    ? economiaLigada({ busca: location.search, online: true, meta: sessao.net?.meta || null, wpnMode: 'all', mapa: currentMap })
+    : economiaLigada({ busca: location.search, wpnMode: settings.wpnMode, mapa: currentMap });
   const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon, economia ? 'pistol' : null])].filter(Boolean);
   const _vmStartWeapon = _qaVmWeapon || (sessao
     ? sessao.net.meta.roster.find((r) => r.id === sessao.net.yourEnt)?.weapon || charWeapon(charId)
