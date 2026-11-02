@@ -799,7 +799,7 @@
     "eval:knife-skin-markings": "node tools/eval/knife-skin-markings-check.mjs",
     "eval:campo-uv": "node tools/eval/campo-uv-finish-mutations.mjs",
     "eval:grafite-atual": "node tools/eval/graffiti-current-ci-check.mjs --map=all --json=artifacts/grafite-atual",
-    "eval:grafite-atual:prova": "node tools/eval/graffiti-art-identity-check.mjs && node tools/eval/graffiti-current-ci-check.mjs --self-test",
+    "eval:grafite-atual:prova": "node --test tests/graffiti-global.test.mjs tests/graffiti-ownership.test.mjs && node tools/eval/graffiti-art-identity-check.mjs && node tools/eval/graffiti-current-ci-check.mjs --self-test",
     "eval:sondafilho": "node tools/eval/sonda-filho-check.mjs",
     "//eval:map-fauna-curated": "Acervo Mint usado no mapa: binding, textura, rig e preload mobile; mutantes recusam fallback e fauna removida.",
     "eval:map-fauna-curated": "node tools/eval/map-fauna-curated-mutants-check.mjs",

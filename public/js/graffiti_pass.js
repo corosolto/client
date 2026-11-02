@@ -65,6 +65,7 @@ import { medirParede, offsetTinta } from './map_decals.js';
 import { GRAFITE } from './graffiti_layout.js';
 import { criarSuporteGrafite, superficieGrafitavel } from './graffiti_surface.js';
 import { identidadeArteGrafite } from './graffiti_art_id.js';
+import { artePermitidaNoMapa } from './graffiti_ownership.js';
 
 const imagensGrafite = new WeakMap();
 let imagemGrafiteId = 0;
@@ -223,14 +224,14 @@ export function grafitar(cfg) {
   if (_semTinta) return { pass: { ancoras: 0, pecas: 0, pulado: true }, hom: { murais: 0, pulado: true } };
   const { id, root, T, waypoints, bandas, murais } = cfg;
   const _t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
-  revisarGrafiteManual(root);
+  revisarGrafiteManual(root, id);
   const assado = GRAFITE && GRAFITE[id];
   const vivo = (typeof window !== 'undefined' && window.__grafiteLive) || !assado;
   let pass, hom;
   if (!vivo) {
     const porNome = {};
     if (murais) (murais.nomes || []).forEach((n, i) => { if (murais.texturas[i]) porNome[n] = murais.texturas[i]; });
-    const r = aplicarGrafite(root, T, assado, porNome);
+    const r = aplicarGrafite(root, T, assado, porNome, id);
     pass = { pecas: r.pecas, malhas: r.malhas, assado: true };
     hom = { murais: r.murais, assado: true };
   } else {
@@ -240,7 +241,7 @@ export function grafitar(cfg) {
        menor inteiro dentro do maior. Invertido, a passada recebe as vagas dos
        murais em `ocupado` e desvia. */
     hom = murais
-      ? pendurarMurais(Object.assign({ root, T, waypoints, limpo: cfg.limpo, evitar: cfg.evitar }, murais))
+      ? pendurarMurais(Object.assign({}, murais, { id, root, T, waypoints, limpo: cfg.limpo, evitar: cfg.evitar }))
       : { murais: 0, layout: [] };
     const vagasMural = (hom.layout || []).map(([, x, y, z, ry, w, h]) => ({ x, y, z, ry, w, h }));
     pass = pintarParedes(Object.assign({}, cfg, { ocupado: vagasMural }));
@@ -254,7 +255,7 @@ export function grafitar(cfg) {
   return { pass, hom };
 }
 
-function revisarGrafiteManual(root) {
+function revisarGrafiteManual(root, id) {
   const suporte = criarSuporteGrafite(root, gradeEspacial), pieces = [], usadas = new Set();
   root.traverse((mesh) => {
     if (!mesh.isMesh || !/^(decal:|mural:)/.test(mesh.name) || mesh.userData.pecas) return;
@@ -265,7 +266,7 @@ function revisarGrafiteManual(root) {
     const up = new THREE.Vector3(0, 1, 0).transformDirection(mesh.matrixWorld);
     const piece = retanguloGrafiteDesenhado(mesh.geometry, mesh.matrixWorld);
     const chave = chaveArte(mesh.material?.map, mesh.name);
-    if (Array.isArray(mesh.material) || !piece || Math.abs(normal.y) > 0.001 || Math.abs(up.y) < 1 - 1e-6 || !suporte(piece) || usadas.has(chave)) pieces.push(mesh);
+    if (!artePermitidaNoMapa(id, chave) || Array.isArray(mesh.material) || !piece || Math.abs(normal.y) > 0.001 || Math.abs(up.y) < 1 - 1e-6 || !suporte(piece) || usadas.has(chave)) pieces.push(mesh);
     else usadas.add(chave);
   });
   for (const mesh of pieces) {
@@ -350,7 +351,7 @@ export function pintarParedes(opts) {
     root, T, waypoints, bandas,
     alcance = 7, passo = 2.2, raios = 16, cobre = 0.25,
     excluir = null, limpo = null, evitar = null, seed = 1, maxLarg = 5.2, minLarg = 0.45,
-    exigeChao = true, ocupado = null, olhos = null,
+    exigeChao = true, ocupado = null, olhos = null, id,
   } = opts;
   /* ZONA LIMPA — parede que o dono quer SEM tinta, declarada em coordenada.
      Nasceu da Loja H (07/08): "pode tirar os graffitis de dentro da loja, pode deixar
@@ -501,7 +502,7 @@ export function pintarParedes(opts) {
       for (const alt of B.alturas) {
         if (alt > B.y1 - B.y0 + 0.6) continue;
         const cartaz = B.fonte === 'poster';
-        const i = _escolher(B.pool, k, T, cartaz, usadas);
+        const i = _escolher(B.pool, k, T, cartaz, usadas, id);
         if (i === undefined) break;
         /* CARTAZ É OUTRA FONTE. `T.posterImgs` é a coleção do dono (lambe-lambe de
            verdade, JPG opaco) e vive num array separado de `T.decals`. Sem isto ela
@@ -604,7 +605,7 @@ function materialMural(nome, map) {
   });
 }
 
-export function aplicarGrafite(root, T, layout, muraisTex) {
+export function aplicarGrafite(root, T, layout, muraisTex, id) {
   if (!root || !T || !layout || !T.decalFiles) return { pecas: 0, murais: 0 };
   const suporte = criarSuporteGrafite(root, gradeEspacial);
   const idx = new Map(), idxP = new Map();
@@ -624,11 +625,12 @@ export function aplicarGrafite(root, T, layout, muraisTex) {
       continue;
     }
     // `poster:` no nome = veio da coleção do dono, não do pacote de decalques
+    if (!artePermitidaNoMapa(id, chaveArte(null, nome))) continue;
     const cartaz = nome.startsWith('poster:');
     const i = cartaz ? idxP.get(nome.slice(7)) : idx.get(nome);
     if (i === undefined) { console.warn('[grafite] layout cita "' + nome + '", que saiu do pacote'); continue; }
     const chaveArteAtual = chaveArte(cartaz ? T.posterImgs[i] : T.decals[i], nome);
-    if (usadas.has(chaveArteAtual)) continue;
+    if (!artePermitidaNoMapa(id, chaveArteAtual) || usadas.has(chaveArteAtual)) continue;
     const g = new THREE.PlaneGeometry(w, h);
     g.rotateY(ry); g.translate(x, y, z);
     const drawn = retanguloGrafiteDesenhado(g);
@@ -649,7 +651,7 @@ export function aplicarGrafite(root, T, layout, muraisTex) {
     const t = muraisTex && muraisTex[nome];
     if (!t) continue;
     const chaveArteAtual = chaveArte(t, nome);
-    if (usadas.has(chaveArteAtual)) continue;
+    if (!artePermitidaNoMapa(id, chaveArteAtual) || usadas.has(chaveArteAtual)) continue;
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), materialMural(nome, t));
     m.position.set(x, y, z); m.rotation.y = ry;
     m.renderOrder = 2; m.receiveShadow = true;
@@ -776,7 +778,7 @@ export function pendurarMurais(opts) {
   const {
     root, T, waypoints, texturas, nomes = [], alcance = 9, passo = 3.0,
     larg = 5.4, alt = 2.8, minLarg = 3.0, separacao = 14, seed = 7, excluir = null, limpo = null,
-    evitar = null,
+    evitar = null, id,
   } = opts;
   const _naZona = (x, z) => !!limpo && limpo.some((b) =>
     x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1);
@@ -840,7 +842,7 @@ export function pendurarMurais(opts) {
   const candidatas = texturas.map((texture, i) => ({ texture, nome: nomes[i] || ('homenagem-' + i) }))
     .filter(({ texture, nome }) => {
       const chave = chaveArte(texture, nome);
-      if (usadas.has(chave)) return false;
+      if (!artePermitidaNoMapa(id, chave) || usadas.has(chave)) return false;
       usadas.add(chave); return true;
     });
   const postas = [], feitos = [];
@@ -1044,12 +1046,14 @@ function _alturaParede(alvos, rc, A) {
 
 // Cada arquivo só aparece uma vez no mapa, cruzando manual, poster e passada.
 // Pool esgotado deixa a parede limpa, sem reciclar a mesma arte.
-function _escolher(pool, k, T, cartaz, usadas) {
+function _escolher(pool, k, T, cartaz, usadas, id) {
   for (let t = 0; t < pool.length; t++) {
     const j = pool[(k + t) % pool.length];
-    const texture = cartaz ? T.posterImgs[j] : T.decals[j];
     const nome = (cartaz ? 'poster:' : 'decal:') + (cartaz ? T.posterFiles[j] : T.decalFiles[j]);
-    if (texture && !usadas.has(chaveArte(texture, nome))) return j;
+    if (!artePermitidaNoMapa(id, chaveArte(null, nome))) continue;
+    const texture = cartaz ? T.posterImgs[j] : T.decals[j];
+    const chave = chaveArte(texture, nome);
+    if (texture && artePermitidaNoMapa(id, chave) && !usadas.has(chave)) return j;
   }
 }
 
