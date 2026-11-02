@@ -24,6 +24,7 @@ import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura 
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
+import { planoUV, metrosPorUV } from './map_uv.js';
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
@@ -587,8 +588,10 @@ export function buildQuebrada(scene, T) {
      `collide:false`: dar-lhe colisor não mudaria o andar e só engordaria a lista quente. */
   const RUA_Z0 = -20, RUA_Z1 = 24, RUA_D = RUA_Z1 - RUA_Z0, RUA_ZC = (RUA_Z0 + RUA_Z1) / 2;
   addFloor(14, RUA_D, 0, RUA_ZC, MAT.asphalt);
+  const mpuCalcada = metrosPorUV(MAT.concrete);
   for (const sx of [-1, 1]) {
-    addFloor(5.5, RUA_D, sx * 9.75, RUA_ZC, MAT.concrete, 0.02);
+    const calcada = addFloor(5.5, RUA_D, sx * 9.75, RUA_ZC, MAT.concrete, 0.02);
+    planoUV(calcada.geometry, 5.5, RUA_D, mpuCalcada);
     addBox(0.22, 0.14, RUA_D, MAT.concreteDark, sx * 7.11, 0, RUA_ZC, { collide: false, cast: false });
   }
   // faixa de pedestre nas duas bocas da rua (praça e travessa) — leitura de "rua de verdade"
