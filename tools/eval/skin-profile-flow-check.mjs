@@ -243,6 +243,9 @@ try {
       preloadWeaponSkinCandidate: (id) => { ordem.push(`preload skin ${id}`); return promesaFaca; },
       playerKnifeSkinId: KNIFE,
       sfx: { preloadWeaponSamples: () => Promise.resolve() },
+      /* v7 da união: o bloco real pergunta `ehMapaJavaporcos(currentMap)` antes do
+         preload de áudio do modo. Cenário desta régua não é mapa javaporcos. */
+      ehMapaJavaporcos: () => false, currentMap: 'praca_poderes',
       preloadMapProps: () => Promise.resolve(), mapPropIds, mapaPartida: {},
       MOBILE_AUTO: true, preloadMapAmbientLife: () => Promise.resolve(),
       preloadFPArms: () => Promise.resolve(), POINTER_COARSE: true,

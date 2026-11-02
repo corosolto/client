@@ -5,8 +5,10 @@ import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, copyFileSy
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { sonda, pula } from './sonda-filho.mjs';
 import { carregarMapIds } from '../audio/map-ids.mjs';
+import { JAVAPORCO_GRAVACOES } from '../../public/js/data/javaporcos_audio.js';
 
 const root = resolve(new URL('../..', import.meta.url).pathname);
 let source = readFileSync(join(root, 'tools/audio/lajes-soundscape.mjs'), 'utf8');
@@ -47,7 +49,14 @@ console.log('PASS LSA1–LSA6 helper puro: Lajes, isolamento, escopo, autorado, 
 const temp = mkdtempSync(join(tmpdir(), 'lajes-audio-fetch-'));
 let causaLSA = '';
 try {
-  for (const dir of ['scripts', 'tools/audio', 'public/audio', 'public/js', 'bin', 'pack']) mkdirSync(join(temp, dir), { recursive: true });
+  for (const dir of ['scripts', 'tools/audio', 'public/audio', 'public/js/data', 'bin', 'pack']) mkdirSync(join(temp, dir), { recursive: true });
+  copyFileSync(join(root, 'tools/audio/javaporcos-samples.mjs'), join(temp, 'tools/audio/javaporcos-samples.mjs'));
+  const samples = Object.fromEntries(Object.entries(JAVAPORCO_GRAVACOES).map(([key, sample], index) => {
+    const bytes = Buffer.from(`fixture-javaporco-${index}`);
+    writeFileSync(join(temp, `sample-${index}.mp3`), bytes);
+    return [key, { ...sample, download: `https://example.invalid/sample-${index}.mp3`, sha256: createHash('sha256').update(bytes).digest('hex') }];
+  }));
+  writeFileSync(join(temp, 'public/js/data/javaporcos_audio.js'), `export const JAVAPORCO_GRAVACOES = ${JSON.stringify(samples)};\n`);
   // `fetch-audio.sh` termina em `ensure-map-soundscapes.mjs` (issue #696), que lê os ids
   // do registro de mapas: a árvore de teste precisa dele e do `maps.js` para não cair em ERR_MODULE_NOT_FOUND.
   copyFileSync(join(root, 'tools/audio/map-ids.mjs'), join(temp, 'tools/audio/map-ids.mjs'));
@@ -61,15 +70,21 @@ try {
   copyFileSync(join(root, 'tools/audio/extend-map-soundscapes.mjs'), join(temp, 'tools/audio/extend-map-soundscapes.mjs'));
   const fetch = readFileSync(join(root, 'scripts/fetch-audio.sh'), 'utf8').replaceAll('/tmp/csbrasil-audio.zip', join(temp, 'download.zip'));
   writeFileSync(join(temp, 'scripts/fetch-audio.sh'), fetch);
-  writeFileSync(join(temp, 'bin/curl'), `#!/usr/bin/env bash\nwhile [ "$#" -gt 0 ]; do if [ "$1" = "-o" ]; then shift; cp "$FIXTURE_ZIP" "$1"; exit 0; fi; shift; done\nexit 2\n`, { mode: 0o755 });
-  const runFetch = vercel => spawnSync('bash', ['scripts/fetch-audio.sh'], { cwd: temp, encoding: 'utf8', env: { ...process.env, VERCEL: vercel, AUDIO_PACK_URL: 'https://example.invalid/fixture.zip', AUDIO_PACK_SHA256: '', BLOB_READ_WRITE_TOKEN: '', PATH: `${join(temp, 'bin')}:${process.env.PATH}`, FIXTURE_ZIP: join(temp, 'pack.zip') } });
+  const sampleRoutes = Object.values(samples).map((sample, index) => `  ${sample.download}) cp "$FIXTURE_DIR/sample-${index}.mp3" "$dest" ;;`).join('\n');
+  writeFileSync(join(temp, 'bin/curl'), `#!/usr/bin/env bash\nset -eu\nurl=\ndest=\nwhile [ "$#" -gt 0 ]; do\n  case "$1" in\n    -o) shift; dest="$1" ;;\n    https://*) url="$1" ;;\n  esac\n  shift\ndone\ncase "$url" in\n  https://example.invalid/fixture.zip) cp "$FIXTURE_ZIP" "$dest" ;;\n${sampleRoutes}\n  *) exit 2 ;;\nesac\n`, { mode: 0o755 });
+  const runFetch = vercel => spawnSync('bash', ['scripts/fetch-audio.sh'], { cwd: temp, encoding: 'utf8', env: { ...process.env, VERCEL: vercel, AUDIO_PACK_URL: 'https://example.invalid/fixture.zip', AUDIO_PACK_SHA256: '', BLOB_READ_WRITE_TOKEN: '', PATH: `${join(temp, 'bin')}:${process.env.PATH}`, FIXTURE_ZIP: join(temp, 'pack.zip'), FIXTURE_DIR: temp } });
   const path = join(temp, 'public/audio/manifest.json');
   writeFileSync(path, JSON.stringify(fetchFixture));
   const cached = runFetch(''); assert.equal(cached.status, 0, cached.stderr);
+  for (const sample of Object.values(samples)) {
+    assert.equal(createHash('sha256').update(readFileSync(join(temp, 'public', sample.file))).digest('hex'), sample.sha256);
+    rmSync(join(temp, 'public', sample.file));
+  }
   assert.deepEqual(JSON.parse(readFileSync(path)).mapSoundscapes.lajes, donor, 'LSA7 early exit ignorou adaptação de Lajes');
   writeFileSync(join(temp, 'pack/manifest.json'), JSON.stringify(fetchFixture));
   const zip = spawnSync('zip', ['-q', join(temp, 'pack.zip'), 'manifest.json'], { cwd: join(temp, 'pack'), encoding: 'utf8' }); assert.equal(zip.status, 0, zip.stderr);
   const fresh = runFetch('1'); assert.equal(fresh.status, 0, fresh.stderr);
+  for (const sample of Object.values(samples)) assert.equal(createHash('sha256').update(readFileSync(join(temp, 'public', sample.file))).digest('hex'), sample.sha256);
   assert.deepEqual(JSON.parse(readFileSync(path)).mapSoundscapes.lajes, donor, 'LSA8 unzip ignorou adaptação de Lajes');
   assert.deepEqual(JSON.parse(readFileSync(path)).mapSoundscapes.amazonia, { loops: donor.loops, shots: donor.shots }, 'fetch deve preparar também Amazônia');
   assert.deepEqual(JSON.parse(readFileSync(path)).mapSoundscapes.escadao, donor, 'Fetch integra também Escadão');

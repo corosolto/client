@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { importAudioProbe } from './audio-probe-module.mjs';
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
@@ -30,7 +31,7 @@ globalThis.Audio = class {
   pause() {}
 };
 
-const { Sfx } = await import(`data:text/javascript;base64,${Buffer.from(audio).toString('base64')}#${mutante || 'normal'}`);
+const { Sfx } = await importAudioProbe(audio, mutante);
 const sfx = new Sfx();
 sfx._pick = (pool) => pool?.[0] || null;
 

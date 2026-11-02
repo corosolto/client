@@ -22,6 +22,9 @@ const alvoPorMutante = {
   'loading-uma-acao': 'UIA6',
   'loading-clipe-falso': 'UIA6',
   'sem-i18n': 'UIR1',
+  'loading-sem-tr': 'UIR1',
+  'loading-fallback-fora-tr': 'UIR1',
+  'loading-triplo-fora-tr': 'UIR1',
   'preview-render': 'UIR2',
   'preview-decode': 'UIR3',
   'mapa-esconde-um': 'UIR4',
@@ -188,9 +191,16 @@ loading3d = muta('loading-uma-faccao', loading3d,
   "U: 'blackmetal'",
   "U: 'canarinho'");
 
+main = muta('loading-sem-tr', main, 'a.textContent = tr(nomeTimeJavaporcos', 'a.textContent = (nomeTimeJavaporcos');
+main = muta('loading-fallback-fora-tr', main,
+  "a.textContent = tr(nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'E') || FACTION_NAME[currentTeam] || '')",
+  "a.textContent = tr('') || (FACTION_NAME[currentTeam] || '')");
+main = muta('loading-triplo-fora-tr', main,
+  "b.textContent = tr(ehMapaJavaporcos(currentMap) && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || '')",
+  "b.textContent = ehMapaJavaporcos(currentMap) && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : tr(nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || '')");
 main = muta('sem-i18n', main,
-  "`${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`",
-  "`MAPA ${MAP_IDS.indexOf(currentMap) + 1} DE ${MAP_IDS.length}`");
+  "`${tr('MAPA')} ${MAPAS_MENU.indexOf(currentMap) + 1} ${tr('DE')} ${MAPAS_MENU.length}`",
+  "`MAPA ${MAPAS_MENU.indexOf(currentMap) + 1} DE ${MAPAS_MENU.length}`");
 main = muta('preview-render', main,
   "if (pv && pv.model && previewModelActive(csOpen,hubPreviewOpen)) {",
   "if (pv && pv.model && (csOpen || hubPreviewOpen)) {");
@@ -348,7 +358,7 @@ game = muta('resultado-personagem-antigo', game,
   'if (charId) { this.playerDef = byId(charId); this.playerCharId = charId; p.def = this.playerDef; }',
   'if (charId) { this.playerDef = byId(charId); p.def = this.playerDef; }');
 main = muta('loading-sem-wallpaper', main,
-  "_lo.box.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI++));",
+  "_lo.box.style.setProperty('--loading-wall', _loadWallFixa ? `url('${_loadWallFixa}')` : loadingWallUrl(_loadWallI++));",
   "_lo.box.style.setProperty('--loading-wall', 'none');");
 main = muta('splash-sem-wallpaper', main,
   "splash.style.setProperty('--loading-wall', loadingWallUrl(_wallK));",
@@ -644,10 +654,12 @@ const loadingAcoes3d = new Set(loadingActions).size >= 6
 const funcLoop = blocoFuncao(main, 'loop');
 const funcShow = blocoFuncao(main, 'show');
 const funcMap = blocoFuncao(main, 'renderMapScreen');
+const mainLoadingI18n = main.replace(/nomeTimeJavaporcos\(ehMapaJavaporcos\(currentMap\) \? 'horde' : '', '[EB]'\) \|\| /g, '')
+  .replace("tr(ehMapaJavaporcos(currentMap) && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : ", 'tr(');
 const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main)
   && /tr\(FACTION_NAME\[c\.team\] \|\| ''\)[\s\S]{0,160}tr\('PERSONAGENS'\)/.test(main)
-  && /a\.textContent = tr\(FACTION_NAME\[currentTeam\] \|\| ''\)/.test(main)
-  && /b\.textContent = tr\(FACTION_NAME\[ladoDele\] \|\| ''\)/.test(main)
+  && /a\.textContent = tr\(FACTION_NAME\[currentTeam\] \|\| ''\)/.test(mainLoadingI18n)
+  && /b\.textContent = tr\(FACTION_NAME\[ladoDele\] \|\| ''\)/.test(mainLoadingI18n)
   && /chip\.textContent = `\$\{n\} \$\{tr\('PERSONAGENS'\)\}`/.test(main)
   && /ms-desc'\)\.textContent = tr\(MAP_DESC\[currentMap\] \|\| ''\)/.test(main)
   && /frase\('escolhaAdversario', tr\(FACTION_NAME\[myFaction\]/.test(main)
@@ -823,12 +835,13 @@ const resultadoEstatico = /--me-art/.test(game)
      (`if (charId) { this.playerDef = byId(charId); ... }`) e ficou vermelha sozinha
      quando o guarda ganhou reserva de facção, sem que nada do contrato mudasse. */
   && /_switchTeam\(charId\)[\s\S]{0,900}?this\.playerDef =[\s\S]{0,400}?this\.playerCharId = this\.playerDef\.id;[\s\S]{0,200}?p\.def = this\.playerDef;/.test(game);
+const loadingWallAplicada = main.includes("_lo.box.style.setProperty('--loading-wall', _loadWallFixa ? `url('${_loadWallFixa}')` : loadingWallUrl(_loadWallI++));");
 const loadingWallpaper = /const loadingWallUrl = \(i\) =>/.test(main)
-  && /_lo\.box\.style\.setProperty\('--loading-wall', loadingWallUrl\(_loadWallI\+\+\)\)/.test(main)
+  && loadingWallAplicada
   && /splash\.style\.setProperty\('--loading-wall', loadingWallUrl\(_wallK\)\)/.test(main)
   && loadingCharacterIds.length === 5 && new Set(loadingCharacterIds).size === 5
   && /E: 'gotinha'[\s\S]*?B: 'canarinho'[\s\S]*?U: 'blackmetal'[\s\S]*?C: 'bonzo'[\s\S]*?F: 'mandrake'/.test(loading3d)
-  && /loadingStage\.show\(currentFaction\)/.test(main)
+  && /loadingStage\.show\(ehMapaJavaporcos\(currentMap\) \? 'J' : currentFaction\)/.test(main)
   && /loadingStage\.hide\(\)/.test(main)
   && !/loading-runner/.test(astro)
   && !/loading-runner-frames/.test(css);
@@ -915,7 +928,7 @@ const menuWall3x2AssetsOk = menuWallSources.length > 0 && (await Promise.all(men
   return meta.width === sourceMeta.width && meta.height === Math.round(sourceMeta.width / 1.5);
 }))).every(Boolean);
 const wallpaperLoadingResponsivo = /setProperty\('--loading-wall', loadingWallUrl\(_wallK\)\)/.test(main)
-  && /setProperty\('--loading-wall', loadingWallUrl\(_loadWallI\+\+\)\)/.test(main)
+  && loadingWallAplicada
   && /setProperty\('--menu-wall', HOME_WALL\)/.test(main)
   && /setProperty\('--menu-wall', SETUP_WALL\)/.test(main)
   && /setProperty\('--menu-wall-3x2', HOME_WALL_3X2\)/.test(main)
@@ -939,7 +952,8 @@ const opcoesPartidaNoMapa = /id="ms-wpn-mode"/.test(astro)
   && /settings\.enemyBots = Math\.max\(1, Math\.min\(8, msEnemy\.value \| 0\)\)/.test(main)
   && /settings\[matchMode === 'ctf' \? 'ctfRounds' : 'rounds'\] = sanitizeRounds\(msRounds\.value\)(?: \|\| \(matchMode === 'ctf' \? 3 : 5\))?;/.test(main)
   && /function matchRounds\(\)[\s\S]{0,400}settings\.ctfRounds[\s\S]{0,400}settings\.rounds/.test(main)
-  && /roundsMax: sessao \? \(sanitizeRounds\(sessao\.net\.meta\.roundsMax\) \|\| undefined\) : matchRounds\(\),/.test(main)
+  && /roundsMax:[^\n]*sanitizeRounds\(sessao\.net\.meta\.roundsMax\)[^\n]*matchRounds\(\)/.test(main)
+  && /roundsMax:[^\n]*ehMapaJavaporcos\(currentMap\) \? 1/.test(main)
   && /constructor\(\{[^\n]*\broundsMax\b/.test(game)
   && /export const sanitizeRounds[\s\S]{0,200}ROUNDS_CUSTOM_MAX \? n : 0;/.test(game)
   && /const requestedRounds = sanitizeRounds\(roundsMax\);/.test(game)

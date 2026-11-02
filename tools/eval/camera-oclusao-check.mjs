@@ -139,6 +139,86 @@ const passo = (g, n = 1, eye = 1.62) => { for (let i = 0; i < n; i++) Game.proto
   }
 }
 
+/* ---- (3) câmera tem volume nos quatro lados, inclusive com pitch alto ---- */
+{
+  const g = boot({});
+  g.camView = 'third';
+  g.player.yaw = 0;
+  g.player.pitch = 1.2;
+  passo(g, 3);
+  g.world.occluders.length = 0;
+  g.world.camBlockers = [];
+  const sentinel = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial());
+  sentinel.position.set(0, -100, 0);
+  sentinel.updateMatrixWorld(true);
+  g.world.occluders.push(sentinel);
+  const eye = eyePos(g);
+  const boom = g.camera.position.clone().sub(eye);
+  const dir = boom.clone().normalize();
+  const right = g._tpRight.clone().addScaledVector(dir, -g._tpRight.dot(dir)).normalize();
+  const up = new THREE.Vector3().crossVectors(dir, right).normalize();
+  const dQuina = Math.min(0.9, boom.length() * 0.55);
+  const targets = [];
+  const intersectObjects = g.ray.intersectObjects.bind(g.ray);
+  g.ray.intersectObjects = (objects, recursive, target) => {
+    targets.push(target);
+    return intersectObjects(objects, recursive, target);
+  };
+  const casos = [
+    ['direita', right, 0.12],
+    ['esquerda', right, -0.12],
+    ['topo', up, 0.10],
+    ['base', up, -0.10],
+  ];
+  for (const [nome, eixo, offset] of casos) {
+    const centro = eye.clone().addScaledVector(dir, dQuina).addScaledVector(eixo, offset);
+    const quina = new THREE.Box3(
+      centro.clone().addScalar(-0.025),
+      centro.clone().addScalar(0.025),
+    );
+    (g.world.camBlockers ||= []).push(quina);
+    g._tpBoomBlockedGrace = 0;
+    g._tpBoomLastBlocked = undefined;
+    g._tpBoomClear = undefined;
+    passo(g, 1);
+    const d = g.camera.position.distanceTo(eye);
+    check(`volume da câmera cobre ${nome}`, d < dQuina - 0.05,
+      { d: +d.toFixed(3), dQuina: +dQuina.toFixed(3), pitch: g.player.pitch });
+    g.world.camBlockers.pop();
+  }
+  check('probes reutilizam array de interseções',
+    targets.length >= 5 && targets.every((target) => target === targets[0] && Array.isArray(target)),
+    { chamadas: targets.length, mesmoArray: targets.every((target) => target === targets[0]) });
+}
+
+/* ---- (4) N e Shift+N passam pelo teclado; B fica reservado à compra ---- */
+{
+  const g = boot({});
+  const teclaN = ({ shiftKey = false, repeat = false } = {}) => g._kd({
+    code: 'KeyN', shiftKey, repeat, target: null, preventDefault() {},
+  });
+  g.setCamView('third');
+  teclaN();
+  check('N sem Shift alterna o modo', g.camView === 'shoulder', { camView: g.camView });
+  passo(g, 1);
+  const eye = eyePos(g);
+  const ladoAntes = g.camera.position.clone().sub(eye).dot(g._tpRight);
+  teclaN({ shiftKey: true });
+  passo(g, 1);
+  const ladoDepois = g.camera.position.clone().sub(eye).dot(g._tpRight);
+  check('Shift+N mantém câmera de ombro', g.camView === 'shoulder', { camView: g.camView });
+  check('Shift+N inverte lado do enquadramento',
+    ladoAntes > 0.2 && ladoDepois < -0.2,
+    { ladoAntes: +ladoAntes.toFixed(3), ladoDepois: +ladoDepois.toFixed(3) });
+  const ladoAposTroca = g._tpShoulderSide;
+  teclaN({ shiftKey: true, repeat: true });
+  check('repeat de Shift+N não troca de novo', g._tpShoulderSide === ladoAposTroca,
+    { antes: ladoAposTroca, depois: g._tpShoulderSide });
+  const mode = g.camView, side = g._tpShoulderSide;
+  for (const shiftKey of [false,true]) g._kd({code:'KeyB',shiftKey,repeat:false,target:null,preventDefault(){}});
+  check('B e Shift+B não mexem na câmera',g.camView===mode && g._tpShoulderSide===side,
+    {mode,givenMode:g.camView,side,givenSide:g._tpShoulderSide});
+
 /* ---- (3) Piscina: o volume visual do armário para o boom antes de tomar a tela ---- */
 {
   const g = boot({ mapId: 'piscina_treta' });
@@ -160,6 +240,8 @@ const passo = (g, n = 1, eye = 1.62) => { for (let i = 0; i < n; i++) Game.proto
       g.camera.position.z <= box.min.z + 0.02 && g.camera.position.z > g.player.pos.z,
       { cameraZ: +g.camera.position.z.toFixed(3), armarioMinZ: +box.min.z.toFixed(3), playerZ: +g.player.pos.z.toFixed(3) });
   } else check('boom da Piscina para antes do fundo do armário', false, { armarios: 0 });
+}
+
 }
 
 const result = {

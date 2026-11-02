@@ -1390,7 +1390,7 @@ export function buildEscadao(scene, T) {
   };
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, snapDownSteps: true, layeredNavigation: true, spawns, sun, hemi, pickups, ctfPoints, ambience, update, casario, casarioMoldes: CASARIO_MOLDES,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, snapDownSteps: true, layeredNavigation: true, authoredSpawnYaw: true, spawns, sun, hemi, pickups, ctfPoints, ambience, update, casario, casarioMoldes: CASARIO_MOLDES,
     /* Som por cota: duas fontes no centro com raio 70 m tocavam igual no beco e no
        mirante. Agora baile na rua, cidade subindo do vale e passarada no topo. */
     sound: { loops: [
