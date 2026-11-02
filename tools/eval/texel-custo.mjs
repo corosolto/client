@@ -53,7 +53,7 @@ const ESPERA = +(arg('espera', 6000));
    o instante da amostra depende de quanto o mapa conseguiu desenhar, não do que a mudança
    fez. Medido no escadao, MESMO estado, 5 execuções: 198, 205, 205, 205, 218 — 10% de
    amplitude sem uma linha de código mudar, e a execução de 218 acendeu
-   "✗ CUSTO escadao: textures subiu 10.1%" contra uma mudança que não cria textura
+   "✗ CUSTO fy_escadao: textures subiu 10.1%" contra uma mudança que não cria textura
    nenhuma. `geometries` oscilou junto (1468 a 2167).
    COMO LER ESTA RÉGUA, então: uma execução de cada lado NÃO decide nada perto da margem.
    Repita 3 vezes cada lado e compare a MODA; se as duas modas forem iguais, o eixo não se

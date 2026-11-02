@@ -92,11 +92,11 @@
      loja_h         3048   533 (17,5%)     367 (12,0%)                   0
      ferro_velho    2376   863 (36,3%)       1 ( 0,0%)                   0
      quebrada       2928   546 (18,6%)      52 ( 1,8%)                   0
-     escadao     3192   234 ( 7,3%)     320 (10,0%)                   34 grupos
-     campomorro  2880   307 (10,7%)      52 ( 1,8%)                   0
-     lajes       2928   977→82 (33→2,8%) 95 ( 3,2%)                   0
-     corrego     2808    89 ( 3,2%)     217 ( 7,7%)                   0
-     mansao      3000   129 ( 4,3%)      81 ( 2,7%)                   0
+     fy_escadao     3192   234 ( 7,3%)     320 (10,0%)                   34 grupos
+     fy_campomorro  2880   307 (10,7%)      52 ( 1,8%)                   0
+     fy_lajes       2928   977→82 (33→2,8%) 95 ( 3,2%)                   0
+     fy_corrego     2808    89 ( 3,2%)     217 ( 7,7%)                   0
+     fy_mansao      3000   129 ( 4,3%)      81 ( 2,7%)                   0
 
    O teto NÃO é folga para o estado atual: o estado atual reprova em 10/10 e as
    fotos (--fotos) mostram que não é ruído de coleta — em quebrada o jogador vê
