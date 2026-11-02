@@ -33,5 +33,10 @@ causal. A lista do gerador manteve exatamente os mesmos arquivos do grafo;
 o hash foi recomputado independentemente. O nominal Javaporcos também passou.
 O hash oficial foi regenerado e os checks de docs e ARCH passaram (R1242).
 
+O caso R1245 também passou: depois dos processos que importam o helper, outro
+processo carrega Three e GLTFLoader sem importar esse helper. Isso exercita a
+ponte em disco usada pelos instrumentos antigos, sem o gancho mascarar falhas.
+Esse acréscimo altera a cobertura do arnês; não muda o grafo da simulação.
+
 Próximos: compor os outros achados e submeter o novo candidato aos reviews e
 portões. Não publicar ou parear o backend usando o hash anterior.

@@ -28,8 +28,11 @@ const worker = `
   const {GLTFLoader} = await import('three/addons/loaders/GLTFLoader.js');
   console.log(JSON.stringify({sameThree:THREE.Mesh===vendor.Mesh,loader:typeof GLTFLoader==='function'}));
 `;
-const child = cwd => new Promise((resolve, reject) => {
-  const proc = spawn(process.execPath, ['--input-type=module', '-e', worker], { cwd, timeout: 15000 });
+const child = (cwd, legacy = false) => new Promise((resolve, reject) => {
+  const marker = "const {THREE} = await import('./tools/eval/three-node.mjs');";
+  if (legacy) assert.equal(worker.split(marker).length, 2);
+  const code = legacy ? worker.replace(marker, "const THREE = await import('three');") : worker;
+  const proc = spawn(process.execPath, ['--input-type=module', '-e', code], { cwd, timeout: 15000 });
   let stdout = '', stderr = '';
   proc.stdout.on('data', data => { stdout += data; });
   proc.stderr.on('data', data => { stderr += data; });
@@ -61,6 +64,7 @@ async function measure(code, installed) {
     }
     const before = inventory(dir);
     await Promise.all([child(dir), child(dir)]);
+    if (!installed) await child(dir, true);
     const after = inventory(dir);
     const changed = [...new Set([...Object.keys(before), ...Object.keys(after)])]
       .filter(key => JSON.stringify(before[key]) !== JSON.stringify(after[key]));
@@ -88,4 +92,5 @@ if (mutationFS.existsSync(target)) mutationFS.writeFileSync(target, '{"corrupted
 assert.notEqual(hash(mutated), hash(source));
 assert.deepEqual(await measure(mutated, true), ['node_modules/three/package.json'], 'mutação não detectada na fronteira exata');
 console.log(JSON.stringify({ gate: 'three-node', sourceSHA: hash(source), concurrentChildren: 2,
-  nominal: ['sem-pacote', 'pacote-instalado'], mutatedSourceSHA: hash(mutated), mutationDetected: 'package.json-alterado' }));
+  nominal: ['sem-pacote', 'pacote-instalado'], legacyConsumer: true,
+  mutatedSourceSHA: hash(mutated), mutationDetected: 'package.json-alterado' }));
