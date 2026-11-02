@@ -837,6 +837,55 @@ regra('snapshot v8 replica o estado completo da horda', () => {
   assert.deepEqual(decodeSnapshot(wire).objective, objective);
 });
 
+const placarNoFio = (horda) => {
+  const objective = snapshotHorda(horda);
+  const wire = encodeSnapshot({
+    type: 'snapshot', room: 'horda', tick: 1, t: 1, state: 'live', owner: '',
+    players: 2, spectators: 0, livre: { E: 2, B: 0 }, timeLeft: 360, roundNum: 1,
+    scoreE: 0, scoreB: 0, roundKillsE: 0, roundKillsB: 0, objective, ents: [],
+  }, 8);
+  const recebido = decodeSnapshot(wire).objective;
+  assert.deepEqual(recebido, objective);
+  return recebido.scoreByPlayer;
+};
+
+regra('snapshot v8 leva o primeiro dano antes de qualquer abate', () => {
+  const horda = criarHorda({ seed: 91 });
+  iniciarOnda(horda); passoHorda(horda, 1);
+  assert.deepEqual(placarNoFio(horda), {});
+  registrarDano(horda, horda.alive[0].id, 'atirador', 40);
+  assert.deepEqual(placarNoFio(horda).atirador, {
+    points: 0, kills: 0, assists: 0, combo: 0, bestCombo: 0, damagePrevented: 40,
+  });
+});
+
+regra('snapshot v8 leva a primeira assistência sem abate próprio', () => {
+  const horda = criarHorda({ seed: 91 });
+  iniciarOnda(horda); passoHorda(horda, 1);
+  const alvo = horda.alive[0];
+  registrarDano(horda, alvo.id, 'assistente', 40);
+  registrarAbate(horda, alvo.id, 'atirador');
+  const placar = placarNoFio(horda);
+  assert.deepEqual(placar.assistente, {
+    points: Math.round(BOAR_POINTS[alvo.type] * .4), kills: 0, assists: 1,
+    combo: 0, bestCombo: 0, damagePrevented: 40,
+  });
+  placar.assistente.points = -1;
+  assert.ok(horda.scores.assistente.points > 0, 'o snapshot alterou o placar autoritativo');
+});
+
+regra('publicar o placar preserva a janela autoritativa do combo', () => {
+  const horda = criarHorda({ seed: 91 });
+  iniciarOnda(horda); passoHorda(horda, 1);
+  for (const [clock, combo] of [[1, 1], [5, 2], [9.001, 1]]) {
+    horda.clock = clock;
+    registrarAbate(horda, horda.alive[0].id, 'atirador');
+    assert.equal(placarNoFio(horda).atirador.combo, combo);
+    assert.equal(horda.scores.atirador.combo, combo);
+  }
+  assert.equal(horda.scores.atirador.bestCombo, 2);
+});
+
 regra('snapshot com a horda cheia ainda cabe nos 8 KB do fio', () => {
   const horda = criarHorda({ seed: 12 });
   horda.wave = WAVE_COUNTS.length - 1;

@@ -554,7 +554,10 @@ export function snapshotHorda(state) {
     controle: state.mutante === 'rede-sem-dominio' ? [] : state.controle.map((v) => Math.round(v * 100) / 100),
     dominio: state.mutante === 'rede-sem-dominio' ? 0 : Math.round((state.dominio || 0) * 1000) / 1000,
     foodHealth: { ...state.foodHp },
-    scoreByPlayer: structuredClone(state.scores),
+    scoreByPlayer: Object.fromEntries(Object.entries(state.scores).map(([id, score]) => [id, {
+      points: score.points, kills: score.kills, assists: score.assists,
+      combo: score.combo, bestCombo: score.bestCombo, damagePrevented: score.damagePrevented,
+    }])),
     teamBonus: state.teamBonus,
     winner: state.winner,
   };
