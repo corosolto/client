@@ -20,4 +20,8 @@ export const GRAFITE = {"praca_poderes":{"arquivos":["tags-treino-02.png"],"peca
 
 /* IMPRESSÃO DIGITAL DAS ENTRADAS (issue #82) — GERADA junto com o layout, ver
    tools/eval/graffiti-fingerprint.mjs. Cobrada por tools/eval/graffiti-layout-check.mjs. */
-export const GRAFITE_FP = {"pass":"478f4ca259c427fa","maps":{"campomorro":"65b35adb7fc71473","escadao":"30b6fbc0e3823ad5","praca_poderes":"41a6e52d14fc260f","piscina_treta":"461e02bfa2e6745f","loja_h":"cd052805cfdefa1e","ferro_velho":"c1de3ddb82292bdf","quebrada":"1293f3a6f9c716e2","lajes":"d4b8a0dd4e6132b1","corrego":"0ad8834aa1c2596c","mansao":"9ec442d0909df647","upa_24h":"b580461681cd5f09","obras_prefeitura":"8d1fbcfe77d4b918","posto_treta":"692ddca62652ab3d","atacadao_treta":"cffbad8150a92b5b"}};
+
+/* REASSINADO SEM REASSAR em 2026-11-02 — Campo: UV e materiais azuis, vãos fora da parede de suporte x=-24 z=10.5; Quebrada: UV de calçada e colisores sem malha. Ego R2008/R2010: 14 pecas desenhadas, 350 amostras e 14 retangulos completos apoiados; posicoes preservadas.
+   As colocações existentes foram preservadas; o motivo delimita a revalidação
+   das fontes e dos suportes. */
+export const GRAFITE_FP = {"pass":"478f4ca259c427fa","maps":{"campomorro":"2c894e4428124cbd","escadao":"30b6fbc0e3823ad5","praca_poderes":"41a6e52d14fc260f","piscina_treta":"461e02bfa2e6745f","loja_h":"cd052805cfdefa1e","ferro_velho":"c1de3ddb82292bdf","quebrada":"fae1f654e37d2e11","lajes":"d4b8a0dd4e6132b1","corrego":"0ad8834aa1c2596c","mansao":"9ec442d0909df647","upa_24h":"b580461681cd5f09","obras_prefeitura":"8d1fbcfe77d4b918","posto_treta":"692ddca62652ab3d","atacadao_treta":"cffbad8150a92b5b"}};
