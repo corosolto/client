@@ -75,22 +75,6 @@ export function buildCampoMorro(scene, T = {}) {
     if (d && d.roughnessMap) m.roughnessMap = d.roughnessMap;
     return m;
   };
-  // Textura procedural pequena, repetível e sem dependência de rede. O quadriculado
-  // irregular dá escala ao cimento queimado/forro mesmo no arnês node do contrato.
-  const texturaSuperficie = (a, b, repeatX, repeatY) => {
-    const dados = new Uint8Array(4 * 4 * 4);
-    const rgb = (hex) => [hex >> 16 & 255, hex >> 8 & 255, hex & 255];
-    for (let i = 0; i < 16; i++) {
-      const cor = rgb((i + Math.floor(i / 4)) % 3 ? a : b);
-      dados.set([...cor, 255], i * 4);
-    }
-    const tex = new THREE.DataTexture(dados, 4, 4, THREE.RGBAFormat);
-    tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(repeatX, repeatY); tex.needsUpdate = true;
-    return tex;
-  };
-  const texturaPisoGalpao = texturaSuperficie(0x7d796f, 0x625f59, 5, 4);
-  const texturaForroGalpao = texturaSuperficie(0x67777a, 0x4b5d61, 4, 3);
   const MAT = {
     /* Tint mineral local: paridade de MÉDIA LINEAR com o baseline 1179 (dirt_field média
        sRGB 150,101,54 × tint 0x9a7a4c ÷ base #786D5F do canvas) — Ferro segue sem tint. */
@@ -105,8 +89,7 @@ export function buildCampoMorro(scene, T = {}) {
     door: lam({ color: 0x4a3325, roughness: 0.9 }),
     roof: lam({ color: 0x777a76, metalness: 0.32, roughness: 0.75 }),
     galpaoRoof: lam({ color: 0x526f73, emissive: 0x0b1b20, emissiveIntensity: .12, metalness: 0.42, roughness: 0.58 }),
-    galpaoFloor: lam({ map: texturaPisoGalpao, color: 0xa6a298, roughness: 0.92 }),
-    galpaoCeiling: lam({ map: texturaForroGalpao, color: 0x9aa8a9, emissive: 0x17282a, emissiveIntensity: .18, roughness: .8 }),
+    galpaoConcrete: lam({ map: T.concrete, color: 0xc2bcae, roughness: .92 }),
     sound: lam({ color: 0x252b2f, metalness: 0.14, roughness: 0.76 }),
     soundRing: lam({ color: 0xd8a928, metalness: 0.2, roughness: 0.55 }),
     exitLight: lam({ color: 0xffc95c, emissive: 0xff9f28, emissiveIntensity: .82, roughness: .48 }),
@@ -131,7 +114,7 @@ export function buildCampoMorro(scene, T = {}) {
           c.map.repeat.copy(c.userData.baseRepeat); c.map.needsUpdate = true;
           const cd = det.normalMap || det.roughnessMap ? { normalMap: det.normalMap ? det.normalMap.clone() : null, roughnessMap: det.roughnessMap ? det.roughnessMap.clone() : null } : (detailFor(c.map) || {});
           c.normalMap = cd.normalMap || null;
-          c.roughnessMap = cd.roughnessMap || null;
+          c.roughnessMap = c.userData.roughnessUniforme ? null : (cd.roughnessMap || null);
           for (const d of [c.normalMap, c.roughnessMap]) {
             if (!d) continue;
             d.wrapS = d.wrapT = THREE.RepeatWrapping; d.repeat.copy(c.map.repeat); d.offset.copy(c.map.offset); d.needsUpdate = true;
@@ -156,6 +139,8 @@ export function buildCampoMorro(scene, T = {}) {
     MAT.wall.userData.detalhe = { normalMap: rebocoDetalhe('pbr_paintedplaster017_normal.webp'), roughnessMap: rebocoDetalhe('pbr_paintedplaster017_rough.webp') };
     MAT.wall.name = 'campo-reboco'; MAT.wall.needsUpdate = true;
     external(MAT.concrete, '/img/textures/concrete_br.webp', 3, 3);
+    MAT.galpaoConcrete.userData.detalhe = { normalMap: rebocoDetalhe('pbr_concrete046_normal.webp'), roughnessMap: rebocoDetalhe('pbr_concrete046_rough.webp') };
+    external(MAT.galpaoConcrete, '/img/textures/pbr_concrete046_color.webp', 1, 1);
     external(MAT.roof, '/img/textures/tex_zinco.webp', 3, 3);
     MAT.baile = lam({ map: MAT.wall.map, roughness: 1 });
     external(MAT.baile, '/img/textures/campomorro_streetart_baile.webp', 1, 1);
@@ -174,13 +159,17 @@ export function buildCampoMorro(scene, T = {}) {
     (base.userData.clones ||= []).push(m);   // external troca o mapa no onLoad: o clone entra junto
     return m;
   };
+  MAT.galpaoFloor = repetido(MAT.galpaoConcrete, 11.4 / 3, 9.4 / 3);
+  MAT.galpaoCeiling = repetido(MAT.galpaoConcrete, 11.45 / 3, 9.45 / 3);
+  MAT.galpaoCeiling.color.setHex(0xbec7c7); MAT.galpaoCeiling.roughness = .92;
+  MAT.galpaoCeiling.userData.roughnessUniforme = true;
+  MAT.galpaoCeiling.emissive.setHex(0x17282a); MAT.galpaoCeiling.emissiveIntensity = .18;
   // O clone recebe o zinco assíncrono pelo mesmo registro; as coroas mantêm seu material.
   const modoFachadaQP = QP.get('campoFachadas');
   const folhaF7R23 = modoFachadaQP !== '0' && modoFachadaQP !== '1' ? repetido(MAT.roof, 3, 3) : null;
   if (folhaF7R23) { folhaF7R23.roughness = 0.9; folhaF7R23.metalness = 0; }
   MAT.muralha = repetido(MAT.concrete, 1, 1);
   // com UV em metros por face, o clone de densidade 3x2 quebraria o período: é o mesmo reboco
-  MAT.morroFundo = MAT.wall;
   /* UV do reboco EM METROS por face (grupos da BoxGeometry): tile de 2,0 m igual ao
      Lajes — independe do tamanho da caixa, acaba com o papel de parede por repeat. */
   const REBOCO_TILE = 2.0;
@@ -887,21 +876,141 @@ export function buildCampoMorro(scene, T = {}) {
   malhaAcabamento.castShadow = malhaAcabamento.receiveShadow = true;
   root.add(malhaAcabamento);
 
-  /* SILHUETA DO MORRO: estas lajes ficam ALÉM da muralha (fora de `bounds`) — não tocam
-     navegação nem colisão, são só a favela continuando morro acima. */
-  for (const [x, z, andares] of [
-    [-40, -6, 3], [-40.5, 8, 2], [-39.5, -20, 3], [-44, -2, 3], [-44.5, 14, 2],
-    [-43, -26, 4], [-38, 22, 2], [-48, 6, 4], [-47, -14, 4], [-33, -35, 3], [-19, -36, 2], [-6, -37, 3],
-  ]) {
-    let y = morroBase(x, z);
-    for (let a = 0; a < andares; a++) {
-      const w = 6.2 - a * 0.9, d = 5.4 - a * 0.8, alt = 3.3 - a * 0.25;
-      const laje = addBox(w, alt, d, MAT.morroFundo,
-        x + (a % 2 ? 0.7 : -0.6), y, z + (a % 2 ? -0.5 : 0.6), { collide: false, cast: false });
-      laje.receiveShadow = false;
-      y += alt;
+  // Encosta e casario de fundo ficam fora do terreno jogável, sem colisão ou oclusão.
+  const pecasFundo = { p0: [], p1: [], p2: [], telhado: [], fundacao: [], esquadria: [], vidro: [] };
+  const pecaFundo = (lista, w, h, d, x, y, z, metrico) => {
+    const g = new THREE.BoxGeometry(w, h, d);
+    if (metrico) uvRebocoMetros(g, w, h, d);
+    lista.push(g.translate(x, y + h / 2, z));
+  };
+
+  const encostaFundo = (x0, x1, z0, z1) => {
+    const w = x1 - x0, dp = z1 - z0;
+    const nx = Math.round(w / 2), nz = Math.round(dp / 2), positions = [], uvs = [], indices = [], vertices = new Map();
+    const vertex = (x, z) => {
+      const key = `${x},${z}`;
+      if (vertices.has(key)) return vertices.get(key);
+      const id = positions.length / 3;
+      positions.push(x, morroBase(x, z), z); uvs.push((x + 36) / 72, (30 - z) / 60);
+      vertices.set(key, id); return id;
+    };
+    // Só a borda acompanha a grade jogável de 1 × 0,5 m; o interior continua a 2 m.
+    for (let iz = 0; iz < nz; iz++) for (let ix = 0; ix < nx; ix++) {
+      const xa = x0 + ix * w / nx, xb = x0 + (ix + 1) * w / nx;
+      const za = z0 + iz * dp / nz, zb = z0 + (iz + 1) * dp / nz;
+      const corners = [[xa, za], [xa, zb], [xb, zb], [xb, za]], ring = [];
+      let refined = false;
+      for (let e = 0; e < 4; e++) {
+        const [ax, az] = corners[e], [bx, bz] = corners[(e + 1) % 4];
+        const steps = ax === bx && ax === -36 ? 4 : az === bz && az === z1 && z1 === -30 ? 2 : 1;
+        refined ||= steps > 1;
+        for (let j = 0; j < steps; j++) ring.push(vertex(ax + (bx - ax) * j / steps, az + (bz - az) * j / steps));
+      }
+      if (refined) {
+        const center = vertex((xa + xb) / 2, (za + zb) / 2);
+        for (let e = 0; e < ring.length; e++) indices.push(center, ring[e], ring[(e + 1) % ring.length]);
+      } else indices.push(ring[0], ring[1], ring[2], ring[0], ring[2], ring[3]);
     }
-    addBox(1.5, 0.16, 1.5, MAT.roof, x, y, z, { collide: false, cast: false });
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    g.setIndex(indices); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, MAT.dirt);
+    m.receiveShadow = true; m.castShadow = false;
+    m.userData.campoBackdrop = true; m.userData.graffitiSupportExcluded = true;
+    root.add(m);
+  };
+  encostaFundo(-60, -36, -44, 40);
+  encostaFundo(-36, 36, -44, -30);
+
+  const fundacaoFundo = repetido(MAT.galpaoConcrete, REBOCO_TILE / 3, REBOCO_TILE / 3);
+  const rebocosFundo = [0, 1, 2].map(i => {
+    const m = repetido(MAT.wall, 1, 1);
+    m.userData.rebocoMetros = true;
+    m.color.setHex([0xc0a78c, 0x8faaa8, 0xb3b7a7][i]);
+    return m;
+  });
+
+  const CASAS_FUNDO = [
+    [-40, -20, 3], [-40, -8, 2], [-40, 5, 3], [-40, 21, 2], [-48, -25, 3], [-48, -12, 2],
+    [-48, 1, 3], [-48, 15, 4], [-31, -36, 3], [-21, -37, 2], [-10, -36, 3], [2, -37, 2],
+  ];
+  const LARGURA_FUNDO = 6.2, PROFUNDIDADE_FUNDO = 5.4;
+  const molduraFundo = repetido(MAT.wall, 1, 1); molduraFundo.color.setHex(0xd3c9b9);
+  for (let hi = 0; hi < CASAS_FUNDO.length; hi++) {
+    const [x, z, and] = CASAS_FUNDO[hi], y0 = morroBase(x, z);
+    const fh = 2.8 + (hi % 3) * 0.1;
+    const sul = z < -30, desl = hi % 2 ? 0.1 : -0.1;
+    const variante = hi === 5 ? 'recuo' : hi === 2 ? 'assimetrica' : hi === 9 ? 'zinco' : 'padrao';
+    pecaFundo(pecasFundo.fundacao, LARGURA_FUNDO + 0.6, 2, PROFUNDIDADE_FUNDO + 0.6, x, y0 - 2, z, true);
+    for (let a = 0; a < and; a++) {
+      const recuo = variante === 'recuo' && a === and - 1;
+      const bw = recuo ? LARGURA_FUNDO - 2.4 : LARGURA_FUNDO;
+      const bd = recuo ? PROFUNDIDADE_FUNDO - 1.6 : PROFUNDIDADE_FUNDO;
+      const ox = recuo ? -0.9 : (a ? (sul ? 0 : desl) : 0), oz = a ? (sul ? desl : 0) : 0;
+      const cx = x + ox, cz = z + oz;
+      pecaFundo(pecasFundo['p' + (hi % 3)], bw, fh, bd, cx, y0 + a * fh, cz, true);
+      pecaFundo(pecasFundo.esquadria, bw + 0.3, 0.25, bd + 0.3, cx, y0 + (a + 1) * fh - 0.25, cz, true);
+      const fy = y0 + a * fh + 1.05;
+      const janelas = variante === 'assimetrica' ? [[-1.65, 1.7], [0.45, 0.85]] : recuo ? [[0, 1.2]] : [[-1.4, 1.2], [1.4, 1.2]];
+      for (const [s, largura] of janelas) {
+        const wx = sul ? cx + s : cx + bw / 2;
+        const wz = sul ? cz + bd / 2 : cz + s;
+        pecaFundo(pecasFundo.esquadria, sul ? largura : 0.14, 1.0, sul ? 0.14 : largura, wx, fy, wz, true);
+        pecaFundo(pecasFundo.vidro, sul ? largura - 0.25 : 0.1, .78, sul ? 0.1 : largura - 0.25,
+          wx + (sul ? 0 : 0.03), fy + 0.1, wz + (sul ? 0.03 : 0), false);
+        pecaFundo(pecasFundo.esquadria, sul ? largura + 0.2 : 0.3, 0.08, sul ? 0.3 : largura + 0.2,
+          wx, fy - 0.08, wz + (sul ? 0.08 : 0), true);
+      }
+      if (a === 0) {
+        const off = variante === 'assimetrica' ? 1.9 : 0;
+        const dx = sul ? x + off : x + LARGURA_FUNDO / 2, dz = sul ? z + PROFUNDIDADE_FUNDO / 2 : z + off;
+        pecaFundo(pecasFundo.esquadria, sul ? 1.2 : 0.14, 2.25, sul ? 0.14 : 1.2, dx, y0, dz, true);
+        pecaFundo(pecasFundo.vidro, sul ? 0.95 : 0.1, 2.05, sul ? 0.1 : 0.95,
+          dx + (sul ? 0 : 0.03), y0 + 0.05, dz + (sul ? 0.03 : 0), false);
+      }
+    }
+    const topW = variante === 'recuo' ? LARGURA_FUNDO - 2.4 : LARGURA_FUNDO;
+    const topD = variante === 'recuo' ? PROFUNDIDADE_FUNDO - 1.6 : PROFUNDIDADE_FUNDO;
+    const tx = variante === 'recuo' ? x - 0.9 : (sul ? x : x + (and > 1 ? desl : 0));
+    const tz = sul ? z + (and > 1 ? desl : 0) : z;
+    const ty = y0 + and * fh;
+    if (variante === 'zinco') {
+      const rw = LARGURA_FUNDO + 0.5, rd = PROFUNDIDADE_FUNDO + 0.5, rh = 1;
+      const ang = Math.atan2(rh, rd / 2), pl = Math.hypot(rd / 2, rh);
+      for (const s of [-1, 1]) {
+        const g = new THREE.BoxGeometry(rw, 0.08, pl + 0.05);
+        g.rotateX(s * ang); pecasFundo.telhado.push(g.translate(tx, ty + rh / 2, tz + s * rd / 4));
+        const px = tx + s * LARGURA_FUNDO / 2, zs = [tz - s * rd / 2, tz, tz + s * rd / 2];
+        const empena = new THREE.BufferGeometry();
+        empena.setAttribute('position', new THREE.Float32BufferAttribute([px, ty, zs[0], px, ty + rh, zs[1], px, ty, zs[2]], 3));
+        empena.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, s * rd / (2 * REBOCO_TILE), rh / REBOCO_TILE, s * rd / REBOCO_TILE, 0], 2));
+        empena.computeVertexNormals(); pecasFundo['p' + (hi % 3)].push(empena);
+      }
+      pecasFundo.telhado.push(new THREE.BoxGeometry(rw + 0.1, 0.1, 0.32).translate(tx, ty + rh, tz));
+      continue;
+    }
+    pecaFundo(pecasFundo.telhado, topW + 0.5, 0.22, topD + 0.5, tx, ty, tz, false);
+    for (const [px, pz, pw, pd] of [
+      [tx, tz - topD / 2, topW + 0.5, 0.18], [tx, tz + topD / 2, topW + 0.5, 0.18],
+      [tx - topW / 2, tz, 0.18, topD + 0.5], [tx + topW / 2, tz, 0.18, topD + 0.5],
+    ]) pecaFundo(pecasFundo.esquadria, pw, 0.45, pd, px, ty + 0.22, pz, true);
+    if (variante === 'recuo') {
+      for (const [px, pz, pw, pd] of [
+        [x, z - PROFUNDIDADE_FUNDO / 2, LARGURA_FUNDO + 0.5, 0.18],
+        [x, z + PROFUNDIDADE_FUNDO / 2, LARGURA_FUNDO + 0.5, 0.18],
+        [x + LARGURA_FUNDO / 2, z, 0.18, PROFUNDIDADE_FUNDO + 0.5],
+      ]) pecaFundo(pecasFundo.esquadria, pw, 0.5, pd, px, y0 + (and - 1) * fh, pz, true);
+    }
+  }
+
+  for (const [mat, lista] of [[rebocosFundo[0], pecasFundo.p0], [rebocosFundo[1], pecasFundo.p1], [rebocosFundo[2], pecasFundo.p2],
+    [MAT.roof, pecasFundo.telhado], [fundacaoFundo, pecasFundo.fundacao], [molduraFundo, pecasFundo.esquadria], [MAT.glass, pecasFundo.vidro]]) {
+    if (!lista.length) continue;
+    const m = new THREE.Mesh(mergeParts(lista), mat);
+    m.castShadow = false; m.receiveShadow = true;
+    m.userData.campoBackdrop = true; m.userData.graffitiSupportExcluded = true;
+    root.add(m);
   }
 
   const blocked = (x, z, inf = 0.38, y = groundHeightAt(x, z)) => {
