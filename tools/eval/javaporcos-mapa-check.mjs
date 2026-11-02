@@ -37,10 +37,9 @@
             invasão para na calçada, que é o defeito que o dono viu.
 
    LAYOUT DE 30/10/2026 (decisões do dono: pasto entre cidade e mata, seis frentes, becos):
-     MATA3  FRENTES FECHADAS: anel de sondas a pé na ENTRADA da parede (v = 55 m, os quatro
-            lados). Os arcos livres contíguos são as bocas de verdade — tem de haver
-            EXATAMENTE 3, cada um sobre uma frente declarada. Declarar 3 e deixar furo
-            aberto na mata é o que esta cláusula pega.
+     MATA3  LIMITE EXTERNO FECHADO: anel de sondas a pé em V_SONDA_PAREDE nos quatro
+            lados, sem arcos livres; a faixa interna precisa continuar explorável.
+            As rotas das seis frentes internas são verificadas por HORDA1.
      PASTO1 LINHA DE TIRO: raio horizontal a 1,6 m da borda da cidade (r = 35,8) para fora,
             a cada 2 m dos quatro lados, contra `occluders` + sub-bosque. 85% dos raios têm de correr 17,4 m
             livres (o pasto) e a mediana do primeiro acerto tem de cair na mata (≤ 22 m):
@@ -315,8 +314,7 @@ regra('MATA2 cinturão denso e seis frentes separadas', () => {
   return `${c.arvores} árvores, ${c.colisoresParede} colisores de parede, ${bocas.length} bocas em ${[...lados].join('/')}`;
 });
 
-/* Anel de sondas DENTRO da parede: arco livre contíguo é boca que existe no chão, seja
-   ela declarada ou não. A sonda usa o `_collide` do jogo, a mesma do MATA1. */
+/* A sonda externa usa o `_collide` do jogo; HORDA1 verifica as frentes internas. */
 const paraMundo = (lado, u, v) => (lado === 'N' ? [u, -v] : lado === 'S' ? [u, v] : lado === 'O' ? [-v, u] : [v, u]);
 const livreEm = (x, z) => { const p = { x, y: gh(x, z), z }; jogo._collide(p, R_CORPO); return Math.abs(p.x - x) < 1e-6 && Math.abs(p.z - z) < 1e-6; };
 regra('MATA3 mata explorável por dentro e limite externo fechado', () => {
@@ -330,7 +328,6 @@ regra('MATA3 mata explorável por dentro e limite externo fechado', () => {
     }
     if (aberto) { aberto.u1 = V_SONDA_PAREDE; arcos.push(aberto); }
   }
-  const frentes = W.horda?.frentes || [];
   relatorio.arcosAbertos = arcos.map((a) => ({ lado: a.lado, u0: a.u0, u1: a.u1 }));
   exige(arcos.length === 0, `${arcos.length} aberturas no limite externo da mata`);
   let andaveis = 0, sondas = 0;
@@ -339,11 +336,6 @@ regra('MATA3 mata explorável por dentro e limite externo fechado', () => {
     if (livreEm(x,z)) andaveis++;
   }
   exige(andaveis / sondas >= .45, `mata explorável bloqueada: ${andaveis}/${sondas}`);
-  for (const a of arcos) {
-    const [mx, mz] = a.pts[(a.pts.length / 2) | 0];
-    const dono = frentes.find((f) => f.rota.some((p) => Math.hypot(p.x - mx, p.z - mz) < 4.5));
-    exige(dono, `arco aberto ${a.lado}[${a.u0}..${a.u1}] não pertence a nenhuma frente declarada`);
-  }
   return `${arcos.length} arcos abertos: ${arcos.map((a) => `${a.lado} ${(a.u1 - a.u0).toFixed(1)} m`).join(', ')}`;
 });
 

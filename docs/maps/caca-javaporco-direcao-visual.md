@@ -2,7 +2,9 @@
 
 Decisões do dono em 31/10/2026. O modo tem card próprio no lobby, entrada
 singleplayer ou multiplayer e escolha/rotação de mapas. Esta ficha descreve a
-expansão; os mapas novos ainda não estão implementados.
+expansão autoral e os kits ainda não integrados. Distrito Rural e Vila da Mata já
+possuem protótipos no [registro](../../public/js/maps.js), mantidos em
+`MAPAS_PARADOS`, fora do menu normal enquanto aguardam retrabalho e aceite.
 
 ## Padrão comum
 

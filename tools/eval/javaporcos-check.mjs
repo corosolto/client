@@ -27,7 +27,7 @@
       registro, e esta régua precisa rodar em 0,2 s mesmo com o mapa da invasão em obras.
 
    PERF: o teto de 64 vivos simultâneos é medido em tools/eval/javaporcos-perf.mjs
-   (jogo real, mapa real). Esta régua só cobra que o teto é respeitado e alcançado.
+   (física real, mundo sintético). Esta régua só cobra que o teto é respeitado e alcançado.
 
    MUTANTES (cada cláusula nova tem o seu; `--mutante=X` tem de deixar a régua VERMELHA):
      horda-magra      onda rala e teto de 24 (o estado que o dono reprovou)

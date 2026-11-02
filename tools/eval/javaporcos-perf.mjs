@@ -12,15 +12,14 @@
    horda tira dos outros 16,6 ms do quadro de 60 Hz.
 
    CONTRA QUE MUNDO
-   Mundo sintético dimensionado pelo contrato FECHADO do mapa novo (MapaJava, 29/10):
-   grade de waypoints de 1,5 m (~3.200 nós), ~390 colisores (cidade + mata grossa),
-   `groundHeightAt` bilinear sobre Float32Array de 0,5 m, 16 foodSpots, 10 bocas de mata,
-   3 objetivos. A FÍSICA É A DE VERDADE: `Game.prototype._moveEntity` e
+   Mundo sintético construído neste arquivo, com grade de waypoints, colisores,
+   `groundHeightAt` bilinear sobre Float32Array, foodSpots, bocas de mata e objetivos.
+   Seus parâmetros vivem na construção abaixo. A FÍSICA É A DE VERDADE: `Game.prototype._moveEntity` e
    `Game.prototype._collide` são chamados do game.js, não reimplementados — é o
    `_collide` (varredura linear sobre `world.colliders`) que domina a conta, e medir
    contra uma imitação seria medir nada.
-   O mapa placeholder de hoje (596 nós, poucos colisores) SUBESTIMARIA o custo; por isso
-   o arnês não depende dele, e roda mesmo com o mapa em obras.
+   O arnês permite repetir a medição enquanto o mapa muda. Medir a geometria do mapa
+   carregado no jogo e o custo de render continua sendo uma validação separada.
 
    PIOR CASO DE PROPÓSITO
    Fúria no teto (spawn mais rápido, bicho mais veloz), pool sempre cheio (ninguém morre,
@@ -31,7 +30,7 @@
    USO
      node tools/eval/javaporcos-perf.mjs                 # varredura + veredito
      node tools/eval/javaporcos-perf.mjs --vivos=64      # um ponto só
-     node tools/eval/javaporcos-perf.mjs --mutante=horda-dobrada   # tem de ficar VERMELHA
+     node tools/eval/javaporcos-perf.mjs --mutante=teto-furado     # tem de ficar VERMELHA
    ============================================================================ */
 import assert from 'node:assert/strict';
 import { PerformanceObserver } from 'node:perf_hooks';
