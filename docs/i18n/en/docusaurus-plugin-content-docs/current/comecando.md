@@ -51,7 +51,7 @@ this page was aging at the very first commit — see
 | Playable characters | 63, in 7 groups | `CHARACTERS` array in `characters.js` |
 | Maps in the menu | 13 | `MAPS` minus `MAPAS_PARADOS` |
 | Visual harnesses in HTML | 26 | `git ls-files 'public/*.html' \| wc -l` |
-| Harness scripts | 1085 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Harness scripts | 1087 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Pipeline scripts | 126 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Written entry tasks | 27 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Version | `2.1.0-alpha.135` | `public/js/version.js` and `package.json` (match) |

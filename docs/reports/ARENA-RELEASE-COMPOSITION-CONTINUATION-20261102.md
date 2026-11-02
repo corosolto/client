@@ -37,3 +37,41 @@ O único conflito textual era o timeout de CI. Foi preservado o teto atual de 30
 R1803 passou syntax, Arena completo, switchteam, fluxo de skins e mutantes, boot JSON e mutante de relevo, preload/binding e timeout. Mapjson recusou corretamente duas instâncias Three: imports estáticos dos instrumentos antigos resolveram a ponte compartilhada antes do resolvedor canônico da base. R1805 muda somente a ordem dos imports de dois instrumentos, preserva o produto byteidêntico e passa o alias inteiro sem aviso, com 110 casos e cinco mutantes semânticos. O aviso continua sendo falha de infraestrutura, nunca aceite de mutante.
 
 Checkpoint local recuperável; ainda requer regeneração oficial de documentação/índice, build, boot de origem, hooks normais, publicação e revisões atuais. Backend pareado, release e QA real continuam incompletos.
+
+## R1835 correções do portão normal
+
+O push normal R1816 foi recusado (109/112); o remoto1214 permaneceu69fa19.
+A composição inclui agora o checkpoint Y6e035, com o decisor yaw fail-closed
+e os passos SDK+boot explícitos no CI. Nenhuma ref de outro autor foi alterada.
+
+UIR26 tinha ReferenceError do helper de objetivo no sandbox. O teste executa
+agora o helper real, com ciclo dos três modos e bloqueios Hordas/Escolta.
+R1833: redesign nominal PASS1,015s; campo-uv completo PASS72,770s, três perfis,
+default estrutural idêntico e todos os mutantes existentes mais batente-translado.
+Nenhum arquivo de produto foi alterado por estas duas correções de teste.
+
+CU5/CU8 recusavam114 batentes novos no original e105 emR22/R23. R1831 removeu
+somente suas quatro linhas em cópia externa e provou a régua antiga PASS nos
+três perfis. O suplemento literal lacrado preserva integralmente a fixture
+antiga e acrescenta somente batentes ao acabamento:316/329/329 caixas.
+Topologia, materiais, UV2m, tolerâncias e pins raster permanecem iguais.
+Procedência e cotas em docs/visual-consistency/CAMPO-UV-FINISH.md.
+
+GLM R1830: uma consulta de autoria, tools0, custoUSD0,0358466, sem crédito de
+review. Root rejeitou cast=false, deslocamento dos batentes para std, contagem
+R22/R23 incorreta e chamada de função lexical fora do VM; executou helper
+único no contexto e confirmou toda a geometria contra a referência selada.
+
+Matriz de armas, SIM_HASH e documentação devem ser regenerados oficialmente
+antes do checkpoint; build/boot/push normal/review atual/backend/release e QA
+integral ainda pendentes. Não há aprovação global de mapa, mobile ou humana.
+
+R1836 confirmou nominal UIR43cláusulas e três mutantes semânticos somente UIR26.
+R1835 não tem crédito: o probe supunha44IDs/exit1, mas o protocolo real usa
+43IDs (UIR18 ausente) e exit0 na detecção; o terceiro caso revelou também
+âncora obsoleta, corrigida mantendo o guard de objetivo no mutante.
+R1837 geradores oficiais arma/SIM/docs/arch PASS; matriz mudou somente dois
+links de linhas e SIM_HASH9c50fae39e7e435a→800741ec1642321f. Versãoalpha135
+sem bump/tag. Syntax4,609s, docs0,448s, arch0,142s e matriz0,142s PASS.
+Próximo checkpoint normal, build/boot atual e nova publicação com hook112;
+reviews, backend e release continuam pendentes.

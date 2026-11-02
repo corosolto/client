@@ -43,7 +43,7 @@ algo está errado e o quality gate está verde, o defeito é do quality gate.
 |---|---|---|---|
 | `public/` | o **jogo** | 199 arquivos `.js`, 78.299 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
 | `src/` | o **site** | 28 páginas `.astro`, 5 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
-| `tools/` | o **arnês** | 1085 scripts em `tools/eval/`, 126 em `tools/` | node puro: sobe o jogo real sem browser |
+| `tools/` | o **arnês** | 1087 scripts em `tools/eval/`, 126 em `tools/` | node puro: sobe o jogo real sem browser |
 
 **Não existe `public/index.html`.** O HTML do jogo é `src/pages/index.astro`, servido na rota `/`. Servir `public/` estaticamente entrega os arnêses visuais, **não o jogo** — é a pegadinha que custa a primeira hora de todo mundo.
 

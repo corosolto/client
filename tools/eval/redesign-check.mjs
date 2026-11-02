@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Script as VMScript } from 'node:vm';
+import { Script as VMScript, createContext } from 'node:vm';
 import sharp from 'sharp';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
@@ -443,8 +443,8 @@ main = muta('troca-m-abre-pausa', main,
   "game.setPaused(true);\n    switchMode = true;",
   "if (document.pointerLockElement) document.exitPointerLock();\n    switchMode = true;");
 main = muta('toggle-sem-arena', main,
-  "if (!['rounds', 'ctf', 'arena'].includes(mode)) return;",
-  "if (!['rounds', 'ctf'].includes(mode)) return;");
+  "if (modoObjetivoAtual() || !['rounds', 'ctf', 'arena'].includes(mode)) return;",
+  "if (modoObjetivoAtual() || !['rounds', 'ctf'].includes(mode)) return;");
 main = muta('m-lado-antigo', main,
   "pickTeam(game._factionOf(game.player.team === 'E' ? 'B' : 'E'));",
   "pickTeam(game.enemyFaction);");
@@ -987,6 +987,8 @@ let modoCicloOk = false;
 const modoCicloEvid = [];
 try {
   const corpoSelect = blocoFuncao(main, 'selectMatchMode');
+  const objetivoHelpers = [...main.matchAll(/^const modoObjetivoAtual = \(\) => MAPS\[currentMap\]\?\.objectiveMode \|\| '';$/gm)];
+  if (objetivoHelpers.length !== 1) throw new Error('helper real de objetivo sem âncora única');
   const ancora = "\n{\n  const mm = $('map-mode');";
   const inicio = main.indexOf(ancora);
   if (!corpoSelect || (main.match(/function selectMatchMode\(/g) || []).length !== 1
@@ -1001,6 +1003,8 @@ try {
   let renders = 0;
   const ctx = {
     matchMode: 'rounds', modoEscolhido: false, setupTitle: '', handler: null,
+    MAPS: { classico: {}, horde: { objectiveMode: 'horde' }, escort: { objectiveMode: 'escort' } },
+    currentMap: 'classico',
     $: (id) => id === 'map-mode' ? { addEventListener: (tipo, fn) => {
       if (tipo !== 'click') throw new Error('evento de modo errado');
       ctx.handler = fn;
@@ -1009,12 +1013,19 @@ try {
     setMapMode: () => vistos.push([ctx.matchMode, ctx.modoEscolhido, ctx.setupTitle]),
     setSetupStep: (passo) => passos.push(passo), renderMapScreen: () => renders++,
   };
-  new VMScript(`${corpoSelect}\n${main.slice(inicio + 1, fim)}\nfor (let i=0;i<3;i++) handler(); selectMatchMode('abate', false);`)
-    .runInNewContext(ctx, { timeout: 1000 });
+  const contexto = createContext(ctx);
+  new VMScript(`${objetivoHelpers[0][0]}\n${corpoSelect}\n${main.slice(inicio + 1, fim)}\nfor (let i=0;i<3;i++) handler(); selectMatchMode('abate', false);`)
+    .runInContext(contexto, { timeout: 1000 });
   const esperado = [['ctf', true, 'CAPTURE THE FLAG'], ['arena', true, 'VIRA-CASACA'], ['rounds', true, 'MATA-MATA']];
   if (JSON.stringify(vistos) !== JSON.stringify(esperado)) modoCicloEvid.push(`ciclo/estado=${JSON.stringify(vistos)}`);
   if (ctx.matchMode !== 'rounds' || !ctx.modoEscolhido || ctx.setupTitle !== 'MATA-MATA'
       || renders !== 3 || sons.length !== 3 || JSON.stringify(passos) !== '["match","match","match"]') modoCicloEvid.push('fluxo de mapa/estado inválido');
+  for (const mapa of ['horde', 'escort']) {
+    ctx.currentMap = mapa;
+    new VMScript("handler(); selectMatchMode('arena');").runInContext(contexto, { timeout: 1000 });
+    if (vistos.length !== 3 || renders !== 3 || sons.length !== 3 || passos.length !== 3
+        || ctx.matchMode !== 'rounds' || ctx.setupTitle !== 'MATA-MATA') modoCicloEvid.push(`objetivo ${mapa} alterou o modo`);
+  }
   modoCicloOk = modoCicloEvid.length === 0;
 } catch (erro) { modoCicloEvid.push(`execução falhou: ${erro.message}`); }
 /* Multiplayer abre direto. Single Player abre seu submenu, que contém os dois modos locais.
