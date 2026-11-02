@@ -71,11 +71,11 @@ await check('clock: recuo de sessão reinicia a janela sem congelamento', () => 
 await check('clock: partida reinicia medidor e preserva null na telemetria', async () => {
   const net = new NetClient('ws://fixture.invalid/ws'); let hooks; const sent = [];
   const pending = net._conectar(1000, () => ({ abrir(value) { hooks = value; }, fechar() {}, enviar(value) { sent.push(value); } }));
-  hooks.mensagem(JSON.stringify({ type: 'welcome', clientVersion: VERSION, simHash: SIM_HASH }), false, 100);
+  hooks.mensagem(JSON.stringify({ type: 'welcome', protocolVersion: 8, clientVersion: VERSION, simHash: SIM_HASH }), false, 100);
   await pending;
   for (let i = 1; i <= 90; i++) hooks.mensagem(JSON.stringify({ type: 'snapshot', t: i / 30, tick: i, ents: [] }), false, 700);
   assert(net.computeStats().hz > 0, 'pré-condição: havia taxa medida');
-  hooks.mensagem(JSON.stringify({ type: 'partida' }), false, 100);
+  hooks.mensagem(JSON.stringify({ type: 'partida', protocolVersion: 8 }), false, 100);
   const after = net.computeStats(); assert.equal(after.hz, 0); assert.equal(after.kbps, 0);
   net.sendClientStats({ snap: null }); assert.equal(JSON.parse(sent.at(-1)).snap, null);
 });

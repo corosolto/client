@@ -75,3 +75,16 @@ os 112 aliases, review formal atual e críticos integrais independentes.
 Depois repinar o backend para o client publicado e validar o par antes do release.
 Continuam abertos os débitos artísticos do Campo, a avaliação dos demais mapas,
 personagens e skins, além do QA real pelo Ego e em aparelho mobile.
+
+O checkpoint `69fa19a6a8a6c3f3b82c1efeef0866769eb184e8` foi publicado normalmente
+no #1214 (R1690): 112/112 aliases passaram. Build R1688 e oito passadas de boot
+R1689 também passaram, sem representar aprovação artística, mobile ou produção.
+
+O merge normal `1413ca6fe4ad05843121d6c8c317f0b673cc6080` acrescenta o #1143 já
+publicado em staging e o checkpoint causal NET `bbbbbdb32c0f5403727a5c5f0611ae6668f8e16a`.
+A composição revelou fixtures do welcome e da partida sem `protocolVersion: 8`,
+obrigatório neste cliente. R1721/R1723 preservam o erro de protocolo. As fixtures
+passam a enviar a versão real; o cliente e sua recusa de protocolo ficam intactos.
+O checker legado continua exigindo null sem relógio e a prova de partida continua
+exigindo o reset do medidor, incluindo os mutantes causais. Publicação do merge,
+review atual, arte do Campo, outros PRs e release continuam pendentes.

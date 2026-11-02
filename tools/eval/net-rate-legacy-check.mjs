@@ -38,7 +38,7 @@ const snap = (i, t) => JSON.stringify({ type: 'snapshot', tick: i, ents: [], ...
 const conecta = async () => {
   const net = new NetClient('ws://fixture.invalid/ws'), caixa = { h: null };
   const pend = net._conectar(1000, () => ({ abrir(v) { caixa.h = v; }, fechar() { net.connected = false; }, enviar() {} }));
-  caixa.h.mensagem(JSON.stringify({ type: 'welcome', clientVersion: VERSION, simHash: SIM_HASH }), false, 100);
+  caixa.h.mensagem(JSON.stringify({ type: 'welcome', protocolVersion: 8, clientVersion: VERSION, simHash: SIM_HASH }), false, 100);
   await pend; return { net, h: caixa.h };
 };
 const solta = net => { net.stopPing(); net.tp?.fechar(); };
