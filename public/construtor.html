@@ -157,6 +157,14 @@ function list(type){
   if(type==='caixa'||type==='caixaw') return spec.boxes;
   return spec[({rampa:'ramps',slow:'slow',prop:'props',ctf:'ctf',pickup:'pickups'})[type]];
 }
+function novaBandeiraId(){
+  const usados=new Set(spec.ctf.map(b=>b.id));
+  for(let n=1;;n++){
+    let k=n,id='';
+    while(k>0){ k--; id=String.fromCharCode(65+k%26)+id; k=Math.floor(k/26); }
+    if(!usados.has(id)) return id;
+  }
+}
 function novo(type,x,z){
   const b = { x:snap(x), z:snap(z) };
   if(type==='caixa') return {...b,w:3,h:2,d:3,color:'#7a8089'};
@@ -165,7 +173,7 @@ function novo(type,x,z){
   if(type==='slow') return {...b,w:4,d:4};
   if(type==='prop') return {...b,id:'bus',yaw:0,h:3.0,solid:false};
   if(type==='spawnE'||type==='spawnB') return {...b,yaw:type==='spawnE'?0:Math.PI};
-  if(type==='ctf') return {...b,id:String.fromCharCode(65+spec.ctf.length),label:'BANDEIRA',x:snap(x),z:snap(z)};
+  if(type==='ctf') return {...b,id:novaBandeiraId(),label:'BANDEIRA',x:snap(x),z:snap(z)};
   if(type==='pickup') return {...b,weapon:'ak'};
 }
 function selType(t){ return (t==='caixa'||t==='caixaw')?'box': t; }
@@ -250,6 +258,7 @@ function pick(x,z){
 let drag=null;
 cv.addEventListener('mousedown',e=>{
   if(e.button===1){ drag={pan:true,x:e.clientX,y:e.clientY}; return; }
+  if(e.button!==0) return;
   const r=cv.getBoundingClientRect(); const [wx,wz]=s2w(e.clientX-r.left,e.clientY-r.top);
   if(tool==='selecionar'){ sel=pick(wx,wz); if(sel){ const o=list(sel.type)[sel.index]; drag={obj:o,offx:o.x-wx,offz:o.z-wz}; } renderInsp(); draw(); return; }
   // ferramenta de criação

@@ -135,6 +135,44 @@ for (const [name, bounds, override, expected] of drawCases) {
     `strokes=${strokes} expected=${expected} error=${error?.code ?? error?.message ?? 'none'}`);
 }
 
+const entityStart = html.indexOf('function list(type)');
+const entityEnd = html.indexOf('function selType(', entityStart);
+const pointerStart = html.indexOf('let drag=null;');
+const pointerEnd = html.indexOf("addEventListener('mousemove',", pointerStart);
+if ([entityStart, entityEnd, pointerStart, pointerEnd].some(i => i < 0)) throw new Error('editor pointer/entity handlers not found');
+const entitySource = html.slice(entityStart, entityEnd);
+for (const tool of ['caixa', 'selecionar']) for (const button of [0, 1, 2, 3]) {
+  let handler, picked = 0;
+  const candidate = structuredClone(fixture), before = candidate.boxes.length;
+  const scope = { spec: candidate, tool, sel: null, snap: n => Math.round(n * 2) / 2,
+    cv: { addEventListener(name, fn) { if (name === 'mousedown') handler = fn; }, getBoundingClientRect: () => ({ left: 0, top: 0 }) },
+    s2w: (x, z) => [x, z], pick() { picked++; return { type: 'caixa', index: 0 }; },
+    revalidate() {}, renderInsp() {}, draw() {},
+  };
+  vm.createContext(scope); vm.runInContext(entitySource + html.slice(pointerStart, pointerEnd), scope);
+  handler({ button, clientX: 2, clientY: 4 });
+  const drag = vm.runInContext('drag', scope);
+  check(`pointer-${tool}-${button}`, candidate.boxes.length === before + (tool === 'caixa' && button === 0 ? 1 : 0)
+    && picked === (tool === 'selecionar' && button === 0 ? 1 : 0)
+    && Boolean(drag?.pan) === (button === 1)
+    && (button === 0 || button === 1 || drag === null),
+    `created=${candidate.boxes.length - before} picks=${picked} drag=${Boolean(drag)} pan=${Boolean(drag?.pan)}`);
+}
+{
+  const scope = { spec: structuredClone(fixture), snap: n => Math.round(n * 2) / 2 };
+  vm.createContext(scope); vm.runInContext(entitySource, scope);
+  scope.spec.ctf = [{ id: 'E' }, { id: 'MID' }, { id: 'B' }];
+  scope.spec.ctf.push(scope.novo('ctf', 1, 2));
+  scope.spec.ctf.shift();
+  scope.spec.ctf.push(scope.novo('ctf', 3, 4));
+  check('ctf-id-after-delete', new Set(scope.spec.ctf.map(flag => flag.id)).size === scope.spec.ctf.length,
+    scope.spec.ctf.map(flag => flag.id).join(','));
+  scope.spec.ctf = Array.from({ length: 26 }, (_, i) => ({ id: String.fromCharCode(65 + i) }));
+  for (let i = 0; i < 30; i++) scope.spec.ctf.push(scope.novo('ctf', i, i));
+  check('ctf-id-after-alphabet', scope.spec.ctf.every(flag => /^[A-Z]+$/.test(flag.id))
+    && new Set(scope.spec.ctf.map(flag => flag.id)).size === 56, scope.spec.ctf.slice(26).map(flag => flag.id).join(','));
+}
+
 const previewStart = html.indexOf('let three=null;');
 const previewEnd = html.indexOf('// ---- boot', previewStart);
 if (previewStart < 0 || previewEnd < 0) throw new Error('editor preview lifecycle not found');
