@@ -16,11 +16,16 @@ export const ECONOMIA = Object.freeze({
   recompensaKillPadrao: 300,
 });
 
-// Multiplayer fica sem loja até o nó autoritativo validar a compra (contrato no doc).
-export const ECONOMIA_NO_MP = false;
+// Armas grátis no chão SÓ no Javaporcos (dono, 01/11); o nó dedicado lê o mesmo conjunto.
+export const MAPAS_PICKUP_GRATIS = new Set(['invasao_javaporcos']);
 
-export function economiaLigada({ busca = '', online = false, dedicado = false, wpnMode = 'all' } = {}) {
-  if (dedicado || (online && !ECONOMIA_NO_MP)) return false;
+/* O MP só liga a loja quando o nó autoritativo anuncia `meta.economia === 1` no welcome
+   (rollout servidor-primeiro: nó velho = loadout de hoje). A validação da compra mora
+   no nó (backend game/room.js); o cliente só pede. Contrato: docs/ECONOMIA-PARTIDA.md. */
+export function economiaLigada({ busca = '', online = false, dedicado = false, meta = null, wpnMode = 'all', mapa = null } = {}) {
+  if (dedicado) return false;   // nó dedicado: quem decide é a Room (backend game/room.js)
+  if (mapa != null && MAPAS_PICKUP_GRATIS.has(mapa)) return false;   // javaporcos: armas grátis, sem loja — online e offline
+  if (online) return meta?.economia === 1 && new URLSearchParams(busca).get('economia') !== '0';
   if ((wpnMode || 'all') !== 'all') return false;
   return new URLSearchParams(busca).get('economia') !== '0';
 }

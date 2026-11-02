@@ -7,7 +7,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const FAMILIAS = ['awp', 'ak', 'm4', 'shotgun', 'mp5', 'deagle', 'pistol'];
-const MAPA = 'piscina_treta';       // 22 pickups: 10 rifles + 8 pistols + 4 deck (map_piscina.js)
+/* ARMAS GRÁTIS NO CHÃO (dono, 01/11): o assentamento de pickup de mapa agora só existe no
+   Javaporcos, então a medição roda nele — com o build da piscina (22 pickups: 10 rifles +
+   8 pistols + 4 deck, map_piscina.js) registrado sob o id do modo horda. PIM6, a cláusula
+   da economia, roda no mapa COMUM (piscina de verdade), que fica sem pickups. */
+const MAPA = 'invasao_javaporcos';
+const MAPA_COMUM = 'piscina_treta';
 const ESPERA = 22;
 const GAP_TOL = 0.05;               // MESMA tolerância do VM14/pickup-check; nada de teto novo
 const ROLL = 0.12;                  // mapPickup roll do refreshPickupModels
@@ -89,7 +94,9 @@ let Game;
 try { Game = await gameClasseDe(src, `pickup-init-${modo}`); }
 catch (e) { console.error(`infra na classe variante: ${e.message}`); process.exit(3); }
 
-function boot(economia) {
+h.MAPS[MAPA] = { name: 'invasao_javaporcos (stub da régua)', build: h.MAPS[MAPA_COMUM].build };
+
+function boot(economia, mapa = MAPA) {
   const P = h.CHARACTERS.find((c) => c.team === 'E');
   h.seedRandom(12345);
   globalThis.location.search = '';
@@ -97,7 +104,7 @@ function boot(economia) {
     renderer: h.renderer, textures: h.initTextures(), sfx: h.sfx,
     settings: { bots: 4, quality: 'low', difficulty: 'normal' },
     playerCharId: P.id, playerTeam: 'E', playerFaction: P.team, enemyFaction: 'B',
-    nickname: 'SIM', mapId: MAPA, ctf: false, testMode: true, onQuit() {}, onMatchEnd() {},
+    nickname: 'SIM', mapId: mapa, ctf: false, testMode: true, onQuit() {}, onMatchEnd() {},
     economia,
   });
 }
@@ -127,7 +134,7 @@ try {
   const pks = g.world.pickups || [];
   const c1 = pks.length === ESPERA;
   if (!c1) falhas.push('PIM1');
-  linhas.push(`${c1 ? 'ok ' : 'XX '} PIM1 contagem: ${pks.length} (esperado ${ESPERA}) em ${MAPA}`);
+  linhas.push(`${c1 ? 'ok ' : 'XX '} PIM1 contagem: ${pks.length} (esperado ${ESPERA}) em ${MAPA} (build ${MAPA_COMUM})`);
 
   const semFonte = pks.filter((p) => !p.mesh || p.mesh.userData.weaponSource !== p.weapon);
   const c2 = semFonte.length === 0;
@@ -160,11 +167,11 @@ try {
   linhas.push(`${c5 ? 'ok ' : 'XX '} PIM5 geometria real distinta: ${new Set(vals).size}/${vals.length} famílias com fingerprint único`);
 } finally { g.dispose?.(); }
 
-const ge = boot(true);
+const ge = boot(true, MAPA_COMUM);
 try {
   const c6 = (ge.world.pickups || []).length === 0;
   if (!c6) falhas.push('PIM6');
-  linhas.push(`${c6 ? 'ok ' : 'XX '} PIM6 economia ligada: ${ge.world.pickups.length} pickups (esperado 0)`);
+  linhas.push(`${c6 ? 'ok ' : 'XX '} PIM6 economia no mapa comum: ${ge.world.pickups.length} pickups (esperado 0)`);
 } finally { ge.dispose?.(); }
 
 for (const l of linhas) console.log(l);

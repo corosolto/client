@@ -143,7 +143,32 @@ equip-sem-entrega, equip-nao-perde e rodada-zera-equip.
 
 Fumaça e frag continuam como hoje (cota grátis por rodada) até a granada entrar na loja.
 
-## Multiplayer: contrato que o servidor precisa
+## Multiplayer: economia no nó autoritativo (IMPLEMENTADO, 01/11/2026)
+
+O contrato abaixo foi implementado nos dois lados:
+
+- **Nó** (`corosolto/backend`, `game/room.js`): toda sala nasce com a loja ligada
+  (`meta.economia: 1` no welcome; kill-switch `MP_ECONOMIA=0`). Estado por slot
+  (`_carteira`, `_compraAte`, `_desarmado`), crédito de abate e de rodada, recompra dos
+  bots (`compraDoBot`/`equipamentoDoBot`), drop da comprada na morte pelo `_kill` do jogo
+  (flag `_economiaPartida`), pedido `compra` validado com `motivoRecusa` (zona, tempo,
+  saldo, posse, assinatura) com teto de 1 pedido/100 ms, resposta `compra-ok`/`compra-nack`
+  e reboque v8 do snapshot (saldo, janela, colete/capacete/flash do próprio slot).
+  Flash NÃO se vende no nó (o input de hoje só aceita frag/fumaça).
+- **Cliente** (`economiaLigada`): no online, a loja liga só com `meta.economia === 1` do
+  welcome — nó velho segue no loadout de hoje (rollout servidor-primeiro). O menu manda
+  `{ type: 'compra', id, seq }` e aplica o que o nó concede; saldo e janela chegam no
+  reboque v8 do snapshot (netcodec `coro-snapshot-v8`).
+- **ARMAS GRÁTIS NO CHÃO** (dono, 01/11): o único mapa/modo com pickups estáticos é o
+  Javaporcos (`MAPAS_PICKUP_GRATIS`); em todo o resto — VS BOTS, MP, nó dedicado, modo
+  arma-única — arma vem de compra ou de nascimento, e o chão só entrega o que alguém
+  derrubou. A economia não liga no Javaporcos (armas grátis, sem loja).
+- Mapeamento, saldos e equipamento herdam a carteira do CORPO (o slot é o corpo, igual CS).
+
+Histórico do contrato (antes de existir nó que validasse): a economia ficava desligada no
+multiplayer (`ECONOMIA_NO_MP`) e o MP seguia com o loadout de até 31/10.
+
+## Multiplayer: contrato original (28–31/10, antes do nó validar)
 
 A autoridade do multiplayer mora em `corosolto/backend` (`game/room.js`, que roda o
 `Game` deste repositório como nó dedicado). Este repositório não tem como validar
