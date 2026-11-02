@@ -108,17 +108,20 @@ for (const regua of REGUAS_PR_FAST) {
 /* ---- PI4: falha de régua não pula consumidores independentes (#1188).
    Semântica de status: docs.github.com/en/actions/reference/workflows-and-actions/expressions. */
 if (CI_MUTADO) falhas.push(`PI4 mutação '${MUT}' não aplicou no ci.yml — ajustar o alvo`);
+/* [jobDono, prefixoDoPasso, comandos]: cada grupo pertence a exatamente um
+   job real da seção jobs:, e a unicidade é cobrada GLOBALMENTE — duplicata em
+   qualquer outro job, inclusive job novo desconhecido, reprova. */
 const GRUPOS_PI4 = [
-  ['TRETA$ da partida segue o CS', ['eval:economia']],
-  ['TRETA$ da partida dentro do Game real', ['eval:economia-jogo']],
-  ['Contratos visuais de mapas', ['eval:shot-final-pose', 'eval:authored-locomotion', 'eval:character-normal-quality', 'eval:grafite-curation', 'eval:map-material-finish', 'eval:ferro-balcao', 'eval:match-pickups', 'eval:net-flash-disable', 'eval:normal-only-fit-equivalence', 'eval:tp-world-contract', 'eval:skin-profile-flow', 'eval:death-camera-consistency', 'eval:visual-map-contracts', 'eval:knife-skin-markings', 'eval:campo-uv', 'eval:grafite-atual:prova']],
-  ['Flash, fluidez e ADS da AK pública', ['eval:flashbang', 'mut:flashbang', 'eval:movimento-fluidez', 'eval:ads1p-public', 'eval:posto-board-support', 'eval:preview-grip-phase', 'eval:armadura', 'eval:ads1p-runtime-public']],
-  ['Todo mapa devolve o que o game.js consome', ['eval:mapcontrato']],
-  ['Pichação colada na parede', ['eval:pichacao-parede']],
-  ['Amazônia acessível', ['eval:amazonia']],
-  ['Escadão — circulação', ['eval:escadao-graph', 'eval:escadao-home', 'eval:escadao-structure', 'eval:escadao-descent', 'eval:escadao-details']],
-  ['Validar fluidez, território e rede do mantle', ['eval:mantle-fluidez', 'mut:mantle', 'eval:mantle-network']],
-  ['Escadão — compatibilidade', ['tools/eval/escadao-audio-pack-check.mjs']],
+  ['reguas-e-site', 'TRETA$ da partida segue o CS', ['eval:economia']],
+  ['reguas-e-site', 'TRETA$ da partida dentro do Game real', ['eval:economia-jogo']],
+  ['reguas-e-site', 'Contratos visuais de mapas', ['eval:shot-final-pose', 'eval:authored-locomotion', 'eval:character-normal-quality', 'eval:grafite-curation', 'eval:map-material-finish', 'eval:ferro-balcao', 'eval:match-pickups', 'eval:net-flash-disable', 'eval:normal-only-fit-equivalence', 'eval:tp-world-contract', 'eval:skin-profile-flow', 'eval:death-camera-consistency', 'eval:visual-map-contracts', 'eval:knife-skin-markings', 'eval:campo-uv', 'eval:grafite-atual:prova']],
+  ['reguas-e-site', 'Flash, fluidez e ADS da AK pública', ['eval:flashbang', 'mut:flashbang', 'eval:movimento-fluidez', 'eval:ads1p-public', 'eval:posto-board-support', 'eval:preview-grip-phase', 'eval:armadura', 'eval:ads1p-runtime-public']],
+  ['reguas-e-site', 'Todo mapa devolve o que o game.js consome', ['eval:mapcontrato']],
+  ['reguas-e-site', 'Pichação colada na parede', ['eval:pichacao-parede']],
+  ['reguas-e-site', 'Amazônia acessível', ['eval:amazonia']],
+  ['reguas-e-site', 'Escadão — circulação', ['eval:escadao-graph', 'eval:escadao-home', 'eval:escadao-structure', 'eval:escadao-descent', 'eval:escadao-details']],
+  ['mantle', 'Validar fluidez, território e rede do mantle', ['eval:mantle-fluidez', 'mut:mantle', 'eval:mantle-network']],
+  ['reguas-e-site', 'Escadão — compatibilidade', ['tools/eval/escadao-audio-pack-check.mjs']],
 ];
 function passosDoJob(texto, job) {
   const bloco = texto.match(new RegExp(`^  ${job}:\\n([\\s\\S]*?)(?=^  [\\w-]+:|$(?![\\s\\S]))`, 'm'))?.[1];
@@ -169,38 +172,59 @@ function simula(passos, { falhaEm = -1, cancelarAntes = -1, pularEm = -1 } = {})
 }
 let casosPI4 = 0;
 try {
-  const passos = passosDoJob(ci, 'reguas-e-site');
-  const unico = (pred, alvo) => {
-    const indices = passos.flatMap((p, i) => pred(p) ? [i] : []);
-    if (indices.length !== 1) throw new Error(`PI4 ${alvo}: esperado um passo, encontrados ${indices.length}`);
-    return indices[0];
-  };
-  const grupos = GRUPOS_PI4.map(([prefixo, comandos]) => {
-    const i = unico((p) => p.name.startsWith(prefixo), prefixo);
-    const tokens = (passos[i].run || '').split(/\s+/);
-    const faltantes = comandos.filter((cmd) => !tokens.includes(cmd));
-    if (faltantes.length) throw new Error(`PI4 ${prefixo}: consumidores ${faltantes.join(', ')} não executam no run`);
-    return i;
-  });
-  const deps = unico((p) => p.run?.trim() === 'npm ci', 'npm ci');
-  if (!passos[deps].id) falhas.push('PI4 npm ci precisa de id para guardar setup concluído');
-  const ids = passos.map((p) => p.id).filter(Boolean);
-  if (new Set(ids).size !== ids.length) throw new Error('PI4 ids de steps duplicados');
-  const checkout = unico((p) => p.uses?.startsWith('actions/checkout@'), 'checkout');
-  const node = unico((p) => p.uses?.startsWith('actions/setup-node@'), 'setup-node');
-  const antes = grupos[0] - 1;
-  const cenarios = [
-    { nome: 'sucesso', conclusao: 'success', roda: () => true },
-    { nome: 'npm ci pulado', pularEm: deps, conclusao: 'success', roda: () => false },
-    ...[antes, ...grupos].map((i) => ({ nome: `falha: ${passos[i].name}`, falhaEm: i, conclusao: 'failure', roda: () => true })),
-    ...[checkout, node, deps].map((i) => ({ nome: `setup falhou: ${passos[i].name}`, falhaEm: i, conclusao: 'failure', roda: () => false })),
-    ...[grupos[0], grupos[2]].map((i) => ({ nome: `cancelamento antes de ${passos[i].name}`, cancelarAntes: i, conclusao: 'cancelled', roda: (j) => j < i })),
-  ];
-  for (const s of cenarios) {
-    const r = simula(passos, s); casosPI4++;
-    if (r.conclusao !== s.conclusao) falhas.push(`PI4 ${s.nome}: conclusão ${r.conclusao}, esperada ${s.conclusao} — falha engolida`);
-    if (s.falhaEm !== undefined && r.outcomes[s.falhaEm] !== 'failure') falhas.push(`PI4 ${s.nome}: falha não foi injetada no consumidor real`);
-    for (const i of grupos) if (r.executados.has(i) !== s.roda(i)) falhas.push(`PI4 ${s.nome}: ${passos[i].name} ${r.executados.has(i) ? 'rodou' : 'não rodou'} indevidamente`);
+  /* Unicidade GLOBAL: enumera TODOS os jobs reais da seção top-level `jobs:`
+     (ignora on. e comentários), inclusive os não simulados — duplicata em
+     qualquer job, ou job dono inexistente, reprova. */
+  const secaoJobs = ci.match(/^jobs:\n([\s\S]*?)(?=^\S|$(?![\s\S]))/m)?.[1] || '';
+  const TODOS_JOBS = [...secaoJobs.matchAll(/^  ([\w-]+):(?=\s*$)/gm)].map((m) => m[1]);
+  if (!TODOS_JOBS.length) throw new Error('PI4 seção jobs: ausente ou sem jobs reais no ci.yml');
+  const passosGlobais = Object.fromEntries(TODOS_JOBS.map((j) => [j, passosDoJob(ci, j)]));
+  const gruposPorJob = {};
+  for (const [jobDoGrupo, prefixo] of GRUPOS_PI4) {
+    if (!TODOS_JOBS.includes(jobDoGrupo)) throw new Error(`PI4 ${prefixo}: job dono ${jobDoGrupo} não existe na seção jobs`);
+    const donos = TODOS_JOBS.filter((j) => passosGlobais[j].some((p) => p.name.startsWith(prefixo)));
+    const total = donos.reduce((n, j) => n + passosGlobais[j].filter((p) => p.name.startsWith(prefixo)).length, 0);
+    if (donos.join() !== jobDoGrupo || total !== 1) throw new Error(`PI4 ${prefixo}: esperado exatamente um passo em ${jobDoGrupo}, encontrados ${total} em [${donos.join(', ')}]`);
+    (gruposPorJob[jobDoGrupo] ||= []).push(prefixo);
+  }
+  /* Cada grupo é simulado no SEU job dono: falha anterior não pula consumidor
+     independente; setup pulado, falho ou cancelado impede execução. */
+  for (const [jobDoGrupo, prefixos] of Object.entries(gruposPorJob)) {
+    const passos = passosGlobais[jobDoGrupo];
+    const unico = (pred, alvo) => {
+      const indices = passos.flatMap((p, i) => pred(p) ? [i] : []);
+      if (indices.length !== 1) throw new Error(`PI4 ${alvo} (${jobDoGrupo}): esperado um passo, encontrados ${indices.length}`);
+      return indices[0];
+    };
+    const grupos = prefixos.map((prefixo) => {
+      const i = unico((p) => p.name.startsWith(prefixo), prefixo);
+      const comandos = GRUPOS_PI4.find(([, pre]) => pre === prefixo)[2];
+      const tokens = (passos[i].run || '').split(/\s+/);
+      const faltantes = comandos.filter((cmd) => !tokens.includes(cmd));
+      if (faltantes.length) throw new Error(`PI4 ${prefixo} (${jobDoGrupo}): consumidores ${faltantes.join(', ')} não executam no run`);
+      return i;
+    });
+    const deps = unico((p) => p.run?.trim() === 'npm ci', 'npm ci');
+    if (!passos[deps].id) falhas.push(`PI4 ${jobDoGrupo}: npm ci precisa de id para guardar setup concluído`);
+    const ids = passos.map((p) => p.id).filter(Boolean);
+    if (new Set(ids).size !== ids.length) throw new Error(`PI4 ${jobDoGrupo}: ids de steps duplicados`);
+    const checkout = unico((p) => p.uses?.startsWith('actions/checkout@'), 'checkout');
+    const node = unico((p) => p.uses?.startsWith('actions/setup-node@'), 'setup-node');
+    const antes = grupos[0] - 1;
+    const cenarios = [
+      { nome: `sucesso (${jobDoGrupo})`, conclusao: 'success', roda: () => true },
+      { nome: `npm ci pulado (${jobDoGrupo})`, pularEm: deps, conclusao: 'success', roda: () => false },
+      // Falha independente exige passo REAL não-setup entre setup e o primeiro grupo.
+      ...[antes, ...grupos].filter((i) => ![checkout, node, deps].includes(i)).map((i) => ({ nome: `falha: ${passos[i].name}`, falhaEm: i, conclusao: 'failure', roda: () => true })),
+      ...[checkout, node, deps].map((i) => ({ nome: `setup falhou (${jobDoGrupo}): ${passos[i].name}`, falhaEm: i, conclusao: 'failure', roda: () => false })),
+      ...[grupos[0], grupos[grupos.length - 1]].map((i) => ({ nome: `cancelamento antes de ${passos[i].name}`, cancelarAntes: i, conclusao: 'cancelled', roda: (j) => j < i })),
+    ];
+    for (const s of cenarios) {
+      const r = simula(passos, s); casosPI4++;
+      if (r.conclusao !== s.conclusao) falhas.push(`PI4 ${s.nome}: conclusão ${r.conclusao}, esperada ${s.conclusao} — falha engolida`);
+      if (s.falhaEm !== undefined && r.outcomes[s.falhaEm] !== 'failure') falhas.push(`PI4 ${s.nome}: falha não foi injetada no consumidor real`);
+      for (const i of grupos) if (r.executados.has(i) !== s.roda(i)) falhas.push(`PI4 ${s.nome}: ${passos[i].name} ${r.executados.has(i) ? 'rodou' : 'não rodou'} indevidamente`);
+    }
   }
 } catch (e) { falhas.push(String(e.message)); }
 

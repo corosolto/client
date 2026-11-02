@@ -87,13 +87,15 @@ class Netcode {
     this._prevOnPersonagem = net.onPersonagem;
     this._cosmeticRevisions = new Map();
     this._onPersonagem = (m, notify = true) => {
+      const corpo = m.ent === net.yourEnt && !this.espectador ? this.game.player : this._netMap.get(m.ent);
+      if (m.team === 'J' || corpo?._objectiveNpc || net.meta?.roster?.some(r => r.id === m.ent && r.team === 'J')) return;
       const def = byId(m.char);
       const revision = (this._cosmeticRevisions.get(m.ent) || 0) + 1;
       this._cosmeticRevisions.set(m.ent,revision);
       const apply = (reload = false) => {
         if (!def || this._cosmeticRevisions.get(m.ent) !== revision || net.onPersonagem !== this._onPersonagem) return;
         const alvo = m.ent === net.yourEnt && !this.espectador ? this.game.player : this._netMap.get(m.ent);
-        if (alvo) this.game._trocarPersonagem(alvo,{...def,skinId:m.skinId || null,eyewearId:m.eyewearId || null},reload);
+        if (alvo && !alvo._objectiveNpc) this.game._trocarPersonagem(alvo,{...def,skinId:m.skinId || null,eyewearId:m.eyewearId || null},reload);
       };
       if (m.skinId || m.eyewearId) void Promise.all([preloadCosmeticAssets([m.skinId]),preloadEyewearAssets([m.eyewearId])]).then(()=>apply(true)); else apply();
       if (notify) this._prevOnPersonagem?.(m);
@@ -405,6 +407,7 @@ class Netcode {
       game.roundKills.E = snap.roundKillsE;
       game.roundKills.B = snap.roundKillsB;
     }
+    if (snap.objective) game.objective?.applyNetState?.(snap.objective);
     if (game.state !== estadoAntes) this.transicaoDeEstado(estadoAntes, game.state, placarAntes);
     this.vagas = snap.livre || null;
 
@@ -597,15 +600,19 @@ class Netcode {
     if (this._netTick < 0) return;   // 1º snapshot: entrou no meio de algo — sem cerimônia (e sem "empate" inventado)
     try {
       if (depois === 'roundEnd') {
-        let winner = null;
-        if (placarAntes && game.roundsWon) {
+        let winner = game.objective?.state?.winner || null;
+        if (!winner && placarAntes && game.roundsWon) {
           if (game.roundsWon.E > placarAntes.E) winner = 'E';
           else if (game.roundsWon.B > placarAntes.B) winner = 'B';
         }
         game.player.scoped = false; game.el.scope?.classList.remove('on');
         game.radioOpen = null; game._radioUi?.();
         game._compra?.fimDeRodadaRemoto?.(winner === game.playerTeam);   // festa local; crédito é do nó
-        if (!winner) { game._resultadoDaRodada('EMPATE NA TRETA', 'ninguém convenceu ninguém'); game.sfx.roundLose(); }
+        if (game.objective && winner) {
+          const result = game.objective.roundResult(winner);
+          game._resultadoDaRodada(result.title, result.detail);
+          game.objective.startCinematic(winner);
+        } else if (!winner) { game._resultadoDaRodada('EMPATE NA TRETA', 'ninguém convenceu ninguém'); game.sfx.roundLose(); }
         else {
           const mine = winner === game.playerTeam;
           game._resultadoDaRodada(`${game._teamName(winner)} LEVARAM O ROUND`, mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche');
@@ -872,7 +879,7 @@ class Netcode {
 
   /* Render de um boneco REMOTO. Chamado pelo game._updateBot para corpos com `_remote`.
      Espelha a lógica de morte do _updateBot local. */
-  updateRemoteBot(b, dt) {
+  updateRemoteBot(b, dt, positionOnly = false) {
     const game = this.game;
     const g = b.mesh && b.mesh.group;
     if (!g) return;
@@ -911,6 +918,7 @@ class Netcode {
         segYaw = this.__mutYawInstante ? null : b._bufYaw[s] + ds / 2;
       }
     }
+    if (positionOnly) { g.visible = false; return; }
     if (b.alive) {
       if (b._deadShown) { if (b.mesh.isGLB) b.mesh.ctrl.revive && b.mesh.ctrl.revive(); b._deadShown = false; b.deadT = 0; }
       const corpoYaw = b._netBot === false ? b.yaw + Math.PI : b.yaw;   // humano remoto olhava pra trás
@@ -922,7 +930,10 @@ class Netcode {
         // update(dt, moving, hasTarget, speed, back): a velocidade REAL vai no 4º argumento —
         // com speed=0 o clipe rodava a 0,45× e o boneco deslizava (BUG-113).
         b.mesh.ctrl.aimPitch = Math.max(-0.6, Math.min(0.6, b._netPitch || 0));
-        b.mesh.ctrl.setMantle?.(b.mantleF >= 0 ? b.mantleF : null);
+        // O progresso ativo alimenta a transição aérea antes da pose e do amortecimento.
+        const mMantle = Number.isFinite(b.mantleF) && b.mantleF > 0 && b.mantleF < 1;
+        b.mesh.ctrl.setAr?.(mMantle);
+        b.mesh.ctrl.setMantle?.(mMantle ? b.mantleF : null);
         b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25);
       } else poseCharacter(b.mesh.parts, spd, 0, game.time);
     } else {

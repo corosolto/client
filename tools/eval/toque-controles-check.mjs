@@ -122,9 +122,12 @@ async function abrir() {
       `${metodo} {\n    const game = this.game;`));
   }
   if (MUT === 'respawn-sp-preso') {
+    /* v7 da união: o guard `objective.eliminados` do modo javaporcos ficou ENTRE o
+       releaseInput e o `const p`; a mordida continua removendo exatamente o
+       `_releaseInput()` do renascer SP, seja lá o que vem depois. */
     await reescreve(/\/js\/game\.js/, (t) => t.replace(
-      'if (this.online) return;\n    this._releaseInput();\n    const p = this.player;',
-      'if (this.online) return;\n    const p = this.player;'));
+      'if (this.online) return;\n    this._releaseInput();',
+      'if (this.online) return;'));
   }
   if (MUT === 'round-sp-preso') {
     await reescreve(/\/js\/game\.js/, (t) => t.replace(

@@ -1732,12 +1732,41 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard .sb-col td.sb-ping{padding-right:16px;color:#5c5d63;font-size:14px}
 #scoreboard .sb-col td:nth-child(3){color:#9a9ba1}
 #scoreboard tbody tr:first-of-type::before{display:none}
+#hud[data-objective="horde"][data-human-teams="1"] #score-b,#hud[data-objective="horde"][data-human-teams="1"] .tp-hud-retratos[data-lado="B"]{display:none!important}
+#scoreboard .sb-cols:has(.horde-team){grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+#scoreboard .sb-cols:has(.horde-enemy){grid-template-columns:minmax(0,1fr)}
+#scoreboard .horde-team{--sb-grid:minmax(0,1fr) 65px 65px}
+#scoreboard .horde-team p{padding:12px;color:#d4bd7c;font-size:12px}
+#scoreboard .horde-avatar{width:48px;height:48px;object-fit:cover;border-radius:50%;margin-right:10px;vertical-align:middle}
+@media(max-width:800px){#scoreboard .sb-cols:has(.horde-team){grid-template-columns:1fr;max-height:68dvh;overflow:auto}}
+#hud[data-objective="horde"] #score-e{min-width:72px;flex-direction:column;gap:2px}
+#hud[data-objective="horde"] #hud-top{padding:5px 8px;background:rgba(13,14,17,.94);border:1px solid #61513c;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+#hud[data-objective="horde"] #score-e::after{content:"ABATES";font:700 10px/1 system-ui;margin:0 8px}
+#hud[data-objective="horde"][data-human-teams="2"] #score-e::after{content:"TIME E · ABATES"}
+#hud[data-objective="horde"][data-human-teams="2"] #score-b{order:1;flex-direction:column;gap:2px;min-width:72px}
+#hud[data-objective="horde"][data-human-teams="2"] #score-b::after{content:"TIME B · ABATES";font:700 10px/1 system-ui}
+#hud[data-objective="horde"][data-human-teams="2"] #hud-mid{order:3}
+#score-j{order:2;flex-direction:column;gap:2px!important;min-width:86px;color:#edb27c}
+#score-j img{width:22px;height:22px;object-fit:cover;border-radius:50%}
+#score-j span{font:700 10px/1 system-ui}
+#scoreboard .horde-score{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) 70px 70px 90px 90px 110px;
+  align-items:center;background:rgba(13,14,17,.92);border:1px solid #26272d;border-top:2px solid #e0762a}
+#scoreboard .horde-score>span{min-width:0;padding:13px 10px;border-bottom:1px solid #26272d;
+  color:#ecebe6;text-align:right;font:600 16px/1 var(--font)}
+#scoreboard .horde-score>.horde-name{text-align:left;padding-left:16px;font-family:var(--aaa-font-body)}
+#scoreboard .horde-score>.horde-points{color:#b4d92e;font-weight:700}
+#scoreboard .horde-score>.horde-head{padding-top:10px;padding-bottom:10px;color:#9a9ba1;
+  font:700 11px/1 var(--aaa-font-body);letter-spacing:2px}
+#scoreboard .horde-score>.horde-bonus{background:rgba(224,50,50,.14);border-bottom:0}
 #scoreboard .sb-foot{position:absolute;left:50%;right:auto;bottom:32px;transform:translateX(-50%);display:flex;gap:18px;
   font:600 12px/1 var(--font);letter-spacing:2px;color:#5c5d63}
 #scoreboard .sb-foot b{color:#9a9ba1}
 #scoreboard .sb-center{position:absolute;inset:0 64px;display:flex;flex-direction:column;justify-content:center;gap:48px}
 #scoreboard .sb-center>h3{position:static;left:auto;right:auto;top:auto;width:100%;margin:0}
 #scoreboard .sb-center>.sb-cols{position:static;left:auto;right:auto;top:auto;width:100%;margin:0}
+#scoreboard:has(.horde-team,.horde-score) .sb-center{inset:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1180px,calc(100% - 32px));max-height:calc(100dvh - 100px);box-sizing:border-box;overflow:auto;justify-content:flex-start;gap:24px;padding:24px;background:rgba(13,14,17,.96);border:1px solid #61513c;border-radius:12px;box-shadow:0 12px 48px rgba(0,0,0,.5)}
+#scoreboard:has(.horde-team,.horde-score) .sb-center>h3{font-size:clamp(14px,2vw,22px);line-height:1.3;text-align:center}
+@media(max-width:800px){#scoreboard:has(.horde-team,.horde-score) .sb-center{padding:12px;gap:12px}}
 
 /* ---------- match end ----------
    Três blocos com hierarquia declarada, em vez de um painel único com tudo do mesmo
@@ -2165,6 +2194,7 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
   width:min(86px,6.8vw);height:min(144px,15.2vh);pointer-events:none;
   filter:drop-shadow(0 28px 24px rgba(0,0,0,.58))}
 #load-character-3d{display:block;width:100%;height:100%;background:transparent}
+#load-overlay[data-mode="horde"] #load-character-stage{width:min(300px,26vw);height:min(280px,30vh)}
 #load-character-action{position:absolute;right:8px;bottom:18px;padding:5px 9px;
   border-left:3px solid var(--br-faixa);background:rgba(var(--bg-900-rgb),.72);
   font:700 10px/1 var(--mono);letter-spacing:var(--tr-3);color:var(--ink-200);display:none}
