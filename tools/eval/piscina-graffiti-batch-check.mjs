@@ -10,6 +10,16 @@ import { GRAFITE } from '../../public/js/graffiti_layout.js';
 import { criarSuporteGrafite, superficieGrafitavel } from '../../public/js/graffiti_surface.js';
 import { measureGraffitiArea } from './graffiti-area-audit.mjs';
 import { identidadeArteGrafite } from '../../public/js/graffiti_art_id.js';
+import { registerPropTemplate } from '../../public/js/mapprops.js';
+
+const invalido = (mensagem) => { console.error(mensagem); process.exit(2); };
+const ARGS = process.argv.slice(2);
+const mutantes = ARGS.filter((a) => a.startsWith('--mutante='));
+if (ARGS.length !== mutantes.length || new Set(ARGS).size !== ARGS.length) invalido('argumento desconhecido ou duplicado');
+if (mutantes.length > 1) invalido('mutante duplicado');
+const MUT = mutantes.length === 1 ? mutantes[0].slice('--mutante='.length) : '';
+if (mutantes.length === 1 && !MUT) invalido('mutante vazio');
+if (MUT && MUT !== 'lote-sem-permissao') invalido(`mutante desconhecido: ${MUT} (use lote-sem-permissao)`);
 
 const mapURL = new URL('../../public/js/map_piscina.js', import.meta.url);
 const source = readFileSync(mapURL, 'utf8');
@@ -209,5 +219,53 @@ excluded.position.y = 2; excluded.userData.graffitiSupportExcluded = true;
 const root = new THREE.Group(); root.add(excluded);
 assert.equal(criarSuporteGrafite(root)({ x: 0, y: 2, z: .13, ry: 0, w: 2, h: 2 }), false);
 assert.equal(excluded.userData.nonSolidSurface, undefined);
+
+/* Lote dos props autorais (#1109; dente do #1185). `batchAuthoredProps` troca os grupos
+   `piscina:<id>` por um InstancedMesh na raiz, e é o grupo quem carrega a permissão de
+   pintura (classificarParedeProp) — o lote precisa repassá-la, senão vira parede pintável
+   e o bake da piscina cresce. Em node o GLB não existe e o lote sairia vazio, então o
+   template é registrado aqui. Prova semântica do mutante lote-sem-permissao:
+   mutante-semantico-proof piscina-batch exige a cláusula authored-batch-permission. */
+const AUTORAIS = ['piscina_escada', 'piscina_armarios', 'piscina_banco', 'piscina_espreguicadeira'];
+const permissaoDoLote = '      batch.userData.graffitiNomeDoAsset = !!list[0].child.userData.graffitiNomeDoAsset;\n'
+  + '      batch.userData.graffitiSupportExcluded = !superficieGrafitavel(first);\n';
+assert.equal(source.split(permissaoDoLote).length, 2, 'authored batch must carry the paint permission');
+if (MUT) console.log(`Mutação aplicada: ${MUT}`);
+const montaLotes = async (texto) => {
+  const geoProp = new THREE.BoxGeometry(1, 1, 1), matProp = new THREE.MeshLambertMaterial();
+  for (const id of AUTORAIS) {
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(geoProp, matProp));
+    registerPropTemplate(id, g);
+  }
+  try {
+    const build = texto === source ? MAPS.piscina_treta.build
+      : (await import(`data:text/javascript,${encodeURIComponent(absoluteImports(texto, mapURL))}`)).buildPoolDay;
+    seedRandom(12345);
+    const w = build(new THREE.Scene(), initTextures());
+    w.root.updateMatrixWorld(true);
+    return w.root.children.filter((o) => o.isInstancedMesh && /^piscina:piscina_.+:batch$/.test(o.name));
+  } finally { for (const id of AUTORAIS) registerPropTemplate(id, null); }
+};
+const pintaveisDosLotes = (lotes) => lotes.filter((o) => superficieGrafitavel(o)).map((o) => o.name);
+const lotesProducao = await montaLotes(source);
+assert.ok(lotesProducao.length > 0, 'authored props must batch when their templates are registered');
+const pintaveisProducao = pintaveisDosLotes(lotesProducao);
+assert.deepEqual(pintaveisProducao, [], `lote de prop autoral pintável em produção: ${pintaveisProducao.join(', ')}`);
+console.log(JSON.stringify({ gate: 'authored-batch-permission', lotes: lotesProducao.length, pintaveis: pintaveisProducao.length }));
+if (MUT) {
+  const textoMutado = source.replace(permissaoDoLote, '');
+  assert.notEqual(textoMutado, source, 'mutação da permissão do lote deve aplicar');
+  const lotesMutado = await montaLotes(textoMutado);
+  assert.ok(lotesMutado.length > 0, 'mutante: lote deve continuar existindo sem a permissão');
+  const pintaveisMutado = pintaveisDosLotes(lotesMutado);
+  if (pintaveisMutado.length) {
+    console.log(`  ✗ ${MUT}: sem a permissão, o lote de prop autoral ficou pintável: ${pintaveisMutado.join(', ')}`);
+    console.log(JSON.stringify({ mutant: MUT, cases: 1, failed: [{ clause: 'authored-batch-permission', type: 'ContractViolation', message: `lote sem a permissão ficou pintável: ${pintaveisMutado.join(', ')}` }], error: null }));
+    process.exit(1);
+  }
+  console.log(JSON.stringify({ mutant: MUT, cases: 1, failed: [], error: 'BlindMutation' }));
+  process.exit(2);
+}
 assert.equal(readFileSync(mapURL, 'utf8'), source, 'production map was never patched by mutant');
-console.log('Piscina batch gate: real geometry, order mutation, exclusion and physics parity passed');
+console.log('Piscina batch gate: real geometry, order mutation, exclusion, authored batch permission and physics parity passed');
