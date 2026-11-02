@@ -77,18 +77,21 @@ for (const [ctf, expected] of [[false, 5], [true, 3]]) {
    avaliada com sessões fabricadas, em vez de comparada como texto. */
 {
   let main = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
-  const atual = /roundsMax:\s*sessao\s*\?\s*\(sanitizeRounds\(sessao\.net\.meta\.roundsMax\)\s*\|\|\s*undefined\)\s*:\s*matchRounds\(\)/;
-  if (MUT === 'mp-local') main = main.replace(atual, 'roundsMax: matchRounds()');
-  if (MUT === 'mp-ignora-servidor') main = main.replace(atual, 'roundsMax: sessao ? undefined : matchRounds()');
-  if (MUT === 'mp-sem-sanitizar') main = main.replace(atual, 'roundsMax: sessao ? sessao.net.meta.roundsMax : matchRounds()');
+  /* v7 da união: a expressão real ganhou o guard `ehMapaJavaporcos(currentMap) ? 1 : ...`
+     na frente; os mutantes mordem o trecho de rede que continua lá dentro. */
+  const atual = /\bsessao\s*\?\s*\(sanitizeRounds\(sessao\.net\.meta\.roundsMax\)\s*\|\|\s*undefined\)\s*:\s*matchRounds\(\)/;
+  if (MUT === 'mp-local') main = main.replace(atual, 'matchRounds()');
+  if (MUT === 'mp-ignora-servidor') main = main.replace(atual, 'sessao ? undefined : matchRounds()');
+  if (MUT === 'mp-sem-sanitizar') main = main.replace(atual, 'sessao ? sessao.net.meta.roundsMax : matchRounds()');
   const linhas = main.match(/^\s*roundsMax:.*$/gm) || [];
   expect(linhas.length === 1, `main.js: esperado 1 roundsMax no new Game, achei ${linhas.length}`);
   const expr = (linhas[0] || '').trim().replace(/^roundsMax:\s*/, '').replace(/,\s*$/, '');
   let avaliar = () => NaN;
-  try { avaliar = new Function('sessao', 'matchRounds', 'sanitizeRounds', `return (${expr});`); }
+  try { avaliar = new Function('sessao', 'matchRounds', 'sanitizeRounds', 'ehMapaJavaporcos', 'currentMap', `return (${expr});`); }
   catch (e) { expect(false, `main.js: expressão do roundsMax não avalia (${expr})`); }
   const local = () => 13;
   const sessao = (meta) => ({ net: { meta } });
+  const fora = () => false;
   const casos = [
     [sessao({ roundsMax: 9 }), 9, 'sala oficial de 9 rodadas'],
     [sessao({ roundsMax: 3 }), 3, 'captura de 3 rodadas'],
@@ -96,9 +99,15 @@ for (const [ctf, expected] of [[false, 5], [true, 3]]) {
     [sessao({ roundsMax: 99 }), undefined, 'teto fora de 1–15 vindo da rede'],
     [null, 13, 'offline usa o ajuste local'],
   ];
+  const casosJav = [[sessao({ roundsMax: 9 }), 1, 'mapa javaporcos força a partida única, mesmo com meta do servidor']];
   for (const [s, esperado, nome] of casos) {
     let veio;
-    try { veio = avaliar(s, local, sanitizeRounds); } catch (e) { veio = `erro: ${e.message}`; }
+    try { veio = avaliar(s, local, sanitizeRounds, fora, 'praca_poderes'); } catch (e) { veio = `erro: ${e.message}`; }
+    expect(veio === esperado, `main.js: ${nome} → roundsMax ${veio}, esperado ${esperado} (${expr})`);
+  }
+  for (const [s, esperado, nome] of casosJav) {
+    let veio;
+    try { veio = avaliar(s, local, sanitizeRounds, () => true, 'invasao_javaporcos'); } catch (e) { veio = `erro: ${e.message}`; }
     expect(veio === esperado, `main.js: ${nome} → roundsMax ${veio}, esperado ${esperado} (${expr})`);
   }
   rows.push(`multiplayer       roundsMax = ${expr}`);
