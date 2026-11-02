@@ -62,7 +62,7 @@ try {
 
   const shortcuts = await page.locator('#hud-shortcuts').innerText();
   const cameraSelect = page.locator('#set-camera');
-  check('CAM1 atalho no HUD', shortcuts.includes('B CÂMERA'), shortcuts);
+  check('CAM1 atalho no HUD', shortcuts.includes('N CÂMERA'), shortcuts);
   check('CAM2 opção com três modos', await cameraSelect.count() === 1
     && JSON.stringify(await cameraSelect.locator('option').evaluateAll((items) => items.map((el) => el.value)))
       === JSON.stringify(['first', 'third', 'shoulder']));
@@ -72,7 +72,7 @@ try {
     && first.root && first.authored && first.badge.includes('AUTORADO m4'), JSON.stringify(first));
   await page.screenshot({ path: path.join(captureDir, 'first.png') });
 
-  await page.keyboard.press('b');
+  await page.keyboard.press('n');
   await settle(page);
   const third = await snapshot(page);
   check('CAM4 corpo e arma no rig TP', third.mode === 'third' && third.tp && third.tpGLB && third.tpWeapon === 'm4'
