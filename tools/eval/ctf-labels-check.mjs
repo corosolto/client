@@ -10,7 +10,7 @@
    próprias bandeiras, e o fallback ficou com rótulo neutro (BASE A/CENTRO/BASE B) para
    mapa futuro nunca herdar monumento alheio.
 
-   O QUE ELA EXIGE, construindo cada mapa REGISTRADO no harness (código de produção):
+   O QUE ELA EXIGE, construindo cada mapa CTF REGISTRADO no harness (código de produção):
      · CTFL1  world.ctfPoints declarado, com ≥3 pontos e rótulo não-vazio em todos;
      · CTFL2  os nomes de monumento de Brasília só aparecem no praca_poderes;
      · CTFL3  rótulos únicos dentro do mapa (dois "CENTRO" no HUD não orientam ninguém).
@@ -28,7 +28,7 @@ const BRASILIA = new Set(['CONGRESSO', 'ÔNIBUS', 'CATEDRAL']);
 
 const T = initTextures();
 let vermelho = 0;
-for (const [id, def] of Object.entries(MAPS)) {
+for (const [id, def] of Object.entries(MAPS).filter(([, map]) => !map.objectiveMode)) {
   const W = def.build(new THREE.Scene(), T);
   if (MUT === 'vaza' && id === 'piscina_treta') delete W.ctfPoints;
   const pts = W.ctfPoints || [];

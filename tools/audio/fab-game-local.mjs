@@ -450,6 +450,7 @@ const mapSoundscapes = completeLajesSoundscape({ mapSoundscapes: {
   parque_treta: { loops: [loop('Environment/Wind_Loop_1.wav', .055), loop('Environment/Water_Stream_Calm_1.wav', .035)], shots: [shot(['Environment/Tree_Rustling_1-1.wav'], 18, 52, .14)] },
   velho_oeste: { loops: [loop('Environment/Wind_Loop_6.wav', .09)], shots: [shot(['Environment/Wood_Move_1-1.wav', 'Environment/Wood_Move_2-1.wav'], 16, 46, .17)] },
   penitenciaria: { synth: { kind: 'indoor-hum', vol: .02 }, shots: [shot(['Doors/Rusty_Metal_Creak_01.wav', 'Doors/Rusty_Metal_Creak_03.wav'], 22, 64, .14)] },
+  invasao_javaporcos: { loops: [loop('Environment/Wind_Loop_6.wav', .08)], shots: [shot(['Environment/Tree_Rustling_1-1.wav', 'Environment/Wood_Move_1-1.wav'], 16, 48, .15)] },
 } }).mapSoundscapes;
 extendMapSoundscapes({ mapSoundscapes });
 if (MUTANTE_SEM_CAMPOMORRO) delete mapSoundscapes.campomorro;

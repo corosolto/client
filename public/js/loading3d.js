@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CHARACTERS, charWeapon } from './characters.js';
 import { buildCharacterModel, hasModel, preloadCharacterAssets } from './glbchars.js';
 import { criaRenderer } from './glcontext.js';
+import { tr } from './i18n.js';
 
 /* Um por facção, e a facção manda: sem a entrada, o `|| .E` abaixo mostrava GOTINHA
    para quem escolheu MÍTICO. Régua no `eval:miticos-lobisomem` (mutante `loading`). */
@@ -79,11 +80,20 @@ export class LoadingCharacterStage {
     this.elapsed = 0;
     this.currentAction = null;
     const token = ++this.token;
-    const id = LOADING_CHARACTER_IDS[faction] || LOADING_CHARACTER_IDS.E;
+    const id = faction === 'J' ? 'javaporco' : LOADING_CHARACTER_IDS[faction] || LOADING_CHARACTER_IDS.E;
     this.canvas.dataset.character = id;
     this.canvas.dataset.ready = '0';
     if (!this.renderer) return;
-    if (!this.cache.has(id)) {
+    if (this.current) this.scene.remove(this.current.group);
+    this.current = null;
+    this.ctrl = null;
+    this.renderer.clear();
+    if (id === 'javaporco' && !this.cache.has(id)) {
+      const {preloadJavaporcos, criarPreviewJavaporco} = await import('./mode_javaporcos.js');
+      await preloadJavaporcos();
+      if (token !== this.token || !this.active) return;
+      this.cache.set(id, {group: criarPreviewJavaporco(), javaporco: true});
+    } else if (!this.cache.has(id)) {
       /* Só a arma DESTE preview: sem a lista, o bootstrap puxava as 26 antes de a partida
          existir — 7,5 MB e ~164 MB de VRAM na tela de carregamento. Régua: ARM1. */
       await preloadCharacterAssets([id], { weapons: [charWeapon(id)] });
@@ -102,6 +112,9 @@ export class LoadingCharacterStage {
     if (this.current) this.scene.remove(this.current.group);
     this.current = this.cache.get(id);
     this.ctrl = this.current.ctrl;
+    this.current.group.rotation.y = 0.42;
+    this.camera.position.set(.12, 1.08, this.current.javaporco ? 6 : 3.9);
+    this.camera.lookAt(0, this.current.javaporco ? .7 : .92, 0);
     this.scene.add(this.current.group);
     this.canvas.dataset.ready = '1';
   }
@@ -134,9 +147,24 @@ export class LoadingCharacterStage {
   }
 
   update(dt) {
-    if (!this.active || !this.renderer || !this.ctrl) return;
+    if (!this.active || !this.renderer || !this.current) return;
     this._resize();
     this.elapsed += Math.min(dt, 0.05);
+    if (this.current.javaporco) {
+      const time = this.reducedMotion ? 0 : this.elapsed;
+      for (const rig of this.current.group.userData.passada?.rigs || []) {
+        rig.head.rotation.x = .2 + Math.sin(time * 3) * .12;
+        rig.head.rotation.y = Math.sin(time * 1.7) * .1;
+      }
+      this.current.group.rotation.y = .42 + Math.sin(time * .7) * .08;
+      this.canvas.dataset.action = 'fucar';
+      this.canvas.dataset.clip = 'fucar-procedural';
+      const label = document.getElementById('load-character-action');
+      if (label) label.textContent = tr('JAVAPORCO · FUÇANDO');
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
+    if (!this.ctrl) return;
     const action = this.reducedMotion
       ? LOADING_ACTIONS.find((item) => item.name === 'ready')
       : actionAt(this.elapsed);

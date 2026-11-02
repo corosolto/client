@@ -59,7 +59,7 @@ export const GATILHOS = {
     workflow: '.github/workflows/portao-browser.yml',
     padroes: [
       ...COMUM,
-      /^tools\/eval\/(serve|harness|graffiti-census|graffiti-census-accept|ego-graffiti-census|graffiti-current-ci-check|graffiti-current-accept|graffiti-current-browser-check|graffiti-curation-measure|graffiti-art-inventory|graffiti-audit|select-inflate|entrada-check|armas-check|selected-weapon-probe|boot-check|perfil-mobile-browser|sertao-livestock-runtime-check|treta-vitrine-browser|lobby-arma-mao-check|mira-alinhada-check|gate-accept|toque-controles-check|vm-autorado-vivo|viewmodel-network-fixture)\.mjs$/,
+      /^tools\/eval\/(serve|harness|three-node|ak-manga-gpu-check|graffiti-census|graffiti-audit|select-inflate|entrada-check|armas-check|boot-check|perfil-mobile-browser|sertao-livestock-runtime-check|treta-vitrine-browser|graffiti-census-accept|ego-graffiti-census|graffiti-current-ci-check|graffiti-current-accept|graffiti-current-browser-check|graffiti-curation-measure|graffiti-art-inventory|selected-weapon-probe|lobby-arma-mao-check|mira-alinhada-check|gate-accept|toque-controles-check|vm-autorado-vivo|viewmodel-network-fixture)\.mjs$/,
       /^tools\/eval\/(graffiti_census|graffiti_audit|select_inflate|select_inflate_debt)\.json$/,
       /^tools\/eval\/assets-check\.mjs$/,
       /^tools\/eval\/map-fauna-curated(?:-(?:ci|collector|browser|capture))?\.(?:mjs|json)$/,

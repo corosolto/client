@@ -86,50 +86,7 @@ globalThis.Audio = class { play() {} pause() {} };
    textura. Sem este stub o Game nem constrói com ctf:true ("Image is not defined"). */
 globalThis.Image = class { constructor() { this.onload = null; this.onerror = null; this.width = 1; this.height = 1; } set src(v) { this._src = v; } get src() { return this._src || ''; } };
 
-/* Resolução do especificador nu `three`: os módulos de mapa fazem `import * as THREE from
-   'three'`, que no browser é resolvido pelo import map do index.astro. Em node não existe
-   import map, e `npm install` está bloqueado — então plantamos um pacote-ponte FORA do repo
-   (subindo a árvore de node_modules a partir de tools/eval) apontando para o three
-   vendorizado. Nada é baixado; é um arquivo de 3 linhas + dois symlinks. */
-{
-  const fs = await import('node:fs');
-  /* DENTRO DO PROJETO, e não um nível acima (correção 07/08, achada pelo build limpo
-     do T3). O atalho morava em `<pai-do-projeto>/node_modules/three`, e isso tem duas
-     consequências que só aparecem em checkout novo:
-
-       · ele é COMPARTILHADO por todo checkout debaixo daquele pai. Um clone antigo em
-         /tmp/qb_base deixou o atalho apontando pra si; a pasta sumiu; o symlink virou
-         pendurado. Aí `npm run assert:assets` num clone NOVO em /tmp/t3 morria com
-         ERR_MODULE_NOT_FOUND — apontando pro caminho de um projeto que não existe mais.
-       · `existsSync` num symlink QUEBRADO devolve false, então a guarda achava que
-         precisava recriar; o `mkdir`/`writeFile` passavam, o `symlinkSync` estourava
-         EEXIST, e o `try {} catch {}` engolia. Falha silenciosa permanente.
-
-     Dentro do projeto o atalho nasce e morre com o checkout, é sempre gravável (a
-     Vercel roda `npm ci` antes do buildCommand) e não contamina vizinho. E agora o
-     symlink pendurado é CONSERTADO em vez de engolido. */
-  const raiz = path.resolve(HERE, '../..');            // a raiz do projeto
-  const shim = path.join(raiz, 'node_modules', 'three');
-  const alvoIdx = path.resolve(raiz, 'public/vendor/three.module.js');
-  const alvoAdd = path.resolve(raiz, 'public/vendor/addons');
-  const liga = (de, para, tipo) => {
-    // lstat vê o LINK; existsSync vê o DESTINO. Link pendurado só aparece pro lstat.
-    try { fs.lstatSync(de); fs.rmSync(de, { recursive: true, force: true }); } catch { /* não existe */ }
-    fs.symlinkSync(para, de, tipo);
-  };
-  if (!fs.existsSync(path.join(shim, 'index.js'))) {
-    fs.mkdirSync(shim, { recursive: true });
-    fs.writeFileSync(path.join(shim, 'package.json'), JSON.stringify({
-      name: 'three', version: '0.160.0', type: 'module', main: 'index.js',
-      exports: { '.': './index.js', './addons/*': './addons/*' },
-    }));
-    /* SEM catch mudo: se não der pra plantar o atalho, nenhuma régua sobe, e a mensagem
-       tem que dizer isso — foi o silêncio aqui que escondeu o defeito por 3 dias. */
-    liga(path.join(shim, 'index.js'), alvoIdx);
-    liga(path.join(shim, 'addons'), alvoAdd, 'dir');
-  }
-}
-export const THREE = await import('three');
+export const { THREE } = await import('./three-node.mjs');
 export const { MAPS, MAP_IDS, carregaMapa } = await import(`${JS}/maps.js`);
 /* Mapas sob demanda: no browser o módulo da arena só entra por carregaMapa; no
    arnês não existe grafo de boot a poupar, e dezenas de réguas assumem MAPS[id].build

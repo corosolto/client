@@ -104,6 +104,7 @@ function tuboQuantizado(segmentos = 16) {
 const malhaQ = tuboQuantizado();
 malhaQ.geometry.computeBoundingBox();
 const caixaAntes = malhaQ.geometry.boundingBox.clone();
+const verticesQ = malhaQ.geometry.attributes.position.clone();
 if (MUTANTE === 'tampa-crua') {
   // Estado do relato de 26/10: copia os atributos escrevendo o valor DESNORMALIZADO no array cru.
   const geo = malhaQ.geometry, pos = geo.attributes.position;
@@ -200,5 +201,10 @@ const preFix = estadoDasNormais(malhaBug.geometry);
 chk('MT8', preFix.zero > 0 && posFix.zero === 0 && posFix.fora === 0,
   `${posFix.cobertos} vértices de faces válidas: zero=${posFix.zero}, fora da unidade=${posFix.fora} `
   + `(bocas tampadas: ${bocasF}; estado pré-fix reproduz ${preFix.zero}/${preFix.cobertos} normais zero — era o bloco preto)`);
+
+let erroQ = 0;
+const resultadoQ = malhaQ.geometry.attributes.position;
+for (let i = 0; i < verticesQ.count; i++) for (const c of ['getX', 'getY', 'getZ']) erroQ = Math.max(erroQ, Math.abs(verticesQ[c](i) - resultadoQ[c](i)));
+chk('MT9', erroQ <= 1e-6, `posição decodificada preservada: erro máximo ${erroQ}`);
 
 process.exit(falhas ? 1 : 0);
