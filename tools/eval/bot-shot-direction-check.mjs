@@ -32,7 +32,8 @@ try {
   cobrar(Math.abs(Math.atan2(direcao.y, -direcao.z) - .05) < 1e-8, 'NN usa o desvio vertical sorteado no raio efetivo');
   cobrar(rastro[1].clone().sub(rastro[0]).normalize().distanceTo(direcao) < 1e-8, 'rastro acompanha a mesma direção de disparo');
   cobrar(danos === 0 && bot.mag === 9, 'erro grande mantém miss e cobrança de munição');
-  Math.random = () => .52; jogo._botShootNN(bot, alvo);
+  // .52 desviava 11 cm a 40 m e só acertava pela esfera de 0,50 m; .505 desvia 3 cm (cabeça justa).
+  Math.random = () => .505; jogo._botShootNN(bot, alvo);
   cobrar(danos === 1 && direcao.x !== 0 && rastro[1].clone().sub(rastro[0]).normalize().distanceTo(direcao) < 1e-8,
     'acerto com desvio pequeno mantém rastro na direção efetiva');
   Math.random = () => .5; jogo._botShootNN(bot, alvo);

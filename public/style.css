@@ -917,12 +917,23 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 #char-select{justify-content:flex-start;gap:var(--s-4);padding:clamp(56px,7vh,88px) var(--s-5) var(--s-5)}
 /* Ficha + preview são as duas únicas colunas. O elenco ocupa uma segunda linha inteira. */
 .char-stage{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);
-  --char-thumb:114px;grid-template-rows:minmax(0,1fr) var(--char-thumb);grid-template-areas:"sheet preview" "rail rail";
+  /* rail tem PISO de 1 fileira (thumb72+12, mesmo 84px do coarse≤560 #1179): sem piso
+     a ficha empurra e corta a lista em vez de rolar dentro dela */
+  --char-thumb:114px;grid-template-rows:auto minmax(84px,1fr);grid-template-areas:"sheet preview" "rail rail";
   gap:var(--s-4) var(--s-5);align-items:stretch;flex:1 1 auto;min-height:0;width:min(1280px,95vw)}
-.char-filmstrip{grid-area:rail;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:var(--s-2);min-width:0}
-.char-list{display:flex;flex:0 1 auto;flex-direction:row;gap:var(--s-2);min-width:0;width:max-content;
-  max-width:calc(100% - 104px);overflow-x:auto;overflow-y:hidden;
-  overscroll-behavior:contain;padding-bottom:3px;
+.char-filmstrip{grid-area:rail;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;
+  /* a grade rola DENTRO da grid-area do rail — igual ao fix #1179 do coarse≤560 */
+  grid-template-rows:minmax(0,1fr);
+  align-items:center;gap:var(--s-2);min-width:0;min-height:0}
+/* GRADE DO ELENCO (relato do dono, 31/10: "são muitos personagens, está difícil
+   escolher assim" numa faixa horizontal): a fileira única vira grade multilinha com
+   rolagem própria; thumbs de 72 px mostram o elenco inteiro de uma vez. */
+.char-list{--char-thumb:72px;display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--char-thumb),1fr));gap:var(--s-2);min-width:0;width:100%;max-width:100%;
+  /* mínimo de 1 fileira inteira: em tela baixa o trilho encolhe, mas a thumb não corta (#1179) */
+  min-height:calc(var(--char-thumb) + 12px);
+  /* teto = área do rail (não 3 fileiras fixas): o rail só tem o que sobrar da ficha */
+  max-height:100%;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;padding:2px 3px 6px;
   scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 .char-list::-webkit-scrollbar{height:6px}
 .char-list::-webkit-scrollbar-thumb{background:var(--line-2)}
@@ -937,7 +948,7 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 /* SELECIONADO: amarelo da faixa (era ciano do sistema — ciano é foco, não escolha) */
 .char-row.sel,.char-row[aria-selected="true"]{border-color:var(--br-faixa);box-shadow:inset 0 3px 0 var(--br-faixa)}
 .strip-arrow{background:rgba(var(--bg-800-rgb),.9);border:1px solid var(--line);color:var(--ink-300);cursor:pointer;
-  flex:0 0 44px;width:44px;height:var(--char-thumb);font-size:24px;line-height:1;padding:0;clip-path:var(--cut-sm);
+  flex:0 0 44px;width:44px;height:44px;font-size:24px;line-height:1;padding:0;clip-path:var(--cut-sm);
   transition:color var(--t) var(--ease),border-color var(--t) var(--ease)}
 .strip-arrow:hover,.strip-arrow:focus-visible{color:var(--br-faixa);border-color:var(--br-faixa)}
 /* A FICHA ABRAÇA O CONTEÚDO (align-self:start) em vez de esticar até o rodapé do palco.
@@ -946,9 +957,12 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
    Na referência a coluna do meio termina onde o conteúdo termina. O gap sobe pra s-4
    porque agora ele é o que dá o ritmo entre os blocos. */
 .char-sheet{grid-area:sheet;align-self:start;max-height:100%;
-  display:flex;flex-direction:column;gap:var(--s-4);min-height:0;overflow-y:auto;
+  display:flex;flex-direction:column;gap:var(--s-4);min-height:0;overflow:hidden;
   background:rgba(var(--bg-800-rgb),.9);border:1px solid var(--line);padding:var(--s-5);clip-path:var(--cut);
-  position:relative;text-align:left;scrollbar-width:thin}
+  position:relative;text-align:left}
+/* Rodapé reservado: só o body rola; o CTA nunca cai na área cortada do scroller. */
+.char-sheet-body{flex:1 1 auto;min-height:0;overflow-y:auto;
+  display:flex;flex-direction:column;gap:var(--s-4);scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 /* nome e raridade EMPILHADOS: na referência o "ÉPICO" cai numa linha própria embaixo do
    "PALHAÇO DO MAL" — lado a lado a pastilha disputava a linha do título e apertava o nome */
 .char-info-head{display:flex;flex-direction:column;align-items:flex-start;gap:var(--s-2)}
@@ -967,7 +981,7 @@ html[data-ui="legacy"] .char-spec small::before,html[data-ui="legacy"] .char-att
    ~280px de conteúdo, e o texto vinha em --fs-600 com tracking de título. Na referência
    é uma linha só. O `nowrap` é o contrato — se o corpo crescer de novo, estoura visível
    em vez de dobrar em silêncio. Preenchimento e cor vêm do `.btn-big`. */
-#char-confirm{margin-top:auto;align-self:stretch;white-space:nowrap;
+#char-confirm{flex:0 0 auto;margin-top:auto;align-self:stretch;white-space:nowrap;
   font-size:var(--fs-400);letter-spacing:var(--tr-2);padding:var(--s-3) var(--s-4)}
 /* SEM MOLDURA (referência 03): lá o personagem ocupa o terço direito inteiro, sangrando
    pro fundo da página. No jogo eram DUAS bordas concêntricas — a caixa e o canvas — e o
@@ -975,6 +989,9 @@ html[data-ui="legacy"] .char-spec small::before,html[data-ui="legacy"] .char-att
    da tela. Tirando as duas o canvas ganha os 58→72vh e o personagem vira o assunto. */
 .char-preview-box{grid-area:preview;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s-2);
   min-width:0;min-height:0;position:relative;background:none;border:0;padding:0;overflow:hidden}
+/* contain:size só no palco de seleção (filho direto, altura definida pela linha do grid):
+   o mesmo box movido pro #hub-character pelo syncHomeCharacter() não casa o seletor. */
+.char-stage > .char-preview-box{contain:size}
 /* Canvas fluido: cresce com a janela (a altura aperta primeiro em 3:2). Backing 640². */
 #char-preview{flex:0 1 auto;cursor:grab;touch-action:none;
   background:
@@ -993,6 +1010,19 @@ html[data-ui="legacy"] .char-spec small::before,html[data-ui="legacy"] .char-att
   -webkit-mask-image:radial-gradient(78% 92% at 50% 56%,#000 52%,transparent 96%);
   mask-image:radial-gradient(78% 92% at 50% 56%,#000 52%,transparent 96%)}
 .char-preview-box.has-video #char-preview,.char-preview-box.has-video #char-preview-static{display:none}
+.pv-equipment{position:absolute;bottom:var(--s-2);max-width:100%;display:flex;flex-direction:column;gap:var(--s-1);align-items:center;text-align:center;pointer-events:none}
+.pv-equipment span:not([hidden]){padding:var(--s-1) var(--s-2);background:var(--bg-900);color:var(--ink-100);font-size:var(--fs-100);border-radius:var(--s-1)}
+.pv-compact-portrait,.pv-compact-equipment{display:none}
+.hub-character .pv-equipment{display:none}
+/* R65-S1: só no estado de erro o aviso volta a existir no herói vazio, centrado e longe do card. */
+.hub-character .char-preview-box.preview-failure .pv-equipment{display:flex;position:absolute;left:50%;bottom:50%;transform:translateX(-50%);align-items:center}
+.hub-character .char-preview-box.preview-failure #char-preview-weapon{display:none}
+.hub-character-card .pv-compact-equipment:not([hidden]){display:block}
+.hub-character-card .pv-compact-equipment{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+@media(max-width:760px),(pointer:coarse) and (max-height:560px){
+  .hub-character-card .pv-compact-portrait:not([hidden]),.hub-character-card .pv-compact-equipment:not([hidden]){display:block}
+  .hub-character-card #hub-character-crest{display:none}
+}
 .pv-hints{display:flex;flex:0 0 auto;min-height:20px;align-items:center;gap:var(--s-5);font-family:var(--mono);font-size:var(--fs-50);
   letter-spacing:var(--tr-2);color:var(--ink-300)}
 
@@ -1451,6 +1481,13 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
   letter-spacing:var(--tr-2);color:var(--ink-200);vertical-align:baseline;
   -webkit-text-stroke:0;line-height:1.1}
 #hp-num.low{color:var(--crit)}
+/* Colete ao lado da vida (escudo + número), capacete só com .com-capacete. Some com colete 0. */
+#armor-hud{display:inline-flex;align-items:center;gap:4px;align-self:center;font-weight:700;font-size:var(--fs-600);
+  color:var(--ink-100);font-variant-numeric:tabular-nums;text-shadow:var(--sh-hud)}
+#armor-hud i{display:inline-block;width:18px;height:18px;background:currentColor;flex:none}
+#armor-hud .armor-ico{mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z'/%3E%3C/svg%3E") center/contain no-repeat}
+#armor-hud .helmet-ico{display:none;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 16a9 9 0 0 1 18 0v2H3zm-1 3h20v2H2z'/%3E%3C/svg%3E") center/contain no-repeat}
+#armor-hud.com-capacete .helmet-ico{display:inline-block}
 /* A BARRA MANTÉM FUNDO DE PROPÓSITO: barra é OBJETO GRÁFICO e a UI1 não dá crédito de
    contorno pra objeto gráfico — sem trilho próprio não existe barra. Preenchimento em
    âmbar como na referência; o vermelho continua reservado pro alarme. */
@@ -1695,12 +1732,41 @@ html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 #scoreboard .sb-col td.sb-ping{padding-right:16px;color:#5c5d63;font-size:14px}
 #scoreboard .sb-col td:nth-child(3){color:#9a9ba1}
 #scoreboard tbody tr:first-of-type::before{display:none}
+#hud[data-objective="horde"][data-human-teams="1"] #score-b,#hud[data-objective="horde"][data-human-teams="1"] .tp-hud-retratos[data-lado="B"]{display:none!important}
+#scoreboard .sb-cols:has(.horde-team){grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+#scoreboard .sb-cols:has(.horde-enemy){grid-template-columns:minmax(0,1fr)}
+#scoreboard .horde-team{--sb-grid:minmax(0,1fr) 65px 65px}
+#scoreboard .horde-team p{padding:12px;color:#d4bd7c;font-size:12px}
+#scoreboard .horde-avatar{width:48px;height:48px;object-fit:cover;border-radius:50%;margin-right:10px;vertical-align:middle}
+@media(max-width:800px){#scoreboard .sb-cols:has(.horde-team){grid-template-columns:1fr;max-height:68dvh;overflow:auto}}
+#hud[data-objective="horde"] #score-e{min-width:72px;flex-direction:column;gap:2px}
+#hud[data-objective="horde"] #hud-top{padding:5px 8px;background:rgba(13,14,17,.94);border:1px solid #61513c;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+#hud[data-objective="horde"] #score-e::after{content:"ABATES";font:700 10px/1 system-ui;margin:0 8px}
+#hud[data-objective="horde"][data-human-teams="2"] #score-e::after{content:"TIME E · ABATES"}
+#hud[data-objective="horde"][data-human-teams="2"] #score-b{order:1;flex-direction:column;gap:2px;min-width:72px}
+#hud[data-objective="horde"][data-human-teams="2"] #score-b::after{content:"TIME B · ABATES";font:700 10px/1 system-ui}
+#hud[data-objective="horde"][data-human-teams="2"] #hud-mid{order:3}
+#score-j{order:2;flex-direction:column;gap:2px!important;min-width:86px;color:#edb27c}
+#score-j img{width:22px;height:22px;object-fit:cover;border-radius:50%}
+#score-j span{font:700 10px/1 system-ui}
+#scoreboard .horde-score{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) 70px 70px 90px 90px 110px;
+  align-items:center;background:rgba(13,14,17,.92);border:1px solid #26272d;border-top:2px solid #e0762a}
+#scoreboard .horde-score>span{min-width:0;padding:13px 10px;border-bottom:1px solid #26272d;
+  color:#ecebe6;text-align:right;font:600 16px/1 var(--font)}
+#scoreboard .horde-score>.horde-name{text-align:left;padding-left:16px;font-family:var(--aaa-font-body)}
+#scoreboard .horde-score>.horde-points{color:#b4d92e;font-weight:700}
+#scoreboard .horde-score>.horde-head{padding-top:10px;padding-bottom:10px;color:#9a9ba1;
+  font:700 11px/1 var(--aaa-font-body);letter-spacing:2px}
+#scoreboard .horde-score>.horde-bonus{background:rgba(224,50,50,.14);border-bottom:0}
 #scoreboard .sb-foot{position:absolute;left:50%;right:auto;bottom:32px;transform:translateX(-50%);display:flex;gap:18px;
   font:600 12px/1 var(--font);letter-spacing:2px;color:#5c5d63}
 #scoreboard .sb-foot b{color:#9a9ba1}
 #scoreboard .sb-center{position:absolute;inset:0 64px;display:flex;flex-direction:column;justify-content:center;gap:48px}
 #scoreboard .sb-center>h3{position:static;left:auto;right:auto;top:auto;width:100%;margin:0}
 #scoreboard .sb-center>.sb-cols{position:static;left:auto;right:auto;top:auto;width:100%;margin:0}
+#scoreboard:has(.horde-team,.horde-score) .sb-center{inset:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1180px,calc(100% - 32px));max-height:calc(100dvh - 100px);box-sizing:border-box;overflow:auto;justify-content:flex-start;gap:24px;padding:24px;background:rgba(13,14,17,.96);border:1px solid #61513c;border-radius:12px;box-shadow:0 12px 48px rgba(0,0,0,.5)}
+#scoreboard:has(.horde-team,.horde-score) .sb-center>h3{font-size:clamp(14px,2vw,22px);line-height:1.3;text-align:center}
+@media(max-width:800px){#scoreboard:has(.horde-team,.horde-score) .sb-center{padding:12px;gap:12px}}
 
 /* ---------- match end ----------
    Três blocos com hierarquia declarada, em vez de um painel único com tudo do mesmo
@@ -2128,6 +2194,7 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
   width:min(86px,6.8vw);height:min(144px,15.2vh);pointer-events:none;
   filter:drop-shadow(0 28px 24px rgba(0,0,0,.58))}
 #load-character-3d{display:block;width:100%;height:100%;background:transparent}
+#load-overlay[data-mode="horde"] #load-character-stage{width:min(300px,26vw);height:min(280px,30vh)}
 #load-character-action{position:absolute;right:8px;bottom:18px;padding:5px 9px;
   border-left:3px solid var(--br-faixa);background:rgba(var(--bg-900-rgb),.72);
   font:700 10px/1 var(--mono);letter-spacing:var(--tr-3);color:var(--ink-200);display:none}
@@ -2743,15 +2810,13 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   background:rgba(180,217,46,.30);border:2px solid rgba(255,255,255,.32);will-change:transform;
   display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.62)}
 #touch-ui .touch-joy-knob svg{width:56%;height:56%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));pointer-events:none}
-/* MIOLO PRESSIONADO = tiro: o knob acende vermelho enquanto atira (feedback do gatilho central) */
-#touch-ui .touch-joy.firing .touch-joy-knob{background:rgba(230,60,50,.55);border-color:rgba(255,150,140,.8);color:#fff}
 #touch-ui .touch-btn{position:absolute;pointer-events:auto;z-index:2;border-radius:50%;color:#fff;
   font:800 11px/1 var(--aaa-font-body,sans-serif);letter-spacing:.3px;
   background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.32);display:flex;align-items:center;justify-content:center}
 #touch-ui .touch-btn:active{background:rgba(180,217,46,.55)}
 #touch-ui .touch-btn svg{width:54%;height:54%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.65))}
-/* TIRO agora é no MIOLO dos dois sticks (não há mais botões de fogo dedicados).
-   DIREITA: MIRAR / RECARREGAR / ABAIXAR ficam ACIMA e à ESQUERDA do stick de olhar. */
+#touch-ui .touch-fire{right:calc(32px + var(--sr));bottom:calc(34px + var(--sb));width:104px;height:104px;background:rgba(224,50,50,.55)}
+#touch-ui .touch-joy-r{display:none}
 #touch-ui .touch-ads{right:calc(150px + var(--sr));bottom:calc(150px + var(--sb));width:54px;height:54px}
 #touch-ui .touch-reload{right:calc(140px + var(--sr));bottom:calc(50px + var(--sb));width:50px;height:50px}
 #touch-ui .touch-crouch{right:calc(204px + var(--sr));bottom:calc(54px + var(--sb));width:50px;height:50px}
@@ -3110,12 +3175,19 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
      precisa das áreas em coluna única, senão o "sheet preview" de 2 colunas some o botão. */
   .char-preview-box, .pv-hints { display: none; }
   .char-stage { grid-template-columns: 1fr; grid-template-areas: "sheet" "rail";
-    grid-template-rows: auto var(--char-thumb); }
+    /* trilho elástico (antes travado em 114px espremia a grade a 10px — #1179) */
+    grid-template-rows: auto minmax(84px, 1fr); }
   .char-sheet { flex-direction: row; align-items: center; gap: 14px; max-height: none;
     overflow: visible; padding: var(--s-2) var(--s-4); align-self: start; }
+  /* contents devolve os filhos ao flex-row compacto acima, sem reestilizá-los */
+  .char-sheet-body { display: contents; overflow: visible; }
   /* faixa do meio mais baixa: menos respiro em volta e teto no palco pra não invadir os
      retratos da fileira de baixo */
   .char-stage { gap: var(--s-2) var(--s-4); }
+  /* a grade não pode ser bloco de 244px centrado no trilho: sangra 33px sobre a
+     ficha e 33px pra fora do palco (#1179). A fileira do meio vira trilho definido. */
+  .char-filmstrip { grid-template-rows: minmax(0, 1fr); }
+  .char-list { height: 100%; max-height: none; }
   .char-sheet #char-info-blurb, .char-sheet .char-attrs-block { display: none; }
   /* a descrição da especialidade quebrava em 2 linhas nos nomes longos e esticava a faixa
      (o Dollynho, curto, ficava certo). Trava em 1 linha: altura da faixa vira constante. */
@@ -3123,6 +3195,11 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   .char-spec p { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
     overflow: hidden; }
   .char-info-head { flex: 1 1 auto; min-width: 0; }
+  .char-info-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 var(--s-2);align-items:center}
+  .char-info-head .pv-compact-portrait:not([hidden]){display:block;width:38px;height:38px;object-fit:contain;grid-column:1;grid-row:1/3}
+  .char-info-head .pv-compact-equipment:not([hidden]){display:block;grid-column:2;font-size:var(--fs-50);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .char-info-head #char-rarity{display:none}
+  .char-info-head #char-info-name{grid-column:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #char-info-name { font-size: clamp(18px, 4vw, 26px); }
   /* "TRIBOS URBANAS · 9 PERSONAGENS" em 2 linhas: some o "·" e a contagem cai pra linha de baixo */
   #char-faction-tag .cft-sep { display: none; }
@@ -3613,3 +3690,46 @@ html[data-home-ui="hub"] #main-menu[data-hub-tab="sobre"] .hub-footer{position:r
 #emote-wheel .emote-fatia.ativo{background:#b4d92e;border-color:#b4d92e;color:#10141a}
 #emote-wheel .emote-fatia.ativo b{color:#10141a}
 @media (max-width:720px){#emote-wheel .emote-fatia{min-width:84px;font-size:10px;padding:7px 9px}}
+
+/* TRETA$ da partida: saldo acima da pilha de armas; o menu ocupa a tela como no CS. */
+#hud-treta{position:absolute;right:20px;bottom:350px;z-index:22;display:flex;align-items:baseline;justify-content:flex-end;flex-wrap:wrap;gap:6px;max-width:280px;
+  font:800 20px/1 var(--tp-num,var(--aaa-font-body,sans-serif));color:#b4d92e;text-align:right;text-shadow:0 2px 6px #000}
+#hud-treta .ht-moeda{font-size:12px;letter-spacing:.12em;color:#cfd6c0}
+#hud-treta .ht-ganho{font-style:normal;font-size:14px;color:#e8ff8a;opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s}
+#hud-treta .ht-ganho.on{opacity:1;transform:none}
+#hud-treta .ht-dica{flex-basis:100%;font:700 11px/1.2 var(--aaa-font-body,sans-serif);letter-spacing:.08em;color:#cfd6c0}
+#hud-treta .ht-dica:empty{display:none}
+#compra-menu{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:20px;box-sizing:border-box;
+  background:rgba(5,7,5,.62);backdrop-filter:blur(8px);pointer-events:auto;font-family:var(--aaa-font-body,sans-serif)}
+#compra-menu.hidden{display:none}
+#compra-menu .cm-painel{width:min(880px,94vw);max-height:min(600px,86vh);display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding:clamp(14px,2vw,26px);box-sizing:border-box;
+  background:linear-gradient(145deg,rgba(22,28,18,.98),rgba(7,10,8,.98));border:1px solid rgba(180,217,46,.28);border-radius:14px;box-shadow:0 28px 90px rgba(0,0,0,.65)}
+#compra-menu .cm-cabeca{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:2px 4px 16px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,.14);font:800 15px/1 inherit;letter-spacing:.14em;color:#cfd6c0}
+#compra-menu .cm-cabeca b{font-size:22px;letter-spacing:.04em;color:#b4d92e}
+#compra-menu .cm-corpo{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));align-content:start;gap:6px 10px;overflow:auto;padding:4px}
+#compra-menu .cm-linha{display:flex;align-items:center;gap:10px;width:100%;min-height:46px;padding:7px 11px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.08);border-radius:7px;color:#fff;font:700 13px/1.1 inherit;letter-spacing:.05em;text-align:left;cursor:pointer}
+#compra-menu .cm-linha:hover,#compra-menu .cm-linha:focus-visible{background:rgba(180,217,46,.16);border-color:#b4d92e}
+#compra-menu .cm-linha i{font-style:normal;min-width:18px;color:#b4d92e}
+#compra-menu .cm-linha img{width:82px;height:34px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
+#compra-menu .cm-linha span{flex:1}
+#compra-menu .cm-linha span em{font-style:normal;font-size:10px;color:#10141a;background:#b4d92e;border-radius:3px;padding:1px 4px;margin-left:4px}
+#compra-menu .cm-linha b{color:#b4d92e;font-size:14px}
+#compra-menu .cm-linha b s{color:#9a9ba1;font-weight:600;margin-right:6px}
+#compra-menu .cm-linha.off{opacity:.42}
+#compra-menu .cm-linha small{margin-left:6px;font-size:11px;color:#cfd6c0}
+#compra-menu .cm-linha.assinatura{border-color:rgba(180,217,46,.45)}
+#compra-menu .cm-pe{display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.14)}
+#compra-menu .cm-aviso{display:block;flex:1;padding:2px 8px 4px;font:700 12px/1.2 inherit;color:#ff8a7a}
+#compra-menu .cm-voltar{min-height:42px;max-width:240px;color:#cfd6c0}
+/* MODAL COMPACTO (relato do dono, 31/10: "menu de compra gigantesco → modal pequeno
+   pegando só o meio da tela"): painel delimitado, backdrop clicável fecha. */
+#compra-menu .cm-linha b .cm-moeda{width:14px;height:14px;margin-right:5px;vertical-align:-2px;object-fit:contain}
+#compra-menu .cm-cabeca b .cm-moeda{width:18px;height:18px;vertical-align:-4px}
+#compra-menu .cm-linha img{flex:none}
+/* Moeda do TRETA$ no HUD e a moeda que VIRA ao ganhar a rodada (CSS 3D, sem JS por quadro). */
+#hud-treta .ht-coin{width:22px;height:22px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+@keyframes ht-moeda-flip{0%{transform:rotateY(0) translateY(6px);opacity:0}14%{opacity:1}100%{transform:rotateY(900deg) translateY(-48px);opacity:0}}
+#hud-treta .ht-moeda-anim{position:absolute;right:4px;bottom:110%;width:36px;height:36px;object-fit:contain;animation:ht-moeda-flip 1.15s cubic-bezier(.2,.7,.3,1) forwards;filter:drop-shadow(0 3px 8px rgba(0,0,0,.65));pointer-events:none}
+.touch-compra{position:fixed;left:calc(212px + env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));width:44px;height:44px;font:800 22px/1 sans-serif;color:#10141a!important;background:#b4d92e!important;border-radius:50%}
+.touch-compra.hidden{display:none}
+@media (pointer:coarse),(max-height:500px){#hud-treta{right:10px;bottom:250px}#compra-menu{padding:0}#compra-menu .cm-painel{height:100%;padding:12px}#compra-menu .cm-linha{min-height:44px}}

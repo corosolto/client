@@ -39,8 +39,8 @@ if (mutation) {
   }
   console.log('Mutação aplicada: ' + mutation);
 }
-const helperBegin = source.indexOf('const ANSIOSO = '), helperEnd = source.indexOf('\nlet mutacaoAplicada =', helperBegin);
-const begin = source.indexOf('async function mede('), end = source.indexOf('\nlet saida =', begin);
+const helperBegin = source.indexOf('const ANSIOSO = '), helperEnd = source.indexOf('\nconst PUBLIC_ROOT=', helperBegin);
+const begin = source.indexOf('async function mede('), end = source.indexOf('\nlet saida=', begin);
 assert(helperBegin >= 0 && helperEnd > helperBegin && begin > helperEnd && end > begin, 'fronteiras reais');
 let failures = 0;
 for (const [name, options] of [

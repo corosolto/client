@@ -52,6 +52,7 @@ const CONSTROI_MIDIA = /new Audio\s*\(|createElement\s*\(\s*['"`](audio|video)['
 const PLAY = /\.play\s*\(/;
 const CATCH_DIRETO = /\.play\s*\(\s*\)\s*\.catch\s*\(/;
 const ATRIBUI_PLAY = /(?:^|[^.\w])(\w+)\s*=\s*[^=].*\.play\s*\(\s*\)/;
+const AWAIT_PLAY_INLINE = /^\s*try\s*\{\s*await\s+[\w$.]+\.play\s*\(\s*\)\s*;\s*\}\s*catch\s*(?:\([^)]*\))?\s*(\{.*\})\s*$/;
 
 function arquivosJs(dir, acc = []) {
   for (const e of readdirSync(dir)) {
@@ -65,6 +66,9 @@ function arquivosJs(dir, acc = []) {
 function playGuardado(linhas, i) {
   const linha = linhas[i];
   if (CATCH_DIRETO.test(linha)) return true;             // X.play().catch(...)
+  const awaited=linha.match(AWAIT_PLAY_INLINE);
+  if ((linha.match(/\.play\s*\(/g) || []).length === 1 && awaited
+      && !/\b(?:throw|await)\b|Promise\s*\.\s*reject\s*\(/.test(awaited[1])) return true;
   const m = linha.match(ATRIBUI_PLAY);                   // const p = X.play(); ... p.then(...)
   if (m) {
     const v = m[1];

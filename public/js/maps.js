@@ -22,10 +22,21 @@ import { withVisibleShotOccluders } from './shot_surfaces.js';
 
    Ver `ALIAS_MAPA` logo abaixo do registro: id antigo continua resolvendo, e o motivo
    de isso não ser opcional está lá. */
+const JAVAPORCOS_META = { ctfMode: false, objectiveMode: 'horde',
+    loadingWall: '/img/loading-javaporcos.webp',
+    props: ['carro_batido_scan_03', 'perua_pichada_scan', 'junk_car', 'carro_batido_scan_07',
+      'dumpster', 'porta_aco', 'arvore_mata', 'shopping_cart', 'capim_touceira_a', 'capim_touceira_b',
+      'arbusto_mata_a', 'arbusto_mata_b', 'samambaia_mata', 'calathea_mata', 'galhos_secos', 'toco_arvore',
+      'tronco_caido', 'pedra_mata', 'saco_lixo', 'caixa_papelao', 'engradado_plastico', 'cadeira_plastico',
+      'pneu_velho', 'tambor_metal', 'tampa_bueiro', 'lixeira_metal', 'lata_enferrujada', 'poste_luz_praca',
+      'caixote_madeira'],
+    ambience: ['rat', 'pigeonGround', 'dog', 'parrot'],
+  };
 export const MAPS = {
   campomorro: { name: 'Campinho do Morro', ctfMode: true,
     props: ['arquibancada', 'junkyard_container', 'caixa_som_baile', 'stall', 'fav_house', 'pilha_pneus', 'moto_cg', 'fusca', 'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas', 'grama_corrego_01', 'grama_corrego_02', 'planta_corrego_taboa', 'planta_corrego_taioba'],
-    ambience: ['rat', 'pigeonGround', 'dog', 'jacare', 'capivara', 'cat', 'chicken', 'cow', 'armadillo', 'cockroach', 'parrot'],
+    ambience: ['rat', 'pigeonGround', 'dog', 'escadaoCat', 'sertaoHen', 'cow', 'armadillo', 'parrot'],
+    mobileAmbience: true,
   },
   mansao: { name: 'Mansão do Joá', ctfMode: true,
     props: ['mesa_guardasol', 'guarda_sol', '1968_volkswagen_beetle', '2014_mini_cooper_s_f56', '2002_volkswagen_golf_r32_mk4', 'palmeira_imperial', 'palmeira_ravenala', 'heliconia', 'costela_adao', 'bananeira', 'ixora', 'agave', 'samambaia', 'banco_jardim', 'poste_jardim', 'escultura_jardim', 'vaso_tropical', 'lounge_externo', 'lampiao_fachada', 'mansao_sofa', 'mansao_poltrona', 'mansao_mesa_centro', 'mansao_lustre', 'coqueiro'],
@@ -37,10 +48,13 @@ export const MAPS = {
   },
   escadao: { name: 'Escadão (Morro)', ctfMode: true,
     props: ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fusca', 'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02', 'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas', 'samambaia', 'grama_corrego_02', 'escadao_casa_r3', 'escadao_varanda_r4', 'escadao_eletrica_r4'],
-    ambience: ['rat', 'pigeonGround', 'dog', 'jacare', 'capivara', 'chicken', 'cow', 'armadillo', 'cockroach', 'parrot', 'escadaoCat'],
+    ambience: ['rat', 'pigeonGround', 'dog', 'cockroach', 'escadaoCat', 'sertaoHen'],
+    mobileAmbience: true,
   },
   praca_poderes: { name: 'Praça dos Três Poderes',   // Brasília fiel (substitui o clássico)
     props: ['congresso', 'catedral', 'ministerio', 'palacio', 'justica', 'tires', 'stall', 'tent', 'bus', 'drinkstand', 'urna', 'towner'],
+    propsComplete: true,
+    ambience: ['rat', 'pigeonGround', 'armadillo'],
   },
   piscina_treta: { name: 'Piscina da Treta',   // salão fechado do CS 1.6; a versão Piscinão está em map_piscinao_ramos.js, fora do registro
     props: ['piscina_armarios', 'piscina_banco', 'piscina_espreguicadeira', 'piscina_escada'],
@@ -49,18 +63,22 @@ export const MAPS = {
   // (seed no startGame). `ctfMode: true` = ABRE em CTF, mas o jogador pode trocar.
   loja_h: { name: 'Loja H (Estacionamento)', ctfMode: true },
   ferro_velho: { name: 'Ferro Velho do Zé', ctfMode: true,
-    props: ['muro_carros', 'fileira_carros', 'monte_carros', 'guindaste', 'prensa_carros', 'pilha_pneus', 'abandoned_car', 'broken_car', 'broken_car_2', 'carro_danificado', 'destroyed_car', 'junk_car', 'dumpster', 'jersey_barrier', 'sandbags', 'concrete_roadblock'],
+    props: ['muro_carros', 'fileira_carros', 'monte_carros', 'guindaste', 'prensa_carros', 'pilha_pneus', 'ferro_balcao', 'abandoned_car', 'broken_car', 'broken_car_2', 'carro_danificado', 'destroyed_car', 'junk_car', 'dumpster', 'jersey_barrier', 'sandbags', 'concrete_roadblock'],
   },
   quebrada: { name: 'Quebrada (Rua do Baile)', ctfMode: true,
     props: ['pilha_pneus', 'tires', 'jersey_barrier', 'stall', 'tent', 'caixa_som', 'arquibancada', 'churrasqueira', 'mesa_guardasol', 'guarda_sol', 'moto_cg', 'kombi', 'uno_mille', 'fusca', 'saveiro', 'dumpster', 'arara_roupas', 'drinkstand', 'fav_house', 'fav_brasileira', 'fav_modular', 'tiara_gt83', 'botijao_gas', 'vw_9150', 'fachada_comercio', 'onibus_sptrans', 'caixa_som_baile'],
+    ambience: ['rat', 'pigeonGround', 'dog', 'escadaoCat'],
+    mobileAmbience: true,
   },
   corrego: { name: 'Córrego (Favela de SP)', ctfMode: true,
     props: ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fusca', 'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_som', 'fav_house', 'fav_brasileira', 'caixa_dagua', 'botijao_gas', 'uno_mille', 'fiat_uno', 'kombi', 'grama_corrego_01', 'grama_corrego_02', 'planta_corrego_taboa', 'planta_corrego_taioba', 'pipa_papel', 'helicoptero_pm'],
-    ambience: ['rat', 'pigeonGround', 'dog', 'jacare', 'capivara', 'cat', 'chicken', 'cow', 'armadillo', 'cockroach', 'parrot', 'jacare', 'capivara'],
+    ambience: ['rat', 'pigeonGround', 'cockroach', 'escadaoCat', 'sertaoHen', 'jacare', 'capivara'],
+    mobileAmbience: true,
   },
   lajes: { name: 'Lajes (Comunidade)', ctfMode: true,
     props: ['lajes_casa_01', 'lajes_casa_02', 'lajes_casa_03', 'lajes_casa_04', 'lajes_casa_05', 'lajes_casa_06', 'lajes_casa_07', 'lajes_varal', 'caixa_dagua', 'helicoptero_pm', 'moto_cg'],
-    ambience: ['rat', 'pigeonGround', 'dog', 'jacare', 'capivara', 'cat', 'chicken', 'cow', 'armadillo', 'cockroach', 'parrot', 'pipa'],
+    ambience: ['rat', 'pigeonGround', 'dog', 'cockroach', 'escadaoCat', 'pipa'],
+    mobileAmbience: true,
   },
   posto_treta: { name: 'Posto da Treta', ctfMode: true,
     props: ['bombas_combustivel', 'loja_conveniencia', 'kombi', 'saveiro', 'fusca', 'dumpster', 'quiosque', 'botijao_gas', 'jersey_barrier', 'concrete_roadblock', 'sandbags', 'pilha_pneus', 'tires', 'fileira_carros', 'opala', 'chevette', 'brasilia_vw', 'fiat_uno', 'uno_mille', 'moto_cg', 'cooler', 'caixa_som', 'guarda_sol', 'mesa_guardasol', 'shopping_cart', 'vw_9150', 'manequim', 'fav_house', 'fav_modular', 'fav_brasileira', 'fachada_comercio', 'bus', 'onibus_urbano', 'ixora', 'agave', 'samambaia'],
@@ -82,6 +100,9 @@ export const MAPS = {
     props: ['sertao_macambira', 'sertao_juazeiro', 'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'caixa_som_baile', 'casa_pedra', 'casa_geminada', 'igrejinha', 'caminhao_antigo'],
     ambience: ['rat', 'pigeonGround', 'parrot', 'calango', 'lagarto', 'sertaoGoat', 'sertaoHen', 'sertaoChick'],
   },
+  invasao_javaporcos: { name: 'Cidade Invadida', ...JAVAPORCOS_META },
+  distrito_rural: { name: 'Distrito Rural', ...JAVAPORCOS_META },
+  vila_da_mata: { name: 'Vila da Mata', ...JAVAPORCOS_META },
   penitenciaria: { name: 'CARANDIRU', ctfMode: true,
     props: [],
     ambience: ['rat', 'pigeonGround'],
@@ -109,6 +130,9 @@ const MODULOS = {
   atacadao_treta: () => import('./map_atacadao.js'),
   parque_treta: () => import('./map_parque.js'),
   velho_oeste: () => import('./map_velho_oeste.js'),
+  invasao_javaporcos: () => import('./map_invasao_javaporcos.js'),
+  distrito_rural: () => import('./map_javaporcos_rural.js'),
+  vila_da_mata: () => import('./map_javaporcos_vila.js'),
   penitenciaria: () => import('./map_penitenciaria.js'),
 };
 
@@ -118,11 +142,11 @@ const EXPORTS = {
   mansao: { build: 'buildMansao', props: 'MANSAO_PROPS', ambience: 'MANSAO_AMBIENCE', preload: 'preloadMansaoAmbience' },
   amazonia: { build: 'buildAmazonia', props: 'AMAZONIA_PROPS', ambience: 'AMAZONIA_AMBIENCE' },
   escadao: { build: 'buildEscadao', props: 'ESCADAO_PROPS', ambience: 'ESCADAO_AMBIENCE' },
-  praca_poderes: { build: 'buildBrasilia', props: 'BRASILIA_PROPS' },
+  praca_poderes: { build: 'buildBrasilia', props: 'BRASILIA_PROPS', ambience: 'BRASILIA_AMBIENCE' },
   piscina_treta: { build: 'buildPoolDay', props: 'PISCINA_PROPS' },
   loja_h: { build: 'buildHavan', propsGetter: 'havanPropsForMatch' },
   ferro_velho: { build: 'buildFerroVelho', props: 'FERRO_PROPS' },
-  quebrada: { build: 'buildQuebrada', props: 'QUEBRADA_PROPS' },
+  quebrada: { build: 'buildQuebrada', props: 'QUEBRADA_PROPS', ambience: 'QUEBRADA_AMBIENCE' },
   corrego: { build: 'buildCorrego', props: 'CORREGO_PROPS', ambience: 'CORREGO_AMBIENCE' },
   lajes: { build: 'buildLajes', props: 'LAJES_PROPS', ambience: 'LAJES_AMBIENCE' },
   posto_treta: { build: 'buildPosto', props: 'POSTO_PROPS' },
@@ -131,6 +155,9 @@ const EXPORTS = {
   atacadao_treta: { build: 'buildAtacadao', props: 'ATACADAO_PROPS' },
   parque_treta: { build: 'buildParque', props: 'PARQUE_PROPS', ambience: 'PARQUE_AMBIENCE' },
   velho_oeste: { build: 'buildVelhoOeste', props: 'VELHO_OESTE_PROPS', ambience: 'VELHO_OESTE_AMBIENCE' },
+  invasao_javaporcos: { build: 'buildInvasaoJavaporcos', props: 'INVASAO_JAVAPORCOS_PROPS', preload: 'preloadJavaporcos' },
+  distrito_rural: {build:'buildDistritoRural',props:'DISTRITO_RURAL_PROPS',preload:'preloadJavaporcos'},
+  vila_da_mata: {build:'buildVilaDaMata',props:'VILA_DA_MATA_PROPS',preload:'preloadJavaporcos'},
   penitenciaria: { build: 'buildPenitenciaria', props: 'PENITENCIARIA_PROPS', ambience: 'PENITENCIARIA_AMBIENCE' },
 };
 
@@ -183,6 +210,8 @@ export const DEFAULT_MAP = 'praca_poderes';
 /* Mapas fora do jogo para retrabalho: saem do menu, não do registro (é dele que ~50
    réguas vivem). Contrato e volta: docs/maps/MAPAS-PARADOS.md. */
 export const MAPAS_PARADOS = new Set([
+  'distrito_rural',
+  'vila_da_mata',
   'mansao',
   'parque_treta',
   'campomorro',
@@ -278,3 +307,5 @@ export function mapaDaSessao({ urlMap, savedMap, pinned, oficina = false } = {})
   if (pinned) return guarda(savedMap, 'mapa fixado');
   return nextMapId(savedMap);
 }
+
+export const ehMapaJavaporcos = id => MAPS[resolveMapId(id)]?.objectiveMode === 'horde';

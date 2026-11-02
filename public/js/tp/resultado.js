@@ -52,7 +52,10 @@ function dados(fim) {
     const eu = g.playerTeam === 'B' ? 'B' : 'E', eles = eu === 'E' ? 'B' : 'E';
     const abates = g.player.kills | 0;
     return {
-      venceu, vencedor: venceu ? eu : eles, placar: [g.roundsWon[eu] | 0, g.roundsWon[eles] | 0],
+      nomes: g.world?.mode === 'horde' ? { E: g._teamName('E'), B: g._teamName('B'), J: g._teamName('J') } : null,
+      empate: g.objective?.state?.winner === 'draw',
+      territorio: g.objective ? (g.objective.regras.times === 3 ? ['E','B','J'] : ['E','J']).map(team=>[g._teamName(team),Math.round((g.objective.state.territorio?.[team] || 0)*100)]) : null,
+      venceu, vencedor: g.objective?.state?.winner || (venceu ? eu : eles), placar: [g.roundsWon[eu] | 0, g.roundsWon[eles] | 0],
       abates, mortes: g.player.deaths | 0, hs: abates ? Math.round((100 * (g.player.headshots | 0)) / abates) : 0,
       segundos: Math.round(g.time || 0), combo: g.mk?.best | 0,
       personagem: g.playerDef?.name || '', online: !!g.online,
@@ -145,16 +148,30 @@ export function ligar() {
     const d = dados(fim);
     if (!d) { delete fim.dataset.tpRes; raiz.hidden = true; return; }
     const vit = d.venceu;
-    raiz.dataset.resultado = vit ? 'vitoria' : 'derrota';
-    q('.tp-res__titulo .tp-ital').textContent = tr(vit ? 'VITÓRIA' : 'DERROTA');
-    const [n1, n2] = raiz.querySelectorAll('.tp-res__placar b');
-    n1.dataset.alvo = d.placar[0]; n2.dataset.alvo = d.placar[1];
-    q('.tp-res__placar').setAttribute('aria-label', tr('Rodadas {a} a {b}').replace('{a}', d.placar[0]).replace('{b}', d.placar[1]));
+    raiz.dataset.resultado = d.empate ? 'empate' : vit ? 'vitoria' : 'derrota';
+    q('.tp-res__titulo .tp-ital').textContent = tr(d.empate ? 'EMPATE' : vit ? 'VITÓRIA' : 'DERROTA');
+    const placar = q('.tp-res__placar');
+    placar.replaceChildren();
+    const linha = el('span','tp-ital');
+    placar.append(linha);
+    if (d.territorio) {
+      placar.style.fontSize = 'clamp(14px, 2.4vw, 28px)';
+      for (const [nome, pct] of d.territorio) {
+        const item = el('span', '', `${nome} `), n = el('b','tp-res__n',`${pct}%`);
+        item.append(n); linha.append(item, document.createTextNode(' · '));
+      }
+      linha.lastChild?.remove();
+      placar.setAttribute('aria-label', d.territorio.map(([nome,pct])=>`${nome}: ${pct}% do mapa`).join(', '));
+    } else {
+      placar.style.fontSize = '';
+      for (let i=0;i<2;i++) { if(i) linha.append(el('i','',' × ')); const n=el('b','tp-res__n'); n.dataset.fmt='int'; n.dataset.alvo=d.placar[i]; linha.append(n); }
+      placar.setAttribute('aria-label', tr('Rodadas {a} a {b}').replace('{a}', d.placar[0]).replace('{b}', d.placar[1]));
+    }
     const frase = q('.tp-res__frase');
     frase.hidden = !d.vencedor;
     if (d.vencedor) {
       const modelo = vit ? 'A {time} levou a treta. O pastel da vitória está pago.' : 'A {time} levou a melhor. Já pediram CPI da partida.';
-      frase.textContent = tr(modelo).replace('{time}', tr(TIME[d.vencedor]));
+      frase.textContent = d.empate ? 'As equipes terminaram empatadas.' : d.nomes ? `${d.nomes[d.vencedor]} venceram a partida.` : tr(modelo).replace('{time}', tr(TIME[d.vencedor]));
     }
 
     const stats = q('.tp-res__stats');
@@ -225,7 +242,7 @@ export function ligar() {
   const partilha = q('.tp-res__partilha');
   partilha.addEventListener('click', async () => {
     const mapa = window.__game?._mapId || new URLSearchParams(location.search).get('map') || '';
-    const texto = tr(fim.classList.contains('win') ? 'Ganhei uma treta no CORO SOLTO. Bora jogar?' : 'Perdi uma treta no CORO SOLTO. Bora jogar?');
+    const texto = tr(fim.classList.contains('draw') ? 'Empate no CORO SOLTO. Bora jogar?' : fim.classList.contains('win') ? 'Ganhei uma treta no CORO SOLTO. Bora jogar?' : 'Perdi uma treta no CORO SOLTO. Bora jogar?');
     const url = linkCompartilhavel(mapa ? `/?map=${encodeURIComponent(mapa)}` : '/', 'fim-de-partida');
     const aviso = AVISO[await compartilhar({ titulo: 'CORO SOLTO', texto, url })];
     if (!aviso) return;
@@ -234,7 +251,7 @@ export function ligar() {
   });
 
   new MutationObserver(() => {
-    if (!fim.classList.contains('hidden') && (fim.classList.contains('win') || fim.classList.contains('lose'))) pintar();
+    if (!fim.classList.contains('hidden') && (fim.classList.contains('win') || fim.classList.contains('lose') || fim.classList.contains('draw'))) pintar();
     else { delete fim.dataset.tpRes; raiz.hidden = true; encerrar(); }
   }).observe(fim, { attributes: true, attributeFilter: ['class'] });
   const proximo = $('match-next');

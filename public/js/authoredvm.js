@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-import { authoredFrameFor, VM_FAMILY, VM_WEAPON, VM_FABRICA } from './data/vmconfig.js';
+import { adsEfetivo, authoredFrameFor, VM_FAMILY, VM_WEAPON, VM_FABRICA } from './data/vmconfig.js';
 import { VM_RUNTIME } from './vmlaunch.js';
 import { GOLDEN_VER } from './data/goldenver.js';
 import { FAMILY_VER } from './data/weaponver.js';
@@ -9,11 +9,13 @@ import { VM_BYTES } from './data/vmbytes.js';
 import { VM_FABRICA_BYTES } from './data/vmfabrica.js';
 import { SHARED_VER } from './data/vmsharedver.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
+import { attachGoldenBarrel } from './golden-barrel.js';
 import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
 import { applyTeamHandMaterial, refreshTeamHands, handLayoutOfMesh } from './vmhands.js';
 import { extendSleeveOpenings, capSleeveOpenings, SLEEVE_MATERIAL } from './vmsleeve.js';
 import { applyWeaponSkinCandidate } from './weapon-skins.js';
+import { approach, VM_TIMES } from './springs.js';
 
 const DEG2RAD = Math.PI / 180;
 
@@ -87,6 +89,10 @@ const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
 // Revisão: ?vmgolden=ak serve a golden da arma sem mexer no `golden` do vmconfig.
 const GOLDEN_QS = new Set((_QS?.get('vmgolden') || '').split(',').filter((w) => GOLDEN_VER[w]));
 const GOLDEN_ADS = AUTHORED_VM_ENABLED && _QS?.get('vmgoldenads') !== '0';
+// ADS 1P pela linha de mira (adsEfetivo em vmconfig.js); ?ads1pfix=0 volta ao foco.
+const ADS1P_FIX = _QS?.get('ads1pfix') !== '0';
+// ?vmlocomotion=0: kill-switch do gait/sway 1P para A/B sem deploy (espírito ?vmkick).
+const VM_LOCOMOTION = _QS?.get('vmlocomotion') !== '0';
 
 // Fail-closed: sem a chave (ou revisão) tudo permanece no legado; `vmready`/`vmweapon`
 // só abrem armas numa sessão de revisão.
@@ -471,6 +477,8 @@ export class AuthoredViewModels {
     this.profile = profile;
     this.adsAmount = 0;
     this._ctx = {};
+    this._gaitEnv = 0;
+    this._gait = { x: 0, y: 0, rz: 0 };
     this._time = 0;
     this.recoil = new VmRecoil();
     this._recoilParams = null;
@@ -574,10 +582,9 @@ export class AuthoredViewModels {
           boca: visual.scene.getObjectByName('SOCKET_FAB_BARREL') || null,
         };
       } else if (bakedWeapon) {
-        // GLB assado novo expõe MINT_WEAPON_*; nos goldens públicos antigos a
-        // primeira malha de arma é o corpo normalizado e recebe pintura e decalques.
-        const mint = visual.scene.getObjectByName(`MINT_WEAPON_${bakedWeapon.toUpperCase()}`)
-          || (golden ? visual.weaponMeshes[0] : null);
+        // Só MINT_WEAPON_* é wrap Mint; a golden já traz a arma final no próprio rig.
+        // Reusar a primeira mesh aplicava material/enquadramento que ampliava a AK.
+        const mint = visual.scene.getObjectByName(`MINT_WEAPON_${bakedWeapon.toUpperCase()}`);
         if (mint) entry.mint = { active: mint, wraps: new Map(), weaponId: bakedWeapon };
         entry.sockets = {
           muzzle: visual.scene.getObjectByName('SOCKET_MINT_MUZZLE') || null,
@@ -591,9 +598,10 @@ export class AuthoredViewModels {
         if (owner) attachMintWeapon(entry, owner);
       }
       this._applyWeaponSkin(entry, entry.mint?.weaponId || bakedWeapon);
+      attachGoldenBarrel(entry);
       // AK golden: ADS pela alça e massa medidas na malha (sonda-golden.mjs), fora de sockets/mint
-      // para boca, flash e quadril seguirem os aprovados (VM-FABRICA §8.3).
-      const mira = golden && GOLDEN_ADS && VM_WEAPON[bakedWeapon]?.ads?.golden;
+      // independente da origem física de flash/tracer; conserva o enquadramento (§8.3).
+      const mira = golden && GOLDEN_ADS && adsEfetivo(VM_WEAPON[bakedWeapon]?.ads, ADS1P_FIX)?.golden;
       if (mira) {
         const osso = visual.scene.getObjectByName(mira.osso);
         if (osso) {
@@ -682,10 +690,32 @@ export class AuthoredViewModels {
     this.adsAmount = Math.min(1, Math.max(0, Number(amount) || 0));
     return this.active(id);
   }
+  // Gait 1P (P3 da METRICA): Lissajous 1:2 travado no stepPhase do som de passo;
+  // ganhos, taus e limites com procedência em docs/visual-consistency/MOVIMENTO-1P.md.
+  _stepGait(step, ctx) {
+    // A guarda serve ao mutante fixture-sem-estado: sem ctor o estado falta como NaN
+    // visível ao gate (mounts-finitos), não como crash.
+    const gait = this._gait || (this._gait = { x: 0, y: 0, rz: 0 });
+    if (!VM_LOCOMOTION) { gait.x = 0; gait.y = 0; gait.rz = 0; return; }
+    const speed = Math.max(0, Number(ctx.speed) || 0);
+    const want = (ctx.grounded === false || ctx.moving === false) ? 0 : Math.min(1, speed / 6.6);
+    this._gaitEnv = approach(this._gaitEnv, want, want > this._gaitEnv ? 0.10 : VM_TIMES.bobStopTau, step);
+    const phase = Number(ctx.stepPhase) || 0;
+    const amp = this._gaitEnv * (1 - this.adsAmount);
+    gait.x = Math.sin(phase) * 0.008 * amp;
+    gait.y = Math.sin(phase * 2) * 0.010 * amp;
+    gait.rz = Math.sin(phase) * 0.030 * amp;
+  }
+
+  // Reset de lifecycle (morte/respawn — MOVIMENTO-1P): a vida nova não herda envelope/fase.
+  resetLocomotion() { this._gaitEnv = 0; this._gait = { x: 0, y: 0, rz: 0 }; }
+
 
   update(dt, ctx = {}) {
     const step = Math.min(0.05, Math.max(0, Number(dt) || 0));
     this._ctx = ctx;
+    // Envelope sempre viva (porte de granada/mount oculto): sem estado perdido na volta.
+    this._stepGait(step, ctx);
     if (this.utility) {
       const utility = this.utility;
       this._stepEntry(utility.entry, step);
@@ -756,7 +786,7 @@ export class AuthoredViewModels {
     // ADS (M6): o CANO fica colinear com o eixo óptico (rotação do mount) e só
     // então a alça MEDIDA desliza ao centro — não um ponto cruzando em diagonal.
     const ads = this.adsAmount;
-    const adsConfig = cfgArma(this.weapon)?.ads;
+    const adsConfig = adsEfetivo(cfgArma(this.weapon)?.ads, ADS1P_FIX);
     const wrap = active.mint?.active || active.adsSockets?.sight;
     if (ads > 0.001 && adsConfig && wrap) {
       if (adsConfig.auto) {
@@ -801,6 +831,15 @@ export class AuthoredViewModels {
       active.mount.rotation.y += adsConfig.rotDeg[1] * DEG2RAD * ads;
       active.mount.rotation.z += adsConfig.rotDeg[2] * DEG2RAD * ads;
     }
+    // LOCOMOTION 1P: aditivo sobre frame∘draw∘recoil∘ADS; o envelope (1-ADS) também
+    // no sway garante zero EXATO no ADS cheio — molas do rig são assintóticas.
+    if (VM_LOCOMOTION && !this.held) {
+      const hip = 1 - this.adsAmount;
+      const sway = ctx.sway;
+      active.mount.position.x += this._gait.x + (sway?.swayX?.value || 0) * hip;
+      active.mount.position.y += this._gait.y + (sway?.swayY?.value || 0) * hip;
+      active.mount.rotation.z += this._gait.rz + (sway?.swayR?.value || 0) * hip;
+    }
   }
 
   // Boca do cano da arma VISÍVEL em world space (tracer/flash nascem nela, não na
@@ -826,7 +865,8 @@ export class AuthoredViewModels {
   // 10,9 m atrás da câmera. Média dos vértices deformados mais à frente (−Z), índices em cache.
   _frontMuzzle(entry) {
     const v = new THREE.Vector3();
-    entry.scene.updateWorldMatrix(true, true);
+    entry.scene.updateWorldMatrix(true, false);
+    entry.scene.updateMatrixWorld(true);
     if (!entry.muzzleIdx) {
       const all = [];
       let minZ = Infinity;

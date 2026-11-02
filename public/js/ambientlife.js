@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { assetUrl } from './data/asseturl.js';
+import { makeContactShadow } from './contact-shadow.js';
 
 const loader = new GLTFLoader();
 const templates = new Map();
@@ -89,11 +90,16 @@ export async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {
         object.material.metalness = 0;
         object.material.roughness = Math.max(.72, object.material.roughness ?? .72);
       });
-      templates.set(id, { scene: gltf.scene, clips: gltf.animations, skinned });
+      templates.set(id, { scene: gltf.scene, clips: gltf.animations, skinned, assetPath: ASSETS[id] });
     } catch (error) {
       console.warn('[ambientlife] GLB não carregou', id, error);
     }
   }));
+}
+
+export async function preloadMapAmbientLife(map, { mobileAuto = false } = {}) {
+  if (mobileAuto && !map?.mobileAmbience) return;
+  await preloadAmbientLife(map?.ambience || []);
 }
 
 function fallbackRat(index) {
@@ -240,6 +246,7 @@ function cloneAsset(id) {  const template = templates.get(id);
   return {
     model: template.skinned ? skeletonClone(template.scene) : template.scene.clone(true),
     clips: template.clips,
+    assetPath: template.assetPath,
   };
 }
 
@@ -287,8 +294,11 @@ class FavelaAmbience {
     const ratList = low ? rats.slice(0, 1) : rats;
     const pigeonList = low ? pigeons.slice(0, 1) : pigeons;
     const dogList = low ? dogs.slice(0, 1) : dogs;
-    const catList = low ? cats.slice(0, 1) : cats;
-    const chickenList = low ? chickens.slice(0, 1) : chickens;
+    /* Fauna curada (assetId explícito) é conteúdo do mapa, não rebanho ambiente: o corte
+       de custo low aparava o censo curado no aparelho real (QA mobile 3 mapas mediu
+       campomorro 1+1 em vez de 2+2). Legado continua no máximo 1, ordem original. */
+    const catList = apararFaunaLow(cats, low);
+    const chickenList = apararFaunaLow(chickens, low);
     const cowList = low ? cows.slice(0, 1) : cows;
     const armadilloList = low ? armadillos.slice(0, 1) : armadillos;
     const cockroachList = low ? cockroaches.slice(0, 1) : cockroaches;
@@ -327,6 +337,21 @@ class FavelaAmbience {
   }
 
   _add(type, config, index) {
+    const turnRate = Number.isFinite(config.turnRate) && config.turnRate > 0 ? config.turnRate : 0;
+    if (QUADS.has(type) && turnRate && Math.PI / turnRate >= (ALERT_TIME[type] || 3.2))
+      throw new RangeError('ambient_turn_rate');
+    const fleeArea = config.fleeArea ? { ...config.fleeArea } : null;
+    if (fleeArea && (!QUADS.has(type) || !['minX', 'maxX', 'minZ', 'maxZ'].every(key => Number.isFinite(fleeArea[key]))
+      || fleeArea.minX >= fleeArea.maxX || fleeArea.minZ >= fleeArea.maxZ
+      || [config.pos, config.to || config.pos].some(p => !Number.isFinite(p[0]) || !Number.isFinite(p[2])
+        || p[0] < fleeArea.minX || p[0] > fleeArea.maxX || p[2] < fleeArea.minZ || p[2] > fleeArea.maxZ)))
+      throw new RangeError('ambient_flee_area');
+    /* heightAt é exclusivo de quad: função + resultado finito nos pontos autorados,
+       senão RangeError — dado autorado inválido falha fechado, não afunda no mapa. */
+    const heightAt = config.heightAt == null ? null : config.heightAt;
+    if (heightAt !== null && (!QUADS.has(type) || typeof heightAt !== 'function'
+      || [config.pos, config.to || config.pos].some((p) => !Number.isFinite(heightAt(p[0], p[2])))))
+      throw new RangeError('ambient_height_at');
     if (type === 'pigeon' && config.mode === 'flight') {
       /* v2.1 (BUG-57): pombo não voa mais — o GLB de voo era estático com asas abertas
          (dono: "deveria ficar so na ponta das lajes ou no chao"). Config não migrada cai
@@ -340,6 +365,7 @@ class FavelaAmbience {
     animalRoot.name = `${type}:${this.map}:${index}`;
     animalRoot.userData.fauna = FAUNA_NAME[type] || 'pomba';
     animalRoot.userData.assetId = assetId;
+    animalRoot.userData.assetPath = loaded?.assetPath || null;
     animalRoot.userData.nonCollider = true;
     animalRoot.userData.motion = 'deterministic-run-idle';
     animalRoot.userData.bodyLength = type === 'rat' ? .142 : undefined;
@@ -365,6 +391,13 @@ class FavelaAmbience {
       object.castShadow = !this.low;
       object.receiveShadow = true;
     });
+    let contactShadow = null;
+    if (config.contactShadow) {
+      const height = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()).y;
+      contactShadow = makeContactShadow(height);
+      contactShadow.name = 'FAUNA_CONTACT_SHADOW';
+      animalRoot.add(contactShadow);
+    }
     this.group.add(animalRoot);
     const clips = loaded?.clips || [];
     let mixer = null;
@@ -392,9 +425,10 @@ class FavelaAmbience {
     const to = new THREE.Vector3(...(config.to || config.pos));
     this.animals.push({
       id: `${type}-${index}`, type, mode: type === 'pigeon' ? 'ground' : (config.mode || 'ground'), root: animalRoot, model,
-      origin, to, speed: config.speed, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
-      source: loaded ? 'gltf' : 'fallback', mixer, actions, action: 'idle', state: 'idle', alertUntil: 0,
-      alertAt: 0, alertOrigin: origin.clone(), flee: new THREE.Vector3(1, 0, 0),
+      origin, to, speed: config.speed, turnRate, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
+      source: loaded ? 'gltf' : 'fallback', contactShadow, mixer, actions, action: 'idle', state: 'idle', alertUntil: 0,
+      alertAt: 0, alertTurnDelay: 0, alertOrigin: origin.clone(),
+      flee: new THREE.Vector3(1, 0, 0), fleeArea, fleeDistance: Infinity, heightAt,
       routine: origin.clone(), recoverAt: 0, recoverUntil: 0, recoverFrom: origin.clone(),
       calangoGait: 0,
     });
@@ -407,11 +441,14 @@ class FavelaAmbience {
     for (const animal of this.animals) {
       animal.alertUntil = 0;
       animal.alertAt = 0;
+      animal.alertTurnDelay = 0;
+      animal.fleeDistance = Infinity;
       animal.recoverAt = 0;
       animal.recoverUntil = .8;
       animal.recoverFrom.copy(animal.origin);
-      animal.state = 'idle';
       animal.root.position.copy(animal.origin);
+      this._projectSupport(animal);
+      animal.state = 'idle';
       animal.root.rotation.set(0, animal.phase, 0);
       if (animal.actions?.idle) {
         animal.mixer.stopAllAction();
@@ -436,6 +473,10 @@ class FavelaAmbience {
       animal.flee.copy(position).sub(start).setY(0);
       if (animal.flee.lengthSq() < .01) animal.flee.set(Math.sin(animal.phase + 1), 0, Math.cos(animal.phase + 1));
       animal.flee.normalize();
+      animal.fleeDistance = Infinity;
+      if (animal.fleeArea) this._boundQuadFlee(animal, this.group.worldToLocal(start.clone()));
+      const target = Math.atan2(animal.flee.x, animal.flee.z), delta = target - animal.root.rotation.y;
+      animal.alertTurnDelay = animal.turnRate ? Math.abs(Math.atan2(Math.sin(delta), Math.cos(delta))) / animal.turnRate : 0;
       /* pombo foge a pé pela superfície onde nasceu (v2.1: sem takeoff/flight) */
       animal.state = 'flee';
       reacted++;
@@ -460,6 +501,7 @@ class FavelaAmbience {
       else if (animal.type === 'macaco') this._updateMacaco(animal);
       else if (animal.type === 'onca') this._updateOnca(animal);
       else this._updateQuad(animal, dt);
+      this._projectSupport(animal);
       animal.mixer?.update(dt);
     }
   }
@@ -489,14 +531,74 @@ class FavelaAmbience {
     animal.action = name;
   }
 
-  _updateQuad(animal) {
+  _turnQuad(animal, target, dt) {
+    if (!animal.turnRate) { animal.root.rotation.y = target; return; }
+    // A ida/volta trocava 180° num único frame. Percorrer o menor arco evita o salto e a volta longa em ±π.
+    const current = animal.root.rotation.y;
+    const delta = Math.atan2(Math.sin(target - current), Math.cos(target - current));
+    const step = animal.turnRate * Math.max(0, Math.min(.05, Number.isFinite(dt) ? dt : 0));
+    animal.root.rotation.y = current + THREE.MathUtils.clamp(delta, -step, step);
+  }
+
+  _boundQuadFlee(animal, threat) {
+    const area = animal.fleeArea, origin = animal.root.position;
+    const speed = animal.speed || QUAD_SPEED[animal.type] || QUAD_SPEED.dog, limit = speed.flee * 1.4;
+    const candidates = [origin.clone(), origin.clone().addScaledVector(animal.flee, limit)];
+    for (const x of [area.minX, area.maxX]) for (const z of [area.minZ, area.maxZ]) candidates.push(new THREE.Vector3(x, origin.y, z));
+    let best = new THREE.Vector3(), score = origin.distanceToSquared(threat);
+    // A área autorada já inclui folga do corpo; seus segmentos convexos preservam a passagem livre.
+    for (const candidate of candidates) {
+      candidate.x = THREE.MathUtils.clamp(candidate.x, area.minX, area.maxX);
+      candidate.z = THREE.MathUtils.clamp(candidate.z, area.minZ, area.maxZ);
+      const offset = candidate.sub(origin).clampLength(0, limit);
+      const distance = origin.clone().add(offset).distanceToSquared(threat);
+      if (distance > score) { score = distance; best = offset; }
+    }
+    animal.fleeDistance = best.length();
+    if (animal.fleeDistance > 1e-8) animal.flee.copy(best).normalize();
+  }
+
+  _recoverCuratedQuad(animal, target, routeDirection, speed, dt) {
+    // O lerp de dois segundos arrastava o corpo de lado após um susto lateral.
+    // Nas três instâncias curadas, o retorno segue o rumo real e a velocidade de caminhada.
+    const offset = target.clone().sub(animal.root.position), distance = offset.length();
+    const direction = distance > 1e-8 ? offset : routeDirection;
+    if (direction && direction.lengthSq() > 1e-16) {
+      const heading = Math.atan2(direction.x, direction.z);
+      this._turnQuad(animal, heading, dt);
+      const delta = heading - animal.root.rotation.y;
+      if (Math.abs(Math.atan2(Math.sin(delta), Math.cos(delta))) > 1e-9) return true;
+    }
+    if (distance > 1e-8) {
+      const step = speed * Math.max(0, Math.min(.05, Number.isFinite(dt) ? dt : 0));
+      animal.root.position.addScaledVector(offset, Math.min(distance, step) / distance);
+      return true;
+    }
+    animal.alertUntil = 0;
+    animal.recoverUntil = 0;
+    return false;
+  }
+
+  _supportY(animal, x, z) {
+    const y = animal.heightAt(x, z);
+    if (!Number.isFinite(y)) throw new RangeError('ambient_height_at');
+    return y;
+  }
+
+  _projectSupport(animal) {
+    if (animal.heightAt) animal.root.position.y = this._supportY(animal, animal.root.position.x, animal.root.position.z);
+  }
+
+  _updateQuad(animal, dt) {
     const speed = animal.speed || QUAD_SPEED[animal.type] || QUAD_SPEED.dog;
     if (this.time < animal.alertUntil) {
-      const elapsed = this.time - animal.alertAt;
-      animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, Math.min(speed.flee * 1.4, elapsed * speed.flee));
-      animal.root.rotation.y = Math.atan2(animal.flee.x, animal.flee.z);
+      // A fauna curada pivota antes de fugir: girar devagar enquanto já corre causava deslizamento lateral.
+      const elapsed = Math.max(0, this.time - animal.alertAt - animal.alertTurnDelay);
+      const distance = Math.min(speed.flee * 1.4, animal.fleeDistance, elapsed * speed.flee);
+      animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, distance);
+      this._turnQuad(animal, Math.atan2(animal.flee.x, animal.flee.z), dt);
       animal.state = 'flee';
-      this._dogAction(animal, 'run');
+      this._dogAction(animal, animal.turnRate && elapsed <= 0 ? 'walk' : animal.fleeArea && distance >= animal.fleeDistance ? 'idle' : 'run');
       return;
     }
     const span = animal.origin.distanceTo(animal.to);
@@ -504,19 +606,35 @@ class FavelaAmbience {
     const cycle = (this.time + animal.phase) % (2 * (DOG_IDLE_TIME + leg));
     let moving = false;
     let direction = null;
-    if (cycle < DOG_IDLE_TIME) animal.routine.copy(animal.origin);
+    if (cycle < DOG_IDLE_TIME) {
+      animal.routine.copy(animal.origin);
+      if (animal.turnRate) direction = animal.to.clone().sub(animal.origin);
+    }
     else if (cycle < DOG_IDLE_TIME + leg) {
       animal.routine.lerpVectors(animal.origin, animal.to, (cycle - DOG_IDLE_TIME) / leg);
       moving = span > .05;
       direction = animal.to.clone().sub(animal.origin);
-    } else if (cycle < 2 * DOG_IDLE_TIME + leg) animal.routine.copy(animal.to);
+    } else if (cycle < 2 * DOG_IDLE_TIME + leg) {
+      animal.routine.copy(animal.to);
+      if (animal.turnRate) direction = animal.origin.clone().sub(animal.to);
+    }
     else {
       animal.routine.lerpVectors(animal.to, animal.origin, (cycle - 2 * DOG_IDLE_TIME - leg) / leg);
       moving = span > .05;
       direction = animal.origin.clone().sub(animal.to);
     }
-    const recovering = this._recoverToRoute(animal, animal.routine, 2);
-    if (direction && direction.lengthSq() > .001) animal.root.rotation.y = Math.atan2(direction.x, direction.z);
+    /* rotina apoiada ANTES do recovery: lerp linear persegue para sempre o Y
+       interpolado quando o terreno é não linear em XZ */
+    if (animal.heightAt) animal.routine.y = this._supportY(animal, animal.routine.x, animal.routine.z);
+    const recovering = animal.turnRate && animal.alertUntil > 0
+      ? this._recoverCuratedQuad(animal, animal.routine, direction, speed.walk, dt)
+      : this._recoverToRoute(animal, animal.routine, 2);
+    if (animal.turnRate && recovering && animal.alertUntil > 0) {
+      animal.state = 'recover';
+      this._dogAction(animal, 'walk');
+      return;
+    }
+    if (direction && direction.lengthSq() > .001) this._turnQuad(animal, Math.atan2(direction.x, direction.z), dt);
     animal.state = recovering ? 'recover' : moving ? 'walk' : 'idle';
     this._dogAction(animal, recovering || moving ? 'walk' : 'idle');
   }
@@ -743,7 +861,10 @@ class FavelaAmbience {
   }
 
   dispose() {
-    for (const animal of this.animals) animal.mixer?.stopAllAction();
+    for (const animal of this.animals) {
+      animal.mixer?.stopAllAction();
+      animal.contactShadow?.material.dispose();
+    }
     this.group.removeFromParent();
   }
 }
@@ -751,6 +872,15 @@ class FavelaAmbience {
 export function createFavelaAmbience(root, options = {}) {
   const low = options.low ?? Boolean(globalThis.__CS_TEXTURA_MAX__);
   return new FavelaAmbience(root, { ...options, low });
+}
+
+/* Corte de custo low: cada tipo ambiente fica no máximo 1 instância, mas configs
+   curadas (assetId explícito) são conteúdo autoral do mapa e seguem inteiras.
+   Ordem original preservada; sem low, devolve a lista intacta. */
+export function apararFaunaLow(list, low) {
+  if (!low) return list;
+  const primeiraLegada = list.find((c) => !c.assetId);
+  return list.filter((c) => c.assetId || c === primeiraLegada);
 }
 
 /* FAUNA ESTÁTICA POSICIONÁVEL (BUG-57, região append-only): GLB sem rig, escala por

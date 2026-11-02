@@ -75,7 +75,7 @@ export function resolverRaio({ origem, direcao, alvos, paredes, intersectar, alc
   const parede = paredes[0], limite = parede?.distance ?? Infinity;
   let primeiro = null;
   for (const alvo of alvos) {
-    const hit = intersectar(origem, direcao, alvo.pos, alvo.crouchF);
+    const hit = intersectar(origem, direcao, alvo.pos, alvo.crouchF, alvo.cabeca);   // cabeca: perfil justo opcional (hitboxes.js)
     if (!hit || hit.dist > alcance) continue;
     if (!primeiro || hit.dist < primeiro.dist) primeiro = { ent: alvo.ent, ...hit };
   }

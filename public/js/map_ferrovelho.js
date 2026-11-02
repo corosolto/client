@@ -9,39 +9,35 @@
 import * as THREE from 'three';
 import { soilSurface } from './map_surface_finish.js';
 import { aplicaSombraSol } from './mapquality.js';
-import { placeProp } from './mapprops.js';
+import { placeProp, PropBatch } from './mapprops.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por direção do olhar
 import { detailFor } from './textures.js';   // normal+rough por Sobel (ver lam)
-import { decalIds, paredeAtras, caixaGirada } from './map_decals.js';   // pool por NOME + raycast de parede
+import { decalIds, paredeAtras, caixaGirada, offsetTinta } from './map_decals.js';   // pool por NOME + raycast de parede
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';                         // cobertura medida, não coordenada à mão
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
-
-// kill-switches (padrão do projeto): ?nofog=1 sem névoa, ?rays=0 sem god rays,
-// ?dust=0 sem poeira em suspensão, ?mato=0 sem vegetação invasora.
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
-// quality vem do localStorage (o buildFerroVelho recebe só scene+T; game.js não passa
-// settings). 'low' = notebook fraco: cortamos contagem de painéis, mato e partículas.
-const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
-// BECO OESTE (08/2026): flanco oeste vira o cânion da imagem-conceito do dono. ?beco=0
-// restaura o layout antigo (padrão kill-switch do projeto, segue o modelo do ?rack=old).
-const BECO = QP.get('beco') !== '0';
+const USAR_BALCAO_PROP = QP.get('usarprop') !== '0';
 
 const HALF_X = 32, HALF_Z = 36;
 export const FERRO_PROPS = [
   // pilhas/máquinas Mint estilizadas (substituem os photoscans que destoavam + pesavam)
   'muro_carros', 'fileira_carros', 'monte_carros', 'guindaste', 'prensa_carros', 'pilha_pneus',
+  'ferro_balcao',
   // wrecks unitários (scans escuros — leem bem no tema)
   'abandoned_car', 'broken_car', 'broken_car_2', 'carro_danificado', 'destroyed_car', 'junk_car',
   // miúdos
   'dumpster', 'jersey_barrier', 'sandbags', 'concrete_roadblock',
 ];
-/* Somente estes quatro modelos locais entram no preload do Ferro Velho. A lista fica
-   junto do mapa para impedir que uma melhoria de ambiência baixe o catálogo inteiro. */
-export const FERRO_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'dog', 'cockroach']);
+// quality vem do localStorage (o buildFerroVelho recebe só scene+T; game.js não passa
+// settings). 'low' = notebook fraco: cortamos contagem de painéis, mato e partículas.
+const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
+// BECO OESTE (08/2026): flanco oeste vira o cânion da imagem-conceito do dono. ?beco=0
+// restaura o layout antigo (padrão kill-switch do projeto, segue o modelo do ?rack=old).
 const SINGLES = ['abandoned_car', 'broken_car', 'carro_danificado', 'junk_car'];   // destroyed_car/broken_car_2 = scans pretos brilhantes ("blob" do crítico) — fora
+const BECO = QP.get('beco') !== '0';
 
 // ----- texturas canvas ricas (sem low-poly flat: manchas, rachaduras, óleo, pedras) -----
 function noiseTex(base, blotches, rx, rz, opts = {}) {
@@ -136,28 +132,23 @@ function fibroTex(rx, rz, seed = 907) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz); return t;
 }
-// ALVENARIA DE BLOCO CERÂMICO SEM REBOCO (BAR §4.4: o barraco do Zé não é pintado) —
-// bloco vermelho-terra com os 6 furos, junta de argamassa cinza mal passada e escorrido.
-function blocoTex(rx, rz, seed = 449) {
-  const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  x.fillStyle = '#8d8377'; x.fillRect(0, 0, S, S);                  // argamassa
-  const bw = S / 2, bh = S / 4;
-  for (let r = 0; r < 4; r++) for (let k = -1; k < 2; k++) {
-    const bx = k * bw + (r % 2 ? bw / 2 : 0) + 3, by = r * bh + 3;
-    const v = rnd();
-    x.fillStyle = `rgb(${150 + v * 46 | 0},${86 + v * 34 | 0},${58 + v * 26 | 0})`;
-    x.fillRect(bx, by, bw - 6, bh - 6);
-    x.fillStyle = 'rgba(40,26,20,0.55)';                            // furos do bloco
-    for (let h = 0; h < 3; h++) for (let g = 0; g < 2; g++) x.fillRect(bx + 8 + h * (bw - 24) / 3, by + 10 + g * (bh - 26) / 2, (bw - 30) / 3, (bh - 30) / 2);
-  }
-  for (let i = 0; i < 40; i++) {   // sujeira/limo escorrido
-    x.globalAlpha = 0.1 + rnd() * 0.25; x.fillStyle = rnd() > 0.55 ? '#4a4436' : '#2f2a24';
-    x.fillRect(rnd() * S, rnd() * S, 3 + rnd() * 9, 20 + rnd() * 70);
-  }
-  x.globalAlpha = 1;
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz); return t;
+// ALVENARIA DE BLOCO CERÂMICO SEM REBOCO (BAR §4.4) — tijolo baiano do acervo, o MESMO
+// tile 1,2 x 2,0 m do Lajes (lajes_houses.js:35), período fixado no UV. Doc: ACABAMENTO-MAPAS.
+const TIJOLO_TILE = [1.2, 2.0];
+function tijoloBaianoTex(mat) {
+  // aoMat clona o material da casa (compartilha as texturas por referência): o 404 precisa
+  // alcançar também o clone desenhado, senão a parede real fica com sampler sem imagem.
+  const deps = mat.userData.tijoloDeps || (mat.userData.tijoloDeps = new Set());
+  deps.add(mat);
+  const bind = (arq, cor, slot) => {
+    // 404 deixa a cor chapada do material, nunca sampler sem imagem (parede preta)
+    const t = new THREE.TextureLoader().load(`/img/textures/${arq}`, undefined, undefined,
+      () => { for (const m of deps) { m[slot] = null; m.needsUpdate = true; } });
+    t.colorSpace = cor; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+    mat[slot] = t; mat.needsUpdate = true;
+    return t;
+  };
+  return { map: bind('lajes_tijolo_baiano_color.webp', THREE.SRGBColorSpace, 'map'), normalMap: bind('lajes_tijolo_baiano_normal.webp', THREE.NoColorSpace, 'normalMap') };
 }
 // barril (azul desbotado c/ faixa + ferrugem no fundo)
 function barrelTex() {
@@ -526,7 +517,7 @@ export function buildFerroVelho(scene, T) {
        porque o lóbulo é largo e fraco, no outro porque é forte e sub-pixel. A faixa útil
        com uma luz direcional é 0,22-0,38, e é onde tudo aqui foi parar. */
     steel: lam({ map: noiseTex('#8a9096', [['#787e84', 30, 6, 20, 0.4], ['#9aa0a8', 20, 4, 14, 0.3], ['#6a5a48', 8, 3, 10, 0.3]], 2, 2, { seed: 137 }), metalness: 0.82, roughness: 0.34, envMapIntensity: 1.8 }),
-    office: lam({ map: blocoTex(4, 2) }),   // barraco = bloco cerâmico SEM reboco (era verde chapado)
+    office: (() => { const m = lam({ color: 0xc18b71, normalScale: new THREE.Vector2(.65, .65) }); tijoloBaianoTex(m); return m; })(),   // barraco = tijolo baiano SEM reboco (BAR §4.4), mesma família do Lajes
     roof: lam({ map: fibroTex(5, 3) }),   // BAR §4.4: barraco tem telhado de FIBROCIMENTO, não zinco
     // zinco da cerca/portão: chapa cinza-azulada, giz de óxido, base corroída
     // a onda da telha é curva: com 0,30 o risco de sol percorre CADA canaleta (é a imagem
@@ -564,6 +555,23 @@ export function buildFerroVelho(scene, T) {
      chapa lê como recorte colado no chão. */
   const aoMat = aoMatFactory();
   const SKIRT = new ContactSkirt({ low: LOWQ });
+  /* UV do tijolo em metros por face (grupos da BoxGeometry; o aoBoxGeo subdividido não é o
+     layout de 24 vértices do map_uv.js); texelEscalada trava a 2ª escala do vao.js. */
+  function uvTijoloMetros(geo, w, h, d) {
+    geo.userData.texelEscalada = true;
+    const uv = geo.attributes.uv, idx = geo.index;
+    const EXT = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+    const visto = new Uint8Array(uv.count);
+    for (const g of geo.groups) {
+      const [eu, ev] = EXT[g.materialIndex | 0] || [0, 0];
+      if (!eu || !ev) continue;
+      for (let k = g.start; k < g.start + g.count; k++) {
+        const i = idx.getX(k); if (visto[i]) continue; visto[i] = 1;
+        uv.setXY(i, uv.getX(i) * eu / TIJOLO_TILE[0], uv.getY(i) * ev / TIJOLO_TILE[1]);
+      }
+    }
+    uv.needsUpdate = true;
+  }
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
     const vao = VAO_BANDS && opts.vao !== false && mat && mat.visible !== false;
     // `solo` é geométrico, não depende do gate de faixas — assim `?vao=skirt` (A/B do
@@ -571,7 +579,12 @@ export function buildFerroVelho(scene, T) {
     const solo = onGround(y, h) && !opts.rx && !opts.rz;
     const geo = vao ? aoBoxGeo(w, h, d, { low: LOWQ, base: solo ? undefined : BASE_FLOATING })
       : new THREE.BoxGeometry(w, h, d);
-    const m = new THREE.Mesh(geo, vao ? aoMat(mat) : mat);
+    if (mat === MAT.office) uvTijoloMetros(geo, w, h, d);
+    const drawn = vao ? aoMat(mat) : mat;
+    // material efetivamente desenhado entra como dependente do bind do tijolo (404 → chapa)
+    if (drawn !== mat && mat.userData.tijoloDeps instanceof Set) mat.userData.tijoloDeps.add(drawn);
+    const m = new THREE.Mesh(geo, drawn);
+    m.userData.graffitiRespawnB = mat === MAT.office;
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
     if (solo && opts.skirt !== false) SKIRT.add(x, y, z, w, d, opts.ry || 0);
@@ -669,7 +682,7 @@ export function buildFerroVelho(scene, T) {
     if (!m) {
       m = new THREE.MeshStandardMaterial({
         map: T.decals[i], transparent: true, alphaTest: 0.22, roughness: 0.98, metalness: 0,
-        polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+        ...offsetTinta(-4, -4),   // só unidades: ver map_decals.js (offsetTinta)
       });
       _dmat.set(i, m);
     }
@@ -939,7 +952,18 @@ export function buildFerroVelho(scene, T) {
   addBox(0.5, 3.4, 2.5, MAT.office, G.x1, 0, G.z0 + 1.25);
   addBox(0.5, 3.4, 2.5, MAT.office, G.x1, 0, G.z1 - 1.25);
   addBox(G.x1 - G.x0 + 1.5, 0.3, G.z1 - G.z0 + 1.5, MAT.roof, (G.x0 + G.x1) / 2, 3.4, (G.z0 + G.z1) / 2, { collide: false });  // telhado
-  addBox(3.2, 1.0, 1.4, nextRust(), -8, 0, -31.5, { collide: true });   // balcão/mesa dentro
+  const balcaoBase = addBox(3.2, 1.0, 1.4, nextRust(), -8, 0, -31.5, { collide: true });   // collider/occluder legado
+  if (USAR_BALCAO_PROP) {
+    const pb = new PropBatch({ tag: 'balcao' });   // 24 primitivas → 5 draws (1 por material), sem clone/recolor
+    if (pb.add('ferro_balcao', { x: -8, z: -31.5, targetH: 1.0 })) {
+      const g = new THREE.Group(); g.name = 'ferro-balcao'; g.userData.propId = 'ferro_balcao';
+      root.add(g);
+      pb.build(g);
+      // a bala/LOS só vê superfície RENDERIZADA (shot_surfaces): caixa oculta sai dos occluders
+      g.traverse((m) => { if (m.isMesh) occluders.push(m); });
+      balcaoBase.visible = false;
+    }
+  }
   { // placa do escritório: mesma mão de pincel do portão, campo azul (BAR §4.4 aceita
     // vermelho/azul/amarelo). Marco visual do spawn B, legível de longe.
     const s = new THREE.Mesh(new THREE.PlaneGeometry(8, 1.7), new THREE.MeshBasicMaterial({
@@ -1418,10 +1442,11 @@ export function buildFerroVelho(scene, T) {
     if (QP.get('mato') !== '0') {
       const grassMat = new THREE.MeshLambertMaterial({ map: bladeTex(457, true), transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, depthWrite: true });
       // bolsões mortos: encostados na cerca, atrás das pilhas, cantos que ninguém cruza
+      // [-14,-34] (era [-8,-34]): fora do escritório — capim não nasce atravessando o balcão
       const clumpsAll = [
         [-29.5, -30], [-29.5, -22], [-29.5, -6], [-29.5, 10], [-29.5, 26], [-29.5, 33],
         [29.5, -32], [29.5, -24], [29.5, -8], [29.5, 6], [29.5, 20], [29.5, 33],
-        [-26, -34], [-8, -34], [16, -34], [24, -34], [-27, 34.5], [22, 34.5],
+        [-26, -34], [-14, -34], [16, -34], [24, -34], [-27, 34.5], [22, 34.5],
         // O tufo antigo [-13,-22] ficava a 1–3 m do spawn B e tapava o centro da tela (#943).
         // ?matospawn=1 preserva a comparação visual sem reintroduzir o defeito por padrão.
         [-19.5, -13], [-19.5, 15], [19.5, 1], QP.get('matospawn') === '1' ? [-13, -22] : [-29.5, -14], [13, -30], [27, -18],
@@ -1982,12 +2007,11 @@ export function buildFerroVelho(scene, T) {
   // saia de contato: todas as bases registradas viram UMA malha mesclada = 1 draw call
   SKIRT.build(root);
 
-  /* ═══ PASSADA DE GRAFITE (07/08) ══════════════════════════════════════════
-     Pedido do dono: "no ferro velho em todas paredes que derem, não só do escritório
-     mas dos muros em volta". As 44 peças à mão vivem no escritório e no portão; o muro
-     do perímetro, os contêineres e as pilhas de lataria estavam limpos.
-     Ferro velho é o lugar mais bombardeado que existe na vida real — muro de fundo de
-     pátio é a superfície preferida de quem pinta, justamente porque ninguém reclama. */
+  // Curadoria atual: arte exclusiva da casa de respawn B.
+  // Contrato e evidência em docs/visual-consistency/CONTINUATION.md.
+  root.traverse(mesh => {
+    if (mesh.isMesh && !mesh.userData.graffitiRespawnB) mesh.userData.graffitiSupportExcluded = true;
+  });
   grafitar({
     id: 'ferro_velho',
     root, T, waypoints: nodes, seed: 8123, passo: 0.95, alcance: 9, cobre: 0.06, minLarg: 0.32,
@@ -2019,7 +2043,7 @@ export function buildFerroVelho(scene, T) {
      que a main trouxe com ratos, pombos, cachorro e baratas. */
 
   return {
-    root, colliders, occluders, groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience,
+    root, colliders, occluders, groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience, authoredSpawnYaw: true,
     sound: { loops: [
       { src: AMB_LOOPS.cidade, pos: [0, 3, 0], radius: 78, vol: .15, global: true },
       { src: AMB_LOOPS.vento, pos: [26, 3, 8], radius: 44, vol: .22 },

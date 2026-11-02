@@ -96,7 +96,7 @@ foi incluído. Demais props usados pelo mapa já existiam na main.
 
 Gerados em 06/09/2026 no [projeto Mint do Escadão](https://mint.gg/chat/ph71esgt6wvxqr9ywswh7nr8f58dxycs), pack `th71b3y03ksncsfj8wzt08w5hh8dxjpk`, run `vd7cw36hdpbv3zxwkt19km2d6h8dwz6j`, TRIPO_P1 Standard. Termos e hashes das fontes/finais em `mint-assets.json`; mesma seção 4 dos termos documentados na R3. Nenhuma foto de referência foi incorporada à textura.
 
-- `escadao_cat_r4.glb`: 4.723 triângulos, PBR WebP 1024, rig autoral de 19 ossos com idle/walk/run. Caminhada 0,55 m/s e fuga 1,5 m/s, altura de referência 0,48 m. Substituição restrita ao Escadão.
+- `escadao_cat_r4.glb`: 4.723 triângulos, PBR WebP 1024, rig autoral de 19 ossos com idle/walk/run. Caminhada 0,55 m/s e fuga 1,5 m/s, altura de referência 0,48 m. Usado no Escadão e em Lajes; mesma altura e cadência do rig, sem alterar o GLB.
 - `escadao_varanda_r4.glb`: 4.453 triângulos, cadeira plástica, pano e dois vasos; geometria original preservada.
 - `escadao_eletrica_r4.glb`: 3.470 triângulos, caixa de medição e conduítes; simplificação limitada por erro geométrico.
 
@@ -302,3 +302,127 @@ GLBs autocontidos, normalizados antes da integração para escala runtime1.
 Estado de revisão registrado no manifesto; renders/originais/rejeições preservados
 fora do Git. A procedência confirma geração e download, não uma concessão de
 licença: termos de publicação não confirmados nesta sessão; não declarar CC0.
+
+
+## Invasão dos Javaporcos: props realistas (30/10/2026)
+
+O dono pediu o mapa "mais realista, sem lowpoly" (carros, lixo, mato, postes). Nada gerado:
+modelos da biblioteca local do dono (Sketchfab, licença no `asset.extras` de cada GLB e
+conferida na página) e do Poly Haven (CC0, baixado pela API em `references/polyhaven/`,
+gitignored). Derivados por `tools/javaporcos-realista-assets.mjs`: recorte da variante,
+Meshopt (permissivo nos scans), giro assado, pivô no chão em metros, WebP. Registro com SHA
+em `mint-assets.json` (`frente: javaporcos-realista`); a régua é `npm run eval:props-acervo`.
+Crédito CC-BY/CC-BY-NC-SA: autor e link abaixo. Os NC-SA (Ddiaz Design) proíbem uso comercial:
+Saveiro Robust e BYD abaixo estão em quarentena local, fora de `public/`, do registro
+de publicação e do pipeline. Uso não autorizado. Gol G2 e Fusca legados também não
+entram neste modo; a decisão sobre o acervo dos outros mapas continua pendente.
+
+### Carros (rua)
+
+| Arquivo | Origem | Autor | Licença | Tris (bruto) | KB | Dimensão (m) | Uso |
+|---|---|---|---|---|---|---|---|
+| `chevette_sl76.glb` | <https://sketchfab.com/3d-models/chevrolet-chevette-sl-76-2322139894c545b6838000f08d853662> | Laerte.Hubaleque | CC-BY-4.0 | 37.983 (53.839) | 1391 | 1.61 x 1.35 x 4.12 | rua |
+| `saveiro_robust.glb` | <https://sketchfab.com/3d-models/2022-volkswagen-saveiro-16-robust-bd312f832dd64eb8acb01923b85283de> | Ddiaz Design | CC-BY-NC-SA-4.0 | 16.093 (290.097) | 856 | 1.88 x 1.51 x 4.49 | quarentena local, fora da publicação |
+| `byd_dolphin.glb` | <https://sketchfab.com/3d-models/2024-byd-dolphin-e8f3cf54c0e545b1b290d7a55ca77fca> | Ddiaz Design | CC-BY-NC-SA-4.0 | 19.992 (112.804) | 1461 | 1.99 x 1.54 x 4.29 | quarentena local, fora da publicação |
+| `carro_batido_scan_03.glb` | <https://sketchfab.com/3d-models/destroyed-car-03-raw-scan-483fe7f26336463fba66638ca4200c5a> | Renafox | CC-BY-4.0 | 39.979 (2.499.993) | 1225 | 2.41 x 1.22 x 4.2 | rua/beco |
+| `carro_batido_scan_07.glb` | <https://sketchfab.com/3d-models/destroyed-car-07-raw-scan-916b51c7e5644eb2a6c9b3797ebb08cf> | Renafox | CC-BY-4.0 | 39.995 (2.500.000) | 1171 | 2.97 x 1.8 x 4 | rua/beco |
+| `perua_pichada_scan.glb` | <https://sketchfab.com/3d-models/graffitid-toyota-wagon-raw-scan-cb1a538a5e84460e8dfeb4cfff109653> | Renafox | CC-BY-4.0 | 39.986 (2.499.862) | 1201 | 1.81 x 1.47 x 4.34 | rua/pasto |
+
+### Rua, beco e praça: lixo, sujeira e mobiliário
+
+| Arquivo | Origem | Autor | Licença | Tris (bruto) | KB | Dimensão (m) | Uso |
+|---|---|---|---|---|---|---|---|
+| `saco_lixo.glb` | <https://polyhaven.com/a/trashbag> | Benny Weimer | CC0 1.0 | 4.482 (4.482) | 193 | 0.53 x 0.57 x 0.46 | rua/beco |
+| `caixa_papelao.glb` | <https://polyhaven.com/a/cardboard_box_01> | Poly Haven | CC0 1.0 | 5.000 (16.952) | 187 | 0.39 x 0.34 x 0.52 | rua/beco |
+| `engradado_plastico.glb` | <https://polyhaven.com/a/plastic_crate_02> | Poly Haven | CC0 1.0 | 5.840 (5.840) | 262 | 0.51 x 0.25 x 0.41 | praça/rua |
+| `caixote_madeira.glb` | <https://polyhaven.com/a/wooden_crate_01> | Poly Haven | CC0 1.0 | 6.576 (6.576) | 270 | 0.83 x 0.35 x 0.41 | praça (feira) |
+| `pneu_velho.glb` | <https://polyhaven.com/a/old_tyre> | Poly Haven | CC0 1.0 | 2.880 (2.880) | 175 | 0.6 x 0.6 x 0.16 | praça/rua |
+| `cadeira_plastico.glb` | <https://polyhaven.com/a/plastic_monobloc_chair_01> | Poly Haven | CC0 1.0 | 3.356 (3.356) | 214 | 0.64 x 0.88 x 0.63 | rua (bar) |
+| `saco_cimento.glb` | <https://polyhaven.com/a/cement_bag> | Poly Haven | CC0 1.0 | 844 (844) | 62 | 0.46 x 0.18 x 0.7 | beco/rua |
+| `tambor_metal.glb` | <https://polyhaven.com/a/barrel_03> | Poly Haven | CC0 1.0 | 1.473 (1.473) | 121 | 0.63 x 0.93 x 0.64 | beco/pasto |
+| `tampa_bueiro.glb` | <https://polyhaven.com/a/water_manhole_cover> | Poly Haven | CC0 1.0 | 2.999 (6.301) | 213 | 0.69 x 0.07 x 0.69 | rua |
+| `lixeira_metal.glb` | <https://polyhaven.com/a/metal_trash_can> | Poly Haven | CC0 1.0 | 7.532 (7.532) | 342 | 0.77 x 0.91 x 0.55 | beco |
+| `lata_enferrujada.glb` | <https://polyhaven.com/a/can_rusted> | Poly Haven | CC0 1.0 | 1.500 (3.520) | 66 | 0.12 x 0.15 x 0.12 | beco/rua |
+| `caixa_energia.glb` | <https://polyhaven.com/a/utility_box_01> | Poly Haven | CC0 1.0 | 4.404 (4.404) | 203 | 0.52 x 1.12 x 0.43 | beco |
+| `porta_aco.glb` | <https://polyhaven.com/a/rollershutter_door> | Poly Haven | CC0 1.0 | 552 (552) | 182 | 1.08 x 2.4 x 0.3 | rua (comércio fechado) |
+| `porta_aco_pichada.glb` | <https://polyhaven.com/a/rollershutter_door> | Poly Haven | CC0 1.0 | 552 (552) | 217 | 1.08 x 2.4 x 0.3 | rua/beco |
+| `barreira_concreto.glb` | <https://polyhaven.com/a/concrete_road_barrier> | Poly Haven | CC0 1.0 | 8.000 (60.928) | 281 | 1.54 x 0.83 x 0.64 | praça (barricada) |
+| `luminaria_parede.glb` | <https://polyhaven.com/a/street_lamp_02> | Poly Haven | CC0 1.0 | 8.096 (20.338) | 287 | 0.39 x 1.67 x 0.81 | praça (fachada da igreja) |
+
+### Postes (rua, beco e praça)
+
+| Arquivo | Origem | Autor | Licença | Tris (bruto) | KB | Dimensão (m) | Uso |
+|---|---|---|---|---|---|---|---|
+| `poste_transformador.glb` | <https://polyhaven.com/a/modular_electricity_poles> | Poly Haven | CC0 1.0 | 12.665 (31.932) | 867 | 1.2 x 6.13 x 1.96 | rua/praça |
+| `poste_fiacao.glb` | <https://polyhaven.com/a/modular_electricity_poles> | Poly Haven | CC0 1.0 | 12.499 (26.466) | 856 | 1.2 x 6.13 x 0.85 | rua/beco |
+| `poste_luz_praca.glb` | <https://polyhaven.com/a/street_lamp_01> | Poly Haven | CC0 1.0 | 12.095 (30.610) | 359 | 0.7 x 3.87 x 0.39 | praça |
+
+### Mato, mata e pasto
+
+| Arquivo | Origem | Autor | Licença | Tris (bruto) | KB | Dimensão (m) | Uso |
+|---|---|---|---|---|---|---|---|
+| `capim_touceira_a.glb` | <https://polyhaven.com/a/grass_medium_02> | Poly Haven | CC0 1.0 | 2.489 (2.489) | 111 | 0.32 x 0.26 x 0.36 | pasto/mata |
+| `capim_touceira_b.glb` | <https://polyhaven.com/a/grass_medium_02> | Poly Haven | CC0 1.0 | 1.760 (1.760) | 87 | 0.18 x 0.18 x 0.2 | pasto/calçada |
+| `mato_erva.glb` | <https://polyhaven.com/a/weed_plant_02> | Poly Haven | CC0 1.0 | 2.967 (2.967) | 157 | 0.22 x 0.07 x 0.29 | calçada/beco |
+| `arbusto_mata_a.glb` | <https://polyhaven.com/a/shrub_02> | Poly Haven | CC0 1.0 | 9.234 (9.234) | 306 | 1.77 x 1.31 x 2.29 | mata/pasto |
+| `arbusto_mata_b.glb` | <https://polyhaven.com/a/shrub_02> | Poly Haven | CC0 1.0 | 7.590 (7.590) | 258 | 1.31 x 1.69 x 1.64 | mata/praça |
+| `samambaia_mata.glb` | <https://polyhaven.com/a/fern_02> | Poly Haven | CC0 1.0 | 2.384 (2.384) | 112 | 0.99 x 0.43 x 0.89 | mata |
+| `calathea_mata.glb` | <https://polyhaven.com/a/calathea_orbifolia_01> | Poly Haven | CC0 1.0 | 5.904 (5.904) | 194 | 0.6 x 0.42 x 0.53 | mata |
+| `galhos_secos.glb` | <https://polyhaven.com/a/dry_branches_medium_01> | Poly Haven | CC0 1.0 | 5.933 (5.933) | 332 | 0.32 x 0.34 x 1.3 | mata/pasto |
+| `toco_arvore.glb` | <https://polyhaven.com/a/tree_stump_01> | Poly Haven | CC0 1.0 | 7.994 (41.046) | 404 | 1.43 x 0.57 x 1.59 | pasto/mata |
+| `tronco_caido.glb` | <https://polyhaven.com/a/dead_tree_trunk> | Poly Haven | CC0 1.0 | 7.994 (101.802) | 324 | 3.05 x 0.29 x 0.28 | mata/pasto |
+| `pedra_mata.glb` | <https://polyhaven.com/a/rock_07> | Poly Haven | CC0 1.0 | 3.998 (14.844) | 216 | 0.17 x 0.14 x 0.32 | pasto/mata |
+
+### Javaporcos: quatro aparências Mint — 30/10/2026
+
+Modelos próprios do projeto CORO SOLTO — Javaporcos, pack
+`th7f82d138zgbc9bzs2c3032f58h9f8g`,
+[solicitação no Mint](https://mint.gg/chat/ph73ry10s4j7w9gtzw6k8vqqqx8h8jmk).
+Os animais ficam em `public/models/enemies/javaporcos/`, registrados em
+`mint-assets.json` e no `asset-manifest.json` dessa pasta com hashes e origem.
+
+- `leitao_listrado.glb` — `ks72s7n7xpvss3hp3vncm5xd2h8h8w2w`.
+- `javaporco_malhado.glb` — `ks77ht2fkgabbttc2mqq96p0x98h962g`.
+- `javaporco_ruivo.glb` — `ks7c1r9d83q0d6ekjd3m6747vx8h8qgm`.
+- `javaporco_velho_cicatrizado.glb` — `ks70t3c3mkxgtszkhd7wb1q54n8h88xn`.
+
+Originais completos preservados em `references/glb/` (ignorados). Receita
+`tools/javaporcos-variantes.mjs`: geometria intacta, WebP512/quality90, dedup/prune.
+Derivados `_lod.glb` por `tools/javaporcos-lod.mjs`: weld e simplify com razão0,30,
+erro0,01; materiais e bytes das texturas preservados. Rig de passada feito no
+runtime, sem animação gerada/paga adicional. Os quatro modelos anteriores permanecem.
+
+<!-- javaporcos-mint-packs:start -->
+
+### Pacotes Mint cidade e vegetação — 30/10/2026
+
+Modelos próprios do projeto CORO SOLTO — Javaporcos. Cidade: [pack](https://mint.gg/assets?asset=th753rbz1fjyvfcsypbdcfcntn8h8wr4), [solicitação](https://mint.gg/chat/ph71s3avnfz5xtf76nm4vg7dnn8h91hc). Vegetação: [pack](https://mint.gg/assets?asset=th7a6e6j8ex8gx7jc3btycpjdn8h8xj5), [solicitação](https://mint.gg/chat/ph78p4ab22f3c9cmqk4qy5hx9d8h9391).
+
+Originais ignorados em references/glb/javaporcos-mint-packs; hashes e processamento em mint-assets.json. Receita tools/javaporcos-mint-packs.mjs: escala uniforme declarada, pivô no chão, geometria original e WebP512/quality90. Sem quantização, sem conversão paga. Modelos catalogados; ainda não colocados no mapa, que mantém sua geometria física validada. Escalas são calibração local para futura integração, não medidas de objetos reais.
+
+| Arquivo | Item | Pack | Tris | KiB | Dimensão local (m) |
+|---|---|---|---|---|---|
+| `javaporcos_mint_fachada.glb` | Fachada de comércio do interior | cidade | 4713 | 338 | 5.228 × 4 × 4.552 |
+| `javaporcos_mint_fundo_casa.glb` | Fundo de casa do beco | cidade | 4674 | 311 | 4.249 × 4 × 2.287 |
+| `javaporcos_mint_cacamba.glb` | Caçamba de entulho | cidade | 4681 | 373 | 2.281 × 1.76 × 3.5 |
+| `javaporcos_mint_poste_trafo.glb` | Poste de concreto com transformador | cidade | 4863 | 437 | 3.335 × 8 × 1.988 |
+| `javaporcos_mint_padrao_luz.glb` | Padrão de entrada de luz | cidade | 4758 | 243 | 0.511 × 1 × 0.284 |
+| `javaporcos_mint_lixeira_tombada.glb` | Lixeira tombada | cidade | 4790 | 375 | 1.3 × 0.674 × 0.791 |
+| `javaporcos_mint_pilha_sacos.glb` | Pilha de sacos de lixo | cidade | 4920 | 369 | 1.491 × 1.034 × 1.5 |
+| `javaporcos_mint_banca_feira.glb` | Banca de feira | cidade | 4428 | 407 | 2.4 × 2.4 × 2.052 |
+| `javaporcos_mint_uno_batido.glb` | Uno batido abandonado | cidade | 4859 | 320 | 1.85 × 1.479 × 3.65 |
+| `javaporcos_mint_varal.glb` | Varal com roupas | cidade | 4601 | 363 | 4 × 2.262 × 1.01 |
+| `javaporcos_mint_mesa_bar.glb` | Mesa e cadeiras de bar | cidade | 4826 | 324 | 1.516 × 1 × 1.392 |
+| `javaporcos_mint_orelhao.glb` | Orelhão | cidade | 4515 | 265 | 0.908 × 2.2 × 1.003 |
+| `javaporcos_mint_mangueira.glb` | Mangueira | vegetacao | 4708 | 390 | 6.767 × 7 × 6.726 |
+| `javaporcos_mint_ipe_amarelo.glb` | Ipê-amarelo | vegetacao | 4498 | 439 | 7.17 × 8 × 7.342 |
+| `javaporcos_mint_arvore_mata.glb` | Árvore da mata atlântica | vegetacao | 4057 | 384 | 8.434 × 10 × 7.691 |
+| `javaporcos_mint_embauba.glb` | Embaúba | vegetacao | 4912 | 394 | 6.184 × 8 × 6.278 |
+| `javaporcos_mint_bananeira.glb` | Bananeira | vegetacao | 4897 | 339 | 4.217 × 5 × 4.178 |
+| `javaporcos_mint_jucara.glb` | Palmeira juçara | vegetacao | 5460 | 438 | 4.174 × 9 × 4.033 |
+| `javaporcos_mint_capim.glb` | Touceira de capim braquiária | vegetacao | 4249 | 428 | 1.167 × 1.2 × 1.2 |
+| `javaporcos_mint_cupinzeiro.glb` | Cupinzeiro de pasto | vegetacao | 4349 | 380 | 1.789 × 1.6 × 1.789 |
+| `javaporcos_mint_mourao.glb` | Mourão com arame farpado | vegetacao | 4285 | 387 | 0.186 × 1.3 × 2.433 |
+| `javaporcos_mint_moita.glb` | Moita de samambaia e helicônia | vegetacao | 3555 | 301 | 1.931 × 1.5 × 1.908 |
+
+<!-- javaporcos-mint-packs:end -->

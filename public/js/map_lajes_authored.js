@@ -4,7 +4,7 @@ import { addLajesGround } from './lajes_ground.js';
 import { attachLajesSantosDumont } from './lajes_santos_dumont.js';
 import { placeProp, PropBatch } from './mapprops.js';
 import { makeAerialFog } from './bloom.js';
-import { createFavelaAmbience, attachPipaSky, FAVELA_AMBIENCE_ASSETS, PIPA_ASSETS } from './ambientlife.js';
+import { createFavelaAmbience, attachPipaSky, PIPA_ASSETS } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { makeLajesCTFSurface } from './lajes_ctf_surface.js';
 import { lajesArchitecture } from './lajes_houses.js';
@@ -20,7 +20,7 @@ export const LAJES_AUTHORED_ASSETS = Object.freeze([
   'lajes_varal', 'caixa_dagua',
 ]);
 export const LAJES_PROPS = [...LAJES_AUTHORED_ASSETS, ...LAJES_SKY_PROPS, 'moto_cg'];
-export const LAJES_AMBIENCE = Object.freeze([...FAVELA_AMBIENCE_ASSETS, ...PIPA_ASSETS]);
+export const LAJES_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'dog', 'cockroach', 'escadaoCat', ...PIPA_ASSETS]);
 export const LAJES_CONNECTIONS = Object.freeze([
   'ESCADARIA NORTE OESTE', 'ESCADARIA NORTE LESTE', 'ESCADARIA SUL OESTE', 'ESCADARIA SUL LESTE',
   'PONTE OESTE', 'PONTE LESTE',
@@ -393,7 +393,9 @@ export function buildLajes(scene, T) {
     pigeons: [{ mode: 'ground', pos: [-2, 0, 1], phase: .3 }, { mode: 'ground', pos: [2.5, 0, -1], phase: 1.3 },
       { mode: 'ground', pos: [-6, H, -14], phase: 2.1 }, { mode: 'ground', pos: [6, H, 14], phase: 3.5 }],
     dogs: [{ pos: [-2, 0, -2], to: [2, 0, 2], phase: .6 }],
-    cats: [{ pos: [-10, H, 16], to: [-10, H, 18], phase: 1.2 }],
+    // Folga de meio metro ao redor do gato mantém tanque, quartos e bordas fora da fuga.
+    cats: [{ assetId: 'escadaoCat', contactShadow: true, turnRate: 6, speed: { walk: .55, flee: 1.5 },
+      fleeArea: { minX: -10, maxX: -8.5, minZ: 14.8, maxZ: 19 }, pos: [-10, H, 16], to: [-10, H, 18], phase: 1.2 }],
   });
   attachPipaSky(ambience, root, low ? LAJES_KITE_CONFIGS.slice(0, 4) : LAJES_KITE_CONFIGS);
   attachLajesKitePresentation(ambience);

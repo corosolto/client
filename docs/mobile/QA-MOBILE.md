@@ -35,10 +35,10 @@ roteiro de 20 s terminava em **31,3 s** (medido). Com prazo absoluto, o atraso d
 absorvido pelo seguinte e a medida real fecha em 20,0 s.
 
 Os toques são `Touch`/`TouchEvent` reais despachados nos elementos do `#touch-ui` que o
-`game.js` cria: `.touch-look` (arraste de mira), `.touch-joy-l` (andar, e o miolo é gatilho),
+`game.js` cria: `.touch-look` (arraste de mira), `.touch-joy-l` (somente andar),
 `.touch-reload`, `.touch-ads`, `.touch-crouch`, `.touch-wep[data-wep=…]`. O gatilho preferido é
-o `.tp-toque-atira` do HUD Treta Pop; sem ele, o miolo de um dos sticks, que é o gatilho do HUD
-legado. Elemento com caixa zero é ignorado: o Treta Pop esconde o stick direito com
+o `.tp-toque-atira` do HUD Treta Pop; sem ele, `.touch-fire` do HUD legado.
+Elemento com caixa zero é ignorado: o Treta Pop esconde o stick direito com
 `display:none`, e tocar nele seria um gesto que nenhum jogador consegue dar.
 
 ## O relatório

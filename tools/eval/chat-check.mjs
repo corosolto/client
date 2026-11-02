@@ -391,12 +391,13 @@ async function cc3(cobra, { GameClasse }) {
     if (typeof g.travarEntrada !== 'function') {
       cobra(false, 'CC3d travarEntrada(v) ausente em game.js (commit 6 do plano)');
     } else {
-      g.keys.KeyW = true; g.mouseDown0 = true; g._fireStick = { l: true, r: true };
+      g.keys.KeyW = true; g.mouseDown0 = true;
+      let solturas = 0; g._sticksSoltar = [() => { solturas++; }];
       g.touchMove.x = 1; g.touchMove.z = 1; g.touchLook.x = 1; g.touchLook.y = 1;
       g.travarEntrada(true);
       cobra(g._acceptInput() === false, 'CC3d _acceptInput() é false com a entrada travada');
-      cobra(!g.keys.KeyW && !g.mouseDown0 && !g._fireStick.l && !g._fireStick.r && g.touchMove.x === 0 && g.touchMove.z === 0 && g.touchLook.x === 0 && g.touchLook.y === 0,
-        'CC3d travarEntrada zera keys, mouse, sticks de toque e _fireStick');
+      cobra(!g.keys.KeyW && !g.mouseDown0 && solturas === 1 && g.touchMove.x === 0 && g.touchMove.z === 0 && g.touchLook.x === 0 && g.touchLook.y === 0,
+        'CC3d travarEntrada zera keys, mouse e sticks de toque e libera os dedos');
       cobra(globalThis.document.getElementById('touch-ui').classList.contains('chat') === true, 'CC3d travarEntrada(true) põe a classe `chat` em #touch-ui');
       g._kd(tecla('KeyW', alvoCanvas));
       cobra(!g.keys.KeyW, 'CC3d com a entrada travada nem tecla no canvas vira tecla');

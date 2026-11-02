@@ -843,7 +843,8 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <div id="hub-character" class="hub-character" aria-label="Personagem escolhido"></div>
       <button id="hub-change-character" class="hub-character-card" type="button">
         <img id="hub-character-crest" src={brasaoE} width="38" height="38" alt="">
-        <span><small>SEU CORO · SEU PERSONAGEM</small><strong id="hub-character-name">ESCOLHA SEU PERSONAGEM</strong><span class="hub-character-change">TROCAR PERSONAGEM ▸</span></span>
+        <img id="hub-character-portrait" class="pv-compact-portrait" width="38" height="38" alt="" hidden>
+        <span><small>SEU CORO · SEU PERSONAGEM</small><strong id="hub-character-name">ESCOLHA SEU PERSONAGEM</strong><small id="hub-character-equipment" class="pv-compact-equipment" hidden></small><span class="hub-character-change">TROCAR PERSONAGEM ▸</span></span>
       </button>
       <div id="hub-multiplayer-entry" class="hub-multiplayer-entry" hidden={initialNetwork !== 'mp'}>
         <div class="hub-mp-tabs" role="tablist" aria-label="Tipo de servidor">
@@ -1319,10 +1320,13 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <button id="strip-down" class="strip-arrow" type="button" aria-label="próximo personagem">›</button>
     </div>
     <div class="char-sheet">
+      <div class="char-sheet-body" tabindex="0" role="region" aria-labelledby="char-info-name">
       <div id="char-faction-tag" class="char-faction-tag"> - </div>
       <div class="char-info-head">
+        <img id="char-select-portrait" class="pv-compact-portrait" width="38" height="38" alt="" hidden>
         <div id="char-info-name"> - </div>
         <span id="char-rarity" class="rarity">COMUM</span>
+        <span id="char-select-equipment" class="pv-compact-equipment" hidden></span>
       </div>
       <div id="char-info-blurb"> - </div>
       <div class="char-spec">
@@ -1334,6 +1338,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
         <small>ATRIBUTOS</small>
         <div id="char-attrs"></div>
       </div>
+      </div>
       <button id="char-confirm" class="btn btn-big">USAR PERSONAGEM</button>
     </div>
     <span id="char-preview-return" hidden></span>
@@ -1341,6 +1346,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <canvas id="char-preview" width="640" height="640"></canvas>
       <img id="char-preview-static" class="hidden" alt="">
       <video id="char-preview-video" class="hidden" muted loop playsinline></video>
+      <div class="pv-equipment"><span id="char-preview-skin" hidden></span><span id="char-preview-weapon" hidden></span></div>
       <div class="pv-hints"><span>ARRASTE · GIRAR</span><span>SCROLL · ZOOM</span></div>
       {EMOTES_ENABLED && (
       <div class="pv-emotes" id="pv-emotes">
@@ -1702,7 +1708,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
   <div id="ctf-hud" class="hidden"></div>
   <div id="killfeed"></div>
   <div id="hud-bottom-left">
-    <div id="hp-row"><span id="hp-num">100</span></div>
+    <div id="hp-row"><span id="hp-num">100</span><span id="armor-hud" class="hidden" aria-label="Colete"><i class="armor-ico" aria-hidden="true"></i><span id="armor-num">0</span><i class="helmet-ico" aria-hidden="true"></i></span></div>
     <div id="hp-bar"><div id="hp-fill"></div></div>
     <!-- Abates do JOGADOR (BUG-144): as plaquetas do topo contam o TIME na RODADA.
          Régua: tools/eval/abateshud-check.mjs -->
@@ -1717,7 +1723,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
     <div id="smoke-count" title="Fumaça (tecla 4)  ·  Frag (tecla 5)">💨 5   🧨 1</div>
     <div id="reload-note" class="hidden">RECARREGANDO…</div>
   </div>
-  <div id="hud-shortcuts"><span>Z/X/V RÁDIO</span><span>TAB PLACAR</span><span>M TROCAR DE TIME</span><span>B CÂMERA</span><span>ALT+MOUSE ORBITA</span><span id="hud-atalho-chat" hidden><button type="button" id="hud-chat-sala" data-entrada-propria>Y SALA</button><button type="button" id="hud-chat-time" data-entrada-propria>U TIME</button></span></div>
+  <div id="hud-shortcuts"><span>Z/X/V RÁDIO</span><span>TAB PLACAR</span><span>M TROCAR DE TIME</span><span>B COMPRAR</span><span>,/. MUNIÇÃO</span><span>N CÂMERA · SHIFT+N OMBRO</span><span>ALT+MOUSE ÓRBITA</span><span id="hud-atalho-chat" hidden><button type="button" id="hud-chat-sala" data-entrada-propria>Y SALA</button><button type="button" id="hud-chat-time" data-entrada-propria>U TIME</button></span></div>
   <div id="round-banner" class="hidden"><div id="banner-title"></div><div class="banner-rule"></div><div id="banner-sub"></div></div>
   <div id="lock-hint" class="hidden">
     <div class="lh-title"><svg viewBox="0 0 12 17" width="13" height="18" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M6 0a6 6 0 0 1 6 6v5a6 6 0 0 1-12 0V6a6 6 0 0 1 6-6zm.9 3.2h-1.8v3.1h1.8z"/></svg> CLIQUE PARA ATIVAR A MIRA</div>

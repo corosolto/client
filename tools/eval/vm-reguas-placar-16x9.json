@@ -1,7 +1,7 @@
 {
- "gerado": "2026-10-18",
+ "gerado": "2026-11-01",
  "aspecto": "16x9",
- "entradas": "6e1e58fdaf18261b",
+ "entradas": "bd9cb06dfd8a1a98",
  "resultados": {
   "awp": {
    "mira": {
@@ -33,13 +33,13 @@
   "ak": {
    "mira": {
     "estado": "VERDE",
-    "valor": "0 px",
-    "msg": "foco com retículo livre; cruz indica o eixo de disparo"
+    "valor": "4 px",
+    "msg": "massa a 4 px da cruz (+4, +1); teto 30 px; eixo no ADS -9° da vertical (teto ±12°)"
    },
    "cobertura": {
     "estado": "VERDE",
     "valor": "1.00× AK",
-    "msg": "tamanho 1.00× AK, rolagem 0° da AK (informativa), eixo 0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 6.6% (teto 18.2%)"
+    "msg": "tamanho 1.00× AK, rolagem +0° da AK (informativa), eixo +0° da AK, braço 1.00×, cruz 0 px, olho 2.99 palma, ADS cobre 11.7% (teto 18.2%)"
    },
    "pistola-ref": {
     "estado": "N/A",
@@ -152,7 +152,7 @@
    "pistola-ref": {
     "estado": "VERDE",
     "valor": "1.19× pistola aprovada",
-    "msg": "tamanho 1.19× pistola aprovada, desvio 34 px, ADS 150%"
+    "msg": "tamanho 1.19× pistola aprovada, desvio 34 px, ADS 112%"
    },
    "maos": {
     "estado": "N/A",
@@ -179,7 +179,7 @@
    "pistola-ref": {
     "estado": "VERDE",
     "valor": "0.99× pistola aprovada",
-    "msg": "tamanho 0.99× pistola aprovada, desvio 36 px, ADS 76%"
+    "msg": "tamanho 0.99× pistola aprovada, desvio 36 px, ADS 53%"
    },
    "maos": {
     "estado": "N/A",
@@ -715,13 +715,8 @@
    "carregador"
   ],
   "armas": [
-   "deagle",
-   "mosin",
-   "rem700",
-   "uzi",
-   "g3sg1",
-   "sks"
+   "ak"
   ],
-  "base": "2026-10-04"
+  "base": "2026-10-31"
  }
 }

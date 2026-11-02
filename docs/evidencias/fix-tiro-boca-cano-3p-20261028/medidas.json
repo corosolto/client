@@ -1,0 +1,164 @@
+{
+  "antes": {
+    "3P": {
+      "arma": "ak",
+      "glb": true,
+      "armaGlb": true,
+      "clarao": {
+        "m": 0.687,
+        "px": 149.9
+      },
+      "claraoNaVmScene": true,
+      "tracante": {
+        "m": 0.131,
+        "px": 26.9
+      },
+      "bocaPx": [
+        631,
+        504
+      ]
+    },
+    "BOT": {
+      "bot": "GLB",
+      "arma": "p90",
+      "clarao": {
+        "m": 0.818,
+        "px": 50.1
+      },
+      "tracante": {
+        "m": 0.722,
+        "px": 51.6
+      },
+      "bocaPx": [
+        670,
+        444
+      ],
+      "diag": {
+        "nFlash": 1,
+        "nTracer": 1,
+        "sprites": [
+          [
+            697,
+            402
+          ]
+        ],
+        "flashPx": [
+          [
+            697,
+            401
+          ]
+        ],
+        "smoke": 0
+      }
+    },
+    "1P": {
+      "arma": "ak",
+      "autorado": true,
+      "claraoPx": 0,
+      "tracantePx": 40.7,
+      "bocaPx": [
+        748,
+        410
+      ],
+      "diag": {
+        "mwPx": 0,
+        "relLen": 2.254,
+        "relDot": 0.974,
+        "vmPt": [
+          0.313,
+          -0.145,
+          -2.227
+        ],
+        "view": false,
+        "tetoK": 1,
+        "camZoom": 1.0003324420063728,
+        "vmZoom": 1,
+        "nT": 1
+      }
+    },
+    "erros": [
+      "Failed to fetch dynamically imported module: http://127.0.0.1:8512/.astro/eval-vite/deps/astro-DcsWSggM.js?v=286dfecf"
+    ]
+  },
+  "depois": {
+    "3P": {
+      "arma": "ak",
+      "glb": true,
+      "armaGlb": true,
+      "clarao": {
+        "m": 0,
+        "px": 0
+      },
+      "claraoNaVmScene": false,
+      "tracante": {
+        "m": 0,
+        "px": 0
+      },
+      "bocaPx": [
+        631,
+        504
+      ]
+    },
+    "BOT": {
+      "bot": "GLB",
+      "arma": "awp",
+      "clarao": {
+        "m": 0,
+        "px": 0
+      },
+      "tracante": {
+        "m": 0,
+        "px": 0
+      },
+      "bocaPx": [
+        625,
+        450
+      ],
+      "diag": {
+        "nFlash": 1,
+        "nTracer": 1,
+        "sprites": [
+          [
+            624,
+            451
+          ]
+        ],
+        "flashPx": [
+          [
+            625,
+            450
+          ]
+        ],
+        "smoke": 0
+      }
+    },
+    "1P": {
+      "arma": "ak",
+      "autorado": true,
+      "claraoPx": 0,
+      "tracantePx": 0,
+      "bocaPx": [
+        748,
+        410
+      ],
+      "diag": {
+        "mwPx": 0,
+        "relLen": 2.254,
+        "relDot": 0.974,
+        "vmPt": [
+          0.313,
+          -0.145,
+          -2.227
+        ],
+        "view": false,
+        "tetoK": 1,
+        "camZoom": 1.0004777871918566,
+        "vmZoom": 1,
+        "nT": 1
+      }
+    },
+    "erros": [
+      "Failed to fetch dynamically imported module: http://127.0.0.1:8512/.astro/eval-vite/deps/astro-DcsWSggM.js?v=286dfecf"
+    ]
+  }
+}

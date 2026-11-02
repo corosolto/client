@@ -35,7 +35,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { sonda, pula } from './sonda-filho.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const BASELINE = path.join(HERE, 'botsim-golden.json');
@@ -64,8 +64,12 @@ function roda(mapId, mutante = '') {
   if (mutante === 'pirueta') env.SIM_MUT_YAW = '3';
   if (mutante === 'faixas-aleatorias') env.SIM_MUT_LANES = '1';
   if (mutante === 'profundidades-fixas') env.SIM_MUT_DEPTH = '1';
-  const saida = execFileSync(process.execPath, [path.join(HERE, 'botsim.mjs'), String(SECS), mapId],
-    { env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 1 << 24 });
+  const r = sonda([path.join(HERE, 'botsim.mjs'), String(SECS), mapId], { env, maxBuffer: 1 << 24 });
+  /* stderr era descartado aqui; dependência ausente virava "botsim falhou em X"
+     sem dizer o quê. Agora o desfecho "não medi" tem nome próprio (#1133). */
+  if (!r.mediu) pula(r.causa, `botsim ${mapId}`);
+  if (r.status !== 0) throw new Error(`botsim saiu ${r.status} em ${mapId}: ${(r.stderr || '').slice(-600)}`);
+  const saida = r.stdout;
   // o botsim loga "[times] ..." antes do JSON — o payload começa na linha que é só "["
   const ini = saida.search(/^\[$/m), fim = saida.lastIndexOf(']');
   const arr = JSON.parse(saida.slice(ini, fim + 1));

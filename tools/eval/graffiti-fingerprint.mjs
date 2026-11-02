@@ -142,7 +142,7 @@ export function impressao() {
   for (const [id, arq] of Object.entries(MAP_SOURCES)) {
     maps[id] = sha([arq, ...(MAP_DEPENDENCIES[id] || [])].map(file => normalizar(readFileSync(file, 'utf8'))).join('\n'));
   }
-  const pass = sha([PASS_FILE, 'public/js/graffiti_surface.js', 'public/js/graffiti_coverage.js', 'public/js/map_decals.js']
+  const pass = sha([PASS_FILE, 'public/js/graffiti_art_id.js', 'public/js/graffiti_surface.js', 'public/js/graffiti_coverage.js', 'public/js/map_decals.js']
     .map(file => normalizar(readFileSync(file, 'utf8'))).join('\n'));
   return { pass, maps };
 }

@@ -22,6 +22,8 @@
    ARM5 depois da carga ociosa, chão e armários procedurais são trocados pelo GLB certo.
    ARM6 fallbacks do armário compartilham as 6 geometrias que `characters.js:buildRifle`
         cria; este script conta UUIDs e o mutante prova a alocação por instância.
+   ARM7 desktop e toque exibem a arma selecionada após AWP → pistola → AWP; esconder
+        essa arma com outra malha na raiz precisa zerar a contagem selecionada.
 
    Mutantes: sem-lazy acende ARM3; awp-fallback acende ARM4; fallback-unshared acende ARM6.
    Uso: node tools/eval/armas-check.mjs [--mutante=sem-lazy|awp-fallback|fallback-unshared] [--porta=8137] [--foto=/tmp/armas.png]
@@ -29,6 +31,7 @@
 import { execSync, spawn } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { probeSelectedWeapon } from './selected-weapon-probe.mjs';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutante');
@@ -155,6 +158,33 @@ try {
     });
     writeFileSync(FOTO, Buffer.from(png, 'base64'));
     console.log(`  figura: ${FOTO}`);
+  }
+  for (const mobile of [false, true]) {
+    const target = mobile ? await browser.newPage({ viewport: { width: 844, height: 390 },
+      isMobile: true, hasTouch: true }) : page;
+    if (mobile) {
+      await target.goto(`${BASE}/?debug=1&auto=E&map=piscina_treta&vmweapon=awp`,
+        { waitUntil: 'commit', timeout: 180000 });
+      await target.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
+    }
+    const samples = [];
+    for (const weapon of ['awp', 'pistol', 'awp']) {
+      await target.evaluate((weapon) => {
+        const g = window.__game;
+        g.player.alive = true; g.camView = 'first'; g.player.weapon = weapon;
+        g._scope(false, true); g._applyVmVisibility();
+      }, weapon);
+      const present = await target.evaluate(probeSelectedWeapon);
+      const hidden = await target.evaluate(probeSelectedWeapon, { decoy: true });
+      samples.push({ weapon, meshes: present.meshes, decoyMeshes: hidden.sceneMeshes, hiddenMeshes: hidden.meshes });
+    }
+    const presence = { mobile: await target.evaluate(() => window.__game.mobile), samples };
+    console.log(`  ARM7 arma visível no ${mobile ? 'mobile' : 'desktop'}: ${JSON.stringify(presence)}`);
+    if (presence.mobile !== mobile || presence.samples.some((sample) => !sample.meshes
+      || !sample.decoyMeshes || sample.hiddenMeshes !== 0)) {
+      falhas.push(`ARM7 arma invisível no ${mobile ? 'mobile' : 'desktop'}`);
+    }
+    await target.close();
   }
 } catch (e) {
   falhas.push(`ARM não deu para medir: ${String(e).split('\n')[0]}`);

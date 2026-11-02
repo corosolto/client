@@ -8,6 +8,7 @@ export function identifyGraffitiTexture(texture, canvasSources) {
   let path;
   try { path = new URL(src, 'http://inventory.invalid/').pathname; } catch { return null; }
   if (/\/img\/decals\//.test(path)) return { kind: 'image', path, family: 'decal' };
+  if (/\/posters\//.test(path)) return { kind: 'image', path, family: 'decal' };
   if (/\/img\/textures\/(corrego_streetart_pixo|campomorro_streetart_baile)\.webp$/.test(path))
     return { kind: 'image', path, family: 'painted-texture' };
   return null;
@@ -27,11 +28,15 @@ export function inventoryGraffitiMaterials(root, THREE, predicate, identify, can
       ancestors.push({ name: ancestor.name, type: ancestor.type,
         nonSolidSurface: !!ancestor.userData.nonSolidSurface,
         graffitiSupportExcluded: !!ancestor.userData.graffitiSupportExcluded });
-      if (/^(decal:|mural:)/.test(ancestor.name || '')) declared = true;
+      if (/^(decal:|mural:|poster:)/.test(ancestor.name || '')) declared = true;
     }
     for (let materialIndex = 0; materialIndex < materials.length; materialIndex++) {
       const material = materials[materialIndex], artwork = identify(material?.map, canvasSources);
-      if (!artwork || material.visible === false || material.colorWrite === false || !(material.opacity > 0)) continue;
+      // Opacity0 com NoBlending ou NormalBlending opaco ainda escreve RGB.
+      // Mesmo predicado da medição; contrato em GRAFITE-REGUA.md.
+      const desenhaRGB = material.opacity > 0 || material.blending === THREE.NoBlending
+        || (material.blending === THREE.NormalBlending && material.transparent === false);
+      if (!artwork || material.visible === false || material.colorWrite === false || !desenhaRGB) continue;
       const drawn = !Array.isArray(mesh.material) || geometry.groups.some(g => g.materialIndex === materialIndex
         && Math.min(end, g.start + g.count) - Math.max(start, g.start) >= 3);
       if (!drawn) continue;

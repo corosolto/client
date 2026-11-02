@@ -60,7 +60,7 @@ const measure = async ({ limits, areaSource, graffitiMapIds, identifySource, inv
   const { superficieGrafitavel } = await import('./js/graffiti_surface.js');
   const { MAPS } = await import('./js/maps.js');
   const { GRAFITE } = await import('./js/graffiti_layout.js');
-  const { COMMON_MAP_PROPS, hasProp } = await import('./js/mapprops.js');
+  const { mapPropIds, hasProp } = await import('./js/mapprops.js');
   const scene = window.__scene;
   scene.updateMatrixWorld(true);
   const visible = o => {
@@ -289,8 +289,7 @@ const measure = async ({ limits, areaSource, graffitiMapIds, identifySource, inv
     && missingBakedArtifacts.length === 0);
   const totalArea = pieces.reduce((sum, p) => sum + (Number.isFinite(p.w * p.h) ? p.w * p.h : 0), 0);
   const visibleArea = pieces.filter(p => p.visible).reduce((sum, p) => sum + (Number.isFinite(p.w * p.h) ? p.w * p.h : 0), 0);
-  const props = MAPS[window.__mapId].props;
-  const unloadedTemplates = [...new Set([...COMMON_MAP_PROPS, ...(typeof props === 'function' ? props() : props || [])])].filter(id => !hasProp(id));
+  const unloadedTemplates = mapPropIds(MAPS[window.__mapId]).filter(id => !hasProp(id));
   const rejectedArea = failures.reduce((sum, p) => sum + (Number.isFinite(p.w * p.h) ? p.w * p.h : 0), 0);
   return { actualMapId: window.__mapId, total: pieces.length, valid: pieces.length - failures.length,
     rejected: failures.length, sampledPoints: inspected.length * 25, candidateMeshes: meshes.length,

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { importAudioProbe } from './audio-probe-module.mjs';
 /* A fala pertence ao clique no avatar, não à seleção automática que monta a tela.
    O índice no elenco precisa produzir um arquivo distinto do pool da própria facção,
    e personagens com bordão conhecido precisam manter a identidade mesmo se o pool mudar. */
@@ -60,8 +61,7 @@ expect(packVersion === '8' && main.includes('sfx.loadManifest(VERSION)')
 `VOICE13 o carregador ingame não usa a revisão da release com manifesto revalidável; CDN pode servir catálogo antigo (pack v${packVersion || '?'})`);
 
 globalThis.location ||= { search: '' };
-const moduleUrl = `data:text/javascript;base64,${Buffer.from(audio).toString('base64')}#${mutante || 'normal'}`;
-const { Sfx } = await import(moduleUrl);
+const { Sfx } = await importAudioProbe(audio, mutante);
 const probe = new Sfx();
 probe.pack = { voice: { T: ['audio/t-0.mp3', 'audio/t-1.mp3', 'audio/t-2.mp3'] } };
 const played = [];

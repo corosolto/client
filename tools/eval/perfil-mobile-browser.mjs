@@ -114,7 +114,7 @@ await mutar(gamePage);
 const gameHeavy = [];
 gamePage.on('request', (request) => {
   const url = request.url();
-  if (/\/models\/ambient\/|\/private-assets\/viewmodels\/(?!grenade\/grenades-world\.glb)/.test(url)) gameHeavy.push(url);
+  if (/\/models\/ambient\//.test(url)) gameHeavy.push(url);
 });
 await gamePage.goto(`${BASE}/?debug=1&auto=P,mst&map=piscina_treta`, { waitUntil: 'commit', timeout: 60_000 });
 await gamePage.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 300_000 });
@@ -131,6 +131,7 @@ const estadoJogo = await gamePage.evaluate(() => ({
   limiteDecals: window.__game?._limiteDecals,
   limiteBlood: window.__game?._limiteBloodDecals,
   cadencia: window.__escada?.cadencia?.fps,
+  authored: !!window.__game?.vm?.authored,
 }));
 if (estadoJogo.qualidade !== 'low') falhas.push(`PMB6 partida móvel ficou em qualidade ${estadoJogo.qualidade}, queria low`);
 if (!(estadoJogo.dpr > 0 && estadoJogo.dpr <= 0.6)) falhas.push(`PMB6 partida móvel ficou em DPR ${estadoJogo.dpr}, queria ≤ 0,6`);
@@ -138,6 +139,7 @@ if (estadoJogo.sombras !== false) falhas.push('PMB6 sombras dinâmicas continuam
 if (estadoJogo.degrau !== 6) falhas.push(`PMB6 partida saiu do degrau inicial ${estadoJogo.degrau}, queria 6`);
 if (estadoJogo.texturaMax !== 1024) falhas.push(`PMB6 partida perdeu teto de textura (${estadoJogo.texturaMax})`);
 if (gameHeavy.length) falhas.push(`PMB7 partida móvel bloqueou o início com assets pesados: ${gameHeavy.map((url) => new URL(url).pathname).join(', ')}`);
+if (!estadoJogo.authored) falhas.push('PMB7 perfil móvel removeu o controlador de arma com mãos');
 if (estadoJogo.cadencia !== 60) falhas.push(`PMB8 partida pediu cadência ${estadoJogo.cadencia}, queria 60 FPS`);
 if (!(estadoJogo.efeitos > 0 && estadoJogo.efeitos <= 0.35)
   || estadoJogo.limiteCasings > 8 || estadoJogo.limiteDecals > 17 || estadoJogo.limiteBlood > 22) {

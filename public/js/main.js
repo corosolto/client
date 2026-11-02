@@ -1,3 +1,7 @@
+import { apresentarJavaporcos } from './javaporcos_intro.js';
+import { sincronizarOpcoesJavaporcos } from './javaporcos_opcoes.js';
+import { equipeJavaporcos } from './javaporcos_equipe.js';
+import { nomeTimeJavaporcos, wallpaperJavaporcos } from './javaporcos_apresentacao.js';
 // Boot, menus, settings, logo, main loop.
 import * as THREE from 'three';
 import { estadoDaUrl, urlDoEstado, CHAVES_DE_TELA } from './rotas.js';
@@ -7,24 +11,25 @@ import {initLoginPrompt,noteLoginPromptMatch} from './login-prompt.js';
 import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
 import { clientUuid, getAnonId } from './client-id.js';
-import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
+import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
 import {tretaPack} from './data/pack-definitions.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { EMOTES_ENABLED } from './emote-features.js';
 import { preloadEyewearAssets } from './eyewear.js';
-import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver } from './glbchars.js';
+import { preloadCharacterAssets, preloadCosmeticAssets, preloadGloveAssets, buildCharacterModel, hasModel, GLB_CHARS , setEmoteDriver, GloveManifestUnavailable } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
-import { preloadMapProps, COMMON_MAP_PROPS } from './mapprops.js';
-import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
+import { preloadMapProps, mapPropIds } from './mapprops.js';
+import { preloadMapAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
 import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
-import { MAPS, DEFAULT_MAP, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS, comMapaCarregado, defineSeedHavan } from './maps.js';
+import { MAPS, DEFAULT_MAP, ehMapaJavaporcos, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS, comMapaCarregado, defineSeedHavan } from './maps.js';
 import { PALETA } from './paleta.js';
 import { preloadWeapons, WEAPON_IDS } from './weapons.js';
 import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
 import { Sfx } from './audio.js';
-import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons, sanitizeRounds, ROUNDS_CUSTOM_MAX } from './game.js';
+import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons, sanitizeRounds, ROUNDS_CUSTOM_MAX, aguardarPreloads } from './game.js';
+import { economiaLigada } from './economia-partida.js';
 import { VERSION } from './version.js';
 import { bindMapPreview, stopMapPreviews, previewRevision } from './amazonia_map_preview.js';
 import { mapPreviewPoster as escadaoMapPreviewPoster, bindMapPreviews, stopMapPreview } from './escadao_preview.js';
@@ -272,10 +277,8 @@ let currentMap = mapaDaSessao({ urlMap, savedMap: settings.map, pinned: settings
 if (!urlMap) { settings.map = currentMap; saveSettings(); }
 
 /* ---------------- menu backdrop (orbiting map) ---------------- */
-// Mint building/statue GLBs used by the Brasília map (loaded once, cloned per placement).
-const MAP_PROPS = COMMON_MAP_PROPS;   // props do Piscinão de Ramos (Mint); carros/estátua do Havan carregam por-mapa   // Havan (estátua + carros + carrinho)
-const MENU_PROPS_COMPLETOS = new Set([MAPS.praca_poderes]);
 let menuScene = new THREE.Scene();
+let menuBackdropWorld = null;
 
 const menuCam = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 400);
 /* ---------------- loading real (barra via LoadingManager compartilhado) ---------------- */
@@ -423,15 +426,18 @@ function showLoading(label, status = 'CARREGANDO MODELOS 3D…', mapName = '') {
   if (vs) {
     const a = $('load-vs-a'), b = $('load-vs-b');
     if (mapName && currentEnemyFaction) {
-      a.textContent = tr(FACTION_NAME[currentTeam] || ''); a.style.color = (PALETA[currentTeam] || {}).base || '#e0762a';
+      a.textContent = tr(nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'E') || FACTION_NAME[currentTeam] || ''); a.style.color = (PALETA[currentTeam] || {}).base || '#e0762a';
       const ladoDele = currentTeam === 'B' ? 'E' : 'B';
-      b.textContent = tr(FACTION_NAME[ladoDele] || ''); b.style.color = (PALETA[ladoDele] || {}).base || '#8258d8';
+      b.textContent = tr(ehMapaJavaporcos(currentMap) && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || ''); b.style.color = (PALETA[ladoDele] || {}).base || '#8258d8';
       vs.classList.remove('hidden');
     } else vs.classList.add('hidden');
   }
-  try { _lo.box.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI++)); } catch {}
+  _lo.box.dataset.mode = ehMapaJavaporcos(currentMap) ? 'horde' : '';
+  _loadWallModoI = 0;
+  _loadWallFixa = (mapName && MAPS[currentMap]?.loadingWall) || '';
+  try { _lo.box.style.setProperty('--loading-wall', _loadWallFixa ? `url('${_loadWallFixa}')` : loadingWallUrl(_loadWallI++)); } catch {}
   _lo.box.classList.remove('hidden');
-  if (!LEAN) loadingStage.show(currentFaction).catch(() => {});   // mobile mantém a tela 2D; nenhum segundo renderer/GLB durante o boot
+  if (!LEAN) loadingStage.show(ehMapaJavaporcos(currentMap) ? 'J' : currentFaction).catch(() => {});   // mobile mantém a tela 2D; nenhum segundo renderer/GLB durante o boot
   _giraDica();
   clearInterval(_dicaT); _dicaT = setInterval(_giraDica, 5000);
   _mkPhase(_lo.fill, _lo.pct, _lo.status);
@@ -443,14 +449,15 @@ function hideLoading() {
   _lo.box.classList.add('hidden');
 }
 function rebuildMenuBackdrop(mapa) {
+  menuBackdropWorld?.ambience?.dispose?.();
+  menuBackdropWorld = null;
   renderer.liberaPosDaCena?.(menuScene);
   menuScene = new THREE.Scene();
-  mapa.build(menuScene, textures);
+  menuBackdropWorld = mapa.build(menuScene, textures);
   ajustarAnisotropia(menuScene, settings.quality);
 }
 function menuProps(mapa) {
-  const props = mapa.props || [];
-  return MENU_PROPS_COMPLETOS.has(mapa) ? props : [...MAP_PROPS, ...props];
+  return mapPropIds(mapa);
 }
 let _menuLoadSeq = 0;
 async function loadMenuBackdrop() {
@@ -467,7 +474,7 @@ async function loadMenuBackdrop() {
        com o que o portão da splash espera. O lobby final é o mesmo, só fica alcançável antes. */
     return propsReady.then(() => {
       rebuildCurrent();
-      preloadAmbientLife(mapa.ambience || []).then(rebuildCurrent).catch(() => {});
+      preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});
     });
   });
 }
@@ -502,6 +509,8 @@ function show(id) {
   stopMapPreviews();
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
+  clearCompactPreviews();
+  stopHiddenPreview();
   if (id !== 'char-select') pvStopVideo();
   if (id !== 'map-screen') stopMapPreview();
   // ao navegar pra qualquer tela, fecha o painel de setup do menu CS (não fica aberto after)
@@ -574,7 +583,7 @@ const LOADING_WALLS = ['/img/loading-20.webp', '/img/loading-21.webp', '/img/loa
   '/img/loading-27.webp', '/img/loading-28.webp', '/img/loading-29.webp', '/img/loading-30.webp',
   '/img/loading-31.webp', '/img/loading-32.webp', '/img/loading-33.webp', '/img/loading-34.webp',
   '/img/loading-35.webp', '/img/loading-36.webp', '/img/loading-37.webp', '/img/loading-38.webp'];
-let _loadWallI = 4;
+let _loadWallI = 4, _loadWallFixa = '', _loadWallModoI = 0;
 const loadingWallUrl = (i) => `url('${LOADING_WALLS[i % LOADING_WALLS.length]}')`;
 function applySplashWallpaper() {
   const splash = $('boot-splash');
@@ -626,15 +635,20 @@ startVisibleRotation(async () => {
   _wallK = next;
   try { localStorage.setItem('cs_wallK', String(_wallK)); } catch {}
   refreshWallpapers();
-}, () => !MOBILE_AUTO && ['main-menu', 'team-select', 'char-select'].some(id => !$(id)?.classList.contains('hidden')));
+/* Rotação de wallpaper fora do char-select (dono, 31/10): fundo girando sob o preview lê como flicker. */
+}, () => !MOBILE_AUTO && ['main-menu', 'team-select'].some(id => !$(id)?.classList.contains('hidden')));
 startVisibleRotation(async () => {
   const next = (_loadWallI + 1) % LOADING_WALLS.length;
   const preload = new Image();
-  preload.src = LOADING_WALLS[next];
+  const horde = $('load-overlay')?.dataset.mode === 'horde';
+  preload.src = horde ? wallpaperJavaporcos(_loadWallModoI + 1) : LOADING_WALLS[next];
   await preload.decode();
   _loadWallI = next;
   $('boot-splash')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
-  $('load-overlay')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
+  if (horde) {
+    _loadWallFixa = wallpaperJavaporcos(++_loadWallModoI);
+    $('load-overlay')?.style.setProperty('--loading-wall', `url('${_loadWallFixa}')`);
+  } else if (!_loadWallFixa) $('load-overlay')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
 }, () => !MOBILE_AUTO && ['boot-splash', 'load-overlay'].some(id => {
   const element = $(id);
   return element && !element.classList.contains('gone') && !element.classList.contains('hidden');
@@ -750,6 +764,7 @@ const _armMusic = () => {
 // destrava o áudio COM SOM na hora — sem fallback mudo e sem fade atrapalhado. Registrado
 // em capture ANTES do _armMusic, que vira no-op (musicArmed já true).
 function dismissSplash(e) {
+  if (document.querySelector('#javaporcos-intro:modal')) return;
   const sp = document.getElementById('boot-splash');
   if (!sp || !_splashReady || sp.classList.contains('gone')) return;
   if (e?.target?.closest?.('[data-splash-fica]')) return;
@@ -909,57 +924,179 @@ let pv = null, pvDrag = null;
    404 por personagem faltando.
    Uma função só alimenta prévia estática, fallback do snapshot 3D e modo de
    qualidade baixa — trocar aqui melhora os três de uma vez. */
-const portraitUrl = (def) => `/img/chars-hero/${def.id}.webp?v=${VERSION}`;
+const portraitUrl = (def) => {
+  const skin=tretaSkinPresentation(def.skinId,def.id);
+  return skin?(skin.poster?`${skin.poster}?v=${VERSION}`:null):`/img/chars-hero/${def.id}.webp?v=${VERSION}`;
+};
 /* O antigo continua no repo e vira a rede de segurança: se o hero não carregar, a
    imagem cai para o recorte do modelo em vez de ficar quebrada. */
 const portraitFallbackUrl = (def) => `/img/chars/${def.id}.webp?v=${VERSION}`;
 /* VÍDEO DO PERSONAGEM (tela 03 do redesign): captura do próprio modelo, rig e clipe
    do jogo por tools/eval/char-native-vids.mjs. Falha de rede mantém o canvas/GLB. */
 let pvVidToken = 0;
+let pvImageToken = 0;
+let pvCompactToken = 0;
+let pvStaticKey = '';
+let pvPosterFailure = null;
+const pvReducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+pvReducedMotion.addEventListener?.('change',event=>{if(event.matches){pvStopVideo();pv?.ctrl?.pararEmote?.();}if(pv)pv.renderDirty=true;sincronizaBarraEmotes();});
+const pvCompact=matchMedia('(pointer: coarse) and (max-height: 560px)');
+const pvNarrow=matchMedia('(max-width: 760px)');
+pvCompact.addEventListener?.('change',()=>refreshMenuEquipment());
+pvNarrow.addEventListener?.('change',()=>refreshMenuEquipment());
+function resolvePreviewCharacter(def) {
+  const skinId=Object.prototype.hasOwnProperty.call(def,'skinId')?def.skinId:equippedTretaSkin(def.id);
+  return {...def,skinId:tretaSkinPresentation(skinId,def.id)?.id || null,eyewearId:equippedTretaEyewear()};
+}
 function previewVideoVisible() {
   return document.querySelector('.char-preview-box')?.classList.contains('has-video') === true;
 }
+function previewModelActive(selectionOpen,hubOpen) {
+  return !pvCompact.matches && (selectionOpen || (hubOpen && !pvNarrow.matches)) && !$('char-preview')?.classList.contains('hidden') && !previewVideoVisible();
+}
+function previewUsesStills() {
+  return staticPreviews || pvCompact.matches || (pvNarrow.matches && !$('main-menu')?.classList.contains('hidden'));
+}
+function previewHeroVisible() {
+  const selection=$('char-select')?.classList.contains('hidden')===false;
+  const hub=previewHubVisible();
+  return !pvCompact.matches && (selection || (hub && !pvNarrow.matches)) && document.querySelector('.char-preview-box')?.checkVisibility?.()!==false;
+}
+function previewHubVisible() {
+  const menu=$('main-menu');
+  return menu?.classList.contains('hidden')===false && menu.dataset.hubTab==='jogar' && menu.dataset.hubNet==='sp';
+}
+function clearCompactPreviews() {
+  for(const prefix of ['hub-character','char-select']){
+    const image=$(prefix+'-portrait'),label=$(prefix+'-equipment');
+    if(image){image.dataset.previewKey='';image.dataset.previewToken='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;}
+    if(label)label.hidden=true;
+  }
+}
+function pvSetFailureUi(active) {
+  // R65-S1: o hub esconde .pv-equipment por CSS; só a classe de erro expõe o aviso.
+  document.querySelector('.char-preview-box')?.classList.toggle('preview-failure', active && !previewVideoVisible());
+}
+function clearStaticPreview({finishPending=false}={}) {
+  const my=++pvImageToken;pvStaticKey='';pvPosterFailure=null;pvSetFailureUi(false);
+  const image=$('char-preview-static');
+  if(image){
+    const release=()=>{if(my!==pvImageToken)return;image.onload=image.onerror=null;image.removeAttribute('src');};
+    image.onload=image.onerror=null;image.classList.add('hidden');
+    // Na troca para o GLB, conclui o pedido já iniciado. Sair da tela cancela na hora.
+    if(finishPending && image.src && !image.complete)image.onload=image.onerror=release;
+    else release();
+  }
+  for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label){label.hidden=true;label.textContent='';}}
+}
+function stopHiddenPreview() {
+  if(previewHeroVisible())return;
+  clearStaticPreview();pvStopVideo();
+}
+const previewCopy = (pt, en) => LANG === 'en' ? en : pt;
+const previewUnavailableCaption = name => `${previewCopy('Prévia indisponível', 'Preview unavailable')}: ${name}`;
+function previewPaintCaption(weapon, paint) {
+  const names = { ak:'AK-47', m4:'M4', scar:'SCAR', pistol:previewCopy('Pistola', 'Pistol') };
+  return `${previewCopy('Pintura', 'Paint')}: ${names[weapon.weaponId] || weapon.weaponId} · ${paint.name}`;
+}
 function pvStopVideo() {
+  pvVidToken++;
   const box = document.querySelector('.char-preview-box');
   const video = $('char-preview-video');
   if (!video) return;
+  video.onloadeddata=null;video.onerror=null;
   video.pause();
   video.removeAttribute('src');
   video.load();
   video.classList.add('hidden');
   box?.classList.remove('has-video');
+  const label=$('char-preview-skin');
+  if(label && pvPosterFailure){label.hidden=false;label.textContent=previewUnavailableCaption(pvPosterFailure);}
+  pvSetFailureUi(Boolean(pvPosterFailure));
 }
 function pvSetVideo(def) {
   const box = document.querySelector('.char-preview-box');
   const video = $('char-preview-video'), hints = document.querySelector('.pv-hints');
   if (!box || !video) return;
-  const my = ++pvVidToken;
+  def=resolvePreviewCharacter(def);
+  const skin=tretaSkinPresentation(def.skinId,def.id);
+  const src=skin?(skin.video?.webm || skin.video?.mp4):`/video/chars/${def.id}.webm`;
+  if(!src || pvReducedMotion.matches || !previewHeroVisible()){pvStopVideo();return;}
+  const url=`${src}?v=${VERSION}`;
+  if(video.dataset.previewSrc===url && video.onloadeddata)return;
+  pvStopVideo();
+  const my = pvVidToken;
+  video.dataset.previewSrc=url;
   box.classList.remove('has-video');
   video.classList.add('hidden');
   // no modo estático (sem WebGL) as dicas de GIRAR/ZOOM nunca aparecem — nem quando o vídeo falta
   if (hints) hints.classList.toggle('hidden', staticPreviews);
-  video.onerror = () => { if (my === pvVidToken) { box.classList.remove('has-video'); video.classList.add('hidden'); } };
-  video.onloadeddata = () => {
+  video.onerror = () => {if(my===pvVidToken)pvStopVideo();};
+  video.onloadeddata = async () => {
     if (my !== pvVidToken) return;
-    video.play().catch(() => {});
+    try{await video.play();}catch{if(my===pvVidToken)pvStopVideo();return;}
+    if(my!==pvVidToken)return;
     box.classList.add('has-video');
+    pvSetFailureUi(false);
     video.classList.remove('hidden');
+    const label=$('char-preview-skin');if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
     if (hints) hints.classList.add('hidden');
   };
-  video.src = `/video/chars/${def.id}.webm?v=${VERSION}`;
+  video.src = url;
   video.load();
 }
 function showStaticPreview(def) {
   const canvas = $('char-preview'), image = $('char-preview-static'), hints = document.querySelector('.pv-hints');
+  const skin=tretaSkinPresentation(def.skinId,def.id),label=$('char-preview-skin'),weaponLabel=$('char-preview-weapon');
+  const weapon=armaDoPreview(def.id),paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId);
+  const key=JSON.stringify([def.id,def.skinId,skin?.poster,skin?.name,skin?.video,def.eyewearId,weapon,paint?.name]);
+  if(key===pvStaticKey)return;
+  pvStaticKey=key;pvPosterFailure=null;pvStopVideo();pvSetFailureUi(false);
+  if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
+  if(weaponLabel){weaponLabel.textContent=paint?previewPaintCaption(weapon,paint):'';weaponLabel.hidden=!paint;}
   if (canvas) canvas.classList.add('hidden');
   if (image) {
-    image.onerror = () => { image.onerror = null; image.src = portraitFallbackUrl(def); };
-    image.src = portraitUrl(def); image.alt = def.name; image.classList.remove('hidden');
+    const my=++pvImageToken;
+    image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');
+    const unavailable=()=>{pvPosterFailure=skin?.name || def.name;image.classList.add('hidden');pvSetFailureUi(true);if(label && !previewVideoVisible()){label.hidden=false;label.textContent=previewUnavailableCaption(pvPosterFailure);}};
+    const src=portraitUrl(def);
+    image.alt = skin?.name || def.name;
+    if(src){
+      image.onload=()=>{if(my!==pvImageToken)return;image.classList.remove('hidden');pvPosterFailure=null;pvSetFailureUi(false);if(label && !previewVideoVisible()){label.textContent=skin?.name || '';label.hidden=!skin;}};
+      image.onerror = () => {if(my!==pvImageToken)return;image.onerror=null;if(skin)unavailable();else{image.onerror=()=>{if(my===pvImageToken)unavailable();};image.src=portraitFallbackUrl(def);}};
+      image.src=src;
+    }else unavailable();
   }
   if (hints) hints.classList.add('hidden');
 }
+function syncCompactPreview(def) {
+  const skin=tretaSkinPresentation(def.skinId,def.id),weapon=armaDoPreview(def.id);
+  const paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId);
+  const caption=[skin?.name,paint?previewPaintCaption(weapon,paint):null].filter(Boolean).join(' · ');
+  const src=portraitUrl(def),key=JSON.stringify([def.id,def.skinId,src,caption]);
+  const hub=(pvCompact.matches || pvNarrow.matches) && previewHubVisible();
+  const selection=pvCompact.matches && $('char-select')?.classList.contains('hidden')===false;
+  for(const [imageId,labelId,active] of [['hub-character-portrait','hub-character-equipment',hub],['char-select-portrait','char-select-equipment',selection]]){
+    const image=$(imageId),label=$(labelId);if(!image || !label)continue;
+    if(!active){
+      image.dataset.previewKey='';image.dataset.previewToken='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
+      const desktopHub=imageId==='hub-character-portrait' && previewHubVisible();
+      label.textContent=desktopHub?caption:'';label.hidden=!desktopHub || !caption;continue;
+    }
+    if(image.dataset.previewKey===key)continue;
+    image.dataset.previewKey=key;const my=String(++pvCompactToken);image.dataset.previewToken=my;let fallback=false;
+    image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
+    label.textContent=caption;label.hidden=!caption;image.alt=skin?.name || def.name;
+    const unavailable=()=>{image.hidden=true;label.hidden=false;label.textContent=`${previewUnavailableCaption(skin?.name || def.name)}${paint?` · ${paint.name}`:''}`;};
+    if(src){
+      image.onload=()=>{if(image.dataset.previewToken!==my)return;image.hidden=false;label.textContent=caption;label.hidden=!caption;};
+      image.onerror=()=>{if(image.dataset.previewToken!==my)return;if(!skin && !fallback){fallback=true;image.src=portraitFallbackUrl(def);}else unavailable();};
+      image.src=src;
+    }else unavailable();
+  }
+}
 function ensurePreview() {
-  if (staticPreviews) return null;
+  if (previewUsesStills()) return null;
   if (pv) return pv;
   const canvas = $('char-preview');
   const r = criaRenderer({ canvas, alpha: true }, { optional: true });
@@ -995,18 +1132,19 @@ function ensurePreview() {
   cam.position.set(0, 1.3, 3.2); cam.lookAt(0, 0.92, 0);
   pv = { r, scene, cam, model: null };
   // GIRAR/ZOOM de verdade — a dica embaixo do canvas não pode ser enfeite.
-  // Arrastar gira o modelo; scroll aproxima. Durante o arraste o giro automático pausa (ver loop()).
+  // Arrastar gira o modelo; scroll aproxima.
   canvas.addEventListener('pointerdown', e => {
     pvDrag = { x: e.clientX, yaw: pv.model ? pv.model.rotation.y : 0 };
     canvas.setPointerCapture(e.pointerId);
   });
   canvas.addEventListener('pointermove', e => {
-    if (pvDrag && pv.model) pv.model.rotation.y = pvDrag.yaw + (e.clientX - pvDrag.x) * 0.012;
+    if (pvDrag && pv.model) { pv.model.rotation.y = pvDrag.yaw + (e.clientX - pvDrag.x) * 0.012; pv.renderDirty = true; }
   });
   canvas.addEventListener('pointerup', () => { pvDrag = null; });
   canvas.addEventListener('wheel', e => {
     e.preventDefault();
     pv.cam.position.z = Math.min(4.6, Math.max(2.2, pv.cam.position.z + e.deltaY * 0.002));
+    pv.renderDirty = true;
   }, { passive: false });
   return pv;
 }
@@ -1054,6 +1192,7 @@ function snapThumb(obj, fallbackUrl) {
   x.drawImage(p.r.domElement, 0, 0, THUMB_PX, THUMB_PX);   // backing 640² -> 128²: downscale = antialias de graça
   p.scene.remove(obj);
   if (p.model) p.model.visible = prevVis;
+  p.renderDirty = true;
   return c.toDataURL();
 }
 // Each character shows off a weapon that fits their vibe (not everyone with an AK).
@@ -1080,7 +1219,9 @@ function enquadrarMaos(p, m) {
   let mao = null;
   m.group.traverse((o) => { if (!mao && o.isBone && /right.?hand|hand.?r\b|rhand|r_hand/i.test(o.name)) mao = o; });
   if (!mao) return;
-  if (p.mixer) { p.mixer.update(0); p.mixer.timeScale = 0; }
+  // mede a pose que o loop() de fato desenha: ctrl (idle+IK) restaura o overlay que mixer.update(0) desfaz
+  if (p.ctrl) p.ctrl.update(0, 0, false, 0); else if (p.mixer) p.mixer.update(0);
+  if (p.mixer) p.mixer.timeScale = 0;
   m.group.updateMatrixWorld(true);
   const alvo = new THREE.Vector3().setFromMatrixPosition(mao.matrixWorld);
   p.cam.position.set(alvo.x + 0.42, alvo.y + 0.12, alvo.z + 0.52);
@@ -1101,7 +1242,7 @@ async function carregaEmotes() {
 function sincronizaBarraEmotes() {
   const barra = document.getElementById('pv-emotes');
   if (!barra) return;
-  const temBoneco = !staticPreviews && !!(pv && pv.ctrl);
+  const temBoneco = !staticPreviews && !pvReducedMotion.matches && !!(pv && pv.ctrl);
   barra.hidden = !temBoneco;
   if (!temBoneco) { emotesMontados = false; barra.innerHTML = '<button id="pv-emote-abrir" class="pv-emote-btn pv-emote-abrir" type="button">DANÇAR</button>'; religaAbrirEmotes(); }
 }
@@ -1112,7 +1253,7 @@ function religaAbrirEmotes() {
 }
 function pvTocaEmote(id, botao) {
   const ctrl = pv && pv.ctrl;
-  if (!ctrl) return;
+  if (!ctrl || pvReducedMotion.matches) return;
   const barra = document.getElementById('pv-emotes');
   const ligado = ctrl.emoteAtual() === id;
   barra?.querySelectorAll('.pv-emote-btn[aria-pressed]')?.forEach((b) => b.setAttribute('aria-pressed', 'false'));
@@ -1146,35 +1287,49 @@ async function montaBarraEmotes() {
 religaAbrirEmotes();
 
 function pvSetChar(def) {
-  def = {...def, skinId:equippedTretaSkin(def.id),eyewearId:equippedTretaEyewear()};
-  if (staticPreviews) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
+  def = resolvePreviewCharacter(def);
+  const my = ++pvToken;
+  syncCompactPreview(def);
+  if(!previewHeroVisible()){
+    clearStaticPreview();pvStopVideo();
+    $('char-preview')?.classList.add('hidden');sincronizaBarraEmotes();return;
+  }
+  if (previewUsesStills()) { showStaticPreview(def); sincronizaBarraEmotes(); return; }
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
+  const showCanvas=()=>{
+    p.renderDirty = true;
+    clearStaticPreview({finishPending:true});pvStopVideo();
+    $('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');
+    document.querySelector('.pv-hints')?.classList.remove('hidden');
+    for(const id of ['char-preview-skin','char-preview-weapon']){const label=$(id);if(label)label.hidden=true;}
+  };
+  showStaticPreview(def);
   // Swap to the real rigged GLB (idle) once loaded, if this is still the selection.
-  const my = ++pvToken;
   const showBox = () => {   // procedural fallback (only when there's no GLB at all)
     if (p.model) p.scene.remove(p.model);
     p.mixer = null; p.ctrl = null;
     p.model = buildCharacter(def).group;
     p.model.rotation.y = -0.4;
     p.scene.add(p.model);
+    showCanvas();
   };
   // ?nav=1 mantém o preview procedural; web-assets.spec.js cobre o GLB real.
   if (navOnly) { showBox(); return; }
   if (GLB_CHARS.has(def.id)) {
-    // Keep the PREVIOUS model visible while the real GLB streams in — never flash the
-    // blocky placeholder for a character that has a real model (the pop-in bug).
+    // O retrato mantém a identidade selecionada enquanto o GLB carrega ou falha.
     const arma = armaDoPreview(def.id);
-    Promise.all([preloadCharacterAssets([def.id]),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
+    Promise.all([preloadCharacterAssets([def.id], { weapons:[arma.weaponId] }),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
       preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId),
-      arma.gloveSkinId ? preloadGloveAssets([def.id]) : null]).then(() => {
-      if (my !== pvToken) return;
+      arma.gloveSkinId ? preloadGloveAssets([def.id]).catch((e) => { if (!(e instanceof GloveManifestUnavailable)) throw e; e.warn(); }) : null]).then(() => {
+      if (my !== pvToken || !previewHeroVisible()) return;
       // preview: porte de EXIBIÇÃO — arma atravessada no peito (estilo vitrine do CS) em
       // vez do porte funcional que aponta o cano pra câmera e esconde a silhueta da arma
       // (era o "posturas bizarras" de 05/08). Ângulos por classe em glbchars.js. No jogo,
       // nada muda.
       const m = hasModel(def.id) ? buildCharacterModel(def, { weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, gloveSkinId: arma.gloveSkinId, preview: true }) : null;
-      if (!m) { showBox(); return; }
+      if (!m) return;
+      showCanvas();
       if (p.model) p.scene.remove(p.model);
       // Evidência do que foi montado na mão (régua LB20): os valores saem do objeto 3D,
       // não da intenção - canvas não se lê e intenção não prova nada.
@@ -1186,6 +1341,7 @@ function pvSetChar(def) {
         if (!luvaNaMao && o.userData?.gloveSkin) luvaNaMao = o.userData.gloveSkin;
       });
       cv.dataset.glb = '1';
+      cv.dataset.skin = m.skinId || '';
       cv.dataset.arma = armaNaMao ? arma.weaponId : '';
       cv.dataset.armaSkin = pinturaNaMao;
       cv.dataset.luva = luvaNaMao;
@@ -1200,13 +1356,13 @@ function pvSetChar(def) {
       // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
       // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.
       if (PV_CAM_MAOS) enquadrarMaos(p, m);
-    }).catch(() => { if (my === pvToken) showBox(); });
+    }).catch(() => { if (my === pvToken && previewHeroVisible()) showStaticPreview(def); });
   } else {
     showBox();
   }
 }
 function pvThumb(def) {
-  if (staticPreviews) return portraitUrl(def);
+  if (previewUsesStills()) return portraitUrl(def);
   // Box-only thumbnail (tiny icon) — never triggers a GLB load.
   // Passa pelo MESMO snapThumb do GLB: antes esta versão ainda destruía o preview
   // grande (p.model = null) e gravava com outro enquadramento — duas miniaturas com
@@ -1228,7 +1384,7 @@ function returnPreviewToSelection() {
   if (box && marker && box.parentElement !== marker.parentElement) marker.parentElement.insertBefore(box, marker.nextSibling);
 }
 function syncHomeCharacter() {
-  if (!HUB_ENABLED || $('main-menu')?.dataset.hubTab !== 'jogar' || $('main-menu')?.dataset.hubNet !== 'sp') return;
+  if (!HUB_ENABLED || $('main-menu')?.classList.contains('hidden') || $('main-menu')?.dataset.hubTab !== 'jogar' || $('main-menu')?.dataset.hubNet !== 'sp') return;
   const box = document.querySelector('.char-preview-box');
   const host = $('hub-character');
   if (box && host && box.parentElement !== host) host.appendChild(box);
@@ -1238,6 +1394,11 @@ function syncHomeCharacter() {
   $('hub-character-crest').src = `/img/brasoes/${lado.toLowerCase()}.png`;
   $('hub-change-character').style.setProperty('--hub-faction', PALETA[lado]?.base || '#b4d92e');
   pvSetChar(def);
+}
+function refreshMenuEquipment() {
+  if(selChar && !$('char-select')?.classList.contains('hidden')){pvSetChar(selChar);if(staticPreviews)pvSetVideo(selChar);}
+  else syncHomeCharacter();
+  if(!$('hub-roster-modal')?.hidden)hubRosterRender?.();
 }
 let hubMapReturnQuick = false;
 let hubRosterLado = 'E', hubRosterCat = null;
@@ -1342,7 +1503,7 @@ function openHubRoster(updateRoute = true) {
         // Voltar ao personagem base com skin equipada TIRA a skin no servidor antes de trocar.
         if (equipada) {
           try { if (!await desequiparTretaSkin()) throw new Error('unequip_recusado'); }
-          catch { $('hub-roster-selected').textContent = 'Não deu para tirar a skin agora. Tente de novo em instantes.'; return; }
+          catch { $('hub-roster-selected').textContent = frase('skinTirarErro'); return; }
         }
         escolher(def.id);
       };
@@ -1350,10 +1511,10 @@ function openHubRoster(updateRoute = true) {
       if (def.id !== currentChar) {
         const pin = document.createElement('button'); pin.type = 'button';
         const ehPin = settings.pinnedChars.includes(def.id);
-        const papel = podeNoLado(def, currentTeam) ? 'ALIADO' : 'INIMIGO';
+        const papel = podeNoLado(def, currentTeam) ? tr('ALIADO') : tr('INIMIGO');
         pin.className = 'hub-roster-pin';
         pin.setAttribute('aria-pressed', String(ehPin));
-        pin.title = ehPin ? `Escalado como ${papel} — clique para tirar` : `Escalar como ${papel} na próxima partida`;
+        pin.title = ehPin ? frase('pinTituloTravado', papel) : frase('pinTituloEscalar', papel);
         pin.textContent = ehPin ? papel : '＋';
         pin.onclick = (ev) => {
           ev.stopPropagation();
@@ -1376,7 +1537,7 @@ function openHubRoster(updateRoute = true) {
         skinButton.onclick = async () => {
           ui.click();
           try { if (!await equiparTretaSkin(skin.id)) throw new Error('equip_recusado'); }
-          catch { $('hub-roster-selected').textContent = 'Não deu para equipar esta skin agora. Tente de novo em instantes.'; return; }
+          catch { $('hub-roster-selected').textContent = frase('skinEquiparErro'); return; }
           escolher(def.id);
         };
         skinCell.appendChild(skinButton);
@@ -1385,7 +1546,7 @@ function openHubRoster(updateRoute = true) {
     }
     const selected = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
     const skinAtual = armario.find((s) => s.equipped && s.character === selected.id) || null;
-    $('hub-roster-selected').textContent = `Selecionado: ${tr(FACTION_NAME[ladoValido(selected, currentTeam)])} · ${selected.name}${skinAtual ? ` · ${skinAtual.name}` : ''}`;
+    $('hub-roster-selected').textContent = frase('selecionado', tr(FACTION_NAME[ladoValido(selected, currentTeam)]), selected.name, skinAtual ? skinAtual.name : '');
     /* ESCALAÇÃO travada: contagem por papel contra as VAGAS do formato escolhido —
        passar do limite não quebra nada (pickMatchRoster corta), mas o jogador vê. */
     const papelDe = (id) => { const c = CHARACTERS.find((x) => x.id === id); return c && podeNoLado(c, currentTeam) ? 'ally' : 'enemy'; };
@@ -1394,8 +1555,8 @@ function openHubRoster(updateRoute = true) {
     const linha = $('hub-roster-escalacao');
     if (linha) {
       linha.textContent = nAlly || nEnemy
-        ? `ESCALAÇÃO: ${Math.min(nAlly, settings.allyBots)} de ${settings.allyBots} aliados · ${Math.min(nEnemy, settings.enemyBots)} de ${settings.enemyBots} inimigos` + ((nAlly > settings.allyBots || nEnemy > settings.enemyBots) ? ' — escalados além das vagas são descartados' : ' — resto sorteado')
-        : 'ESCALAÇÃO: automática (clique no ＋ de um personagem pra travá-lo)';
+        ? frase('escalacaoVagas', Math.min(nAlly, settings.allyBots), settings.allyBots, Math.min(nEnemy, settings.enemyBots), settings.enemyBots, nAlly > settings.allyBots || nEnemy > settings.enemyBots)
+        : frase('escalacaoAuto');
     }
     const limpar = $('hub-roster-clear');
     if (limpar) {
@@ -1419,6 +1580,7 @@ const lancamentoPerdeu = (n) => n !== _lancamento;
 function soltarPartida() {
   game = null; window.__game = null;
   _lancamento++;
+  window.__javaporcosIntroAbort?.abort();
   /* A tela de loading morre COM a partida: `show()` não mexe no overlay, e uma queda no meio
      do preload deixava o menu atrás de um "CARREGANDO MODELOS 3D…" eterno. */
   try { hideLoading(); } catch { /* overlay ainda não existe */ }
@@ -1460,6 +1622,10 @@ function sendJsonKeepalive(path, payload) {
     return true;
   } catch { return false; }
 }
+function modoTelemetria(g) {
+  if (g?.arena) return 'arena';
+  return g?.ctf ? 'ctf' : 'rounds';
+}
 let telemetrySent = true;
 function sendTelemetry() {
   if (!analyticsAllowed()) return;
@@ -1469,7 +1635,7 @@ function sendTelemetry() {
   const payload = {
     anonId: getAnonId(),
     map: g._mapId || currentMap,
-    mode: g.ctf ? 'ctf' : 'rounds',
+    mode: modoTelemetria(g),
     seconds: Math.round(g.time || 0),
     rounds: (g.roundsWon?.E || 0) + (g.roundsWon?.B || 0),
     nick: registeredNick || null,
@@ -1482,7 +1648,7 @@ function sendGameStarted() {
   if (!analyticsAllowed()) return;
   if (testMode || !game) return;
   sendJsonKeepalive('/api/telemetry', {
-    anonId: getAnonId(), map: game._mapId || currentMap, mode: game.ctf ? 'ctf' : 'rounds',
+    anonId: getAnonId(), map: game._mapId || currentMap, mode: modoTelemetria(game),
     nick: registeredNick || null,
     event: 'game_started', gameType: telemetryGameContext.gameType, matchEventId: _matchEventId,
   });
@@ -1709,7 +1875,7 @@ function sendMatchEvent(result) {
     anonId: getAnonId(),
     sessionId: getSessionId(), eventId: _matchEventId, version: versaoComOrigem(VERSION),
     ...telemetryGameContext, ...sinaisDeBuild(),
-    map: currentMap, mode: matchMode === 'ctf' ? 'ctf' : 'rounds',
+    map: currentMap, mode: modoTelemetria(g),
     character: currentChar, team: g.playerTeam,
     faction: g.playerFaction || currentFaction,
     result: result || 'quit',
@@ -1811,6 +1977,13 @@ addEventListener('pointerdown', _menuOnce);
 addEventListener('keydown', _menuOnce);
 
 async function startGame(team, charId, enemyFaction, online = false) {
+  const meuLancamento = novoLancamento();
+  window.__javaporcosIntroAbort?.abort();
+  const introAbort = new AbortController();
+  window.__javaporcosIntroAbort = introAbort;
+  const continuaPartida = online && telemetryGameContext.gameType === 'multiplayer'
+    && telemetryGameContext.roomId === (mpSessao?.net?.meta?.room || mpSessao?.sala?.id || mpSessao?.sala?.room || null) && game?._mapId === currentMap;
+  if (introAbort.signal.aborted || lancamentoPerdeu(meuLancamento)) return;
   /* #241: em rede lenta o preload dos GLBs passa de 60 s COM progresso andando
      (_lstat.loaded sobe a cada arquivo do DefaultLoadingManager). O watchdog
      renova enquanto há movimento e só falha se o progresso PARAR — travamento
@@ -1826,9 +1999,8 @@ async function startGame(team, charId, enemyFaction, online = false) {
     return false;
   });
   /* RÉGUA:launch-watchdog fim */
-  const meuLancamento = novoLancamento();
   try {
-    await _startGame(meuLancamento, team, charId, enemyFaction, online);
+    await _startGame(meuLancamento, team, charId, enemyFaction, online, introAbort);
     window.__gameLaunch?.ready('partida');
   } catch (e) {
     /* RÉGUA:launch-race queda início — extraído por `tools/eval/launch-race-check.mjs` */
@@ -1850,7 +2022,7 @@ async function startGame(team, charId, enemyFaction, online = false) {
     /* RÉGUA:launch-race queda fim */
   }
 }
-async function _startGame(meuLancamento, team, charId, enemyFaction, online = false) {
+async function _startGame(meuLancamento, team, charId, enemyFaction, online = false, introAbort) {
   const sessao = online ? mpSessao : null;
   const metaMp = sessao?.net?.meta || {};
   const salaMp = sessao?.sala || {};
@@ -1878,6 +2050,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   if (sessao) team = ladoOnline(team, sessao.net);
   const charDef = CHARACTERS.find(c => c.id === charId) || {};
   if (!online && !podeNoLado(charDef, team)) team = ladosDe(charDef)[0];
+  if (!online && ehMapaJavaporcos(currentMap)) team = 'E';
   let faction = charDef.team || team || 'E';
   const side = resolvePlayerSide(team, faction, online);
   if (!online) faction = side;
@@ -1933,6 +2106,11 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
      corpos e o casamento de ids fica adivinhando). No single player é LIVRE: bots do seu
      lado + bots inimigos (1v4, solo vs 8, 5v5…). */
   const tamanhoTime = sessao ? sessao.net.meta.teamSize : 0;
+  const cooperativo = sessao?.net.meta.cooperative === true;
+  const settingsDaPartida = sessao
+    ? {...settings, bots: tamanhoTime, allyBots: Math.max(0, tamanhoTime - 1), enemyBots: cooperativo ? 0 : tamanhoTime,
+      javaporcos: {...settings.javaporcos, coop: cooperativo}}
+    : ehMapaJavaporcos(currentMap) ? equipeJavaporcos(settings) : settings;
   /* ELENCO: no multiplayer ele vem PRONTO do servidor (welcome.roster). Sortear o próprio faria
      cada jogador da mesma sala ver bonecos diferentes, e o nome do killfeed não bateria com o
      rosto que apareceu na tela. Fora do multiplayer, sorteio normal — com a ESCALAÇÃO do
@@ -1946,10 +2124,11 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   };
   const matchRoster = sessao
     ? rosterDoServidor(side, charId)
-    : pickMatchRoster(faction, enemyFac, { allies: settings.allyBots, enemies: settings.enemyBots }, charId, false, _pinned);
+    : pickMatchRoster(faction, enemyFac, { allies: settingsDaPartida.allyBots, enemies: settingsDaPartida.enemyBots }, charId, false, _pinned);
   /* Treta Pop: o carregamento VS mostra o elenco sorteado; o global cobre o ?auto=, que lança antes de tp/ligar.js chegar */
   if (document.documentElement.dataset.ui === 'v3') {
     window.__tpElenco = {
+      javaporcosTimes: cooperativo ? 2 : sessao || settingsDaPartida.javaporcos?.times === 3 ? 3 : 2,
       lado: side, eu: CHARACTERS.find((c) => c.id === charId), aliados: matchRoster.allyDefs, inimigos: matchRoster.enemyDefs,
       online: !!sessao, tamanho: tamanhoTime || 0, ctf: matchMode === 'ctf', rounds: sessao ? sanitizeRounds(sessao.net.meta.roundsMax) : matchRounds(),
       mapa: MAPS[currentMap].name, desc: MAP_DESC[currentMap] || '', arte: mapPreviewPoster(currentMap, VERSION) };
@@ -1984,28 +2163,42 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // A sonda de QA do viewmodel inclui a arma pedida no preload; sem isso a HUD podia
   // selecionar uma arma de teste cujo GLB não tinha entrado nesta partida reduzida.
   const _qaVmWeapon = testMode && WEAPON_IDS.includes(params.get('vmweapon')) ? params.get('vmweapon') : null;
-  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon])].filter(Boolean);
+  // TRETA$ da partida: todo mundo nasce de pistola, então ela entra no preload junto com as sorteadas
+  const economia = economiaLigada({ busca: location.search, online: !!sessao, wpnMode: settings.wpnMode });
+  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon, economia ? 'pistol' : null])].filter(Boolean);
+  const _vmStartWeapon = _qaVmWeapon || (sessao
+    ? sessao.net.meta.roster.find((r) => r.id === sessao.net.yourEnt)?.weapon || charWeapon(charId)
+    : economia ? 'pistol' : settings.wpnMode === 'awp' ? 'awp' : settings.wpnMode === 'knife' ? 'knife'
+      : settings.wpnMode === 'pistols' ? 'pistol' : charWeapon(charId));
+  const _vmBootWeapons = POINTER_COARSE ? [_vmStartWeapon] : _armasDaPartida;
   try {
     if (!navOnly) {
-      await Promise.all([
+      await aguardarPreloads([
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
         preloadCosmeticAssets(matchSkins),
         preloadEyewearAssets(matchEyewear),
+        playerGloveId ? preloadGloveAssets([charId]) : null,
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
+        playerKnifeSkinId ? preloadWeaponSkinCandidate(playerKnifeSkinId) : null,
         sfx.preloadWeaponSamples(_armasDaPartida),
-        preloadMapProps([...MAP_PROPS, ...(mapaPartida.props || [])]),   // + props do mapa (Havan: carros/estátua)
-        /* Desktop preserva a fauna GLB do BUG-57 e os viewmodels autorados. No perfil
-           móvel, ambos têm fallback procedural/legado e ficam fora do caminho crítico:
-           eram dezenas de MB e compilavam enquanto o jogador já tentava mirar. */
-        MOBILE_AUTO ? null : preloadAmbientLife(mapaPartida.ambience || []),
+        ehMapaJavaporcos(currentMap) ? sfx.preloadJavaporcos().catch(e => console.error('JAV-AUDIO: preload falhou', e)) : null,
+        preloadMapProps(mapPropIds(mapaPartida)),
+        preloadMapAmbientLife(mapaPartida, { mobileAuto: MOBILE_AUTO }),
         mapaPartida.preload ? mapaPartida.preload() : null,
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
-        POINTER_COARSE ? null : preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida, playerWeaponSkins)),
+        preloadAuthoredFamilies(authoredBootFamilies(_vmBootWeapons, playerWeaponSkins)),
       ]);
     }
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
   if (lancamentoPerdeu(meuLancamento)) return;
   if (sessao) await preloadMapProps(mapaPartida.props || [], { required: true });
+  if (introAbort.signal.aborted || lancamentoPerdeu(meuLancamento)) return;
+  if (ehMapaJavaporcos(currentMap) && !continuaPartida && (!testMode || params.get('hordeintro') === '1')) {
+    window.__gameLaunch?.ready('partida');
+    hideLoading();
+    await apresentarJavaporcos(introAbort.signal);
+    if (introAbort.signal.aborted || lancamentoPerdeu(meuLancamento)) return;
+  }
   /* RÉGUA:launch-race nascimento início — extraído por `tools/eval/launch-race-check.mjs` */
   /* O preload leva segundos: sem esta saída, uma queda de socket no meio dele fazia nascer um
      Game zumbi por cima do menu que a desconexão já havia aberto. */
@@ -2014,11 +2207,11 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   game = new Game({
     /* MP: o servidor manda no tamanho — sobrescreve AMBOS os campos do formato local
        (o allyBots/enemyBots do save não pode vencer o teamSize da sala). */
-    settings: sessao ? { ...settings, bots: tamanhoTime, allyBots: Math.max(0, tamanhoTime - 1), enemyBots: tamanhoTime } : settings,
+    settings: settingsDaPartida,
     renderer, textures, sfx,
     playerCharId: charId, playerSkinId, playerEyewearId, playerGloveId, playerWeaponSkins, playerKnifeSkinId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
-    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
-    ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
+    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons, economia,
+    ctf: MAPS[currentMap].objectiveMode ? false : matchMode === 'ctf',
     /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
        sobrariam nove corpos locais para dez entidades e um jogador ficaria invisível. */
     mpFactory: sessao ? makeNetcode : null,
@@ -2026,7 +2219,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     dedicated: !!(sessao && sessao.net.espectador),
     /* online: o teto é o da sala (meta.roundsMax do servidor; nó antigo sem o campo = padrão
        5 / 3) e o fim vem do servidor; o teto local (1–15) só vale offline. */
-    roundsMax: sessao ? (sanitizeRounds(sessao.net.meta.roundsMax) || undefined) : matchRounds(),
+    roundsMax: ehMapaJavaporcos(currentMap) ? 1 : (sessao ? (sanitizeRounds(sessao.net.meta.roundsMax) || undefined) : matchRounds()),
     onMatchEnd: recordMatchStats,
     recordTraining: trainingEnabled(),
     onTrainingFrames: sendTrainingFrames,
@@ -2225,6 +2418,10 @@ const ui = {
   back()  { try { sfx.uiBack(); } catch {} },
 };
 let matchMode = 'rounds';   // 'rounds' | 'ctf' — lido em startGame (ctf)
+const modoObjetivoAtual = () => MAPS[currentMap]?.objectiveMode || '';
+const rotuloObjetivoAtual = () => ({ horde: 'HORDAS', escort: 'ESCOLTA' })[modoObjetivoAtual()]
+  || modoObjetivoAtual().toUpperCase();
+const resumoObjetivoAtual = () => modoObjetivoAtual() === 'horde' ? 'INVASÃO · DISPUTA TERRITORIAL' : rotuloObjetivoAtual();
 /* O JOGADOR JÁ DISSE QUAL MODO QUER? (defeito: "esse mapa está como CAPTURA, mas eu
    selecionei single player — e esse erro se repete em outros mapas")
    O `ctfMode` do mapa é PADRÃO, não ordem. Só que `gotoMap` reescrevia `matchMode` a cada
@@ -2519,6 +2716,8 @@ if (HUB_ENABLED) {
   const setHubTab = (tab, updateRoute = true) => {
     if ($('main-menu').dataset.socialPaused === 'true' && tab !== 'comunidade') return;
     $('main-menu').dataset.hubTab = tab;
+    clearCompactPreviews();
+    stopHiddenPreview();
     updateHubTip();
     if (tab !== 'jogar' && menuSetup.dataset.step === 'profile') setSetupStep('match');
     for (const button of tabs) {
@@ -2594,6 +2793,8 @@ if (HUB_ENABLED) {
   });
   const setHubNet = (net, updateRoute = true) => {
     $('main-menu').dataset.hubNet = net;
+    clearCompactPreviews();
+    stopHiddenPreview();
     updateHubTip();
     if (net === 'mp' && menuSetup.dataset.step === 'profile') setSetupStep('match');
     $('hub-sp').setAttribute('aria-pressed', String(net === 'sp'));
@@ -2715,7 +2916,7 @@ function openHubQuick(updateRoute = true) {
   const fields = [
     ['TIPO', 'SINGLEPLAYER'],
     ['MAPA', MAPS[currentMap].name],
-    ['MODO', matchMode === 'ctf' ? 'CAPTURE A BANDEIRA' : 'MATA-MATA'],
+    ['MODO', ehMapaJavaporcos(currentMap) ? 'HORDAS' : (matchMode === 'ctf' ? 'CAPTURE A BANDEIRA' : 'MATA-MATA')],
     ['ARMAS', tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS')],
     ['FORMATO', formatoPartida()],
     ['ROUNDS', String(matchRounds())],
@@ -2814,6 +3015,7 @@ function setMapThumb() {
 // ficha do cartaz e o dropdown têm que dizer a mesma coisa com as mesmas palavras.
 const WPN_MODE_LABEL = { all: 'TODAS', pistols: 'SÓ PISTOLAS', knife: 'SÓ FACA', awp: 'SÓ AWP' };
 function matchRounds() {
+  if (ehMapaJavaporcos(currentMap)) return 1;
   /* 1–15 (ROUNDS_CUSTOM_MAX do game.js — uma régua só). Salvo fora do intervalo cai no
      padrão do modo; par é permitido: empate no teto vai pro desempate por abates. */
   const fallback = matchMode === 'ctf' ? 3 : 5;
@@ -2825,24 +3027,31 @@ function matchRounds() {
 const hubSels = [];
 function syncHubSels() { for (const s of hubSels) s.sync(); }
 function setMapMeta() {
+  sfx.setGameMode(ehMapaJavaporcos(currentMap) ? 'horde' : '');
   const el = $('map-meta'); if (!el) return;
-  const modo = frase(matchMode === 'ctf' ? 'ctfMelhorDeN' : 'melhorDeN', matchRounds());
-  el.textContent = frase('resumoPartida', modo, 1 + settings.allyBots, settings.enemyBots, tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS'));
+  const modo = modoObjetivoAtual() ? resumoObjetivoAtual() : frase(matchMode === 'ctf' ? 'ctfMelhorDeN' : 'melhorDeN', matchRounds());
+  el.textContent = ehMapaJavaporcos(currentMap)
+    ? `${modo} · ${equipeJavaporcos(settings).javaporcos.defensores} DEFENSORES (VOCÊ + BOTS) × JAVAPORCOS`
+    : frase('resumoPartida', modo, 1 + settings.allyBots, settings.enemyBots, tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS'));
   syncHubSels();
 }
 function setMapMode() {
+  const objetivo = modoObjetivoAtual();
   const m = $('map-mode');
   if (m) {
-    m.textContent = matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA');
-    m.dataset.mode = matchMode;
+    m.textContent = objetivo ? rotuloObjetivoAtual() : (matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA'));
+    m.dataset.mode = objetivo || matchMode;
+    m.disabled = !!objetivo;
   }
   const d = $('map-dots');
   if (d) d.innerHTML = MAPAS_MENU.map((_, i) => `<i class="${i === mapIdx ? 'on' : ''}"></i>`).join('');
   if (HUB_ENABLED) {
-    $('hub-mode-rounds').setAttribute('aria-pressed', String(matchMode === 'rounds'));
-    $('hub-mode-ctf').setAttribute('aria-pressed', String(matchMode === 'ctf'));
-    $('hub-mode-rounds').querySelector('small').textContent = `MELHOR DE ${settings.rounds || 5}`;
-    $('hub-mode-ctf').querySelector('small').textContent = `MELHOR DE ${settings.ctfRounds || 3}`;
+    $('hub-mode-rounds').setAttribute('aria-pressed', String(!objetivo && matchMode === 'rounds'));
+    $('hub-mode-ctf').setAttribute('aria-pressed', String(!objetivo && matchMode === 'ctf'));
+    $('hub-mode-rounds').disabled = !!objetivo;
+    $('hub-mode-ctf').disabled = !!objetivo;
+    $('hub-mode-rounds').querySelector('small').textContent = objetivo ? rotuloObjetivoAtual() : `MELHOR DE ${settings.rounds || 5}`;
+    $('hub-mode-ctf').querySelector('small').textContent = objetivo ? 'INDISPONÍVEL NESTE MAPA' : `MELHOR DE ${settings.ctfRounds || 3}`;
     $('hub-rounds-value').textContent = String(matchRounds());
   }
   setMapMeta();
@@ -2853,6 +3062,7 @@ function setMapMode() {
 {
   const mm = $('map-mode');
   if (mm) mm.addEventListener('click', () => {
+    if (modoObjetivoAtual()) return;
     matchMode = matchMode === 'ctf' ? 'rounds' : 'ctf';
     modoEscolhido = true;   // alternar no badge também é escolha do jogador
     ui.click();
@@ -2866,7 +3076,7 @@ function setMapMode() {
 }
 if (HUB_ENABLED) {
   $('hub-mode-rounds').onclick = () => { if (matchMode !== 'rounds') $('map-mode').click(); };
-  $('hub-mode-ctf').onclick = () => { if (matchMode !== 'ctf') $('map-mode').click(); };
+  $('hub-mode-ctf').onclick = () => { if (!modoObjetivoAtual() && matchMode !== 'ctf') $('map-mode').click(); };
   $('hub-rounds').onclick = () => {
     /* ciclo pelos ÍMPARES de 1–15 (o "melhor de N" usual); os pares ficam pro select da
        tela de mapa. Do valor atual, salta pro próximo ímpar MAIOR (valor par vindo do
@@ -2884,10 +3094,9 @@ function gotoMap(i, updateRoute = true) {
   settings.map = currentMap; settings.mapPinned = true; saveSettings();   // escolha explícita sai da rotação
   mapNameEl.textContent = MAPS[currentMap].name;
   setMapThumb();
-  // troca de mapa aplica o PADRÃO do mapa (Loja H/Ferro Velho abrem em CTF, o resto em rounds)
-  // — mas SÓ enquanto o jogador não tiver escolhido. Ver `modoEscolhido` lá em cima: era
-  // aqui que a escolha dele morria (main.js:692 na versão anterior).
-  if (!modoEscolhido) matchMode = MAPS[currentMap].ctfMode ? 'ctf' : 'rounds';
+  // Mapas objetivos só substituem o modo efetivo enquanto estão ativos. A escolha explícita
+  // fica preservada para o jogador reencontrá-la ao voltar a um mapa de rounds/CTF.
+  if (!modoObjetivoAtual() && !modoEscolhido) matchMode = MAPS[currentMap].ctfMode ? 'ctf' : 'rounds';
   setMapMode();
   void loadMenuBackdrop();
   renderMapScreen();   // se a tela cheia estiver aberta, ela acompanha o carrossel
@@ -2920,6 +3129,9 @@ const MAP_DESC = {
   campomorro: 'Campo de várzea cercado pelo morro: oito becos, arquibancada com torcida e galpão do baile.',
   parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
   velho_oeste: 'Duelo na cidade empoeirada: saloon, banco, carroças e tumbleweeds cruzando três rotas entre casas de madeira.',
+  distrito_rural: 'Defenda fazendas e depósitos de ração. Entre nos celeiros e procure abrigo nas coberturas.',
+  vila_da_mata: 'Defenda uma vila de casas portuguesas. Explore a praça, os sobrados e as ruelas da encosta.',
+  invasao_javaporcos: 'Dispute a cidade contra bandos que saem da mata por seis frentes. Retome setores, explore o pasto e mantenha seu time vivo. Escolha defesa contra a horda ou três times em disputa.',
   penitenciaria: 'Rebelião no pátio: celas abertas, concreto gasto, guaritas e barricadas policiais entre três rotas de confronto.',
   upa_24h: 'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.',
   obras_prefeitura: 'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.',
@@ -3122,6 +3334,11 @@ if (msRounds) for (let n = 1; n <= ROUNDS_CUSTOM_MAX; n++) { const o = document.
 if (msAlly) for (let n = 0; n <= 7; n++) { const o = document.createElement('option'); o.value = String(n); o.textContent = botsLabel(n); msAlly.appendChild(o); }
 if (msEnemy) for (let n = 1; n <= 8; n++) { const o = document.createElement('option'); o.value = String(n); o.textContent = botsLabel(n); msEnemy.appendChild(o); }
 function syncMapOptions() {
+  const horda = ehMapaJavaporcos(currentMap);
+  sincronizarOpcoesJavaporcos($('ms-match-options'), horda, settings, () => {saveSettings(); setMapMeta();});
+  if (msRounds?.parentElement) msRounds.parentElement.hidden = horda;
+  if (msEnemy?.parentElement) msEnemy.parentElement.hidden = horda;
+  if (msAlly?.parentElement) msAlly.parentElement.hidden = horda;
   if (msWpnMode) msWpnMode.value = settings.wpnMode || 'all';
   if (msAlly) msAlly.value = String(settings.allyBots);
   if (msEnemy) msEnemy.value = String(settings.enemyBots);
@@ -3162,6 +3379,12 @@ function montarHubSels() {
     box.append(btn, lista); host.appendChild(box);
     const sel = {
       sync() {
+        const horda = ehMapaJavaporcos(currentMap);
+        box.hidden = horda && (id === 'inimigos' || id === 'rounds');
+        btn.disabled = horda && id === 'modo';
+        btn.querySelector('small').textContent = tr(horda && id === 'time' ? 'DEFENSORES' : rotulo);
+        lista.setAttribute('aria-label', tr(horda && id === 'time' ? 'DEFENSORES' : rotulo));
+        if (box.hidden || btn.disabled) sel.abrir(false);
         const v = atual(), op = opcoes().find((o) => o.v === v);
         btn.querySelector('strong').textContent = op ? op.t : v;
       },
@@ -3204,11 +3427,17 @@ function montarHubSels() {
   const faixa = (de, ate, rot) => Array.from({ length: ate - de + 1 }, (_, k) => ({ v: String(de + k), t: rot(de + k) }));
   montar('mapa', 'MAPA', () => MAPAS_MENU.map((id) => ({ v: id, t: MAPS[id].name, img: mapPreviewPoster(id, VERSION) })),
     () => currentMap, (v) => { ui.click(); gotoMap(MAPAS_MENU.indexOf(v)); });
-  montar('modo', 'MODO', () => [{ v: 'rounds', t: tr('MATA-MATA') }, { v: 'ctf', t: tr('CAPTURA') }],
-    () => matchMode, (v) => $(v === 'ctf' ? 'hub-mode-ctf' : 'hub-mode-rounds').click());
+  montar('modo', 'MODO', () => ehMapaJavaporcos(currentMap) ? [{v:'horde',t:'CAÇA AO JAVAPORCO'}] : [{ v: 'rounds', t: tr('MATA-MATA') }, { v: 'ctf', t: tr('CAPTURA') }],
+    () => ehMapaJavaporcos(currentMap) ? 'horde' : matchMode, (v) => $(v === 'ctf' ? 'hub-mode-ctf' : 'hub-mode-rounds').click());
   montar('armas', 'ARMAS', () => WPN_MODES.map((m) => ({ v: m.id, t: tr(m.label) })),
     () => settings.wpnMode || 'all', (v) => { msWpnMode.value = v; msWpnMode.onchange(); });
-  montar('time', 'SEU TIME', () => faixa(0, 7, botsLabel), () => String(settings.allyBots), (v) => { msAlly.value = v; msAlly.onchange(); });
+  montar('time', 'SEU TIME', () => ehMapaJavaporcos(currentMap) ? faixa(4,8,n=>`${n} · VOCÊ + BOTS`) : faixa(0, 7, botsLabel),
+    () => String(ehMapaJavaporcos(currentMap) ? equipeJavaporcos(settings).javaporcos.defensores : settings.allyBots), (v) => {
+      if (ehMapaJavaporcos(currentMap)) {
+        settings.javaporcos = {...settings.javaporcos,defensores:Number(v)};
+        saveSettings(); syncMapOptions(); setMapMeta(); ui.click();
+      } else { msAlly.value = v; msAlly.onchange(); }
+    });
   montar('inimigos', 'INIMIGOS', () => faixa(1, 8, botsLabel), () => String(settings.enemyBots), (v) => { msEnemy.value = v; msEnemy.onchange(); });
   montar('rounds', 'ROUNDS', () => faixa(1, ROUNDS_CUSTOM_MAX, String), () => String(matchRounds()), (v) => { msRounds.value = v; msRounds.onchange(); });
   document.addEventListener('click', () => fechar(null));
@@ -3220,7 +3449,8 @@ if (HUB_ENABLED) montarHubSels();
 /* Treta Pop (public/js/tp/modos.js): lê o estado da partida e troca o mapa pela mesma máquina do menu. */
 if (document.documentElement.dataset.ui === 'v3') window.__tpModos = {
   mapas: () => MAPAS_MENU.map((id) => ({ id, nome: MAPS[id].name, poster: mapPreviewPoster(id, VERSION), cats: catsDe(id), data: MAP_DATA[id] || '', desc: tr(MAP_DESC[id] || ''), parado: MAPAS_PARADOS.has(id) })),
-  estado: () => ({ mapa: currentMap, modo: matchMode, armas: settings.wpnMode || 'all', aliados: settings.allyBots, inimigos: settings.enemyBots, rounds: matchRounds(), dificuldade: settings.difficulty || 'normal', escalados: [...settings.pinnedChars] }),
+  estado: () => ({ mapa: currentMap, modo: matchMode, armas: settings.wpnMode || 'all', aliados: settings.allyBots, inimigos: settings.enemyBots, rounds: matchRounds(), dificuldade: settings.difficulty || 'normal', escalados: [...settings.pinnedChars], javaporcos: {...settings.javaporcos} }),
+  opcoesJavaporcos: (host, mudou) => sincronizarOpcoesJavaporcos(host, ehMapaJavaporcos(currentMap), settings, () => { saveSettings(); syncMapOptions(); setMapMeta(); mudou?.(); }),
   irMapa: (id) => { if (MAPAS_MENU.includes(id)) gotoMap(MAPAS_MENU.indexOf(id)); },
 };
 if (diffSel) {
@@ -3877,7 +4107,7 @@ async function renderGlobal(nick) {
 
 // GLB idle thumbnail (no weapon), rendered off the shared preview renderer.
 function glbThumb(def) {
-  if (staticPreviews) return portraitUrl(def);
+  if (previewUsesStills()) return portraitUrl(def);
   if (!hasModel(def.id)) return null;
   const m = buildCharacterModel(def, { weapon: false });
   if (!m) return null;
@@ -3887,24 +4117,26 @@ function glbThumb(def) {
 }
 /* Previews 3D dos dois times: quatro personagens disponíveis por lado, cacheados
    uma vez por visita. Grupos do catálogo não ganham cards nesta tela. */
-let teamPreviewsDone = false;
+const teamPreviewsDone = new Set();
+const teamPreviewsPending = new Set();
 function ensureTeamPreviews() {
-  if (teamPreviewsDone) return;
-  teamPreviewsDone = true;
   for (const [btn, lado] of [['btn-team-e', 'E'], ['btn-team-b', 'B']]) {
     const box = document.querySelector(`#${btn} .team-chars`);
-    if (!box) continue;
+    if (!box || !(box.checkVisibility?.() ?? box.getClientRects().length > 0)) continue;
+    if (teamPreviewsDone.has(lado) || teamPreviewsPending.has(lado)) continue;
     const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id)).slice(0, 4);
     if (!chars.length) continue;
+    teamPreviewsPending.add(lado);
     box.innerHTML = chars.map(() => '<span class="tc-slot"></span>').join('');
     const slots = [...box.children];
-    const ready = staticPreviews ? Promise.resolve() : preloadCharacterAssets(chars.map(c => c.id));
+    const ready = previewUsesStills() ? Promise.resolve() : preloadCharacterAssets(chars.map(c => c.id));
     ready.then(() => {
       chars.forEach((c, i) => {
         const url = glbThumb(c);
         if (url && slots[i]) slots[i].innerHTML = `<img src="${url}" alt="${c.name}" title="${c.name}">`;
       });
-    }).catch(() => {});
+      teamPreviewsDone.add(lado);
+    }).catch(() => {}).finally(() => teamPreviewsPending.delete(lado));
   }
 }
 function pickTeam(faction) {
@@ -3932,8 +4164,8 @@ function pickTeam(faction) {
       // Avatar = busto cortado da ARTE APROVADA (molde/neutro), não do GLB low-poly —
       // referência 03: a coluna da esquerda é uma fileira de retratos, não de modelos 3D.
       const thumb0 = `/img/chars/avatars/${c.id}.webp?v=${VERSION}`;
-      row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false');
-      row.innerHTML = `<img src="${thumb0}" alt="${c.name}"><span>${c.name}</span>`;
+      row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false'); row.title = c.name;
+      row.innerHTML = `<img src="${thumb0}" alt="${c.name}" loading="lazy"><span>${c.name}</span>`;
       row.onmouseenter = () => ui.hover();
       // A faixa é horizontal, mas ↑↓ continuam aceitos para quem já usava o fluxo antigo.
       row.onkeydown = (e) => {
@@ -3950,10 +4182,10 @@ function pickTeam(faction) {
       if (i === 0) firstRow = row;
     });
     // seleciona DEPOIS de gerar todos os thumbs — senão o preview fica com o último
-    if (firstRow) selectChar(chars[0], firstRow);
     show('char-select');
+    if (firstRow) selectChar(chars[0], firstRow);
   };
-  if (navOnly || staticPreviews) { mountCharList(); return; }
+  if (navOnly || previewUsesStills()) { mountCharList(); return; }
   // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
   // nada de thumbnails de caixa montando aos poucos (o "minecraft" que o dono viu)
   showLoading('CARREGANDO PERSONAGENS…');
@@ -4271,11 +4503,14 @@ function loop(agoraMs = performance.now()) {
   const hubPreviewOpen = HUB_ENABLED && hubMenu?.classList.contains('hidden') === false
     && hubMenu?.dataset.hubTab === 'jogar' && hubMenu?.dataset.hubNet === 'sp';
   if (!splashAtiva) {
-    if ((csOpen || hubPreviewOpen) && pv && pv.model && !previewVideoVisible()) {
-      const pvDt = pv.travado ? 0 : Math.min(0.05, dtReal);   // ?pvcam=maos congela pose e giro
-      if (!pvDrag && !pv.travado) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
+    if (pv && pv.model && previewModelActive(csOpen,hubPreviewOpen)) {
+      const pvDt = pv.travado || pvReducedMotion.matches ? 0 : Math.min(0.05, dtReal);   // ?pvcam=maos congela pose e giro
       // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
-      if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
+      if (!pv.travado && !pvReducedMotion.matches) {
+        if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
+      }
+      if (pvReducedMotion.matches && pv.renderDirty === false) return;
+      pv.renderDirty = false;
       pv.r.render(pv.scene, pv.cam);
     }
   }
@@ -4367,7 +4602,7 @@ function rosterDoServidor(lado, charId) {
   const def = (r) => ({...(CHARACTERS.find((c) => c.id === r.char) || CHARACTERS[0]), skinId:r.skinId || null,eyewearId:r.eyewearId || null});
   return {
     allyDefs: roster.filter((r) => r.team === lado && r.id !== meu).map(def),
-    enemyDefs: roster.filter((r) => r.team !== lado).map(def),
+    enemyDefs: roster.filter((r) => r.team !== lado && r.team !== 'J' && !r.objectiveNpc).map(def),
   };
 }
 
@@ -4663,7 +4898,8 @@ async function mpAtualizarSalas() {
     /* sem emoji (regra do redesign): PRIVADA e espectador viram texto/tag */
     const tags = (r.oficial ? '<span class="mp-tag" data-t="oficial">OFICIAL</span>' : '')
       + (r.private ? '<span class="mp-tag" data-t="privada">PRIVADA</span>' : '')
-      + (r.ctf ? '<span class="mp-tag">CTF</span>' : '');
+      + (r.ctf ? '<span class="mp-tag">CTF</span>' : '')
+      + (r.mode === 'horde' ? '<span class="mp-tag">JAVAPORCOS · 4–8</span>' : '');
     /* lotação como BARRA além do número: sala meio cheia e sala lotada se distinguem
        de longe, sem ler fração nenhuma */
     const frac = r.max ? Math.min(1, r.players / r.max) : 0;
@@ -4671,7 +4907,8 @@ async function mpAtualizarSalas() {
       `<div class="mp-sala-top"><div class="mp-sala-nome">${r.name}${tags}</div>`
       + `<div class="mp-lot"><span class="mp-lot-bar"><i style="width:${Math.round(frac * 100)}%"></i></span>`
       + `<b>${r.players}</b>/${r.max}${r.spectators ? `<span class="mp-lot-spec">+${r.spectators} assistindo</span>` : ''}</div></div>`
-      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${FACTION_NAME.E} × ${FACTION_NAME.B}`
+      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.cooperative ? 'DEFENSORES × JAVAPORCOS' : `${FACTION_NAME.E} × ${FACTION_NAME.B}`}`
+      + (r.cooperative && r.waitingForPlayers ? ` · aguardando ${Math.max(0,4-r.players)} defensor(es)` : '')
       + (Array.isArray(r.mapas) && r.mapas.length
         ? ` · ${r.mapas.length === 1 ? 'mapa fixo' : `${r.mapas.length} mapas na fila`}` : '')
       + '</div>'
@@ -4680,12 +4917,12 @@ async function mpAtualizarSalas() {
     /* UM BOTÃO POR LADO, e não um "ENTRAR" que balanceia sozinho: o jogador quer escolher com
        quem joga, e a facção é metade da graça do jogo. O número é a vaga daquele lado — lado
        cheio apaga em vez de sumir, senão a sala parece ter menos opção do que tem. */
-    for (const lado of ['E', 'B']) {
+    for (const lado of r.cooperative ? ['E'] : ['E', 'B']) {
       const livres = (r.livre && r.livre[lado]) || 0;
       const b = document.createElement('button');
       b.className = 'mp-entrar'; b.type = 'button';
       b.dataset.lado = lado;
-      b.textContent = `${FACTION_NAME[lado]} ${livres}`;
+      b.textContent = `${r.cooperative ? 'DEFENDER A CIDADE' : FACTION_NAME[lado]} ${livres}`;
       b.title = livres ? `Entrar no ${FACTION_NAME[lado]} (${livres} vaga(s))` : 'Esse time está cheio';
       b.disabled = !livres;
       b.onclick = () => { ui.click(); mpEntrar(r, lado); };
@@ -5060,8 +5297,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
 }
 
 /* PRÓXIMO MAPA NO PLACAR: os mesmos carregadores essenciais do _startGame, em segundo
-   plano, com os ids anunciados pelo nó; o perfil móvel deixa fauna/viewmodels decorativos
-   no fallback. A tela de fim mostra nome e contagem; VOLTAR AO MENU segue ao lado. */
+   plano, com os ids anunciados pelo nó; o perfil móvel adia fauna e armas não equipadas. A tela de fim mostra nome e contagem; VOLTAR AO MENU segue ao lado. */
 let mpContagemProximo = null;
 function mpPararContagemProximo() {
   clearInterval(mpContagemProximo); mpContagemProximo = null;
@@ -5085,10 +5321,11 @@ function mpPreCarregarProximo(m) {
   Promise.all([
     plano.chars.length ? preloadCharacterAssets(plano.chars, { weapons: armas }) : null,
     sfx.preloadWeaponSamples(armas),
-    mapaReady.then((mapa) => preloadMapProps([...MAP_PROPS, ...(mapa.props || [])])),
-    MOBILE_AUTO ? null : mapaReady.then((mapa) => preloadAmbientLife(mapa.ambience || [])),
+    ehMapaJavaporcos(plano.mapId) ? sfx.preloadJavaporcos().catch(e => console.error('JAV-AUDIO: preload falhou', e)) : null,
+    mapaReady.then((mapa) => preloadMapProps(mapPropIds(mapa))),
+    mapaReady.then((mapa) => preloadMapAmbientLife(mapa, { mobileAuto: MOBILE_AUTO })),
     mapaReady.then((mapa) => mapa.preload ? mapa.preload() : null),
-    POINTER_COARSE ? null : preloadAuthoredFamilies(authoredBootFamilies(armas)),
+    preloadAuthoredFamilies(authoredBootFamilies(POINTER_COARSE ? [] : armas)),
   ]).catch((e) => console.warn('[mp] pré-carga do próximo mapa falhou (a virada carrega):', e && e.message));
 }
 
@@ -5259,7 +5496,7 @@ void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params
 // Logar com a aba RANKING aberta tira o convite de nick na hora, sem refazer a lista.
 document.addEventListener('cs-account-change',(e)=>{contaNick=e.detail?.profile?.nick || '';const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);});
 tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
-document.addEventListener('cs-treta-inventory-change',()=>{syncHomeCharacter();if(!$('hub-roster-modal')?.hidden)hubRosterRender?.();});
+document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
 // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
 if (directRoute) document.getElementById('boot-splash')?.remove();
 const abrirVitrine=()=>{if(!tretaVitrine()?.length)return;document.removeEventListener('cs-treta-state',abrirVitrine);void import('./treta-vitrine.js').then(m=>m.iniciarVitrine()).catch(()=>{});};

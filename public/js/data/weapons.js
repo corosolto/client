@@ -45,3 +45,19 @@ export const WEAPONS = {
   uzi:       { name: 'UZI "RÁ-TÁ-TÁ"', short: 'UZI', dmg: 25, mag: 25, reserve: 100, rate: 0.07, reload: 2.1, spreadHip: 0.032, recoil: 0.006, auto: true },
   p90:       { name: 'P90 "CHINELÃO"', short: 'P90', dmg: 23, mag: 50, reserve: 100, rate: 0.065, reload: 2.3, spreadHip: 0.03, recoil: 0.005, auto: true },
 };
+
+// Fração do dano que passa pelo colete/capacete = "armor ratio" do CS ÷ 2, por calibre (armadura.js).
+// Régua: tools/eval/armadura-check.mjs (AWP > fuzil > SMG e a tabela de dano).
+export const ARMOR_PEN = {
+  awp: 0.975, mosin: 0.90, rem700: 0.85, svd: 0.85, g3sg1: 0.825, sks: 0.80,
+  ak: 0.775, akm: 0.775, m92: 0.775,
+  g3: 0.80, scar: 0.80, lmg: 0.80,
+  m4: 0.70, md97: 0.70, tavor: 0.70, famas: 0.70, m400: 0.70, carbine: 0.70,
+  mp5: 0.625, uzi: 0.575, p90: 0.69,
+  shotgun: 0.50,
+  deagle: 0.932, revolver38: 0.60, pistol: 0.47,
+  knife: 0.85,
+  frag: 0.50,   // granada não é arma da tabela WEAPONS; chega no `_damage` como 'FRAG'
+};
+// Tiro na cabeça destas ignora o capacete (dono: "capacete reduz headshot de rifle/pistola, mas não de AWP").
+export const ATRAVESSA_CAPACETE = ['awp'];

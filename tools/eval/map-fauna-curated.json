@@ -1,0 +1,258 @@
+[
+  {
+    "map": "escadao",
+    "type": "chicken",
+    "count": 1,
+    "turnRate": 6,
+    "assetId": "sertaoHen",
+    "path": "models/ambient/sertao_galinha.glb",
+    "sha256": "d07aa63bea9db19f4df54fe10495b08821f446706c3e253e8ceecc91f8e65b17",
+    "registryId": "sertao-galinha-animada",
+    "textures": {
+      "albedo": [
+        1024,
+        1024
+      ]
+    },
+    "provenance": "public/models/ambient/FONTE.md; mint-assets.json; tools/animate-sertao-livestock.py",
+    "animalIds": [
+      "chicken-0"
+    ]
+  },
+  {
+    "map": "escadao",
+    "type": "cat",
+    "count": 1,
+    "turnRate": 6,
+    "assetId": "escadaoCat",
+    "path": "models/props/escadao_cat_r4.glb",
+    "sha256": "065988ff0eeb6adf7af962c8bff8a188867af4dfd1c636272360191b8275a9ac",
+    "registryId": "escadao_cat_r4",
+    "textures": {
+      "albedo": [
+        1024,
+        1024
+      ],
+      "normal": [
+        1024,
+        1024
+      ],
+      "roughness": [
+        1024,
+        1024
+      ]
+    },
+    "run": true,
+    "speed": {
+      "walk": 0.55,
+      "flee": 1.5
+    },
+    "provenance": "public/models/props/FONTE.md; mint-assets.json; tools/rig-escadao-cat-r4.py",
+    "animalIds": [
+      "cat-0"
+    ]
+  },
+  {
+    "map": "lajes",
+    "type": "cat",
+    "count": 1,
+    "turnRate": 6,
+    "assetId": "escadaoCat",
+    "path": "models/props/escadao_cat_r4.glb",
+    "sha256": "065988ff0eeb6adf7af962c8bff8a188867af4dfd1c636272360191b8275a9ac",
+    "registryId": "escadao_cat_r4",
+    "textures": {
+      "albedo": [
+        1024,
+        1024
+      ],
+      "normal": [
+        1024,
+        1024
+      ],
+      "roughness": [
+        1024,
+        1024
+      ]
+    },
+    "run": true,
+    "fleeSpace": true,
+    "speed": {
+      "walk": 0.55,
+      "flee": 1.5
+    },
+    "provenance": "public/models/props/FONTE.md; mint-assets.json; tools/rig-escadao-cat-r4.py",
+    "animalIds": [
+      "cat-0"
+    ]
+  },
+  {
+    "map": "campomorro",
+    "type": "cat",
+    "count": 2,
+    "turnRate": 6,
+    "assetId": "escadaoCat",
+    "path": "models/props/escadao_cat_r4.glb",
+    "sha256": "065988ff0eeb6adf7af962c8bff8a188867af4dfd1c636272360191b8275a9ac",
+    "registryId": "escadao_cat_r4",
+    "textures": {
+      "albedo": [
+        1024,
+        1024
+      ],
+      "normal": [
+        1024,
+        1024
+      ],
+      "roughness": [
+        1024,
+        1024
+      ]
+    },
+    "run": true,
+    "speed": {
+      "walk": 0.55,
+      "flee": 1.5
+    },
+    "fleeSpace": {
+      "mode": "ground",
+      "animals": {
+        "cat-0": {
+          "mode": "roof",
+          "minEscapeDistance": 0,
+          "house": "campomorro-casa-2",
+          "excludeSupportProxy": {
+            "minX": -26.6,
+            "maxX": -22.4,
+            "minZ": 20.25,
+            "maxZ": 25.75
+          }
+        }
+      }
+    },
+    "provenance": "public/models/props/FONTE.md; mint-assets.json; tools/rig-escadao-cat-r4.py",
+    "animalIds": [
+      "cat-0",
+      "cat-1"
+    ]
+  },
+  {
+    "map": "campomorro",
+    "type": "chicken",
+    "count": 2,
+    "turnRate": 6,
+    "assetId": "sertaoHen",
+    "path": "models/ambient/sertao_galinha.glb",
+    "sha256": "d07aa63bea9db19f4df54fe10495b08821f446706c3e253e8ceecc91f8e65b17",
+    "registryId": "sertao-galinha-animada",
+    "textures": {
+      "albedo": [
+        1024,
+        1024
+      ]
+    },
+    "fleeSpace": {
+      "mode": "ground"
+    },
+    "provenance": "public/models/ambient/FONTE.md; mint-assets.json; tools/animate-sertao-livestock.py",
+    "animalIds": [
+      "chicken-0",
+      "chicken-1"
+    ]
+  },
+  {
+    "map": "corrego",
+    "type": "cat",
+    "count": 1,
+    "turnRate": 6,
+    "assetId": "escadaoCat",
+    "path": "models/props/escadao_cat_r4.glb",
+    "sha256": "065988ff0eeb6adf7af962c8bff8a188867af4dfd1c636272360191b8275a9ac",
+    "registryId": "escadao_cat_r4",
+    "textures": {
+      "albedo": [
+        1024,
+        1024
+      ],
+      "normal": [
+        1024,
+        1024
+      ],
+      "roughness": [
+        1024,
+        1024
+      ]
+    },
+    "run": true,
+    "speed": {
+      "walk": 0.55,
+      "flee": 1.5
+    },
+    "fleeSpace": {
+      "mode": "ground"
+    },
+    "provenance": "public/models/props/FONTE.md; mint-assets.json; tools/rig-escadao-cat-r4.py",
+    "animalIds": [
+      "cat-0"
+    ]
+  },
+  {
+    "map": "corrego",
+    "type": "chicken",
+    "count": 1,
+    "turnRate": 6,
+    "assetId": "sertaoHen",
+    "path": "models/ambient/sertao_galinha.glb",
+    "sha256": "d07aa63bea9db19f4df54fe10495b08821f446706c3e253e8ceecc91f8e65b17",
+    "registryId": "sertao-galinha-animada",
+    "textures": {
+      "albedo": [
+        1024,
+        1024
+      ]
+    },
+    "fleeSpace": {
+      "mode": "ground"
+    },
+    "provenance": "public/models/ambient/FONTE.md; mint-assets.json; tools/animate-sertao-livestock.py",
+    "animalIds": [
+      "chicken-0"
+    ]
+  },
+  {
+    "map": "quebrada",
+    "type": "cat",
+    "count": 1,
+    "turnRate": 6,
+    "assetId": "escadaoCat",
+    "path": "models/props/escadao_cat_r4.glb",
+    "sha256": "065988ff0eeb6adf7af962c8bff8a188867af4dfd1c636272360191b8275a9ac",
+    "registryId": "escadao_cat_r4",
+    "textures": {
+      "albedo": [
+        1024,
+        1024
+      ],
+      "normal": [
+        1024,
+        1024
+      ],
+      "roughness": [
+        1024,
+        1024
+      ]
+    },
+    "run": true,
+    "speed": {
+      "walk": 0.55,
+      "flee": 1.5
+    },
+    "fleeSpace": {
+      "mode": "ground"
+    },
+    "provenance": "public/models/props/FONTE.md; mint-assets.json; tools/rig-escadao-cat-r4.py",
+    "animalIds": [
+      "cat-0"
+    ]
+  }
+]

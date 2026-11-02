@@ -35,8 +35,13 @@
    PG5 · portão e smoke NÃO escutam `merge_group`: não são obrigatórios, já rodaram no
          PR e, no lote, só disputariam runner com os checks obrigatórios.
 
+   PG6 · pacote público e assert nominal antecedem serve/medição; erro não é ignorado.
+         Fetch, assert e imports precisam acordar o portão.
+
    Mutantes: tira-caminho (PG1), passo-novo (PG2), diff-aberto e quotepath-volta (PG3),
-   portao-na-fila (PG5).
+   portao-na-fila (PG5), sem-fetch/fetch-tarde/assert-sem-pack/fetch-ignorado/
+   fetch-fora-gatilho, early-exit, errexit-desligado, heredoc, indent-escape e
+   shell-sem-errexit (PG6). Aplicação ausente/ambígua sai3; mutante sobrevivente sai4.
    Uso: node tools/eval/portao-gatilho-check.mjs [--mutante=<nome>]
    ============================================================================ */
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -44,21 +49,46 @@ import { spawnSync } from 'node:child_process';
 import { dirname, join, normalize } from 'node:path';
 import { GATILHOS, casa, decidir, scriptsUsados } from '../../scripts/ci/gatilho.mjs';
 
-const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+const MUT = process.argv.find((a) => a.startsWith('--mutante='))?.slice('--mutante='.length) || '';
 const MUTANTES = {
   'tira-caminho': 'PG1', 'passo-novo': 'PG2', 'diff-aberto': 'PG3', 'quotepath-volta': 'PG3',
   'portao-na-fila': 'PG5',
+  'sem-fetch': 'PG6', 'fetch-tarde': 'PG6', 'assert-sem-pack': 'PG6',
+  'fetch-ignorado': 'PG6', 'fetch-fora-gatilho': 'PG6',
+  'early-exit': 'PG6', 'errexit-desligado': 'PG6', 'heredoc': 'PG6',
+  'indent-escape': 'PG6', 'shell-sem-errexit': 'PG6',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
+function erroInstrumento(nome, detalhe) {
+  console.error(`INSTRUMENTO ${nome}: ${detalhe}`);
+  process.exit(3);
+}
+function escaparRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function substituirUma(texto, padrao, depois, nome) {
+  const re = typeof padrao === 'string' ? new RegExp(escaparRegex(padrao), 'g') : new RegExp(padrao.source, padrao.flags.includes('g') ? padrao.flags : padrao.flags + 'g');
+  const matches = [...texto.matchAll(re)];
+  if (matches.length !== 1) erroInstrumento(nome, `substituição exige um alvo, encontrados ${matches.length}`);
+  const m = matches[0], novo = typeof depois === 'function' ? depois(m[0]) : depois;
+  if (novo === m[0]) erroInstrumento(nome, 'substituição não alterou o alvo');
+  return texto.slice(0, m.index) + novo + texto.slice(m.index + m[0].length);
+}
+
 if (MUT === 'tira-caminho') {
-  GATILHOS.portao.padroes = GATILHOS.portao.padroes.filter((re) => !String(re).includes('module-cache'));
+  const antes = GATILHOS.portao.padroes;
+  GATILHOS.portao.padroes = antes.filter((re) => !String(re).includes('module-cache'));
+  if (antes.length - GATILHOS.portao.padroes.length !== 1) erroInstrumento(MUT, 'padrão do cache ausente ou ambíguo');
 }
 
 const ler = (p) => { try { return readFileSync(p, 'utf8'); } catch { return ''; } };
 const ehArquivo = (p) => { try { return statSync(p).isFile(); } catch { return false; } };
 const pkg = JSON.parse(ler('package.json'));
 const falhas = [];
+if (MUT === 'fetch-fora-gatilho') {
+  const antes = GATILHOS.portao.padroes;
+  GATILHOS.portao.padroes = antes.filter((p) => !String(p).includes('fetch-decals'));
+  if (antes.length - GATILHOS.portao.padroes.length !== 1) erroInstrumento(MUT, 'padrão do fetch ausente ou ambíguo');
+}
 
 /* ---------------------------------------------------------------- fecho ---- */
 const CODIGO = /\.(m?js|cjs|ts|astro)$/;
@@ -128,6 +158,93 @@ function jobsDe(fonte) {
   return blocos;
 }
 
+function passosRun(bloco) {
+  return bloco.split(/^ {6}- /m).slice(1).map((corpo, step) => {
+    const linhas = corpo.split('\n'), campos = [], comandos = [];
+    let invalido = false;
+    for (let i = 0; i < linhas.length; i++) {
+      const l = linhas[i];
+      if (!l.trim() || l.trimStart().startsWith('#')) continue;
+      const m = (i === 0 ? /^([^\s:]+):\s*(.*)$/ : /^ {8}([^\s:]+):\s*(.*)$/).exec(l);
+      if (!m) { invalido = true; continue; }
+      const campo = m[1].replace(/^(['"])(.*)\1$/, '$2');
+      if (campos.includes(campo)) invalido = true;
+      campos.push(campo);
+      if (campo !== 'run') continue;
+      if (m[2] === '|' || m[2] === '|-') {
+        while (i + 1 < linhas.length && (!linhas[i + 1].trim() || linhas[i + 1].startsWith('          '))) {
+          const cmd = linhas[++i].slice(10).trim();
+          if (cmd && !cmd.startsWith('#')) comandos.push(cmd);
+        }
+      } else comandos.push(m[2].trim());
+    }
+    return { step, corpo, campos, comandos, invalido };
+  });
+}
+const FETCH_DECALS = 'bash scripts/fetch-decals.sh';
+const ASSERT_DECALS = 'node tools/eval/assets-check.mjs --so=decals';
+function conferirBootstrapDecals(wf) {
+  const job = jobsDe(wf).portao;
+  if (!job) { falhas.push('PG6 job portao ausente — bootstrap não medido'); return; }
+  const passos = passosRun(job);
+  const linhas = passos.flatMap((p) => p.comandos.map((cmd) => ({ cmd, passo: p })));
+  const achar = (cmd) => linhas.flatMap((l, i) => l.cmd === cmd ? [i] : []);
+  const fetch = achar(FETCH_DECALS), assert = achar(ASSERT_DECALS);
+  const serve = linhas.findIndex((l) => /^npm run eval:serve(?:\s|$)/.test(l.cmd));
+  const medir = linhas.findIndex((l) => l.cmd === 'npm run eval:grafite-atual');
+  if (fetch.length !== 1) falhas.push(`PG6 fetch público deve executar uma vez no job portao (encontrados ${fetch.length})`);
+  if (assert.length !== 1) falhas.push(`PG6 assert nominal deve executar uma vez (encontrados ${assert.length})`);
+  if (serve < 0 || medir < 0) falhas.push('PG6 serve/medição ausentes — régua perdeu consumidor');
+  if (/^(?:defaults|["']defaults["']|<<|["']<<["'])\s*:/m.test(wf)
+    || /^ {4}(?:defaults|["']defaults["']|<<|["']<<["'])\s*:/m.test(job)) falhas.push('PG6 defaults/merge não podem alterar a execução do bootstrap');
+  if (fetch.length === 1 && assert.length === 1) {
+    if (!(fetch[0] < assert[0] && assert[0] < serve && serve < medir)) falhas.push('PG6 ordem exigida: fetch → assert nominal → serve → medição');
+    const f = linhas[fetch[0]].passo, a = linhas[assert[0]].passo;
+    const esperados = f === a ? [[f, [FETCH_DECALS, ASSERT_DECALS]]] : [[f, [FETCH_DECALS]], [a, [ASSERT_DECALS]]];
+    if (f !== a && a.step !== f.step + 1) falhas.push('PG6 fetch e assert devem formar um bloco adjacente');
+    for (const [p, comandos] of esperados) {
+      if (p.invalido || p.campos.some((c) => !['name', 'id', 'run'].includes(c))
+        || JSON.stringify(p.comandos) !== JSON.stringify(comandos)) falhas.push('PG6 bootstrap exige somente os dois comandos diretos, sem controle, escape ou override');
+    }
+  }
+  for (const f of ['scripts/fetch-decals.sh', 'tools/eval/assets-check.mjs']) if (!ehArquivo(f) || !casa('portao', f)) falhas.push(`PG6 ${f} precisa existir e acordar o portão`);
+}
+function mudarComando(job, comando, linhas, nome) {
+  const re = new RegExp(`^( *)(?:(?:- )?run:[ \\t]*)?${escaparRegex(comando)}[ \\t]*$`, 'gm');
+  return substituirUma(job, re, (linha) => {
+    if (/^ *(?:- )?run:/.test(linha)) return `${linha.slice(0, linha.indexOf('run:') + 4)} |\n${linhas.map((l) => `          ${l}`).join('\n')}`;
+    const indent = linha.match(/^ */)[0];
+    return linhas.map((l) => indent + l).join('\n');
+  }, nome);
+}
+function mutarBootstrapDecals(wf) {
+  if (MUT === 'fetch-fora-gatilho') return wf;
+  const job = jobsDe(wf).portao;
+  if (!job) erroInstrumento(MUT, 'job portao ausente');
+  let m = job;
+  if (MUT === 'sem-fetch' || MUT === 'fetch-tarde') m = mudarComando(m, FETCH_DECALS, ['true'], MUT);
+  if (MUT === 'fetch-tarde') m += '\n      - name: Fetch atrasado (mutante)\n        run: bash scripts/fetch-decals.sh\n';
+  if (MUT === 'assert-sem-pack') m = mudarComando(m, ASSERT_DECALS, ['true'], MUT);
+  if (MUT === 'fetch-ignorado') m = mudarComando(m, FETCH_DECALS, [`${FETCH_DECALS} || true`], MUT);
+  if (MUT === 'early-exit') m = mudarComando(m, FETCH_DECALS, ['exit 0', FETCH_DECALS], MUT);
+  if (MUT === 'errexit-desligado') {
+    m = mudarComando(m, FETCH_DECALS, ['set +o errexit', FETCH_DECALS, 'echo ok'], MUT);
+    m = mudarComando(m, ASSERT_DECALS, ['set +o errexit', ASSERT_DECALS, 'echo ok'], MUT);
+  }
+  if (MUT === 'heredoc') {
+    m = mudarComando(m, FETCH_DECALS, ["cat <<'PG6_EOF'", FETCH_DECALS], MUT);
+    m = mudarComando(m, ASSERT_DECALS, [ASSERT_DECALS, 'PG6_EOF'], MUT);
+  }
+  if (MUT === 'indent-escape') m = mudarComando(m, ASSERT_DECALS, ['  exit 0', ASSERT_DECALS], MUT);
+  if (MUT === 'shell-sem-errexit') {
+    const passo = passosRun(m).find((p) => p.comandos.includes(FETCH_DECALS));
+    if (!passo) erroInstrumento(MUT, 'passo do fetch ausente');
+    const n = passo.corpo.startsWith('run:') ? `${passo.corpo}\n        shell: bash {0}\n` : passo.corpo.replace('\n', '\n        shell: bash {0}\n');
+    m = substituirUma(m, passo.corpo, n, MUT);
+  }
+  return substituirUma(wf, `  portao:\n${job}`, `  portao:\n${m}`, MUT);
+}
+
 const ENTRADAS_FIXAS = [
   'astro.config.mjs', 'src/pages/index.astro', 'public/js/main.js',
   /* o jogo chama /api/* no boot (public/js/apibase.js); no astro dev quem responde é esta rota */
@@ -142,11 +259,16 @@ const LIDOS = {
 for (const [alvo, g] of Object.entries(GATILHOS)) {
   let wf = ler(g.workflow);
   if (!wf) { falhas.push(`PG0 ${g.workflow} não existe — a régua perdeu o alvo`); continue; }
-  if (MUT === 'passo-novo' && alvo === 'portao') wf += '\n      - name: passo novo\n        if: ${{ !cancelled() }}\n        run: npm run eval:passo-novo\n';
-  if (MUT === 'diff-aberto' && alvo === 'portao') wf = wf.replace(/(if ! git [^\n]*diff[^\n]*\n(?:[^\n]*\n){0,2}?[^\n]*)rodar=true/, '$1rodar=false');
-  if (MUT === 'quotepath-volta' && alvo === 'smoke') wf = wf.replace('git -c core.quotePath=false diff', 'git diff');
-  if (MUT === 'portao-na-fila' && alvo === 'portao') wf = wf.replace('  pull_request:\n', '  pull_request:\n  merge_group:\n    types: [checks_requested]\n');
+  if (MUT === 'passo-novo' && alvo === 'portao') {
+    if (wf.includes('eval:passo-novo')) erroInstrumento(MUT, 'passo novo já existe');
+    wf += '\n      - name: passo novo\n        if: ${{ !cancelled() }}\n        run: npm run eval:passo-novo\n';
+  }
+  if (MUT === 'diff-aberto' && alvo === 'portao') wf = substituirUma(wf, /if ! git [^\n]*diff[^\n]*\n(?:[^\n]*\n){0,2}?[^\n]*rodar=true/, (m) => m.replace(/rodar=true$/, 'rodar=false'), MUT);
+  if (MUT === 'quotepath-volta' && alvo === 'smoke') wf = substituirUma(wf, 'git -c core.quotePath=false diff', 'git diff', MUT);
+  if (MUT === 'portao-na-fila' && alvo === 'portao') wf = substituirUma(wf, '  pull_request:\n', '  pull_request:\n  merge_group:\n    types: [checks_requested]\n', MUT);
+  if (alvo === 'portao' && MUTANTES[MUT] === 'PG6') wf = mutarBootstrapDecals(wf);
   const cmd = comandos(wf);
+  if (alvo === 'portao') conferirBootstrapDecals(wf);
 
   /* ---- PG2: o que o workflow roda é conhecido ---- */
   const npmRun = [...cmd.matchAll(/npm run\s+([\w:.-]+)/g)].map((m) => m[1]);
@@ -158,7 +280,7 @@ for (const [alvo, g] of Object.entries(GATILHOS)) {
     if (!npmRun.includes(s)) falhas.push(`PG2 GATILHOS.${alvo}.passos declara \`${s}\`, que ${g.workflow} não roda mais — passo que sumiu do portão`);
   }
   const usados = scriptsUsados(alvo, pkg.scripts);
-  const nodeAlvos = [...alvosNode(cmd)];
+  const nodeAlvos = [...alvosNode(cmd), ...[...cmd.matchAll(/(?:^|[\s;&|])(?:bash|sh)\s+([^\s;&|]+\.sh)/g)].map((m) => m[1])];
   for (const s of usados) {
     const linha = pkg.scripts[s];
     if (!linha) continue;
@@ -233,6 +355,8 @@ for (const [alvo, g] of Object.entries(GATILHOS)) {
   const casos = [
     ['lista vazia roda', 'portao', [], leitor(pacoteBase), true],
     ['só docs não acorda', 'portao', ['docs/docs/comecando.md', 'public/docs/index.html'], leitor(pacoteBase), false],
+    ['fetch público acorda o portão', 'portao', ['scripts/fetch-decals.sh'], leitor(pacoteBase), true],
+    ['assert de decalques acorda o portão', 'portao', ['tools/eval/assets-check.mjs'], leitor(pacoteBase), true],
     ['net.js acorda o portão', 'portao', ['public/js/net.js'], leitor(pacoteBase), true],
     ['community.js acorda o smoke', 'smoke', ['public/js/community.js'], leitor(pacoteBase), true],
     ['script novo no package.json não acorda', 'portao', ['package.json'], leitor(comScript), false],
@@ -247,10 +371,10 @@ for (const [alvo, g] of Object.entries(GATILHOS)) {
   if (jsonQuebrado !== 'lança') falhas.push('PG4 package.json ilegível precisa lançar (a CLI converte em rodar=true), não decidir pular');
 }
 
+if (MUT && !falhas.some((f) => f.startsWith(MUTANTES[MUT]))) {
+  console.error(`MUTANTE_SOBREVIVEU ${MUT}`);
+  process.exit(4);
+}
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m PG o gatilho cobre o fecho (portão ${GATILHOS.portao.medido} arquivos, smoke ${GATILHOS.smoke.medido}), todo passo é conhecido e o decide falha fechado`);
-if (MUT && !falhas.length) {
-  console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);
-  falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)
-}
 process.exit(falhas.length ? 1 : 0);

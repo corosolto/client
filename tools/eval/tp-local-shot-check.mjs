@@ -68,10 +68,11 @@ function fixture({weapon = 'pistol', view = 'third', online = true, built, absen
     _reloading: ActualGame.prototype._reloading, _startReload() { calls.reload++; },
     _tryKnifeAttack() { calls.knife++; }, _botOuve: noop, _aimOrigin: v => v.set(0, 1.62, 0),
     _fireHitscan() { calls.hitscan++; }, _shotRecoil: noop, _muzzleWorld: () => new THREE.Vector3(),
+    _bocaDaArmaDoCorpo: () => null,
     _flash: noop, _ejectCasing: noop, _scope: noop,
     vm: {authored: {shoot() { calls.vm++; }}, recoil: {kick: noop}},
-    sfx: {shotWeapon: noop, dryFire: noop, jump: noop, land: noop},
-    _ensurePlayerTP: noop, _tpEul: new THREE.Euler(), _tpFwd: new THREE.Vector3(),
+    sfx: {shotWeapon: noop, dryFire: noop, jump: noop, land: noop, bolt: noop},
+    _ensurePlayerTP: noop, _updatePlayerTPCamera: Game.prototype._updatePlayerTPCamera, _tpEul: new THREE.Euler(), _tpFwd: new THREE.Vector3(),
     _tpRight: new THREE.Vector3(), _tpOrbitPitch: 0, _tpOrbitYaw: 0, _eyeWorld: new THREE.Vector3(),
     world: {groundHeightAt: () => 0}, _collide: noop, _acceptInput: () => true};
   return {game, player, calls, built, ctrl};
