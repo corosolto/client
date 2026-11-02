@@ -687,12 +687,9 @@ fetch(`/audio/manifest.json?v=${VERSION}`)
     const novas = list.map((u) => (u.startsWith('/') ? u : `/${u}`));
     if (novas.join('|') === MENU_TRACKS.join('|')) return;
     MENU_TRACKS.splice(0, MENU_TRACKS.length, ...novas);
-    // O boot chama startMenuMusic() antes desta promessa resolver e _ensureMusic cacheia o
-    // <Audio> pra sempre — sem soltar o cache, a lista da pasta nunca escolhe faixa.
+    // O catálogo vale na próxima criação do player. Atualizar a lista não inicia
+    // uma faixa nem interrompe a que já está tocando.
     tracksTrocadas = true;
-    // Mudo ainda: dá pra trocar agora. Com som tocando não — a troca fica pendente e o
-    // _ensureMusic pega na próxima visita ao menu, que é quando a faixa muda de qualquer jeito.
-    if (!musicArmed) startMenuMusic();
   })
   .catch(() => {});
 let menuMusic = null, musicArmed = false, musicFade = null, tracksTrocadas = false;
@@ -726,6 +723,8 @@ function _ensureMusic() {
 }
 function startMenuMusic() {
   if (settings.menuMusic === false) return;
+  // O player nasce ao entrar no menu ou ligar a música; o laboratório tem acionamento próprio.
+  if (!musicArmed && !MENU_MUSIC_REVIEW) return;
   const m = _ensureMusic();
   if (musicFade) { clearInterval(musicFade); musicFade = null; }
   if (!musicArmed) {
@@ -753,14 +752,16 @@ function stopMenuMusic() {   // fade rápido pra não cortar seco ao entrar na p
     if (menuMusic.volume <= 0.001) { clearInterval(musicFade); musicFade = null; menuMusic.pause(); }
   }, 40);
 }
-// no 1º gesto (clique/tecla): desmuta com fade-in — a faixa JÁ está rolando (autoplay mudo),
-// então o som "entra" instantâneo, como se fosse autoplay de verdade
+// O primeiro gesto com a splash pronta inicia a faixa e seu fade-in.
 const _armMusic = () => {
-  if (musicArmed) return; musicArmed = true;
+  if (musicArmed || (!_splashReady && !MENU_MUSIC_REVIEW)) return;
+  musicArmed = true;
   if (settings.menuMusic === false) return;
   const m = _ensureMusic();
+  if (musicFade) { clearInterval(musicFade); musicFade = null; }
   m.muted = false;
   let v = 0.02; m.volume = v;
+  m.play().catch(() => {});
   musicFade = setInterval(() => { v += 0.04; m.volume = Math.min(MENU_MUSIC_VOL, v); if (v >= MENU_MUSIC_VOL) { clearInterval(musicFade); musicFade = null; } }, 40);
 };
 // SPLASH DE BOOT ("pressione para entrar"): o gesto que sai da splash é GARANTIDO, então
@@ -808,14 +809,14 @@ if (menuMusicToggle) menuMusicToggle.onclick = () => {
   settings.menuMusic = settings.menuMusic === false;
   saveSettings();
   syncMenuMusicToggle();
-  if (settings.menuMusic) startMenuMusic();
+  if (settings.menuMusic) { musicArmed = true; startMenuMusic(); }
   else {
     if (musicFade) { clearInterval(musicFade); musicFade = null; }
     if (menuMusic) { menuMusic.pause(); menuMusic.muted = true; }
   }
 };
 syncMenuMusicToggle();
-if (!POINTER_COARSE) startMenuMusic();   // celular baixa/decodifica a faixa só depois do primeiro gesto
+// Desktop e toque aguardam a entrada no menu para baixar e tocar a faixa.
 
 /* Laboratório local de curadoria (?menumusiclab=1). O jogo normal continua escolhendo uma
    faixa aleatória por visita; aqui a escolha é determinística e o veredito fica somente no
