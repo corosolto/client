@@ -56,8 +56,22 @@ Os 16 aliases pertinentes passaram em 11,563 s (R1649), incluindo áudio privado
 consumidores, documentação, sintaxe, módulo, cache e wiring. Não é o gate integral
 de publicação deste novo merge.
 
-Integrar o acabamento Campo de `56ea38711349f8893172c750d3789fe6ba04370e`, validar
-build/boot/push final, obter review formal atual e críticos integrais independentes.
+O acabamento Campo de `56ea38711349f8893172c750d3789fe6ba04370e` foi integrado no
+merge `36af72ee210ef74c435e26d751bcb6c5e2a031cb`, com SIM `9c50fae39e7e435a`.
+Build e oito passadas de boot passaram (R1655/R1657). O push normal R1659 reteve a
+publicação: 110/112 aliases passaram. O remoto continua `bb447c6b50b44dc8718b07ffd795b90910c79254`.
+
+O diagnóstico real do retry de luvas mostrou duas instâncias de Three.js: a fixture
+resolvia o loader por node_modules compartilhado de outra worktree, enquanto o
+arnês usava o vendor desta fonte. A fixture agora usa o mesmo vendor e verifica
+identidade de Scene e GLTFLoader. Avisos continuam estritos. No Lajes, a fixture
+do fetch de áudio passa a copiar também a CLI de migração e sua dependência real.
+O RED integral e o diagnóstico são preservados em R1679/R1680. R1683 passou no
+Lajes real e no alias completo de retry, incluindo os oito mutantes causais.
+Não houve mudança em public/, avisos filtrados ou relaxamento de assertivas.
+
+Próximo: checkpoint normal, build e boot vinculados ao novo head, push normal com
+os 112 aliases, review formal atual e críticos integrais independentes.
 Depois repinar o backend para o client publicado e validar o par antes do release.
 Continuam abertos os débitos artísticos do Campo, a avaliação dos demais mapas,
 personagens e skins, além do QA real pelo Ego e em aparelho mobile.
