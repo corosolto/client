@@ -21,3 +21,9 @@ Os 1097 assets ignorados de execução foram hidratados e comparados por hash (R
 ## Próximos passos concretos
 
 Concluir execução focada atual, checkpoint normal da composição, incorporar o acabamento Campo validado e corrigir/compor o PR1101 (dimensões de prop sólido e rotação de collider/nav). Regenerar documentos/versão oficiais, build, boot e portão normal de publicação. Fazer revisão integral do head publicado e resolver todas as superfícies atuais antes de merge. Backend final, PostgreSQL/WS, ordem de deploy e rollback continuam pendentes. Ego/Game, humano, mobile e MP real ainda não têm aceite desta composição.
+
+## R1790: composição do acabamento Campo
+
+EntradaG `35a9442f86fd22de2e98d1d7190f03217f60e587`, com3814 ancestral, entrou sem conflitos. O Game permanece byteidêntico à composição Arena439da; os cinco módulos de arte/contrato são byteidênticos aos validados emG. O único script alterado foi `eval:map-material-finish`, que adiciona o checker permanente assíncrono de reboco. `check:fast` e o alias Arena permanecem completos. R1789 executou Campo/CVC1 e Arena no mundo combinado e ambos passaram.
+
+Arte aceita somente nos itens/vistas do relatório Campo. O snapshot versionado de tiros mantém comparação exata, com mudança explícita de um miolo e quatro batches; a física continua igual. Ver `CAMPO-ART-CONTINUATION-20261102.md`. Próxima etapa: PR1101 em lane própria, corrigindo dimensões sólidas e rotação real da colisão/navegação, depois composição final e validação de publicação. Ainda sem novo push, release ou aprovação Ego/mobile/humana.
