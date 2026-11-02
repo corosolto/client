@@ -51,9 +51,9 @@ const ESPERA = +(arg('espera', 6000));
    errada custou um vermelho falso. `renderer.info.memory.textures` conta textura JÁ SUBIDA
    pra GPU, e neste harness o render é software (swiftshader, 1-2 fps): quantas subiram até
    o instante da amostra depende de quanto o mapa conseguiu desenhar, não do que a mudança
-   fez. Medido no fy_escadao, MESMO estado, 5 execuções: 198, 205, 205, 205, 218 — 10% de
+   fez. Medido no escadao, MESMO estado, 5 execuções: 198, 205, 205, 205, 218 — 10% de
    amplitude sem uma linha de código mudar, e a execução de 218 acendeu
-   "✗ CUSTO fy_escadao: textures subiu 10.1%" contra uma mudança que não cria textura
+   "✗ CUSTO escadao: textures subiu 10.1%" contra uma mudança que não cria textura
    nenhuma. `geometries` oscilou junto (1468 a 2167).
    COMO LER ESTA RÉGUA, então: uma execução de cada lado NÃO decide nada perto da margem.
    Repita 3 vezes cada lado e compare a MODA; se as duas modas forem iguais, o eixo não se
@@ -65,9 +65,9 @@ const MARGEM = { calls: 0.05, tris: 0.05, textures: 0.10, heapMB: 0.15, programs
 
 const MAPAS = [
   ['praca_poderes', 'P,mst'], ['piscina_treta', 'P,mst'], ['loja_h', 'B,bozo'],
-  ['ferro_velho', 'B,bozo'], ['quebrada', 'P,mst'], ['fy_escadao', 'P,mst'],
-  ['fy_campomorro', 'P,mst'], ['fy_lajes', 'P,mst'], ['fy_corrego', 'P,mst'],
-  ['fy_mansao', 'P,mst'],
+  ['ferro_velho', 'B,bozo'], ['quebrada', 'P,mst'], ['escadao', 'P,mst'],
+  ['campomorro', 'P,mst'], ['lajes', 'P,mst'], ['corrego', 'P,mst'],
+  ['mansao', 'P,mst'],
 ].filter((x) => !process.env.ONLY || process.env.ONLY.split(',').includes(x[0]));
 
 const gRoot = execSync('npm root -g').toString().trim();

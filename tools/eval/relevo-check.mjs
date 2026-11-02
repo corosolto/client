@@ -2,7 +2,7 @@
    relevo-check.mjs — O MAPA TEM MORRO OU É UM CAMPO NUM GALPÃO?
    ----------------------------------------------------------------------------
    POR QUE EXISTE
-   O dono jogou e disse, sobre o fy_campomorro: "o do campinho tambem sem
+   O dono jogou e disse, sobre o campomorro: "o do campinho tambem sem
    topografia". O mapa se chama Campo do MORRO. Nenhuma régua desta base media
    COTA: `map-check.mjs` mede corpo-dentro-de-sólido e escada, `campo-contract`
    mede spawn/rota/luz, `texel-check` mede pixel por metro. Todas ficaram VERDES
@@ -38,20 +38,20 @@
      --mutante=degrau-unico    troca a rampa por um degrau seco       → R3, R4
 
    Uso: node tools/eval/relevo-check.mjs [mapId]
-        node tools/eval/relevo-check.mjs fy_campomorro --mutante=terreno-plano
+        node tools/eval/relevo-check.mjs campomorro --mutante=terreno-plano
    Mapas fora da lista MORRO são medidos e impressos, mas não reprovam: o
    contrato de cota é do mapa que se chama morro.
    ============================================================================ */
 import { THREE, initTextures, bootGame } from './harness.mjs';
 
-const MAPA = (process.argv[2] && !process.argv[2].startsWith('--')) ? process.argv[2] : 'fy_campomorro';
+const MAPA = (process.argv[2] && !process.argv[2].startsWith('--')) ? process.argv[2] : 'campomorro';
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
 
 // Limiares só para os mapas cujo nome promete morro. Os números vêm do que o
-// dono reconhece como morro nesta base: o fy_escadao lê como favela porque tem
+// dono reconhece como morro nesta base: o escadao lê como favela porque tem
 // ~5 m de cota na área jogável; abaixo de 3 m o olho lê "terreno plano".
 const MORRO = {
-  fy_campomorro: { amplitude: 3.0, planaMax: 65, declive: 12, subida: 2.5, topo: 12.0 },
+  campomorro: { amplitude: 3.0, planaMax: 65, declive: 12, subida: 2.5, topo: 12.0 },
 };
 const LIMITE = MORRO[MAPA] || null;
 

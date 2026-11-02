@@ -1,4 +1,4 @@
-// CAPTURA DE EVIDÊNCIA 3:2 — BUG-55 (escala dos barracos do fy_corrego).
+// CAPTURA DE EVIDÊNCIA 3:2 — BUG-55 (escala dos barracos do corrego).
 // Antes×depois no recorte que o dono recebe (3:2), com referência humana ao lado:
 // um bot do jogo E uma vareta de exatamente 1,70 m na soleira da porta.
 // Uso: BASE=http://127.0.0.1:8124 node tools/eval/bug55-evidence-capture.mjs antes|depois
@@ -15,7 +15,7 @@ const VW = parseInt(process.env.EV_W || "1500", 10), VH = parseInt(process.env.E
 
 /* As poses nascem do MESMO mundo que a régua mede (bootGame em node): a casa-alvo é a
    da fileira B leste mais próxima de z=-10 — mesma casa antes e depois do conserto. */
-const g0 = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 13007 });
+const g0 = bootGame('corrego', { textures: initTextures(), ctf: true, seed: 13007 });
 const casas = g0.world.colliders.filter((c) => c.minY > 1.0 && c.minY < 1.1 && c.minX > 14 && c.minX < 20);
 const alvo = casas.sort((a, b) => Math.abs((a.minZ + a.maxZ) / 2 + 10) - Math.abs((b.minZ + b.maxZ) / 2 + 10))[0];
 const cx = (alvo.minX + alvo.maxX) / 2, cz = (alvo.minZ + alvo.maxZ) / 2, fz = alvo.maxZ;
@@ -49,12 +49,12 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ viewport: { width: VW, height: VH } });
 /* LOWQ + bloom=0: em SwiftShader o boot custa 7-10 min com pós; sem o composite ele cai
    pela metade (mesma geometria, mesma escala — o que esta evidência mede). */
-await page.addInitScript(() => { try { localStorage.setItem('awpbr_settings', JSON.stringify({ quality: 'low', map: 'fy_corrego' })); } catch (e) {} });
+await page.addInitScript(() => { try { localStorage.setItem('awpbr_settings', JSON.stringify({ quality: 'low', map: 'corrego' })); } catch (e) {} });
 let errors = 0;
 page.on('console', (m) => { if (m.type() === 'error') { errors++; console.error('[console-err]', m.text()); } });
 page.on('pageerror', (e) => { errors++; console.error('[pageerror]', e.message); });
 for (let att = 0; att < 3; att++) {
-  try { await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_corrego`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; } catch (e) { console.log('goto retry', att); if (att === 2) throw e; }
+  try { await page.goto(`${BASE}/?debug=1&auto=P,mst&map=corrego`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; } catch (e) { console.log('goto retry', att); if (att === 2) throw e; }
 }
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 300000 });
 await page.waitForTimeout(800);

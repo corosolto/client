@@ -77,7 +77,7 @@
                                    livres nos DOIS lados → tiro-no-ar DISPARA.
    Sem mutante: checks falham → exit 1. Com mutante: se não aplicou → erro alto
    ("MUTANTE NÃO APLICOU"); se os checks PASSAM → "MUTANTE sobreviveu", exit 1;
-   se FALHAM como esperado → exit 0. Mutantes rodam em fy_lajes + quebrada
+   se FALHAM como esperado → exit 0. Mutantes rodam em lajes + quebrada
    (controle de mapa alinhado) quando --map não é passado.
 
    ── TETOS E PROCEDÊNCIA ─────────────────────────────────────────────────────
@@ -92,11 +92,11 @@
      loja_h         3048   533 (17,5%)     367 (12,0%)                   0
      ferro_velho    2376   863 (36,3%)       1 ( 0,0%)                   0
      quebrada       2928   546 (18,6%)      52 ( 1,8%)                   0
-     fy_escadao     3192   234 ( 7,3%)     320 (10,0%)                   34 grupos
-     fy_campomorro  2880   307 (10,7%)      52 ( 1,8%)                   0
-     fy_lajes       2928   977→82 (33→2,8%) 95 ( 3,2%)                   0
-     fy_corrego     2808    89 ( 3,2%)     217 ( 7,7%)                   0
-     fy_mansao      3000   129 ( 4,3%)      81 ( 2,7%)                   0
+     escadao     3192   234 ( 7,3%)     320 (10,0%)                   34 grupos
+     campomorro  2880   307 (10,7%)      52 ( 1,8%)                   0
+     lajes       2928   977→82 (33→2,8%) 95 ( 3,2%)                   0
+     corrego     2808    89 ( 3,2%)     217 ( 7,7%)                   0
+     mansao      3000   129 ( 4,3%)      81 ( 2,7%)                   0
 
    O teto NÃO é folga para o estado atual: o estado atual reprova em 10/10 e as
    fotos (--fotos) mostram que não é ruído de coleta — em quebrada o jogador vê
@@ -110,9 +110,9 @@
    ── USO ─────────────────────────────────────────────────────────────────────
      npm run eval:serve &        # servidor no ar (BASE=http://127.0.0.1:8124)
      node tools/eval/occluder-ray-check.mjs                  # os 10 mapas
-     node tools/eval/occluder-ray-check.mjs --map=fy_lajes   # um só
+     node tools/eval/occluder-ray-check.mjs --map=lajes   # um só
      node tools/eval/occluder-ray-check.mjs --mutante=proxy-inflado
-     node tools/eval/occluder-ray-check.mjs --map=fy_lajes --fotos 4
+     node tools/eval/occluder-ray-check.mjs --map=lajes --fotos 4
    ============================================================================ */
 import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -120,7 +120,7 @@ import { pathToFileURL } from 'node:url';
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8124';
 const TODOS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada',
-  'fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao'];
+  'escadao', 'campomorro', 'lajes', 'corrego', 'mansao'];
 const MUTANTES = new Set(['occluder-invisivel', 'proxy-inflado', 'grupo-sem-raycast', 'vao-fechado']);
 
 const argDe = (nome, def = '') => {
@@ -134,7 +134,7 @@ const argMapa = argDe('--map');
 const argMutante = argDe('--mutante');
 const argFotos = parseInt(argDe('--fotos', '0'), 10) || 0;
 if (argMutante && !MUTANTES.has(argMutante)) throw new Error(`mutante desconhecido: ${argMutante}`);
-const MAPAS = argMapa ? argMapa.split(',') : (argMutante ? ['fy_lajes', 'quebrada'] : TODOS);
+const MAPAS = argMapa ? argMapa.split(',') : (argMutante ? ['lajes', 'quebrada'] : TODOS);
 
 /* Teto de tiro-no-ar: max(2, 0,5% dos raios). O ruído legítimo é o raio que
    roça quina de caixa alinhada; acima disso é proxy divergente de verdade. */
