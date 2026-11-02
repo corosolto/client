@@ -34,9 +34,22 @@
    ============================================================================ */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { THREE, MAPS, MAP_IDS, initTextures } from '../eval/harness.mjs';
 import { AMBIENTE_PACK, resolveAmbientePack, sha1Arquivo } from './ambiente-pack.mjs';
-import { BIOME_SHOTS } from '../../public/js/soundscape.js';
+import { carregarMapIds } from './map-ids.mjs';
+
+/* O harness (THREE + MAPS + initTextures) e os pools de bioma entram SÓ quando
+   um mapa precisa mesmo ser construído — entrada curada não paga o build e uma
+   árvore de teste que cobre tudo (estado do pack privado) nem os importa. */
+const MAP_IDS = carregarMapIds();
+let arnes = null;
+const carregaArnes = async () => {
+  if (arnes) return arnes;
+  const { THREE, MAPS, initTextures } = await import('../eval/harness.mjs');
+  const { BIOME_SHOTS } = await import('../../public/js/soundscape.js');
+  arnes = { THREE, MAPS, BIOME_SHOTS, textures: await initTextures() };
+  return arnes;
+};
+let reais = 0, sinteticos = 0, subidos = 0;
 
 const raiz = (process.argv.find((a) => a.startsWith('--raiz=')) || '').slice(7) || 'public';
 const caminho = join(raiz, 'audio', 'manifest.json');
@@ -47,10 +60,7 @@ if (!existsSync(caminho)) {
 const manifest = JSON.parse(readFileSync(caminho, 'utf8'));
 manifest.mapSoundscapes ||= {};
 
-const textures = await initTextures();
 const faltando = [];
-let reais = 0, sinteticos = 0, subidos = 0;
-
 const traduz = (id, src) => {
   const pack = resolveAmbientePack(src);
   if (!pack) { faltando.push(`${id}: src não catalogado no pack v9: ${src}`); return src; }
@@ -70,6 +80,7 @@ for (const id of MAP_IDS) {
   const curado = !!(atual?.loops?.some((l) => typeof l?.src === 'string') || atual?.shots?.some((s) => s.srcs?.length));
   if (curado) continue;
 
+  const { THREE, MAPS, BIOME_SHOTS, textures } = await carregaArnes();
   const registro = MAPS[id];
   const world = registro?.build ? registro.build(new THREE.Scene(), textures) : null;
   const sound = world?.sound || null;

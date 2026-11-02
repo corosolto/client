@@ -66,6 +66,11 @@ try {
   copyFileSync(join(root, 'public/js/audio_manifest.js'), join(temp, 'public/js/audio_manifest.js'));
   copyFileSync(join(root, 'tools/audio/lajes-soundscape.mjs'), join(temp, 'tools/audio/lajes-soundscape.mjs'));
   copyFileSync(join(root, 'tools/audio/complete-amazonia-soundscape.mjs'), join(temp, 'tools/audio/complete-amazonia-soundscape.mjs'));
+  /* v9: o fetch também resolve a ambiência autoral. Com cobertura COMPLETA (o estado
+     desta fixture) o ambiente-mapas não constrói mapa nenhum e nem importa o harness
+     — os dois arquivos bastam; map-ids já está abaixo. */
+  copyFileSync(join(root, 'tools/audio/ambiente-mapas.mjs'), join(temp, 'tools/audio/ambiente-mapas.mjs'));
+  copyFileSync(join(root, 'tools/audio/ambiente-pack.mjs'), join(temp, 'tools/audio/ambiente-pack.mjs'));
   // Cobertura COMPLETA de propósito: é o estado do pack privado, e o `ensure` do fetch
   // não pode mascará-lo. A adaptação de Lajes continua sendo a única mudança esperada.
   const fetchFixture = { ...baseline, mapSoundscapes: Object.fromEntries(carregarMapIds().map((id) => [id, structuredClone(donor)])) };
