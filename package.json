@@ -450,7 +450,7 @@
     "//eval:vm-serving-prod": "entrega privada do viewmodel em produção: publicado (dist ou --url=) bate com o manifesto por SHA-256, cabeçalhos e vínculo com VM_BYTES; docs/reports/VM-ENTREGA-PRODUCAO.md",
     "eval:vm-serving-prod": "node tools/eval/vm-serving-prod-check.mjs",
     "eval:vm-serving-config": "node tools/eval/vm-serving-prod-check.mjs --config",
-    "eval:vm-consistencia": "node tools/eval/vm-consistencia-check.mjs",
+    "eval:vm-consistencia": "node tools/eval/vm-consistencia-check.mjs --selftest && node tools/eval/vm-consistencia-check.mjs",
     "eval:vm-attach": "node tools/eval/vm-attach-fallback-check.mjs",
     "eval:vm-attach-legado": "node tools/eval/vm-attach-fallback-check.mjs --caminho=legado --arma=m92 --porta=8158",
     "eval:vm-autorado-vivo": "node tools/eval/vm-autorado-vivo.mjs",
