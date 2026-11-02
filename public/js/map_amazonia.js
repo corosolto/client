@@ -1160,6 +1160,7 @@ export function buildAmazonia(scene, T) {
 
   const slowAt = (x,z) => QP.get('amzwaterslow') === '1' && waterAt(x,z);
   const footstepSurfaceAt = (x,z) => waterAt(x,z) ? 'water' : undefined;
+  const waterSurfaceAt = (x, z) => waterAt(x, z) ? RIO_AGUA : null;
   const quintal = new THREE.Group(); quintal.name='galinha-e-pintinhos'; root.add(quintal);
   const hen=placeProp('galinha_mint_amazonia',{x:19.4,z:12.1,y:0,targetH:.55,ry:.5});
   if(hen) quintal.add(hen);
@@ -1231,7 +1232,7 @@ export function buildAmazonia(scene, T) {
     // Contrato: grafo com camadas, consultas de piso/nó com yRef e curvas precisas no CTF.
     botLayeredNavigation: true,
     rayOccluded: QP.get('amzrayindex') === '0' ? undefined : rayOccluded,
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, footstepSurfaceAt,     spawns: {
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, footstepSurfaceAt, waterSurfaceAt, spawns: {
       /* 0,4 m além da face da mata girada: o AABB conservador da copa com yaw
          projeta a quina ~0,5 m para dentro da caixa e a folga do MAP2B mede
          contra o AABB, não contra a malha. */
