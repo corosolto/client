@@ -39,8 +39,14 @@ const TETO_MAX = 30;
    portao 16-34 min (2 de 15 acima de 30), classify 3-28 min. Medir de novo antes de mexer (#497).
    smoke: 13 runs de 13/10/2026 entre 12,7 e 27,7 min com o chat em passos (#846). Em 14/10 o
    roteiro desktop do chat (~14,5 min) foi para o job `chat-desktop`, que herda a isenção; o
-   `smoke` que sobra (web + toque) volta ao teto comum. */
-const TETO_ISENTO = { 'portao-browser.yml:portao': 45, 'ui-regression.yml:classify': 35, 'smoke-web.yml:chat-desktop': 40 };
+   `smoke` que sobra (web + toque) volta ao teto comum.
+   ci.yml:reguas-e-site 40: o conteúdo do job cresceu com as réguas que o staging puxou
+   (medido no run 41391550552, job 125104067527, PR #1101 em 02/11: só os passos
+   "TRETA$ da partida dentro do Game real" e "Contratos visuais" somam 15m57s, e o job
+   morreu no teto de 25 min com ~30 passos ainda à frente — head de 31/10 com o
+   workflow antigo rodava o job inteiro em 3m39s, run 41192216328). 40 min = teto
+   medido + margem para runner lento. */
+const TETO_ISENTO = { 'portao-browser.yml:portao': 45, 'ui-regression.yml:classify': 35, 'smoke-web.yml:chat-desktop': 40, 'ci.yml:reguas-e-site': 40 };
 
 /* Parser de indentação, não de YAML: a régua roda no `check:deploy`, que é node
    puro e sem dependência. `jobs:` na coluna 0, nome do job com 2 espaços, chaves
