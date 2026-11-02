@@ -23,7 +23,7 @@ if (!validos.has(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
 
 const falhas = [];
 const angulo = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
-const originais = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada'];
+const originais = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada'];
 const T = initTextures();
 let yawTotal = 0, yawErrados = 0;
 
@@ -47,7 +47,7 @@ for (const id of originais) {
     if (angulo(atual, s.yaw) > 1e-6) yawErrados++;
   }
 
-  if (id === 'fy_pool_day') {
+  if (id === 'piscina_treta') {
     const molhados = mutante === 'sempiscina' ? []
       : W.waypoints.nodes.map((n, i) => ({ ...n, i })).filter((n) => W.groundHeightAt(n.x, n.z) < -0.35);
     let rotas = 0;
@@ -79,10 +79,10 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 800, height: 500 } });
 const casos = {
-  fy_havan: [
+  loja_h: [
     [[11, .9, 6], [11, .9, 14]], [[-18, .9, 6], [-18, .9, 14]], [[-5, .9, 34], [-5, .9, 42]],
   ],
-  fy_ferrovelho: [
+  ferro_velho: [
     [[-15, 1.4, -13], [-7, 1.4, -13]], [[7, 1.4, 1], [15, 1.4, 1]], [[-10, 1.4, 4], [-10, 1.4, 12]],
   ],
 };

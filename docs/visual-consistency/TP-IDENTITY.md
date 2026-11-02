@@ -32,6 +32,10 @@ cache. As outras cargas terminam antes da observação; tempo não é prova da
 barreira. O primeiro corpo é registrado no nascimento, antes de liberar o latch.
 Outra carga rejeitada não pode antecipar esse nascimento. Sem seleção e navOnly
 não pedem luva; navOnly não é prova de corpo GLB carregado.
+C6 também observa o logger real: a rejeição opcional é registrada uma vez com o mesmo Error, antes da consulta ao handle.
+
+O corpo base continua elegível quando o preload cosmético opcional rejeita:
+a resolução do handle ocorre depois de ambos terminarem, usando allSettled.
 
 S usa o pacote real do Capitão: segura sua conclusão, mantém Games distintos
 para A→B, A→B→A, arma trocada, seleção alterada, saída e morte/retorno. Depois
@@ -48,8 +52,8 @@ externo: sem seleção válida não carrega, demanda própria pede e monta depoi
 T controla manifesto sem variante e falha do GLB; respostas terminais não geram
 novo I/O ou reconstrução. Não usa tempo decorrido como prova de prontidão.
 
-O carregador conserva cache negativo e deduplica por família. Game limita pedidos
-por família e não recebe callback de conclusão: o próximo ensure lê o estado
+O carregador conserva cache negativo e deduplica pela origem efetiva. Game limita pedidos
+pela mesma chave e não recebe callback de conclusão: o próximo ensure lê o estado
 atual. Completude do pacote é medida por geometria e bones, não pelo número do
 cache ou pelo snapshot de tentativa. Corpo vindo somente de cosmético aprovado,
 sem GLB base no cache, ainda exige prova própria de demanda e compatibilidade;
@@ -63,6 +67,8 @@ real de MP, GPU, materiais/pixels ou custo por frame.
 | own-glove: remove a seleção no builder e na atualização própria | O1, C4, S1, S3, S4, S5, S7, S10, S11, S12, S13, S14, N2 |
 | glove-preload: remove a entrada na barreira | C1, C2, C3, C4, C6 |
 | boot-await: remove o await da barreira | C2, C3, C4, C6 |
+| body-preload-failfast: preserva envelopes de sucesso e rejeita cedo, impedindo a resolução do handle | C6 |
+| boot-diag-silent: silencia o diagnóstico de rejeição opcional, mantendo a barreira | C6 |
 | glove-first-part: conserva só a primeira parte no cache | O1, O4, C4, S1, S3, S4, S5, S7, S10, S11, S12, S13, S14, N2 |
 | glove-partial-bind: anexa partes válidas de pacote incompatível | O4 |
 | glove-ready-upgrade: ignora seleção/prontidão no retorno | S1, S4, S5, S7, S10, S11, S12, S13, S14, N2 |

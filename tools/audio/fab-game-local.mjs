@@ -412,15 +412,12 @@ const physicalProfiles = {
     death: seguros(['Human_Vocalizations/Male_1_-_Grunt_18.wav', 'Human_Vocalizations/Male_1_-_Grunt_26.wav']),
   },
 };
-const CHARACTER_IDS = [
-  'esquerdomacho', 'sindicato', 'mst', 'doutora', 'mistico', 'caminhoneiro', 'sertanejo', 'coach',
-  'gotinha', 'farialimer', 'bombado', 'hipster', 'dollynho', 'et', 'ancap', 'canarinho', 'proerd',
-  'bonzo', 'palhacomal', 'jozo', 'adjim', 'esbirro', 'titica', 'padati', 'padata', 'cadequinha',
-  'emo', 'blackmetal', 'metaleiro', 'punk', 'skatista', 'clubber', 'rapper', 'reggae', 'pagodeiro',
-  'mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao',
-  'lobisomem', 'mariabonita', 'lampiao', 'bandeirante', 'boto', 'zumbi', 'curupira', 'saci', 'caipora',
-];
-const FEMALE_CHARACTERS = new Set(['doutora', 'mariabonita', 'caipora']);
+const rosterSource = readFileSync(join(RAIZ_REPO, 'public/js/characters.js'), 'utf8');
+const rosterBlock = rosterSource.split('export const CHARACTERS = [')[1]?.split('];\nexport const byId')[0];
+if (!rosterBlock) throw new Error('Registro CHARACTERS ausente; perfis físicos não foram instalados.');
+const CHARACTER_IDS = [...rosterBlock.matchAll(/\bid:\s*'([^']+)'/g)].map(match => match[1]);
+if (!CHARACTER_IDS.length || new Set(CHARACTER_IDS).size !== CHARACTER_IDS.length) throw new Error('Registro CHARACTERS vazio ou ambíguo.');
+const FEMALE_CHARACTERS = new Set(['doutora', 'mariabonita', 'caipora', 'dama', 'julia-zanatta', 'marina-silva']);
 const CREATURE_CHARACTERS = new Set(['gotinha', 'dollynho', 'et', 'canarinho', 'proerd', 'lobisomem', 'boto', 'curupira']);
 const physicalByCharacter = Object.fromEntries(CHARACTER_IDS.map((id) => [
   id, FEMALE_CHARACTERS.has(id) ? 'female' : (CREATURE_CHARACTERS.has(id) ? 'creature' : 'male'),
@@ -566,7 +563,7 @@ const manifest = {
   ...(selectedCharacterVoices ? { characterVoice: selectedCharacterVoices } : {}),
   ...(selectedCharacterVoiceText ? { characterVoiceText: selectedCharacterVoiceText } : {}),
   ...(selectedMenuMusic ? { menuMusic: selectedMenuMusic } : {}),
-  cs: {
+  jogo: {
     reload: magOut, reloadend: magIn, bolt,
     footsteps: footstepsBySurface.concrete,
     footstepsBySurface,

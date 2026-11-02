@@ -93,7 +93,7 @@ function rodaArm(role, mutante = null, controle = null) {
   const dt = controle ? DT.A : DT[role];
   let game = null, primario = null;
   try {
-    game = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 12345 });
+    game = bootGame('corrego', { textures: initTextures(), ctf: true, seed: 12345 });
     const player = game.player, start = new THREE.Vector3(START.x, START.y, START.z);
     infra(game._mAlc && game._mapId === 'corrego', 'fixture', 'território/mapa resolvido divergente');
     const target = game._mantleTarget(start, 0, 1);
@@ -103,7 +103,7 @@ function rodaArm(role, mutante = null, controle = null) {
     player.pos.copy(start); player.vel.set(0, 0, 0); player.yaw = Math.PI; player.grounded = true;
     player.crouchF = 0; player._spaceHeld = false; player.jumpBufferedUntil = 0; player.coyoteUntil = 0; player._mantleScanAt = 0;
     const roster = { player: snapshotEntity(player), bots: game.bots.map(snapshotEntity) };
-    const setupPre = { mapPedido: 'fy_corrego', mapId: game._mapId, ctf: true, seed: 12345,
+    const setupPre = { mapPedido: 'corrego', mapId: game._mapId, ctf: true, seed: 12345,
       colliders: game.world.colliders.length, broadphaseLocal: broadphase,
       players: game.players?.length ?? null, bots: game.bots.length, start: start.toArray(), dir: [0, 1], input: INPUT };
     infra(deepFinite(roster) && vec3(roster.player.pos) && vec3(roster.player.vel)
@@ -178,7 +178,7 @@ function schemaArm(a, role, mutante, controle) {
     && vec3(a.posFinal) && finite(a.maxStepXZ) && finite(a.maxStep3D) && finite(a.elapsed) && finite(a.erroPouso)
     && typeof a.groundedFinal === 'boolean' && typeof a.mantleFinal === 'boolean', 'schema', 'estado físico incompleto');
   infra(plain(a.setupPre) && plain(a.roster) && plain(a.roster.player) && Array.isArray(a.roster.bots)
-    && a.setupPre.mapPedido === 'fy_corrego' && a.setupPre.mapId === 'corrego' && a.setupPre.ctf === true && a.setupPre.seed === 12345
+    && a.setupPre.mapPedido === 'corrego' && a.setupPre.mapId === 'corrego' && a.setupPre.ctf === true && a.setupPre.seed === 12345
     && JSON.stringify(a.setupPre.start) === JSON.stringify(Object.values(START))
     && JSON.stringify(a.setupPre.input) === JSON.stringify(INPUT)
     && JSON.stringify(a.setupPre.dir) === '[0,1]' && Number.isInteger(a.setupPre.bots) && a.setupPre.bots === a.roster.bots.length
@@ -296,7 +296,7 @@ function parserFixture(role) { // Dados SINTÉTICOS só para testar o parser, nu
     maxStepXZ: 0, maxStep3D: 0, beginMantle: { x0: START.x, y0: START.y, z0: START.z, x1: START.x, y1: 0, z1: -26.47, t: dt, dur: 0.393 },
     beginFrame: 0, terminal: { frame: n - 1, tAntes: 0.35, tDepois: 0.393, dur: 0.393, ended: true },
     naturalTarget: { x: START.x, y: 0, z: -26.47 },
-    setupPre: { mapPedido: 'fy_corrego', mapId: 'corrego', ctf: true, seed: 12345, colliders: 303, broadphaseLocal: 9, players: null, bots: 1, start: p, dir: [0, 1], input: INPUT },
+    setupPre: { mapPedido: 'corrego', mapId: 'corrego', ctf: true, seed: 12345, colliders: 303, broadphaseLocal: 9, players: null, bots: 1, start: p, dir: [0, 1], input: INPUT },
     roster: { player: entity, bots: [entity] }, elapsed: n * dt, posFinal: p, erroPouso: 0, groundedFinal: true, mantleFinal: true };
 }
 function metaNative() {

@@ -49,7 +49,7 @@ Medição: SVD do Jacobiano UV em uma base tangente ortonormal, com drawRange, �
 | CU-2 | lock das guardas: `geometry.userData.texelEscalada === true` | trava a 2ª escala do `vao.js` |
 | CU-3 | UV das guardas = dim/4 em **todos** os 480 triângulos (tolerância 1e-5 tiles/m) | contagem exata e seis faces desenhadas por guarda; SVD aceita só erro float |
 | CU-4 | acabamento: 1 malha `favelaFinish='campo'`, lock **pós-merge** true, `groups=0` | o merge descarta userData; sem re-lock o `vao.js` re-escala |
-| CU-5 | UV do acabamento = dim/2 em todos os triângulos do perfil: 2 424 no original, 2 688 em R22/R23 (tolerância 1e-5) | contagem literal ligada ao inventário independente; reset 0–1 daria \|s−0,5\| ≫ teto |
+| CU-5 | UV do acabamento = dim/2 em todos os triângulos do perfil: 3 792 no original, 3 948 em R22/R23 (tolerância 1e-5) | contagem literal ligada ao inventário independente; reset 0–1 daria \|s−0,5\| ≫ teto |
 | CU-6 | período global do UV mesclado > 2 tiles nos dois eixos | nominal ≈ 5,21; reset 0–1 por caixa colapsa em 1,0 |
 | CU-7 | determinismo entre dois builds + bijeção guarda↔collider↔occluder (40/40) + acabamento sem collider | snapshot AABB/matriz/contagens, sem ler UV |
 
@@ -57,9 +57,9 @@ Medição: SVD do Jacobiano UV em uma base tangente ortonormal, com drawRange, �
 
 | perfil | query | caixas acabamento | triângulos acabamento | caixas std | batches std |
 |---|---|---:|---:|---:|---:|
-| original | `campoFachadas=0` | 202 | 2 424 | 0 | 0 |
-| r22 | `campoFachadas=1` | 224 | 2 688 | 29 | 7 |
-| r23 | `campoFachadas=2` ou ausente | 224 | 2 688 | 50 | 8 |
+| original | `campoFachadas=0` | 316 | 3 792 | 0 | 0 |
+| r22 | `campoFachadas=1` | 329 | 3 948 | 29 | 7 |
+| r23 | `campoFachadas=2` ou ausente | 329 | 3 948 | 50 | 8 |
 
 `tools/eval/campo-fachadas-reference.mjs` carrega uma fixture imutável em
 `tools/eval/fixtures/campo-fachadas-inventory.json`, SHA256
@@ -253,3 +253,36 @@ perspectiva, drawcalls ou FPS. O `TEXEL3b` do campomorro (máx/mediana ≈ 5,6 >
 continua **preexistente e vermelho** — não é escopo desta régua e não pode ser
 apagado por ela. Tetos do texel-check não foram relaxados e nenhum inventário de
 arma/malha foi reduzido.
+
+## Batentes laterais R1832
+
+A arte do commit `3814a02e8cc666367c7b5aaa470ddde43e5cc68f4` acrescentou
+dois montantes e uma verga a cada porta das fachadas laterais. São 18 portas
+nos lados X (x=±36, z=−26+6,5i, i=0..8) e 20 nos lados Z
+(z=±30, x=−31,5+7i, i=0..9): 38×3=114 peças. Em R22/R23, três
+fachadas Z+ (i=6,7,8) são substituídas pelo piloto; ficam 35×3=105 peças.
+
+O desenho independente fixa o centro da porta em u+1,45 e sua base no
+`morroBase` original +0,02. Em X, os montantes medem 0,16×1,92×0,11 m,
+com deslocamento lateral ±0,465; a verga mede 0,18×0,10×1,04 m, base
++1,94. Em Z, montantes 0,11×1,92×0,16 m, deslocamento ±0,475; verga
+1,06×0,10×0,18 m, base +1,94. O plano da fachada recua 0,31 m da borda.
+Todas compartilham o `matJunta` e castShadow=true do acabamento mesclado.
+
+Estas cotas foram expandidas offline para
+`tools/eval/fixtures/campo-batentes-inventory.json`, SHA256
+`2ed3cf88c4cb8886cce8a2c1052cc912e1410940b078584fd9c06865d8a0cb56`.
+O suplemento é lacrado e carregado antes do harness por
+`campo-batentes-reference.mjs`; não lê a candidata. A fixture original e seu
+gerador permanecem byte a byte iguais. CU-5 deriva os triângulos do número
+de caixas do desenho independente, não da cena medida. CU-8 mantém bijeção,
+topologia, material e 36 pins raster, com as mesmas tolerâncias.
+
+A prova `CAMPO-OLD-INVENTORY-MIGRATION-R1831.json` removeu somente as quatro
+linhas que criam estes batentes em uma cópia externa da candidata e obteve
+CU-1..8 verdes nos três perfis com a régua antiga intacta. Fonte candidata
+SHA256 `5b3c57704e1b6908b79cc2c10fbebf7d74244b159a1eff20cddc20087295879d`;
+cópia anterior reconstruída `2e0c06189fc59a84e8098d5e56ce5b26cea5ef14259f613d1ed7addbb196bcbd`.
+O mutante `batente-translado` desloca uma peça nova real 0,125 m em X e exige
+falha somente CU-8 nos três perfis. A aprovação visual localizada das
+aberturas em R1760 continua separada da medição UV e não aprova o mapa inteiro.

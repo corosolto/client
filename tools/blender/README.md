@@ -1,6 +1,6 @@
-# Piloto de casca assada — fy_lajes, fileira norte (v2)
+# Piloto de casca assada — lajes, fileira norte (v2)
 
-Gera a casca visual (geometria + PBR + lightmap) de um quarteirão do `fy_lajes`:
+Gera a casca visual (geometria + PBR + lightmap) de um quarteirão do `lajes`:
 3 prédios (caixa + puxadinho cada) da fileira norte, faces norte flush em
 `z=-31`, com anti-caixa de verdade: duas peles por prédio com faixa de laje
 saliente, sobrados pendendo sobre os vãos, platibandas quebradas com

@@ -72,14 +72,11 @@ const extrai = (ini, fim, rotulo) => {
   return main.slice(main.indexOf(ini), main.indexOf(fim, main.indexOf(ini)));
 };
 const corposVo4 = [
+  extrai('function modoTelemetria(g) {', '\nlet telemetrySent = true;', 'modoTelemetria'),
   extrai('function _clientSessionContext() {', '\n// FUNIL (017)', '_clientSessionContext'),
   extrai('function _perfFinish(bootMs, frames) {', '\n// MATCH EVENT (016)', '_perfFinish'),
   extrai('function sendMatchEvent(result) {', 'function sendTrainingFrames', 'sendMatchEvent'),
-].join('\n')
-  // O sendMatchEvent pós-r844 marca o modo pelo modoTelemetria real (módulo, fora das
-  // regiões acima): a régua leva a função real, não um stub.
-  + '\n' + extrai('function modoTelemetria(g) {', '\nlet telemetrySent = true;', 'modoTelemetria')
-  + '\nlet _matchEventSent = false;\n';
+].join('\n') + '\nlet _matchEventSent = false;\n';
 if (!falhas.some((f) => f.startsWith('VO4 âncora'))) {
   for (const { host, esperada } of [
     { host: 'www.corosolto.com.br', esperada: V },

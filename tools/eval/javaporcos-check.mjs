@@ -27,7 +27,7 @@
       registro, e esta régua precisa rodar em 0,2 s mesmo com o mapa da invasão em obras.
 
    PERF: o teto de 64 vivos simultâneos é medido em tools/eval/javaporcos-perf.mjs
-   (jogo real, mapa real). Esta régua só cobra que o teto é respeitado e alcançado.
+   (física real, mundo sintético). Esta régua só cobra que o teto é respeitado e alcançado.
 
    MUTANTES (cada cláusula nova tem o seu; `--mutante=X` tem de deixar a régua VERMELHA):
      horda-magra      onda rala e teto de 24 (o estado que o dono reprovou)
@@ -722,7 +722,7 @@ regra('o snapshot leva o controle por setor e o cliente reconstrói o domínio',
     type: 'snapshot', room: 'horda', tick: 1, t: 1, state: 'live', owner: '', players: 1, spectators: 0,
     livre: { E: 3, B: 0 }, timeLeft: 60, roundNum: 1, scoreE: 0, scoreB: 0, roundKillsE: 0, roundKillsB: 0,
     objective: host.modo.netState(), ents: [],
-  }, 7)).objective;
+  }, 8)).objective;
   const cliente = jogoFalso({ mundo: mundoFalso({ horda: true }) });
   cliente.game.online = true;
   cliente.modo.applyNetState(net);
@@ -825,7 +825,7 @@ regra('o HUD mostra a fúria e quantos javaporcos estão na rua', () => {
   assert.ok(/LIXO \d+\/\d+/.test(texto), `HUD sem placar de lixo revirado: ${texto}`);
 });
 
-regra('snapshot v7 replica o estado completo da horda', () => {
+regra('snapshot v8 replica o estado completo da horda', () => {
   const horda = criarHorda({ seed: 91, mutante });
   iniciarOnda(horda); passoHorda(horda, 1);
   const objective = snapshotHorda(horda);
@@ -833,8 +833,57 @@ regra('snapshot v7 replica o estado completo da horda', () => {
     type: 'snapshot', room: 'horda', tick: 1, t: 1, state: 'live', owner: '',
     players: 1, spectators: 0, livre: { E: 3, B: 0 }, timeLeft: 360, roundNum: 1,
     scoreE: 0, scoreB: 0, roundKillsE: 0, roundKillsB: 0, objective, ents: [],
-  }, 7);
+  }, 8);
   assert.deepEqual(decodeSnapshot(wire).objective, objective);
+});
+
+const placarNoFio = (horda) => {
+  const objective = snapshotHorda(horda);
+  const wire = encodeSnapshot({
+    type: 'snapshot', room: 'horda', tick: 1, t: 1, state: 'live', owner: '',
+    players: 2, spectators: 0, livre: { E: 2, B: 0 }, timeLeft: 360, roundNum: 1,
+    scoreE: 0, scoreB: 0, roundKillsE: 0, roundKillsB: 0, objective, ents: [],
+  }, 8);
+  const recebido = decodeSnapshot(wire).objective;
+  assert.deepEqual(recebido, objective);
+  return recebido.scoreByPlayer;
+};
+
+regra('snapshot v8 leva o primeiro dano antes de qualquer abate', () => {
+  const horda = criarHorda({ seed: 91 });
+  iniciarOnda(horda); passoHorda(horda, 1);
+  assert.deepEqual(placarNoFio(horda), {});
+  registrarDano(horda, horda.alive[0].id, 'atirador', 40);
+  assert.deepEqual(placarNoFio(horda).atirador, {
+    points: 0, kills: 0, assists: 0, combo: 0, bestCombo: 0, damagePrevented: 40,
+  });
+});
+
+regra('snapshot v8 leva a primeira assistência sem abate próprio', () => {
+  const horda = criarHorda({ seed: 91 });
+  iniciarOnda(horda); passoHorda(horda, 1);
+  const alvo = horda.alive[0];
+  registrarDano(horda, alvo.id, 'assistente', 40);
+  registrarAbate(horda, alvo.id, 'atirador');
+  const placar = placarNoFio(horda);
+  assert.deepEqual(placar.assistente, {
+    points: Math.round(BOAR_POINTS[alvo.type] * .4), kills: 0, assists: 1,
+    combo: 0, bestCombo: 0, damagePrevented: 40,
+  });
+  placar.assistente.points = -1;
+  assert.ok(horda.scores.assistente.points > 0, 'o snapshot alterou o placar autoritativo');
+});
+
+regra('publicar o placar preserva a janela autoritativa do combo', () => {
+  const horda = criarHorda({ seed: 91 });
+  iniciarOnda(horda); passoHorda(horda, 1);
+  for (const [clock, combo] of [[1, 1], [5, 2], [9.001, 1]]) {
+    horda.clock = clock;
+    registrarAbate(horda, horda.alive[0].id, 'atirador');
+    assert.equal(placarNoFio(horda).atirador.combo, combo);
+    assert.equal(horda.scores.atirador.combo, combo);
+  }
+  assert.equal(horda.scores.atirador.bestCombo, 2);
 });
 
 regra('snapshot com a horda cheia ainda cabe nos 8 KB do fio', () => {
@@ -851,7 +900,7 @@ regra('snapshot com a horda cheia ainda cabe nos 8 KB do fio', () => {
     type: 'snapshot', room: 'horda', tick: 9, t: 9, state: 'live', owner: '',
     players: 10, spectators: 0, livre: { E: 0, B: 0 }, timeLeft: 60, roundNum: 1,
     scoreE: 0, scoreB: 0, roundKillsE: 0, roundKillsB: 0, objective, ents: [],
-  }, 7);
+  }, 8);
   assert.deepEqual(decodeSnapshot(wire).objective, objective);
 });
 

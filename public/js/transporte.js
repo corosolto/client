@@ -1,6 +1,6 @@
 // Transporte da sessão de jogo atrás de uma interface pequena. O cabeçalho do net.js promete
 // isso desde sempre; até 12/09 ele falava `this.ws` direto em nove pontos. Ver docs/TRANSPORTE.md.
-import { MAX_SNAPSHOT_BYTES, SNAPSHOT_PROTOCOLS } from './netcodec.js';
+import { MAX_SNAPSHOT_BYTES, CLIENT_SNAPSHOT_PROTOCOL } from './netcodec.js';
 
 export class TransporteWS {
   constructor(url) { this.url = url; this.ws = null; }
@@ -8,9 +8,16 @@ export class TransporteWS {
   // `manipuladores` = { aberto, mensagem, erro, fechado }. Quem decide o que fazer é o NetClient.
   abrir(manipuladores) {
     const h = manipuladores || {};
-    this.ws = new WebSocket(this.url, SNAPSHOT_PROTOCOLS);
+    this.ws = new WebSocket(this.url, [CLIENT_SNAPSHOT_PROTOCOL]);
     this.ws.binaryType = 'arraybuffer';
-    this.ws.onopen = () => h.aberto?.();
+    this.ws.onopen = () => {
+      if (this.ws.protocol !== CLIENT_SNAPSHOT_PROTOCOL) {
+        h.erro?.(new Error('subprotocolo_nao_negociado'));
+        if (this.ws.readyState < 2) this.fechar(1002, 'subprotocolo_nao_negociado');
+        return;
+      }
+      h.aberto?.();
+    };
     this.ws.onerror = () => h.erro?.(new Error('ws_error'));
     this.ws.onclose = () => h.fechado?.();
     this.ws.onmessage = (ev) => {
@@ -75,7 +82,12 @@ export class TransporteWT {
       for (;;) {
         if (buf.length < 4) break;
         const n = new DataView(buf.buffer, buf.byteOffset, 4).getUint32(0);
-        if (n > MAX_SNAPSHOT_BYTES || buf.length < 4 + n) break;
+        if (n > MAX_SNAPSHOT_BYTES) {
+          this.fechar(1009, 'snapshot_too_large');
+          try { await r.cancel('snapshot_too_large'); } catch { /* transporte ja encerrado */ }
+          return;
+        }
+        if (buf.length < 4 + n) break;
         this._entrega(buf.subarray(4, 4 + n), h);
         buf = buf.subarray(4 + n);
       }

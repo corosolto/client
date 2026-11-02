@@ -49,20 +49,38 @@ const mutarMain = (page, trocas) => page.route(/\/js\/main\.js/, async (route) =
   for (const [de, para] of trocas) { if (!body.includes(de)) throw new Error(`mutante não achou: ${de}`); body = body.replace(de, para); }
   await route.fulfill({ response: resp, body });
 });
+const entrar = async (page) => {
+  const splash = page.locator('#boot-splash');
+  if (await splash.isVisible().catch(() => false)) {
+    await page.waitForFunction(() => {
+      const novo = document.getElementById('tp-splash-jogar');
+      const legado = document.getElementById('splash-enter');
+      return (novo && !novo.disabled) || (legado && !legado.classList.contains('hidden'));
+    }, null, { timeout: 120000 });
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => {
+      const atual = document.getElementById('boot-splash');
+      return !atual || atual.classList.contains('gone') || !atual.checkVisibility();
+    }, null, { timeout: 30000 });
+  } else {
+    await page.waitForFunction(() => window.__CS_MAIN_READY__ === true, null, { timeout: 120000 });
+  }
+  await page.waitForSelector('#hub-ui:not([hidden])', { timeout: 120000 });
+};
 
 try {
   const page = await browser.newPage({ viewport: { width: W, height: H } });
   await page.route(/corosolto\.com\.br/, (r) => r.abort());
   await page.addInitScript(() => {
+    sessionStorage.setItem('cs_login_prompt_seen', '1');
     localStorage.setItem('awpbr_nick', 'RUBAO'); localStorage.setItem('cs_lang', 'pt');
     localStorage.setItem('awpbr_settings', JSON.stringify({ map: 'praca_poderes', mapPinned: true, wpnMode: 'all', allyBots: 3, enemyBots: 4, rounds: 5, ctfRounds: 3 }));
   });
   if (MUT === 'tab-aberta') await mutarMain(page, [["box.addEventListener('focusout', sair); lista.addEventListener('focusout', sair);", '']]);
-  await page.goto(`${BASE}/?secao=jogar&partida=singleplayer`, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('#splash-enter:not(.hidden)', { timeout: 180000 });
-  await page.keyboard.press('Space');
-  await page.waitForSelector('#hub-ui:not([hidden])', { timeout: 120000 });
+  await page.goto(`${BASE}/?ui=legacy&secao=jogar&partida=singleplayer`, { waitUntil: 'domcontentloaded' });
+  await entrar(page);
   await page.waitForTimeout(800);
+  await page.evaluate(() => document.querySelectorAll('dialog[open]').forEach((d) => d.close()));
   if (MUT === 'lista-fora') await page.addStyleTag({ content: '.hub-sel-list{bottom:auto!important;top:-4000px!important}' });
   if (MUT === 'sem-efeito') await page.evaluate(() => document.addEventListener('click', (e) => { if (e.target.closest?.('.hub-sel-opt')) e.stopPropagation(); }, true));
 
@@ -110,6 +128,8 @@ try {
   };
   let e = await escolhe('mapa', 'amazonia');
   cobra(/Amaz/.test(e.mapa) && /map=amazonia/.test(e.url) && /Amaz/.test(e.rotulo) && e.s.map === 'amazonia', `HS3 mapa → Amazônia (${e.mapa}, ${e.url}, ${e.rotulo})`);
+  e = await escolhe('modo', 'arena');
+  cobra(e.modo === 'arena' && e.rotulo === 'VIRA-CASACA', `HS3 modo → Vira-Casaca (${e.modo}, ${e.rotulo})`);
   e = await escolhe('modo', 'rounds');
   cobra(e.modo === 'rounds' && e.rotulo === 'MATA-MATA', `HS3 modo → mata-mata (${e.modo}, ${e.rotulo})`);
   e = await escolhe('armas', 'awp');
@@ -147,16 +167,20 @@ try {
   const en = await browser.newPage({ viewport: { width: W, height: H } });
   await en.route(/corosolto\.com\.br/, (r) => r.abort());
   if (MUT === 'sem-tr') await mutarMain(en, [["`<small>${tr(rotulo)}</small>", "`<small>${rotulo}</small>"], ["t: tr('MATA-MATA')", "t: 'MATA-MATA'"]]);
-  await en.addInitScript(() => { localStorage.setItem('awpbr_nick', 'RUBAO'); localStorage.setItem('cs_lang', 'en'); });
-  await en.goto(`${BASE}/?secao=jogar&partida=singleplayer`, { waitUntil: 'domcontentloaded' });
-  await en.waitForSelector('#splash-enter:not(.hidden)', { timeout: 180000 });
-  await en.keyboard.press('Space');
-  await en.waitForSelector('#hub-ui:not([hidden])', { timeout: 120000 });
+  await en.addInitScript(() => {
+    sessionStorage.setItem('cs_login_prompt_seen', '1');
+    localStorage.setItem('awpbr_nick', 'RUBAO');
+    localStorage.setItem('cs_lang', 'en');
+  });
+  await en.goto(`${BASE}/?ui=legacy&secao=jogar&partida=singleplayer`, { waitUntil: 'domcontentloaded' });
+  await entrar(en);
   await en.waitForTimeout(800);
+  await en.evaluate(() => document.querySelectorAll('dialog[open]').forEach((d) => d.close()));
   const rotEn = await en.evaluate(() => [...document.querySelectorAll('#hub-sels > .hub-sel small')].map((x) => x.textContent));
+  await en.evaluate(() => document.querySelectorAll('dialog[open]').forEach((d) => d.close()));
   await en.click('#hub-sel-modo .hub-sel-btn'); await en.waitForTimeout(200);
   const modosEn = await en.evaluate(() => [...document.querySelectorAll('#hub-sel-modo-lista .hub-sel-opt')].map((x) => x.textContent));
-  cobra(JSON.stringify(rotEn) === JSON.stringify(ROTULOS_EN) && JSON.stringify(modosEn) === '["DEATHMATCH","CAPTURE"]',
+  cobra(JSON.stringify(rotEn) === JSON.stringify(ROTULOS_EN) && JSON.stringify(modosEn) === '["DEATHMATCH","CAPTURE","TURNCOAT"]',
     `HS5 em inglês: rótulos ${JSON.stringify(rotEn)}, modos ${JSON.stringify(modosEn)}`);
   await en.close();
 } finally {

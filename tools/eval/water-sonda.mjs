@@ -6,7 +6,7 @@ const BASE = process.env.BASE || 'http://localhost:8141';
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
-const MAP = process.env.MAP || 'fy_mansao';
+const MAP = process.env.MAP || 'mansao';
 const GPU = process.env.GPU === '1';
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

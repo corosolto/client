@@ -73,7 +73,10 @@ jobs:
       - name: Contrato de famílias e marcas do áudio
         run: npm run eval:audiomarcas
       - name: Dependências e reconstrução do fundo do menu
-        run: npm run eval:menuprops
+        run: |
+          npm run eval:menuprops
+          node tools/eval/menu-map-props-check.mjs --mutantes
+          node tools/eval/menu-map-props-check.mjs --autoteste
       - name: Mutantes do orçamento exigem a falha correta
         run: node tools/eval/boot-mutant-verdict-check.mjs --mutantes
       # boot-assets-check (--mutantes) REMOVIDO nesta PR: a régua era exclusiva da PR
@@ -85,10 +88,16 @@ jobs:
       # poster-intent e overlay com mutantes.
       - name: Causa real da liberação da splash com mutantes
         run: node tools/eval/boot-ready-check.mjs --mutantes
-      - name: Origem da versão nos payloads reais de perf e match
-        run: npm run eval:versaoorigem
+      - name: Enquadramento e limite do stream WebTransport
+        run: npm run eval:transport-stream
       - name: Regras da horda e consumo de objetivo no cliente
         run: npm run eval:javaporcos
+      - name: Origem da versão nos payloads reais de perf e match
+        run: npm run eval:versaoorigem
+      - name: Arena, formato melhor-de e preload
+        run: node tools/eval/runner.mjs eval:arena-mode eval:formatomelhorde eval:preload
+      - name: Mapas JSON, construtor e boot no Game
+        run: node tools/eval/runner.mjs eval:mapjson eval:mapjsonboot
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         run: npm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
@@ -129,7 +138,7 @@ jobs:
         run: node tools/eval/telemetry-mode-check.mjs
       - name: Contratos visuais de mapas, personagens, câmera e equipamento
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:grafite-curation eval:map-material-finish eval:ferro-balcao eval:match-pickups eval:net-flash-disable eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:visual-map-contracts eval:knife-skin-markings eval:campo-uv eval:grafite-atual:prova
+        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:grafite-curation eval:map-material-finish eval:ferro-balcao eval:match-pickups eval:net-flash-disable eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:visual-map-contracts eval:knife-skin-markings eval:campo-uv eval:grafite-atual:prova eval:piscina-graffiti-batch
       - name: Flash, fluidez e ADS da AK pública
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:flashbang mut:flashbang eval:movimento-fluidez eval:ads1p-public eval:posto-board-support eval:preview-grip-phase eval:armadura eval:ads1p-runtime-public
@@ -138,13 +147,21 @@ jobs:
         run: npm run eval:mapcontrato
       - name: Câmera, atalhos e HUD com mutantes
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:cameraoclusao
+        run: |
+          npm run eval:cameraoclusao
+          node tools/eval/camera-oclusao-mutate.mjs
+          node tools/eval/camera-hud-check.mjs
+          node tools/eval/camera-hud-check.mjs --mutantes
       - name: Spawns orientam jogador e bots pelo consumidor real
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:spawnface
+        run: |
+          node tools/eval/spawn-facing-proof.mjs --autoteste
+          node tools/eval/spawn-facing-proof.mjs
       - name: Backpedal preserva autoridade e lateral com mutantes
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:tpbackpedal
+        run: |
+          node tools/eval/tp-local-backpedal-proof.mjs --autoteste
+          node tools/eval/tp-local-backpedal-proof.mjs
       - name: Loops de áudio de todos os mapas usam src carregável
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:soundscape-contract
@@ -269,6 +286,21 @@ jobs:
       - name: Smoke do site (13 rotas, contrato + JSON-LD)
         run: node tools/eval/site-smoke.mjs
 
+  equipamento-tp:
+    runs-on: ubuntu-latest
+    # R1047: os processos CPU e o setup ultrapassaram o limite de 10 minutos.
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        run: npm ci
+      - name: Corpo, luvas e procedência em processos CPU reais
+        run: node tools/eval/runner.mjs eval:tp-identity eval:tp-cosmetic-source eval:tp-drip-source eval:tp-glove-origin
+
   # O bloco do viewmodel e das invariantes, na MESMA ordem de antes: o vm-mint-audit escreve
   # o tools/eval/vm_mint_audit.json que as invariantes e o vm-kick-sim leem.
   invariantes:
@@ -341,7 +373,7 @@ jobs:
         run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network
 
   build:
-    needs: [reguas-e-site, invariantes, mantle]
+    needs: [reguas-e-site, invariantes, mantle, equipamento-tp]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

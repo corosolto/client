@@ -4,10 +4,15 @@ import vm from 'node:vm';
 import {THREE} from './harness.mjs';
 
 let src=readFileSync('public/js/glbchars.js','utf8');
-const mutant=process.argv.includes('--mutante=acumula');
+const args=process.argv.slice(2);
+if(args.length>1||(args.length&&args[0]!=='--mutante=acumula')){console.error('Uso: morte-pose-estavel-check.mjs [--mutante=acumula]');process.exit(2);}
+const mutant=args.length===1;
 if(mutant) {
- const before=src;src=src.replace('this._restaurarPoseMorte();\n    if (!this.dead)', 'if (!this.dead)');
- assert.notEqual(src,before,'mutação impossível');
+ const before=src,anchors=[...src.matchAll(/^  update\(dt,[^\n]*\) \{\n    this\._restaurarPoseMorte\(\);/gm)];
+ if(anchors.length!==1){console.error(`INFRA morte: âncora update/restauração deve ser única (encontradas ${anchors.length})`);process.exit(2);}
+ const anchor=anchors[0];
+ src=src.slice(0,anchor.index)+anchor[0].replace('    this._restaurarPoseMorte();','')+src.slice(anchor.index+anchor[0].length);
+ assert.ok(src!==before,'mutação impossível');
 }
 const Controller=vm.runInNewContext(src.slice(src.indexOf('class CharController'))+'\nCharController;',{
  THREE,FADE:.16,footOffset:()=>0,_emoteDriver:null,

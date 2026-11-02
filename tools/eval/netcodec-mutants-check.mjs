@@ -30,7 +30,7 @@ const roda = (args, cwd, espera, frases, proibidas = []) => {
 };
 
 roda([], ROOT, 0, ['APROVADO']);
-roda(['--mutante=sem-negociacao'], ROOT, 0, ['DETECTADO — só a cláusula alvo apagou', 'FALHA cliente negocia']);
+roda(['--mutante=sem-negociacao'], ROOT, 0, ['DETECTADO — só a cláusula alvo apagou', 'FALHA cliente oferece']);
 roda(['--mutante=sem-decoder'], ROOT, 0, ['DETECTADO — só a cláusula alvo apagou', 'FALHA o caminho de produção chama o decoder real']);
 roda(['--mutante=estranho'], ROOT, 1, ['mutante desconhecido: estranho']);
 
@@ -41,11 +41,11 @@ fs.mkdirSync(tmpJs, { recursive: true });
 fs.symlinkSync(path.join(ROOT, 'public/js/netcodec.js'), path.join(tmpJs, 'netcodec.js'));
 const escreve = (alvo, munge) => fs.writeFileSync(path.join(tmpJs, alvo), munge(fs.readFileSync(path.join(ROOT, 'public/js', alvo), 'utf8')));
 
-escreve('transporte.js', (s) => s.replace('new WebSocket(this.url, SNAPSHOT_PROTOCOLS)', 'new WebSocket(this.url, PROTOS_VELHOS)'));
+escreve('transporte.js', (s) => s.replace('new WebSocket(this.url, [CLIENT_SNAPSHOT_PROTOCOL])', 'new WebSocket(this.url, PROTOS_VELHOS)'));
 escreve('net.js', (s) => s);
 roda(['--mutante=sem-negociacao'], TMP, 2, ['NÃO APLICOU: âncora presente 0 vez(es)'], ['DETECTADO']);
 
-escreve('transporte.js', (s) => s.concat('\n// espelho: new WebSocket(this.url, SNAPSHOT_PROTOCOLS)\n'));
+escreve('transporte.js', (s) => s.concat('\n// espelho: new WebSocket(this.url, [CLIENT_SNAPSHOT_PROTOCOL])\n'));
 roda(['--mutante=sem-negociacao'], TMP, 2, ['NÃO APLICOU: âncora presente 2 vez(es)'], ['DETECTADO']);
 
 escreve('transporte.js', (s) => s.replace(/binaryType\s*=\s*'arraybuffer'/, "binaryType = 'blob'"));

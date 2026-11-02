@@ -25,10 +25,10 @@ const MUTANTES = {
     'const avanco = Number.isFinite(tLocalMs) ? Math.max(0, tLocalMs - this._ultimoLocal) : 0;',
     'const avanco = 0;',
   ],
-  // Volta a empilhar amostras de mesmo instante: a drenagem em lote vira rajada inventada.
-  'rajada-em-um-instante': [
-    'if (!temSrv && this._tm.length > 0 && tm === this._ultimoTm) {',
-    'if (false && this._tm.length > 0 && tm === this._ultimoTm) {',
+  // Sem chegada preservada, o instante da drenagem não informa uma taxa (#1143).
+  'chegada-pela-drenagem': [
+    'amostra(bytes, tServidorS, tLocalMs, tPacoteLocalMs) {',
+    'amostra(bytes, tServidorS, tLocalMs, tPacoteLocalMs = tLocalMs) {',
   ],
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
@@ -73,7 +73,7 @@ function simula(Medidor, { fps, travadaEmMs = null, travadaMs = 0, duracaoMs = 8
       if (chegadaLocal > t) break;
       if (silencioApos != null && chegadaLocal > silencioApos) break;
       // protocolo antigo com fila que preserva chegada carimba o pacote; sem ela,
-      // o 4º arg cai no default do medidor (= carimbo da drenagem, caso do navegador)
+      // o 4º arg fica ausente, como no transporte real do navegador
       medidor.amostra(B, comRelogioServidor ? tSrv : null, t, comRelogioServidor || carimboChegada ? chegadaLocal : undefined);
       k++;
     }
@@ -150,22 +150,20 @@ const hz300 = aos300.length ? +media(aos300.map((l) => l.hz)).toFixed(2) : NaN;
 cobra(Number.isFinite(hz300) && Math.abs(hz300 - R) <= 3,
   `NR6 · janela parcial não mente na entrada: aos ~300 ms reporta ${hz300} Hz para ${R} Hz reais`);
 
-// NR7 — protocolo sem relógio de servidor: degrada para o relógio local sem quebrar.
+// NR7 — fila sintética com carimbo de chegada preservado, disponível no quarto argumento.
 const { leituras: semT } = simula(Medidor, { fps: 60, comRelogioServidor: false });
 const semTEstavel = regime(semT, 2000);
 cobra(semTEstavel.every((l) => Number.isFinite(l.hz)) && Math.abs(media(semTEstavel.map((l) => l.hz)) - R) <= 0.5,
-  `NR7 · snapshot sem \`t\` (protocolo antigo) cai para o relógio local e segue medindo: ${+media(semTEstavel.map((l) => l.hz)).toFixed(2)} Hz`);
+  `NR7 · fila sintética preserva a chegada no quarto argumento: ${+media(semTEstavel.map((l) => l.hz)).toFixed(2)} Hz`);
 
 // NR8 — a MESMA travada no protocolo antigo: o navegador devolve o backlog do WS num
 // turno só (todas as amostras com o MESMO performance.now()); a rajada não pode virar
 // taxa nem banda inventada — é o defeito que o eixo por quadros tinha (fio #1143).
 const { leituras: loteSemT } = simula(Medidor, { fps: 2, travadaEmMs: 3000, travadaMs: TRAVADA_MS, duracaoMs: 20000, comRelogioServidor: false, carimboChegada: false });
-const picoLoteHz = Math.max(...loteSemT.map((l) => l.hz));
-const picoLoteKb = Math.max(...loteSemT.map((l) => l.kbps));
-cobra(picoLoteHz <= R * 1.1,
-  `NR8 · drenagem em lote sem carimbo de chegada não infla a taxa: pico ${picoLoteHz} Hz (teto ${+(R * 1.1).toFixed(1)}; empilhar o lote dava ~${esperadoDefeito} Hz)`);
-cobra(picoLoteKb <= ALVO_KBPS * 1.1,
-  `NR8b · o lote não infla a banda: pico ${picoLoteKb} KB/s (teto ${+(ALVO_KBPS * 1.1).toFixed(2)}; os ${Math.round((R * TRAVADA_MS) / 1000)} pacotes do backlog somariam ${Math.round((esperadoDefeito * B) / 1024)} KB/s)`);
+cobra(loteSemT.every(l => l.hz === null),
+  'NR8 · drenagem sem carimbo de chegada mantém a taxa indisponível em todas as leituras');
+cobra(loteSemT.every(l => l.kbps === null),
+  'NR8b · drenagem sem carimbo de chegada mantém a banda indisponível em todas as leituras');
 
 /* ---------------- saída ---------------- */
 if (JSON_OUT) {
@@ -181,7 +179,7 @@ if (JSON_OUT) {
 }
 
 if (MUT) {
-  const esperada = { 'eixo-de-quadros': 'NR2 ·', 'conta-sem-dividir': 'NR6 ·', 'janela-parada': 'NR5b ·', 'rajada-em-um-instante': 'NR8 ·' }[MUT];
+  const esperada = { 'eixo-de-quadros': 'NR2 ·', 'conta-sem-dividir': 'NR6 ·', 'janela-parada': 'NR5b ·', 'chegada-pela-drenagem': 'NR8 ·' }[MUT];
   const acendeu = mutanteAplicado && falhas.some(falha => falha.startsWith(esperada));
   if (!JSON_OUT) {
     console.log(acendeu

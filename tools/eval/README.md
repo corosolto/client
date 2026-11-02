@@ -16,6 +16,7 @@ com código 1 em falha crítica.
 
 | Arquivo | O que mede | Artefato |
 |---|---|---|
+| `construtor-input-check.mjs` | Entradas de grade não esgotam memória nem travam a CLI; o handler real do editor preserva objetos ao editar campos. | `npm run eval:construtor-input` (incluído em `eval:mapjson`) |
 | `ballistics-falloff-check.mjs` | Extremos e interpolação da queda de dano; mede jogador e ambas as IAs, com mutações da curva e da distância. | `npm run eval:ballistics-falloff` |
 | `firing-cadence-check.mjs` | Cadência pelo _updatePlayer real; calendário, cooldown, teto por passo, entrada e interrupções, com mutantes. | `npm run eval:firing-cadence` |
 | `recoil-contract-check.mjs` | Perfis históricos de #970; mede câmera, padrão e kick entregue ao viewmodel pelo disparo real. | `npm run eval:recoil-contract` |
@@ -259,3 +260,7 @@ TTK condicional e dispersão com cinco disparos; método e limites em
 - `npm run eval:javaporcosperf`: orçamento CPU separado de render; não equivale a FPS ou aprovação visual.
 
 Captura real3:2, leitura do modal/card e avaliação dos GLBs em movimento continuam portões independentes; testes Node não os substituem.
+
+`npm run eval:authored-draw-timing` cobre o saque declarado gameplay com Game/callbacks e GLB público reais: o clique antes do deploy é bloqueado e, depois dele, Equip terminou e o corpo está no frustum antes do tiro. O ramo com drawDrop compartilha a duração do clipe; AK/non-gameplay e fallback conservam seus tempos. Os três mutantes em memória exigem as falhas causais exatas. A ponte de carga Node e o DOM/renderer do harness são explícitos: não é aceite de raster, pintura, anatomia, mobile ou MP. É chamado por `eval:authored-transition`, na cadeia `check:vm`.
+
+`npm run eval:golden-skin-selection` carrega os GLBs públicos atuais de pistol/AK pelo `_loadFamily` completo no controller e switch do Game. Verifica body nomeado único, pentes/ferrolho, exclusão de mãos, idempotência, poses/IBMs/matrizes/clips/mount/câmera e AK sem pintura; cinco mutantes exigem seus RED causais. A cópia em memória habilita apenas a guarda Node de carga; a fronteira GLB usa parse real e textura neutra. Ordem invertida e body duplicado rejeitam fallback de primeira mesh. O alias integra `eval:authored-transition` → `check:vm`. Decalque, pintura no Game 3:2, anatomia/contato, mobile e MP continuam sem aceite visual.

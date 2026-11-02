@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { createHash, randomUUID } from 'node:crypto';
-import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -122,8 +121,12 @@ async function worker(config) {
     Object.defineProperty(globalThis, 'fetch', { configurable: true, get: () => localFetch, set() {} });
     const H = await import(pathToFileURL(path.join(sourceRoot, 'tools/eval/harness.mjs')).href);
     Object.defineProperty(globalThis, 'fetch', { configurable: true, writable: true, value: localFetch });
-    const require = createRequire(path.join(sourceRoot, 'package.json'));
-    const { GLTFLoader } = await import(pathToFileURL(require.resolve('three/addons/loaders/GLTFLoader.js')).href);
+    const vendorBase = pathToFileURL(path.join(sourceRoot, 'public/vendor') + path.sep).href;
+    const vendorURL = name => vendorBase + (name === 'three' ? 'three.module.js' : name.slice('three/'.length));
+    const { GLTFLoader } = await import(vendorURL('three/addons/loaders/GLTFLoader.js'));
+    if ((await import(vendorURL('three'))).Scene !== H.THREE.Scene
+      || (await import('three/addons/loaders/GLTFLoader.js')).GLTFLoader !== GLTFLoader)
+      throw Error('INFRA: source-root vendor identity differs from the harness');
     const load0 = GLTFLoader.prototype.load;
     cleanup.push(() => { GLTFLoader.prototype.load = load0; });
     GLTFLoader.prototype.load = function (url, done, progress, fail) {
@@ -147,7 +150,7 @@ async function worker(config) {
     temp = fs.mkdtempSync(path.join(config.artifacts, 'worker-'));
     const baseURL = pathToFileURL(path.join(sourceRoot, 'public/js')).href + '/';
     const absolute = text => text.replace(/from '(\.\/[^']+)'/g, (_, rel) => `from ${JSON.stringify(baseURL + rel.slice(2))}`)
-      .replace(/from '(three(?:\/[^']+)?)'/g, (_, name) => `from ${JSON.stringify(pathToFileURL(require.resolve(name)).href)}`)
+      .replace(/from '(three(?:\/[^']+)?)'/g, (_, name) => `from ${JSON.stringify(vendorURL(name))}`)
       .replace(/import\('\.\//g, `import('${baseURL}`);
     const glbURL = pathToFileURL(path.join(temp, 'glbchars.mjs')).href;
     fs.writeFileSync(path.join(temp, 'glbchars.mjs'), absolute(source['glbchars.js'].text));

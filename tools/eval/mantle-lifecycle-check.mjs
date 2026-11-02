@@ -31,7 +31,7 @@ if(mutant){
 const rows=[];
 const check=(clause,run)=>{try{run();rows.push({clause,pass:true});console.log('ok '+clause);}catch(e){rows.push({clause,pass:false,type:e.name,message:e.message});console.error('FALHA '+clause+': '+e.message);}};
 const textures=initTextures();
-const g=bootGame('fy_corrego',{textures,bots:4});
+const g=bootGame('corrego',{textures,bots:4});
 check('cache territorial pronto antes da primeira consulta',()=>{assert(g._mAlc,'pré-cálculo da rodada não pode depender do primeiro mantle');});
 for(const who of ['player','remote'])check('reset limpa trajetória e buffers '+who,()=>{
  {

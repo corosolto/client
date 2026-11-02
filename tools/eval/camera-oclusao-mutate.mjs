@@ -21,7 +21,8 @@ const REUSE = 'probes reutilizam array de interseções';
 const trials = [
   ['sem-pull-in', source.replace(BLOCO, ''),
     ['câmera para ANTES do prop (pull-in)', 'ombro: câmera fica antes do prop colado',
-      'ombro: malhas próprias somem só dentro da cápsula', 'câmera não entra no varal', ...VOLUME, REUSE]],
+      'ombro: malhas próprias somem só dentro da cápsula', 'câmera não entra no varal', ...VOLUME, REUSE,
+      'boom da Piscina para antes do fundo do armário']],
   ['ignora-camBlockers', source.replace(CAMBLOCO, ''), ['câmera não entra no varal', ...VOLUME]],
   ['piso-antigo', source.replace('Math.max(0, claro - 0.18)', 'Math.max(0.35, claro - 0.18)'),
     ['ombro: câmera fica antes do prop colado']],
@@ -54,8 +55,8 @@ const trials = [
     "if (e.code === 'KeyN') {"),
     ['repeat de Shift+N não troca de novo']],
   ['volta-b', source.replace(
-    "if (e.code === 'KeyN' && !e.repeat) {",
-    "if ((e.code === 'KeyN' || e.code === 'KeyB') && !e.repeat) {"),
+    "if (e.code === 'KeyB') { this._compra?.alternar(); return; }",
+    "if (e.code === 'KeyB') { this._toggleCamView(); return; }"),
     ['B e Shift+B não mexem na câmera']],
 ];
 

@@ -1,16 +1,22 @@
 // Captura 3:2 da cena real em pontos que PROVAM os landmarks dos cinco mapas novos.
 // Usa mapview.html: mesmo builder, texturas e GLBs do jogo, com câmera livre reprodutível.
 // Diferente de uma câmera aleatória de bot, cada quadro tem intenção declarada e viaja
-// com um manifest JSON. Uso: `ONLY=fy_corrego,fy_mansao node tools/capture-map-evidence.mjs`.
+// com um manifest JSON. Uso: `ONLY=corrego,mansao node tools/capture-map-evidence.mjs`.
 import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { MAP_EVIDENCE_ORDER, MAP_EVIDENCE_SHOTS } from './eval/map-evidence-views.mjs';
+import { MAPS } from '../public/js/maps.js';
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
 const OUT = process.env.OUT || 'tools/eval/asset-evidence/maps';
 const ONLY = new Set((process.env.ONLY || '').split(',').filter(Boolean));
+for (const map of [...MAP_EVIDENCE_ORDER, ...ONLY]) {
+  if (!Object.hasOwn(MAPS, map) || !Object.hasOwn(MAP_EVIDENCE_SHOTS, map)) {
+    throw new Error(`mapa sem roteiro canônico de captura: ${map}`);
+  }
+}
 const VIEWPORT = Object.freeze({ width: 1536, height: 1024, aspect: '3:2' });
 const sha = (value) => createHash('sha256').update(value).digest('hex');
 const cameraSha = (map, shot) => sha(JSON.stringify({
@@ -21,7 +27,7 @@ const propNames = existsSync('public/models/props')
   ? readdirSync('public/models/props').filter((name) => name.endsWith('.glb'))
   : [];
 const sourceFiles = (map) => {
-  const mapFile = map === 'fy_lajes' ? 'public/js/map_lajes_authored.js' : `public/js/map_${map.slice(3)}.js`;
+  const mapFile = map === 'lajes' ? 'public/js/map_lajes_authored.js' : `public/js/map_${map}.js`;
   const src = readFileSync(mapFile, 'utf8');
   const textureFiles = [...src.matchAll(/["']\/(img\/textures\/[^"']+)["']/g)]
     .map((match) => `public/${match[1]}`)
@@ -95,6 +101,8 @@ for (const map of MAP_EVIDENCE_ORDER) {
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   await page.goto(`${BASE}/mapview.html?map=${map}&capture=${sources[map].sha256.slice(0, 16)}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => window.MAPEVAL?.ready === true, null, { timeout: 180000 });
+  const loadedMap = await page.evaluate(() => window.__mapId);
+  if (loadedMap !== map) throw new Error(`mapa carregado ${loadedMap}; solicitado ${map}`);
   await page.addStyleTag({ content: '#hud{display:none!important}' });
   await page.waitForTimeout(1200);
   for (const shot of shots) {

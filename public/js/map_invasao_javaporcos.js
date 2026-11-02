@@ -235,7 +235,7 @@ export function buildInvasaoJavaporcos(scene, T, ambiente='cidade') {
     [-HALF, HALF, -HALF, -P, MAT.grama], [-HALF, HALF, P, HALF, MAT.grama],
     [-HALF, -P, -P, P, MAT.grama], [P, HALF, -P, P, MAT.grama],
     [-P, P, -P, -45, MAT.pasto, 2], [-P, -8, -45, -38, MAT.pasto, 1], [-8, 1, -45, -38, MAT.pasto, PASSO],
-    [1, P, -45, -38, MAT.pasto, 1],
+    [1, P, -45, -38, MAT.pasto, PASSO],
     [-P, P, -38, -C, MAT.pasto, 2], [-P, P, C, P, MAT.pasto, 2],
     [-P, -C, -C, C, MAT.pasto, 2], [C, P, -C, C, MAT.pasto, 2],
     [-C, C, -C, C, MAT.gramaCidade],

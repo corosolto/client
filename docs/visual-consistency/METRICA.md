@@ -28,8 +28,9 @@ que seja a nota nas demais dimensões. Uma captura bonita não encerra a avalia�
 
 Contratos novos pedidos pelo dono: **zero arte duplicada no mesmo mapa**, inclusive
 mesma imagem recortada ou escalada; Ferro Velho com grafites somente na casa de
-respawn B; Piscina com grafites e posters somente em paredes brancas. Inventariar
-também reutilização entre mapas, para curadoria. Ausência total de grafite não
+respawn B; Piscina com grafites e posters somente em paredes brancas. A mesma arte também
+não se repete entre os 14 mapas: o aceite global usa peças desenhadas, sem
+consultar o catálogo de donos, e bloqueia reutilização entre cenários. Ausência total de grafite não
 comprova curadoria: conferir assets carregados e preservar arte intencional válida.
 
 Não inventar posição da casa B ou classificar parede por aparência no nome do

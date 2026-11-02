@@ -39,13 +39,21 @@ export class MedidorDeTaxa {
     this.hz = 0; this.kbps = 0;
   }
 
-  /** Registra um snapshot que CHEGOU: `bytes`, `tServidorS` (snapshot.t em s, null = protocolo
-   *  antigo), `tLocalMs` (performance.now() da drenagem, só referência de avanço) e
-   *  `tPacoteLocalMs` (carimbo de chegada preservado pela fila; sem fila, = tLocalMs). */
-  amostra(bytes, tServidorS, tLocalMs, tPacoteLocalMs = tLocalMs) {
+  /** `tServidorS` mede simulação; `tLocalMs` avança a janela. Sem servidor, exige
+   *  `tPacoteLocalMs` preservado na chegada; caso contrário, publica indisponibilidade. */
+  amostra(bytes, tServidorS, tLocalMs, tPacoteLocalMs) {
     const temSrv = Number.isFinite(tServidorS);
+    if (!Number.isFinite(tLocalMs)) return;
+    if (!temSrv && !Number.isFinite(tPacoteLocalMs)) {
+      this.reiniciar();
+      this._eixoServidor = false;
+      this._vivo = this._congelado = true;
+      this._ultimoLocal = tLocalMs;
+      this.hz = this.kbps = null;
+      return;
+    }
     const tm = temSrv ? tServidorS * 1000 : tPacoteLocalMs;
-    if (!Number.isFinite(tm) || !Number.isFinite(tLocalMs)) return;
+    if (!Number.isFinite(tm)) return;
     /* `t` avançando é ESTIMATIVA em tempo de simulação, não hora de emissão: repetido ou
        atrasado não deixa ritmo a inferir — NULL, só a âncora, nunca 0/clamp/valor antigo. */
     if (this._vivo && temSrv && this._eixoServidor && tm <= this._ultimoTm && tm >= this._ultimoTm - RECUO_MAX_MS) {
@@ -65,11 +73,7 @@ export class MedidorDeTaxa {
       this._vivo = true;
     }
     const b = Number.isFinite(bytes) && bytes > 0 ? bytes : 0;
-    /* Drenagem em lote (aba travada devolve dezenas de mensagens no mesmo turno do
-       event loop, todas com o mesmo performance.now()): instante repetido não prova
-       ritmo nem distribuição de bytes — o excedente do mesmo instante é descartado
-       em vez de publicar a rajada inventada (~274 Hz, MB/s). O eixo do servidor não
-       passa por aqui: os carimbo dele já vêm espalhados pelo tempo de simulação. */
+    // Chegadas locais com carimbo repetido não provam ritmo nem distribuição de bytes.
     if (!temSrv && this._tm.length > 0 && tm === this._ultimoTm) {
       this._ultimoLocal = tLocalMs;
       return;

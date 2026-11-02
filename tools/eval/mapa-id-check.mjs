@@ -113,6 +113,17 @@ const SEM_VARREDURA = [
      ninguém vai olhar. A régua varre o sistema de arquivos, não o índice do git; enquanto
      for assim, o que o git ignora precisa sair daqui à mão. */
   join('.claude', 'worktrees'),
+  // Provas históricas preservadas; fontes e capturadores atuais continuam sob M1.
+  // Escopo e hashes: docs/reports/MAP-ID-SCOPE-20261102.md.
+  'tools/eval/asset-evidence/bug56-antes/manifest.json',
+  'tools/eval/asset-evidence/bug56-depois/manifest.json',
+  'tools/eval/asset-evidence/lenda-lanhouse/BROWSER-HANDOFF.md',
+  'tools/eval/asset-evidence/lenda-lanhouse/browser-handoff.json',
+  'tools/eval/asset-evidence/maps/manifest.json',
+  'tools/eval/asset-evidence/profeta-calcada/game/profeta-calcada-evidence.json',
+  'tools/eval/graffiti_audit.json',
+  'tools/eval/mantle_check.json',
+  'tools/eval/texel_check.json',
 ];
 const EXT = new Set(['.js', '.mjs', '.ts', '.astro', '.html', '.css', '.json', '.py', '.md']);
 
@@ -144,7 +155,9 @@ for (const rel of arquivos(RAIZ)) {
   let txt;
   try { txt = readFileSync(join(RAIZ, rel), 'utf8'); } catch { continue; }
   if (MUTAR === 'id-cs' && rel === 'public/js/game.js') txt += `\nconst mapaFake = 'fy_novo_mapa';\n`;
+  if (MUTAR === 'alias-inventado' && rel === 'tools/eval/mapas-sob-demanda-check.mjs') txt += `\ncarregaMapa('fy_novo_mapa');\n`;
   for (const m of txt.matchAll(FORMA_CS)) {
+    if (rel === 'tools/eval/mapas-sob-demanda-check.mjs' && Object.hasOwn(alias, m[1])) continue;
     achados.push({ rel, id: m[1], linha: txt.slice(0, m.index).split('\n').length });
   }
 }
@@ -152,6 +165,7 @@ const m1 = achados.length === 0;
 console.log('M1 · nenhum id no estilo Counter-Strike (fy_/de_/aim_/awp_) no código vivo');
 if (m1) console.log('   nenhum');
 else for (const a of achados.slice(0, 12)) console.log(`   ${a.rel}:${a.linha}  '${a.id}'`);
+if (achados.length > 12) console.log(`   … +${achados.length - 12} ocorrência(s), ${achados.length} no total`);
 console.log(`   ${m1 ? 'PASSA' : 'FALHA'}\n`);
 
 /* ── M2 ─────────────────────────────────────────────────────────────────────────── */

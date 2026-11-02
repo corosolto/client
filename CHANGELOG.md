@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.133`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.135`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -27,6 +27,7 @@
 
 ### Adicionado
 - Dá para dançar no meio da partida: a tecla T abre uma roda com os oito passos, a câmera se afasta para você se ver dançando e qualquer passo cai no instante em que você anda, atira ou morre.
+- O modo Vira-Casaca entra na seleção local: cada abate converte o adversário para o seu lado e a partida termina quando um time domina o elenco inteiro.
 - O personagem agora dança no lobby: oito passos brasileiros — passinho, samba no pé, ginga, frevo, dois pra lá, quadradinho, sarrada no ar e um salve — direto na tela de escolha, sem baixar nada a mais para quem não pedir.
 - Quem joga pelo aplicativo passa a ver aviso de manutenção e, quando houver, o caminho alternativo para continuar jogando, sem precisar esperar uma atualização na loja.
 - O jogo agora sabe se testar sozinho no celular: uma partida curta automática mede desempenho, travadas e erros no próprio aparelho, para o problema aparecer antes do jogador reclamar.

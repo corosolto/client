@@ -272,38 +272,38 @@ if (manifest) {
   if (shotgunCandidates.length !== 6 || !shotgunCandidates.every((url) => url.startsWith('audio/firearms-cc0-dev/'))) {
     erros.push(`LAB5f candidatos reais de shotgun no seletor local: ${shotgunCandidates.length}/6.`);
   }
-  if (manifest.cs?.reload?.length !== 1 || manifest.cs?.reloadend?.length !== 1 || manifest.cs?.bolt?.length !== 1) {
+  if (manifest.jogo?.reload?.length !== 1 || manifest.jogo?.reloadend?.length !== 1 || manifest.jogo?.bolt?.length !== 1) {
     erros.push('LAB6 foley disponível não foi ligado aos caminhos globais do runtime.');
   }
   for (const surface of ['concrete', 'metal', 'wood', 'dirt', 'grass', 'gravel', 'water']) {
-    if (!manifest.cs?.footstepsBySurface?.[surface]?.length) erros.push(`LAB7 passos de ${surface} não foram ligados por superfície.`);
+    if (!manifest.jogo?.footstepsBySurface?.[surface]?.length) erros.push(`LAB7 passos de ${surface} não foram ligados por superfície.`);
   }
   for (const key of ['death', 'explosion', 'roundstart', 'roundwin', 'roundlose', 'knife', 'knifehit', 'knifedeploy', 'dryfire']) {
-    if (!manifest.cs?.[key]?.length) erros.push(`LAB8 evento ${key} continua sem sample no runtime.`);
+    if (!manifest.jogo?.[key]?.length) erros.push(`LAB8 evento ${key} continua sem sample no runtime.`);
   }
   for (const key of ['grenadepin', 'grenadethrow', 'grenadebounce']) {
-    if (!manifest.cs?.[key]?.length) erros.push(`LAB8c evento ${key} continua sem sample no runtime.`);
+    if (!manifest.jogo?.[key]?.length) erros.push(`LAB8c evento ${key} continua sem sample no runtime.`);
   }
   for (const surface of ['concrete', 'metal', 'wood', 'glass', 'dirt', 'water']) {
-    if (!manifest.cs?.impactsBySurface?.[surface]?.length) erros.push(`LAB8i impacto de ${surface} continua sem pool proprio.`);
+    if (!manifest.jogo?.impactsBySurface?.[surface]?.length) erros.push(`LAB8i impacto de ${surface} continua sem pool proprio.`);
   }
   for (const key of ['body', 'armor']) {
-    if (!manifest.cs?.characterImpact?.[key]?.length) erros.push(`LAB8j impacto de ${key} continua sem pool proprio.`);
+    if (!manifest.jogo?.characterImpact?.[key]?.length) erros.push(`LAB8j impacto de ${key} continua sem pool proprio.`);
   }
   for (const key of ['weapon', 'ammo']) {
-    if (!manifest.cs?.pickupByKind?.[key]?.length) erros.push(`LAB8k pickup de ${key} continua sem pool proprio.`);
+    if (!manifest.jogo?.pickupByKind?.[key]?.length) erros.push(`LAB8k pickup de ${key} continua sem pool proprio.`);
   }
   for (const key of ['pistol', 'smg', 'rifle', 'shotgun', 'awp']) {
-    if (!manifest.cs?.weaponSwitchByClass?.[key]?.length) erros.push(`LAB8l troca de ${key} continua sem pool proprio.`);
-    if (manifest.cs?.weaponSwitchByClass?.[key]?.some((url) => !url.includes('/Guns/Foley/'))) {
+    if (!manifest.jogo?.weaponSwitchByClass?.[key]?.length) erros.push(`LAB8l troca de ${key} continua sem pool proprio.`);
+    if (manifest.jogo?.weaponSwitchByClass?.[key]?.some((url) => !url.includes('/Guns/Foley/'))) {
       erros.push(`LAB8la troca de ${key} ainda usa um efeito que não é mecanismo da arma.`);
     }
   }
-  if (JSON.stringify(manifest.cs?.weaponSwitchByClass || {}).includes('Combat/Draw_Weapon_Metal')) {
+  if (JSON.stringify(manifest.jogo?.weaponSwitchByClass || {}).includes('Combat/Draw_Weapon_Metal')) {
     erros.push('LAB8lb troca de arma de fogo ainda soa como saque de faca.');
   }
   for (const key of ['click', 'hover', 'back']) {
-    if (!manifest.cs?.uiByAction?.[key]?.length) erros.push(`LAB8m UI ${key} continua sem pool proprio.`);
+    if (!manifest.jogo?.uiByAction?.[key]?.length) erros.push(`LAB8m UI ${key} continua sem pool proprio.`);
   }
   const profiles = manifest.characterPhysical?.profiles || {};
   for (const profile of ['male', 'female', 'creature']) {

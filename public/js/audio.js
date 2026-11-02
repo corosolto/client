@@ -1,7 +1,7 @@
 import { JAVAPORCO_GRAVACOES } from './data/javaporcos_audio.js';
+import { normalizarManifestAudio } from './audio_manifest.js';
 // Procedural WebAudio SFX + user sample packs (audio/manifest.json).
-// Real CS 1.6 samples are NOT bundled (Valve copyright) — drop your own legally-owned
-// files in audio/cs/ and register them under "cs" in audio/manifest.json.
+// Registre samples próprios e licenciados na família `jogo` de audio/manifest.json.
 /* Fator global do tiro — ver shotWeapon(). 0,42 = -7,5 dB, revisão pedida pelo dono no
    BUG-140 para a arma não cobrir voz e passo (era 1,0; depois 0,62 e 0,52).
    O duck continua independente. Tunável ao vivo: ?gunvol=N. */
@@ -103,7 +103,7 @@ export class Sfx {
     for (const url of [`audio/manifest.json${query}`, 'audio/manifest.default.json?v=1']) {
       try {
         const r = await fetch(url, { cache: 'no-cache' });
-        if (r.ok) { this.pack = await r.json(); return; }
+        if (r.ok) { this.pack = normalizarManifestAudio(await r.json()); return; }
       } catch { /* try next */ }
     }
     this.pack = null;

@@ -5,8 +5,8 @@ import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, copyFileSy
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import { sonda, pula } from './sonda-filho.mjs';
+import { createHash } from 'node:crypto';
 import { carregarMapIds } from '../audio/map-ids.mjs';
 import { JAVAPORCO_GRAVACOES } from '../../public/js/data/javaporcos_audio.js';
 
@@ -62,6 +62,8 @@ try {
   copyFileSync(join(root, 'tools/audio/map-ids.mjs'), join(temp, 'tools/audio/map-ids.mjs'));
   copyFileSync(join(root, 'public/js/maps.js'), join(temp, 'public/js/maps.js'));
   copyFileSync(join(root, 'tools/audio/ensure-map-soundscapes.mjs'), join(temp, 'tools/audio/ensure-map-soundscapes.mjs'));
+  copyFileSync(join(root, 'tools/audio/migrar-manifesto.mjs'), join(temp, 'tools/audio/migrar-manifesto.mjs'));
+  copyFileSync(join(root, 'public/js/audio_manifest.js'), join(temp, 'public/js/audio_manifest.js'));
   copyFileSync(join(root, 'tools/audio/lajes-soundscape.mjs'), join(temp, 'tools/audio/lajes-soundscape.mjs'));
   copyFileSync(join(root, 'tools/audio/complete-amazonia-soundscape.mjs'), join(temp, 'tools/audio/complete-amazonia-soundscape.mjs'));
   // Cobertura COMPLETA de propósito: é o estado do pack privado, e o `ensure` do fetch

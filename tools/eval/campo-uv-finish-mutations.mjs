@@ -21,7 +21,7 @@ const NOVOS = Object.freeze([
   ['fim-compensado', TODOS], ['std-compensado', SO_STD],
   ['fim-oculto', TODOS], ['std-oculto', SO_STD],
   ['fim-ancestral-oculto', TODOS], ['fim-face-duplicada', TODOS],
-  ['std-face-duplicada', SO_STD], ['fim-translado', TODOS],
+  ['std-face-duplicada', SO_STD], ['fim-translado', TODOS], ['batente-translado', TODOS],
   ['folha-f7-metal', Object.freeze([2])], ['std-drawrange', SO_STD],
   ['std-grupo-oculto', SO_STD], ['fim-alpha-test', TODOS], ['fim-alpha-blend', TODOS],
   ['fim-raster-blend-zero', TODOS], ['fim-raster-depth-never', TODOS],

@@ -22,7 +22,7 @@ for (const arg of process.argv.slice(2)) {
 }
 
 // Fronteira de execução guardada: import de arquivo do repo falha como INFRA 3, não exit 1.
-let THREE; let GLTFLoader; let WEAPON_SKINS; let GOLDEN_VER; let footprintFullyCovered;
+let THREE; let GLTFLoader; let WEAPON_SKINS; let GOLDEN_VER; let footprintFullyCovered; let ownVmResource;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -209,8 +209,8 @@ async function load(file) {
 function makeSkin(mutate = (s) => s) {
   const body = mutate(read('public/js/weapon-skins.js'))
     .replace(/^import .*;\n/gm, '').replace(/^export \{ WEAPON_SKINS \};\n/gm, '').replace(/^export /gm, '');
-  return new Function('THREE', 'WEAPON_SKINS', 'footprintFullyCovered', 'FOOTPRINT_TOLERANCE', `${body}\nreturn {applyWeaponSkinCandidate, markTextures, knifeBladeFrame, KNIFE_MARK_PROFILES};`)(
-    THREE, WEAPON_SKINS, footprintFullyCovered, { cornerTol: 1e-7, areaTolFrac: 1e-6 });
+  return new Function('THREE', 'WEAPON_SKINS', 'footprintFullyCovered', 'FOOTPRINT_TOLERANCE', 'ownVmResource', `${body}\nreturn {applyWeaponSkinCandidate, markTextures, knifeBladeFrame, KNIFE_MARK_PROFILES};`)(
+    THREE, WEAPON_SKINS, footprintFullyCovered, { cornerTol: 1e-7, areaTolFrac: 1e-6 }, ownVmResource);
 }
 
 // Consumidor 1P REAL: KnifeMeleeViewModel de meleevm.js e seu _accept; mãos preservadas pelo
@@ -517,6 +517,7 @@ try {
   ({ WEAPON_SKINS } = await import('../../public/js/data/weapon-skin-definitions.js'));
   ({ GOLDEN_VER } = await import('../../public/js/data/goldenver.js'));
   ({ footprintFullyCovered } = await import('../../public/js/knife-mark-support.js'));
+  ({ ownVmResource } = await import('../../public/js/vmownership.js'));
 
   const selfTests = coverageSelfTests();
   const selfFailures = Object.entries(selfTests).filter(([, ok]) => !ok).map(([id]) => id);

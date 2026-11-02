@@ -62,15 +62,15 @@ Tamanho dos arquivos que o `gen-arch.mjs` indexa — bloco gerado, regenerado po
 
 | Arquivo | Linhas |
 |---|---:|
-| `public/js/game.js` | 9.712 |
-| `public/js/main.js` | 5.456 |
-| `public/js/glbchars.js` | 1.457 |
+| `public/js/game.js` | 9.812 |
+| `public/js/main.js` | 5.564 |
+| `public/js/glbchars.js` | 1.511 |
 | `public/js/characters.js` | 1.110 |
 | `public/js/weapons.js` | 360 |
 | `public/js/vmattach.js` | 352 |
 | `public/js/springs.js` | 259 |
 
-Total de `public/js/`: **70.818 linhas em 175 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
+Total de `public/js/`: **78.304 linhas em 199 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: ``git ls-files public/js/*.js | xargs wc -l``
 
@@ -209,15 +209,16 @@ com a portabilidade.
 
 ## Sistema de dados de conteúdo
 
-Hoje mapas, armas e personagens são **código**: cada `map_*.js` é geometria declarada à
-mão, e os maiores deles rivalizam em tamanho com os módulos de sistema. A direção
-"conteúdo como dado" do
-[`ROADMAP.md`](https://github.com/corosolto/client/blob/main/ROADMAP.md)
-quer migrar isso para JSON com loader único, para que uma contribuição de conteúdo seja
-*"abre um JSON e cria conteúdo"* em vez de *"um PR de código hand-coded arriscado"*.
+Armas e personagens ainda são **código**: cada `map_*.js` autorado é geometria declarada à
+mão, e os maiores rivalizam em tamanho com os módulos de sistema. A direção "conteúdo como
+dado" quer migrar isso para JSON com loader único, para que uma contribuição seja *"abre um
+JSON e cria conteúdo"* em vez de *"um PR de código hand-coded arriscado"*.
 
-Se você quer o trabalho de maior alavancagem no projeto inteiro, é esse. Ver
-[Estado atual](./estado.md).
+**Mapa já chegou lá.** `public/js/map_json.js` é o loader único: um descritor JSON (com
+rampas, plataformas, água e props por GLB) vira o mesmo contrato de world que um `build*()`,
+com a régua nascendo junto (`eval:mapjson`, `eval:mapjsonboot`) e um editor visual em
+`public/construtor.html`. Ver [Construtor de mapas](./construtor-de-mapas.md). Armas e
+personagens continuam sendo o trabalho de maior alavancagem ainda aberto nessa direção.
 
 ## O que é gerado, e o que não é
 

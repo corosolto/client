@@ -1,8 +1,10 @@
 // Três ambientes devem existir no registro e produzir layouts distintos, com a mesma mecânica.
 import assert from 'node:assert/strict';
 import {bootGame,initTextures,MAPS,THREE} from './harness.mjs';
-const mutant=process.argv.find(a=>a.startsWith('--mutante='))?.slice(10)||'';
-assert.ok(['','layout-copiado','sem-horda','silo-transparente','via-obstruida','terreno-deslocado','spawn-desnivelado'].includes(mutant));
+const args=process.argv.slice(2),mutant=args[0]?.slice('--mutante='.length)||'';
+const mutants=['layout-copiado','sem-horda','silo-transparente','via-obstruida','terreno-deslocado','spawn-desnivelado'];
+if(args.length>1||(args.length&&(!args[0].startsWith('--mutante=')||!mutants.includes(mutant)))){console.error('Uso: javaporcos-tres-mapas-check.mjs [--mutante='+mutants.join('|')+']');process.exit(2);}
+assert.ok(['',...mutants].includes(mutant));
 const ids=['invasao_javaporcos','distrito_rural','vila_da_mata'],assinaturas=new Set();
 let falha='';
 try {
@@ -12,6 +14,11 @@ try {
   assert.equal(MAPS[id].objectiveMode,'horde',`${id}: mecânica errada`);
   if(mutant==='layout-copiado'&&id!=='invasao_javaporcos')MAPS[id].build=MAPS.invasao_javaporcos.build;
   const g=bootGame(id,{textures:initTextures(),seed:77}),w=g.world;
+  const ocupacao=[];
+  for(let x=-32;x<=32;x+=2)for(let z=-32;z<=32;z+=2)ocupacao.push(w.colliders.some(c=>{if(c.maxY-c.minY<1)return false;if(!c.ry)return x>c.minX&&x<c.maxX&&z>c.minZ&&z<c.maxZ;const dx=x-c.cx,dz=z-c.cz;return Math.abs(dx*c.cos-dz*c.sin)<c.hx&&Math.abs(dx*c.sin+dz*c.cos)<c.hz;}));
+  const assinatura=ocupacao.join('');
+  assert.ok(!assinaturas.has(assinatura),'layouts não diferem');
+  assinaturas.add(assinatura);
   assert.ok(g.objective,'modo não iniciou');assert.equal(w.horda.frentes.length,6);
   assert.ok(w.hordeRefuges.length>=4);assert.ok(w.pickups.length>=12);
   g.scene.updateMatrixWorld(true);
@@ -55,9 +62,6 @@ try {
    }}
   }
   const layout=w.root.userData.layoutAmbiente||'cidade-quarteiroes';
-  const ocupacao=[];
-  for(let x=-32;x<=32;x+=2)for(let z=-32;z<=32;z+=2)ocupacao.push(w.colliders.some(c=>{if(c.maxY-c.minY<1)return false;if(!c.ry)return x>c.minX&&x<c.maxX&&z>c.minZ&&z<c.maxZ;const dx=x-c.cx,dz=z-c.cz;return Math.abs(dx*c.cos-dz*c.sin)<c.hx&&Math.abs(dx*c.sin+dz*c.cos)<c.hz;}));
-  assinaturas.add(ocupacao.join(''));
   console.log(`✓ MAPA ${id}: ${w.waypoints.nodes.length} nós, ${w.foodSpots.length} alimentos, layout ${layout}`);
  }
  assert.equal(assinaturas.size,3,'layouts não diferem');

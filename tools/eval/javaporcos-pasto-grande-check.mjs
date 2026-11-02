@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { THREE, initTextures, bootGame } from './harness.mjs';
-const mutante = process.argv.find(a => a.startsWith('--mutante='))?.split('=')[1];
-if (mutante && !['pasto-curto', 'terreno-afundado', 'diagonal-antiga'].includes(mutante)) throw Error(`mutante desconhecido: ${mutante}`);
+const args = process.argv.slice(2), mutante = args[0]?.slice('--mutante='.length);
+if (args.length > 1 || (args.length && (!args[0].startsWith('--mutante=') || !['pasto-curto', 'terreno-afundado', 'diagonal-antiga'].includes(mutante)))) {
+  console.error('Uso: javaporcos-pasto-grande-check.mjs [--mutante=pasto-curto|terreno-afundado|diagonal-antiga]'); process.exit(2);
+}
 const game = bootGame('invasao_javaporcos', { textures: initTextures(), seed: 77 });
 const world = game.world, troncos = world.root.getObjectByName('mata-troncos');
 assert.ok(troncos?.isInstancedMesh && troncos.count, 'mata real ausente');
@@ -34,7 +36,7 @@ const raio = new THREE.Raycaster(), baixo = new THREE.Vector3(0, -1, 0);
 let erro = 0, pior = null;
 for (let x = -67.5; x <= 67.5; x += 1.5) for (let z = -67.5; z <= 67.5; z += 1.5) {
   if (Math.max(Math.abs(x), Math.abs(z)) < cidade) continue;
-  const y = world.groundHeightAt(x, z);
+  const y = world.terrainHeightAt(x, z);
   raio.set(new THREE.Vector3(x, y + 3, z), baixo); raio.far = 6;
   const hit = raio.intersectObjects(terrenos, false)[0];
   assert.ok(hit, `terreno ausente em ${x},${z}`);

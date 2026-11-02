@@ -34,7 +34,7 @@ gramas" do dono, agora com coordenada por peça em `graffiti_census.json → orf
    Conserto: remover as entradas com x=y=z=0 do layout assado (elas desenhavam um
    poster no meio do mapa, no chão da origem) — ou reposicionar se o poster valia.
 2. **Lajes perdeu o graffiti inteiro no rename.** O layout existe — sob a chave
-   `fy_lajes` (veio do ramo FP: "só os mapas que ela não tem vêm deste ramo") — mas
+   `GRAFITE_FP.fy_lajes` (veio do ramo FP: "só os mapas que ela não tem vêm deste ramo") — mas
    o registro agora constrói `lajes` (`map_lajes_authored.js`), e o `GRAFITE` não
    tem chave `lajes`. 1821 placas peladas no mapa mais novo da casa. O `ALIAS_MAPA`
    resolve id de mapa em link/banco; nada resolve chave de layout. Conserto:
