@@ -105,7 +105,7 @@ Cobertura: **3864 de 9087 linhas (43%)** do `game.js` têm dono declarado. O res
 | 399 | `PUNCH_ZOOM` | 3 |
 | 402 | `BOCA_CORPO` | 3 |
 | 405 | `bocaLocalDaArma` | 22 |
-| 371 | `TRACER_STYLE` | 6 |
+| 428 | `LANDING_FX_STYLE` | 12 |
 | 381 | `ADS_RAMPA_S` | 3 |
 | 385 | `aberturaCone` | 16 |
 | 401 | `anguloDeDisparo` | 4 |
@@ -292,6 +292,7 @@ Cobertura: **3864 de 9087 linhas (43%)** do `game.js` têm dono declarado. O res
 | 4718 | `_killfeedWeaponIcon()` | 9 |
 | 4727 | `_wpnIcon()` | 64 |
 | 4791 | `_tracer()` | 26 |
+| 4997 | `_landingFx()` | 27 |
 | 4817 | `_puff()` | 39 |
 | 4856 | `_holeDecalMat()` | 8 |
 | 4864 | `_flash()` | 61 |

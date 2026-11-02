@@ -1208,6 +1208,7 @@ export function buildPoolDay(scene, T) {
 
   // Jogador e bots usam o mesmo chão, A* e penalidade dentro d'água.
   const slowAt = (x, z) => groundHeightAt(x, z) < -0.35;
+  const waterSurfaceAt = (x, z) => slowAt(x, z) ? -0.4 : null;
 
   /* ═══ PASSADA DE GRAFITE (07/08) ══════════════════════════════════════════
      Reprovação do dono: "na piscina ainda tem muito muro e obstáculos e armários
@@ -1277,7 +1278,7 @@ export function buildPoolDay(scene, T) {
 
   return {
     ambience,
-    root, colliders, occluders, camBlockers, decalSolids: [root], groundHeightAt, slowAt,
+    root, colliders, occluders, camBlockers, decalSolids: [root], groundHeightAt, slowAt, waterSurfaceAt,
     update(dt) { for (const w of scene.userData.waters || []) w.update(dt); },
     spawns, sun, hemi, pickups,
     /* BANDEIRAS DO CTF — DECLARADAS (06/08, defeito do dono: "bandeiras com nome do pátio

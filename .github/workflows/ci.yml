@@ -117,6 +117,7 @@ jobs:
       - name: Escadão — circulação, estrutura e casa
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
+
       - name: Escadão — compatibilidade com pacote de áudio publicado
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/escadao-audio-pack-check.mjs
@@ -298,7 +299,10 @@ jobs:
         run: npm ci
       - name: Validar fluidez, território e rede do mantle
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network
+        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network eval:landing-impact
+      - name: Penitenciária liga o look do próprio mapa (mutante corrego)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:lookbinding
 
   build:
     needs: [reguas-e-site, invariantes, mantle]
