@@ -153,3 +153,15 @@ test('CTRL4 non-JSON binary negative zero is outside this guard',()=>{
  const input=snapshot(null);input.t=-0;
  assert.equal(Object.is(current.decodeSnapshot(current.encodeSnapshot(input,8)).t,-0),true);
 });
+
+// Compatibilidade com a compra do PR1216 (staging b8a9c30a3): formato público v8 e reboque privado.
+test('v8 preserves canonical economy bytes together with the objective', () => {
+ const snapshot=fixture(7,10);snapshot.objective={mode:'javaporcos',wave:2};
+ const priv={id:100,ackSeq:19,x:1.25,y:.2,z:2.5,mag:17,res:61,reloadIn:.5,primary:'ak',secondary:'pistol',saldo:1234,compraRestante:17,colete:70,capacete:true,flashes:2};
+ const trailer=current.encodeTrailerV8(priv);assert.equal(trailer.length,35);
+ const wire=current.juntarV5(current.encodeSnapshot(snapshot,8),trailer);
+ assert.equal(createHash('sha256').update(wire).digest('hex'),'faff466cad4fe1a51fe5d23aed3830c09ea321e71c7e9a56043105b8c77a6297');
+ const out=current.decodeSnapshot(wire);assert.deepEqual(out.objective,snapshot.objective);
+ for(const key of ['saldo','compraRestante','colete','capacete','flashes','ackSeq','mag','res'])assert.equal(out.meu[key],priv[key],key);
+ assert.equal(out.ents[0].saldo,priv.saldo);assert.equal(out.ents[0].weapon,'awp');
+});
