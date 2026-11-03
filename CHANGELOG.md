@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.136`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.137`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -157,6 +157,14 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.137] — 2026-11-03
+
+### Mudado
+- fix(audio): ambiência do v9 no ramo privado do fetch-audio (build de produção) (#1226)
+- lote release: Javaporcos aberto a todos + luvas/origem, câmera/ombro, pouso com peso, strict v7, pack v9 (16 ambiente), migração corosolto.com.br (#1224)
+- fix(audio): ambiência do v9 roda também no ramo privado do fetch-audio
+- fix(net): igualdade estrita na primária — snapshot v7 sem economia não apaga arma
 
 ## [2.1.0-alpha.136] — 2026-11-03
 
