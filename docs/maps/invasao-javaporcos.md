@@ -19,8 +19,8 @@ controle. O cenário não reproduz uma propriedade ou município específico.
 Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
 [`invasao-javaporcos-layout.md`](invasao-javaporcos-layout.md).
 
-- **Pegada:** 136 × 136 m (`bounds` ±68), com r = max(|x|, |z|). Miolo urbano em
-  `cityBounds` ±36; pasto de r = 36 a 54; mata de 54 a 68.
+- **Pegada:** 136 × 136 m (`bounds` ±68), com r = max(|x|, |z|). Cidade em
+  `|x|, |z| ≤ 36` (quadrado `cityBounds`); pasto em `36 < r ≤ 54`; mata em `54 < r ≤ 68`.
 - **Malha urbana:** avenida em cruz de 12 m (x = 0 e z = 0) com calçada de 2 m e meio-fio
   de 0,15 m; viela de terra de 3,5 m em |x| = 22 e |z| = 22; anel perimetral de terra
   entre 31,5 e 36 m. A calçada PARA no cruzamento — ela não atravessa a pista.
@@ -32,8 +32,8 @@ Planta, cotas, frentes, becos, setores e A/B de 30/10/2026:
   arame a 37,2 m e trilha de terra batida da boca até a cidade. Linha de tiro aberta da
   borda da cidade até a mata.
 - **Mata:** 1.018 árvores instanciadas (tronco + três camadas de copa achatada) e ~3.700
-  peças de sub-bosque, cipó e capim. A faixa de 54 a 63 m é explorável, com colisor por tronco;
-  o limite externo de 63 a 68 m fecha a arena.
+  peças de sub-bosque, cipó e capim. A faixa de `54 < r ≤ 63` é explorável, com colisor por tronco;
+  o limite externo de `63 < r ≤ 68` fecha a arena.
 - **Entradas:** seis frentes nos quatro lados (norte, leste, sul e oeste). Cada uma é uma trilha de 3,5 m que
   entra na mata, DOBRA e morre numa clareira de 3 m de raio.
 - **Becos:** 4, um por lado, de 2,5 m entre fundos de casa, do anel perimetral à viela.

@@ -6,8 +6,9 @@ Decisões do dono de 30/10/2026, traduzidas em geometria. A ficha do mapa é
 artes-conceito em [`arte-javaporcos/`](arte-javaporcos/README.md) (`conceito-a-aerea` é a
 planta macro).
 
-1. **Pasto** entre a cidade (`cityBounds` ±36) e a mata: anel de r = 36 a 54, com
-   r = max(|x|, |z|). Linha de tiro aberta da borda da cidade até a primeira árvore.
+1. **Pasto** entre a cidade (`cityBounds`, quadrado `|x|, |z| ≤ 36`) e a mata: anel
+   `36 < r ≤ 54`, com r = max(|x|, |z|). Linha de tiro aberta da borda da cidade
+   até a primeira árvore.
 2. **Seis frentes** de trilha distribuídas pelos quatro lados da mata. Há nove metros
    de profundidade explorável antes da parede externa colidível.
 3. **Becos** de 2,5 m entre fundos de casa ligando o anel que encosta no pasto à viela,
@@ -19,12 +20,12 @@ fica a 62,6 m; MATA1 mantém 5,4 m de mata fechada entre clareira e borda.
 
 ## Planta
 
-| faixa (r) | o que é |
+| faixa | o que é |
 | --- | --- |
-| 0 a 36 | cidade: avenida em cruz, vielas em ±22, anel perimetral de terra 31,5–36 |
-| 36 a 54 | pasto: sobe 0,45 m em rampa ondulada; cerca a 37,2; córrego no lado norte |
-| 53,4 a 63 | orla e mata explorável, com colisor por tronco |
-| 63 a 68 | parede de mata: colisor em colunas de 0,5 m, aberto só nas trilhas |
+| `|x|, |z| ≤ 36` | cidade: avenida em cruz, vielas em ±22, anel perimetral de terra 31,5–36 |
+| `36 < r ≤ 54` | pasto: sobe 0,45 m em rampa ondulada; cerca a 37,2; córrego no lado norte |
+| `53,4 < r ≤ 63` | orla e mata explorável, com colisor por tronco |
+| `63 < r ≤ 68` | parede de mata: colisor em colunas de 0,5 m, aberto só nas trilhas |
 
 ## Cotas do relevo
 
