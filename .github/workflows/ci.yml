@@ -72,6 +72,8 @@ jobs:
         run: npm run eval:netrate
       - name: Contrato de famílias e marcas do áudio
         run: npm run eval:audiomarcas
+      - name: Studio pack verification and immutable install
+        run: npm run eval:studiopack
       - name: Dependências e reconstrução do fundo do menu
         run: |
           npm run eval:menuprops
