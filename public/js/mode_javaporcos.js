@@ -563,7 +563,9 @@ export function snapshotHorda(state) {
   };
 }
 
-const MODEL_PATHS = Object.fromEntries(Object.entries(MODELOS_JAVAPORCOS).map(([tipo, nome]) => [tipo, `/models/enemies/javaporcos/${nome}.glb`]));
+/* Chave do mapa = IDENTIFICADOR do GLB (valor do catálogo): é o que varianteJavaporco
+   devolve e o que o carregador registra, então a variante resolve no template direto. */
+const MODEL_PATHS = Object.fromEntries(Object.values(MODELOS_JAVAPORCOS).map((nome) => [nome, `/models/enemies/javaporcos/${nome}.glb`]));
 const modelTemplates = new Map();
 let preloadPromise = null;
 
@@ -634,7 +636,8 @@ function fallbackAnimal(type) {
    `position.y = -box.min.y` que o passo do bicho sobrescrevia e enterrava a pata. */
 function visualAnimal(type, mutante = '', ordinal = 0) {
   const variante = varianteJavaporco(type, ordinal);
-  const template = modelTemplates.get(variante) || modelTemplates.get(type);
+  const baseId = MODELOS_JAVAPORCOS[type] || type;
+  const template = modelTemplates.get(variante) || modelTemplates.get(baseId);
   const corpo = template ? template.clone(true) : fallbackAnimal(type);
   const box = new THREE.Box3().setFromObject(corpo);
   const altura = Math.max(.01, box.max.y - box.min.y);

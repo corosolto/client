@@ -4,7 +4,9 @@ export const MODELOS_JAVAPORCOS = Object.freeze({
   listrado: 'leitao_listrado', malhado: 'javaporco_malhado',
   ruivo: 'javaporco_ruivo', velho: 'javaporco_velho_cicatrizado',
 });
-const variantes = Object.freeze({ jovem: ['jovem', 'listrado'], adulto: ['adulto', 'malhado', 'ruivo'], matriarca: ['matriarca', 'velho'], ariete: ['ariete'] });
+/* Os valores são IDENTIFICADORES de GLB em models/enemies/javaporcos (review #1219):
+   o retorno de varianteJavaporco resolve direto no modelo, sem apelido no meio. */
+const variantes = Object.freeze({ jovem: [MODELOS_JAVAPORCOS.jovem, MODELOS_JAVAPORCOS.listrado], adulto: [MODELOS_JAVAPORCOS.adulto, MODELOS_JAVAPORCOS.malhado, MODELOS_JAVAPORCOS.ruivo], matriarca: [MODELOS_JAVAPORCOS.matriarca, MODELOS_JAVAPORCOS.velho], ariete: [MODELOS_JAVAPORCOS.ariete] });
 export function varianteJavaporco(tipo, ordinal) {
   const opcoes = variantes[tipo] || [tipo];
   let seed = (Math.abs(Math.trunc(ordinal)) + 1) >>> 0;

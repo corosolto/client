@@ -297,7 +297,7 @@ regra('as três frentes entram no rodízio e os IDs são estáveis', () => {
 
 regra('as ondas reais alcançam todas as oito aparências', () => {
   const horda = criarHorda({ seed: 319 }), vistas = new Set();
-  const pools = { jovem: ['jovem','listrado'], adulto: ['adulto','malhado','ruivo'], matriarca: ['matriarca','velho'], ariete: ['ariete'] };
+  const pools = { jovem: ['javali_jovem','leitao_listrado'], adulto: ['javaporco_adulto','javaporco_malhado','javaporco_ruivo'], matriarca: ['matriarca_javali','javaporco_velho_cicatrizado'], ariete: ['ariete_javali'] };
   for(let onda=0;onda<8;onda++) {
     iniciarOnda(horda);let guarda=0;
     while(horda.remaining>0&&guarda++<10000) {
@@ -309,7 +309,7 @@ regra('as ondas reais alcançam todas as oito aparências', () => {
     }
     assert.ok(guarda<10000,'onda travada');
   }
-  assert.deepEqual([...vistas].sort(),Object.keys(MODELOS_JAVAPORCOS).sort());
+  assert.deepEqual([...vistas].sort(),Object.values(MODELOS_JAVAPORCOS).sort());
 });
 
 regra('dois clientes fecham as oito ondas com o mesmo estado', () => {
@@ -481,7 +481,7 @@ regra('a pata encosta no chão mesmo com o pivô do GLB fora do lugar', () => {
   const molde = new THREE.Group();
   const corpo = new THREE.Mesh(new THREE.BoxGeometry(1, 1.4, 2), new THREE.MeshBasicMaterial());
   molde.add(corpo);   // centro na origem: o pivô do GLB fica 0,7 m acima da pata
-  registrarModeloJavaporco('jovem', molde);
+  registrarModeloJavaporco('javali_jovem', molde);
   const ctx = jogoFalso({ jogadorEm: [0, 0] });
   abrirOnda(ctx);
   for (let i = 0; i < 120; i++) passo(ctx, 1 / 60);
@@ -495,7 +495,7 @@ regra('a pata encosta no chão mesmo com o pivô do GLB fora do lugar', () => {
     assert.ok(base >= chao - 0.01, `modelo enterrado ${(chao - base).toFixed(3)} m`);
     assert.ok(base <= chao + 0.06, `modelo flutuando ${(base - chao).toFixed(3)} m`);
   }
-  registrarModeloJavaporco('jovem', null);
+  registrarModeloJavaporco('javali_jovem', null);
 });
 
 regra('o bando anda PARA o alvo, não de costas', () => {
