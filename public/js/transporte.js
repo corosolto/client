@@ -1,6 +1,6 @@
 // Transporte da sessão de jogo atrás de uma interface pequena. O cabeçalho do net.js promete
 // isso desde sempre; até 12/09 ele falava `this.ws` direto em nove pontos. Ver docs/TRANSPORTE.md.
-import { MAX_SNAPSHOT_BYTES, CLIENT_SNAPSHOT_PROTOCOL } from './netcodec.js';
+import { MAX_SNAPSHOT_BYTES, CLIENT_SNAPSHOT_PROTOCOL, SNAPSHOT_PROTOCOLS } from './netcodec.js';
 
 export class TransporteWS {
   constructor(url) { this.url = url; this.ws = null; }
@@ -8,10 +8,10 @@ export class TransporteWS {
   // `manipuladores` = { aberto, mensagem, erro, fechado }. Quem decide o que fazer é o NetClient.
   abrir(manipuladores) {
     const h = manipuladores || {};
-    this.ws = new WebSocket(this.url, [CLIENT_SNAPSHOT_PROTOCOL]);
+    this.ws = new WebSocket(this.url, SNAPSHOT_PROTOCOLS);
     this.ws.binaryType = 'arraybuffer';
     this.ws.onopen = () => {
-      if (this.ws.protocol !== CLIENT_SNAPSHOT_PROTOCOL) {
+      if (!SNAPSHOT_PROTOCOLS.includes(this.ws.protocol)) {
         h.erro?.(new Error('subprotocolo_nao_negociado'));
         if (this.ws.readyState < 2) this.fechar(1002, 'subprotocolo_nao_negociado');
         return;
