@@ -15,7 +15,7 @@
 
    USO
      node tools/medir-boot.mjs --cenario=desktop-cabo
-     node tools/medir-boot.mjs --todos --repeticoes=3 --base=https://www.csbrasil.online
+     node tools/medir-boot.mjs --todos --repeticoes=3 --base=https://www.corosolto.com.br
      node tools/medir-boot.mjs --todos --json=evidence/boot.json
      node tools/medir-boot.mjs --cenario=celular-3g --patch   # com o diff local aplicado
 
@@ -33,7 +33,7 @@ const args = process.argv.slice(2);
 const val = (k, d) => { const v = (args.find((a) => a.startsWith(`--${k}=`)) || '').split('=').slice(1).join('='); return v === '' || v === undefined ? d : v; };
 const flag = (k) => args.includes(`--${k}`);
 
-const BASE = val('base', process.env.BASE || 'https://www.csbrasil.online');
+const BASE = val('base', process.env.BASE || 'https://www.corosolto.com.br');
 const REPS = Number(val('repeticoes', 3));
 const TOPN = Number(val('top', 15));
 const TIMEOUT = Number(val('timeout', 180000));

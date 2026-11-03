@@ -69,7 +69,7 @@ async function mundo({ webdriver = false, search = '', fetchFalha = false, agora
   const doc = { visibilityState: 'visible', addEventListener: (t, fn) => { (ouvintes[`doc:${t}`] ||= []).push(fn); } };
   Object.defineProperty(doc, 'cookie', { get() { storage.push('document.cookie'); return ''; }, set() { storage.push('document.cookie='); } });
   const g = {
-    location: { search, hostname: 'www.csbrasil.online' },
+    location: { search, hostname: 'www.corosolto.com.br' },
     navigator: { webdriver },
     document: doc,
     window: {},

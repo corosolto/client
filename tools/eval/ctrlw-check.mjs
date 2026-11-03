@@ -67,7 +67,7 @@
    USO
      node tools/eval/ctrlw-check.mjs
      node tools/eval/ctrlw-check.mjs --mutante=semlock
-     BASE=https://www.csbrasil.online node tools/eval/ctrlw-check.mjs
+     BASE=https://www.corosolto.com.br node tools/eval/ctrlw-check.mjs
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import { spawn, spawnSync, execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';

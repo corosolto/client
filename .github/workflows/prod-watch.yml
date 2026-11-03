@@ -53,19 +53,24 @@ jobs:
       # um mês; sem purge a release nova fica invisível apesar do GLB já existir.
       # Sem o secret cadastrado, pula — o probe ainda vale.
       # (O secret mora no env DO JOB: `if` de step não enxerga env do próprio step.)
+      # A zona migrou de csbrasil.online para corosolto.com.br (domínio canônico
+      # www.corosolto.com.br). O CF_API_TOKEN precisa de acesso à zona NOVA
+      # (Zone: Read + Cache Purge); enquanto o token não a cobrir, exporte
+      # CF_ZONE_NAME apontando para a zona que ele ainda alcança.
       - name: purge do edge Cloudflare (/js/* + CSS + manifesto de skins)
         if: env.CF_API_TOKEN != ''
         run: |
+          ZONE_NAME="${CF_ZONE_NAME:-corosolto.com.br}"
           ZONE_ID=$(curl -sS -H "Authorization: Bearer $CF_API_TOKEN" \
-            "https://api.cloudflare.com/client/v4/zones?name=csbrasil.online" \
+            "https://api.cloudflare.com/client/v4/zones?name=$ZONE_NAME" \
             | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).result[0].id))")
           curl -sS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" \
-            --data '{"prefixes":["www.csbrasil.online/js/","www.csbrasil.online/style.css","www.csbrasil.online/models/skins/manifest.json"]}' \
+            --data '{"prefixes":["www.corosolto.com.br/js/","www.corosolto.com.br/style.css","www.corosolto.com.br/models/skins/manifest.json"]}' \
             "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache"
 
       - name: probe de coerência do edge
         id: probe
-        run: node tools/eval/prod-coherence.mjs https://www.csbrasil.online
+        run: node tools/eval/prod-coherence.mjs https://www.corosolto.com.br
 
       # O purge acima esvazia o edge e cada release muda o ?v=: sem aquecer, os primeiros
       # jogadores de cada alpha pagam a origem em todos os assets (medido 06/09/2026, logo
@@ -75,13 +80,13 @@ jobs:
       - name: aquece o edge depois do deploy
         if: github.event_name == 'deployment_status'
         continue-on-error: true
-        run: node tools/ops/aquecer.mjs https://www.csbrasil.online --espera=120000
+        run: node tools/ops/aquecer.mjs https://www.corosolto.com.br --espera=120000
 
       - name: probe do banco e schema de telemetria
         run: |
           node --input-type=module - <<'NODE'
           const backend = 'https://csbrasil-backend-hupd3weo5q-rj.a.run.app';
-          const origin = 'https://www.csbrasil.online';
+          const origin = 'https://www.corosolto.com.br';
           const preflight = await fetch(`${backend}/api/telemetry`, {
             method: 'OPTIONS',
             headers: {
@@ -96,7 +101,7 @@ jobs:
           console.log(JSON.stringify({ corsBeaconOk, status: preflight.status }));
           if (!corsBeaconOk) process.exit(1);
 
-          const response = await fetch('https://www.csbrasil.online/api/health');
+          const response = await fetch('https://www.corosolto.com.br/api/health');
           const body = await response.json().catch(() => ({}));
           console.log(JSON.stringify(body));
           // perf/match/city dependem de gente jogando e podem ficar ociosos legitimamente.

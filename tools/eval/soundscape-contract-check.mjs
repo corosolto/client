@@ -149,7 +149,7 @@ async function entradasDoPack(url) {
 }
 
 if (!MUTANTE || MUTANTE === 'asset-ausente') {
-  const ORIGEM = process.env.ASSET_ORIGIN || 'https://www.csbrasil.online';
+  const ORIGEM = process.env.ASSET_ORIGIN || 'https://www.corosolto.com.br';
   const alvos = [...srcsUnicos, ...Object.values(AMB_LOOPS)];
   for (const pools of Object.values(BIOME_SHOTS)) for (const pool of pools) alvos.push(...pool.srcs);
   /* Mutante: o primeiro src de ambiente resolve para um hash que não existe no

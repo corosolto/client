@@ -73,7 +73,7 @@ if (dryRun) {
 const apiKey = provider === 'openrouter' ? ENV.OPENROUTER_API_KEY : ENV.ELEVENLABS_API_KEY;
 if (!apiKey) throw new Error(`${provider === 'openrouter' ? 'OPENROUTER_API_KEY' : 'ELEVENLABS_API_KEY'} ausente; use --dry-run ou configure a chave fora do git`);
 const headers = { Authorization: `Bearer ${apiKey}`, 'content-type': 'application/json',
-  'HTTP-Referer': 'https://game.csbrasil.online', 'X-Title': 'CORO SOLTO: Treta Suprema' };
+  'HTTP-Referer': 'https://www.corosolto.com.br', 'X-Title': 'CORO SOLTO: Treta Suprema' };
 
 async function jsonRequest(url) {
   const response = await fetch(url, { headers });

@@ -18,7 +18,7 @@ for (const a of args) {
   if (!k || vistos.has(k)) { console.error('uso: --base=URL --api-base=ORIGIN --mutante=cartaz-ansioso|fauna-cedo --self-test (sem duplicatas)'); process.exit(2); }
   vistos.add(k); opcoes[k]=m?.[2] ?? true;
 }
-const MUTANTE=opcoes.mutante || '', BASE=opcoes.base ?? process.env.BOOT_CANDIDATE_BASE ?? process.env.BASE ?? 'https://www.csbrasil.online';
+const MUTANTE=opcoes.mutante || '', BASE=opcoes.base ?? process.env.BOOT_CANDIDATE_BASE ?? process.env.BASE ?? 'https://www.corosolto.com.br';
 if (!['','cartaz-ansioso','fauna-cedo'].includes(MUTANTE)) { console.error('mutante desconhecido');process.exit(2); }
 try { if (!['http:','https:'].includes(new URL(BASE).protocol)) throw Error(); }
 catch { console.error('BASE inválida');process.exit(2); }

@@ -67,11 +67,11 @@ if (MUT === 'sem-purge-deploy') deployProd = mutate(deployProd,
   /\n      - name: purge do edge[\s\S]*$/,
   '\n', 'sem-purge-deploy');
 if (MUT === 'sem-manifest-deploy') deployProd = mutate(deployProd,
-  'www.csbrasil.online/models/skins/manifest.json',
-  'www.csbrasil.online/models/skins/manifest-ausente.json', 'sem-manifest-deploy');
+  'www.corosolto.com.br/models/skins/manifest.json',
+  'www.corosolto.com.br/models/skins/manifest-ausente.json', 'sem-manifest-deploy');
 if (MUT === 'sem-manifest-watch') prodWatch = mutate(prodWatch,
-  'www.csbrasil.online/models/skins/manifest.json',
-  'www.csbrasil.online/models/skins/manifest-ausente.json', 'sem-manifest-watch');
+  'www.corosolto.com.br/models/skins/manifest.json',
+  'www.corosolto.com.br/models/skins/manifest-ausente.json', 'sem-manifest-watch');
 
 const falhas = [];
 
@@ -102,14 +102,14 @@ if (!heredoc) {
 
 /* EC3 · purge no deploy manual, com o guard de secret que o wfsecret exige. */
 const temPurge = /purge_cache/.test(deployProd)
-  && /www\.csbrasil\.online\/js\//.test(deployProd)
+  && /www\.corosolto\.com\.br\/js\//.test(deployProd)
   && /CF_API_TOKEN/.test(deployProd);
 if (!temPurge) {
   falhas.push('EC3 deploy-prod.yml publica produção sem purgar o prefixo /js/ do edge (guardado por CF_API_TOKEN)');
 }
 
 /* EC4 · todo caminho de deploy limpa o manifesto mutável preso no TTL de /models/. */
-const MANIFESTO = /www\.csbrasil\.online\/models\/skins\/manifest\.json/;
+const MANIFESTO = /www\.corosolto\.com\.br\/models\/skins\/manifest\.json/;
 const purgeManifestoManual = /purge_cache/.test(deployProd) && MANIFESTO.test(deployProd);
 const purgeManifestoGit = /purge_cache/.test(prodWatch) && MANIFESTO.test(prodWatch);
 if (!purgeManifestoManual || !purgeManifestoGit) {

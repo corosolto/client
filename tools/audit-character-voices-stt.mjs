@@ -84,7 +84,7 @@ for (const [index, job] of jobs.entries()) {
   const response = await fetch('https://openrouter.ai/api/v1/audio/transcriptions', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.OPENROUTER_API_KEY}`, 'content-type': 'application/json',
-      'HTTP-Referer': 'https://game.csbrasil.online', 'X-Title': 'CORO SOLTO: Treta Suprema' },
+      'HTTP-Referer': 'https://www.corosolto.com.br', 'X-Title': 'CORO SOLTO: Treta Suprema' },
     body: JSON.stringify({ model, language: 'pt', temperature: 0,
       input_audio: { data: readFileSync(job.file).toString('base64'), format: 'mp3' } }),
   });

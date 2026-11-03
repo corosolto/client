@@ -13,7 +13,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-const BASE = process.env.BASE || 'https://www.csbrasil.online';
+const BASE = process.env.BASE || 'https://www.corosolto.com.br';
 
 /* Cópia LITERAL da versão de origin/main (textures.js:67-84, v2.1.0-alpha.123). Ela mora
    aqui e não no git history de propósito: a prova tem que ser legível junto do resultado. */

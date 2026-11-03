@@ -6,7 +6,7 @@ test('serves crawler-readable metadata and structured game content before WASM b
   const html = await response.text();
   expect(html).toContain('<html lang="pt-BR">');
   expect(html).toContain('<meta name="description"');
-  expect(html).toContain('<link rel="canonical" href="https://csbrasil.online/">');
+  expect(html).toContain('<link rel="canonical" href="https://www.corosolto.com.br/">');
   expect(html).toContain('property="og:title"');
   expect(html).toContain('name="twitter:card"');
   expect(html).toContain('"@type":"VideoGame"');

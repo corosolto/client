@@ -161,7 +161,7 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `blind-capture.mjs` | Captura cega das 26 armas (o "0 erros" que fecha rodada). |
 | `game-capture.mjs`, `map-capture.mjs`, `select-capture.mjs`, `bv-capture.mjs`, `vm-capture.mjs`, `walk-video.mjs` | Capturadores por cena. |
 | `peso-boot.mjs` | Régua de peso/tempo do boot (lane glm/peso): browser real, cache limpo, CDP controlando rede (1,6 Mbps/150 ms/CPU 4x) e CPU. Bytes por tipo até o menu pronto, a splash clicável e a partida viva (mapa leve e pesado), só payload de jogo (public/); o número abre todo PR da lane. Rode sob `with-browser-lock.sh`, porta 9100-9900. |
-| `smoke-pos-deploy.mjs` | Gate de DEPOIS do deploy (não entra em `check:*`, depende de rede externa): abre partida real no endereço publicado, espera `live`, assiste ~15 s e reprova se não abriu (SPD1), se houve erro de console nosso (SPD2) ou se o jogo não desenhou quadro (SPD3). Em menos de 2 min e sem escrever um byte no repositório. | `BASE=https://www.csbrasil.online npm run smoke:prod` |
+| `smoke-pos-deploy.mjs` | Gate de DEPOIS do deploy (não entra em `check:*`, depende de rede externa): abre partida real no endereço publicado, espera `live`, assiste ~15 s e reprova se não abriu (SPD1), se houve erro de console nosso (SPD2) ou se o jogo não desenhou quadro (SPD3). Em menos de 2 min e sem escrever um byte no repositório. | `BASE=https://www.corosolto.com.br npm run smoke:prod` |
 
 ---
 

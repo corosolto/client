@@ -62,7 +62,7 @@ async function comLocation(loc, fn) {
 }
 
 const ESPERADAS = ['heartbeat', 'perf', 'presence', 'submit-match', 'telemetry'];
-await comLocation({ search: '', hostname: 'www.csbrasil.online' }, async (api) => {
+await comLocation({ search: '', hostname: 'www.corosolto.com.br' }, async (api) => {
   const via = [...(api.ROTAS_VIA_SITE || [])].sort();
   cobra(via.join(',') === ESPERADAS.join(','), `GP1 ROTAS_VIA_SITE = [${via}] — esperado [${ESPERADAS}]`);
   for (const r of ESPERADAS) {
@@ -85,7 +85,7 @@ let sinal;
 async function sobe(headers, clientAddress, opcoes) {
   let enviados;
   await proxyApiRequest(
-    new Request('https://www.csbrasil.online/api/telemetry', { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: '{}' }),
+    new Request('https://www.corosolto.com.br/api/telemetry', { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: '{}' }),
     'https://backend.invalid/api/telemetry', clientAddress,
     async (_url, init) => { enviados = init.headers; sinal = init.signal; return new Response('{}', { status: 200 }); },
     opcoes,

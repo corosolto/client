@@ -25,7 +25,7 @@
    afrouxamento.
 
    USO
-     node tools/eval/prod-coherence.mjs [baseUrl]   # padrão https://www.csbrasil.online
+     node tools/eval/prod-coherence.mjs [baseUrl]   # padrão https://www.corosolto.com.br
      node tools/eval/prod-coherence.mjs --selftest  # mutação: TEM que sair 1
 
    A MUTAÇÃO (lei 3 da casa — régua que não morde não existe)
@@ -36,7 +36,7 @@
    ============================================================================ */
 import http from 'node:http';
 
-const BASE = process.argv.find((a) => !a.startsWith('--') && a.includes('://')) || 'https://www.csbrasil.online';
+const BASE = process.argv.find((a) => !a.startsWith('--') && a.includes('://')) || 'https://www.corosolto.com.br';
 const SELFTEST = process.argv.includes('--selftest');
 
 const RE_IMPORT_FROM = /import\s+(?:[\w$]+\s*,\s*)?(?:\{([^}]*)\})?(?:\s*\*\s*as\s*[\w$]+)?(?:\s+[\w$]+)?\s*from\s*['"]([^'"]+)['"]/g;
