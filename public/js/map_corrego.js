@@ -1768,6 +1768,7 @@ export function buildCorrego(scene, T) {
       mesh.updateMatrixWorld(true);
       const drawn = retanguloGrafiteDesenhado(mesh.geometry, mesh.matrixWorld);
       if (!suporte(piece) || !drawn || !suporte(drawn)) { mesh.geometry.dispose(); continue; }
+      mesh.userData.graffitiArquivo = '/img/textures/corrego_streetart_pixo.webp';
       mesh.name = 'decal:corrego_streetart_pixo.webp';
       mesh.receiveShadow = true;
       root.add(mesh);

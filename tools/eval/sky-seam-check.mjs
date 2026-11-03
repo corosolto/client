@@ -1,7 +1,7 @@
 /* A costura de wrap de todo `public/img/textures/sky_*.webp` fecha em cor.
 
    Caso real: o dono viu uma emenda vertical partindo a tela ao meio no
-   `fy_quebrada` — coluna x=812 de um frame 1500×1000, metade esquerda
+   `quebrada` — coluna x=812 de um frame 1500×1000, metade esquerda
    quente/creme e metade direita cinza-azulada (ΔL* 7,70 · Δb* 10,26 no frame).
    O palpite óbvio era compressão ou `map_sky.js`. Os dois foram REFUTADOS:
    `sky_rj.webp` passa pelo MESMO caminho (map_sky.js:14 mapping equirretangular,

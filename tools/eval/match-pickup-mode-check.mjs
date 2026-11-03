@@ -1,4 +1,6 @@
-/* MATCH_PICKUP_MODE — loja substitui; OFF conserva somente os pickups permitidos.
+/* MATCH_PICKUP_MODE — armas grátis no chão SÓ no Javaporcos (dono, 01/11); nele o filtro de
+ * modo de armas continua valendo (SÓ AWP não acha fuzil no chão). Mapa comum nasce SEM
+ * pickups estáticos, com ou sem loja — arma vem de compra ou de nascimento.
  * Contratos, medições anteriores e mutantes: docs/visual-consistency/PICKUPS-FLASH.md */
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -7,41 +9,49 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const JS = path.join(ROOT, 'public/js');
-const SHA = 'f4bcffdf2';
+const SHA = 'f0cbe56f6';   // origin/main antes desta mudança: sem loja, mapa comum tinha armas grátis
 const ARSENAL = 12;
 const AWP = 1, PISTOLS = 2; // Game8ee antes do fix: REVIEW-R71-FIXES-20261101.md.
-const ALVO_VARIANTE = ['PM2', 'PM3', 'PM4', 'PM5', 'PM7', 'PM9', 'PM10', 'PM11'];
+const MAPA_PICKUP = 'invasao_javaporcos';   // o único mapa com armas grátis no chão
+const ALVO_REINTRODUZ = ['PM13'];
+const ALVO_LIMPA_TUDO = ['PM1', 'PM2', 'PM3', 'PM4', 'PM5', 'PM7', 'PM9', 'PM10', 'PM11'];   // PM8 espera 0 e passa no mutante
 const ALVO_SEM_FILTRO = ['PM5', 'PM7', 'PM8', 'PM9', 'PM10', 'PM11', 'PM12'];
+// O main anterior não conhecia o modo Javaporcos (por isso o baseline mede SÓ o recorte
+// mapa-comum): lá, mapa sem loja continuava entregando arsenal. É a regra que o dono matou.
+const ALVO_BASELINE = ['PM13'];
 const FIXTURE_IDS = ['awp', 'pistol', 'deagle', 'ak', '__unknown_pickup__', 'toString', '__proto__', 'constructor'];
 const PERMITIDOS = { all: ['awp', 'pistol', 'deagle', 'ak'], awp: ['awp'], pistols: ['pistol', 'deagle'], knife: [] };
 
 const CENARIOS = [
-  { id: 'PM1', nome: 'economia ligada esvazia arsenal', opts: { economia: true }, espera: 0 },
-  { id: 'PM2', nome: 'sem economia mantém arsenal', opts: {}, espera: ARSENAL },
-  { id: 'PM3', nome: '?economia=0 mantém arsenal', opts: { economia: true }, qs: '?economia=0', espera: ARSENAL },
-  { id: 'PM4', nome: 'dedicado mantém arsenal', opts: { economia: true, dedicated: true }, espera: ARSENAL },
-  { id: 'PM5', nome: 'awp mantém apenas a AWP medida', opts: { economia: true, settings: { wpnMode: 'awp' } }, espera: AWP, permitidos: ['awp'] },
-  { id: 'PM7', nome: 'pistols mantém apenas pistolas medidas', opts: { settings: { wpnMode: 'pistols' } }, espera: PISTOLS, permitidos: ['pistol', 'deagle'] },
-  { id: 'PM8', nome: 'knife não mantém pickups', opts: { settings: { wpnMode: 'knife' } }, espera: 0, permitidos: [] },
+  // No Javaporcos a loja NÃO liga (armas grátis no chão) — nem pedindo economia.
+  { id: 'PM1', nome: 'javaporcos: loja não liga, arsenal grátis permanece', opts: { economia: true }, espera: ARSENAL, ecoLigada: false },
+  { id: 'PM2', nome: 'javaporcos: sem economia mantém arsenal', opts: {}, espera: ARSENAL },
+  { id: 'PM3', nome: 'javaporcos: ?economia=0 mantém arsenal', opts: { economia: true }, qs: '?economia=0', espera: ARSENAL },
+  { id: 'PM4', nome: 'javaporcos: dedicado mantém arsenal', opts: { economia: true, dedicated: true }, espera: ARSENAL },
+  { id: 'PM5', nome: 'javaporcos awp mantém apenas a AWP medida', opts: { settings: { wpnMode: 'awp' } }, espera: AWP, permitidos: ['awp'] },
+  { id: 'PM7', nome: 'javaporcos pistols mantém apenas pistolas medidas', opts: { settings: { wpnMode: 'pistols' } }, espera: PISTOLS, permitidos: ['pistol', 'deagle'] },
+  { id: 'PM8', nome: 'javaporcos knife não mantém pickups', opts: { settings: { wpnMode: 'knife' } }, espera: 0, permitidos: [] },
+  // MAPA COMUM (dono, 01/11): sem armas grátis no chão, com ou sem loja — regra nova.
+  { id: 'PM13', nome: 'mapa comum fica sem armas no chão', opts: {}, espera: 0, mapa: 'quebrada' },
 ];
 
 function parseCLI(argv) {
   if (argv.length === 0) return 'nominal';
   if (argv.length === 1 && argv[0] === '--baseline') return 'baseline';
-  if (argv.length === 1 && argv[0] === '--mutante=reintroduz') return 'mutante';
-  if (argv.length === 1 && argv[0] === '--mutante=sem-filtro-off') return 'sem-filtro';
-  console.error(`uso: node tools/eval/match-pickup-mode-check.mjs [--baseline|--mutante=reintroduz|--mutante=sem-filtro-off] — recebido: ${JSON.stringify(argv)}`);
+  if (argv.length === 1 && argv[0] === '--mutante=reintroduz') return 'reintroduz';
+  if (argv.length === 1 && argv[0] === '--mutante=limpa-tudo') return 'limpa-tudo';
+  if (argv.length === 1 && argv[0] === '--mutante=sem-filtro') return 'sem-filtro';
+  console.error(`uso: node tools/eval/match-pickup-mode-check.mjs [--baseline|--mutante=reintroduz|--mutante=limpa-tudo|--mutante=sem-filtro] — recebido: ${JSON.stringify(argv)}`);
   process.exit(2);
 }
-const GUARDA = `if (this._ecoLigada) {\n      for (const pk of this.world.pickups || []) pk.mesh?.removeFromParent?.();\n      this.world.pickups = [];\n    }`;
-const GUARDA_INCONDICIONAL = GUARDA.replace('if (this._ecoLigada) {', '{ /* mutante: clear incondicional */');
-
-export function fonteMutante(src) {
-  if (src.split(GUARDA).length !== 2) throw new Error('mutante: guarda do constructor não é âncora única');
-  return src.replace(GUARDA, GUARDA_INCONDICIONAL);
-}
-
-const FILTRO_OFF = `    if (!this._ecoLigada) {
+/* Âncoras do game.js ATUAL (bloco de pickups do constructor). Cada mutante desliga UMA
+   regra: nunca-strip (mapa comum volta a ter armas), limpa-tudo (javaporcos perde o
+   arsenal) e sem-filtro (modo de armas para de filtrar). */
+const NUNCA_STRIP = `const gratisNoChao = MAPAS_PICKUP_GRATIS.has(this._mapId);`;
+const NUNCA_STRIP_MUTADO = `const gratisNoChao = true; /* mutante: todo mapa vira javaporcos */`;
+const LIMPA_TUDO = `    if (!gratisNoChao) {`;
+const LIMPA_TUDO_MUTADO = `    if (true) { /* mutante: strip sempre */`;
+const FILTRO_OFF = `    } else if (!this._ecoLigada) {
       this.world.pickups = (this.world.pickups || []).filter((pk) => {
         if (Object.prototype.hasOwnProperty.call(WEAPONS, pk.weapon) && this._pickupAllowed(pk.weapon)) return true;
         pk.mesh?.removeFromParent?.();
@@ -49,9 +59,17 @@ const FILTRO_OFF = `    if (!this._ecoLigada) {
       });
     }`;
 
-function fonteSemFiltro(src) {
+export function fonteMutante(src, variante) {
+  if (variante === 'reintroduz') {
+    if (src.split(NUNCA_STRIP).length !== 2) throw new Error('mutante: âncora whitelist não é única');
+    return src.replace(NUNCA_STRIP, NUNCA_STRIP_MUTADO);
+  }
+  if (variante === 'limpa-tudo') {
+    if (src.split(LIMPA_TUDO).length !== 2) throw new Error('mutante: âncora do strip não é única');
+    return src.replace(LIMPA_TUDO, LIMPA_TUDO_MUTADO);
+  }
   if (src.split(FILTRO_OFF).length !== 2) throw new Error('mutante: filtro OFF não é âncora única');
-  return src.replace(FILTRO_OFF, '');
+  return src.replace(FILTRO_OFF, '\n    }');
 }
 
 /* Módulo-variante em memória: fonte reescrita com imports absolutos, dentro de
@@ -74,46 +92,61 @@ export async function gameClasseDe(source, tag) {
   }
 }
 
-function boot(GameClass, h, { economia, dedicated = false, settings = {} } = {}) {
+function boot(GameClass, h, { economia, dedicated = false, settings = {}, mapa = MAPA_PICKUP } = {}) {
   h.seedRandom(12345);
   return new GameClass({
     renderer: h.renderer, textures: h.textures, sfx: h.sfx,
     settings: { bots: 4, quality: 'low', difficulty: 'normal', sens: 1, ...settings },
     playerCharId: h.PERSONAGEM.id, playerTeam: 'E', playerFaction: h.PERSONAGEM.team, enemyFaction: 'B',
-    nickname: 'SIM', mapId: 'quebrada', ctf: false, testMode: true, onQuit() {}, onMatchEnd() {},
+    nickname: 'SIM', mapId: mapa, ctf: false, testMode: true, onQuit() {}, onMatchEnd() {},
     economia, dedicated,
   });
 }
 
+/* O stub do Javaporcos usa o build da Quebrada: o contrato medido aqui é o FILTRO do
+   constructor, não a geometria do mapa. Registrado sob o id real do modo horda. */
+function comMapaJavaporcos(h, corpo) {
+  const build = h.MAPS.quebrada.build;
+  h.MAPS[MAPA_PICKUP] = { name: 'invasao_javaporcos (stub da régua)', build };
+  try { return corpo(); } finally { delete h.MAPS[MAPA_PICKUP]; }
+}
+
 // Baseline e mutantes atravessam os mesmos boots e fixtures de produção.
-export function medir(GameClass, h, { refreshObrigatorio = true } = {}) {
+export function medir(GameClass, h, { refreshObrigatorio = true, recorte = 'todas' } = {}) {
+  // o stub do Javaporcos vale para TODOS os boots daqui (os cenários bootam nele)
+  return comMapaJavaporcos(h, () => medirInterno(GameClass, h, { refreshObrigatorio, recorte }));
+}
+
+function medirInterno(GameClass, h, { refreshObrigatorio = true, recorte = 'todas' } = {}) {
   const falhas = [];
   const linhas = [];
-  for (const c of CENARIOS) {
+  const cenarios = recorte === 'mapa-comum' ? CENARIOS.filter((c) => c.mapa) : CENARIOS;
+  for (const c of cenarios) {
     globalThis.location.search = c.qs || '';
-    const g = boot(GameClass, h, c.opts);
+    const g = boot(GameClass, h, { ...c.opts, mapa: c.mapa });
     g._ensureDolly = () => {};
     g.killsToWin = Infinity;
     g.start ? g.start() : g._startRound();
     try {
       const n = g.world.pickups.length;
       const ids = g.world.pickups.map((pk) => pk.weapon);
-      const pass = n === c.espera && (!c.permitidos || ids.every((id) => c.permitidos.includes(id)));
+      const ecoOk = c.ecoLigada === undefined || g._ecoLigada === c.ecoLigada;
+      const pass = n === c.espera && ecoOk && (!c.permitidos || ids.every((id) => c.permitidos.includes(id)));
       if (!pass) falhas.push(c.id);
-      linhas.push(`${pass ? 'ok ' : 'XX '} ${c.id} ${c.nome}: ${n} (esperado ${c.espera}); ids=${ids.join(',') || '-'}`);
+      linhas.push(`${pass ? 'ok ' : 'XX '} ${c.id} ${c.nome}: ${n} (esperado ${c.espera})${c.ecoLigada === undefined ? '' : ` ecoLigada=${g._ecoLigada}`}; ids=${ids.join(',') || '-'}`);
     } finally {
       g.dispose?.();
     }
   }
-  for (const [i, mode] of ['all', 'awp', 'pistols', 'knife'].entries()) {
+  if (recorte !== 'mapa-comum') for (const [i, mode] of ['all', 'awp', 'pistols', 'knife'].entries()) {
     const id = `PM${i + 9}`;
-    const result = medirFixture(GameClass, h, mode, refreshObrigatorio);
+    const result = comMapaJavaporcos(h, () => medirFixture(GameClass, h, mode, refreshObrigatorio));
     if (!result.pass) falhas.push(id);
     linhas.push(`${result.pass ? 'ok ' : 'XX '} ${id} fixture ${mode}: ${JSON.stringify(result)}`);
   }
   // PM6: drop de abate (fluxo legado) continua nascendo com economia OFF.
   globalThis.location.search = '';
-  const g = boot(GameClass, h, {});
+  const g = boot(GameClass, h, { mapa: 'quebrada' });
   g._ensureDolly = () => {};
   g.killsToWin = Infinity;
   g.start ? g.start() : g._startRound();
@@ -132,11 +165,11 @@ export function medir(GameClass, h, { refreshObrigatorio = true } = {}) {
 }
 
 function medirFixture(GameClass, h, mode, refreshObrigatorio) {
-  const build = h.MAPS.quebrada.build;
+  const build = h.MAPS[MAPA_PICKUP].build;
   const refresh = GameClass.prototype.refreshPickupModels;
   const temRefresh = typeof refresh === 'function';
   let fixtures = [], validos = [], snapshots = [], builds = 0, game;
-  h.MAPS.quebrada.build = function (scene, textures) {
+  h.MAPS[MAPA_PICKUP].build = function (scene, textures) {
     const world = build.call(this, scene, textures);
     builds++;
     validos = world.pickups.filter((pk) => mode === 'all' || (mode === 'awp' && pk.weapon === 'awp') || (mode === 'pistols' && ['pistol', 'deagle'].includes(pk.weapon)));
@@ -165,7 +198,7 @@ function medirFixture(GameClass, h, mode, refreshObrigatorio) {
     const tempoOK = !refreshObrigatorio || snapshots.length > 0;
     return { pass: builds === 1 && tempoOK && snapshots.every(fixtureOK) && fixtureOK(final) && refsOK && quantidade, builds, temRefresh, refreshObrigatorio, beforeRealRefresh: snapshots, final, refsOK, retained: game.world.pickups.length, expected: validos.length + esperados.length };
   } finally {
-    h.MAPS.quebrada.build = build;
+    h.MAPS[MAPA_PICKUP].build = build;
     if (temRefresh) GameClass.prototype.refreshPickupModels = refresh;
     game?.dispose?.();
   }
@@ -198,41 +231,30 @@ async function main() {
 
   if (modo === 'baseline') {
     const src = execSync(`git show ${SHA}:public/js/game.js`, { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 });
-    const res = medir(await gameClasseDe(src, `baseline-${SHA}`), h, { refreshObrigatorio: false });
+    const res = medir(await gameClasseDe(src, `baseline-${SHA}`), h, { refreshObrigatorio: false, recorte: 'mapa-comum' });
     console.log(res.linhas.join('\n'));
     console.log(`baseline ${SHA}: falhas=${res.falhas.join(',') || '-'}`);
-    if (!clausulasExatamente(res.falhas, ALVO_VARIANTE)) {
-      console.error(`x BASELINE tem que acender exatamente ${ALVO_VARIANTE.join(',')} — régua cega ou cláusula extra`);
+    if (!clausulasExatamente(res.falhas, ALVO_BASELINE)) {
+      console.error(`x BASELINE tem que acender exatamente ${ALVO_BASELINE.join(',')} — régua cega ou cláusula extra`);
       process.exit(1);
     }
-    console.log(`ok BASELINE ${SHA}: defeito do antecedente detectado em ${ALVO_VARIANTE.length}/${ALVO_VARIANTE.length} cláusulas`);
+    console.log(`ok BASELINE ${SHA}: defeito do antecedente detectado em ${ALVO_BASELINE.length}/${ALVO_BASELINE.length} cláusulas`);
     return;
   }
-  if (modo === 'mutante') {
-    const mut = fonteMutante(fs.readFileSync(path.join(JS, 'game.js'), 'utf8'));
-    const res = medir(await gameClasseDe(mut, 'mutante-reintroduz'), h);
+  const ALVOS = { reintroduz: ALVO_REINTRODUZ, 'limpa-tudo': ALVO_LIMPA_TUDO, 'sem-filtro': ALVO_SEM_FILTRO };
+  if (ALVOS[modo]) {
+    const mut = fonteMutante(fs.readFileSync(path.join(JS, 'game.js'), 'utf8'), modo);
+    const res = medir(await gameClasseDe(mut, `mutante-${modo}`), h);
     console.log(res.linhas.join('\n'));
-    console.log(`mutante reintroduz: falhas=${res.falhas.join(',') || '-'}`);
-    if (!clausulasExatamente(res.falhas, ALVO_VARIANTE)) {
-      console.error(`x MUTANTE tem que acender exatamente ${ALVO_VARIANTE.join(',')} — régua cega ou cláusula extra`);
+    console.log(`mutante ${modo}: falhas=${res.falhas.join(',') || '-'}`);
+    if (!clausulasExatamente(res.falhas, ALVOS[modo])) {
+      console.error(`x MUTANTE ${modo} tem que acender exatamente ${ALVOS[modo].join(',')}`);
       process.exit(1);
     }
-    console.log(`ok MUTANTE reintroduz detectado (exatamente ${ALVO_VARIANTE.join(',')}; PM1+PM6 verdes)`);
+    console.log(`ok MUTANTE ${modo} detectado (exatamente ${ALVOS[modo].join(',')})`);
     return;
   }
-  if (modo === 'sem-filtro') {
-    const mut = fonteSemFiltro(fs.readFileSync(path.join(JS, 'game.js'), 'utf8'));
-    const res = medir(await gameClasseDe(mut, 'mutante-sem-filtro-off'), h);
-    console.log(res.linhas.join('\n'));
-    console.log(`mutante sem-filtro-off: falhas=${res.falhas.join(',') || '-'}`);
-    if (!clausulasExatamente(res.falhas, ALVO_SEM_FILTRO)) {
-      console.error(`x MUTANTE OFF tem que acender exatamente ${ALVO_SEM_FILTRO.join(',')}`);
-      process.exit(1);
-    }
-    console.log('ok MUTANTE sem-filtro-off detectado; nominal preservado no disco');
-    return;
-  }
-  console.log(`MATCH_PICKUP_MODE ok · all=${ARSENAL} awp=${AWP} pistols=${PISTOLS} knife=0 · inválidos removidos antes do refresh real`);
+  console.log(`MATCH_PICKUP_MODE ok · javaporcos all=${ARSENAL} awp=${AWP} pistols=${PISTOLS} knife=0 · mapa comum sem armas no chão · inválidos removidos antes do refresh real`);
 }
 
 const chamadoDireto = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

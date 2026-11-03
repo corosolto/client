@@ -1,0 +1,26 @@
+# Javaporco checker repairs R862 — product RED remains
+
+Objective: repair three stale instruments on client `55685b88646e84f2a44608b167ce896ae70a0b5e`, preserving every measurement assertion, ceiling, grid, sample and denominator. Full maps/characters/skins/motion/weapons/release/backend mission continues; #1158 excluded, owners preserved, UI/social later. This lane owns only the three checkers and this continuation. It does not change Game, GLB/maps/geometry/assets, package aliases, other WTs, GH or deployment.
+
+Branch `codex/javaporco-checker-repairs-r862-20261101`; own WT `worktrees/javaporco-checker-repairs-r862-20261101`. Original R855 logs and fresh BEFORE logs are retained under `audits/2026-10-31-visual-consistency/JAVAPORCO-CHECKERS-R862-*` in the aggregate. Before all edits, the three official aliases reproduced: pasto terrain absent−45,−6; layout-copiado rejected for unrelated missing vias; death accumula rejected because its source anchor no longer applied. These are instrument failures, not proof of three product regressions.
+
+One OMP SDK GLM5.3 low consultation used all three checkers and affected producers/controller, tools0/MCPfalse/no retry/fallback,49.636s. RAW/ANSWER were sealed0444 before Native adaptation. Native authored the patch and controls; this is not independent whole review. Accepted terrain-vs-terrain query and early distinct-layout check. The old controller correctly rejected unrelated layout failure (no false-green credit); GLM's phrasing was inaccurate. Its claim that diagonal correction applies at ax*az<=0 is inverted by the real producer's continue condition. Its proposed restore+freeHand literal was replaced by a unique update-method header anchor, preserving all other code and the revive restoration.
+
+Changes:
+
+- Pasto queries `terrainHeightAt` for rays against terrain-only meshes. Same6.072 sample points, far6,0.30m ceiling, forest widths/count/front assertions and mutations. Actual physical `groundHeightAt` still includes refuges; the checker must not use elevated floors to cast at raw terrain.
+- Three-map occupancy sampling is moved byte-exact immediately after each world construction, before environment checks or checker collider mutation. A duplicate rejects early with the existing `layouts não diferem` cause; original final cardinality3 and every environment/refuge/via/silo/spawn/terrain assertion remain.
+- Death accumula removes only the update restoration statement under a unique method header. Missing/duplicate anchors exit2 before VM measurement. Preview freeHand reset, revive restore, fixture, frame counts,1e−6 ceiling and all death assertions remain exact. The old inequality assertion is retained as equivalent bounded boolean comparison so source text is not printed on failure. All three entrypoints reject unsupported/extra CLI args with2.
+
+Validated milestones (Node22 explicit PATH, own immutable leaf dependencies and own Three bridge):
+
+- AFTER `eval:javaporcostresmapas`: PASS69.332s, nominal+five aliased mutants with correct causes. Sixth supported `terreno-deslocado`, not currently in package alias, separately detected13.460s.
+- AFTER `eval:morteestavel`: PASS0.375s; nominal drift0.00000004rad, accumula3.14140899rad at the intended assertion. No parse/anchor error credited.
+-12 invalid CLI controls and2 source-anchor controls: every exit2, stdout0, short diagnostics; source-injection applications exactly1. Expected instrument errors receive no semantic mutation credit.
+- `DELTA-GUARD.json`: pasture body exact except height query; occupancy loop exact and remaining three-map body exact after relocation; death oracle exact; actual mutation prelude deletes only29bytes of update restoration, retaining revive and freeHand code. Syntax/diff/scope checks are recorded separately.
+
+## Unresolved product blocker, not hidden or relaxed
+
+AFTER `eval:javaporcospasto` remains RED at the real0.30m assertion: max0.521539m at31.5,−42. Terrain-only query fixes80 missing rays (all6.072 now hit) but reveals two above-ceiling samples:31.5,−42→0.521539m and25.5,−42→0.452964m. At both `groundHeightAt===terrainHeightAt`; neither is a refuge discrepancy. Read-only triangle proof shows the strip [1,P]×[−45,−38] uses1m cells over a0.5m field: existing vertices match the field exactly, but interpolation misses interior valley samples. Artifacts `TERRAIN-PROBE-V2.json` and `TERRAIN-TRIANGLES.json` bind values/vertices/source. No geometry was modified, points skipped, tolerance changed or expected RED exempted. The alias stops at nominal; its three pasto mutants therefore remain unexecuted/uncredited at this point. Definition of done (all three nominal aliases plus all mutations causal) is NOT achieved.
+
+Next: Root owns a separate producer correction/review for the terrain mismatch, then rebind this checker and rerun the full pasture alias including its three mutants. A probable narrow producer candidate is matching that strip's mesh sampling to the field step; it is UNRUN and not part of this checkpoint. Root may add the already-supported sixth three-map mutant to its alias; package is untouched here. Root assigns independent whole review and handles integration/publication. This checkpoint is recoverable instrument work with an explicit existing product RED, never visual/art/mobile/MP/release approval.

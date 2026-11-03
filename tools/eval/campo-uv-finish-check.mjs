@@ -3,11 +3,12 @@
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { loadFixture, expectedForProfile, MATCH_TOLERANCE } from './campo-fachadas-reference.mjs';
+import { withBatentes } from './campo-batentes-reference.mjs';
 
 const MUTANTES = ['guardrepeat20x3', 'removerguardUV', 'guardperiod2m', 'removerfimUV', 'removerlock',
   'uv-rank1', 'face-ausente', 'repeat-nao-finito', 'inventario-compensado',
   'fim-compensado', 'std-compensado', 'fim-oculto', 'std-oculto', 'fim-ancestral-oculto',
-  'fim-face-duplicada', 'std-face-duplicada', 'fim-translado', 'folha-f7-metal',
+  'fim-face-duplicada', 'std-face-duplicada', 'fim-translado', 'batente-translado', 'folha-f7-metal',
   'std-drawrange', 'std-grupo-oculto', 'fim-alpha-test', 'fim-alpha-blend',
   'fim-raster-blend-zero', 'fim-raster-depth-never',
   'fim-position-itemsize1', 'fim-normal-itemsize1', 'fim-uv-itemsize1', 'fim-index-itemsize2',
@@ -160,12 +161,12 @@ if (SELF_RASTER) {
 // ----- Esperado do fixture lacrado ANTES do harness: falha aqui é infra, nunca mutante -----
 let esperado;
 try {
-  esperado = expectedForProfile(loadFixture(), PERFIL_NUM);
+  esperado = withBatentes(expectedForProfile(loadFixture(), PERFIL_NUM), PERFIL_NOME);
 } catch (e) {
   console.error(`infraestrutura: fixture/esperado — ${String(e?.message || e)}`);
   process.exit(3);
 }
-const FIM_TRIS = { original: 2424, r22: 2688, r23: 2688 }[PERFIL_NOME];
+const FIM_TRIS = esperado.counts.finish * 12;
 
 // Tiles/m; Float32 nominal fica a menos de 1e-5 do período métrico.
 const GUARD_TILE = 4, FIM_TILE = 2, TOL = 1e-5;
@@ -845,13 +846,14 @@ if (MUTANTE) {
     idx.needsUpdate = true;
     if (idx.getX(s) === antesIdx) infra('std-face-duplicada: aplicação não mudou índices');
     alvoInfo = 'std:F6:base';
-  } else if (MUTANTE === 'fim-translado') {
-    const e = alvo('fim:zneg:i4:verga');
+  } else if (MUTANTE === 'fim-translado' || MUTANTE === 'batente-translado') {
+    const id = MUTANTE === 'batente-translado' ? 'batente:xneg:i0:lateral-minus' : 'fim:zneg:i4:verga';
+    const e = alvo(id);
     const pos = fim.geometry.attributes.position, antesX = pos.getX(e.bl.first);
     for (let i = 0; i < 24; i++) pos.setX(e.bl.first + i, pos.getX(e.bl.first + i) + 0.125);
     pos.needsUpdate = true;
     if (Math.abs(pos.getX(e.bl.first) - antesX - 0.125) > 1e-9) infra('fim-translado: aplicação não mudou bytes');
-    alvoInfo = 'fim:zneg:i4:verga (+0.125m x)';
+    alvoInfo = `${id} (+0.125m x)`;
   } else if (MUTANTE === 'fim-alpha-test') {
     const m0 = fim.material;
     fim.material = m0.clone();

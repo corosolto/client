@@ -27,6 +27,7 @@
 
 ### Adicionado
 - Dá para dançar no meio da partida: a tecla T abre uma roda com os oito passos, a câmera se afasta para você se ver dançando e qualquer passo cai no instante em que você anda, atira ou morre.
+- O modo Vira-Casaca entra na seleção local: cada abate converte o adversário para o seu lado e a partida termina quando um time domina o elenco inteiro.
 - O personagem agora dança no lobby: oito passos brasileiros — passinho, samba no pé, ginga, frevo, dois pra lá, quadradinho, sarrada no ar e um salve — direto na tela de escolha, sem baixar nada a mais para quem não pedir.
 - Quem joga pelo aplicativo passa a ver aviso de manutenção e, quando houver, o caminho alternativo para continuar jogando, sem precisar esperar uma atualização na loja.
 - O jogo agora sabe se testar sozinho no celular: uma partida curta automática mede desempenho, travadas e erros no próprio aparelho, para o problema aparecer antes do jogador reclamar.
@@ -54,6 +55,7 @@
 - Girar no lugar deixa o quadril para trás e os pés alcançam depois, em vez de o corpo inteiro teleportar junto com a mira.
 - Personagens distantes animam com menos frequência, devolvendo quadros ao celular sem mudar o que se vê de perto.
 - Recarregar ficou visível de fora: em terceira pessoa, a mão livre vai ao carregador e o corpo mergulha durante a recarga, do jogador e dos bots — dá saber quando o adversário está vulnerável.
+- Piscina da Treta volta a carregar sua ambiência.
 - O placar reaproveita cada retrato em vez de baixar o mesmo avatar seis vezes.
 - O guia inicial mostra movimento, tiro e recarga por 15 segundos; a ajuda completa continua no ALT.
 - Os spawns do Escadão e do Ferro Velho deixam a primeira rota livre; a fauna do Ferro Velho nasce fora dos colisores.

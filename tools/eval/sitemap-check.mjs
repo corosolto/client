@@ -64,12 +64,12 @@ checa('SM3', fatias.every(([a, b]) => b - a <= POR_PAGINA),
 
 // ---- XML bem formado nos dois modos ----
 const entradas = Array.from({ length: 3 }, (_, i) => ({
-  loc: `https://www.csbrasil.online/u/id-${i}/nick&${i}`,
+  loc: `https://www.corosolto.com.br/u/id-${i}/nick&${i}`,
   lastmod: '2026-08-06', changefreq: 'weekly', priority: '0.6',
 }));
 const urlset = xmlUrlset(entradas);
 const index = xmlIndex(Array.from({ length: n }, (_, i) => ({
-  loc: `https://www.csbrasil.online/sitemap-${i + 1}.xml`, lastmod: '2026-08-06',
+  loc: `https://www.corosolto.com.br/sitemap-${i + 1}.xml`, lastmod: '2026-08-06',
 })));
 
 const bemFormado = (xml, raiz) =>

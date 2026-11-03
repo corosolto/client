@@ -1,6 +1,7 @@
 // Identidade Mint no viewmodel pago (BUG-75 M3): a malha da PRÓPRIA arma entra
 // no socket da mão do pack; a genérica KINEMATION fica oculta atrás dela.
 import * as THREE from 'three';
+import { ownVmResource } from './vmownership.js';
 import { hasWeapon, preloadWeapons, weaponModel } from './weapons.js';
 import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
 
@@ -238,7 +239,7 @@ export function splitParts(entry, wrap, partsCfg) {
           }
           geometry.setAttribute(name, new THREE.BufferAttribute(array, item));
         }
-        return geometry;
+        return ownVmResource(geometry);
       };
       mesh.geometry = build(outside);
       const partMesh = new THREE.Mesh(build(inside), mesh.material);

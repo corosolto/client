@@ -56,6 +56,15 @@ const DICT = {
   'JOGAR': 'PLAY',
   'ABATE': 'DEATHMATCH',
   'CAPTURE A BANDEIRA': 'CAPTURE THE FLAG',
+  'VIRA-CASACA': 'TURNCOAT',
+  'Quem cai muda de lado': 'Downed players switch sides',
+  'QUEM CAI MUDA DE LADO': 'DOWNED PLAYERS SWITCH SIDES',
+  'QUEM CAIR MUDA DE LADO': 'IF YOU GO DOWN, YOU SWITCH SIDES',
+  'PARTIDA ÚNICA': 'SINGLE MATCH',
+  'ÚNICA': 'SINGLE',
+  'CONVERSÕES': 'CONVERSIONS',
+  'SEUS ABATES': 'YOUR KILLS',
+  'PASSO 1 · VIRA-CASACA': 'STEP 1 · TURNCOAT',
   'SUPORTE AO JOGO': 'SUPPORT THE GAME',
   'COMO JOGAR': 'HOW TO PLAY',
   'SINGLE PLAYER': 'SINGLE PLAYER',
@@ -582,6 +591,7 @@ const DICT = {
   'Compartilhado': 'Shared', 'Link copiado': 'Link copied', 'Copie o link': 'Copy the link',
   'Ganhei uma treta no CORO SOLTO. Bora jogar?': 'I won a fight in CORO SOLTO. Wanna play?',
   'Perdi uma treta no CORO SOLTO. Bora jogar?': 'I lost a fight in CORO SOLTO. Wanna play?',
+  'Empate no CORO SOLTO. Bora jogar?': 'A draw in CORO SOLTO. Wanna play?',
   // tp:fim-resultado
 
   // tp:loja

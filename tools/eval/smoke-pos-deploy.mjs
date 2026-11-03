@@ -18,7 +18,7 @@
            analytics, anúncio, fonte externa — é ruído conhecido, não é o deploy);
      SPD3  o jogo desenhou: quadros contados no aparelho e draw calls > 0.
 
-   Uso: node tools/eval/smoke-pos-deploy.mjs [--base=https://www.csbrasil.online]
+   Uso: node tools/eval/smoke-pos-deploy.mjs [--base=https://www.corosolto.com.br]
                                              [--mapa=praca_poderes] [--desktop]
         BASE=… também serve. Por padrão mede em Pixel 5 emulado, que é a cara do
         app de loja; `--desktop` troca para 1280×720.
@@ -27,7 +27,7 @@ import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 const arg = (nome) => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=')[1] || '';
-const BASE = (arg('base') || process.env.BASE || 'https://www.csbrasil.online').replace(/\/+$/, '');
+const BASE = (arg('base') || process.env.BASE || 'https://www.corosolto.com.br').replace(/\/+$/, '');
 const MAPA = arg('mapa') || 'praca_poderes';
 const DESKTOP = process.argv.includes('--desktop');
 const PRAZO_LIVE_MS = Number(arg('prazo')) || 90_000;

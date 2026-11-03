@@ -1,0 +1,11 @@
+# Viewmodel lifetime and shared resources
+
+Native R1879 N03/N04 were preexisting. Actual module continuation mounted a family after dispose during the clone await; disposing one controller emitted four dispose events on cache-owned resources. Real RED evidence is R1922; R1921 initial huge synthetic-object assertion was replaced with a bounded boolean and a direct cache-dispose assertion.
+
+The post-await guard cancels installation before mount/entries/onReady. Explicit weak registration identifies only geometry/material created for an instance: hand tint, skin materials/marks, split Mint geometry and sleeve edits. Disposal releases reachable private resources once across entries, preserving template geometry/material, cached magazines and shared textures. Caps copy only a sleeve that is actually modified, avoiding mutation of cached geometry. This does not clone entire families or disable cleanup.
+
+The actual runtime test adapts only Node load guard and a deterministic clone-await checkpoint, using synthetic GLTF and the actual loader/cache/controller. Two controllers share one actual GLTF_CACHE fetch; cache resources survive, private resources release once, other controller remains installed, template geometry stays unchanged. Three in-memory causal source regressions restore late-install/shared-dispose/template-cap behavior and each produces exactly one expected AssertionError with sibling test passing; timeout/import/warning are refused. Initial R1924 nested runner inherited NODE_TEST_CONTEXT and was refused as INFRA; R1925 launches a fresh test runner with that internal context removed, without suppressing warnings:5/5 PASS.
+
+Existing authored-locomotion and its mutants PASS1.322s, characterkit0.923s, syntax4.648s. New ownership import exposed an extraction dependency in knife-skin-markings (R1926 exit3); its product factory now receives the actual ownVmResource helper. R1929 knife nominal/mutants1.815s, normal-only equivalence0.184s and manga-tampa0.629s PASS, original geometry/fit oracles preserved.
+
+GLM implementation proposal R1912 informed the patch; it was not a review or execution. New tests are bound to existing eval:authored-locomotion in the deploy gate. No browser pixels, actual asset fit, mobile/MP or release acceptance follows. Independent review and current final build/boot/gates remain pending.

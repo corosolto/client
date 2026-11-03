@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ownVmResource } from './vmownership.js';
 import {gloveSkinStyle} from './data/glove-skin-definitions.js';
 
 // Três propostas para FUNKEIROS (o dono escolhe; ?vmmaosf=<opção> na revisão). docs/reports/VM-MAOS-POR-TIME.md.
@@ -53,7 +54,7 @@ export function applyTeamHandMaterial(material, profile, layout) {
   const role = layout === 'knife' ? 'combined' : /Cloth|Sleeves/i.test(material.name) ? 'cloth'
     : /Glove/i.test(material.name) ? 'glove' : 'skin';
   const key = `${layout}/${role}-${style.id}`;
-  const copy = material.clone();
+  const copy = ownVmResource(material.clone());
   copy.color.set(0xffffff);
   copy.metalness = 0;
   copy.roughness = role === 'skin' && style.fingerless ? 0.72 : 0.86;
@@ -65,7 +66,8 @@ export function applyTeamHandMaterial(material, profile, layout) {
   // Os atlas têm UVs distintos; só a identidade é comum. Não colar UV de um rig no outro.
   if (typeof document !== 'undefined' && !(typeof process !== 'undefined' && process.versions?.node)) {
     if (!maps.has(key)) {
-      const map = new THREE.TextureLoader().load(`/models/viewmodels/coro/hands/${key}.webp?v=${HAND_ATLAS_VERSION}`, undefined, undefined,
+      const colorVersion = key === 'pistol/glove-E' ? 'team-hands-11' : HAND_ATLAS_VERSION;
+      const map = new THREE.TextureLoader().load(`/models/viewmodels/coro/hands/${key}.webp?v=${colorVersion}`, undefined, undefined,
         (error) => console.error(`[viewmodel-hands] ${key}`, error));
       map.flipY = false;
       map.colorSpace = THREE.SRGBColorSpace;

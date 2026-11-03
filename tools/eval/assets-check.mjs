@@ -47,11 +47,12 @@
 
    O contrato que ela mede é o do JOGO, não o do pacote (`game.js`:
    `pack.mapSoundscapes[mapId] || world.sound`): ou o manifest cobre todo mapa do
-   `maps.js` com `mapSoundscapes`, ou os 18 caminhos `audio/ambiente/*` que o
-   `world.sound` de cada mapa nomeia precisam existir. NENHUM pacote atual traz
-   `ambiente/` — medido no `audio-pack-v8` (445 entradas, zero em `ambiente/`,
-   manifest sem `mapSoundscapes`), e é por isso que `fetch-audio.sh` instala o
-   fallback sintético no ramo público em vez de deixar o build depender disso.
+   `maps.js` com `mapSoundscapes` (o caminho do v9 em diante: `ambiente-mapas.mjs`
+   escreve os overrides com os caminhos binários resolvidos), ou os caminhos
+   `audio/ambiente/*` que o `world.sound` de cada mapa nomeia precisam existir.
+   Até o v8 NENHUM pacote trazia `ambiente/` nem `mapSoundscapes` — medido no v8
+   (445 entradas, zero em `ambiente/`), e era por isso que o `fetch-audio.sh`
+   instalava o fallback sintético no ramo público.
    `eval:audioruntimeassets` prova os três estados (cru = vermelho, preparado =
    verde, parcial = vermelho) chamando ESTE script.
 

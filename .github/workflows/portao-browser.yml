@@ -91,13 +91,11 @@ jobs:
             echo "rodar=true" >> "$GITHUB_OUTPUT"
           fi
 
-  portao:
+  portao-fauna:
     needs: decide
     if: needs.decide.outputs.rodar == 'true'
     runs-on: ubuntu-latest
-    # SwiftShader renderiza o contrato nominal dos 14 mapas e a seleção;
-    # o teto de 45 min continua limitando o job.
-    timeout-minutes: 45
+    timeout-minutes: 30
     env:
       BASE: http://localhost:8123
       # Os arnêses de navegador importam o Playwright do root GLOBAL (npm root -g) e
@@ -110,24 +108,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Decalques públicos completos antes do navegador
-        run: |
-          bash scripts/fetch-decals.sh
-          node tools/eval/assets-check.mjs --so=decals
-
-      # graffiti-census/graffiti-audit/select-inflate fazem `import(npm root -g +
-      # /playwright/index.js)`: o Playwright precisa existir no GLOBAL, na mesma versão
-      # do devDependency, não só no node_modules local.
       - name: Playwright global (mesma versão do devDependency)
         run: npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
 
       - name: Instala Chromium + libs do sistema
         run: npx playwright install --with-deps chromium
 
-      # Quem sabe onde o binário caiu é o próprio Playwright: o layout da pasta muda entre
-      # versões (chrome-linux -> chrome-linux64) e um glob que não casa vira string vazia
-      # sem derrubar o `echo` — CHROME_BIN saía vazio e a régua caía no canal 'chrome',
-      # procurando o Chrome do macOS num runner Linux. Aqui falha alto em vez de degradar.
       - name: Resolve CHROME_BIN (Chromium do Playwright)
         run: |
           BIN="$(node -e "console.log(require('playwright').chromium.executablePath())")"
@@ -160,24 +146,48 @@ jobs:
           path: artifacts/map-fauna-curated/
           if-no-files-found: error
 
-      # Contrato vigente: 14 nominais completos, sem meta histórica de saturação.
-      - name: eval:grafite-atual (arte única e suporte real, 14 mapas)
-        run: npm run eval:grafite-atual
-
-      - name: Guarda o contrato atual de grafite
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+  portao-armas:
+    needs: decide
+    if: needs.decide.outputs.rodar == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE: http://localhost:8123
+      # Os arnêses de navegador importam o Playwright do root GLOBAL (npm root -g) e
+      # dirigem o Chromium por CHROME_BIN; PLAYWRIGHT_BROWSERS_PATH fixa onde ele instala.
+      PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          name: grafite-atual
-          path: artifacts/grafite-atual/
-          if-no-files-found: warn
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Playwright global (mesma versão do devDependency)
+        run: npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
 
-      # Roda mesmo com o grafite vermelho: são réguas independentes, e com o `success()`
-      # padrão uma regressão de silhueta ficaria invisível justo quando já há falha.
-      # `!cancelled()` e não `always()` — corrida cancelada deve parar de verdade.
-      - name: eval:select (silhueta da tela de seleção)
-        if: ${{ !cancelled() }}
-        run: npm run eval:select
+      - name: Instala Chromium + libs do sistema
+        run: npx playwright install --with-deps chromium
+
+      - name: Resolve CHROME_BIN (Chromium do Playwright)
+        run: |
+          BIN="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+          test -x "$BIN" || { echo "CHROME_BIN não resolveu para um executável: [$BIN]"; exit 1; }
+          echo "CHROME_BIN=$BIN" >> "$GITHUB_ENV"
+
+      - name: Sobe o eval:serve em background
+        run: npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+
+      - name: Espera o servidor responder
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8123/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/eval-serve.log
+          exit 1
 
       - name: Pegada do lobby nos 11 casos públicos
         if: ${{ !cancelled() }}
@@ -197,6 +207,63 @@ jobs:
           path: artifacts/mira-public.json
           if-no-files-found: warn
 
+      - name: Todas as armas com mãos e rastro no cano em mobile e desktop
+        if: ${{ !cancelled() }}
+        env:
+          VM_PUBLIC_ASSETS: https://www.corosolto.com.br
+        run: npm run eval:vm-maos-mobile-desktop
+
+      - name: eval:armas (preload de arma por partida)
+        if: ${{ !cancelled() }}
+        run: npm run eval:armas
+
+  portao-controles:
+    needs: decide
+    if: needs.decide.outputs.rodar == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE: http://localhost:8123
+      # Os arnêses de navegador importam o Playwright do root GLOBAL (npm root -g) e
+      # dirigem o Chromium por CHROME_BIN; PLAYWRIGHT_BROWSERS_PATH fixa onde ele instala.
+      PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Playwright global (mesma versão do devDependency)
+        run: npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
+
+      - name: Instala Chromium + libs do sistema
+        run: npx playwright install --with-deps chromium
+
+      - name: Resolve CHROME_BIN (Chromium do Playwright)
+        run: |
+          BIN="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+          test -x "$BIN" || { echo "CHROME_BIN não resolveu para um executável: [$BIN]"; exit 1; }
+          echo "CHROME_BIN=$BIN" >> "$GITHUB_ENV"
+
+      - name: Sobe o eval:serve em background
+        run: npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+
+      - name: Espera o servidor responder
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8123/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/eval-serve.log
+          exit 1
+
+      - name: eval:select (silhueta da tela de seleção)
+        if: ${{ !cancelled() }}
+        run: npm run eval:select
+
       # A porta de entrada do funil: o gesto que tira a splash não pode apertar o menu
       # por baixo (medido no runner do #368 — ver tools/eval/entrada-check.mjs).
       - name: eval:entrada (o gesto que entra não aperta botão do menu)
@@ -213,16 +280,65 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run eval:toquecontroles
 
-      - name: Todas as armas com mãos e rastro no cano em mobile e desktop
-        if: ${{ !cancelled() }}
-        env:
-          VM_PUBLIC_ASSETS: https://www.corosolto.com.br
-        run: npm run eval:vm-maos-mobile-desktop
+  portao-core:
+    needs: decide
+    if: needs.decide.outputs.rodar == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE: http://localhost:8123
+      # Os arnêses de navegador importam o Playwright do root GLOBAL (npm root -g) e
+      # dirigem o Chromium por CHROME_BIN; PLAYWRIGHT_BROWSERS_PATH fixa onde ele instala.
+      PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Decalques públicos completos antes do navegador
+        run: |
+          bash scripts/fetch-decals.sh
+          node tools/eval/assets-check.mjs --so=decals
 
-      # A partida carrega as armas DELA e nenhum bot empunha caixa (medido no navegador).
-      - name: eval:armas (preload de arma por partida)
+      - name: Playwright global (mesma versão do devDependency)
+        run: npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
+
+      - name: Instala Chromium + libs do sistema
+        run: npx playwright install --with-deps chromium
+
+      - name: Resolve CHROME_BIN (Chromium do Playwright)
+        run: |
+          BIN="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+          test -x "$BIN" || { echo "CHROME_BIN não resolveu para um executável: [$BIN]"; exit 1; }
+          echo "CHROME_BIN=$BIN" >> "$GITHUB_ENV"
+
+      - name: Sobe o eval:serve em background
+        run: npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+
+      - name: Espera o servidor responder
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8123/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/eval-serve.log
+          exit 1
+
+      # Contrato vigente: 14 nominais completos, sem meta histórica de saturação.
+      - name: eval:grafite-atual (arte única e suporte real, 14 mapas)
+        run: npm run eval:grafite-atual
+
+      - name: Guarda o contrato atual de grafite
         if: ${{ !cancelled() }}
-        run: npm run eval:armas
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: grafite-atual
+          path: artifacts/grafite-atual/
+          if-no-files-found: warn
 
       # Vitrine SKINS NOVAS no JOGAR: some com a loja fora, não baixa vídeo no boot, não move o JOGAR.
       - name: eval:treta-vitrine (vitrine da loja no menu principal)
@@ -264,12 +380,23 @@ jobs:
             /tmp/treta-vitrine/**
           if-no-files-found: ignore
 
-  # O SERTÃO EM JOB PRÓPRIO (14/10/2026). Era o passo mais caro do portão: 8,7 a 12,9 min
-  # de um job de 18,7 a 27,7 min (4 runs verdes de 13/10). Em paralelo com o resto, o
-  # relógio de parede do portão cai para o maior dos dois (~15 min). Mesmo passo, mesmo
-  # servidor (eval:serve na 8123), mesmo Chromium; o teste em
-  # tools/ops/tests/workflows.test.mjs cobra que nenhum passo saiu e que ele não espera
-  # o job `portao`.
+  portao:
+    needs: [decide, portao-fauna, portao-armas, portao-controles, portao-core]
+    if: ${{ needs.decide.outputs.rodar == 'true' && !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Portão verde só se os quatro portões paralelos forem
+        run: |
+          STRING='''${{ toJson(needs) }}'''
+          python3 - "$STRING" <<'PY'
+import json,sys
+necessarios=json.loads(sys.argv[1])
+for nome,info in sorted(necessarios.items()):
+    if info['result']!='success': print(f"::error::portao-parcial {nome} terminou em {info['result']}"); sys.exit(1)
+print('portao: os 4 portões paralelos verdes')
+PY
+
   sertao:
     needs: decide
     if: needs.decide.outputs.rodar == 'true'

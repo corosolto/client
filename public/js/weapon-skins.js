@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ownVmResource } from './vmownership.js';
 import { WEAPON_SKINS } from './data/weapon-skin-definitions.js';
 import { footprintFullyCovered, FOOTPRINT_TOLERANCE } from './knife-mark-support.js';
 export { WEAPON_SKINS };
@@ -488,13 +489,14 @@ function paintedMaterial(texture, skinId, role) {
     envMapIntensity: 0.74,
     side: THREE.FrontSide,
   });
+  ownVmResource(material);
   material.name = `${skinId}__${role}_paint`;
   return material;
 }
 
 function addFittedPair(model, skinId, role, texture, placement, surfaces, aspect) {
   const width = placement.height * aspect;
-  const geometry = new THREE.PlaneGeometry(width, placement.height);
+  const geometry = ownVmResource(new THREE.PlaneGeometry(width, placement.height));
   const material = paintedMaterial(texture, skinId, role);
   for (const [side, x, rotation] of [
     ['right', surfaces.right, Math.PI / 2],
@@ -746,7 +748,7 @@ function knifePlacement(frame, profile, aspect, role, priors) {
 }
 
 function addKnifePair(model, skinId, role, texture, frame, placement, context) {
-  const geometry = new THREE.PlaneGeometry(placement.width, placement.height);
+  const geometry = ownVmResource(new THREE.PlaneGeometry(placement.width, placement.height));
   if (KNIFE_MARK_PROFILES[context].roles[role].longitudinal) {
     const uv = geometry.attributes.uv;
     for (let i = 0; i < uv.count; i++) { const u = uv.getX(i); uv.setXY(i, 1 - uv.getY(i), u); }
@@ -859,7 +861,7 @@ function attachOfficialMark(model, weaponId, skinId) {
   const layout = CLUB_MARK_LAYOUT[weaponId];
   if (!texture || !definition || !layout) return;
   const aspect = (texture.image?.width || 1) / (texture.image?.height || 1);
-  const geometry = new THREE.PlaneGeometry(layout.height * aspect, layout.height);
+  const geometry = ownVmResource(new THREE.PlaneGeometry(layout.height * aspect, layout.height));
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
@@ -870,6 +872,7 @@ function attachOfficialMark(model, weaponId, skinId) {
     side: THREE.FrontSide,
     toneMapped: false,
   });
+  ownVmResource(material);
   for (const [side, x, rotation] of [
     ['right', layout.x, Math.PI / 2],
     ['left', -layout.x, -Math.PI / 2],
@@ -892,7 +895,7 @@ function attachSkinMark(model, weaponId, skinId, knifeContext) {
 }
 
 function cloneMaterial(material, skinId) {
-  const copy = material.clone();
+  const copy = ownVmResource(material.clone());
   copy.name = `${material.name || 'weapon'}__skin_${skinId}`;
   const definition = WEAPON_SKINS[skinId];
   const profile = MATERIAL_PROFILE[definition?.metalFinish] || MATERIAL_PROFILE.default;

@@ -13,7 +13,7 @@
    O que ela mede, no MESMO mundo em que o jogo roda (bootGame; material VIVO do
    sistema VIVO — uso, não declaração):
 
-     SP1  existe sistema de partículas AMBIENTE no fy_campomorro (a poeira de
+     SP1  existe sistema de partículas AMBIENTE no campomorro (a poeira de
           rua do piloto), registrado em scene.userData.softs — o DepthPass só
           alimenta quem está na lista;
      SP2  o fragmentShader VIVO tem a cláusula de depth fade: amostra tDepth e
@@ -41,13 +41,13 @@ const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('
 const falhas = [];
 const ok = [];
 
-const g = bootGame('fy_campomorro', { textures: initTextures() });
+const g = bootGame('campomorro', { textures: initTextures() });
 
 /* SP1 — sistema ambiente registrado */
 const softs = g.scene.userData.softs || [];
 const poeira = softs.find((s) => s.ambiente === 'poeira');
 if (!softs.length) falhas.push('SP1: scene.userData.softs vazia — nenhum sistema de partículas se registrou para o DepthPass');
-else if (!poeira) falhas.push('SP1: nenhum sistema ambiente (poeira de rua) no fy_campomorro');
+else if (!poeira) falhas.push('SP1: nenhum sistema ambiente (poeira de rua) no campomorro');
 else ok.push(`SP1 ${softs.length} sistema(s) em softs, poeira presente`);
 
 if (poeira) {

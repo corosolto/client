@@ -35,7 +35,7 @@ for (const layout of layouts) {
     for (const style of styles) {
       const file = path.join(output, layout, `${papel}-${style.id}.webp`);
       const heightFile = file.replace('.webp', '-height.webp');
-      const { pixels, heights } = pintar(campo, prim.pintura, style);
+      const { pixels, heights } = pintar(campo, prim.pintura, style, layout);
       const rel = path.relative(root, file);
       if (args.has('conferir')) {
         if (!(await existe(file))) { report.push({ layout, papel, time: style.id, file: rel, ausente: true }); continue; }

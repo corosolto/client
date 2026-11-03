@@ -28,6 +28,7 @@ const sidebars = {
     'botbrain',
     'arquitetura',
     'criar-mapa-com-ia',
+    'construtor-de-mapas',
     'colaborar',
     'estado',
   ],

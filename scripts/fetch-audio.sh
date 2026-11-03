@@ -9,7 +9,7 @@ cd "$(dirname "$0")/.."
 # Pacote completo — vozes/rounds/SFX/menu/ingame — com nomes hasheados
 # (decisão do dono: nenhum título legível em URL/zip). Fecha o BUG-19
 # (produção servia o pack de julho e todo som novo dava 404).
-URL="${AUDIO_PACK_URL:-https://github.com/corosolto/client/releases/download/audio-pack-v8/audio-pack.zip}"
+URL="${AUDIO_PACK_URL:-https://github.com/corosolto/client/releases/download/audio-pack-v9/audio-pack.zip}"
 DEST="public/audio"
 AUTH_ARGS=()
 PACOTE_PRIVADO=0
@@ -24,15 +24,20 @@ case "$URL" in
 esac
 
 # O manifest que o jogo consome precisa de `mapSoundscapes` para todo mapa do
-# `maps.js`; sem isso o `world.sound` de cada mapa aponta pros `audio/ambiente/*`
-# que NENHUM pacote atual traz (medido em audio-pack-v8, 04/10/2026) e o mapa
-# sobe mudo. O pack público recebe o hum sintetizado — que não é asset e não
-# precisa de credencial; o privado NÃO recebe, porque ambiência real que falta
-# tem de reprovar o build, não ser trocada por silêncio.
+# `maps.js` — sem isso o `world.sound` de cada mapa aponta pros `audio/ambiente/*`
+# que só o audio-pack-v9+ traz (sob nomes binários) e o mapa sobe mudo. O pack
+# público do v9 traz as 17 faixas e o `ambiente-mapas.mjs` escreve os overrides
+# com os caminhos resolvidos; mapas sem sound autoral ficam no hum sintetizado —
+# que não é asset e não precisa de credencial. O pack privado NÃO passa pelos
+# dois: ambiência real que falta tem de reprovar o build, não ser trocada por
+# silêncio.
 prepara_ambiencia() {
+  node tools/audio/migrar-manifesto.mjs "$DEST/manifest.json"
+  node tools/audio/javaporcos-samples.mjs
   node tools/audio/complete-amazonia-soundscape.mjs
   node tools/audio/extend-map-soundscapes.mjs "$DEST/manifest.json"
   node tools/audio/lajes-soundscape.mjs "$DEST/manifest.json"
+  [ "$PACOTE_PRIVADO" = 1 ] || node tools/audio/ambiente-mapas.mjs
   [ "$PACOTE_PRIVADO" = 1 ] || node tools/audio/ensure-map-soundscapes.mjs
 }
 

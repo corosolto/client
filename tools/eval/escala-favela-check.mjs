@@ -54,7 +54,7 @@ const FAIXA_PROP = {
   uno_mille: [1.35, 1.50], fiat_uno: [1.35, 1.50], fusca: [1.35, 1.50], kombi: [1.85, 2.10],
 };
 
-const game = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 13007 });
+const game = bootGame('corrego', { textures: initTextures(), ctf: true, seed: 13007 });
 const world = game.world;
 
 /* ---- malha mesclada dos vãos ---- */

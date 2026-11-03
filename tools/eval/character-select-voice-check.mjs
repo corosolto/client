@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { importAudioProbe } from './audio-probe-module.mjs';
 /* A fala pertence ao clique no avatar, não à seleção automática que monta a tela.
    O índice no elenco precisa produzir um arquivo distinto do pool da própria facção,
    e personagens com bordão conhecido precisam manter a identidade mesmo se o pool mudar. */
@@ -23,7 +24,7 @@ if (mutante === 'sem-clique') {
 if (mutante === 'auto-fala') {
   main = main.replace('if (row) selectChar(character, row);', 'row?.click();');
 }
-if (mutante === 'pack-antigo') fetchAudio = fetchAudio.replace('audio-pack-v8', 'audio-pack-v7');
+if (mutante === 'pack-antigo') fetchAudio = fetchAudio.replace('audio-pack-v9', 'audio-pack-v8');
 if (mutante === 'manifest-antigo') main = main.replace('sfx.loadManifest(VERSION)', 'sfx.loadManifest()');
 if (mutante === 'fu-ia-volta') {
   audio = audio
@@ -49,19 +50,18 @@ expect(!/characterSelectVoice/.test(selectBody),
   'VOICE3 selectChar fala durante a montagem automática da tela');
 expect(!/row\?\.click\(\)/.test(main),
   'VOICE4 a query string simula clique humano e dispara fala');
-expect(/releases\/download\/audio-pack-v8\/audio-pack\.zip/.test(fetchAudio),
-  'VOICE12 o build não baixa o pacote com as vozes do time Mítico e o upgrade dos funkeiros (v8; inclui o Faria Limer corrigido e o menu Suno do v7)');
+expect(/releases\/download\/audio-pack-v9\/audio-pack\.zip/.test(fetchAudio),
+  'VOICE12 o build não baixa o pacote com as vozes do time Mítico, o upgrade dos funkeiros e a ambiência autoral dos mapas (v9; inclui o Faria Limer corrigido do v7 e o menu Suno do v8)');
 const packVersion = fetchAudio.match(/audio-pack-v(\d+)\/audio-pack\.zip/)?.[1];
 const manifestHeader = JSON.parse(vercel).headers?.find((entry) => entry.source === '/audio/manifest.json');
-expect(packVersion === '8' && main.includes('sfx.loadManifest(VERSION)')
+expect(packVersion === '9' && main.includes('sfx.loadManifest(VERSION)')
   && /async loadManifest\(revision = ''\)/.test(audio)
   && /audio\/manifest\.json\$\{query\}/.test(audio)
   && manifestHeader?.headers?.some((header) => header.key === 'Cache-Control' && header.value === 'public, max-age=0, must-revalidate'),
 `VOICE13 o carregador ingame não usa a revisão da release com manifesto revalidável; CDN pode servir catálogo antigo (pack v${packVersion || '?'})`);
 
 globalThis.location ||= { search: '' };
-const moduleUrl = `data:text/javascript;base64,${Buffer.from(audio).toString('base64')}#${mutante || 'normal'}`;
-const { Sfx } = await import(moduleUrl);
+const { Sfx } = await importAudioProbe(audio, mutante);
 const probe = new Sfx();
 probe.pack = { voice: { T: ['audio/t-0.mp3', 'audio/t-1.mp3', 'audio/t-2.mp3'] } };
 const played = [];

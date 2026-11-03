@@ -1,27 +1,29 @@
 #!/usr/bin/env node
 /* Deixa o manifest de áudio CONSUMÍVEL: todo mapa tem ambiência que existe.
  *
- * Contrato medido (lei 2 — procedência, não opinião). `audio-pack-v8`, a release
- * pública que o `AUDIO_PACK_URL` default aponta, tem 218.660.617 bytes, 445
- * entradas e NENHUMA pasta `ambiente/`; o `manifest.json` de dentro dela (16.426
- * bytes) não tem a chave `mapSoundscapes`. Medido em 04/10/2026 lendo o diretório
- * central do zip por HTTP Range e descomprimindo só aquela entrada — o pacote não
- * foi baixado inteiro.
+ * Contrato medido (lei 2 — procedência, não opinião). Até o `audio-pack-v8`, a
+ * release pública que o `AUDIO_PACK_URL` default aponta tinha 218.660.617 bytes,
+ * 445 entradas e NENHUMA pasta `ambiente/`; o `manifest.json` de dentro dela
+ * (16.426 bytes) não tinha a chave `mapSoundscapes`. Medido em 04/10/2026 lendo o
+ * diretório central do zip por HTTP Range e descomprimindo só aquela entrada — o
+ * pacote não foi baixado inteiro.
  *
- * O que o jogo faz com isso (`game.js`, `this.sfx.pack?.mapSoundscapes?.[this._mapId]
- * || this.world.sound`): sem override do mapa, `world.sound` cai nos 17 caminhos
- * `audio/ambiente/*` que `soundscape.js` nomeia, e cada um vira um 404 com warn
- * (`soundscape.js:59`). É o mapa mudo, e é por isso que `assert:assets` reprova um
- * manifest assim em vez de deixar passar.
+ * O v9 trouxe as 17 faixas de ambiência e o `ambiente-mapas.mjs` escreve os
+ * overrides com caminhos resolvidos ANTES deste script — que aqui vira GUARDA:
+ * com cobertura completa ele não altera nada, e continua reprovar pacote PARCIAL
+ * (algum mapa coberto e outro não é empacotador esquecendo um mapa, ou pack de
+ * outra linha do jogo). Pack privado nunca passa por aqui nem pelo
+ * `ambiente-mapas.mjs`, pelo mesmo motivo de sempre.
  *
- * O único conserto que não redistribui asset nenhum é o hum SINTETIZADO pelo jogo,
- * instalado nos mapas que o pacote não cobre. Ele não exige credencial, não copia
- * WAV privado e não muda o que já está curado.
+ * O que o jogo faz com um manifest SEM overrides (`game.js`,
+ * `this.sfx.pack?.mapSoundscapes?.[this._mapId] || this.world.sound`): cai nos
+ * caminhos `audio/ambiente/*` que `soundscape.js` nomeia, e cada um vira um 404
+ * com warn (`soundscape.js:59`). É o mapa mudo, e é por isso que `assert:assets`
+ * reprova um manifest assim em vez de deixar passar.
  *
- * Por que o pack privado NÃO passa por aqui: `fetch-audio.sh` só chama este script
- * no ramo público. Pack privado sem `mapSoundscapes` é pack quebrado, e a resposta
- * certa é o build reprovar no `assert:assets` — não trocar ambiência real por hum
- * calado. Override PARCIAL também reprova, pelo mesmo motivo.
+ * O único conserto que não redistribui asset nenhum é o hum SINTETIZADO pelo
+ * jogo. Ele não exige credencial, não copia WAV privado e não muda o que já está
+ * curado. Override PARCIAL também reprova, pelo mesmo motivo.
  */
 import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';

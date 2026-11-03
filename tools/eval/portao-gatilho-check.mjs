@@ -184,8 +184,10 @@ function passosRun(bloco) {
 const FETCH_DECALS = 'bash scripts/fetch-decals.sh';
 const ASSERT_DECALS = 'node tools/eval/assets-check.mjs --so=decals';
 function conferirBootstrapDecals(wf) {
-  const job = jobsDe(wf).portao;
-  if (!job) { falhas.push('PG6 job portao ausente — bootstrap não medido'); return; }
+  /* O split paralelo (02/11) levou a cadeia decals+grafite para o job portao-core;
+     o job `portao` virou agregador e carrega o gate do decide (PG3 cobre). */
+  const job = jobsDe(wf)['portao-core'];
+  if (!job) { falhas.push('PG6 job portao-core ausente — bootstrap não medido'); return; }
   const passos = passosRun(job);
   const linhas = passos.flatMap((p) => p.comandos.map((cmd) => ({ cmd, passo: p })));
   const achar = (cmd) => linhas.flatMap((l, i) => l.cmd === cmd ? [i] : []);
@@ -219,8 +221,8 @@ function mudarComando(job, comando, linhas, nome) {
 }
 function mutarBootstrapDecals(wf) {
   if (MUT === 'fetch-fora-gatilho') return wf;
-  const job = jobsDe(wf).portao;
-  if (!job) erroInstrumento(MUT, 'job portao ausente');
+  const job = jobsDe(wf)['portao-core'];
+  if (!job) erroInstrumento(MUT, 'job portao-core ausente');
   let m = job;
   if (MUT === 'sem-fetch' || MUT === 'fetch-tarde') m = mudarComando(m, FETCH_DECALS, ['true'], MUT);
   if (MUT === 'fetch-tarde') m += '\n      - name: Fetch atrasado (mutante)\n        run: bash scripts/fetch-decals.sh\n';
@@ -242,7 +244,7 @@ function mutarBootstrapDecals(wf) {
     const n = passo.corpo.startsWith('run:') ? `${passo.corpo}\n        shell: bash {0}\n` : passo.corpo.replace('\n', '\n        shell: bash {0}\n');
     m = substituirUma(m, passo.corpo, n, MUT);
   }
-  return substituirUma(wf, `  portao:\n${job}`, `  portao:\n${m}`, MUT);
+  return substituirUma(wf, `  portao-core:\n${job}`, `  portao-core:\n${m}`, MUT);
 }
 
 const ENTRADAS_FIXAS = [

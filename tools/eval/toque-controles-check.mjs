@@ -122,9 +122,10 @@ async function abrir() {
       `${metodo} {\n    const game = this.game;`));
   }
   if (MUT === 'respawn-sp-preso') {
+    // O mutante remove a liberação do toque sem tocar no guard de equipe eliminada.
     await reescreve(/\/js\/game\.js/, (t) => t.replace(
-      'if (this.online) return;\n    this._releaseInput();\n    const p = this.player;',
-      'if (this.online) return;\n    const p = this.player;'));
+      'if (this.online) return;\n    this._releaseInput();',
+      'if (this.online) return;'));
   }
   if (MUT === 'round-sp-preso') {
     await reescreve(/\/js\/game\.js/, (t) => t.replace(
@@ -168,6 +169,8 @@ const medido = await page.evaluate(async () => {
     src: b.querySelector('img')?.getAttribute('src') || null,
     ativa: b.classList.contains('ativa'),
   }));
+  g.player.primary = 'm4';
+  g._syncTouchWeps();
   const antesTroca = arteDe();
   g.player.primary = 'ak';
   g._syncTouchWeps();
@@ -391,12 +394,11 @@ await fechar();
 
 const slots = medido.depoisTroca.filter((s) => ['primary', 'secondary', 'knife'].includes(s.slot));
 const comArte = slots.filter((s) => s.src && /\/img\/weapons\/[a-z0-9_]+\.webp$/.test(s.src));
-const trocou = medido.antesTroca.find((s) => s.slot === 'primary')?.src !== medido.depoisTroca.find((s) => s.slot === 'primary')?.src
-  && medido.depoisTroca.find((s) => s.slot === 'primary')?.src === '/img/weapons/ak.webp';
+const primariaAntes = medido.antesTroca.find((s) => s.slot === 'primary')?.src;
+const primariaDepois = medido.depoisTroca.find((s) => s.slot === 'primary')?.src;
+const trocou = primariaAntes === '/img/weapons/m4.webp' && primariaDepois === '/img/weapons/ak.webp';
 cobra('TQ1', comArte.length === 3 && medido.imagensOk.every(Boolean) && trocou,
-  comArte.length === 3
-    ? `TQ1 · ${comArte.length} slots com render real (${comArte.map((s) => s.src.split('/').pop()).join(', ')}), imagens carregadas e a primária virou ak.webp ao trocar`
-    : `TQ1 · só ${comArte.length}/3 slots com render de arma: ${slots.map((s) => `${s.slot}=${s.src || 'glifo'}`).join(' ')}`);
+  `TQ1 · ${comArte.length}/3 renders, primária ${primariaAntes || 'glifo'} → ${primariaDepois || 'glifo'}; imagens carregadas ${medido.imagensOk.filter(Boolean).length}/${medido.imagensOk.length}`);
 
 const escala = medido.giro300 > 0 ? medido.giroMetade / medido.giro300 : 0;
 cobra('TQ2', medido.grau300 >= 100 && medido.pxMeiaVolta <= 480 && Math.abs(escala - 0.5) < 0.08,

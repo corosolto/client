@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { THREE, bootGame, initTextures } from './harness.mjs';
 import { makeNetcode } from '../../public/js/netgame.js';
 
-const game = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 12345 });
+const game = bootGame('corrego', { textures: initTextures(), ctf: true, seed: 12345 });
 const bot = game.bots[0];
 bot.mantle = { x0: 1, y0: 2, z0: 3, x1: 4, y1: 5, z1: 6, t: 0.2, dur: 0.4 };
 bot.mantleF = 0.5;

@@ -13,7 +13,7 @@ const { CHARACTERS, charWeapon } = await import('../public/js/characters.js');
 const argv = process.argv.slice(2);
 const randomWeapon = argv.includes('--mutante=arma-aleatoria');
 const positional = argv.filter((arg) => !arg.startsWith('--mutante='));
-const [id = 'camera-roxa', enemy = 'T', out = '/tmp/character-game', map = 'fy_quebrada', xArg = '0', zArg = '0'] = positional;
+const [id = 'camera-roxa', enemy = 'T', out = '/tmp/character-game', map = 'quebrada', xArg = '0', zArg = '0'] = positional;
 const captureX = Number(xArg), captureZ = Number(zArg);
 if (!Number.isFinite(captureX) || !Number.isFinite(captureZ)) throw new Error('x,z precisam ser números');
 const expectedWeapon = charWeapon(id);

@@ -13,7 +13,7 @@
    Range GET basta: o edge busca o objeto inteiro na origem e guarda (medido
    06/09/2026: `bytes=0-15` MISS na 1ª chamada, HIT em 78 ms na 2ª).
 
-   Uso: node tools/ops/aquecer.mjs [https://www.csbrasil.online] [--esperada=2.0.0-alpha.N]
+   Uso: node tools/ops/aquecer.mjs [https://www.corosolto.com.br] [--esperada=2.0.0-alpha.N]
         [--espera=300000] [--concorrencia=8] [--json]
    Sai 1 se algum pedido falhou (404/5xx/rede) ou se a raiz não serviu a versão
    esperada dentro da espera; "frio" depois de duas passadas é informação, não erro
@@ -80,7 +80,7 @@ const ehMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv
 if (ehMain) {
   const argv = process.argv.slice(2);
   const val = (k, d) => { const v = (argv.find((a) => a.startsWith(`--${k}=`)) || '').split('=').slice(1).join('='); return v === '' ? d : v; };
-  const base = (argv.find((a) => !a.startsWith('--')) || 'https://www.csbrasil.online').replace(/\/$/, '');
+  const base = (argv.find((a) => !a.startsWith('--')) || 'https://www.corosolto.com.br').replace(/\/$/, '');
   const r = await aquecer(base, { esperada: val('esperada', null), esperaMs: Number(val('espera', 300_000)), concorrencia: Number(val('concorrencia', 8)), log: (m) => console.error(m) });
   console.log(argv.includes('--json') ? JSON.stringify(r, null, 2) : renderAquecimento(r));
   process.exit(r.ok ? 0 : 1);

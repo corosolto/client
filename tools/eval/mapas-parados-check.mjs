@@ -29,6 +29,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runInNewContext } from 'node:vm';
 import { MAPS } from './harness.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -153,8 +154,29 @@ if (MAINSRC) {
   } else {
     const portas = (MAINSRC.match(/if \(noServeMapaParado\(/g) || []).length;
     if (portas < 2) falhas.push(`MP9 a recusa cobre ${portas} de 2 pontos (welcome da sala e onPartida da rotação)`);
-    if (!/mpMapasDoNo = \(await listMaps\([^)]*\)\)\.filter\(\(id\) => MAPS\[id\] && MAPAS_MENU\.includes\(id\)\);/.test(MAINSRC)) {
-      falhas.push('MP9 a grade de mapas do multiplayer não filtra pela lista jogável');
+    const filtros = [...MAINSRC.matchAll(/mpMapasDoNo\s*=\s*\(await listMaps\([^)]*\)\)\s*\.filter\(([^;]+)\);/g)];
+    if (filtros.length !== 1) {
+      falhas.push('MP9 a grade de mapas do multiplayer não tem filtro único da lista do nó');
+    } else {
+      // Reproduz a callback real: separa registro/menu e impede aprovação por filtro vazio.
+      // Horde pode ser um subconjunto adicional; MP9 não escolhe a política desse modo.
+      const candidatos = Object.freeze(['jogavel', 'parado', 'ausente', 'horde']);
+      const registro = Object.freeze(Object.assign(Object.create(null), {
+        jogavel: Object.freeze({ objectiveMode: 'rounds' }), parado: Object.freeze({ objectiveMode: 'rounds' }),
+        horde: Object.freeze({ objectiveMode: 'horde' }),
+      }));
+      const menu = Object.freeze(['jogavel', 'ausente', 'horde']);
+      try {
+        const filtrados = runInNewContext(`candidatos.filter(${filtros[0][1]})`,
+          { candidatos, MAPS: registro, MAPAS_MENU: menu },
+          { timeout: 1000, contextCodeGeneration: { strings: false, wasm: false } });
+        if (!Array.isArray(filtrados) || !filtrados.includes('jogavel')
+          || !filtrados.every(id => Object.hasOwn(registro, id) && menu.includes(id))) {
+          throw Error('não preserva mapa válido ou aceita id fora de MAPS/lista jogável');
+        }
+      } catch (e) {
+        falhas.push('MP9 a grade de mapas do multiplayer não filtra pela lista jogável: ' + String(e.message).slice(0, 160));
+      }
     }
   }
 }

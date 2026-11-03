@@ -16,10 +16,12 @@ com código 1 em falha crítica.
 
 | Arquivo | O que mede | Artefato |
 |---|---|---|
+| `construtor-input-check.mjs` | Entradas de grade não esgotam memória nem travam a CLI; o handler real do editor preserva objetos ao editar campos. | `npm run eval:construtor-input` (incluído em `eval:mapjson`) |
 | `ballistics-falloff-check.mjs` | Extremos e interpolação da queda de dano; mede jogador e ambas as IAs, com mutações da curva e da distância. | `npm run eval:ballistics-falloff` |
 | `firing-cadence-check.mjs` | Cadência pelo _updatePlayer real; calendário, cooldown, teto por passo, entrada e interrupções, com mutantes. | `npm run eval:firing-cadence` |
 | `recoil-contract-check.mjs` | Perfis históricos de #970; mede câmera, padrão e kick entregue ao viewmodel pelo disparo real. | `npm run eval:recoil-contract` |
 | `tp-jump-ownership-check.mjs` | Salto interrompido: seleção real cancela ownership, recusa preserva ação e revive permite retorno; rigs reais em CPU, sem aceite visual. | `npm run eval:tpjumpownership` |
+| `tp-identity-check.mjs` | Arma do bot e luva própria no TP: Game/GLBs reais em CPU, boot frio com latch, todas as partes da luva, recusa atômica e mutantes causais; sem aceite visual. | `npm run eval:tp-identity` |
 | `ranking-home-status.mjs` | Estado real dos renderers da home: 38 casos entre loading/OFF/rede/vazio/sucesso e oito mutantes; DOM em Node, sem aceite visual. | `npm run eval:ranking-home-status` |
 | `invariants.mjs` | **O portão principal.** As invariantes permanentes: toda vez que o dono reporta um bug, ele vira uma invariante aqui e nunca mais volta. Regenera `vm_kick_sim.json` sozinho e LÊ `vm_mint_audit.json`. | `npm run eval:invariants` |
 | `vm-mint-audit.mjs` | Enquadramento do viewmodel arma por arma, nos 26 GLBs reais. Mede a seção transversal perto de cada ponta em Z pra descobrir se a arma está de ré. | `vm_mint_audit.json` (**versionado — sem ele as invariantes VM1–VM6/VM9/VM10 viram PULADAS, que é portão verde por ausência de dado**) |
@@ -84,7 +86,7 @@ recusa DB/site remoto e restaura catálogo/contas no finally. Aprovação no man
 | `stance-speed.mjs` | Velocidade por postura (andar/correr/agachar). |
 | `pulo-tiro-recarga-check.mjs` | Os 3 bugs de gameplay de 01/10/2026: (A) tiro no pulo tem piso ADITIVO de imprecisão — a AWP de luneta no ar não é laser (mesma `aberturaCone` do cliente e do nó MP), semente por tiro; (B) pulo agachado não corre no ar (mesma altura, distância ≤ pulo em pé); (C) gatilho preso/clique não rearma recarga vencendo — o pente vazio volta a 30. Mutantes: `cone-ar`, `crouch-ar`, `reload-rearma`. `npm run eval:pulotirorecarga` |
 | `round-municao-check.mjs` | Contrato de munição entre rounds (relato de out/2026): sobreviver ao corte de round não entrega o round seguinte sem balas — o loadout dos SLOTS (primária/secundária do modo) renasce cheio igual ao respawn, sem presentear slot proibido (SÓ AWP não ganha pistola, FACA não ganha pente de rifle). Mutantes: `sem-refill`, `refill-ignora-modo` (`mut:roundmunicao`). `npm run eval:roundmunicao` |
-| `camera-oclusao-check.mjs` | Oclusão do boom da câmera de 3ª pessoa/ombro (relato de out/2026, ferro velho/favela): a câmera para ANTES de prop alto atrás do jogador (occluders via raycaster) e do PANO que não segura bala (`world.camBlockers`, Box3 — varal da favela: câmera para, tiro passa), com piso de 0,35 m e boom recompondo a 5 m/s sem elástico. Mutantes: `sem-pull-in`, `ignora-camBlockers` (`mut:cameraoclusao`). `npm run eval:cameraoclusao` |
+| `camera-oclusao-check.mjs`, `camera-hud-check.mjs` | Câmera respeita volume da lente, paredes e props; N alterna a visão, Shift+N troca o ombro sem repetição, B permanece reservado à compra. HUD legado e TP indicam N. `npm run eval:cameraoclusao` inclui os mutantes de geometria, teclado e HUD no CI obrigatório. |
 | `pistola-cadencia-check.mjs` | Cadência das pistolas semi no piso do gênero (relato de out/2026: "firerate muito baixo"): PT-38 0,17 s e Deagle 0,24 s, TTK de corpo < 0,40 s, ordem de TTK preservada (pistola perde pra MP5, Deagle mais lenta que AK) e pente/reserva intactos. Mutantes: `rate-antigo`, `pistola-laser` (`mut:pistolacadencia`). `npm run eval:pistolacadencia` |
 | `frag-restock-check.mjs` | A granada volta por sequência (pedido de jogador, out/2026): a cada 3 abates NA rodada, +1 frag só pra quem está sem (teto 1, sem banco), contador zerado a cada round, slot remoto reposto no MESMO `_kill` que roda no nó autoritativo e o cliente MP prediz em `morteRemota`. Mutantes: `sem-restock`, `restock-empilha`, `sequencia-atravessa-round` (`mut:fragrestock`). `npm run eval:fragrestock` |
 | `formato-melhorde-check.mjs` | O banner do ROUND 1 declara o formato da partida (melhor de N, primeiro a X) nos dois modos e na transição replicada do MP, sem repetir nos rounds seguintes (relato de out/2026: jogador pediu melhor de 3/5/7 sem saber que já existia). Mutantes: `sem-formato-sp`, `sem-formato-mp`, `formato-todo-round` (`mut:formatomelhorde`). `npm run eval:formatomelhorde` |
@@ -120,6 +122,7 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `vm-project.mjs`, `vm-solve.mjs` | Projeção e solução do enquadramento. |
 | `vm-verify.mjs` | Verificação final do viewmodel. |
 | `tp-mount-probe.mjs` | Mount de 3ª pessoa, com parser de GLB próprio. |
+| `tp-glove-manifest-retry-check.mjs` | Retry do manifesto TP: Game e GLTFLoader reais em CPU, orçamento por demanda, concorrência e negativos definitivos; `--source-root` e mutantes focais. Comandos e limites em [R864](../../docs/reports/GLOVE-MANIFEST-R864-CONTINUATION.md). Ferramenta focal, sem registro no CI. |
 | `fparms-capture.mjs` | Captura dos braços de 1ª pessoa. |
 | `mount-capture.mjs` | Captura do ponto de mount. |
 | `weapon-capture.mjs` | Captura arma a arma. |
@@ -158,7 +161,7 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `blind-capture.mjs` | Captura cega das 26 armas (o "0 erros" que fecha rodada). |
 | `game-capture.mjs`, `map-capture.mjs`, `select-capture.mjs`, `bv-capture.mjs`, `vm-capture.mjs`, `walk-video.mjs` | Capturadores por cena. |
 | `peso-boot.mjs` | Régua de peso/tempo do boot (lane glm/peso): browser real, cache limpo, CDP controlando rede (1,6 Mbps/150 ms/CPU 4x) e CPU. Bytes por tipo até o menu pronto, a splash clicável e a partida viva (mapa leve e pesado), só payload de jogo (public/); o número abre todo PR da lane. Rode sob `with-browser-lock.sh`, porta 9100-9900. |
-| `smoke-pos-deploy.mjs` | Gate de DEPOIS do deploy (não entra em `check:*`, depende de rede externa): abre partida real no endereço publicado, espera `live`, assiste ~15 s e reprova se não abriu (SPD1), se houve erro de console nosso (SPD2) ou se o jogo não desenhou quadro (SPD3). Em menos de 2 min e sem escrever um byte no repositório. | `BASE=https://www.csbrasil.online npm run smoke:prod` |
+| `smoke-pos-deploy.mjs` | Gate de DEPOIS do deploy (não entra em `check:*`, depende de rede externa): abre partida real no endereço publicado, espera `live`, assiste ~15 s e reprova se não abriu (SPD1), se houve erro de console nosso (SPD2) ou se o jogo não desenhou quadro (SPD3). Em menos de 2 min e sem escrever um byte no repositório. | `BASE=https://www.corosolto.com.br npm run smoke:prod` |
 
 ---
 
@@ -247,3 +250,17 @@ raios, respawn e round dos bots locais, incluindo três mutantes. O ensaio opcio
 `node tools/eval/ballistics-range-playtest.mjs [--fixed-five]` produz dados de
 TTK condicional e dispersão com cinco disparos; método e limites em
 `docs/qa/balistica/autorado/README.md`. Ele não impõe tuning ou teto novo ao gate.
+
+### Cidade Invadida — gauntlet31/10/2026
+
+- `npm run eval:javaporcoscidadeacessivel`: torre por escada real nos dois sentidos, três linhas de tiro, percurso rua/andar/janela/rua nas quatro casas, 24 armas fora do centro e UV das rampas e proteção das bordas; seis mutantes.
+- `npm run eval:javaporcosdirecao`: percurso curvo, desvio de muro, flancos/antecipação, bando com separação, patas apoiadas e planejamento FIFO sem starvation; cinco mutantes.
+- `npm run eval:javaporcoscidadeinterface`: seleção só Cidade, silêncio de falas/vinhetas no modo com recarga preservada, elenco real4–8 no solo, coop explícito/MP legado e kills/avatar da horda; três mutantes.
+- `npm run eval:javaporcosnetpersonagem`: eventos e roster J preservam o NPC, troca humana continua; mutante personagem-humano.
+- `npm run eval:javaporcosperf`: orçamento CPU separado de render; não equivale a FPS ou aprovação visual.
+
+Captura real3:2, leitura do modal/card e avaliação dos GLBs em movimento continuam portões independentes; testes Node não os substituem.
+
+`npm run eval:authored-draw-timing` cobre o saque declarado gameplay com Game/callbacks e GLB público reais: o clique antes do deploy é bloqueado e, depois dele, Equip terminou e o corpo está no frustum antes do tiro. O ramo com drawDrop compartilha a duração do clipe; AK/non-gameplay e fallback conservam seus tempos. Os três mutantes em memória exigem as falhas causais exatas. A ponte de carga Node e o DOM/renderer do harness são explícitos: não é aceite de raster, pintura, anatomia, mobile ou MP. É chamado por `eval:authored-transition`, na cadeia `check:vm`.
+
+`npm run eval:golden-skin-selection` carrega os GLBs públicos atuais de pistol/AK pelo `_loadFamily` completo no controller e switch do Game. Verifica body nomeado único, pentes/ferrolho, exclusão de mãos, idempotência, poses/IBMs/matrizes/clips/mount/câmera e AK sem pintura; cinco mutantes exigem seus RED causais. A cópia em memória habilita apenas a guarda Node de carga; a fronteira GLB usa parse real e textura neutra. Ordem invertida e body duplicado rejeitam fallback de primeira mesh. O alias integra `eval:authored-transition` → `check:vm`. Decalque, pintura no Game 3:2, anatomia/contato, mobile e MP continuam sem aceite visual.

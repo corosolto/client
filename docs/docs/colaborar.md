@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**14 identidades de autoria humana** assinam commit no histórico **desta branch**: `rubenmarcus`, `ruben-cytonic`, `Ruben`, `Emerson Garrido`, `nunreasonable`, `Ruben Marcus`, `Juan Versolato Lopes`, `William Oliveira`, `daeeseD`, `Maná Soares`, `matheusgb`, `Nicholas Velten`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**15 identidades de autoria humana** assinam commit no histórico **desta branch**: `rubenmarcus`, `ruben-cytonic`, `Ruben`, `Emerson Garrido`, `nunreasonable`, `Ruben Marcus`, `Juan Versolato Lopes`, `William Oliveira`, `daeeseD`, `Agent`, `Maná Soares`, `matheusgb`, `Nicholas Velten`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -243,6 +243,15 @@ conteúdo como dado do
 [`ROADMAP.md`](https://github.com/corosolto/client/blob/main/ROADMAP.md), e é a
 contribuição de maior alavancagem do projeto.
 
+:::tip O formato JSON já existe — e tem editor
+A migração "conteúdo como dado" saiu do papel: `public/js/map_json.js` carrega mapa a
+partir de um descritor JSON (rampas, plataformas, água e props por GLB inclusos), e o
+**Construtor da Treta** (`public/construtor.html`) é o editor visual dele. A régua nasce
+junto — `npm run eval:mapjson` e `npm run eval:mapjsonboot`. Passo a passo em
+[Construtor de mapas](./construtor-de-mapas.md). O caminho de código à mão abaixo continua
+valendo para relevo em camadas (mezanino sobre piso), que o formato de dado não cobre.
+:::
+
 O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 {/* BEGIN:GERADO:mapas — não edite à mão, rode `npm run docs` */}
@@ -261,8 +270,9 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `posto_treta` | Posto da Treta | **captura** | `—` | — |
 | `upa_24h` | UPA 24h da Treta | **captura** | `—` | — |
 | `velho_oeste` | Sertão da Treta | **captura** | `—` | — |
+| `invasao_javaporcos` | Cidade Invadida | rodadas | `—` | — |
 
-**12 mapas no menu** — 2 abrem em rodadas e 10 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 24 arquivos `map_*.js` em `public/js/`; mapas em `MAPAS_PARADOS` ficam fora do menu.
+**13 mapas no menu** — 3 abrem em rodadas e 10 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 25 arquivos `map_*.js` em `public/js/`; mapas em `MAPAS_PARADOS` ficam fora do menu.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS menos MAPAS_PARADOS de public/js/maps.js`
 
@@ -382,9 +392,10 @@ correção do turno de duelo está no código com medição A/B; busque `BUG-03`
     próprio índice gerado. Precisa de acordo prévio sobre a partição, porque a região é
     disputada.
 
-5. **Mapas como JSON (Fase 2).** Geometria, colliders, occluders, spawns, pickups e
-    waypoints em dado, com loader único e **waypoints validados por teste**. É o que
-    transforma "PR de código arriscado" em "abre um JSON". Abra uma issue primeiro.
+5. **Mapas como JSON — já disponível.** Geometria, colliders, occluders, spawns, pickups,
+    rampas, água e props em dado, com loader único (`map_json.js`) e **waypoints validados
+    por teste**. Transforma "PR de código arriscado" em "abre um JSON". Use o editor e a
+    régua: [Construtor de mapas](./construtor-de-mapas.md).
 
 6. **Job de CI noturno com browser** para destravar PX1–PX4. Quatro invariantes de pixel
     estão puladas desde sempre.

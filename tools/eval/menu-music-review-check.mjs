@@ -13,6 +13,7 @@ const CSS = readFileSync('public/style.css', 'utf8');
 const GENERATOR = readFileSync('tools/gen-audio-manifest.mjs', 'utf8');
 const BUILDER = readFileSync('scripts/build-audio-pack.mjs', 'utf8');
 const { MENU_MUSIC_ACTIVE_IDS } = await import('../../public/js/menu-music-selection.js');
+const { JAVAPORCO_GRAVACOES } = await import('../../public/js/data/javaporcos_audio.js');
 const erros = [];
 const expected = ['m11', 'm14', 'm16', 'm17', 'm22'];
 const opaqueRef = (id) => `audio/a/${createHash('sha1').update(`fixture-${id}`).digest('hex').slice(0, 16)}.mp3`;
@@ -84,6 +85,9 @@ try {
     for (const id of ids) {
       writeFileSync(join(menu, `${id}.mp3`), `fixture-${id}`);
       writeFileSync(join(opaque, opaqueRef(id).slice('audio/a/'.length)), `fixture-${id}`);
+    }
+    for (const { file } of Object.values(JAVAPORCO_GRAVACOES)) {
+      writeFileSync(join(temp, 'public', file), 'fixture-javaporco');
     }
     writeFileSync(join(audio, 'manifest.json'), JSON.stringify({
       _privateBuild: { format: 'content-addressed-v1' },

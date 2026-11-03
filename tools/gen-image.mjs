@@ -125,7 +125,7 @@ async function apiFetch(url, opts = {}) {
     headers: {
       Authorization: `Bearer ${KEY}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://game.csbrasil.online',
+      'HTTP-Referer': 'https://www.corosolto.com.br',
       'X-Title': 'CORO SOLTO: Treta Suprema',
       ...(opts.headers || {}),
     },

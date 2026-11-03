@@ -71,7 +71,7 @@ const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
   headers: {
     Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
     'content-type': 'application/json',
-    'HTTP-Referer': 'https://game.csbrasil.online',
+    'HTTP-Referer': 'https://www.corosolto.com.br',
     'X-Title': 'CORO SOLTO: Treta Suprema',
   },
   body: JSON.stringify({

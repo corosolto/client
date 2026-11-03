@@ -112,6 +112,31 @@ for (const file of files) {
   }
 }
 
+{
+  const { measureSurfaceFloors, FLOOR_MUTANTS } = await import('./fixtures/surface-floor-uv.mjs');
+  const baseline = JSON.parse(readFileSync(new URL('./fixtures/surface-floor-uv-baseline.json', import.meta.url), 'utf8'));
+  const nominal = measureSurfaceFloors();
+  const preservation = JSON.stringify(nominal.signatures) === JSON.stringify(baseline.expected);
+  const pass = nominal.failed.length === 0 && preservation;
+  console.log(JSON.stringify({ file: 'surface-floor-uv', pass, rows: nominal.rows, preservation }));
+  failed ||= !pass;
+  if (process.argv.includes('--self-test') && pass) {
+    const expected = {
+      'quebrada-sem-uv': ['quebrada:fallback:0', 'quebrada:fallback:1'],
+      'escadao-sem-inicial': ['escadao:fallback:0'],
+      'escadao-sem-onload': ['escadao:onload', 'escadao:double-density', 'escadao:dimensions-repeat', 'escadao:changed-double'],
+      'escadao-acumula': ['escadao:onload', 'escadao:double', 'escadao:double-density', 'escadao:dimensions-repeat', 'escadao:changed-double'],
+      'escadao-ignora-repeat': ['escadao:onload', 'escadao:double-density', 'escadao:dimensions-repeat', 'escadao:changed-double'],
+      'escadao-ignora-dimensoes': ['escadao:dimensions-repeat', 'escadao:changed-double'],
+    };
+    for (const name of FLOOR_MUTANTS) {
+      const measured = measureSurfaceFloors(name);
+      if (JSON.stringify(measured.failed) !== JSON.stringify(expected[name])) throw Error(`surface-floor-uv: wrong semantic failset ${name}: ${measured.failed}`);
+      console.log(`surface-floor-uv: mutante ${name} RED <- ${measured.failed.join(',')}`);
+    }
+  }
+}
+
 /* Ferro: tijoloBaianoTex — o 404 tem que alcançar o material REAL clonado pelo
    aoMatFactory (é o que a casa desenha), executando o callback exato entregue ao loader.
    Loader que engole/ignora onError é proibido: sem callback entregue = NAOAPLICOU. */

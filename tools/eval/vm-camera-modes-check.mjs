@@ -20,6 +20,11 @@ const playwright = await import(pathToFileURL(path.join(globalRoot, 'playwright/
 const chromium = playwright.chromium || playwright.default?.chromium;
 const server = spawn(process.execPath, ['tools/eval/serve.mjs', port], { cwd: ROOT, stdio: 'ignore' });
 let browser;
+let page;
+const pageErrors = [];
+const networkErrors = [];
+const requestPath = (url) => { const parsed = new URL(url); return /^https?:$/.test(parsed.protocol) ? `${parsed.origin}${parsed.pathname}` : parsed.protocol; };
+const withoutQueries = (text) => text.replace(/https?:\/\/[^\s]+/g, requestPath).slice(0, 4000);
 const failures = [];
 const check = (name, ok, evidence = '') => {
   console.log(`${ok ? 'PASSA' : 'FALHA'} ${name}${evidence ? ` — ${evidence}` : ''}`);
@@ -49,9 +54,10 @@ try {
   if (!up) throw new Error('servidor de revisão não subiu');
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
   const context = await browser.newContext({ viewport: { width: 1200, height: 800 } });
-  const page = await context.newPage();
-  const pageErrors = [];
+  page = await context.newPage();
   page.on('pageerror', (error) => pageErrors.push(error.message));
+  page.on('requestfailed', (request) => networkErrors.push({ path: requestPath(request.url()), error: request.failure()?.errorText }));
+  page.on('response', (response) => { if (response.status() >= 400) networkErrors.push({ path: requestPath(response.url()), status: response.status() }); });
   const url = `${base}/?debug=1&auto=E&vmauthored=1&vmfabrica=1&vmweapon=m4&map=brasilia&armaslazy=0&vmqa=precision&bloom=0`;
   await page.goto(url, { waitUntil: 'load', timeout: 180000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
@@ -62,7 +68,7 @@ try {
 
   const shortcuts = await page.locator('#hud-shortcuts').innerText();
   const cameraSelect = page.locator('#set-camera');
-  check('CAM1 atalho no HUD', shortcuts.includes('B CÂMERA'), shortcuts);
+  check('CAM1 atalho no HUD', shortcuts.includes('N CÂMERA'), shortcuts);
   check('CAM2 opção com três modos', await cameraSelect.count() === 1
     && JSON.stringify(await cameraSelect.locator('option').evaluateAll((items) => items.map((el) => el.value)))
       === JSON.stringify(['first', 'third', 'shoulder']));
@@ -72,7 +78,7 @@ try {
     && first.root && first.authored && first.badge.includes('AUTORADO m4'), JSON.stringify(first));
   await page.screenshot({ path: path.join(captureDir, 'first.png') });
 
-  await page.keyboard.press('b');
+  await page.keyboard.press('n');
   await settle(page);
   const third = await snapshot(page);
   check('CAM4 corpo e arma no rig TP', third.mode === 'third' && third.tp && third.tpGLB && third.tpWeapon === 'm4'
@@ -124,6 +130,8 @@ try {
   check('CAM9 sem erro de página', pageErrors.length === 0, JSON.stringify(pageErrors.slice(0, 3)));
 } catch (error) {
   check('CAM0 execução', false, error.stack || String(error));
+  const overlay = await page?.locator('#crash-overlay').textContent({ timeout: 1000 }).catch(() => '');
+  console.error('CAM diagnóstico', JSON.stringify({ overlay: overlay && withoutQueries(overlay), pageErrors: pageErrors.slice(0, 5).map(withoutQueries), networkErrors: networkErrors.slice(0, 12) }));
 } finally {
   await browser?.close();
   server.kill();

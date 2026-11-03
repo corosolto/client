@@ -16,6 +16,7 @@
 //   tuning ao vivo: ?charfloor= ?charfloorfar= ?charceil= ?charsat= ?rimnear= ?rimfar=
 import * as THREE from 'three';
 import { assetUrl } from './data/asseturl.js';
+import { revDe } from './data/assetver.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { buildRifle, CHAR_FX, charRimColor, upgradeCharMaterial, makeContactShadow } from './characters.js';
@@ -197,6 +198,7 @@ const TINT_3P = {
 let _clips = null;                 // { idle: AnimationClip, ... } shared fallback
 const _clipsByChar = {};           // id -> per-character retargeted clip set (fallback to _clips)
 const _base = new Map();           // id -> THREE.Object3D template scene
+const _bodyOrigins = new WeakMap();
 const _skins = new Map(), _skinRequests = new Map();
 let _skinManifest = null;
 export async function preloadCosmeticAssets(ids = []) {
@@ -209,6 +211,7 @@ export async function preloadCosmeticAssets(ids = []) {
     if (_skins.has(id)) return;
     if (_skinRequests.has(id)) return _skinRequests.get(id);
     const request = (async () => {
+      const origin = Object.freeze({ kind: 'cosmetic', character: entry.character, path: `public${entry.model}`, sha256: entry.sha256 });
       const g = await loadGLB(entry.model); let rigged = false;
       g.scene.traverse(o => { if (o.isSkinnedMesh && o.skeleton) rigged = true; });
       if (!rigged) throw new Error('skin_requires_rig');
@@ -219,6 +222,7 @@ export async function preloadCosmeticAssets(ids = []) {
       }
       const compatible = entry.rigCompatibleWith === entry.character;
       if (!compatible && !STATES.every(name => clips[name])) throw new Error('skin_requires_animations');
+      _bodyOrigins.set(g.scene, origin);
       _skins.set(id, {character:entry.character, model:g.scene, clips:compatible?null:clips,gripProfile:entry.gripProfile,metalFinish:entry.metalFinish});
     })().catch(e => console.warn(`[skins] ${id}: ${e.message}`)).finally(() => _skinRequests.delete(id));
     _skinRequests.set(id, request); return request;
@@ -227,64 +231,124 @@ export async function preloadCosmeticAssets(ids = []) {
 
 /* LUVAS EM 3ª PESSOA (20/10): a fábrica já recortava a mão de cada personagem em
    `models/gloves/3p/`; aqui o pacote é re-bindado por nome de osso e pintado. */
-const _gloveMesh = new Map();      // charId -> SkinnedMesh template (ou null se não há pacote)
+const _gloveMeshes = new Map();
+const _gloveRequests = new Map();
+const _gloveHandles = new Map(), _gloveOrigins = new WeakMap();
+export class GloveManifestUnavailable extends Error {
+  constructor(cause) { super('gloves_manifest_unavailable'); this.cause = cause; this.reported = false; }
+  warn() { if (!this.reported) { this.reported = true; console.warn('[luvas] manifesto TP indisponível'); } }
+}
 let _gloveManifest = null;
 function gloveManifest() {
-  if (!_gloveManifest) _gloveManifest = fetch(assetUrl('data/gloves-manifest.json'))
-    .then((r) => { if (!r.ok) throw new Error('gloves_manifest'); return r.json(); })
-    .catch(() => ({ packages: [] }));
+  if (!_gloveManifest) {
+    const request = Promise.resolve().then(() => fetch(assetUrl('data/gloves-manifest.json')))
+      .then((r) => { if (!r.ok) throw new Error('gloves_manifest'); return r.json(); })
+      .then((manifest) => {
+        const object = (v) => v && typeof v === 'object' && !Array.isArray(v);
+        if (!object(manifest) || !Array.isArray(manifest.packages) || manifest.packages.some((p) =>
+          !object(p) || typeof p.perspective !== 'string' || (p.perspective === '3p' &&
+            (!/^[a-f0-9]{64}$/.test(p.skeletonFamily?.fingerprintSha256 || '') || !Array.isArray(p.sourceVariants)
+              || p.sourceVariants.some((v) => !object(v) || typeof v.id !== 'string' || !Array.isArray(v.characterIds)
+                || v.characterIds.some((id) => typeof id !== 'string')))))) throw new Error('gloves_manifest');
+        return manifest;
+      }).catch((cause) => {
+        if (_gloveManifest === request) _gloveManifest = null;
+        throw new GloveManifestUnavailable(cause);
+      });
+    _gloveManifest = request;
+  }
   return _gloveManifest;
 }
-function glovePath(manifest, charId) {
+function glovePath(manifest, origin) {
+  const matches = [];
   for (const pack of manifest.packages || []) {
     if (pack.perspective !== '3p') continue;
-    const variante = (pack.sourceVariants || []).find((v) => (v.characterIds || []).includes(charId));
-    if (variante) return `/models/gloves/3p/${variante.id}-${pack.skeletonFamily.fingerprintSha256.slice(0, 12)}.glb`;
+    const family = pack.skeletonFamily?.fingerprintSha256;
+    if (!/^[a-f0-9]{64}$/.test(family || '')) continue;
+    for (const variante of pack.sourceVariants || []) {
+      const source = variante.source;
+      if (!(variante.characterIds || []).includes(origin.character) || !/^[a-z0-9-]+$/.test(variante.id || '')
+        || source?.path !== origin.path || !/^[a-f0-9]{64}$/.test(source.sha256 || '')
+        || source.skeletonFamilySha256 !== family) continue;
+      const sameSource = origin.kind === 'cosmetic' ? source.sha256 === origin.sha256
+        : origin.kind === 'base' && /^[a-f0-9]{10}$/.test(origin.revision || '') && source.sha256.startsWith(origin.revision);
+      if (sameSource) matches.push({ url: `/models/gloves/3p/${variante.id}-${family.slice(0, 12)}.glb` });
+    }
   }
-  return null;
+  return matches.length === 1 ? matches[0] : null;
+}
+function baseGloveOrigin(id) {
+  if (!GLB_CHARS.has(id)) return null;
+  const path = `models/characters/${id}.glb`;
+  return Object.freeze({ kind: 'base', character: id, path: `public/${path}`, revision: revDe(path) });
+}
+function gloveHandleFor(origin) {
+  if (!origin) return null;
+  const key = JSON.stringify([origin.kind, origin.character, origin.path, origin.kind === 'cosmetic' ? origin.sha256 : origin.revision]);
+  if (_gloveHandles.has(key)) return _gloveHandles.get(key);
+  const handle = Object.freeze({
+    key,
+    get ready() { return !!_gloveMeshes.get(key); },
+    preload() {
+      if (_gloveMeshes.has(key)) return Promise.resolve();
+      if (_gloveRequests.has(key)) return _gloveRequests.get(key);
+      const request = Promise.resolve().then(() => gloveManifest()).then(async (manifest) => {
+        try {
+          const pack = glovePath(manifest, origin);
+          if (!pack) { _gloveMeshes.set(key, null); return; }
+          const g = await loadGLB(assetUrl(pack.url.replace(/^\//, '')));
+          const meshes = [];
+          g.scene.traverse((o) => { if (o.isSkinnedMesh) meshes.push(o); });
+          _gloveMeshes.set(key, meshes.length ? meshes : null);
+        } catch (e) { _gloveMeshes.set(key, null); }
+      }).finally(() => _gloveRequests.delete(key));
+      _gloveRequests.set(key, request);
+      return request;
+    },
+  });
+  _gloveHandles.set(key, handle);
+  _gloveOrigins.set(handle, origin);
+  return handle;
+}
+export function getGloveHandle(charId, skinId = null) {
+  const cosmetic = _skins.get(skinId);
+  const template = cosmetic?.character === charId ? cosmetic.model : _base.get(charId);
+  return gloveHandleFor(template && _bodyOrigins.get(template));
 }
 export async function preloadGloveAssets(ids = []) {
-  const alvos = [...new Set(ids.filter((id) => GLB_CHARS.has(id) && !_gloveMesh.has(id)))];
-  if (!alvos.length) return;
-  const manifest = await gloveManifest();
-  await Promise.all(alvos.map(async (id) => {
-    const url = glovePath(manifest, id);
-    if (!url) { _gloveMesh.set(id, null); return; }
-    try {
-      const g = await loadGLB(assetUrl(url.replace(/^\//, '')));
-      let mesh = null;
-      g.scene.traverse((o) => { if (!mesh && o.isSkinnedMesh) mesh = o; });
-      _gloveMesh.set(id, mesh || null);
-    } catch (e) { _gloveMesh.set(id, null); }
-  }));
+  await Promise.all([...new Set(ids)].map(id => gloveHandleFor(baseGloveOrigin(id))?.preload()));
 }
-export function hasGloveModel(id) { return !!_gloveMesh.get(id); }
-/* Anexa a luva ao personagem JÁ CLONADO. Devolve a malha anexada (ou null). */
-function attachGloves(model, charId, gloveSkinId) {
+export function hasGloveModel(id) {
+  return !!gloveHandleFor(baseGloveOrigin(id))?.ready;
+}
+/* Anexa o pacote inteiro ao personagem JÁ CLONADO, ou recusa a família divergente. */
+function attachGloves(model, gloveSkinId, handle) {
   const estilo = gloveSkinStyle(gloveSkinId);
-  const template = _gloveMesh.get(charId);
-  if (!estilo || !template) return null;
+  const templates = handle && _gloveOrigins.has(handle) ? _gloveMeshes.get(handle.key) : null;
+  if (!estilo || !templates) return null;
   let corpo = null;
   model.traverse((o) => { if (!corpo && o.isSkinnedMesh) corpo = o; });
   if (!corpo) return null;
   const ossos = new Map();
   corpo.skeleton.bones.forEach((b) => ossos.set(b.name, b));
-  const alvo = template.skeleton.bones.map((b) => ossos.get(b.name));
-  if (alvo.some((b) => !b)) return null;    // família divergente: não force o bind
-  const luva = new THREE.SkinnedMesh(template.geometry, new THREE.MeshStandardMaterial({
-    color: new THREE.Color(estilo.glove), roughness: 0.86, metalness: 0,
-  }));
-  luva.name = 'luvas-3p';
-  luva.userData.gloveSkin = estilo.id;
-  luva.bind(new THREE.Skeleton(alvo, template.skeleton.boneInverses), template.bindMatrix);
-  luva.bindMode = template.bindMode;
-  luva.frustumCulled = false;
-  corpo.parent.add(luva);
-  return luva;
+  const binds = templates.map(template => ({ template, bones: template.skeleton.bones.map(b => ossos.get(b.name)) }));
+  if (binds.some(({ bones }) => bones.some(b => !b))) return null;
+  return binds.map(({ template, bones }) => {
+    const luva = new THREE.SkinnedMesh(template.geometry, new THREE.MeshStandardMaterial({
+      color: new THREE.Color(estilo.glove), roughness: 0.86, metalness: 0,
+    }));
+    luva.name = 'luvas-3p';
+    luva.userData.gloveSkin = estilo.id;
+    luva.bind(new THREE.Skeleton(bones, template.skeleton.boneInverses), template.bindMatrix);
+    luva.bindMode = template.bindMode;
+    luva.frustumCulled = false;
+    corpo.parent.add(luva);
+    return luva;
+  });
 }
 
 
-export function hasModel(id) { return _base.has(id); }
+export function hasModel(id, skinId) { return _base.has(id) || _skins.get(skinId)?.character === id; }
 // Acesso ao template já carregado (fparms.js clona daqui p/ os braços de 1ª pessoa)
 // e aos clipes compartilhados (pose base congelada). Pré-requisito: preloadCharacterAssets.
 export function getCharTemplate(id) { return _base.get(id); }
@@ -459,7 +523,10 @@ export async function preloadCharacterAssets(ids, opts = {}) {
   const wanted = [...new Set(ids)].filter((id) => GLB_CHARS.has(id) && !_base.has(id));
   await Promise.all(wanted.map(async (id) => {
     try {
-      const g = await loadGLB(assetUrl(`models/characters/${id}.glb`));
+      const path = `models/characters/${id}.glb`;
+      const origin = Object.freeze({ kind: 'base', character: id, path: `public/${path}`, revision: revDe(path) });
+      const g = await loadGLB(assetUrl(path));
+      _bodyOrigins.set(g.scene, origin);
       _base.set(id, g.scene);
     } catch (e) { console.warn('model load failed', id, e); }
     // Clipes retargetados POR PERSONAGEM (models/anims/<id>/): cada rig do Meshy tem
@@ -533,11 +600,13 @@ export function buildCharacterModel(def, opts = {}) {
   if (opts.preview && def.skinId && !skin) return null;
   const template = skin?.model || _base.get(def.id);
   if (!template || !_clips) return null;
+  const bodyOrigin = _bodyOrigins.get(template);
   const withWeapon = opts.weapon !== false; // menu showcase passes weapon:false
+  const gloveHandle = gloveHandleFor(bodyOrigin);
 
   const model = skeletonClone(template);
   // Luva equipada: entra ANTES do passe de materiais para herdar sombra/rim como o corpo.
-  if (opts.gloveSkinId) attachGloves(model, def.id, opts.gloveSkinId);
+  let gloveMeshes = opts.gloveSkinId ? attachGloves(model, opts.gloveSkinId, gloveHandle) || [] : [];
 
   // Normalize: scale to target height, drop feet to y=0, apply facing fix.
   // Update world matrices first so the bounding box reflects the real transforms.
@@ -559,7 +628,7 @@ export function buildCharacterModel(def, opts = {}) {
     if(skin?.metalFinish==='matte' && 'roughness' in next){next.roughness=Math.max(next.roughness ?? 1,.82);next.needsUpdate=true;}
     return next;
   };
-  model.traverse((o) => {
+  const finishMesh = (o) => {
     if (!o.isMesh) return;
     o.castShadow = true;
     // receiveShadow: sem isto a sombra do sol NUNCA escurecia o personagem — parte do
@@ -573,7 +642,8 @@ export function buildCharacterModel(def, opts = {}) {
     o.material = Array.isArray(o.material)
       ? o.material.map(finishMaterial)
       : finishMaterial(o.material);
-  });
+  };
+  model.traverse(finishMesh);
 
   const group = new THREE.Group();
   group.add(model);
@@ -906,7 +976,23 @@ export function buildCharacterModel(def, opts = {}) {
     ctrl.tpMount.pegadaAtiva = true;
     orientTpMount(ctrl.tpMount);
   }
-  return { group, parts: { head }, isGLB: true, mixer, ctrl, skinId: skin ? def.skinId : null };
+  return { group, parts: { head }, isGLB: true, mixer, ctrl, skinId: skin ? def.skinId : null, gloveHandle,
+    setGloveSkin(id) {
+      const removed = gloveMeshes;
+      for (const mesh of removed) {
+        mesh.removeFromParent();
+        mesh.material.dispose();
+        mesh.skeleton.dispose();
+      }
+      gloveMeshes = attachGloves(model, id, gloveHandle) || [];
+      for (const mesh of gloveMeshes) {
+        const rawMaterial = mesh.material;
+        finishMesh(mesh);
+        if (mesh.material !== rawMaterial) rawMaterial.dispose();
+      }
+      return { removed, added: gloveMeshes };
+    },
+  };
 }
 
 /* O driver de coreografia (public/js/emotes.js) é injetado, nunca importado aqui:
@@ -1043,6 +1129,7 @@ class CharController {
     // Viés de tombo pela direção do disparo: o mesmo clipe deixa de cair sempre igual.
     this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
     this._deathDir = dir ? { x: dir.x, z: dir.z } : null;
+    this._deathK = 0;
     this.dead = true; this.shooting = false; this._ar = false; this._mantleF = null;
     /* Overlays de vida (reload/flinch/lean/pitch) morrem junto com o corpo (dono, 31/10). Hist: docs/ANIM-3P.md. */
     this.cancelReload();
@@ -1058,10 +1145,18 @@ class CharController {
   // character does everything on top of the fallen pose (the "walking while falling
   // backward" bug). Then start idle clean.
   revive() {
+    this._restaurarPoseMorte();
+    this._deathK = 0; this._deathDir = null;
     this.dead = false; this.shooting = false; this.jumping = false; this._ar = false; this._mantleF = null;
     this.mixer.stopAllAction();
     this.cur = null;
     this._to('idle');
+  }
+
+  _restaurarPoseMorte() {
+    if (!this._deathPoseBone) return;
+    this._deathPoseBone.quaternion.copy(this._deathPoseBase);
+    this._deathPoseBone = null;
   }
 
   // moving: 0..1, hasTarget: bool, speed: real ground speed (m/s), back: true when the
@@ -1070,6 +1165,7 @@ class CharController {
   // so the feet plant instead of ice-skating (root-motion-free clips have no built-in
   // stride, so we drive the cycle rate from how fast the body is really moving).
   update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
+    this._restaurarPoseMorte();
     const freeHand = this._previewFreeHand;
     // Restaura antes do mixer: uma pose idêntica pode não reescrever a propriedade em dt=0.
     if (freeHand?.applied) { freeHand.bone.quaternion.copy(freeHand.before); freeHand.applied = false; }
@@ -1398,6 +1494,8 @@ class CharController {
       this.group.updateMatrixWorld(true);
       bone_pai: {
         const bone = torso.spines[0];
+        this._deathPoseBase ||= new THREE.Quaternion();
+        this._deathPoseBase.copy(bone.quaternion); this._deathPoseBone = bone;
         bone.parent.getWorldQuaternion(_pq).invert();
         _axisF.set(-d.z / n, 0, d.x / n).applyQuaternion(_pq).normalize();
         _aplicaMorte(bone, _qLean.setFromAxisAngle(_axisF, this._deathK * 0.22).clone());

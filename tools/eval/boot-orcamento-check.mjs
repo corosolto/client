@@ -1,6 +1,6 @@
 // Transporte HTTP real e contrato: docs/visual-consistency/BOOT-COHERENT-OVERLAY.md.
 import { execSync } from 'node:child_process';
-import { startBootOrigin,snapshotPublicJs,assertSnapshotLive } from './boot-network-origin.mjs';
+import { startBootOrigin,snapshotPublicJs,assertSnapshotLive,publicApiOrigin } from './boot-network-origin.mjs';
 import {freezeWindow,awaitWindow,validateReadyExact} from './boot-network-window.mjs';
 import {verifyDecoded,verifyResponseRecord,awaitBodies} from './boot-network-body.mjs';
 import {writeFileSync,mkdirSync} from 'node:fs';
@@ -8,18 +8,23 @@ import {randomUUID} from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { chaveDeCarga, InfraError, JS_EXCLUSOS, somaCargas, aceitaMutante, cancelaUi, prefixoRecebido, validaEnc } from './boot-overlay.mjs';
 import {createGuestProfileObserver,readGuestPageIdentity} from './boot-guest-profile.mjs';
+import {instrumentPosterIntent,collectPosterProof,lazyPosterSubset} from './boot-poster-intent.mjs';
+import {awaitLocalModuleProof} from './boot-local-proof.mjs';
 
 const args = process.argv.slice(2), vistos = new Set(), opcoes = {};
 for (const a of args) {
-  const m=a.match(/^--(base|mutante)=(.+)$/);
+  const m=a.match(/^--(base|api-base|mutante)=(.+)$/);
   const k=a==='--self-test'?'self-test':m?.[1];
-  if (!k || vistos.has(k)) { console.error('uso: --base=URL --mutante=cartaz-ansioso|fauna-cedo --self-test (sem duplicatas)'); process.exit(2); }
+  if (!k || vistos.has(k)) { console.error('uso: --base=URL --api-base=ORIGIN --mutante=cartaz-ansioso|fauna-cedo --self-test (sem duplicatas)'); process.exit(2); }
   vistos.add(k); opcoes[k]=m?.[2] ?? true;
 }
-const MUTANTE=opcoes.mutante || '', BASE=opcoes.base || process.env.BASE || 'https://www.csbrasil.online';
+const MUTANTE=opcoes.mutante || '', BASE=opcoes.base ?? process.env.BOOT_CANDIDATE_BASE ?? process.env.BASE ?? 'https://www.corosolto.com.br';
 if (!['','cartaz-ansioso','fauna-cedo'].includes(MUTANTE)) { console.error('mutante desconhecido');process.exit(2); }
 try { if (!['http:','https:'].includes(new URL(BASE).protocol)) throw Error(); }
 catch { console.error('BASE inválida');process.exit(2); }
+let API_BASE;
+try { API_BASE=publicApiOrigin(opcoes['api-base'] ?? process.env.BOOT_API_BASE ?? new URL(BASE).origin); }
+catch { console.error('API_BASE inválida');process.exit(2); }
 if (opcoes['self-test']) {
   if (args.length !== 1) { console.error('--self-test exige uso isolado');process.exit(2); }
   const {selfTest}=await import('./boot-overlay.mjs');process.exit(selfTest().length?1:0);
@@ -32,8 +37,12 @@ const TETO_REQS = 340;
 // Referência e mutante compartilham a transformação e recusam âncora ausente.
 const ANSIOSO = /( {2})T\.posterImgs = \[\];\n {2}POSTER_FILES\.forEach\(\(\[f\], i\) => \{[\s\S]*?\n {2}\}\);\n/;
 function poolAnsioso(corpo) {
-  if (!ANSIOSO.test(corpo)) throw new Error('não achei o bloco de getters de T.posterImgs em textures.js');
-  return corpo.replace(ANSIOSO, '  T.posterImgs = POSTER_FILES.map(([f]) => _cartaz(f));\n');
+  const ansioso = '  T.posterImgs = POSTER_FILES.map(([f]) => _cartaz(f));\n';
+  const nBloco = [...corpo.matchAll(new RegExp(ANSIOSO.source, 'g'))].length;
+  if (nBloco !== 1) throw new Error(`esperava 1 bloco de getters de T.posterImgs em textures.js, achei ${nBloco}`);
+  const depois = corpo.replace(ANSIOSO, ansioso);
+  if ([...depois.matchAll(new RegExp(ANSIOSO.source, 'g'))].length !== 0 || depois.split(ansioso).length !== 2) throw new Error('pool ansioso não aplicou exatamente uma vez');
+  return depois;
 }
 // A chamada real é a âncora da mutação.
 const FAUNA_ADIADA = '      preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});\n';
@@ -71,7 +80,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   const label=refPoolAnsioso?'reference':mutante||'nominal',passId=label+'-'+randomUUID(),proofDir=process.env.BOOT_PROOF_DIR?process.env.BOOT_PROOF_DIR+'/'+RUN_ID+'/'+passId:null;
   if(proofDir)mkdirSync(proofDir,{recursive:true});
   console.log('BOOT_PASS '+JSON.stringify({runId:RUN_ID,passId,label,proofDir,snapshot:SNAPSHOT.fingerprint}));
-  let context,origin,page,guest,terminalCapture=null,diagnostic=()=>({});
+  let context,origin,page,guest,terminalCapture=null,localProof=null,diagnostic=()=>({});
   try {
   context = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
   await context.addInitScript(() => {
@@ -97,9 +106,10 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   const isentas=new Set(),sobrepostos=new Map(),corposEsperados=new Map(),verificados=new Set(),verificacoes=new Map();
   const bodyChecks=new Map(),bodyRecords=new Map(),servedPayloads=new Map(),serverIds=new Set();
   let reportProxyError=null;const pendingProxyErrors=[];
-  origin=await startBootOrigin({BASE,snapshot:SNAPSHOT,transformJs:(rel,original)=>{
+  origin=await startBootOrigin({BASE,API_BASE,snapshot:SNAPSHOT,transformJs:(rel,original)=>{
     let corpo=original;
     if(rel==='js/textures.js'&&(refPoolAnsioso||mutante==='cartaz-ansioso'))corpo=poolAnsioso(corpo);
+    if(rel==='js/textures.js')corpo=instrumentPosterIntent(corpo);
     if(rel==='js/main.js'){if(mutante==='fauna-cedo')corpo=faunaCedo(corpo);corpo=instrumentaCausaSplash(corpo);}
     return corpo;
   },onError:e=>{const m='HTTP proxy: '+e.message;pendingProxyErrors.push(m);reportProxyError?.(m);},authorizeProfile:meta=>guest?guest.authorizeProfile(meta):null});
@@ -122,6 +132,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
     }
     if(!Number.isFinite(e.wallTime)||e.wallTime<=0||!Number.isFinite(e.timestamp)||e.timestamp<=0){marcaInfra('clock CDP request inválido');return;}
     const startEpoch=e.wallTime*1000;
+    if(frozenCutoff!==null&&startEpoch<=frozenCutoff&&new URL(e.request.url).origin===origin.url&&new URL(e.request.url).pathname.startsWith('/posters/'))marcaInfra('início de cartaz tardio dentro da janela após freeze: '+e.request.url);
     reqs.set(e.requestId, { startMonotonic:e.timestamp,requestId:e.requestId,loaderId:e.loaderId,type:e.type,documentURL:e.documentURL,method:e.request.method,initiator:e.initiator, url: e.request.url, inicio: startEpoch, fim: null, bytes: 0, erro: null, recebidoResposta: 0, recebidoChunks: 0, canceladaUi: false });
   });
   const fecha = (e) => {
@@ -214,6 +225,8 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   await page.waitForFunction(epoch=>performance.timeOrigin+performance.now()>=epoch,cutoff,{timeout:30000,polling:10});
   await cdp.send('Runtime.evaluate',{expression:'0',returnByValue:true});
   const gateRequests=freezeWindow([...reqs.values()],gateEpoch),gateObjects=new Set(gateRequests);frozenCutoff=cutoff;
+  const posterObservation=await page.evaluate(()=>({trace:window.__bootPosterIntent,current:{timeOrigin:performance.timeOrigin,now:performance.now()}}));
+  const posterProof=collectPosterProof({...posterObservation,requests:[...reqs.values()],origin:origin.url,timeOrigin,cutoffEpoch:cutoff});
   await Promise.race([awaitWindow(gateRequests),infraP]);
   const requiredIds=new Set(gateRequests.filter(r=>!r.canceladaUi&&new URL(r.url).origin===origin.url&&/^https?:$/.test(new URL(r.url).protocol)).map(r=>String(r.serverID)));
   const absentBodies=[];
@@ -274,6 +287,10 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
       }
     },{ids,timeoutMs}),
     closeObservation:async()=>{
+      localProof=await awaitLocalModuleProof({requests:()=>corposEsperados.keys(),verification:request=>{
+        const row=bodyRecords.get(request),text=verificacoes.get(request),body=row&&bodyChecks.get(row.id);
+        return text&&body?Promise.all([text,body]):null;
+      },verified:request=>verificados.has(request)&&bodyRecords.get(request)?.state==='checked',failure:request=>bodyRecords.get(request)?.error||'módulo sem corpo integral: '+request.url(),barrier:()=>cdp.send('Runtime.evaluate',{expression:'0',returnByValue:true})});
       terminalCapture={abortTrace:await page.evaluate(()=>window.__bootTrace||[]),fetchBodies:await page.evaluate(()=>window.__bootFetchBodies||[]),readyExact:await page.evaluate(()=>window.__csReadyExact||null)};
       await cdp.send('Network.disable');
       await context.close();context=null;
@@ -293,6 +310,8 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
     isentas: [...ate].filter((r) => isentas.has(chaveDeCarga(r.url))).length,
     depoisPortao: depois.length,
     cartazes: new Set(ate.filter((r) => /\/posters\//.test(r.url)).map((r) => r.url.split('?')[0])).size,
+    posterProof,
+    localBootstrapProof:localProof,
     ultimoProp: Math.max(-1, ...ate.filter((r) => /\/models\/props\//.test(r.url)).map((r) => r.fim-timeOrigin)),
     primeiraFauna: Math.min(Infinity, ...[...reqs.values()].filter((r) => /\/models\/ambient\//.test(r.url)).map((r) => r.inicio-timeOrigin)),
     erros,
@@ -316,7 +335,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
 
 let saida=1;
 const veredito=(cand,ref)=>({READY:cand.causa==='assets',ORC1:cand.bytes<=TETO_BYTES&&cand.reqs<=TETO_REQS,
-  ORC2:cand.cartazes<ref.cartazes,ORC3:cand.ultimoProp>0&&Number.isFinite(cand.primeiraFauna)&&cand.primeiraFauna>=cand.ultimoProp});
+  ORC2:lazyPosterSubset(cand.posterProof,ref.posterProof),ORC3:cand.ultimoProp>0&&Number.isFinite(cand.primeiraFauna)&&cand.primeiraFauna>=cand.ultimoProp});
 const relatar=(cand,ref,ok,rotulo)=>{
  console.log(`base ${BASE} · ${rotulo}`);
  console.log(`portão ${Math.round(cand.portao)}ms por ${cand.causa}; overlay ${cand.sobrepostos} js; isentas ${cand.isentas}; depois ${cand.depoisPortao}`);
@@ -324,7 +343,7 @@ const relatar=(cand,ref,ok,rotulo)=>{
  console.log('HTTPgzipProof '+JSON.stringify(cand.networkProof));
  console.log(`READY ${ok.READY?'ok':'FALHA'}`);
  console.log(`ORC1 ${(cand.bytes/1048576).toFixed(2)} MiB / ${cand.reqs} req (teto ${TETO_BYTES} / ${TETO_REQS}) ${ok.ORC1?'ok':'FALHA'}`);
- console.log(`ORC2 ${cand.cartazes} vs ${ref.cartazes} cartazes ${ok.ORC2?'ok':'FALHA'}`);
+ console.log(`ORC2 ${cand.posterProof.started.length} vs ${ref.posterProof.started.length} inícios por identidade (concluídos ${cand.cartazes} vs ${ref.cartazes}) ${ok.ORC2?'ok':'FALHA'}`);
  console.log(`ORC3 último prop ${cand.ultimoProp}ms, primeira fauna ${cand.primeiraFauna}ms ${ok.ORC3?'ok':'FALHA'}`);
 };
 try {

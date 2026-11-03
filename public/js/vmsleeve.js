@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ownVmResource } from './vmownership.js';
 
 // Manga KINEMATION termina aberta no deltoide, a poucos cm da câmera do pacote; o frame por
 // arma (z<0) traz essa boca ao quadro. Régua: tools/eval/vm-manga-oca-check.mjs.
@@ -119,10 +120,12 @@ export function extendSleeveOpenings(mesh, { space = null, length = 0.9, pose = 
 /* Fecha a boca da manga no espaço de bind (um centro por laço + leque). A extensão acima
    é do produto K e no golden sai pelo lado errado. Régua: manga-tampa-check.mjs. */
 export function capSleeveOpenings(mesh) {
-  const geo = mesh.geometry;
-  if (!geo?.attributes?.position || mesh.userData.sleeveCapped) return 0;
-  const { loops, representative } = sleeveOpenings(geo);
+  const source = mesh.geometry;
+  if (!source?.attributes?.position || mesh.userData.sleeveCapped) return 0;
+  const { loops, representative } = sleeveOpenings(source);
   if (!loops.length) return 0;
+  const geo = ownVmResource(source.clone());
+  mesh.geometry = geo;
   const pos = geo.attributes.position;
   const nomes = Object.keys(geo.attributes);
   const antigos = geo.index ? Array.from({ length: geo.index.count }, (_, i) => geo.index.getX(i)) : null;
@@ -152,13 +155,11 @@ export function capSleeveOpenings(mesh) {
   for (const nome of nomes) {
     const attr = geo.attributes[nome];
     const item = attr.itemSize;
-    // computeVertexNormals acumula por setXYZ com Math.round(x*32767) no Int16 normalizado:
-    // face de área pequena arredonda a contribuição a 0 e o PBR recebe normal (0,0,0). MANGA-NORMAIS.md.
-    const flutuante = nome === 'normal';
+    // Normais recalculadas e atributos desquantizados precisam de Float32 para manter o PBR.
+    // MANGA-NORMAIS.md e docs/viewmodels/ak-manga-quantizada-20261030.md.
+    const flutuante = nome === 'normal' || attr.normalized;
     const arr = new (flutuante ? Float32Array : attr.array.constructor)((pos.count + extras.length) * item);
     const novo = new THREE.BufferAttribute(arr, item, flutuante ? false : attr.normalized);
-    /* Pelo ACESSOR, nunca pelo array cru: `getX` desnormaliza e o golden é quantizado
-       (Int16 normalizada), então o float truncava pra 0. §5 do doc de 26/10; MT6/MT7. */
     for (let i = 0; i < attr.count; i += 1) for (let c = 0; c < item; c += 1) novo[SET[c]](i, attr[GET[c]](i));
     extras.forEach((media, k) => {
       for (let c = 0; c < item; c += 1) novo[SET[c]](pos.count + k, media[nome][c]);
@@ -260,7 +261,7 @@ function extendAtCurrentPose(mesh, source, loops, representative, space, length)
     ends.push(...previous, tip);
   }
   if (!ends.length) return 0;
-  const out = new THREE.BufferGeometry();
+  const out = ownVmResource(new THREE.BufferGeometry());
   for (const name of names) {
     const attribute = source.attributes[name];
     // getX já devolve valor desnormalizado; grava cru, sem `normalized`.

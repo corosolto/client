@@ -50,6 +50,8 @@
      ST3  ANTIVACUIDADE: com id VÁLIDO a troca continua trocando de verdade (lado, facção
           e personagem mudam) — sem isto bastaria transformar `_switchTeam` em no-op
      ST4  nenhuma atribuição a `this.playerDef` no game.js usa `byId(...)` sem reserva
+     ST5  arena do construtor com 2 spawns por lado: 30 trocas sem lançar, posição
+          finita e lado trocado (índice de spawns nunca assume 4 slots)
 
    uso: node tools/eval/switchteam-check.mjs [--mutante=<nome>]
      semreserva    reaplica o defeito no FONTE lido pela ST4      -> ST4 vermelha
@@ -59,7 +61,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { bootGame, initTextures, CHARACTERS } from './harness.mjs';
+import { bootGame, initTextures, CHARACTERS, MAPS } from './harness.mjs';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
@@ -154,9 +156,44 @@ const novoJogo = () => {
   else nok('ST4', 'nenhuma atribuição a this.playerDef usa byId() sem reserva', d);
 }
 
+/* ST5 — arena do CONSTRUTOR com 2 spawns por lado (formato "mapa como dado"). O índice
+   antigo `spawns[time][(Math.random() * 4) | 0]` lia undefined em metade das trocas
+   (2 spawns reais, 4 sorteados) e o `catch` do main.js engolia: TypeError em `s.x`.
+   Medido antes do conserto nesta arena: a troca lança em ~50% das chamadas; 30 trocas
+   seguidas sem lançar, com posição finita e lado trocado, é a prova. */
+{
+  const SPEC = JSON.parse(fs.readFileSync(path.join(RAIZ, 'tools/eval/mapjson_fixture.json'), 'utf8'));
+  const { buildMapFromJSON, propIdsFromSpec } = await import(path.join(RAIZ, 'public/js/map_json.js'));
+  MAPS.arena_json_2spawns = {
+    name: 'Arena JSON 2 spawns (switchteam)', ctfMode: true,
+    build: (scene, T) => buildMapFromJSON(scene, T, SPEC),
+    props: propIdsFromSpec(SPEC),
+  };
+  const g = bootGame('arena_json_2spawns', { textures, ctf: true, bots: 2, seed: 777 });
+  g.state = 'live';
+  g.player.alive = true;
+  let erro = null;
+  let trocas = 0;
+  try {
+    for (let i = 0; i < 30; i++) {
+      const ladoAntes = g.playerTeam;
+      g._switchTeam();
+      if (g.playerTeam !== ladoAntes) trocas++;
+      if (!Number.isFinite(g.player.pos.x) || !Number.isFinite(g.player.pos.z))
+        throw new Error(`posição não finita após troca ${i}: ${g.player.pos.x},${g.player.pos.z}`);
+    }
+  } catch (e) { erro = e; }
+  const d = `arena '${SPEC.name}' com ${SPEC.spawns.E.length}/${SPEC.spawns.B.length} spawns`
+    + `   trocas efetivas ${trocas}/30`
+    + `   exceção ${erro ? erro.constructor.name + ': ' + erro.message : 'nenhuma'}`
+    + `   pos (${g.player.pos.x}, ${g.player.pos.z})`;
+  if (!erro && trocas === 30) ok('ST5', 'troca de lado em arena do construtor com 2 spawns não lança e troca de verdade', d);
+  else nok('ST5', 'troca de lado em arena do construtor com 2 spawns não lança e troca de verdade', d);
+}
+
 console.log(`\n${linhas.join('\n\n')}\n`);
 if (MUT) console.log(`mutante aplicado: --mutante=${MUT}\n`);
 console.log(falhas.length === 0
-  ? 'PASSA (switchteam-check) — 4/4 cláusulas'
+  ? 'PASSA (switchteam-check) — 5/5 cláusulas'
   : `REPROVA (switchteam-check) — ${falhas.join(', ')}`);
 process.exit(falhas.length === 0 ? 0 : 1);

@@ -18,7 +18,7 @@ const cobra = (cond, msg) => {
 };
 
 const ALVO_DO_MUTANTE = {
-  'sem-negociacao': 'cliente negocia v7/v6/v5/v4/v3/v2 binário com fallback v1 JSON',
+  'sem-negociacao': 'cliente oferece exclusivamente v8; capacidade legada permanece no codec',
   'sem-decoder': 'o caminho de produção chama o decoder real',
 };
 /* Aplicação de mutante é estado SEPARADO da detecção: âncora ausente ou duplicada é erro
@@ -38,11 +38,11 @@ const aplicaMutacao = (nome, src, ancora, troca) => {
    net.js, que é quem decide o que fazer com os bytes. */
 let netSrc = fs.readFileSync('public/js/net.js', 'utf8');
 let tpSrc = fs.readFileSync('public/js/transporte.js', 'utf8');
-if (MUT === 'sem-negociacao') tpSrc = aplicaMutacao(MUT, tpSrc, 'new WebSocket(this.url, SNAPSHOT_PROTOCOLS)', 'new WebSocket(this.url)');
+if (MUT === 'sem-negociacao') tpSrc = aplicaMutacao(MUT, tpSrc, 'new WebSocket(this.url, [CLIENT_SNAPSHOT_PROTOCOL])', 'new WebSocket(this.url)');
 else if (MUT === 'sem-decoder') netSrc = aplicaMutacao(MUT, netSrc, 'decodeSnapshot(dados)', 'JSON.parse(dados)');
 else if (MUT && !ALVO_DO_MUTANTE[MUT]) { console.log(`mutante desconhecido: ${MUT}`); process.exit(1); }
 
-cobra(/new WebSocket\(this\.url, SNAPSHOT_PROTOCOLS\)/.test(tpSrc), 'cliente negocia v7/v6/v5/v4/v3/v2 binário com fallback v1 JSON');
+cobra(/new WebSocket\(this\.url, \[CLIENT_SNAPSHOT_PROTOCOL\]\)/.test(tpSrc), 'cliente oferece exclusivamente v8; capacidade legada permanece no codec');
 cobra(/binaryType\s*=\s*['"]arraybuffer['"]/.test(tpSrc), 'frames binários chegam como ArrayBuffer, não Blob');
 cobra(/decodeSnapshot\(dados\)/.test(netSrc), 'o caminho de produção chama o decoder real');
 cobra(/MAX_SNAPSHOT_BYTES/.test(tpSrc), 'o transporte limita frame antes de alocar/decodificar');
@@ -149,14 +149,10 @@ if (codec) {
   const jsonBytes = Buffer.byteLength(JSON.stringify(sample));
   cobra(bin.byteLength < jsonBytes * 0.45,
     `payload binário fica abaixo de 45% do JSON (${bin.byteLength}/${jsonBytes} bytes)`);
-  cobra(codec.SNAPSHOT_PROTOCOLS[0] === 'coro-snapshot-v7'
-      && codec.SNAPSHOT_PROTOCOLS[1] === 'coro-snapshot-v6'
-      && codec.SNAPSHOT_PROTOCOLS[2] === 'coro-snapshot-v5'
-      && codec.SNAPSHOT_PROTOCOLS[3] === 'coro-snapshot-v4'
-      && codec.SNAPSHOT_PROTOCOLS[4] === 'coro-snapshot-v3'
-      && codec.SNAPSHOT_PROTOCOLS[5] === 'coro-snapshot-v2'
-      && codec.SNAPSHOT_PROTOCOLS.includes('coro-json-v1'),
-    'ordem de negociação prefere v7 e preserva fallbacks v6/v5/v4/v3/v2/JSON');
+  cobra(JSON.stringify(codec.SNAPSHOT_PROTOCOLS) === JSON.stringify([
+      'coro-snapshot-v8', 'coro-snapshot-v7', 'coro-snapshot-v6', 'coro-snapshot-v5',
+      'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']),
+    'capacidade do codec inclui v8 e preserva os nomes canônicos v7..v2/JSON');
 
   for (const ruim of [bin.slice(0, 12), new Uint8Array([0, 1, 2, 3]), new Uint8Array(codec.MAX_SNAPSHOT_BYTES + 1)]) {
     let recusou = false; try { codec.decodeSnapshot(ruim); } catch { recusou = true; }

@@ -37,10 +37,16 @@ export function assertSnapshotLive(snapshot) {
  if(current.fingerprint!==snapshot.fingerprint)throw Error('snapshot public/js mudou entre passadas: '+snapshot.fingerprint+' -> '+current.fingerprint);
  return true;
 }
-export async function startBootOrigin({BASE,publicRoot,snapshot=snapshotPublicJs(publicRoot),transformJs=(rel,body)=>body,onError=()=>{},authorizeProfile=null,profileAuthorizationTimeoutMs=5000}) {
+export function publicApiOrigin(value) {
+ const parsed=new URL(value);
+ if(!['http:','https:'].includes(parsed.protocol)||parsed.username||parsed.password||parsed.search||parsed.hash||parsed.pathname!=='/')throw Error('API_BASE exige origem HTTP(S) sem credenciais, query ou caminho');
+ return parsed.origin;
+}
+export async function startBootOrigin({BASE,API_BASE,publicRoot,snapshot=snapshotPublicJs(publicRoot),transformJs=(rel,body)=>body,onError=()=>{},authorizeProfile=null,profileAuthorizationTimeoutMs=5000}) {
  if(!Number.isFinite(profileAuthorizationTimeoutMs)||profileAuthorizationTimeoutMs<=0||profileAuthorizationTimeoutMs>5000)throw Error('timeout de autorização inválido');
  const upstream=new URL(BASE);
  if(!['http:','https:'].includes(upstream.protocol)||upstream.username||upstream.password)throw Error('BASE pública HTTP(S) sem credenciais exigida');
+ const apiOrigin=publicApiOrigin(API_BASE===undefined?upstream.origin:API_BASE);
  const modules=new Map(),requests=[],byId=new Map(),active=new Set(),sockets=new Set(),profileDenials=[];let closing=false,nextId=0;
  if(snapshot.fingerprint!==sha(Buffer.from(JSON.stringify(snapshot.entries))))throw Error('snapshot inconsistente');
  for(const {rel,body:original} of snapshot.entries) {
@@ -65,7 +71,7 @@ export async function startBootOrigin({BASE,publicRoot,snapshot=snapshotPublicJs
   return new Promise((resolve,reject)=>{
    const transport=url.protocol==='https:'?https:http;
    const headers={accept:'*/*','accept-encoding':'gzip, br'};
-   if(body){headers['content-type']='application/json';headers['content-length']=String(body.length);headers.origin=upstream.origin;}
+   if(body){headers['content-type']='application/json';headers['content-length']=String(body.length);headers.origin=url.origin;}
    const request=transport.request(url,{method,headers},response=>{
     const chunks=[];response.on('data',b=>chunks.push(b));response.on('aborted',()=>reject(Error('upstream body abortado')));response.on('error',reject);
     response.on('end',()=>{
@@ -111,7 +117,8 @@ export async function startBootOrigin({BASE,publicRoot,snapshot=snapshotPublicJs
     record(res,{path:req.url,kind:'local-js',rel,status:200,payloadBytes:local.payloadBytes,decodedBytes:local.decodedBytes,sha256:local.sha256,encoding:'gzip'});
     res.writeHead(200,{'content-type':'text/javascript; charset=utf-8','content-encoding':'gzip','content-length':String(local.payloadBytes),'cache-control':'no-store',vary:'Accept-Encoding','x-boot-origin':'local-js'});res.end(local.payload);return;
    }
-   const dest=new URL(req.url,upstream.origin);if(dest.origin!==upstream.origin)throw Error('origin escapou');
+   const destinationOrigin=pathname.startsWith('/api/')?apiOrigin:upstream.origin;
+   const dest=new URL(req.url,destinationOrigin);if(dest.origin!==destinationOrigin)throw Error('origin escapou');
    const upstreamResponse=await getWire(dest,{method:req.method,body:requestBody}),{status,body:wire}=upstreamResponse,headers=upstreamResponse.headers;
    if(status>=300&&status<400)throw Error('redirect upstream não aceito: '+status+' '+dest.pathname);
    const originalEncoding=String(headers['content-encoding']||''),decoded=decodeWire(wire,originalEncoding),type=String(headers['content-type']||'application/octet-stream');
@@ -119,7 +126,7 @@ export async function startBootOrigin({BASE,publicRoot,snapshot=snapshotPublicJs
    if(isText(type)&&decoded.length){payload=gzipSync(decoded,{level:9});encoding='gzip';}
    const outputHeaders={'content-type':type,'cache-control':'no-store','content-length':String(payload.length),'x-boot-origin':'upstream-public'};
    if(encoding)outputHeaders['content-encoding']=encoding;
-   record(res,{path:req.url,method:req.method,requestBodyBytes:requestBody?.length||0,requestBodySha256:requestBody?sha(requestBody):null,kind:'upstream-public',status,payloadBytes:payload.length,decodedBytes:decoded.length,sha256:sha(decoded),encoding,upstreamEncoding:originalEncoding,upstreamWireBytes:wire.length});
+   record(res,{path:req.url,method:req.method,requestBodyBytes:requestBody?.length||0,requestBodySha256:requestBody?sha(requestBody):null,kind:'upstream-public',upstreamOrigin:destinationOrigin,status,payloadBytes:payload.length,decodedBytes:decoded.length,sha256:sha(decoded),encoding,upstreamEncoding:originalEncoding,upstreamWireBytes:wire.length});
    res.writeHead(status,outputHeaders);res.end(payload);
   }catch(e){if(!closing)onError(e);if(!res.headersSent)res.writeHead(502,{'cache-control':'no-store'});res.end('boot proxy failed');}
  });

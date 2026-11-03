@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# Configura a zona csbrasil.online na Cloudflare via API (fase A do runbook
+# Configura a zona corosolto.com.br na Cloudflare via API (fase A do runbook
 # docs/runbooks/cdn-cloudflare.md): SSL strict, Brotli/HTTP3/Early Hints e as
 # cache rules (bypass /api/*, mídia longa no edge, /js/ CURTO — BUG-39).
+# A migração do domínio (csbrasil.online → corosolto.com.br) moveu a zona;
+# o token precisa de acesso à zona nova, ou exporte CF_ZONE_NAME para apontar
+# a zona que ele ainda alcança.
 #
 # NÃO guarda segredo em arquivo: a chave vem de variável de ambiente.
 #
@@ -15,7 +18,7 @@
 set -e
 cd "$(dirname "$0")/.."
 
-ZONE="csbrasil.online"
+ZONE="${CF_ZONE_NAME:-corosolto.com.br}"
 API="https://api.cloudflare.com/client/v4"
 
 if [ -n "$CF_API_TOKEN" ]; then
@@ -68,7 +71,7 @@ read -r -d '' RULES <<'JSON' || true
     {
       "ref": "assets_midia",
       "description": "assets-midia: áudio/modelos/imagens/fontes no edge por 1 mês",
-      "expression": "(http.host eq \"www.csbrasil.online\" and (starts_with(http.request.uri.path, \"/audio/\") or starts_with(http.request.uri.path, \"/models/\") or starts_with(http.request.uri.path, \"/img/\") or starts_with(http.request.uri.path, \"/fonts/\") or starts_with(http.request.uri.path, \"/posters/\")))",
+      "expression": "(http.host eq \"www.corosolto.com.br\" and (starts_with(http.request.uri.path, \"/audio/\") or starts_with(http.request.uri.path, \"/models/\") or starts_with(http.request.uri.path, \"/img/\") or starts_with(http.request.uri.path, \"/fonts/\") or starts_with(http.request.uri.path, \"/posters/\")))",
       "action": "set_cache_settings",
       "action_parameters": {
         "cache": true,
@@ -79,7 +82,7 @@ read -r -d '' RULES <<'JSON' || true
     {
       "ref": "assets_js",
       "description": "assets-js: /js/ no edge por 10 min — TTL de 1 mês montava main.js de um deploy com fparms.js de outro (BUG-39/BUG-75); URLs já são ?v= por conteúdo, deploy novo nem depende deste TTL (tools/eval/edge-cache-check.mjs)",
-      "expression": "(http.host eq \"www.csbrasil.online\" and starts_with(http.request.uri.path, \"/js/\"))",
+      "expression": "(http.host eq \"www.corosolto.com.br\" and starts_with(http.request.uri.path, \"/js/\"))",
       "action": "set_cache_settings",
       "action_parameters": {
         "cache": true,
@@ -95,8 +98,8 @@ echo "   ok (bypass_api acima de assets_midia/assets_js; /js/ curto de propósit
 
 echo "== 4/4 · verificação"
 if [ "$STATUS" = "active" ]; then
-  H1=$(curl -sI "https://www.csbrasil.online/js/version.js" | tr -d '\r')
-  H2=$(curl -sI "https://www.csbrasil.online/js/version.js" | tr -d '\r')
+  H1=$(curl -sI "https://www.corosolto.com.br/js/version.js" | tr -d '\r')
+  H2=$(curl -sI "https://www.corosolto.com.br/js/version.js" | tr -d '\r')
   echo "$H2" | grep -i '^cf-cache-status' || true
   echo "$H2" | grep -i '^cache-control' || true
   echo "$H2" | grep -iq '^server: cloudflare' && echo "   proxy Cloudflare ATIVO" || echo "   ⚠ resposta ainda não veio da Cloudflare"

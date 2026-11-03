@@ -57,7 +57,7 @@ console.log('· NetClient');
   cobra(new URL(net.url).searchParams.get('pronto') === '1', 'o cliente se declara capaz de avisar `pronto` (query pronto=1)');
 
   const { enviados, recebe, conexao } = conectar(net);
-  recebe({ type: 'welcome', map: 'lajes', partida: 4, roster: [], yourEnt: 7, yourTeam: 'E', espectador: false });
+  recebe({ type: 'welcome', protocolVersion: 8, map: 'lajes', partida: 4, roster: [], yourEnt: 7, yourTeam: 'E', espectador: false });
   await conexao;
   const anuncios = [];
   net.onProximo = (m) => anuncios.push(m);
@@ -67,7 +67,7 @@ console.log('· NetClient');
   cobra(net.meta.map === 'lajes' && net.meta.partida === 4 && net.yourEnt === 7, 'o anúncio não mexe na meta nem no slot da partida que está no placar');
   recebe({ type: 'proximo', map: 42 });
   cobra(anuncios.length === 1, 'anúncio sem mapa válido é descartado');
-  recebe({ type: 'partida', map: 'velho_oeste', partida: 5, roster: [], yourEnt: 11, yourTeam: 'E', espectador: false });
+  recebe({ type: 'partida', protocolVersion: 8, map: 'velho_oeste', partida: 5, roster: [], yourEnt: 11, yourTeam: 'E', espectador: false });
   cobra(net.proximo === null && net.meta.partida === 5, 'o `partida` esquece o anúncio e traz a meta nova');
   enviados.length = 0;
   cobra(net.avisarPronto(5) === true && enviados.length === 1 && enviados[0].type === 'pronto' && enviados[0].partida === 5,

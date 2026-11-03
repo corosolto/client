@@ -106,8 +106,8 @@ const IMPORTMAP = JSON.stringify({
    PUBLIC_SUPPORT_URL_* mudava o /apoie e não o menu do jogo (CodeRabbit, PR #284). */
 window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
 </script>
-<script is:inline define:vars={{ GIT_SHA }}>
-window.__CS_BUILD = { sha: GIT_SHA };
+<script is:inline define:vars={{ GIT_SHA, V }}>
+window.__CS_BUILD = { sha: GIT_SHA, version: V };
 </script>
 <script is:inline>
 /* Fetch do /api/geo-lang ANTES dos módulos; o i18n consome a promise no boot.
@@ -168,12 +168,10 @@ window.__GEO_LANG__ = (function () {
     return t ? t.slice(0, max).trim() : '';
   }
 
-  /* A versão sai do `?v=` do próprio HTML: ela já está aqui, já sobe junto no bump dos
-     dois lados, e assim não há terceiro lugar para esquecer de atualizar. */
   function versao(){
     try{
-      var l = document.querySelector('link[rel=stylesheet][href*="?v="]');
-      return l ? (l.getAttribute('href').split('?v=')[1] || null) : null;
+      var v = window.__CS_BUILD && window.__CS_BUILD.version;
+      return typeof v === 'string' ? v : null;
     }catch(_){ return null; }
   }
 
@@ -203,7 +201,7 @@ window.__GEO_LANG__ = (function () {
         // resolvido no campo com underscore. Ler o nome errado dá `undefined` calado -
         // o erro chegaria sem mapa e ninguém desconfiaria da coluna vazia.
         c.map = g._mapId || null;
-        c.mode = g.ctf ? 'ctf' : 'rounds';
+        c.mode = g.arena ? 'arena' : (g.ctf ? 'ctf' : 'rounds');
         c.faction = g.playerFaction || null;
         c.matchSecs = Math.round(g.time || 0);
         c.nick = g.nickname || null;
@@ -1008,6 +1006,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <div class="cs-sub" id="cs-modos" hidden>
         <button class="cs-item cs-sub-item" data-act="sp" type="button"><span class="cs-tick">▸</span>MATA-MATA</button>
         <button class="cs-item cs-sub-item" data-act="ctf" type="button"><span class="cs-tick">▸</span>CAPTURE A BANDEIRA</button>
+        <button class="cs-item cs-sub-item" data-act="arena" type="button"><span class="cs-tick">▸</span>VIRA-CASACA</button>
       </div>
       <button class="cs-item" data-act="ranking" type="button"><span class="cs-tick">▸</span>RANKING</button>
       <button class="cs-item" data-act="sobre" type="button"><span class="cs-tick">▸</span>COMO JOGAR</button>
@@ -1117,6 +1116,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
       <div class="hub-match-chips" role="group" aria-label="Opções da partida">
         <button id="hub-mode-rounds" type="button" aria-pressed="true" title="Selecionar mata-mata"><strong>MATA-MATA</strong><small>MELHOR DE 5</small></button>
         <button id="hub-mode-ctf" type="button" aria-pressed="false" title="Selecionar captura de bandeiras"><strong>CAPTURA</strong><small>MELHOR DE 3</small></button>
+        <button id="hub-mode-arena" type="button" aria-pressed="false" title="Selecionar Vira-Casaca"><strong>VIRA-CASACA</strong><small>QUEM CAI MUDA DE LADO</small></button>
         <div class="match-opts">
         <label class="map-label">ARMAS
           <div class="dd" id="wpn-dd">
@@ -1723,7 +1723,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
     <div id="smoke-count" title="Fumaça (tecla 4)  ·  Frag (tecla 5)">💨 5   🧨 1</div>
     <div id="reload-note" class="hidden">RECARREGANDO…</div>
   </div>
-  <div id="hud-shortcuts"><span>Z/X/V RÁDIO</span><span>TAB PLACAR</span><span>M TROCAR DE TIME</span><span>B COMPRAR</span><span>,/. MUNIÇÃO</span><span>N CÂMERA</span><span>ALT+MOUSE ORBITA</span><span id="hud-atalho-chat" hidden><button type="button" id="hud-chat-sala" data-entrada-propria>Y SALA</button><button type="button" id="hud-chat-time" data-entrada-propria>U TIME</button></span></div>
+  <div id="hud-shortcuts"><span>Z/X/V RÁDIO</span><span>TAB PLACAR</span><span>M TROCAR DE TIME</span><span>B COMPRAR</span><span>,/. MUNIÇÃO</span><span>N CÂMERA · SHIFT+N OMBRO</span><span>ALT+MOUSE ÓRBITA</span><span id="hud-atalho-chat" hidden><button type="button" id="hud-chat-sala" data-entrada-propria>Y SALA</button><button type="button" id="hud-chat-time" data-entrada-propria>U TIME</button></span></div>
   <div id="round-banner" class="hidden"><div id="banner-title"></div><div class="banner-rule"></div><div id="banner-sub"></div></div>
   <div id="lock-hint" class="hidden">
     <div class="lh-title"><svg viewBox="0 0 12 17" width="13" height="18" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M6 0a6 6 0 0 1 6 6v5a6 6 0 0 1-12 0V6a6 6 0 0 1 6-6zm.9 3.2h-1.8v3.1h1.8z"/></svg> CLIQUE PARA ATIVAR A MIRA</div>
