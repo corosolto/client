@@ -159,8 +159,8 @@ public/                O JOGO (vanilla, zero build)
 tools/                 pipeline do client (otimização de GLB e documentação)
   gen-arch.mjs         GERA tools/eval/ARCH.md (índice + tabela de conflito)
   gen-docs.mjs         GERA os blocos numéricos deste README e de docs/
-../coro-solto-studio/tools/
-                       gen-asset e gen-image no Studio (repositório privado)
+../studio/tools/
+                       gen-asset e gen-image no Studio público (`corosolto/studio`)
 tools/eval/            o arnês de medição e os quality gates de qualidade
 docs/                  documentação para devs (Docusaurus) + as issues de entrada
 .agents/skills/        skills de agente (.claude/skills/ são symlinks pra cá)

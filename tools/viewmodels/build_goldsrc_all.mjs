@@ -40,7 +40,7 @@ for (const arma of armas) {
   const rot = (cfg.rot || [0, 0, 0]).join(',');
   const r = spawnSync(BLENDER, [
     '-b', '--python-exit-code', '1',
-    '--python', path.join(ROOT, '../coro-solto-studio/tools/blender/viewmodels/build_goldsrc_vm.py'), '--',
+    '--python', path.join(ROOT, '../studio/tools/blender/viewmodels/build_goldsrc_vm.py'), '--',
     `--cs=${cs}`, `--arma=${arma}`,
     `--mint=${path.join(ROOT, `public/models/weapons/${arma}.glb`)}`,
     `--len=${cfg.len || 1}`, `--gripz=${cfg.gripZ ?? 0.6}`, `--rot=${rot}`,

@@ -64,7 +64,7 @@ Reli `PROFILE-PORTRAITS.md` após o ajuste da coordenação: agora declara acerv
 
 O erro potencial de comunicação sobre autoria uniforme foi corrigido na documentação. A pendência P2 de novas versões permanece: documentação verdadeira não transforma os renders existentes em novas ilustrações. `tools/prepare-profile-art.mjs` prepara hashes/referências/argumentos por ID sem chamadas de API. O primeiro ref é acabamento Canarinho; o segundo preserva identidade. Há 62 candidatos e o Canarinho como referência, sem promoção automática para produto. Não executei esse script, pois ele escreve artefatos da coordenação fora do prefixo próprio autorizado; minha conferência foi de fonte.
 
-Advertência operacional precisa para a continuação: `../coro-solto-studio/tools/gen-image.mjs` com `--raw-only` grava em `/tmp/gen-image`, independentemente de `--out`. Copiar o master e seu hash para o volume do projeto é uma etapa explícita antes de revisão/reboot. O job deve registrar o modelo que será efetivamente usado; o default do gerador não é recibo dos assets anteriores.
+Advertência operacional precisa para a continuação: `../studio/tools/gen-image.mjs` com `--raw-only` grava em `/tmp/gen-image`, independentemente de `--out`. Copiar o master e seu hash para o volume do projeto é uma etapa explícita antes de revisão/reboot. O job deve registrar o modelo que será efetivamente usado; o default do gerador não é recibo dos assets anteriores.
 
 A consulta de disponibilidade e a tentativa HTTP402 foram executadas pela coordenação, não por este crítico. Não houve imagem nova nesta revisão. A existência desses resultados locais não concede autorização para recarga, publicação ou substituição automática de fontes.
 

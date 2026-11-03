@@ -402,7 +402,7 @@
         "model": "mint text-to-3d (original)",
         "tools": [
           "mint.gg",
-          "padrão ../coro-solto-studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrão ../studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
         ],
         "finalSha256": "c84cc4ff23c4da8483030812b28127dc831c1992ea0fa61ffabd676f38fe23cb"
       }
@@ -424,7 +424,7 @@
         "model": "mint text-to-3d (original)",
         "tools": [
           "mint.gg",
-          "padrão ../coro-solto-studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrão ../studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
         ],
         "finalSha256": "a210448f00b82f7e1e8f4a13d46b0fb2c17cfc4b0a30e0eff449b308b72c12fe"
       }
@@ -446,7 +446,7 @@
         "model": "mint text-to-3d (original)",
         "tools": [
           "mint.gg",
-          "padrão ../coro-solto-studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrão ../studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
         ],
         "finalSha256": "8fa0febb139a27f62ae0a3704cbf73a8f296ccbcc560c62b1ab4a166d126a20d"
       }
@@ -468,7 +468,7 @@
         "model": "mint text-to-3d (original)",
         "tools": [
           "mint.gg",
-          "padrão ../coro-solto-studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrão ../studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
         ],
         "finalSha256": "4c5f0b78a48cd160ef9786d688d764543baa8d897ce59c0fcc360f08a7476d22"
       }
@@ -490,7 +490,7 @@
         "model": "mint text-to-3d (original)",
         "tools": [
           "mint.gg",
-          "padrão ../coro-solto-studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrão ../studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
         ],
         "finalSha256": "de88a5bfe1e48a132dca9d3f985b7ef0b55133c5e1253bf8f2020d1ceeb09c7d"
       }
@@ -512,7 +512,7 @@
         "model": "mint text-to-3d (original)",
         "tools": [
           "mint.gg",
-          "padrão ../coro-solto-studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrão ../studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
         ],
         "finalSha256": "66d4e4423ddf62acc7e22c4c2c399c2f18e008d2bfb83369c1aeadc37f76fd9a"
       }
@@ -534,7 +534,7 @@
         "model": "mint text-to-3d (original)",
         "tools": [
           "mint.gg",
-          "padrão ../coro-solto-studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrão ../studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
         ],
         "finalSha256": "5a56336945d1d7db691cd521e149e7c1ae4d6f38a36d5bbe404d62248e5d25c8"
       }
@@ -556,7 +556,7 @@
         "model": "mint text-to-3d (original)",
         "tools": [
           "mint.gg",
-          "padrão ../coro-solto-studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrão ../studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
         ],
         "finalSha256": "32459720fe88a477eb1e26a67655b87534148867a67368816cf02a7d196d6581"
       }
@@ -578,7 +578,7 @@
         "model": "mint text-to-3d (original)",
         "tools": [
           "mint.gg",
-          "padrão ../coro-solto-studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrão ../studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
         ],
         "finalSha256": "0b366c74f4a3df22bf063ae66ba965092bcf11235914daf19a67fdae0350c3af"
       }
@@ -624,7 +624,7 @@
         "model": "mint text-to-3d (original)",
         "tools": [
           "mint.gg",
-          "padrão ../coro-solto-studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrão ../studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
         ],
         "finalSha256": "70ad2bff5431aa4b3ecc4024af05bf693d362949c53703a91dbec5acdc394c66"
       }
@@ -647,7 +647,7 @@
         "model": "mint text-to-3d (original)",
         "tools": [
           "mint.gg",
-          "padrão ../coro-solto-studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrão ../studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
         ],
         "finalSha256": "ebf89e8e01e57a6f4b6fe8ebe5051898e607184f92035b729ac8ec0a7034a459"
       }
@@ -670,7 +670,7 @@
         "model": "mint text-to-3d (original)",
         "tools": [
           "mint.gg",
-          "padrão ../coro-solto-studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+          "padrão ../studio/tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
         ],
         "finalSha256": "f6a1d16a43fbe2e6bc338066a43889817d48ebfeb4a6e8d22d0975d24aadb433"
       }
@@ -1280,7 +1280,7 @@
         "provider": "openrouter",
         "model": "google/gemini-3-pro-image",
         "tools": [
-          "../coro-solto-studio/tools/gen-image.mjs",
+          "../studio/tools/gen-image.mjs",
           "PIL"
         ],
         "finalSha256": "7063c08031efea12eef11bca050aea05d20dc97a11ee3684bbec188f875232f9"
@@ -1570,13 +1570,13 @@
         "kind": "replicate-gen",
         "displayName": "Balcão de açougue (atacadão)",
         "frente": "atacadao-secoes",
-        "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por ../coro-solto-studio/tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, seção AÇOUGUE (4 instâncias, targetH 1,15 m => 1,13 × 0,89 m cada). Proporção medida 0,908 × 0,925 × 0,715 e distribuição de geometria em linha com o acervo bom (31% de face horizontal, banda 10-90 de 76%). 12.000 tris."
+        "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por ../studio/tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, seção AÇOUGUE (4 instâncias, targetH 1,15 m => 1,13 × 0,89 m cada). Proporção medida 0,908 × 0,925 × 0,715 e distribuição de geometria em linha com o acervo bom (31% de face horizontal, banda 10-90 de 76%). 12.000 tris."
       },
       "processing": {
         "provider": "replicate",
         "model": "black-forest-labs/flux-schnell -> ndreca/hunyuan3d-2",
         "tools": [
-          "../coro-solto-studio/tools/gen-asset.mjs --provider replicate",
+          "../studio/tools/gen-asset.mjs --provider replicate",
           "tools/optimize-props-v21.mjs"
         ],
         "finalSha256": "54162fc6a9f5151f2264de2c4df63388508cee5b327b1efc3a91e8e45f3698e3"
@@ -1591,13 +1591,13 @@
         "kind": "replicate-gen",
         "displayName": "Balcão/ilha de padaria (atacadão)",
         "frente": "atacadao-secoes",
-        "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por ../coro-solto-studio/tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, seção PADARIA (3 instâncias, targetH 1,10 m). Proporção medida 0,284 × 0,151 × 0,285: planta QUADRADA e meia-altura, então entra como ILHA de exposição, que é o que a malha é de fato — não como balcão linear. 12.000 tris."
+        "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por ../studio/tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, seção PADARIA (3 instâncias, targetH 1,10 m). Proporção medida 0,284 × 0,151 × 0,285: planta QUADRADA e meia-altura, então entra como ILHA de exposição, que é o que a malha é de fato — não como balcão linear. 12.000 tris."
       },
       "processing": {
         "provider": "replicate",
         "model": "black-forest-labs/flux-schnell -> ndreca/hunyuan3d-2",
         "tools": [
-          "../coro-solto-studio/tools/gen-asset.mjs --provider replicate",
+          "../studio/tools/gen-asset.mjs --provider replicate",
           "tools/optimize-props-v21.mjs"
         ],
         "finalSha256": "8f2a25fa9c02b2d5958c48353a2a645a0c7931657098d32dc01c518ee0fc4242"
@@ -1662,13 +1662,13 @@
         "kind": "replicate-gen",
         "displayName": "Geladeira vertical de bebidas (atacadão)",
         "frente": "atacadao-secoes",
-        "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por ../coro-solto-studio/tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, parede de BEBIDAS (4 instâncias, targetH 2,00 m => 1,56 × 0,67 m cada). Pedido explícito do dono (\"precisa de geladeiras de bebidas\"). Proporção medida 0,770 × 0,990 × 0,334: mais alta que larga e rasa, que é a proporção certa de expositor de porta de vidro — o `freezer` do acervo é ilha HORIZONTAL e não serve para isso. CUSTO: 22.158 tris, ~5× um prop do kit Mint; por isso 4 instâncias e não uma parede inteira (89 k tris no total)."
+        "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por ../studio/tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, parede de BEBIDAS (4 instâncias, targetH 2,00 m => 1,56 × 0,67 m cada). Pedido explícito do dono (\"precisa de geladeiras de bebidas\"). Proporção medida 0,770 × 0,990 × 0,334: mais alta que larga e rasa, que é a proporção certa de expositor de porta de vidro — o `freezer` do acervo é ilha HORIZONTAL e não serve para isso. CUSTO: 22.158 tris, ~5× um prop do kit Mint; por isso 4 instâncias e não uma parede inteira (89 k tris no total)."
       },
       "processing": {
         "provider": "replicate",
         "model": "black-forest-labs/flux-schnell -> ndreca/hunyuan3d-2",
         "tools": [
-          "../coro-solto-studio/tools/gen-asset.mjs --provider replicate",
+          "../studio/tools/gen-asset.mjs --provider replicate",
           "tools/optimize-props-v21.mjs"
         ],
         "finalSha256": "0521658c629dd048f0be681cbbf41505c016ec9f9d0a647192c9d21e018563bd"
@@ -1708,13 +1708,13 @@
         "kind": "replicate-gen",
         "displayName": "Ilha de hortifrúti (atacadão)",
         "frente": "atacadao-secoes",
-        "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por ../coro-solto-studio/tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, seção HORTIFRÚTI (4 instâncias, targetH 1,20 m). Bbox cúbico 0,989³, banda 10-90 de 96%: malha cheia e bem distribuída. 12.000 tris."
+        "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por ../studio/tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, seção HORTIFRÚTI (4 instâncias, targetH 1,20 m). Bbox cúbico 0,989³, banda 10-90 de 96%: malha cheia e bem distribuída. 12.000 tris."
       },
       "processing": {
         "provider": "replicate",
         "model": "black-forest-labs/flux-schnell -> ndreca/hunyuan3d-2",
         "tools": [
-          "../coro-solto-studio/tools/gen-asset.mjs --provider replicate",
+          "../studio/tools/gen-asset.mjs --provider replicate",
           "tools/optimize-props-v21.mjs"
         ],
         "finalSha256": "01d1c0736151491050b15dde70085133894d343850787e9d24ad42f0d51422ad"

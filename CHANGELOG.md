@@ -5593,7 +5593,7 @@
 - Brasília recebeu **1** mural de homenagem: é praça aberta sobre pilotis e não tem 8
   paredes de 4 m livres. As vagas são medidas, não declaradas.
 - Os murais do Chorão e do Yuka são "no espírito de", não retrato — semelhança de verdade
-  precisa de foto de referência local (`../coro-solto-studio/tools/gen-image.mjs --ref`).
+  precisa de foto de referência local (`../studio/tools/gen-image.mjs --ref`).
 - `013_feedback.sql` é aplicada **à mão** na base de produção; até lá o form responde
   "indisponível".
 - 13 dívidas críticas seguem no `tools/eval/KNOWN-RED.json` e o BOT8/BUG-03 continua aberto.

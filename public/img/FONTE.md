@@ -2,7 +2,7 @@
 
 O registro anterior da branch map2/velho-oeste (25/08, checkpoint402665ef)
 atribui a textura abaixo ao OpenRouter, google/gemini-3-pro-image, via
-`../coro-solto-studio/tools/gen-image.mjs`, no repositório privado Coro Solto Studio. Preservados o prompt registrado e o hash, sem regeneração.
+`../studio/tools/gen-image.mjs`, no repositório público Coro Solto Studio (`corosolto/studio`). Preservados o prompt registrado e o hash, sem regeneração.
 
 - `textures/tex_adobe.webp` (512×512): taipa/adobe das paredes do casario. Prompt:
   "Top-down seamless texture of traditional Brazilian northeast adobe wall
@@ -27,7 +27,7 @@ disponível; a textura representa material genérico, sem fotografia incorporada
 
 ## Reboco de pau a pique e pedra do casario (07/10/2026)
 
-OpenRouter, `google/gemini-3-pro-image`, via `../coro-solto-studio/tools/gen-image.mjs --raw-only --n 2`,
+OpenRouter, `google/gemini-3-pro-image`, via `../studio/tools/gen-image.mjs --raw-only --n 2`,
 com `textures/tex_adobe.webp` como referência de estilo. Duas variações por pedido;
 a escolhida está indicada. O bruto (1024×1024) vira textura de mapa com
 `tools/textura-emendavel.py`, que reproduz os arquivos abaixo pixel a pixel.

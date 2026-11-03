@@ -114,7 +114,7 @@
     "pt38": {
       "id": "pt38",
       "description": "Identidade da PT-38 aprovada sobre o X18 do pack: a receita PISTOL_MATERIALS do build pago.",
-      "origin": "../coro-solto-studio/tools/blender/viewmodels/build_paid_family.py (PISTOL_MATERIALS)",
+      "origin": "../studio/tools/blender/viewmodels/build_paid_family.py (PISTOL_MATERIALS)",
       "source": {
         "evidence": "tools/fabrica/fichas/pistol.json",
         "fingerprints": {

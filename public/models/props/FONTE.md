@@ -123,8 +123,8 @@ assinante Mint Pro; assets originais gerados por prompt, sem conteúdo de tercei
 
 ### Seções do mercado — lote Replicate de 27/08/2026
 
-Este lote não é Mint. Foi gerado na conta Replicate do dono pelo repositório privado
-Coro Solto Studio, com `../coro-solto-studio/tools/gen-asset.mjs --provider replicate`: `black-forest-labs/flux-schnell` para
+Este lote não é Mint. Foi gerado na conta Replicate do dono pelo repositório público
+Coro Solto Studio (`corosolto/studio`), com `../studio/tools/gen-asset.mjs --provider replicate`: `black-forest-labs/flux-schnell` para
 imagem e `ndreca/hunyuan3d-2` para malha, seguido de dedup/prune e WebP 1024. Os
 registros correspondentes em `mint-assets.json` declaram honestamente
 `source.kind: replicate-gen` e `processing.provider: replicate`.

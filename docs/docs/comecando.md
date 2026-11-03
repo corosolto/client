@@ -208,8 +208,8 @@ tools/
     ARCH.md BAR.md          mapa de conflito (gerado) e a régua visual
   gen-arch.mjs            gera e VALIDA o ARCH.md
   gen-docs.mjs            gera e VALIDA os blocos numéricos desta documentação
-../coro-solto-studio/tools/gen-asset.mjs  gera prop 3D por texto (Studio privado)
-../coro-solto-studio/tools/gen-image.mjs  gera arte 2D por texto (Studio privado)
+../studio/tools/gen-asset.mjs  gera prop 3D por texto (Studio público: corosolto/studio)
+../studio/tools/gen-image.mjs  gera arte 2D por texto (Studio público: corosolto/studio)
 
                         (banco: schema/migrations são PRIVADOS — fora do repo)
 .github/workflows/ci.yml  o quality gate rodando em CI

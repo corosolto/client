@@ -86,7 +86,7 @@ const prompt = `${PRESERVA}\n\n${POSES[POSE]}\n\n`
 const t0 = Date.now();
 try {
   const out = execFileSync('node', [
-    '../coro-solto-studio/tools/gen-image.mjs', '--id', `${ID}-${POSE}`, '--ref', REF,
+    '../studio/tools/gen-image.mjs', '--id', `${ID}-${POSE}`, '--ref', REF,
     '--model', MODEL, '--aspect', ASPECT, '--raw-only', '--prompt', prompt,
   ], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   const linha = out.trim().split('\n').filter((l) => l.includes('→')).pop() || out.trim().split('\n').pop();

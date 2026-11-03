@@ -12,7 +12,7 @@
    Então esta ferramenta não gera nada e não fala com rede nenhuma. Ela renderiza a
    CABEÇA de `public/models/characters/<id>.glb` pelo MESMO `buildCharacterModel()` de
    `glbchars.js` que a tela de seleção chama, e grava PNGs que servem de `--ref` para o
-   `../coro-solto-studio/tools/gen-image.mjs`. O brasão nasce do boneco, não de uma descrição dele.
+   `../studio/tools/gen-image.mjs`. O brasão nasce do boneco, não de uma descrição dele.
 
    ── AMBIENTE NÃO É ENFEITE, É O QUE IMPEDE A SILHUETA PRETA ──────────────────────
    Está escrito em `public/js/game.js:1457`: "SEM ambiente (?env=0, ou PMREM falhando)

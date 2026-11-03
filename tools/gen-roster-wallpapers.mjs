@@ -49,7 +49,7 @@ if (process.argv.includes('--import-masters')) {
 for (const job of jobs) {
   if (requested.length && !requested.includes(job.id) && !requested.includes(job.character)) continue;
   if (existsSync(`public/img/${job.id}.webp`)) { console.log(`${job.id}: já gerado`); continue; }
-  const args = ['../coro-solto-studio/tools/gen-image.mjs', '--id', job.id, '--prompt', job.prompt, '--aspect', job.aspect, '--crop', job.aspect, '--w', String(job.width), '--quality', '90'];
+  const args = ['../studio/tools/gen-image.mjs', '--id', job.id, '--prompt', job.prompt, '--aspect', job.aspect, '--crop', job.aspect, '--w', String(job.width), '--quality', '90'];
   for (const ref of job.refs) args.push('--ref', ref);
   await new Promise((resolve, reject) => {
     const child = spawn(process.execPath, args, { stdio: 'inherit' });

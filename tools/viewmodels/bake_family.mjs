@@ -63,7 +63,7 @@ if (templateDir) {
 
 const blender = spawnSync(BLENDER, [
   '-b', '--python-exit-code', '1',
-  '--python', path.join(REPO_ROOT, '../coro-solto-studio/tools/blender/viewmodels/build_baked_family.py'),
+  '--python', path.join(REPO_ROOT, '../studio/tools/blender/viewmodels/build_baked_family.py'),
   '--', ...argumentos,
 ], { encoding: 'utf8' });
 process.stdout.write(`${blender.stdout.split('\n').filter((line) => /CORO_|Error|Traceback|  File|render/.test(line)).join('\n')}\n`);

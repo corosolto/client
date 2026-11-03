@@ -12,7 +12,7 @@
  * 4. capturas no jogo (idle, ADS, tiro, recarga vazia, inspeção) nas duas proporções, depois
  *    de o saque e o ADS assentarem (kcap espera o estado idle e adsAmount ≥ 0,99);
  * 5. pacote do crítico cego em artifacts/fabrica-lote1/critico/<id>/ (figuras + referências
- *    AK golden e PT-38 aprovadas; o crítico é o agente ../coro-solto-studio/.claude/agents/critico-visual-vm.md, chamado por quem roda);
+ *    AK golden e PT-38 aprovadas; o crítico é o agente ../studio/.claude/agents/critico-visual-vm.md, chamado por quem roda);
  * 6. regressão do arsenal: eval:vm-cache, eval:vm-launch, eval:vm-rig, eval:vm-orientacao,
  *    eval:vm-manga-oca, eval:vm-placar (o que já existia tem de continuar como estava).
  * Saída: artifacts/fabrica-lote1/qa/<id>.json e qa/resumo.json.

@@ -44,7 +44,7 @@ const prompt = [
   'Matte materials, no glossy white highlights, no rim glow, no outline.',
 ].filter((l) => l !== null).join('\n');
 
-const flags = ['../coro-solto-studio/tools/gen-image.mjs', '--id', `${f.id}-concept`, '--raw-only', '--n', arg('n', '2'),
+const flags = ['../studio/tools/gen-image.mjs', '--id', `${f.id}-concept`, '--raw-only', '--n', arg('n', '2'),
   '--aspect', '2:3', '--model', arg('model', 'google/gemini-3-pro-image')];
 for (const r of refs) flags.push('--ref', r);
 flags.push('--ref', ESTILO, '--prompt', prompt);

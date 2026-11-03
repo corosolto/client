@@ -61,7 +61,7 @@ node tools/eval/vm-bancada-check.mjs --porta=4361 --clipe=Reload \
 
 ## Passo 2 — o crítico cego
 
-Chame o agente `critico-visual-vm`, definido em `../coro-solto-studio/.claude/agents/critico-visual-vm.md`, passando **só o diretório de figuras**.
+Chame o agente `critico-visual-vm`, definido em `../studio/.claude/agents/critico-visual-vm.md`, passando **só o diretório de figuras**.
 
 > **Não mande junto o que você consertou, por que consertou, nem o que espera
 > que ele veja.** Se ele souber a intenção, ele lê o frame pela intenção, e aí

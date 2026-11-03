@@ -123,13 +123,13 @@ hipotético:
 | Serviço | O que gera | Script | Chave |
 |---|---|---|---|
 | **mint.gg** (Mint MCP) | personagens rigados, packs, animação | ferramentas MCP; o registro do que foi gerado é `mint-assets.json` | conta do dono, via MCP |
-| **Tripo3D** | props 3D por texto (padrão) | `../coro-solto-studio/tools/gen-asset.mjs --provider tripo` | `TRIPO_API_KEY` |
-| **Meshy** | props 3D por texto (alternativa) e rig | `../coro-solto-studio/tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
-| **OpenRouter** | arte 2D (cartaz de facção, wallpaper, splash) | `../coro-solto-studio/tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
+| **Tripo3D** | props 3D por texto (padrão) | `../studio/tools/gen-asset.mjs --provider tripo` | `TRIPO_API_KEY` |
+| **Meshy** | props 3D por texto (alternativa) e rig | `../studio/tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
+| **OpenRouter** | arte 2D (cartaz de facção, wallpaper, splash) | `../studio/tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
 
 `mint-assets.json` registra **105 assets** gerados via Mint (55 `mint-model` · 13 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative` · 1 `openrouter-image-concept` · 4 `replicate-gen` · 3 `mint-asset-pack-item` · 10 `mint-humanoid-model` · 1 `mint-model-batch`), cada um com `assetId`, `chatUrl` e notas do que deu errado na tentativa anterior.
 
-Os scripts de geração `../coro-solto-studio/tools/gen-asset.mjs` e `../coro-solto-studio/tools/gen-image.mjs` ficam no **Coro Solto Studio**, um repositório privado separado; os caminhos são relativos a um checkout do client ao lado dele.
+Os scripts de geração `../studio/tools/gen-asset.mjs` e `../studio/tools/gen-image.mjs` ficam no **[Coro Solto Studio](https://github.com/corosolto/studio)**, um repositório público separado; os caminhos são relativos a um checkout do client ao lado dele. Fontes editáveis e packs licenciados permanecem privados em `corosolto/studio-assets`, sem caminhos correspondentes no repositório público.
 
 As três chaves de API vivem em `.env` na raiz — **gitignored, modo 600, nunca em `argv`** (argv vaza no `ps` de qualquer processo da máquina). Sem elas o jogo roda igual: o pipeline de geração é offline, o resultado é que entra no repositório.
 
@@ -160,13 +160,13 @@ o asset vira um binário sem procedência no meio do repositório.
 
 ### Props 3D: Tripo3D e Meshy
 
-`../coro-solto-studio/tools/gen-asset.mjs` gera um prop por texto, baixa o GLB e grava **já otimizado** em
+`../studio/tools/gen-asset.mjs` gera um prop por texto, baixa o GLB e grava **já otimizado** em
 `public/models/props/`:
 
 ```bash
-node ../coro-solto-studio/tools/gen-asset.mjs --prompt "caixa de som de baile" --id caixa_som
-node ../coro-solto-studio/tools/gen-asset.mjs --provider meshy --prompt "carro tunado" --id carro_tunado
-node ../coro-solto-studio/tools/gen-asset.mjs --resume <task_id> --id caixa_som   # tarefa já paga
+node ../studio/tools/gen-asset.mjs --prompt "caixa de som de baile" --id caixa_som
+node ../studio/tools/gen-asset.mjs --provider meshy --prompt "carro tunado" --id carro_tunado
+node ../studio/tools/gen-asset.mjs --resume <task_id> --id caixa_som   # tarefa já paga
 ```
 
 Tripo é o padrão; Meshy é a alternativa. `--face-limit` (padrão 12000), `--raw-only` para
@@ -178,7 +178,7 @@ que vem de GLB são **props**.
 
 ### Arte 2D: OpenRouter
 
-`../coro-solto-studio/tools/gen-image.mjs` é o irmão 2D: gera cartaz de facção, wallpaper e splash por texto
+`../studio/tools/gen-image.mjs` é o irmão 2D: gera cartaz de facção, wallpaper e splash por texto
 (+ imagens de referência), e entrega o arquivo **já enquadrado e comprimido** para a caixa
 em que a tela vai desenhá-lo.
 

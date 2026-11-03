@@ -23,7 +23,7 @@
    Passa no piso de 250, então não bloqueia.)*
 2. **Paridade de grafite em produção** — o acervo é gitignored por procedência, então
    prod depende do pacote acima. Caminho de longo prazo continua: gerar levas `or-*`
-   via OpenRouter (`../coro-solto-studio/tools/gen-image.mjs`) até aposentar o acervo baixado da web.
+   via OpenRouter (`../studio/tools/gen-image.mjs`) até aposentar o acervo baixado da web.
    A cobertura procedural fechou em 07/08 (`graffiti_pass.js` + layout assado):
    piscina 99,1% · ferrovelho 95,7% · loja H 89,6% · quebrada 88,7% · brasília 88,5%,
    medido por `npm run eval:grafite`.

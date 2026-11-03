@@ -1,7 +1,7 @@
 # Faca melee Coro Solto
 
-`knife-hires.glb` é gerado no repositório privado Coro Solto Studio por
-`../coro-solto-studio/tools/blender/viewmodels/knife_melee/build.py`.
+`knife-hires.glb` é gerado no repositório público Coro Solto Studio (`corosolto/studio`) por
+`../studio/tools/blender/viewmodels/knife_melee/build.py`.
 
 - Geometria e material visíveis da arma: `public/models/weapons/knife.glb`.
 - Mãos, antebraços, mangas e rig: `public/models/viewmodels/coro/pistol-hires.glb`,

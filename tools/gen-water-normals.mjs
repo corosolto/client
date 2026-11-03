@@ -1,5 +1,5 @@
 // Deriva os normal maps da água (RC2, plans/23) da textura de superfície gerada
-// via OpenRouter (../coro-solto-studio/tools/gen-image.mjs — a regra da casa é 2D só por lá). O modelo
+// via OpenRouter (../studio/tools/gen-image.mjs — a regra da casa é 2D só por lá). O modelo
 // de imagem NÃO sabe o que é um normal map (entrega azul decorativo errado), então
 // o que ele gera é a SUPERFÍCIE vista de cima e a normal sai da luminância por
 // sobel — derivada honesta, sem atribuir ao modelo o que ele não fez.

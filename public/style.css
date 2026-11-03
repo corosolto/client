@@ -839,7 +839,7 @@ html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;fo
 .team-card[aria-pressed="true"] .team-art{transform:scale(1.2)}
 /* O `-rgb` de cada facção existe pelo mesmo motivo do --bg-900-rgb documentado no topo:
    o scrim tingido precisa de ALFA, e alfa não sai de um hex guardado em var(). */
-/* ARTE POR FACÇÃO — RETRATO 640×1601 (2:5), gerada por `node ../coro-solto-studio/tools/gen-image.mjs`.
+/* ARTE POR FACÇÃO — RETRATO 640×1601 (2:5), gerada por `node ../studio/tools/gen-image.mjs`.
    A placa é uma caixa de ~245×620 (razão 0,39-0,45) e `.team-art` acima usa `cover`. A
    arte anterior era 1536×1024 PAISAGEM com o logotipo do time pintado no meio: no
    `cover` só ~26% da largura cabia, então cada placa mostrava UM personagem e meio

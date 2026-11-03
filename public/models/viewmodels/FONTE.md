@@ -11,7 +11,7 @@ enquadramento e cadência; não são redistribuídas nem incorporadas ao asset.
 
 ## AK golden (`coro/ak-hires.glb`)
 
-O piloto golden é produzido por `../coro-solto-studio/tools/blender/viewmodels/build_ak_hires_pilot.py`, no repositório privado Coro Solto Studio. O doador
+O piloto golden é produzido por `../studio/tools/blender/viewmodels/build_ak_hires_pilot.py`, no repositório público Coro Solto Studio (`corosolto/studio`). O doador
 local CC0 `ak-12animated.glb` (SHA-256
 `1cf28a31ad50a8f037bc04499896f40021dd2bf4d3739dafda9b026cf8759f70`) fornece somente
 topologia de braços, rig, estrutura das ações e um normal map neutro da manga. A arma do
@@ -28,7 +28,7 @@ O relatório de build registra os insumos e o hash do produto em
 
 ```bash
 /Applications/Blender.app/Contents/MacOS/Blender -b \
-  --python ../coro-solto-studio/tools/blender/viewmodels/build_ak_hires_pilot.py -- \
+  --python ../studio/tools/blender/viewmodels/build_ak_hires_pilot.py -- \
   --doador=/Users/ruben/Downloads/ak-12animated.glb \
   --arma=public/models/weapons/ak.glb \
   --saida=artifacts/viewmodels/golden-ak/build-final-v2 \
@@ -50,6 +50,6 @@ localmente, sem URL pública; por isso os hashes abaixo são a âncora de proced
   - origina `knife.glb` (o modelo de faca do primeiro pacote estava incompleto).
 
 Pipeline reproduzível: GoldSrc MDL v10 → SMD/QC → Blender Source Tools → Blender/GLB,
-por `../coro-solto-studio/tools/blender/import_goldsrc_viewmodel.py`. A conversão preserva os pesos de pele e
+por `../studio/tools/blender/import_goldsrc_viewmodel.py`. A conversão preserva os pesos de pele e
 os clipes `idle`, `draw`, `shoot`, `reload`, `slash` e `stab`; as texturas ficam embutidas
 no GLB. Nenhum braço, dedo ou encaixe é sintetizado pelo jogo para essas 26 armas.
