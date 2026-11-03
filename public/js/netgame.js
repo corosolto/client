@@ -295,7 +295,7 @@ class Netcode {
     if (e.primary && WEAPONS[e.primary]) p.primary = e.primary;
     // Economia: o nó zera a primária na morte (rearmar = faca + pistola). Sem limpar, o
     // HUD continuaria mostrando a arma comprada que o servidor já tirou do inventário.
-    else if (e.primary == null && this.game._compra && this.game.online) p.primary = null;
+    else if (e.primary === null && this.game._compra && this.game.online) p.primary = null;
     if (e.secondary && WEAPONS[e.secondary]) p.secondary = e.secondary;
     if (e.weapon && WEAPONS[e.weapon] && Number.isInteger(e.mag) && Number.isInteger(e.res)) {
       p.ammo[e.weapon] ||= { mag: 0, res: 0 };
