@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.135`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.136`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -157,6 +157,464 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.136] — 2026-11-03
+
+### Mudado
+- fix: medir grafites da Piscina com identidade canônica (#1202)
+- fix: liga as réguas ao contexto e ao PBR atuais (#1203)
+- fix: manter arma e luva no corpo em terceira pessoa (#1197)
+- fix: medir salto de Lajes no integrador atual (#1205)
+- fix: alinhar réguas da Mansão ao runtime atual (#1206)
+- fix: sincronizar luvas TP sem reiniciar animações (#1204)
+- fix: bake de grafite cancela sem entrada e ganha prova de determinismo (base atualizada do #1173) (#1211)
+- Régua de mãos nas 26 armas sem mutar node_modules (base atualizada do #1170) (#1212)
+- fix: integrar luvas e atualização TP em staging (#1208)
+- [REA] Restaurar ambiência da Piscina (#1137)
+- Respawn e troca de time limpam o estado de mantle e os buffers de salto. A composição preserva a curadoria de fauna e grafites e a propagação de falhas da CI. (#1155)
+- Adicionar Caça ao Javaporco na Cidade Invadida (#1160)
+- [REA] Câmera de ombro com troca lateral e colisão volumétrica (#1153)
+- push direto em main/staging recusado: todo push vira PR (#1215)
+- fix(vm): toda arma com pente declara parts.mag — a régua passava verde sem medir 24 delas (#1144)
+- Compra no multiplayer, armas grátis só no Javaporcos, TRETA$ 2x no HUD (#1216)
+- fix(ui): rearma a trava de Ctrl+W quando a tela cheia cai na pausa (#1136)
+- fix(audio): nomes neutros no manifest — 15 URLs de marca saíam pelo carregador em runtime (#1145)
+- fix(eval): lote autoral da piscina prova a permissao de pintura com mutante semantico (#1217)
+- fix(net): overlay NET mede snapshots/s e banda pelo relógio do servidor, não por quadros (#1143)
+- feat: compor Javaporcos, Arena e consistência visual (#1214)
+- audio-pack v9: ambiência autoral dos mapas (plans/22) (#1218)
+- lote release 02/11: Javaporcos, luvas, câmera/ombro, pouso com peso, ambiência autoral (pack v9), grafite e mãos (#1219)
+- fix(release): cópias EN das páginas novas do #1101 (broken link no docusaurus en) (#1222)
+- docs(i18n): cópias EN das páginas construtor-de-mapas e criar-mapa-com-ia
+- ops: produção canônica passa a ser www.corosolto.com.br
+- fix(javaporcos): variante devolve o stem do GLB, não o apelido
+- fix(arena): veredito na morte esvaziando o lado de vivos
+- fix(net): oferece todos os subprotocolos do codec no handshake do WebSocket
+- ci(portao): divide o portão em 4 jobs paralelos + agregador
+- docs(audio): procedência do ambiente sai de public/ — tools/audio/FONTE-ambiente.md
+- docs(assets): FONTE.md público sem nomes de provedor nem caminho de sessão
+- docs(javaporcos): faixas por domínio de coordenadas — cidade quadrada, anéis de r=max
+- ci(lote): mantle no teto de 30 min da régua WT2
+- fix(lote): veredito objetivo no placar de fim, música do menu pós-manifesto e teto do mantle
+- fix(audio): ambiente-mapas só importa o harness quando constrói mapa
+- feat(audio): ambiência autoral dos mapas no pack v9 (plans/22)
+- fix(grafite): renew validated map input fingerprints
+- chore(sim): refresh generated simulation fingerprint
+- fix(map): preserve Quebrada physics with optional props
+- fix: preservar caches e cancelar viewmodels descartados
+- fix: encerrar banners e identificar versao dos erros
+- fix: preservar input e identificadores do construtor
+- fix: limpar temporarios de deadline e recusar CLI invalida
+- Faz o mutante de relevo quebrar a funcao usada pelo Game
+- Atualiza blocos gerados da composicao de fauna e transporte
+- Encerra stream WebTransport no cabecalho acima do limite
+- Corrige fixtures de fauna para o contrato de boot atual
+- test(release): atualiza contratos da composicao Arena e Campo
+- test(sdk): recusa infraestrutura como mutante detectado
+- docs: regenera índices da composição Arena e SDK
+- fix(mapas): valida dimensões sólidas e respeita rotação
+- fix(campo): constrói vãos e cargas de obra legíveis
+- fix(campo): separa reboco e vidro sem alterar oclusao
+- test(net): usa protocolo 8 nas fixtures de taxa
+- fix(net): publica indisponibilidade sem relógio confiável
+- fix: alinhar fixtures ao vendor e ao áudio atual
+- fix(mapa): refinar casario e unir bordas da encosta
+- fix: version.js do merge anterior sai duplicada (regex pegou só o bloco do SIM_HASH)
+- fix(net): drenagem em lote no protocolo antigo não inventa rajada
+- fix(mapa): assentar casario e concreto do Campo
+- ci: reguas-e-site no teto admitido pela wf-timeout (25 - 30 min)
+- fix: version.js do merge anterior sai com marcadores de conflito
+- fix(audio): família cs vira jogo — marca não mora em chave de manifest tampouco
+- docs: regenerar links da matriz de armas
+- test: atualizar referência dos pisos após curadoria
+- fix(eval): exercitar grafites vivos e cobrir gatilho global
+- fix(grafite): preservar cartazes manuais na curadoria
+- ci: reguas-e-site ganha folga real de timeout (25 - 35 min)
+- ci: teto do reguas-e-site acompanha o conteúdo que o staging puxou
+- test(net): preserva compra e objetivo no snapshot v8
+- fix(audio): inicia música do menu após a entrada
+- fix(mapas): aplica curadoria também a cartazes manuais
+- feat(mapas): reserva arte única por cenário
+- fix(eval): mede boot pelo build de produção explícito
+- fix: troca de lado usa o tamanho real da lista de spawns
+- fix(eval): preserva origem pública e módulos do candidato
+- fix(eval): lote autoral da piscina prova a permissao de pintura com mutante semantico
+- fix(compra): Javaporcos fica sem loja também no online
+- Meça o frevo pelos dois pés em movimento
+- chore(push): push direto em main e staging é recusado — tudo vira PR
+- fix(eval): menuprops leva o modoObjetivoAtual real pós-#1160
+- fix(eval): versaoorigem leva o modoTelemetria real pós-r844
+- Separe IDs vivos das provas históricas na régua
+- Alinhe as fixtures ao mapa solicitado
+- Use IDs canônicos nas sondas visuais dos mapas
+- Prepare uma troca real no teste dos ícones de toque
+- Vincule as capturas aos IDs reais dos mapas
+- Confira a versão nos payloads reais da integração
+- style: encolhe comentários novos ao teto de 2 linhas (réguas cm1)
+- fix(eval): alinhar contratos dos instrumentos Javaporcos
+- fix(eval): match-options acompanha o guard javaporcos no roundsMax
+- test: cobre consumidor legado da ponte Three
+- fix(eval): respawn-sp-preso acompanha o guard javaporcos do renascer SP
+- test: alinhe a captura ao contrato atual da horda
+- fix: preserve pacotes ao resolver o Three no arnês
+- ci: aposenta o passo boot-assets --mutantes desta PR (fixture superseded)
+- fix(compra): recola o saldo no topo da pilha quando o HUD recria
+- fix: envie o placar da horda antes do primeiro abate
+- docs(economia): seção do multiplayer implementada (nó + cliente)
+- test(pickup): réguas medem o novo contrato de armas grátis
+- style(hud): saldo TRETA$ dobra e gruda no topo da pilha de armas
+- feat(compra): TRETA$ 2x acima da pilha de armas e compra remota no MP
+- feat(net): pedido de compra no MP e sync do saldo/janela/equipamento
+- feat(net): protocolo de snapshot v8 com reboque da economia de partida
+- feat(compra): loja do MP lê a flag do nó; armas grátis no chão só no Javaporcos
+- fix(eval): régua do READY do boot acompanha o veredito r844
+- fix(eval): régua do veredicto do boot acompanha a decisão r844
+- fix(eval): match-options acompanha o guard javaporcos no roundsMax
+- fix(test): fauna curada reconhece o preload javaporcos do bloco real
+- docs: Registrar composição do stack de pisos
+- fix: Normalizar UV dos pisos da Quebrada e Escadão
+- chore(docs): regenera blocos derivados e version.js pós-r844
+- fix(eval): skin-profile-flow reconhece o preload javaporcos do bloco real
+- test: Registrar baseline dos UVs dos pisos
+- test: atualize a âncora do mutante de respawn
+- chore(ci): re-dispara o synchronize após resolver a base com a main r843
+- chore(ci): reentrega o evento synchronize (pr-fast não disparou no push 0213ef91d)
+- fix(eval): réguas do menu e do backpedal acompanham o head mergeado
+- test: Corrigir bindings da fixture de fauna
+- chore: registra geração e BOOT atuais do CtrlW
+- docs: alinhar limites da mata à geometria real
+- Allow measured third-person equipment CI duration
+- Clean cosmetic mutant files on worker timeout
+- fix(ci): ajuste o timeout de réguas e site
+- Atualize esperado do catálogo antes de provar mutantes
+- fix: aplique pinturas equipadas nas golden de pistola e AK
+- chore: remover linha vazia no fim do checker
+- docs: descreva o controlador causal de grafite
+- Corrija o alias Piscina e preserve a curadoria
+- fix: respeite o tempo de saque declarado pelo jogo
+- fix(eval): medir filtro jogável do multiplayer
+- test: Exija os quatro lotes no controle de permissão da Piscina
+- Corrige o driver causal do batch de grafite da Piscina
+- docs: Registre adoção dos hooks de mãos e gates focais
+- docs(java): checkpoint repaired integration gates
+- fix(multiplayer): keep PvP room callers separate from horde
+- docs: regenera AGENTS/comecando após o merge da base (docs:check)
+- fix(eval): complete o contexto das fixtures de boot
+- test(multiplayer): freeze real client room caller contract
+- fix(quality): derive mutant census from current catalog
+- Reduza construções repetidas nos fixtures de fauna
+- fix(eval): Preserve a régua estrita de mãos separada
+- fix: Recupere o manifesto TP após falha temporária
+- test: Meça retry transitório do manifesto TP
+- docs: registrar integração local do cliente e backend v8
+- docs: registrar checkpoint causal do ORC2
+- fix: medir início dos cartazes no ORC2
+- fix: alinhar a malha do córrego ao campo de altura
+- fix(eval): repair Javaporco checker surfaces and mutation targets
+- fix: negociar snapshots v8 antes de aceitar a sessão
+- docs: registrar checkpoint causal do ORC2
+- fix: medir início dos cartazes no ORC2
+- chore(docs): regenera bloco derivado (autofix)
+- Preserve v7 ao integrar o codec cooperativo v8
+- fix: preservar diagnóstico dos preloads do corpo
+- docs: descrever o controlador de mutações das mãos
+- docs: remover contagem desatualizada dos mutantes TP
+- fix(eval): valide mutantes de mãos com recibos
+- fix: isolar luvas pela origem efetiva do corpo TP
+- test: medir origem das luvas no corpo TP
+- docs: registrar revisão e checkpoint da factory Drip
+- feat: extrair luva da origem cosmética Drip
+- test: fornecer origem do corpo na fixture de preview
+- fix(eval): resolve three via hooks de import em vez de mutar node_modules
+- fix(ci): cobrir helper de resposta no gatilho do portão
+- test(fauna): consolidar QA G/P e prova de corpo no MOV
+- test: isolar mutações de procedência em terceira pessoa
+- fix: reconhecer rótulos e lote reais de Mansão
+- fix: vincular luvas ao corpo realmente clonado
+- fix: atualizar derivados das fontes de luvas
+- fix(eval): restaura contrato de assets e teto da Mansão
+- fix(regua): valida escada antes de ler a posição
+- fix(regua): ancora LS6 no salto aprovado
+- fix: preservar falhas de infraestrutura nas réguas TP
+- fix: sincronizar luvas TP sem reiniciar animações
+- docs: precisar a contagem dos controles de telemetria
+- fix: ligar a régua local ao material PBR do Córrego
+- fix: medir o DPR enviado pelas funções reais de desempenho
+- fix: reparar a régua de grafite da Piscina
+- fix: reparar o mutante de revisão do manifesto
+- fix: limpar o desenho repetido na luva em primeira pessoa
+- test: declarar a seleção de luva na fixture de fauna
+- fix: carregar as duas partes da luva no corpo
+- fix: preserve arma e luva na terceira pessoa
+- ci: separa validação do mantle sem enfraquecer o portão
+- test: atualiza o golden após o pulo 5.6
+- test: cobrir trajetória de mantle em passos de50ms
+- fix(regua): recusa erro de infraestrutura em mut:mantle
+- fix: descarta travessia ao trocar de time
+- chore(docs): regenera bloco derivado (autofix)
+- Registra envio normal e próximos passos do PR1138
+- Registra validação da integração do PR1138
+- Registra validação da integração do PR1155
+- docs: preserve validação e envio da Arena
+- docs: registra envio e próxima integração local
+- docs: registra causa e recuperação dos loaders locais
+- docs(ops): registra boot do build completo e calibração de mídia
+- fix(eval): registra referência de família ausente como sem medida
+- test: usa backend gráfico padrão do Mac no orçamento de boot
+- test: executa os fluxos de modo e fecha falsos positivos do boot
+- fix: cancelar rearme tardio do teclado ao pausar ou sair
+- test: exigir morte semântica da fluidez e rodar movimento no CI
+- test: instrumenta o carregador real dos rigs nas provas CPU
+- fix: limpar mantle entre rodadas e animar remoto no ar
+- Medir janelas abertas e terreno sob os refúgios
+- Corrigir o contrato das clareiras e da grade de altura
+- Exibir o empate no resultado e no compartilhamento
+- Alinhar as fichas às seis frentes e à arena atual
+- Retirar os dois carros NC novos da publicação
+- fix: incluir ponte three no gatilho do navegador
+- fix: servir dependencias locais na regua de boot
+- fix: preparar three nas reguas em checkout limpo
+- Registre revisão e integração do SDK
+- fix: corrigir respawn da vila e sondas numericas nas arestas
+- Evite revisão trocada no preview do construtor
+- test: exigir abandono do alimento cercado antes de aprovar desistencia
+- test: cobrar regras da horda na CI e detectar perda do contorno
+- ci: reservar tempo para auditoria dos 21 mapas
+- test: comparar objetivo com snapshot atual
+- test: exigir consumo real do objetivo no cliente
+- test: corrigir fixture da corrida de introducao
+- test: preservar captura nos mapas de entrada rounds
+- fix: corrigir HUD remoto e contato da horda
+- perf: calcular limites estaticos na auditoria de mapas
+- docs: registrar arsenal e preview dos javaporcos
+- fix: entrega orientação autorada dos mapas ao jogador e aos bots
+- docs: registra revisão integral antes do envio de rede
+- fix: preservar apoio das patas ao parar
+- docs: registra revisão integral antes do envio de áudio
+- test: alinha fixtures TP ao loader de produção e prova recuo
+- test: corrige fixtures TP e exige mutantes de recuo no CI
+- Mostre presas nos abates dos javaporcos
+- Meça o tempo de cada mapa na auditoria
+- docs: corrige evidência do merge de áudio
+- Reduza o comentário do diagnóstico de rede
+- Registre a checagem visual do preview Javaporcos
+- Confira a origem nos payloads reais de perf e match
+- Valide o boot na branch de câmera sem perder seus ajustes
+- Valide o boot do menu na branch de rede
+- Preserve a origem e ordem dos assets nos redirects
+- Recuse assets falhados na medição do boot
+- Exija a falha correta nos mutantes do boot
+- Carregue só os props auditados no lobby da Praça
+- test: usa o backend gráfico padrão do Chrome no macOS
+- fix: marca taxa indisponível com relógio de simulação parado
+- fix(audio): reject invalid manifest families in required CI
+- docs(weapons): regenerate matrix source links after camera fix
+- Registre o preview publicado e o orçamento da horda
+- Registre MAPCHECK verde da Cidade Invadida
+- Preserve a continuação do gauntlet e do canário
+- test(camera): reject unapplied HUD mutants in the required gate
+- Registre a revisão e os testes reais da cidade
+- Ajuste os controles da invasão no lobby
+- fix(camera): align TP hints and enforce camera gates in CI
+- Proteja os vãos e o patamar da torre
+- fix(camera): reserve N and Shift+N for view controls
+- Registre o gauntlet da cidade e sincronize os índices
+- Dê curvas e flancos à horda e mostre seus abates
+- Integre a sala cooperativa sem humanizar a horda
+- Apresente Javaporcos no lobby com arte GPT
+- Concentre a invasão na cidade com 4 a 8 defensores
+- Abra a torre e mais casas da Cidade Invadida
+- Silencie as falas políticas no modo Javaporcos
+- test: exigir navegação válida na plataforma elevada
+- fix: validar relevo e identificadores do construtor
+- Registra validação do construtor após main atual
+- Corrige colisão e validação dos props carregados no construtor
+- Registra validação de áudio após sincronizar main
+- test: impedir vacuidade no contrato de áudio
+- fix: preservar proporção e liberar cenas da prévia
+- fix: publicar posições XYZ nos ambientes da Piscina
+- fix: preservar mapa ao importar JSON inválido
+- docs(javaporcos): registre o preview dos três mapas para teste
+- fix: limitar grade do construtor ao viewport
+- fix(javaporcos): alinhe o relevo da vila e complete a página de mapas
+- docs: reter SDK para reparos da revisão independente
+- fix(javaporcos): complete a ambiência dos mapas e ajuste os refúgios
+- ci: rodar contrato de áudio dos mapas no portão
+- fix(javaporcos): libere os sobrados e proteja as escadas
+- fix(javaporcos): liberar vias e alinhar colisão das coberturas
+- feat(javaporcos): preservar produção dos três ambientes e interiores
+- Registra armas GLB na criação da partida real
+- fix: preserva as armas pré-carregadas dos bots
+- docs(javaporcos): registra preview da morte e estado dos mapas
+- docs: registra edição e exportação de spawn no navegador
+- docs: registra rebase validado e gate de armas ainda pendente
+- fix: orienta seta do construtor pela visão real do spawn
+- fix: estabiliza pose após animação de morte
+- docs(javaporcos): registra três pilotos de arquitetura no Mint
+- docs: registra avanço remoto antes de integrar reparo
+- fix: restaura alvo de rounds no formato da partida
+- docs(javaporcos): registrar push e validacao do preview
+- fix(javaporcos): traduzir o confronto triplo no loading
+- fix(javaporcos): completar fixtures de carregamento e audio
+- chore(javaporcos): catalogar os pacotes Mint prontos
+- fix(javaporcos): expor regras solo no menu atual
+- feat(javaporcos): variar a aparencia da horda com modelos Mint
+- feat(javaporcos): disputar territorio com tres faccoes e refugios
+- feat(javaporcos): separar tres faccoes e regras de sobrevivencia
+- feat(javaporcos): abrir mata exploravel em seis frentes
+- fix(javaporcos): isolar intro por tentativa de lancamento
+- feat(javaporcos): dispersar bandos e tombar corpos de lado
+- feat(javaporcos): apresentar praga na entrada apos carregar
+- fix(javaporcos): mostrar defesa cooperativa e retomar setores limpos
+- fix(javaporcos): reconhecer gravacoes runtime no pacote privado
+- test(javaporcos): integrar imports e réguas do pre-push
+- feat(javaporcos): explicar a praga antes da partida
+- feat(javaporcos): nomear times e alternar wallpapers visíveis
+- test(launch): atualizar fixture do nascimento da partida
+- test(javaporcos): registrar física do pasto ampliado
+- fix(viewmodel): preservar atributos da tampa da AK
+- feat(javaporcos): ampliar campo e cinturão de mata
+- feat(javaporcos): saquear seis lojas e disputar domínio
+- feat(javaporcos): reproduzir grunhidos e guinchos reais CC0
+- Dá passada com apoio no chão aos javaporcos
+- Registra push e validação do wallpaper javaporcos
+- Corrige régua do loading com wallpaper do mapa
+- Lixo de guia que se vê da câmera do centro
+- Cupinzeiro sem orelhas de gato
+- Halo na lâmpada do beco
+- Lâmpada do beco com cone a 32 e lente mais quente
+- Forro de tábua no beiral dos telhados
+- Régua ORC2 para os telhados em lote
+- Telhados de 4 águas num lote por material
+- Rodapé do beco em reboco descascado com relevo
+- Folhagem deixa passar mais luz por baixo
+- Hemisfério do javaporcos volta a 1,35
+- Atualiza map_check.json do javaporcos com a rodada 4
+- Saco e caixa GLB somem mais perto
+- Lixo encostado na guia da rua do centro
+- Torrão do cupinzeiro em malha própria e simples
+- Puxa o céu do hemisfério para o lilás
+- Cupinzeiro com lóbulo fundo, ruído e torrinha
+- Saco de lixo em monte, amassado e tombado
+- PropBatch aceita escala por eixo e inclinação
+- Clareia o albedo do muro de bloco
+- Cortina da janela deixa de ler grade de tábua
+- Luz do beco vira cone para o chão
+- Clareia a trilha da mata sem amarelar
+- Hemisfério volta a escurecer e esfriar menos
+- Atualiza map_check.json do javaporcos com a cidade da rodada 3
+- Fusca 1968 sai da lista de carro comercial da régua
+- Rua do centro com fila de carros, caçamba e bar
+- Carro velho repintado por instância
+- Sombra de carro por caixa no lugar do GLB
+- Muro de bloco com mancha e junta
+- Fundo do beco com reboco, portão e pichação
+- Poste de sódio e fios no rasgo de céu dos becos
+- Janela com cortina e cômodo atrás do vidro
+- Saco de lixo com brilho de plástico
+- Desgaste da faixa de pedestre mais curto
+- Atualiza map_check.json do javaporcos com a mata nova
+- Régua da mata javaporcos: trilha, copa, cupinzeiro
+- Cupinzeiro do javaporcos em domo de 3 lóbulos
+- Copa do javaporcos desce no tronco, sem pirulito
+- Trilha do javaporcos deita na normal do barranco
+- Trilha do javaporcos deixa de ler piche
+- Clareia e esfria o hemisfério do javaporcos
+- Faixa de pedestre gasta sem veio de tábua
+- Atualiza map_check.json do javaporcos com a cidade nova
+- Régua da cidade javaporcos: icosaedro, janela, carro, poste
+- Dezesseis carros encostados na guia, só licença comercial
+- Letreiro pintado, porta de aço e cadeira de bar nas lojas
+- Decalque de lixo, poça e faixa no chão da cidade
+- Janela com vidro recuado, moldura e grade grossa
+- Saco, entulho e moita do javaporcos sem icosaedro
+- Poste redondo com luminária e luz na praça
+- PBR do Poly Haven em rodapé, muro, loja e poste
+- Cimento do beco javaporcos ganha junta e rachadura
+- Atualiza map_check.json do javaporcos com a mata nova
+- Capim do pasto javaporcos menos amarelo
+- Mata e chão até o horizonte no mapa javaporcos
+- Tira as árvores GLB da clareira do javaporcos
+- Copa da mata vira cartão de folha escaneada
+- Esfria a luz de sombra do mapa javaporcos
+- Troca o céu chapado do javaporcos por panorama
+- Atualiza map_check.json com o mapa javaporcos novo
+- Orla da mata volta a fechar atrás da samambaia
+- Documenta o layout de pasto, frentes e becos
+- Props realistas posicionados no mapa javaporcos
+- Texturas PBR no chão e nas paredes do mapa javaporcos
+- Capim do pasto sem verso preto no mapa javaporcos
+- Corrige a leitura do domínio no mapa novo
+- Ficha do modo documenta o domínio e o A/B
+- Onda com bicho escondido vira no relógio
+- Domínio por setor substitui os três objetivos
+- Fúria da horda cresce com o relógio da partida
+- Simulação da partida inteira mede domínio e becos
+- Setores de domínio da cidade no mapa javaporcos
+- Becos entre fundos de casa no mapa javaporcos
+- Pasto e 3 frentes de trilha no mapa javaporcos
+- Texturas de pasto, beco e trilha no mapa javaporcos
+- Texturas PBR do Poly Haven para os javaporcos
+- Mato, arbustos e troncos realistas dos javaporcos
+- Postes de madeira com fiação e transformador
+- Lixo e mobiliário de rua realistas dos javaporcos
+- Carros realistas no catálogo dos javaporcos
+- Régua de acervo cobra licença e teto dos javaporcos
+- Pipeline dos props realistas dos javaporcos
+- feat(loading): a espera do mapa javaporcos mostra a horda
+- docs(mapa): artes-conceito do layout com pasto e 3 frentes
+- docs(mapa): as duas tabelas de cotas que saíram do código
+- refactor(mapa): as cotas do relevo e da mata apontam para o doc
+- feat(audio): o javaporco rosna, carrega e morre
+- feat(horda): ondas gigantes, fúria e o bicho colado no chão
+- feat(mapa): a cidade dos javaporcos sai do blockout
+- feat: animate javaporco deaths with blood
+- O bake de grafite cancela quando falta entrada na cena
+- O lote dos props da piscina volta a levar a permissão de pintura
+- chore(docs): regenera bloco derivado (autofix)
+- fix: model objective maps as explicit modes
+- fix: use native GPU for boot gate on macOS
+- fix: finalize Javaporcos mode
+- Liga a régua de mãos com os mutantes no melee-vm e a versão com catálogo no check:vm
+- Régua de mãos passa a medir as 26 armas em todas as rotas e o rig de cada uma
+- Cobrir rounds próprios do modo horda
+- Integrar a horda aos contratos do cliente
+- Replicar e verificar a horda autoritativa
+- Implementar invasão em oito ondas
+- Adicionar cenário da invasão dos javaporcos
+- Medir a causa real do desbloqueio da splash
+- fix: cobrir volume completo da câmera
+- chore: atualizar índice de símbolos da câmera
+- docs: reduzir comentário dos probes
+- feat: tornar câmera de ombro mais dinâmica
+- docs: regenerar documentacao apos renomear caminhos do manifest
+- chore(docs): regenera bloco derivado (autofix)
+- fix(net): comentarios de campo abaixo do teto do CM1
+- fix(net): JSDoc do medidor dentro do teto de 2 linhas do CM1
+- fix(net): separa cabecalho do JSDoc para o CM1 contar blocos certos
+- docs(net): historia do defeito migra para o cabecalho da regua
+- docs(changelog): registrar ambiência da Piscina
+- docs(changelog): registrar Vira-Casaca
+- fix(net): comentario do relogio do servidor dentro do teto de 2 linhas
+- test(menu): cobrir Vira-Casaca no seletor legacy
+- feat(game): lançar modo Vira-Casaca
+- fix(audio): restaurar ambiência da Piscina
+- test(eval): régua do Ctrl+W passa a medir o navegador
+- fix(ui): rearma a trava de atalhos quando a tela cheia cai
+- fix(eval): vm-consistencia mede o caminho assado em vez de sair 25/25 calada
+- fix(eval): a rede do SUSPEITO da PRV9 não via `ak47`
+- fix(audio): nomes neutros nos caminhos do manifest de exemplo
+- test(audio): régua que reprova marca de terceiro em manifest versionado
+- fix(net): mede snapshots/s e banda pelo relógio do servidor, não por quadros
+- docs: Mova o contrato JSON para o guia do construtor
+- fix: Limite grade e preserve edição no construtor
+- docs: verify map editor export through CLI
+- feat(mapas): validate exported JSON file with map gate
+- docs: registrar que mapa-como-dado ja existe (arquitetura, CONTRIBUTING)
+- docs(mapas): pagina do construtor, good-first-issue e cross-links
+- feat(construtor): editor visual de mapa (public/construtor.html)
+- test(mapas): prova in-engine do formato JSON (eval:mapjsonboot)
+- feat(mapas): relevo no formato mapa-como-dado (rampas, plataformas, agua, props)
 
 ## [2.1.0-alpha.135] — 2026-11-01
 
