@@ -29,8 +29,8 @@
    completa para todos os `MAP_IDS` — mapa sem `world.sound` (atacadao_treta)
    recebe o hum sintetizado, igual à era v8.
 
-   Roda SÓ no ramo público do `fetch-audio.sh`: o pack privado é curado pelo
-   dono e não traz as faixas do v9 — traduzir para ele seria inventar 404.
+   Roda nos DOIS ramos do `fetch-audio.sh` — o blob privado carrega o mesmo v9
+   do release público, e o CONTRATO DE FALHA acima já reprova faixa que faltar.
    ============================================================================ */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
