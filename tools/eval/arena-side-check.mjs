@@ -197,12 +197,16 @@ async function prova() {
     g.dispose?.();
   }
 
+
   // M reassina um bot morto sem deixar conversão viva órfã, nos dois sentidos.
   for (const inicial of ['E', 'B']) {
-    const g = bootGame(MAPA, { textures, bots: 1, arena: true, seed: 7319 });
+    const g = bootGame(MAPA, { textures, bots: 2, arena: true, seed: 7319 });
     aoVivo(g);
     if (inicial === 'B') g._switchTeam();
-    const bot = g.bots[0], destino = inicial === 'E' ? 'B' : 'E';
+    /* Contrato #1219: a morte em 1v1 encerra a arena — a cláusula testa o reassign do M,
+       então o lado do bot precisa de um sobrevivente para a partida continuar viva. */
+    const bot = g.bots[0], bot2 = g.bots[1], destino = inicial === 'E' ? 'B' : 'E';
+    bot.team = destino; bot2.team = destino;
     assert.equal(g.player.team, inicial, 'C: lado inicial incorreto');
     assert.equal(bot.team, destino, 'C: bot não está no lado oposto');
     const map0 = mappingDe(g), faccaoDestino = g._factionOf(destino);
@@ -221,15 +225,18 @@ async function prova() {
       playerFaction: faccaoDestino, enemyFaction: JSON.parse(map0).playerFaction }), 'C: M corrompeu o mapping de facções');
     assert.equal(g.state, 'live', 'C: M encerrou a partida cedo');
     assert.equal(finais, 0, 'C: M apresentou fim prematuro');
-    g._kill(g.player, bot, 'FRAG');
-    assert.equal(g.player._switchTeam, inicial, 'C: morte do jogador não agendou conversão');
-    g._respawnPlayer();
-    assert.equal(g.player.team, inicial, 'C: conversão final do jogador incorreta');
-    assert.equal(g.player.team, bot.team, 'C: conversão final não unificou os lados');
-    g._checkArenaWin();
-    assert.equal(g.state, 'matchEnd', 'C: não encerrou após a conversão final');
+    /* Contrato #1219: esvaziar o lado do jogador encerra NA MORTE, e a conversão
+       pendente leva o jogador pro lado vencedor quando o match é remontado. */
+    const vivosDoLado = () => g.combatants.filter((x) => x.alive && x.team === g.player.team && x !== g.player);
+    while (g.state === 'live' && vivosDoLado().length) g._kill(vivosDoLado()[0], bot, 'FRAG');
+    if (g.state === 'live') {   // os outros morreram com sobrevivente do outro lado: nada acabou cedo
+      g._kill(g.player, bot, 'FRAG');
+      assert.equal(g.player._switchTeam, inicial, 'C: morte do jogador não agendou conversão');
+    }
+    assert.equal(g.state, 'matchEnd', 'C: não encerrou ao esvaziar o lado do jogador');
     assert.equal(finais, 1, 'C: final não foi apresentado exatamente uma vez');
     assert.equal(resultado.won, true, 'C: jogador convertido não venceu');
+    assert.equal(resultado.team, inicial, 'C: veredito não é o lado do convertido');
     assert.equal([g.player, ...g.combatants].filter((x) => x.alive && x._switchTeam).length, 0, 'C: flag viva órfã final');
     g.dispose();
   }

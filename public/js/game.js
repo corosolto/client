@@ -3316,7 +3316,12 @@ export class Game {
     const winner = winnerOverride || this.objective?.state?.winner || (this.roundsWon.E !== this.roundsWon.B
       ? (this.roundsWon.E > this.roundsWon.B ? 'E' : 'B')
       : ((this.matchKills.E + this.roundKills.E) >= (this.matchKills.B + this.roundKills.B) ? 'E' : 'B'));
-    const playerSide = this.arena ? this.player.team : this.playerTeam;
+    /* ARENA: o veredito sai na morte (review #1219), antes de a conversão sair no
+       respawn — o lado pendente é o destino do jogador no Vira-Casaca e é com ele
+       que o `won` fica honesto (virou o casaco pro lado vencedor na própria morte). */
+    const playerSide = this.arena
+      ? (this.player._switchTeam || this.player.team)
+      : this.playerTeam;
     const mine = winner === playerSide;
     const draw = winner === 'draw';
     // Tela de fim estilo CoD/Valorant: VITÓRIA/DERROTA gigante, time vencedor no sub.
@@ -4665,6 +4670,10 @@ export class Game {
       ent._switchTeam = attacker.team;
       this.arenaSwitched++;
     }
+    /* ARENA termina na MORTE, antes de a conversão sair no respawn (review #1219):
+       contar população total nunca esvazia lado — a conversão preserva o total e as
+       mortes dos dois lados se compensam, e o fim ficava inalcançável. */
+    if (this.arena) this._checkArenaWin();
     // Drop tem prazo e teto porque a versão sem eles foi retirada por virar lixo de mapa;
     // faca não dropa (todo mundo nasce com uma). Histórico e números: tools/eval/drop-check.mjs.
     // com loja, quem morre larga a primária comprada (CS); `_economiaPartida` = nó dedicado.
@@ -4706,15 +4715,16 @@ export class Game {
     if (BLOOD && ent.pos) this._bloodPoolAt(ent.pos);
     this._feed(attacker, ent, weap, head);
   }
-  /* VIRA-CASACA termina só depois do respawn aplicar a conversão. Um combatente
-     restante ainda pode lutar; zero combatentes significa que o lado foi convertido. */
+  /* VIRA-CASACA termina quando um lado fica sem COMBATENTES VIVOS: o veredito é na
+     morte, com o vencedor calculado antes de a conversão sair no respawn (review
+     #1219). O bloco por `_switchTeam` e a contagem de população total foram a causa
+     do fim inalcançável — total é preservado pela conversão e as mortes dos dois
+     lados se compensam. Gated por `this.arena`: nenhum outro modo passa daqui. */
   _checkArenaWin() {
     if (!this.arena || this.state !== 'live') return;
-    const e = this._teamPopulation('E'), b = this._teamPopulation('B');
+    const e = this.combatants?.filter((c) => c.alive && c.team === 'E').length ?? 0;
+    const b = this.combatants?.filter((c) => c.alive && c.team === 'B').length ?? 0;
     if (e > 0 && b > 0) return;
-    // A população só é definitiva depois de aplicar as conversões no respawn.
-    if (this.player._switchTeam) return;
-    for (const c of this.combatants || []) if (c._switchTeam) return;
     this._endMatch(e > 0 ? 'E' : 'B');
   }
   /* ===================== INDICADOR DIRECIONAL DE DANO =====================

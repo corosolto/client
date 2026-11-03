@@ -8,14 +8,17 @@ export const MUTANTES = {
     clausula: 'P1 snapshot matchEnd apresenta o resultado uma vez',
   },
   'ignora-fila': {
-    alvo: "    if (this.player._switchTeam) return;\n    for (const c of this.combatants || []) if (c._switchTeam) return;",
-    troca: '',
-    clausula: 'P2 respawn com fila cruzada pendente mantém a partida viva',
+    /* Reintroduz o bug do review #1219: contar POPULAÇÃO TOTAL (mortos incluídos)
+       em vez de vivos — a fila pendente é ignorada porque a conversão preserva o
+       total e as mortes dos dois lados se compensam, então o fim nunca chega. */
+    alvo: "    const e = this.combatants?.filter((c) => c.alive && c.team === 'E').length ?? 0;\n    const b = this.combatants?.filter((c) => c.alive && c.team === 'B').length ?? 0;",
+    troca: "    const e = this._teamPopulation('E');\n    const b = this._teamPopulation('B');",
+    clausula: 'P2 última morte encerra exatamente uma vez',
   },
   'vencedor-trocado': {
     alvo: "    this._endMatch(e > 0 ? 'E' : 'B');",
     troca: "    this._endMatch(e > 0 ? 'B' : 'E');",
-    clausula: 'P2 última conversão encerra exatamente uma vez',
+    clausula: 'P2 última morte encerra exatamente uma vez',
   },
   'tela-so-ctf': {
     alvo: "    this.el.matchEnd.classList.remove('hidden');",

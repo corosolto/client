@@ -47,7 +47,10 @@ if (g.state !== 'live') g.state = 'live';
 
 g._kill(vitima, atacante, 'AK', false);
 confere(vitima._switchTeam === 'B', `morte não agendou conversão para B: ${String(vitima._switchTeam)}`);
-confere(g.state === 'live', 'partida acabou antes de aplicar a conversão');
+/* Contrato #1219: o veredito é na MORTE — o último E morreu, o lado B venceu já,
+   sem esperar a conversão sair no respawn (a população total nunca esvazia lado). */
+confere(g.state === 'matchEnd', `morte do último E deixou estado ${g.state}, esperado matchEnd`);
+confere(resultado != null, 'morte do último E não publicou o fim da partida');
 if (MUTANTE === 'sem-troca-bot') vitima._switchTeam = null;
 g._respawnEntity(vitima);
 confere(vitima.team === 'B', `bot renasceu no time ${vitima.team}, esperado B`);

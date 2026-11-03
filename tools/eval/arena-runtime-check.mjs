@@ -111,20 +111,22 @@ async function prova(mutante) {
     g.dispose();
   }
 
-  /* P2: fila cruzada 1x1 — conversões pendentes para lados opostos, ambas ordens e lados */
+  /* P2: fila cruzada — conversões pendentes para lados opostos, ambas ordens e lados.
+     2v2: sob o contrato #1219 o veredito é na morte, então uma morte em 1x1 encerra a
+     arena e a fila cruzada precisa de sobreviventes nos dois lados para existir. */
   for (const [ladoPlayer, ladoBot] of [['E', 'B'], ['B', 'E']]) {
     for (const ordem of ['player', 'bot']) {
       const g = boot({ arena: true, seed: 7319 });
-      const p = g.player, bot = g.bots[0];
-      g.bots = [bot]; g.combatants = [p, bot];
-      p.team = ladoPlayer; bot.team = ladoBot; g.state = 'live';
+      const p = g.player, bot = g.bots[0], bot2 = g.bots[1], bot3 = g.bots[2];
+      g.bots = [bot, bot2, bot3]; g.combatants = [p, bot, bot2, bot3];
+      p.team = ladoPlayer; bot.team = ladoBot; bot2.team = ladoPlayer; bot3.team = ladoBot; g.state = 'live';
       let eventos = 0, ultimo = null;
       g.onMatchEnd = (d) => { eventos++; ultimo = d; };
       g.el.matchEnd.classList.add('hidden');   // DOM compartilhado entre fixtures: entra oculto como no navegador
       clausula({ id: `P2 matchEnd oculto antes do fim (${ladoPlayer}${ladoBot}/${ordem})`, visivel: visivel(g) }, (e) => e.visivel === false);
-      g._kill(p, bot, 'FRAG');
-      g._kill(bot, p, 'FRAG');
-      clausula({ id: `P2 fila cruzada 1x1 pendente nos dois lados (${ladoPlayer}${ladoBot}/${ordem})`, pendentePlayer: p._switchTeam, pendenteBot: bot._switchTeam, estado: g.state, eventos },
+      g._kill(p, bot, 'FRAG');       // p pendente→ladoBot: o lado dele ainda tem bot2 vivo
+      g._kill(bot, bot2, 'FRAG');    // bot pendente→ladoPlayer: o lado dele ainda tem bot3 vivo
+      clausula({ id: `P2 fila cruzada pendente nos dois lados (${ladoPlayer}${ladoBot}/${ordem})`, pendentePlayer: p._switchTeam, pendenteBot: bot._switchTeam, estado: g.state, eventos },
         (e) => e.pendentePlayer === ladoBot && e.pendenteBot === ladoPlayer && e.estado === 'live' && e.eventos === 0);
       if (ordem === 'player') g._respawnPlayer(); else g._respawnEntity(bot);
       clausula({ id: `P2 respawn com fila cruzada pendente mantém a partida viva (${ladoPlayer}${ladoBot}/${ordem})`, estado: g.state, eventos, visivel: visivel(g) },
@@ -134,10 +136,9 @@ async function prova(mutante) {
         (e) => e.pendentePlayer === null && e.pendenteBot === null && e.timePlayer === ladoBot && e.timeBot === ladoPlayer && e.estado === 'live' && e.eventos === 0);
       g.state = 'live';
       g.time += 1 / 60;
-      g._kill(bot, p, 'FRAG');
-      g._respawnEntity(bot);
-      g._checkArenaWin();
-      clausula({ id: `P2 última conversão encerra exatamente uma vez (${ladoPlayer}${ladoBot}/${ordem})`, venceu: ultimo?.won, timePlayer: ultimo?.team, esperado: p.team, eventos, estado: g.state, visivel: visivel(g) },
+      g._kill(bot2, p, 'FRAG');      // o lado do bot perde o primeiro...
+      g._kill(bot, p, 'FRAG');       // ...e o segundo: veredito na MORTE, uma vez só
+      clausula({ id: `P2 última morte encerra exatamente uma vez (${ladoPlayer}${ladoBot}/${ordem})`, venceu: ultimo?.won, timePlayer: ultimo?.team, esperado: p.team, eventos, estado: g.state, visivel: visivel(g) },
         (e) => e.venceu === true && e.timePlayer === e.esperado && e.eventos === 1 && e.estado === 'matchEnd' && e.visivel === true);
       g.dispose();
     }
