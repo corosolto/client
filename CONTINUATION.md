@@ -16,9 +16,12 @@
 
 - The first push under Node 26.12.1 stopped at the existing `tp-origin` Node 22 requirement with `INFRA`; no project check ran in that attempt. The retry used Node 22.23.4 without bypassing hooks.
 - The Node 22 gate then rejected `eval:weapon-matrix`. This branch had not changed any weapon, runtime, generator or matrix input. `node tools/gen-weapon-matrix.mjs` refreshed only the two stale source links (`game.js` 4273/4219 to 4278/4224), and its `--check` passed. This baseline documentation freshness fix is a separate commit.
+- The Node 22.23.4 prepush then passed `eval:mapcontrato` and `check:deploy` in 1230 seconds without bypassing hooks.
 
-## Pending external candidate
+## Genuine candidate verification
 
-The Studio coordinator reports that `map/lajes/0.1.0` is still an unapproved, unpromoted candidate. The genuine private manifest/package root, pushed schema/release identity and Studio gauntlet evidence have not yet been delivered. Runtime promotion remains blocked and no runtime fallback is allowed.
+The coordinator delivered the actual private `map/lajes/0.1.0` loop-02 owner-review candidate. Client source verification, immutable local installation and installed verification passed for 98 files and 93,655,071 bytes. Manifest SHA-256 is `5f95943ad9fae20b2fd1322b48c71eced94978e83ae3ad05b74c7a048e33890d`; source revision is `892b54f4c57d3ffaed46b11182fc03d529515873`. The candidate uses only allowlisted `.glb`, `.png` and `.json` formats.
 
-This change belongs on the `feat/studio-pack-integration-20261103` feature branch in an unmerged PR. Merge, deployment and any future runtime promotion remain owner-controlled.
+Public Studio schema/tooling PR: https://github.com/corosolto/studio/pull/1 at `cda36ce711aa7dee1a82c9130406b890241c3f89`; the vendored client schema matches that pushed head. Private candidate PR: `corosolto/studio-assets#1` at `f886e49180ff881940c011770fdfb1aad5728482`. Both remain unmerged. The candidate is unapproved and is not runtime-promoted or production-approved. No private asset bytes or manifest were added to client history.
+
+Client PR: https://github.com/corosolto/client/pull/1225. It remains open and unmerged. Runtime promotion, merge and deployment remain owner-controlled.
