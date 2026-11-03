@@ -12,6 +12,11 @@
 - Added `studio:pack:verify`, `studio:pack:install` and `eval:studiopack`; `pr-fast` invokes the suite.
 - Documented the exact future runtime promotion contract in `docs/studio-pack-integration.md`. The fixture is not a Lajes asset and no pack is presented as integrated.
 
+## Prepush environment and baseline freshness
+
+- The first push under Node 26.12.1 stopped at the existing `tp-origin` Node 22 requirement with `INFRA`; no project check ran in that attempt. The retry used Node 22.23.4 without bypassing hooks.
+- The Node 22 gate then rejected `eval:weapon-matrix`. This branch had not changed any weapon, runtime, generator or matrix input. `node tools/gen-weapon-matrix.mjs` refreshed only the two stale source links (`game.js` 4273/4219 to 4278/4224), and its `--check` passed. This baseline documentation freshness fix is a separate commit.
+
 ## Pending external candidate
 
 The Studio coordinator reports that `map/lajes/0.1.0` is still an unapproved, unpromoted candidate. The genuine private manifest/package root, pushed schema/release identity and Studio gauntlet evidence have not yet been delivered. Runtime promotion remains blocked and no runtime fallback is allowed.
