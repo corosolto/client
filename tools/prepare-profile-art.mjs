@@ -1,4 +1,4 @@
-// Prepara referências e pedidos; geração usa tools/gen-image.mjs, nunca este script.
+// Prepara referências e pedidos; geração usa ../coro-solto-studio/tools/gen-image.mjs, nunca este script.
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import vm from 'node:vm';
@@ -13,8 +13,8 @@ const jobs=Array.from(roster,c=>{
  if(!/^[a-z0-9_-]+$/.test(c.id))throw Error('ID inválido');
  const reference=`public/img/resultado/${c.id}-vitoria.webp`;
  const prompt=`Use a primeira referência (Canarinho) somente como padrão de acabamento: caricatura 3D cinematográfica estilizada, materiais detalhados, luz de estúdio e silhueta nítida. Repinte o personagem da segunda referência, ${c.name}, preservando exatamente rosto caricato, identidade, proporções, tom de pele, cabelo, roupa, cores, arma e acessórios. Não transforme no pássaro nem use fotografia de pessoa real. Corpo inteiro, cabeça, mãos e pés inteiros dentro do quadro, com margem transparente mínima. Não invente membros, pessoas ou adereços. Pose natural e reconhecível. Somente este personagem, fundo transparente, sem texto, números novos, marca, moldura ou cenário.`;
- return {id:c.id,name:c.name,status:c.id==='canarinho'?'style-reference':'awaiting-generation-and-review',references:[receipt(style),receipt(reference)],model,prompt,rawOutput:`/tmp/gen-image/social-og-${c.id}-styled.png`,archiveDirectory:`${output}/candidates`,args:['tools/gen-image.mjs','--id',`social-og-${c.id}-styled`,'--ref',style,'--ref',reference,'--model',model,'--aspect','2:3','--raw-only','--prompt',prompt]};
+ return {id:c.id,name:c.name,status:c.id==='canarinho'?'style-reference':'awaiting-generation-and-review',references:[receipt(style),receipt(reference)],model,prompt,rawOutput:`/tmp/gen-image/social-og-${c.id}-styled.png`,archiveDirectory:`${output}/candidates`,args:['../coro-solto-studio/tools/gen-image.mjs','--id',`social-og-${c.id}-styled`,'--ref',style,'--ref',reference,'--model',model,'--aspect','2:3','--raw-only','--prompt',prompt]};
 });
 mkdirSync(output,{recursive:true});
-writeFileSync(`${output}/generation-plan.json`,JSON.stringify({provider:'OpenRouter',generator:'tools/gen-image.mjs',generated:false,jobs},null,2)+'\n');
+writeFileSync(`${output}/generation-plan.json`,JSON.stringify({provider:'OpenRouter',generator:'../coro-solto-studio/tools/gen-image.mjs',generated:false,jobs},null,2)+'\n');
 console.log(`PASS ${jobs.length} personagens com ID, referências e hashes; ${jobs.length-1} candidatos preparados; nenhuma chamada de API ou publicação`);

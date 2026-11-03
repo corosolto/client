@@ -210,8 +210,8 @@ tools/
     ARCH.md BAR.md          conflict map (generated) and the visual ruler
   gen-arch.mjs            generates and VALIDATES ARCH.md
   gen-docs.mjs            generates and VALIDATES the numeric blocks of this documentation
-  gen-asset.mjs           generates a 3D prop from text (Tripo/Meshy)
-  gen-image.mjs           generates 2D art from text (OpenRouter)
+../coro-solto-studio/tools/gen-asset.mjs  generates a 3D prop from text (private Studio)
+../coro-solto-studio/tools/gen-image.mjs  generates 2D art from text (private Studio)
 
                         (database: schema/migrations are PRIVATE — outside the repo)
 .github/workflows/ci.yml  the gate running in CI

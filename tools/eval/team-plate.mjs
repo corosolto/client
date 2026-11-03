@@ -3,7 +3,7 @@
    POR QUE ESTA FERRAMENTA EXISTE
 
    A rodada anterior gerou `public/img/team-*.webp` por modelo de imagem
-   (`tools/gen-image.mjs`, OpenRouter). O resultado era bonito e ERRADO: os personagens
+   (`../coro-solto-studio/tools/gen-image.mjs`, OpenRouter). O resultado era bonito e ERRADO: os personagens
    eram INVENTADOS. Palavras do dono: *"a qualidade visual ficou muito boa, mas não usou
    os models reais que temos, tem que usar, tem personagens aí que não existem"*. Ele está
    certo — na placa dos time-es havia um velho de chapéu de palha e alguém de jaleco; nos

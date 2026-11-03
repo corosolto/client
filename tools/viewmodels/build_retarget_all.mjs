@@ -52,7 +52,7 @@ for (const arma of armas) {
   }
   const r = spawnSync(BLENDER, [
     '-b', '--python-exit-code', '1',
-    '--python', path.join(ROOT, 'tools/blender/viewmodels/build_retarget_vm.py'), '--',
+    '--python', path.join(ROOT, '../coro-solto-studio/tools/blender/viewmodels/build_retarget_vm.py'), '--',
     `--arma=${arma}`, `--goldsrc=${GOLDSRC}`, `--bracos=${bracos}`, `--saida=${SAIDA}`,
   ], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   const ok = r.status === 0 && r.stdout.includes('CORO_RT_BUILD=');

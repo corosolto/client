@@ -600,13 +600,15 @@ const BLOCOS = {
     '| Serviço | O que gera | Script | Chave |',
     '|---|---|---|---|',
     '| **mint.gg** (Mint MCP) | personagens rigados, packs, animação | ferramentas MCP; o registro do que foi gerado é `mint-assets.json` | conta do dono, via MCP |',
-    '| **Tripo3D** | props 3D por texto (padrão) | `tools/gen-asset.mjs --provider tripo` | `TRIPO_API_KEY` |',
-    '| **Meshy** | props 3D por texto (alternativa) e rig | `tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |',
-    '| **OpenRouter** | arte 2D (cartaz de facção, wallpaper, splash) | `tools/gen-image.mjs` | `OPENROUTER_API_KEY` |',
+    '| **Tripo3D** | props 3D por texto (padrão) | `../coro-solto-studio/tools/gen-asset.mjs --provider tripo` | `TRIPO_API_KEY` |',
+    '| **Meshy** | props 3D por texto (alternativa) e rig | `../coro-solto-studio/tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |',
+    '| **OpenRouter** | arte 2D (cartaz de facção, wallpaper, splash) | `../coro-solto-studio/tools/gen-image.mjs` | `OPENROUTER_API_KEY` |',
     '',
     f.pipeline.mint
       ? `\`mint-assets.json\` registra **${v(f.pipeline.mint.total)} assets** gerados via Mint (${v(Object.entries(f.pipeline.mint.kinds).map(([k, n]) => `${n} \`${k}\``).join(' · '))}), cada um com \`assetId\`, \`chatUrl\` e notas do que deu errado na tentativa anterior.`
       : '`mint-assets.json` não foi encontrado nesta árvore.',
+    '',
+    'Os scripts de geração `../coro-solto-studio/tools/gen-asset.mjs` e `../coro-solto-studio/tools/gen-image.mjs` ficam no **Coro Solto Studio**, um repositório privado separado; os caminhos são relativos a um checkout do client ao lado dele.',
     '',
     'As três chaves de API vivem em `.env` na raiz — **gitignored, modo 600, nunca em `argv`** ' +
     '(argv vaza no `ps` de qualquer processo da máquina). Sem elas o jogo roda igual: o pipeline ' +
@@ -808,10 +810,11 @@ const BLOCOS_EN = {
   assets: (f) => [
     '| Service | What it generates | Script | Key |', '|---|---|---|---|',
     '| **mint.gg** (Mint MCP) | rigged characters, packs, animation | MCP tools; `mint-assets.json` records the result | owner account via MCP |',
-    '| **Tripo3D** | 3D props from text | `tools/gen-asset.mjs --provider tripo` | `TRIPO_API_KEY` |',
-    '| **Meshy** | 3D props and rigging | `tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |',
-    '| **OpenRouter** | 2D art | `tools/gen-image.mjs` | `OPENROUTER_API_KEY` |', '',
+    '| **Tripo3D** | 3D props from text | `../coro-solto-studio/tools/gen-asset.mjs --provider tripo` | `TRIPO_API_KEY` |',
+    '| **Meshy** | 3D props and rigging | `../coro-solto-studio/tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |',
+    '| **OpenRouter** | 2D art | `../coro-solto-studio/tools/gen-image.mjs` | `OPENROUTER_API_KEY` |', '',
     f.pipeline.mint ? `\`mint-assets.json\` records **${v(f.pipeline.mint.total)} assets** generated through Mint (${v(Object.entries(f.pipeline.mint.kinds).map(([k, n]) => `${n} \`${k}\``).join(' · '))}).` : '`mint-assets.json` was not found.',
+    '', 'The `../coro-solto-studio/tools/gen-asset.mjs` and `../coro-solto-studio/tools/gen-image.mjs` generation scripts live in **Coro Solto Studio**, a separate private repository; the paths are relative to a client checkout next to it.',
     '', 'API keys live in the gitignored root `.env`; generation is offline and the game runs without them.', rodapeEn(f.pipeline.cmd),
   ].join('\n'),
   skills: (f) => [

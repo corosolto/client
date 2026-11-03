@@ -55,7 +55,7 @@ def main() -> int:
     for family in [name for name in selected if name in available]:
         run([
             str(args.blender), "-b",
-            "--python", "tools/blender/viewmodels/build_paid_family.py",
+            "--python", "../coro-solto-studio/tools/blender/viewmodels/build_paid_family.py",
             "--", "--family", family, "--manifest", str(manifest_path),
         ])
         run([
@@ -65,7 +65,7 @@ def main() -> int:
     if "grenade" in selected:
         run([
             str(args.blender), "-b",
-            "--python", "tools/blender/viewmodels/build_paid_grenade.py",
+            "--python", "../coro-solto-studio/tools/blender/viewmodels/build_paid_grenade.py",
             "--", "--manifest", str(manifest_path),
         ])
         run(["node", "tools/viewmodels/bind_paid_grenade.mjs"])

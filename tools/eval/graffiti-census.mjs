@@ -117,7 +117,7 @@ const TETO = { praca_poderes: 0.5, piscina_treta: 0.85, loja_h: 0.7, ferro_velho
    declarada no mesmo espírito do GRAF1 do KNOWN-RED ("272 com vão atrás" na régua
    vizinha): o gate morde ACIMA disso, o MA2 quita zerando cada mapa (quando zerar,
    apague a linha). Açoites com coordenada estão no graffiti_census.json → orfas.
-   .amostra e no docs/maps/GRAFITE-CENSO-11.md. */
+   .amostra e no ../coro-solto-studio/studies/maps/GRAFITE-CENSO-11.md. */
 // 13/10/2026: zero órfãs nos 11 mapas depois do suporte estrito; qualquer órfã reprova.
 const ORFAS_TOLERADO = {};
 

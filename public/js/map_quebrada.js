@@ -46,7 +46,7 @@ export const QUEBRADA_PROPS = ['pilha_pneus', 'tires', 'jersey_barrier', 'stall'
        "quero o padrão visual desses GLBs"). São eles que DITAM o estilo do mapa: textura
        fotográfica de tijolo/reboco, paleta lavada, 780-16 k triângulos.
      — `onibus_sptrans`, `fachada_comercio` e `caixa_som_baile` foram gerados no Tripo
-       (tools/gen-asset.mjs) só onde a referência não tinha peça: não há ônibus na pasta
+       (../coro-solto-studio/tools/gen-asset.mjs) só onde a referência não tinha peça: não há ônibus na pasta
        (o `delivery_volkswagen_9.150` é CAMINHÃO BAÚ, conferido na imagem — virou o caminhão
        de entrega da adega, não o ônibus) nem fachada de comércio nem paredão texturizado
        (`speaker_..._paredao` é geometria boa mas SEM textura, sairia cinza chapado). */
@@ -106,7 +106,7 @@ export function buildQuebrada(scene, T) {
      qualidade está muito baixa — os prédios, comércios, ônibus, carros". Ele está certo e o
      defeito é literal: barraco, ônibus, carro tunado e fachada de comércio eram CAIXA E PLANO
      com textura de canvas. Os quatro grupos que ele nomeou viraram GLB gerado no Tripo
-     (tools/gen-asset.mjs).
+     (../coro-solto-studio/tools/gen-asset.mjs).
 
       A REGRA DESTA TROCA, e é o que a torna reversível e segura: **o GLB entra só na IMAGEM**.
       A caixa procedural continua sendo criada e continua registrada em `colliders` e

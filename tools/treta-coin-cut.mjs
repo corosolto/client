@@ -1,5 +1,5 @@
 // Recorta a arte crua de uma moeda TRETA$ gerada pelo OpenRouter
-// (tools/gen-image.mjs --raw-only, uma moeda por imagem, fundo branco liso) no MESMO
+// (../coro-solto-studio/tools/gen-image.mjs --raw-only, uma moeda por imagem, fundo branco liso) no MESMO
 // formato da moeda do Saci (public/img/treta/coin-classic-saci.webp): webp 512×512,
 // moeda de borda a borda, fora do círculo transparente.
 //

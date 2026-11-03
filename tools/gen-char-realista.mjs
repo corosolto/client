@@ -339,7 +339,7 @@ for (const ID of IDS) {
     await sharp(arte.arquivo).extract(arte.caixa).png().toFile(corte);
     refs.push('--ref', corte);
   }
-  const flags = ['tools/gen-image.mjs', '--id', `${ID}-${ESTILO}`, ...refs,
+  const flags = ['../coro-solto-studio/tools/gen-image.mjs', '--id', `${ID}-${ESTILO}`, ...refs,
     '--model', MODEL, '--aspect', '1:1', '--prompt', comDica(ID)];
   if (PUBLICAR) flags.push('--out', OUT, '--crop', '1:1', '--w', '512');
   else flags.push('--raw-only');

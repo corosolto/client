@@ -4,7 +4,7 @@
    Regra da casa (skill `regua`, pergunta 3): quem mede a mesma coisa usa o
    mesmo limiar. Aqui moram os números que as réguas eval:vm-mira,
    eval:vm-cobertura, eval:vm-pistola-ref, eval:vm-maos e eval:vm-carregador
-   usam, e o texto do crítico cego (.claude/agents/critico-visual-vm.md) cita
+   usam, e o texto do crítico cego (../coro-solto-studio/.claude/agents/critico-visual-vm.md) cita
    estes mesmos valores. Mudar um número aqui muda a régua E a tolerância que o
    crítico declara; não mude um sem o outro.
 

@@ -156,9 +156,11 @@ src/
 public/                O JOGO (vanilla, zero build)
   js/ vendor/ models/ style.css robots.txt llms.txt og-image.png
   audio/                 ⚠ NÃO versionado — ver "Áudio" abaixo
-tools/                 pipeline de asset (gen-asset, gen-image, otimização de GLB)
+tools/                 pipeline do client (otimização de GLB e documentação)
   gen-arch.mjs         GERA tools/eval/ARCH.md (índice + tabela de conflito)
   gen-docs.mjs         GERA os blocos numéricos deste README e de docs/
+../coro-solto-studio/tools/
+                       gen-asset e gen-image no Studio (repositório privado)
 tools/eval/            o arnês de medição e os quality gates de qualidade
 docs/                  documentação para devs (Docusaurus) + as issues de entrada
 .agents/skills/        skills de agente (.claude/skills/ são symlinks pra cá)

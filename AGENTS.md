@@ -58,7 +58,7 @@ junto com a portabilidade. Three.js é vendorizado em `public/vendor/`; não adi
 
 **Roteamento de geração de asset (regra do dono, 19/08/2026; música em 20/08/2026):
 Mint é SÓ para 3D** (models, props, personagens, rig/animação); **toda arte 2D sai pelo
-OpenRouter** (`tools/gen-image.mjs`, chave só do `.env`); **música NÃO é Mint — sai pelo
+OpenRouter** (`../coro-solto-studio/tools/gen-image.mjs`, no repositório privado Coro Solto Studio; chave só do `.env`); **música NÃO é Mint — sai pelo
 OpenRouter** (`/audio/speech` e cia., mesma chave) ou outro provedor dedicado. O pipeline
 de animação do Mint é humanoid-only, o GPT de imagem entrega 2D com mais base no real
 (medido nos lotes da v2.1, pixos SP×RJ) e a música do Mint não agradou. Fauna continua

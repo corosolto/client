@@ -62,7 +62,7 @@ Galerias usam fixture declarada e não representam partidas reais.
 
 `node tools/prepare-profile-art.mjs` prepara uma referência e um pedido por ID,
 com o Canarinho como referência de acabamento e a arte do próprio personagem como
-referência de identidade. Salva hashes, prompts e argumentos de `tools/gen-image.mjs`
+referência de identidade. Salva hashes, prompts e argumentos de `../coro-solto-studio/tools/gen-image.mjs`
 em `artifacts/social/og-stylized/generation-plan.json`, sem API ou credenciais.
 São62 candidatos e uma referência de estilo; não representam artes já geradas.
 Os jobs fixam explicitamente o modelo futuro `google/gemini-3-pro-image`, sem

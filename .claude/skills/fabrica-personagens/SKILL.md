@@ -16,7 +16,7 @@ Leia antes: `CONTRIBUTING.md` (vetos e a exceção de sátira política), a skil
 
 ## Roteamento de gerador (regra do dono)
 
-- **2D sai pelo OpenRouter** (`tools/gen-image.mjs`, chave só do `.env`): concept,
+- **2D sai pelo OpenRouter** (`../coro-solto-studio/tools/gen-image.mjs`, chave só do `.env`): concept,
   avatar, retrato, arte de resultado.
 - **3D sai pelo Mint**: modelo, rig. Nunca use Mint para 2D.
 

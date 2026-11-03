@@ -79,7 +79,7 @@ function convertFbx(source, output) {
 // o delta do Mag saía girado (pente a 1 m da mão na recarga, medido 29/08).
 const BLENDER = '/Applications/Blender.app/Contents/MacOS/Blender';
 function convertWeaponFbx(source, output) {
-  const script = path.join(REPO_ROOT, 'tools/blender/viewmodels/convert_weapon_clip_fbx.py');
+  const script = path.join(REPO_ROOT, '../coro-solto-studio/tools/blender/viewmodels/convert_weapon_clip_fbx.py');
   const result = spawnSync(BLENDER, [
     '-b', '--python-exit-code', '1', '--python', script, '--', source, output,
   ], { encoding: 'utf8' });

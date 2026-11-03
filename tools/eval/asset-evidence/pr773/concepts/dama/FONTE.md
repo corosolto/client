@@ -1,6 +1,6 @@
 # Dama da Mandioca: concept 2D
 
-- `concept.jpg`: gerado em 07/10/2026 por `tools/gen-image.mjs` (OpenRouter, `google/gemini-3-pro-image`, `--n 2`, variação v2 escolhida). Prompt em `concept-prompt.txt`.
+- `concept.jpg`: gerado em 07/10/2026 por `../coro-solto-studio/tools/gen-image.mjs` (OpenRouter, `google/gemini-3-pro-image`, `--n 2`, variação v2 escolhida). Prompt em `concept-prompt.txt`.
 - Referências usadas no pedido e **não** versionadas (foto de pessoa real só serve ao concept, CONTRIBUTING.md):
   - Wikimedia Commons, Dilma Rousseff na COP30, nov/2025, corpo inteiro (CC BY 2.0).
   - Wikimedia Commons, Dilma Rousseff no STF, jan/2026, retrato (CC BY 2.0).

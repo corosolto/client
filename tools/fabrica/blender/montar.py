@@ -9,7 +9,7 @@ Zona de contato = o pack COMO AUTORADO: SK_Arms_Mono + a arma do próprio pack
 de zona livre RÍGIDAS no nó raiz da arma, que cavalga o osso ik_hand_gun
 (o "Handle" do tutorial: tudo que não se mexe é filho da raiz; só pente,
 ferrolho e bomba têm osso próprio, e esses vêm do pack).
-Derivado de tools/blender/viewmodels/build_paid_family.py.
+Derivado de ../coro-solto-studio/tools/blender/viewmodels/build_paid_family.py.
 """
 
 from __future__ import annotations

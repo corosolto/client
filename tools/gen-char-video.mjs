@@ -1,6 +1,6 @@
 // Gera VÍDEO do personagem a partir do MODELO REAL do jogo.
 //
-// É o par de `tools/gen-image.mjs` (arte 2D por texto via OpenRouter): ali a
+// É o par de `../coro-solto-studio/tools/gen-image.mjs` (arte 2D por texto via OpenRouter): ali a
 // imagem é inventada a partir de um prompt, aqui ela é MEDIDA a partir do GLB.
 // Os dois se encontram no `--ref` do gen-image: o frame que sai daqui é a
 // referência que trava a identidade do personagem quando o modelo de imagem

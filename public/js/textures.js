@@ -832,7 +832,7 @@ export function initTextures() {
     ['tags-treino-06.png', 0.375, 'tag', 1],
   ];
   /* DECALS:GERADO-FIM */
-  /* ORIGINAIS `or-*` (07/08): gerados via OpenRouter (tools/gen-image.mjs), obra própria —
+  /* ORIGINAIS `or-*` (07/08): gerados via OpenRouter (../coro-solto-studio/tools/gen-image.mjs), obra própria —
      por isso são os ÚNICOS decals VERSIONADOS (exceção no .gitignore) e os únicos que
      existem no deploy de produção, que builda do git puro e não tem os recortes de
      references/. Bloco separado do gerado de propósito: o gen-graffiti-decals reescreve
