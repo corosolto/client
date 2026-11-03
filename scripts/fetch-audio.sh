@@ -26,18 +26,19 @@ esac
 # O manifest que o jogo consome precisa de `mapSoundscapes` para todo mapa do
 # `maps.js` — sem isso o `world.sound` de cada mapa aponta pros `audio/ambiente/*`
 # que só o audio-pack-v9+ traz (sob nomes binários) e o mapa sobe mudo. O pack
-# público do v9 traz as 17 faixas e o `ambiente-mapas.mjs` escreve os overrides
-# com os caminhos resolvidos; mapas sem sound autoral ficam no hum sintetizado —
-# que não é asset e não precisa de credencial. O pack privado NÃO passa pelos
-# dois: ambiência real que falta tem de reprovar o build, não ser trocada por
-# silêncio.
+# v9 traz as 17 faixas nos DOIS ramos (o blob privado carrega os mesmos bytes
+# do release público), e o `ambiente-mapas.mjs` roda nos dois: cada faixa é
+# conferida no disco e por sha1 contra a tabela `ambiente-pack.mjs` — track que
+# o pack não traz reprova o build em vez de virar 404. Só o
+# `ensure-map-soundscapes` fica restrito ao público: hum sintetizado não pode
+# mascarar pack privado incompleto.
 prepara_ambiencia() {
   node tools/audio/migrar-manifesto.mjs "$DEST/manifest.json"
   node tools/audio/javaporcos-samples.mjs
   node tools/audio/complete-amazonia-soundscape.mjs
   node tools/audio/extend-map-soundscapes.mjs "$DEST/manifest.json"
   node tools/audio/lajes-soundscape.mjs "$DEST/manifest.json"
-  [ "$PACOTE_PRIVADO" = 1 ] || node tools/audio/ambiente-mapas.mjs
+  node tools/audio/ambiente-mapas.mjs
   [ "$PACOTE_PRIVADO" = 1 ] || node tools/audio/ensure-map-soundscapes.mjs
 }
 
