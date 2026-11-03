@@ -16,7 +16,7 @@
    `a/<sha1 do conteúdo, 16 hex>.<ext>` — as 17 entradas do v9 foram geradas PELO
    empacotador real, então a tabela é verificável por conteúdo, não por fé:
    `sha1Arquivo(caminho) === hash` tem de valer para todo arquivo instalado.
-   Procedência arquivo a arquivo: `public/audio/ambiente/FONTE.md`.
+   Procedência arquivo a arquivo: `tools/audio/FONTE-ambiente.md`.
    ============================================================================ */
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';

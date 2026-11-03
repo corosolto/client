@@ -6,7 +6,7 @@
    existia: `ensure-map-soundscapes` instalava hum sintetizado em todo mapa e a
    ambiência real de `soundscape.js` era 404 garantido em produção. O
    audio-pack-v9 traz as 17 faixas (16 CC0 Freesound + 1 Mint, procedência em
-   `public/audio/ambiente/FONTE.md`) sob nomes binários, e ESTE script escreve o
+   `tools/audio/FONTE-ambiente.md`) sob nomes binários, e ESTE script escreve o
    override por mapa no manifest com os caminhos RESOLVIDOS:
 
      mapSoundscapes.<id> = { loops: [...], shots: [...] }

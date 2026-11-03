@@ -1,13 +1,16 @@
 # Áudio ambiente (vida 1, plans/22)
 
+> Procedência interna (vive em `tools/audio/`, FORA de `public/` — nomes de
+> provedor de geração não podem ser servidos ao navegador).
+
 Loops posicionais e one-shots de bioma do `public/js/soundscape.js`. Os 16 sons
 de natureza/cidade são **CC0** (Freesound, preview lq 128kbps, filtro
 `license:"Creative Commons 0"` na busca — verificação 19/08/2026). O `funk-bar.mp3`
 é **geração Mint** (projeto CSBRASIL Audio Original, asset original por prompt,
 licença de assinante Mint Pro — não existe funk instrumental CC0; chat:
-<https://mint.gg/chat/ph75v74kr4gx586vr21b1e4qq98csn32>). Esta pasta é
-gitignored (regra do `public/audio/`): os binários shipam pelo audio-pack.zip;
-só este FONTE.md é versionado (exceção no `.gitignore`).
+<https://mint.gg/chat/ph75v74kr4gx586vr21b1e4qq98csn32>). Os binários sob
+`public/audio/` são gitignored (regra do `public/audio/`): os mp3 shipam pelo
+audio-pack.zip; este registro de procedência é versionado aqui, em `tools/audio/`.
 
 
 | arquivo | título do som | autor | URL da página | ID | preview URL | duração medida |
