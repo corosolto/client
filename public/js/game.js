@@ -8797,11 +8797,7 @@ export class Game {
             b.burst = BOT_FAIR ? (dist < 14 ? 1 : 2) + ((Math.random() * 2) | 0)
               : 1 + ((Math.random() * (dist < 14 ? 5 : 3)) | 0);
             const pause = (BOT_FAIR ? BOT_BURST_PAUSE + Math.random() * 0.6 : 0.35 + Math.random() * 0.55) / Math.max(0.5, b.skill);
-            /* Na escolta, skill baixa podia produzir 3,1 s de silêncio entre rajadas: o
-               guarda chegava ao slot e atravessava uma janela inteira de 2 s com LOS sem
-               responder. Reação, foco, erro de mira, cadência DENTRO da rajada e o gate de
-               LOS continuam iguais; só a pausa ENTRE rajadas tem teto, e só com o guarda
-               já na formação. Deslocamento e combate em reagrupamento conservam a cadência. */
+            /* Escort formation caps burst pauses at 1.5 s; regroup keeps normal cadence. */
             b.nextShotAt = this.time + (BOT_FAIR && objectiveDestination && !formationPull ? Math.min(pause, 1.5) : pause);
           }
         } else {
@@ -9804,9 +9800,7 @@ export class Game {
       const protText = String(Math.ceil(protLeft));
       if (this.el.protCount.textContent !== protText) this.el.protCount.textContent = protText;
     }
-    // HUD do objetivo (Operação Flávio online): o letreiro da escolta acompanha o HUD comum.
-    // A mensagem da cinemática vence — atualizaHud se cala enquanto this.cinematic existir.
-    // Javaporcos mantém seu próprio agendamento em update/updatePresentation.
+    // Escort HUD follows the common HUD; Javaporcos keeps its own schedule.
     if (this.world.mode === 'escort' || this.objective?.vip) this.objective?.atualizaHud?.();
   }
 
