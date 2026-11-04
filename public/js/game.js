@@ -9800,7 +9800,7 @@ export class Game {
       const protText = String(Math.ceil(protLeft));
       if (this.el.protCount.textContent !== protText) this.el.protCount.textContent = protText;
     }
-    // Escort HUD follows the common HUD; Javaporcos keeps its own schedule.
+    // HUD da escolta acompanha o HUD comum; Javaporcos mantém seu próprio agendamento.
     if (this.world.mode === 'escort' || this.objective?.vip) this.objective?.atualizaHud?.();
   }
 
