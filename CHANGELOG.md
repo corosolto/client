@@ -43,6 +43,7 @@
 
 ### Corrigido
 - A Piscina deixa de repetir grafites ou pintá-los sobre a faixa azul; armários não engolem a câmera, e armas estáticas deixam os mapas com a loja ligada. Esquerdomacho segura pistola e faca sem disputar duas poses, recebe colete proporcional, e a AK volta ao tamanho certo em primeira pessoa. O menu de compra ocupa a tela, B fica exclusivo da loja, N troca a câmera, o saldo vai para a direita, a janela de compra fica mais longa e vírgula/ponto compram munição extra.
+- O modo Treta Pop deixa de importar diretamente o catálogo de mapas para detectar Javaporcos; a informação vem da API do menu, evitando erro fatal quando o navegador mistura módulos de releases diferentes.
 - A arma equipada volta a aparecer no celular. Se o modelo animado ainda estiver carregando ou falhar, uma arma alternativa continua visível também no desktop.
 - Canarinho e suas três skins deixam de carregar uma cauda maior que quase metade do corpo. A pistola fica à frente do tronco, com cotovelo dobrado e montagem recalculada depois da pose de uma mão.
 - A contagem diária de visitantes cobre todas as páginas públicas. Antes, só a entrada do jogo emitia a visita e deixava de fora quem chegava por conteúdo, perfil ou documento legal.
