@@ -46,6 +46,7 @@
 - O modo Treta Pop deixa de importar diretamente o catálogo de mapas para detectar Javaporcos; a informação vem da API do menu, evitando erro fatal quando o navegador mistura módulos de releases diferentes.
 - O wallpaper de espera dos Javaporcos agora leva revisão na URL; evita que a CDN mantenha o 404 antigo do asset recém-publicado.
 - A matriz gerada do arsenal acompanha as linhas atuais de `game.js`, mantendo o gate de consistência do CI verde.
+- O gate de processos CPU do Treta Pop ganha teto de 30 minutos; o runner cancelava antes de executar `tp-glove-origin` em máquina fria.
 - A arma equipada volta a aparecer no celular. Se o modelo animado ainda estiver carregando ou falhar, uma arma alternativa continua visível também no desktop.
 - Canarinho e suas três skins deixam de carregar uma cauda maior que quase metade do corpo. A pistola fica à frente do tronco, com cotovelo dobrado e montagem recalculada depois da pose de uma mão.
 - A contagem diária de visitantes cobre todas as páginas públicas. Antes, só a entrada do jogo emitia a visita e deixava de fora quem chegava por conteúdo, perfil ou documento legal.
