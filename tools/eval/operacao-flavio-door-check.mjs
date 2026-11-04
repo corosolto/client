@@ -6,20 +6,29 @@ import { registerHooks } from 'node:module';
 const mapUrl = new URL('../../public/js/map_operacao_flavio.js', import.meta.url);
 const mutation = process.argv.find(arg => arg.startsWith('--mutante='))?.slice(10);
 if (mutation) {
-  const anchors = '  for (const x of fachadaNorte.portas) if (!blocked(x, fachadaNorte.z)) nodes.push({ x, z: fachadaNorte.z });';
-  const relay = '  if (!blocked(fachadaNorte.x, fachadaNorte.z + step)) nodes.push({ x: fachadaNorte.x, z: fachadaNorte.z + step });';
+  const graphAnchor = '  const nearestWaypoint = (x, z) => {';
+  const cutEdges = (central = false, oneWay = false) => `  for (let i = 0; i < nodes.length; i++) {
+    const a = nodes[i];
+    adj[i] = adj[i].filter(j => {
+      const b = nodes[j];
+      if (a.z === b.z || Math.min(a.z, b.z) > fachadaNorte.z || Math.max(a.z, b.z) < fachadaNorte.z) return true;
+      const x = a.x + (b.x - a.x) * (fachadaNorte.z - a.z) / (b.z - a.z);
+      const target = ${central ? 'Math.abs(x - fachadaNorte.x) < 1.15' : 'true'};
+      return !(target${oneWay ? ' && i < j' : ''});
+    });
+  }
+${graphAnchor}`;
   const edits = {
-    'sem-portas': [anchors, ''],
-    'sem-relay': [relay, ''],
-    'meia-porta': ['      if (i === j) continue;', `      if (i === j || (nodes[i].x === fachadaNorte.x && nodes[i].z === fachadaNorte.z && nodes[j].z > fachadaNorte.z)
-        || (nodes[j].x === fachadaNorte.x && nodes[j].z === fachadaNorte.z && nodes[i].z > fachadaNorte.z)) continue;`],
-    'no-penetrado': [anchors, anchors.replace('nodes.push({ x, z:', 'nodes.push({ x: x === 0 ? (fachadaNorte.portas[1] + fachadaNorte.portas[2]) / 2 : x, z:')],
-    'atalho-parede': ['  const nearestWaypoint = (x, z) => {', `  const atalho = [fachadaNorte.z - step, fachadaNorte.z + step].map(z => nodes.reduce((best, node, i) => {
+    'sem-portas': [graphAnchor, cutEdges()],
+    'sem-relay': [graphAnchor, cutEdges(true)],
+    'meia-porta': [graphAnchor, cutEdges(true, true)],
+    'no-penetrado': [graphAnchor, `  nodes.push({ x: 8.5, z: fachadaNorte.z }); adj.push([]);\n${graphAnchor}`],
+    'atalho-parede': [graphAnchor, `  const atalho = [fachadaNorte.z - step, fachadaNorte.z + step].map(z => nodes.reduce((best, node, i) => {
     const x = (fachadaNorte.portas[1] + fachadaNorte.portas[2]) / 2;
     return Math.hypot(node.x - x, node.z - z) < Math.hypot(nodes[best].x - x, nodes[best].z - z) ? i : best;
   }, 0));
   adj[atalho[0]].push(atalho[1]); adj[atalho[1]].push(atalho[0]);
-  const nearestWaypoint = (x, z) => {`],
+${graphAnchor}`],
   };
   edits['atalho-inverso'] = [edits['atalho-parede'][0], edits['atalho-parede'][1].replace(
     'adj[atalho[0]].push(atalho[1]); adj[atalho[1]].push(atalho[0]);', 'adj[Math.max(...atalho)].push(Math.min(...atalho));')];

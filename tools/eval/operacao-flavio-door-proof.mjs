@@ -24,7 +24,7 @@ if (process.argv.includes('--autoteste')) {
   for (const [name, args, clause] of [
     ['sem-portas', ['--mutante=sem-portas'], 'porta 0: grafo'],
     ['sem-relay', ['--mutante=sem-relay'], 'porta 0: grafo'],
-    ['meia-porta', ['--mutante=meia-porta'], 'porta 0: grafo'],
+    ['meia-porta', ['--mutante=meia-porta'], 'porta 0: arestas físicas'],
     ['no-penetrado', ['--mutante=no-penetrado'], 'grafo: nós não começam penetrados'],
     ['atalho-parede', ['--mutante=atalho-parede'], 'fachada: arestas respeitam paredes'],
     ['atalho-inverso', ['--mutante=atalho-inverso'], 'fachada: arestas respeitam paredes'],

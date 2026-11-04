@@ -16,46 +16,45 @@ hangar industrial azul-cinza e pista aberta na luz do fim da tarde.
 
 ## Layout
 
-- **Pegada:** 88 × 116 m; contato entre times em 11–15 s, travessia completa do
-  objetivo em 95–130 s sem combate.
-- **Ato 1 — escritório (z -52 a -16):** recepção, gabinete, arquivo, sala de
-  reunião, copa, CPD e corredor em anel. Divisórias e portas alternadas formam um
-  labirinto legível, sem corredores sem saída maiores que 8 m.
-- **Ato 2 — serviço (z -16 a 22):** triagem, doca, almoxarifado e pátio de
-  manutenção. Três rotas: corredor interno, doca central e viela externa.
-- **Ato 3 — hangar (z 22 a 48):** mezanino lateral, oficina, estantes e fuselagem
-  em manutenção. O centro é aberto, mas carrinhos e bancadas quebram a visada.
-- **Ato 4 — apron (z 48 a 58):** faixa final de 10 m até a escada do avião.
-  Área curta e exposta para criar o clímax, com GPU, trator de bagagem e pallets
-  como cobertura temporária.
-- **Rota de Flávio:** 12 checkpoints. Ele só avança quando pelo menos um
-  defensor vivo está num raio de 6 m e nenhum atacante está num raio de 4 m.
-  Contestado, para; sem escolta por 4 s, recua lentamente até o checkpoint anterior.
-- **Condição de vitória:** defensores vencem quando Flávio permanece 3 s na
-  zona da escada. Atacantes vencem ao derrubá-lo ou quando os 6 min acabam.
-- **Respawn:** ondas de 8 s nos checkpoints de retaguarda; o spawn nunca muda
-  para um ponto à frente do VIP.
+- **Espaço jogável:** limites de `x -43…43` e `z -57…57` (86 × 114 m). O piso visual do aeroporto é maior, 94 × 124 m, e os volumes externos são apenas cenário.
+- **Escritório (z -52 a -16):** terminal aberto com recepção, assentos, jardineiras e corredores entre móveis. Não há salas fechadas em anel nem mezanino. As paredes sul, norte e laterais têm aberturas reais. Cada banco de assentos tem 2,6 × 1,05 × 0,9 m, abaixo da estatura de 1,72 m dos personagens; GLB e fallback usam as mesmas dimensões e o mesmo proxy rotacionado.
+- **Serviço (z -16 a 22):** controle de acesso central, guaritas e separadores. A travessia oferece cinco opções: corredor central, vielas externas oeste/leste e vielas internas oeste/leste. As internas saem da porta central, contornam as coberturas em `(-12,5)` e `(12,4)` por `x = ±15.5` e convergem para `x = ±7` na entrada do hangar, sem saída cega.
+- **Hangar (z 22 a 48):** estrutura aberta com oficina, veículos, containers e carrinhos. Coberturas sólidas em `(-3, 37)` e `(10, 37)` interrompem parte das visadas longitudinais sem ocupar a linha da escolta.
+- **Apron (z 48 a 57):** escada em `(4.2, 52)`, avião em `(0, 55)` e último checkpoint em `(7.2, 49.2)`. A cobertura em `(-1,45)` fecha a visada aberta sem tocar a aproximação da escada, que fica fora dos proxies da fuselagem e das asas.
+- **Rota de Flávio:** 13 checkpoints, do spawn `(-20, -48)` ao apron. Ele só avança quando pelo menos um defensor vivo está num raio de 6 m e nenhum atacante está num raio de 4 m. Contestado, para; sem escolta por 4 s, recua lentamente até o checkpoint anterior.
+- **Condição de vitória:** defensores vencem quando Flávio permanece 3 s na zona da escada. Atacantes vencem ao derrubá-lo ou quando os 6 min acabam.
+- **Respawn:** ondas de 8 s nos checkpoints de retaguarda; o spawn nunca muda para um ponto à frente do VIP.
 
-## Cobertura (cover)
+## Portas e navegação
 
-- Escritório: armários de arquivo, ilhas de mesa, pilares, balcão de recepção e
-  divisórias opacas de 1,45 m; vidro é visual e nunca colisor invisível.
-- Serviço: caixas, pallets e carrinhos em pares, deixando corredores de 1,8 m.
-- Hangar: bancadas, pneus, estantes e uma aeronave em manutenção; nenhuma peça
-  forma uma visada reta maior que 32 m.
-- Apron: quatro covers baixos e dois altos. O avião não absorve tiro fora da
-  fuselagem visível.
+- Sul: `x ±20, z -52`; norte: `x -17, 0, 17, z -16`; laterais: `x ±29, z -43 e -25`.
+- O grafo combina grade de 3,5 m, centros e relés explícitos das nove portas e nós ao longo da escolta e das cinco rotas de serviço.
+- Arestas ligam somente vizinhos próximos e usam interseção exata entre segmento e AABBs expandidas. Um índice espacial restringe os pares candidatos a células adjacentes; a construção não faz a antiga varredura de todos os pares.
+- A cobertura oeste/leste externa exige o desvio por `x ∓19.4`; as rotas internas usam relés antes dos scanners e contornos próprios. Todos os cinco trajetos têm segmentos físicos livres e ligação pelo grafo até o embarque.
 
-## Linhas de visão
+## Spawns e primeira leitura
 
-- Escritório: 5–14 m, sempre com duas saídas por sala.
-- Serviço: 12–24 m; a doca central é a rota rápida e exposta.
-- Hangar: 18–32 m no térreo e uma única linha de 38 m no mezanino, quebrada por
-  duas colunas estruturais.
-- Apron: 28 m máximos; atiradores veem a zona final, mas não o último checkpoint
-  dentro do hangar.
-- Cada checkpoint do VIP tem duas aproximações atacantes e uma rota de retirada
-  defensora. Nenhum spawn enxerga outro spawn ou o VIP.
+- **B:** `(-20,-48)`, `(-17.8,-46.5)`, `(-22.2,-47.5)` e `(-20,-50.5)`, todos com `yaw = π`, voltados para o avanço em `+z` e não para a parede sul.
+- **E:** `(-33,16)`, `(33,16)`, `(-32,54)` e `(32,54)`, todos com `yaw = 0`. Os pontos traseiros saem do espaço entre torres, oficinas e containers; há passagem livre imediata e ligação ao grafo.
+
+## Cobertura e linhas de visão
+
+- Nove coberturas procedurais sólidas de 1,45 m: terminal `(-7,-37)` e `(8,-37)`, serviço externo `(-23,3)` e `(23,3)`, acesso interno `(-12,5)` e `(12,4)`, hangar `(-3,37)` e `(10,37)` e apron `(-1,45)`. Elas têm colisor, oclusão e sombra também no perfil baixo.
+- `escortCoverPoints` contém 20 posições utilizáveis junto a essas coberturas, à barreira do apron e à escada. São posições separadas dos checkpoints; a presença dos pontos no contrato do mapa não afirma, por si só, uma política tática dos bots.
+- As novas peças quebram as visadas centrais do terminal, as duas vielas internas e as linhas longas do hangar/apron sem ocupar os segmentos entre os 13 checkpoints. Móveis e equipamentos existentes continuam formando cobertura complementar.
+
+## Avião e colisores
+
+- Cada prop sólido declara seu yaw. O proxy é a AABB que envolve o retângulo rotacionado, e é idêntico com GLB carregado ou fallback procedural.
+- O avião usa proxy de fuselagem de 3,4 × 12 m e proxy de asas de 16 × 3,2 m, ambos centrados na área visual de pouso. Fuselagem e asas não atingem o último checkpoint nem o segmento da escolta que chega a ele; a escada é sólida e sua subida ocorre na cinemática.
+- As AABBs são envelopes conservadores, não colisão por polígono nem OBB. Cantos vazios de um prop rotacionado podem parecer mais fechados que o modelo visual.
+- A navegação é 2D e `groundHeightAt` permanece zero. Não há mezanino jogável nem subida livre pela escada; o embarque pela escada pertence à cinemática.
+
+## Qualidade e desempenho
+
+- No perfil baixo, o vidro do mapa usa `MeshStandardMaterial` transparente, sem `transmission`; materiais transmissivos dos GLBs também são convertidos preservando os parâmetros visuais comuns. Em médio/alto, o vidro físico e sua transmissão são preservados.
+- No perfil baixo, decoração não sólida, tesouras e props não sólidos deixam de projetar sombra. Paredes, coberturas e props sólidos continuam no shadow pass, inclusive quando o GLB falha e o fallback procedural é usado; o fallback não duplica o proxy explícito. Geometria, posições, cores de vidro e sinalização não mudam entre os perfis.
+- Essas medidas reduzem trabalho de material e de sombra por construção. Não há neste documento uma medição de FPS ou de tempo de frame que sustente um ganho numérico.
 
 ## Modo multiplayer
 
@@ -90,9 +89,9 @@ hangar industrial azul-cinza e pista aberta na luz do fim da tarde.
 
 ## Régua de aceite
 - Ficha passa em `node tools/spec.mjs check docs/maps/operacao-decola.md`.
-- Grafo prova duas rotas independentes entre cada spawn e os 12 checkpoints.
-- Bot escolta completa 20/20 sementes; bot atacante consegue impedir ao menos
-  20% e no máximo 80% das partidas na dificuldade média.
+- `node tools/eval/operacao-flavio-collider-check.mjs` cobre equivalência GLB/fallback, yaw das AABBs, escala humana e alinhamento dos quatro bancos, pegada do avião, 13 checkpoints e seus segmentos, nove portas, cinco rotas físicas ligadas ao embarque, nove coberturas com oclusão, 20 pontos de cobertura, primeira leitura dos spawns e corte de custo no perfil baixo sem perder sombra de fallback sólido. `operacao-flavio-proof-check.mjs collider` verifica os mutantes dessas cláusulas.
+- `node tools/eval/operacao-flavio-door-proof.mjs` combina atravessia física e grafo na fachada, inclusive mutantes sem arestas, unidirecionais e atravessando parede. O orçamento do grafo exige candidatos locais, não todos os pares.
+- As metas de simulação continuam: escolta completa em 20/20 sementes e atacantes impedindo 20–80% das partidas na dificuldade média. São metas de balanceamento, não um resultado medido declarado por esta ficha.
 - Mutante sem a guarda de contestação faz a régua falhar.
 - Snapshot multiplayer reproduz o mesmo checkpoint, vida e vencedor em dois
   clientes com a mesma semente.

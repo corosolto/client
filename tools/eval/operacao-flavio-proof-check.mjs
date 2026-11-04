@@ -6,7 +6,18 @@ import { fileURLToPath } from 'node:url';
 const familias = {
   collider: ['operacao-flavio-collider-check.mjs', {
     'fallback-solido': 'FALHA loaded-fallback-identical-colliders:',
+    'sombra-fallback-solido': 'FALHA low-profile-avoids-transmission-and-decorative-shadows:',
+    'cadeiras-gigantes': 'FALHA airport-chairs-human-scale-and-aligned-colliders:',
+    'sem-rota-interna': 'FALHA five-service-routes-survive-cover-and-reach-boarding:',
+    'sem-cobertura-extra': 'FALHA solid-covers-and-lateral-cover-points:',
     'proxy-so-glb': 'FALHA plane-proxy-independent-of-template:',
+    'sem-yaw': 'FALHA prop-yaw-rotates-aabb:',
+    'sem-asas': 'FALHA plane-proxy-independent-of-template:',
+    'spawn-invertido': 'FALHA spawn-clearance-and-first-read:',
+    'sem-cobertura': 'FALHA solid-covers-and-lateral-cover-points:',
+    'rota-n2': 'FALHA graph-build-uses-local-candidates:',
+    'vidro-low-fisico': 'FALHA low-profile-avoids-transmission-and-decorative-shadows:',
+    'sombras-low-completas': 'FALHA low-profile-avoids-transmission-and-decorative-shadows:',
   }],
   menu: ['operacao-flavio-menu-check.mjs', Object.fromEntries(
     ['preferencia', 'sem-objetivo', 'botoes-ativos', 'rotulo'].map(m => [m, 'FALHA menu-objective-operacao_flavio-ctf:']))],
