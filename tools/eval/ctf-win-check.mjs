@@ -40,6 +40,7 @@ const falhas = [];
 const linhas = [];
 
 const textures = initTextures();
+// ctfMode é só o modo inicial; apenas objectiveMode retira o mapa do CTF comum.
 const IDS = Object.keys(MAPS).filter((id) => !MAPS[id].objectiveMode);
 
 for (const id of IDS) {

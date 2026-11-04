@@ -325,6 +325,7 @@ Os mapas registrados, e em que modo cada um abre:
 | `upa_24h` | UPA 24h da Treta | **captura** | `—` | — |
 | `velho_oeste` | Sertão da Treta | **captura** | `—` | — |
 | `invasao_javaporcos` | Cidade Invadida | rodadas | `—` | — |
+| `operacao_flavio` | Operação Flávio | rodadas | `—` | — |
 
 **13 mapas no menu** — 3 abrem em rodadas e 10 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 25 arquivos `map_*.js` em `public/js/`; mapas em `MAPAS_PARADOS` ficam fora do menu.
 

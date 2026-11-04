@@ -165,6 +165,9 @@ jobs:
       - name: Loops de áudio de todos os mapas usam src carregável
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:soundscape-contract
+      - name: Operação Flávio, objetivo, autoridade e anúncio
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:operacao-flavio eval:operacao-reset eval:operacao-online eval:operacao-duration eval:operacao-clock eval:operacao-boarding eval:character-owned eval:objective-codec-contract eval:operacao-npc eval:mode-announcements eval:ctflabels eval:tpreloadpaired
       - name: Pichação colada na parede e sem vazar pela quina da frente
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:pichacao-parede

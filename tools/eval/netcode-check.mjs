@@ -100,10 +100,11 @@ console.log('\n· ack e loadout autoritativos do slot (BUG-126/127)');
   net.snap = snapshot(50, 1, {
     ackSeq: 0, weapon: 'm4', mag: 11, res: 47, reloadIn: 1.2,
     primary: 'm4', secondary: 'pistol', jogadorX: 0, jogadorY: 0, jogadorZ: 0,
-    objective: { wave: 5, phase: 'combat' },
+    objective: { wave: 5, phase: 'combat', checkpoint: 4, contested: true },
   });
   g._mp.applySnapshot();
-  cobra(objetivoRecebido?.wave === 5 && objetivoRecebido?.phase === 'combat',
+  cobra(objetivoRecebido?.wave === 5 && objetivoRecebido?.phase === 'combat'
+    && objetivoRecebido?.checkpoint === 4 && objetivoRecebido?.contested === true,
     'snapshot entrega o objetivo ao modo ativo antes da apresentação local');
   cobra(g.player.weapon === 'm4' && g.player.primary === 'm4' && g.player.secondary === 'pistol',
     'snapshot v4 corrige arma atual e slots locais pela autoridade do servidor');
@@ -1140,7 +1141,7 @@ console.log('\n· online, ninguém pega drop andando por cima no cliente (o serv
 /* FASE 3 DO CANAL `ev` — granadas. Online o cliente só PEDE (`nade` no input); o servidor lança,
    manda `nade {i,kind,x,y,z,vx,vy,vz,o,f}` e `boom {i,kind,x,y,z}`; o cliente desenha a granada
    pelo evento e estoura na posição do servidor SEM aplicar dano (o hp é do snapshot). */
-console.log('\n· granada online: o 5 pede ao servidor e não spawna local; `nade`/`boom` desenham sem dano (fase 3)');
+console.log('\n· granada online: o clique pede ao servidor e não spawna local; `nade`/`boom` desenham sem dano (fase 3)');
 {
   const net = fakeNet(1, 5, false, 30, 1);
   const g = montaJogo(net);

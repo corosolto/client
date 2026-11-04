@@ -23,6 +23,10 @@ export function extendMapSoundscapes(manifest) {
     const donor=maps.invasao_javaporcos;
     if(!Object.hasOwn(maps,id)&&donor){maps[id]=structuredClone(donor);changed=true;}
   }
+  if(!Object.hasOwn(maps,'operacao_flavio')) {
+    const donor=maps.loja_h||maps.mansao;
+    if(donor){maps.operacao_flavio=structuredClone(donor);changed=true;}
+  }
   return changed;
 }
 
