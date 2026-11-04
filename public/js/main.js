@@ -3074,8 +3074,7 @@ const WPN_MODE_LABEL = { all: 'TODAS', pistols: 'SÓ PISTOLAS', knife: 'SÓ FACA
 function matchRounds() {
   if (ehMapaJavaporcos(currentMap)) return 1;
   if (!modoObjetivoAtual() && matchMode === 'arena') return 1;
-  /* 1–15 (ROUNDS_CUSTOM_MAX do game.js — uma régua só). Salvo fora do intervalo cai no
-     padrão do modo; par é permitido: empate no teto vai pro desempate por abates. */
+  // Effective mode owns its own round setting.
   const modo = modoEfetivoAtual();   // objetivo ativo = rounds (não herda ctfRounds por preferência escondida)
   const fallback = modo === 'ctf' ? 3 : 5;
   return sanitizeRounds(modo === 'ctf' ? settings.ctfRounds : settings.rounds) || fallback;
