@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { aceitaMutante } from './boot-overlay.mjs';
+import { lazyPosterSubset } from './boot-poster-intent.mjs';
 
 // Executa o veredito real com medições controladas. Não substitui o browser.
 const source = readFileSync(new URL('./boot-orcamento-check.mjs', import.meta.url), 'utf8');
@@ -11,8 +12,13 @@ const start = source.indexOf(anchor), end = source.indexOf('process.exit(saida);
 assert.ok(start > 0 && end > start && source.slice(end).trim() === '', 'veredito real completo');
 assert.ok(source.includes('const TETO_BYTES = 8_200_000;') && source.includes('const TETO_REQS = 340;'), 'tetos atuais preservados');
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
-const verdict = new AsyncFunction('mede', 'BASE', 'MUTANTE', 'TETO_BYTES', 'TETO_REQS', 'browser', 'process', 'console', 'aceitaMutante', 'assertSnapshotLive', 'SNAPSHOT', source.slice(start, end));
+const verdict = new AsyncFunction('mede', 'BASE', 'MUTANTE', 'TETO_BYTES', 'TETO_REQS', 'browser', 'process', 'console', 'aceitaMutante', 'lazyPosterSubset', 'assertSnapshotLive', 'SNAPSHOT', source.slice(start, end));
 const healthy = { causa: 'assets', portao: 100, bytes: 1, reqs: 1, cartazes: 1, ultimoProp: 10, primeiraFauna: 20, erros: [] };
+const posterProof = cartazes => {
+  const catalogue = ['/posters/a.webp', '/posters/b.webp'];
+  const started = catalogue.slice(0, cartazes);
+  return { schema: 'boot-poster-proof/1', catalogue, expected: catalogue, intended: started, started };
+};
 let cases = 0;
 for (const mutant of ['', 'cartaz-ansioso', 'fauna-cedo']) {
   const scenarios = [
@@ -38,9 +44,9 @@ for (const mutant of ['', 'cartaz-ansioso', 'fauna-cedo']) {
     const label = `${mutant || 'normal'}/${scenario.name}`;
     const calls = [], errors = [], snapshotArgs = [];
     let exit = -1, exits = 0, closed = 0, injected = false;
-    const nominal = { ...healthy, ...scenario.nominal };
-    const reference = { ...healthy, cartazes: 2, ...scenario.reference };
-    const candidate = { ...healthy, ...scenario.candidate };
+    const nominal = { ...healthy, ...scenario.nominal, posterProof: posterProof((scenario.nominal?.cartazes ?? healthy.cartazes)) };
+    const reference = { ...healthy, cartazes: 2, ...scenario.reference, posterProof: posterProof(2) };
+    const candidate = { ...healthy, ...scenario.candidate, posterProof: posterProof((scenario.candidate?.cartazes ?? healthy.cartazes)) };
     const snapshot = Object.freeze({ fixture: label });
     await verdict(async options => {
       let phase;
@@ -56,13 +62,14 @@ for (const mutant of ['', 'cartaz-ansioso', 'fauna-cedo']) {
       { exit: code => { exit = code; exits++; } },
       { log() {}, error: message => errors.push(message) },
       aceitaMutante,
+      lazyPosterSubset,
       value => { snapshotArgs.push(value); if (scenario.snapshotError) throw new Error('fixture snapshot rejected'); },
       snapshot);
     const expectedCalls = scenario.measurementError === 'nominal' ? ['nominal']
       : scenario.measurementError === 'reference' || scenario.stopsNominal || !mutant ? ['nominal', 'reference']
       : ['nominal', 'reference', 'mutant'];
     assert.deepEqual(calls, expectedCalls, `${label}: nominal e referência precedem o mutante`);
-    assert.equal(exit, scenario.expected, label);
+    assert.equal(exit, scenario.expected, `${label}: ${JSON.stringify(errors)}`);
     assert.equal(exits, 1, `${label}: saída única`);
     assert.equal(closed, 1, `${label}: browser fechado`);
     assert.equal(snapshotArgs.length, 1, `${label}: snapshot final verificado`);

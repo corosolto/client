@@ -9,7 +9,7 @@ const edits = {
   'preferencia': ['main', 'mapa: currentMap, modo: modoEfetivoAtual(), objetivo: modoObjetivoAtual(),', 'mapa: currentMap, modo: matchMode, objetivo: modoObjetivoAtual(),'],
   'sem-objetivo': ['main', 'objetivo: modoObjetivoAtual(),', 'objetivo: false,'],
   'botoes-ativos': ['modos', 'b.disabled = !!est.objetivo;', 'b.disabled = false;'],
-  'rotulo': ['modos', "est.objetivo ? 'ESCOLTA' : est.modo", 'est.modo'],
+  'rotulo': ['modos', "est.objetivo === 'escort' ? 'ESCOLTA' :", "est.objetivo === 'escort' ? est.modo :"],
 };
 if (mutant) {
   const edit = edits[mutant];
@@ -37,16 +37,16 @@ const element = () => ({ textContent: '', disabled: false, dataset: {}, attrs: {
 let failures = 0;
 for (const [map, preference] of [['operacao_flavio','ctf'],['operacao_flavio','rounds'],['normal','ctf']]) {
   const objective = map === 'operacao_flavio';
-  const state = new Function('MAPS','currentMap','settings','matchRounds', init+
+  const state = new Function('MAPS','currentMap','settings','matchRounds','ehMapaJavaporcos', init+
     '\nmatchMode='+JSON.stringify(preference)+';return ('+bridge+');')(
-      { operacao_flavio: { objectiveMode: 'operacao_flavio' }, normal: {} }, map,
-      { pinnedChars: [], allyBots: 2, enemyBots: 2 }, () => 5);
+      { operacao_flavio: { objectiveMode: 'escort' }, normal: {} }, map,
+      { pinnedChars: [], allyBots: 2, enemyBots: 2 }, () => 5, () => false);
   const buttons = ['rounds','ctf'].map(mode => Object.assign(element(), { dataset: { modo: mode } }));
   const eye = element(), scope = {
     api: () => ({ estado: () => state, mapas: () => [{ id: map, cats: [], nome: map }] }),
-    tela: { modos: { querySelectorAll: () => buttons }, lista: element(), ficha: { querySelector: () => eye },
+    tela: { modos: { querySelectorAll: () => buttons }, lista: element(), ficha: { querySelector: () => eye }, regras: element(),
       painel: element(), giro: element(), escalacao: element() },
-    PASSOS: {}, ARMAS: [['all','TODAS']], BOTS: [['normal','NORMAL']], tr: text => text, el: element,
+    PASSOS: {}, ARMAS: [['all','TODAS']], BOTS: [['normal','NORMAL']], tr: text => text, el: element, ehMapaJavaporcos: () => false,
   };
   // Cada seletor da ficha tem seu próprio nó, como no DOM real.
   scope.tela.ficha.querySelector = selector => selector === '.tp-modos__olho' ? eye : element();
