@@ -3179,7 +3179,8 @@ export class Game {
       if (b._objectiveNpc) continue;
       const botSpawn = place(b, b.team, slots[b.team]++);
       b.yaw = this._spawnYaw(botSpawn, b.team, true);
-      b.target = null; b.path = null; b.repathAt = 0;
+      b.target = null; b.path = null; b.repathAt = 0; b._regroupEscapePending = false; b._regroupDirectEscape = false;
+      b._regroupCenterX = b._regroupCenterZ = undefined;
       this._posturaBot(b, false);
       b.mesh.group.rotation.set(0, b.yaw, 0);
       b.mesh.group.position.copy(b.pos);
@@ -3294,6 +3295,9 @@ export class Game {
      gateado por `!this.ctf` (game.js:update), o que fazia o modo CAPTURA rodar pra sempre —
      rounds infinitos, nenhuma tela de fim, e o placar do topo subindo sem teto. */
   _fimDaPartida() {
+    // Escolta usa o teto configurado, como as demais disputas por rodadas. O vencedor do
+    // objetivo fecha a RODADA atual; tratá-lo como fim da partida impedia a rodada seguinte.
+    if (this.world.mode === 'escort') return this.roundNum >= this.roundsMax;
     if (this.objective) return !!this.objective.state.winner;
     if (this.arena) return this.state === 'matchEnd';
     if (this.ctf) return this.roundNum >= this.roundsMax || this.ctfMatchLeft <= 0;
@@ -3315,10 +3319,13 @@ export class Game {
     this._matchEndShown = true;
     if (this.state !== 'matchEnd') this.state = 'matchEnd';
     /* No Vira-Casaca o vencedor vem da população final. Nos modos de rodada, empate
-       segue para abates da partida inteira. */
-    const winner = winnerOverride || this.objective?.state?.winner || (this.roundsWon.E !== this.roundsWon.B
+       segue para abates da partida inteira. Na escolta o estado do objetivo descreve só a
+       ÚLTIMA rodada: o placar acumulado decide a partida, inclusive após prepareRound. */
+    const escort = this.world.mode === 'escort';
+    let winner = winnerOverride || (!escort && this.objective?.state?.winner);
+    if (!winner) winner = this.roundsWon.E !== this.roundsWon.B
       ? (this.roundsWon.E > this.roundsWon.B ? 'E' : 'B')
-      : ((this.matchKills.E + this.roundKills.E) >= (this.matchKills.B + this.roundKills.B) ? 'E' : 'B'));
+      : ((this.matchKills.E + this.roundKills.E) >= (this.matchKills.B + this.roundKills.B) ? 'E' : 'B');
     /* ARENA: o veredito sai na morte (review #1219), antes de a conversão sair no
        respawn — o lado pendente é o destino do jogador no Vira-Casaca e é com ele
        que o `won` fica honesto (virou o casaco pro lado vencedor na própria morte). */
@@ -3335,7 +3342,9 @@ export class Game {
     this.el.matchSub.textContent = draw ? 'As equipes terminaram empatadas.' : mine
       ? frase('venceu', this._teamName(winner))
       : frase('perdeu', this._teamName(winner));
-    this.el.matchStats.innerHTML = this.objective
+    this.el.matchStats.innerHTML = escort
+      ? frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths)
+      : this.objective
       ? (this.objective.regras.times === 3 ? ['E', 'B', 'J'] : ['E', 'J']).map(team => `${this._teamName(team)}: <b>${Math.round((this.objective.state.territorio?.[team] || 0) * 100)}%</b>`).join(' · ') + `<br>${this.player.kills} abates · ${this.player.deaths} mortes`
       : this.arena
         ? `${tr('CONVERSÕES')}: ${this.arenaSwitched} · ${tr('SEUS ABATES')}: ${this.player.kills}`
@@ -7990,6 +7999,9 @@ export class Game {
     return this.world && this.world.groundHeightAt ? this.world.groundHeightAt(x, z) : 0;
   }
   _spawnYaw(spawn, team, bot = false) {
+    // A câmera da escolta sempre usa a orientação autorada para apontar a primeira
+    // leitura à rota. Os corpos conservam a convenção legada já validada pela IA.
+    if (!bot && this.world.mode === 'escort' && Number.isFinite(spawn?.yaw)) return spawn.yaw;
     if (!this.world.authoredSpawnYaw || !Number.isFinite(spawn?.yaw)) return bot ? (team === 'E' ? 0 : Math.PI) : (team === 'E' ? Math.PI : 0);
     // A câmera olha para -Z; o corpo do bot para +Z.
     return spawn.yaw + (bot ? Math.PI : 0);
@@ -8277,7 +8289,8 @@ export class Game {
     b.aimErr = 0.2; b.burst = 0; b.alertUntil = 0; b._hurtAt = 0; b.reloadUntil = 0;
     b.cegoAte = 0; b.cegoTotalAte = 0;   // renasce enxergando
     b.focusUntil = 0; b._spinAcc = 0; b._spinAt = 0; b._sideUntil = 0;   // estado de mira/anti-pirueta da vida anterior
-    b.target = null; b.path = null; b.yaw = this._spawnYaw(s, b.team, true);
+    b.target = null; b.path = null; b._regroupEscapePending = false; b._regroupDirectEscape = false; b.yaw = this._spawnYaw(s, b.team, true);
+    b._regroupCenterX = b._regroupCenterZ = undefined;
     this._posturaBot(b, false);
     // Coluna, rota, juke e rumo são estado de VIDA: herdá-los repete rota e gira no spawn.
     b.laneX = undefined; b.roamUntil = 0;
@@ -8433,7 +8446,9 @@ export class Game {
         // no meio da nuvem sem nunca re-engatar. Enquanto uma nuvem OPACA bloqueia o
         // segmento, o grace estica p/ 4s: segura a direção e re-engata assim que abre.
         // O gate de tiro (_losLost) continua fechado — não atira no que não vê.
-        let grace = 1.2;
+        // A escolta mantém a memória da ameaça durante o reagrupamento; `_losLost`
+        // continua fechando o gatilho até a visão ser realmente recuperada.
+        let grace = objectiveDestination ? 4.0 : 1.2;
         for (const s of this._smokes) {
           if (!s._opaque) continue;
           const ab = b.target.pos.clone().sub(b.pos);
@@ -8443,12 +8458,22 @@ export class Game {
         if (this.time - b._lostAt > grace) { b.target = null; b._losLost = false; b._lostAt = 0; }
       }
     }
-    // A formação limita o deslocamento sem apagar a memória de combate.
+    // A formação limita o deslocamento sem apagar a memória de combate. A velocidade do
+    // centro decide se há aproximação estacionária ou acompanhamento de um VIP em marcha.
+    const escortCenterMoving = !!objectiveDestination && b._regroupCenterX !== undefined
+      && (b._regroupCenterX !== objectiveDestination.centerX || b._regroupCenterZ !== objectiveDestination.centerZ);
+    if (objectiveDestination) {
+      b._regroupCenterX = objectiveDestination.centerX;
+      b._regroupCenterZ = objectiveDestination.centerZ;
+    }
     const slotSx = objectiveDestination ? b.pos.x - objectiveDestination.x : 0;
     const slotSz = objectiveDestination ? b.pos.z - objectiveDestination.z : 0;
     const formationPull = !!objectiveDestination && (
       (b.pos.x - objectiveDestination.centerX) ** 2 + (b.pos.z - objectiveDestination.centerZ) ** 2 > objectiveDestination.leash * objectiveDestination.leash
       || slotSx * slotSx + slotSz * slotSz > objectiveDestination.slotRadius * objectiveDestination.slotRadius);
+    // O estado de bolso vale só até o guarda sair da recuperação e ocupar a formação.
+    if (!formationPull && b._regroupEscapePending) b._regroupEscapePending = false;
+    if ((!formationPull || escortCenterMoving) && b._regroupDirectEscape) b._regroupDirectEscape = false;
 
     this._posturaBot(b, !!b.target && b.crouchBias);
 
@@ -8565,7 +8590,19 @@ export class Game {
       // Reagrupar não muda o yaw que orienta a mira.
       if (formationPull) {
         const Wo = this.world;
-        if ((!b.path || this.time > b.repathAt) && this.time >= (b._repathMin || 0)) {
+        const armRegroupEscape = () => {
+          if (!b._regroupEscapePending) b._escapeUntil = 0;
+          if (b._regroupEscapePending) {
+            b.path = null;
+          } else {
+            b.path = null;
+            b._escapeUntil = Math.max(b._escapeUntil || 0, this.time + 0.35);
+            b._regroupEscapePending = true;
+            b._escapeYaw = this._freeYaw(b, 2.5);
+            b.repathAt = this.time + 0.3;
+          }
+        };
+        if ((!b.path || this.time > b.repathAt) && this.time >= (b._repathMin || 0) && !b._regroupEscapePending) {
           b._repathMin = this.time + 0.25;
           b.repathAt = this.time + (objectiveDestination.repath || 2.5);
           let fromReg = Wo.nearestWaypoint(b.pos.x, b.pos.z, b.pos.y);
@@ -8582,40 +8619,61 @@ export class Game {
             b.path = this._findPathLocal(Wo, fromReg,
               Wo.nearestWaypoint(objectiveDestination.x, objectiveDestination.z, b.pos.y), b._banNodes);
             b.pathIdx = 1;
-          } else {
-            b.path = null;
-            b._escapeUntil = Math.max(b._escapeUntil || 0, this.time + 0.35);
-            b._escapeYaw = this._freeYaw(b, 2.5);
-            b.repathAt = this.time + 0.3;
-          }
+          } else armRegroupEscape();
         }
-        let regNode = this._walkReach(b, objectiveDestination) ? objectiveDestination : null;
+        let regNode = b._regroupEscapePending || b._regroupDirectEscape ? null : objectiveDestination;
         if (!regNode && b.path && b.path.length > 1) {
           const wpReg = Wo.waypoints.nodes;
           while (b.pathIdx < b.path.length - 1
             && Math.hypot(wpReg[b.path[b.pathIdx]].x - b.pos.x, wpReg[b.path[b.pathIdx]].z - b.pos.z) < 1.5) b.pathIdx++;
           regNode = wpReg[b.path[Math.min(b.pathIdx, b.path.length - 1)]];
         }
-        if (regNode && this._walkReach(b, regNode)) {
+        const moveRegNode = () => {
           const gx = regNode.x - b.pos.x, gz = regNode.z - b.pos.z, gn = Math.hypot(gx, gz) || 1;
-          b.pos.x += (gx / gn) * BOT_SPEED * dt;
-          b.pos.z += (gz / gn) * BOT_SPEED * dt;
+          // A aproximação final é amortecida pela distância até a borda: nada de cruzar
+          // o slot em velocidade plena e alternar dentro/fora da formação a cada frame.
+          const braking = !escortCenterMoving && regNode === objectiveDestination && gn > objectiveDestination.slotRadius
+            && gn < objectiveDestination.slotRadius + 24 * BOT_SPEED * dt;
+          const remaining = gn - objectiveDestination.slotRadius;
+          // Os últimos 2 cm entram imediatamente: a curva amortecida não pode deixar o
+          // guarda assintoticamente fora do raio quando o destino já está estável.
+          const step = braking ? Math.min(BOT_SPEED * dt, remaining <= 0.02 ? remaining + 1e-9 : remaining * 0.02) : BOT_SPEED * dt;
+          b.pos.x += (gx / gn) * step;
+          b.pos.z += (gz / gn) * step;
           this._collide(b.pos, 0.38);
+        };
+        if (regNode && this._walkReach(b, regNode)) {
+          moveRegNode();
           moving = 1;
         } else if (b.path) {
           // Hop bloqueado usa o banimento e o repath do fallback existente.
-          (b._banNodes || (b._banNodes = new Set())).add(b.path[Math.min(b.pathIdx, b.path.length - 1)]);
-          if (b._banNodes.size > 24) b._banNodes.clear();
-          b.path = null;
-          b._escapeUntil = Math.max(b._escapeUntil || 0, this.time + 0.35);
-          b._escapeYaw = this._freeYaw(b, 2.5);
-          b.repathAt = this.time + 0.3;
+          const wpReg = Wo.waypoints.nodes;
+          const fallback = wpReg[b.path[Math.min(b.pathIdx, b.path.length - 1)]];
+          if (regNode === objectiveDestination && !b._regroupDirectEscape) {
+            // O slot direto está obstruído: primeiro um passo físico de escape; a rota
+            // por waypoints só retoma depois dele, sem descartar navegação válida.
+            b._regroupDirectEscape = true;
+            armRegroupEscape();
+          } else if (!b._regroupEscapePending && fallback && this._walkReach(b, fallback)) {
+            regNode = fallback;
+            moveRegNode();
+            moving = 1;
+          } else {
+            (b._banNodes || (b._banNodes = new Set())).add(b.path[Math.min(b.pathIdx, b.path.length - 1)]);
+            if (b._banNodes.size > 24) b._banNodes.clear();
+            armRegroupEscape();
+          }
+        } else {
+          armRegroupEscape();
         }
         // Escape mantém a mira e não soma um segundo deslocamento neste frame.
         if (this.time < (b._escapeUntil || 0) && !moving) {
           b.pos.x += Math.sin(b._escapeYaw || 0) * BOT_SPEED * dt;
           b.pos.z += Math.cos(b._escapeYaw || 0) * BOT_SPEED * dt;
           this._collide(b.pos, 0.38);
+          // Só o passo físico de escape autoriza o próximo A*; sem esse passo o bolso
+          // não pode ser contornado por uma rota que começa fora do alcance do corpo.
+          b._regroupEscapePending = false;
           moving = 1;
         }
       }
@@ -8738,7 +8796,13 @@ export class Game {
             // justamente a de perto, onde cada acerto dói mais.
             b.burst = BOT_FAIR ? (dist < 14 ? 1 : 2) + ((Math.random() * 2) | 0)
               : 1 + ((Math.random() * (dist < 14 ? 5 : 3)) | 0);
-            b.nextShotAt = this.time + (BOT_FAIR ? BOT_BURST_PAUSE + Math.random() * 0.6 : 0.35 + Math.random() * 0.55) / Math.max(0.5, b.skill);
+            const pause = (BOT_FAIR ? BOT_BURST_PAUSE + Math.random() * 0.6 : 0.35 + Math.random() * 0.55) / Math.max(0.5, b.skill);
+            /* Na escolta, skill baixa podia produzir 3,1 s de silêncio entre rajadas: o
+               guarda chegava ao slot e atravessava uma janela inteira de 2 s com LOS sem
+               responder. Reação, foco, erro de mira, cadência DENTRO da rajada e o gate de
+               LOS continuam iguais; só a pausa ENTRE rajadas tem teto, e só com o guarda
+               já na formação. Deslocamento e combate em reagrupamento conservam a cadência. */
+            b.nextShotAt = this.time + (BOT_FAIR && objectiveDestination && !formationPull ? Math.min(pause, 1.5) : pause);
           }
         } else {
           // semi-auto: 0,3 s entre tiros de escopeta de 30 de dano também era melt.
@@ -9742,7 +9806,8 @@ export class Game {
     }
     // HUD do objetivo (Operação Flávio online): o letreiro da escolta acompanha o HUD comum.
     // A mensagem da cinemática vence — atualizaHud se cala enquanto this.cinematic existir.
-    this.objective?.atualizaHud?.();
+    // Javaporcos mantém seu próprio agendamento em update/updatePresentation.
+    if (this.world.mode === 'escort' || this.objective?.vip) this.objective?.atualizaHud?.();
   }
 
   /* ================= main update ================= */

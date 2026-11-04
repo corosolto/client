@@ -23,6 +23,17 @@
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
 
+## Unreleased — 2026-11-04
+
+### Added
+- Operação Flávio now has five connected escort routes, human-scale airport seating, additional solid cover and a route-facing first-person spawn.
+- Attackers actively contest the escort, while VIP always carries armor, a helmet and a working PT-38.
+- Escort recovery includes physical path replanning, stable formation slots and online-authoritative respawn waves.
+
+### Fixed
+- Dedicated online escort simulation, round lifecycle, match-end statistics, online objective reset and horde round-end audio.
+- Prop rotation, aircraft collision, boarding navigation, low-profile solid-cover shadows and recovery firing/movement regressions.
+
 ## Não lançado — 2026-10-19
 
 ### Adicionado

@@ -440,6 +440,9 @@ class Netcode {
       if (Number.isFinite(relogioDoServidor)) game.timeLeft = relogioDoServidor;
     }
     this.vagas = snap.livre || null;
+    // O objetivo é consumido antes da deduplicação de tick, inclusive na primeira amostra.
+    // A cerimônia de roundEnd continua usando snap.objective.winner depois das entidades.
+    if (snap.objective) game.objective?.applyNetState?.(snap.objective);
 
     if (snap.tick === this._netTick) return;
     this._netTick = snap.tick;
@@ -460,7 +463,6 @@ class Netcode {
 
     const primeiroSnap = this._tAt.length <= 1;   // no casamento inicial, alive true->false é estado herdado, não morte
     if (game.ctf && snap.ctf) this.applyCtfState(snap.ctf);
-    if (snap.objective) game.objective?.applyNetState?.(snap.objective);
     let dorDoJogador = 0;
     for (const e of snap.ents) {
       const ent = this._netMap.get(e.id);
@@ -643,11 +645,12 @@ class Netcode {
     if (this._netTick < 0) return;   // 1º snapshot: entrou no meio de algo — sem cerimônia (e sem "empate" inventado)
     try {
       if (depois === 'roundEnd') {
-        // Vencedor autoritativo vem do snapshot ATUAL; game.objective.state.winner pode
-        // persistir da rodada anterior. Sem ele (ou inválido), só então infere pelo placar.
+        // Vencedor autoritativo vem do snapshot ATUAL. Objetivos legados conservam o
+        // fallback de estado; a escolta nunca herda winner de uma rodada anterior.
         const winnerRede = winnerAtual === 'E' || winnerAtual === 'B' || winnerAtual === 'J' || winnerAtual === 'draw' ? winnerAtual : null;
-        let winner = winnerRede, resultadoDesconhecido = false;
-        if (!winnerRede && placarAntes && game.roundsWon) {
+        const winnerLegado = game.objective?.vip ? null : game.objective?.state?.winner;
+        let winner = winnerRede || winnerLegado, resultadoDesconhecido = false;
+        if (!winnerRede && !winnerLegado && placarAntes && game.roundsWon) {
           // Salto de 2+ rodadas soma nos dois placares: sem protocolo de vencedor,
           // não encenar campeão falso — só um ÚNICO lado crescido define o winner.
           const subiuE = game.roundsWon.E > placarAntes.E, subiuB = game.roundsWon.B > placarAntes.B;
@@ -663,8 +666,12 @@ class Netcode {
           const mine = winner === game.playerTeam;
           if (game.objective?.roundResult) {
             const fim = game.objective.roundResult(winner);
-            // O placar não pode cobrir a cinemática, como no _endRound local.
-            game._resultadoDaRodada(fim.title, fim.detail, false);
+            // Escolta: o placar não cobre a cinemática. Horda mantém a apresentação original.
+            if (game.world?.mode === 'escort' || game.objective?.vip) {
+              game._resultadoDaRodada(fim.title, fim.detail, false);
+            } else {
+              game._resultadoDaRodada(fim.title, fim.detail);
+            }
           } else {
             game._resultadoDaRodada(`${game._teamName(winner)} LEVARAM O ROUND`, mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche');
           }

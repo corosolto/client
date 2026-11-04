@@ -368,7 +368,7 @@ const views = [
     secondary: runtime.vip.secondary,
     meshWeapon: runtime.vip.meshWeapon,
     team: runtime.vip.team,
-  }, { char: 'senador', weapon: 'knife', primary: 'knife', secondary: 'knife', meshWeapon: 'knife', team: 'B' });
+  }, { char: 'senador', weapon: 'pistol', primary: null, secondary: 'pistol', meshWeapon: 'pistol', team: 'B' });
   assert.ok(Math.abs(runtime.plane?.clearance || 0) <= 0.01, `avião fora do solo: ${runtime.plane?.clearance}`);
   assert.ok(runtime.plane?.groundY >= 0.07, `avião sem folga do pátio: ${runtime.plane?.groundY}`);
   assert.ok(runtime.plane?.height > 1, `altura inválida do avião: ${runtime.plane?.height}`);
@@ -440,7 +440,7 @@ const views = [
   `bots abandonaram a formação protetora: ${JSON.stringify(escortTrace)}`);
   assert.ok(escortTrace.every((sample) => sample.overlaps === 0),
     `Flávio atravessou um colisor: ${JSON.stringify(escortTrace)}`);
-  assert.ok(escortTrace.every((sample) => sample.weapon === 'knife' && sample.meshWeapon === 'knife'), 'Flávio trocou a faca durante a escolta');
+  assert.ok(escortTrace.every((sample) => sample.weapon === 'pistol' && sample.meshWeapon === 'pistol'), 'Flávio manteve a pistola visível durante a escolta');
 
   const threatBefore = await page.evaluate(() => {
     const g = window.__game;
