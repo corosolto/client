@@ -6142,8 +6142,7 @@ export class Game {
       const walked = Math.hypot(sim.x - b.pos.x, sim.z - b.pos.z);
       let turn = Math.abs(((a - b.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
       const score = walked - turn * 0.55;   // 0,55 m de "custo" por radiano de giro
-      // ESCOLTA: o alinhamento joga o escape pro LADO DO OBJETIVO — sem isto o guarda
-      // fugia pro lado oposto no bolso do balcão (medido: 24 m do VIP).
+      // ESCOLTA: alinhamento joga o escape pro LADO DO OBJETIVO (no bolso fugia a 24 m do VIP).
       const total = dirX || dirZ ? score + (sx * dirX + sz * dirZ) * 1.2 : score;
       if (total > bestS) { bestS = total; bestA = a; }
     }
@@ -8708,9 +8707,8 @@ export class Game {
         }
         const moveRegNode = () => {
           const gx = regNode.x - b.pos.x, gz = regNode.z - b.pos.z, gn = Math.hypot(gx, gz) || 1;
-          // PERSEGUIÇÃO AMORTECIDA do ponto de slot: passo cheio cruzava o destino e
-          // voltava (flip em 60 Hz); passo proporcional ao vão assenta em ~1 s, sem
-          // depender de skill (régua de órbita; detalhes: docs/reports/OPERACAO-FLAVIO-20261104.md).
+          // PERSEGUIÇÃO AMORTECIDA do ponto de slot: passo proporcional ao vão assenta em
+          // ~1 s sem depender de skill; passo cheio flipava de sentido em 60 Hz (régua de órbita).
           const step = regNode === objectiveDestination
             ? Math.min(BOT_SPEED * dt, Math.max(gn * dt * 6, 1e-4))
             : BOT_SPEED * dt;

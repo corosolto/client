@@ -20,9 +20,9 @@ const GUARD_ASSIGN_RADIUS = 12;
 // ameaças quase equidistantes não podem alternar o docking por quadro (flicker da escolta).
 const ENGAGE_SAIDA = 1.25;
 const FOCO_TROCA = 0.75;         // troca a ameaça engajada só com 25% de vantagem
-const ORIENTACAO_TROCA = 0.85;   // idem desengajada, 15%
+const ORIENTACAO_TROCA = 0.85;
 // Respawn do ATAQUE: vanguarda/base, nunca a retaguarda do comboio nem a sala de embarque.
-const ATAQUE_DIST_VIP = 7;       // não renasce colado no VIP
+const ATAQUE_DIST_VIP = 7;
 // Sala de embarque: faixa sul do terminal + bolso externo das portas sul (espelhada no map-eval e em docs/maps/operacao-decola.md).
 const SALA_EMBARQUE = { minX: -29, maxX: 29, minZ: -57, maxZ: -44 };
 // Papéis da escolta: 4 guardas diretos (LMG, escopeta, rifle, sniper) + flanqueadores de
@@ -36,15 +36,15 @@ const FLANQUEADOR_VANGUARDA = 2;     // checkpoints à frente do comboio
 const FLANQUEADOR_LATERAL = 3.4;
 const FLANQUEADOR_LEASH = 30;
 // Abrigo real (world.escortCoverPoints: {x,z,role,zone}): VIP busca cobertura de objeto
-// sólido; guardas engajados fazem snap por zona. LOS/fairness intactos — sem wallhack.
-const ABRIGO_RAIO = 8;             // abrigo precisa ficar perto do âncora de recuo
-const ABRIGO_PESO_ANCORA = 1.4;    // perto do comboio pesa mais que longe da ameaça
-const ABRIGO_TROCA = 1.5;          // histerese: troca de abrigo só com vantagem clara
-const ABRIGO_COLADA = 4;           // ameaça colada no abrigo força troca
-const ABRIGO_TROCA_FORTE = 4;       // emergência: abrigo muito mais seguro troca na hora
-const ABRIGO_MIN_PERMANENCIA = 1.5; // moradia mínima: oscilação não muda o corpo de lugar
-const ROTEAMENTO_MEMORIA = 4;      // visto há <4 s segue roteando a formação (brechas de LOS em marcha)
-const GUARDA_COBERTURA_RAIO = 4;   // snap do guarda engajado à cobertura role 'guard'
+// sólido; guardas fazem snap por zona. Sem wallhack; detalhes: docs/reports/OPERACAO-FLAVIO-20261104.md.
+const ABRIGO_RAIO = 8;
+const ABRIGO_PESO_ANCORA = 1.4;
+const ABRIGO_TROCA = 1.5;
+const ABRIGO_COLADA = 4;
+const ABRIGO_TROCA_FORTE = 4;
+const ABRIGO_MIN_PERMANENCIA = 1.5;
+const ROTEAMENTO_MEMORIA = 4;
+const GUARDA_COBERTURA_RAIO = 4;
 const GUARD_SLOTS = [
   { right: 0, forward: 2.4 },
   { right: -2.2, forward: 1.2 }, { right: 2.2, forward: 1.2 },
