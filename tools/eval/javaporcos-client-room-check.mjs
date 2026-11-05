@@ -43,7 +43,7 @@ function mutate(source,kind,parse){
   const before=out.main;out.main=replaceNodes(m,objects,n=>'{'+n.properties.filter(p=>p.key?.name!=='mode').map(p=>cut(m,p)).join(',')+'}');
   return {source:out,application:{kind,file:FILES.main,count:4,before:sha(before),after:sha(out.main)}};
  }else if(kind==='stale-selection'){
-  nodes=matches(form,n=>n.type==='IfStatement'&&/escolhidos/.test(cut(m,n.test))&&/some|every|MAPS|mpMapasDoNo/.test(cut(m,n.test)));replace=n=>'if(aDedo&&!escolhidos.length)'+cut(m,n.consequent);
+  nodes=matches(form,n=>n.type==='IfStatement'&&/escolhidos/.test(cut(m,n.test))&&cut(m,n.test).includes('mpMapasDoNo')&&/some|every|MAPS/.test(cut(m,n.test)));replace=n=>'if(aDedo&&!escolhidos.length)'+cut(m,n.consequent);
  }else if(kind==='node-guard'||kind==='mixed-overfilter'){
   nodes=matches(a,n=>n.type==='BinaryExpression'&&/^(===|!==|==|!=)$/.test(n.operator)&&((n.left.type==='MemberExpression'&&['nodeMode','roomCreation'].includes(n.left.property?.name))||(n.right.type==='MemberExpression'&&['nodeMode','roomCreation'].includes(n.right.property?.name))));
   if(kind==='mixed-overfilter')nodes=nodes.filter(n=>cut(m,n).includes('nodeMode'));
