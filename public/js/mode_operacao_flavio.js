@@ -16,21 +16,17 @@ const GUARD_ENGAGE_RADIUS = 7.5;
 const GUARD_SLOT_RADIUS = 1.6;
 const GUARD_PROTECT_RADIUS = 4.5;
 const GUARD_ASSIGN_RADIUS = 12;
-// Histerese da orientação da formação: engata dentro de GUARD_ENGAGE_RADIUS e só solta o
-// contato além de 1,25x; ameaças quase equidistantes não podem alternar o docking a cada
-// quadro (era o flicker visível dos guardas durante a escolta).
+// Histerese da orientação da formação: engata em GUARD_ENGAGE_RADIUS, solta além de 1,25x —
+// ameaças quase equidistantes não podem alternar o docking por quadro (flicker da escolta).
 const ENGAGE_SAIDA = 1.25;
 const FOCO_TROCA = 0.75;         // troca a ameaça engajada só com 25% de vantagem
-const ORIENTACAO_TROCA = 0.85;   // referência desengajada troca só com 15% de vantagem
+const ORIENTACAO_TROCA = 0.85;   // idem desengajada, 15%
 // Respawn do ATAQUE: vanguarda/base, nunca a retaguarda do comboio nem a sala de embarque.
-const ATAQUE_DIST_VIP = 7;       // atacante não renasce colado no VIP
-// Sala de embarque: faixa sul do terminal (spawn B e checkpoint 0) mais o bolso externo
-// das portas sul. Espelhado no map-eval e em docs/maps/operacao-decola.md.
+const ATAQUE_DIST_VIP = 7;       // não renasce colado no VIP
+// Sala de embarque: faixa sul do terminal + bolso externo das portas sul (espelhada no map-eval e em docs/maps/operacao-decola.md).
 const SALA_EMBARQUE = { minX: -29, maxX: 29, minZ: -57, maxZ: -44 };
-// Papéis da escolta: 4 guardas diretos com um LMG, uma escopeta, um rifle e um sniper, e
-// flanqueadores de vanguarda (2+ em partidas 7x7+; 6x6 mantém os 4 guardas). Guardas são
-// mais eficazes (piso de skill) e mais duros de matar (colete+capacete) SEM visão extra:
-// aquisição de alvo segue a IA genérica, com LOS obrigatória — sem wallhack.
+// Papéis da escolta: 4 guardas diretos (LMG, escopeta, rifle, sniper) + flanqueadores de
+// vanguarda (7x7+); piso de skill e colete+capacete, IA genérica com LOS — sem wallhack.
 const GUARDAS_DIRETOS = 4;
 const ARMAS_GUARDA = ['lmg', 'shotgun', 'ak', 'awp'];
 const ARMAS_FLANQUEADOR = ['mp5', 'carbine'];
@@ -39,10 +35,8 @@ const GUARDA_SKILL_VANTAGEM = 1.1;   // piso também fica acima da média inimig
 const FLANQUEADOR_VANGUARDA = 2;     // checkpoints à frente do comboio
 const FLANQUEADOR_LATERAL = 3.4;
 const FLANQUEADOR_LEASH = 30;
-// Abrigo real (exportado pelo mapa em world.escortCoverPoints — {x, z, role, zone}): o VIP
-// ameaçado ou sem escolta busca cobertura de objeto sólido em vez de parar no checkpoint
-// cru; guardas engajados fazem snap para cobertura da zona de conflito. LOS e fairness
-// seguem intactos: nada de wallhack para o ataque, nada de invisibilidade para o VIP.
+// Abrigo real (world.escortCoverPoints: {x,z,role,zone}): VIP busca cobertura de objeto
+// sólido; guardas engajados fazem snap por zona. LOS/fairness intactos — sem wallhack.
 const ABRIGO_RAIO = 8;             // abrigo precisa ficar perto do âncora de recuo
 const ABRIGO_PESO_ANCORA = 1.4;    // perto do comboio pesa mais que longe da ameaça
 const ABRIGO_TROCA = 1.5;          // histerese: troca de abrigo só com vantagem clara
@@ -111,10 +105,8 @@ function ameacaMaisProxima(vip, ameacas) {
   return { maisPerto, menorDistancia };
 }
 
-// Orientação da formação com HISTERESE (Schmitt): o contato ancora o yaw na primeira
-// exposição e só solta quando a ameaça sai do raio ampliado (ENGAGE_SAIDA) ou morre;
-// desengajada, a referência só troca com vantagem clara de distância. A alternação do
-// contato a cada quadro girava o docking inteiro — o flicker dos guardas na escolta.
+// Orientação da formação com HISTERESE (Schmitt): contato ancora o yaw e só solta fora de
+// ENGAGE_SAIDA/morte; desengajada, troca só com vantagem clara (o flicker girava o docking).
 function orientacaoFormacao(vip, ameacas) {
   const { maisPerto, menorDistancia } = ameacaMaisProxima(vip, ameacas);
   let orient = orientacoesEscolta.get(vip);
@@ -145,9 +137,8 @@ function orientacaoFormacao(vip, ameacas) {
   return orient;
 }
 
-// Snap de cobertura do guarda engajado: dentro do raio do slot, prefere ponto real do
-// mapa (role do papel primeiro), sem duplicar ponto entre defensores vivos e sem puxar
-// na direção da ameaça. Sem coberturas (mundos sintéticos) o destino é o slot legado.
+// Snap de cobertura do guarda engajado: prefere ponto real do mapa (role primeiro), sem
+// duplicar entre defensores e sem puxar pra ameaça; sem coberturas, slot legado.
 function coberturaGuarda(bot, vip, defensores, coberturas, destino, ameaca) {
   if (!Array.isArray(coberturas) || !coberturas.length) return null;
   let reservas = reservasCobertura.get(vip);
@@ -520,12 +511,8 @@ export class OperacaoFlavio {
     return destinoProtecaoEscolta(bot, this.vip, this.game.bots, ameacas, destino, this.game.world.escortCoverPoints);
   }
 
-  // Ameaças que roteiam a formação/flanqueador: só o que o VIP VÊ (LOS) — ameaça oculta
-  // atrás de parede não engaja a formação, não puxa o flanqueador da vanguarda e não
-  // reserva cobertura de guarda (mesma regra do foco P1: sem leak de informação
-  // autoritativa). Quem foi visto há menos de ROTEAMENTO_MEMORIA segue valendo: em
-  // marcha a linha de visão abre e fecha a cada cobertura e a formação não pode
-  // desengajar/reengajar por causa de uma brecha de um segundo.
+  // Ameaças que roteiam a formação/flanqueador: só o que o VIP VÊ (LOS), sem leak
+  // autoritativo; memória de ROTEAMENTO_MEMORIA evita desengajar numa brecha de 1 s.
   _ameacasRoteamento() {
     if (!this.vip) return [];
     const agora = this.game.time;
@@ -742,11 +729,8 @@ export class OperacaoFlavio {
     const medir = (ancora) => (p) => ({ x: p.x, z: p.z, yaw: p.yaw,
       dist: Math.hypot(p.x - ancora.x, p.z - ancora.z), lateral: Math.abs(p.x - ancora.x) });
     if (team === 'E') {
-      /* ATAQUE — vanguarda/base (regra do dono): nunca à retaguarda do comboio e nunca
-         dentro da sala de embarque (bolso sul onde o VIP nasce). Antes disto o E
-         renascia na sala e prendia o VIP no próprio spawn. Vanguarda = nós à frente do
-         VIP com leash do PRÓXIMO checkpoint, distância mínima do VIP e rota alcançável;
-         base = spawns.E do mapa, fora da sala. */
+      /* ATAQUE — vanguarda/base (regra do dono): nunca à retaguarda do comboio nem na
+         sala de embarque (o E renascia lá e prendia o VIP no spawn); vanguarda = nós à frente. */
       const vanguarda = path[Math.min(k + 1, path.length - 1)];
       const rota = alcanceDe(vanguarda);
       const sala = (p) => p.x > SALA_EMBARQUE.minX && p.x < SALA_EMBARQUE.maxX
@@ -775,11 +759,8 @@ export class OperacaoFlavio {
     return escolha.slice(0, 8);
   }
 
-  // Foco de ameaça do VIP — só o que ele REALMENTE VÊ (LOS). Ameaça oculta atrás de
-  // parede não move o abrigo nem o rumo: seria leak de informação autoritativa. Entre
-  // visíveis vale a histerese (equidistantes não alternam o rumo por quadro); perdida a
-  // visão, a memória de THREAT_MEMORY usa a última posição VISTA (snapshot), nunca a
-  // posição viva de quem está escondido.
+  // Foco de ameaça do VIP — só o que ele REALMENTE VÊ (LOS); oculta não move abrigo/rumo
+  // (sem leak autoritativo). Entre visíveis, histerese; perdida a visão, memória THREAT_MEMORY.
   ameacaMaisPerto() {
     if (!this.vip) return null;
     let maisPerto = null, menorDistancia = Infinity;
@@ -1003,10 +984,8 @@ export class OperacaoFlavio {
       this.hud.textContent = 'FLÁVIO FOI MORTO · ESCOLTA FRACASSOU';
     }
   }
-  // Abrigo do VIP nos pontos REAIS do mapa ({x,z,role,zone} do escortCoverPoints):
-  // escolhe slot dentro de ABRIGO_RAIO do checkpoint de recuo que maximiza longe-da-
-  // ameaça vs perto-do-âncora, com histerese (não re-escolhe por quadro) e troca
-  // forçada se a ameaça colar no abrigo atual. Sem pontos exportados: null (legado).
+  // Abrigo do VIP nos pontos REAIS do mapa (escortCoverPoints): slot em ABRIGO_RAIO que
+  // maximiza longe-da-ameaça vs perto-do-âncora, com histerese; sem pontos: null (legado).
   _atualizarAbrigo(ameaca, dt = 0) {
     const coberturas = this.game.world.escortCoverPoints;
     if (!Array.isArray(coberturas) || !coberturas.length) { this._vipAbrigo = null; return null; }
@@ -1019,10 +998,8 @@ export class OperacaoFlavio {
       const dAmeaca = ameacaPos ? Math.hypot(ponto.x - ameacaPos.x, ponto.z - ameacaPos.z) : ABRIGO_RAIO;
       return dAmeaca - ABRIGO_PESO_ANCORA * dAncora;
     };
-    // Histerese em DOIS níveis: (1) margem — vantagens pequenas não trocam; (2) moradia
-    // mínima — depois de trocar, o VIP mora no abrigo por ABRIGO_MIN_PERMANENCIA e só
-    // sai antes disso por emergência (abrigo MUITO melhor) ou ameaça colada. A ameaça
-    // oscilando entre coberturas válidas nunca muda o corpo de lugar.
+    // Histerese em DOIS níveis: margem (vantagens pequenas não trocam) e moradia mínima
+    // (ABRIGO_MIN_PERMANENCIA, saída só por emergência) — a ameaça oscilando não move o VIP.
     this._vipAbrigoIdade = (this._vipAbrigoIdade || 0) + dt;
     const atual = this._vipAbrigo;
     if (atual) {

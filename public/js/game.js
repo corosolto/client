@@ -4492,11 +4492,8 @@ export class Game {
   // Partida local só: online o nó roda este mesmo `_damage` sem estado de armadura (contrato no PR do colete).
   // `fracCabeca`: rajada de chumbo somada (bot) passa cabeça e corpo cada um pela sua regra (AR14).
   _aplicaArmadura(ent, dmg, weap, head, fracCabeca = null) {
-    /* SERVIDOR DEDICADO APLICA ARMADURA: o dano autoritativo online é computado nele —
-       sem isto o colete/capacete da escolta (o modo equipa 100 + capacete nos guardas)
-       era silenciosamente ignorado e os guardas NÃO ficavam mais duros de matar online.
-       Cliente online puro (sem dedicated) segue dirigido por SNAPSHOT: não aplica
-       armadura localmente, o HP que chega já é o do servidor. */
+    /* SERVIDOR DEDICADO APLICA ARMADURA (dano autoritativo nele): sem isto o colete/
+       capacete era ignorado online; cliente sem dedicated não aplica local. */
     if (!ARMADURA || (this.online && !this.dedicated) || !(ent.armor > 0)) return dmg;
     if (ARMADURA_CHUMBO && fracCabeca > 0 && fracCabeca < 1) {
       const cab = this._aplicaArmadura(ent, dmg * fracCabeca, weap, true);
@@ -5931,12 +5928,8 @@ export class Game {
         /* Corpo com dono não se empurra: no servidor o slot humano é um bot, e o cliente não
            prediz este empurrão — ele volta como correção (BUG-151). `__mut…`: régua. */
         const humano = !!o._remote && !this.__mutEmpurraHumano;
-        /* SEM SALTO: a despenetração rígida era um TELEPORTE de até 0,62 m por par
-           num único quadro (medido na escolta: passo de 0,91 m quando o bolo se cruza
-           no cotovelo do pátio — o "pop" que o dono vê). O MESMO vetor, fatiado: no
-           máximo 2 passos físicos por quadro somando TODOS os contatos — sobreposição
-           total separa em ~5 quadros (80 ms), sem piscar. Direção e simetria (BUG-151)
-           intactas. */
+        /* SEM SALTO: despenetração fatiada em ≤2 passos/quadro somando todos os
+           contatos; o vetor inteiro era um teleporte de até 0,62 m (BUG-151 intacto). */
         const d = Math.sqrt(d2);
         const push = Math.min((BODY2 - d) * (humano ? 1 : 0.5), Math.max(0, BOT_SPEED * dt * 2 - Math.hypot(depx, depz)));
         depx += (dx / d) * push; depz += (dz / d) * push;
@@ -6149,9 +6142,8 @@ export class Game {
       const walked = Math.hypot(sim.x - b.pos.x, sim.z - b.pos.z);
       let turn = Math.abs(((a - b.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
       const score = walked - turn * 0.55;   // 0,55 m de "custo" por radiano de giro
-      // ESCOLTA (dirX/dirZ = rumo ao slot): entre dois rumos igualmente livres, o
-      // bônus de alinhamento faz o guarda escapar pro LADO DO OBJETIVO — no bolso do
-      // balcão ele fugia pro lado oposto e se perdia da formação (medido: 24 m do VIP).
+      // ESCOLTA: o alinhamento joga o escape pro LADO DO OBJETIVO — sem isto o guarda
+      // fugia pro lado oposto no bolso do balcão (medido: 24 m do VIP).
       const total = dirX || dirZ ? score + (sx * dirX + sz * dirZ) * 1.2 : score;
       if (total > bestS) { bestS = total; bestA = a; }
     }
@@ -8191,9 +8183,8 @@ export class Game {
     }));
     halo.rotation.x = -Math.PI / 2; halo.scale.setScalar(1.45); halo.renderOrder = 3;
     this.scene.add(halo);
-    // (Proteção de spawn é telegrafada no PRÓPRIO halo — ver _updateTeamMark: sem
-    // malha extra. Cada objeto THREE novo consome o RNG semeado dos evals (UUID) e
-    // desloca sorteios de spawn/arma — regressão medida no botfaca BF4.)
+    // (Telegrafo de spawn no próprio halo — ver _updateTeamMark: objeto THREE novo
+    // consumiria o RNG semeado dos evals e deslocaria spawn/arma.)
     bot._mark = { halo, ally, col: this._teamColor(bot.team) };
   }
   /* Escolha de personagem no meio da partida (multiplayer). O servidor roda o mesmo método,
@@ -8249,11 +8240,8 @@ export class Game {
       m.halo.material.map = this._teamMarkTex(ally ? 'haloAlly' : 'haloEnemy');
       m.halo.material.needsUpdate = true;
     }
-    // PROTEÇÃO DE SPAWN TELEGRAFADA no próprio halo: durante protUntil o dano é ZERO
-    // e, na escolta, o corpo não pisca — sem telegraph, inimigo "invulnerável" lê como
-    // bug. O anel CRESCE (1,45→1,9) e fica azul-gelo: estável (só muda na transição),
-    // não pisca o corpo e NÃO ALOCA nada por quadro. A textura continua sólida
-    // (aliado) ou tracejada (inimigo): a leitura de time fica preservada.
+    // PROTEÇÃO DE SPAWN TELEGRAFADA no halo: dano ZERO e anel que cresce azul-gelo —
+    // estável, não pisca o corpo e não aloca por quadro (sem telegraph leria como bug).
     const protegido = this.time < (b.protUntil || 0);
     if (m.protegido !== protegido) {
       m.protegido = protegido;
@@ -8349,16 +8337,9 @@ export class Game {
     }
   }
 
-  /* CINTILAÇÃO DA ESCOLTA (diagnóstico medido na régua
-     tools/eval/operacao-flavio-escort-flicker-check.mjs): o destino tático do modo
-     orienta um ANEL de slots em torno do VIP, e a troca da ameaça mais próxima vira
-     um salto de até 180° no ponto de slot — 5,0 m EM UM QUADRO, 12 trocas em 19 s,
-     reversão de sentido 177/min e o bolo atravessando o VIP pra frente e pra trás.
-     O ponto consumido pela IA segue o bruto por um ARCO com teto angular (o anel não
-     colapsa no centro) e raio amortecido: a formação REORIENTA andando em volta do
-     VIP, em vez de teleportar de lado. O objeto do modo é regravado IN PLACE — o
-     trecho final (_walkReach) e as réguas continuam vendo o MESMO destino; só x/z
-     mudam, e sempre na direção do bruto. O próprio VIP (anel r~0) passa direto. */
+  /* CINTILAÇÃO DA ESCOLTA (régua tools/eval/operacao-flavio-escort-flicker-check.mjs):
+     a troca de ameaça saltava o slot até 5,0 m num quadro; o ponto da IA segue o bruto
+     por ARCO com teto angular e raio amortecido, regravado IN PLACE (detalhes: docs/reports/OPERACAO-FLAVIO-20261104.md). */
   _suavizaDestinoEscolta(b, destino, dt) {
     const tx = destino.x - destino.centerX, tz = destino.z - destino.centerZ;
     const rBruto = Math.hypot(tx, tz);
@@ -8374,10 +8355,7 @@ export class Game {
     let da = angBruto - angAtual;
     while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
     const r = Math.hypot(arco.x, arco.z);
-    // Teto angular proporcional ao inverso do raio: no anel dos guardas (~2,4-3,1 m)
-    // o ponto orbita a velocidade que o guarda alcança; anel pequeno gira mais. Piso
-    // de 1,9 rad/s: reorientação de 180° (ameaça invertida) fecha em <1,7 s — a régua
-    // de defesa exige ocupar o slot novo dentro da janela de 6 s.
+    // Teto ~1/r: anel externo orbita na velocidade do guarda, anel pequeno gira mais (piso 1,9 rad/s).
     const omega = Math.min(3.4, Math.max(1.9, 2.6 / Math.max(0.5, r)));
     const passo = Math.max(-omega * dt, Math.min(omega * dt, da));
     const rNovo = r + (rBruto - r) * Math.min(1, dt * 3);
@@ -8412,18 +8390,15 @@ export class Game {
     }
     const objectiveDestination = this.objective?.botDestination?.(b) || null;
     if (objectiveDestination) this._suavizaDestinoEscolta(b, objectiveDestination, dt);
-    // Rumo unitário ao destino de escolta: o escape de bolso/fachada foge pro LADO do
-    // objetivo (ver _freeYaw) — no bolso do balcão o guarda fugia pro lado oposto e
-    // se perdia da formação (medido a 24 m do VIP).
+    // Rumo unitário ao destino de escolta: o escape foge pro LADO do objetivo (ver
+    // _freeYaw) — no bolso do balcão o guarda fugia pro lado oposto (24 m do VIP).
     let escortDir = [];
     if (objectiveDestination) {
       const edx = objectiveDestination.x - b.pos.x, edz = objectiveDestination.z - b.pos.z;
       const edn = Math.hypot(edx, edz) || 1;
       escortDir = [edx / edn, edz / edn];
-      // BAN DE NÓ ENVELHECE NA ESCOLTA: o objetivo ANDA — um hop "bloqueado" pra um
-      // slot que o VIP já deixou pra trás não pode envenenar a rota até o fim do round
-      // (medido: 8 bans ativos => desvio permanente, guarda a 24 m da formação).
-      // Flush a cada 8 s: o hop ruim é re-testado; se ainda doer, é re-banido na hora.
+      // BAN DE NÓ ENVELHECE NA ESCOLTA: o objetivo anda, e hop banido não pode envenenar
+      // a rota até o fim do round — flush a cada 8 s re-testa (8 bans => guarda a 24 m).
       if (b._banNodes?.size && this.time > (b._banFlushAt || 0)) {
         b._banFlushAt = this.time + 8;
         b._banNodes.clear();
@@ -8568,19 +8543,14 @@ export class Game {
     let formationPull = !!objectiveDestination && (
       (b.pos.x - objectiveDestination.centerX) ** 2 + (b.pos.z - objectiveDestination.centerZ) ** 2 > objectiveDestination.leash * objectiveDestination.leash
       || slotSx * slotSx + slotSz * slotSz > objectiveDestination.slotRadius * objectiveDestination.slotRadius);
-    // HISTERESE DA FORMAÇÃO: sair e voltar usavam o MESMO limiar — na borda do slot o
-    // guarda alternava reagrupar/combater a cada quadro (medido na régua de cintilação:
-    // chiação de animação >2.000/min em marcha limpa). Dentro, a formação segura 0,35 s
-    // antes de soltar o reagrupamento; empurrões de separação não religam o estado.
-    // (A declaração fica NA expressão de propósito: mutantes de régua injetam código
-    // logo após o `);` referenciando `formationPull` — declarar depois viraria TDZ.)
+    // HISTERESE DA FORMAÇÃO: limiares distintos pra sair/voltar (empurrão não religa);
+    // declarado aqui pois mutantes de régua referenciam `formationPull` logo após (TDZ).
     if (formationPull) b._formacaoHoldAte = this.time + 0.35;
     else if (this.time < (b._formacaoHoldAte || 0)) formationPull = true;
     // O estado de bolso vale só até o guarda sair da recuperação e ocupar a formação.
     if (!formationPull && b._regroupEscapePending) b._regroupEscapePending = false;
-    // O escape DIRETO não rearma a cada quadro só porque o centro marchou: sem este
-    // hold, "limpar → testar slot obstruído → rearmar → destruir rota" rodava por
-    // frame (medido: rota destruída todo quadro na marcha com fachada na frente).
+    // O escape DIRETO não rearma por quadro só porque o centro marchou: sem este hold,
+    // a rota era destruída todo quadro na marcha com fachada na frente.
     if ((!formationPull || (escortCenterMoving && this.time > (b._escapeDiretoAt || 0) + 0.6)) && b._regroupDirectEscape) b._regroupDirectEscape = false;
 
     this._posturaBot(b, !!b.target && b.crouchBias);
@@ -8738,14 +8708,9 @@ export class Game {
         }
         const moveRegNode = () => {
           const gx = regNode.x - b.pos.x, gz = regNode.z - b.pos.z, gn = Math.hypot(gx, gz) || 1;
-          // PERSEGUIÇÃO AMORTECIDA do ponto de slot (VIP parado OU marchando): a passo
-          // cheio o guarda CRUZA o destino num quadro e volta no seguinte (com o VIP
-          // marchando o slot anda 3 cm/quadro e o guarda pisa 6,8 cm — flip de sentido
-          // em 60 Hz). A frenagem exponencial anterior (2% do vão por quadro) assentava
-          // na borda em ~4 s: com guarda elite e VIP marchando estourava a janela da
-          // régua (3,9 m do slot no fim, interação medida com GUARDA_SKILL_PISO 1,25).
-          // Passo proporcional ao vão: em regime o guarda acompanha o slot na
-          // velocidade dele e assenta em ~1 s — independente de skill.
+          // PERSEGUIÇÃO AMORTECIDA do ponto de slot: passo cheio cruzava o destino e
+          // voltava (flip em 60 Hz); passo proporcional ao vão assenta em ~1 s, sem
+          // depender de skill (régua de órbita; detalhes: docs/reports/OPERACAO-FLAVIO-20261104.md).
           const step = regNode === objectiveDestination
             ? Math.min(BOT_SPEED * dt, Math.max(gn * dt * 6, 1e-4))
             : BOT_SPEED * dt;
@@ -8984,11 +8949,8 @@ export class Game {
     } else if (objectiveDestination
         && Math.hypot(objectiveDestination.x - b.pos.x, objectiveDestination.z - b.pos.z) <= objectiveDestination.slotRadius) {
       moving = 0;
-      // MARCHA DA FORMAÇÃO: com o VIP andando, "dentro do slot" não é parar — é
-      // ACOMPANHAR. O guarda congelava até o destino cruzar a borda de 1,6 m, dava dois
-      // passos, congelava de novo: alternação parado/andando medida a ~2.000/min (a
-      // chiação de animação da escolta em marcha limpa). Passo proporcional ao vão, o
-      // mesmo amortecimento do reagrupamento: em regime anda na velocidade do VIP.
+      // MARCHA DA FORMAÇÃO: com o VIP andando, "dentro do slot" é ACOMPANHAR — passo
+      // proporcional ao vão elimina a alternação parado/andando (~2.000/min medida).
       if (escortCenterMoving) {
         const gfx = objectiveDestination.x - b.pos.x, gfz = objectiveDestination.z - b.pos.z;
         const gfn = Math.hypot(gfx, gfz) || 1;
@@ -9029,12 +8991,9 @@ export class Game {
             .sort((a, c) => a.d - c.d);
           for (let k = 0; k < Math.min(6, cands.length); k++) if (this._walkReach(b, W.waypoints.nodes[cands[k].i])) { found = cands[k].i; break; }
           if (found < 0 && objectiveDestination) {
-            /* ESCOLTA EM BOLSO: os 6 mais próximos podem ficar TODOS do outro lado do
-               balcão — o guarda escapa pro lado errado, bane nó em ciclo e se PERDE da
-               formação (medido na régua de cintilação: guarda derivando a 24 m do VIP).
-               Segunda passada só com nós do MESMO componente do objetivo: a rota sai
-               por onde realmente alcança o slot. Custa até 30 sondas, só no bolso da
-               escolta (~1×/s), nunca no fluxo dos outros mapas. */
+            /* ESCOLTA EM BOLSO: os 6 mais próximos podem ficar todos do outro lado do
+               balcão — segunda passada só com nós do MESMO componente do objetivo
+               (até 30 sondas, ~1×/s, só na escolta; detalhes: OPERACAO-FLAVIO-20261104.md). */
             const comp = this._wpComp();
             const compAlvo = comp && comp.length
               ? comp[W.nearestWaypoint(objectiveDestination.x, objectiveDestination.z, b.pos.y)] : -1;
@@ -9286,10 +9245,7 @@ export class Game {
           const px = b.pos.x, pz = b.pos.z;
           if (trechoSlot) {
             // TRECHO FINAL DA ESCOLTA: perseguição amortecida DIRETA ao ponto (a mesma
-            // do reagrupamento). A passo cheio pelo rumo o guarda ATRAVESSAVA o slot e
-            // voltava — flip de sentido em cima do destino com o VIP marchando (medido
-            // na régua de órbita). Em regime anda na velocidade do slot, não vibra a
-            // 4,1 m/s em torno dele; e o hover parado no ponto não é "travamento".
+            // do reagrupamento) — passo cheio atravessava o slot e voltava (régua de órbita).
             const nn = dn || 1;
             const passoSlot = Math.min(BOT_SPEED * bSlow * dt, Math.max(dn * dt * 6, 1e-4));
             b.pos.x += (dx / nn) * passoSlot;
@@ -9405,9 +9361,8 @@ export class Game {
         // moviam o bot sem setar `moving`, então `spd<0.35?0:moving` dava 0 e o char ficava em
         // idle/shoot (pernas estáticas) deslizando. Atrelar ao spd faz as pernas ciclarem SEMPRE
         // que o corpo transladar (>0.35 m/s), inclusive atirando em movimento (walkfire).
-        // HISTERESE DA BANDA: cruzar 0,35 m/s a cada quadro (empurrão de separação,
-        // convergência amortecida do slot) liga/desliga o ciclo de pernas em 60 Hz —
-        // piscadela de animação. Liga acima de 0,45 m/s, desliga abaixo de 0,30.
+        // HISTERESE DA BANDA: cruzar 0,35 m/s por quadro piscava o ciclo de pernas em
+        // 60 Hz — liga acima de 0,45, desliga abaixo de 0,30.
         if (spd > 0.45) b._mvHigh = true; else if (spd < 0.3) b._mvHigh = false;
         const mv = b._mvHigh ? 1 : 0;
         /* LOD de animação: bot longe não precisa de 60 Hz de mixer, IK e malha fechada de

@@ -272,9 +272,8 @@ export function buildOperacaoFlavio(scene, T = {}) {
     for (const x of [-20, 0, 20]) bloco('luminaria-terminal', x, 3.42, z, 8.5, 0.05, 0.26, mats.luz, false, false);
   }
   placa('placa-rota-patio', 'PÁTIO', 'EMBARQUE ↑', 0, 4.25, -15.62, 6.8, 1.7, Math.PI);
-  // A proteção do embarque vem de objetos reais (balcões, jardineiras, bancos), não de caixas:
-  // as peças altas escondem o VIP de 1,72 m e quebram as lanes norte/laterais do terminal.
-  // Controle de acesso: pistas baixas, scanners, guaritas envidraçadas e fila clara.
+  // Proteção do embarque vem de objetos reais (balcões, jardineiras, bancos) — peças altas
+  // escondem o VIP e quebram lanes; controle de acesso: pistas baixas, scanners, guaritas.
   for (const x of [-31, 31]) {
     bloco('guarita-base', x, 0.55, 1, 10, 1.1, 15, mats.marinho);
     bloco('guarita-corpo', x, 1.9, 1, 9.2, 1.7, 14.2, mats.parede);
@@ -670,9 +669,8 @@ export function buildOperacaoFlavio(scene, T = {}) {
   };
 
   const escortPath = ESCORT_PATH.map((p) => ({ ...p }));
-  // Slots de cobertura por zona com papel declarado: suportam 6 defensores (4 guardas
-  // diretos junto à rota + 2 roamers de flanco) em qualquer trecho da escolta. Os pontos
-  // ficam a ≤1,6 m de colisor alto, nunca colados em checkpoint e ligados ao grafo.
+  // Slots de cobertura por zona com papel declarado: 6 defensores (4 diretos + 2 roamers),
+  // pontos a ≤1,6 m de colisor alto, nunca colados em checkpoint e ligados ao grafo.
   const escortCoverPoints = [
     { x: -7.2, z: -40.0, role: 'guard', zone: 'embarque' },
     { x: 8.2, z: -40.0, role: 'guard', zone: 'embarque' },

@@ -91,15 +91,8 @@ export const VM_WEAPON = {
       slideLiner: { mesh: 'GEO-deagle-slide-liner-reconstructed', bone: 'Slider' },
       hammer: { mesh: 'GEO-deagle-hammer', bone: 'Hammer' },
     } }),
-  // PT-38 APROVADA = golden do catálogo PÚBLICO (dono, 05/11: Operação Flávio e global).
-  // O piloto coro/pistol-hires.glb viaja no deploy (sem catálogo privado não há 404 nem
-  // legado em silêncio); o chassi X18 da fábrica fica no A/B `?vmgolden=0` e o produto K
-  // (`pistol#pistol`, runtime:'family') no A/B duplo `?vmgolden=0&vmfabrica=0`.
-  // ads (rota golden, unidades do PRÓPRIO piloto — ~97 un/m, off/alívio em metro da
-  // fábrica seriam invisíveis): alça/massa MEDIDAS no osso CoroWeapon (Idle@0, espaço
-  // do bone) erguem o `wrap` do update — sem elas o ADS ficava parado inteiro. Foco
-  // ABAIXO da cruz preservado (decisão do dono 28/10, BUG-181): alça −8 cm (−7,8 un) e
-  // alívio 0,38 m (36,9 un); `linha` é o mesmo A/B da fábrica (?ads1pfix=0 volta o foco torto).
+  // PT-38 APROVADA = golden do catálogo PÚBLICO (dono, 05/11): piloto viaja no deploy,
+  // ads medido no osso CoroWeapon, foco abaixo da cruz preservado (BUG-181). Detalhes: docs/reports/GOLDEN-SKIN-SELECTION-CONTINUATION-20261101.md.
   pistol: W('pistol', { baked: true, golden: true, runtime: 'family', timing: 'gameplay',
     ads: { auto: true, off: [0, 0.04, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 36.9, estilo: 'foco',
       linha: { off: [0, -7.8, 0], estilo: 'foco' },
