@@ -43,7 +43,7 @@
 - Formation and cover routing follow the same rule: threats the VIP cannot see never engage the formation, pull roamers off their lane or reserve guard cover — attackers remain visible only through genuine line of sight, with a short seen-recently memory so marching sightline gaps don't re-trigger engagements.
 - The pistol now always serves the authored PT-38 pilot from the public catalog (`gold#pistol`), in Operação Flávio and every mode; the private factory chassis stays available for A/B via `?vmgolden=0`, and the legacy procedural viewmodel no longer takes over silently when the private asset channel is missing.
 - The boot budget proxy now isolates the externally injected X/Twitter ad snippet from public HTML before measurement and reports `thirdPartyScriptsStripped`; any game script or page error still fails the gate, and a dedicated no-removal mutant catches regression. Production HTML itself still needs the malformed third-party snippet repaired or removed by the owner.
-- CI: `reguas-e-site` now has a measured 35-minute timeout exemption. Run `42009772988` was canceled at 30m16s in the Fauna step after every earlier gate passed; no step was skipped or weakened.
+- CI: the former `reguas-e-site` serial queue is split into parallel `reguas-e-site` and `mapas-e-site` jobs after measured cancellations at 30m16s (run `42009772988`) and 35m18s (run `42016661426`), both without a red verdict. Every step moved intact; the build job now requires both.
 
 ## Não lançado — 2026-10-19
 

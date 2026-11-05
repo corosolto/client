@@ -37,7 +37,7 @@ const DIR = path.join(ROOT, '.github/workflows');
 const TETO_MAX = 30;
 /* Isenções NOMINAIS, com pior caso medido (histórico no git).
    reguas-e-site: 30m16s no run 42009772988, cancelado em Fauna com fila anterior verde. */
-const TETO_ISENTO = { 'portao-browser.yml:portao': 45, 'ui-regression.yml:classify': 35, 'smoke-web.yml:chat-desktop': 40, 'ci.yml:reguas-e-site': 35 };
+const TETO_ISENTO = { 'portao-browser.yml:portao': 45, 'ui-regression.yml:classify': 35, 'smoke-web.yml:chat-desktop': 40, 'ci.yml:reguas-e-site': 35, 'ci.yml:mapas-e-site': 35 };
 
 /* Parser de indentação, não de YAML: a régua roda no `check:deploy`, que é node
    puro e sem dependência. `jobs:` na coluna 0, nome do job com 2 espaços, chaves

@@ -31,10 +31,8 @@ jobs:
   # resto; agora rodam em paralelo no job `invariantes`. Nenhum passo saiu.
   reguas-e-site:
     runs-on: ubuntu-latest
-    # Histórico: 25 min caiu com runners saturados (#1217); 30 min bastaram até o
-    # merge da main de 05/11. No run 42009772988 o job passou toda a fila até Fauna
-    # e foi cancelado em 30m16s pelo teto, não por régua vermelha; 35 mantém ~5 min
-    # de folga sem dispensar etapa.
+    # Fila nuclear. Mapas/site foram para job paralelo depois do run 42016661426
+    # ser cortado em 35m18s dentro de Flávio, sem veredito vermelho.
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -164,6 +162,19 @@ jobs:
       - name: Loops de áudio de todos os mapas usam src carregável
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:soundscape-contract
+  mapas-e-site:
+    runs-on: ubuntu-latest
+    # Fila dividida do antigo reguas-e-site: mesmo passo, nenhum dispensado.
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
       - name: Operação Flávio, objetivo, autoridade e anúncio
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:operacao-flavio eval:operacao-reset eval:operacao-online eval:operacao-duration eval:operacao-clock eval:operacao-boarding eval:character-owned eval:objective-codec-contract eval:operacao-npc eval:mode-announcements eval:ctflabels eval:tpreloadpaired
@@ -375,7 +386,7 @@ jobs:
         run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network
 
   build:
-    needs: [reguas-e-site, invariantes, mantle, equipamento-tp]
+    needs: [reguas-e-site, mapas-e-site, invariantes, mantle, equipamento-tp]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
