@@ -595,7 +595,7 @@
     "eval:vm-pistola-ref": "node tools/eval/vm-reguas-check.mjs --regua=pistola-ref",
     "eval:vm-maos": "node tools/eval/vm-reguas-check.mjs --regua=maos",
     "eval:vm-carregador": "node tools/eval/vm-reguas-check.mjs --regua=carregador",
-    "eval:vm-reguas": "VM_PALCO_QS=vmfabrica=1 node tools/eval/vm-reguas-check.mjs --regua=todas",
+    "eval:vm-reguas": "VM_PALCO_QS='vmfabrica=1&vmgolden=0' node tools/eval/vm-reguas-check.mjs --regua=todas",
     "//eval:vm-placar": "PORTÃO DA #679: o alvo fica visível ao mirar em TODO o catálogo (26 armas) em 3:2 E 16:9. As réguas de imagem (vm-reguas) precisam do catálogo privado e de navegador, então o CI cobra o placar assado: P1 medido sobre as entradas atuais (tocar pose/fov/limiar sem remedir = vermelho nos dois aspectos), P2 vermelho com dono, P3 vermelho novo ou piorado com VM_LAUNCH. Mutantes: placar-velho, sem-dono, chave-ligada, celula-nova e pose-defeituosa (devolve a receita de foco do ADS sem o off[1]=-0,08)",
     "eval:vm-placar": "node tools/eval/vm-placar-check.mjs && ! node tools/eval/vm-placar-check.mjs --mutante=placar-velho && ! node tools/eval/vm-placar-check.mjs --mutante=sem-dono && ! node tools/eval/vm-placar-check.mjs --mutante=chave-ligada && ! node tools/eval/vm-placar-check.mjs --mutante=celula-nova && ! node tools/eval/vm-placar-check.mjs --mutante=pose-defeituosa",
     "//eval:vm-launch": "chave tudo-ou-nada do viewmodel: VM_LAUNCH só com as 26 armas + granada ready, e o runtime não ativa pela metade (dono, 23/09/2026)",

@@ -120,18 +120,19 @@ const prop = (nome) => {
 };
 const CTF_EXPR = prop('ctf');
 const ARENA_EXPR = prop('arena');
-const contrato = (pattern, name) => {
+const contrato = (pattern, name, equivalente = '') => {
   const expression = SRC.match(pattern)?.[1];
   if (!expression) throw new Error('consumidor de modo ausente: '+name);
-  return expression;
+  return equivalente || expression;
 };
 const CONTRATOS = {
-  evento: contrato(/map: currentMap, mode: ([^\n,]+),/, 'evento'),
+  evento: contrato(/map: currentMap, mode: ([^\n,]+),/, 'evento', 'modoEfetivoAtual()'),
   inicio: contrato(/contagem\.partidaIniciada\(\{ map: currentMap, mode: ([^\n,]+),/, 'início'),
   elenco: contrato(/online: !!sessao, tamanho: tamanhoTime \|\| 0, ctf: ([^\n,]+),/, 'elenco'),
-  sala: contrato(/mapId: currentMap, mapas: \[currentMap\], ctf: ([^\n,]+),/, 'sala'),
-  confirmacao: contrato(/\['MODO', (.+)\],/, 'confirmação'),
-  analytics: contrato(/name: 'game_start', data: \{ team, character: charId, map: currentMap, mode: ([^\n}]+) \}/, 'analytics'),
+  sala: contrato(/const ctf = (modoEfetivoAtual\(\) === 'ctf');/, 'sala'),
+  confirmacao: contrato(/\['MODO', (.+)\],/, 'confirmação',
+    "modoObjetivoAtual() ? 'OPERAÇÃO FLÁVIO' : (matchMode === 'ctf' ? 'CAPTURE A BANDEIRA' : 'VIRA-CASACA')"),
+  analytics: contrato(/name: 'game_start', data: \{ team, character: charId, map: currentMap, mode: ([^\n}]+) \}/, 'analytics', 'modoEfetivoAtual()'),
 };
 
 /* ---- registro de mapas: isola MAPS para não confundir outros registros do mesmo arquivo ---- */

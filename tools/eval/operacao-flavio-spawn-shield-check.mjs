@@ -74,13 +74,13 @@ check('escudo: halo telegrafado estável durante protUntil sem piscar corpo', ()
     if (prevHalo !== null && halo !== prevHalo) haloFlips++;
     if (halo) haloApareceu++;
     const m = attacker._mark;
-    if (m.protegido === true && Math.abs(m.halo.scale.x - 1.9) < 1e-6 && m.col === '#bfe6ff') telegrafado++;
+    if (m.protegido === true && Math.abs(m.halo.scale.x - 1.9) < 1e-6 && m.col === game._teamColor(attacker.team)) telegrafado++;
     frames++; prevCorpo = corpo; prevHalo = halo;
   }
   report.escudo = { frames, corpoFlips, haloFlips, haloApareceu, telegrafado };
   assert.equal(corpoFlips, 0, 'corpo não pisca na escolta durante a proteção');
   assert.equal(haloFlips, 0, 'halo não alterna por quadro');
-  assert.ok(telegrafado >= 120, `halo telegrafado (crescido + azul-gelo) durante a proteção (${telegrafado}/${frames})`);
+  assert.ok(telegrafado >= 120, `halo telegrafado (crescido + cor do time) durante a proteção (${telegrafado}/${frames})`);
 });
 check('escudo: dano zero durante protUntil e anel some ao expirar', () => {
   attacker.protUntil = game.time + 0.5;

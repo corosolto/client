@@ -8239,14 +8239,13 @@ export class Game {
       m.halo.material.map = this._teamMarkTex(ally ? 'haloAlly' : 'haloEnemy');
       m.halo.material.needsUpdate = true;
     }
-    // PROTEÇÃO DE SPAWN TELEGRAFADA no halo: dano ZERO e anel que cresce azul-gelo —
-    // estável, não pisca o corpo e não aloca por quadro (sem telegraph leria como bug).
+    // Proteção de spawn: anel estável crescido, sem piscar corpo nem apagar a cor do time.
     const protegido = this.time < (b.protUntil || 0);
     if (m.protegido !== protegido) {
       m.protegido = protegido;
       m.halo.scale.setScalar(protegido ? 1.9 : 1.45);
     }
-    const col = protegido ? '#bfe6ff' : this._teamColor(b.team);
+    const col = this._teamColor(b.team);
     if (m.col !== col) { m.col = col; m.halo.material.color.set(col); }
     if (!b.alive || !b.mesh.group.visible) { m.halo.visible = false; return; }
     m.halo.visible = true;

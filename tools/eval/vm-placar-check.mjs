@@ -32,9 +32,22 @@ const ENTRADAS = [
 // `pose-defeituosa` devolve a receita de ADS quebrada sem tocar o repositório.
 export function entradasDoPlacar(raiz = process.cwd(), sobrepor = {}) {
   const h = crypto.createHash('sha256');
+  // O palco de fábrica não consome VM_WEAPON.pistol (golden pública): fora do hash.
+  const semRotaPublicaPistol = (txt) => {
+    const linhas = txt.split('\n');
+    const pistol = linhas.findIndex((linha) => /^  pistol: W\(/.test(linha));
+    if (pistol < 0) return txt;
+    let inicio = pistol;
+    while (inicio > 0 && /^  \/\//.test(linhas[inicio - 1])) inicio--;
+    const proxima = linhas.findIndex((linha, i) => i > pistol && /^  [a-z0-9_]+: W\(/.test(linha));
+    let fim = proxima < 0 ? linhas.length : proxima;
+    while (fim > pistol + 1 && /^  \/\//.test(linhas[fim - 1])) fim--;
+    return linhas.slice(0, inicio).concat(linhas.slice(fim)).join('\n');
+  };
   for (const f of ENTRADAS) {
     // VM_LAUNCH não muda imagem: fora do hash, senão virar a chave "envelhece" o placar.
-    const txt = (sobrepor[f] ?? fs.readFileSync(path.join(raiz, f), 'utf8')).replace(/export const VM_LAUNCH = (true|false);/, '');
+    let txt = (sobrepor[f] ?? fs.readFileSync(path.join(raiz, f), 'utf8')).replace(/export const VM_LAUNCH = (true|false);/, '');
+    if (f === 'public/js/data/vmconfig.js') txt = semRotaPublicaPistol(txt);
     h.update(`${f}\n${txt}`);
   }
   const av = sobrepor['public/js/authoredvm.js'] ?? fs.readFileSync(path.join(raiz, 'public/js/authoredvm.js'), 'utf8');
