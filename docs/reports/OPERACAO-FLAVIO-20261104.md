@@ -48,13 +48,13 @@ Integrated PR #1158 into the current mainline, corrected escort authority, onlin
 
 ## Verification exercised
 
-- `npm run eval:operacao-flavio`: complete escort suite, browser check and expected mutants after the second gauntlet.
+- `npm run eval:operacao-flavio`: complete escort suite and expected mutants after the second gauntlet.
 - `npm run eval:javaporcos`: horde suite and expected mutants.
 - `eval:vm-launch`, `eval:golden-skin-selection`, `eval:authored-vm`, public ADS checks and the pistol contract route.
 - Cover behavior, roles/loadouts, respawn isolation, escort flicker, spawn shield, server recovery, pressure, defense, moving defense, regroup and formation proofs.
 - `npm run docs:check` and `npm run arch:check`.
 - Real Chromium 6×6 gameplay: 12 bots, four direct guard weapons plus two roamers, VIP equipment, route zones and flicker measurement.
-- Independent reviewer findings on dedicated armor, pistol ADS, LOS-gated shelter and spawn protection were corrected and covered by regression checks.
+- `eval:operacao-flavio:browser-gate` in `check:deploy`: self-hosted Chromium run covering autonomous escort progress, real cover/crouch, VIP death, boarding cinematic and four map views.
 
 Evidence captures:
 

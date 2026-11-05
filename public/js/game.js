@@ -5896,26 +5896,16 @@ export class Game {
   // Separação (boids): empurra o bot pra longe de colegas do mesmo time num raio curto, pra eles
   // NÃO andarem colados em fila indiana sobre o mesmo path. Peso ~inverso à distância.
   _botSeparation(b, dt) {
+    // O VIP da escolta tem movimento autoritativo do objetivo; guardas não o empurram.
+    const vipEscolta = this.objective?.vip;
+    if (b === vipEscolta) { this._collide(b.pos, 0.38); return; }
     let px = 0, pz = 0, crowd = 0;
-    /* ANTI-AMONTOADO (01/08, bug do print da Loja H). Três coisas acontecem nesta varredura,
-       e é importante que sejam TRÊS e não uma:
-       (a) a separação de boids ORIGINAL (raio 1,15 m, só colegas de time) — mexer no raio
-           dela foi MEDIDO como ruim: o componente lateral vira desvio de rumo, e com raio
-           grande o bot sai do próprio caminho toda hora, erra o nó, o destravamento bane o
-           nó e a rota apodrece (A* falhando ~40% por nó banido). Fica como estava;
-       (b) DESPENETRAÇÃO RÍGIDA (nova): nada no jogo impedia dois bonecos de ocuparem o mesmo
-           ponto — `_collide` só resolve contra o CENÁRIO. É isso que produz o borrão de 8
-           personagens do print. Aqui os dois são afastados de verdade, metade pra cada um,
-           valendo inclusive contra o time inimigo (a pilha da porta é mista). Como é uma
-           correção de POSIÇÃO simétrica e não uma força de direção, ela não briga com a rota;
-       (c) `crowd` = colegas a menos de 3 m, medido SEMPRE (independente do raio de boids —
-           na primeira versão ele vivia zerado porque estava dentro do `if` do raio de 1,15 m).
-           Serve pra cancelar o "plantar e mirar" no meio do bolo (ver _updateBot). */
+    /* boids + despenetração fatiada + crowd; detalhes em docs/MULTIPLAYER.md. */
     const R = BOT_MOVE2 ? 1.15 : 1.6, R2 = R * R;
     const BODY2 = BOT_BODY_R * 2;
-    let depx = 0, depz = 0;   // orçamento de despenetração deste corpo NESTE quadro
+    let depx = 0, depz = 0;
     for (const o of this.bots) {
-      if (o === b || !o.alive) continue;
+      if (o === b || !o.alive || o === vipEscolta) continue;
       const foe = o.team !== b.team;
       const dx = b.pos.x - o.pos.x, dz = b.pos.z - o.pos.z, d2 = dx * dx + dz * dz;
       if (d2 <= 1e-4) continue;

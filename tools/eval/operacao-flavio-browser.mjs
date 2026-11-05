@@ -449,15 +449,23 @@ const views = [
     const cover = g.objective.state.caminho[checkpoint];
     const threat = g.bots.find((bot) => bot.team === 'E');
     threat.alive = true; threat.hp = 1000; threat.protUntil = Infinity;
-    threat.pos.set(vip.pos.x, 0, vip.pos.z + 5);
-    threat.target = null; threat.path = null;
-    for (const bot of g.bots) if (bot.team === 'E' && bot !== threat) bot.pos.set(38, 0, 54);
+    threat.pos.set(vip.pos.x, 0, vip.pos.z + 8);
+    threat.nextShotAt = Infinity; threat.reloadUntil = Infinity;
+    threat.target = null; threat.path = null; threat.think = Infinity;
+    for (const bot of g.bots) if (bot.team === 'E' && bot !== threat) { bot.pos.set(38, 0, 54); bot.think = Infinity; bot.nextShotAt = Infinity; }
     return {
       checkpoint,
+      threat: { x: threat.pos.x, z: threat.pos.z },
       distanceToCover: Math.hypot(vip.pos.x - cover.x, vip.pos.z - cover.z),
     };
   });
-  await page.waitForTimeout(1800);
+  for (let slice = 0; slice < 12; slice++) {
+    await page.evaluate((point) => {
+      const g = window.__game, threat = g.bots.find((bot) => bot.team === 'E');
+      threat.pos.set(point.x, 0, point.z); threat.path = null; threat.think = Infinity;
+    }, threatBefore.threat);
+    await page.waitForTimeout(1000);
+  }
   const threatAfter = await page.evaluate(() => {
     const g = window.__game;
     const vip = g.objective.vip;
