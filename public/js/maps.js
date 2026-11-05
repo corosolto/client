@@ -1,4 +1,5 @@
 import { withVisibleShotOccluders } from './shot_surfaces.js';
+import { JAVAPORCOS_LOADING_WALL } from './javaporcos_apresentacao.js';
 
 /* Mapas sob demanda (lane glm/peso): registro com metadados leves; o módulo da
    arena só entra por carregaMapa. Régua eval:mapasobdemanda; fiação no PR. */
@@ -23,7 +24,7 @@ import { withVisibleShotOccluders } from './shot_surfaces.js';
    Ver `ALIAS_MAPA` logo abaixo do registro: id antigo continua resolvendo, e o motivo
    de isso não ser opcional está lá. */
 const JAVAPORCOS_META = { ctfMode: false, objectiveMode: 'horde',
-    loadingWall: '/img/loading-javaporcos.webp',
+    loadingWall: JAVAPORCOS_LOADING_WALL,
     props: ['carro_batido_scan_03', 'perua_pichada_scan', 'junk_car', 'carro_batido_scan_07',
       'dumpster', 'porta_aco', 'arvore_mata', 'shopping_cart', 'capim_touceira_a', 'capim_touceira_b',
       'arbusto_mata_a', 'arbusto_mata_b', 'samambaia_mata', 'calathea_mata', 'galhos_secos', 'toco_arvore',

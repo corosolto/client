@@ -2,7 +2,7 @@
  *
  * Pedido do dono (30/10/2026): "fazer um wallpaper pra ler no modo javaporco com os javaporcos".
  *
- *   JW1  carregando invasao_javaporcos, o #load-overlay usa /img/loading-javaporcos.webp;
+ *   JW1  carregando invasao_javaporcos, o #load-overlay usa /img/loading-javaporcos.webp com revisão;
  *   JW2  carregando outro mapa (praca_poderes), a rotação normal continua (sem a arte do modo);
  *   JW3  o arquivo existe e é servido como imagem.
  *
@@ -45,7 +45,7 @@ async function paredeDaEspera(mapa) {
 
 const res = [];
 const java = await paredeDaEspera('invasao_javaporcos');
-res.push(['JW1', 'espera do javaporcos usa a arte do modo', /loading-javaporcos\.webp/.test(java), java]);
+res.push(['JW1', 'espera do javaporcos usa a arte revisada do modo', /loading-javaporcos\.webp\?v=[^'")]+/.test(java), java]);
 const praca = await paredeDaEspera('praca_poderes');
 res.push(['JW2', 'outro mapa segue a rotação normal', /loading-\d+\.webp/.test(praca), praca]);
 const ctx = await b.newContext();

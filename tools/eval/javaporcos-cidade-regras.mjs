@@ -102,7 +102,7 @@
      carro-carvao    junk_car sem pintura (a ferrugem da rodada 2)        -> RUA1
    ============================================================================ */
 
-export const MUTANTES = ['saco-icosaedro', 'janela-real-cega', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'beiral-preto', 'lampada-fraca', 'sem-halo', 'guia-rasa', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao'];
+export const MUTANTES = ['saco-icosaedro', 'janela-real-cega', 'janela-cega', 'carro-nc', 'carros-poucos', 'poste-viga', 'beco-limpo', 'zebra-veio', 'janela-preta', 'janela-tabua', 'muro-escuro', 'barra-lisa', 'telhado-solto', 'beiral-preto', 'lampada-fraca', 'sem-halo', 'guia-rasa', 'saco-ovo', 'guia-limpa', 'saco-longe', 'beco-apagado', 'luz-presa', 'luz-bola', 'beco-sem-fio', 'rua-vazia', 'carro-carvao', 'calcada-zfight'];
 // licença: public/models/props/FONTE.md (saveiro/byd CC-BY-NC-SA); gol g2 e fusca 1968 (asset.extras) também são NC
 export const CARROS_NC = ['saveiro_robust', 'byd_dolphin', '1999_volkswagen_gol_2000_gti_g2', '1968_volkswagen_beetle'];
 export const CARROS_COMERCIAIS = ['carro_batido_scan_03', 'carro_batido_scan_07', 'perua_pichada_scan', 'junk_car',
@@ -145,6 +145,27 @@ const labB = (r, g, b) => {
 export function regrasCidade({ W, THREE, MUT, regra, exige, fs }) {
   const malhas = () => { const l = []; W.root.traverse((o) => { if (o.isMesh) l.push(o); }); return l; };
   const porNome = (nome) => malhas().find((o) => o.name === nome) || null;
+  if (MUT === 'calcada-zfight') {
+    const pisos = malhas().filter((o) => o.name === 'chao-calcada');
+    exige(pisos.length >= 4, 'MUTANTE calcada-zfight NÃO APLICOU: sem pisos de calçada');
+    pisos.forEach((piso) => {
+      const m = Array.isArray(piso.material) ? piso.material[0] : piso.material;
+      m.polygonOffset = false;
+      m.polygonOffsetFactor = 0;
+      m.polygonOffsetUnits = 0;
+    });
+  }
+  regra('RUA0 calçadas não disputam profundidade com o terreno', () => {
+    const pisos = malhas().filter((o) => o.name === 'chao-calcada');
+    exige(pisos.length >= 4, `só ${pisos.length} pisos de calçada (piso 4)`);
+    for (const piso of pisos) {
+      const m = Array.isArray(piso.material) ? piso.material[0] : piso.material;
+      exige(m.polygonOffset === true && m.polygonOffsetFactor < 0 && m.polygonOffsetUnits < 0,
+        'piso de calçada sem polygonOffset negativo: z-fighting com o terreno coplanar');
+      exige(piso.renderOrder > 0, 'piso de calçada sem renderOrder após o terreno');
+    }
+    return `${pisos.length} pisos com offset de profundidade e renderOrder ${pisos[0].renderOrder}`;
+  });
   const m4 = new THREE.Matrix4(), p3 = new THREE.Vector3(), q4 = new THREE.Quaternion(), s3 = new THREE.Vector3();
   const instancias = (m) => {
     const out = [];
