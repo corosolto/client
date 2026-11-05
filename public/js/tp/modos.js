@@ -1,4 +1,3 @@
-import { ehMapaJavaporcos } from '../maps.js';
 /* Treta Pop · 03 modo e mapa, 19 mobile. Carregado por tp/ligar.js só com ?ui=v3. */
 import { tr } from '../i18n.js';
 
@@ -220,10 +219,10 @@ function grade() {
 function pintar() {
   if (!tela || !api()) return;
   const est = api().estado();
-  const horda = ehMapaJavaporcos(est.mapa);
+  const mapa = api().mapas().find((m) => m.id === est.mapa);
+  const horda = mapa?.horda === true || mapa?.objectiveMode === 'horde';
   api().opcoesJavaporcos?.(tela.regras, pintar);
   tela.regras.hidden = !horda;
-  const mapa = api().mapas().find((m) => m.id === est.mapa);
   for (const b of tela.modos.querySelectorAll('.tp-modos__modo')) {
     if (b.dataset.modo === 'rounds' || b.dataset.modo === 'ctf' || b.dataset.modo === 'arena') {
       b.disabled = !!est.objetivo;

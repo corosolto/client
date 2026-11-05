@@ -206,10 +206,18 @@ export function buildInvasaoJavaporcos(scene, T, ambiente='cidade') {
     const uv = geo.attributes.uv;
     for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (w / tile), uv.getY(i) * (d / tile));
     uv.needsUpdate = true;
-    const m = new THREE.Mesh(geo, mat);
+    const antiZFight = nome === 'chao-calcada';
+    const material = antiZFight ? mat.clone() : mat;
+    if (antiZFight) {
+      material.polygonOffset = true;
+      material.polygonOffsetFactor = -1;
+      material.polygonOffsetUnits = -1;
+    }
+    const m = new THREE.Mesh(geo, material);
     m.userData.construcaoImovel = true;
     m.rotation.x = -Math.PI / 2;
     m.position.set(x, y, z); m.receiveShadow = true; m.name = nome;
+    if (antiZFight) m.renderOrder = 1;
     root.add(m);
     return m;
   };
