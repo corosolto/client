@@ -32,7 +32,7 @@ function fixture({ params = '', testMode = false } = {}) {
   const sp = { dataset: {}, classList: { contains: k => classes.has(k), add: k => classes.add(k) }, remove() { removed++; } };
   const noop = () => {};
   const context = vm.createContext({
-    document: { getElementById: () => sp }, _splashReady: true,
+    document: { getElementById: () => sp, querySelector: () => null }, _splashReady: true,
     performance: { now: () => 100 }, _entradaEm: 0,
     loadingStage: { hide: noop }, dockLoadingCharacter: noop,
     window: {}, contagem: { evento: noop }, marcoFunil: noop, _lobbyEntrou: () => lobby++, focusMenu: noop,

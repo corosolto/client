@@ -480,8 +480,9 @@ export class OperacaoFlavio {
     if (this.vip._meshWeapon !== VIP_WEAPON) this.game._syncRemoteWeapon(this.vip, VIP_WEAPON);
   }
 
-  _autoridadeEscolta() { return !this.game.online || this.game.dedicated; }
-  _clienteEscolta() { return this.game.online && !this.game.dedicated; }
+  _espectadorEscolta() { return this.game.online && this.game.dedicated && this.game._mp?.net?.espectador === true; }
+  _autoridadeEscolta() { return !this.game.online || (this.game.dedicated && !this._espectadorEscolta()); }
+  _clienteEscolta() { return this.game.online && (!this.game.dedicated || this._espectadorEscolta()); }
 
   botDestination(bot) {
     if (!this.vip?.alive || !bot?.alive) return null;
@@ -691,7 +692,7 @@ export class OperacaoFlavio {
   /* Onda de 8 s desde o epoch da rodada (docs/maps/operacao-decola.md §Respawn): morte na
      borda perde a onda atual; devolve tempo ABSOLUTO (ent.respawnAt); VIP não renasce. */
   respawnAt(ent, now) {
-    if (this._clienteEscolta()) return Infinity;
+    if (this._clienteEscolta()) return undefined;
     if (ent === this.vip) return Infinity;
     const epoch = this._waveEpoch ?? (this._waveEpoch = now);
     return epoch + (Math.floor((now - epoch) / 8) + 1) * 8;

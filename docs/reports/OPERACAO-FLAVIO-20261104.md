@@ -2,7 +2,7 @@
 
 Date: 2026-11-04
 Branch: `feat/operacao-flavio-improvements-20261104`
-Status: verified local candidate; no merge or deployment
+Status: PR #1232 open; verified candidate; no merge or deployment
 
 ## Scope
 

@@ -4,10 +4,10 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const mutations = {
-  'cliente-autoridade': ['_autoridadeEscolta() { return !this.game.online || this.game.dedicated; }', '_autoridadeEscolta() { return !this.game.online; }', 'servidor online simula escolta até vitória B'],
+  'cliente-autoridade': ['_autoridadeEscolta() { return !this.game.online || (this.game.dedicated && !this._espectadorEscolta()); }', '_autoridadeEscolta() { return !this.game.online; }', 'servidor online simula escolta até vitória B'],
   'vip-bot-remoto': ['if (bot !== this.vip || this._clienteEscolta()) return false;', 'if (bot !== this.vip || this.game.online) return false;', 'servidor online simula escolta até vitória B'],
   'snapshot-no-servidor': ['if (!this._clienteEscolta()) return;\n    aplicarSnapshotEscolta(this.state, net);', 'if (false) return;\n    aplicarSnapshotEscolta(this.state, net);', 'servidor ignora snapshot recebido'],
-  'respawn-cliente-local': ['if (this._clienteEscolta()) return Infinity;', 'if (this._clienteEscolta()) return now + 2.2;', 'cliente não calcula onda local'],
+  'respawn-cliente-local': ['if (this._clienteEscolta()) return undefined;', 'if (this._clienteEscolta()) return now + 2.2;', 'cliente não calcula onda local'],
   'hud-contestado-oculto': ["if (this.state.contested) status.push('CONTESTADO');", "if (this.state.contested && !this.state.threatened) status.push('CONTESTADO');", 'HUD mostra contestação e cobertura simultâneas'],
   'slots-mortes': ['if (!bot?.pos || !vip?.pos || bot.alive === false || bot === vip) return null;', 'if (!bot?.pos || !vip?.pos || bot === vip) return null;\n  if (bot.alive === false) { formacoesEscolta.get(vip)?.delete(bot); return null; }', 'slot permanece com a entidade após morte'],
   'slots-distantes-iguais': ['const ordem = temporarios.indexOf(bot);', 'const ordem = 0;', 'múltiplos bots distantes ocupam slots temporários distintos'],

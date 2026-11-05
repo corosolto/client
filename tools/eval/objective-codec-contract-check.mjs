@@ -8,7 +8,7 @@ if (mutant) {
   const before = source;
   if (mutant === 'sem-time-j') source = source.replace("(ent.team === 'J' ? 16 : ent.team === 'B' ? 1 : 0)", "(ent.team === 'B' ? 1 : 0)");
   else if (mutant === 'limite-64') source = source.replaceAll('version >= 8 ? 80 : MAX_ENTITIES', 'MAX_ENTITIES');
-  else if (mutant === 'j-legado') source = source.replace("version >= 8 && ent.team === 'J'", "ent.team === 'J'");
+  else if (mutant === 'j-legado') source = source.replace("(snapshot.objective != null || ents.some(ent => ent.team === 'J'))", "(snapshot.objective != null)");
   else throw new Error('mutante desconhecido');
   assert.notEqual(source, before, 'mutação precisa aplicar');
   console.log('Mutação aplicada: '+mutant);
@@ -30,6 +30,7 @@ const snapshot = ents => ({
   roundNum: 1, scoreE: 0, scoreB: 0, roundKillsE: 0, roundKillsB: 0,
   objective: { kind: 'escort', checkpoint: 1, escortCount: 2 }, ents,
 });
+const legacySnapshot = ents => ({ ...snapshot(ents), objective: null });
 // SHA256 de frames E/B no codec Flávio 8248164 anterior ao reparo.
 const golden = {"2": "682f175ca0bec1c64a9f462ebae209e0d3cfccd8208738936e79e12a8b8eb72f", "3": "c6ac16ea80971181b821d5c84f5346af54c795f3f6ad424b7f0bb599fd8d7e89", "4": "7ce8289c032515867a192d17ba4e3a314240e6db094e5b512ffaa4ea6bd3cbbf", "5": "dd331a3a04e9904fa648b247c7bb47df7072cef8320a31323fa17c1bae5cf0a6", "6": "c235aefe22539cec5d926c3510a9aaf6f5cb22f97fb5abcd3e6af6d06ca6f505"};
 let failures = 0;
@@ -44,21 +45,21 @@ for (const [name, check] of [
     assert.equal(result.ents.length, 80);
   }],
   ['formatos anteriores continuam recusando terceiro time', () => {
-    for (const version of [2,3,4,5,6,7]) assert.throws(() => encodeSnapshot(snapshot([entity(1, 'J')]), version), /team/);
+    for (const version of [2,3,4,5,6,7]) assert.throws(() => encodeSnapshot(legacySnapshot([entity(1, 'J')]), version), /objective_requires_v8/);
   }],
   ['limites hostis continuam fechados por versão', () => {
     assert.throws(() => encodeSnapshot(snapshot(Array.from({length: 81}, (_, i) => entity(i+1))), 8), /too_many_entities/);
-    for (const version of [2,3,4,5,6,7]) assert.throws(() => encodeSnapshot(snapshot(Array.from({length: 65}, (_, i) => entity(i+1))), version), /too_many_entities/);
+    for (const version of [2,3,4,5,6,7]) assert.throws(() => encodeSnapshot(legacySnapshot(Array.from({length: 65}, (_, i) => entity(i+1))), version), /too_many_entities/);
   }],
   ['formatos anteriores mantêm os mesmos bytes E/B', () => {
     for (const version of [2,3,4,5,6]) {
-      const hash = createHash('sha256').update(encodeSnapshot(snapshot([entity(1, 'E'), entity(2, 'B')]), version)).digest('hex');
+      const hash = createHash('sha256').update(encodeSnapshot(legacySnapshot([entity(1, 'E'), entity(2, 'B')]), version)).digest('hex');
       assert.equal(hash, golden[version], 'bytes legados v'+version);
     }
   }],
   ['formatos anteriores mantêm os dois times', () => {
     for (const version of [2,3,4,5,6,7]) {
-      const result = decodeSnapshot(encodeSnapshot(snapshot([entity(1, 'E'), entity(2, 'B')]), version));
+      const result = decodeSnapshot(encodeSnapshot(legacySnapshot([entity(1, 'E'), entity(2, 'B')]), version));
       assert.deepEqual(result.ents.map(e => e.team), ['E','B']);
     }
   }],

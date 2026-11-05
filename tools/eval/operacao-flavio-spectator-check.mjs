@@ -8,10 +8,10 @@ import { Game, THREE, initTextures, renderer, sfx, PCHAR, CHARACTERS } from './h
 
 const mutations = {
   hud: ['mode_operacao_flavio.js', "if ((!game.dedicated || game.online) && typeof document !== 'undefined') {", "if (!game.dedicated && typeof document !== 'undefined') {", 'espectador recebe HUD'],
-  estado: ['mode_operacao_flavio.js', 'applyNetState(net) {\n    if (!this.game.online) return;', 'applyNetState(net) {\n    if (!this.game.online || this.game.dedicated) return;', 'espectador aplica estado'],
-  autoridade: ['mode_operacao_flavio.js', 'if (!this.game.online) {', 'if (!this.game.online || this.game.dedicated) {', 'espectador não decide vitória'],
-  respawn: ['mode_operacao_flavio.js', 'if (this.game.online) return undefined;', 'if (this.game.online && !this.game.dedicated) return undefined;', 'espectador não agenda respawn'],
-  bot: ['mode_operacao_flavio.js', 'if (bot !== this.vip || this.game.online) return false;', 'if (bot !== this.vip || (this.game.online && !this.game.dedicated)) return false;', 'espectador não executa controlador'],
+  estado: ['mode_operacao_flavio.js', "_clienteEscolta() { return this.game.online && (!this.game.dedicated || this._espectadorEscolta()); }", "_clienteEscolta() { return this.game.online && !this.game.dedicated; }", 'espectador aplica estado'],
+  autoridade: ['mode_operacao_flavio.js', "_autoridadeEscolta() { return !this.game.online || (this.game.dedicated && !this._espectadorEscolta()); }", "_autoridadeEscolta() { return !this.game.online || this.game.dedicated; }", 'espectador não decide vitória'],
+  respawn: ['mode_operacao_flavio.js', "if (this._clienteEscolta()) return undefined;", "if (this.game.online && !this.game.dedicated) return undefined;", 'espectador não agenda respawn'],
+  bot: ['mode_operacao_flavio.js', "if (bot !== this.vip || this._clienteEscolta()) return false;", "if (bot !== this.vip || (this.game.online && !this.game.dedicated)) return false;", 'espectador não executa controlador'],
   camera: ['mode_operacao_flavio.js', 'if (!this.cinematicActive || (this.game.dedicated && !this.game.online)) return;', 'if (!this.cinematicActive || this.game.dedicated) return;', 'espectador vê cena E'],
   marcha: ['mode_operacao_flavio.js', 'if (!this.game.dedicated || this.game.online) this.fontes = marchaMilitar(this.game.sfx);', 'if (!this.game.dedicated) this.fontes = marchaMilitar(this.game.sfx);', 'espectador ouve marcha no resultado B'],
   ambiente: ['mode_operacao_flavio.js', "if (winner === 'E' && (!this.game.dedicated || this.game.online)) {", "if (winner === 'E' && !this.game.dedicated) {", 'espectador vê cena E'],
@@ -23,7 +23,7 @@ if (process.argv.includes('--mutantes')) {
     const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--mutante='+name], { encoding: 'utf8', timeout: 90000, maxBuffer: 4 << 20 });
     assert.equal(r.status, 1, name+' precisa reprovar');assert.ok(!r.signal && !r.error);
     assert.ok(r.stdout.split(/\r?\n/).includes('Mutação aplicada: '+name), name+' precisa aplicar');
-    assert.ok(r.stderr.includes('FAIL '+clause), name+' precisa da cláusula esperada');
+    assert.ok(r.stderr.includes('FAIL '+clause), name+' precisa da cláusula esperada: '+r.stdout+r.stderr);
     console.log('✓ espectador/'+name+': aplicado e reprovado na cláusula esperada');
   }
   process.exit(0);
@@ -44,7 +44,7 @@ async function moduleFor(file) {
 const { makeNetcode } = await moduleFor('netgame.js');
 
 console.info = () => {};
-const net = { meta: {}, espectador: true, yourEnt: null, startPing() {}, stopPing() {} };
+const net = { meta: {}, espectador: true, yourEnt: null, startPing() {}, stopPing() {}, computeStats: () => ({ ping: 0, hz: 20 }), stats: { hz: 20 } };
 const options = { renderer, textures: initTextures(), sfx, settings: { bots: 2, quality: 'low', sens: 1 },
   playerCharId: PCHAR, playerTeam: 'E', mapId: 'operacao_flavio', testMode: true, dedicated: true,
   onQuit() {}, onMatchEnd() {} };
@@ -92,7 +92,7 @@ try {
     assert.equal(mode.respawnAt(g.bots.find(b => b !== mode.vip), 10), undefined, 'respawn pertence ao servidor');
   });
   check('espectador não executa controlador autoritativo do VIP', () => {
-    assert.equal(mode.updateBot(mode.vip, .01), false, 'animação remota segue netcode');
+    mode.vip.alive = false;assert.equal(mode.updateBot(mode.vip, .01), false, 'animação remota segue netcode');mode.prepareRound();
   });
   check('espectador ouve marcha no resultado B', () => {
     mode.prepareRound();g.time = 10;mode.startCinematic('B');
@@ -133,7 +133,7 @@ try {
     assert.ok(hudMode.hud, 'HUD local existe independentemente do espectador');
     // mkEl não interpreta cssText; estes são os valores declarados pelo construtor.
     hudMode.hud.style.background = '#09101cdd';hudMode.hud.style.borderColor = '#d8b765';
-    hudMode.deathAnnounced = false;hudMode.anunciarMorte();
+    hudMode.deathAnnounced = false;hudMode.vip.alive = false;hudMode.anunciarMorte();
     assert.equal(hudMode.hud.style.borderColor, '#ff514f', 'pré-condição vermelha');
     hudMode.prepareRound();assert.equal(hudMode.hud.style.background, '#09101cdd');assert.equal(hudMode.hud.style.borderColor, '#d8b765');
   });

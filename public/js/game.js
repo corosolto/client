@@ -4489,12 +4489,12 @@ export class Game {
     if (ARMADURA && (ent?.armor || 0) > 0 && (!head || ent.helmet)) return true;
     return /colete|cota de malha|armadura|capacete/i.test(ent?.def?.blurb || '');
   }
-  // Partida local só: online o nó roda este mesmo `_damage` sem estado de armadura (contrato no PR do colete).
+  // Armadura local cobre partida local e, no dedicado, apenas VIP/guardas de Flávio.
   // `fracCabeca`: rajada de chumbo somada (bot) passa cabeça e corpo cada um pela sua regra (AR14).
+  _entidadeEscolta(ent) { return ent === this.objective?.vip || Boolean(ent?._flavioPapel); }
   _aplicaArmadura(ent, dmg, weap, head, fracCabeca = null) {
-    /* SERVIDOR DEDICADO APLICA ARMADURA (dano autoritativo nele): sem isto o colete/
-       capacete era ignorado online; cliente sem dedicated não aplica local. */
-    if (!ARMADURA || (this.online && !this.dedicated) || !(ent.armor > 0)) return dmg;
+    if (!ARMADURA || !(ent.armor > 0)) return dmg;
+    if (this.online && !(this.dedicated && this._entidadeEscolta(ent))) return dmg;
     if (ARMADURA_CHUMBO && fracCabeca > 0 && fracCabeca < 1) {
       const cab = this._aplicaArmadura(ent, dmg * fracCabeca, weap, true);
       return cab + this._aplicaArmadura(ent, dmg * (1 - fracCabeca), weap, false);
@@ -4503,11 +4503,11 @@ export class Game {
     ent.armor = r.colete;
     return r.vida;
   }
-  _armaduraLigada() { return ARMADURA && (!this.online || this.dedicated); }
+  _armaduraLigada(ent) { return ARMADURA && (!this.online || (this.dedicated && this._entidadeEscolta(ent))); }
   _equiparArmadura(ent) {
-    const d = this._armaduraLigada() ? ARMADURA_DEBUG : null;
+    const d = this._armaduraLigada(ent) ? ARMADURA_DEBUG : null;
     // com loja o colete é comprado e só se perde morrendo (CompraPartida.aoAbate)
-    if (!d && this._compra && this._armaduraLigada()) return;
+    if (!d && this._compra && this._armaduraLigada(ent)) return;
     ent.armor = d ? d.colete : 0;
     ent.helmet = !!(d && d.capacete && d.colete > 0);
   }

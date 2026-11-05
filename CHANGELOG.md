@@ -36,6 +36,7 @@
 
 ### Fixed
 - Dedicated online escort simulation, round lifecycle, match-end statistics, online objective reset and horde round-end audio.
+- A dedicated online spectator is now distinct from the authoritative escort server (`net.espectador`): spectators apply objective snapshots and keep presentation, but never decide the winner, schedule respawn waves or run the VIP controller; authoritative guard armor remains scoped to VIP/escort roles instead of every dedicated entity.
 - Prop rotation, aircraft collision, boarding navigation, low-profile solid-cover shadows and recovery firing/movement regressions.
 - Flávio now hides for real: threatened or unescorted, the VIP seeks exported map cover slots (`escortCoverPoints` — sticky choice with margin + minimum dwell, never closer to the threat, immediate switch only for a glued threat or a much safer slot), crouches behind the solid object and only resumes when the escort recovers; engaged guards snap to conflict-zone `guard` cover without sharing points, roamers keep pressuring their lane and converge on contact. Line of sight remains the only acquisition path — no attacker wall-hack, no VIP invisibility.
 - Shelter threat focus is now LOS-gated end to end: a hidden attacker behind a wall never moves the VIP's cover, heading or resume decisions — after losing sight, only a short memory of the last SEEN position (snapshot) applies. No authoritative-information leaks from the escort mode.
