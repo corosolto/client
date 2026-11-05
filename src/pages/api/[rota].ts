@@ -1,7 +1,7 @@
 // Rede de segurança e caminho do preview para as rotas que mudaram de casa. Ver docs/APIS.md.
 import type { APIRoute } from 'astro';
 import { proxyApiRequest } from '../../lib/api-proxy.mjs';
-import { sendXConversion } from '../../lib/x-conversions';
+import { xEventId } from '../../lib/x-pixel';
 
 export const prerender = false;
 
@@ -20,10 +20,6 @@ const MIGRADAS = new Set([
 // clans (backend#72) ainda depende do rollout: 404 upstream vira 503.
 const EM_ROLLOUT = ['social-auth','treta','clans'];
 
-const X_EVENT_IDS: Record<'match_start' | 'match_end', string> = {
-  match_start: 'tw-rh4bd-rii9f',
-  match_end: 'tw-rh4bd-rii9g',
-};
 
 const handler: APIRoute = async (context) => {
   const { params, url, request } = context;
@@ -31,7 +27,7 @@ const handler: APIRoute = async (context) => {
   try { clientAddress = context.clientAddress; } catch { /* Vercel adapter: geo headers remain authoritative. */ }
   const rota = String(params.rota || '').replace(/\/+$/, '');
   const funnelBody = rota === 'funnel' && request.method === 'POST'
-    ? await request.clone().json().catch(() => null) as { step?: unknown; sessionId?: unknown } | null
+    ? await request.clone().json().catch(() => null) as { step?: unknown; matchEventId?: unknown } | null
     : null;
   if (!MIGRADAS.has(rota)) {
     return new Response(JSON.stringify({ error: 'not_found', path: url.pathname }), {
@@ -48,14 +44,18 @@ const handler: APIRoute = async (context) => {
   const step = funnelBody?.step;
   if (resposta.ok && (step === 'match_start' || step === 'match_end')) {
     const clientIp = clientAddress || request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
-    await sendXConversion({
-      eventId: X_EVENT_IDS[step],
-      conversionId: typeof funnelBody?.sessionId === 'string' ? funnelBody.sessionId : undefined,
+    const matchEventId = typeof funnelBody?.matchEventId === 'string' ? funnelBody.matchEventId : crypto.randomUUID();
+    void sendXConversion({
+      eventId: xEventId(step, matchEventId),
+      conversionId: matchEventId,
       identifiers: {
         ipAddress: clientIp === 'unknown' ? undefined : clientIp,
         userAgent: request.headers.get('user-agent') ?? undefined,
       },
-    });
+    }).then((result) => {
+      if (!result.ok && result.reason !== 'not_configured')
+        console.warn('[x-conversion] delivery failed', { status: result.status, reason: result.reason });
+    }).catch(() => {});
   }
   if (resposta.status === 404 && (EM_ROLLOUT.includes(rota) || rota === 'gameplay-upload')) {
     await resposta.body?.cancel().catch(() => {});

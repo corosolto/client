@@ -1,6 +1,7 @@
-const PIXEL_ID = 'rh4bd';
-const ENDPOINT = `https://ads-api.x.com/12/measurement/conversions/${PIXEL_ID}`;
-const HASH_RE = /^[0-9a-f]{64}$/i;
+import { X_EVENT_PREFIX, X_PIXEL_ID } from './x-pixel';
+
+const ENDPOINT = `https://ads-api.x.com/12/measurement/conversions/${X_PIXEL_ID}`;
+const EVENT_ID_RE = new RegExp(`^${X_EVENT_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[A-Za-z0-9_-]+$`);
 const E164_RE = /^\+[1-9]\d{7,14}$/;
 
 export interface XConversionIdentifiers {
@@ -78,7 +79,7 @@ function conversionTime(value?: Date | string): string {
 
 async function payloadFor(input: XConversionInput) {
   const eventId = text(input.eventId);
-  if (!/^tw-rh4bd-[A-Za-z0-9_-]+$/.test(eventId)) throw new Error('invalid_event_id');
+  if (!EVENT_ID_RE.test(eventId)) throw new Error('invalid_event_id');
   const conversion: Record<string, unknown> = {
     conversion_time: conversionTime(input.conversionTime),
     event_id: eventId,

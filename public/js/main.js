@@ -1775,7 +1775,13 @@ const _automacao = () => { try { return navigator.webdriver === true; } catch { 
 function _funnel(step, gameType = null) {
   if (!analyticsAllowed()) return;
   if (testMode || _automacao()) return;
-  sendJsonKeepalive('/api/funnel', { step, ..._clientSessionContext(), ...telemetryGameContext, ...(gameType ? { gameType } : {}) });
+  sendJsonKeepalive('/api/funnel', {
+    step,
+    ..._clientSessionContext(),
+    ...telemetryGameContext,
+    ...(gameType ? { gameType } : {}),
+    ...(step === 'match_start' || step === 'match_end' ? { matchEventId: _matchEventId } : {}),
+  });
 }
 const _tipoDaPartida = () => (telemetryGameContext.gameType === 'multiplayer' ? 'multiplayer' : 'single_player');
 // AQUISIÇÃO (019): 1x por navegador. referrer vira host (URL inteira pode carregar query
