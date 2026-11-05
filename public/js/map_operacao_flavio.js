@@ -172,7 +172,8 @@ export function buildOperacaoFlavio(scene, T = {}) {
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
     mesh.name = nome; mesh.position.set(x, y, z); mesh.rotation.y = yaw; root.add(mesh); return mesh;
   };
-  const faixaEntre = (nome, a, b, largura, mat, y = 0.075) => {
+  const Y_MARCACAO = 0.13;
+  const faixaEntre = (nome, a, b, largura, mat, y = Y_MARCACAO) => {
     const dx = b.x - a.x, dz = b.z - a.z, comprimento = Math.hypot(dx, dz);
     const mesh = bloco(nome, (a.x + b.x) / 2, y, (a.z + b.z) / 2, largura, 0.035, comprimento, mat, false, false);
     mesh.rotation.y = Math.atan2(dx, dz); return mesh;
@@ -444,7 +445,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
   for (let i = 0; i < ESCORT_PATH.length; i++) {
     const anel = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.85, 28), anelCheckpoint);
     anel.name = 'marca-checkpoint-escolta';
-    anel.rotation.x = -Math.PI / 2; anel.position.set(ESCORT_PATH[i].x, 0.06, ESCORT_PATH[i].z);
+    anel.rotation.x = -Math.PI / 2; anel.position.set(ESCORT_PATH[i].x, Y_MARCACAO, ESCORT_PATH[i].z);
     root.add(anel);
   }
   const equipamentos = [

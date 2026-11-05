@@ -27,6 +27,7 @@ const familias = {
     'bay-vira-beco': 'FALHA real-cover-hides-vip-and-stops-hitscan:',
     'ilha-patio-fantasma': 'FALHA real-cover-hides-vip-and-stops-hitscan:',
     'sem-anel-checkpoint': 'FALHA checkpoint-markings-semantic-and-nonsolid:',
+    'anel-afunda': 'FALHA checkpoint-markings-semantic-and-nonsolid:',
     'escada-sem-proxy': 'FALHA prop-yaw-rotates-aabb:',
   }],
   menu: ['operacao-flavio-menu-check.mjs', Object.fromEntries(

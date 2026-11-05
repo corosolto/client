@@ -30,6 +30,7 @@ const edits = {
   'bay-vira-beco': ["['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, true],", "['containers_carga', -13.5, 51.4, 5, 0, 5, 2.6, 2.5, true],"],
   'ilha-patio-fantasma': ["['barreiras_aeroporto', -6.2, 4, 5, 0, 4.5, 1.4, 1.2, true],", "['barreiras_aeroporto', -6.2, 4, 5, 0, 4.5, 1.4, 1.2, false],"],
   'sem-anel-checkpoint': ['for (let i = 0; i < ESCORT_PATH.length; i++) {', 'for (let i = 0; i < ESCORT_PATH.length - 1; i++) {'],
+  'anel-afunda': ['const Y_MARCACAO = 0.13;', 'const Y_MARCACAO = 0.06;'],
   'escada-sem-proxy': ["colliderDoProp('escada_embarque', -3.2, 0, 52.5, 3, 2.4, 4, Math.PI / 2);", ''],
 };
 if (mutant) {
@@ -373,10 +374,16 @@ try {
   });
   check('checkpoint-markings-semantic-and-nonsolid', () => {
     const aneis = loaded.root.children.filter(o => o.name === 'marca-checkpoint-escolta');
+    const piso = loaded.root.children.find(o => o.name === 'piso-hangar');
+    const topoPiso = piso.position.y + piso.geometry.parameters.height / 2;
     assert.equal(aneis.length, 13, '13 anéis de checkpoint');
     loaded.escortPath.forEach((cp, i) => {
       assert.ok(aneis.some(a => Math.abs(a.position.x - cp.x) < 1e-9 && Math.abs(a.position.z - cp.z) < 1e-9), `anel ${i} no checkpoint`);
     });
+    assert.ok(aneis.every(a => a.position.y > topoPiso + 0.02), 'anéis acima da laje do hangar');
+    const faixas = loaded.root.children.filter(o => o.name.startsWith('faixa-box-hangar')
+      || o.name === 'eixo-hangar' || o.name.startsWith('travessa-box-hangar'));
+    assert.ok(faixas.length > 0 && faixas.every(o => o.position.y - o.geometry.parameters.height / 2 > topoPiso + 0.005), 'faixas acima da laje do hangar');
     assert.equal(loaded.colliders.some(c => c.id === 'marca-checkpoint-escolta'), false, 'anéis não são colisores');
     assert.ok(aneis.every(a => !a.castShadow), 'anéis não projetam sombra');
   });
