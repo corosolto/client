@@ -1,7 +1,8 @@
 // Rede de segurança e caminho do preview para as rotas que mudaram de casa. Ver docs/APIS.md.
 import type { APIRoute } from 'astro';
 import { proxyApiRequest } from '../../lib/api-proxy.mjs';
-import { xEventId } from '../../lib/x-pixel';
+import { sendXConversion } from '../../lib/x-conversions';
+import { X_EVENT_IDS } from '../../lib/x-pixel';
 
 export const prerender = false;
 
@@ -46,7 +47,7 @@ const handler: APIRoute = async (context) => {
     const clientIp = clientAddress || request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
     const matchEventId = typeof funnelBody?.matchEventId === 'string' ? funnelBody.matchEventId : crypto.randomUUID();
     void sendXConversion({
-      eventId: xEventId(step, matchEventId),
+      eventId: X_EVENT_IDS[step],
       conversionId: matchEventId,
       identifiers: {
         ipAddress: clientIp === 'unknown' ? undefined : clientIp,
