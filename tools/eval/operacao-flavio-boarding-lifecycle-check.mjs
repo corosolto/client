@@ -41,7 +41,8 @@ async function fixture(){
   dispose(){if(this.disposed)return;this.stop();this.disposed++;}
  }
  globalThis[key]={importModule:()=>new Promise(resolve=>imports.push(()=>resolve({FlavioBoarding:Stage})))};
- const instrumented=source.replace(boundary,'globalThis['+JSON.stringify(key)+'].importModule()');
+ const instrumented=source.replace(boundary,'globalThis['+JSON.stringify(key)+'].importModule()')
+   .replace(/from\s+(['"])([^'"]+)\1/g,(_,quote,spec)=>'from '+JSON.stringify(new URL(spec,new URL('../../public/js/mode_operacao_flavio.js',import.meta.url)).href));
  const {OperacaoFlavio}=await import('data:text/javascript;base64,'+Buffer.from(instrumented+'\n// fixture '+serial).toString('base64'));
  const vip={team:'B',def:{id:'senador'},pos:new THREE.Vector3(),_meshWeapon:'knife',alive:true};
  const effective={...vip.def,effectiveFixture:true};

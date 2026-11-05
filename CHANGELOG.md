@@ -27,12 +27,20 @@
 
 ### Added
 - Operação Flávio now has five connected escort routes, human-scale airport seating, additional solid cover and a route-facing first-person spawn.
+- Boarding lounge and apron protection now revolves around real airport objects (1.8 m planters, a container bay, GPUs, check-in counters) that hide the 1.72 m VIP and break attacker approach lanes; the nav graph stays one dead-end-free component. `escortCoverPoints` grows to 28 role/zone slots supporting 6×6 escorts (4 direct guards + 2 roamers), and attacker spawns or graph paths never funnel into the boarding lounge.
+- Gauntlet iteration from live captures: staggered real cover islands every ~8–12 m across the patio, hangar mouth and apron (baggage tugs, service cars, barriers, tool carts); boarding stairs tucked against the fuselage with a hard-cover service car at their base; both E approach lanes balanced (10×8 tall cover); the oversized foreground railing at the west E spawn removed; the queue belt split with a central gap; amber checkpoint rings as semantic route markings; distant ridges restore sky/aircraft contrast; the black terminal capture was an invalid vantage inside the new counter, now pinned by a waypoints-and-lighting contract. `escortCoverPoints` grows to 43 slots with ≥2 VIP cover slots within 8 m of every intermediate checkpoint.
+- Operação Flávio escorts now run as a role squad: four direct VIP guards carry exactly one LMG, one shotgun, one rifle and one sniper (armor + helmet every life, skill floor above the enemy average), and extra defenders become forward roamers holding the vanguard two checkpoints ahead — no wall-hacks, online authority unchanged.
+- Attacker respawns are forward/base-only: never behind the convoy, never inside the boarding lounge (south terminal pocket, `x∈(-29,29) z∈(-57,-44)` mirrored in map evals and docs), always ≥7 m from the VIP and route-reachable from the next checkpoint; defenders keep the rear wave.
 - Attackers actively contest the escort, while VIP always carries armor, a helmet and a working PT-38.
 - Escort recovery includes physical path replanning, stable formation slots and online-authoritative respawn waves.
 
 ### Fixed
 - Dedicated online escort simulation, round lifecycle, match-end statistics, online objective reset and horde round-end audio.
 - Prop rotation, aircraft collision, boarding navigation, low-profile solid-cover shadows and recovery firing/movement regressions.
+- Flávio now hides for real: threatened or unescorted, the VIP seeks exported map cover slots (`escortCoverPoints` — sticky choice with margin + minimum dwell, never closer to the threat, immediate switch only for a glued threat or a much safer slot), crouches behind the solid object and only resumes when the escort recovers; engaged guards snap to conflict-zone `guard` cover without sharing points, roamers keep pressuring their lane and converge on contact. Line of sight remains the only acquisition path — no attacker wall-hack, no VIP invisibility.
+- Shelter threat focus is now LOS-gated end to end: a hidden attacker behind a wall never moves the VIP's cover, heading or resume decisions — after losing sight, only a short memory of the last SEEN position (snapshot) applies. No authoritative-information leaks from the escort mode.
+- Formation and cover routing follow the same rule: threats the VIP cannot see never engage the formation, pull roamers off their lane or reserve guard cover — attackers remain visible only through genuine line of sight, with a short seen-recently memory so marching sightline gaps don't re-trigger engagements.
+- The pistol now always serves the authored PT-38 pilot from the public catalog (`gold#pistol`), in Operação Flávio and every mode; the private factory chassis stays available for A/B via `?vmgolden=0`, and the legacy procedural viewmodel no longer takes over silently when the private asset channel is missing.
 
 ## Não lançado — 2026-10-19
 

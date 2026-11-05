@@ -8,6 +8,9 @@ if (process.argv.includes('--mutante=marcha-curta')) {
   source = source.replace(old, 'for (let i = 0; i < 24; i++)');
   console.log('Mutante marcha-curta aplicado');
 }
+const modeUrl = new URL('../../public/js/mode_operacao_flavio.js', import.meta.url);
+source = source.replace(/from\s+(['"])([^'"]+)\1/g, (_, quote, spec) =>
+  'from ' + JSON.stringify(new URL(spec, modeUrl).href));
 const { OperacaoFlavio } = await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 const nodes = [];
 const master = {};

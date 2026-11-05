@@ -18,6 +18,8 @@
  *                     confere os bytes por SHA-256 antes de publicar
  *   VL7 ak golden     a 'ak' serve a GOLDEN aprovada (gold#ak, coro/ak-hires.glb 4094c053…), nada mais
  *                     (sem catálogo privado não dá para medir → VERMELHO)
+ *   VL8 pt-38 golden  a 'pistol' serve a golden PÚBLICA no lançamento (gold#pistol,
+ *                     coro/pistol-hires.glb 45b65dc9fe…) e ?vmgolden=0 devolve o chassi fab#pistol
  *
  *   node tools/eval/vm-launch-check.mjs              # régua no estado do repo
  *   node tools/eval/vm-launch-check.mjs --mutantes   # prova que ela morde
@@ -41,6 +43,8 @@ const FILES = {
 const read = (key) => fs.readFileSync(FILES[key], 'utf8');
 // sha256 da AK golden aprovada pelo dono (rig A, coro/ak-hires.glb) — o mesmo prefixo de GOLDEN_VER.ak.
 const AK_GOLDEN_SHA = '4094c053';
+// sha256 da PT-38 golden pública (piloto coro/pistol-hires.glb) — prefixo de GOLDEN_VER.pistol.
+const PISTOL_GOLDEN_SHA = '45b65dc9fe';
 let serial = 0;
 
 // Módulo a partir de FONTE (mutável): especificador relativo vira URL absoluta,
@@ -219,6 +223,27 @@ async function audit(sources, { jogo = true, catalogo = true, manifesto = true, 
     chave: fonte.chave, url: fonte.url, sha: sha.slice(0, 10),
     msg: `a 'ak' não serve a golden aprovada (chave ${fonte.chave || '—'}, sha ${sha.slice(0, 10) || 'ausente'}; esperado gold#ak e ${AK_GOLDEN_SHA})` });
 
+  // VL8: decisão do dono (05/11) — PT-38 = golden do catálogo PÚBLICO, servida no
+  // LANÇAMENTO (sem query), não só na revisão. Antes o chassi X18 da fábrica (catálogo
+  // privado) vencia a golden e a pistola caía no legado EM SILÊNCIO onde o privado falta
+  // (Operação Flávio). `?vmgolden=0` devolve o chassi; o produto K fica no A/B duplo.
+  const pistol = authored.vmFonteDe('pistol');
+  const pistolRev = rev.authored.vmFonteDe('pistol');
+  const semGolden = await load(sources, '?vmgolden=0');
+  const chassiPistol = semGolden.authored.vmFonteDe('pistol');
+  const pistolGlb = path.join(ROOT, 'public/models/viewmodels/coro/pistol-hires.glb');
+  const pistolSha = fs.existsSync(pistolGlb) ? (await import('node:crypto')).createHash('sha256').update(fs.readFileSync(pistolGlb)).digest('hex') : '';
+  const pistolVersao = new URLSearchParams(pistol.url.split('?')[1] || '').get('v');
+  const pistolAds = config.VM_WEAPON.pistol?.ads;
+  check('VL8', pistol.chave === 'gold#pistol' && pistolRev.chave === 'gold#pistol'
+    && pistol.url.startsWith('/models/viewmodels/coro/pistol-hires.glb')
+    && pistolSha.startsWith(PISTOL_GOLDEN_SHA) && pistolVersao === pistolSha.slice(0, 10)
+    && chassiPistol.chave === 'fab#pistol'
+    && pistolAds?.golden?.osso === 'CoroWeapon' && Array.isArray(pistolAds?.linha?.off),
+    { chave: pistol.chave, revisao: pistolRev.chave, vmgolden0: chassiPistol.chave,
+      url: pistol.url, sha: pistolSha.slice(0, 10), ads: pistolAds ? { osso: pistolAds.golden?.osso, linha: pistolAds.linha?.off } : null,
+      msg: `a 'pistol' não serve a golden pública no lançamento (chave ${pistol.chave || '—'}, revisão ${pistolRev.chave || '—'}, ?vmgolden=0 ${chassiPistol.chave || '—'}, sha ${pistolSha.slice(0, 10) || 'ausente'}; esperado gold#pistol + ${PISTOL_GOLDEN_SHA}, A/B fab#pistol e ads.golden medido no CoroWeapon)` });
+
   if (jogo) {
     const semChave = await gameProbe(sources.game !== read('game') ? sources.game : '', '');
     const revisao = await gameProbe(sources.game !== read('game') ? sources.game : '', '?vmauthored=1');
@@ -277,6 +302,10 @@ if (process.argv.includes('--mutantes')) {
     ['granada-fora-da-chave', ['VL1'], mut('launch', "[...WEAPON_IDS, 'grenade']", '[...WEAPON_IDS]')],
     ['chave-sem-asset', ['VL6'], { ...base, config: allReady(base.config, { launch: true }) }, { catalogo: false, manifesto: false }],
     ['ak-servida-pelo-k', ['VL7'], mut('config', "ak: W('ak', { baked: true, golden: true,", "ak: W('ak', { baked: true,")],
+    ['pistol-servida-pela-fabrica', ['VL8'], mut('config', "pistol: W('pistol', { baked: true, golden: true,", "pistol: W('pistol', { baked: true,")],
+    ['fabrica-sobre-golden', ['VL8'], mut('authored',
+      '  if (GOLDEN_VM && (VM_WEAPON[weapon]?.golden === true || GOLDEN_QS.has(weapon))) return `gold#${weapon}`;\n  if (fabricaAtiva(weapon)) return `fab#${weapon}`;',
+      '  if (fabricaAtiva(weapon)) return `fab#${weapon}`;\n  if (GOLDEN_VM && (VM_WEAPON[weapon]?.golden === true || GOLDEN_QS.has(weapon))) return `gold#${weapon}`;')],
   ];
   result.mutantes = [];
   for (const [nome, espera, sources, opcoes = {}] of mutantes) {

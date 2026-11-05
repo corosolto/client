@@ -65,7 +65,7 @@ const readyFamilies = Object.entries(VM_FAMILY)
 check(readyFamilies.length === Object.keys(VM_FAMILY).length,
   'todas as famílias abrem o lançamento padrão', readyFamilies.join(', '));
 // O dono pediu as 26 mãos novas sem query em 27/09; a fábrica cobre 24 armas,
-// a AK mantém a golden aprovada, e a faca tem rig próprio.
+// a AK e a PT-38 mantêm a golden (pública) aprovada, e a faca tem rig próprio.
 const armasServidas = Object.entries(VM_WEAPON)
   .filter(([, c]) => VM_FAMILY[c.family]?.ready === true && c.ready !== false)
   .map(([w]) => w).sort();
@@ -73,16 +73,18 @@ check(armasServidas.length === Object.keys(VM_WEAPON).length,
   'todas as armas de fogo chegam ao jogador', armasServidas.join(', '));
 const rotas = Object.fromEntries(armasServidas.map((w) => [w, vmFonteDe(w).chave]));
 check(Object.keys(VM_FABRICA).length === 24 && Object.entries(rotas).every(([w, key]) =>
-  key === (w === 'ak' ? 'gold#ak' : `fab#${w}`)),
-  'fábrica por padrão nas 24 armas; AK conserva a golden', JSON.stringify(rotas));
+  key === (['ak', 'pistol'].includes(w) ? `gold#${w}` : `fab#${w}`)),
+  'fábrica por padrão nas 24 armas; AK e PT-38 conservam a golden pública', JSON.stringify(rotas));
 check(/VM_WEAPON\[weapon\]\?\.ready !== false/.test(runtime),
   'runtime honra o portão por arma (ready:false em VM_WEAPON)');
-// Decisão do dono (24/09): a AK é a GOLDEN aprovada (rig A); nenhuma outra arma volta ao golden
-// sem decisão. Mutante ak-k: a AK servida pelo catálogo K tem de reprovar.
+// Decisões do dono: AK golden desde 24/09; PT-38 golden pública desde 05/11 (Operação
+// Flávio e global — o chassi X18 da fábrica é catálogo privado e caía no legado em silêncio).
+// O produto K continua ligado (`runtime:'family'`) para o A/B `?vmgolden=0&vmfabrica=0`.
+// Mutante ak-k: a AK servida pelo catálogo K tem de reprovar.
 const goldenFogo = Object.entries(VM_WEAPON).filter(([, c]) => c.golden === true).map(([w]) => w);
-check(mutant !== 'ak-k' && goldenFogo.join(',') === 'ak'
+check(mutant !== 'ak-k' && goldenFogo.join(',') === 'ak,pistol'
     && VM_WEAPON.pistol?.runtime === 'family',
-  'AK conserva a única golden; pistola K mantém a rota de família para A/B',
+  'AK e PT-38 conservam a golden; pistola K mantém a rota de família para A/B',
   goldenFogo.join(', '));
 check(/vmauthored/.test(runtime), 'kill-switch ?vmauthored=0 derruba o caminho autorado inteiro');
 check(/setAim\(id[^)]*amount/.test(runtime) && /this\.adsAmount/.test(runtime),

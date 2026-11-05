@@ -303,10 +303,14 @@ const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
 export const entryKeyFor = (weapon) => {
   const family = familyFor(weapon);
   if (!family) return '';
-  if (fabricaAtiva(weapon)) return `fab#${weapon}`;
   if (VM_FONTE === 'retarget') return `rt#${weapon}`;
   if (VM_FONTE === 'goldsrc') return `gs#${weapon}`;
+  // Golden (produto APROVADO pelo dono, catálogo público — ak e pistol) vence o chassi
+  // da fábrica (catálogo privado): antes o lançamento servia o X18 e a PT-38 caía no
+  // legado EM SILÊNCIO onde o privado falta (05/11, Operação Flávio). A pintura equipada
+  // já chegava aqui por skinnedEntryKey; `?vmgolden=0` devolve o chassi para A/B.
   if (GOLDEN_VM && (VM_WEAPON[weapon]?.golden === true || GOLDEN_QS.has(weapon))) return `gold#${weapon}`;
+  if (fabricaAtiva(weapon)) return `fab#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;
 };
 // Fonte que o runtime serve para a arma (revisão/QA/réguas): chave e URL. VL7 do eval:vm-launch.
@@ -797,7 +801,10 @@ export class AuthoredViewModels {
     // ADS (M6): o CANO fica colinear com o eixo óptico (rotação do mount) e só
     // então a alça MEDIDA desliza ao centro — não um ponto cruzando em diagonal.
     const ads = this.adsAmount;
-    const adsConfig = adsEfetivo(cfgArma(this.weapon)?.ads, ADS1P_FIX);
+    // ADS por ROTA (como o frame): golden usa a tabela do PRÓPRIO produto — o piloto
+    // da PT-38 vive em unidades próprias (~97 un/m) e o off/alívio em metro da fábrica
+    // seria invisível; a AK golden já lia a própria tabela por ficar fora de VM_FABRICA.
+    const adsConfig = adsEfetivo((active.golden ? VM_WEAPON[this.weapon] : cfgArma(this.weapon))?.ads, ADS1P_FIX);
     const wrap = active.mint?.active || active.adsSockets?.sight;
     if (ads > 0.001 && adsConfig && wrap) {
       if (adsConfig.auto) {

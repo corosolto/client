@@ -18,8 +18,8 @@ const mutations = {
     clause: 'VIP tem pistola visível, colete e capacete restaurados a cada rodada',
   },
   'vip-sem-combate': {
-    before: 'bot.crouchBias = Boolean(this.state.threatened);\n      return false;',
-    after: 'bot.crouchBias = Boolean(this.state.threatened);\n      return true;',
+    before: 'bot.crouchBias = Boolean(this.state.threatened || (this.state.unattendedFor || 0) > 0.5);\n      return false;',
+    after: 'bot.crouchBias = Boolean(this.state.threatened || (this.state.unattendedFor || 0) > 0.5);\n      return true;',
     clause: 'VIP vivo usa aquisição LOS, tiro e recarga genéricos',
   },
 };

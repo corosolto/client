@@ -51,6 +51,12 @@ game.scene.updateMatrixWorld(true); game.world.root.updateMatrixWorld(true);
 const vip = game.objective.vip, guard = game.bots.find(b => b.team === 'B' && b !== vip), enemy = game.bots.find(b => b.team === 'E');
 game.bots = [vip, guard, enemy]; game.combatants = [...game.bots];
 vip.pos.set(0, 0, -12); guard.pos.set(9, 0, -17); enemy.pos.set(6, 0, -17);
+// ROTEAMENTO LEGÍTIMO: o gate do modo só engaja a formação com ameaça que o VIP VÊ
+// (_ameacasRoteamento) — o balcão deste cenário bloqueia a vista do VIP pro inimigo,
+// a formação desengajaria e o reagrupamento deixaria de ser exercido (o mutante
+// para-apos-lateral perdia a prova semântica). Olhos do VIP forçados ANTES das
+// consultas de destino; a física/aquisição do guarda seguem reais.
+game.objective._vipTemLos = () => true;
 enemy.hp = 1e6; guard.weapon = 'ak'; guard.mag = 30; guard.target = null; guard.think = 0;
 guard.path = null; guard.repathAt = 0; guard._repathMin = 0;
 const slot = { ...game.objective.botDestination(guard) };

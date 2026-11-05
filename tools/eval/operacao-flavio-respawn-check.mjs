@@ -9,6 +9,9 @@ const mutants = {
   relativo: ['mode_operacao_flavio.js', 'return epoch + (Math.floor((now - epoch) / 8) + 1) * 8;', 'return epoch + (Math.floor((now - epoch) / 8) + 1) * 8 - now;', /mortes na mesma janela aguardam/],
   'vip-revive': ['mode_operacao_flavio.js', 'if (ent === this.vip) return Infinity;', 'if (ent === this.vip) return now + 8;', /VIP morto não revive/],
   'spawn-antigo': ['game.js', 'const list = this.objective?.spawnCandidates?.(team) || this.world.spawns[team] || [];', 'const list = this.world.spawns[team] || [];', /respawn nunca fica à frente|spawn acompanha checkpoint/],
+  'e-retaguarda': ['mode_operacao_flavio.js', 'const aFrente = (p) => p.z > vipZ && !sala(p) && semColisao(p)', 'const aFrente = (p) => p.z < vipZ && !sala(p) && semColisao(p)', /atacante renasce na vanguarda ou na base/],
+  'e-na-sala': ['mode_operacao_flavio.js', 'const aFrente = (p) => p.z > vipZ && !sala(p) && semColisao(p)', 'const aFrente = (p) => p.z > vipZ && semColisao(p)', /atacante não renasce na sala de embarque/],
+  'e-colidado-vip': ['mode_operacao_flavio.js', '&& Math.hypot(p.x - this.vip.pos.x, p.z - this.vip.pos.z) >= ATAQUE_DIST_VIP;', ';', /atacante guarda distância mínima do VIP/],
 };
 if (process.argv.includes('--mutantes')) {
   for (const [name, [, , , failure]] of Object.entries(mutants)) {
@@ -60,23 +63,58 @@ for (const dedicated of [false, true]) {
       assert.equal(g.objective.vip.respawnAt, Infinity, 'VIP morto não revive no meio do objetivo');
       g.objective.vip.alive = true;
     });
-    for (let k = 0; k < g.world.escortPath.length; k++) for (const team of ['E', 'B']) check('retaguarda física '+JSON.stringify({ dedicated, k, team }), () => {
+    const sala = (p) => p.x > -29 && p.x < 29 && p.z > -57 && p.z < -44;   // bounds espelhados do mapa (SALA_EMBARQUE)
+    for (let k = 0; k < g.world.escortPath.length; k++) for (const team of ['E', 'B']) check(('retaguarda física ' + JSON.stringify({ dedicated, k, team })), () => {
       const vip = g.objective.vip, path = g.world.escortPath;
       g.objective.state.checkpoint = k;
       Object.assign(g.objective.state.position, path[k]);
       vip.pos.set(path[k].x, 0, path[k].z);
       const anchor = path[Math.max(0, k - 1)];
+      const vanguarda = path[Math.min(k + 1, path.length - 1)];
+      const base = (spawn) => (g.world.spawns.E || []).some((s) => s.x === spawn.x && s.z === spawn.z);
+      if (team === 'E') {
+        const lista = g.objective.spawnCandidates('E');
+        assert.ok(Array.isArray(lista) && lista.length, 'atacante tem candidatos de vanguarda/base');
+        assert.ok(lista.every((p) => !sala(p)), 'atacante não renasce na sala de embarque');
+        assert.ok(lista.every((p) => p.z > vip.pos.z || base(p)), 'atacante renasce na vanguarda ou na base');
+        assert.ok(lista.filter((p) => !base(p)).every((p) => Math.hypot(p.x - vip.pos.x, p.z - vip.pos.z) >= 7), 'atacante guarda distância mínima do VIP');
+      }
       for (let attempt = 0; attempt < 3; attempt++) {
         const spawn = g._pickSpawn(team);
-        assert.ok(spawn.z < vip.pos.z, 'respawn nunca fica à frente do VIP');
-        assert.ok(Math.hypot(spawn.x - anchor.x, spawn.z - anchor.z) <= 18, 'spawn acompanha checkpoint anterior, sem ficar preso na base inicial');
+        if (team === 'B') {
+          assert.ok(spawn.z < vip.pos.z, 'respawn nunca fica à frente do VIP');
+          assert.ok(Math.hypot(spawn.x - anchor.x, spawn.z - anchor.z) <= 18, 'spawn acompanha checkpoint anterior, sem ficar preso na base inicial');
+        } else {
+          assert.ok(spawn.z > vip.pos.z || base(spawn), 'atacante renasce na vanguarda ou na base');
+          assert.ok(!sala(spawn), 'atacante não renasce na sala de embarque');
+          if (spawn.z > vip.pos.z) assert.ok(Math.hypot(spawn.x - vip.pos.x, spawn.z - vip.pos.z) >= 7, 'atacante guarda distância mínima do VIP');
+          assert.ok(base(spawn) || Math.hypot(spawn.x - vanguarda.x, spawn.z - vanguarda.z) <= 18, 'vanguarda acompanha o próximo checkpoint');
+        }
         assert.ok(!g.world.colliders.some(c => c.minY < 1.8 && c.maxY > .1 && spawn.x > c.minX - .4 && spawn.x < c.maxX + .4 && spawn.z > c.minZ - .4 && spawn.z < c.maxZ + .4), 'corpo nasce fora de parede/prop');
-        const from = g.world.nearestWaypoint(spawn.x, spawn.z), to = g.world.nearestWaypoint(anchor.x, anchor.z);
-        assert.ok(from === to || g.world.findPath(from, to).at(-1) === to, 'retaguarda tem rota até o checkpoint');
+        const alvo = team === 'B' ? anchor : vanguarda;
+        const from = g.world.nearestWaypoint(spawn.x, spawn.z), to = g.world.nearestWaypoint(alvo.x, alvo.z);
+        assert.ok(from === to || g.world.findPath(from, to).at(-1) === to, 'spawn tem rota até o comboio');
       }
-      if (team === 'E' && !dedicated) { g._respawnPlayer(); assert.ok(g.player.pos.z < vip.pos.z); }
+      if (team === 'E' && !dedicated) {
+        g._respawnPlayer();
+        assert.ok(g.player.pos.z > vip.pos.z || base(g.player.pos), 'jogador E renasce na vanguarda ou na base');
+        assert.ok(!sala(g.player.pos), 'jogador E não renasce na sala de embarque');
+      }
       const body = g.bots.find(b => b.team === team && b !== vip);
-      assert.ok(body); g._respawnEntity(body); assert.ok(body.pos.z < vip.pos.z);
+      assert.ok(body); g._respawnEntity(body);
+      if (team === 'B') assert.ok(body.pos.z < vip.pos.z);
+      else assert.ok(body.pos.z > vip.pos.z || base({ x: body.pos.x, z: body.pos.z }), 'bot E renasce na vanguarda ou na base');
+    });
+    for (let k = 0; k < g.world.escortPath.length; k++) check(('fuga permanece possível ' + JSON.stringify({ dedicated, k })), () => {
+      const path = g.world.escortPath, vip = g.objective.vip;
+      g.objective.state.checkpoint = k;
+      Object.assign(g.objective.state.position, path[k]);
+      vip.pos.set(path[k].x, 0, path[k].z);
+      const candidates = g.objective.spawnCandidates('E');
+      assert.ok(Array.isArray(candidates) && candidates.length > 0, 'atacante sempre tem vanguarda ou base para renascer');
+      const from = g.world.nearestWaypoint(path[Math.max(0, k - 1)].x, path[Math.max(0, k - 1)].z);
+      const to = g.world.nearestWaypoint(path.at(-1).x, path.at(-1).z);
+      assert.ok(from === to || g.world.findPath(from, to).at(-1) === to, 'rota de fuga do VIP até o embarque permanece íntegra');
     });
     check('countdown conserva pontos iniciais '+JSON.stringify({ dedicated }), () => {
       g.state = 'countdown';

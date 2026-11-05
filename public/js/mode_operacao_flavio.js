@@ -1,3 +1,5 @@
+import { WEAPONS } from './data/weapons.js';
+
 const ESCORT_RADIUS = 6;
 const CONTEST_RADIUS = 4;
 const THREAT_RADIUS = 14;
@@ -14,6 +16,41 @@ const GUARD_ENGAGE_RADIUS = 7.5;
 const GUARD_SLOT_RADIUS = 1.6;
 const GUARD_PROTECT_RADIUS = 4.5;
 const GUARD_ASSIGN_RADIUS = 12;
+// Histerese da orientação da formação: engata dentro de GUARD_ENGAGE_RADIUS e só solta o
+// contato além de 1,25x; ameaças quase equidistantes não podem alternar o docking a cada
+// quadro (era o flicker visível dos guardas durante a escolta).
+const ENGAGE_SAIDA = 1.25;
+const FOCO_TROCA = 0.75;         // troca a ameaça engajada só com 25% de vantagem
+const ORIENTACAO_TROCA = 0.85;   // referência desengajada troca só com 15% de vantagem
+// Respawn do ATAQUE: vanguarda/base, nunca a retaguarda do comboio nem a sala de embarque.
+const ATAQUE_DIST_VIP = 7;       // atacante não renasce colado no VIP
+// Sala de embarque: faixa sul do terminal (spawn B e checkpoint 0) mais o bolso externo
+// das portas sul. Espelhado no map-eval e em docs/maps/operacao-decola.md.
+const SALA_EMBARQUE = { minX: -29, maxX: 29, minZ: -57, maxZ: -44 };
+// Papéis da escolta: 4 guardas diretos com um LMG, uma escopeta, um rifle e um sniper, e
+// flanqueadores de vanguarda (2+ em partidas 7x7+; 6x6 mantém os 4 guardas). Guardas são
+// mais eficazes (piso de skill) e mais duros de matar (colete+capacete) SEM visão extra:
+// aquisição de alvo segue a IA genérica, com LOS obrigatória — sem wallhack.
+const GUARDAS_DIRETOS = 4;
+const ARMAS_GUARDA = ['lmg', 'shotgun', 'ak', 'awp'];
+const ARMAS_FLANQUEADOR = ['mp5', 'carbine'];
+const GUARDA_SKILL_PISO = 1.25;
+const GUARDA_SKILL_VANTAGEM = 1.1;   // piso também fica acima da média inimiga
+const FLANQUEADOR_VANGUARDA = 2;     // checkpoints à frente do comboio
+const FLANQUEADOR_LATERAL = 3.4;
+const FLANQUEADOR_LEASH = 30;
+// Abrigo real (exportado pelo mapa em world.escortCoverPoints — {x, z, role, zone}): o VIP
+// ameaçado ou sem escolta busca cobertura de objeto sólido em vez de parar no checkpoint
+// cru; guardas engajados fazem snap para cobertura da zona de conflito. LOS e fairness
+// seguem intactos: nada de wallhack para o ataque, nada de invisibilidade para o VIP.
+const ABRIGO_RAIO = 8;             // abrigo precisa ficar perto do âncora de recuo
+const ABRIGO_PESO_ANCORA = 1.4;    // perto do comboio pesa mais que longe da ameaça
+const ABRIGO_TROCA = 1.5;          // histerese: troca de abrigo só com vantagem clara
+const ABRIGO_COLADA = 4;           // ameaça colada no abrigo força troca
+const ABRIGO_TROCA_FORTE = 4;       // emergência: abrigo muito mais seguro troca na hora
+const ABRIGO_MIN_PERMANENCIA = 1.5; // moradia mínima: oscilação não muda o corpo de lugar
+const ROTEAMENTO_MEMORIA = 4;      // visto há <4 s segue roteando a formação (brechas de LOS em marcha)
+const GUARDA_COBERTURA_RAIO = 4;   // snap do guarda engajado à cobertura role 'guard'
 const GUARD_SLOTS = [
   { right: 0, forward: 2.4 },
   { right: -2.2, forward: 1.2 }, { right: 2.2, forward: 1.2 },
@@ -39,6 +76,7 @@ const vivosNoRaio = (lista, pos, raio) => lista.filter((ent) => ent.alive !== fa
 const formacoesEscolta = new WeakMap();
 const formacoesAtaque = new WeakMap();
 const orientacoesEscolta = new WeakMap();
+const reservasCobertura = new WeakMap();
 
 function slotEscolta(bot, vip, defensores) {
   let formacao = formacoesEscolta.get(vip);
@@ -62,31 +100,91 @@ function slotEscolta(bot, vip, defensores) {
   return livres[Math.max(0, ordem) % livres.length];
 }
 
-export function destinoProtecaoEscolta(bot, vip, defensores = [], ameacas = [], out = null) {
-  if (!bot?.pos || !vip?.pos || bot.alive === false || bot === vip) return null;
-  if (!defensores.includes(bot)) return null;
-  const slot = GUARD_SLOTS[slotEscolta(bot, vip, defensores)];
+// Ameaça viva mais próxima do VIP (distância ao quadrado, convenção do d2).
+function ameacaMaisProxima(vip, ameacas) {
   let maisPerto = null, menorDistancia = Infinity;
   for (const ent of ameacas) {
     if (ent?.alive === false || !ent?.pos) continue;
     const distancia = d2(ent.pos, vip.pos);
     if (distancia < menorDistancia) { maisPerto = ent; menorDistancia = distancia; }
   }
-  const interceptar = maisPerto && menorDistancia <= GUARD_ENGAGE_RADIUS * GUARD_ENGAGE_RADIUS;
-  let contato = orientacoesEscolta.get(vip);
-  if (interceptar && contato?.ameaca !== maisPerto) {
-    contato = {
-      ameaca: maisPerto,
-      yaw: Math.atan2(maisPerto.pos.x - vip.pos.x, maisPerto.pos.z - vip.pos.z),
-      distancia: menorDistancia,
-    };
-    orientacoesEscolta.set(vip, contato);
-  } else if (!interceptar && contato) {
-    orientacoesEscolta.delete(vip);
-    contato = null;
+  return { maisPerto, menorDistancia };
+}
+
+// Orientação da formação com HISTERESE (Schmitt): o contato ancora o yaw na primeira
+// exposição e só solta quando a ameaça sai do raio ampliado (ENGAGE_SAIDA) ou morre;
+// desengajada, a referência só troca com vantagem clara de distância. A alternação do
+// contato a cada quadro girava o docking inteiro — o flicker dos guardas na escolta.
+function orientacaoFormacao(vip, ameacas) {
+  const { maisPerto, menorDistancia } = ameacaMaisProxima(vip, ameacas);
+  let orient = orientacoesEscolta.get(vip);
+  if (orient && (orient.ameaca?.alive === false || !orient.ameaca?.pos)) orient = null;
+  if (orient?.engajado) {
+    const distancia = d2(orient.ameaca.pos, vip.pos);
+    if (distancia > (GUARD_ENGAGE_RADIUS * ENGAGE_SAIDA) ** 2) orient.engajado = false;
+    else if (maisPerto && maisPerto !== orient.ameaca && menorDistancia < distancia * FOCO_TROCA ** 2) {
+      orient = { ameaca: maisPerto, yaw: Math.atan2(maisPerto.pos.x - vip.pos.x, maisPerto.pos.z - vip.pos.z), distancia: menorDistancia, engajado: true };
+    }
   }
-  const yaw = contato ? contato.yaw : maisPerto
-    ? Math.atan2(maisPerto.pos.x - vip.pos.x, maisPerto.pos.z - vip.pos.z)
+  if (orient && !orient.engajado) {
+    if (maisPerto && menorDistancia <= GUARD_ENGAGE_RADIUS ** 2) {
+      orient = { ameaca: maisPerto, yaw: Math.atan2(maisPerto.pos.x - vip.pos.x, maisPerto.pos.z - vip.pos.z), distancia: menorDistancia, engajado: true };
+    } else if (maisPerto) {
+      const distanciaReferencia = orient.ameaca?.pos ? d2(orient.ameaca.pos, vip.pos) : Infinity;
+      const valida = distanciaReferencia <= (THREAT_RADIUS * ENGAGE_SAIDA) ** 2
+        && (orient.ameaca === maisPerto || menorDistancia < distanciaReferencia * ORIENTACAO_TROCA ** 2);
+      if (!valida) orient.ameaca = maisPerto;
+    }
+  }
+  if (!orient && maisPerto) {
+    orient = menorDistancia <= GUARD_ENGAGE_RADIUS ** 2
+      ? { ameaca: maisPerto, yaw: Math.atan2(maisPerto.pos.x - vip.pos.x, maisPerto.pos.z - vip.pos.z), distancia: menorDistancia, engajado: true }
+      : { ameaca: maisPerto, engajado: false };
+  }
+  if (orient) orientacoesEscolta.set(vip, orient); else orientacoesEscolta.delete(vip);
+  return orient;
+}
+
+// Snap de cobertura do guarda engajado: dentro do raio do slot, prefere ponto real do
+// mapa (role do papel primeiro), sem duplicar ponto entre defensores vivos e sem puxar
+// na direção da ameaça. Sem coberturas (mundos sintéticos) o destino é o slot legado.
+function coberturaGuarda(bot, vip, defensores, coberturas, destino, ameaca) {
+  if (!Array.isArray(coberturas) || !coberturas.length) return null;
+  let reservas = reservasCobertura.get(vip);
+  if (!reservas) { reservas = new Map(); reservasCobertura.set(vip, reservas); }
+  const vivos = new Set(defensores.filter((ent) => ent !== vip && ent.alive !== false && ent !== bot));
+  for (const [dono, ponto] of reservas) if (!vivos.has(dono)) reservas.delete(dono);
+  const meu = reservas.get(bot);
+  if (meu && Math.hypot(meu.x - destino.x, meu.z - destino.z) <= GUARDA_COBERTURA_RAIO) return meu;
+  const papel = bot._flavioPapel === 'flanqueador' ? 'roamer' : 'guard';
+  let melhor = null, melhorNota = -Infinity;
+  for (const ponto of coberturas) {
+    if (!Number.isFinite(ponto?.x) || !Number.isFinite(ponto?.z)) continue;
+    const distancia = Math.hypot(ponto.x - destino.x, ponto.z - destino.z);
+    if (distancia > GUARDA_COBERTURA_RAIO) continue;
+    let tomado = false;
+    for (const [dono, reserva] of reservas) {
+      if (dono !== bot && vivos.has(dono) && reserva === ponto) { tomado = true; break; }
+    }
+    if (tomado) continue;
+    const daAmeaca = ameaca?.pos ? Math.hypot(ponto.x - ameaca.pos.x, ponto.z - ameaca.pos.z) : 0;
+    const nota = (ponto.role === papel ? 2 : 0) + Math.min(daAmeaca, 20) * 0.05 - distancia * 0.5;
+    if (nota > melhorNota) { melhorNota = nota; melhor = ponto; }
+  }
+  if (!melhor) { reservas.delete(bot); return null; }
+  reservas.set(bot, melhor);
+  return melhor;
+}
+
+export function destinoProtecaoEscolta(bot, vip, defensores = [], ameacas = [], out = null, coberturas = null) {
+  if (!bot?.pos || !vip?.pos || bot.alive === false || bot === vip) return null;
+  if (!defensores.includes(bot)) return null;
+  const slot = GUARD_SLOTS[slotEscolta(bot, vip, defensores)];
+  const orient = orientacaoFormacao(vip, ameacas);
+  const contato = orient?.engajado ? orient : null;
+  const referencia = contato || (orient?.ameaca?.pos ? { ameaca: orient.ameaca } : null);
+  const yaw = contato ? contato.yaw
+    : referencia ? Math.atan2(referencia.ameaca.pos.x - vip.pos.x, referencia.ameaca.pos.z - vip.pos.z)
     : Number.isFinite(vip.yaw) ? vip.yaw : 0;
   const rightX = Math.cos(yaw), rightZ = -Math.sin(yaw);
   const forwardX = Math.sin(yaw), forwardZ = Math.cos(yaw);
@@ -99,6 +197,8 @@ export function destinoProtecaoEscolta(bot, vip, defensores = [], ameacas = [], 
     const avanco = Math.min(1.2, Math.max(0, GUARD_PROTECT_RADIUS - radial), Math.max(0, limite - radial));
     destino.x += forwardX * avanco;
     destino.z += forwardZ * avanco;
+    const cobertura = coberturaGuarda(bot, vip, defensores, coberturas, destino, contato.ameaca);
+    if (cobertura) { destino.x = cobertura.x; destino.z = cobertura.z; }
   }
   destino.centerX = vip.pos.x;
   destino.centerZ = vip.pos.z;
@@ -204,7 +304,9 @@ export function passoEscolta(state, contexto, dt, { mutante = '', mover = null }
   if (state.threatened) {
     state.boardedFor = 0;
     state.unattendedFor = 0;
-    const abrigo = state.caminho[state.checkpoint];
+    // Abrigo REAL quando o mapa exporta cobertura: o ponto vem pronto do modo (com
+    // histerese); sem cobertura vale o checkpoint legado.
+    const abrigo = contexto.abrigo || state.caminho[state.checkpoint];
     const chegou = moverAte(state, abrigo, COVER_SPEED * dt, mover);
     state.inCover = chegou || Math.hypot(state.position.x - abrigo.x, state.position.z - abrigo.z) < 0.75;
     return state;
@@ -228,6 +330,12 @@ export function passoEscolta(state, contexto, dt, { mutante = '', mover = null }
       state.inCover = false;
       const chegou = moverAte(state, state.caminho[state.checkpoint - 1], RETURN_SPEED * dt, mover);
       if (chegou) { state.checkpoint--; state.inCover = true; }
+    } else if (contexto.abrigo) {
+      // Sem escolta e esperando o retorno: agacha atrás de cobertura real em vez de
+      // ficar exposto no ponto aberto do checkpoint.
+      const falta = Math.hypot(contexto.abrigo.x - state.position.x, contexto.abrigo.z - state.position.z);
+      if (falta > 0.75) { state.inCover = false; moverAte(state, contexto.abrigo, COVER_SPEED * dt, mover); }
+      else state.inCover = true;
     }
   }
   return state;
@@ -335,6 +443,10 @@ export class OperacaoFlavio {
       game._trocarPersonagem(this.vip, vipDef, true);
       this.vip.name = game.online || game.dedicated ? vipDef.name : '[VIP] ' + vipDef.name;
       this.restaurarEquipamentoVip();
+      // Papéis da escolta (guardas diretos + flanqueadores) são determinísticos pela
+      // ordem do roster: todos os nós computam o mesmo time sem tráfego extra.
+      this.atribuirPapeis();
+      this._equiparPapeis();
     }
     if ((!game.dedicated || game.online) && typeof document !== 'undefined') {
       this.hud = document.createElement('div');
@@ -399,8 +511,53 @@ export class OperacaoFlavio {
         this.state.caminho, this.state.checkpoint, destino);
     }
     if (bot.team !== 'B') return null;
-    const ameacas = this.game.combatants.filter((ent) => ent.team === 'E' && ent.alive !== false);
-    return destinoProtecaoEscolta(bot, this.vip, this.game.bots, ameacas, destino);
+    const ameacas = this._ameacasRoteamento();
+    // Flanqueador segura a vanguarda enquanto a formação não está engajada; o engaje tem
+    // histerese (orientacaoFormacao), então o destino não alterna a cada quadro.
+    if (bot._flavioPapel === 'flanqueador' && !orientacaoFormacao(this.vip, ameacas)?.engajado) {
+      return this.destinoFlanqueador(bot, destino);
+    }
+    return destinoProtecaoEscolta(bot, this.vip, this.game.bots, ameacas, destino, this.game.world.escortCoverPoints);
+  }
+
+  // Ameaças que roteiam a formação/flanqueador: só o que o VIP VÊ (LOS) — ameaça oculta
+  // atrás de parede não engaja a formação, não puxa o flanqueador da vanguarda e não
+  // reserva cobertura de guarda (mesma regra do foco P1: sem leak de informação
+  // autoritativa). Quem foi visto há menos de ROTEAMENTO_MEMORIA segue valendo: em
+  // marcha a linha de visão abre e fecha a cada cobertura e a formação não pode
+  // desengajar/reengajar por causa de uma brecha de um segundo.
+  _ameacasRoteamento() {
+    if (!this.vip) return [];
+    const agora = this.game.time;
+    const visiveis = [], memoria = [];
+    for (const ent of this.game.combatants || []) {
+      if (ent.team !== 'E' || ent.alive === false || !ent?.pos) continue;
+      if (this._vipTemLos(ent)) { ent._flavioVistoEm = agora; visiveis.push(ent); continue; }
+      if (Number.isFinite(ent._flavioVistoEm) && agora - ent._flavioVistoEm <= ROTEAMENTO_MEMORIA) memoria.push(ent);
+    }
+    return visiveis.concat(memoria);
+  }
+
+  destinoFlanqueador(bot, destino) {
+    const caminho = this.state.caminho, ultimo = caminho.length - 1;
+    // Vanguarda só anda quando o COMBOIO avança de checkpoint: destino estável por
+    // construção (histerese estrutural — nunca realvo por quadro, nunca recua sozinho).
+    const alvo = Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA, ultimo);
+    if (!Number.isInteger(bot._flavioVanguarda) || alvo > bot._flavioVanguarda) bot._flavioVanguarda = alvo;
+    const ponto = caminho[bot._flavioVanguarda];
+    const proximo = caminho[Math.min(bot._flavioVanguarda + 1, ultimo)];
+    const dx = proximo.x - ponto.x, dz = proximo.z - ponto.z;
+    const yaw = Math.hypot(dx, dz) >= 1e-6 ? Math.atan2(dx, dz)
+      : Math.atan2(this.state.position.x - ponto.x, this.state.position.z - ponto.z);
+    const lado = bot._flavioLado || 1;
+    destino.x = ponto.x + Math.cos(yaw) * FLANQUEADOR_LATERAL * lado;
+    destino.z = ponto.z - Math.sin(yaw) * FLANQUEADOR_LATERAL * lado;
+    destino.centerX = this.state.position.x;
+    destino.centerZ = this.state.position.z;
+    destino.leash = FLANQUEADOR_LEASH;
+    destino.slotRadius = 1.2;
+    destino.repath = 0.3;
+    return destino;
   }
 
   // Apresentação de fato no comando da câmera: updatePresentation e câmera de espectador.
@@ -517,6 +674,11 @@ export class OperacaoFlavio {
     this._vipBanned = new Set();
     if (this.vip) {
       orientacoesEscolta.delete(this.vip);
+      this._focoAmeaca = null;
+      this._focoPosAmeaca = null;
+      this._focoAmeacaEm = -Infinity;
+      this._vipAbrigo = null;
+      this._vipAbrigoIdade = 0;
       this.vip.alive = true;
       this.vip.hp = 100;
       this.vip.respawnAt = Infinity;
@@ -524,6 +686,8 @@ export class OperacaoFlavio {
       this.vip._lp = { x: this.vip.pos.x, z: this.vip.pos.z };
       this.restaurarEquipamentoVip();
       this.vip.mesh?.ctrl?.revive?.();
+      this.atribuirPapeis();
+      this._equiparPapeis();
       if (this.vip.mesh?.group) {
         this.vip.mesh.group.visible = true;
         this.vip.mesh.group.rotation.x = 0;
@@ -562,37 +726,168 @@ export class OperacaoFlavio {
     const game = this.game, path = game.world.escortPath;
     if (!this.vip || game.state !== 'live' || !Array.isArray(path) || !path.length) return null;
     const k = Math.max(0, Math.min(this.state.checkpoint, path.length - 1));
-    const anchor = path[Math.max(0, k - 1)], vipZ = this.vip.pos.z;
+    const vipZ = this.vip.pos.z;
     const nodes = game.world.waypoints?.nodes || [];
     if (!nodes.length) return null;
-    const reach = this._alcancaveis(game.world.nearestWaypoint(anchor.x, anchor.z));
     const semColisao = (p) => Number.isFinite(p.x) && Number.isFinite(p.z)
       && !(game.world.colliders || []).some((c) => c.minY < 1.8 && c.maxY > 0.1
         && p.x > c.minX - 0.4 && p.x < c.maxX + 0.4 && p.z > c.minZ - 0.4 && p.z < c.maxZ + 0.4);
-    const livre = (p) => p.z < vipZ && semColisao(p);
-    const rota = (p) => {
-      const de = game.world.nearestWaypoint(p.x, p.z);
-      return Number.isInteger(de) && de >= 0 && de < nodes.length && reach[de] === 1;
+    const alcanceDe = (ancora) => {
+      const reach = this._alcancaveis(game.world.nearestWaypoint(ancora.x, ancora.z));
+      return (p) => {
+        const de = game.world.nearestWaypoint(p.x, p.z);
+        return Number.isInteger(de) && de >= 0 && de < nodes.length && reach[de] === 1;
+      };
     };
-    const medir = (p) => ({ x: p.x, z: p.z, yaw: p.yaw,
-      dist: Math.hypot(p.x - anchor.x, p.z - anchor.z), lateral: Math.abs(p.x - anchor.x) });
-    const atras = nodes.filter((p) => livre(p) && rota(p)).map(medir).filter((p) => p.dist <= 18);
-    const base = (game.world.spawns?.[team] || []).filter((p) => livre(p) && rota(p)).map(medir).filter((p) => p.dist <= 18);
+    const medir = (ancora) => (p) => ({ x: p.x, z: p.z, yaw: p.yaw,
+      dist: Math.hypot(p.x - ancora.x, p.z - ancora.z), lateral: Math.abs(p.x - ancora.x) });
+    if (team === 'E') {
+      /* ATAQUE — vanguarda/base (regra do dono): nunca à retaguarda do comboio e nunca
+         dentro da sala de embarque (bolso sul onde o VIP nasce). Antes disto o E
+         renascia na sala e prendia o VIP no próprio spawn. Vanguarda = nós à frente do
+         VIP com leash do PRÓXIMO checkpoint, distância mínima do VIP e rota alcançável;
+         base = spawns.E do mapa, fora da sala. */
+      const vanguarda = path[Math.min(k + 1, path.length - 1)];
+      const rota = alcanceDe(vanguarda);
+      const sala = (p) => p.x > SALA_EMBARQUE.minX && p.x < SALA_EMBARQUE.maxX
+        && p.z > SALA_EMBARQUE.minZ && p.z < SALA_EMBARQUE.maxZ;
+      const aFrente = (p) => p.z > vipZ && !sala(p) && semColisao(p)
+        && Math.hypot(p.x - this.vip.pos.x, p.z - this.vip.pos.z) >= ATAQUE_DIST_VIP;
+      const frente = nodes.filter((p) => aFrente(p) && rota(p)).map(medir(vanguarda))
+        .filter((p) => p.dist <= 18);
+      if (frente.length) {
+        frente.sort((a, b) => a.dist - b.dist || a.lateral - b.lateral);
+        return frente.slice(0, 8);
+      }
+      const base = (game.world.spawns?.E || []).filter((p) => !sala(p) && semColisao(p) && rota(p));
+      return base.length ? base.map(medir(vanguarda)) : null;
+    }
+    /* DEFESA — retaguarda/near: ondas de reforço acompanham o comboio por trás (podem
+       usar a sala de embarque, é o quintal do time B). */
+    const anchor = path[Math.max(0, k - 1)];
+    const rota = alcanceDe(anchor);
+    const livre = (p) => p.z < vipZ && semColisao(p);
+    const atras = nodes.filter((p) => livre(p) && rota(p)).map(medir(anchor)).filter((p) => p.dist <= 18);
+    const base = (game.world.spawns?.[team] || []).filter((p) => livre(p) && rota(p)).map(medir(anchor)).filter((p) => p.dist <= 18);
     const escolha = atras.length ? atras : base;
     if (!escolha.length) return semColisao(anchor) && rota(anchor) ? [{ x: anchor.x, z: anchor.z, dist: 0, lateral: 0 }] : null;
     escolha.sort(team === 'B' ? (a, b) => a.dist - b.dist || a.lateral - b.lateral : (a, b) => b.lateral - a.lateral || a.dist - b.dist);
     return escolha.slice(0, 8);
   }
 
+  // Foco de ameaça do VIP — só o que ele REALMENTE VÊ (LOS). Ameaça oculta atrás de
+  // parede não move o abrigo nem o rumo: seria leak de informação autoritativa. Entre
+  // visíveis vale a histerese (equidistantes não alternam o rumo por quadro); perdida a
+  // visão, a memória de THREAT_MEMORY usa a última posição VISTA (snapshot), nunca a
+  // posição viva de quem está escondido.
   ameacaMaisPerto() {
     if (!this.vip) return null;
-    let melhor = null, distancia = Infinity;
+    let maisPerto = null, menorDistancia = Infinity;
     for (const ent of this.game.combatants) {
-      if (ent.team !== 'E' || ent.alive === false) continue;
-      const atual = d2(ent.pos, this.vip.pos);
-      if (atual < distancia) { melhor = ent; distancia = atual; }
+      if (ent.team !== 'E' || ent.alive === false || !ent?.pos) continue;
+      const distancia = d2(ent.pos, this.vip.pos);
+      if (distancia < menorDistancia && this._vipTemLos(ent)) { maisPerto = ent; menorDistancia = distancia; }
     }
-    return melhor;
+    const agora = this.game.time;
+    const foco = this._focoAmeaca;
+    if (foco?.pos && foco.alive !== false && this._vipTemLos(foco)) {
+      const distancia = d2(foco.pos, this.vip.pos);
+      if (maisPerto === foco || distancia <= (THREAT_RADIUS * ENGAGE_SAIDA) ** 2
+        && distancia <= menorDistancia / ORIENTACAO_TROCA ** 2) {
+        this._focoPosAmeaca = { x: foco.pos.x, z: foco.pos.z };
+        this._focoAmeacaEm = agora;
+        return foco;
+      }
+    }
+    if (maisPerto) {
+      this._focoAmeaca = maisPerto;
+      this._focoPosAmeaca = { x: maisPerto.pos.x, z: maisPerto.pos.z };
+      this._focoAmeacaEm = agora;
+      return maisPerto;
+    }
+    if (foco?.pos && foco.alive !== false && this._focoPosAmeaca
+      && agora - (this._focoAmeacaEm ?? -Infinity) <= THREAT_MEMORY) {
+      return { pos: this._focoPosAmeaca };   // snapshot da última posição vista
+    }
+    this._focoAmeaca = null;
+    return null;
+  }
+
+  // Papéis da escolta: 4 guardas diretos (LMG, escopeta, rifle e sniper — um de cada) e
+  // flanqueadores de vanguarda. Determinístico pela ordem do roster.
+  atribuirPapeis() {
+    if (!this.vip) return;
+    const bots = this.game.bots || [];
+    const defensores = bots.filter((bot) => bot !== this.vip && bot.team === 'B');
+    let flanqueadores = 0;
+    defensores.forEach((bot, ordem) => {
+      if (ordem < GUARDAS_DIRETOS) {
+        bot._flavioPapel = 'guarda';
+        bot._flavioArma = ARMAS_GUARDA[ordem];
+        bot._flavioLado = 0;
+      } else {
+        bot._flavioPapel = 'flanqueador';
+        bot._flavioArma = ARMAS_FLANQUEADOR[flanqueadores % ARMAS_FLANQUEADOR.length];
+        bot._flavioLado = flanqueadores % 2 === 0 ? 1 : -1;
+        flanqueadores++;
+      }
+    });
+    for (const bot of bots) {
+      if (bot === this.vip || bot.team === 'B') continue;
+      bot._flavioPapel = null;   // troca de lado não herda papel
+      bot._flavioArma = null;
+    }
+    // Eficácia: guardas com piso de skill acima da média inimiga. A aquisição de alvo,
+    // reação e mira continuam na IA genérica — LOS obrigatória, sem wallhack.
+    const inimigos = bots.filter((bot) => bot.team === 'E');
+    const mediaInimiga = inimigos.length
+      ? inimigos.reduce((soma, bot) => soma + (bot.skill || 0.8), 0) / inimigos.length : 0.8;
+    const piso = Math.max(GUARDA_SKILL_PISO, mediaInimiga * GUARDA_SKILL_VANTAGEM);
+    for (const bot of defensores) {
+      bot.skill = Math.max(bot.skill || 0, piso);
+      // tier visível espelha o skill real (mesmos cortes do botTier do game.js)
+      bot.tier = bot.skill < 0.75 ? 'ruim' : bot.skill < 1.05 ? 'medio' : bot.skill < 1.4 ? 'bom' : 'muitobom';
+    }
+  }
+
+  // Kit do papel: arma fixa com pente da arma certa + colete/capacete (mais duro de
+  // matar que os atacantes, que continuam sem colete grátis).
+  equiparPapel(bot, imediato = true) {
+    if (!bot?._flavioArma || !WEAPONS[bot._flavioArma]) return;
+    if (bot.weapon !== bot._flavioArma) {
+      bot.weapon = bot._flavioArma;
+      bot.mag = WEAPONS[bot._flavioArma].mag || bot.mag || 30;
+      // A remontagem da malha consome RNG; adiar ela para o 1º update mantém o sorteio
+      // de spawn do jogador determinístico (a régua do yaw autorado depende disso).
+      if (imediato) this.game._syncRemoteWeapon?.(bot, bot._flavioArma);
+      else bot._flavioSyncPendente = true;
+    }
+    bot.armor = 100;
+    bot.helmet = true;
+  }
+
+  _equiparPapeis() {
+    (this.game.bots || []).forEach((bot) => {
+      if (bot === this.vip || bot.team !== 'B' || !bot._flavioArma) return;
+      bot._flavioKitVida = bot.protUntil;
+      bot._flavioVanguarda = undefined;
+      this.equiparPapel(bot, false);
+    });
+  }
+
+  // Renascimento marca protUntil: reforça o kit do papel uma vez por vida (o respawn
+  // genérico zera colete e pode rearmar pela loja — o papel é dono do loadout).
+  _manterPapeis() {
+    (this.game.bots || []).forEach((bot) => {
+      if (bot === this.vip || bot.team !== 'B' || !bot._flavioPapel || !bot.alive) return;
+      if (bot.protUntil > this.game.time && bot._flavioKitVida !== bot.protUntil) {
+        bot._flavioKitVida = bot.protUntil;
+        this.equiparPapel(bot);
+      } else if (bot._flavioSyncPendente) {
+        bot._flavioSyncPendente = false;
+        if (bot._meshWeapon !== bot._flavioArma) this.game._syncRemoteWeapon?.(bot, bot._flavioArma);
+      }
+    });
   }
 
   _vipAlcance(origem, alvo, tolerancia = 0.08) {
@@ -708,23 +1003,77 @@ export class OperacaoFlavio {
       this.hud.textContent = 'FLÁVIO FOI MORTO · ESCOLTA FRACASSOU';
     }
   }
+  // Abrigo do VIP nos pontos REAIS do mapa ({x,z,role,zone} do escortCoverPoints):
+  // escolhe slot dentro de ABRIGO_RAIO do checkpoint de recuo que maximiza longe-da-
+  // ameaça vs perto-do-âncora, com histerese (não re-escolhe por quadro) e troca
+  // forçada se a ameaça colar no abrigo atual. Sem pontos exportados: null (legado).
+  _atualizarAbrigo(ameaca, dt = 0) {
+    const coberturas = this.game.world.escortCoverPoints;
+    if (!Array.isArray(coberturas) || !coberturas.length) { this._vipAbrigo = null; return null; }
+    const ancora = this.state.caminho[this.state.checkpoint];
+    if (!ancora) { this._vipAbrigo = null; return null; }
+    const ameacaPos = ameaca?.pos;
+    const qualidade = (ponto) => {
+      const dAncora = Math.hypot(ponto.x - ancora.x, ponto.z - ancora.z);
+      if (dAncora > ABRIGO_RAIO) return -Infinity;
+      const dAmeaca = ameacaPos ? Math.hypot(ponto.x - ameacaPos.x, ponto.z - ameacaPos.z) : ABRIGO_RAIO;
+      return dAmeaca - ABRIGO_PESO_ANCORA * dAncora;
+    };
+    // Histerese em DOIS níveis: (1) margem — vantagens pequenas não trocam; (2) moradia
+    // mínima — depois de trocar, o VIP mora no abrigo por ABRIGO_MIN_PERMANENCIA e só
+    // sai antes disso por emergência (abrigo MUITO melhor) ou ameaça colada. A ameaça
+    // oscilando entre coberturas válidas nunca muda o corpo de lugar.
+    this._vipAbrigoIdade = (this._vipAbrigoIdade || 0) + dt;
+    const atual = this._vipAbrigo;
+    if (atual) {
+      const qAtual = qualidade(atual);
+      const colada = ameacaPos && Math.hypot(atual.x - ameacaPos.x, atual.z - ameacaPos.z) < ABRIGO_COLADA;
+      if (Number.isFinite(qAtual) && !colada) {
+        let melhor = qAtual;
+        for (const ponto of coberturas) melhor = Math.max(melhor, qualidade(ponto));
+        const emergencia = melhor > qAtual + ABRIGO_TROCA_FORTE;   // abrigo muito mais seguro
+        const morou = this._vipAbrigoIdade >= ABRIGO_MIN_PERMANENCIA;
+        if (melhor <= qAtual + ABRIGO_TROCA || (!morou && !emergencia)) return atual;
+      }
+    }
+    // Re-escolha: pontos grudados na ameaça não são destino (não adianta pular de um
+    // ponto colado para outro); sem alternativa, vale o melhor geral.
+    let melhor = null, melhorQ = -Infinity;
+    for (const ponto of coberturas) {
+      if (!Number.isFinite(ponto?.x) || !Number.isFinite(ponto?.z)) continue;
+      if (ameacaPos && Math.hypot(ponto.x - ameacaPos.x, ponto.z - ameacaPos.z) < ABRIGO_COLADA) continue;
+      const q = qualidade(ponto);
+      if (q > melhorQ) { melhorQ = q; melhor = ponto; }
+    }
+    if (!melhor) {
+      for (const ponto of coberturas) {
+        const q = qualidade(ponto);
+        if (Number.isFinite(q) && q > melhorQ) { melhorQ = q; melhor = ponto; }
+      }
+    }
+    this._vipAbrigo = melhor && Number.isFinite(melhorQ) ? { x: melhor.x, z: melhor.z } : null;
+    this._vipAbrigoIdade = 0;
+    return this._vipAbrigo;
+  }
 
   update(dt) {
     if (this.game.state !== 'live') return;
     if (!this.vip) { this.atualizaHud(); return; }
     this.travarArmaVip();
     if (this._autoridadeEscolta()) {
+      this._manterPapeis();
       this._vipFrameDt = dt;
+      const ameaca = this.ameacaMaisPerto();
       passoEscolta(this.state, {
         defensores: this.game.combatants.filter((ent) => ent !== this.vip && ent.team === 'B'),
         atacantes: this.game.combatants.filter((ent) => ent.team === 'E'),
         vipAlive: this.vip.alive,
         temLinhaDeVisao: (ent) => this._vipTemLos(ent),
+        abrigo: this._atualizarAbrigo(ameaca, dt),
       }, dt, { mover: (origem, proposta, destino) => this.moverVip(origem, proposta, destino) });
       this.vip.pos.x = this.state.position.x;
       this.vip.pos.z = this.state.position.z;
       this.vip.pos.y = this.game.world.groundHeightAt(this.vip.pos.x, this.vip.pos.z);
-      const ameaca = this.ameacaMaisPerto();
       const proximo = this.state.threatened && ameaca
         ? ameaca.pos
         : this.state.caminho[Math.min(this.state.checkpoint + 1, this.state.caminho.length - 1)];
@@ -738,7 +1087,7 @@ export class OperacaoFlavio {
   updateBot(bot, dt) {
     if (bot !== this.vip || this._clienteEscolta()) return false;
     if (bot.alive) {
-      bot.crouchBias = Boolean(this.state.threatened);
+      bot.crouchBias = Boolean(this.state.threatened || (this.state.unattendedFor || 0) > 0.5);
       return false;
     }
     const group = bot.mesh?.group;
@@ -747,6 +1096,8 @@ export class OperacaoFlavio {
     bot.mesh.ctrl?.setCrouch?.(false);
     bot.mesh.ctrl?.die?.();
     bot.mesh.ctrl?.update?.(dt, 0, false);
+    // Corpo morto: fade estável e de mão única — esconde após 1 s e NUNCA reexibe fora
+    // do prepareRound; bots vivos nunca têm a visibilidade do grupo tocada pelo modo.
     if (bot.deadT > 1) group.visible = false;
     return true;
   }

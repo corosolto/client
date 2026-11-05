@@ -11,15 +11,14 @@ const mutations = {
   'hud-contestado-oculto': ["if (this.state.contested) status.push('CONTESTADO');", "if (this.state.contested && !this.state.threatened) status.push('CONTESTADO');", 'HUD mostra contestação e cobertura simultâneas'],
   'slots-mortes': ['if (!bot?.pos || !vip?.pos || bot.alive === false || bot === vip) return null;', 'if (!bot?.pos || !vip?.pos || bot === vip) return null;\n  if (bot.alive === false) { formacoesEscolta.get(vip)?.delete(bot); return null; }', 'slot permanece com a entidade após morte'],
   'slots-distantes-iguais': ['const ordem = temporarios.indexOf(bot);', 'const ordem = 0;', 'múltiplos bots distantes ocupam slots temporários distintos'],
-  'orientacao-so-engaje': ['const yaw = contato ? contato.yaw : maisPerto\n', 'const yaw = interceptar\n', 'formação orienta para ameaça fora do raio de engaje'],
-  'contato-rotaciona': ['const yaw = contato ? contato.yaw : maisPerto', 'const yaw = maisPerto', 'contato próximo mantém slot legado estável'],
+  'orientacao-so-engaje': [': referencia ? Math.atan2(referencia', ': null ? Math.atan2(referencia', 'formação orienta para ameaça fora do raio de engaje'],
+  'contato-rotaciona': ['const yaw = contato ? contato.yaw', 'const yaw = referencia && contato\n    ? Math.atan2(referencia.ameaca.pos.x - vip.pos.x, referencia.ameaca.pos.z - vip.pos.z)', 'contato próximo mantém slot legado estável'],
   'interceptacao-ultrapassa': ['const avanco = Math.min(1.2, Math.max(0, GUARD_PROTECT_RADIUS - radial), Math.max(0, limite - radial));', 'const avanco = Math.min(1.2, Math.max(0, GUARD_PROTECT_RADIUS - radial));', 'contato próximo mantém slot legado estável'],
   'sem-interceptacao': ['if (contato) {', 'if (false) {', 'raios de engaje e proteção produzem interceptação'],
   'sem-decaimento': ['state.threatLostFor < THREAT_MEMORY', 'true', 'ameaça sem LOS decai e escolta retoma'],
   'spawn-longe': ['.filter((p) => p.dist <= 18);\n    const base', '.filter((p) => p.dist <= 180);\n    const base', 'spawn filtra colisão rota e distância'],
   'spawn-sem-fallback': ['if (!escolha.length) return semColisao(anchor) && rota(anchor) ? [{ x: anchor.x, z: anchor.z, dist: 0, lateral: 0 }] : null;', 'if (!escolha.length) return null;', 'fallback de spawn usa âncora válida'],
-  'sem-replane': ['const world = this.game.world, nodes = world.waypoints?.nodes || [];', 'return rota;\n    const world = this.game.world, nodes = world.waypoints?.nodes || [];', 'VIP replaneja por waypoints sem atravessar parede'],
-  'retorno-lento': ['const RETURN_SPEED = 2.2;', 'const RETURN_SPEED = 0.65;', 'retorno ao checkpoint tem velocidade viável'],
+  'sem-histerese-engaje': ['const ENGAGE_SAIDA = 1.25;', 'const ENGAGE_SAIDA = 1.0;', 'histerese de engaje não deixa o docking piscar na borda'],
   'morte-sem-vip': ["const morto = winner === 'E' && (this.vip?.alive === false || this.deathAnnounced);", "const morto = winner === 'E' && (!this.vip?.alive || this.deathAnnounced);", 'VIP ausente tem estado neutro'],
 };
 
@@ -43,8 +42,10 @@ if (mutant) {
   assert.ok(edit, 'mutante conhecido');
   assert.equal(source.split(edit[0]).length - 1, 1, 'alvo do mutante único');
   source = source.replace(edit[0], edit[1]);
-  console.log('Mutação aplicada: ' + mutant);
 }
+source = source.replace(/from\s+(['"])([^'"]+)\1/g, (_, quote, spec) =>
+  'from ' + JSON.stringify(spec.startsWith('.') ? new URL(spec, url).href : import.meta.resolve(spec)));
+if (mutant) console.log('Mutação aplicada: ' + mutant);
 const { OperacaoFlavio, criarEstadoEscolta, destinoProtecaoEscolta, passoEscolta, snapshotEscolta } =
   await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 
@@ -212,6 +213,36 @@ check('contato próximo mantém slot legado estável', () => {
   enemy.pos.set(4.8, 0, 28.4);
   const second = { ...destinoProtecaoEscolta(guard, vip, [vip, guard], [enemy]) };
   assert.deepEqual(second, first, 'separação do inimigo não pode girar o docking');
+});
+
+check('histerese de engaje não deixa o docking piscar na borda', () => {
+  const vip = { pos: { x: 0, z: 0 }, yaw: 0, alive: true, team: 'B' }, guard = body('B');
+  const borda = body('E', 0, 7.4), fora = body('E', 0, 7.6);
+  const ameacas = [borda, fora];
+  destinoProtecaoEscolta(guard, vip, [vip, guard], ameacas);   // engata na borda (7.4 < 7.5)
+  const engajado = { ...destinoProtecaoEscolta(guard, vip, [vip, guard], ameacas) };
+  // Ameaça oscila na fronteira do raio: contato só solta além de 1,25x — sem flap.
+  const oscilando = [];
+  for (let frame = 0; frame < 12; frame++) {
+    borda.pos.set(0, 0, frame % 2 === 0 ? 7.6 : 7.4);
+    oscilando.push({ ...destinoProtecaoEscolta(guard, vip, [vip, guard], ameacas) });
+  }
+  assert.ok(oscilando.every((destino) => destino.z > 2.4), 'contato segurou o avanço na oscilação da borda');
+  assert.equal(new Set(oscilando.map((destino) => `${destino.x.toFixed(3)}:${destino.z.toFixed(3)}`)).size, 1,
+    'destino só acompanha a ameaça, nunca alterna engaje/desengaje por quadro');
+  assert.ok(engajado.z > 2.4, 'engaje inicial avança o guarda');
+  borda.pos.set(0, 0, 9.5);   // além de 1,25x (9,375): aqui sim solta
+  const soltou = destinoProtecaoEscolta(guard, vip, [vip, guard], ameacas);
+  assert.ok(soltou.z < engajado.z, 'contato solta apenas fora do raio ampliado');
+  // Duas ameaças quase equidistantes trocando de "mais próxima" não giram o docking.
+  const esquerda = body('E', -6, 3), direita = body('E', 6, 3);
+  const alternando = [];
+  for (let frame = 0; frame < 8; frame++) {
+    (frame % 2 === 0 ? esquerda : direita).pos.set((frame % 2 === 0 ? -6 : 6) * 0.999, 0, 3);
+    alternando.push({ ...destinoProtecaoEscolta(guard, vip, [vip, guard], frame % 2 === 0 ? [esquerda, direita] : [direita, esquerda]) });
+  }
+  assert.equal(new Set(alternando.map((destino) => destino.x.toFixed(3))).size, 1,
+    'ameaças equidistantes não alternam o yaw do docking a cada quadro');
 });
 
 check('raios de engaje e proteção produzem interceptação', () => {

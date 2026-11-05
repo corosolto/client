@@ -41,12 +41,13 @@ for (const [name, angle] of [['frente', 0], ['lateral', Math.PI / 2], ['retaguar
   vip.pos.set(0, 0, 28);
   enemy.pos.set(Math.sin(angle) * 25, 0, 28 + Math.cos(angle) * 25);
   enemy.hp = 1e6;
+  // Visibilidade é controlada ANTES da consulta de slot: o roteamento da formação é
+  // LOS-gated (P2) e o slot precisa nascer da mesma ameaça visível que o combate usa.
+  game._losClear = () => true;
   const slot = game.objective.botDestination(guard);
   guard.pos.set(slot.x, 0, slot.z); guard.yaw = 0; guard.think = 0;
   guard.weapon = 'ak'; guard.mag = 30; guard.nextShotAt = 0;
   guard.holdUntil = 0; guard._holdDecide = Number.POSITIVE_INFINITY;
-  // Visibilidade é controlada; aquisição, giro, cadência, movimento e colisão são reais.
-  game._losClear = () => true;
   let maximumSlotDistance = 0, fired = false, acquired = false;
   try {
     for (let frame = 0; frame < 240; frame++) {

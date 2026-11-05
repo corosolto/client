@@ -6,8 +6,12 @@ const extras = process.argv.filter(arg => arg.startsWith('--geometry-helper='));
 const run = args => spawnSync(process.execPath, [script, ...extras, ...args], { encoding: 'utf8', timeout: 60000, maxBuffer: 2000000 });
 const proof = (r, name, clause) => {
   const out = r.stdout + r.stderr;
+  // A cláusula exata pode cair em QUALQUER uma das seis configurações (a janela de
+  // reagrupamento da régua depende da direção da marcha do VIP); o que se exige é
+  // prova SEMÂNTICA: mutante aplicado, reprovação nominal, sem erro de linguagem.
+  const clauseEmConfig = new RegExp(`✗ (controlada|real)/[+-]?[01]: AssertionError: ${clause.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`);
   return r.status === 1 && !r.error && !r.signal && out.includes('Mutação aplicada: ' + name)
-    && out.includes(`✗ controlada/1: AssertionError: ${clause}`) && !/TypeError:|ReferenceError:|SyntaxError:/.test(out);
+    && clauseEmConfig.test(out) && !/TypeError:|ReferenceError:|SyntaxError:/.test(out);
 };
 if (process.argv.includes('--autoteste')) {
   const good = { status: 1, stdout: 'Mutação aplicada: controle\n✗ controlada/1: AssertionError: cláusula', stderr: '' };
@@ -20,9 +24,9 @@ if (process.argv.includes('--autoteste')) {
   const baseline = run([]); assert(baseline.status === 0 && !baseline.error && !baseline.signal, 'seis controles válidos: ' + baseline.stdout + baseline.stderr);
   console.log('moving-defense-proof: seis controles válidos');
   for (const [name, clause] of [
-    ['apagar-alvo', 'guarda continua disparando durante acompanhamento do VIP'],
+    ['apagar-alvo', 'reagrupar em marcha mantém o alvo engajado'],
     ['sem-acompanhar', 'guarda acompanha o slot sem perseguir o inimigo'],
-    ['nav-sobrescreve-mira', 'guarda continua disparando durante acompanhamento do VIP'],
+    ['nav-sobrescreve-mira', 'reagrupar em marcha mantém a mira no alvo (navegação não sequestra o rumo)'],
     ['teleporte', 'movimento respeita passo físico sem teleporte'],
   ]) {
     const result = run(['--mutante=' + name]);

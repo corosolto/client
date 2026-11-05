@@ -21,6 +21,16 @@ const edits = {
   'rota-n2': ['const candidates = buckets.get(`${cx + ox},${cz + oz}`) || [];', 'const candidates = nodes.map((_, j) => j);'],
   'vidro-low-fisico': ['? new THREE.MeshStandardMaterial({', '? new THREE.MeshPhysicalMaterial({'],
   'sombras-low-completas': ['mesh.castShadow = sombra && (solid || !lowProfile)', 'mesh.castShadow = sombra'],
+  'sem-jardineira-embarque': ["    ['jardineira', -7.2, -38.6, 2.5, 0, 2.5, 1.8, 1.4, true],\n", ''],
+  'ponto-sem-papel': ["{ x: 13, z: -41, role: 'guard', zone: 'embarque' },", '{ x: 13, z: -41 },'],
+  'ponto-afastado': ["{ x: -3.2, z: 49.9, role: 'guard', zone: 'apron' },", "{ x: -3.2, z: 47.4, role: 'guard', zone: 'apron' },"],
+  'container-oeste-decorativo': ["['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, true],", "['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, false],"],
+  'gpu-decorativo': ["['energia_solo', -1, 44.6, 4, 0, 4, 2, 2, true],", "['energia_solo', -1, 44.6, 4, 0, 4, 2, 2, false],"],
+  'armadilha-lounge': ['E: [{ x: -33, z: 16, yaw: 0 }, { x: 33, z: 16, yaw: 0 }, { x: -32, z: 54, yaw: 0 }, { x: 32, z: 54, yaw: 0 }],', 'E: [{ x: -20, z: -47, yaw: 0 }, { x: 33, z: 16, yaw: 0 }, { x: -32, z: 54, yaw: 0 }, { x: 32, z: 54, yaw: 0 }],'],
+  'bay-vira-beco': ["['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, true],", "['containers_carga', -13.5, 51.4, 5, 0, 5, 2.6, 2.5, true],"],
+  'ilha-patio-fantasma': ["['barreiras_aeroporto', -6.2, 4, 5, 0, 4.5, 1.4, 1.2, true],", "['barreiras_aeroporto', -6.2, 4, 5, 0, 4.5, 1.4, 1.2, false],"],
+  'sem-anel-checkpoint': ['for (let i = 0; i < ESCORT_PATH.length; i++) {', 'for (let i = 0; i < ESCORT_PATH.length - 1; i++) {'],
+  'escada-sem-proxy': ["colliderDoProp('escada_embarque', -3.2, 0, 52.5, 3, 2.4, 4, Math.PI / 2);", ''],
 };
 if (mutant) {
   const edit = edits[mutant];
@@ -85,8 +95,8 @@ try {
       map.root.updateMatrixWorld(true);
       const chairs = map.root.children.filter(o => o.name === 'assentos_aeroporto' || o.name === 'fallback-assentos_aeroporto');
       const proxies = map.colliders.filter(c => c.id === 'assentos_aeroporto');
-      assert.equal(chairs.length, 4, `${label}: quatro bancos visíveis`);
-      assert.equal(proxies.length, 4, `${label}: quatro proxies`);
+      assert.equal(chairs.length, 8, `${label}: oito bancos visíveis (4 do terminal + 4 de cobertura)`);
+      assert.equal(proxies.length, 8, `${label}: oito proxies`);
       for (const chair of chairs) {
         const box = new THREE.Box3().setFromObject(chair), size = box.getSize(new THREE.Vector3());
         assert.ok(Math.abs(size.y - 1.05) < 1e-6, `${label}: encosto abaixo da estatura de 1,72 m`);
@@ -195,15 +205,16 @@ try {
     assert.ok(stats.candidatePairs > 0 && stats.edges > 0);
     assert.ok(stats.candidatePairs < stats.totalPairs * .2, `candidatos ${stats.candidatePairs}/${stats.totalPairs}`);
   });
+  // A proteção de embarque/apron agora gira em torno de objetos reais do aeroporto;
+  // as caixas procedurais restantes são só as do corredor de serviço e do hangar.
   check('solid-covers-and-lateral-cover-points', () => {
     const requiredCovers = [
-      'cobertura-tatica-terminal-oeste', 'cobertura-tatica-terminal-leste',
       'cobertura-tatica-servico-oeste', 'cobertura-tatica-servico-leste',
       'cobertura-tatica-acesso-oeste', 'cobertura-tatica-acesso-leste',
-      'cobertura-tatica-hangar', 'cobertura-tatica-hangar-leste', 'cobertura-tatica-apron',
+      'cobertura-tatica-hangar', 'cobertura-tatica-hangar-leste',
     ].sort();
     const covers = loaded.root.children.filter(o => o.name.startsWith('cobertura-tatica-'));
-    assert.deepEqual(covers.map(o => o.name).sort(), requiredCovers);
+    assert.deepEqual(covers.map(o => o.name).sort(), requiredCovers, 'embarque e apron sem caixas decorativas');
     for (const cover of covers) {
       const proxy = loaded.colliders.find(c => c.id === cover.name);
       assert.ok(proxy && Math.abs(proxy.maxY - proxy.minY - 1.45) < 1e-9, `${cover.name} é sólida`);
@@ -216,14 +227,188 @@ try {
         assert.ok(ray.intersectObject(cover, false).length > 0, `${cover.name} interrompe a visada central`);
       }
     }
-    assert.ok(loaded.escortCoverPoints.length >= 20);
+  });
+  const losBlocked = (map, ax, az, bx, bz, y = 1.5) => {
+    const origin = new THREE.Vector3(ax, y, az), dir = new THREE.Vector3(bx - ax, 0, bz - az);
+    const ray = new THREE.Raycaster(origin, dir.clone().normalize(), 0, dir.length() - .05);
+    return ray.intersectObjects(map.occluders, false).length > 0;
+  };
+  check('real-cover-hides-vip-and-stops-hitscan', () => {
+    // Inventário fixo: peça decorativa (solid=false) some dos colliders e falha aqui.
+    const esperadas = [
+      ['jardineira', -7.2, -38.6], ['jardineira', 8.2, -38.6], ['jardineira', -22.5, -41.3],
+      ['jardineira', -22.5, -39.8], ['jardineira', 17.5, -43], ['jardineira', -28, -45.5], ['jardineira', 24, -44.5],
+      ['balcao_recepcao', 0, -32], ['balcao_recepcao', 15, -39],
+      ['energia_solo', -1, 44.6], ['energia_solo', 24, 50],
+      ['containers_carga', -12, 51.4], ['containers_carga', -12, 53.6], ['containers_carga', 16.5, 52],
+      ['barreiras_aeroporto', 5, -4], ['barreiras_aeroporto', -6.2, 4], ['carro_servico', 18, 10],
+      ['trator_bagagem', -19, 9], ['barreiras_aeroporto', -11, 24], ['barreiras_aeroporto', 11, 24],
+      ['carrinho_ferramentas', -1.5, 26], ['carrinho_ferramentas', 8.6, 47], ['barreiras_aeroporto', -24, 47],
+      ['carro_servico', -8, 54.5], ['barreiras_aeroporto', 25.5, 55], ['jardineira', -18, -34.8],
+    ];
+    for (const [id, x, z] of esperadas) assert.ok(loaded.colliders.some(c => c.id === id
+      && Math.abs((c.minX + c.maxX) / 2 - x) < 1e-9 && Math.abs((c.minZ + c.maxZ) / 2 - z) < 1e-9),
+      `cobertura real ${id}@(${x},${z}) presente e sólida`);
+    const tall = loaded.colliders.filter(c => ['jardineira', 'containers_carga', 'energia_solo', 'trator_bagagem'].includes(c.id) && c.maxY - c.minY >= 1.72);
+    const porZona = { embarque: 0, apron: 0 };
+    for (const c of tall) {
+      const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
+      if (cz < -16) porZona.embarque++; else if (cz > 44) porZona.apron++;
+      assert.equal(blocked(loaded, cx, cz), true, `${c.id}@(${cx},${cz}) é sólido, não cenografia atravessável`);
+      assert.ok(losBlocked(loaded, cx, cz - 6, cx, cz + 6) || losBlocked(loaded, cx, cz + 6, cx, cz - 6),
+        `${c.id}@(${cx},${cz}) não oclui hitscan a 1,5 m de altura dos olhos`);
+    }
+    assert.ok(porZona.embarque >= 3 && porZona.apron >= 3, 'cobertura alta por zona: ' + JSON.stringify(porZona));
+    for (const c of loaded.colliders.filter(c => c.id === 'balcao_recepcao')) {
+      const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
+      assert.equal(blocked(loaded, cx, cz), true, `balcao@(${cx},${cz}) é sólido`);
+      assert.ok(losBlocked(loaded, cx, cz - 6, cx, cz + 6, 1.2), `balcao@(${cx},${cz}) não oclui agachado a 1,2 m`);
+    }
+  });
+  check('cover-points-usable-and-formation-ready', () => {
+    assert.ok(loaded.escortCoverPoints.length >= 26, 'slots suficientes ao longo da rota');
+    const zonas = {};
     for (const point of loaded.escortCoverPoints) {
-      assert.equal(blocked(loaded, point.x, point.z, .46), false, 'ponto de cobertura utilizável');
+      assert.ok(['guard', 'roamer'].includes(point.role) && ['embarque', 'servico', 'hangar', 'apron'].includes(point.zone),
+        `(${point.x},${point.z}) sem papel/zona declarados`);
+      (zonas[point.zone] ??= { guard: 0, roamer: 0 })[point.role]++;
+      assert.equal(blocked(loaded, point.x, point.z, .46), false, `(${point.x},${point.z}) utilizável`);
       const distance = Math.min(...loaded.colliders.filter(c => c.maxY >= 1.2 && c.minY <= .1).map(c => Math.hypot(
         Math.max(c.minX - point.x, 0, point.x - c.maxX), Math.max(c.minZ - point.z, 0, point.z - c.maxZ))));
-      assert.ok(distance <= 1.6, 'ponto está encostado em cobertura real');
-      assert.ok(Math.min(...loaded.escortPath.map(p => Math.hypot(p.x - point.x, p.z - point.z))) > 1, 'ponto não repete checkpoint');
+      assert.ok(distance <= 1.6, `(${point.x},${point.z}) está encostado em cobertura real`);
+      assert.ok(Math.min(...loaded.escortPath.map(p => Math.hypot(p.x - point.x, p.z - point.z))) > 1, `(${point.x},${point.z}) não repete checkpoint`);
+      const nearest = loaded.waypoints.nodes[loaded.nearestWaypoint(point.x, point.z)];
+      assertClearSegment(point, nearest, `(${point.x},${point.z}) ligado ao grafo`, .46);
     }
+    for (const [zone, paper] of Object.entries(zonas)) assert.ok(paper.guard >= 4, `${zone} sustenta 4 guardas diretos`);
+    for (const zone of ['embarque', 'apron']) assert.ok(zonas[zone].roamer >= 2, `${zone} sustenta 2 roamers`);
+  });
+  check('guard-slots-occluded-from-approach-lanes', () => {
+    const lanes = {
+      norteCentro: [0, -17.6], norteLeste: [17, -17.6], ladoOesteSul: [-30.6, -43],
+      apronOeste: [-32, 54], apronLeste: [32, 54], hangarBoca: [0, 19],
+    };
+    const protegido = {
+      '-7.2,-40': ['norteCentro'], '8.2,-40': ['norteCentro'], '0,-36.3': ['norteCentro'],
+      '-20.5,-40.5': ['ladoOesteSul'], '13,-41': ['norteLeste'], '-6,-21.4': ['norteCentro'], '6,-21.4': ['norteCentro'],
+      '-1,46.9': ['hangarBoca'], '-6.6,49': ['apronOeste'],
+      '-3.2,49.9': ['apronOeste', 'apronLeste'], '12.6,50.4': ['apronOeste', 'apronLeste'],
+    };
+    loaded.root.updateMatrixWorld(true);
+    for (const point of loaded.escortCoverPoints.filter(p => p.role === 'guard')) {
+      for (const lane of protegido[point.x + ',' + point.z] || []) {
+        const [ax, az] = lanes[lane];
+        assert.ok(losBlocked(loaded, ax, az, point.x, point.z), `guard (${point.x},${point.z}) exposto à lane ${lane}`);
+      }
+    }
+  });
+  check('boarding-lounge-not-a-respawn-trap', () => {
+    const sala = { minX: -29, maxX: 29, minZ: -57, maxZ: -44 };   // espelha o predicado E do modo (spawnCandidates)
+    const naSala = (x, z) => x > sala.minX && x < sala.maxX && z > sala.minZ && z < sala.maxZ;
+    const fim = loaded.escortPath.at(-1);
+    for (const s of loaded.spawns.E) {
+      assert.equal(naSala(s.x, s.z), false, `spawn E (${s.x},${s.z}) dentro do embarque`);
+      assert.ok(s.z > 0, `spawn E (${s.x},${s.z}) fica à frente da rota`);
+      const path = loaded.findPath(loaded.nearestWaypoint(s.x, s.z), loaded.nearestWaypoint(fim.x, fim.z))
+        .map(i => loaded.waypoints.nodes[i]).filter(n => naSala(n.x, n.z));
+      assert.equal(path.length, 0, 'caminho E até o embarque do avião não funila pela sala: ' + path.map(n => `${n.x},${n.z}`).join(' '));
+    }
+    const saida = loaded.findPath(loaded.nearestWaypoint(-20, -53.1), loaded.nearestWaypoint(fim.x, fim.z));
+    assert.equal(saida.at(-1), loaded.nearestWaypoint(fim.x, fim.z), 'relé sul sempre tem rota de saída (B não nasce preso)');
+  });
+  check('graph-single-component-no-dead-ends', () => {
+    const { nodes, adj } = loaded.waypoints;
+    const seen = new Uint8Array(nodes.length), fila = [0]; seen[0] = 1;
+    for (let i = 0; i < fila.length; i++) for (const j of adj[fila[i]]) if (!seen[j]) { seen[j] = 1; fila.push(j); }
+    assert.equal(fila.length, nodes.length, 'grafo com uma componente só');
+    const folhas = nodes.filter((_, i) => adj[i].length === 1);
+    assert.equal(folhas.length, 0, 'nenhum nó folha: ' + folhas.map(n => `${n.x},${n.z}`).join(' '));
+  });
+  check('route-pressure-attacker-approach-bounded', () => {
+    const { adj } = loaded.waypoints;
+    const bfs = (from) => {
+      const dist = new Int32Array(loaded.waypoints.nodes.length).fill(-1), q = [from]; dist[from] = 0;
+      for (let i = 0; i < q.length; i++) for (const j of adj[q[i]]) if (dist[j] < 0) { dist[j] = dist[q[i]] + 1; q.push(j); }
+      return dist;
+    };
+    for (const s of loaded.spawns.E) {
+      const dist = bfs(loaded.nearestWaypoint(s.x, s.z));
+      loaded.escortPath.forEach((cp, k) => {
+        const d = dist[loaded.nearestWaypoint(cp.x, cp.z)];
+        assert.ok(d > 0, `E(${s.x},${s.z}) alcança o checkpoint ${k}`);
+        assert.ok(d <= 35, `E(${s.x},${s.z})→cp${k} em ${d} arestas: cobertura não virou labirinto`);
+      });
+    }
+  });
+  check('vip-cover-density-per-checkpoint', () => {
+    // Contrato acordado com o modo: cada checkpoint intermediário tem >=2 slots a 8 m
+    // para o VIP escolher abrigo por concealment (raio de âncora de 8 m).
+    loaded.escortPath.forEach((cp, k) => {
+      if (k === 0 || k === loaded.escortPath.length - 1) return;
+      const near = loaded.escortCoverPoints.filter(p => Math.hypot(p.x - cp.x, p.z - cp.z) <= 8);
+      assert.ok(near.length >= 2, `cp${k} (${cp.x},${cp.z}) com ${near.length} slots a 8 m`);
+    });
+  });
+  check('patrol-cover-chain-along-route', () => {
+    const tall = loaded.colliders.filter(c => c.maxY >= 1.2 && c.minY <= .1);
+    for (let i = 1; i < loaded.escortPath.length; i++) {
+      const a = loaded.escortPath[i - 1], b = loaded.escortPath[i];
+      const steps = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 2);
+      for (let n = 0; n <= steps; n++) {
+        const t = n / steps, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
+        const d = Math.min(...tall.map(c => Math.hypot(Math.max(c.minX - x, 0, x - c.maxX), Math.max(c.minZ - z, 0, z - c.maxZ))));
+        assert.ok(d <= 8, `rota a ${d.toFixed(1)} m de cobertura alta em (${x.toFixed(1)},${z.toFixed(1)})`);
+      }
+    }
+  });
+  check('stairs-tucked-against-fuselage', () => {
+    const escada = loaded.colliders.find(c => c.id === 'escada_embarque');
+    assert.ok(escada, 'proxy da escada existe');
+    const fuselagem = loaded.colliders.find(c => c.id === 'aviao_executivo_fuselagem');
+    const gap = Math.max(escada.minX - fuselagem.maxX, fuselagem.minX - escada.maxX);
+    assert.ok(gap <= 0.6, `escada a ${gap.toFixed(2)} m da fuselagem`);
+    assert.equal(blocked(loaded, 7.2, 49.2, .46), false, 'CP12 livre');
+    assert.equal(blocked(loaded, 7, 55), true, 'asas entram na pegada física');
+    assert.equal(blocked(loaded, 7, 55) === blocked(fallback, 7, 55), true, 'escada igual com GLB e fallback');
+  });
+  check('checkpoint-markings-semantic-and-nonsolid', () => {
+    const aneis = loaded.root.children.filter(o => o.name === 'marca-checkpoint-escolta');
+    assert.equal(aneis.length, 13, '13 anéis de checkpoint');
+    loaded.escortPath.forEach((cp, i) => {
+      assert.ok(aneis.some(a => Math.abs(a.position.x - cp.x) < 1e-9 && Math.abs(a.position.z - cp.z) < 1e-9), `anel ${i} no checkpoint`);
+    });
+    assert.equal(loaded.colliders.some(c => c.id === 'marca-checkpoint-escolta'), false, 'anéis não são colisores');
+    assert.ok(aneis.every(a => !a.castShadow), 'anéis não projetam sombra');
+  });
+  check('distant-ridge-separates-horizon', () => {
+    const serras = loaded.root.children.filter(o => o.name === 'serra-distante');
+    assert.equal(serras.length, 5, 'cinco volumes de serra');
+    assert.ok(serras.every(s => Math.abs(s.position.z) > 150), 'serra além da pista, na faixa de névoa');
+    assert.equal(loaded.colliders.some(c => c.id === 'serra-distante'), false, 'serra não é colisor');
+  });
+  check('west-e-spawn-frame-clean', () => {
+    const oeste = loaded.spawns.E.find(sp => sp.x < 0 && sp.z > 40);
+    assert.ok(oeste, 'spawn E oeste existe');
+    const forward = { x: oeste.x - Math.sin(oeste.yaw) * 2, z: oeste.z - Math.cos(oeste.yaw) * 2 };
+    assertClearSegment(oeste, forward, 'E oeste primeira leitura', .46);
+    const colados = loaded.colliders.filter(c => c.id === 'barreiras_aeroporto'
+      && Math.abs((c.minX + c.maxX) / 2 - oeste.x) < 6 && Math.abs((c.minZ + c.maxZ) / 2 - oeste.z) < 6);
+    assert.equal(colados.length, 0, 'sem trilho colado no primeiro quadro do spawn E oeste');
+  });
+  check('lounge-lighting-and-vantage-contract', () => {
+    // Captura preta do gauntlet era ponto de vista dentro do balcão, não luz ausente:
+    // a régua prova que nenhum waypooint válido nasce penetrado e que as luminárias
+    // do terminal continuam nos três meridianos do salão.
+    const luzes = [];
+    loaded.root.traverse(o => { if (o.isPointLight && o.position.z < -14 && o.position.z > -52) luzes.push(Math.round(o.position.z)); });
+    assert.deepEqual(luzes.sort((a, b) => a - b), [-46, -34, -22], 'três pontos de luz no embarque');
+    for (const n of loaded.waypoints.nodes) assert.equal(blocked(loaded, n.x, n.z, .46), false, `nó (${n.x},${n.z}) penetrado`);
+  });
+  check('apron-cover-balance-between-e-lanes', () => {
+    const tall = loaded.colliders.filter(c => (c.minZ + c.maxZ) / 2 > 44 && c.maxY - c.minY >= 1.4);
+    const oeste = tall.filter(c => (c.minX + c.maxX) / 2 < 0).length;
+    const leste = tall.filter(c => (c.minX + c.maxX) / 2 > 0).length;
+    assert.ok(Math.abs(oeste - leste) <= 2, `apron equilibrado entre lanes E: ${oeste}×${leste}`);
   });
   check('spawn-clearance-and-first-read', () => {
     for (const [team, spawns] of Object.entries(loaded.spawns)) for (const [i, spawn] of spawns.entries()) {

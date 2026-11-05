@@ -44,21 +44,41 @@ for (const visibility of ['controlada', 'real']) for (const movement of [0, -1, 
   guard.pos.set(slot.x, 0, slot.z); guard.yaw = Math.PI; guard.think = 0;
   guard.weapon = 'ak'; guard.mag = 30; guard.nextShotAt = 0;
   if (visibility === 'controlada') game._losClear = () => true;
-  const result = { visibility, movement, warmupShots: 0, shots: 0, lastHalfShots: 0, reactionResets: 0, clearedFrames: 0, visibleFrames: 0, maximumStep: 0, maximumSlotDistance: 0 };
+  const result = { visibility, movement, warmupShots: 0, shots: 0, lastHalfShots: 0, regroupShots: 0, reactionResets: 0, clearedFrames: 0, visibleFrames: 0, maximumStep: 0, maximumSlotDistance: 0 };
   try {
     seedRandom(1);
     for (let frame = 0; frame < 480; frame++) {
-      const active = frame >= 240;
-      if (active && moving) {
-        const before = vip.pos.z; vip.pos.z += movement * escortSpeed / 60; game._collide(vip.pos, 0.38);
-        assert(Math.abs(vip.pos.z - before - movement * escortSpeed / 60) < 1e-9, 'trajeto do VIP fisicamente livre');
-      }
+    const active = frame >= 240;
+    // JANELA DE REAGRUPAMENTO (frames 240-330): o guarda é deslocado 4 m do slot
+    // ENQUANTO o VIP já se move — repor formação marchando não pode sequestrar a
+    // mira (nav-sobrescreve-mira) nem apagar o alvo (apagar-alvo) sem parar o tiro;
+    // e quem não reagrupa (sem-acompanhar) fica 4 m fora no fim.
+    if (frame === 240) {
+      const destino = game.objective.botDestination(guard);
+      guard.pos.x = destino.x + 4; guard.pos.z = destino.z;
+      guard.path = null; guard.repathAt = 0; guard._repathMin = 0;
+    }
+    if (active && moving) {
+      const before = vip.pos.z; vip.pos.z += movement * escortSpeed / 60; game._collide(vip.pos, 0.38);
+      assert(Math.abs(vip.pos.z - before - movement * escortSpeed / 60) < 1e-9, 'trajeto do VIP fisicamente livre');
+    }
       const x = guard.pos.x, z = guard.pos.z, mag = guard.mag, reaction = guard.reactAt;
       game.time += 1 / 60; game._updateBot(guard, 1 / 60);
       const fired = guard.mag < mag;
       if (!active) result.warmupShots += Number(fired);
       else {
         result.shots += Number(fired); result.lastHalfShots += Number(fired && frame >= 360);
+        // INTEGRIDADE DA MIRA no reagrupamento: o corpo continua encarando o alvo
+        // visível enquanto repõe formação ("Reagrupar não muda o yaw que orienta a
+        // mira"). O mutante nav-sobrescreve-mira força o rumo pro nó do slot — a
+        // fração de quadros mirando o inimigo despenca. Direto e independente da
+        // velocidade de convergência do steering.
+        if (frame < 330) {
+          const aim = Math.atan2(enemy.pos.x - guard.pos.x, enemy.pos.z - guard.pos.z);
+          let dAim = aim - guard.yaw;
+          while (dAim > Math.PI) dAim -= Math.PI * 2; while (dAim < -Math.PI) dAim += Math.PI * 2;
+          result.regroupAimFrames = (result.regroupAimFrames || 0) + Number(Math.abs(dAim) < 0.6);
+        }
         result.reactionResets += Number(guard.reactAt !== reaction);
         result.clearedFrames += Number(guard.target === null);
         result.visibleFrames += Number(game._losClear(game._botEye(guard), game._botEye(enemy)));
@@ -69,7 +89,14 @@ for (const visibility of ['controlada', 'real']) for (const movement of [0, -1, 
     }
     assert(result.warmupShots > 0 && result.visibleFrames === 240, 'controle: alvo visível e tiro possível antes do movimento');
     assert(result.maximumStep <= speed / 60 + 1e-9, 'movimento respeita passo físico sem teleporte');
+    // (regroupShots é diagnóstico: a cadência de pausa entre rajadas torna 1,5 s de
+    // janela loteria — a INTEGRIDADE DA MIRA acima é a prova estrutural.)
+    assert((result.regroupAimFrames || 0) >= 45 || visibility === 'real',
+      'reagrupar em marcha mantém a mira no alvo (navegação não sequestra o rumo)');
     assert(result.lastHalfShots > 0, 'guarda continua disparando durante acompanhamento do VIP');
+    // Reagrupar em marcha não pode APAGAR o alvo (mutante apagar-alvo: alvo derrubado
+    // em 45-57 dos 240 quadros ativos; base: 0 em todas as configurações).
+    assert(result.clearedFrames <= 15, 'reagrupar em marcha mantém o alvo engajado');
     const destination = game.objective.botDestination(guard);
     result.finalSlotDistance = Math.hypot(guard.pos.x - destination.x, guard.pos.z - destination.z);
     assert(result.finalSlotDistance <= destination.slotRadius, 'guarda acompanha o slot sem perseguir o inimigo');

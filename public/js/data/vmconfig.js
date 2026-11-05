@@ -91,9 +91,22 @@ export const VM_WEAPON = {
       slideLiner: { mesh: 'GEO-deagle-slide-liner-reconstructed', bone: 'Slider' },
       hammer: { mesh: 'GEO-deagle-hammer', bone: 'Hammer' },
     } }),
-  // PT-38 no enquadramento APROVADO (FAMILY_FRAME.pistol); a reescala do #631 foi revertida.
-  // As curtas medem-se contra ela: ARMAS_CURTAS em tools/eval/lib/vm-limiares.mjs.
-  pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
+  // PT-38 APROVADA = golden do catálogo PÚBLICO (dono, 05/11: Operação Flávio e global).
+  // O piloto coro/pistol-hires.glb viaja no deploy (sem catálogo privado não há 404 nem
+  // legado em silêncio); o chassi X18 da fábrica fica no A/B `?vmgolden=0` e o produto K
+  // (`pistol#pistol`, runtime:'family') no A/B duplo `?vmgolden=0&vmfabrica=0`.
+  // ads (rota golden, unidades do PRÓPRIO piloto — ~97 un/m, off/alívio em metro da
+  // fábrica seriam invisíveis): alça/massa MEDIDAS no osso CoroWeapon (Idle@0, espaço
+  // do bone) erguem o `wrap` do update — sem elas o ADS ficava parado inteiro. Foco
+  // ABAIXO da cruz preservado (decisão do dono 28/10, BUG-181): alça −8 cm (−7,8 un) e
+  // alívio 0,38 m (36,9 un); `linha` é o mesmo A/B da fábrica (?ads1pfix=0 volta o foco torto).
+  pistol: W('pistol', { baked: true, golden: true, runtime: 'family', timing: 'gameplay',
+    ads: { auto: true, off: [0, 0.04, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 36.9, estilo: 'foco',
+      linha: { off: [0, -7.8, 0], estilo: 'foco' },
+      golden: { osso: 'CoroWeapon',
+        alca: [-0.1032791669, -6.2635508196, 20.0436404436],
+        massa: [-0.2081203062, -31.7511911266, 19.731317572],
+        cima: [0, 0, 1] } } }),
   // M92: arma até o
   // punho (grip-support.mjs), cabo na borda e ADS pela alça tangente (sockets 10° fora da linha).
   m92: W('ak', { baked: true, ready: true, assetLimit: 'pente-fundido-na-malha Mint',

@@ -272,10 +272,8 @@ export function buildOperacaoFlavio(scene, T = {}) {
     for (const x of [-20, 0, 20]) bloco('luminaria-terminal', x, 3.42, z, 8.5, 0.05, 0.26, mats.luz, false, false);
   }
   placa('placa-rota-patio', 'PÁTIO', 'EMBARQUE ↑', 0, 4.25, -15.62, 6.8, 1.7, Math.PI);
-  for (const [lado, x] of [['oeste', -7], ['leste', 8]]) {
-    bloco(`cobertura-tatica-terminal-${lado}`, x, 0.725, -37, 3.8, 1.45, 1.1, mats.interno);
-    bloco(`faixa-cobertura-terminal-${lado}`, x, 1.465, -37, 3.55, 0.03, 0.85, mats.amarelo, false, false);
-  }
+  // A proteção do embarque vem de objetos reais (balcões, jardineiras, bancos), não de caixas:
+  // as peças altas escondem o VIP de 1,72 m e quebram as lanes norte/laterais do terminal.
   // Controle de acesso: pistas baixas, scanners, guaritas envidraçadas e fila clara.
   for (const x of [-31, 31]) {
     bloco('guarita-base', x, 0.55, 1, 10, 1.1, 15, mats.marinho);
@@ -296,7 +294,9 @@ export function buildOperacaoFlavio(scene, T = {}) {
   }
   for (const z of [-5, 1, 7]) for (const x of [-5.5, 5.5]) {
     cilindro('poste-fila', x, 0.55, z, 0.11, 1.1, mats.metal);
-    bloco('fita-fila', 0, 0.95, z, 11, 0.06, 0.06, mats.laranja, false, false);
+    // Cinto em dois segmentos com vão central de 1,8 m: a fila não vira trilho
+    // atravessando o campo da câmera (achado do gauntlet na captura do pátio).
+    for (const lado of [-3.2, 3.2]) bloco('fita-fila', lado, 0.95, z, 4.6, 0.06, 0.06, mats.laranja, false, false);
   }
   bloco('portico-controle', 0, 3.9, -13, 25, 0.36, 0.7, mats.marinho, false);
   bloco('coluna-portico-oeste', -12.2, 2, -13, 0.5, 4, 0.7, mats.marinho, false);
@@ -329,16 +329,21 @@ export function buildOperacaoFlavio(scene, T = {}) {
   bloco('faixa-cobertura-hangar', -3, 1.465, 37, 4.7, 0.03, 1.1, mats.amarelo, false, false);
   bloco('cobertura-tatica-hangar-leste', 10, 0.725, 37, 4, 1.45, 1.4, mats.metal);
   bloco('faixa-cobertura-hangar-leste', 10, 1.465, 37, 3.7, 0.03, 1.1, mats.amarelo, false, false);
-  bloco('cobertura-tatica-apron', -1, 0.725, 45, 4, 1.45, 1.2, mats.interno);
-  bloco('faixa-cobertura-apron', -1, 1.465, 45, 3.7, 0.03, 0.9, mats.amarelo, false, false);
+  // No apron a proteção também é objeto real: GPU, bay de containers e trator emolduram
+  // a zona de embarque e cortam as lanes leste/oeste dos spawns E sem tocar a escada.
 
   placa('placa-hangar', 'HANGAR', 'ROTA ↑', 0, 6.65, 21.72, 6, 1.4, Math.PI);
   for (let x = -40; x <= 40; x += 8) bloco('faixa-apron', x, 0.075, 51, 4.2, 0.035, 0.22, mats.amarelo, false, false);
+  // Horizonte norte/sul: serra baixa além da pista, já dentro da faixa de névoa, devolve
+  // contraste entre o avião claro e o céu pálido (gauntlet: separação flat do céu).
+  for (const [x, w, h, z] of [[-70, 70, 7, 196], [25, 90, 9, 201], [85, 60, 6, 191], [-30, 80, 6, -192], [55, 70, 8, -197]]) {
+    bloco('serra-distante', x, h / 2 - 0.1, z, w, h, 9, mats.verde, false, false);
+  }
   faixaEntre('eixo-taxiamento', { x: 0, z: 47 }, { x: 0, z: 62 }, 0.26, mats.amarelo);
   for (let z = 49; z <= 64; z += 3) { baliza(-17, z); baliza(17, z); }
   const spot = new THREE.Mesh(new THREE.RingGeometry(7.5, 7.85, 48), mats.branco);
   spot.name = 'marca-estacionamento-aeronave'; spot.rotation.x = -Math.PI / 2; spot.position.set(0, 0.075, 55); root.add(spot);
-  placa('placa-embarque', 'EMBARQUE 01', 'AVIÃO →', 15, 2.2, 49.8, 4.4, 1.1, -Math.PI / 2);
+  placa('placa-embarque', 'EMBARQUE 01', 'AVIÃO →', -12, 2.2, 49.8, 4.4, 1.1, Math.PI / 2);
 
   // Volumes além do limite fecham o horizonte como um aeroporto, não como uma arena vazia.
   for (const [x, z, w, h, d] of [[-57,-32,18,7,34],[57,-28,20,9,42],[-62,28,26,10,30],[62,34,25,8,34]]) {
@@ -414,7 +419,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
     root.add(model); return model;
   };
   const objectivePlane = usarProp('aviao_executivo', [0, 0.08, 55], 18, [18, 5, 8], Math.PI);
-  usarProp('escada_embarque', [4.2, 0.08, 52], 4, [3, 2.4, 4], -Math.PI / 2);
+  usarProp('escada_embarque', [-3.2, 0.08, 52.5], 4, [3, 2.4, 4], Math.PI / 2);
   usarProp('trator_bagagem', [-20, 0.08, 50], 4.2, [4.2, 2, 2.4], Math.PI / 2);
   usarProp('carrinho_ferramentas', [27, 0.08, 38], 2.2, [2.2, 1.4, 1.2], Math.PI / 2);
   usarProp('arco_seguranca', [0, 0.08, -13], 3, [3, 3, 0.8], 0, false);
@@ -426,7 +431,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
   };
   colliderDoProp('aviao_executivo_fuselagem', 0, 0, 55, 3.4, 4.6, 12, Math.PI);
   colliderDoProp('aviao_executivo_asas', 0, 0.8, 55.4, 16, 1.4, 3.2, Math.PI);
-  colliderDoProp('escada_embarque', 4.2, 0, 52, 3, 2.4, 4, -Math.PI / 2);
+  colliderDoProp('escada_embarque', -3.2, 0, 52.5, 3, 2.4, 4, Math.PI / 2);
   colliderDoProp('trator_bagagem', -20, 0, 50, 4.2, 2, 2.4, Math.PI / 2);
   colliderDoProp('carrinho_ferramentas', 27, 0, 38, 2.2, 1.4, 1.2, Math.PI / 2);
   for (const x of [-1.28, 1.28]) colliders.push({
@@ -434,6 +439,15 @@ export function buildOperacaoFlavio(scene, T = {}) {
     minZ: -13.45, maxZ: -12.55,
   });
 
+  // Marcação semântica: anel âmbar emissivo por checkpoint da escolta — distinto das
+  // faixas amarelas de pintura e do anel branco do estacionamento. Render-only.
+  const anelCheckpoint = new THREE.MeshBasicMaterial({ color: 0xffc76a, toneMapped: false, transparent: true, opacity: 0.92 });
+  for (let i = 0; i < ESCORT_PATH.length; i++) {
+    const anel = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.85, 28), anelCheckpoint);
+    anel.name = 'marca-checkpoint-escolta';
+    anel.rotation.x = -Math.PI / 2; anel.position.set(ESCORT_PATH[i].x, 0.06, ESCORT_PATH[i].z);
+    root.add(anel);
+  }
   const equipamentos = [
     ['terminal_fachada', -18, -15.82, 16, 0, 16, 5, 1, false],
     ['terminal_fachada', 18, -15.82, 16, 0, 16, 5, 1, false],
@@ -473,9 +487,46 @@ export function buildOperacaoFlavio(scene, T = {}) {
     ['barreiras_aeroporto', -8, 49, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
     ['torre_iluminacao', -31, 49, 8, 0, 2.2, 8, 2.2, true],
     ['torre_iluminacao', 31, 49, 8, Math.PI, 2.2, 8, 2.2, true],
-    ['barreiras_aeroporto', -23, 53, 5, 0, 4.5, 1.4, 1.2, true],
+    // Barreira oeste recuada para (−27,53): protege a lane do spawn E e mantém o corredor
+    // norte do apron navegável (o grafo perdeu um beco quando ela ficava mais a leste).
     ['barreiras_aeroporto', 23, 53, 5, 0, 4.5, 1.4, 1.2, true],
     ['barreiras_aeroporto', 11, 45, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
+    // Embarque: balcão central quebra a canyon da porta norte; plantas altas (1,8 m)
+    // escondem o VIP de 1,72 m e quebram as lanes norte e laterais do terminal.
+    ['balcao_recepcao', 0, -32, 7.2, Math.PI / 2, 7, 1.4, 2.2, true],
+    ['jardineira', -7.2, -38.6, 2.5, 0, 2.5, 1.8, 1.4, true],
+    ['assentos_aeroporto', -7.2, -35.8, [2.6, 1.05, 0.9], 0, 2.6, 1.05, 0.9, true],
+    ['jardineira', 8.2, -38.6, 2.5, 0, 2.5, 1.8, 1.4, true],
+    ['assentos_aeroporto', 8.2, -35.8, [2.6, 1.05, 0.9], 0, 2.6, 1.05, 0.9, true],
+    // Cerca viva oeste: duas jardineiras cobrem CP2/CP3 da porta lateral sul.
+    ['jardineira', -22.5, -41.3, 2.5, 0, 2.5, 1.8, 1.4, true],
+    ['jardineira', -22.5, -39.8, 2.5, 0, 2.5, 1.8, 1.4, true],
+    ['jardineira', 17.5, -43, 2.5, Math.PI / 2, 2.5, 1.8, 1.4, true],
+    ['assentos_aeroporto', 9, -25.5, [2.6, 1.05, 0.9], Math.PI / 2, 2.6, 1.05, 0.9, true],
+    ['assentos_aeroporto', -9, -25.5, [2.6, 1.05, 0.9], Math.PI / 2, 2.6, 1.05, 0.9, true],
+    ['balcao_recepcao', 15, -39, 7.2, 0, 7, 1.4, 2.2, true],
+    ['jardineira', -28, -45.5, 2.5, Math.PI / 2, 2.5, 1.8, 1.4, true],
+    ['jardineira', 24, -44.5, 2.5, 0, 2.5, 1.8, 1.4, true],
+    // Apron: GPU e bay de containers fecham as lanes dos spawns E sem tocar a escada.
+    ['energia_solo', -1, 44.6, 4, 0, 4, 2, 2, true],
+    ['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, true],
+    ['containers_carga', -12, 53.6, 5, 0, 5, 2.6, 2.5, true],
+    ['containers_carga', 16.5, 52, 5, 0, 5, 2.6, 2.5, true],
+    ['energia_solo', 24, 50, 4, Math.PI / 2, 4, 2, 2, true],
+    // Ilhas escalonadas (gauntlet): cadeia de cobertura real a cada ~8-12 m no pátio,
+    // na boca do hangar e no apron; nada disso toca a escolta nem os relés das cinco rotas.
+    ['barreiras_aeroporto', 5, -4, 5, 0, 4.5, 1.4, 1.2, true],
+    ['barreiras_aeroporto', -6.2, 4, 5, 0, 4.5, 1.4, 1.2, true],
+    ['carro_servico', 18, 10, 5, 0, 5, 2.4, 2.4, true],
+    ['trator_bagagem', -19, 9, 4.2, 0, 4.2, 2, 2.4, true],
+    ['barreiras_aeroporto', -11, 24, 5, 0, 4.5, 1.4, 1.2, true],
+    ['barreiras_aeroporto', 11, 24, 5, 0, 4.5, 1.4, 1.2, true],
+    ['carrinho_ferramentas', -1.5, 26, 2.2, Math.PI / 2, 2.2, 1.4, 1.2, true],
+    ['carrinho_ferramentas', 8.6, 47, 2.2, Math.PI / 2, 2.2, 1.4, 1.2, true],
+    ['barreiras_aeroporto', -24, 47, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
+    ['carro_servico', -8, 54.5, 5, Math.PI / 2, 5, 2.4, 2.4, true],
+    ['barreiras_aeroporto', 25.5, 55, 5, 0, 4.5, 1.4, 1.2, true],
+    ['jardineira', -18, -34.8, 2.5, Math.PI / 2, 2.5, 1.8, 1.4, true],
   ];
   for (const [id, x, z, size, yaw, w, h, d, solid] of equipamentos) {
     usarProp(id, [x, 0.08, z], size, [w, h, d], yaw, solid);
@@ -619,17 +670,53 @@ export function buildOperacaoFlavio(scene, T = {}) {
   };
 
   const escortPath = ESCORT_PATH.map((p) => ({ ...p }));
+  // Slots de cobertura por zona com papel declarado: suportam 6 defensores (4 guardas
+  // diretos junto à rota + 2 roamers de flanco) em qualquer trecho da escolta. Os pontos
+  // ficam a ≤1,6 m de colisor alto, nunca colados em checkpoint e ligados ao grafo.
   const escortCoverPoints = [
-    { x: -23, z: 1.2 }, { x: -23, z: 4.8 },
-    { x: 23, z: 1.2 }, { x: 23, z: 4.8 },
-    { x: -3, z: 35.5 }, { x: -3, z: 38.5 },
-    { x: -6.6, z: 49 }, { x: 7.2, z: 52 },
-    { x: -7, z: -38.35 }, { x: -7, z: -35.65 },
-    { x: 8, z: -38.35 }, { x: 8, z: -35.65 },
-    { x: -12, z: 3.6 }, { x: -12, z: 6.4 },
-    { x: 12, z: 2.6 }, { x: 12, z: 5.4 },
-    { x: 10, z: 35.5 }, { x: 10, z: 38.5 },
-    { x: -1, z: 43.6 }, { x: -1, z: 46.4 },
+    { x: -7.2, z: -40.0, role: 'guard', zone: 'embarque' },
+    { x: 8.2, z: -40.0, role: 'guard', zone: 'embarque' },
+    { x: 0, z: -36.3, role: 'guard', zone: 'embarque' },
+    { x: -20.5, z: -40.5, role: 'guard', zone: 'embarque' },
+    { x: 13, z: -41, role: 'guard', zone: 'embarque' },
+    { x: -6, z: -21.4, role: 'guard', zone: 'embarque' },
+    { x: 6, z: -21.4, role: 'guard', zone: 'embarque' },
+    { x: -26.4, z: -47.1, role: 'roamer', zone: 'embarque' },
+    { x: 24.6, z: -46.6, role: 'roamer', zone: 'embarque' },
+    { x: -20, z: -40.3, role: 'guard', zone: 'embarque' },
+    { x: -17.9, z: -32.6, role: 'guard', zone: 'embarque' },
+    { x: -17.5, z: -36.9, role: 'guard', zone: 'embarque' },
+    { x: -2.5, z: -33.5, role: 'guard', zone: 'embarque' },
+    { x: -5, z: -26.9, role: 'guard', zone: 'embarque' },
+    { x: 5, z: -26.5, role: 'guard', zone: 'embarque' },
+    { x: 7, z: -8.4, role: 'guard', zone: 'servico' },
+    { x: -7, z: -8.4, role: 'guard', zone: 'servico' },
+    { x: 2.2, z: -2.6, role: 'guard', zone: 'servico' },
+    { x: 6.2, z: -2.6, role: 'guard', zone: 'servico' },
+    { x: -5, z: 2.4, role: 'guard', zone: 'servico' },
+    { x: -23, z: 1.2, role: 'guard', zone: 'servico' },
+    { x: -23, z: 4.8, role: 'guard', zone: 'servico' },
+    { x: 23, z: 1.2, role: 'guard', zone: 'servico' },
+    { x: 23, z: 4.8, role: 'guard', zone: 'servico' },
+    { x: -12, z: 3.6, role: 'guard', zone: 'servico' },
+    { x: -12, z: 6.4, role: 'guard', zone: 'servico' },
+    { x: 12, z: 2.6, role: 'guard', zone: 'servico' },
+    { x: 12, z: 5.4, role: 'guard', zone: 'servico' },
+    { x: 7, z: 14.4, role: 'guard', zone: 'servico' },
+    { x: 4, z: 14.4, role: 'guard', zone: 'servico' },
+    { x: -3, z: 35.5, role: 'guard', zone: 'hangar' },
+    { x: -3, z: 38.5, role: 'guard', zone: 'hangar' },
+    { x: 10, z: 35.5, role: 'guard', zone: 'hangar' },
+    { x: 10, z: 38.5, role: 'guard', zone: 'hangar' },
+    { x: -1.5, z: 28.4, role: 'guard', zone: 'hangar' },
+    { x: -1, z: 46.9, role: 'guard', zone: 'apron' },
+    { x: -6.6, z: 49, role: 'guard', zone: 'apron' },
+    { x: -3.2, z: 49.9, role: 'guard', zone: 'apron' },
+    { x: 12.6, z: 50.4, role: 'guard', zone: 'apron' },
+    { x: 8.6, z: 45, role: 'guard', zone: 'apron' },
+    { x: 10.8, z: 48.3, role: 'roamer', zone: 'apron' },
+    { x: -20.5, z: 53.2, role: 'roamer', zone: 'apron' },
+    { x: -24, z: 43.9, role: 'roamer', zone: 'apron' },
   ];
   const spawns = {
     B: [{ x: -20, z: -48, yaw: Math.PI }, { x: -17.8, z: -46.5, yaw: Math.PI }, { x: -22.2, z: -47.5, yaw: Math.PI }, { x: -20, z: -50.5, yaw: Math.PI }],

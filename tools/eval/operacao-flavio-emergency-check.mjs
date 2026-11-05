@@ -32,10 +32,13 @@ const g=new Game({renderer,textures:initTextures(),sfx,
   mapId:'operacao_flavio',testMode:true,onQuit(){},onMatchEnd(){}});
 if (mutant) {
   assert.ok(mutants[mutant], 'mutante conhecido');
-  let source = readFileSync(new URL('../../public/js/mode_operacao_flavio.js', import.meta.url), 'utf8');
+  const modeUrl = new URL('../../public/js/mode_operacao_flavio.js', import.meta.url);
+  let source = readFileSync(modeUrl, 'utf8');
   const [old, replacement] = mutants[mutant];
   assert.equal(source.split(old).length - 1, 1, 'alvo único');
   source = source.replace(old, replacement);
+  source = source.replace(/from\s+(['"])([^'"]+)\1/g, (_, quote, spec) =>
+    'from ' + JSON.stringify(new URL(spec, modeUrl).href));
   const { OperacaoFlavio } = await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
   g.objective.dispose();g.objective = new OperacaoFlavio(g, CHARACTERS.find(c=>c.id==='senador'));
   console.log('Mutação aplicada: '+mutant);
