@@ -2279,7 +2279,10 @@ export class Game {
       if (e.button === 0) this.mouseDown0 = false;
       if (e.button === 2) {
         const w = this.player.weapon;
-        if (!this.player.nade && w !== 'knife' && !(WEAPONS[w] && WEAPONS[w].scope)) this._scope(false);   // só solta o ADS das não-sniper
+        if (!this.player.nade && w !== 'knife' && !(WEAPONS[w] && WEAPONS[w].scope)) {
+          this._adsAposLock = false;   // clique rápido: soltar antes do lock não pode mirar depois
+          this._scope(false);   // só solta o ADS das não-sniper
+        }
       }
     };
     this._mm = e => {

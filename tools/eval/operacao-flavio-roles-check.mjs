@@ -29,6 +29,16 @@ const mutations = {
     after: 'bot._flavioVanguarda = alvoZ;',
     clause: 'flanqueador segura a vanguarda com histerese',
   },
+  'vanguarda-presinha': {
+    before: 'const pontoRota = Array.isArray(rota) ? rota.find((p) => Number.isFinite(p?.z) && p.z >= bot._flavioVanguarda) : null;',
+    after: 'const pontoRota = Array.isArray(rota) ? rota.at(-1) : null;',
+    clause: 'vanguarda atravessa hangar e pátio junto do comboio',
+  },
+  'vanguarda-troca-lado': {
+    before: "if (Math.hypot(dx, dz) < 1e-6) { dx = ponto.x - anterior.x; dz = ponto.z - anterior.z; }",
+    after: "if (Math.hypot(dx, dz) < 1e-6) { dx = this.state.position.x - ponto.x; dz = this.state.position.z - ponto.z; }",
+    clause: 'vanguarda atravessa hangar e pátio junto do comboio',
+  },
   'esconde-vivo': {
     before: 'if (bot.deadT > 1) group.visible = false;',
     after: 'if (bot.deadT > 1) group.visible = Math.random() < 0.5;',
@@ -170,6 +180,28 @@ check('flanqueador segura a vanguarda com histerese', () => withGame(7, (game) =
     'vanguarda não recua quando o comboio recua um checkpoint');
   assert.ok(game.objective.botDestination(roamer).leash > 5.5, 'flanqueador tem trela própria de vanguarda');
   vip.alive = true;
+}));
+
+check('vanguarda atravessa hangar e pátio junto do comboio', () => withGame(7, (game) => {
+  const { vip, flanqueadores } = papeis(game);
+  vip.alive = true;
+  for (const checkpoint of [8, 10]) {
+    game.objective.state.checkpoint = checkpoint;
+    const caminho = game.objective.state.caminho;
+    const atual = caminho[checkpoint];
+    game.objective.state.position.x = atual.x; game.objective.state.position.z = atual.z;
+    vip.pos.set(atual.x, vip.pos.y, atual.z);
+    const indice = Math.min(checkpoint + 2, caminho.length - 1);
+    const ponto = caminho[indice];
+    for (const roamer of flanqueadores) {
+      roamer.alive = true;
+      const destino = game.objective.botDestination(roamer);
+      const lateral = Math.hypot(destino.x - ponto.x, destino.z - ponto.z);
+      assert.ok(destino.z >= ponto.z - 3.5, `checkpoint ${checkpoint}: vanguarda não fica atrás do comboio`);
+      assert.ok(lateral <= 3.5 + 1e-9, `checkpoint ${checkpoint}: vanguarda permanece lateral (${lateral.toFixed(2)} m)`);
+      assert.equal(Math.sign(destino.x - ponto.x), roamer._flavioLado, `checkpoint ${checkpoint}: flanqueador mantém o lado autorado`);
+    }
+  }
 }));
 
 check('bots vivos nunca têm a visibilidade alternada pelo modo', () => withGame(7, (game) => {

@@ -24,7 +24,7 @@ hangar industrial azul-cinza e pista aberta na luz do fim da tarde.
 - **Apron protegido por GSE (z 48 a 57):** escada encostada na fuselagem em `(-3.2, 52.5)` — o GLB não expõe nó de porta, então o alinhamento é geométrico, com a plataforma tocando o dorso —, avião em `(0, 55)` e último checkpoint em `(7.2, 49.2)`. A GPU em `(-1, 44.6)`, o bay de containers `(-12, 51.4)`/`(-12, 53.6)`, o container leste `(16.5, 52)`, a GPU leste `(24, 50)`, os carrinhos `(8.6, 47)`/`(-24, 47)` e o `carro_servico` `(−8, 54.5)` ao pé da escada (cobertura dura onde os corrimãos finos não contam) fecham as lanes E (±32, 54) com contagem alta equilibrada (10 oeste × 8 leste, tolerância 2). A barreira que saturava o primeiro quadro do spawn E oeste saiu do mapa.
 - **Operação de solo (render-only):** dez cones de segurança cercam a posição do avião, quatro calços travam o trem, marcas de pneu, manchas de óleo e remendos de asfalto quebram o piso uniforme, cabos ligam duas válvulas de serviço à fuselagem e duas carretas de bagagem com 14 malas ocupam os vãos laterais. A malha perimetral translúcida, os hangares distantes no eixo norte, a biruta e um caminhão-tanque fora da área jogável fecham o horizonte. Nada disso gera colisor ou bloqueia a rota.
 - **Respawn:** ondas de 8 s; defensores acompanham a retaguarda do comboio e nunca nascem à frente do VIP. O time E tem base fixa no pátio do avião (`(-33,54)`, `(-28,56)`, `(33,54)`, `(30,56)`) e nunca usa vanguarda móvel nem a sala de embarque (`x -29…29, z -57…-44`): cada reforço percorre o mapa até o ponto de contato.
-- **Rota de Flávio:** 13 checkpoints, do spawn `(-20, -48)` ao apron. Ele só avança quando pelo menos um defensor vivo está num raio de 6 m e nenhum atacante está num raio de 4 m. Contestado, para; sem escolta por 4 s, recua lentamente até o checkpoint anterior. Os dois flanqueadores usam as vielas laterais oeste/leste exportadas pelo grafo em vez de colar na rota central.
+- **Rota de Flávio:** 13 checkpoints, do spawn `(-20, -48)` ao apron. Ele só avança quando pelo menos um defensor vivo está num raio de 6 m e nenhum atacante está num raio de 4 m. Contestado, para; sem escolta por 4 s, recua lentamente até o checkpoint anterior. Os dois flanqueadores usam as vielas laterais oeste/leste até o hangar e, dessa altura em diante, acompanham o checkpoint central com deslocamento lateral.
 - **Condição de vitória:** defensores vencem quando Flávio permanece 3 s na zona da escada. Atacantes vencem ao derrubá-lo ou quando os 6 min acabam.
 
 ## Portas e navegação
@@ -37,7 +37,7 @@ hangar industrial azul-cinza e pista aberta na luz do fim da tarde.
 ## Spawns e primeira leitura
 
 - **B:** `(-20,-48)`, `(-17.8,-46.5)`, `(-22.2,-47.5)` e `(-20,-50.5)`, todos com `yaw = π`, voltados para o avanço em `+z` e não para a parede sul.
-- **E:** `(-33,16)`, `(33,16)`, `(-32,54)` e `(32,54)`, todos com `yaw = 0`. Os pontos traseiros saem do espaço entre torres, oficinas e containers; há passagem livre imediata e ligação ao grafo.
+- **E:** `(-33,54)`, `(-28,56)`, `(33,54)` e `(30,56)`, todos com `yaw = 0`, olhando para `-z` (a borda norte fica atrás do respawn e o comboio entra à frente). Cada ponto tem passagem livre imediata e ligação ao grafo.
 
 ## Cobertura (cover)
 

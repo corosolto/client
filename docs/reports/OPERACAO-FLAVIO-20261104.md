@@ -16,7 +16,7 @@ Integrated PR #1158 into the current mainline, corrected escort authority, onlin
 - VIP obstruction triggers physical path replanning. Unseen threats expire instead of freezing the escort indefinitely.
 - Safe spawn candidates validate collision, route and distance.
 - Online objective reset and round-end audio work for both escort and horde.
-- Enemy respawn is base-only at the four fixed E apron positions near the aircraft; no forward mobile spawn or boarding-lounge candidate can shorten the approach.
+- Enemy respawn is base-only at the four fixed E apron positions near the aircraft, each with yaw 0 facing the convoy; no forward mobile spawn or boarding-lounge candidate can shorten the approach.
 - Dedicated servers apply guard armor and helmets; pure remote clients remain snapshot-driven.
 - Shelter selection reacts only to threats currently visible to the VIP and uses a stable minimum dwell, preventing wall-hack-like information leaks and cover ping-pong.
 - Escort spawn protection is telegraphed by a stable halo/shield indicator without flashing the body.
@@ -29,8 +29,8 @@ Integrated PR #1158 into the current mainline, corrected escort authority, onlin
 - Recovery preserves physical movement, line of sight and firing rules, including low-skill bots.
 - Attackers proactively approach and contest the escort instead of waiting for generic target acquisition.
 - The escort supports 6×6: four direct guards carry one LMG, shotgun, rifle and sniper; two roamers pressure forward lanes. Guard kits are restored on every respawn and are more effective/durable than attackers on the authoritative server.
-- West/east roamers now follow exported lateral service routes instead of offsets from the central escort path; vanguard progress remains monotonic when the convoy checkpoint retreats.
-- Right-click on an unlocked canvas requests pointer lock and queues ADS, so the first aim click engages as soon as the browser grants lock; `_releaseInput` clears the pending state.
+- West/east roamers follow exported lateral service routes through the hangar and then keep lateral offset on the central checkpoint; vanguard progress remains monotonic when the convoy checkpoint retreats.
+- Right-click on an unlocked canvas requests pointer lock and queues ADS, so the first aim click engages as soon as the browser grants lock; releasing the button before lock cancels the pending state, as does `_releaseInput`.
 - Escort destinations, animation bands, formation holds and physical depenetration are smoothed/hysteretic. Measured browser flicker fell from repeated body flashing to one normal death transition in twelve seconds.
 - Stable formation guards reroute every 0.37 s, pocketed guards keep the 0.28 s escape cadence and the direct-escape hold is 0.75 s; swap/orbit/march/pocket flicker scenarios and their mutants stay green with the fixed E base and denser apron.
 - The pistol now launches with the public golden PT-38 (`gold#pistol`), including functional ADS sockets; legacy procedural fallback is no longer silently selected in normal play.
@@ -54,7 +54,7 @@ Integrated PR #1158 into the current mainline, corrected escort authority, onlin
 
 - `npm run eval:operacao-flavio`: complete escort suite and expected mutants after the third replay.
 - `npm run eval:operacao-reset`: round reset plus fixed-base respawn ruler and all five respawn mutants.
-- `npm run eval:ads1p-public`: public ADS alignment plus the pointer-lock/right-click ADS ruler and `sem-ads-lock` mutant.
+- `npm run eval:ads1p-public`: public ADS alignment plus the pointer-lock/right-click ADS ruler and `sem-ads-lock`/`cancela-mouseup` mutants.
 - `npm run eval:vm-placar`: 26-weapon image scoreboard in 3:2 and 16:9, including the retuned factory M92, with all five scoreboard mutants.
 - `npm run eval:melee-vm`, `npm run eval:javaporcos-client-room` and `npm run eval:javaporcos`: viewmodel and horde regression controls.
 - `npm run eval:operacao-flavio:browser-gate`: self-hosted Chromium with real private viewmodel products, autonomous escort progress, real cover/crouch, VIP death, boarding cinematic and four map views.

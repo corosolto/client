@@ -535,13 +535,18 @@ export class OperacaoFlavio {
     const lado = bot._flavioLado || 1;
     const rotas = this.game.world.escortServiceRoutes;
     const rota = Array.isArray(rotas) ? rotas[lado < 0 ? 0 : 2] : null;
-    if (Array.isArray(rota) && rota.length) {
-      const ponto = rota.find((p) => Number.isFinite(p?.z) && p.z >= bot._flavioVanguarda) || rota.at(-1);
-      destino.x = ponto.x; destino.z = ponto.z;
+    const pontoRota = Array.isArray(rota) ? rota.find((p) => Number.isFinite(p?.z) && p.z >= bot._flavioVanguarda) : null;
+    if (pontoRota) {
+      destino.x = pontoRota.x; destino.z = pontoRota.z;
     } else {
-      const ponto = caminho[Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA, ultimo)];
-      const proximo = caminho[Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA + 1, ultimo)];
-      const yaw = Math.atan2(proximo.x - ponto.x, proximo.z - ponto.z);
+      // A viela lateral termina no hangar: daí para o apron a vanguarda volta a acompanhar
+      // o checkpoint central com deslocamento lateral, sem ficar para trás.
+      const indice = Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA, ultimo);
+      const ponto = caminho[indice], proximo = caminho[Math.min(indice + 1, ultimo)];
+      const anterior = caminho[Math.max(0, indice - 1)];
+      let dx = proximo.x - ponto.x, dz = proximo.z - ponto.z;
+      if (Math.hypot(dx, dz) < 1e-6) { dx = ponto.x - anterior.x; dz = ponto.z - anterior.z; }
+      const yaw = Math.atan2(dx, dz);
       destino.x = ponto.x + Math.cos(yaw) * FLANQUEADOR_LATERAL * lado;
       destino.z = ponto.z - Math.sin(yaw) * FLANQUEADOR_LATERAL * lado;
     }

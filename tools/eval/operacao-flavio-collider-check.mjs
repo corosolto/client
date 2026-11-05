@@ -17,6 +17,7 @@ const edits = {
   'sem-yaw': ['if (solid) colliderDoProp(id, x, 0, z, w, h, d, yaw);', 'if (solid) colliderDoProp(id, x, 0, z, w, h, d);'],
   'sem-asas': ["  colliderDoProp('aviao_executivo_asas', 0, 0.8, 55.4, 16, 1.4, 3.2, Math.PI);", ''],
   'spawn-invertido': ['B: [{ x: -20, z: -48, yaw: Math.PI }', 'B: [{ x: -20, z: -48, yaw: 0 }'],
+  'e-spawn-invertido': ['E: [{ x: -33, z: 54, yaw: 0 }, { x: -28, z: 56, yaw: 0 }, { x: 33, z: 54, yaw: 0 }, { x: 30, z: 56, yaw: 0 }],', 'E: [{ x: -33, z: 54, yaw: Math.PI }, { x: -28, z: 56, yaw: Math.PI }, { x: 33, z: 54, yaw: Math.PI }, { x: 30, z: 56, yaw: Math.PI }],'],
   'sem-cobertura': ["bloco('cobertura-tatica-hangar', -3, 0.725, 37, 5, 1.45, 1.4, mats.metal);", "bloco('cobertura-tatica-hangar', -3, 0.725, 37, 5, 1.45, 1.4, mats.metal, false);"],
   'rota-n2': ['const candidates = buckets.get(`${cx + ox},${cz + oz}`) || [];', 'const candidates = nodes.map((_, j) => j);'],
   'vidro-low-fisico': ['? new THREE.MeshStandardMaterial({', '? new THREE.MeshPhysicalMaterial({'],
@@ -26,7 +27,7 @@ const edits = {
   'ponto-afastado': ["{ x: -3.2, z: 49.9, role: 'guard', zone: 'apron' },", "{ x: -3.2, z: 47.4, role: 'guard', zone: 'apron' },"],
   'container-oeste-decorativo': ["['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, true],", "['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, false],"],
   'gpu-decorativo': ["['energia_solo', -1, 44.6, 4, 0, 4, 2, 2, true],", "['energia_solo', -1, 44.6, 4, 0, 4, 2, 2, false],"],
-  'armadilha-lounge': ['E: [{ x: -33, z: 54, yaw: Math.PI }, { x: -28, z: 56, yaw: Math.PI }, { x: 33, z: 54, yaw: Math.PI }, { x: 30, z: 56, yaw: Math.PI }],', 'E: [{ x: -20, z: -47, yaw: 0 }, { x: -28, z: 56, yaw: Math.PI }, { x: 33, z: 54, yaw: Math.PI }, { x: 30, z: 56, yaw: Math.PI }],'],
+  'armadilha-lounge': ['E: [{ x: -33, z: 54, yaw: 0 }, { x: -28, z: 56, yaw: 0 }, { x: 33, z: 54, yaw: 0 }, { x: 30, z: 56, yaw: 0 }],', 'E: [{ x: -20, z: -47, yaw: 0 }, { x: -28, z: 56, yaw: 0 }, { x: 33, z: 54, yaw: 0 }, { x: 30, z: 56, yaw: 0 }],'],
   'bay-vira-beco': ["['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, true],", "['containers_carga', -13.5, 51.4, 5, 0, 5, 2.6, 2.5, true],"],
   'ilha-patio-fantasma': ["['barreiras_aeroporto', -6.2, 4, 5, 0, 4.5, 1.4, 1.2, true],", "['barreiras_aeroporto', -6.2, 4, 5, 0, 4.5, 1.4, 1.2, false],"],
   'sem-anel-checkpoint': ['for (let i = 0; i < ESCORT_PATH.length; i++) {', 'for (let i = 0; i < ESCORT_PATH.length - 1; i++) {'],
@@ -429,6 +430,7 @@ try {
       assertReachable(spawn, team === 'B' ? loaded.escortPath[0] : loaded.escortPath.at(-1), `spawn ${team}${i}`);
     }
     assert.ok(loaded.spawns.B.every(spawn => Math.abs(spawn.yaw - Math.PI) < 1e-9), 'B olha para +z, não para a fachada sul');
+    assert.ok(loaded.spawns.E.every(spawn => Math.abs(spawn.yaw) < 1e-9), 'base E olha para -z, para dentro do mapa');
     const spawn = loaded.spawns.B[0], next = loaded.escortPath[1];
     const length = Math.hypot(next.x - spawn.x, next.z - spawn.z);
     const dot = (-Math.sin(spawn.yaw)) * (next.x - spawn.x) / length + (-Math.cos(spawn.yaw)) * (next.z - spawn.z) / length;

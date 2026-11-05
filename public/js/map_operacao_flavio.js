@@ -856,7 +856,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
   ];
   const spawns = {
     B: [{ x: -20, z: -48, yaw: Math.PI }, { x: -17.8, z: -46.5, yaw: Math.PI }, { x: -22.2, z: -47.5, yaw: Math.PI }, { x: -20, z: -50.5, yaw: Math.PI }],
-    E: [{ x: -33, z: 54, yaw: Math.PI }, { x: -28, z: 56, yaw: Math.PI }, { x: 33, z: 54, yaw: Math.PI }, { x: 30, z: 56, yaw: Math.PI }],
+    E: [{ x: -33, z: 54, yaw: 0 }, { x: -28, z: 56, yaw: 0 }, { x: 33, z: 54, yaw: 0 }, { x: 30, z: 56, yaw: 0 }],
   };
 
   return {

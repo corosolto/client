@@ -17,6 +17,7 @@ const familias = {
     'sem-cobertura': 'FALHA solid-covers-and-lateral-cover-points:',
     'rota-n2': 'FALHA graph-build-uses-local-candidates:',
     'vidro-low-fisico': 'FALHA low-profile-avoids-transmission-and-decorative-shadows:',
+    'e-spawn-invertido': 'FALHA spawn-clearance-and-first-read:',
     'sombras-low-completas': 'FALHA low-profile-avoids-transmission-and-decorative-shadows:',
     'sem-jardineira-embarque': 'FALHA real-cover-hides-vip-and-stops-hitscan:',
     'container-oeste-decorativo': 'FALHA real-cover-hides-vip-and-stops-hitscan:',
