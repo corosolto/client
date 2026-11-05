@@ -41,6 +41,7 @@
 - Shelter threat focus is now LOS-gated end to end: a hidden attacker behind a wall never moves the VIP's cover, heading or resume decisions — after losing sight, only a short memory of the last SEEN position (snapshot) applies. No authoritative-information leaks from the escort mode.
 - Formation and cover routing follow the same rule: threats the VIP cannot see never engage the formation, pull roamers off their lane or reserve guard cover — attackers remain visible only through genuine line of sight, with a short seen-recently memory so marching sightline gaps don't re-trigger engagements.
 - The pistol now always serves the authored PT-38 pilot from the public catalog (`gold#pistol`), in Operação Flávio and every mode; the private factory chassis stays available for A/B via `?vmgolden=0`, and the legacy procedural viewmodel no longer takes over silently when the private asset channel is missing.
+- The boot budget proxy now isolates the externally injected X/Twitter ad snippet from public HTML before measurement and reports `thirdPartyScriptsStripped`; any game script or page error still fails the gate, and a dedicated no-removal mutant catches regression. Production HTML itself still needs the malformed third-party snippet repaired or removed by the owner.
 
 ## Não lançado — 2026-10-19
 
