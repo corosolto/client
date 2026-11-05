@@ -78,7 +78,9 @@ const importaFonte = async (fonte) => import(`data:text/javascript;base64,${Buff
 const fetchOriginal=globalThis.fetch;
 try {
   let route=stripTypeScriptTypes(redirect).replaceAll('import.meta.env','({})')
-    .replace('../../lib/api-proxy.mjs','data:text/javascript;base64,'+Buffer.from(proxy).toString('base64'));
+    .replace('../../lib/api-proxy.mjs','data:text/javascript;base64,'+Buffer.from(proxy).toString('base64'))
+    .replace('../../lib/x-conversions', 'data:text/javascript,export const sendXConversion=async()=>({ok:true,status:200})')
+    .replace('../../lib/x-pixel', 'data:text/javascript,export const X_EVENT_IDS={match_start:"tw-rh4bd-rii9f",match_end:"tw-rh4bd-rii9g"}');
   if(mut==='perfil-404')route=route.replace('return resposta;',"return resposta.status===404 ? new Response(null,{status:503}) : resposta;");
   if(mut==='treta-rollout')route=route.replace("['social-auth','treta','clans']","['social-auth','clans']");
   const {GET}=await importaFonte(route);
