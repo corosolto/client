@@ -89,6 +89,8 @@ const terminalFailureJSON = (outcome, receipt, exitCode) => JSON.stringify({
 }, null, 2);
 const verifyBrowserEvents = (errors, failed) => {
   assert.deepEqual(errors, [], `erros no browser: ${errors.join(' | ')}`);
+  const privateFailed = failed.filter(([, url]) => /private-assets\/viewmodels/.test(url));
+  assert.deepEqual(privateFailed, [], `assets privados do viewmodel falharam: ${JSON.stringify(privateFailed)}`);
   const featureFailed = failed.filter(([, url]) => /operacao_flavio|operacao_decola|senador\\.glb/.test(url));
   assert.deepEqual(featureFailed, [], `assets da operação falharam: ${JSON.stringify(featureFailed)}`);
 };

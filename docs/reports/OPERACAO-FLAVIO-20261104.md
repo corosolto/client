@@ -1,12 +1,12 @@
 # Operação Flávio — Gameplay, Map and Bot Improvements
 
-Date: 2026-11-04
+Date: 2026-11-04, updated 2026-11-05
 Branch: `feat/operacao-flavio-improvements-20261104`
 Status: PR #1232 open; verified candidate; no merge or deployment
 
 ## Scope
 
-Integrated PR #1158 into the current mainline, corrected escort authority, online lifecycle, bot behavior, map geometry, combat readability and mobile cost, then ran a second owner-feedback gauntlet for enemy respawn isolation, real cover/hiding, stable bot movement, 6×6 roles/loadouts, conflict routes and the public golden pistol viewmodel. Javaporcos and the other existing modes were used as regression controls.
+Integrated PR #1158 into the current mainline, corrected escort authority, online lifecycle, bot behavior, map geometry, combat readability and mobile cost, then ran a second owner-feedback gauntlet for enemy respawn isolation, real cover/hiding, stable bot movement, 6×6 roles/loadouts, conflict routes and the public golden pistol viewmodel. A third localhost replay on 2026-11-05 fixed local factory viewmodel serving, right-click ADS before pointer lock, fixed enemy respawn bases, lateral flank routes and apron density. Javaporcos and the other existing modes were used as regression controls.
 
 ## Gameplay and online behavior
 
@@ -16,7 +16,7 @@ Integrated PR #1158 into the current mainline, corrected escort authority, onlin
 - VIP obstruction triggers physical path replanning. Unseen threats expire instead of freezing the escort indefinitely.
 - Safe spawn candidates validate collision, route and distance.
 - Online objective reset and round-end audio work for both escort and horde.
-- Enemy respawns are forward/base-only, never in the boarding lounge, and escape to boarding remains pathable at every checkpoint.
+- Enemy respawn is base-only at the four fixed E apron positions near the aircraft; no forward mobile spawn or boarding-lounge candidate can shorten the approach.
 - Dedicated servers apply guard armor and helmets; pure remote clients remain snapshot-driven.
 - Shelter selection reacts only to threats currently visible to the VIP and uses a stable minimum dwell, preventing wall-hack-like information leaks and cover ping-pong.
 - Escort spawn protection is telegraphed by a stable halo/shield indicator without flashing the body.
@@ -29,7 +29,10 @@ Integrated PR #1158 into the current mainline, corrected escort authority, onlin
 - Recovery preserves physical movement, line of sight and firing rules, including low-skill bots.
 - Attackers proactively approach and contest the escort instead of waiting for generic target acquisition.
 - The escort supports 6×6: four direct guards carry one LMG, shotgun, rifle and sniper; two roamers pressure forward lanes. Guard kits are restored on every respawn and are more effective/durable than attackers on the authoritative server.
+- West/east roamers now follow exported lateral service routes instead of offsets from the central escort path; vanguard progress remains monotonic when the convoy checkpoint retreats.
+- Right-click on an unlocked canvas requests pointer lock and queues ADS, so the first aim click engages as soon as the browser grants lock; `_releaseInput` clears the pending state.
 - Escort destinations, animation bands, formation holds and physical depenetration are smoothed/hysteretic. Measured browser flicker fell from repeated body flashing to one normal death transition in twelve seconds.
+- Stable formation guards reroute every 0.37 s, pocketed guards keep the 0.28 s escape cadence and the direct-escape hold is 0.75 s; swap/orbit/march/pocket flicker scenarios and their mutants stay green with the fixed E base and denser apron.
 - The pistol now launches with the public golden PT-38 (`gold#pistol`), including functional ADS sockets; legacy procedural fallback is no longer silently selected in normal play.
 - VIP always respawns with armor 100, helmet enabled and a visible PT-38 with working fire/reload behavior.
 
@@ -39,6 +42,7 @@ Integrated PR #1158 into the current mainline, corrected escort authority, onlin
 - Five connected service routes reach boarding, with additional solid cover and lateral cover points.
 - Prop yaw is reflected in collision boxes. Aircraft collision separates fuselage and wings without blocking boarding.
 - Door routes are explicit in the graph, and graph construction uses local candidates rather than all-pairs checks.
+- Render-only ground operation surrounds boarding: ten cones, four wheel chocks, tire marks, oil stains and asphalt patches, service valves/cables, two baggage carts with 14 bags, a translucent perimeter fence with north run, distant maintenance hangars, windsock and an off-play-area fuel truck. None registers collision or occlusion.
 - The map now exposes 43 role/zone cover slots and at least two cover choices within 8 m of every checkpoint before boarding.
 - Boarding lounge and apron conflicts use real airport objects: counters, planters, seat rows, GPUs, containers, baggage tugs and service vehicles. Both attacker approach lanes have balanced tall cover.
 - Thirteen render-only amber checkpoint rings and distant ridge volumes improve route and horizon readability without adding collision.
@@ -48,25 +52,25 @@ Integrated PR #1158 into the current mainline, corrected escort authority, onlin
 
 ## Verification exercised
 
-- `npm run eval:operacao-flavio`: complete escort suite and expected mutants after the second gauntlet.
-- `npm run eval:javaporcos`: horde suite and expected mutants.
-- `eval:vm-launch`, `eval:golden-skin-selection`, `eval:authored-vm`, public ADS checks and the pistol contract route.
-- Cover behavior, roles/loadouts, respawn isolation, escort flicker, spawn shield, server recovery, pressure, defense, moving defense, regroup and formation proofs.
-- `npm run docs:check` and `npm run arch:check`.
-- Real Chromium 6×6 gameplay: 12 bots, four direct guard weapons plus two roamers, VIP equipment, route zones and flicker measurement.
-- `eval:operacao-flavio:browser-gate` in `check:deploy`: self-hosted Chromium run covering autonomous escort progress, real cover/crouch, VIP death, boarding cinematic and four map views.
+- `npm run eval:operacao-flavio`: complete escort suite and expected mutants after the third replay.
+- `npm run eval:operacao-reset`: round reset plus fixed-base respawn ruler and all five respawn mutants.
+- `npm run eval:ads1p-public`: public ADS alignment plus the pointer-lock/right-click ADS ruler and `sem-ads-lock` mutant.
+- `npm run eval:vm-placar`: 26-weapon image scoreboard in 3:2 and 16:9, including the retuned factory M92, with all five scoreboard mutants.
+- `npm run eval:melee-vm`, `npm run eval:javaporcos-client-room` and `npm run eval:javaporcos`: viewmodel and horde regression controls.
+- `npm run eval:operacao-flavio:browser-gate`: self-hosted Chromium with real private viewmodel products, autonomous escort progress, real cover/crouch, VIP death, boarding cinematic and four map views.
+- `npm run syntax`, `npm run eval:comentario`, `npm run docs:check` and `npm run arch:check`.
 
 Evidence captures:
 
-- `artifacts/flavio-final2-spawn.png`
-- `artifacts/flavio-final2-access.png`
-- `artifacts/flavio-final2-hangar.png`
-- `artifacts/flavio-final2-apron.png`
+- `artifacts/operacao-flavio/01-terminal.png`
+- `artifacts/operacao-flavio/02-seguranca.png`
+- `artifacts/operacao-flavio/03-hangar.png`
+- `artifacts/operacao-flavio/04-apron.png`
 - `artifacts/flavio-final-chairs-routes.png`
 - `artifacts/flavio-final-vip-armed.png`
 
 ## Remaining limits
-- Vision review still rates route/composition around 5–6/10: the initial patio and central access remain relatively open, exterior hangar exposure reduces contrast, and the aircraft dominates the final choke. These are explicit follow-up art-direction items, not claims of completion.
+- Vision review of the final apron still rates composition as partial: the right side and stand are populated, while the left horizon and distant silhouettes remain simple/low-poly. The ground operation closes the playable apron visually, but broader art direction (richer asphalt material, more detailed distant buildings and a second parked aircraft) remains follow-up.
 
 - No physical Android/iOS device test or long human playtest was performed.
 - No real dedicated backend/client pair was launched; backend PR #196 still requires its own update and compatibility evidence.

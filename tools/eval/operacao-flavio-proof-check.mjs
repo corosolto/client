@@ -29,6 +29,7 @@ const familias = {
     'sem-anel-checkpoint': 'FALHA checkpoint-markings-semantic-and-nonsolid:',
     'anel-afunda': 'FALHA checkpoint-markings-semantic-and-nonsolid:',
     'escada-sem-proxy': 'FALHA prop-yaw-rotates-aabb:',
+    'sem-detalhe-embarque': 'FALHA ground-operation-detail-around-boarding:',
   }],
   menu: ['operacao-flavio-menu-check.mjs', Object.fromEntries(
     ['preferencia', 'sem-objetivo', 'botoes-ativos', 'rotulo'].map(m => [m, 'FALHA menu-objective-operacao_flavio-ctf:']))],

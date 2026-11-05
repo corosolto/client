@@ -26,12 +26,13 @@ const edits = {
   'ponto-afastado': ["{ x: -3.2, z: 49.9, role: 'guard', zone: 'apron' },", "{ x: -3.2, z: 47.4, role: 'guard', zone: 'apron' },"],
   'container-oeste-decorativo': ["['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, true],", "['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, false],"],
   'gpu-decorativo': ["['energia_solo', -1, 44.6, 4, 0, 4, 2, 2, true],", "['energia_solo', -1, 44.6, 4, 0, 4, 2, 2, false],"],
-  'armadilha-lounge': ['E: [{ x: -33, z: 16, yaw: 0 }, { x: 33, z: 16, yaw: 0 }, { x: -32, z: 54, yaw: 0 }, { x: 32, z: 54, yaw: 0 }],', 'E: [{ x: -20, z: -47, yaw: 0 }, { x: 33, z: 16, yaw: 0 }, { x: -32, z: 54, yaw: 0 }, { x: 32, z: 54, yaw: 0 }],'],
+  'armadilha-lounge': ['E: [{ x: -33, z: 54, yaw: Math.PI }, { x: -28, z: 56, yaw: Math.PI }, { x: 33, z: 54, yaw: Math.PI }, { x: 30, z: 56, yaw: Math.PI }],', 'E: [{ x: -20, z: -47, yaw: 0 }, { x: -28, z: 56, yaw: Math.PI }, { x: 33, z: 54, yaw: Math.PI }, { x: 30, z: 56, yaw: Math.PI }],'],
   'bay-vira-beco': ["['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, true],", "['containers_carga', -13.5, 51.4, 5, 0, 5, 2.6, 2.5, true],"],
   'ilha-patio-fantasma': ["['barreiras_aeroporto', -6.2, 4, 5, 0, 4.5, 1.4, 1.2, true],", "['barreiras_aeroporto', -6.2, 4, 5, 0, 4.5, 1.4, 1.2, false],"],
   'sem-anel-checkpoint': ['for (let i = 0; i < ESCORT_PATH.length; i++) {', 'for (let i = 0; i < ESCORT_PATH.length - 1; i++) {'],
   'anel-afunda': ['const Y_MARCACAO = 0.13;', 'const Y_MARCACAO = 0.06;'],
   'escada-sem-proxy': ["colliderDoProp('escada_embarque', -3.2, 0, 52.5, 3, 2.4, 4, Math.PI / 2);", ''],
+  'sem-detalhe-embarque': ['new THREE.InstancedMesh(new THREE.ConeGeometry(0.17, 0.58, 14), mats.sinalizacao, conePos.length)', 'new THREE.InstancedMesh(new THREE.ConeGeometry(0.17, 0.58, 14), mats.sinalizacao, Math.max(0, conePos.length - 10))'],
 };
 if (mutant) {
   const edit = edits[mutant];
@@ -432,6 +433,29 @@ try {
     const length = Math.hypot(next.x - spawn.x, next.z - spawn.z);
     const dot = (-Math.sin(spawn.yaw)) * (next.x - spawn.x) / length + (-Math.cos(spawn.yaw)) * (next.z - spawn.z) / length;
     assert.ok(dot > .75, 'primeira leitura aponta para a rota');
+  });
+  check('ground-operation-detail-around-boarding', () => {
+    const group = loaded.root.getObjectByName('operacao-solo-embarque');
+    assert.ok(group, 'grupo de operação de solo existe');
+    const cones = loaded.root.getObjectByName('cones-seguranca-embarque');
+    const chocks = loaded.root.getObjectByName('calocos-trem-embarque');
+    assert.equal(cones?.count, 10, '10 cones de segurança instanciados');
+    assert.equal(chocks?.count, 4, 'quatro calços de trem');
+    const children = [...group.children];
+    assert.equal(children.filter(o => o.name === 'marca-pneu-embarque').length, 4, 'marcas de pneu no pátio');
+    assert.equal(children.filter(o => o.name === 'cabo-servico-embarque').length, 2, 'cabos de serviço ligam as valvulas');
+    assert.equal(loaded.root.children.filter(o => o.name === 'valvula-servico-embarque').length, 2, 'valvulas de serviço');
+    assert.equal(children.filter(o => o.name === 'mancha-oleo-embarque').length, 6, 'manchas de óleo quebram o asfalto liso');
+    assert.equal(children.filter(o => o.name === 'remendo-asfalto-embarque').length, 5, 'remendos variam o tom do asfalto');
+    assert.equal(children.filter(o => o.name === 'linha-servico-embarque').length, 8, 'faixas de via de serviço lateral');
+    assert.equal(loaded.root.getObjectByName('bagagens-embarque')?.count, 14, 'malas instanciadas nas carretas');
+    assert.equal(children.filter(o => o.name === 'carreta-bagagem-embarque').length, 2, 'carretas de bagagem laterais');
+    assert.equal(loaded.root.children.filter(o => o.name === 'cerca-perimetro-apron').length, 3, 'malha perimetral fecha o pátio e o norte');
+    assert.equal(loaded.root.getObjectByName('postes-cerca-norte')?.count, 15, 'postes da cerca norte');
+    assert.equal(loaded.root.children.filter(o => o.name === 'hangar-distante-norte').length, 2, 'hangares distantes fecham o horizonte norte');
+    assert.ok(loaded.root.getObjectByName('biruta-apron'), 'biruta de vento no perímetro');
+    assert.ok(loaded.root.getObjectByName('caminhao-combustivel-embarque'), 'caminhão de combustível fora da área jogável');
+    assert.ok(loaded.colliders.every(c => !/cones-seguranca|calocos-trem|cabo-servico/.test(c.id)), 'detalhe render-only não bloqueia rota');
   });
   check('low-profile-avoids-transmission-and-decorative-shadows', () => {
     const materials = map => {

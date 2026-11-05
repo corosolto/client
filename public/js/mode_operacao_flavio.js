@@ -197,7 +197,8 @@ export function destinoProtecaoEscolta(bot, vip, defensores = [], ameacas = [], 
   destino.engageRadius = GUARD_ENGAGE_RADIUS;
   destino.slotRadius = GUARD_SLOT_RADIUS;
   destino.protectRadius = GUARD_PROTECT_RADIUS;
-  destino.repath = 0.28;
+  // Formação estável re-rodeia devagar; bolso em marcha continua rearmo rápido.
+  destino.repath = bot._regroupEscapePending || bot._regroupDirectEscape ? 0.28 : 0.37;
   return destino;
 }
 
@@ -528,18 +529,22 @@ export class OperacaoFlavio {
 
   destinoFlanqueador(bot, destino) {
     const caminho = this.state.caminho, ultimo = caminho.length - 1;
-    // Vanguarda só anda quando o COMBOIO avança de checkpoint: destino estável por
-    // construção (histerese estrutural — nunca realvo por quadro, nunca recua sozinho).
-    const alvo = Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA, ultimo);
-    if (!Number.isInteger(bot._flavioVanguarda) || alvo > bot._flavioVanguarda) bot._flavioVanguarda = alvo;
-    const ponto = caminho[bot._flavioVanguarda];
-    const proximo = caminho[Math.min(bot._flavioVanguarda + 1, ultimo)];
-    const dx = proximo.x - ponto.x, dz = proximo.z - ponto.z;
-    const yaw = Math.hypot(dx, dz) >= 1e-6 ? Math.atan2(dx, dz)
-      : Math.atan2(this.state.position.x - ponto.x, this.state.position.z - ponto.z);
+    // Vanguarda monotônica: acompanha dois checkpoints à frente e nunca recua sozinha.
+    const alvoZ = caminho[Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA, ultimo)].z;
+    if (!Number.isFinite(bot._flavioVanguarda) || alvoZ > bot._flavioVanguarda) bot._flavioVanguarda = alvoZ;
     const lado = bot._flavioLado || 1;
-    destino.x = ponto.x + Math.cos(yaw) * FLANQUEADOR_LATERAL * lado;
-    destino.z = ponto.z - Math.sin(yaw) * FLANQUEADOR_LATERAL * lado;
+    const rotas = this.game.world.escortServiceRoutes;
+    const rota = Array.isArray(rotas) ? rotas[lado < 0 ? 0 : 2] : null;
+    if (Array.isArray(rota) && rota.length) {
+      const ponto = rota.find((p) => Number.isFinite(p?.z) && p.z >= bot._flavioVanguarda) || rota.at(-1);
+      destino.x = ponto.x; destino.z = ponto.z;
+    } else {
+      const ponto = caminho[Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA, ultimo)];
+      const proximo = caminho[Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA + 1, ultimo)];
+      const yaw = Math.atan2(proximo.x - ponto.x, proximo.z - ponto.z);
+      destino.x = ponto.x + Math.cos(yaw) * FLANQUEADOR_LATERAL * lado;
+      destino.z = ponto.z - Math.sin(yaw) * FLANQUEADOR_LATERAL * lado;
+    }
     destino.centerX = this.state.position.x;
     destino.centerZ = this.state.position.z;
     destino.leash = FLANQUEADOR_LEASH;
@@ -730,21 +735,14 @@ export class OperacaoFlavio {
     const medir = (ancora) => (p) => ({ x: p.x, z: p.z, yaw: p.yaw,
       dist: Math.hypot(p.x - ancora.x, p.z - ancora.z), lateral: Math.abs(p.x - ancora.x) });
     if (team === 'E') {
-      /* ATAQUE — vanguarda/base (regra do dono): nunca à retaguarda do comboio nem na
-         sala de embarque (o E renascia lá e prendia o VIP no spawn); vanguarda = nós à frente. */
+      /* ATAQUE — sempre a base E no pátio do avião (regra do dono, 05/11):
+         sem vanguarda móvel; o reforço percorre o mapa até o comboio. */
       const vanguarda = path[Math.min(k + 1, path.length - 1)];
       const rota = alcanceDe(vanguarda);
       const sala = (p) => p.x > SALA_EMBARQUE.minX && p.x < SALA_EMBARQUE.maxX
         && p.z > SALA_EMBARQUE.minZ && p.z < SALA_EMBARQUE.maxZ;
-      const aFrente = (p) => p.z > vipZ && !sala(p) && semColisao(p)
-        && Math.hypot(p.x - this.vip.pos.x, p.z - this.vip.pos.z) >= ATAQUE_DIST_VIP;
-      const frente = nodes.filter((p) => aFrente(p) && rota(p)).map(medir(vanguarda))
-        .filter((p) => p.dist <= 18);
-      if (frente.length) {
-        frente.sort((a, b) => a.dist - b.dist || a.lateral - b.lateral);
-        return frente.slice(0, 8);
-      }
-      const base = (game.world.spawns?.E || []).filter((p) => !sala(p) && semColisao(p) && rota(p));
+      const base = (game.world.spawns?.E || []).filter((p) => !sala(p) && semColisao(p) && rota(p)
+        && Math.hypot(p.x - this.vip.pos.x, p.z - this.vip.pos.z) >= ATAQUE_DIST_VIP);
       return base.length ? base.map(medir(vanguarda)) : null;
     }
     /* DEFESA — retaguarda/near: ondas de reforço acompanham o comboio por trás (podem

@@ -25,8 +25,8 @@ const mutations = {
     clause: 'VIP foca uma ameaça sem girar entre equidistantes',
   },
   'vanguarda-por-quadro': {
-    before: 'if (!Number.isInteger(bot._flavioVanguarda) || alvo > bot._flavioVanguarda) bot._flavioVanguarda = alvo;',
-    after: 'bot._flavioVanguarda = alvo;',
+    before: 'if (!Number.isFinite(bot._flavioVanguarda) || alvoZ > bot._flavioVanguarda) bot._flavioVanguarda = alvoZ;',
+    after: 'bot._flavioVanguarda = alvoZ;',
     clause: 'flanqueador segura a vanguarda com histerese',
   },
   'esconde-vivo': {
@@ -152,6 +152,9 @@ check('flanqueador segura a vanguarda com histerese', () => withGame(7, (game) =
   const roamer = flanqueadores[0];
   roamer.alive = true;
   const destino = { ...game.objective.botDestination(roamer) };
+  const rotaLateral = (game.world.escortServiceRoutes || [])[roamer._flavioLado < 0 ? 0 : 2] || [];
+  assert.ok(rotaLateral.some((p) => Math.abs(p.x - destino.x) < 1e-9 && Math.abs(p.z - destino.z) < 1e-9),
+    'flanqueador usa caminho lateral do mapa');
   const aFrente = game.objective.state.caminho[Math.min(3 + 2, game.objective.state.caminho.length - 1)];
   assert.ok(destino.z > aFrente.z - 4.5, 'vanguarda fica adiante do comboio');
   const mesmas = [];

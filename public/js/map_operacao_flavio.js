@@ -147,6 +147,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
     tela: new THREE.MeshStandardMaterial({ color: 0x65c9d5, emissive: 0x1b7185, emissiveIntensity: 1.15, roughness: 0.28 }),
     luz: new THREE.MeshStandardMaterial({ color: 0xfff1c2, emissive: 0xffc76a, emissiveIntensity: 2.4, roughness: 0.35 }),
     baliza: new THREE.MeshStandardMaterial({ color: 0x7fdfff, emissive: 0x168ed0, emissiveIntensity: 4.2, roughness: 0.2 }),
+    borracha: material(0x15181b, 0.94, 0.0), sinalizacao: material(0xdf6420, 0.62, 0.04),
   };
 
   const bloco = (nome, x, y, z, w, h, d, mat, solid = true, sombra = true) => {
@@ -344,6 +345,91 @@ export function buildOperacaoFlavio(scene, T = {}) {
   const spot = new THREE.Mesh(new THREE.RingGeometry(7.5, 7.85, 48), mats.branco);
   spot.name = 'marca-estacionamento-aeronave'; spot.rotation.x = -Math.PI / 2; spot.position.set(0, 0.075, 55); root.add(spot);
   placa('placa-embarque', 'EMBARQUE 01', 'AVIÃO →', -12, 2.2, 49.8, 4.4, 1.1, Math.PI / 2);
+  {
+    const detalhe = new THREE.Group(); detalhe.name = 'operacao-solo-embarque'; root.add(detalhe);
+    const conePos = [[-8,47],[-4,45],[4,45],[8,47],[8,55],[8,63],[4,65],[-4,65],[-8,63],[-8,55]];
+    const cones = new THREE.InstancedMesh(new THREE.ConeGeometry(0.17, 0.58, 14), mats.sinalizacao, conePos.length);
+    const bases = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.22, 0.26, 0.06, 14), mats.borracha, conePos.length);
+    const matriz = new THREE.Matrix4();
+    conePos.forEach(([x, z], i) => {
+      cones.setMatrixAt(i, matriz.makeTranslation(x, 0.35, z));
+      bases.setMatrixAt(i, matriz.makeTranslation(x, 0.03, z));
+    });
+    cones.name = 'cones-seguranca-embarque'; bases.name = 'bases-cones-embarque';
+    cones.castShadow = bases.castShadow = !lowProfile; detalhe.add(cones, bases);
+
+    const caloco = new THREE.InstancedMesh(new THREE.BoxGeometry(0.62, 0.13, 0.2), mats.amarelo, 4);
+    const quaternion = new THREE.Quaternion(), escala = new THREE.Vector3(1, 1, 1);
+    [[-2.2,49.2,0.22],[2.2,49.2,-0.22],[-2.2,61.2,-0.22],[2.2,61.2,0.22]].forEach(([x, z, yaw], i) => {
+      caloco.setMatrixAt(i, matriz.compose(new THREE.Vector3(x, 0.07, z), quaternion.setFromEuler(new THREE.Euler(0, yaw, 0)), escala));
+    });
+    caloco.name = 'calocos-trem-embarque'; caloco.castShadow = !lowProfile; detalhe.add(caloco);
+
+    const marca = new THREE.MeshBasicMaterial({ color: 0x101318, transparent: true, opacity: 0.2, depthWrite: false });
+    for (const [x, z, yaw, comprimento] of [[-1.2,52,.08,7],[1.2,52,-.08,7],[-5.5,58,.16,5],[5.5,58,-.16,5]]) {
+      const pneu = new THREE.Mesh(new THREE.PlaneGeometry(0.52, comprimento), marca);
+      pneu.name = 'marca-pneu-embarque'; pneu.rotation.set(-Math.PI / 2, 0, yaw);
+      pneu.position.set(x, 0.008, z); detalhe.add(pneu);
+    }
+    for (const [x, z] of [[-19,51],[19,51]]) {
+      bloco('valvula-servico-embarque', x, 0.075, z, 1.5, 0.035, 1.1, mats.borracha, false, false);
+      cilindro('anel-valvula-embarque', x, 0.11, z, 0.72, 0.09, mats.metal);
+    }
+    const cabo = (a, b) => {
+      const inicio = new THREE.Vector3(a[0], 0.075, a[1]), fim = new THREE.Vector3(b[0], 0.075, b[1]);
+      const vetor = new THREE.Vector3().subVectors(fim, inicio), caboMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, vetor.length(), 10), mats.borracha);
+      caboMesh.name = 'cabo-servico-embarque'; caboMesh.position.copy(inicio).add(fim).multiplyScalar(0.5);
+      caboMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vetor.normalize());
+      caboMesh.castShadow = !lowProfile; detalhe.add(caboMesh);
+    };
+    cabo([-18.3, 51], [-5.5, 55]); cabo([18.3, 51], [5.5, 55]);
+    // Desgaste e sinalização horizontal quebram o asfalto espelhado do apron sem criar sólido.
+    const mancha = new THREE.MeshBasicMaterial({ color: 0x0b0f13, transparent: true, opacity: 0.32, depthWrite: false });
+    for (const [x, z, raio] of [[-26,47,2.2],[-15,60,1.5],[12,47,1.9],[24,64,2.4],[-5,44,1.7],[6,67,1.4]]) {
+      const oleo = new THREE.Mesh(new THREE.CircleGeometry(raio, 24), mancha);
+      oleo.name = 'mancha-oleo-embarque'; oleo.rotation.x = -Math.PI / 2;
+      oleo.position.set(x, 0.006, z); detalhe.add(oleo);
+    }
+    const remendo = new THREE.MeshBasicMaterial({ color: 0x343b41, transparent: true, opacity: 0.24, depthWrite: false });
+    for (const [x, z, largura, comprimento, yaw] of [[-22,53,13,9,.08],[-8,62,10,7,-.12],[10,59,11,8,.1],[24,57,9,12,-.06],[-4,46,12,7,.04]]) {
+      const parche = new THREE.Mesh(new THREE.PlaneGeometry(largura, comprimento), remendo);
+      parche.name = 'remendo-asfalto-embarque'; parche.rotation.set(-Math.PI / 2, 0, yaw);
+      parche.position.set(x, 0.004, z); detalhe.add(parche);
+    }
+    const linha = new THREE.MeshBasicMaterial({ color: 0xd7d2c4, transparent: true, opacity: 0.88, depthWrite: false });
+    for (const [x, z, yaw] of [[-13,46,.22],[-13,50,.1],[-13,58,-.1],[-13,62,-.22],[13,46,-.22],[13,50,-.1],[13,58,.1],[13,62,.22]]) {
+      const traco = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 3.4), linha);
+      traco.name = 'linha-servico-embarque'; traco.rotation.set(-Math.PI / 2, 0, yaw);
+      traco.position.set(x, 0.007, z); detalhe.add(traco);
+    }
+
+    // Carretas de bagagem enchem os vãos laterais do stand; continuam render-only.
+    const carretaPos = [[-24.5, 58.4, 0.18], [22.5, 60.6, -0.34]];
+    const bagagens = new THREE.InstancedMesh(new THREE.BoxGeometry(0.72, 0.3, 0.48), mats.interno, 14);
+    let bagagem = 0;
+    for (const [x, z, yaw] of carretaPos) {
+      const carreta = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.24, 1.25), mats.metal);
+      carreta.name = 'carreta-bagagem-embarque'; carreta.position.set(x, 0.44, z); carreta.rotation.y = yaw;
+      carreta.castShadow = !lowProfile; detalhe.add(carreta);
+      const haste = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.1, 8), mats.metal);
+      haste.name = 'haste-carreta-embarque'; haste.position.set(x - Math.cos(yaw) * 1.55, 0.35, z + Math.sin(yaw) * 1.55);
+      haste.rotation.z = Math.PI / 2; haste.rotation.y = yaw; detalhe.add(haste);
+      for (const [dx, dz, nivel] of [[-.72,-.25,0],[-.05,-.3,0],[.68,-.2,0],[-.7,.32,0],[.1,.3,0],[.65,.35,0],[0,0,1]]) {
+        if (bagagem >= bagagens.count) break;
+        bagagens.setMatrixAt(bagagem++, matriz.compose(
+          new THREE.Vector3(x + Math.cos(yaw) * dx - Math.sin(yaw) * dz, 0.72 + nivel * 0.31, z + Math.sin(yaw) * dx + Math.cos(yaw) * dz),
+          quaternion.setFromEuler(new THREE.Euler(0, yaw + dx * 0.14, 0)),
+          escala,
+        ));
+      }
+      for (const dx of [-0.6, 0, 0.6]) {
+        const cinta = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.05, 1.25), mats.borracha);
+        cinta.name = 'cinta-bagagem-embarque'; cinta.position.set(x + Math.cos(yaw) * dx, 0.91, z + Math.sin(yaw) * dx);
+        cinta.rotation.y = yaw; detalhe.add(cinta);
+      }
+    }
+    bagagens.name = 'bagagens-embarque'; bagagens.castShadow = !lowProfile; detalhe.add(bagagens);
+  }
 
   // Volumes além do limite fecham o horizonte como um aeroporto, não como uma arena vazia.
   for (const [x, z, w, h, d] of [[-57,-32,18,7,34],[57,-28,20,9,42],[-62,28,26,10,30],[62,34,25,8,34]]) {
@@ -359,6 +445,57 @@ export function buildOperacaoFlavio(scene, T = {}) {
     bloco('luz-poste-perimetro', -45.5, 5.15, z, 0.9, 0.18, 0.4, mats.luz, false, false);
     bloco('luz-poste-perimetro', 45.5, 5.15, z, 0.9, 0.18, 0.4, mats.luz, false, false);
   }
+  // A malha translúcida entre os postes dá limite real ao pátio sem criar paredão de colisão.
+  const malhaPerimetro = new THREE.MeshStandardMaterial({
+    color: 0x565e65, transparent: true, opacity: 0.62, roughness: 0.48, metalness: 0.35, side: THREE.DoubleSide,
+  });
+  for (const x of [-45.5, 45.5]) {
+    const tela = new THREE.Mesh(new THREE.PlaneGeometry(132, 4.45), malhaPerimetro);
+    tela.name = 'cerca-perimetro-apron'; tela.rotation.y = Math.PI / 2; tela.position.set(x, 2.35, 4); root.add(tela);
+    for (const y of [1.05, 2.35, 3.65]) bloco('trilho-cerca-perimetro', x, y, 4, 0.07, 0.06, 132, mats.metal, false, false);
+  }
+  const telaNorte = new THREE.Mesh(new THREE.PlaneGeometry(132, 4.45), malhaPerimetro);
+  telaNorte.name = 'cerca-perimetro-apron'; telaNorte.position.set(0, 2.35, 89.5); root.add(telaNorte);
+  for (const y of [1.05, 2.35, 3.65]) bloco('trilho-cerca-perimetro', 0, y, 89.5, 132, 0.06, 0.07, mats.metal, false, false);
+  const postesCerca = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.09, 5.2, 8), mats.metal, 15);
+  const matrizCerca = new THREE.Matrix4();
+  for (let i = 0; i < postesCerca.count; i++) {
+    postesCerca.setMatrixAt(i, matrizCerca.makeTranslation(-54 + i * 7.714285714, 2.6, 89.5));
+  }
+  postesCerca.name = 'postes-cerca-norte'; root.add(postesCerca);
+
+  // Manutenção distante além da cerca: o olho para de bater na emenda asfalto/grama.
+  for (const [x, z, w, h, d] of [[-78, 98, 40, 12, 28], [82, 104, 32, 13, 24]]) {
+    bloco('hangar-distante-norte', x, h / 2 - 0.1, z, w, h, d, mats.hangar, false, false);
+    bloco('janela-hangar-distante-norte', x + (x < 0 ? w / 2 + 0.04 : -w / 2 - 0.04), h * 0.56, z, 0.06, h * 0.2, d * 0.74, mats.vidro, false, false);
+    bloco('faixa-hangar-distante-norte', x, h - 0.25, z, w * 0.94, 0.32, d * 0.94, mats.marinho, false, false);
+  }
+  cilindro('mastro-biruta', -48, 2.25, 84, 0.08, 4.5, mats.metal);
+  const biruta = new THREE.Mesh(new THREE.ConeGeometry(0.55, 3, 12), mats.sinalizacao);
+  biruta.name = 'biruta-apron'; biruta.rotation.z = -Math.PI / 2; biruta.position.set(-46.1, 4.35, 84); root.add(biruta);
+
+  // Caminhão-tanque fora da área jogável, no eixo visual oeste da câmera de embarque.
+  const caminhao = new THREE.Group(); caminhao.name = 'caminhao-combustivel-embarque';
+  caminhao.position.set(-23, 0, 67); caminhao.rotation.y = 0.32; root.add(caminhao);
+  const pecasCaminhao = [
+    ['chassi', new THREE.BoxGeometry(4.8, 0.24, 1.25), mats.preto, 0, 0.52, 0],
+    ['cabine', new THREE.BoxGeometry(1.45, 1.35, 1.8), mats.laranja, -1.85, 1.1, 0],
+    ['tanela', new THREE.CylinderGeometry(0.75, 0.75, 4.1, 16), mats.metal, 0.45, 1.22, 0, Math.PI / 2],
+    ['escada', new THREE.BoxGeometry(0.5, 0.08, 0.55), mats.metal, -1, 0.72, 0.68],
+  ];
+  for (const [nome, geometria, mat, x, y, z, rz = 0] of pecasCaminhao) {
+    const peca = new THREE.Mesh(geometria, mat); peca.name = `peca-${nome}-caminhao`;
+    peca.position.set(x, y, z); peca.rotation.z = rz; peca.castShadow = !lowProfile; peca.receiveShadow = true; caminhao.add(peca);
+  }
+  const rodasCaminhao = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.42, 0.42, 0.26, 14), mats.borracha, 6);
+  const quaternionCaminhao = new THREE.Quaternion(), escalaCaminhao = new THREE.Vector3(1, 1, 1);
+  for (let i = 0; i < rodasCaminhao.count; i++) {
+    rodasCaminhao.setMatrixAt(i, matrizCerca.compose(
+      new THREE.Vector3(i < 2 ? -1.9 : -0.4 + (i - 2) * 1.35, 0.42, i % 2 ? 0.68 : -0.68),
+      quaternionCaminhao.setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), escalaCaminhao,
+    ));
+  }
+  rodasCaminhao.name = 'rodas-caminhao-combustivel'; rodasCaminhao.castShadow = !lowProfile; caminhao.add(rodasCaminhao);
 
 
   const usarProp = (id, pos, desiredSize, fallback, yaw = 0, fallbackSolid = true) => {
@@ -719,12 +856,12 @@ export function buildOperacaoFlavio(scene, T = {}) {
   ];
   const spawns = {
     B: [{ x: -20, z: -48, yaw: Math.PI }, { x: -17.8, z: -46.5, yaw: Math.PI }, { x: -22.2, z: -47.5, yaw: Math.PI }, { x: -20, z: -50.5, yaw: Math.PI }],
-    E: [{ x: -33, z: 16, yaw: 0 }, { x: 33, z: 16, yaw: 0 }, { x: -32, z: 54, yaw: 0 }, { x: 32, z: 54, yaw: 0 }],
+    E: [{ x: -33, z: 54, yaw: Math.PI }, { x: -28, z: 56, yaw: Math.PI }, { x: 33, z: 54, yaw: Math.PI }, { x: 30, z: 56, yaw: Math.PI }],
   };
 
   return {
     root, colliders, occluders, decalSolids: [root], pickups, sun, hemi, spawns,
-    mode: 'escort', escortPath, escortCoverPoints, objectivePlane,
+    mode: 'escort', escortPath, escortServiceRoutes: serviceRoutes, escortCoverPoints, objectivePlane,
     groundHeightAt: () => 0, slowAt: () => false,
     waypoints: { nodes, adj, stats: navigationStats }, nearestWaypoint, findPath,
     bounds: { minX: -43, maxX: 43, minZ: -57, maxZ: 57 },

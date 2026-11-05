@@ -2255,6 +2255,7 @@ export class Game {
         if (!this.testMode && (this.state === 'live' || this.state === 'countdown') && !document.pointerLockElement
             && e.target === this.renderer.domElement) {
           if (this.paused) this.setPaused(false);
+          this._adsAposLock = e.button === 2 && !this.player.nade && this.player.weapon !== 'knife';
           this._requestLock();
         }
         return;
@@ -2323,6 +2324,10 @@ export class Game {
     this._hiddenInput = () => { if (document.hidden) this._releaseInput(); };
     this._plc = () => {
       if (this._chatSeguraPausa()) return;
+      if (document.pointerLockElement && this._adsAposLock) {
+        this._adsAposLock = false;
+        if (this.state === 'live' || this.state === 'countdown') this._scope(true);
+      }
       if (!document.pointerLockElement && !this.testMode && (this.state === 'live' || this.state === 'countdown') && !this.paused)
         this.setPaused(true);
     };
@@ -2484,7 +2489,7 @@ export class Game {
 
   _releaseInput() {
     this._fxTiroPendente = null;
-    this.keys = {}; this.mouseDown0 = false;
+    this._adsAposLock = false; this.keys = {}; this.mouseDown0 = false;
     for (const release of this._sticksSoltar || []) release();
     if (this.touchMove) { this.touchMove.x = 0; this.touchMove.z = 0; }
     if (this.touchLook) { this.touchLook.x = 0; this.touchLook.y = 0; }
@@ -8539,7 +8544,7 @@ export class Game {
     if (!formationPull && b._regroupEscapePending) b._regroupEscapePending = false;
     // O escape DIRETO não rearma por quadro só porque o centro marchou: sem este hold,
     // a rota era destruída todo quadro na marcha com fachada na frente.
-    if ((!formationPull || (escortCenterMoving && this.time > (b._escapeDiretoAt || 0) + 0.6)) && b._regroupDirectEscape) b._regroupDirectEscape = false;
+    if ((!formationPull || (escortCenterMoving && this.time > (b._escapeDiretoAt || 0) + 0.75)) && b._regroupDirectEscape) b._regroupDirectEscape = false;
 
     this._posturaBot(b, !!b.target && b.crouchBias);
 
