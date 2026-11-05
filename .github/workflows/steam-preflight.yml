@@ -1,0 +1,82 @@
+name: Steam desktop preflight (no upload)
+on:
+  pull_request:
+    paths:
+      - 'tools/distribution-steam/**'
+      - '.github/workflows/steam-preflight.yml'
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful native build run in this repository
+        required: true
+      source_commit:
+        description: Full SHA of that build run
+        required: true
+      artifact_name:
+        description: Existing native build artifact (not web ZIP)
+        required: true
+      launch_path:
+        description: Relative native executable inside artifact
+        required: true
+      platform:
+        type: choice
+        options: [windows, linux, macos]
+        required: true
+      app_id:
+        required: true
+        description: Steamworks AppID (ownership not checked)
+      depot_id:
+        required: true
+        description: Steamworks DepotID (ownership not checked)
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tools/distribution-steam -v
+  prepare:
+    if: github.event_name == 'workflow_dispatch'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Validate source run identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ inputs.source_run_id }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+        run: |
+          [[ "$SOURCE_RUN" =~ ^[1-9][0-9]*$ ]]
+          [[ "$SOURCE_COMMIT" =~ ^[a-f0-9]{40}$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" > "$RUNNER_TEMP/source-run.json"
+          jq -e --arg sha "$SOURCE_COMMIT" '.head_sha == $sha and .conclusion == "success"' "$RUNNER_TEMP/source-run.json"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: native-build
+          run-id: ${{ inputs.source_run_id }}
+          github-token: ${{ github.token }}
+      - name: Prepare hash manifest and preview VDF
+        env:
+          LAUNCH: ${{ inputs.launch_path }}
+          PLATFORM: ${{ inputs.platform }}
+          APP_ID: ${{ inputs.app_id }}
+          DEPOT_ID: ${{ inputs.depot_id }}
+        run: |
+          python3 tools/distribution-steam/prepare.py --content native-build --output steam-prepared --launch "$LAUNCH" --platform "$PLATFORM" --app-id "$APP_ID" --depot-id "$DEPOT_ID"
+          cp "$RUNNER_TEMP/source-run.json" steam-prepared/source-run.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: steam-prepared-only
+          path: steam-prepared/
+          if-no-files-found: error
+          retention-days: 7
