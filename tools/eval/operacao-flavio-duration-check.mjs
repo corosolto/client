@@ -9,7 +9,12 @@ const mutations = {
   'final-fixo': ['this.stateUntil = this.time + (objectiveResult?.duration || 4.5);', 'this.stateUntil = this.time + 9;'],
   'normal-cortado': ['this.stateUntil = this.time + (objectiveResult?.duration || 4);', 'this.stateUntil = this.time + 4;'],
 };
-if (mutant) {
+const TIMEOUT_ESCOLTA = ["if (this.timeLeft <= 0) this._endRound(this.objective.state?.winner || 'E');", "if (this.timeLeft <= 0) this._endRound('E');"];
+if (mutant === 'timeout-fixo') {
+  const source = Game.prototype.update.toString();
+  assert.equal(source.split(TIMEOUT_ESCOLTA[0]).length - 1, 1, 'mutação tem alvo real único');
+  console.log('Mutação aplicada: ' + mutant);
+} else if (mutant) {
   assert.ok(Object.hasOwn(mutations, mutant), 'mutante conhecido');
   const [before, after] = mutations[mutant], source = Game.prototype._endRound.toString();
   assert.equal(source.split(before).length - 1, 1, 'mutação tem alvo real único');
@@ -50,6 +55,28 @@ for (const final of [false, true]) for (const winner of ['E', 'B']) {
       failures.push({ clause, type: error.name, message: error.message });
       console.error('✗ ' + clause + ': ' + error.name + ': ' + error.message.split('\n')[0]);
     }
+  }
+}
+{
+  cases++;
+  const clause = 'timeout usa o veredito do objetivo';
+  try {
+    const source = Game.prototype.update.toString(), live = source.indexOf("else if (this.state === 'live')");
+    const inicio = source.indexOf('if (this.objective) {', live), fim = source.indexOf('} else if (this.ctf)', inicio);
+    assert.ok(inicio > live && fim > inicio, 'ramo real de objetivo em live');
+    let ramo = source.slice(inicio, fim + 1);
+    if (mutant === 'timeout-fixo') ramo = ramo.replace(TIMEOUT_ESCOLTA[0], TIMEOUT_ESCOLTA[1]);
+    const executar = new Function('dt', ramo);
+    let vencedor = null;
+    const jogo = { state: 'live', timeLeft: .01, world: { mode: 'escort' },
+      objective: { update() {}, state: { winner: 'B' } }, _endRound(time) { vencedor = time; } };
+    executar.call(jogo, .02);
+    assert.ok(jogo.timeLeft < 0, 'relógio da escolta esgota');
+    assert.equal(vencedor, 'B', 'veredito do objetivo vence no timeout');
+    console.log('✓ ' + clause);
+  } catch (error) {
+    failures.push({ clause, type: error.name, message: error.message });
+    console.error('✗ ' + clause + ': ' + error.name + ': ' + error.message.split('\n')[0]);
   }
 }
 console.log(JSON.stringify({ mutant, cases, failed: failures }));

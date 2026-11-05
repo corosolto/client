@@ -9946,7 +9946,7 @@ export class Game {
         this.objective.update(dt);
         if (this.world.mode === 'escort' && this.state === 'live') {
           this.timeLeft -= dt;
-          if (this.timeLeft <= 0) this._endRound('E');
+          if (this.timeLeft <= 0) this._endRound(this.objective.state?.winner || 'E');
         }
       } else if (this.ctf) {
         this._updateCTF(dt);

@@ -14,14 +14,14 @@ const proof = (result, name, clause) => {
   const report = reportOf(result), output = result.stdout + result.stderr;
   return result.status === 1 && !result.signal && !result.error
     && result.stdout.split(/\r?\n/).includes('Mutação aplicada: ' + name)
-    && report?.mutant === name && report.cases === 12 && report.failed.length > 0
+    && report?.mutant === name && report.cases === 13 && report.failed.length > 0
     && report.failed.every(row => row.type === 'AssertionError')
     && report.failed.some(row => row.clause === clause)
     && !/TypeError:|ReferenceError:|SyntaxError:/.test(output);
 };
 if (process.argv.includes('--autoteste')) {
   const name = 'final-cortado', clause = 'flavio final E';
-  const report = { mutant: name, cases: 12, failed: [{ type: 'AssertionError', clause }] };
+  const report = { mutant: name, cases: 13, failed: [{ type: 'AssertionError', clause }] };
   const good = { status: 1, stdout: 'Mutação aplicada: ' + name + '\n' + JSON.stringify(report), stderr: '' };
   assert(proof(good, name, clause));
   for (const bad of [{ ...good, status: 0 }, { ...good, status: 2 }, { ...good, signal: 'SIGTERM' },
@@ -33,12 +33,13 @@ if (process.argv.includes('--autoteste')) {
 }
 const baseline = run([]), report = reportOf(baseline);
 assert(baseline.status === 0 && !baseline.error && !baseline.signal && report?.mutant === null
-  && report.cases === 12 && report.failed.length === 0, 'baseline de duração válido');
-console.log('duration-proof: 12 cenários no Game._endRound real verdes');
+  && report.cases === 13 && report.failed.length === 0, 'baseline de duração válido');
+console.log('duration-proof: 13 cenários no Game real verdes');
 for (const [name, clause] of [
   ['final-cortado', 'flavio final E'],
   ['final-fixo', 'legacy final E'],
   ['normal-cortado', 'flavio intermediária E'],
+  ['timeout-fixo', 'timeout usa o veredito do objetivo'],
 ]) {
   const result = run(['--mutante=' + name]);
   if (!proof(result, name, clause)) {
