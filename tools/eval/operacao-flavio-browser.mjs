@@ -328,6 +328,11 @@ const views = [
       mintPropInstances: g.world.root.children.filter((object) => mintNames.includes(object.name)).length,
       routeMeshCount: g.world.root.children.filter((object) => object.name === 'rota-operacao-flavio').length,
       checkpointRings: (() => { let n = 0; g.scene.traverse((o) => { if (o.name === 'marca-checkpoint-escolta') n++; }); return n; })(),
+      // Escada subível: piso no pé e no topo (último checkpoint) e nenhuma caixa sólida dela.
+      stairs: (() => {
+        const [pe, topo] = g.world.escortPath.slice(-2);
+        return { pe: g.world.groundHeightAt(pe.x, pe.z), topo: g.world.groundHeightAt(topo.x, topo.z), solida: g.world.colliders.some((c) => c.id === 'escada_embarque') };
+      })(),
       // Seta ▼ da placa: ponta opaca no centro da base do canvas, cantos vazios e base larga acima.
       boardingLabel: (() => {
         const placa = g.world.root.getObjectByName('placa-embarque-flavio');
@@ -379,7 +384,8 @@ const views = [
   assert.equal(runtime.mode, 'escort');
   assert.equal(runtime.ctf, false);
   assert.equal(runtime.objective, true);
-  assert.equal(runtime.checkpoints, 13);
+  assert.equal(runtime.checkpoints, 14);
+  assert.ok(runtime.stairs.pe === 0 && runtime.stairs.topo > 1.4 && !runtime.stairs.solida, `escada não subível: ${JSON.stringify(runtime.stairs)}`);
   assert.deepEqual(runtime.vip && {
     char: runtime.vip.char,
     weapon: runtime.vip.weapon,

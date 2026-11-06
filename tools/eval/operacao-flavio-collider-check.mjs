@@ -36,9 +36,14 @@ const edits = {
   // Variantes da rota do VIP (playtest 06/11): validadas como a rota do meio.
   'variante-no-container': ['{ x: 14.5, z: 32 }, { x: 18, z: 32 }', '{ x: 14.5, z: 32 }, { x: 18, z: 28 }'],
   'variante-sem-no': ['for (const caminho of ESCORT_PATHS.slice(1)) for (const ponto of caminho) addNode(ponto.x, ponto.z);', ''],
-  'variante-longe-da-escada': ['{ x: 5.5, z: 47 }, { x: 6.2, z: 52 },', '{ x: 5.5, z: 47 },'],
+  'variante-longe-da-escada': ['{ x: 5.5, z: 47 }, { x: 6.2, z: 52 }, { x: 2.3, z: 52 },', '{ x: 5.5, z: 47 }, { x: 6.2, z: 52 },'],
   'faixa-afunda': ['const Y_MARCACAO = 0.13;', 'const Y_MARCACAO = 0.06;'],
-  'escada-sem-proxy': ["  colliderDoProp('escada_embarque', xEscada, 0, PORTA_EMBARQUE.z, ...MEDIDA_REAL.escada_embarque, YAW_ESCADA);\n", ''],
+  // Escada subível (playtest 06/11 "a escada está bloqueada"): caixa sólida de volta, piso
+  // plano, degrau acima do STEP_H e grafo que corta a lateral da escada.
+  'escada-solida': ["  colliderDoProp('trator_bagagem', -20, 0, 50,", "  colliderDoProp('escada_embarque', xEscada, 0, PORTA_EMBARQUE.z, ...MEDIDA_REAL.escada_embarque, YAW_ESCADA);\n  colliderDoProp('trator_bagagem', -20, 0, 50,"],
+  'escada-plana': ['const groundHeightAt = (x, z) => (escadaModelo.visible ? pisoEscada(x, z) : 0);', 'const groundHeightAt = () => 0;'],
+  'escada-degrau-alto': ['(s < -0.75 ? 0.672 : s < 1.15 ?', '(s < 0.2 ? 0.672 : s < 1.15 ?'],
+  'escada-sem-nav': ['const navColliders = [...colliders, escadaNav];', 'const navColliders = [...colliders];'],
   // Escada do playtest 06/11: topo voltado para fora, lado oposto à porta, porta pintada no -x.
   'escada-invertida': ['const YAW_ESCADA = Math.PI / 2;', 'const YAW_ESCADA = -Math.PI / 2;'],
   'escada-longe-da-porta': ['const xEscada = PORTA_EMBARQUE.x + MEDIDA_REAL.escada_embarque[2] / 2;', 'const xEscada = -3.2;'],
@@ -125,7 +130,7 @@ const portaCinematica = (() => {
     return new THREE.Box3(new THREE.Vector3(...min), new THREE.Vector3(...max)).translate(new THREE.Vector3(...no.translation)).translate(new THREE.Vector3(...palco));
   };
   const soleira = caixa('GEO-boarding-threshold');
-  return { soleira: { x: soleira.max.x, z: (soleira.min.z + soleira.max.z) / 2 }, topo: caixa('GEO-boarding-jamb-a').max.y };
+  return { soleira: { x: soleira.max.x, y: soleira.max.y, z: (soleira.min.z + soleira.max.z) / 2 }, topo: caixa('GEO-boarding-jamb-a').max.y };
 })();
 const glbTemplates = Object.fromEntries(Object.entries(mediumModule.PROP_FILES).map(([id, file]) => {
   const box = glbBounds(file), size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
@@ -155,14 +160,12 @@ try {
   });
   check('prop-yaw-rotates-aabb', () => {
     const tractor = loaded.colliders.find(c => c.id === 'trator_bagagem');
-    const stairs = loaded.colliders.find(c => c.id === 'escada_embarque');
     const serviceCar = loaded.colliders.find(c => c.id === 'carro_servico' && Math.abs((c.minX + c.maxX) / 2 + 16) < 1e-9);
-    assert.ok(tractor && stairs && serviceCar, 'proxies identificados');
+    assert.ok(tractor && serviceCar, 'proxies identificados');
     // Medidas reais (trator 2,8×1,5 m, carro 1,6×3,2 m no eixo nativo do GLB) após yaw 90°.
+    // A escada é subível (sem caixa): a orientação dela é medida em boarding-stairs-*.
     assert.ok(Math.abs((tractor.maxX - tractor.minX) - 1.5) < 1e-9, 'trator troca largura após yaw 90°');
     assert.ok(Math.abs((tractor.maxZ - tractor.minZ) - 2.8) < 1e-9, 'trator troca profundidade após yaw 90°');
-    assert.ok(Math.abs((stairs.maxX - stairs.minX) - 4) < 1e-9, 'escada respeita yaw');
-    assert.ok(Math.abs((stairs.maxZ - stairs.minZ) - 1.68) < 1e-9, 'escada respeita profundidade rotacionada (largura real 1,68 m)');
     assert.ok(Math.abs((serviceCar.maxX - serviceCar.minX) - 3.2) < 1e-9, 'equipamento usa o yaw declarado');
     assert.ok(Math.abs((serviceCar.maxZ - serviceCar.minZ) - 1.6) < 1e-9, 'equipamento rotaciona a profundidade');
   });
@@ -196,7 +199,8 @@ try {
       carro_servico: [1, 1.15, 2.2], trator_bagagem: [0.75, 0.95, 1.75], energia_solo: [0.7, 0.9, 1.75],
       scanner_bagagem: [0.75, 1, 2], estacao_manutencao: [0.9, 1.15, 2], containers_carga: [1.6, 2, 2],
       carrinho_ferramentas: [0.6, 0.8, 0.75], torre_iluminacao: [2, 2.75, 2.4],
-      jardineira: [1, 1.1, 1.5], balcao_recepcao: [0.6, 0.75, 2.4], escada_embarque: [1.5, 2, 2.4],
+      // Escada: altura que leva a plataforma à soleira da porta (1,57 m); a cláusula subível mede a soleira.
+      jardineira: [1, 1.1, 1.5], balcao_recepcao: [0.6, 0.75, 2.4], escada_embarque: [1.25, 1.4, 2.4],
       barreiras_aeroporto: [0.7, 0.85, 2.7],
     };
     // O muro de barreiras é procedural; o kit GLB só existe como cenário fora dos limites.
@@ -209,7 +213,9 @@ try {
     for (const [id, [minH, maxH, maxL]] of Object.entries(LIMITES)) {
       const pecas = glbReal.root.children.filter(o => o.name === (NOME_VISUAL[id] || id));
       const proxies = glbReal.colliders.filter(c => c.id === id);
-      assert.ok(pecas.length > 0 && pecas.length === proxies.length, `${id}: um proxy por peça visível (${pecas.length}×${proxies.length})`);
+      // Escada subível (playtest 06/11): sem caixa sólida; piso e acesso medidos em boarding-stairs-climbable.
+      const subivel = id === 'escada_embarque';
+      assert.ok(pecas.length > 0 && (subivel ? proxies.length === 0 : pecas.length === proxies.length), `${id}: um proxy por peça visível (${pecas.length}×${proxies.length})`);
       for (const peca of pecas) {
         const box = new THREE.Box3().setFromObject(peca), size = box.getSize(new THREE.Vector3());
         const onde = `${id}@(${((box.min.x + box.max.x) / 2).toFixed(1)},${((box.min.z + box.max.z) / 2).toFixed(1)})`;
@@ -217,6 +223,7 @@ try {
           `${onde}: altura ${size.y.toFixed(2)} m fora de ${minH}–${maxH}× a estatura`);
         assert.ok(Math.max(size.x, size.z) <= maxL * ESTATURA + 1e-6,
           `${onde}: ${Math.max(size.x, size.z).toFixed(2)} m acima de ${maxL}× a estatura`);
+        if (subivel) continue;
         const visual = { minX: box.min.x, maxX: box.max.x, minZ: box.min.z, maxZ: box.max.z };
         const proxy = proxies.find(c => Object.keys(visual).every(key => Math.abs(visual[key] - c[key]) < 1e-6));
         assert.ok(proxy, `${onde}: proxy com a mesma pegada do GLB (eixo e tamanho)`);
@@ -253,7 +260,7 @@ try {
   // Toda variante (world.escortPaths) passa pelo mesmo crivo da rota do meio: nó explícito,
   // corpo do VIP livre em cada trecho, grafo contínuo, mesma saída e mesma escada.
   check('escort-route-explicit-and-clear', () => {
-    assert.equal(loaded.escortPath.length, 13);
+    assert.equal(loaded.escortPath.length, 14);
     assert.equal(loaded.escortPaths.length, 3, 'meio, oeste e leste');
     assert.deepEqual(loaded.escortPaths[0], loaded.escortPath, 'variante 0 é a rota do meio');
     loaded.escortPaths.forEach((caminho, rota) => {
@@ -457,7 +464,9 @@ try {
     const seen = new Uint8Array(nodes.length), fila = [0]; seen[0] = 1;
     for (let i = 0; i < fila.length; i++) for (const j of adj[fila[i]]) if (!seen[j]) { seen[j] = 1; fila.push(j); }
     assert.equal(fila.length, nodes.length, 'grafo com uma componente só');
-    const folhas = nodes.filter((_, i) => adj[i].length === 1);
+    // Única folha permitida: a plataforma da escada, fim de linha do embarque (porta do avião).
+    const topo = loaded.escortPath.at(-1);
+    const folhas = nodes.filter((n, i) => adj[i].length === 1 && !(Math.abs(n.x - topo.x) < 1e-3 && Math.abs(n.z - topo.z) < 1e-3));
     assert.equal(folhas.length, 0, 'nenhum nó folha: ' + folhas.map(n => `${n.x},${n.z}`).join(' '));
   });
   check('route-pressure-attacker-approach-bounded', () => {
@@ -497,9 +506,14 @@ try {
       }
     }
   });
+  // Escada subível não tem caixa: a pegada é a do modelo com as proporções reais do GLB.
+  const escadaVisual = () => {
+    glbReal.root.updateMatrixWorld(true);
+    const modelo = glbReal.root.getObjectByName('escada_embarque'), caixa = new THREE.Box3().setFromObject(modelo);
+    return { modelo, minX: caixa.min.x, maxX: caixa.max.x, minZ: caixa.min.z, maxZ: caixa.max.z, maxY: caixa.max.y };
+  };
   check('stairs-tucked-against-fuselage', () => {
-    const escada = loaded.colliders.find(c => c.id === 'escada_embarque');
-    assert.ok(escada, 'proxy da escada existe');
+    const escada = escadaVisual();
     const fuselagem = loaded.colliders.find(c => c.id === 'aviao_executivo_fuselagem');
     const gap = Math.max(escada.minX - fuselagem.maxX, fuselagem.minX - escada.maxX);
     assert.ok(gap <= 0.6, `escada a ${gap.toFixed(2)} m da fuselagem`);
@@ -508,22 +522,26 @@ try {
     assert.equal(blocked(loaded, 7, 55) === blocked(fallback, 7, 55), true, 'escada igual com GLB e fallback');
   });
   // Playtest 06/11 ("escada ao contrário"): o topo nativo da escada encosta na porta real da
-  // cinemática, a porta pintada do avião fica do mesmo lado e as três rotas terminam no pé.
-  check('boarding-stairs-face-door-from-every-route', () => {
+  // cinemática, a porta pintada fica do mesmo lado; rotas sobem do pé à plataforma.
+  const geometriaEscada = () => {
     const vertices = glbVertices('escada_embarque.glb');
     const ys = vertices.map(v => v.y), alto = Math.max(...ys) - (Math.max(...ys) - Math.min(...ys)) * 0.2;
     const topo = vertices.filter(v => v.y >= alto), zTopo = topo.reduce((soma, v) => soma + v.z, 0) / topo.length;
     assert.ok(Math.abs(zTopo) > 0.1, `plataforma nativa num extremo do eixo z (${zTopo.toFixed(2)})`);
-    const escada = loaded.colliders.find(c => c.id === 'escada_embarque');
-    const modelo = loaded.root.getObjectByName('escada_embarque');
-    assert.ok(escada && modelo && Math.abs(modelo.rotation.y - escada.yaw) < 1e-9, 'render e colisor com o mesmo yaw');
-    assert.ok(Math.abs(Math.sin(2 * escada.yaw)) < 1e-9, 'yaw em múltiplo de 90° (AABB exata)');
-    const dir = { x: Math.sin(escada.yaw) * Math.sign(zTopo), z: Math.cos(escada.yaw) * Math.sign(zTopo) };
+    const escada = escadaVisual(), yaw = escada.modelo.rotation.y;
+    const modeloMundo = loaded.root.getObjectByName('escada_embarque');
+    assert.ok(Math.abs(modeloMundo.rotation.y - yaw) < 1e-9 && Math.abs(Math.sin(2 * yaw)) < 1e-9, 'yaw igual nos fixtures e em múltiplo de 90°');
+    const dir = { x: Math.sin(yaw) * Math.sign(zTopo), z: Math.cos(yaw) * Math.sign(zTopo) };
     const largX = escada.maxX - escada.minX, largZ = escada.maxZ - escada.minZ;
     const comprimento = Math.abs(dir.x) * largX + Math.abs(dir.z) * largZ, largura = Math.abs(dir.z) * largX + Math.abs(dir.x) * largZ;
     const centro = { x: (escada.minX + escada.maxX) / 2, z: (escada.minZ + escada.maxZ) / 2 };
-    const ponta = (s) => ({ x: centro.x + s * dir.x * comprimento / 2, z: centro.z + s * dir.z * comprimento / 2 });
-    const topoMundo = ponta(1), pe = ponta(-1), porta = portaCinematica.soleira;
+    // s: distância ao centro rumo ao pé (−L/2 = topo); t: desvio lateral.
+    const eixo = (p) => ({ s: -((p.x - centro.x) * dir.x + (p.z - centro.z) * dir.z), t: Math.abs((p.x - centro.x) * dir.z - (p.z - centro.z) * dir.x) });
+    const ponta = (k) => ({ x: centro.x + k * dir.x * comprimento / 2, z: centro.z + k * dir.z * comprimento / 2 });
+    return { dir, comprimento, largura, centro, eixo, topoMundo: ponta(1), pe: ponta(-1) };
+  };
+  check('boarding-stairs-face-door-from-every-route', () => {
+    const { comprimento, largura, eixo, topoMundo, pe } = geometriaEscada(), porta = portaCinematica.soleira;
     const dTopo = Math.hypot(topoMundo.x - porta.x, topoMundo.z - porta.z);
     assert.ok(dTopo <= 0.5, `topo da escada a ${dTopo.toFixed(2)} m da porta da cinemática`);
     assert.ok(Math.hypot(pe.x - porta.x, pe.z - porta.z) >= comprimento - 0.5, 'degraus descem para longe da porta');
@@ -534,15 +552,49 @@ try {
     const ladoPintado = new THREE.Vector3(1, 0, 0).transformDirection(loaded.objectivePlane.matrixWorld);
     assert.equal(Math.sign(ladoPintado.x), Math.sign(porta.x), 'porta pintada do avião no lado da escada');
     loaded.escortPaths.forEach((caminho, rota) => {
-      const fim = caminho.at(-1), antes = caminho.at(-2);
-      const rel = { x: fim.x - centro.x, z: fim.z - centro.z };
-      const aoLongo = -(rel.x * dir.x + rel.z * dir.z), lateral = Math.abs(rel.x * dir.z - rel.z * dir.x);
-      assert.ok(aoLongo > comprimento / 2 && aoLongo <= comprimento / 2 + 1.6, `variante ${rota}: embarque a ${(aoLongo - comprimento / 2).toFixed(2)} m do pé`);
-      assert.ok(lateral <= largura / 2, `variante ${rota}: embarque de frente para os degraus (${lateral.toFixed(2)} m)`);
-      assert.equal(blocked(loaded, fim.x, fim.z, .46), false, `variante ${rota}: pé da escada livre`);
-      assertClearSegment(antes, fim, `variante ${rota} chegada ao pé`, .46);
-      assertReachable(antes, fim, `variante ${rota} chegada ao pé`);
+      const [antes, noPe, fim] = caminho.slice(-3), p = eixo(noPe), f = eixo(fim);
+      assert.ok(p.s > comprimento / 2 && p.s <= comprimento / 2 + 1.6 && p.t <= largura / 2, `variante ${rota}: penúltimo checkpoint a ${(p.s - comprimento / 2).toFixed(2)} m à frente do pé`);
+      // Plataforma: o quarto superior do eixo (s nativo de -2 a -0,75 m de 4 m).
+      assert.ok(f.s >= -comprimento / 2 && f.s <= -comprimento * 0.19 && f.t <= largura / 2, `variante ${rota}: checkpoint final fora da plataforma (s ${f.s.toFixed(2)})`);
+      assert.ok(Math.hypot(fim.x - porta.x, fim.z - porta.z) <= 1.1, `variante ${rota}: embarque longe da porta`);
+      for (const [a, b, nome] of [[antes, noPe, 'chegada ao pé'], [noPe, fim, 'subida']]) {
+        assert.equal(blocked(loaded, b.x, b.z, .46), false, `variante ${rota}: ${nome} livre`);
+        assertClearSegment(a, b, `variante ${rota} ${nome}`, .46);
+        assertReachable(a, b, `variante ${rota} ${nome}`);
+      }
     });
+  });
+  // Playtest 06/11 ("a escada está bloqueada"): piso monotônico do pé à plataforma, cada passo
+  // ≤ STEP_H do jogo, corpo sem colisor na altura do degrau e o grafo só cruza pelo eixo.
+  check('boarding-stairs-climbable', () => {
+    const STEP_H = Number(readFileSync(new URL('../../public/js/game.js', import.meta.url), 'utf8').match(/const STEP_H = ([\d.]+);/)[1]);
+    const { eixo, comprimento, largura } = geometriaEscada(), porta = portaCinematica.soleira;
+    for (const [nome, mapa] of [['loaded', loaded], ['fallback', fallback], ['low', lowLoaded]]) {
+      const [noPe, fim] = mapa.escortPath.slice(-2), passos = Math.ceil(Math.hypot(fim.x - noPe.x, fim.z - noPe.z) / 0.05);
+      let anterior = mapa.groundHeightAt(noPe.x, noPe.z), maior = 0;
+      for (let n = 1; n <= passos; n++) {
+        const x = noPe.x + (fim.x - noPe.x) * n / passos, z = noPe.z + (fim.z - noPe.z) * n / passos, y = mapa.groundHeightAt(x, z);
+        assert.ok(y >= anterior - 1e-9, `${nome}: piso desce rumo ao topo em (${x.toFixed(2)},${z.toFixed(2)})`);
+        maior = Math.max(maior, y - anterior); anterior = y;
+        const corpo = mapa.colliders.find(c => Math.hypot(x - Math.max(c.minX, Math.min(x, c.maxX)), z - Math.max(c.minZ, Math.min(z, c.maxZ))) < 0.38 && y + 1.5 > c.minY && y + 0.3 < c.maxY);
+        assert.equal(corpo, undefined, `${nome}: colisor ${corpo?.id || ''} trava o corpo no degrau (${x.toFixed(2)}; ${y.toFixed(2)})`);
+      }
+      assert.ok(maior <= STEP_H, `${nome}: degrau de ${maior.toFixed(2)} m > STEP_H ${STEP_H}`);
+      assert.ok(Math.abs(anterior - porta.y) <= 0.1, `${nome}: plataforma a ${anterior.toFixed(2)} m, soleira da porta a ${porta.y.toFixed(2)} m`);
+      assert.equal(mapa.groundHeightAt(noPe.x, noPe.z), 0, `${nome}: pé no chão do pátio`);
+    }
+    // O grafo só cruza a pegada da escada pelo eixo pé → topo (sem atalho pela lateral).
+    const { nodes, adj } = loaded.waypoints, dentro = (p) => { const e = eixo(p); return e.s >= -comprimento / 2 - 0.2 && e.s <= comprimento / 2 + 0.2 && e.t <= largura / 2 + 0.2; };
+    for (let i = 0; i < nodes.length; i++) for (const j of adj[i]) {
+      if (j < i) continue;
+      const cruza = Array.from({ length: 21 }, (_, n) => ({ x: nodes[i].x + (nodes[j].x - nodes[i].x) * n / 20, z: nodes[i].z + (nodes[j].z - nodes[i].z) * n / 20 })).some(dentro);
+      if (cruza) assert.ok(eixo(nodes[i]).t < 0.05 && eixo(nodes[j]).t < 0.05, `aresta (${nodes[i].x},${nodes[i].z})→(${nodes[j].x},${nodes[j].z}) corta a lateral da escada`);
+    }
+    // A cinemática esconde a escada do mundo: sem ela o pátio volta a ser plano.
+    const modelo = loaded.root.getObjectByName('escada_embarque'), fim = loaded.escortPath.at(-1);
+    modelo.visible = false;
+    try { assert.equal(loaded.groundHeightAt(fim.x, fim.z), 0, 'escada oculta ainda sustenta piso'); } finally { modelo.visible = true; }
+    assert.ok(Math.hypot(fim.x - porta.x, fim.z - porta.z) <= 1.1, 'topo junto à porta');
   });
   // Placa (playtest 06/11): render-only, ancorada na ponta da seta ▼ logo acima da porta, igual
   // em todos os perfis; não vira colisor, oclusor nem alvo de raycast.

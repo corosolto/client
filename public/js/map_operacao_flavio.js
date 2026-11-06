@@ -40,7 +40,7 @@ const MEDIDA_REAL = {
   torre_iluminacao: [3.9, 4.5, 2.4],
   jardineira: [2.5, 1.8, 1.4],
   balcao_recepcao: [3.5, 1.25, 2.2],
-  escada_embarque: [1.68, 3.2, 4],
+  escada_embarque: [1.68, 2.22, 4],   // altura da escada leva a plataforma à soleira da porta (1,57 m)
   barreiras_aeroporto: [4.5, 1.4, 1.2],
 };
 const real = (id, x, z, yaw, solid = true) => [id, x, z, MEDIDA_REAL[id], yaw, ...MEDIDA_REAL[id], solid];
@@ -50,14 +50,14 @@ let preloadPromise = null;
 export const registerOperacaoFlavioTemplate = (id, scene) => templates.set(id, scene);
 
 // Porta real da cinemática (GEO-boarding-threshold) fica no lado +x da fuselagem. Topo nativo
-// da escada é -z: yaw +90° o encosta na porta e os degraus descem para +x, até o último checkpoint.
+// da escada é -z: yaw +90° o encosta na porta; as rotas sobem do pé (6,2;52) à plataforma (2,3;52).
 const PORTA_EMBARQUE = { x: 1.3, z: 52 };
 const YAW_ESCADA = Math.PI / 2;
 const ESCORT_PATH = [
   { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
   { x: -9, z: -31 }, { x: 0, z: -27 }, { x: 0, z: -20 }, { x: 0, z: -12 },
   { x: -4, z: 0 }, { x: 2, z: 15 }, { x: 2, z: 31 }, { x: 5, z: 42 },
-  { x: 6.2, z: 52 },
+  { x: 6.2, z: 52 }, { x: 2.3, z: 52 },
 ];
 // Variantes do VIP (playtest 06/11): portas norte laterais (x=±17), vielas internas (x≈±14) e
 // bolsões do hangar até a mesma escada; o modo escolhe uma por rodada.
@@ -65,14 +65,14 @@ const ESCORT_PATH_OESTE = [
   { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
   { x: -12, z: -26 }, { x: -17, z: -16 }, { x: -14.2, z: -12 }, { x: -14.2, z: 8 },
   { x: -13.5, z: 11 }, { x: -13.5, z: 19 }, { x: -15.5, z: 25 }, { x: -15.5, z: 45.6 },
-  { x: 5.5, z: 47 }, { x: 6.2, z: 52 },
+  { x: 5.5, z: 47 }, { x: 6.2, z: 52 }, { x: 2.3, z: 52 },
 ];
 const ESCORT_PATH_LESTE = [
   { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
   { x: -9, z: -31 }, { x: 0, z: -27 }, { x: 11, z: -29 }, { x: 17, z: -16 },
   { x: 14.5, z: -12 }, { x: 14.5, z: 7 }, { x: 13, z: 9 }, { x: 11.8, z: 18 },
   { x: 14.5, z: 22 }, { x: 14.5, z: 32 }, { x: 18, z: 32 }, { x: 18, z: 44 },
-  { x: 12.5, z: 48.5 }, { x: 6.2, z: 52 },
+  { x: 12.5, z: 48.5 }, { x: 6.2, z: 52 }, { x: 2.3, z: 52 },
 ];
 const ESCORT_PATHS = [ESCORT_PATH, ESCORT_PATH_OESTE, ESCORT_PATH_LESTE];
 // Iscas por variante (índices de serviceRoutes: 0 externa O, 2 externa L, 3 interna O,
@@ -614,7 +614,17 @@ export function buildOperacaoFlavio(scene, T = {}) {
   // O GLB pinta a porta no lado -x; espelhado em x, ela fica no +x, onde a cinemática a abre.
   if (templates.has('aviao_executivo')) objectivePlane.scale.x *= -1;
   const xEscada = PORTA_EMBARQUE.x + MEDIDA_REAL.escada_embarque[2] / 2;
-  usarProp('escada_embarque', [xEscada, 0.08, PORTA_EMBARQUE.z], MEDIDA_REAL.escada_embarque, MEDIDA_REAL.escada_embarque, YAW_ESCADA);
+  const escadaModelo = usarProp('escada_embarque', [xEscada, 0.08, PORTA_EMBARQUE.z], MEDIDA_REAL.escada_embarque, MEDIDA_REAL.escada_embarque, YAW_ESCADA);
+  // Piso medido nos degraus do GLB, em fração da altura (s = eixo nativo z em m, -2 = topo):
+  // plataforma 0,672·h até s=-0,75, degraus até 0,0875·h em s=1,15 e base baixa até o pé (s=2).
+  const pisoEscada = (x, z) => {
+    const dx = x - xEscada, dz = z - PORTA_EMBARQUE.z, sin = Math.sin(YAW_ESCADA), cos = Math.cos(YAW_ESCADA);
+    const s = dx * sin + dz * cos, t = dx * cos - dz * sin, [largura, h] = MEDIDA_REAL.escada_embarque;
+    if (Math.abs(s) > 2 || Math.abs(t) > largura / 2) return 0;
+    return 0.08 + h * (s < -0.75 ? 0.672 : s < 1.15 ? 0.672 - (s + 0.75) * (0.5845 / 1.9) : 0.0875);
+  };
+  // A cinemática esconde a escada do mundo e usa a dela: sem o modelo, o pátio volta a ser plano.
+  const groundHeightAt = (x, z) => (escadaModelo.visible ? pisoEscada(x, z) : 0);
   usarProp('trator_bagagem', [-20, 0.08, 50], MEDIDA_REAL.trator_bagagem, MEDIDA_REAL.trator_bagagem, Math.PI / 2);
   usarProp('carrinho_ferramentas', [27, 0.08, 38], MEDIDA_REAL.carrinho_ferramentas, MEDIDA_REAL.carrinho_ferramentas, Math.PI / 2);
   usarProp('arco_seguranca', [0, 0.08, -13], 3, [3, 3, 0.8], 0, false);
@@ -626,7 +636,13 @@ export function buildOperacaoFlavio(scene, T = {}) {
   };
   colliderDoProp('aviao_executivo_fuselagem', 0, 0, 55, 3.4, 4.6, 12, Math.PI);
   colliderDoProp('aviao_executivo_asas', 0, 0.8, 55.4, 16, 1.4, 3.2, Math.PI);
-  colliderDoProp('escada_embarque', xEscada, 0, PORTA_EMBARQUE.z, ...MEDIDA_REAL.escada_embarque, YAW_ESCADA);
+  // A escada não tem caixa sólida: o piso subível vem de groundHeightAt, e o grafo só a cruza
+  // pelo eixo pé → topo (escadaNav). Corrimãos e degraus continuam oclusores de tiro.
+  const escadaNav = (() => {
+    const [w, h, d] = MEDIDA_REAL.escada_embarque, cos = Math.abs(Math.cos(YAW_ESCADA)), sin = Math.abs(Math.sin(YAW_ESCADA));
+    const hx = (w * cos + d * sin) / 2, hz = (w * sin + d * cos) / 2;
+    return { id: 'escada_embarque_nav', minX: xEscada - hx, maxX: xEscada + hx, minY: 0, maxY: h, minZ: PORTA_EMBARQUE.z - hz, maxZ: PORTA_EMBARQUE.z + hz };
+  })();
   colliderDoProp('trator_bagagem', -20, 0, 50, ...MEDIDA_REAL.trator_bagagem, Math.PI / 2);
   colliderDoProp('carrinho_ferramentas', 27, 0, 38, ...MEDIDA_REAL.carrinho_ferramentas, Math.PI / 2);
   for (const x of [-1.28, 1.28]) colliders.push({
@@ -639,7 +655,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
   const placaEmbarque = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaSetaEmbarque(), toneMapped: false, fog: false }));
   placaEmbarque.name = 'placa-embarque-flavio';
   placaEmbarque.center.set(0.5, 0); placaEmbarque.scale.set(4, 2.5, 1);
-  placaEmbarque.position.set(PORTA_EMBARQUE.x + 0.4, 3.9, PORTA_EMBARQUE.z);
+  placaEmbarque.position.set(PORTA_EMBARQUE.x + 0.4, 4.3, PORTA_EMBARQUE.z);
   placaEmbarque.raycast = () => {}; placaEmbarque.userData.nonSolidSurface = true;
   root.add(placaEmbarque);
   const equipamentos = [
@@ -779,10 +795,11 @@ export function buildOperacaoFlavio(scene, T = {}) {
     if (z === 29 || z === 42) light.name = `luz-hangar-${z}`;   // nomes estáveis p/ cinemática E
   }
 
-  const blocked = (x, z, inflate = 0.55) => colliders.some((c) => x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < 1.8 && c.maxY > 0.1);
+  const navColliders = [...colliders, escadaNav];
+  const blocked = (x, z, inflate = 0.55) => navColliders.some((c) => x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < 1.8 && c.maxY > 0.1);
   const segmentBlocked = (a, b, inflate = 0.55) => {
     const dx = b.x - a.x, dz = b.z - a.z;
-    return colliders.some((c) => {
+    return navColliders.some((c) => {
       if (c.minY >= 1.8 || c.maxY <= 0.1) return false;
       const minX = c.minX - inflate, maxX = c.maxX + inflate;
       const minZ = c.minZ - inflate, maxZ = c.maxZ + inflate;
@@ -874,6 +891,16 @@ export function buildOperacaoFlavio(scene, T = {}) {
         if (segmentBlocked(nodes[i], nodes[j])) continue;
         adj[i].push(j); adj[j].push(i);
       }
+    }
+  }
+  // Escada: pé → meio → topo ligados só entre si; o pé já é nó da rota e o topo vira o último checkpoint.
+  // Pé bloqueado (colisor sobre ele) deixa a escada fora do grafo: as réguas de rota acusam.
+  {
+    const [pe, topo] = ESCORT_PATH.slice(-2), meio = { x: (pe.x + topo.x) / 2, z: (pe.z + topo.z) / 2 };
+    let anterior = nodes.findIndex((node) => Math.abs(node.x - pe.x) < 0.001 && Math.abs(node.z - pe.z) < 0.001);
+    for (const ponto of anterior < 0 ? [] : [meio, topo]) {
+      nodes.push({ x: ponto.x, z: ponto.z }); adj.push([anterior]); adj[anterior].push(nodes.length - 1);
+      anterior = nodes.length - 1;
     }
   }
   const navigationStats = {
@@ -988,7 +1015,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
     root, colliders, occluders, decalSolids: [root], pickups, sun, hemi, spawns,
     mode: 'escort', escortPath, escortPaths, escortDecoyRoutes: ESCORT_DECOY_ROUTES.map((iscas) => [...iscas]),
     escortServiceRoutes: serviceRoutes, escortCoverPoints, objectivePlane,
-    groundHeightAt: () => 0, slowAt: () => false,
+    groundHeightAt, snapDownSteps: true, slowAt: () => false,
     waypoints: { nodes, adj, stats: navigationStats }, nearestWaypoint, findPath,
     bounds: { minX: -43, maxX: 43, minZ: -57, maxZ: 57 },
     sound: { bioma: 'industrial', loops: [

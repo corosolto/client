@@ -8,6 +8,9 @@ const COVER_SPEED = 2.5;
 const RETURN_SPEED = 2.2;
 const RETURN_DELAY = 3;
 const BOARDING_TIME = 3;
+// Embarque só na plataforma: o último checkpoint é o topo da escada (playtest 06/11) e o
+// raio não alcança os degraus de baixo nem o pé.
+const RAIO_EMBARQUE = 0.45;
 const THREAT_MEMORY = 0.7;
 // Rush (playtest 06/11): com 2+ guardas colados Flávio segue andando sob fogo; só se
 // abriga exposto. Guardas avançam até 2 m à frente do slot para interceptar.
@@ -329,7 +332,7 @@ export function passoEscolta(state, contexto, dt, { mutante = '', mover = null }
     state.unattendedFor = 0;
     const escada = state.caminho[ultimo];
     const naEscada = moverAte(state, escada, ESCORT_SPEED * dt, mover)
-      || Math.hypot(state.position.x - escada.x, state.position.z - escada.z) < 0.75;
+      || Math.hypot(state.position.x - escada.x, state.position.z - escada.z) < RAIO_EMBARQUE;
     state.inCover = true;
     state.boardedFor = naEscada ? state.boardedFor + dt : 0;
     if (state.boardedFor >= BOARDING_TIME) state.winner = 'B';
@@ -503,7 +506,7 @@ export function passoEscoltaJogador(state, contexto, dt) {
   for (let i = ultimo; i > state.checkpoint; i--) {
     if (d2(state.position, state.caminho[i]) <= VIP_JOGADOR_RAIO ** 2) { state.checkpoint = i; break; }
   }
-  const naEscada = state.checkpoint >= ultimo && d2(state.position, state.caminho[ultimo]) <= VIP_JOGADOR_RAIO ** 2;
+  const naEscada = state.checkpoint >= ultimo && d2(state.position, state.caminho[ultimo]) <= RAIO_EMBARQUE ** 2;
   const livre = defensores.length > 0 || (!state.contested && !state.threatened);
   state.boardedFor = naEscada && livre ? state.boardedFor + dt : 0;
   if (state.boardedFor >= BOARDING_TIME) state.winner = 'B';
@@ -658,8 +661,10 @@ export class OperacaoFlavio {
 
   destinoFlanqueador(bot, destino) {
     const caminho = this.state.caminho, ultimo = caminho.length - 1;
+    // O último trecho é a subida da escada: a vanguarda segura o pé dela, nunca o topo.
+    const chao = Math.max(0, ultimo - 1);
     // Vanguarda monotônica: FLANQUEADOR_VANGUARDA checkpoints à frente, nunca recua sozinha.
-    const alvoZ = caminho[Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA, ultimo)].z;
+    const alvoZ = caminho[Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA, chao)].z;
     if (!Number.isFinite(bot._flavioVanguarda) || alvoZ > bot._flavioVanguarda) bot._flavioVanguarda = alvoZ;
     const lado = bot._flavioLado || 1;
     const rotas = this.game.world.escortServiceRoutes;
@@ -670,8 +675,8 @@ export class OperacaoFlavio {
     } else {
       // A viela lateral termina no hangar: daí para o apron a vanguarda volta a acompanhar
       // o checkpoint central com deslocamento lateral, sem ficar para trás.
-      const indice = Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA, ultimo);
-      const ponto = caminho[indice], proximo = caminho[Math.min(indice + 1, ultimo)];
+      const indice = Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA, chao);
+      const ponto = caminho[indice], proximo = caminho[Math.min(indice + 1, chao)];
       const anterior = caminho[Math.max(0, indice - 1)];
       let dx = proximo.x - ponto.x, dz = proximo.z - ponto.z;
       if (Math.hypot(dx, dz) < 1e-6) { dx = ponto.x - anterior.x; dz = ponto.z - anterior.z; }

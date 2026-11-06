@@ -69,10 +69,10 @@ const mutations = {
     after: ': Number.isFinite(vip.yaw) ? vip.yaw : 0;',
     clause: 'formação ociosa encara o rumo da câmera do VIP jogador',
   },
-  'zona-jogador-no-penultimo': {
-    before: 'const naEscada = state.checkpoint >= ultimo && d2(state.position, state.caminho[ultimo]) <= VIP_JOGADOR_RAIO ** 2;',
-    after: 'const naEscada = state.checkpoint >= ultimo && d2(state.position, state.caminho[ultimo - 1]) <= VIP_JOGADOR_RAIO ** 2;',
-    clause: 'VIP jogador anda até o pé da escada e embarca em toda variante',
+  'zona-jogador-no-pe': {
+    before: 'const naEscada = state.checkpoint >= ultimo && d2(state.position, state.caminho[ultimo]) <= RAIO_EMBARQUE ** 2;',
+    after: 'const naEscada = state.checkpoint >= ultimo - 1 && d2(state.position, state.caminho[ultimo - 1]) <= RAIO_EMBARQUE ** 2;',
+    clause: 'VIP jogador sobe a escada e embarca no topo em toda variante',
   },
 };
 
@@ -253,29 +253,37 @@ check('VIP jogador escoltado embarca mesmo contestado', () => withGame(SENADOR.i
   assert.equal(game.objective.state.winner, 'B', 'com escolta o embarque não espera o pátio limpar (regra do bot VIP)');
 }));
 
-// Playtest 06/11 ("não consegue embarcar"): com a física real do jogador, Zero Um anda do
-// penúltimo checkpoint de cada variante até o pé da escada sem colisor no caminho e embarca.
-check('VIP jogador anda até o pé da escada e embarca em toda variante', () => withGame(SENADOR.id, (game) => {
+// Playtest 06/11 ("a escada está bloqueada"): com a física real do jogador (W), Zero Um anda até
+// o pé, não embarca parado lá, sobe degrau a degrau até a plataforma e embarca na porta.
+check('VIP jogador sobe a escada e embarca no topo em toda variante', () => withGame(SENADOR.id, (game) => {
   game._losClear = () => false;
   const p = game.player;
   for (let rodada = 1; rodada <= 3; rodada++) {
     game.roundNum = rodada; game.state = 'live';
     game.objective.prepareRound();
-    const estado = game.objective.state, inicio = estado.caminho.at(-2), fim = estado.caminho.at(-1);
-    estado.checkpoint = estado.caminho.length - 2;
+    const estado = game.objective.state, [inicio, pe, fim] = estado.caminho.slice(-3);
+    estado.checkpoint = estado.caminho.length - 3;
     for (const bot of game.bots) bot.alive = false;   // pátio limpo: embarque sozinho vale
     p.pos.set(inicio.x, 0, inicio.z); p.vel.set(0, 0, 0); p.alive = true; p.hp = 100;
     game.touchMove = { x: 0, z: 0 };
-    let chegou = false;
-    for (let t = 0; t < 30 && !estado.winner; t += 1 / 60) {
-      const dx = fim.x - p.pos.x, dz = fim.z - p.pos.z;
-      chegou ||= Math.hypot(dx, dz) < 0.3;
-      game.keys = chegou ? {} : { KeyW: true }; p.yaw = Math.atan2(-dx, -dz);
+    let alvo = pe, parado = 0, subidaMax = 0, chegou = false;
+    for (let t = 0; t < 40 && !estado.winner; t += 1 / 60) {
+      if (alvo === pe && Math.hypot(pe.x - p.pos.x, pe.z - p.pos.z) < 0.3 && (parado += 1 / 60) > 1.5) {
+        assert.equal(estado.boardedFor, 0, `rodada ${rodada}: parado no pé da escada já conta embarque`);
+        alvo = fim;
+      }
+      const dx = alvo.x - p.pos.x, dz = alvo.z - p.pos.z, perto = Math.hypot(dx, dz) < 0.3;
+      chegou ||= alvo === fim && perto;
+      game.keys = perto ? {} : { KeyW: true }; p.yaw = Math.atan2(-dx, -dz);
+      const y0 = p.pos.y;
       game.time += 1 / 60; game._updatePlayer(1 / 60); game.objective.update(1 / 60);
+      subidaMax = Math.max(subidaMax, p.pos.y - y0);
     }
     game.keys = {};
-    assert.ok(chegou, `rodada ${rodada}: jogador travou a ${Math.hypot(fim.x - p.pos.x, fim.z - p.pos.z).toFixed(2)} m do pé da escada`);
+    assert.ok(chegou, `rodada ${rodada}: jogador travou em (${p.pos.x.toFixed(2)}; ${p.pos.y.toFixed(2)}; ${p.pos.z.toFixed(2)}) antes da plataforma`);
     assert.equal(estado.winner, 'B', `rodada ${rodada}: embarque do VIP jogador`);
+    assert.ok(p.pos.y > 1.4 && p.pos.y >= game.world.groundHeightAt(fim.x, fim.z) - 0.05, `rodada ${rodada}: embarcou a ${p.pos.y.toFixed(2)} m, fora da plataforma`);
+    assert.ok(subidaMax <= 0.55, `rodada ${rodada}: subida de ${subidaMax.toFixed(2)} m num quadro passa do degrau do jogo`);
   }
 }));
 

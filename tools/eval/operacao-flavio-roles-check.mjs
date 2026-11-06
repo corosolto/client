@@ -54,10 +54,15 @@ const mutations = {
     after: 'return criarEstadoEscolta(this.game.world.escortPath);',
     clause: 'rota do VIP varia por rodada e conduz Flávio pela variante',
   },
-  'embarque-no-penultimo': {
+  'embarque-no-pe': {
     before: 'const escada = state.caminho[ultimo];',
     after: 'const escada = state.caminho[ultimo - 1];',
-    clause: 'VIP bot chega ao pé da escada e embarca em toda variante',
+    clause: 'VIP bot sobe a escada e embarca no topo em toda variante',
+  },
+  'vanguarda-sobe-escada': {
+    before: 'const chao = Math.max(0, ultimo - 1);',
+    after: 'const chao = ultimo;',
+    clause: 'vanguarda atravessa hangar e pátio junto do comboio',
   },
   'isca-fixa': {
     before: 'const rota = iscas[((bot._flavioIsca || 0) + (bot._flavioVidas || 0)) % iscas.length];',
@@ -234,7 +239,7 @@ check('vanguarda atravessa hangar e pátio junto do comboio', () => withGame(7, 
     const atual = caminho[checkpoint];
     game.objective.state.position.x = atual.x; game.objective.state.position.z = atual.z;
     vip.pos.set(atual.x, vip.pos.y, atual.z);
-    const indice = Math.min(checkpoint + VANGUARDA, caminho.length - 1);
+    const indice = Math.min(checkpoint + VANGUARDA, caminho.length - 2);   // segura o pé da escada
     const ponto = caminho[indice];
     for (const roamer of flanqueadores) {
       roamer.alive = true;
@@ -366,26 +371,30 @@ check('rota do VIP varia por rodada e conduz Flávio pela variante', () => withG
   assert.equal(escolhidas[0], 0, 'primeira rodada abre pelo meio');
 }));
 
-// Playtest 06/11 ("não consegue embarcar"): em cada variante o VIP bot sai do penúltimo
-// checkpoint pelo moverVip real, chega ao pé da escada e completa o embarque.
-check('VIP bot chega ao pé da escada e embarca em toda variante', () => withGame(7, (game) => {
+// Playtest 06/11 ("a escada está bloqueada"): em cada variante o VIP bot sai do checkpoint
+// antes do pé pelo moverVip real, sobe os degraus e só embarca na plataforma, na porta.
+check('VIP bot sobe a escada e embarca no topo em toda variante', () => withGame(7, (game) => {
   const { vip, guardas, atacantes } = papeis(game);
   game._losClear = () => false;
   for (let rodada = 1; rodada <= 3; rodada++) {
     game.roundNum = rodada; game.state = 'live';
     game.objective.prepareRound();
-    const estado = game.objective.state, caminho = estado.caminho, k = caminho.length - 2, fim = caminho.at(-1);
+    const estado = game.objective.state, caminho = estado.caminho, k = caminho.length - 3, fim = caminho.at(-1);
     estado.checkpoint = k; estado.position.x = caminho[k].x; estado.position.z = caminho[k].z;
     vip.pos.set(caminho[k].x, 0, caminho[k].z);
+    let subidaMax = 0, yAnterior = 0;
     for (let frame = 0; frame < 60 * 25 && !estado.winner; frame++) {
       for (const bot of atacantes) { bot.alive = false; bot.pos.set(-40, 0, -55); }
       for (const guarda of guardas) { guarda.alive = true; guarda.pos.set(vip.pos.x, 0, vip.pos.z); }
       game.time += 1 / 60;
       game.objective.update(1 / 60);
+      subidaMax = Math.max(subidaMax, vip.pos.y - yAnterior); yAnterior = vip.pos.y;
     }
     assert.equal(estado.winner, 'B', `rodada ${rodada}: Flávio não embarcou (checkpoint ${estado.checkpoint}/${caminho.length - 1})`);
     const falta = Math.hypot(estado.position.x - fim.x, estado.position.z - fim.z);
-    assert.ok(falta < 0.75, `rodada ${rodada}: embarcou a ${falta.toFixed(2)} m do pé da escada`);
+    assert.ok(falta < 0.45, `rodada ${rodada}: embarcou a ${falta.toFixed(2)} m da plataforma`);
+    assert.ok(vip.pos.y >= game.world.groundHeightAt(fim.x, fim.z) - 0.05 && vip.pos.y > 1.4, `rodada ${rodada}: embarcou a ${vip.pos.y.toFixed(2)} m de altura, fora da plataforma`);
+    assert.ok(subidaMax <= 0.55, `rodada ${rodada}: degrau de ${subidaMax.toFixed(2)} m num quadro`);
   }
 }));
 
