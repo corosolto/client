@@ -1,12 +1,21 @@
 # Operação Flávio — Gameplay, Map and Bot Improvements
 
-Date: 2026-11-04, updated 2026-11-05
+Date: 2026-11-04, updated 2026-11-06
 Branch: `feat/operacao-flavio-improvements-20261104`
 Status: PR #1232 open; verified candidate; no merge or deployment
 
 ## Scope
 
 Integrated PR #1158 into the current mainline, corrected escort authority, online lifecycle, bot behavior, map geometry, combat readability and mobile cost, then ran a second owner-feedback gauntlet for enemy respawn isolation, real cover/hiding, stable bot movement, 6×6 roles/loadouts, conflict routes and the public golden pistol viewmodel. A third localhost replay on 2026-11-05 fixed local factory viewmodel serving, right-click ADS before pointer lock, fixed enemy respawn bases, lateral flank routes and apron density. Javaporcos and the other existing modes were used as regression controls.
+
+A fourth owner playtest on 2026-11-06 drove six fixes:
+
+- **PT-38 viewmodel.** The public golden pilot's own camera (34°) rendered the pistol at 1.99× the approved PT-38, and the baked scoreboard stayed green at 0.99× because the pistol was excluded from its hash. `goldFrame` reframes only the `gold#` route: 1.05× and 1 px offset in 3:2, 1.01× in 16:9. The pistol is back in the hash, guarded by the `quadro-pistola` mutant.
+- **HUD.** The escort HUD shows only progress and time. Escort count and contested/cover state no longer leak the defence's tactics.
+- **Player as VIP.** Picking Zero Um on side B makes the player the VIP, offline only, with no duplicate senador bot. The online roster stays server-owned.
+- **Routes and aggression.** There are three deterministic VIP route variants per round (middle/west/east, derived from `roundNum`). The VIP pushes under visible threat with two or more guards and boards while escorted even when contested. Flankers act as decoys across three or more lanes.
+- **Prop scale.** Vehicles, ground equipment, counters, stairs, barriers and planters render at real scale with colliders equal to the render. Standing concealment comes from genuinely tall props (container stacks, 1.8 m planters, the 1.95 m service car).
+- **Crash fix.** A guard formation hold no longer crashes `_updateBot` after the VIP dies.
 
 ## Gameplay and online behavior
 
@@ -75,4 +84,6 @@ Evidence captures:
 - No physical Android/iOS device test or long human playtest was performed.
 - No real dedicated backend/client pair was launched; backend PR #196 still requires its own update and compatibility evidence.
 - Browser checks used the local development server, not production or a store shell.
+- Golden PT-38 reload: the magazine ruler now measures the pilot rig and reports `pente some na tela` at 46% of an empty reload and 43% of a tactical reload. The baked `carregador/pistol` cell was not re-baked: with `VM_LAUNCH=true` a red cell needs the owner's exact acceptance or an animation fix.
+- Player-as-VIP works offline only. Online rosters come from the backend, which must also make a senador pick the VIP.
 - This is a local candidate, not a claim of release readiness or an 8/9 visual rating.

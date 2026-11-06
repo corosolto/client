@@ -6,9 +6,16 @@ const THREAT_RADIUS = 14;
 const ESCORT_SPEED = 1.8;
 const COVER_SPEED = 2.5;
 const RETURN_SPEED = 2.2;
-const RETURN_DELAY = 4;
+const RETURN_DELAY = 3;
 const BOARDING_TIME = 3;
-const THREAT_MEMORY = 1.25;
+const THREAT_MEMORY = 0.7;
+// Rush (playtest 06/11): com 2+ guardas colados Flávio segue andando sob fogo; só se
+// abriga exposto. Guardas avançam até 2 m à frente do slot para interceptar.
+const ESCOLTA_RUSH = 2;
+const GUARDA_AVANCO_MAX = 2;
+// Histerese do abrigo: atacante que entrou no raio de contestação segura Flávio exposto
+// enquanto seguir visto a até 10 m (2,5× CONTEST_RADIUS).
+const EXPOSTO_SAIDA = 10;
 const VIP_RADIUS = 0.46;
 const VIP_REPLAN_DELAY = 0.75;
 const GUARD_LEASH = 5.5;
@@ -32,7 +39,7 @@ const ARMAS_GUARDA = ['lmg', 'shotgun', 'ak', 'awp'];
 const ARMAS_FLANQUEADOR = ['mp5', 'carbine'];
 const GUARDA_SKILL_PISO = 1.25;
 const GUARDA_SKILL_VANTAGEM = 1.1;   // piso também fica acima da média inimiga
-const FLANQUEADOR_VANGUARDA = 2;     // checkpoints à frente do comboio
+const FLANQUEADOR_VANGUARDA = 3;     // checkpoints à frente do comboio (isca empurra o apron)
 const FLANQUEADOR_LATERAL = 3.4;
 const FLANQUEADOR_LEASH = 30;
 // Abrigo real (world.escortCoverPoints: {x,z,role,zone}): VIP busca cobertura de objeto
@@ -176,7 +183,8 @@ export function destinoProtecaoEscolta(bot, vip, defensores = [], ameacas = [], 
   const referencia = contato || (orient?.ameaca?.pos ? { ameaca: orient.ameaca } : null);
   const yaw = contato ? contato.yaw
     : referencia ? Math.atan2(referencia.ameaca.pos.x - vip.pos.x, referencia.ameaca.pos.z - vip.pos.z)
-    : Number.isFinite(vip.yaw) ? vip.yaw : 0;
+    // Jogador VIP guarda yaw de câmera (forward = (-sin,-cos)); a formação usa o do corpo.
+    : Number.isFinite(vip.yaw) ? (vip.isPlayer ? vip.yaw + Math.PI : vip.yaw) : 0;
   const rightX = Math.cos(yaw), rightZ = -Math.sin(yaw);
   const forwardX = Math.sin(yaw), forwardZ = Math.cos(yaw);
   const destino = out || {};
@@ -185,7 +193,7 @@ export function destinoProtecaoEscolta(bot, vip, defensores = [], ameacas = [], 
   if (contato) {
     const radial = Math.hypot(slot.right, slot.forward);
     const limite = Math.max(radial, Math.sqrt(contato.distancia) - 0.6);
-    const avanco = Math.min(1.2, Math.max(0, GUARD_PROTECT_RADIUS - radial), Math.max(0, limite - radial));
+    const avanco = Math.min(GUARDA_AVANCO_MAX, Math.max(0, GUARD_PROTECT_RADIUS - radial), Math.max(0, limite - radial));
     destino.x += forwardX * avanco;
     destino.z += forwardZ * avanco;
     const cobertura = coberturaGuarda(bot, vip, defensores, coberturas, destino, contato.ameaca);
@@ -242,6 +250,29 @@ export function destinoAtaqueEscolta(bot, vip, atacantes = [], caminho = [], che
   return destino;
 }
 
+// Variante da rota por rodada (world.escortPaths). Deriva só do roundNum, que já vem no
+// snapshot: servidor e clientes chegam no mesmo caminho sem campo novo no fio. Cada ciclo
+// de `total` rodadas usa todas as variantes embaralhadas; a 1ª rodada abre pelo meio e
+// rodadas seguidas nunca repetem a rota.
+function embaralharCiclo(ciclo, total) {
+  const ordem = Array.from({ length: total }, (_, i) => i);
+  let semente = Math.imul(ciclo, 0x9e3779b1) >>> 0;
+  for (let i = total - 1; ciclo > 0 && i > 0; i--) {
+    semente = (Math.imul(semente, 1664525) + 1013904223) >>> 0;
+    const j = semente % (i + 1);
+    [ordem[i], ordem[j]] = [ordem[j], ordem[i]];
+  }
+  return ordem;
+}
+export function varianteRotaEscolta(rodada, total) {
+  if (!Number.isInteger(total) || total < 2 || !Number.isInteger(rodada) || rodada < 1) return 0;
+  if (total === 2) return (rodada - 1) % 2;
+  const ciclo = Math.floor((rodada - 1) / total), ordem = embaralharCiclo(ciclo, total);
+  // A troca 0↔1 não mexe no fim do ciclo (total ≥ 3), então o anterior cru basta.
+  if (ciclo > 0 && ordem[0] === embaralharCiclo(ciclo - 1, total)[total - 1]) [ordem[0], ordem[1]] = [ordem[1], ordem[0]];
+  return ordem[(rodada - 1) % total];
+}
+
 export function criarEstadoEscolta(caminho) {
   if (!Array.isArray(caminho) || caminho.length < 2) throw new Error('Operação Flávio exige ao menos dois checkpoints');
   return {
@@ -255,6 +286,7 @@ export function criarEstadoEscolta(caminho) {
     inCover: true,
     unattendedFor: 0,
     boardedFor: 0,
+    exposto: false,
     winner: null,
   };
 }
@@ -293,7 +325,28 @@ export function passoEscolta(state, contexto, dt, { mutante = '', mover = null }
   const acompanhado = defensores.length > 0 && !state.contested;
   const ultimo = state.caminho.length - 1;
 
-  if (state.threatened) {
+  // Embarque com escolta não espera o pátio limpar: contestado ou sob fogo, Flávio sobe;
+  // só sozinho na escada ele perde o progresso.
+  if (state.checkpoint >= ultimo && defensores.length > 0) {
+    state.unattendedFor = 0;
+    const escada = state.caminho[ultimo];
+    const naEscada = moverAte(state, escada, ESCORT_SPEED * dt, mover)
+      || Math.hypot(state.position.x - escada.x, state.position.z - escada.z) < 0.75;
+    state.inCover = true;
+    state.boardedFor = naEscada ? state.boardedFor + dt : 0;
+    if (state.boardedFor >= BOARDING_TIME) state.winner = 'B';
+    return state;
+  }
+
+  // Exposto = ameaça vista com escolta curta ou atacante no raio de contestação; com
+  // ESCOLTA_RUSH guardas colados a ameaça não para o comboio (cai no avanço abaixo).
+  // Schmitt: sem a saída em EXPOSTO_SAIDA, Flávio largava o abrigo a 4,1 m do atacante,
+  // marchava de volta e era recontestado — vai-e-vem sem nunca abrigar (gate 06/11). A
+  // trava vale enquanto `threatened` (LOS + memória) durar: a LOS que pisca na quina de
+  // uma planta não solta o abrigo, mas ameaça esquecida solta.
+  const colado = ameacas.some((ent) => d2(ent.pos || ent, state.position) <= EXPOSTO_SAIDA * EXPOSTO_SAIDA);
+  state.exposto = state.threatened && (state.contested || defensores.length < ESCOLTA_RUSH || (state.exposto === true && colado));
+  if (state.exposto) {
     state.boardedFor = 0;
     state.unattendedFor = 0;
     // Abrigo REAL quando o mapa exporta cobertura: o ponto vem pronto do modo (com
@@ -306,8 +359,7 @@ export function passoEscolta(state, contexto, dt, { mutante = '', mover = null }
 
   if (state.checkpoint >= ultimo) {
     state.inCover = true;
-    state.boardedFor = acompanhado ? state.boardedFor + dt : 0;
-    if (state.boardedFor >= BOARDING_TIME) state.winner = 'B';
+    state.boardedFor = 0;
     return state;
   }
 
@@ -418,22 +470,73 @@ function sireneEmergencia(sfx) {
   } catch { return []; }
 }
 
+// Zero Um escolhido no time B é o próprio VIP (só offline: online o elenco é do servidor).
+export const jogadorEhVip = (lado, personagem, vipDef) => lado === 'B' && Boolean(vipDef?.id) && personagem === vipDef.id;
+
+// Elenco offline: o VIP entra uma única vez. Jogador VIP → nenhum bot senador; senão o
+// bot VIP abre o lado B (o modo pega o 1º bot B). Senador é só-B (podeNoLado).
+export function elencoOperacaoFlavio(roster, lado, personagem, vipDef) {
+  if (!vipDef?.id) return roster;
+  const campo = lado === 'B' ? 'allyDefs' : 'enemyDefs';
+  const semVip = roster[campo].filter((def) => def.id !== vipDef.id);
+  roster[campo] = jogadorEhVip(lado, personagem, vipDef) ? semVip : [vipDef, ...semVip];
+  return roster;
+}
+
+// VIP JOGADOR: quem anda é ele; o estado só segue a posição. Checkpoint avança ao pisar a
+// ≤VIP_JOGADOR_RAIO de um ponto à frente (rota lateral pula trecho) e nunca recua. Embarque
+// igual ao do bot: com escolta sobe mesmo contestado; sozinho, só com o pátio limpo (sem
+// aliados o modo seria invencível se exigisse escolta).
+const VIP_JOGADOR_RAIO = 3;
+export function passoEscoltaJogador(state, contexto, dt) {
+  if (state.winner || dt <= 0) return state;
+  if (!contexto.vipAlive) {
+    state.winner = 'E';
+    return state;
+  }
+  state.position.x = contexto.posicao.x;
+  state.position.z = contexto.posicao.z;
+  const defensores = vivosNoRaio(contexto.defensores || [], state.position, ESCORT_RADIUS);
+  const atacantes = vivosNoRaio(contexto.atacantes || [], state.position, CONTEST_RADIUS);
+  const ameacas = vivosNoRaio(contexto.atacantes || [], state.position, THREAT_RADIUS);
+  const visiveis = typeof contexto.temLinhaDeVisao === 'function'
+    ? ameacas.filter((ent) => contexto.temLinhaDeVisao(ent))
+    : ameacas;
+  state.threatLostFor = visiveis.length ? 0 : (state.threatLostFor || 0) + dt;
+  state.escortCount = defensores.length;
+  state.contested = atacantes.length > 0;
+  state.threatened = visiveis.length > 0 || (state.threatened && state.threatLostFor < THREAT_MEMORY);
+  state.unattendedFor = 0;
+  const ultimo = state.caminho.length - 1;
+  for (let i = ultimo; i > state.checkpoint; i--) {
+    if (d2(state.position, state.caminho[i]) <= VIP_JOGADOR_RAIO ** 2) { state.checkpoint = i; break; }
+  }
+  const naEscada = state.checkpoint >= ultimo && d2(state.position, state.caminho[ultimo]) <= VIP_JOGADOR_RAIO ** 2;
+  const livre = defensores.length > 0 || (!state.contested && !state.threatened);
+  state.boardedFor = naEscada && livre ? state.boardedFor + dt : 0;
+  if (state.boardedFor >= BOARDING_TIME) state.winner = 'B';
+  return state;
+}
+
 export class OperacaoFlavio {
   constructor(game, vipDef) {
     this.game = game;
-    this.vip = game.bots.find((bot) => bot.team === 'B') || null;
-    this.state = criarEstadoEscolta(game.world.escortPath);
+    const jogadorVip = !game.online && !game.dedicated && jogadorEhVip(game.player?.team, game.playerCharId, vipDef);
+    this.vip = jogadorVip ? game.player : game.bots.find((bot) => bot.team === 'B') || null;
+    this.state = this._novoEstadoDaRodada();
     this.fontes = [];
     this.cinematic = null;
     this.deathAnnounced = false;
     this.hud = null;
     if (this.vip) {
-      this.vip.weapon = VIP_WEAPON;
-      this.vip.primary = null;
-      this.vip.secondary = VIP_WEAPON;
-      this.vip._objectiveNpc = 'flavio';
-      game._trocarPersonagem(this.vip, vipDef, true);
-      this.vip.name = game.online || game.dedicated ? vipDef.name : '[VIP] ' + vipDef.name;
+      if (!jogadorVip) {
+        this.vip.weapon = VIP_WEAPON;
+        this.vip.primary = null;
+        this.vip.secondary = VIP_WEAPON;
+        this.vip._objectiveNpc = 'flavio';
+        game._trocarPersonagem(this.vip, vipDef, true);
+        this.vip.name = game.online || game.dedicated ? vipDef.name : '[VIP] ' + vipDef.name;
+      }
       this.restaurarEquipamentoVip();
       // Papéis da escolta (guardas diretos + flanqueadores) são determinísticos pela
       // ordem do roster: todos os nós computam o mesmo time sem tráfego extra.
@@ -457,6 +560,9 @@ export class OperacaoFlavio {
     if (!this.vip) return;
     this.vip.armor = 100;
     this.vip.helmet = true;
+    // Jogador VIP fica com arma/munição/viewmodel próprios (sem trava de pistola): o resto
+    // daqui é estado de IA de bot e a troca forçada desmontaria o viewmodel dele.
+    if (this.vip.isPlayer) return;
     this.vip.mag = VIP_MAG;
     this.vip.reloadUntil = 0;
     this.vip.nextShotAt = 0;
@@ -474,7 +580,7 @@ export class OperacaoFlavio {
   }
 
   travarArmaVip() {
-    if (!this.vip) return;
+    if (!this.vip || this.vip.isPlayer) return;
     this.vip.weapon = VIP_WEAPON;
     this.vip.primary = null;
     this.vip.secondary = VIP_WEAPON;
@@ -527,14 +633,54 @@ export class OperacaoFlavio {
     return visiveis.concat(memoria);
   }
 
+  // Rota da rodada (varianteRotaEscolta); mapa sem variantes fica no escortPath único.
+  _rotaDaRodada() {
+    const rotas = this.game.world.escortPaths;
+    return Array.isArray(rotas) && rotas.length > 1 ? varianteRotaEscolta(this.game.roundNum, rotas.length) : 0;
+  }
+
+  _novoEstadoDaRodada() {
+    this._rota = this._rotaDaRodada();
+    this._marcarRota();
+    return criarEstadoEscolta(this.game.world.escortPaths?.[this._rota] || this.game.world.escortPath);
+  }
+
+  // Cliente que entra no meio da partida nasceu com o roundNum 0: o snapshot entrega o
+  // roundNum antes do objetivo, então o caminho troca antes de aplicar o checkpoint.
+  _sincronizarRota() {
+    if (this._rotaDaRodada() === this._rota) return;
+    this._rota = this._rotaDaRodada();
+    this._marcarRota();
+    const caminho = this.game.world.escortPaths?.[this._rota] || this.game.world.escortPath;
+    this.state.caminho = caminho.map(({ x, z }) => ({ x, z }));
+  }
+
+  // Anéis do mapa (userData.rotas): só os checkpoints da rota da rodada ficam acesos.
+  _marcarRota() {
+    for (const anel of this.game.world.root?.children || []) {
+      if (anel.name === 'marca-checkpoint-escolta' && Array.isArray(anel.userData?.rotas)) anel.visible = anel.userData.rotas.includes(this._rota);
+    }
+  }
+
+  // Isca: rota de serviço fora da lane do VIP, na ordem da variante (world.escortDecoyRoutes,
+  // 1º flanqueador do lado oposto); a cada vida troca de lane para o ataque não ler o padrão.
+  _rotaFlanqueador(bot) {
+    const iscas = this.game.world.escortDecoyRoutes?.[this._rota] || [2, 0];
+    const rota = iscas[((bot._flavioIsca || 0) + (bot._flavioVidas || 0)) % iscas.length];
+    const pontos = this.game.world.escortServiceRoutes?.[rota];
+    const mediaX = Array.isArray(pontos) && pontos.length ? pontos.reduce((soma, p) => soma + p.x, 0) / pontos.length : rota === 0 ? -1 : 1;
+    bot._flavioRota = rota;
+    bot._flavioLado = mediaX < 0 ? -1 : 1;
+  }
+
   destinoFlanqueador(bot, destino) {
     const caminho = this.state.caminho, ultimo = caminho.length - 1;
-    // Vanguarda monotônica: acompanha dois checkpoints à frente e nunca recua sozinha.
+    // Vanguarda monotônica: FLANQUEADOR_VANGUARDA checkpoints à frente, nunca recua sozinha.
     const alvoZ = caminho[Math.min(this.state.checkpoint + FLANQUEADOR_VANGUARDA, ultimo)].z;
     if (!Number.isFinite(bot._flavioVanguarda) || alvoZ > bot._flavioVanguarda) bot._flavioVanguarda = alvoZ;
     const lado = bot._flavioLado || 1;
     const rotas = this.game.world.escortServiceRoutes;
-    const rota = Array.isArray(rotas) ? rotas[lado < 0 ? 0 : 2] : null;
+    const rota = Array.isArray(rotas) ? rotas[bot._flavioRota ?? (lado < 0 ? 0 : 2)] : null;
     const pontoRota = Array.isArray(rota) ? rota.find((p) => Number.isFinite(p?.z) && p.z >= bot._flavioVanguarda) : null;
     if (pontoRota) {
       destino.x = pontoRota.x; destino.z = pontoRota.z;
@@ -655,7 +801,7 @@ export class OperacaoFlavio {
     this._pararBoarding();
     this._encerrarFontes();
     this._restaurarAmbiente();
-    this.state = criarEstadoEscolta(this.game.world.escortPath);
+    this.state = this._novoEstadoDaRodada();
     const plano = this.game.world.objectivePlane;
     if (plano?.position) {
       this._planeOrigin ??= { x: plano.position.x, y: plano.position.y, z: plano.position.z };
@@ -682,6 +828,7 @@ export class OperacaoFlavio {
       this.vip.respawnAt = Infinity;
       this.vip.pos.set(this.state.position.x, this.game.world.groundHeightAt(this.state.position.x, this.state.position.z), this.state.position.z);
       this.vip._lp = { x: this.vip.pos.x, z: this.vip.pos.z };
+      if (this.vip.isPlayer) this._prepararJogadorVip();
       this.restaurarEquipamentoVip();
       this.vip.mesh?.ctrl?.revive?.();
       this.atribuirPapeis();
@@ -697,6 +844,20 @@ export class OperacaoFlavio {
     if (this.game.vmScene) this.game.vmScene.visible = true;
     if (this.hud) this.hud.hidden = false;
     this.atualizaHud();
+  }
+
+  // Jogador VIP nasce no início da rota olhando o próximo checkpoint. A morte dele fecha a
+  // rodada sem passar pelo _respawnPlayer, então a tela de morte é desfeita aqui.
+  _prepararJogadorVip() {
+    const p = this.vip, game = this.game, alvo = this.state.caminho[1];
+    p.vel?.set?.(0, 0, 0);
+    p.yaw = Math.atan2(alvo.x - p.pos.x, alvo.z - p.pos.z) + Math.PI;   // câmera: forward = (-sin,-cos)
+    p.pitch = 0;
+    if (!this.deathAnnounced && !game._tpDead) return;
+    game._tpRevive?.();
+    game.el?.respawn?.classList?.add('hidden');
+    if (game._deathPanel) game._deathPanel.innerHTML = '';
+    if (game.camera) game.camera.rotation.z = 0;
   }
 
   /* Onda de 8 s desde o epoch da rodada (docs/maps/operacao-decola.md §Respawn): morte na
@@ -721,7 +882,7 @@ export class OperacaoFlavio {
   }
 
   spawnCandidates(team) {
-    const game = this.game, path = game.world.escortPath;
+    const game = this.game, path = this.state.caminho;
     if (!this.vip || game.state !== 'live' || !Array.isArray(path) || !path.length) return null;
     const k = Math.max(0, Math.min(this.state.checkpoint, path.length - 1));
     const vipZ = this.vip.pos.z;
@@ -813,7 +974,9 @@ export class OperacaoFlavio {
       } else {
         bot._flavioPapel = 'flanqueador';
         bot._flavioArma = ARMAS_FLANQUEADOR[flanqueadores % ARMAS_FLANQUEADOR.length];
-        bot._flavioLado = flanqueadores % 2 === 0 ? 1 : -1;
+        bot._flavioIsca = flanqueadores;
+        bot._flavioVidas = 0;
+        this._rotaFlanqueador(bot);
         flanqueadores++;
       }
     });
@@ -867,6 +1030,7 @@ export class OperacaoFlavio {
       if (bot === this.vip || bot.team !== 'B' || !bot._flavioPapel || !bot.alive) return;
       if (bot.protUntil > this.game.time && bot._flavioKitVida !== bot.protUntil) {
         bot._flavioKitVida = bot.protUntil;
+        if (bot._flavioPapel === 'flanqueador') { bot._flavioVidas = (bot._flavioVidas || 0) + 1; this._rotaFlanqueador(bot); }
         this.equiparPapel(bot);
       } else if (bot._flavioSyncPendente) {
         bot._flavioSyncPendente = false;
@@ -917,7 +1081,9 @@ export class OperacaoFlavio {
     for (const { i: de } of saidas) for (const { i: para } of chegadas) {
       const path = world.findPath(de, para);
       if (!Array.isArray(path) || path.at(-1) !== para || path.some((i, n) => n > 0 && this._vipBanned?.has(i))) continue;
-      rota.points = path.slice(1).map((i) => ({ x: nodes[i].x, z: nodes[i].z, node: i }));
+      // O nó de saída fica na rota: abrigo fora do grafo (ex.: atrás da fachada, junto à
+      // porta) só alcança o nó seguinte passando por ele; o laço de avanço pula o que está colado.
+      rota.points = path.map((i) => ({ x: nodes[i].x, z: nodes[i].z, node: i }));
       rota.points.push({ x: destino.x, z: destino.z, node: -1 });
       return rota;
     }
@@ -975,7 +1141,8 @@ export class OperacaoFlavio {
     if (typeof this.game._losClear !== 'function') return true;
     if (typeof this.game._botEye !== 'function') return this.game._losClear(this.vip.pos, ent.pos);
     const olho = ent.isPlayer ? this.game.camera.position : this.game._botEye(ent);
-    return this.game._losClear(this.game._botEye(this.vip), olho);
+    const olhoVip = this.vip.isPlayer ? this.game.camera.position : this.game._botEye(this.vip);
+    return this.game._losClear(olhoVip, olho);
   }
 
   anunciarMorte() {
@@ -1044,12 +1211,23 @@ export class OperacaoFlavio {
     if (this._autoridadeEscolta()) {
       this._manterPapeis();
       this._vipFrameDt = dt;
+      const defensores = this.game.combatants.filter((ent) => ent !== this.vip && ent.team === 'B');
+      const atacantes = this.game.combatants.filter((ent) => ent.team === 'E');
+      const temLinhaDeVisao = (ent) => this._vipTemLos(ent);
+      // Jogador VIP: o estado segue a posição dele; o modo nunca o desloca.
+      if (this.vip.isPlayer) {
+        passoEscoltaJogador(this.state, { posicao: this.vip.pos, defensores, atacantes, vipAlive: this.vip.alive, temLinhaDeVisao }, dt);
+        if (this.vip.alive === false) this.anunciarMorte();
+        if (this.state.winner) this.game._endRound(this.state.winner);
+        this.atualizaHud();
+        return;
+      }
       const ameaca = this.ameacaMaisPerto();
       passoEscolta(this.state, {
-        defensores: this.game.combatants.filter((ent) => ent !== this.vip && ent.team === 'B'),
-        atacantes: this.game.combatants.filter((ent) => ent.team === 'E'),
+        defensores,
+        atacantes,
         vipAlive: this.vip.alive,
-        temLinhaDeVisao: (ent) => this._vipTemLos(ent),
+        temLinhaDeVisao,
         abrigo: this._atualizarAbrigo(ameaca, dt),
       }, dt, { mover: (origem, proposta, destino) => this.moverVip(origem, proposta, destino) });
       this.vip.pos.x = this.state.position.x;
@@ -1091,15 +1269,13 @@ export class OperacaoFlavio {
     }
     if (this.deathAnnounced) return;
     const total = this.state.caminho.length - 1;
-    const status = [];
-    if (this.state.contested) status.push('CONTESTADO');
-    if (this.state.threatened) status.push(this.state.inCover ? 'EM COBERTURA' : 'BUSCANDO COBERTURA');
-    if (!status.length) status.push(this.state.escortCount ? `${this.state.escortCount} ESCOLTANDO` : 'SEM ESCOLTA');
-    this.hud.textContent = `OPERAÇÃO FLÁVIO · ${this.state.checkpoint}/${total} · ${status.join(' · ')} · ${Math.max(0, Math.ceil(this.game.timeLeft))}s`;
+    // O HUD é lido pelos dois times: só progresso e relógio. Contagem de escolta,
+    // contestação e cobertura entregavam a tática de Flávio ao ataque (playtest 06/11).
+    this.hud.textContent = `OPERAÇÃO FLÁVIO · ${this.state.checkpoint}/${total} · ${Math.max(0, Math.ceil(this.game.timeLeft))}s`;
   }
 
   roundIntro() {
-    return 'ESCOLTE FLÁVIO ATÉ O AVIÃO · 6 MINUTOS';
+    return this.vip?.isPlayer ? 'VOCÊ É FLÁVIO · CHEGUE AO AVIÃO · 6 MINUTOS' : 'ESCOLTE FLÁVIO ATÉ O AVIÃO · 6 MINUTOS';
   }
 
   roundResult(winner) {
@@ -1164,6 +1340,7 @@ export class OperacaoFlavio {
 
   applyNetState(net) {
     if (!this._clienteEscolta()) return;
+    this._sincronizarRota();
     aplicarSnapshotEscolta(this.state, net);
   }
 

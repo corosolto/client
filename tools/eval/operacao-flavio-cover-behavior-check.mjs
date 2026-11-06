@@ -260,7 +260,7 @@ check('sem escolta, VIP espera atrás de cobertura em vez de exposto', () => wit
   game._losClear = () => true;
   const abrigoInicial = maisPerto(vip.pos, coberturas);
   const inicial = Math.hypot(abrigoInicial.x - vip.pos.x, abrigoInicial.z - vip.pos.z);
-  for (let frame = 0; frame < 180; frame++) game.objective.update(1 / 60);   // 3 s < RETURN_DELAY
+  for (let frame = 0; frame < 150; frame++) game.objective.update(1 / 60);   // 2,5 s < RETURN_DELAY (3 s)
   const pos = game.objective.state.position;
   const abrigo = maisPerto(pos, coberturas);
   game.objective.updateBot(vip, 1 / 60);   // postura vem do updateBot (canal do corpo)

@@ -27,6 +27,24 @@ export const PROP_FILES = {
   containers_carga: 'containers_carga.glb',
   jardineira: 'jardineira.glb',
 };
+// Medidas reais [x, y, z] no eixo nativo de cada GLB (x antes do yaw), em metros, contra
+// o personagem de 1,72 m. Escala escalar pelo maior eixo deixava o carro com 3,5 m de
+// altura e o collider deitado no eixo errado; o mesmo array dimensiona render e proxy.
+const MEDIDA_REAL = {
+  carro_servico: [1.6, 1.95, 3.2],          // utilitário de pátio: cabine 1,75 m + giroflex
+  trator_bagagem: [2.8, 1.55, 1.5],         // trator de bagagem: volante ~1,5 m
+  energia_solo: [1.2, 1.4, 2.6],            // GPU rebocável: só cobre agachado
+  scanner_bagagem: [2.2, 1.6, 2.8],         // raio-X com esteiras de entrada/saída
+  estacao_manutencao: [3, 1.8, 1.15],       // bancada + armário de 1,8 m
+  containers_carga: [3.3, 3.27, 2.6],       // dois ULD LD3 (1,63 m) + um empilhado
+  carrinho_ferramentas: [1.05, 1.25, 0.74], // gaveteiro de ferramentas com alça
+  torre_iluminacao: [3.9, 4.5, 2.4],        // reboque de luz com mastro meio recolhido
+  jardineira: [2.5, 1.8, 1.4],              // folhagem a 1,8 m: o que esconde o VIP é visível
+  balcao_recepcao: [3.5, 1.25, 2.2],        // módulo de check-in; tampo ~1,15 m (era 3,2 m)
+  escada_embarque: [1.68, 3.2, 4],          // escada de 1,68 m de largura, corrimão a 3,2 m
+  barreiras_aeroporto: [4.5, 1.4, 1.2],     // muro New Jersey procedural (2 módulos)
+};
+const real = (id, x, z, yaw, solid = true) => [id, x, z, MEDIDA_REAL[id], yaw, ...MEDIDA_REAL[id], solid];
 const templates = new Map();
 let preloadPromise = null;
 // Registro confiável interno por id: o servidor headless injeta os 17 GLB antes da sala existir.
@@ -38,6 +56,26 @@ const ESCORT_PATH = [
   { x: -4, z: 0 }, { x: 2, z: 15 }, { x: 2, z: 31 }, { x: 5, z: 42 },
   { x: 7.2, z: 49.2 },
 ];
+// Variantes da rota do VIP (playtest 06/11: "não só o meio"). Saem pelas portas norte
+// laterais (x=±17), cruzam o pátio pelas vielas internas (x≈±14) e entram no hangar pelos
+// bolsões laterais; todas terminam na mesma escada. O modo sorteia uma por rodada.
+const ESCORT_PATH_OESTE = [
+  { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
+  { x: -12, z: -26 }, { x: -17, z: -16 }, { x: -14.2, z: -12 }, { x: -14.2, z: 8 },
+  { x: -13.5, z: 11 }, { x: -13.5, z: 19 }, { x: -15.5, z: 25 }, { x: -15.5, z: 45.6 },
+  { x: -7, z: 45.9 }, { x: 7.2, z: 49.2 },
+];
+const ESCORT_PATH_LESTE = [
+  { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
+  { x: -9, z: -31 }, { x: 0, z: -27 }, { x: 11, z: -29 }, { x: 17, z: -16 },
+  { x: 14.5, z: -12 }, { x: 14.5, z: 7 }, { x: 13, z: 9 }, { x: 11.8, z: 18 },
+  { x: 14.5, z: 22 }, { x: 14.5, z: 32 }, { x: 18, z: 32 }, { x: 18, z: 44 },
+  { x: 12.5, z: 48.5 }, { x: 7.2, z: 49.2 },
+];
+const ESCORT_PATHS = [ESCORT_PATH, ESCORT_PATH_OESTE, ESCORT_PATH_LESTE];
+// Iscas por variante (índices de serviceRoutes: 0 externa O, 2 externa L, 3 interna O,
+// 4 interna L): o 1º flanqueador vai pelo lado oposto ao VIP, o 2º cobre o flanco dele.
+const ESCORT_DECOY_ROUTES = [[3, 4, 0, 2], [2, 0, 4], [0, 2, 3]];
 
 function texturaProcedural(base, detalhe, tipo = 'placas') {
   const c = document.createElement('canvas'); c.width = c.height = 256;
@@ -556,9 +594,9 @@ export function buildOperacaoFlavio(scene, T = {}) {
     root.add(model); return model;
   };
   const objectivePlane = usarProp('aviao_executivo', [0, 0.08, 55], 18, [18, 5, 8], Math.PI);
-  usarProp('escada_embarque', [-3.2, 0.08, 52.5], 4, [3, 2.4, 4], Math.PI / 2);
-  usarProp('trator_bagagem', [-20, 0.08, 50], 4.2, [4.2, 2, 2.4], Math.PI / 2);
-  usarProp('carrinho_ferramentas', [27, 0.08, 38], 2.2, [2.2, 1.4, 1.2], Math.PI / 2);
+  usarProp('escada_embarque', [-3.2, 0.08, 52.5], MEDIDA_REAL.escada_embarque, MEDIDA_REAL.escada_embarque, Math.PI / 2);
+  usarProp('trator_bagagem', [-20, 0.08, 50], MEDIDA_REAL.trator_bagagem, MEDIDA_REAL.trator_bagagem, Math.PI / 2);
+  usarProp('carrinho_ferramentas', [27, 0.08, 38], MEDIDA_REAL.carrinho_ferramentas, MEDIDA_REAL.carrinho_ferramentas, Math.PI / 2);
   usarProp('arco_seguranca', [0, 0.08, -13], 3, [3, 3, 0.8], 0, false);
   const colliderDoProp = (id, x, y, z, w, h, d, yaw = 0) => {
     // AABB envolvente do retângulo rotacionado: física idêntica com ou sem GLB.
@@ -568,107 +606,166 @@ export function buildOperacaoFlavio(scene, T = {}) {
   };
   colliderDoProp('aviao_executivo_fuselagem', 0, 0, 55, 3.4, 4.6, 12, Math.PI);
   colliderDoProp('aviao_executivo_asas', 0, 0.8, 55.4, 16, 1.4, 3.2, Math.PI);
-  colliderDoProp('escada_embarque', -3.2, 0, 52.5, 3, 2.4, 4, Math.PI / 2);
-  colliderDoProp('trator_bagagem', -20, 0, 50, 4.2, 2, 2.4, Math.PI / 2);
-  colliderDoProp('carrinho_ferramentas', 27, 0, 38, 2.2, 1.4, 1.2, Math.PI / 2);
+  colliderDoProp('escada_embarque', -3.2, 0, 52.5, ...MEDIDA_REAL.escada_embarque, Math.PI / 2);
+  colliderDoProp('trator_bagagem', -20, 0, 50, ...MEDIDA_REAL.trator_bagagem, Math.PI / 2);
+  colliderDoProp('carrinho_ferramentas', 27, 0, 38, ...MEDIDA_REAL.carrinho_ferramentas, Math.PI / 2);
   for (const x of [-1.28, 1.28]) colliders.push({
     minX: x - 0.24, maxX: x + 0.24, minY: 0, maxY: 3,
     minZ: -13.45, maxZ: -12.55,
   });
 
   // Marcação semântica: anel âmbar emissivo por checkpoint da escolta — distinto das
-  // faixas amarelas de pintura e do anel branco do estacionamento. Render-only.
+  // faixas amarelas de pintura e do anel branco do estacionamento. Render-only. Um anel por
+  // ponto distinto das variantes; userData.rotas diz a quais pertence e o modo acende só
+  // os da rota da rodada (nasce com a do meio).
   const anelCheckpoint = new THREE.MeshBasicMaterial({ color: 0xffc76a, toneMapped: false, transparent: true, opacity: 0.92 });
-  for (let i = 0; i < ESCORT_PATH.length; i++) {
-    const anel = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.85, 28), anelCheckpoint);
-    anel.name = 'marca-checkpoint-escolta';
-    anel.rotation.x = -Math.PI / 2; anel.position.set(ESCORT_PATH[i].x, Y_MARCACAO, ESCORT_PATH[i].z);
-    root.add(anel);
-  }
+  const aneis = new Map();
+  ESCORT_PATHS.forEach((caminho, rota) => {
+    for (const ponto of caminho) {
+      const chave = `${ponto.x},${ponto.z}`;
+      let anel = aneis.get(chave);
+      if (!anel) {
+        anel = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.85, 28), anelCheckpoint);
+        anel.name = 'marca-checkpoint-escolta';
+        anel.rotation.x = -Math.PI / 2; anel.position.set(ponto.x, Y_MARCACAO, ponto.z);
+        anel.userData.rotas = [];
+        aneis.set(chave, anel);
+        root.add(anel);
+      }
+      if (!anel.userData.rotas.includes(rota)) anel.userData.rotas.push(rota);
+      anel.visible = anel.userData.rotas.includes(0);
+    }
+  });
   const equipamentos = [
     ['terminal_fachada', -18, -15.82, 16, 0, 16, 5, 1, false],
     ['terminal_fachada', 18, -15.82, 16, 0, 16, 5, 1, false],
     ['terminal_portal', 0, -52.15, 6, Math.PI, 5, 4, 2, false],
-    ['balcao_recepcao', -6.4, -19, 7.2, 0, 7, 1.4, 2.2, true],
-    ['balcao_recepcao', 6.4, -19, 7.2, 0, 7, 1.4, 2.2, true],
+    // Fileiras de dois módulos de check-in reais ocupam a pegada do antigo balcão gigante
+    // de 7 m (a formação da marcha foi afinada nela). Balcão de 1,25 m não esconde ninguém
+    // em pé: plantas de 1,8 m logo atrás das fileiras escondem os slots (±6;-22,3) da porta
+    // norte central, sem estreitar o corredor da escolta.
+    real('balcao_recepcao', -8.15, -19, 0),
+    real('balcao_recepcao', -4.65, -19, 0),
+    real('balcao_recepcao', 4.65, -19, 0),
+    real('balcao_recepcao', 8.15, -19, 0),
+    real('jardineira', -5.3, -20.9, 0),
+    real('jardineira', 5.3, -20.9, 0),
     ['assentos_aeroporto', -20, -34, [2.6, 1.05, 0.9], Math.PI / 2, 2.6, 1.05, 0.9, true],
     ['assentos_aeroporto', 20, -34, [2.6, 1.05, 0.9], -Math.PI / 2, 2.6, 1.05, 0.9, true],
     ['assentos_aeroporto', -24, -43, [2.6, 1.05, 0.9], 0, 2.6, 1.05, 0.9, true],
     ['assentos_aeroporto', 13, -43, [2.6, 1.05, 0.9], Math.PI, 2.6, 1.05, 0.9, true],
-    ['jardineira', -5, -25, 2.5, 0, 2.5, 1.8, 1.4, true],
-    ['jardineira', 5, -25, 2.5, Math.PI, 2.5, 1.8, 1.4, true],
-    ['jardineira', -20, -38, 2.5, Math.PI / 2, 2.5, 1.8, 1.4, true],
-    ['jardineira', 18, -28, 2.5, -Math.PI / 2, 2.5, 1.8, 1.4, true],
-    ['scanner_bagagem', -7, -10.5, 4.5, 0, 4.3, 2.2, 2.8, true],
-    ['scanner_bagagem', 7, -10.5, 4.5, Math.PI, 4.3, 2.2, 2.8, true],
-    ['barreiras_aeroporto', -10, 4, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
-    ['barreiras_aeroporto', 10, 10, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
-    ['barreiras_aeroporto', 7, 16, 5, 0, 4.5, 1.4, 1.2, true],
-    ['barreiras_aeroporto', 8, 31, 5, 0, 4.5, 1.4, 1.2, true],
-    ['carro_servico', -16, 15, 5, Math.PI / 2, 5, 2.4, 2.4, true],
-    ['carro_servico', -18, 38, 5, Math.PI / 2, 5, 2.4, 2.4, true],
-    ['energia_solo', 15, 14, 4, -Math.PI / 2, 4, 2, 2, true],
-    ['energia_solo', 16, 35, 4, -Math.PI / 2, 4, 2, 2, true],
-    ['estacao_manutencao', -26, 29, 5, Math.PI / 2, 5, 2.4, 2.4, true],
-    ['estacao_manutencao', 26, 40, 5, -Math.PI / 2, 5, 2.4, 2.4, true],
-    ['estacao_manutencao', -20, 46, 5, Math.PI / 2, 5, 2.4, 2.4, true],
-    ['containers_carga', -13, 29, 5, Math.PI / 2, 5, 2.6, 2.5, true],
-    ['containers_carga', 14, 41, 5, -Math.PI / 2, 5, 2.6, 2.5, true],
-    ['containers_carga', -13, 42, 5, Math.PI / 2, 5, 2.6, 2.5, true],
-    ['containers_carga', 18, 28, 5, -Math.PI / 2, 5, 2.6, 2.5, true],
-    ['carrinho_ferramentas', -9, 37, 2.2, 0, 2.2, 1.4, 1.2, true],
-    ['carrinho_ferramentas', 21, 46, 2.2, Math.PI, 2.2, 1.4, 1.2, true],
-    ['jardineira', 21, -46, 2.5, 0, 2.5, 1.8, 1.4, true],
-    ['energia_solo', 24, 18, 4, Math.PI / 2, 4, 2, 2, true],
-    ['containers_carga', -28, 39, 5, Math.PI / 2, 5, 2.6, 2.5, true],
-    ['barreiras_aeroporto', -8, 49, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
-    ['torre_iluminacao', -31, 49, 8, 0, 2.2, 8, 2.2, true],
-    ['torre_iluminacao', 31, 49, 8, Math.PI, 2.2, 8, 2.2, true],
+    real('jardineira', -5, -25, 0),
+    real('jardineira', 5, -25, Math.PI),
+    real('jardineira', -20, -38, Math.PI / 2),
+    real('jardineira', 18, -28, -Math.PI / 2),
+    real('scanner_bagagem', -7, -10.5, 0),
+    real('scanner_bagagem', 7, -10.5, Math.PI),
+    real('barreiras_aeroporto', -10, 4, Math.PI / 2),
+    real('barreiras_aeroporto', 10, 10, Math.PI / 2),
+    real('barreiras_aeroporto', 7, 16, 0),
+    real('barreiras_aeroporto', 8, 31, 0),
+    real('carro_servico', -16, 15, Math.PI / 2),
+    real('carro_servico', -18, 38, Math.PI / 2),
+    real('energia_solo', 15, 14, -Math.PI / 2),
+    real('energia_solo', 16, 35, -Math.PI / 2),
+    real('estacao_manutencao', -26, 29, Math.PI / 2),
+    real('estacao_manutencao', 26, 40, -Math.PI / 2),
+    real('estacao_manutencao', -20, 46, Math.PI / 2),
+    real('containers_carga', -13, 29, Math.PI / 2),
+    real('containers_carga', 14, 41, -Math.PI / 2),
+    real('containers_carga', -13, 42, Math.PI / 2),
+    real('containers_carga', 18, 28, -Math.PI / 2),
+    real('carrinho_ferramentas', -9, 37, 0),
+    // Trator real (1,55 m) no lugar do gaveteiro: o carrinho de 1,25 m deixou a lane E leste
+    // sem cobertura ≥1,4 m e desequilibrou o apron.
+    real('trator_bagagem', 21, 46, Math.PI),
+    real('jardineira', 21, -46, 0),
+    real('energia_solo', 24, 18, Math.PI / 2),
+    real('containers_carga', -28, 39, Math.PI / 2),
+    real('barreiras_aeroporto', -8, 49, Math.PI / 2),
+    real('torre_iluminacao', -31, 49, 0),
+    real('torre_iluminacao', 31, 49, Math.PI),
     // Barreira oeste recuada para (−27,53): protege a lane do spawn E e mantém o corredor
     // norte do apron navegável (o grafo perdeu um beco quando ela ficava mais a leste).
-    ['barreiras_aeroporto', 23, 53, 5, 0, 4.5, 1.4, 1.2, true],
-    ['barreiras_aeroporto', 11, 45, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
+    real('barreiras_aeroporto', 23, 53, 0),
+    real('barreiras_aeroporto', 11, 45, Math.PI / 2),
     // Embarque: balcão central quebra a canyon da porta norte; plantas altas (1,8 m)
     // escondem o VIP de 1,72 m e quebram as lanes norte e laterais do terminal.
-    ['balcao_recepcao', 0, -32, 7.2, Math.PI / 2, 7, 1.4, 2.2, true],
-    ['jardineira', -7.2, -38.6, 2.5, 0, 2.5, 1.8, 1.4, true],
+    real('balcao_recepcao', 0, -30.25, Math.PI / 2),
+    real('balcao_recepcao', 0, -33.75, Math.PI / 2),
+    // Planta no pé da fileira central: mantém o slot (0;-37,8) fora da visada da porta.
+    real('jardineira', 0, -36.2, 0),
+    real('jardineira', -7.2, -38.6, 0),
     ['assentos_aeroporto', -7.2, -35.8, [2.6, 1.05, 0.9], 0, 2.6, 1.05, 0.9, true],
-    ['jardineira', 8.2, -38.6, 2.5, 0, 2.5, 1.8, 1.4, true],
+    real('jardineira', 8.2, -38.6, 0),
     ['assentos_aeroporto', 8.2, -35.8, [2.6, 1.05, 0.9], 0, 2.6, 1.05, 0.9, true],
     // Cerca viva oeste: duas jardineiras cobrem CP2/CP3 da porta lateral sul.
-    ['jardineira', -22.5, -41.3, 2.5, 0, 2.5, 1.8, 1.4, true],
-    ['jardineira', -22.5, -39.8, 2.5, 0, 2.5, 1.8, 1.4, true],
-    ['jardineira', 17.5, -43, 2.5, Math.PI / 2, 2.5, 1.8, 1.4, true],
+    real('jardineira', -22.5, -41.3, 0),
+    real('jardineira', -22.5, -39.8, 0),
+    real('jardineira', 17.5, -43, Math.PI / 2),
     ['assentos_aeroporto', 9, -25.5, [2.6, 1.05, 0.9], Math.PI / 2, 2.6, 1.05, 0.9, true],
     ['assentos_aeroporto', -9, -25.5, [2.6, 1.05, 0.9], Math.PI / 2, 2.6, 1.05, 0.9, true],
-    ['balcao_recepcao', 15, -39, 7.2, 0, 7, 1.4, 2.2, true],
-    ['jardineira', -28, -45.5, 2.5, Math.PI / 2, 2.5, 1.8, 1.4, true],
-    ['jardineira', 24, -44.5, 2.5, 0, 2.5, 1.8, 1.4, true],
-    // Apron: GPU e bay de containers fecham as lanes dos spawns E sem tocar a escada.
-    ['energia_solo', -1, 44.6, 4, 0, 4, 2, 2, true],
-    ['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, true],
-    ['containers_carga', -12, 53.6, 5, 0, 5, 2.6, 2.5, true],
-    ['containers_carga', 16.5, 52, 5, 0, 5, 2.6, 2.5, true],
-    ['energia_solo', 24, 50, 4, Math.PI / 2, 4, 2, 2, true],
+    real('balcao_recepcao', 13.25, -39, 0),
+    real('balcao_recepcao', 16.75, -39, 0),
+    // Planta na quina norte do balcão leste: corta a visada da porta (17;-16) ao slot (13;-41).
+    real('jardineira', 13.6, -36.9, 0),
+    real('jardineira', -28, -45.5, Math.PI / 2),
+    real('jardineira', 24, -44.5, 0),
+    // Apron: GPU real (1,4 m) só cobre agachado; quem esconde o VIP em pé perto da
+    // escada é a pilha de ULD (3,27 m) no lugar do antigo GPU gigante. Bay de containers
+    // fecha as lanes dos spawns E sem tocar a escada.
+    real('containers_carga', -1, 44.6, 0),
+    real('containers_carga', -12, 51.4, 0),
+    real('containers_carga', -12, 53.6, 0),
+    // x=17,4: com 3,3 m de largura real a pilha volta a fechar o nó (19,5;53,5), que viraria beco.
+    real('containers_carga', 17.4, 52, 0),
+    real('energia_solo', 24, 50, Math.PI / 2),
     // Ilhas escalonadas (gauntlet): cadeia de cobertura real a cada ~8-12 m no pátio,
     // na boca do hangar e no apron; nada disso toca a escolta nem os relés das cinco rotas.
-    ['barreiras_aeroporto', 5, -4, 5, 0, 4.5, 1.4, 1.2, true],
-    ['barreiras_aeroporto', -6.2, 4, 5, 0, 4.5, 1.4, 1.2, true],
-    ['carro_servico', 18, 10, 5, 0, 5, 2.4, 2.4, true],
-    ['trator_bagagem', -19, 9, 4.2, 0, 4.2, 2, 2.4, true],
-    ['barreiras_aeroporto', -11, 24, 5, 0, 4.5, 1.4, 1.2, true],
-    ['barreiras_aeroporto', 11, 24, 5, 0, 4.5, 1.4, 1.2, true],
-    ['carrinho_ferramentas', -1.5, 26, 2.2, Math.PI / 2, 2.2, 1.4, 1.2, true],
-    ['carrinho_ferramentas', 8.6, 47, 2.2, Math.PI / 2, 2.2, 1.4, 1.2, true],
-    ['barreiras_aeroporto', -24, 47, 5, Math.PI / 2, 4.5, 1.4, 1.2, true],
-    ['carro_servico', -8, 54.5, 5, Math.PI / 2, 5, 2.4, 2.4, true],
-    ['barreiras_aeroporto', 25.5, 55, 5, 0, 4.5, 1.4, 1.2, true],
-    ['jardineira', -18, -34.8, 2.5, Math.PI / 2, 2.5, 1.8, 1.4, true],
+    real('barreiras_aeroporto', 5, -4, 0),
+    real('barreiras_aeroporto', -6.2, 4, 0),
+    real('carro_servico', 18, 10, 0),
+    real('trator_bagagem', -19, 9, 0),
+    real('barreiras_aeroporto', -11, 24, 0),
+    real('barreiras_aeroporto', 11, 24, 0),
+    // GPU real (2,6 m) mantém a pegada do antigo gaveteiro gigante; o de 1,05 m deixava o
+    // slot (-1,5;28,4) longe de cobertura.
+    real('energia_solo', -1.5, 26, 0),
+    real('energia_solo', 8.6, 47, 0),   // GPU ao lado do avião: cobertura agachada no CP final
+    real('barreiras_aeroporto', -24, 47, Math.PI / 2),
+    real('carro_servico', -8, 54.5, Math.PI / 2),
+    real('barreiras_aeroporto', 25.5, 55, 0),
+    real('jardineira', -18, -34.8, Math.PI / 2),
   ];
+  // Muro New Jersey em dois módulos de 2,24 m: o kit GLB de barreiras é um cercado de
+  // 5 × 4,3 m com cones e grades que não cabe numa pegada de muro; aqui o volume visível é
+  // exatamente o collider. O kit continua como cenário fora dos limites jogáveis (z > 57).
+  const perfilJersey = new THREE.Shape();
+  [[-0.6, 0], [0.6, 0], [0.6, 0.12], [0.32, 0.38], [0.16, 1.4], [-0.16, 1.4], [-0.32, 0.38], [-0.6, 0.12]]
+    .forEach(([px, py], i) => (i ? perfilJersey.lineTo(px, py) : perfilJersey.moveTo(px, py)));
+  const moduloJersey = new THREE.ExtrudeGeometry(perfilJersey, { depth: 2.24, bevelEnabled: false })
+    .translate(0, 0, -1.12).rotateY(Math.PI / 2);
+  const faixaJersey = new THREE.BoxGeometry(2.1, 0.12, 0.45);
+  const muroJersey = (x, z, yaw, solid) => {
+    const muro = new THREE.Group();
+    muro.name = 'barreira-jersey'; muro.position.set(x, 0.08, z); muro.rotation.y = yaw;
+    for (const lado of [-1.13, 1.13]) {
+      const modulo = new THREE.Mesh(moduloJersey, mats.concreto);
+      const faixa = new THREE.Mesh(faixaJersey, mats.amarelo);
+      modulo.position.x = faixa.position.x = lado; faixa.position.y = 1.05;
+      for (const peca of [modulo, faixa]) {
+        peca.castShadow = solid || !lowProfile; peca.receiveShadow = true; muro.add(peca);
+        if (solid) occluders.push(peca);
+      }
+    }
+    root.add(muro);
+  };
   for (const [id, x, z, size, yaw, w, h, d, solid] of equipamentos) {
-    usarProp(id, [x, 0.08, z], size, [w, h, d], yaw, solid);
+    if (id === 'barreiras_aeroporto') muroJersey(x, z, yaw, solid);
+    else usarProp(id, [x, 0.08, z], size, [w, h, d], yaw, solid);
     if (solid) colliderDoProp(id, x, 0, z, w, h, d, yaw);
   }
+  for (const [x, yaw] of [[-30, 0.2], [30, -0.2]]) usarProp('barreiras_aeroporto', [x, 0.08, 59.6], 5, [5, 1.83, 4.28], yaw, false);
 
   const sun = new THREE.DirectionalLight(0xffd2a1, 2.05);
   sun.position.set(-44, 68, -28); sun.castShadow = true; aplicaSombraSol(sun); root.add(sun);
@@ -746,6 +843,9 @@ export function buildOperacaoFlavio(scene, T = {}) {
     }
   };
   addRoute(ESCORT_PATH);
+  // Variantes: só os checkpoints viram nó (trechos retos já são livres para o VIP); a
+  // subdivisão adensava o grafo do pátio e fazia a formação da marcha central chiar.
+  for (const caminho of ESCORT_PATHS.slice(1)) for (const ponto of caminho) addNode(ponto.x, ponto.z);
   for (const route of serviceRoutes) addRoute(route);
 
   // Só vizinhos de células adjacentes podem estar dentro do raio; não há varredura N².
@@ -807,16 +907,17 @@ export function buildOperacaoFlavio(scene, T = {}) {
   };
 
   const escortPath = ESCORT_PATH.map((p) => ({ ...p }));
+  const escortPaths = ESCORT_PATHS.map((caminho) => caminho.map((p) => ({ ...p })));
   // Slots de cobertura por zona com papel declarado: 6 defensores (4 diretos + 2 roamers),
   // pontos a ≤1,6 m de colisor alto, nunca colados em checkpoint e ligados ao grafo.
   const escortCoverPoints = [
     { x: -7.2, z: -40.0, role: 'guard', zone: 'embarque' },
     { x: 8.2, z: -40.0, role: 'guard', zone: 'embarque' },
-    { x: 0, z: -36.3, role: 'guard', zone: 'embarque' },
+    { x: 0, z: -37.8, role: 'guard', zone: 'embarque' },   // atrás da planta (0;-36,2)
     { x: -20.5, z: -40.5, role: 'guard', zone: 'embarque' },
     { x: 13, z: -41, role: 'guard', zone: 'embarque' },
-    { x: -6, z: -21.4, role: 'guard', zone: 'embarque' },
-    { x: 6, z: -21.4, role: 'guard', zone: 'embarque' },
+    { x: -6, z: -22.3, role: 'guard', zone: 'embarque' },  // atrás das plantas (±5,3;-20,9)
+    { x: 6, z: -22.3, role: 'guard', zone: 'embarque' },
     { x: -26.4, z: -47.1, role: 'roamer', zone: 'embarque' },
     { x: 24.6, z: -46.6, role: 'roamer', zone: 'embarque' },
     { x: -20, z: -40.3, role: 'guard', zone: 'embarque' },
@@ -825,8 +926,10 @@ export function buildOperacaoFlavio(scene, T = {}) {
     { x: -2.5, z: -33.5, role: 'guard', zone: 'embarque' },
     { x: -5, z: -26.9, role: 'guard', zone: 'embarque' },
     { x: 5, z: -26.5, role: 'guard', zone: 'embarque' },
-    { x: 7, z: -8.4, role: 'guard', zone: 'servico' },
-    { x: -7, z: -8.4, role: 'guard', zone: 'servico' },
+    // Scanner real (2,2 m de largura) liberou os nós (±5/9;-9,5) colados nas quinas: os slots
+    // sobem para z=-7,7 (1,4 m da esteira, ainda a <8 m do CP7) e ligam ao grafo por (±5,5/-5;-6).
+    { x: 6.6, z: -7.7, role: 'guard', zone: 'servico' },
+    { x: -6.6, z: -7.7, role: 'guard', zone: 'servico' },
     { x: 2.2, z: -2.6, role: 'guard', zone: 'servico' },
     { x: 6.2, z: -2.6, role: 'guard', zone: 'servico' },
     { x: -5, z: 2.4, role: 'guard', zone: 'servico' },
@@ -848,11 +951,31 @@ export function buildOperacaoFlavio(scene, T = {}) {
     { x: -1, z: 46.9, role: 'guard', zone: 'apron' },
     { x: -6.6, z: 49, role: 'guard', zone: 'apron' },
     { x: -3.2, z: 49.9, role: 'guard', zone: 'apron' },
-    { x: 12.6, z: 50.4, role: 'guard', zone: 'apron' },
+    // Encostado na quina SO da pilha de ULD real (x=17,4): a 12,6 ficava a 3 m da cobertura.
+    { x: 14.4, z: 50.2, role: 'guard', zone: 'apron' },
     { x: 8.6, z: 45, role: 'guard', zone: 'apron' },
     { x: 10.8, z: 48.3, role: 'roamer', zone: 'apron' },
-    { x: -20.5, z: 53.2, role: 'roamer', zone: 'apron' },
+    { x: -20.5, z: 52.6, role: 'roamer', zone: 'apron' },   // colado no trator real (2,8 m)
     { x: -24, z: 43.9, role: 'roamer', zone: 'apron' },
+    // Variante oeste: portas internas do terminal, boca da viela, hangar oeste e apron.
+    { x: -20, z: -17.4, role: 'guard', zone: 'embarque' },
+    { x: -14.5, z: -17.4, role: 'guard', zone: 'embarque' },
+    { x: -10.5, z: -18.7, role: 'guard', zone: 'embarque' },
+    { x: -11, z: 22.4, role: 'guard', zone: 'servico' },
+    { x: -19.5, z: 20.6, role: 'guard', zone: 'servico' },
+    { x: -15.4, z: 42, role: 'guard', zone: 'hangar' },
+    { x: -9.6, z: 47.6, role: 'guard', zone: 'apron' },
+    // Variante leste: espelho no terminal e corredor leste do hangar até a escada.
+    { x: 20, z: -17.4, role: 'guard', zone: 'embarque' },
+    { x: 14.5, z: -17.4, role: 'guard', zone: 'embarque' },
+    { x: 10.5, z: -18.7, role: 'guard', zone: 'embarque' },
+    { x: 16.3, z: -28, role: 'guard', zone: 'embarque' },
+    { x: 11, z: 22.4, role: 'guard', zone: 'servico' },
+    { x: 19.5, z: 20.6, role: 'guard', zone: 'servico' },
+    { x: 11.2, z: 31, role: 'guard', zone: 'hangar' },
+    { x: 15.6, z: 28, role: 'guard', zone: 'hangar' },
+    { x: 16.4, z: 41, role: 'guard', zone: 'hangar' },
+    { x: 12.6, z: 45.5, role: 'guard', zone: 'apron' },
   ];
   const spawns = {
     B: [{ x: -20, z: -48, yaw: Math.PI }, { x: -17.8, z: -46.5, yaw: Math.PI }, { x: -22.2, z: -47.5, yaw: Math.PI }, { x: -20, z: -50.5, yaw: Math.PI }],
@@ -861,7 +984,8 @@ export function buildOperacaoFlavio(scene, T = {}) {
 
   return {
     root, colliders, occluders, decalSolids: [root], pickups, sun, hemi, spawns,
-    mode: 'escort', escortPath, escortServiceRoutes: serviceRoutes, escortCoverPoints, objectivePlane,
+    mode: 'escort', escortPath, escortPaths, escortDecoyRoutes: ESCORT_DECOY_ROUTES.map((iscas) => [...iscas]),
+    escortServiceRoutes: serviceRoutes, escortCoverPoints, objectivePlane,
     groundHeightAt: () => 0, slowAt: () => false,
     waypoints: { nodes, adj, stats: navigationStats }, nearestWaypoint, findPath,
     bounds: { minX: -43, maxX: 43, minZ: -57, maxZ: 57 },

@@ -273,7 +273,9 @@ const views = [
     localStorage.setItem('awpbr_settings', JSON.stringify({ quality: 'med', allyBots: 3, enemyBots: 4, bots: 4, vol: 0, speech: false }));
   });
   stage = 'page';
-  await page.goto(`${base}/?debug=1&auto=B,senador&map=operacao_flavio&perfilauto=0`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  // Zero Um escolhido vira o próprio VIP (operacao-flavio-vip-jogador-check); este cenário
+  // mede o VIP bot autônomo, então o jogador entra no B com outro personagem.
+  await page.goto(`${base}/?debug=1&auto=B,deputado&map=operacao_flavio&perfilauto=0`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
   await page.waitForTimeout(3200);
   await page.addStyleTag({ content: '#crash-overlay,astro-dev-toolbar{display:none!important}' });
@@ -444,52 +446,67 @@ const views = [
     `Flávio atravessou um colisor: ${JSON.stringify(escortTrace)}`);
   assert.ok(escortTrace.every((sample) => sample.weapon === 'pistol' && sample.meshWeapon === 'pistol'), 'Flávio manteve a pistola visível durante a escolta');
 
-  const threatBefore = await page.evaluate(() => {
+  // Playtest 06/11: com 2+ guardas colados a ameaça vista a 8 m NÃO para o comboio (rush);
+  // Flávio só se abriga exposto (atacante no raio de contestação ou escolta curta).
+  const ameacaEm = (dx, dz) => page.evaluate(({ dx, dz }) => {
     const g = window.__game;
     const vip = g.objective.vip;
-    const checkpoint = g.objective.state.checkpoint;
-    const cover = g.objective.state.caminho[checkpoint];
     const threat = g.bots.find((bot) => bot.team === 'E');
     threat.alive = true; threat.hp = 1000; threat.protUntil = Infinity;
-    threat.pos.set(vip.pos.x, 0, vip.pos.z + 8);
+    threat.pos.set(vip.pos.x + dx, 0, vip.pos.z + dz);
     threat.nextShotAt = Infinity; threat.reloadUntil = Infinity;
     threat.target = null; threat.path = null; threat.think = Infinity;
     for (const bot of g.bots) if (bot.team === 'E' && bot !== threat) { bot.pos.set(38, 0, 54); bot.think = Infinity; bot.nextShotAt = Infinity; }
-    return {
-      checkpoint,
-      threat: { x: threat.pos.x, z: threat.pos.z },
-      distanceToCover: Math.hypot(vip.pos.x - cover.x, vip.pos.z - cover.z),
-    };
-  });
-  for (let slice = 0; slice < 12; slice++) {
-    await page.evaluate((point) => {
-      const g = window.__game, threat = g.bots.find((bot) => bot.team === 'E');
-      threat.pos.set(point.x, 0, point.z); threat.path = null; threat.think = Infinity;
-    }, threatBefore.threat);
-    await page.waitForTimeout(1000);
-  }
-  const threatAfter = await page.evaluate(() => {
+    return { checkpoint: g.objective.state.checkpoint, x: vip.pos.x, z: vip.pos.z, threat: { x: threat.pos.x, z: threat.pos.z } };
+  }, { dx, dz });
+  const amostraEscolta = () => page.evaluate(() => {
     const g = window.__game;
     const vip = g.objective.vip;
-    const cover = g.objective.state.caminho[g.objective.state.checkpoint];
     return {
       checkpoint: g.objective.state.checkpoint,
+      x: vip.pos.x, z: vip.pos.z,
       threatened: g.objective.state.threatened,
+      contested: g.objective.state.contested,
       inCover: g.objective.state.inCover,
       crouched: Boolean(vip.mesh?.ctrl?.crouch),
-      distanceToCover: Math.hypot(vip.pos.x - cover.x, vip.pos.z - cover.z),
       hud: document.getElementById('escort-objective')?.textContent || '',
       guardsInside: g.bots.filter((bot) => bot !== vip && bot.team === 'B' && bot.alive
         && Math.hypot(bot.pos.x - vip.pos.x, bot.pos.z - vip.pos.z) <= 6.1).length,
     };
   });
-  assert.equal(threatAfter.checkpoint, threatBefore.checkpoint);
-  assert.ok(threatAfter.threatened && threatAfter.inCover && threatAfter.crouched,
-    `Flávio não buscou cobertura: ${JSON.stringify({ threatBefore, threatAfter })}`);
-  assert.ok(threatAfter.distanceToCover <= threatBefore.distanceToCover + 0.05,
-    `Flávio se afastou do abrigo: ${JSON.stringify({ threatBefore, threatAfter })}`);
-  assert.match(threatAfter.hud, /COBERTURA/);
-  assert.ok(threatAfter.guardsInside >= 2, `guardas não protegeram Flávio sob ameaça: ${JSON.stringify(threatAfter)}`);
+  const fixarAmeaca = (point) => page.evaluate((point) => {
+    const g = window.__game, threat = g.bots.find((bot) => bot.team === 'E');
+    threat.pos.set(point.x, 0, point.z); threat.path = null; threat.think = Infinity;
+  }, point);
+
+  // Lateral: andar pela rota não traz o atacante para o raio de contestação (4 m).
+  const rushBefore = await ameacaEm(8, 0);
+  const rushTrace = [];
+  for (let slice = 0; slice < 8; slice++) {
+    await fixarAmeaca(rushBefore.threat);
+    await page.waitForTimeout(1000);
+    rushTrace.push(await amostraEscolta());
+  }
+  const rushAfter = rushTrace.at(-1);
+  assert.ok(rushTrace.some((sample) => sample.threatened), `ameaça a 8 m não foi vista: ${JSON.stringify(rushTrace)}`);
+  assert.ok(Math.hypot(rushAfter.x - rushBefore.x, rushAfter.z - rushBefore.z) > 3,
+    `Flávio parou sob ameaça vista mesmo escoltado (rush): ${JSON.stringify({ rushBefore, rushTrace })}`);
+  assert.ok(rushTrace.every((sample) => sample.guardsInside >= 2), `guardas largaram Flávio no rush: ${JSON.stringify(rushTrace)}`);
+  assert.ok(rushTrace.every((sample) => !/ESCOLT|COBERTURA|CONTESTAD/.test(sample.hud)),
+    `HUD entrega a tática da escolta: ${JSON.stringify(rushTrace.map((sample) => sample.hud))}`);
+
+  const exposedBefore = await ameacaEm(0, 3);
+  const exposedTrace = [];
+  for (let slice = 0; slice < 10; slice++) {
+    await fixarAmeaca(exposedBefore.threat);
+    await page.waitForTimeout(500);
+    exposedTrace.push(await amostraEscolta());
+  }
+  assert.ok(exposedTrace.some((sample) => sample.threatened && sample.inCover && sample.crouched),
+    `Flávio exposto não buscou cobertura: ${JSON.stringify({ exposedBefore, exposedTrace })}`);
+  assert.ok(exposedTrace.every((sample) => sample.checkpoint === exposedBefore.checkpoint),
+    `Flávio exposto seguiu a rota em vez de se abrigar: ${JSON.stringify({ exposedBefore, exposedTrace })}`);
+  assert.ok(exposedTrace.some((sample) => sample.guardsInside >= 2), `guardas não protegeram Flávio exposto: ${JSON.stringify(exposedTrace)}`);
   await page.evaluate(() => {
     const g = window.__game;
     for (const bot of g.bots) if (bot.team === 'E') {
@@ -603,7 +620,7 @@ const views = [
 
   receiptData = {
     generatedAt: new Date().toISOString(), base, runtime, escortTrace,
-    threatBefore, threatAfter, death, cinematic, views, errors, failed, glbs,
+    rushBefore, rushTrace, exposedBefore, exposedTrace, death, cinematic, views, errors, failed, glbs,
   };
 };
 // Eventos finais e recibo terminal somente depois das duas tentativas de close.

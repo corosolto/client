@@ -7311,7 +7311,8 @@ export class Game {
     if (PACE) this._checkPace();   // alvo de abates / match point — vale também com o jogador morto
     if (!p.alive) {
       const left = p.respawnAt - this.time;
-      this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
+      // VIP jogador da Operação Flávio não renasce (respawnAt = Infinity): sem "Infinity" na tela.
+      this.el.respawnCount.textContent = Number.isFinite(left) ? Math.max(0, left).toFixed(1) : '—';
       this._deathFeedback(dt);
       this._tpDeath(dt);   // corpo TP cai (item: "boneco não caía morto")
       /* Online o _respawnPlayer é no-op (revive vem do snapshot): seguir morto mantém a
@@ -8542,7 +8543,9 @@ export class Game {
     // HISTERESE DA FORMAÇÃO: limiares distintos pra sair/voltar (empurrão não religa);
     // declarado aqui pois mutantes de régua referenciam `formationPull` logo após (TDZ).
     if (formationPull) b._formacaoHoldAte = this.time + 0.35;
-    else if (this.time < (b._formacaoHoldAte || 0)) formationPull = true;
+    // Hold só com destino vivo: morto o VIP, botDestination vira null e religar o puxão
+    // lia objectiveDestination.repath (TypeError no servidor dedicado).
+    else if (objectiveDestination && this.time < (b._formacaoHoldAte || 0)) formationPull = true;
     // O estado de bolso vale só até o guarda sair da recuperação e ocupar a formação.
     if (!formationPull && b._regroupEscapePending) b._regroupEscapePending = false;
     // O escape DIRETO não rearma por quadro só porque o centro marchou: sem este hold,

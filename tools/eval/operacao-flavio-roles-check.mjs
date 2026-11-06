@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { Game, PCHAR, CHARACTERS, initTextures, renderer, sfx, seedRandom } from './harness.mjs';
+import { Game as BaseGame, PCHAR, CHARACTERS, initTextures, renderer, sfx, seedRandom } from './harness.mjs';
 import { WEAPONS } from '../../public/js/data/weapons.js';
 
 const mutations = {
@@ -44,6 +44,33 @@ const mutations = {
     after: 'if (bot.deadT > 1) group.visible = Math.random() < 0.5;',
     clause: 'corpo morto do VIP some uma única vez e não volta',
   },
+  'rota-fixa': {
+    before: 'return Array.isArray(rotas) && rotas.length > 1 ? varianteRotaEscolta(this.game.roundNum, rotas.length) : 0;',
+    after: 'return 0;',
+    clause: 'rota do VIP varia por rodada e conduz Flávio pela variante',
+  },
+  'rota-sem-caminho': {
+    before: 'return criarEstadoEscolta(this.game.world.escortPaths?.[this._rota] || this.game.world.escortPath);',
+    after: 'return criarEstadoEscolta(this.game.world.escortPath);',
+    clause: 'rota do VIP varia por rodada e conduz Flávio pela variante',
+  },
+  'isca-fixa': {
+    before: 'const rota = iscas[((bot._flavioIsca || 0) + (bot._flavioVidas || 0)) % iscas.length];',
+    after: 'const rota = (bot._flavioIsca || 0) % 2 === 0 ? 2 : 0;',
+    clause: 'flanqueadores viram iscas em ≥3 rotas, primeiro do lado oposto',
+  },
+  'isca-sem-rodizio': {
+    before: "if (bot._flavioPapel === 'flanqueador') { bot._flavioVidas = (bot._flavioVidas || 0) + 1; this._rotaFlanqueador(bot); }",
+    after: '',
+    clause: 'flanqueadores viram iscas em ≥3 rotas, primeiro do lado oposto',
+  },
+  // Alvo em game.js: o hold da formação religava o puxão com destino null (VIP morto).
+  'hold-sem-destino': {
+    file: 'game',
+    before: 'else if (objectiveDestination && this.time < (b._formacaoHoldAte || 0)) formationPull = true;',
+    after: 'else if (this.time < (b._formacaoHoldAte || 0)) formationPull = true;',
+    clause: 'guarda em hold de formação não quebra quando o VIP morre',
+  },
 };
 
 if (process.argv.includes('--mutantes')) {
@@ -62,16 +89,27 @@ if (process.argv.includes('--mutantes')) {
 const mutant = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || null;
 const modeUrl = new URL('../../public/js/mode_operacao_flavio.js', import.meta.url);
 let modeSource = readFileSync(modeUrl, 'utf8');
+let Game = BaseGame;
 if (mutant) {
   assert.ok(Object.hasOwn(mutations, mutant), 'mutante conhecido');
-  const { before, after } = mutations[mutant];
-  assert.equal(modeSource.split(before).length - 1, 1, 'alvo do mutante único');
-  modeSource = modeSource.replace(before, after);
+  const { before, after, file } = mutations[mutant];
+  if (file === 'game') {
+    const gameUrl = new URL('../../public/js/game.js', import.meta.url);
+    const gameSource = readFileSync(gameUrl, 'utf8');
+    assert.equal(gameSource.split(before).length - 1, 1, 'alvo do mutante único');
+    ({ Game } = await import('data:text/javascript;base64,' + Buffer.from(gameSource.replace(before, after)
+      .replace(/from\s+(['"])([^'"]+)\1/g, (_, quote, spec) => 'from ' + JSON.stringify(spec.startsWith('.') ? new URL(spec, gameUrl).href : import.meta.resolve(spec)))).toString('base64')));
+  } else {
+    assert.equal(modeSource.split(before).length - 1, 1, 'alvo do mutante único');
+    modeSource = modeSource.replace(before, after);
+  }
   console.log('Mutação aplicada: ' + mutant);
 }
 modeSource = modeSource.replace(/from\s+(['"])([^'"]+)\1/g, (_, quote, spec) =>
   'from ' + JSON.stringify(spec.startsWith('.') ? new URL(spec, modeUrl).href : import.meta.resolve(spec)));
 const { OperacaoFlavio } = await import('data:text/javascript;base64,' + Buffer.from(modeSource).toString('base64'));
+const VANGUARDA = Number(modeSource.match(/const FLANQUEADOR_VANGUARDA = (\d+)/)?.[1]);
+assert.ok(VANGUARDA >= 3, 'vanguarda empurra ao menos três checkpoints à frente');
 
 let failures = 0;
 const cases = [];
@@ -162,10 +200,10 @@ check('flanqueador segura a vanguarda com histerese', () => withGame(7, (game) =
   const roamer = flanqueadores[0];
   roamer.alive = true;
   const destino = { ...game.objective.botDestination(roamer) };
-  const rotaLateral = (game.world.escortServiceRoutes || [])[roamer._flavioLado < 0 ? 0 : 2] || [];
+  const rotaLateral = (game.world.escortServiceRoutes || [])[roamer._flavioRota] || [];
   assert.ok(rotaLateral.some((p) => Math.abs(p.x - destino.x) < 1e-9 && Math.abs(p.z - destino.z) < 1e-9),
     'flanqueador usa caminho lateral do mapa');
-  const aFrente = game.objective.state.caminho[Math.min(3 + 2, game.objective.state.caminho.length - 1)];
+  const aFrente = game.objective.state.caminho[Math.min(3 + VANGUARDA, game.objective.state.caminho.length - 1)];
   assert.ok(destino.z > aFrente.z - 4.5, 'vanguarda fica adiante do comboio');
   const mesmas = [];
   for (let frame = 0; frame < 30; frame++) mesmas.push({ ...game.objective.botDestination(roamer) });
@@ -191,7 +229,7 @@ check('vanguarda atravessa hangar e pátio junto do comboio', () => withGame(7, 
     const atual = caminho[checkpoint];
     game.objective.state.position.x = atual.x; game.objective.state.position.z = atual.z;
     vip.pos.set(atual.x, vip.pos.y, atual.z);
-    const indice = Math.min(checkpoint + 2, caminho.length - 1);
+    const indice = Math.min(checkpoint + VANGUARDA, caminho.length - 1);
     const ponto = caminho[indice];
     for (const roamer of flanqueadores) {
       roamer.alive = true;
@@ -283,6 +321,93 @@ check('sem wallhack: guarda sem LOS não adquire alvo', () => withGame(7, (game)
     adquiriu ||= guarda.target === atacantes[0];
   }
   assert.ok(adquiriu, 'LOS aberta volta a permitir a aquisição normal');
+}));
+
+// Playtest 06/11 ("não só o meio"): cada rodada escolhe uma variante de world.escortPaths
+// pelo roundNum e o VIP anda por ELA; nenhuma rodada repete a anterior.
+check('rota do VIP varia por rodada e conduz Flávio pela variante', () => withGame(7, (game) => {
+  const { vip } = papeis(game);
+  const rotas = game.world.escortPaths;
+  assert.ok(Array.isArray(rotas) && rotas.length >= 3, 'mapa exporta três variantes');
+  const escolhidas = [];
+  game._losClear = () => false;   // isola a marcha: sem ameaça vista
+  for (let rodada = 1; rodada <= 6; rodada++) {
+    game.roundNum = rodada; game.state = 'live';
+    game.objective.prepareRound();
+    const rota = game.objective._rota;
+    escolhidas.push(rota);
+    const caminho = game.objective.state.caminho;
+    assert.deepEqual(caminho, rotas[rota], `rodada ${rodada}: estado usa a variante ${rota}`);
+    const visiveis = game.world.root.children.filter((o) => o.name === 'marca-checkpoint-escolta' && o.visible);
+    assert.equal(visiveis.length, caminho.length, `rodada ${rodada}: só os anéis da variante acesos`);
+    if (rodada > 3) continue;
+    // Ponto de divergência: o próximo checkpoint é exclusivo desta variante.
+    const k = caminho.findIndex((_, i) => i + 1 < caminho.length && rotas.every((outra, j) => j === rota
+      || !outra[i + 1] || Math.hypot(outra[i + 1].x - caminho[i + 1].x, outra[i + 1].z - caminho[i + 1].z) > 2));
+    assert.ok(k >= 0, `rodada ${rodada}: variante diverge das outras`);
+    const estado = game.objective.state;
+    estado.checkpoint = k; estado.position.x = caminho[k].x; estado.position.z = caminho[k].z;
+    vip.pos.set(caminho[k].x, 0, caminho[k].z);
+    const guardas = game.bots.filter((bot) => bot.team === 'B' && bot !== vip).slice(0, 2);
+    const alvo = caminho[k + 1], antes = Math.hypot(alvo.x - vip.pos.x, alvo.z - vip.pos.z);
+    for (let frame = 0; frame < 90; frame++) {
+      for (const guarda of guardas) { guarda.alive = true; guarda.pos.set(vip.pos.x, 0, vip.pos.z); }
+      game.time += 1 / 60;
+      game.objective.update(1 / 60);
+    }
+    const depois = Math.hypot(alvo.x - vip.pos.x, alvo.z - vip.pos.z);
+    assert.ok(antes - depois >= 1.5 || estado.checkpoint > k, `rodada ${rodada}: VIP andou ${(antes - depois).toFixed(2)} m rumo ao checkpoint da variante`);
+  }
+  assert.equal(new Set(escolhidas.slice(0, 3)).size, 3, `três rodadas cobrem as três variantes (${escolhidas})`);
+  assert.ok(escolhidas.every((rota, i) => i === 0 || rota !== escolhidas[i - 1]), `rodadas seguidas não repetem a rota (${escolhidas})`);
+  assert.equal(escolhidas[0], 0, 'primeira rodada abre pelo meio');
+}));
+
+// "Enganar o inimigo": flanqueadores são iscas em rotas de serviço fora da lane do VIP —
+// o primeiro pelo lado oposto da variante — e trocam de lane a cada vida.
+check('flanqueadores viram iscas em ≥3 rotas, primeiro do lado oposto', () => withGame(7, (game) => {
+  const usadas = new Set();
+  for (let rodada = 1; rodada <= 3; rodada++) {
+    game.roundNum = rodada; game.state = 'live';
+    game.objective.prepareRound();
+    const { flanqueadores } = papeis(game);
+    assert.ok(flanqueadores.length >= 2, '7x7 tem dois flanqueadores');
+    for (const bot of flanqueadores) {
+      assert.ok(Number.isInteger(bot._flavioRota) && bot._flavioRota !== 1, `rodada ${rodada}: isca fora da rota central`);
+      usadas.add(bot._flavioRota);
+    }
+    const caminho = game.objective.state.caminho;
+    const patio = caminho.filter((p) => p.z >= -16 && p.z <= 23);
+    const lado = Math.sign(patio.reduce((soma, p) => soma + p.x, 0) / patio.length);
+    if (Math.abs(patio.reduce((soma, p) => soma + p.x, 0) / patio.length) > 6) {
+      assert.equal(flanqueadores[0]._flavioLado, -lado, `rodada ${rodada}: 1ª isca vai pelo lado oposto ao VIP`);
+    }
+  }
+  assert.ok(usadas.size >= 3, `iscas usam ${usadas.size} rotas (${[...usadas]})`);
+  const { flanqueadores } = papeis(game);
+  const isca = flanqueadores[0], antes = isca._flavioRota;
+  isca.alive = true; isca.protUntil = game.time + 2;   // nova vida (respawn marca protUntil)
+  game.objective._manterPapeis();
+  assert.notEqual(isca._flavioRota, antes, 'nova vida troca a lane da isca');
+}));
+
+// Simulação bot×bot (06/11): morto o VIP, botDestination vira null; guarda com hold de
+// formação ativo lia objectiveDestination.repath e derrubava o _updateBot do servidor.
+check('guarda em hold de formação não quebra quando o VIP morre', () => withGame(7, (game) => {
+  const { vip, guardas, atacantes } = papeis(game);
+  const guarda = guardas[0], alvo = atacantes[0];
+  // Guarda em combate (ramo com alvo) e com hold vivo: é onde o puxão relê o destino.
+  game._losClear = () => true;
+  alvo.alive = true; alvo.pos.set(guarda.pos.x + 6, 0, guarda.pos.z + 6);
+  guarda.alive = true; guarda.target = alvo; guarda.think = 99; guarda.path = null;
+  guarda.repathAt = 0; guarda._repathMin = 0; guarda._regroupEscapePending = false;
+  guarda._formacaoHoldAte = game.time + 5;
+  vip.alive = false;
+  assert.equal(game.objective.botDestination(guarda), null, 'pré-condição: VIP morto não dá destino');
+  for (let frame = 0; frame < 30; frame++) {
+    game.time += 1 / 60;
+    assert.doesNotThrow(() => game._updateBot(guarda, 1 / 60), `quadro ${frame}`);
+  }
 }));
 
 console.log(JSON.stringify({ tool: 'operacao-flavio-roles-check', mutant, cases, failed: cases.filter((test) => !test.pass) }));

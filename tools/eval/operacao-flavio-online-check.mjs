@@ -95,7 +95,7 @@ try {
     game.objective.applyNetState({ checkpoint: 1, position: { x: 0, z: 4 }, escortCount: 3, contested: false, threatened: false, inCover: false });
     game.timeLeft = 305;
     Game.prototype._updateHud.call(game);
-    assert.match(game.objective.hud.textContent, /1\/2 · 3 ESCOLTANDO · 305s/);
+    assert.match(game.objective.hud.textContent, /^OPERAÇÃO FLÁVIO · 1\/2 · 305s$/);
     game.timeLeft = 304;
     Game.prototype._updateHud.call(game);
     assert.match(game.objective.hud.textContent, /304s$/);

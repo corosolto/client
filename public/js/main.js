@@ -29,6 +29,7 @@ import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons, sanitizeRounds, ROUNDS_CUSTOM_MAX, aguardarPreloads } from './game.js';
+import { elencoOperacaoFlavio } from './mode_operacao_flavio.js';   // já no grafo via game.js
 import { economiaLigada } from './economia-partida.js';
 import { VERSION } from './version.js';
 import { bindMapPreview, stopMapPreviews, previewRevision } from './amazonia_map_preview.js';
@@ -2155,10 +2156,9 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const matchRoster = sessao
     ? rosterDoServidor(side, charId)
     : pickMatchRoster(faction, enemyFac, { allies: settingsDaPartida.allyBots, enemies: settingsDaPartida.enemyBots }, charId, false, _pinned);
+  // Zero Um escolhido no time B é o próprio VIP: sem bot senador duplicado. Só offline.
   if (!sessao && currentMap === 'operacao_flavio') {
-    const senador = CHARACTERS.find((character) => character.id === 'senador');
-    const field = side === 'B' ? 'allyDefs' : 'enemyDefs';
-    if (senador) matchRoster[field] = [senador, ...matchRoster[field].filter((def) => def.id !== senador.id)];
+    elencoOperacaoFlavio(matchRoster, side, charId, CHARACTERS.find((character) => character.id === 'senador'));
   }
   /* Treta Pop: o carregamento VS mostra o elenco sorteado; o global cobre o ?auto=, que lança antes de tp/ligar.js chegar */
   if (document.documentElement.dataset.ui === 'v3') {

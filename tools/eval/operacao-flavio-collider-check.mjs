@@ -22,18 +22,28 @@ const edits = {
   'rota-n2': ['const candidates = buckets.get(`${cx + ox},${cz + oz}`) || [];', 'const candidates = nodes.map((_, j) => j);'],
   'vidro-low-fisico': ['? new THREE.MeshStandardMaterial({', '? new THREE.MeshPhysicalMaterial({'],
   'sombras-low-completas': ['mesh.castShadow = sombra && (solid || !lowProfile)', 'mesh.castShadow = sombra'],
-  'sem-jardineira-embarque': ["    ['jardineira', -7.2, -38.6, 2.5, 0, 2.5, 1.8, 1.4, true],\n", ''],
+  'sem-jardineira-embarque': ["    real('jardineira', -7.2, -38.6, 0),\n", ''],
   'ponto-sem-papel': ["{ x: 13, z: -41, role: 'guard', zone: 'embarque' },", '{ x: 13, z: -41 },'],
-  'ponto-afastado': ["{ x: -3.2, z: 49.9, role: 'guard', zone: 'apron' },", "{ x: -3.2, z: 47.4, role: 'guard', zone: 'apron' },"],
-  'container-oeste-decorativo': ["['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, true],", "['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, false],"],
-  'gpu-decorativo': ["['energia_solo', -1, 44.6, 4, 0, 4, 2, 2, true],", "['energia_solo', -1, 44.6, 4, 0, 4, 2, 2, false],"],
+  // z=47,8: a 1,98 m da pilha de ULD real de (-1;44,6) (em 47,4 ela ainda ficava a 1,6 m).
+  'ponto-afastado': ["{ x: -3.2, z: 49.9, role: 'guard', zone: 'apron' },", "{ x: -3.2, z: 47.8, role: 'guard', zone: 'apron' },"],
+  'container-oeste-decorativo': ["real('containers_carga', -12, 51.4, 0),", "real('containers_carga', -12, 51.4, 0, false),"],
+  'gpu-decorativo': ["real('energia_solo', 24, 50, Math.PI / 2),", "real('energia_solo', 24, 50, Math.PI / 2, false),"],
   'armadilha-lounge': ['E: [{ x: -33, z: 54, yaw: 0 }, { x: -28, z: 56, yaw: 0 }, { x: 33, z: 54, yaw: 0 }, { x: 30, z: 56, yaw: 0 }],', 'E: [{ x: -20, z: -47, yaw: 0 }, { x: -28, z: 56, yaw: 0 }, { x: 33, z: 54, yaw: 0 }, { x: 30, z: 56, yaw: 0 }],'],
-  'bay-vira-beco': ["['containers_carga', -12, 51.4, 5, 0, 5, 2.6, 2.5, true],", "['containers_carga', -13.5, 51.4, 5, 0, 5, 2.6, 2.5, true],"],
-  'ilha-patio-fantasma': ["['barreiras_aeroporto', -6.2, 4, 5, 0, 4.5, 1.4, 1.2, true],", "['barreiras_aeroporto', -6.2, 4, 5, 0, 4.5, 1.4, 1.2, false],"],
-  'sem-anel-checkpoint': ['for (let i = 0; i < ESCORT_PATH.length; i++) {', 'for (let i = 0; i < ESCORT_PATH.length - 1; i++) {'],
+  'bay-vira-beco': ["real('containers_carga', -12, 51.4, 0),", "real('containers_carga', -13.5, 51.4, 0),"],
+  'ilha-patio-fantasma': ["real('barreiras_aeroporto', -6.2, 4, 0),", "real('barreiras_aeroporto', -6.2, 4, 0, false),"],
+  'sem-anel-checkpoint': ['for (const ponto of caminho) {', 'for (const ponto of caminho.slice(0, -1)) {'],
+  // Variantes da rota do VIP (playtest 06/11): validadas como a rota do meio.
+  'variante-no-container': ['{ x: 14.5, z: 32 }, { x: 18, z: 32 }', '{ x: 14.5, z: 32 }, { x: 18, z: 28 }'],
+  'variante-sem-no': ['for (const caminho of ESCORT_PATHS.slice(1)) for (const ponto of caminho) addNode(ponto.x, ponto.z);', ''],
+  'variante-longe-da-escada': ['{ x: -7, z: 45.9 }, { x: 7.2, z: 49.2 },', '{ x: -7, z: 45.9 },'],
   'anel-afunda': ['const Y_MARCACAO = 0.13;', 'const Y_MARCACAO = 0.06;'],
-  'escada-sem-proxy': ["colliderDoProp('escada_embarque', -3.2, 0, 52.5, 3, 2.4, 4, Math.PI / 2);", ''],
+  'escada-sem-proxy': ["  colliderDoProp('escada_embarque', -3.2, 0, 52.5, ...MEDIDA_REAL.escada_embarque, Math.PI / 2);\n", ''],
   'sem-detalhe-embarque': ['new THREE.InstancedMesh(new THREE.ConeGeometry(0.17, 0.58, 14), mats.sinalizacao, conePos.length)', 'new THREE.InstancedMesh(new THREE.ConeGeometry(0.17, 0.58, 14), mats.sinalizacao, Math.max(0, conePos.length - 10))'],
+  'carro-gigante': ["real('carro_servico', -16, 15, Math.PI / 2),", "['carro_servico', -16, 15, 5, Math.PI / 2, 5, 2.4, 2.4, true],"],
+  'carro-eixo-trocado': ["real('carro_servico', -18, 38, Math.PI / 2),", "['carro_servico', -18, 38, [1.6, 1.95, 3.2], Math.PI / 2, 3.2, 1.95, 1.6, true],"],
+  'balcao-gigante': ["real('balcao_recepcao', 16.75, -39, 0),", "['balcao_recepcao', 16.75, -39, 7.2, 0, 7, 1.4, 2.2, true],"],
+  'jardineira-render-baixo': ["real('jardineira', 24, -44.5, 0),", "['jardineira', 24, -44.5, 2.5, 0, 2.5, 1.8, 1.4, true],"],
+  'kit-barreira-no-patio': ["usarProp('barreiras_aeroporto', [x, 0.08, 59.6]", "usarProp('barreiras_aeroporto', [x, 0.08, 52]"],
 };
 if (mutant) {
   const edit = edits[mutant];
@@ -48,18 +58,44 @@ const loadModule = async (lowProfile) => {
   assert.notEqual(fixtureSource, mapSource, 'perfil de qualidade instrumentado');
   fixtureSource = fixtureSource.replace(/from\s+(['"])([^'"]+)\1/g, (_, quote, spec) =>
     'from '+JSON.stringify(spec.startsWith('.') ? new URL(spec, url).href : import.meta.resolve(spec)));
-  fixtureSource += '\nexport function fixtureTemplates(template) { templates.clear(); if(template) for(const id of Object.keys(PROP_FILES)) templates.set(id,template); }';
+  fixtureSource += '\nexport function fixtureTemplates(template) { templates.clear(); if(template) for(const id of Object.keys(PROP_FILES)) templates.set(id, typeof template === "function" ? template(id) : template); }';
   return import('data:text/javascript;base64,'+Buffer.from(fixtureSource).toString('base64'));
 };
 const mediumModule = await loadModule(false), lowModule = await loadModule(true);
 const textures = initTextures();
 const template = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshPhysicalMaterial({ transmission: .5 }));
 const world = (module, loaded) => {
-  module.fixtureTemplates(loaded ? template : null);
+  module.fixtureTemplates(loaded === true ? template : loaded || null);
   return withVisibleShotOccluders(module.buildOperacaoFlavio)(new THREE.Scene(), textures);
 };
 const fallback = world(mediumModule, false), loaded = world(mediumModule, true);
 const lowFallback = world(lowModule, false), lowLoaded = world(lowModule, true);
+// Caixa com as proporções nativas de cada GLB (accessor min/max + transformações dos nós):
+// a régua de escala mede o volume que o jogador vê, não o cubo unitário do fixture.
+const glbBounds = (file) => {
+  const bytes = readFileSync(new URL('../../public/models/props/operacao_decola/' + file, import.meta.url));
+  const gltf = JSON.parse(bytes.subarray(20, 20 + bytes.readUInt32LE(12)).toString('utf8'));
+  const box = new THREE.Box3();
+  const visit = (index, parent) => {
+    const node = gltf.nodes[index], local = new THREE.Matrix4();
+    if (node.matrix) local.fromArray(node.matrix);
+    else local.compose(new THREE.Vector3(...(node.translation || [0, 0, 0])),
+      new THREE.Quaternion(...(node.rotation || [0, 0, 0, 1])), new THREE.Vector3(...(node.scale || [1, 1, 1])));
+    const matrix = parent.clone().multiply(local);
+    if (node.mesh !== undefined) for (const primitive of gltf.meshes[node.mesh].primitives) {
+      const { min, max } = gltf.accessors[primitive.attributes.POSITION];
+      box.union(new THREE.Box3(new THREE.Vector3(...min), new THREE.Vector3(...max)).applyMatrix4(matrix));
+    }
+    for (const child of node.children || []) visit(child, matrix);
+  };
+  for (const root of gltf.scenes[gltf.scene ?? 0].nodes) visit(root, new THREE.Matrix4());
+  return box;
+};
+const glbTemplates = Object.fromEntries(Object.entries(mediumModule.PROP_FILES).map(([id, file]) => {
+  const box = glbBounds(file), size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+  return [id, new THREE.Mesh(new THREE.BoxGeometry(size.x, size.y, size.z).translate(center.x, center.y, center.z), template.material)];
+}));
+const glbReal = world(mediumModule, (id) => glbTemplates[id]);
 const blocked = (map, x, z, inflate = 0) => map.colliders.some(c => x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < 1.8 && c.maxY > .1);
 let failures = 0;
 const check = (name, fn) => {
@@ -86,12 +122,13 @@ try {
     const stairs = loaded.colliders.find(c => c.id === 'escada_embarque');
     const serviceCar = loaded.colliders.find(c => c.id === 'carro_servico' && Math.abs((c.minX + c.maxX) / 2 + 16) < 1e-9);
     assert.ok(tractor && stairs && serviceCar, 'proxies identificados');
-    assert.ok(Math.abs((tractor.maxX - tractor.minX) - 2.4) < 1e-9, 'trator troca largura após yaw 90°');
-    assert.ok(Math.abs((tractor.maxZ - tractor.minZ) - 4.2) < 1e-9, 'trator troca profundidade após yaw 90°');
+    // Medidas reais (trator 2,8×1,5 m, carro 1,6×3,2 m no eixo nativo do GLB) após yaw 90°.
+    assert.ok(Math.abs((tractor.maxX - tractor.minX) - 1.5) < 1e-9, 'trator troca largura após yaw 90°');
+    assert.ok(Math.abs((tractor.maxZ - tractor.minZ) - 2.8) < 1e-9, 'trator troca profundidade após yaw 90°');
     assert.ok(Math.abs((stairs.maxX - stairs.minX) - 4) < 1e-9, 'escada respeita yaw');
-    assert.ok(Math.abs((stairs.maxZ - stairs.minZ) - 3) < 1e-9, 'escada respeita profundidade rotacionada');
-    assert.ok(Math.abs((serviceCar.maxX - serviceCar.minX) - 2.4) < 1e-9, 'equipamento usa o yaw declarado');
-    assert.ok(Math.abs((serviceCar.maxZ - serviceCar.minZ) - 5) < 1e-9, 'equipamento rotaciona a profundidade');
+    assert.ok(Math.abs((stairs.maxZ - stairs.minZ) - 1.68) < 1e-9, 'escada respeita profundidade rotacionada (largura real 1,68 m)');
+    assert.ok(Math.abs((serviceCar.maxX - serviceCar.minX) - 3.2) < 1e-9, 'equipamento usa o yaw declarado');
+    assert.ok(Math.abs((serviceCar.maxZ - serviceCar.minZ) - 1.6) < 1e-9, 'equipamento rotaciona a profundidade');
   });
   check('airport-chairs-human-scale-and-aligned-colliders', () => {
     for (const [label, map] of [['loaded', loaded], ['fallback', fallback]]) {
@@ -110,6 +147,44 @@ try {
         const visualBounds = { minX: box.min.x, maxX: box.max.x, minZ: box.min.z, maxZ: box.max.z };
         for (const key of ['minX', 'maxX', 'minZ', 'maxZ']) assert.ok(Math.abs(visualBounds[key] - proxy[key]) < 1e-6, `${label}: ${key} alinhado`);
         assert.ok(Math.abs(size.y - (proxy.maxY - proxy.minY)) < 1e-6, `${label}: altura do proxy alinhada`);
+      }
+    }
+  });
+  check('vehicle-props-human-scale-and-aligned-colliders', () => {
+    // Razões contra o personagem de 1,72 m: [altura mín, altura máx, maior lado máx].
+    // Carro ≥1× a estatura porque esconde o VIP em pé; GPU/trator ficam abaixo (só agachado);
+    // a pilha de ULD é a cobertura alta legítima do apron. Jardineira ≥1× porque a folhagem
+    // visível é o que esconde o VIP; balcão real (~1,2 m) e muro New Jersey só cobrem agachado.
+    const ESTATURA = 1.72;
+    const LIMITES = {
+      carro_servico: [1, 1.15, 2.2], trator_bagagem: [0.75, 0.95, 1.75], energia_solo: [0.7, 0.9, 1.75],
+      scanner_bagagem: [0.75, 1, 2], estacao_manutencao: [0.9, 1.15, 2], containers_carga: [1.6, 2, 2],
+      carrinho_ferramentas: [0.6, 0.8, 0.75], torre_iluminacao: [2, 2.75, 2.4],
+      jardineira: [1, 1.1, 1.5], balcao_recepcao: [0.6, 0.75, 2.4], escada_embarque: [1.5, 2, 2.4],
+      barreiras_aeroporto: [0.7, 0.85, 2.7],
+    };
+    // O muro de barreiras é procedural; o kit GLB só existe como cenário fora dos limites.
+    const NOME_VISUAL = { barreiras_aeroporto: 'barreira-jersey' };
+    glbReal.root.updateMatrixWorld(true);
+    for (const kit of glbReal.root.children.filter(o => o.name === 'barreiras_aeroporto')) {
+      const box = new THREE.Box3().setFromObject(kit);
+      assert.ok(box.min.z > glbReal.bounds.maxZ, `kit de barreiras sem collider dentro da área jogável (z ${box.min.z.toFixed(2)})`);
+    }
+    for (const [id, [minH, maxH, maxL]] of Object.entries(LIMITES)) {
+      const pecas = glbReal.root.children.filter(o => o.name === (NOME_VISUAL[id] || id));
+      const proxies = glbReal.colliders.filter(c => c.id === id);
+      assert.ok(pecas.length > 0 && pecas.length === proxies.length, `${id}: um proxy por peça visível (${pecas.length}×${proxies.length})`);
+      for (const peca of pecas) {
+        const box = new THREE.Box3().setFromObject(peca), size = box.getSize(new THREE.Vector3());
+        const onde = `${id}@(${((box.min.x + box.max.x) / 2).toFixed(1)},${((box.min.z + box.max.z) / 2).toFixed(1)})`;
+        assert.ok(size.y >= minH * ESTATURA - 1e-6 && size.y <= maxH * ESTATURA + 1e-6,
+          `${onde}: altura ${size.y.toFixed(2)} m fora de ${minH}–${maxH}× a estatura`);
+        assert.ok(Math.max(size.x, size.z) <= maxL * ESTATURA + 1e-6,
+          `${onde}: ${Math.max(size.x, size.z).toFixed(2)} m acima de ${maxL}× a estatura`);
+        const visual = { minX: box.min.x, maxX: box.max.x, minZ: box.min.z, maxZ: box.max.z };
+        const proxy = proxies.find(c => Object.keys(visual).every(key => Math.abs(visual[key] - c[key]) < 1e-6));
+        assert.ok(proxy, `${onde}: proxy com a mesma pegada do GLB (eixo e tamanho)`);
+        assert.ok(Math.abs(size.y - (proxy.maxY - proxy.minY)) < 1e-6, `${onde}: altura do proxy alinhada`);
       }
     }
   });
@@ -139,17 +214,29 @@ try {
       assert.equal(blocked(loaded, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, inflate), false, `${label}: corpo livre no passo ${n}`);
     }
   };
+  // Toda variante (world.escortPaths) passa pelo mesmo crivo da rota do meio: nó explícito,
+  // corpo do VIP livre em cada trecho, grafo contínuo, mesma saída e mesma escada.
   check('escort-route-explicit-and-clear', () => {
     assert.equal(loaded.escortPath.length, 13);
-    for (let i = 0; i < loaded.escortPath.length; i++) {
-      const point = loaded.escortPath[i];
-      assertNode(point, `checkpoint ${i}`);
-      assert.equal(blocked(loaded, point.x, point.z, .46), false, `checkpoint ${i} livre`);
-      if (i) {
-        assertClearSegment(loaded.escortPath[i - 1], point, `escolta ${i}`, .46);
-        assertReachable(loaded.escortPath[i - 1], point, `escolta ${i}`);
+    assert.equal(loaded.escortPaths.length, 3, 'meio, oeste e leste');
+    assert.deepEqual(loaded.escortPaths[0], loaded.escortPath, 'variante 0 é a rota do meio');
+    loaded.escortPaths.forEach((caminho, rota) => {
+      assert.deepEqual(caminho[0], loaded.escortPath[0], `variante ${rota} sai do embarque`);
+      assert.deepEqual(caminho.at(-1), loaded.escortPath.at(-1), `variante ${rota} termina na escada do avião`);
+      for (let i = 0; i < caminho.length; i++) {
+        const point = caminho[i];
+        assertNode(point, `variante ${rota} checkpoint ${i}`);
+        assert.equal(blocked(loaded, point.x, point.z, .46), false, `variante ${rota} checkpoint ${i} livre`);
+        if (i) {
+          assertClearSegment(caminho[i - 1], point, `variante ${rota} escolta ${i}`, .46);
+          assertReachable(caminho[i - 1], point, `variante ${rota} escolta ${i}`);
+        }
       }
-    }
+    });
+    // Lanes distintas no pátio de serviço: média x por variante separada por ≥8 m.
+    const patio = loaded.escortPaths.map(c => c.filter(p => p.z >= -16 && p.z <= 23));
+    const medias = patio.map(ps => ps.reduce((s, p) => s + p.x, 0) / ps.length).sort((a, b) => a - b);
+    assert.ok(medias.every((m, i) => !i || m - medias[i - 1] >= 8), `pátio com lanes separadas (${medias.map(m => m.toFixed(1))})`);
   });
   check('all-terminal-doors-have-graph-routes', () => {
     const doors = [
@@ -238,21 +325,29 @@ try {
   };
   check('real-cover-hides-vip-and-stops-hitscan', () => {
     // Inventário fixo: peça decorativa (solid=false) some dos colliders e falha aqui.
+    // Escala real: o GPU gigante de (-1;44,6) virou pilha de ULD (3,27 m), a pilha leste foi
+    // a x=17,4 e os gaveteiros de (8,6;47)/(-1,5;26) viraram GPU real; trator/GPU (≤1,55 m)
+    // só cobrem agachado.
     const esperadas = [
       ['jardineira', -7.2, -38.6], ['jardineira', 8.2, -38.6], ['jardineira', -22.5, -41.3],
       ['jardineira', -22.5, -39.8], ['jardineira', 17.5, -43], ['jardineira', -28, -45.5], ['jardineira', 24, -44.5],
-      ['balcao_recepcao', 0, -32], ['balcao_recepcao', 15, -39],
-      ['energia_solo', -1, 44.6], ['energia_solo', 24, 50],
-      ['containers_carga', -12, 51.4], ['containers_carga', -12, 53.6], ['containers_carga', 16.5, 52],
+      // Balcões viraram fileiras de módulos reais de 3,5 m na mesma pegada; plantas novas
+      // atrás deles fazem a ocultação em pé que o balcão gigante (3,2 m) fazia.
+      ['balcao_recepcao', 0, -30.25], ['balcao_recepcao', 0, -33.75], ['balcao_recepcao', 13.25, -39], ['balcao_recepcao', 16.75, -39],
+      ['jardineira', -5.3, -20.9], ['jardineira', 5.3, -20.9], ['jardineira', 0, -36.2], ['jardineira', 13.6, -36.9],
+      ['containers_carga', -1, 44.6], ['energia_solo', 24, 50], ['energia_solo', 8.6, 47], ['trator_bagagem', 21, 46],
+      ['containers_carga', -12, 51.4], ['containers_carga', -12, 53.6], ['containers_carga', 17.4, 52],
       ['barreiras_aeroporto', 5, -4], ['barreiras_aeroporto', -6.2, 4], ['carro_servico', 18, 10],
       ['trator_bagagem', -19, 9], ['barreiras_aeroporto', -11, 24], ['barreiras_aeroporto', 11, 24],
-      ['carrinho_ferramentas', -1.5, 26], ['carrinho_ferramentas', 8.6, 47], ['barreiras_aeroporto', -24, 47],
+      ['energia_solo', -1.5, 26], ['barreiras_aeroporto', -24, 47],
       ['carro_servico', -8, 54.5], ['barreiras_aeroporto', 25.5, 55], ['jardineira', -18, -34.8],
     ];
     for (const [id, x, z] of esperadas) assert.ok(loaded.colliders.some(c => c.id === id
       && Math.abs((c.minX + c.maxX) / 2 - x) < 1e-9 && Math.abs((c.minZ + c.maxZ) / 2 - z) < 1e-9),
       `cobertura real ${id}@(${x},${z}) presente e sólida`);
-    const tall = loaded.colliders.filter(c => ['jardineira', 'containers_carga', 'energia_solo', 'trator_bagagem'].includes(c.id) && c.maxY - c.minY >= 1.72);
+    // Cobertura que esconde o VIP em pé (≥1,72 m) é a que tem essa altura no mundo real:
+    // plantas altas, pilhas de ULD, utilitário de pátio e armário da estação de manutenção.
+    const tall = loaded.colliders.filter(c => ['jardineira', 'containers_carga', 'carro_servico', 'estacao_manutencao'].includes(c.id) && c.maxY - c.minY >= 1.72);
     const porZona = { embarque: 0, apron: 0 };
     for (const c of tall) {
       const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
@@ -279,7 +374,7 @@ try {
       const distance = Math.min(...loaded.colliders.filter(c => c.maxY >= 1.2 && c.minY <= .1).map(c => Math.hypot(
         Math.max(c.minX - point.x, 0, point.x - c.maxX), Math.max(c.minZ - point.z, 0, point.z - c.maxZ))));
       assert.ok(distance <= 1.6, `(${point.x},${point.z}) está encostado em cobertura real`);
-      assert.ok(Math.min(...loaded.escortPath.map(p => Math.hypot(p.x - point.x, p.z - point.z))) > 1, `(${point.x},${point.z}) não repete checkpoint`);
+      assert.ok(Math.min(...loaded.escortPaths.flat().map(p => Math.hypot(p.x - point.x, p.z - point.z))) > 1, `(${point.x},${point.z}) não repete checkpoint`);
       const nearest = loaded.waypoints.nodes[loaded.nearestWaypoint(point.x, point.z)];
       assertClearSegment(point, nearest, `(${point.x},${point.z}) ligado ao grafo`, .46);
     }
@@ -292,10 +387,12 @@ try {
       apronOeste: [-32, 54], apronLeste: [32, 54], hangarBoca: [0, 19],
     };
     const protegido = {
-      '-7.2,-40': ['norteCentro'], '8.2,-40': ['norteCentro'], '0,-36.3': ['norteCentro'],
-      '-20.5,-40.5': ['ladoOesteSul'], '13,-41': ['norteLeste'], '-6,-21.4': ['norteCentro'], '6,-21.4': ['norteCentro'],
+      // Slots do lounge recuaram para trás das plantas de 1,8 m (balcão real de 1,25 m não esconde em pé).
+      '-7.2,-40': ['norteCentro'], '8.2,-40': ['norteCentro'], '0,-37.8': ['norteCentro'],
+      '-20.5,-40.5': ['ladoOesteSul'], '13,-41': ['norteLeste'], '-6,-22.3': ['norteCentro'], '6,-22.3': ['norteCentro'],
       '-1,46.9': ['hangarBoca'], '-6.6,49': ['apronOeste'],
-      '-3.2,49.9': ['apronOeste', 'apronLeste'], '12.6,50.4': ['apronOeste', 'apronLeste'],
+      // Slot leste seguiu a pilha de ULD de escala real (antes 12,6;50,4 com container de 5 m).
+      '-3.2,49.9': ['apronOeste', 'apronLeste'], '14.4,50.2': ['apronOeste', 'apronLeste'],
     };
     loaded.root.updateMatrixWorld(true);
     for (const point of loaded.escortCoverPoints.filter(p => p.role === 'guard')) {
@@ -336,7 +433,7 @@ try {
     };
     for (const s of loaded.spawns.E) {
       const dist = bfs(loaded.nearestWaypoint(s.x, s.z));
-      loaded.escortPath.forEach((cp, k) => {
+      loaded.escortPaths.flat().forEach((cp, k) => {
         const d = dist[loaded.nearestWaypoint(cp.x, cp.z)];
         assert.ok(d > 0, `E(${s.x},${s.z}) alcança o checkpoint ${k}`);
         assert.ok(d <= 35, `E(${s.x},${s.z})→cp${k} em ${d} arestas: cobertura não virou labirinto`);
@@ -346,16 +443,16 @@ try {
   check('vip-cover-density-per-checkpoint', () => {
     // Contrato acordado com o modo: cada checkpoint intermediário tem >=2 slots a 8 m
     // para o VIP escolher abrigo por concealment (raio de âncora de 8 m).
-    loaded.escortPath.forEach((cp, k) => {
-      if (k === 0 || k === loaded.escortPath.length - 1) return;
+    for (const caminho of loaded.escortPaths) caminho.forEach((cp, k) => {
+      if (k === 0 || k === caminho.length - 1) return;
       const near = loaded.escortCoverPoints.filter(p => Math.hypot(p.x - cp.x, p.z - cp.z) <= 8);
       assert.ok(near.length >= 2, `cp${k} (${cp.x},${cp.z}) com ${near.length} slots a 8 m`);
     });
   });
   check('patrol-cover-chain-along-route', () => {
     const tall = loaded.colliders.filter(c => c.maxY >= 1.2 && c.minY <= .1);
-    for (let i = 1; i < loaded.escortPath.length; i++) {
-      const a = loaded.escortPath[i - 1], b = loaded.escortPath[i];
+    for (const caminho of loaded.escortPaths) for (let i = 1; i < caminho.length; i++) {
+      const a = caminho[i - 1], b = caminho[i];
       const steps = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 2);
       for (let n = 0; n <= steps; n++) {
         const t = n / steps, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
@@ -378,10 +475,13 @@ try {
     const aneis = loaded.root.children.filter(o => o.name === 'marca-checkpoint-escolta');
     const piso = loaded.root.children.find(o => o.name === 'piso-hangar');
     const topoPiso = piso.position.y + piso.geometry.parameters.height / 2;
-    assert.equal(aneis.length, 13, '13 anéis de checkpoint');
-    loaded.escortPath.forEach((cp, i) => {
-      assert.ok(aneis.some(a => Math.abs(a.position.x - cp.x) < 1e-9 && Math.abs(a.position.z - cp.z) < 1e-9), `anel ${i} no checkpoint`);
-    });
+    const distintos = new Set(loaded.escortPaths.flat().map(p => `${p.x},${p.z}`));
+    assert.equal(aneis.length, distintos.size, `${distintos.size} anéis: um por checkpoint distinto das variantes`);
+    loaded.escortPaths.forEach((caminho, rota) => caminho.forEach((cp, i) => {
+      const anel = aneis.find(a => Math.abs(a.position.x - cp.x) < 1e-9 && Math.abs(a.position.z - cp.z) < 1e-9);
+      assert.ok(anel && anel.userData.rotas.includes(rota), `variante ${rota}: anel ${i} no checkpoint`);
+    }));
+    assert.equal(aneis.filter(a => a.visible).length, 13, 'mapa nasce com os 13 anéis do meio acesos');
     assert.ok(aneis.every(a => a.position.y > topoPiso + 0.02), 'anéis acima da laje do hangar');
     const faixas = loaded.root.children.filter(o => o.name.startsWith('faixa-box-hangar')
       || o.name === 'eixo-hangar' || o.name.startsWith('travessa-box-hangar'));
@@ -475,7 +575,8 @@ try {
     assert.ok(facadeShadows(loaded).every(Boolean), 'médio preserva sombra dos props decorativos');
     assert.ok(facadeShadows(lowLoaded).every(flag => !flag), 'baixo corta sombra dos props decorativos');
     assert.ok(lowFallback.root.children.filter(o => o.name.startsWith('cobertura-tatica-')).every(o => o.castShadow), 'cover sólido preserva sombra');
-    const decorativeFallbacks = new Set(['fallback-terminal_fachada', 'fallback-terminal_portal', 'fallback-arco_seguranca']);
+    // O kit GLB de barreiras virou cenário fora da área jogável (sem collider, sem sombra no baixo).
+    const decorativeFallbacks = new Set(['fallback-terminal_fachada', 'fallback-terminal_portal', 'fallback-arco_seguranca', 'fallback-barreiras_aeroporto']);
     const fallbackMeshes = lowFallback.root.children.filter(o => o.name.startsWith('fallback-'));
     const solidFallbacks = fallbackMeshes.filter(o => !decorativeFallbacks.has(o.name));
     assert.ok(solidFallbacks.length > 0 && solidFallbacks.every(o => o.castShadow), 'fallback sólido preserva sombra no baixo');
@@ -488,7 +589,8 @@ try {
   });
 } finally {
   mediumModule.fixtureTemplates(null); lowModule.fixtureTemplates(null);
-  fallback.dispose?.(); loaded.dispose?.(); lowFallback.dispose?.(); lowLoaded.dispose?.();
+  fallback.dispose?.(); loaded.dispose?.(); lowFallback.dispose?.(); lowLoaded.dispose?.(); glbReal.dispose?.();
   template.geometry.dispose(); template.material.dispose();
+  for (const mesh of Object.values(glbTemplates)) mesh.geometry.dispose();
 }
 process.exitCode = failures ? 1 : 0;
