@@ -52,9 +52,11 @@ export function classe(arma) {
   return 'longa';
 }
 const luneta = (arma) => Boolean(WEAPONS[arma]?.scope);
-// A PT-38 golden pública (pistol-hires.glb) vence a fábrica e tem rig próprio (L_*/R_*): sem
-// isto o carregador saía "ossos de mão ausentes" e o placar guardava a pistola antiga.
-const GOLDEN_PISTOLA = Boolean(VM_WEAPON.pistol?.golden) && !/(?:^|&)vmgolden=0(?:&|$)/.test(process.env.VM_PALCO_QS || '');
+// A PT-38 golden (pistol-hires.glb, pintura ou ?vmgolden=pistol) tem rig próprio (L_*/R_*): sem
+// isto o carregador saía "ossos de mão ausentes". Sem pintura o lançamento é o X18 (06/11).
+const QS_PALCO = new URLSearchParams(process.env.VM_PALCO_QS || '');
+const GOLDEN_PISTOLA = QS_PALCO.get('vmgolden') !== '0'
+  && (Boolean(VM_WEAPON.pistol?.golden) || (QS_PALCO.get('vmgolden') || '').split(',').includes('pistol'));
 const rigDe = (arma) => (arma === 'pistol' && GOLDEN_PISTOLA ? 'coro' : VM_WEAPON[arma]?.golden ? 'metarig' : 'k');
 
 // Peça do carregador por arma (nome de malha ou osso do produto K, 23/09).

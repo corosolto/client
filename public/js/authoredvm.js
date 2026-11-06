@@ -305,7 +305,7 @@ export const entryKeyFor = (weapon) => {
   if (!family) return '';
   if (VM_FONTE === 'retarget') return `rt#${weapon}`;
   if (VM_FONTE === 'goldsrc') return `gs#${weapon}`;
-  // Golden (dono, 05/11) vence o chassi da fábrica; `?vmgolden=0` devolve para A/B.
+  // Golden marcada no vmconfig (hoje só a AK) vence o chassi da fábrica; `?vmgolden=0` devolve para A/B.
   if (GOLDEN_VM && (VM_WEAPON[weapon]?.golden === true || GOLDEN_QS.has(weapon))) return `gold#${weapon}`;
   if (fabricaAtiva(weapon)) return `fab#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;

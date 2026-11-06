@@ -1,7 +1,7 @@
 {
  "gerado": "2026-11-06",
  "aspecto": "16x9",
- "entradas": "734617e5cd5dacfd",
+ "entradas": "b01361413dfd9278",
  "resultados": {
   "awp": {
    "mira": {
@@ -173,13 +173,13 @@
    },
    "cobertura": {
     "estado": "VERDE",
-    "valor": "1.01× PT-38",
-    "msg": "curta: tamanho 1.01× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho ? palma"
+    "valor": "0.99× PT-38",
+    "msg": "curta: tamanho 0.99× PT-38 aprovada por metro (faixa 0.8–1.25), cruz 0 px, olho 3.31 palma"
    },
    "pistola-ref": {
     "estado": "VERDE",
-    "valor": "1.01× pistola aprovada",
-    "msg": "tamanho 1.01× pistola aprovada, desvio 15 px, ADS 120%"
+    "valor": "0.99× pistola aprovada",
+    "msg": "tamanho 0.99× pistola aprovada, desvio 36 px, ADS 53%"
    },
    "maos": {
     "estado": "N/A",
@@ -710,11 +710,13 @@
   "reguas": [
    "mira",
    "cobertura",
-   "pistola-ref"
+   "pistola-ref",
+   "maos",
+   "carregador"
   ],
   "armas": [
    "pistol"
   ],
-  "base": "2026-11-05"
+  "base": "2026-11-06"
  }
 }

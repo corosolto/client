@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const args = process.argv.slice(2);
-const MUTANTS = ['body-noop', 'mag-unpainted', 'hand-painted', 'ak-base-changed', 'first-mesh', 'fabrica-no-lancamento', 'sem-alca-golden'];
+const MUTANTS = ['body-noop', 'mag-unpainted', 'hand-painted', 'ak-base-changed', 'first-mesh', 'golden-no-lancamento', 'sem-alca-golden'];
 if (args.length > 1 || args.some(a => !MUTANTS.includes(a.replace(/^--mutante=/, '')) || !a.startsWith('--mutante='))) throw Error('CLI inválida: --mutante=' + MUTANTS.join('|'));
 const mutant = args[0]?.slice('--mutante='.length) || '';
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
@@ -39,7 +39,7 @@ if (mutant === 'first-mesh') replaceOnce('const bodies = (entry.weaponMeshes || 
 if (mutant === 'mag-unpainted') replaceOnce('const irmas = [...(entry.weaponMeshes || []), ...(corpo.userData?.mintParts || [])];', 'const irmas = [...(entry.weaponMeshes || []), ...(corpo.userData?.mintParts || [])].filter(p => !/magazine|charging_handle/.test(p.name));');
 if (mutant === 'hand-painted') replaceOnce('const irmas = [...(entry.weaponMeshes || []), ...(corpo.userData?.mintParts || [])];', 'const irmas = [...(entry.weaponMeshes || []), ...(corpo.userData?.mintParts || []), ...(entry.handMeshes || [])];');
 if (mutant === 'ak-base-changed') replaceOnce('const skinId = this.profile.weaponSkins?.[weaponId];', "const skinId = this.profile.weaponSkins?.[weaponId] || (weaponId === 'ak' ? 'ouro-ak' : null);");
-if (mutant === 'fabrica-no-lancamento') replaceOnce('  if (GOLDEN_VM && (VM_WEAPON[weapon]?.golden === true || GOLDEN_QS.has(weapon))) return `gold#${weapon}`;\n  if (fabricaAtiva(weapon)) return `fab#${weapon}`;', '  if (fabricaAtiva(weapon)) return `fab#${weapon}`;\n  if (GOLDEN_VM && (VM_WEAPON[weapon]?.golden === true || GOLDEN_QS.has(weapon))) return `gold#${weapon}`;');
+if (mutant === 'golden-no-lancamento') replaceOnce('  if (GOLDEN_VM && (VM_WEAPON[weapon]?.golden === true || GOLDEN_QS.has(weapon))) return `gold#${weapon}`;', "  if (GOLDEN_VM && (VM_WEAPON[weapon]?.golden === true || GOLDEN_QS.has(weapon) || weapon === 'pistol')) return `gold#${weapon}`;");
 if (mutant === 'sem-alca-golden') replaceOnce('const mira = golden && GOLDEN_ADS && adsEfetivo(VM_WEAPON[bakedWeapon]?.ads, ADS1P_FIX)?.golden;', 'const mira = false && GOLDEN_ADS && adsEfetivo(VM_WEAPON[bakedWeapon]?.ads, ADS1P_FIX)?.golden;');
 source = source.replace(/from (['"])([^'"]+)\1/g, (_, q, p) => `from ${q}${p.startsWith('.') ? new URL(p, url).href : import.meta.resolve(p)}${q}`)
   .replace(/import\((['"])(\.\.?\/[^'"]+)\1\)/g, (_, q, p) => `import(${q}${new URL(p, url).href}${q})`);
@@ -141,43 +141,37 @@ check('named-body-order', Object.entries(entries).every(([weapon, e]) => runtime
 check('duplicate-body-rejected', Object.entries(entries).every(([weapon, e]) => runtime.pecasDaPintura({ ...e, weaponMeshes: [...e.weaponMeshes, e.weaponMeshes.find(m => m.name === assetSpec[weapon].body)] }).length === 0), true);
 check('no-mint-created', Object.values(entries).every(e => !e.mint) && !plainAk.mint, true);
 check('profile-load-real', painted.vm.profile.weaponSkins.pistol === 'ouro-pistola' && painted.vm.profile.weaponSkins.ak === 'ouro-ak' && parseCalls.length === 2 && readyCalls.length === 3 && Object.values(entries).every(e => e.mixer instanceof THREE.AnimationMixer), { parseCalls, readyCalls });
-/* Lançamento SEM pintura (05/11, Operação Flávio): a PT-38 do jogador comum também
-   resolve gold#pistol — a golden PÚBLICA do catálogo — e o Game ativa a entrada real
-   (mount visível, mãos do pacote, clipes do contrato, legado fora de cena). A rota
-   fab#pistol (catálogo privado) caía no legado em silêncio onde o privado falta.
-   Aqui DEPOIS de 'profile-load-real': a carga extra muda contagens globais já pinadas. */
-/* O controlador do Game é o REAL; a mutação vive na CÓPIA (mesmo padrão dos forwards
-   de _loadFamily/_applyWeaponSkin). O _keyFor DA INSTÂNCIA encaminha para a cópia para
-   que a troca de precedência do mutante seja vista pela resolução que o jogo usaria —
-   sem o forward o mutante aplicava e a cláusula media o módulo intacto (falso verde). */
+/* Lançamento SEM pintura (dono, 06/11): a PT-38 do jogador comum resolve o X18 da fábrica
+   (fab#pistol); a golden pública fica para a pintura, medida abaixo na entrada pintada. */
+/* O controlador do Game é o REAL; a mutação vive na CÓPIA. O _keyFor DA INSTÂNCIA encaminha
+   para a cópia, senão o mutante aplicava e a cláusula media o módulo intacto (falso verde). */
 plain.vm._keyFor = (id) => runtime.AuthoredViewModels.prototype._keyFor.call(plain.vm, id);
 const bareKey = plain.vm._keyFor('pistol');
 const realRoute = originalRuntime.vmFonteDe('pistol').chave;
-check('pistol-golden-launch', bareKey === 'gold#pistol' && realRoute === 'gold#pistol', { bareKey, realRoute });
-if (bareKey === 'gold#pistol') {
-  const plainPistol = await switchAndLoad(plain, 'pistol');
-  plain.g._applyVmVisibility();
-  check('pistol-launch-entry', plain.vm.active('pistol') && plainPistol.mount.visible, { key: plainPistol.key, mount: plainPistol.mount.visible });
-  check('pistol-launch-hands', plainPistol.handMeshes.length >= 1, plainPistol.handMeshes.length);
-  check('pistol-launch-clips', ['equip_rifle', 'idle', 'reload_tactical', 'shoot'].every(c => plainPistol.clips.has(c)), [...plainPistol.clips.keys()]);
-  check('pistol-launch-no-legacy', plain.g._vmPresentation.authored === true && plain.g._vmVisibility.fallback === false, plain.g._vmVisibility);
-  /* P1 da revisão (05/11): golden sem ads.golden não ergue `wrap` e o update pulava o
-     ADS INTEIRO (nem residual). Agora: sockets medidos + cfg por rota movem o mount de
-     verdade — alça vai ao foco abaixo da cruz e o cano ao eixo (raster: ads1p-linha). */
-  for (let i = 0; i < 6; i++) plain.vm.update(1 / 60);   // assenta o idle/draw (baseline parado)
-  const m0 = plainPistol.mount.position.clone();
-  const r0 = [plainPistol.mount.rotation.x, plainPistol.mount.rotation.y];
-  plain.vm.setAim('pistol', 1);
-  for (let i = 0; i < 3; i++) plain.vm.update(1 / 60);
-  const alvo = plainPistol.adsSockets?.sight;
-  const dy = plainPistol.mount.position.y - m0.y;
-  const drot = Math.abs(plainPistol.mount.rotation.x - r0[0]) + Math.abs(plainPistol.mount.rotation.y - r0[1]);
-  check('pistol-launch-ads', Boolean(alvo) && Math.abs(dy) > 2 && drot > 0.01,
+check('pistol-factory-launch', bareKey === 'fab#pistol' && realRoute === 'fab#pistol', { bareKey, realRoute });
+{
+  const goldPistol = entries.pistol;
+  painted.g._switchWeapon('pistol');
+  painted.g._applyVmVisibility();
+  check('pistol-golden-entry', goldPistol.key === 'gold#pistol' && painted.vm.active('pistol') && goldPistol.mount.visible, { key: goldPistol.key, mount: goldPistol.mount.visible });
+  check('pistol-golden-hands', goldPistol.handMeshes.length >= 1, goldPistol.handMeshes.length);
+  check('pistol-golden-clips', ['equip_rifle', 'idle', 'reload_tactical', 'shoot'].every(c => goldPistol.clips.has(c)), [...goldPistol.clips.keys()]);
+  /* P1 da revisão (05/11): golden sem ads.golden não ergue `wrap` e o update pulava o ADS
+     INTEIRO. Sockets medidos + cfg por rota movem o mount (raster: ads1p-linha). */
+  for (let i = 0; i < 6; i++) painted.vm.update(1 / 60);   // assenta o idle/draw (baseline parado)
+  const m0 = goldPistol.mount.position.clone();
+  const r0 = [goldPistol.mount.rotation.x, goldPistol.mount.rotation.y];
+  painted.vm.setAim('pistol', 1);
+  for (let i = 0; i < 3; i++) painted.vm.update(1 / 60);
+  const alvo = goldPistol.adsSockets?.sight;
+  const dy = goldPistol.mount.position.y - m0.y;
+  const drot = Math.abs(goldPistol.mount.rotation.x - r0[0]) + Math.abs(goldPistol.mount.rotation.y - r0[1]);
+  check('pistol-golden-ads', Boolean(alvo) && Math.abs(dy) > 2 && drot > 0.01,
     { sockets: alvo?.name ?? null, dy: +dy.toFixed(3), drot: +drot.toFixed(4) });
-  plain.vm.setAim('pistol', 0);
-  for (let i = 0; i < 3; i++) plain.vm.update(1 / 60);
-  check('pistol-launch-ads-solta', Math.abs(plainPistol.mount.position.y - m0.y) < 0.01,
-    { dy: +(plainPistol.mount.position.y - m0.y).toFixed(4) });
+  painted.vm.setAim('pistol', 0);
+  for (let i = 0; i < 3; i++) painted.vm.update(1 / 60);
+  check('pistol-golden-ads-solta', Math.abs(goldPistol.mount.position.y - m0.y) < 0.01,
+    { dy: +(goldPistol.mount.position.y - m0.y).toFixed(4) });
 }
 for (const g of games) g.dispose();
 await Promise.all(loadOperations);
@@ -185,7 +179,7 @@ GLTFLoader.prototype.loadAsync = originalLoadAsync;
 for (const k of Object.keys(originalConsole)) console[k] = originalConsole[k];
 if (events.some(e => e.level === 'warn' || e.level === 'error')) throw Error('INFRA: ' + JSON.stringify(events.filter(e => e.level === 'warn' || e.level === 'error')));
 const failed = checks.filter(c => !c.ok).map(c => c.id).sort();
-const expected = { 'body-noop': ['pistol-body', 'pistol-siblings', 'pistol-body-first', 'ak-body', 'ak-siblings', 'ak-body-first', 'named-body-order'], 'mag-unpainted': ['pistol-siblings', 'ak-siblings'], 'hand-painted': ['hands-excluded', 'mint-factory-preserved'], 'ak-base-changed': ['ak-unpainted'], 'first-mesh': ['named-body-order', 'duplicate-body-rejected'], 'fabrica-no-lancamento': ['pistol-golden-launch'], 'sem-alca-golden': ['pistol-launch-ads'] };
+const expected = { 'body-noop': ['pistol-body', 'pistol-siblings', 'pistol-body-first', 'ak-body', 'ak-siblings', 'ak-body-first', 'named-body-order'], 'mag-unpainted': ['pistol-siblings', 'ak-siblings'], 'hand-painted': ['hands-excluded', 'mint-factory-preserved'], 'ak-base-changed': ['ak-unpainted'], 'first-mesh': ['named-body-order', 'duplicate-body-rejected'], 'golden-no-lancamento': ['pistol-factory-launch'], 'sem-alca-golden': ['pistol-golden-ads'] };
 const ok = mutant ? JSON.stringify(failed) === JSON.stringify(expected[mutant].sort()) : failed.length === 0;
-console.log('GOLDEN-SKIN/1 ' + JSON.stringify({ ok, mutant, failed, expected: mutant ? expected[mutant] : [], checks, sourcePins: sourceBefore, selected, loadCalls, applyCallCount: applyCalls.length, fixture: { realGameController: true, actualGameSwitch: true, fullLoadFamily: true, copyChange: 'NODE_RUNTIME load guard removed; imports relocated; fabrica-no-lancamento swaps entryKeyFor precedence', textureBoundary: 'Exact shipping GLB parsed; neutral 1x1 texture decode; no pixel claim', poses: ['Idle from load', 'Equip start', 'Reload start'], limits: ['Node harness DOM/renderer/sfx; no browser download/appearance/decal/contact/anatomy/mobile/MP approval', 'Mint/factory and unknown selector cases are small API fixtures, not loaded private assets', 'No persistent model export or source writes by this checker'] } }));
+console.log('GOLDEN-SKIN/1 ' + JSON.stringify({ ok, mutant, failed, expected: mutant ? expected[mutant] : [], checks, sourcePins: sourceBefore, selected, loadCalls, applyCallCount: applyCalls.length, fixture: { realGameController: true, actualGameSwitch: true, fullLoadFamily: true, copyChange: 'NODE_RUNTIME load guard removed; imports relocated; golden-no-lancamento forces gold#pistol in entryKeyFor', textureBoundary: 'Exact shipping GLB parsed; neutral 1x1 texture decode; no pixel claim', poses: ['Idle from load', 'Equip start', 'Reload start'], limits: ['Node harness DOM/renderer/sfx; no browser download/appearance/decal/contact/anatomy/mobile/MP approval', 'Mint/factory and unknown selector cases are small API fixtures, not loaded private assets', 'No persistent model export or source writes by this checker'] } }));
 if (!ok) process.exitCode = 1;

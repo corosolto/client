@@ -91,9 +91,9 @@ export const VM_WEAPON = {
       slideLiner: { mesh: 'GEO-deagle-slide-liner-reconstructed', bone: 'Slider' },
       hammer: { mesh: 'GEO-deagle-hammer', bone: 'Hammer' },
     } }),
-  // PT-38 APROVADA = golden do catálogo PÚBLICO (dono, 05/11): piloto viaja no deploy,
-  // ads medido no osso CoroWeapon, foco abaixo da cruz preservado (BUG-181). Detalhes: docs/reports/GOLDEN-SKIN-SELECTION-CONTINUATION-20261101.md.
-  pistol: W('pistol', { baked: true, golden: true, runtime: 'family', timing: 'gameplay',
+  // PT-38 sem pintura = X18 da fábrica (dono, 06/11: a golden pública via a traseira); a golden
+  // (coro/pistol-hires.glb) só com pintura ou ?vmgolden=pistol. Ads abaixo: tabela da golden.
+  pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay',
     // A câmera do piloto (fov 34°) dava 1,99× a PT-38 aprovada (playtest 06/11). Unidades do
     // piloto (~97 un/m); medido em vm-reguas pistola-ref: 1,05×, desvio 1 px.
     goldFrame: { x: -7.5, y: -5.5, z: 0, fov: 60 },

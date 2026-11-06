@@ -10,7 +10,7 @@ Integrated PR #1158 into the current mainline, corrected escort authority, onlin
 
 A fourth owner playtest on 2026-11-06 drove seven fixes:
 
-- **PT-38 viewmodel.** The public golden pilot's own camera (34°) rendered the pistol at 1.99× the approved PT-38, and the baked scoreboard stayed green at 0.99× because the pistol was excluded from its hash. `goldFrame` reframes only the `gold#` route: 1.05× and 1 px offset in 3:2, 1.01× in 16:9. The pistol is back in the hash, guarded by the `quadro-pistola` mutant.
+- **PT-38 viewmodel.** The public golden pilot was both giant (1.99×, from its own 34° camera) and wrong: it showed the back of the slide with blob hands. Since the second playtest, the unpainted PT-38 is the factory X18 again (0.99×, green magazine, same composition as the rest of the arsenal). The golden stays for the gold paint route, reframed with `goldFrame` to 1.05×. The pistol is back in the scoreboard hash, guarded by the `quadro-pistola` mutant.
 - **HUD.** The escort HUD shows only progress and time. Escort count and contested/cover state no longer leak the defence's tactics.
 - **Player as VIP.** Picking Zero Um on side B makes the player the VIP, offline only, with no duplicate senador bot. The online roster stays server-owned.
 - **Routes and aggression.** There are three deterministic VIP route variants per round (middle/west/east, derived from `roundNum`). The VIP pushes under visible threat with two or more guards and boards while escorted even when contested. Flankers act as decoys across three or more lanes.
@@ -43,7 +43,7 @@ A fourth owner playtest on 2026-11-06 drove seven fixes:
 - Right-click on an unlocked canvas requests pointer lock and queues ADS, so the first aim click engages as soon as the browser grants lock; releasing the button before lock cancels the pending state, as does `_releaseInput`.
 - Escort destinations, animation bands, formation holds and physical depenetration are smoothed/hysteretic. Measured browser flicker fell from repeated body flashing to one normal death transition in twelve seconds.
 - Stable formation guards reroute every 0.37 s, pocketed guards keep the 0.28 s escape cadence and the direct-escape hold is 0.75 s; swap/orbit/march/pocket flicker scenarios and their mutants stay green with the fixed E base and denser apron.
-- The pistol now launches with the public golden PT-38 (`gold#pistol`), including functional ADS sockets; legacy procedural fallback is no longer silently selected in normal play.
+- The unpainted pistol launches with the factory X18 (`fab#pistol`); the public golden PT-38 (`gold#pistol`, functional ADS sockets) serves the gold paint route. Local DEV proxies `/private-assets/`, so normal play does not fall back to the legacy viewmodel.
 - VIP always respawns with armor 100, helmet enabled and a visible PT-38 with working fire/reload behavior.
 
 ## Map and presentation
@@ -85,6 +85,6 @@ Evidence captures:
 - No physical Android/iOS device test or long human playtest was performed.
 - No real dedicated backend/client pair was launched; backend PR #196 still requires its own update and compatibility evidence.
 - Browser checks used the local development server, not production or a store shell.
-- Golden PT-38 reload: the magazine ruler now measures the pilot rig and reports `pente some na tela` at 46% of an empty reload and 43% of a tactical reload. The baked `carregador/pistol` cell was not re-baked: with `VM_LAUNCH=true` a red cell needs the owner's exact acceptance or an animation fix.
+- Golden PT-38 (paint route only): the magazine ruler measures the pilot rig and reports `pente some na tela` at about 45% of the reload; the pilot hand rig remains declared debt `RIG:pistol@pintura`. The unpainted X18 is green.
 - Player-as-VIP works offline only. Online rosters come from the backend, which must also make a senador pick the VIP.
 - This is a local candidate, not a claim of release readiness or an 8/9 visual rating.

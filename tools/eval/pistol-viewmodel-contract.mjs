@@ -148,10 +148,10 @@ for (const part of ['Arm', 'Cloth', 'Glove']) {
 
 const vmconfig = fs.readFileSync(path.join(root, 'public/js/data/vmconfig.js'), 'utf8');
 const authoredVm = fs.readFileSync(path.join(root, 'public/js/authoredvm.js'), 'utf8');
-// Rota (05/11): a PT-38 serve a golden PÚBLICA (gold#pistol) no lançamento; o produto
-// K da família (pistol#pistol) continua ligado para o A/B `?vmgolden=0&vmfabrica=0`.
+// Rota (dono, 06/11): sem pintura a PT-38 serve o X18 da fábrica; golden pública só com pintura.
+// O produto K da família (pistol#pistol) segue ligado para o A/B `?vmgolden=0&vmfabrica=0`.
 const runtimeRoute = !hasMutant('sem-runtime')
-  && /pistol:\s*W\('pistol',\s*\{\s*baked:\s*true,\s*golden:\s*true,\s*runtime:\s*'family',\s*timing:\s*'gameplay',/.test(vmconfig)
+  && /pistol:\s*W\('pistol',\s*\{\s*baked:\s*true,\s*runtime:\s*'family',\s*timing:\s*'gameplay',/.test(vmconfig)
   && /osso:\s*'CoroWeapon'/.test(vmconfig)
   && /VM_WEAPON\[weapon\]\?\.runtime === 'family'/.test(authoredVm);
 

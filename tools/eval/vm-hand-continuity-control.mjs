@@ -42,7 +42,7 @@ export function expectedHandMutation(nominal, spec) {
     count = nominal.faccoes.length * measured.reduce((n, r) => n + r.handMaterialCount, 0); routes = targets;
   } else {
     paid = Object.keys(HAND_DEBT).map(key => `${key}: passou a verde — remova da DIVIDA`);
-    count = 1; routes = ['pistol@padrao'];
+    count = 1; routes = ['pistol@pintura'];
   }
   requireInfra(Number.isSafeInteger(count) && count > 0 && (red.length > 0 || paid.length > 0), 'mutant target not measured');
   return { red: sorted(red), paid: sorted(paid), count, routes: sorted(routes) };
