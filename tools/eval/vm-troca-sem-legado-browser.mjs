@@ -29,23 +29,28 @@ try {
   await page.waitForFunction(() => window.__game._vmVisibility?.authored === true, null, { timeout: 120000 });
   await page.waitForFunction((mut) => mut || Boolean(window.__game.vm.authored.entry('deagle')), MUTANTE, { timeout: 120000 });
   await page.waitForTimeout(MUTANTE ? 3000 : 300);
-  const quadros = await page.evaluate(() => new Promise((resolve) => {
+  // O estado no instante da troca decide o próximo render: sem pacote montado, o legado
+  // entra antes de qualquer quadro (o nº de quadros depois varia com a máquina).
+  const { troca, quadros } = await page.evaluate(() => new Promise((resolve) => {
     const g = window.__game, amostras = [];
     g._switchWeapon('deagle');
+    const v0 = g._vmVisibility || {};
+    const troca = { legado: Boolean(v0.fallback), autorado: Boolean(v0.authored) };
     const passo = () => {
       const v = g._vmVisibility || {};
       amostras.push({ legado: Boolean(v.fallback), autorado: Boolean(v.authored) });
-      if (amostras.length >= 90) resolve(amostras); else requestAnimationFrame(passo);
+      if (amostras.length >= 90) resolve({ troca, quadros: amostras }); else requestAnimationFrame(passo);
     };
     requestAnimationFrame(passo);
   }));
   const legado = quadros.filter((q) => q.legado).length;
-  console.log(JSON.stringify({ mutante: MUTANTE || null, quadros: quadros.length, legado, autoradoNoFim: quadros.at(-1).autorado, erros }));
+  console.log(JSON.stringify({ mutante: MUTANTE || null, troca, quadros: quadros.length, legado, autoradoNoFim: quadros.at(-1).autorado, erros }));
   if (MUTANTE) {
-    assert.ok(legado > 0, 'mutante sem-prime não mostrou o legado: a régua não morde');
-    console.log('✓ mutante sem-prime reprovado: legado aparece na 1ª troca sem prime');
+    assert.ok(troca.legado && !troca.autorado, 'mutante sem-prime já tinha o autorado na troca: a régua não morde');
+    console.log('✓ mutante sem-prime reprovado: sem prime a troca entra no legado');
   } else {
     assert.deepEqual(erros, [], 'erros de página');
+    assert.ok(troca.autorado && !troca.legado, `na troca o autorado não estava pronto: ${JSON.stringify(troca)}`);
     assert.equal(legado, 0, `1ª troca para a secundária mostrou o legado em ${legado} quadro(s)`);
     assert.ok(quadros.at(-1).autorado, 'a secundária não terminou no viewmodel autorado');
     console.log('✓ 1ª troca para a secundária vai direto ao autorado, sem o legado');
