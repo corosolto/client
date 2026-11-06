@@ -6,6 +6,7 @@ import { escapeClanName } from './clan-label.js';
 import { ajustarAnisotropia } from './textures.js';
 import { MAPS, resolveMapId } from './maps.js';
 import { criarInvasaoJavaporcos } from './mode_javaporcos.js';
+import { criarOperacaoFlavio } from './mode_operacao_flavio.js';
 import { atualizaCortes } from './mapprops.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon, podeNoLado } from './characters.js';
 import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver, getGloveHandle, GloveManifestUnavailable } from './glbchars.js';
@@ -1369,7 +1370,8 @@ export class Game {
     // Modos são explícitos no contrato do Game. Vira-Casaca é local: nunca divide estado
     // com CTF nem depende de query string escondida.
     this.arena = !!this._arenaOpt;
-    this.ctf = !this.arena && this.world.mode !== 'horde' && (!!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1'));
+    this.ctf = !this.arena && this.world.mode !== 'horde' && this.world.mode !== 'escort'
+      && (!!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1'));
     /* TETO DE RODADAS LIVRE (1–15, ROUNDS_CUSTOM_MAX): era whitelist [1,3,5,7] — o dono
        pediu número customizado. Fora do intervalo cai no padrão do modo. Empate em teto
        PAR (2×2 no melhor de 4) segue pro desempate por abates (já existente no _endMatch).
@@ -1418,7 +1420,8 @@ export class Game {
       const on = this.onToggleSpeech?.();
       this.el.hudSpeech.textContent = on ? '🔊' : '🔇';
     };
-    this.objective = this.world.mode === 'horde' ? criarInvasaoJavaporcos(this) : null;
+    this.objective = this.world.mode === 'horde' ? criarInvasaoJavaporcos(this)
+      : this.world.mode === 'escort' ? criarOperacaoFlavio(this, byId('senador')) : null;
     /* O netcode nasce por ÚLTIMO: ele lê `player`, `bots` e `el`, que só existem agora.
        Construí-lo junto com o resto era pegar metade do jogo montada. */
     if (this._mpPend) { this._mp = this._mpPend.mpFactory(this, this._mpPend.net); this._mpPend = null; }
@@ -2252,6 +2255,7 @@ export class Game {
         if (!this.testMode && (this.state === 'live' || this.state === 'countdown') && !document.pointerLockElement
             && e.target === this.renderer.domElement) {
           if (this.paused) this.setPaused(false);
+          this._adsAposLock = e.button === 2 && !this.player.nade && this.player.weapon !== 'knife';
           this._requestLock();
         }
         return;
@@ -2275,7 +2279,10 @@ export class Game {
       if (e.button === 0) this.mouseDown0 = false;
       if (e.button === 2) {
         const w = this.player.weapon;
-        if (!this.player.nade && w !== 'knife' && !(WEAPONS[w] && WEAPONS[w].scope)) this._scope(false);   // só solta o ADS das não-sniper
+        if (!this.player.nade && w !== 'knife' && !(WEAPONS[w] && WEAPONS[w].scope)) {
+          this._adsAposLock = false;   // clique rápido: soltar antes do lock não pode mirar depois
+          this._scope(false);   // só solta o ADS das não-sniper
+        }
       }
     };
     this._mm = e => {
@@ -2320,6 +2327,10 @@ export class Game {
     this._hiddenInput = () => { if (document.hidden) this._releaseInput(); };
     this._plc = () => {
       if (this._chatSeguraPausa()) return;
+      if (document.pointerLockElement && this._adsAposLock) {
+        this._adsAposLock = false;
+        if (this.state === 'live' || this.state === 'countdown') this._scope(true);
+      }
       if (!document.pointerLockElement && !this.testMode && (this.state === 'live' || this.state === 'countdown') && !this.paused)
         this.setPaused(true);
     };
@@ -2481,7 +2492,7 @@ export class Game {
 
   _releaseInput() {
     this._fxTiroPendente = null;
-    this.keys = {}; this.mouseDown0 = false;
+    this._adsAposLock = false; this.keys = {}; this.mouseDown0 = false;
     for (const release of this._sticksSoltar || []) release();
     if (this.touchMove) { this.touchMove.x = 0; this.touchMove.z = 0; }
     if (this.touchLook) { this.touchLook.x = 0; this.touchLook.y = 0; }
@@ -3176,7 +3187,8 @@ export class Game {
       if (b._objectiveNpc) continue;
       const botSpawn = place(b, b.team, slots[b.team]++);
       b.yaw = this._spawnYaw(botSpawn, b.team, true);
-      b.target = null; b.path = null; b.repathAt = 0;
+      b.target = null; b.path = null; b.repathAt = 0; b._regroupEscapePending = false; b._regroupDirectEscape = false;
+      b._regroupCenterX = b._regroupCenterZ = undefined;
       this._posturaBot(b, false);
       b.mesh.group.rotation.set(0, b.yaw, 0);
       b.mesh.group.position.copy(b.pos);
@@ -3260,7 +3272,7 @@ export class Game {
     this.stateUntil = this.time + (objectiveResult?.duration || 4);
     this.player.scoped = false; this.el.scope.classList.remove('on');
     this.radioOpen = null; this._radioUi();
-    this._showScoreboard(!this.objective);
+    this._showScoreboard(!this.objective);   // modos de objetivo guardam a tela para a cinemática
     if (this.objective) this.objective.startCinematic(winner);
     else this._ensureDolly();
     const placar = objectiveResult?.detail || (this.ctf ? `${this.roundCaps.E} × ${this.roundCaps.B} bandeiras` : `${p} × ${b}`);
@@ -3275,8 +3287,8 @@ export class Game {
       if (winner !== 'J' && winner !== 'draw') this._roundWinnerVoice(winner);
       if (winner === 'J' || winner === 'draw' || !this.sfx.roundSound(this._voiceKey(winner))) mine ? this.sfx.roundWin() : this.sfx.roundLose();
     }
-    if (this._fimDaPartida() && !this.objective)
-      this.stateUntil = this.time + 4.5; // then match end
+    if (this._fimDaPartida())
+      this.stateUntil = this.time + (objectiveResult?.duration || 4.5); // then match end
   }
   _roundWinnerVoice(team) {
     const characterId = team === this.playerTeam
@@ -3291,6 +3303,9 @@ export class Game {
      gateado por `!this.ctf` (game.js:update), o que fazia o modo CAPTURA rodar pra sempre —
      rounds infinitos, nenhuma tela de fim, e o placar do topo subindo sem teto. */
   _fimDaPartida() {
+    // Escolta usa o teto configurado, como as demais disputas por rodadas. O vencedor do
+    // objetivo fecha a RODADA atual; tratá-lo como fim da partida impedia a rodada seguinte.
+    if (this.world.mode === 'escort') return this.roundNum >= this.roundsMax;
     if (this.objective) return !!this.objective.state.winner;
     if (this.arena) return this.state === 'matchEnd';
     if (this.ctf) return this.roundNum >= this.roundsMax || this.ctfMatchLeft <= 0;
@@ -3312,10 +3327,13 @@ export class Game {
     this._matchEndShown = true;
     if (this.state !== 'matchEnd') this.state = 'matchEnd';
     /* No Vira-Casaca o vencedor vem da população final. Nos modos de rodada, empate
-       segue para abates da partida inteira. */
-    const winner = winnerOverride || this.objective?.state?.winner || (this.roundsWon.E !== this.roundsWon.B
+       segue para abates da partida inteira. Na escolta o estado do objetivo descreve só a
+       ÚLTIMA rodada: o placar acumulado decide a partida, inclusive após prepareRound. */
+    const escort = this.world.mode === 'escort';
+    let winner = winnerOverride || (!escort && this.objective?.state?.winner);
+    if (!winner) winner = this.roundsWon.E !== this.roundsWon.B
       ? (this.roundsWon.E > this.roundsWon.B ? 'E' : 'B')
-      : ((this.matchKills.E + this.roundKills.E) >= (this.matchKills.B + this.roundKills.B) ? 'E' : 'B'));
+      : ((this.matchKills.E + this.roundKills.E) >= (this.matchKills.B + this.roundKills.B) ? 'E' : 'B');
     /* ARENA: o veredito sai na morte (review #1219), antes de a conversão sair no
        respawn — o lado pendente é o destino do jogador no Vira-Casaca e é com ele
        que o `won` fica honesto (virou o casaco pro lado vencedor na própria morte). */
@@ -3332,7 +3350,9 @@ export class Game {
     this.el.matchSub.textContent = draw ? 'As equipes terminaram empatadas.' : mine
       ? frase('venceu', this._teamName(winner))
       : frase('perdeu', this._teamName(winner));
-    this.el.matchStats.innerHTML = this.objective
+    this.el.matchStats.innerHTML = escort
+      ? frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths)
+      : this.objective
       ? (this.objective.regras.times === 3 ? ['E', 'B', 'J'] : ['E', 'J']).map(team => `${this._teamName(team)}: <b>${Math.round((this.objective.state.territorio?.[team] || 0) * 100)}%</b>`).join(' · ') + `<br>${this.player.kills} abates · ${this.player.deaths} mortes`
       : this.arena
         ? `${tr('CONVERSÕES')}: ${this.arenaSwitched} · ${tr('SEUS ABATES')}: ${this.player.kills}`
@@ -3551,7 +3571,7 @@ export class Game {
     this.vm.melee?.setProfile(handProfile);
     p.team = newTeam;
     // rebalanceia 4×4: um bot do time novo deserta pro time velho
-    const candidates = this.bots.filter(b => b.team === newTeam);
+    const candidates = this.bots.filter(b => b.team === newTeam && !b._objectiveNpc);
     const swapBot = candidates[(Math.random() * candidates.length) | 0];
     if (swapBot) {
       swapBot.team = oldTeam;
@@ -3610,6 +3630,8 @@ export class Game {
     const melee = this.vm.melee?.setWeapon(w) || false;
     const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
     if (melee) this.vm.authored?.setWeapon('');
+    // Primária e secundária ficam montadas ocultas: a troca não pisca o legado (playtest 06/11).
+    this.vm.authored?.prime?.([this._slotPrimaria(), this.player.secondary || 'pistol'].filter((id) => id && id !== w && id !== 'knife'));
     // Sem controlador pronto, inclusive no toque, a arma alternativa precisa existir.
     // Reutiliza a raiz para preservar os controladores e o rig de luz já instalados.
     if (!authored && !melee && !this.vm.models[w]) {
@@ -4477,10 +4499,12 @@ export class Game {
     if (ARMADURA && (ent?.armor || 0) > 0 && (!head || ent.helmet)) return true;
     return /colete|cota de malha|armadura|capacete/i.test(ent?.def?.blurb || '');
   }
-  // Partida local só: online o nó roda este mesmo `_damage` sem estado de armadura (contrato no PR do colete).
+  // Armadura local cobre partida local e, no dedicado, apenas VIP/guardas de Flávio.
   // `fracCabeca`: rajada de chumbo somada (bot) passa cabeça e corpo cada um pela sua regra (AR14).
+  _entidadeEscolta(ent) { return ent === this.objective?.vip || Boolean(ent?._flavioPapel); }
   _aplicaArmadura(ent, dmg, weap, head, fracCabeca = null) {
-    if (!ARMADURA || this.online || this.dedicated || !(ent.armor > 0)) return dmg;
+    if (!ARMADURA || !(ent.armor > 0)) return dmg;
+    if (this.online && !(this.dedicated && this._entidadeEscolta(ent))) return dmg;
     if (ARMADURA_CHUMBO && fracCabeca > 0 && fracCabeca < 1) {
       const cab = this._aplicaArmadura(ent, dmg * fracCabeca, weap, true);
       return cab + this._aplicaArmadura(ent, dmg * (1 - fracCabeca), weap, false);
@@ -4489,11 +4513,11 @@ export class Game {
     ent.armor = r.colete;
     return r.vida;
   }
-  _armaduraLigada() { return ARMADURA && !this.online && !this.dedicated; }
+  _armaduraLigada(ent) { return ARMADURA && (!this.online || (this.dedicated && this._entidadeEscolta(ent))); }
   _equiparArmadura(ent) {
-    const d = this._armaduraLigada() ? ARMADURA_DEBUG : null;
+    const d = this._armaduraLigada(ent) ? ARMADURA_DEBUG : null;
     // com loja o colete é comprado e só se perde morrendo (CompraPartida.aoAbate)
-    if (!d && this._compra && this._armaduraLigada()) return;
+    if (!d && this._compra && this._armaduraLigada(ent)) return;
     ent.armor = d ? d.colete : 0;
     ent.helmet = !!(d && d.capacete && d.colete > 0);
   }
@@ -4663,7 +4687,7 @@ export class Game {
     ent.alive = false; ent.hp = 0; ent.deaths++;
     if (ent.isPlayer) this._emoteStop();   // ninguém dança morto
     ent._killedBy = attacker ? (attacker.name || null) : null;   // tela de morte do multiplayer (vai no snapshot)
-    ent.respawnAt = this.time + RESPAWN_DELAY;
+    ent.respawnAt = this.objective?.respawnAt?.(ent, this.time) ?? (this.time + RESPAWN_DELAY);
     /* MODO ARENA: quem morre vai pro time do assassino. A troca é aplicada no
        respawn (não aqui) pra não quebrar o killfeed nem o estado do frame atual. */
     if (this.arena && attacker && attacker.team !== ent.team) {
@@ -5882,25 +5906,16 @@ export class Game {
   // Separação (boids): empurra o bot pra longe de colegas do mesmo time num raio curto, pra eles
   // NÃO andarem colados em fila indiana sobre o mesmo path. Peso ~inverso à distância.
   _botSeparation(b, dt) {
+    // O VIP da escolta tem movimento autoritativo do objetivo; guardas não o empurram.
+    const vipEscolta = this.objective?.vip;
+    if (b === vipEscolta) { this._collide(b.pos, 0.38); return; }
     let px = 0, pz = 0, crowd = 0;
-    /* ANTI-AMONTOADO (01/08, bug do print da Loja H). Três coisas acontecem nesta varredura,
-       e é importante que sejam TRÊS e não uma:
-       (a) a separação de boids ORIGINAL (raio 1,15 m, só colegas de time) — mexer no raio
-           dela foi MEDIDO como ruim: o componente lateral vira desvio de rumo, e com raio
-           grande o bot sai do próprio caminho toda hora, erra o nó, o destravamento bane o
-           nó e a rota apodrece (A* falhando ~40% por nó banido). Fica como estava;
-       (b) DESPENETRAÇÃO RÍGIDA (nova): nada no jogo impedia dois bonecos de ocuparem o mesmo
-           ponto — `_collide` só resolve contra o CENÁRIO. É isso que produz o borrão de 8
-           personagens do print. Aqui os dois são afastados de verdade, metade pra cada um,
-           valendo inclusive contra o time inimigo (a pilha da porta é mista). Como é uma
-           correção de POSIÇÃO simétrica e não uma força de direção, ela não briga com a rota;
-       (c) `crowd` = colegas a menos de 3 m, medido SEMPRE (independente do raio de boids —
-           na primeira versão ele vivia zerado porque estava dentro do `if` do raio de 1,15 m).
-           Serve pra cancelar o "plantar e mirar" no meio do bolo (ver _updateBot). */
+    /* boids + despenetração fatiada + crowd; detalhes em docs/MULTIPLAYER.md. */
     const R = BOT_MOVE2 ? 1.15 : 1.6, R2 = R * R;
     const BODY2 = BOT_BODY_R * 2;
+    let depx = 0, depz = 0;
     for (const o of this.bots) {
-      if (o === b || !o.alive) continue;
+      if (o === b || !o.alive || o === vipEscolta) continue;
       const foe = o.team !== b.team;
       const dx = b.pos.x - o.pos.x, dz = b.pos.z - o.pos.z, d2 = dx * dx + dz * dz;
       if (d2 <= 1e-4) continue;
@@ -5913,14 +5928,18 @@ export class Game {
         /* Corpo com dono não se empurra: no servidor o slot humano é um bot, e o cliente não
            prediz este empurrão — ele volta como correção (BUG-151). `__mut…`: régua. */
         const humano = !!o._remote && !this.__mutEmpurraHumano;
-        const d = Math.sqrt(d2), push = (BODY2 - d) * (humano ? 1 : 0.5);
-        b.pos.x += (dx / d) * push; b.pos.z += (dz / d) * push;
+        /* SEM SALTO: despenetração fatiada em ≤2 passos/quadro somando todos os
+           contatos; o vetor inteiro era um teleporte de até 0,62 m (BUG-151 intacto). */
+        const d = Math.sqrt(d2);
+        const push = Math.min((BODY2 - d) * (humano ? 1 : 0.5), Math.max(0, BOT_SPEED * dt * 2 - Math.hypot(depx, depz)));
+        depx += (dx / d) * push; depz += (dz / d) * push;
         if (!humano) {
           o.pos.x -= (dx / d) * push; o.pos.z -= (dz / d) * push;
           this._collide(o.pos, 0.38);
         }
       }
     }
+    b.pos.x += depx; b.pos.z += depz;
     b._crowd = crowd;
     if (!px && !pz) { this._collide(b.pos, 0.38); return; }
     const k = BOT_MOVE2 ? 0.45 : 0.7;
@@ -6113,7 +6132,7 @@ export class Game {
      que consegue andar mais longe, penalizando quanto ele obriga a girar. Serve à fuga de
      bolso e ao anti-pirueta — os dois casos em que a alternativa era sortear um ângulo, o
      que fazia o bot girar 180° parado antes de sair do lugar. */
-  _freeYaw(b, reach = 3.0) {
+  _freeYaw(b, reach = 3.0, dirX = 0, dirZ = 0) {
     let bestA = b.yaw, bestS = -1e9;
     for (let i = 0; i < 8; i++) {
       const a = b.yaw + (i * Math.PI) / 4;
@@ -6122,8 +6141,10 @@ export class Game {
       for (let k = 0; k < 6; k++) { sim.x += sx * step; sim.z += sz * step; this._collide(sim, 0.38); }
       const walked = Math.hypot(sim.x - b.pos.x, sim.z - b.pos.z);
       let turn = Math.abs(((a - b.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
-      const score = walked - turn * 0.55;   // 0.55 m de "custo" por radiano de giro
-      if (score > bestS) { bestS = score; bestA = a; }
+      const score = walked - turn * 0.55;   // 0,55 m de "custo" por radiano de giro
+      // ESCOLTA: alinhamento joga o escape pro LADO DO OBJETIVO (no bolso fugia a 24 m do VIP).
+      const total = dirX || dirZ ? score + (sx * dirX + sz * dirZ) * 1.2 : score;
+      if (total > bestS) { bestS = total; bestA = a; }
     }
     return bestA;
   }
@@ -7292,7 +7313,8 @@ export class Game {
     if (PACE) this._checkPace();   // alvo de abates / match point — vale também com o jogador morto
     if (!p.alive) {
       const left = p.respawnAt - this.time;
-      this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
+      // VIP jogador da Operação Flávio não renasce (respawnAt = Infinity): sem "Infinity" na tela.
+      this.el.respawnCount.textContent = Number.isFinite(left) ? Math.max(0, left).toFixed(1) : '—';
       this._deathFeedback(dt);
       this._tpDeath(dt);   // corpo TP cai (item: "boneco não caía morto")
       /* Online o _respawnPlayer é no-op (revive vem do snapshot): seguir morto mantém a
@@ -7987,6 +8009,9 @@ export class Game {
     return this.world && this.world.groundHeightAt ? this.world.groundHeightAt(x, z) : 0;
   }
   _spawnYaw(spawn, team, bot = false) {
+    // A câmera da escolta sempre usa a orientação autorada para apontar a primeira
+    // leitura à rota. Os corpos conservam a convenção legada já validada pela IA.
+    if (!bot && this.world.mode === 'escort' && Number.isFinite(spawn?.yaw)) return spawn.yaw;
     if (!this.world.authoredSpawnYaw || !Number.isFinite(spawn?.yaw)) return bot ? (team === 'E' ? 0 : Math.PI) : (team === 'E' ? Math.PI : 0);
     // A câmera olha para -Z; o corpo do bot para +Z.
     return spawn.yaw + (bot ? Math.PI : 0);
@@ -7994,7 +8019,7 @@ export class Game {
   _pickSpawn(team, entity = null) {
     const seguro = this.objective?.safeSpawn?.(team, entity);
     if (seguro) return seguro;
-    const list = this.world.spawns[team] || [];
+    const list = this.objective?.spawnCandidates?.(team) || this.world.spawns[team] || [];
     if (!list.length) return { x: 0, z: 0 };
     const foes = this.combatants.filter(c => c.alive && c.team !== team);
     if (!foes.length) return list[(Math.random() * list.length) | 0];
@@ -8158,6 +8183,8 @@ export class Game {
     }));
     halo.rotation.x = -Math.PI / 2; halo.scale.setScalar(1.45); halo.renderOrder = 3;
     this.scene.add(halo);
+    // (Telegrafo de spawn no próprio halo — ver _updateTeamMark: objeto THREE novo
+    // consumiria o RNG semeado dos evals e deslocaria spawn/arma.)
     bot._mark = { halo, ally, col: this._teamColor(bot.team) };
   }
   /* Escolha de personagem no meio da partida (multiplayer). O servidor roda o mesmo método,
@@ -8212,6 +8239,12 @@ export class Game {
       m.ally = ally;
       m.halo.material.map = this._teamMarkTex(ally ? 'haloAlly' : 'haloEnemy');
       m.halo.material.needsUpdate = true;
+    }
+    // Proteção de spawn: anel estável crescido, sem piscar corpo nem apagar a cor do time.
+    const protegido = this.time < (b.protUntil || 0);
+    if (m.protegido !== protegido) {
+      m.protegido = protegido;
+      m.halo.scale.setScalar(protegido ? 1.9 : 1.45);
     }
     const col = this._teamColor(b.team);
     if (m.col !== col) { m.col = col; m.halo.material.color.set(col); }
@@ -8274,12 +8307,15 @@ export class Game {
     b.aimErr = 0.2; b.burst = 0; b.alertUntil = 0; b._hurtAt = 0; b.reloadUntil = 0;
     b.cegoAte = 0; b.cegoTotalAte = 0;   // renasce enxergando
     b.focusUntil = 0; b._spinAcc = 0; b._spinAt = 0; b._sideUntil = 0;   // estado de mira/anti-pirueta da vida anterior
-    b.target = null; b.path = null; b.yaw = this._spawnYaw(s, b.team, true);
+    b.target = null; b.path = null; b._regroupEscapePending = false; b._regroupDirectEscape = false; b.yaw = this._spawnYaw(s, b.team, true);
+    b._regroupCenterX = b._regroupCenterZ = undefined;
     this._posturaBot(b, false);
     // Coluna, rota, juke e rumo são estado de VIDA: herdá-los repete rota e gira no spawn.
     b.laneX = undefined; b.roamUntil = 0;
     b._banNodes = null; b._unreach = null; b._escapeUntil = 0; b._jukeAt = 0;
     b._hdg = undefined; b._tokRest = 0; b._repathMin = 0;
+    b._escortArco = null; b._escortCentroX = b._escortCentroZ = undefined;
+    b._formacaoHoldAte = 0; b._escapeDiretoAt = 0; b._mvHigh = false; b._banFlushAt = 0;
     if (this._duelTok) this._duelTok.delete(b);
     b._lp = { x: s.x, z: s.z };   // evita spike de velocidade (teleporte) no 1º frame
     g.rotation.set(0, b.yaw, 0); g.position.copy(b.pos); g.visible = true;
@@ -8300,6 +8336,42 @@ export class Game {
     }
   }
 
+  /* CINTILAÇÃO DA ESCOLTA (régua tools/eval/operacao-flavio-escort-flicker-check.mjs):
+     a troca de ameaça saltava o slot até 5,0 m num quadro; o ponto da IA segue o bruto
+     por ARCO com teto angular e raio amortecido, regravado IN PLACE (detalhes: docs/reports/OPERACAO-FLAVIO-20261104.md). */
+  _suavizaDestinoEscolta(b, destino, dt) {
+    const tx = destino.x - destino.centerX, tz = destino.z - destino.centerZ;
+    const rBruto = Math.hypot(tx, tz);
+    if (rBruto < 0.35) { b._escortArco = null; return; }
+    let arco = b._escortArco;
+    if (!arco || Math.hypot(arco.x, arco.z) < 0.35
+      || Math.hypot(destino.centerX - (b._escortCentroX ?? destino.centerX),
+        destino.centerZ - (b._escortCentroZ ?? destino.centerZ)) > 4) {
+      arco = b._escortArco = { x: tx, z: tz };   // primeira amostra válida (ou centro saltou): começa do bruto
+    }
+    b._escortCentroX = destino.centerX; b._escortCentroZ = destino.centerZ;
+    const angAtual = Math.atan2(arco.z, arco.x), angBruto = Math.atan2(tz, tx);
+    let da = angBruto - angAtual;
+    while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
+    const r = Math.hypot(arco.x, arco.z);
+    // Teto ~1/r: anel externo orbita na velocidade do guarda, anel pequeno gira mais (piso 1,9 rad/s).
+    const omega = Math.min(3.4, Math.max(1.9, 2.6 / Math.max(0.5, r)));
+    const passo = Math.max(-omega * dt, Math.min(omega * dt, da));
+    const rNovo = r + (rBruto - r) * Math.min(1, dt * 3);
+    // CONVERGIDO = BRUTO BIT A BIT: a ida-e-volta polar (atan2→cos/sin) perturba o
+    // ponto em ~1e-16 m; réguas de defesa comparam distância EXATA zero no slot.
+    if (Math.abs(da) < 1e-9 && Math.abs(rNovo - rBruto) < 1e-9) {
+      arco.x = tx; arco.z = tz;
+      destino.x = destino.centerX + tx;
+      destino.z = destino.centerZ + tz;
+      return;
+    }
+    const ang = angAtual + passo;
+    arco.x = Math.cos(ang) * rNovo; arco.z = Math.sin(ang) * rNovo;
+    destino.x = destino.centerX + arco.x;
+    destino.z = destino.centerZ + arco.z;
+  }
+
   _updateBot(b, dt) {
 
     if (this.objective?.updateBot(b, dt)) return;
@@ -8315,12 +8387,29 @@ export class Game {
       if (b._netInput) this._moveEntity(b, b._netInput, dt);
       return;
     }
+    const objectiveDestination = this.objective?.botDestination?.(b) || null;
+    if (objectiveDestination) this._suavizaDestinoEscolta(b, objectiveDestination, dt);
+    // Rumo unitário ao destino de escolta: o escape foge pro LADO do objetivo (ver
+    // _freeYaw) — no bolso do balcão o guarda fugia pro lado oposto (24 m do VIP).
+    let escortDir = [];
+    if (objectiveDestination) {
+      const edx = objectiveDestination.x - b.pos.x, edz = objectiveDestination.z - b.pos.z;
+      const edn = Math.hypot(edx, edz) || 1;
+      escortDir = [edx / edn, edz / edn];
+      // BAN DE NÓ ENVELHECE NA ESCOLTA: o objetivo anda, e hop banido não pode envenenar
+      // a rota até o fim do round — flush a cada 8 s re-testa (8 bans => guarda a 24 m).
+      if (b._banNodes?.size && this.time > (b._banFlushAt || 0)) {
+        b._banFlushAt = this.time + 8;
+        b._banNodes.clear();
+      }
+    }
     // `__mutBotYaw`: gancho da botsim-golden (mesmo precedente do __mutAccel) — deriva o rumo
     // do bot pra régua provar que morde. Zero em produção.
     if (this.__mutBotYaw && b.alive) b.yaw += this.__mutBotYaw * dt;
     const g = b.mesh.group;
     // Sem alvo no CTF, mantém a navegação roteirizada até o objetivo.
     if (this._botBrain && this._botBrain.ready && this.botBrainMix > 0 && b.alive && this.state === 'live'
+        && !objectiveDestination
         && (!this.ctf || b.target)
         && (!this._botBrainTeam || b.team === this._botBrainTeam)) {   // régua NN contra roteiro
       return this._updateBotNN(b, dt);
@@ -8348,7 +8437,7 @@ export class Game {
     }
 
     // spawn protection: pisca o modelo enquanto invulnerável
-    if (this.time < b.protUntil) g.visible = Math.floor(this.time * 12) % 2 === 0;
+    if (this.time < b.protUntil && this.world.mode !== 'escort') g.visible = Math.floor(this.time * 12) % 2 === 0;
     else if (!g.visible) g.visible = true;
 
     // REGEN do bot (mesma regra do jogador — ver constante REGEN): sem isto o bot que trocou
@@ -8428,7 +8517,9 @@ export class Game {
         // no meio da nuvem sem nunca re-engatar. Enquanto uma nuvem OPACA bloqueia o
         // segmento, o grace estica p/ 4s: segura a direção e re-engata assim que abre.
         // O gate de tiro (_losLost) continua fechado — não atira no que não vê.
-        let grace = 1.2;
+        // A escolta mantém a memória da ameaça durante o reagrupamento; `_losLost`
+        // continua fechando o gatilho até a visão ser realmente recuperada.
+        let grace = objectiveDestination ? 4.0 : 1.2;
         for (const s of this._smokes) {
           if (!s._opaque) continue;
           const ab = b.target.pos.clone().sub(b.pos);
@@ -8438,6 +8529,30 @@ export class Game {
         if (this.time - b._lostAt > grace) { b.target = null; b._losLost = false; b._lostAt = 0; }
       }
     }
+    // A formação limita o deslocamento sem apagar a memória de combate. A velocidade do
+    // centro decide se há aproximação estacionária ou acompanhamento de um VIP em marcha.
+    const escortCenterMoving = !!objectiveDestination && b._regroupCenterX !== undefined
+      && (b._regroupCenterX !== objectiveDestination.centerX || b._regroupCenterZ !== objectiveDestination.centerZ);
+    if (objectiveDestination) {
+      b._regroupCenterX = objectiveDestination.centerX;
+      b._regroupCenterZ = objectiveDestination.centerZ;
+    }
+    const slotSx = objectiveDestination ? b.pos.x - objectiveDestination.x : 0;
+    const slotSz = objectiveDestination ? b.pos.z - objectiveDestination.z : 0;
+    let formationPull = !!objectiveDestination && (
+      (b.pos.x - objectiveDestination.centerX) ** 2 + (b.pos.z - objectiveDestination.centerZ) ** 2 > objectiveDestination.leash * objectiveDestination.leash
+      || slotSx * slotSx + slotSz * slotSz > objectiveDestination.slotRadius * objectiveDestination.slotRadius);
+    // HISTERESE DA FORMAÇÃO: limiares distintos pra sair/voltar (empurrão não religa);
+    // declarado aqui pois mutantes de régua referenciam `formationPull` logo após (TDZ).
+    if (formationPull) b._formacaoHoldAte = this.time + 0.35;
+    // Hold só com destino vivo: morto o VIP, botDestination vira null e religar o puxão
+    // lia objectiveDestination.repath (TypeError no servidor dedicado).
+    else if (objectiveDestination && this.time < (b._formacaoHoldAte || 0)) formationPull = true;
+    // O estado de bolso vale só até o guarda sair da recuperação e ocupar a formação.
+    if (!formationPull && b._regroupEscapePending) b._regroupEscapePending = false;
+    // O escape DIRETO não rearma por quadro só porque o centro marchou: sem este hold,
+    // a rota era destruída todo quadro na marcha com fachada na frente.
+    if ((!formationPull || (escortCenterMoving && this.time > (b._escapeDiretoAt || 0) + 0.75)) && b._regroupDirectEscape) b._regroupDirectEscape = false;
 
     this._posturaBot(b, !!b.target && b.crouchBias);
 
@@ -8503,7 +8618,7 @@ export class Game {
          de si mesmo". Gente não faz isso: quando o alvo sai muito do eixo (>40°), você
          REPOSICIONA. Aqui, sair do eixo cancela o hold e o bot volta a andar enquanto vira. */
       if (Math.abs(dy) > 0.5) b.holdUntil = 0;
-      const holding = this.time < (b.holdUntil || 0);
+      const holding = this.time < (b.holdUntil || 0) || !!objectiveDestination;
       /* A banda de distância é a única dona do avanço/recuo; movimento aleatório
          no miolo voltava a cruzar seus próprios limiares. */
       if (BOT_MOVE2 && !this.__mutBotMidWander) {
@@ -8539,7 +8654,7 @@ export class Game {
          é, na tela, a pirueta — e a métrica confirma (voltas/min sobe quando o bot para de
          derivar de lado). Gente que é surpreendida pelo flanco DÁ UM PASSO enquanto vira.
          Então: enquanto o alvo estiver a mais de ~29° do eixo, o passo é pra frente. */
-      if (BOT_MOVE2 && !approach && Math.abs(dy) > 0.5) approach = 0.5;
+      if (BOT_MOVE2 && !approach && Math.abs(dy) > 0.5 && !objectiveDestination) approach = 0.5;
       const strafe = holding ? 0 : (b._lat || 0);
       const fdx = Math.sin(b.yaw), fdz = Math.cos(b.yaw);   // forward (mesh facing)
       const rdx = Math.cos(b.yaw), rdz = -Math.sin(b.yaw);  // right
@@ -8550,6 +8665,94 @@ export class Game {
         b.pos.x += Math.sin(b._coverYaw || 0) * BOT_SPEED * 0.8 * dt;
         b.pos.z += Math.cos(b._coverYaw || 0) * BOT_SPEED * 0.8 * dt;
         moving = 1;
+      }
+      // Reagrupar não muda o yaw que orienta a mira.
+      if (formationPull) {
+        const Wo = this.world;
+        const armRegroupEscape = () => {
+          if (!b._regroupEscapePending) b._escapeUntil = 0;
+          if (b._regroupEscapePending) {
+            b.path = null;
+          } else {
+            b.path = null;
+            b._escapeUntil = Math.max(b._escapeUntil || 0, this.time + 0.35);
+            b._regroupEscapePending = true;
+            b._escapeYaw = this._freeYaw(b, 2.5, ...escortDir);
+            b.repathAt = this.time + 0.3;
+          }
+        };
+        if ((!b.path || this.time > b.repathAt) && this.time >= (b._repathMin || 0) && !b._regroupEscapePending) {
+          b._repathMin = this.time + 0.25;
+          b.repathAt = this.time + (objectiveDestination.repath || 2.5);
+          let fromReg = Wo.nearestWaypoint(b.pos.x, b.pos.z, b.pos.y);
+          if (!this._walkReach(b, Wo.waypoints.nodes[fromReg])) {
+            const cands = Wo.waypoints.nodes
+              .map((n, i) => ({ i, d: (n.x - b.pos.x) ** 2 + (n.z - b.pos.z) ** 2 }))
+              .sort((a, c) => a.d - c.d);
+            fromReg = -1;
+            for (let k = 0; k < Math.min(6, cands.length); k++) {
+              if (this._walkReach(b, Wo.waypoints.nodes[cands[k].i])) { fromReg = cands[k].i; break; }
+            }
+          }
+          if (fromReg >= 0) {
+            b.path = this._findPathLocal(Wo, fromReg,
+              Wo.nearestWaypoint(objectiveDestination.x, objectiveDestination.z, b.pos.y), b._banNodes);
+            b.pathIdx = 1;
+          } else armRegroupEscape();
+        }
+        let regNode = b._regroupEscapePending || b._regroupDirectEscape ? null : objectiveDestination;
+        if (!regNode && b.path && b.path.length > 1) {
+          const wpReg = Wo.waypoints.nodes;
+          while (b.pathIdx < b.path.length - 1
+            && Math.hypot(wpReg[b.path[b.pathIdx]].x - b.pos.x, wpReg[b.path[b.pathIdx]].z - b.pos.z) < 1.5) b.pathIdx++;
+          regNode = wpReg[b.path[Math.min(b.pathIdx, b.path.length - 1)]];
+        }
+        const moveRegNode = () => {
+          const gx = regNode.x - b.pos.x, gz = regNode.z - b.pos.z, gn = Math.hypot(gx, gz) || 1;
+          // PERSEGUIÇÃO AMORTECIDA do ponto de slot: passo proporcional ao vão assenta em
+          // ~1 s sem depender de skill; passo cheio flipava de sentido em 60 Hz (régua de órbita).
+          const step = regNode === objectiveDestination
+            ? Math.min(BOT_SPEED * dt, Math.max(gn * dt * 6, 1e-4))
+            : BOT_SPEED * dt;
+          b.pos.x += (gx / gn) * step;
+          b.pos.z += (gz / gn) * step;
+          this._collide(b.pos, 0.38);
+        };
+        if (regNode && this._walkReach(b, regNode)) {
+          moveRegNode();
+          moving = 1;
+        } else if (b.path) {
+          // Hop bloqueado usa o banimento e o repath do fallback existente.
+          const wpReg = Wo.waypoints.nodes;
+          const fallback = wpReg[b.path[Math.min(b.pathIdx, b.path.length - 1)]];
+          if (regNode === objectiveDestination && !b._regroupDirectEscape) {
+            // O slot direto está obstruído: primeiro um passo físico de escape; a rota
+            // por waypoints só retoma depois dele, sem descartar navegação válida.
+            b._regroupDirectEscape = true;
+            b._escapeDiretoAt = this.time;
+            armRegroupEscape();
+          } else if (!b._regroupEscapePending && fallback && this._walkReach(b, fallback)) {
+            regNode = fallback;
+            moveRegNode();
+            moving = 1;
+          } else {
+            (b._banNodes || (b._banNodes = new Set())).add(b.path[Math.min(b.pathIdx, b.path.length - 1)]);
+            if (b._banNodes.size > 24) b._banNodes.clear();
+            armRegroupEscape();
+          }
+        } else {
+          armRegroupEscape();
+        }
+        // Escape mantém a mira e não soma um segundo deslocamento neste frame.
+        if (this.time < (b._escapeUntil || 0) && !moving) {
+          b.pos.x += Math.sin(b._escapeYaw || 0) * BOT_SPEED * dt;
+          b.pos.z += Math.cos(b._escapeYaw || 0) * BOT_SPEED * dt;
+          this._collide(b.pos, 0.38);
+          // Só o passo físico de escape autoriza o próximo A*; sem esse passo o bolso
+          // não pode ser contornado por uma rota que começa fora do alcance do corpo.
+          b._regroupEscapePending = false;
+          moving = 1;
+        }
       }
       // FLANCO/AVANÇO: sem isto, com o beeline no inimigo mais próximo TODOS convergiam pro
       // centro. Quando o alvo está LONGE (>20m) o bot avança pela SUA coluna (laneX) rumo à
@@ -8572,7 +8775,7 @@ export class Game {
          o bot anda de frente pra onde vai. Em combate o bot avança, recua, segura ou
          reposiciona — sempre com a animação certa. */
       const off = b.laneX - b.pos.x;
-      if (BOT_MOVE2) {
+      if (BOT_MOVE2 || objectiveDestination) {
         /* sem deslocamento lateral em combate — ver o bloco acima */
       } else if (dist > 20) {
         const lz = Math.sign(dz) || 1, ln = Math.hypot(off, lz) || 1;
@@ -8670,7 +8873,9 @@ export class Game {
             // justamente a de perto, onde cada acerto dói mais.
             b.burst = BOT_FAIR ? (dist < 14 ? 1 : 2) + ((Math.random() * 2) | 0)
               : 1 + ((Math.random() * (dist < 14 ? 5 : 3)) | 0);
-            b.nextShotAt = this.time + (BOT_FAIR ? BOT_BURST_PAUSE + Math.random() * 0.6 : 0.35 + Math.random() * 0.55) / Math.max(0.5, b.skill);
+            const pause = (BOT_FAIR ? BOT_BURST_PAUSE + Math.random() * 0.6 : 0.35 + Math.random() * 0.55) / Math.max(0.5, b.skill);
+            /* Escort formation caps burst pauses at 1.5 s; regroup keeps normal cadence. */
+            b.nextShotAt = this.time + (BOT_FAIR && objectiveDestination && !formationPull ? Math.min(pause, 1.5) : pause);
           }
         } else {
           // semi-auto: 0,3 s entre tiros de escopeta de 30 de dano também era melt.
@@ -8741,6 +8946,22 @@ export class Game {
         this._flash(this._bocaTiroBot(b, from, dir, 0.85), dir);   // GPU-batched: 1 draw call
         if (b.mesh.isGLB) b.mesh.ctrl.shoot();
       }
+    } else if (objectiveDestination
+        && Math.hypot(objectiveDestination.x - b.pos.x, objectiveDestination.z - b.pos.z) <= objectiveDestination.slotRadius) {
+      moving = 0;
+      // MARCHA DA FORMAÇÃO: com o VIP andando, "dentro do slot" é ACOMPANHAR — passo
+      // proporcional ao vão elimina a alternação parado/andando (~2.000/min medida).
+      if (escortCenterMoving) {
+        const gfx = objectiveDestination.x - b.pos.x, gfz = objectiveDestination.z - b.pos.z;
+        const gfn = Math.hypot(gfx, gfz) || 1;
+        const passoSlot = Math.min(BOT_SPEED * dt, Math.max(gfn * dt * 6, 1e-4));
+        if (passoSlot > 1e-3) {
+          b.pos.x += (gfx / gfn) * passoSlot;
+          b.pos.z += (gfz / gfn) * passoSlot;
+          this._collide(b.pos, 0.38);
+          moving = 1;
+        }
+      }
     } else if (this.ctf) {
       // --- CTF: procurar e segurar um ponto capturável (o combate acima ainda tem prioridade)
       this._botCtf(b, dt);
@@ -8754,7 +8975,7 @@ export class Game {
       // (a caminhada de escape cobre a espera, então o bot não congela).
       if ((!b.path || this.time > b.repathAt) && this.time >= (b._repathMin || 0)) {
         b._repathMin = this.time + 0.25;
-        b.repathAt = this.time + 2.5;
+        b.repathAt = this.time + (objectiveDestination?.repath || 2.5);
         const W = this.world;
         // G2-R6A: o `from` = nearestWaypoint podia estar ATRÁS de uma parede (nó (-8.4,34)
         // do piscinão fica do outro lado do muro das ilhotas) — o bot nunca alcançava
@@ -8769,6 +8990,20 @@ export class Game {
             .map((n, i) => ({ i, d: (n.x - b.pos.x) ** 2 + (n.z - b.pos.z) ** 2 }))
             .sort((a, c) => a.d - c.d);
           for (let k = 0; k < Math.min(6, cands.length); k++) if (this._walkReach(b, W.waypoints.nodes[cands[k].i])) { found = cands[k].i; break; }
+          if (found < 0 && objectiveDestination) {
+            /* ESCOLTA EM BOLSO: os 6 mais próximos podem ficar todos do outro lado do
+               balcão — segunda passada só com nós do MESMO componente do objetivo
+               (até 30 sondas, ~1×/s, só na escolta; detalhes: OPERACAO-FLAVIO-20261104.md). */
+            const comp = this._wpComp();
+            const compAlvo = comp && comp.length
+              ? comp[W.nearestWaypoint(objectiveDestination.x, objectiveDestination.z, b.pos.y)] : -1;
+            if (compAlvo >= 0) {
+              for (let k = 0; k < Math.min(30, cands.length); k++) {
+                if (comp[cands[k].i] !== compAlvo) continue;
+                if (this._walkReach(b, W.waypoints.nodes[cands[k].i])) { found = cands[k].i; break; }
+              }
+            }
+          }
           if (found >= 0) from = found;
           else {
             // BOLSO sem nó alcançável: caminhada de escape ~1s numa direção livre (sai da
@@ -8780,14 +9015,18 @@ export class Game {
             // física real (_collide) e escolhemos a que anda mais, com desempate a favor da
             // direção MAIS PARECIDA COM A ATUAL: ele sai andando, quase sem girar.
             b._escapeUntil = this.time + 1.0;
-            b._escapeYaw = BOT_MOVE2 ? this._freeYaw(b, 3.0) : Math.random() * Math.PI * 2;
+            b._escapeYaw = BOT_MOVE2 ? this._freeYaw(b, 3.0, ...escortDir) : Math.random() * Math.PI * 2;
             b.path = null; b.repathAt = this.time + 1.0;
             pocket = true;
           }
         }
         // INVESTIGAR (ver SENTIDOS DO BOT): ouviu o jogador há <4 s e está sem alvo → o destino
         // vira o nó ALCANÇÁVEL (mesmo componente do grafo) mais perto do som, por até 6 s.
-        if (BOT_SENTIDOS && !pocket && b._heardAt && b._heardUsed !== b._heardAt && this.time - b._heardAt < 4) {
+        if (!pocket && objectiveDestination) {
+          b.roamIdx = W.nearestWaypoint(objectiveDestination.x, objectiveDestination.z, b.pos.y);
+          b.roamUntil = this.time + objectiveDestination.repath;
+        }
+        if (!objectiveDestination && BOT_SENTIDOS && !pocket && b._heardAt && b._heardUsed !== b._heardAt && this.time - b._heardAt < 4) {
           b._heardUsed = b._heardAt;
           const nodes = W.waypoints.nodes, comp = this._wpComp();
           const myComp = comp && comp.length ? comp[from] : -1;
@@ -8800,7 +9039,7 @@ export class Game {
           }
           if (hi >= 0 && hi !== from) { b.roamIdx = hi; b.roamUntil = this.time + 6; }
         }
-        if (!pocket && (this.time > (b.roamUntil || 0) || b.roamIdx === undefined)) {
+        if (!objectiveDestination && !pocket && (this.time > (b.roamUntil || 0) || b.roamIdx === undefined)) {
           // Enemy direction derived from the spawn LAYOUT (not hardcoded — the spawn
           // swap P<->B would otherwise silently flip the roam side and keep bots home).
           const sP = this.world.spawns.E[0], sB = this.world.spawns.B[0];
@@ -8952,7 +9191,12 @@ export class Game {
       // MIRA no nó atual do path (não +2): com o A* reto, seguir o path fielmente contorna os
       // obstáculos. O look-ahead +2 cortava a quina PRA DENTRO do obstáculo -> o bot batia e
       // oscilava fwd/back sem desviar. Agora ele acompanha a curva do path ao redor da geometria.
-      const node = b.path ? _wp[b.path[Math.min(b.pathIdx, b.path.length - 1)]] : null;
+      let node = b.path ? _wp[b.path[Math.min(b.pathIdx, b.path.length - 1)]] : null;
+      // O waypoint conduz ao trecho final; a formação termina no ponto físico do slot.
+      if (objectiveDestination && b.pathIdx >= b.path.length - 1
+          && Math.hypot(objectiveDestination.x - b.pos.x, objectiveDestination.z - b.pos.z) <= objectiveDestination.leash
+          && this._walkReach(b, objectiveDestination)) node = objectiveDestination;
+      const trechoSlot = !!objectiveDestination && node === objectiveDestination;
       if (node && !this._walkReach(b, node)) {
         // Hop fisicamente intransitável (aresta que passou no segClear do mapa mas não
         // cabe o bot r=0.38 — ex.: quina do muro das ilhotas): bane o nó e rerroteia.
@@ -8967,7 +9211,7 @@ export class Game {
            que é o que o dono precisa ver. */
         b.path = null;
         b._escapeUntil = Math.max(b._escapeUntil || 0, this.time + 0.35);
-        b._escapeYaw = this._freeYaw(b, 2.5);
+        b._escapeYaw = this._freeYaw(b, 2.5, ...escortDir);
         b.repathAt = this.time + 0.3;
       } else if (node) {
         const dx = node.x - b.pos.x, dz = node.z - b.pos.z;
@@ -8999,8 +9243,17 @@ export class Game {
           b.yaw += BOT_MOVE2 ? Math.max(-YAW_CAP * dt, Math.min(YAW_CAP * dt, turn)) : turn;
           const bSlow = this.world.slowAt && this.world.slowAt(b.pos.x, b.pos.z) ? 0.5 : 1;  // bots também vadear
           const px = b.pos.x, pz = b.pos.z;
-          b.pos.x += Math.sin(b.yaw) * BOT_SPEED * bSlow * dt;
-          b.pos.z += Math.cos(b.yaw) * BOT_SPEED * bSlow * dt;
+          if (trechoSlot) {
+            // TRECHO FINAL DA ESCOLTA: perseguição amortecida DIRETA ao ponto (a mesma
+            // do reagrupamento) — passo cheio atravessava o slot e voltava (régua de órbita).
+            const nn = dn || 1;
+            const passoSlot = Math.min(BOT_SPEED * bSlow * dt, Math.max(dn * dt * 6, 1e-4));
+            b.pos.x += (dx / nn) * passoSlot;
+            b.pos.z += (dz / nn) * passoSlot;
+          } else {
+            b.pos.x += Math.sin(b.yaw) * BOT_SPEED * bSlow * dt;
+            b.pos.z += Math.cos(b.yaw) * BOT_SPEED * bSlow * dt;
+          }
           this._collide(b.pos, 0.38);
           moving = 1;
           // stuck detection: barely moved (blocked by geometry) -> sidestep + pick a new
@@ -9010,7 +9263,7 @@ export class Game {
              girar sem sair do lugar é o bug "rodando em volta de si mesmo". Passou de 4,5 rad
              (~260°) sem deslocar, a rota é dada como envenenada: bane o nó, força uma
              caminhada de escape na direção livre mais próxima e zera o acumulador. */
-          if (BOT_MOVE2 && moved < BOT_SPEED * bSlow * dt * 0.5) {
+          if (BOT_MOVE2 && !trechoSlot && moved < BOT_SPEED * bSlow * dt * 0.5) {
             b._spinAcc = (b._spinAcc || 0) + Math.abs(turn);
             if (b._spinAcc > 4.5) {
               b._spinAcc = 0;
@@ -9020,7 +9273,7 @@ export class Game {
               b.path = null; b.repathAt = this.time + 0.9;
             }
           } else b._spinAcc = Math.max(0, (b._spinAcc || 0) - Math.abs(turn) * 2);
-          if (moved < BOT_SPEED * bSlow * dt * 0.35) {
+          if (!trechoSlot && moved < BOT_SPEED * bSlow * dt * 0.35) {
             b._stuckT = (b._stuckT || 0) + dt;
             if (b._stuckT > (BOT_MOVE2 ? 0.35 : 0.5)) {   // reage mais cedo: 0,5 s raspando a quina já é visível
               // NÃO re-escolhe o alvo (isso causava milling perto do spawn). Mantém o objetivo
@@ -9108,7 +9361,10 @@ export class Game {
         // moviam o bot sem setar `moving`, então `spd<0.35?0:moving` dava 0 e o char ficava em
         // idle/shoot (pernas estáticas) deslizando. Atrelar ao spd faz as pernas ciclarem SEMPRE
         // que o corpo transladar (>0.35 m/s), inclusive atirando em movimento (walkfire).
-        const mv = spd < 0.35 ? 0 : 1;
+        // HISTERESE DA BANDA: cruzar 0,35 m/s por quadro piscava o ciclo de pernas em
+        // 60 Hz — liga acima de 0,45, desliga abaixo de 0,30.
+        if (spd > 0.45) b._mvHigh = true; else if (spd < 0.3) b._mvHigh = false;
+        const mv = b._mvHigh ? 1 : 0;
         /* LOD de animação: bot longe não precisa de 60 Hz de mixer, IK e malha fechada de
            cabeça. Perto de 25 m cai para ~20 Hz; fora de 45 m, ~10 Hz. Ver docs/ANIM-3P.md. */
         const distCam = Math.hypot(b.pos.x - this.camera.position.x, b.pos.z - this.camera.position.z);
@@ -9661,6 +9917,8 @@ export class Game {
       const protText = String(Math.ceil(protLeft));
       if (this.el.protCount.textContent !== protText) this.el.protCount.textContent = protText;
     }
+    // HUD da escolta acompanha o HUD comum; Javaporcos mantém seu próprio agendamento.
+    if (this.world.mode === 'escort' || this.objective?.vip) this.objective?.atualizaHud?.();
   }
 
   /* ================= main update ================= */
@@ -9689,20 +9947,21 @@ export class Game {
          cobradas agora pela UI4, cada uma com a sua mutação. */
       if (this.objective) {
         this.objective.update(dt);
+        if (this.world.mode === 'escort' && this.state === 'live') {
+          this.timeLeft -= dt;
+          if (this.timeLeft <= 0) this._endRound(this.objective.state?.winner || 'E');
+        }
       } else if (this.ctf) {
         this._updateCTF(dt);
         this.ctfMatchLeft -= dt;
-        /* `this.state === 'live'` de novo AQUI, e não é redundância: `_updateCTF` pode ter
-           chamado `_ctfWin` (dominação das bandeiras) no meio deste mesmo frame, e o
-           `_ctfWin` já credita a rodada e muda o estado. Sem a guarda, `_endRound` credita
-           uma SEGUNDA vitória na mesma rodada — medido: a partida de CTF do praca_old
-           fechava em 56 s com `rounds=1` porque um round valia 2 pontos. */
+        /* `_updateCTF` pode fechar o round neste quadro; a guarda evita crédito duplo. */
         if (this.state === 'live' && (this._roundOverPedido || this.ctfMatchLeft <= 0)) {
           this._roundOverPedido = false;
           this._endRound();
         }
       } else {
-        this.timeLeft -= dt; if (this.timeLeft <= 0) this._endRound();
+        this.timeLeft -= dt;
+        if (this.timeLeft <= 0) this._endRound();
       }
     } else if (this.state === 'roundEnd' && this.time >= this.stateUntil) {
       if (this._fimDaPartida()) this._endMatch();

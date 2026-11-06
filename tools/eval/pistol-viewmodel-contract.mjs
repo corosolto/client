@@ -148,12 +148,15 @@ for (const part of ['Arm', 'Cloth', 'Glove']) {
 
 const vmconfig = fs.readFileSync(path.join(root, 'public/js/data/vmconfig.js'), 'utf8');
 const authoredVm = fs.readFileSync(path.join(root, 'public/js/authoredvm.js'), 'utf8');
+// Rota (dono, 06/11): sem pintura a PT-38 serve o X18 da fábrica; golden pública só com pintura.
+// O produto K da família (pistol#pistol) segue ligado para o A/B `?vmgolden=0&vmfabrica=0`.
 const runtimeRoute = !hasMutant('sem-runtime')
-  && /pistol:\s*W\('pistol',\s*\{\s*baked:\s*true,\s*runtime:\s*'family',\s*timing:\s*'gameplay'\s*\}\)/.test(vmconfig)
+  && /pistol:\s*W\('pistol',\s*\{\s*baked:\s*true,\s*runtime:\s*'family',\s*timing:\s*'gameplay',/.test(vmconfig)
+  && /osso:\s*'CoroWeapon'/.test(vmconfig)
   && /VM_WEAPON\[weapon\]\?\.runtime === 'family'/.test(authoredVm);
-check(runtimeRoute, 'runtime não aponta pistol#pistol para o GLB canônico da família');
 
-const frameMatch = /pistol:\s*\{\s*x:\s*([\d.-]+),\s*y:\s*([\d.-]+),\s*z:\s*([\d.-]+),\s*fov:\s*([\d.-]+),\s*rotDeg:\s*\[([^\]]+)\],\s*drawDrop:\s*([\d.-]+)/.exec(authoredVm);
+// Enquadramento APROVADO da família (centralizado no vmconfig em a03b3b4e1).
+const frameMatch = /pistol:\s*\{\s*x:\s*([\d.-]+),\s*y:\s*([\d.-]+),\s*z:\s*([\d.-]+),\s*fov:\s*([\d.-]+),\s*rotDeg:\s*\[([^\]]+)\],\s*drawDrop:\s*([\d.-]+)/.exec(vmconfig);
 const frame = frameMatch ? {
   x: Number(frameMatch[1]), y: Number(frameMatch[2]), z: Number(frameMatch[3]),
   fov: hasMutant('fov-pacote') ? 84 : Number(frameMatch[4]),

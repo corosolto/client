@@ -199,7 +199,13 @@ export const MAPAS: Mapa[] = [
     resumo: 'Bandos saem da mata e se espalham entre lojas e quarteirões.',
     detalhe: 'Retome setores, proteja seu time e explore sobrados, lajes e mercearia. O domínio cai quando você limpa as áreas.',
   },
-
+  {
+    id: 'operacao_flavio', nome: 'Operação Flávio', modo: 'Escolta', ctf: false,
+    resumo: 'Escolte o senador Zero Um do escritório ao avião executivo antes do fim dos 6 minutos.',
+    detalhe: 'A rota cruza o anel de escritórios, o controle de segurança, o pátio de serviço e o hangar. ' +
+      'Flávio só avança com ao menos um defensor a até 6 metros; um atacante a até 4 metros contesta o objetivo. ' +
+      'O time B vence após 3 segundos na escada de embarque. O time E vence ao abater o alvo.',
+  },
 ];
 
 export interface Personagem { id: string; grupo: string; nome: string; blurb: string; }

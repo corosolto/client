@@ -104,6 +104,10 @@ export const MAPS = {
   invasao_javaporcos: { name: 'Cidade Invadida', ...JAVAPORCOS_META },
   distrito_rural: { name: 'Distrito Rural', ...JAVAPORCOS_META },
   vila_da_mata: { name: 'Vila da Mata', ...JAVAPORCOS_META },
+  operacao_flavio: { name: 'Operação Flávio',
+    objectiveMode: 'escort',
+    props: [],
+  },
   penitenciaria: { name: 'CARANDIRU', ctfMode: true,
     props: [],
     ambience: ['rat', 'pigeonGround'],
@@ -134,6 +138,7 @@ const MODULOS = {
   invasao_javaporcos: () => import('./map_invasao_javaporcos.js'),
   distrito_rural: () => import('./map_javaporcos_rural.js'),
   vila_da_mata: () => import('./map_javaporcos_vila.js'),
+  operacao_flavio: () => import('./map_operacao_flavio.js'),
   penitenciaria: () => import('./map_penitenciaria.js'),
 };
 
@@ -159,6 +164,7 @@ const EXPORTS = {
   invasao_javaporcos: { build: 'buildInvasaoJavaporcos', props: 'INVASAO_JAVAPORCOS_PROPS', preload: 'preloadJavaporcos' },
   distrito_rural: {build:'buildDistritoRural',props:'DISTRITO_RURAL_PROPS',preload:'preloadJavaporcos'},
   vila_da_mata: {build:'buildVilaDaMata',props:'VILA_DA_MATA_PROPS',preload:'preloadJavaporcos'},
+  operacao_flavio: { build: 'buildOperacaoFlavio', props: 'OPERACAO_FLAVIO_PROPS', preload: 'preloadOperacaoFlavio' },
   penitenciaria: { build: 'buildPenitenciaria', props: 'PENITENCIARIA_PROPS', ambience: 'PENITENCIARIA_AMBIENCE' },
 };
 

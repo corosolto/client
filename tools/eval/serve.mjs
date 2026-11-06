@@ -52,7 +52,7 @@ const server = http.createServer(async (req, res) => {
   try {
     const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     // Rotas fixas do hub (/loja, /jogar/multiplayer...) saem do mesmo renderer, como no build (ADR 0008).
-    if (p === '/' || rotaDoCaminho(p) || /^\/(?:api\/|@|src\/|node_modules\/|\.astro\/)/.test(p)) {
+    if (p === '/' || rotaDoCaminho(p) || /^\/(?:api\/|private-assets\/|@|src\/|node_modules\/|\.astro\/)/.test(p)) {
       const renderer = await currentRenderer();
       renderer.handle(req, res);
       return;
