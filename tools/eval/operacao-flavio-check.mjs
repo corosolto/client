@@ -1,8 +1,10 @@
+import { readFileSync } from 'node:fs';
 import { aplicarSnapshotEscolta, criarEstadoEscolta, destinoProtecaoEscolta, passoEscolta, snapshotEscolta } from '../../public/js/mode_operacao_flavio.js';
 
 const flags = process.argv.slice(2);
 const unicos = new Set(flags);
-const mutante = unicos.size === 1 && unicos.has('--mutante=sem-contestacao') ? 'sem-contestacao' : '';
+const mutante = unicos.size === 1 && ['--mutante=sem-contestacao', '--mutante=suite-duplicada'].includes([...unicos][0])
+  ? [...unicos][0].slice(10) : '';
 if (flags.length !== unicos.size || (flags.length > 0 && !mutante)) {
   process.exit(2);
 }
@@ -13,6 +15,14 @@ const cobra = (ok, texto) => {
   resultados.push({ texto, ok: ok === true });
   if (!ok) falhas++;
 };
+const pacote = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
+if (mutante === 'suite-duplicada') pacote.scripts['check:fast'] += ' eval:operacao-online';
+const workflow = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
+const suporteUnico = pacote.scripts['eval:operacao-flavio'].includes('npm run eval:operacao-online')
+  && !pacote.scripts['eval:operacao-flavio'].includes('eval:operacao-flavio-online')
+  && !['check:fast', 'check:deploy'].some((gate) => pacote.scripts[gate].split(/\s+/).includes('eval:operacao-online'))
+  && !/(^|\s)eval:operacao-online(\s|$)/.test(workflow);
+cobra(suporteUnico, 'suíte online executa uma vez pelo pai eval:operacao-flavio');
 const caminho = [{ x: 0, z: 0 }, { x: 0, z: 4 }, { x: 0, z: 8 }];
 const vivo = (x, z, team) => ({ x, z, team, alive: true });
 
@@ -81,11 +91,18 @@ aplicarSnapshotEscolta(cliente, snapshotEscolta(servidor));
 cobra(JSON.stringify(snapshotEscolta(cliente)) === JSON.stringify(snapshotEscolta(servidor)),
   'snapshot autoritativo replica a escolta completa entre servidor e cliente');
 
-if (mutante) {
+if (mutante === 'sem-contestacao') {
   const proprioResultado = resultados.find((resultado) => resultado.texto === 'atacante no raio interrompe a escolta');
   const acendeu = Boolean(proprioResultado) && proprioResultado.ok === false
     && resultados.filter((resultado) => resultado.ok === false).length === 1;
   console.log(`${acendeu ? '✓' : '✗'} mutante sem contestação acendeu a régua`);
+  process.exit(acendeu ? 0 : 1);
+}
+if (mutante === 'suite-duplicada') {
+  const proprioResultado = resultados.find((resultado) => resultado.texto === 'suíte online executa uma vez pelo pai eval:operacao-flavio');
+  const acendeu = Boolean(proprioResultado) && proprioResultado.ok === false
+    && resultados.filter((resultado) => resultado.ok === false).length === 1;
+  console.log(`${acendeu ? '✓' : '✗'} mutante suite duplicada acendeu a régua`);
   process.exit(acendeu ? 0 : 1);
 }
 process.exit(falhas ? 1 : 0);

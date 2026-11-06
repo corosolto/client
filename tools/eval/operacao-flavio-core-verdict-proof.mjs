@@ -12,8 +12,8 @@ let fonte;
 try { fonte = readFileSync(checkerPath, 'utf8'); }
 catch (erro) { console.log(JSON.stringify({ tool: 'operacao-flavio-core-verdict-proof.mjs', infra: true, cases: [], error: String(erro?.message ?? erro).slice(0, 240) })); process.exit(2); }
 const ancoraHelperInicio = 'let falhas = 0;';
-const ancoraHelperFim = 'const caminho =';
-const ancoraVeredito = 'if (mutante) {';
+const ancoraHelperFim = 'const pacote =';
+const ancoraVeredito = "if (mutante === 'sem-contestacao') {";
 function posicaoUnica(ancora) {
   if (fonte.split(ancora).length !== 2) return -1;
   return fonte.indexOf(ancora);
