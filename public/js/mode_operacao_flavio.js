@@ -250,10 +250,8 @@ export function destinoAtaqueEscolta(bot, vip, atacantes = [], caminho = [], che
   return destino;
 }
 
-// Variante da rota por rodada (world.escortPaths). Deriva só do roundNum, que já vem no
-// snapshot: servidor e clientes chegam no mesmo caminho sem campo novo no fio. Cada ciclo
-// de `total` rodadas usa todas as variantes embaralhadas; a 1ª rodada abre pelo meio e
-// rodadas seguidas nunca repetem a rota.
+// Rota da rodada só pelo roundNum do snapshot (sem campo novo no fio): cada ciclo embaralha
+// todas as variantes, a 1ª rodada abre pelo meio e rodadas seguidas nunca repetem.
 function embaralharCiclo(ciclo, total) {
   const ordem = Array.from({ length: total }, (_, i) => i);
   let semente = Math.imul(ciclo, 0x9e3779b1) >>> 0;
@@ -338,12 +336,8 @@ export function passoEscolta(state, contexto, dt, { mutante = '', mover = null }
     return state;
   }
 
-  // Exposto = ameaça vista com escolta curta ou atacante no raio de contestação; com
-  // ESCOLTA_RUSH guardas colados a ameaça não para o comboio (cai no avanço abaixo).
-  // Schmitt: sem a saída em EXPOSTO_SAIDA, Flávio largava o abrigo a 4,1 m do atacante,
-  // marchava de volta e era recontestado — vai-e-vem sem nunca abrigar (gate 06/11). A
-  // trava vale enquanto `threatened` (LOS + memória) durar: a LOS que pisca na quina de
-  // uma planta não solta o abrigo, mas ameaça esquecida solta.
+  // Exposto (contestado ou escolta curta) trava até a ameaça lembrada sair de EXPOSTO_SAIDA:
+  // sem a histerese Flávio ia e voltava na borda dos 4 m sem nunca abrigar (gate 06/11).
   const colado = ameacas.some((ent) => d2(ent.pos || ent, state.position) <= EXPOSTO_SAIDA * EXPOSTO_SAIDA);
   state.exposto = state.threatened && (state.contested || defensores.length < ESCOLTA_RUSH || (state.exposto === true && colado));
   if (state.exposto) {
@@ -483,10 +477,8 @@ export function elencoOperacaoFlavio(roster, lado, personagem, vipDef) {
   return roster;
 }
 
-// VIP JOGADOR: quem anda é ele; o estado só segue a posição. Checkpoint avança ao pisar a
-// ≤VIP_JOGADOR_RAIO de um ponto à frente (rota lateral pula trecho) e nunca recua. Embarque
-// igual ao do bot: com escolta sobe mesmo contestado; sozinho, só com o pátio limpo (sem
-// aliados o modo seria invencível se exigisse escolta).
+// VIP jogador: o estado segue a posição dele; checkpoint avança a ≤VIP_JOGADOR_RAIO e nunca
+// recua. Embarque sozinho só com pátio limpo (sem aliados exigir escolta travaria o modo).
 const VIP_JOGADOR_RAIO = 3;
 export function passoEscoltaJogador(state, contexto, dt) {
   if (state.winner || dt <= 0) return state;

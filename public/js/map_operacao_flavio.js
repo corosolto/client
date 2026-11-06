@@ -27,22 +27,21 @@ export const PROP_FILES = {
   containers_carga: 'containers_carga.glb',
   jardineira: 'jardineira.glb',
 };
-// Medidas reais [x, y, z] no eixo nativo de cada GLB (x antes do yaw), em metros, contra
-// o personagem de 1,72 m. Escala escalar pelo maior eixo deixava o carro com 3,5 m de
-// altura e o collider deitado no eixo errado; o mesmo array dimensiona render e proxy.
+// Medidas reais [x, y, z] no eixo nativo do GLB (antes do yaw), contra o personagem de 1,72 m;
+// o mesmo array dimensiona render e collider. Procedência: docs/maps/operacao-decola.md.
 const MEDIDA_REAL = {
-  carro_servico: [1.6, 1.95, 3.2],          // utilitário de pátio: cabine 1,75 m + giroflex
-  trator_bagagem: [2.8, 1.55, 1.5],         // trator de bagagem: volante ~1,5 m
-  energia_solo: [1.2, 1.4, 2.6],            // GPU rebocável: só cobre agachado
-  scanner_bagagem: [2.2, 1.6, 2.8],         // raio-X com esteiras de entrada/saída
-  estacao_manutencao: [3, 1.8, 1.15],       // bancada + armário de 1,8 m
-  containers_carga: [3.3, 3.27, 2.6],       // dois ULD LD3 (1,63 m) + um empilhado
-  carrinho_ferramentas: [1.05, 1.25, 0.74], // gaveteiro de ferramentas com alça
-  torre_iluminacao: [3.9, 4.5, 2.4],        // reboque de luz com mastro meio recolhido
-  jardineira: [2.5, 1.8, 1.4],              // folhagem a 1,8 m: o que esconde o VIP é visível
-  balcao_recepcao: [3.5, 1.25, 2.2],        // módulo de check-in; tampo ~1,15 m (era 3,2 m)
-  escada_embarque: [1.68, 3.2, 4],          // escada de 1,68 m de largura, corrimão a 3,2 m
-  barreiras_aeroporto: [4.5, 1.4, 1.2],     // muro New Jersey procedural (2 módulos)
+  carro_servico: [1.6, 1.95, 3.2],
+  trator_bagagem: [2.8, 1.55, 1.5],
+  energia_solo: [1.2, 1.4, 2.6],
+  scanner_bagagem: [2.2, 1.6, 2.8],
+  estacao_manutencao: [3, 1.8, 1.15],
+  containers_carga: [3.3, 3.27, 2.6],
+  carrinho_ferramentas: [1.05, 1.25, 0.74],
+  torre_iluminacao: [3.9, 4.5, 2.4],
+  jardineira: [2.5, 1.8, 1.4],
+  balcao_recepcao: [3.5, 1.25, 2.2],
+  escada_embarque: [1.68, 3.2, 4],
+  barreiras_aeroporto: [4.5, 1.4, 1.2],
 };
 const real = (id, x, z, yaw, solid = true) => [id, x, z, MEDIDA_REAL[id], yaw, ...MEDIDA_REAL[id], solid];
 const templates = new Map();
@@ -56,9 +55,8 @@ const ESCORT_PATH = [
   { x: -4, z: 0 }, { x: 2, z: 15 }, { x: 2, z: 31 }, { x: 5, z: 42 },
   { x: 7.2, z: 49.2 },
 ];
-// Variantes da rota do VIP (playtest 06/11: "não só o meio"). Saem pelas portas norte
-// laterais (x=±17), cruzam o pátio pelas vielas internas (x≈±14) e entram no hangar pelos
-// bolsões laterais; todas terminam na mesma escada. O modo sorteia uma por rodada.
+// Variantes do VIP (playtest 06/11): portas norte laterais (x=±17), vielas internas (x≈±14) e
+// bolsões do hangar até a mesma escada; o modo escolhe uma por rodada.
 const ESCORT_PATH_OESTE = [
   { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
   { x: -12, z: -26 }, { x: -17, z: -16 }, { x: -14.2, z: -12 }, { x: -14.2, z: 8 },
@@ -614,10 +612,8 @@ export function buildOperacaoFlavio(scene, T = {}) {
     minZ: -13.45, maxZ: -12.55,
   });
 
-  // Marcação semântica: anel âmbar emissivo por checkpoint da escolta — distinto das
-  // faixas amarelas de pintura e do anel branco do estacionamento. Render-only. Um anel por
-  // ponto distinto das variantes; userData.rotas diz a quais pertence e o modo acende só
-  // os da rota da rodada (nasce com a do meio).
+  // Anel âmbar render-only por ponto distinto das rotas; userData.rotas diz a quais pertence
+  // e o modo acende só os da rota da rodada (nasce com a do meio).
   const anelCheckpoint = new THREE.MeshBasicMaterial({ color: 0xffc76a, toneMapped: false, transparent: true, opacity: 0.92 });
   const aneis = new Map();
   ESCORT_PATHS.forEach((caminho, rota) => {
@@ -640,10 +636,8 @@ export function buildOperacaoFlavio(scene, T = {}) {
     ['terminal_fachada', -18, -15.82, 16, 0, 16, 5, 1, false],
     ['terminal_fachada', 18, -15.82, 16, 0, 16, 5, 1, false],
     ['terminal_portal', 0, -52.15, 6, Math.PI, 5, 4, 2, false],
-    // Fileiras de dois módulos de check-in reais ocupam a pegada do antigo balcão gigante
-    // de 7 m (a formação da marcha foi afinada nela). Balcão de 1,25 m não esconde ninguém
-    // em pé: plantas de 1,8 m logo atrás das fileiras escondem os slots (±6;-22,3) da porta
-    // norte central, sem estreitar o corredor da escolta.
+    // Dois módulos reais de check-in na pegada do antigo balcão de 7 m (marcha afinada nela);
+    // balcão de 1,25 m não esconde em pé: plantas de 1,8 m escondem os slots (±6;-22,3).
     real('balcao_recepcao', -8.15, -19, 0),
     real('balcao_recepcao', -4.65, -19, 0),
     real('balcao_recepcao', 4.65, -19, 0),
@@ -711,9 +705,8 @@ export function buildOperacaoFlavio(scene, T = {}) {
     real('jardineira', 13.6, -36.9, 0),
     real('jardineira', -28, -45.5, Math.PI / 2),
     real('jardineira', 24, -44.5, 0),
-    // Apron: GPU real (1,4 m) só cobre agachado; quem esconde o VIP em pé perto da
-    // escada é a pilha de ULD (3,27 m) no lugar do antigo GPU gigante. Bay de containers
-    // fecha as lanes dos spawns E sem tocar a escada.
+    // Apron: GPU real (1,4 m) só cobre agachado; a pilha de ULD (3,27 m) esconde o VIP em pé
+    // perto da escada, e a bay de containers fecha as lanes dos spawns E.
     real('containers_carga', -1, 44.6, 0),
     real('containers_carga', -12, 51.4, 0),
     real('containers_carga', -12, 53.6, 0),
@@ -737,9 +730,8 @@ export function buildOperacaoFlavio(scene, T = {}) {
     real('barreiras_aeroporto', 25.5, 55, 0),
     real('jardineira', -18, -34.8, Math.PI / 2),
   ];
-  // Muro New Jersey em dois módulos de 2,24 m: o kit GLB de barreiras é um cercado de
-  // 5 × 4,3 m com cones e grades que não cabe numa pegada de muro; aqui o volume visível é
-  // exatamente o collider. O kit continua como cenário fora dos limites jogáveis (z > 57).
+  // Muro New Jersey (2 × 2,24 m) com volume visível = collider; o kit GLB (cercado 5 × 4,3 m)
+  // não cabe na pegada de muro e fica só como cenário fora dos limites (z > 57).
   const perfilJersey = new THREE.Shape();
   [[-0.6, 0], [0.6, 0], [0.6, 0.12], [0.32, 0.38], [0.16, 1.4], [-0.16, 1.4], [-0.32, 0.38], [-0.6, 0.12]]
     .forEach(([px, py], i) => (i ? perfilJersey.lineTo(px, py) : perfilJersey.moveTo(px, py)));
