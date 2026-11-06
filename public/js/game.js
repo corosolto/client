@@ -3630,6 +3630,8 @@ export class Game {
     const melee = this.vm.melee?.setWeapon(w) || false;
     const authored = melee ? false : (this.vm.authored?.setWeapon(w) || false);
     if (melee) this.vm.authored?.setWeapon('');
+    // Primária e secundária ficam montadas ocultas: a troca não pisca o legado (playtest 06/11).
+    this.vm.authored?.prime?.([this._slotPrimaria(), this.player.secondary || 'pistol'].filter((id) => id && id !== w && id !== 'knife'));
     // Sem controlador pronto, inclusive no toque, a arma alternativa precisa existir.
     // Reutiliza a raiz para preservar os controladores e o rig de luz já instalados.
     if (!authored && !melee && !this.vm.models[w]) {

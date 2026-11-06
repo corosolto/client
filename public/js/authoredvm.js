@@ -90,6 +90,7 @@ const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
 // Revisão: ?vmgolden=ak serve a golden da arma sem mexer no `golden` do vmconfig.
 const GOLDEN_QS = new Set((_QS?.get('vmgolden') || '').split(',').filter((w) => GOLDEN_VER[w]));
 const GOLDEN_ADS = AUTHORED_VM_ENABLED && _QS?.get('vmgoldenads') !== '0';
+const PRIME_VM = _QS?.get('vmprime') !== '0';
 // ADS 1P pela linha de mira (adsEfetivo em vmconfig.js); ?ads1pfix=0 volta ao foco.
 const ADS1P_FIX = _QS?.get('ads1pfix') !== '0';
 // ?vmlocomotion=0: kill-switch do gait/sway 1P para A/B sem deploy (espírito ?vmkick).
@@ -538,6 +539,16 @@ export class AuthoredViewModels {
         : setTimeout(prime, 1400);
     }
     return this;
+  }
+
+  // Monta oculto (request -1) o pacote das outras armas do inventário: a 1ª troca não
+  // mostra o legado enquanto clona o GLB (playtest 06/11, PT-38). ?vmprime=0 desliga.
+  prime(ids = []) {
+    if (!PRIME_VM || this._disposed) return;
+    for (const id of ids) {
+      const key = id ? this._keyFor(id) : '';
+      if (key && !this.entries.has(key) && !this.pending.has(key)) this._loadFamily(key, -1);
+    }
   }
 
   async _loadFamily(key, request = this._activeRequest) {

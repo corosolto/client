@@ -80,6 +80,8 @@ async function boot(weaponSkins) {
   await Promise.resolve();
   const vm = g.vm.authored;
   if (!(vm instanceof originalRuntime.AuthoredViewModels)) throw Error('INFRA: controller Game não é o real');
+  // A fixture só tem as golden: o prime do inventário (fab#…) tem régua própria, vm-troca-sem-legado.
+  vm.prime = () => {};
   vm._loadFamily = function (key, request) { loadCalls.push({ key, request }); const operation = runtime.AuthoredViewModels.prototype._loadFamily.call(this, key, request); loadOperations.push(operation); return operation; };
   const ready = vm.onReady;
   vm.onReady = c => { readyCalls.push({ key: c._keyFor(c.weapon), entries: c.entries.size }); return ready?.(c); };

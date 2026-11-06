@@ -64,11 +64,18 @@ const abatido = criarEstadoEscolta(caminho);
 passoEscolta(abatido, { defensores: [], atacantes: [], vipAlive: false }, 0.1, { mutante });
 cobra(abatido.winner === 'E', 'abater Flávio entrega vitória aos atacantes');
 
-const embarque = criarEstadoEscolta([{ x: 0, z: 0 }, { x: 0, z: 0.1 }]);
-for (let i = 0; i < 40 && !embarque.winner; i++) {
-  passoEscolta(embarque, { defensores: [vivo(0, 0, 'B')], atacantes: [], vipAlive: true }, 0.1, { mutante });
+// Embarque automático (playtest 06/11): entrou na zona da escada (eixo pé → topo), B vence na
+// hora — sem segurar 3 s, sem escolta e mesmo contestado.
+const zona = { pe: { x: 0, z: 4 }, topo: { x: 0, z: 8 }, raio: 1 };
+const embarque = criarEstadoEscolta([{ x: 0, z: 0 }, { x: 0, z: 4 }, { x: 0, z: 8 }]);
+for (let i = 0; i < 60 && !embarque.winner; i++) {
+  passoEscolta(embarque, { defensores: [vivo(embarque.position.x, embarque.position.z, 'B')], atacantes: [], vipAlive: true, zonaEmbarque: zona }, 0.1, { mutante });
 }
-cobra(embarque.winner === 'B' && embarque.boardedFor >= 3, 'três segundos na escada concluem o embarque');
+const sozinho = criarEstadoEscolta([{ x: 0, z: 0 }, { x: 0, z: 4 }, { x: 0, z: 8 }]);
+sozinho.position = { x: 0.4, z: 6 };
+passoEscolta(sozinho, { defensores: [], atacantes: [vivo(1, 6, 'E')], vipAlive: true, zonaEmbarque: zona }, 0.1, { mutante });
+cobra(embarque.winner === 'B' && embarque.position.z <= 4.01 && embarque.checkpoint === 2 && sozinho.winner === 'B',
+  'entrar na escada conclui o embarque na hora, mesmo sozinho e contestado');
 const vip = { pos: { x: 12, z: -7 }, yaw: Math.PI / 4 };
 const guardas = [0, 1, 2].map((i) => ({ pos: { x: i * 20, z: i * -20 }, team: 'B', alive: true }));
 const ameaca = vivo(12, 3, 'E'); ameaca.pos = { x: 12, z: 3 };
@@ -83,7 +90,7 @@ cobra(destinos[0].z > vip.pos.z && destinos.every((destino) => destino.leash <= 
 const servidor = criarEstadoEscolta(caminho);
 Object.assign(servidor, {
   checkpoint: 1, escortCount: 3, contested: true, threatened: true, inCover: false,
-  unattendedFor: 2.5, boardedFor: 1.25, winner: null,
+  unattendedFor: 2.5, winner: null,
 });
 servidor.position = { x: 1.5, z: 6.25 };
 const cliente = criarEstadoEscolta(caminho);

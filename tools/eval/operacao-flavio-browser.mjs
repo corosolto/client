@@ -328,10 +328,11 @@ const views = [
       mintPropInstances: g.world.root.children.filter((object) => mintNames.includes(object.name)).length,
       routeMeshCount: g.world.root.children.filter((object) => object.name === 'rota-operacao-flavio').length,
       checkpointRings: (() => { let n = 0; g.scene.traverse((o) => { if (o.name === 'marca-checkpoint-escolta') n++; }); return n; })(),
-      // Escada subível: piso no pé e no topo (último checkpoint) e nenhuma caixa sólida dela.
+      // Escada subível (piso no pé e no topo, sem caixa sólida), zona de embarque automático e anel do avião.
       stairs: (() => {
-        const [pe, topo] = g.world.escortPath.slice(-2);
-        return { pe: g.world.groundHeightAt(pe.x, pe.z), topo: g.world.groundHeightAt(topo.x, topo.z), solida: g.world.colliders.some((c) => c.id === 'escada_embarque') };
+        const [pe, topo] = g.world.escortPath.slice(-2), zona = g.world.escortBoardingZone;
+        return { pe: g.world.groundHeightAt(pe.x, pe.z), topo: g.world.groundHeightAt(topo.x, topo.z), solida: g.world.colliders.some((c) => c.id === 'escada_embarque'),
+          zona: zona ? { pe: zona.pe.x === pe.x && zona.pe.z === pe.z, raio: zona.raio } : null, anel: g.world.aircraftRing?.length || 0 };
       })(),
       // Seta ▼ da placa: ponta opaca no centro da base do canvas, cantos vazios e base larga acima.
       boardingLabel: (() => {
@@ -386,6 +387,7 @@ const views = [
   assert.equal(runtime.objective, true);
   assert.equal(runtime.checkpoints, 14);
   assert.ok(runtime.stairs.pe === 0 && runtime.stairs.topo > 1.4 && !runtime.stairs.solida, `escada não subível: ${JSON.stringify(runtime.stairs)}`);
+  assert.ok(runtime.stairs.zona?.pe && runtime.stairs.zona.raio >= 0.75 && runtime.stairs.anel >= 8, `zona de embarque/anel do avião ausentes: ${JSON.stringify(runtime.stairs)}`);
   assert.deepEqual(runtime.vip && {
     char: runtime.vip.char,
     weapon: runtime.vip.weapon,

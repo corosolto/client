@@ -7,10 +7,9 @@ const ESCORT_SPEED = 1.8;
 const COVER_SPEED = 2.5;
 const RETURN_SPEED = 2.2;
 const RETURN_DELAY = 3;
-const BOARDING_TIME = 3;
-// Embarque só na plataforma: o último checkpoint é o topo da escada (playtest 06/11) e o
-// raio não alcança os degraus de baixo nem o pé.
-const RAIO_EMBARQUE = 0.45;
+// Embarque automático (playtest 06/11): entrou na zona da escada, B vence na hora, sem segurar
+// tempo nem exigir escolta ou pátio limpo; sem zona declarada vale o raio do último checkpoint.
+const RAIO_EMBARQUE_PADRAO = 0.75;
 const THREAT_MEMORY = 0.7;
 // Rush (playtest 06/11): com 2+ guardas colados Flávio segue andando sob fogo; só se
 // abriga exposto. Guardas avançam até 2 m à frente do slot para interceptar.
@@ -286,7 +285,6 @@ export function criarEstadoEscolta(caminho) {
     threatLostFor: 0,
     inCover: true,
     unattendedFor: 0,
-    boardedFor: 0,
     exposto: false,
     winner: null,
   };
@@ -306,10 +304,23 @@ function moverAte(state, alvo, distancia, mover = null) {
   return Math.hypot(alvo.x - resultado.x, alvo.z - resultado.z) < 0.12;
 }
 
+// Distância ao eixo pé → topo da escada (cápsula); sem zona, ao último checkpoint do caminho.
+export function naZonaEmbarque(pos, caminho, zona) {
+  const a = zona?.pe || caminho[caminho.length - 1], b = zona?.topo || a, raio = zona?.raio ?? RAIO_EMBARQUE_PADRAO;
+  const dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz;
+  const t = l2 > 0 ? Math.max(0, Math.min(1, ((pos.x - a.x) * dx + (pos.z - a.z) * dz) / l2)) : 0;
+  return Math.hypot(pos.x - (a.x + dx * t), pos.z - (a.z + dz * t)) <= raio;
+}
+
 export function passoEscolta(state, contexto, dt, { mutante = '', mover = null } = {}) {
   if (state.winner || dt <= 0) return state;
   if (!contexto.vipAlive) {
     state.winner = 'E';
+    return state;
+  }
+  if (naZonaEmbarque(state.position, state.caminho, contexto.zonaEmbarque)) {
+    state.checkpoint = state.caminho.length - 1;
+    state.winner = 'B';
     return state;
   }
   const defensores = vivosNoRaio(contexto.defensores || [], state.position, ESCORT_RADIUS);
@@ -326,25 +337,11 @@ export function passoEscolta(state, contexto, dt, { mutante = '', mover = null }
   const acompanhado = defensores.length > 0 && !state.contested;
   const ultimo = state.caminho.length - 1;
 
-  // Embarque com escolta não espera o pátio limpar: contestado ou sob fogo, Flávio sobe;
-  // só sozinho na escada ele perde o progresso.
-  if (state.checkpoint >= ultimo && defensores.length > 0) {
-    state.unattendedFor = 0;
-    const escada = state.caminho[ultimo];
-    const naEscada = moverAte(state, escada, ESCORT_SPEED * dt, mover)
-      || Math.hypot(state.position.x - escada.x, state.position.z - escada.z) < RAIO_EMBARQUE;
-    state.inCover = true;
-    state.boardedFor = naEscada ? state.boardedFor + dt : 0;
-    if (state.boardedFor >= BOARDING_TIME) state.winner = 'B';
-    return state;
-  }
-
   // Exposto (contestado ou escolta curta) trava até a ameaça lembrada sair de EXPOSTO_SAIDA:
   // sem a histerese Flávio ia e voltava na borda dos 4 m sem nunca abrigar (gate 06/11).
   const colado = ameacas.some((ent) => d2(ent.pos || ent, state.position) <= EXPOSTO_SAIDA * EXPOSTO_SAIDA);
   state.exposto = state.threatened && (state.contested || defensores.length < ESCOLTA_RUSH || (state.exposto === true && colado));
   if (state.exposto) {
-    state.boardedFor = 0;
     state.unattendedFor = 0;
     // Abrigo REAL quando o mapa exporta cobertura: o ponto vem pronto do modo (com
     // histerese); sem cobertura vale o checkpoint legado.
@@ -356,7 +353,6 @@ export function passoEscolta(state, contexto, dt, { mutante = '', mover = null }
 
   if (state.checkpoint >= ultimo) {
     state.inCover = true;
-    state.boardedFor = 0;
     return state;
   }
 
@@ -390,7 +386,6 @@ export function snapshotEscolta(state) {
     threatened: state.threatened,
     inCover: state.inCover,
     unattendedFor: state.unattendedFor,
-    boardedFor: state.boardedFor,
     winner: state.winner,
   };
 }
@@ -405,7 +400,6 @@ export function aplicarSnapshotEscolta(state, net) {
   state.threatened = net.threatened === true;
   state.inCover = net.inCover === true;
   if (Number.isFinite(net.unattendedFor) && net.unattendedFor >= 0) state.unattendedFor = net.unattendedFor;
-  if (Number.isFinite(net.boardedFor) && net.boardedFor >= 0) state.boardedFor = net.boardedFor;
   state.winner = net.winner === 'E' || net.winner === 'B' ? net.winner : null;
   return state;
 }
@@ -481,7 +475,7 @@ export function elencoOperacaoFlavio(roster, lado, personagem, vipDef) {
 }
 
 // VIP jogador: o estado segue a posição dele; checkpoint avança a ≤VIP_JOGADOR_RAIO e nunca
-// recua. Embarque sozinho só com pátio limpo (sem aliados exigir escolta travaria o modo).
+// recua. Pisou na zona da escada, embarca na hora, sozinho ou contestado (como o bot VIP).
 const VIP_JOGADOR_RAIO = 3;
 export function passoEscoltaJogador(state, contexto, dt) {
   if (state.winner || dt <= 0) return state;
@@ -503,13 +497,14 @@ export function passoEscoltaJogador(state, contexto, dt) {
   state.threatened = visiveis.length > 0 || (state.threatened && state.threatLostFor < THREAT_MEMORY);
   state.unattendedFor = 0;
   const ultimo = state.caminho.length - 1;
+  if (naZonaEmbarque(contexto.posicao, state.caminho, contexto.zonaEmbarque)) {
+    state.checkpoint = ultimo;
+    state.winner = 'B';
+    return state;
+  }
   for (let i = ultimo; i > state.checkpoint; i--) {
     if (d2(state.position, state.caminho[i]) <= VIP_JOGADOR_RAIO ** 2) { state.checkpoint = i; break; }
   }
-  const naEscada = state.checkpoint >= ultimo && d2(state.position, state.caminho[ultimo]) <= RAIO_EMBARQUE ** 2;
-  const livre = defensores.length > 0 || (!state.contested && !state.threatened);
-  state.boardedFor = naEscada && livre ? state.boardedFor + dt : 0;
-  if (state.boardedFor >= BOARDING_TIME) state.winner = 'B';
   return state;
 }
 
@@ -609,9 +604,25 @@ export class OperacaoFlavio {
     // Flanqueador segura a vanguarda enquanto a formação não está engajada; o engaje tem
     // histerese (orientacaoFormacao), então o destino não alterna a cada quadro.
     if (bot._flavioPapel === 'flanqueador' && !orientacaoFormacao(this.vip, ameacas)?.engajado) {
-      return this.destinoFlanqueador(bot, destino);
+      return this._foraDaEscada(this.destinoFlanqueador(bot, destino));
     }
-    return destinoProtecaoEscolta(bot, this.vip, this.game.bots, ameacas, destino, this.game.world.escortCoverPoints);
+    return this._foraDaEscada(destinoProtecaoEscolta(bot, this.vip, this.game.bots, ameacas, destino, this.game.world.escortCoverPoints));
+  }
+
+  // Guarda e flanqueador nunca ocupam a escada (playtest 06/11: guarda parado na porta): destino
+  // na pegada dela sai pela borda livre mais próxima. Atacantes não passam por aqui.
+  _foraDaEscada(destino) {
+    const area = this.game.world.escortBoardingZone?.area, folga = 0.6;
+    if (!destino || !area || destino.x <= area.minX - folga || destino.x >= area.maxX + folga
+      || destino.z <= area.minZ - folga || destino.z >= area.maxZ + folga) return destino;
+    const livre = (x, z) => !(this.game.world.colliders || []).some((c) => c.minY < 1.8 && c.maxY > 0.1
+      && x > c.minX - 0.4 && x < c.maxX + 0.4 && z > c.minZ - 0.4 && z < c.maxZ + 0.4);
+    const saida = [
+      { x: area.minX - folga, z: destino.z }, { x: area.maxX + folga, z: destino.z },
+      { x: destino.x, z: area.minZ - folga }, { x: destino.x, z: area.maxZ + folga },
+    ].sort((a, b) => d2(a, destino) - d2(b, destino)).find((p) => livre(p.x, p.z));
+    if (saida) { destino.x = saida.x; destino.z = saida.z; }
+    return destino;
   }
 
   // Ameaças que roteiam a formação/flanqueador: só o que o VIP VÊ (LOS), sem leak
@@ -1202,9 +1213,10 @@ export class OperacaoFlavio {
       const defensores = this.game.combatants.filter((ent) => ent !== this.vip && ent.team === 'B');
       const atacantes = this.game.combatants.filter((ent) => ent.team === 'E');
       const temLinhaDeVisao = (ent) => this._vipTemLos(ent);
+      const zonaEmbarque = this.game.world.escortBoardingZone;
       // Jogador VIP: o estado segue a posição dele; o modo nunca o desloca.
       if (this.vip.isPlayer) {
-        passoEscoltaJogador(this.state, { posicao: this.vip.pos, defensores, atacantes, vipAlive: this.vip.alive, temLinhaDeVisao }, dt);
+        passoEscoltaJogador(this.state, { posicao: this.vip.pos, defensores, atacantes, vipAlive: this.vip.alive, temLinhaDeVisao, zonaEmbarque }, dt);
         if (this.vip.alive === false) this.anunciarMorte();
         if (this.state.winner) this.game._endRound(this.state.winner);
         this.atualizaHud();
@@ -1217,6 +1229,7 @@ export class OperacaoFlavio {
         vipAlive: this.vip.alive,
         temLinhaDeVisao,
         abrigo: this._atualizarAbrigo(ameaca, dt),
+        zonaEmbarque,
       }, dt, { mover: (origem, proposta, destino) => this.moverVip(origem, proposta, destino) });
       this.vip.pos.x = this.state.position.x;
       this.vip.pos.z = this.state.position.z;

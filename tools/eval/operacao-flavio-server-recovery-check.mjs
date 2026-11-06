@@ -22,7 +22,7 @@ const mutations = {
   'rush-sem-exposicao': ['state.exposto = state.threatened && (state.contested || defensores.length < ESCOLTA_RUSH || (state.exposto === true && colado));', 'state.exposto = state.threatened && (state.contested || (state.exposto === true && colado));', 'escolta em número não deixa Flávio parado sob ameaça'],
   'exposto-sem-histerese': ['state.exposto = state.threatened && (state.contested || defensores.length < ESCOLTA_RUSH || (state.exposto === true && colado));', 'state.exposto = state.threatened && (state.contested || defensores.length < ESCOLTA_RUSH);', 'contestado uma vez, Flávio chega ao abrigo sem vai-e-vem'],
   'trava-por-los': ['const colado = ameacas.some((ent) => d2(ent.pos || ent, state.position) <= EXPOSTO_SAIDA * EXPOSTO_SAIDA);', 'const colado = visiveis.some((ent) => d2(ent.pos || ent, state.position) <= EXPOSTO_SAIDA * EXPOSTO_SAIDA);', 'contestado uma vez, Flávio chega ao abrigo sem vai-e-vem'],
-  'embarque-exige-limpo': ['if (state.checkpoint >= ultimo && defensores.length > 0) {', 'if (state.checkpoint >= ultimo && acompanhado && !state.threatened) {', 'embarque progride contestado com escolta'],
+  'embarque-exige-limpo': ['if (naZonaEmbarque(state.position, state.caminho, contexto.zonaEmbarque)) {', 'if (naZonaEmbarque(state.position, state.caminho, contexto.zonaEmbarque) && contexto.defensores?.length && !(contexto.atacantes || []).length) {', 'embarque automático conclui contestado, com ou sem escolta'],
   'cliente-sem-rota': ['this._sincronizarRota();\n    aplicarSnapshotEscolta(this.state, net);', 'aplicarSnapshotEscolta(this.state, net);', 'cliente e servidor derivam a mesma rota da rodada replicada'],
   'saida-cortada': ['rota.points = path.map((i) => ({ x: nodes[i].x, z: nodes[i].z, node: i }));', 'rota.points = path.slice(1).map((i) => ({ x: nodes[i].x, z: nodes[i].z, node: i }));', 'plano do VIP passa pelo nó de saída sem travar'],
   'spawn-longe': ['.filter((p) => p.dist <= 18);\n    const base', '.filter((p) => p.dist <= 180);\n    const base', 'spawn filtra colisão rota e distância'],
@@ -126,7 +126,7 @@ check('servidor online simula escolta até vitória B', () => {
   for (let i = 0; i < 60 && !winners.length; i++) objective.update(0.1);
   assert.deepEqual(winners, ['B']);
   assert.equal(objective.state.checkpoint, 1);
-  assert.ok(objective.state.boardedFor >= 3);
+  assert.equal(objective.state.winner, 'B', 'embarque automático ao chegar à escada');
   assert.equal(game.state, 'roundEnd');
 });
 
@@ -138,7 +138,7 @@ check('cliente remoto só espelha snapshot entre atualizações', () => {
   assert.equal(objective.updateBot(vip, 0.1), false, 'cliente deixa corpo para interpolação de rede');
   assert.equal(vip.crouchBias, false, 'cliente não prepara postura da IA autoritativa');
   assert.equal(vip.target, null, 'cliente não adquire alvo para o VIP');
-  objective.applyNetState({ position: { x: 2, z: 0.2 }, checkpoint: 0, escortCount: 4, contested: true, threatened: true, inCover: false, unattendedFor: 2, boardedFor: 1, winner: null });
+  objective.applyNetState({ position: { x: 2, z: 0.2 }, checkpoint: 0, escortCount: 4, contested: true, threatened: true, inCover: false, unattendedFor: 2, winner: null });
   const before = snapshotEscolta(objective.state);
   vip.pos.set(99, 0, 99);
   game.combatants.push(body('E', 2, 0.2));
@@ -407,18 +407,17 @@ check('contestado uma vez, Flávio chega ao abrigo sem vai-e-vem', () => {
   assert.ok(state.position.z > 1.5 + 0.5, 'escolta retoma a marcha');
 });
 
-check('embarque progride contestado com escolta', () => {
+// Embarque automático (playtest 06/11): na zona da escada o B vence no primeiro passo, com ou
+// sem escolta e com atacante colado; nada congela o embarque depois de disparado.
+check('embarque automático conclui contestado, com ou sem escolta', () => {
   const caminho = [{ x: 0, z: 0 }, { x: 0, z: 0.1 }];
   const contexto = (defensores) => ({ defensores, atacantes: [body('E', 0, 1)], vipAlive: true, temLinhaDeVisao: () => true });
-  const escoltado = criarEstadoEscolta(caminho);
-  escoltado.checkpoint = 1; escoltado.position.z = 0.1;
-  for (let i = 0; i < 40 && !escoltado.winner; i++) passoEscolta(escoltado, contexto([body('B')]), 0.1);
-  assert.equal(escoltado.contested, true, 'atacante colado contesta a escada');
-  assert.equal(escoltado.winner, 'B', `escolta sobe com o pátio contestado (embarque ${escoltado.boardedFor.toFixed(2)} s)`);
-  const sozinho = criarEstadoEscolta(caminho);
-  sozinho.checkpoint = 1; sozinho.position.z = 0.1;
-  for (let i = 0; i < 40; i++) passoEscolta(sozinho, contexto([]), 0.1);
-  assert.equal(sozinho.winner, null, 'sem escolta não embarca');
+  for (const defensores of [[body('B')], []]) {
+    const estado = criarEstadoEscolta(caminho);
+    estado.position.z = 0.1;
+    passoEscolta(estado, contexto(defensores), 0.1);
+    assert.equal(estado.winner, 'B', `na escada ${defensores.length ? 'com' : 'sem'} escolta e contestado, embarca no primeiro passo`);
+  }
 });
 
 // A variante vem só do roundNum (já replicado no snapshot): servidor e cliente que entrou
@@ -438,7 +437,7 @@ check('cliente e servidor derivam a mesma rota da rodada replicada', () => {
     servidor.game.roundNum = rodada; servidor.objective.prepareRound();
     assert.deepEqual(servidor.objective.state.caminho, rotas[esperada], `servidor na variante ${esperada}`);
     cliente.game.roundNum = rodada;   // netgame copia snap.roundNum antes de aplicar o objetivo
-    cliente.objective.applyNetState({ position: { x: 5, z: 6 }, checkpoint: 3, escortCount: 2, contested: false, threatened: false, inCover: false, unattendedFor: 0, boardedFor: 0, winner: null });
+    cliente.objective.applyNetState({ position: { x: 5, z: 6 }, checkpoint: 3, escortCount: 2, contested: false, threatened: false, inCover: false, unattendedFor: 0, winner: null });
     assert.deepEqual(cliente.objective.state.caminho, servidor.objective.state.caminho, `cliente na mesma variante da rodada ${rodada}`);
     assert.equal(cliente.objective.state.checkpoint, 3, 'checkpoint replicado não é cortado pelo caminho errado');
   }

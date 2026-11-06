@@ -54,10 +54,15 @@ const mutations = {
     after: 'return criarEstadoEscolta(this.game.world.escortPath);',
     clause: 'rota do VIP varia por rodada e conduz Flávio pela variante',
   },
-  'embarque-no-pe': {
-    before: 'const escada = state.caminho[ultimo];',
-    after: 'const escada = state.caminho[ultimo - 1];',
-    clause: 'VIP bot sobe a escada e embarca no topo em toda variante',
+  'embarque-so-no-topo': {
+    before: 'if (naZonaEmbarque(state.position, state.caminho, contexto.zonaEmbarque)) {',
+    after: 'if (naZonaEmbarque(state.position, state.caminho, contexto.zonaEmbarque && { ...contexto.zonaEmbarque, pe: contexto.zonaEmbarque.topo, raio: 0.45 })) {',
+    clause: 'VIP bot embarca ao chegar à escada mesmo com guarda parado na plataforma',
+  },
+  'guarda-na-escada': {
+    before: 'return this._foraDaEscada(destinoProtecaoEscolta(',
+    after: 'return (destinoProtecaoEscolta(',
+    clause: 'guardas e flanqueadores não recebem destino na escada',
   },
   'vanguarda-sobe-escada': {
     before: 'const chao = Math.max(0, ultimo - 1);',
@@ -244,9 +249,12 @@ check('vanguarda atravessa hangar e pátio junto do comboio', () => withGame(7, 
     for (const roamer of flanqueadores) {
       roamer.alive = true;
       const destino = game.objective.botDestination(roamer);
-      const lateral = Math.hypot(destino.x - ponto.x, destino.z - ponto.z);
+      const lateral = Math.hypot(destino.x - ponto.x, destino.z - ponto.z), { area } = game.world.escortBoardingZone;
+      // No pé, o lado que cairia na escada sai da pegada dela (+0,6 m; playtest 06/11).
+      const limite = indice === caminho.length - 2 ? 4 : 3.5;
       assert.ok(destino.z >= ponto.z - 3.5, `checkpoint ${checkpoint}: vanguarda não fica atrás do comboio`);
-      assert.ok(lateral <= 3.5 + 1e-9, `checkpoint ${checkpoint}: vanguarda permanece lateral (${lateral.toFixed(2)} m)`);
+      assert.ok(lateral <= limite + 1e-9, `checkpoint ${checkpoint}: vanguarda permanece lateral (${lateral.toFixed(2)} m)`);
+      assert.ok(!(destino.x > area.minX && destino.x < area.maxX && destino.z > area.minZ && destino.z < area.maxZ), `checkpoint ${checkpoint}: vanguarda na escada`);
       assert.equal(Math.sign(destino.x - ponto.x), roamer._flavioLado, `checkpoint ${checkpoint}: flanqueador mantém o lado autorado`);
     }
   }
@@ -371,30 +379,46 @@ check('rota do VIP varia por rodada e conduz Flávio pela variante', () => withG
   assert.equal(escolhidas[0], 0, 'primeira rodada abre pelo meio');
 }));
 
-// Playtest 06/11 ("a escada está bloqueada"): em cada variante o VIP bot sai do checkpoint
-// antes do pé pelo moverVip real, sobe os degraus e só embarca na plataforma, na porta.
-check('VIP bot sobe a escada e embarca no topo em toda variante', () => withGame(7, (game) => {
+// Playtest 06/11 ("tinha que ser automático"): em cada variante o VIP bot sai do checkpoint
+// antes do pé pelo moverVip real e embarca ao entrar na escada, com um guarda parado no topo.
+check('VIP bot embarca ao chegar à escada mesmo com guarda parado na plataforma', () => withGame(7, (game) => {
   const { vip, guardas, atacantes } = papeis(game);
+  const { topo } = game.world.escortBoardingZone;
   game._losClear = () => false;
   for (let rodada = 1; rodada <= 3; rodada++) {
     game.roundNum = rodada; game.state = 'live';
     game.objective.prepareRound();
-    const estado = game.objective.state, caminho = estado.caminho, k = caminho.length - 3, fim = caminho.at(-1);
+    const estado = game.objective.state, caminho = estado.caminho, k = caminho.length - 3;
     estado.checkpoint = k; estado.position.x = caminho[k].x; estado.position.z = caminho[k].z;
     vip.pos.set(caminho[k].x, 0, caminho[k].z);
-    let subidaMax = 0, yAnterior = 0;
-    for (let frame = 0; frame < 60 * 25 && !estado.winner; frame++) {
+    let quadros = 0;
+    for (; quadros < 60 * 25 && !estado.winner; quadros++) {
       for (const bot of atacantes) { bot.alive = false; bot.pos.set(-40, 0, -55); }
-      for (const guarda of guardas) { guarda.alive = true; guarda.pos.set(vip.pos.x, 0, vip.pos.z); }
+      guardas.forEach((guarda, i) => { guarda.alive = true; guarda.pos.set(i ? vip.pos.x : topo.x, 0, i ? vip.pos.z : topo.z); });
       game.time += 1 / 60;
       game.objective.update(1 / 60);
-      subidaMax = Math.max(subidaMax, vip.pos.y - yAnterior); yAnterior = vip.pos.y;
     }
     assert.equal(estado.winner, 'B', `rodada ${rodada}: Flávio não embarcou (checkpoint ${estado.checkpoint}/${caminho.length - 1})`);
-    const falta = Math.hypot(estado.position.x - fim.x, estado.position.z - fim.z);
-    assert.ok(falta < 0.45, `rodada ${rodada}: embarcou a ${falta.toFixed(2)} m da plataforma`);
-    assert.ok(vip.pos.y >= game.world.groundHeightAt(fim.x, fim.z) - 0.05 && vip.pos.y > 1.4, `rodada ${rodada}: embarcou a ${vip.pos.y.toFixed(2)} m de altura, fora da plataforma`);
-    assert.ok(subidaMax <= 0.55, `rodada ${rodada}: degrau de ${subidaMax.toFixed(2)} m num quadro`);
+    const doTopo = Math.hypot(estado.position.x - topo.x, estado.position.z - topo.z);
+    assert.ok(doTopo >= 2.5 && vip.pos.y < 0.4, `rodada ${rodada}: embarque esperou subir (a ${doTopo.toFixed(2)} m do topo, y ${vip.pos.y.toFixed(2)})`);
+  }
+}));
+
+// Guarda na plataforma bloqueava o embarque (playtest 06/11): nenhum destino de guarda ou
+// flanqueador cai na escada, com Flávio no pé ou na rampa; atacantes podem subir.
+check('guardas e flanqueadores não recebem destino na escada', () => withGame(7, (game) => {
+  const { vip, guardas, flanqueadores } = papeis(game);
+  const { pe, topo, area } = game.world.escortBoardingZone;
+  game._losClear = () => false;
+  for (const ponto of [pe, { x: (pe.x + topo.x) / 2, z: pe.z }, topo]) {
+    game.objective.state.position.x = ponto.x; game.objective.state.position.z = ponto.z;
+    vip.pos.set(ponto.x, 0, ponto.z);
+    for (const bot of [...guardas, ...flanqueadores]) {
+      bot.alive = true; bot.pos.set(topo.x, 0, topo.z);
+      const destino = game.objective.botDestination(bot);
+      const dentro = destino && destino.x > area.minX - 0.38 && destino.x < area.maxX + 0.38 && destino.z > area.minZ - 0.38 && destino.z < area.maxZ + 0.38;
+      assert.ok(destino && !dentro, `${bot._flavioPapel} com Flávio em (${ponto.x},${ponto.z}) recebeu destino na escada (${destino?.x?.toFixed(2)}; ${destino?.z?.toFixed(2)})`);
+    }
   }
 }));
 

@@ -13,9 +13,15 @@ const edits = {
   'cadeiras-gigantes': ["['assentos_aeroporto', -20, -34, [2.6, 1.05, 0.9], Math.PI / 2, 2.6, 1.05, 0.9, true]", "['assentos_aeroporto', -20, -34, 6, Math.PI / 2, 6, 1.5, 2.2, true]"],
   'sem-rota-interna': ["    [{ x: 0, z: -16 }, { x: 0, z: -14.5 }, { x: 12, z: -14.5 }, { x: 12, z: -7 }, { x: 15.5, z: -3 }, { x: 15.5, z: 1 }, { x: 15.5, z: 7 }, { x: 13, z: 9 }, { x: 11.8, z: 18 }, { x: 9, z: 20 }, { x: 7, z: 23 }],\n", ''],
   'sem-cobertura-extra': ["bloco('cobertura-tatica-hangar-leste', 10, 0.725, 37, 4, 1.45, 1.4, mats.metal);", "bloco('cobertura-tatica-hangar-leste', 10, 0.725, 37, 4, 1.45, 1.4, mats.metal, false);"],
-  'proxy-so-glb': ['const colliderDoProp = (id, x, y, z, w, h, d, yaw = 0) => {', 'const colliderDoProp = (id, x, y, z, w, h, d, yaw = 0) => { if (!templates.has(id)) return;'],
+  'proxy-so-glb': [']) colliders.push({ id, minX, maxX, minY, maxY, minZ, maxZ });', "]) if (templates.has('aviao_executivo')) colliders.push({ id, minX, maxX, minY, maxY, minZ, maxZ });"],
   'sem-yaw': ['if (solid) colliderDoProp(id, x, 0, z, w, h, d, yaw);', 'if (solid) colliderDoProp(id, x, 0, z, w, h, d);'],
-  'sem-asas': ["  colliderDoProp('aviao_executivo_asas', 0, 0.8, 55.4, 16, 1.4, 3.2, Math.PI);", ''],
+  'sem-asas': ["    ['aviao_executivo_asas', -5.5, 5.5, 0.8, 2.4, 54.75, 56.25],\n", ''],
+  // Anel do avião (playtest 06/11): asa do proxy antigo (16 m), limite norte antigo, carro colado na asa, anel fora do grafo.
+  'asa-larga': ["['aviao_executivo_asas', -5.5, 5.5, 0.8, 2.4, 54.75, 56.25],", "['aviao_executivo_asas', -8, 8, 0.8, 2.2, 53.8, 57],"],
+  'limite-norte-antigo': ['const LIMITES_JOGAVEIS = { minX: -43, maxX: 43, minZ: -57, maxZ: 64 };', 'const LIMITES_JOGAVEIS = { minX: -43, maxX: 43, minZ: -57, maxZ: 57 };'],
+  'carro-na-asa': ["real('carro_servico', -8.6, 54.5, Math.PI / 2),", "real('carro_servico', -7.6, 54.5, Math.PI / 2),"],
+  'anel-fora-do-grafo': ['  addRoute([...ANEL_AVIAO, ANEL_AVIAO[0]]);\n', ''],
+  'fuselagem-larga': ["['aviao_executivo_fuselagem', -1, 1, 0, 1.6, 49.5, 54],", "['aviao_executivo_fuselagem', -1.7, 1.7, 0, 1.6, 49.5, 54],"],
   'spawn-invertido': ['B: [{ x: -20, z: -48, yaw: Math.PI }', 'B: [{ x: -20, z: -48, yaw: 0 }'],
   'e-spawn-invertido': ['E: [{ x: -33, z: 54, yaw: 0 }, { x: -28, z: 56, yaw: 0 }, { x: 33, z: 54, yaw: 0 }, { x: 30, z: 56, yaw: 0 }],', 'E: [{ x: -33, z: 54, yaw: Math.PI }, { x: -28, z: 56, yaw: Math.PI }, { x: 33, z: 54, yaw: Math.PI }, { x: 30, z: 56, yaw: Math.PI }],'],
   'sem-cobertura': ["bloco('cobertura-tatica-hangar', -3, 0.725, 37, 5, 1.45, 1.4, mats.metal);", "bloco('cobertura-tatica-hangar', -3, 0.725, 37, 5, 1.45, 1.4, mats.metal, false);"],
@@ -24,8 +30,8 @@ const edits = {
   'sombras-low-completas': ['mesh.castShadow = sombra && (solid || !lowProfile)', 'mesh.castShadow = sombra'],
   'sem-jardineira-embarque': ["    real('jardineira', -7.2, -38.6, 0),\n", ''],
   'ponto-sem-papel': ["{ x: 13, z: -41, role: 'guard', zone: 'embarque' },", '{ x: 13, z: -41 },'],
-  // z=47,8: a 1,98 m da pilha de ULD real de (-1;44,6) (em 47,4 ela ainda ficava a 1,6 m).
-  'ponto-afastado': ["{ x: -3.2, z: 49.9, role: 'guard', zone: 'apron' },", "{ x: -3.2, z: 47.8, role: 'guard', zone: 'apron' },"],
+  // x=-3,4: a 2,4 m da cabine real (x -1,0), longe demais de cobertura alta.
+  'ponto-afastado': ["{ x: -2.4, z: 50.5, role: 'guard', zone: 'apron' },", "{ x: -3.4, z: 50.5, role: 'guard', zone: 'apron' },"],
   'container-oeste-decorativo': ["real('containers_carga', -12, 51.4, 0),", "real('containers_carga', -12, 51.4, 0, false),"],
   'gpu-decorativo': ["real('energia_solo', 24, 50, Math.PI / 2),", "real('energia_solo', 24, 50, Math.PI / 2, false),"],
   'armadilha-lounge': ['E: [{ x: -33, z: 54, yaw: 0 }, { x: -28, z: 56, yaw: 0 }, { x: 33, z: 54, yaw: 0 }, { x: 30, z: 56, yaw: 0 }],', 'E: [{ x: -20, z: -47, yaw: 0 }, { x: -28, z: 56, yaw: 0 }, { x: 33, z: 54, yaw: 0 }, { x: 30, z: 56, yaw: 0 }],'],
@@ -36,7 +42,7 @@ const edits = {
   // Variantes da rota do VIP (playtest 06/11): validadas como a rota do meio.
   'variante-no-container': ['{ x: 14.5, z: 32 }, { x: 18, z: 32 }', '{ x: 14.5, z: 32 }, { x: 18, z: 28 }'],
   'variante-sem-no': ['for (const caminho of ESCORT_PATHS.slice(1)) for (const ponto of caminho) addNode(ponto.x, ponto.z);', ''],
-  'variante-longe-da-escada': ['{ x: 5.5, z: 47 }, { x: 6.2, z: 52 }, { x: 2.3, z: 52 },', '{ x: 5.5, z: 47 }, { x: 6.2, z: 52 },'],
+  'variante-longe-da-escada': ['{ x: 3.2, z: 42.4 }, { x: 6.2, z: 52 }, { x: 2.3, z: 52 },', '{ x: 3.2, z: 42.4 }, { x: 6.2, z: 52 },'],
   'faixa-afunda': ['const Y_MARCACAO = 0.13;', 'const Y_MARCACAO = 0.06;'],
   // Escada subível (playtest 06/11 "a escada está bloqueada"): caixa sólida de volta, piso
   // plano, degrau acima do STEP_H e grafo que corta a lateral da escada.
@@ -55,7 +61,7 @@ const edits = {
   'carro-eixo-trocado': ["real('carro_servico', -18, 38, Math.PI / 2),", "['carro_servico', -18, 38, [1.6, 1.95, 3.2], Math.PI / 2, 3.2, 1.95, 1.6, true],"],
   'balcao-gigante': ["real('balcao_recepcao', 16.75, -39, 0),", "['balcao_recepcao', 16.75, -39, 7.2, 0, 7, 1.4, 2.2, true],"],
   'jardineira-render-baixo': ["real('jardineira', 24, -44.5, 0),", "['jardineira', 24, -44.5, 2.5, 0, 2.5, 1.8, 1.4, true],"],
-  'kit-barreira-no-patio': ["usarProp('barreiras_aeroporto', [x, 0.08, 59.6]", "usarProp('barreiras_aeroporto', [x, 0.08, 52]"],
+  'kit-barreira-no-patio': ["usarProp('barreiras_aeroporto', [x, 0.08, 70]", "usarProp('barreiras_aeroporto', [x, 0.08, 52]"],
 };
 if (mutant) {
   const edit = edits[mutant];
@@ -120,6 +126,17 @@ const glbVertices = (file) => {
   }
   return pontos;
 };
+// Triângulos reais (índices + vértices) para medir o volume visível do avião contra os proxies.
+const glbTriangulos = (file) => {
+  const { gltf, bin } = glbLer('../../public/models/props/operacao_decola/' + file), vertices = glbVertices(file), triangulos = [];
+  for (const mesh of gltf.meshes) for (const primitive of mesh.primitives) {
+    const accessor = gltf.accessors[primitive.indices], view = gltf.bufferViews[accessor.bufferView];
+    const inicio = (view.byteOffset || 0) + (accessor.byteOffset || 0), largura = accessor.componentType === 5125 ? 4 : 2;
+    const indice = (i) => largura === 4 ? bin.readUInt32LE(inicio + i * 4) : bin.readUInt16LE(inicio + i * 2);
+    for (let i = 0; i < accessor.count; i += 3) triangulos.push([indice(i), indice(i + 1), indice(i + 2)].map(k => vertices[k]));
+  }
+  return triangulos;
+};
 const portaCinematica = (() => {
   const { gltf } = glbLer('../../public/models/cinematics/operacao_flavio_boarding.glb');
   const palco = readFileSync(new URL('../../public/js/flavio-boarding.js', import.meta.url), 'utf8').match(/stage\.position\.set\(([^)]+)\)/)[1].split(',').map(Number);
@@ -154,7 +171,7 @@ try {
   check('plane-proxy-independent-of-template', () => {
     for (const map of [loaded, fallback]) {
       assert.equal(blocked(map, 0, 56), true, 'fuselagem tem proxy');
-      assert.equal(blocked(map, 7, 55), true, 'asas entram na pegada física');
+      assert.equal(blocked(map, 5, 55.6), true, 'asas entram na pegada física');
       assert.equal(blocked(map, map.escortPath.at(-1).x, map.escortPath.at(-1).z), false, 'último checkpoint continua livre');
     }
   });
@@ -383,7 +400,7 @@ try {
       ['barreiras_aeroporto', 5, -4], ['barreiras_aeroporto', -6.2, 4], ['carro_servico', 18, 10],
       ['trator_bagagem', -19, 9], ['barreiras_aeroporto', -11, 24], ['barreiras_aeroporto', 11, 24],
       ['energia_solo', -1.5, 26], ['barreiras_aeroporto', -24, 47],
-      ['carro_servico', -8, 54.5], ['barreiras_aeroporto', 25.5, 55], ['jardineira', -18, -34.8],
+      ['carro_servico', -8.6, 54.5], ['barreiras_aeroporto', 25.5, 55], ['jardineira', -18, -34.8],
     ];
     for (const [id, x, z] of esperadas) assert.ok(loaded.colliders.some(c => c.id === id
       && Math.abs((c.minX + c.maxX) / 2 - x) < 1e-9 && Math.abs((c.minZ + c.maxZ) / 2 - z) < 1e-9),
@@ -514,12 +531,13 @@ try {
   };
   check('stairs-tucked-against-fuselage', () => {
     const escada = escadaVisual();
-    const fuselagem = loaded.colliders.find(c => c.id === 'aviao_executivo_fuselagem');
+    const fuselagem = loaded.colliders.find(c => c.id === 'aviao_executivo_fuselagem' && c.minZ <= escada.minZ && c.maxZ >= escada.maxZ && c.minY <= 1.6 && c.maxY > 1.6);
+    assert.ok(fuselagem, 'fuselagem na altura da plataforma, ao lado da escada');
     const gap = Math.max(escada.minX - fuselagem.maxX, fuselagem.minX - escada.maxX);
     assert.ok(gap <= 0.6, `escada a ${gap.toFixed(2)} m da fuselagem`);
     assert.equal(blocked(loaded, loaded.escortPath.at(-1).x, loaded.escortPath.at(-1).z, .46), false, 'checkpoint final livre');
-    assert.equal(blocked(loaded, 7, 55), true, 'asas entram na pegada física');
-    assert.equal(blocked(loaded, 7, 55) === blocked(fallback, 7, 55), true, 'escada igual com GLB e fallback');
+    assert.equal(blocked(loaded, 5, 55.6), true, 'asas entram na pegada física');
+    assert.equal(blocked(loaded, 5, 55.6) === blocked(fallback, 5, 55.6), true, 'escada igual com GLB e fallback');
   });
   // Playtest 06/11 ("escada ao contrário"): o topo nativo da escada encosta na porta real da
   // cinemática, a porta pintada fica do mesmo lado; rotas sobem do pé à plataforma.
@@ -595,6 +613,52 @@ try {
     modelo.visible = false;
     try { assert.equal(loaded.groundHeightAt(fim.x, fim.z), 0, 'escada oculta ainda sustenta piso'); } finally { modelo.visible = true; }
     assert.ok(Math.hypot(fim.x - porta.x, fim.z - porta.z) <= 1.1, 'topo junto à porta');
+  });
+  // Playtest 06/11 ("atrás da aeronave não é acessível"): o corpo do jogador dá a volta inteira
+  // no avião dentro dos limites e no grafo; proxies do avião nunca maiores que a malha real.
+  check('aircraft-ring-walkable-and-faithful-colliders', () => {
+    const anel = loaded.aircraftRing, B = loaded.bounds, r = 0.38;
+    assert.ok(Array.isArray(anel) && anel.length >= 8, 'anel do avião declarado');
+    const aviao = loaded.colliders.filter(c => (c.id || '').startsWith('aviao_executivo'));
+    const asas = aviao.filter(c => c.id === 'aviao_executivo_asas'), fus = aviao.filter(c => c.id === 'aviao_executivo_fuselagem');
+    assert.ok(Math.max(...anel.map(p => p.z)) >= Math.max(...fus.map(c => c.maxZ)) + 1, 'anel passa atrás da cauda');
+    assert.ok(Math.min(...anel.map(p => p.z)) <= Math.min(...fus.map(c => c.minZ)) - 1, 'anel passa à frente do nariz');
+    assert.ok(Math.min(...anel.map(p => p.x)) <= Math.min(...asas.map(c => c.minX)) - r && Math.max(...anel.map(p => p.x)) >= Math.max(...asas.map(c => c.maxX)) + r, 'anel contorna as duas pontas de asa');
+    const corpo = (x, z) => loaded.colliders.find(c => c.minY < 1.5 && c.maxY > 0.3
+      && Math.hypot(x - Math.max(c.minX, Math.min(x, c.maxX)), z - Math.max(c.minZ, Math.min(z, c.maxZ))) < r);
+    const { nodes } = loaded.waypoints;
+    const noDe = (p) => { const i = loaded.nearestWaypoint(p.x, p.z); assert.ok(Math.hypot(nodes[i].x - p.x, nodes[i].z - p.z) <= 0.6, `anel (${p.x},${p.z}) sem nó do grafo`); return i; };
+    anel.forEach((a, i) => {
+      const b = anel[(i + 1) % anel.length], passos = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.1);
+      for (let n = 0; n <= passos; n++) {
+        const x = a.x + (b.x - a.x) * n / passos, z = a.z + (b.z - a.z) * n / passos, c = corpo(x, z);
+        assert.ok(x > B.minX + r && x < B.maxX - r && z > B.minZ + r && z < B.maxZ - r, `anel (${x.toFixed(2)},${z.toFixed(2)}) fora dos limites jogáveis`);
+        assert.equal(c, undefined, `anel (${x.toFixed(2)},${z.toFixed(2)}) bate em ${c?.id}`);
+        assert.equal(loaded.groundHeightAt(x, z), 0, 'anel no chão do pátio');
+      }
+      const caminho = loaded.findPath(noDe(a), noDe(b));
+      assert.ok(caminho.at(-1) === noDe(b) && caminho.length <= 6, `anel (${a.x},${a.z})→(${b.x},${b.z}) sem caminho curto no grafo`);
+    });
+    // Proxies ⊆ malha: cada célula de 25 cm do proxy, na faixa de altura dele, tem malha a ≤25 cm.
+    const triangulos = glbTriangulos('aviao_executivo.glb'), tri = triangulos.flat();
+    const ext = (k) => tri.reduce((m, v) => Math.max(m, v[k]), -Infinity) - tri.reduce((m, v) => Math.min(m, v[k]), Infinity);
+    const escala = 18 / Math.max(ext('x'), ext('y'), ext('z')), y0 = tri.reduce((m, v) => Math.min(m, v.y), Infinity);
+    const modelo = loaded.root.getObjectByName('aviao_executivo');
+    assert.ok(modelo && Math.abs(modelo.rotation.y - Math.PI) < 1e-9 && modelo.scale.x < 0, 'avião em yaw π e espelhado em x (transformação medida)');
+    const malha = new Set(), cel = 0.25;
+    for (const [a, b, c] of triangulos) for (let u = 0; u <= 10; u++) for (let v = 0; u + v <= 10; v++) {
+      const w = 10 - u - v, p = (k) => (a[k] * u + b[k] * v + c[k] * w) / 10;
+      malha.add(`${Math.floor(p('x') * escala / cel)},${Math.floor((p('y') - y0) * escala / cel)},${Math.floor((55 - p('z') * escala) / cel)}`);
+    }
+    for (const c of aviao) for (let x = c.minX + 0.05; x < c.maxX; x += cel) for (let z = c.minZ + 0.05; z < c.maxZ; z += cel) {
+      const [ix, iz] = [Math.floor(x / cel), Math.floor(z / cel)];
+      let perto = false;
+      for (let y = Math.max(c.minY, 0.3); y <= Math.min(c.maxY, 4) && !perto; y += cel) {
+        const iy = Math.floor((y - 0.08) / cel);
+        for (let dx = -1; dx <= 1 && !perto; dx++) for (let dz = -1; dz <= 1 && !perto; dz++) for (let dy = -1; dy <= 1 && !perto; dy++) perto = malha.has(`${ix + dx},${iy + dy},${iz + dz}`);
+      }
+      assert.ok(perto, `${c.id}: proxy em (${x.toFixed(2)},${z.toFixed(2)}) sem malha do avião (maior que o render)`);
+    }
   });
   // Placa (playtest 06/11): render-only, ancorada na ponta da seta ▼ logo acima da porta, igual
   // em todos os perfis; não vira colisor, oclusor nem alvo de raycast.

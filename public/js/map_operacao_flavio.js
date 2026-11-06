@@ -53,6 +53,15 @@ export const registerOperacaoFlavioTemplate = (id, scene) => templates.set(id, s
 // da escada é -z: yaw +90° o encosta na porta; as rotas sobem do pé (6,2;52) à plataforma (2,3;52).
 const PORTA_EMBARQUE = { x: 1.3, z: 52 };
 const YAW_ESCADA = Math.PI / 2;
+// Limite norte em 64: o pátio inclui a cauda (z 64) e o corredor atrás dela, não só a metade da frente.
+const LIMITES_JOGAVEIS = { minX: -43, maxX: 43, minZ: -57, maxZ: 64 };
+// Volta completa no avião (playtest 06/11): pontos a ≥0,75 m de fuselagem, asas, escada,
+// carro e containers; o grafo segue esse anel e a régua o percorre com o corpo do jogador.
+const ANEL_AVIAO = [
+  { x: 1.6, z: 44.6 }, { x: 6.6, z: 48.5 }, { x: 6.6, z: 53.6 }, { x: 6.6, z: 57.6 }, { x: 3, z: 60.5 },
+  { x: 0, z: 61.5 }, { x: -3, z: 60.5 }, { x: -6.25, z: 57.6 }, { x: -6.25, z: 53.4 }, { x: -3, z: 48.5 },
+  { x: -3.4, z: 42.6 }, { x: 1.6, z: 42.6 },
+];
 const ESCORT_PATH = [
   { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
   { x: -9, z: -31 }, { x: 0, z: -27 }, { x: 0, z: -20 }, { x: 0, z: -12 },
@@ -65,7 +74,8 @@ const ESCORT_PATH_OESTE = [
   { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
   { x: -12, z: -26 }, { x: -17, z: -16 }, { x: -14.2, z: -12 }, { x: -14.2, z: 8 },
   { x: -13.5, z: 11 }, { x: -13.5, z: 19 }, { x: -15.5, z: 25 }, { x: -15.5, z: 45.6 },
-  { x: 5.5, z: 47 }, { x: 6.2, z: 52 }, { x: 2.3, z: 52 },
+  // O nariz real (z ≥ 46,25) colado na pilha de ULD fecha a frente do avião: contorna pelo sul.
+  { x: -3.6, z: 42.6 }, { x: 3.2, z: 42.4 }, { x: 6.2, z: 52 }, { x: 2.3, z: 52 },
 ];
 const ESCORT_PATH_LESTE = [
   { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
@@ -634,14 +644,25 @@ export function buildOperacaoFlavio(scene, T = {}) {
     const halfW = (w * cos + d * sin) / 2, halfD = (w * sin + d * cos) / 2;
     colliders.push({ id, yaw, minX: x - halfW, maxX: x + halfW, minY: y, maxY: y + h, minZ: z - halfD, maxZ: z + halfD });
   };
-  colliderDoProp('aviao_executivo_fuselagem', 0, 0, 55, 3.4, 4.6, 12, Math.PI);
-  colliderDoProp('aviao_executivo_asas', 0, 0.8, 55.4, 16, 1.4, 3.2, Math.PI);
+  // Proxies do avião medidos na malha real (corpo 0,3–1,6 m e cabine acima), nunca maiores que o
+  // render: nariz, asas e cauda deixam o anel em volta do avião livre para circular.
+  for (const [id, minX, maxX, minY, maxY, minZ, maxZ] of [
+    ['aviao_executivo_fuselagem', -0.5, 0.5, 0, 2.4, 46.25, 47.5],
+    ['aviao_executivo_fuselagem', -0.75, 0.75, 0, 3.3, 47.5, 49.5],
+    ['aviao_executivo_fuselagem', -1, 1, 0, 1.6, 49.5, 54],
+    ['aviao_executivo_fuselagem', -1.25, 1.25, 0, 1.6, 54, 57],
+    ['aviao_executivo_fuselagem', -1, 1, 0, 1.6, 57, 58.5],
+    ['aviao_executivo_fuselagem', -0.75, 0.75, 0, 1.6, 58.5, 59.25],
+    ['aviao_executivo_fuselagem', -1.25, 1.25, 1.6, 3.9, 49.5, 58.5],
+    ['aviao_executivo_asas', -5.5, 5.5, 0.8, 2.4, 54.75, 56.25],
+    ['aviao_executivo_asas', -2.75, 2.75, 0.8, 2.4, 54.25, 56.5],
+  ]) colliders.push({ id, minX, maxX, minY, maxY, minZ, maxZ });
   // A escada não tem caixa sólida: o piso subível vem de groundHeightAt, e o grafo só a cruza
-  // pelo eixo pé → topo (escadaNav). Corrimãos e degraus continuam oclusores de tiro.
+  // pelo eixo pé → topo (escadaNav, que também fecha o beco entre escada, fuselagem e asa).
   const escadaNav = (() => {
     const [w, h, d] = MEDIDA_REAL.escada_embarque, cos = Math.abs(Math.cos(YAW_ESCADA)), sin = Math.abs(Math.sin(YAW_ESCADA));
     const hx = (w * cos + d * sin) / 2, hz = (w * sin + d * cos) / 2;
-    return { id: 'escada_embarque_nav', minX: xEscada - hx, maxX: xEscada + hx, minY: 0, maxY: h, minZ: PORTA_EMBARQUE.z - hz, maxZ: PORTA_EMBARQUE.z + hz };
+    return { id: 'escada_embarque_nav', minX: xEscada - hx, maxX: xEscada + hx, minY: 0, maxY: h, minZ: PORTA_EMBARQUE.z - hz, maxZ: Math.max(PORTA_EMBARQUE.z + hz, 54.5) };
   })();
   colliderDoProp('trator_bagagem', -20, 0, 50, ...MEDIDA_REAL.trator_bagagem, Math.PI / 2);
   colliderDoProp('carrinho_ferramentas', 27, 0, 38, ...MEDIDA_REAL.carrinho_ferramentas, Math.PI / 2);
@@ -752,12 +773,12 @@ export function buildOperacaoFlavio(scene, T = {}) {
     real('energia_solo', -1.5, 26, 0),
     real('energia_solo', 8.6, 47, 0),   // GPU ao lado do avião: cobertura agachada no CP final
     real('barreiras_aeroporto', -24, 47, Math.PI / 2),
-    real('carro_servico', -8, 54.5, Math.PI / 2),
+    real('carro_servico', -8.6, 54.5, Math.PI / 2),   // 1,5 m da ponta da asa: o anel do avião passa
     real('barreiras_aeroporto', 25.5, 55, 0),
     real('jardineira', -18, -34.8, Math.PI / 2),
   ];
   // Muro New Jersey (2 × 2,24 m) com volume visível = collider; o kit GLB (cercado 5 × 4,3 m)
-  // não cabe na pegada de muro e fica só como cenário fora dos limites (z > 57).
+  // não cabe na pegada de muro e fica só como cenário além do limite norte (z ≈ 70).
   const perfilJersey = new THREE.Shape();
   [[-0.6, 0], [0.6, 0], [0.6, 0.12], [0.32, 0.38], [0.16, 1.4], [-0.16, 1.4], [-0.32, 0.38], [-0.6, 0.12]]
     .forEach(([px, py], i) => (i ? perfilJersey.lineTo(px, py) : perfilJersey.moveTo(px, py)));
@@ -783,7 +804,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
     else usarProp(id, [x, 0.08, z], size, [w, h, d], yaw, solid);
     if (solid) colliderDoProp(id, x, 0, z, w, h, d, yaw);
   }
-  for (const [x, yaw] of [[-30, 0.2], [30, -0.2]]) usarProp('barreiras_aeroporto', [x, 0.08, 59.6], 5, [5, 1.83, 4.28], yaw, false);
+  for (const [x, yaw] of [[-30, 0.2], [30, -0.2]]) usarProp('barreiras_aeroporto', [x, 0.08, 70], 5, [5, 1.83, 4.28], yaw, false);
 
   const sun = new THREE.DirectionalLight(0xffd2a1, 2.05);
   sun.position.set(-44, 68, -28); sun.castShadow = true; aplicaSombraSol(sun); root.add(sun);
@@ -826,7 +847,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
   const nodes = [];
   const adj = [];
   const step = 3.5;
-  for (let x = -40; x <= 40; x += step) for (let z = -55; z <= 55; z += step) if (!blocked(x, z)) nodes.push({ x, z });
+  for (let x = -40; x <= 40; x += step) for (let z = -55; z <= LIMITES_JOGAVEIS.maxZ - 2; z += step) if (!blocked(x, z)) nodes.push({ x, z });
   const addNode = (x, z) => {
     if (blocked(x, z)) return -1;
     const existing = nodes.findIndex((node) => Math.abs(node.x - x) < 0.001 && Math.abs(node.z - z) < 0.001);
@@ -862,6 +883,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
     }
   };
   addRoute(ESCORT_PATH);
+  addRoute([...ANEL_AVIAO, ANEL_AVIAO[0]]);
   // Variantes: só os checkpoints viram nó (trechos retos já são livres para o VIP); a
   // subdivisão adensava o grafo do pátio e fazia a formação da marcha central chiar.
   for (const caminho of ESCORT_PATHS.slice(1)) for (const ponto of caminho) addNode(ponto.x, ponto.z);
@@ -979,7 +1001,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
     { x: -1.5, z: 28.4, role: 'guard', zone: 'hangar' },
     { x: -1, z: 46.9, role: 'guard', zone: 'apron' },
     { x: -6.6, z: 49, role: 'guard', zone: 'apron' },
-    { x: -3.2, z: 49.9, role: 'guard', zone: 'apron' },
+    { x: -2.4, z: 50.5, role: 'guard', zone: 'apron' },   // colado na cabine real (x -1,0)
     // Encostado na quina SO da pilha de ULD real (x=17,4): a 12,6 ficava a 3 m da cobertura.
     { x: 14.4, z: 50.2, role: 'guard', zone: 'apron' },
     { x: 8.6, z: 45, role: 'guard', zone: 'apron' },
@@ -1016,8 +1038,12 @@ export function buildOperacaoFlavio(scene, T = {}) {
     mode: 'escort', escortPath, escortPaths, escortDecoyRoutes: ESCORT_DECOY_ROUTES.map((iscas) => [...iscas]),
     escortServiceRoutes: serviceRoutes, escortCoverPoints, objectivePlane,
     groundHeightAt, snapDownSteps: true, slowAt: () => false,
+    // Zona de embarque: cápsula de 1 m em volta do eixo pé → topo da escada (o modo embarca ao
+    // entrar nela); `area` é a pegada da escada, onde a escolta não recebe destino.
+    escortBoardingZone: { pe: { ...ESCORT_PATH.at(-2) }, topo: { ...ESCORT_PATH.at(-1) }, raio: 1, area: { minX: escadaNav.minX, maxX: escadaNav.maxX, minZ: escadaNav.minZ, maxZ: escadaNav.maxZ } },
+    aircraftRing: ANEL_AVIAO.map((p) => ({ ...p })),
     waypoints: { nodes, adj, stats: navigationStats }, nearestWaypoint, findPath,
-    bounds: { minX: -43, maxX: 43, minZ: -57, maxZ: 57 },
+    bounds: { ...LIMITES_JOGAVEIS },
     sound: { bioma: 'industrial', loops: [
       { src: AMB_LOOPS.hum, pos: [0, 3, -12], radius: 42, vol: 0.2 },
       { src: AMB_LOOPS.cidade, pos: [0, 4, 34], radius: 70, vol: 0.14 },
