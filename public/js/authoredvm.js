@@ -454,10 +454,10 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
     const k = weaponLength / alvo;
     if (k > 1.5) mount.scale.multiplyScalar(1 / k);
   }
-  // golden: a câmera do GLB É a composição aprovada (vm-camera-check mede isto no
-  // navegador). O clamp pelo fov da família só vale para o molde goldsrc/retarget.
+  // golden: a câmera do GLB é a composição, salvo goldFrame (PT-38 a 60°, pistola-ref).
+  // O clamp pelo fov da família só vale para o molde goldsrc/retarget.
   return {
-    scene, mount, cameraFov: golden ? cameraFov : molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,
+    scene, mount, cameraFov: molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,
     frame, handMeshes, weaponMeshes, utilityModels,
   };
 }

@@ -94,6 +94,9 @@ export const VM_WEAPON = {
   // PT-38 APROVADA = golden do catálogo PÚBLICO (dono, 05/11): piloto viaja no deploy,
   // ads medido no osso CoroWeapon, foco abaixo da cruz preservado (BUG-181). Detalhes: docs/reports/GOLDEN-SKIN-SELECTION-CONTINUATION-20261101.md.
   pistol: W('pistol', { baked: true, golden: true, runtime: 'family', timing: 'gameplay',
+    // A câmera do piloto (fov 34°) dava 1,99× a PT-38 aprovada (playtest 06/11). Unidades do
+    // piloto (~97 un/m); medido em vm-reguas pistola-ref: 1,05×, desvio 1 px.
+    goldFrame: { x: -7.5, y: -5.5, z: 0, fov: 60 },
     ads: { auto: true, off: [0, 0.04, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 36.9, estilo: 'foco',
       linha: { off: [0, -7.8, 0], estilo: 'foco' },
       golden: { osso: 'CoroWeapon',
@@ -315,7 +318,8 @@ export function authoredFrameFor(weapon, family, sourceKey = '', cameraFov = 84)
       ...(VM_FABRICA[weapon]?.frame || {}),
     };
   }
-  if (sourceKey.startsWith('gold#')) return { x: 0, y: 0, z: 0, fov: cameraFov };
+  // gold#: câmera do próprio piloto; goldFrame (unidades do piloto) reenquadra sem tocar o A/B family.
+  if (sourceKey.startsWith('gold#')) return { x: 0, y: 0, z: 0, fov: cameraFov, ...(VM_WEAPON[weapon]?.goldFrame || {}) };
   if (sourceKey.startsWith('rt#')) return { x: 0, y: 0, z: 0, fov: 74 };
   if (sourceKey.startsWith('gs#')) {
     const frame = VM_AUTHORED_FRAME.goldsrc[weapon];

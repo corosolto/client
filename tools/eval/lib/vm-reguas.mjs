@@ -52,7 +52,10 @@ export function classe(arma) {
   return 'longa';
 }
 const luneta = (arma) => Boolean(WEAPONS[arma]?.scope);
-const rigDe = (arma) => (VM_WEAPON[arma]?.golden ? 'metarig' : 'k');
+// A PT-38 golden pública (pistol-hires.glb) vence a fábrica e tem rig próprio (L_*/R_*): sem
+// isto o carregador saía "ossos de mão ausentes" e o placar guardava a pistola antiga.
+const GOLDEN_PISTOLA = Boolean(VM_WEAPON.pistol?.golden) && !/(?:^|&)vmgolden=0(?:&|$)/.test(process.env.VM_PALCO_QS || '');
+const rigDe = (arma) => (arma === 'pistol' && GOLDEN_PISTOLA ? 'coro' : VM_WEAPON[arma]?.golden ? 'metarig' : 'k');
 
 // Peça do carregador por arma (nome de malha ou osso do produto K, 23/09).
 export const CARREGADOR_PECA = {
@@ -96,6 +99,8 @@ if (FABRICA_NA_REGUA) {
   };
   for (const [arma, spec] of Object.entries(planoB)) if (soFabrica(arma)) CARREGADOR_PECA[arma] = spec;
 }
+// O piloto troca de peça na recarga: CoroMagazine cai, CoroFreshMagazine vem na mão (par reserva).
+if (GOLDEN_PISTOLA) CARREGADOR_PECA.pistol = { osso: 'CoroMagazine', reserva: 'CoroFreshMagazine' };
 const CARREGADOR_NA = {
   knife: 'faca: sem carregador',
   revolver38: 'cilindro: tambor e cartuchos são do eval:vm-pistol-revolver',

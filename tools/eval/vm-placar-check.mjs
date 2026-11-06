@@ -14,7 +14,8 @@
    Mutantes: --mutante=placar-velho (troca o hash), --mutante=sem-dono (tira uma
    dívida), --mutante=chave-ligada (altera um vermelho),
    --mutante=celula-nova (vermelho novo), --mutante=pose-defeituosa (devolve a
-   receita de foco do ADS sem o off[1] = -0,08 — o defeito do #679) — todos reprovam.
+   receita de foco do ADS sem o off[1] = -0,08 — o defeito do #679),
+   --mutante=quadro-pistola (mexe no goldFrame da PT-38) — todos reprovam.
    Conserto quando P1 reprova: `npm run eval:vm-reguas -- --placar` (local).
    ============================================================================ */
 import crypto from 'node:crypto';
@@ -32,22 +33,9 @@ const ENTRADAS = [
 // `pose-defeituosa` devolve a receita de ADS quebrada sem tocar o repositório.
 export function entradasDoPlacar(raiz = process.cwd(), sobrepor = {}) {
   const h = crypto.createHash('sha256');
-  // O palco de fábrica não consome VM_WEAPON.pistol (golden pública): fora do hash.
-  const semRotaPublicaPistol = (txt) => {
-    const linhas = txt.split('\n');
-    const pistol = linhas.findIndex((linha) => /^  pistol: W\(/.test(linha));
-    if (pistol < 0) return txt;
-    let inicio = pistol;
-    while (inicio > 0 && /^  \/\//.test(linhas[inicio - 1])) inicio--;
-    const proxima = linhas.findIndex((linha, i) => i > pistol && /^  [a-z0-9_]+: W\(/.test(linha));
-    let fim = proxima < 0 ? linhas.length : proxima;
-    while (fim > pistol + 1 && /^  \/\//.test(linhas[fim - 1])) fim--;
-    return linhas.slice(0, inicio).concat(linhas.slice(fim)).join('\n');
-  };
   for (const f of ENTRADAS) {
     // VM_LAUNCH não muda imagem: fora do hash, senão virar a chave "envelhece" o placar.
-    let txt = (sobrepor[f] ?? fs.readFileSync(path.join(raiz, f), 'utf8')).replace(/export const VM_LAUNCH = (true|false);/, '');
-    if (f === 'public/js/data/vmconfig.js') txt = semRotaPublicaPistol(txt);
+    const txt = (sobrepor[f] ?? fs.readFileSync(path.join(raiz, f), 'utf8')).replace(/export const VM_LAUNCH = (true|false);/, '');
     h.update(`${f}\n${txt}`);
   }
   const av = sobrepor['public/js/authoredvm.js'] ?? fs.readFileSync(path.join(raiz, 'public/js/authoredvm.js'), 'utf8');
@@ -84,9 +72,17 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   // `pose-defeituosa` (#679): devolve a receita de foco do ADS sem o `off[1] = -0.08`
   // que baixa a arma para liberar a cruz. É a pose que o dono viu em quase todas as
   // armas. O hash muda e a P1 reprova: conserto de pose sem remedir = vermelho.
-  let atual = mut === 'pose-defeituosa'
+  // `quadro-pistola`: o palco de fábrica RENDERIZA a golden pública da PT-38; tirar a
+  // pistola do hash deixou o placar em 0,99× com a arma viva a 1,99× (playtest 06/11).
+  const vmconfig = fs.readFileSync('public/js/data/vmconfig.js', 'utf8');
+  const quadroPistola = (txt) => {
+    const mudado = txt.replace(/goldFrame: \{ x: (-?[\d.]+),/, (_, x) => `goldFrame: { x: ${Number(x) + 3},`);
+    if (mudado === txt) throw new Error('mutante não aplicou: goldFrame da PT-38 sumiu de vmconfig.js');
+    return mudado;
+  };
+  let atual = mut === 'pose-defeituosa' || mut === 'quadro-pistola'
     ? entradasDoPlacar(process.cwd(), {
-      'public/js/data/vmconfig.js': quebrandoReceitaFoco(fs.readFileSync('public/js/data/vmconfig.js', 'utf8')),
+      'public/js/data/vmconfig.js': mut === 'pose-defeituosa' ? quebrandoReceitaFoco(vmconfig) : quadroPistola(vmconfig),
     }).hash
     : entradasDoPlacar().hash;
   if (mut === 'placar-velho') atual = `${atual.slice(0, -1)}x`;
