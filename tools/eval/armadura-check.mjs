@@ -17,8 +17,8 @@
      AR9  HUD: número aparece com colete, some com 0; capacete marca a classe
      AR10 `?debug=1&colete=100&capacete=1` equipa jogador e bots; sem `debug=1` não equipa
      AR11 `?armadura=0` volta ao jogo antigo (sem colete, dano cheio)
-     AR12 partida online/servidor dedicado: o `_damage` não aplica armadura (o servidor é
-          a autoridade e não tem esse estado — contrato no corpo do PR)
+     AR12 online comum não aplica armadura local; no dedicado só a escolta de Flávio
+          carrega esse estado autoritativo (VIP/guardas), bots comuns seguem sem colete
      AR13 renascer (jogador e bot) passa pelo `_equiparArmadura`: re-equipa no debug, zera fora dele
      AR14 rajada de escopeta do bot com 1 chumbo na cabeça e o resto no peito: o colete sem
           capacete ainda segura a parte do peito (a rajada é somada antes do `_damage`)
@@ -83,7 +83,7 @@ if (process.argv.includes('--motor')) {
     return +(100 - p.hp).toFixed(3);
   };
   out.chumbo = { sem: rajada(0), colete: rajada(100) };
-  g.dedicated = true; out.dedicado = golpe(b, 100, true, 36, 'AK', false); g.dedicated = false;
+  g.online = true; g.dedicated = true; out.dedicado = golpe(b, 100, true, 36, 'AK', false); g.online = g.dedicated = false;
   g.online = true; out.online = golpe(b, 100, true, 36, 'AK', false); g.online = false;
   process.stdout.write('\n@@' + JSON.stringify(out));
   process.exit(0);

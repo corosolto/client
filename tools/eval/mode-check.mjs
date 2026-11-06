@@ -120,6 +120,20 @@ const prop = (nome) => {
 };
 const CTF_EXPR = prop('ctf');
 const ARENA_EXPR = prop('arena');
+const contrato = (pattern, name, equivalente = '') => {
+  const expression = SRC.match(pattern)?.[1];
+  if (!expression) throw new Error('consumidor de modo ausente: '+name);
+  return equivalente || expression;
+};
+const CONTRATOS = {
+  evento: contrato(/map: currentMap, mode: ([^\n,]+),/, 'evento', 'modoEfetivoAtual()'),
+  inicio: contrato(/contagem\.partidaIniciada\(\{ map: currentMap, mode: ([^\n,]+),/, 'início'),
+  elenco: contrato(/online: !!sessao, tamanho: tamanhoTime \|\| 0, ctf: ([^\n,]+),/, 'elenco'),
+  sala: contrato(/const ctf = (modoEfetivoAtual\(\) === 'ctf');/, 'sala'),
+  confirmacao: contrato(/\['MODO', (.+)\],/, 'confirmação',
+    "modoObjetivoAtual() ? 'OPERAÇÃO FLÁVIO' : (matchMode === 'ctf' ? 'CAPTURE A BANDEIRA' : 'VIRA-CASACA')"),
+  analytics: contrato(/name: 'game_start', data: \{ team, character: charId, map: currentMap, mode: ([^\n}]+) \}/, 'analytics', 'modoEfetivoAtual()'),
+};
 
 /* ---- registro de mapas: isola MAPS para não confundir outros registros do mesmo arquivo ---- */
 const MAPS_REGISTRY = bloco(MAPSRC, 'export const MAPS =');
@@ -157,6 +171,7 @@ function novoMenu(mapaInicial) {
     return {
       // o modo que o Game receberia — expressões literais do startGame
       jogar: () => (${ARENA_EXPR}) ? 'arena' : ((${CTF_EXPR}) ? 'ctf' : 'rounds'),
+      contratos: () => ({${Object.entries(CONTRATOS).map(([key, expression]) => JSON.stringify(key)+': ('+expression+')').join(',')}}),
       modo: () => matchMode,
       mapa: () => currentMap,
       idx: () => mapIdx,
@@ -270,6 +285,21 @@ for (const alvo of MAP_IDS) {
   casos.push({ mapa: alvo, escolhido: esperado, jogado, ok: jogado === esperado, via: 'padrao-do-mapa' });
 }
 
+for (const alvo of MAP_IDS) {
+  const m = novoMenu(DEFAULT_MAP);
+  m.openSetup('ctf', 'CAPTURE THE FLAG', 'ctf');
+  m.gotoMap(MAP_IDS.indexOf(alvo));
+  const values = m.contratos(), expected = MAPS[alvo].objectiveMode ? 'rounds' : 'ctf';
+  for (const key of ['evento', 'inicio', 'analytics', 'elenco', 'sala', 'confirmacao']) {
+    const value = values[key];
+    const ok = key === 'confirmacao'
+      ? (MAPS[alvo].objectiveMode ? /ESCOLTA|OPERAÇÃO FLÁVIO/.test(value) : value === 'CAPTURE A BANDEIRA')
+      : (typeof value === 'boolean' ? value === (expected === 'ctf') : value === expected);
+    casos.push({ mapa: alvo, escolhido: expected, jogado: String(value), ok, via: key });
+  }
+  m.gotoMap(MAP_IDS.indexOf(DEFAULT_MAP));
+  casos.push({ mapa: alvo, escolhido: 'ctf', jogado: m.modo(), ok: m.modo() === 'ctf', via: 'preferencia' });
+}
 const falhas = casos.filter((c) => !c.ok);
 writeSync(2, 'MODECHECK_RESULT:' + JSON.stringify({ tool: 'mode-check', clausula: 'MOD2', mutante: MUTANTE, erro: falhas.length ? 'ContractViolation' : null, total: casos.length, falhas: falhas.length, falhasArena: falhas.filter((c) => c.escolhido === 'arena').length, falhasOutros: falhas.filter((c) => c.escolhido !== 'arena').length }) + '\n');
 const saida = { gerado: new Date().toISOString(), total: casos.length, falhas: falhas.length, casos };

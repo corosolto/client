@@ -267,6 +267,7 @@ Cobertura: **3964 de 9825 linhas (40%)** do `game.js` têm dono declarado. O res
 | 4441 | `_penetrationExit()` | 8 |
 | 4449 | `_surfaceOf()` | 27 |
 | 4476 | `_armoredTarget()` | 6 |
+| 4494 | `_entidadeEscolta()` | 1 |
 | 4482 | `_aplicaArmadura()` | 10 |
 | 4492 | `_armaduraLigada()` | 1 |
 | 4493 | `_equiparArmadura()` | 8 |
@@ -412,6 +413,7 @@ Cobertura: **3964 de 9825 linhas (40%)** do `game.js` têm dono declarado. O res
 | 8235 | `_duelToken()` | 22 |
 | 8257 | `_respawnEntity()` | 34 |
 | 8291 | `_botOuve()` | 12 |
+| 8362 | `_suavizaDestinoEscolta()` | 36 |
 | 8303 | `_updateBot()` | 831 |
 | 9134 | `_flushTraining()` | 13 |
 | 9147 | `_updateBotNN()` | 73 |

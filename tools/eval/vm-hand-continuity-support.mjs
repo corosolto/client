@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 export const HAND_DEBT = Object.freeze({
   'RIG:pistol@pintura': Object.freeze({
     rigHash: 'f468adc9279d',
-    motivo: '#1128 — coro/pistol-hires.glb (gold#pistol, servido quando o jogador pinta a pistola) '
+    motivo: '#1128 — coro/pistol-hires.glb (gold#pistol, rota da pintura; sem pintura o X18 da fábrica desde 06/11) '
       + 'traz a malha armmesh_Mat_0 do rig L da faca (R_wrist_026) com o material CoroSolto_FP_Gloves; a linha '
       + 'golden é o rig A da AK (Requests_Studio_Hands + .001). Conserto é re-rig do GLB no Blender, não arnês.',
   }),

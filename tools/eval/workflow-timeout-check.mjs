@@ -35,12 +35,9 @@ if (mutante && !['sem-timeout', 'timeout-absurdo', 'isencao-estourada'].includes
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const DIR = path.join(ROOT, '.github/workflows');
 const TETO_MAX = 30;
-/* Isenção NOMINAL, com o pior caso medido (gh api .../actions/runs/<id>/jobs, 15 runs de 09/10/2026):
-   portao 16-34 min (2 de 15 acima de 30), classify 3-28 min. Medir de novo antes de mexer (#497).
-   smoke: 13 runs de 13/10/2026 entre 12,7 e 27,7 min com o chat em passos (#846). Em 14/10 o
-   roteiro desktop do chat (~14,5 min) foi para o job `chat-desktop`, que herda a isenção; o
-   `smoke` que sobra (web + toque) volta ao teto comum. */
-const TETO_ISENTO = { 'portao-browser.yml:portao': 45, 'ui-regression.yml:classify': 35, 'smoke-web.yml:chat-desktop': 40 };
+/* Isenções NOMINAIS, com pior caso medido (histórico no git).
+   reguas-e-site: 30m16s no run 42009772988, cancelado em Fauna com fila anterior verde. */
+const TETO_ISENTO = { 'portao-browser.yml:portao': 45, 'ui-regression.yml:classify': 35, 'smoke-web.yml:chat-desktop': 40, 'ci.yml:reguas-e-site': 35, 'ci.yml:mapas-e-site': 35 };
 
 /* Parser de indentação, não de YAML: a régua roda no `check:deploy`, que é node
    puro e sem dependência. `jobs:` na coluna 0, nome do job com 2 espaços, chaves

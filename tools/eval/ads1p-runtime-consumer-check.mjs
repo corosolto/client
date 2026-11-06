@@ -22,10 +22,11 @@ const original = AuthoredViewModels.prototype.update;
 let update = original, calls = 0;
 if (mutant) {
   const url = new URL('../../public/js/authoredvm.js', import.meta.url);
-  const before = 'adsEfetivo(cfgArma(this.weapon)?.ads, ADS1P_FIX)';
+  // Âncora segue o update real (05/11): ADS por rota — golden lê VM_WEAPON, o resto cfgArma.
+  const before = 'adsEfetivo((active.golden ? VM_WEAPON[this.weapon] : cfgArma(this.weapon))?.ads, ADS1P_FIX)';
   let source = readFileSync(url, 'utf8');
   if (source.split(before).length !== 2) { console.error('MUTACAO NAO APLICADA: âncora única não encontrada no consumidor real'); process.exit(4); }
-  source = source.replace(before, 'cfgArma(this.weapon)?.ads')
+  source = source.replace(before, '(active.golden ? VM_WEAPON[this.weapon] : cfgArma(this.weapon))?.ads')
     .replace(/from\s+(['"])([^'"]+)\1/g, (_, q, spec) => 'from ' + JSON.stringify(spec.startsWith('.') ? new URL(spec, url).href : import.meta.resolve(spec)));
   const m = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
   update = m.AuthoredViewModels.prototype.update;

@@ -488,6 +488,19 @@ export const OSSOS_MAO = {
         .concat([1, 2, 3].map((k) => `thumb0${k}${S}_metarig`)),
     };
   },
+  // coro = golden pública da PT-38 (pistol-hires.glb): sufixo numérico do export, mesma ordem L/R.
+  coro: (s) => {
+    const n = s === 'l'
+      ? { wrist: '02', thumb: ['03', '04', '05'], point: ['07', '08', '09'], middle: ['011', '012', '013'], palm: '015', ring: ['016', '017', '018'], pink: ['020', '021', '022'] }
+      : { wrist: '026', thumb: ['027', '028', '029'], point: ['031', '032', '033'], middle: ['035', '036', '037'], palm: '039', ring: ['040', '041', '042'], pink: ['044', '045', '046'] };
+    const S = s.toUpperCase();
+    const dedo = (d) => n[d].map((x, i) => `${S}_${d}${i + 1}_${x}`);
+    return {
+      palma: [`${S}_wrist_${n.wrist}`, `${S}_palm_${n.palm}`, ...['point', 'middle', 'ring', 'pink'].map((d) => dedo(d)[0])],
+      comp: [`${S}_wrist_${n.wrist}`, dedo('middle')[0]],
+      dedos: ['point', 'middle', 'ring', 'pink', 'thumb'].flatMap(dedo),
+    };
+  },
 };
 
 /* PEÇA DO CARREGADOR na pose desenhada. `spec.malhas` (regex de nome de malha)

@@ -41,5 +41,6 @@ check('B3-non-gameplay-clip',ak.rate===1,ak);
 check('B4-non-gameplay-arc',ak.drawDuration===1,ak);
 check('B5-fallback-preserved',Math.abs(fallback.drawDuration-.34)<1e-9,fallback);
 g.dispose();console.log=log;console.info=info;console.warn=warn;console.error=error;
-const failed=checks.filter(c=>!c.ok).map(c=>c.id).sort();const expected={'clip-cs16':['B1-gameplay-clip-rate','B2-gameplay-arc-duration','G3-clip-ended-by-unlock','G4-body-in-frustum-before-shot'],'drop-cs16':['B2-gameplay-arc-duration'],'non-gameplay':['B3-non-gameplay-clip','B4-non-gameplay-arc']};const ok=mutant?JSON.stringify(failed)===JSON.stringify(expected[mutant].sort()):failed.length===0;
+// 06/11: com o goldFrame (60°) a PT-38 golden fica no quadro mesmo no saque cs16; G4 saiu do clip-cs16.
+const failed=checks.filter(c=>!c.ok).map(c=>c.id).sort();const expected={'clip-cs16':['B1-gameplay-clip-rate','B2-gameplay-arc-duration','G3-clip-ended-by-unlock'],'drop-cs16':['B2-gameplay-arc-duration'],'non-gameplay':['B3-non-gameplay-clip','B4-non-gameplay-arc']};const ok=mutant?JSON.stringify(failed)===JSON.stringify(expected[mutant].sort()):failed.length===0;
 log('AUTHORED-DRAW/1 '+JSON.stringify({ok,mutant,failed,expected:mutant?expected[mutant]:[],checks,fixture:{actualGame:true,actualMouseCallbacks:true,realAsset:sha(bytes),paintRouteActive:actual.paintRouteActive,nodeLoadBridge:actual.nodeLoadBridge,limits:actual.limits},rows,transitions,shots}));if(!ok)process.exitCode=1;
