@@ -429,10 +429,8 @@ check('cliente e servidor derivam a mesma rota da rodada replicada', () => {
     [{ x: 0, z: 0 }, { x: -5, z: 3 }, { x: -5, z: 6 }, { x: -5, z: 9 }, { x: 0, z: 10 }],
     [{ x: 0, z: 0 }, { x: 5, z: 3 }, { x: 5, z: 6 }, { x: 5, z: 9 }, { x: 0, z: 10 }],
   ];
-  const aneis = () => ({ children: rotas.flat().map((p, i) => ({ name: 'marca-checkpoint-escolta', visible: true,
-    userData: { rotas: rotas.map((_, r) => r).filter((r) => rotas[r].includes(p)) }, ponto: p, i })) });
-  const servidor = fixture({ path: rotas[0], world: { escortPaths: rotas, root: aneis() } });
-  const cliente = fixture({ dedicated: false, path: rotas[0], world: { escortPaths: rotas, root: aneis() } });
+  const servidor = fixture({ path: rotas[0], world: { escortPaths: rotas } });
+  const cliente = fixture({ dedicated: false, path: rotas[0], world: { escortPaths: rotas } });
   assert.deepEqual(cliente.objective.state.caminho, rotas[0], 'antes do snapshot o cliente está na rodada 0');
   for (const rodada of [2, 3]) {
     const esperada = varianteRotaEscolta(rodada, rotas.length);
@@ -443,8 +441,6 @@ check('cliente e servidor derivam a mesma rota da rodada replicada', () => {
     cliente.objective.applyNetState({ position: { x: 5, z: 6 }, checkpoint: 3, escortCount: 2, contested: false, threatened: false, inCover: false, unattendedFor: 0, boardedFor: 0, winner: null });
     assert.deepEqual(cliente.objective.state.caminho, servidor.objective.state.caminho, `cliente na mesma variante da rodada ${rodada}`);
     assert.equal(cliente.objective.state.checkpoint, 3, 'checkpoint replicado não é cortado pelo caminho errado');
-    const acesos = cliente.game.world.root.children.filter((anel) => anel.visible).map((anel) => anel.ponto);
-    assert.ok(acesos.length && acesos.every((p) => rotas[esperada].includes(p)), 'cliente acende só os anéis da variante');
   }
 });
 

@@ -49,11 +49,15 @@ let preloadPromise = null;
 // Registro confiável interno por id: o servidor headless injeta os 17 GLB antes da sala existir.
 export const registerOperacaoFlavioTemplate = (id, scene) => templates.set(id, scene);
 
+// Porta real da cinemática (GEO-boarding-threshold) fica no lado +x da fuselagem. Topo nativo
+// da escada é -z: yaw +90° o encosta na porta e os degraus descem para +x, até o último checkpoint.
+const PORTA_EMBARQUE = { x: 1.3, z: 52 };
+const YAW_ESCADA = Math.PI / 2;
 const ESCORT_PATH = [
   { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
   { x: -9, z: -31 }, { x: 0, z: -27 }, { x: 0, z: -20 }, { x: 0, z: -12 },
   { x: -4, z: 0 }, { x: 2, z: 15 }, { x: 2, z: 31 }, { x: 5, z: 42 },
-  { x: 7.2, z: 49.2 },
+  { x: 6.2, z: 52 },
 ];
 // Variantes do VIP (playtest 06/11): portas norte laterais (x=±17), vielas internas (x≈±14) e
 // bolsões do hangar até a mesma escada; o modo escolhe uma por rodada.
@@ -61,14 +65,14 @@ const ESCORT_PATH_OESTE = [
   { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
   { x: -12, z: -26 }, { x: -17, z: -16 }, { x: -14.2, z: -12 }, { x: -14.2, z: 8 },
   { x: -13.5, z: 11 }, { x: -13.5, z: 19 }, { x: -15.5, z: 25 }, { x: -15.5, z: 45.6 },
-  { x: -7, z: 45.9 }, { x: 7.2, z: 49.2 },
+  { x: 5.5, z: 47 }, { x: 6.2, z: 52 },
 ];
 const ESCORT_PATH_LESTE = [
   { x: -20, z: -48 }, { x: -17, z: -44 }, { x: -14, z: -40 }, { x: -14, z: -34 },
   { x: -9, z: -31 }, { x: 0, z: -27 }, { x: 11, z: -29 }, { x: 17, z: -16 },
   { x: 14.5, z: -12 }, { x: 14.5, z: 7 }, { x: 13, z: 9 }, { x: 11.8, z: 18 },
   { x: 14.5, z: 22 }, { x: 14.5, z: 32 }, { x: 18, z: 32 }, { x: 18, z: 44 },
-  { x: 12.5, z: 48.5 }, { x: 7.2, z: 49.2 },
+  { x: 12.5, z: 48.5 }, { x: 6.2, z: 52 },
 ];
 const ESCORT_PATHS = [ESCORT_PATH, ESCORT_PATH_OESTE, ESCORT_PATH_LESTE];
 // Iscas por variante (índices de serviceRoutes: 0 externa O, 2 externa L, 3 interna O,
@@ -99,6 +103,21 @@ function texturaProcedural(base, detalhe, tipo = 'placas') {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(8, 8); detailFor(t);
+  return t;
+}
+
+// Placa da escada: painel + seta ▼ cuja ponta é a base do canvas (Sprite.center ancora nela).
+function texturaSetaEmbarque() {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 320;
+  const x = c.getContext('2d');
+  x.fillStyle = 'rgba(10,18,30,.92)'; x.fillRect(8, 8, 496, 184);
+  x.strokeStyle = '#ffb22e'; x.lineWidth = 10; x.strokeRect(8, 8, 496, 184);
+  x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#ffffff';
+  x.font = '900 64px Arial Black, sans-serif'; x.fillText('EMBARQUE', 256, 66);
+  x.fillStyle = '#ffb22e'; x.font = '900 50px Arial Black, sans-serif'; x.fillText('DO FLÁVIO', 256, 140);
+  x.beginPath(); x.moveTo(176, 204); x.lineTo(336, 204); x.lineTo(256, 318); x.closePath();
+  x.fillStyle = '#ffb22e'; x.fill(); x.strokeStyle = 'rgba(10,18,30,.92)'; x.lineWidth = 6; x.stroke();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }
 
@@ -592,7 +611,10 @@ export function buildOperacaoFlavio(scene, T = {}) {
     root.add(model); return model;
   };
   const objectivePlane = usarProp('aviao_executivo', [0, 0.08, 55], 18, [18, 5, 8], Math.PI);
-  usarProp('escada_embarque', [-3.2, 0.08, 52.5], MEDIDA_REAL.escada_embarque, MEDIDA_REAL.escada_embarque, Math.PI / 2);
+  // O GLB pinta a porta no lado -x; espelhado em x, ela fica no +x, onde a cinemática a abre.
+  if (templates.has('aviao_executivo')) objectivePlane.scale.x *= -1;
+  const xEscada = PORTA_EMBARQUE.x + MEDIDA_REAL.escada_embarque[2] / 2;
+  usarProp('escada_embarque', [xEscada, 0.08, PORTA_EMBARQUE.z], MEDIDA_REAL.escada_embarque, MEDIDA_REAL.escada_embarque, YAW_ESCADA);
   usarProp('trator_bagagem', [-20, 0.08, 50], MEDIDA_REAL.trator_bagagem, MEDIDA_REAL.trator_bagagem, Math.PI / 2);
   usarProp('carrinho_ferramentas', [27, 0.08, 38], MEDIDA_REAL.carrinho_ferramentas, MEDIDA_REAL.carrinho_ferramentas, Math.PI / 2);
   usarProp('arco_seguranca', [0, 0.08, -13], 3, [3, 3, 0.8], 0, false);
@@ -604,7 +626,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
   };
   colliderDoProp('aviao_executivo_fuselagem', 0, 0, 55, 3.4, 4.6, 12, Math.PI);
   colliderDoProp('aviao_executivo_asas', 0, 0.8, 55.4, 16, 1.4, 3.2, Math.PI);
-  colliderDoProp('escada_embarque', -3.2, 0, 52.5, ...MEDIDA_REAL.escada_embarque, Math.PI / 2);
+  colliderDoProp('escada_embarque', xEscada, 0, PORTA_EMBARQUE.z, ...MEDIDA_REAL.escada_embarque, YAW_ESCADA);
   colliderDoProp('trator_bagagem', -20, 0, 50, ...MEDIDA_REAL.trator_bagagem, Math.PI / 2);
   colliderDoProp('carrinho_ferramentas', 27, 0, 38, ...MEDIDA_REAL.carrinho_ferramentas, Math.PI / 2);
   for (const x of [-1.28, 1.28]) colliders.push({
@@ -612,26 +634,14 @@ export function buildOperacaoFlavio(scene, T = {}) {
     minZ: -13.45, maxZ: -12.55,
   });
 
-  // Anel âmbar render-only por ponto distinto das rotas; userData.rotas diz a quais pertence
-  // e o modo acende só os da rota da rodada (nasce com a do meio).
-  const anelCheckpoint = new THREE.MeshBasicMaterial({ color: 0xffc76a, toneMapped: false, transparent: true, opacity: 0.92 });
-  const aneis = new Map();
-  ESCORT_PATHS.forEach((caminho, rota) => {
-    for (const ponto of caminho) {
-      const chave = `${ponto.x},${ponto.z}`;
-      let anel = aneis.get(chave);
-      if (!anel) {
-        anel = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.85, 28), anelCheckpoint);
-        anel.name = 'marca-checkpoint-escolta';
-        anel.rotation.x = -Math.PI / 2; anel.position.set(ponto.x, Y_MARCACAO, ponto.z);
-        anel.userData.rotas = [];
-        aneis.set(chave, anel);
-        root.add(anel);
-      }
-      if (!anel.userData.rotas.includes(rota)) anel.userData.rotas.push(rota);
-      anel.visible = anel.userData.rotas.includes(0);
-    }
-  });
+  // Placa render-only (sem colisor, oclusor ou raycast) igual para os dois times: a seta
+  // aponta a porta por cima da fuselagem e substitui os anéis de checkpoint no piso.
+  const placaEmbarque = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaSetaEmbarque(), toneMapped: false, fog: false }));
+  placaEmbarque.name = 'placa-embarque-flavio';
+  placaEmbarque.center.set(0.5, 0); placaEmbarque.scale.set(4, 2.5, 1);
+  placaEmbarque.position.set(PORTA_EMBARQUE.x + 0.4, 3.9, PORTA_EMBARQUE.z);
+  placaEmbarque.raycast = () => {}; placaEmbarque.userData.nonSolidSurface = true;
+  root.add(placaEmbarque);
   const equipamentos = [
     ['terminal_fachada', -18, -15.82, 16, 0, 16, 5, 1, false],
     ['terminal_fachada', 18, -15.82, 16, 0, 16, 5, 1, false],

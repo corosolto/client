@@ -8,7 +8,7 @@ Status: PR #1232 open; verified candidate; no merge or deployment
 
 Integrated PR #1158 into the current mainline, corrected escort authority, online lifecycle, bot behavior, map geometry, combat readability and mobile cost, then ran a second owner-feedback gauntlet for enemy respawn isolation, real cover/hiding, stable bot movement, 6×6 roles/loadouts, conflict routes and the public golden pistol viewmodel. A third localhost replay on 2026-11-05 fixed local factory viewmodel serving, right-click ADS before pointer lock, fixed enemy respawn bases, lateral flank routes and apron density. Javaporcos and the other existing modes were used as regression controls.
 
-A fourth owner playtest on 2026-11-06 drove six fixes:
+A fourth owner playtest on 2026-11-06 drove seven fixes:
 
 - **PT-38 viewmodel.** The public golden pilot's own camera (34°) rendered the pistol at 1.99× the approved PT-38, and the baked scoreboard stayed green at 0.99× because the pistol was excluded from its hash. `goldFrame` reframes only the `gold#` route: 1.05× and 1 px offset in 3:2, 1.01× in 16:9. The pistol is back in the hash, guarded by the `quadro-pistola` mutant.
 - **HUD.** The escort HUD shows only progress and time. Escort count and contested/cover state no longer leak the defence's tactics.
@@ -16,6 +16,7 @@ A fourth owner playtest on 2026-11-06 drove six fixes:
 - **Routes and aggression.** There are three deterministic VIP route variants per round (middle/west/east, derived from `roundNum`). The VIP pushes under visible threat with two or more guards and boards while escorted even when contested. Flankers act as decoys across three or more lanes.
 - **Prop scale.** Vehicles, ground equipment, counters, stairs, barriers and planters render at real scale with colliders equal to the render. Standing concealment comes from genuinely tall props (container stacks, 1.8 m planters, the 1.95 m service car).
 - **Crash fix.** A guard formation hold no longer crashes `_updateBot` after the VIP dies.
+- **Boarding.** The stairs stood on the plane's west side with the platform facing away, and the final checkpoint was on the other side of the fuselage, so Flávio "could not board". The stairs now sit on the east (+x) side of the fuselage at the cinematic door (`z 52`). The platform touches the door and the steps descend outward. The aircraft GLB is mirrored in x so its painted door faces the stairs. All three routes end at the foot, `(6.2, 52)`. An "EMBARQUE DO FLÁVIO ▼" billboard over the door replaces the amber checkpoint floor rings, which read as unexplained circles in the lounge. A B boarding win now reads "FLÁVIO FUGIU PROS EUA". The blue ring under allies is the pre-existing global team halo (`_makeTeamMark`, all modes, `?teammark=0`); it grows from 1.45 m to 1.9 m during the 2 s spawn protection. New mutants cover the inverted stairs, the stairs on the wrong side, the unmirrored aircraft, the label (no arrow anchor, occluding), a ring back in the lounge, the VIP bot/player boarding away from the foot, and the old title/HUD text.
 
 ## Gameplay and online behavior
 
@@ -54,8 +55,8 @@ A fourth owner playtest on 2026-11-06 drove six fixes:
 - Render-only ground operation surrounds boarding: ten cones, four wheel chocks, tire marks, oil stains and asphalt patches, service valves/cables, two baggage carts with 14 bags, a translucent perimeter fence with north run, distant maintenance hangars, windsock and an off-play-area fuel truck. None registers collision or occlusion.
 - The map now exposes 43 role/zone cover slots and at least two cover choices within 8 m of every checkpoint before boarding.
 - Boarding lounge and apron conflicts use real airport objects: counters, planters, seat rows, GPUs, containers, baggage tugs and service vehicles. Both attacker approach lanes have balanced tall cover.
-- Thirteen render-only amber checkpoint rings and distant ridge volumes improve route and horizon readability without adding collision.
-- Boarding stairs are geometrically tucked against the fuselage, with a service vehicle as hard cover at their base.
+- Distant ridge volumes improve horizon readability without adding collision. The amber checkpoint floor rings were removed after the 06/11 playtest. A render-only "EMBARQUE DO FLÁVIO ▼" billboard above the aircraft door now marks the boarding point for both teams.
+- The boarding stairs meet the aircraft door on the east side. The real GLB platform touches the door, the steps descend outward, and every route ends at the foot.
 - Spawn orientation shows the escort route instead of the terminal wall.
 - Low profile avoids transmission and reduces decorative shadows while preserving solid-cover shadows and geometry.
 

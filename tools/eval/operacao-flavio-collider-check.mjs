@@ -31,13 +31,20 @@ const edits = {
   'armadilha-lounge': ['E: [{ x: -33, z: 54, yaw: 0 }, { x: -28, z: 56, yaw: 0 }, { x: 33, z: 54, yaw: 0 }, { x: 30, z: 56, yaw: 0 }],', 'E: [{ x: -20, z: -47, yaw: 0 }, { x: -28, z: 56, yaw: 0 }, { x: 33, z: 54, yaw: 0 }, { x: 30, z: 56, yaw: 0 }],'],
   'bay-vira-beco': ["real('containers_carga', -12, 51.4, 0),", "real('containers_carga', -13.5, 51.4, 0),"],
   'ilha-patio-fantasma': ["real('barreiras_aeroporto', -6.2, 4, 0),", "real('barreiras_aeroporto', -6.2, 4, 0, false),"],
-  'sem-anel-checkpoint': ['for (const ponto of caminho) {', 'for (const ponto of caminho.slice(0, -1)) {'],
+  // Playtest 06/11: anéis no piso confundiam o lounge; a direção vem da placa sobre a porta.
+  'anel-no-lounge': ['  const equipamentos = [', "  { const anel = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.85, 28), mats.metal); anel.rotation.x = -Math.PI / 2; anel.position.set(-20, 0.13, -44); root.add(anel); }\n  const equipamentos = ["],
   // Variantes da rota do VIP (playtest 06/11): validadas como a rota do meio.
   'variante-no-container': ['{ x: 14.5, z: 32 }, { x: 18, z: 32 }', '{ x: 14.5, z: 32 }, { x: 18, z: 28 }'],
   'variante-sem-no': ['for (const caminho of ESCORT_PATHS.slice(1)) for (const ponto of caminho) addNode(ponto.x, ponto.z);', ''],
-  'variante-longe-da-escada': ['{ x: -7, z: 45.9 }, { x: 7.2, z: 49.2 },', '{ x: -7, z: 45.9 },'],
-  'anel-afunda': ['const Y_MARCACAO = 0.13;', 'const Y_MARCACAO = 0.06;'],
-  'escada-sem-proxy': ["  colliderDoProp('escada_embarque', -3.2, 0, 52.5, ...MEDIDA_REAL.escada_embarque, Math.PI / 2);\n", ''],
+  'variante-longe-da-escada': ['{ x: 5.5, z: 47 }, { x: 6.2, z: 52 },', '{ x: 5.5, z: 47 },'],
+  'faixa-afunda': ['const Y_MARCACAO = 0.13;', 'const Y_MARCACAO = 0.06;'],
+  'escada-sem-proxy': ["  colliderDoProp('escada_embarque', xEscada, 0, PORTA_EMBARQUE.z, ...MEDIDA_REAL.escada_embarque, YAW_ESCADA);\n", ''],
+  // Escada do playtest 06/11: topo voltado para fora, lado oposto à porta, porta pintada no -x.
+  'escada-invertida': ['const YAW_ESCADA = Math.PI / 2;', 'const YAW_ESCADA = -Math.PI / 2;'],
+  'escada-longe-da-porta': ['const xEscada = PORTA_EMBARQUE.x + MEDIDA_REAL.escada_embarque[2] / 2;', 'const xEscada = -3.2;'],
+  'aviao-sem-espelho': ["  if (templates.has('aviao_executivo')) objectivePlane.scale.x *= -1;\n", ''],
+  'placa-sem-seta': ['placaEmbarque.center.set(0.5, 0);', 'placaEmbarque.center.set(0.5, 0.5);'],
+  'placa-oclusora': ['  root.add(placaEmbarque);\n', '  root.add(placaEmbarque); occluders.push(placaEmbarque);\n'],
   'sem-detalhe-embarque': ['new THREE.InstancedMesh(new THREE.ConeGeometry(0.17, 0.58, 14), mats.sinalizacao, conePos.length)', 'new THREE.InstancedMesh(new THREE.ConeGeometry(0.17, 0.58, 14), mats.sinalizacao, Math.max(0, conePos.length - 10))'],
   'carro-gigante': ["real('carro_servico', -16, 15, Math.PI / 2),", "['carro_servico', -16, 15, 5, Math.PI / 2, 5, 2.4, 2.4, true],"],
   'carro-eixo-trocado': ["real('carro_servico', -18, 38, Math.PI / 2),", "['carro_servico', -18, 38, [1.6, 1.95, 3.2], Math.PI / 2, 3.2, 1.95, 1.6, true],"],
@@ -91,6 +98,35 @@ const glbBounds = (file) => {
   for (const root of gltf.scenes[gltf.scene ?? 0].nodes) visit(root, new THREE.Matrix4());
   return box;
 };
+// Vértices reais (GLB sem Draco, nós sem transformação) e a porta da cinemática: a orientação
+// da escada é medida na malha, não no cubo do fixture.
+const glbLer = (path) => {
+  const bytes = readFileSync(new URL(path, import.meta.url)), tamanho = bytes.readUInt32LE(12);
+  return { gltf: JSON.parse(bytes.subarray(20, 20 + tamanho).toString('utf8')), bin: bytes.subarray(28 + tamanho) };
+};
+const glbVertices = (file) => {
+  const { gltf, bin } = glbLer('../../public/models/props/operacao_decola/' + file), pontos = [];
+  assert.ok(gltf.nodes.every(n => !n.matrix && !n.translation && !n.rotation && !n.scale), `${file}: malha no eixo nativo`);
+  for (const mesh of gltf.meshes) for (const primitive of mesh.primitives) {
+    const accessor = gltf.accessors[primitive.attributes.POSITION], view = gltf.bufferViews[accessor.bufferView];
+    assert.equal(accessor.componentType, 5126, `${file}: POSITION em float`);
+    const passo = view.byteStride || 12, inicio = (view.byteOffset || 0) + (accessor.byteOffset || 0);
+    for (let i = 0; i < accessor.count; i++) pontos.push(new THREE.Vector3(...[0, 4, 8].map(k => bin.readFloatLE(inicio + i * passo + k))));
+  }
+  return pontos;
+};
+const portaCinematica = (() => {
+  const { gltf } = glbLer('../../public/models/cinematics/operacao_flavio_boarding.glb');
+  const palco = readFileSync(new URL('../../public/js/flavio-boarding.js', import.meta.url), 'utf8').match(/stage\.position\.set\(([^)]+)\)/)[1].split(',').map(Number);
+  const caixa = (nome) => {
+    const no = gltf.nodes.find(n => n.name === nome);
+    assert.ok(no && !no.rotation && !no.scale, `${nome}: nó só translada`);
+    const { min, max } = gltf.accessors[gltf.meshes[no.mesh].primitives[0].attributes.POSITION];
+    return new THREE.Box3(new THREE.Vector3(...min), new THREE.Vector3(...max)).translate(new THREE.Vector3(...no.translation)).translate(new THREE.Vector3(...palco));
+  };
+  const soleira = caixa('GEO-boarding-threshold');
+  return { soleira: { x: soleira.max.x, z: (soleira.min.z + soleira.max.z) / 2 }, topo: caixa('GEO-boarding-jamb-a').max.y };
+})();
 const glbTemplates = Object.fromEntries(Object.entries(mediumModule.PROP_FILES).map(([id, file]) => {
   const box = glbBounds(file), size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
   return [id, new THREE.Mesh(new THREE.BoxGeometry(size.x, size.y, size.z).translate(center.x, center.y, center.z), template.material)];
@@ -114,7 +150,7 @@ try {
     for (const map of [loaded, fallback]) {
       assert.equal(blocked(map, 0, 56), true, 'fuselagem tem proxy');
       assert.equal(blocked(map, 7, 55), true, 'asas entram na pegada física');
-      assert.equal(blocked(map, 7.2, 49.2), false, 'último checkpoint continua livre');
+      assert.equal(blocked(map, map.escortPath.at(-1).x, map.escortPath.at(-1).z), false, 'último checkpoint continua livre');
     }
   });
   check('prop-yaw-rotates-aabb', () => {
@@ -467,27 +503,88 @@ try {
     const fuselagem = loaded.colliders.find(c => c.id === 'aviao_executivo_fuselagem');
     const gap = Math.max(escada.minX - fuselagem.maxX, fuselagem.minX - escada.maxX);
     assert.ok(gap <= 0.6, `escada a ${gap.toFixed(2)} m da fuselagem`);
-    assert.equal(blocked(loaded, 7.2, 49.2, .46), false, 'CP12 livre');
+    assert.equal(blocked(loaded, loaded.escortPath.at(-1).x, loaded.escortPath.at(-1).z, .46), false, 'checkpoint final livre');
     assert.equal(blocked(loaded, 7, 55), true, 'asas entram na pegada física');
     assert.equal(blocked(loaded, 7, 55) === blocked(fallback, 7, 55), true, 'escada igual com GLB e fallback');
   });
-  check('checkpoint-markings-semantic-and-nonsolid', () => {
-    const aneis = loaded.root.children.filter(o => o.name === 'marca-checkpoint-escolta');
+  // Playtest 06/11 ("escada ao contrário"): o topo nativo da escada encosta na porta real da
+  // cinemática, a porta pintada do avião fica do mesmo lado e as três rotas terminam no pé.
+  check('boarding-stairs-face-door-from-every-route', () => {
+    const vertices = glbVertices('escada_embarque.glb');
+    const ys = vertices.map(v => v.y), alto = Math.max(...ys) - (Math.max(...ys) - Math.min(...ys)) * 0.2;
+    const topo = vertices.filter(v => v.y >= alto), zTopo = topo.reduce((soma, v) => soma + v.z, 0) / topo.length;
+    assert.ok(Math.abs(zTopo) > 0.1, `plataforma nativa num extremo do eixo z (${zTopo.toFixed(2)})`);
+    const escada = loaded.colliders.find(c => c.id === 'escada_embarque');
+    const modelo = loaded.root.getObjectByName('escada_embarque');
+    assert.ok(escada && modelo && Math.abs(modelo.rotation.y - escada.yaw) < 1e-9, 'render e colisor com o mesmo yaw');
+    assert.ok(Math.abs(Math.sin(2 * escada.yaw)) < 1e-9, 'yaw em múltiplo de 90° (AABB exata)');
+    const dir = { x: Math.sin(escada.yaw) * Math.sign(zTopo), z: Math.cos(escada.yaw) * Math.sign(zTopo) };
+    const largX = escada.maxX - escada.minX, largZ = escada.maxZ - escada.minZ;
+    const comprimento = Math.abs(dir.x) * largX + Math.abs(dir.z) * largZ, largura = Math.abs(dir.z) * largX + Math.abs(dir.x) * largZ;
+    const centro = { x: (escada.minX + escada.maxX) / 2, z: (escada.minZ + escada.maxZ) / 2 };
+    const ponta = (s) => ({ x: centro.x + s * dir.x * comprimento / 2, z: centro.z + s * dir.z * comprimento / 2 });
+    const topoMundo = ponta(1), pe = ponta(-1), porta = portaCinematica.soleira;
+    const dTopo = Math.hypot(topoMundo.x - porta.x, topoMundo.z - porta.z);
+    assert.ok(dTopo <= 0.5, `topo da escada a ${dTopo.toFixed(2)} m da porta da cinemática`);
+    assert.ok(Math.hypot(pe.x - porta.x, pe.z - porta.z) >= comprimento - 0.5, 'degraus descem para longe da porta');
+    assert.ok(Math.abs(pe.x) > Math.abs(topoMundo.x) + 3, 'pé da escada do lado de fora da fuselagem');
+    // O GLB do avião pinta a porta no +x nativo (esquerda do piloto): a matriz do mundo leva
+    // esse lado ao lado da escada, senão os degraus sobem numa janela.
+    loaded.objectivePlane.updateMatrixWorld(true);
+    const ladoPintado = new THREE.Vector3(1, 0, 0).transformDirection(loaded.objectivePlane.matrixWorld);
+    assert.equal(Math.sign(ladoPintado.x), Math.sign(porta.x), 'porta pintada do avião no lado da escada');
+    loaded.escortPaths.forEach((caminho, rota) => {
+      const fim = caminho.at(-1), antes = caminho.at(-2);
+      const rel = { x: fim.x - centro.x, z: fim.z - centro.z };
+      const aoLongo = -(rel.x * dir.x + rel.z * dir.z), lateral = Math.abs(rel.x * dir.z - rel.z * dir.x);
+      assert.ok(aoLongo > comprimento / 2 && aoLongo <= comprimento / 2 + 1.6, `variante ${rota}: embarque a ${(aoLongo - comprimento / 2).toFixed(2)} m do pé`);
+      assert.ok(lateral <= largura / 2, `variante ${rota}: embarque de frente para os degraus (${lateral.toFixed(2)} m)`);
+      assert.equal(blocked(loaded, fim.x, fim.z, .46), false, `variante ${rota}: pé da escada livre`);
+      assertClearSegment(antes, fim, `variante ${rota} chegada ao pé`, .46);
+      assertReachable(antes, fim, `variante ${rota} chegada ao pé`);
+    });
+  });
+  // Placa (playtest 06/11): render-only, ancorada na ponta da seta ▼ logo acima da porta, igual
+  // em todos os perfis; não vira colisor, oclusor nem alvo de raycast.
+  check('boarding-label-above-door', () => {
+    const porta = portaCinematica.soleira, topoPorta = portaCinematica.topo;
+    for (const [nome, mapa] of [['loaded', loaded], ['fallback', fallback], ['low', lowLoaded], ['low-fallback', lowFallback]]) {
+      const placa = mapa.root.getObjectByName('placa-embarque-flavio');
+      assert.ok(placa?.isSprite && placa.parent === mapa.root && placa.visible, `${nome}: placa visível no mapa`);
+      assert.ok(placa.center.x === 0.5 && placa.center.y === 0, `${nome}: âncora na ponta da seta, que aponta para baixo`);
+      assert.ok(Math.hypot(placa.position.x - porta.x, placa.position.z - porta.z) <= 0.6, `${nome}: placa sobre a porta`);
+      assert.ok(placa.position.y >= topoPorta && placa.position.y <= topoPorta + 1, `${nome}: seta logo acima da porta (y ${placa.position.y})`);
+      assert.ok(placa.scale.x >= 3 && placa.scale.y >= 2 && placa.material.map?.isTexture && placa.material.fog === false, `${nome}: legível do pátio`);
+      assert.equal(mapa.occluders.includes(placa), false, `${nome}: placa não é oclusor`);
+      assert.equal(mapa.colliders.some(c => /placa/.test(c.id || '')), false, `${nome}: placa não é colisor`);
+      const raio = new THREE.Raycaster(new THREE.Vector3(placa.position.x + 6, placa.position.y + 1.2, placa.position.z), new THREE.Vector3(-1, 0, 0));
+      assert.equal(raio.intersectObject(placa).length, 0, `${nome}: tiro e LOS atravessam a placa`);
+    }
+  });
+  // Playtest 06/11: os "círculos redondos na sala de embarque" eram os anéis de checkpoint; o
+  // piso do terminal e os checkpoints ficam sem anel.
+  check('lounge-without-floor-rings', () => {
+    const checkpoints = loaded.escortPaths.flat();
+    for (const [nome, mapa] of [['loaded', loaded], ['fallback', fallback]]) {
+      mapa.root.updateMatrixWorld(true);
+      const aneis = [];
+      mapa.root.traverse(o => {
+        if (o.name === 'marca-checkpoint-escolta') aneis.push(o.name);
+        if (!o.isMesh || !/^(Ring|Circle|Torus)Geometry$/.test(o.geometry?.type || '')) return;
+        const p = o.getWorldPosition(new THREE.Vector3());
+        const noTerminal = Math.abs(p.x) <= 29 && p.z >= -57 && p.z <= -16;
+        const noCheckpoint = checkpoints.some(cp => Math.hypot(cp.x - p.x, cp.z - p.z) < 1.5);
+        if (p.y < 0.6 && (noTerminal || noCheckpoint)) aneis.push(`${o.name || o.geometry.type}@(${p.x.toFixed(1)},${p.z.toFixed(1)})`);
+      });
+      assert.deepEqual(aneis, [], `${nome}: anéis no piso do lounge ou dos checkpoints`);
+    }
+  });
+  check('hangar-stripes-above-slab', () => {
     const piso = loaded.root.children.find(o => o.name === 'piso-hangar');
     const topoPiso = piso.position.y + piso.geometry.parameters.height / 2;
-    const distintos = new Set(loaded.escortPaths.flat().map(p => `${p.x},${p.z}`));
-    assert.equal(aneis.length, distintos.size, `${distintos.size} anéis: um por checkpoint distinto das variantes`);
-    loaded.escortPaths.forEach((caminho, rota) => caminho.forEach((cp, i) => {
-      const anel = aneis.find(a => Math.abs(a.position.x - cp.x) < 1e-9 && Math.abs(a.position.z - cp.z) < 1e-9);
-      assert.ok(anel && anel.userData.rotas.includes(rota), `variante ${rota}: anel ${i} no checkpoint`);
-    }));
-    assert.equal(aneis.filter(a => a.visible).length, 13, 'mapa nasce com os 13 anéis do meio acesos');
-    assert.ok(aneis.every(a => a.position.y > topoPiso + 0.02), 'anéis acima da laje do hangar');
     const faixas = loaded.root.children.filter(o => o.name.startsWith('faixa-box-hangar')
       || o.name === 'eixo-hangar' || o.name.startsWith('travessa-box-hangar'));
     assert.ok(faixas.length > 0 && faixas.every(o => o.position.y - o.geometry.parameters.height / 2 > topoPiso + 0.005), 'faixas acima da laje do hangar');
-    assert.equal(loaded.colliders.some(c => c.id === 'marca-checkpoint-escolta'), false, 'anéis não são colisores');
-    assert.ok(aneis.every(a => !a.castShadow), 'anéis não projetam sombra');
   });
   check('distant-ridge-separates-horizon', () => {
     const serras = loaded.root.children.filter(o => o.name === 'serra-distante');

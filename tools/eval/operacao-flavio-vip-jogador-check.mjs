@@ -69,6 +69,11 @@ const mutations = {
     after: ': Number.isFinite(vip.yaw) ? vip.yaw : 0;',
     clause: 'formação ociosa encara o rumo da câmera do VIP jogador',
   },
+  'zona-jogador-no-penultimo': {
+    before: 'const naEscada = state.checkpoint >= ultimo && d2(state.position, state.caminho[ultimo]) <= VIP_JOGADOR_RAIO ** 2;',
+    after: 'const naEscada = state.checkpoint >= ultimo && d2(state.position, state.caminho[ultimo - 1]) <= VIP_JOGADOR_RAIO ** 2;',
+    clause: 'VIP jogador anda até o pé da escada e embarca em toda variante',
+  },
 };
 
 if (process.argv.includes('--mutantes')) {
@@ -246,6 +251,32 @@ check('VIP jogador escoltado embarca mesmo contestado', () => withGame(SENADOR.i
   passos(game, 3.5);
   assert.equal(game.objective.state.contested, true, 'atacante no raio de contestação');
   assert.equal(game.objective.state.winner, 'B', 'com escolta o embarque não espera o pátio limpar (regra do bot VIP)');
+}));
+
+// Playtest 06/11 ("não consegue embarcar"): com a física real do jogador, Zero Um anda do
+// penúltimo checkpoint de cada variante até o pé da escada sem colisor no caminho e embarca.
+check('VIP jogador anda até o pé da escada e embarca em toda variante', () => withGame(SENADOR.id, (game) => {
+  game._losClear = () => false;
+  const p = game.player;
+  for (let rodada = 1; rodada <= 3; rodada++) {
+    game.roundNum = rodada; game.state = 'live';
+    game.objective.prepareRound();
+    const estado = game.objective.state, inicio = estado.caminho.at(-2), fim = estado.caminho.at(-1);
+    estado.checkpoint = estado.caminho.length - 2;
+    for (const bot of game.bots) bot.alive = false;   // pátio limpo: embarque sozinho vale
+    p.pos.set(inicio.x, 0, inicio.z); p.vel.set(0, 0, 0); p.alive = true; p.hp = 100;
+    game.touchMove = { x: 0, z: 0 };
+    let chegou = false;
+    for (let t = 0; t < 30 && !estado.winner; t += 1 / 60) {
+      const dx = fim.x - p.pos.x, dz = fim.z - p.pos.z;
+      chegou ||= Math.hypot(dx, dz) < 0.3;
+      game.keys = chegou ? {} : { KeyW: true }; p.yaw = Math.atan2(-dx, -dz);
+      game.time += 1 / 60; game._updatePlayer(1 / 60); game.objective.update(1 / 60);
+    }
+    game.keys = {};
+    assert.ok(chegou, `rodada ${rodada}: jogador travou a ${Math.hypot(fim.x - p.pos.x, fim.z - p.pos.z).toFixed(2)} m do pé da escada`);
+    assert.equal(estado.winner, 'B', `rodada ${rodada}: embarque do VIP jogador`);
+  }
 }));
 
 check('outro personagem no time B mantém o bot VIP de antes', () => withGame(OUTRO_B.id, (game) => {

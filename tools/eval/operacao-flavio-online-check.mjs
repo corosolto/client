@@ -41,8 +41,14 @@ const netEdits = mutante === 'prazo-reescrito'
   : [];
 const { makeNetcode } = netEdits.length
   ? await moduloMutado('../../public/js/netgame.js', netEdits) : await import('../../public/js/netgame.js');
-const { OperacaoFlavio } = mutante === 'sem-parar'
-  ? await moduloMutado('../../public/js/mode_operacao_flavio.js', [['for (const fonte of this.fontes) { try { fonte.stop(); }', 'for (const fonte of []) { try { fonte.stop(); }']])
+// Playtest 06/11: a vitória B se chama "FLÁVIO FUGIU PROS EUA" no resultado e no HUD da cinemática.
+const modeEdits = {
+  'sem-parar': [['for (const fonte of this.fontes) { try { fonte.stop(); }', 'for (const fonte of []) { try { fonte.stop(); }']],
+  'titulo-antigo': [["? 'FLÁVIO FUGIU PROS EUA' : morto", "? 'FLÁVIO EMBARCOU' : morto"]],
+  'hud-antigo': [["      ? 'FLÁVIO FUGIU PROS EUA'\n", "      ? 'EMBARQUE CONCLUÍDO'\n"]],
+}[mutante];
+const { OperacaoFlavio } = modeEdits
+  ? await moduloMutado('../../public/js/mode_operacao_flavio.js', modeEdits)
   : await import('../../public/js/mode_operacao_flavio.js');
 
 // Régua independente: roda HUD e transições reais, sem renderer ou rede humana.
@@ -80,7 +86,7 @@ else if (mutante === 'sem-reset') {
     this.cinematic = cinematic;
     this.game.world.objectivePlane.position.copy(plane);
   };
-} else if (mutante && !['sem-placar','sem-ordem','sem-parar','sem-retomada','sem-reancora','sem-limpar-drops','sem-fim-identidade','reset-match-end','empate-desconhecido','sem-winner-atual','winner-persistido','prazo-reescrito'].includes(mutante)) throw new Error('Mutante desconhecido: '+mutante);
+} else if (mutante && !['sem-placar','sem-ordem','sem-parar','titulo-antigo','hud-antigo','sem-retomada','sem-reancora','sem-limpar-drops','sem-fim-identidade','reset-match-end','empate-desconhecido','sem-winner-atual','winner-persistido','prazo-reescrito'].includes(mutante)) throw new Error('Mutante desconhecido: '+mutante);
 if (mutante) console.log('Mutação aplicada: '+mutante);
 let failures = 0;
 const failed = [];
@@ -108,11 +114,11 @@ try {
     mp.transicaoDeEstado('live', 'roundEnd', { E: 0, B: 0 });
     assert.equal(game.stateUntil, serverDeadline, 'transição preserva prazo autoritativo de nove segundos');
     assert.equal(game.objective.cinematic?.winner, 'B');
-    assert.equal(result.at(-1)?.[0], 'FLÁVIO EMBARCOU');
+    assert.equal(result.at(-1)?.[0], 'FLÁVIO FUGIU PROS EUA');
     assert.equal(result.at(-1)?.[2], false, 'placar não cobre a cinemática do objetivo');
     assert.equal(game.vmScene.visible, false);
     Game.prototype._updateHud.call(game);
-    assert.equal(game.objective.hud.textContent, 'EMBARQUE CONCLUÍDO', 'HUD normal não apaga a mensagem da cinemática');
+    assert.equal(game.objective.hud.textContent, 'FLÁVIO FUGIU PROS EUA', 'HUD normal não apaga a mensagem da cinemática');
   });
   check('nova rodada online restaura apresentação sem reescrever o relógio do servidor', () => {
     game.objective.startCinematic('B');
@@ -291,7 +297,7 @@ try {
       ents: net.snap.ents.map(e => e.id === 7 ? { ...e, hp: winner === 'B' ? 100 : 0, alive: winner === 'B' } : e) };
     mp.applySnapshot();
     assert.equal(game.objective.cinematic?.winner, winner);
-    assert.equal(result.at(-1)?.[0], winner === 'B' ? 'FLÁVIO EMBARCOU' : 'FLÁVIO FOI MORTO');
+    assert.equal(result.at(-1)?.[0], winner === 'B' ? 'FLÁVIO FUGIU PROS EUA' : 'FLÁVIO FOI MORTO');
     assert.equal(result.length, before + 1);
     mp.applySnapshot();
     net.snap = { ...net.snap, tick: net.snap.tick + 1, t: net.snap.t + .05 };

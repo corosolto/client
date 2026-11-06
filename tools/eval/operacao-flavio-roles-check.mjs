@@ -54,6 +54,11 @@ const mutations = {
     after: 'return criarEstadoEscolta(this.game.world.escortPath);',
     clause: 'rota do VIP varia por rodada e conduz Flávio pela variante',
   },
+  'embarque-no-penultimo': {
+    before: 'const escada = state.caminho[ultimo];',
+    after: 'const escada = state.caminho[ultimo - 1];',
+    clause: 'VIP bot chega ao pé da escada e embarca em toda variante',
+  },
   'isca-fixa': {
     before: 'const rota = iscas[((bot._flavioIsca || 0) + (bot._flavioVidas || 0)) % iscas.length];',
     after: 'const rota = (bot._flavioIsca || 0) % 2 === 0 ? 2 : 0;',
@@ -338,8 +343,6 @@ check('rota do VIP varia por rodada e conduz Flávio pela variante', () => withG
     escolhidas.push(rota);
     const caminho = game.objective.state.caminho;
     assert.deepEqual(caminho, rotas[rota], `rodada ${rodada}: estado usa a variante ${rota}`);
-    const visiveis = game.world.root.children.filter((o) => o.name === 'marca-checkpoint-escolta' && o.visible);
-    assert.equal(visiveis.length, caminho.length, `rodada ${rodada}: só os anéis da variante acesos`);
     if (rodada > 3) continue;
     // Ponto de divergência: o próximo checkpoint é exclusivo desta variante.
     const k = caminho.findIndex((_, i) => i + 1 < caminho.length && rotas.every((outra, j) => j === rota
@@ -361,6 +364,29 @@ check('rota do VIP varia por rodada e conduz Flávio pela variante', () => withG
   assert.equal(new Set(escolhidas.slice(0, 3)).size, 3, `três rodadas cobrem as três variantes (${escolhidas})`);
   assert.ok(escolhidas.every((rota, i) => i === 0 || rota !== escolhidas[i - 1]), `rodadas seguidas não repetem a rota (${escolhidas})`);
   assert.equal(escolhidas[0], 0, 'primeira rodada abre pelo meio');
+}));
+
+// Playtest 06/11 ("não consegue embarcar"): em cada variante o VIP bot sai do penúltimo
+// checkpoint pelo moverVip real, chega ao pé da escada e completa o embarque.
+check('VIP bot chega ao pé da escada e embarca em toda variante', () => withGame(7, (game) => {
+  const { vip, guardas, atacantes } = papeis(game);
+  game._losClear = () => false;
+  for (let rodada = 1; rodada <= 3; rodada++) {
+    game.roundNum = rodada; game.state = 'live';
+    game.objective.prepareRound();
+    const estado = game.objective.state, caminho = estado.caminho, k = caminho.length - 2, fim = caminho.at(-1);
+    estado.checkpoint = k; estado.position.x = caminho[k].x; estado.position.z = caminho[k].z;
+    vip.pos.set(caminho[k].x, 0, caminho[k].z);
+    for (let frame = 0; frame < 60 * 25 && !estado.winner; frame++) {
+      for (const bot of atacantes) { bot.alive = false; bot.pos.set(-40, 0, -55); }
+      for (const guarda of guardas) { guarda.alive = true; guarda.pos.set(vip.pos.x, 0, vip.pos.z); }
+      game.time += 1 / 60;
+      game.objective.update(1 / 60);
+    }
+    assert.equal(estado.winner, 'B', `rodada ${rodada}: Flávio não embarcou (checkpoint ${estado.checkpoint}/${caminho.length - 1})`);
+    const falta = Math.hypot(estado.position.x - fim.x, estado.position.z - fim.z);
+    assert.ok(falta < 0.75, `rodada ${rodada}: embarcou a ${falta.toFixed(2)} m do pé da escada`);
+  }
 }));
 
 // "Enganar o inimigo": flanqueadores são iscas em rotas de serviço fora da lane do VIP —

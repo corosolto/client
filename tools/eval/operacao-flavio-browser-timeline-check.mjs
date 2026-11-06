@@ -15,7 +15,7 @@ const body=source.slice(start,end);
 const run=new (Object.getPrototypeOf(async function(){}).constructor)('page','assert','out','requireOwnedOut',body+'\nreturn cinematic;');
 const positivesOnly=process.argv.includes('--positivos');
 const scenarios=[['boarding',false],['fallback',false],...positivesOnly?[]:[
- ['taxi-cedo',true],['sem-taxi',true],['original-oculto-move',true],['prazo-curto',true],
+ ['taxi-cedo',true],['sem-taxi',true],['original-oculto-move',true],['prazo-curto',true],['placa-boiando',true],
 ]];
 const rows=[];
 for(const [scenario,reject] of scenarios){
@@ -35,9 +35,11 @@ for(const [scenario,reject] of scenarios){
     if(scenario==='original-oculto-move')g.world.objectivePlane.position.z=85;
     return true;
    },
-   stop(){stage.visible=false;g.world.objectivePlane.visible=true;mode._boardingSession=null;},
+   stop(){stage.visible=false;g.world.objectivePlane.visible=true;placa.visible=true;mode._boardingSession=null;},
   };
-  this._boarding=boarding;this._boardingSession=this.cinematic;g.world.objectivePlane.visible=false;
+  // Como FlavioBoarding.start: a placa da escada some junto com avião e escada originais.
+  const placa=g.world.root.getObjectByName('placa-embarque-flavio');
+  this._boarding=boarding;this._boardingSession=this.cinematic;g.world.objectivePlane.visible=false;placa.visible=scenario==='placa-boiando';
  };
  const advance=ms=>{wall+=ms;g.time+=ms/1000;g.objective.updatePresentation();};
  const page={
@@ -51,7 +53,7 @@ for(const [scenario,reject] of scenarios){
   const requireOwnedOut=()=>{ownedChecks++;}; // dependência explícita, sem IO nesta fixture
   let error=null;try{await run(page,assert,'/tmp/no-browser-capture',requireOwnedOut);}catch(e){error=e;}
   assert.equal(ownedChecks,2,'victory probe keeps both owned-output guards');
-  if(reject){const expectedPrefix={'taxi-cedo':'FB_PRE_DOOR','sem-taxi':'FB_TAXI_ADVANCE','original-oculto-move':'FB_TAXI_ADVANCE','prazo-curto':'FB_DURATION'}[scenario];assert(error instanceof assert.AssertionError && typeof error.message==='string' && error.message.startsWith(expectedPrefix),'invalid timeline must fail the expected assertion ('+scenario+'=>'+expectedPrefix+'): '+(error&&error.message));}
+  if(reject){const expectedPrefix={'taxi-cedo':'FB_PRE_DOOR','sem-taxi':'FB_TAXI_ADVANCE','original-oculto-move':'FB_TAXI_ADVANCE','prazo-curto':'FB_DURATION','placa-boiando':'FB_LABEL_HIDDEN'}[scenario];assert(error instanceof assert.AssertionError && typeof error.message==='string' && error.message.startsWith(expectedPrefix),'invalid timeline must fail the expected assertion ('+scenario+'=>'+expectedPrefix+'): '+(error&&error.message));}
   else if(error)throw error;
   rows.push({clause:scenario,pass:true});console.log('ok browser timeline '+scenario);
  }catch(e){rows.push({clause:scenario,pass:false,type:e.name,message:e.message});console.error('FALHA browser timeline '+scenario+': '+e.message);}

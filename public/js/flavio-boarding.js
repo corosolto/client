@@ -66,7 +66,8 @@ export class FlavioBoarding {
       actor.group.position.set(3.8,0,-3);actor.group.rotation.y=-Math.PI/2;
       const originalPlane=this.game.world.objectivePlane;
       const stairs=this.game.world.root.getObjectByName('escada_embarque') || this.game.world.root.getObjectByName('fallback-escada_embarque');
-      for(const object of [originalPlane,stairs])if(object){session.hidden.set(object,object.visible);object.visible=false;}
+      const placa=this.game.world.root.getObjectByName('placa-embarque-flavio');
+      for(const object of [originalPlane,stairs,placa])if(object){session.hidden.set(object,object.visible);object.visible=false;}
       this.game.world.root.add(stage);stage.visible=true;
       this._buildProfile();
       if(!this._prepareFeet(session,actor)){this._rollback(session);return false;}

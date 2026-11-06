@@ -633,7 +633,6 @@ export class OperacaoFlavio {
 
   _novoEstadoDaRodada() {
     this._rota = this._rotaDaRodada();
-    this._marcarRota();
     return criarEstadoEscolta(this.game.world.escortPaths?.[this._rota] || this.game.world.escortPath);
   }
 
@@ -642,16 +641,8 @@ export class OperacaoFlavio {
   _sincronizarRota() {
     if (this._rotaDaRodada() === this._rota) return;
     this._rota = this._rotaDaRodada();
-    this._marcarRota();
     const caminho = this.game.world.escortPaths?.[this._rota] || this.game.world.escortPath;
     this.state.caminho = caminho.map(({ x, z }) => ({ x, z }));
-  }
-
-  // Anéis do mapa (userData.rotas): só os checkpoints da rota da rodada ficam acesos.
-  _marcarRota() {
-    for (const anel of this.game.world.root?.children || []) {
-      if (anel.name === 'marca-checkpoint-escolta' && Array.isArray(anel.userData?.rotas)) anel.visible = anel.userData.rotas.includes(this._rota);
-    }
   }
 
   // Isca: rota de serviço fora da lane do VIP, na ordem da variante (world.escortDecoyRoutes,
@@ -1276,7 +1267,7 @@ export class OperacaoFlavio {
     const morto = winner === 'E' && (this.vip?.alive === false || this.deathAnnounced);
     return {
       duration: 9,
-      title: winner === 'B' ? 'FLÁVIO EMBARCOU' : morto ? 'FLÁVIO FOI MORTO' : 'A FUGA FOI INTERROMPIDA',
+      title: winner === 'B' ? 'FLÁVIO FUGIU PROS EUA' : morto ? 'FLÁVIO FOI MORTO' : 'A FUGA FOI INTERROMPIDA',
       detail: winner === 'B'
         ? 'o avião está pronto para decolar'
         : morto ? 'a escolta fracassou antes do embarque' : 'o aeroporto foi bloqueado',
@@ -1296,7 +1287,7 @@ export class OperacaoFlavio {
       this.fontes.push(...sireneEmergencia(this.game.sfx));
     }
     if (this.hud) this.hud.textContent = winner === 'B'
-      ? 'EMBARQUE CONCLUÍDO'
+      ? 'FLÁVIO FUGIU PROS EUA'
       : this.vip?.alive === false || this.deathAnnounced ? 'FLÁVIO FOI MORTO · ESCOLTA FRACASSOU' : 'OPERAÇÃO INTERROMPIDA';
   }
 

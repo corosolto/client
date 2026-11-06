@@ -327,6 +327,21 @@ const views = [
       mintProps: mintNames.filter((name) => g.world.root.getObjectByName(name)),
       mintPropInstances: g.world.root.children.filter((object) => mintNames.includes(object.name)).length,
       routeMeshCount: g.world.root.children.filter((object) => object.name === 'rota-operacao-flavio').length,
+      checkpointRings: (() => { let n = 0; g.scene.traverse((o) => { if (o.name === 'marca-checkpoint-escolta') n++; }); return n; })(),
+      // Seta ▼ da placa: ponta opaca no centro da base do canvas, cantos vazios e base larga acima.
+      boardingLabel: (() => {
+        const placa = g.world.root.getObjectByName('placa-embarque-flavio');
+        const img = placa?.material?.map?.image;
+        if (!img?.getContext) return null;
+        const ctx = img.getContext('2d'), w = img.width, h = img.height;
+        const alfa = (x, y) => ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data[3];
+        return {
+          visible: placa.visible, occluder: g.world.occluders.includes(placa), center: [placa.center.x, placa.center.y],
+          position: placa.position.toArray(), tipOpaque: alfa(w / 2, h - 6) > 200,
+          tipCornersClear: alfa(w * 0.2, h - 6) === 0 && alfa(w * 0.8, h - 6) === 0,
+          baseWide: alfa(w * 0.36, h * 0.66) > 200 && alfa(w * 0.64, h * 0.66) > 200,
+        };
+      })(),
       vm: {
         mode: g.camView,
         root: Boolean(g.vm.root?.visible),
@@ -376,7 +391,11 @@ const views = [
   assert.ok(Math.abs(runtime.plane?.clearance || 0) <= 0.01, `avião fora do solo: ${runtime.plane?.clearance}`);
   assert.ok(runtime.plane?.groundY >= 0.07, `avião sem folga do pátio: ${runtime.plane?.groundY}`);
   assert.ok(runtime.plane?.height > 1, `altura inválida do avião: ${runtime.plane?.height}`);
-  assert.deepEqual(runtime.signs.sort(), ['placa-embarque', 'placa-hangar', 'placa-rota-patio']);
+  assert.deepEqual(runtime.signs.sort(), ['placa-embarque', 'placa-embarque-flavio', 'placa-hangar', 'placa-rota-patio']);
+  assert.equal(runtime.checkpointRings, 0, 'anéis de checkpoint voltaram ao piso');
+  const placa = runtime.boardingLabel;
+  assert.ok(placa?.visible && !placa.occluder && placa.center[1] === 0, `placa de embarque ausente ou sólida: ${JSON.stringify(placa)}`);
+  assert.ok(placa.tipOpaque && placa.tipCornersClear && placa.baseWide, `seta da placa não aponta para baixo: ${JSON.stringify(placa)}`);
   assert.equal(runtime.mintProps.length, 12);
   assert.ok(runtime.mintPropInstances >= 37, `poucos props detalhados no mapa: ${runtime.mintPropInstances}`);
   assert.equal(runtime.routeMeshCount, 0, 'a trilha amarela da escolta continua desenhada no chão');
@@ -575,6 +594,7 @@ const views = [
       elapsed: owner?._elapsedCinematic(),
       planeZ: boardPlane.getWorldPosition(boardPlane.position.clone()).z,
       activeIsBoardingPlane: boardPlane === boarding?.plane,
+      labelVisible: g.world.root.getObjectByName('placa-embarque-flavio')?.visible,
     };
   });
   const waitForElapsed = (target) => page.waitForFunction((t) => {
@@ -610,6 +630,7 @@ const views = [
       duration: g.stateUntil - c?.startedAt,
       planeZ: boardPlane.getWorldPosition(boardPlane.position.clone()).z,
       result: g._resultado,
+      hud: g.objective?.hud?.textContent || '',
     };
   });
   cinematic.samples = { preDoorA, preDoorB, taxi };
@@ -617,6 +638,10 @@ const views = [
   assert.equal(cinematic.winner, 'B');
   assert.ok(cinematic.duration >= 8.9, `FB_DURATION duração da cinemática deve ser >= 8.9 (dur ${cinematic.duration})`);
   assert.ok(cinematic.planeZ > 55);
+  assert.equal(cinematic.result?.titulo, 'FLÁVIO FUGIU PROS EUA');
+  assert.equal(cinematic.hud, 'FLÁVIO FUGIU PROS EUA');
+  // A placa fica no mundo; com o palco da cinemática no ar ela some para não boiar sobre o táxi.
+  assert.ok(!preDoorB.activeIsBoardingPlane || preDoorB.labelVisible === false, `FB_LABEL_HIDDEN placa visível durante o embarque: ${JSON.stringify(preDoorB)}`);
 
   receiptData = {
     generatedAt: new Date().toISOString(), base, runtime, escortTrace,
