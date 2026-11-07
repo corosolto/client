@@ -71,7 +71,7 @@ const REGUAS_PR_FAST = [
   'eval:wfsecret', 'eval:wflocal', 'eval:wftimeout', 'eval:wfconcurrency', 'eval:deploygate',
   'eval:autofix', 'eval:mutcega', 'eval:portaointeiro', 'eval:release', 'eval:privacy', 'eval:noescolha',
   'eval:contagens-pr',
-  'eval:mergequeue',
+  'eval:mergequeue', 'eval:wfpurge',
 ];
 let ci = existsSync('.github/workflows/ci.yml') ? readFileSync('.github/workflows/ci.yml', 'utf8') : '';
 if (MUT === 'sucesso-implicito') ci = ci.replace(/(- name: Contratos visuais[^\n]*\n)        if:[^\n]*\n/, '$1');

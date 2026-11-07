@@ -1,7 +1,7 @@
 import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
-import {readFileSync,readdirSync,realpathSync,statSync} from 'node:fs';
+import {existsSync,readFileSync,readdirSync,realpathSync,statSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {gzipSync,gunzipSync,brotliDecompressSync,inflateSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
@@ -126,6 +126,14 @@ export async function startBootOrigin({BASE,API_BASE,publicRoot,snapshot=snapsho
    const destinationOrigin=pathname.startsWith('/api/')?apiOrigin:upstream.origin;
    const dest=new URL(req.url,destinationOrigin);if(dest.origin!==destinationOrigin)throw Error('origin escapou');
    const upstreamResponse=await getWire(dest,{method:req.method,body:requestBody}),{status,body:wire}=upstreamResponse,headers=upstreamResponse.headers;
+   // Mídia nova do candidato (ex.: arte do card) ainda não publicada: o 404 de produção não é
+   // o boot medido; serve o arquivo de public/ e registra a origem como candidato local.
+   const candidato=status===404&&req.method==='GET'&&/^\/img\/[\w./-]+\.(?:webp|png|jpe?g|svg)$/i.test(pathname)?path.join(snapshot.root,rel):null;
+   if(candidato&&candidato.startsWith(snapshot.root+path.sep)&&existsSync(candidato)&&statSync(candidato).isFile()) {
+    const body=readFileSync(candidato),ext=path.extname(candidato).slice(1).toLowerCase(),type=ext==='svg'?'image/svg+xml':ext==='jpg'?'image/jpeg':'image/'+ext;
+    record(res,{path:req.url,method:req.method,kind:'local-candidate-asset',rel,status:200,payloadBytes:body.length,decodedBytes:body.length,sha256:sha(body),encoding:''});
+    res.writeHead(200,{'content-type':type,'cache-control':'no-store','content-length':String(body.length),'x-boot-origin':'local-candidate-asset'});res.end(body);return;
+   }
    if(status>=300&&status<400)throw Error('redirect upstream não aceito: '+status+' '+dest.pathname);
    const originalEncoding=String(headers['content-encoding']||'');let decoded=decodeWire(wire,originalEncoding);const type=String(headers['content-type']||'application/octet-stream');
    let thirdPartyScriptsStripped=0;

@@ -687,9 +687,23 @@ const DICT = {
   'Página do clã': 'Clan page', 'Ranking de clãs e desafios: próxima etapa': 'Clan ranking and challenges: next step',
   // tp:fim-perfil
 
+  // tp:flavio (card do lobby e história do Flávio; ficção do jogo)
+  'A HISTÓRIA DO FLÁVIO': 'FLÁVIO\'S STORY', 'OPERAÇÃO FLÁVIO': 'OPERATION FLÁVIO', 'A HISTÓRIA ▸': 'THE STORY ▸',
+  'Operação Flávio: a história do Flávio': 'Operation Flávio: Flávio\'s story',
+  'Zero Um, o senador Flávio, cansou de dar entrevista e resolveu que o mandato rende mais visto lá de fora. O jatinho já está ligado no pátio; só falta atravessar o aeroporto inteiro sem levar bala.':
+    'Zero Um, Senator Flávio, got tired of interviews and decided his term looks better from abroad. The jet is already running on the apron; he just has to cross the whole airport without catching a bullet.',
+  'A comitiva faz de tudo: cerca o VIP, apressa o passo, abre cobertura e manda isca pelo outro lado. A equipe adversária fecha o terminal, o raio-X, o hangar e o pátio para interceptar o Flávio antes da escada.':
+    'His crew does it all: boxes the VIP in, rushes the pace, lays cover and sends decoys down the other side. The enemy team locks down the terminal, the X-ray, the hangar and the apron to intercept Flávio before the stairs.',
+  'Escolta 6×6, do terminal ao jato': '6v6 escort, from the terminal to the jet',
+  'Três rotas: a comitiva escolhe, o outro time adivinha': 'Three routes: the crew picks, the other team guesses',
+  'Escolha o Zero Um e seja você o VIP': 'Pick Zero Um and be the VIP yourself',
+  'Se ele subir a escada, a manchete sai sozinha: FLÁVIO FUGIU PROS EUA.': 'If he makes it up the stairs, the headline writes itself: FLÁVIO FUGIU PROS EUA.',
+  'Paródia: personagens e fatos são ficção do jogo.': 'Parody: characters and events are game fiction.',
+  'Flávio na escada do jato, com a placa EMBARQUE DO FLÁVIO no pátio do aeroporto': 'Flávio on the jet stairs, with the FLÁVIO BOARDING sign on the airport apron',
+
   // tp:social
   'Resenha': 'Chat', 'Canais': 'Channels',   'SALAS': 'ROOMS',
-  'Abrir a resenha': 'Open chat', 'Abrir a resenha, {n} novidades': 'Open chat, {n} new', 'Fechar a resenha': 'Close chat',
+  'Fechar a resenha': 'Close chat',
   'Buscar na turma': 'Search your crew', 'Turma vazia': 'No crew yet', 'Adicione amigos pela Comunidade.': 'Add friends from Community.',
   'O clã ainda não tem sala de conversa.': 'Clans have no chat yet.', 'Convites para a sala de alguém da turma.': 'Invites to a friend\'s match.',
   'Chame quem não joga ainda': 'Bring someone new', 'COPIAR LINK DO JOGO': 'COPY GAME LINK', 'LINK COPIADO': 'LINK COPIED',

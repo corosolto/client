@@ -1,5 +1,6 @@
 /* Treta Pop · 03 modo e mapa, 19 mobile. Carregado por tp/ligar.js só com ?ui=v3. */
 import { tr } from '../i18n.js';
+import { retratoFontes } from '../data/retratos.js';
 
 const CHAVE_FAV = 'tp-modos-favoritos';
 /* Selo NOVO: mapa que entrou no jogo (mapcat.js MAP_DATA) há no máximo 30 dias. */
@@ -70,7 +71,7 @@ function montar(card) {
   modos.setAttribute('role', 'group'); modos.setAttribute('aria-label', tr('Modo de jogo'));
   for (const m of MODOS) {
     const b = el('button', 'tp-modos__modo'); b.type = 'button'; b.dataset.modo = m.id;
-    const img = el('img'); img.src = `/img/chars-hero/${m.arte}.webp`; img.alt = ''; img.decoding = 'async';
+    const img = el('img'); img.src = retratoFontes(m.arte)[0]; img.alt = ''; img.decoding = 'async';
     const txt = el('span', 'tp-modos__modo-txt');
     const nome = el('span', 'tp-disp'); nome.appendChild(el('span', 'tp-ital', tr(m.nome)));
     txt.append(nome, el('span', 'tp-modos__sub', tr(m.sub)));

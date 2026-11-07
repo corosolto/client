@@ -1,6 +1,6 @@
 // GERADO por tools/gen-asset-rev.mjs — não editar à mão (`npm run gen:assetrev`).
 // Revisão de URL por ARQUIVO (sha256 dos bytes, 10 hex) dos binários pesados de
-// /models e /audio. Existe porque o edge serve /models como immutable por 1 ano e a
+// /models, /img/mode-announcements e /audio. Existe porque o edge serve /models como immutable por 1 ano e a
 // query carregava a VERSION do release: toda publicação invalidava o acervo inteiro.
 // Quem monta a URL (com fallback de VERSION) é ./asseturl.js.
 export const ASSET_REV = Object.freeze({
@@ -389,6 +389,10 @@ export const ASSET_REV = Object.freeze({
   "audio/menu-music/m24.mp3": "8bb429c94a",
   "audio/menu-music/m25.mp3": "e43de13cb4",
   "audio/menu-music/m26.mp3": "474ba390dc",
+  "img/mode-announcements/flavio-apron.webp": "895e7dc1ba",
+  "img/mode-announcements/flavio-embarque-card.webp": "6845c89d80",
+  "img/mode-announcements/flavio-embarque.webp": "ae7fd8a648",
+  "img/mode-announcements/flavio-hangar.webp": "e916a7da5a",
   "models/ambient/anta.glb": "5a56336945",
   "models/ambient/arara_vermelha.glb": "8fa0febb13",
   "models/ambient/arara_voo.glb": "f7716f1f95",
