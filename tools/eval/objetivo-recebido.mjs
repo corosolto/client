@@ -22,7 +22,7 @@ export function objetivoConsumido(evidence, snap) {
   return !!received && typeof received === 'object' && Object.keys(received).length > 0
     && !!applied && evidence.tick === snap.tick
     && JSON.stringify(evidence.recebido) === JSON.stringify(received)
-    && ['wave', 'clock', 'dominio', 'kills'].every(key => applied[key] === received[key]);
+    && JSON.stringify(applied) === JSON.stringify(received);
 }
 
 export function capturarObjetivoAtual() {

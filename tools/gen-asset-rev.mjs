@@ -20,6 +20,11 @@
      conteúdo própria (`data/vmbytes.js`, `data/weaponver.js`, `data/vmsharedver.js`)
      e duplicar o hash só engordaria o módulo.
 
+   TAMBÉM ENTRA: `public/img/mode-announcements/**` — arte dos anúncios e da
+     história dos modos (card do lobby, `tp/flavio.js`). `/img` não é immutable,
+     mas a arte é trocada no mesmo caminho quando a captura é refeita: o hash
+     na URL garante que o jogador não fique com a foto antiga em cache.
+
    O QUE ENTRA SÓ QUANDO EXISTE: `public/audio/**`
      `public/audio/` é IGNORADO pelo git (`.gitignore`: o áudio shipa pelo
      `audio-pack.zip`, nunca pelo repositório). Um clone sem o pacote não tem os
@@ -56,6 +61,7 @@ export const EXTENSOES = /\.(glb|bin|json|mp3|ogg|webp)$/i;
 
 export const RAIZES = Object.freeze([
   { prefixo: 'models', versionado: true, podar: ['viewmodels'] },
+  { prefixo: 'img/mode-announcements', versionado: true, podar: [] },
   { prefixo: 'audio', versionado: false, podar: [] },
 ]);
 
@@ -107,7 +113,7 @@ export function mapaDoDisco(anterior = {}, base = PUBLICO) {
 
 export const fonte = (mapa) => `// GERADO por tools/gen-asset-rev.mjs — não editar à mão (\`npm run gen:assetrev\`).
 // Revisão de URL por ARQUIVO (sha256 dos bytes, ${TAMANHO_REV} hex) dos binários pesados de
-// /models e /audio. Existe porque o edge serve /models como immutable por 1 ano e a
+// /models, /img/mode-announcements e /audio. Existe porque o edge serve /models como immutable por 1 ano e a
 // query carregava a VERSION do release: toda publicação invalidava o acervo inteiro.
 // Quem monta a URL (com fallback de VERSION) é ./asseturl.js.
 export const ASSET_REV = Object.freeze({
@@ -137,7 +143,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const anterior = await mapaPublicado();
   const mapa = mapaDoDisco(anterior);
   const total = Object.keys(mapa).length;
-  if (!total) { console.error(`ASSET-REV: nenhum binário em ${PUBLICO}/{models,audio}`); process.exit(1); }
+  if (!total) { console.error(`ASSET-REV: nenhum binário em ${PUBLICO}/{models,img/mode-announcements,audio}`); process.exit(1); }
   const nova = fonte(mapa);
   if (process.argv.includes('--check')) {
     let atual = existsSync(OUT) ? readFileSync(OUT, 'utf8') : '';

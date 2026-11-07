@@ -7,6 +7,7 @@ import { ligar as resultado } from './resultado.js';
 import { ligar as loja } from './loja.js';
 import { ligar as perfil } from './perfil.js';
 import { ligar as social } from './social.js';
+import { ligar as flavio } from './flavio.js';
 import { ligar as servidores } from './servidores.js';
 import { ligar as ajustes } from './ajustes.js';
 /* Movimento é transversal (mapa 39): entra como mais uma "tela" para herdar o
@@ -14,7 +15,7 @@ import { ligar as ajustes } from './ajustes.js';
 import { ligar as movimento } from '../ui-motion.js';
 
 export function ligarTelas() {
-  for (const [nome, ligar] of Object.entries({ movimento, lobby, modos, carregamento, hud, resultado, loja, perfil, social, servidores, ajustes })) {
+  for (const [nome, ligar] of Object.entries({ movimento, lobby, modos, carregamento, hud, resultado, loja, perfil, social, flavio, servidores, ajustes })) {
     try { ligar(); } catch (e) { console.error(`[treta-pop] ${nome}`, e); }
   }
 }

@@ -90,6 +90,7 @@ const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
 // Revisão: ?vmgolden=ak serve a golden da arma sem mexer no `golden` do vmconfig.
 const GOLDEN_QS = new Set((_QS?.get('vmgolden') || '').split(',').filter((w) => GOLDEN_VER[w]));
 const GOLDEN_ADS = AUTHORED_VM_ENABLED && _QS?.get('vmgoldenads') !== '0';
+const PRIME_VM = _QS?.get('vmprime') !== '0';
 // ADS 1P pela linha de mira (adsEfetivo em vmconfig.js); ?ads1pfix=0 volta ao foco.
 const ADS1P_FIX = _QS?.get('ads1pfix') !== '0';
 // ?vmlocomotion=0: kill-switch do gait/sway 1P para A/B sem deploy (espírito ?vmkick).
@@ -303,10 +304,11 @@ const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
 export const entryKeyFor = (weapon) => {
   const family = familyFor(weapon);
   if (!family) return '';
-  if (fabricaAtiva(weapon)) return `fab#${weapon}`;
   if (VM_FONTE === 'retarget') return `rt#${weapon}`;
   if (VM_FONTE === 'goldsrc') return `gs#${weapon}`;
+  // Golden marcada no vmconfig (hoje só a AK) vence o chassi da fábrica; `?vmgolden=0` devolve para A/B.
   if (GOLDEN_VM && (VM_WEAPON[weapon]?.golden === true || GOLDEN_QS.has(weapon))) return `gold#${weapon}`;
+  if (fabricaAtiva(weapon)) return `fab#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;
 };
 // Fonte que o runtime serve para a arma (revisão/QA/réguas): chave e URL. VL7 do eval:vm-launch.
@@ -453,10 +455,10 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
     const k = weaponLength / alvo;
     if (k > 1.5) mount.scale.multiplyScalar(1 / k);
   }
-  // golden: a câmera do GLB É a composição aprovada (vm-camera-check mede isto no
-  // navegador). O clamp pelo fov da família só vale para o molde goldsrc/retarget.
+  // golden: a câmera do GLB é a composição, salvo goldFrame (PT-38 a 60°, pistola-ref).
+  // O clamp pelo fov da família só vale para o molde goldsrc/retarget.
   return {
-    scene, mount, cameraFov: golden ? cameraFov : molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,
+    scene, mount, cameraFov: molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,
     frame, handMeshes, weaponMeshes, utilityModels,
   };
 }
@@ -537,6 +539,16 @@ export class AuthoredViewModels {
         : setTimeout(prime, 1400);
     }
     return this;
+  }
+
+  // Monta oculto (request -1) o pacote das outras armas do inventário: a 1ª troca não
+  // mostra o legado enquanto clona o GLB (playtest 06/11, PT-38). ?vmprime=0 desliga.
+  prime(ids = []) {
+    if (!PRIME_VM || this._disposed) return;
+    for (const id of ids) {
+      const key = id ? this._keyFor(id) : '';
+      if (key && !this.entries.has(key) && !this.pending.has(key)) this._loadFamily(key, -1);
+    }
   }
 
   async _loadFamily(key, request = this._activeRequest) {
@@ -797,7 +809,9 @@ export class AuthoredViewModels {
     // ADS (M6): o CANO fica colinear com o eixo óptico (rotação do mount) e só
     // então a alça MEDIDA desliza ao centro — não um ponto cruzando em diagonal.
     const ads = this.adsAmount;
-    const adsConfig = adsEfetivo(cfgArma(this.weapon)?.ads, ADS1P_FIX);
+    // ADS por ROTA: golden usa a tabela do PRÓPRIO piloto (unidades ~97 un/m; off/alívio
+    // em metro da fábrica seria invisível).
+    const adsConfig = adsEfetivo((active.golden ? VM_WEAPON[this.weapon] : cfgArma(this.weapon))?.ads, ADS1P_FIX);
     const wrap = active.mint?.active || active.adsSockets?.sight;
     if (ads > 0.001 && adsConfig && wrap) {
       if (adsConfig.auto) {

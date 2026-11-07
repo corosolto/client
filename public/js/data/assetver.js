@@ -1,6 +1,6 @@
 // GERADO por tools/gen-asset-rev.mjs — não editar à mão (`npm run gen:assetrev`).
 // Revisão de URL por ARQUIVO (sha256 dos bytes, 10 hex) dos binários pesados de
-// /models e /audio. Existe porque o edge serve /models como immutable por 1 ano e a
+// /models, /img/mode-announcements e /audio. Existe porque o edge serve /models como immutable por 1 ano e a
 // query carregava a VERSION do release: toda publicação invalidava o acervo inteiro.
 // Quem monta a URL (com fallback de VERSION) é ./asseturl.js.
 export const ASSET_REV = Object.freeze({
@@ -389,6 +389,10 @@ export const ASSET_REV = Object.freeze({
   "audio/menu-music/m24.mp3": "8bb429c94a",
   "audio/menu-music/m25.mp3": "e43de13cb4",
   "audio/menu-music/m26.mp3": "474ba390dc",
+  "img/mode-announcements/flavio-apron.webp": "895e7dc1ba",
+  "img/mode-announcements/flavio-embarque-card.webp": "6845c89d80",
+  "img/mode-announcements/flavio-embarque.webp": "ae7fd8a648",
+  "img/mode-announcements/flavio-hangar.webp": "e916a7da5a",
   "models/ambient/anta.glb": "5a56336945",
   "models/ambient/arara_vermelha.glb": "8fa0febb13",
   "models/ambient/arara_voo.glb": "f7716f1f95",
@@ -1395,6 +1399,7 @@ export const ASSET_REV = Object.freeze({
   "models/characters/titica.glb": "264d99d9a0",
   "models/characters/trapfunk.glb": "7ed59f4903",
   "models/characters/zumbi.glb": "f56419e19f",
+  "models/cinematics/operacao_flavio_boarding.glb": "6b2ace3066",
   "models/dollynho_dance.glb": "9b0f9642ab",
   "models/enemies/javaporcos/ariete_javali.glb": "792c3dedb2",
   "models/enemies/javaporcos/ariete_javali_lod.glb": "fce6dc951c",
@@ -1673,6 +1678,24 @@ export const ASSET_REV = Object.freeze({
   "models/props/onibus_sptrans.glb": "7486b76f2f",
   "models/props/onibus_urbano.glb": "6eb3989977",
   "models/props/opala.glb": "e595cd10af",
+  "models/props/operacao_decola/arco_seguranca.glb": "bb335edaf3",
+  "models/props/operacao_decola/assentos_aeroporto.glb": "ef42e9abc6",
+  "models/props/operacao_decola/asset-manifest.json": "d4c85f8cca",
+  "models/props/operacao_decola/aviao_executivo.glb": "73e289cc3b",
+  "models/props/operacao_decola/balcao_recepcao.glb": "84c6061795",
+  "models/props/operacao_decola/barreiras_aeroporto.glb": "2546c41241",
+  "models/props/operacao_decola/carrinho_ferramentas.glb": "d670c2587a",
+  "models/props/operacao_decola/carro_servico.glb": "21dc1604e2",
+  "models/props/operacao_decola/containers_carga.glb": "3db3450c36",
+  "models/props/operacao_decola/energia_solo.glb": "82af01bfd1",
+  "models/props/operacao_decola/escada_embarque.glb": "62d23fdea5",
+  "models/props/operacao_decola/estacao_manutencao.glb": "f5ab35c281",
+  "models/props/operacao_decola/jardineira.glb": "839bb29a24",
+  "models/props/operacao_decola/scanner_bagagem.glb": "aa3e5e50bd",
+  "models/props/operacao_decola/terminal_fachada.glb": "2cb17ee5cd",
+  "models/props/operacao_decola/terminal_portal.glb": "89f3494153",
+  "models/props/operacao_decola/torre_iluminacao.glb": "2d68c96925",
+  "models/props/operacao_decola/trator_bagagem.glb": "4a5e140209",
   "models/props/painel_tvs.glb": "bf15333148",
   "models/props/palacio.glb": "a667d08dfa",
   "models/props/palafita_aberta_amazonia.glb": "2d5724305e",

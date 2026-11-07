@@ -77,12 +77,12 @@ async function preparar(page, mutante, { conta = true, registro = [] } = {}) {
   });
   const css = /\/css\/tp\/social\.css/, js = /\/js\/tp\/social\.js/;
   if (mutante === 'vaza-flag') await reescreve(/\/js\/main\.js/, (t) => t.replace("if (document.documentElement.dataset.ui === 'v3') {\n  import('./splash-v3.js')", "if (true) {\n  import('./splash-v3.js')"));
-  if (mutante === 'botao-sobre') await reescreve(css, (t) => t.replace('--tp-resenha-chao:12px', '--tp-resenha-chao:500px'));
+  if (mutante === 'botao-volta') await reescreve(js, (t) => t.replace('menu.append(veu, g);', "menu.append(veu, g, Object.assign(document.createElement('button'), { id: 'tp-resenha-botao', textContent: 'Resenha' }));"));
   if (mutante === 'sem-y') await reescreve(js, (t) => t.replace("e.code !== 'KeyY'", "e.code !== 'KeyZ'"));
   if (mutante === 'gaveta-estreita') await reescreve(css, (t) => t.replace('.tp-resenha{width:100vw', '.tp-resenha{width:min(780px,100vw)'));
   if (mutante === 'inventa') await reescreve(js, (t) => t.replace(".filter((f) => f.state === 'accepted')", '.filter((f) => f)'));
   if (mutante === 'bolha-trocada') await reescreve(css, (t) => t.replace('.tp-msg[data-de="eu"]{align-self:flex-end', '.tp-msg[data-de="eu"]{align-self:flex-start'));
-  if (mutante === 'zero-visivel') await reescreve(css, (t) => t.replace('.tp-resenha-botao__novas[data-vazio]{display:none}', ''));
+  if (mutante === 'vazio-sem-acao') await reescreve(js, (t) => t.replace('if (acao) v.append(acao);', ''));
   if (mutante === 'dois-lima') await reescreve(css, (t) => t.replace('.tp-convidar__entrar{height:52px;padding:0 28px;border-radius:10px;border:2px solid var(--tp-lima);background:none;', '.tp-convidar__entrar{height:52px;padding:0 28px;border-radius:10px;border:2px solid var(--tp-lima);background:var(--tp-lima);'));
   if (mutante === 'qr-torto') await reescreve(js, (t) => t.replace('qrSvg(publico,', "qrSvg(publico.replace('corosolto','errado'),"));
   if (mutante === 'cartao-fixo') await reescreve(css, (t) => t.replace('width:min(1120px,calc(100vw - 32px))', 'width:1400px'));
@@ -101,6 +101,11 @@ async function lobby(opcoes = {}) {
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
   const page = await ctx.newPage();
   page.setDefaultTimeout(6000);
+  /* anúncios de abertura (Javaporco e Operação Flávio) já vistos: são de outra régua e tapam o lobby */
+  await page.addInitScript(() => {
+    localStorage.setItem('csbr-mode-ann-seen', JSON.stringify(['operacao_flavio']));
+    localStorage.setItem('cs-javaporcos-cidade-anuncio-v1', '1');
+  });
   const registro = await preparar(page, mutante, { conta });
   await page.goto(`${BASE}/?${flag ? '' : 'ui=legacy&'}lang=${lang}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.addStyleTag({ content: 'astro-dev-toolbar{display:none!important;pointer-events:none!important}' });
@@ -134,17 +139,18 @@ async function semFlag(mutante, cap) {
   await abrirModal(page); await page.waitForTimeout(800);
   if (cap) await page.screenshot({ path: `${OUT}/antes-convidar-1536x1024.png` });
   const r = await page.evaluate(() => ({
-    botao: !!document.getElementById('tp-resenha-botao'), gaveta: !!document.getElementById('tp-resenha'),
+    botao: !!document.getElementById('tp-resenha-botao') || !!document.getElementById('tp-lobby-flavio'), gaveta: !!document.getElementById('tp-resenha'),
     cartao: document.querySelector('.mp-modal-card')?.className || '',
     filhos: [...document.querySelectorAll('.mp-modal-card > *')].map((e) => e.id || e.className).join(','),
   }));
   await ctx.close();
   const LEGADO = 'mp-modal-kicker,mp-modal-title,mp-modal-convite,mp-modal-lot,mp-modal-copy,mp-modal-entrar,mp-modal-nota';
   const ok = !r.botao && !r.gaveta && !/tp-/.test(r.cartao) && r.filhos === LEGADO;
-  return [{ id: 'SO1', ok, msg: ok ? '?ui=legacy: sem botão Resenha, sem gaveta, modal da sala com a marcação anterior' : `rollback vaza: botão ${r.botao}, gaveta ${r.gaveta}, cartão "${r.cartao}", filhos ${r.filhos}` }];
+  return [{ id: 'SO1', ok, msg: ok ? '?ui=legacy: sem card do canto, sem gaveta, modal da sala com a marcação anterior' : `rollback vaza: canto ${r.botao}, gaveta ${r.gaveta}, cartão "${r.cartao}", filhos ${r.filhos}` }];
 }
 
-/* B · 4 telas: botão no lobby, gaveta e cartão de convite cabem. */
+/* B · 4 telas: o canto do lobby é do card da Operação Flávio (lobby-flavio-browser.mjs); a gaveta
+   abre pelo Y e a turma segue no AMIGOS. Gaveta e cartão de convite cabem. */
 async function telas(mutante, cap) {
   const sobre = [], geo = [], cabe = [];
   for (const [w, h] of VIEWPORTS) {
@@ -152,28 +158,14 @@ async function telas(mutante, cap) {
     const tag = `${w}x${h}`;
     await page.waitForTimeout(500);
     if (cap) await page.screenshot({ path: `${OUT}/lobby-${tag}.png` });
-    const b = await page.evaluate(() => {
-      const bt = document.getElementById('tp-resenha-botao');
-      if (!bt?.checkVisibility()) return null;
-      const r = bt.getBoundingClientRect();
-      const cruza = [];
-      for (const e of document.querySelectorAll('#main-menu a, #main-menu button, #main-menu input, #main-menu select, #main-menu [role=tab]')) {
-        if (e === bt || bt.contains(e) || e.closest('#tp-resenha') || !e.checkVisibility()) continue;
-        const o = e.getBoundingClientRect();
-        if (!o.width || !o.height) continue;
-        if (o.left < r.right - 1 && r.left < o.right - 1 && o.top < r.bottom - 1 && r.top < o.bottom - 1) cruza.push((e.id || e.className || e.tagName).toString().split(' ')[0]);
-      }
-      const topo = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-      return { l: r.left, t: r.top, r: r.right, b: r.bottom, cruza, coberto: !(topo && (topo === bt || bt.contains(topo))), novas: bt.querySelector('.tp-resenha-botao__novas')?.textContent || '', hub: document.getElementById('hub-social-unread')?.textContent || '' };
-    });
-    if (!b) sobre.push(`${tag}: botão Resenha ausente`);
-    else {
-      if (b.l < 0 || b.t < 0 || b.r > w || b.b > h) sobre.push(`${tag}: botão fora da tela`);
-      if (b.cruza.length) sobre.push(`${tag}: botão cobre ${b.cruza.join(', ')}`);
-      if (b.coberto) sobre.push(`${tag}: algo cobre o botão`);
-      if ((b.novas || '0') !== (b.hub || '0')) sobre.push(`${tag}: contador ${b.novas || 'vazio'} e a comunidade diz ${b.hub || 'vazio'}`);
-    }
-    await page.click('#tp-resenha-botao').catch(() => {});
+    const b = await page.evaluate(() => ({
+      resenha: !!document.getElementById('tp-resenha-botao') || [...document.querySelectorAll('#main-menu button, #main-menu a')]
+        .some((e) => !e.closest('#tp-resenha') && e.checkVisibility() && /^\s*resenha\b/i.test(e.textContent)),
+      amigos: !!document.querySelector('#main-menu a[href="/comunidade/amigos"]'),
+    }));
+    if (b.resenha) sobre.push(`${tag}: botão Resenha de volta ao lobby`);
+    if (!b.amigos) sobre.push(`${tag}: lobby sem caminho para a turma (AMIGOS → /comunidade/amigos)`);
+    await page.keyboard.press('y');
     await page.waitForTimeout(900);
     const g = await caixa(page, '#tp-resenha');
     const querW = Math.min(GAVETA_W, w) === GAVETA_W && w > 900 ? GAVETA_W : w;
@@ -195,7 +187,7 @@ async function telas(mutante, cap) {
     await ctx.close();
   }
   return [
-    { id: 'SO2', ok: !sobre.length, msg: sobre.length ? sobre.join('; ') : '4 telas: botão Resenha visível, livre, sem cobrir nada clicável, contador igual ao da comunidade' },
+    { id: 'SO2', ok: !sobre.length, msg: sobre.length ? sobre.join('; ') : '4 telas: sem botão Resenha no canto (é do card da Operação Flávio) e a turma segue no AMIGOS' },
     { id: 'SO4', ok: !geo.length, msg: geo.length ? geo.join('; ') : `gaveta de ${GAVETA_W} px colada à direita no desktop e tela cheia no celular` },
     { id: 'SO10', ok: !cabe.length, msg: cabe.length ? cabe.join('; ') : `4 telas: gaveta e cartão (${CARTAO_W} px no desktop) sem nada fora da tela e sem rolagem lateral` },
   ];
@@ -205,6 +197,9 @@ async function telas(mutante, cap) {
 async function fluxo(mutante, cap) {
   const { page, ctx, registro } = await lobby({ mutante });
   const r = [];
+  /* foco de origem conhecido (AMIGOS do cabeçalho): o ESC tem que devolvê-lo */
+  await page.focus('#tp-lobby-amigos').catch(() => {});
+  await page.evaluate(() => { if (document.activeElement) document.activeElement.dataset.reguaOrigem = '1'; });
   await page.keyboard.press('y');
   await page.waitForTimeout(900);
   const abriu = await page.evaluate(() => document.getElementById('tp-resenha')?.hasAttribute('data-aberta') && document.getElementById('tp-resenha').contains(document.activeElement));
@@ -217,9 +212,9 @@ async function fluxo(mutante, cap) {
   const lista = await page.evaluate(() => [...document.querySelectorAll('#tp-resenha [data-conversa]')].map((b) => ({ id: b.dataset.id, nome: b.querySelector('b')?.textContent, sub: b.querySelector('small')?.textContent, novas: b.querySelector('.tp-resenha__novas')?.textContent || '' })));
   await page.keyboard.press('Escape');
   await page.waitForTimeout(500);
-  const fechou = await page.evaluate(() => !document.getElementById('tp-resenha')?.hasAttribute('data-aberta') && document.activeElement?.id === 'tp-resenha-botao');
+  const fechou = await page.evaluate(() => !document.getElementById('tp-resenha')?.hasAttribute('data-aberta') && document.activeElement?.id === 'tp-lobby-amigos' && document.activeElement.dataset.reguaOrigem === '1');
   r.push({ id: 'SO3', ok: abriu && digita.aberta && digita.valor === 'y' && fechou,
-    msg: !abriu ? 'Y no lobby não abre a gaveta com o foco dentro' : !(digita.aberta && digita.valor === 'y') ? `Y digitado no campo ${digita.aberta ? 'não chega ao campo' : 'fecha a gaveta'}` : !fechou ? 'ESC não fecha nem devolve o foco ao botão' : 'Y abre com foco dentro, Y no campo é texto, ESC fecha e devolve o foco' });
+    msg: !abriu ? 'Y no lobby não abre a gaveta com o foco dentro' : !(digita.aberta && digita.valor === 'y') ? `Y digitado no campo ${digita.aberta ? 'não chega ao campo' : 'fecha a gaveta'}` : !fechou ? 'ESC não fecha nem devolve o foco a quem abriu' : 'Y abre com foco dentro, Y no campo é texto, ESC fecha e devolve o foco a quem abriu' });
 
   /* SO5: 3 amigos aceitos (o pedido pendente não entra), presença da fixture, não lidas do inbox. */
   const QUER = [['PunkDoPiscinao', 'Online', '2'], ['ClubberDaLaje', 'Em partida · Escadão', ''], ['TrapDoCorrego', 'visto há 3 h', '']];
@@ -332,8 +327,7 @@ async function fluxo(mutante, cap) {
 /* D · sem conta: estado vazio, nada inventado. */
 async function semConta(mutante, cap) {
   const { page, ctx } = await lobby({ mutante, conta: false });
-  const novasVis = await page.evaluate(() => document.querySelector('#tp-resenha-botao .tp-resenha-botao__novas')?.checkVisibility() ?? false);
-  await page.click('#tp-resenha-botao').catch(() => {});
+  await page.keyboard.press('y');
   await page.waitForTimeout(1500);
   if (cap) await page.screenshot({ path: `${OUT}/gaveta-sem-conta-1536x1024.png` });
   const g = await page.evaluate(() => ({ linhas: document.querySelectorAll('#tp-resenha [data-conversa]').length, vazio: !!document.querySelector('#tp-resenha .tp-resenha__conversa [data-vazio-estado] button'), texto: document.getElementById('tp-resenha')?.innerText || '' }));
@@ -344,12 +338,11 @@ async function semConta(mutante, cap) {
   await ctx.close();
   const DEMO = /PunkDoPisc|Cria do Pisc|ClubberDaLaje|TrapDoC|ReggaeDaPraia|n[ií]vel \d|Sargento|T\$ 100/i;
   const e = [];
-  if (novasVis) e.push('contador zerado aparece no botão');
   if (g.linhas) e.push(`${g.linhas} conversas sem conta`);
   if (!g.vazio) e.push('gaveta sem estado vazio com ação de entrar');
   if (DEMO.test(g.texto)) e.push(`dado de demonstração do pacote na tela: ${g.texto.match(DEMO)[0]}`);
   if (mod.amigos || !mod.vazio) e.push(`convite sem conta: ${mod.amigos} amigos, estado vazio ${mod.vazio}`);
-  return [{ id: 'SO7', ok: !e.length, msg: e.length ? e.join('; ') : 'sem conta: contador some, zero conversas, estado vazio com ENTRAR, nenhum dado do pacote' }];
+  return [{ id: 'SO7', ok: !e.length, msg: e.length ? e.join('; ') : 'sem conta: zero conversas, estado vazio com ENTRAR, nenhum dado do pacote' }];
 }
 
 /* E · celular deitado: alvo de toque. */
@@ -369,8 +362,8 @@ async function toque(mutante, cap) {
       }), { r: raiz, min: TOQUE });
     pequenos.push(...p.map((x) => `${nome}: ${x}`));
   };
-  await mede('#main-menu > #tp-resenha-botao', 'botão');
-  await page.tap('#tp-resenha-botao').catch(() => {});
+  /* sem botão no canto (é do card do Flávio): a gaveta abre pelo Y de um teclado ligado ao celular */
+  await page.keyboard.press('y');
   await page.waitForFunction(() => document.querySelectorAll('#tp-resenha [data-conversa]').length > 0, null, { timeout: 8000 }).catch(() => {});
   await page.tap(`#tp-resenha [data-conversa][data-id="${id(1)}"]`).catch(() => {});
   await page.waitForFunction(() => document.querySelectorAll('#tp-resenha .tp-msg').length > 0, null, { timeout: 8000 }).catch(() => {});
@@ -386,7 +379,7 @@ async function toque(mutante, cap) {
   if (cap) await page.screenshot({ path: `${OUT}/m-convidar-844x390.png` });
   await mede('#mp-modal .mp-modal-card', 'convite');
   await ctx.close();
-  return [{ id: 'SO11', ok: !pequenos.length, msg: pequenos.length ? `alvo de toque abaixo de ${TOQUE} px ou coberto: ${pequenos.slice(0, 5).join('; ')}` : `844×390 com toque: todo alvo do botão, da gaveta e do convite ≥ ${TOQUE} px e sem nada por cima` }];
+  return [{ id: 'SO11', ok: !pequenos.length, msg: pequenos.length ? `alvo de toque abaixo de ${TOQUE} px ou coberto: ${pequenos.slice(0, 5).join('; ')}` : `844×390 com toque: todo alvo da gaveta e do convite ≥ ${TOQUE} px e sem nada por cima` }];
 }
 
 /* F · PT e EN: nenhuma string do outro idioma (mensagens e nicks são conteúdo de jogador). */
@@ -394,7 +387,7 @@ async function idioma(mutante, cap) {
   const textos = {};
   for (const lang of ['pt', 'en']) {
     const { page, ctx } = await lobby({ lang, mutante });
-    await page.click('#tp-resenha-botao').catch(() => {});
+    await page.keyboard.press('y');
     await page.waitForFunction(() => document.querySelectorAll('#tp-resenha [data-conversa]').length > 0, null, { timeout: 8000 }).catch(() => {});
     await page.click(`#tp-resenha [data-conversa][data-id="${id(1)}"]`).catch(() => {});
     await page.waitForFunction(() => document.querySelectorAll('#tp-resenha .tp-msg').length > 0, null, { timeout: 8000 }).catch(() => {});
@@ -421,8 +414,8 @@ async function idioma(mutante, cap) {
 
 const GRUPOS = { semFlag, telas, fluxo, semConta, toque, idioma };
 const MUT = [
-  ['vaza-flag', 'SO1', 'semFlag'], ['botao-sobre', 'SO2', 'telas'], ['sem-y', 'SO3', 'fluxo'], ['gaveta-estreita', 'SO4', 'telas'],
-  ['inventa', 'SO5', 'fluxo'], ['bolha-trocada', 'SO6', 'fluxo'], ['zero-visivel', 'SO7', 'semConta'], ['dois-lima', 'SO8', 'fluxo'],
+  ['vaza-flag', 'SO1', 'semFlag'], ['botao-volta', 'SO2', 'telas'], ['sem-y', 'SO3', 'fluxo'], ['gaveta-estreita', 'SO4', 'telas'],
+  ['inventa', 'SO5', 'fluxo'], ['bolha-trocada', 'SO6', 'fluxo'], ['vazio-sem-acao', 'SO7', 'semConta'], ['dois-lima', 'SO8', 'fluxo'],
   ['qr-torto', 'SO9', 'fluxo'], ['cartao-fixo', 'SO10', 'telas'], ['toque-30', 'SO11', 'toque'], ['pwa-por-cima', 'SO11', 'toque'], ['en-vaza', 'SO12', 'idioma'],
   ['offline-junto', 'SO13', 'fluxo'], ['codigo-perdido', 'SO15', 'fluxo'], ['em-breve', 'SO8', 'fluxo'],
 ];

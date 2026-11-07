@@ -4,6 +4,7 @@ import { loadAccount, socialApi } from '../account-entry.js';
 import { linkDeConvite } from '../nos.js';
 import { origemPublica, linkCompartilhavel } from '../compartilhar.js';
 import { qrSvg } from './qr.js';
+import { retratoFontes } from '../data/retratos.js';
 
 const LIMITE = 200;
 const RAPIDAS = ['Bora!', '5 min', 'Tô dentro', 'Chora na live!'];
@@ -25,7 +26,6 @@ const ICONES = {
   zap: '<path d="M4 20l1.4-4A8 8 0 1 1 8 19z"/>',
   discord: '<rect x="3" y="5" width="18" height="14" rx="4"/><circle cx="9" cy="12" r="1.3"/><circle cx="15" cy="12" r="1.3"/>',
   telegram: '<path d="M3 11l18-7-4 16-6-5-3 4v-6z"/>',
-  balao: '<path d="M4 5h16v11H9l-5 4z"/>',
 };
 const icone = (nome) => {
   const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -108,13 +108,9 @@ function ligarResenha() {
   const menu = document.getElementById('main-menu');
   if (!menu || document.getElementById('tp-resenha')) return;
 
-  const abre = botao('tp-resenha-botao');
-  abre.id = 'tp-resenha-botao';
-  abre.setAttribute('aria-controls', 'tp-resenha'); abre.setAttribute('aria-expanded', 'false'); abre.setAttribute('aria-keyshortcuts', 'Y');
-  const nome = el('span', 'tp-disp'); nome.append(el('span', 'tp-ital', tr('Resenha')));
-  const novas = el('span', 'tp-resenha-botao__novas tp-num');
-  abre.append(icone('balao'), nome, novas, el('kbd', 'tp-num', 'Y'));
-
+  /* O canto do lobby virou o card da Operação Flávio (tp/flavio.js): a gaveta abre pelo Y
+     e a conversa segue na COMUNIDADE (AMIGOS → MANDAR MENSAGEM). */
+  let origem = null;
   const veu = el('div', 'tp-resenha-veu');
   const g = el('aside', 'tp-gaveta tp-resenha');
   g.id = 'tp-resenha';
@@ -138,24 +134,13 @@ function ligarResenha() {
   const conversa = el('section', 'tp-resenha__conversa');
   corpo.append(lista, conversa);
   g.append(topo, corpo);
-  menu.append(abre, veu, g);
-
-  /* O contador do botão é o mesmo da aba COMUNIDADE: quem calcula é a comunidade. */
-  const fonte = document.getElementById('hub-social-unread');
-  const espelha = () => {
-    const n = parseInt(fonte?.textContent || '', 10) || 0;
-    novas.textContent = n ? String(n) : '';
-    novas.toggleAttribute('data-vazio', !n);
-    abre.setAttribute('aria-label', n ? comTr('Abrir a resenha, {n} novidades', { n }) : tr('Abrir a resenha'));
-  };
-  espelha();
-  if (fonte) new MutationObserver(espelha).observe(fonte, { childList: true, characterData: true, subtree: true });
+  menu.append(veu, g);
 
   const aberta = () => g.hasAttribute('data-aberta');
   function abrir() {
     if (aberta()) return;
+    origem = document.activeElement;
     g.setAttribute('data-aberta', ''); veu.setAttribute('data-aberto', '');
-    abre.setAttribute('aria-expanded', 'true');
     desenhar();
     abas[S.canal].focus({ preventScroll: true });
     carregar().then(desenhar);
@@ -163,10 +148,9 @@ function ligarResenha() {
   function fechar(devolveFoco = true) {
     if (!aberta()) return;
     g.removeAttribute('data-aberta'); veu.removeAttribute('data-aberto');
-    abre.setAttribute('aria-expanded', 'false');
-    if (devolveFoco) abre.focus({ preventScroll: true });
+    if (devolveFoco && origem?.isConnected && !g.contains(origem)) origem.focus({ preventScroll: true });
+    origem = null;
   }
-  abre.onclick = () => (aberta() ? fechar() : abrir());
   sair.onclick = () => fechar();
   veu.onclick = () => fechar();
   avisos.add(() => { if (aberta()) carregar().then(desenhar); });
@@ -175,7 +159,7 @@ function ligarResenha() {
   addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && aberta()) { e.preventDefault(); e.stopPropagation(); fechar(); return; }
     if (e.code !== 'KeyY' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || editavel(e.target)) return;
-    if (!menu.checkVisibility?.() || !document.getElementById('mp-modal')?.classList.contains('hidden')) return;
+    if (!menu.checkVisibility?.() || !document.getElementById('mp-modal')?.classList.contains('hidden') || document.querySelector('dialog[open]')) return;
     const splash = document.getElementById('boot-splash');
     if (splash && !splash.classList.contains('gone')) return;
     e.preventDefault();
@@ -547,7 +531,7 @@ function ligarConvidar() {
     try { id = localStorage.getItem('csbr-home-character') || ''; } catch { /* sem storage, vale o brasão */ }
     const brasao = $('hub-character-crest')?.src || '';
     foto.onerror = () => { foto.onerror = null; if (brasao) foto.src = brasao; };
-    foto.src = /^[a-z0-9_-]+$/.test(id) ? `/img/chars-hero/${id}.webp` : brasao;
+    foto.src = /^[a-z0-9_-]+$/.test(id) ? retratoFontes(id)[0] : brasao;
     amigosOnline();
     if (S.auth === undefined || (S.auth?.profile && !S.social)) carregar().then(amigosOnline);
   }

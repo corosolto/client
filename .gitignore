@@ -38,6 +38,7 @@ public/audio/
 # Contrato completo: docs/audio/PROVENIENCIA.md. Réguas: `npm run eval:audioproc`
 # (forma do ledger) e `npm run assert:assets` (PRV5, hash contra a build).
 private-assets/
+!src/pages/private-assets/
 audio-src/
 # token de OAuth de loja de asset — segredo, mesma regra do .env
 *.epic-token

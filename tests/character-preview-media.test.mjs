@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { retratoFontes, HERO_IDS } from '../public/js/data/retratos.js';
 
 const raw = fs.readFileSync(new URL('../public/js/main.js', import.meta.url), 'utf8');
 const glbRaw=fs.readFileSync(new URL('../public/js/glbchars.js',import.meta.url),'utf8');
@@ -63,7 +64,7 @@ function fixture({ lang = 'pt', reduced = false, compact = false, narrow = false
     + '\n' + raw.slice(raw.indexOf('  const setHubTab ='),raw.indexOf('  tabs.forEach((button, index)'))
     + '\n' + raw.slice(raw.indexOf('  const setHubNet ='),raw.indexOf("  $('hub-sp').onclick"))
     + '\nfunction frame(dtReal){' + raw.slice(raw.indexOf('      const pvDt = pv.travado'),raw.indexOf('      pv.r.render(pv.scene, pv.cam);')+'      pv.r.render(pv.scene, pv.cam);'.length)+'\n}';
-  const context = vm.createContext({ VERSION: 'fixture', staticPreviews: lean, LANG: resolveLang(lang), $: node,
+  const context = vm.createContext({ VERSION: 'fixture', retratoFontes, staticPreviews: lean, LANG: resolveLang(lang), $: node,
     document: { getElementById:node,dispatchEvent(){},querySelector: selector => {if(selector==='.char-preview-box')return box;if(selector.includes('.team-chars')){const team=node(selector);const visible=()=>typeof teamVisible==='object'?teamVisible[selector.includes('team-e')?'E':'B']:teamVisible;team.checkVisibility=teamVisibilityAPI?visible:undefined;team.getClientRects=()=>visible()?[{}]:[];return team;}return hints;},querySelectorAll:()=>[],createElement:()=>node('row-'+nodes.size) },
     matchMedia: query => query.includes('pointer: coarse')?compactQuery:query.includes('max-width')?narrowQuery:motion,
     tretaSkinPresentation: (id, character) => id === 'lula-cyborg' && character === 'barbudo' ? presentation : null,
@@ -105,7 +106,13 @@ test('failed skin poster never falls back to the base character', () => {
 test('base portrait retains the native base fallback', () => {
   const f = fixture(); f.api.showStaticPreview(base);
   f.node('char-preview-static').onerror();
-  assert.equal(f.node('char-preview-static').src, '/img/chars/barbudo.webp?v=fixture');
+  assert.equal(f.node('char-preview-static').src, '/img/chars/avatars/barbudo.webp?v=fixture');
+});
+test('portrait asks chars-hero only for ids with hero art (#1231)', () => {
+  const f = fixture();
+  assert.equal(HERO_IDS.has('punk'), true);
+  assert.equal(f.api.portraitUrl({ id: 'punk' }), '/img/chars-hero/punk.webp?v=fixture');
+  for (const id of ['julia-zanatta', 'senador', 'mariabonita']) assert.doesNotMatch(f.api.portraitUrl({ id }), /chars-hero/);
 });
 test('skin video uses its own media instead of the base character loop', () => {
   const f = fixture(); f.api.pvSetVideo(cyborg);
@@ -246,7 +253,7 @@ test('the real character caller resolves the equipped skin and preserves an expl
   const f=fixture();f.api.pvSetChar(base);
   assert.equal(f.node('char-preview-static').src,presentation.poster+'?v=fixture');
   f.api.pvSetChar({...base,skinId:null});
-  assert.equal(f.node('char-preview-static').src,'/img/chars-hero/barbudo.webp?v=fixture');
+  assert.equal(f.node('char-preview-static').src,'/img/chars/barbudo.webp?v=fixture');
 });
 test('compact cards outside the hidden hero keep a faithful skin portrait and weapon identity',()=>{
   for(const [screen,prefix] of [['hub','hub-character'],['selection','char-select']]){
@@ -335,8 +342,8 @@ for(const mixer of [false,true])test('locked and reduced motion together render 
 });
 test('team and character thumbnail callers avoid GLB preloads and renders in compact mode',async()=>{
   const f=fixture({compact:true,lean:false});f.api.ensureTeamPreviews();await tick();
-  assert.equal(f.api.pvThumb(base),'/img/chars-hero/barbudo.webp?v=fixture');
-  assert.equal(f.api.glbThumb(base),'/img/chars-hero/barbudo.webp?v=fixture');
+  assert.equal(f.api.pvThumb(base),'/img/chars/barbudo.webp?v=fixture');
+  assert.equal(f.api.glbThumb(base),'/img/chars/barbudo.webp?v=fixture');
   assert.equal(f.preloads(),0);assert.equal(f.thumbnailRenders(),0);
 });
 test('invisible team thumbnails do not mount even placeholder image markup',async()=>{
@@ -362,18 +369,18 @@ test('an image failure callback queued for another character cannot hide its rep
   const f=fixture();f.api.showStaticPreview(cyborg);const failed=f.node('char-preview-static').onerror;
   f.api.showStaticPreview(base);f.node('char-preview-static').onload();failed();
   assert.equal(f.node('char-preview-static').classList.contains('hidden'),false);
-  assert.equal(f.node('char-preview-static').src,'/img/chars-hero/barbudo.webp?v=fixture');
+  assert.equal(f.node('char-preview-static').src,'/img/chars/barbudo.webp?v=fixture');
 });
 test('inventory and account refresh retain the open selection and clear the old skin media',()=>{
   const f=fixture();f.api.refreshMenuEquipment();
   assert.equal(f.node('char-preview-static').src,presentation.poster+'?v=fixture');
   const loaded=f.video.onloadeddata;
   f.accountSkin(null);f.api.refreshMenuEquipment();loaded();
-  assert.equal(f.node('char-preview-static').src,'/img/chars-hero/barbudo.webp?v=fixture');
+  assert.equal(f.node('char-preview-static').src,'/img/chars/barbudo.webp?v=fixture');
   assert.equal(f.homeRefreshes(),0);
   assert.equal(f.box.classList.contains('has-video'),false);
   f.selection({...base,skinId:null});f.accountSkin('lula-cyborg');f.api.refreshMenuEquipment();
-  assert.equal(f.node('char-preview-static').src,'/img/chars-hero/barbudo.webp?v=fixture');
+  assert.equal(f.node('char-preview-static').src,'/img/chars/barbudo.webp?v=fixture');
 });
 const replace=(from,to)=>value=>{assert.equal(value.split(from).length-1,1,'mutation anchor missing or ambiguous');return value.replace(from,to);};
 for(const [name,mutate,probe,options={}] of [
@@ -383,7 +390,7 @@ for(const [name,mutate,probe,options={}] of [
   ['reduced motion ignored',replace('if(!src || pvReducedMotion.matches','if(!src || false'),f=>{f.api.pvSetVideo(cyborg);assert.equal(f.video.src,'');},{reduced:true}],
   ['same presentation reloads',replace('if(key===pvStaticKey)return;',''),f=>{f.api.pvSetChar(base);f.api.pvSetVideo(base);const n=f.video.loads;f.api.pvSetChar(base);f.api.pvSetVideo(base);assert.equal(f.video.loads,n);}],
   ['old image failure retained',replace('image.onerror = () => {if(my!==pvImageToken)return;','image.onerror = () => {'),f=>{f.api.showStaticPreview(cyborg);const old=f.node('char-preview-static').onerror;f.api.showStaticPreview(base);f.node('char-preview-static').onload();old();assert.equal(f.node('char-preview-static').classList.contains('hidden'),false);}],
-  ['explicit base trial overwritten',replace("Object.prototype.hasOwnProperty.call(def,'skinId')?def.skinId:equippedTretaSkin(def.id)",'equippedTretaSkin(def.id)'),f=>{f.api.pvSetChar({...base,skinId:null});assert.equal(f.node('char-preview-static').src,'/img/chars-hero/barbudo.webp?v=fixture');}],
+  ['explicit base trial overwritten',replace("Object.prototype.hasOwnProperty.call(def,'skinId')?def.skinId:equippedTretaSkin(def.id)",'equippedTretaSkin(def.id)'),f=>{f.api.pvSetChar({...base,skinId:null});assert.equal(f.node('char-preview-static').src,'/img/chars/barbudo.webp?v=fixture');}],
   ['poster failure forgotten when video stops',replace('if(label && pvPosterFailure){','if(false){'),async f=>{f.api.showStaticPreview(cyborg);f.api.pvSetVideo(cyborg);f.video.onloadeddata();await tick();f.node('char-preview-static').onerror();f.reduceMotion();assert.match(f.node('char-preview-skin').textContent,/indisponível/);}],
   ['failed play promotes video',replace('try{await video.play();}catch{if(my===pvVidToken)pvStopVideo();return;}','void video.play().catch(()=>{});'),async f=>{f.api.pvSetVideo(cyborg);f.video.onloadeddata();await tick();assert.equal(f.box.classList.contains('has-video'),false);},{play:()=>Promise.reject(new Error('fixture blocked'))}],
   ['compact thumbnail renders on the GPU',replace('staticPreviews || pvCompact.matches','staticPreviews'),f=>{f.api.pvThumb(base);assert.equal(f.thumbnailRenders(),0);},{compact:true,lean:false}],
@@ -468,7 +475,7 @@ function baseFallbackVisible(compact,mutate){
   const f=fixture({compact,screen:compact?'hub':'selection',mutate});
   if(compact)f.api.pvSetChar({...base,skinId:null});else f.api.showStaticPreview(base);
   const img=f.node(compact?'hub-character-portrait':'char-preview-static'),loaded=img.onload;
-  img.onerror();assert.equal(img.src,'/img/chars/barbudo.webp?v=fixture');
+  img.onerror();assert.equal(img.src,'/img/chars/avatars/barbudo.webp?v=fixture');
   assert.equal(img.onload,loaded,'fallback retains its current request handler');img.onload?.();
   assert.equal(compact?img.hidden:img.classList.contains('hidden'),false,'loaded base fallback is hidden');
 }

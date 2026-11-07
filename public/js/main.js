@@ -13,6 +13,7 @@ import { contagem } from './contagem.js';   // contagem agregada sem id, indepen
 import { clientUuid, getAnonId } from './client-id.js';
 import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
 import {tretaPack} from './data/pack-definitions.js';
+import {retratoFontes} from './data/retratos.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { EMOTES_ENABLED } from './emote-features.js';
@@ -29,6 +30,7 @@ import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons, sanitizeRounds, ROUNDS_CUSTOM_MAX, aguardarPreloads } from './game.js';
+import { elencoOperacaoFlavio } from './mode_operacao_flavio.js';   // já no grafo via game.js
 import { economiaLigada } from './economia-partida.js';
 import { VERSION } from './version.js';
 import { bindMapPreview, stopMapPreviews, previewRevision } from './amazonia_map_preview.js';
@@ -772,17 +774,40 @@ function dismissSplash(e) {
   const sp = document.getElementById('boot-splash');
   if (!sp || !_splashReady || sp.classList.contains('gone')) return;
   if (e?.target?.closest?.('[data-splash-fica]')) return;
-  e?.preventDefault?.(); e?.stopPropagation?.();
+  e?.preventDefault?.(); e?.stopPropagation?.();   // bloqueia ANTES da anti-reentrada: 2º gesto preso na splash não vaza atalho para o lobby
+  if (sp.dataset.csEntrada) return;   // splash presa aguardando anúncio/import: 2º gesto não reprocessa
+  sp.dataset.csEntrada = '1';
   _entradaEm = performance.now();
   loadingStage.hide();
   dockLoadingCharacter();
-  sp.classList.add('gone');
   window.__gameLaunch?.ready('entrada');
   contagem.evento('splash_enter');
-  marcoFunil('splash_enter');   // funil (084): o lobby ficou visível de verdade
-  _lobbyEntrou();               // e o relógio de permanência no lobby começa aqui
-  setTimeout(() => sp.remove(), 480);
-  setTimeout(focusMenu, 120);   // pós-splash: dá foco ao 1º botão pra ↑/↓ navegarem SEM precisar de Tab
+  // O anúncio deve fechar antes de contar a entrada no lobby; convites e testes
+  // preservam o caminho direto. O gesto inicial continua destravando o áudio.
+  let lobbyMarcado = false;
+  const entrarNoLobby = () => {
+    if (lobbyMarcado) return; lobbyMarcado = true;
+    marcoFunil('splash_enter');   // funil (084): o lobby ficou visível de verdade
+    _lobbyEntrou();
+    setTimeout(focusMenu, 120);
+  };
+  const soltaSplash = () => {   // splash some SÓ com anúncio aberto de verdade ou lobby liberado — nunca no limbo
+    sp.classList.add('gone');
+    setTimeout(() => sp.remove(), 480);
+  };
+  if (inspectionScreen || testMode || params.get('sala')) { entrarNoLobby(); soltaSplash(); }
+  else {
+    const menuIds = mapasDoMenu().map((m) => (typeof m === 'string' ? m : m?.id)).filter(Boolean);
+    let prazo = setTimeout(() => { prazo = null; entrarNoLobby(); soltaSplash(); }, 2500); // prazo operacional curto: libera UMA vez; o import em si NÃO é cancelado
+    import('./mode-announcements.js')   // dinâmico: o módulo só baixa quando há o que anunciar
+      .then((m) => {
+        if (prazo) { clearTimeout(prazo); prazo = null; }
+        if (lobbyMarcado) { soltaSplash(); return; }   // timeout/jogo já mudaram de fase: anúncio tardio não abre
+        if (m.mostrarNovidadesModos({ mapIds: menuIds, onDone: entrarNoLobby })) soltaSplash();
+        else { soltaSplash(); entrarNoLobby(); }
+      })
+      .catch(() => { if (prazo) { clearTimeout(prazo); prazo = null; } soltaSplash(); entrarNoLobby(); });   // módulo falhou: lobby liberado como no fluxo atual, splash nunca presa
+  }
   musicArmed = true;
   if (musicFade) { clearInterval(musicFade); musicFade = null; }
   startMenuMusic();
@@ -921,20 +946,14 @@ let howtoReturn = 'main-menu';   // CONTROLES aberto pelo pause volta pro pause,
 
 /* ---------------- 3D character preview ---------------- */
 let pv = null, pvDrag = null;
-/* RETRATO HERO em vez do recorte low-poly. Os 44 de public/img/chars-hero/ saem do
-   MESMO GLB (o render é a referência que trava a identidade — ver
-   tools/gen-char-realista.mjs), só com densidade de detalhe que a malha do jogo não
-   tem. Verificado: os 44 ids do characters.js têm arquivo, então não há caminho de
-   404 por personagem faltando.
-   Uma função só alimenta prévia estática, fallback do snapshot 3D e modo de
-   qualidade baixa — trocar aqui melhora os três de uma vez. */
+/* Retrato hero só para quem tem arquivo (data/retratos.js; 18 ids não têm); senão o
+   recorte/busto. Uma função alimenta prévia estática, snapshot 3D e qualidade baixa. */
 const portraitUrl = (def) => {
   const skin=tretaSkinPresentation(def.skinId,def.id);
-  return skin?(skin.poster?`${skin.poster}?v=${VERSION}`:null):`/img/chars-hero/${def.id}.webp?v=${VERSION}`;
+  return skin?(skin.poster?`${skin.poster}?v=${VERSION}`:null):`${retratoFontes(def.id)[0]}?v=${VERSION}`;
 };
-/* O antigo continua no repo e vira a rede de segurança: se o hero não carregar, a
-   imagem cai para o recorte do modelo em vez de ficar quebrada. */
-const portraitFallbackUrl = (def) => `/img/chars/${def.id}.webp?v=${VERSION}`;
+/* Rede de segurança: a fonte seguinte da mesma lista, nunca a que acabou de falhar. */
+const portraitFallbackUrl = (def) => { const f=retratoFontes(def.id); return `${f[1]||f[0]}?v=${VERSION}`; };
 /* VÍDEO DO PERSONAGEM (tela 03 do redesign): captura do próprio modelo, rig e clipe
    do jogo por tools/eval/char-native-vids.mjs. Falha de rede mantém o canvas/GLB. */
 let pvVidToken = 0;
@@ -1775,7 +1794,13 @@ const _automacao = () => { try { return navigator.webdriver === true; } catch { 
 function _funnel(step, gameType = null) {
   if (!analyticsAllowed()) return;
   if (testMode || _automacao()) return;
-  sendJsonKeepalive('/api/funnel', { step, ..._clientSessionContext(), ...telemetryGameContext, ...(gameType ? { gameType } : {}) });
+  sendJsonKeepalive('/api/funnel', {
+    step,
+    ..._clientSessionContext(),
+    ...telemetryGameContext,
+    ...(gameType ? { gameType } : {}),
+    ...(step === 'match_start' || step === 'match_end' ? { matchEventId: _matchEventId } : {}),
+  });
 }
 const _tipoDaPartida = () => (telemetryGameContext.gameType === 'multiplayer' ? 'multiplayer' : 'single_player');
 // AQUISIÇÃO (019): 1x por navegador. referrer vira host (URL inteira pode carregar query
@@ -2066,7 +2091,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // o lote de escolha da partida — 5 contadores numa chamada (ver /api/pick)
   _picks([
     { kind: 'mapa', key: currentMap },
-    { kind: 'modo', key: activeModeId() },
+    { kind: 'modo', key: modoEfetivoAtual() },
     { kind: 'faccao', key: faction },
     { kind: 'personagem', key: charId || 'aleatorio' },
     { kind: 'arma', key: settings.wpnMode || 'all' },
@@ -2132,12 +2157,16 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const matchRoster = sessao
     ? rosterDoServidor(side, charId)
     : pickMatchRoster(faction, enemyFac, { allies: settingsDaPartida.allyBots, enemies: settingsDaPartida.enemyBots }, charId, false, _pinned);
+  // Zero Um escolhido no time B é o próprio VIP: sem bot senador duplicado. Só offline.
+  if (!sessao && currentMap === 'operacao_flavio') {
+    elencoOperacaoFlavio(matchRoster, side, charId, CHARACTERS.find((character) => character.id === 'senador'));
+  }
   /* Treta Pop: o carregamento VS mostra o elenco sorteado; o global cobre o ?auto=, que lança antes de tp/ligar.js chegar */
   if (document.documentElement.dataset.ui === 'v3') {
     window.__tpElenco = {
       javaporcosTimes: cooperativo ? 2 : sessao || settingsDaPartida.javaporcos?.times === 3 ? 3 : 2,
       lado: side, eu: CHARACTERS.find((c) => c.id === charId), aliados: matchRoster.allyDefs, inimigos: matchRoster.enemyDefs,
-      online: !!sessao, tamanho: tamanhoTime || 0, ctf: matchMode === 'ctf', arena: !sessao && matchMode === 'arena', rounds: sessao ? sanitizeRounds(sessao.net.meta.roundsMax) : matchRounds(),
+      online: !!sessao, tamanho: tamanhoTime || 0, ctf: modoEfetivoAtual() === 'ctf', arena: !sessao && !MAPS[currentMap].objectiveMode && matchMode === 'arena', rounds: sessao ? sanitizeRounds(sessao.net.meta.roundsMax) : matchRounds(),
       mapa: MAPS[currentMap].name, desc: MAP_DESC[currentMap] || '', arte: mapPreviewPoster(currentMap, VERSION) };
     window.dispatchEvent(new CustomEvent('tp:elenco', { detail: window.__tpElenco }));
   }
@@ -2274,7 +2303,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   _funnel('match_start', _tipoDaPartida());    // funil: começou a jogar (017), separado por tipo
   _lobbySaiuPraPartida();    // funil (084): quem entrou em partida não é mais "parado no lobby"
   if (!continuaPartida) sendGameStarted();
-  if (!continuaPartida) contagem.partidaIniciada({ map: currentMap, mode: matchMode, game: sessao ? 'mp' : 'sp' });
+  if (!continuaPartida) contagem.partidaIniciada({ map: currentMap, mode: modoEfetivoAtual(), game: sessao ? 'mp' : 'sp' });
   retryPending();
   armSwitchHook();
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
@@ -2440,10 +2469,14 @@ let matchMode = 'rounds';   // 'rounds' | 'ctf' | 'arena' — lido em startGame
 const modoObjetivoAtual = () => MAPS[currentMap]?.objectiveMode || '';
 const rotuloObjetivoAtual = () => ({ horde: 'HORDAS', escort: 'ESCOLTA' })[modoObjetivoAtual()]
   || modoObjetivoAtual().toUpperCase();
-const resumoObjetivoAtual = () => modoObjetivoAtual() === 'horde' ? 'INVASÃO · DISPUTA TERRITORIAL' : rotuloObjetivoAtual();
+const resumoObjetivoAtual = () => modoObjetivoAtual() === 'horde' ? 'INVASÃO · DISPUTA TERRITORIAL'
+  : modoObjetivoAtual() === 'escort' ? `ESCOLTA · MELHOR DE ${matchRounds()}` : rotuloObjetivoAtual();
+/* MODO EFETIVO (contrato ctf/rounds): mapa de objetivo usa rounds. A preferência
+   `matchMode` fica intacta para o retorno a um mapa normal. */
+const modoEfetivoAtual = () => (modoObjetivoAtual() ? 'rounds' : matchMode);
 function activeModeId(g = game) {
   if (g) return g.arena ? 'arena' : (g.ctf ? 'ctf' : 'rounds');
-  return matchMode === 'arena' ? 'arena' : (matchMode === 'ctf' ? 'ctf' : 'rounds');
+  return modoEfetivoAtual();
 }
 const modeLabel = (mode = matchMode) => mode === 'arena' ? tr('VIRA-CASACA') : (mode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA'));
 /* O JOGADOR JÁ DISSE QUAL MODO QUER? (defeito: "esse mapa está como CAPTURA, mas eu
@@ -2941,7 +2974,7 @@ function openHubQuick(updateRoute = true) {
   const fields = [
     ['TIPO', 'SINGLEPLAYER'],
     ['MAPA', MAPS[currentMap].name],
-    ['MODO', ehMapaJavaporcos(currentMap) ? 'HORDAS' : modeLabel()],
+    ['MODO', modoObjetivoAtual() ? rotuloObjetivoAtual() : modeLabel()],
     ['ARMAS', tr(WPN_MODE_LABEL[settings.wpnMode || 'all'] || 'TODAS')],
     ['FORMATO', formatoPartida()],
     ['ROUNDS', String(matchRounds())],
@@ -3041,11 +3074,11 @@ function setMapThumb() {
 const WPN_MODE_LABEL = { all: 'TODAS', pistols: 'SÓ PISTOLAS', knife: 'SÓ FACA', awp: 'SÓ AWP' };
 function matchRounds() {
   if (ehMapaJavaporcos(currentMap)) return 1;
-  if (matchMode === 'arena') return 1;
-  /* 1–15 (ROUNDS_CUSTOM_MAX do game.js — uma régua só). Salvo fora do intervalo cai no
-     padrão do modo; par é permitido: empate no teto vai pro desempate por abates. */
-  const fallback = matchMode === 'ctf' ? 3 : 5;
-  return sanitizeRounds(matchMode === 'ctf' ? settings.ctfRounds : settings.rounds) || fallback;
+  if (!modoObjetivoAtual() && matchMode === 'arena') return 1;
+  // Effective mode owns its own round setting.
+  const modo = modoEfetivoAtual();   // objetivo ativo = rounds (não herda ctfRounds por preferência escondida)
+  const fallback = modo === 'ctf' ? 3 : 5;
+  return sanitizeRounds(modo === 'ctf' ? settings.ctfRounds : settings.rounds) || fallback;
 }
 // Ficha da partida IMPRESSA NO CARTAZ (modo · formato · armas). O dono pediu "maior dimensão
 // pro mapa" com "nome, modo, bots" — então o resumo mora sobre a arte, e não numa coluna
@@ -3080,7 +3113,7 @@ function setMapMode() {
     $('hub-mode-ctf').disabled = !!objetivo;
     $('hub-mode-rounds').querySelector('small').textContent = objetivo ? rotuloObjetivoAtual() : `MELHOR DE ${settings.rounds || 5}`;
     $('hub-mode-ctf').querySelector('small').textContent = objetivo ? 'INDISPONÍVEL NESTE MAPA' : `MELHOR DE ${settings.ctfRounds || 3}`;
-    $('hub-rounds-value').textContent = matchMode === 'arena' ? tr('ÚNICA') : String(matchRounds());
+    $('hub-rounds-value').textContent = !objetivo && matchMode === 'arena' ? tr('ÚNICA') : String(matchRounds());
     $('hub-mode-arena').setAttribute('aria-pressed', String(!objetivo && matchMode === 'arena'));
     $('hub-mode-arena').disabled = !!objetivo;
     $('hub-rounds').disabled = !!objetivo || matchMode === 'arena';
@@ -3117,7 +3150,7 @@ if (HUB_ENABLED) {
        select não volta pro 1 à toa) e fecha a volta em 1. */
     const atual = matchRounds();
     const next = [1, 3, 5, 7, 9, 11, 13, 15].find((n) => n > atual) ?? 1;
-    settings[matchMode === 'ctf' ? 'ctfRounds' : 'rounds'] = next;
+    settings[modoEfetivoAtual() === 'ctf' ? 'ctfRounds' : 'rounds'] = next;
     saveSettings(); ui.click(); setMapMode(); renderMapScreen();
   };
 }
@@ -3166,6 +3199,7 @@ const MAP_DESC = {
   distrito_rural: 'Defenda fazendas e depósitos de ração. Entre nos celeiros e procure abrigo nas coberturas.',
   vila_da_mata: 'Defenda uma vila de casas portuguesas. Explore a praça, os sobrados e as ruelas da encosta.',
   invasao_javaporcos: 'Dispute a cidade contra bandos que saem da mata por seis frentes. Retome setores, explore o pasto e mantenha seu time vivo. Escolha defesa contra a horda ou três times em disputa.',
+  operacao_flavio: 'Escolte Flávio pelo escritório, corredor de segurança e hangar até o avião antes que o aeroporto seja bloqueado.',
   penitenciaria: 'Rebelião no pátio: celas abertas, concreto gasto, guaritas e barricadas policiais entre três rotas de confronto.',
   upa_24h: 'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.',
   obras_prefeitura: 'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.',
@@ -3392,9 +3426,9 @@ if (msEnemy) msEnemy.onchange = () => {
   setMapMeta(); renderMapScreen(); sfx.uiClick();
 };
 if (msRounds) msRounds.onchange = () => {
-  if (matchMode === 'arena') { msRounds.value = '1'; return; }
-  settings[matchMode === 'ctf' ? 'ctfRounds' : 'rounds'] = sanitizeRounds(msRounds.value) || (matchMode === 'ctf' ? 3 : 5);
-  saveSettings(); setMapMeta(); setMapMode(); renderMapScreen(); sfx.uiClick();
+  if (!modoObjetivoAtual() && matchMode === 'arena') { msRounds.value = '1'; return; }
+  settings[modoEfetivoAtual() === 'ctf' ? 'ctfRounds' : 'rounds'] = sanitizeRounds(msRounds.value) || (modoEfetivoAtual() === 'ctf' ? 3 : 5);
+  saveSettings(); setMapMeta(); setMapMode(); renderMapScreen(); sfx.uiClick();   // setMapMode: o chip de ROUNDS do setup acompanha o select
 };
 const diffSel = $('diff-select');
 syncMapOptions();
@@ -3462,8 +3496,11 @@ function montarHubSels() {
   const faixa = (de, ate, rot) => Array.from({ length: ate - de + 1 }, (_, k) => ({ v: String(de + k), t: rot(de + k) }));
   montar('mapa', 'MAPA', () => MAPAS_MENU.map((id) => ({ v: id, t: MAPS[id].name, img: mapPreviewPoster(id, VERSION) })),
     () => currentMap, (v) => { ui.click(); gotoMap(MAPAS_MENU.indexOf(v)); });
-  montar('modo', 'MODO', () => ehMapaJavaporcos(currentMap) ? [{v:'horde',t:'CAÇA AO JAVAPORCO'}] : [{ v: 'rounds', t: tr('MATA-MATA') }, { v: 'ctf', t: tr('CAPTURA') }, { v: 'arena', t: tr('VIRA-CASACA') }],
-    () => ehMapaJavaporcos(currentMap) ? 'horde' : matchMode, (v) => $(`hub-mode-${v}`)?.click());
+  montar('modo', 'MODO', () => modoObjetivoAtual()
+    ? [{ v: ehMapaJavaporcos(currentMap) ? 'horde' : 'rounds', t: ehMapaJavaporcos(currentMap) ? 'CAÇA AO JAVAPORCO' : tr('ESCOLTA') }]
+    : [{ v: 'rounds', t: tr('MATA-MATA') }, { v: 'ctf', t: tr('CAPTURA') }, { v: 'arena', t: tr('VIRA-CASACA') }],
+    () => ehMapaJavaporcos(currentMap) ? 'horde' : modoEfetivoAtual(),
+    (v) => { if (!modoObjetivoAtual()) $(`hub-mode-${v}`)?.click(); });
   montar('armas', 'ARMAS', () => WPN_MODES.map((m) => ({ v: m.id, t: tr(m.label) })),
     () => settings.wpnMode || 'all', (v) => { msWpnMode.value = v; msWpnMode.onchange(); });
   montar('time', 'SEU TIME', () => ehMapaJavaporcos(currentMap) ? faixa(4,8,n=>`${n} · VOCÊ + BOTS`) : faixa(0, 7, botsLabel),
@@ -3484,7 +3521,7 @@ if (HUB_ENABLED) montarHubSels();
 /* Treta Pop (public/js/tp/modos.js): lê o estado da partida e troca o mapa pela mesma máquina do menu. */
 if (document.documentElement.dataset.ui === 'v3') window.__tpModos = {
   mapas: () => MAPAS_MENU.map((id) => ({ id, nome: MAPS[id].name, poster: mapPreviewPoster(id, VERSION), cats: catsDe(id), data: MAP_DATA[id] || '', desc: tr(MAP_DESC[id] || ''), parado: MAPAS_PARADOS.has(id), horda: ehMapaJavaporcos(id) })),
-  estado: () => ({ mapa: currentMap, modo: matchMode, armas: settings.wpnMode || 'all', aliados: settings.allyBots, inimigos: settings.enemyBots, rounds: matchRounds(), dificuldade: settings.difficulty || 'normal', escalados: [...settings.pinnedChars], javaporcos: {...settings.javaporcos} }),
+  estado: () => ({ mapa: currentMap, modo: modoEfetivoAtual(), objetivo: modoObjetivoAtual(), armas: settings.wpnMode || 'all', aliados: settings.allyBots, inimigos: settings.enemyBots, rounds: matchRounds(), dificuldade: settings.difficulty || 'normal', escalados: [...settings.pinnedChars], javaporcos: {...settings.javaporcos} }),
   opcoesJavaporcos: (host, mudou) => sincronizarOpcoesJavaporcos(host, ehMapaJavaporcos(currentMap), settings, () => { saveSettings(); syncMapOptions(); setMapMeta(); mudou?.(); }),
   irMapa: (id) => { if (MAPAS_MENU.includes(id)) gotoMap(MAPAS_MENU.indexOf(id)); },
 };
@@ -3837,7 +3874,7 @@ function partialPayload() {
     uid: getAnonId(), nick, token: getToken(), won: false, kills: p.kills, deaths: p.deaths,
     headshots: p.headshots || 0, bestStreak: g.mk.best || 0, rounds, team: g.playerTeam,
     faction: g.playerFaction || currentFaction,
-    seconds: Math.round(g.time), character: currentChar, mode: matchMode,
+    seconds: Math.round(g.time), character: currentChar, mode: modoEfetivoAtual(),
   };
 }
 addEventListener('beforeunload', (e) => {
@@ -3913,7 +3950,7 @@ async function recordMatchStats(s) {
       uid: getAnonId(), nick, token: getToken(), won: s.won, kills: s.kills, deaths: s.deaths,
       headshots: s.headshots, bestStreak: s.bestStreak,
       rounds: s.roundsP + s.roundsB, team: s.team, faction: currentFaction, seconds: s.seconds || 0,
-      character: s.character, mode: matchMode,
+      character: s.character, mode: modoEfetivoAtual(),
     });
     if (!res) submitNote('ranking global indisponível');
     else if (res.error) submitNote(res.message || traduErroSubmit(res.error));
@@ -4840,13 +4877,20 @@ function mpCartaoNoHTML(n) {
 let mpMapasDoNo = [];
 let mpMapasEscolhidos = new Set();
 
+/* Operação Flávio (escolta) só roda em rounds com 2+ por time — o servidor recusa
+   CTF/X1, e a grade não pode deixar marcado o que a sala criada vai derrubar. */
+const mpMapaCompativel = (id) => MAPS[id]?.objectiveMode !== 'escort'
+  || (mpEl('mp-modo')?.value !== 'ctf' && +(mpEl('mp-teamsize')?.value || 5) >= 2);
+
 function mpPintarMapas() {
   const grade = mpEl('mp-mapas-grade'), conta = mpEl('mp-mapas-conta');
   if (!grade || !conta) return;
   const ctf = mpEl('mp-modo') && mpEl('mp-modo').value === 'ctf';
+  for (const id of [...mpMapasEscolhidos]) if (!mpMapaCompativel(id)) mpMapasEscolhidos.delete(id);
   grade.innerHTML = mpMapasDoNo.map((id) => {
     const on = mpMapasEscolhidos.has(id);
-    return `<button class="mp-mapa${on ? ' on' : ''}" type="button" data-id="${id}" aria-pressed="${on}" title="${MAPS[id].name}">`
+    const travado = !mpMapaCompativel(id);
+    return `<button class="mp-mapa${on ? ' on' : ''}" type="button" data-id="${id}"${travado ? ' disabled' : ''} aria-pressed="${on}" title="${travado ? 'Operação Flávio exige rounds e pelo menos 2 por time' : MAPS[id].name}">`
       + `<img class="mp-mapa-img" loading="lazy" decoding="async" src="${mapPreviewPoster(id, VERSION)}" alt="">`
       // o crachá CAPTURA só informa quando o modo É captura; senão é ruído em quase todo cartão
       + (ctf && MAPS[id].ctfMode ? '<span class="mp-mapa-ctf">CAPTURA</span>' : '')
@@ -4863,11 +4907,13 @@ function mpPintarMapas() {
   });
   const n = mpMapasEscolhidos.size;
   const fora = MAPAS_MENU.filter((id) => !mpMapasDoNo.includes(id)).length;
+  const flavioTravado = mpMapasDoNo.some((id) => !mpMapaCompativel(id));
   conta.textContent = (!mpMapasDoNo.length ? 'esse servidor não respondeu a lista de mapas'
     : n === 0 ? 'marque pelo menos um mapa'
       : n === 1 ? 'só 1 mapa: a sala não gira, joga sempre nele'
         : `${n} mapas na fila, sorteados a cada partida`)
-    + (fora ? ` · ${fora} do jogo ainda não estão neste servidor` : '');
+    + (fora ? ` · ${fora} do jogo ainda não estão neste servidor` : '')
+    + (flavioTravado ? ' · Operação Flávio exige rounds e pelo menos 2 por time' : '');
 }
 
 function mpNoPermitePvp(no) {
@@ -5081,7 +5127,7 @@ document.addEventListener('cs-treta-solo', async () => {
     mpSelecionarNo(no);
     const ticket = await obterMpTicket('create');
     const senha = clientUuid();
-    const ctf = matchMode === 'ctf';
+    const ctf = modoEfetivoAtual() === 'ctf';
     const sala = await createRoom(no.http, {
       name: 'SOLO TRETA$', solo: true, private: true, password: senha,
       mapId: currentMap, mapas: [currentMap], ctf, mode: ctf ? 'ctf' : 'rounds',
@@ -5099,8 +5145,9 @@ function mpMontarFormulario() {
   if (rot && !rot._ok) {
     rot._ok = true;
     rot.onchange = () => { ui.click(); mpSincronizarMapas(); };
-    mpEl('mp-modo').addEventListener('change', () => mpSincronizarMapas());   // o crachá CAPTURA depende do modo
-    mpEl('mp-mapas-todos').onclick = () => { ui.click(); mpMapasEscolhidos = new Set(mpMapasDoNo); mpPintarMapas(); };
+    mpEl('mp-modo').addEventListener('change', () => mpSincronizarMapas());   // o crachá CAPTURA e o travamento do Flávio dependem do modo
+    mpEl('mp-teamsize').addEventListener('change', () => mpSincronizarMapas());   // Flávio exige rounds com 2+ por time
+    mpEl('mp-mapas-todos').onclick = () => { ui.click(); mpMapasEscolhidos = new Set(mpMapasDoNo.filter(mpMapaCompativel)); mpPintarMapas(); };
     mpEl('mp-mapas-limpar').onclick = () => { ui.click(); mpMapasEscolhidos.clear(); mpPintarMapas(); };
   }
   mpSincronizarMapas();
@@ -5115,6 +5162,8 @@ function mpMontarFormulario() {
     const aDedo = mpEl('mp-rotacao').value === 'escolher';
     const escolhidos = [...mpMapasEscolhidos];
     if (aDedo && (!escolhidos.length || escolhidos.some((id) => !mpMapasDoNo.includes(id) || !MAPS[id] || MAPS[id].objectiveMode === 'horde'))) return mpErro('Escolha pelo menos um mapa disponível para sua sala.');
+    if (aDedo && escolhidos.some((id) => !mpMapaCompativel(id)))
+      return mpErro('Operação Flávio exige rounds e pelo menos 2 por time. Ajuste modo/tamanho ou desmarque o mapa.');
     const ctf = mpEl('mp-modo').value === 'ctf';
     try {
       const ticket = await obterMpTicket('create');

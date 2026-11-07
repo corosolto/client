@@ -71,7 +71,7 @@ const REGUAS_PR_FAST = [
   'eval:wfsecret', 'eval:wflocal', 'eval:wftimeout', 'eval:wfconcurrency', 'eval:deploygate',
   'eval:autofix', 'eval:mutcega', 'eval:portaointeiro', 'eval:release', 'eval:privacy', 'eval:noescolha',
   'eval:contagens-pr',
-  'eval:mergequeue',
+  'eval:mergequeue', 'eval:wfpurge',
 ];
 let ci = existsSync('.github/workflows/ci.yml') ? readFileSync('.github/workflows/ci.yml', 'utf8') : '';
 if (MUT === 'sucesso-implicito') ci = ci.replace(/(- name: Contratos visuais[^\n]*\n)        if:[^\n]*\n/, '$1');
@@ -117,11 +117,11 @@ const GRUPOS_PI4 = [
   ['reguas-e-site', 'Contratos visuais de mapas', ['eval:shot-final-pose', 'eval:authored-locomotion', 'eval:character-normal-quality', 'eval:grafite-curation', 'eval:map-material-finish', 'eval:ferro-balcao', 'eval:match-pickups', 'eval:net-flash-disable', 'eval:normal-only-fit-equivalence', 'eval:tp-world-contract', 'eval:skin-profile-flow', 'eval:death-camera-consistency', 'eval:visual-map-contracts', 'eval:knife-skin-markings', 'eval:campo-uv', 'eval:grafite-atual:prova', 'eval:piscina-graffiti-batch']],
   ['reguas-e-site', 'Flash, fluidez e ADS da AK pública', ['eval:flashbang', 'mut:flashbang', 'eval:movimento-fluidez', 'eval:ads1p-public', 'eval:posto-board-support', 'eval:preview-grip-phase', 'eval:armadura', 'eval:ads1p-runtime-public']],
   ['reguas-e-site', 'Todo mapa devolve o que o game.js consome', ['eval:mapcontrato']],
-  ['reguas-e-site', 'Pichação colada na parede', ['eval:pichacao-parede']],
-  ['reguas-e-site', 'Amazônia acessível', ['eval:amazonia']],
-  ['reguas-e-site', 'Escadão — circulação', ['eval:escadao-graph', 'eval:escadao-home', 'eval:escadao-structure', 'eval:escadao-descent', 'eval:escadao-details']],
+  ['mapas-e-site', 'Pichação colada na parede', ['eval:pichacao-parede']],
+  ['mapas-e-site', 'Amazônia acessível', ['eval:amazonia']],
+  ['mapas-e-site', 'Escadão — circulação', ['eval:escadao-graph', 'eval:escadao-home', 'eval:escadao-structure', 'eval:escadao-descent', 'eval:escadao-details']],
   ['mantle', 'Validar fluidez, território e rede do mantle', ['eval:mantle-fluidez', 'mut:mantle', 'eval:mantle-network']],
-  ['reguas-e-site', 'Escadão — compatibilidade', ['tools/eval/escadao-audio-pack-check.mjs']],
+  ['mapas-e-site', 'Escadão — compatibilidade', ['tools/eval/escadao-audio-pack-check.mjs']],
 ];
 function passosDoJob(texto, job) {
   const bloco = texto.match(new RegExp(`^  ${job}:\\n([\\s\\S]*?)(?=^  [\\w-]+:|$(?![\\s\\S]))`, 'm'))?.[1];
