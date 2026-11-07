@@ -11,6 +11,7 @@ import TretaStore from '../components/TretaStore.astro';
 import TretaDialogs from '../components/TretaDialogs.astro';
 import '../styles/career-rank.css';
 import { SITE, abs, routeOgPath, DISCORD_URL, TELEGRAM_URL, GITHUB_URL, REDES_OFICIAIS, SUPPORT_URL_BR, SUPPORT_URL_INTL, RANKING_ON, RANKING_DESCRIPTION_PT, DESC_LONG } from '../lib/site';
+import { X_PIXEL_ID } from '../lib/x-pixel';
 
 /* Revisão do CSS pelo CONTEÚDO: a versão do pacote não muda quando só o CSS muda, e o
    WebView servia CSS velho. Hash do arquivo na URL derruba o cache sozinho. Vem do build
@@ -74,6 +75,14 @@ const IMPORTMAP = JSON.stringify({
 <head>
 {import.meta.env.DEV && import.meta.env.SOCIAL_LOCAL_GAME_URL && <meta name="cs-local-game" content={import.meta.env.SOCIAL_LOCAL_GAME_URL} />}
 <meta charset="UTF-8">
+<!-- X conversion tracking base code -->
+<script is:inline define:vars={{ X_PIXEL_ID }}>
+!function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
+},s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='https://static.ads-twitter.com/uwt.js',
+a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(s,a))}(window,document,'script');
+twq('config', X_PIXEL_ID);
+</script>
+<!-- End X conversion tracking base code -->
 <script is:inline>
 /* Treta Pop é o padrão; ?ui=legacy preserva o rollback antes do primeiro paint. */
 (function () {
