@@ -93,6 +93,13 @@ hangar industrial azul-cinza e pista aberta na luz do fim da tarde.
   música compatível; o fluxo OpenRouter atual do projeto gera imagem e voz, não música.
   Mint gera somente os props 3D: avião executivo, trator de bagagem, carrinho
   de ferramentas, arco de segurança e escada móvel.
+- No lobby Treta Pop, o card da Operação Flávio ocupa o canto inferior esquerdo
+  (antes o botão Resenha; a conversa segue pelo Y e por AMIGOS) e abre a história
+  do Flávio — paródia, só nomes de personagem — com JOGAR (VS BOTS neste mapa) e
+  FECHAR/Escape. A arte é captura real desta cinemática, câmera fixa no meio da
+  subida: `npm run gen:lobby-flavio-arte` (Chrome com GPU) grava
+  `public/img/mode-announcements/flavio-embarque{,-card}.webp` e o hash de conteúdo
+  em `assetver.js`.
 
 ## Referências
 
@@ -114,3 +121,8 @@ hangar industrial azul-cinza e pista aberta na luz do fim da tarde.
   descrição visual adversarial.
 - Cartaz OpenRouter e os cinco props Mint são abertos e inspecionados antes da
   integração; asset ausente cai em fallback procedural, nunca em objeto invisível.
+- `tools/eval/lobby-flavio-check.mjs` (node, `eval:mode-announcements`) e
+  `tools/eval/lobby-flavio-browser.mjs` (Chrome, `eval:ui-v3:lobby-flavio`) provam
+  o card no canto da antiga Resenha, a história com a arte carregada, Escape com
+  foco de volta e JOGAR no `operacao_flavio`; mutantes `card-resenha`,
+  `modal-sem-imagem`, `esc-sem-foco` e `jogar-mapa-errado` mordem.

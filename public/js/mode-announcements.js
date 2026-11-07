@@ -43,6 +43,12 @@ const CSS = `
 @media (max-width:640px){.cs-modes-veil{background:linear-gradient(180deg,rgba(5,7,11,.88),rgba(5,7,11,.45) 45%,rgba(5,7,11,.94))}.cs-modes-painel{padding-bottom:clamp(20px,6vh,44px)}.cs-modes-painel>:last-child{margin-bottom:0}}
 @media (orientation:landscape) and (max-height:420px){.cs-modes-painel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;padding:clamp(10px,2.5vh,16px) clamp(16px,4vw,28px);overflow-y:auto}.cs-modes-painel>*{margin:0}.cs-modes-painel>:first-child{margin-top:0}.cs-modes-painel>:last-child{margin-bottom:0}.cs-modes-logo{height:clamp(28px,9vh,40px)}.cs-modes-kicker{font-size:clamp(10px,2.2vh,13px);letter-spacing:.26em}.cs-modes-titulo{font-size:clamp(28px,12vh,46px);line-height:.95}.cs-modes-texto{font-size:13px;line-height:1.35}.cs-modes-fatos{grid-column:1;gap:4px;margin:0;font-size:12px}.cs-modes-fatos li{font-size:12px;padding-left:13px}.cs-modes-fatos li::before{width:6px;height:6px;top:.4em}.cs-modes-logo,.cs-modes-kicker,.cs-modes-titulo,.cs-modes-texto,.cs-modes-acoes{grid-column:1/-1}.cs-modes-mini{grid-column:2;width:clamp(84px,24vh,132px);height:auto;align-self:start}.cs-modes-acoes{gap:8px;margin-top:4px}.cs-modes-acoes button{min-height:44px;padding:0 16px;font-size:14px}.cs-modes-acoes button:focus-visible{outline-width:2px;outline-offset:1px}}
 @media (prefers-reduced-motion:no-preference){.cs-modes-painel{animation:cs-modes-in .26s ease-out both}@keyframes cs-modes-in{from{opacity:0;transform:translateY(10px)}}}
+.cs-modes-dialog--historia .cs-modes-bg{object-position:72% center}
+.cs-modes-dialog--historia .cs-modes-painel{max-width:640px}
+.cs-modes-fecho{margin:0;max-width:34em;font-size:clamp(15px,1.8vw,18px);font-weight:700;line-height:1.3;letter-spacing:.02em;color:var(--cs-modes-a);text-transform:uppercase}
+.cs-modes-nota{margin:0;font-size:12px;color:rgba(242,239,230,.62)}
+@media (min-height:521px) and (max-height:820px){.cs-modes-dialog--historia .cs-modes-painel{padding:28px clamp(20px,4vw,48px);gap:10px}.cs-modes-dialog--historia .cs-modes-titulo{font-size:clamp(40px,6vw,64px)}.cs-modes-dialog--historia .cs-modes-texto{font-size:16px;line-height:1.4}.cs-modes-dialog--historia .cs-modes-fatos li{font-size:15px}.cs-modes-dialog--historia .cs-modes-fecho{font-size:15px}}
+@media (max-height:520px){.cs-modes-dialog--historia .cs-modes-painel{max-width:min(600px,70vw);gap:6px;padding:12px clamp(16px,3vw,24px)}.cs-modes-dialog--historia .cs-modes-kicker{font-size:11px;letter-spacing:.26em}.cs-modes-dialog--historia .cs-modes-titulo{font-size:34px;line-height:.95}.cs-modes-dialog--historia .cs-modes-texto{font-size:12.5px;line-height:1.35}.cs-modes-dialog--historia .cs-modes-fatos{gap:2px;margin:0}.cs-modes-dialog--historia .cs-modes-fatos li{font-size:12px;padding-left:13px}.cs-modes-dialog--historia .cs-modes-fatos li::before{width:6px;height:6px;top:.4em}.cs-modes-fecho{font-size:13px}.cs-modes-nota{font-size:10.5px}.cs-modes-fecho,.cs-modes-nota{grid-column:1/-1}.cs-modes-dialog--historia .cs-modes-acoes{margin-top:2px;gap:8px}.cs-modes-dialog--historia .cs-modes-acoes button{min-height:44px;padding:0 18px;font-size:14px}}
 `;
 
 let aberto = null;
@@ -62,23 +68,34 @@ function marcarVisto(id) {
   catch { /* storage bloqueado: só repete na próxima sessão */ }
 }
 
-function abrir(c, onDone) {
+function dialogo(imagem, alt) {
   if (!document.getElementById('cs-modes-style')) {
     const st = el('style'); st.id = 'cs-modes-style'; st.textContent = CSS;
     document.head.appendChild(st);
   }
   const dlg = el('dialog', 'cs-modes-dialog');
   dlg.setAttribute('aria-labelledby', 'cs-modes-titulo');
-  const bg = el('img', 'cs-modes-bg'); bg.src = c.imagem; bg.alt = ''; bg.setAttribute('aria-hidden', 'true');
+  const bg = el('img', 'cs-modes-bg'); bg.src = imagem; bg.alt = alt || '';
+  if (!alt) bg.setAttribute('aria-hidden', 'true');
   const veil = el('div', 'cs-modes-veil'); veil.setAttribute('aria-hidden', 'true');
   const painel = el('div', 'cs-modes-painel');
-  const logo = el('img', 'cs-modes-logo'); logo.src = '/logo.png'; logo.alt = 'CORO SOLTO';
-  const kicker = el('p', 'cs-modes-kicker', c.kicker);
+  dlg.append(bg, veil, painel);
+  return { dlg, painel };
+}
+function cabeca(painel, c) {
   const titulo = el('h1', 'cs-modes-titulo', c.titulo); titulo.id = 'cs-modes-titulo';
-  const texto = el('p', 'cs-modes-texto', c.texto);
   const fatos = el('ul', 'cs-modes-fatos');
   for (const f of c.fatos) fatos.appendChild(el('li', null, f));
-  painel.append(logo, kicker, titulo, texto, fatos);
+  painel.append(el('p', 'cs-modes-kicker', c.kicker), titulo);
+  return fatos;
+}
+
+function abrir(c, onDone) {
+  const { dlg, painel } = dialogo(c.imagem);
+  const logo = el('img', 'cs-modes-logo'); logo.src = '/logo.png'; logo.alt = 'CORO SOLTO';
+  painel.appendChild(logo);
+  const fatos = cabeca(painel, c);
+  painel.append(el('p', 'cs-modes-texto', c.texto), fatos);
   if (c.miniatura) {
     const mini = el('img', 'cs-modes-mini'); mini.src = c.miniatura; mini.alt = 'Hangar do aeroporto do novo modo';
     painel.appendChild(mini);
@@ -89,7 +106,6 @@ function abrir(c, onDone) {
   fecharBtn.setAttribute('aria-keyshortcuts', 'Escape');
   acoes.append(entrar, fecharBtn);
   painel.appendChild(acoes);
-  dlg.append(bg, veil, painel);
   let fechado = false;
   const fechar = () => {
     if (fechado) return; fechado = true; aberto = null;
@@ -115,4 +131,35 @@ export function mostrarNovidadesModos({ mapIds = [], onDone = null, force = fals
   if (!ids.includes(c.id) || (!force && lidos().has(c.id))) { onDone?.(); return false; }
   try { return abrir(c, onDone); }
   catch { document.querySelector('dialog.cs-modes-dialog')?.remove(); aberto = null; onDone?.(); return false; }
+}
+
+/* História do modo pedida pelo card do lobby (tp/flavio.js): mesmo diálogo, com JOGAR.
+   Chega traduzida e com URL revisada; não marca o anúncio como visto. */
+export function abrirHistoria(c) {
+  if (aberto) return false;
+  const { dlg, painel } = dialogo(c.imagem, c.alt);
+  dlg.classList.add('cs-modes-dialog--historia'); dlg.dataset.historia = c.id;
+  const fatos = cabeca(painel, c);
+  for (const p of c.paragrafos) painel.appendChild(el('p', 'cs-modes-texto', p));
+  painel.append(fatos, el('p', 'cs-modes-fecho', c.fecho));
+  if (c.nota) painel.appendChild(el('p', 'cs-modes-nota', c.nota));
+  const acoes = el('div', 'cs-modes-acoes');
+  const jogar = el('button', 'cs-modes-primario', c.jogar); jogar.type = 'button'; jogar.dataset.jogar = '';
+  const fecharBtn = el('button', 'cs-modes-secundario', c.fechar); fecharBtn.type = 'button';
+  fecharBtn.setAttribute('aria-keyshortcuts', 'Escape');
+  acoes.append(jogar, fecharBtn);
+  painel.appendChild(acoes);
+  /* um caminho de saída só: botão, Escape nativo ou fechamento sem cancel caem no close */
+  let depois = null;
+  dlg.addEventListener('close', () => {
+    aberto = null; dlg.remove();
+    if (depois) depois(); else if (c.foco?.isConnected) c.foco.focus({ preventScroll: true });
+  });
+  jogar.addEventListener('click', () => { depois = c.aoJogar; dlg.close(); });
+  fecharBtn.addEventListener('click', () => dlg.close());
+  document.body.appendChild(dlg);
+  dlg.showModal();
+  jogar.focus();
+  aberto = dlg;
+  return true;
 }

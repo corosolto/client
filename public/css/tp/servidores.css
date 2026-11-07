@@ -170,7 +170,7 @@
 }
 
 /* SV13: na tela de servidores o único lima é o JOGO RÁPIDO */
-:root[data-ui="v3"] body:has(#mp-panel.tp-srv-painel:not(.hidden)) .tp-resenha-botao{display:none}
+:root[data-ui="v3"] body:has(#mp-panel.tp-srv-painel:not(.hidden)) .tp-lobby-flavio{display:none}
 :root[data-ui="v3"] body:has(#mp-panel.tp-srv-painel:not(.hidden)) .tp-abas__risco{background:var(--tp-elevado)}
 :root[data-ui="v3"] body:has(#mp-panel.tp-srv-painel:not(.hidden)) #hub-ui #hub-treta-wallet>span{background:var(--tp-elevado);color:var(--tp-tinta-1)}
 .tp-srv .tp-abas__risco{background:var(--tp-elevado)}

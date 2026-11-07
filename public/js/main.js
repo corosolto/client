@@ -13,6 +13,7 @@ import { contagem } from './contagem.js';   // contagem agregada sem id, indepen
 import { clientUuid, getAnonId } from './client-id.js';
 import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
 import {tretaPack} from './data/pack-definitions.js';
+import {retratoFontes} from './data/retratos.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { EMOTES_ENABLED } from './emote-features.js';
@@ -945,20 +946,14 @@ let howtoReturn = 'main-menu';   // CONTROLES aberto pelo pause volta pro pause,
 
 /* ---------------- 3D character preview ---------------- */
 let pv = null, pvDrag = null;
-/* RETRATO HERO em vez do recorte low-poly. Os 44 de public/img/chars-hero/ saem do
-   MESMO GLB (o render é a referência que trava a identidade — ver
-   tools/gen-char-realista.mjs), só com densidade de detalhe que a malha do jogo não
-   tem. Verificado: os 44 ids do characters.js têm arquivo, então não há caminho de
-   404 por personagem faltando.
-   Uma função só alimenta prévia estática, fallback do snapshot 3D e modo de
-   qualidade baixa — trocar aqui melhora os três de uma vez. */
+/* Retrato hero só para quem tem arquivo (data/retratos.js; 18 ids não têm); senão o
+   recorte/busto. Uma função alimenta prévia estática, snapshot 3D e qualidade baixa. */
 const portraitUrl = (def) => {
   const skin=tretaSkinPresentation(def.skinId,def.id);
-  return skin?(skin.poster?`${skin.poster}?v=${VERSION}`:null):`/img/chars-hero/${def.id}.webp?v=${VERSION}`;
+  return skin?(skin.poster?`${skin.poster}?v=${VERSION}`:null):`${retratoFontes(def.id)[0]}?v=${VERSION}`;
 };
-/* O antigo continua no repo e vira a rede de segurança: se o hero não carregar, a
-   imagem cai para o recorte do modelo em vez de ficar quebrada. */
-const portraitFallbackUrl = (def) => `/img/chars/${def.id}.webp?v=${VERSION}`;
+/* Rede de segurança: a fonte seguinte da mesma lista, nunca a que acabou de falhar. */
+const portraitFallbackUrl = (def) => { const f=retratoFontes(def.id); return `${f[1]||f[0]}?v=${VERSION}`; };
 /* VÍDEO DO PERSONAGEM (tela 03 do redesign): captura do próprio modelo, rig e clipe
    do jogo por tools/eval/char-native-vids.mjs. Falha de rede mantém o canvas/GLB. */
 let pvVidToken = 0;
