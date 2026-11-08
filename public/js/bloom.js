@@ -985,10 +985,8 @@ export function enableLightBloom(renderer, opts = {}) {
   // BUG-09: bloom seletivo ligado por padrão. ?charbloom=1 volta o bloom global de antes
   // (nem passe, nem patch de shader) — é o A/B lado a lado.
   const charMaskOn = qp.get('charbloom') !== '1';
-  /* Passes de máscara/água/soft desenham a MESMA cena com outras camadas na câmera: sem luz
-     nelas, o hash de luzes trocava 2× por quadro e TODO material iluminado recalculava o
-     programa (40-76 por quadro). Luz em todas as camadas não muda pixel: esses passes são
-     sem iluminação. Varredura a cada 30 quadros, como a do CharMask. ?luzcamadas=0 desliga. */
+  // Luz em todas as camadas: sem isso os passes de máscara/água trocavam o hash de luzes e
+  // recompilavam o programa de todo material lit por quadro (eval:bots-perf). ?luzcamadas=0 desliga.
   const luzCamadas = qp.get('luzcamadas') !== '0';
 
   const liberadas = new WeakSet();
