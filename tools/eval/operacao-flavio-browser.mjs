@@ -422,6 +422,8 @@ const views = [
     'terminal_fachada.glb', 'terminal_portal.glb', 'balcao_recepcao.glb', 'assentos_aeroporto.glb',
     'scanner_bagagem.glb', 'carro_servico.glb', 'energia_solo.glb', 'torre_iluminacao.glb',
     'barreiras_aeroporto.glb', 'estacao_manutencao.glb', 'containers_carga.glb', 'jardineira.glb', 'senador.glb',
+    // Laterais (playtest 08/11): ônibus do acervo comum e caixote derivado da operação.
+    'props/bus.glb', 'caixote_carga.glb',
   ]) {
     assert.ok(glbs.some((url) => url.includes(file)), `${file} não carregou por HTTP 200`);
   }
