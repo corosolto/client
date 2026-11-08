@@ -55,6 +55,7 @@ import { entradaCombatente, ALCANCE_TIRO, alturaDoOlho } from './hitboxes.js';
 import { CABECAS_HITBOX, CABECA_PADRAO } from './data/cabecas-hitbox.js';
 import { cegueiraFlash, brancoEm, retidaEm, FLASH_ERRO_MIRA } from './flashbang.js';
 import { assetUrl } from './data/asseturl.js';
+import { gradeColisores, candidatosColisao } from './collider_grid.js';
 export { saidaPenetracao, resolverRaio };
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
 // autoritativo) e tools/eval/botdiag.mjs. Consumidor novo importa de data/weapons.js.
@@ -216,6 +217,7 @@ export function confirmGate(agora, armadoEm) {
   return 'rearma';                                           // rajada: relógio volta ao zero
 }
 const BOT_SPEED = 4.1, BOT_EYE = 1.5;   // 3.3 = 30% mais lento que o jogador: o bot nunca chegava no lugar
+const COLIDE_FOLGA = 1.0;   // _collideGrade: raio extra da consulta; empurrão acima da metade volta ao linear
 const BOT_VIEW = 45;              // alcance de aquisição de alvo (m) — ver comentário no think
 const BOT_VIEW_SNIPER = 82;       // com luneta o bot enxerga longe (o jogador de AWP era impune a 100m)
 const BOT_VIEW_ALERT = 64;        // levou/ouviu tiro: abre a visão por alguns segundos
@@ -6472,7 +6474,9 @@ export class Game {
      o seno/cosseno, e os senos vêm precomputados do mapa. Medido no botsim (determinístico,
      60 s × 6 mapas): ver o commit desta correção. */
   _collide(pos, r, colliders = this.world.colliders) {
-    for (const c of colliders) {
+    // Grade só filtra quem não pode encostar; empurrão que sair da folga refaz a varredura linear.
+    const grade = colliders.length > 32 && !this.__mutColideLinear ? gradeColisores(colliders) : null;
+    if (!grade || !this._collideGrade(pos, r, colliders, grade)) for (const c of colliders) {
       const nx = Math.max(c.minX, Math.min(pos.x, c.maxX));
       const nz = Math.max(c.minZ, Math.min(pos.z, c.maxZ));
       const dx = pos.x - nx, dz = pos.z - nz;
@@ -6487,6 +6491,25 @@ export class Game {
     const B = this.world.bounds;
     pos.x = Math.max(B.minX + r, Math.min(B.maxX - r, pos.x));
     pos.z = Math.max(B.minZ + r, Math.min(B.maxZ - r, pos.z));
+  }
+  _collideGrade(pos, r, colliders, grade) {
+    const x0 = pos.x, z0 = pos.z;
+    if (!Number.isFinite(x0) || !Number.isFinite(z0)) return false;
+    const n = candidatosColisao(grade, x0, z0, r + COLIDE_FOLGA), ids = grade.ids, lim2 = COLIDE_FOLGA * COLIDE_FOLGA / 4;
+    for (let k = 0; k < n; k++) {
+      const c = colliders[ids[k]];
+      const nx = Math.max(c.minX, Math.min(pos.x, c.maxX));
+      const nz = Math.max(c.minZ, Math.min(pos.z, c.maxZ));
+      const dx = pos.x - nx, dz = pos.z - nz;
+      const d2 = dx * dx + dz * dz;
+      if (d2 < r * r && pos.y + 1.5 > c.minY && pos.y + 0.3 < c.maxY) {
+        if (c.ry) this._collideRot(pos, r, c);
+        else if (d2 < 1e-8) pos.x += r;
+        else { const d = Math.sqrt(d2), push = (r - d) / d; pos.x += dx * push; pos.z += dz * push; }
+        if ((pos.x - x0) ** 2 + (pos.z - z0) ** 2 > lim2) { pos.x = x0; pos.z = z0; return false; }
+      }
+    }
+    return true;
   }
   /* Empurra `pos` para fora de um colisor GIRADO. Mesma matemática do caso AABB, só que em
      (lx, lz) — o eixo do prop. A convenção de mundo↔local é a do three (`rotation.y`):
