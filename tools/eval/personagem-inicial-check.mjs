@@ -28,6 +28,7 @@ const mutado = mutante === 'sem-sorteio'
     : mutante === 'grava-rota'
       ? boot.replace('if (!routeCharacterId && !rememberedDef)', 'if (!routeCharacterId)')
       : boot;
+assert.equal(mutado !== boot, Boolean(mutante), mutante ? `mutante ${mutante} não foi aplicada` : 'boot nominal foi alterado');
 
 const CHARACTERS = [
   { id: 'esquerdo', team: 'E' },
