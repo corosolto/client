@@ -26,7 +26,10 @@
 //
 // ESTADO EM 08/11 — MÃOS EM LÂMINA: o transplante agora ENCAIXA cotovelo e punho na malha
 // (bloco "AJUSTE DAS JUNTAS" abaixo). Sem isso 12 dos 37 do lote30 (Creepypasta Season)
-// esticavam aresta da mão 15-87× nos clipes; com ele, 37/37 ≤ 1,6×. Régua:
+// esticavam aresta da mão 15-87× nos clipes; com ele, os 34 com carne na mão ficam ≤ 1,6×.
+// Os 3 mascotes de braço-toco (teletreco-sinal-fraco, dino-festa, coelho-pascoa-shopping)
+// não têm carne no punho: a régua marca "sem mão medível" e o corpo deles ainda rasga com o
+// esqueleto humano do mst — limite conhecido, fora deste ajuste. Régua:
 // `npm run eval:rigmaos` (tools/eval/rig-maos-check.mjs). Os GLB do elenco em public/
 // NÃO foram regerados por esta mudança.
 //
