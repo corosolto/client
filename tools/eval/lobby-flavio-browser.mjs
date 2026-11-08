@@ -1,13 +1,16 @@
 #!/usr/bin/env node
-/* Régua do card da Operação Flávio no lobby Treta Pop, medida no Chrome (a de node é lobby-flavio-check.mjs).
+/* Régua do painel da Operação Flávio no lobby Treta Pop, medida no Chrome (a de node é lobby-flavio-check.mjs).
      BASE=http://127.0.0.1:9428 node tools/eval/lobby-flavio-browser.mjs [--mutantes]
-   O dono trocou o botão Resenha do canto do lobby pelo card do Flávio com a história (07/11).
-     LFB1 6 telas: Resenha fora do lobby; o card ocupa o canto e o tamanho do antigo botão, à vista,
-          sem cobrir nada clicável e com a miniatura carregada
-     LFB2 o card abre a história: imagem carregada, nada rola nem sai da tela, foco preso no diálogo
-     LFB3 Escape fecha, devolve o foco ao card, e o Y não abre a gaveta por baixo do diálogo
+   07/11: o card do Flávio com a história trocou o botão Resenha. 08/11 (dono): o Flávio vira o primeiro
+   painel do lobby, acima da caça ao Javaporco; Quests e Novidades de skins descem para baixo de Amigos online.
+     LFB1 6 telas: Resenha fora do lobby; o painel do Flávio à vista, ACIMA da invasão, sem cobrir nada
+          clicável e com a arte carregada
+     LFB2 o painel abre a história: imagem carregada, nada rola nem sai da tela, foco preso no diálogo
+     LFB3 Escape fecha, devolve o foco ao painel, e o Y não abre a gaveta por baixo do diálogo
      LFB4 JOGAR começa a partida no operacao_flavio
-     LFB5 ?lang=en: card e história em inglês
+     LFB5 ?lang=en: painel e história em inglês
+     LFB6 6 telas: com a coluna da direita à vista, Quests e skins moram nela, depois de Amigos online, sem
+          entrar no painel da partida; sem a coluna, Quests continua à vista na esquerda
    Os anúncios de abertura (Javaporco e Operação Flávio) entram como já vistos: são outra régua.
    Capturas em OUT (padrão tools/eval/out/lobby-flavio). Um navegador por vez (with-browser-lock.sh). */
 import { execSync } from 'node:child_process';
@@ -28,8 +31,9 @@ const browser = await chromium.launch({
 });
 
 const MUT = {
-  'card-resenha': [/\/js\/tp\/flavio\.js/, (t) => t.replace("card.id = 'tp-lobby-flavio';", "card.id = 'tp-resenha-botao';").replace("titulo.append(no('span', 'tp-ital', tr('OPERAÇÃO FLÁVIO')));", "titulo.append(no('span', 'tp-ital', tr('Resenha')));"), 'LFB1', 'telas'],
-  'card-sobre': [/\/css\/tp\/lobby\.css/, (t) => t.replace('--tp-flavio-chao:16px', '--tp-flavio-chao:420px'), 'LFB1', 'telas'],
+  'card-resenha': [/\/js\/tp\/flavio\.js/, (t) => t.replace("card.id = 'tp-lobby-flavio';", "card.id = 'tp-resenha-botao';").replace("no('strong', 'tp-disp', tr('OPERAÇÃO FLÁVIO'))", "no('strong', 'tp-disp', tr('Resenha'))"), 'LFB1', 'telas'],
+  'card-depois': [/\/js\/tp\/lobby\.js/, (t) => t.replace('esq.appendChild(invasao);', 'esq.insertBefore(invasao, esq.firstChild);'), 'LFB1', 'telas'],
+  'quests-esquerda': [/\/js\/tp\/lobby\.js/, (t) => t.replace("if (getComputedStyle(dir).display !== 'none') dir.append(...blocos);", 'if (false) dir.append(...blocos);'), 'LFB6', 'telas'],
   'modal-sem-imagem': [/\/js\/mode-announcements\.js/, (t) => t.replace('bg.src = imagem;', "bg.src = '';"), 'LFB2', 'telas'],
   'modal-transborda': [/\/js\/mode-announcements\.js/, (t) => t.replace('@media (max-height:520px){.cs-modes-dialog--historia', '@media (max-height:1px){.cs-modes-dialog--historia'), 'LFB2', 'telas'],
   'esc-sem-foco': [/\/js\/mode-announcements\.js/, (t) => t.replace('else if (c.foco?.isConnected) c.foco.focus({ preventScroll: true });', ''), 'LFB3', 'telas'],
@@ -77,43 +81,61 @@ async function abrirCard(page, toque) {
   return page.waitForFunction(() => document.querySelector('dialog[data-historia="operacao_flavio"]')?.open, null, { timeout: 8000 }).then(() => true, () => false);
 }
 
-/* A · 6 telas: canto, história e saída. */
+/* A · 6 telas: posição, história, saída e as colunas. */
 async function telas(mutante, cap) {
-  const e1 = [], e2 = [], e3 = [];
+  const e1 = [], e2 = [], e3 = [], e6 = [];
   for (const [w, h, toque] of TELAS) {
     const tag = `${w}x${h}`;
     const { page, ctx } = await lobby({ w, h, toque, mutante });
     if (cap) await page.screenshot({ path: `${OUT}/lobby-${tag}.png` });
     const c = await page.evaluate(() => {
-      const card = document.getElementById('tp-lobby-flavio');
+      const card = document.getElementById('tp-lobby-flavio'), invasao = document.getElementById('tp-lobby-invasao');
       const resenha = !!document.getElementById('tp-resenha-botao') || [...document.querySelectorAll('#main-menu button, #main-menu a')]
         .some((e) => !e.closest('#tp-resenha') && e.checkVisibility() && /^\s*resenha\b/i.test(e.textContent));
-      if (!card?.checkVisibility()) return { resenha, card: null };
-      const r = card.getBoundingClientRect(), cruza = [];
+      const vis = (e) => !!e?.checkVisibility();
+      const caixa = (e) => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
+      const cruzam = (a, o) => o.l < a.r - 1 && a.l < o.r - 1 && o.t < a.b - 1 && a.t < o.b - 1;
+      /* colunas: Quests e skins na direita, depois de Amigos online, e nada dela dentro da partida */
+      const dir = document.querySelector('.tp-lobby-dir'), quests = document.getElementById('tp-lobby-quests'), skins = document.getElementById('tp-lobby-skins');
+      const partida = [...document.querySelectorAll('#menu-setup .pane-match > *')].filter(vis).map(caixa).filter((b) => b.b > b.t);
+      const amigos = document.getElementById('tp-lobby-online-amigos');
+      const colunas = {
+        dirVisivel: vis(dir), questsVisivel: vis(quests), questsNaDir: !!quests && !!dir?.contains(quests), skinsNaDir: !!skins && !!dir?.contains(skins),
+        depoisDosAmigos: [quests, skins].filter(Boolean).every((e) => !!(amigos?.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING)),
+        naPartida: [quests, skins].filter(vis).filter((e) => partida.some((p) => cruzam(caixa(e), p))).map((e) => e.id),
+      };
+      if (!vis(card)) return { resenha, card: null, colunas };
+      const r = caixa(card), cruza = [];
       for (const e of document.querySelectorAll('#main-menu a, #main-menu button, #main-menu input, #main-menu select, #main-menu [role=tab], #hub-ui a, #hub-ui button')) {
-        if (e === card || card.contains(e) || e.closest('#tp-resenha') || !e.checkVisibility()) continue;
-        const o = e.getBoundingClientRect();
-        if (!o.width || !o.height) continue;
-        if (o.left < r.right - 1 && r.left < o.right - 1 && o.top < r.bottom - 1 && r.top < o.bottom - 1) cruza.push((e.id || e.getAttribute('aria-label') || e.className || e.tagName).toString().split(' ')[0]);
+        if (e === card || card.contains(e) || e.closest('#tp-resenha') || !vis(e)) continue;
+        const o = caixa(e);
+        if (o.r - o.l <= 0 || o.b - o.t <= 0) continue;
+        if (cruzam(r, o)) cruza.push((e.id || e.getAttribute('aria-label') || e.className || e.tagName).toString().split(' ')[0]);
       }
-      const topo = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-      const img = card.querySelector('img');
-      return { resenha, card: { l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height, cruza, coberto: !(topo && card.contains(topo)), mini: img?.complete && img.naturalWidth, rotulo: card.textContent } };
+      const topo = document.elementFromPoint((r.l + r.r) / 2, (r.t + r.b) / 2);
+      const img = card.querySelector('img'), inv = vis(invasao) ? caixa(invasao) : null;
+      return { resenha, colunas, card: { ...r, h: r.b - r.t, cruza, coberto: !(topo && card.contains(topo)), arte: img?.complete && img.naturalWidth,
+        rotulo: card.textContent, invasao: !!inv, acima: !!inv && r.b <= inv.t + 1 && !!(card.compareDocumentPosition(invasao) & Node.DOCUMENT_POSITION_FOLLOWING) } };
     });
-    /* canto do antigo botão Resenha (social.css até 07/11): 32/16 px e 60 px; deitado 16 px, 166 px e 44 px */
-    const deitado = h <= 520, querL = deitado ? 16 : 32, querB = deitado ? h - 166 : h - 16, querH = deitado ? 44 : 60;
     if (c.resenha) e1.push(`${tag}: botão Resenha no lobby`);
-    if (!c.card) e1.push(`${tag}: card da Operação Flávio ausente`);
+    if (!c.card) e1.push(`${tag}: painel da Operação Flávio ausente`);
     else {
       const k = c.card;
-      if (Math.abs(k.l - querL) > 1 || Math.abs(k.b - querB) > 1 || Math.abs(k.h - querH) > 1) e1.push(`${tag}: card em x=${k.l.toFixed(0)} base=${k.b.toFixed(0)} alt=${k.h.toFixed(0)} (canto da Resenha: x=${querL} base=${querB} alt=${querH})`);
-      if (k.l < 0 || k.t < 0 || k.r > w || k.b > h) e1.push(`${tag}: card fora da tela`);
-      if (k.cruza.length) e1.push(`${tag}: card cobre ${k.cruza.join(', ')}`);
-      if (k.coberto) e1.push(`${tag}: algo cobre o card`);
-      if (!k.mini) e1.push(`${tag}: miniatura do card não carregou`);
-      if (!/OPERAÇÃO FLÁVIO/.test(k.rotulo)) e1.push(`${tag}: card diz "${k.rotulo}"`);
-      if (toque && k.h < TOQUE - 0.5) e1.push(`${tag}: card com ${k.h.toFixed(0)} px de altura no toque`);
+      if (!k.invasao) e1.push(`${tag}: invasão fora da tela (sem referência de ordem)`);
+      else if (!k.acima) e1.push(`${tag}: painel do Flávio não está acima da invasão (topo ${k.t.toFixed(0)}, base ${k.b.toFixed(0)})`);
+      if (k.l < 0 || k.t < 0 || k.r > w || k.b > h) e1.push(`${tag}: painel fora da tela`);
+      if (k.cruza.length) e1.push(`${tag}: painel cobre ${k.cruza.join(', ')}`);
+      if (k.coberto) e1.push(`${tag}: algo cobre o painel`);
+      if (!(k.arte >= 1280)) e1.push(`${tag}: arte do painel não carregou (${k.arte || 0} px)`);
+      if (!/OPERAÇÃO FLÁVIO/.test(k.rotulo)) e1.push(`${tag}: painel diz "${k.rotulo}"`);
+      if (toque && k.h < TOQUE - 0.5) e1.push(`${tag}: painel com ${k.h.toFixed(0)} px de altura no toque`);
     }
+    const col = c.colunas;
+    if (col.dirVisivel) {
+      if (!col.questsNaDir || !col.skinsNaDir) e6.push(`${tag}: coluna da direita à vista sem ${[!col.questsNaDir && 'Quests', !col.skinsNaDir && 'skins'].filter(Boolean).join(' e ')}`);
+      else if (!col.depoisDosAmigos) e6.push(`${tag}: Quests/skins antes de Amigos online`);
+      if (col.naPartida.length) e6.push(`${tag}: ${col.naPartida.join(', ')} dentro do painel da partida`);
+    } else if (h > 500 && !col.questsVisivel) e6.push(`${tag}: sem a coluna da direita, Quests sumiu`);
     if (!(await abrirCard(page, toque))) { e2.push(`${tag}: o card não abre a história`); await ctx.close(); continue; }
     await page.waitForFunction(() => { const i = document.querySelector('dialog[data-historia] .cs-modes-bg'); return i?.complete; }, null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(500);
@@ -141,9 +163,10 @@ async function telas(mutante, cap) {
     await ctx.close();
   }
   return [
-    { id: 'LFB1', ok: !e1.length, msg: e1.join('; ') || `${TELAS.length} telas: sem Resenha; card no canto e no tamanho do antigo botão, livre, à vista, miniatura carregada` },
+    { id: 'LFB1', ok: !e1.length, msg: e1.join('; ') || `${TELAS.length} telas: sem Resenha; painel do Flávio acima da invasão, livre, à vista, arte carregada` },
     { id: 'LFB2', ok: !e2.length, msg: e2.join('; ') || `${TELAS.length} telas: história abre com a arte carregada, sem rolar nem sair da tela, foco preso no diálogo` },
-    { id: 'LFB3', ok: !e3.length, msg: e3.join('; ') || `${TELAS.length} telas: Escape fecha e devolve o foco ao card; Y não abre a gaveta por baixo` },
+    { id: 'LFB3', ok: !e3.length, msg: e3.join('; ') || `${TELAS.length} telas: Escape fecha e devolve o foco ao painel; Y não abre a gaveta por baixo` },
+    { id: 'LFB6', ok: !e6.length, msg: e6.join('; ') || `${TELAS.length} telas: Quests e skins embaixo de Amigos online fora da partida; sem a coluna, Quests na esquerda` },
   ];
 }
 

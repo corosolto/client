@@ -12,7 +12,7 @@ test('mídia nova do candidato vem de public/ quando a produção responde 404',
   const origin = await startBootOrigin({ BASE: base, API_BASE: base, publicRoot: new URL('../public/', import.meta.url) });
   t.after(async () => { await origin.close(); upstream.close(); });
 
-  const arte = '/img/mode-announcements/flavio-embarque-card.webp';
+  const arte = '/img/mode-announcements/flavio-embarque.webp';
   const ok = await fetch(origin.url + arte);
   assert.equal(ok.status, 200);
   assert.equal(ok.headers.get('x-boot-origin'), 'local-candidate-asset');

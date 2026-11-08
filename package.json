@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.1.0-alpha.137",
+  "version": "2.1.0-alpha.138",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador com 63 personagens em dois times (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -211,7 +211,7 @@
     "//eval:ui-v3:perfil": "Perfil e carreira Treta Pop (telas 10 e 11) no Chrome com APIs simuladas: cartão, edição ao lado com prévia ao vivo e settings sem chute, um lima por tela, números iguais aos do backend, partidas e patente, clã e convite, PT e EN, 4 telas e toque de 44 px; ?ui=legacy mantém a tela anterior.",
     "eval:ui-v3:perfil": "node tools/eval/ui-v3-perfil.mjs && node tools/eval/ui-v3-perfil.mjs --mutantes",
     "eval:ui-v3:social": "node tools/eval/ui-v3-social.mjs && node tools/eval/ui-v3-social.mjs --mutantes && npm run eval:ui-v3:lobby-flavio",
-    "//eval:ui-v3:lobby-flavio": "Card da Operação Flávio no canto do lobby (era o botão Resenha) medido no Chrome: canto e tamanho do antigo botão em 5 telas sem cobrir nada, história com arte carregada e sem rolagem, Escape devolve o foco, JOGAR entra no operacao_flavio; --mutantes prova cada cláusula. Arte: npm run gen:lobby-flavio-arte (GPU).",
+    "//eval:ui-v3:lobby-flavio": "Painel da Operação Flávio no lobby medido no Chrome em 6 telas: primeiro painel, acima da caça ao Javaporco, sem cobrir nada e com a arte carregada; Quests e Novidades de skins embaixo de Amigos online sem entrar na partida (sem a coluna da direita, Quests fica na esquerda); história com arte e sem rolagem, Escape devolve o foco, JOGAR entra no operacao_flavio; --mutantes prova cada cláusula. Arte: npm run gen:lobby-flavio-arte (GPU).",
     "eval:ui-v3:lobby-flavio": "node tools/eval/lobby-flavio-browser.mjs && node tools/eval/lobby-flavio-browser.mjs --mutantes",
     "eval:ui-v3:lobby-flavio:gate": "node tools/eval/lobby-flavio-browser-gate.mjs",
     "gen:lobby-flavio-arte": "node tools/eval/lobby-flavio-captura.mjs && node tools/gen-asset-rev.mjs",

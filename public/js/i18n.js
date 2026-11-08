@@ -687,8 +687,8 @@ const DICT = {
   'Página do clã': 'Clan page', 'Ranking de clãs e desafios: próxima etapa': 'Clan ranking and challenges: next step',
   // tp:fim-perfil
 
-  // tp:flavio (card do lobby e história do Flávio; ficção do jogo)
-  'A HISTÓRIA DO FLÁVIO': 'FLÁVIO\'S STORY', 'OPERAÇÃO FLÁVIO': 'OPERATION FLÁVIO', 'A HISTÓRIA ▸': 'THE STORY ▸',
+  // tp:flavio (painel do lobby e história do Flávio; ficção do jogo)
+  'A HISTÓRIA DO FLÁVIO': 'FLÁVIO\'S STORY', 'OPERAÇÃO FLÁVIO': 'OPERATION FLÁVIO', 'A HISTÓRIA ▸': 'THE STORY ▸', 'ESCOLTA': 'ESCORT',
   'Operação Flávio: a história do Flávio': 'Operation Flávio: Flávio\'s story',
   'Zero Um, o senador Flávio, cansou de dar entrevista e resolveu que o mandato rende mais visto lá de fora. O jatinho já está ligado no pátio; só falta atravessar o aeroporto inteiro sem levar bala.':
     'Zero Um, Senator Flávio, got tired of interviews and decided his term looks better from abroad. The jet is already running on the apron; he just has to cross the whole airport without catching a bullet.',
