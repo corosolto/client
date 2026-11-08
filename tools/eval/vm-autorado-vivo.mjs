@@ -39,7 +39,7 @@ const arg = (n, d) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `=${
   .split('=').slice(1).join('=');
 const PORTA = arg('porta', '4361');
 const MUTANTE = arg('mutante', '');
-if (MUTANTE && !['semfiacao', 'maos-ocultas', 'cano-lateral', 'boot-catalogo', 'boot-mp-local'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
+if (MUTANTE && !['semfiacao', 'maos-ocultas', 'cano-lateral', 'boot-catalogo'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 const SO = arg('armas', '').split(',').filter(Boolean);
 const TODAS = process.argv.includes('--todas');
 const SEM_FLAGS = process.argv.includes('--sem-flags');
@@ -96,13 +96,6 @@ if (MOBILE && SEM_FLAGS) await pag.route('**/js/main.js*', async (route) => {
   }
   await route.fulfill({ response: res, body: source });
 });
-if (MUTANTE === 'boot-mp-local') {
-  const before = fs.readFileSync('public/js/game.js', 'utf8');
-  const source = before.replace('const cw = (this.online && WEAPONS[rosterWeapon] ? rosterWeapon : null) || charWeapon(this.playerCharId);', 'const cw = charWeapon(this.playerCharId);');
-  if (source === before) throw new Error('boot-mp-local não aplicou');
-  await pag.route('**/js/game.js*', (r) => r.fulfill({ contentType: 'application/javascript', body: source }));
-}
-
 await pag.route(/\.astro\/eval-vite|dev-toolbar|@vite\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: 'export default {};export const createHotContext=()=>({accept(){},dispose(){},prune(){},on(){},off(){},send(){},invalidate(){},data:{}});export const updateStyle=()=>{};export const removeStyle=()=>{};export const injectQuery=u=>u;export class ErrorOverlay{}' }));
 const erros = [];
 pag.on('pageerror', (e) => { const text = String(e).split('\n')[0].slice(0, 140); erros.push(text); console.error(text); });
@@ -354,7 +347,7 @@ console.log(`\n  ${bons}/${ALVO.length} armas montam o viewmodel autorado COM m�
 if (legado.length) console.log(`  caíram no legado: ${legado.join(' ')}`);
 if (semMao.length) console.log(`  autoradas mas SEM mão: ${semMao.join(' ')}`);
 if (erros.length) console.log(`  erros de página: ${[...new Set(erros)].slice(0, 3).join(' | ')}`);
-const ok = nextOk && (['boot-catalogo', 'boot-mp-local'].includes(MUTANTE) ? !bootOk && bons === ALVO.length : MUTANTE ? bootOk && bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave
+const ok = nextOk && (MUTANTE === 'boot-catalogo' ? !bootOk && bons === ALVO.length : MUTANTE ? bootOk && bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave
   : MUTANTE === 'cano-lateral' ? l.ligada && l.visiveis > 0 && l.emQuadro && l.canoEmQuadro && l.autorada && !l.fallback && l.mobile === MOBILE && Number.isFinite(l.rastroPx) && l.rastroPx > 1
   : l.ligada && l.paisVisiveis && Boolean(l.chave?.includes('#')) && l.maos > 0
     && l.autorada && !l.fallback && l.mobile === MOBILE && !l.visiveis) : bootOk && bons === ALVO.length);
