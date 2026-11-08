@@ -1,5 +1,9 @@
 import * as THREE from 'three';
 
+// forceSinglePass: plano no chão; as 2 passadas de transparente dupla-face do three marcavam
+// needsUpdate e recalculavam o programa 2× por bot por quadro. ?halosingle=0 volta ao antigo.
+const UMA_PASSADA = new URLSearchParams(globalThis.location?.search || '').get('halosingle') !== '0';
+
 let _csTex = null, _csGeo = null;
 function contactShadowTexture() {
   if (_csTex) return _csTex;
@@ -23,7 +27,7 @@ export function makeContactShadow(size = 0.9, opacity = .45) {
   const m = new THREE.Mesh(_csGeo, new THREE.MeshBasicMaterial({
     map: contactShadowTexture(), color: 0x000000,
     transparent: true, opacity, depthWrite: false,
-    side: THREE.DoubleSide, toneMapped: false,
+    side: THREE.DoubleSide, toneMapped: false, forceSinglePass: UMA_PASSADA,
   }));
   m.rotation.x = -Math.PI / 2;
   m.scale.set(size, size, 1);
