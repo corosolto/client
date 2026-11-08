@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { LIVE_MAP } from '../src/data/live-map.mjs';
 
-const CONTENT_PAGES = ['/armas', '/mapas', '/personagens', '/como-jogar', '/sobre', '/changelog', '/weapons', '/maps', '/characters', '/how-to-play', '/about', '/whats-new', '/apoie'];
+const CONTENT_PAGES = ['/armas', '/mapas', '/personagens', '/como-jogar', '/sobre', '/changelog', '/en', '/weapons', '/maps', '/characters', '/how-to-play', '/about', '/whats-new', '/apoie'];
 
 function readPage(clientDir, pathname) {
   const file = pathname === '/'

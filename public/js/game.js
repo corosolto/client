@@ -6544,6 +6544,26 @@ export class Game {
   _mantleAlcance() {
     if (this._mAlc) return this._mAlc;
     const W = this.world, B = W.bounds, G = MANTLE_GRID;
+    const CG = MANTLE_COLLIDER_GRID;
+    const cnx = Math.max(1, Math.ceil((B.maxX - B.minX) / CG));
+    const cnz = Math.max(1, Math.ceil((B.maxZ - B.minZ) / CG));
+    const col = new Map();
+    for (const c of W.colliders) {
+      const i0 = Math.max(0, Math.floor((c.minX - 0.38 - B.minX) / CG));
+      const i1 = Math.min(cnx - 1, Math.floor((c.maxX + 0.38 - B.minX) / CG));
+      const k0 = Math.max(0, Math.floor((c.minZ - 0.38 - B.minZ) / CG));
+      const k1 = Math.min(cnz - 1, Math.floor((c.maxZ + 0.38 - B.minZ) / CG));
+      for (let i = i0; i <= i1; i++) for (let k = k0; k <= k1; k++) {
+        const key = i * cnz + k;
+        const bucket = col.get(key);
+        if (bucket) bucket.push(c); else col.set(key, [c]);
+      }
+    }
+    const perto = (x, z) => {
+      const i = Math.floor((x - B.minX) / CG), k = Math.floor((z - B.minZ) / CG);
+      if (i < 0 || i >= cnx || k < 0 || k >= cnz) return EMPTY_COLLIDERS;
+      return col.get(i * cnz + k) || EMPTY_COLLIDERS;
+    };
     const nx = Math.max(1, Math.floor((B.maxX - B.minX) / G));
     const nz = Math.max(1, Math.floor((B.maxZ - B.minZ) / G));
     const alt = new Float32Array(nx * nz).fill(NaN);
@@ -6554,7 +6574,7 @@ export class Game {
       const cx = B.minX + (i + 0.5) * G, cz = B.minZ + (k + 0.5) * G;
       for (const [ox, oz] of [[0, 0], [0.25, 0], [-0.25, 0], [0, 0.25], [0, -0.25]]) {
         const x = cx + ox, z = cz + oz, y = W.groundHeightAt(x, z, 1e3);
-        p.set(x, y, z); this._collide(p, 0.38);
+        p.set(x, y, z); this._collide(p, 0.38, perto(x, z));
         if (Math.abs(p.x - x) < 1e-3 && Math.abs(p.z - z) < 1e-3) { alt[i * nz + k] = y; break; }
       }
     }
@@ -6583,21 +6603,6 @@ export class Game {
           y = sy;
         }
         if (ok) { vis[d] = 1; fila.push(d); }
-      }
-    }
-    const CG = MANTLE_COLLIDER_GRID;
-    const cnx = Math.max(1, Math.ceil((B.maxX - B.minX) / CG));
-    const cnz = Math.max(1, Math.ceil((B.maxZ - B.minZ) / CG));
-    const col = new Map();
-    for (const c of W.colliders) {
-      const i0 = Math.max(0, Math.floor((c.minX - 0.38 - B.minX) / CG));
-      const i1 = Math.min(cnx - 1, Math.floor((c.maxX + 0.38 - B.minX) / CG));
-      const k0 = Math.max(0, Math.floor((c.minZ - 0.38 - B.minZ) / CG));
-      const k1 = Math.min(cnz - 1, Math.floor((c.maxZ + 0.38 - B.minZ) / CG));
-      for (let i = i0; i <= i1; i++) for (let k = k0; k <= k1; k++) {
-        const key = i * cnz + k;
-        const bucket = col.get(key);
-        if (bucket) bucket.push(c); else col.set(key, [c]);
       }
     }
     this._mAlc = { nx, nz, G, minX: B.minX, minZ: B.minZ, alt, vis, CG, cnx, cnz, col };

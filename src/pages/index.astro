@@ -598,6 +598,9 @@ window.__GEO_LANG__ = (function () {
      de `x-default` e da auto-referência. -->
 {(!rota || rota.indexavel) && <><link rel="alternate" hreflang="pt-BR" href={pageUrl}>
 <link rel="alternate" hreflang="x-default" href={pageUrl}></>}
+<!-- Só a home tem gêmea EN (/en, src/pages/en.astro): as rotas do hub não têm
+     par, e declarar `en` nelas apontaria pra uma página que fala de outra coisa. -->
+{!rota && <link rel="alternate" hreflang="en" href={abs('/en')}>}
 <!-- Open Graph -->
 <meta property="og:type" content={rota?.ogTipo || 'website'}>
 <meta property="og:site_name" content="CORO SOLTO: Treta Suprema">
@@ -609,6 +612,7 @@ window.__GEO_LANG__ = (function () {
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content={ogImage.alt}></>}
 <meta property="og:locale" content="pt_BR">
+{!rota && <meta property="og:locale:alternate" content="en_US">}
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content={ogTitle}>
@@ -1486,9 +1490,9 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
         <section class="mp-bloco">
           <div class="mp-titulo">ENTRAR NA TRETA</div>
           <button id="mp-quick" class="btn btn-big mp-quick" type="button">▶ JOGO RÁPIDO</button>
-          <!-- JOGAR COM AMIGOS: um clique cria sala privada SEM senha (o código do convite é a
+          <!-- CRIAR SALA PRIVADA: um clique cria sala SEM senha (o código do convite é a
                chave) e abre o modal de convite -->
-          <button id="mp-amigos" class="btn btn-big mp-amigos" type="button">JOGAR COM AMIGOS</button>
+          <button id="mp-amigos" class="btn btn-big mp-amigos" type="button">CRIAR SALA PRIVADA</button>
           <!-- form de verdade: Enter no campo entra, como todo campo de código que se cola -->
           <form id="mp-convite-form" class="mp-convite">
             <input id="mp-convite-in" type="text" maxlength="11" placeholder="BR-7K3M"
