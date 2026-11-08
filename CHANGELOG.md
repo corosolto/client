@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.137`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.138`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -34,6 +34,9 @@
 - Attacker respawns are forward/base-only: never behind the convoy, never inside the boarding lounge (south terminal pocket, `x∈(-29,29) z∈(-57,-44)` mirrored in map evals and docs), always ≥7 m from the VIP and route-reachable from the next checkpoint; defenders keep the rear wave.
 - Attackers actively contest the escort, while VIP always carries armor, a helmet and a working PT-38.
 - Escort recovery includes physical path replanning, stable formation slots and online-authoritative respawn waves.
+
+### Changed
+- Lobby (Treta Pop), owner request 08/11: **Operação Flávio** becomes the first panel of the left column, above the Javaporco hunt, with the same full-art design (`montarPainelFlavio` in `public/js/tp/flavio.js`; the bottom-left corner card, its mini art `flavio-embarque-card.webp` and the footer offset are gone). **Quests da Treta** and **Novidades de skins** move under **Amigos online** in the right column; where that column is hidden (height ≤ 799 px) Quests returns to the left column instead of disappearing, and a right-column panel that would reach the match panel is dropped bottom-up (`encaixarDireita`). On landscape phones both promos stay top-left as compact one-line rows. Pinned by `eval:ui-v3:lobby-flavio` (LFB1 order above the invasion in 6 screens, new LFB6 columns; mutants `card-depois`, `quests-esquerda`) and `lobby-flavio-check.mjs`.
 
 ### Fixed
 - Offline matches no longer stutter as the bot count grows past 4 (owner report, 08/11). Measured in Chrome with GPU and 4× CPU throttling, Operação Flávio with 12 bots went from p50 333 / p95 533 ms per frame to 33 / 50 ms, and 8 bots from p95 317 to 33 ms. Causes, from CPU and allocation profiles: on Flávio every defender re-raycast the VIP's line of sight against every attacker each frame, through all 321k occluder triangles (66% of CPU); `_collide` scanned every collider (1403 on Amazônia) dozens of times per bot per frame and produced 102 MB/s of garbage; three.js rebuilt program keys 60-130 times per frame (shared shadow depth material flipping skinning per character, two-pass transparent halos and contact shadows, post passes that hid the lights); every gunshot and footstep allocated a new noise `AudioBuffer`. Fixes: exact per-step memo of the VIP LOS, first-hit LOS exit, an XZ collider grid, the static raycast index on every plain occluder, a shared skinned depth material, single-pass ground planes, lights on every pass layer and pooled noise buffers. Program lookups per frame dropped to 2-16, and 12-bot allocation fell from 127 to 20 MB/s on Amazônia. The simulation is unchanged: the match hash is identical with and without each fix on five maps, and the halo/contact-shadow frame is bit-identical. Pinned by `eval:bots-perf` (node: LOS per bot, colliders visited, triangles per ray, same hash; 3 mutants) and `eval:bots-perf:browser` (Chrome, Flávio 12 bots, CPU 4×: p95 ≤ 100 ms and ≤ 40 program lookups per frame; mutants `ia-antiga` and `render-antigo`).
@@ -209,6 +212,131 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.138] — 2026-11-07
+
+### Mudado
+- fix(javaporcos): restaura wallpaper e desacopla Treta Pop (#1227)
+- fix: remover flickering da calcada dos javaporcos (#1229)
+- release: promover staging para produção (#1230)
+- Operação Flávio: escolta 6×6, embarque pela escada e PT-38 da fábrica (#1232)
+- Operação Flávio no lobby e monitor de produção limpo (#1236)
+- Pixel do X na linha de release, com insertBefore corrigido (#1237)
+- lote release 07/11: Operação Flávio (#1232, #1236, #1237) (#1235)
+- Insert the X pixel script element instead of twq
+- Serve unpublished candidate media in the boot budget proxy
+- Feature Operação Flávio in the lobby and fix production monitoring
+- Measure the secondary switch at the switch instant
+- Board Flávio automatically and open the aircraft ring
+- Let Flávio climb the stairs and board at the door
+- Serve the factory X18 PT-38 again without paint
+- Board Flávio through the real stairs door
+- Trim new escort comments to the two-line ceiling
+- Rush Flávio, hide escort tactics and fix prop scale
+- Reframe the golden PT-38 to the approved pistol size
+- Single-source the escort online suite
+- Harden escort replay edge cases
+- Address the Operação Flávio localhost replay
+- Run the escort browser ruler as a local deploy gate
+- Raise escort markings above the hangar slab
+- Honor escort objective verdict on timeout
+- Split the CI rules and site queue into parallel jobs
+- Raise measured reguas-e-site CI timeout
+- Preserve team color in spawn shield and factory scoreboard inputs
+- Align escort CI gates with authoritative spectator split
+- Fixture da régua de sala fornece a parede Javaporcos
+- comentarios: comprime blocos remanescentes para o teto de 2 linhas
+- comentarios: encurta blocos novos da Operacao Flavio para o teto de 2 linhas
+- Isolate third-party boot noise from production HTML
+- Complete Operação Flávio gauntlet feedback
+- fix: use configured X conversion event ids
+- Refresh weapon matrix and room mutation coverage
+- fix: keep API gate aware of X modules
+- fix: harden X conversion delivery
+- Use concise Portuguese HUD comment
+- Shorten escort comments for the repository limit
+- feat: add X conversion tracking
+- Keep matchRounds within the UI contract
+- fix: remove z-fighting da calcada dos javaporcos
+- Fix Operação Flávio gameplay and bot authority
+- Improve Operação Flávio map routes and presentation
+- fix(ci): amplia janela do gate Treta Pop
+- test: align escort and boot fixtures with the mainline
+- fix(ci): regenera matriz do arsenal
+- fix(javaporcos): invalida cache do wallpaper
+- fix(treta-pop): desacopla detecção de mapa Javaporcos
+- test: atualizar âncora do mutante flash
+- Corrija as provas de defesa e ambiente
+- Complete o piso no acesso ao avião
+- Traduza os comentários das garantias de embarque
+- Corrige verificadores de inicialização, menu e escolta
+- fix: restaura a cena quando o embarque falha
+- Registra envio do anúncio Flávio
+- Ajusta anúncio Flávio em paisagem baixa
+- Registra envio da integração Flávio200
+- Registra validação da integração Flávio200
+- docs: registre validação integrada do Flávio
+- docs(operacao): fixa a base da integracao Flavio
+- test: exercita atraso do quadril no LOD apropriado
+- test: ligar CTF e recarga pareada ao CI e preservar diagnóstico de boot
+- test: confere o modo efetivo na contagem de partida
+- test: modelar anúncio na jornada B7
+- docs: preservar recibo da correção de autoria local
+- test: medir rounds no modo efetivo do formulário
+- docs: registrar quarenta cenários e par WebSocket final
+- test: alinhar smoke à sequência real de embarque
+- fix: preservar o VIP na troca de time offline
+- docs: registrar reconciliação local do Flávio
+- fix(net): preservar v7 e publicar objetivo em snapshot v8
+- fix(flavio): aceitar identidade NPC no intervalo uint32
+- feat(flavio): ligar embarque com passos e palco isolados
+- fix: coleta recursos próprios de atores de apresentação
+- Prepare asset reproduzível para o embarque
+- Registre contrato e aceite estático do embarque
+- fix: usa tempo real na apresentação de Flávio
+- fix: preserva duração do objetivo na rodada decisiva
+- docs: registra aceite local das quarenta partidas
+- fix: mantém defesa e reagrupamento físico da escolta
+- test: valida atalhos dirigidos na fachada do Flávio
+- Proteja as travessias físicas e atualize o hash
+- Ligue as portas do terminal às rotas dos guardas
+- Registre o diagnóstico físico das portas do terminal
+- fix: mantém os guardas no ponto físico da formação
+- test(flavio): keep stale winner alive until snapshot transition
+- fix(flavio): honor explicit current-round winner after reconnect
+- fix(flavio): defend escort formation without chasing distant targets
+- docs(ops): record complete Flavio seed balance rejection
+- fix(operacao): preserve spectator presentation across round resets
+- Exige prova causal nas réguas da Operação Flávio
+- Add Flávio hangar emergency presentation
+- fix(flavio): share visible prop geometry with the server
+- fix(flavio): filter incompatible room options before creating
+- fix(mp): retoma rodadas por identidade e resultado autoritativo
+- docs: registrar revisão e sincronização do Flávio
+- fix: preservar escolta na retomada e no menu
+- test: percorrer anúncio antes de medir o lobby
+- Mantém avião no quadro da cinemática
+- Corrige mutação dos marcos de entrada no lobby
+- chore: reduz notas redundantes na entrada do lobby
+- test: compara retorno da recarga com controle no mesmo estado
+- docs: registra pilotos de gameplay e revisão dos dois formatos
+- fix: mantém marcha original na duração prevista e cancelável
+- fix: alinha ondas de respawn e prova aplicação do objetivo online
+- fix: preserva apresentação online e cobertura dos mapas CTF
+- feat: apresenta Operação Flávio antes do lobby com capturas reais
+- fix: sincroniza resultado online e encerra marcha do Flávio
+- fix: converge codec dos modos no contrato v7
+- fix: conecta apresentação online da Operação Flávio
+- fix: reinicia avião da Operação Flávio entre rodadas
+- fix: preserve selected mode across objectives
+- fix: keep objective bots isolated from viewmodels
+- fix: use native GPU for boot gate on macOS
+- feat: finalize Operation Flavio mode
+- fix: reconstruir escolta da Operação Flávio
+- feat: rebuild operacao flavio airport
+- Integrar a escolta aos contratos do cliente
+- Implementar escolta autoritativa de Flávio
+- Adicionar mapa da Operação Flávio
 
 ## [2.1.0-alpha.137] — 2026-11-03
 

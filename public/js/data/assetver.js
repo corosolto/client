@@ -390,7 +390,6 @@ export const ASSET_REV = Object.freeze({
   "audio/menu-music/m25.mp3": "e43de13cb4",
   "audio/menu-music/m26.mp3": "474ba390dc",
   "img/mode-announcements/flavio-apron.webp": "895e7dc1ba",
-  "img/mode-announcements/flavio-embarque-card.webp": "6845c89d80",
   "img/mode-announcements/flavio-embarque.webp": "ae7fd8a648",
   "img/mode-announcements/flavio-hangar.webp": "e916a7da5a",
   "models/ambient/anta.glb": "5a56336945",
