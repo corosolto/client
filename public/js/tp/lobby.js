@@ -6,6 +6,7 @@ import { tretaLoja, abrirTretaSkin } from '../treta-store.js';
 import { montarPlacar } from './ranking.js';
 import { wallpaperJavaporcos } from '../javaporcos_apresentacao.js';
 import { anunciarJavaporcos } from '../javaporcos_novidade.js';
+import { montarPainelFlavio } from './flavio.js';
 
 const $ = (id) => document.getElementById(id);
 function no(tag, cls = '', texto = '') {
@@ -248,25 +249,19 @@ function desenharQuests(painel) {
   }
 }
 
+/* Esquerda: Operação Flávio primeiro, a caça ao Javaporco embaixo e as novidades da arena (dono, 08/11).
+   Quests e Novidades de skins moram embaixo de Amigos online, na direita (posicionarColunas). */
 function montarEsquerda(play) {
   const esq = no('aside', 'tp-lobby-esq');
   esq.setAttribute('aria-label', tr('Quests e novidades'));
+  const flavio = montarPainelFlavio();
+  if (flavio) esq.appendChild(flavio);
   const invasao = no('button', 'tp-lobby-painel tp-lobby-invasao');
   invasao.type='button';invasao.id='tp-lobby-invasao';
   const arte=no('img');arte.src=wallpaperJavaporcos(0);arte.alt='';arte.loading='lazy';arte.decoding='async';
   invasao.append(arte,no('span','tp-chip tp-chip--novo',tr('INVASÃO')),no('strong','tp-disp',tr('CAÇA AO JAVAPORCO')),no('span','',tr('Defenda a cidade · 4 a 8 defensores')),no('span','tp-lobby-link',tr('DEFENDER A CIDADE ▸')));
   invasao.addEventListener('click',()=>{$('hub-sp')?.click();window.__tpModos?.irMapa('invasao_javaporcos');});
   esq.appendChild(invasao);
-  const quests = no('section', 'tp-lobby-painel tp-lobby-quests');
-  quests.id = 'tp-lobby-quests';
-  const cab = no('div', 'tp-lobby-painel__cab');
-  const h2 = no('h2', 'tp-disp tp-lobby-painel__titulo');
-  h2.appendChild(no('span', 'tp-ital', tr('QUESTS DA TRETA')));
-  cab.appendChild(h2);
-  const ver = no('button', 'tp-lobby-link tp-lobby-quests__todas', tr('VER TODAS AS QUESTS ▸'));
-  ver.type = 'button';
-  ver.addEventListener('click', () => { abaDoHub('loja'); document.querySelector('[data-treta-view="quests"]')?.click(); });
-  quests.append(cab, no('div', 'tp-lobby-quests__lista'), no('div', 'tp-lobby-quests__aviso'), ver);
   const novidades = no('section', 'tp-lobby-painel tp-lobby-novidades');
   novidades.id = 'tp-lobby-novidades';
   const capa = no('div', 'tp-lobby-novidades__capa');
@@ -280,15 +275,60 @@ function montarEsquerda(play) {
   link.href = LANG === 'en' ? '/whats-new' : '/changelog';
   rodape.append(link, no('span', 'tp-num tp-lobby-novidades__versao', `v${VERSION}`));
   novidades.append(capa, rodape);
-  esq.append(quests);
-  montarSkins(esq);
   esq.appendChild(novidades);
   play.appendChild(esq);
-  const redesenhar = () => desenharQuests(quests);
+}
+
+function montarQuests() {
+  const quests = no('section', 'tp-lobby-painel tp-lobby-quests');
+  quests.id = 'tp-lobby-quests';
+  const cab = no('div', 'tp-lobby-painel__cab');
+  const h2 = no('h2', 'tp-disp tp-lobby-painel__titulo');
+  h2.appendChild(no('span', 'tp-ital', tr('QUESTS DA TRETA')));
+  cab.appendChild(h2);
+  const ver = no('button', 'tp-lobby-link tp-lobby-quests__todas', tr('VER TODAS AS QUESTS ▸'));
+  ver.type = 'button';
+  ver.addEventListener('click', () => { abaDoHub('loja'); document.querySelector('[data-treta-view="quests"]')?.click(); });
+  quests.append(cab, no('div', 'tp-lobby-quests__lista'), no('div', 'tp-lobby-quests__aviso'), ver);
+  const redesenhar = () => { desenharQuests(quests); encaixarDireita(); };
   document.addEventListener('cs-treta-state', redesenhar);
   const login = $('hub-account-login');
   if (login) new MutationObserver(redesenhar).observe(login, { attributes: true, attributeFilter: ['data-state'] });
-  redesenhar();
+  desenharQuests(quests);
+  return quests;
+}
+
+/* Quests e skins vão para baixo de Amigos online quando a coluna da direita aparece; onde ela some
+   (altura até 799 px), voltam para a esquerda, embaixo da invasão, em vez de sumir junto. */
+function posicionarColunas() {
+  const esq = document.querySelector('.tp-lobby-esq'), dir = document.querySelector('.tp-lobby-dir');
+  const blocos = [$('tp-lobby-quests'), $('tp-lobby-skins')].filter(Boolean);
+  if (!esq || !dir || !blocos.length) return;
+  if (getComputedStyle(dir).display !== 'none') dir.append(...blocos);
+  else {
+    const novidades = $('tp-lobby-novidades');
+    if (novidades?.parentElement === esq) novidades.before(...blocos);
+    else esq.append(...blocos);
+  }
+  encaixarDireita();
+}
+
+/* A coluna da direita termina acima do painel da partida: o painel que não cabe inteiro sai, de baixo
+   para cima, em vez de passar por baixo do JOGAR. */
+function encaixarDireita() {
+  const dir = document.querySelector('.tp-lobby-dir');
+  if (!dir) return;
+  for (const f of dir.children) delete f.dataset.semEspaco;
+  if (getComputedStyle(dir).display === 'none') return;
+  const partida = [...document.querySelectorAll('#menu-setup .pane-match > *')].filter((e) => e.checkVisibility?.())
+    .map((e) => e.getBoundingClientRect()).filter((b) => b.height);
+  if (!partida.length) return;
+  const limite = Math.min(...partida.map((b) => b.top)) - 14;
+  for (const f of [...dir.children].reverse()) {
+    if (!f.checkVisibility?.()) continue;
+    if (f.getBoundingClientRect().bottom <= limite) break;
+    f.dataset.semEspaco = '';
+  }
 }
 
 /* Novidades de skins: UM pack por vez, girando sozinho. A régua de rolagem lateral cortava os
@@ -350,7 +390,7 @@ function desenharSkins(painel, estado) {
   mostrarSkin(painel, estado);
 }
 
-function montarSkins(esq) {
+function montarSkins(coluna) {
   const painel = no('section', 'tp-lobby-painel tp-lobby-skins');
   painel.id = 'tp-lobby-skins';
   const cab = no('div', 'tp-lobby-painel__cab');
@@ -361,9 +401,9 @@ function montarSkins(esq) {
   ver.addEventListener('click', () => abaDoHub('loja'));
   cab.append(h2, ver);
   painel.append(cab, no('div', 'tp-lobby-skins__janela'), no('div', 'tp-lobby-skins__pontos'));
-  esq.appendChild(painel);
+  coluna.appendChild(painel);
   const estado = { i: 0 };
-  const redesenhar = () => desenharSkins(painel, estado);
+  const redesenhar = () => { desenharSkins(painel, estado); encaixarDireita(); };
   document.addEventListener('cs-treta-state', redesenhar);
   redesenhar();
   /* o giro para no mouse e no teclado: ninguém perde o card que estava lendo ou pra clicar */
@@ -414,11 +454,13 @@ function montarDireita(play) {
   ver.href = '/comunidade/amigos';
   painel.append(ver);
   dir.appendChild(painel);
+  dir.appendChild(montarQuests());
+  montarSkins(dir);
   play.appendChild(dir);
   desenhar($('community')?.socialLive);
-  document.addEventListener('cs-social-live', (e) => desenhar(e.detail?.live));
+  document.addEventListener('cs-social-live', (e) => { desenhar(e.detail?.live); encaixarDireita(); });
   /* Deslogado não há lista de amigos nem convite que leve a algo: o bloco inteiro sai (dono, 22/10). */
-  const sessao = () => { painel.hidden = ehGuest(); };
+  const sessao = () => { painel.hidden = ehGuest(); encaixarDireita(); };
   const login = $('hub-account-login');
   if (login) new MutationObserver(sessao).observe(login, { attributes: true, attributeFilter: ['data-state'] });
   sessao();
@@ -576,12 +618,15 @@ function montar() {
   montarDireita(play);
   montarPlacar();
   montarPartida();
-  const invasao=$('tp-lobby-invasao'),esquerda=document.querySelector('.tp-lobby-esq');
+  /* Celular deitado: Flávio e invasão ficam na esquerda, compactos e nessa ordem (o lobby.css esconde o
+     resto da coluna). Retrato estreito e multiplayer escondem as colunas: os dois descem para a partida. */
+  const promos=[$('tp-lobby-flavio'),$('tp-lobby-invasao')].filter(Boolean),esquerda=document.querySelector('.tp-lobby-esq');
   const adaptarInvasao=()=>{
-    const compacto=innerHeight<=500 || innerWidth<=600 || menu()?.dataset.hubNet==='mp';
-    const destino=compacto?document.querySelector('.tp-lobby-partida')?.parentElement:esquerda;
-    if(destino && invasao.parentElement!==destino) destino.prepend(invasao);
-    invasao.classList.toggle('tp-lobby-invasao--compacto',compacto);
+    const deitado=innerHeight<=500, naPartida=menu()?.dataset.hubNet==='mp' || (!deitado && innerWidth<=600);
+    const destino=naPartida?document.querySelector('.tp-lobby-partida')?.parentElement:esquerda;
+    if(destino && promos[0]?.parentElement!==destino) destino.prepend(...promos);
+    for(const p of promos) p.classList.toggle('tp-lobby-invasao--compacto',deitado || naPartida);
+    posicionarColunas();
   };
   addEventListener('resize',adaptarInvasao);
   new MutationObserver(adaptarInvasao).observe(menu(),{attributes:true,attributeFilter:['data-hub-net']});
