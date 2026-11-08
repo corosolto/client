@@ -1,5 +1,6 @@
-/* Treta Pop · card da Operação Flávio no canto do lobby (antes o botão Resenha) e a história do Flávio.
-   O diálogo é o mesmo dos anúncios de modo (mode-announcements.js). Régua: tools/eval/lobby-flavio-check.mjs. */
+/* Treta Pop · painel da Operação Flávio, o primeiro da coluna da esquerda do lobby (acima da caça ao
+   Javaporco, pedido do dono 08/11), e a história do Flávio. O diálogo é o mesmo dos anúncios de modo
+   (mode-announcements.js). Réguas: tools/eval/lobby-flavio-check.mjs e lobby-flavio-browser.mjs. */
 import { tr } from '../i18n.js';
 import { assetUrl } from '../data/asseturl.js';
 import { MAP_IDS_JOGAVEIS } from '../maps.js';
@@ -7,7 +8,6 @@ import { MAP_IDS_JOGAVEIS } from '../maps.js';
 export const MAPA_FLAVIO = 'operacao_flavio';
 /* Capturas reais do embarque (tools/eval/lobby-flavio-captura.mjs), revisadas por conteúdo. */
 export const ARTE_FLAVIO = '/img/mode-announcements/flavio-embarque.webp';
-export const MINI_FLAVIO = '/img/mode-announcements/flavio-embarque-card.webp';
 
 const $ = (id) => document.getElementById(id);
 function no(tag, cls = '', texto = '') {
@@ -50,25 +50,23 @@ export function jogarOperacaoFlavio() {
   $('btn-jogar')?.click();
 }
 
-export function montarCardFlavio(menu, abrir) {
-  const card = no('button', 'tp-lobby-flavio');
+/* Mesmo desenho do painel da invasão (tp-lobby-invasao): arte cheia, chip, título, linha e link.
+   Sem o modo no catálogo jogável não há painel, como no anúncio. */
+export function montarPainelFlavio() {
+  if (!MAP_IDS_JOGAVEIS.includes(MAPA_FLAVIO)) return null;
+  const card = no('button', 'tp-lobby-painel tp-lobby-invasao tp-lobby-flavio');
   card.type = 'button'; card.id = 'tp-lobby-flavio';
   card.setAttribute('aria-haspopup', 'dialog');
   card.setAttribute('aria-label', tr('Operação Flávio: a história do Flávio'));
-  const mini = no('img'); mini.src = assetUrl(MINI_FLAVIO); mini.alt = ''; mini.decoding = 'async';
-  const titulo = no('strong', 'tp-disp'); titulo.append(no('span', 'tp-ital', tr('OPERAÇÃO FLÁVIO')));
-  card.append(mini, no('span', 'tp-lobby-flavio__kicker', tr('A HISTÓRIA ▸')), titulo);
-  card.addEventListener('click', () => abrir(card));
-  menu.append(card);
+  const arte = no('img'); arte.src = assetUrl(ARTE_FLAVIO); arte.alt = ''; arte.decoding = 'async';
+  card.append(arte, no('span', 'tp-chip tp-chip--novo', tr('ESCOLTA')), no('strong', 'tp-disp', tr('OPERAÇÃO FLÁVIO')),
+    no('span', '', tr('Escolta 6×6, do terminal ao jato')), no('span', 'tp-lobby-link', tr('A HISTÓRIA ▸')));
+  card.addEventListener('click', () => abrirHistoriaFlavio(card));
   return card;
 }
 
-export function ligar() {
-  const menu = $('main-menu');
-  if (!menu || $('tp-lobby-flavio')) return;
-  /* o card só aparece com o modo no catálogo jogável, como o anúncio */
-  if (!MAP_IDS_JOGAVEIS.includes(MAPA_FLAVIO)) return;
-  montarCardFlavio(menu, (card) => import('../mode-announcements.js')
+export function abrirHistoriaFlavio(card) {
+  return import('../mode-announcements.js')
     .then((m) => m.abrirHistoria({ ...historiaFlavio(), aoJogar: jogarOperacaoFlavio, foco: card }))
-    .catch((e) => console.error('[treta-pop] flavio', e)));
+    .catch((e) => console.error('[treta-pop] flavio', e));
 }

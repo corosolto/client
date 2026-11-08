@@ -48,7 +48,18 @@
  *       push`), qualquer outro `completed*` é vermelho, e sem resposta ela desiste no prazo.
  *       O prazo cabe no `timeout-minutes` do job, e cabeça que já é `chore(release):` aborta.
  *
- * Mutações: --mutante=nome-antigo | semcreditos | semdco | semdocs | semrollback | deploy-duplo | deploy-yaml | sem-anims-deploy | cancelar-bot | ignora-sem-filtro | gerado-trava-trem | gerado-fora-do-pr | release-confere-so-estrutura | release-sem-modo | autoria-trava-trem | autoria-desligada | release-sem-arch | cron-de-volta | sem-dispatch | lote-ignorado | sem-rotulo | sem-filtro-lote | qualquer-merge | pr-aberto | concurrency-no-topo | sem-concurrency | grupo-sem-portao | bump-cancelavel | bump-mesmo-grupo | sem-aviso | loop | injecao | sem-retry | retry-infinito | push-forcado | publica-sem-conferir | sha-solto | falha-vira-verde | funcao-curta | sem-commit | cabeca-release-segue | prazo-longo.
+ * RLS18: LOTE JÁ TESTADO EMBARCA NA HORA (07/11/2026, pedido do dono). O embarque esperava até
+ *       25 min o pr-fast do push do merge do lote, que repete os checks que o PR de lote acabou
+ *       de passar; se ele passasse de 25 min o trem nem saía. Agora `verde_por_lote` aceita a head
+ *       sem esperar quando ela é merge de 2 pais, com a MESMA árvore do pai 2, e há run do ci.yml
+ *       `completed success` com head_sha = pai 2. Qualquer condição falha = espera o push como
+ *       antes. O passo `verde` do embarque roda DE VERDADE aqui (`gh` falso que responde commits e
+ *       runs de uma fixture via jq, `sleep` que só conta): lote testado sai com 0 sonecas e o SHA
+ *       do merge; árvore diferente, ci do pai 2 vermelho/ausente/no ar, head de 1 ou 3 pais caem
+ *       na espera; sem push verde não sai; head `chore(release):` não sai. O bump usa CÓPIA
+ *       IDÊNTICA da função antes do `pr_fast_verde` quando a main anda (RLS17 continua: só SHA verde).
+ *
+ * Mutações: --mutante=nome-antigo | semcreditos | semdco | semdocs | semrollback | deploy-duplo | deploy-yaml | sem-anims-deploy | cancelar-bot | ignora-sem-filtro | gerado-trava-trem | gerado-fora-do-pr | release-confere-so-estrutura | release-sem-modo | autoria-trava-trem | autoria-desligada | release-sem-arch | cron-de-volta | sem-dispatch | lote-ignorado | sem-rotulo | sem-filtro-lote | qualquer-merge | pr-aberto | concurrency-no-topo | sem-concurrency | grupo-sem-portao | bump-cancelavel | bump-mesmo-grupo | sem-aviso | loop | injecao | sem-retry | retry-infinito | push-forcado | publica-sem-conferir | sha-solto | falha-vira-verde | funcao-curta | sem-commit | cabeca-release-segue | prazo-longo | lote-sem-arvore | lote-sem-ci | lote-desligado.
  */
 import { readFileSync, readdirSync, mkdtempSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -260,7 +271,7 @@ const validaRetry = () => {
     && /APROVADO: \$\{\{ needs\.embarque\.outputs\.sha \}\}/.test(bump)
     && /^ {6}actions: read/m.test(bump)
     && /git reset --hard "\$APROVADO"/.test(laco) && !/git reset --hard origin\/main/.test(laco)
-    && /if \[ "\$CABECA" != "\$APROVADO" \]; then[\s\S]*?if ! pr_fast_verde "\$CABECA"; then\n[^\n]*::error::[^\n]*\n[^\n]*exit 1[\s\S]*?APROVADO=\$CABECA/.test(laco)
+    && /if \[ "\$CABECA" != "\$APROVADO" \]; then[\s\S]*?if ! (?:verde_por_lote "\$CABECA" && ! )?pr_fast_verde "\$CABECA"; then\n[^\n]*::error::[^\n]*\n[^\n]*exit 1[\s\S]*?APROVADO=\$CABECA/.test(laco)
     && /PRAZO=/.test(bump) && teto > 0 && teto <= 30;
 };
 /* RLS17 (a conferência) — o corpo de `pr_fast_verde` é executado, não lido. O `gh` falso só
@@ -319,8 +330,118 @@ const validaConferencia = () => {
 let conferencia = validaConferencia();
 let retryRelease = validaRetry() && !conferencia.length;
 
+/* RLS18 — o passo `verde` do embarque roda com um `gh` falso (commits e runs de uma fixture,
+   filtros --commit/--event/--branch e --json/--jq aplicados como o gh) e um `sleep` que conta. */
+const scriptEmbarque = () => {
+  const m = /\n      - name: [^\n]*\n        id: verde\n[\s\S]*?\n        run: \|\n((?:          [^\n]*\n|\n)+)/.exec(blocoJob('embarque'));
+  return m ? m[1].split('\n').map((l) => l.slice(10)).join('\n') : '';
+};
+const funcaoLote = (job) => {
+  const linhas = blocoJob(job).split('\n');
+  const def = linhas.findIndex((l) => /^\s*verde_por_lote\(\) \{\s*$/.test(l));
+  if (def < 0) return '';
+  const recuo = linhas[def].match(/^\s*/)[0];
+  const fim = linhas.findIndex((l, i) => i > def && l === `${recuo}}`);
+  return fim < 0 ? '' : linhas.slice(def, fim + 1).map((l) => l.slice(recuo.length)).join('\n');
+};
+const GH_FALSO = `#!/bin/bash
+set -o pipefail
+JQ=""; C=""; E=""; B=""; J=""; W=""; p=""
+for a in "$@"; do
+  case "$p" in --jq) JQ=$a ;; --commit) C=$a ;; --event) E=$a ;; --branch) B=$a ;; --json) J=$a ;; --workflow) W=$a ;; esac
+  p=$a
+done
+sai() { if [ -n "$JQ" ]; then jq -r "$JQ"; else cat; fi; }
+if [ "$1" = api ]; then
+  case "$2" in repos/*/git/commits/*) G=1 ;; repos/*/commits/*) G=0 ;; *) exit 9 ;; esac
+  jq -ec --arg s "$(basename "$2")" --argjson g "$G" '(if $s == "main" then .main else $s end) as $sha | .commits[$sha] as $c
+    | if $c == null then error("gh: Not Found (HTTP 404)") else ([$c.parents[] | {sha: .}]) as $p
+    | if $g == 1 then {sha: $sha, tree: {sha: $c.tree}, parents: $p, message: $c.message}
+      else {sha: $sha, commit: {message: $c.message, tree: {sha: $c.tree}}, parents: $p} end end' "$FIXTURE" | sai
+elif [ "$1 $2" = "run list" ] && [ "$W" = ci.yml ]; then
+  V="$FIXTURE.vistas"; [ -f "$V" ] || echo '{}' > "$V"
+  jq -c --slurpfile v "$V" --arg c "$C" --arg e "$E" --arg b "$B" --arg j "$J" '$v[0] as $vistas
+    | [.runs | to_entries[] | select(($c == "" or .value.headSha == $c) and ($e == "" or .value.event == $e) and ($b == "" or .value.headBranch == $b))
+       | (.key | tostring) as $k | (($vistas[$k] // 0) + 1) as $n
+       | {k: $k, n: $n, r: (.value + (if $n <= (.value.pendentePor // 0) then {status: "in_progress", conclusion: null} else {} end))}]
+    | (reduce .[] as $x ($vistas; .[$x.k] = $x.n)), [.[] | .r as $r | reduce ($j | split(",") | .[]) as $f ({}; .[$f] = $r[$f])]' "$FIXTURE" > "$V.novo" || exit 1
+  sed -n 1p "$V.novo" > "$V"; sed -n 2p "$V.novo" | sai
+else exit 9; fi
+`;
+const LOTE_M = 'e'.repeat(40), LOTE_P1 = '1'.repeat(40), LOTE_P2 = '2'.repeat(40);
+const cenarioLote = ({ pais = [LOTE_P1, LOTE_P2], arvore = 'arv-lote', msg = 'Merge pull request #900 from corosolto/lote-x',
+  ciLote = [['completed', 'success']], pushPendente = 2, semPush = false } = {}) => ({
+  main: LOTE_M,
+  commits: {
+    [LOTE_M]: { message: msg, tree: arvore, parents: pais },
+    [LOTE_P1]: { message: 'chore(release): v2.0.0-alpha.1', tree: 'arv-main', parents: ['0'.repeat(40)] },
+    [LOTE_P2]: { message: 'lote', tree: 'arv-lote', parents: [LOTE_P1] },
+  },
+  runs: [
+    ...ciLote.map(([status, conclusion]) => ({ headSha: LOTE_P2, event: 'pull_request', headBranch: 'lote-x', status, conclusion })),
+    { headSha: LOTE_P1, event: 'push', headBranch: 'main', status: 'completed', conclusion: 'success' },
+    ...(semPush ? [] : [{ headSha: LOTE_M, event: 'push', headBranch: 'main', status: 'completed', conclusion: 'success', pendentePor: pushPendente }]),
+  ],
+});
+/* Um diretório para todos os cenários: executável novo por cenário custa caro no macOS. */
+const simulaEmbarque = (fixture, dir) => {
+  const f = path.join(dir, 'f.json'), saida = path.join(dir, 'out'), sonecas = path.join(dir, 'sonecas');
+  writeFileSync(f, JSON.stringify(fixture));
+  rmSync(`${f}.vistas`, { force: true });
+  writeFileSync(saida, '');
+  writeFileSync(sonecas, '');
+  /* o shell padrão do Actions é `bash -eo pipefail` */
+  const r = spawnSync('bash', ['-eo', 'pipefail', '-c', scriptEmbarque()], {
+    cwd: dir, encoding: 'utf8', timeout: 60000,
+    env: { PATH: `${dir}:${process.env.PATH}`, FIXTURE: f, SONECAS: sonecas, GITHUB_OUTPUT: saida, GH_TOKEN: 'x', REPO: 'corosolto/client' },
+  });
+  const out = readFileSync(saida, 'utf8');
+  return {
+    status: r.status, sai: /^sai=(\w+)$/m.exec(out)?.[1], sha: /^sha=(\S+)$/m.exec(out)?.[1],
+    sonecas: readFileSync(sonecas, 'utf8').split('\n').filter(Boolean).length,
+  };
+};
+const NA_HORA = (r) => r.status === 0 && r.sai === 'true' && r.sha === LOTE_M && r.sonecas === 0;
+const ESPEROU = (r) => r.status === 0 && r.sai === 'true' && r.sha === LOTE_M && r.sonecas >= 1;
+const NAO_SAI = (r) => r.status === 0 && r.sai === 'false' && !r.sha;
+const CENARIOS_LOTE = [
+  ['(a) lote testado embarca sem esperar', cenarioLote({ pushPendente: 99 }), NA_HORA],
+  ['(a) run cancelado antes do verde no pai 2 não atrapalha', cenarioLote({ pushPendente: 99, ciLote: [['completed', 'cancelled'], ['completed', 'success']] }), NA_HORA],
+  ['(b) árvore diferente do pai 2 espera o push', cenarioLote({ arvore: 'arv-misturada' }), ESPEROU],
+  ['(b) árvore diferente sem push verde não sai', cenarioLote({ arvore: 'arv-misturada', semPush: true }), NAO_SAI],
+  ['(c) ci vermelho no pai 2 espera o push', cenarioLote({ ciLote: [['completed', 'failure']] }), ESPEROU],
+  ['(c) ci ausente no pai 2 espera o push', cenarioLote({ ciLote: [] }), ESPEROU],
+  ['(c) ci no ar no pai 2 espera o push', cenarioLote({ ciLote: [['in_progress', null]] }), ESPEROU],
+  ['(c) ci vermelho no pai 2 sem push verde não sai', cenarioLote({ ciLote: [['completed', 'failure']], semPush: true }), NAO_SAI],
+  ['(d) head de 1 pai espera o push', cenarioLote({ pais: [LOTE_P1], arvore: 'arv-main' }), ESPEROU],
+  ['(d) head de 3 pais espera o push', cenarioLote({ pais: [LOTE_P1, LOTE_P2, '3'.repeat(40)] }), ESPEROU],
+  ['head chore(release) não sai', cenarioLote({ msg: 'chore(release): v2.0.0-alpha.2', pushPendente: 0 }), NAO_SAI],
+];
+const validaLoteVerde = () => {
+  const motivos = [];
+  const fn = funcaoLote('embarque');
+  if (!temJq) return ['jq ausente no PATH'];
+  if (!scriptEmbarque() || !fn) return ['passo `verde` ou função `verde_por_lote` do embarque não achados'];
+  const dir = mkdtempSync(path.join(tmpdir(), 'rls-lote-verde-'));
+  try {
+    writeFileSync(path.join(dir, 'gh'), GH_FALSO, { mode: 0o755 });
+    writeFileSync(path.join(dir, 'sleep'), '#!/bin/sh\necho z >> "$SONECAS"\n', { mode: 0o755 });
+    for (const [nome, fixture, esperado] of CENARIOS_LOTE) {
+      const r = simulaEmbarque(fixture, dir);
+      if (!esperado(r)) motivos.push(`${nome} falhou (status ${r.status}, sai=${r.sai}, sha=${r.sha === LOTE_M ? 'merge' : r.sha}, ${r.sonecas} sonecas)`);
+    }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+  if (funcaoLote('bump-tag-release') !== fn) motivos.push('`verde_por_lote` do bump não é cópia idêntica da do embarque');
+  const bump = blocoJob('bump-tag-release').split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+  if (!/if \[ "\$CABECA" != "\$APROVADO" \]; then[\s\S]*?if ! verde_por_lote "\$CABECA" && ! pr_fast_verde "\$CABECA"; then\n/.test(bump)) {
+    motivos.push('o bump não confere `verde_por_lote` (com `pr_fast_verde` de reserva) quando a main anda');
+  }
+  return motivos;
+};
+let loteVerde = validaLoteVerde();
+
 if (mutante) {
-  const antes = JSON.stringify([comandos, commitsRelease, docsRelease, rollbackRelease, caminhoProdUnico, animacoesNoDeploy, concorrenciaRelease, tremRelease, geradosNoTrem, lote, retryRelease, conferencia]);
+  const antes = JSON.stringify([comandos, commitsRelease, docsRelease, rollbackRelease, caminhoProdUnico, animacoesNoDeploy, concorrenciaRelease, tremRelease, geradosNoTrem, lote, retryRelease, conferencia, loteVerde]);
   const mutaRelease = (de, para) => {
     workflowRelease = workflowRelease.replace(de, para);
     concorrenciaRelease = validaConcorrenciaRelease();
@@ -426,8 +547,18 @@ if (mutante) {
     workflowRelease = workflowRelease.replace(...TROCAS[mutante]);
     conferencia = validaConferencia(); retryRelease = validaRetry() && !conferencia.length;
   }
+  else if (['lote-sem-arvore', 'lote-sem-ci', 'lote-desligado'].includes(mutante)) {
+    /* `g`: muta as DUAS cópias, para quem morder ser o cenário e não a comparação das cópias */
+    const TROCAS = {
+      'lote-sem-arvore': [/\n\s*\[ "\$ARV2" = "\$ARV" \] \|\| return 1/g, ''],
+      'lote-sem-ci': [/\n\s*\[ "\$\{VERDES:-0\}" -gt 0 \] 2>\/dev\/null \|\| return 1/g, ''],
+      'lote-desligado': [/(verde_por_lote\(\) \{\n)(\s*)/g, '$1$2return 1\n$2'],
+    };
+    workflowRelease = workflowRelease.replace(...TROCAS[mutante]);
+    loteVerde = validaLoteVerde();
+  }
   else throw new Error(`mutante desconhecido: ${mutante}`);
-  if (JSON.stringify([comandos, commitsRelease, docsRelease, rollbackRelease, caminhoProdUnico, animacoesNoDeploy, concorrenciaRelease, tremRelease, geradosNoTrem, lote, retryRelease, conferencia]) === antes) throw new Error(`MUTANTE NAO APLICOU: ${mutante}`);
+  if (JSON.stringify([comandos, commitsRelease, docsRelease, rollbackRelease, caminhoProdUnico, animacoesNoDeploy, concorrenciaRelease, tremRelease, geradosNoTrem, lote, retryRelease, conferencia, loteVerde]) === antes) throw new Error(`MUTANTE NAO APLICOU: ${mutante}`);
 }
 
 const nomes = comandos.filter(({ linha }) => /--title "CSBR \$/.test(linha)).length;
@@ -437,7 +568,7 @@ const dco = commitsRelease.filter(temDco).length;
 const totalCommits = commitsRelease.length;
 const docsOk = docsRelease.filter(Boolean).length;
 const ok = total > 0 && nomes === total && creditos === total && totalCommits > 0 && dco === totalCommits && docsOk === docsRelease.length && rollbackRelease && caminhoProdUnico && animacoesNoDeploy && concorrenciaRelease && tremRelease && geradosNoTrem
-  && lote.semCron && lote.dispatch && lote.disparaLote && lote.naoDisparaComum && lote.antiLoop && lote.seguro && retryRelease;
+  && lote.semCron && lote.dispatch && lote.disparaLote && lote.naoDisparaComum && lote.antiLoop && lote.seguro && retryRelease && !loteVerde.length;
 
 console.log(`${nomes === total && total ? '✓' : '✗'} RLS1 título CSBR: ${nomes}/${total} caminhos`);
 console.log(`${creditos === total && total ? '✓' : '✗'} RLS2 notas com contribuidores: ${creditos}/${total} caminhos`);
@@ -456,6 +587,7 @@ console.log(`${lote.naoDisparaComum ? '✓' : '✗'} RLS14 merge de PR comum nã
 console.log(`${lote.antiLoop ? '✓' : '✗'} RLS15 commit chore(release) do bot não dispara outro release`);
 console.log(`${lote.seguro ? '✓' : '✗'} RLS16 head.ref do PR é dado, não código; job lote só lê`);
 console.log(`${retryRelease ? '✓' : '✗'} RLS17 push do trem com retry limitado, sem force, e só sobre SHA com pr-fast verde${conferencia.length ? ` (${conferencia.join('; ')})` : ''}`);
+console.log(`${loteVerde.length ? '✗' : '✓'} RLS18 merge de lote com a árvore do pai 2 já verde no ci.yml embarca sem esperar; senão espera o push${loteVerde.length ? ` (${loteVerde.join('; ')})` : ''}`);
 if (!ok) {
   console.error('Release inválido: preserve créditos, DCO, docs, concorrência segura e um único caminho automático de produção.');
   process.exit(1);
