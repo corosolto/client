@@ -163,15 +163,27 @@ if (!ALVO.length) {
 let bootOk = true;
 let nextOk = true;
 if (MOBILE && SEM_FLAGS) {
-  const boot = await pag.evaluate(async () => { const g = window.__game; const weapon = g.online ? g._mp.net.meta.roster.find((r) => r.id === g._mp.net.yourEnt).weapon : g.player.weapon; return { keys: globalThis.__vmBootKeys?.[0], weapon, equipped: g.player.weapon, source: (await import('/js/authoredvm.js')).vmFonteDe(weapon) }; });
+  const boot = await pag.evaluate(async () => {
+    const g = window.__game;
+    const weapon = g.online ? g._mp.net.meta.roster.find((r) => r.id === g._mp.net.yourEnt).weapon : g.player.weapon;
+    const authored = await import('/js/authoredvm.js');
+    const characters = await import('/js/characters.js');
+    return {
+      keys: globalThis.__vmBootKeys?.[0], weapon, equipped: g.player.weapon, economia: !!g._ecoLigada,
+      source: authored.vmFonteDe(weapon),
+      pistolSource: authored.vmFonteDe(characters.charWeapon(g.playerCharId)),
+    };
+  });
   const manifest = JSON.parse(fs.readFileSync('tools/viewmodels/vm-assets.manifest.json'));
   const root = manifest.servedRoot + '/';
-  const allowed = new Map(manifest.files.filter((f) => /^(?:shared\/|melee\/|grenade\/|recoil\.json$)/.test(f.path) || root + f.path === new URL(boot.source.url, BASE).pathname)
+  const armasPermitidas = new Set([new URL(boot.source.url, BASE).pathname]);
+  armasPermitidas.add(new URL(boot.pistolSource.url, BASE).pathname);
+  const allowed = new Map(manifest.files.filter((f) => /^(?:shared\/|melee\/|grenade\/|recoil\.json$)/.test(f.path) || armasPermitidas.has(root + f.path))
     .map((f) => [root + f.path, f.bytes]));
   const unrelated = [...bootPaths].filter((p) => !allowed.has(p));
   const bytes = [...bootPaths].reduce((sum, p) => sum + (manifest.files.find((f) => root + f.path === p)?.bytes || 0), 0);
   const budget = [...allowed.values()].reduce((a, b) => a + b, 0);
-  bootOk = boot.weapon === boot.equipped && boot.keys?.length === 2 && boot.keys.includes(boot.source.chave)
+  bootOk = (!MP || boot.weapon === 'awp') && boot.weapon === boot.equipped && boot.keys?.length === 2 && boot.keys.includes(boot.source.chave)
     && boot.keys.includes('grenade') && !unrelated.length && bytes > 0 && bytes <= budget;
   console.log(`VMH boot mobile: ${JSON.stringify({ ...boot, bytes, budget, unrelated, ok: bootOk })}`);
   if (MP) {
