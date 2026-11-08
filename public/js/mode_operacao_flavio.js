@@ -1141,13 +1141,13 @@ export class OperacaoFlavio {
     if (typeof this.game._botEye !== 'function') return this.game._losClear(this.vip.pos, ent.pos);
     const olho = ent.isPlayer ? this.game.camera.position : this.game._botEye(ent);
     const olhoVip = this.vip.isPlayer ? this.game.camera.position : this.game._botEye(this.vip);
-    // Cada defensor pergunta o mesmo no passo: memo exato (tempo + olhos idênticos), sem raycast repetido.
-    const memo = (this._memoLos ||= new WeakMap()).get(ent);
-    if (memo && memo.t === this.game.time && !this.__mutSemMemoLos && memo.ax === olhoVip.x && memo.ay === olhoVip.y && memo.az === olhoVip.z
+    // Cada defensor pergunta o mesmo no passo: memo exato (tempo, olhos e consulta idênticos), sem raycast repetido.
+    const memo = (this._memoLos ||= new WeakMap()).get(ent), consulta = this.game._losClear;
+    if (memo && memo.t === this.game.time && memo.fn === consulta && !this.__mutSemMemoLos && memo.ax === olhoVip.x && memo.ay === olhoVip.y && memo.az === olhoVip.z
       && memo.bx === olho.x && memo.by === olho.y && memo.bz === olho.z) return memo.v;
-    const v = this.game._losClear(olhoVip, olho);
+    const v = consulta.call(this.game, olhoVip, olho);
     const m = memo || {};
-    m.t = this.game.time; m.ax = olhoVip.x; m.ay = olhoVip.y; m.az = olhoVip.z; m.bx = olho.x; m.by = olho.y; m.bz = olho.z; m.v = v;
+    m.t = this.game.time; m.fn = consulta; m.ax = olhoVip.x; m.ay = olhoVip.y; m.az = olhoVip.z; m.bx = olho.x; m.by = olho.y; m.bz = olho.z; m.v = v;
     if (!memo) this._memoLos.set(ent, m);
     return v;
   }
