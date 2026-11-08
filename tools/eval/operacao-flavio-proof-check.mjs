@@ -110,7 +110,7 @@ const familias = {
     'modo-ausente': 'force não anuncia um modo ausente do catálogo jogável',
   }],
   lobby: ['lobby-flavio-check.mjs', {
-    'card-resenha': 'FALHA LF1 o canto do lobby é o card da Operação Flávio',
+    'card-resenha': 'FALHA LF1 o painel é a Operação Flávio, com o desenho da invasão',
     'modal-sem-imagem': 'FALHA LF2 o card abre a história com texto e a arte real',
     'esc-sem-foco': 'FALHA LF3 FECHAR e Escape fecham e devolvem o foco ao card',
     'jogar-mapa-errado': 'FALHA LF4 JOGAR leva ao VS BOTS no operacao_flavio',
