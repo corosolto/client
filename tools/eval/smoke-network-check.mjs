@@ -12,6 +12,11 @@ await test('erro HTTP cross-origin é ruído do backend, não do deploy do site'
   assert.equal(nosso({ kind: 'response', status: 503, url: 'https://backend.example.run.app/api/online' }, { host }), false);
 });
 
+await test('503 same-origin do proxy /api/* é ruído do backend, não do deploy do site', () => {
+  assert.equal(nosso({ kind: 'response', status: 503, url: `https://${host}/api/treta` }, { host }), false);
+});
+
+
 await test('ERR_ABORTED sem resposta bem-sucedida continua visível', () => {
   assert.equal(nosso({ kind: 'requestfailed', url: `https://${host}/img/critical.webp`, error: 'net::ERR_ABORTED' }, { host }), true);
 });
