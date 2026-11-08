@@ -384,6 +384,7 @@ Cobertura: **4151 de 10084 linhas (41%)** do `game.js` têm dono declarado. O re
 | 7310 | `_updatePlayer()` | 360 |
 | 7670 | `_footstepSurface()` | 13 |
 | 7683 | `_updatePickups()` | 159 |
+| 7839 | `_botPegaArma()` | 5 |
 | 7842 | `_wpnMode()` | 7 |
 | 7849 | `_botWeapon()` | 10 |
 | 7859 | `_municaoInfinita()` | 1 |
