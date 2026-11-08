@@ -390,12 +390,12 @@ jobs:
         run: |
           STRING='''${{ toJson(needs) }}'''
           python3 - "$STRING" <<'PY'
-import json,sys
-necessarios=json.loads(sys.argv[1])
-for nome,info in sorted(necessarios.items()):
-    if info['result']!='success': print(f"::error::portao-parcial {nome} terminou em {info['result']}"); sys.exit(1)
-print('portao: os 4 portões paralelos verdes')
-PY
+          import json,sys
+          necessarios=json.loads(sys.argv[1])
+          for nome,info in sorted(necessarios.items()):
+              if info['result']!='success': print(f"::error::portao-parcial {nome} terminou em {info['result']}"); sys.exit(1)
+          print('portao: os 4 portões paralelos verdes')
+          PY
 
   sertao:
     needs: decide
