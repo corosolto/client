@@ -8,6 +8,10 @@ await test('erro HTTP do próprio host reprova', () => {
   assert.equal(nosso({ kind: 'response', status: 404, url: `https://${host}/img/missing.webp` }, { host }), true);
 });
 
+await test('erro HTTP cross-origin é ruído do backend, não do deploy do site', () => {
+  assert.equal(nosso({ kind: 'response', status: 503, url: 'https://backend.example.run.app/api/online' }, { host }), false);
+});
+
 await test('ERR_ABORTED sem resposta bem-sucedida continua visível', () => {
   assert.equal(nosso({ kind: 'requestfailed', url: `https://${host}/img/critical.webp`, error: 'net::ERR_ABORTED' }, { host }), true);
 });
@@ -26,5 +30,3 @@ await test('ruído do servidor local só é filtrado no ensaio local', () => {
   assert.equal(nosso(evento, { host, ensaioLocal: true }), false);
   assert.equal(nosso(evento, { host, ensaioLocal: false }), true);
 });
-
-console.log('smoke-network: classificação de respostas, cancelamentos e terceiros passa');
