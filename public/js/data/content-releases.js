@@ -20,9 +20,9 @@ export const CHARACTER_RELEASES = Object.freeze({
   'capitao-caveira': Object.freeze({
     kind: 'character',
     id: 'capitao-caveira',
-    version: '0.1.0',
-    manifestSha256: '7f8e149a28a41f14df203f9a229c07b460424a082688a210176dc31635a7852e',
-    manifestUrl: '/packs/character/capitao-caveira/0.1.0/manifest.json',
+    version: '0.1.1',
+    manifestSha256: 'ea613a3a7fee31b22b8121fa212c7331a67fbc2ac565e06b24160d897355e523',
+    manifestUrl: '/packs/character/capitao-caveira/0.1.1/manifest.json',
     minRuntime: '2.1.0-alpha.138',
     skeleton: STUDIO_CHARACTER_SKELETON,
   }),

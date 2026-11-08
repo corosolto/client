@@ -2,7 +2,8 @@
 
 Como o cliente carrega um PERSONAGEM de um pacote imutável do Studio (`kind: "character"`,
 contrato em `corosolto/studio` → `docs/character-pack.md`), verificado no navegador antes de
-virar modelo. Primeiro consumidor: `capitao-caveira@0.1.0`.
+virar modelo. Primeiro consumidor: `capitao-caveira@0.1.1` (0.1.0 tinha as mãos em lâmina por
+rig sem encaixe de cotovelo/punho; consertado no `tools/rig-from-donor.mjs`, client #1253).
 
 Este passo NÃO coloca ninguém no elenco: sem entrada em `characters.js`, sem retrato/avatar/
 arte de resultado/WebM, sem allowlist no backend nem `CLIENT_REF`, sem multiplayer e sem
@@ -45,7 +46,7 @@ com o verificador Node do pacote (Studio `tools/validate-pack.mjs` e a instalaç
 
 ```sh
 STUDIO_PACK_ROOT=/caminho/para/local/studio-packs npm run dev
-# o pacote fica em $STUDIO_PACK_ROOT/character/capitao-caveira/0.1.0/manifest.json
+# o pacote fica em $STUDIO_PACK_ROOT/character/capitao-caveira/0.1.1/manifest.json
 ```
 
 `/packs/` aceita só GET/HEAD, só caminho canônico (sem `%`, `\`, `.`/`..`, barra dupla), só
