@@ -1387,6 +1387,8 @@ export class Game {
     this._ctfZoneTex = this._makeCtfZoneTex();
     this._ctfGray = new THREE.Color(0x8a8a86);   // dessaturação da cor de time na zona (-50% sat)
     this.ray = new THREE.Raycaster();
+    // LOS dos bots roda dezenas de vezes por quadro: vetores e lista de acertos reaproveitados.
+    this._losDir = new THREE.Vector3(); this._losAb = new THREE.Vector3(); this._losTmp = new THREE.Vector3(); this._losHits = [];
 
     // ---- round state ----
     this.roundNum = 0;
@@ -8113,18 +8115,27 @@ export class Game {
 
   /* ================= bots ================= */
   _losClear(from, to) {
-    const dir = to.clone().sub(from), dist = dir.length();
+    const dir = this._losDir.subVectors(to, from), dist = dir.length();
     if (dist < 0.5) return true;
     this.ray.set(from, dir.normalize()); this.ray.far = dist - 0.3;
-    if (this.world.rayOccluded ? this.world.rayOccluded(this.ray) : this.ray.intersectObjects(this.world.occluders, false).length > 0) return false;
+    if (this.world.rayOccluded ? this.world.rayOccluded(this.ray) : this._raioBloqueado(this.ray)) return false;
     // fumaça bloqueia a visão dos bots: se o segmento cruza uma nuvem opaca, sem linha de visão.
     for (const s of this._smokes) {
       if (!s._opaque) continue;
-      const ab = to.clone().sub(from);
-      const t = Math.max(0, Math.min(1, s.center.clone().sub(from).dot(ab) / (ab.lengthSq() || 1)));
-      if (from.clone().addScaledVector(ab, t).distanceToSquared(s.center) <= s.radius * s.radius) return false;
+      const ab = this._losAb.subVectors(to, from);
+      const t = Math.max(0, Math.min(1, this._losTmp.subVectors(s.center, from).dot(ab) / (ab.lengthSq() || 1)));
+      if (this._losTmp.copy(from).addScaledVector(ab, t).distanceToSquared(s.center) <= s.radius * s.radius) return false;
     }
     return true;
+  }
+  // Basta um acerto: para no primeiro occluder em vez de juntar e ordenar todos.
+  _raioBloqueado(ray) {
+    const hits = this._losHits;
+    for (const o of this.world.occluders) {
+      hits.length = 0; ray.intersectObject(o, false, hits);
+      if (hits.length) { hits.length = 0; return true; }
+    }
+    return false;
   }
   /* RÁDIO DOS BOTS: o sistema de rádio existia só pro jogador — o time era mudo, então nada
      do que os bots faziam chegava ao jogador como informação. Aqui, ao ENGATAR um alvo, o bot
