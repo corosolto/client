@@ -22,6 +22,13 @@
 // Rigid-ish but smooth enough for distant bots.
 //
 // usage: node tools/rig-from-donor.mjs <donor.glb> <mesh.glb> <out.glb>
+//        AJUSTE_JUNTAS=0 desliga o encaixe de cotovelo/punho na malha (transplante cru).
+//
+// ESTADO EM 08/11 — MÃOS EM LÂMINA: o transplante agora ENCAIXA cotovelo e punho na malha
+// (bloco "AJUSTE DAS JUNTAS" abaixo). Sem isso 12 dos 37 do lote30 (Creepypasta Season)
+// esticavam aresta da mão 15-87× nos clipes; com ele, 37/37 ≤ 1,6×. Régua:
+// `npm run eval:rigmaos` (tools/eval/rig-maos-check.mjs). Os GLB do elenco em public/
+// NÃO foram regerados por esta mudança.
 //
 // ─────────────────────────────────────────────────────────────────────────────────────
 // ESTADO EM 04/08 — O DEFEITO DO "BALÃO" FOI ACHADO E CONSERTADO
@@ -121,6 +128,74 @@ const nameToIdx = new Map(jointInfo.map((j, i) => [j.name, i]));
 const MIN_SEG = 0.02;                                     // < 2 cm é degenerado (Hand→Curl tem 1 mm)
 const kidsDe = jointInfo.map(() => []);
 jointInfo.forEach((j, i) => { if (j.parentName != null) kidsDe[nameToIdx.get(j.parentName)].push(i); });
+const dBox = meshBBox(donor);
+const donorH = dBox.mx[1] - dBox.mn[1], donorFootY = dBox.mn[1];
+
+// ================= MESH: read + align =================
+const doc = await io.read(meshPath);
+const mBox = meshBBox(doc);
+const scale = donorH / (mBox.mx[1] - mBox.mn[1]);
+const cx = (mBox.mn[0] + mBox.mx[0]) / 2, cz = (mBox.mn[2] + mBox.mx[2]) / 2;
+const tx = -cx * scale, tz = -cz * scale, ty = donorFootY - mBox.mn[1] * scale;
+const alignPt = (v) => new THREE.Vector3(v[0] * scale + tx, v[1] * scale + ty, v[2] * scale + tz);
+const buffer = doc.getRoot().listBuffers()[0] || doc.createBuffer();
+const scene = doc.getRoot().listScenes()[0];
+
+/* AJUSTE DAS JUNTAS DO ANTEBRAÇO E DA MÃO À MALHA (08/11/2026 — mãos em lâmina do
+   capitao-caveira@0.1.0). O transplante copiava as juntas do mst sem olhar a malha. Na
+   malha do Mint o braço passava ~10 cm ACIMA da linha de juntas e o antebraço dobrava pra
+   frente: a carne da mão ficava 23 cm da junta LeftHand/RightHand. O peso por proximidade
+   então dividia a mão entre Arm/ForeArm/Hand e o clipe girava a mão em torno de um pivô
+   fora da carne: aresta da mão esticando 86× (walkfire) e 36× (death) contra ≤ 1,8× do
+   elenco (régua: tools/eval/rig-maos-check.mjs).
+   O ajuste: para cotovelo e punho, a fatia da malha perpendicular ao osso do doador
+   (±2,5 cm) dentro de 30 cm da junta; o centróide vira a junta, e a subárvore anda junto.
+   Só TRANSLAÇÃO muda: rotação de repouso fica a do doador, então o retarget-glb (deltas
+   de rotação de mundo) e o pack compartilhado continuam valendo. IBM é recalculada só
+   para a subárvore que andou; o resto do esqueleto sai byte a byte igual ao doador.
+   Fatia sem carne (< 12 pontos) mantém a junta do doador. AJUSTE_JUNTAS=0 desliga (é o
+   transplante cru de antes; existe para o mutante da régua). */
+const AJUSTE = process.env.AJUSTE_JUNTAS !== '0';
+const AJUSTAVEIS = ['LeftForeArm', 'LeftHand', 'RightForeArm', 'RightHand'];
+const FATIA = 0.025, ALCANCE = 0.30, MIN_PONTOS = 12;
+const movidas = new Set();
+if (AJUSTE) {
+  const pts = [], el = [];
+  for (const m of doc.getRoot().listMeshes()) for (const p of m.listPrimitives()) {
+    const a = p.getAttribute('POSITION'); if (!a) continue;
+    for (let i = 0; i < a.getCount(); i++) pts.push(alignPt(a.getElement(i, el)));
+  }
+  const subarvore = (i) => { const out = [i]; for (let k = 0; k < out.length; k++) out.push(...kidsDe[out[k]]); return out; };
+  for (const nome of AJUSTAVEIS) {
+    const i = nameToIdx.get(nome), j = i == null ? null : jointInfo[i];
+    if (!j || j.parentName == null) continue;
+    const eixo = new THREE.Vector3().subVectors(j.world, jointInfo[nameToIdx.get(j.parentName)].world).normalize();
+    const soma = new THREE.Vector3(), d = new THREE.Vector3(); let n = 0;
+    for (const p of pts) {
+      d.subVectors(p, j.world); const ao = d.dot(eixo);
+      if (Math.abs(ao) > FATIA || d.addScaledVector(eixo, -ao).length() > ALCANCE) continue;
+      soma.add(p); n++;
+    }
+    if (n < MIN_PONTOS) { console.log(`ajuste: ${nome} sem carne na fatia (${n} pts), fica a junta do doador`); continue; }
+    const delta = soma.divideScalar(n).sub(j.world);
+    for (const k of subarvore(i)) { jointInfo[k].world = jointInfo[k].world.clone().add(delta); movidas.add(k); }
+    console.log(`ajuste: ${nome} ${(delta.length() * 100).toFixed(1)} cm (${n} pts)`);
+  }
+}
+// Translação local e IBM das juntas que andaram, a partir do mundo ajustado (rotação/escala do doador).
+const mundoAjustado = [];
+const raizPai = dWM.get(dParent.get(rootJoint)) || new THREE.Matrix4();
+const ordem = [nameToIdx.get(rootJoint.getName())];
+for (let k = 0; k < ordem.length; k++) ordem.push(...kidsDe[ordem[k]]);
+for (const i of ordem) {
+  const j = jointInfo[i];
+  const P = j.parentName != null ? mundoAjustado[nameToIdx.get(j.parentName)] : raizPai;
+  if (movidas.has(i)) j.t = j.world.clone().applyMatrix4(P.clone().invert()).toArray();
+  mundoAjustado[i] = P.clone().multiply(new THREE.Matrix4().compose(new THREE.Vector3().fromArray(j.t), new THREE.Quaternion().fromArray(j.r), new THREE.Vector3().fromArray(j.s)));
+}
+const ibmAjustada = Float32Array.from(dIBM);
+for (const i of movidas) ibmAjustada.set(mundoAjustado[i].clone().invert().elements, i * 16);
+
 const segs = [];
 jointInfo.forEach((j, i) => {
   if (/^curl_/i.test(j.name)) return;                     // folha de dedo não domina carne
@@ -136,18 +211,6 @@ jointInfo.forEach((j, i) => {
     segs.push({ a: j.world, b: j.world.clone().addScaledVector(dir.normalize(), L), idx: i });
   }
 });
-const dBox = meshBBox(donor);
-const donorH = dBox.mx[1] - dBox.mn[1], donorFootY = dBox.mn[1];
-
-// ================= MESH: read + align =================
-const doc = await io.read(meshPath);
-const mBox = meshBBox(doc);
-const scale = donorH / (mBox.mx[1] - mBox.mn[1]);
-const cx = (mBox.mn[0] + mBox.mx[0]) / 2, cz = (mBox.mn[2] + mBox.mx[2]) / 2;
-const tx = -cx * scale, tz = -cz * scale, ty = donorFootY - mBox.mn[1] * scale;
-const alignPt = (v) => new THREE.Vector3(v[0] * scale + tx, v[1] * scale + ty, v[2] * scale + tz);
-const buffer = doc.getRoot().listBuffers()[0] || doc.createBuffer();
-const scene = doc.getRoot().listScenes()[0];
 
 // ---- recreate armature chain (top-of-chain under scene, nested down) ----
 const armNodes = armChain.map(a => doc.createNode(a.name).setTranslation(a.t).setRotation(a.r).setScale(a.s));
@@ -155,12 +218,12 @@ for (let i = armChain.length - 1; i > 0; i--) armNodes[i].addChild(armNodes[i - 
 if (armNodes.length) scene.addChild(armNodes[armNodes.length - 1]);
 const armParent = armNodes.length ? armNodes[0] : scene;
 
-// ---- rebuild joints with ORIGINAL local TRS ----
+// ---- rebuild joints with the donor's local TRS (translação ajustada nas juntas que andaram) ----
 const newNodes = jointInfo.map(j => doc.createNode(j.name).setTranslation(j.t).setRotation(j.r).setScale(j.s));
 jointInfo.forEach((j, i) => { if (j.parentName != null) newNodes[nameToIdx.get(j.parentName)].addChild(newNodes[i]); });
 armParent.addChild(newNodes[nameToIdx.get(rootJoint.getName())]);
 
-const ibmAcc = doc.createAccessor().setType('MAT4').setArray(Float32Array.from(dIBM)).setBuffer(buffer);
+const ibmAcc = doc.createAccessor().setType('MAT4').setArray(ibmAjustada).setBuffer(buffer);
 const skin = doc.createSkin('rig').setInverseBindMatrices(ibmAcc).setSkeleton(newNodes[nameToIdx.get(rootJoint.getName())]);
 newNodes.forEach(n => skin.addJoint(n));
 
