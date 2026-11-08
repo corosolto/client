@@ -116,6 +116,8 @@ jobs:
         run: npm run eval:character-preview-media
       - name: Retrato hero só para personagem com arquivo (#1231, com mutantes)
         run: npm run eval:retratohero
+      - name: Rig por transplante encaixa cotovelo e punho, mão sem lâmina (com mutantes)
+        run: npm run eval:rigmaos
       - name: Pixel do X insere o script do uwt.js (#1231, com mutante)
         run: npm run eval:xpixel
       - name: Acúmulo de armas no chão tem teto
