@@ -14,6 +14,11 @@
      B6  pacote adulterado no fio (1 byte do jump.glb): preload REJEITA com
          studio_file_sha_mismatch, o id do Studio fica sem modelo/proveniência, o id
          legado pedido na mesma chamada carrega, e o erro aparece no console
+     B7  mão sem lâmina: com o skinning do three (getVertexPosition), nenhuma aresta que
+         toca a mão (peso ≥ 0,25) estica mais que 2,5× em 3 instantes de cada um dos 11
+         clipes do pacote, no corpo montado pelo jogo
+     B8  controle negativo de B7: a release anterior conhecida com mão em lâmina
+         (CONTROLE_LAMINA, se ainda instalada na raiz) TEM que passar de 2,5× na mesma conta
 
    Sem STUDIO_PACK_ROOT (ou sem o pacote instalado nele) sai 78 = NÃO MEDIDO, nunca
    verde. Porta: PORTA ou a 1ª livre a partir de 9461 (lane 9100-9900). Rode sob with-browser-lock.sh. */
@@ -50,6 +55,34 @@ const BASE = `http://127.0.0.1:${PORTA}`;
 const OUT = join(ROOT, 'artifacts', 'studio-character', ID);
 mkdirSync(OUT, { recursive: true });
 const DIR_PACOTE = PIN.manifestUrl.replace(/manifest\.json$/, '');
+const LIMITE_MAO = 2.5;
+/* capitao-caveira@0.1.0: rig sem encaixe de cotovelo/punho, mão a 23 cm da junta (client #1253). */
+const CONTROLE_LAMINA = { 'capitao-caveira': { version: '0.1.0', manifestSha256: '7f8e149a28a41f14df203f9a229c07b460424a082688a210176dc31635a7852e' } }[ID];
+/* Conta de B7/B8 injetada na página: maior esticamento de aresta da mão sob cada clipe. */
+const MEDE_MAOS = `window.__medeMaos = (THREE, raiz, pele, clips) => {
+  const nomes = pele.skeleton.bones.map((b) => b.name);
+  const mao = new Set(nomes.map((n, i) => (/^(Left|Right)Hand$|^Curl_/.test(n) ? i : -1)).filter((i) => i >= 0));
+  const g = pele.geometry, si = g.attributes.skinIndex, sw = g.attributes.skinWeight, pos = g.attributes.position;
+  const q4 = (attr, v) => [attr.getX(v), attr.getY(v), attr.getZ(v), attr.getW(v)];
+  const peso = (v) => { const j = q4(si, v), w = q4(sw, v); let s = 0; for (let k = 0; k < 4; k++) if (mao.has(j[k])) s += w[k]; return s; };
+  const idx = g.index ? g.index.array : Array.from({ length: pos.count }, (_, i) => i);
+  const vistas = new Set(), arestas = [], a = new THREE.Vector3(), b = new THREE.Vector3();
+  for (let t = 0; t + 2 < idx.length; t += 3) for (const [u, v] of [[idx[t], idx[t + 1]], [idx[t + 1], idx[t + 2]], [idx[t + 2], idx[t]]]) {
+    const k = u < v ? u + ',' + v : v + ',' + u; if (vistas.has(k)) continue; vistas.add(k);
+    if (peso(u) < 0.25 && peso(v) < 0.25) continue;
+    const L = a.fromBufferAttribute(pos, u).distanceTo(b.fromBufferAttribute(pos, v)); if (L > 1e-6) arestas.push([u, v, L]);
+  }
+  const mixer = new THREE.AnimationMixer(raiz); let pior = 1, estado = null;
+  for (const [s, clip] of Object.entries(clips)) {
+    mixer.stopAllAction(); const act = mixer.clipAction(clip); act.reset(); act.enabled = true; act.setEffectiveWeight(1); act.play();
+    for (const f of [0.1, 0.45, 0.8]) {
+      act.time = clip.duration * f; mixer.update(0); raiz.updateMatrixWorld(true);
+      for (const [u, v, L] of arestas) { const r = pele.getVertexPosition(u, a).distanceTo(pele.getVertexPosition(v, b)) / L; if (r > pior) { pior = r; estado = s; } }
+    }
+  }
+  mixer.stopAllAction(); mixer.uncacheRoot(raiz);
+  return { pior, estado, arestas: arestas.length };
+};`;
 
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
@@ -74,6 +107,7 @@ const browser = await chromium.launch({
 try {
   // ── B1..B5: pacote íntegro no harness real ─────────────────────────────────
   const ctx = await browser.newContext({ viewport: { width: 640, height: 720 } });
+  await ctx.addInitScript(MEDE_MAOS);
   const page = await ctx.newPage();
   const erros = [], pedidos = [];
   page.on('pageerror', (e) => erros.push(e.message));
@@ -137,6 +171,8 @@ try {
       const G = await import('/js/glbchars.js');
       out.luva = G.getGloveHandle(C.id);
       out.hasModel = G.hasModel(C.id);
+      // B7 no corpo montado pelo jogo, com os clipes do pacote (identidade checada em B4).
+      out.maos = window.__medeMaos(THREE, ctrl.model, pele, st ? st.clips : {});
       return out;
     }, { estados: STUDIO_CHARACTER_STATES, juntas: STUDIO_SKELETON_JOINTS });
 
@@ -174,14 +210,42 @@ try {
       linhas.push(`${s.padEnd(10)} dur ${c.duracao.toFixed(2)}s  Δquat ${c.mexe.toFixed(3)}  altura ${c.altura.toFixed(2)} m  corpo ${(c.quadro * 100).toFixed(1)}% do quadro  ${arquivo}`);
     }
     if (r.luva !== null) falha(`B5: corpo do Studio ganhou handle de luva: ${JSON.stringify(r.luva)}`);
+    if (!(r.maos.arestas > 0)) falha('B7: nenhuma aresta pesada na mão — nada medido');
+    else if (r.maos.pior > LIMITE_MAO) falha(`B7: aresta da mão estica ${r.maos.pior.toFixed(2)}× (${r.maos.estado}) > ${LIMITE_MAO}× — mão em lâmina`);
     if (!r.hasModel) falha('B1: hasModel falso depois do preload');
     if (erros.length) falha(`B1: erros de página: ${erros.join(' | ')}`);
     console.log(`proveniência: manifesto ${st?.manifestSha256}, modelo ${st?.modelSha256}`);
     console.log(`rede /packs/: ${doPacote.length} pedido(s) → ${[...new Set(doPacote.map((p) => p.status))].join(',')}`);
     console.log(`esqueleto: ${r.juntas.length} juntas (${r.juntasFaltando.length} meshy-28 faltando)`);
     for (const l of linhas) console.log(`  ${l}`);
+    console.log(`mãos: ${r.maos.arestas} arestas, maior esticamento ${r.maos.pior.toFixed(2)}× (${r.maos.estado}), limite ${LIMITE_MAO}×`);
   }
   await ctx.close();
+
+  // ── B8: controle negativo de B7 contra a release com mão em lâmina ─────────
+  if (CONTROLE_LAMINA && existsSync(join(RAIZ, 'character', ID, CONTROLE_LAMINA.version, 'manifest.json'))) {
+    const ctx3 = await browser.newContext();
+    await ctx3.addInitScript(MEDE_MAOS);
+    const p3 = await ctx3.newPage();
+    await p3.goto(`${BASE}/eval-character.html`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    const ctrl = await p3.evaluate(async ({ pin, estados }) => {
+      const THREE = await import('three');
+      const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+      const { resolveStudioCharacter } = await import('/js/studio-character.js');
+      const pack = await resolveStudioCharacter(pin);
+      const L = new GLTFLoader(), load = (u) => new Promise((ok, no) => L.load(u, ok, undefined, no));
+      const g = await load(pack.modelUrl);
+      let pele = null; g.scene.traverse((o) => { if (!pele && o.isSkinnedMesh) pele = o; });
+      const clips = {};
+      for (const s of estados) clips[s] = (await load(pack.animationUrls[s])).animations.find((c) => c.name === s);
+      return window.__medeMaos(THREE, g.scene, pele, clips);
+    }, { pin: { ...PIN, ...CONTROLE_LAMINA, manifestUrl: `/packs/character/${ID}/${CONTROLE_LAMINA.version}/manifest.json` }, estados: STUDIO_CHARACTER_STATES })
+      .catch((e) => ({ erro: e.message }));
+    if (ctrl.erro) falha(`B8: controle ${ID}@${CONTROLE_LAMINA.version} não carregou: ${ctrl.erro}`);
+    else if (!(ctrl.pior > LIMITE_MAO)) falha(`B8: controle ${ID}@${CONTROLE_LAMINA.version} (mão em lâmina conhecida) mediu só ${ctrl.pior.toFixed(2)}× — B7 não morde`);
+    else console.log(`controle negativo ${ID}@${CONTROLE_LAMINA.version}: mão estica ${ctrl.pior.toFixed(2)}× (${ctrl.estado}) > ${LIMITE_MAO}×, B7 morde`);
+    await ctx3.close();
+  } else if (CONTROLE_LAMINA) console.log(`controle negativo ${ID}@${CONTROLE_LAMINA.version}: não instalado na raiz, B8 não medido`);
 
   // ── B6: pacote adulterado no fio ───────────────────────────────────────────
   const ctx2 = await browser.newContext();
