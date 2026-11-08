@@ -8130,6 +8130,8 @@ export class Game {
   }
   // Basta um acerto: para no primeiro occluder em vez de juntar e ordenar todos.
   _raioBloqueado(ray) {
+    // `__mutLosTodos`: gancho da régua bots-perf (mesmo precedente do __mutBotYaw) — volta a juntar todos.
+    if (this.__mutLosTodos) return ray.intersectObjects(this.world.occluders, false).length > 0;
     const hits = this._losHits;
     for (const o of this.world.occluders) {
       hits.length = 0; ray.intersectObject(o, false, hits);
