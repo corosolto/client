@@ -1,4 +1,11 @@
 /* Proxies de movimento permanecem físicos; a bala registra somente superfícies renderizadas. */
+import { indexLajesRaycast as indexStaticRaycast } from './lajes_raycast_index.js';
+// ?occindex=0 devolve o raycast linear (A/B e mutante da régua bots-perf).
+const INDICE_OCCLUDER = new URLSearchParams(globalThis.location?.search || '').get('occindex') !== '0';
+// O proxy do índice nasce com UUID do three (Math.random): não pode gastar o sorteio semeado
+// das réguas e do servidor — senão spawn e arma mudam só por indexar.
+let _passo = 0;
+const semSorteio = () => (_passo = (_passo + 0.6180339887498949) % 1);
 const guarded = new WeakSet();
 const construtores = new WeakMap();
 const renders = material => material && material.visible !== false && material.colorWrite !== false && (material.opacity ?? 1) > 0;
@@ -26,6 +33,12 @@ export function withVisibleShotOccluders(build) {
     world.occluders = meshes;
     for (const object of world.occluders) {
       if (guarded.has(object)) continue;
+      // Malha sem raycast próprio ganha o índice estático: mesmos acertos, menos triângulos testados.
+      if (INDICE_OCCLUDER && object.isMesh && !Object.prototype.hasOwnProperty.call(object, 'raycast')) {
+        const sorteio = Math.random;
+        Math.random = semSorteio;
+        try { indexStaticRaycast(object); } finally { Math.random = sorteio; }
+      }
       const raycast = object.raycast;
       object.raycast = function (raycaster, hits) {
         if (!visibleNode(this)) return;
