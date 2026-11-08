@@ -56,6 +56,9 @@ import { CABECAS_HITBOX, CABECA_PADRAO } from './data/cabecas-hitbox.js';
 import { cegueiraFlash, brancoEm, retidaEm, FLASH_ERRO_MIRA } from './flashbang.js';
 import { assetUrl } from './data/asseturl.js';
 import { gradeColisores, candidatosColisao } from './collider_grid.js';
+import { usarIndiceEstatico } from './shot_surfaces.js';
+import { indexLajesRaycast } from './lajes_raycast_index.js';
+usarIndiceEstatico(indexLajesRaycast);
 export { saidaPenetracao, resolverRaio };
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
 // autoritativo) e tools/eval/botdiag.mjs. Consumidor novo importa de data/weapons.js.
