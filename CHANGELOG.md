@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.138`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.139`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -217,6 +217,36 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.139] — 2026-11-08
+
+### Mudado
+- Release sai na hora quando a main recebe um lote já testado (#1239)
+- Lobby: Operação Flávio primeiro; Quests e skins embaixo de Amigos online (#1240)
+- Add /en as the crawlable English home (#1243)
+- fix(mp): expor sala privada e reduzir stalls do mantle (#1241)
+- Flávio: cobertura nas laterais e arma caída pegável (#1242)
+- feat(client): randomize anonymous initial character (#1247)
+- fix(ci): exigir mutantes aplicadas no contrato de personagem (#1249)
+- lote release: promover staging para main (#1248)
+- test(client): detect unapplied character mutants
+- test(client): cover anonymous character bootstrap
+- Point the card-resenha proof at the renamed LF1 clause
+- feat(client): randomize anonymous initial character
+- test(lobby): isolate card-resenha failure
+- Add /en as the crawlable English home
+- chore(docs): regenera bloco derivado (autofix)
+- Regenerate ARCH.md for _botPegaArma
+- Give the Flávio side lanes real cover every ten meters
+- Add a 12-triangle baked cargo crate for Flávio cover
+- perf(mp): index mantle colliders before sampling
+- Let the Flávio escort leave dropped weapons for the player
+- docs: changelog do lobby com Flávio primeiro
+- test(lobby): réguas do painel do Flávio e das colunas (LFB6)
+- chore(lobby): tira a miniatura do card de canto da revisão de assets
+- feat(lobby): Operação Flávio primeiro, quests e skins sob amigos online
+- fix(ui): expose private room action in legacy lobby
+- Ship the release train at once when main merges a tested lot
 
 ## [2.1.0-alpha.138] — 2026-11-07
 
