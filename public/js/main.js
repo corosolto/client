@@ -14,6 +14,7 @@ import { clientUuid, getAnonId } from './client-id.js';
 import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
 import {tretaPack} from './data/pack-definitions.js';
 import {retratoFontes} from './data/retratos.js';
+import {characterRelease} from './data/content-releases.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { EMOTES_ENABLED } from './emote-features.js';
@@ -2187,7 +2188,9 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
     .map((d) => (typeof d === 'string' ? d : d.id))
     .filter((id, i, a) => GLB_CHARS.has(id) && a.indexOf(id) === i);
-  const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS];
+  // Fallback sem roster GLB: só o acervo legado. Release do Studio só carrega quando está
+  // na partida (fora do elenco hoje); pedir /packs/ aqui seria 404 garantido em produção.
+  const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS].filter((id) => !characterRelease(id));
   /* Armas da partida sorteadas aqui pelo mesmo motivo do roster: as 26 custavam 164 MB de VRAM
      e 7,5 MB de download numa partida que usa ~9. O resto chega em ocioso. Régua: ARM1. */
   /* Armas: no multiplayer também são do servidor (ele é dono do estado de arma de cada corpo).

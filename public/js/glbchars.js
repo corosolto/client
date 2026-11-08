@@ -24,6 +24,8 @@ import { weaponModel, preloadWeapons, ONE_HANDED, gripPoints } from './weapons.j
 import { mountEyewear } from './eyewear.js';
 import { gloveSkinStyle } from './data/glove-skin-definitions.js';
 import { solveCCDIK } from './handik.js';
+import { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES, STUDIO_SKELETON_JOINTS, characterRelease } from './data/content-releases.js';
+import { resolveStudioCharacter, StudioCharacterError } from './studio-character.js';
 
 // Character ids that have a real model under public/models/characters/<id>.glb.
 export const GLB_CHARS = new Set([
@@ -48,6 +50,11 @@ export const GLB_CHARS = new Set([
   'barbudo', 'capitao', 'dama', 'professor', 'senador', 'ministro', 'deputado', 'juiz',
   'julia-zanatta', 'marina-silva',
 ]);
+/* Personagens do Studio fixados por release (data/content-releases.js): entram no
+   GLB_CHARS, mas o corpo e os 11 clipes vêm SÓ do pacote verificado — nunca de
+   public/models/characters/, do índice de clipes ou do pack compartilhado. A lista
+   literal acima continua sendo a dos GLBs legados em public/. */
+for (const id of Object.keys(CHARACTER_RELEASES)) GLB_CHARS.add(id);
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
 // (caso do Dollynho na tela de seleção). Neles, a mão L segue a pose do clipe.
@@ -277,13 +284,16 @@ function glovePath(manifest, origin) {
   }
   return matches.length === 1 ? matches[0] : null;
 }
+/* Corpo do Studio não tem origem em public/models/characters: nem origem base inventada,
+   nem pacote de luva — a origem dele é {kind:'studio', sha256, manifestSha256} e só uma
+   variante de luva verificada para ESSES bytes poderia casar (não existe hoje). */
 function baseGloveOrigin(id) {
-  if (!GLB_CHARS.has(id)) return null;
+  if (!GLB_CHARS.has(id) || characterRelease(id)) return null;
   const path = `models/characters/${id}.glb`;
   return Object.freeze({ kind: 'base', character: id, path: `public/${path}`, revision: revDe(path) });
 }
 function gloveHandleFor(origin) {
-  if (!origin) return null;
+  if (!origin || origin.kind === 'studio') return null;
   const key = JSON.stringify([origin.kind, origin.character, origin.path, origin.kind === 'cosmetic' ? origin.sha256 : origin.revision]);
   if (_gloveHandles.has(key)) return _gloveHandles.get(key);
   const handle = Object.freeze({
@@ -483,8 +493,10 @@ const torsoRadiusAt = (prof, y) => {
 };
 
 // Preload shared clips + base meshes for the given character ids. Safe to call once
-// before a match; already-loaded assets are skipped. Failures are swallowed per-asset
-// so a missing model just falls back to the box mesh.
+// before a match; already-loaded assets are skipped. Legacy failures are swallowed
+// per-asset so a missing model just falls back to the box mesh. Studio-pinned ids are
+// all-or-nothing: they load only from the verified pack and their failure REJECTS this
+// call (StudioCharacterError, or AggregateError for several) after every other id settled.
 export async function preloadCharacterAssets(ids, opts = {}) {
   /* Armas FORA do bootstrap de clipes: a 1ª chamada é a da tela de carregamento, e prender as
      armas ao `if (!_clips)` fazia a partida herdar a lista errada (ou as 26). Idempotente. */
@@ -521,7 +533,14 @@ export async function preloadCharacterAssets(ids, opts = {}) {
     ]);
   } else await armas;
   const wanted = [...new Set(ids)].filter((id) => GLB_CHARS.has(id) && !_base.has(id));
+  const studioFailures = [];
   await Promise.all(wanted.map(async (id) => {
+    const release = characterRelease(id);
+    if (release) {
+      try { await preloadStudioCharacter(id, release); }
+      catch (e) { console.error(`[studio] ${id}@${release.version}: ${e?.code || 'studio_load_failed'}`, e); studioFailures.push(e); }
+      return;
+    }
     try {
       const path = `models/characters/${id}.glb`;
       const origin = Object.freeze({ kind: 'base', character: id, path: `public/${path}`, revision: revDe(path) });
@@ -561,7 +580,48 @@ export async function preloadCharacterAssets(ids, opts = {}) {
     }));
     _clipsByChar[id] = set;
   }));
+  if (studioFailures.length === 1) throw studioFailures[0];
+  if (studioFailures.length) throw new AggregateError(studioFailures, 'studio_character_preload_failed');
 }
+
+/* PERSONAGEM DO STUDIO (release fixada): modelo + os 11 clipes saem SÓ das Blob URLs
+   verificadas por studio-character.js. Nada de animIndex(), GLB mesclado, pasta
+   models/anims/<id>/ nem clipe compartilhado. Estado global só é escrito depois que
+   TUDO carregou e conferiu (tudo ou nada); a origem do corpo é {kind:'studio'}. */
+const _studioRequests = new Map();
+const _studioProvenance = new Map();
+function preloadStudioCharacter(id, release) {
+  if (_studioRequests.has(id)) return _studioRequests.get(id);
+  const request = (async () => {
+    const pack = await resolveStudioCharacter(release);
+    const [model, ...clipGlbs] = await Promise.all([
+      loadGLB(pack.modelUrl),
+      ...STUDIO_CHARACTER_STATES.map((s) => loadGLB(pack.animationUrls[s])),
+    ]).catch((e) => { throw new StudioCharacterError('studio_glb_invalid', `${id}: ${e?.message || e}`, { cause: e }); });
+    const joints = new Set();
+    model.scene.traverse((o) => { if (o.isSkinnedMesh && o.skeleton) for (const b of o.skeleton.bones) joints.add(b.name); });
+    const missing = STUDIO_SKELETON_JOINTS.filter((name) => !joints.has(name));
+    if (missing.length) throw new StudioCharacterError('studio_skeleton_mismatch', `${id}: sem ${missing.join(',')}`);
+    const set = {};
+    STUDIO_CHARACTER_STATES.forEach((s, i) => {
+      const clip = clipGlbs[i].animations.find((c) => c.name === s);
+      if (!clip) throw new StudioCharacterError('studio_clip_missing', `${id}: ${s}`);
+      set[s] = clip;
+    });
+    _bodyOrigins.set(model.scene, Object.freeze({ kind: 'studio', character: id, sha256: pack.modelSha256, manifestSha256: pack.manifestSha256 }));
+    _clipsByChar[id] = set;
+    _base.set(id, model.scene);
+    _studioProvenance.set(id, Object.freeze({
+      kind: 'studio', id, version: pack.version, manifestSha256: pack.manifestSha256, modelSha256: pack.modelSha256,
+      modelUrl: pack.modelUrl, animationUrls: pack.animationUrls, previewUrls: pack.previewUrls, clips: Object.freeze({ ...set }),
+    }));
+  })().finally(() => _studioRequests.delete(id));
+  _studioRequests.set(id, request);
+  return request;
+}
+/* Evidência para harness/réguas: de onde vieram corpo e clipes de um id do Studio
+   (null para legado ou ainda não carregado). */
+export function studioCharacterProvenance(id) { return _studioProvenance.get(id) || null; }
 
 const _v = new THREE.Vector3();
 const _gq = new THREE.Quaternion(), _wq = new THREE.Quaternion(), _pq = new THREE.Quaternion(), _headUpQ = new THREE.Quaternion();

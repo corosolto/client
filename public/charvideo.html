@@ -47,7 +47,7 @@ import * as THREE from 'three';
 import { comMapaCarregado, resolveMapId } from './js/maps.js';
 import { initTextures } from './js/textures.js';
 import { CHARACTERS } from './js/characters.js';
-import { preloadCharacterAssets, preloadCosmeticAssets, buildCharacterModel } from './js/glbchars.js';
+import { preloadCharacterAssets, preloadCosmeticAssets, buildCharacterModel, studioCharacterProvenance } from './js/glbchars.js';
 import { assetUrl } from './js/data/asseturl.js';
 import { enableLightBloom } from './js/bloom.js';
 
@@ -215,13 +215,19 @@ aplicaPose(POSE0);
 for (let k = 0; k < 30; k++) avanca(1 / FPS);
 renderer.render(scene, camera);
 
+/* Personagem de release do Studio (data/content-releases.js): `studio` diz de onde
+   vieram corpo e clipes (Blob URLs verificadas + SHA-256). `ctrl` e `render()` deixam
+   a régua tocar cada clipe direto no mixer sem o update() trocar o estado.
+   Régua: tools/eval/studio-character-browser.mjs (eval:studiochar:browser). */
 window.CHARVID = {
   ready: true, id: ID, skin: SKIN || null, weapon: WPN || null, skinned: !!SKIN && built.ctrl?.charId === SKIN,
   idleSecs: ctrl?.actions?.idle?.getClip?.().duration || 0, w: W, h: H, fps: FPS, bg: BG, shot: SHOT,
   poses: ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'jump'],
+  studio: studioCharacterProvenance(ID), ctrl,
   pose(s) { aplicaPose(s); },
   reset() { t = 0; for (let k = 0; k < 30; k++) avanca(1 / FPS); renderer.render(scene, camera); },
   step(dt) { const d = dt || 1 / FPS; t += d; avanca(d); renderer.render(scene, camera); return t; },
+  render() { built.group.updateMatrixWorld(true); renderer.render(scene, camera); },
   grab() { return renderer.domElement.toDataURL('image/png'); },
 };
 </script>
