@@ -12,7 +12,7 @@ const edits = {
   'sombra-fallback-solido': ['caixa.castShadow = fallbackSolid || !lowProfile;', 'caixa.castShadow = !lowProfile;'],
   'cadeiras-gigantes': ["['assentos_aeroporto', -20, -34, [2.6, 1.05, 0.9], Math.PI / 2, 2.6, 1.05, 0.9, true]", "['assentos_aeroporto', -20, -34, 6, Math.PI / 2, 6, 1.5, 2.2, true]"],
   'sem-rota-interna': ["    [{ x: 0, z: -16 }, { x: 0, z: -14.5 }, { x: 12, z: -14.5 }, { x: 12, z: -7 }, { x: 15.5, z: -3 }, { x: 15.5, z: 1 }, { x: 15.5, z: 7 }, { x: 13, z: 9 }, { x: 11.8, z: 18 }, { x: 9, z: 20 }, { x: 7, z: 23 }],\n", ''],
-  'sem-cobertura-extra': ["bloco('cobertura-tatica-hangar-leste', 10, 0.725, 37, 4, 1.45, 1.4, mats.metal);", "bloco('cobertura-tatica-hangar-leste', 10, 0.725, 37, 4, 1.45, 1.4, mats.metal, false);"],
+  'sem-cobertura-extra': ["  ['cobertura-tatica-hangar-leste', 10, 37, 0, 2, 2, 1],\n", ''],
   'proxy-so-glb': [']) colliders.push({ id, minX, maxX, minY, maxY, minZ, maxZ });', "]) if (templates.has('aviao_executivo')) colliders.push({ id, minX, maxX, minY, maxY, minZ, maxZ });"],
   'sem-yaw': ['if (solid) colliderDoProp(id, x, 0, z, w, h, d, yaw);', 'if (solid) colliderDoProp(id, x, 0, z, w, h, d);'],
   'sem-asas': ["    ['aviao_executivo_asas', -5.5, 5.5, 0.8, 2.4, 54.75, 56.25],\n", ''],
@@ -24,7 +24,13 @@ const edits = {
   'fuselagem-larga': ["['aviao_executivo_fuselagem', -1, 1, 0, 1.6, 49.5, 54],", "['aviao_executivo_fuselagem', -1.7, 1.7, 0, 1.6, 49.5, 54],"],
   'spawn-invertido': ['B: [{ x: -20, z: -48, yaw: Math.PI }', 'B: [{ x: -20, z: -48, yaw: 0 }'],
   'e-spawn-invertido': ['E: [{ x: -33, z: 54, yaw: 0 }, { x: -28, z: 56, yaw: 0 }, { x: 33, z: 54, yaw: 0 }, { x: 30, z: 56, yaw: 0 }],', 'E: [{ x: -33, z: 54, yaw: Math.PI }, { x: -28, z: 56, yaw: Math.PI }, { x: 33, z: 54, yaw: Math.PI }, { x: 30, z: 56, yaw: Math.PI }],'],
-  'sem-cobertura': ["bloco('cobertura-tatica-hangar', -3, 0.725, 37, 5, 1.45, 1.4, mats.metal);", "bloco('cobertura-tatica-hangar', -3, 0.725, 37, 5, 1.45, 1.4, mats.metal, false);"],
+  'sem-cobertura': ["  ['cobertura-tatica-hangar', -3, 37, 0, 3, 2, 1],\n", ''],
+  // Laterais (playtest 08/11): pilha da parede some, relés somem, ônibus sem endireitar, caixote
+  // desenhado fora da pilha do colisor.
+  'lateral-nua': ["  ['pilha-caixotes-corredor-parede-oeste', -37.95, 37, 0, 2, 3, 3],\n", ''],
+  'corredor-sem-rele': ['for (const route of [...serviceRoutes, ...CORREDORES_LATERAIS]) addRoute(route);', 'for (const route of serviceRoutes) addRoute(route);'],
+  'onibus-torto': ['const ALINHAMENTO_NATIVO = { onibus_patio: -0.3211 };', 'const ALINHAMENTO_NATIVO = {};'],
+  'caixote-fora-da-pilha': ['(c + 0.5) * cw - w / 2, n * ch, (f + 0.5) * cd - d / 2', '(c + 0.5) * cw - w / 2, n * ch * 0.5, (f + 0.5) * cd - d / 2'],
   'rota-n2': ['const candidates = buckets.get(`${cx + ox},${cz + oz}`) || [];', 'const candidates = nodes.map((_, j) => j);'],
   'vidro-low-fisico': ['? new THREE.MeshStandardMaterial({', '? new THREE.MeshPhysicalMaterial({'],
   'sombras-low-completas': ['mesh.castShadow = sombra && (solid || !lowProfile)', 'mesh.castShadow = sombra'],
@@ -219,6 +225,8 @@ try {
       // Escada: altura que leva a plataforma à soleira da porta (1,57 m); a cláusula subível mede a soleira.
       jardineira: [1, 1.1, 1.5], balcao_recepcao: [0.6, 0.75, 2.4], escada_embarque: [1.25, 1.4, 2.4],
       barreiras_aeroporto: [0.7, 0.85, 2.7],
+      // Ônibus de pátio (3,3 × 10,5 m).
+      onibus_patio: [1.75, 2, 6.2],
     };
     // O muro de barreiras é procedural; o kit GLB só existe como cenário fora dos limites.
     const NOME_VISUAL = { barreiras_aeroporto: 'barreira-jersey' };
@@ -355,27 +363,118 @@ try {
     assert.ok(stats.candidatePairs > 0 && stats.edges > 0);
     assert.ok(stats.candidatePairs < stats.totalPairs * .2, `candidatos ${stats.candidatePairs}/${stats.totalPairs}`);
   });
-  // A proteção de embarque/apron agora gira em torno de objetos reais do aeroporto;
-  // as caixas procedurais restantes são só as do corredor de serviço e do hangar.
+  // Playtest 08/11 ("muito low poly"): as seis coberturas táticas deixaram de ser caixas lisas e
+  // viraram pilhas de caixotes GLB na mesma posição e altura de agachado (1,44 m).
   check('solid-covers-and-lateral-cover-points', () => {
     const requiredCovers = [
       'cobertura-tatica-servico-oeste', 'cobertura-tatica-servico-leste',
       'cobertura-tatica-acesso-oeste', 'cobertura-tatica-acesso-leste',
       'cobertura-tatica-hangar', 'cobertura-tatica-hangar-leste',
     ].sort();
-    const covers = loaded.root.children.filter(o => o.name.startsWith('cobertura-tatica-'));
-    assert.deepEqual(covers.map(o => o.name).sort(), requiredCovers, 'embarque e apron sem caixas decorativas');
-    for (const cover of covers) {
-      const proxy = loaded.colliders.find(c => c.id === cover.name);
-      assert.ok(proxy && Math.abs(proxy.maxY - proxy.minY - 1.45) < 1e-9, `${cover.name} é sólida`);
-    }
     for (const map of [loaded, fallback]) {
       map.root.updateMatrixWorld(true);
-      for (const cover of map.root.children.filter(o => o.name.startsWith('cobertura-tatica-'))) {
-        const box = new THREE.Box3().setFromObject(cover), x = (box.min.x + box.max.x) / 2;
-        const ray = new THREE.Raycaster(new THREE.Vector3(x, 1.2, box.min.z - .5), new THREE.Vector3(0, 0, 1), 0, box.max.z - box.min.z + 1);
-        assert.ok(ray.intersectObject(cover, false).length > 0, `${cover.name} interrompe a visada central`);
+      assert.deepEqual(map.root.children.filter(o => o.name.startsWith('cobertura-tatica-')).map(o => o.name), [], 'nenhuma caixa lisa de cobertura');
+      const covers = map.colliders.filter(c => (c.id || '').startsWith('cobertura-tatica-'));
+      assert.deepEqual(covers.map(c => c.id).sort(), requiredCovers, 'seis coberturas táticas sólidas');
+      for (const c of covers) {
+        assert.ok(c.maxY - c.minY >= 1.4 && c.maxY - c.minY <= 1.5, `${c.id} na altura de agachado (${(c.maxY - c.minY).toFixed(2)} m)`);
+        // A 1,2 m (olho agachado ~1,1 m) o raio atravessa a pilha pelo eixo fino e para nos caixotes.
+        // A 30% do comprimento (meio de um caixote, fora da junta entre dois).
+        const finoX = c.maxX - c.minX < c.maxZ - c.minZ, cx = c.minX + (c.maxX - c.minX) * .3, cz = c.minZ + (c.maxZ - c.minZ) * .3;
+        const ray = finoX
+          ? new THREE.Raycaster(new THREE.Vector3(c.minX - .5, 1.2, cz), new THREE.Vector3(1, 0, 0), 0, c.maxX - c.minX + 1)
+          : new THREE.Raycaster(new THREE.Vector3(cx, 1.2, c.minZ - .5), new THREE.Vector3(0, 0, 1), 0, c.maxZ - c.minZ + 1);
+        assert.ok(ray.intersectObjects(map.occluders, false).length > 0, `${c.id} interrompe a visada central`);
       }
+    }
+  });
+  // Cada caixote instanciado pertence a uma pilha e a união deles é o colisor da pilha (render =
+  // colisor); com GLB as instâncias usam a malha do template, sem GLB a caixa do mesmo tamanho.
+  check('crate-stacks-render-equals-collider', () => {
+    for (const [nome, map, malha] of [['loaded', loaded, template.geometry], ['fallback', fallback, null], ['low-fallback', lowFallback, null], ['glb', glbReal, glbTemplates.caixote_carga.geometry]]) {
+      map.root.updateMatrixWorld(true);
+      const pilhas = map.colliders.filter(c => /^(cobertura-tatica-|pilha-caixotes-)/.test(c.id || ''));
+      assert.ok(pilhas.length >= 15, `${nome}: pilhas de caixotes nas táticas e laterais (${pilhas.length})`);
+      const grupo = map.root.getObjectByName('caixotes-carga'), insts = grupo?.children.filter(o => o.isInstancedMesh) || [];
+      assert.ok(insts.length > 0 && insts.every(o => o.count === insts[0].count && o.castShadow), `${nome}: caixotes instanciados e com sombra`);
+      if (malha) assert.ok(insts.every(o => o.geometry === malha), `${nome}: caixote usa a malha do template GLB`);
+      else assert.ok(insts.length === 1 && insts[0].geometry.type === 'BoxGeometry', `${nome}: fallback é uma caixa por caixote`);
+      const uniao = new Map(), m = new THREE.Matrix4();
+      for (let i = 0; i < insts[0].count; i++) {
+        const caixa = new THREE.Box3();
+        for (const inst of insts) {
+          inst.geometry.computeBoundingBox(); inst.getMatrixAt(i, m);
+          caixa.union(inst.geometry.boundingBox.clone().applyMatrix4(m.premultiply(inst.matrixWorld)));
+        }
+        const c = caixa.getCenter(new THREE.Vector3());
+        const dona = pilhas.find(p => c.x > p.minX && c.x < p.maxX && c.z > p.minZ && c.z < p.maxZ);
+        assert.ok(dona, `${nome}: caixote ${i} fora de qualquer pilha (${c.x.toFixed(2)},${c.z.toFixed(2)})`);
+        uniao.set(dona, (uniao.get(dona) || new THREE.Box3()).union(caixa));
+      }
+      for (const p of pilhas) {
+        const u = uniao.get(p);
+        assert.ok(u, `${nome}: ${p.id} sem caixote visível`);
+        for (const [k, v] of [['minX', u.min.x], ['maxX', u.max.x], ['minZ', u.min.z], ['maxZ', u.max.z]]) assert.ok(Math.abs(v - p[k]) < 1e-4, `${nome}: ${p.id} ${k} visual ${v.toFixed(3)} ≠ colisor ${p[k].toFixed(3)}`);
+        assert.ok(Math.abs((u.max.y - u.min.y) - (p.maxY - p.minY)) < 1e-4, `${nome}: ${p.id} altura visual ≠ colisor`);
+      }
+    }
+  });
+  // O GLB do ônibus vem girado 18,4° no eixo nativo; a escala por eixo do `real()` só preserva a
+  // forma se o template for endireitado antes. Mede nos vértices reais: caixa mínima no eixo.
+  check('bus-aligned-with-collider', () => {
+    const pontos = glbVertices('../bus.glb'), geo = new THREE.BufferGeometry().setFromPoints(pontos);
+    mediumModule.fixtureTemplates(id => glbTemplates[id]);
+    mediumModule.registerOperacaoFlavioTemplate('onibus_patio', new THREE.Mesh(geo, template.material));
+    const mundo = withVisibleShotOccluders(mediumModule.buildOperacaoFlavio)(new THREE.Scene(), textures);
+    try {
+      mundo.root.updateMatrixWorld(true);
+      const onibus = mundo.root.children.filter(o => o.name === 'onibus_patio');
+      assert.equal(onibus.length, 2, 'dois ônibus de pátio');
+      for (const bus of onibus) {
+        const xz = [];
+        bus.traverse(o => { if (o.isMesh) for (let i = 0; i < o.geometry.attributes.position.count; i++) xz.push(new THREE.Vector3().fromBufferAttribute(o.geometry.attributes.position, i).applyMatrix4(o.matrixWorld)); });
+        let melhor = { area: Infinity, graus: 0 };
+        for (let g = 0; g < 90; g += 0.25) {
+          const r = g * Math.PI / 180, cos = Math.cos(r), sin = Math.sin(r);
+          let a = Infinity, b = -Infinity, c = Infinity, d = -Infinity;
+          for (const p of xz) { const u = p.x * cos + p.z * sin, v = -p.x * sin + p.z * cos; a = Math.min(a, u); b = Math.max(b, u); c = Math.min(c, v); d = Math.max(d, v); }
+          if ((b - a) * (d - c) < melhor.area) melhor = { area: (b - a) * (d - c), graus: g };
+        }
+        const desvio = Math.min(melhor.graus, 90 - melhor.graus), caixa = new THREE.Box3().setFromObject(bus);
+        assert.ok(desvio <= 1, `ônibus em (${bus.position.x.toFixed(1)},${bus.position.z.toFixed(1)}) torto ${desvio.toFixed(2)}° dentro do colisor`);
+        assert.ok(melhor.area >= 0.97 * (caixa.max.x - caixa.min.x) * (caixa.max.z - caixa.min.z), 'carroceria preenche a pegada do colisor');
+      }
+    } finally { mundo.dispose?.(); geo.dispose(); }
+  });
+  // Playtest 08/11 ("nas laterais não tem onde se proteger"): cobertura ≥1,2 m (sem paredes) perto de
+  // todo ponto livre das faixas laterais; corredores externos sem visada reta e atravessáveis no grafo.
+  check('lateral-cover-chain-and-corridor-sightlines', () => {
+    const estrutura = /^(fachada|lateral|parede|frente|aviao)/;
+    const cover = loaded.colliders.filter(c => c.maxY - c.minY >= 1.2 && c.minY <= .1 && !estrutura.test(c.id || ''));
+    const dist = (x, z) => Math.min(...cover.map(c => Math.hypot(Math.max(c.minX - x, 0, x - c.maxX), Math.max(c.minZ - z, 0, z - c.maxZ))));
+    // [|x| mín, |x| máx, z mín, z máx, pior distância, p90] — antes: piores 9,6–27 m, p90 6–22 m.
+    const faixas = {
+      terminalExterno: [30, 42.5, -56, -17, 11, 7.5], patio: [19, 42.5, -15, 21, 10, 6.5],
+      hangarExterno: [36.8, 42.5, 22, 49, 6, 4], hangarInterno: [19, 35.3, 23, 48, 8.5, 6.5],
+    };
+    for (const [nome, [x0, x1, z0, z1, pior, p90]] of Object.entries(faixas)) for (const lado of [-1, 1]) {
+      const ds = [];
+      for (let ax = x0; ax <= x1; ax += 1) for (let z = z0; z <= z1; z += 1) if (!blocked(loaded, ax * lado, z, .4)) ds.push(dist(ax * lado, z));
+      ds.sort((a, b) => a - b);
+      const rotulo = `${nome} ${lado < 0 ? 'oeste' : 'leste'}`;
+      assert.ok(ds.at(-1) <= pior, `${rotulo}: ponto a ${ds.at(-1).toFixed(1)} m da cobertura mais próxima (teto ${pior} m)`);
+      assert.ok(ds[Math.floor(ds.length * .9)] <= p90, `${rotulo}: p90 ${ds[Math.floor(ds.length * .9)].toFixed(1)} m (teto ${p90} m)`);
+    }
+    loaded.root.updateMatrixWorld(true);
+    const { nodes } = loaded.waypoints;
+    for (const lado of [-1, 1]) {
+      for (let ax = 36.6; ax <= 42.6; ax += .2) {
+        const ray = new THREE.Raycaster(new THREE.Vector3(ax * lado, 1.5, 51), new THREE.Vector3(0, 0, -1), 0, 30);
+        assert.ok(ray.intersectObjects(loaded.occluders, false).length > 0, `corredor externo x=${(ax * lado).toFixed(1)} com visada reta z 51→21`);
+      }
+      const caminho = loaded.findPath(loaded.nearestWaypoint(37.85 * lado, 22), loaded.nearestWaypoint(37.85 * lado, 50)).map(i => nodes[i]);
+      assert.ok(caminho.length > 1 && caminho.at(-1).z >= 49, `corredor ${lado < 0 ? 'oeste' : 'leste'} sem caminho no grafo`);
+      assert.ok(caminho.every(n => Math.abs(n.x) >= 36.3), `corredor ${lado < 0 ? 'oeste' : 'leste'} só se atravessa por dentro do hangar: ${caminho.map(n => `${n.x},${n.z}`).join(' ')}`);
     }
   });
   const losBlocked = (map, ax, az, bx, bz, y = 1.5) => {
@@ -787,7 +886,10 @@ try {
     const facadeShadows = map => { const flags = []; map.root.getObjectByName('terminal_fachada').traverse(o => { if (o.isMesh) flags.push(o.castShadow); }); return flags; };
     assert.ok(facadeShadows(loaded).every(Boolean), 'médio preserva sombra dos props decorativos');
     assert.ok(facadeShadows(lowLoaded).every(flag => !flag), 'baixo corta sombra dos props decorativos');
-    assert.ok(lowFallback.root.children.filter(o => o.name.startsWith('cobertura-tatica-')).every(o => o.castShadow), 'cover sólido preserva sombra');
+    for (const map of [lowFallback, lowLoaded]) {
+      const caixotes = map.root.getObjectByName('caixotes-carga')?.children || [];
+      assert.ok(caixotes.length > 0 && caixotes.every(o => o.castShadow), 'cover sólido (caixotes) preserva sombra no baixo');
+    }
     // O kit GLB de barreiras virou cenário fora da área jogável (sem collider, sem sombra no baixo).
     const decorativeFallbacks = new Set(['fallback-terminal_fachada', 'fallback-terminal_portal', 'fallback-arco_seguranca', 'fallback-barreiras_aeroporto']);
     const fallbackMeshes = lowFallback.root.children.filter(o => o.name.startsWith('fallback-'));

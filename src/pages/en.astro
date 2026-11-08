@@ -1,0 +1,111 @@
+---
+// /en - gêmea EN da home: a home é o jogo e publica HTML só em PT (a camada EN
+// nasce no boot), então o crawler em inglês lê daqui. Par em src/lib/i18n-pairs.ts.
+import Layout from '../layouts/Layout.astro';
+import pkg from '../../package.json';
+import { ARMAS, MAPAS, PERSONAGENS, GRUPOS } from '../data/jogo';
+import { HOME_FAQ_EN } from '../data/home-faq';
+import { BRAND_FULL, BRAND_ALT, GAME_ID, WEBSITE_ID, abs } from '../lib/site';
+
+const TITLE = `${BRAND_FULL} - Free browser FPS, no download`;
+const DESCRIPTION =
+  'Free CS 1.6-style FPS that runs in your browser: bots, multiplayer beta, rounds and Capture the Flag in a satirical Brazil. ' +
+  `${MAPAS.length} maps, ${ARMAS.length} weapons, ${PERSONAGENS.length} characters. Desktop and mobile with touch controls, no sign-up.`;
+const OG_IMAGE = abs('/og-image.jpg');
+const OG_ALT = `${BRAND_FULL} - free satirical browser FPS with two teams`;
+const PLAY = '/?lang=en';
+
+// Os quatro guias EN já existentes + docs. A home PT chega neles pelo hub; a
+// EN precisa dos links no HTML, senão /characters e cia. ficam órfãs em inglês.
+const GUIDES: [string, string, string][] = [
+  ['/how-to-play', 'How to play', 'Controls, modes and your first match in two minutes.'],
+  ['/characters', 'Characters', `${PERSONAGENS.length} characters in ${GRUPOS.length} catalogue groups.`],
+  ['/maps', 'Maps', `${MAPAS.length} arenas, from Brasília to the Amazon.`],
+  ['/weapons', 'Weapons', `${ARMAS.length} weapons plus throwables: rifles, snipers, pistols and knife.`],
+  ['/about', 'About the game', 'What it is, who makes it and why it is open source.'],
+  ['/whats-new', 'What’s new', 'Changelog of every release, in English.'],
+  ['/docs/en/', 'Developer docs', 'How the game is built: Three.js, no bundler, AI-assisted workflow.'],
+];
+
+const jsonld = [
+  {
+    '@type': 'WebPage',
+    '@id': abs('/en') + '#webpage',
+    url: abs('/en'),
+    name: TITLE,
+    description: DESCRIPTION,
+    inLanguage: 'en',
+    isPartOf: { '@id': WEBSITE_ID },
+    mainEntity: { '@id': GAME_ID },
+    primaryImageOfPage: { '@type': 'ImageObject', url: OG_IMAGE, width: 1200, height: 630 },
+  },
+  {
+    '@type': 'FAQPage',
+    '@id': abs('/en') + '#faq',
+    inLanguage: 'en',
+    about: { '@id': GAME_ID },
+    mainEntity: HOME_FAQ_EN.map(([name, text]) => ({ '@type': 'Question', name, acceptedAnswer: { '@type': 'Answer', text } })),
+  },
+];
+---
+<Layout
+  title={TITLE}
+  description={DESCRIPTION}
+  ogImage={OG_IMAGE}
+  ogImageAlt={OG_ALT}
+  jsonld={jsonld}
+  h1="Free browser FPS - play now, no download"
+  kicker="CORO SOLTO: Treta Suprema"
+  heroImg="/img/map-previews/escadao.jpg"
+  heroPos="50%">
+  <Fragment slot="sub">
+    Team E × Team B in a fictional, satirical Brazil. Pick a character, fight bots or join the
+    multiplayer beta, in rounds or Capture the Flag. Runs on desktop and on your phone with touch
+    controls. Formerly known as <strong>{BRAND_ALT}</strong>. Free, open source, no account needed.
+  </Fragment>
+
+  <div class="cta-row">
+    <a class="btn-cta" href={PLAY}>▶ Play now - free</a>
+    <a class="btn-cta btn-2" href="/how-to-play">How to play</a>
+  </div>
+  <p style="font-size:12px;color:var(--bone-dim);margin-top:10px">Opens the game in English. Desktop: mouse and keyboard. Phone: hold it in landscape.</p>
+  <p style="font-size:12px;color:var(--bone-dim);margin-top:4px">Current version: {pkg.version}</p>
+
+  <div class="tstat" style="margin-top:26px">
+    <a href="/characters"><b>{PERSONAGENS.length}</b><span>characters</span></a>
+    <a href="/maps"><b>{MAPAS.length}</b><span>maps</span></a>
+    <a href="/weapons"><b>{ARMAS.length}</b><span>weapons</span></a>
+    <div><b>2</b><span>teams</span></div>
+  </div>
+
+  <h2>What you get</h2>
+  <ul>
+    <li><strong>No download, no install.</strong> Open the link and play; the whole game is a web page built with Three.js.</li>
+    <li><strong>Bots or people.</strong> Single player against bots at any time; multiplayer beta with quick play, public and private rooms.</li>
+    <li><strong>Rounds and Capture the Flag</strong> on {MAPAS.length} maps inspired by Brazilian cities and landscapes.</li>
+    <li><strong>Works on phones.</strong> Touch controls in the web beta; add it to your home screen when your browser offers it.</li>
+    <li><strong>Open source (AGPL-3.0).</strong> The code is public; the game was built almost entirely by AI agents under human review.</li>
+  </ul>
+
+  <h2>Guides in English</h2>
+  <div class="galeria">
+    {GUIDES.map(([href, name, blurb]) => (
+      <a class="fig" href={href} style="display:block;padding:14px 16px;aspect-ratio:auto;text-decoration:none">
+        <strong style="display:block;color:var(--lime);font:400 20px/1.1 var(--display);margin-bottom:6px">{name}</strong>
+        <span style="font-size:14px;color:var(--bone-dim)">{blurb}</span>
+      </a>
+    ))}
+  </div>
+
+  <h2>Frequently asked questions</h2>
+  {HOME_FAQ_EN.map(([q, a], i) => (
+    <details open={i === 0}><summary><strong>{q}</strong></summary><p>{a}</p></details>
+  ))}
+
+  <h2>Prefer Portuguese?</h2>
+  <p>
+    The game and the site are made in Brazil and the Portuguese version is the original:{' '}
+    <a href="/" hreflang="pt-BR" lang="pt-BR">corosolto.com.br</a>. Language in the game follows your
+    choice (<code>?lang=en</code> or <code>?lang=pt</code>), then your country, then your browser.
+  </p>
+</Layout>
