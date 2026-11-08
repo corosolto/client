@@ -8210,10 +8210,12 @@ export class Game {
     const ally = bot.team === this.player.team;
     const col = new THREE.Color(this._teamColor(bot.team));
     this._tmHaloGeo = this._tmHaloGeo || new THREE.PlaneGeometry(1, 1);
+    // forceSinglePass: plano no chão não precisa das 2 passadas de transparente dupla-face do
+    // three, que marcavam needsUpdate e recalculavam o programa 2× por halo por quadro.
     const halo = new THREE.Mesh(this._tmHaloGeo, new THREE.MeshBasicMaterial({
       map: this._teamMarkTex(ally ? 'haloAlly' : 'haloEnemy'), color: col,
       transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide,
-      polygonOffset: true, polygonOffsetFactor: -3, toneMapped: false,
+      polygonOffset: true, polygonOffsetFactor: -3, toneMapped: false, forceSinglePass: QS.get('halosingle') !== '0',
     }));
     halo.rotation.x = -Math.PI / 2; halo.scale.setScalar(1.45); halo.renderOrder = 3;
     this.scene.add(halo);
