@@ -1399,10 +1399,24 @@ function pvThumb(def) {
 
 /* ---------------- game lifecycle ---------------- */
 const routeChar = HUB_ENABLED ? new URLSearchParams(location.search).get('personagem') : null;
-const rememberedChar = (routeChar && CHARACTERS.some((c) => c.id === routeChar) ? routeChar : null) || localStorage.getItem('csbr-home-character');
-const initialChar = CHARACTERS.find((c) => c.id === rememberedChar) || CHARACTERS[0];
+const routeCharacterId = routeChar && CHARACTERS.some((c) => c.id === routeChar) ? routeChar : null;
+const storedCharacterId = localStorage.getItem('csbr-home-character');
+const rememberedChar = routeCharacterId || storedCharacterId;
+const rememberedSide = localStorage.getItem('csbr-home-side') === 'B' ? 'B' : 'E';
+const randomInitialCharacter = () => {
+  const eligible = CHARACTERS.filter((character) => podeNoLado(character, rememberedSide));
+  if (!eligible.length) return CHARACTERS[0];
+  const seed = new Uint32Array(1);
+  crypto.getRandomValues(seed);
+  return eligible[seed[0] % eligible.length];
+};
+const rememberedDef = CHARACTERS.find((c) => c.id === rememberedChar);
+const initialChar = rememberedDef || randomInitialCharacter();
+if (!routeCharacterId && !rememberedDef) {
+  try { localStorage.setItem('csbr-home-character', initialChar.id); } catch {}
+}
 const ladoValido = (def, lado) => (podeNoLado(def, lado) ? lado : ladosDe(def)[0]);
-const initialSide = ladoValido(initialChar, localStorage.getItem('csbr-home-side') === 'B' ? 'B' : 'E');
+const initialSide = ladoValido(initialChar, rememberedSide);
 let game = null, currentTeam = initialSide, currentFaction = initialSide, currentChar = initialChar.id, selChar = null, tretaStoreReady = Promise.resolve();
 function returnPreviewToSelection() {
   const box = document.querySelector('.char-preview-box');
