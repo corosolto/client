@@ -91,9 +91,12 @@ clausula('LF1 o painel é a Operação Flávio, com o desenho da invasão, e o c
   assert.equal(card?.id, 'tp-lobby-flavio', 'LF1: painel sem o id tp-lobby-flavio');
   assert.ok(card.classList.contains('tp-lobby-painel') && card.classList.contains('tp-lobby-invasao'), `LF1: painel fora do desenho da invasão (${card.className})`);
   const rotulo = card.textContent.replace(/\s+/g, ' ');
-  assert.ok(/OPERAÇÃO FLÁVIO/.test(rotulo) && /A HISTÓRIA/.test(rotulo) && !/resenha/i.test(rotulo), `LF1: o painel diz "${rotulo}"`);
-  assert.equal(doClique?.dataset.historia, 'operacao_flavio', 'LF1: clique no painel não abriu a história');
-  doClique.close();
+  try {
+    assert.ok(/OPERAÇÃO FLÁVIO/.test(rotulo) && /A HISTÓRIA/.test(rotulo) && !/resenha/i.test(rotulo), `LF1: o painel diz "${rotulo}"`);
+    assert.equal(doClique?.dataset.historia, 'operacao_flavio', 'LF1: clique no painel não abriu a história');
+  } finally {
+    doClique?.close();
+  }
 });
 
 /* Arte: arquivo real em public/, URL com o hash de conteúdo do assetver.js. */
