@@ -65,6 +65,29 @@ function home(html) {
   for (const route of ['sobre', 'como-jogar', 'personagens', 'armas', 'mapas', 'mapa', 'changelog', 'apoie']) assert.match(html, new RegExp(`href="/${route}"[^>]*data-guide="${route}"`));
   assert.equal((html.match(/<summary data-en=/g) ?? []).length, nodes(html).find(n => n['@type'] === 'FAQPage').mainEntity.length, 'FAQ sem tradução EN');
   assert.doesNotMatch(html, /sem pessoas reais|seis facções fictícias/);
+  // Gêmea EN da home: declarada só aqui (head próprio), nunca nas rotas do hub.
+  assert.match(html, new RegExp(`<link rel="alternate" hreflang="en" href="${SITE}/en">`), 'home sem hreflang en');
+  assert.match(html, /<meta property="og:locale:alternate" content="en_US">/, 'home sem og:locale:alternate');
+}
+// /en é a home que o buscador em inglês vê: não está no nav (sem aria-current),
+// por isso não entra em `routes`; o contrato é próprio e mais estrito.
+function enHome(html) {
+  assert.match(html, new RegExp(`<link rel="canonical" href="${SITE}/en">`));
+  assert.match(html, /<html[^>]*lang="en"/);
+  assert.equal((html.match(/<h1[ >]/g) || []).length, 1);
+  assert.match(html, /<main[^>]*id="conteudo"/);
+  assert.match(html, new RegExp(`<link rel="alternate" hreflang="pt-BR" href="${SITE}/">`), '/en sem hreflang pt-BR para a home');
+  assert.match(html, new RegExp(`<link rel="alternate" hreflang="en" href="${SITE}/en">`), '/en sem auto-referência');
+  assert.match(html, new RegExp(`<link rel="alternate" hreflang="x-default" href="${SITE}/">`), '/en com x-default fora da home PT');
+  assert.match(html, /<meta property="og:locale" content="en_US">/);
+  assert.match(html, /<meta property="og:locale:alternate" content="pt_BR">/);
+  assert.match(html, /href="\/\?lang=en"/, '/en sem CTA pro jogo em inglês');
+  for (const en of pairs.map(([, en]) => en)) assert.match(html, new RegExp(`href="/${en}"`), `/en não linka /${en}`);
+  const webpage = nodes(html).find(n => n['@type'] === 'WebPage');
+  assert.equal(webpage?.inLanguage, 'en');
+  assert.equal(webpage?.mainEntity?.['@id'], `${SITE}/#game`, '/en não referencia o VideoGame da home');
+  faq(html);
+  assert.doesNotMatch(html, /(?:href|src)\s*=\s*["']\s*["']/i);
 }
 let extra = 0;
 function contract(name, fn) {
@@ -75,6 +98,9 @@ function contract(name, fn) {
 const homeHtml = read('index.html');
 contract('home: subtabs + FAQ visível/EN', () => home(homeHtml));
 contract('home: AEO', () => assert.ok(urls.has(`${SITE}/`)));
+const enHtml = read('en/index.html');
+contract('/en: home em inglês (hreflang, JSON-LD, FAQ, links)', () => enHome(enHtml));
+contract('/en: AEO', () => assert.ok(urls.has(`${SITE}/en`)));
 const { fileURLToPath } = await import('node:url');
 const { join } = await import('node:path');
 const cwd = process.cwd();
@@ -122,7 +148,11 @@ if (process.argv.includes('--mutate')) {
   assert.throws(() => checks.aeo('mapa'), 'AEO SSR cego');
   urls.delete(`${SITE}/`);
   assert.throws(() => assert.ok(urls.has(`${SITE}/`)), 'AEO home cego');
-  console.log('✓ 4 mutações centrais detectadas');
+  assert.throws(() => home(homeHtml.replace(`hreflang="en" href="${SITE}/en"`, `hreflang="en" href="${SITE}/about"`)), 'home → /en cego');
+  assert.throws(() => enHome(enHtml.replace(`hreflang="pt-BR" href="${SITE}/"`, `hreflang="pt-BR" href="${SITE}/sobre"`)), '/en → home cego');
+  assert.throws(() => enHome(enHtml.replace('"inLanguage":"en"', '"inLanguage":"pt-BR"')), '/en inLanguage cego');
+  assert.throws(() => enHome(enHtml.replaceAll('href="/how-to-play"', 'href="/como-jogar"')), '/en links EN cegos');
+  console.log('✓ 8 mutações centrais detectadas');
 }
 console.log(`${routes.length * 3 + extra - failures}/${routes.length * 3 + extra} contratos totais, incluindo home e SSR`);
 process.exitCode = failures ? 1 : 0;
