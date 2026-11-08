@@ -1,27 +1,5 @@
-/* RESOLVEDOR DE PERSONAGEM DO STUDIO (só navegador; sem import de Node).
-   ----------------------------------------------------------------------------
-   Recebe um pin de data/content-releases.js e devolve URLs Blob de bytes JÁ
-   VERIFICADOS: o modelo, exatamente os 11 clipes de estado e as prévias. Falha
-   fechado em qualquer divergência, com erro tipado (StudioCharacterError.code), e
-   nunca devolve conteúdo parcial.
-
-   Ordem que importa:
-   1. Sem crypto.subtle não há verificação, então não há carga
-      (`studio_webcrypto_unavailable`) — nunca se pula o digest.
-   2. O SHA-256 é dos BYTES EXATOS do manifest.json, calculado ANTES do parse:
-      um manifesto adulterado nunca chega a ser interpretado.
-   3. Identidade, minRuntime × VERSION, esqueleto, caminhos seguros, inventário
-      sem duplicata e dono único de cada arquivo (model / animations.<estado> /
-      previews / evidence), tudo antes de baixar qualquer binário.
-   4. Cada arquivo: tamanho real e SHA-256 conferidos antes de virar Blob URL.
-      Se qualquer um falhar, TODAS as URLs criadas nesta tentativa são revogadas
-      depois que as outras buscas assentam (sem vazamento de estado parcial) e o
-      cache esquece a tentativa, para uma nova chamada buscar de novo.
-
-   O verificador Node do pacote (corosolto/studio tools/validate-pack.mjs e a
-   instalação local) continua dono das checagens de árvore, symlink, modo e GLB;
-   aqui se prova integridade e papéis dos bytes que o navegador recebeu.
-   Contrato: docs/studio-character-release.md. */
+/* Resolvedor só de navegador: pin → Blob URLs de bytes já verificados (modelo, 11 clipes, prévias),
+   fail-closed com StudioCharacterError.code. Ordem e limites: docs/studio-character-release.md. */
 import { VERSION } from './version.js';
 import { STUDIO_CHARACTER_STATES, STUDIO_CHARACTER_SKELETON } from './data/content-releases.js';
 
@@ -45,9 +23,8 @@ const MAX_PACK_BYTES = 16 * 1024 * 1024;
 const MIME = { glb: 'model/gltf-binary', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp' };
 const PREVIEW_EXT = /\.(?:png|jpe?g|webp)$/;
 
-/* Caminho relativo do pacote: segmentos [A-Za-z0-9_][A-Za-z0-9._-]*, sem `.`/`..`,
-   sem barra inicial, sem barra dupla, sem `\`, `%`, `:` ou espaço. O servidor local
-   (scripts/studio-pack-serving.mjs) usa a MESMA regra. */
+/* Segmentos [A-Za-z0-9_][A-Za-z0-9._-]*: sem `.`/`..`, barra inicial/dupla, `\`, `%` ou `:`.
+   scripts/studio-pack-serving.mjs usa a mesma regra. */
 export function isSafePackPath(path) {
   return typeof path === 'string' && path.length > 0 && path.length <= 512
     && path.split('/').every((segment) => SEGMENT.test(segment));

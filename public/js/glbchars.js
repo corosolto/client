@@ -50,10 +50,8 @@ export const GLB_CHARS = new Set([
   'barbudo', 'capitao', 'dama', 'professor', 'senador', 'ministro', 'deputado', 'juiz',
   'julia-zanatta', 'marina-silva',
 ]);
-/* Personagens do Studio fixados por release (data/content-releases.js): entram no
-   GLB_CHARS, mas o corpo e os 11 clipes vêm SÓ do pacote verificado — nunca de
-   public/models/characters/, do índice de clipes ou do pack compartilhado. A lista
-   literal acima continua sendo a dos GLBs legados em public/. */
+/* Releases do Studio entram no GLB_CHARS, mas corpo e clipes vêm só do pacote verificado;
+   a lista literal acima segue sendo a dos GLBs legados de public/. */
 for (const id of Object.keys(CHARACTER_RELEASES)) GLB_CHARS.add(id);
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
@@ -284,9 +282,8 @@ function glovePath(manifest, origin) {
   }
   return matches.length === 1 ? matches[0] : null;
 }
-/* Corpo do Studio não tem origem em public/models/characters: nem origem base inventada,
-   nem pacote de luva — a origem dele é {kind:'studio', sha256, manifestSha256} e só uma
-   variante de luva verificada para ESSES bytes poderia casar (não existe hoje). */
+/* Corpo do Studio tem origem {kind:'studio'}: nem origem base em public/ nem luva pública
+   casam com ele (docs/studio-character-release.md). */
 function baseGloveOrigin(id) {
   if (!GLB_CHARS.has(id) || characterRelease(id)) return null;
   const path = `models/characters/${id}.glb`;
@@ -493,10 +490,10 @@ const torsoRadiusAt = (prof, y) => {
 };
 
 // Preload shared clips + base meshes for the given character ids. Safe to call once
-// before a match; already-loaded assets are skipped. Legacy failures are swallowed
-// per-asset so a missing model just falls back to the box mesh. Studio-pinned ids are
-// all-or-nothing: they load only from the verified pack and their failure REJECTS this
-// call (StudioCharacterError, or AggregateError for several) after every other id settled.
+// before a match; already-loaded assets are skipped. Failures are swallowed per-asset
+// so a missing model just falls back to the box mesh.
+// Release do Studio é tudo ou nada: falha rejeita esta chamada depois que os outros ids
+// assentam (StudioCharacterError, ou AggregateError para vários).
 export async function preloadCharacterAssets(ids, opts = {}) {
   /* Armas FORA do bootstrap de clipes: a 1ª chamada é a da tela de carregamento, e prender as
      armas ao `if (!_clips)` fazia a partida herdar a lista errada (ou as 26). Idempotente. */
@@ -584,10 +581,8 @@ export async function preloadCharacterAssets(ids, opts = {}) {
   if (studioFailures.length) throw new AggregateError(studioFailures, 'studio_character_preload_failed');
 }
 
-/* PERSONAGEM DO STUDIO (release fixada): modelo + os 11 clipes saem SÓ das Blob URLs
-   verificadas por studio-character.js. Nada de animIndex(), GLB mesclado, pasta
-   models/anims/<id>/ nem clipe compartilhado. Estado global só é escrito depois que
-   TUDO carregou e conferiu (tudo ou nada); a origem do corpo é {kind:'studio'}. */
+/* Modelo e 11 clipes só das Blob URLs verificadas (sem animIndex, mesclado ou compartilhado);
+   _base/_clipsByChar/origem só são escritos depois que tudo carregou e conferiu. */
 const _studioRequests = new Map();
 const _studioProvenance = new Map();
 function preloadStudioCharacter(id, release) {
@@ -619,8 +614,7 @@ function preloadStudioCharacter(id, release) {
   _studioRequests.set(id, request);
   return request;
 }
-/* Evidência para harness/réguas: de onde vieram corpo e clipes de um id do Studio
-   (null para legado ou ainda não carregado). */
+// Proveniência de um id do Studio para harness/réguas (null para legado ou não carregado).
 export function studioCharacterProvenance(id) { return _studioProvenance.get(id) || null; }
 
 const _v = new THREE.Vector3();
