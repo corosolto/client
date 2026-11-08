@@ -358,6 +358,7 @@ Cobertura: **3964 de 9825 linhas (40%)** do `game.js` têm dono declarado. O res
 | 6371 | `_hideCtfHud()` | 6 |
 | 6377 | `_updateCtfHud()` | 76 |
 | 6453 | `_collide()` | 23 |
+| 6497 | `_collideGrade()` | 25 |
 | 6476 | `_collideRot()` | 22 |
 | 6498 | `_mantleAlcance()` | 62 |
 | 6560 | `_mantleColliders()` | 10 |
@@ -401,6 +402,7 @@ Cobertura: **3964 de 9825 linhas (40%)** do `game.js` têm dono declarado. O res
 | 7994 | `_pickSpawn()` | 25 |
 | 8019 | `_respawnPlayer()` | 48 |
 | 8067 | `_losClear()` | 18 |
+| 8132 | `_raioBloqueado()` | 12 |
 | 8085 | `_botCall()` | 41 |
 | 8126 | `_teamMarkTex()` | 23 |
 | 8149 | `_makeTeamMark()` | 16 |
