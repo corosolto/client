@@ -6,6 +6,7 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { dev } from 'astro';
 import { moduleCacheManifest } from '../../scripts/module-cache.mjs';
+import { serveStudioPack } from '../../scripts/studio-pack-serving.mjs';
 import { rotaDoCaminho } from '../../public/js/rotas.js';
 
 const PORT = parseInt(process.argv[2] || '8123', 10);
@@ -50,6 +51,11 @@ async function currentRenderer() {
 }
 const server = http.createServer(async (req, res) => {
   try {
+    /* Pacotes do Studio (STUDIO_PACK_ROOT, fora de public/): o handler recebe o caminho
+       CRU (sem normalizar `..` nem decodificar) e decide sozinho: canônico, contido,
+       no-store. Sem raiz → 404. Mesmo handler do dev server do Astro. */
+    const rawPath = String(req.url).split(/[?#]/, 1)[0];
+    if (rawPath.startsWith('/packs/')) return await serveStudioPack(req, res, { rawPath: rawPath.slice('/packs'.length) });
     const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     // Rotas fixas do hub (/loja, /jogar/multiplayer...) saem do mesmo renderer, como no build (ADR 0008).
     if (p === '/' || rotaDoCaminho(p) || /^\/(?:api\/|private-assets\/|@|src\/|node_modules\/|\.astro\/)/.test(p)) {

@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import vercel from '@astrojs/vercel';
 import { aeoCurado } from './scripts/aeo.mjs';
 import { moduleCacheManifest } from './scripts/module-cache.mjs';
+import { studioPackVitePlugin } from './scripts/studio-pack-serving.mjs';
 import {readFileSync,existsSync,readdirSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
@@ -79,6 +80,9 @@ export default defineConfig({
         allow: ['.', '/Users/ruben/csbrasil-private-assets'],
       },
     },
+    // Pacotes do Studio instalados fora de public/: /packs/ lê STUDIO_PACK_ROOT (sem a
+    // variável, 404). Mesmo handler do tools/eval/serve.mjs; docs/studio-character-release.md.
+    plugins: [studioPackVitePlugin()],
   },
 
   // AEO: llms-full.txt, ai-index.json, docs.json e espelhos .md das páginas de
