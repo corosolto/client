@@ -715,7 +715,7 @@
     "eval:mapa-sp-pos-mp": "node tools/eval/mapa-sp-pos-mp-check.mjs",
     "//eval:game-pages": "Contrato do HTML de todas as páginas do lobby e cobertura AEO, com mutações que quebram canonical, shell e índice.",
     "eval:telemetria-coorte": "node tools/eval/telemetria-coorte-check.mjs",
-    "eval:personagem-escolhido": "node tools/eval/personagem-escolhido-check.mjs",
+    "eval:personagem-escolhido": "node tools/eval/personagem-escolhido-check.mjs && node tools/eval/personagem-inicial-check.mjs && ! node tools/eval/personagem-inicial-check.mjs --mutante=sem-sorteio && ! node tools/eval/personagem-inicial-check.mjs --mutante=ignora-lado && ! node tools/eval/personagem-inicial-check.mjs --mutante=grava-rota",
     "eval:game-pages": "node tools/eval/game-pages-check.mjs && node tools/eval/game-pages-check.mjs --mutate",
     "eval:wfconcurrency": "node tools/eval/workflow-concurrency-check.mjs",
     "eval:hub-profile-links": "node tools/eval/hub-profile-links-browser.mjs && ! node tools/eval/hub-profile-links-browser.mjs --mutante=ranking-fora && ! node tools/eval/hub-profile-links-browser.mjs --mutante=perfil-na-query",
