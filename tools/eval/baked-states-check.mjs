@@ -75,6 +75,7 @@ for (const [id, body] of bodies) {
 }
 
 // Prova no MESMO GLTFLoader do jogo: meshopt + int16 normalizado viram clipes Three finitos.
+// Sem pack aceito não há GLB para decodificar; o veredito declara isso em vez de fingir cobertura.
 if (!falhas.length && bodies.length) {
   const { THREE } = await import('./three-node.mjs');
   const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
@@ -100,7 +101,7 @@ if (!falhas.length && bodies.length) {
 
 const resumo = bodies.length
   ? `${bodies.length} corpos/${clips} estados · pior mínimo ${piorPe} cm (${piorPeQuem}) · menor folga de quadril ${piorFolgaHips.toFixed(4)}× (${piorHipsQuem})`
-  : `0 corpos selecionados · ${excluded.length} exclusões com regressão registrada`;
+  : `0 corpos selecionados · ${excluded.length} exclusões com piora numérica verificada · decode/piso/quadril NÃO exercitados (nenhum pack aceito)`;
 if (MUT) {
   const assinatura = { 'exclusao-sem-metrica': 'bonzo: exclusão sem métrica', 'piora-inventada': 'não é piora' }[MUT];
   const mordeu = falhas.some((f) => f.startsWith('bonzo') && f.includes(assinatura));
