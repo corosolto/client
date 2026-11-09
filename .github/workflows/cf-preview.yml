@@ -1,7 +1,8 @@
 name: cf-preview
 
 on:
-  pull_request:
+  # O workflow é lido da base confiável; o checkout do PR fica sem segredos.
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
@@ -43,29 +44,49 @@ jobs:
             echo "nenhum arquivo do site mudou: preview pula"
           fi
 
-  # A publicação é opcional para não bloquear o PR enquanto o dono ajusta o token.
-  preview:
+  # O build recebe código do PR sem segredos. Só o deploy confiável lê o token CF.
+  build:
     needs: decide
     if: needs.decide.outputs.rodar == 'true' && github.event.pull_request.draft != true && github.event.pull_request.head.repo.full_name == github.repository
-    continue-on-error: true
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Build Cloudflare
-        env:
-          # O fetch-viewmodels degrada para o legado quando estes segredos não existem,
-          # mas o aviso identifica exatamente a credencial necessária para o pack privado.
-          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
-          VM_BLOB_TOKEN: ${{ secrets.VM_BLOB_TOKEN }}
+      - name: Build Cloudflare sem segredos
         run: npm run build:cf
+      - name: Guarda artefato do Worker
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cf-preview-${{ github.event.pull_request.number }}
+          path: |
+            dist
+            wrangler.preview.toml
+          if-no-files-found: error
+          include-hidden-files: true
+
+  # Este job usa apenas o artefato produzido acima e a definição confiável deste workflow.
+  deploy:
+    needs: build
+    if: needs.build.result == 'success'
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Baixa artefato sem executar código do PR
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cf-preview-${{ github.event.pull_request.number }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
       - name: Verifica configuração da conta
         env:
           ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -78,6 +99,7 @@ jobs:
         id: upload
         env:
           CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN || secrets.CF_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN || secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           PR_NUM: ${{ github.event.pull_request.number }}
         run: |
@@ -86,7 +108,7 @@ jobs:
             echo "::error::CF_WORKERS_TOKEN/CF_API_TOKEN ausente ou sem Workers Scripts:Edit"
             exit 1
           fi
-          npx wrangler versions upload \
+          npx --yes wrangler@4.158.0 versions upload \
             --config wrangler.preview.toml \
             --name csb-preview \
             --message "PR #$PR_NUM" 2>&1 | tee "$RUNNER_TEMP/wrangler-upload.log"
@@ -97,6 +119,11 @@ jobs:
           fi
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "preview Cloudflare: $URL"
+      - name: Carrega script de comentário confiável
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
       - name: Atualiza comentário sticky
         env:
           GH_TOKEN: ${{ github.token }}
@@ -104,4 +131,4 @@ jobs:
           PR_NUM: ${{ github.event.pull_request.number }}
           PREVIEW_URL: ${{ steps.upload.outputs.url }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python3 scripts/ci/cf_preview_comment.py "$PR_NUM" "$PREVIEW_URL"
+        run: python3 scripts/ci/cf_preview_comment.py "$PR_NUM" "$PREVIEW_URL" "$HEAD_SHA"
