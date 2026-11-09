@@ -212,6 +212,8 @@ jobs:
         run: npm run eval:escala
       - name: Loja, vídeos de hover das skins (VP9 + H.264 + poster, até 400 KB)
         run: npm run eval:treta-video
+      - name: Censo de rig, deformação de skin nunca piora (tetos congelados por sha + mutantes)
+        run: npm run eval:rig-census
       - name: Orçamento de shader WebGL1
         run: npm run eval:shaderbudget
       - name: Sitemap pagina além do max-rows do PostgREST
