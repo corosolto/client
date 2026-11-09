@@ -10,7 +10,17 @@ import { spawnSync } from 'node:child_process';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mutant = process.argv.find((x) => x.startsWith('--mutante='))?.split('=')[1] || '';
-const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle'];
+/* Mutantes de game.js: cada um tira ou altera UM call site e tem de reprovar só a cláusula EX10 dele. */
+const MUT_JOGO = {
+  'jogo-flinch-mudo': ['_ctrl?.flinch?.({ x: _fx, z: _fz }, dmg / 100, head);', '', 'EX10a-flinch'],
+  'jogo-flinch-sem-cabeca': ['_ctrl?.flinch?.({ x: _fx, z: _fz }, dmg / 100, head);', '_ctrl?.flinch?.({ x: _fx, z: _fz }, dmg / 100);', 'EX10a-flinch'],
+  'jogo-granada-muda': ['this.playerTP?.ctrl?.grenade?.(ANIM_ARREMESSO);', '', 'EX10b-granada'],
+  'jogo-saque-tp-mudo': ['if (weaponChanged) tp.ctrl?.draw?.();', '', 'EX10c-saque-jogador'],
+  'jogo-saque-bot-mudo': ['if (oldGroup) next.ctrl?.draw?.();', '', 'EX10d-saque-bot'],
+  'jogo-cerimonia-muda': ['    this._cerimoniaCorpos?.(winner);\n', '', 'EX10e-cerimonia'],
+  'jogo-cerimonia-invertida': ['b.mesh?.ctrl?.ceremony?.(!!winner && winner === b.team)', 'b.mesh?.ctrl?.ceremony?.(!!winner && winner !== b.team)', 'EX10e-cerimonia'],
+};
+const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle', ...Object.keys(MUT_JOGO)];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
   for (const kind of ['', ...mutants]) {
@@ -30,7 +40,8 @@ const localFetch = async (url) => {
   return fs.existsSync(file) ? new Response(fs.readFileSync(file)) : new Response('', { status: 404 });
 };
 Object.defineProperty(globalThis, 'fetch', { configurable: true, get: () => localFetch, set() {} });
-const { THREE, CHARACTERS } = await import('./harness.mjs');
+const H = await import('./harness.mjs');
+const { THREE, CHARACTERS } = H;
 const { GLTFLoader } = await import('../../public/vendor/addons/loaders/GLTFLoader.js');
 Object.defineProperty(globalThis, 'fetch', { configurable: true, writable: true, value: localFetch });
 GLTFLoader.prototype.load = function (url, done, progress, fail) {
@@ -165,18 +176,91 @@ if (!mutant) {
   m.ctrl.reload(1); step(m, 12);
   check('EX9b-pack-ausente', () => { assert.equal(m.ctrl._upperName, null); assert.ok(m.ctrl.reloadK > 0.5); });
 }
-const gameSource = fs.readFileSync(path.join(root, 'public/js/game.js'), 'utf8');
-check('EX10-callsites', () => {
-  assert.ok(gameSource.includes('flinch?.({ x: _fx, z: _fz }, dmg / 100, head)'));
-  assert.ok(gameSource.includes('ctrl?.grenade?.(ANIM_ARREMESSO)'));
-  assert.ok(gameSource.includes('ctrl?.draw?.()'));
-  assert.ok(gameSource.includes('ctrl?.ceremony?.('));
+/* EX10: os quatro call sites medidos no Game real (o mesmo que o harness sobe), com o
+   CharController real espionado no protótipo: quem recebe a chamada e com quais argumentos. */
+const JS = path.join(root, 'public/js');
+let GameMod = { Game: H.Game };
+if (MUT_JOGO[mutant]) {
+  const [antes, depois] = MUT_JOGO[mutant];
+  let jogoSrc = fs.readFileSync(path.join(JS, 'game.js'), 'utf8');
+  assert.equal(jogoSrc.split(antes).length, 2, `mutante de game.js deve aplicar uma vez: ${antes}`);
+  const prefixo = pathToFileURL(JS).href;
+  jogoSrc = jogoSrc.replace(antes, depois)
+    .replace(/from '(\.\/[^']+)'/g, (_, rel) => `from ${JSON.stringify(prefixo + rel.slice(1))}`)
+    .replace(/import\('\.\//g, `import('${prefixo}/`);
+  const tmp = fs.mkdtempSync(path.join(root, 'node_modules', '.estados3p-'));
+  try {
+    const f = path.join(tmp, 'game.mjs'); fs.writeFileSync(f, jogoSrc);
+    GameMod = await import(pathToFileURL(f).href);
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+}
+const R = await import(pathToFileURL(path.join(JS, 'glbchars.js')).href);
+await R.preloadCharacterAssets(['barbudo', 'capitao'], { weapons: ['pistol', 'ak'] });
+assert.ok(R.hasModel('barbudo') && R.hasModel('capitao'), 'GLB barbudo/capitao ausente');
+const protoCtrl = Object.getPrototypeOf(R.buildCharacterModel(def('barbudo'), { weaponId: 'pistol' }).ctrl);
+const chamadas = [];
+for (const nome of ['flinch', 'draw', 'grenade', 'ceremony']) {
+  const original = protoCtrl[nome];
+  protoCtrl[nome] = function (...args) { chamadas.push({ nome, ctrl: this, args }); return original.apply(this, args); };
+}
+const de = (nome) => { const r = chamadas.filter((c) => c.nome === nome); chamadas.length = 0; return r; };
+H.seedRandom(12345);
+const jogo = new GameMod.Game({ renderer: H.renderer, textures: H.initTextures(), sfx: H.sfx,
+  settings: { bots: 1, allyBots: 0, enemyBots: 1, quality: 'low', difficulty: 'normal', sens: 1 },
+  playerCharId: 'barbudo', playerTeam: 'E', playerFaction: 'E', enemyFaction: 'B', nickname: 'SIM', mapId: 'posto_treta',
+  ctf: false, testMode: true, matchRoster: { allyDefs: [], enemyDefs: [def('capitao')] }, matchWeapons: ['pistol'], onQuit() {}, onMatchEnd() {} });
+jogo._ensureDolly = () => {}; jogo.killsToWin = Infinity; jogo.start(); jogo.state = 'live';
+jogo._ensurePlayerTP(); de('draw');
+const bot = jogo.bots.find((b) => b.alive && b.mesh?.ctrl);
+assert.ok(jogo.playerTP?.ctrl && bot, 'Game real sem corpo 3P do jogador ou do bot');
+jogo.time = 100; bot.protUntil = 0; jogo.player.protUntil = 0;
+check('EX10a-flinch', () => {
+  const hp0 = bot.hp; jogo._damage(bot, 20, jogo.player, 'pistol', true);
+  const [b] = de('flinch');
+  assert.ok(b, 'tiro no bot não chamou flinch');
+  assert.equal(b.ctrl, bot.mesh.ctrl);
+  assert.deepEqual(b.args, [{ x: bot.pos.x - jogo.player.pos.x, z: bot.pos.z - jogo.player.pos.z }, (hp0 - bot.hp) / 100, true]);
+  jogo._damage(jogo.player, 10, bot, 'ak', false);
+  const [p] = de('flinch');
+  assert.ok(p && p.ctrl === jogo.playerTP.ctrl, 'tiro no jogador não chegou ao corpo 3P dele');
+  assert.equal(p.args[2], false);
+});
+check('EX10b-granada', () => {
+  const p = jogo.player; p.frags = 1; p._nextNade = 0; p.nadeBusyUntil = 0;
+  jogo._throwNade('frag', 'frags', 1);
+  const g = de('grenade');
+  assert.equal(g.length, 1, `${g.length} chamada(s) de grenade`);
+  assert.equal(g[0].ctrl, jogo.playerTP.ctrl);
+  assert.deepEqual(g[0].args, [1.05]);
+});
+check('EX10c-saque-jogador', () => {
+  const nova = jogo.player.weapon === 'ak' ? 'pistol' : 'ak';
+  jogo.player.weapon = nova; jogo._ensurePlayerTP();
+  const d = de('draw');
+  assert.equal(d.length, 1, `${d.length} chamada(s) de draw na troca de arma`);
+  assert.equal(d[0].ctrl, jogo.playerTP.ctrl);
+  assert.equal(d[0].ctrl.weaponId, nova);
+});
+check('EX10d-saque-bot', () => {
+  assert.ok(jogo._syncRemoteWeapon(bot, bot._meshWeapon === 'ak' ? 'pistol' : 'ak'), 'troca de arma do bot não reconstruiu o corpo');
+  const d = de('draw');
+  assert.equal(d.length, 1, `${d.length} chamada(s) de draw no bot`);
+  assert.equal(d[0].ctrl, bot.mesh.ctrl);
+});
+check('EX10e-cerimonia', () => {
+  jogo.roundKills = { E: 1, B: 0 }; jogo._endRound();
+  const c = de('ceremony');
+  const doBot = c.find((x) => x.ctrl === bot.mesh.ctrl), doJogador = c.find((x) => x.ctrl === jogo.playerTP.ctrl);
+  assert.equal(c.length, 2, `${c.length} chamada(s) de ceremony no fim de rodada`);
+  assert.deepEqual(doBot?.args, [false], 'bot do time perdedor');
+  assert.deepEqual(doJogador?.args, [true], 'jogador do time vencedor');
 });
 
 const failures = results.filter((x) => !x.ok);
 for (const r of results) console.log(`${r.ok ? 'ok  ' : 'FALHA'} ${r.id}${r.erro ? ` · ${r.erro}` : ''}`);
 if (mutant) {
   assert.ok(failures.length > 0, `MUTAÇÃO PASSOU — ${mutant}`);
+  if (MUT_JOGO[mutant]) assert.deepEqual(failures.map((x) => x.id), [MUT_JOGO[mutant][2]], `mutante ${mutant} fora da cláusula dele`);
   console.log(`MUTANTE ${mutant} REPROVADO: ${failures.map((x) => x.id).join(', ')}`);
 } else {
   assert.equal(failures.length, 0, `${failures.length} cláusulas vermelhas`);
