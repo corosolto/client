@@ -45,6 +45,15 @@ suavizado a 8/s, proporcional a `lateral/4,5`. Medido: 3,5 m/s lateral desloca a
 ~5 cm no eixo da direita; sem lateral volta a <0,5 cm; corpo morto não inclina.
 Jogador 3P e bots clássicos alimentam; caminho NN segue sem (flag de laboratório).
 
+### Dados já disponíveis para remotos
+
+O segmento interpolado fornece velocidade lateral no referencial do corpo. Eventos `hit`
+e `kill` usam a diferença entre posições de vítima e autor; sem autor, a morte preserva
+o fallback sem direção. Trocas de arma entre snapshots disparam saque procedural breve,
+sem tocar no protocolo; o overlay é omitido no LOD distante e cancelado na morte.
+Eventos `hit` podem ser descartados pelo servidor sob carga. `npm run eval:remotos3p`
+mede as entradas e seus mutantes; não substitui a inspeção visual do corpo.
+
 ## As duas armadilhas que a régua existe para impedir de voltar
 
 - **Undo ANTES do mixer.** O overlay usa deltas aditivos em ossos que os clipes podem ou

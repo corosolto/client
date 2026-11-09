@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
-import { THREE, bootGame, initTextures } from './harness.mjs';
-import { makeNetcode } from '../../public/js/netgame.js';
+import { register } from 'node:module';
+if (process.env.REMOTOS_MUTANTE) register(new URL('./remotos3p-mut-loader.mjs', import.meta.url));
+const { THREE, bootGame, initTextures } = await import('./harness.mjs');
+const { makeNetcode } = await import('../../public/js/netgame.js');
 
 const game = bootGame('corrego', { textures: initTextures(), ctf: true, seed: 12345 });
 const net = { meta: { snapshotHz: 20 }, espectador: false, yourEnt: 1, startPing() {}, stopPing() {}, sendInput() { return 0; } };
