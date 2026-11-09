@@ -157,6 +157,10 @@ estar em Actions Secrets com `Workers Scripts:Edit`. A variável `CLOUDFLARE_ACC
 Actions Variables. O token local usado no spike tem o escopo OAuth `workers_scripts:write`;
 `npx wrangler whoami` confirmou a conta `81dceb0823d6c4dd3c41ad0c51ba2143`. Se o token atual
 falhar no upload, registrar o erro literal no PR e criar `CF_WORKERS_TOKEN` com esse escopo.
+Na primeira execução do PR #1271, o `CF_API_TOKEN` existente falhou literalmente com
+`Authentication error [code: 10000]` em `/accounts/81dceb0823d6c4dd3c41ad0c51ba2143/workers/services/csb-preview`;
+o Wrangler também informou `Failed to automatically retrieve account IDs for the logged in user`.
+O dono precisa configurar `CF_WORKERS_TOKEN` com `Workers Scripts:Edit` ou ampliar o token atual.
 PRs de fork não publicam preview Cloudflare, pois não recebem segredos no evento `pull_request`.
 
 ## Segredos: destino na Cloudflare
