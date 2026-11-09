@@ -49,8 +49,9 @@ Jogador 3P e bots clássicos alimentam; caminho NN segue sem (flag de laboratór
 
 O segmento interpolado fornece velocidade lateral no referencial do corpo. Eventos `hit`
 e `kill` usam a diferença entre posições de vítima e autor; sem autor, a morte preserva
-o fallback sem direção. Um `kill` atrasado não anima um corpo que o snapshot já mostra
-vivo após respawn. Trocas de arma entre snapshots disparam saque procedural breve,
+o fallback sem direção. Se o evento chegar depois do snapshot de morte, acrescenta a
+direção sem reiniciar o clipe; um `kill` atrasado não anima corpo já vivo após respawn.
+Trocas de arma entre snapshots disparam saque procedural breve,
 sem tocar no protocolo; o overlay é omitido no LOD distante e cancelado na morte.
 O suporte da arma é reorientado após o saque, antes do IK da mão de apoio.
 O backend só emite `hit` não fatal para vítima humana; bots remotos não recebem flinch.

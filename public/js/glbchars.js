@@ -1134,7 +1134,13 @@ class CharController {
 
   die(dir = null) {
     this._emoteId = null;
-    if (this.dead) return;
+    if (this.dead) {
+      if (dir && !this._deathDir) {
+        this._deathTilt = Math.atan2(dir.x, dir.z);
+        this._deathDir = { x: dir.x, z: dir.z };
+      }
+      return;
+    }
     // Viés de tombo pela direção do disparo: o mesmo clipe deixa de cair sempre igual.
     this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
     this._deathDir = dir ? { x: dir.x, z: dir.z } : null;
