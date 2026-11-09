@@ -212,7 +212,7 @@ Não há `models/anims/<id>/<extra>.glb`: multiplicar os 21 estados pelo elenco 
 esqueleto. `index.json.extras` é derivado dos nomes dentro do GLB; `extras.SOURCES.md` guarda os
 IDs do catálogo. `draw_pistol` e `holster_pistol` não existem na biblioteca convertida e caem no
 comportamento atual sem erro. Falha ou ausência de qualquer outro clipe também usa o fallback
-procedural/base; LOD≥2 não inicia extras.
+procedural/base; o primeiro saque fica pendente e é reproduzido quando o pack resolve. LOD≥2 não inicia extras.
 
 O `ctrl.update` deriva o componente frente de `speed`, `back` e `lateral`, percorre quatro setores
 (frente→direita→trás→esquerda) e mistura os DOIS clipes vizinhos pelo ângulo. Cardinals ficam com
