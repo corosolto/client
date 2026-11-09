@@ -91,6 +91,7 @@ cobra(compativel('2.0.0-alpha.1', VERSION, 'aaaa', 'aaaa') === true
 const transporteFalso = (versao, simHash) => {
   const tp = {
     fechado: false,
+    protocolo: 'coro-snapshot-v8',
     abrir({ aberto, mensagem }) {
       aberto?.();
       setTimeout(() => mensagem(JSON.stringify({
