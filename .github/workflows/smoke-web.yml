@@ -152,10 +152,7 @@ jobs:
   # O preview é opcional enquanto a migração roda em paralelo com a Vercel.
   smoke-cf:
     needs: decide
-    if: >-
-      (github.event_name == 'pull_request' ||
-       (github.event_name == 'workflow_dispatch' && inputs.host != '')) &&
-      needs.decide.outputs.rodar == 'true'
+    if: (github.event_name == 'pull_request' && needs.decide.outputs.rodar == 'true') || (github.event_name == 'workflow_dispatch' && inputs.host != '' && needs.decide.outputs.rodar == 'true')
     continue-on-error: true
     runs-on: ubuntu-latest
     timeout-minutes: 30
