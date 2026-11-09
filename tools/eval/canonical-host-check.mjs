@@ -17,7 +17,10 @@
      CH5 · a comunidade do jogo recebe o host decidido (`#community[data-site]`)
 
    Uso: npm run build && node tools/eval/canonical-host-check.mjs [--mutate]
-   --mutate reintroduz o host antigo em cada superfície medida e exige vermelho. */
+   --mutate reintroduz o host antigo em cada superfície medida e exige vermelho.
+   CSB_SSR_BASE=http://127.0.0.1:8787 (build Cloudflare, `npm run build:cf`): o handler SSR
+   não roda em Node (importa `cloudflare:workers`), então CH2 pede as rotas a esse host
+   (wrangler dev ou deploy); o backend de perfil tem que ser o fake de tools/cf/backend-fake.mjs. */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -85,19 +88,26 @@ function paginaErrada(nome, html, exigeTudo) {
   return null;
 }
 
+const SSR_BASE = (process.env.CSB_SSR_BASE || '').replace(/\/$/, '');
+
 async function coletar() {
   const cfg = path.join(FUNC, '.vc-config.json');
-  const entry = existsSync(cfg) && path.join(FUNC, JSON.parse(readFileSync(cfg, 'utf8')).handler);
-  if (!existsSync(DIST) || !entry || !existsSync(entry)) return null;
+  const entry = !SSR_BASE && existsSync(cfg) && path.join(FUNC, JSON.parse(readFileSync(cfg, 'utf8')).handler);
+  if (!existsSync(DIST) || (!SSR_BASE && (!entry || !existsSync(entry)))) return null;
   const arquivos = Object.fromEntries(arvore(DIST).map((f) => [f, readFileSync(path.join(DIST, f), 'utf8')]));
   const ROTAS_SSR = rotasSSR();
   const cwd = process.cwd();
-  process.chdir(FUNC);
-  const { default: handler } = await import(pathToFileURL(entry).href);
   const fetchReal = globalThis.fetch;
-  globalThis.fetch = async (alvo, init) => String(alvo?.url ?? alvo).includes(`action=profile&id=${PERFIL_ID}`)
-    ? new Response(JSON.stringify({ profile: PERFIL }), { headers: { 'content-type': 'application/json' } })
-    : fetchReal(alvo, init);
+  let handler;
+  if (SSR_BASE) {
+    handler = { fetch: (req) => fetchReal(SSR_BASE + new URL(req.url).pathname, { headers: req.headers, redirect: 'manual' }) };
+  } else {
+    process.chdir(FUNC);
+    ({ default: handler } = await import(pathToFileURL(entry).href));
+    globalThis.fetch = async (alvo, init) => String(alvo?.url ?? alvo).includes(`action=profile&id=${PERFIL_ID}`)
+      ? new Response(JSON.stringify({ profile: PERFIL }), { headers: { 'content-type': 'application/json' } })
+      : fetchReal(alvo, init);
+  }
   const ssr = {};
   for (const origem of [CANONICO, ANTIGO]) for (const rota of [...ROTAS_SSR, ROTA_PERFIL, '/sitemap.xml']) {
     const r = await handler.fetch(new Request(`${origem}${rota}`, { headers: { 'x-forwarded-for': '127.0.0.1' } }));
