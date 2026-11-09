@@ -163,7 +163,10 @@ falhar no upload, registrar o erro literal no PR e criar `CF_WORKERS_TOKEN` com 
 Na primeira execução do PR #1271, o `CF_API_TOKEN` existente falhou literalmente com
 `Authentication error [code: 10000]` em `/accounts/81dceb0823d6c4dd3c41ad0c51ba2143/workers/services/csb-preview`;
 o Wrangler também informou `Failed to automatically retrieve account IDs for the logged in user`.
-O dono precisa configurar `CF_WORKERS_TOKEN` com `Workers Scripts:Edit` ou ampliar o token atual.
+O `CF_WORKERS_TOKEN` dedicado foi configurado e validado no run 42606435715 do PR #1271. A versão
+publicada foi `https://6fc811a7-csb-preview.rubenmarcus-dev.workers.dev`; `curl -fsS -o /dev/null
+-w "HTTP %{http_code}\n" https://6fc811a7-csb-preview.rubenmarcus-dev.workers.dev/` retornou
+`HTTP 200`. O comentário sticky foi atualizado com `<!-- cf-preview -->`.
 PRs de fork não publicam preview Cloudflare, pois não recebem segredos no evento `pull_request`.
 
 ## Segredos: destino na Cloudflare
@@ -207,4 +210,4 @@ npm run cf:paridade -- --alvo https://<worker>.workers.dev
 | 2026-11-09 | — | runbook criado; worktrees `chore/vercel-custos-fase0`, `feat/cloudflare-spike`, `chore/eval-lixo-bloco1` abertas | L1 e L2 em paralelo |
 | 2026-11-09 | #1258 | fase 0: `vercel-ignore.sh` filtra preview por diff desde o último deploy (régua `eval:vercelignore`, 3 mutantes, no pr-fast); zips de áudio/decalques e assets do viewmodel em `node_modules/.cache/csb-packs/`; `middleware.js` e `/api/[rota]` logam uma vez por instância e causa; runbook commitado | dono mergeia; na fatura do ciclo seguinte esperar Build CPU < 60 h (preview só em PR que toca o site), Blob Data Transfer perto de zero, Observability < 1 M eventos. Se Build seguir alto, abrir os deploys de preview no painel e ler a linha `vercel-ignore:` de cada um |
 | 2026-11-09 | spike | fase 1: `csb-spike` no ar em workers.dev com 18/19 rotas idênticas à produção; adaptador por `ADAPTER`; `_headers`/`_redirects` gerados; middleware portado; OG/badge/profile-card em resvg-wasm nas duas bordas; `eval:cfparidade` e `cf-paridade-check` | dono mergeia; fase 2 começa pelo item 1 da lista (segredos em runtime) e pelo preview por PR |
-| 2026-11-09 | fase 2 | preview por PR no Workers: `cf-preview.yml`, `wrangler.preview.toml`, comentário sticky `cf-preview` e `smoke-cf` opcional; Vercel continua sendo o smoke principal | configurar `CF_API_TOKEN` com Workers Scripts:Edit e `CLOUDFLARE_ACCOUNT_ID`; depois provar URL e smoke no PR |
+| 2026-11-09 | fase 2 | feito: preview por PR no Workers via `cf-preview.yml`, `wrangler.preview.toml`, comentário sticky `cf-preview` e `smoke-cf` opcional; Vercel continua sendo o smoke principal; run 42606435715 publicou a versão e retornou `HTTP 200` | fase 2b: `CF_WORKERS_TOKEN` dedicado configurado; seguir com smoke/paridade e merge |
