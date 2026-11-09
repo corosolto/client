@@ -41,7 +41,7 @@ campanhas e funil; "olhar rápido" vai ser Umami (self-host no Workers + D1) ou 
 
 | Fase | Entrega | Prova de saída | Status |
 |---|---|---|---|
-| 0. Cortes na Vercel | preview só quando o site muda (`vercel-ignore.sh` para `VERCEL_ENV=preview`), packs em cache de build, `console.*` por requisição fora | fatura do ciclo seguinte: Build < 60 h, Observability < 1 M eventos | PR aberto (branch `chore/vercel-custos-fase0`); ver "Fase 0: o que ficou" |
+| 0. Cortes na Vercel | preview só quando o site muda (`vercel-ignore.sh` para `VERCEL_ENV=preview`), packs em cache de build, `console.*` por requisição fora | fatura do ciclo seguinte: Build < 60 h, Observability < 1 M eventos | PR #1258 aberto (branch `chore/vercel-custos-fase0`); ver "Fase 0: o que ficou" |
 | 1. Spike | `@astrojs/cloudflare` no lugar de `@astrojs/vercel`; `wrangler.toml`; `_headers`/`_redirects` **gerados** de `vercel.json` por script (uma fonte, régua de paridade); `middleware.js` → middleware do Astro lendo `cf-connecting-ip`; `buildCommand` reproduzido no build do Workers | deploy em `*.workers.dev` com mesmos status/headers que produção em: `/`, `/en`, `/api/geo-lang`, `/api/og/pagina.png`, `/u/<perfil>`, `/mapa`, `/sala/x`, `/sitemap.xml`, `/api/health` (proxy); `check:seo`, `canonical-host-check`, `game-pages-check`, `site-smoke` rodando contra esse host | em andamento (branch `feat/cloudflare-spike`) |
 | 2. Preview por PR | `preview-build.yml` → `wrangler versions upload` com URL por PR; `smoke-web.yml` e o comentário do bot apontam para ela | PR qualquer gera preview e `smoke-web` passa nele | pendente |
 | 3. Staging em paralelo | `staging.corosolto.com.br` no Workers; `prod-watch` e `smoke:prod` nos dois hosts por 1 semana; diff automático de headers/CSP/rotas | zero divergência | pendente |
@@ -110,3 +110,4 @@ node tools/eval/cf-paridade-check.mjs --alvo https://<worker>.workers.dev
 | Data | PR | O que mudou | Próximo passo |
 |---|---|---|---|
 | 2026-11-09 | — | runbook criado; worktrees `chore/vercel-custos-fase0`, `feat/cloudflare-spike`, `chore/eval-lixo-bloco1` abertas | L1 e L2 em paralelo |
+| 2026-11-09 | #1258 | fase 0: `vercel-ignore.sh` filtra preview por diff desde o último deploy (régua `eval:vercelignore`, 3 mutantes, no pr-fast); zips de áudio/decalques e assets do viewmodel em `node_modules/.cache/csb-packs/`; `middleware.js` e `/api/[rota]` logam uma vez por instância e causa; runbook commitado | dono mergeia; na fatura do ciclo seguinte esperar Build CPU < 60 h (preview só em PR que toca o site), Blob Data Transfer perto de zero, Observability < 1 M eventos. Se Build seguir alto, abrir os deploys de preview no painel e ler a linha `vercel-ignore:` de cada um |
