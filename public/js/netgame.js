@@ -613,7 +613,10 @@ class Netcode {
       try { game._feed(att, vic, w, h); } catch { /* HUD */ }
       if (att === p && game._compra) game._compra.ganhoAbate(w, vic.team === p.team);   // +TRETA$ do nó
       if (vic === p) { if (att && !this.espectador) game._noteHit(att, w, d, h, dist(att)); }
-      else this.morteRemota(vic, att, h);
+      else {
+        if (att?.pos && vic.pos) vic.mesh?.ctrl?.die?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z });
+        this.morteRemota(vic, att, h);
+      }
     } else if (e.k === 'tiro') {
       this.tiroDeRede(att, e);
     } else if (e.k === 'drop') {
