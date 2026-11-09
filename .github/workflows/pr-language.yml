@@ -1,0 +1,42 @@
+name: pr-language
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-language-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  english:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          filter: blob:none
+          sparse-checkout: scripts/ci
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Install the pinned language detector
+        run: python3 -m pip install --disable-pip-version-check langdetect==1.0.9
+      - name: Require English PR title and description
+        run: |
+          python3 scripts/ci/pr_language.py --selftest
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('/tmp/pr-language.json').write_text(json.dumps({
+              'title': os.environ.get('PR_TITLE', ''),
+              'body': os.environ.get('PR_BODY', ''),
+          }))
+          PY
+          python3 scripts/ci/pr_language.py < /tmp/pr-language.json
