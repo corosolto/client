@@ -1,5 +1,6 @@
 # Preview por PR da migração Vercel -> Cloudflare Workers.
 # Mantém os bindings do spike, mas usa uma publicação por versão.
+# O upload versionado e o deploy local usam esta mesma configuração.
 name = "csb-preview"
 main = "dist/server/entry.mjs"
 compatibility_date = "2026-11-09"
