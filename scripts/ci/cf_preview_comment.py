@@ -15,11 +15,11 @@ def gh(*args: str, input_data: str | None = None) -> str:
     return subprocess.check_output(comando, text=True, input=input_data)
 
 
-def corpo(url: str) -> str:
-    return f"🟠 **preview Cloudflare** → {url}\n\n{MARKER}\n"
+def corpo(url: str, head_sha: str) -> str:
+    return f"🟠 **preview Cloudflare** → {url}\n\n{MARKER}\n<!-- sha: {head_sha} -->\n"
 
 
-def atualizar(repo: str, pr: str, url: str) -> None:
+def atualizar(repo: str, pr: str, url: str, head_sha: str) -> None:
     comentarios = json.loads(gh("api", f"repos/{repo}/issues/{pr}/comments", "--paginate") or "[]")
     encontrados = [c for c in comentarios if MARKER in (c.get("body") or "")]
     for extra in encontrados[1:]:
@@ -29,7 +29,7 @@ def atualizar(repo: str, pr: str, url: str) -> None:
             check=False,
             stdout=subprocess.DEVNULL,
         )
-    body = corpo(url)
+    body = corpo(url, head_sha)
     if encontrados:
         comentario_id = str(encontrados[0]["id"])
         gh(
@@ -60,7 +60,7 @@ def main() -> int:
     if not repo:
         print("GITHUB_REPOSITORY ausente", file=sys.stderr)
         return 2
-    atualizar(repo, sys.argv[1], sys.argv[2])
+    atualizar(repo, sys.argv[1], sys.argv[2], os.environ.get("HEAD_SHA", ""))
     return 0
 
 

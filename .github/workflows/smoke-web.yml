@@ -159,12 +159,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           PR_NUM: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           for i in $(seq 1 90); do
-            URL="$(gh api "repos/$REPO/issues/$PR_NUM/comments" --paginate \
-              --jq '.[] | select(.body | contains("<!-- cf-preview -->")) | .body' 2>/dev/null \
-              | grep -Eo 'https://[^[:space:]]+\.workers\.dev' | tail -n 1 || true)"
+            BODY="$(gh api "repos/$REPO/issues/$PR_NUM/comments" --paginate \
+              --jq '.[] | select(.body | contains("<!-- cf-preview -->")) | .body' 2>/dev/null || true)"
+            if ! printf '%s\n' "$BODY" | grep -Fq "<!-- sha: $HEAD_SHA -->"; then
+              sleep 10
+              continue
+            fi
+            URL="$(printf '%s\n' "$BODY" | grep -Eo 'https://[^[:space:]]+\.workers\.dev' | tail -n 1 || true)"
             if [ -n "$URL" ] && curl --fail --silent --show-error --location --max-time 20 "$URL/" >/dev/null; then
               echo "BASE_URL=$URL" >> "$GITHUB_ENV"
               echo "Preview Cloudflare disponível: $URL"

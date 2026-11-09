@@ -98,4 +98,5 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUM: ${{ github.event.pull_request.number }}
           PREVIEW_URL: ${{ steps.upload.outputs.url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: python3 scripts/ci/cf_preview_comment.py "$PR_NUM" "$PREVIEW_URL"
