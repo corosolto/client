@@ -602,6 +602,29 @@ jobs:
           path: tools/eval/out/operacao-online.json
           if-no-files-found: warn
 
+  operacao-flavio-integracao:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Operação Flávio, integração, recuperação e pressão
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:operacao-flavio-integracao --json-out=tools/eval/out/operacao-flavio-integracao.json
+      - name: Tempos de integração da Operação Flávio
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operacao-flavio-integracao-tempos-${{ github.run_id }}
+          path: tools/eval/out/operacao-flavio-integracao.json
+          if-no-files-found: warn
+
   operacao-flavio-comportamento:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -623,6 +646,29 @@ jobs:
         with:
           name: operacao-flavio-comportamento-tempos-${{ github.run_id }}
           path: tools/eval/out/operacao-flavio-comportamento.json
+          if-no-files-found: warn
+
+  operacao-flavio-escolta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Operação Flávio, escolta, VIP e pickups
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:operacao-flavio-escolta --json-out=tools/eval/out/operacao-flavio-escolta.json
+      - name: Tempos de escolta da Operação Flávio
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operacao-flavio-escolta-tempos-${{ github.run_id }}
+          path: tools/eval/out/operacao-flavio-escolta.json
           if-no-files-found: warn
 
   equipamento-tp-corpo:
@@ -864,7 +910,7 @@ jobs:
           if-no-files-found: warn
 
   build:
-    needs: [reguas-e-site, mapas-e-site, invariantes-fonte, invariantes-vm, invariantes-bots, invariantes-chars-mat, invariantes-mapas, mantle, equipamento-tp-corpo, equipamento-tp-origem, contratos-visuais-personagens-camera, contratos-visuais-mapas-materiais, contratos-visuais-campo-uv, contratos-visuais-gameplay-grafite, economia-ak-hud, soundscape, operacao-flavio-core, operacao-flavio-collider-1, operacao-flavio-collider-2, operacao-flavio-collider-3, operacao-flavio-collider-4, operacao-flavio-menu, operacao-flavio-online, operacao-flavio-comportamento]
+    needs: [reguas-e-site, mapas-e-site, invariantes-fonte, invariantes-vm, invariantes-bots, invariantes-chars-mat, invariantes-mapas, mantle, equipamento-tp-corpo, equipamento-tp-origem, contratos-visuais-personagens-camera, contratos-visuais-mapas-materiais, contratos-visuais-campo-uv, contratos-visuais-gameplay-grafite, economia-ak-hud, soundscape, operacao-flavio-core, operacao-flavio-collider-1, operacao-flavio-collider-2, operacao-flavio-collider-3, operacao-flavio-collider-4, operacao-flavio-menu, operacao-flavio-online, operacao-flavio-integracao, operacao-flavio-comportamento, operacao-flavio-escolta]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

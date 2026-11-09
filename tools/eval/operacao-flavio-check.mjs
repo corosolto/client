@@ -23,8 +23,8 @@ const suporteUnico = chamadasOnline.length === 1
   && !pai.includes('eval:operacao-flavio-online')
   && !['check:fast', 'check:deploy'].some((gate) => pacote.scripts[gate].split(/\s+/).includes('eval:operacao-online'));
 cobra(suporteUnico, 'suíte online executa uma vez pelo pai eval:operacao-flavio');
-const fluxoPai = 'npm run eval:operacao-flavio-core && npm run eval:operacao-flavio-collider && npm run eval:operacao-flavio-menu && npm run eval:operacao-online && npm run eval:operacao-flavio-comportamento';
-cobra(pai === fluxoPai, 'pai local executa core, collider completo, menu, online e comportamento em sequência');
+const fluxoPai = 'npm run eval:operacao-flavio-core && npm run eval:operacao-flavio-collider && npm run eval:operacao-flavio-menu && npm run eval:operacao-online && npm run eval:operacao-flavio-integracao && npm run eval:operacao-flavio-comportamento && npm run eval:operacao-flavio-escolta';
+cobra(pai === fluxoPai, 'pai local executa core, collider completo, menu, online, integração, comportamento e escolta em sequência');
 const caminho = [{ x: 0, z: 0 }, { x: 0, z: 4 }, { x: 0, z: 8 }];
 const vivo = (x, z, team) => ({ x, z, team, alive: true });
 
