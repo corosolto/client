@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mutant = process.argv.find((x) => x.startsWith('--mutante='))?.split('=')[1] || '';
-/* Mutantes de game.js: cada um tira ou altera UM call site e tem de reprovar só a cláusula EX10 dele. */
+/* Mutantes de game.js: cada um altera UM ponto do jogo e tem de reprovar só a cláusula EX10/EX11 dele. */
 const MUT_JOGO = {
   'jogo-flinch-mudo': ['_ctrl?.flinch?.({ x: _fx, z: _fz }, dmg / 100, head);', '', 'EX10a-flinch'],
   'jogo-flinch-sem-cabeca': ['_ctrl?.flinch?.({ x: _fx, z: _fz }, dmg / 100, head);', '_ctrl?.flinch?.({ x: _fx, z: _fz }, dmg / 100);', 'EX10a-flinch'],
@@ -19,6 +19,7 @@ const MUT_JOGO = {
   'jogo-saque-bot-mudo': ['if (oldGroup) next.ctrl?.draw?.();', '', 'EX10d-saque-bot'],
   'jogo-cerimonia-muda': ['    this._cerimoniaCorpos?.(winner);\n', '', 'EX10e-cerimonia'],
   'jogo-cerimonia-invertida': ['b.mesh?.ctrl?.ceremony?.(!!winner && winner === b.team)', 'b.mesh?.ctrl?.ceremony?.(!!winner && winner !== b.team)', 'EX10e-cerimonia'],
+  'bot-strafe-espelhado': ['const lat = (mz * Math.sin(b.yaw) - mx * Math.cos(b.yaw)) / dtSafe;', 'const lat = (mx * Math.cos(b.yaw) - mz * Math.sin(b.yaw)) / dtSafe;', 'EX11-bot-strafe-lado'],
 };
 const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle', 'flinch-preso-no-hit', ...Object.keys(MUT_JOGO)];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
@@ -279,6 +280,44 @@ check('EX10e-cerimonia', () => {
   assert.equal(c.length, 2, `${c.length} chamada(s) de ceremony no fim de rodada`);
   assert.deepEqual(doBot?.args, [false], 'bot do time perdedor');
   assert.deepEqual(doJogador?.args, [true], 'jogador do time vencedor');
+});
+/* EX11: bot do single-player andando de lado pelo _updateBot real. Posição e yaw do bot são
+   roteirizados (setters ignorados, a IA não move o corpo); o resto do caminho é o do jogo.
+   Convenção do jogador local (game.js, _updatePlayerTP): lateral > 0 = direita do corpo. */
+jogo.state = 'live'; bot.alive = true; bot.target = null; bot.crouchBias = false; bot.mesh.ctrl.revive();
+await esperaExtras(bot.mesh, 'strafe_right');
+const ladoBot = (sinal) => {
+  const yaw = 0.7, v = 2 * sinal, c = jogo.camera.position;
+  let x = c.x + 5, z = c.z + 5;
+  const pos = new THREE.Vector3(x, 0, z);
+  Object.defineProperty(pos, 'x', { configurable: true, get: () => x, set() {} });
+  Object.defineProperty(pos, 'z', { configurable: true, get: () => z, set() {} });
+  const posOriginal = bot.pos;
+  Object.defineProperty(bot, 'pos', { configurable: true, writable: true, value: pos });
+  Object.defineProperty(bot, 'yaw', { configurable: true, get: () => yaw, set() {} });
+  const ctrl = bot.mesh.ctrl, up = ctrl.update, laterais = [];
+  ctrl.update = function (...args) { if (args.length >= 6) laterais.push(args[5]); return up.apply(this, args); };
+  try {
+    bot._lp = { x, z };
+    for (let f = 0; f < 40; f++) {   // direita do corpo = −X local = (−cos yaw, sen yaw) no mundo
+      x += -Math.cos(yaw) * v / 60; z += Math.sin(yaw) * v / 60;
+      jogo._updateBot(bot, 1 / 60);
+    }
+  } finally {
+    ctrl.update = up;
+    delete bot.yaw; bot.yaw = yaw;
+    Object.defineProperty(bot, 'pos', { configurable: true, writable: true, value: posOriginal });
+  }
+  const lado = sinal > 0 ? 'strafe_right' : 'strafe_left';
+  return { lateral: laterais.at(-1), quadros: laterais.length, clipe: ctrl.curName, esperado: ctrl.oneHanded && ctrl.actions[`${lado}_pistol`] ? `${lado}_pistol` : lado };
+};
+check('EX11-bot-strafe-lado', () => {
+  const dir = ladoBot(1), esq = ladoBot(-1);
+  const txt = `direita lateral ${dir.lateral?.toFixed(2)} → ${dir.clipe}; esquerda lateral ${esq.lateral?.toFixed(2)} → ${esq.clipe}`;
+  assert.ok(dir.quadros >= 30 && esq.quadros >= 30, `controlador recebeu ${dir.quadros}/${esq.quadros} updates com lateral`);
+  assert.ok(dir.lateral > 1.5 && esq.lateral < -1.5, txt);
+  assert.equal(dir.clipe, dir.esperado, txt);
+  assert.equal(esq.clipe, esq.esperado, txt);
 });
 
 const failures = results.filter((x) => !x.ok);

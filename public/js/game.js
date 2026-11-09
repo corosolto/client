@@ -9434,7 +9434,8 @@ export class Game {
         const distCam = Math.hypot(b.pos.x - this.camera.position.x, b.pos.z - this.camera.position.z);
         const passo = distCam > 45 ? 0.1 : (distCam > 25 ? 0.05 : 0);
         b.mesh.ctrl.lod = distCam > 45 ? 2 : (distCam > 25 ? 1 : 0);
-        const lat = (mx * Math.cos(b.yaw) - mz * Math.sin(b.yaw)) / dtSafe;
+        // Lateral > 0 = direita do corpo (−X local), o sinal do jogador local e do remoto do MP.
+        const lat = (mz * Math.sin(b.yaw) - mx * Math.cos(b.yaw)) / dtSafe;
         if (passo === 0) b.mesh.ctrl.update(dt, mv, !!b.target, spd, fwd < -0.25, lat);
         else {
           b._animAcc = (b._animAcc || 0) + dt;
