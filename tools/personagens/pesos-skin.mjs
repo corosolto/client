@@ -20,6 +20,12 @@
      as regras mudam (descritas em `REGRAS`); posição, normal, UV, tangente,
      materiais, esqueleto, IBMs e animações saem byte a byte iguais.
      Determinístico: mesma entrada, mesmos bytes.
+
+   EXTENSÃO DO ROSTER (P4, 09/11/2026): o censo achou também costuras DURAS
+   (vértice 100 % Spine02 colado em vértice 100 % LeftArm no sovaco, coxa E
+   colada na coxa D na virilha, cauda da cuca 1,3 m atrás pesada na canela).
+   R7–R9 tratam isso; ficam desligadas por padrão, então as receitas antigas
+   (Lula) reproduzem os mesmos bytes.
    ============================================================================ */
 import { readFileSync } from 'node:fs';
 
@@ -156,6 +162,24 @@ function parteDoOsso(nome) {
   return 'tronco'; // Hips, Spine*, neck, Head*, Shoulders
 }
 
+/* Classes das costuras (R7/R8): a parte do corpo, com o tronco separado em
+   ombro de cada lado e cabeça/pescoço. */
+function classeDoOsso(nome) {
+  const p = parteDoOsso(nome);
+  if (p !== 'tronco') return p;
+  if (/Shoulder$/.test(nome)) return /^Left/.test(nome) ? 'ombroL' : 'ombroR';
+  if (/^(neck|Head|head)/.test(nome)) return 'cabeca';
+  return 'tronco';
+}
+
+// Zona da costura entre duas classes dominantes (null = não é costura tratada).
+function zonaDoPar(x, y) {
+  const perna = (c) => c.startsWith('perna'), braco = (c) => c.startsWith('braco');
+  if (x === 'cabeca' || y === 'cabeca') return perna(x) || perna(y) ? null : 'pescoco';
+  if (perna(x) || perna(y)) return 'virilha';
+  return braco(x) && braco(y) ? null : 'sovaco';
+}
+
 /* Valores padrão. Cada skin reparada grava os seus em
    tools/personagens/pesos-receitas.json (escolhidos pela régua do pose test;
    a receita é o que torna o resultado reproduzível byte a byte). */
@@ -167,6 +191,15 @@ export const PARAMETROS = Object.freeze({
   ombroR1: 2.5,
   anel: 2, // anéis de vizinhos somados à região alterada antes do preenchimento
   preencher: 300, // passadas do preenchimento harmônico
+  // R7–R9 (P4, roster): desligadas por padrão, para as receitas antigas
+  // reproduzirem os mesmos bytes. Cada uma vale o número de anéis da faixa
+  // de transição montada em volta da costura dura da sua zona.
+  costura: 0.5, // aresta é costura dura se a soma |Δpeso| entre as pontas passar disto
+  virilha: 0, // R7: costura perna E × perna D e tronco × perna (virilha, quadril, saia)
+  sovaco: 0, // R8: costura tronco × ombro × braço (sovaco, ombro) e ombro E × ombro D
+  pescoco: 0, // R8b: costura cabeça/pescoço × tronco/ombro
+  cauda: 0, // R9: metros atrás da junta Hips a partir dos quais o peso de perna sai (0 = desligada)
+  caudaRampa: 0.2, // R9: largura (m) da rampa em que o peso de perna da cauda vai a zero
 });
 
 export const REGRAS = Object.freeze([
@@ -177,6 +210,9 @@ export const REGRAS = Object.freeze([
   'R4 destino do peso retirado: o de perna que sai do corpo vai para Hips (o pai das coxas) na fração 1 − s(a); o resto volta aos ossos que ficaram, na mesma proporção; vértice que perdeu tudo vai para a junta permitida mais próxima.',
   'R5 preenchimento harmônico: região = vértices alterados + `anel` anéis de vizinhos; o contorno fica fixo e a região é refeita pela média dos vizinhos ponderada por 1/comprimento da aresta, com R1–R4 reaplicadas a cada passada (Jacobi projetado, `preencher` passadas). Sem degrau entre vizinhos — é o que tira o "inchaço".',
   'R6 saída: no máximo 4 influências, ordem decrescente, soma 1 em float32; vértices soldados (mesma posição) recebem os mesmos pesos; vértice sem mudança mantém os bytes originais.',
+  'R7 virilha (`virilha` anéis): aresta cujas pontas são dominadas por classes diferentes (perna E × perna D, tronco × perna, braço × perna) e diferem mais que `costura` em Σ|Δpeso| é costura dura; as pontas + `virilha` anéis entram na região do R5. A virilha passa a pesar nas DUAS coxas em degradê, sem degrau de 1 aresta entre as pernas.',
+  'R8 sovaco (`sovaco` anéis) e pescoço (`pescoco` anéis): o mesmo para tronco × ombro × braço, ombro E × ombro D (sovaco/ombro: o sovaco passa a pesar em Spine02 em degradê até o braço) e cabeça/pescoço × tronco/ombro/braço.',
+  'R9 cauda (`cauda` m): vértice mais de `cauda` metros ATRÁS da junta Hips (−Z, a frente do meshy-28 é +Z) perde o peso de perna em rampa até `cauda + caudaRampa`; o peso sai para Hips (R4). Cauda/capa não segue a canela.',
   'Mão: regra "mão 100 % em Hand" foi medida e REJEITADA (piorou o esticamento da mão de 1,55× para 2,3–3,4× no pose test, acima do limite 2,5×); a mão já não tem peso de tronco/perna depois de R1/R2.',
 ]);
 
@@ -233,8 +269,9 @@ export function repesar(origem, opcoes = {}) {
       if (idx(n) < 0) throw new Error(`esqueleto sem ${n}: não é meshy-28`);
     }
     const parteOsso = s.nomes.map(parteDoOsso);
+    const classeOsso = s.nomes.map(classeDoOsso);
     const J = (n) => s.juntas[idx(n)];
-    const yHips = J('Hips')[1], ySpine02 = J('Spine02')[1], hips = idx('Hips');
+    const yHips = J('Hips')[1], ySpine02 = J('Spine02')[1], zHips = J('Hips')[2], hips = idx('Hips');
     const lados = {};
     for (const L of ['L', 'R']) {
       const p = L === 'L' ? 'Left' : 'Right';
@@ -302,6 +339,7 @@ export function repesar(origem, opcoes = {}) {
     }
     const s01 = (x) => { const t = Math.max(0, Math.min(1, (x - o.braciceMin) / (o.braciceMax - o.braciceMin))); return t * t * (3 - 2 * t); };
     const ombro = (gi, L) => rampa(dist(pos[gi], lados[L].arm), o.ombroR0 * lados[L].comp, o.ombroR1 * lados[L].comp);
+    const cauda = (gi) => (o.cauda > 0 ? rampa(zHips - pos[gi][2], o.cauda, o.cauda + o.caudaRampa) : 1); // R9
 
     const regras = (gi, m0) => {
       const lado = a.L[gi] >= a.R[gi] ? 'L' : 'R';
@@ -309,7 +347,7 @@ export function repesar(origem, opcoes = {}) {
       const fator = (j) => {
         const q = parteOsso[j];
         if (q.startsWith('braco')) { const L = q.slice(-1); return Math.max(s01(a[L][gi]), ombro(gi, L)); } // R2
-        if (q.startsWith('perna')) return rampa(pos[gi][1], yHips, ySpine02) * (1 - manga); // R1 + R3
+        if (q.startsWith('perna')) return rampa(pos[gi][1], yHips, ySpine02) * (1 - manga) * cauda(gi); // R1 + R3 + R9
         return Math.max(1 - manga, ombro(gi, lado)); // R2
       };
       const m = new Map();
@@ -342,6 +380,38 @@ export function repesar(origem, opcoes = {}) {
       const novos = [];
       for (let gi = 0; gi < ng; gi++) if (regiao[gi]) for (const nb of vizinhos[gi]) if (!regiao[nb]) novos.push(nb);
       for (const gi of novos) regiao[gi] = 1;
+    }
+    // R7/R8: costura dura (pontas dominadas por classes diferentes da mesma zona e
+    // Σ|Δpeso| > costura) + N anéis entram na região; o R5 monta o degradê.
+    const costuras = {};
+    const zonas = [['virilha', o.virilha], ['sovaco', o.sovaco], ['pescoco', o.pescoco]].filter(([, k]) => k > 0);
+    if (zonas.length) {
+      const dominante = atual.map((m) => {
+        const t = new Map();
+        for (const [j, w] of m) t.set(classeOsso[j], (t.get(classeOsso[j]) || 0) + w);
+        let c = null, cw = -1;
+        for (const [k, w] of [...t].sort((x, y) => (x[0] < y[0] ? -1 : 1))) if (w > cw) { c = k; cw = w; }
+        return c;
+      });
+      const marcas = Object.fromEntries(zonas.map(([z]) => [z, new Uint8Array(ng)]));
+      for (let u = 0; u < ng; u++) for (const w of vizinhos[u]) {
+        if (w < u || dominante[u] === dominante[w]) continue;
+        const z = zonaDoPar(dominante[u], dominante[w]);
+        if (!z || !marcas[z]) continue;
+        let d = 0;
+        for (const j of new Set([...atual[u].keys(), ...atual[w].keys()])) d += Math.abs((atual[u].get(j) || 0) - (atual[w].get(j) || 0));
+        if (d > o.costura) { marcas[z][u] = 1; marcas[z][w] = 1; }
+      }
+      for (const [z, k] of zonas) {
+        const marca = marcas[z];
+        costuras[z] = marca.reduce((t, x) => t + x, 0);
+        for (let r = 0; r < k; r++) {
+          const novos = [];
+          for (let gi = 0; gi < ng; gi++) if (marca[gi]) for (const nb of vizinhos[gi]) if (!marca[nb]) novos.push(nb);
+          for (const gi of novos) marca[gi] = 1;
+        }
+        for (let gi = 0; gi < ng; gi++) if (marca[gi]) regiao[gi] = 1;
+      }
     }
     for (let it = 0; it < o.preencher; it++) {
       atual = atual.map((m, gi) => {
@@ -377,7 +447,7 @@ export function repesar(origem, opcoes = {}) {
         });
       }
     });
-    relatorio.push({ malha: s.malha, primitiva: s.primitiva, vertices: nv, gruposPelasRegras: direto, gruposNaRegiao: regiao.reduce((t, x) => t + x, 0), verticesReescritos: vertices });
+    relatorio.push({ malha: s.malha, primitiva: s.primitiva, vertices: nv, gruposPelasRegras: direto, gruposNaRegiao: regiao.reduce((t, x) => t + x, 0), verticesReescritos: vertices, ...(zonas.length ? { costuras } : {}) });
   }
   return { bytes: saida, relatorio };
 }
