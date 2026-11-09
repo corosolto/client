@@ -66,7 +66,27 @@ for (const d of dirs) {
 if (MUT === 'sobrando') clipes.palhacomal = [...STATES];        // manifesto promete o que o disco não tem
 if (MUT === 'faltando') delete clipes[Object.keys(clipes)[0]];  // manifesto esconde o que o disco tem
 
-const idx = { estados: STATES, opcionais: OPT_STATES, clipes };
+/* REFS DE VELOCIDADE POR CLIPE: o clipe assado do Studio carrega a velocidade natural do
+   ciclo (m/s na escala do personagem) em `extras.clip.rootMotion.speed`; o jogo divide a
+   velocidade do bot por ela para plantar o pé (glbchars.js, rate()). Clipe sem o campo —
+   os retargets antigos — fica com a ref global medida do pack compartilhado. */
+const LOCO = ['walk', 'run', 'crouchwalk', 'walk1h'];
+const velocidadeDe = (arq) => {
+  const b = fs.readFileSync(arq);
+  const doc = JSON.parse(b.subarray(20, 20 + b.readUInt32LE(12)).toString('utf8'));
+  const v = doc.animations?.[0]?.extras?.clip?.rootMotion?.speed;
+  return v > 0 ? v : null;
+};
+const refs = {};
+for (const [id, sts] of Object.entries(clipes)) {
+  for (const s of LOCO.filter((x) => sts.includes(x))) {
+    const arq = path.join(ANIMS, id, `${s}.glb`);
+    const v = fs.existsSync(arq) ? velocidadeDe(arq) : null;
+    if (v) (refs[id] ||= {})[s] = v;
+  }
+}
+
+const idx = { estados: STATES, opcionais: OPT_STATES, clipes, refs };
 const texto = JSON.stringify(idx, null, 1) + '\n';
 
 /* ── CLÁUSULAS ────────────────────────────────────────────────────────────────────── */
