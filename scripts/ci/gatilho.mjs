@@ -74,7 +74,7 @@ export const GATILHOS = {
     ],
     /* `npm run` que o workflow chama. A régua cobra os dois lados: passo novo sem
        entrada aqui é vermelho, e entrada aqui sem passo também (passo que sumiu). */
-    passos: ['eval:serve', 'eval:map-fauna-curated:runtime', 'eval:grafite-atual', 'eval:select', 'eval:lobbyarmamao', 'eval:mira-public', 'eval:entrada', 'eval:perfilmobile:browser', 'eval:bots-perf:browser', 'eval:toquecontroles', 'eval:vm-maos-mobile-desktop', 'eval:armas', 'eval:boot', 'eval:sertao-livestock-runtime', 'eval:grafite:ar'],
+    passos: ['eval:serve', 'eval:map-fauna-curated:runtime', 'eval:grafite-atual', 'eval:select', 'eval:lobbyarmamao', 'eval:mira-public', 'eval:entrada', 'eval:perfilmobile:browser', 'eval:toquecontroles', 'eval:vm-maos-mobile-desktop', 'eval:armas', 'eval:boot', 'eval:sertao-livestock-runtime', 'eval:grafite:ar'],
   },
   smoke: {
     workflow: '.github/workflows/smoke-web.yml',
