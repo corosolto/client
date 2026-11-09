@@ -60,7 +60,7 @@ const mutacoes = {
   'tamanho-ignorado': [RES, 'if (bytes.byteLength !== entry.bytes) fail(', 'if (false) fail(', ['R4:']],
   'estado-opcional': [RES, "if (!Object.hasOwn(manifest.animations, state)) fail('studio_state_missing', state);", '', ['R5:']],
   'estado-desconhecido': [RES, "if (!STUDIO_CHARACTER_STATES.includes(state)) fail('studio_state_unknown', state);", '', ['R6:']],
-  'dono-duplicado': [RES, 'if (owners.has(path)) fail(', 'if (false) fail(', ['R6b:', 'R15d:']],
+  'dono-duplicado': [RES, "if (owners.has(path) && tipoDe(owners.get(path)) !== tipoDe(role)) {", 'if (false) {', ['R6b:', 'R15d:']],
   'arquivo-sem-dono': [RES, "for (const path of files.keys()) if (!owners.has(path)) fail('studio_file_unowned', path);", '', ['R6c:']],
   'caminho-inseguro': [RES, "path.split('/').every((segment) => SEGMENT.test(segment))", 'true', ['R7:', 'S4:']],
   'runtime-ignorado': [RES, 'if (compareRuntimeVersions(minimo, VERSION) > 0) fail(', 'if (false) fail(', ['R8:']],
@@ -70,7 +70,13 @@ const mutacoes = {
   'cache-eterno': [RES, 'request.catch(() => { if (_requests.get(key) === request) _requests.delete(key); });', 'request.catch(() => {});', ['R12:']],
   'extra-tudo-baixa': [RES, 'if (!isStudioExtraClipName(name)) {', 'if (false) {', ['R15b:']],
   'extra-sem-validacao': [RES, "if (!isObject(entry) || typeof entry.file !== 'string') fail('studio_manifest_invalid', `animations.extra.${name} sem file`);", '', ['R15f:']],
-  'extra-nao-baixado': [RES, '    ...plan.extraClips.map(([, entry]) => entry.file),\n', '', ['R15:', 'R11:']],
+  'extra-nao-baixado': [RES, '    ...plan.extraClips.map(([, entry]) => entry.file),\n', '', ['R15:', 'R11:', 'R16:']],
+  'familia-ignorada': [RES, 'if (entry.family !== studioClipFamily(name)) {', 'if (false) {', ['R16d:']],
+  'emote-compartilhado-aceito': [RES, "if (nomes.length > 1 && nomes.some((nome) => nome.startsWith('emote_'))) {", 'if (false) {', ['R16c:']],
+  'busca-duplicada': [RES, '[...representantes.values()].map', 'wanted.map', ['R16:', 'R16b:', 'R17:']],
+  'url-sem-dedupe': [RES, 'urls.get(representantes.get(plan.files.get(path).sha256))', 'urls.get(path)', ['R16:', 'R16b:']],
+  'familias-sem-mapa': [RES, 'if (conteudos.length === 1) {', 'if (false) {', ['R16:', 'R16b:', 'R17:']],
+  'clip-sem-nome': [RES, 'clip: name,', "clip: '',", ['R16:']],
   'servidor-com-cache': [SRV, "'cache-control': 'no-store'", "'cache-control': 'public, max-age=31536000'", ['S1:']],
   'servidor-segue-symlink': [SRV, 'if (!contained(rootReal, real)) return deny(404);', '', ['S5:']],
   'servidor-serve-codigo': [SRV, "  '.webp': 'image/webp',\n", "  '.webp': 'image/webp',\n  '.js': 'text/javascript',\n", ['S6:']],
@@ -132,7 +138,8 @@ function pacote(caso, muta = () => {}) {
   const servidos = new Map([
     ['model/sintetico.glb', bytesDe('modelo', 4096)],
     ...STUDIO_CHARACTER_STATES.map((s) => [`animations/${s}.glb`, bytesDe(s, 400 + s.length * 13)]),
-    ['animations/extra/victory.glb', bytesDe('vitoria', 512)],
+    ['animations/extra/ceremony.glb', bytesDe('cerimonia', 900)],
+    ['animations/extra/loco.glb', bytesDe('locomocao', 1200)],
     ['animations/extra/emote-danca.glb', bytesDe('emote', 384)],
     ['previews/retrato.jpg', bytesDe('retrato', 321)],
     ['evidence/proveniencia.json', new TextEncoder().encode('{"sintetico":true}')],
@@ -145,8 +152,11 @@ function pacote(caso, muta = () => {}) {
     animations: {
       ...Object.fromEntries(STUDIO_CHARACTER_STATES.map((s) => [s, `animations/${s}.glb`])),
       extra: {
-        victory: { file: 'animations/extra/victory.glb', duration: 3.2, loop: false, rootMotion: true, source: 'fixture sintética' },
-        emote_danca: { file: 'animations/extra/emote-danca.glb', duration: 1.5, loop: true, rootMotion: false, source: 'fixture sintética' },
+        victory: { file: 'animations/extra/ceremony.glb', duration: 3.2, loop: false, rootMotion: true, source: 'fixture sintética', family: 'ceremony' },
+        defeat: { file: 'animations/extra/ceremony.glb', duration: 2.8, loop: false, rootMotion: false, source: 'fixture sintética' },
+        strafe_left: { file: 'animations/extra/loco.glb', duration: 0.9, loop: true, rootMotion: false, source: 'fixture sintética' },
+        walk_back: { file: 'animations/extra/loco.glb', duration: 1.2, loop: true, rootMotion: false, source: 'fixture sintética' },
+        emote_danca: { file: 'animations/extra/emote-danca.glb', duration: 1.5, loop: true, rootMotion: false, source: 'fixture sintética', family: 'emote' },
       },
     },
     previews: ['previews/retrato.jpg'], evidence: ['evidence/proveniencia.json'],
@@ -218,8 +228,8 @@ try {
       if (!(r.extraClipUrls instanceof Map)) falha('R15: extraClipUrls não é um Map');
       else {
         const nomes = [...r.extraClipUrls.keys()].join();
-        if (nomes !== 'victory,emote_danca') falha(`R15: extras expostos ${nomes}`);
-        for (const [nome, rel] of [['victory', 'animations/extra/victory.glb'], ['emote_danca', 'animations/extra/emote-danca.glb']]) {
+        if (nomes !== 'victory,defeat,strafe_left,walk_back,emote_danca') falha(`R15: extras expostos ${nomes}`);
+        for (const [nome, rel] of [['victory', 'animations/extra/ceremony.glb'], ['emote_danca', 'animations/extra/emote-danca.glb']]) {
           const info = r.extraClipUrls.get(nome);
           if (!info || !Object.isFrozen(info)) { falha(`R15: ${nome} sem entrada congelada`); continue; }
           await confere(info.url, rel, 'model/gltf-binary', 'R15:');
@@ -263,7 +273,7 @@ try {
   }), 'studio_state_unknown');
   await exigeFalha('R6b:', pacote('r6b', (c, fase) => {
     if (fase !== 'antes') return;
-    c.manifest.animations.walk1h = 'animations/walk.glb';
+    c.manifest.animations.walk1h = 'model/sintetico.glb';
     c.manifest.files = c.manifest.files.filter((f) => f.path !== 'animations/walk1h.glb');
   }), 'studio_role_duplicate');
   await exigeFalha('R6c:', pacote('r6c', (c, fase) => {
@@ -320,7 +330,7 @@ try {
     const antes = new Set(criadas);
     const e = await exigeFalha('R11:', ctx, 'studio_fetch_failed');
     const nestaTentativa = [...criadas].filter((u) => !antes.has(u));
-    if (e && nestaTentativa.length < 14) falha(`R11: só ${nestaTentativa.length} Blob URL(s) criadas; a fixture devia criar 14 antes de revogar`);
+    if (e && nestaTentativa.length < 15) falha(`R11: só ${nestaTentativa.length} Blob URL(s) criadas; a fixture devia criar 15 antes de revogar`);
     const vivas = nestaTentativa.filter((u) => !revogadas.has(u) || resolveObjectURL(u));
     if (vivas.length) falha(`R11: ${vivas.length} Blob URL(s) de tentativa falha continuam vivas (estado parcial vazado)`);
 
@@ -359,7 +369,7 @@ try {
       c.manifest.animations.extra.moonwalk = { file: 'animations/extra/moonwalk.glb', duration: 1, loop: false, rootMotion: false, source: 'fora do vocabulário' };
     });
     const r = await resolve(ctx).catch((e) => { falha(`R15b: chave desconhecida derrubou o pacote: ${e?.code}`); return null; });
-    if (r && (r.extraClipUrls.has('moonwalk') || r.extraClipUrls.size !== 2)) falha(`R15b: Map com ${r.extraClipUrls.size} entradas (moonwalk presente? ${r.extraClipUrls.has('moonwalk')})`);
+    if (r && (r.extraClipUrls.has('moonwalk') || r.extraClipUrls.size !== 5)) falha(`R15b: Map com ${r.extraClipUrls.size} entradas (moonwalk presente? ${r.extraClipUrls.has('moonwalk')})`);
     if (ctx.pedidos.some((u) => u.includes('moonwalk'))) falha('R15b: chave desconhecida foi baixada');
   }
   await exigeFalha('R15c:', pacote('r15c', (c, fase) => { if (fase === 'antes') c.manifest.animations.extra.victory.file = 'animations/extra/fantasma.glb'; }), 'studio_role_unknown_file');
@@ -375,6 +385,73 @@ try {
   }
   await exigeFalha('R15f:', pacote('r15f', (c, fase) => { if (fase === 'antes') c.manifest.animations.extra = []; }), 'studio_manifest_invalid');
   await exigeFalha('R15f:', pacote('r15f2', (c, fase) => { if (fase === 'antes') c.manifest.animations.extra.victory = 'animations/extra/victory.glb'; }), 'studio_manifest_invalid');
+
+  // ── R16: packs de família (vários clipes por arquivo) ───────────────────────
+  {
+    const ctx = pacote('r16');
+    const r = await resolve(ctx).catch((e) => { falha(`R16: pacote com packs de família rejeitado: ${e?.code} ${e?.message}`); return null; });
+    if (!r) throw new Error('R16 falhou');
+    const contagem = (suf) => ctx.pedidos.filter((u) => u.endsWith(suf)).length;
+    if (contagem('animations/extra/loco.glb') !== 1) falha(`R16: loco.glb buscado ${contagem('animations/extra/loco.glb')}× (2 chaves), devia ser 1`);
+    if (contagem('animations/extra/ceremony.glb') !== 1) falha(`R16: ceremony.glb buscado ${contagem('animations/extra/ceremony.glb')}×, devia ser 1`);
+    const strafe = r.extraClipUrls.get('strafe_left'), costas = r.extraClipUrls.get('walk_back');
+    if (!strafe || !costas || strafe.url !== costas.url || !strafe.url) falha('R16: chaves do pack loco não compartilham a mesma Blob URL');
+    if (strafe.clip !== 'strafe_left' || costas.clip !== 'walk_back') falha('R16: extraClipUrls sem o nome do clipe dentro do pack');
+    if (strafe.family !== 'loco' || costas.family !== 'loco') falha('R16: família computada errada no pack loco');
+    if (r.extraClipUrls.get('victory').family !== 'ceremony') falha('R16: família declarada (ceremony) não apareceu');
+    if (r.extraClipUrls.get('emote_danca').family !== 'emote') falha('R16: emote sem família emote');
+    if (!(r.families instanceof Map)) { falha('R16: families não é Map'); throw new Error('R16 falhou'); }
+    const loco = r.families.get('loco'), ceremony = r.families.get('ceremony');
+    if (!loco || loco.url !== strafe.url || JSON.stringify(loco.keys) !== JSON.stringify(['strafe_left', 'walk_back'])) falha('R16: families.get("loco") sem {url, keys} do pack compartilhado');
+    if (!ceremony || JSON.stringify(ceremony.keys) !== JSON.stringify(['victory', 'defeat'])) falha('R16: families.get("ceremony") sem as duas chaves do pack');
+    if (r.families.has('emote')) falha('R16: emote apareceu em families (um arquivo por chave não é família carregável)');
+    if (r.families.has('combat')) falha('R16: combat apareceu em families sem clipes');
+    // Estados continuam um arquivo por estado: URLs distintas.
+    if (r.animationUrls.idle === r.animationUrls.walk) falha('R16: estados com arquivos próprios compartilharam URL');
+  }
+  {
+    // R16b: deduplicação por SHA — caminho distinto com bytes idênticos é buscado uma vez.
+    const ctx = pacote('r16b', (c, fase) => {
+      if (fase !== 'antes') return;
+      const b = c.servidos.get('animations/extra/loco.glb');
+      c.servidos.set('animations/extra/loco-copia.glb', b);
+      c.manifest.files.push({ path: 'animations/extra/loco-copia.glb', sha256: sha(b), bytes: b.byteLength });
+      c.manifest.animations.extra.run_back = { file: 'animations/extra/loco-copia.glb', duration: 1.0, loop: true, rootMotion: false, source: 'cópia byte a byte do pack loco' };
+    });
+    const r = await resolve(ctx).catch((e) => { falha(`R16b: cópia com mesmo SHA rejeitada: ${e?.code}`); return null; });
+    const buscasCopia = ctx.pedidos.filter((u) => u.endsWith('animations/extra/loco-copia.glb')).length;
+    if (r && buscasCopia !== 0) falha(`R16b: cópia com mesmo SHA foi buscada ${buscasCopia}×`);
+    if (r && r.extraClipUrls.get('run_back').url !== r.extraClipUrls.get('strafe_left').url) falha('R16b: cópia não reutilizou a Blob URL do conteúdo igual');
+    if (r && !r.families.get('loco')) falha('R16b: loco deixou de ser família carregável com a cópia declarada');
+  }
+  await exigeFalha('R16c:', pacote('r16c', (c, fase) => { if (fase === 'antes') c.manifest.animations.extra.emote_danca.file = 'animations/extra/loco.glb'; }), 'studio_manifest_invalid');
+  await exigeFalha('R16c:', pacote('r16c2', (c, fase) => {
+    if (fase !== 'antes') return;
+    c.manifest.animations.extra.emote_salute = { ...c.manifest.animations.extra.emote_danca, file: c.manifest.animations.extra.emote_danca.file };
+  }), 'studio_manifest_invalid');
+  await exigeFalha('R16d:', pacote('r16d', (c, fase) => { if (fase === 'antes') c.manifest.animations.extra.strafe_left.family = 'combat'; }), 'studio_manifest_invalid');
+  await exigeFalha('R16d:', pacote('r16d2', (c, fase) => { if (fase === 'antes') c.manifest.animations.extra.defeat.family = 'loco'; }), 'studio_manifest_invalid');
+
+  // ── R17: estados num único states.glb ───────────────────────────────────────
+  {
+    const ctx = pacote('r17', (c, fase) => {
+      if (fase !== 'antes') return;
+      const b = bytesDe('states', 2600);
+      c.servidos.set('animations/states.glb', b);
+      c.manifest.files.push({ path: 'animations/states.glb', sha256: sha(b), bytes: b.byteLength });
+      for (const s of STUDIO_CHARACTER_STATES) {
+        c.manifest.files = c.manifest.files.filter((f) => f.path !== `animations/${s}.glb`);
+        c.manifest.animations[s] = 'animations/states.glb';
+      }
+    });
+    const r = await resolve(ctx).catch((e) => { falha(`R17: states.glb compartilhado rejeitado: ${e?.code} ${e?.message}`); return null; });
+    if (!r) throw new Error('R17 falhou');
+    const buscasStates = ctx.pedidos.filter((u) => u.endsWith('animations/states.glb')).length;
+    if (buscasStates !== 1) falha(`R17: states.glb buscado ${buscasStates}× (11 estados), devia ser 1`);
+    const urls = [...new Set(Object.values(r.animationUrls))];
+    if (urls.length !== 1 || !urls[0]) falha(`R17: ${urls.length} URL(s) para 11 estados no mesmo arquivo`);
+    if (r.families instanceof Map && r.families.size !== 2) falha('R17: families mudou com states.glb (extras seguem iguais)');
+  }
 
   // ── S: servidor de /packs/ (plugin Vite real) ───────────────────────────────
   const raiz = join(temporario, 'studio-packs');
