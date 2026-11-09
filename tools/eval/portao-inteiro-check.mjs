@@ -30,6 +30,7 @@
    Uso: node tools/eval/portao-inteiro-check.mjs [--mutante=<nome>]
    ============================================================================ */
 import { readFileSync, existsSync } from 'node:fs';
+import { SUITES } from './suites.mjs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const MUTANTES = { 'passo-orfao': 'PI1', 'regua-fantasma': 'PI2', 'regua-fora-do-pr-fast': 'PI3', 'sucesso-implicito': 'PI4', 'always': 'PI4', 'erro-ignorado': 'PI4', 'setup': 'PI4', 'sem-armadura-ci': 'PI4', 'sem-ads1p-runtime-ci': 'PI4', 'sem-piscina-batch-ci': 'PI4' };
@@ -37,7 +38,8 @@ if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); proc
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const scripts = { ...pkg.scripts };
-if (MUT === 'passo-orfao') scripts['check:fast'] += ' eval:nao-existe';
+const passosPorPortao = { 'check:fast': [...SUITES.fast], 'check:deploy': [...SUITES.deploy] };
+if (MUT === 'passo-orfao') passosPorPortao['check:fast'].push('eval:nao-existe');
 if (MUT === 'regua-fantasma') scripts['eval:fantasma'] = 'node tools/eval/nao-existe-check.mjs';
 
 const falhas = [];
@@ -46,11 +48,12 @@ const PORTOES = ['check:fast', 'check:deploy'];
 /* ---- PI1: nome citado tem de estar definido ---- */
 for (const portao of PORTOES) {
   const linha = scripts[portao];
+  const suite = portao.slice('check:'.length);
   if (!linha) { falhas.push(`PI1 o portão \`${portao}\` não existe em scripts`); continue; }
-  /* A linha é `node tools/eval/runner.mjs a b c`: passo é token com `:` que não é
-     caminho. `syntax` é o único passo sem `:` e está definido como script. */
-  const passos = linha.split(/\s+/).slice(2).filter((t) => t && !t.includes('/'));
-  for (const passo of passos) {
+  if (linha !== `node tools/eval/runner.mjs --suite=${suite}`) {
+    falhas.push(`PI1 ${portao} precisa expandir --suite=${suite} pelo runner`);
+  }
+  for (const passo of passosPorPortao[portao]) {
     if (!scripts[passo]) {
       falhas.push(`PI1 ${portao} cita \`${passo}\`, que não está definido em scripts — o npm morre em "missing script" e os passos seguintes NÃO rodam`);
     }
@@ -112,10 +115,14 @@ if (CI_MUTADO) falhas.push(`PI4 mutação '${MUT}' não aplicou no ci.yml — aj
    job real da seção jobs:, e a unicidade é cobrada GLOBALMENTE — duplicata em
    qualquer outro job, inclusive job novo desconhecido, reprova. */
 const GRUPOS_PI4 = [
-  ['reguas-e-site', 'TRETA$ da partida segue o CS', ['eval:economia']],
-  ['reguas-e-site', 'TRETA$ da partida dentro do Game real', ['eval:economia-jogo']],
-  ['reguas-e-site', 'Contratos visuais de mapas', ['eval:shot-final-pose', 'eval:authored-locomotion', 'eval:character-normal-quality', 'eval:grafite-curation', 'eval:map-material-finish', 'eval:ferro-balcao', 'eval:match-pickups', 'eval:net-flash-disable', 'eval:normal-only-fit-equivalence', 'eval:tp-world-contract', 'eval:skin-profile-flow', 'eval:death-camera-consistency', 'eval:visual-map-contracts', 'eval:knife-skin-markings', 'eval:campo-uv', 'eval:grafite-atual:prova', 'eval:piscina-graffiti-batch']],
-  ['reguas-e-site', 'Flash, fluidez e ADS da AK pública', ['eval:flashbang', 'mut:flashbang', 'eval:movimento-fluidez', 'eval:ads1p-public', 'eval:posto-board-support', 'eval:preview-grip-phase', 'eval:armadura', 'eval:ads1p-runtime-public']],
+  ['economia-ak-hud', 'TRETA$ da partida segue o CS', ['eval:economia']],
+  ['economia-ak-hud', 'TRETA$ da partida dentro do Game real', ['eval:economia-jogo']],
+  ['contratos-visuais', 'Contratos visuais de mapas', ['eval:shot-final-pose', 'eval:authored-locomotion', 'eval:character-normal-quality', 'eval:grafite-curation', 'eval:map-material-finish', 'eval:ferro-balcao', 'eval:match-pickups', 'eval:net-flash-disable', 'eval:normal-only-fit-equivalence', 'eval:tp-world-contract', 'eval:skin-profile-flow', 'eval:death-camera-consistency', 'eval:visual-map-contracts', 'eval:knife-skin-markings', 'eval:campo-uv', 'eval:grafite-atual:prova', 'eval:piscina-graffiti-batch']],
+  ['economia-ak-hud', 'Flash, fluidez e ADS da AK pública', ['eval:flashbang', 'mut:flashbang', 'eval:movimento-fluidez', 'eval:ads1p-public', 'eval:posto-board-support', 'eval:preview-grip-phase', 'eval:armadura', 'eval:ads1p-runtime-public']],
+  ['economia-ak-hud', 'Câmera, atalhos e HUD', ['eval:cameraoclusao', 'tools/eval/camera-oclusao-mutate.mjs', 'tools/eval/camera-hud-check.mjs']],
+  ['soundscape', 'Loops de áudio de todos os mapas', ['eval:soundscape-contract']],
+  ['operacao-flavio', 'Operação Flávio, objetivo', ['eval:operacao-flavio', 'eval:operacao-reset', 'eval:operacao-duration', 'eval:operacao-clock', 'eval:operacao-boarding', 'eval:character-owned', 'eval:objective-codec-contract', 'eval:operacao-npc', 'eval:mode-announcements', 'eval:ctflabels', 'eval:tpreloadpaired']],
+  ['reguas-e-site', 'Suites preservam cobertura', ['tests/eval-suites.test.mjs']],
   ['reguas-e-site', 'Todo mapa devolve o que o game.js consome', ['eval:mapcontrato']],
   ['mapas-e-site', 'Pichação colada na parede', ['eval:pichacao-parede']],
   ['mapas-e-site', 'Amazônia acessível', ['eval:amazonia']],
@@ -230,7 +237,7 @@ try {
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) {
-  const total = PORTOES.reduce((n, p) => n + (scripts[p] || '').split(/\s+/).slice(2).filter((t) => t && !t.includes('/')).length, 0);
+  const total = PORTOES.reduce((n, p) => n + passosPorPortao[p].length, 0);
   console.log(`  \x1b[32m✓\x1b[0m PI4 ${GRUPOS_PI4.length} grupos independentes × ${casosPI4} cenários de status`);
   console.log(`  \x1b[32m✓\x1b[0m PI todo passo dos dois portões está definido e aponta para arquivo que existe (${total} citações)`);
 }
