@@ -10,10 +10,11 @@
 
    Uso (servidor + lock de browser do repo):
      node tools/eval/serve.mjs 9437 &
-     tools/eval/with-browser-lock.sh node tools/eval/pesos-lula-capture.mjs --base http://127.0.0.1:9437
-   Saída: tools/eval/asset-evidence/pesos-lula/<skin>.jpg (folha de contato por
+     tools/eval/with-browser-lock.sh npm run evidencia:pesos-lula -- --base http://127.0.0.1:9437
+   Saída (--saida, padrão /tmp/pesos-lula): <skin>.jpg (folha de contato por
    skin: antes, depois e |diferença| ×4) + recibo.json + quadros PNG em
-   /tmp/pesos-lula-quadros/.
+   /tmp/pesos-lula-quadros/. A evidência publicada fica no studio-assets
+   (evidence/pesos-skins-20261109/), não no client.
    ============================================================================ */
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -23,7 +24,7 @@ import { chromium } from 'playwright';
 const arg = (n, d) => { const i = process.argv.indexOf(`--${n}`); return i > 0 ? process.argv[i + 1] : d; };
 const BASE = arg('base', 'http://127.0.0.1:9437');
 const ORIGEM = arg('origem', 'origin/main'); // commit com os GLBs antigos
-const SAIDA = 'tools/eval/asset-evidence/pesos-lula';
+const SAIDA = arg('saida', '/tmp/pesos-lula');
 const QUADROS = '/tmp/pesos-lula-quadros';
 mkdirSync(SAIDA, { recursive: true }); mkdirSync(QUADROS, { recursive: true });
 
