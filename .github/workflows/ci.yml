@@ -138,6 +138,8 @@ jobs:
         run: npm run eval:lixo
       - name: Preview da Vercel só builda quando o site muda (com mutantes)
         run: npm run eval:vercelignore
+      - name: Segredo de SSR é lido em runtime, não inlinado no build (com mutantes)
+        run: npm run eval:envruntime
       - name: Wrapper de portal embeda o site (frame-ancestors, UTM, pointer-lock)
         run: npm run eval:portalembed
       # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
@@ -329,7 +331,19 @@ jobs:
         run: npm run verify:skills
 
       - name: Astro build
+        env:
+          API_PROXY_SECRET: SENTINEL_ci_api_proxy
+          SUPABASE_URL: SENTINEL_ci_supabase_url
+          SUPABASE_SERVICE_ROLE_KEY: SENTINEL_ci_supabase_key
+          X_PIXEL_TOKEN: SENTINEL_ci_x_pixel
         run: npm run build
+      - name: Build não inlina segredo (varre os artefatos com as sentinelas)
+        env:
+          API_PROXY_SECRET: SENTINEL_ci_api_proxy
+          SUPABASE_URL: SENTINEL_ci_supabase_url
+          SUPABASE_SERVICE_ROLE_KEY: SENTINEL_ci_supabase_key
+          X_PIXEL_TOKEN: SENTINEL_ci_x_pixel
+        run: node tools/eval/env-runtime-check.mjs --varre
 
       - name: SEO e links publicados (com mutações)
         run: |
