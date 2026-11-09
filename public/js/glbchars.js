@@ -1064,7 +1064,7 @@ class CharController {
     this.oneHanded = false; // arma de 1 mão: idle/walk trocam p/ idle1h/walk1h (setado em buildCharacterModel)
     this.weaponId = 'awp';
     this._upperName = null; this._upperDur = 0; this._upperT = 0; this._upperAction = null;
-    this._upperActions = new Map(); this._drawPending = false; this._reloadClip = false; this._hitClip = false;
+    this._upperActions = new Map(); this._drawPending = false; this._drawRequested = false; this._reloadClip = false; this._hitClip = false;
     this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     this._loco = 'idle'; // current locomotion state (hysteresis memory for walk/run choice)
     for (const name of EXTRA_STATES) if (_extraClips[name]) actions[name] = mixer.clipAction(_extraClips[name]);
@@ -1081,6 +1081,7 @@ class CharController {
     void extrasPack().then(() => {
       for (const name of EXTRA_STATES) if (_extraClips[name] && !this.actions[name]) this.actions[name] = this.mixer.clipAction(_extraClips[name]);
       if (this._reloadDur > 0 && !this._reloadClip) this._startReloadClip();
+      if (this._drawRequested) { this._drawRequested = false; this.draw(); }
       if (this._ceremonyPending != null) { const v = this._ceremonyPending; this._ceremonyPending = null; this.ceremony(v); }
     });
   }
@@ -1132,7 +1133,7 @@ class CharController {
     this._upperT += dt;
     if (this._upperT < this._upperDur) return;
     if (this._drawPending) {
-      this._drawPending = false;
+      this._drawPending = false; this._drawRequested = false;
       this._playUpper(`draw_${this.oneHanded ? 'pistol' : 'rifle'}`, 0.65);
     } else if (this._reloadDur > 0 && this._reloadClip) {
       this._stopUpper();
@@ -1234,6 +1235,7 @@ class CharController {
   draw() {
     if (this.dead || this.lod >= 2 || this.weaponId === 'knife') return;
     const tipo = this.oneHanded ? 'pistol' : 'rifle';
+    this._drawRequested = true;
     this._drawPending = this._playUpper(`holster_${tipo}`, 0.45);
     if (!this._drawPending) this._playUpper(`draw_${tipo}`, 0.65);
   }
@@ -1247,7 +1249,7 @@ class CharController {
   ceremony(vitoria) {
     if (this.dead) return;
     if (this.lod >= 2) { this._to('idle'); return; }
-    this.cancelReload(); this._stopUpper(); this.shooting = false; this._emoteId = null; this._drawPending = false;
+    this.cancelReload(); this._stopUpper(); this.shooting = false; this._emoteId = null; this._drawPending = false; this._drawRequested = false;
     const nome = vitoria ? 'victory' : 'defeat';
     if (!this.actions[nome]) { this._ceremonyPending = vitoria; this._requestExtras(); return; }
     this._to(nome);
@@ -1332,7 +1334,7 @@ class CharController {
     this.dead = true; this.shooting = false; this._ar = false; this._mantleF = null;
     /* Overlays de vida (reload/flinch/lean/pitch) morrem junto com o corpo (dono, 31/10). Hist: docs/ANIM-3P.md. */
     this.cancelReload();
-    this._stopUpper(); this._hitClip = false; this._ceremonyPending = null; this._drawPending = false;
+    this._stopUpper(); this._hitClip = false; this._ceremonyPending = null; this._drawPending = false; this._drawRequested = false;
     this._flinchDur = 0;
     this._leanK = 0;
     this.aimPitch = 0;
@@ -1348,7 +1350,7 @@ class CharController {
     this._restaurarPoseMorte();
     this._deathK = 0; this._deathDir = null;
     this.dead = false; this.shooting = false; this.jumping = false; this._ar = false; this._mantleF = null;
-    this._ceremonyPending = null; this._drawPending = false; this._stopUpper();
+    this._ceremonyPending = null; this._drawPending = false; this._drawRequested = false; this._stopUpper();
     this.mixer.stopAllAction();
     this.cur = null;
     this._to('idle');

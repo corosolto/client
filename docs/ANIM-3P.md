@@ -255,7 +255,7 @@ punho dominante com o clipe-base. Residual após a 3ª rodada: `knife_stab` aind
 no coronel (teto 2,5×), sem vantagem do retarget individual. Não foi afrouxado teto nem criado
 pack específico para esconder esse caso.
 
-A régua runtime é `npm run eval:estados3p` (EX1–EX10, 13 casos), incluída no `check:fast`. Ela usa os GLBs e
+A régua runtime é `npm run eval:estados3p` (EX1–EX10, 14 casos), incluída no `check:fast`. Ela usa os GLBs e
 `AnimationMixer` reais e prova: uma só requisição lazy, strafe e diagonal, pernas idênticas ao
 controle durante recarga andando, quatro direções + cabeça, holster→draw, faca, granada 1,05 s,
 vitória/derrota, LOD/fallback e os call sites mínimos em `game.js`. Mutantes: `strafe-mudo`,

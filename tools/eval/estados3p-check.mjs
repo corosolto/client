@@ -85,7 +85,13 @@ const check = (id, fn) => { try { fn(); results.push({ id, ok: true }); } catch 
 
 const a = body();
 assert.ok(!a.ctrl.actions.strafe_left, 'extras não podem ser preload');
+const primeiroSaque = body();
+primeiroSaque.ctrl.draw();
+await esperaExtras(primeiroSaque, 'holster_rifle');
+step(primeiroSaque, 30);
+check('EX1b-primeiro-saque-lazy', () => { assert.equal(primeiroSaque.ctrl._upperName, 'draw_rifle'); });
 a.ctrl.reload(1.2);
+a.ctrl._requestExtras();
 await esperaExtras(a, 'reload_rifle');
 check('EX1-pack-lazy', () => {
   assert.equal(requests.filter((u) => u.includes('models/anims/extras.glb')).length, 1);
