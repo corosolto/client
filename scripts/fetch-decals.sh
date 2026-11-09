@@ -4,6 +4,8 @@
 # "Decalques de graffiti"); sem este passo o deploy renderiza os mapas SEM
 # grafite (T.decals vira 404 silencioso — foi o "os mapas perderam toda textura
 # de graffitis" do dono em 06/08). Publicação do pack autorizada pelo dono.
+# Cache de build: o zip fica em node_modules/.cache/csb-packs/ (a Vercel guarda a pasta
+# entre builds) sob chave da URL; sem a pasta (máquina local) o script baixa como antes.
 set -e
 cd "$(dirname "$0")/.."
 
@@ -28,7 +30,18 @@ if [ "$decal_count" -ge "$EXPECTED_DECALS" ]; then
   exit 0
 fi
 mkdir -p "$DEST"
-echo "Baixando decalques de: $URL"
-curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL "$URL" -o /tmp/csbrasil-decals.zip
+CACHE_DIR="node_modules/.cache/csb-packs"
+if [ "${VERCEL:-}" = "1" ]; then mkdir -p "$CACHE_DIR"; fi
+# Chave = sha256 da URL inteira: URL longa não trunca nem colide com outra de prefixo igual.
+CACHE_ZIP="$CACHE_DIR/decals-$(printf '%s' "$URL" | shasum -a 256 | cut -d' ' -f1).zip"
+if [ -f "$CACHE_ZIP" ] && unzip -tq "$CACHE_ZIP" >/dev/null 2>&1; then
+  echo "Decalques do cache de build: $CACHE_ZIP"
+  cp "$CACHE_ZIP" /tmp/csbrasil-decals.zip
+else
+  rm -f "$CACHE_ZIP"
+  echo "Baixando decalques de: $URL"
+  curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL "$URL" -o /tmp/csbrasil-decals.zip
+  if [ -d "$CACHE_DIR" ]; then cp /tmp/csbrasil-decals.zip "$CACHE_ZIP"; fi
+fi
 unzip -o -q /tmp/csbrasil-decals.zip -d "$DEST/"
 echo "Pronto. $(ls -1 "$DEST"/*.png | wc -l | tr -d ' ') decalques em $DEST/."
