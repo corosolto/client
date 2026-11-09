@@ -25,14 +25,26 @@
 
    Uso:
      node tools/eval/runner.mjs syntax arch:check docs:check
+     node tools/eval/runner.mjs --suite=fast
      node tools/eval/runner.mjs --npm syntax audio:check      (padrão: são scripts npm)
    ============================================================================ */
 import { spawnSync } from 'node:child_process';
+import { passosDaSuite } from './suites.mjs';
 import { SAIDA_SKIP, causaNaoMedivel } from './sonda-filho.mjs';
 
-const passos = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const passos = [];
+try {
+  for (const arg of process.argv.slice(2)) {
+    if (arg.startsWith('--suite=')) passos.push(...passosDaSuite(arg.slice('--suite='.length)));
+    else if (arg === '--suite') throw new Error('use --suite=<nome>');
+    else if (!arg.startsWith('--')) passos.push(arg);
+  }
+} catch (erro) {
+  console.error(`runner: ${erro.message}`);
+  process.exit(2);
+}
 if (!passos.length) {
-  console.error('uso: node tools/eval/runner.mjs <script npm> [<script npm> …]');
+  console.error('uso: node tools/eval/runner.mjs [--suite=<nome>] [<script npm> …]');
   process.exit(2);
 }
 
