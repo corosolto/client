@@ -42,13 +42,13 @@ const fonteDoc = `# SOURCES — models/anims/emotes-mocap.glb\n\n`
   + `Pacote único dos emotes de captura no esqueleto meshy-28 de referência (${bytes} bytes, ${nomes.length} clipes). `
   + `Gerado por \`node tools/build-emotes-mocap-pack.mjs --library=<biblioteca>/index.json\`; `
   + `os GLBs intermediários e FBX não são redistribuídos. O jogo baixa o pack no primeiro emote de clipe `
-  + `e reescala só a translação do \`Hips\` pela altura de quadril de cada corpo.\n\n`
+  + `e retarga cada clipe para o repouso de cada corpo no primeiro uso (\`emoteClipDoCorpo\` em \`public/js/glbchars.js\`).\n\n`
   + `## Catálogo\n\n| Clipe (= id do emote) | ID do catálogo | Duração | Reprodução (laço do catálogo) | QA de conversão aprovada |\n|---|---|---:|---|---|\n`
   + `${linhas.join('\n')}\n\n`
   + LICENCAS
   + `A conversão para meshy-28 preserva \`extras.clip.source.id\` em cada animação. `
   + `A mescla reaproveita os nós por nome e elimina cenas duplicadas; o jogo consome \`g.animations\` `
-  + `e a altura de repouso do nó \`Hips\` da cena.\n`;
+  + `e o repouso dos nós da cena, que é a base do retarget.\n`;
 fs.writeFileSync('public/models/anims/emotes-mocap.SOURCES.md', fonteDoc);
 console.log(`EMOTES-MOCAP-PACK ✓ ${nomes.length} clipes, ${bytes} bytes -> ${saida}`);
 for (const { nome, meta } of pack.metas) console.log(`  ${nome}: ${meta.duration.toFixed(4)} s, ${meta.loop ? 'laço' : 'uma vez'}`);

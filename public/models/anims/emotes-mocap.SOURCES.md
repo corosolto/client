@@ -1,6 +1,6 @@
 # SOURCES — models/anims/emotes-mocap.glb
 
-Pacote único dos emotes de captura no esqueleto meshy-28 de referência (304768 bytes, 8 clipes). Gerado por `node tools/build-emotes-mocap-pack.mjs --library=<biblioteca>/index.json`; os GLBs intermediários e FBX não são redistribuídos. O jogo baixa o pack no primeiro emote de clipe e reescala só a translação do `Hips` pela altura de quadril de cada corpo.
+Pacote único dos emotes de captura no esqueleto meshy-28 de referência (304768 bytes, 8 clipes). Gerado por `node tools/build-emotes-mocap-pack.mjs --library=<biblioteca>/index.json`; os GLBs intermediários e FBX não são redistribuídos. O jogo baixa o pack no primeiro emote de clipe e retarga cada clipe para o repouso de cada corpo no primeiro uso (`emoteClipDoCorpo` em `public/js/glbchars.js`).
 
 ## Catálogo
 
@@ -20,4 +20,4 @@ Pacote único dos emotes de captura no esqueleto meshy-28 de referência (304768
 - IDs `mixamo/*`: Adobe Mixamo, uso em jogos e mídia, inclusive comercial; a redistribuição dos FBX brutos não é permitida. https://helpx.adobe.com/mixamo/faq/mixamo-faq.html
 - IDs `ual/*`: Quaternius Universal Animation Library, CC0 1.0 Universal. https://creativecommons.org/publicdomain/zero/1.0/
 
-A conversão para meshy-28 preserva `extras.clip.source.id` em cada animação. A mescla reaproveita os nós por nome e elimina cenas duplicadas; o jogo consome `g.animations` e a altura de repouso do nó `Hips` da cena.
+A conversão para meshy-28 preserva `extras.clip.source.id` em cada animação. A mescla reaproveita os nós por nome e elimina cenas duplicadas; o jogo consome `g.animations` e o repouso dos nós da cena, que é a base do retarget.
