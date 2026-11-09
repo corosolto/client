@@ -364,7 +364,7 @@ test.describe('chat de sala', () => {
   test.describe('desktop: ARIA, Y/Enter/Esc, foco, IME, XSS e RTL, bloqueio, denúncia e geometria', () => {
     test.describe.configure({ mode: 'serial' });
     let page;
-    const errosDePagina = [];
+    let idioma = 'pt';
     test.beforeAll(async ({ browser }, testInfo) => {
       page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
       page.setDefaultTimeout(20_000);
@@ -373,6 +373,7 @@ test.describe('chat de sala', () => {
       page.on('pageerror', (e) => errosDePagina.push(String(e)));
       await aplicarMutante(page, testInfo);
       await bootarPartida(page);
+      idioma = await page.evaluate(async () => (await (await fetch('/api/geo-lang')).json()).lang);
     });
     test.afterEach(async ({}, testInfo) => {
       if (testInfo.status !== testInfo.expectedStatus) await retratarFalha(page, testInfo);
@@ -388,8 +389,8 @@ test.describe('chat de sala', () => {
       expect(await page.evaluate(() => document.getElementById('chat-sala').hidden)).toBe(false);
       expect(await chatAberto(page)).toBe(false);
       await expect(page.locator('#hud-atalho-chat')).toBeVisible();
-      await expect(page.locator('#hud-chat-sala')).toHaveText('Y SALA');
-      await expect(page.locator('#hud-chat-time')).toHaveText('U TIME');
+      await expect(page.locator('#hud-chat-sala')).toHaveText(idioma === 'pt' ? 'Y SALA' : 'Y ROOM');
+      await expect(page.locator('#hud-chat-time')).toHaveText(idioma === 'pt' ? 'U TIME' : 'U TEAM');
     });
 
     test('botões da HUD: clique abre o canal do rótulo, digitar não vaza pro jogo', async () => {

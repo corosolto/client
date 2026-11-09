@@ -92,7 +92,7 @@ test('menu, ranking, map, teams, character and initial hud boot', async ({ page 
   await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
   await page.keyboard.press('Enter');
   await expect(page.locator('#boot-splash')).toHaveCount(0);
-  marcar('menu');
+  const idioma = await page.evaluate(async () => (await (await fetch('/api/geo-lang')).json()).lang);
 
   await expect(page.locator('#main-menu')).toBeVisible();
   await page.locator('.cs-item[data-act="ranking"]').click();
@@ -134,7 +134,7 @@ test('menu, ranking, map, teams, character and initial hud boot', async ({ page 
   await expect(page.locator('#char-select')).toBeVisible();
   await expect(page.locator('#pause-menu')).toBeHidden();
   // M abre a seleção do OUTRO lado (Direita); o nome é TIME B até o rename de #767 entrar.
-  await expect(page.locator('#char-faction-tag')).toContainText(/DIREITA|TIME B/);
+  await expect(page.locator('#char-faction-tag')).toContainText(idioma === 'pt' ? /DIREITA|TIME B/ : /RIGHT|TEAM B/);
   expect(await page.locator('.screen:not(.hidden)').evaluateAll((els) => els.map((el) => el.id))).toEqual(['char-select']);
 
   await page.locator('#char-back').click();
