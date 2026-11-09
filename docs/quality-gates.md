@@ -57,10 +57,16 @@ no CI vem de `FILA_BASE` (base do PR ou do lote).
 ## Local e pre-push
 
 `check:prepush` executa o núcleo e as suites afetadas pelo diff (`core`, `maps`, `ui`, `audio`,
-`browser`, `network`, `vm`). Caminho desconhecido, dependência transversal ou falha ao ler o diff
-executa `check:deploy` completo. A seleção só existe localmente: o CI nunca usa diff para pular testes.
+`browser`, `network`, `vm`). Em `package.json`, compara os scripts entre os blobs do range e inclui
+somente os passos alterados de `check:fast`/`check:deploy`; workflows com mapa estático validado
+incluem suas réguas. Caminho ou workflow desconhecido, lock/dependência/metadado, agregador,
+remoção de script, JSON inválido ou falha ao ler o diff executa `check:deploy` completo. A seleção
+só existe localmente: o CI nunca usa diff para pular testes.
 
 `check:fast` e `check:deploy` expandem `tools/eval/suites.mjs` com a sequência anterior preservada.
+Os 17 contratos visuais são distribuídos em quatro jobs sem perda ou duplicação. O pai local
+`eval:operacao-flavio` continua sequencial e completo; no CI, os 50 mutantes de collider usam
+quatro shards disjuntos, com core, menu, online e comportamento em jobs separados.
 O `soundscape` é um job obrigatório separado no `build`, então falha externa de áudio não invalida
 um agregado inteiro. Packs de assets usam cache por tag exata e checksum quando existir; os asserts
 nominais continuam obrigatórios. As invariantes são divididas por família e por mapa, sem separar
