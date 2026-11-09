@@ -1,5 +1,5 @@
 {
- "gerado": "2026-11-09T16:34:11.611Z",
+ "gerado": "2026-11-09T17:22:07.599Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
@@ -7,6 +7,9 @@
  "offsets": {
   "esquerdomacho": {
    "run": -0.0343
+  },
+  "mst": {
+   "idle": -0.0242
   },
   "doutora": {
    "run": -0.0153
@@ -29,6 +32,7 @@
    "run": -0.025
   },
   "et": {
+   "idle": -0.0129,
    "run": -0.0341
   },
   "ancap": {
@@ -39,6 +43,7 @@
    "walk": -0.0146
   },
   "proerd": {
+   "idle": -0.0104,
    "crouch": -0.1929
   },
   "palhacomal": {
@@ -55,6 +60,7 @@
    "walk": -0.0137
   },
   "padata": {
+   "idle": -0.0111,
    "run": -0.018
   },
   "emo": {
@@ -80,6 +86,7 @@
    "walk": -0.0143
   },
   "mandrake": {
+   "idle": -0.0169,
    "walk": -0.0113,
    "run": -0.0319
   },
@@ -87,6 +94,7 @@
    "run": -0.0186
   },
   "funkraiz": {
+   "idle": -0.0103,
    "run": -0.0137
   },
   "fluxo": {
@@ -144,7 +152,7 @@
    "run": -0.0168
   },
   "ministro": {
-   "idle": 0.0239,
+   "idle": -0.0136,
    "walk": -0.0141,
    "run": -0.042,
    "shoot": 0.0243
