@@ -1,3 +1,5 @@
+> Registro histórico. As pendências do revisor legado abaixo não são exigências atuais; siga [o ciclo vigente de revisão](../../.claude/skills/estragacodigo-loop/SKILL.md).
+
 # Runtime R94 — checker real passou B1–B9
 
 Root leu o log completo e o processo terminou exit0. B4 real observou automática
@@ -49,7 +51,7 @@ AcceptedROsourceevidence: ABactualhostedB4auto0/total3/manualfingerprinttruefail
 
 OneOMPzai/glm-5.3lowbounded<=150sauthorwith2pathguard; preserveRAW/diff/sourcebeforeNativeadjudication. CurrentturnAUTOR+STATIConly: noNodeimport/SUT/test/parser/build/browser/server/full107; onlysyntax/diffchecksafterfrozenNativefullread. CausalfixturesUNRUN (history,delayauto,missingauto/wrongFP-source-kind,missingmanual/oldseq,delayedack,cleanup).
 
-AGENTS/bug-huntreadfromAB; Rootscopeoverridesgeneraltest/build/browserrequirementsforthispreparation. CodeRabbitOFFprotocol remains; Rootassignsindependentcriticalread/experimentslater. CurrentstateAUTHOR_PENDING_UNRUN. Nextfreezeauthoroutput,Nativefullread/staticcheck, minimalhandoff/ownershipreturn, noautomaticadoption.
+AGENTS/bug-huntreadfromAB; Rootscopeoverridesgeneraltest/build/browserrequirementsforthispreparation. The legacy reviewer remains retired; Rootassignsindependentcriticalread/experimentslater. CurrentstateAUTHOR_PENDING_UNRUN. Nextfreezeauthoroutput,Nativefullread/staticcheck, minimalhandoff/ownershipreturn, noautomaticadoption.
 
 ## Author patch 2026-11-01 (PATCH_ONLY_UNRUN)
 

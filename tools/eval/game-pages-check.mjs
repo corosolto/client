@@ -103,20 +103,30 @@ contract('/en: home em inglês (hreflang, JSON-LD, FAQ, links)', () => enHome(en
 contract('/en: AEO', () => assert.ok(urls.has(`${SITE}/en`)));
 const { fileURLToPath } = await import('node:url');
 const { join } = await import('node:path');
+// CSB_SSR_BASE (build Cloudflare): o handler importa `cloudflare:workers` e não roda em Node;
+// /mapa é pedido a esse host e o AEO publicado é o de dist/client (o Workers serve dist/client direto).
+const SSR_BASE = (process.env.CSB_SSR_BASE || '').replace(/\/$/, '');
 const cwd = process.cwd();
-const functionDir = fileURLToPath(new URL('.vercel/output/_functions/', root));
-process.chdir(functionDir);
 let liveHtml;
-try {
-  const handler = (await import(new URL('.vercel/output/_functions/entry.mjs', root))).default;
-  const response = await handler.fetch(new Request(`${SITE}/mapa`));
+if (SSR_BASE) {
+  const response = await fetch(`${SSR_BASE}/mapa`);
   assert.equal(response.status, 200);
   liveHtml = await response.text();
-} finally { process.chdir(cwd); }
+} else {
+  const functionDir = fileURLToPath(new URL('.vercel/output/_functions/', root));
+  process.chdir(functionDir);
+  try {
+    const handler = (await import(new URL('.vercel/output/_functions/entry.mjs', root))).default;
+    const response = await handler.fetch(new Request(`${SITE}/mapa`));
+    assert.equal(response.status, 200);
+    liveHtml = await response.text();
+  } finally { process.chdir(cwd); }
+}
 for (const [name, check] of Object.entries(checks)) contract(`mapa SSR: ${name}`, () => name === 'aeo' ? check('mapa') : check(liveHtml, 'mapa'));
 contract('mapa SSR: FAQ', () => faq(liveHtml));
-contract('AEO entregue na Vercel', () => {
-  const deployed = JSON.parse(readFileSync(new URL('.vercel/output/static/ai-index.json', root), 'utf8'));
+contract(SSR_BASE ? 'AEO entregue no Workers' : 'AEO entregue na Vercel', () => {
+  const publicado = SSR_BASE ? new URL('dist/client/ai-index.json', root) : new URL('.vercel/output/static/ai-index.json', root);
+  const deployed = JSON.parse(readFileSync(publicado, 'utf8'));
   assert.deepEqual(deployed.entries.map(e => e.url), index.entries.map(e => e.url));
 });
 // A vitrine deve cobrir exatamente os mapas selecionáveis, com o modo inicial real.
@@ -135,10 +145,11 @@ contract('catálogo: todos os mapas selecionáveis', () => {
     assert.ok(cards.some(card => card.name === name || card.item?.name === name), `${id} ausente do ItemList`);
   }
 });
+const PUBLICADO = SSR_BASE ? 'dist/client' : '.vercel/output/static';
 contract('imagens de conteúdo no artefato publicado', () => {
   for (const [route, html] of Object.entries(pages)) for (const match of html.matchAll(/<img[^>]*src="(\/[^"]+)"/g)) {
     const pathname = new URL(match[1], SITE).pathname;
-    assert.ok(existsSync(new URL(`.vercel/output/static${pathname}`, root)), `${route}: imagem ausente ${pathname}`);
+    assert.ok(existsSync(new URL(`${PUBLICADO}${pathname}`, root)), `${route}: imagem ausente ${pathname}`);
   }
 });
 if (process.argv.includes('--mutate')) {

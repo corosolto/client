@@ -49,6 +49,12 @@
       "skillPath": "skills/gameplay-mechanics/SKILL.md",
       "computedHash": "b8a20a15154e8c6c432fba69d6b7d33f34efff4489244a710935cd229ccef6a7"
     },
+    "graphify": {
+      "source": "Graphify-Labs/graphify",
+      "sourceType": "github",
+      "skillPath": "graphify/skill.md",
+      "computedHash": "e98847c4140fdc35b3c169e1725beae59cfb572411460f5101ab0b3b8af0faf4"
+    },
     "grill-me": {
       "source": "mattpocock/skills",
       "sourceType": "github",

@@ -11,7 +11,7 @@ desatualizados. Duplicar é criar o quinto.
 ---
 
 
-## Antes de escrever régua ou mexer em asset: `docs/LICOES.md`
+## Antes de escrever régua ou mexer em asset: `docs/LICOES.md` (em `../progress`)
 
 14 lições, cada uma com o caso real e o número que a comprou. Elas existem porque
 sem esse arquivo todo agente novo redescobre os mesmos buracos — e paga de novo.
@@ -173,8 +173,8 @@ npm run check:fast   # node tools/eval/runner.mjs --suite=fast
 > As invariantes de viewmodel **leem** o `tools/eval/vm_mint_audit.json` que o `eval:vm`
 > **escreve**. Rodar as invariantes com esse JSON velho mede o viewmodel de ontem e
 > **inventa vermelha**: com o JSON em `V0=80°` contra o `game.js` em `V0=42°`, a VM5 acusava
-> **26/26 armas fora**; depois de regenerar, **3/26**. A ordem do `npm run check` já está
-> corrigida — o cuidado é para quando você chamar `node tools/eval/invariants.mjs` na mão.
+> **26/26 armas fora**; depois de regenerar, **3/26**. `eval:invariants` não entra em
+> nenhum `check:*`: o cuidado é para quando você chamar `node tools/eval/invariants.mjs` na mão.
 > É o **BUG-02** do `KNOWN-BUGS.md` (em `../progress`).
 
 O `check:fast` usa `tools/eval/runner.mjs`: **todos os passos rodam mesmo quando um deles

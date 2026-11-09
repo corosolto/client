@@ -1,19 +1,16 @@
 // GET /api/badge/<id|nick>.png - badge com stats.
-// Render: resvg nativo no servidor + fonte DejaVu embutida.
+// Render: resvg-wasm (src/lib/png.ts) + fonte DejaVu embutida; avatar quadrado por `#borda-imagem`.
 // Avatar: foto → unavatar(X) → personagem do jogo (SVG) → inicial.
 import type { APIRoute } from 'astro';
-import { Resvg } from '@resvg/resvg-js';
-import sharp from 'sharp';
+import { bordaImagem } from '#borda-imagem';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../../lib/supabase';
 import { rateLimit } from '../../../lib/ratelimit';
-import fontSource from '../../../lib/font-data.ts?raw';
+import { renderPng } from '../../../lib/png';
 import { fmtTime } from '../../../lib/fmt';
 import { CHARS, charSvg, charName } from '../../../lib/charsvg';
 import { fetchAvatar } from '../../../lib/safe-url';
 
 export const prerender = false;
-
-const fontBuffers = [Buffer.from([...fontSource.matchAll(/'([A-Za-z0-9+/=]+)'/g)].map(m=>m[1]).join(''), 'base64')];
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -30,10 +27,7 @@ async function avatarDataUri(url?: string | null, id?: string): Promise<string |
     if(data)buf=Buffer.from(await data.arrayBuffer());
   }else buf=await fetchAvatar(url);
   if (!buf) return null;
-  try {
-    const png = await sharp(buf).resize(120, 120, { fit: 'cover' }).png().toBuffer();
-    return 'data:image/png;base64,' + png.toString('base64');
-  } catch { return null; }
+  return bordaImagem.avatarDataUri(buf);
 }
 
 // matches_p/matches_b são colunas legadas; a interface publica apenas os times E/B.
@@ -64,7 +58,7 @@ function badgeSvg(p: any, avatarUri: string | null, charId: string | null): stri
 
   const avatar = avatarUri
     ? `<defs><clipPath id="cav"><circle cx="748" cy="96" r="56"/></clipPath></defs>
-       <image href="${avatarUri}" x="692" y="40" width="112" height="112" clip-path="url(#cav)"/>
+       <image href="${avatarUri}" x="692" y="40" width="112" height="112" preserveAspectRatio="xMidYMid slice" clip-path="url(#cav)"/>
        <circle cx="748" cy="96" r="56" fill="none" stroke="${sideColor}" stroke-width="4"/>`
     : (charId && CHARS[charId] ? charSvg(charId, sideColor)
     : `<circle cx="748" cy="96" r="56" fill="${sideColor}" opacity="0.25"/>
@@ -111,7 +105,7 @@ export const GET: APIRoute = async (ctx) => {
   }
 };
 
-const handle: APIRoute = async ({ params }) => {
+const handle: APIRoute = async ({ params, request }) => {
   if (!supabaseAdmin)
     return new Response(NOT_CONFIGURED, { status: 503, headers: { 'content-type': 'application/json' } });
   const parts = (params.path || '').split('/').filter(Boolean);
@@ -125,11 +119,8 @@ const handle: APIRoute = async ({ params }) => {
   if(!score) return new Response('not found',{status:404,headers:{'cache-control':'no-store'}});
   const p={...score,social:score.social_link};
   const avatarUri=await avatarDataUri(score.avatar_url,score.id);
-  const resvg = new Resvg(badgeSvg(p, avatarUri, score.last_character), {
-    font: { fontBuffers, loadSystemFonts: false, defaultFontFamily: 'DejaVu Sans' },
-    background: '#0c0e11',
-  });
-  return new Response(new Uint8Array(resvg.render().asPng()), {
+  const png = await renderPng(request, badgeSvg(p, avatarUri, score.last_character), '#0c0e11');
+  return new Response(png, {
     // `s-maxage` faltava: sem ele a CDN não guarda e todo hit paga o WASM de novo.
     headers: { 'content-type': 'image/png', 'cache-control': 'no-store' },
   });

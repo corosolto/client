@@ -541,11 +541,11 @@ export function repesar(origem, opcoes = {}) {
   return { bytes: saida, relatorio };
 }
 
-// Colagem: maior Σ|Δpeso| entre vértices de PEÇAS diferentes (sem aresta entre elas) a
-// ≤ `raio` m no bind, em cada primitiva. Peças coladas com pesos diferentes se afastam
-// quando o osso gira (rasgo); o repeso não pode aumentar este número (régua de pesos).
-export function medirColagem(g, raio = 0.01, aoPar = null) {
-  let pior = 0;
+// Pares colados: vértices de PEÇAS diferentes (sem aresta nem solda entre elas) a ≤ `raio`
+// m no bind, em cada primitiva. O rasgo em cm entre eles é medido por pose-skin.mjs; aqui
+// só os acha (o mutante cola-solta da régua de pesos solta um deles).
+export function paresColados(g, raio = 0.01) {
+  const pares = [];
   for (const s of skinsDoGlb(g)) {
     const nv = s.P.length / 3, pai = Int32Array.from({ length: nv }, (_, i) => i);
     const raiz = (x) => { while (pai[x] !== x) { pai[x] = pai[pai[x]]; x = pai[x]; } return x; };
@@ -554,19 +554,14 @@ export function medirColagem(g, raio = 0.01, aoPar = null) {
     const solda = new Map();
     for (let v = 0; v < nv; v++) { const k = [0, 1, 2].map((c) => Math.round(s.P[v * 3 + c] * 1e5)).join(); if (solda.has(k)) unir(solda.get(k), v); else solda.set(k, v); }
     const P = (v) => [s.P[v * 3], s.P[v * 3 + 1], s.P[v * 3 + 2]];
-    const pesos = (v) => { const m = new Map(); for (let k = 0; k < 4; k++) if (s.W[v * 4 + k] > 0) m.set(s.J[v * 4 + k], (m.get(s.J[v * 4 + k]) || 0) + s.W[v * 4 + k]); return m; };
     const grade = new Map();
     for (let v = 0; v < nv; v++) { const k = P(v).map((x) => Math.floor(x / raio)).join(); if (!grade.has(k)) grade.set(k, []); grade.get(k).push(v); }
     for (let v = 0; v < nv; v++) {
       const p = P(v), c = p.map((x) => Math.floor(x / raio));
       for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) for (const u of grade.get(`${c[0] + dx},${c[1] + dy},${c[2] + dz}`) || []) {
-        if (u <= v || raiz(u) === raiz(v) || dist(p, P(u)) > raio) continue;
-        const a = pesos(v), b = pesos(u);
-        let d = 0; for (const j of new Set([...a.keys(), ...b.keys()])) d += Math.abs((a.get(j) || 0) - (b.get(j) || 0));
-        if (d > pior) pior = d;
-        if (aoPar) aoPar(s, v, u, d);
+        if (u > v && raiz(u) !== raiz(v) && dist(p, P(u)) <= raio) pares.push({ s, v, u });
       }
     }
   }
-  return +pior.toFixed(4);
+  return pares;
 }

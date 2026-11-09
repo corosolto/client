@@ -1,3 +1,5 @@
+> Registro histórico. As pendências do revisor legado abaixo não são exigências atuais; siga [o ciclo vigente de revisão](../.claude/skills/estragacodigo-loop/SKILL.md).
+
 # Operação Flávio e resolução dos 47 PRs
 
 ## Estado atual recuperável
@@ -67,7 +69,7 @@ JSON veio com cercas Markdown, removidas só do envelope; versão bruta preserva
 
 QA pareada local passou: fixture runtime/flavio-pair/ no HQ usa game/ e api/_lib do backend182 df6ab491, public/tools da lane cliente, sem modificar symlink backend→Java. Room e Game reais, codec binário v7, humano com mesmo personagem sem tomar VIP, morte atual/resultado sem placar e countdown preservando relógio. É fixture sem WebSocket nem participantes humanos; não é produção ou partida humana. Script/check/result e pins preservados no runtime. Avisos de instâncias Three/GLTF anotados no log, sem falha de contrato.
 
-Checagem ampla check:fast segue rodando; eval:tpanim3p já falhou e precisa diagnóstico antes de qualquer declaração de gate verde. Não atribuir automaticamente à lane nem ignorar como dívida. Falta revisão independente no head final, CodeRabbit atual, push normal com hooks e QA WebSocket/browser pareada.
+Checagem ampla check:fast segue rodando; eval:tpanim3p já falhou e precisa diagnóstico antes de qualquer declaração de gate verde. Não atribuir automaticamente à lane nem ignorar como dívida. Falta revisão independente no head final, revisor legado atual, push normal com hooks e QA WebSocket/browser pareada.
 
 
 ### GLM18 reservado: recebimento do crítico e52
@@ -77,7 +79,7 @@ Régua independente de apresentação mediu RED no pulo online (stateUntil alter
 2026-10-31T00:44:42.342523+00:00: mutante vaza anterior saiu0 sem atingir Piscina; régua independente reproduziu omissão de Praça. Lease apenas tools/eval/ctf-labels-check.mjs e ctf-win-check.mjs. Proposta deve excluir só objectiveMode e comprovar aplicação. Codex mantém testes independentes.
 
 ### Crítico independente do checkpoint e52 — sete itens abertos no recebimento
-Revisão antecipada exigida por AGENTS; não substitui a revisão final após CodeRabbit. Itens: pulo online altera relógio; follow sobrescreve câmera; filtros CTF omitem mapas opcionais/mutante; OBJ3 mede estado local em vez de recepção/aplicação; timeout sem winner; respawn8s/retaguarda ausente; blocos derivados de scripts desatualizados.
+Revisão antecipada exigida por AGENTS; não substitui a revisão final após revisor legado. Itens: pulo online altera relógio; follow sobrescreve câmera; filtros CTF omitem mapas opcionais/mutante; OBJ3 mede estado local em vez de recepção/aplicação; timeout sem winner; respawn8s/retaguarda ausente; blocos derivados de scripts desatualizados.
 
 GLM18 recebido com envelope Markdown removido só para parse; bruto preservado. Allowlist/hashes/literais conferidos antes de aplicar. Sete casos de apresentação verdes; cinco mutantes reais aplicados e reprovados (pulo, relógio, câmera, vencedor, áudio). Reentrada verificada; clock autoritativo preservado. Sem alegar WS/humano nem conclusão dos outros quatro itens. Logs /tmp/corosolto-flavio-presentation-*.log; runtime GLM-18-PATCH.json no HQ. Próximo: reparar CTF/OBJ3/respawn, gerar docs e terminar gate amplo antes de push/revisão.
 
@@ -118,7 +120,7 @@ Reprodução focada animação: AN1 adjim retorno2.47cm vs limite2cm; mão18.3cm
 
 2026-10-31T01:36:16.393183+00:00 — GLM28 recebido (auditoria, sem patch). Diagnóstico com GLBs/AnimationMixer/CharController reais:19fases×3LODs e39combinaçõesarma/histórico sem resíduo pareado; prétiro deriva17.99cm igual no controle sem recarga. Não reproduz numericamente2.47cm anterior nem prova causa única. Codex corrigiu AN1 para corpos gêmeos/fase alinhada, teto2cm/seleção original preservados; normal browser em execução, ainda sem resultado. Crítico antecipado pediu matriz permanente com histórias e mutante de retorno, aceitos: tools/eval/tp-reload-paired-check.mjs agora42casos idle/tiro/corrida, todosretorno0; mutantes reais residuo42/42, apos-tiro14/42, apos-corrida14/42 reprovam retorno19.47cm com timers0. Integrado à chamada normal AN1; fonte glbchars.js intocada. TesteautorCodex, GLM29 revisão estática em execução. Log /tmp/corosolto-tp-reload-paired-self-test.log. ExtraçãoEgo real mede controle mas não substitui browserPraca/wiring. Próximo: fechar normalbrowser, crítico da nova matriz, docsgerados e checkpoint antes de push normal.
 
-2026-10-31T01:39:30.292457+00:00 — Browser normal pareado terminouexit0,10/10: raul mão23.3cm, pente30→12cm, retorno0.00cm contra controle, idle0.24cm. Log /tmp/corosolto-flavio-tpanim-paired-normal.log. Não reproduz/resolve numericamente originaladjim2.47; é correção demonstrada da medição e nova cobertura permanente. Críticoaceitouhistórias/mutantes e apontou NaN; guarda finite aplicada a retorno/mid/drift/duração, novo mutante real nao-finito42/42 reprova. Self-testfinal42normais+4mutantes verdes /tmp/corosolto-tp-reload-paired-self-test.log. Docs normal (após staging), docs:check, arch:check e syntaxdos2scripts verdes. GLM29pré-revisão ainda emcurso. Próximo: checkpoint e pushnormal comhooks, preservar eventuaisbloqueios; CodeRabbitheadatual e críticofinal/humano nãoobtidos.
+2026-10-31T01:39:30.292457+00:00 — Browser normal pareado terminouexit0,10/10: raul mão23.3cm, pente30→12cm, retorno0.00cm contra controle, idle0.24cm. Log /tmp/corosolto-flavio-tpanim-paired-normal.log. Não reproduz/resolve numericamente originaladjim2.47; é correção demonstrada da medição e nova cobertura permanente. Críticoaceitouhistórias/mutantes e apontou NaN; guarda finite aplicada a retorno/mid/drift/duração, novo mutante real nao-finito42/42 reprova. Self-testfinal42normais+4mutantes verdes /tmp/corosolto-tp-reload-paired-self-test.log. Docs normal (após staging), docs:check, arch:check e syntaxdos2scripts verdes. GLM29pré-revisão ainda emcurso. Próximo: checkpoint e pushnormal comhooks, preservar eventuaisbloqueios; revisor legadoheadatual e críticofinal/humano nãoobtidos.
 
 2026-10-31T01:49:59.458036+00:00 — Push normal a8489bc84 encerrou1, semenvio: hookcheck:deploy CM1 em main.js trêscomentários trailing consecutivos movidos pelo anúncio. Log /tmp/corosolto-flavio-push-a8489.log. Codex remove somente duas notas redundantes, semmudarcomportamento/limites. Próximo gatecomentário+checkpoint e novopushnormal; sem bypass.
 

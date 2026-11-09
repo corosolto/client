@@ -1767,7 +1767,7 @@ export function buildHavan(scene, T) {
       if (!blocked(gx, gz, 0.5)) nodes.push({ x: gx, z: gz });
   // ADENSAMENTO NA RAMPA: com STEP 3,4 m só 2 nós caíam sobre uma rampa de 6 m — dois pontos
   // não fazem caminho. Rampa precisa de passo proporcional à inclinação (mesma conclusão do
-  // protótipo em tools/mapdesign/favela.py: escada a 1,1 m contra rua a 3,4 m).
+  // protótipo tools/mapdesign/favela.py, hoje só no histórico git: escada a 1,1 m contra rua a 3,4 m).
   /* 1,7 m -> 0,8 m: a escada nova tem 2,60 m de largura (era 6,00) e 5,80 m de corrida (era
      10,00), e o corrimão virou colisor. Com passo 1,7 sobrava UMA coluna de nós dentro do
      canal livre de 1,74 m — uma fila de pontos não é grafo. Com 0,8 são 3 colunas × 7
