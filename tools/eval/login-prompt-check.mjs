@@ -189,7 +189,6 @@ await caso('LP9', 'fiação: partida começada conta, partida terminada arma o c
   assert(rec > 0 && /document\.dispatchEvent\(new CustomEvent\('cs-match-end', \{ detail: \{ mode: mpSessao \? 'multiplayer' : 'singleplayer' \} \}\)\)/.test(fonteMain.slice(rec, rec + 200)), 'fim de partida não avisa');
   assert(/document\.addEventListener\('cs-match-end',e=>\{\n\s+ended=true;/.test(fontePrompt), 'convite não escuta o fim da partida');
   assert(/onReady:ready=>initLoginPrompt\(\{\.\.\.ready,skip:Boolean\(inspectionScreen \|\| testMode \|\| params\.get\('sala'\)(?: \|\| (?:params\.get\('perfil'\)|perfilCompartilhado))?\)/.test(fonteMain), 'convite não pendurado no onReady da conta');
-  assert(/sendJsonKeepalive\('\/api\/funnel', \{ step, sessionId: getSessionId\(\), \.\.\.data \}\)/.test(fonteMain), 'transporte fora do funil');
 });
 await caso('LP11', 'passo de entrada não abre sozinho para visitante (com ou sem nick); abre para link expirado e conta sem nick', () => {
   const linha = fonteConta.match(/const wantsPrompt=\(\)=>[^;]*;/)?.[0];

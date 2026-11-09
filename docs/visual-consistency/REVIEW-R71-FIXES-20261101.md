@@ -1,3 +1,5 @@
+> Registro histórico. As pendências do revisor legado abaixo não são exigências atuais; siga [o ciclo vigente de revisão](../../.claude/skills/estragacodigo-loop/SKILL.md).
+
 # Continuação da revisão 8ee — R73, 01/11/2026
 
 Objetivo integral da operação: consistência de mapas/UI/personagens/skins/armas,
@@ -18,7 +20,7 @@ Evidência desta lane (E): `A/review-r71-fixes-r73/`.
 Esses caminhos partem do aggregate `/Volumes/Zenith/Projects/game/corosolto/csbrasil`,
 não do worktree Git. Os `audits/` citados aqui e nos contratos são evidência externa
 local; não existem sob este WT, não são links GitHub e não há promessa de upload.
-CodeRabbit foi dispensado pelo dono em
+revisor legado foi dispensado pelo dono em
 `operations/corosolto-hq-20261026/ledger/REVIEW-PROTOCOL-20261031.md`;
 crítico independente e QA pertinente continuam obrigatórios e pertencem ao Root.
 

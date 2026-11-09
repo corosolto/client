@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { initTextures, renderer, sfx, PCHAR } from './harness.mjs';
+import { replaceOnce } from './mutation.mjs';
 
 const mutante = process.argv.find(arg => arg.startsWith('--mutante='))?.slice(10) || null;
 let url = new URL('../../public/js/game.js', import.meta.url);
@@ -18,8 +19,7 @@ if (mutante) {
   const [antes, depois] = mutacoes[mutante];
   assert.ok(antes, 'mutante conhecido');
   let source = readFileSync(url, 'utf8');
-  assert.equal(source.split(antes).length, 2, 'alvo único do mutante');
-  source = source.replace(antes, depois);
+  source = replaceOnce(source, antes, depois, `mutante ${mutante}`);
   source = source.replace(/from\s+(['"])([^'"]+)\1/g, (_, quote, spec) =>
     `from ${JSON.stringify(spec.startsWith('.') ? new URL(spec, url).href : spec)}`);
   console.log(`Mutação aplicada: ${mutante}`);

@@ -25,6 +25,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SUITES } from './suites.mjs';
 
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (!['', 'gerador', 'base-padrao', 'audit-grava'].includes(MUTANTE)) { console.error(`mutante desconhecido: ${MUTANTE}`); process.exit(1); }
@@ -34,11 +35,6 @@ const PADRAO = /(\|\||\?\?)\s*['"`]https?:\/\/(localhost|127\.0\.0\.1):8123/;
 const SEM_BASE = ['tools/gen-graffiti-layout.mjs', 'tools/eval/graffiti-census.mjs', 'tools/eval/graffiti-audit.mjs', 'tools/eval/gl-metrics.mjs'];
 
 const scripts = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).scripts;
-if (MUTANTE === 'gerador') {
-  const s = scripts['check:fast'];
-  scripts['check:fast'] = s.replace(' docs:check ', ' docs:check grafite ');
-  if (scripts['check:fast'] === s) { console.error('MUTANTE NAO APLICOU: gerador'); process.exit(1); }
-}
 const lerFonte = (rel) => {
   const s = readFileSync(join(ROOT, rel), 'utf8');
   if (MUTANTE === 'audit-grava' && rel === 'tools/eval/graffiti-audit.mjs') {
@@ -55,9 +51,14 @@ const lerFonte = (rel) => {
 const passos = new Set();
 for (const portao of ['check:fast', 'check:deploy']) {
   const cmd = scripts[portao];
-  if (!cmd || !cmd.includes('runner.mjs')) { console.error(`${portao} não usa tools/eval/runner.mjs; não sei ler os passos`); process.exit(1); }
-  for (const p of cmd.split(/\s+/).slice(cmd.split(/\s+/).indexOf('tools/eval/runner.mjs') + 1)) passos.add(p);
+  const suite = portao.slice('check:'.length);
+  if (!cmd || cmd !== `node tools/eval/runner.mjs --suite=${suite}`) {
+    console.error(`${portao} não usa a suite ${suite} do tools/eval/runner.mjs; não sei ler os passos`);
+    process.exit(1);
+  }
+  for (const p of SUITES[suite]) passos.add(p);
 }
+if (MUTANTE === 'gerador') passos.add('grafite');
 const geradores = [], comPadrao = [], gravadores = [];
 const JSON_1 = /process\.env\.JSON === '1'/;
 for (const p of passos) {
