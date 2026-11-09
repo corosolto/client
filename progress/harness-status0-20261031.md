@@ -1,6 +1,8 @@
+> Registro histórico. As pendências do revisor legado abaixo não são exigências atuais; siga [o ciclo vigente de revisão](../.claude/skills/estragacodigo-loop/SKILL.md).
+
 # Harness status0 — continuação recuperável
 
-Objetivo: corrigir ENOBUFS/status0 classificado PASS; exigir eval:sondafilho no CI; provar PASS limpo e falhas. GLM207/211/216 via OMP, crítico independente FINALCLEAN219; CodeRabbit dispensado por Ruben. Base pública49151a2970e1ec7cd5c31f4f232b82639804f8ae; nenhuma escrita na lane owner1167.
+Objetivo: corrigir ENOBUFS/status0 classificado PASS; exigir eval:sondafilho no CI; provar PASS limpo e falhas. GLM207/211/216 via OMP, crítico independente FINALCLEAN219; revisor legado dispensado por Ruben. Base pública49151a2970e1ec7cd5c31f4f232b82639804f8ae; nenhuma escrita na lane owner1167.
 
 Aplicados runner207/CI207/SFS216. Prova REAL isolada Node22 Linux219: baseline25/25, mutante PASS→SKIP detectado SFS22, mutante ENOBUFSstatus0→PASS detectado SFS21, restauração25/25;30.37s. Fixture física Git491+Three vendored; zip/unzip apenas na imagem local de testefed51a4. Hashes restaurados. Falhas anteriores de dependências preservadas, sem mascará-las como sucesso.
 

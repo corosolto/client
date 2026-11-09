@@ -5888,7 +5888,7 @@
 ## [2.0.0-alpha.119] — 2026-08-14
 
 ### Mudado
-- feat(ci): CodeRabbit no lugar do Greptile como revisor de PR (#272)
+- feat(ci): revisor legado no lugar do Greptile como revisor de PR (#272)
 
 ## [2.0.0-alpha.118] — 2026-08-14
 
