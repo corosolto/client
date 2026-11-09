@@ -1,0 +1,305 @@
+{
+  "_nota": "Pool voice.M do pack v8 (content-addressed-v1) identificado por transcrição offline (whisper.cpp small, pt) + banda de pitch por voz, 09/11/2026. Fonte das falas: tools/gerar-vozes-miticos.mjs e tools/montar-pack-miticos.mjs (FALAS menos SELECT). Lobisomem: 8 SFX sem fala, sem texto.",
+  "personagens": {
+    "lampiao": {
+      "kill": [
+        {
+          "file": "audio/a/e1b6407763596a4f.mp3",
+          "slug": "oxente",
+          "text": "Ôxente!"
+        },
+        {
+          "file": "audio/a/496bfc7d87eb930e.mp3",
+          "slug": "vote",
+          "text": "Vôte!"
+        },
+        {
+          "file": "audio/a/9dedcf9ba8e6c8ba.mp3",
+          "slug": "arre-egua",
+          "text": "Arre égua!"
+        },
+        {
+          "file": "audio/a/e9399e162f3cbe08.mp3",
+          "slug": "cabra-da-peste",
+          "text": "Cabra da peste!"
+        },
+        {
+          "file": "audio/a/5da69a43e12d964a.mp3",
+          "slug": "visse",
+          "text": "Visse?!"
+        },
+        {
+          "file": "audio/a/01a0f66bafc798e7.mp3",
+          "slug": "lascou-se",
+          "text": "Lascô-se!"
+        }
+      ]
+    },
+    "mariabonita": {
+      "kill": [
+        {
+          "file": "audio/a/ba4c0f14977337c0.mp3",
+          "slug": "caiu-ligeiro",
+          "text": "Caiu ligeiro, visse?"
+        },
+        {
+          "file": "audio/a/0881ba4fde12a69a.mp3",
+          "slug": "assina-maria",
+          "text": "Assina: Maria."
+        },
+        {
+          "file": "audio/a/1560eeed2bb10dda.mp3",
+          "slug": "um-tiro",
+          "text": "Um tiro só."
+        },
+        {
+          "file": "audio/a/80b02f21da019b45.mp3",
+          "slug": "vote-errou",
+          "text": "Vôte, errou!"
+        },
+        {
+          "file": "audio/a/70dcbf3ae92aa3e6.mp3",
+          "slug": "arretada",
+          "text": "Arretada, eu."
+        },
+        {
+          "file": "audio/a/46f02e15ec76b51d.mp3",
+          "slug": "de-nada-cabra",
+          "text": "De nada, cabra."
+        }
+      ]
+    },
+    "saci": {
+      "kill": [
+        {
+          "file": "audio/a/b79a35903d383cb8.mp3",
+          "slug": "sumiu",
+          "text": "Sumiu!"
+        },
+        {
+          "file": "audio/a/258de62aa4f06a5b.mp3",
+          "slug": "pegadinha",
+          "text": "Pegadinha!"
+        },
+        {
+          "file": "audio/a/9dbf34b9bf90c5eb.mp3",
+          "slug": "redemoinho",
+          "text": "Redemoinho!"
+        },
+        {
+          "file": "audio/a/c1423b78d2135409.mp3",
+          "slug": "era-eu",
+          "text": "Era eu!"
+        },
+        {
+          "file": "audio/a/1141b6a885def87b.mp3",
+          "slug": "uma-perna",
+          "text": "Uma perna!"
+        },
+        {
+          "file": "audio/a/a7c07ed28d24dabc.mp3",
+          "slug": "achou-nao",
+          "text": "Achou não!"
+        }
+      ]
+    },
+    "curupira": {
+      "kill": [
+        {
+          "file": "audio/a/136ef5631a2f007a.mp3",
+          "slug": "pe-virado",
+          "text": "Pé virado!"
+        },
+        {
+          "file": "audio/a/9c5cc09a9d393f9c.mp3",
+          "slug": "rastro-errado",
+          "text": "Rastro errado!"
+        },
+        {
+          "file": "audio/a/35901417b1120f15.mp3",
+          "slug": "perdeu",
+          "text": "Se perdeu!"
+        },
+        {
+          "file": "audio/a/7af4907a53667eb1.mp3",
+          "slug": "mata-cobra",
+          "text": "A mata cobra."
+        },
+        {
+          "file": "audio/a/3da523f40c817cfb.mp3",
+          "slug": "voltou-nao",
+          "text": "Voltou não!"
+        },
+        {
+          "file": "audio/a/07652523c1cf4285.mp3",
+          "slug": "fiu-fiu",
+          "text": "Já era!"
+        }
+      ]
+    },
+    "cuca": {
+      "kill": [
+        {
+          "file": "audio/a/8c7c5448557fba64.mp3",
+          "slug": "nana-nenem",
+          "text": "Nana, neném."
+        },
+        {
+          "file": "audio/a/1256c01d03f60c55.mp3",
+          "slug": "dorme",
+          "text": "Dorme."
+        },
+        {
+          "file": "audio/a/17f7d8f0c326308c.mp3",
+          "slug": "boa-noite",
+          "text": "Boa noite..."
+        },
+        {
+          "file": "audio/a/ebe04f0412a19c76.mp3",
+          "slug": "sonho-bom",
+          "text": "Sonho bom?"
+        },
+        {
+          "file": "audio/a/13835522f5a2ceba.mp3",
+          "slug": "hora-de-dormir",
+          "text": "Hora de dormir."
+        },
+        {
+          "file": "audio/a/7ffbbe3b50fe6fb4.mp3",
+          "slug": "mais-um",
+          "text": "Mais um dormiu."
+        }
+      ]
+    },
+    "boto": {
+      "kill": [
+        {
+          "file": "audio/a/386c70ebea0cd7e5.mp3",
+          "slug": "encantei",
+          "text": "Encantei."
+        },
+        {
+          "file": "audio/a/f0758412ef55882f.mp3",
+          "slug": "charme-puro",
+          "text": "Charme puro."
+        },
+        {
+          "file": "audio/a/dcc4558750da2dba.mp3",
+          "slug": "meu-bem",
+          "text": "Meu bem..."
+        },
+        {
+          "file": "audio/a/0a406c4cfa1a4a25.mp3",
+          "slug": "afundou",
+          "text": "Afundou."
+        },
+        {
+          "file": "audio/a/56ce141039f46b09.mp3",
+          "slug": "que-pena",
+          "text": "Que pena."
+        },
+        {
+          "file": "audio/a/c1f74951b9f08a2b.mp3",
+          "slug": "rosa-vence",
+          "text": "Rosa vence."
+        }
+      ]
+    },
+    "bandeirante": {
+      "kill": [
+        {
+          "file": "audio/a/2a1c49fe61904975.mp3",
+          "slug": "rastreado",
+          "text": "Rastreado."
+        },
+        {
+          "file": "audio/a/21ed5785e68a92bf.mp3",
+          "slug": "marco-novo",
+          "text": "Marco novo."
+        },
+        {
+          "file": "audio/a/080607e89240fb56.mp3",
+          "slug": "fim-da-trilha",
+          "text": "Fim da trilha."
+        },
+        {
+          "file": "audio/a/2d6db245fd7fe35b.mp3",
+          "slug": "previsivel",
+          "text": "Previsível."
+        },
+        {
+          "file": "audio/a/9a0e0938a69bb0db.mp3",
+          "slug": "mapeado",
+          "text": "Mapeado."
+        },
+        {
+          "file": "audio/a/30650ac56a9f79c6.mp3",
+          "slug": "achei",
+          "text": "Achei."
+        }
+      ]
+    },
+    "zumbi": {
+      "kill": [
+        {
+          "file": "audio/a/eac827a88d529c48.mp3",
+          "slug": "palmares",
+          "text": "Palmares!"
+        },
+        {
+          "file": "audio/a/b0d928447f52c676.mp3",
+          "slug": "liberdade",
+          "text": "Liberdade!"
+        },
+        {
+          "file": "audio/a/61db6fd3a21d2212.mp3",
+          "slug": "avanca",
+          "text": "Avança!"
+        },
+        {
+          "file": "audio/a/50c9a535f77653c9.mp3",
+          "slug": "de-pe",
+          "text": "De pé!"
+        },
+        {
+          "file": "audio/a/92786eb4b8147921.mp3",
+          "slug": "pela-serra",
+          "text": "Pela serra!"
+        },
+        {
+          "file": "audio/a/7aca15b97b0d8ba8.mp3",
+          "slug": "coragem",
+          "text": "Coragem!"
+        }
+      ]
+    },
+    "lobisomem": {
+      "kill": [
+        {
+          "file": "audio/a/3079ffb95dda8377.mp3"
+        },
+        {
+          "file": "audio/a/17ccc8ba7eef04e4.mp3"
+        },
+        {
+          "file": "audio/a/3c8ebdb678350328.mp3"
+        },
+        {
+          "file": "audio/a/951f684b254b1cdf.mp3"
+        },
+        {
+          "file": "audio/a/b5ceef525d5de69f.mp3"
+        },
+        {
+          "file": "audio/a/c27518490b4891ba.mp3"
+        },
+        {
+          "file": "audio/a/ce30a15579484b39.mp3"
+        },
+        {
+          "file": "audio/a/ea075c043b68753a.mp3"
+        }
+      ]
+    }
+  }
+}

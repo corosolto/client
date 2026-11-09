@@ -436,7 +436,7 @@ function showLoading(label, status = 'CARREGANDO MODELOS 3D…', mapName = '') {
   }
   _lo.box.dataset.mode = ehMapaJavaporcos(currentMap) ? 'horde' : '';
   _loadWallModoI = 0;
-  _loadWallFixa = (mapName && MAPS[currentMap]?.loadingWall) || '';
+  _loadWallFixa = (mapName && MAPS[currentMap]?.loadingWall) || loadingWallDoPersonagem(currentChar) || '';
   try { _lo.box.style.setProperty('--loading-wall', _loadWallFixa ? `url('${_loadWallFixa}')` : loadingWallUrl(_loadWallI++)); } catch {}
   _lo.box.classList.remove('hidden');
   if (!LEAN) loadingStage.show(ehMapaJavaporcos(currentMap) ? 'J' : currentFaction).catch(() => {});   // mobile mantém a tela 2D; nenhum segundo renderer/GLB durante o boot
@@ -587,6 +587,14 @@ const LOADING_WALLS = ['/img/loading-20.webp', '/img/loading-21.webp', '/img/loa
   '/img/loading-35.webp', '/img/loading-36.webp', '/img/loading-37.webp', '/img/loading-38.webp'];
 let _loadWallI = 4, _loadWallFixa = '', _loadWallModoI = 0;
 const loadingWallUrl = (i) => `url('${LOADING_WALLS[i % LOADING_WALLS.length]}')`;
+/* Arte do lote que retrata o personagem escolhido: a espera mostra QUEM você vai jogar. Sem
+   isto a rotação sorteava qualquer um — "o loading me mostrou a Maria Bonita e abriu o
+   Lampião" (dono, 09/11). Só os Míticos têm arte no lote; os demais seguem na rotação. */
+const LOADING_WALL_BY_CHAR = Object.freeze({
+  lobisomem: 20, mariabonita: 21, lampiao: 22, bandeirante: 23, boto: 24,
+  zumbi: 25, saci: 26, curupira: 27, caipora: 28,
+});
+const loadingWallDoPersonagem = (charId) => LOADING_WALL_BY_CHAR[charId] ? `/img/loading-${LOADING_WALL_BY_CHAR[charId]}.webp` : '';
 function applySplashWallpaper() {
   const splash = $('boot-splash');
   if (splash) splash.style.setProperty('--loading-wall', loadingWallUrl(_wallK));
