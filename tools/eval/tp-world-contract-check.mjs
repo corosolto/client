@@ -230,7 +230,7 @@ async function rodarVariante(mut) {
       // (o overlay procedural só entra sem clipe). RC1 cobra isso quadro a quadro.
       reload: (c) => { c.reload(1.2); const r = c._tpWorldRecarga = { foraDoClipe: 0, kProcedural: 0, fase: false }; for (let f = 0; f < 40; f++) { c.update(1 / 60, 0, false, 0); if (!c._reloadClip || c._upperName !== 'reload_rifle') r.foraDoClipe++; if (c.reloadK !== 0) r.kProcedural++; if ((c._upperAction?.getEffectiveWeight() || 0) > 0.5) r.fase = true; mede(c); } },
       // Fallback de produção sem o pack (módulo com extras.glb ausente): curva procedural.
-      'reload-procedural': (c) => { c.reload(1.2); let fase = false; for (let f = 0; f < 40; f++) { c.update(1 / 60, 0, false, 0); if (c.reloadK > 0.5) fase = true; mede(c); } if (!fase) throw new Error('reloadK nunca passou de 0.5 sem o pack'); },
+      'reload-procedural': (c) => { c.reload(1.2); let fase = false; for (let f = 0; f < 40; f++) { c.update(1 / 60, 0, false, 0); if (c.reloadK > 0.5) fase = true; mede(c); } if (!fase) throw new Error('reloadK nunca passou de 0.5 sem o pack'); if (c.actions.reload_rifle || c._reloadClip) throw new Error('módulo sem pack tocou reload_rifle'); },
       emote: (c) => { if (!c.emote('passinho')) throw new Error('emote recusado'); let fase = false; for (let f = 0; f < 40; f++) { c.update(1 / 60, 0, false, 0); if (c._emoteK > 0.5) fase = true; mede(c); } if (!fase) throw new Error('_emoteK nunca passou de 0.5'); },
       death: (c) => { c.die(new THREE.Vector3(1, 0, 0.5)); let fase = false; for (let f = 0; f < 60; f++) { c.update(1 / 60, 0, false, 0); if ((c._deathK || 0) > 0.3) fase = true; mede(c); } if (!fase) throw new Error('_deathK nunca passou de 0.3'); },
     };
