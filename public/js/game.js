@@ -2671,12 +2671,13 @@ export class Game {
   }
   async _emoteMods() {
     if (this._emoteMod) return this._emoteMod;
-    try {
-      const mod = await import('./emotes.js');
+    if (this._emoteLoading) return this._emoteLoading;
+    this._emoteLoading = import('./emotes.js').then((mod) => {
       setEmoteDriver({ pose: mod.poseEmote, duracao: mod.emoteDuracao, laco: mod.emoteLaco });
       this._emoteMod = mod;
       return mod;
-    } catch { return null; }
+    }).catch(() => null).finally(() => { this._emoteLoading = null; });
+    return this._emoteLoading;
   }
   _emoteUi(mod) {
     const m = this.el.emoteWheel;

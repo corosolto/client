@@ -6,6 +6,7 @@ import { WEAPONS, supDeCod, anguloDeDisparo } from './game.js';
 import { frase } from './i18n.js';
 import { preloadEyewearAssets } from './eyewear.js';
 import { preloadCosmeticAssets } from './glbchars.js';
+import { emoteInfo } from './data/emote-catalog.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
 
@@ -191,6 +192,7 @@ class Netcode {
       shoot: !!this.game.mouseDown0, weapon: p.weapon,
       // INTENÇÃO de mirar (1 bit). Quem integra o `adsF` — e portanto a precisão — é o servidor.
       ads: !!p.scoped,
+      emote: this.game._emoteAtual || null,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
       // duração DESTE passo (teto do laço do navegador): o servidor integra o comando por ela,
       // e não pelo tick dele — senão o ack compara poses de instantes diferentes (BUG-152).
@@ -333,6 +335,7 @@ class Netcode {
     this.net.sendInput({
       ax: 0, az: 0, crouch: false, shift: false, jump: false,
       yaw: p.yaw, pitch: p.pitch, shoot: false, weapon: p.weapon,
+      emote: null,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(), dtms: 1,
     });
     this._inputAt = now;
@@ -511,6 +514,15 @@ class Netcode {
         this._syncPlayerLoadout(e, ent);
         continue;
       }
+      // Estado persistente, não evento: quem entra no meio herda recarga e fase da dança.
+      ent._netCrouch = !!e.crouch;
+      ent.crouchF = ent._netCrouch ? 1 : 0;
+      ent._netReloadUntilMs = e.alive ? nowMs + Math.max(0, Number(e.reloadIn) || 0) * 1000 : 0;
+      ent._netEmote = e.alive && game.state === 'live' && emoteInfo(e.emote) ? e.emote : null;
+      ent._netEmoteElapsed = Math.max(0, Number(e.emoteElapsed) || 0);
+      ent._netStateAtMs = nowMs;
+      ent._netStateTick = snap.tick;
+      this._syncRemoteStates(ent);
       /* Interpolação contínua entre pacotes (reiniciar picota o boneco). Campos PLANOS de
          propósito: um {x,y,z} por ent × frequência de rede gera GC que trava o vsync. */
       if (ent._ipT1 == null) {
@@ -947,6 +959,49 @@ class Netcode {
     try { game.sfx.respawn(); } catch { /* ctx mudo */ }
   }
 
+  /* Os estados vivem na entidade, não no GLB: uma troca de malha no meio da ação
+     recebe o restante atual. O import só instala o driver; nunca inicia dança num
+     callback atrasado, que poderia ressuscitar uma intenção já cancelada. */
+  _syncRemoteStates(b) {
+    const ctrl = b.mesh?.isGLB && b.mesh.ctrl;
+    if (!ctrl) return;
+    const novo = b._netVisualCtrl !== ctrl;
+    if (novo) {
+      b._netVisualCtrl = ctrl;
+      b._netReloadActive = false;
+      b._netEmoteAppliedTick = null;
+    }
+    ctrl.setCrouch?.(b.alive && !!b._netCrouch);
+    if (!b.alive) {
+      ctrl.cancelReload?.(); ctrl.pararEmote?.();
+      b._netVisualCtrl = null;
+      return;
+    }
+    if (ctrl.dead) return;   // updateRemoteBot revive antes de reaplicar a vida nova
+    const agora = this._now();
+    const restante = Math.max(0, ((b._netReloadUntilMs || 0) - agora) / 1000);
+    if (restante > 0 && !b._netReloadActive) ctrl.reload?.(restante);
+    else if (restante === 0 && b._netReloadActive) ctrl.cancelReload?.();
+    b._netReloadActive = restante > 0;
+    const info = emoteInfo(b._netEmote);
+    if (!info || this.game.state !== 'live') {
+      ctrl.pararEmote?.(); b._netEmoteAppliedTick = null;
+      return;
+    }
+    if (!this.game._emoteMod) {
+      if (!b._netEmoteLoading) {
+        b._netEmoteLoading = true;
+        void this.game._emoteMods().finally(() => { b._netEmoteLoading = false; });
+      }
+      return;
+    }
+    if (b._netEmoteAppliedTick === b._netStateTick && !novo) return;
+    const elapsed = b._netEmoteElapsed + Math.max(0, agora - b._netStateAtMs) / 1000;
+    if (!info.laco && elapsed >= info.dur) ctrl.pararEmote?.();
+    else ctrl.emote?.(info.id, info.laco ? elapsed % info.dur : elapsed);
+    b._netEmoteAppliedTick = b._netStateTick;
+  }
+
   /* Render de um boneco REMOTO. Chamado pelo game._updateBot para corpos com `_remote`.
      Espelha a lógica de morte do _updateBot local. */
   updateRemoteBot(b, dt, positionOnly = false) {
@@ -991,6 +1046,7 @@ class Netcode {
     if (positionOnly) { g.visible = false; return; }
     if (b.alive) {
       if (b._deadShown) { if (b.mesh.isGLB) b.mesh.ctrl.revive && b.mesh.ctrl.revive(); b._deadShown = false; b.deadT = 0; }
+      if (b.mesh.isGLB) this._syncRemoteStates(b);
       const corpoYaw = b._netBot === false ? b.yaw + Math.PI : b.yaw;   // humano remoto olhava pra trás
       g.position.copy(b.pos); g.rotation.set(0, corpoYaw, 0); g.visible = true;
       const spd = Math.min(6, b._netSpd || 0);
