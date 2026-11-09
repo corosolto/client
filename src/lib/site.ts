@@ -30,8 +30,9 @@ export const DESC_SHORT =
 export const DESC_LONG =
   'Jogo FPS gratuito de navegador com dois times, Time E e Time B, sátira brasileira, arenas, armas, bots, rounds e Capture the Flag. Multiplayer beta e controles de toque no celular; sem cadastro.';
 
-const PUBLIC_ENV = import.meta.env || {};
-export const RANKING_ON = PUBLIC_ENV.RANKING_ON === 'true';
+// Acesso membro a membro: capturar `import.meta.env` inteiro embutiria no chunk
+// SSR o objeto de env do build (réguas ER1 de env-runtime-check).
+export const RANKING_ON = import.meta.env.RANKING_ON === 'true';
 export const RANKING_DESCRIPTION_PT = RANKING_ON
   ? 'O ranking soma a pontuação das partidas. Cada abate confirmado soma um ponto; abates multiplayer entre perfis distintos recebem um ponto extra. Consulte o ranking para ver os resultados.'
   : 'O ranking global está indisponível por enquanto. Os stats de partida ficam salvos no seu navegador e aparecem no menu RANKING do jogo.';
@@ -67,8 +68,8 @@ export const REDES_OFICIAIS = [
 // Apoio: o endereço da campanha brasileira entra depois que ela for criada no MeApoia.
 // Os fallbacks deixam a página utilizável no primeiro deploy e podem ser trocados só por
 // variáveis públicas, sem espalhar URL de plataforma pelo jogo.
-export const SUPPORT_URL_BR = PUBLIC_ENV.PUBLIC_SUPPORT_URL_BR || 'https://meapoia.com/vaquinhas/ajude-a-manter-o-coro-solto-online';
-export const SUPPORT_URL_INTL = PUBLIC_ENV.PUBLIC_SUPPORT_URL_INTL || 'https://ko-fi.com/corosolto';
+export const SUPPORT_URL_BR = import.meta.env.PUBLIC_SUPPORT_URL_BR || 'https://meapoia.com/vaquinhas/ajude-a-manter-o-coro-solto-online';
+export const SUPPORT_URL_INTL = import.meta.env.PUBLIC_SUPPORT_URL_INTL || 'https://ko-fi.com/corosolto';
 
 /* ===========================================================================
    RANKING: DESLIGADO (decisão do dono, 04/08/2026)
