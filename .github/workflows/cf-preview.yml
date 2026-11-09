@@ -1,8 +1,8 @@
 name: cf-preview
 
 on:
-  # O workflow é lido da base confiável; o checkout do PR fica sem segredos.
-  pull_request_target:
+  # O build roda sem segredos; o deploy confiável é disparado em outro workflow.
+  pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
@@ -44,7 +44,7 @@ jobs:
             echo "nenhum arquivo do site mudou: preview pula"
           fi
 
-  # O build recebe código do PR sem segredos. Só o deploy confiável lê o token CF.
+  # O build recebe código do PR sem segredos. O deploy fica em cf-preview-deploy.yml.
   build:
     needs: decide
     if: needs.decide.outputs.rodar == 'true' && github.event.pull_request.draft != true && github.event.pull_request.head.repo.full_name == github.repository
@@ -62,73 +62,11 @@ jobs:
       - run: npm ci
       - name: Build Cloudflare sem segredos
         run: npm run build:cf
-      - name: Guarda artefato do Worker
+      - name: Guarda apenas os assets compilados
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: cf-preview-${{ github.event.pull_request.number }}
-          path: |
-            dist
-            wrangler.preview.toml
+          path: dist
           if-no-files-found: error
           include-hidden-files: true
 
-  # Este job usa apenas o artefato produzido acima e a definição confiável deste workflow.
-  deploy:
-    needs: build
-    if: needs.build.result == 'success'
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: Baixa artefato sem executar código do PR
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: cf-preview-${{ github.event.pull_request.number }}
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 22
-      - name: Verifica configuração da conta
-        env:
-          ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          if [ -z "$ACCOUNT_ID" ]; then
-            echo "::error::Configure CLOUDFLARE_ACCOUNT_ID em Settings > Secrets and variables > Actions > Variables"
-            exit 1
-          fi
-      - name: Publica versão do Worker
-        id: upload
-        env:
-          CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN || secrets.CF_API_TOKEN }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN || secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          PR_NUM: ${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
-          if [ -z "$CF_API_TOKEN" ]; then
-            echo "::error::CF_WORKERS_TOKEN/CF_API_TOKEN ausente ou sem Workers Scripts:Edit"
-            exit 1
-          fi
-          npx --yes wrangler@4.158.0 versions upload \
-            --config wrangler.preview.toml \
-            --name csb-preview \
-            --message "PR #$PR_NUM" 2>&1 | tee "$RUNNER_TEMP/wrangler-upload.log"
-          URL=$(grep -Eo 'https://[^[:space:]]+\.workers\.dev' "$RUNNER_TEMP/wrangler-upload.log" | tail -n 1 | sed 's/[),.]$//')
-          if [ -z "$URL" ]; then
-            echo "::error::Wrangler não retornou a URL da versão"
-            exit 1
-          fi
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-          echo "preview Cloudflare: $URL"
-      - name: Carrega script de comentário confiável
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          persist-credentials: false
-      - name: Atualiza comentário sticky
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          PR_NUM: ${{ github.event.pull_request.number }}
-          PREVIEW_URL: ${{ steps.upload.outputs.url }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python3 scripts/ci/cf_preview_comment.py "$PR_NUM" "$PREVIEW_URL" "$HEAD_SHA"
