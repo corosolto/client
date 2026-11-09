@@ -376,7 +376,7 @@ test.describe('chat de sala', () => {
       page.on('pageerror', (e) => errosDePagina.push(String(e)));
       await aplicarMutante(page, testInfo);
       await bootarPartida(page);
-      idioma = await page.evaluate(async () => (await (await fetch('/api/geo-lang')).json()).lang);
+      idioma = (await page.locator('#hud-chat-sala').innerText()).includes('SALA') ? 'pt' : 'en';
     });
     test.afterEach(async ({}, testInfo) => {
       if (testInfo.status !== testInfo.expectedStatus) await retratarFalha(page, testInfo);
