@@ -5,38 +5,38 @@
   "skins": {
     "lula-mandrake": {
       "antigo": "lula-mandrake-d7014fbc5694.glb",
-      "novo": "lula-mandrake-7babfbddcf34.glb",
+      "novo": "lula-mandrake-4e58761e8ed5.glb",
       "folha": "tools/eval/asset-evidence/pesos-lula/lula-mandrake.jpg",
-      "bytes": 337045,
+      "bytes": 336929,
       "quadros": 18,
       "diferencaMediaPorQuadro": {
-        "shoot · frente 3/4": 9.527,
-        "idle · frente 3/4": 7.449,
-        "walkfire · frente 3/4": 6.5,
-        "shoot · lado": 5.729,
-        "idle · lado": 7.168,
-        "walkfire · lado": 4.67,
-        "shoot · costas 3/4": 10.311,
-        "idle · costas 3/4": 10.696,
-        "walkfire · costas 3/4": 12.402
+        "shoot · frente 3/4": 9.55,
+        "idle · frente 3/4": 7.48,
+        "walkfire · frente 3/4": 6.542,
+        "shoot · lado": 5.624,
+        "idle · lado": 6.879,
+        "walkfire · lado": 4.286,
+        "shoot · costas 3/4": 10.303,
+        "idle · costas 3/4": 10.693,
+        "walkfire · costas 3/4": 12.388
       }
     },
     "lula-cyborg": {
       "antigo": "lula-cyborg-dee1c4685b95.glb",
-      "novo": "lula-cyborg-b1739c744789.glb",
+      "novo": "lula-cyborg-e94ce8f2be07.glb",
       "folha": "tools/eval/asset-evidence/pesos-lula/lula-cyborg.jpg",
-      "bytes": 381509,
+      "bytes": 381664,
       "quadros": 18,
       "diferencaMediaPorQuadro": {
-        "shoot · frente 3/4": 8.346,
-        "idle · frente 3/4": 6.875,
-        "walkfire · frente 3/4": 5.216,
-        "shoot · lado": 6.565,
-        "idle · lado": 6.822,
-        "walkfire · lado": 6.66,
-        "shoot · costas 3/4": 8.141,
-        "idle · costas 3/4": 7.894,
-        "walkfire · costas 3/4": 8.976
+        "shoot · frente 3/4": 8.785,
+        "idle · frente 3/4": 6.719,
+        "walkfire · frente 3/4": 4.851,
+        "shoot · lado": 6.908,
+        "idle · lado": 6.819,
+        "walkfire · lado": 6.204,
+        "shoot · costas 3/4": 8.129,
+        "idle · costas 3/4": 8.201,
+        "walkfire · costas 3/4": 9.858
       }
     },
     "lula-drip": {
