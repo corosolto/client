@@ -29,15 +29,32 @@ const h12 = (bytes) => sha(bytes).slice(0, 12);
 const readJSON = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
 const io = new NodeIO();
 
-/* Nada é escrito antes de TODOS os corpos validarem; um throw deixa public/ e tools/eval/ intactos. */
+/* Nada é escrito antes de TODOS os corpos validarem; um throw deixa public/ e tools/eval/ intactos.
+   A promoção tem duas fases: grava todos os `.tmp` e só então troca alvo a alvo. Se uma escrita
+   ou um rename falha, os alvos já trocados voltam aos bytes anteriores (ou somem, se não
+   existiam), as pastas criadas e os `.tmp` são apagados, e o erro original sobe. */
 const pendentes = [];
 const promote = () => {
-  for (const [target, bytes] of pendentes) {
-    if (fs.existsSync(target) && fs.readFileSync(target).equals(bytes)) continue;
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    const tmp = `${target}.${process.pid}.tmp`;
-    fs.writeFileSync(tmp, bytes);
-    fs.renameSync(tmp, target);
+  const lote = pendentes
+    .filter(([alvo, bytes]) => !(fs.existsSync(alvo) && fs.readFileSync(alvo).equals(bytes)))
+    .map(([alvo, bytes]) => ({ alvo, bytes, tmp: `${alvo}.${process.pid}.tmp`, antes: fs.existsSync(alvo) ? fs.readFileSync(alvo) : null }));
+  const pastas = [], trocados = [];
+  try {
+    for (const { alvo, bytes, tmp } of lote) {
+      const criada = fs.mkdirSync(path.dirname(alvo), { recursive: true });
+      if (criada) pastas.push(criada);
+      fs.writeFileSync(tmp, bytes);
+    }
+    for (const item of lote) { fs.renameSync(item.tmp, item.alvo); trocados.push(item); }
+  } catch (error) {
+    const naoRestaurados = [];
+    for (const { alvo, antes } of trocados.reverse()) {
+      try { if (antes) fs.writeFileSync(alvo, antes); else fs.rmSync(alvo, { force: true }); } catch { naoRestaurados.push(path.relative(process.cwd(), alvo)); }
+    }
+    for (const { tmp } of lote) fs.rmSync(tmp, { force: true });
+    for (const pasta of pastas.reverse()) fs.rmSync(pasta, { recursive: true, force: true });
+    if (naoRestaurados.length) error.message += ` (rollback falhou em: ${naoRestaurados.join(', ')})`;
+    throw error;
   }
 };
 
