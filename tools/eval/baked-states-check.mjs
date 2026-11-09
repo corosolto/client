@@ -1,25 +1,36 @@
 #!/usr/bin/env node
-/* ESTADOS-ASSADOS: o GLB servido é o pack medido pelo Studio e mantém contato/quadril.
+/* ESTADOS-ASSADOS: valida o GLB servido contra o QA Studio e impede seleção por vacuidade.
    O teto de -3 cm vem do contrato da lane; quadril usa exatamente o limite do Studio:
-   max(1,08× bind, máximo da fonte +0,08). Hash/int16/meshopt impedem trocar o asset sem
-   renovar a evidência. --mutante=pe-afundado injeta os -13,37 cm da morte antiga do bonzo. */
+   max(1,08× bind, máximo da fonte +0,08). Toda exclusão precisa de regressão numérica ou
+   de runtime registrada. --mutante=exclusao-sem-metrica remove a prova de uma exclusão. */
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 
 const MUT = process.argv.find((a) => a.startsWith('--mutante='))?.split('=')[1] || '';
-if (MUT && MUT !== 'pe-afundado') throw new Error(`mutante desconhecido: ${MUT}`);
+if (MUT && MUT !== 'exclusao-sem-metrica') throw new Error(`mutante desconhecido: ${MUT}`);
 const ARQ = path.resolve('public/models/anims/baked-states.json');
 const data = JSON.parse(fs.readFileSync(ARQ, 'utf8'));
-if (MUT === 'pe-afundado') {
-  const death = data.bodies.bonzo?.states.death;
-  if (!death) throw new Error('mutante não aplicou: bonzo/death ausente');
-  death.lowestVertexCm = -13.37;
+if (MUT === 'exclusao-sem-metrica') {
+  if (!data.excluded.bonzo?.length) throw new Error('mutante não aplicou: exclusão do bonzo ausente');
+  data.excluded.bonzo = [];
+}
+const falhas = [];
+const bodies = Object.entries(data.bodies || {}), excluded = Object.entries(data.excluded || {});
+if (bodies.length + excluded.length !== 74) falhas.push(`inventário incompleto: ${bodies.length} selecionados + ${excluded.length} excluídos != 74`);
+for (const [id, regressions] of excluded) {
+  if (!Array.isArray(regressions) || !regressions.length) falhas.push(`${id}: exclusão sem métrica/regressão registrada`);
+  for (const r of regressions || []) {
+    const numeric = r.state && r.metric && Number.isFinite(r.current) && Number.isFinite(r.next) && Number.isFinite(r.delta);
+    const runtime = r.state && Array.isArray(r.kinds) && r.kinds.length;
+    if (!numeric && !runtime) falhas.push(`${id}: regressão malformada`);
+  }
 }
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
-const falhas = [];
 let clips = 0, piorPe = Infinity, piorPeQuem = '', piorFolgaHips = Infinity, piorHipsQuem = '';
-for (const [id, body] of Object.entries(data.bodies || {})) {
+for (const [id, body] of bodies) {
+  if (data.excluded?.[id]) falhas.push(`${id}: selecionado e excluído ao mesmo tempo`);
+  if (data.states.length !== 11 || Object.keys(body.states || {}).length !== 11) falhas.push(`${id}: seleção precisa ter 11 estados`);
   if (id.includes('-cyborg-') || id.includes('-drip-') || id.includes('-mandrake-')) falhas.push(`${id}: skin entrou no pipeline de BODIES`);
   const mergedPath = path.resolve('public/models/anims', `${id}.glb`);
   if (!fs.existsSync(mergedPath)) { falhas.push(`${id}: pack mesclado ausente`); continue; }
@@ -48,7 +59,7 @@ for (const [id, body] of Object.entries(data.bodies || {})) {
 }
 
 // Prova no MESMO GLTFLoader do jogo: meshopt + int16 normalizado viram clipes Three finitos.
-if (!falhas.length) {
+if (!falhas.length && bodies.length) {
   const { THREE } = await import('./three-node.mjs');
   const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
   const { MeshoptDecoder } = await import('../../public/vendor/meshopt_decoder.module.js');
@@ -71,14 +82,16 @@ if (!falhas.length) {
   }
 }
 
-const resumo = `${Object.keys(data.bodies || {}).length} corpos/${clips} estados · pior mínimo ${piorPe} cm (${piorPeQuem}) · menor folga de quadril ${piorFolgaHips.toFixed(4)}× (${piorHipsQuem})`;
+const resumo = bodies.length
+  ? `${bodies.length} corpos/${clips} estados · pior mínimo ${piorPe} cm (${piorPeQuem}) · menor folga de quadril ${piorFolgaHips.toFixed(4)}× (${piorHipsQuem})`
+  : `0 corpos selecionados · ${excluded.length} exclusões com regressão registrada`;
 if (MUT) {
-  const mordeu = falhas.some((f) => f.includes('bonzo/death') && f.includes('-13.37'));
-  console.log(mordeu ? `✓ mutante pe-afundado reprovado: ${resumo}` : `MUTAÇÃO PASSOU — ${resumo}`);
+  const mordeu = falhas.some((f) => f.includes('bonzo: exclusão sem métrica'));
+  console.log(mordeu ? `✓ mutante exclusao-sem-metrica reprovado: ${resumo}` : `MUTAÇÃO PASSOU — ${resumo}`);
   process.exit(mordeu ? 0 : 1);
 }
 if (falhas.length) {
   console.error(`ESTADOS-ASSADOS VERMELHO · ${falhas.length} falha(s)\n${falhas.slice(0, 20).join('\n')}`);
   process.exit(1);
 }
-console.log(`ESTADOS-ASSADOS ✓ ${resumo}; 11/11 clipes decodificados por corpo`);
+console.log(`ESTADOS-ASSADOS ✓ ${resumo}${bodies.length ? '; 11/11 clipes decodificados por corpo' : ''}`);

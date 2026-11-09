@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Importa os 11 estados assados por corpo, preservando o pack meshopt e os fallbacks
-   por estado. A seleção compara os mesmos tipos de violação do QA Studio por estado:
-   um corpo é recusado quando o pacote final introduz uma violação ausente no clipe atual.
+   por estado. Um corpo só entra se NENHUMA métrica QA comparável piorar contra o clipe
+   atual, mesmo quando antes e depois continuam do mesmo lado do threshold do Studio.
    Uso: node tools/import-baked-states.mjs --legacy-out=<dir> --legacy=<dir> */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -41,6 +41,36 @@ function assertPacked(bytes, id) {
   if (JSON.stringify(names) !== JSON.stringify([...STATES].sort())) throw new Error(`${id}: clipes divergentes: ${names.join(', ')}`);
 }
 
+const QA_METRICS = [
+  ['footSlideCm', ['footSlide', 'maxCm'], 1],
+  ['lowestVertexCm', ['lowestVertex', 'minCm'], -1],
+  ['heelCm', ['lowestVertex', 'byRegionCm', 'heel'], -1],
+  ['toeCm', ['lowestVertex', 'byRegionCm', 'toe'], -1],
+  ['hipsMaxRatio', ['hips', 'maxRatio'], 1],
+  ['loopPositionCm', ['loopSeam', 'positionCm'], 1],
+  ['loopRotationDeg', ['loopSeam', 'rotationDeg'], 1],
+  ['handsMaxDeviationCm', ['hands', 'maxDeviationCm'], 1],
+  ['stretchMaxEdge', ['stretch', 'maxEdge', 'value'], 1],
+  ['stretchBackMaxEdge', ['stretch', 'backMaxEdge', 'value'], 1],
+  ['stretchHandL', ['stretch', 'handMaxEdgeL', 'value'], 1],
+  ['stretchHandR', ['stretch', 'handMaxEdgeR', 'value'], 1],
+  ['seamGapMax', ['stretch', 'seamGapMax', 'value'], 1],
+];
+function qaValue(result, path) {
+  let value = result?.metrics;
+  for (const key of path) value = value?.[key];
+  return Number.isFinite(value) ? value : null;
+}
+function qaRegressions(state, current, packed) {
+  const regressions = [];
+  for (const [metric, path, direction] of QA_METRICS) {
+    const before = qaValue(current, path), after = qaValue(packed, path);
+    if (before === null || after === null) continue;
+    if (direction * (after - before) > 1e-9) regressions.push({ state, metric, current: before, next: after, delta: after - before });
+  }
+  return regressions;
+}
+
 const RUNTIME_EXCLUSIONS = {
   canarinho: { state: 'idle/pistol+knife', kinds: ['runtime:COTOVELO'], current: ['55°..150°'], next: ['41.8°'] },
   ministro: { state: 'idle/select', kinds: ['runtime:INFLATE'], current: ['p99 1.261; ruins/1e4 135.7'], next: ['p99 1.295; ruins/1e4 153.7'] },
@@ -66,16 +96,17 @@ const selected = [], excluded = [];
 for (const entry of bodies) {
   const id = entry.id;
   const qa = readJSON(path.join(NEW_ROOT, id, 'qa-packed.json'));
+  const currentQa = readJSON(path.join(OLD_ROOT, id, 'qa-current.json'));
   const manifest = readJSON(path.join(NEW_ROOT, id, 'manifest.json'));
   const results = new Map(qa.results.map((r) => [r.name, r]));
+  const currentResults = new Map(currentQa.results.map((r) => [r.name, r]));
   const regressions = [];
   for (const state of STATES) {
-    const result = results.get(state);
-    if (!result) throw new Error(`${id}/${state}: ausente no qa-packed`);
+    const result = results.get(state), current = currentResults.get(state);
+    if (!result || !current) throw new Error(`${id}/${state}: ausente no QA atual ou no qa-packed`);
     const packedVerdict = result.failures.length ? 'fail' : 'pass';
     if (packedVerdict !== entry.newStates[state].verdict) throw new Error(`${id}/${state}: verdict mudou no packing`);
-    const added = entry.newStates[state].kinds.filter((kind) => !entry.current[state].kinds.includes(kind));
-    if (added.length) regressions.push({ state, kinds: added, current: entry.current[state].failures, next: result.failures });
+    regressions.push(...qaRegressions(state, current, result));
   }
   const record = { id, regressions };
   if (RUNTIME_EXCLUSIONS[id]) regressions.push(RUNTIME_EXCLUSIONS[id]);
@@ -119,7 +150,7 @@ const out = {
   provenance: {
     packs: 'anim-conv legacy-out/<id>/{states.glb,manifest.json,qa-packed.json}',
     currentQA: 'anim-conv legacy/summary.json (client 6ae417eeb)',
-    selection: 'exclui qualquer tipo novo de violação QA por estado; números fora dos thresholds não são comparáveis com o QA atual',
+    selection: 'exclui qualquer piora numérica por estado nas métricas QA comparáveis; threshold não esconde magnitude',
     compression: 'EXT_meshopt_compression; rotações int16 normalizadas; fallbacks por estado sem compressão',
   },
   thresholds: { lowestVertexCm: -3, hipsMaxRatio: 1.08, hipsOverSourceRatio: 0.08 },
@@ -130,11 +161,13 @@ const out = {
 fs.writeFileSync(path.join(ANIMS, 'baked-states.json'), JSON.stringify(out, null, 2) + '\n');
 const doc = `# Estados assados por corpo\n\nGerado por \`tools/import-baked-states.mjs\` a partir dos packs meshy-28 e do QA Studio. `
   + `Os arquivos \`<id>.glb\` preservam meshopt + rotações int16; as pastas \`<id>/\` guardam o fallback por estado.\n\n`
-  + `- ${selected.length} BODIES substituídos; ${excluded.length} excluídos por introduzir tipo novo de violação QA.\n`
+  + `- ${selected.length} BODIES substituídos; ${excluded.length} excluídos por pelo menos uma métrica QA pior.\n`
   + `- Nenhum arquivo de \`public/models/skins/\` participa deste pipeline.\n`
   + `- Piso mínimo aceito: -3 cm; quadril: limite do Studio por estado (1,08× ou fonte +0,08).\n`
-  + `- A cuca usa \`--passive-knees\`, mas o pacote final introduz \`hips\`/\`float\`; permanece nos clipes atuais.\n\n`
-  + `Fontes Mixamo/Quaternius e licenças seguem a procedência registrada nos manifests do Studio. `
+  + (selected.some((b) => b.id === 'cuca')
+    ? `- A cuca entra com \`--passive-knees\`: o qa-packed final zera floor/heel e mantém quadril dentro do limite; stretch do rig permanece declarado.\n`
+    : `- A cuca permanece fora: o pacote final piora métricas QA apesar de melhorar piso e quadril.\n`)
+  + `\nFontes Mixamo/Quaternius e licenças seguem a procedência registrada nos manifests do Studio. `
   + `O índice \`baked-states.json\` contém hashes, velocidades, números de QA e todas as exclusões.\n`;
 fs.writeFileSync(path.join(ANIMS, 'baked-states.SOURCES.md'), doc);
 console.log(`ESTADOS-ASSADOS: ${selected.length} substituídos, ${excluded.length} excluídos`);
