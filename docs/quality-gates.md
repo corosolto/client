@@ -33,6 +33,25 @@ Não entra em automerge:
 - anti-cheat
 - backend/ranking
 
+## Lixo não nasce em PR (`eval:lixo`)
+
+`tools/eval/lixo-check.mjs` roda no `pr-fast` e no `check:fast` e mede só o que o PR
+**adiciona** (`git diff --diff-filter=A --no-renames` contra a base; renomear para pasta
+proibida conta como adicionar; editar e apagar é sempre livre). Reprova quando o PR cria:
+
+- `LX1` arquivo em `plans/`, `progress/`, `prompts/`, `content/`, `references/`, `tools/eval/asset-evidence/`
+- `LX2` arquivo na raiz (ou pasta nova na raiz) fora da allowlist literal do próprio script
+- `LX3` `tools/eval/<nome>.mjs` que nem `package.json`, nem workflow, nem outro módulo de `tools/eval` cita
+- `LX4` `docs/**.md` com nome de histórico: `CONTINUATION`, `HANDOFF`, `STATUS`, `RELATORIO`, `PLANO`, data ou rodada (`R1234`)
+- `LX5` arquivo em `public/img|video|models` que nenhum código do jogo pede (`public/js`, `src`, JSONs de `public`, `public/*.css`)
+
+Política por trás das cláusulas: evidência de PR vai no corpo do PR; histórico e diário
+vão no repo privado `progress`; fonte de arte e evidência pesada vão no `studio-assets`.
+Quem precisa de arquivo novo na raiz muda a allowlist no mesmo PR, com o porquê.
+`node tools/eval/lixo-check.mjs --mutate` prova as cinco cláusulas num clone de rascunho
+(6 mutantes vermelhos, incluindo rename para `progress/`, 2 controles verdes). Localmente a base é `merge-base origin/main`;
+no CI vem de `FILA_BASE` (base do PR ou do lote).
+
 ## Staging
 
 ## Local e pre-push

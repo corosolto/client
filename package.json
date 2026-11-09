@@ -17,6 +17,8 @@
     "//build:cf": "Spike Cloudflare Workers (docs/runbooks/MIGRACAO-CLOUDFLARE.md): gera _headers/_redirects de vercel.json e builda com ADAPTER=cloudflare; deploy com `npx wrangler deploy`.",
     "build:cf": "node tools/cf/gen-headers-redirects.mjs && ADAPTER=cloudflare npm run build",
     "eval:cfparidade": "node tools/eval/cf-paridade-estatica-check.mjs && for m in sem-header sem-redirect; do ! node tools/eval/cf-paridade-estatica-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
+    "//cf:paridade": "Fase 1 da migração Cloudflare: compara status e headers do spike em workers.dev com a produção; manual, `npm run cf:paridade -- --alvo <url>`.",
+    "cf:paridade": "node tools/eval/cf-paridade-check.mjs",
     "release": "node scripts/release.mjs",
     "setup": "node scripts/setup.mjs",
     "prepare": "node scripts/install-git-hooks.mjs",
@@ -708,6 +710,8 @@
     "//eval:rotas-browser": "Deep-link, link antigo e voltar do navegador no hub de verdade. Precisa de BASE com tools/eval/serve.mjs numa porta própria.",
     "eval:rotas-browser": "node tools/eval/rotas-browser.mjs && ! node tools/eval/rotas-browser.mjs --mutante=query && ! node tools/eval/rotas-browser.mjs --mutante=loja-fixa",
     "eval:hub-loja": "node tools/eval/hub-loja-rotulo-check.mjs && node tools/eval/hub-loja-rotulo-check.mjs --mutations",
+    "//eval:lixo": "LX1-LX5: PR não ADICIONA diário em plans/progress/prompts/content/references/asset-evidence, arquivo de raiz fora da allowlist, régua órfã em tools/eval, doc histórico (CONTINUATION/HANDOFF/STATUS/data/rodada) nem asset em public/img|video|models que nenhum código pede. Base: merge-base origin/main (FILA_BASE no CI). --mutate prova 5 cláusulas num clone de rascunho.",
+    "eval:lixo": "node tools/eval/lixo-check.mjs && node tools/eval/lixo-check.mjs --mutate",
     "eval:treta-rewards": "node tools/eval/treta-rewards-check.mjs && node tools/eval/treta-rewards-check.mjs --mutations",
     "eval:treta-skins": "node tools/eval/treta-skins-check.mjs && node tools/eval/treta-skins-check.mjs --mutations",
     "eval:treta-manifest-ready": "node --test tests/treta-manifest-readiness.test.mjs",
@@ -955,5 +959,5 @@
     "playwright": "^1.62.1",
     "wrangler": "^4.158.0"
   },
-  "packageManager": "yarn@4.18.0+sha512.fcb8716fe7cd0eece141ffc18b92193a9df9204c1ba83189c288835223fc0bbe64af473bab0d5e9927a7daeb5caf2bb07eb2787cc9338ca040ea125f2a1f2f7e"
+  "packageManager": "npm@10.9.9"
 }
