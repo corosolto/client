@@ -231,33 +231,25 @@ function upperClip(name) {
   }
   return _upperClips.get(name);
 }
-/* EMOTES DE CAPTURA: pack único lazy no esqueleto de referência, RETARGETADO por corpo no
-   primeiro uso (a convenção do tools/retarget-glb.mjs, em runtime). Copiar a rotação LOCAL
-   da referência girava o corpo inteiro: o Hips dela repousa a 30° em X e o repouso dos
-   ossos diverge até 173° entre corpos. Coluna, pernas e ombro recebem o DELTA de mundo do
-   clipe sobre o próprio repouso; braço, antebraço e mão, a rotação de mundo ABSOLUTA da
-   referência (A-pose de repouso não vira braço caído na dança). O Hips anda o deslocamento
-   da referência na escala da altura de quadril do corpo, com o horizontal encolhido por
-   clipe para caber na cápsula, e o chão vem do CONTATO: por quadro, o ponto mais baixo da
-   malha (`apoioDoCorpo`) fica na altura que o osso mais baixo da referência tem sobre o
-   repouso dela — o freeze apoia a mão do mascote em vez de enterrar a cabeça, e perna
-   dobrada não flutua. Medidas por corpo: tools/eval/emotes-mocap-roster.mjs, docs/EMOTES-BR.md. */
+/* EMOTES DE CAPTURA: pack lazy no esqueleto de referência, retargetado por corpo no 1º uso.
+   Rotação, chão por contato, apêndice e cápsula: docs/EMOTES-BR.md ("Corpo inteiro"). */
 export const EMOTE_CAPSULA_R = 0.38;   // raio da cápsula do jogador: game.js `_collide(p.pos, 0.38)`
 const EMOTE_FPS = 30;
-// Medido no roster contra o clipe assado por corpo: braço em delta deixava 44 de 792 clipes
-// com estica acima de 1,1× o assado; absoluto, 12. Mesma direção de osso nos dois (erro
-// mediano 14°): a diferença é o giro axial do antebraço.
+// Braço, antebraço e mão usam a rotação de mundo ABSOLUTA da referência; o resto, o delta
+// sobre o próprio repouso (medida do roster em docs/EMOTES-BR.md, "Rotação").
 const EMOTE_ABSOLUTO = /Arm|Hand/;
 // 26 direções no espaço do osso (faces, arestas e cantos do cubo): casco da região de cada osso.
 const EMOTE_DIRS = [];
 for (const x of [-1, 0, 1]) for (const y of [-1, 0, 1]) for (const z of [-1, 0, 1]) {
   if (x || y || z) EMOTE_DIRS.push(new THREE.Vector3(x, y, z).normalize());
 }
+// Caches: repouso da cena do pack; por charId, repouso e pontos de apoio (+ chão do repouso);
+// por `${charId}|${nome}|${escala}`, o clipe retargetado.
 const _emoteClips = {};
-let _emoteRef = null;                 // repouso da cena do pack
-const _emoteRepouso = new Map();      // charId -> repouso do esqueleto do corpo
-const _emoteApoio = new Map();        // charId -> pontos de apoio por osso + chão do repouso
-const _emoteClipsCorpo = new Map();   // `${charId}|${nome}|${escala}` -> clipe retargetado
+let _emoteRef = null;
+const _emoteRepouso = new Map();
+const _emoteApoio = new Map();
+const _emoteClipsCorpo = new Map();
 let _emotesP = null;
 const _qI = new THREE.Quaternion();
 /* Repouso relativo à raiz (sem o enquadramento do modelo), pai antes do filho. Não desce
@@ -280,10 +272,8 @@ function repousoEsqueleto(raiz) {
   for (const c of raiz.children) if (!c.isMesh) visita(c, null, null);
   return { ossos, ordem, indice };
 }
-/* Pontos de apoio: por osso, os vértices extremos nas 26 direções do espaço do osso, da
-   região que ele domina, no repouso — guardados com os 4 pesos para o skinning EXATO por
-   quadro (anexar rígido ao osso dominante jogava a pele mista coxa/quadril do lobisomem
-   cyborg 42 cm abaixo do real). Uma passada na malha por personagem. */
+/* Pontos de apoio: por osso, os extremos da malha nas 26 direções do espaço do osso, com os
+   4 pesos para skinning exato por quadro. Uma passada na malha por personagem. */
 function apoioDoCorpo(model, tgt) {
   const melhor = new Map();
   const v = new THREE.Vector3(), r = new THREE.Vector3(), t = new THREE.Vector3();
@@ -324,12 +314,8 @@ function apoioDoCorpo(model, tgt) {
   });
   const usados = [...new Set([...melhor.values()].flatMap((m) => [...m.idx]))].filter((i) => i >= 0).map((i) => pontos[i]);
   if (!usados.length) return null;
-  /* Classes: `pe` (osso dominante pé/dedo) assenta a dança em pé; `apendice` nunca sustenta
-     nem é guardado — ponto a mais de uma altura de quadril do osso que o carrega (o segmento
-     até o filho). É a cauda/capa que o auto-skin pendurou longe: cuca 1,61 na perna,
-     lobisomem cyborg 1,48 na coxa, proerd 1,43 e bandeirante 1,22 no quadril; o próximo do
-     roster é a cauda do canarinho, 0,84. Rígida e mais longa que a perna, ela ou flutua o
-     corpo ou atravessa o chão; atravessar é o mal menor. `corpo` é o resto. */
+  /* Classes: `pe` assenta a dança em pé; `apendice` (mais de uma altura de quadril do osso)
+     nunca sustenta nem é guardado; `corpo` é o resto. Casos: docs/EMOTES-BR.md, "Apêndice". */
   const altura = alturaQuadril(tgt);
   const filhos = new Map();
   for (const o of tgt.ordem) if (o.pai) (filhos.get(o.pai) || filhos.set(o.pai, []).get(o.pai)).push(o);
@@ -400,9 +386,8 @@ function emoteClipDoCorpo(nome, ctrl) {
   const n = Math.max(2, Math.round(c.duration * EMOTE_FPS) + 1);
   const times = new Float32Array(n);
   for (let f = 0; f < n; f++) times[f] = Math.min(c.duration, f / EMOTE_FPS);
-  // Mundo do osso no quadro = mundo da referência · base. Delta: base = qW_ref_rest⁻¹ ·
-  // qW_corpo_rest (o corpo gira o que a referência girou, a partir do próprio repouso).
-  // Absoluto (braço): base = identidade (o mundo da referência, como no retarget-glb).
+  // Mundo do osso = mundo da referência · base. Delta: base = qW_ref_rest⁻¹ · qW_corpo_rest;
+  // absoluto (braço): base = identidade, como no retarget-glb.
   const base = tgt.ordem.map((o, i) => (!animados[i] ? null
     : EMOTE_ABSOLUTO.test(o.nome) ? _qI : ref.ossos.get(o.nome).qW.clone().invert().multiply(o.qW)));
   const locais = tgt.ordem.map((o, i) => (animados[i] ? new Float32Array(n * 4) : null));
@@ -453,9 +438,8 @@ function emoteClipDoCorpo(nome, ctrl) {
       p.fromArray(hipsIt.evaluate(times[f])).applyMatrix4(refPai).sub(rh.pW).multiplyScalar(k).toArray(mundo, f * 3);
       maxXZ = Math.max(maxXZ, Math.hypot(p.x, p.z));
     }
-    // Cápsula: centrada no EIXO do grupo (origem XZ do modelo), não no repouso do Hips — corpo
-    // autorado fora do eixo (cuca, ~0,5 m) volta pra dentro. O horizontal do clipe inteiro
-    // encolhe junto (sem quina na trajetória).
+    // Cápsula centrada no EIXO do grupo, não no repouso do Hips; o horizontal do clipe
+    // inteiro encolhe junto (sem quina na trajetória).
     const limite = EMOTE_CAPSULA_R / escala;
     const fXZ = maxXZ > limite ? limite / maxXZ : 1;
     const v = new Float32Array(n * 3), tgtM = tgt.ordem.map(() => new THREE.Matrix4()), quats = tgt.ordem.map(() => null);
