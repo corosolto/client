@@ -59,7 +59,8 @@ aprovação humana definida nos quality gates antes de entrar em `staging`.
 - `publish` parte de um checkout fresco, valida repositório, PR, branch, SHA, tree, digest, paths e
   aplicação exata do patch com um guard novo da branch padrão;
 - `publish` não executa npm, Codex, hooks ou scripts da PR; somente esse job recebe o token de push;
-- workflows e hooks são proibidos no diff; diff vazio ou alterado é rejeitado;
+- workflows, hooks, `scripts/ci`, `tools/eval`, `package.json` e `package-lock.json` são proibidos
+  no diff; o reparo não pode alterar os gates que o validam. Diff vazio ou alterado é rejeitado;
 - somente o patch permitido e verde vira commit com DCO + trailer `Agent:` e push normal;
 - falha não altera a branch e recebe `build-fix-failed`;
 - o merge acontece somente no workflow de automerge, depois dos portões da nova head.
