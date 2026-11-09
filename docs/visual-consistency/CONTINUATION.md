@@ -1,3 +1,5 @@
+> Registro histórico. As pendências do revisor legado abaixo não são exigências atuais; siga [o ciclo vigente de revisão](../../.claude/skills/estragacodigo-loop/SKILL.md).
+
 # Consistência visual e release, 31/10/2026
 
 ## Estado para retomada: 2026-10-31T18:44:37.845308+00:00
@@ -104,8 +106,8 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
 - #1179 CI falha na economia: EJ22 ainda espera 30 s, runtime oferece 50 s;
   EJ12 também vermelho, investigar no log. Não está pronto para merge remoto.
 - Protocolo vigente recuperado em `operations/corosolto-hq-20261026/ledger/REVIEW-PROTOCOL-20261031.md`:
-  CodeRabbit não está habilitado; Ruben autorizou GLM via OMP + crítico independente.
-  O pedido anterior ao CodeRabbit foi redundante, não repetir. Estraga-codigo é o
+  revisor legado não está habilitado; Ruben autorizou GLM via OMP + crítico independente.
+  O pedido anterior ao revisor legado foi redundante, não repetir. Estraga-codigo é o
   revisor real em restauração. Dispensa não significa revisão recebida ou limpa.
 - Lease GLM de testes grafite: `tools/eval/graffiti-curation-check.mjs` (novo),
   fixtures afetadas de `graffiti-support-check.mjs` e

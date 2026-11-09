@@ -246,9 +246,9 @@ de trabalhar. Elas vivem em `.agents/skills/`, e `.claude/skills/` são symlinks
 
 | Contagem | Quanto | O que significa |
 |---|---:|---|
-| Declaradas no `skills-lock.json` | 39 | com `source`, `skillPath` e `computedHash` — skill de terceiro que mudar de conteúdo é detectável |
-| Versionadas (chegam em quem clona) | 10 | `git ls-files .agents/skills` |
-| …dessas, com `SKILL.md` no git | 10 | é o que um clone limpo consegue ler |
+| Declaradas no `skills-lock.json` | 40 | com `source`, `skillPath` e `computedHash` — skill de terceiro que mudar de conteúdo é detectável |
+| Versionadas (chegam em quem clona) | 0 | `git ls-files .agents/skills` |
+| …dessas, com `SKILL.md` no git | 0 | é o que um clone limpo consegue ler |
 
 **As contagens divergem de propósito, e a diferença é o fato:** a maioria das skills é de terceiro, fixada por hash no lock e baixada sob demanda. Quem clonar o repositório recebe o lock inteiro e só uma parte do conteúdo. Publicar só uma das contagens esconderia exatamente o que o contribuidor precisa saber.
 

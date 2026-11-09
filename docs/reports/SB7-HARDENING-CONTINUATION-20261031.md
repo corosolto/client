@@ -1,3 +1,5 @@
+> Registro histórico. As pendências do revisor legado abaixo não são exigências atuais; siga [o ciclo vigente de revisão](../../.claude/skills/estragacodigo-loop/SKILL.md).
+
 # PR #1167: preservação de falha e diagnóstico de infraestrutura
 
 Esta lane é parte da missão completa de consistência visual, integração de PRs e
@@ -16,7 +18,7 @@ de temporários contornado por process.exit. Antes de merge: verificar cada item
 corrigir os válidos com prova RED/GREEN/causalidade, revisão GLM final limpa e
 crítico independente readonly do diff inteiro (base main e correções).
 
-CodeRabbit não está habilitado; protocolo explícito do dono em
+revisor legado não está habilitado; protocolo explícito do dono em
 `operations/corosolto-hq-20261026/ledger/REVIEW-PROTOCOL-20261031.md` no agregador
 autoriza GLM + crítico independente. Nenhum merge/push ocorreu nesta lane.
 

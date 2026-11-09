@@ -59,6 +59,11 @@ const STATES = ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'crouchwalk',
 // o load falha em silêncio e cai no comportamento padrão (idle/walk/shoot de 2 mãos).
 const OPT_STATES = ['idle1h', 'walk1h', 'walkfire'];
 const qp = new URLSearchParams(location.search);
+// ?skindepth=0 volta ao depth único do three (A/B e mutante da régua bots-perf).
+const DEPTH_SKINNED = qp.get('skindepth') === '0' ? undefined : new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+// Sem variante = o three usaria o depth compartilhado como está (sem recorte alfa, deslocamento ou clipping).
+const sombraSemVariante = (m) => !!DEPTH_SKINNED && [].concat(m || []).every((x) => !((x.map || x.alphaMap) && x.alphaTest > 0)
+  && !(x.displacementMap && x.displacementScale !== 0) && !(x.clipShadows && x.clippingPlanes?.length));
 /* CORREÇÃO DE PÉ NO CHÃO, POR CLIPE (invariante CHR3) — tabela GERADA por
    `npm run feet` a partir da medição do char-probe. Ver tools/gen-foot-offsets.mjs.
 
@@ -649,6 +654,9 @@ export function buildCharacterModel(def, opts = {}) {
       : finishMaterial(o.material);
   };
   model.traverse(finishMesh);
+  // Profundidade de sombra própria dos esqueletos: no depth único do three, cada boneco
+  // alternava skinning e recalculava a chave do programa 2× por bot por quadro.
+  model.traverse((o) => { if (o.isSkinnedMesh && sombraSemVariante(o.material)) o.customDepthMaterial = DEPTH_SKINNED; });
 
   const group = new THREE.Group();
   group.add(model);

@@ -1,0 +1,203 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { SUITES, passosDaSuite } from '../tools/eval/suites.mjs';
+import { selecionarPorArquivos } from '../tools/eval/selecao-pre-push.mjs';
+
+
+test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {
+  const conhecidos = new Set([...SUITES.fast, ...SUITES.deploy]);
+  for (const nome of ['core', 'maps', 'ui', 'audio', 'browser', 'network', 'vm']) {
+    assert.ok(SUITES[nome].length > 0, `${nome} vazia`);
+    assert.equal(new Set(SUITES[nome]).size, SUITES[nome].length, `${nome} duplicada`);
+    for (const passo of SUITES[nome]) assert.ok(conhecidos.has(passo), `${nome}: passo novo ${passo}`);
+    const expandido = passosDaSuite(nome);
+    assert.deepEqual(expandido, SUITES[nome]);
+    expandido.pop();
+    assert.equal(SUITES[nome].length > expandido.length, true, 'expansão precisa devolver uma cópia');
+  }
+});
+
+test('runner rejeita suite inválida antes de executar npm', () => {
+  const r = spawnSync(process.execPath, ['tools/eval/runner.mjs', '--suite=nao-existe'], { encoding: 'utf8' });
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /suite desconhecida: nao-existe/);
+  assert.match(r.stderr, /fast, deploy, core, maps, ui, audio, browser, network, vm/);
+});
+
+test('runner expande suite e preserva duração, placar e exit 78 de não medido', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'runner-suite-'));
+  try {
+    writeFileSync(join(dir, 'npm'), '#!/bin/sh\nexit 78\n', { mode: 0o755 });
+    const r = spawnSync(process.execPath, ['tools/eval/runner.mjs', '--suite=core'], {
+      encoding: 'utf8',
+      env: { ...process.env, PATH: `${dir}:${process.env.PATH}` },
+    });
+    assert.equal(r.status, 78);
+    assert.match(r.stdout, /PULOU/);
+    assert.match(r.stdout, /\d+\.\d+s/);
+    assert.match(r.stdout, new RegExp(`0/${SUITES.core.length} passaram`));
+    assert.match(r.stdout, /não medido:/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('runner jobs=2 sobrepõe dois npm e preserva ordem, exit 78 e JSON completo', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'runner-paralelo-'));
+  try {
+    const log = join(dir, 'eventos.jsonl');
+    const jsonOut = join(dir, 'relatorios', 'core.json');
+    writeFileSync(log, '');
+    writeFileSync(join(dir, 'npm'), `#!${process.execPath}
+const fs = require('node:fs');
+const passo = process.argv[process.argv.length - 1];
+const inicio = Date.now();
+fs.appendFileSync(process.env.FAKE_NPM_LOG, JSON.stringify({ evento: 'inicio', passo, t: inicio }) + '\\n');
+let distintos = 0;
+const limite = inicio + 5000;
+while (Date.now() < limite) {
+  const eventos = fs.readFileSync(process.env.FAKE_NPM_LOG, 'utf8').trim().split('\\n').filter(Boolean);
+  distintos = new Set(eventos.map((linha) => JSON.parse(linha)).filter((e) => e.evento === 'inicio').map((e) => e.passo)).size;
+  if (distintos >= 2) break;
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 5);
+}
+if (distintos >= 2) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20);
+fs.appendFileSync(process.env.FAKE_NPM_LOG, JSON.stringify({ evento: 'fim', passo, t: Date.now() }) + '\\n');
+console.log('saida sensivel de ' + passo);
+process.exit(distintos >= 2 ? 78 : 97);
+`, { mode: 0o755 });
+    const r = spawnSync(process.execPath, [
+      'tools/eval/runner.mjs', '--jobs=2', '--suite=core', `--json-out=${jsonOut}`,
+    ], {
+      encoding: 'utf8',
+      timeout: 20000,
+      env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, FAKE_NPM_LOG: log },
+    });
+    assert.equal(r.status, 78, r.stderr);
+
+    const eventos = readFileSync(log, 'utf8').trim().split('\n').map((linha) => JSON.parse(linha));
+    const [a, b] = SUITES.core;
+    const instante = (evento, passo) => eventos.find((e) => e.evento === evento && e.passo === passo)?.t;
+    assert.ok(Number.isFinite(instante('inicio', a)) && Number.isFinite(instante('inicio', b)));
+    assert.ok(Math.max(instante('inicio', a), instante('inicio', b)) < Math.min(instante('fim', a), instante('fim', b)),
+      'os timestamps do npm fake precisam comprovar overlap dos dois primeiros passos');
+
+    let posicaoAnterior = -1;
+    for (const passo of SUITES.core) {
+      const posicao = r.stdout.indexOf(`  ${passo} … `);
+      assert.ok(posicao > posicaoAnterior, `${passo} saiu fora da ordem de entrada`);
+      posicaoAnterior = posicao;
+    }
+
+    const relatorio = JSON.parse(readFileSync(jsonOut, 'utf8'));
+    assert.deepEqual(relatorio.suites, ['core']);
+    assert.deepEqual(relatorio.passos, SUITES.core);
+    assert.equal(relatorio.exitFinal, 78);
+    assert.ok(Number.isFinite(Date.parse(relatorio.inicio)) && Number.isFinite(Date.parse(relatorio.fim)));
+    assert.ok(relatorio.duracaoTotal >= 0);
+    assert.deepEqual(relatorio.resultados.map((resultado) => resultado.passo), SUITES.core);
+    for (const resultado of relatorio.resultados) {
+      assert.equal(resultado.status, 'PULOU');
+      assert.equal(resultado.exit, 78);
+      assert.equal(typeof resultado.duracao, 'number');
+      assert.ok(Object.hasOwn(resultado, 'causa'));
+      assert.equal(Object.hasOwn(resultado, 'stdout'), false);
+      assert.equal(Object.hasOwn(resultado, 'saida'), false);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('runner jobs=2 rejeita categoria não-core antes de executar npm', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'runner-rejeita-paralelo-'));
+  try {
+    const marca = join(dir, 'npm-executou');
+    writeFileSync(join(dir, 'npm'), `#!${process.execPath}
+require('node:fs').writeFileSync(process.env.FAKE_NPM_MARCA, 'executou');
+`, { mode: 0o755 });
+    const r = spawnSync(process.execPath, ['tools/eval/runner.mjs', '--jobs=2', '--suite=maps'], {
+      encoding: 'utf8',
+      env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, FAKE_NPM_MARCA: marca },
+    });
+    assert.equal(r.status, 2);
+    assert.match(r.stderr, /--jobs=2 aceita somente passos da suite core/);
+    assert.equal(existsSync(marca), false, 'npm não pode ser chamado para uma seleção não-core');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('sem diff ou com documentação, o pre-push mantém os checks centrais baratos', () => {
+  for (const arquivos of [[], ['docs/ARCH.md']]) {
+    const r = selecionarPorArquivos(arquivos);
+    assert.equal(r.fallback, false);
+    assert.deepEqual(r.suites, ['core']);
+    assert.deepEqual(r.comando, [process.execPath, ['tools/eval/runner.mjs', ...r.passos]]);
+    for (const passo of ['syntax', 'arch:check', 'docs:check', 'travessao:check']) assert.ok(r.passos.includes(passo));
+  }
+});
+
+const CASOS = [
+  ['public/js/map_campo.js', 'maps', 'eval:mapcontrato'],
+  ['src/components/Lobby.astro', 'ui', 'eval:ui-v3'],
+  ['public/audio/manifest.json', 'audio', 'audio:check'],
+  ['playwright.config.mjs', 'browser', 'eval:vm-troca-sem-legado'],
+  ['public/js/transporte.js', 'network', 'eval:netcode'],
+  ['tools/viewmodels/validate_paid_catalog.mjs', 'vm', 'eval:vm-presence'],
+];
+for (const [arquivo, suite, passo] of CASOS) {
+  test(`diff de ${suite} seleciona core + ${suite}`, () => {
+    const r = selecionarPorArquivos([arquivo]);
+    assert.equal(r.fallback, false);
+    assert.deepEqual(r.suites, ['core', suite]);
+    assert.equal(r.comando[1].includes('--jobs=2'), false);
+    assert.ok(r.passos.includes(passo), `${suite} perdeu ${passo}`);
+    assert.ok(r.regras[0].includes(arquivo));
+  });
+}
+
+test('mapa seleciona só contratos genéricos e estruturais do próprio mapa', () => {
+  const r = selecionarPorArquivos(['public/js/map_campo.js']);
+  assert.equal(r.fallback, false);
+  assert.ok(r.passos.includes('eval:campo-contract'));
+  for (const pesado of ['eval:operacao-flavio', 'eval:map-material-finish', 'eval:campo-uv', 'eval:mansao']) {
+    assert.equal(r.passos.includes(pesado), false, `${pesado} pertence ao CI completo`);
+  }
+});
+
+test('categorias múltiplas formam união ordenada e sem passos repetidos', () => {
+  const r = selecionarPorArquivos(['public/js/map_campo.js', 'public/js/audio.js']);
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core', 'maps', 'audio']);
+  assert.equal(new Set(r.passos).size, r.passos.length);
+  assert.deepEqual(r.passos.slice(0, SUITES.core.length), SUITES.core);
+});
+
+test('caminho desconhecido cai no check:deploy completo e explica o fallback', () => {
+  const r = selecionarPorArquivos(['src/lib/contrato-transversal.ts']);
+  assert.equal(r.fallback, true);
+  assert.match(r.motivo, /sem regra segura/);
+  assert.deepEqual(r.passos, SUITES.deploy);
+  assert.deepEqual(r.comando, ['npm', ['run', '--silent', 'check:deploy']]);
+});
+
+for (const arquivo of [
+  'package.json',
+  'public/js/game.js',
+  'public/js/main.js',
+  'public/js/bootstrap.js',
+  'public/js/netgame.js',
+  'tools/eval/runner.mjs',
+]) {
+  test(`mudança transversal em ${arquivo} força deploy completo`, () => {
+    const r = selecionarPorArquivos(['public/js/map_campo.js', arquivo]);
+    assert.equal(r.fallback, true);
+    assert.match(r.motivo, /transversal/);
+    assert.deepEqual(r.passos, SUITES.deploy);
+  });
+}
