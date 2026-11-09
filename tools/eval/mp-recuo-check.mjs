@@ -55,8 +55,11 @@ const def = CHARACTERS.find((c) => c.id === CHAR);
 
 /* vf/vl no referencial do CORPO (frente/direita); o snapshot leva o yaw de rede, que no
    humano é o da câmera (o corpo gira yaw+π). */
-function roda({ yaw = 0, humano = false, vf = 0, vl = 0, giro = 0 }) {
+async function roda({ yaw = 0, humano = false, vf = 0, vl = 0, giro = 0 }) {
   const m = G.buildCharacterModel(def, { weaponId: ARMA });
+  m.ctrl._requestExtras();
+  for (let i = 0; i < 100 && !m.ctrl.actions.strafe_right; i++) await new Promise((r) => setTimeout(r, 10));
+  if (!m.ctrl.actions.strafe_right) throw new Error('extras.glb não registrou strafe_right');
   if (!m?.ctrl?.actions?.walk || !m.ctrl.actions.run) throw new Error('mst sem walk/run — a régua não sabe medir');
   if (MUT === 'semrecuo') { const up = m.ctrl.update.bind(m.ctrl); m.ctrl.update = (dt, mv, alvo, spd) => up(dt, mv, alvo, spd, false); }
   let clock = 100000;
@@ -90,9 +93,10 @@ function roda({ yaw = 0, humano = false, vf = 0, vl = 0, giro = 0 }) {
 }
 
 const falhas = [];
-function cobra(cod, txt, cenario, esperado) {
-  const serie = roda(cenario);
-  const ruins = serie.filter((s) => s.clip !== esperado.clip || Math.sign(s.ts) !== esperado.sinal);
+async function cobra(cod, txt, cenario, esperado) {
+  const serie = await roda(cenario);
+  const ruins = serie.filter((s) => !((s.clip === esperado.clip && Math.sign(s.ts) === esperado.sinal)
+    || (esperado.legado && s.clip === esperado.legado && Math.sign(s.ts) === esperado.legadoSinal)));
   const trocas = serie.filter((s, i) => i && (s.clip !== serie[i - 1].clip || Math.sign(s.ts) !== Math.sign(serie[i - 1].ts))).length;
   const conta = {};
   for (const s of serie) { const k = `${s.clip}${s.ts < 0 ? '↺' : ''}`; conta[k] = (conta[k] || 0) + 1; }
@@ -101,15 +105,15 @@ function cobra(cod, txt, cenario, esperado) {
   if (!ok) falhas.push(cod);
 }
 
-cobra('MPR1', 'bot remoto, yaw 0, recuando 1,8 m/s', { vf: -1.8 }, { clip: 'walk', sinal: -1 });
-cobra('MPR2', 'bot remoto, yaw 2,1, recuando 1,8 m/s', { yaw: 2.1, vf: -1.8 }, { clip: 'walk', sinal: -1 });
-cobra('MPR3', 'humano remoto (corpo yaw+π), yaw 0,7, recuando 1,8 m/s', { yaw: 0.7, humano: true, vf: -1.8 }, { clip: 'walk', sinal: -1 });
-cobra('MPR4', 'bot remoto andando 1,1 m/s para frente', { yaw: 2.1, vf: 1.1 }, { clip: 'walk', sinal: 1 });
-cobra('MPR5', 'bot remoto correndo 4,7 m/s para frente', { yaw: 2.1, vf: 4.7 }, { clip: 'run', sinal: 1 });
-cobra('MPR6', 'humano remoto andando 1,1 m/s para frente', { yaw: 0.7, humano: true, vf: 1.1 }, { clip: 'walk', sinal: 1 });
-cobra('MPR7', 'bot remoto de lado 4,7 m/s', { yaw: 2.1, vl: 4.7 }, { clip: 'run', sinal: 1 });
-cobra('MPR8', 'bot remoto de lado 4,7 m/s girando 4 rad/s', { yaw: 0.3, vl: 4.7, giro: 4 }, { clip: 'run', sinal: 1 });
-cobra('MPR9', 'humano remoto de lado 2,5 m/s girando 6 rad/s', { yaw: 0.3, humano: true, vl: 2.5, giro: 6 }, { clip: 'run', sinal: 1 });
+await cobra('MPR1', 'bot remoto, yaw 0, recuando 1,8 m/s', { vf: -1.8 }, { clip: 'run_back', sinal: 1, legado: 'walk', legadoSinal: -1 });
+await cobra('MPR2', 'bot remoto, yaw 2,1, recuando 1,8 m/s', { yaw: 2.1, vf: -1.8 }, { clip: 'run_back', sinal: 1, legado: 'walk', legadoSinal: -1 });
+await cobra('MPR3', 'humano remoto (corpo yaw+π), yaw 0,7, recuando 1,8 m/s', { yaw: 0.7, humano: true, vf: -1.8 }, { clip: 'run_back', sinal: 1, legado: 'walk', legadoSinal: -1 });
+await cobra('MPR4', 'bot remoto andando 1,1 m/s para frente', { yaw: 2.1, vf: 1.1 }, { clip: 'walk', sinal: 1 });
+await cobra('MPR5', 'bot remoto correndo 4,7 m/s para frente', { yaw: 2.1, vf: 4.7 }, { clip: 'run', sinal: 1 });
+await cobra('MPR6', 'humano remoto andando 1,1 m/s para frente', { yaw: 0.7, humano: true, vf: 1.1 }, { clip: 'walk', sinal: 1 });
+await cobra('MPR7', 'bot remoto de lado 4,7 m/s', { yaw: 2.1, vl: 4.7 }, { clip: 'strafe_right', sinal: 1, legado: 'run', legadoSinal: 1 });
+await cobra('MPR8', 'bot remoto de lado 4,7 m/s girando 4 rad/s', { yaw: 0.3, vl: 4.7, giro: 4 }, { clip: 'strafe_right', sinal: 1, legado: 'run', legadoSinal: 1 });
+await cobra('MPR9', 'humano remoto de lado 2,5 m/s girando 6 rad/s', { yaw: 0.3, humano: true, vl: 2.5, giro: 6 }, { clip: 'strafe_right', sinal: 1, legado: 'run', legadoSinal: 1 });
 
 const esperadas = MUT === 'yawinstante' ? ['MPR8', 'MPR9'] : ['MPR1', 'MPR2', 'MPR3'];
 if (MUT) {

@@ -173,19 +173,17 @@ O contrato é `npm run eval:postura` (`tools/eval/postura-check.mjs`), no `check
 | PS5 | cotovelo 55°..150° | faixa humana; censo p05=79,8 p95=135,8 |
 | PS6 | tremor ≤0,035 alturas/quadro correndo | quem passa mede ≤0,028; reprovados 0,039–0,075 |
 
-**Dívida, não perdão.** O elenco de hoje tem 11 personagens/cláusula fora do contrato. Eles
-estão em `DIVIDA` dentro da régua, visível no veredito: personagem NOVO que quebrar reprova
-o CI; entrada da lista que for consertada e não removida também reprova ("dívida paga:
-tire da lista"). A lista encolhe, nunca cresce escondido. Exceção de CORPO (não de defeito)
+**Dívida, não perdão.** Os casos restantes estão em `DIVIDA` dentro da régua, visíveis no
+veredito: personagem NOVO que quebrar reprova o CI; entrada da lista que for consertada e não
+removida também reprova ("dívida paga: tire da lista"). A lista encolhe, nunca cresce escondido.
+Os três antigos casos de tremor (`lobisomem`, `mariabonita`, `lampiao`) passaram na medição de
+09/11/2026 após a revisão do idle de faca e saíram da lista. Exceção de CORPO (não de defeito)
 também é declarada com motivo: `dollynho`, `gotinha`, `et`, `canarinho` — mascotes.
 
 A fila de revisão, com o que cada um quebra hoje:
 
 | Personagem | Cláusula | Medida | Caminho de conserto |
 |---|---|---|---|
-| `lobisomem` | PS6 tremor | 0,075 (2× o teto) | clipe compartilhado: re-autorar ou filtrar |
-| `mariabonita` | PS6 tremor | 0,039 | idem |
-| `lampiao` | PS6 tremor | 0,039 | idem |
 | `adjim`, `ancap`, `cadequinha`, `metaleiro` | PS3 arma na altura da cabeça | −0,008..0,017 | pose no rig ou clipe próprio |
 | `bonzo` | PS3 + PS5 cotovelo 42° | — | re-rig (o overlay balona a malha dele) |
 | `canarinho` | PS5 cotovelo 43° | — | mascote de braço-toco: decisão editorial |
@@ -205,3 +203,60 @@ Histórico e causa dos fixes desta rodada (o código aponta pra cá; comentário
 - **Guarda extra de alcance do IK — retirada na integração #1188**: o wrapper de95% ignorava o offset mundial da palma e puxava para dentro alvos ainda alcançáveis. O teto das referências subia de0,675/23,6 para0,689/28,6. O `solveCCDIK` mantém sua proteção mundial com palma, reserva0,98 e passo angular máximo0,6; as quatro chamadas preservam seus alvos. A retirada não acrescenta limite anatômico de junta.
 - **Tint 3P (`TINT_3P`)**: capa do Juiz "esbranquiçada demais" — a textura do robe é clara de fábrica (PBR verde em 74/74). Multiplicador 0x98a3c6 no material da toga; crivo final na contact sheet.
 - **Morrer no meio da recarga**: `die()` cancela reload/flinch/lean/pitch. O envelope `reloadK` não era guardado por `dead` e o mergulho do tronco (spine k*0.20 pra trás) continuava sobre o clipe death clampado: o "cadáver se debatendo pra trás" do dono. Medido: reloadK 0 no cadáver.
+
+## Estados extras com pack compartilhado (09/11/2026)
+
+**Decisão de custo:** um único `public/models/anims/extras.glb` (526.696 bytes, 21 clipes),
+carregado uma vez no primeiro strafe/back, recarga, saque, hit, granada, faca ou cerimônia.
+Não há `models/anims/<id>/<extra>.glb`: multiplicar os 21 estados pelo elenco repetiria o mesmo
+esqueleto. `index.json.extras` é derivado dos nomes dentro do GLB; `extras.SOURCES.md` guarda os
+IDs do catálogo. `draw_pistol` e `holster_pistol` não existem na biblioteca convertida e caem no
+comportamento atual sem erro. Falha ou ausência de qualquer outro clipe também usa o fallback
+procedural/base; LOD≥2 não inicia extras.
+
+O `ctrl.update` deriva o componente frente de `speed`, `back` e `lateral`, percorre quatro setores
+(frente→direita→trás→esquerda) e mistura os DOIS clipes vizinhos pelo ângulo. Cardinals ficam com
+peso 1; diagonais usam pesos complementares. Velocidades naturais medidas no catálogo: strafe rifle
+1,5304 m/s, walk-back 0,8707 m/s, run-back 3,8261 m/s, strafe pistola ≈1,8 m/s, walk-back pistola
+1,1644 m/s. `strafe_*_pistol` e `walk_back_pistol` entram em armas de uma mão; a faca tem
+`knife_idle` e `knife_stab`, nunca o `shoot` de rifle quando o clipe existe.
+
+Recarga, saque/guarda, hits, granada e golpe usam clipes filtrados no load: `Hips`, pernas, pés e
+dedos do pé saem das tracks; `Spine*`, ombros, braços, mãos, pescoço e cabeça ficam. Assim a
+locomoção continua dona das pernas. O IK de apoio e os overlays procedurais antigos são suspensos
+somente enquanto a camada correspondente está ativa; sem clipe eles continuam sendo o fallback.
+`knife_idle` é a exceção medida: fica apenas em `neck`/cabeça sobre `idle1h`, porque usar
+braços/coluna do take derrubou a postura de 32 rigs; com a máscara restrita, 63/63 voltaram a
+passar fora da dívida e os três casos antigos de tremor foram baixados. `ctrl.grenade(1.05)` preserva a janela de `ANIM_ARREMESSO`. Na troca de arma o corpo novo executa
+`holster_rifle` curto (0,45 s) seguido de `draw_rifle` (0,65 s): não ficam duas malhas sobrepostas.
+`ctrl.ceremony(vitoria)` usa corpo inteiro e é chamado por `_cerimoniaCorpos` nos dois fins de
+rodada locais; o worker de rede pode chamar o mesmo método sem conhecer o pack.
+
+### Medição compartilhado × retarget por personagem
+
+Comando: `tools/retarget-glb.mjs` para os 21 clipes, depois
+`studio-work/animation-conversion-20261109/tools/characters/rig-pose-test.mjs --samples=8`
+nos cinco rigs Blender. Relatórios: `csbrasil/local/estados-extras-3p-20261109/`.
+Teto: corpo/costas 3,5×, mãos 2,5×, seams 5 mm.
+
+| Rig | Compartilhado pior corpo | Retarget pior corpo | Mãos L/R finais | Resultado |
+|---|---:|---:|---:|---|
+| capitao-caveira | 3,194× | 3,194× | 1,216/1,363× | passa |
+| nanica | 2,866× | 2,866× | 2,284/2,365× | passa |
+| dama-creepy | 3,146× | 3,146× | 2,078/1,868× | passa |
+| coronel-arrego | 2,682× | 2,682× | 1,943/2,682× | mão R 2,682×: residual |
+| teletreco-sinal-fraco | 2,261× | 2,261× | 1,377/1,454× | passa |
+
+Os deltas compartilhado×retarget foram **zero** nos cinco relatórios iniciais: gerar packs por
+personagem não melhora esses clipes. Gauntlet limitado a 3 rodadas: `knife_stab` na dama foi
+4,201× → 3,985× (troca de take) → 2,249× no corpo (retirar Head/neck, que o aim já controla);
+`reload_pistol` caiu de mão R 2,547×/2,744× para 1,127×/1,137× em nanica/coronel ao deixar o
+punho dominante com o clipe-base. Residual após a 3ª rodada: `knife_stab` ainda mede mão R 2,682×
+no coronel (teto 2,5×), sem vantagem do retarget individual. Não foi afrouxado teto nem criado
+pack específico para esconder esse caso.
+
+A régua runtime é `npm run eval:estados3p` (EX1–EX10, 13 casos), incluída no `check:fast`. Ela usa os GLBs e
+`AnimationMixer` reais e prova: uma só requisição lazy, strafe e diagonal, pernas idênticas ao
+controle durante recarga andando, quatro direções + cabeça, holster→draw, faca, granada 1,05 s,
+vitória/derrota, LOD/fallback e os call sites mínimos em `game.js`. Mutantes: `strafe-mudo`,
+`reload-perna-congelada`, `hit-sem-direcao`, `saque-mudo`, `faca-usa-rifle`, `vitoria-muda`.

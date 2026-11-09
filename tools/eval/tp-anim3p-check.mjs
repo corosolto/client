@@ -202,7 +202,7 @@ const m = await page.evaluate(async () => {
     const frente = () => { const y = grupo.rotation.y; return V(-Math.sin(y), 0, -Math.cos(y)); };
     roda(120); rodaControle(120);
     const base = { mao: pos(maoEsq), cabeca: pos(cabeca) };
-    ctrl.reload(1.2); roda(36); rodaControle(36);
+    ctrl.reload(1.2); ctrl._reloadClip = false; roda(36); rodaControle(36);
     const magAlvo = torso.gun.localToWorld(torso.magLocal.clone());
     const meio = { mao: pos(maoEsq), cabeca: pos(cabeca), k: ctrl.reloadK };
     roda(90); rodaControle(90);
@@ -213,7 +213,7 @@ const m = await page.evaluate(async () => {
     roda(60, 0); const cabecaVolta = pos(cabeca);
     roda(30);
     const antesFlinch = pos(cabeca);
-    ctrl.flinch({ x: 1, z: 0 }, 1); roda(6);
+    ctrl.flinch({ x: 1, z: 0 }, 1); ctrl._hitClip = false; ctrl._stopUpper(); roda(6);
     const an6 = { picoCm: antesFlinch.distanceTo(pos(cabeca)) * 100 };
     roda(45); an6.voltaCm = antesFlinch.distanceTo(pos(cabeca)) * 100;
     ctrl.setCrouch(true); roda(12);

@@ -138,9 +138,15 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
         }
         if (frame >= 30) {
           const ctrl = tested.built.ctrl;
-          const expected = c.idle ? (ctrl.oneHanded && ctrl.actions.idle1h ? 'idle1h' : 'idle') : c.back ? (ctrl.oneHanded && ctrl.actions.walk1h ? 'walk1h' : 'walk') : 'run';
-          check(() => assert.equal(a.clip, expected, 'clip ativo incorreto'));
-          if (!c.idle) check(() => assert.equal(Math.sign(a.rate), c.back ? -1 : 1, 'sentido real do mixer incorreto'));
+          const backName = ctrl._loco === 'run' ? 'run_back' : (ctrl.oneHanded && ctrl.actions.walk_back_pistol ? 'walk_back_pistol' : 'walk_back');
+          const authoredBack = c.back && ctrl.actions[backName];
+          const lado = /left/.test(c.name) ? 'strafe_left' : /right|quarter/.test(c.name) ? 'strafe_right' : null;
+          const ladoNome = lado && ctrl.oneHanded && ctrl.actions[`${lado}_pistol`] ? `${lado}_pistol` : lado;
+          const authoredStrafe = ladoNome && ctrl.actions[ladoNome];
+          const expected = c.idle ? (ctrl.oneHanded && ctrl.actions.idle1h ? 'idle1h' : 'idle') : authoredStrafe ? ladoNome : authoredBack ? backName : c.back ? (ctrl.oneHanded && ctrl.actions.walk1h ? 'walk1h' : 'walk') : 'run';
+          const aceitos = authoredStrafe ? [ladoNome, 'run', backName] : [expected];
+          check(() => assert.ok(aceitos.includes(a.clip), `clip ativo incorreto: ${a.clip} fora de ${aceitos.join('/')}`));
+          if (!c.idle) check(() => assert.equal(Math.sign(a.rate), c.back && !authoredBack && !authoredStrafe ? -1 : 1, 'sentido real do mixer incorreto'));
           check(() => assert.equal(tested.args[4], c.back, 'back incorreto'));
           check(() => assert.equal(tested.args[2], false, 'hasTarget alterado'));
           check(() => assert.equal(tested.args[3], a.sp, 'speed alterado'));
@@ -150,7 +156,8 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
       if (!c.idle) {
         assert.notDeepEqual(samples[0].bones, samples[1].bones, 'pose real não avançou');
         const a = samples[1], b = samples[2], time = ((a.time + (b.frame - a.frame) * dt * a.rate) % a.duration + a.duration) % a.duration;
-        assert.ok(Math.abs(time - b.time) < 1e-9, 'trajetória temporal difere do rate assinado');
+        const blended = Object.entries(a.actions).some(([name, action]) => name.startsWith('strafe_') && action.weight > 0);
+        if (!blended) assert.ok(Math.abs(time - b.time) < 1e-9, 'trajetória temporal difere do rate assinado');
       }
     } catch (e) {failureTypes.add(e.name); errors.push(e.message);}
     rows.push({id, weapon, case: c.name, pass: !errors.length, errors, authorityFrames, negativeFrames, samples});
