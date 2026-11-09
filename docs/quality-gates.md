@@ -54,6 +54,18 @@ no CI vem de `FILA_BASE` (base do PR ou do lote).
 
 ## Staging
 
+## Local e pre-push
+
+`check:prepush` executa o núcleo e as suites afetadas pelo diff (`core`, `maps`, `ui`, `audio`,
+`browser`, `network`, `vm`). Caminho desconhecido, dependência transversal ou falha ao ler o diff
+executa `check:deploy` completo. A seleção só existe localmente: o CI nunca usa diff para pular testes.
+
+`check:fast` e `check:deploy` expandem `tools/eval/suites.mjs` com a sequência anterior preservada.
+O `soundscape` é um job obrigatório separado no `build`, então falha externa de áudio não invalida
+um agregado inteiro. Packs de assets usam cache por tag exata e checksum quando existir; os asserts
+nominais continuam obrigatórios. O job de invariantes permanece inteiro porque compartilha o cache
+de simulações entre as verificações.
+
 Use a branch `staging` para validar combinações de PRs antes de produção.
 O workflow de staging deve apontar para `STAGING_URL`.
 

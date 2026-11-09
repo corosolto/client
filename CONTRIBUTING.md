@@ -178,15 +178,18 @@ registro. Passo a passo em `docs/docs/construtor-de-mapas.md`. Relevo em camadas
 
 ## Antes de abrir o PR
 
-**O `git push` já roda o `check:deploy` sozinho** — é o hook `.githooks/pre-push`.
+**O `git push` já roda o `check:prepush` sozinho** — é o hook `.githooks/pre-push`.
 Ele existe porque numa única sessão de 12/08/2026 quatro pushes seguidos abriram CI
 vermelho em portão que roda em **5 segundos** na máquina: `docs:check` duas vezes,
 `arch:check` e `eval:shaderlog`. O portão existia; ninguém rodava.
 
-É o `check:deploy` e não o `check:fast` de propósito: 20 passos determinísticos, sem
-browser e sem rede, contra 35. Portão que demora vira portão que se contorna. Quando
-você precisar mesmo passar por cima, `PULAR_PORTAO=1 git push` — e o CI continua
-sendo a rede de baixo.
+O hook executa o núcleo e as suites afetadas pelo diff. Qualquer caminho desconhecido ou
+transversal (`package.json`, `game.js`, `main.js`, boot/rede, workflows) cai no `check:deploy`
+completo. A seleção é só local e o CI continua completo. Rode `npm run check:fast` ou
+`npm run check:deploy` diretamente quando quiser a suíte inteira antes do primeiro push.
+
+Em uma falha preexistente comprovada, `PREPUSH=0 git push` pula o hook — e o CI continua
+sendo a rede de baixo. Não use esse escape para uma falha do seu próprio diff.
 
 Antes de abrir o PR, o resto continua na sua mão:
 
