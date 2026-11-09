@@ -1,0 +1,860 @@
+{
+ "metodo": "Gauntlet de até 3 rodadas por GLB (r1 grade de zonas, r2 R7 cadeia, r3 vizinhos dos 3 melhores; r2b = mesmas configurações remedidas depois do conserto da âncora distal do R7). Por configuração: pose test sintético do Studio (rig-pose-test.mjs) + clip-qa do pack (qa-packed.json, falhas [rig]) + vazamento braço→perna (censo). Envio exige: pose test melhora ≥1 %, [rig] cai (ou fica em 0), nenhuma pose cruza o limite/piora acima dele/deriva >10 %, nenhum clipe ganha falha, total de falhas e máximos do clip-qa não pioram, vazamento não sobe, ≤ 0,5 % de vértices de braço/cabeça largados e nenhum rasgo novo entre peças (>10 % + 1 cm). Depois: rebase barato (gloves/adapters/manifestos); corpo com prova sha-amarrada cara fica de fora.",
+ "corpos": {
+  "profeta-calcada": {
+   "configuracoes": 49,
+   "passouNaRegua": true,
+   "cfg": "r3-ane3cos0.3sov3vir3",
+   "params": {
+    "anel": 3,
+    "preencher": 300,
+    "costura": 0.3,
+    "mistura": 0,
+    "bracoPerna": 1,
+    "virilha": 3,
+    "sovaco": 3,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 17.467,
+    "rig": 85,
+    "falhas": 313,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 10.066,
+    "rig": 0,
+    "falhas": 150,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "bolsonaro-mandrake": {
+   "configuracoes": 50,
+   "passouNaRegua": true,
+   "cfg": "r3-ane3mis0.12",
+   "params": {
+    "anel": 3,
+    "preencher": 300,
+    "costura": 0.5,
+    "mistura": 0.12,
+    "bracoPerna": 1,
+    "virilha": 0,
+    "sovaco": 0,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 9.604,
+    "rig": 5,
+    "falhas": 86,
+    "vazados": 17
+   },
+   "depois": {
+    "pose": 2.94,
+    "rig": 0,
+    "falhas": 4,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "ministro": {
+   "configuracoes": 53,
+   "passouNaRegua": false,
+   "cfg": "r2-m12b1s3f30",
+   "params": {
+    "mistura": 0.12,
+    "bracoPerna": 1,
+    "sovaco": 3,
+    "preencher": 30
+   },
+   "antes": {
+    "pose": 7.844,
+    "rig": 78,
+    "falhas": 127,
+    "vazados": 32
+   },
+   "depois": {
+    "pose": 3.114,
+    "rig": 0,
+    "falhas": 82,
+    "vazados": 0
+   },
+   "regressoes": [
+    "1 clipe(s) com falha a mais"
+   ]
+  },
+  "cuca": {
+   "configuracoes": 62,
+   "passouNaRegua": false,
+   "cfg": "r2-m12b0v3f30",
+   "params": {
+    "mistura": 0.12,
+    "bracoPerna": 0,
+    "virilha": 3,
+    "preencher": 30,
+    "cauda": 0.3
+   },
+   "antes": {
+    "pose": 7.554,
+    "rig": 82,
+    "falhas": 203,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 4.184,
+    "rig": 1,
+    "falhas": 223,
+    "vazados": 0
+   },
+   "regressoes": [
+    "qa.total 203→223",
+    "24 clipe(s) com falha a mais"
+   ]
+  },
+  "motoca-cachorro-loko": {
+   "configuracoes": 47,
+   "passouNaRegua": false,
+   "cfg": "r1-v0s3p0",
+   "params": {
+    "virilha": 0,
+    "sovaco": 3,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 6.938,
+    "rig": 247,
+    "falhas": 251,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 7.44,
+    "rig": 2,
+    "falhas": 173,
+    "vazados": 0
+   },
+   "regressoes": [
+    "syn.max 6.938→7.44",
+    "syn.back 6.479→7.44",
+    "arms-up-90 6.938→7.44",
+    "qa.maxSkin 10.708→14.206",
+    "qa.maxBack 9.229→14.206",
+    "2 clipe(s) com falha a mais"
+   ]
+  },
+  "juiz": {
+   "configuracoes": 55,
+   "passouNaRegua": false,
+   "cfg": "r3-bra0cos0.3mis0.12pre30sov3vir3",
+   "params": {
+    "anel": 2,
+    "preencher": 30,
+    "costura": 0.3,
+    "mistura": 0.12,
+    "bracoPerna": 0,
+    "virilha": 3,
+    "sovaco": 3,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 6.465,
+    "rig": 0,
+    "falhas": 94,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 2.929,
+    "rig": 0,
+    "falhas": 87,
+    "vazados": 0
+   },
+   "regressoes": [
+    "arms-forward-60 1.7→2.018",
+    "3 clipe(s) com falha a mais"
+   ]
+  },
+  "camera-roxa": {
+   "configuracoes": 52,
+   "passouNaRegua": true,
+   "cfg": "r2-m12b1s3v3",
+   "params": {
+    "mistura": 0.12,
+    "sovaco": 3,
+    "virilha": 3
+   },
+   "antes": {
+    "pose": 6.014,
+    "rig": 170,
+    "falhas": 170,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 3.257,
+    "rig": 0,
+    "falhas": 22,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "caipora": {
+   "configuracoes": 52,
+   "passouNaRegua": false,
+   "cfg": "r3-ane1vir3",
+   "params": {
+    "anel": 1,
+    "preencher": 300,
+    "costura": 0.5,
+    "mistura": 0,
+    "bracoPerna": 1,
+    "virilha": 3,
+    "sovaco": 0,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 5.968,
+    "rig": 0,
+    "falhas": 84,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 1.776,
+    "rig": 0,
+    "falhas": 1,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "michelle-mandrake": {
+   "configuracoes": 52,
+   "passouNaRegua": false,
+   "cfg": "r3-bra0mis0.12pre100sov3vir3",
+   "params": {
+    "anel": 2,
+    "preencher": 100,
+    "costura": 0.5,
+    "mistura": 0.12,
+    "bracoPerna": 0,
+    "virilha": 3,
+    "sovaco": 3,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 5.91,
+    "rig": 198,
+    "falhas": 199,
+    "vazados": 8
+   },
+   "depois": {
+    "pose": 2.096,
+    "rig": 0,
+    "falhas": 76,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "lula-na-regua": {
+   "configuracoes": 56,
+   "passouNaRegua": false,
+   "cfg": "r3-mis0.12pre15sov3vir3",
+   "params": {
+    "anel": 2,
+    "preencher": 15,
+    "costura": 0.5,
+    "mistura": 0.12,
+    "bracoPerna": 1,
+    "virilha": 3,
+    "sovaco": 3,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 5.816,
+    "rig": 138,
+    "falhas": 138,
+    "vazados": 23
+   },
+   "depois": {
+    "pose": 2.748,
+    "rig": 0,
+    "falhas": 64,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "programador-virado": {
+   "configuracoes": 50,
+   "passouNaRegua": false,
+   "cfg": "r2-m12b1s3v3",
+   "params": {
+    "mistura": 0.12,
+    "bracoPerna": 1,
+    "sovaco": 3,
+    "virilha": 3
+   },
+   "antes": {
+    "pose": 5.797,
+    "rig": 104,
+    "falhas": 211,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 5.659,
+    "rig": 0,
+    "falhas": 178,
+    "vazados": 0
+   },
+   "regressoes": [
+    "syn.back 4.635→5.659",
+    "step-left 1.595→2.177",
+    "step-right 1.771→4.003",
+    "qa.maxSkin 8.717→13.17",
+    "qa.maxBack 6.674→8.451",
+    "6 clipe(s) com falha a mais"
+   ]
+  },
+  "doidinho-bairro": {
+   "configuracoes": 44,
+   "passouNaRegua": true,
+   "cfg": "r3-pre30",
+   "params": {
+    "anel": 2,
+    "preencher": 30,
+    "costura": 0.5,
+    "mistura": 0,
+    "bracoPerna": 1,
+    "virilha": 0,
+    "sovaco": 0,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 5.697,
+    "rig": 219,
+    "falhas": 226,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 3.577,
+    "rig": 135,
+    "falhas": 135,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "barbudo": {
+   "configuracoes": 51,
+   "passouNaRegua": false,
+   "cfg": "r3-mis0.12pre15sov3",
+   "params": {
+    "anel": 2,
+    "preencher": 15,
+    "costura": 0.5,
+    "mistura": 0.12,
+    "bracoPerna": 1,
+    "virilha": 0,
+    "sovaco": 3,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 5.57,
+    "rig": 136,
+    "falhas": 136,
+    "vazados": 33
+   },
+   "depois": {
+    "pose": 2.688,
+    "rig": 0,
+    "falhas": 163,
+    "vazados": 0
+   },
+   "regressoes": [
+    "syn.back 2.414→2.688",
+    "qa.total 136→163",
+    "37 clipe(s) com falha a mais"
+   ]
+  },
+  "esbirro": {
+   "configuracoes": 53,
+   "passouNaRegua": false,
+   "cfg": "r3-bra0mis0.12pre30sov2",
+   "params": {
+    "anel": 2,
+    "preencher": 30,
+    "costura": 0.5,
+    "mistura": 0.12,
+    "bracoPerna": 0,
+    "virilha": 0,
+    "sovaco": 2,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 5.429,
+    "rig": 26,
+    "falhas": 127,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 6.503,
+    "rig": 2,
+    "falhas": 146,
+    "vazados": 0
+   },
+   "regressoes": [
+    "syn.max 5.429→6.503",
+    "syn.back 2.694→4.306",
+    "arms-up-90 2.375→4.306",
+    "arms-forward-60 1.881→4.007",
+    "head-turn-60 5.429→6.503",
+    "qa.total 127→146",
+    "qa.maxBack 5.441→5.831",
+    "16 clipe(s) com falha a mais"
+   ]
+  },
+  "marina-silva": {
+   "configuracoes": 55,
+   "passouNaRegua": false,
+   "cfg": "r3-mis0.1pre30sov3",
+   "params": {
+    "anel": 2,
+    "preencher": 30,
+    "costura": 0.5,
+    "mistura": 0.1,
+    "bracoPerna": 1,
+    "virilha": 0,
+    "sovaco": 3,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 5.387,
+    "rig": 138,
+    "falhas": 160,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 2.119,
+    "rig": 0,
+    "falhas": 19,
+    "vazados": 0
+   },
+   "regressoes": [
+    "head-turn-60 1.336→2.119",
+    "1 clipe(s) com falha a mais"
+   ]
+  },
+  "lampiao": {
+   "configuracoes": 47,
+   "passouNaRegua": false,
+   "cfg": "r3-ane1pes3",
+   "params": {
+    "anel": 1,
+    "preencher": 300,
+    "costura": 0.5,
+    "mistura": 0,
+    "bracoPerna": 1,
+    "virilha": 0,
+    "sovaco": 0,
+    "pescoco": 3
+   },
+   "antes": {
+    "pose": 5.209,
+    "rig": 85,
+    "falhas": 178,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 2.6,
+    "rig": 6,
+    "falhas": 44,
+    "vazados": 0
+   },
+   "regressoes": [
+    "arms-forward-60 1.845→2.385",
+    "8 clipe(s) com falha a mais"
+   ]
+  },
+  "deputado": {
+   "configuracoes": 53,
+   "passouNaRegua": false,
+   "cfg": "r3-mis0.12pre30sov5vir3",
+   "params": {
+    "anel": 2,
+    "preencher": 30,
+    "costura": 0.5,
+    "mistura": 0.12,
+    "bracoPerna": 1,
+    "virilha": 3,
+    "sovaco": 5,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 4.977,
+    "rig": 76,
+    "falhas": 105,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 2.53,
+    "rig": 0,
+    "falhas": 83,
+    "vazados": 0
+   },
+   "regressoes": [
+    "arms-up-90 2.029→2.238",
+    "step-left 1.5→1.669",
+    "4 clipe(s) com falha a mais"
+   ]
+  },
+  "padati": {
+   "configuracoes": 53,
+   "passouNaRegua": false,
+   "cfg": "r3-bra0mis0.12pre15",
+   "params": {
+    "anel": 2,
+    "preencher": 15,
+    "costura": 0.5,
+    "mistura": 0.12,
+    "bracoPerna": 0,
+    "virilha": 0,
+    "sovaco": 0,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 4.939,
+    "rig": 16,
+    "falhas": 23,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 3.446,
+    "rig": 0,
+    "falhas": 46,
+    "vazados": 0
+   },
+   "regressoes": [
+    "step-left 1.615→2.926",
+    "step-right 1.726→2.002",
+    "head-turn-60 1.547→1.837",
+    "qa.total 23→46",
+    "29 clipe(s) com falha a mais"
+   ]
+  },
+  "mariabonita": {
+   "configuracoes": 55,
+   "passouNaRegua": true,
+   "cfg": "r3-bra0mis0.1pre30sov3vir3",
+   "params": {
+    "anel": 2,
+    "preencher": 30,
+    "costura": 0.5,
+    "mistura": 0.1,
+    "bracoPerna": 0,
+    "virilha": 3,
+    "sovaco": 3,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 4.437,
+    "rig": 95,
+    "falhas": 197,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 2.289,
+    "rig": 0,
+    "falhas": 54,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "aljuiz-toga-mandrake": {
+   "configuracoes": 50,
+   "passouNaRegua": false,
+   "cfg": "r3-ane1mis0.12pre30",
+   "params": {
+    "anel": 1,
+    "preencher": 30,
+    "costura": 0.5,
+    "mistura": 0.12,
+    "bracoPerna": 1,
+    "virilha": 0,
+    "sovaco": 0,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 4.358,
+    "rig": 163,
+    "falhas": 163,
+    "vazados": 91
+   },
+   "depois": {
+    "pose": 3.176,
+    "rig": 0,
+    "falhas": 84,
+    "vazados": 0
+   },
+   "regressoes": [
+    "step-left 1.824→2.75",
+    "step-right 1.895→2.344"
+   ]
+  },
+  "senador-drip": {
+   "configuracoes": 46,
+   "passouNaRegua": false,
+   "cfg": "r3-ane3pes3sov3vir3",
+   "params": {
+    "anel": 3,
+    "preencher": 300,
+    "costura": 0.5,
+    "mistura": 0,
+    "bracoPerna": 1,
+    "virilha": 3,
+    "sovaco": 3,
+    "pescoco": 3
+   },
+   "antes": {
+    "pose": 4.33,
+    "rig": 75,
+    "falhas": 92,
+    "vazados": 88
+   },
+   "depois": {
+    "pose": 2.29,
+    "rig": 1,
+    "falhas": 10,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "capitao": {
+   "configuracoes": 48,
+   "passouNaRegua": true,
+   "cfg": "r3-cos0.3pes3sov5vir3",
+   "params": {
+    "anel": 2,
+    "preencher": 300,
+    "costura": 0.3,
+    "mistura": 0,
+    "bracoPerna": 1,
+    "virilha": 3,
+    "sovaco": 5,
+    "pescoco": 3
+   },
+   "antes": {
+    "pose": 4.174,
+    "rig": 58,
+    "falhas": 59,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 2.297,
+    "rig": 0,
+    "falhas": 7,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "zero-um-mandrake": {
+   "configuracoes": 47,
+   "passouNaRegua": false,
+   "cfg": "r3-pre100sov3vir3",
+   "params": {
+    "anel": 2,
+    "preencher": 100,
+    "costura": 0.5,
+    "mistura": 0,
+    "bracoPerna": 1,
+    "virilha": 3,
+    "sovaco": 3,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 4.074,
+    "rig": 114,
+    "falhas": 148,
+    "vazados": 85
+   },
+   "depois": {
+    "pose": 2.306,
+    "rig": 16,
+    "falhas": 31,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "professor": {
+   "configuracoes": 52,
+   "passouNaRegua": false,
+   "cfg": "r3-mis0.12pre60sov3vir3",
+   "params": {
+    "anel": 2,
+    "preencher": 60,
+    "costura": 0.5,
+    "mistura": 0.12,
+    "bracoPerna": 1,
+    "virilha": 3,
+    "sovaco": 3,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 4.052,
+    "rig": 11,
+    "falhas": 71,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 2.075,
+    "rig": 0,
+    "falhas": 37,
+    "vazados": 0
+   },
+   "regressoes": [
+    "step-left 1.512→1.806",
+    "6 clipe(s) com falha a mais"
+   ]
+  },
+  "lobisomem-cyborg": {
+   "configuracoes": 48,
+   "passouNaRegua": false,
+   "cfg": "r3-ane1pes3",
+   "params": {
+    "anel": 1,
+    "preencher": 300,
+    "costura": 0.5,
+    "mistura": 0,
+    "bracoPerna": 1,
+    "virilha": 0,
+    "sovaco": 0,
+    "pescoco": 3
+   },
+   "antes": {
+    "pose": 3.989,
+    "rig": 118,
+    "falhas": 148,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 2.691,
+    "rig": 19,
+    "falhas": 30,
+    "vazados": 0
+   },
+   "regressoes": [
+    "arms-forward-60 1.48→1.898",
+    "step-left 1.614→1.995",
+    "step-right 1.512→1.701"
+   ]
+  },
+  "ancap": {
+   "configuracoes": 49,
+   "passouNaRegua": false,
+   "cfg": "r3-pes3sov5vir3",
+   "params": {
+    "anel": 2,
+    "preencher": 300,
+    "costura": 0.5,
+    "mistura": 0,
+    "bracoPerna": 1,
+    "virilha": 3,
+    "sovaco": 5,
+    "pescoco": 3
+   },
+   "antes": {
+    "pose": 3.981,
+    "rig": 0,
+    "falhas": 84,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 2.348,
+    "rig": 0,
+    "falhas": 76,
+    "vazados": 0
+   },
+   "regressoes": [
+    "syn.back 1.861→2.056",
+    "qa.maxBack 4.341→4.768",
+    "24 clipe(s) com falha a mais"
+   ]
+  },
+  "michelle-bolsonaro": {
+   "configuracoes": 52,
+   "passouNaRegua": false,
+   "cfg": "r2-m12b1f30",
+   "params": {
+    "mistura": 0.12,
+    "bracoPerna": 1,
+    "sovaco": 0,
+    "virilha": 0,
+    "preencher": 30
+   },
+   "antes": {
+    "pose": 3.79,
+    "rig": 47,
+    "falhas": 49,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 2.073,
+    "rig": 0,
+    "falhas": 1,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "esquerdomacho": {
+   "configuracoes": 46,
+   "passouNaRegua": true,
+   "cfg": "r3-pre30",
+   "params": {
+    "anel": 2,
+    "preencher": 30,
+    "costura": 0.5,
+    "mistura": 0,
+    "bracoPerna": 1,
+    "virilha": 0,
+    "sovaco": 0,
+    "pescoco": 0
+   },
+   "antes": {
+    "pose": 3.748,
+    "rig": 0,
+    "falhas": 152,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 1.874,
+    "rig": 0,
+    "falhas": 2,
+    "vazados": 0
+   },
+   "regressoes": []
+  },
+  "gotinha-mandrake": {
+   "configuracoes": 46,
+   "passouNaRegua": false,
+   "cfg": "r3-pes2sov3",
+   "params": {
+    "anel": 2,
+    "preencher": 300,
+    "costura": 0.5,
+    "mistura": 0,
+    "bracoPerna": 1,
+    "virilha": 0,
+    "sovaco": 3,
+    "pescoco": 2
+   },
+   "antes": {
+    "pose": 3.576,
+    "rig": 31,
+    "falhas": 66,
+    "vazados": 0
+   },
+   "depois": {
+    "pose": 1.928,
+    "rig": 0,
+    "falhas": 3,
+    "vazados": 0
+   },
+   "regressoes": [
+    "arms-forward-60 1.379→1.551"
+   ]
+  }
+ }
+}
