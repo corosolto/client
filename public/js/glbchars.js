@@ -1527,14 +1527,15 @@ class CharController {
     // (eixo +Z local da cabeça em mundo) e gira o osso pela DIFERENÇA pro aimPitch.
     // Só roda quando aimPitch é DEFINIDO (bots) — preview da seleção e braços FP ficam
     // com a pose natural do clipe (aplicar em todos deixava as cabeças esquisitas).
-    if (this.headBone && this.aimPitch !== undefined && !this.dead && this.lod < 2 && !this._emoteClipeAtivo) {
+    if (this.headBone && this.aimPitch !== undefined && !this.dead && this.lod < 2) {
       const target = this.aimPitch;
       this.group.getWorldQuaternion(_gq);
       _right.set(1, 0, 0).applyQuaternion(_gq);
       this.headBone.getWorldQuaternion(_wq);
       _v.set(0, 0, 1).applyQuaternion(_wq);
       const curPitch = Math.asin(Math.max(-1, Math.min(1, _v.y)));
-      let corr = target - curPitch;
+      // Emote de captura manda na cabeça: a correção decai a zero em vez de torcer o clipe.
+      let corr = this._emoteClipeAtivo ? 0 : target - curPitch;
       corr = Math.max(-AIM_CORR_CLAMP, Math.min(AIM_CORR_CLAMP, corr));
       this._aimCorr = (this._aimCorr || 0) + (corr - (this._aimCorr || 0)) * Math.min(1, dt * 6);
       if (Math.abs(this._aimCorr) > 1e-4) {
