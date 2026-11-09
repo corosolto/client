@@ -72,19 +72,16 @@ jobs:
           BODY=$(cat <<EOF
           ## Paridade Cloudflare staging
 
-          O comparador encontrou divergência(s) fora da allowlist em \
-          \\`${TARGET}\\` contra \\`https://www.corosolto.com.br\\`.
+          O comparador encontrou divergência(s) fora da allowlist em $TARGET contra https://www.corosolto.com.br.
 
-          - Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
-          - Artifact: \\`cf-staging-paridade-${GITHUB_RUN_ID}\\`
+          Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          Artifact: cf-staging-paridade-${GITHUB_RUN_ID}
 
-          \\`allowlist_exit=${{ steps.allowlist.outputs.allowlist_exit }}\\`
+          allowlist_exit=${{ steps.allowlist.outputs.allowlist_exit }}
 
           <details><summary>Veredito</summary>
 
-          \\`\\`\\`text
           $(cat allowlist.log)
-          \\`\\`\\`
           </details>
           EOF
           )
