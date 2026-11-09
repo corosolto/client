@@ -33,7 +33,9 @@ if(mutant==='square-source'){
  prepare=prepare.replace(from,'const file=[`public/img/chars/${id}.webp`,`public/img/chars-hero/${id}.webp`,`public/img/social-chars/${id}.png`].find(existsSync);');
 }
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
-const prepared=await new AsyncFunction('readFileSync','existsSync','sharp',prepare+";return {characters:SOCIAL_CHARACTERS,portraits:SOCIAL_PORTRAITS,logo:typeof SOCIAL_LOGO==='undefined'?null:SOCIAL_LOGO}")(readFileSync,(await import('node:fs')).existsSync,sharp);
+/* O bloco também conhece o alvo do deploy (Vercel aqui: retratos inline) e os `fs` do caminho Cloudflare. */
+const {adaptadorAlvo}=await import('../../scripts/adaptador.mjs');
+const prepared=await new AsyncFunction('readFileSync','existsSync','sharp','adaptadorAlvo','mkdirSync','writeFileSync',prepare+";return {characters:SOCIAL_CHARACTERS,portraits:SOCIAL_PORTRAITS,logo:typeof SOCIAL_LOGO==='undefined'?null:SOCIAL_LOGO}")(readFileSync,(await import('node:fs')).existsSync,sharp,adaptadorAlvo,mkdirSync,writeFileSync);
 const {characters,portraits}=prepared;logo=prepared.logo;
 assert(logo?.startsWith('data:image/png;base64,'),'build must embed the official public/logo.png as SOCIAL_LOGO');
 const logoPixels=await sharp(Buffer.from(logo.split(',')[1],'base64')).ensureAlpha().raw().toBuffer({resolveWithObject:true});

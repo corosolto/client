@@ -68,6 +68,8 @@ const LEGACY_VOICE_ALLOWLIST = Object.freeze({
     'audio/a/d983d18b544ff48a.mp3',
   ]),
 });
+// Eventos de fala dentro da partida; `select` fica fora (frase longa da tela de seleção).
+const INGAME_VOICE_EVENTS = Object.freeze(['kill', 'radio', 'round']);
 
 export class Sfx {
   constructor() {
@@ -175,16 +177,24 @@ export class Sfx {
     this._lastVoice = performance.now();
     return true;
   }
-  // Fala autoral do personagem. Sem take próprio ou pool curado, não há voz substituta.
+  /* Take do evento → outro take ingame do MESMO personagem → pool da facção só para quem não
+     tem voz ingame própria (string legada = só seleção). Pool M mistura todos os Míticos. */
+  _ownIngameVoice(characterId, event) {
+    const own = this.pack?.characterVoice?.[characterId];
+    if (!own || typeof own !== 'object') return null;
+    if (own[event]?.length) return own[event];
+    if (!INGAME_VOICE_EVENTS.includes(event)) return null;   // seleção não pega bordão de kill
+    const outros = INGAME_VOICE_EVENTS.filter((e) => e !== event).flatMap((e) => own[e] || []);
+    return outros.length ? outros : null;
+  }
   characterVoice(characterId, event, { fallbackFaction = null, interrupt = false } = {}) {
     if (this.gameMode === 'horde') return false;
     if (!this.speechEnabled) return false;
     const now = performance.now();
     if (event === 'kill' && this._lastKillVoice > 0 && now - this._lastKillVoice < 3500) return false;
     const rollback = !!LEGACY_VOICE_ALLOWLIST[fallbackFaction];
-    const own = rollback ? null : this.pack?.characterVoice?.[characterId]?.[event];
-    const genericPool = this._voicePool(fallbackFaction);
-    const file = this._pick(own?.length ? own : genericPool);
+    const own = rollback ? null : this._ownIngameVoice(characterId, event);
+    const file = this._pick(own || this._voicePool(fallbackFaction));
     if (file) {
       if (interrupt && this._characterAudio) this._characterAudio.pause();
       const audio = this._sample(file);
@@ -356,9 +366,19 @@ export class Sfx {
     node.gain.exponentialRampToValueAtTime(end, t0 + a + d);
   }
   _noise(dur) {
-    const n = this.ctx.sampleRate * dur, buf = this.ctx.createBuffer(1, n, this.ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    // Ruído reaproveitado: 6 buffers por duração em vez de um AudioBuffer novo (e milhares de
+    // Math.random) por camada de cada tiro e passo — com 12 bots isso virava lixo de GC.
+    if (this._ruidoCtx !== this.ctx) { this._ruidoCtx = this.ctx; this._ruido = new Map(); }
+    const sr = this.ctx.sampleRate, n = Math.max(1, Math.floor(sr * dur)), banco = this._ruido;
+    let lista = banco.get(n);
+    if (!lista) banco.set(n, lista = []);
+    let buf;
+    if (lista.length < 6) {
+      buf = this.ctx.createBuffer(1, n, sr);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      lista.push(buf);
+    } else buf = lista[(Math.random() * 6) | 0];
     const src = this.ctx.createBufferSource(); src.buffer = buf; return src;
   }
   _osc(type, freq) { const o = this.ctx.createOscillator(); o.type = type; o.frequency.value = freq; return o; }

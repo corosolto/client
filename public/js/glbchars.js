@@ -67,6 +67,11 @@ const EXTRA_STATES = ['strafe_left', 'strafe_right', 'walk_back', 'run_back',
   'grenade_throw', 'knife_idle', 'knife_stab', 'victory', 'defeat'];
 const UPPER_BONE = /^(Spine|Spine01|Spine02|neck|Head|head_end|headfront|LeftShoulder|LeftArm|LeftForeArm|LeftHand|RightShoulder|RightArm|RightForeArm|RightHand)$/;
 const qp = new URLSearchParams(location.search);
+// ?skindepth=0 volta ao depth único do three (A/B e mutante da régua bots-perf).
+const DEPTH_SKINNED = qp.get('skindepth') === '0' ? undefined : new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+// Sem variante = o three usaria o depth compartilhado como está (sem recorte alfa, deslocamento ou clipping).
+const sombraSemVariante = (m) => !!DEPTH_SKINNED && [].concat(m || []).every((x) => !((x.map || x.alphaMap) && x.alphaTest > 0)
+  && !(x.displacementMap && x.displacementScale !== 0) && !(x.clipShadows && x.clippingPlanes?.length));
 /* CORREÇÃO DE PÉ NO CHÃO, POR CLIPE (invariante CHR3) — tabela GERADA por
    `npm run feet` a partir da medição do char-probe. Ver tools/gen-foot-offsets.mjs.
 
@@ -683,6 +688,9 @@ export function buildCharacterModel(def, opts = {}) {
       : finishMaterial(o.material);
   };
   model.traverse(finishMesh);
+  // Profundidade de sombra própria dos esqueletos: no depth único do three, cada boneco
+  // alternava skinning e recalculava a chave do programa 2× por bot por quadro.
+  model.traverse((o) => { if (o.isSkinnedMesh && sombraSemVariante(o.material)) o.customDepthMaterial = DEPTH_SKINNED; });
 
   const group = new THREE.Group();
   group.add(model);

@@ -8,32 +8,31 @@ um comentário novo em vez de atualizar o existente (BUG-68).
 import json
 import sys
 
-# Razão de cada label em português de gente — a label sozinha não diz nada
-# pra quem chegou agora; a frase sim.
+# Public explanations use English. Label identifiers remain stable.
 LABEL_REASONS = {
-    "target:main": "vai direto pra `main`, sem fila de integração",
-    "target:staging": "encaminhada pra branch de integração `staging`",
-    "target:release": "encaminhada pra branch de release",
-    "needs-staging": "mudança de runtime/UI — valida integrado no staging antes do merge",
-    "needs-human-gameplay": "toca gameplay/render/HUD/mapa/personagem — decisão de humano",
-    "needs-human-backend": "toca API/Supabase/anti-cheat/ranking — decisão de humano",
-    "safe-automerge": "pequena e reversível, fora de superfície sensível — elegível a merge automático",
-    "needs-estragacodigo-resolution": "há apontamento do estraga-codigo pendente — não mergear sem `estragacodigo-resolved`",
-    "crash-auto": "veio do report automático de crash em produção",
+    "target:main": "targets `main` directly, without an integration queue",
+    "target:staging": "routed to the `staging` integration branch",
+    "target:release": "routed to the release branch",
+    "needs-staging": "runtime/UI change: validate the integrated change in staging before merging",
+    "needs-human-gameplay": "changes gameplay, rendering, HUD, maps or characters: human approval required",
+    "needs-human-backend": "changes API, Supabase, anti-cheat or ranking: human approval required",
+    "safe-automerge": "small and reversible, outside sensitive areas: eligible under the safe-merge policy",
+    "needs-estragacodigo-resolution": "has an unresolved estraga-codigo finding: requires `estragacodigo-resolved` before merging",
+    "crash-auto": "created from an automated production crash report",
 }
 
 AREA_RULES = [
-    ("mapas", "🗺️", lambda p: p.startswith("public/js/map_")),
-    ("jogo", "🎮", lambda p: p.startswith("public/js/")),
+    ("maps", "🗺️", lambda p: p.startswith("public/js/map_")),
+    ("game", "🎮", lambda p: p.startswith("public/js/")),
     ("backend", "⚙️", lambda p: p.startswith("src/pages/api") or p.startswith("src/lib")),
     ("site", "🌐", lambda p: p.startswith("src/")),
     ("CI", "🤖", lambda p: p.startswith(".github") or p.startswith("scripts/ci")),
-    ("arnês", "🧪", lambda p: p.startswith("tools/")),
+    ("harness", "🧪", lambda p: p.startswith("tools/")),
     ("docs", "📚", lambda p: p.endswith(".md")),
     ("assets", "🎨", lambda p: p.startswith(("public/models", "public/img", "public/audio"))),
 ]
 
-AREA_DEFAULT = ("outros", "📦")
+AREA_DEFAULT = ("other", "📦")
 
 
 def area_de(path: str) -> tuple[str, str]:
@@ -72,16 +71,16 @@ def render(payload: dict) -> str:
     tot_del = sum(e["del"] for e in entradas)
 
     # ── resumo em caixa colorida: a primeira coisa que o olho pega ─────────
-    quem = f"**@{author}** abriu" if author else "PR de autor desconhecido com"
-    tamanho = f"**{changed} arquivo(s)**"
+    quem = f"**@{author}** opened a PR with" if author else "PR with an unknown author and"
+    tamanho = f"**{changed} file(s)**"
     if entradas:
         tamanho += f" · **+{tot_add}** **−{tot_del}**"
-    resumo = [f"{quem} {tamanho}, base **{base_branch}**."]
+    resumo = [f"{quem} {tamanho}, targeting **{base_branch}**."]
     if retarget:
-        resumo.append(f"Reencaminhada automaticamente para **{retarget}**.")
+        resumo.append(f"Automatically routed to **{retarget}**.")
     if lista_incompleta:
-        resumo.append("A API devolveu a **lista de arquivos incompleta** (PR grande demais), "
-                      "então o mapa por área abaixo não cobre a mudança inteira.")
+        resumo.append("The API returned an **incomplete file list** (the PR is too large), "
+                      "so the area breakdown below does not cover the entire change.")
     caixa = "\n".join(f"> {l}" for l in resumo)
 
     # ── mapa da mudança: área → quantos arquivos, com amostra ─────────────
@@ -91,8 +90,8 @@ def render(payload: dict) -> str:
         for e in entradas:
             nome, icone = area_de(e["path"])
             por_area.setdefault(nome, {"icone": icone, "itens": []})["itens"].append(e)
-        linhas += ["### O que mudou", "",
-                   "| área | arquivos | + | − | amostra |",
+        linhas += ["### What changed", "",
+                   "| area | files | + | − | sample |",
                    "|:------|---------:|--:|--:|:--------|"]
         for nome, d in sorted(por_area.items(), key=lambda kv: -len(kv[1]["itens"])):
             itens = d["itens"]
@@ -107,23 +106,23 @@ def render(payload: dict) -> str:
     # ── o que o bot fez de ação (só o que aconteceu de verdade) ───────────
     acoes = []
     if assignee:
-        acoes.append(f"- **assignee:** @{assignee} — responsável pela revisão")
+        acoes.append(f"- **assignee:** @{assignee} : responsible for review")
     if labels_add:
         linhas += ["### Labels", "",
-                   "| label | por quê |", "|:------|:--------|"]
+                   "| label | reason |", "|:------|:--------|"]
         for lab in labels_add:
-            motivo = LABEL_REASONS.get(lab, "critério do roteador")
+            motivo = LABEL_REASONS.get(lab, "routing rule")
             linhas.append(f"| `{lab}` | {motivo} |")
         linhas.append("")
     elif acoes or entradas:
-        linhas += ["### Labels", "", "nenhuma label adicional sugerida — PR fora dos critérios de roteamento.", ""]
+        linhas += ["### Labels", "", "No additional labels suggested. This PR does not match the routing criteria.", ""]
 
     if "needs-estragacodigo-resolution" in labels_add:
         linhas += ["> [!CAUTION]",
-                   "> O estraga-codigo deixou apontamento **pendente**. Não mergear sem aplicar `estragacodigo-resolved`.", ""]
+                   "> An estraga-codigo finding is **unresolved**. Resolve it before applying `estragacodigo-resolved` and merging.", ""]
 
     if acoes:
-        linhas += ["### Ações do bot", "", *acoes, ""]
+        linhas += ["### Bot actions", "", *acoes, ""]
     return "\n".join(linhas).rstrip() + "\n"
 
 
@@ -147,28 +146,28 @@ def selftest() -> int:
     casos += [
         ("heading-marcador-de-dedupe", "## csbrasil-bot classification" in p),
         ("resumo soma totais", "+16" in p and "−5" in p),
-        ("mapa separa área de mapa", "🗺️ mapas | 1 | +5 | −0" in p),
-        ("mapa separa jogo", "🎮 jogo | 1 | +10 | −2" in p),
-        ("label com motivo humano", "valida integrado no staging" in p),
+        ("mapa separa área de mapa", "🗺️ maps | 1 | +5 | −0" in p),
+        ("mapa separa jogo", "🎮 game | 1 | +10 | −2" in p),
+        ("label com motivo humano", "validate the integrated change in staging" in p),
         ("assignee listado", "**assignee:** @ruben" in p),
         ("caixa NOTE presente", "> [!NOTE]" in p),
     ]
     q = render({"files": [], "changedFiles": 0, "baseRefName": "staging",
                 "labels_add": ["needs-estragacodigo-resolution"]})
     casos += [
-        ("sem arquivo não quebra", "0 arquivo(s)" in q),
+        ("sem arquivo não quebra", "0 file(s)" in q),
         ("bloqueio estragacodigo em CAUTION", "> [!CAUTION]" in q),
         ("rótulo resolvido correto aparece", "`estragacodigo-resolved`" in q),
-        ("coderabbit não aparece", "coderabbit" not in q.lower()),
+        ("cautela identifica o revisor ativo", "> An estraga-codigo finding" in q),
     ]
     r = render({"files": None, "changedFiles": 1720, "baseRefName": "main",
                 "author_login": "ruben", "labels_add": ["needs-staging"]})
     t = render({"files": [{"path": "docs/a.md", "additions": 1, "deletions": 0}],
                 "changedFiles": 300, "baseRefName": "main", "labels_add": []})
     casos += [
-        ("lista nula não quebra e mantém o total", "1720 arquivo(s)" in r),
-        ("lista nula é declarada no corpo", "lista de arquivos incompleta" in r),
-        ("lista truncada é declarada no corpo", "lista de arquivos incompleta" in t),
+        ("lista nula não quebra e mantém o total", "1720 file(s)" in r),
+        ("lista nula é declarada no corpo", "incomplete file list" in r),
+        ("lista truncada é declarada no corpo", "incomplete file list" in t),
     ]
     erros = 0
     for nome, ok in casos:
