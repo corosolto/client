@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { SUITES, passosDaSuite } from '../tools/eval/suites.mjs';
-import { selecionarPorArquivos } from '../tools/eval/selecao-pre-push.mjs';
+import { selecionarPorArquivos, validarMapaWorkflows } from '../tools/eval/selecao-pre-push.mjs';
 
 /* Baseline congelado das duas linhas que existiam antes do manifesto. O resumo
  * cobre ordem, repetições e conteúdo; ele NÃO é derivado do manifesto atual. */
@@ -14,7 +14,7 @@ const BASELINE = {
   fast: { quantidade: 338, sha256: '05c5d2027a8229f379a4556ee991daf1bc0e9f45b04ee3515d4e458259d6bfdf' },
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
-const NOVOS = { fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:rede3p']), deploy: new Set() };
+const NOVOS = { fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:rede3p']), deploy: new Set() };
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
 
 for (const [nome, baseline] of Object.entries(BASELINE)) {
@@ -35,10 +35,11 @@ for (const [nome, baseline] of Object.entries(BASELINE)) {
   });
 }
 
-test('staging adiciona portalembed, lixo e envruntime sem apagar os passos migrados', () => {
+test('staging adiciona portalembed, lixo, envruntime e servertraffic sem apagar os passos migrados', () => {
   assert.ok(SUITES.fast.includes('eval:portalembed'));
   assert.ok(SUITES.fast.includes('eval:lixo'));
   assert.ok(SUITES.fast.includes('eval:envruntime'));
+  assert.ok(SUITES.fast.includes('eval:servertraffic'));
 });
 
 test('rede3p entra no fast como único passo novo desta entrega', () => {
@@ -225,7 +226,8 @@ test('caminho desconhecido cai no check:deploy completo e explica o fallback', (
 });
 
 for (const arquivo of [
-  'package.json',
+  'package-lock.json',
+  'yarn.lock',
   'public/js/game.js',
   'public/js/main.js',
   'public/js/bootstrap.js',
@@ -239,3 +241,140 @@ for (const arquivo of [
     assert.deepEqual(r.passos, SUITES.deploy);
   });
 }
+
+const manifesto = (scripts, extras = {}) => ({ name: 'coro-solto', version: '1.0.0', ...extras, scripts });
+const blobsPackage = (antes, depois) => new Map([['package.json', {
+  antes: typeof antes === 'string' ? antes : JSON.stringify(antes),
+  depois: typeof depois === 'string' ? depois : JSON.stringify(depois),
+}]]);
+const selecaoPackage = (antes, depois) => selecionarPorArquivos(['package.json'], blobsPackage(antes, depois));
+
+test('package.json com um script real alterado executa core e esse passo', () => {
+  const r = selecaoPackage(
+    manifesto({ 'eval:release': 'node antes.mjs' }),
+    manifesto({ 'eval:release': 'node depois.mjs' }),
+  );
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core']);
+  assert.deepEqual(r.passos, [...SUITES.core, 'eval:release']);
+  assert.ok(r.passos.length > 0);
+});
+
+test('package.json com múltiplos scripts faz união deduplicada após core', () => {
+  const r = selecaoPackage(
+    manifesto({ syntax: 'node antes.mjs', 'eval:release': 'node antes.mjs', 'eval:edgecache': 'node mesmo.mjs' }),
+    manifesto({ syntax: 'node depois.mjs', 'eval:release': 'node depois.mjs', 'eval:edgecache': 'node depois.mjs' }),
+  );
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core']);
+  assert.deepEqual(r.passos.slice(0, SUITES.core.length), SUITES.core);
+  assert.equal(r.passos.filter((passo) => passo === 'syntax').length, 1);
+  assert.ok(r.passos.includes('eval:release') && r.passos.includes('eval:edgecache'));
+  assert.equal(new Set(r.passos).size, r.passos.length);
+});
+
+const PACKAGE_FULL = [
+  ['dependencies', manifesto({ syntax: 'node a.mjs' }), manifesto({ syntax: 'node a.mjs' }, { dependencies: { astro: '1.0.0' } })],
+  ['version', manifesto({ syntax: 'node a.mjs' }), { ...manifesto({ syntax: 'node a.mjs' }), version: '2.0.0' }],
+  ['name', manifesto({ syntax: 'node a.mjs' }), { ...manifesto({ syntax: 'node a.mjs' }), name: 'outro-nome' }],
+  ['agregador', manifesto({ 'check:fast': 'node antes.mjs' }), manifesto({ 'check:fast': 'node depois.mjs' })],
+  ['script removido', manifesto({ 'eval:release': 'node a.mjs' }), manifesto({})],
+  ['build fora das suites', manifesto({ build: 'node antes.mjs' }), manifesto({ build: 'node depois.mjs' })],
+  ['nome alterado divergente', manifesto({ 'eval:release': 'node a.mjs' }), manifesto({ 'eval:edgecache': 'node a.mjs' })],
+];
+for (const [nome, antes, depois] of PACKAGE_FULL) {
+  test(`package.json com ${nome} força deploy completo`, () => {
+    const r = selecaoPackage(antes, depois);
+    assert.equal(r.fallback, true);
+    assert.deepEqual(r.passos, SUITES.deploy);
+  });
+}
+
+test('package.json agregador dentro das suites também força deploy completo', () => {
+  const r = selecaoPackage(
+    manifesto({ 'eval:release': 'npm run eval:outro' }),
+    manifesto({ 'eval:release': 'npm run eval:novo' }),
+  );
+  assert.equal(r.fallback, true);
+  assert.match(r.motivo, /agregador/);
+});
+
+for (const [nome, antes, depois] of [
+  ['base', '{', JSON.stringify(manifesto({}))],
+  ['head', JSON.stringify(manifesto({})), '{'],
+]) {
+  test(`package.json com JSON inválido na ${nome} força deploy completo`, () => {
+    const r = selecaoPackage(antes, depois);
+    assert.equal(r.fallback, true);
+    assert.match(r.motivo, /inválido/);
+  });
+}
+
+test('--files=package.json sem blobs injetados falha fechado', () => {
+  const r = selecionarPorArquivos(['package.json']);
+  assert.equal(r.fallback, true);
+  assert.match(r.motivo, /blobs antes\/depois/);
+  assert.deepEqual(r.passos, SUITES.deploy);
+});
+
+test('lock real vence uma seleção segura de package.json', () => {
+  const blobs = blobsPackage(
+    manifesto({ 'eval:release': 'node antes.mjs' }),
+    manifesto({ 'eval:release': 'node depois.mjs' }),
+  );
+  const r = selecionarPorArquivos(['package.json', 'package-lock.json'], blobs);
+  assert.equal(r.fallback, true);
+  assert.deepEqual(r.passos, SUITES.deploy);
+});
+
+const WORKFLOWS = [
+  ['ci.yml', ['eval:operacao-flavio', 'eval:release']],
+  ['release.yml', ['eval:release']],
+  ['deploy-prod.yml', ['eval:edgecache', 'eval:release']],
+  ['prod-watch.yml', ['eval:edgecache', 'eval:wfpurge']],
+  ['preview-build.yml', []],
+  ['preview-deploy.yml', []],
+  ['preview-bot.yml', []],
+  ['portao-browser.yml', []],
+  ['autofix.yml', []],
+];
+for (const [arquivo, extras] of WORKFLOWS) {
+  test(`workflow mapeado ${arquivo} seleciona core e suas réguas`, () => {
+    const r = selecionarPorArquivos([`.github/workflows/${arquivo}`]);
+    assert.equal(r.fallback, false);
+    assert.deepEqual(r.suites, ['core']);
+    assert.deepEqual(r.passos, [...new Set([...SUITES.core, ...extras])]);
+    assert.ok(r.passos.length > 0);
+  });
+}
+
+for (const arquivo of ['.github/workflows/issues-bot.yml', '.github/workflows/ci.yaml', '.github/CODEOWNERS']) {
+  test(`arquivo GitHub sem mapa seguro ${arquivo} força deploy completo`, () => {
+    const r = selecionarPorArquivos([arquivo]);
+    assert.equal(r.fallback, true);
+    assert.deepEqual(r.passos, SUITES.deploy);
+  });
+}
+
+test('workflow e categoria temática mistos unem réguas sem duplicatas', () => {
+  const r = selecionarPorArquivos(['public/js/map_campo.js', '.github/workflows/ci.yml']);
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core', 'maps']);
+  for (const passo of ['eval:campo-contract', 'eval:operacao-flavio', 'eval:release']) {
+    assert.ok(r.passos.includes(passo), `perdeu ${passo}`);
+  }
+  assert.equal(new Set(r.passos).size, r.passos.length);
+});
+
+test('transversal real sempre vence misto com workflow mapeado', () => {
+  const r = selecionarPorArquivos(['.github/workflows/ci.yml', 'yarn.lock']);
+  assert.equal(r.fallback, true);
+  assert.deepEqual(r.passos, SUITES.deploy);
+});
+
+test('mapa de workflows rejeita passo fantasma fora de fast e deploy', () => {
+  assert.throws(
+    () => validarMapaWorkflows({ '.github/workflows/ci.yml': ['eval:passo-fantasma'] }),
+    /passo fantasma/,
+  );
+});
