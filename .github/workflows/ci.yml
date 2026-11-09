@@ -126,6 +126,8 @@ jobs:
         run: npm run eval:capturecodex
       - name: Aba da loja no hub diz só LOJA
         run: npm run eval:hub-loja
+      - name: Wrapper de portal embeda o site (frame-ancestors, UTM, pointer-lock)
+        run: npm run eval:portalembed
       - name: TRETA$ da partida segue o CS e não toca a carteira do menu
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:economia
