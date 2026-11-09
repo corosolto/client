@@ -297,6 +297,23 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Tag exata do pacote de decalques
+        id: packs
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const fonte = fs.readFileSync('scripts/fetch-decals.sh', 'utf8');
+          const url = fonte.match(/URL="\$\{DECALS_PACK_URL:-([^}]+)\}"/)?.[1];
+          const tag = url?.match(/\/download\/([^/]+)\//)?.[1];
+          if (!tag) throw new Error('fetch-decals.sh: tag ausente da URL default de DECALS_PACK_URL');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `decals_tag=${tag}\n`);
+          NODE
+      - name: Cache dos decalques por tag exata
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: public/img/decals
+          key: decals-pack-${{ steps.packs.outputs.decals_tag }}
       - name: Decalques públicos completos antes do navegador
         run: |
           bash scripts/fetch-decals.sh
@@ -389,13 +406,7 @@ jobs:
       - name: Portão verde só se os quatro portões paralelos forem
         run: |
           STRING='''${{ toJson(needs) }}'''
-          python3 - "$STRING" <<'PY'
-import json,sys
-necessarios=json.loads(sys.argv[1])
-for nome,info in sorted(necessarios.items()):
-    if info['result']!='success': print(f"::error::portao-parcial {nome} terminou em {info['result']}"); sys.exit(1)
-print('portao: os 4 portões paralelos verdes')
-PY
+          python3 -c 'import json,sys; n=json.loads(sys.argv[1]); bad=[k+" terminou em "+v["result"] for k,v in sorted(n.items()) if v["result"]!="success"]; print("\n".join(bad) if bad else "portao: os 4 portões paralelos verdes"); sys.exit(bool(bad))' "$STRING"
 
   sertao:
     needs: decide
