@@ -67,6 +67,8 @@ jobs:
         run: npm run syntax
       - name: Taxa de rede (FPS, travada, relógio congelado e mutantes)
         run: npm run eval:netrate
+      - name: Estados remotos v9, compatibilidade v8 e mutantes
+        run: node tools/eval/runner.mjs eval:netcodecbin eval:rede3p
       - name: Contrato de famílias e marcas do áudio
         run: npm run eval:audiomarcas
       - name: Dependências e reconstrução do fundo do menu
