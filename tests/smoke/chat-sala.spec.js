@@ -1,5 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
+import { estadoPt } from '../../playwright.smoke.config.mjs';
 
 /* SMOKE DO CHAT DE SALA (#686, docs/chat-de-sala.md §11). Página real, jogo real em
    single player e um `net` falso montado dentro da página: o que se mede é o painel
@@ -366,7 +367,8 @@ test.describe('chat de sala', () => {
     let page;
     let idioma = 'pt';
     test.beforeAll(async ({ browser }, testInfo) => {
-      page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+      // página própria fora do fixture: repete o cs_lang=pt do playwright.smoke.config.mjs
+      page = await browser.newPage({ viewport: { width: 1600, height: 900 }, storageState: estadoPt });
       page.setDefaultTimeout(20_000);
       page.setDefaultNavigationTimeout(60_000);
       await desacelerar(page);
