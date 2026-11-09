@@ -5138,7 +5138,14 @@ async function mpEntrarPorConvite(txt) {
   mpEstado('conectando', `PROCURANDO ${alvo.convite}…`);
   const http = httpDoNo(alvo.no);
   mpNoAtual = { ...alvo.no, http, ticketNode: alvo.no.id };
-  const sala = await salaPorConvite(http, alvo.codigo);
+  let sala;
+  try { sala = await salaPorConvite(http, alvo.codigo); }
+  catch (e) {
+    await abrirMultiplayer();
+    return mpErro(String(e && e.message || '').includes('http_429')
+      ? 'Calma aí: muitas tentativas seguidas. Espere um minuto antes de abrir outro convite.'
+      : 'Não deu pra procurar a sala agora. Tente novamente em instantes.');
+  }
   if (!sala) { await abrirMultiplayer(); return mpErro(`A sala ${alvo.convite} não existe mais. Escolha outra abaixo.`); }
   mpEntrar(sala, 'auto');
 }
@@ -5360,6 +5367,8 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     return mpErro(m.includes('bad_password') ? 'Senha errada.'
       : m.includes('room_full') ? 'Sala cheia.'
       : m.includes('room_not_found') ? 'Essa sala não existe mais.'
+      : m.includes('muitas_tentativas') ? 'Muitas tentativas seguidas. Espere um minuto e tente de novo.'
+      : m.includes('protocolo_incompativel') ? 'Este servidor fala uma versão antiga do jogo. Recarregue a página; se continuar, escolha outra região.'
       : m.includes('timeout') ? 'O servidor demorou demais pra responder. Tente de novo ou escolha outra região.'
       : 'Não deu pra conectar nesse servidor.');
   }
