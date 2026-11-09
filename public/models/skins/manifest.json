@@ -326,11 +326,11 @@
     },
     "bolsonaro-mandrake": {
       "character": "capitao",
-      "model": "/models/skins/bolsonaro-mandrake-bcd355b78b39.glb",
+      "model": "/models/skins/bolsonaro-mandrake-0eb46ca7a3e3.glb",
       "poster": "/img/skins/bolsonaro-mandrake.webp",
       "approved": true,
       "preview": true,
-      "sha256": "bcd355b78b3958e7df3d41f514e413373d6b0cf3dbbcf15cb57e23224056ecf7",
+      "sha256": "0eb46ca7a3e33761320a7cd0ef49a9e6c44337f55e766909d0bab787d9c36deb",
       "bytes": 1211824,
       "sourceSha256": "0aea95c67f8da82947cff19c3037ae4a28a3ebb2d46dc412bb9e74df8e116212",
       "animationNames": {

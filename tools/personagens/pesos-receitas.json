@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "nota": "Parâmetros de tools/personagens/pesos-skin.mjs por GLB reparado. Escolhidos na grade de 16 configurações medida com o pose test do Studio (sintético + 11 clipes embutidos × 8 instantes): menor excesso sobre os limites (aresta 3,5×, costas 3,5×, mão 2,5×) com vazamento braço→perna = 0. Receita + arquivo de origem = mesmos bytes (determinístico).",
+  "nota": "Parâmetros de tools/personagens/pesos-skin.mjs por GLB reparado (só os que diferem de PARAMETROS). Lula (PR #1265): grade de 16 configurações no pose test do Studio (sintético + 11 clipes embutidos × 8 instantes), menor excesso sobre os limites (aresta 3,5×, costas 3,5×, mão 2,5×) com vazamento braço→perna = 0. Roster (P4): até 3 rodadas por GLB em tools/eval/asset-evidence/pesos-roster/medidas.json; só entra GLB que melhora o pose test E as falhas [rig] do clip-qa do pack, sem regressão nem membro solto/rasgo entre peças. Receita + arquivo de origem = mesmos bytes (determinístico).",
   "receitas": {
     "lula-mandrake": {
       "origemSha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
@@ -24,6 +24,22 @@
         "anel": 3,
         "ombroR0": 1.5,
         "ombroR1": 2.5
+      }
+    },
+    "bolsonaro-mandrake": {
+      "origemSha256": "bcd355b78b3958e7df3d41f514e413373d6b0cf3dbbcf15cb57e23224056ecf7",
+      "parametros": {
+        "anel": 3,
+        "mistura": 0.12
+      }
+    },
+    "profeta-calcada": {
+      "origemSha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+      "parametros": {
+        "anel": 3,
+        "costura": 0.3,
+        "sovaco": 3,
+        "virilha": 3
       }
     }
   }

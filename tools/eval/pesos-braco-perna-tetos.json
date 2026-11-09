@@ -18,10 +18,6 @@
       "vazados": 91,
       "bracos": 1904
     },
-    "skin:bolsonaro-mandrake": {
-      "vazados": 17,
-      "bracos": 2628
-    },
     "skin:lula-na-regua": {
       "vazados": 23,
       "bracos": 1835
@@ -48,6 +44,9 @@
     },
     "skin:lula-drip": {
       "antes": 66
+    },
+    "skin:bolsonaro-mandrake": {
+      "antes": 17
     }
   }
 }
