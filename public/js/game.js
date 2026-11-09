@@ -3273,7 +3273,7 @@ export class Game {
     if (winner && winner !== 'draw') this.roundsWon[winner] = (this.roundsWon[winner] || 0) + 1;
     this._compra?.aoFimDaRodada(winner);
     this.state = 'roundEnd';
-    this._cerimoniaCorpos(winner);
+    this._cerimoniaCorpos?.(winner);
     const objectiveResult = this.objective?.roundResult?.(winner);
     this.stateUntil = this.time + (objectiveResult?.duration || 4);
     this.player.scoped = false; this.el.scope.classList.remove('on');
@@ -6119,7 +6119,7 @@ export class Game {
     this.roundsWon[team] = (this.roundsWon[team] || 0) + 1;
     this.world.onGoal?.();
     this.state = 'roundEnd'; this.stateUntil = this.time + 4;
-    this._cerimoniaCorpos(team);
+    this._cerimoniaCorpos?.(team);
     this.player.scoped = false; this.el.scope.classList.remove('on');
     this.radioOpen = null; this._radioUi();
     this._ensureDolly();
