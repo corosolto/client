@@ -13,18 +13,19 @@
 
    ER1 nenhum arquivo de `src/` (nem `middleware.js`) lê `import.meta.env.<NOME>`
    da lista de segredos/vars de runtime (API_PROXY_SECRET, SUPABASE_URL,
-   SUPABASE_SERVICE_ROLE_KEY, X_PIXEL_TOKEN), e nenhum usa `import.meta.env[...]`
-   dinâmico: a captura dinâmica materializa o OBJETO inteiro de env do build
-   (segredos incluídos) dentro do chunk SSR.
+   SUPABASE_SERVICE_ROLE_KEY, X_PIXEL_TOKEN), nenhum usa `import.meta.env[...]`
+   dinâmico e nenhuma referência NUA a `import.meta.env` (alias do tipo
+   `const env = import.meta.env` ou destructuring captura o objeto inteiro, com
+   os segredos do build, dentro do chunk SSR).
    ER2 com `--com-build`: roda `npm run build` com SENTINELAS nas envs dos quatro
    nomes e varre `dist/server/**`, `dist/client/**`, `.vercel/output/functions/**`
    e `.vercel/output/static/**` atrás do valor literal de cada sentinela. Se o
    bundle contiver a sentinela, algo voltou a inlinar. Com `--varre`, varre o build
    que já existe: as sentinelas vêm do env (padrão `SENTINEL_*`), como no CI.
 
-   Mutantes: `le-segredo` reintroduz um `import.meta.env.API_PROXY_SECRET` no
-   corpus de ER1; `inlina-sentinela` injeta um chunk falso com a sentinela no
-   corpus de ER2. Os dois têm que acender.
+   Mutantes: `le-segredo` reintroduz uma leitura por ALIAS (`const env =
+   import.meta.env; env.API_PROXY_SECRET`) no corpus de ER1; `inlina-sentinela`
+   injeta um chunk falso com a sentinela no corpus de ER2. Os dois acendem.
 
    Uso: node tools/eval/env-runtime-check.mjs [--com-build] [--varre] [--mutante=le-segredo|inlina-sentinela]
    ============================================================================ */
@@ -53,7 +54,13 @@ const NOMES = Object.keys(SENTINELAS);
    (`import.meta.env.API_PROXY_SECRET`) e dinâmico (`import.meta.env[nome]`). */
 const LE_SEGREDO = new RegExp(`import\\.meta\\.env\\.(?:${NOMES.join('|')})\\b`);
 const LE_DYNAMICAMENTE = /import\.meta\.env\s*\[/;
+// Referência NUA (alias, destructuring, template): só o acesso membro a membro
+// é forma permitida; o resto embute o objeto de env do build no chunk SSR.
+const LE_ALIAS = /(?<![\w$])import\.meta\.env(?!\s*\.\s*[A-Za-z_$])/;
 
+const semComentarios = (texto) => texto
+  .replace(/\/\*[\s\S]*?\*\//g, (b) => b.replace(/[^\n]/g, ' '))
+  .replace(/(^|[^:])\/\/[^\n]*/g, (b) => b.replace(/[^\n]/g, ' '));
 function arquivosFonte() {
   const saida = ['middleware.js'];
   const entrar = (dir) => {
@@ -72,11 +79,13 @@ const falhas = [];
 /* ER1 — sempre roda: é barata e é o portão do pr-fast. */
 let corpus = arquivosFonte();
 if (mutante === 'le-segredo') {
-  corpus = [...corpus, ['src/pages/api/fake-mutante.ts', "const s = import.meta.env.API_PROXY_SECRET || '';\nexport { s };\n"]];
+  corpus = [...corpus, ['src/pages/api/fake-mutante.ts', "const env = import.meta.env;\nconst s = env.API_PROXY_SECRET || '';\nexport { s };\n"]];
 }
 for (const [caminho, texto] of corpus) {
-  if (LE_SEGREDO.test(texto)) falhas.push(`ER1 ${caminho} lê import.meta.env.<segredo> (use src/lib/env-runtime.ts)`);
-  if (LE_DYNAMICAMENTE.test(texto)) falhas.push(`ER1 ${caminho} acessa import.meta.env[...] dinâmico (materializa o env do build no chunk)`);
+  const codigo = semComentarios(texto);
+  if (LE_SEGREDO.test(codigo)) falhas.push(`ER1 ${caminho} lê import.meta.env.<segredo> (use src/lib/env-runtime.ts)`);
+  if (LE_DYNAMICAMENTE.test(codigo)) falhas.push(`ER1 ${caminho} acessa import.meta.env[...] dinâmico (materializa o env do build no chunk)`);
+  if (LE_ALIAS.test(codigo)) falhas.push(`ER1 ${caminho} referencia import.meta.env sem acesso a membro (alias/destructuring embute o env do build; use envRuntime ou acesso direto por nome)`);
 }
 
 /* ER2 — varre artefatos de build atrás das sentinelas. dist/server só existe no
