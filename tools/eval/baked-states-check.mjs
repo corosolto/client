@@ -17,7 +17,7 @@ import os from 'node:os';
 import { createHash } from 'node:crypto';
 import { motivosParaManter, motivosRegraRuido } from './baked-states-metrics.mjs';
 import { readGLB, buildScene, worldMats, poseWith, skinVerts, bboxOf } from './tp-mount-probe.mjs';
-import { marcarRef, refsDoCorpo } from '../../public/js/anim-speed-ref.js';
+import { marcarRef, refsDoCorpo, REFS_PADRAO } from '../../public/js/anim-speed-ref.js';
 
 const MUT = process.argv.find((a) => a.startsWith('--mutante='))?.split('=')[1] || '';
 const MUTANTES = {
@@ -149,7 +149,7 @@ for (const id of alvosR3) {
 }
 
 /* R4 — refs por personagem: índice = manifest; o jogo multiplica pela escala do modelo. */
-const GLOBAIS = { walk: 0.84, walk1h: 0.84, run: 2.08, crouchwalk: 0.75 };
+const GLOBAIS = REFS_PADRAO; // mesma fonte do glbchars.js (exigido abaixo)
 let refsTrocadas = 0;
 for (const id of ids) {
   const c = data.corpos[id];
@@ -173,7 +173,9 @@ for (const id of ids) {
 }
 {
   const exigido = [
-    [/import \{ marcarRef, refsDoCorpo \} from '\.\/anim-speed-ref\.js';/, 'importa anim-speed-ref.js'],
+    [/import \{ marcarRef, refsDoCorpo, REFS_PADRAO \} from '\.\/anim-speed-ref\.js';/, 'importa anim-speed-ref.js'],
+    [/WALK_REF += parseFloat\(qp\.get\('wref'\)\) \|\| REFS_PADRAO\.walk;[\s\S]*RUN_REF += parseFloat\(qp\.get\('rref'\)\) \|\| REFS_PADRAO\.run;[\s\S]*CROUCH_REF = parseFloat\(qp\.get\('cref'\)\) \|\| REFS_PADRAO\.crouchwalk;/, 'tira as refs globais de REFS_PADRAO'],
+    [/const REFS_GLOBAIS = Object\.freeze\(\{ walk: WALK_REF, walk1h: WALK_REF, run: RUN_REF, crouchwalk: CROUCH_REF \}\);/, 'monta REFS_GLOBAIS das refs'],
     [/const refs = \(_idx && _idx\.refs && _idx\.refs\[id\]\) \|\| \{\};/, 'lê refs do índice'],
     [/set\[s\] = c; marcarRef\(c, refs\[s\]\)/, 'marca a ref do clipe mesclado'],
     [/set\[s\] = g\.animations\[0\]; marcarRef\(set\[s\], refs\[s\]\)/, 'marca a ref do clipe por estado'],

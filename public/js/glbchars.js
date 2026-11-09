@@ -24,7 +24,7 @@ import { weaponModel, preloadWeapons, ONE_HANDED, gripPoints } from './weapons.j
 import { mountEyewear } from './eyewear.js';
 import { gloveSkinStyle } from './data/glove-skin-definitions.js';
 import { solveCCDIK } from './handik.js';
-import { marcarRef, refsDoCorpo } from './anim-speed-ref.js';
+import { marcarRef, refsDoCorpo, REFS_PADRAO } from './anim-speed-ref.js';
 
 // Character ids that have a real model under public/models/characters/<id>.glb.
 export const GLB_CHARS = new Set([
@@ -106,9 +106,9 @@ const ANIM_DIR = qp.get('animdir') || 'models/anims/mixamo';   // pack Mixamo ri
 const TARGET_HEIGHT = parseFloat(qp.get('charh')) || 1.72;      // meters (match box silhouette)
 // Per-clip natural ground speed (m/s) that plants the feet at timeScale 1, MEASURED from
 // each clip's real foot stride (tools: iktest HARNESS.measureStride / tools/eval/mixamo-measure.mjs).
-const WALK_REF   = parseFloat(qp.get('wref')) || 0.84;
-const RUN_REF    = parseFloat(qp.get('rref')) || 2.08;
-const CROUCH_REF = parseFloat(qp.get('cref')) || 0.75;
+const WALK_REF   = parseFloat(qp.get('wref')) || REFS_PADRAO.walk;
+const RUN_REF    = parseFloat(qp.get('rref')) || REFS_PADRAO.run;
+const CROUCH_REF = parseFloat(qp.get('cref')) || REFS_PADRAO.crouchwalk;
 const REFS_GLOBAIS = Object.freeze({ walk: WALK_REF, walk1h: WALK_REF, run: RUN_REF, crouchwalk: CROUCH_REF });
 const FACING_OFFSET = (parseFloat(qp.get('charface')) || 0) * Math.PI / 180; // yaw fix if model faces -Z
 // FASE 3: clamp de segurança da correção de pitch da cabeça (malha fechada, ~28°).

@@ -14,3 +14,6 @@ export function refsDoCorpo(acoes, escala, globais) {
   }
   return out;
 }
+
+// Refs globais medidas no pack compartilhado (m/s); glbchars.js e a régua leem daqui.
+export const REFS_PADRAO = Object.freeze({ walk: 0.84, walk1h: 0.84, run: 2.08, crouchwalk: 0.75 });
