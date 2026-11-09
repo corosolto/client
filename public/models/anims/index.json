@@ -444,6 +444,19 @@
    "walk1h",
    "walkfire"
   ],
+  "gilbomes": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "gotinha": [
    "idle",
    "walk",
