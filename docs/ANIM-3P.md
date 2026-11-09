@@ -173,7 +173,7 @@ O contrato é `npm run eval:postura` (`tools/eval/postura-check.mjs`), no `check
 | PS5 | cotovelo 55°..150° | faixa humana; censo p05=79,8 p95=135,8 |
 | PS6 | tremor ≤0,035 alturas/quadro correndo | quem passa mede ≤0,028; reprovados 0,039–0,075 |
 
-**Dívida, não perdão.** O elenco de hoje tem 11 personagens/cláusula fora do contrato. Eles
+**Dívida, não perdão.** O censo de 23/10 tinha 11 personagens/cláusula fora do contrato; desde 09/11 restam 3. Eles
 estão em `DIVIDA` dentro da régua, visível no veredito: personagem NOVO que quebrar reprova
 o CI; entrada da lista que for consertada e não removida também reprova ("dívida paga:
 tire da lista"). A lista encolhe, nunca cresce escondido. Exceção de CORPO (não de defeito)
@@ -183,17 +183,13 @@ A fila de revisão, com o que cada um quebra hoje:
 
 | Personagem | Cláusula | Medida | Caminho de conserto |
 |---|---|---|---|
-| `lobisomem` | PS6 tremor | 0,075 (2× o teto) | clipe compartilhado: re-autorar ou filtrar |
-| `mariabonita` | PS6 tremor | 0,039 | idem |
-| `lampiao` | PS6 tremor | 0,039 | idem |
-| `adjim`, `ancap`, `cadequinha`, `metaleiro` | PS3 arma na altura da cabeça | −0,008..0,017 | pose no rig ou clipe próprio |
-| `bonzo` | PS3 + PS5 cotovelo 42° | — | re-rig (o overlay balona a malha dele) |
+| `ancap` | PS3 arma na altura da cabeça | 0,017 | pose no rig ou clipe próprio |
+| `bonzo` | PS3 + PS5 cotovelo 30° | 0,025 | re-rig (o overlay balona a malha dele) |
 | `canarinho` | PS5 cotovelo 43° | — | mascote de braço-toco: decisão editorial |
-| `marina-silva` | PS4 mão na arma de 1 mão | 0,017–0,046 | pose no rig |
 
-Os três de tremor são os mesmos corpos que o `EMOTES-BR.md` já apontava por dependerem do
-pack de animação compartilhado: o tremor está no CLIPE, não no mount — consertar é re-autorar
-ou filtrar, e cada um desses caminhos é decisão de custo, não de parâmetro.
+Pagas em 09/11 pelos estados assados do Studio (ver "Estados assados por estado"): o tremor de
+`lobisomem`, `mariabonita` e `lampiao` (era do clipe compartilhado), a arma na altura da cabeça
+de `adjim`, `cadequinha` e `metaleiro` e a mão solta na arma de 1 mão da `marina-silva`.
 
 ## Rodada 31/10 — gauntlet do lote #1171
 
@@ -224,3 +220,8 @@ cada um fica em `tools/eval/baked-states.json` e a régua é `eval:estadosassado
   rodaria quase 2× rápido demais com a ref global de 0,84 m/s.
 - **Pés**: `foot-offsets.json` é regenerado (`node tools/eval/char-probe.mjs && npm run feet`); os
   clipes trocados já plantam o pé, então a correção por clipe cai onde o assado entrou.
+- **Veto de runtime**: estado que passa a regra do QA mas reprova régua do jogo já existente mantém
+  o clipe atual, com a régua e o número na evidência. Hoje só `canarinho/idle1h`
+  (`eval:postura` COTOVELO 41,8°, faixa 55°–150°, com pistol/knife).
+- **Corpos que usavam o compartilhado** (`cuca`, `gilbomes`): ao ganhar pasta própria, os estados
+  mantidos entram como cópia byte a byte de `mixamo/<estado>.glb`, para a pasta ter os 8 clipes base.
