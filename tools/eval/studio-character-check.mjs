@@ -22,6 +22,11 @@
      R11 falha parcial não vaza: toda Blob URL criada na tentativa é revogada, inclusive a que chega DEPOIS da falha
      R12 cache por URL+SHA: mesma promessa no sucesso; falha sai do cache e a nova tentativa busca de novo
      R13 identidade divergente → studio_identity_mismatch;  R14 orçamento → studio_budget_exceeded antes de baixar
+     R15 clipes extras opcionais (animations.extra): conhecidos → baixados, verificadas hash/MIME/bytes e expostos
+        num Map nome→{url, sha256, duration, loop, rootMotion}; sem extra → Map vazio, sem erro
+     R15b chave fora do vocabulário é ignorada: não baixa, não expõe e não derruba o pacote
+     R15c extra conhecido fora de files → studio_role_unknown_file;  R15d extra duplicando arquivo de estado → studio_role_duplicate
+     R15e extras contam no orçamento → studio_budget_exceeded antes de baixar;  R15f extra não-objeto/entrada sem file → studio_manifest_invalid
      S1  /packs/ serve com MIME certo e Cache-Control: no-store (pelo plugin Vite real)
      S4  travessia/forma não canônica → 404;  S5 symlink para fora da raiz → 404
      S6  diretório e extensão de código → 404;  S7 sem STUDIO_PACK_ROOT → 404;  S8 método ≠ GET/HEAD → 405
@@ -55,7 +60,7 @@ const mutacoes = {
   'tamanho-ignorado': [RES, 'if (bytes.byteLength !== entry.bytes) fail(', 'if (false) fail(', ['R4:']],
   'estado-opcional': [RES, "if (!Object.hasOwn(manifest.animations, state)) fail('studio_state_missing', state);", '', ['R5:']],
   'estado-desconhecido': [RES, "if (!STUDIO_CHARACTER_STATES.includes(state)) fail('studio_state_unknown', state);", '', ['R6:']],
-  'dono-duplicado': [RES, 'if (owners.has(path)) fail(', 'if (false) fail(', ['R6b:']],
+  'dono-duplicado': [RES, 'if (owners.has(path)) fail(', 'if (false) fail(', ['R6b:', 'R15d:']],
   'arquivo-sem-dono': [RES, "for (const path of files.keys()) if (!owners.has(path)) fail('studio_file_unowned', path);", '', ['R6c:']],
   'caminho-inseguro': [RES, "path.split('/').every((segment) => SEGMENT.test(segment))", 'true', ['R7:', 'S4:']],
   'runtime-ignorado': [RES, 'if (compareRuntimeVersions(minimo, VERSION) > 0) fail(', 'if (false) fail(', ['R8:']],
@@ -63,6 +68,9 @@ const mutacoes = {
   'sem-webcrypto': [RES, "if (!subtle || typeof subtle.digest !== 'function') fail('studio_webcrypto_unavailable', 'crypto.subtle ausente: sem verificação não há carga');", '', ['R10:']],
   'vaza-parcial': [RES, 'for (const url of created) URL.revokeObjectURL(url);', '', ['R11:']],
   'cache-eterno': [RES, 'request.catch(() => { if (_requests.get(key) === request) _requests.delete(key); });', 'request.catch(() => {});', ['R12:']],
+  'extra-tudo-baixa': [RES, 'if (!isStudioExtraClipName(name)) {', 'if (false) {', ['R15b:']],
+  'extra-sem-validacao': [RES, "if (!isObject(entry) || typeof entry.file !== 'string') fail('studio_manifest_invalid', `animations.extra.${name} sem file`);", '', ['R15f:']],
+  'extra-nao-baixado': [RES, '    ...plan.extraClips.map(([, entry]) => entry.file),\n', '', ['R15:', 'R11:']],
   'servidor-com-cache': [SRV, "'cache-control': 'no-store'", "'cache-control': 'public, max-age=31536000'", ['S1:']],
   'servidor-segue-symlink': [SRV, 'if (!contained(rootReal, real)) return deny(404);', '', ['S5:']],
   'servidor-serve-codigo': [SRV, "  '.webp': 'image/webp',\n", "  '.webp': 'image/webp',\n  '.js': 'text/javascript',\n", ['S6:']],
@@ -124,6 +132,8 @@ function pacote(caso, muta = () => {}) {
   const servidos = new Map([
     ['model/sintetico.glb', bytesDe('modelo', 4096)],
     ...STUDIO_CHARACTER_STATES.map((s) => [`animations/${s}.glb`, bytesDe(s, 400 + s.length * 13)]),
+    ['animations/extra/victory.glb', bytesDe('vitoria', 512)],
+    ['animations/extra/emote-danca.glb', bytesDe('emote', 384)],
     ['previews/retrato.jpg', bytesDe('retrato', 321)],
     ['evidence/proveniencia.json', new TextEncoder().encode('{"sintetico":true}')],
   ]);
@@ -132,7 +142,13 @@ function pacote(caso, muta = () => {}) {
     source: { revision: '0'.repeat(40), provenance: ['fixture sintética da régua'] },
     files: [...servidos].map(([path, b]) => ({ path, sha256: sha(b), bytes: b.byteLength })),
     model: 'model/sintetico.glb', skeleton: 'meshy-28',
-    animations: Object.fromEntries(STUDIO_CHARACTER_STATES.map((s) => [s, `animations/${s}.glb`])),
+    animations: {
+      ...Object.fromEntries(STUDIO_CHARACTER_STATES.map((s) => [s, `animations/${s}.glb`])),
+      extra: {
+        victory: { file: 'animations/extra/victory.glb', duration: 3.2, loop: false, rootMotion: true, source: 'fixture sintética' },
+        emote_danca: { file: 'animations/extra/emote-danca.glb', duration: 1.5, loop: true, rootMotion: false, source: 'fixture sintética' },
+      },
+    },
     previews: ['previews/retrato.jpg'], evidence: ['evidence/proveniencia.json'],
     rights: { status: 'original', basis: 'fixture sintética' }, budgets: { triangles: 12, bytes: 1 << 20 },
     campoFuturo: { inerte: true },
@@ -189,15 +205,29 @@ try {
     if (r) {
       const estados = Object.keys(r.animationUrls);
       if (estados.join() !== STUDIO_CHARACTER_STATES.join()) falha(`R1: estados ${estados.join()}`);
-      const confere = async (url, rel, mime) => {
+      const confere = async (url, rel, mime, clausula = 'R1:') => {
         const blob = url?.startsWith('blob:') ? resolveObjectURL(url) : null;
-        if (!blob) return falha(`R1: ${rel} sem Blob URL viva (${url})`);
-        if (blob.type !== mime) falha(`R1: ${rel} com MIME ${blob.type}`);
-        if (sha(new Uint8Array(await blob.arrayBuffer())) !== sha(ctx.servidos.get(rel))) falha(`R1: ${rel} com bytes diferentes dos verificados`);
+        if (!blob) return falha(`${clausula} ${rel} sem Blob URL viva (${url})`);
+        if (blob.type !== mime) falha(`${clausula} ${rel} com MIME ${blob.type}`);
+        if (sha(new Uint8Array(await blob.arrayBuffer())) !== sha(ctx.servidos.get(rel))) falha(`${clausula} ${rel} com bytes diferentes dos verificados`);
       };
       await confere(r.modelUrl, 'model/sintetico.glb', 'model/gltf-binary');
       for (const s of STUDIO_CHARACTER_STATES) await confere(r.animationUrls[s], `animations/${s}.glb`, 'model/gltf-binary');
       await confere(r.previewUrls[0], 'previews/retrato.jpg', 'image/jpeg');
+      /* R15: clipes extras conhecidos viram Map com Blob URL verificada e metadados do manifesto. */
+      if (!(r.extraClipUrls instanceof Map)) falha('R15: extraClipUrls não é um Map');
+      else {
+        const nomes = [...r.extraClipUrls.keys()].join();
+        if (nomes !== 'victory,emote_danca') falha(`R15: extras expostos ${nomes}`);
+        for (const [nome, rel] of [['victory', 'animations/extra/victory.glb'], ['emote_danca', 'animations/extra/emote-danca.glb']]) {
+          const info = r.extraClipUrls.get(nome);
+          if (!info || !Object.isFrozen(info)) { falha(`R15: ${nome} sem entrada congelada`); continue; }
+          await confere(info.url, rel, 'model/gltf-binary', 'R15:');
+          if (info.sha256 !== sha(ctx.servidos.get(rel))) falha(`R15: sha256 de ${nome} não confere`);
+        }
+        const v = r.extraClipUrls.get('victory');
+        if (v?.duration !== 3.2 || v?.loop !== false || v?.rootMotion !== true) falha('R15: metadados de victory ≠ manifesto');
+      }
       if (r.modelSha256 !== sha(ctx.servidos.get('model/sintetico.glb'))) falha('R1: modelSha256 não é o SHA do modelo');
       if (r.manifestSha256 !== ctx.pin.manifestSha256) falha('R1: manifestSha256 do resultado ≠ pin');
       if (ctx.pedidos.some((u) => u.includes('evidence/'))) falha('R1: evidência baixada sem necessidade');
@@ -290,7 +320,7 @@ try {
     const antes = new Set(criadas);
     const e = await exigeFalha('R11:', ctx, 'studio_fetch_failed');
     const nestaTentativa = [...criadas].filter((u) => !antes.has(u));
-    if (e && nestaTentativa.length < 12) falha(`R11: só ${nestaTentativa.length} Blob URL(s) criadas; a fixture devia criar 12 antes de revogar`);
+    if (e && nestaTentativa.length < 14) falha(`R11: só ${nestaTentativa.length} Blob URL(s) criadas; a fixture devia criar 14 antes de revogar`);
     const vivas = nestaTentativa.filter((u) => !revogadas.has(u) || resolveObjectURL(u));
     if (vivas.length) falha(`R11: ${vivas.length} Blob URL(s) de tentativa falha continuam vivas (estado parcial vazado)`);
 
@@ -306,6 +336,45 @@ try {
     await resolve(ctx).catch(() => {});
     if (ctx.pedidos.length !== n) falha('R12: sucesso em cache refez pedidos');
   }
+
+  // ── R15: clipes extras opcionais (animations.extra) ─────────────────────────
+  {
+    // Sem extra: opcional é poder faltar — Map vazio, sem erro e sem pedido em extra/.
+    const ctx = pacote('r15-sem', (c, fase) => {
+      if (fase !== 'antes') return;
+      c.manifest.files = c.manifest.files.filter((f) => !f.path.startsWith('animations/extra/'));
+      delete c.manifest.animations.extra;
+    });
+    const r = await resolve(ctx).catch((e) => { falha(`R15: pacote sem extra rejeitado: ${e?.code}`); return null; });
+    if (r && !(r.extraClipUrls instanceof Map && r.extraClipUrls.size === 0)) falha('R15: sem extra o Map devia ser vazio');
+    if (ctx.pedidos.some((u) => u.includes('extra/'))) falha('R15: pacote sem extra baixou algo de extra/');
+  }
+  {
+    // R15b: chave fora do vocabulário é ignorada — não baixa, não expõe e não derruba o pacote.
+    const ctx = pacote('r15b', (c, fase) => {
+      if (fase !== 'antes') return;
+      const b = bytesDe('moonwalk', 432);
+      c.servidos.set('animations/extra/moonwalk.glb', b);
+      c.manifest.files.push({ path: 'animations/extra/moonwalk.glb', sha256: sha(b), bytes: b.byteLength });
+      c.manifest.animations.extra.moonwalk = { file: 'animations/extra/moonwalk.glb', duration: 1, loop: false, rootMotion: false, source: 'fora do vocabulário' };
+    });
+    const r = await resolve(ctx).catch((e) => { falha(`R15b: chave desconhecida derrubou o pacote: ${e?.code}`); return null; });
+    if (r && (r.extraClipUrls.has('moonwalk') || r.extraClipUrls.size !== 2)) falha(`R15b: Map com ${r.extraClipUrls.size} entradas (moonwalk presente? ${r.extraClipUrls.has('moonwalk')})`);
+    if (ctx.pedidos.some((u) => u.includes('moonwalk'))) falha('R15b: chave desconhecida foi baixada');
+  }
+  await exigeFalha('R15c:', pacote('r15c', (c, fase) => { if (fase === 'antes') c.manifest.animations.extra.victory.file = 'animations/extra/fantasma.glb'; }), 'studio_role_unknown_file');
+  await exigeFalha('R15d:', pacote('r15d', (c, fase) => { if (fase === 'antes') c.manifest.animations.extra.victory.file = c.manifest.animations.walk; }), 'studio_role_duplicate');
+  {
+    const ctx = pacote('r15e', (c, fase) => {
+      if (fase !== 'antes') return;
+      const bytesExtras = c.manifest.files.filter((f) => f.path.startsWith('animations/extra/')).reduce((s, f) => s + f.bytes, 0);
+      c.manifest.budgets.bytes = c.manifest.files.reduce((s, f) => s + f.bytes, 0) - bytesExtras;
+    });
+    await exigeFalha('R15e:', ctx, 'studio_budget_exceeded');
+    if (ctx.pedidos.length !== 1) falha('R15e: orçamento estourado pelos extras ainda baixou binários');
+  }
+  await exigeFalha('R15f:', pacote('r15f', (c, fase) => { if (fase === 'antes') c.manifest.animations.extra = []; }), 'studio_manifest_invalid');
+  await exigeFalha('R15f:', pacote('r15f2', (c, fase) => { if (fase === 'antes') c.manifest.animations.extra.victory = 'animations/extra/victory.glb'; }), 'studio_manifest_invalid');
 
   // ── S: servidor de /packs/ (plugin Vite real) ───────────────────────────────
   const raiz = join(temporario, 'studio-packs');
@@ -407,6 +476,6 @@ if (mutante) {
   for (const f of falhas) console.error(`  ✗ ${f}`);
   process.exitCode = 1;
 } else {
-  console.log(`personagem do Studio confere: ${Object.keys(CHARACTER_RELEASES).length} release(s) fixada(s), resolvedor fecha em 14 mutações de pacote sintético, /packs/ canônico, contido e no-store.`);
+  console.log(`personagem do Studio confere: ${Object.keys(CHARACTER_RELEASES).length} release(s) fixada(s), resolvedor fecha em ${Object.keys(mutacoes).length} mutantes de código, /packs/ canônico, contido e no-store.`);
 }
 process.exit(process.exitCode || 0);
