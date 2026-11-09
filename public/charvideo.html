@@ -59,7 +59,8 @@ const SKIN = qp.get('skin') || '';
 const SKIN_ENTRY = SKIN ? (await (await fetch(assetUrl('models/skins/manifest.json'))).json()).skins?.[SKIN] : null;
 if (SKIN && !SKIN_ENTRY?.approved) throw new Error('skin fora do manifesto aprovado: ' + SKIN);
 const ID = SKIN_ENTRY?.character || qp.get('id') || 'mandrake';
-const WPN = qp.get('wpn') || '';
+const REMOTE = qp.get('remote') === '1';
+const WPN = qp.get('wpn') || (REMOTE ? 'awp' : '');
 const MAPID = resolveMapId(qp.get('map') || 'loja_h');
 const BG = (qp.get('bg') || 'cena').toLowerCase();       // 'cena' | 'alpha'
 const ALPHA = BG === 'alpha';
@@ -224,6 +225,12 @@ window.CHARVID = {
   step(dt) { const d = dt || 1 / FPS; t += d; avanca(d); renderer.render(scene, camera); return t; },
   grab() { return renderer.domElement.toDataURL('image/png'); },
 };
+
+/* O arnês remoto é opcional e não altera a API normal de vídeo. */
+if (REMOTE) {
+  const { createRemoteHarness } = await import('./js/remote-video.js');
+  window.REMOTEVID = await createRemoteHarness({ scene, camera, renderer, built, def, sp, gy, weapon: WPN, fps: FPS });
+}
 </script>
 </body>
 </html>

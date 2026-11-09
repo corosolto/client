@@ -1328,6 +1328,7 @@ class CharController {
       drawArm.parent.getWorldQuaternion(_pq).invert();
       _axisF.set(Math.cos(this.group.rotation.y), 0, -Math.sin(this.group.rotation.y)).applyQuaternion(_pq).normalize();
       drawArm.quaternion.premultiply(_qLean.setFromAxisAngle(_axisF, Math.sin(Math.PI * this._drawT / 0.32) * 0.3));
+      if (this.tpMount) orientTpMount(this.tpMount);
     }
     // IK da mão de apoio (FASE 2): palma L no guarda-mão da arma montada (só 2 mãos).
     // Roda depois do mixer/pose — corrige o contato por arma sem tocar na orientação.
