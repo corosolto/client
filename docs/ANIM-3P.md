@@ -51,7 +51,8 @@ O segmento interpolado fornece velocidade lateral no referencial do corpo. Event
 e `kill` usam a diferença entre posições de vítima e autor; sem autor, a morte preserva
 o fallback sem direção. Trocas de arma entre snapshots disparam saque procedural breve,
 sem tocar no protocolo; o overlay é omitido no LOD distante e cancelado na morte.
-Eventos `hit` podem ser descartados pelo servidor sob carga. `npm run eval:remotos3p`
+O backend só emite `hit` não fatal para vítima humana; bots remotos não recebem flinch.
+Mesmo para humanos, `hit` pode ser descartado sob carga. `npm run eval:remotos3p`
 mede as entradas e seus mutantes; não substitui a inspeção visual do corpo.
 
 ## As duas armadilhas que a régua existe para impedir de voltar
