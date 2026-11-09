@@ -71,6 +71,7 @@
     "ops:test": "node --test tools/ops/tests/*.test.mjs",
     "ops:aquecer": "node tools/ops/aquecer.mjs",
     "eval:release": "node tools/eval/release-check.mjs",
+    "eval:vercelignore": "node tools/eval/vercel-ignore-check.mjs && node tools/eval/vercel-ignore-check.mjs --mutate",
     "eval:uuid": "node tools/eval/uuid-compat-check.mjs",
     "eval:drop": "node tools/eval/drop-check.mjs",
     "eval:deps": "node tools/eval/deps-check.mjs",

@@ -132,7 +132,6 @@ O que as fases 2–4 têm que tratar (lista fechada, achada no spike):
    na zona (pendência do dono) para a cidade chegar.
 7. `window.__CS_BUILD.sha`: `VERCEL_GIT_COMMIT_SHA` vira `GITHUB_SHA` no build.
 8. O `_headers` tem 16 blocos (teto 100) e a maior linha é a CSP (~700 chars, teto 2000): folga, mas `eval:cfparidade` vigia.
-
 ## Segredos: destino na Cloudflare
 
 | Hoje (Vercel) | Depois | Como |

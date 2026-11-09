@@ -134,6 +134,8 @@ jobs:
         env:
           FILA_BASE: ${{ github.event.merge_group.base_sha || github.event.pull_request.base.sha || github.sha }}
         run: npm run eval:lixo
+      - name: Preview da Vercel só builda quando o site muda (com mutantes)
+        run: npm run eval:vercelignore
       - name: Wrapper de portal embeda o site (frame-ancestors, UTM, pointer-lock)
         run: npm run eval:portalembed
       # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
