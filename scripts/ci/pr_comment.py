@@ -158,7 +158,7 @@ def selftest() -> int:
         ("sem arquivo não quebra", "0 file(s)" in q),
         ("bloqueio estragacodigo em CAUTION", "> [!CAUTION]" in q),
         ("rótulo resolvido correto aparece", "`estragacodigo-resolved`" in q),
-        ("coderabbit não aparece", "coderabbit" not in q.lower()),
+        ("cautela identifica o revisor ativo", "> An estraga-codigo finding" in q),
     ]
     r = render({"files": None, "changedFiles": 1720, "baseRefName": "main",
                 "author_login": "ruben", "labels_add": ["needs-staging"]})
