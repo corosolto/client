@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { QA_METRICS } from './eval/baked-states-metrics.mjs';
 
 const arg = (name) => process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
 const NEW_ROOT = path.resolve(arg('legacy-out') || '');
@@ -60,21 +61,6 @@ function assertPacked(bytes, id) {
   if (JSON.stringify(names) !== JSON.stringify([...STATES].sort())) throw new Error(`${id}: clipes divergentes: ${names.join(', ')}`);
 }
 
-const QA_METRICS = [
-  ['footSlideCm', ['footSlide', 'maxCm'], 1],
-  ['lowestVertexCm', ['lowestVertex', 'minCm'], -1],
-  ['heelCm', ['lowestVertex', 'byRegionCm', 'heel'], -1],
-  ['toeCm', ['lowestVertex', 'byRegionCm', 'toe'], -1],
-  ['hipsMaxRatio', ['hips', 'maxRatio'], 1],
-  ['loopPositionCm', ['loopSeam', 'positionCm'], 1],
-  ['loopRotationDeg', ['loopSeam', 'rotationDeg'], 1],
-  ['handsMaxDeviationCm', ['hands', 'maxDeviationCm'], 1],
-  ['stretchMaxEdge', ['stretch', 'maxEdge', 'value'], 1],
-  ['stretchBackMaxEdge', ['stretch', 'backMaxEdge', 'value'], 1],
-  ['stretchHandL', ['stretch', 'handMaxEdgeL', 'value'], 1],
-  ['stretchHandR', ['stretch', 'handMaxEdgeR', 'value'], 1],
-  ['seamGapMax', ['stretch', 'seamGapMax', 'value'], 1],
-];
 function qaValue(result, path) {
   let value = result?.metrics;
   for (const key of path) value = value?.[key];

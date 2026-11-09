@@ -1,19 +1,29 @@
 #!/usr/bin/env node
 /* ESTADOS-ASSADOS: valida o GLB servido contra o QA Studio e impede seleção por vacuidade.
    O teto de -3 cm vem do contrato da lane; quadril usa exatamente o limite do Studio:
-   max(1,08× bind, máximo da fonte +0,08). Toda exclusão precisa de regressão numérica ou
-   de runtime registrada. --mutante=exclusao-sem-metrica remove a prova de uma exclusão. */
+   max(1,08× bind, máximo da fonte +0,08). Verde com 0 selecionados só existe se as 74
+   exclusões carregam piora numérica no sentido ruim da métrica (ou regressão de runtime).
+   --mutante=exclusao-sem-metrica apaga a prova de uma exclusão; --mutante=piora-inventada
+   inverte o sentido de uma piora (o pack teria melhorado) e também tem que reprovar. */
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { QA_DIRECTION } from './baked-states-metrics.mjs';
 
 const MUT = process.argv.find((a) => a.startsWith('--mutante='))?.split('=')[1] || '';
-if (MUT && MUT !== 'exclusao-sem-metrica') throw new Error(`mutante desconhecido: ${MUT}`);
+const MUTANTES = ['exclusao-sem-metrica', 'piora-inventada'];
+if (MUT && !MUTANTES.includes(MUT)) throw new Error(`mutante desconhecido: ${MUT}`);
 const ARQ = path.resolve('tools/eval/baked-states.json');
 const data = JSON.parse(fs.readFileSync(ARQ, 'utf8'));
 if (MUT === 'exclusao-sem-metrica') {
   if (!data.excluded.bonzo?.length) throw new Error('mutante não aplicou: exclusão do bonzo ausente');
   data.excluded.bonzo = [];
+}
+if (MUT === 'piora-inventada') {
+  const r = data.excluded.bonzo?.find((x) => x.metric);
+  if (!r) throw new Error('mutante não aplicou: bonzo sem regressão numérica');
+  [r.current, r.next] = [r.next, r.current];
+  r.delta = r.next - r.current;
 }
 const falhas = [];
 const bodies = Object.entries(data.bodies || {}), excluded = Object.entries(data.excluded || {});
@@ -21,9 +31,15 @@ if (bodies.length + excluded.length !== 74) falhas.push(`inventário incompleto:
 for (const [id, regressions] of excluded) {
   if (!Array.isArray(regressions) || !regressions.length) falhas.push(`${id}: exclusão sem métrica/regressão registrada`);
   for (const r of regressions || []) {
-    const numeric = r.state && r.metric && Number.isFinite(r.current) && Number.isFinite(r.next) && Number.isFinite(r.delta);
     const runtime = r.state && Array.isArray(r.kinds) && r.kinds.length;
-    if (!numeric && !runtime) falhas.push(`${id}: regressão malformada`);
+    if (runtime) continue;
+    const numeric = r.state && r.metric && Number.isFinite(r.current) && Number.isFinite(r.next) && Number.isFinite(r.delta);
+    if (!numeric) { falhas.push(`${id}: regressão malformada`); continue; }
+    const direction = QA_DIRECTION[r.metric];
+    if (!direction) { falhas.push(`${id}/${r.state}: métrica desconhecida ${r.metric}`); continue; }
+    if (Math.abs(r.delta - (r.next - r.current)) > 1e-9 || direction * r.delta <= 1e-9) {
+      falhas.push(`${id}/${r.state}: ${r.metric} ${r.current} → ${r.next} não é piora`);
+    }
   }
 }
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -86,8 +102,9 @@ const resumo = bodies.length
   ? `${bodies.length} corpos/${clips} estados · pior mínimo ${piorPe} cm (${piorPeQuem}) · menor folga de quadril ${piorFolgaHips.toFixed(4)}× (${piorHipsQuem})`
   : `0 corpos selecionados · ${excluded.length} exclusões com regressão registrada`;
 if (MUT) {
-  const mordeu = falhas.some((f) => f.includes('bonzo: exclusão sem métrica'));
-  console.log(mordeu ? `✓ mutante exclusao-sem-metrica reprovado: ${resumo}` : `MUTAÇÃO PASSOU — ${resumo}`);
+  const assinatura = { 'exclusao-sem-metrica': 'bonzo: exclusão sem métrica', 'piora-inventada': 'não é piora' }[MUT];
+  const mordeu = falhas.some((f) => f.startsWith('bonzo') && f.includes(assinatura));
+  console.log(mordeu ? `✓ mutante ${MUT} reprovado: ${resumo}` : `MUTAÇÃO PASSOU — ${resumo}`);
   process.exit(mordeu ? 0 : 1);
 }
 if (falhas.length) {
