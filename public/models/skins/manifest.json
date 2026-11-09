@@ -194,11 +194,11 @@
     },
     "lula-cyborg": {
       "character": "barbudo",
-      "model": "/models/skins/lula-cyborg-b1739c744789.glb",
+      "model": "/models/skins/lula-cyborg-e94ce8f2be07.glb",
       "poster": "/img/skins/lula-cyborg.webp",
       "approved": true,
       "preview": true,
-      "sha256": "b1739c74478996c90b3430f1564246bb04874a2d3d0ea74a18c46c08b1f31899",
+      "sha256": "e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119",
       "bytes": 914748,
       "sourceSha256": "541bcd7c149c3c7b4ee51db12ac6ebac31b706dab597d6d4de73727fd82268fd",
       "animationNames": {
@@ -293,11 +293,11 @@
     },
     "lula-mandrake": {
       "character": "barbudo",
-      "model": "/models/skins/lula-mandrake-7babfbddcf34.glb",
+      "model": "/models/skins/lula-mandrake-4e58761e8ed5.glb",
       "poster": "/img/skins/lula-mandrake.webp",
       "approved": true,
       "preview": true,
-      "sha256": "7babfbddcf3470ee855ead588bbc4cfde25abc8a708f04ef18423d77b3272a90",
+      "sha256": "4e58761e8ed5827ad7ef35432e57c20885c2490d70721d2c309497b1f7cf84dd",
       "bytes": 1137388,
       "sourceSha256": "ebef952f5e59bc971c1e2fd3d00aa56c7c3980ccbdda82d59fa50963e6c82a10",
       "animationNames": {

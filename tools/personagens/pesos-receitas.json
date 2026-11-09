@@ -7,7 +7,8 @@
       "parametros": {
         "anel": 2,
         "ombroR0": 1.5,
-        "ombroR1": 2.5
+        "ombroR1": 2.5,
+        "colar": 0.01
       }
     },
     "lula-cyborg": {
@@ -15,7 +16,8 @@
       "parametros": {
         "anel": 4,
         "ombroR0": 1,
-        "ombroR1": 1.5
+        "ombroR1": 1.5,
+        "colar": 0.01
       }
     },
     "lula-drip": {
