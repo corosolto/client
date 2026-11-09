@@ -414,11 +414,14 @@ let teto = {
   p99: refs.length ? +(Math.max(...refs.map((r) => r.p99)) * FOLGA).toFixed(3) : null,
   ruins1e4: refs.length ? +(Math.max(...refs.map((r) => r.ruins1e4)) * FOLGA).toFixed(1) : null,
 };
-if (!MUT && (teto.p99 !== DIVIDA.tetoGlobalPreservado.p99
-  || teto.ruins1e4 !== DIVIDA.tetoGlobalPreservado.ruins1e4)) {
-  console.error(`ERRO: teto global mudou de ${DIVIDA.tetoGlobalPreservado.p99}/${DIVIDA.tetoGlobalPreservado.ruins1e4} para ${teto.p99}/${teto.ruins1e4}; revise referências e dívida juntas.`);
+if (!MUT && (teto.p99 > DIVIDA.tetoGlobalPreservado.p99
+  || teto.ruins1e4 > DIVIDA.tetoGlobalPreservado.ruins1e4)) {
+  console.error(`ERRO: teto global piorou de ${DIVIDA.tetoGlobalPreservado.p99}/${DIVIDA.tetoGlobalPreservado.ruins1e4} para ${teto.p99}/${teto.ruins1e4}; revise referências e dívida juntas.`);
   process.exit(2);
 }
+// Referências melhores não rebaixam a régua automaticamente: personagens sem dívida
+// registrada não podem virar vermelhos só porque o elogiado melhorou. Piora sai acima.
+if (!MUT) teto = { ...DIVIDA.tetoGlobalPreservado };
 /* TETO CONGELADO NA MUTAÇÃO. Sem isto o teste de mutação é teatro: o mutante piora
    TAMBÉM as referências, o teto sobe junto e a régua continua verde enquanto o jogo
    inteiro derrete. Com `--mutate` o teto vem da última execução limpa (o JSON), então

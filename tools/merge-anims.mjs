@@ -32,6 +32,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { NodeIO } from '@gltf-transform/core';
 import { prune, mergeDocuments, unpartition } from '@gltf-transform/functions';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { MeshoptDecoder } from 'meshoptimizer';
 
 const ANIMS = 'public/models/anims';
 const GLBCHARS = 'public/js/glbchars.js';
@@ -47,7 +49,10 @@ const listaDe = (nome) => {
 const ESTADOS = [...listaDe('STATES'), ...listaDe('OPT_STATES')];
 if (!ESTADOS.length) { console.error('não achei STATES/OPT_STATES em', GLBCHARS); process.exit(1); }
 
-const io = new NodeIO();
+await MeshoptDecoder.ready;
+const io = new NodeIO()
+  .registerExtensions(ALL_EXTENSIONS)
+  .registerDependencies({ 'meshopt.decoder': MeshoptDecoder });
 
 // Pastas com pelo menos 1 clipe de estado (inclui o pack compartilhado, ex. `mixamo`).
 const pastas = fs.readdirSync(ANIMS).filter((f) => {

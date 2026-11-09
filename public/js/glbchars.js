@@ -89,9 +89,13 @@ export function footOffset(id, pose) { return (_footOff && _footOff[id] && _foot
 let _animIdxP = null;
 function animIndex() {
   if (!_animIdxP) {
-    _animIdxP = fetch(assetUrl('models/anims/index.json'))
+    const json = (caminho) => fetch(assetUrl(caminho))
       .then((r) => (r.ok ? r.json() : null))
       .catch(() => null);
+    _animIdxP = Promise.all([
+      json('models/anims/index.json'),
+      json('models/anims/baked-states.json'),
+    ]).then(([idx, assados]) => ({ ...(idx || {}), assados }));
   }
   return _animIdxP;
 }
@@ -197,6 +201,7 @@ const TINT_3P = {
 
 let _clips = null;                 // { idle: AnimationClip, ... } shared fallback
 const _clipsByChar = {};           // id -> per-character retargeted clip set (fallback to _clips)
+const _locoRefsByChar = {};        // id -> velocidades naturais medidas no pack assado
 const _base = new Map();           // id -> THREE.Object3D template scene
 const _bodyOrigins = new WeakMap();
 const _skins = new Map(), _skinRequests = new Map();
@@ -560,6 +565,7 @@ export async function preloadCharacterAssets(ids, opts = {}) {
       } catch (e) { /* fallback: clipe compartilhado */ }
     }));
     _clipsByChar[id] = set;
+    _locoRefsByChar[id] = _idx?.assados?.bodies?.[id]?.refs || null;
   }));
 }
 
@@ -729,7 +735,8 @@ export function buildCharacterModel(def, opts = {}) {
   for (const name of [...STATES, ...OPT_STATES]) if (clips[name]) actions[name] = mixer.clipAction(clips[name]);
 
   // Skins assam contato no próprio clipe; offsets da base têm outro rig.
-  const ctrl = new CharController(mixer, actions, group, headBone, head, skin ? def.skinId : def.id, model, def.id);
+  const ctrl = new CharController(mixer, actions, group, headBone, head, skin ? def.skinId : def.id, model, def.id,
+    skin ? null : _locoRefsByChar[def.id]);
   ctrl.shadow = shadow;   // antes do settle loop abaixo (ctrl.update já a atualiza)
   // Arma de 1 mão (pistol/deagle/revolver38/knife): usa idle1h/walk1h quando carregados.
   ctrl.oneHanded = !!(opts.weaponId && ONE_HANDED.has(opts.weaponId));
@@ -1011,9 +1018,16 @@ export function temEmoteDriver() { return !!_emoteDriver; }
 const FADE = 0.16;
 
 class CharController {
-  constructor(mixer, actions, group, headBone, head, charId, model, bodyId = charId) {
+  constructor(mixer, actions, group, headBone, head, charId, model, bodyId = charId, locoRefs = null) {
     this.mixer = mixer; this.actions = actions;
     this.group = group; this.headBone = headBone; this.head = head;
+    // Overrides de query preservam o tuning manual; sem pack/ref, valem os globais antigos.
+    const ref = (nome, global, param) => (!qp.has(param) && locoRefs?.[nome] > 0 ? locoRefs[nome] : global);
+    this._locoRefs = {
+      walk: ref('walk', WALK_REF, 'wref'), run: ref('run', RUN_REF, 'rref'),
+      crouchwalk: ref('crouchwalk', CROUCH_REF, 'cref'),
+      walk1h: ref('walk1h', WALK_REF, 'wref'), walkfire: ref('walkfire', WALK_REF, 'wref'),
+    };
     /* Base do Y vem do enquadramento da bind (`model.position.y = -bbox.min.y * s`, acima).
        A correção do clipe é somada A ELA, nunca substitui — senão o personagem perde o
        alinhamento de bind que já estava certo em todos os 44. */
@@ -1222,10 +1236,11 @@ class CharController {
       // Per-clip cycle rate = ground speed / that clip's measured natural speed, so the
       // feet plant instead of ice-skating. clamp keeps it from looking frantic/frozen.
       const rate = (ref) => Math.max(0.45, Math.min(3.0, speed / ref));
-      if (this.actions.run) this.actions.run.timeScale = rate(RUN_REF);
-      if (this.actions.walk) this.actions.walk.timeScale = back ? -rate(WALK_REF) : rate(WALK_REF);
-      if (this.actions.walk1h) this.actions.walk1h.timeScale = back ? -rate(WALK_REF) : rate(WALK_REF);
-      if (this.actions.crouchwalk) this.actions.crouchwalk.timeScale = rate(CROUCH_REF);
+      if (this.actions.run) this.actions.run.timeScale = rate(this._locoRefs.run);
+      if (this.actions.walk) this.actions.walk.timeScale = back ? -rate(this._locoRefs.walk) : rate(this._locoRefs.walk);
+      if (this.actions.walk1h) this.actions.walk1h.timeScale = back ? -rate(this._locoRefs.walk1h) : rate(this._locoRefs.walk1h);
+      if (this.actions.walkfire) this.actions.walkfire.timeScale = rate(this._locoRefs.walkfire);
+      if (this.actions.crouchwalk) this.actions.crouchwalk.timeScale = rate(this._locoRefs.crouchwalk);
     }
     this.mixer.update(dt);
     // Pitch da cabeça em MALHA FECHADA (substitui o HEAD_UP fixo, que ACUMULAVA rotação
