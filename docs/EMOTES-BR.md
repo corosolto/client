@@ -119,3 +119,92 @@ Sketchfab/Mixamo: ossos `mixamorig:LeftArm_09`, malha própria, **0 de 18** osso
 com o rig do jogo. É a causa dos "braços quebrados" anotados em `game.js`, e o
 `SOURCES.md` do próprio projeto diz que redistribuir o asset cru não é permitido — só o
 derivado retargetado. Fica registrado aqui; remover ou retargetar é decisão do dono.
+
+## Emotes de captura: capoeira, breakdance e gestos (09/11)
+
+O limite 3 acima ("procedural, não mocap") vale para os 8 passos de dentro da roda. Desde
+09/11 a roda tem um **anel de fora** com 8 emotes de captura, convertidos do Mixamo para o
+esqueleto meshy-28 com QA aprovada nos rigs de prova (`emotes-mocap.SOURCES.md` lista o ID
+de cada clipe no catálogo de conversão). FBX bruto não entra no repositório. Só o clipe
+derivado entra, que é o uso permitido.
+
+| Id (rede) | Nome | Clipe | Reprodução | Reserva procedural | Desbloqueio |
+|---|---|---|---|---|---|
+| 9 `capoeira` | Ginga | `mixamo/capoeira-pack/capoeira` | laço, 3,43 s | `ginga` | **base** |
+| 10 `meia_lua` | Meia-lua de frente | `mixamo/capoeira-pack/meia-lua-de-frente` | laço, 2,47 s | `ginga` | passe |
+| 11 `bencao` | Bênção | `mixamo/capoeira-pack/bencao` | laço, 1,37 s | `ginga` | passe |
+| 12 `uprock` | Uprock | `mixamo/breakdance-pack/breakdance-uprock` | laço, 2,10 s | `passinho` | passe |
+| 13 `freeze` | Freeze | `mixamo/breakdance-pack/breakdance-freeze-var-2` | uma vez, 4,87 s | `passinho` | passe |
+| 14 `continencia` | Continência | `mixamo/loose/salute` | laço, 2,83 s | `salve` | passe |
+| 15 `marra` | Marra | `mixamo/gestures-pack-basic/being-cocky` | laço, 2,87 s | `salve` | passe |
+| 16 `comemoracao` | Comemoração | `mixamo/gestures-pack-basic/happy-hand-gesture` | laço, 2,73 s | `salve` | **base** |
+
+Laço ou uma vez vem do campo `loop` do catálogo de conversão, que mede a costura do clipe.
+A **Ginga** de captura convive com a `ginga` procedural: os anéis são diferentes e o id
+também.
+
+**Pack e custo.** `public/models/anims/emotes-mocap.glb` tem **304.768 bytes** (239.972
+em gzip) com 8 clipes. É gerado por `node tools/build-emotes-mocap-pack.mjs
+--library=<biblioteca>/index.json`, que usa a mesma mescla do `extras.glb`
+(`tools/anim-pack.mjs`; o `extras.glb` regenerado saiu byte a byte idêntico). O jogo só
+baixa o pack no **primeiro emote de clipe** e baixa uma vez por sessão. Dança procedural,
+boot e construção de corpo não pedem nada.
+
+**Corpo inteiro com quadril por corpo.** O controlador toca o clipe como estado de corpo
+inteiro, com fade de 0,16 s, e suspende mira de cabeça e pitch de coluna enquanto ele
+manda. As rotações servem a todo corpo meshy-28. A translação do `Hips` é absoluta, na
+altura de quadril da referência (82,5 cm). Cada corpo recebe uma cópia do clipe com só
+essa track reescalada pela sua altura de repouso (Capitão 102,3 cm, Gotinha 58,2 cm).
+Medido na continência, os pés ficam no chão do idle a +0,3 cm no Capitão e a −1,2 cm na
+Gotinha. Sem a reescala, o pé do Capitão afunda 18,4 cm. O mutante
+`quadril-sem-escala` cobra isso.
+
+**Regras herdadas.** A arma some como nos procedurais. Andar, atirar, trocar de arma,
+levar dano, morrer e a cerimônia de fim de rodada cancelam. O `freeze` termina sozinho;
+os laços seguem até o jogador sair. Em LOD≥2 o clipe não toca: o corpo fica no idle com
+a coreografia de reserva. Ao voltar para perto, o clipe retoma na fase certa. A reserva
+procedural também cobre o download do pack e uma falha dele.
+
+**Rede.** Os ids 9–16 foram **acrescentados** depois dos 8 da v9 (`public/js/data/
+emote-catalog.js`, contrato de #1266). A réplica remota precisa de duas coisas: #1266 no
+cliente e o nó com `CLIENT_REF` num commit que já tenha estes ids, porque o servidor
+valida pelo mesmo catálogo. Antes disso, o nó trata id desconhecido como "parar" e os
+outros jogadores não veem a dança de captura. `ctrl.emote(id, elapsed)` aceita a fase da
+rede, e reaplicar o mesmo emote só corrige uma deriva maior que 0,25 s, sem reiniciar
+clipe nem rampa.
+
+**Risco de rollout.** O decoder v9 de #1266 rejeita id maior que o tamanho do catálogo
+(`RangeError('emote')`, tratado como snapshot inválido). Uma aba aberta com o catálogo de
+8 ids que receber o id 9–16 de um nó atualizado perde o snapshot. Antes de o nó publicar
+esses ids, uma de duas coisas precisa existir: o nó manda 0 para as conexões cujo cliente
+não conhece o id, ou os ids sobem numa versão de protocolo nova. A decisão é do dono e do
+backend. Este PR não publica nada sozinho.
+
+**Desbloqueio.** O campo `desbloqueio` (`'base'` | `'passe'`) existe para o passe de
+temporada travar depois. Hoje nada é travado; a roda só marca **PASSE**. Ficam na base
+**Ginga** e **Comemoração**. A Ginga é o movimento-raiz da capoeira e a versão de captura
+da dança que todo mundo já tem. A Comemoração é um gesto curto e neutro para celebrar a
+rodada. Vão para o passe os golpes e acrobacias (Meia-lua, Bênção, Uprock, Freeze) e os
+gestos de atitude (Marra, Continência). Sem campo explícito, o emote é `'base'`, como os
+8 procedurais.
+
+**Como se dança.** **Shift+1–8** ou clique no anel de fora. 1–8 continuam no anel de
+dentro.
+
+**Réguas.** `npm run eval:emotes-mocap` tem 13 cláusulas e 5 mutantes:
+`emote-mocap-mudo`, `arma-visivel-no-emote`, `emote-nao-cancela`, `id-renumerado` e
+`quadril-sem-escala`. O `eval:emotepartida` ganhou o **EP7**, que cobre a partida
+real: Shift+1 toca a Ginga de captura com clipe, arma guardada e um único pedido do pack,
+e andar derruba a dança. Ele também ganhou o mutante `captura-sem-shift`. O
+`eval:emotes` mede só os procedurais.
+
+**Prova visual.** Folhas de 8 quadros (frente e 3/4) em partida local para Ginga, Freeze
+e Marra no Capitão e na Gotinha: `artifacts/emotes-mocap/<corpo>__<emote>.jpg`
+(local, fora do git). O roteiro de captura fica fora do repositório.
+
+**Limites.** A pose de descanso local diverge muito entre corpos: até 173° em ombro ou
+coluna contra a referência. Por isso a validação visual cobre só os dois corpos da folha.
+Os outros corpos tocam o mesmo clipe de referência, como o `extras.glb`. Ainda não há
+aceite visual neles. Nos clipes de chão, o corpo sai até ~0,9 m da cápsula e não colide
+com parede. A hitbox de cabeça acompanha o osso, como nos procedurais. A porta de
+produção (`EMOTES_ENABLED`) continua fechada.
