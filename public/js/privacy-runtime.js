@@ -1,5 +1,5 @@
-/* Medição padrão, com recusa persistente em `cs_privacy`; sem escolha, mantém-se ligada.
-   `cs_anon` é UUID local sem IP/e-mail; `set(false)` apaga o armazenamento opcional. */
+/* Medição LIGADA por padrão (dono, 09/11/2026): só recusa gravada em `cs_privacy` desliga;
+   storage corrompido/antigo vale como padrão. Réguas: privacy-choice-check, privacy-ops-check. */
 (function () {
   if (window.__csPrivacy) return;
   const VERSION='corosolto-analytics-v1',KEY='cs_privacy';

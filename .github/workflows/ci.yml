@@ -743,9 +743,11 @@ jobs:
           node-version: 22
           cache: npm
       - name: Dependências (npm ci)
+        id: deps
         run: npm ci
-      - name: Corpo e cosméticos em processos CPU reais
-        run: node tools/eval/runner.mjs eval:tp-identity eval:tp-cosmetic-source --json-out=tools/eval/out/equipamento-corpo.json
+      - name: Corpo em processos CPU reais
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:tp-identity --json-out=tools/eval/out/equipamento-corpo.json
       - name: Tempos do equipamento corpo
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -764,9 +766,11 @@ jobs:
           node-version: 22
           cache: npm
       - name: Dependências (npm ci)
+        id: deps
         run: npm ci
-      - name: Drip e luvas em processos CPU reais
-        run: node tools/eval/runner.mjs eval:tp-drip-source eval:tp-glove-origin --json-out=tools/eval/out/equipamento-origem.json
+      - name: Drip, luvas e cosméticos em processos CPU reais
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:tp-drip-source eval:tp-glove-origin eval:tp-cosmetic-source --json-out=tools/eval/out/equipamento-origem.json
       - name: Tempos do equipamento origem
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
