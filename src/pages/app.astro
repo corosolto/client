@@ -30,39 +30,7 @@ const DESCRIPTION = 'CORO SOLTO é um FPS grátis que roda no navegador, sem ins
     <video class="app-video" src="/video/landing/gameplay-vertical.mp4" poster="/video/landing/gameplay-vertical.jpg" width="720" height="1280" autoplay muted loop playsinline preload="metadata" aria-label="6 segundos de gameplay no Parque da Treta"></video>
   </section>
 
-  <script is:inline>
-  /* Fora de WebView este botão é um link comum. Dentro: Android abre o Chrome via intent://,
-     iOS tenta o Safari via x-safari-https://; se a aba continuar visível em 1,8 s, mostra a dica. */
-  (function () {
-    var botao = document.getElementById('app-abrir');
-    var aqui = document.getElementById('app-aqui');
-    var dica = document.getElementById('app-dica');
-    var ua = navigator.userAgent || '';
-    var destino = new URL('/', location.origin);
-    new URLSearchParams(location.search).forEach(function (v, k) { if (k !== 'jogo') destino.searchParams.set(k, v); });
-    destino.searchParams.set('jogo', '1');
-    botao.href = destino.pathname + destino.search;
-    aqui.href = botao.href;
-    /* JOGAR do topo e VOLTAR AO JOGO também apontam para a home: sem `jogo=1` a borda traria de volta. */
-    document.querySelectorAll('a[href^="/?"], a[href="/"]').forEach(function (a) { a.href = botao.href; });
-    var android = /Android/i.test(ua);
-    var ios = /iPhone|iPad|iPod/i.test(ua);
-    var webview = /musical_ly|BytedanceWebview|TikTok|Instagram|FBAN|FBAV|FB_IAB|LinkedInApp|TwitterAndroid|Twitter for iPhone/i.test(ua) || (android && /\bwv\b/.test(ua));
-    if (!webview || (!android && !ios)) return;
-    botao.addEventListener('click', function (ev) {
-      ev.preventDefault();
-      var saiu = false;
-      var marca = function () { saiu = true; };
-      document.addEventListener('visibilitychange', marca, { once: true });
-      window.addEventListener('pagehide', marca, { once: true });
-      var alvo = android
-        ? 'intent://' + destino.host + destino.pathname + destino.search + '#Intent;scheme=https;action=android.intent.action.VIEW;S.browser_fallback_url=' + encodeURIComponent(destino.href) + ';end'
-        : 'x-safari-' + destino.href;
-      location.href = alvo;
-      setTimeout(function () { if (!saiu && !document.hidden) dica.hidden = false; }, 1800);
-    });
-  })();
-  </script>
+  <script type="module" src="/js/landing-app.js"></script>
 
   <style>
   .app-landing{display:grid;gap:18px;justify-items:center;padding:8px 20px 40px;max-width:520px;margin:0 auto}

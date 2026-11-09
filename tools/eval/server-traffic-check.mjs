@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
+import * as landing from '../../public/js/landing-app.js';
 import { desvioParaApp, trafficEntry, uniqueRegister } from '../../src/lib/server-traffic.mjs';
 
 describe('entradas HTML contadas no servidor', () => {
@@ -138,5 +139,19 @@ describe('middleware de contagem', () => {
       globalThis.fetch = originalFetch;
       delete process.env.API_PROXY_SECRET;
     }
+  });
+});
+
+describe('landing /app: alvo do navegador externo', () => {
+  it('iOS monta UMA autoridade https; Android usa intent com fallback https codificado', () => {
+    const { alvoExterno } = landing;
+    const destino = new URL('https://www.corosolto.com.br/?utm_source=tiktok&utm_medium=paid-social&jogo=1');
+    const ios = alvoExterno(destino, 'ios');
+    assert.equal(ios, 'x-safari-https://www.corosolto.com.br/?utm_source=tiktok&utm_medium=paid-social&jogo=1');
+    assert.equal(ios.match(/https:\/\//g).length, 1, 'autoridade https dobrada (o bug do estraga-codigo)');
+    const android = alvoExterno(destino, 'android');
+    assert.ok(android.startsWith('intent://www.corosolto.com.br/?'), android);
+    assert.ok(android.includes('S.browser_fallback_url=' + encodeURIComponent(destino.href)));
+    assert.ok(android.endsWith(';end'));
   });
 });
