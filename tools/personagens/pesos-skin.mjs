@@ -91,6 +91,10 @@ export function skinsDoGlb(g, { geometria = true } = {}) {
     const nomes = skin.joints.map((i) => g.json.nodes[i].name || `junta${i}`);
     const ibm = geometria && skin.inverseBindMatrices != null ? lerAcessor(g, skin.inverseBindMatrices) : null;
     const juntas = nomes.map((_, i) => (ibm ? posicaoDaJunta(ibm.subarray(i * 16, i * 16 + 16)) : [0, 0, 0]));
+    // pai de cada junta (índice na lista da skin; −1 = raiz), pela hierarquia de nós do glTF
+    const paiDoNo = new Map();
+    (g.json.nodes || []).forEach((n, ni) => { for (const c of n.children || []) paiDoNo.set(c, ni); });
+    const pais = skin.joints.map((ni) => skin.joints.indexOf(paiDoNo.get(ni) ?? -1));
     g.json.meshes[node.mesh].primitives.forEach((p, pi) => {
       if (p.attributes.JOINTS_0 == null || p.attributes.WEIGHTS_0 == null) return;
       const chave = `${node.mesh}/${pi}`;
@@ -98,7 +102,7 @@ export function skinsDoGlb(g, { geometria = true } = {}) {
       vistos.add(chave);
       const extra = p.attributes.JOINTS_1 != null && p.attributes.WEIGHTS_1 != null;
       out.push({
-        malha: node.mesh, primitiva: pi, nomes, juntas,
+        malha: node.mesh, primitiva: pi, nomes, juntas, pais,
         P: geometria ? lerAcessor(g, p.attributes.POSITION) : null,
         I: geometria && p.indices != null ? lerAcessor(g, p.indices) : null,
         J: lerAcessor(g, p.attributes.JOINTS_0), W: lerAcessor(g, p.attributes.WEIGHTS_0),
@@ -191,13 +195,14 @@ export const PARAMETROS = Object.freeze({
   ombroR1: 2.5,
   anel: 2, // anéis de vizinhos somados à região alterada antes do preenchimento
   preencher: 300, // passadas do preenchimento harmônico
-  // R7–R9 (P4, roster): desligadas por padrão, para as receitas antigas
-  // reproduzirem os mesmos bytes. Cada uma vale o número de anéis da faixa
-  // de transição montada em volta da costura dura da sua zona.
-  costura: 0.5, // aresta é costura dura se a soma |Δpeso| entre as pontas passar disto
-  virilha: 0, // R7: costura perna E × perna D e tronco × perna (virilha, quadril, saia)
-  sovaco: 0, // R8: costura tronco × ombro × braço (sovaco, ombro) e ombro E × ombro D
-  pescoco: 0, // R8b: costura cabeça/pescoço × tronco/ombro
+  // R7–R10 (P4, roster): desligadas por padrão, para as receitas antigas
+  // reproduzirem os mesmos bytes.
+  bracoPerna: 1, // 0 desliga R1–R3 (só R7–R10 e a solda mexem)
+  mistura: 0, // R7: peso a partir do qual dois ossos "contam" juntos no vértice (0 = desligada)
+  costura: 0.5, // R8: aresta é costura dura se a soma |Δpeso| entre as pontas passar disto
+  virilha: 0, // R8: anéis de degradê na costura perna E × perna D, tronco × perna, braço × perna
+  sovaco: 0, // R8: anéis na costura tronco × ombro × braço e ombro E × ombro D
+  pescoco: 0, // R8: anéis na costura cabeça/pescoço × tronco/ombro/braço
   cauda: 0, // R9: metros atrás da junta Hips a partir dos quais o peso de perna sai (0 = desligada)
   caudaRampa: 0.2, // R9: largura (m) da rampa em que o peso de perna da cauda vai a zero
 });
@@ -210,9 +215,10 @@ export const REGRAS = Object.freeze([
   'R4 destino do peso retirado: o de perna que sai do corpo vai para Hips (o pai das coxas) na fração 1 − s(a); o resto volta aos ossos que ficaram, na mesma proporção; vértice que perdeu tudo vai para a junta permitida mais próxima.',
   'R5 preenchimento harmônico: região = vértices alterados + `anel` anéis de vizinhos; o contorno fica fixo e a região é refeita pela média dos vizinhos ponderada por 1/comprimento da aresta, com R1–R4 reaplicadas a cada passada (Jacobi projetado, `preencher` passadas). Sem degrau entre vizinhos — é o que tira o "inchaço".',
   'R6 saída: no máximo 4 influências, ordem decrescente, soma 1 em float32; vértices soldados (mesma posição) recebem os mesmos pesos; vértice sem mudança mantém os bytes originais.',
-  'R7 virilha (`virilha` anéis): aresta cujas pontas são dominadas por classes diferentes (perna E × perna D, tronco × perna, braço × perna) e diferem mais que `costura` em Σ|Δpeso| é costura dura; as pontas + `virilha` anéis entram na região do R5. A virilha passa a pesar nas DUAS coxas em degradê, sem degrau de 1 aresta entre as pernas.',
-  'R8 sovaco (`sovaco` anéis) e pescoço (`pescoco` anéis): o mesmo para tronco × ombro × braço, ombro E × ombro D (sovaco/ombro: o sovaco passa a pesar em Spine02 em degradê até o braço) e cabeça/pescoço × tronco/ombro/braço.',
-  'R9 cauda (`cauda` m): vértice mais de `cauda` metros ATRÁS da junta Hips (−Z, a frente do meshy-28 é +Z) perde o peso de perna em rampa até `cauda + caudaRampa`; o peso sai para Hips (R4). Cauda/capa não segue a canela.',
+  'R7 cadeia (`mistura`): dois ossos com peso > `mistura` no mesmo vértice têm de ser do mesmo lado e estar a ≤ 2 juntas na árvore (é a conta do clip-qa do Studio que marca [rig] a partir de 0,15). Virilha nas DUAS coxas e sovaco em Spine02 junto com o braço violam; o peso do osso que viola vai para o osso do caminho entre os dois mais longe do dominante a ≤ 2 juntas, sem trocar de lado (coxa E + coxa D → Hips; LeftArm + Spine02 → Spine). Reaplicada a cada passada do R5: o degradê atravessa a cadeia (Spine02 → Spine01 → Spine → ombro → braço) em vez de saltar.',
+  'R8 costura (`virilha`/`sovaco`/`pescoco` anéis): aresta cujas pontas são dominadas por classes diferentes da zona e diferem mais que `costura` em Σ|Δpeso| é costura dura; as pontas + N anéis entram na região do R5 (degradê em vez de degrau de 1 aresta).',
+  'R9 cauda (`cauda` m): vértice mais de `cauda` metros ATRÁS da junta Hips (−Z, a frente do meshy-28 é +Z) perde o peso de perna em rampa até `cauda + caudaRampa`; o peso sai para Hips (R4). Cauda/capa não segue a canela (cuca: 280 vértices até 1,3 m atrás).',
+  'R10 solda: vértices na mesma célula de 1e-5 m ou em célula vizinha a ≤ 1e-5 m recebem os mesmos pesos (a costura do pose test é a da posição esfolada no bind).',
   'Mão: regra "mão 100 % em Hand" foi medida e REJEITADA (piorou o esticamento da mão de 1,55× para 2,3–3,4× no pose test, acima do limite 2,5×); a mão já não tem peso de tronco/perna depois de R1/R2.',
 ]);
 
@@ -359,11 +365,43 @@ export function repesar(origem, opcoes = {}) {
     const ombro = (gi, L) => rampa(dist(pos[gi], lados[L].arm), o.ombroR0 * lados[L].comp, o.ombroR1 * lados[L].comp);
     const cauda = (gi) => (o.cauda > 0 ? rampa(zHips - pos[gi][2], o.cauda, o.cauda + o.caudaRampa) : 1); // R9
 
+    // R7: alvo[d][b] = para onde vai o peso do osso b num vértice dominado por d
+    // (−1 = a dupla pode conviver: mesmo lado e ≤ 2 juntas na árvore).
+    const nj = s.nomes.length;
+    const ladoOsso = s.nomes.map((n) => (/^Left|_L$/.test(n) ? 'L' : /^Right|_R$/.test(n) ? 'R' : ''));
+    const subida = (j) => { const c = []; for (let x = j; x >= 0; x = s.pais[x]) c.push(x); return c; };
+    const caminho = (x, y) => {
+      const cx = subida(x), cy = subida(y), comum = cx.find((n) => cy.includes(n));
+      return comum == null ? null : [...cx.slice(0, cx.indexOf(comum) + 1), ...cy.slice(0, cy.indexOf(comum)).reverse()];
+    };
+    const alvo = Array.from({ length: nj }, (_, d) => Int16Array.from({ length: nj }, (_, b) => {
+      const c = b === d ? null : caminho(d, b);
+      if (!c) return -1;
+      const oposto = ladoOsso[d] && ladoOsso[b] && ladoOsso[d] !== ladoOsso[b];
+      if (!oposto && c.length - 1 <= 2) return -1;
+      let t = d;
+      for (let i = 1; i <= Math.min(2, c.length - 2); i++) if (!ladoOsso[c[i]] || !ladoOsso[d] || ladoOsso[c[i]] === ladoOsso[d]) t = c[i];
+      return t;
+    }));
+    const cadeia = (m) => {
+      if (!(o.mistura > 0)) return m;
+      for (let it = 0; it < 8; it++) {
+        const fortes = [...m].filter(([, w]) => w > o.mistura).sort((x, y) => y[1] - x[1] || x[0] - y[0]);
+        let par = null;
+        for (let i = 0; i < fortes.length && !par; i++) for (let k = i + 1; k < fortes.length; k++) if (alvo[fortes[i][0]][fortes[k][0]] >= 0) { par = [fortes[i][0], fortes[k][0]]; break; }
+        if (!par) break;
+        const [d, b] = par, w = m.get(b), t = alvo[d][b];
+        m.delete(b); m.set(t, (m.get(t) || 0) + w);
+      }
+      return m;
+    };
+
     const regras = (gi, m0) => {
       const lado = a.L[gi] >= a.R[gi] ? 'L' : 'R';
-      const manga = s01(a[lado][gi]);
+      const manga = o.bracoPerna ? s01(a[lado][gi]) : 0;
       const fator = (j) => {
         const q = parteOsso[j];
+        if (!o.bracoPerna) return q.startsWith('perna') ? cauda(gi) : 1; // só R9
         if (q.startsWith('braco')) { const L = q.slice(-1); return Math.max(s01(a[L][gi]), ombro(gi, L)); } // R2
         if (q.startsWith('perna')) return rampa(pos[gi][1], yHips, ySpine02) * (1 - manga) * cauda(gi); // R1 + R3 + R9
         return Math.max(1 - manga, ombro(gi, lado)); // R2
@@ -386,7 +424,7 @@ export function repesar(origem, opcoes = {}) {
         });
         m.set(melhor, 1);
       }
-      return normalizar(m);
+      return cadeia(normalizar(m)); // R7
     };
 
     const igual = (x, y) => x.size === y.size && [...x].every(([j, w]) => Math.abs((y.get(j) || 0) - w) < 1e-6);
