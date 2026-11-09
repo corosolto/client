@@ -84,6 +84,19 @@ A régua funcional continua sendo `npm run eval:mantle` (alcance, beiradas e ter
 `npm run eval:mantle-fluidez` adiciona o contrato visual: 18 a 28 quadros a 60 Hz, no máximo
 0,18 m por quadro, subida antes do avanço e mutante que volta a teleportar.
 
+## Estados assados por corpo (09/11/2026)
+
+Os BODIES selecionados pelo QA do Studio carregam `models/anims/<id>.glb` com meshopt e
+rotações int16 normalizadas; `models/anims/<id>/<estado>.glb` continua como fallback. O
+`GLTFLoader` vendorizado já instala `MeshoptDecoder` por padrão. O índice gerado
+`baked-states.json` guarda hash, evidência de piso/quadril, exclusões e as velocidades
+naturais de walk/run/crouchwalk/walk1h/walkfire. O controlador usa essas refs no anti-deslize;
+sem pack, ou com `?wref=/?rref=/?cref=`, mantém os globais. Skins seguem com seus clipes
+próprios e não entram no importador.
+
+`npm run eval:estadosassados` decodifica todos os packs, cobra vértice mínimo ≥−3 cm e o
+limite de quadril do Studio, e prova os mutantes `pe-afundado` e `ref-global`.
+
 ## Fallbacks declarados (AN5)
 
 Todo personagem do manifesto tem os 8 clipes base. Os opcionais (`idle1h`, `walk1h`,
