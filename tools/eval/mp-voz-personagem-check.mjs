@@ -12,12 +12,15 @@
 
    Mutantes: --mutante=pool-da-faccao (audio.js volta a sortear do pool da facção)
              --mutante=rede-muda (o _botCall antigo: sem DOM, sem voz no snapshot) */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { importAudioProbe } from './audio-probe-module.mjs';
 import { aplicarVozesMiticas } from '../audio/miticos-character-voice-apply.mjs';
 import { encodeSnapshot, decodeSnapshot } from '../../public/js/netcodec.js';
 
 const mutante = process.argv.find((a) => a.startsWith('--mutante='))?.slice(10) || '';
+/* Saída 1 = cláusula reprovou (o que o mutante deve causar); 2 = arnês quebrado (âncora
+   ausente, mutante desconhecido, backend fora do alcance). O package.json cobra 1, não "≠0". */
 if (mutante && !['pool-da-faccao', 'rede-muda'].includes(mutante)) { console.error(`mutante desconhecido: ${mutante}`); process.exit(2); }
 const aplicaMutacao = (src, ancora, troca) => {
   if (src.split(ancora).length !== 2) { console.error(`mutante ${mutante} NÃO APLICOU: âncora ${ancora}`); process.exit(2); }
@@ -93,12 +96,31 @@ check('VOZ7', bot._voiceSnap === 'radio' && no._radioCd === 15 && !segundo._voic
 const cliente = { state: 'live', time: 10, _radioCd: 0, dedicated: false, el: null, player: null };
 const botLocal = { team: 'B' };
 botCall.call(cliente, botLocal, {});
-const roundTrip = decodeSnapshot(encodeSnapshot({
-  type: 'snapshot', room: 'r', tick: 1, t: 1, state: 'live', owner: '', players: 1, spectators: 0, livre: { E: 0, B: 0 },
-  timeLeft: 60, roundNum: 1, scoreE: 0, scoreB: 0, roundKillsE: 0, roundKillsB: 0, ctf: null, objective: null,
-  ents: [{ id: 7, name: 'bot', team: 'B', bot: 1, x: 0, y: 0, z: 0, yaw: 0, pitch: 0, hp: 100, alive: true, weapon: 'ak', fireN: 0, voice: 'radio', voiceN: 3, k: 0, d: 0, respawnIn: 0 }],
-}, 8)).ents[0];
-check('VOZ8', !botLocal._voiceSnap && roundTrip.voice === 'radio' && roundTrip.voiceN === 3, 'cliente sem DOM não marca snapshot; codec v8 leva radio/voiceN íntegros');
+/* O produtor REAL: o trecho de `snapshot()` do room.js que leva `_voiceSnap` a `voice`/`voiceN`
+   é extraído do backend ao lado desta árvore (ou de BACKEND_DIR) e executado sobre o corpo que
+   o `_botCall` marcou. Sem backend ao lado a cláusula fica NÃO MEDIDA (como P5 do mp-paridade);
+   com BACKEND_DIR apontado, backend inválido é arnês quebrado (saída 2). */
+const candidatos = process.env.BACKEND_DIR ? [`${process.env.BACKEND_DIR}/game/room.js`] : ['../backend/game/room.js', '../../backend/game/room.js', '../../../backend/game/room.js'];
+const roomJs = candidatos.filter(Boolean).map((p) => resolve(p)).find((p) => existsSync(p));
+if (!roomJs && process.env.BACKEND_DIR) { console.error(`BACKEND_DIR=${process.env.BACKEND_DIR} sem game/room.js`); process.exit(2); }
+if (!roomJs) {
+  console.log('VOZ8 NÃO MEDIDA — backend/game/room.js não está ao lado desta árvore (defina BACKEND_DIR)');
+} else {
+  const produtor = readFileSync(roomJs, 'utf8').match(/const voice = c\._voiceSnap[\s\S]*?c\._voiceSnap = 0;/)?.[0];
+  if (!produtor) { console.error(`${roomJs} não tem o bloco voice/voiceN de snapshot()`); process.exit(2); }
+  const serializaVoz = new Function('c', `${produtor}\nreturn { voice, voiceN: c._voiceN | 0 };`);
+  const antes = serializaVoz({ ...bot, _voiceN: 2 });
+  const vozDoNo = serializaVoz(bot);
+  const depois = serializaVoz(bot);
+  const roundTrip = decodeSnapshot(encodeSnapshot({
+    type: 'snapshot', room: 'r', tick: 1, t: 1, state: 'live', owner: '', players: 1, spectators: 0, livre: { E: 0, B: 0 },
+    timeLeft: 60, roundNum: 1, scoreE: 0, scoreB: 0, roundKillsE: 0, roundKillsB: 0, ctf: null, objective: null,
+    ents: [{ id: 7, name: 'bot', team: 'B', bot: 1, x: 0, y: 0, z: 0, yaw: 0, pitch: 0, hp: 100, alive: true, weapon: 'ak', fireN: 0, ...vozDoNo, k: 0, d: 0, respawnIn: 0 }],
+  }, 8)).ents[0];
+  check('VOZ8', !botLocal._voiceSnap && antes.voice === 'radio' && antes.voiceN === 3 && vozDoNo.voice === 'radio' && vozDoNo.voiceN === 1
+    && depois.voice === 0 && depois.voiceN === 1 && roundTrip.voice === 'radio' && roundTrip.voiceN === 1,
+    `${roomJs.replace(/.*\/backend\//, 'backend/')} serializa o corpo marcado como voice='radio' com voiceN+1, zera a marca, e o codec v8 entrega (${JSON.stringify(vozDoNo)} → ${roundTrip.voice}/${roundTrip.voiceN})`);
+}
 
 /* ---- VOZ9: o cliente aplica a régua do single ao rádio remoto (55 m, aliado sempre, log) ---- */
 {
