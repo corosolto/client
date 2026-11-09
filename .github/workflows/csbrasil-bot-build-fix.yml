@@ -133,7 +133,7 @@ jobs:
     needs: claim
     if: needs.claim.outputs.decision == 'attempt'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 30
     outputs:
       proposal: ${{ steps.ready.outputs.proposal }}
     permissions:

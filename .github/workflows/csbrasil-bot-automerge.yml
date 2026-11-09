@@ -124,12 +124,15 @@ jobs:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       REPO: ${{ github.repository }}
     steps:
-      - name: Reevaluate every open safe or release PR
+      - name: Guard bot token
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "::warning::CSBRASIL_BOT_TOKEN is missing; the automerge sweep cannot run."
-            exit 0
+            echo "pular=1" >> "$GITHUB_ENV"
+            echo "::warning title=Bot inerte::CSBRASIL_BOT_TOKEN nao configurado — o sweep de automerge esta pulando."
           fi
+      - name: Reevaluate every open safe or release PR
+        if: env.pular != '1'
+        run: |
           for pr in $(gh pr list --repo "$REPO" --state open --limit 100 --json number,labels \
                         --jq '.[] | select(any(.labels[]; .name == "safe-automerge" or .name == "release")) | .number'); do
             gh workflow run csbrasil-bot-automerge.yml --repo "$REPO" -f pr_number="$pr" \
