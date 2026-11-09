@@ -985,6 +985,9 @@ export function enableLightBloom(renderer, opts = {}) {
   // BUG-09: bloom seletivo ligado por padrão. ?charbloom=1 volta o bloom global de antes
   // (nem passe, nem patch de shader) — é o A/B lado a lado.
   const charMaskOn = qp.get('charbloom') !== '1';
+  // Luz em todas as camadas: sem isso os passes de máscara/água trocavam o hash de luzes e
+  // recompilavam o programa de todo material lit por quadro (eval:bots-perf). ?luzcamadas=0 desliga.
+  const luzCamadas = qp.get('luzcamadas') !== '0';
 
   const liberadas = new WeakSet();
   const patched = (scene, camera) => {
@@ -1006,6 +1009,7 @@ export function enableLightBloom(renderer, opts = {}) {
     if (cp._ssao) cp._ssao.camera = camera;   // a cena pode trocar de câmera (menu/preview)
     if (scene.userData.vmPass) focusSunShadow(scene, camera);   // só na cena de jogo
     if (cp._water) cp._water.camera = camera;   // a cena pode trocar de câmera
+    if (luzCamadas && ((cp._luzF = (cp._luzF || 0) + 1) % 30) === 1) scene.traverse((o) => { if (o.isLight) o.layers.enableAll(); });
     cp.render();
     renderer.render = patched;
   };
