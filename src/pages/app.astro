@@ -1,13 +1,6 @@
 ---
-/* /app: landing leve para quem abre o jogo dentro do navegador de um app (TikTok, Instagram,
- * Facebook, LinkedIn, X). A borda manda o WebView para cá em vez da home (desvioParaApp em
- * src/lib/server-traffic.mjs): 08/11/2026, 517 visitas pagas do TikTok em uma hora, 72%
- * carregaram os 8 MB do jogo e 85% saíram em menos de 1 min sem clicar em entrar.
- *
- * Aqui pesa ~1,3 MB (vídeo de 6 s + poster) e a decisão é uma só: abrir no navegador do
- * aparelho, onde o WebGL e o áudio funcionam, ou jogar aqui mesmo. A query (utm_*) viaja
- * intacta para a home, então a atribuição por fonte não muda; `?jogo=1` diz à borda que a
- * pessoa já escolheu e não deve voltar para cá. noindex: página de conversão, não de busca. */
+/* /app: landing leve (~1,4 MB) para WebView de app; a borda desvia a home para cá (desvioParaApp).
+   Réguas: server-traffic-check (matriz do desvio); detalhes no CHANGELOG. */
 import Layout from '../layouts/Layout.astro';
 import { BRAND_FULL } from '../lib/site';
 
