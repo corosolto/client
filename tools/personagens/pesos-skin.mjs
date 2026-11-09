@@ -284,13 +284,31 @@ export function repesar(origem, opcoes = {}) {
       return m;
     };
 
-    // Grupos soldados (mesma posição a 1e-5 m) e vizinhança por aresta de triângulo.
-    const chave = (v) => `${Math.round(s.P[v * 3] * 1e5)},${Math.round(s.P[v * 3 + 1] * 1e5)},${Math.round(s.P[v * 3 + 2] * 1e5)}`;
+    // Grupos soldados e vizinhança por aresta de triângulo. Solda = mesma célula
+    // de 1e-5 m OU célula vizinha a ≤ 1e-5 m: o pose test agrupa pela posição
+    // esfolada no bind (erro ~1e-7), então um par a 2e-7 m que cai em células
+    // diferentes aqui é a MESMA costura lá (profeta-calcada: 2 pares abriam 1,6 cm).
+    const cel = (v) => [0, 1, 2].map((c) => Math.round(s.P[v * 3 + c] * 1e5));
+    const pai = Int32Array.from({ length: nv }, (_, i) => i);
+    const raiz = (x) => { while (pai[x] !== x) { pai[x] = pai[pai[x]]; x = pai[x]; } return x; };
+    const unir = (x, y) => { const a = raiz(x), b = raiz(y); if (a !== b) pai[Math.max(a, b)] = Math.min(a, b); };
+    const celulas = new Map();
+    for (let v = 0; v < nv; v++) {
+      const [x, y, z] = cel(v);
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+        const mesma = !dx && !dy && !dz;
+        for (const u of celulas.get(`${x + dx},${y + dy},${z + dz}`) || []) {
+          if (mesma || Math.hypot(s.P[v * 3] - s.P[u * 3], s.P[v * 3 + 1] - s.P[u * 3 + 1], s.P[v * 3 + 2] - s.P[u * 3 + 2]) <= 1e-5) unir(u, v);
+        }
+      }
+      const k = `${x},${y},${z}`;
+      if (celulas.has(k)) celulas.get(k).push(v); else celulas.set(k, [v]);
+    }
     const solda = new Map(), grupoDe = new Int32Array(nv), membros = [];
     for (let v = 0; v < nv; v++) {
-      const k = chave(v);
-      if (!solda.has(k)) { solda.set(k, membros.length); membros.push([]); }
-      grupoDe[v] = solda.get(k); membros[grupoDe[v]].push(v);
+      const r = raiz(v);
+      if (!solda.has(r)) { solda.set(r, membros.length); membros.push([]); }
+      grupoDe[v] = solda.get(r); membros[grupoDe[v]].push(v);
     }
     const ng = membros.length;
     const orig = membros.map((ms) => pesosDe(ms[0]));
