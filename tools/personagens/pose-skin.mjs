@@ -105,8 +105,16 @@ function amostrador(anim) {
   const valor = (c, t) => {
     let i = 0; while (i < c.T.length - 2 && c.T[i + 1] <= t) i++;
     const f = c.T.length > 1 && !c.step ? Math.min(1, Math.max(0, (t - c.T[i]) / ((c.T[i + 1] - c.T[i]) || 1))) : 0;
-    const em = (k) => { const b = c.cubic ? (k * 3 + 1) * c.n : k * c.n; return Array.from(c.V.slice(b, b + c.n)); };
-    const a = em(i), b = em(Math.min(i + 1, c.T.length - 1));
+    const j = Math.min(i + 1, c.T.length - 1);
+    // CUBICSPLINE guarda [tangente de entrada, valor, tangente de saída] por chave: Hermite do glTF.
+    const em = (k, slot = 1) => { const b = c.cubic ? (k * 3 + slot) * c.n : k * c.n; return Array.from(c.V.slice(b, b + c.n)); };
+    if (c.cubic) {
+      const dt = c.T[j] - c.T[i], f2 = f * f, f3 = f2 * f;
+      const v0 = em(i), b0 = em(i, 2), v1 = em(j), a1 = em(j, 0);
+      const out = v0.map((_, k) => (2 * f3 - 3 * f2 + 1) * v0[k] + dt * (f3 - 2 * f2 + f) * b0[k] + (-2 * f3 + 3 * f2) * v1[k] + dt * (f3 - f2) * a1[k]);
+      return c.n === 4 ? new THREE.Quaternion().fromArray(out).normalize().toArray() : out;
+    }
+    const a = em(i), b = em(j);
     if (c.n === 4) return new THREE.Quaternion().fromArray(a).slerp(new THREE.Quaternion().fromArray(b), f).toArray();
     return a.map((x, k) => x + (b[k] - x) * f);
   };
