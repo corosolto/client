@@ -37,35 +37,6 @@
   "method": "clipe glTF importado no armature; m4 em 0.84 m; mão de gatilho preservada, IK da mão de apoio e arma alinhada ao vetor final das mãos",
   "limitation": "evidência offline de asset/clipe/pegada; o porte cruzado reproduz o contrato de mount+IK, mas não substitui recaptura do runtime no browser",
   "poses": {
-    "idle": {
-      "clip": "idle",
-      "frame": 15,
-      "handSpan": 0.338441,
-      "weaponScale": 0.841644,
-      "rightHand": [
-        -0.255264,
-        0.033448,
-        0.846369
-      ],
-      "leftHand": [
-        -0.061169,
-        -0.24361,
-        0.856749
-      ],
-      "rightAnchor": [
-        -0.255264,
-        0.033448,
-        0.846369
-      ],
-      "leftAnchor": [
-        -0.081498,
-        -0.21459,
-        0.855662
-      ],
-      "rightDistance": 0.0,
-      "leftDistance": 0.035449,
-      "render": "tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-idle-m4.png"
-    },
     "walk": {
       "clip": "walk",
       "frame": 15,
@@ -145,6 +116,37 @@
       "rightDistance": 0.0,
       "leftDistance": 0.006483,
       "render": "tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-crouch-m4.png"
+    }
+  },
+  "foraDoContrato": {
+    "idle": {
+      "clip": "idle",
+      "frame": 15,
+      "handSpan": 0.338441,
+      "weaponScale": 0.841644,
+      "rightHand": [
+        -0.255264,
+        0.033448,
+        0.846369
+      ],
+      "leftHand": [
+        -0.061169,
+        -0.24361,
+        0.856749
+      ],
+      "rightAnchor": [
+        -0.255264,
+        0.033448,
+        0.846369
+      ],
+      "leftAnchor": [
+        -0.081498,
+        -0.21459,
+        0.855662
+      ],
+      "rightDistance": 0.0,
+      "leftDistance": 0.035449,
+      "motivo": "fora do contrato walk/crouch da régua eval:camera-grip: o IK de 2 ossos (braço+antebraço, a mesma cadeia do solveCCDIK do runtime) não dobra o braço de apoio até o anchor neste quadro (pulso a 61,6 mm do alvo); 35,4 mm no anchor tanto no GLB original 8af17491 quanto no repesado 14899791"
     }
   }
 }

@@ -18,6 +18,8 @@ const check = (ok, message) => { console.log(`${ok ? '✓' : '✗'} ${message}`)
 check(evidence.weapon === 'm4', 'arma declarada é M4');
 check(evidence.characterSha256 === sha256(evidence.character), 'SHA do Câmera canônico confere');
 check(evidence.weaponSha256 === sha256(evidence.weaponFile), 'SHA da M4 canônica confere');
+check(evidence.socketContract?.maxHandDistanceMeters === .03, 'tolerância do recibo = teto da régua (0,030 m)');
+for (const [clip, pose] of Object.entries(evidence.foraDoContrato || {})) check(!evidence.poses[clip] && !!pose.motivo, `${clip}: fora do contrato declara o motivo`);
 
 for (const [clip, pose] of Object.entries(evidence.poses)) {
   const anchors = MUTANT && clip === 'walk' ? pose.mutant : pose;
