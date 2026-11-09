@@ -1,7 +1,5 @@
-/* Emotes brasileiros: coreografia procedural em espaço de MUNDO (sem asset) para os 8
-   primeiros; os emotes de captura (`clipe: true` no catálogo) tocam um clipe de corpo
-   inteiro e usam a coreografia de `reserva` só como fallback. Repertório, método,
-   fontes e limites: docs/EMOTES-BR.md. */
+/* Emotes brasileiros: coreografia procedural em espaço de MUNDO; os de captura (`clipe`)
+   tocam clipe e usam a `reserva` só como fallback. Repertório e limites: docs/EMOTES-BR.md. */
 
 /* Vocabulário dos eixos: 'r' = direita do corpo, 'u' = cima, 'f' = frente.
    O controlador resolve esses três no mundo e converte pro quadro do pai do osso. */

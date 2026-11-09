@@ -9,12 +9,8 @@ export const EMOTES = [
   { id: 'quadradinho', nome: 'Quadradinho',     origem: 'Funk — o rebolado virado quadrado, em quatro tempos',   dur: 1.60, laco: true },
   { id: 'sarrada',     nome: 'Sarrada no ar',   origem: 'Funk — impulso de quadril com as mãos à frente',        dur: 1.10, laco: false },
   { id: 'salve',       nome: 'Salve',           origem: 'Saudação de rua — o braço que sobe no lugar do aperto de mão', dur: 1.30, laco: false },
-  /* 9–16: emotes de captura (Mixamo convertido para meshy-28), tocados por clipe de corpo
-     inteiro do pack lazy models/anims/emotes-mocap.glb. SÓ ACRESCENTAR no fim: a posição
-     é o id binário v9. `dur`/`laco` vêm do clipe convertido (emotes-mocap.SOURCES.md);
-     `reserva` é a dança procedural usada enquanto o pack baixa, se ele falhar ou em LOD≥2.
-     `desbloqueio`: 'base' = todo mundo tem; 'passe' = reservado ao passe de temporada
-     (ainda sem trava; a loja lê este campo). Os 8 procedurais acima são 'base'. */
+  /* 9–16: emotes de captura, clipe do pack lazy emotes-mocap.glb. SÓ ACRESCENTAR: posição = id v9.
+     reserva = dança procedural de fallback; desbloqueio base|passe. Ver docs/EMOTES-BR.md. */
   { id: 'capoeira',    nome: 'Ginga',              origem: 'Capoeira — a ginga de roda, captura de movimento', dur: 3.4333, laco: true,  clipe: true, fonte: 'mixamo/capoeira-pack/capoeira', reserva: 'ginga', desbloqueio: 'base' },
   { id: 'meia_lua',    nome: 'Meia-lua de frente', origem: 'Capoeira — chute circular de frente, de dentro pra fora', dur: 2.4667, laco: true, clipe: true, fonte: 'mixamo/capoeira-pack/meia-lua-de-frente', reserva: 'ginga', desbloqueio: 'passe' },
   { id: 'bencao',      nome: 'Bênção',             origem: 'Capoeira — o chute frontal de sola que empurra', dur: 1.3667, laco: true,  clipe: true, fonte: 'mixamo/capoeira-pack/bencao', reserva: 'ginga', desbloqueio: 'passe' },

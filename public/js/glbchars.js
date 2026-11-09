@@ -231,12 +231,8 @@ function upperClip(name) {
   }
   return _upperClips.get(name);
 }
-/* EMOTES DE CAPTURA: um pack único (models/anims/emotes-mocap.glb) no esqueleto de
-   referência, baixado só no primeiro emote de clipe. As rotações servem a todo corpo
-   meshy-28; a TRANSLAÇÃO do Hips é absoluta e vem na altura de quadril da referência
-   (82 cm), então cada corpo recebe uma cópia do clipe com o Hips reescalado pela sua
-   própria altura de repouso — sem isso a Gotinha (58 cm) flutuava e o Capitão
-   (102 cm) afundava os pés no chão. Medidas: docs/EMOTES-BR.md. */
+/* EMOTES DE CAPTURA: pack único lazy no esqueleto de referência. A translação do Hips é
+   reescalada pela altura de repouso de cada corpo (pés no chão); medidas: docs/EMOTES-BR.md. */
 const _emoteClips = {};
 const _emoteClipsCorpo = new Map();
 let _emoteHipsRef = null;

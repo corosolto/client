@@ -18,7 +18,7 @@
 
    MUTANTES (reescrevem o arquivo servido; o disco não é tocado):
      --mutante=tecla-morta    T não abre a roda            -> EP1+EP2+EP3+EP5+EP7
-     --mutante=camera-colada  não troca pra 3ª pessoa      -> EP2+EP5
+     --mutante=camera-colada  não troca pra 3ª pessoa      -> EP2+EP5+EP7 (corpo 3P sem tick)
      --mutante=anda-dancando  andar não cancela            -> EP3+EP7
      --mutante=morto-dancando o abate não derruba o passo  -> EP4
      --mutante=camera-perto   câmera não afasta            -> EP5
@@ -36,7 +36,7 @@ const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('
 const ESPERADO = {
   // acoplamentos reais e declarados: sem roda nada toca, e sem 3a pessoa nao ha
   // distancia de camera pra medir.
-  'tecla-morta': ['EP1', 'EP2', 'EP3', 'EP5', 'EP7'], 'camera-colada': ['EP2', 'EP5'], 'anda-dancando': ['EP3', 'EP7'],
+  'tecla-morta': ['EP1', 'EP2', 'EP3', 'EP5', 'EP7'], 'camera-colada': ['EP2', 'EP5', 'EP7'], 'anda-dancando': ['EP3', 'EP7'],
   'morto-dancando': ['EP4'], 'camera-perto': ['EP5'], 'porta-aberta': ['EP6'],
   'passo-congelado': ['EP2'], 'corpo-sem-tick': ['EP2', 'EP7'], 'captura-sem-shift': ['EP7'],
 };
@@ -220,7 +220,13 @@ const captura = await page.evaluate(() => {
   for (let i = 0; i < 30; i++) g.update(1 / 60);
   g.keys.KeyW = false;
   for (let i = 0; i < 10; i++) g.update(1 / 60);
-  const andou = { emote: g._emoteAtual, cur: ctrl?.curName };
+  // Andar devolve a 1ª pessoa, onde o corpo 3P não é tickado; a saída do clipe se mede
+  // voltando à 3ª pessoa parado.
+  const parou = { emote: g._emoteAtual, ctrl: ctrl?.emoteAtual?.() ?? null };
+  g.setCamView('third');
+  for (let i = 0; i < 40; i++) g.update(1 / 60);
+  const andou = { ...parou, cur: ctrl?.curName };
+  g.setCamView('first');
   g._emoteStop();
   return { dancando, andou };
 });
@@ -279,7 +285,7 @@ cobra('EP1', abriu.aberta && abriu.visivel && abriu.itens.length === 16 && !fech
 
 cobra('EP7', captura.dancando.emote === 'capoeira' && captura.dancando.cur === 'emote_capoeira'
   && captura.dancando.clipe && captura.dancando.armaGuardada && pedidosPack === 1
-  && captura.andou.emote === null && captura.andou.cur !== 'emote_capoeira',
+  && captura.andou.emote === null && captura.andou.ctrl === null && captura.andou.cur !== 'emote_capoeira',
   `EP7 · Shift+1 tocou ${captura.dancando.emote} no clipe ${captura.dancando.cur} (ativo ${captura.dancando.clipe}, arma guardada ${captura.dancando.armaGuardada}),`
   + ` pack pedido ${pedidosPack}×; andar → ${captura.andou.emote ?? 'nenhum'}/${captura.andou.cur}`);
 
