@@ -205,6 +205,7 @@ export const PARAMETROS = Object.freeze({
   pescoco: 0, // R8: anéis na costura cabeça/pescoço × tronco/ombro/braço
   cauda: 0, // R9: metros atrás da junta Hips a partir dos quais o peso de perna sai (0 = desligada)
   caudaRampa: 0.2, // R9: largura (m) da rampa em que o peso de perna da cauda vai a zero
+  colar: 0, // R11: distância (m) até a qual vértices de peças diferentes andam juntos no R5 (0 = desligada)
 });
 
 export const REGRAS = Object.freeze([
@@ -219,6 +220,7 @@ export const REGRAS = Object.freeze([
   'R8 costura (`virilha`/`sovaco`/`pescoco` anéis): aresta cujas pontas são dominadas por classes diferentes da zona e diferem mais que `costura` em Σ|Δpeso| é costura dura; as pontas + N anéis entram na região do R5 (degradê em vez de degrau de 1 aresta).',
   'R9 cauda (`cauda` m): vértice mais de `cauda` metros ATRÁS da junta Hips (−Z, a frente do meshy-28 é +Z) perde o peso de perna em rampa até `cauda + caudaRampa`; o peso sai para Hips (R4). Cauda/capa não segue a canela (cuca: 280 vértices até 1,3 m atrás).',
   'R10 solda: vértices na mesma célula de 1e-5 m ou em célula vizinha a ≤ 1e-5 m recebem os mesmos pesos (a costura do pose test é a da posição esfolada no bind).',
+  'R11 colar (`colar` m): vértices de peças DIFERENTES da malha a ≤ `colar` no bind são vizinhos no R5 — se um entra na região, o par entra junto e a média os amarra. Sem isso a peça repesada se afasta da colada (lula-mandrake: 1,1 → 3,4 cm em head-turn-60).',
   'Mão: regra "mão 100 % em Hand" foi medida e REJEITADA (piorou o esticamento da mão de 1,55× para 2,3–3,4× no pose test, acima do limite 2,5×); a mão já não tem peso de tronco/perna depois de R1/R2.',
 ]);
 
@@ -478,11 +480,33 @@ export function repesar(origem, opcoes = {}) {
         for (let gi = 0; gi < ng; gi++) if (marca[gi]) regiao[gi] = 1;
       }
     }
+    // R11 colar: vértices de PEÇAS diferentes a ≤ `colar` m no bind viram vizinhos no
+    // R5 (a região puxa o par junto). Sem isso a peça repesada se afasta da colada
+    // (lula-mandrake: cabelo × cabeça abria 1,1 → 3,4 cm em head-turn-60).
+    let viz = vizinhos;
+    if (o.colar > 0) {
+      const compDe = new Int32Array(ng);
+      componentes.forEach((c, ci) => { for (const gi of c.grupos) compDe[gi] = ci; });
+      const celula = (gi) => pos[gi].map((x) => Math.floor(x / o.colar));
+      const grade = new Map();
+      for (let gi = 0; gi < ng; gi++) { const k = celula(gi).join(); if (!grade.has(k)) grade.set(k, []); grade.get(k).push(gi); }
+      const colados = Array.from({ length: ng }, () => []);
+      for (let gi = 0; gi < ng; gi++) {
+        const [x, y, z] = celula(gi);
+        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) for (const gj of grade.get(`${x + dx},${y + dy},${z + dz}`) || []) {
+          if (gj !== gi && compDe[gj] !== compDe[gi] && dist(pos[gi], pos[gj]) <= o.colar) colados[gi].push(gj);
+        }
+      }
+      viz = vizinhos.map((v, gi) => [...v, ...colados[gi].sort((p, q) => p - q)]);
+      const marcados = [];
+      for (let gi = 0; gi < ng; gi++) if (regiao[gi]) for (const gj of colados[gi]) if (!regiao[gj]) marcados.push(gj);
+      for (const gj of marcados) regiao[gj] = 1;
+    }
     for (let it = 0; it < o.preencher; it++) {
       atual = atual.map((m, gi) => {
-        if (!regiao[gi] || !vizinhos[gi].length) return m;
+        if (!regiao[gi] || !viz[gi].length) return m;
         const acc = new Map();
-        for (const nb of vizinhos[gi]) {
+        for (const nb of viz[gi]) {
           const c = 1 / Math.max(dist(pos[gi], pos[nb]), 1e-4);
           for (const [j, w] of atual[nb]) acc.set(j, (acc.get(j) || 0) + c * w);
         }
