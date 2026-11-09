@@ -708,6 +708,8 @@
     "eval:rotas": "node tools/eval/rotas-check.mjs && for m in caminho legado redirect abas base href-antigo perfil perfil-aba; do ! node tools/eval/rotas-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
     "//eval:compartilhar": "ADR 0008: botão único de compartilhar (Web Share ou cópia) e os 6 pontos ligados à URL certa, com mutantes.",
     "eval:compartilhar": "node tools/eval/compartilhar-check.mjs && for m in cancelar origem ponto; do ! node tools/eval/compartilhar-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
+    "//eval:shareorigin": "Links publicados usam corosol.to para compartilhar, enquanto canonical, OG e sitemap permanecem no host www; mutantes cobrem origem e SEO.",
+    "eval:shareorigin": "node tools/eval/share-origin-check.mjs && node tools/eval/share-origin-check.mjs --mutate",
     "//eval:compartilhar-browser": "Fim de partida e ranking no hub de verdade: Web Share no celular, cópia no computador. Precisa de BASE com tools/eval/serve.mjs.",
     "eval:compartilhar-browser": "node tools/eval/compartilhar-browser.mjs && ! node tools/eval/compartilhar-browser.mjs --mutante=sem-share",
     "//eval:perfil-abas": "ADR 0008: /u/<perfil>/<aba> com canonical, robots, abas, conteúdo e JSON-LD próprios, no handler SSR do build. Precisa de npm run build antes.",

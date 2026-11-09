@@ -14,7 +14,7 @@ const BASELINE = {
   fast: { quantidade: 338, sha256: '05c5d2027a8229f379a4556ee991daf1bc0e9f45b04ee3515d4e458259d6bfdf' },
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
-const NOVOS = { fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic']), deploy: new Set() };
+const NOVOS = { fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:shareorigin']), deploy: new Set() };
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
 
 for (const [nome, baseline] of Object.entries(BASELINE)) {
@@ -35,11 +35,12 @@ for (const [nome, baseline] of Object.entries(BASELINE)) {
   });
 }
 
-test('staging adiciona portalembed, lixo, envruntime e servertraffic sem apagar os passos migrados', () => {
+test('staging adiciona portalembed, lixo, envruntime, servertraffic e shareorigin sem apagar os passos migrados', () => {
   assert.ok(SUITES.fast.includes('eval:portalembed'));
   assert.ok(SUITES.fast.includes('eval:lixo'));
   assert.ok(SUITES.fast.includes('eval:envruntime'));
   assert.ok(SUITES.fast.includes('eval:servertraffic'));
+  assert.ok(SUITES.fast.includes('eval:shareorigin'));
 });
 
 test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {
@@ -174,6 +175,20 @@ test('sem diff ou com documentação, o pre-push mantém os checks centrais bara
     assert.deepEqual(r.comando, [process.execPath, ['tools/eval/runner.mjs', ...r.passos]]);
     for (const passo of ['syntax', 'arch:check', 'docs:check', 'travessao:check']) assert.ok(r.passos.includes(passo));
   }
+});
+
+test('skills de agente, markdown em qualquer pasta e mídia de lançamento são só core (09/11: caíam no deploy completo)', () => {
+  for (const arquivo of ['.agents/skills/game-3d-assets/SKILL.md', '.claude/agents/revisor.md', 'public/docs/estado/nota.md', 'launch-media/2026-11-09/post.png', 'plans/landing-app.md', 'scripts/ci/cf_preview_comment.py']) {
+    const r = selecionarPorArquivos([arquivo]);
+    assert.equal(r.fallback, false, arquivo);
+    assert.deepEqual(r.suites, ['core'], arquivo);
+  }
+});
+
+test('contagem de borda é network, não fallback', () => {
+  const r = selecionarPorArquivos(['src/lib/server-traffic.mjs', 'tools/eval/server-traffic-check.mjs']);
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core', 'network']);
 });
 
 const CASOS = [
