@@ -56,11 +56,26 @@ const AGENTS = [
   [/facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|whatsapp/i, 'social-preview', 'social/preview'],
 ];
 
+/* Navegador interno de app: continua `kind: 'browser'` (é gente), mas com agente
+   nomeado, porque o comportamento é outro. Medido em 08/11/2026: 517 visitas da campanha
+   do TikTok, 72% carregaram o jogo e 85% saíram em menos de 1 min sem entrar; num dia
+   normal a sessão sem partida é 1 em 3. Sem esta classe o admin mistura os dois.
+   Padrões: TikTok manda `musical_ly`/`BytedanceWebview`/`TikTok`; Instagram e Facebook
+   mandam `Instagram` e `FBAN`/`FBAV`/`FB_IAB`; LinkedIn, `LinkedInApp`; X, `TwitterAndroid`. */
+const APPS = [
+  [/musical_ly|bytedancewebview|tiktok/i, 'app/tiktok'],
+  [/instagram/i, 'app/instagram'],
+  [/\bFBAN\b|\bFBAV\b|FB_IAB/, 'app/facebook'],
+  [/linkedinapp/i, 'app/linkedin'],
+  [/twitterandroid|twitter for iphone/i, 'app/x'],
+];
+
 function classify(agent) {
   const ua = agent || '';
   for (const [pattern, kind, name] of AGENTS) if (pattern.test(ua)) return { kind, agent: name };
   if (/bot|crawler|spider|ahrefs|semrush/i.test(ua)) return { kind: 'other-bot', agent: 'other/unknown-bot' };
   if (/curl|python-requests|wget|httpclient|axios|node-fetch/i.test(ua) || !ua) return { kind: 'automation', agent: 'automation/tool' };
+  for (const [pattern, name] of APPS) if (pattern.test(ua)) return { kind: 'browser', agent: name };
   return { kind: 'browser', agent: '' };
 }
 
