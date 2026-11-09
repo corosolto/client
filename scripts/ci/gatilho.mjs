@@ -49,7 +49,7 @@ const COMUM = [
   /^src\/(components|layouts|lib|data|styles)\//,
   /^astro\.config\.mjs$/,
   /^tsconfig\.json$/,
-  /^scripts\/(aeo|module-cache|copy-wasm|install-git-hooks)\.mjs$/,
+  /^scripts\/(aeo|module-cache|copy-wasm|install-git-hooks|adaptador)\.mjs$/,
   /^package-lock\.json$/,
   /^scripts\/ci\/gatilho\.mjs$/,
 ];
