@@ -1,0 +1,67 @@
+name: cf-staging-deploy
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cf-staging-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build Cloudflare
+        run: npm run build:cf
+      - name: Confere conta Cloudflare
+        env:
+          ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CF_WORKERS_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$ACCOUNT_ID" ]; then
+            echo "::error::Configure CLOUDFLARE_ACCOUNT_ID em Actions Variables"
+            exit 1
+          fi
+          if [ -z "$CF_WORKERS_TOKEN" ]; then
+            echo "::error::Configure CF_WORKERS_TOKEN com Workers Scripts:Edit em Actions Secrets"
+            exit 1
+          fi
+      - name: Publica csb-staging
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          SUBDOMAIN: ${{ vars.CF_WORKERS_SUBDOMAIN }}
+        run: |
+          set -euo pipefail
+          npx wrangler deploy --config wrangler.staging.toml 2>&1 | tee "$RUNNER_TEMP/wrangler-staging.log"
+          URL=$(grep -Eo 'https://[^[:space:]]+\.workers\.dev' "$RUNNER_TEMP/wrangler-staging.log" | tail -n 1 | sed 's/[),.]$//' || true)
+          URL="${URL:-https://csb-staging.${SUBDOMAIN:-rubenmarcus-dev}.workers.dev}"
+          echo "STAGING_URL=$URL" >> "$GITHUB_ENV"
+          echo "### Cloudflare staging" >> "$GITHUB_STEP_SUMMARY"
+          echo "URL: $URL" >> "$GITHUB_STEP_SUMMARY"
+      - name: Confere staging vivo
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 30 "$STAGING_URL/" >/dev/null
+          STATUS=$(curl --silent --show-error --location --max-time 30 -o /dev/null -w '%{http_code}' "$STAGING_URL/")
+          [ "$STATUS" = 200 ]
+          echo "curl /: HTTP $STATUS" >> "$GITHUB_STEP_SUMMARY"
+          echo "Segredos de runtime ausentes não bloqueiam este deploy; o app degrada para suas respostas sem configuração."
+      - name: Documenta segredos ainda não instalados
+        run: |
+          echo "::warning::O dono deve instalar no csb-staging: API_PROXY_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e X_PIXEL_TOKEN"

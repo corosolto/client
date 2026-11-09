@@ -44,7 +44,7 @@ campanhas e funil; "olhar rápido" vai ser Umami (self-host no Workers + D1) ou 
 | 0. Cortes na Vercel | preview só quando o site muda (`vercel-ignore.sh` para `VERCEL_ENV=preview`), packs em cache de build, `console.*` por requisição fora | fatura do ciclo seguinte: Build < 60 h, Observability < 1 M eventos | PR #1258 aberto (branch `chore/vercel-custos-fase0`); ver "Fase 0: o que ficou" |
 | 1. Spike | `@astrojs/cloudflare` no lugar de `@astrojs/vercel`; `wrangler.toml`; `_headers`/`_redirects` **gerados** de `vercel.json` por script (uma fonte, régua de paridade); `middleware.js` → middleware do Astro lendo `cf-connecting-ip`; `buildCommand` reproduzido no build do Workers | deploy em `*.workers.dev` com mesmos status/headers que produção em: `/`, `/en`, `/api/geo-lang`, `/api/og/pagina.png`, `/u/<perfil>`, `/mapa`, `/sala/x`, `/sitemap.xml`, `/api/health` (proxy); `check:seo`, `canonical-host-check`, `game-pages-check`, `site-smoke` rodando contra esse host | feito (PR do spike, ver seção "Fase 1: resultado do spike"); `site-smoke` fica para a fase 2 (precisa de preview por PR) |
 | 2. Preview por PR | `cf-preview.yml` filtra PRs que tocam o site, compila com `ADAPTER=cloudflare`, publica `wrangler versions upload` e atualiza o comentário sticky; `smoke-web.yml` coleta `smoke-cf` opcional | PR gera URL `*.workers.dev`, comentário é atualizado sem duplicata e o smoke registra paridade | feito (fase 2b: configurar `CF_API_TOKEN` com Workers Scripts:Edit e a variável `CLOUDFLARE_ACCOUNT_ID`) |
-| 3. Staging em paralelo | `staging.corosolto.com.br` no Workers; `prod-watch` e `smoke:prod` nos dois hosts por 1 semana; diff automático de headers/CSP/rotas | zero divergência | pendente |
+| 3. Staging em paralelo | `csb-staging` em `https://csb-staging.<sub>.workers.dev`, via `cf-staging-deploy.yml`; paridade a cada 6 h e por dispatch com `cf-staging-paridade.yml`; `smoke-cf` aceita `workflow_dispatch` com `host` | durante a semana de observação, divergências novas viram a issue `[cf-staging] paridade`; o artifact JSON de cada run fica ligado no run do Actions | pendente |
 | 4. Virada | CNAME `www` → Workers (DNS já é Cloudflare; reversível em 1 min); Vercel fica 30 dias como rollback; rotacionar `API_PROXY_SECRET` e `SUPABASE_SERVICE_ROLE_KEY` na virada (site e backend no mesmo deploy) | `BASE=https://www.corosolto.com.br npm run smoke:prod` verde; MP e OAuth ok | pendente |
 | 5. Analytics | Umami (Workers + D1) ou Plausible; `@vercel/analytics` sai do `Layout.astro` | eventos no painel | pendente |
 | 6. Desligar | cancelar Vercel; remover `@astrojs/vercel`, `@vercel/functions`, `vercel.json`, `VERCEL_*` dos workflows; `vercel-env-security-check` vira `cf-env-security-check` | repo sem `vercel` fora do CHANGELOG | pendente |
@@ -183,17 +183,39 @@ PRs de fork não publicam preview Cloudflare, pois não recebem segredos no even
 Regra que fica: `.env.example` documenta cada chave; nenhum segredo em `[vars]`; nenhum `PUBLIC_*` com cara
 de token (régua `vercel-env-security-check` → renomear).
 
-## Comandos
+## Fase 3: staging em paralelo
+
+O Worker de staging é publicado por `cf-staging-deploy.yml` como `csb-staging`, sem tocar DNS.
+Enquanto a fase 3 estiver em observação, use o host `https://csb-staging.<sub>.workers.dev`. O
+passo de DNS fica para o dono, depois da semana de paridade:
+
+```text
+CNAME staging.corosolto.com.br → csb-staging.<sub>.workers.dev (proxied)
+```
+
+Como alternativa, o dono pode cadastrar `staging.corosolto.com.br` como custom domain do Worker.
+Não configurar zona, rota ou DNS neste PR.
+
+O dono instala os segredos no Worker, sem colocá-los em `[vars]` nem no GitHub Actions:
 
 ```bash
-# spike local (build com ADAPTER=cloudflare + _headers/_redirects gerados)
-cd worktrees/feat-cloudflare-spike && npm ci && npm run build:cf && npx wrangler dev --config dist/server/wrangler.json
-# perfil de fixture local: node tools/cf/backend-fake.mjs e PUBLIC_API_BASE em .dev.vars (ver cabeçalho do script)
-# publicar o spike (conta rubenmarcus.dev; `npx wrangler login` abre o browser: usar o perfil rubenmarcus.dev do Ego)
-npx wrangler deploy
-# paridade com produção (o script lista rota, status, headers que diferem)
-npm run cf:paridade -- --alvo https://<worker>.workers.dev
+wrangler secret put API_PROXY_SECRET --name csb-staging
+wrangler secret put SUPABASE_URL --name csb-staging
+wrangler secret put SUPABASE_SERVICE_ROLE_KEY --name csb-staging
+wrangler secret put X_PIXEL_TOKEN --name csb-staging
 ```
+
+Sem esses quatro segredos, o primeiro deploy continua válido e o app degrada nas rotas de
+proxy, badge e pixel, como o spike. `PUBLIC_API_BASE` e `RANKING_ON` ficam em `[vars]` e
+reproduzem a configuração do preview/prod.
+
+`cf-staging-paridade.yml` grava `parity.json` como artifact em cada execução. Para ler a
+divergência, abra a issue única `[cf-staging] paridade` com o label `cloudflare` e siga o link
+do run do Actions no corpo; o artifact `cf-staging-paridade-<run_id>` contém o JSON completo.
+A allowlist documenta apenas o CSP `.itch.zone` até a produção acompanhar, `/api/badge` sem
+Supabase e as rotas de proxy sem `API_PROXY_SECRET`; qualquer outra divergência abre ou atualiza
+a issue e reprova o job.
+
 
 ## Decisões tomadas (não reabrir sem o dono)
 
@@ -212,3 +234,4 @@ npm run cf:paridade -- --alvo https://<worker>.workers.dev
 | 2026-11-09 | spike | fase 1: `csb-spike` no ar em workers.dev com 18/19 rotas idênticas à produção; adaptador por `ADAPTER`; `_headers`/`_redirects` gerados; middleware portado; OG/badge/profile-card em resvg-wasm nas duas bordas; `eval:cfparidade` e `cf-paridade-check` | dono mergeia; fase 2 começa pelo item 1 da lista (segredos em runtime) e pelo preview por PR |
 | 2026-11-09 | fase 2 | feito: preview por PR no Workers via `cf-preview.yml`, `wrangler.preview.toml`, comentário sticky `cf-preview` e `smoke-cf` opcional; Vercel continua sendo o smoke principal; run 42606435715 publicou a versão e retornou `HTTP 200` | fase 2b: `CF_WORKERS_TOKEN` dedicado configurado; seguir com smoke/paridade e merge |
 | 2026-11-09 | limpeza-lote2 | lote 2 removeu 9 `tools/eval` órfãos e 59 geradores raiz sem chamadores; arquivou históricos e pastas privadas fora do repo; ajustou os consumidores de `plans/` e `references/` | L2 aguarda PR e merge; arquivos `tools/blender/**` e `tools/fabrica/**` seguem intactos por decisão do dono |
+| 2026-11-09 | fase 3 | staging paralelo preparado: `csb-staging`/`wrangler.staging.toml`, deploy por push em `staging`, paridade a cada 6 h com artifact e issue `[cf-staging] paridade`, allowlist com régua `eval:cfallowlist`, `smoke-cf` aceita `host` por dispatch; DNS ainda não tocado | publicar o primeiro deploy sem segredos, executar o dispatch de paridade e observar uma semana; depois dono faz `CNAME staging.corosolto.com.br → csb-staging.<sub>.workers.dev` proxied ou custom domain |
