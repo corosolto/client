@@ -40,7 +40,9 @@ por `bot.mesh.parts.head`.
 Correção: o bloco foi movido para o FIM de `CharController.update`, depois do
 último overlay e com `updateMatrixWorld(true)` — um único sync por quadro, sem
 pagar CPU dobrada. Contrato (PS1): em CADA update exercitado de idle, locomoção,
-recarga (entrada efetiva reloadK>0.5), emote (_emoteK>0.5) e morte (_deathK>0.3),
+recarga com o clipe autoral `reload_rifle` (pack `extras.glb` carregado antes),
+recarga procedural (módulo com o pack ausente, entrada efetiva reloadK>0.5),
+emote (_emoteK>0.5) e morte (_deathK>0.3),
 a posição mundial do proxy == a posição mundial FINAL do osso Head (< 1e-4 m),
 e FINITA em todos os frames do estado: frame com proxy não finito é contado por
 estado e reprova sozinho — amostra finita posterior NÃO apaga frame inválido
@@ -48,7 +50,10 @@ anterior (máximo finito é conservado separadamente do contador). A decisão é
 pelo DESVIO MÁXIMO por update do estado, não só pelo último frame — sync
 intermitente (tela a cada 2 updates) é reprovado (idle ~0,4 mm até 8,6 cm na
 morte). O fonte antecedente (sync antes da sombra/overlays) reprova na ordem
-de 4–12 cm em reload/emote/death; `sync-mudo` reprova nos cinco.
+de 4–12 cm em reload-procedural/emote/death; `sync-mudo` reprova nos seis.
+
+RC1: na recarga com o pack, os 40 quadros ficam em `reload_rifle`, o peso do
+clipe passa de 0,5 e reloadK fica 0 (o overlay procedural só existe sem clipe).
 
 ## Mutantes (`--mutante=…`, MESMAS aceitações do nominal)
 
@@ -60,16 +65,18 @@ reprova, não "pega").
 - `palma-local` — volta a palma a `.length()` local (o antecedente): reprova
   WP1a e WP2 nos dois rigs (raio ~100×, clamp mudo → `null`).
 - `sync-antecipado` — devolve o sync para antes dos overlays (o antecedente):
-  reprova PS1 em reload/emote/death.
+  reprova PS1 em reload-procedural/emote/death. Com o clipe, o mixer move o
+  tronco antes do ponto antigo do sync, então [reload] continua verde.
 - `nan-primeiro` — NaN por UM único frame após o warm-up do build (o
   `buildCharacterModel` consome 10 updates ~0,33 s antes da medição; o frame
-  transitório cai dentro da janela medida): reprova PS1 nos cinco estados
+  transitório cai dentro da janela medida): reprova PS1 nos seis estados
   pelo contador de frames não finitos.
-- `nan-sempre` — proxy NaN em todo update: reprova PS1 nos cinco estados;
+- `nan-sempre` — proxy NaN em todo update: reprova PS1 nos seis estados;
   garante que aceitador não disfarça estado inválido como erro zero.
-- `sync-mudo` — remove o sync: reprova PS1 nos cinco estados.
+- `sync-mudo` — remove o sync: reprova PS1 nos seis estados.
 - `sync-alternado` — físico: sync só em updates pares; morto pelo desvio
-  máximo por update, nos cinco estados.
+  máximo por update, nos seis estados.
+- `reload-sem-clipe` — `_startReloadClip` nunca toca o clipe: reprova só RC1.
 
 Exits: 0 nominal verde / mutante pego no conjunto exato · 1 nominal vermelho
 ou conjunto fora do exato · 2 CLI inválida (duplicada, sufixo, desconhecida,

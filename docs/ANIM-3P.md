@@ -255,8 +255,21 @@ punho dominante com o clipe-base. Residual após a 3ª rodada: `knife_stab` aind
 no coronel (teto 2,5×), sem vantagem do retarget individual. Não foi afrouxado teto nem criado
 pack específico para esconder esse caso.
 
-A régua runtime é `npm run eval:estados3p` (EX1–EX10, 14 casos), incluída no `check:fast`. Ela usa os GLBs e
+A régua runtime é `npm run eval:estados3p` (EX1–EX10, 15 casos), incluída no `check:fast`. Ela usa os GLBs e
 `AnimationMixer` reais e prova: uma só requisição lazy, strafe e diagonal, pernas idênticas ao
 controle durante recarga andando, quatro direções + cabeça, holster→draw, faca, granada 1,05 s,
-vitória/derrota, LOD/fallback e os call sites mínimos em `game.js`. Mutantes: `strafe-mudo`,
-`reload-perna-congelada`, `hit-sem-direcao`, `saque-mudo`, `faca-usa-rifle`, `vitoria-muda`.
+vitória/derrota (e que a vitória segura 30 quadros parado, sem o idle voltar por cima), LOD/fallback
+e os call sites mínimos em `game.js`. Mutantes: `strafe-mudo`, `reload-perna-congelada`,
+`hit-sem-direcao`, `saque-mudo`, `faca-usa-rifle`, `vitoria-muda`, `cerimonia-vira-idle`.
+
+Caminho de clipe e fallback procedural são medidos separados, nunca como alternativa aceita nem
+por flag forçada. Em `eval:tpanim3p`, AN1/AN2/AN6 rodam num corpo de outra instância de
+`glbchars.js` (`?sempack=1`, pack nunca resolvido no laço síncrono; a cláusula exige 0 quadro com
+clipe) e AN12/AN13 medem `reload_*` e `hit_*` com o pack carregado num corpo em LOD 0 (13 partidas
+medidas: recarga leva a mão 21,4–38,5 cm e a cabeça 3,6–45,6 cm; hit leva a cabeça 4,8–49,6 cm; tudo
+volta a ≤0,27 cm). Mutantes `reload-sem-clipe` e
+`hit-sem-clipe`. `eval:tp-world-contract` separa `[reload]` (clipe, RC1 com reloadK 0) de
+`[reload-procedural]` (módulo com `extras.glb` ausente). `eval:mprecuo` e `eval:tpbackpedal`
+exigem o clipe dominante autoral com o pack (`run_back`, `strafe_*`) e cobram o fallback sem pack
+em cláusulas próprias; o remoto do MP recebe a lateral do segmento com o sinal do jogador local
+(`strafe_right` anda para −X local do corpo, medido pelo deslize do pé de apoio).

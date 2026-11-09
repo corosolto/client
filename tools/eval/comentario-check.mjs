@@ -41,7 +41,7 @@ const ZONAS = /^(public\/js\/|src\/)/;
 /* Marca de inglês só conta quando NENHUMA palavra portuguesa aparece: comentário
    misto ("o cache do fallback") é normal e não é violação de idioma. `a` e `no`
    ficam de FORA de propósito: são palavras inglesas também, e bastavam para
-   desligar a cláusula num comentário todo em inglês (CodeRabbit, PR #209). */
+   desligar a cláusula num comentário todo em inglês (PR #209). */
 const INGLES = /\b(the|this|that|when|which|because|should|would|with|from|does|has|are|is)\b/i;
 const PORTUGUES = /\b(o|os|as|de|do|da|que|não|é|por|para|com|quando|porque|sem|já|pra|na|um|uma|em|se)\b/i;
 
@@ -114,7 +114,7 @@ if (mutante === 'cauda-longa') {
 }
 if (mutante === 'comentario-ingles') {
   /* O ` a ` no meio é o furo do regex de português: com `a` na lista de marcas
-     PT, esta linha passava verde (CodeRabbit, PR #209). */
+     PT, esta linha passava verde (PR #209). */
   texto += '\n+++ b/src/mutante.ts\n@@ -0,0 +1,1 @@\n+// this is a comment written in english and should be flagged\n';
 }
 

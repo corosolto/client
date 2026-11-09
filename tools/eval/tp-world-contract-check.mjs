@@ -6,7 +6,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const args = process.argv.slice(2);
-const VALID = ['palma-local', 'sync-antecipado', 'sync-mudo', 'sync-alternado', 'nan-primeiro', 'nan-sempre'];
+const VALID = ['palma-local', 'sync-antecipado', 'sync-mudo', 'sync-alternado', 'nan-primeiro', 'nan-sempre', 'reload-sem-clipe'];
 let MUT = '';
 if (args.length > 1 || args.filter((a) => a.startsWith('--mutante=')).length > 1) {
   console.error('argumento inválido: use no máximo uma opção --mutante=<variante>'); process.exit(2);
@@ -104,26 +104,35 @@ const SYNC_ANTIGO = `    if (this.headBone) {
     }
     // Sombra de contato: reage ao estado do corpo. No pulo ela ABRE e desbota (penumbra`;
 const ANCORA_SOMBRA = '    // Sombra de contato: reage ao estado do corpo. No pulo ela ABRE e desbota (penumbra';
+const CLIPE_RECARGA = 'this._reloadClip = this._playUpper(';
+const PACK_EXTRAS = "assetUrl('models/anims/extras.glb')";
 
 function caminhosDaVariante(mut) {
   let handikPath = path.join(ROOT, 'public/js/handik.js');
   let glbPath = path.join(ROOT, 'public/js/glbchars.js');
+  const trocas = {
+    'sync-antecipado': [[SYNC_FINAL, ''], [ANCORA_SOMBRA, SYNC_ANTIGO]],
+    'sync-mudo': [[SYNC_FINAL, '']],
+    'sync-alternado': [[SYNC_FINAL, SYNC_ALTERNADO]],
+    'nan-primeiro': [[SYNC_FINAL, SYNC_NAN_1]],
+    'nan-sempre': [[SYNC_FINAL, SYNC_NAN_ALL]],
+    'reload-sem-clipe': [[CLIPE_RECARGA, 'this._reloadClip = false && this._playUpper(']],
+  }[mut] || [];
   if (mut === 'palma-local') handikPath = tmpMod('handik', srcHandik, [[NOVO_PALMA, VELHO_PALMA]]);
-  if (mut === 'sync-antecipado') glbPath = tmpMod('glbchars', srcGlb, [[SYNC_FINAL, ''], [ANCORA_SOMBRA, SYNC_ANTIGO]]);
-  if (mut === 'sync-mudo') glbPath = tmpMod('glbchars', srcGlb, [[SYNC_FINAL, '']]);
-  if (mut === 'sync-alternado') glbPath = tmpMod('glbchars', srcGlb, [[SYNC_FINAL, SYNC_ALTERNADO]]);
-  if (mut === 'nan-primeiro') glbPath = tmpMod('glbchars', srcGlb, [[SYNC_FINAL, SYNC_NAN_1]]);
-  if (mut === 'nan-sempre') glbPath = tmpMod('glbchars', srcGlb, [[SYNC_FINAL, SYNC_NAN_ALL]]);
-  return { handikPath, glbPath };
+  if (trocas.length) glbPath = tmpMod('glbchars', srcGlb, trocas);
+  // Mesma variante com o pack extras ausente: o fallback procedural de produção, sem forçar flag.
+  const glbSemPackPath = tmpMod(`glbchars-sempack-${mut || 'nominal'}`, srcGlb, [...trocas, [PACK_EXTRAS, "assetUrl('models/anims/extras-ausente.glb')"]]);
+  return { handikPath, glbPath, glbSemPackPath };
 }
 
 /* ── rodar uma variante (nominal usa os fontes reais) ────────────────────── */
 async function rodarVariante(mut) {
   const clausulas = []; // {id, ok, motivo}
   const chk = (id, ok, motivo) => clausulas.push({ id, ok, motivo: ok ? '' : motivo });
-  const { handikPath, glbPath } = caminhosDaVariante(mut);
+  const { handikPath, glbPath, glbSemPackPath } = caminhosDaVariante(mut);
   const { solveCCDIK } = await import(pathToFileURL(handikPath).href);
   const G = await import(pathToFileURL(glbPath).href);
+  const GSemPack = await import(pathToFileURL(glbSemPackPath).href);
   const em = await import(path.join(ROOT, 'public/js/emotes.js'));
   G.setEmoteDriver({ pose: em.poseEmote, duracao: em.emoteDuracao, laco: em.emoteLaco });
 
@@ -203,6 +212,12 @@ async function rodarVariante(mut) {
   /* ── PS1: proxy == Head FINAL em CADA update exercitado, por estado ───── */
   try {
     if (!G.hasModel('mandrake')) throw new Error('GLB mandrake ausente');
+    await GSemPack.preloadCharacterAssets(['mandrake'], { weapons: ['ak'] });
+    // O pack extras é lazy: carrega antes dos estados para a recarga medir o clipe de produção.
+    const carga = G.buildCharacterModel(CHARACTERS.find((c) => c.id === 'mandrake'), { weaponId: 'ak' }).ctrl;
+    carga._requestExtras();
+    for (let i = 0; i < 300 && !carga.actions.reload_rifle; i++) await new Promise((r) => setTimeout(r, 10));
+    if (!carga.actions.reload_rifle) throw new Error('extras.glb não registrou reload_rifle');
     const erroProxy = (ctrl, group) => {
       group.updateMatrixWorld(true);
       const proxy = group.localToWorld(ctrl.head.position.clone());
@@ -211,7 +226,11 @@ async function rodarVariante(mut) {
     const estados = {
       idle: (c) => { for (let f = 0; f < 30; f++) { c.update(1 / 60, 0, false, 0); mede(c); } },
       locomotion: (c) => { for (let f = 0; f < 60; f++) { c.update(1 / 60, 1, true, 3.0); mede(c); } },
-      reload: (c) => { c.reload(1.2); c._reloadClip = false; let fase = false; for (let f = 0; f < 40; f++) { c.update(1 / 60, 0, false, 0); if (c.reloadK > 0.5) fase = true; mede(c); } if (!fase) throw new Error('reloadK nunca passou de 0.5'); },
+      // Caminho de produção com o pack: o clipe reload_rifle segura o tronco e reloadK fica 0
+      // (o overlay procedural só entra sem clipe). RC1 cobra isso quadro a quadro.
+      reload: (c) => { c.reload(1.2); const r = c._tpWorldRecarga = { foraDoClipe: 0, kProcedural: 0, fase: false }; for (let f = 0; f < 40; f++) { c.update(1 / 60, 0, false, 0); if (!c._reloadClip || c._upperName !== 'reload_rifle') r.foraDoClipe++; if (c.reloadK !== 0) r.kProcedural++; if ((c._upperAction?.getEffectiveWeight() || 0) > 0.5) r.fase = true; mede(c); } },
+      // Fallback de produção sem o pack (módulo com extras.glb ausente): curva procedural.
+      'reload-procedural': (c) => { c.reload(1.2); let fase = false; for (let f = 0; f < 40; f++) { c.update(1 / 60, 0, false, 0); if (c.reloadK > 0.5) fase = true; mede(c); } if (!fase) throw new Error('reloadK nunca passou de 0.5 sem o pack'); },
       emote: (c) => { if (!c.emote('passinho')) throw new Error('emote recusado'); let fase = false; for (let f = 0; f < 40; f++) { c.update(1 / 60, 0, false, 0); if (c._emoteK > 0.5) fase = true; mede(c); } if (!fase) throw new Error('_emoteK nunca passou de 0.5'); },
       death: (c) => { c.die(new THREE.Vector3(1, 0, 0.5)); let fase = false; for (let f = 0; f < 60; f++) { c.update(1 / 60, 0, false, 0); if ((c._deathK || 0) > 0.3) fase = true; mede(c); } if (!fase) throw new Error('_deathK nunca passou de 0.3'); },
     };
@@ -221,7 +240,7 @@ async function rodarVariante(mut) {
       if (e > c._tpWorldMaxErro) c._tpWorldMaxErro = e;
     }
     for (const [nome, roda] of Object.entries(estados)) {
-      const char = G.buildCharacterModel(CHARACTERS.find((c) => c.id === 'mandrake'), { weaponId: 'ak' });
+      const char = (nome === 'reload-procedural' ? GSemPack : G).buildCharacterModel(CHARACTERS.find((c) => c.id === 'mandrake'), { weaponId: 'ak' });
       char.ctrl._tpWorldMaxErro = 0;
       char.ctrl._tpWorldNaoFinito = 0;
       roda(char.ctrl);
@@ -230,6 +249,9 @@ async function rodarVariante(mut) {
       chk(`PS1 proxy==Head final [${nome}]`, naoFinito === 0 && max < 1e-4,
         naoFinito > 0 ? `${naoFinito} frame(s) com posição não finita do proxy em ${nome} — estado inválido, não erro zero`
           : `desvio máximo por update ${max.toFixed(4)} m em todos os frames do estado (tol 1e-4)`);
+      const r = char.ctrl._tpWorldRecarga;
+      if (r) chk('RC1 recarga toca o clipe autoral', r.foraDoClipe === 0 && r.kProcedural === 0 && r.fase,
+        `${r.foraDoClipe}/40 quadro(s) fora de reload_rifle, ${r.kProcedural} com reloadK procedural, peso do clipe ${r.fase ? '>' : '≤'} 0,5`);
     }
   } catch (e) {
     clausulas.push({ id: 'PS1/ERRO', ok: false, motivo: `infra: ${e.message}` });
@@ -244,14 +266,18 @@ function classificar(clausulas) {
   return { ERRO, VERM };
 }
 
-/* conjunto EXATO de cláusulas vermelhas esperado por variante */
+/* conjunto EXATO de cláusulas vermelhas esperado por variante. `sync-antecipado` não pega
+   [reload] com o clipe: o mixer move o tronco ANTES do ponto antigo do sync; quem mexe nos
+   ancestrais depois dele é o overlay procedural, medido em [reload-procedural]. */
+const PS1_TODOS = ['idle', 'locomotion', 'reload', 'reload-procedural', 'emote', 'death'].map((e) => `PS1 proxy==Head final [${e}]`);
 const EXPECTADO = {
-  'nan-primeiro': ['PS1 proxy==Head final [idle]', 'PS1 proxy==Head final [locomotion]', 'PS1 proxy==Head final [reload]', 'PS1 proxy==Head final [emote]', 'PS1 proxy==Head final [death]'],
-  'nan-sempre': ['PS1 proxy==Head final [idle]', 'PS1 proxy==Head final [locomotion]', 'PS1 proxy==Head final [reload]', 'PS1 proxy==Head final [emote]', 'PS1 proxy==Head final [death]'],
+  'nan-primeiro': PS1_TODOS,
+  'nan-sempre': PS1_TODOS,
   'palma-local': ['WP1a decisão de clamp igual', 'WP2 mandrake raio na casa do braço', 'WP2 pagodeiro raio na casa do braço'],
-  'sync-antecipado': ['PS1 proxy==Head final [reload]', 'PS1 proxy==Head final [emote]', 'PS1 proxy==Head final [death]'],
-  'sync-mudo': ['PS1 proxy==Head final [idle]', 'PS1 proxy==Head final [locomotion]', 'PS1 proxy==Head final [reload]', 'PS1 proxy==Head final [emote]', 'PS1 proxy==Head final [death]'],
-  'sync-alternado': ['PS1 proxy==Head final [idle]', 'PS1 proxy==Head final [locomotion]', 'PS1 proxy==Head final [reload]', 'PS1 proxy==Head final [emote]', 'PS1 proxy==Head final [death]'],
+  'sync-antecipado': ['PS1 proxy==Head final [reload-procedural]', 'PS1 proxy==Head final [emote]', 'PS1 proxy==Head final [death]'],
+  'sync-mudo': PS1_TODOS,
+  'sync-alternado': PS1_TODOS,
+  'reload-sem-clipe': ['RC1 recarga toca o clipe autoral'],
 };
 
 const imprimirs = (rotulo, clausulas) => {

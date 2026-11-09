@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /* Contrato mapa → soundscape. Um loop só é carregável quando publica `src` string;
  * `path` parece válido no mapa, mas vira fetch(undefined) no consumidor. */
+import assert from 'node:assert/strict';
+import http from 'node:http';
 import https from 'node:https';
 import { readFileSync } from 'node:fs';
 import { THREE, MAPS, initTextures } from './harness.mjs';
@@ -93,8 +95,10 @@ if (!piscinaVista) invalidos.push({ mapa: 'piscina_treta', indice: -2, motivo: '
    e a entrada resolvida tem de existir na release que o build realmente baixa —
    conferida no diretório central do zip por HTTP Range, sem baixar os 225 MB.
    Falha de rede aqui é REPROVAÇÃO, não passagem silenciosa (o HEAD antigo tratava
-   timeout como presença). Src de outra família (fora de `audio/ambiente/`) segue
-   no HEAD da origem de sempre. Asset novo que o código nomear sem estar no
+   timeout como presença). Timeout, erro de conexão e HTTP 408/429/5xx têm no
+   máximo três tentativas com backoff curto; 404, asset ausente e zip inválido
+   continuam falhando imediatamente. Src de outra família (fora de `audio/ambiente/`)
+   segue no HEAD da origem de sempre. Asset novo que o código nomear sem estar no
    catálogo reprova — a dívida de publicação acabou com o v9. */
 const PACK_SRC = readFileSync('scripts/fetch-audio.sh', 'utf8')
   .match(/https:\/\/github\.com\/corosolto\/client\/releases\/download\/(audio-pack-v\d+)\/audio-pack\.zip/)?.[0];
@@ -106,23 +110,121 @@ if (!PACK_SRC) {
    a tabela dá os nomes. Zip64 fora de questão para este pack (<4 GB, <65535).
    Baixa por `node:https` (o harness desliga o `fetch` global das réguas) e segue
    o redirect da release manualmente, preservando o Range. */
-function pedacoRange(url, range, saltos = 0) {
+const MAX_TENTATIVAS_SC3 = 3;
+const ERROS_CONEXAO_SC3 = new Set([
+  'ECONNABORTED', 'ECONNREFUSED', 'ECONNRESET', 'EAI_AGAIN', 'EHOSTUNREACH',
+  'ENETUNREACH', 'ENOTFOUND', 'EPIPE', 'ETIMEDOUT', 'ERR_SOCKET_CONNECTION_TIMEOUT',
+]);
+const httpRepetivelSc3 = (status) => status === 408 || status === 429 || (status >= 500 && status <= 599);
+const erroRepetivelSc3 = (error) => httpRepetivelSc3(Number(error?.statusCode)) || ERROS_CONEXAO_SC3.has(error?.code);
+const backoffSc3 = (tentativa) => new Promise((resolve) => setTimeout(resolve, tentativa * 100));
+function erroHttpSc3(status, detalhe) {
+  const error = new Error(`HTTP ${status} para ${detalhe}`);
+  error.statusCode = status;
+  return error;
+}
+async function comRetrySc3(operacao) {
+  for (let tentativa = 1; tentativa <= MAX_TENTATIVAS_SC3; tentativa++) {
+    try { return await operacao(); }
+    catch (error) {
+      if (tentativa === MAX_TENTATIVAS_SC3 || !erroRepetivelSc3(error)) throw error;
+      await backoffSc3(tentativa);
+    }
+  }
+  throw new Error('retry SC3 terminou sem veredito');
+}
+function transporteSc3(url) {
+  return new URL(url).protocol === 'http:' ? http : https;
+}
+
+function pedacoRangeUmaVez(url, range, saltos = 0) {
   return new Promise((resolve, reject) => {
     if (saltos > 5) return reject(new Error('muitos redirecionamentos na release do pack'));
-    const pedido = https.request(new URL(url), { method: 'GET', headers: { Range: range } }, (res) => {
+    const pedido = transporteSc3(url).request(new URL(url), { method: 'GET', headers: { Range: range } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         res.resume();
-        return resolve(pedacoRange(res.headers.location, range, saltos + 1));
+        return resolve(pedacoRangeUmaVez(res.headers.location, range, saltos + 1));
       }
-      if (res.statusCode !== 206) { res.resume(); return reject(new Error(`HTTP ${res.statusCode} para Range ${range}`)); }
+      if (res.statusCode !== 206) { res.resume(); return reject(erroHttpSc3(res.statusCode, `Range ${range}`)); }
       const pedacos = [];
       res.on('data', (c) => pedacos.push(c));
       res.on('end', () => resolve({ buf: Buffer.concat(pedacos), tamanhoTotal: Number(res.headers['content-range']?.split('/')[1] || 0) }));
     });
-    pedido.setTimeout(15_000, () => pedido.destroy(new Error('timeout lendo o zip do pack')));
+    pedido.setTimeout(15_000, () => {
+      const error = new Error('timeout lendo o zip do pack');
+      error.code = 'ETIMEDOUT';
+      pedido.destroy(error);
+    });
     pedido.on('error', reject);
     pedido.end();
   });
+}
+
+async function pedacoRange(url, range) {
+  return comRetrySc3(() => pedacoRangeUmaVez(url, range));
+}
+
+async function statusOrigem(src, origem) {
+  const url = new URL(src.replace(/^\//, ''), origem.endsWith('/') ? origem : origem + '/');
+  try {
+    return await comRetrySc3(async () => {
+      const status = await new Promise((resolve, reject) => {
+        const pedido = transporteSc3(url).request(url, { method: 'HEAD' }, (res) => { res.resume(); resolve(res.statusCode); });
+        pedido.setTimeout(10_000, () => {
+          const error = new Error('timeout no HEAD do asset');
+          error.code = 'ETIMEDOUT';
+          pedido.destroy(error);
+        });
+        pedido.on('error', reject);
+        pedido.end();
+      });
+      if (httpRepetivelSc3(status)) throw erroHttpSc3(status, `HEAD ${src}`);
+      return status;
+    });
+  } catch (error) {
+    return Number(error.statusCode) || 0;
+  }
+}
+
+/* Prova local e determinística do retry: duas falhas transitórias antes do 206;
+   o 404 é contrato e precisa parar na primeira resposta. */
+async function provarRetrySc3() {
+  let transitórias = 0;
+  let ausentes = 0;
+  const servidor = http.createServer((req, res) => {
+    if (req.url === '/transitorio') {
+      transitórias++;
+      if (transitórias < 3) {
+        res.writeHead(transitórias === 1 ? 503 : 504);
+        res.end();
+        return;
+      }
+      res.writeHead(206, { 'Content-Range': 'bytes 0-0/1', 'Content-Length': '1' });
+      res.end('x');
+      return;
+    }
+    if (req.url === '/ausente') {
+      ausentes++;
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+    res.writeHead(400);
+    res.end();
+  });
+  await new Promise((resolve) => servidor.listen(0, '127.0.0.1', resolve));
+  const endereco = servidor.address();
+  const base = `http://127.0.0.1:${endereco.port}`;
+  try {
+    const resposta = await pedacoRange(`${base}/transitorio`, 'bytes=0-0');
+    assert.equal(resposta.buf.toString(), 'x');
+    assert.equal(resposta.tamanhoTotal, 1);
+    assert.equal(transitórias, 3, '503/504 precisam parar no terceiro 206');
+    await assert.rejects(pedacoRange(`${base}/ausente`, 'bytes=0-0'), /HTTP 404/);
+    assert.equal(ausentes, 1, '404 não pode tentar de novo');
+  } finally {
+    await new Promise((resolve) => servidor.close(resolve));
+  }
 }
 
 async function entradasDoPack(url) {
@@ -149,6 +251,7 @@ async function entradasDoPack(url) {
 }
 
 if (!MUTANTE || MUTANTE === 'asset-ausente') {
+  if (!MUTANTE) await provarRetrySc3();
   const ORIGEM = process.env.ASSET_ORIGIN || 'https://www.corosolto.com.br';
   const alvos = [...srcsUnicos, ...Object.values(AMB_LOOPS)];
   for (const pools of Object.values(BIOME_SHOTS)) for (const pool of pools) alvos.push(...pool.srcs);
@@ -175,11 +278,7 @@ if (!MUTANTE || MUTANTE === 'asset-ausente') {
       ausentesPack.add(`${src} fora do catálogo do pack (ambiente-pack.mjs)`);
       continue;
     }
-    const status = await new Promise((res) => {
-      const pedido = https.request(new URL(src.replace(/^\//, ''), ORIGEM.endsWith('/') ? ORIGEM : ORIGEM + '/'), { method: 'HEAD' }, (r) => res(r.statusCode));
-      pedido.setTimeout(10_000, () => { pedido.destroy(); res(0); });
-      pedido.on('error', () => res(0)); pedido.end();
-    });
+    const status = await statusOrigem(src, ORIGEM);
     if (status >= 400 || status === 0) ausentesOrigem.push(`${src} (HTTP ${status})`);
   }
   if (MUTANTE === 'asset-ausente') {
@@ -217,3 +316,4 @@ if (MUTANTE) {
 console.log('  SC1 todos os loops publicam src string e posição XYZ finita — PASSA');
 console.log(`  SC2 consumidor real atualizou ${loopsConsumidos} loops com AudioParams finitos (fetch/decode locais) — PASSA`);
 console.log(`  SC3 pack v9: todo src de ambiente do código resolve e existe na release do pack (nomes binários; HEAD na origem só para famílias fora do catálogo) — PASSA`);
+console.log('  SC3 retry: 503/504 duas vezes antes do 206 e 404 sem nova tentativa — PASSA');

@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mutant = process.argv.find((x) => x.startsWith('--mutante='))?.split('=')[1] || '';
-const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'faca-usa-rifle', 'vitoria-muda'];
+const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle'];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
   for (const kind of ['', ...mutants]) {
@@ -57,6 +57,7 @@ if (mutant === 'hit-sem-direcao') once("return `hit_${quadrante}`;", "return 'hi
 if (mutant === 'saque-mudo') once("this._playUpper(`draw_${this.oneHanded ? 'pistol' : 'rifle'}`, 0.65);", "this._playUpper('estado_inexistente', 0.65);");
 if (mutant === 'faca-usa-rifle') once("this._playUpper('knife_stab'", "this._playUpper('shoot'");
 if (mutant === 'vitoria-muda') once("this._to(nome);", "this._to('idle');");
+if (mutant === 'cerimonia-vira-idle') once("if (/^(victory|defeat)$/.test(this.curName || '')) {", 'if (false) {');
 source = source.replace(/from (['"])([^'"\n]+)\1/g, (all, quote, spec) => {
   const file = spec === 'three' ? path.join(root, 'public/vendor/three.module.js')
     : spec.startsWith('three/addons/') ? path.join(root, 'public/vendor/addons', spec.slice(13))
@@ -145,6 +146,14 @@ check('EX6-faca', () => {
 });
 check('EX7-granada', () => { a.ctrl.grenade(); assert.equal(a.ctrl._upperName, 'grenade_throw'); assert.equal(a.ctrl._upperDur, 1.05); });
 check('EX8-cerimonia', () => { a.ctrl.ceremony(true); assert.equal(a.ctrl.curName, 'victory'); a.ctrl.ceremony(false); assert.equal(a.ctrl.curName, 'defeat'); a.ctrl.revive(); step(a, 30, 1); assert.ok(!/^(victory|defeat)$/.test(a.ctrl.curName)); });
+check('EX8b-cerimonia-segura-parado', () => {
+  // _endRound chama ceremony() e o próximo update é o de quem está parado (moving 0).
+  const c = body(); c.ctrl.ceremony(true); step(c, 30, 0);
+  assert.equal(c.ctrl.curName, 'victory');
+  assert.equal(c.ctrl.cur, c.ctrl.actions.victory);
+  assert.ok(c.ctrl.actions.victory.getEffectiveWeight() > 0.99, `peso da vitória ${c.ctrl.actions.victory.getEffectiveWeight()}`);
+  assert.ok(c.ctrl.actions.idle.getEffectiveWeight() < 0.01, 'idle voltou por cima da cerimônia');
+});
 check('EX9-lod-fallback', () => {
   const l = body(); l.ctrl.lod = 2; l.ctrl.reload(1); step(l, 2); assert.equal(l.ctrl._upperName, null);
 });

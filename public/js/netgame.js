@@ -822,14 +822,35 @@ class Netcode {
   }
 
   // Voz de um combatente remoto (rádio ao avistar / comemoração de abate) — é o que devolve o
-  // "papo" dos personagens ao multiplayer.
+  // "papo" dos personagens ao multiplayer. Rádio segue a régua do `_botCall` do single.
   voice(ent, kind) {
-    const fac = this.game._voiceKey(ent.team);
+    const game = this.game, p = game.player;
+    if (kind === 'radio') {
+      if (!this.espectador && ent.pos && p?.pos && ent.pos.distanceTo(p.pos) > 55) return;
+      const mine = !this.espectador && ent.team === p.team;
+      if (!mine && Math.random() < 0.6) return;
+      this._radioLog(ent, mine);
+    }
+    const fac = game._voiceKey(ent.team);
     try {
       this.game.sfx.characterVoice(ent.def?.id, kind, {
         fallbackFaction: fac, interrupt: kind === 'radio',
       });
     } catch { /* ctx mudo */ }
+  }
+  _radioLog(ent, mine) {
+    const radioLog = this.game.el?.radioLog;
+    if (!radioLog) return;
+    const lines = mine
+      ? ['Contato!', 'Tô vendo um aqui!', 'Inimigo na minha frente!', 'Cobre eu que eu vou!']
+      : ['Achei um!', 'Tá aqui, ó!'];
+    const log = document.createElement('div');
+    log.className = 'radio-line';
+    log.style.opacity = mine ? '1' : '0.75';
+    log.textContent = `${ent.name} (RÁDIO): ${lines[(Math.random() * lines.length) | 0]}`;
+    radioLog.appendChild(log);
+    setTimeout(() => log.remove(), 3600);
+    while (radioLog.children.length > 3) radioLog.firstChild.remove();
   }
 
   // Tiro posicional de um remoto: som atenuado por distância, com pan pelo lado da câmera, e
@@ -996,6 +1017,9 @@ class Netcode {
       const spd = Math.min(6, b._netSpd || 0);
       const fwdYaw = segYaw == null ? corpoYaw : (b._netBot === false ? segYaw + Math.PI : segYaw);
       const fwd = vx * Math.sin(fwdYaw) + vz * Math.cos(fwdYaw);
+      // Lateral à DIREITA do corpo, mesmo sinal do jogador local (game.js): strafe_right
+      // desloca para -X local. Sem isto o remoto de lado nunca escolhe o strafe autoral.
+      const lat = vz * Math.sin(fwdYaw) - vx * Math.cos(fwdYaw);
       if (b.mesh.isGLB) {
         // update(dt, moving, hasTarget, speed, back): a velocidade REAL vai no 4º argumento —
         // com speed=0 o clipe rodava a 0,45× e o boneco deslizava (BUG-113).
@@ -1004,7 +1028,7 @@ class Netcode {
         const mMantle = Number.isFinite(b.mantleF) && b.mantleF > 0 && b.mantleF < 1;
         b.mesh.ctrl.setAr?.(mMantle);
         b.mesh.ctrl.setMantle?.(mMantle ? b.mantleF : null);
-        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25);
+        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25, lat);
       } else poseCharacter(b.mesh.parts, spd, 0, game.time);
     } else {
       b.deadT = (b.deadT || 0) + dt; b._deadShown = true;
