@@ -54,7 +54,7 @@ campanhas e funil; "olhar rápido" vai ser Umami (self-host no Workers + D1) ou 
 - `scripts/ci/vercel-ignore.sh`, ramo preview: builda só se `git diff --name-only $VERCEL_GIT_PREVIOUS_SHA..HEAD`
   toca `src/`, `public/`, `vercel.json`, `package*.json`, `astro.config.mjs`, `middleware.js`, `scripts/fetch-*`,
   `scripts/copy-wasm.mjs`, `scripts/prune-dist.mjs`, `scripts/aeo.mjs`, `tools/gen-asset-rev.mjs`,
-  `tools/viewmodels/prepare_precision_preview.mjs`, `tools/audio/`, `tools/strip-decal-bg.mjs` ou `CHANGELOG.md`.
+  `tools/cf/`, `tools/viewmodels/prepare_precision_preview.mjs`, `tools/audio/`, `tools/strip-decal-bg.mjs` ou `CHANGELOG.md`.
   `staging`, `main` e `lote-*` buildam sempre. Sem `VERCEL_GIT_PREVIOUS_SHA` (primeiro push da branch) ou com o
   SHA fora do clone raso da Vercel (`--depth=10`): builda. O script só sai 0 ou 1; qualquer outro código a Vercel
   trata como deploy falho. Produção não mudou (só `chore(release):`). O preview de PR que o bot comenta vem do
@@ -140,8 +140,12 @@ O que as fases 2–4 têm que tratar (lista fechada, achada no spike):
 O workflow `.github/workflows/cf-preview.yml` roda em `pull_request`, mas preserva o check visível
 mesmo quando o diff não toca o site: o job `decide` aplica o mesmo conjunto de caminhos de
 `scripts/ci/vercel-ignore.sh` e o job de publicação fica pulado. Para PRs do próprio repositório,
-ele faz `npm ci`, `npm run build:cf` e `npx wrangler versions upload --config wrangler.preview.toml
---name csb-preview`. O Wrangler devolve uma URL de versão, por exemplo
+o job `compile` faz `npm ci` e `npm run build:cf` num runner descartável sem segredos e exporta só
+`dist`. O job `preview` não faz checkout do head: baixa `dist` como dados, instala Wrangler 4.158.0
+sem credenciais fora do workspace e publica pelo binário absoluto. `wrangler.preview.toml` e
+`scripts/ci/cf_preview_comment.py` vêm de um checkout sparse do `base.sha`; o token Cloudflare fica
+restrito ao upload e o token de escrita no PR ao comentário. Assim, executáveis, configuração e
+scripts controlados pelo PR nunca entram no job tokenizado. O comentário e o smoke aceitam a URL somente de `github-actions[bot]`, com SHA e URL no mesmo corpo, ignorando marcadores forjados; `tools/cf/` entra no gatilho. O Wrangler devolve uma URL de versão, por exemplo
 `https://<version>-csb-preview.<subdominio>.workers.dev`.
 
 `scripts/ci/cf_preview_comment.py` mantém um único comentário com o marcador

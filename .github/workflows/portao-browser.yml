@@ -276,6 +276,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run eval:perfilmobile:browser
 
+      - name: eval:bots-perf:browser (12 bots, CPU 4× e mutantes)
+        if: ${{ !cancelled() }}
+        run: npm run eval:bots-perf:browser
+
       - name: Controles mobile sem disparo involuntário e câmera por toque
         if: ${{ !cancelled() }}
         run: npm run eval:toquecontroles
