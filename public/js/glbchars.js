@@ -231,45 +231,256 @@ function upperClip(name) {
   }
   return _upperClips.get(name);
 }
-/* EMOTES DE CAPTURA: pack único lazy no esqueleto de referência. A translação do Hips é
-   reescalada pela altura de repouso de cada corpo (pés no chão); medidas: docs/EMOTES-BR.md. */
+/* EMOTES DE CAPTURA: pack único lazy no esqueleto de referência, RETARGETADO por corpo no
+   primeiro uso (a convenção do tools/retarget-glb.mjs, em runtime). Copiar a rotação LOCAL
+   da referência girava o corpo inteiro: o Hips dela repousa a 30° em X e o repouso dos
+   ossos diverge até 173° entre corpos. Coluna, pernas e ombro recebem o DELTA de mundo do
+   clipe sobre o próprio repouso; braço, antebraço e mão, a rotação de mundo ABSOLUTA da
+   referência (A-pose de repouso não vira braço caído na dança). O Hips anda o deslocamento
+   da referência na escala da altura de quadril do corpo, com o horizontal encolhido por
+   clipe para caber na cápsula, e o chão vem do CONTATO: por quadro, o ponto mais baixo da
+   malha (`apoioDoCorpo`) fica na altura que o osso mais baixo da referência tem sobre o
+   repouso dela — o freeze apoia a mão do mascote em vez de enterrar a cabeça, e perna
+   dobrada não flutua. Medidas por corpo: tools/eval/emotes-mocap-roster.mjs, docs/EMOTES-BR.md. */
+export const EMOTE_CAPSULA_R = 0.38;   // raio da cápsula do jogador: game.js `_collide(p.pos, 0.38)`
+const EMOTE_FPS = 30;
+// Medido no roster contra o clipe assado por corpo: braço em delta deixava 44 de 792 clipes
+// com estica acima de 1,1× o assado; absoluto, 12. Mesma direção de osso nos dois (erro
+// mediano 14°): a diferença é o giro axial do antebraço.
+const EMOTE_ABSOLUTO = /Arm|Hand/;
+// 26 direções no espaço do osso (faces, arestas e cantos do cubo): casco da região de cada osso.
+const EMOTE_DIRS = [];
+for (const x of [-1, 0, 1]) for (const y of [-1, 0, 1]) for (const z of [-1, 0, 1]) {
+  if (x || y || z) EMOTE_DIRS.push(new THREE.Vector3(x, y, z).normalize());
+}
 const _emoteClips = {};
-const _emoteClipsCorpo = new Map();
-let _emoteHipsRef = null;
+let _emoteRef = null;                 // repouso da cena do pack
+const _emoteRepouso = new Map();      // charId -> repouso do esqueleto do corpo
+const _emoteApoio = new Map();        // charId -> pontos de apoio por osso + chão do repouso
+const _emoteClipsCorpo = new Map();   // `${charId}|${nome}|${escala}` -> clipe retargetado
 let _emotesP = null;
+const _qI = new THREE.Quaternion();
+/* Repouso relativo à raiz (sem o enquadramento do modelo), pai antes do filho. Não desce
+   do osso para filhos que não são osso (mount de arma, óculos). */
+function repousoEsqueleto(raiz) {
+  const ossos = new Map(), ordem = [], indice = new Map();
+  const visita = (o, paiW, pai) => {
+    const w = new THREE.Matrix4().compose(o.position, o.quaternion, o.scale);
+    if (paiW) w.premultiply(paiW);
+    let nome = pai;
+    if (o.name && !ossos.has(o.name)) {
+      const pW = new THREE.Vector3(), qW = new THREE.Quaternion();
+      w.decompose(pW, qW, new THREE.Vector3());
+      const r = { nome: o.name, pai, q: o.quaternion.clone(), p: o.position.clone(), s: o.scale.clone(), w, pW, qW };
+      indice.set(o.name, ordem.length);
+      ossos.set(o.name, r); ordem.push(r); nome = o.name;
+    }
+    for (const c of o.children) if (!c.isMesh && (!o.isBone || c.isBone)) visita(c, w, nome);
+  };
+  for (const c of raiz.children) if (!c.isMesh) visita(c, null, null);
+  return { ossos, ordem, indice };
+}
+/* Pontos de apoio: por osso, os vértices extremos nas 26 direções do espaço do osso, da
+   região que ele domina, no repouso — guardados com os 4 pesos para o skinning EXATO por
+   quadro (anexar rígido ao osso dominante jogava a pele mista coxa/quadril do lobisomem
+   cyborg 42 cm abaixo do real). Uma passada na malha por personagem. */
+function apoioDoCorpo(model, tgt) {
+  const melhor = new Map();
+  const v = new THREE.Vector3(), r = new THREE.Vector3(), t = new THREE.Vector3();
+  const GET = ['getX', 'getY', 'getZ', 'getW'];
+  const pontos = [];
+  model.traverse((o) => {
+    if (!o.isSkinnedMesh || !o.skeleton) return;
+    const { position: pos, skinIndex: J, skinWeight: W } = o.geometry.attributes;
+    if (!pos || !J || !W) return;
+    const nos = o.skeleton.bones.map((b) => (tgt.indice.has(b.name) ? tgt.indice.get(b.name) : -1));
+    const bi = o.skeleton.boneInverses.map((m) => m.clone().multiply(o.bindMatrix));
+    const ms = nos.map((i, j) => (i >= 0 ? tgt.ordem[i].w.clone().multiply(bi[j]) : null));
+    const inv = nos.map((i) => (i >= 0 ? tgt.ordem[i].w.clone().invert() : null));
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i); r.set(0, 0, 0);
+      let dom = -1, wDom = 0, soma = 0;
+      const js = [], ws = [], qs = [];
+      for (let k = 0; k < 4; k++) {
+        const w = W[GET[k]](i), j = J[GET[k]](i);
+        if (!w || !ms[j]) continue;
+        r.addScaledVector(t.copy(v).applyMatrix4(ms[j]), w); soma += w;
+        js.push(nos[j]); ws.push(w); qs.push(v.clone().applyMatrix4(bi[j]));
+        if (w > wDom) { wDom = w; dom = j; }
+      }
+      if (dom < 0) continue;
+      r.divideScalar(soma);
+      t.copy(r).applyMatrix4(inv[dom]);
+      let m = melhor.get(nos[dom]);
+      if (!m) melhor.set(nos[dom], m = { val: new Float64Array(EMOTE_DIRS.length).fill(-Infinity), idx: new Int32Array(EMOTE_DIRS.length).fill(-1) });
+      let novo = -1;
+      for (let d = 0; d < EMOTE_DIRS.length; d++) {
+        const s = t.dot(EMOTE_DIRS[d]);
+        if (s <= m.val[d]) continue;
+        if (novo < 0) { novo = pontos.length; pontos.push({ r: r.clone(), j: js, w: ws.map((x) => x / soma), q: qs, dom: nos[dom] }); }
+        m.val[d] = s; m.idx[d] = novo;
+      }
+    }
+  });
+  const usados = [...new Set([...melhor.values()].flatMap((m) => [...m.idx]))].filter((i) => i >= 0).map((i) => pontos[i]);
+  if (!usados.length) return null;
+  /* Classes: `pe` (osso dominante pé/dedo) assenta a dança em pé; `apendice` nunca sustenta
+     nem é guardado — ponto a mais de uma altura de quadril do osso que o carrega (o segmento
+     até o filho). É a cauda/capa que o auto-skin pendurou longe: cuca 1,61 na perna,
+     lobisomem cyborg 1,48 na coxa, proerd 1,43 e bandeirante 1,22 no quadril; o próximo do
+     roster é a cauda do canarinho, 0,84. Rígida e mais longa que a perna, ela ou flutua o
+     corpo ou atravessa o chão; atravessar é o mal menor. `corpo` é o resto. */
+  const altura = alturaQuadril(tgt);
+  const filhos = new Map();
+  for (const o of tgt.ordem) if (o.pai) (filhos.get(o.pai) || filhos.set(o.pai, []).get(o.pai)).push(o);
+  const seg = new THREE.Line3(), c = new THREE.Vector3();
+  for (const p of usados) {
+    const dono = tgt.ordem[p.dom];
+    const segs = filhos.get(dono.nome) || [];
+    const d = segs.length ? Math.min(...segs.map((f) => { seg.set(dono.pW, f.pW); return seg.closestPointToPoint(p.r, true, c).distanceTo(p.r); })) : p.r.distanceTo(dono.pW);
+    p.classe = /Foot|ToeBase/.test(dono.nome) ? 'pe' : d > altura ? 'apendice' : 'corpo';
+  }
+  const chao = (lista) => (lista.length ? Math.min(...lista.map((p) => p.r.y)) : null);
+  return { pts: usados, chao: chao(usados.filter((p) => p.classe !== 'apendice')), chaoPe: chao(usados.filter((p) => p.classe === 'pe')) };
+}
+/* Altura do ponto de apoio mais baixo (da `classe`, ou de todos fora os apêndices) com o
+   esqueleto em `mats`: o skinning linear do SkinnedMesh (Σ w · osso · boneInverse ·
+   bindMatrix · v), só o Y. */
+function apoioMaisBaixo(apoio, mats, classe = null) {
+  let baixo = Infinity;
+  for (const p of apoio.pts) {
+    if (classe ? p.classe !== classe : p.classe === 'apendice') continue;
+    let y = 0;
+    for (let k = 0; k < p.j.length; k++) {
+      const e = mats[p.j[k]].elements, q = p.q[k];
+      y += p.w[k] * (e[1] * q.x + e[5] * q.y + e[9] * q.z + e[13]);
+    }
+    if (y < baixo) baixo = y;
+  }
+  return baixo;
+}
+/* Mundo de cada nó num quadro: rotação local de `quats` (índice da ordem; null = repouso) e
+   translação de repouso, salvo o Hips (`hipsLocal`). */
+function fkQuadro(r, mats, quats, hipsLocal) {
+  for (let i = 0; i < r.ordem.length; i++) {
+    const o = r.ordem[i];
+    mats[i].compose(o.nome === 'Hips' && hipsLocal ? hipsLocal : o.p, quats[i] || o.q, o.s);
+    if (o.pai) mats[i].premultiply(mats[r.indice.get(o.pai)]);
+  }
+}
 function emotesPack() {
   if (!_emotesP) {
     _emotesP = loadGLB(assetUrl('models/anims/emotes-mocap.glb')).then((g) => {
-      let hips = null;
-      g.scene.traverse((o) => { if (!hips && o.name === 'Hips') hips = o; });
-      if (hips) _emoteHipsRef = hips.position.clone();
+      _emoteRef = repousoEsqueleto(g.scene);
       for (const c of g.animations) _emoteClips[c.name] = c;
       return _emoteClips;
     }).catch(() => _emoteClips);
   }
   return _emotesP;
 }
-function emoteClipDoCorpo(nome, hipsRest) {
-  const c = _emoteClips[nome];
-  if (!c || !hipsRest || !_emoteHipsRef) return c || null;
-  const chave = `${nome}|${hipsRest.x.toFixed(2)},${hipsRest.y.toFixed(2)},${hipsRest.z.toFixed(2)}`;
-  if (!_emoteClipsCorpo.has(chave)) {
-    const k = hipsRest.y / _emoteHipsRef.y;
-    const ref = _emoteHipsRef;
-    // Só a track de posição do Hips é copiada; as de rotação são compartilhadas.
-    const tracks = c.tracks.map((t) => {
-      if (t.name !== 'Hips.position') return t;
-      const v = t.values.slice();
-      for (let i = 0; i < v.length; i += 3) {
-        v[i] = hipsRest.x + (v[i] - ref.x) * k;
-        v[i + 1] = hipsRest.y + (v[i + 1] - ref.y) * k;
-        v[i + 2] = hipsRest.z + (v[i + 2] - ref.z) * k;
-      }
-      return new THREE.VectorKeyframeTrack(t.name, t.times, v);
+const alturaQuadril = (r) => r.ossos.get('Hips').pW.y - (r.ossos.get('LeftFoot').pW.y + r.ossos.get('RightFoot').pW.y) / 2;
+/* Clipe do emote retargetado para o corpo do controlador; `model.scale` (metros de jogo por
+   unidade) converte a cápsula para unidade local. */
+function emoteClipDoCorpo(nome, ctrl) {
+  const { charId, model } = ctrl, escala = model?.scale.x || 1;
+  const c = _emoteClips[nome], tgt = _emoteRepouso.get(charId), ref = _emoteRef;
+  if (!c || !tgt || !ref || !model) return null;
+  const nomesTrack = new Set(c.tracks.map((t) => t.name));
+  const animados = tgt.ordem.map((o) => ref.ossos.has(o.nome) && nomesTrack.has(`${o.nome}.quaternion`));
+  // Curl_* (fechamento da mão, escrito uma vez pelo buildCharacterModel) fica VIVO na dança:
+  // entra no contato e na chave — o Lampião enterrava 8,7 cm de dedo fechado no freeze.
+  const curls = new Map();
+  model.traverse((o) => { if (o.isBone && /^Curl_/.test(o.name) && !curls.has(o.name)) curls.set(o.name, o.quaternion); });
+  const vivos = tgt.ordem.map((o) => (curls.has(o.nome) && curls.get(o.nome).angleTo(o.q) > 1e-3 ? curls.get(o.nome).clone() : null));
+  const chave = `${charId}|${nome}|${escala.toFixed(4)}|${vivos.map((q, i) => (q ? `${i}:${q.x.toFixed(2)},${q.y.toFixed(2)},${q.z.toFixed(2)}` : '')).join('')}`;
+  if (_emoteClipsCorpo.has(chave)) return _emoteClipsCorpo.get(chave);
+  if (!_emoteApoio.has(charId)) _emoteApoio.set(charId, apoioDoCorpo(model, tgt));
+  const apoio = _emoteApoio.get(charId);
+  const interp = new Map(c.tracks.map((t) => [t.name, t.createInterpolant()]));
+  const n = Math.max(2, Math.round(c.duration * EMOTE_FPS) + 1);
+  const times = new Float32Array(n);
+  for (let f = 0; f < n; f++) times[f] = Math.min(c.duration, f / EMOTE_FPS);
+  // Mundo do osso no quadro = mundo da referência · base. Delta: base = qW_ref_rest⁻¹ ·
+  // qW_corpo_rest (o corpo gira o que a referência girou, a partir do próprio repouso).
+  // Absoluto (braço): base = identidade (o mundo da referência, como no retarget-glb).
+  const base = tgt.ordem.map((o, i) => (!animados[i] ? null
+    : EMOTE_ABSOLUTO.test(o.nome) ? _qI : ref.ossos.get(o.nome).qW.clone().invert().multiply(o.qW)));
+  const locais = tgt.ordem.map((o, i) => (animados[i] ? new Float32Array(n * 4) : null));
+  const hipsIt = interp.get('Hips.position'), rh = ref.ossos.get('Hips'), th = tgt.ossos.get('Hips');
+  const comQuadril = !!(hipsIt && rh && th && ['LeftFoot', 'RightFoot'].every((o) => ref.ossos.has(o) && tgt.ossos.has(o)));
+  const refQ = ref.ordem.map(() => new THREE.Quaternion()), refQL = ref.ordem.map(() => null);
+  const refM = ref.ordem.map(() => new THREE.Matrix4());
+  const tgtW = tgt.ordem.map(() => new THREE.Quaternion());
+  const refHips = new THREE.Vector3(), loc = new THREE.Quaternion(), p = new THREE.Vector3();
+  // Ossos da referência do Hips para baixo: o mais baixo deles é o contato com o chão, e se
+  // ele é pé/dedo a referência está em pé naquele quadro.
+  const abaixo = ref.ordem.map((o) => { for (let x = o; x; x = ref.ossos.get(x.pai)) if (x.nome === 'Hips') return true; return false; });
+  const ePe = ref.ordem.map((o) => /Foot|ToeBase/.test(o.nome));
+  const menorRef = (mats) => {
+    let y = Infinity, pe = false;
+    mats.forEach((m, i) => { if (abaixo[i] && m.elements[13] < y) { y = m.elements[13]; pe = ePe[i]; } });
+    return [y, pe];
+  };
+  const refChao = menorRef(ref.ordem.map((o) => o.w))[0];
+  const refAlto = new Float32Array(n), refNoPe = new Uint8Array(n);
+  for (let f = 0; f < n; f++) {
+    ref.ordem.forEach((o, i) => {
+      const it = interp.get(`${o.nome}.quaternion`);
+      refQL[i] = it ? (refQL[i] || new THREE.Quaternion()).fromArray(it.evaluate(times[f])) : null;
+      refQ[i].copy(o.pai ? refQ[ref.indice.get(o.pai)] : _qI).multiply(refQL[i] || o.q);
     });
-    _emoteClipsCorpo.set(chave, new THREE.AnimationClip(`emote_${nome}`, c.duration, tracks));
+    if (comQuadril) {
+      fkQuadro(ref, refM, refQL, refHips.fromArray(hipsIt.evaluate(times[f])));
+      const [y, pe] = menorRef(refM);
+      refAlto[f] = Math.max(0, y - refChao); refNoPe[f] = pe ? 1 : 0;
+    }
+    tgt.ordem.forEach((o, i) => {
+      const paiW = o.pai ? tgtW[tgt.indice.get(o.pai)] : _qI;
+      if (!animados[i]) { tgtW[i].copy(paiW).multiply(o.q); return; }
+      tgtW[i].copy(refQ[ref.indice.get(o.nome)]).multiply(base[i]);
+      loc.copy(paiW).invert().multiply(tgtW[i]).toArray(locais[i], f * 4);
+    });
   }
-  return _emoteClipsCorpo.get(chave);
+  const tracks = [];
+  tgt.ordem.forEach((o, i) => { if (locais[i]) tracks.push(new THREE.QuaternionKeyframeTrack(`${o.nome}.quaternion`, times, locais[i])); });
+  if (comQuadril) {
+    const k = alturaQuadril(tgt) / alturaQuadril(ref);
+    const refPai = rh.pai ? ref.ossos.get(rh.pai).w : new THREE.Matrix4();
+    const tgtPai = th.pai ? tgt.ossos.get(th.pai).w : new THREE.Matrix4(), tgtPaiInv = tgtPai.clone().invert();
+    const mundo = new Float32Array(n * 3);
+    let maxXZ = 0;
+    for (let f = 0; f < n; f++) {
+      p.fromArray(hipsIt.evaluate(times[f])).applyMatrix4(refPai).sub(rh.pW).multiplyScalar(k).toArray(mundo, f * 3);
+      maxXZ = Math.max(maxXZ, Math.hypot(p.x, p.z));
+    }
+    // Cápsula: centrada no EIXO do grupo (origem XZ do modelo), não no repouso do Hips — corpo
+    // autorado fora do eixo (cuca, ~0,5 m) volta pra dentro. O horizontal do clipe inteiro
+    // encolhe junto (sem quina na trajetória).
+    const limite = EMOTE_CAPSULA_R / escala;
+    const fXZ = maxXZ > limite ? limite / maxXZ : 1;
+    const v = new Float32Array(n * 3), tgtM = tgt.ordem.map(() => new THREE.Matrix4()), quats = tgt.ordem.map(() => null);
+    const q = tgt.ordem.map(() => new THREE.Quaternion()), hl = new THREE.Vector3();
+    for (let f = 0; f < n; f++) {
+      p.fromArray(mundo, f * 3);
+      p.set(p.x * fXZ, th.pW.y + p.y, p.z * fXZ);
+      if (apoio) {
+        tgt.ordem.forEach((o, i) => { quats[i] = locais[i] ? q[i].fromArray(locais[i], f * 4) : vivos[i]; });
+        fkQuadro(tgt, tgtM, quats, hl.copy(p).applyMatrix4(tgtPaiInv));
+        if (refNoPe[f] && apoio.chaoPe !== null) {
+          // Em pé: o pé assenta; o resto do corpo (joelho, mão, cabeça) só não atravessa o chão.
+          let dy = apoio.chaoPe + refAlto[f] * k - apoioMaisBaixo(apoio, tgtM, 'pe');
+          const corpo = apoioMaisBaixo(apoio, tgtM, 'corpo') + dy;
+          if (corpo < apoio.chao) dy += apoio.chao - corpo;
+          p.y += dy;
+        } else p.y += apoio.chao + refAlto[f] * k - apoioMaisBaixo(apoio, tgtM);
+      }
+      p.applyMatrix4(tgtPaiInv).toArray(v, f * 3);
+    }
+    tracks.push(new THREE.VectorKeyframeTrack('Hips.position', times, v));
+  }
+  const clip = new THREE.AnimationClip(`emote_${nome}`, c.duration, tracks);
+  _emoteClipsCorpo.set(chave, clip);
+  return clip;
 }
 const _base = new Map();           // id -> THREE.Object3D template scene
 const _bodyOrigins = new WeakMap();
@@ -1099,9 +1310,10 @@ class CharController {
     this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
     this._emoteId = null; this._emoteT = 0; this._emoteK = 0; this._emoteDip = 0;
     this.emotando = false; this._emoteOssos = []; this._emoteClipeInfo = null; this._emoteClipeAtivo = false; this._ultimoPose = null;
-    // Repouso do Hips ANTES de qualquer pose: base da reescala dos emotes de captura.
-    this._hipsRest = null;
-    model?.traverse?.((o) => { if (!this._hipsRest && o.isBone && o.name === 'Hips') this._hipsRest = o.position.clone(); });
+    // Repouso do esqueleto ANTES de qualquer pose, uma vez por personagem: base do retarget
+    // dos emotes de captura (o template nunca é animado; o clone nasce no repouso).
+    if (model && charId && !_emoteRepouso.has(charId)) _emoteRepouso.set(charId, repousoEsqueleto(model));
+    this._emoteClipes = new Map();   // id -> clipe já retargetado para este corpo
     this._ar = false; this._mantleF = null; this._landT = 0; this._yawAtraso = null; this._deathTilt = 0; this.lod = 0;
     this.shadow = null; this._airK = 0;   // sombra de contato + fator "está no ar" (0..1, suavizado)
     this.oneHanded = false; // arma de 1 mão: idle/walk trocam p/ idle1h/walk1h (setado em buildCharacterModel)
@@ -1277,8 +1489,12 @@ class CharController {
   _tocarEmoteClipe() {
     const info = this._emoteClipeInfo;
     if (!info || this.dead || this.lod >= 2) return false;
-    const clip = emoteClipDoCorpo(info.id, this._hipsRest);
-    if (!clip) { this._pedirEmotes(); return false; }
+    let clip = this._emoteClipes.get(info.id);
+    if (!clip) {
+      clip = emoteClipDoCorpo(info.id, this);
+      if (!clip) { this._pedirEmotes(); return false; }
+      this._emoteClipes.set(info.id, clip);
+    }
     const nome = `emote_${info.id}`;
     const a = this.actions[nome] || (this.actions[nome] = this.mixer.clipAction(clip));
     const dur = clip.duration;
