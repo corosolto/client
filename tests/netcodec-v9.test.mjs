@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 const codec = await import(process.env.CODEC_UNDER_TEST || '../public/js/netcodec.js');
+const { EMOTE_IDS } = await import('../public/js/data/emote-catalog.js');
 const ids = ['passinho','samba','ginga','frevo','forro','quadradinho','sarrada','salve'];
 const entity = (id, extra = {}) => ({id,name:`P${id}`,team:'E',bot:id % 2,alive:true,
   x:1,y:0,z:2,yaw:0,pitch:0,hp:100,weapon:'ak',k:0,d:0,respawnIn:0,...extra});
@@ -30,13 +31,10 @@ test('R3 every catalog emote and elapsed phase reaches late joiners', () => {
     assert.equal(wire.at(-2), i + 1, emote);
   }
 });
-test('R4 absent dance has zero phase and invalid ids are rejected', () => {
+test('R4 absent dance has zero phase and the encoder rejects names outside the catalog', () => {
   const out = roundtrip([entity(1,{emoteElapsed:5})]).ents[0];
   assert.equal(out.emote,null); assert.equal(out.emoteElapsed,0);
   for(const emote of ['unknown',0,{},'__proto__']) assert.throws(()=>roundtrip([entity(1,{emote})]),/emote/);
-  const bytes = codec.encodeSnapshot(snapshot([entity(1)]),9);
-  bytes[bytes.length-2]=255;
-  assert.throws(()=>codec.decodeSnapshot(bytes),/emote/);
 });
 test('R5 v8 omits v9 state without changing legacy layout', () => {
   const plain = snapshot([entity(1),entity(2)]);
@@ -56,4 +54,20 @@ test('R6 v9 keeps exact private reload and economy without overwriting neighbors
 test('R7 truncated v9 state cannot become a partial snapshot', () => {
   const wire=codec.encodeSnapshot(snapshot([entity(1,{emote:'passinho'})]),9);
   for(const cut of [1,2,3])assert.throws(()=>codec.decodeSnapshot(wire.slice(0,-cut)),/snapshot_truncated/);
+});
+test('R8 emote id from a newer catalog decodes as no emote without dropping the snapshot', () => {
+  const ents=[entity(1,{reloadIn:1.2,emote:'samba',emoteElapsed:.4}),entity(2,{team:'B',reloadIn:2.1,emote:'ginga',emoteElapsed:.7}),entity(3,{emote:'salve',emoteElapsed:.3})];
+  const wire=codec.encodeSnapshot(snapshot(ents),9);
+  // Sem reboque: o byte de emote da entidade 2 é o penúltimo da codificação até ela.
+  const at=codec.encodeSnapshot(snapshot(ents.slice(0,2)),9).length-2;
+  const base=codec.decodeSnapshot(wire);
+  // IDs acrescentados depois deste catálogo (ex.: 9–16) e o máximo do u8.
+  for(const id of [EMOTE_IDS.length+1,255]){
+    const bytes=Uint8Array.from(wire);bytes[at]=id;
+    const out=codec.decodeSnapshot(bytes);
+    assert.equal(out.ents.length,3,`id ${id}`);
+    assert.deepEqual(out.ents[1],{...base.ents[1],emote:null,emoteElapsed:0},`id ${id}`);
+    assert.deepEqual([out.ents[0],out.ents[2]],[base.ents[0],base.ents[2]],`id ${id}`);
+    assert.deepEqual({...out,ents:null},{...base,ents:null},`id ${id}`);
+  }
 });

@@ -308,8 +308,11 @@ export function decodeSnapshot(data) {
       const k = r.u16(), d = r.u16(), respawnIn = r.u8() / 10, killedBy = r.str();
       const reloadIn = version >= 9 ? r.u8() / 10 : 0;
       const emoteId = version >= 9 ? r.u8() : 0;
-      const emoteElapsed = version >= 9 ? r.u8() / 10 : 0;
-      if (emoteId > EMOTE_IDS.length) throw new RangeError('emote');
+      const emoteTenths = version >= 9 ? r.u8() : 0;
+      // Compatibilidade adiante: o catálogo só cresce no fim. ID acima do catálogo local
+      // (nó com catálogo mais novo) vira "sem emote" nesta entidade; o snapshot segue.
+      const emote = EMOTE_IDS[emoteId - 1] ?? null;
+      const emoteElapsed = emote ? emoteTenths / 10 : 0;
       if (weaponId !== 255 && !WEAPON_IDS[weaponId]) throw new RangeError('weapon');
       const vt = voiceByte & 3;
       snapshot.ents.push({
@@ -319,7 +322,7 @@ export function decodeSnapshot(data) {
         fireN, voice: vt === 1 ? 'radio' : vt === 2 ? 'voice' : 0, voiceN: voiceByte >> 2,
         k, d, respawnIn, ...(mantleByte ? { mantleF: (mantleByte - 1) / 254 } : {}),
         ...(killedBy ? { killedBy } : {}),
-        ...(version >= 9 ? { crouch: !!(flags & 8), reloadIn, emote: emoteId ? EMOTE_IDS[emoteId - 1] : null, emoteElapsed } : {}),
+        ...(version >= 9 ? { crouch: !!(flags & 8), reloadIn, emote, emoteElapsed } : {}),
       });
       continue;
     }

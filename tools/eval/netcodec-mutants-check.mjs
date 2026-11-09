@@ -12,13 +12,16 @@ const cases=[
   ['emote-mudo','w.u8(emoteId);','w.u8(0);',['R3']],
   ['fase-zero','w.u8(emoteId ? qTenths(ent.emoteElapsed) : 0);','w.u8(0);',['R3']],
   ['v8-contaminado','version >= 9 && ent.crouch ? 8 : 0','ent.crouch ? 8 : 0',['R5']],
+  // Comportamento antigo: um ID de catálogo mais novo derrubava o snapshot inteiro.
+  ['emote-desconhecido-derruba-snapshot','const emote = EMOTE_IDS[emoteId - 1] ?? null;',
+    "if (emoteId > EMOTE_IDS.length) throw new RangeError('emote'); const emote = EMOTE_IDS[emoteId - 1] ?? null;",['R8']],
 ];
 let failures=0;
 function run(name,file,expected){
   const r=spawnSync(process.execPath,['--test','tests/netcodec-v9.test.mjs'],{cwd:root,encoding:'utf8',timeout:20000,
     env:{...process.env,CODEC_UNDER_TEST:pathToFileURL(file).href}});
   const actual=[...(r.stdout||'').matchAll(/^not ok \d+ - (R\d+) /gm)].map(m=>m[1]).sort();
-  const pass=!r.error&&!r.signal&&!r.stderr&&/^# tests 7$/m.test(r.stdout||'')
+  const pass=!r.error&&!r.signal&&!r.stderr&&/^# tests 8$/m.test(r.stdout||'')
     &&r.status===(expected.length?1:0)&&JSON.stringify(actual)===JSON.stringify([...expected].sort());
   console.log(JSON.stringify({name,pass,exit:r.status,failed:actual,expected}));
   if(!pass){failures++;console.error(r.stdout,r.stderr);}
