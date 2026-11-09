@@ -21,7 +21,7 @@ const MUT_JOGO = {
   'jogo-cerimonia-invertida': ['b.mesh?.ctrl?.ceremony?.(!!winner && winner === b.team)', 'b.mesh?.ctrl?.ceremony?.(!!winner && winner !== b.team)', 'EX10e-cerimonia'],
   'bot-strafe-espelhado': ['const lat = (mz * Math.sin(b.yaw) - mx * Math.cos(b.yaw)) / dtSafe;', 'const lat = (mx * Math.cos(b.yaw) - mz * Math.sin(b.yaw)) / dtSafe;', 'EX11-bot-strafe-lado'],
 };
-const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle', 'flinch-preso-no-hit', ...Object.keys(MUT_JOGO)];
+const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle', 'flinch-preso-no-hit', 'granada-perdida-lazy', ...Object.keys(MUT_JOGO)];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
   for (const kind of ['', ...mutants]) {
@@ -71,6 +71,7 @@ if (mutant === 'faca-usa-rifle') once("this._playUpper('knife_stab'", "this._pla
 if (mutant === 'vitoria-muda') once("this._to(nome);", "this._to('idle');");
 if (mutant === 'cerimonia-vira-idle') once("if (/^(victory|defeat)$/.test(this.curName || '')) {", 'if (false) {');
 if (mutant === 'flinch-preso-no-hit') once("    this._hitClip = name.startsWith('hit_');", '');
+if (mutant === 'granada-perdida-lazy') once('      if (this._grenadePending) this._retomaGranada();\n', '');
 source = source.replace(/from (['"])([^'"\n]+)\1/g, (all, quote, spec) => {
   const file = spec === 'three' ? path.join(root, 'public/vendor/three.module.js')
     : spec.startsWith('three/addons/') ? path.join(root, 'public/vendor/addons', spec.slice(13))
@@ -99,11 +100,27 @@ const check = (id, fn) => { try { fn(); results.push({ id, ok: true }); } catch 
 
 const a = body();
 assert.ok(!a.ctrl.actions.strafe_left, 'extras não podem ser preload');
+// Granadas pedidas ANTES do pack existir: 0,2 s de arremesso já corridos, morte durante a carga e
+// arremesso inteiro (1,05 s) terminado antes do pack chegar.
+const granadaLazy = body(), granadaMorta = body(), granadaVencida = body();
+for (const g of [granadaLazy, granadaMorta, granadaVencida]) g.ctrl.grenade(1.05);
+step(granadaLazy, 12); granadaMorta.ctrl.die(); step(granadaVencida, 70);
+const granadaAntes = { lazy: granadaLazy.ctrl._upperName, morta: granadaMorta.ctrl._upperName };
 const primeiroSaque = body();
 primeiroSaque.ctrl.draw();
 await esperaExtras(primeiroSaque, 'holster_rifle');
 step(primeiroSaque, 30);
 check('EX1b-primeiro-saque-lazy', () => { assert.equal(primeiroSaque.ctrl._upperName, 'draw_rifle'); });
+for (const g of [granadaLazy, granadaMorta, granadaVencida]) await esperaExtras(g, 'grenade_throw');
+check('EX7b-granada-antes-do-pack', () => {
+  assert.equal(granadaAntes.lazy, null, 'granada tocou antes do pack existir');
+  const l = granadaLazy.ctrl;
+  assert.equal(l._upperName, 'grenade_throw', `primeira granada sem clipe depois do pack: ${l._upperName}`);
+  assert.ok(Math.abs(l._upperT - 0.2) < 0.02, `clipe fora de fase com o arremesso: ${l._upperT.toFixed(3)} s`);
+  step(granadaLazy, 52); assert.equal(l._upperName, null, 'clipe passou do fim do arremesso de 1,05 s');
+  assert.equal(granadaMorta.ctrl._upperName, null, 'morto tocou a granada pendente');
+  assert.equal(granadaVencida.ctrl._upperName, null, 'arremesso já terminado tocou depois do pack');
+});
 a.ctrl.reload(1.2);
 a.ctrl._requestExtras();
 await esperaExtras(a, 'reload_rifle');

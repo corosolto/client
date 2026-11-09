@@ -212,7 +212,11 @@ Não há `models/anims/<id>/<extra>.glb`: multiplicar os 21 estados pelo elenco 
 esqueleto. `index.json.extras` é derivado dos nomes dentro do GLB; `extras.SOURCES.md` guarda os
 IDs do catálogo. `draw_pistol` e `holster_pistol` não existem na biblioteca convertida e caem no
 comportamento atual sem erro. Falha ou ausência de qualquer outro clipe também usa o fallback
-procedural/base; o primeiro saque fica pendente e é reproduzido quando o pack resolve. LOD≥2 não inicia extras.
+procedural/base; o primeiro saque fica pendente e é reproduzido quando o pack resolve. A granada pedida
+antes do pack também fica pendente: guarda o fim do arremesso no relógio do mixer e, quando o pack chega,
+toca em fase com ele (EX7b: 0,2 s corridos → clipe começa em 0,2 s e termina em 1,05 s). Se faltam
+≤0,1 s ou o arremesso já acabou, não toca; morte, revive, recarga nova e cerimônia descartam o pendente.
+LOD≥2 não inicia extras.
 
 O `ctrl.update` deriva o componente frente de `speed`, `back` e `lateral`, percorre quatro setores
 (frente→direita→trás→esquerda) e mistura os DOIS clipes vizinhos pelo ângulo. Cardinals ficam com
@@ -255,7 +259,7 @@ punho dominante com o clipe-base. Residual após a 3ª rodada: `knife_stab` aind
 no coronel (teto 2,5×), sem vantagem do retarget individual. Não foi afrouxado teto nem criado
 pack específico para esconder esse caso.
 
-A régua runtime é `npm run eval:estados3p` (EX1–EX11, 22 cláusulas), incluída no `check:fast`. Ela usa os GLBs e
+A régua runtime é `npm run eval:estados3p` (EX1–EX11, 23 cláusulas), incluída no `check:fast`. Ela usa os GLBs e
 `AnimationMixer` reais e prova: uma só requisição lazy, strafe e diagonal, pernas idênticas ao
 controle durante recarga andando, quatro direções + cabeça, holster→draw, faca, granada 1,05 s,
 vitória/derrota (e que a vitória segura 30 quadros parado, sem o idle voltar por cima) e LOD/fallback.
@@ -267,7 +271,7 @@ protótipo e disparam as transições: `_damage` no bot e no jogador (flinch com
 cabeça), `_throwNade` (grenade 1,05), troca de arma do jogador e `_syncRemoteWeapon` do bot (draw no
 corpo novo) e `_endRound` (ceremony false no perdedor, true no vencedor). Mutantes: `strafe-mudo`,
 `reload-perna-congelada`, `hit-sem-direcao`, `saque-mudo`, `faca-usa-rifle`, `vitoria-muda`,
-`cerimonia-vira-idle`, `flinch-preso-no-hit` e oito que reescrevem `game.js` e têm de reprovar só a cláusula EX10/EX11 do ponto alterado:
+`cerimonia-vira-idle`, `flinch-preso-no-hit`, `granada-perdida-lazy` e oito que reescrevem `game.js` e têm de reprovar só a cláusula EX10/EX11 do ponto alterado:
 `jogo-flinch-mudo`, `jogo-flinch-sem-cabeca`, `jogo-granada-muda`, `jogo-saque-tp-mudo`,
 `jogo-saque-bot-mudo`, `jogo-cerimonia-muda`, `jogo-cerimonia-invertida`, `bot-strafe-espelhado`.
 EX11 anda o bot do single-player 2 m/s para cada lado pelo `_updateBot` real (posição e yaw

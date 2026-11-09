@@ -1311,7 +1311,7 @@ class CharController {
     this.oneHanded = false; // arma de 1 mão: idle/walk trocam p/ idle1h/walk1h (setado em buildCharacterModel)
     this.weaponId = 'awp';
     this._upperName = null; this._upperDur = 0; this._upperT = 0; this._upperAction = null;
-    this._upperActions = new Map(); this._drawPending = false; this._drawRequested = false; this._reloadClip = false; this._hitClip = false;
+    this._upperActions = new Map(); this._drawPending = false; this._drawRequested = false; this._reloadClip = false; this._hitClip = false; this._grenadePending = null;
     this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     this._loco = 'idle'; // current locomotion state (hysteresis memory for walk/run choice)
     for (const name of EXTRA_STATES) if (_extraClips[name]) actions[name] = mixer.clipAction(_extraClips[name]);
@@ -1328,6 +1328,7 @@ class CharController {
     void extrasPack().then(() => {
       for (const name of EXTRA_STATES) if (_extraClips[name] && !this.actions[name]) this.actions[name] = this.mixer.clipAction(_extraClips[name]);
       if (this._reloadDur > 0 && !this._reloadClip) this._startReloadClip();
+      if (this._grenadePending) this._retomaGranada();
       if (this._drawRequested) { this._drawRequested = false; this.draw(); }
       if (this._ceremonyPending != null) { const v = this._ceremonyPending; this._ceremonyPending = null; this.ceremony(v); }
     });
@@ -1511,7 +1512,7 @@ class CharController {
      ao pente pelo MESMO CCD da mão de apoio. */
   reload(dur) {
     if (this.dead || !(dur > 0)) return;
-    this._reloadT = 0; this._reloadDur = dur;
+    this._reloadT = 0; this._reloadDur = dur; this._grenadePending = null;
     if (!this._startReloadClip() && this.lod < 2) this._requestExtras();
   }
   // Recarga INTERROMPIDA (granada na mão, morte): o overlay cai no mesmo quadro — senão o
@@ -1532,13 +1533,24 @@ class CharController {
   grenade(dur = 1.05) {
     if (this.dead) return;
     this.cancelReload();
-    this._playUpper('grenade_throw', dur);
+    this._grenadePending = null;
+    // Pack ainda não chegou: guarda o fim do arremesso no relógio do mixer e retoma na carga.
+    if (!this._playUpper('grenade_throw', dur) && this.lod < 2 && !_extraClips.grenade_throw) this._grenadePending = { dur, fim: this.mixer.time + dur };
+  }
+
+  // Toca em fase com o arremesso; se faltam ≤0,1 s (ou acabou), a granada não toca.
+  _retomaGranada() {
+    const { dur, fim } = this._grenadePending, resta = fim - this.mixer.time;
+    this._grenadePending = null;
+    if (resta <= 0.1 || !this._playUpper('grenade_throw', dur)) return;
+    this._upperT = dur - resta;
+    this._upperAction.time = this._upperT * this._upperAction.timeScale;
   }
 
   ceremony(vitoria) {
     if (this.dead) return;
     if (this.lod >= 2) { this._to('idle'); return; }
-    this.cancelReload(); this._stopUpper(); this.shooting = false; this._emoteId = null; this._drawPending = false; this._drawRequested = false;
+    this.cancelReload(); this._stopUpper(); this.shooting = false; this._emoteId = null; this._drawPending = false; this._drawRequested = false; this._grenadePending = null;
     const nome = vitoria ? 'victory' : 'defeat';
     if (!this.actions[nome]) { this._ceremonyPending = vitoria; this._requestExtras(); return; }
     this._to(nome);
@@ -1623,7 +1635,7 @@ class CharController {
     this.dead = true; this.shooting = false; this._ar = false; this._mantleF = null;
     /* Overlays de vida (reload/flinch/lean/pitch) morrem junto com o corpo (dono, 31/10). Hist: docs/ANIM-3P.md. */
     this.cancelReload();
-    this._stopUpper(); this._ceremonyPending = null; this._drawPending = false; this._drawRequested = false;
+    this._stopUpper(); this._ceremonyPending = null; this._drawPending = false; this._drawRequested = false; this._grenadePending = null;
     this._flinchDur = 0;
     this._leanK = 0;
     this.aimPitch = 0;
@@ -1639,7 +1651,7 @@ class CharController {
     this._restaurarPoseMorte();
     this._deathK = 0; this._deathDir = null;
     this.dead = false; this.shooting = false; this.jumping = false; this._ar = false; this._mantleF = null;
-    this._ceremonyPending = null; this._drawPending = false; this._drawRequested = false; this._stopUpper();
+    this._ceremonyPending = null; this._drawPending = false; this._drawRequested = false; this._grenadePending = null; this._stopUpper();
     this.mixer.stopAllAction();
     this.cur = null;
     this._to('idle');
