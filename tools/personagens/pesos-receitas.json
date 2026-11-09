@@ -43,6 +43,12 @@
         "sovaco": 3,
         "virilha": 3
       }
+    },
+    "doidinho-bairro": {
+      "origemSha256": "9d65fc624e894f23f1e029309dca0130e68a582bf70a172bfd09804fc53a6153",
+      "parametros": {
+        "preencher": 30
+      }
     }
   }
 }
