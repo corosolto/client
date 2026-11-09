@@ -12,6 +12,7 @@
      quadril-fora-da-capsula horizontal do Hips sem encolher              -> EMM12
      rotacao-local           rotação local da referência, sem retarget    -> EMM13
      lobby-sem-clipe         DANÇAR do lobby registra driver sem `clipe`  -> EMM11
+     travessao-no-titulo     `—` volta numa `origem` (title da roda)      -> EMM0c
    Uso: node tools/eval/emotes-mocap-check.mjs [--self-test | --mutante=<nome>] */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -21,7 +22,7 @@ import { spawnSync } from 'node:child_process';
 import { root, requests, THREE, CHARACTERS, parseGlb, carregaRuntime, once, step, esperaClipe } from './lib/glbchars-node.mjs';
 
 const mutant = process.argv.find((x) => x.startsWith('--mutante='))?.split('=')[1] || '';
-const mutants = ['emote-mocap-mudo', 'arma-visivel-no-emote', 'emote-nao-cancela', 'id-renumerado', 'quadril-fora-da-capsula', 'rotacao-local', 'lobby-sem-clipe'];
+const mutants = ['emote-mocap-mudo', 'arma-visivel-no-emote', 'emote-nao-cancela', 'id-renumerado', 'quadril-fora-da-capsula', 'rotacao-local', 'lobby-sem-clipe', 'travessao-no-titulo'];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
   for (const kind of ['', ...mutants]) {
@@ -44,6 +45,7 @@ const PACK = 'models/anims/emotes-mocap.glb';
 /* Catálogo + coreografia + glbchars reais (o id-renumerado troca uprock e freeze de lugar). */
 const { E, G } = await carregaRuntime({
   catalogo: (catalogo) => {
+    if (mutant === 'travessao-no-titulo') return once(catalogo, "origem: 'Breaking - o duelo", "origem: 'Breaking — o duelo");
     if (mutant !== 'id-renumerado') return catalogo;
     const linhas = catalogo.split('\n');
     const a = linhas.findIndex((l) => l.includes("id: 'uprock'")), b = linhas.findIndex((l) => l.includes("id: 'freeze'"));
@@ -108,6 +110,10 @@ check('EMM0b-catalogo', () => {
     assert.ok(['base', 'passe'].includes(E.emoteDesbloqueio(id)), `${id}: desbloqueio`);
   }
   assert.deepEqual(IDS_CAPTURA.filter((id) => E.emoteDesbloqueio(id) === 'base'), BASE_GRATIS);
+});
+/* EMM0c: nome e origem viram texto do jogador (title dos botões da roda e do lobby). */
+check('EMM0c-texto-publico', () => {
+  for (const e of E.EMOTES) assert.ok(!/[—–]/.test(`${e.nome} ${e.origem}`), `${e.id}: travessão no texto público`);
 });
 
 /* EMM1 — o pack versionado tem exatamente os 8 clipes, com a duração do catálogo. */

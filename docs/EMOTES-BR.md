@@ -217,11 +217,11 @@ gestos de atitude (Marra, Continência). Sem campo explícito, o emote é `'base
 **Como se dança.** **Shift+1–8** ou clique no anel de fora. 1–8 continuam no anel de
 dentro.
 
-**Réguas.** O `npm run eval:emotes-mocap` tem 15 cláusulas e 7 mutantes:
+**Réguas.** O `npm run eval:emotes-mocap` tem 16 cláusulas e 8 mutantes:
 `emote-mocap-mudo`, `arma-visivel-no-emote`, `emote-nao-cancela`, `id-renumerado`,
 `quadril-fora-da-capsula` (EMM12: quadril a 1,147 m do eixo), `rotacao-local` (EMM13:
 coluna a 16,9° do idle) e `lobby-sem-clipe` (EMM11: o DANÇAR do lobby registra o driver
-sem `clipe` e cai na reserva procedural). O `npm run eval:emotes-roster` toca os 8 clipes nos 74 corpos e
+sem `clipe` e cai na reserva procedural) e `travessao-no-titulo` (EMM0c: `—` no `nome`/`origem`, que viram o title dos botões). O `npm run eval:emotes-roster` toca os 8 clipes nos 74 corpos e
 nas 25 skins aprovadas pelo runtime real. Em 16 instantes por clipe, ele skinna a malha na
 CPU e cobra:
 
