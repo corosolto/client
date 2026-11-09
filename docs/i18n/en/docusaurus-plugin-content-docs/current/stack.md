@@ -245,9 +245,9 @@ working. They live in `.agents/skills/`, and `.claude/skills/` are symlinks to t
 
 | Count | How many | Meaning |
 |---|---:|---|
-| Declared in `skills-lock.json` | 39 | third-party skills pinned by source and hash |
-| Versioned | 10 | content available in a clean clone |
-| Versioned with `SKILL.md` | 10 | directly readable instructions |
+| Declared in `skills-lock.json` | 40 | third-party skills pinned by source and hash |
+| Versioned | 0 | content available in a clean clone |
+| Versioned with `SKILL.md` | 0 | directly readable instructions |
 
 The counts differ by design: the lock records more third-party skills than the repository vendors.
 
