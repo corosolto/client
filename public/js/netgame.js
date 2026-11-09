@@ -1008,6 +1008,8 @@ class Netcode {
       const fwdYaw = segYaw == null ? corpoYaw : (b._netBot === false ? segYaw + Math.PI : segYaw);
       const fwd = vx * Math.sin(fwdYaw) + vz * Math.cos(fwdYaw);
       if (b.mesh.isGLB) {
+        const distCam = Math.hypot(b.pos.x - game.camera.position.x, b.pos.z - game.camera.position.z);
+        b.mesh.ctrl.lod = distCam > 45 ? 2 : (distCam > 25 ? 1 : 0);
         // update(dt, moving, hasTarget, speed, back): a velocidade REAL vai no 4º argumento —
         // com speed=0 o clipe rodava a 0,45× e o boneco deslizava (BUG-113).
         b.mesh.ctrl.aimPitch = Math.max(-0.6, Math.min(0.6, b._netPitch || 0));

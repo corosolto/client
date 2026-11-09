@@ -17,6 +17,9 @@ const remoto = {
 mp._relogioAgora = () => mp.interpAtrasoMs + 50;
 mp.updateRemoteBot(remoto, 1 / 60);
 assert.equal(lateral, 2, `inclinação remota perdeu velocidade lateral: ${lateral}`);
+game.camera.position.set(100, 0, 0);
+mp.updateRemoteBot(remoto, 1 / 60);
+assert.equal(remoto.mesh.ctrl.lod, 2, 'remoto distante não recebeu LOD de animação');
 const atacante = { pos: new THREE.Vector3(3, 0, 4) };
 remoto.pos.set(5, 0, 7);
 let golpe;
