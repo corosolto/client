@@ -389,13 +389,7 @@ jobs:
       - name: Portão verde só se os quatro portões paralelos forem
         run: |
           STRING='''${{ toJson(needs) }}'''
-          python3 - "$STRING" <<'PY'
-import json,sys
-necessarios=json.loads(sys.argv[1])
-for nome,info in sorted(necessarios.items()):
-    if info['result']!='success': print(f"::error::portao-parcial {nome} terminou em {info['result']}"); sys.exit(1)
-print('portao: os 4 portões paralelos verdes')
-PY
+          python3 -c 'import json,sys; n=json.loads(sys.argv[1]); bad=[k+" terminou em "+v["result"] for k,v in sorted(n.items()) if v["result"]!="success"]; print("\n".join(bad) if bad else "portao: os 4 portões paralelos verdes"); sys.exit(bool(bad))' "$STRING"
 
   sertao:
     needs: decide
