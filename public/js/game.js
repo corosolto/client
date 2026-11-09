@@ -3183,6 +3183,7 @@ export class Game {
     else this.vm.rig.startDraw();
     this.el.weaponName.textContent = WEAPONS[this.player.weapon].name;
     const slots = { E: 1, B: 0 };
+    this.playerTP?.ctrl?.revive?.();
     for (const b of this.bots) {
       if (b._objectiveNpc) continue;
       const botSpawn = place(b, b.team, slots[b.team]++);
@@ -3253,6 +3254,10 @@ export class Game {
     }
     if (lead >= tgt) this.timeLeft = 0;   // update() enxerga timeLeft<=0 e chama _endRound
   }
+  _cerimoniaCorpos(winner) {
+    for (const b of this.bots) if (b.alive) b.mesh?.ctrl?.ceremony?.(!!winner && winner === b.team);
+    if (this.player.alive) this.playerTP?.ctrl?.ceremony?.(!!winner && winner === this.playerTeam);
+  }
   _endRound(forcedWinner = null) {
     const p = this.roundKills.E, b = this.roundKills.B;
     let winner = forcedWinner;
@@ -3268,6 +3273,7 @@ export class Game {
     if (winner && winner !== 'draw') this.roundsWon[winner] = (this.roundsWon[winner] || 0) + 1;
     this._compra?.aoFimDaRodada(winner);
     this.state = 'roundEnd';
+    this._cerimoniaCorpos(winner);
     const objectiveResult = this.objective?.roundResult?.(winner);
     this.stateUntil = this.time + (objectiveResult?.duration || 4);
     this.player.scoped = false; this.el.scope.classList.remove('on');
@@ -4632,7 +4638,7 @@ export class Game {
     if (ent.hp > 0 && attacker && attacker.pos) {
       const _fx = ent.pos.x - attacker.pos.x, _fz = ent.pos.z - attacker.pos.z;
       const _ctrl = ent.isPlayer ? this.playerTP?.ctrl : ent.mesh?.ctrl;
-      _ctrl?.flinch?.({ x: _fx, z: _fz }, dmg / 100);
+      _ctrl?.flinch?.({ x: _fx, z: _fz }, dmg / 100, head);
     }
     if (ent.isPlayer && ent.hp > 0) this._stackTrace(attacker);
     if (ent.isPlayer) {
@@ -5580,6 +5586,7 @@ export class Game {
     if ((p[ammoKey] | 0) <= 0 && p.nade === kind) { p.nade = null; this.vm.authored?.releaseUtility(); }
     this._cancelReload();   // recarregando e jogou granada: a recarga cai (mesma regra do porte)
     const ANIM_ARREMESSO = 1.05;
+    this.playerTP?.ctrl?.grenade?.(ANIM_ARREMESSO);
     const animou = Boolean(this.vm.authored?.throwUtility(kind, ANIM_ARREMESSO, release));
     /* Sem pacote pago (mobile/legado) a granada sai no ato e não há animação para proteger:
        a janela é só a do arremesso que existe. */
@@ -6112,6 +6119,7 @@ export class Game {
     this.roundsWon[team] = (this.roundsWon[team] || 0) + 1;
     this.world.onGoal?.();
     this.state = 'roundEnd'; this.stateUntil = this.time + 4;
+    this._cerimoniaCorpos(team);
     this.player.scoped = false; this.el.scope.classList.remove('on');
     this.radioOpen = null; this._radioUi();
     this._ensureDolly();
@@ -6919,6 +6927,7 @@ export class Game {
     tp.group.visible = (this.camView === 'third');
     this.scene.add(tp.group);
     this.playerTP = tp;
+    if (weaponChanged) tp.ctrl?.draw?.();
     this._tpGloveId = gloveId;
     this._tpGloveReady = gloveReady;
     this._tpGloveKey = tp.gloveHandle?.key || null;
@@ -8235,6 +8244,7 @@ export class Game {
     next.group.traverse((o) => { o.userData.botOwner = bot; });
     this.scene.add(next.group);
     bot.mesh = next;
+    if (oldGroup) next.ctrl?.draw?.();
     bot._meshWeapon = weapon;
     return true;
   }

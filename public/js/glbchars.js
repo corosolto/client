@@ -58,6 +58,14 @@ const STATES = ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'crouchwalk',
 // Clipes OPCIONAIS: 1 mão (pistolas) + andando atirando. Se o arquivo não existir,
 // o load falha em silêncio e cai no comportamento padrão (idle/walk/shoot de 2 mãos).
 const OPT_STATES = ['idle1h', 'walk1h', 'walkfire'];
+// Vocabulário espelhado de STUDIO_EXTRA_CLIPS (PR #1260). O pack compartilhado é
+// carregado só no primeiro uso; draw/holster_pistol ficam no fallback por não ter fonte.
+const EXTRA_STATES = ['strafe_left', 'strafe_right', 'walk_back', 'run_back',
+  'strafe_left_pistol', 'strafe_right_pistol', 'walk_back_pistol',
+  'reload_rifle', 'reload_pistol', 'draw_rifle', 'holster_rifle', 'draw_pistol', 'holster_pistol',
+  'hit_front', 'hit_back', 'hit_left', 'hit_right', 'hit_head',
+  'grenade_throw', 'knife_idle', 'knife_stab', 'victory', 'defeat'];
+const UPPER_BONE = /^(Spine|Spine01|Spine02|neck|Head|head_end|headfront|LeftShoulder|LeftArm|LeftForeArm|LeftHand|RightShoulder|RightArm|RightForeArm|RightHand)$/;
 const qp = new URLSearchParams(location.search);
 /* CORREÇÃO DE PÉ NO CHÃO, POR CLIPE (invariante CHR3) — tabela GERADA por
    `npm run feet` a partir da medição do char-probe. Ver tools/gen-foot-offsets.mjs.
@@ -197,6 +205,32 @@ const TINT_3P = {
 
 let _clips = null;                 // { idle: AnimationClip, ... } shared fallback
 const _clipsByChar = {};           // id -> per-character retargeted clip set (fallback to _clips)
+const _extraClips = {};
+const _upperClips = new Map();
+let _extrasP = null;
+function extrasPack() {
+  if (!_extrasP) {
+    _extrasP = loadGLB(assetUrl('models/anims/extras.glb')).then((g) => {
+      for (const c of g.animations) if (EXTRA_STATES.includes(c.name)) _extraClips[c.name] = c;
+      return _extraClips;
+    }).catch(() => _extraClips);
+  }
+  return _extrasP;
+}
+function upperClip(name) {
+  if (!_upperClips.has(name)) {
+    const c = _extraClips[name];
+    if (!c) return null;
+    const tracks = c.tracks.filter((t) => {
+      const bone = t.name.split('.')[0];
+      // A postura de faca preserva o porte validado; o clipe autoral move só a cabeça.
+      if (name === 'knife_idle') return /^(neck|Head|head_end|headfront)$/.test(bone);
+      return UPPER_BONE.test(bone);
+    });
+    _upperClips.set(name, new THREE.AnimationClip(`${name}_upper`, c.duration, tracks));
+  }
+  return _upperClips.get(name);
+}
 const _base = new Map();           // id -> THREE.Object3D template scene
 const _bodyOrigins = new WeakMap();
 const _skins = new Map(), _skinRequests = new Map();
@@ -733,6 +767,7 @@ export function buildCharacterModel(def, opts = {}) {
   ctrl.shadow = shadow;   // antes do settle loop abaixo (ctrl.update já a atualiza)
   // Arma de 1 mão (pistol/deagle/revolver38/knife): usa idle1h/walk1h quando carregados.
   ctrl.oneHanded = !!(opts.weaponId && ONE_HANDED.has(opts.weaponId));
+  ctrl.weaponId = opts.weaponId || 'awp';
   if (opts.preview === true && !skin && withWeapon && def.id === 'esquerdomacho'
       && opts.weaponId === 'pistol' && lhandBone) {
     const target = `${lhandBone.name}.quaternion`;
@@ -1027,7 +1062,12 @@ class CharController {
     this._ar = false; this._mantleF = null; this._landT = 0; this._yawAtraso = null; this._deathTilt = 0; this.lod = 0;
     this.shadow = null; this._airK = 0;   // sombra de contato + fator "está no ar" (0..1, suavizado)
     this.oneHanded = false; // arma de 1 mão: idle/walk trocam p/ idle1h/walk1h (setado em buildCharacterModel)
+    this.weaponId = 'awp';
+    this._upperName = null; this._upperDur = 0; this._upperT = 0; this._upperAction = null;
+    this._upperActions = new Map(); this._drawPending = false; this._reloadClip = false; this._hitClip = false;
+    this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     this._loco = 'idle'; // current locomotion state (hysteresis memory for walk/run choice)
+    for (const name of EXTRA_STATES) if (_extraClips[name]) actions[name] = mixer.clipAction(_extraClips[name]);
     mixer.addEventListener('finished', (e) => {
       if (e.action === actions.shoot) this.shooting = false;
       if (e.action === actions.jump) this.jumping = false;
@@ -1035,9 +1075,122 @@ class CharController {
     this._to('idle');
   }
 
+  _requestExtras() {
+    if (this._extrasBind) return;
+    this._extrasBind = true;
+    void extrasPack().then(() => {
+      for (const name of EXTRA_STATES) if (_extraClips[name] && !this.actions[name]) this.actions[name] = this.mixer.clipAction(_extraClips[name]);
+      if (this._reloadDur > 0 && !this._reloadClip) this._startReloadClip();
+      if (this._ceremonyPending != null) { const v = this._ceremonyPending; this._ceremonyPending = null; this.ceremony(v); }
+    });
+  }
+
+  _startReloadClip() {
+    const name = this.oneHanded && this.weaponId !== 'knife' ? 'reload_pistol' : 'reload_rifle';
+    this._reloadClip = this._playUpper(name, Math.max(0.05, this._reloadDur - this._reloadT));
+    return this._reloadClip;
+  }
+
+  _playUpper(name, dur, repeat = false) {
+    if (this.dead || this.lod >= 2) return false;
+    if (!_extraClips[name]) { this._requestExtras(); return false; }
+    const key = name;
+    let a = this._upperActions.get(key);
+    if (!a) {
+      const clip = upperClip(name);
+      if (!clip) return false;
+      a = this.mixer.clipAction(clip);
+      this._upperActions.set(key, a);
+    }
+    if (this._upperAction && this._upperAction !== a) this._upperAction.fadeOut(0.08);
+    a.reset(); a.setLoop(repeat ? THREE.LoopRepeat : THREE.LoopOnce, repeat ? Infinity : 1); a.clampWhenFinished = false;
+    a.timeScale = dur > 0 ? a.getClip().duration / dur : 1;
+    a.enabled = true; a.fadeIn(0.08).play();
+    this._upperAction = a; this._upperName = name; this._upperDur = repeat ? Infinity : (dur || a.getClip().duration); this._upperT = 0;
+    return true;
+  }
+
+  // Usado pelo mutante reload-perna-congelada e por clipes full-body futuros.
+  _playFull(name, dur) {
+    const a = this.actions[name];
+    if (!a || this.dead || this.lod >= 2) return false;
+    if (this._upperAction && this._upperAction !== a) this._upperAction.fadeOut(0.08);
+    a.reset(); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = false;
+    a.timeScale = dur > 0 ? a.getClip().duration / dur : 1;
+    a.enabled = true; a.fadeIn(0.08).play();
+    this._upperAction = a; this._upperName = name; this._upperDur = dur || a.getClip().duration; this._upperT = 0;
+    return true;
+  }
+
+  _stopUpper() {
+    if (this._upperAction) this._upperAction.fadeOut(0.08);
+    this._upperAction = null; this._upperName = null; this._upperDur = 0; this._upperT = 0;
+  }
+
+  _tickUpper(dt) {
+    if (!this._upperName) return;
+    this._upperT += dt;
+    if (this._upperT < this._upperDur) return;
+    if (this._drawPending) {
+      this._drawPending = false;
+      this._playUpper(`draw_${this.oneHanded ? 'pistol' : 'rifle'}`, 0.65);
+    } else if (this._reloadDur > 0 && this._reloadClip) {
+      this._stopUpper();
+      this._startReloadClip();
+    } else this._stopUpper();
+  }
+
+  _setLocoSemDirecao() { this._to(this._loco); }
+
+  _setLocoPar(an, bn, mix) {
+    const a = this.actions[an], b = this.actions[bn];
+    if (!a) return false;
+    if (this._locoA !== a || this._locoB !== (b || null)) {
+      if (this.cur && this.cur !== this._locoA && this.cur !== this._locoB) this.cur.fadeOut(FADE);
+      if (this._locoA) this._locoA.fadeOut(FADE);
+      if (this._locoB) this._locoB.fadeOut(FADE);
+      for (const action of b ? [a, b] : [a]) {
+        action.reset(); action.setLoop(THREE.LoopRepeat, Infinity); action.enabled = true; action.fadeIn(FADE).play();
+      }
+      this._locoA = a; this._locoB = b || null; this._locoAName = an; this._locoBName = b ? bn : null;
+      this.cur = a;
+      if (this.model) this.model.position.y = this._footBase + footOffset(this.charId, an) - (this._emoteDip || 0);
+    }
+    this._locoMix = b ? mix : 0;
+    a.weight = 1 - this._locoMix;
+    if (b) b.weight = this._locoMix;
+    this.curName = this._locoMix > 0.5 ? bn : an;
+    return true;
+  }
+
+  _setLocoDirecional(speed, back, lateral, usaClipe1h) {
+    if (this.lod < 2 && (back || Math.abs(lateral) > 0.25)) this._requestExtras();
+    const base = this._loco === 'walk' && usaClipe1h && this.actions.walk1h ? 'walk1h' : this._loco;
+    const variante = (nome) => this.oneHanded && this.actions[`${nome}_pistol`] ? `${nome}_pistol` : nome;
+    const costas = this._loco === 'run' ? 'run_back' : 'walk_back';
+    if (this.lod >= 2 || (back && !this.actions[variante(costas)])) {
+      this._to(back ? (usaClipe1h && this.actions.walk1h ? 'walk1h' : 'walk') : base);
+      return;
+    }
+    if (!back && Math.abs(lateral) > speed * 0.7
+      && !this.actions[variante(lateral > 0 ? 'strafe_right' : 'strafe_left')]) {
+      this._to(base);
+      return;
+    }
+    const fwd = (back ? -1 : 1) * Math.sqrt(Math.max(0, speed * speed - lateral * lateral));
+    let ang = Math.atan2(lateral, fwd); if (ang < 0) ang += Math.PI * 2;
+    const setor = Math.floor(ang / (Math.PI / 2)) % 4;
+    const mix = (ang / (Math.PI / 2)) - Math.floor(ang / (Math.PI / 2));
+    const nomes = [base, variante('strafe_right'), variante(costas), variante('strafe_left')];
+    if (!this._setLocoPar(nomes[setor], nomes[(setor + 1) % 4], mix)) this._to(base);
+  }
+
   _to(name, once = false, restart = true) {
     const a = this.actions[name];
-    if (!a || this.cur === a) return;
+    if (!a || (this.cur === a && !this._locoA && !this._locoB)) return;
+    if (this._locoA) this._locoA.fadeOut(FADE);
+    if (this._locoB) this._locoB.fadeOut(FADE);
+    this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     if (a !== this.actions.jump) this.jumping = false;
     if (restart) {
       a.reset();
@@ -1045,7 +1198,7 @@ class CharController {
       a.clampWhenFinished = once;
     }
     a.enabled = true; a.fadeIn(FADE); a.play();
-    if (this.cur) this.cur.fadeOut(FADE);
+    if (this.cur && this.cur !== a) this.cur.fadeOut(FADE);
     this.cur = a;
     this.curName = name;   // nome do estado atual — o clamp de frente do mount lê daqui
     // pé no chão: o offset do clipe que ENTRA (ver footOffset)
@@ -1069,20 +1222,56 @@ class CharController {
   reload(dur) {
     if (this.dead || !(dur > 0)) return;
     this._reloadT = 0; this._reloadDur = dur;
+    if (!this._startReloadClip() && this.lod < 2) this._requestExtras();
   }
   // Recarga INTERROMPIDA (granada na mão, morte): o overlay cai no mesmo quadro — senão o
   // corpo 3P segue mergulhando atrás de um pente que ninguém está trocando.
-  cancelReload() { this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; }
+  cancelReload() {
+    this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._reloadClip = false;
+    if (this._upperName?.startsWith('reload_')) this._stopUpper();
+  }
+
+  draw() {
+    if (this.dead || this.lod >= 2 || this.weaponId === 'knife') return;
+    const tipo = this.oneHanded ? 'pistol' : 'rifle';
+    this._drawPending = this._playUpper(`holster_${tipo}`, 0.45);
+    if (!this._drawPending) this._playUpper(`draw_${tipo}`, 0.65);
+  }
+
+  grenade(dur = 1.05) {
+    if (this.dead) return;
+    this.cancelReload();
+    this._playUpper('grenade_throw', dur);
+  }
+
+  ceremony(vitoria) {
+    if (this.dead) return;
+    if (this.lod >= 2) { this._to('idle'); return; }
+    this.cancelReload(); this._stopUpper(); this.shooting = false; this._emoteId = null; this._drawPending = false;
+    const nome = vitoria ? 'victory' : 'defeat';
+    if (!this.actions[nome]) { this._ceremonyPending = vitoria; this._requestExtras(); return; }
+    this._to(nome);
+  }
+
+  _hitClipName(dir, head) {
+    if (head) return 'hit_head';
+    const yaw = this.group.rotation.y;
+    const frente = -dir.x * Math.sin(yaw) - dir.z * Math.cos(yaw);
+    const direita = dir.x * Math.cos(yaw) - dir.z * Math.sin(yaw);
+    const quadrante = Math.abs(frente) >= Math.abs(direita) ? (frente >= 0 ? 'front' : 'back') : (direita >= 0 ? 'right' : 'left');
+    return `hit_${quadrante}`;
+  }
 
   /* Levar tiro move o corpo: sem isso quem atira de longe não sabe se acertou.
      `dir` é a direção do disparo em mundo; `forca` 0..1 (dano/100). */
-  flinch(dir, forca = 0.5) {
+  flinch(dir, forca = 0.5, head = false) {
     this._emoteId = null;   // levar tiro derruba o emote na hora
     if (this.dead || !dir) return;
     this._flinchDir = { x: dir.x, z: dir.z };
     this._flinchDur = 0.18;
     this._flinchT = 0;
     this._flinchF = Math.max(0.25, Math.min(1, forca));
+    this._hitClip = this._playUpper(this._hitClipName(dir, head), head ? 0.43 : 0.45);
   }
 
   /* No ar o clipe de pulo acabava e o corpo voltava a CORRER em queda livre.
@@ -1113,10 +1302,14 @@ class CharController {
 
   shoot() {
     if (this.dead) return;
+    if (this.weaponId === 'knife' && this._playUpper('knife_stab', 0.65)) return;
     // Agachado não troca de clipe (a pose já mira), mas ganha recuo aditivo: antes o
     // bot agachado atirava completamente imóvel. Ver docs/ANIM-3P.md.
     if (this.crouch || !this.actions.shoot) { this._fireDur = 0.12; this._fireT = 0; return; }
     this.jumping = false;
+    if (this._locoA) this._locoA.fadeOut(0.06);
+    if (this._locoB) this._locoB.fadeOut(0.06);
+    this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     this.shooting = true;
     this.curName = 'shoot';
     this._shootUntil = this.mixer.time + this.actions.shoot.getClip().duration;
@@ -1139,6 +1332,7 @@ class CharController {
     this.dead = true; this.shooting = false; this._ar = false; this._mantleF = null;
     /* Overlays de vida (reload/flinch/lean/pitch) morrem junto com o corpo (dono, 31/10). Hist: docs/ANIM-3P.md. */
     this.cancelReload();
+    this._stopUpper(); this._hitClip = false; this._ceremonyPending = null; this._drawPending = false;
     this._flinchDur = 0;
     this._leanK = 0;
     this.aimPitch = 0;
@@ -1154,6 +1348,7 @@ class CharController {
     this._restaurarPoseMorte();
     this._deathK = 0; this._deathDir = null;
     this.dead = false; this.shooting = false; this.jumping = false; this._ar = false; this._mantleF = null;
+    this._ceremonyPending = null; this._drawPending = false; this._stopUpper();
     this.mixer.stopAllAction();
     this.cur = null;
     this._to('idle');
@@ -1175,9 +1370,12 @@ class CharController {
     const freeHand = this._previewFreeHand;
     // Restaura antes do mixer: uma pose idêntica pode não reescrever a propriedade em dt=0.
     if (freeHand?.applied) { freeHand.bone.quaternion.copy(freeHand.before); freeHand.applied = false; }
+    this._tickUpper(dt);
     if (!this.dead) {
       if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
-      if (this._mantleF !== null && this.actions.jump) {
+      if (/^(victory|defeat)$/.test(this.curName || '')) {
+        // A cerimônia segura o corpo inteiro até a próxima rodada.
+      } else if (this._mantleF !== null && this.actions.jump) {
         if (this.cur !== this.actions.jump) { this._to('jump'); this.jumping = false; }
         const jump = this.actions.jump;
         jump.paused = true;
@@ -1204,19 +1402,18 @@ class CharController {
         this._to('crouch');
       } else if (!this.shooting && !this.jumping) {
         const usaClipe1h = this.oneHanded && !P1H_BASE_CLIP.has(this.bodyId);
-        if (moving <= 0.05) { this._to(usaClipe1h && this.actions.idle1h ? 'idle1h' : 'idle'); this._loco = 'idle'; }
-        else if (back) {
-          // Backpedal: walk clip REVERSED (negative timeScale below) so the feet step
-          // backward — a forward clip while retreating is the classic moonwalk.
-          this._to(usaClipe1h && this.actions.walk1h ? 'walk1h' : 'walk'); this._loco = 'walk';
+        if (moving <= 0.05) {
+          if (this.weaponId === 'knife' && this.lod < 2) this._requestExtras();
+          const baseIdle = usaClipe1h && this.actions.idle1h ? 'idle1h' : 'idle';
+          this._to(baseIdle);
+          if (this.weaponId === 'knife' && this.lod < 2 && this.actions.knife_idle && !this._upperName) this._playUpper('knife_idle', 0, true);
+          this._loco = 'idle';
         } else {
-          // Pick the clip by SPEED with hysteresis (not by hasTarget): fast movement with
-          // the slow walk clip needs a frantic ~2.4x cycle; slow movement with the run
-          // clip looks like gliding. run > 1.45 m/s, walk < 1.15, keep current in between.
+          if (this._upperName === 'knife_idle') this._stopUpper();
           if (this._loco !== 'run' && speed > 1.45) this._loco = 'run';
           else if (this._loco !== 'walk' && speed < 1.15) this._loco = 'walk';
           else if (this._loco !== 'walk' && this._loco !== 'run') this._loco = hasTarget && speed < 1.7 ? 'walk' : 'run';
-          this._to(this._loco === 'walk' && usaClipe1h && this.actions.walk1h ? 'walk1h' : this._loco);
+          this._setLocoDirecional(speed, back, lateral, usaClipe1h);
         }
       }
       // Per-clip cycle rate = ground speed / that clip's measured natural speed, so the
@@ -1226,6 +1423,12 @@ class CharController {
       if (this.actions.walk) this.actions.walk.timeScale = back ? -rate(WALK_REF) : rate(WALK_REF);
       if (this.actions.walk1h) this.actions.walk1h.timeScale = back ? -rate(WALK_REF) : rate(WALK_REF);
       if (this.actions.crouchwalk) this.actions.crouchwalk.timeScale = rate(CROUCH_REF);
+      for (const nome of ['strafe_left', 'strafe_right', 'strafe_left_pistol', 'strafe_right_pistol']) {
+        if (this.actions[nome]) this.actions[nome].timeScale = rate(nome.endsWith('_pistol') ? 1.8 : 1.53);
+      }
+      if (this.actions.walk_back) this.actions.walk_back.timeScale = rate(0.87);
+      if (this.actions.walk_back_pistol) this.actions.walk_back_pistol.timeScale = rate(1.16);
+      if (this.actions.run_back) this.actions.run_back.timeScale = rate(3.826);
     }
     this.mixer.update(dt);
     // Pitch da cabeça em MALHA FECHADA (substitui o HEAD_UP fixo, que ACUMULAVA rotação
@@ -1285,7 +1488,7 @@ class CharController {
     }
     if (this.tpMount && !this.dead && !this.emotando) {
       const t = this.tpMount;
-      if (t.pegada) t.pegadaAtiva = /^(idle|idle1h|crouch)$/.test(this.curName || '');
+      if (t.pegada) t.pegadaAtiva = /^(idle|idle1h|crouch|knife_idle)$/.test(this.curName || '');
       orientTpMount(t);
       if(t.stabilizeCarry && t.carryPalmModel && t.rArm && t.rFore && /^(walk|run|walk1h|walkfire)$/.test(this.curName || '')){
         _v.copy(t.carryPalmModel);t.model.localToWorld(_v);
@@ -1302,7 +1505,7 @@ class CharController {
       // reprovado no olho: a arma descolava da mão (esbirro: 11 cm). Aqui a MÃO inteira
       // vem pra frente (CCD em Arm→ForeArm, o mesmo solver da mão de apoio) e a arma,
       if (t.palmLocal && t.rArm && t.rFore && TP_FRONT_MIN > -Infinity
-          && /^(idle|idle1h|crouch)$/.test(this.curName || '')) {
+          && /^(idle|idle1h|crouch|knife_idle)$/.test(this.curName || '')) {
         _v.copy(t.palmLocal);
         t.handBone.localToWorld(_v);
         t.model.worldToLocal(_v);
@@ -1316,7 +1519,7 @@ class CharController {
     }
     // IK da mão de apoio (FASE 2): palma L no guarda-mão da arma montada (só 2 mãos).
     // Roda depois do mixer/pose — corrige o contato por arma sem tocar na orientação.
-    if (this.ikL && !this.dead && this.lod < 1 && !this.emotando) {
+    if (this.ikL && !this.dead && this.lod < 1 && !this.emotando && !this._upperName) {
       const ik = this.ikL;
       ik.gun.updateWorldMatrix(true, false);
       _ikTgt.copy(ik.fore);
@@ -1406,12 +1609,12 @@ class CharController {
          overlay o cotovelo fica quase reto e a pistola lê como pendurada. */
       const canarinho1h = this.bodyId === 'canarinho';
       const usaBase1h = P1H_BASE_CLIP.has(this.bodyId);
-      const clipeAceita1h = usaBase1h ? /^(idle|walk|run)$/ : /^(idle1h|walk1h)$/;
+      const clipeAceita1h = usaBase1h ? /^(idle|walk|run|knife_idle)$/ : /^(idle1h|walk1h|knife_idle)$/;
       const quer1h = PORTE_1H && this.oneHanded && !this.emotando && this.lod < 1
         && (!P1H_SKIP.has(this.bodyId) || canarinho1h)
         && clipeAceita1h.test(this.curName || '');
       this._porte1hK += ((quer1h ? 1 : 0) - this._porte1hK) * Math.min(1, dt * 10);
-      if (this._porte1hK > 0.004 && this.reloadK <= 0.05 && this.corpo?.size) {
+      if (this._porte1hK > 0.004 && this.reloadK <= 0.05 && (!this._upperName || this._upperName === 'knife_idle') && this.corpo?.size) {
         const k1 = this._porte1hK;
         const rArm = this.corpo.get('RightArm'), rFore = this.corpo.get('RightForeArm');
         if (rArm) _deltaMundo(rArm, cosY, 0, -sinY, (canarinho1h ? CANARINHO_P1H_ARM : P1H_ARM) * k1);
@@ -1431,7 +1634,7 @@ class CharController {
         this._reloadT += dt;
         if (this._reloadT >= this._reloadDur) { this._reloadT = 0; this._reloadDur = 0; }
       }
-      this.reloadK = this._reloadDur > 0 ? Math.sin(Math.PI * Math.min(1, this._reloadT / this._reloadDur)) : 0;
+      this.reloadK = !this._reloadClip && this._reloadDur > 0 ? Math.sin(Math.PI * Math.min(1, this._reloadT / this._reloadDur)) : 0;
       // PITCH DISTRIBUÍDO: a coluna assume parte da mira vertical; a malha fechada da
       // cabeça (acima) converge o resto. Antes só a cabeça inclinava, com teto de 28°.
       if (this.aimPitch !== undefined && this.lod < 1) {
@@ -1457,7 +1660,7 @@ class CharController {
         this._flinchT += dt;
         if (this._flinchT >= this._flinchDur) { this._flinchDur = 0; this._flinchT = 0; }
       }
-      const fk = this._flinchDur > 0 ? Math.sin(Math.PI * Math.min(1, this._flinchT / this._flinchDur)) * (this._flinchF || 0.5) : 0;
+      const fk = !this._hitClip && this._flinchDur > 0 ? Math.sin(Math.PI * Math.min(1, this._flinchT / this._flinchDur)) * (this._flinchF || 0.5) : 0;
       this.flinchK = fk;
       if (fk > 0.02 && this._flinchDir) {
         const d = this._flinchDir, n = Math.hypot(d.x, d.z) || 1;
