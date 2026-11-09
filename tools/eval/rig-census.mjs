@@ -35,7 +35,8 @@
      · sha bate    → medido ≤ teto × 1,05 (ruído de float, só aqui) E
                      teto ≤ medido × 1,05: o teto é cravado nos bytes, subir
                      número no arquivo sem trocar o GLB reprova.
-     · sha difere  → GLB trocou: tem que passar nos tetos ESTRITOS e não
+     · sha difere  → GLB trocou: tem que passar nos tetos ESTRITOS (o id
+                     legado que já passava deles usa o próprio teto) e não
                      pode piorar nenhum teto do id (reparo travado — só desce).
      · sem teto    → GLB novo: só os tetos ESTRITOS; ganhar entrada no
                      arquivo de tetos é proibido (diff contra a cópia da
@@ -52,6 +53,8 @@
      pesos-trocados            peso da cabeça cai no vértice errado → reprova
      clipe-ignorado            sem medir clipes o fixture fica VERDE — prova
                                que a cobertura de clipes é o que reprova
+     legado-reparado           id legado acima do estrito troca de bytes sem
+                               piorar → verde; piorando o teto do id → reprova
 
    USO: node tools/eval/rig-census.mjs            # o portão (CI + check:fast)
         node tools/eval/rig-census.mjs --regen    # congela/recongela os tetos
@@ -418,16 +421,21 @@ function verificaItem(item, medido, tetos) {
     const rotulo = medido.metricas[grupo][chave]?.rotulo ?? '?';
     falhas.push(`${item.id} (${item.tipo}, ${item.caminho}): ${ROTULO_GRUPO[grupo]} ${ROTULO_METRICA[chave]} ${valor} em “${rotulo}” ${porque}`);
   };
-  const checaEstrito = (grupo) => {
+  // Com teto congelado acima do estrito (legado), o limite do id é o próprio teto.
+  const checaEstrito = (grupo, tetoId = null) => {
     for (const chave of ['maxEdge', 'backMaxEdge', 'maoL', 'maoR']) {
       const m = medido.metricas[grupo]?.[chave];
       if (m?.valor == null) continue;
-      const limite = chave.startsWith('mao') ? ESTRITO.handMaxEdge : chave === 'backMaxEdge' ? ESTRITO.backMaxEdge : ESTRITO.maxEdge;
-      if (m.valor > limite) descreve(grupo, chave, `${m.valor}×`, `> teto estrito ${limite}×`);
+      const global = chave.startsWith('mao') ? ESTRITO.handMaxEdge : chave === 'backMaxEdge' ? ESTRITO.backMaxEdge : ESTRITO.maxEdge;
+      const congelado = tetoId?.metricas?.[grupo]?.[chave];
+      const limite = congelado != null ? Math.max(congelado, global) : global;
+      if (m.valor > limite) descreve(grupo, chave, `${m.valor}×`, limite > global ? `> teto legado do id ${limite}×` : `> teto estrito ${limite}×`);
     }
     const seam = medido.metricas[grupo]?.seamGapMax;
-    if (seam?.valor != null && seam.valor > ESTRITO.seamGapMax) {
-      falhas.push(`${item.id}: ${ROTULO_GRUPO[grupo]} costura abre ${seam.valor} m em “${seam.rotulo}” > ${ESTRITO.seamGapMax} m`);
+    const seamCongelado = tetoId?.metricas?.[grupo]?.seamGapMax;
+    const seamLimite = seamCongelado != null ? Math.max(seamCongelado, ESTRITO.seamGapMax) : ESTRITO.seamGapMax;
+    if (seam?.valor != null && seam.valor > seamLimite) {
+      falhas.push(`${item.id}: ${ROTULO_GRUPO[grupo]} costura abre ${seam.valor} m em “${seam.rotulo}” > ${seamLimite} m`);
     }
   };
 
@@ -448,8 +456,9 @@ function verificaItem(item, medido, tetos) {
     if (tb != null && be > tb * TOLERANCIA_RUIDO + 1e-4) falhas.push(`${item.id}: erro de bind ${be} m > congelado ${tb} m (sha confere) — IBM/skin piorou`);
     return falhas;
   }
-  // sha diferente = GLB trocado: estrito E não pode piorar o teto do id (só desce).
-  checaEstrito('sinteticas'); checaEstrito('clips');
+  // sha diferente = GLB trocado: estrito (ou o teto legado do id, se já passava
+  // do estrito) E não pode piorar o teto do id (só desce).
+  checaEstrito('sinteticas', teto); checaEstrito('clips', teto);
   for (const grupo of ['sinteticas', 'clips']) for (const chave of CHAVES_METRICAS) {
     const m = medido.metricas[grupo]?.[chave], t = teto.metricas?.[grupo]?.[chave];
     if (m?.valor == null || t == null) continue;
@@ -684,8 +693,29 @@ async function mutacoes() {
       morde(verificaItem(item, cego, { tetos: {} }).length === 0, 'régua cega (clipes apagados) ficaria VERDE — a cobertura de clipes é o que reprova', 'sem clipes a régua CONTINUOU reprovando — o fixture não exercita a cobertura');
     }
 
+    console.log('mutante legado-reparado: id congelado acima do estrito troca de bytes sem piorar → verde; piorando → reprova');
+    {
+      const legado = await montaFixtureBytes({ pesoCabeca: [0, 1] });
+      const reparado = await montaFixtureBytes({ pesoCabeca: [0.2, 0.8] });
+      morde(!legado.equals(reparado), 'mutação aplicou (bytes do GLB mudaram)', 'MUTAÇÃO NÃO APLICOU (GLBs idênticos)');
+      const itemLegado = await comSha(itemDe('fixture-leg', 'corpo', await grava('leg.glb', legado)));
+      const medLegado = (await medeFixture(itemLegado)).metricas;
+      const tetos = tetosDe('fixture-leg', itemLegado, medLegado);
+      const itemRep = await comSha(itemDe('fixture-leg', 'corpo', await grava('leg-rep.glb', reparado)));
+      const medRep = (await medeFixture(itemRep)).metricas;
+      const antes = medLegado.clips.maxEdge?.valor, depois = medRep.clips.maxEdge?.valor;
+      morde(antes > depois && depois > ESTRITO.maxEdge,
+        `reparo baixa sem sair do legado (clips ${antes}× → ${depois}× > estrito ${ESTRITO.maxEdge}×)`,
+        'fixture não exercita legado acima do estrito — mutante não prova nada');
+      const r = verificaItem(itemRep, { metricas: medRep }, tetos);
+      morde(r.length === 0, 'reparo que não piora passa no teto legado do id', `reparo que não piora REPROVOU (${r[0]})`);
+      const tetosRep = tetosDe('fixture-leg', itemRep, medRep);
+      const piora = verificaItem(itemLegado, { metricas: medLegado }, tetosRep);
+      morde(piora.length > 0, `troca que piora reprova (${piora[0]})`, 'troca que piora o teto do id PASSOU');
+    }
+
     if (cegas) { console.error(`mutações: ${cegas} régua(s) cega(s)/frouxa(s)`); process.exitCode = 1; }
-    else console.log('mutações: as 4 morderam (teto-subiu, glb-novo-sem-teto-frouxo, pesos-trocados, clipe-ignorado).');
+    else console.log('mutações: as 5 morderam (teto-subiu, glb-novo-sem-teto-frouxo, pesos-trocados, clipe-ignorado, legado-reparado).');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
