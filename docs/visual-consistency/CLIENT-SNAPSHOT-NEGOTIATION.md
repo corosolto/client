@@ -37,6 +37,10 @@ Por entidade, humano **ou bot**:
 - `emote`: u8, zero sem dança; 1–8 seguem a ordem imutável de
   `public/js/data/emote-catalog.js`: passinho, samba, ginga, frevo, forro,
   quadradinho, sarrada, salve. Novos IDs devem ser acrescentados, nunca reordenados.
+  **Compatibilidade adiante:** IDs novos (ex.: 9–16) podem ser publicados sem subir
+  a versão do protocolo. Um cliente com catálogo menor decodifica um ID acima do seu
+  catálogo como zero (sem emote, fase zero) só naquela entidade; o restante do
+  snapshot segue normal. O codificador continua recusando nomes fora do catálogo.
 - `emoteElapsed`: u8 de décimos, fase decorrida; laços usam módulo da duração
   no servidor e gestos de uma vez só expiram no servidor. Sem emote, fase zero.
 
@@ -62,7 +66,9 @@ O formato v8 ignora todos os campos v9 e mantém os bytes anteriores.
 ## Réguas
 
 `eval:netcodecbin` mede round-trips v2–v9, bytes canônicos v8, reboque privado,
-limites hostis, cinco mutantes v9 e dois controles v8. O antigo teste que exigia
+limites hostis, seis mutantes v9 e dois controles v8. O mutante
+`emote-desconhecido-derruba-snapshot` restaura a recusa antiga de ID acima do
+catálogo e precisa reprovar exatamente R8. O antigo teste que exigia
 oferta exclusiva v8 foi removido: contradizia o transporte de produção.
 
 `eval:client-snapshot-negotiation` importa NetClient e TransporteWS reais e
