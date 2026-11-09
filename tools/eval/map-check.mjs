@@ -32,17 +32,32 @@
      CTF1  bandeiras: colinearidade (altura mínima do triângulo), distância até o
            spawn mais próximo e maior linha de tiro limpa até a bandeira.
 
-   Uso:  node tools/eval/map-check.mjs [mapId|all]     (escreve map_check.json)
+   Uso:  node tools/eval/map-check.mjs [mapId|all|novos|id1,id2]  (escreve map_check.json)
          node tools/eval/map-check.mjs <mapId> --mutante=rota-unica
+         node tools/eval/map-check.mjs id1,id2 --list-json       (só resolve o seletor)
    ============================================================================ */
 import path from 'node:path';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { THREE, MAPS, initTextures, bootGame } from './harness.mjs';
+import { MAPS } from '../../public/js/maps.js';
 import { amostraBaricentrica } from './map-audit-samples.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ONLY = process.argv[2] || 'all';
+const ARGS = process.argv.slice(2);
+const LIST_JSON = ARGS.includes('--list-json');
+const ONLY = ARGS.find((arg) => !arg.startsWith('--')) || 'all';
+const MAPAS_NOVOS = ['escadao', 'campomorro', 'lajes', 'corrego', 'mansao'];
+const MAP_IDS = ONLY === 'all' ? Object.keys(MAPS) : ONLY === 'novos' ? MAPAS_NOVOS : ONLY.split(',').map((id) => id.trim());
+const invalidos = MAP_IDS.filter((id) => !id || !Object.hasOwn(MAPS, id));
+if (invalidos.length || new Set(MAP_IDS).size !== MAP_IDS.length) {
+  console.error(`Seleção de mapas inválida: ${invalidos.join(', ') || 'ids duplicados'}. Válidos: ${Object.keys(MAPS).join(', ')}`);
+  process.exit(1);
+}
+if (LIST_JSON) {
+  console.log(JSON.stringify({ mapas: MAP_IDS }));
+  process.exit(0);
+}
+const { THREE, initTextures, bootGame } = await import('./harness.mjs');
 // O nome antigo fica como alias porque já aparece em comandos de auditoria registrados.
 const MUTANTE_SUPERFICIE_SOLIDA = process.argv.includes('--mutante=superficie-solida') ||
   process.argv.includes('--mutante=agua-solida');
@@ -152,8 +167,6 @@ const SEP_ROTA = 6.0;           // m de afastamento pra duas rotas contarem como
 const QUEDA_ANDAR = 2.0;
 
 const textures = initTextures();
-const MAPAS_NOVOS = ['escadao', 'campomorro', 'lajes', 'corrego', 'mansao'];
-const MAP_IDS = ONLY === 'all' ? Object.keys(MAPS) : ONLY === 'novos' ? MAPAS_NOVOS : [ONLY];
 const down = new THREE.Vector3(0, -1, 0);
 
 const mapas = [];
