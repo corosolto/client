@@ -91,6 +91,11 @@ const lado = (r, falhas) => (Object.keys(falhas).length ? [r.metrics.lowestVerte
 const legacy = readJSON(path.join(OLD_ROOT, 'summary.json'));
 const bodies = legacy.filter((e) => e.kind === 'body');
 if (bodies.length !== 74) throw new Error(`esperava 74 BODIES, fonte tem ${bodies.length}`);
+/* Veto de runtime: estado que passa a regra do QA mas reprova uma régua do jogo já existente
+   fica com o clipe atual. Cada veto carrega a régua e o número medido com o clipe assado. */
+const VETOS = {
+  'canarinho/idle1h': 'eval:postura COTOVELO=41.8° (faixa 55°–150°) com pistol/knife',
+};
 const corpos = {};
 let trocados = 0;
 for (const { id } of bodies) {
@@ -103,32 +108,42 @@ for (const { id } of bodies) {
   const atualQa = resultados(files.qaAtual), novoQa = resultados(files.qaNovo);
   const manifest = readJSON(files.manifest);
   const origem = readJSON(path.join(OLD_ROOT, id, 'current', 'sources.json'));
-  const estados = [], refs = {};
-  for (const state of STATES) {
+  const decisoes = STATES.map((state) => {
     const a = atualQa.get(state), n = novoQa.get(state);
     if (!a || !n) throw new Error(`${id}/${state}: ausente no QA atual ou no qa-uncompressed`);
     const fa = falhasDe(a), fn = falhasDe(n);
+    const veto = VETOS[`${id}/${state}`] || null;
     const motivos = motivosParaManter(fa, fn);
+    if (veto && motivos.length) throw new Error(`${id}/${state}: veto de runtime em estado que a regra já mantém`);
+    return { state, a, n, fa, fn, veto, troca: !motivos.length && !veto };
+  });
+  // Corpo que usava o compartilhado e ganha pasta própria: os estados mantidos viram cópia
+  // byte a byte do compartilhado, para a pasta ter os 8 clipes base (tp-anim3p AN5).
+  const ganhaPasta = decisoes.some((d) => d.troca);
+  const estados = [], refs = {};
+  for (const { state, a, n, fa, fn, veto, troca } of decisoes) {
     const copiaAtual = path.join(OLD_ROOT, id, 'current', `${state}.glb`);
     const repo = path.join(ANIMS, id, `${state}.glb`);
+    const compartilhado = path.join(ANIMS, 'mixamo', `${state}.glb`);
     const proprio = origem[state] === 'per-character';
     if (!proprio && origem[state] !== 'shared') throw new Error(`${id}/${state}: origem do clipe atual desconhecida: ${origem[state]}`);
-    const novo = motivos.length ? null : fs.readFileSync(path.join(NEW_ROOT, id, '_baked', `${state}.glb`));
+    const novo = troca ? fs.readFileSync(path.join(NEW_ROOT, id, '_baked', `${state}.glb`)) : null;
     if (novo) assertBaked(novo, id, state, manifest);
     // O clipe atual medido pelo QA tem que ser o do repo (ou o compartilhado, se o corpo não tem pasta).
     const noRepo = fs.existsSync(repo) ? fs.readFileSync(repo) : null;
-    const jaTrocado = novo && noRepo?.equals(novo);
-    if (!jaTrocado) {
+    const bytesCompartilhado = proprio ? null : fs.readFileSync(compartilhado);
+    if (!(novo && noRepo?.equals(novo))) {
       if (proprio && !noRepo) throw new Error(`${id}/${state}: clipe atual por personagem ausente no repo`);
-      if (!proprio && noRepo) throw new Error(`${id}/${state}: QA mediu o compartilhado, mas o repo tem clipe próprio`);
-      const medido = proprio ? repo : path.join(ANIMS, 'mixamo', `${state}.glb`);
-      if (!(await mesmoClipe(copiaAtual, medido))) throw new Error(`${id}/${state}: o clipe atual no repo não é o que o QA mediu`);
+      if (!proprio && noRepo && !noRepo.equals(bytesCompartilhado)) throw new Error(`${id}/${state}: QA mediu o compartilhado, mas o repo tem clipe próprio`);
+      if (!(await mesmoClipe(copiaAtual, proprio ? repo : compartilhado))) throw new Error(`${id}/${state}: o clipe atual no repo não é o que o QA mediu`);
     }
-    const publicado = novo || noRepo;
-    estados.push([novo ? 1 : 0, publicado ? h12(publicado) : null, lado(a, fa), lado(n, fn)]);
+    const publicado = novo || noRepo || (ganhaPasta ? bytesCompartilhado : null);
+    const registro = [troca ? 1 : 0, publicado ? h12(publicado) : null, lado(a, fa), lado(n, fn)];
+    if (veto) registro.push(veto);
+    estados.push(registro);
+    if (publicado && !noRepo?.equals(publicado)) pendentes.push([repo, publicado]);
     if (novo) {
       trocados++;
-      pendentes.push([repo, novo]);
       if (LOCO.includes(state)) refs[state] = manifest.clips[state].speed;
     }
   }
@@ -140,7 +155,7 @@ const proveniencia = {
   novo: 'anim-conv legacy-out/<id>/qa-uncompressed.json (os _baked/<estado>.glb publicados) + manifest.json',
   f: 'sha256[0..12] de [qa-current.json, qa-uncompressed.json, manifest.json]',
   v: 'velocidade natural (m/s na escala do personagem) do manifest, só nos estados de locomoção substituídos',
-  e: 'um registro por estado, na ordem de `estados`: [1 substitui | 0 mantém, sha256[0..12] do arquivo publicado (null = clipe compartilhado), atual [piso cm, {check: valor}?], novo [idem]]; `~` lista os stretch [rig], que não contam',
+  e: 'um registro por estado, na ordem de `estados`: [1 substitui | 0 mantém, sha256[0..12] do arquivo publicado (null = clipe compartilhado), atual [piso cm, {check: valor}?], novo [idem], veto de runtime?]; `~` lista os stretch [rig], que não contam',
 };
 const limites = readJSON(path.join(NEW_ROOT, bodies[0].id, 'qa-uncompressed.json')).thresholds;
 // Uma linha por corpo: diff legível e arquivo compacto (< 60 KB).

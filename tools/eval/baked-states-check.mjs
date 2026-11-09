@@ -67,6 +67,7 @@ if (MUT === 'ref-global') glbchars = glbchars.replace(/this\.refs = refsDoCorpo\
 const ids = Object.keys(data.corpos);
 if (ids.length !== 74) falhas.push(`inventário: ${ids.length} corpos != 74`);
 let trocados = 0, mantidos = 0, recusaRuido = 0, exemploRuido = '';
+const vetos = [];
 const regra = MUT === 'regra-ruido'
   ? (a, n) => motivosRegraRuido(a[0], n[0], a[1] || {}, n[1] || {})
   : (a, n) => motivosParaManter(a[1] || {}, n[1] || {});
@@ -74,7 +75,7 @@ for (const id of ids) {
   const c = data.corpos[id];
   if (!Array.isArray(c.f) || c.f.length !== 3 || !c.f.every((x) => /^[0-9a-f]{12}$/.test(x))) falhas.push(`${id}: sem hash das fontes do QA Studio`);
   if (!Array.isArray(c.e) || c.e.length !== S.length) { falhas.push(`${id}: precisa de ${S.length} registros de estado`); continue; }
-  c.e.forEach(([troca, hash, a, n], i) => {
+  c.e.forEach(([troca, hash, a, n, veto], i) => {
     const estado = S[i], k = `${id}/${estado}`;
     if (!Number.isFinite(a?.[0]) || !Number.isFinite(n?.[0])) { falhas.push(`${k}: piso ausente`); return; }
     const motivos = regra(a, n);
@@ -85,7 +86,10 @@ for (const id of ids) {
       }
       falhas.push(`R1 ${k}: substituído contra a regra (${motivos.join('; ')})`);
     }
-    if (troca === 0 && !motivos.length) falhas.push(`R1 ${k}: mantido sem motivo — a regra manda substituir`);
+    // Veto de runtime só mantém clipe que a regra trocaria, e só com régua do jogo + número medido.
+    if (veto !== undefined && !(troca === 0 && !regra(a, n).length && /^eval:[a-z0-9-]+ .*\d/.test(veto))) falhas.push(`R1 ${k}: veto de runtime inválido (${veto})`);
+    if (troca === 0 && !motivos.length && veto === undefined) falhas.push(`R1 ${k}: mantido sem motivo — a regra manda substituir`);
+    if (veto !== undefined) vetos.push(`${k}: ${veto}`);
     if (troca !== 0 && troca !== 1) falhas.push(`R1 ${k}: decisão inválida ${troca}`);
     troca === 1 ? trocados++ : mantidos++;
     const bytes = ler(id, estado);
@@ -210,7 +214,7 @@ if (!MUT) {
 
 const porCorpo = ids.map((id) => data.corpos[id].e.filter((e) => e[0] === 1).length);
 const resumo = `${trocados}/${trocados + mantidos} estados substituídos em ${porCorpo.filter(Boolean).length} corpos (${porCorpo.filter((n) => n === S.length).length} com 11/11)`
-  + ` · ${mantidos} mantidos · ${refsTrocadas} refs de locomoção por personagem`
+  + ` · ${mantidos} mantidos (${vetos.length} por veto de runtime${vetos.length ? `: ${vetos.join('; ')}` : ''}) · ${refsTrocadas} refs de locomoção por personagem`
   + (medidos ? ` · pé medido em ${medidos} clipes, pior ${piorPe} cm (${piorPeQuem})` : '');
 if (MUT) {
   const mordeu = falhas.some(MUTANTES[MUT]) && (MUT !== 'regra-ruido' || recusaRuido > 0);
