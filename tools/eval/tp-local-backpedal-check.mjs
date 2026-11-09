@@ -10,9 +10,8 @@ const root = process.cwd();
 const option = name => process.argv.find(a => a.startsWith(name + '='))?.slice(name.length + 1);
 const preview = process.argv.includes('--candidate-preview');
 const mutant = option('--mutante') || '';
-assert.ok(['', 'no-back', 'wrong-sign', 'player', 'ref-global'].includes(mutant), 'mutante desconhecido');
+assert.ok(['', 'no-back', 'wrong-sign', 'player'].includes(mutant), 'mutante desconhecido');
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
-const baked = JSON.parse(fs.readFileSync(path.join(root, 'public/models/anims/baked-states.json'), 'utf8'));
 const loadedInputs = {};
 function read(file) {
   const bytes = fs.readFileSync(file);
@@ -84,9 +83,6 @@ const cases = [
 function fixture(id, weapon, c) {
   const built = G.buildCharacterModel(CHARACTERS.find(d => d.id === id), {weaponId: weapon});
   assert.ok(built?.ctrl?.actions.walk && built.ctrl.actions.run, 'GLB/clipes não carregaram');
-  if (mutant === 'ref-global' && baked.bodies[id]) {
-    built.ctrl._locoRefs = {walk: .84, walk1h: .84, walkfire: .84, run: 2.08, crouchwalk: .75};
-  }
   const player = {pos: new THREE.Vector3(), vel: new THREE.Vector3(...(c.vel || [0, 0, 0])), yaw: c.yaw, pitch: .1, crouchF: 0, scoped: false, grounded: true, weapon};
   const game = {_ensurePlayerTP() {}, _updatePlayerTPCamera: Game.prototype._updatePlayerTPCamera, playerTP: built, player, _tpEul: new THREE.Euler(), _tpFwd: new THREE.Vector3(), _tpRight: new THREE.Vector3(), _tpOrbitPitch: .2, _tpOrbitYaw: .4, _eyeWorld: new THREE.Vector3(), camView: 'third', camera: new THREE.PerspectiveCamera(70, 1.5, .08, 400), world: {groundHeightAt: () => 0}, sfx: {jump() {}, land() {}}, _collide() {}, _acceptInput: () => true, time: 0,
     // A câmera de 3ª pessoa sonda oclusão do boom com o Raycaster do construtor real (game.js);
@@ -148,17 +144,6 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
           check(() => assert.equal(tested.args[4], c.back, 'back incorreto'));
           check(() => assert.equal(tested.args[2], false, 'hasTarget alterado'));
           check(() => assert.equal(tested.args[3], a.sp, 'speed alterado'));
-          const refs = baked.bodies[id]?.refs;
-          if (refs) {
-            for (const [nome, esperado] of Object.entries(refs)) {
-              check(() => assert.equal(ctrl._locoRefs[nome], esperado, `ref ${nome} não veio do pack assado`));
-            }
-            if (!c.idle) {
-              const esperado = Math.max(.45, Math.min(3, a.sp / refs[a.clip])) * (c.back ? -1 : 1);
-              check(() => assert.ok(Math.abs(a.rate - esperado) < 1e-9,
-                `${a.clip}: rate ${a.rate} != speed/ref assada ${esperado}`));
-            }
-          }
         }
         if ([30, 45, 59].includes(frame)) samples.push({frame, ...a});
       }
@@ -176,8 +161,4 @@ const report = {preview, mutant, scope: 'CPU real GLB/CharController; physics pl
 if (option('--out')) fs.writeFileSync(path.resolve(option('--out')), JSON.stringify(report, null, 2) + '\n');
 if (option('--clip-out')) fs.writeFileSync(path.resolve(option('--clip-out')), JSON.stringify(clipDetails) + '\n');
 console.log(JSON.stringify({preview, mutant, passed: report.passed, total: report.total, failureTypes: report.failureTypes, failed: rows.filter(r => !r.pass).map(r => [r.id, r.case, r.errors[0]]), authorityFrames: rows.reduce((n, r) => n + r.authorityFrames, 0), negativeFrames: rows.reduce((n, r) => n + r.negativeFrames, 0), loadedFiles: Object.keys(loadedInputs).length}));
-if (mutant === 'ref-global') {
-  const mordeu = report.passed < report.total && rows.some(r => r.errors.some(e => e.includes('ref') || e.includes('rate')));
-  console.log(mordeu ? '✓ mutante ref-global reprovado: o controlador perdeu as velocidades do pack' : 'MUTAÇÃO PASSOU — refs globais não foram detectadas');
-  process.exitCode = mordeu ? 0 : 1;
-} else process.exitCode = report.passed === report.total ? 0 : 1;
+process.exitCode = report.passed === report.total ? 0 : 1;

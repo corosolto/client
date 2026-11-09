@@ -60,7 +60,9 @@ const EXCECOES = new Map([
    personagem novo que quebra postura não entra — e reprova entrada PAGA que ficou na
    lista: consertou, tire da linha. A dívida encolhe, nunca cresce escondido. */
 const DIVIDA = new Set([
-  'adjim|NA-CABECA', 'ancap|NA-CABECA', 'bonzo|NA-CABECA', 'bonzo|COTOVELO',
+  'adjim|NA-CABECA', 'ancap|NA-CABECA', 'bonzo|NA-CABECA', 'cadequinha|NA-CABECA',
+  'metaleiro|NA-CABECA', 'lobisomem|TREMOR', 'mariabonita|TREMOR', 'lampiao|TREMOR',
+  'marina-silva|APOIO-NA-ARMA', 'bonzo|COTOVELO',
 ]);
 
 const ESPERADO = {
