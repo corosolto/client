@@ -16,6 +16,17 @@ Uma tentativa rejeitada fica terminal antes de fechar. Mensagens tardias não
 podem trocar meta/slot nem disparar callbacks na tentativa seguinte. A abertura
 sem welcome conserva o prazo; `onClose` só notifica uma sessão já aceita.
 
+O ticket de `connect` tem nonce de uso único. O nó pode consumi-lo antes de a
+ponte WT descobrir que v9 não é suportada. Depois de qualquer falha WT autenticada,
+`NetClient` fecha a tentativa e pede outro ticket via `refreshTicket()` antes de
+abrir WS. A credencial é opaca para o cliente; o emissor cria um nonce novo e o
+nó rejeita o replay pelo nonce, mesmo se os demais bytes do ticket mudarem.
+Falha do emissor, resposta vazia ou ticket idêntico interrompem o fallback.
+Sem emissor, uma conexão com ticket usa WS direto para não consumir o único nonce
+em WT. Conexões de teste anônimas podem tentar WT e cair para WS sem emissão.
+`main.js` fixa o nó antes do primeiro pedido: URL, emissão inicial, renovação e
+registro da sessão usam esse nó, mesmo que a seleção da lista mude durante o await.
+
 ## Estado público v9
 
 Por entidade, humano **ou bot**:
@@ -54,8 +65,38 @@ O formato v8 ignora todos os campos v9 e mantém os bytes anteriores.
 limites hostis, cinco mutantes v9 e dois controles v8. O antigo teste que exigia
 oferta exclusiva v8 foi removido: contradizia o transporte de produção.
 
-`eval:client-snapshot-negotiation` importa NetClient real e simula a fronteira
-WebSocket: v9, fallback v8, ack divergente, partida divergente com mensagem tardia,
-v7 recusada, seleção ausente e timeout. Três mutantes exigem nominal verde e
-failset exato. `eval:rede3p` cobre o caminho snapshot → controlador de animação.
+`eval:client-snapshot-negotiation` importa NetClient e TransporteWS reais e
+exercita dez casos: v9, fallback v8, ack divergente, partida divergente com
+mensagem tardia, v7 recusada, seleção ausente, timeout, seleção desconhecida,
+recusa de welcome sem notificação e fechamento antes de welcome sem notificação.
+Os seis mutantes exigem nominal verde e failset exato:
+
+| Mutante | Casos reprovados |
+| --- | --- |
+| `welcome-version` | N3, N5, N9 |
+| `partida-version` | N4 |
+| `attempt-guard` | N4, N9 |
+| `ws-selection` | N8 |
+| `early-close-notify` | N10, N9 |
+| `callback-before-close` | N4 |
+
+Esse mesmo gate executa `eval:client-ticket-fallback` (também acessível sozinho).
+A régua usa NetClient, TransporteWT e TransporteWS reais, com APIs de navegador e
+emissor/nó controlados. Os 14 casos cobrem rollback v8 após consumo do nonce,
+WT v9 sem renovação, WS direto sem emissor, erros e credenciais inválidas na
+renovação, metadados incompatíveis, falha anterior à autorização, acesso anônimo,
+recusa WS, erro WS, rejeição de nonce reutilizado em ticket diferente e pin do nó
+durante a emissão assíncrona. O último executa `obterMpTicket` e `mpEntrar` de
+`main.js`, alterando a seleção entre os pedidos e conferindo também a sessão.
+Controles de ticket exigem estes failsets:
+
+| Mutante | Casos reprovados |
+| --- | --- |
+| `replay-ticket` | T1, T11, T12, T13, T7, T9 |
+| `unsafe-no-provider` | T3 |
+| `refresh-validation` | T5, T6 |
+| `node-pin` | T14 |
+
+Reprodução: `npm run -s eval:client-snapshot-negotiation`. O gate já é chamado por
+`eval:netcodecbin`. `eval:rede3p` cobre snapshot → controlador de animação.
 Essas réguas não aprovam QUIC nem rollout de produção.

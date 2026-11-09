@@ -4766,12 +4766,12 @@ function mpMostrarIdentidade(estado) {
   mpIdentityTimer = setTimeout(() => { const toast = document.getElementById('mp-identity-toast'); if (toast) toast.hidden = true; }, 5000);
 }
 
-async function obterMpTicket(action) {
+async function obterMpTicket(action, no = mpNoAtual) {
   /* Um ?mp= pode apontar a staging ou a um nó oficial. Só o nó de teste selecionado
      dispensa ticket público; trocar para BR/US/EU na lista exige ticket normalmente. */
   const localMp = new URLSearchParams(location.search).get('mp') || '';
-  if (localMp && mpNoAtual?.id === 'url' && !NOS.some((no) => no.url === mpNoAtual.url)) return '';
-  const node = String(mpNoAtual?.ticketNode || mpNoAtual?.id || '').toLowerCase();
+  if (localMp && no?.id === 'url' && !NOS.some((oficial) => oficial.url === no.url)) return '';
+  const node = String(no?.ticketNode || no?.id || '').toLowerCase();
   if (!NO_RE.test(node)) return '';   // forma do id em nos.js; 'br2' é nó, não erro de digitação
   const uid = getAnonId();
   const token = getToken();
@@ -5307,14 +5307,17 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   }
   mpEstado('conectando', `CONECTANDO · ${sala.name || sala.convite || 'SALA'}…`);
   mpConectando = true;
+  // Autorização inicial, renovação e sessão pertencem ao mesmo nó, mesmo se a lista mudar.
+  const no = mpNoAtual;
   let ticket;
-  try { ticket = await obterMpTicket('connect'); }
+  try { ticket = await obterMpTicket('connect', no); }
   catch {
     mpConectando = false;
     return mpErro('Não deu para autorizar a conexão. Tente novamente.');
   }
-  const net = new NetClient(mpNoAtual.url.replace(/\/ws.*$/, '') + '/ws', {
+  const net = new NetClient(no.url.replace(/\/ws.*$/, '') + '/ws', {
     nome: nick || null, room: sala.id, codigo: soConvite ? sala.codigo : null, pw: senha, team, ticket,
+    refreshTicket: () => obterMpTicket('connect', no),
     csha: String(window.__CS_BUILD?.sha || ''),   // mp_session grava o build do navegador (backend#22)
   });
   /* Espera COM feedback: o connect pode levar segundos numa região longe, e tela parada sem
@@ -5344,7 +5347,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   mpErro('');
   mpEstado('on', `NA SALA · ${sala.name || sala.convite || ''}`);
   clearInterval(mpTimerLista);
-  mpSessao = { net, sala, no: mpNoAtual };
+  mpSessao = { net, sala, no };
   // chat de sala (#686): inerte sem welcome.chat; vive na sessão, não no Game, então sobrevive à troca de mapa
   mpSessao.chat = montarChatSala({ net, obterJogo: () => game, tr, frase, convite: sala.convite || sala.id || '', toque: TOUCH });
   /* O SERVIDOR dita o cenário. `currentMap`/`matchMode` são as variáveis que o startGame lê.

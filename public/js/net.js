@@ -151,7 +151,7 @@ export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
 }
 
 export class NetClient {
-  constructor(url, { nome = null, room = null, codigo = null, pw = '', team = 'auto', ticket = '', wt = '', wtHashes = null, csha = '' } = {}) {
+  constructor(url, { nome = null, room = null, codigo = null, pw = '', team = 'auto', ticket = '', refreshTicket = null, wt = '', wtHashes = null, csha = '' } = {}) {
     // `sp` leva o subprotocolo para o gateway: quem escolhe a versão do snapshot é quem
     // vai decodificá-la, e no caminho WebTransport não existe handshake para negociar
     // `pronto=1`: este cliente avisa quando montou o mapa novo (o nó segura o round 1, com teto)
@@ -159,6 +159,7 @@ export class NetClient {
     this.url = `${url}${url.includes('?') ? '&' : '?'}${qs}`;
     this.wtUrl = wt ? `${wt}${wt.includes('?') ? '&' : '?'}${qs}&sp=${encodeURIComponent(CLIENT_SNAPSHOT_PROTOCOL)}` : '';
     this.wtHashes = wtHashes;
+    this._refreshTicket = refreshTicket;
     this.tp = null;
     this.connected = false;
     // `ws` continua legível (overlay de rede, réguas, sonda): é o socket de VERDADE, mas
@@ -217,11 +218,24 @@ export class NetClient {
      depois que o canário provar, e até lá quem pede é `?wt=`. Prazo curto e queda em
      SILÊNCIO — um gateway fora do ar não pode virar "o jogo não abre". */
   async connect(timeoutMs = 8000) {
-    if (this.wtUrl && typeof WebTransport === 'function') {
+    const ticket = new URL(this.url).searchParams.get('ticket') || '';
+    // Sem emissor, usa WS direto: uma tentativa WT pode consumir o nonce mesmo sem welcome.
+    if (this.wtUrl && typeof WebTransport === 'function' && (!ticket || typeof this._refreshTicket === 'function')) {
       try {
         return await this._conectar(timeoutMs, () => new TransporteWT(this.wtUrl, { hashes: this.wtHashes }));
       } catch (e) {
+        const falhou = this.tp;
         this.tp = null; this.connected = false;
+        falhou?.fechar(1000, 'transport_fallback');
+        if (ticket) {
+          // O nó antigo consome o ticket antes de a ponte descobrir a incompatibilidade.
+          // O emissor garante nonce novo; o cliente mantém o ticket opaco.
+          const novoTicket = await this._refreshTicket();
+          if (typeof novoTicket !== 'string' || !novoTicket.trim() || novoTicket === ticket) throw new Error('ticket_refresh_invalid');
+          const url = new URL(this.url);
+          url.searchParams.set('ticket', novoTicket);
+          this.url = url.href;
+        }
         try { console.info('[net] WebTransport falhou, caindo para WebSocket:', e?.message || e); } catch { /* console mudo */ }
       }
     }
