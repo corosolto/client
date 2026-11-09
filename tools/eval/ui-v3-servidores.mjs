@@ -291,7 +291,7 @@ async function servidores(mutante) {
   const corrida = await pc.evaluate(() => ({
     criar: document.getElementById('mp-amigos')?.checkVisibility() && !!document.getElementById('mp-amigos')?.closest('.tp-srv__acoes'),
     rapido: document.getElementById('mp-quick')?.checkVisibility() && !!document.getElementById('mp-quick')?.closest('.tp-srv__acoes'),
-    opcoes: !!document.querySelector('.tp-srv__lado > .mp-criar[open]'),
+    opcoes: (() => { const opcoes = document.querySelector('.tp-srv__lado > .mp-criar[open]'); return !!opcoes?.checkVisibility(); })(),
     evento: window.__criarCorrida,
   }));
   if (!mutante) await pc.screenshot({ path: `${OUT}/servidores-corrida-geo.png` });
