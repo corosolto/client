@@ -235,9 +235,11 @@ class Netcode {
     const game = this.game;
     if (!e || !Number.isInteger(e.i) || game.drops.some((d) => d._nid === e.i)) return;
     if (!WEAPONS[e.w]) return;
-    game._dropWeapon(+e.x || 0, +e.z || 0, e.w, false, 0.01, 0);   // sem prazo local: quem some é o `gone`
+    game._dropWeapon(+e.x || 0, +e.z || 0, e.w, false, 0.01, 0);   // quem some é o `gone` — ou o prazo abaixo
     const d = game.drops[game.drops.length - 1];
-    if (d) d._nid = e.i;
+    // TTL do servidor quando vem (> 0, no evento e no welcome); sem ele, teto local de 25 s
+    const ttl = Number.isFinite(e.ttl) && e.ttl > 0 ? e.ttl : 25;
+    if (d) { d._nid = e.i; d._expiraRedeEm = game.time + ttl + 2; }
   }
 
   _clearPrediction() {
@@ -579,11 +581,20 @@ class Netcode {
      tick de entrada é estado herdado (como `primeiroSnap`), e lote com 3 s de atraso (pausa) some. */
   _drenar(snap, primeiroSnap) {
     const fila = this.net.events;
-    if (!fila || !fila.length) return;
-    while (fila.length && fila[0].tick <= snap.tick) {
-      const lote = fila.shift();
-      if (primeiroSnap || snap.tick - lote.tick > 90) continue;
-      for (const e of lote.list) { try { this._evento(e); } catch { /* HUD ainda não montado */ } }
+    if (fila && fila.length) {
+      while (fila.length && fila[0].tick <= snap.tick) {
+        const lote = fila.shift();
+        if (primeiroSnap || snap.tick - lote.tick > 90) continue;
+        for (const e of lote.list) { try { this._evento(e); } catch { /* HUD ainda não montado */ } }
+      }
+    }
+    /* `gone` perdido (lote atrasado) deixava ARMA FANTASMA no chão até a virada da rodada.
+       O servidor manda o TTL do drop no próprio evento e no welcome: ele é a rede de
+       segurança — quem passar do prazo some sozinho, como o `gone` faria. */
+    const game = this.game;
+    for (let i = game.drops.length - 1; i >= 0; i--) {
+      const d = game.drops[i];
+      if (d._nid && d._expiraRedeEm != null && game.time >= d._expiraRedeEm) game._sumirDrop(i);
     }
   }
   // IDs uint32 de eventos não podem truncar para signed nem coagir inválidos em zero.
@@ -624,7 +635,11 @@ class Netcode {
       const origem = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0), dir = new THREE.Vector3(+e.vx || 0, +e.vy || 0, +e.vz || 0);
       game._spawnGrenade(origem, dir.lengthSq() ? dir.clone().normalize() : new THREE.Vector3(0, 0, -1), kind, dono);
       const gr = game._grenades[game._grenades.length - 1];
-      if (gr) { gr._nid = e.i; gr.v.copy(dir); gr.mesh.position.copy(origem); gr.fuse = 1e9; }   // quem estoura é o `boom`
+      /* Quem estoura é o `boom` autoritativo — mas o lote dele pode ser descartado quando
+         chega atrasado (jitter > 1,5 s), e a granada ficava CONGELADA em cena para sempre
+         (fuse 1e9). O fuse local de 8 s é a rede de segurança: estoura visualmente como o
+         boom faria, só que tarde, em vez de virar fantasma. */
+      if (gr) { gr._nid = e.i; gr.v.copy(dir); gr.mesh.position.copy(origem); gr.fuse = 8; }
     } else if (e.k === 'boom') {
       const i = game._grenades.findIndex((x) => x._nid === e.i);
       if (i >= 0) { game.scene.remove(game._grenades[i].mesh); game._grenades.splice(i, 1); }

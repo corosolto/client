@@ -81,8 +81,11 @@ const j = async (url, opt) => {
 };
 export const listRooms = (httpBase) => j(`${httpBase}/rooms`).then((x) => x.rooms || []);
 // Uma sala pelo código do convite. 404 vira null: sala que acabou não é erro, é sala que acabou.
+// O RESTO sobe: 429 do freio de convite e 5xx não são "sala inexistente", e a mensagem antiga
+// mentia a causa pro jogador ("não existe mais" quando ele é que estava freado).
 export const salaPorConvite = (httpBase, codigo) =>
-  j(`${httpBase}/sala/${encodeURIComponent(codigo)}`).then((x) => x.sala).catch(() => null);
+  j(`${httpBase}/sala/${encodeURIComponent(codigo)}`).then((x) => x.sala)
+    .catch((e) => { if (String(e && e.message || '') !== 'http_404') throw e; return null; });
 export const listMaps = (httpBase) => j(`${httpBase}/maps`).then((x) => x.maps || []);
 export const health = (httpBase) => j(`${httpBase}/health`);
 export const createRoom = (httpBase, cfg, ticket = '') => j(`${httpBase}/rooms`, {

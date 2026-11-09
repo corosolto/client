@@ -426,6 +426,51 @@ console.log('\n· morte→respawn por snapshot RESETA o corpo TP do jogador (BUG
   g2.dispose();
 }
 
+/* Lote de `ev` atrasado (> 1,5 s) é descartado inteiro: se o `boom` ia nele, a granada
+   ficava CONGELADA em cena para sempre (fuse 1e9, só o boom removia); se ia o `gone`,
+   a arma morta virava fantasma até a virada da rodada. Rede de segurança: fuse local
+   de 8 s na granada e o TTL do servidor como prazo do drop. */
+console.log('\n· boom/gone PERDIDOS não deixam fantasma (granada congelada e arma eterna)');
+{
+  const net = fakeNet(1, 5, false, 20, 1);
+  const g = montaJogo(net, { teamSize: 5 });
+  net.snap = snapshot(500, 90); g._mp.applySnapshot();   // primeiro snapshot: lote daqui é estado herdado, descartado
+  net.events.push({ tick: 100, list: [{ k: 'nade', i: 77, kind: 'frag', x: 2, y: 1, z: 2, vx: 1, vy: 1, vz: 0, o: 0 }] });
+  net.snap = snapshot(500.1, 100);
+  g._mp.applySnapshot();
+  const gr = g._grenades.find((x) => x._nid === 77);
+  cobra(!!gr, 'o evento `nade` nasce a granada de rede');
+  cobra(!!gr && gr.fuse > 0 && gr.fuse <= 8, `granada de rede tem fuse de segurança (${gr && +gr.fuse.toFixed(1)} s ≤ 8), não 1e9`);
+  for (let i = 0; i < 60 * 9; i++) g.update(1 / 60);
+  cobra(!g._grenades.some((x) => x._nid === 77), 'boom que nunca chega não vira granada congelada: o fuse local remove');
+  g.dispose();
+
+  // MUTANTE: o fuse eterno (comportamento antigo) deixa a granada fantasma — a régua morde.
+  const net2 = fakeNet(1, 5, false, 20, 1);
+  const g2 = montaJogo(net2, { teamSize: 5 });
+  net2.snap = snapshot(500, 90); g2._mp.applySnapshot();
+  net2.events.push({ tick: 100, list: [{ k: 'nade', i: 78, kind: 'frag', x: 2, y: 1, z: 2, vx: 1, vy: 1, vz: 0, o: 0 }] });
+  net2.snap = snapshot(500.1, 100); g2._mp.applySnapshot();
+  const gr2 = g2._grenades.find((x) => x._nid === 78);
+  if (gr2) gr2.fuse = 1e9;
+  for (let i = 0; i < 60 * 12; i++) g2.update(1 / 60);
+  cobra(g2._grenades.some((x) => x._nid === 78), 'MUTANTE com fuse 1e9 deixa a granada fantasma (a cláusula acima morde)');
+  g2.dispose();
+
+  // Drop: o TTL do servidor vira prazo de validade; `gone` perdido não deixa arma eterna.
+  const net3 = fakeNet(1, 5, false, 20, 1);
+  const g3 = montaJogo(net3, { teamSize: 5 });
+  net3.snap = snapshot(500, 90); g3._mp.applySnapshot();
+  net3.events.push({ tick: 100, list: [{ k: 'drop', i: 91, x: 3, z: 3, w: 'ak', ttl: 3 }] });
+  net3.snap = snapshot(500.1, 100); g3._mp.applySnapshot();
+  const dr = g3.drops.find((x) => x._nid === 91);
+  cobra(!!dr && dr._expiraRedeEm != null, 'drop de rede ganha prazo com o TTL do servidor (ou teto de 25 s)');
+  for (let i = 0; i < 60 * 7; i++) g3.update(1 / 60);
+  net3.snap = snapshot(507, 520); g3._mp.applySnapshot();
+  cobra(!g3.drops.some((x) => x._nid === 91), 'gone perdido não vira arma fantasma: passado o TTL, o drop some sozinho');
+  g3.dispose();
+}
+
 /* BUG-87 — "Lags". A interpolação antiga viajava prev→cur no gap de CHEGADA (~50 ms):
    qualquer snapshot atrasado clampava no último ponto e o boneco CONGELAVA até o próximo
    pacote — a 20 Hz com jitter real isso lê como lag mesmo com rede boa. O buffer de
