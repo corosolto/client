@@ -7314,12 +7314,12 @@
       "bodyId": "skin:lula-cyborg",
       "sourceKind": "skin",
       "baseCharacter": "barbudo",
-      "path": "public/models/skins/lula-cyborg-b1739c744789.glb",
+      "path": "public/models/skins/lula-cyborg-e94ce8f2be07.glb",
       "bytes": 914748,
-      "sourceSha256": "b1739c74478996c90b3430f1564246bb04874a2d3d0ea74a18c46c08b1f31899",
+      "sourceSha256": "e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119",
       "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
       "familyId": "rig-dc96cfa99b23",
-      "profileId": "skin:lula-cyborg@b1739c744789",
+      "profileId": "skin:lula-cyborg@e94ce8f2be07",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -7391,7 +7391,7 @@
         "status": "pass",
         "bindFingerprintSha256": "bdb85b83c7501ec01b4e1316ce20f19e8a677dcf11e8cb269e5877300b3e043c",
         "geometryFingerprintSha256": "5f512572d4e36995f8753e98aa8d73bc473b2c99e32aafad3f795328f9ace0de",
-        "weightsFingerprintSha256": "897d7337e10eefe1006099f69993bc6f3097ed970c9f53c50636a4e367a6aa7d"
+        "weightsFingerprintSha256": "1c56f061ed4d1ff6b273a987547d0e3fd53d46284cf9311be41b0ec91ba0f7bd"
       },
       "structuralStatus": "candidate",
       "issues": [],
@@ -7496,12 +7496,12 @@
       "bodyId": "skin:lula-mandrake",
       "sourceKind": "skin",
       "baseCharacter": "barbudo",
-      "path": "public/models/skins/lula-mandrake-7babfbddcf34.glb",
+      "path": "public/models/skins/lula-mandrake-4e58761e8ed5.glb",
       "bytes": 1137388,
-      "sourceSha256": "7babfbddcf3470ee855ead588bbc4cfde25abc8a708f04ef18423d77b3272a90",
+      "sourceSha256": "4e58761e8ed5827ad7ef35432e57c20885c2490d70721d2c309497b1f7cf84dd",
       "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
       "familyId": "rig-dc96cfa99b23",
-      "profileId": "skin:lula-mandrake@7babfbddcf34",
+      "profileId": "skin:lula-mandrake@4e58761e8ed5",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -7573,7 +7573,7 @@
         "status": "pass",
         "bindFingerprintSha256": "0aefff3b84d6a1f64514d1e332a33ee7a8bc0df99fb58183ac2c0c88a8182a1b",
         "geometryFingerprintSha256": "9a92d98cf691f9303cec55bacae3cc8b7d966a60b2901cdfe8f28f983502daea",
-        "weightsFingerprintSha256": "eba91c30043ac05ed791b0f1f2cec94b896626ca9ea1730815bb7e8d6e414085"
+        "weightsFingerprintSha256": "3293057630996cfe5506da15c18877fd5dad7d1397ad7bb6f08aefa1e896d7cf"
       },
       "structuralStatus": "candidate",
       "issues": [],

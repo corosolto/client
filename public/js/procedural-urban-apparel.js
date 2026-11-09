@@ -40,7 +40,7 @@ export const URBAN_BODY_ADAPTERS = Object.freeze({
   'e5a31ca1d72b6a4cb3231757c6a9ad075c3713e8a32722a665f10b3a7f4a177b': adapter('weighted-mesh-motoca-cachorro-loko', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
   '7714dbb9ff324e0c1fac93de2e0ee2d2fb150c3576eba304840bcaa876ee955e': adapter('bounds-cuca', 'body-local-depth-envelope', { maximumDepth: 1.75 }),
   '6b3839025c194b1418c71c7ddb68a9a9afe59794d50d49c4409197edf6f0093d': adapter('bounds-lobisomem', 'body-local-width-envelope', { maximumWidth: 2.2 }),
-  'b1739c74478996c90b3430f1564246bb04874a2d3d0ea74a18c46c08b1f31899': adapter('spine02-lula-cyborg', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
+  'e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119': adapter('spine02-lula-cyborg', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
   '4db27d13f43fd0f3a06b0d564747e62722e848c1667af4e8fc362923e9716f1b': adapter('spine02-senador-drip', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
   '43eb4d073d4a485b24c3916e0259049667f07440a88c4aac52f27888ed4b48e8': adapter('spine02-zero-um-mandrake', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
   'acecd2a763dc417f6b132a2d555bffd2c6a5e7cf3b1a83a50ee24d938fce4b0f': adapter('roles-mst', 'duplicate-curl-joints-are-outside-required-fit-roles'),

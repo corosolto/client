@@ -31,10 +31,10 @@ Teto de 400 KB por vídeo, conferido por `npm run eval:treta-video`.
 | `senador-drip` | `senador-drip-4db27d13f43f.glb` | 234 KB / 210 KB / 9 KB | `0095225e2fe3` / `4194ad5050de` |
 | `janja` | `janja-a268fab50a32.glb` | 210 KB / 176 KB / 8 KB | `cde411af02d4` / `9aaabbd8e02c` |
 | `michelle-bolsonaro` | `michelle-bolsonaro-15a1099a0f1b.glb` | 202 KB / 175 KB / 8 KB | `ed5359d5bc0f` / `efe3830b3b64` |
-| `lula-cyborg` | `lula-cyborg-b1739c744789.glb` | 318 KB / 280 KB / 11 KB | `c02d12ba23da` / `fe92f02b1412` |
+| `lula-cyborg` | `lula-cyborg-e94ce8f2be07.glb` | 318 KB / 280 KB / 11 KB | `c02d12ba23da` / `fe92f02b1412` |
 | `bolsonaro-cyborg` | `bolsonaro-cyborg-1ca095b97b57.glb` | 226 KB / 198 KB / 8 KB | `52b5777c80b1` / `5f82a4be15c3` |
 | `aljuiz-toga-mandrake` | `aljuiz-toga-mandrake-e4bebe4f7c20.glb` | 264 KB / 226 KB / 11 KB | `553fe382828e` / `604b52922076` |
-| `lula-mandrake` | `lula-mandrake-7babfbddcf34.glb` | 249 KB / 219 KB / 10 KB | `fbcfd136c8a8` / `59fe88202522` |
+| `lula-mandrake` | `lula-mandrake-4e58761e8ed5.glb` | 249 KB / 219 KB / 10 KB | `fbcfd136c8a8` / `59fe88202522` |
 | `bolsonaro-mandrake` | `bolsonaro-mandrake-bcd355b78b39.glb` | 257 KB / 222 KB / 10 KB | `ee2570703192` / `f31b6222a8e0` |
 | `michelle-mandrake` | `michelle-mandrake-2a3fcdf22215.glb` | 210 KB / 186 KB / 8 KB | `d21208fe076f` / `e63e7e63d44f` |
 | `zero-um-mandrake` | `zero-um-mandrake-43eb4d073d4a.glb` | 275 KB / 238 KB / 10 KB | `a87864efdbe3` / `fa231a2e4e91` |
