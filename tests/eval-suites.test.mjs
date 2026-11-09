@@ -14,24 +14,30 @@ const BASELINE = {
   fast: { quantidade: 338, sha256: '05c5d2027a8229f379a4556ee991daf1bc0e9f45b04ee3515d4e458259d6bfdf' },
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
+const NOVOS = { fast: new Set(['eval:portalembed']), deploy: new Set() };
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
 
 for (const [nome, baseline] of Object.entries(BASELINE)) {
+  const preservados = () => SUITES[nome].filter((passo) => !NOVOS[nome].has(passo));
   test(`check:${nome} preserva exatamente a sequência anterior`, () => {
-    assert.equal(SUITES[nome].length, baseline.quantidade);
-    assert.equal(assinatura(SUITES[nome]), baseline.sha256);
+    assert.equal(preservados().length, baseline.quantidade);
+    assert.equal(assinatura(preservados()), baseline.sha256);
   });
 
   test(`baseline de ${nome} detecta mutantes de perda e reordenação`, () => {
-    const semPasso = SUITES[nome].filter((_, i) => i !== 17);
+    const semPasso = preservados().filter((_, i) => i !== 17);
     assert.equal(semPasso.length, baseline.quantidade - 1);
     assert.notEqual(assinatura(semPasso), baseline.sha256);
 
-    const reordenado = [...SUITES[nome]];
+    const reordenado = preservados();
     [reordenado[3], reordenado[19]] = [reordenado[19], reordenado[3]];
     assert.notEqual(assinatura(reordenado), baseline.sha256);
   });
 }
+
+test('staging adiciona portalembed sem apagar os passos migrados', () => {
+  assert.ok(SUITES.fast.includes('eval:portalembed'));
+});
 
 test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {
   const conhecidos = new Set([...SUITES.fast, ...SUITES.deploy]);
