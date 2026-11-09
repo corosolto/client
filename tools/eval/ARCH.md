@@ -179,6 +179,7 @@ Cobertura: **4148 de 10091 linhas (41%)** do `game.js` têm dono declarado. O re
 | 2652 | `_radioUi()` | 10 |
 | 2662 | `_emoteToggle()` | 10 |
 | 2672 | `_emoteMods()` | 9 |
+| 2684 | `_emoteAnel()` | 4 |
 | 2681 | `_emoteUi()` | 20 |
 | 2701 | `_emoteClose()` | 6 |
 | 2707 | `_emotePick()` | 11 |

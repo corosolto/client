@@ -231,6 +231,50 @@ function upperClip(name) {
   }
   return _upperClips.get(name);
 }
+/* EMOTES DE CAPTURA: um pack único (models/anims/emotes-mocap.glb) no esqueleto de
+   referência, baixado só no primeiro emote de clipe. As rotações servem a todo corpo
+   meshy-28; a TRANSLAÇÃO do Hips é absoluta e vem na altura de quadril da referência
+   (82 cm), então cada corpo recebe uma cópia do clipe com o Hips reescalado pela sua
+   própria altura de repouso — sem isso a Gotinha (58 cm) flutuava e o Capitão
+   (102 cm) afundava os pés no chão. Medidas: docs/EMOTES-BR.md. */
+const _emoteClips = {};
+const _emoteClipsCorpo = new Map();
+let _emoteHipsRef = null;
+let _emotesP = null;
+function emotesPack() {
+  if (!_emotesP) {
+    _emotesP = loadGLB(assetUrl('models/anims/emotes-mocap.glb')).then((g) => {
+      let hips = null;
+      g.scene.traverse((o) => { if (!hips && o.name === 'Hips') hips = o; });
+      if (hips) _emoteHipsRef = hips.position.clone();
+      for (const c of g.animations) _emoteClips[c.name] = c;
+      return _emoteClips;
+    }).catch(() => _emoteClips);
+  }
+  return _emotesP;
+}
+function emoteClipDoCorpo(nome, hipsRest) {
+  const c = _emoteClips[nome];
+  if (!c || !hipsRest || !_emoteHipsRef) return c || null;
+  const chave = `${nome}|${hipsRest.x.toFixed(2)},${hipsRest.y.toFixed(2)},${hipsRest.z.toFixed(2)}`;
+  if (!_emoteClipsCorpo.has(chave)) {
+    const k = hipsRest.y / _emoteHipsRef.y;
+    const ref = _emoteHipsRef;
+    // Só a track de posição do Hips é copiada; as de rotação são compartilhadas.
+    const tracks = c.tracks.map((t) => {
+      if (t.name !== 'Hips.position') return t;
+      const v = t.values.slice();
+      for (let i = 0; i < v.length; i += 3) {
+        v[i] = hipsRest.x + (v[i] - ref.x) * k;
+        v[i + 1] = hipsRest.y + (v[i + 1] - ref.y) * k;
+        v[i + 2] = hipsRest.z + (v[i + 2] - ref.z) * k;
+      }
+      return new THREE.VectorKeyframeTrack(t.name, t.times, v);
+    });
+    _emoteClipsCorpo.set(chave, new THREE.AnimationClip(`emote_${nome}`, c.duration, tracks));
+  }
+  return _emoteClipsCorpo.get(chave);
+}
 const _base = new Map();           // id -> THREE.Object3D template scene
 const _bodyOrigins = new WeakMap();
 const _skins = new Map(), _skinRequests = new Map();
@@ -1058,7 +1102,10 @@ class CharController {
     this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0; this._porte1hK = 0;
     this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
     this._emoteId = null; this._emoteT = 0; this._emoteK = 0; this._emoteDip = 0;
-    this.emotando = false; this._emoteOssos = [];
+    this.emotando = false; this._emoteOssos = []; this._emoteClipeInfo = null; this._emoteClipeAtivo = false; this._ultimoPose = null;
+    // Repouso do Hips ANTES de qualquer pose: base da reescala dos emotes de captura.
+    this._hipsRest = null;
+    model?.traverse?.((o) => { if (!this._hipsRest && o.isBone && o.name === 'Hips') this._hipsRest = o.position.clone(); });
     this._ar = false; this._mantleF = null; this._landT = 0; this._yawAtraso = null; this._deathTilt = 0; this.lod = 0;
     this.shadow = null; this._airK = 0;   // sombra de contato + fator "está no ar" (0..1, suavizado)
     this.oneHanded = false; // arma de 1 mão: idle/walk trocam p/ idle1h/walk1h (setado em buildCharacterModel)
@@ -1208,14 +1255,51 @@ class CharController {
 
   setCrouch(v) { this.crouch = !!v; }
   /* EMOTE: dança por overlay de mundo (ver public/js/emotes.js). Entra e sai em rampa
-     de 0,18 s — cortar no quadro dá solavanco e o boneco "pula" de pose. */
-  emote(id) {
+     de 0,18 s — cortar no quadro dá solavanco e o boneco "pula" de pose. Emote de
+     captura (`clipe` no driver) toca o clipe de corpo inteiro; `elapsed` posiciona a
+     fase (entrada no meio da dança, rede) sem reiniciar rampa nem clipe já em curso. */
+  emote(id, elapsed = 0) {
     if (this.dead || !id) return false;
-    this._emoteId = id; this._emoteT = 0; this.emotando = true;
+    this._emoteId = id; this._emoteT = Math.max(0, Number(elapsed) || 0); this.emotando = true;
+    this._emoteClipeInfo = _emoteDriver?.clipe?.(id) || null;
+    if (this._emoteClipeInfo) this._tocarEmoteClipe();
     return true;
   }
   pararEmote() { this._emoteId = null; }
   emoteAtual() { return this.emotando ? this._emoteId : null; }
+
+  _pedirEmotes() {
+    if (this._emotesBind) return;
+    this._emotesBind = true;
+    void emotesPack().then(() => {
+      // O pack chega depois: só retoma se o MESMO emote ainda está pedido (parar ou
+      // morrer durante o download não ressuscita a dança).
+      if (this._emoteId && this._emoteClipeInfo?.id === this._emoteId) this._tocarEmoteClipe();
+    });
+  }
+
+  _tocarEmoteClipe() {
+    const info = this._emoteClipeInfo;
+    if (!info || this.dead || this.lod >= 2) return false;
+    const clip = emoteClipDoCorpo(info.id, this._hipsRest);
+    if (!clip) { this._pedirEmotes(); return false; }
+    const nome = `emote_${info.id}`;
+    const a = this.actions[nome] || (this.actions[nome] = this.mixer.clipAction(clip));
+    const dur = clip.duration;
+    const fase = info.laco ? this._emoteT % dur : Math.min(this._emoteT, dur);
+    if (this.cur === a) {
+      // Ressincronização: só corrige deriva visível; a fase local já anda com o mixer.
+      let d = Math.abs(a.time - fase);
+      if (info.laco) d = Math.min(d, dur - d);
+      if (d > 0.25) a.time = fase;
+      return true;
+    }
+    // Corpo inteiro: recarga/faca/hit em camada superior não sobrepõem a dança.
+    this._stopUpper();
+    this._to(nome, !info.laco);
+    a.time = fase;
+    return true;
+  }
 
   /* Recarga visível em 3P: overlay procedural sobre o clipe corrente (não há clipe de
      reload no acervo — ver docs/ANIM-3P.md). Envelope sobe e desce; a mão esquerda vai
@@ -1383,6 +1467,11 @@ class CharController {
         jump.paused = true;
         jump.time = jump.getClip().duration * (0.08 + this._mantleF * 0.88);
         this.curName = 'jump';
+      } else if (this._emoteClipeInfo && this._emoteId && !this.crouch && !this._ar) {
+        // Emote de captura: o clipe é dono do corpo inteiro. LOD≥2 não paga o clipe e
+        // fica no idle com a coreografia de reserva; voltando ao LOD perto, retoma na fase.
+        if (this.lod >= 2) this._to('idle');
+        else this._tocarEmoteClipe();
       } else if (this.crouch) {
         this._to(moving > 0.05 ? 'crouchwalk' : 'crouch');
       } else if (this.shooting && moving > 0.05 && this.actions.walkfire) {
@@ -1433,13 +1522,16 @@ class CharController {
       if (this.actions.run_back) this.actions.run_back.timeScale = rate(3.826);
     }
     this.mixer.update(dt);
+    // Emote de captura tocando: o clipe manda no corpo, então mira/coluna não o torcem.
+    const clipeEmote = this._emoteClipeInfo ? this.actions[`emote_${this._emoteClipeInfo.id}`] : null;
+    this._emoteClipeAtivo = !!clipeEmote && this.cur === clipeEmote && !this.dead;
     // Pitch da cabeça em MALHA FECHADA (substitui o HEAD_UP fixo, que ACUMULAVA rotação
     // quando o mixer parava de escrever o osso — ex.: idle.glb com duração zero, que
     // dobrava a cabeça do personagem na tela de seleção). Mede o pitch real do olhar
     // (eixo +Z local da cabeça em mundo) e gira o osso pela DIFERENÇA pro aimPitch.
     // Só roda quando aimPitch é DEFINIDO (bots) — preview da seleção e braços FP ficam
     // com a pose natural do clipe (aplicar em todos deixava as cabeças esquisitas).
-    if (this.headBone && this.aimPitch !== undefined && !this.dead && this.lod < 2) {
+    if (this.headBone && this.aimPitch !== undefined && !this.dead && this.lod < 2 && !this._emoteClipeAtivo) {
       const target = this.aimPitch;
       this.group.getWorldQuaternion(_gq);
       _right.set(1, 0, 0).applyQuaternion(_gq);
@@ -1555,8 +1647,19 @@ class CharController {
     if (this._emoteK > 0.004 && _emoteDriver && this.corpo?.size) {
       const lista = this._emoteOssos;
       lista.length = 0;
-      const dip = _emoteDriver.pose(this._emoteId || this._ultimoEmote, this._emoteT, lista) || 0;
-      if (this._emoteId) this._ultimoEmote = this._emoteId;
+      /* Procedural: a própria coreografia. Captura: a `reserva` só enquanto o clipe não
+         manda inteiro (pack baixando, falha, LOD≥2 ou cruzando a entrada); na saída de
+         um clipe já assentado não há reserva para ressurgir. */
+      let poseId = this._ultimoPose, pesoReserva = 1;
+      if (this._emoteId) {
+        const info = this._emoteClipeInfo;
+        const wClipe = this._emoteClipeAtivo ? clipeEmote.getEffectiveWeight() : 0;
+        poseId = !info ? this._emoteId : (wClipe > 0.999 ? null : (info.reserva || null));
+        if (info) pesoReserva = 1 - wClipe;
+        this._ultimoPose = poseId;
+      }
+      const dip = poseId ? (_emoteDriver.pose(poseId, this._emoteT, lista) || 0) * pesoReserva : 0;
+      if (pesoReserva < 1) for (const passo of lista) passo[2] *= pesoReserva;
       this._emoteDip = dip * this._emoteK;
       const yawE = this.group.rotation.y;
       const cosE = Math.cos(yawE), sinE = Math.sin(yawE);
@@ -1639,7 +1742,7 @@ class CharController {
       this.reloadK = !this._reloadClip && this._reloadDur > 0 ? Math.sin(Math.PI * Math.min(1, this._reloadT / this._reloadDur)) : 0;
       // PITCH DISTRIBUÍDO: a coluna assume parte da mira vertical; a malha fechada da
       // cabeça (acima) converge o resto. Antes só a cabeça inclinava, com teto de 28°.
-      if (this.aimPitch !== undefined && this.lod < 1) {
+      if (this.aimPitch !== undefined && this.lod < 1 && !this._emoteClipeAtivo) {
         const pit = Math.max(-0.35, Math.min(0.35, this.aimPitch * 0.45));
         if (Math.abs(pit) > 1e-3) _deltaMundo(torso.spines[0], cosY, 0, -sinY, -pit);
       }

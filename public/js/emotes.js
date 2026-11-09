@@ -1,5 +1,7 @@
-/* Emotes brasileiros: coreografia procedural em espaço de MUNDO (não há clipe nem
-   asset). Repertório, método, fontes e limites: docs/EMOTES-BR.md. */
+/* Emotes brasileiros: coreografia procedural em espaço de MUNDO (sem asset) para os 8
+   primeiros; os emotes de captura (`clipe: true` no catálogo) tocam um clipe de corpo
+   inteiro e usam a coreografia de `reserva` só como fallback. Repertório, método,
+   fontes e limites: docs/EMOTES-BR.md. */
 
 /* Vocabulário dos eixos: 'r' = direita do corpo, 'u' = cima, 'f' = frente.
    O controlador resolve esses três no mundo e converte pro quadro do pai do osso. */
@@ -201,3 +203,10 @@ export function poseEmote(id, t, ossos) {
 
 export const emoteDuracao = (id) => (emoteInfo(id)?.dur ?? 0);
 export const emoteLaco = (id) => !!emoteInfo(id)?.laco;
+/* Emote de captura: o controlador toca o clipe homônimo do pack emotes-mocap.glb.
+   Devolve null para os procedurais; o objeto é o próprio registro do catálogo. */
+export const emoteClipe = (id) => {
+  const info = emoteInfo(id);
+  return info && info.clipe ? info : null;
+};
+export { emoteDesbloqueio } from './data/emote-catalog.js';
