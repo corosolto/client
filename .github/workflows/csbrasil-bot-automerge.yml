@@ -2,13 +2,15 @@ name: csbrasil-bot-automerge
 
 on:
   pull_request_target:
-    types: [labeled, synchronize, reopened, ready_for_review]
+    types: [labeled, unlabeled, synchronize, reopened, ready_for_review]
   # Reavalia quando o CI TERMINA. Antes só olhava no label/sync — com os checks ainda
   # pendentes `check_rollup_ok` dava falso e ninguém olhava de novo depois do verde,
   # então o `pronto-pra-merge` quase nunca acendia.
   workflow_run:
-    workflows: [pr-fast]
+    workflows: [pr-fast, smoke-web, pr-gates, pr-language, hotfix-ancestry-gate]
     types: [completed]
+  schedule:
+    - cron: '13,43 * * * *'
   workflow_dispatch:
     inputs:
       pr_number:
@@ -17,6 +19,7 @@ on:
         type: number
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -39,8 +42,9 @@ jobs:
     timeout-minutes: 10
     # workflow_run de push na main (ou de fork, que não traz número de PR) não tem PR para olhar.
     if: >-
-      github.event_name != 'workflow_run' ||
-      (github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.pull_requests[0].number)
+      (github.event_name != 'workflow_run' && github.event_name != 'schedule') ||
+      ((github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'pull_request_target') &&
+      github.event.workflow_run.pull_requests[0].number)
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number || github.event.workflow_run.pull_requests[0].number }}
@@ -66,20 +70,24 @@ jobs:
         run: python3 scripts/ci/ensure_labels.py pronto-pra-merge
       - name: Fetch PR status
         if: env.pular != '1'
-        run: gh pr view "$PR_NUMBER" --json isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,files,changedFiles > /tmp/automerge.json
+        run: gh pr view "$PR_NUMBER" --json isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,files,changedFiles,baseRefName,headRefName,headRepository > /tmp/automerge.json
       - name: Check eligibility
         if: env.pular != '1'
         # O autoteste roda ANTES da decisão: este script mescla sem humano no
         # caminho, e portão quebrado que passa calado aqui mescla PR vermelho.
         run: |
           python3 scripts/ci/check_automerge.py --selftest
+          python3 - <<'PY'
+          import json, os
+          path = '/tmp/automerge.json'
+          pr = json.load(open(path))
+          pr['expected_repository'] = os.environ['GITHUB_REPOSITORY']
+          open(path, 'w').write(json.dumps(pr))
+          PY
           python3 scripts/ci/check_automerge.py < /tmp/automerge.json > /tmp/automerge-result.json
-      # DEIXAR PRONTO NÃO É MERGEAR (decisão do dono, 21/08). Este passo chamava
-      # `gh pr merge --squash --auto` e fechava o PR sozinho. A intenção declarada dos
-      # bots é outra: autocorreção e autorrevisão para deixar o PR PRONTO, com o botão
-      # de merge continuando humano. O que era merge vira etiqueta e um comentário que
-      # diz por que o PR está pronto.
-      - name: Marca como pronto quando elegível
+      # O dono autorizou merge automático em 09/11/2026: PR segura entra na base
+      # classificada; o lote oficial staging→main entra por merge commit, sem apagar staging.
+      - name: Merge when eligible
         if: env.pular != '1'
         run: |
           python3 - <<'PY'
@@ -94,8 +102,36 @@ jobs:
                                '[.labels[].name] | index("pronto-pra-merge") != null'],
                               capture_output=True, text=True).stdout.strip() == 'true'
           subprocess.run(['gh', 'pr', 'edit', pr, '--add-label', 'pronto-pra-merge'], check=True)
-          if not ja:   # um comentário por PR, não um por reavaliação
+          if not ja:
+              kind = 'the daily release batch' if data.get('merge_kind') == 'release-batch' else 'a safe change'
               subprocess.run(['gh', 'pr', 'comment', pr, '--body',
-                              '🤖 **csbrasil-bot**: required checks passed and the diff meets the '
-                              '`check_automerge` criteria. Marked as `pronto-pra-merge` for human review.'], check=True)
+                              f'🤖 **csbrasil-bot**: required checks passed and the diff meets the '
+                              f'`check_automerge` criteria. Merging automatically as {kind}.'], check=True)
+          command = ['gh', 'pr', 'merge', pr, '--merge']
+          if data.get('merge_kind') != 'release-batch':
+              command.append('--delete-branch')
+          subprocess.run(command, check=True)
           PY
+
+  sweep:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: write
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Reevaluate every open safe or release PR
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::CSBRASIL_BOT_TOKEN is missing; the automerge sweep cannot run."
+            exit 0
+          fi
+          for pr in $(gh pr list --repo "$REPO" --state open --limit 100 --json number,labels \
+                        --jq '.[] | select(any(.labels[]; .name == "safe-automerge" or .name == "release")) | .number'); do
+            gh workflow run csbrasil-bot-automerge.yml --repo "$REPO" -f pr_number="$pr" \
+              || echo "::warning::could not reevaluate PR #$pr"
+          done
