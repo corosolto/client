@@ -1,11 +1,13 @@
 /* Evidência offline do piloto Câmera Roxa com a arma canônica M4.
 
    O Blender persiste mãos e anchors para walk/crouch. A régua recalcula as
-   distâncias, confere hashes canônicos e exige as quatro figuras. O mutante move
-   somente a M4 pelo offset persistido e precisa ficar vermelho.
+   distâncias contra o teto canônico (lib/grip-tolerancia.mjs), confere hashes e
+   exige as quatro figuras. Pose em `foraDoContrato` precisa medir ACIMA do teto.
+   O mutante move somente a M4 pelo offset persistido e precisa ficar vermelho.
 */
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
+import { TETO_PEGADA_M, tetoTexto } from './lib/grip-tolerancia.mjs';
 
 const MUTANT = process.argv.includes('--mutante=arma-deslocada');
 const evidencePath = 'tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-grip-evidence.json';
@@ -18,15 +20,19 @@ const check = (ok, message) => { console.log(`${ok ? '✓' : '✗'} ${message}`)
 check(evidence.weapon === 'm4', 'arma declarada é M4');
 check(evidence.characterSha256 === sha256(evidence.character), 'SHA do Câmera canônico confere');
 check(evidence.weaponSha256 === sha256(evidence.weaponFile), 'SHA da M4 canônica confere');
-check(evidence.socketContract?.maxHandDistanceMeters === .03, 'tolerância do recibo = teto da régua (0,030 m)');
-for (const [clip, pose] of Object.entries(evidence.foraDoContrato || {})) check(!evidence.poses[clip] && !!pose.motivo, `${clip}: fora do contrato declara o motivo`);
+check(evidence.socketContract?.maxHandDistanceMeters === TETO_PEGADA_M, `tolerância do recibo = teto canônico (${tetoTexto})`);
+for (const [clip, pose] of Object.entries(evidence.foraDoContrato || {})) {
+  const pior = Math.max(distance(pose.rightHand, pose.rightAnchor), distance(pose.leftHand, pose.leftAnchor));
+  check(!evidence.poses[clip] && pior > TETO_PEGADA_M && !!pose.motivo,
+    `${clip}: fora do contrato mede acima do teto (${pior.toFixed(3)} m > ${tetoTexto}) e declara o motivo`);
+}
 
 for (const [clip, pose] of Object.entries(evidence.poses)) {
   const anchors = MUTANT && clip === 'walk' ? pose.mutant : pose;
   const right = distance(pose.rightHand, anchors.rightAnchor);
   const left = distance(pose.leftHand, anchors.leftAnchor);
-  check(right <= .03, `${clip}: mão direita toca anchor (${right.toFixed(3)} m <= 0,030 m)`);
-  check(left <= .03, `${clip}: mão esquerda toca anchor (${left.toFixed(3)} m <= 0,030 m)`);
+  check(right <= TETO_PEGADA_M, `${clip}: mão direita toca anchor (${right.toFixed(3)} m <= ${tetoTexto})`);
+  check(left <= TETO_PEGADA_M, `${clip}: mão esquerda toca anchor (${left.toFixed(3)} m <= ${tetoTexto})`);
   check(existsSync(pose.render), `${clip}: render de corpo inteiro existe`);
 }
 check(existsSync(evidence.poses.walk.gripRender), 'grip A limpo existe');
