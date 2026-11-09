@@ -34,10 +34,7 @@ const base = arg('base') || 'origin/main';
 
 /* Dívida herdada: script de decisão que nasceu sem fixture. A lista só encolhe.
    Quem tocar num destes escreve o `--selftest` no mesmo PR. */
-const SEM_FIXTURE = new Set([
-  'scripts/ci/issue_triage.py',
-  'scripts/ci/pr_route.py',
-]);
+const SEM_FIXTURE = new Set([]);
 
 const git = (args, fallback = '') => {
   try { return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return fallback; }
@@ -54,8 +51,11 @@ if (mutante === 'lista-cresce') SEM_FIXTURE.add('scripts/ci/fantasma.py');
 /* O mutante do FX2 aponta para um script que TEM fixture: sem isso ele cairia no
    FX1 e a cláusula do autoteste quebrado nunca seria exercitada. */
 if (mutante === 'selftest-quebrado') tocados = ['scripts/ci/agente_check.py'];
-/* FX1 puro: tocar num script da dívida SEM ter escrito a fixture dele. */
-if (mutante === 'sem-fixture') tocados = ['scripts/ci/pr_route.py'];
+/* FX1 puro: toca script da dívida SEM ter escrito a fixture dele. */
+if (mutante === 'sem-fixture') {
+  SEM_FIXTURE.add('scripts/ci/pr_route.py');
+  tocados = ['scripts/ci/pr_route.py'];
+}
 
 const falhas = [];
 for (const arquivo of tocados) {
@@ -81,7 +81,8 @@ try { execFileSync('git', ['cat-file', '-e', `${base}:${ESTE}`], { stdio: 'ignor
 const naBase = existiaNaBase ? git(['show', `${base}:${ESTE}`]) : '';
 let daBase;
 if (existiaNaBase && naBase) {
-  daBase = new Set([...naBase.matchAll(/'(scripts\/ci\/[^']+)'/g)].map((m) => m[1]));
+  const bloco = naBase.match(/const SEM_FIXTURE = new Set\(\[([\s\S]*?)\]\)/)?.[1] || '';
+  daBase = new Set([...bloco.matchAll(/'(scripts\/ci\/[^']+)'/g)].map((m) => m[1]));
 } else if (existiaNaBase) {
   falhas.push(`FX0 a lista de dispensa existe em \`${base}\` mas não pôde ser lida — sem ela não dá para saber se cresceu`);
   daBase = new Set();
