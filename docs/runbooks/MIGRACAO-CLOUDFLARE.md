@@ -137,8 +137,7 @@ O que as fases 2–4 têm que tratar (lista fechada, achada no spike):
 
 ## Fase 2: preview por PR
 
-O workflow `.github/workflows/cf-preview.yml` roda em `pull_request`, mas preserva o check visível
-mesmo quando o diff não toca o site: o job `decide` aplica o mesmo conjunto de caminhos de
+O workflow `.github/workflows/cf-preview.yml` roda em `pull_request_target`, portanto a definição usada é sempre a do branch base, não a do PR. O job `decide` aplica o mesmo conjunto de caminhos de
 `scripts/ci/vercel-ignore.sh` e o job de publicação fica pulado. Para PRs do próprio repositório,
 o job `compile` faz `npm ci` e `npm run build:cf` num runner descartável sem segredos e exporta só
 `dist`. O job `preview` não faz checkout do head: baixa `dist` como dados, instala Wrangler 4.158.0
