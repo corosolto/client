@@ -64,7 +64,7 @@ export const ALLOW_RAIZ = new Set([
   'AGENTS.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'ROADMAP.md', 'SECURITY.md',
   'astro.config.mjs', 'knip.json', 'middleware.js', 'mint-assets.json',
   'package.json', 'package-lock.json', 'playwright.smoke.config.mjs', 'renovate.json',
-  'skills-lock.json', 'tsconfig.json', 'vercel.json', 'wrangler.toml',
+  'skills-lock.json', 'tsconfig.json', 'vercel.json', 'wrangler.toml', 'wrangler.preview.toml',
 ]);
 export const ALLOW_DIRS = new Set([
   '.agents', '.claude', '.codex', '.githooks', '.github',
