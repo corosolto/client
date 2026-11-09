@@ -1,5 +1,5 @@
 {
- "gerado": "2026-11-09T17:22:07.599Z",
+ "gerado": "2026-11-09T17:27:06.129Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
@@ -12,6 +12,7 @@
    "idle": -0.0242
   },
   "doutora": {
+   "idle": -0.0109,
    "run": -0.0153
   },
   "caminhoneiro": {
@@ -134,18 +135,20 @@
    "walk": -0.0129
   },
   "barbudo": {
-   "idle": 0.017,
+   "idle": -0.0292,
    "walk": -0.0114,
    "run": 0.0166,
    "shoot": 0.017
   },
   "capitao": {
+   "idle": -0.018,
    "run": -0.0341
   },
   "dama": {
    "run": -0.0451
   },
   "professor": {
+   "idle": -0.021,
    "run": -0.0497
   },
   "senador": {
@@ -158,7 +161,11 @@
    "shoot": 0.0243
   },
   "deputado": {
+   "idle": -0.0174,
    "run": -0.0394
+  },
+  "juiz": {
+   "idle": -0.0247
   },
   "julia-zanatta": {
    "run": -0.042
