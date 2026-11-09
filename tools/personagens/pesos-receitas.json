@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "nota": "Parâmetros de tools/personagens/pesos-skin.mjs por GLB reparado (só os que diferem de PARAMETROS). Lula (PR #1265): grade de 16 configurações no pose test do Studio (sintético + 11 clipes embutidos × 8 instantes), menor excesso sobre os limites (aresta 3,5×, costas 3,5×, mão 2,5×) com vazamento braço→perna = 0. Roster (P4): até 3 rodadas por GLB em tools/eval/asset-evidence/pesos-roster/medidas.json; só entra GLB que melhora o pose test E as falhas [rig] do clip-qa do pack, sem regressão nem membro solto/rasgo entre peças. Receita + arquivo de origem = mesmos bytes (determinístico).",
+  "nota": "Parâmetros de tools/personagens/pesos-skin.mjs por GLB reparado (só os que diferem de PARAMETROS). Lula (PR #1265): grade de 16 configurações no pose test do Studio (sintético + 11 clipes embutidos × 8 instantes), menor excesso sobre os limites (aresta 3,5×, costas 3,5×, mão 2,5×) com vazamento braço→perna = 0. Roster (P4): até 3 rodadas por GLB em corosolto/studio-assets evidence/pesos-skins-20261109/pesos-roster/medidas.json; só entra GLB que melhora o pose test E as falhas [rig] do clip-qa do pack, sem regressão nem membro solto/rasgo entre peças. Receita + arquivo de origem = mesmos bytes (determinístico).",
   "receitas": {
     "lula-mandrake": {
       "origemSha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
