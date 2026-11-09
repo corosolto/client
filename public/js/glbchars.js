@@ -1022,6 +1022,7 @@ class CharController {
     this.cur = null; this.dead = false; this.shooting = false; this.crouch = false; this.jumping = false;
     this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0; this._porte1hK = 0;
     this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
+    this._drawT = 0; this._drawBone = null; this._drawBase = new THREE.Quaternion();
     this._emoteId = null; this._emoteT = 0; this._emoteK = 0; this._emoteDip = 0;
     this.emotando = false; this._emoteOssos = [];
     this._ar = false; this._mantleF = null; this._landT = 0; this._yawAtraso = null; this._deathTilt = 0; this.lod = 0;
@@ -1073,6 +1074,8 @@ class CharController {
   // Recarga INTERROMPIDA (granada na mão, morte): o overlay cai no mesmo quadro — senão o
   // corpo 3P segue mergulhando atrás de um pente que ninguém está trocando.
   cancelReload() { this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; }
+
+  draw() { if (!this.dead) this._drawT = 0.32; }
 
   /* Levar tiro move o corpo: sem isso quem atira de longe não sabe se acertou.
      `dir` é a direção do disparo em mundo; `forca` 0..1 (dano/100). */
@@ -1139,6 +1142,7 @@ class CharController {
     this.dead = true; this.shooting = false; this._ar = false; this._mantleF = null;
     /* Overlays de vida (reload/flinch/lean/pitch) morrem junto com o corpo (dono, 31/10). Hist: docs/ANIM-3P.md. */
     this.cancelReload();
+    this._drawT = 0;
     this._flinchDur = 0;
     this._leanK = 0;
     this.aimPitch = 0;
@@ -1172,6 +1176,8 @@ class CharController {
   // stride, so we drive the cycle rate from how fast the body is really moving).
   update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
     this._restaurarPoseMorte();
+    if (this._drawBone) { this._drawBone.quaternion.copy(this._drawBase); this._drawBone = null; }
+    this._drawT = Math.max(0, this._drawT - dt);
     const freeHand = this._previewFreeHand;
     // Restaura antes do mixer: uma pose idêntica pode não reescrever a propriedade em dt=0.
     if (freeHand?.applied) { freeHand.bone.quaternion.copy(freeHand.before); freeHand.applied = false; }
@@ -1471,6 +1477,12 @@ class CharController {
       }
       const rk = this._fireDur > 0 ? 1 - this._fireT / this._fireDur : 0;
       if (rk > 0.02) _deltaMundo(torso.spines[0], cosY, 0, -sinY, -rk * 0.09);
+      const drawArm = this._drawT > 0 && this.lod < 1 && !this.emotando && this.corpo?.get('RightArm');
+      if (drawArm) {
+        this._drawBone = drawArm;
+        this._drawBase.copy(drawArm.quaternion);
+        _deltaMundo(drawArm, cosY, 0, -sinY, Math.sin(Math.PI * this._drawT / 0.32) * 0.3);
+      }
       if (this.reloadK > 0.05) {
         const k = this.reloadK;
         // mergulho do tronco em torno da direita do corpo: os olhos acompanham o pente

@@ -479,10 +479,12 @@ class Netcode {
       }
       if (ent !== game.player) ent._netBot = !!e.bot;   // IA: frente +Z (yaw); humano: convenção da câmera (yaw+π) — BUG-117
       if (ent !== game.player && e.weapon) {
+        const trocouArma = !primeiroSnap && wasAlive && e.alive && ent.weapon && ent.weapon !== e.weapon;
         // O id lógico sozinho não troca a arma que foi montada dentro do GLB do personagem.
         // O helper remonta a 3ª pessoa quando pickup/respawn muda a arma autoritativa.
         if (ent.weapon !== e.weapon || ent._meshWeapon !== e.weapon) game._syncRemoteWeapon?.(ent, e.weapon);
         else ent.weapon = e.weapon;
+        if (trocouArma) ent.mesh?.ctrl?.draw?.();
       }
       if (ent === game.player) {
         this._meuNomeServidor = e.name || this._meuNomeServidor;   // o servidor trunca o apelido; é este nome que vem em `killedBy`
