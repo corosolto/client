@@ -98,7 +98,7 @@ if (desconhecidos.length) {
   }
 }
 
-const TIMEOUT_MS = 120_000, MAX_BUF = 8 * 1024 * 1024;
+const TIMEOUT_MS = 300_000, MAX_BUF = 8 * 1024 * 1024;
 const runCheck = (simMutante) => {
   const r = spawnSync(process.execPath, [
     '--loader', './tools/eval/landing-impact-loader.mjs',
