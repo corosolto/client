@@ -15,5 +15,13 @@ const remoto = {
 mp._relogioAgora = () => mp.interpAtrasoMs + 50;
 mp.updateRemoteBot(remoto, 1 / 60);
 assert.equal(lateral, 2, `inclinação remota perdeu velocidade lateral: ${lateral}`);
+const atacante = { pos: new THREE.Vector3(3, 0, 4) };
+remoto.pos.set(5, 0, 7);
+let golpe;
+remoto.mesh.ctrl.flinch = (dir, forca) => { golpe = { dir, forca }; };
+mp._netMap.set(2, atacante);
+mp._netMap.set(3, remoto);
+mp._evento({ k: 'hit', a: 2, v: 3, d: 40 });
+assert.deepEqual(golpe, { dir: { x: 2, z: 3 }, forca: 0.4 }, 'hit remoto não animou a vítima na direção do disparo');
 mp.dispose();
 console.log('VERDE remotos3p: velocidade lateral 2 m/s');

@@ -599,6 +599,12 @@ class Netcode {
     const d = Math.max(0, Math.min(999, e.d | 0)), h = e.h === 1 || e.h === true, w = String(e.w || '').slice(0, 8);
     const dist = (a) => (a && a.pos && p && p.pos) ? Math.hypot(a.pos.x - p.pos.x, a.pos.z - p.pos.z) : 0;
     if (e.k === 'hit') {
+      if (vId !== meu) {
+        if (att?.pos && vic?.pos && vic !== p && vic.alive) {
+          vic.mesh?.ctrl?.flinch?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z }, d / 100);
+        }
+        return;
+      }
       if (!att || this.espectador || vId !== meu) return;
       try { game._dmgArc(att, p, d); } catch { /* HUD */ }
       game._noteHit(att, w, d, h, dist(att));
