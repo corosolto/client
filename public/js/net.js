@@ -6,7 +6,7 @@
 // Registro de nós em nos.js: a página de convite do site lê a MESMA lista.
 export { NOS, parseConvite, linkDeConvite, httpDoNo, NO_RE, ordenarNos, FAIXA_PING_MS, melhorNoParaJogar, TETO_COMPANHIA_MS } from './nos.js';
 import { NOS } from './nos.js';
-import { decodeSnapshot, MAX_SNAPSHOT_BYTES, CLIENT_SNAPSHOT_PROTOCOL } from './netcodec.js';
+import { decodeSnapshot, MAX_SNAPSHOT_BYTES, CLIENT_SNAPSHOT_PROTOCOL, snapshotVersionForProtocol } from './netcodec.js';
 import { TransporteWS, TransporteWT } from './transporte.js';
 import { MedidorDeTaxa } from './netrate.js';
 import * as versao from './version.js';
@@ -247,7 +247,7 @@ export class NetClient {
         try { m = binary ? decodeSnapshot(dados) : JSON.parse(dados); }
         catch { if (binary) falha(new Error('snapshot_invalid'), 1002, 'snapshot_invalid'); return; }
         if (m.type === 'welcome') {
-          if (m.protocolVersion !== 8) { falha(new Error('protocolo_incompativel')); return; }
+          if (m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo)) { falha(new Error('protocolo_incompativel')); return; }
           // Versão diferente do nó não tira ninguém da partida (decisão do dono, 13/10);
           // ?mpversao=1 volta a recusar, para diagnóstico.
           this.versaoDiferente = versaoCompativel(m.clientVersion, VERSION, m.simHash)
@@ -272,7 +272,7 @@ export class NetClient {
             if (this._rttSamples.length > 32) this._rttSamples.shift();
           }
         } else if (m.type === 'partida') {
-          if (m.protocolVersion !== 8) { falha(new Error('protocolo_incompativel')); return; }
+          if (m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo)) { falha(new Error('protocolo_incompativel')); return; }
           // o servidor girou o mapa: meta NOVA (roster, ids, mapa, facções) + o seu slot (BUG-112)
           this.meta = m; this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
           this.snap = null; this.prev = null;   // snapshots do jogo velho não servem para o novo
