@@ -169,6 +169,11 @@ window.__GEO_LANG__ = (function () {
     for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; }
     return ('0000000' + h.toString(16)).slice(-8);
   }
+  /* Object URLs mudam só o UUID a cada carga. Mantém a origem para não misturar
+     desenvolvimento, preview e produção no mesmo balde. */
+  function normalizaFingerprint(v){
+    return String(v === null || v === undefined ? '' : v).replace(/\bblob:(https?:\/\/[^\/\s]+)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, 'blob:$1');
+  }
 
   /* Espelha o `str()` de `src/pages/api/jserror.ts` (trim, depois corte): o que é hasheado
      tem que ser o que vai no corpo, ou o servidor não reconstrói o fingerprint (BUG-71). */
@@ -227,7 +232,7 @@ window.__GEO_LANG__ = (function () {
     if (reportando) return null;                           // guarda de laço
     try{
       var mFinal = corta(msg, 500) || '?', sFinal = corta(source, 300) || null;
-      var fp = digital(kind + '|' + mFinal + '|' + (sFinal || ''));
+      var fp = digital(kind + '|' + normalizaFingerprint(mFinal) + '|' + normalizaFingerprint(sFinal || ''));
       if (enviados[fp]) return { fp: fp, corpo: corpos[fp] || null }; // 1 envio automático por erro distinto
       if (!enviados[fp]) {
         if (externa) {

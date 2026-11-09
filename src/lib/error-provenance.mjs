@@ -35,6 +35,12 @@ const AUTOMACAO_RE = /\bUtilityScript\b|\b__puppeteer_evaluation_script__\b|\bpp
 // (script-src sem blob: e sem 'unsafe-eval'). ESTREITA, exige source blob: — #798.
 const EVAL_CSP_RE = /\bEvalError\b.*'unsafe-eval' is not an allowed source of script/;
 const HTTP_URL_RE = /https?:\/\/[^\s)'"<>]+/gi;
+/* Blob URLs recebem um UUID novo a cada object URL. O host continua sendo parte
+   da proveniência: localhost e produção não podem cair no mesmo balde. */
+const BLOB_UUID_RE = /\bblob:(https?:\/\/[^/\s]+)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
+export function normalizeFingerprintValue(value) {
+  return String(value ?? '').replace(BLOB_UUID_RE, 'blob:$1');
+}
 /* Assinaturas opacas de terceiro/extensão/resposta corrompida: mensagens sem
    pilha e sem nome de arquivo do próprio jogo que o navegador entrega já
    anonimizadas (CORS mascara "Script error.", Firefox emite "uncaught
@@ -135,7 +141,7 @@ export const shouldDispatchCrash = (classification) => classification !== 'exter
 /* Mesma receita do `digital()` de `index.astro`. A multiplicação é em ponto FLUTUANTE de
    propósito: passa de 2^53 e perde precisão — `Math.imul` daria outro número (BUG-71). */
 export function crashFingerprint(kind, message, source) {
-  const texto = `${kind}|${message ?? ''}|${source ?? ''}`;
+  const texto = `${kind}|${normalizeFingerprintValue(message)}|${normalizeFingerprintValue(source)}`;
   let h = 2166136261;
   for (let i = 0; i < texto.length; i++) { h ^= texto.charCodeAt(i); h = (h * 16777619) >>> 0; }
   return `0000000${h.toString(16)}`.slice(-8);
