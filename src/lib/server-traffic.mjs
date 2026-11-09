@@ -56,12 +56,8 @@ const AGENTS = [
   [/facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|whatsapp/i, 'social-preview', 'social/preview'],
 ];
 
-/* Navegador interno de app: continua `kind: 'browser'` (é gente), mas com agente
-   nomeado, porque o comportamento é outro. Medido em 08/11/2026: 517 visitas da campanha
-   do TikTok, 72% carregaram o jogo e 85% saíram em menos de 1 min sem entrar; num dia
-   normal a sessão sem partida é 1 em 3. Sem esta classe o admin mistura os dois.
-   Padrões: TikTok manda `musical_ly`/`BytedanceWebview`/`TikTok`; Instagram e Facebook
-   mandam `Instagram` e `FBAN`/`FBAV`/`FB_IAB`; LinkedIn, `LinkedInApp`; X, `TwitterAndroid`. */
+/* Navegador interno de app: segue `kind: 'browser'` (é gente) com agente nomeado, porque se
+   comporta diferente (08/11: 85% das visitas do TikTok saíram em menos de 1 min). Régua: eval:servertraffic. */
 const APPS = [
   [/musical_ly|bytedancewebview|tiktok/i, 'app/tiktok'],
   [/instagram/i, 'app/instagram'],
