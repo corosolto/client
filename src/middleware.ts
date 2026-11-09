@@ -2,14 +2,13 @@
 // proxy já conta o tráfego de toda requisição e este `onRequest` devolve `next()` sem tocar nada.
 import { defineMiddleware } from 'astro:middleware';
 import { borda } from '#borda';
+import { backendUrl } from './lib/env-runtime';
 import { trafficEntry, uniqueRegister } from './lib/server-traffic.mjs';
 
-// Lido em runtime (nodejs_compat popula process.env com [vars] e `wrangler secret put`), não
-// inlinado no build como import.meta.env: o segredo fica no cofre do Worker, não no bundle.
-const BACKEND = process.env.PUBLIC_API_BASE || 'https://csbrasil-backend-hupd3weo5q-rj.a.run.app';
+// Env lida POR REQUISIÇÃO: no Workers a ponte do src/cf/worker.ts copia [vars] e
+// secrets do binding para process.env; segredo nunca inlinado pelo import.meta.env.
 
 export const onRequest = defineMiddleware((context, next) => {
-  if (borda.nome !== 'cloudflare') return next();
   const { request } = context;
   const entry = trafficEntry(request);
   const secret = process.env.API_PROXY_SECRET;
@@ -20,7 +19,7 @@ export const onRequest = defineMiddleware((context, next) => {
     const unique = entry.kind === 'browser'
       ? uniqueRegister(visitorIp, request.headers.get('user-agent'), secret, day)
       : null;
-    borda.agendar(context.locals, fetch(`${BACKEND.replace(/\/$/, '')}/api/server-traffic`, {
+    borda.agendar(context.locals, fetch(`${backendUrl().replace(/\/$/, '')}/api/server-traffic`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-csb-proxy-auth': secret },
       body: JSON.stringify({ ...entry, unique }),
