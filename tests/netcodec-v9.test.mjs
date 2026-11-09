@@ -24,6 +24,11 @@ test('R3 every catalog emote and elapsed phase reaches late joiners', () => {
   const out = roundtrip(ents).ents;
   assert.deepEqual(out.map(e=>e.emote),ids);
   assert.deepEqual(out.map(e=>e.emoteElapsed),ids.map((_,i)=>(3+i)/10));
+  // IDs persistem entre releases: round-trip simétrico sozinho não detecta catálogo reordenado.
+  for (const [i, emote] of ids.entries()) {
+    const wire = codec.encodeSnapshot(snapshot([entity(1, { emote })]), 9);
+    assert.equal(wire.at(-2), i + 1, emote);
+  }
 });
 test('R4 absent dance has zero phase and invalid ids are rejected', () => {
   const out = roundtrip([entity(1,{emoteElapsed:5})]).ents[0];
