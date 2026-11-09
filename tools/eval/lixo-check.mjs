@@ -187,7 +187,10 @@ export function classificar(novos, { mencoes, assets }) {
       const rel = p.slice('public/'.length);
       const stem = base.replace(/\.[^.]+$/, '');
       const c = assets();
-      const pedido = c.includes(rel) || c.includes(base) || (stem.length >= 4 && c.includes(stem));
+      // Clipe por estado é pedido pelo índice models/anims/index.json (`"<id>": [... "<estado>"]`), stem curto como "run".
+      const clipe = rel.match(/^models\/anims\/([a-z0-9-]+)\/([a-z0-9]+)\.glb$/);
+      const noIndice = clipe && new RegExp(`"${clipe[1]}": \\[[^\\]]*"${clipe[2]}"`).test(c);
+      const pedido = noIndice || c.includes(rel) || c.includes(base) || (stem.length >= 4 && c.includes(stem));
       if (!pedido) falhas.LX5.push(p);
     }
   }
