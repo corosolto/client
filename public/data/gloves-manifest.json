@@ -5267,7 +5267,7 @@
       "perspective": "3p",
       "source": {
         "path": "public/models/characters/profeta-calcada.glb",
-        "sha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471"
+        "sha256": "ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400"
       },
       "status": "unknown",
       "reasonCode": "selection-not-robust",
@@ -5276,7 +5276,7 @@
       "fingerprints": {
         "skeletonFamilySha256": "7cc203d1590c1ed2c83bee5a288e74ad22e57be726c5ad5d93b696a88ab3f480",
         "geometrySha256": "e2b719f3271b6ced947a5f73eac9cb5a20ba6c855b9fc94c77af31f7b2022807",
-        "weightsSha256": "3b1cb6e0c75dba8755bca1a479a7df00f2fe11a59ced671e1cfe9785830c5037"
+        "weightsSha256": "06085507068197af6c8d92a07b31729155b7139f71eaced5a48fc20e597fe43d"
       }
     }
   ],

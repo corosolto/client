@@ -5616,10 +5616,10 @@
       "sourceKind": "character",
       "path": "public/models/characters/profeta-calcada.glb",
       "bytes": 630628,
-      "sourceSha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+      "sourceSha256": "ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400",
       "structureSha256": "a95b48489ba30bd2d8f544f1983e062191059ce76d4e2672054b371032629e36",
       "familyId": "rig-a95b48489ba3",
-      "profileId": "character:profeta-calcada@09f5055d124c",
+      "profileId": "character:profeta-calcada@ae2017469778",
       "skinCount": 1,
       "jointCount": 24,
       "jointNames": [
@@ -5689,7 +5689,7 @@
         "status": "pass",
         "bindFingerprintSha256": "7cc203d1590c1ed2c83bee5a288e74ad22e57be726c5ad5d93b696a88ab3f480",
         "geometryFingerprintSha256": "e2b719f3271b6ced947a5f73eac9cb5a20ba6c855b9fc94c77af31f7b2022807",
-        "weightsFingerprintSha256": "3b1cb6e0c75dba8755bca1a479a7df00f2fe11a59ced671e1cfe9785830c5037"
+        "weightsFingerprintSha256": "06085507068197af6c8d92a07b31729155b7139f71eaced5a48fc20e597fe43d"
       },
       "structuralStatus": "candidate",
       "issues": [],
@@ -7132,12 +7132,12 @@
       "bodyId": "skin:bolsonaro-mandrake",
       "sourceKind": "skin",
       "baseCharacter": "capitao",
-      "path": "public/models/skins/bolsonaro-mandrake-bcd355b78b39.glb",
+      "path": "public/models/skins/bolsonaro-mandrake-0eb46ca7a3e3.glb",
       "bytes": 1211824,
-      "sourceSha256": "bcd355b78b3958e7df3d41f514e413373d6b0cf3dbbcf15cb57e23224056ecf7",
+      "sourceSha256": "0eb46ca7a3e33761320a7cd0ef49a9e6c44337f55e766909d0bab787d9c36deb",
       "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
       "familyId": "rig-dc96cfa99b23",
-      "profileId": "skin:bolsonaro-mandrake@bcd355b78b39",
+      "profileId": "skin:bolsonaro-mandrake@0eb46ca7a3e3",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -7209,7 +7209,7 @@
         "status": "pass",
         "bindFingerprintSha256": "fdb5698556b768c89bb56e46c0da0d6bf44b38e717639339a283993785275ad4",
         "geometryFingerprintSha256": "de168020c26bab69cb9b3939bcf6fcd220454230e229561fe16d41eeeda3e98f",
-        "weightsFingerprintSha256": "c6c8528c34501779605886feb1c95efd0826ea30108a9b2e4fc773a54e871a82"
+        "weightsFingerprintSha256": "1b1248e6f0290a63c33a7650aa37a6c74e4d8b666f83ef96f2b4c42e3f6da8d8"
       },
       "structuralStatus": "candidate",
       "issues": [],
