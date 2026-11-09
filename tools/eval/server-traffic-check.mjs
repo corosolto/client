@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { trafficEntry, uniqueRegister } from '../../src/lib/server-traffic.mjs';
+import { desvioParaApp, trafficEntry, uniqueRegister } from '../../src/lib/server-traffic.mjs';
 
 describe('entradas HTML contadas no servidor', () => {
   it('guarda só host de origem e UTM curta, sem URL sensível nem identidade', () => {
@@ -34,6 +34,22 @@ describe('entradas HTML contadas no servidor', () => {
     assert.deepEqual(trafficEntry(req('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36')), { landing: '/', referrer: 'www.tiktok.com', utmSource: 'tiktok', kind: 'browser', agent: '' });
     // O preview do Facebook (facebookexternalhit) é bot de preview, nunca app.
     assert.equal(trafficEntry(req('facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)'))?.kind, 'social-preview');
+  });
+
+  it('WebView de app na home vai para /app com a query intacta; escolha feita, sala, rota funda, Chrome e bot ficam', () => {
+    const TIKTOK = 'Mozilla/5.0 (Linux; Android 14; wv) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36 musical_ly_2024.12 BytedanceWebview/d8a21c6';
+    const req = (url, ua = TIKTOK, method = 'GET') => new Request(url, { method, headers: { accept: 'text/html', 'user-agent': ua } });
+    assert.equal(desvioParaApp(req('https://www.corosolto.com.br/?utm_source=tiktok&utm_medium=paid-social')), 'https://www.corosolto.com.br/app?utm_source=tiktok&utm_medium=paid-social');
+    assert.equal(desvioParaApp(req('https://www.corosolto.com.br')), 'https://www.corosolto.com.br/app');
+    assert.equal(desvioParaApp(req('https://www.corosolto.com.br/?utm_source=tiktok&jogo=1')), null, 'quem já escolheu jogar não volta');
+    assert.equal(desvioParaApp(req('https://www.corosolto.com.br/?sala=ABCD')), null, 'convite de sala entra direto');
+    assert.equal(desvioParaApp(req('https://www.corosolto.com.br/app?utm_source=tiktok')), null, 'a própria landing não redireciona');
+    assert.equal(desvioParaApp(req('https://www.corosolto.com.br/u/alguem')), null, 'perfil segue onde aponta');
+    assert.equal(desvioParaApp(req('https://www.corosolto.com.br/', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36')), null, 'Chrome aberto não é WebView');
+    assert.equal(desvioParaApp(req('https://www.corosolto.com.br/', 'facebookexternalhit/1.1')), null, 'preview de rede não é gente');
+    assert.equal(desvioParaApp(req('https://www.corosolto.com.br/', TIKTOK, 'HEAD')), null);
+    assert.equal(desvioParaApp(req('https://preview.vercel.app/')), null, 'só o host público');
+    assert.equal(trafficEntry(req('https://www.corosolto.com.br/app?utm_source=tiktok'))?.landing, '/app', 'a landing conta como página própria');
   });
 
   it('não conta recursos, API, HEAD ou hosts de preview', () => {
@@ -99,6 +115,25 @@ describe('middleware de contagem', () => {
       assert.ok(body.unique?.bucket >= 0 && body.unique?.rank >= 1);
       assert.equal(captured.body.includes('private'), false);
       assert.equal(captured.body.includes('198.51'), false);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.API_PROXY_SECRET;
+    }
+  });
+  it('WebView de app na home recebe 302 para /app antes de qualquer ingestão', async () => {
+    process.env.API_PROXY_SECRET = 'test-only-secret-for-server-traffic-000000';
+    const { default: middleware } = await import('../../middleware.js');
+    const originalFetch = globalThis.fetch;
+    let chamadas = 0;
+    globalThis.fetch = async () => { chamadas++; return new Response(null, { status: 204 }); };
+    try {
+      const request = new Request('https://www.corosolto.com.br/?utm_source=tiktok&utm_medium=paid-social', {
+        headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0 (Linux; Android 14; wv) Chrome/130.0 Mobile Safari/537.36 musical_ly_2024.12 BytedanceWebview/x', 'x-real-ip': '198.51.100.10' },
+      });
+      const response = middleware(request, { waitUntil() { assert.fail('redirect não agenda ingestão'); } });
+      assert.equal(response.status, 302);
+      assert.equal(response.headers.get('location'), 'https://www.corosolto.com.br/app?utm_source=tiktok&utm_medium=paid-social');
+      assert.equal(chamadas, 0);
     } finally {
       globalThis.fetch = originalFetch;
       delete process.env.API_PROXY_SECRET;

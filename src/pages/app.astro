@@ -1,0 +1,83 @@
+---
+/* /app: landing leve para quem abre o jogo dentro do navegador de um app (TikTok, Instagram,
+ * Facebook, LinkedIn, X). A borda manda o WebView para cá em vez da home (desvioParaApp em
+ * src/lib/server-traffic.mjs): 08/11/2026, 517 visitas pagas do TikTok em uma hora, 72%
+ * carregaram os 8 MB do jogo e 85% saíram em menos de 1 min sem clicar em entrar.
+ *
+ * Aqui pesa ~1,3 MB (vídeo de 6 s + poster) e a decisão é uma só: abrir no navegador do
+ * aparelho, onde o WebGL e o áudio funcionam, ou jogar aqui mesmo. A query (utm_*) viaja
+ * intacta para a home, então a atribuição por fonte não muda; `?jogo=1` diz à borda que a
+ * pessoa já escolheu e não deve voltar para cá. noindex: página de conversão, não de busca. */
+import Layout from '../layouts/Layout.astro';
+import { BRAND_FULL } from '../lib/site';
+
+/* Página estática como a home: a query (utm_*) do visitante entra nos links no navegador. */
+const hrefJogo = '/?jogo=1';
+const TITLE = 'Jogue agora no navegador';
+const DESCRIPTION = 'CORO SOLTO é um FPS grátis que roda no navegador, sem instalar nada. Abra no Chrome ou Safari do seu celular e entre na treta.';
+---
+<Layout
+  title={TITLE}
+  description={DESCRIPTION}
+  ogImage="/video/landing/gameplay-vertical.jpg"
+  ogImageAlt={`${BRAND_FULL}: gameplay no Parque da Treta`}
+  ogImageWidth={720}
+  ogImageHeight={1280}
+  noindex
+  h1="FPS brasileiro, grátis, sem instalar"
+  kicker="roda no navegador do celular">
+  <p slot="sub">Dentro do app isso aqui fica travado. <strong>Abra no navegador</strong> e joga em 10 segundos.</p>
+
+  <section class="app-landing" data-landing="app">
+    <div class="app-ctas">
+      <a id="app-abrir" class="app-cta app-cta-primaria" href={hrefJogo}>ABRIR NO NAVEGADOR</a>
+      <a id="app-aqui" class="app-cta" href={hrefJogo}>jogar aqui mesmo</a>
+    </div>
+    <p id="app-dica" class="app-dica" hidden>Se nada abriu: toque nos três pontos do app e escolha <strong>Abrir no navegador</strong>.</p>
+    <video class="app-video" src="/video/landing/gameplay-vertical.mp4" poster="/video/landing/gameplay-vertical.jpg" width="720" height="1280" autoplay muted loop playsinline preload="metadata" aria-label="6 segundos de gameplay no Parque da Treta"></video>
+  </section>
+
+  <script is:inline>
+  /* Fora de WebView este botão é um link comum. Dentro: Android abre o Chrome via intent://,
+     iOS tenta o Safari via x-safari-https://; se a aba continuar visível em 1,8 s, mostra a dica. */
+  (function () {
+    var botao = document.getElementById('app-abrir');
+    var aqui = document.getElementById('app-aqui');
+    var dica = document.getElementById('app-dica');
+    var ua = navigator.userAgent || '';
+    var destino = new URL('/', location.origin);
+    new URLSearchParams(location.search).forEach(function (v, k) { if (k !== 'jogo') destino.searchParams.set(k, v); });
+    destino.searchParams.set('jogo', '1');
+    botao.href = destino.pathname + destino.search;
+    aqui.href = botao.href;
+    /* JOGAR do topo e VOLTAR AO JOGO também apontam para a home: sem `jogo=1` a borda traria de volta. */
+    document.querySelectorAll('a[href^="/?"], a[href="/"]').forEach(function (a) { a.href = botao.href; });
+    var android = /Android/i.test(ua);
+    var ios = /iPhone|iPad|iPod/i.test(ua);
+    var webview = /musical_ly|BytedanceWebview|TikTok|Instagram|FBAN|FBAV|FB_IAB|LinkedInApp|TwitterAndroid|Twitter for iPhone/i.test(ua) || (android && /\bwv\b/.test(ua));
+    if (!webview || (!android && !ios)) return;
+    botao.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      var saiu = false;
+      var marca = function () { saiu = true; };
+      document.addEventListener('visibilitychange', marca, { once: true });
+      window.addEventListener('pagehide', marca, { once: true });
+      var alvo = android
+        ? 'intent://' + destino.host + destino.pathname + destino.search + '#Intent;scheme=https;action=android.intent.action.VIEW;S.browser_fallback_url=' + encodeURIComponent(destino.href) + ';end'
+        : 'x-safari-' + destino.href;
+      location.href = alvo;
+      setTimeout(function () { if (!saiu && !document.hidden) dica.hidden = false; }, 1800);
+    });
+  })();
+  </script>
+
+  <style>
+  .app-landing{display:grid;gap:18px;justify-items:center;padding:8px 20px 40px;max-width:520px;margin:0 auto}
+  .app-video{width:min(100%,300px);max-height:46vh;object-fit:cover;aspect-ratio:9/16;border-radius:14px;border:1px solid var(--tp-borda-forte);background:#000;box-shadow:0 18px 50px #000a}
+  .app-ctas{display:grid;gap:10px;width:100%}
+  .app-cta{display:block;text-align:center;text-decoration:none;font:400 22px/1 var(--display);letter-spacing:.04em;padding:18px 20px;border-radius:10px;color:var(--tp-tinta-2);border:1px solid var(--tp-borda-forte)}
+  .app-cta-primaria{background:var(--tp-lima);color:#131313;border-color:var(--tp-lima);font-size:26px}
+  .app-cta:focus-visible{outline:2px solid var(--tp-ambar);outline-offset:4px}
+  .app-dica{text-align:center;color:var(--tp-tinta-3);font-size:15px}
+  </style>
+</Layout>
