@@ -76,8 +76,9 @@ export const GET: APIRoute = async () => {
      índice, e um `count` com `head: true` não traz linha nenhuma - é bem mais
      barato que puxar 5.000 registros só pra contar. */
   let totalPerfis = 0;
-  if (RANKING_ON && supabaseAdmin) {
-    const { count } = await supabaseAdmin
+  const db = supabaseAdmin();
+  if (RANKING_ON && db) {
+    const { count } = await db
       .from('player_points')
       .select('id', { count: 'exact', head: true });
     totalPerfis = count ?? 0;
@@ -101,11 +102,12 @@ export const GET: APIRoute = async () => {
 
 /** Uma fatia dos perfis, já como entradas de sitemap. Usada pelas duas rotas. */
 export async function perfis(offset: number, limite: number): Promise<Entrada[]> {
-  if (!RANKING_ON || !supabaseAdmin || limite <= 0) return [];
+  const db = supabaseAdmin();
+  if (!RANKING_ON || !db || limite <= 0) return [];
   const out: Entrada[] = [];
   // O PostgREST do Supabase corta cada resposta em max-rows (1.000) sem erro.
   for (let de = offset, fim = offset + limite; de < fim;) {
-    const { data } = await supabaseAdmin
+    const { data } = await db
       .from('player_points')
       .select('id,nick')
       .order('id', { ascending: true })

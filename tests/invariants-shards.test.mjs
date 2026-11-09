@@ -2,9 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { COLLIDER_SHARDS } from '../tools/eval/operacao-flavio-proof-check.mjs';
 
 const INVARIANTES = fileURLToPath(new URL('../tools/eval/invariants.mjs', import.meta.url));
 const MAP_CHECK = fileURLToPath(new URL('../tools/eval/map-check.mjs', import.meta.url));
+const PORTAO_INTEIRO = fileURLToPath(new URL('../tools/eval/portao-inteiro-check.mjs', import.meta.url));
+const OPERACAO_FLAVIO = fileURLToPath(new URL('../tools/eval/operacao-flavio-check.mjs', import.meta.url));
+const OPERACAO_FLAVIO_PROOF = fileURLToPath(new URL('../tools/eval/operacao-flavio-proof-check.mjs', import.meta.url));
 const SHARDS = ['fonte', 'vm', 'bots-base', 'bots-duelo', 'bots-diagnostico', 'bots-mount', 'chars-mat', 'mapas-nucleo', 'mapas-comunidades', 'mapas-amazonia', 'mapas-oeste', 'mapas-invasao', 'mapas-rural', 'mapas-vila'];
 const IDS_HISTORICOS = [
   'SYN', 'VM1', 'VM2', 'VM3', 'VM4', 'VM5', 'VM6', 'VM7', 'VM8', 'VM9', 'VM10', 'VM12', 'VM14', 'VM15', 'VM16', 'VM17', 'VM18', 'VM18b', 'VM19', 'VM20', 'VM21', 'VM22', 'VM23',
@@ -33,6 +37,14 @@ function selecaoMapas(ids) {
   const r = executar(MAP_CHECK, [ids, '--list-json']);
   assert.equal(r.status, 0, r.stderr || r.stdout);
   return JSON.parse(r.stdout).mapas;
+}
+
+function selecaoFlavio(familia) {
+  const r = executar(OPERACAO_FLAVIO_PROOF, ['--list-json', familia]);
+  assert.equal(r.status, 0, r.stderr || r.stdout);
+  const plano = JSON.parse(r.stdout);
+  assert.equal(plano.length, 1);
+  return plano[0];
 }
 
 const chave = (bloco, id) => `${bloco.familia}:${bloco.cenario || '-'}:${id}`;
@@ -113,4 +125,45 @@ test('seleção de mapa desconhecida ou duplicada falha antes do harness', () =>
     assert.match(r.stderr, /Seleção de mapas inválida/);
     assert.equal(r.stdout, '');
   }
+});
+
+test('validador real cobre os 17 contratos visuais uma única vez e na ordem dos shards', () => {
+  const r = executar(PORTAO_INTEIRO, []);
+  assert.equal(r.status, 0, r.stderr || r.stdout);
+  assert.match(r.stdout, /PI4 17 contratos visuais únicos, ordenados e cobertos pelos \d+ shards/);
+  const duplicado = executar(PORTAO_INTEIRO, ['--mutante=contrato-visual-duplicado']);
+  assert.equal(duplicado.status, 1, duplicado.stderr || duplicado.stdout);
+  assert.match(duplicado.stdout, /eval:knife-skin-markings: esperado uma execução no CI, encontradas 2/);
+});
+
+test('seletor real divide collider em shards balanceados, disjuntos, ordenados e completos', () => {
+  const completo = selecaoFlavio('collider');
+  const shards = COLLIDER_SHARDS.map((indice) => selecaoFlavio(`collider:${indice}`));
+  const uniao = shards.flatMap((shard) => shard.mutantes);
+  assert.equal(new Set(uniao).size, uniao.length);
+  assert.deepEqual([...uniao].sort(), [...completo.mutantes].sort());
+  assert.ok(Math.max(...shards.map((s) => s.mutantes.length)) - Math.min(...shards.map((s) => s.mutantes.length)) <= 1);
+  for (const [indice, shard] of shards.entries()) {
+    assert.equal(shard.script, completo.script);
+    assert.deepEqual(shard.mutantes, completo.mutantes.filter((_, posicao) => posicao % COLLIDER_SHARDS.length === indice));
+    const posteriores = new Set(shards.slice(indice + 1).flatMap((s) => s.mutantes));
+    assert.deepEqual(shard.mutantes.filter((mutante) => posteriores.has(mutante)), []);
+  }
+});
+
+test('seletor collider falha fechado para shard inválido', () => {
+  for (const familia of ['collider:', 'collider:-1', 'collider:4', 'collider:01', 'collider:x', 'collider:0:1']) {
+    const r = executar(OPERACAO_FLAVIO_PROOF, ['--list-json', familia]);
+    assert.equal(r.status, 2, familia);
+    assert.equal(r.stdout, '');
+    assert.match(r.stderr, /shard collider inválido/);
+  }
+});
+
+test('validador real do pai Flávio preserva online único e detecta suite-duplicada', () => {
+  const nominal = executar(OPERACAO_FLAVIO, []);
+  assert.equal(nominal.status, 0, nominal.stderr || nominal.stdout);
+  const mutante = executar(OPERACAO_FLAVIO, ['--mutante=suite-duplicada']);
+  assert.equal(mutante.status, 0, mutante.stderr || mutante.stdout);
+  assert.match(mutante.stdout, /mutante suite duplicada acendeu a régua/);
 });
