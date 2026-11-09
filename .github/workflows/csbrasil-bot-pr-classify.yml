@@ -144,7 +144,7 @@ jobs:
           ], input=json.dumps(pr), text=True))
           if channel['hotfix'] and pr.get('baseRefName') == 'main':
               number = os.environ['PR_NUMBER']
-              subprocess.run(['git', 'fetch', 'origin', 'main', 'staging'], check=True)
+              subprocess.run(['git', 'fetch', 'origin', 'main:refs/remotes/origin/main', 'staging:refs/remotes/origin/staging'], check=True)
               head_ref = f'refs/remotes/origin/pr/{number}'
               subprocess.run([
                   'git', 'fetch', 'origin', f'refs/pull/{number}/head:{head_ref}',

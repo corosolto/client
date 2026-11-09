@@ -49,7 +49,7 @@ jobs:
           DATE: ${{ inputs.date || '' }}
         run: |
           set -euo pipefail
-          git fetch origin main staging
+          git fetch origin main:refs/remotes/origin/main staging:refs/remotes/origin/staging
           if [ -z "$DATE" ]; then DATE=$(date -u +%F); fi
           gh api "repos/$REPO/pulls?state=open&base=main&head=$OWNER:staging" > /tmp/release-existing.json
           gh pr list --repo "$REPO" --state merged --base staging --limit 200 \

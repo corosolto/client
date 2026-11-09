@@ -55,7 +55,7 @@ jobs:
               print('Not a hotfix targeting main; ancestry gate does not apply.')
               raise SystemExit(0)
           number = os.environ['PR_NUMBER']
-          subprocess.run(['git', 'fetch', 'origin', 'main', 'staging'], check=True)
+          subprocess.run(['git', 'fetch', 'origin', 'main:refs/remotes/origin/main', 'staging:refs/remotes/origin/staging'], check=True)
           head_ref = f'refs/remotes/origin/pr/{number}'
           subprocess.run([
               'git', 'fetch', 'origin', f'refs/pull/{number}/head:{head_ref}',
