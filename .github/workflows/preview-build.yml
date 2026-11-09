@@ -45,11 +45,51 @@ jobs:
 
       - run: npm ci
 
+      - name: Tags e checksum dos pacotes de assets
+        id: packs
+        env:
+          AUDIO_PACK_SHA256: ${{ vars.AUDIO_PACK_SHA256 }}
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const saida = [];
+          for (const [script, variavel, nome] of [
+            ['scripts/fetch-audio.sh', 'AUDIO_PACK_URL', 'audio_tag'],
+            ['scripts/fetch-decals.sh', 'DECALS_PACK_URL', 'decals_tag'],
+          ]) {
+            const fonte = fs.readFileSync(script, 'utf8');
+            const url = fonte.match(new RegExp(`URL="\\$\\{${variavel}:-([^}]+)\\}"`))?.[1];
+            const tag = url?.match(/\/download\/([^/]+)\//)?.[1];
+            if (!tag) throw new Error(`${script}: tag ausente da URL default de ${variavel}`);
+            saida.push(`${nome}=${tag}`);
+          }
+          const sha = process.env.AUDIO_PACK_SHA256 || 'public';
+          if (sha !== 'public' && !/^[a-f0-9]{64}$/i.test(sha)) throw new Error('AUDIO_PACK_SHA256 inválido para a chave de cache');
+          saida.push(`audio_sha=${sha}`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `${saida.join('\n')}\n`);
+          NODE
+
+      # Sem restore-keys: pack parcial ou de outra tag nunca pode completar o checkout.
+      - name: Cache do pacote de áudio por tag e checksum
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: public/audio
+          key: audio-pack-${{ steps.packs.outputs.audio_tag }}-${{ steps.packs.outputs.audio_sha }}
+
+      - name: Cache dos decalques por tag exata
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: public/img/decals
+          key: decals-pack-${{ steps.packs.outputs.decals_tag }}
+
       # Os pacotes de asset vêm de release público — sem segredo, e com retry para
       # soluço de rede não virar PR vermelho (é a DG2). O pack público não carrega
       # a ambiência licenciada do Blob; o `fetch-audio.sh` completa os mapas com o
       # hum sintetizado pelo jogo, sem expor credencial nem redistribuir WAV privado.
       - name: Assets
+        env:
+          AUDIO_PACK_SHA256: ${{ vars.AUDIO_PACK_SHA256 }}
         run: |
           bash scripts/fetch-audio.sh
           bash scripts/fetch-decals.sh
