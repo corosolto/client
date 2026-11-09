@@ -1,129 +1,225 @@
 #!/usr/bin/env node
-/* ESTADOS-ASSADOS: valida o GLB servido contra o QA Studio e impede seleção por vacuidade.
-   O teto de -3 cm vem do contrato da lane; quadril usa exatamente o limite do Studio:
-   max(1,08× bind, máximo da fonte +0,08). Verde com 0 selecionados só existe se as 74
-   exclusões carregam piora numérica no sentido ruim da métrica (ou regressão de runtime).
-   --mutante=exclusao-sem-metrica apaga a prova de uma exclusão; --mutante=piora-inventada
-   inverte o sentido de uma piora (o pack teria melhorado) e também tem que reprovar. */
+/* ESTADOS-ASSADOS: troca de clipe por ESTADO nos 74 BODIES legados (regra em baked-states-metrics.mjs).
+   A régua prova, a partir de tools/eval/baked-states.json (gerado por tools/import-baked-states.mjs):
+     R1 a decisão de cada estado é a da regra (substitui ⇔ nenhum motivo para manter);
+     R2 o arquivo publicado é o que o QA mediu (sha256[0..12]); estado compartilhado não tem arquivo;
+     R3 pé no chão MEDIDO no clipe publicado, skinado no GLB do personagem (pé = vértices cuja
+        junta dominante é Foot/ToeBase): mínimo ≥ min(−penetração do Studio, piso do QA) − 1,5 cm;
+     R4 o jogo usa a velocidade do manifest nos estados de locomoção trocados (índice + anim-speed-ref);
+     R5 o pack mesclado <id>.glb decodifica no GLTFLoader do jogo com os clipes da pasta.
+   Mutantes (cada um tem que reprovar):
+     --mutante=pe-afundado  afunda 13 cm o quadril do death do bonzo e regrava o hash (só R3 pega);
+     --mutante=ref-global   o glbchars volta a usar só as refs globais;
+     --mutante=regra-ruido  aplica a regra antiga (qualquer número pior): recusa clipe válido. */
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { createHash } from 'node:crypto';
-import { QA_DIRECTION } from './baked-states-metrics.mjs';
+import { motivosParaManter, motivosRegraRuido } from './baked-states-metrics.mjs';
+import { readGLB, buildScene, worldMats, poseWith, skinVerts, bboxOf } from './tp-mount-probe.mjs';
+import { marcarRef, refsDoCorpo } from '../../public/js/anim-speed-ref.js';
 
 const MUT = process.argv.find((a) => a.startsWith('--mutante='))?.split('=')[1] || '';
-const MUTANTES = ['exclusao-sem-metrica', 'piora-inventada', 'exclusao-so-runtime'];
-if (MUT && !MUTANTES.includes(MUT)) throw new Error(`mutante desconhecido: ${MUT}`);
-const ARQ = path.resolve('tools/eval/baked-states.json');
-const data = JSON.parse(fs.readFileSync(ARQ, 'utf8'));
-if (MUT === 'exclusao-sem-metrica') {
-  if (!data.excluded.bonzo?.length) throw new Error('mutante não aplicou: exclusão do bonzo ausente');
-  data.excluded.bonzo = [];
-}
-if (MUT === 'piora-inventada') {
-  const r = data.excluded.bonzo?.find((x) => x.metric);
-  if (!r) throw new Error('mutante não aplicou: bonzo sem regressão numérica');
-  [r.current, r.next] = [r.next, r.current];
-  r.delta = r.next - r.current;
-}
-if (MUT === 'exclusao-so-runtime') {
-  if (!data.excluded.bonzo?.length) throw new Error('mutante não aplicou: exclusão do bonzo ausente');
-  data.excluded.bonzo = [{ state: 'idle/select', kinds: ['runtime:INFLATE'], current: ['p99 0.1'], next: ['p99 0.2'] }];
-}
+const MUTANTES = {
+  'pe-afundado': (f) => f.startsWith('R3 bonzo/death'),
+  'ref-global': (f) => f.startsWith('R4 glbchars'),
+  'regra-ruido': (f) => f.startsWith('R1') && f.includes('substituído contra a regra'),
+};
+if (MUT && !MUTANTES[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
+const ANIMS = path.resolve('public/models/anims');
+const data = JSON.parse(fs.readFileSync(path.resolve('tools/eval/baked-states.json'), 'utf8'));
+const indice = JSON.parse(fs.readFileSync(path.join(ANIMS, 'index.json'), 'utf8'));
+let glbchars = fs.readFileSync(path.resolve('public/js/glbchars.js'), 'utf8');
+const S = data.estados;
+const LOCO = ['walk', 'run', 'crouchwalk', 'walk1h'];
+const TOL_PISO_CM = 1.5;
+const h12 = (bytes) => createHash('sha256').update(bytes).digest('hex').slice(0, 12);
 const falhas = [];
-const bodies = Object.entries(data.bodies || {}), excluded = Object.entries(data.excluded || {});
-if (bodies.length + excluded.length !== 74) falhas.push(`inventário incompleto: ${bodies.length} selecionados + ${excluded.length} excluídos != 74`);
-const HEX64 = /^[0-9a-f]{64}$/;
-for (const id of [...bodies, ...excluded].map(([id]) => id)) {
-  const s = data.sources?.[id];
-  if (!s || !['qaCurrent', 'qaPacked', 'manifest'].every((k) => HEX64.test(s[k] || ''))) falhas.push(`${id}: sem hash das fontes do QA Studio (qa-current/qa-packed/manifest)`);
+const lidos = new Map();
+const ler = (id, estado) => {
+  const k = `${id}/${estado}`;
+  if (!lidos.has(k)) { const f = path.join(ANIMS, id, `${estado}.glb`); lidos.set(k, fs.existsSync(f) ? fs.readFileSync(f) : null); }
+  return lidos.get(k);
+};
+const glbDe = (bytes) => {
+  const n = bytes.readUInt32LE(12);
+  return { json: JSON.parse(bytes.subarray(20, 20 + n).toString('utf8')), bin: bytes.subarray(20 + n + 8) };
+};
+
+if (MUT === 'pe-afundado') {
+  // Desce o Hips 13 cm no mundo em todas as chaves do death do bonzo e "conserta" o hash.
+  const bytes = Buffer.from(ler('bonzo', 'death'));
+  const g = glbDe(bytes), anim = g.json.animations[0];
+  const hips = g.json.nodes.findIndex((n) => n.name === 'Hips');
+  const ch = anim.channels.find((c) => c.target.node === hips && c.target.path === 'translation');
+  const pai = g.json.nodes.findIndex((n) => n.children?.includes(hips));
+  const cena = buildScene(g), W = worldMats(cena);
+  const escalaPai = pai >= 0 ? Math.hypot(W[pai][4], W[pai][5], W[pai][6]) : 1;
+  const acc = g.json.accessors[anim.samplers[ch.sampler].output], bv = g.json.bufferViews[acc.bufferView];
+  const base = (bv.byteOffset || 0) + (acc.byteOffset || 0);
+  for (let i = 0; i < acc.count; i++) { const p = base + i * 12 + 4; g.bin.writeFloatLE(g.bin.readFloatLE(p) - 0.13 / escalaPai, p); }
+  lidos.set('bonzo/death', bytes);
+  data.corpos.bonzo.e[S.indexOf('death')][1] = h12(bytes);
 }
-for (const [id, regressions] of excluded) {
-  if (!Array.isArray(regressions) || !regressions.length) { falhas.push(`${id}: exclusão sem métrica/regressão registrada`); continue; }
-  let medidas = 0;
-  for (const r of regressions) {
-    const runtime = r.state && Array.isArray(r.kinds) && r.kinds.length;
-    if (runtime) continue;
-    const numeric = r.state && r.metric && Number.isFinite(r.current) && Number.isFinite(r.next) && Number.isFinite(r.delta);
-    if (!numeric) { falhas.push(`${id}: regressão malformada`); continue; }
-    const direction = QA_DIRECTION[r.metric];
-    if (!direction) { falhas.push(`${id}/${r.state}: métrica desconhecida ${r.metric}`); continue; }
-    if (Math.abs(r.delta - (r.next - r.current)) > 1e-9 || direction * r.delta <= 1e-9) {
-      falhas.push(`${id}/${r.state}: ${r.metric} ${r.current} → ${r.next} não é piora`);
-      continue;
+if (MUT === 'ref-global') glbchars = glbchars.replace(/this\.refs = refsDoCorpo\([^;]*\);/, 'this.refs = REFS_GLOBAIS;');
+
+/* R1 + R2 */
+const ids = Object.keys(data.corpos);
+if (ids.length !== 74) falhas.push(`inventário: ${ids.length} corpos != 74`);
+let trocados = 0, mantidos = 0, recusaRuido = 0, exemploRuido = '';
+const regra = MUT === 'regra-ruido'
+  ? (a, n) => motivosRegraRuido(a[0], n[0], a[1] || {}, n[1] || {})
+  : (a, n) => motivosParaManter(a[1] || {}, n[1] || {});
+for (const id of ids) {
+  const c = data.corpos[id];
+  if (!Array.isArray(c.f) || c.f.length !== 3 || !c.f.every((x) => /^[0-9a-f]{12}$/.test(x))) falhas.push(`${id}: sem hash das fontes do QA Studio`);
+  if (!Array.isArray(c.e) || c.e.length !== S.length) { falhas.push(`${id}: precisa de ${S.length} registros de estado`); continue; }
+  c.e.forEach(([troca, hash, a, n], i) => {
+    const estado = S[i], k = `${id}/${estado}`;
+    if (!Number.isFinite(a?.[0]) || !Number.isFinite(n?.[0])) { falhas.push(`${k}: piso ausente`); return; }
+    const motivos = regra(a, n);
+    if (troca === 1 && motivos.length) {
+      if (MUT === 'regra-ruido' && !motivosParaManter(a[1] || {}, n[1] || {}).length) {
+        recusaRuido++;
+        if (!exemploRuido && !Object.keys(n[1] || {}).some((x) => x !== '~')) exemploRuido = `${k} passa todos os checks do QA e a regra antiga recusa por ${motivos.join('; ')}`;
+      }
+      falhas.push(`R1 ${k}: substituído contra a regra (${motivos.join('; ')})`);
     }
-    medidas++;
-  }
-  // Anotação de runtime não exclui sozinha: sem piora numérica medida o corpo teria que ser aceito.
-  if (!medidas) falhas.push(`${id}: exclusão sem piora numérica medida`);
-}
-const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
-let clips = 0, piorPe = Infinity, piorPeQuem = '', piorFolgaHips = Infinity, piorHipsQuem = '';
-for (const [id, body] of bodies) {
-  if (data.excluded?.[id]) falhas.push(`${id}: selecionado e excluído ao mesmo tempo`);
-  if (data.states.length !== 11 || Object.keys(body.states || {}).length !== 11) falhas.push(`${id}: seleção precisa ter 11 estados`);
-  if (id.includes('-cyborg-') || id.includes('-drip-') || id.includes('-mandrake-')) falhas.push(`${id}: skin entrou no pipeline de BODIES`);
-  const mergedPath = path.resolve('public/models/anims', `${id}.glb`);
-  if (!fs.existsSync(mergedPath)) { falhas.push(`${id}: pack mesclado ausente`); continue; }
-  const merged = fs.readFileSync(mergedPath);
-  if (sha(merged) !== body.sha256 || merged.length !== body.bytes) falhas.push(`${id}: pack difere do QA gerado; rode o importador`);
-  for (const [state, m] of Object.entries(body.states || {})) {
-    clips++;
-    if (!Number.isFinite(m.lowestVertexCm) || !Number.isFinite(m.hipsMaxRatio) || !Number.isFinite(m.hipsLimitRatio)) {
-      falhas.push(`${id}/${state}: QA incompleto`); continue;
+    if (troca === 0 && !motivos.length) falhas.push(`R1 ${k}: mantido sem motivo — a regra manda substituir`);
+    if (troca !== 0 && troca !== 1) falhas.push(`R1 ${k}: decisão inválida ${troca}`);
+    troca === 1 ? trocados++ : mantidos++;
+    const bytes = ler(id, estado);
+    if (hash === null) {
+      if (troca === 1) falhas.push(`R2 ${k}: substituído sem arquivo`);
+      if (bytes) falhas.push(`R2 ${k}: QA mediu o clipe compartilhado, mas há arquivo próprio`);
+    } else if (!bytes) falhas.push(`R2 ${k}: arquivo publicado ausente`);
+    else if (h12(bytes) !== hash) falhas.push(`R2 ${k}: arquivo difere do que o QA mediu; rode o importador`);
+    if (troca === 1 && bytes) {
+      const { json } = glbDe(bytes);
+      if (json.extensionsRequired?.length) falhas.push(`R2 ${k}: exige ${json.extensionsRequired.join(', ')}, o loader do jogo não registra decoder`);
+      if (json.animations?.[0]?.name !== estado) falhas.push(`R2 ${k}: clipe com nome ${json.animations?.[0]?.name}`);
     }
-    if (m.lowestVertexCm < piorPe) { piorPe = m.lowestVertexCm; piorPeQuem = `${id}/${state}`; }
-    if (m.lowestVertexCm < data.thresholds.lowestVertexCm) falhas.push(`${id}/${state}: vértice ${m.lowestVertexCm} cm < ${data.thresholds.lowestVertexCm} cm`);
-    const folga = m.hipsLimitRatio - m.hipsMaxRatio;
-    if (!m.airborne && folga < piorFolgaHips) { piorFolgaHips = folga; piorHipsQuem = `${id}/${state}`; }
-    if (!m.airborne && m.hipsMaxRatio > m.hipsLimitRatio + 1e-9) falhas.push(`${id}/${state}: quadril ${m.hipsMaxRatio}× > ${m.hipsLimitRatio}×`);
-    const expectedLimit = Math.max(data.thresholds.hipsMaxRatio, (m.hipsSourceMaxRatio ?? -Infinity) + data.thresholds.hipsOverSourceRatio);
-    if (Math.abs(expectedLimit - m.hipsLimitRatio) > 1e-9) falhas.push(`${id}/${state}: limite de quadril diverge do Studio`);
-    const fallback = path.resolve('public/models/anims', id, `${state}.glb`);
-    if (!fs.existsSync(fallback)) { falhas.push(`${id}/${state}: fallback ausente`); continue; }
-    const bytes = fs.readFileSync(fallback);
-    if (sha(bytes) !== m.sha256 || bytes.length !== m.bytes) falhas.push(`${id}/${state}: fallback difere do QA gerado`);
-    for (const ref of ['walk', 'run', 'crouchwalk', 'walk1h', 'walkfire']) {
-      if (!(body.refs?.[ref] > 0)) falhas.push(`${id}: velocidade ${ref} ausente`);
-    }
-  }
+  });
 }
 
-// Prova no MESMO GLTFLoader do jogo: meshopt + int16 normalizado viram clipes Three finitos.
-// Sem pack aceito não há GLB para decodificar; o veredito declara isso em vez de fingir cobertura.
-if (!falhas.length && bodies.length) {
-  const { THREE } = await import('./three-node.mjs');
+/* R3 — pé medido no clipe publicado (mesmo skinning das sondas de personagem). */
+const PE = /^(Left|Right)(Foot|ToeBase)$/;
+let piorPe = Infinity, piorPeQuem = '', medidos = 0;
+const alvosR3 = MUT === 'pe-afundado' ? ['bonzo'] : MUT ? [] : ids;
+for (const id of alvosR3) {
+  const g = readGLB(path.resolve('public/models/characters', `${id}.glb`)), sc = buildScene(g);
+  const nomes = g.json.skins[0].joints.map((j) => g.json.nodes[j].name);
+  const chao = bboxOf(skinVerts(sc, g, worldMats(sc), 1))[1];
+  const pe = (vs) => {
+    let mn = Infinity;
+    for (const v of vs) {
+      if (!v.j) continue;
+      let dom = 0; for (let k = 1; k < 4; k++) if (v.w[k] > v.w[dom]) dom = k;
+      if (PE.test(nomes[v.j[dom]] || '') && v.p[1] < mn) mn = v.p[1];
+    }
+    return mn;
+  };
+  data.corpos[id].e.forEach(([troca, , , n], i) => {
+    if (troca !== 1 || (MUT && S[i] !== 'death')) return;
+    const bytes = ler(id, S[i]);
+    if (!bytes) return;
+    // poseWith lê de arquivo: o clipe mutado vai para um temporário fora do repo.
+    let arquivo = path.join(ANIMS, id, `${S[i]}.glb`), tmp = null;
+    if (!fs.readFileSync(arquivo).equals(bytes)) {
+      tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'estados-assados-'));
+      arquivo = path.join(tmp, 'clipe.glb');
+      fs.writeFileSync(arquivo, bytes);
+    }
+    try {
+      const { json } = glbDe(bytes);
+      const dur = Math.max(...json.animations[0].samplers.map((s) => json.accessors[s.input].max[0]));
+      let mn = Infinity;
+      for (let k = 0; k <= 12; k++) mn = Math.min(mn, pe(skinVerts(sc, g, poseWith(sc, arquivo, (dur * k) / 12), 2)));
+      const cm = +((mn - chao) * 100).toFixed(2);
+      medidos++;
+      if (cm < piorPe) { piorPe = cm; piorPeQuem = `${id}/${S[i]}`; }
+      const limite = Math.min(-data.limites.penetrationCm, n[0]) - TOL_PISO_CM;
+      if (cm < limite) falhas.push(`R3 ${id}/${S[i]}: pé afundado ${cm} cm < ${limite} cm (QA declarou piso ${n[0]} cm)`);
+    } finally { if (tmp) fs.rmSync(tmp, { recursive: true, force: true }); }
+  });
+}
+
+/* R4 — refs por personagem: índice = manifest; o jogo multiplica pela escala do modelo. */
+const GLOBAIS = { walk: 0.84, walk1h: 0.84, run: 2.08, crouchwalk: 0.75 };
+let refsTrocadas = 0;
+for (const id of ids) {
+  const c = data.corpos[id];
+  const acoes = {};
+  for (const estado of LOCO) {
+    const troca = c.e[S.indexOf(estado)][0] === 1;
+    const v = c.v?.[estado], noIndice = indice.refs?.[id]?.[estado];
+    if (troca !== (v > 0)) falhas.push(`R4 ${id}/${estado}: ref do manifest ${troca ? 'ausente' : 'em estado mantido'}`);
+    if ((v ?? null) !== (noIndice ?? null)) falhas.push(`R4 ${id}/${estado}: índice tem ${noIndice}, manifest ${v}`);
+    const clip = {};
+    marcarRef(clip, noIndice);
+    acoes[estado] = { getClip: () => clip };
+  }
+  const escala = 1.04;
+  const refs = refsDoCorpo(acoes, escala, GLOBAIS);
+  for (const estado of LOCO) {
+    const esperado = c.v?.[estado] > 0 ? c.v[estado] * escala : GLOBAIS[estado];
+    if (Math.abs(refs[estado] - esperado) > 1e-9) falhas.push(`R4 ${id}/${estado}: ref ${refs[estado]} != ${esperado}`);
+    if (c.v?.[estado] > 0) refsTrocadas++;
+  }
+}
+{
+  const exigido = [
+    [/import \{ marcarRef, refsDoCorpo \} from '\.\/anim-speed-ref\.js';/, 'importa anim-speed-ref.js'],
+    [/const refs = \(_idx && _idx\.refs && _idx\.refs\[id\]\) \|\| \{\};/, 'lê refs do índice'],
+    [/set\[s\] = c; marcarRef\(c, refs\[s\]\)/, 'marca a ref do clipe mesclado'],
+    [/set\[s\] = g\.animations\[0\]; marcarRef\(set\[s\], refs\[s\]\)/, 'marca a ref do clipe por estado'],
+    [/this\.refs = refsDoCorpo\(actions, model \? model\.scale\.x : 0, REFS_GLOBAIS\);/, 'resolve as refs com a escala do modelo'],
+  ];
+  for (const [re, oque] of exigido) if (!re.test(glbchars)) falhas.push(`R4 glbchars não ${oque} (ref global no lugar da do clipe)`);
+  for (const estado of LOCO) if (!glbchars.includes(`rate(refs.${estado})`)) falhas.push(`R4 glbchars: ${estado} não usa a ref do clipe`);
+  if (/rate\((WALK|RUN|CROUCH)_REF\)/.test(glbchars)) falhas.push('R4 glbchars: rate() ainda usa ref global direta');
+}
+
+/* R5 — pack mesclado decodifica no GLTFLoader do jogo (sem decoder: os clipes são float). */
+if (!MUT) {
+  await import('./three-node.mjs');
   const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
-  const { MeshoptDecoder } = await import('../../public/vendor/meshopt_decoder.module.js');
-  await MeshoptDecoder.ready;
-  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-  for (const id of Object.keys(data.bodies)) {
-    const bytes = fs.readFileSync(path.resolve('public/models/anims', `${id}.glb`));
+  const loader = new GLTFLoader();
+  for (const id of ids) {
+    const esperados = S.filter((s) => ler(id, s));
+    if (!esperados.length) continue;
+    if (JSON.stringify(indice.clipes?.[id] || []) !== JSON.stringify(esperados)) falhas.push(`R5 ${id}: índice lista ${indice.clipes?.[id]}, pasta tem ${esperados}`);
+    const f = path.join(ANIMS, `${id}.glb`);
+    if (!fs.existsSync(f)) { falhas.push(`R5 ${id}: pack mesclado ausente`); continue; }
+    const bytes = fs.readFileSync(f);
     try {
       const gltf = await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
-      const names = gltf.animations.map((a) => a.name).sort();
-      if (JSON.stringify(names) !== JSON.stringify([...data.states].sort())) falhas.push(`${id}: clipes decodificados divergentes`);
+      const nomes = gltf.animations.map((a) => a.name);
+      if (JSON.stringify([...nomes].sort()) !== JSON.stringify([...esperados].sort())) falhas.push(`R5 ${id}: mesclado tem ${nomes}, pasta tem ${esperados}`);
       for (const clip of gltf.animations) {
-        if (!(clip.duration > 0) || !clip.tracks.length) falhas.push(`${id}/${clip.name}: clipe vazio após decode`);
-        for (const track of clip.tracks) {
-          if (!Array.from(track.values).every(Number.isFinite)) falhas.push(`${id}/${clip.name}: track não finita`);
-          if (!(track instanceof THREE.KeyframeTrack)) falhas.push(`${id}/${clip.name}: track inválida`);
-        }
+        const proprio = ler(id, clip.name);
+        if (!proprio) { falhas.push(`R5 ${id}/${clip.name}: no mesclado e não na pasta`); continue; }
+        const { json } = glbDe(proprio);
+        const dur = Math.max(...(json?.animations?.[0]?.samplers || []).map((s) => json.accessors[s.input].max[0]));
+        if (Math.abs(clip.duration - dur) > 1e-3) falhas.push(`R5 ${id}/${clip.name}: mesclado dura ${clip.duration}s, arquivo ${dur}s (rode npm run anims:merge)`);
+        if (!clip.tracks.every((t) => Array.from(t.values).every(Number.isFinite))) falhas.push(`R5 ${id}/${clip.name}: track não finita`);
       }
-    } catch (error) { falhas.push(`${id}: GLTFLoader não decodificou: ${error.message}`); }
+    } catch (error) { falhas.push(`R5 ${id}: GLTFLoader não decodificou: ${error.message}`); }
   }
 }
 
-const resumo = bodies.length
-  ? `${bodies.length} corpos/${clips} estados · pior mínimo ${piorPe} cm (${piorPeQuem}) · menor folga de quadril ${piorFolgaHips.toFixed(4)}× (${piorHipsQuem})`
-  : `0 corpos selecionados · ${excluded.length} exclusões com piora numérica verificada · decode/piso/quadril NÃO exercitados (nenhum pack aceito)`;
+const porCorpo = ids.map((id) => data.corpos[id].e.filter((e) => e[0] === 1).length);
+const resumo = `${trocados}/${trocados + mantidos} estados substituídos em ${porCorpo.filter(Boolean).length} corpos (${porCorpo.filter((n) => n === S.length).length} com 11/11)`
+  + ` · ${mantidos} mantidos · ${refsTrocadas} refs de locomoção por personagem`
+  + (medidos ? ` · pé medido em ${medidos} clipes, pior ${piorPe} cm (${piorPeQuem})` : '');
 if (MUT) {
-  const assinatura = { 'exclusao-sem-metrica': 'bonzo: exclusão sem métrica', 'piora-inventada': 'não é piora', 'exclusao-so-runtime': 'bonzo: exclusão sem piora numérica medida' }[MUT];
-  const mordeu = falhas.some((f) => f.startsWith('bonzo') && f.includes(assinatura));
-  console.log(mordeu ? `✓ mutante ${MUT} reprovado: ${resumo}` : `MUTAÇÃO PASSOU — ${resumo}`);
+  const mordeu = falhas.some(MUTANTES[MUT]) && (MUT !== 'regra-ruido' || recusaRuido > 0);
+  const detalhe = MUT === 'regra-ruido' ? ` — regra antiga recusa ${recusaRuido} estados válidos; ex.: ${exemploRuido}` : ` — ${falhas.find(MUTANTES[MUT]) || ''}`;
+  console.log(mordeu ? `✓ mutante ${MUT} reprovado${detalhe}` : `MUTAÇÃO PASSOU — ${resumo}`);
   process.exit(mordeu ? 0 : 1);
 }
 if (falhas.length) {
   console.error(`ESTADOS-ASSADOS VERMELHO · ${falhas.length} falha(s)\n${falhas.slice(0, 20).join('\n')}`);
   process.exit(1);
 }
-console.log(`ESTADOS-ASSADOS ✓ ${resumo}${bodies.length ? '; 11/11 clipes decodificados por corpo' : ''}`);
+console.log(`ESTADOS-ASSADOS ✓ ${resumo}; packs mesclados decodificados no GLTFLoader`);

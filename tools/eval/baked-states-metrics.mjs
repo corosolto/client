@@ -1,19 +1,68 @@
-/* Métricas QA comparáveis entre o clipe atual e o pack assado, com o sentido em que
-   "pior" aponta. Única fonte para o importador e para a régua: a régua só confia numa
-   exclusão cujo delta anda no sentido ruim da própria métrica. */
-export const QA_METRICS = Object.freeze([
-  ['footSlideCm', ['footSlide', 'maxCm'], 1],
-  ['lowestVertexCm', ['lowestVertex', 'minCm'], -1],
-  ['heelCm', ['lowestVertex', 'byRegionCm', 'heel'], -1],
-  ['toeCm', ['lowestVertex', 'byRegionCm', 'toe'], -1],
-  ['hipsMaxRatio', ['hips', 'maxRatio'], 1],
-  ['loopPositionCm', ['loopSeam', 'positionCm'], 1],
-  ['loopRotationDeg', ['loopSeam', 'rotationDeg'], 1],
-  ['handsMaxDeviationCm', ['hands', 'maxDeviationCm'], 1],
-  ['stretchMaxEdge', ['stretch', 'maxEdge', 'value'], 1],
-  ['stretchBackMaxEdge', ['stretch', 'backMaxEdge', 'value'], 1],
-  ['stretchHandL', ['stretch', 'handMaxEdgeL', 'value'], 1],
-  ['stretchHandR', ['stretch', 'handMaxEdgeR', 'value'], 1],
-  ['seamGapMax', ['stretch', 'seamGapMax', 'value'], 1],
+/* Regra de troca por estado (aprovada pelo dono em 09/11) — fonte única do importador e da régua.
+   O clipe assado SUBSTITUI o atual num estado quando:
+     1. não cria reprovação nova no QA do Studio (todo check que passa no atual passa no novo);
+     2. num check que reprova nos DOIS, o valor novo não piora mais de 10% sobre o atual;
+     3. stretch marcado `[rig]` (peso da malha, não o clipe) não conta contra o clipe.
+   Os checks e os textos de falha são os de `evaluateClip` (studio tools/lib/clip-qa.mjs). O
+   valor de cada check vem das métricas do mesmo resultado, no sentido "maior = pior". */
+export const CHECKS = Object.freeze([
+  ['ds', 'foot slide (cm)', /^foot slide /, (m) => m.footSlide.maxCm, false],
+  ['pn', 'floor penetration (−cm)', /^floor penetration /, (m) => -m.lowestVertex.minCm, false],
+  ['cl', 'heel sinks (−cm)', /^heel sinks /, (m) => -m.lowestVertex.byRegionCm.heel, false],
+  ['fl', 'floats (cm)', /^floats /, (m) => m.lowestVertex.floatOverSourceCm ?? m.lowestVertex.maxCm, false],
+  ['qd', 'hips rise (× bind)', /^hips rise /, (m) => m.hips.maxRatio, false],
+  ['ec', 'loop seam (cm)', /^loop seam [\d.]+ cm/, (m) => m.loopSeam.positionCm, false],
+  ['eg', 'loop seam (°)', /^loop seam [\d.]+°/, (m) => m.loopSeam.rotationDeg, false],
+  ['pg', 'two-hand grip (cm)', /^two-hand grip /, (m) => m.hands.maxDeviationCm, false],
+  ['st', 'skin stretch (×)', /^skin stretch /, (m) => m.stretch.maxEdge.value, true],
+  ['sc', 'back stretch (×)', /^back stretch /, (m) => m.stretch.backMaxEdge.value, true],
+  ['se', 'hand L stretch (×)', /^hand L stretch /, (m) => m.stretch.handMaxEdgeL.value, true],
+  ['sd', 'hand R stretch (×)', /^hand R stretch /, (m) => m.stretch.handMaxEdgeR.value, true],
+  ['cs', 'seam opens (m)', /^seam opens /, (m) => m.stretch.seamGapMax.value, true],
 ]);
-export const QA_DIRECTION = Object.freeze(Object.fromEntries(QA_METRICS.map(([name, , direction]) => [name, direction])));
+const ESTICA = new Set(CHECKS.filter((c) => c[4]).map(([codigo]) => codigo));
+export const LEGENDA = Object.freeze(Object.fromEntries(CHECKS.map(([codigo, rotulo]) => [codigo, rotulo])));
+export const TOLERANCIA_PIORA = 0.10;
+// Chave dos checks reprovados que NÃO contam (stretch `[rig]`, regra 3): códigos separados por espaço.
+export const RIG = '~';
+
+/* Resultado do QA → { check: valor } das reprovações que contam, mais `~: "st cs"` com os
+   stretch `[rig]` (sem valor: não entram na regra). */
+export function falhasDe(result) {
+  const out = {}, rig = new Set();
+  for (const texto of result.failures) {
+    const check = CHECKS.find(([, , re]) => re.test(texto));
+    if (!check) throw new Error(`${result.name}: falha do QA sem check conhecido: ${texto}`);
+    const [codigo, , , valor, estica] = check;
+    if (estica && /\[rig[:\]]/.test(texto)) rig.add(codigo);
+    else out[codigo] = valor(result.metrics);
+  }
+  if (rig.size) out[RIG] = [...rig].join(' ');
+  return out;
+}
+
+/* Motivos para MANTER o clipe atual; lista vazia = substituir. `atual` e `novo` são
+   saídas de falhasDe. */
+export function motivosParaManter(atual, novo) {
+  const motivos = [];
+  for (const [check, valorNovo] of Object.entries(novo)) {
+    if (check === RIG) {
+      for (const c of String(valorNovo).split(' ')) if (!ESTICA.has(c)) motivos.push(`[rig] fora de stretch: ${c}`);
+      continue;
+    }
+    if (!(check in LEGENDA)) { motivos.push(`check desconhecido: ${check}`); continue; }
+    if (!(check in atual)) { motivos.push(`reprovação nova: ${check} ${valorNovo}`); continue; }
+    const valorAtual = atual[check];
+    if (valorNovo > valorAtual * (1 + TOLERANCIA_PIORA) + 1e-9) motivos.push(`${check} piora ${valorAtual} → ${valorNovo} (> +10%)`);
+  }
+  return motivos;
+}
+
+/* A regra ANTIGA (rejeitada): qualquer número pior, mesmo dentro do threshold. Só existe
+   para o mutante `regra-ruido` provar que ela recusa clipe válido. Piso maior = melhor. */
+export function motivosRegraRuido(pisoAtual, pisoNovo, atual, novo) {
+  const motivos = [];
+  if (pisoNovo < pisoAtual) motivos.push(`piso ${pisoAtual} → ${pisoNovo} cm`);
+  for (const [check, v] of Object.entries(novo)) if (check !== RIG && check in atual && v > atual[check]) motivos.push(`${check} ${atual[check]} → ${v}`);
+  return motivos;
+}
