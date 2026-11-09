@@ -21,6 +21,14 @@ const MIGRADAS = new Set([
 // clans (backend#72) ainda depende do rollout: 404 upstream vira 503.
 const EM_ROLLOUT = ['social-auth','treta','clans'];
 
+// Cada linha de log é evento pago na Vercel: falha do X sai UMA vez por instância e causa.
+const falhasX = new Set<string>();
+const avisaFalhaX = (status: number | null, reason: string | undefined) => {
+  const causa = `${status ?? '-'} ${reason ?? '-'}`;
+  if (falhasX.has(causa)) return;
+  falhasX.add(causa);
+  console.warn('[x-conversion] delivery failed', { status, reason });
+};
 
 const handler: APIRoute = async (context) => {
   const { params, url, request } = context;
@@ -54,8 +62,7 @@ const handler: APIRoute = async (context) => {
         userAgent: request.headers.get('user-agent') ?? undefined,
       },
     }).then((result) => {
-      if (!result.ok && result.reason !== 'not_configured')
-        console.warn('[x-conversion] delivery failed', { status: result.status, reason: result.reason });
+      if (!result.ok && result.reason !== 'not_configured') avisaFalhaX(result.status, result.reason);
     }).catch(() => {});
   }
   if (resposta.status === 404 && (EM_ROLLOUT.includes(rota) || rota === 'gameplay-upload')) {

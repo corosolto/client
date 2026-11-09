@@ -35,6 +35,20 @@ Não entra em automerge:
 
 ## Staging
 
+## Local e pre-push
+
+`check:prepush` executa o núcleo e as suites afetadas pelo diff (`core`, `maps`, `ui`, `audio`,
+`browser`, `network`, `vm`). Caminho desconhecido, dependência transversal ou falha ao ler o diff
+executa `check:deploy` completo. A seleção só existe localmente: o CI nunca usa diff para pular testes.
+
+`check:fast` e `check:deploy` expandem `tools/eval/suites.mjs` com a sequência anterior preservada.
+O `soundscape` é um job obrigatório separado no `build`, então falha externa de áudio não invalida
+um agregado inteiro. Packs de assets usam cache por tag exata e checksum quando existir; os asserts
+nominais continuam obrigatórios. As invariantes são divididas por família e por mapa, sem separar
+produtor e consumidor de um `freshReport`. Sertão usa shards por IDs de check, nunca por qualidade.
+O runner grava `tools/eval/out/runner-latest.json` por execução e aceita `--jobs=2` apenas no core;
+o pre-push continua sequencial por padrão para não aumentar contenção na máquina local.
+
 Use a branch `staging` para validar combinações de PRs antes de produção.
 O workflow de staging deve apontar para `STAGING_URL`.
 

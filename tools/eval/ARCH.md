@@ -403,7 +403,7 @@ Cobertura: **4148 de 10091 linhas (41%)** do `game.js` têm dono declarado. O re
 | 8026 | `_pickSpawn()` | 25 |
 | 8051 | `_respawnPlayer()` | 48 |
 | 8099 | `_losClear()` | 18 |
-| 8142 | `_raioBloqueado()` | 14 |
+| 8132 | `_raioBloqueado()` | 14 |
 | 8117 | `_botCall()` | 41 |
 | 8158 | `_teamMarkTex()` | 23 |
 | 8181 | `_makeTeamMark()` | 18 |
