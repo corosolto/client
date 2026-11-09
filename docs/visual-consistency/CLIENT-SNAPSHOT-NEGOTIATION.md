@@ -75,7 +75,8 @@ oferta exclusiva v8 foi removido: contradizia o transporte de produção.
 exercita dez casos: v9, fallback v8, ack divergente, partida divergente com
 mensagem tardia, v7 recusada, seleção ausente, timeout, seleção desconhecida,
 recusa de welcome sem notificação e fechamento antes de welcome sem notificação.
-Os seis mutantes exigem nominal verde e failset exato:
+O WebSocket falso só seleciona protocolo oferecido pelo cliente, exceto em N8, que
+simula servidor hostil. Os sete mutantes exigem nominal verde e failset exato:
 
 | Mutante | Casos reprovados |
 | --- | --- |
@@ -83,6 +84,7 @@ Os seis mutantes exigem nominal verde e failset exato:
 | `partida-version` | N4 |
 | `attempt-guard` | N4, N9 |
 | `ws-selection` | N8 |
+| `oferta-so-v9` | N2 |
 | `early-close-notify` | N10, N9 |
 | `callback-before-close` | N4 |
 

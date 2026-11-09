@@ -11,19 +11,22 @@ const mutations={
   'partida-version': [`} else if (m.type === 'partida') {\n          if (${guard})`,`} else if (m.type === 'partida') {\n          if (false)`,['N4']],
   'attempt-guard': ['const ativo = () => !ended && this.tp === tp;','const ativo = () => true;',['N4','N9']],
   'ws-selection': ['if (!SNAPSHOT_PROTOCOLS.includes(this.ws.protocol)) {', 'if (false) {', ['N8']],
+  'oferta-so-v9': ['new WebSocket(this.url, SNAPSHOT_PROTOCOLS)', 'new WebSocket(this.url, [CLIENT_SNAPSHOT_PROTOCOL])', ['N2']],
   'early-close-notify': ['if (accepted) this.onClose?.();', 'this.onClose?.();', ['N10','N9']],
   'callback-before-close': ['tp.fechar(codigo, motivo);\n        if (accepted) this.onClose?.();', 'if (accepted) this.onClose?.();\n        tp.fechar(codigo, motivo);', ['N4']],
 };
 if(selected&&!mutations[selected])throw Error('mutante desconhecido: '+selected);
+const TRANSPORTE=new Set(['ws-selection','oferta-so-v9']);
 const flush=()=>new Promise(r=>setImmediate(r));
 const saved=globalThis.WebSocket;
 const metadata=(type,protocolVersion,id=1)=>({type,protocolVersion,yourEnt:id,yourTeam:'E',espectador:false,events:1});
 async function measure(NetClient){
   const rows=[];
-  async function scenario(id,protocol,version,action){
+  // Servidor honesto só seleciona protocolo oferecido; `hostil` (N8) seleciona mesmo sem oferta.
+  async function scenario(id,protocol,version,action,hostil=false){
     let ws;
     globalThis.WebSocket=class {
-      constructor(url,offered){this.protocol=protocol;this.offered=offered;this.readyState=0;this.closes=0;ws=this;
+      constructor(url,offered){this.protocol=hostil||offered.includes(protocol)?protocol:'';this.offered=offered;this.readyState=0;this.closes=0;ws=this;
         queueMicrotask(()=>{this.readyState=1;this.onopen?.();this.connectedAfterOpen=client.connected;if(version==='close')this.close();else if(this.readyState===1&&version!==null)this.emit(metadata('welcome',version));});}
       emit(m){this.onmessage?.({data:JSON.stringify(m)});}
       send(){}
@@ -35,7 +38,7 @@ async function measure(NetClient){
     try{rows.push({id,ok:await action(client,ws,result,()=>notifications)});}finally{client.close();await flush();}
   }
   await scenario('N1','coro-snapshot-v9',9,(n,w,ok)=>ok&&n.connected&&n.meta.protocolVersion===9&&w.offered[0]==='coro-snapshot-v9');
-  await scenario('N2','coro-snapshot-v8',8,(n,w,ok)=>ok&&n.connected&&n.meta.protocolVersion===8);
+  await scenario('N2','coro-snapshot-v8',8,(n,w,ok)=>ok&&n.connected&&n.meta.protocolVersion===8&&w.offered.includes('coro-snapshot-v8'));
   await scenario('N3','coro-snapshot-v9',8,(n,w,ok)=>!ok&&!n.connected&&w.closes>0);
   await scenario('N4','coro-snapshot-v9',9,async(n,w,ok)=>{
     if(!ok)return false;
@@ -46,7 +49,7 @@ async function measure(NetClient){
   await scenario('N5','coro-snapshot-v7',7,(n,w,ok)=>!ok&&!n.connected&&w.closes>0);
   await scenario('N6','',9,(n,w,ok)=>!ok&&!n.connected&&w.closes>0);
   await scenario('N7','coro-snapshot-v9',null,(n,w,ok)=>!ok&&!n.connected&&w.closes>0);
-  await scenario('N8','coro-snapshot-v99',null,(n,w,ok)=>!ok&&!n.connected&&w.closes>0&&w.connectedAfterOpen===false);
+  await scenario('N8','coro-snapshot-v99',null,(n,w,ok)=>!ok&&!n.connected&&w.closes>0&&w.connectedAfterOpen===false,true);
   await scenario('N9','coro-snapshot-v9',8,(n,w,ok,notifications)=>!ok&&!n.connected&&notifications()===0);
   await scenario('N10','coro-snapshot-v9','close',(n,w,ok,notifications)=>!ok&&!n.connected&&w.closes>0&&notifications()===0);
   return rows.filter(r=>!r.ok).map(r=>r.id).sort();
@@ -57,7 +60,7 @@ async function run(mutant){
     let source=fs.readFileSync(path.join(root,'public/js/net.js'),'utf8');
     let transport=fs.readFileSync(path.join(root,'public/js/transporte.js'),'utf8');
     if(mutant){
-      const [a,b]=mutations[mutant],isTransport=mutant==='ws-selection';
+      const [a,b]=mutations[mutant],isTransport=TRANSPORTE.has(mutant);
       let target=isTransport?transport:source;
       const count=mutant==='early-close-notify'?2:1;
       if(target.split(a).length!==count+1)throw Error('INFRA: âncora ausente/ambígua: '+mutant);
