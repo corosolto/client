@@ -13,8 +13,8 @@ publicação em R2. Cada um desses é um PR próprio.
 
 | Arquivo | Papel |
 | --- | --- |
-| `public/js/data/content-releases.js` | Pins: `kind`, `id`, `version`, `manifestSha256`, `manifestUrl` em `/packs/...`, `minRuntime` (comparado à `VERSION`, não ao `SIM_HASH`), `skeleton: "meshy-28"`; os 11 estados e as juntas meshy-28. |
-| `public/js/studio-character.js` | Resolvedor só de navegador. `resolveStudioCharacter(pin, { fetchImpl })` → Blob URLs verificadas do modelo, dos 11 clipes e das prévias. |
+| `public/js/data/content-releases.js` | Pins: `kind`, `id`, `version`, `manifestSha256`, `manifestUrl` em `/packs/...`, `minRuntime` (comparado à `VERSION`, não ao `SIM_HASH`), `skeleton: "meshy-28"`; os 11 estados, as juntas meshy-28 e o vocabulário de clipes extras (`STUDIO_EXTRA_CLIPS` + prefixos `emote_`). |
+| `public/js/studio-character.js` | Resolvedor só de navegador. `resolveStudioCharacter(pin, { fetchImpl })` → Blob URLs verificadas do modelo, dos 11 clipes, dos clipes extras opcionais e das prévias; extras expostos no Map `extraClipUrls` (nome → `{url, sha256, duration, loop, rootMotion}`). |
 | `public/js/glbchars.js` | Adaptador: ids fixados entram no `GLB_CHARS`; `preloadCharacterAssets()` carrega modelo e os 11 clipes SÓ das Blob URLs (sem `animIndex`, GLB mesclado, pasta `models/anims/<id>/` ou clipe compartilhado), tudo ou nada; origem do corpo `{kind:'studio', sha256, manifestSha256}`, que nunca casa com luva pública. |
 | `scripts/studio-pack-serving.mjs` | Handler Node de `/packs/` montado no dev server do Astro (plugin Vite) e em `tools/eval/serve.mjs`. Lê `STUDIO_PACK_ROOT`; sem ela, 404. |
 
@@ -27,7 +27,11 @@ publicação em R2. Cada um desses é um PR próprio.
    (`studio_unsafe_path`), inventário sem duplicata (`studio_inventory_invalid`), orçamento
    ≤ `budgets.bytes` e ≤ 16 MiB antes de baixar (`studio_budget_exceeded`), os 11 estados
    exatos (`studio_state_missing`/`studio_state_unknown`), dono único por arquivo
-   (`studio_role_duplicate`, `studio_role_unknown_file`, `studio_file_unowned`).
+   (`studio_role_duplicate`, `studio_role_unknown_file`, `studio_file_unowned`). Clipes extras
+   opcionais (`animations.extra`): só nomes do vocabulário são baixados/verificados/expostos
+   (`R15`); chave fora do vocabulário é ignorada (não baixa, não expõe, não derruba o pacote);
+   sem `extra` o `extraClipUrls` é um Map vazio; extras contam no orçamento e no dono único
+   (`studio_manifest_invalid` para `extra` não-objeto ou entrada sem `file`).
 4. Cada arquivo baixado: tamanho real (`studio_file_length_mismatch`) e SHA-256
    (`studio_file_sha_mismatch`) antes de virar Blob URL. Falha em qualquer um revoga TODAS as
    URLs criadas na tentativa, depois que as outras buscas assentam, e tira a tentativa do cache.
@@ -59,7 +63,7 @@ Ver o piloto no renderer real, sem estar no elenco:
 ## Réguas
 
 - `npm run eval:studiochar` (no `check:fast` e no pr-fast do CI): pacote sintético gerado na
-  hora, 14+ mutações de pacote, servidor `/packs/` e 17 mutantes de código que precisam ser
+  hora (com dois clipes extras), servidor `/packs/` e 20 mutantes de código que precisam ser
   reprovados na cláusula certa. Com `STUDIO_PACK_ROOT`, também resolve o piloto real.
 - `STUDIO_PACK_ROOT=… npm run eval:studiochar:browser`: Chrome no `charvideo.html` real —
   Blob URLs com o SHA do pin, 14 pedidos `/packs/` em 200 e nenhum ao acervo legado, 28 juntas

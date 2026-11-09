@@ -1,7 +1,8 @@
-/* Resolvedor só de navegador: pin → Blob URLs de bytes já verificados (modelo, 11 clipes, prévias),
-   fail-closed com StudioCharacterError.code. Ordem e limites: docs/studio-character-release.md. */
+/* Resolvedor só de navegador: pin → Blob URLs de bytes já verificados (modelo, 11 clipes,
+   clipes extras opcionais, prévias), fail-closed com StudioCharacterError.code.
+   Ordem e limites: docs/studio-character-release.md. */
 import { VERSION } from './version.js';
-import { STUDIO_CHARACTER_STATES, STUDIO_CHARACTER_SKELETON } from './data/content-releases.js';
+import { STUDIO_CHARACTER_STATES, STUDIO_CHARACTER_SKELETON, isStudioExtraClipName } from './data/content-releases.js';
 
 export class StudioCharacterError extends Error {
   constructor(code, detail = '', options = undefined) {
@@ -106,8 +107,29 @@ function verifyManifest(manifest, pin) {
     if (!Object.hasOwn(manifest.animations, state)) fail('studio_state_missing', state);
   }
   for (const state of Object.keys(manifest.animations)) {
+    if (state === 'extra') continue;
     if (!STUDIO_CHARACTER_STATES.includes(state)) fail('studio_state_unknown', state);
     own(`animations.${state}`, manifest.animations[state], /\.glb$/);
+  }
+  /* Clipes extras (opcionais): só nomes do vocabulário são baixados, verificados e expostos.
+     Chave desconhecida é ignorada — não baixa, não expõe e não derruba o pacote (o Studio
+     validou o nome com um vocabulário que pode ser mais novo que este runtime); o arquivo
+     dela segue contando no inventário/orçamento, mas fica sem fetch para sempre. */
+  const extraClips = [];
+  const extraMap = manifest.animations.extra;
+  if (extraMap !== undefined) {
+    if (!isObject(extraMap)) fail('studio_manifest_invalid', 'animations.extra não é objeto');
+    for (const [name, entry] of Object.entries(extraMap)) {
+      if (!isStudioExtraClipName(name)) {
+        if (isObject(entry) && isSafePackPath(entry.file) && !owners.has(entry.file)) {
+          owners.set(entry.file, `animations.extra.${name}`);
+        }
+        continue;
+      }
+      if (!isObject(entry) || typeof entry.file !== 'string') fail('studio_manifest_invalid', `animations.extra.${name} sem file`);
+      own(`animations.extra.${name}`, entry.file, /\.glb$/);
+      extraClips.push([name, entry]);
+    }
   }
   if (!Array.isArray(manifest.previews) || !manifest.previews.length) fail('studio_manifest_invalid', 'previews vazio');
   manifest.previews.forEach((path, i) => own(`previews[${i}]`, path, PREVIEW_EXT));
@@ -121,6 +143,7 @@ function verifyManifest(manifest, pin) {
     files,
     model: manifest.model,
     animations: Object.fromEntries(STUDIO_CHARACTER_STATES.map((s) => [s, manifest.animations[s]])),
+    extraClips,
     previews: [...manifest.previews],
   };
 }
@@ -158,7 +181,12 @@ async function resolveUncached(pin, fetchImpl, subtle) {
   catch (e) { fail('studio_manifest_invalid', 'JSON ilegível', e); }
   const plan = verifyManifest(manifest, pin);
 
-  const wanted = [plan.model, ...STUDIO_CHARACTER_STATES.map((s) => plan.animations[s]), ...plan.previews];
+  const wanted = [
+    plan.model,
+    ...STUDIO_CHARACTER_STATES.map((s) => plan.animations[s]),
+    ...plan.extraClips.map(([, entry]) => entry.file),
+    ...plan.previews,
+  ];
   const created = [];
   const settled = await Promise.allSettled(wanted.map(async (path) => {
     const entry = plan.files.get(path);
@@ -186,6 +214,13 @@ async function resolveUncached(pin, fetchImpl, subtle) {
     modelSha256: plan.files.get(plan.model).sha256,
     modelUrl: urls.get(plan.model),
     animationUrls: Object.freeze(Object.fromEntries(STUDIO_CHARACTER_STATES.map((s) => [s, urls.get(plan.animations[s])]))),
+    extraClipUrls: Object.freeze(new Map(plan.extraClips.map(([name, entry]) => [name, Object.freeze({
+      url: urls.get(entry.file),
+      sha256: plan.files.get(entry.file).sha256,
+      duration: entry.duration,
+      loop: entry.loop,
+      rootMotion: entry.rootMotion,
+    })]))),
     previewUrls: Object.freeze(plan.previews.map((path) => urls.get(path))),
   });
 }

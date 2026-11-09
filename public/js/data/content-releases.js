@@ -6,6 +6,20 @@ export const STUDIO_CHARACTER_STATES = Object.freeze([
   'idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'crouchwalk', 'jump', 'idle1h', 'walk1h', 'walkfire',
 ]);
 
+// Clipes extras opcionais do pacote (animations.extra do Studio): nomes fixos do vocabulário
+// ou prefixo emote_ com pelo menos um sufixo. Autoritativo: corosolto/studio tools/lib/character-pack.mjs.
+export const STUDIO_EXTRA_CLIPS = Object.freeze([
+  'strafe_left', 'strafe_right', 'walk_back', 'run_back',
+  'strafe_left_pistol', 'strafe_right_pistol', 'walk_back_pistol',
+  'reload_rifle', 'reload_pistol', 'draw_rifle', 'holster_rifle', 'draw_pistol', 'holster_pistol',
+  'hit_front', 'hit_back', 'hit_left', 'hit_right', 'hit_head',
+  'grenade_throw', 'knife_idle', 'knife_stab', 'victory', 'defeat',
+]);
+export const STUDIO_EXTRA_CLIP_PREFIXES = Object.freeze(['emote_']);
+export const isStudioExtraClipName = (name) =>
+  STUDIO_EXTRA_CLIPS.includes(name)
+  || STUDIO_EXTRA_CLIP_PREFIXES.some((prefixo) => name.length > prefixo.length && name.startsWith(prefixo));
+
 // Único esqueleto aceito (lista autoritativa: corosolto/studio tools/lib/character-pack.mjs).
 export const STUDIO_CHARACTER_SKELETON = 'meshy-28';
 // Os 26 nomes distintos das 28 juntas (Curl_R/Curl_L repetem); o adaptador exige todos no modelo.
