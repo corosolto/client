@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -7,6 +8,42 @@ import { spawnSync } from 'node:child_process';
 import { SUITES, passosDaSuite } from '../tools/eval/suites.mjs';
 import { selecionarPorArquivos } from '../tools/eval/selecao-pre-push.mjs';
 
+/* Baseline congelado das duas linhas que existiam antes do manifesto. O resumo
+ * cobre ordem, repetições e conteúdo; ele NÃO é derivado do manifesto atual. */
+const BASELINE = {
+  fast: { quantidade: 338, sha256: '05c5d2027a8229f379a4556ee991daf1bc0e9f45b04ee3515d4e458259d6bfdf' },
+  deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
+};
+const NOVOS = { fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:rede3p']), deploy: new Set() };
+const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
+
+for (const [nome, baseline] of Object.entries(BASELINE)) {
+  const preservados = () => SUITES[nome].filter((passo) => !NOVOS[nome].has(passo));
+  test(`check:${nome} preserva exatamente a sequência anterior`, () => {
+    assert.equal(preservados().length, baseline.quantidade);
+    assert.equal(assinatura(preservados()), baseline.sha256);
+  });
+
+  test(`baseline de ${nome} detecta mutantes de perda e reordenação`, () => {
+    const semPasso = preservados().filter((_, i) => i !== 17);
+    assert.equal(semPasso.length, baseline.quantidade - 1);
+    assert.notEqual(assinatura(semPasso), baseline.sha256);
+
+    const reordenado = preservados();
+    [reordenado[3], reordenado[19]] = [reordenado[19], reordenado[3]];
+    assert.notEqual(assinatura(reordenado), baseline.sha256);
+  });
+}
+
+test('staging adiciona portalembed e lixo sem apagar os passos migrados', () => {
+  assert.ok(SUITES.fast.includes('eval:portalembed'));
+  assert.ok(SUITES.fast.includes('eval:lixo'));
+});
+
+test('rede3p entra no fast como único passo novo desta entrega', () => {
+  assert.equal(SUITES.fast.filter((passo) => passo === 'eval:rede3p').length, 1);
+  assert.equal(SUITES.fast.length, BASELINE.fast.quantidade + NOVOS.fast.size);
+});
 
 test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {
   const conhecidos = new Set([...SUITES.fast, ...SUITES.deploy]);
