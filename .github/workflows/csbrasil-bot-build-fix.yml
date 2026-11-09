@@ -1,0 +1,424 @@
+name: csbrasil-bot-build-fix
+
+on:
+  workflow_run:
+    workflows: [pr-fast]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: build-fix-pr-${{ github.event.workflow_run.pull_requests[0].number || github.run_id }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -eo pipefail {0}
+
+jobs:
+  claim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.pull_requests[0].number &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.head_branch != 'main' &&
+      github.event.workflow_run.head_branch != 'staging'
+    outputs:
+      pr_number: ${{ steps.event.outputs.pr_number }}
+      head_branch: ${{ steps.event.outputs.head_branch }}
+      expected_sha: ${{ steps.event.outputs.expected_sha }}
+      decision: ${{ steps.attempt.outputs.decision }}
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Require bot and Codex credentials
+        env:
+          CSBRASIL_BOT_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          for variable in CSBRASIL_BOT_TOKEN OPENAI_API_KEY; do
+            if [ -z "${!variable:-}" ]; then
+              echo "::error title=Missing credential::${variable} must be configured and nonempty for autonomous build repair."
+              exit 1
+            fi
+          done
+
+      # claim executes only trusted default-branch code. No PR code can alter
+      # PATH or the guard used by credentialed API steps.
+      - name: Checkout trusted claim guard
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          token: ${{ github.token }}
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout: scripts/ci
+
+      - name: Set up trusted claim Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+
+      - name: Self-test guard and validate triggering event
+        id: event
+        run: |
+          cp scripts/ci/build_fix_guard.py /tmp/csbrasil-build-fix-guard.py
+          python3 /tmp/csbrasil-build-fix-guard.py --selftest
+          python3 /tmp/csbrasil-build-fix-guard.py event \
+            --event-path "$GITHUB_EVENT_PATH" \
+            --repository "$GITHUB_REPOSITORY" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Validate current PR and claim one attempt
+        id: attempt
+        env:
+          GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+          PR_NUMBER: ${{ steps.event.outputs.pr_number }}
+          HEAD_BRANCH: ${{ steps.event.outputs.head_branch }}
+          EXPECTED_SHA: ${{ steps.event.outputs.expected_sha }}
+        run: |
+          gh label create build-fix-attempted \
+            --color 1D76DB \
+            --description "csbrasil-bot has used its one automatic build repair attempt" \
+            --force
+          gh label create build-fix-failed \
+            --color B60205 \
+            --description "csbrasil-bot did not land a verified automatic build repair" \
+            --force
+          gh pr view "$PR_NUMBER" \
+            --json headRefName,headRefOid,headRepository,labels > /tmp/build-fix-pr.json
+          decision="$(python3 /tmp/csbrasil-build-fix-guard.py pull-request \
+            --pr-json /tmp/build-fix-pr.json \
+            --repository "$GITHUB_REPOSITORY" \
+            --head-branch "$HEAD_BRANCH" \
+            --expected-sha "$EXPECTED_SHA")"
+          echo "decision=$decision" >> "$GITHUB_OUTPUT"
+          if [ "$decision" != attempt ]; then
+            echo "Skipping with decision $decision; no attempt label was consumed."
+            exit 0
+          fi
+          gh pr edit "$PR_NUMBER" --add-label build-fix-attempted
+          touch /tmp/build-fix-attempt-active
+
+      - name: Report a claim-time failure once
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+          PR_NUMBER: ${{ steps.event.outputs.pr_number }}
+        run: |
+          if [ ! -f /tmp/build-fix-attempt-active ]; then
+            exit 0
+          fi
+          gh pr edit "$PR_NUMBER" --add-label build-fix-failed
+          {
+            echo '<!-- csbrasil-bot-build-fix -->'
+            echo '**csbrasil-bot automatic build repair**'
+            echo
+            echo 'The attempt was claimed, but claim validation did not complete. No proposal was published and no branch write was made by this run.'
+          } > /tmp/build-fix-comment.md
+          existing="$(gh pr view "$PR_NUMBER" --json comments \
+            --jq '[.comments[].body | select(contains("<!-- csbrasil-bot-build-fix -->"))] | length')"
+          if [ "$existing" = 0 ]; then
+            gh pr comment "$PR_NUMBER" --body-file /tmp/build-fix-comment.md
+          fi
+
+  propose:
+    needs: claim
+    if: needs.claim.outputs.decision == 'attempt'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    outputs:
+      proposal: ${{ steps.ready.outputs.proposal }}
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
+    env:
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      PR_NUMBER: ${{ needs.claim.outputs.pr_number }}
+      HEAD_BRANCH: ${{ needs.claim.outputs.head_branch }}
+      EXPECTED_SHA: ${{ needs.claim.outputs.expected_sha }}
+    steps:
+      # This guard only formats the prompt and describes the untrusted artifact.
+      # publish independently repeats every security decision with a fresh guard.
+      - name: Checkout read-only prompt helper
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          token: ${{ github.token }}
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout: scripts/ci
+
+      - name: Preserve prompt helper outside PR workspace
+        run: cp scripts/ci/build_fix_guard.py /tmp/csbrasil-build-fix-propose-guard.py
+
+      - name: Set up trusted Node before PR code
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Preinstall pinned Codex outside PR workspace
+        id: codex_tools
+        env:
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+          NPM_CONFIG_USERCONFIG: /tmp/csbrasil-empty-user-npmrc
+          NPM_CONFIG_GLOBALCONFIG: /tmp/csbrasil-empty-global-npmrc
+        run: |
+          : > /tmp/csbrasil-empty-user-npmrc
+          : > /tmp/csbrasil-empty-global-npmrc
+          npm install --prefix /tmp/csbrasil-codex --no-audit --no-fund @openai/codex@0.167.0
+          codex=/tmp/csbrasil-codex/node_modules/.bin/codex
+          test -x "$codex"
+          "$codex" --version
+          sha256sum "$codex" > /tmp/csbrasil-codex.sha256
+          echo "codex=$codex" >> "$GITHUB_OUTPUT"
+          echo "node_dir=$(dirname "$(command -v node)")" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout exact PR commit without credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          token: ${{ github.token }}
+          ref: ${{ needs.claim.outputs.expected_sha }}
+          fetch-depth: 1
+          persist-credentials: false
+          clean: true
+
+      - name: Verify proposal base
+        run: |
+          case "$HEAD_BRANCH" in main|staging) exit 1;; esac
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+
+      - name: Collect failed logs with read-only token
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/build-fix-failed.log
+          python3 /tmp/csbrasil-build-fix-propose-guard.py prompt \
+            --logs /tmp/build-fix-failed.log \
+            --output /tmp/build-fix-prompt.txt \
+            --pr-number "$PR_NUMBER" \
+            --expected-sha "$EXPECTED_SHA"
+
+      - name: Install baseline dependencies without PR lifecycle scripts
+        continue-on-error: true
+        run: npm ci --ignore-scripts
+
+      - name: Run Codex build repair
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TRUSTED_CODEX: ${{ steps.codex_tools.outputs.codex }}
+          TRUSTED_NODE_DIR: ${{ steps.codex_tools.outputs.node_dir }}
+        run: |
+          export PATH="${TRUSTED_NODE_DIR}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          sha256sum --check /tmp/csbrasil-codex.sha256
+          "$TRUSTED_CODEX" exec \
+            --sandbox workspace-write \
+            --ignore-user-config \
+            --ephemeral \
+            -c 'shell_environment_policy.exclude=["OPENAI_API_KEY","GH_TOKEN","CSBRASIL_BOT_TOKEN"]' \
+            "$(cat /tmp/build-fix-prompt.txt)"
+
+      - name: Reject unexpected proposal commits
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+
+      - name: Reinstall repaired dependencies
+        run: npm ci
+
+      - name: Independently run fast checks
+        run: npm run check:fast
+
+      - name: Create binary patch and exact metadata without committing
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git add -A
+          git diff --cached --binary --full-index --no-color --no-ext-diff --no-textconv \
+            "$EXPECTED_SHA" > /tmp/build-fix-proposal.patch
+          test -s /tmp/build-fix-proposal.patch
+          python3 /tmp/csbrasil-build-fix-propose-guard.py metadata \
+            --repository "$GITHUB_REPOSITORY" \
+            --pr-number "$PR_NUMBER" \
+            --head-branch "$HEAD_BRANCH" \
+            --expected-sha "$EXPECTED_SHA" \
+            --base-tree "$(git rev-parse "${EXPECTED_SHA}^{tree}")" \
+            --patch /tmp/build-fix-proposal.patch \
+            --output /tmp/build-fix-proposal.json
+
+      - name: Upload verified proposal artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: build-fix-proposal-${{ github.run_id }}-${{ needs.claim.outputs.pr_number }}
+          path: |
+            /tmp/build-fix-proposal.patch
+            /tmp/build-fix-proposal.json
+          if-no-files-found: error
+
+      - name: Mark proposal artifact ready
+        id: ready
+        run: echo "proposal=ready" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: [claim, propose]
+    # This job also reports a missing/failed proposal. Every checkout, patch,
+    # commit and push step below remains gated on a successfully uploaded artifact.
+    if: ${{ always() && needs.claim.outputs.decision == 'attempt' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    env:
+      PR_NUMBER: ${{ needs.claim.outputs.pr_number }}
+      HEAD_BRANCH: ${{ needs.claim.outputs.head_branch }}
+      EXPECTED_SHA: ${{ needs.claim.outputs.expected_sha }}
+    steps:
+      - name: Download proposal artifact
+        if: needs.propose.outputs.proposal == 'ready'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: build-fix-proposal-${{ github.run_id }}-${{ needs.claim.outputs.pr_number }}
+          path: /tmp/build-fix-proposal
+
+      # This is a new trusted default-branch guard in the publish job. Nothing
+      # executed or inherited from propose is authority for protected paths.
+      - name: Checkout fresh trusted publish guard
+        if: needs.propose.outputs.proposal == 'ready'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          token: ${{ github.token }}
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout: scripts/ci
+
+      - name: Set up trusted publish Python
+        if: needs.propose.outputs.proposal == 'ready'
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+
+      - name: Self-test fresh publish guard
+        if: needs.propose.outputs.proposal == 'ready'
+        run: |
+          cp scripts/ci/build_fix_guard.py /tmp/csbrasil-build-fix-publish-guard.py
+          python3 /tmp/csbrasil-build-fix-publish-guard.py --selftest
+          case "$HEAD_BRANCH" in
+            main|staging)
+              echo "Refusing to publish to protected branch $HEAD_BRANCH"
+              exit 1
+              ;;
+          esac
+
+      - name: Fresh checkout at expected PR SHA
+        if: needs.propose.outputs.proposal == 'ready'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          token: ${{ github.token }}
+          ref: ${{ needs.claim.outputs.expected_sha }}
+          fetch-depth: 1
+          persist-credentials: false
+          clean: true
+
+      - name: Validate exact artifact and test patch application
+        if: needs.propose.outputs.proposal == 'ready'
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          base_tree="$(git rev-parse "${EXPECTED_SHA}^{tree}")"
+          python3 /tmp/csbrasil-build-fix-publish-guard.py artifact \
+            --metadata /tmp/build-fix-proposal/build-fix-proposal.json \
+            --patch /tmp/build-fix-proposal/build-fix-proposal.patch \
+            --repository "$GITHUB_REPOSITORY" \
+            --pr-number "$PR_NUMBER" \
+            --head-branch "$HEAD_BRANCH" \
+            --expected-sha "$EXPECTED_SHA" \
+            --base-tree "$base_tree"
+          git apply --check --index --whitespace=nowarn /tmp/build-fix-proposal/build-fix-proposal.patch
+
+      - name: Apply and independently validate exact patch
+        if: needs.propose.outputs.proposal == 'ready'
+        run: |
+          git apply --index --whitespace=nowarn /tmp/build-fix-proposal/build-fix-proposal.patch
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git status --porcelain=v1 -z --untracked-files=all > /tmp/build-fix-publish-status.bin
+          python3 /tmp/csbrasil-build-fix-publish-guard.py working-tree \
+            --expected-sha "$EXPECTED_SHA" \
+            --actual-sha "$(git rev-parse HEAD)" \
+            --status /tmp/build-fix-publish-status.bin
+          git diff --cached --binary --full-index --no-color --no-ext-diff --no-textconv \
+            "$EXPECTED_SHA" > /tmp/build-fix-applied.patch
+          cmp -s /tmp/build-fix-proposal/build-fix-proposal.patch /tmp/build-fix-applied.patch
+
+      # The fresh publish checkout has no PR-installed hooks. DCO and Agent are explicit.
+      - name: Commit exact validated patch with DCO and Agent trailer
+        if: needs.propose.outputs.proposal == 'ready'
+        run: |
+          git \
+            -c user.name=csbrasil-bot \
+            -c user.email=csbrasil-bot@users.noreply.github.com \
+            commit -s \
+            -m "fix: repair pr-fast build" \
+            -m "Agent: csbrasil-bot (Codex build repair)"
+
+      - name: Verify published commit ancestry, content, and trailers
+        if: needs.propose.outputs.proposal == 'ready'
+        run: |
+          git log -1 --format=%B > /tmp/build-fix-publish-message.txt
+          git diff --name-only -z "$EXPECTED_SHA" HEAD > /tmp/build-fix-publish-paths.bin
+          git status --porcelain=v1 -z --untracked-files=all > /tmp/build-fix-publish-status.bin
+          python3 /tmp/csbrasil-build-fix-publish-guard.py committed \
+            --expected-sha "$EXPECTED_SHA" \
+            --actual-sha "$(git rev-parse HEAD)" \
+            --parent-sha "$(git rev-parse HEAD^)" \
+            --message /tmp/build-fix-publish-message.txt \
+            --paths /tmp/build-fix-publish-paths.bin \
+            --status /tmp/build-fix-publish-status.bin
+          git diff --binary --full-index --no-color --no-ext-diff --no-textconv \
+            "$EXPECTED_SHA" HEAD > /tmp/build-fix-committed.patch
+          cmp -s /tmp/build-fix-proposal/build-fix-proposal.patch /tmp/build-fix-committed.patch
+
+      - name: Verify unchanged remote and push normally
+        if: needs.propose.outputs.proposal == 'ready'
+        env:
+          GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+        run: |
+          case "$HEAD_BRANCH" in main|staging) exit 1;; esac
+          remote_sha="$(gh pr view "$PR_NUMBER" --json headRefOid --jq .headRefOid)"
+          if [ "$remote_sha" != "$EXPECTED_SHA" ]; then
+            echo "The PR head moved before publication. Refusing to overwrite newer work."
+            exit 1
+          fi
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "HEAD:refs/heads/${HEAD_BRANCH}"
+          commit_sha="$(git rev-parse HEAD)"
+          touch /tmp/build-fix-publish-success
+          echo "Codex proposed a scoped repair. The independent npm run check:fast passed in the isolated proposal job, and verified commit ${commit_sha} was pushed normally to the PR branch. This workflow did not merge the PR." > /tmp/build-fix-publish-result.txt
+
+      - name: Report one English publication result
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+        run: |
+          if [ ! -f /tmp/build-fix-publish-success ]; then
+            gh pr edit "$PR_NUMBER" --add-label build-fix-failed
+            if [ ! -f /tmp/build-fix-publish-result.txt ]; then
+              echo "No verified proposal was published. The proposal checks or a trusted publish guard failed, and this run reported no branch write." > /tmp/build-fix-publish-result.txt
+            fi
+          fi
+          {
+            echo '<!-- csbrasil-bot-build-fix -->'
+            echo '**csbrasil-bot automatic build repair**'
+            echo
+            cat /tmp/build-fix-publish-result.txt
+          } > /tmp/build-fix-publish-comment.md
+          existing="$(gh pr view "$PR_NUMBER" --json comments \
+            --jq '[.comments[].body | select(contains("<!-- csbrasil-bot-build-fix -->"))] | length')"
+          if [ "$existing" = 0 ]; then
+            gh pr comment "$PR_NUMBER" --body-file /tmp/build-fix-publish-comment.md
+          fi
