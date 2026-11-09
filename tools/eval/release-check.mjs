@@ -65,6 +65,7 @@ import { readFileSync, readdirSync, mkdtempSync, writeFileSync, existsSync, rmSy
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { SUITES } from './suites.mjs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.split('=')[1];
 const arquivos = ['.github/workflows/release.yml', '.github/workflows/ci.yml'];
@@ -124,8 +125,7 @@ const validaCaminhoProd = () => {
     && /^\s+ref:\s*refs\/tags\/\$\{\{\s*github\.event\.inputs\.tag\s*\}\}\s*$/m.test(workflowDeploy);
 };
 let caminhoProdUnico = validaCaminhoProd();
-let animacoesNoDeploy = /(?:^|\s)anims:check(?:\s|$)/.test(packageJson.scripts['check:deploy'] || '')
-  && /(?:^|\s)anims:merge:check(?:\s|$)/.test(packageJson.scripts['check:deploy'] || '');
+let animacoesNoDeploy = ['anims:check', 'anims:merge:check'].every((passo) => SUITES.deploy.includes(passo));
 /* RLS8 — com o gatilho em todo push da main, concurrency no TOPO deixaria o merge de um PR
    comum cancelar o lote que espera o pr-fast. O grupo vive nos dois jobs que embarcam. */
 const CONCORRENCIA_JOB = (porta) => `    concurrency:\n      group: \${{ needs.${porta}.outputs.sai == 'true' && 'release-main' || format('release-fora-{0}', github.run_id) }}\n      cancel-in-progress: \${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}\n`;
