@@ -1,24 +1,26 @@
 #!/usr/bin/env node
 /* Emotes de captura (capoeira, breakdance, gestos): pack único lazy, clipe de corpo
-   inteiro com quadril reescalado por corpo, arma guardada, cancelamento, laço × uma
-   vez, LOD, ressincronização de rede, fallback procedural e ids binários só
-   acrescentados. Roda GLB/AnimationMixer reais em Node.
+   inteiro retargetado por corpo, arma guardada, cancelamento, laço × uma vez, LOD,
+   ressincronização de rede, fallback procedural e ids binários só acrescentados. Roda
+   GLB/AnimationMixer reais em Node (tools/eval/lib/glbchars-node.mjs). O roster inteiro
+   (99 corpos e skins) é o eval:emotes-roster.
    Cada mutante reintroduz um defeito visível e precisa reprovar a cláusula correspondente:
-     emote-mocap-mudo       o clipe nunca toca (só a reserva procedural)  -> EMM3/EMM4/EMM7/EMM9
-     arma-visivel-no-emote  a arma fica na mão durante o emote de clipe  -> EMM5
-     emote-nao-cancela      parar/dano não tiram o corpo do clipe        -> EMM6
-     id-renumerado          um emote de captura muda de posição          -> EMM0
-     quadril-sem-escala     Hips da referência sem reescala por corpo    -> EMM4
+     emote-mocap-mudo        o clipe nunca toca (só a reserva procedural)  -> EMM3/EMM4/EMM7/EMM9
+     arma-visivel-no-emote   a arma fica na mão durante o emote de clipe  -> EMM5
+     emote-nao-cancela       parar/dano não tiram o corpo do clipe        -> EMM6
+     id-renumerado           um emote de captura muda de posição          -> EMM0
+     quadril-fora-da-capsula horizontal do Hips sem encolher              -> EMM12
+     rotacao-local           rotação local da referência, sem retarget    -> EMM13
    Uso: node tools/eval/emotes-mocap-check.mjs [--self-test | --mutante=<nome>] */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { root, requests, THREE, CHARACTERS, parseGlb, carregaRuntime, once, step, esperaClipe } from './lib/glbchars-node.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mutant = process.argv.find((x) => x.startsWith('--mutante='))?.split('=')[1] || '';
-const mutants = ['emote-mocap-mudo', 'arma-visivel-no-emote', 'emote-nao-cancela', 'id-renumerado', 'quadril-sem-escala'];
+const mutants = ['emote-mocap-mudo', 'arma-visivel-no-emote', 'emote-nao-cancela', 'id-renumerado', 'quadril-fora-da-capsula', 'rotacao-local'];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
   for (const kind of ['', ...mutants]) {
@@ -38,66 +40,25 @@ const NOMES = ['Ginga', 'Meia-lua de frente', 'Bênção', 'Uprock', 'Freeze', '
 const BASE_GRATIS = ['capoeira', 'comemoracao'];
 const PACK = 'models/anims/emotes-mocap.glb';
 
-const requests = [];
-const assetPath = (url) => path.resolve(root, 'public', String(url).split('?')[0].replace(/^\//, ''));
-const localFetch = async (url) => {
-  requests.push(String(url));
-  const file = assetPath(url);
-  return fs.existsSync(file) ? new Response(fs.readFileSync(file)) : new Response('', { status: 404 });
-};
-Object.defineProperty(globalThis, 'fetch', { configurable: true, get: () => localFetch, set() {} });
-const { THREE, CHARACTERS } = await import('./harness.mjs');
-const { GLTFLoader } = await import('../../public/vendor/addons/loaders/GLTFLoader.js');
-Object.defineProperty(globalThis, 'fetch', { configurable: true, writable: true, value: localFetch });
-GLTFLoader.prototype.load = function (url, done, progress, fail) {
-  requests.push(String(url));
-  const loader = new GLTFLoader();
-  loader.register(() => ({ name: 'EXT_texture_webp', async loadTexture() {
-    const texture = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
-    texture.needsUpdate = true; return texture;
-  } }));
-  Promise.resolve().then(async () => {
-    const file = assetPath(url);
-    if (!fs.existsSync(file)) throw new Error(`404 ${url}`);
-    const bytes = fs.readFileSync(file);
-    done(await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), ''));
-  }).catch((error) => { if (fail) fail(error); else throw error; });
-};
-
-const absolutiza = (source, base) => source.replace(/from (['"])([^'"\n]+)\1/g, (all, quote, spec) => {
-  const file = spec === 'three' ? path.join(root, 'public/vendor/three.module.js')
-    : spec.startsWith('three/addons/') ? path.join(root, 'public/vendor/addons', spec.slice(13))
-      : spec.startsWith('.') ? path.resolve(base, spec) : null;
-  return file ? `from ${quote}${pathToFileURL(file).href}${quote}` : all;
+/* Catálogo + coreografia + glbchars reais (o id-renumerado troca uprock e freeze de lugar). */
+const { E, G } = await carregaRuntime({
+  catalogo: (catalogo) => {
+    if (mutant !== 'id-renumerado') return catalogo;
+    const linhas = catalogo.split('\n');
+    const a = linhas.findIndex((l) => l.includes("id: 'uprock'")), b = linhas.findIndex((l) => l.includes("id: 'freeze'"));
+    assert.ok(a > 0 && b > 0);
+    [linhas[a], linhas[b]] = [linhas[b], linhas[a]];
+    return linhas.join('\n');
+  },
+  glbchars: (s) => {
+    if (mutant === 'emote-mocap-mudo') return once(s, 'this._to(nome, !info.laco);', 'void nome;');
+    if (mutant === 'arma-visivel-no-emote') return once(s, 'n.visible = !this.emotando;', 'n.visible = !this.emotando || !!this._emoteClipeInfo;');
+    if (mutant === 'emote-nao-cancela') return once(s, '} else if (this._emoteClipeInfo && this._emoteId && !this.crouch && !this._ar) {', '} else if (this._emoteClipeInfo && !this.crouch && !this._ar) {');
+    if (mutant === 'quadril-fora-da-capsula') return once(s, 'const fXZ = maxXZ > limite ? limite / maxXZ : 1;', 'const fXZ = 1;');
+    if (mutant === 'rotacao-local') return once(s, 'loc.copy(paiW).invert().multiply(tgtW[i]).toArray(locais[i], f * 4);', '(refQL[ref.indice.get(o.nome)] || ref.ossos.get(o.nome).q).toArray(locais[i], f * 4);');
+    return s;
+  },
 });
-const comoModulo = (source) => import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
-const once = (texto, before, after) => {
-  assert.equal(texto.split(before).length, 2, `mutante deve aplicar uma vez: ${before}`);
-  return texto.replace(before, after);
-};
-
-/* Catálogo + coreografia reais (o id-renumerado troca uprock e freeze de lugar). */
-let catalogo = fs.readFileSync(path.join(root, 'public/js/data/emote-catalog.js'), 'utf8');
-if (mutant === 'id-renumerado') {
-  const linhas = catalogo.split('\n');
-  const a = linhas.findIndex((l) => l.includes("id: 'uprock'")), b = linhas.findIndex((l) => l.includes("id: 'freeze'"));
-  assert.ok(a > 0 && b > 0);
-  [linhas[a], linhas[b]] = [linhas[b], linhas[a]];
-  catalogo = linhas.join('\n');
-}
-const catUrl = 'data:text/javascript;base64,' + Buffer.from(catalogo).toString('base64');
-const emotesSrc = fs.readFileSync(path.join(root, 'public/js/emotes.js'), 'utf8').replaceAll("'./data/emote-catalog.js'", `'${catUrl}'`);
-const E = await comoModulo(emotesSrc);
-
-let source = fs.readFileSync(path.join(root, 'public/js/glbchars.js'), 'utf8');
-if (mutant === 'emote-mocap-mudo') source = once(source, 'this._to(nome, !info.laco);', 'void nome;');
-if (mutant === 'arma-visivel-no-emote') source = once(source, 'n.visible = !this.emotando;', 'n.visible = !this.emotando || !!this._emoteClipeInfo;');
-if (mutant === 'emote-nao-cancela') source = once(source, '} else if (this._emoteClipeInfo && this._emoteId && !this.crouch && !this._ar) {', '} else if (this._emoteClipeInfo && !this.crouch && !this._ar) {');
-if (mutant === 'quadril-sem-escala') source = once(source, 'if (!c || !hipsRest || !_emoteHipsRef) return c || null;', 'return c || null;');
-source = absolutiza(source, path.join(root, 'public/js'));
-const G = await comoModulo(source);
-const driver = { pose: E.poseEmote, duracao: E.emoteDuracao, laco: E.emoteLaco, clipe: E.emoteClipe };
-G.setEmoteDriver(driver);
 await G.preloadCharacterAssets(['capitao', 'gotinha']);
 const def = (id) => CHARACTERS.find((x) => x.id === id);
 const body = (id = 'capitao', weapon = 'ak', mod = G) => {
@@ -106,14 +67,7 @@ const body = (id = 'capitao', weapon = 'ak', mod = G) => {
   b.ctrl.aimPitch = 0;
   return b;
 };
-const step = (b, frames, moving = 0) => {
-  for (let i = 0; i < frames; i++) b.ctrl.update(1 / 60, moving, moving > 0, moving ? 2 : 0, false, 0);
-  b.group.updateMatrixWorld(true);
-};
 const pedidosPack = () => requests.filter((u) => u.includes('emotes-mocap.glb')).length;
-const esperaClipe = async (b) => {
-  for (let i = 0; i < 200 && !b.ctrl._emoteClipeAtivo; i++) { await new Promise((r) => setTimeout(r, 10)); step(b, 1); }
-};
 const quat = (b, osso) => b.ctrl.corpo.get(osso).getWorldQuaternion(new THREE.Quaternion());
 const posMundo = (b, osso) => b.ctrl.corpo.get(osso).getWorldPosition(new THREE.Vector3());
 const acao = (b, id) => b.ctrl.actions[`emote_${id}`];
@@ -158,8 +112,7 @@ check('EMM0b-catalogo', () => {
 /* EMM1 — o pack versionado tem exatamente os 8 clipes, com a duração do catálogo. */
 const packBytes = fs.statSync(path.join(root, 'public', PACK)).size;
 medidas.packBytes = packBytes;
-const glb = fs.readFileSync(path.join(root, 'public', PACK));
-const parsed = await new GLTFLoader().parseAsync(glb.buffer.slice(glb.byteOffset, glb.byteOffset + glb.byteLength), '');
+const parsed = await parseGlb(fs.readFileSync(path.join(root, 'public', PACK)));
 check('EMM1-pack', () => {
   assert.deepEqual(parsed.animations.map((a) => a.name).sort(), [...IDS_CAPTURA].sort());
   for (const a of parsed.animations) assert.ok(Math.abs(a.duration - E.emoteInfo(a.name).dur) < 0.02, `${a.name}: ${a.duration} × ${E.emoteInfo(a.name).dur}`);
@@ -201,19 +154,50 @@ check('EMM3-corpo-inteiro', () => {
   assert.ok(quadril > 0.05, `quadril andou ${quadril.toFixed(3)} m`);
 });
 
-/* EMM4 — quadril reescalado por corpo: em pé (continência) os pés ficam no chão do idle. */
+/* EMM4 — chão por corpo: em pé (continência) os pés ficam no chão do idle. */
 const peIdle = {};
 for (const id of ['capitao', 'gotinha']) { const c = body(id); step(c, 40); peIdle[id] = posMundo(c, 'LeftFoot').y; }
 const capSaude = body('capitao');
 capSaude.ctrl.emote('continencia'); await esperaClipe(capSaude);
 step(capSaude, 60); step(gotinha, 60);
-check('EMM4-quadril-por-corpo', () => {
+check('EMM4-chao-por-corpo', () => {
   for (const [id, b] of [['capitao', capSaude], ['gotinha', gotinha]]) {
     assert.equal(b.ctrl.curName, 'emote_continencia', `${id}: ${b.ctrl.curName}`);
     const d = posMundo(b, 'LeftFoot').y - peIdle[id];
     medidas[`pe_${id}_cm`] = +(d * 100).toFixed(1);
     assert.ok(Math.abs(d) < 0.05, `${id}: pé ${(d * 100).toFixed(1)} cm fora do chão do idle`);
   }
+});
+
+/* EMM12 — cápsula: na meia-lua (a referência viaja 0,97 m) o Hips não sai do raio do jogador,
+   e o raio do runtime é o literal da colisão do jogador em game.js. */
+const capsula = {};
+for (const id of ['capitao', 'gotinha']) {
+  const b = body(id); step(b, 30); b.ctrl.emote('meia_lua'); await esperaClipe(b);
+  let max = 0;
+  for (let i = 0; i < Math.ceil(E.emoteInfo('meia_lua').dur * 60); i++) {
+    step(b, 1);
+    const h = posMundo(b, 'Hips'); max = Math.max(max, Math.hypot(h.x - b.group.position.x, h.z - b.group.position.z));
+  }
+  capsula[id] = max;
+}
+check('EMM12-capsula', () => {
+  const raioJogo = Number(/this\._collide\(p\.pos, ([\d.]+)\)/.exec(fs.readFileSync(path.join(root, 'public/js/game.js'), 'utf8'))?.[1]);
+  assert.equal(G.EMOTE_CAPSULA_R, raioJogo, `raio do emote ${G.EMOTE_CAPSULA_R} × colisão do jogador ${raioJogo}`);
+  for (const [id, m] of Object.entries(capsula)) {
+    medidas[`capsula_${id}_m`] = +m.toFixed(3);
+    assert.ok(m <= G.EMOTE_CAPSULA_R + 0.002, `${id}: Hips a ${m.toFixed(3)} m do eixo`);
+  }
+});
+
+/* EMM13 — retarget por corpo: na continência a coluna (Hips→pescoço) fica onde estava no
+   idle. Copiar a rotação local da referência (Hips dela a 30° em X) tombava o tronco. */
+const tronco = (b) => posMundo(b, 'neck').sub(posMundo(b, 'Hips')).normalize();
+const idleCap = body('capitao'); step(idleCap, 40);
+check('EMM13-coluna-em-pe', () => {
+  const ang = tronco(capSaude).angleTo(tronco(idleCap)) * 180 / Math.PI;
+  medidas.colunaGraus = +ang.toFixed(1);
+  assert.ok(ang < 12, `coluna ${ang.toFixed(1)}° fora do idle`);
 });
 
 /* EMM5 — a arma some durante o emote de clipe e volta depois. */
@@ -278,9 +262,7 @@ check('EMM9-ressincronia', () => {
 
 /* EMM10 — pack ausente: o emote segue com a coreografia de reserva, sem exceção. */
 if (!mutant) {
-  const ausente = source.replace("assetUrl('models/anims/emotes-mocap.glb')", "assetUrl('models/anims/emotes-ausente.glb')");
-  const M = await comoModulo(ausente);
-  M.setEmoteDriver(driver);
+  const { G: M } = await carregaRuntime({ glbchars: (s) => once(s, "assetUrl('models/anims/emotes-mocap.glb')", "assetUrl('models/anims/emotes-ausente.glb')") });
   await M.preloadCharacterAssets(['capitao']);
   const m = body('capitao', 'ak', M), c = body('capitao', 'ak', M);
   step(m, 20); step(c, 20);
