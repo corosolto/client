@@ -11,6 +11,7 @@
      id-renumerado           um emote de captura muda de posição          -> EMM0
      quadril-fora-da-capsula horizontal do Hips sem encolher              -> EMM12
      rotacao-local           rotação local da referência, sem retarget    -> EMM13
+     lobby-sem-clipe         DANÇAR do lobby registra driver sem `clipe`  -> EMM11
    Uso: node tools/eval/emotes-mocap-check.mjs [--self-test | --mutante=<nome>] */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -20,7 +21,7 @@ import { spawnSync } from 'node:child_process';
 import { root, requests, THREE, CHARACTERS, parseGlb, carregaRuntime, once, step, esperaClipe } from './lib/glbchars-node.mjs';
 
 const mutant = process.argv.find((x) => x.startsWith('--mutante='))?.split('=')[1] || '';
-const mutants = ['emote-mocap-mudo', 'arma-visivel-no-emote', 'emote-nao-cancela', 'id-renumerado', 'quadril-fora-da-capsula', 'rotacao-local'];
+const mutants = ['emote-mocap-mudo', 'arma-visivel-no-emote', 'emote-nao-cancela', 'id-renumerado', 'quadril-fora-da-capsula', 'rotacao-local', 'lobby-sem-clipe'];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
   for (const kind of ['', ...mutants]) {
@@ -276,10 +277,14 @@ if (!mutant) {
   });
 }
 
-/* EMM11 — call sites: driver com clipe e roda com o anel de captura (Shift+1-8). */
+/* EMM11 — call sites: partida e DANÇAR do lobby entregam `clipe` ao driver (sem ele o
+   emote cai na reserva procedural); roda com o anel de captura (Shift+1-8). */
 const gameSource = fs.readFileSync(path.join(root, 'public/js/game.js'), 'utf8');
+const mainReal = fs.readFileSync(path.join(root, 'public/js/main.js'), 'utf8');
+const mainSource = mutant === 'lobby-sem-clipe' ? once(mainReal, ', clipe: m.emoteClipe });', ' });') : mainReal;
 check('EMM11-callsites', () => {
-  assert.ok(gameSource.includes('clipe: mod.emoteClipe'));
+  assert.ok(gameSource.includes('clipe: mod.emoteClipe'), 'game.js: driver da partida sem clipe');
+  assert.ok(mainSource.includes('clipe: m.emoteClipe'), 'main.js: driver do lobby sem clipe');
   assert.ok(gameSource.includes('this._emoteAnel(e.shiftKey)'));
   assert.ok(!/import[^;]*emotes\.js/.test(fs.readFileSync(path.join(root, 'public/js/glbchars.js'), 'utf8')), 'glbchars importou emotes.js');
 });
