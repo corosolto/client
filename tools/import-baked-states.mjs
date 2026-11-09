@@ -95,6 +95,23 @@ if (bodies.length !== 74) throw new Error(`esperava 74 BODIES, fonte tem ${bodie
    fica com o clipe atual. Cada veto carrega a régua e o número medido com o clipe assado. */
 const VETOS = {
   'canarinho/idle1h': 'eval:postura COTOVELO=41.8° (faixa 55°–150°) com pistol/knife',
+  'ministro/idle': 'eval:select p99/ruins1e4 1.261/135.7 → 1.295/153.7 (dívida congelada piora)',
+  'marina-silva/idle': 'eval:select p99/ruins1e4 0.948/89.5 → 0.989/97.2 (dívida congelada piora)',
+  'esbirro/idle': 'eval:select p99/ruins1e4 0.738/43.6 → 0.746/49.7 (dívida congelada piora)',
+  'gotinha/idle': 'eval:select p99/ruins1e4 0.67/38.4 → 0.734/48.4 (dívida congelada piora)',
+  'oakley/idle': 'eval:select p99/ruins1e4 0.544/44.5 → 0.686/48.4 (dívida congelada piora)',
+  'proerd/idle': 'eval:select p99/ruins1e4 0.581/30.3 → 0.742/42.6 (dívida congelada piora)',
+  'reggae/idle': 'eval:select p99/ruins1e4 0.46/26.9 → 0.563/30.6 (dívida congelada piora)',
+  'bombado/idle': 'eval:select p99/ruins1e4 0.548/28.7 → 0.609/25.8 (dívida congelada piora)',
+  'padata/idle': 'eval:select p99/ruins1e4 0.552/40.2 > teto 0.675/23.6',
+  'mst/idle': 'eval:select p99/ruins1e4 0.647/29.4 > teto 0.675/23.6',
+  'et/idle': 'eval:select p99/ruins1e4 0.607/29.2 > teto 0.675/23.6',
+  'titica/idle': 'eval:select p99/ruins1e4 0.644/28.7 > teto 0.675/23.6',
+  'jozo/idle': 'eval:select p99/ruins1e4 0.467/26.2 > teto 0.675/23.6',
+  'funkraiz/idle': 'eval:select p99/ruins1e4 0.424/23.8 > teto 0.675/23.6',
+  'hipster/idle': 'eval:select p99/ruins1e4 0.617/23.7 > teto 0.675/23.6',
+  'mandrake/idle': 'eval:select referência do teto: o idle assado baixa o teto global 0.675/23.6 → 0.545/17.5 e reabre a dívida do elenco',
+  'pagodeiro/idle1h': 'eval:select referência do teto: o idle1h assado baixa o teto global 0.675/23.6 → 0.545/17.5 e reabre a dívida do elenco',
 };
 const corpos = {};
 let trocados = 0;
