@@ -758,7 +758,7 @@
     "eval:character-owned": "node tools/eval/character-owned-resources-proof.mjs",
     "//eval:tplocalshot": "Evento local de tiro TP, fase original, retorno parado e expiração no Game/controlador reais; prova CPU limitada sem aceite de arte.",
     "eval:tpbackpedal": "node tools/eval/tp-local-backpedal-check.mjs",
-    "//eval:tpbackpedal": "Sentido de recuo local no controlador real, preservando autoridade e poses fora do recuo; mutantes no-back, wrong-sign e player.",
+    "//eval:tpbackpedal": "Sentido de recuo local no controlador real, preservando autoridade e poses fora do recuo; com o pack extras exige o clipe autoral dominante (strafe_*/run_back/walk_back*), fallback sem pack em linhas separadas; mutantes no-back, wrong-sign, player, sem-strafe e lado-invertido (tp-local-backpedal-proof.mjs).",
     "eval:operacao-reset": "node tools/eval/operacao-flavio-reset-check.mjs && node tools/eval/operacao-flavio-proof-check.mjs reset && node tools/eval/operacao-flavio-respawn-check.mjs && node tools/eval/operacao-flavio-respawn-check.mjs --mutantes",
     "eval:mode-announcements": "node tools/eval/mode-announcements-check.mjs && node tools/eval/mode-announcements-entry-check.mjs && node tools/eval/lobby-flavio-check.mjs && node tools/eval/operacao-flavio-proof-check.mjs entrada catalogo lobby",
     "eval:operacao-npc": "node tools/eval/operacao-flavio-npc-check.mjs && node tools/eval/operacao-flavio-proof-check.mjs npc && node tools/eval/net-event-id-proof.mjs && node tools/eval/operacao-flavio-team-proof.mjs",

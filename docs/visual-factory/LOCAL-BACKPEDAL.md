@@ -21,8 +21,10 @@ npm run eval:tpbackpedal
 node tools/eval/tp-local-backpedal-check.mjs --mutante=no-back
 node tools/eval/tp-local-backpedal-check.mjs --mutante=wrong-sign
 node tools/eval/tp-local-backpedal-check.mjs --mutante=player
+node tools/eval/tp-local-backpedal-check.mjs --mutante=sem-strafe
+node tools/eval/tp-local-backpedal-check.mjs --mutante=lado-invertido
 ```
 
-O primeiro comando passa36/36 com Game._moveEntity, Game._updatePlayerTP, GLTFLoader e CharController reais. Antes do patch21/36 passam. Mutantes aplicados devem sair1, respectivamente21/36,0/36,0/36. São casos numéricos de direção, não36 melhorias artísticas. O gate compara2160frames de autoridade e1260frames fora do recuo exatamente; não é oracle independente da magnitude de rate nem teste completo de transições. Textura branca e física plana são stubs declarados; clipes, mixer e controlador são reais.
+O primeiro comando passa 72/72 com Game._moveEntity, Game._updatePlayerTP, GLTFLoader e CharController reais: 36 linhas com o pack `extras.glb` carregado antes dos casos, em que o clipe dominante (`curName`) tem de ser o autoral (`strafe_*`, `run_back`/`walk_back*`), e 36 linhas `sem-pack`, com os clipes extras removidos, em que o fallback legado (walk reverso, run de lado) é exigido à parte. Mutantes aplicados devem sair 1, respectivamente 42/72, 0/72, 0/72, 57/72 e 54/72. São casos numéricos de direção, não melhorias artísticas. O gate compara 4320 frames de autoridade e 2520 frames fora do recuo exatamente; não é oracle independente da magnitude de rate nem teste completo de transições. Textura branca e física plana são stubs declarados; clipes, mixer e controlador são reais.
 
 Para conferir jogando, abra o servidor de desenvolvimento, selecione câmera de terceira pessoa nas configurações e compare frente, recuo e lateral com Sertanejo/revólver e Gotinha/pistola. Esse teste humano continua pendente. Não há validação de multiplayer, mapa, colisão de câmera, recarga ou orçamento de performance nesta camada.

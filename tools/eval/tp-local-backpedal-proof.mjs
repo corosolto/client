@@ -38,6 +38,8 @@ for (const [name, clauses] of [
   ['no-back', ['back incorreto', 'clip ativo incorreto', 'sentido real do mixer incorreto']],
   ['wrong-sign', ['back incorreto', 'ação/pose negativa alterada', 'clip ativo incorreto']],
   ['player', ['TP alterou player/physics', 'autoridade/câmera/aim/root divergiram']],
+  ['sem-strafe', ['clip ativo incorreto', 'ação/pose negativa alterada']],
+  ['lado-invertido', ['clip ativo incorreto', 'ação/pose negativa alterada']],
 ]) {
   const result = run([`--mutante=${name}`]);
   if (!proof(result, name, clauses)) {
