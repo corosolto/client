@@ -11,7 +11,9 @@ import { QA_METRICS } from './eval/baked-states-metrics.mjs';
 const arg = (name) => process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
 const NEW_ROOT = path.resolve(arg('legacy-out') || '');
 const OLD_ROOT = path.resolve(arg('legacy') || '');
-if (!arg('legacy-out') || !arg('legacy')) throw new Error('uso: node tools/import-baked-states.mjs --legacy-out=<dir> --legacy=<dir>');
+// --check: regenera a evidência em memória e compara byte a byte com a versionada; não escreve nada.
+const CHECK = process.argv.includes('--check');
+if (!arg('legacy-out') || !arg('legacy')) throw new Error('uso: node tools/import-baked-states.mjs --legacy-out=<dir> --legacy=<dir> [--check]');
 const ANIMS = path.resolve('public/models/anims');
 // Evidência do gate, não asset servido: nada em public/ a consome.
 const EVIDENCIA = path.resolve('tools/eval');
@@ -97,11 +99,19 @@ const legacy = readJSON(path.join(OLD_ROOT, 'summary.json'));
 const bodies = legacy.filter((e) => e.kind === 'body');
 if (bodies.length !== 74) throw new Error(`esperava 74 BODIES, fonte tem ${bodies.length}`);
 const selected = [], excluded = [];
+const sources = {};
 for (const entry of bodies) {
   const id = entry.id;
-  const qa = readJSON(path.join(NEW_ROOT, id, 'qa-packed.json'));
-  const currentQa = readJSON(path.join(OLD_ROOT, id, 'qa-current.json'));
-  const manifest = readJSON(path.join(NEW_ROOT, id, 'manifest.json'));
+  const files = {
+    qaCurrent: path.join(OLD_ROOT, id, 'qa-current.json'),
+    qaPacked: path.join(NEW_ROOT, id, 'qa-packed.json'),
+    manifest: path.join(NEW_ROOT, id, 'manifest.json'),
+  };
+  // Hash das fontes: quem tiver o QA do Studio reproduz a evidência com `--check`.
+  sources[id] = Object.fromEntries(Object.entries(files).map(([k, f]) => [k, sha(fs.readFileSync(f))]));
+  const qa = readJSON(files.qaPacked);
+  const currentQa = readJSON(files.qaCurrent);
+  const manifest = readJSON(files.manifest);
   const results = new Map(qa.results.map((r) => [r.name, r]));
   const currentResults = new Map(currentQa.results.map((r) => [r.name, r]));
   const regressions = [];
@@ -113,8 +123,10 @@ for (const entry of bodies) {
     regressions.push(...qaRegressions(state, current, result));
   }
   const record = { id, regressions };
-  if (RUNTIME_EXCLUSIONS[id]) regressions.push(RUNTIME_EXCLUSIONS[id]);
+  // Regressão de runtime é anotação: a exclusão só vale com piora numérica medida.
+  if (regressions.length && RUNTIME_EXCLUSIONS[id]) regressions.push(RUNTIME_EXCLUSIONS[id]);
   if (regressions.length) { excluded.push(record); continue; }
+  if (RUNTIME_EXCLUSIONS[id]) throw new Error(`${id}: exclusão de runtime sem piora numérica medida; refaça a medição em vez de excluir à mão`);
 
   const packed = fs.readFileSync(path.join(NEW_ROOT, id, 'states.glb'));
   assertPacked(packed, id);
@@ -148,8 +160,10 @@ for (const entry of bodies) {
       failures: r.failures,
     };
   }
-  publish(packed, path.join(ANIMS, `${id}.glb`));
-  for (const [state, bytes] of fallbacks) publish(bytes, path.join(ANIMS, id, `${state}.glb`));
+  if (!CHECK) {
+    publish(packed, path.join(ANIMS, `${id}.glb`));
+    for (const [state, bytes] of fallbacks) publish(bytes, path.join(ANIMS, id, `${state}.glb`));
+  }
   selected.push({ id, sha256: sha(packed), bytes: packed.length, gzipBytes: declared.gzipBytes, refs, states });
 }
 
@@ -163,10 +177,19 @@ const out = {
   },
   thresholds: { lowestVertexCm: -3, hipsMaxRatio: 1.08, hipsOverSourceRatio: 0.08 },
   states: STATES,
+  sources,
   bodies: Object.fromEntries(selected.map((b) => [b.id, b])),
   excluded: Object.fromEntries(excluded.map((b) => [b.id, b.regressions])),
 };
-fs.writeFileSync(path.join(EVIDENCIA, 'baked-states.json'), JSON.stringify(out, null, 2) + '\n');
+const evidencia = JSON.stringify(out, null, 2) + '\n';
+const alvo = path.join(EVIDENCIA, 'baked-states.json');
+if (CHECK) {
+  const atual = fs.existsSync(alvo) ? fs.readFileSync(alvo, 'utf8') : '';
+  if (atual !== evidencia) { console.error(`ESTADOS-ASSADOS --check: ${alvo} diverge da regeneração a partir do QA Studio`); process.exit(1); }
+  console.log(`ESTADOS-ASSADOS --check ✓ evidência reproduzida: ${selected.length} substituídos, ${excluded.length} excluídos`);
+  process.exit(0);
+}
+fs.writeFileSync(alvo, evidencia);
 const doc = `# Estados assados por corpo\n\nGerado por \`tools/import-baked-states.mjs\` a partir dos packs meshy-28 e do QA Studio. `
   + `Os arquivos \`<id>.glb\` preservam meshopt + rotações int16; as pastas \`<id>/\` guardam o fallback por estado.\n\n`
   + `- ${selected.length} BODIES substituídos; ${excluded.length} excluídos por pelo menos uma métrica QA pior.\n`

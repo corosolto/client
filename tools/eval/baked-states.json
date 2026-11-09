@@ -24,6 +24,378 @@
     "walk1h",
     "walkfire"
   ],
+  "sources": {
+    "adjim": {
+      "qaCurrent": "3392dd84fff0a6b1a558da43e14ab5965a43dc4c030f9da0c2fa010aab4e80f0",
+      "qaPacked": "25ed46232ba0ba91a55322aa920e5dedc71b8bde34bd38c723707d832dba5966",
+      "manifest": "2e41793166172795ef279ed665d555ddcb0a590d7c680d61afedb82f3db3b675"
+    },
+    "ancap": {
+      "qaCurrent": "b62c78456f7874f2d8a962b7cf1c5cbd8d0c3a15754657523c5ab73c90f408ee",
+      "qaPacked": "34123c9d31689f26eda21f7fa8c1a318007ce2c69de5563d1ee38aa0c1164d28",
+      "manifest": "23ccdd16077b1792fae0cbc36187f662a2481fef7970e12ad7af62ec6d168aa9"
+    },
+    "bandeirante": {
+      "qaCurrent": "1e9e87ad2107472c912fd0bb39957d59ee325110c1aad7c7f3316e0c113af4dc",
+      "qaPacked": "7f6e1a76c02afd567b254e4a29d65024115db6f1ab94c47e5ba8338a1059d216",
+      "manifest": "a9b2bbb435620643888aef60283cecaa6cf9946787d87e798951b26e74baaa6a"
+    },
+    "barbudo": {
+      "qaCurrent": "7be115b3de87827438cdfc3ec7e78ad4aed08aeeba306ec14d7ab85271765dc1",
+      "qaPacked": "0abd3e86e7bb8010a2fa7e70d51f2859879fbd46fba74c18358c4b24eee48e09",
+      "manifest": "9243501af1be4a85ac99a8c4fbe7436f31de314e17e35c972d0ad4796fa1c425"
+    },
+    "blackmetal": {
+      "qaCurrent": "1cf9c69b64a9a5611354c65a0018abacd46ddfa746c4ad226a67c39ac8b86607",
+      "qaPacked": "c1c8fe45b273fbd481e197118690646164c33230cf8bbb382b28d9165b06c231",
+      "manifest": "e1baadc5b34dfdc82735dc2e39ca0cf3b81c771d0e005d7a01bee38f8d64590c"
+    },
+    "bombado": {
+      "qaCurrent": "b3795313f19e20b98aa1eee575de58a50d327b6a4dee694f594399b414acd38b",
+      "qaPacked": "ed37cca2c112f84fa845fc2265e58bf511b891f3d05b9c0c2ddee8ce9d3e8959",
+      "manifest": "7bd403f217a4f129908e1d19d473d9d3aa22e77266e1b38e41a01340c1d9d853"
+    },
+    "bonzo": {
+      "qaCurrent": "a03a603c98f82bf785e9c333335d1aabf9238f0e1288cd63af505799182efe61",
+      "qaPacked": "d4358e9cecec5c379188f9f3e42d9aedd8786ff0c9f17057fbbd4950770631d6",
+      "manifest": "2abd73f29606afdc99d1099d5d0177f8444b5acfd9edbeb1e7154006fedd9f7e"
+    },
+    "boto": {
+      "qaCurrent": "14ab74828e42166ae1135be1b1f40d9f67046dc123b4ab6206abb42e1ac261cc",
+      "qaPacked": "26a0b4d9e6be5da377c280c2a98284d8d04d6d1ec940537f88b049fc9ec03c5f",
+      "manifest": "ed67ff3c795f4bf83b7926edaa0fe830b3efc9353961d6ffb5a6b18b98d67045"
+    },
+    "cadequinha": {
+      "qaCurrent": "091ed16ff69c1c4722ca0d1de524ac6c5e7d2148364c0f56024b275d11230d08",
+      "qaPacked": "413cec59fc0be4402431b6078db6dff6dc3ba1a90c254ed115209fc172133453",
+      "manifest": "94e60bd4f661f76469a021d3ff0143ada06023486b54c2ecb06900970b5a5006"
+    },
+    "caipora": {
+      "qaCurrent": "1ff04d6ff570d9e54ae3db45ac4c514e857ed91a7e220753effc7e6e4d8438c4",
+      "qaPacked": "1051686fd62cb76731d5f447e5955d86ed6a01228d9378cbe8cfaef69af3a8aa",
+      "manifest": "05fa4cdd570eb4efc717dcd2390a16e8013db76fbfcb65500875b8b327bdefe7"
+    },
+    "camera-roxa": {
+      "qaCurrent": "d04f85936a5b6463770aec0271909a9a75a321d85056696b6d3276449e0bb84b",
+      "qaPacked": "6b8f0630850f5827db6ddf2785e685c5d31e4a6695aa70fbdd0e04a5c7887a63",
+      "manifest": "7892a32707f04cf641c6d700e291012f3b14cbbfa5448e0942c3ce826332b071"
+    },
+    "caminhoneiro": {
+      "qaCurrent": "9c5cb4f0e738a3914d4e5106697c4a70a30863bc45ea6b36cc86dabd81b40b3c",
+      "qaPacked": "0ef918e32d09e7ac02f91f046ec910e28dd0993317a636e020891fb2082532ec",
+      "manifest": "e2025c5ef1597186fe81a0a273cd37391c71810051ff86f9d345b0d8b8ae5a02"
+    },
+    "canarinho": {
+      "qaCurrent": "2e2647c525d573a713b3747e344d0b1c6e339896d830815518121830634b747a",
+      "qaPacked": "3d385f19259bdaf86f37b9901cddcb05dac3df3700486ddad854a6e9dfcd8b21",
+      "manifest": "c0985b81867ed947cde0d90374b37edd55360a8592e65beff009c00a293ed196"
+    },
+    "capitao": {
+      "qaCurrent": "b09ea42149c8c3caa6e8bc85e1a645a2f3bde43c10868427efd5d54aaf3f05da",
+      "qaPacked": "f322b0e37e13ae4d7c2b703b8966db250f10e1cddead6647478a517301e42054",
+      "manifest": "5e83c1dbacbdba45e10837f4bfbd1428ea7b4e5b1a2ff26916ce3285f20c31f1"
+    },
+    "chave": {
+      "qaCurrent": "3fae4a1317555e7b9a602f3eefcc65bdd0dc19f738e2b9943a05dff26861888e",
+      "qaPacked": "6d5a0f462d11c3fff7d886c62c4237be4c8e9aee8c3f022a0562d9311bc1c780",
+      "manifest": "29f1c103b1145a394957dccdb68f1126ae945144ac18dd567c22938e72ac70cd"
+    },
+    "clubber": {
+      "qaCurrent": "ba5b2f6e076afb61751aaad55817d4e12c1183ab2c0fb2686db348b2f9529e49",
+      "qaPacked": "94f7954c6738e89b6592e1d77e77620fbf90e00ede51e4d9b00a9138137cb0e0",
+      "manifest": "dfcd8dbc1b76d47cfd22d165d14cf2437006c43182c3b86291e7f35a5baae96a"
+    },
+    "coach": {
+      "qaCurrent": "d8c35b9d0b51131f64729bd46dd07cab9fa7003ac9e38bcab801094eceed8022",
+      "qaPacked": "e97dbe04ede0956460e48d8008d90c50c3376a9bd0189c4ded93194ad5c88349",
+      "manifest": "0dcee01fb76a0087fa5e337755a53b1eef9a9bfe1aafa3e84397304a88c5e88e"
+    },
+    "criarj": {
+      "qaCurrent": "077e0c8877a1213a27736f07acca98986ae7b86729961fdf3359b9e794913063",
+      "qaPacked": "aaab7376e33004d85c2f13fdf143805676c11e75f1e0741f425cae437bb4a6a7",
+      "manifest": "f65b8bcfd83f7889b626d9002f0b4eafaed29dacdb9f152a8545ba52a170e489"
+    },
+    "cuca": {
+      "qaCurrent": "50197d8c27b2f193198d67169f47245af0f50708524e50d2788262928886dfd5",
+      "qaPacked": "f1c97c9d8081bb53b2353cc70b344ebebc9c2d59394aa7a7f86bfc91a3a41d89",
+      "manifest": "46af7bcd4190663ce1f301b107d61a5211081d56dc3389c9cc0c5babc2b789d8"
+    },
+    "curupira": {
+      "qaCurrent": "d6efb792a3c20886361d7d4ae1fc17bef1262886227305b8da6e72a42d526562",
+      "qaPacked": "320f4031876b1c3df539129531f86e429dfa2b9eea71526f2c2b91892be58e81",
+      "manifest": "6cad8ccbc7f4df5ab7cd31e18dc7099230195697f5e9e1c5dca339119aa83ea6"
+    },
+    "dama": {
+      "qaCurrent": "dc13bf84312d064ef40952e9a603dae4a7584b03886170b8db3321d186e81d41",
+      "qaPacked": "5311cd897a80c1184f66b4f01c6593bbe3a3f31432692a77a6fd7d3754c2e301",
+      "manifest": "0b385af843d31c7d6f11fe8d39e95883af7352f47f8cfac7c3a56919669c37c5"
+    },
+    "deputado": {
+      "qaCurrent": "f9385798dc1b124d05ba2ff8913fbe44b18af09294ff851fb3bc9aaf902891b8",
+      "qaPacked": "d93c84ca32c20c4b38ba2543df27cc0ab644860dd557f1c474fe7dc28a3e7e27",
+      "manifest": "d0d2790cea3f18b2d1e633be3cf50b346215a4f6f97fc628cd19cc6c59364484"
+    },
+    "designer-ux": {
+      "qaCurrent": "a623adbb7de693ebab62099a016f054134d2379a373c9512ee7f6f122af81e07",
+      "qaPacked": "cb813c2322671e34f779cd035d6b46848e8e3b61511f63f73bf9c9bd2ccf42bd",
+      "manifest": "2c1308a6b219997a23c9a31abd4a9fc9756c87854ee50737a58add6c3e9e6e37"
+    },
+    "doidinho-bairro": {
+      "qaCurrent": "d4cfafa1b911f82d8c50bef4dfab658a345365a75c79ad6dc3c3b59b2cf645c3",
+      "qaPacked": "e92044c6fb2c6651ff45f32f93818beb73d83ae068475fa33eadf8dda9f0c8a2",
+      "manifest": "b820e58cc29b3a67dcc8fbf0ead6a88d34f473975deb9e6c7a1a157479aeccc0"
+    },
+    "dollynho": {
+      "qaCurrent": "4d8893b94c9107989a01facca289df66959da96659f9ee98fe066b3a98374a69",
+      "qaPacked": "46ffc2d4d7fbaaf12cd771a38c4ae68638d342cef8e27333332e3dfa9985429f",
+      "manifest": "9361f6b04975df653968be68c6c55d28fc3de49c8f222b0bf059c0ecda8cf8c0"
+    },
+    "doutora": {
+      "qaCurrent": "c1d80928a77f8933a293e3f2c47106ab98af957dc28f565ef9b03ea0e471ed5a",
+      "qaPacked": "086298bcfaf468e8808d3cd620f47c9f2b77539e61a0402f41b5f928b26f4bc5",
+      "manifest": "6ff13bad3cbf04bfcadaca04315764efdc46fa71b6bdbd439411bcf4138e63ff"
+    },
+    "emo": {
+      "qaCurrent": "d13bee8cbdacf6785cf27e848ec80d25cfd70403ed6f1895aa1f0630d577f367",
+      "qaPacked": "24cfa4327a47900c998967b05aae242624815ab839671d3d74c13b2fe45326e2",
+      "manifest": "2426eded0713fa2194c994b810617c42cf6453742ee612b1140b84f3996cc960"
+    },
+    "esbirro": {
+      "qaCurrent": "960d8427f5a6472a6f8c903442f04cee8f0ff3e7ba58d6a94d579ec5a635cb01",
+      "qaPacked": "b421ea1fbe611da4c7211d0cc99782edb16c6997a14f3a3d989dc4c37842b983",
+      "manifest": "30ca212366070871c4513ea4fb11525c6038fac303d9dc7fd23509bff840f51f"
+    },
+    "esquerdomacho": {
+      "qaCurrent": "bc7e1d941d02b4d69b4df6bba6d21af2cb9859acd45e5bce3d50e7e137f9ab38",
+      "qaPacked": "8b7f01138d60b9b1f4df8a073484321e17127c4848c0221f8f5ce991ba55bb90",
+      "manifest": "0e9a6a71f070f883f803e1f643948e7e3f9ddee19f69f5686965371aa46e0058"
+    },
+    "et": {
+      "qaCurrent": "ee817b724b56c8aed982818963aca2d822bb032d322a2514991655aa3f07b7bc",
+      "qaPacked": "934d10c6d1f967ad2b59106a8d26ca47dea36661c6cbc50b2df24a6d4bc98a5f",
+      "manifest": "a0b2d53cff62248e9b5d75afa3c7e58c4c3f76995781a1133a54efbaf942de7b"
+    },
+    "farialimer": {
+      "qaCurrent": "3da379e391da8af354fa8a8627c67dba90bbbb24c765b4bd3dd2c6af81f63bfd",
+      "qaPacked": "ffa278004b9f64ce124df48e98f213a7bae1653bc85ef0168e0a27abab6d4071",
+      "manifest": "e1c248ad35024a5d47327eb25f9ccb6c05f3b4e2d862a4487fbc770dce890358"
+    },
+    "fluxo": {
+      "qaCurrent": "8b0ccd6f9ec3d1e3e1e824c2b2abd8ea267ba9f823a3416c6481d48900389325",
+      "qaPacked": "36d34494cab0cf2cb4e51a0c45117294f0f98c570b73d9e1052757128cfa467e",
+      "manifest": "dbe95a40ea0e44849db72e898af0327125535f58274542eb3059276dcf613043"
+    },
+    "funkeiro": {
+      "qaCurrent": "77e7918260a4685e6909259de495c8844a9cdb1a0121f8c7e4487f030e75de95",
+      "qaPacked": "666bedda1009a08fc834c79935afd0995af99eb9d6e3c025fb232e000974b0da",
+      "manifest": "969d84978ffd9e158ba15cd91aa9ed742401e4b8797a871f2e0b3ca53e54f292"
+    },
+    "funkraiz": {
+      "qaCurrent": "40d4835c6a3fca0e57bbdb925ae5bbe9a869e38d2e67339e724fb580e16db415",
+      "qaPacked": "e880d67ebf6780eb44eb4500eabd39adb6887ccce474957e90573d50153fefb4",
+      "manifest": "c2bec31beab156219150a0f06849df94ad1720cf5dec45e7e9a36bca5cf27b1b"
+    },
+    "gilbomes": {
+      "qaCurrent": "46227042bf4d794832526939f5a95710c293592dfd40d8d0c1e5b70fe3c36193",
+      "qaPacked": "7e64bedf26f34e84735aa3c545cad9798b5cb907ae90c080f91fd67e4503453b",
+      "manifest": "5da165fcb24b25d2d4bf11942d2d26fd2c6660a7c915283c57acf46ca07fd6ad"
+    },
+    "gotinha": {
+      "qaCurrent": "9515c7c68a75eb4bb51b19202bd2f2974889c254e26b333d991a6db986b889e6",
+      "qaPacked": "16ed779f25345c5606c3725f2e14d4c42bb54f5ae2a342640b56d7ebd21b5a55",
+      "manifest": "38e6e3f4b273168eab2f1c9a119b49c6cfd62666f997b9b7e3eb73b3f92934e9"
+    },
+    "hipster": {
+      "qaCurrent": "e8c865ee4b17e057f851a2e9d9d4658f97f0264ba69dea19dbf8004a324b6c83",
+      "qaPacked": "cb5bc2d58bf83e2e02258d6b0ad620a3e5c9f7287ecaeb706c8a51446361c3ef",
+      "manifest": "50c70d096d0481dc0024c2494d28c0424f6944e9b6a9df1bfe59b67957da520d"
+    },
+    "jozo": {
+      "qaCurrent": "5b2f4c26f7491a2d0dcc0d3e600e138c651fc71ac52cc8670c66b86cb936e982",
+      "qaPacked": "e8a55144c0db6a3218e5a5a621a9b1e3326396ee6a420c869691c38d7276bb35",
+      "manifest": "cb4ffa8260b483c738fa09be68566bb44bb4018a6aee44f7f273de3cd754cd50"
+    },
+    "juiz": {
+      "qaCurrent": "aa03a05f4fb3ee29049707e39b809dcf4a04a843bfeb639388b25fddb41b57f5",
+      "qaPacked": "fe3fa56d217ee37d3ad651778f01efd09eb4455d8e1a82cdd93bbffab76bcbf0",
+      "manifest": "9f8d832a00635d4738ed81392bd85ac36252caa023134f354004072b959526c7"
+    },
+    "julia-zanatta": {
+      "qaCurrent": "e2b8d60c9dd7abcb9c140a011d67b1df00767075e2f7b8d7344d8c94f4cb9c3b",
+      "qaPacked": "269ff826fdd3c262d364fe2cd4b3534a4078c0bc797e78f121634a0a3f8eae63",
+      "manifest": "84a4ceed27d1069d91da6678d1b47e430e18989cd1ab53cd25ad686b37b89cf1"
+    },
+    "lampiao": {
+      "qaCurrent": "14aafc3821168e052d3bf98ba44e1e4e19d0f5bd60a88044ac46a761c390292d",
+      "qaPacked": "68b7c3cfdd612a11c13e8d47f981bf6d8da76a9c5bc331ac21a57cd16ef8d284",
+      "manifest": "5f09fe1d4fd00ac6a3057a4b5b6f3d2681869e0ef3299fce468f9381d80b2569"
+    },
+    "lenda-lanhouse": {
+      "qaCurrent": "286c83c3ff4c46779ef683dd1a7742e50098c57abb89736afbf7a3c7dbea81f4",
+      "qaPacked": "374cc1b7f7a99f863e54037474b09617578f977c0b96415cce7f6052642ee211",
+      "manifest": "b7db3a8c8157a8182b0713d97ad43507467d8fe4d1a5e33589d363b218169e76"
+    },
+    "lobisomem": {
+      "qaCurrent": "7b8979dab0c3a57e567887077fb83a6eebcfaea54cd55ae92395cc4e56eb8248",
+      "qaPacked": "04be5251358a08e0f3695a0de08748ae4a0dd9e46684a9f4f20d45554b2d9c81",
+      "manifest": "e5b3e2bf0e3ef84e2d6ae0e1d5a7160f0cb675f798819a2d254c799b904546ab"
+    },
+    "mandrake": {
+      "qaCurrent": "12b3824f84b8e4bd95721ccf92a7b61ed6f5fb0b9650d361af803ae9ab742daa",
+      "qaPacked": "ea8a05acbf9c4189923cb06ae7b063ffc12c143f646da36640cd3f3f3a26e0d8",
+      "manifest": "e7b7823a329d55bcbd002aa7086e8cb0eadd5b8aae6fffc0d7d76fe481f2f71a"
+    },
+    "mariabonita": {
+      "qaCurrent": "a20b8f5902176ba5dc4e9bb4a0d999b6b2256ffae38c1f9f4c6104b6a9158cf3",
+      "qaPacked": "9a7011a87c92f278dd576aaaadfebc7cfc4a0fbab89b88dd7e7757b5ff046b03",
+      "manifest": "367746d03f5c0f37dcefad03a062c307ed60d70c0f66eca4c978aad0299b5597"
+    },
+    "marina-silva": {
+      "qaCurrent": "7840bcf4532d47e7ecfce563823843e01c4f17c641091ce03e06c878075c9224",
+      "qaPacked": "ae61aadd496081755fde13725d5a25b8cc715a959383751bc9d86476d24e90c7",
+      "manifest": "6a06e9fc377c3e8287599695e1723d11e20fa392dc0857db17b858a6f1ad5557"
+    },
+    "metaleiro": {
+      "qaCurrent": "569492a63ca969a633b103e934c87880ce98267a8c24a4d94c33119a58409e3d",
+      "qaPacked": "a4a9215fdc956ca483b87a34ee8e5ada14d19cacc0fbfc70ad1d3e657ba5132e",
+      "manifest": "7d917cc5f69d812f72be0c773418ca5b140abc1c9a2888512d13d9f9ed42b50b"
+    },
+    "microfonildo": {
+      "qaCurrent": "889c7dbb71d828ad3f000f404f1c1c2bb5f06d79fd16bcca42943ae462d83950",
+      "qaPacked": "370a7d227ad18c9961e4c925ecd5ca42ea066ae32959abfc2bf42ad4e8de89f2",
+      "manifest": "089f86e85da7cf82c361fdb665ac7db4bbb9f16b9581bd7cea2540e969b73dee"
+    },
+    "ministro": {
+      "qaCurrent": "79cf1ed7f81704ff00f98c7a9d382399404f61410e5f60f72e1e23fdbe177c9e",
+      "qaPacked": "dc12da87b45569c388dad61d522e88856ef63dd7687122cbff9dff195e4095c5",
+      "manifest": "3f6e89680b045f8ca18aab04dc85c3ad27ba84a63659cf7c07381a9ae69056df"
+    },
+    "mistico": {
+      "qaCurrent": "a0730094afa8c3e3997effac22a3a915b61b09907f49675ae0a9ab1b2b4e29d2",
+      "qaPacked": "ef9466f711bed5ef3875ca40b822bf58a2840bc9fafc8465fa5bcaec289215c8",
+      "manifest": "728ca28118e53aa6642b613a7a4a89b8c52547d0d8107d57ed10d10ef1d18572"
+    },
+    "motoca-cachorro-loko": {
+      "qaCurrent": "6fa6952fdfb7e4dcfad9919fee646e3809a193c2df651bd5ae4655bcfa636c3d",
+      "qaPacked": "a012a1e22660f03fa5fda40e363d1f297cd1c519246aaa0f1dcf7b3d518f44d8",
+      "manifest": "66b9651b5431d65d6f58420b168326d6a6f980aa344d571cde998b43721f835a"
+    },
+    "mst": {
+      "qaCurrent": "ca67911233dab6570aa3c2f98d679c051942a128346afadb8a5e839fdbeb7abd",
+      "qaPacked": "de2891bc298b3fccaba8da81c2bce51a669dfe9d4e0e6c143ed2807f1253691d",
+      "manifest": "ba7326cee5c5c6608cf4d343051d1ba6362c07c1b37d14bdc77c65288030470d"
+    },
+    "oakley": {
+      "qaCurrent": "2ea54b5220ea33cc2696239cf5dbdb2947fbea342cfdc173543a9d1383694b9d",
+      "qaPacked": "b23325e97c1eabd6512e73edca29e78be8416033d9628e8b06ab4720a9871102",
+      "manifest": "a74d9931123fa8a55aabd64f13eff6883bdfefd1569997f474997006f61d5f0d"
+    },
+    "ostentacao": {
+      "qaCurrent": "1acd7a2a95c78437ad8302de4867d8b2960f6f1f18333d997ff74608c6255743",
+      "qaPacked": "cd9afd88dd92b1be63e0051b052c87a53c842f1797df9147c1afb523060d2b0a",
+      "manifest": "59de1a44f09657cd7bb8276969ed6fcdef151e2037cc1dda77d08ce9399a8880"
+    },
+    "padata": {
+      "qaCurrent": "b90dcef2846fa9e9be576cbecbe02c99550e1287000326ce2b5384cb84122310",
+      "qaPacked": "2ca83d79d077657152778a04ce0b21da5feecd107988620bd80db420479cf52b",
+      "manifest": "5a0895827a8f1770292ff88a8621d432b0f02f454ceb9a7a9946dd6dabf6bd52"
+    },
+    "padati": {
+      "qaCurrent": "196d318c9ab61b502591134bb88d1c01cd6cc798de1306a7e5210d33fce5c69c",
+      "qaPacked": "7a4b7d409b327ed9b72df9f9ebf69547867fb89928aea9a8015eee99e3519c80",
+      "manifest": "63117b42e0e7fe044edd32fa3e4ddbdd9562636d0752c72d74db50a6e695bdfd"
+    },
+    "pagodeiro": {
+      "qaCurrent": "e98fedee6147815c04d85a309110b69099278d43c85fef8697d2448c7832b6d0",
+      "qaPacked": "eacc14a0462e22305f9d3b7ac018067b5bf557d7b36156ee146a816c2557d955",
+      "manifest": "03441506faf0ea56f1c111e5b22318a47157b38e65eb5728b438cf70882f28ed"
+    },
+    "palhacomal": {
+      "qaCurrent": "889a10a88a9ab07aa904aef860ff03385b24b84495cda971e046edd173ed579e",
+      "qaPacked": "a7be174c2c755a01ffefd8f9da9a4e714d45c7e59351aca59b11a6627aaf21eb",
+      "manifest": "a72b47e195c3dd5cd6ef5e94ad594b206d4ebb6b0b88be68f3d787fc825d9209"
+    },
+    "proerd": {
+      "qaCurrent": "eb0df61802b813ce86f57dbabec460618d402e3c228c00a777c4390b9425ea28",
+      "qaPacked": "dfb26a541f28a12604611db0342c4b91df0e93d2be894ca16d1295571b784557",
+      "manifest": "a5b19da0df378aebaf544297ef5d25e7087be41fcd990e707e67b4a2f7fdf3b9"
+    },
+    "professor": {
+      "qaCurrent": "0366cbe0b8e57d18338a99e0098c876483c28ea861680878580dbead28b21d5e",
+      "qaPacked": "29a464a46a63d0ffa865fd8176ca821baecd30df949c094bb51ee324c4e8072a",
+      "manifest": "68d4fab260982f7aa69b4b8dd5a7cec732b8c93d3f5059a7e33aba47f6885cce"
+    },
+    "profeta-calcada": {
+      "qaCurrent": "474b6ee2ab7ba9caa2271fcc3c51311e4cc837bf17ed6e8becce3ba82a3f7cbe",
+      "qaPacked": "aa31a8394291fab43f31c47d5a1dcbb440e57e74e17a9958eabc6c82ef4c9f68",
+      "manifest": "c9fc73c031bfed8b1aac66b62fe25128292fb3fbcc86976004fdf55e2404e591"
+    },
+    "programador-virado": {
+      "qaCurrent": "0e1005ff691cb9125f8e10e797395843a2ce7d31e3c05d5a9cad92d468056496",
+      "qaPacked": "ca6e9ac6087fdcb6d786bff3972a002c1500b4648ac1da535cb4d6a35f9f564f",
+      "manifest": "c7057b5621106b79ca849b15f2c63e20bf6ffea2c27ef8d19df32e786a497426"
+    },
+    "punk": {
+      "qaCurrent": "e6199d23b10f789cbfb791b6e1f26e02f14040d3314e5e17f713bf203620d866",
+      "qaPacked": "e399bcac675087c7716f79eeecc24fcb20d81d2e6b806347e726b70eb258ab7c",
+      "manifest": "e30ae6a49d9edfae079e8615c3491678f270c0c10c7cd151f4ec3bbab6abd6a5"
+    },
+    "rapper": {
+      "qaCurrent": "8ce943c4f30473f1671079b71f1a27e1f5e76bf824391cc8df960008bd2ec5d4",
+      "qaPacked": "e8886db1097021b17553064c91b1ac6922081a44f503794c0ec8646e6b8de3eb",
+      "manifest": "327c962fdc3213dd6b46b8fce7627b970378c7ff0af95cff90c8e137dec2a771"
+    },
+    "raul": {
+      "qaCurrent": "43101b97a19c65403b2bfb0e8de0fa5c20a6948691ed0f1b220583b619c08856",
+      "qaPacked": "b8d68d772095bd2ad45164425bdfe570d4df3ca186152b451f3f724758eabed1",
+      "manifest": "cf02ff7c916c82cee053d2b21ce792b67a1b82488226fdf083fe9fb1dc40d09a"
+    },
+    "reggae": {
+      "qaCurrent": "e2e3f35254924bcd0e9d38b107ed0f8dbfad125f3505e8f7560b17f3d9f8bf2c",
+      "qaPacked": "f0d545323592463185588880d0326622858fdc90cfd2d976df54a7dea98432f4",
+      "manifest": "b2565cc477821cd81f27aed530a3ada8cb17ead1adfda6fdac77b0c4f7b5531f"
+    },
+    "saci": {
+      "qaCurrent": "f3690b3337bdd756f1a6671a87ea32c046d627bc5d72cd1275d73ee386e341d4",
+      "qaPacked": "35b65fe110ccf3a83d6d621e94d87a8df075abba1e4d65c1b95d0dac8cdbbcf5",
+      "manifest": "69e4fbacaf4f24b3c33d058ecfba47ca405b640595df75b28a1d5d87a1db4cdf"
+    },
+    "senador": {
+      "qaCurrent": "196ed4931eb824811334997c753fc23c4ae5ba1d4a94edecfbce27d4853fa694",
+      "qaPacked": "4d0448f2fc5a0082980a712c9f32b44e1132569471edd9948daa678fd04973b2",
+      "manifest": "d2b99b87a1dacd4985cfb2cf615d1201b3e45140c8d40644c3ec9d48092073e7"
+    },
+    "sertanejo": {
+      "qaCurrent": "b5d579dd0919d6c9b786f08e103d3efec4685a259388e99d577abf9767a4f0bc",
+      "qaPacked": "6768cce155e889461cd4ef745ce520a11627aab1927ce604535cec471bba0346",
+      "manifest": "cd4ec06ef8c90e0879a56bb86cd6bef9301cc3f98f45ae2dd185efc2d98c54dc"
+    },
+    "sindicato": {
+      "qaCurrent": "c3b85aad4ffe27203f93477296f289572aa6fda4add6db9c9df29151daeb63cf",
+      "qaPacked": "7cdf903d5241321c0e1c20abd114eddf5fe4fb463b7161e272e021f3cfacd27c",
+      "manifest": "b59293868ea656dd8dab7053509ba51c0c17f93e968a1fc7d0e741c8a5fbd00f"
+    },
+    "skatista": {
+      "qaCurrent": "e1d159f7cede5ecb67a4be6fc1470c8d3ac8bd2077d09c7f7ea7928f18972955",
+      "qaPacked": "70f966f4b142e352631cda65b30cd8a3463ebe416da2234ae0cfb446f082715d",
+      "manifest": "ea4588d3d27d549a048afb8ade04a93f6836ef4328bfa817115a92aecf62cc85"
+    },
+    "titica": {
+      "qaCurrent": "5419ba7fd33d39c2626151a52e45e49017c9f9191d9d4938c00722fbfb2a7af5",
+      "qaPacked": "683af53c4edaa365dfc26820a9f8e93114af4685699cdd97b104205a03b5fe07",
+      "manifest": "7902c9c1652025a5bd7915402c5c0e6d397cef5fb9a0f1e5853ad553a3bc2b43"
+    },
+    "trapfunk": {
+      "qaCurrent": "75fb909d5d3841a89911b872f01c71550cc6d0903d3fce306247e724f3d07ec3",
+      "qaPacked": "8144504c8339dc7ff14b753e5aef274633bf63b0e80bafc3258f251da8a7759c",
+      "manifest": "2f2f9a0e7f8e876cc3155e3358de1c49e98f375b1bddee618b685d9b3066bdef"
+    },
+    "zumbi": {
+      "qaCurrent": "abb5b477f0ab109ca516b6b6da8a17bb9913b424ca1409cf9324419d9539981f",
+      "qaPacked": "c4608666b90cd1cbd8a3f93e0260c9a8293499bf13b01f97ea0f5ad88e0c6a89",
+      "manifest": "71722a252959cbb70980daf7d6f44b0960e4aa7c85d901fd64b3e5c059edc9f6"
+    }
+  },
   "bodies": {},
   "excluded": {
     "adjim": [
