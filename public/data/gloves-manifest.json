@@ -302,7 +302,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "0ffab142362a47e2363136522ff6a6b80ca4837d73342da07706970eff73f87f",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -386,7 +386,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "d7a23bd745b47e696e67802d41a897f671bc74c83d8b157741af95a68b7ac756",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -470,7 +470,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "a002346d996786a5fbbf648eaf1c33b6cffe432ace359d2c6532480d4260cf9c",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -554,7 +554,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "d81138a1b95e9b885462e8be9bb9f0415fa1b532928ba17c2d6160c77c408f86",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -638,7 +638,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "7fde1360d1676827a60d6242fd6abf708aa360f7a35b42c82c8edca1546be6d5",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -722,7 +722,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "38767b950ac29494d2c0a6a287898a6789c5b9bffade8f5e8e9fe21b70cbddfb",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -806,7 +806,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "928be9333591436fcca035623e171d59210296928e9d2ac4a6e5df03684c2fe3",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -890,7 +890,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "e2a9786584216740d4050787f67f3921f6ed215a0a026d5e4f4506631269feda",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -974,7 +974,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "e593b7558ba3691f4fc6599b0711735c11169eab04d3bd9f3bf5a6be73c78762",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -1058,7 +1058,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "788412d19fcb2a0fbb11c4decb40bca34f6e3c7e6d25541be8a2f0106fbb71b2",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -1142,7 +1142,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "8f931cf43664ebcc70d3fdd529aa4b282d4eecbcea3c49f9c68c09b14130fd0d",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -1226,7 +1226,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "cb89f74cab68645225be3a1dd2ac1d66a4d015cd54f5450fa1b0a9eb550d4736",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -1310,7 +1310,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "157531c1e141ff2a57d45d31fee44bc79533900cbdaf3f214ddc0e28885ba8a8",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -1394,7 +1394,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "7081d4b514c871345966de5352aae5c02d7733d2f671d132bfccf8fb7f1afbf6",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -1478,7 +1478,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "7c1e5638d656debb20e34e29138db49e9371f0fbc8a5edaa1c10b918f8d0949d",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -1562,7 +1562,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "2b62783c8dcf660c824360385c7fce444f7d2a1185ffdd8fa6e4861064d985d8",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -1646,7 +1646,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "a59a29e79b599b510824483d84128750d6fee68d26dff7f124ca2e326b7d5850",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -1730,7 +1730,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "c640759eadf65392a6b0e415c836b1306b06804273ea662bea55e51ba8bdb6e0",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -1814,7 +1814,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "a3fb525ce1da7a7faf0e7ef6be1bdc02836fb0330ad63ccd64c2308a48857fb9",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -1898,7 +1898,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "a6040017f6d078e9890a41d37f28fc966ad0e018489365fdbc89a18d6c2928f0",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -1982,7 +1982,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "1fde026292d6f91e9462385467b8c0a74bf2bfd6bbac9d8a8679a5d472c9549b",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -2066,7 +2066,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "db7cef3c3bc620d64430db22cfd2ea598d2ee1252c758187d124d77f780d09ff",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -2150,7 +2150,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "1ed26cad98745c01fb8506a8597844223c6af433359e8f343dc3f164273c1251",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -2234,7 +2234,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "a672b159698fcd8db800a2973e6d44e872fc5b3b50601119749bd28cd25105d2",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -2318,7 +2318,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "d29e404f3d6c482aa119411f370db1de93a8e2ba05aba9d9f1277f467929c336",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -2402,7 +2402,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "083ea5757fdaf3e76a0b55dcb423299826c0709cb1b22ea899d806901e28681e",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -2486,7 +2486,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "ffd9b58cfb8f9063e9b860efbed72c2d57d01c697fcc9b2cef09f38c2f8a936f",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -2570,7 +2570,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "e0e5440b2263b6ce8c96c88f5ce9f497a938c8cf913f81911a58fac5ef102953",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -2654,7 +2654,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "2a3289e1d97cf88f3ccc82554231f9e4fc937ce7bca789194bb28a433f46d72d",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -2738,7 +2738,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "cac742700834a64e0a436b2ca08a2d95b2786edc8fb04a2564606984b9444031",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -2822,7 +2822,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "1965d8d63af49872babbb7aa9ba0c2c78b2214d485ed107dbde10665d92bb107",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -2906,7 +2906,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "7bf489064b672bb78f4d48edfd01d45bd5f73916c4cf934f5b51615e9d9bfea1",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -2990,7 +2990,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "4649c168474461bb69b02f3dc8bbb89dec182735fa0f0c81f2cd5bc7773ca171",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -3067,15 +3067,15 @@
           ],
           "source": {
             "path": "public/models/characters/camera-roxa.glb",
-            "sha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+            "sha256": "148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b",
             "skeletonFamilySha256": "a723183f7d0f58e4cc03cb1181e140200c3e90bfc833554cb19aee4076d2d8af",
             "geometrySha256": "7a126e85fcf5d3ae7732516536fcf178a687246aac4856cc3acd2367223cfea0",
-            "weightsSha256": "bf44c054eca071cee234d7c588c00dc172e10156495b7e6e74a20adf390d085e"
+            "weightsSha256": "8d0b502c666ddd32097fcf8229a06e437a78280afa5afed7f5d734d7f42911f0"
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
-            "recordSha256": "24a192adf74263dc7d1a5a68ca06c6ca857d2494ce4fdb5d946f2fc805780524",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
+            "recordSha256": "77a560e9b088ac3c60d9eca8e65000b958ca7f94a8b25bb5e4f72ff910e326be",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
           },
@@ -3090,7 +3090,7 @@
             "before": {
               "vertices": 8340,
               "joints": 24,
-              "nonzeroWeights": 19805,
+              "nonzeroWeights": 22984,
               "primitives": 4
             },
             "after": {
@@ -3158,7 +3158,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "88b7402c4a2238d7d5f11c309f3c33ae7aa2de82fa24587b6dcf12b752dc119c",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -3242,7 +3242,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "7ea7a8b2fa4005860a9a7813b1f08c7ac6d4ca13dc206bbb445d9206cbef3be6",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -3326,7 +3326,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "c45a472bb2b7458ba751e5c0c5f96f975ff5be8ceb8ccb23fb62b4b89df0f756",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -3410,7 +3410,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "23ff50e73d805a819dd34ee93d6c94792895b4723b3c64f64c670b1d3f08f337",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -3494,7 +3494,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "572c7ed50310b6371b8a5fc91935e5303a1eb650250160041f36f6e7bb9159ef",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -3578,7 +3578,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "c80fe174b9e86cf75679ea85b5a79339277ce1724a1abe54f27472489cf972b8",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -3662,7 +3662,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "05a9c7b39db6e020c4e68aef6d2494cc96c6a0743fc21a8187f052132d97e4a8",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -3746,7 +3746,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "135655535182f8912af98f07f9826f5935dc7a03276ad81a197d7d93c3e2f226",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -3830,7 +3830,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "3d89859e99a218ed912532d7d2b5c896388f82703793ffa03f55c9ace5556a12",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -3914,7 +3914,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "59d5dbc0f2d946812bd7c7523443e825fcb3f533163bc11254cbfb89fc5da22a",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -3998,7 +3998,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "333149c294d304cd20740b899ca07b057af343779f0f4db05c693d2ff807941c",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -4082,7 +4082,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "db5e01011fbd4ccc6a10c8960b02b5522bd905f341020fd2b67c767631bb09c1",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -4166,7 +4166,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "4bfb80a159625eee5928de0b6957c99cba78ef8dd5d3b0f2178bbf27eaab0f2e",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -4250,7 +4250,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "e941d4913b5cff00d1ff69128d4979b1ab7755769c93defee8864b3cae01d09d",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -4334,7 +4334,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "d820cdec9c8b7771ba05ffa65d0d3cda61ac38fe0ad431dae674125936aceae5",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -4418,7 +4418,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "446ebf51bdb6055146205fb9c752deeab6196266c5cd18b43f1046b9db1c0ef4",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -4502,7 +4502,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "33602c752bd7c06fe4391ddd970a9e9d340fd07cb585733d661d793789e70029",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -4586,7 +4586,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "4ce9fcd93538c1e9b9647fafeb345169578e42fc567e4fad6e18bf1a8a7908c1",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -4670,7 +4670,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "52e036a93479e6c10a81557146c8b56798177043e49c692e60bb8197d6510315",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -4754,7 +4754,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "e1955c3f09b794e1f550658c64c8a2da424b45df9db5f0a5f620186c68765f25",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -4838,7 +4838,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "95066c0ee2e2eaba6f52f24200e2ca31ffaf304941c23efc82302f6f925e77dc",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"
@@ -4922,7 +4922,7 @@
           },
           "selection": {
             "path": "tools/character-kit/gloves/selections.json",
-            "fileSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e",
+            "fileSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188",
             "recordSha256": "b29dbb23e34de61ed9e2f87e5bb12f86d7f0083e11b7b2d0ad18c1478bc0b97a",
             "schema": "cs-glove-mesh-parts/1",
             "meshPartsSchema": "cs-mesh-part-selection/1"

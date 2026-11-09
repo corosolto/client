@@ -1176,10 +1176,10 @@
       "sourceKind": "character",
       "path": "public/models/characters/camera-roxa.glb",
       "bytes": 1172856,
-      "sourceSha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+      "sourceSha256": "148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b",
       "structureSha256": "a95b48489ba30bd2d8f544f1983e062191059ce76d4e2672054b371032629e36",
       "familyId": "rig-a95b48489ba3",
-      "profileId": "character:camera-roxa@8af17491600d",
+      "profileId": "character:camera-roxa@148997911e43",
       "skinCount": 1,
       "jointCount": 24,
       "jointNames": [
@@ -1249,7 +1249,7 @@
         "status": "pass",
         "bindFingerprintSha256": "a723183f7d0f58e4cc03cb1181e140200c3e90bfc833554cb19aee4076d2d8af",
         "geometryFingerprintSha256": "7a126e85fcf5d3ae7732516536fcf178a687246aac4856cc3acd2367223cfea0",
-        "weightsFingerprintSha256": "bf44c054eca071cee234d7c588c00dc172e10156495b7e6e74a20adf390d085e"
+        "weightsFingerprintSha256": "8d0b502c666ddd32097fcf8229a06e437a78280afa5afed7f5d734d7f42911f0"
       },
       "structuralStatus": "candidate",
       "issues": [],

@@ -35,7 +35,7 @@ export const URBAN_BODY_ADAPTERS = Object.freeze({
     measureFrom: Object.freeze({ Spine: 'Spine02' }),
     measureFromByFamily: Object.freeze({ 'cargo-pants': Object.freeze({ Hips: 'Spine02' }) }),
   }),
-  '8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081': adapter('weighted-mesh-camera-roxa', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
+  '148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b': adapter('weighted-mesh-camera-roxa', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
   'c92686566aeef715f5bc9b89f372c1f5bed3a5963f1abeeccb23be2c60a3cc4c': adapter('weighted-mesh-doidinho-bairro', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
   'e5a31ca1d72b6a4cb3231757c6a9ad075c3713e8a32722a665f10b3a7f4a177b': adapter('weighted-mesh-motoca-cachorro-loko', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
   '7714dbb9ff324e0c1fac93de2e0ee2d2fb150c3576eba304840bcaa876ee955e': adapter('bounds-cuca', 'body-local-depth-envelope', { maximumDepth: 1.75 }),
