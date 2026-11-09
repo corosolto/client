@@ -62,7 +62,7 @@ def decide(pr: dict) -> dict:
     common = (
         not pr.get("isDraft", False)
         and not estragacodigo_blocked
-        and pr.get("reviewDecision") != "CHANGES_REQUESTED"
+        and pr.get("reviewDecision") not in {"CHANGES_REQUESTED", "REVIEW_REQUIRED"}
         and pr.get("mergeStateStatus") in {"CLEAN", "HAS_HOOKS"}
         and checks_green
     )
@@ -124,6 +124,7 @@ def selftest() -> int:
         ("label sem regra de revisão não bloqueia",
          com(labels=[{"name": "safe-automerge"}, {"name": "legacy-review-note"}]), True),
         ("mudança pedida não mescla", com(reviewDecision="CHANGES_REQUESTED"), False),
+        ("revisão obrigatória pendente não mescla", com(reviewDecision="REVIEW_REQUIRED"), False),
         ("conflito não mescla", com(mergeStateStatus="DIRTY"), False),
         ("check vermelho não mescla",
          com(statusCheckRollup=[{"__typename": "CheckRun", "conclusion": "FAILURE"}]), False),
