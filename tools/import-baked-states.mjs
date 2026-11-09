@@ -12,6 +12,8 @@ const NEW_ROOT = path.resolve(arg('legacy-out') || '');
 const OLD_ROOT = path.resolve(arg('legacy') || '');
 if (!arg('legacy-out') || !arg('legacy')) throw new Error('uso: node tools/import-baked-states.mjs --legacy-out=<dir> --legacy=<dir>');
 const ANIMS = path.resolve('public/models/anims');
+// Evidência do gate, não asset servido: nada em public/ a consome.
+const EVIDENCIA = path.resolve('tools/eval');
 const STATES = ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'crouchwalk', 'jump', 'idle1h', 'walk1h', 'walkfire'];
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const readJSON = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -179,7 +181,7 @@ const out = {
   bodies: Object.fromEntries(selected.map((b) => [b.id, b])),
   excluded: Object.fromEntries(excluded.map((b) => [b.id, b.regressions])),
 };
-fs.writeFileSync(path.join(ANIMS, 'baked-states.json'), JSON.stringify(out, null, 2) + '\n');
+fs.writeFileSync(path.join(EVIDENCIA, 'baked-states.json'), JSON.stringify(out, null, 2) + '\n');
 const doc = `# Estados assados por corpo\n\nGerado por \`tools/import-baked-states.mjs\` a partir dos packs meshy-28 e do QA Studio. `
   + `Os arquivos \`<id>.glb\` preservam meshopt + rotações int16; as pastas \`<id>/\` guardam o fallback por estado.\n\n`
   + `- ${selected.length} BODIES substituídos; ${excluded.length} excluídos por pelo menos uma métrica QA pior.\n`
@@ -190,6 +192,6 @@ const doc = `# Estados assados por corpo\n\nGerado por \`tools/import-baked-stat
     : `- A cuca permanece fora: o pacote final piora métricas QA apesar de melhorar piso e quadril.\n`)
   + `\nFontes Mixamo/Quaternius e licenças seguem a procedência registrada nos manifests do Studio. `
   + `O índice \`baked-states.json\` contém hashes, velocidades, números de QA e todas as exclusões.\n`;
-fs.writeFileSync(path.join(ANIMS, 'baked-states.SOURCES.md'), doc);
+fs.writeFileSync(path.join(EVIDENCIA, 'baked-states.SOURCES.md'), doc);
 console.log(`ESTADOS-ASSADOS: ${selected.length} substituídos, ${excluded.length} excluídos`);
 console.log(`excluídos: ${excluded.map((b) => b.id).join(', ')}`);

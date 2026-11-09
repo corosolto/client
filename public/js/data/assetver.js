@@ -447,7 +447,6 @@ export const ASSET_REV = Object.freeze({
   "models/anims/ancap/walk.glb": "2efb26cfa4",
   "models/anims/ancap/walk1h.glb": "9adcd87c35",
   "models/anims/ancap/walkfire.glb": "de8bbce42c",
-  "models/anims/baked-states.json": "13f9fb7cae",
   "models/anims/bandeirante.glb": "65160015be",
   "models/anims/bandeirante/crouch.glb": "bf0a6de489",
   "models/anims/bandeirante/crouchwalk.glb": "d50a0195fa",

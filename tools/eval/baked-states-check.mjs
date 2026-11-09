@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto';
 
 const MUT = process.argv.find((a) => a.startsWith('--mutante='))?.split('=')[1] || '';
 if (MUT && MUT !== 'exclusao-sem-metrica') throw new Error(`mutante desconhecido: ${MUT}`);
-const ARQ = path.resolve('public/models/anims/baked-states.json');
+const ARQ = path.resolve('tools/eval/baked-states.json');
 const data = JSON.parse(fs.readFileSync(ARQ, 'utf8'));
 if (MUT === 'exclusao-sem-metrica') {
   if (!data.excluded.bonzo?.length) throw new Error('mutante não aplicou: exclusão do bonzo ausente');
