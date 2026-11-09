@@ -822,14 +822,37 @@ class Netcode {
   }
 
   // Voz de um combatente remoto (rádio ao avistar / comemoração de abate) — é o que devolve o
-  // "papo" dos personagens ao multiplayer.
+  // "papo" dos personagens ao multiplayer. O nó só diz QUEM falou; a régua de quem ouve é a
+  // mesma do `_botCall` do single: até 55 m do jogador, inimigo fala menos (não entrega
+  // tudo) e a linha entra no log do rádio.
   voice(ent, kind) {
-    const fac = this.game._voiceKey(ent.team);
+    const game = this.game, p = game.player;
+    if (kind === 'radio') {
+      if (!this.espectador && ent.pos && p?.pos && ent.pos.distanceTo(p.pos) > 55) return;
+      const mine = !this.espectador && ent.team === p.team;
+      if (!mine && Math.random() < 0.6) return;
+      this._radioLog(ent, mine);
+    }
+    const fac = game._voiceKey(ent.team);
     try {
       this.game.sfx.characterVoice(ent.def?.id, kind, {
         fallbackFaction: fac, interrupt: kind === 'radio',
       });
     } catch { /* ctx mudo */ }
+  }
+  _radioLog(ent, mine) {
+    const radioLog = this.game.el?.radioLog;
+    if (!radioLog) return;
+    const lines = mine
+      ? ['Contato!', 'Tô vendo um aqui!', 'Inimigo na minha frente!', 'Cobre eu que eu vou!']
+      : ['Achei um!', 'Tá aqui, ó!'];
+    const log = document.createElement('div');
+    log.className = 'radio-line';
+    log.style.opacity = mine ? '1' : '0.75';
+    log.textContent = `${ent.name} (RÁDIO): ${lines[(Math.random() * lines.length) | 0]}`;
+    radioLog.appendChild(log);
+    setTimeout(() => log.remove(), 3600);
+    while (radioLog.children.length > 3) radioLog.firstChild.remove();
   }
 
   // Tiro posicional de um remoto: som atenuado por distância, com pan pelo lado da câmera, e

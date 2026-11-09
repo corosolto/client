@@ -534,6 +534,7 @@
     "eval:vm-camera": "node tools/eval/vm-camera-check.mjs --porta=8167",
     "eval:vm-camera-modes": "node tools/eval/vm-camera-modes-check.mjs && node tools/eval/vm-camera-modes-check.mjs --mutante=sem-retorno",
     "eval:mp-paridade": "node tools/eval/mp-paridade-check.mjs",
+    "eval:mp-voz-personagem": "node tools/eval/mp-voz-personagem-check.mjs && ! node tools/eval/mp-voz-personagem-check.mjs --mutante=pool-da-faccao && ! node tools/eval/mp-voz-personagem-check.mjs --mutante=rede-muda",
     "eval:obras": "node tools/eval/obras-check.mjs",
     "eval:obras-browser": "node tools/eval/obras-browser-check.mjs",
     "eval:vm-foundation": "node tools/eval/viewmodel-foundation-check.mjs",

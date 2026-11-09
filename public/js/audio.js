@@ -68,6 +68,8 @@ const LEGACY_VOICE_ALLOWLIST = Object.freeze({
     'audio/a/d983d18b544ff48a.mp3',
   ]),
 });
+// Eventos de fala dentro da partida; `select` fica fora (frase longa da tela de seleção).
+const INGAME_VOICE_EVENTS = Object.freeze(['kill', 'radio', 'round']);
 
 export class Sfx {
   constructor() {
@@ -175,16 +177,28 @@ export class Sfx {
     this._lastVoice = performance.now();
     return true;
   }
-  // Fala autoral do personagem. Sem take próprio ou pool curado, não há voz substituta.
+  /* Fala autoral do personagem. Ordem: take do evento → outro take INGAME do mesmo
+     personagem (kill/radio/round; a de seleção é longa demais) → pool da facção, e este só
+     para quem NÃO tem voz ingame própria no pack. O pool M é a soma dos bordões de todos os
+     Míticos: emprestar dele fazia o Lampião comemorar com a voz do Saci numa sala sem Saci.
+     A forma string (só a fala de seleção, formato legado) não conta como voz ingame — segue
+     no pool até o pack trazer kill/radio estruturados. */
+  _ownIngameVoice(characterId, event) {
+    const own = this.pack?.characterVoice?.[characterId];
+    if (!own || typeof own !== 'object') return null;
+    if (own[event]?.length) return own[event];
+    if (!INGAME_VOICE_EVENTS.includes(event)) return null;   // seleção não pega bordão de kill
+    const outros = INGAME_VOICE_EVENTS.filter((e) => e !== event).flatMap((e) => own[e] || []);
+    return outros.length ? outros : null;
+  }
   characterVoice(characterId, event, { fallbackFaction = null, interrupt = false } = {}) {
     if (this.gameMode === 'horde') return false;
     if (!this.speechEnabled) return false;
     const now = performance.now();
     if (event === 'kill' && this._lastKillVoice > 0 && now - this._lastKillVoice < 3500) return false;
     const rollback = !!LEGACY_VOICE_ALLOWLIST[fallbackFaction];
-    const own = rollback ? null : this.pack?.characterVoice?.[characterId]?.[event];
-    const genericPool = this._voicePool(fallbackFaction);
-    const file = this._pick(own?.length ? own : genericPool);
+    const own = rollback ? null : this._ownIngameVoice(characterId, event);
+    const file = this._pick(own || this._voicePool(fallbackFaction));
     if (file) {
       if (interrupt && this._characterAudio) this._characterAudio.pause();
       const audio = this._sample(file);
