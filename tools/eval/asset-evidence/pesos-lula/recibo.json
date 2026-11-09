@@ -1,0 +1,61 @@
+{
+  "base": "http://127.0.0.1:9437",
+  "origem": "origin/main",
+  "tempo": 0.6,
+  "skins": {
+    "lula-mandrake": {
+      "antigo": "lula-mandrake-d7014fbc5694.glb",
+      "novo": "lula-mandrake-7babfbddcf34.glb",
+      "folha": "tools/eval/asset-evidence/pesos-lula/lula-mandrake.jpg",
+      "bytes": 337045,
+      "quadros": 18,
+      "diferencaMediaPorQuadro": {
+        "shoot · frente 3/4": 9.527,
+        "idle · frente 3/4": 7.449,
+        "walkfire · frente 3/4": 6.5,
+        "shoot · lado": 5.729,
+        "idle · lado": 7.168,
+        "walkfire · lado": 4.67,
+        "shoot · costas 3/4": 10.311,
+        "idle · costas 3/4": 10.696,
+        "walkfire · costas 3/4": 12.402
+      }
+    },
+    "lula-cyborg": {
+      "antigo": "lula-cyborg-dee1c4685b95.glb",
+      "novo": "lula-cyborg-b1739c744789.glb",
+      "folha": "tools/eval/asset-evidence/pesos-lula/lula-cyborg.jpg",
+      "bytes": 381509,
+      "quadros": 18,
+      "diferencaMediaPorQuadro": {
+        "shoot · frente 3/4": 8.346,
+        "idle · frente 3/4": 6.875,
+        "walkfire · frente 3/4": 5.216,
+        "shoot · lado": 6.565,
+        "idle · lado": 6.822,
+        "walkfire · lado": 6.66,
+        "shoot · costas 3/4": 8.141,
+        "idle · costas 3/4": 7.894,
+        "walkfire · costas 3/4": 8.976
+      }
+    },
+    "lula-drip": {
+      "antigo": "lula-drip-b7c49abc6b76.glb",
+      "novo": "lula-drip-881e87facd89.glb",
+      "folha": "tools/eval/asset-evidence/pesos-lula/lula-drip.jpg",
+      "bytes": 349526,
+      "quadros": 18,
+      "diferencaMediaPorQuadro": {
+        "shoot · frente 3/4": 8.838,
+        "idle · frente 3/4": 13.978,
+        "walkfire · frente 3/4": 12.798,
+        "shoot · lado": 10.912,
+        "idle · lado": 12.609,
+        "walkfire · lado": 12.308,
+        "shoot · costas 3/4": 14.031,
+        "idle · costas 3/4": 18.448,
+        "walkfire · costas 3/4": 19.663
+      }
+    }
+  }
+}

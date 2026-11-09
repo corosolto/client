@@ -1,0 +1,28 @@
+# Grade de parâmetros (pose test do Studio, clipes embutidos). ex = excesso somado sobre os limites (aresta 3,5x, costas 3,5x, mão 2,5x); f = amostras reprovadas; s/c = aresta máx sintético/clipe; sh/id/wf = shoot/idle/walkfire; bk = costas; v = vértices vazados braço→perna.
+# aN = anéis do preenchimento; o0 = ombro 0,5→1,0 L, o1 = 1,0→1,5 L, o2 = 1,5→2,5 L; e2 = distância ao ombro com vertical ×2 (testada e rejeitada: piora todas as skins).
+antes          | ex 170.9 f122 s5.2 c8.3 sh4.7 id4.0 wf4.8 bk5.9 v | ex 253.1 f168 s4.1 c8.2 sh4.3 id6.1 wf4.5 bk8.2 v | ex 266.4 f109 s5.7 c8.5 sh6.4 id7.3 wf7.0 bk4.1 v
+k-a1o0e1       | ex 725.3 f180 s6.8 c9.4 sh7.6 id6.3 wf7.8 bk8.8 v0 | ex  35.7 f 55 s3.8 c5.0 sh3.2 id4.6 wf3.1 bk4.1 v0 | ex 370.3 f178 s6.5 c7.8 sh5.7 id5.0 wf5.7 bk7.0 v0
+k-a1o0e2       | ex 816.0 f180 s6.9 c9.5 sh8.2 id6.6 wf8.4 bk9.2 v0 | ex 362.6 f178 s5.0 c7.7 sh5.4 id7.0 wf5.4 bk6.3 v0 | ex 352.7 f178 s6.5 c7.9 sh5.4 id5.2 wf5.4 bk6.7 v0
+k-a1o1e1       | ex   0.6 f  4 s3.2 c3.8 sh2.8 id2.5 wf2.9 bk3.4 v0 | ex 112.9 f 87 s4.1 c6.1 sh4.3 id6.1 wf4.5 bk2.9 v0 | ex 106.5 f177 s5.3 c6.3 sh3.8 id3.8 wf3.7 bk4.9 v0
+k-a1o1e2       | ex 460.8 f178 s6.9 c9.4 sh5.5 id5.4 wf5.6 bk8.1 v0 | ex 120.2 f103 s4.4 c6.1 sh4.3 id6.1 wf4.5 bk4.1 v0 | ex 449.7 f178 s6.4 c7.6 sh6.0 id5.2 wf6.2 bk7.4 v0
+k-a1o2e1       | ex   0.0 f  0 s2.5 c3.4 sh2.5 id2.3 wf2.6 bk3.4 v0 | ex 112.9 f 86 s4.1 c6.1 sh4.3 id6.1 wf4.5 bk2.9 v0 | ex 177.9 f177 s3.5 c5.4 sh4.4 id4.5 wf4.2 bk5.4 v2
+k-a1o2e2       | ex 102.5 f141 s5.6 c7.3 sh3.8 id4.3 wf3.7 bk4.1 v0 | ex 117.4 f114 s4.1 c6.1 sh4.3 id6.1 wf4.5 bk3.8 v0 | ex 188.2 f177 s6.3 c7.5 sh4.1 id4.8 wf3.9 bk5.1 v0
+k-a2o0e1       | ex 706.2 f180 s6.9 c9.4 sh7.3 id6.8 wf8.8 bk8.2 v0 | ex  19.1 f 32 s3.9 c4.7 sh2.9 id4.5 wf3.0 bk4.0 v0 | ex 515.8 f178 s6.4 c8.0 sh6.7 id5.2 wf7.1 bk8.0 v0
+k-a2o0e2       | ex 894.9 f180 s6.9 c9.7 sh8.8 id7.3 wf9.4 bk9.7 v0 | ex 389.6 f178 s4.9 c7.7 sh5.7 id7.7 wf5.6 bk6.4 v0 | ex 445.4 f178 s6.4 c7.7 sh6.0 id5.4 wf6.3 bk7.4 v0
+k-a2o1e1       | ex   2.8 f 24 s3.2 c3.8 sh3.0 id2.8 wf3.1 bk3.7 v0 | ex 102.3 f 85 s4.1 c5.6 sh4.3 id5.6 wf4.5 bk2.9 v0 | ex  50.1 f 47 s5.3 c6.2 sh3.2 id3.3 wf3.6 bk3.8 v0
+k-a2o1e2       | ex 498.4 f178 s6.9 c9.3 sh5.7 id5.4 wf6.0 bk8.1 v0 | ex 109.4 f107 s4.4 c5.6 sh4.3 id5.6 wf4.5 bk4.1 v0 | ex 663.6 f178 s6.5 c8.8 sh7.5 id6.1 wf7.9 bk8.8 v0
+k-a2o2e1       | ex   0.0 f  0 s2.5 c3.2 sh2.6 id2.4 wf2.9 bk3.2 v0 | ex 112.8 f 86 s4.1 c6.1 sh4.3 id6.1 wf4.5 bk3.3 v0 | ex  18.9 f 59 s3.3 c4.4 sh3.4 id3.3 wf3.2 bk4.4 v0
+k-a2o2e2       | ex 131.8 f160 s5.6 c7.3 sh4.1 id4.6 wf4.0 bk4.3 v0 | ex 112.8 f 86 s4.1 c6.1 sh4.3 id6.1 wf4.5 bk2.7 v0 | ex 117.2 f 91 s6.4 c7.4 sh3.7 id4.5 wf4.2 bk3.9 v0
+k-a3o0e1       | ex 748.4 f178 s6.9 c9.9 sh8.3 id7.9 wf9.9 bk8.1 v0 | ex 233.9 f177 s3.9 c7.1 sh4.8 id7.1 wf5.6 bk5.6 v0 | ex 536.7 f178 s6.3 c8.5 sh6.9 id5.3 wf7.4 bk8.5 v0
+k-a3o0e2       | ex 783.7 f180 s6.9 c9.3 sh7.8 id6.8 wf8.4 bk8.7 v0 | ex 422.1 f178 s4.9 c8.4 sh6.0 id7.8 wf6.1 bk6.5 v0 | ex 490.2 f178 s6.3 c8.0 sh6.4 id5.5 wf6.8 bk8.0 v0
+k-a3o1e1       | ex 283.3 f152 s4.3 c8.0 sh6.7 id5.8 wf7.7 bk4.1 v0 | ex  42.0 f 78 s2.9 c4.8 sh4.8 id3.7 wf3.7 bk2.5 v0 | ex  92.4 f 80 s6.5 c6.6 sh3.4 id4.0 wf4.2 bk3.6 v0
+k-a3o1e2       | ex 606.2 f178 s6.9 c9.3 sh7.2 id7.3 wf7.7 bk8.1 v0 | ex  42.6 f 77 s4.4 c4.9 sh4.4 id4.2 wf3.4 bk3.9 v0 | ex 604.5 f178 s6.3 c8.9 sh7.3 id5.6 wf7.8 bk8.9 v0
+k-a3o2e1       | ex  20.3 f 94 s2.5 c4.2 sh3.2 id3.1 wf3.5 bk4.2 v0 | ex 112.8 f 86 s4.1 c6.1 sh4.3 id6.1 wf4.5 bk3.3 v0 | ex   3.7 f 12 s3.2 c4.0 sh2.6 id2.5 wf2.9 bk2.8 v0
+k-a3o2e2       | ex 140.0 f155 s5.6 c7.3 sh3.9 id4.2 wf4.2 bk4.4 v0 | ex 112.8 f 86 s4.1 c6.1 sh4.3 id6.1 wf4.5 bk2.6 v0 | ex 148.2 f130 s6.2 c7.3 sh4.1 id3.8 wf4.6 bk4.8 v0
+k-a4o0e1       | ex 650.3 f178 s6.9 c9.2 sh7.0 id5.8 wf7.7 bk7.8 v0 | ex 143.1 f120 s3.7 c5.5 sh5.2 id5.5 wf5.3 bk4.2 v0 | ex 496.1 f178 s6.2 c8.3 sh6.6 id5.2 wf7.0 bk8.3 v0
+k-a4o0e2       | ex 796.4 f180 s6.9 c9.2 sh7.9 id7.1 wf8.6 bk8.8 v0 | ex 455.4 f178 s4.9 c8.7 sh6.3 id8.1 wf6.5 bk6.6 v0 | ex 449.7 f178 s6.3 c7.8 sh6.1 id5.4 wf6.5 bk7.8 v0
+k-a4o1e1       | ex 227.8 f148 s3.1 c6.6 sh5.7 id5.2 wf6.6 bk4.6 v0 | ex   3.0 f  3 s2.9 c5.1 sh2.8 id2.9 wf2.3 bk3.0 v0 | ex  51.8 f 69 s5.0 c6.0 sh3.4 id3.3 wf3.8 bk3.9 v0
+k-a4o1e2       | ex 519.7 f178 s6.9 c9.2 sh5.9 id5.3 wf6.3 bk7.8 v0 | ex 100.2 f177 s4.4 c5.2 sh4.3 id4.4 wf4.3 bk4.6 v0 | ex 559.2 f178 s6.3 c8.8 sh7.1 id5.3 wf7.5 bk8.8 v0
+k-a4o2e1       | ex  82.8 f 95 s2.5 c5.8 sh4.3 id3.6 wf4.4 bk3.7 v0 | ex 116.6 f142 s4.1 c6.1 sh4.3 id6.1 wf4.5 bk3.6 v0 | ex  50.7 f 54 s5.4 c6.5 sh3.0 id2.7 wf3.8 bk2.3 v0
+k-a4o2e2       | ex 225.8 f161 s5.6 c7.2 sh5.4 id5.2 wf6.1 bk4.6 v0 | ex 112.8 f 86 s4.1 c6.1 sh4.3 id6.1 wf4.5 bk3.0 v0 | ex 141.8 f139 s6.2 c7.4 sh4.2 id3.7 wf4.6 bk4.6 v0
+melhor por skin: {"lula-mandrake":["k-a1o2e1",0],"lula-cyborg":["k-a4o1e1",2.996],"lula-drip":["k-a3o2e1",3.664]}
