@@ -23,6 +23,19 @@ describe('entradas HTML contadas no servidor', () => {
     assert.equal(trafficEntry(req('curl/8.0'))?.kind, 'automation');
   });
 
+  it('navegador interno de app é browser (gente), com o app nomeado e referrer/UTM preservados', () => {
+    const req = (agent) => new Request('https://www.corosolto.com.br/?utm_source=tiktok', { headers: { accept: 'text/html', referer: 'https://www.tiktok.com/', 'user-agent': agent } });
+    const tiktok = 'Mozilla/5.0 (Linux; Android 14; SM-A155M Build/UP1A.231005.007; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/130.0.6723.107 Mobile Safari/537.36 musical_ly_2024.12 JsSdk/1.0 NetType/WIFI Channel/googleplay AppName/musical_ly app_version/38.2.5 ByteLocale/pt-BR ByteFullLocale/pt-BR Region/BR BytedanceWebview/d8a21c6';
+    assert.deepEqual(trafficEntry(req(tiktok)), { landing: '/', referrer: 'www.tiktok.com', utmSource: 'tiktok', kind: 'browser', agent: 'app/tiktok' });
+    assert.equal(trafficEntry(req('Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/21F90 Instagram 334.0.4.32.98 (iPhone15,2; iOS 17_5; pt_BR; pt; scale=3.00; 1179x2556; 606166883)'))?.agent, 'app/instagram');
+    assert.equal(trafficEntry(req('Mozilla/5.0 (Linux; Android 13; SM-G991B Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/129.0.0.0 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/480.0.0.42.75;]'))?.agent, 'app/facebook');
+    assert.equal(trafficEntry(req('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36 LinkedInApp'))?.agent, 'app/linkedin');
+    // Chrome comum continua sem agente: o campo vazio é o que separa navegador aberto de app.
+    assert.deepEqual(trafficEntry(req('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36')), { landing: '/', referrer: 'www.tiktok.com', utmSource: 'tiktok', kind: 'browser', agent: '' });
+    // O preview do Facebook (facebookexternalhit) é bot de preview, nunca app.
+    assert.equal(trafficEntry(req('facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)'))?.kind, 'social-preview');
+  });
+
   it('não conta recursos, API, HEAD ou hosts de preview', () => {
     const entry = (url, method = 'GET', accept = 'text/html') => trafficEntry(new Request(url, { method, headers: { accept } }));
     assert.equal(entry('https://www.corosolto.com.br/api/health'), null);

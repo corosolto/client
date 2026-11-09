@@ -5,6 +5,11 @@ node_modules
 dist/
 .astro/
 .vercel/
+.wrangler/
+# gerados pelo build com ADAPTER=cloudflare (docs/runbooks/MIGRACAO-CLOUDFLARE.md)
+public/_headers
+public/_redirects
+public/img/social-card/
 /artifacts/
 *.tsbuildinfo
 
@@ -14,6 +19,9 @@ dist/
 .env
 .env.*
 !.env.example
+# segredos locais do wrangler dev (mesmo papel do .env)
+.dev.vars
+.dev.vars.*
 
 # ── Áudio ───────────────────────────────────────────────────────────────────
 # Vozes e memes têm direitos incertos; o repositório público leva só o código.

@@ -107,4 +107,4 @@ jobs:
           PREVIEW_URL: ${{ steps.deploy.outputs.url }}
         run: |
           gh pr comment "$PR_NUM" --repo "$GITHUB_REPOSITORY" \
-            --body "🤖 **preview** no ar → $PREVIEW_URL"
+            --body "🤖 **preview** is live → $PREVIEW_URL"
