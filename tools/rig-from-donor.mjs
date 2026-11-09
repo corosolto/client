@@ -173,10 +173,10 @@ if (AJUSTE) {
     const i = nameToIdx.get(nome), j = i == null ? null : jointInfo[i];
     if (!j || j.parentName == null) continue;
     const eixo = new THREE.Vector3().subVectors(j.world, jointInfo[nameToIdx.get(j.parentName)].world).normalize();
-    const soma = new THREE.Vector3(), d = new THREE.Vector3(); let n = 0;
+    const soma = new THREE.Vector3(), d = new THREE.Vector3(), perpendicular = new THREE.Vector3(); let n = 0;
     for (const p of pts) {
       d.subVectors(p, j.world); const ao = d.dot(eixo);
-      if (Math.abs(ao) > FATIA || d.addScaledVector(eixo, -ao).length() > ALCANCE) continue;
+      if (Math.abs(ao) > FATIA || perpendicular.copy(d).addScaledVector(eixo, -ao).length() > ALCANCE) continue;
       soma.add(p); n++;
     }
     if (n < MIN_PONTOS) { console.log(`ajuste: ${nome} sem carne na fatia (${n} pts), fica a junta do doador`); continue; }
