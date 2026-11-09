@@ -1,14 +1,11 @@
 // Rede de segurança e caminho do preview para as rotas que mudaram de casa. Ver docs/APIS.md.
 import type { APIRoute } from 'astro';
 import { proxyApiRequest } from '../../lib/api-proxy.mjs';
+import { backendUrl, envRuntime } from '../../lib/env-runtime';
 import { sendXConversion } from '../../lib/x-conversions';
 import { X_EVENT_IDS } from '../../lib/x-pixel';
 
 export const prerender = false;
-
-const BACKEND = import.meta.env.PUBLIC_API_BASE || 'https://csbrasil-backend-hupd3weo5q-rj.a.run.app';
-// Prova ao backend que a geo/IP vieram deste proxy (api/_lib/borda.mjs no backend).
-const SEGREDO = import.meta.env.API_PROXY_SECRET || '';
 
 const MIGRADAS = new Set([
   'treta',
@@ -45,10 +42,10 @@ const handler: APIRoute = async (context) => {
   }
   const resposta = await proxyApiRequest(
     request,
-    `${BACKEND.replace(/\/$/, '')}/api/${rota}${url.search}`,
+    `${backendUrl().replace(/\/$/, '')}/api/${rota}${url.search}`,
     clientAddress,
     fetch,
-    { segredo: SEGREDO, session: ['treta','social','social-auth','social-avatar','gameplay-upload','register','avatar','mp-ticket','clans','unique'].includes(rota), userAgent: rota === 'unique' },
+    { segredo: envRuntime('API_PROXY_SECRET') || '', session: ['treta','social','social-auth','social-avatar','gameplay-upload','register','avatar','mp-ticket','clans','unique'].includes(rota), userAgent: rota === 'unique' },
   );
   const step = funnelBody?.step;
   if (resposta.ok && (step === 'match_start' || step === 'match_end')) {
