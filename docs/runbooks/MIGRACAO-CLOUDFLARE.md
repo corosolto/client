@@ -122,8 +122,8 @@ O que as fases 2–4 têm que tratar (lista fechada, achada no spike):
    `wrangler secret put` não chega a esse código. Trocar essas leituras por `process.env` (populado pelo `nodejs_compat`) ou
    `astro:env/server` (`getSecret`) antes da fase 3. `[vars]` do `wrangler.toml` entram em `process.env` NO BUILD pelo
    adaptador (`loadWranglerEnv`) e sobrescrevem a env do shell; `.dev.vars` (gitignored) sobrepõe localmente.
-2. Resolvido nesta lane: `build:cf` roda `fetch-audio`, `fetch-decals` e `fetch-viewmodels`; o último
-   depende de `BLOB_READ_WRITE_TOKEN` ou `VM_BLOB_TOKEN` em Actions e avisa quando ausente.
+2. `fetch-viewmodels` com token de Blob (ou R2) no build do Workers; `strip:decalbg`, `assert:assets`, `audio:check` e
+   `check:vercel` do `buildCommand` ainda não estão no `build:cf`.
 3. Cache de SSR (`/api/og`, `/mapa`, sitemap) via `caches.default` no `src/cf/worker.ts`, honrando `s-maxage`.
 4. `/api/badge` sem `sharp`: aceitar o avatar cru (feito) e medir se o recorte circular do resvg basta; senão Cloudflare Images.
 5. Réguas que importam `.vercel/output` (`cla-ssr-check`, `perfil-abas-check`, `profile-*-check`, `ssr-render-check`,
@@ -132,12 +132,8 @@ O que as fases 2–4 têm que tratar (lista fechada, achada no spike):
    na zona (pendência do dono) para a cidade chegar.
 7. `window.__CS_BUILD.sha`: `VERCEL_GIT_COMMIT_SHA` vira `GITHUB_SHA` no build.
 8. O `_headers` tem 16 blocos (teto 100) e a maior linha é a CSP (~700 chars, teto 2000): folga, mas `eval:cfparidade` vigia.
-9. Resolvido nesta lane: `/audio/manifest.json` passa a ser gerado pelo `build:cf` antes do Astro build.
-10. Resolvido nesta lane: `build:cf` baixa áudio e decalques e chama `fetch-viewmodels`. A medição local
-    deste build encontrou 4.577 assets (1,2 GB descompactados; maior arquivo 9,2 MB), abaixo do limite
-    documentado do Workers Static Assets: 20.000 arquivos no plano Free ou 100.000 no Paid, e 25 MiB
-    por arquivo. O preview deve expor `BLOB_READ_WRITE_TOKEN` ou `VM_BLOB_TOKEN` em Actions para incluir
-    os viewmodels privados; sem eles o fetch avisa e usa o legado.
+9. `/audio/manifest.json` respondeu 200 na produção e 404 no preview: incluir o manifesto no `build:cf`
+   ou no pacote de assets antes de tratar a divergência como resolvida.
 
 ## Fase 2: preview por PR
 
@@ -216,4 +212,4 @@ npm run cf:paridade -- --alvo https://<worker>.workers.dev
 | 2026-11-09 | spike | fase 1: `csb-spike` no ar em workers.dev com 18/19 rotas idênticas à produção; adaptador por `ADAPTER`; `_headers`/`_redirects` gerados; middleware portado; OG/badge/profile-card em resvg-wasm nas duas bordas; `eval:cfparidade` e `cf-paridade-check` | dono mergeia; fase 2 começa pelo item 1 da lista (segredos em runtime) e pelo preview por PR |
 | 2026-11-09 | fase 2 | feito: preview por PR no Workers via `cf-preview.yml`, `wrangler.preview.toml`, comentário sticky `cf-preview` e `smoke-cf` opcional; Vercel continua sendo o smoke principal; run 42606435715 publicou a versão e retornou `HTTP 200` | fase 2b: `CF_WORKERS_TOKEN` dedicado configurado; seguir com smoke/paridade e merge |
 | 2026-11-09 | limpeza-lote2 | lote 2 removeu 9 `tools/eval` órfãos e 59 geradores raiz sem chamadores; arquivou históricos e pastas privadas fora do repo; ajustou os consumidores de `plans/` e `references/` | L2 aguarda PR e merge; arquivos `tools/blender/**` e `tools/fabrica/**` seguem intactos por decisão do dono |
-| 2026-11-09 | geo-audio | `geo-lang` usa helper único de borda (Cloudflare prioriza `cf-ipcountry`/`request.cf`, Vercel usa `x-vercel-ip-*`); proxy reconhece `request.cf` e preserva contrato de geo/IP; `cf-paridade-check` compara corpo do endpoint; `build:cf` busca áudio, decalques e viewmodels (com aviso explícito sem `BLOB_READ_WRITE_TOKEN`/`VM_BLOB_TOKEN`); limite de assets registrado | publicar o preview, provar `/audio/manifest.json` 200 e fechar smoke/paridade |
+| 2026-11-09 | — | links compartilháveis do jogo e do site passam a usar `https://corosol.to`; canonical, `og:url`, hreflang, sitemap e JSON-LD permanecem em `www`; régua `eval:shareorigin` com mutantes entra na suite fast | abrir PR para `staging`, acompanhar pr-fast e confirmar a prova de convite no navegador |
