@@ -12,18 +12,19 @@ Astro.response.headers.set(
   'public, max-age=0, s-maxage=300, stale-while-revalidate=900',
 );
 
-let configured = Boolean(supabaseAdmin);
+const db = supabaseAdmin();
+let configured = Boolean(db);
 let totals = { mp: 0, mb: 0 };
 let teamSource: 'telemetry' | 'legacy' = 'telemetry';
 let teamCounts = TIMES.map((t) => ({ ...t, code: t.id, matches: 0, pct: 0 }));
-if (supabaseAdmin) {
-  const { data: points } = await supabaseAdmin.from('player_points').select('matches_p,matches_b');
+if (db) {
+  const { data: points } = await db.from('player_points').select('matches_p,matches_b');
   for (const row of points ?? []) {
     totals.mp += row.matches_p ?? 0;
     totals.mb += row.matches_b ?? 0;
   }
   const queries = await Promise.all(teamCounts.map((t) =>
-    supabaseAdmin.from('match_event').select('*', { count: 'exact', head: true }).eq('faction', t.code),
+    db.from('match_event').select('*', { count: 'exact', head: true }).eq('faction', t.code),
   ));
   if (queries.some((query) => query.error) || !queries.some((query) => (query.count ?? 0) > 0)) {
     teamSource = 'legacy';
