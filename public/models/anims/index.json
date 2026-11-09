@@ -251,10 +251,16 @@
   ],
   "cuca": [
    "idle",
+   "walk",
+   "run",
    "shoot",
    "death",
    "crouch",
-   "idle1h"
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
   ],
   "curupira": [
    "idle",
