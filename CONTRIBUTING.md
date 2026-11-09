@@ -24,29 +24,37 @@ critério de aceite; compare com as issues existentes antes de abrir outra.
 
 ## Regras de PR (valem para todo mundo, CI cobra)
 
-1. **`package.json` e `public/js/version.js` têm que concordar** — o `?v=` do import map
+1. **PR title and description MUST be written in English** — vale para todo autor, humano ou bot.
+   O check `pr-language` reprova texto em português no título ou no corpo; código, comandos e links
+   continuam permitidos. O template já nasce em inglês.
+2. **`package.json` e `public/js/version.js` têm que concordar** — o `?v=` do import map
    (`src/pages/index.astro`) sai da versão no build; se os dois arquivos divergem o
    navegador serve módulo velho do cache e "a correção não chega" — já custou dias
    (ver `public/js/version.js`). O workflow `pr-gates.yml` reprova a divergência. O
    BUMP da versão NÃO é mais tarefa do PR: desde 08/08 o `release.yml` bumpa, taga e
    publica o GitHub Release sozinho — em LOTE (desde 14/10; 13/10 era 2×/dia, antes a cada push).
-2. **Produção publica no LOTE, não em todo merge** (14/10): a integração Git da Vercel na `main`
+3. **Produção publica no LOTE, não em todo merge** (14/10): a integração Git da Vercel na `main`
    continua sendo o caminho (decisão do dono em 08/08), mas o `ignoreCommand`
    (`scripts/ci/vercel-ignore.sh`) só deixa buildar produção no commit `chore(release):`.
    Empilhe os PRs e feche num PR de lote: o `release.yml` sai quando entra na `main` um PR
    com a label `release` ou com branch `lote-*`, `claude/lote-*` ou `*/lote-*`, e só com o
    `pr-fast` verde nesse merge. PR comum não dispara release. PR de lote entra por
    **merge commit** (não squash nem rebase): o job `lote` lê o PR associado ao commit que
-   chegou na `main`, e é o merge commit que aponta para o lote. Hotfix:
-   `gh workflow run release.yml`. O caminho manual por tag (`deploy-prod.yml`) continua
-   de pé como fallback.
-3. **Preview de fork exige revisão humana**: o `cs-brasil-ai-bot` (`preview-bot.yml`)
+   chegou na `main`, e é o merge commit que aponta para o lote. O `csbrasil-bot-daily-release`
+   cria ou atualiza uma única PR `staging → main` por dia às 12:17 UTC; PRs seguras entram em
+   `staging` pelo automerge. Hotfix usa título `hotfix:` e PR baseada/apontada para `main`:
+   o bot compara a ancestry com `main` e `staging`; qualquer commit não publicado vindo de
+   `staging` aplica `needs-hotfix-review`, remove `safe-automerge` e bloqueia release. Com
+   ancestry main-only, recebe `release` e dispara o trem após o merge verde. O dispatch manual
+   (`gh workflow run release.yml`) continua como fallback. O caminho manual por tag
+   (`deploy-prod.yml`) continua de pé como fallback.
+4. **Preview de fork exige revisão humana**: o `cs-brasil-ai-bot` (`preview-bot.yml`)
    classifica o diff sem executá-lo. Um mantenedor revisa o SHA atual e aplica
    `preview-autorizado`; qualquer push revoga a aprovação.
-4. **Quality gates locais antes de abrir**: `npm run check:fast` (segundos) e, se mexeu em
+5. **Quality gates locais antes de abrir**: `npm run check:fast` (segundos) e, se mexeu em
    jogo, `npm run check:deploy` (o mesmo portão que o hook `pre-push` roda). Vermelho
    novo no quality gate = PR volta.
-5. **Nada de travessão `—` no texto do site (`src/`)**. Use hífen com espaços (` - `). O
+6. **Nada de travessão `—` no texto do site (`src/`)**. Use hífen com espaços (` - `). O
    em-dash é a marca de texto gerado por IA e, num jogo que se vende como original, entrega
    a origem em título, meta, OG e nas descrições de arma/personagem. O `travessao:check`
    reprova `—` e `–` em `src/`; escreva ` - ` e siga a vida. Vale para texto escrito por
