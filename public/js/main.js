@@ -2774,9 +2774,11 @@ if (HUB_ENABLED) {
   menuSetup.classList.add('open');
   const mpPanel = $('mp-panel');
   $('hub-mp-host').appendChild(mpPanel);
-  $('mp-panel').querySelector('.mp-corpo').prepend($('mp-quick'));
-  $('mp-quick').after($('mp-amigos'));   // nas duas abas (pública e privada), logo no topo
-  $('mp-panel').querySelector('.mp-corpo').appendChild($('mp-panel').querySelector('.mp-criar'));
+  if (!mpPanel.querySelector('.tp-srv')) {
+    mpPanel.querySelector('.mp-corpo').prepend($('mp-quick'));
+    $('mp-quick').after($('mp-amigos'));   // nas duas abas (pública e privada), logo no topo
+    mpPanel.querySelector('.mp-corpo').appendChild(mpPanel.querySelector('.mp-criar'));
+  }
   const tabs = [...document.querySelectorAll('.hub-tabs [data-hub-tab]')];
   const panes = { jogar: $('hub-play'), loja: $('hub-shop'), ranking: $('hub-ranking'), comunidade: $('hub-community'), sobre: $('hub-about'), feedback: $('hub-feedback'), apoie: $('hub-support') };
   const updateHubTip = () => {

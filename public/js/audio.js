@@ -366,9 +366,19 @@ export class Sfx {
     node.gain.exponentialRampToValueAtTime(end, t0 + a + d);
   }
   _noise(dur) {
-    const n = this.ctx.sampleRate * dur, buf = this.ctx.createBuffer(1, n, this.ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    // Ruído reaproveitado: 6 buffers por duração em vez de um AudioBuffer novo (e milhares de
+    // Math.random) por camada de cada tiro e passo — com 12 bots isso virava lixo de GC.
+    if (this._ruidoCtx !== this.ctx) { this._ruidoCtx = this.ctx; this._ruido = new Map(); }
+    const sr = this.ctx.sampleRate, n = Math.max(1, Math.floor(sr * dur)), banco = this._ruido;
+    let lista = banco.get(n);
+    if (!lista) banco.set(n, lista = []);
+    let buf;
+    if (lista.length < 6) {
+      buf = this.ctx.createBuffer(1, n, sr);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      lista.push(buf);
+    } else buf = lista[(Math.random() * 6) | 0];
     const src = this.ctx.createBufferSource(); src.buffer = buf; return src;
   }
   _osc(type, freq) { const o = this.ctx.createOscillator(); o.type = type; o.frequency.value = freq; return o; }
