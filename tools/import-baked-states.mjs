@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { NodeIO } from '@gltf-transform/core';
-import { LEGENDA, falhasDe, motivosParaManter } from './eval/baked-states-metrics.mjs';
+import { LEGENDA, falhasDe, motivosParaManter, erroDoVeto } from './eval/baked-states-metrics.mjs';
 
 const arg = (name) => process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
 if (!arg('legacy-out') || !arg('legacy')) throw new Error('uso: node tools/import-baked-states.mjs --legacy-out=<dir> --legacy=<dir> [--check]');
@@ -159,6 +159,7 @@ const VETOS = {
   'mandrake/idle': 'eval:select referência do teto: o idle assado baixa o teto global 0.675/23.6 → 0.545/17.5 e reabre a dívida do elenco',
   'pagodeiro/idle1h': 'eval:select referência do teto: o idle1h assado baixa o teto global 0.675/23.6 → 0.545/17.5 e reabre a dívida do elenco',
 };
+const SCRIPTS = readJSON(path.resolve('package.json')).scripts;
 const corpos = {};
 let trocados = 0;
 for (const { id } of bodies) {
@@ -178,6 +179,8 @@ for (const { id } of bodies) {
     const veto = VETOS[`${id}/${state}`] || null;
     const motivos = motivosParaManter(fa, fn);
     if (veto && motivos.length) throw new Error(`${id}/${state}: veto de runtime em estado que a regra já mantém`);
+    const erroVeto = veto && erroDoVeto(veto, SCRIPTS);
+    if (erroVeto) throw new Error(`${id}/${state}: veto de runtime inválido (${erroVeto})`);
     return { state, a, n, fa, fn, veto, troca: !motivos.length && !veto };
   });
   // Corpo que usava o compartilhado e ganha pasta própria: os estados mantidos viram cópia

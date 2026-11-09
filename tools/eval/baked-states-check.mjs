@@ -10,12 +10,13 @@
    Mutantes (cada um tem que reprovar):
      --mutante=pe-afundado  afunda 13 cm o quadril do death do bonzo e regrava o hash (só R3 pega);
      --mutante=ref-global   o glbchars volta a usar só as refs globais;
-     --mutante=regra-ruido  aplica a regra antiga (qualquer número pior): recusa clipe válido. */
+     --mutante=regra-ruido  aplica a regra antiga (qualquer número pior): recusa clipe válido;
+     --mutante=veto-forjado troca o veto do canarinho/idle1h por um cotovelo dentro da faixa. */
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { createHash } from 'node:crypto';
-import { motivosParaManter, motivosRegraRuido } from './baked-states-metrics.mjs';
+import { motivosParaManter, motivosRegraRuido, erroDoVeto } from './baked-states-metrics.mjs';
 import { readGLB, buildScene, worldMats, poseWith, skinVerts, bboxOf } from './tp-mount-probe.mjs';
 import { marcarRef, refsDoCorpo, REFS_PADRAO } from '../../public/js/anim-speed-ref.js';
 
@@ -24,11 +25,13 @@ const MUTANTES = {
   'pe-afundado': (f) => f.startsWith('R3 bonzo/death'),
   'ref-global': (f) => f.startsWith('R4 glbchars'),
   'regra-ruido': (f) => f.startsWith('R1') && f.includes('substituído contra a regra'),
+  'veto-forjado': (f) => f.startsWith('R1 canarinho/idle1h: veto de runtime inválido'),
 };
 if (MUT && !MUTANTES[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 const ANIMS = path.resolve('public/models/anims');
 const data = JSON.parse(fs.readFileSync(path.resolve('tools/eval/baked-states.json'), 'utf8'));
 const indice = JSON.parse(fs.readFileSync(path.join(ANIMS, 'index.json'), 'utf8'));
+const scripts = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8')).scripts;
 let glbchars = fs.readFileSync(path.resolve('public/js/glbchars.js'), 'utf8');
 const S = data.estados;
 const LOCO = ['walk', 'run', 'crouchwalk', 'walk1h'];
@@ -62,6 +65,11 @@ if (MUT === 'pe-afundado') {
   data.corpos.bonzo.e[S.indexOf('death')][1] = h12(bytes);
 }
 if (MUT === 'ref-global') glbchars = glbchars.replace(/this\.refs = refsDoCorpo\([^;]*\);/, 'this.refs = REFS_GLOBAIS;');
+if (MUT === 'veto-forjado') {
+  const e = data.corpos.canarinho.e[S.indexOf('idle1h')];
+  if (!e[4]?.startsWith('eval:postura')) throw new Error('mutante não aplicou: veto do canarinho/idle1h ausente');
+  e[4] = 'eval:postura COTOVELO=80.0° (faixa 55°–150°) com pistol/knife';
+}
 
 /* R1 + R2 */
 const ids = Object.keys(data.corpos);
@@ -86,8 +94,9 @@ for (const id of ids) {
       }
       falhas.push(`R1 ${k}: substituído contra a regra (${motivos.join('; ')})`);
     }
-    // Veto de runtime só mantém clipe que a regra trocaria, e só com régua do jogo + número medido.
-    if (veto !== undefined && !(troca === 0 && !regra(a, n).length && /^eval:[a-z0-9-]+ .*\d/.test(veto))) falhas.push(`R1 ${k}: veto de runtime inválido (${veto})`);
+    // Veto de runtime só mantém clipe que a regra trocaria, com régua do jogo e medição do lado ruim dela.
+    const erroVeto = veto === undefined ? null : troca !== 0 ? 'estado substituído' : regra(a, n).length ? 'estado que a regra já mantém' : erroDoVeto(veto, scripts);
+    if (erroVeto) falhas.push(`R1 ${k}: veto de runtime inválido (${erroVeto})`);
     if (troca === 0 && !motivos.length && veto === undefined) falhas.push(`R1 ${k}: mantido sem motivo — a regra manda substituir`);
     if (veto !== undefined) vetos.push(`${k}: ${veto}`);
     if (troca !== 0 && troca !== 1) falhas.push(`R1 ${k}: decisão inválida ${troca}`);

@@ -66,3 +66,33 @@ export function motivosRegraRuido(pisoAtual, pisoNovo, atual, novo) {
   for (const [check, v] of Object.entries(novo)) if (check !== RIG && check in atual && v > atual[check]) motivos.push(`${check} ${atual[check]} → ${v}`);
   return motivos;
 }
+
+/* Veto de runtime: `eval:<régua> <medição>`. A régua tem que existir em package.json e a
+   medição tem que ter uma das formas abaixo, com os números do lado ruim da própria régua.
+   Retorna o erro, ou null se o veto é válido. */
+const N = '(\\d+(?:\\.\\d+)?)';
+const FORMAS_VETO = {
+  postura: [[new RegExp(`^COTOVELO=${N}° \\(faixa ${N}°–${N}°\\)`), ([v, lo, hi]) => v < lo || v > hi, 'cotovelo fora da faixa']],
+  tpanim3p: [[new RegExp(`^AN1 pente→mão idle/recarga ${N}/${N}→${N}/${N} cm$`), ([idle, , idleNovo]) => idleNovo < idle, 'idle assado mais perto do pente']],
+  select: [
+    [new RegExp(`^dívida piora ${N}/${N}→${N}/${N}$`), ([a, b, c, d]) => c > a || d > b, 'dívida maior com o assado'],
+    [new RegExp(`^${N}/${N} > teto ${N}/${N}$`), ([a, b, ta, tb]) => a > ta || b > tb, 'assado acima do teto'],
+    [new RegExp(`^referência do teto: o \\w+ assado baixa o teto global ${N}/${N} → ${N}/${N} e reabre a dívida do elenco$`), ([a, b, c, d]) => c < a && d < b, 'teto global mais baixo'],
+  ],
+  'death-camera-consistency': [[/^mutante ([a-z-]+) sobrevive com o death assado \(.*: (\d+) de (\d+) clausulas acendem\)$/, ([, acesas, total]) => acesas === 0 && total > 0, 'mutante da régua sobrevive']],
+};
+export function erroDoVeto(veto, scripts) {
+  const m = /^eval:([a-z0-9-]+) (.+)$/.exec(String(veto));
+  if (!m) return 'sem `eval:<régua> <medição>`';
+  const [, regua, medicao] = m;
+  if (!scripts[`eval:${regua}`]) return `régua eval:${regua} não existe em package.json`;
+  if (!FORMAS_VETO[regua]) return `eval:${regua} não é régua de runtime aceita para veto`;
+  for (const [forma, piora, rotulo] of FORMAS_VETO[regua]) {
+    const g = forma.exec(medicao);
+    if (!g) continue;
+    const nums = g.slice(1).map((x) => (/^\d+(\.\d+)?$/.test(x) ? Number(x) : x));
+    if (regua === 'death-camera-consistency' && !scripts[`eval:${regua}`].includes(`--mutante=${nums[0]}`)) return `mutante ${nums[0]} não existe em eval:${regua}`;
+    return piora(nums) ? null : `medição não mostra piora (${rotulo}): ${medicao}`;
+  }
+  return `medição fora das formas de eval:${regua}: ${medicao}`;
+}
