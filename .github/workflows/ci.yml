@@ -220,13 +220,36 @@ jobs:
         run: npm ci
       - name: Contratos visuais de mapas e materiais
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:map-material-finish eval:visual-map-contracts --json-out=tools/eval/out/contratos-visuais-mapas-materiais.json
+        run: node tools/eval/runner.mjs eval:map-material-finish --json-out=tools/eval/out/contratos-visuais-mapas-materiais.json
       - name: Tempos dos contratos visuais de mapas e materiais
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: contratos-visuais-mapas-materiais-tempos-${{ github.run_id }}
           path: tools/eval/out/contratos-visuais-mapas-materiais.json
+          if-no-files-found: warn
+
+  contratos-visuais-visual-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Contratos visuais de geometria e UV
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:visual-map-contracts --json-out=tools/eval/out/contratos-visuais-visual-map.json
+      - name: Tempos dos contratos visuais de geometria e UV
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: contratos-visuais-visual-map-tempos-${{ github.run_id }}
+          path: tools/eval/out/contratos-visuais-visual-map.json
           if-no-files-found: warn
 
   contratos-visuais-campo-uv:
@@ -933,7 +956,7 @@ jobs:
           if-no-files-found: warn
 
   build:
-    needs: [reguas-e-site, mapas-e-site, invariantes-fonte, invariantes-vm, invariantes-bots, invariantes-chars-mat, invariantes-mapas, mantle, equipamento-tp-corpo, equipamento-tp-origem, contratos-visuais-personagens-camera, contratos-visuais-ferro-balcao, contratos-visuais-mapas-materiais, contratos-visuais-campo-uv, contratos-visuais-gameplay-grafite, economia-ak-hud, soundscape, operacao-flavio-core, operacao-flavio-collider-1, operacao-flavio-collider-2, operacao-flavio-collider-3, operacao-flavio-collider-4, operacao-flavio-menu, operacao-flavio-online, operacao-flavio-integracao, operacao-flavio-comportamento, operacao-flavio-escolta]
+    needs: [reguas-e-site, mapas-e-site, invariantes-fonte, invariantes-vm, invariantes-bots, invariantes-chars-mat, invariantes-mapas, mantle, equipamento-tp-corpo, equipamento-tp-origem, contratos-visuais-personagens-camera, contratos-visuais-ferro-balcao, contratos-visuais-mapas-materiais, contratos-visuais-visual-map, contratos-visuais-campo-uv, contratos-visuais-gameplay-grafite, economia-ak-hud, soundscape, operacao-flavio-core, operacao-flavio-collider-1, operacao-flavio-collider-2, operacao-flavio-collider-3, operacao-flavio-collider-4, operacao-flavio-menu, operacao-flavio-online, operacao-flavio-integracao, operacao-flavio-comportamento, operacao-flavio-escolta]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
