@@ -4,10 +4,6 @@
     "p99": 0.675,
     "ruins1e4": 23.6
   },
-  "revisao20261109": {
-    "tetoMedidoNasReferencias": { "p99": 0.545, "ruins1e4": 17.5 },
-    "motivo": "Clipes assados melhoraram mandrake/pagodeiro; o teto global e todos os limites individuais permanecem congelados."
-  },
   "procedencia": {
     "baseAnterior": "f3576db59884e4b6b702a09fd45ef625f9a8ca93",
     "candidatoMedido": "d07749f4162a76e6d7eb0f5bff5ee87f658fdb8b",
