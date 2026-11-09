@@ -21,15 +21,19 @@
           piloto) rigada pelo rig-from-donor DE VERDADE com o mst como doador passa RM1;
           com AJUSTE_JUNTAS=0 (transplante cru, o comportamento antigo) tem que reprovar.
      RM3  em bind o skin devolve a malha crua (≤ 2 mm): junta que anda leva a IBM junto.
+     RM4  modo --elenco: todo GLB REAL de public/models/characters medido; acima de 2,5×
+          só as exceções legadas de ELENCO_EXCECOES, cada uma presa ao teto medido.
 
    Uso:
      node tools/eval/rig-maos-check.mjs <modelo.glb> [...]   [--clipes=<dir>] [--limite=2.5] [--json]
-     node tools/eval/rig-maos-check.mjs --sintetico            (régua do CI: RM1 + RM2 + RM3)
+     node tools/eval/rig-maos-check.mjs --sintetico            (RM1 + RM2 + RM3)
+     node tools/eval/rig-maos-check.mjs --elenco               (RM4)
    Mutantes (--mutante=<nome>, têm que reprovar na cláusula certa):
-     transplante-cru  AJUSTE_JUNTAS=0 no rig do sintético            → RM1
-     ibm-velha        o rig-from-donor move a junta e esquece a IBM  → RM3 */
+     transplante-cru  AJUSTE_JUNTAS=0 no rig do sintético              → RM1
+     ibm-velha        o rig-from-donor move a junta e esquece a IBM    → RM3
+     mao-deslocada    mst real com a junta LeftHand 22 cm fora da mão  → RM4 */
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Document, NodeIO } from '@gltf-transform/core';
@@ -231,13 +235,63 @@ const MUTANTES = {
   'ibm-velha': ['1', 'for (const i of movidas) ibmAjustada.set(', 'for (const i of []) ibmAjustada.set(', 'RM3:'],
 };
 
+/* RM4 — ELENCO REAL: todo GLB de public/models/characters medido com o pack compartilhado.
+   Exceções legadas (medidas em 08/11, nenhuma com o defeito do piloto: desalinho 7-16 cm
+   contra 23 cm) entram com TETO = valor medido; piorar reprova, entrar personagem novo acima
+   de 2,5× reprova. Os GLB do lote30 não estão neste repo (studio-assets, LFS privado). */
+const ELENCO_EXCECOES = {
+  barbudo: 3.27, canarinho: 2.64, cuca: 3.49, dama: 2.55, deputado: 5.13, 'profeta-calcada': 5.15, 'programador-virado': 3.04,
+};
+
+/* Mutante mao-deslocada: o mst real com a junta LeftHand 10 cm acima e 20 cm à frente da
+   carne, IBM recalculada (rig coerente, junta fora da mão) — o defeito do piloto num GLB real. */
+async function maoDeslocada(origem, destino) {
+  const doc = await io.read(origem);
+  const pai = grafo(doc), skin = doc.getRoot().listSkins()[0], juntas = skin.listJoints();
+  const mundo = (n) => { const m = local({ t: n.getTranslation(), r: n.getRotation(), s: n.getScale() }); const p = pai.get(n); return p ? mundo(p).multiply(m) : m; };
+  const mao = juntas.find((j) => j.getName() === 'LeftHand');
+  const alvo = new THREE.Vector3().setFromMatrixPosition(mundo(mao)).add(new THREE.Vector3(0, 0.10, 0.20));
+  mao.setTranslation(alvo.applyMatrix4(mundo(pai.get(mao)).invert()).toArray());
+  const ibm = skin.getInverseBindMatrices(), arr = ibm.getArray().slice();
+  juntas.forEach((j, i) => { for (let n = j; n; n = pai.get(n)) if (n === mao) { arr.set(mundo(j).invert().elements, i * 16); break; } });
+  ibm.setArray(arr);
+  await io.write(destino, doc);
+  return destino;
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
   const opt = (n, d) => args.find((a) => a.startsWith(`--${n}=`))?.split('=').slice(1).join('=') ?? d;
   const LIMITE = +opt('limite', 2.5);
   const clipes = opt('clipes', join(ROOT, 'public/models/anims/mixamo'));
   const mutante = opt('mutante', '');
-  if (mutante && !MUTANTES[mutante]) throw new Error(`mutante desconhecido: ${mutante}`);
+  if (mutante && !MUTANTES[mutante] && mutante !== 'mao-deslocada') throw new Error(`mutante desconhecido: ${mutante}`);
+  if (args.includes('--elenco') || mutante === 'mao-deslocada') {
+    const dir = join(ROOT, 'public/models/characters');
+    const ids = readdirSync(dir).filter((f) => f.endsWith('.glb')).map((f) => f.replace(/\.glb$/, '')).sort();
+    const caminhos = Object.fromEntries(ids.map((id) => [id, join(dir, `${id}.glb`)]));
+    const tmp = mutante ? mkdtempSync(join(tmpdir(), 'rig-maos-elenco-')) : null;
+    const falhas = [];
+    try {
+      if (mutante) caminhos.mst = await maoDeslocada(caminhos.mst, join(tmp, 'mst.glb'));
+      for (const id of ids) {
+        const r = await medirMaos(caminhos[id], { clipes });
+        const pior = Math.max(...r.map((l) => l.pior)), teto = ELENCO_EXCECOES[id];
+        if (r.some((l) => !l.arestas)) falhas.push(`RM4: ${id} sem aresta pesada na mão — não medido`);
+        else if (teto === undefined && pior > LIMITE) falhas.push(`RM4: ${id} estica a mão ${pior.toFixed(2)}× > ${LIMITE}×`);
+        else if (teto !== undefined && pior > teto) falhas.push(`RM4: ${id} piorou: ${pior.toFixed(2)}× > teto registrado ${teto}×`);
+        else if (teto !== undefined && pior <= LIMITE) console.log(`  nota: ${id} agora mede ${pior.toFixed(2)}× ≤ ${LIMITE}× — pode sair de ELENCO_EXCECOES`);
+      }
+    } finally { if (tmp) rmSync(tmp, { recursive: true, force: true }); }
+    if (mutante) {
+      const morde = falhas.length > 0 && falhas.every((f) => f.startsWith('RM4: mst'));
+      console.log(morde ? `mutante ${mutante} reprovado como devia: ${falhas[0]}` : `MUTAÇÃO PASSOU — ${mutante} (${falhas.join(' | ') || 'nenhuma falha'})`);
+      process.exit(morde ? 0 : 1);
+    }
+    if (falhas.length) { for (const f of falhas) console.error(`  ✗ ${f}`); process.exit(1); }
+    console.log(`rig-maos elenco: ${ids.length} GLB reais de public/models/characters medidos; ${ids.length - Object.keys(ELENCO_EXCECOES).length} ≤ ${LIMITE}×, ${Object.keys(ELENCO_EXCECOES).length} exceções legadas dentro do teto registrado.`);
+    process.exit(0);
+  }
   if (args.includes('--sintetico') || mutante) {
     const tmp = mkdtempSync(join(tmpdir(), 'rig-maos-'));
     const falhas = [];
