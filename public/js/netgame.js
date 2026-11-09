@@ -996,6 +996,9 @@ class Netcode {
       const spd = Math.min(6, b._netSpd || 0);
       const fwdYaw = segYaw == null ? corpoYaw : (b._netBot === false ? segYaw + Math.PI : segYaw);
       const fwd = vx * Math.sin(fwdYaw) + vz * Math.cos(fwdYaw);
+      // Lateral à DIREITA do corpo, mesmo sinal do jogador local (game.js): strafe_right
+      // desloca para -X local. Sem isto o remoto de lado nunca escolhe o strafe autoral.
+      const lat = vz * Math.sin(fwdYaw) - vx * Math.cos(fwdYaw);
       if (b.mesh.isGLB) {
         // update(dt, moving, hasTarget, speed, back): a velocidade REAL vai no 4º argumento —
         // com speed=0 o clipe rodava a 0,45× e o boneco deslizava (BUG-113).
@@ -1004,7 +1007,7 @@ class Netcode {
         const mMantle = Number.isFinite(b.mantleF) && b.mantleF > 0 && b.mantleF < 1;
         b.mesh.ctrl.setAr?.(mMantle);
         b.mesh.ctrl.setMantle?.(mMantle ? b.mantleF : null);
-        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25);
+        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25, lat);
       } else poseCharacter(b.mesh.parts, spd, 0, game.time);
     } else {
       b.deadT = (b.deadT || 0) + dt; b._deadShown = true;
