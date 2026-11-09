@@ -64,7 +64,7 @@ remoção de script, JSON inválido ou falha ao ler o diff executa `check:deploy
 só existe localmente: o CI nunca usa diff para pular testes.
 
 `check:fast` e `check:deploy` expandem `tools/eval/suites.mjs` com a sequência anterior preservada.
-Os 17 contratos visuais são distribuídos em quatro jobs sem perda ou duplicação. O pai local
+Os 17 contratos visuais são distribuídos em cinco jobs sem perda ou duplicação. O pai local
 `eval:operacao-flavio` continua sequencial e completo; no CI, os 50 mutantes de collider usam
 quatro shards disjuntos, com core, menu, online, integração, comportamento e escolta em jobs separados.
 O `soundscape` é um job obrigatório separado no `build`, então falha externa de áudio não invalida

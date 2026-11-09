@@ -174,13 +174,36 @@ jobs:
         run: npm ci
       - name: Contratos visuais de personagens e câmera
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:ferro-balcao eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:knife-skin-markings --json-out=tools/eval/out/contratos-visuais-personagens-camera.json
+        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:knife-skin-markings --json-out=tools/eval/out/contratos-visuais-personagens-camera.json
       - name: Tempos dos contratos visuais de personagens e câmera
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: contratos-visuais-personagens-camera-tempos-${{ github.run_id }}
           path: tools/eval/out/contratos-visuais-personagens-camera.json
+          if-no-files-found: warn
+
+  contratos-visuais-ferro-balcao:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Contrato visual de ferro e balcão
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:ferro-balcao --json-out=tools/eval/out/contratos-visuais-ferro-balcao.json
+      - name: Tempos do contrato visual de ferro e balcão
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: contratos-visuais-ferro-balcao-tempos-${{ github.run_id }}
+          path: tools/eval/out/contratos-visuais-ferro-balcao.json
           if-no-files-found: warn
 
   contratos-visuais-mapas-materiais:
@@ -910,7 +933,7 @@ jobs:
           if-no-files-found: warn
 
   build:
-    needs: [reguas-e-site, mapas-e-site, invariantes-fonte, invariantes-vm, invariantes-bots, invariantes-chars-mat, invariantes-mapas, mantle, equipamento-tp-corpo, equipamento-tp-origem, contratos-visuais-personagens-camera, contratos-visuais-mapas-materiais, contratos-visuais-campo-uv, contratos-visuais-gameplay-grafite, economia-ak-hud, soundscape, operacao-flavio-core, operacao-flavio-collider-1, operacao-flavio-collider-2, operacao-flavio-collider-3, operacao-flavio-collider-4, operacao-flavio-menu, operacao-flavio-online, operacao-flavio-integracao, operacao-flavio-comportamento, operacao-flavio-escolta]
+    needs: [reguas-e-site, mapas-e-site, invariantes-fonte, invariantes-vm, invariantes-bots, invariantes-chars-mat, invariantes-mapas, mantle, equipamento-tp-corpo, equipamento-tp-origem, contratos-visuais-personagens-camera, contratos-visuais-ferro-balcao, contratos-visuais-mapas-materiais, contratos-visuais-campo-uv, contratos-visuais-gameplay-grafite, economia-ak-hud, soundscape, operacao-flavio-core, operacao-flavio-collider-1, operacao-flavio-collider-2, operacao-flavio-collider-3, operacao-flavio-collider-4, operacao-flavio-menu, operacao-flavio-online, operacao-flavio-integracao, operacao-flavio-comportamento, operacao-flavio-escolta]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

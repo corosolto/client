@@ -130,7 +130,7 @@ test('seleção de mapa desconhecida ou duplicada falha antes do harness', () =>
 test('validador real cobre os 17 contratos visuais uma única vez e na ordem dos shards', () => {
   const r = executar(PORTAO_INTEIRO, []);
   assert.equal(r.status, 0, r.stderr || r.stdout);
-  assert.match(r.stdout, /PI4 17 contratos visuais únicos, ordenados e cobertos pelos 4 shards/);
+  assert.match(r.stdout, /PI4 17 contratos visuais únicos, ordenados e cobertos pelos \d+ shards/);
   const duplicado = executar(PORTAO_INTEIRO, ['--mutante=contrato-visual-duplicado']);
   assert.equal(duplicado.status, 1, duplicado.stderr || duplicado.stdout);
   assert.match(duplicado.stdout, /eval:knife-skin-markings: esperado uma execução no CI, encontradas 2/);

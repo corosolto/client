@@ -135,7 +135,8 @@ const GRUPOS_COLLIDER_PI4 = COLLIDER_SHARDS.map((indice) => [
 const GRUPOS_PI4 = [
   ['economia-ak-hud', 'TRETA$ da partida segue o CS', ['eval:economia']],
   ['economia-ak-hud', 'TRETA$ da partida dentro do Game real', ['eval:economia-jogo']],
-  ['contratos-visuais-personagens-camera', 'Contratos visuais de personagens', ['eval:shot-final-pose', 'eval:authored-locomotion', 'eval:character-normal-quality', 'eval:ferro-balcao', 'eval:normal-only-fit-equivalence', 'eval:tp-world-contract', 'eval:skin-profile-flow', 'eval:death-camera-consistency', 'eval:knife-skin-markings']],
+  ['contratos-visuais-personagens-camera', 'Contratos visuais de personagens', ['eval:shot-final-pose', 'eval:authored-locomotion', 'eval:character-normal-quality', 'eval:normal-only-fit-equivalence', 'eval:tp-world-contract', 'eval:skin-profile-flow', 'eval:death-camera-consistency', 'eval:knife-skin-markings']],
+  ['contratos-visuais-ferro-balcao', 'Contrato visual de ferro e balcão', ['eval:ferro-balcao']],
   ['contratos-visuais-mapas-materiais', 'Contratos visuais de mapas', ['eval:map-material-finish', 'eval:visual-map-contracts']],
   ['contratos-visuais-campo-uv', 'Contrato visual de campo UV', ['eval:campo-uv']],
   ['contratos-visuais-gameplay-grafite', 'Contratos visuais de gameplay', ['eval:grafite-curation', 'eval:match-pickups', 'eval:net-flash-disable', 'eval:grafite-atual:prova', 'eval:piscina-graffiti-batch']],
@@ -232,9 +233,9 @@ try {
   const gruposVisuais = GRUPOS_PI4.filter(([job]) => job.startsWith('contratos-visuais-'));
   const comandosVisuais = gruposVisuais.flatMap(([, , comandos]) => comandos);
   const coberturaOrdenada = [...comandosVisuais].sort((a, b) => COMANDOS_VISUAIS_BASE.indexOf(a) - COMANDOS_VISUAIS_BASE.indexOf(b));
-  if (gruposVisuais.length !== 4 || new Set(comandosVisuais).size !== COMANDOS_VISUAIS_BASE.length
+  if (new Set(comandosVisuais).size !== COMANDOS_VISUAIS_BASE.length
       || JSON.stringify(coberturaOrdenada) !== JSON.stringify(COMANDOS_VISUAIS_BASE)) {
-    falhas.push(`PI4 contratos visuais: esperados 4 shards e a união ordenada de ${COMANDOS_VISUAIS_BASE.length} comandos da base; encontrados ${gruposVisuais.length} shards e ${comandosVisuais.length} comandos (${new Set(comandosVisuais).size} únicos)`);
+    falhas.push(`PI4 contratos visuais: esperada a união ordenada de ${COMANDOS_VISUAIS_BASE.length} comandos da base; encontrados ${comandosVisuais.length} comandos (${new Set(comandosVisuais).size} únicos) em ${gruposVisuais.length} shards`);
   }
   for (const [job, , comandos] of gruposVisuais) {
     const ordemGlobal = COMANDOS_VISUAIS_BASE.filter((comando) => comandos.includes(comando));
