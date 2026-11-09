@@ -35,7 +35,7 @@ jobs:
             echo "diff indisponível: preview roda"
             exit 0
           fi
-          if grep -Eq '^(src/|public/|vercel\.json$|package\.json$|package-lock\.json$|astro\.config\.mjs$|middleware\.js$|scripts/fetch-|scripts/copy-wasm\.mjs$|scripts/prune-dist\.mjs$|scripts/aeo\.mjs$|tools/gen-asset-rev\.mjs$|tools/viewmodels/prepare_precision_preview\.mjs$|tools/audio/|tools/strip-decal-bg\.mjs$|CHANGELOG\.md$)' "$RUNNER_TEMP/arquivos.txt"; then
+          if grep -Eq '^(src/|public/|vercel\.json$|wrangler\.preview\.toml$|package\.json$|package-lock\.json$|astro\.config\.mjs$|middleware\.js$|scripts/fetch-|scripts/copy-wasm\.mjs$|scripts/prune-dist\.mjs$|scripts/aeo\.mjs$|tools/gen-asset-rev\.mjs$|tools/viewmodels/prepare_precision_preview\.mjs$|tools/audio/|tools/strip-decal-bg\.mjs$|CHANGELOG\.md$)' "$RUNNER_TEMP/arquivos.txt"; then
             echo "rodar=true" >> "$GITHUB_OUTPUT"
             echo "site mudou: preview roda"
           else
