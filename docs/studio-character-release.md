@@ -13,7 +13,7 @@ publicação em R2. Cada um desses é um PR próprio.
 
 | Arquivo | Papel |
 | --- | --- |
-| `public/js/data/content-releases.js` | Pins: `kind`, `id`, `version`, `manifestSha256`, `manifestUrl` em `/packs/...`, `minRuntime` (comparado à `VERSION`, não ao `SIM_HASH`), `skeleton: "meshy-28"`; os 11 estados, as juntas meshy-28 e o vocabulário de clipes extras (`STUDIO_EXTRA_CLIPS` + prefixos `emote_`). |
+| `public/js/data/content-releases.js` | Pins: `kind`, `id`, `version`, `manifestSha256`, `manifestUrl` em `/packs/...`, `minRuntime` (comparado à `VERSION`, não ao `SIM_HASH`), `skeleton: "meshy-28"`; os 11 estados, as juntas meshy-28 e o vocabulário de clipes extras (`STUDIO_EXTRA_CLIPS`, 68 nomes — 23 do núcleo do contrato + 45 propostos pela biblioteca de conversão de animações — + prefixos `emote_`). |
 | `public/js/studio-character.js` | Resolvedor só de navegador. `resolveStudioCharacter(pin, { fetchImpl })` → Blob URLs verificadas do modelo, dos 11 clipes, dos clipes extras opcionais e das prévias; extras expostos no Map `extraClipUrls` (nome → `{url, sha256, duration, loop, rootMotion}`). |
 | `public/js/glbchars.js` | Adaptador: ids fixados entram no `GLB_CHARS`; `preloadCharacterAssets()` carrega modelo e os 11 clipes SÓ das Blob URLs (sem `animIndex`, GLB mesclado, pasta `models/anims/<id>/` ou clipe compartilhado), tudo ou nada; origem do corpo `{kind:'studio', sha256, manifestSha256}`, que nunca casa com luva pública. |
 | `scripts/studio-pack-serving.mjs` | Handler Node de `/packs/` montado no dev server do Astro (plugin Vite) e em `tools/eval/serve.mjs`. Lê `STUDIO_PACK_ROOT`; sem ela, 404. |

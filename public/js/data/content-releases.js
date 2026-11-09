@@ -7,13 +7,29 @@ export const STUDIO_CHARACTER_STATES = Object.freeze([
 ]);
 
 // Clipes extras opcionais do pacote (animations.extra do Studio): nomes fixos do vocabulário
-// ou prefixo emote_ com pelo menos um sufixo. Autoritativo: corosolto/studio tools/lib/character-pack.mjs.
+// ou prefixo emote_ com pelo menos um sufixo. Autoritativo: corosolto/studio tools/lib/character-pack.mjs
+// (68 nomes: coreExtraClipNames + converterExtraClipNames — os 45 últimos espelham a biblioteca de
+// conversão de animações, feat/animation-conversion-20261109, na mesma ordem ordenada do Studio).
 export const STUDIO_EXTRA_CLIPS = Object.freeze([
+  // Núcleo do contrato (locomoção cardinal, armas, dano, melee, resultado de rodada).
   'strafe_left', 'strafe_right', 'walk_back', 'run_back',
   'strafe_left_pistol', 'strafe_right_pistol', 'walk_back_pistol',
   'reload_rifle', 'reload_pistol', 'draw_rifle', 'holster_rifle', 'draw_pistol', 'holster_pistol',
   'hit_front', 'hit_back', 'hit_left', 'hit_right', 'hit_head',
   'grenade_throw', 'knife_idle', 'knife_stab', 'victory', 'defeat',
+  // Nomes propostos pela biblioteca de conversão (diagonais <gait>_<fwd|back>_<left|right>,
+  // sprint, agachado, viradas, fases do salto, mortes por direção etc.), em ordem alfabética.
+  'crouch_aim', 'crouch_pistol', 'crouch_turn_left', 'crouch_turn_right',
+  'crouchwalk_back', 'crouchwalk_back_left', 'crouchwalk_back_right',
+  'crouchwalk_fwd_left', 'crouchwalk_fwd_right', 'crouchwalk_left', 'crouchwalk_right',
+  'death_crouch', 'death_front', 'death_headshot_back', 'death_headshot_front', 'death_right',
+  'idle_aim', 'jump_land', 'jump_loop', 'jump_pistol', 'jump_start',
+  'run_back_left', 'run_back_pistol', 'run_back_right', 'run_fwd_left', 'run_fwd_right',
+  'run_left', 'run_pistol', 'run_right',
+  'shoot_crouch', 'shoot_pistol', 'sprint', 'sprint_back', 'sprint_back_left', 'sprint_back_right',
+  'sprint_fwd_left', 'sprint_fwd_right', 'sprint_left', 'sprint_right',
+  'turn_left', 'turn_right',
+  'walk_back_left', 'walk_back_right', 'walk_fwd_left', 'walk_fwd_right',
 ]);
 export const STUDIO_EXTRA_CLIP_PREFIXES = Object.freeze(['emote_']);
 export const isStudioExtraClipName = (name) =>
