@@ -284,15 +284,15 @@ jobs:
           issue = json.load(open('/tmp/issue.json'))
           title = f"bot: bootstrap fix for #{issue['number']} {issue['title']}"
           body = f"""## Summary
-          - bootstrap PR aberta pelo csbrasil-bot a partir da issue #{issue['number']}
+          - bootstrap PR opened by csbrasil-bot from issue #{issue['number']}
           - issue: {issue['url']}
 
-          ## Context
-          {issue.get('body') or '(sem descrição)'}
+          ## Original issue (verbatim)
+          {issue.get('body') or '(no description provided)'}
 
           ## Notes
-          - PR draft inicial; implementação ainda precisa ser adicionada
-          - aberta apenas para issues etiquetadas `bot-fixable`
+          - initial draft PR; implementation still needs to be added
+          - opened only for issues labeled `bot-fixable`
           """
           subprocess.run([
               'gh', 'pr', 'create',
