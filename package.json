@@ -14,6 +14,9 @@
     "eval:social-boot-guest": "node tools/eval/social-boot-guest-check.mjs --mutantes",
     "eval:hub-identity": "node tools/eval/hub-identity-check.mjs",
     "build": "node tools/viewmodels/prepare_precision_preview.mjs --assert-clean && npm run copy-wasm && npm run gen:assetrev && astro build && node scripts/prune-dist.mjs",
+    "//build:cf": "Spike Cloudflare Workers (docs/runbooks/MIGRACAO-CLOUDFLARE.md): gera _headers/_redirects de vercel.json e builda com ADAPTER=cloudflare; deploy com `npx wrangler deploy`.",
+    "build:cf": "node tools/cf/gen-headers-redirects.mjs && ADAPTER=cloudflare npm run build",
+    "eval:cfparidade": "node tools/eval/cf-paridade-estatica-check.mjs && for m in sem-header sem-redirect; do ! node tools/eval/cf-paridade-estatica-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
     "release": "node scripts/release.mjs",
     "setup": "node scripts/setup.mjs",
     "prepare": "node scripts/install-git-hooks.mjs",
@@ -919,6 +922,7 @@
     "undici": "^8.12.2"
   },
   "devDependencies": {
+    "@astrojs/cloudflare": "^14.3.4",
     "@gltf-transform/core": "^4.4.1",
     "@gltf-transform/extensions": "^4.4.1",
     "@gltf-transform/functions": "^4.4.1",
@@ -930,7 +934,8 @@
     "linkedom": "0.18.12",
     "meshoptimizer": "^1.2.0",
     "ndarray-pixels": "^5.2.0",
-    "playwright": "^1.62.1"
+    "playwright": "^1.62.1",
+    "wrangler": "^4.158.0"
   },
   "packageManager": "yarn@4.18.0+sha512.fcb8716fe7cd0eece141ffc18b92193a9df9204c1ba83189c288835223fc0bbe64af473bab0d5e9927a7daeb5caf2bb07eb2787cc9338ca040ea125f2a1f2f7e"
 }
