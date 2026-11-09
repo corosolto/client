@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Baixa o pacote de áudio para public/audio/. O pack pode vir de release pública ou do
 # Blob privado incorporado ao build; em ambos os casos os bytes continuam fora do Git.
+# Cache de build: o zip fica em node_modules/.cache/csb-packs/ (a Vercel guarda a pasta
+# entre builds) sob chave URL+sha; sem a pasta (máquina local) o script baixa como antes.
 set -e
 cd "$(dirname "$0")/.."
 
@@ -48,11 +50,22 @@ if [ -f "$DEST/manifest.json" ] && [ "${VERCEL:-}" != "1" ]; then
   exit 0
 fi
 mkdir -p "$DEST"
-echo "Baixando pacote de áudio de: $URL"
-curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL \
-  "${AUTH_ARGS[@]}" "$URL" -o /tmp/csbrasil-audio.zip
-if [ -n "${AUDIO_PACK_SHA256:-}" ]; then
-  printf '%s  %s\n' "$AUDIO_PACK_SHA256" /tmp/csbrasil-audio.zip | shasum -a 256 -c -
+CACHE_DIR="node_modules/.cache/csb-packs"
+if [ "${VERCEL:-}" = "1" ]; then mkdir -p "$CACHE_DIR"; fi
+CACHE_ZIP="$CACHE_DIR/audio-$(printf '%s' "${AUDIO_PACK_SHA256:-}${URL}" | tr -c 'A-Za-z0-9._-' '_' | cut -c -180).zip"
+confere_sha() {
+  [ -z "${AUDIO_PACK_SHA256:-}" ] || printf '%s  %s\n' "$AUDIO_PACK_SHA256" "$1" | shasum -a 256 -c -
+}
+if [ -f "$CACHE_ZIP" ] && confere_sha "$CACHE_ZIP"; then
+  echo "Pacote de áudio do cache de build: $CACHE_ZIP"
+  cp "$CACHE_ZIP" /tmp/csbrasil-audio.zip
+else
+  rm -f "$CACHE_ZIP"
+  echo "Baixando pacote de áudio de: $URL"
+  curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL \
+    "${AUTH_ARGS[@]}" "$URL" -o /tmp/csbrasil-audio.zip
+  confere_sha /tmp/csbrasil-audio.zip
+  if [ -d "$CACHE_DIR" ]; then cp /tmp/csbrasil-audio.zip "$CACHE_ZIP"; fi
 fi
 unzip -o -q /tmp/csbrasil-audio.zip -d "$DEST/"
 [ -f "$DEST/manifest.json" ] || cp "$DEST/manifest.example.json" "$DEST/manifest.json"
