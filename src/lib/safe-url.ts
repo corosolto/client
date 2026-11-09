@@ -1,3 +1,4 @@
+import { envRuntime } from './env-runtime';
 // Allowlist de URLs de avatar + fetch com trava de SSRF.
 //
 // O FURO QUE ISSO FECHA
@@ -46,7 +47,7 @@ const AVATAR_HOSTS = new Set([
 // O bucket de avatares é o próprio Supabase do projeto; o host sai da env, não
 // é escrito à mão, então staging e produção funcionam sem editar esta lista.
 function supabaseHost(): string | null {
-  try { return new URL(import.meta.env.SUPABASE_URL || '').hostname || null; }
+  try { return new URL(envRuntime('SUPABASE_URL') || '').hostname || null; }
   catch { return null; }
 }
 

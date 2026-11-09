@@ -1,3 +1,4 @@
+import { envRuntime } from './env-runtime';
 import { X_EVENT_PREFIX, X_PIXEL_ID } from './x-pixel';
 
 const ENDPOINT = `https://ads-api.x.com/12/measurement/conversions/${X_PIXEL_ID}`;
@@ -93,7 +94,7 @@ async function payloadFor(input: XConversionInput) {
 }
 
 export async function sendXConversions(inputs: XConversionInput[]): Promise<XConversionResult> {
-  const token = text(import.meta.env.X_PIXEL_TOKEN);
+  const token = text(envRuntime('X_PIXEL_TOKEN'));
   if (!token) return { ok: false, status: null, reason: 'not_configured' };
   if (!inputs.length) return { ok: false, status: null, reason: 'invalid_input' };
 
