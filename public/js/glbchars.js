@@ -1320,6 +1320,15 @@ class CharController {
         }
       }
     }
+    const drawArm = this._drawT > 0 && !this.dead && this.lod < 1 && !this.emotando && this.corpo?.get('RightArm');
+    if (drawArm?.parent) {
+      this._drawBone = drawArm;
+      this._drawBase.copy(drawArm.quaternion);
+      this.group.updateMatrixWorld(true);
+      drawArm.parent.getWorldQuaternion(_pq).invert();
+      _axisF.set(Math.cos(this.group.rotation.y), 0, -Math.sin(this.group.rotation.y)).applyQuaternion(_pq).normalize();
+      drawArm.quaternion.premultiply(_qLean.setFromAxisAngle(_axisF, Math.sin(Math.PI * this._drawT / 0.32) * 0.3));
+    }
     // IK da mão de apoio (FASE 2): palma L no guarda-mão da arma montada (só 2 mãos).
     // Roda depois do mixer/pose — corrige o contato por arma sem tocar na orientação.
     if (this.ikL && !this.dead && this.lod < 1 && !this.emotando) {
@@ -1477,12 +1486,6 @@ class CharController {
       }
       const rk = this._fireDur > 0 ? 1 - this._fireT / this._fireDur : 0;
       if (rk > 0.02) _deltaMundo(torso.spines[0], cosY, 0, -sinY, -rk * 0.09);
-      const drawArm = this._drawT > 0 && this.lod < 1 && !this.emotando && this.corpo?.get('RightArm');
-      if (drawArm) {
-        this._drawBone = drawArm;
-        this._drawBase.copy(drawArm.quaternion);
-        _deltaMundo(drawArm, cosY, 0, -sinY, Math.sin(Math.PI * this._drawT / 0.32) * 0.3);
-      }
       if (this.reloadK > 0.05) {
         const k = this.reloadK;
         // mergulho do tronco em torno da direita do corpo: os olhos acompanham o pente
