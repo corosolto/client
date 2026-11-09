@@ -32,7 +32,8 @@ fi
 mkdir -p "$DEST"
 CACHE_DIR="node_modules/.cache/csb-packs"
 if [ "${VERCEL:-}" = "1" ]; then mkdir -p "$CACHE_DIR"; fi
-CACHE_ZIP="$CACHE_DIR/decals-$(printf '%s' "$URL" | tr -c 'A-Za-z0-9._-' '_' | cut -c -180).zip"
+# Chave = sha256 da URL inteira: URL longa não trunca nem colide com outra de prefixo igual.
+CACHE_ZIP="$CACHE_DIR/decals-$(printf '%s' "$URL" | shasum -a 256 | cut -d' ' -f1).zip"
 if [ -f "$CACHE_ZIP" ] && unzip -tq "$CACHE_ZIP" >/dev/null 2>&1; then
   echo "Decalques do cache de build: $CACHE_ZIP"
   cp "$CACHE_ZIP" /tmp/csbrasil-decals.zip

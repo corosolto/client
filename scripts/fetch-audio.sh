@@ -52,7 +52,8 @@ fi
 mkdir -p "$DEST"
 CACHE_DIR="node_modules/.cache/csb-packs"
 if [ "${VERCEL:-}" = "1" ]; then mkdir -p "$CACHE_DIR"; fi
-CACHE_ZIP="$CACHE_DIR/audio-$(printf '%s' "${AUDIO_PACK_SHA256:-}${URL}" | tr -c 'A-Za-z0-9._-' '_' | cut -c -180).zip"
+# Chave = sha256 de (digest + URL inteira): URL longa não trunca nem colide com outra de prefixo igual.
+CACHE_ZIP="$CACHE_DIR/audio-$(printf '%s' "${AUDIO_PACK_SHA256:-}${URL}" | shasum -a 256 | cut -d' ' -f1).zip"
 confere_sha() {
   [ -z "${AUDIO_PACK_SHA256:-}" ] || printf '%s  %s\n' "$AUDIO_PACK_SHA256" "$1" | shasum -a 256 -c -
 }
