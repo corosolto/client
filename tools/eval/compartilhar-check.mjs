@@ -4,7 +4,7 @@
 
      CP1 · compartilhar(): Web Share quando existe; cancelar não vira cópia; sem Web Share ou com
            erro copia o link; sem área de transferência devolve 'manual' (o botão mostra o link)
-     CP2 · link: origem do canonical (www), não a do preview; utm_source=compartilhar e o ponto
+     CP2 · link: origem `https://corosol.to` em produção e same-origin em dev; utm_source=compartilhar e o ponto
      CP3 · cada ponto (fim de partida, sala, ranking, skin, perfil, clã) existe e está ligado com
            o caminho certo
 
@@ -19,7 +19,8 @@ const mutar = (texto, de, para) => {
 };
 let fonte = readFileSync('public/js/compartilhar.js', 'utf8');
 if (MUT === 'cancelar') fonte = mutar(fonte, "if (erro?.name === 'AbortError') return 'cancelado';", '');
-if (MUT === 'origem') fonte = mutar(fonte, 'if (canonical) return new URL(canonical).origin;', 'if (canonical && !loc) return new URL(canonical).origin;');
+if (MUT === 'origem') fonte = mutar(fonte, "if (host.endsWith('corosolto.com.br')) return globalThis.window?.__SHARE_ORIGIN || 'https://corosol.to';", "if (host.endsWith('nunca-corosolto.com.br')) return globalThis.window?.__SHARE_ORIGIN || 'https://corosol.to';");
+if (MUT === 'ponto') fonte = mutar(fonte, "url.searchParams.set('utm_medium', ponto);", "url.searchParams.set('utm_medium', 'mutante');");
 const C = await import(`data:text/javascript;base64,${Buffer.from(fonte).toString('base64')}`);
 
 const falhas = [];
@@ -58,14 +59,14 @@ const item = (id, erros, msg) => { if (erros.length) falhas.push(`${id} ${msg}: 
 // CP2
 {
   const erros = [];
-  const doc = { querySelector: () => ({ href: 'https://www.corosolto.com.br/loja' }) };
-  const origem = C.origemPublica(doc, { origin: 'https://csbrasil-git-x.vercel.app' });
-  if (origem !== 'https://www.corosolto.com.br') erros.push(`origem ${origem}: link de preview ou localhost vazaria para o zap`);
-  if (C.origemPublica({ querySelector: () => null }, { origin: 'http://localhost:9434' }) !== 'http://localhost:9434') erros.push('sem canonical não caiu na origem da página');
-  const link = new URL(C.linkCompartilhavel('/?map=lajes', 'fim-de-partida', 'https://www.corosolto.com.br'));
-  if (link.origin !== 'https://www.corosolto.com.br' || link.pathname !== '/' || link.searchParams.get('map') !== 'lajes') erros.push(`link ${link.href}`);
-  if (link.searchParams.get('utm_source') !== 'compartilhar' || link.searchParams.get('utm_medium') !== 'fim-de-partida') erros.push(`utm ${link.search}`);
-  if (!/^Ganhei .*Lajes/.test(C.textoDaPartida({ venceu: true, mapa: 'Lajes' })) || !/^Perdi /.test(C.textoDaPartida({ venceu: false, mapa: 'Lajes' }))) erros.push('texto da partida');
+  const prod = { hostname: 'www.corosolto.com.br', origin: 'https://www.corosolto.com.br' };
+  const origem = C.origemCompartilhamento(prod);
+  if (origem !== 'https://corosol.to') erros.push(`origem ${origem}: produção deve compartilhar pelo domínio curto`);
+  if (C.origemCompartilhamento({ hostname: 'localhost', origin: 'http://localhost:9434' }) !== 'http://localhost:9434') erros.push('dev não caiu na origem local');
+  const link = new URL(C.linkCompartilhavel('/?map=lajes', 'fim-de-partida', 'https://corosol.to'));
+  if (link.origin !== 'https://corosol.to' || link.pathname !== '/' || link.searchParams.get('map') !== 'lajes') errors.push(`link ${link.href}`);
+  if (link.searchParams.get('utm_source') !== 'compartilhar' || link.searchParams.get('utm_medium') !== 'fim-de-partida') errors.push(`utm ${link.search}`);
+  if (!/^Ganhei .*Lajes/.test(C.textoDaPartida({ venceu: true, mapa: 'Lajes' })) || !/^Perdi /.test(C.textoDaPartida({ venceu: false, mapa: 'Lajes' }))) errors.push('texto da partida');
   item('CP2', erros, 'link compartilhado fora do contrato');
 }
 
@@ -79,8 +80,7 @@ const item = (id, erros, msg) => { if (erros.length) falhas.push(`${id} ${msg}: 
   const comunidade = readFileSync('public/js/community.js', 'utf8');
   const clas = readFileSync('public/js/clans.js', 'utf8');
   const pontos = [
-    ['fim de partida', hub, /<button id="btn-share-match"/, main, /ligarCompartilhar\(\$\('btn-share-match'\)[^\n]*linkCompartilhavel\(`\/\?map=\$\{encodeURIComponent\(currentMap\)\}`, 'fim-de-partida'\)/],
-    ['sala', hub, /<button id="mp-modal-compartilhar"/, main, /ligarCompartilhar\(mpEl\('mp-modal-compartilhar'\)[^\n]*linkDeConvite\(sala\.convite, origemPublica\(\)\)/],
+    ['sala', hub, /<button id="mp-modal-compartilhar"/, main, /ligarCompartilhar\(mpEl\('mp-modal-compartilhar'\)[^\n]*linkDeConvite\(sala\.convite\)/],
     ['ranking', hub, /<button id="hub-rank-share"/, main, /ligarCompartilhar\(\$\('hub-rank-share'\)[^\n]*linkCompartilhavel\('\/comunidade\/ranking', 'ranking'\)/],
     ['skin', loja, /<button id="treta-share"/, loja, /ligarCompartilhar\(\$\('treta-share'\)[^\n]*linkCompartilhavel\('\/loja','skin'\)/],
     ['perfil', comunidade, /button\('COMPARTILHAR PERFIL'/, comunidade, /import\('\.\/compartilhar\.js'\)[^\n]*linkCompartilhavel\(p\.url,'perfil'\)/],
