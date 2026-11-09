@@ -6,20 +6,23 @@
    menu nem corpo dançando — e o dono cobrou: "tinha que ter uma tecla e um menu".
 
    Esta régua cobra o caminho inteiro do jogador:
-     EP1  a tecla T abre a roda com os 8 passos, e T/ESC fecham;
+     EP1  a tecla T abre a roda com os 8 passos procedurais e os 8 de captura, e T/ESC fecham;
      EP2  escolher pelo dígito faz o CORPO de 3ª pessoa dançar, e a câmera sai da
           1ª pessoa sozinha (em 1ª pessoa o jogador não veria nada);
      EP3  andar cancela na hora e DEVOLVE a câmera ao que era;
      EP4  morto não dança: morrer derruba o passo e a roda não abre;
      EP5  dançando, a câmera AFASTA — de combate ela cola nas costas e esconde o
           passo.
+     EP7  Shift+1 (anel de captura) toca a Ginga mocap: clipe de corpo inteiro, arma
+          guardada, pack emotes-mocap.glb baixado uma vez; andar derruba o clipe.
 
    MUTANTES (reescrevem o arquivo servido; o disco não é tocado):
-     --mutante=tecla-morta    T não abre a roda            -> EP1+EP2+EP3+EP5
+     --mutante=tecla-morta    T não abre a roda            -> EP1+EP2+EP3+EP5+EP7
      --mutante=camera-colada  não troca pra 3ª pessoa      -> EP2+EP5
-     --mutante=anda-dancando  andar não cancela            -> EP3
+     --mutante=anda-dancando  andar não cancela            -> EP3+EP7
      --mutante=morto-dancando o abate não derruba o passo  -> EP4
      --mutante=camera-perto   câmera não afasta            -> EP5
+     --mutante=captura-sem-shift  Shift+N cai no anel procedural -> EP7
 
    Uso: BASE=http://127.0.0.1:9351 node tools/eval/emote-partida-check.mjs
    ============================================================================ */
@@ -33,9 +36,9 @@ const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('
 const ESPERADO = {
   // acoplamentos reais e declarados: sem roda nada toca, e sem 3a pessoa nao ha
   // distancia de camera pra medir.
-  'tecla-morta': ['EP1', 'EP2', 'EP3', 'EP5'], 'camera-colada': ['EP2', 'EP5'], 'anda-dancando': ['EP3'],
+  'tecla-morta': ['EP1', 'EP2', 'EP3', 'EP5', 'EP7'], 'camera-colada': ['EP2', 'EP5'], 'anda-dancando': ['EP3', 'EP7'],
   'morto-dancando': ['EP4'], 'camera-perto': ['EP5'], 'porta-aberta': ['EP6'],
-  'passo-congelado': ['EP2'], 'corpo-sem-tick': ['EP2'],
+  'passo-congelado': ['EP2'], 'corpo-sem-tick': ['EP2', 'EP7'], 'captura-sem-shift': ['EP7'],
 };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
@@ -66,6 +69,8 @@ const browser = await chromium.launch({
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 760 } });
 const page = await ctx.newPage();
 await page.route(/\.astro\/eval-vite|dev-toolbar|@vite\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: STUB }));
+const pedidosEmotesMocap = [];
+page.on('request', (r) => { if (r.url().includes('emotes-mocap.glb')) pedidosEmotesMocap.push(r.url()); });
 const reescreve = (teste, troca) => page.route(teste, async (r) => {
   const res = await r.fetch();
   const antes = await res.text();
@@ -85,6 +90,7 @@ if (MUT === 'morto-dancando') await reescreve(/\/js\/game\.js/, (t) => t.replace
 if (MUT === 'camera-perto') await reescreve(/\/js\/game\.js/, (t) => t.replace('+ 1.5 * danca;', '+ 0 * danca;'));
 if (MUT === 'passo-congelado') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('this._emoteT += dt;', 'this._emoteT += 0;'));
 if (MUT === 'corpo-sem-tick') await reescreve(/\/js\/game\.js/, (t) => t.replace('tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back, lateral);', 'void dt;'));
+if (MUT === 'captura-sem-shift') await reescreve(/\/js\/game\.js/, (t) => t.replace('this._emoteAnel(e.shiftKey)', 'this._emoteAnel(false)'));
 
 await page.goto(`${BASE}/?${PARTIDA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 240000 });
@@ -198,6 +204,28 @@ const aposAndar = await page.evaluate(() => {
   return { emote: g._emoteAtual, cam: g.camView };
 });
 
+/* ---- EP7: anel de captura — Shift+1 toca a Ginga mocap com clipe de corpo inteiro,
+   arma guardada, pack baixado uma vez; andar derruba o clipe. ---- */
+await page.keyboard.press('KeyT');
+await page.waitForTimeout(600);
+await page.keyboard.press('Shift+Digit1');
+await page.waitForTimeout(2500);   // pack lazy emotes-mocap.glb
+const captura = await page.evaluate(() => {
+  const g = window.__game, ctrl = g.playerTP?.ctrl;
+  for (let i = 0; i < 60; i++) g.update(1 / 60);
+  const armaNos = ctrl?._armaNos || [];
+  const dancando = { emote: g._emoteAtual, cur: ctrl?.curName, clipe: !!ctrl?._emoteClipeAtivo,
+    armaGuardada: armaNos.length > 0 && armaNos.every((n) => !n.visible) };
+  g.keys.KeyW = true;
+  for (let i = 0; i < 30; i++) g.update(1 / 60);
+  g.keys.KeyW = false;
+  for (let i = 0; i < 10; i++) g.update(1 / 60);
+  const andou = { emote: g._emoteAtual, cur: ctrl?.curName };
+  g._emoteStop();
+  return { dancando, andou };
+});
+const pedidosPack = pedidosEmotesMocap.length;
+
 /* ---- EP4: morto não dança ---- */
 await page.waitForTimeout(400);
 const morte = await page.evaluate(async () => {
@@ -246,8 +274,14 @@ await browser.close();
 const r = [];
 const cobra = (id, ok, texto) => r.push({ id, ok, texto });
 
-cobra('EP1', abriu.aberta && abriu.visivel && abriu.itens.length === 8 && !fechouEsc.aberta,
-  `EP1 · tecla T abre a roda com ${abriu.itens.length} passos (${abriu.itens.slice(0, 3).join(', ')}…) e ESC fecha`);
+cobra('EP1', abriu.aberta && abriu.visivel && abriu.itens.length === 16 && !fechouEsc.aberta,
+  `EP1 · tecla T abre a roda com ${abriu.itens.length} passos (${abriu.itens.slice(0, 3).join(', ')}… ${abriu.itens.slice(8, 10).join(', ')}…) e ESC fecha`);
+
+cobra('EP7', captura.dancando.emote === 'capoeira' && captura.dancando.cur === 'emote_capoeira'
+  && captura.dancando.clipe && captura.dancando.armaGuardada && pedidosPack === 1
+  && captura.andou.emote === null && captura.andou.cur !== 'emote_capoeira',
+  `EP7 · Shift+1 tocou ${captura.dancando.emote} no clipe ${captura.dancando.cur} (ativo ${captura.dancando.clipe}, arma guardada ${captura.dancando.armaGuardada}),`
+  + ` pack pedido ${pedidosPack}×; andar → ${captura.andou.emote ?? 'nenhum'}/${captura.andou.cur}`);
 
 cobra('EP2', tocando.emote === 'frevo' && tocando.corpo && tocando.rodaFechou
   && camInicial === 'first' && tocando.cam !== 'first' && corpo.valido && corpoCm >= 20,
