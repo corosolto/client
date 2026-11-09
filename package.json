@@ -17,6 +17,8 @@
     "//build:cf": "Spike Cloudflare Workers (docs/runbooks/MIGRACAO-CLOUDFLARE.md): gera _headers/_redirects de vercel.json e builda com ADAPTER=cloudflare; deploy com `npx wrangler deploy`.",
     "build:cf": "node tools/cf/gen-headers-redirects.mjs && ADAPTER=cloudflare npm run build",
     "eval:cfparidade": "node tools/eval/cf-paridade-estatica-check.mjs && for m in sem-header sem-redirect; do ! node tools/eval/cf-paridade-estatica-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
+    "//cf:paridade": "Fase 1 da migração Cloudflare: compara status e headers do spike em workers.dev com a produção; manual, `npm run cf:paridade -- --alvo <url>`.",
+    "cf:paridade": "node tools/eval/cf-paridade-check.mjs",
     "release": "node scripts/release.mjs",
     "setup": "node scripts/setup.mjs",
     "prepare": "node scripts/install-git-hooks.mjs",

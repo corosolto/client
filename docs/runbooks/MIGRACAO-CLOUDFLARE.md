@@ -156,7 +156,7 @@ cd worktrees/feat-cloudflare-spike && npm ci && npm run build:cf && npx wrangler
 # publicar o spike (conta rubenmarcus.dev; `npx wrangler login` abre o browser: usar o perfil rubenmarcus.dev do Ego)
 npx wrangler deploy
 # paridade com produção (o script lista rota, status, headers que diferem)
-node tools/eval/cf-paridade-check.mjs --alvo https://<worker>.workers.dev
+npm run cf:paridade -- --alvo https://<worker>.workers.dev
 ```
 
 ## Decisões tomadas (não reabrir sem o dono)

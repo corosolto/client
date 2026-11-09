@@ -11,7 +11,8 @@
    PR por vez, cada um "só mais um arquivo". Limpar é trabalho do dono; não
    deixar nascer é trabalho de régua.
 
-   O QUE MEDE: só o que o PR ADICIONA (git diff --diff-filter=A) contra a base.
+   O QUE MEDE: só o que o PR ADICIONA (git diff --diff-filter=A --no-renames)
+   contra a base. Renomear para dentro de pasta proibida conta como adicionar.
    Editar e apagar é sempre permitido: régua que reprovasse edição em progress/
    travaria a própria limpeza.
 
@@ -38,7 +39,7 @@
    o commit com --depth=1 se o checkout raso não o tem) > merge-base origin/main.
    Uso: node tools/eval/lixo-check.mjs [--base=<ref>] [--head=<ref>]
         node tools/eval/lixo-check.mjs --mutate
-          clone de rascunho + 1 commit por cláusula (5 mutantes vermelhos) +
+          clone de rascunho + 1 commit por cláusula (6 mutantes vermelhos, um é rename) +
           2 controles positivos (régua ligada e asset citado ficam verdes).
    ============================================================================ */
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -106,8 +107,9 @@ function resolverBase() {
 }
 
 /* ── Diff: só o que o PR adiciona ───────────────────────────────────────── */
+/* --no-renames: sem ele o git relata R e o destino do rename escaparia das cláusulas. */
 export function arquivosAdicionados(base, head = 'HEAD') {
-  const saida = execFileSync('git', ['diff', '--name-status', '--diff-filter=A', '-z', base, head], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const saida = execFileSync('git', ['diff', '--name-status', '--diff-filter=A', '--no-renames', '-z', base, head], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   const campos = saida.split('\0');
   const novos = [];
   for (let i = 0; i + 1 < campos.length; i += 2) if (campos[i] === 'A') novos.push(campos[i + 1]);
@@ -230,6 +232,12 @@ const MUTANTES = [
   { nome: 'regua-orfa', acende: 'LX3', arquivos: { [regua('orfa')]: 'process.exit(0);\n' } },
   { nome: 'continuation-novo', acende: 'LX4', arquivos: { 'docs/reports/FOO-CONTINUATION-20261109.md': '# foo\n' } },
   { nome: 'asset-sem-dono', acende: 'LX5', arquivos: { 'public/img/chars/molde/zzz-sem-dono.png': 'png' } },
+  {
+    nome: 'renomeado-para-progress',
+    acende: 'LX1',
+    remover: ['README.md'],
+    arquivos: (g) => ({ 'progress/DIARIO-20261109.md': g(['show', 'HEAD:README.md']) + '\n' }),
+  },
 ];
 /* Controles positivos: o mesmo arquivo novo, mas com quem o pede no mesmo commit. */
 const CONTROLES = [
@@ -260,6 +268,7 @@ function mutar() {
     const rodar = (caso) => {
       g(['read-tree', headSha]);
       const arquivos = typeof caso.arquivos === 'function' ? caso.arquivos(g) : caso.arquivos;
+      for (const p of caso.remover || []) g(['update-index', '--force-remove', p]);
       for (const [p, conteudo] of Object.entries(arquivos)) {
         const blob = g(['hash-object', '-w', '--stdin'], { input: conteudo });
         g(['update-index', '--add', '--cacheinfo', `100644,${blob},${p}`]);
