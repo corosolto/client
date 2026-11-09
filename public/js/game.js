@@ -5092,7 +5092,7 @@ export class Game {
       (this._landingFxSystems || (this._landingFxSystems = [])).push(fx);
     }
     const count = 3 + Math.round(k * 3);
-    const waterY = surface === 'water' ? this.world.waterSurfaceAt?.(pos.x, pos.z) : null;
+    const waterY = surface === 'water' ? this.world.waterSurfaceAt?.(pos.x, pos.z, pos.y) : null;
     const y = Number.isFinite(waterY) ? waterY : pos.y;
     const at = pos.clone();
     const vel = new THREE.Vector3();
@@ -7716,7 +7716,7 @@ export class Game {
   _footstepSurface(pos) {
     const surface = this.world.footstepSurfaceAt?.(pos.x, pos.z, pos.y);
     if (surface) return surface;
-    const waterY = this.world.waterSurfaceAt?.(pos.x, pos.z);
+    const waterY = this.world.waterSurfaceAt?.(pos.x, pos.z, pos.y);
     if (Number.isFinite(waterY)) return 'water';
     if (this.world.slowAt && this.world.slowAt(pos.x, pos.z)) return 'water';
     return {

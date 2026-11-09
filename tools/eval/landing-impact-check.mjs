@@ -136,6 +136,8 @@ for (const [mapId, wet] of [
   assert(Number.isFinite(centroY), 'fy_corrego: (0, 0) não publica a altura da lâmina central');
   assert.equal(g._footstepSurface(new THREE.Vector3(0, centroY, 0)), 'water',
     'fy_corrego: pouso no centro da lâmina caiu no fallback de terra');
+  assert.equal(g._footstepSurface(new THREE.Vector3(0, 0.4, 0)), 'dirt',
+    'fy_corrego: ponte central foi classificada como água');
   const bbox = new THREE.Box3().setFromObject(mesh);
   const fora = g.world.waterSurfaceAt(bbox.max.x + 0.2, 35);
   assert(fora == null, `fy_corrego publicou água fora do canal em x=${bbox.max.x + 0.2}`);

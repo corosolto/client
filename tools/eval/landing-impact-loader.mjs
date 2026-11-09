@@ -15,8 +15,8 @@ const MUTANTES = new Map([
   }],
   ['altura-errada', {
     arquivo: '/public/js/map_corrego.js',
-    de: '(Math.abs(x) <= CANAL_ABERTURA / 2 && Math.abs(z) <= HALF_Z) ? CANAL_AGUA : null',
-    para: '(Math.abs(x) <= CANAL_ABERTURA / 2 && Math.abs(z) <= HALF_Z) ? 0.02 : null',
+    de: ') ? CANAL_AGUA : null;',
+    para: ') ? 0.02 : null;',
   }],
   ['sem-limpeza', {
     arquivo: '/public/js/game.js',
