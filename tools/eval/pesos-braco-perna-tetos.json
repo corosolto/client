@@ -41,13 +41,16 @@
   },
   "reparados": {
     "skin:lula-mandrake": {
-      "antes": 102
+      "antes": 102,
+      "colagemAntes": 0.2494
     },
     "skin:lula-cyborg": {
-      "antes": 80
+      "antes": 80,
+      "colagemAntes": 0.2602
     },
     "skin:lula-drip": {
-      "antes": 66
+      "antes": 66,
+      "colagemAntes": 0.2369
     }
   }
 }

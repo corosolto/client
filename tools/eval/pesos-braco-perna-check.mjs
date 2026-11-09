@@ -32,7 +32,7 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { gravarInfluencia, lerGlb, medirVazamento, skinsDoGlb, RE_BRACO_CENSO } from '../personagens/pesos-skin.mjs';
+import { gravarInfluencia, lerGlb, medirColagem, medirVazamento, skinsDoGlb, RE_BRACO_CENSO } from '../personagens/pesos-skin.mjs';
 
 const RAIZ = fileURLToPath(new URL('../../', import.meta.url));
 const MUTANTES = {
@@ -40,6 +40,7 @@ const MUTANTES = {
   'legado-piora': 'skin:aljuiz-toga-mandrake: 92 vértice(s) de braço com peso de perna > teto congelado 91',
   'novo-vazando': 'skin:personagem-novo: 66 vértice(s) de braço com peso de perna',
   'teto-orfao': 'teto para skin:nao-existe sem GLB',
+  'cola-solta': 'skin:lula-mandrake: peças coladas com Σ|Δpeso|',
 };
 
 if (process.argv.includes('--mutacoes')) {
@@ -97,9 +98,23 @@ for (const id of ids) {
   else g = lerGlb(`${RAIZ}${glbs.get(id)}`);
   if (!g.json.skins?.length) continue;
   if (mutante === 'vaza-lula' && id === 'skin:lula-mandrake') plantarVazamento(g, 5);
+  if (mutante === 'cola-solta' && id === 'skin:lula-mandrake') { // 1 vértice colado a outra peça passa a seguir só Hips
+    let par = null;
+    medirColagem(g, 0.01, (s, v, u, d) => { if (!par && d < 0.01) par = [s, v]; });
+    if (!par) throw new Error('MUTANTE NÃO APLICOU');
+    const [s, v] = par, hips = s.nomes.indexOf('Hips');
+    gravarInfluencia(g, s, v, 0, hips, 1);
+    for (let k = 1; k < 4; k++) gravarInfluencia(g, s, v, k, 0, 0);
+  }
   if (mutante === 'legado-piora' && id === 'skin:aljuiz-toga-mandrake') plantarVazamento(g, 1);
   const { bracos, vazados } = medirVazamento(g);
   medidas.push({ id, bracos, vazados });
+  // Rasgo entre peças: o repeso não pode colar pior do que a origem colava.
+  const colagemAntes = tetosDoc.reparados?.[id]?.colagemAntes;
+  if (colagemAntes != null) {
+    const colagem = medirColagem(g);
+    if (colagem > colagemAntes + 1e-4) falhas.push(`${id}: peças coladas com Σ|Δpeso| ${colagem} > ${colagemAntes} da origem (rasgo; use colar na receita)`);
+  }
   const teto = tetos[id]?.vazados ?? 0;
   if (vazados > teto) {
     falhas.push(tetos[id]
