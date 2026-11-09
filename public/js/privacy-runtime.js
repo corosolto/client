@@ -1,3 +1,8 @@
+/* Medição opcional: LIGADA por padrão (interesse legítimo, decisão do dono em 09/11/2026),
+   com recusa explícita e persistente em `cs_privacy`. Só a recusa gravada desliga; sem escolha,
+   JSON corrompido ou versão antiga valem como padrão. O identificador que viaja é o `cs_anon`
+   (UUID local, sem IP e sem e-mail); `set(false)` apaga o resto do armazenamento opcional.
+   Réguas: tools/eval/privacy-choice-check.mjs e tools/eval/privacy-ops-check.mjs. */
 (function () {
   if (window.__csPrivacy) return;
   const VERSION='corosolto-analytics-v1',KEY='cs_privacy';
@@ -7,7 +12,7 @@
       return value?.version===VERSION && typeof value.analytics==='boolean'?value:null;
     } catch { return null; }
   }
-  function allowed() { return choice()?.analytics===true; }
+  function allowed() { return choice()?.analytics!==false; }
   let vercelLoaded=false;
   function enableVercelAnalytics() {
     if(vercelLoaded || !allowed() || /^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname))return;
@@ -43,7 +48,7 @@
   window.addEventListener('storage',event=>{
     if(event.key!==KEY && event.key!==null)return;
     if(!allowed())clearOptionalStorage();
-    notify(choice() || {version:VERSION,analytics:false});
+    notify(choice() || {version:VERSION,analytics:true});
   });
   window.__csPrivacy={allowed,choice,set};
 })();
