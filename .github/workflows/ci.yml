@@ -128,6 +128,12 @@ jobs:
         run: npm run eval:capturecodex
       - name: Aba da loja no hub diz só LOJA
         run: npm run eval:hub-loja
+      # Mede só o que o PR ADICIONA; o checkout é raso, então a base vem do evento
+      # (PR ou lote) e a régua a busca com --depth=1. Push na main: base = o próprio SHA.
+      - name: PR não nasce com lixo (diário, raiz, régua órfã, doc histórico, asset sem dono)
+        env:
+          FILA_BASE: ${{ github.event.merge_group.base_sha || github.event.pull_request.base.sha || github.sha }}
+        run: npm run eval:lixo
       - name: Preview da Vercel só builda quando o site muda (com mutantes)
         run: npm run eval:vercelignore
       - name: Wrapper de portal embeda o site (frame-ancestors, UTM, pointer-lock)
