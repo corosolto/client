@@ -19,9 +19,36 @@ def corpo(url: str, head_sha: str) -> str:
     return f"🟠 **preview Cloudflare** → {url}\n\n{MARKER}\n<!-- sha: {head_sha} -->\n"
 
 
+def marcados(comentarios: list[dict]) -> list[dict]:
+    return [comentario for comentario in comentarios if MARKER in (comentario.get("body") or "")]
+
+
+def selftest() -> int:
+    corpo_teste = corpo("https://preview.example", "abc123")
+    casos = [
+        ("corpo preserva URL, marcador e SHA", all(
+            trecho in corpo_teste
+            for trecho in ("https://preview.example", MARKER, "abc123")
+        )),
+        ("filtra somente comentários marcados", marcados([
+            {"id": 1, "body": "comentário comum"},
+            {"id": 2, "body": f"preview\n{MARKER}"},
+            {"id": 3, "body": None},
+        ]) == [{"id": 2, "body": f"preview\n{MARKER}"}]),
+    ]
+    erros = [nome for nome, passou in casos if not passou]
+    for nome, passou in casos:
+        print(f"{'ok' if passou else 'FALHA'} {nome}")
+    if erros:
+        print(f"{len(erros)} caso(s) vermelho(s)")
+        return 1
+    print("selftest verde")
+    return 0
+
+
 def atualizar(repo: str, pr: str, url: str, head_sha: str) -> None:
     comentarios = json.loads(gh("api", f"repos/{repo}/issues/{pr}/comments", "--paginate") or "[]")
-    encontrados = [c for c in comentarios if MARKER in (c.get("body") or "")]
+    encontrados = marcados(comentarios)
     for extra in encontrados[1:]:
         comentario_id = str(extra["id"])
         subprocess.run(
@@ -53,6 +80,8 @@ def atualizar(repo: str, pr: str, url: str, head_sha: str) -> None:
 
 
 def main() -> int:
+    if "--selftest" in sys.argv:
+        return selftest()
     if len(sys.argv) != 3:
         print(f"uso: {sys.argv[0]} PR URL", file=sys.stderr)
         return 2
