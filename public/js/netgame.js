@@ -335,7 +335,7 @@ class Netcode {
     this.net.sendInput({
       ax: 0, az: 0, crouch: false, shift: false, jump: false,
       yaw: p.yaw, pitch: p.pitch, shoot: false, weapon: p.weapon,
-      emote: null,
+      emote: game._emoteAtual || null,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(), dtms: 1,
     });
     this._inputAt = now;
@@ -380,6 +380,7 @@ class Netcode {
       const bot = (vipValido && e.id === vipId && vipLocal) ? vipLocal : pega(e.team, e.id);
       if (!bot) continue;
       bot._remote = e.id; bot._netId = e.id;
+      bot._netStateTick = null;   // casamento novo não herda o relógio visual do corpo anterior
       bot.team = e.team;                      // o lado do corpo passa a ser o do servidor
       bot.name = e.bot ? `[BOT] ${e.name}` : e.name; bot._nomeServidor = e.name;
       bot._playerId = pid;
@@ -514,14 +515,17 @@ class Netcode {
         this._syncPlayerLoadout(e, ent);
         continue;
       }
-      // Estado persistente, não evento: quem entra no meio herda recarga e fase da dança.
-      ent._netCrouch = !!e.crouch;
-      ent.crouchF = ent._netCrouch ? 1 : 0;
-      ent._netReloadUntilMs = e.alive ? nowMs + Math.max(0, Number(e.reloadIn) || 0) * 1000 : 0;
-      ent._netEmote = e.alive && game.state === 'live' && emoteInfo(e.emote) ? e.emote : null;
-      ent._netEmoteElapsed = Math.max(0, Number(e.emoteElapsed) || 0);
-      ent._netStateAtMs = nowMs;
-      ent._netStateTick = snap.tick;
+      // Estados v9 seguem o tick monotônico da Room; posições antigas ainda entram no buffer ordenado.
+      const estadoNovo = ent._netStateTick == null || snap.tick > ent._netStateTick;
+      if (estadoNovo) {
+        ent._netCrouch = !!e.crouch;
+        ent.crouchF = ent._netCrouch ? 1 : 0;
+        ent._netReloadUntilMs = e.alive ? nowMs + Math.max(0, Number(e.reloadIn) || 0) * 1000 : 0;
+        ent._netEmote = e.alive && game.state === 'live' && emoteInfo(e.emote) ? e.emote : null;
+        ent._netEmoteElapsed = Math.max(0, Number(e.emoteElapsed) || 0);
+        ent._netStateAtMs = nowMs;
+        ent._netStateTick = snap.tick;
+      }
       this._syncRemoteStates(ent);
       /* Interpolação contínua entre pacotes (reiniciar picota o boneco). Campos PLANOS de
          propósito: um {x,y,z} por ent × frequência de rede gera GC que trava o vsync. */

@@ -21,6 +21,8 @@ const mutations = {
   'import-ressuscita': ['b._netEmoteLoading = false;', "b._netEmoteLoading = false; ctrl.emote?.('frevo', 0);"],
   'troca-sem-estado': ['const novo = b._netVisualCtrl !== ctrl;', 'const novo = false;'],
   'intencao-ausente': ['emote: this.game._emoteAtual || null,', 'emote: null,'],
+  'estado-antigo': ['if (estadoNovo) {', 'if (true) {'],
+  'pausa-para-emote': ['emote: game._emoteAtual || null,', 'emote: null,'],
 };
 assert(!mutant || mutations[mutant], 'mutante conhecido');
 let netUrl = new URL('../../public/js/netgame.js', import.meta.url).href;
@@ -138,11 +140,29 @@ try {
   send({ crouch: true, reloadIn: 2, emote: 'frevo' }, 8); frames(90);
   check('R3P12', !b.mesh.ctrl.crouch && b.mesh.ctrl._reloadDur === 0 && b.mesh.ctrl.emoteAtual() === null);
 
+  // Datagrama antigo chega depois do stop: a posição pode entrar no buffer, a ação não volta.
+  send({ crouch: true, reloadIn: 2, emote: 'frevo', emoteElapsed: .5 });
+  const atrasado = net.snap;
+  frames(4); send(); const tickAtual = net.snap.tick; frames(90);
+  net.snap = atrasado; mp.applySnapshot(); frame();
+  check('R3P14', !b.mesh.ctrl.crouch && b.mesh.ctrl._reloadDur === 0
+    && b.mesh.ctrl.emoteAtual() === null && b._netStateTick === tickAtual,
+    { tick: b._netStateTick, atual: tickAtual, crouch: b.mesh.ctrl.crouch, emote: b.mesh.ctrl.emoteAtual() });
+  send({ crouch: true, reloadIn: 2, emote: 'frevo' });
+  net.snap = decodeSnapshot(encodeSnapshot({ ...net.snap, tick: ++tick, t: 0, ents: [{ ...net.snap.ents[0], emote: 'samba' }] }, 9));
+  mp.applySnapshot(); frame();
+  check('R3P15', b._netStateTick === tick && b.mesh.ctrl.crouch
+    && b.mesh.ctrl.emoteAtual() === 'samba', 'tempo do Game reinicia, tick da Room continua');
+
   const input = { ax: 0, az: 0, crouch: false, shift: false, jump: false };
   game._emoteAtual = 'samba'; mp.stepPlayer(game.player, input, 1 / 60);
   game._emoteAtual = null; mp.stepPlayer(game.player, input, 1 / 60);
   check('R3P13', inputs.at(-2)?.emote === 'samba' && inputs.at(-1)?.emote === null,
     inputs.slice(-2).map(i => i.emote));
+  game.paused = true; game._emoteAtual = 'samba'; mp._inputAt = 0;
+  mp._pulsoDePausa();
+  check('R3P16', inputs.at(-1)?.emote === 'samba', 'heartbeat preserva a intenção do jogador pausado');
+  game.paused = false; game._emoteAtual = null;
 } finally { mp.dispose(); }
 for (const row of rows) console.log(`${row.id} ${row.pass ? 'PASSA' : 'FALHA'} ${JSON.stringify(row.observed)}`);
 const failed = rows.filter(row => !row.pass).map(row => row.id);

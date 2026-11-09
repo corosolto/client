@@ -12,6 +12,8 @@ const targets = {
   'import-ressuscita': 'R3P4race',
   'troca-sem-estado': 'R3P9',
   'intencao-ausente': 'R3P13',
+  'estado-antigo': 'R3P14',
+  'pausa-para-emote': 'R3P16',
 };
 const script = fileURLToPath(new URL('./rede3p-check.mjs', import.meta.url));
 for (const [mutant, clause] of Object.entries(targets)) {
@@ -23,4 +25,4 @@ for (const [mutant, clause] of Object.entries(targets)) {
   assert(observed.failed.includes(clause), `${mutant} não atingiu ${clause}: ${JSON.stringify(observed)}`);
   console.log(`MORTO ${mutant}: ${observed.failed.join(', ')}`);
 }
-console.log('VERDE rede3p-mutantes: nove falhas causais detectadas');
+console.log('VERDE rede3p-mutantes: onze falhas causais detectadas');

@@ -87,8 +87,8 @@ fontes acima.
 
 O catálogo leve mantém a ordem `passinho`, `samba`, `ginga`, `frevo`, `forro`,
 `quadradinho`, `sarrada`, `salve`. O input manda a intenção atual como string ou `null`
-em cada passo. A autoridade do servidor decide início, cancelamento e duração; a câmera
-local e a roda continuam nos caminhos existentes.
+em cada passo e no heartbeat de pausa. A autoridade do servidor decide início,
+cancelamento e duração; a câmera local e a roda continuam nos caminhos existentes.
 
 `Netcode.applySnapshot` recebe agachamento, segundos restantes de recarga, ID da dança
 e segundos decorridos. O corpo GLB recebe `setCrouch`; a borda de recarga chama
@@ -101,10 +101,15 @@ O próximo quadro consulta o estado atual e aplica a fase, inclusive ao entrar n
 Pacotes seguintes corrigem o relógio sem zerar a rampa. Laços usam módulo da duração;
 gestos únicos expiram e morte elimina recarga e dança antes do respawn.
 
+Os estados visuais só aceitam ticks crescentes. Datagramas antigos continuam disponíveis
+para interpolação posicional, mas não ressuscitam dança, recarga ou agachamento cancelados.
+O casamento de uma entidade limpa o tick anterior; o tick da Room continua entre mapas.
+
 `eval:rede3p` atravessa o codec binário, o Netcode e o CharController com rig/clipes reais
 em Node. Mede clip/altura de crouch, envelope de reload, fase/rampa/movimento de juntas,
-cancelamento no import, troca de controlador, morte/respawn, fallback v8 e input com
-stop explícito. Nove mutantes alteram a implementação em memória, sem escrever no disco;
+cancelamento no import, troca de controlador, morte/respawn, fallback v8, datagramas
+fora de ordem e input/heartbeat com stop explícito. Onze mutantes alteram a implementação
+em memória, sem escrever no disco;
 o runner exige falha na cláusula causal e rejeita erro de infraestrutura como prova.
 
 ## Porta fechada em produção (23/10)
