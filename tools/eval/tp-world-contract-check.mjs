@@ -211,7 +211,7 @@ async function rodarVariante(mut) {
     const estados = {
       idle: (c) => { for (let f = 0; f < 30; f++) { c.update(1 / 60, 0, false, 0); mede(c); } },
       locomotion: (c) => { for (let f = 0; f < 60; f++) { c.update(1 / 60, 1, true, 3.0); mede(c); } },
-      reload: (c) => { c.reload(1.2); let fase = false; for (let f = 0; f < 40; f++) { c.update(1 / 60, 0, false, 0); if (c.reloadK > 0.5) fase = true; mede(c); } if (!fase) throw new Error('reloadK nunca passou de 0.5'); },
+      reload: (c) => { c.reload(1.2); c._reloadClip = false; let fase = false; for (let f = 0; f < 40; f++) { c.update(1 / 60, 0, false, 0); if (c.reloadK > 0.5) fase = true; mede(c); } if (!fase) throw new Error('reloadK nunca passou de 0.5'); },
       emote: (c) => { if (!c.emote('passinho')) throw new Error('emote recusado'); let fase = false; for (let f = 0; f < 40; f++) { c.update(1 / 60, 0, false, 0); if (c._emoteK > 0.5) fase = true; mede(c); } if (!fase) throw new Error('_emoteK nunca passou de 0.5'); },
       death: (c) => { c.die(new THREE.Vector3(1, 0, 0.5)); let fase = false; for (let f = 0; f < 60; f++) { c.update(1 / 60, 0, false, 0); if ((c._deathK || 0) > 0.3) fase = true; mede(c); } if (!fase) throw new Error('_deathK nunca passou de 0.3'); },
     };
