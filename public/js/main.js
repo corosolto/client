@@ -311,8 +311,9 @@ function _mkPhase(fillEl, pctEl, statusEl) {
   };
   _lstat.phase = ph; ph.set(0); return ph;
 }
-/* Marcos do funil moram aqui porque disparam antes do testMode existir (TDZ) e antes do
-   consentimento: ficam guardados e só saem quando os dois existem. Régua: funil-lobby-check. */
+/* Marcos do funil moram aqui porque disparam antes do testMode existir (TDZ) e antes da
+   checagem de privacidade: ficam guardados e só saem quando as duas existem (medição é ligada
+   por padrão; quem recusou e voltou a permitir recebe os marcos guardados). Régua: funil-lobby-check. */
 const _marcos = new Set();
 const _marcosEnviados = new Set();
 let _funilPronto = false;
@@ -1819,7 +1820,7 @@ function _funnel(step, gameType = null) {
 const _tipoDaPartida = () => (telemetryGameContext.gameType === 'multiplayer' ? 'multiplayer' : 'single_player');
 // AQUISIÇÃO (019): 1x por navegador. referrer vira host (URL inteira pode carregar query
 // sensível); UTM e ?ref= lidos da URL de entrada. first-touch-wins no servidor.
-// A origem fica só em memória até o consentimento: o menu reescreve a URL antes dele.
+// A origem fica só em memória até a checagem de privacidade: o menu reescreve a URL antes dela.
 const _landingOrigem = (() => {
   const u = new URLSearchParams(location.search);
   let referrer = null;
@@ -1987,7 +1988,7 @@ setInterval(_pingPresenca, 45_000);
 setInterval(_refreshOnline, 60_000);
 
 /* Telemetria nova (feat/telemetria) — depois de `testMode` existir (mesma lição do BUG-34).
-   Aquisição e 'land' saem na carga ou no consentimento tardio; régua: consent-funnel-check. */
+   Aquisição e 'land' saem na carga (medição ligada por padrão) ou quando quem recusou volta a permitir; régua: consent-funnel-check. */
 let _landFuneled = false;
 function _funnelLand() {
   if (_landFuneled || !analyticsAllowed()) return;
@@ -2014,9 +2015,9 @@ function _loginPromptTrack(step, data) {
 }
 _funnelLand();
 _funilPronto = true;
-_flushMarcos();       // marcos atingidos durante o boot, se o consentimento já existia
+_flushMarcos();       // marcos atingidos durante o boot, se a medição já estava liberada
 _sendPerf();          // perf de cliente 1x por sessão (018)
-// funil 'menu': 1ª interação real COM consentimento — o clique que consente não conta como uso.
+// funil 'menu': 1ª interação real com medição liberada — o clique que religa a medição não conta como uso.
 let _menuFuneled = false;
 const _menuOnce = () => { if (_menuFuneled || !_landFuneled || !analyticsAllowed()) return; _menuFuneled = true; _funnel('menu'); removeEventListener('pointerdown', _menuOnce); removeEventListener('keydown', _menuOnce); };
 addEventListener('pointerdown', _menuOnce);
