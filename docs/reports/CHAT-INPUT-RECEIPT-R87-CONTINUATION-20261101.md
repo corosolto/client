@@ -1,3 +1,5 @@
+> Registro histórico. As pendências do revisor legado abaixo não são exigências atuais; siga [o ciclo vigente de revisão](../../.claude/skills/estragacodigo-loop/SKILL.md).
+
 # Chat input receipt R87 — continuation
 
 ## Checkpoint Root R90: entrega medida, smoke completo pendente
@@ -20,7 +22,7 @@ Accepted evidence: hostedAB smoke41276686688/job124760254253 failed at case607/a
 
 Plan: one bounded GLM5.3low OMP author call, exact path guard; seal raw/diff/source before native adjudication. Add a serializable receipt helper windowbubble after Game documentbubble, capture first trustedKeyW with Gameidentity/target/active/travada/keyW; reject staleKeyWprecondition; retain focus/chat assertions; cleanup listener/deadline andkeyupfinally. Name delivery, not movement. External Root-only Ego probe reuses the exact helper source/hash on isolated existing normalSP page and has no report submission. Controls: real _releaseInput after receipt before delayedread=>oldRED/newPASS; blockedhandler/lock/focus-own/staleKeyW=>newRED. No browser/probe run by this lane.
 
-Rules read: AGENTS, pr-hardening, project regua/bug-hunt; CodeRabbitOFF is explicit Root protocol REVIEW-PROTOCOL-20261031. Root-directed no SUT/build/browser overrides general skill execution steps; no claim of completed PR. docs/LICOES.md pointer missing in base at the expected path, no source policy changed. Root assigns independent critic after handoff.
+Rules read: AGENTS, pr-hardening, project regua/bug-hunt; The legacy reviewer is retired under the explicit Root protocol REVIEW-PROTOCOL-20261031. Root-directed no SUT/build/browser overrides general skill execution steps; no claim of completed PR. docs/LICOES.md pointer missing in base at the expected path, no source policy changed. Root assigns independent critic after handoff.
 
 Current state AUTHOR_PENDING/PATCH_ONLY_UNRUN. Next: freeze author output, inspect exact scope/syntax, hand back unrun controls and ownership.
 

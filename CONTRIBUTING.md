@@ -194,10 +194,10 @@ sendo a rede de baixo. Não use esse escape para uma falha do seu próprio diff.
 Antes de abrir o PR, o resto continua na sua mão:
 
 ```bash
-npm run check        # quality gate completo
+npm run check:deploy # quality gate completo (check:fast é a versão rápida)
 npm run arch         # se você mexeu em public/js, o ARCH.md precisa ser regerado
 npm run build        # o site tem que buildar
-npm run check:seo    # se você mexeu em src/ ou em public/llms.txt
+npm run check:seo    # se você mexeu em src/ (inclui src/pages/llms.txt.ts)
 ```
 
 `check:seo` roda `npm run build` e depois mede o **HTML publicado**, não o
@@ -234,13 +234,13 @@ E teste à mão: o jogo abre, o console fica limpo, uma partida completa roda
 - Exceção decidida pelo dono em 04/10/2026: **figura política pública** pode entrar
   como caricatura satírica, e só assim. Nome caricato, nunca o nome real. Modelo 3D
   gerado a partir de concept 2D caricato; foto real só serve de referência para o
-  concept e precisa ser conferida a olho (`docs/LICOES.md`, lição 9). O mesmo
+  concept e precisa ser conferida a olho (`docs/LICOES.md` em `../progress`, lição 9). O mesmo
   tratamento vale para todos os campos políticos. Sem gore e sem humilhação física.
   Quando um personagem desses vai ao ar é decisão do dono.
 
 ## Processo
 
-1. Feature grande? Abra uma **issue** antes (veja [`docs/IDEAS.md`](docs/IDEAS.md)).
+1. Feature grande? Abra uma **issue** antes (as ideias vivem em `docs/IDEAS.md` do repo privado `progress`).
 2. Fork, branch, PR com descrição clara e screenshots.
 
    **Nome da branch: `v2/<assunto>`** — `v2/multiplayer`, `v2/audio`, `v2/ui-hud`.

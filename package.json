@@ -14,6 +14,11 @@
     "eval:social-boot-guest": "node tools/eval/social-boot-guest-check.mjs --mutantes",
     "eval:hub-identity": "node tools/eval/hub-identity-check.mjs",
     "build": "node tools/viewmodels/prepare_precision_preview.mjs --assert-clean && npm run copy-wasm && npm run gen:assetrev && astro build && node scripts/prune-dist.mjs",
+    "//build:cf": "Spike Cloudflare Workers (docs/runbooks/MIGRACAO-CLOUDFLARE.md): gera _headers/_redirects de vercel.json e builda com ADAPTER=cloudflare; deploy com `npx wrangler deploy`.",
+    "build:cf": "node tools/cf/gen-headers-redirects.mjs && ADAPTER=cloudflare npm run build",
+    "eval:cfparidade": "node tools/eval/cf-paridade-estatica-check.mjs && for m in sem-header sem-redirect; do ! node tools/eval/cf-paridade-estatica-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
+    "//cf:paridade": "Fase 1 da migração Cloudflare: compara status e headers do spike em workers.dev com a produção; manual, `npm run cf:paridade -- --alvo <url>`.",
+    "cf:paridade": "node tools/eval/cf-paridade-check.mjs",
     "release": "node scripts/release.mjs",
     "setup": "node scripts/setup.mjs",
     "prepare": "node scripts/install-git-hooks.mjs",
@@ -66,6 +71,7 @@
     "ops:test": "node --test tools/ops/tests/*.test.mjs",
     "ops:aquecer": "node tools/ops/aquecer.mjs",
     "eval:release": "node tools/eval/release-check.mjs",
+    "eval:vercelignore": "node tools/eval/vercel-ignore-check.mjs && node tools/eval/vercel-ignore-check.mjs --mutate",
     "eval:uuid": "node tools/eval/uuid-compat-check.mjs",
     "eval:drop": "node tools/eval/drop-check.mjs",
     "eval:deps": "node tools/eval/deps-check.mjs",
@@ -538,6 +544,7 @@
     "eval:vm-camera": "node tools/eval/vm-camera-check.mjs --porta=8167",
     "eval:vm-camera-modes": "node tools/eval/vm-camera-modes-check.mjs && node tools/eval/vm-camera-modes-check.mjs --mutante=sem-retorno",
     "eval:mp-paridade": "node tools/eval/mp-paridade-check.mjs",
+    "eval:mp-voz-personagem": "node tools/eval/mp-voz-personagem-check.mjs && for m in pool-da-faccao rede-muda; do node tools/eval/mp-voz-personagem-check.mjs --mutante=$m >/dev/null 2>&1; [ $? -eq 1 ] || exit 1; done",
     "eval:obras": "node tools/eval/obras-check.mjs",
     "eval:obras-browser": "node tools/eval/obras-browser-check.mjs",
     "eval:vm-foundation": "node tools/eval/viewmodel-foundation-check.mjs",
@@ -697,6 +704,8 @@
     "//eval:pesos-braco-perna": "Manga não segue a perna: todo GLB de personagem/skin com 0 vértice de braço pesado em UpLeg/Leg, legados no teto congelado (tools/eval/pesos-braco-perna-tetos.json); 4 mutantes.",
     "eval:pesos-braco-perna": "node tools/eval/pesos-braco-perna-check.mjs && node tools/eval/pesos-braco-perna-check.mjs --mutacoes",
     "eval:hub-loja": "node tools/eval/hub-loja-rotulo-check.mjs && node tools/eval/hub-loja-rotulo-check.mjs --mutations",
+    "//eval:lixo": "LX1-LX5: PR não ADICIONA diário em plans/progress/prompts/content/references/asset-evidence, arquivo de raiz fora da allowlist, régua órfã em tools/eval, doc histórico (CONTINUATION/HANDOFF/STATUS/data/rodada) nem asset em public/img|video|models que nenhum código pede. Base: merge-base origin/main (FILA_BASE no CI). --mutate prova 5 cláusulas num clone de rascunho.",
+    "eval:lixo": "node tools/eval/lixo-check.mjs && node tools/eval/lixo-check.mjs --mutate",
     "eval:treta-rewards": "node tools/eval/treta-rewards-check.mjs && node tools/eval/treta-rewards-check.mjs --mutations",
     "eval:treta-skins": "node tools/eval/treta-skins-check.mjs && node tools/eval/treta-skins-check.mjs --mutations",
     "eval:treta-manifest-ready": "node --test tests/treta-manifest-readiness.test.mjs",
@@ -929,6 +938,7 @@
     "undici": "^8.12.2"
   },
   "devDependencies": {
+    "@astrojs/cloudflare": "^14.3.4",
     "@gltf-transform/core": "^4.4.1",
     "@gltf-transform/extensions": "^4.4.1",
     "@gltf-transform/functions": "^4.4.1",
@@ -940,7 +950,8 @@
     "linkedom": "0.18.12",
     "meshoptimizer": "^1.2.0",
     "ndarray-pixels": "^5.2.0",
-    "playwright": "^1.62.1"
+    "playwright": "^1.62.1",
+    "wrangler": "^4.158.0"
   },
-  "packageManager": "yarn@4.18.0+sha512.fcb8716fe7cd0eece141ffc18b92193a9df9204c1ba83189c288835223fc0bbe64af473bab0d5e9927a7daeb5caf2bb07eb2787cc9338ca040ea125f2a1f2f7e"
+  "packageManager": "npm@10.9.9"
 }

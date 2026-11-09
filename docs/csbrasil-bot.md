@@ -86,3 +86,10 @@ Guardrails mínimos:
 - exigir CI/smoke verde
 - manter draft por padrão
 - nunca automergir gameplay, backend, anti-cheat ou mapa
+
+## Idioma dos PRs
+
+O bot escreve em inglês os comentários de classificação, prontidão, autofix e
+preview, e os textos próprios da PR bootstrap. O contexto original da issue permanece
+verbatim. Labels, marcadores de deduplicação, permissões e critérios continuam
+iguais. O estraga-codigo tem configuração separada no serviço local de revisão.
