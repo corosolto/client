@@ -68,7 +68,9 @@ aprovação humana definida nos quality gates antes de entrar em `staging`.
 ## Merge e revisão
 
 - PR individual precisa de `safe-automerge`, checks verdes, estado mergeável e nenhuma pendência
-  do estraga-codigo. Gameplay, backend e workflows não entram nesse caminho.
+  do estraga-codigo ou `REVIEW_REQUIRED`. Gameplay, backend e workflows não entram nesse caminho.
+- Todo merge usa `--match-head-commit` com o SHA avaliado; push entre decisão e merge aborta em
+  vez de publicar código não verificado.
 - A PR oficial `staging → main` usa o caminho `release-batch`: pode conter superfícies já
   integradas, mas continua bloqueada por checks vermelhos, conflito, draft e revisão pendente.
 - Rollup vazio ou desconhecido não conta como verde.

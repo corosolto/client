@@ -70,7 +70,7 @@ jobs:
         run: python3 scripts/ci/ensure_labels.py pronto-pra-merge
       - name: Fetch PR status
         if: env.pular != '1'
-        run: gh pr view "$PR_NUMBER" --json isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,files,changedFiles,baseRefName,headRefName,headRepository > /tmp/automerge.json
+        run: gh pr view "$PR_NUMBER" --json isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,files,changedFiles,baseRefName,headRefName,headRefOid,headRepository > /tmp/automerge.json
       - name: Check eligibility
         if: env.pular != '1'
         # O autoteste roda ANTES da decisão: este script mescla sem humano no
@@ -91,9 +91,13 @@ jobs:
         if: env.pular != '1'
         run: |
           python3 - <<'PY'
-          import json, os, subprocess, sys
+          import json, os, re, subprocess, sys
           data = json.load(open('/tmp/automerge-result.json'))
+          status = json.load(open('/tmp/automerge.json'))
           pr = os.environ['PR_NUMBER']
+          head_oid = status.get('headRefOid') or ''
+          if not re.fullmatch(r'[0-9a-f]{40}', head_oid):
+              raise RuntimeError('automerge requires the evaluated canonical head OID')
           if not data.get('eligible'):
               print('pronto-pra-merge: not eligible')
               subprocess.run(['gh', 'pr', 'edit', pr, '--remove-label', 'pronto-pra-merge'], check=False)
@@ -107,7 +111,7 @@ jobs:
               subprocess.run(['gh', 'pr', 'comment', pr, '--body',
                               f'🤖 **csbrasil-bot**: required checks passed and the diff meets the '
                               f'`check_automerge` criteria. Merging automatically as {kind}.'], check=True)
-          command = ['gh', 'pr', 'merge', pr, '--merge']
+          command = ['gh', 'pr', 'merge', pr, '--merge', '--match-head-commit', head_oid]
           if data.get('merge_kind') != 'release-batch':
               command.append('--delete-branch')
           subprocess.run(command, check=True)

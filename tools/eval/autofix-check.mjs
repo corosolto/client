@@ -14,7 +14,7 @@
    AF3 · o bot não mergeia. Deixar o PR pronto e fechá-lo são coisas diferentes, e
          a segunda é humana (decisão do dono, 21/08).
    AF4 · merge automático só existe no job `automerge`, depois de
-         `check_automerge.py` no MESMO job, por merge commit e sem apagar `staging` (decisão do dono,
+         `check_automerge.py` no MESMO job, por merge commit, `--match-head-commit` e sem apagar `staging` (decisão do dono,
          09/11/2026, substituindo a espera humana de 21/08). Qualquer outro workflow,
          squash ou chamada fora da guarda continua proibido.
    AF7 · todo commit que o bot faz - `git commit` E `git merge`, inclusive a chamada
@@ -281,7 +281,7 @@ for (const nome of WORKFLOWS) {
   if (!chamadas.length) continue;
   const automerge = texto.match(/^  automerge:\n([\s\S]*?)(?=^  [\w-]+:\n|\Z)/m)?.[1] || '';
   const posDecisao = automerge.indexOf(decisao);
-  const mergesNoJob = [...automerge.matchAll(/\['gh', 'pr', 'merge', pr, '--merge'\]/g)].map((m) => m.index);
+  const mergesNoJob = [...automerge.matchAll(/\['gh', 'pr', 'merge', pr, '--merge', '--match-head-commit', head_oid\]/g)].map((m) => m.index);
   const guardado = nome === 'csbrasil-bot-automerge.yml'
     && posDecisao >= 0
     && mergesNoJob.length === chamadas.length
