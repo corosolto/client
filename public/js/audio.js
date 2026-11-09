@@ -332,8 +332,30 @@ export class Sfx {
         this.duckBus.connect(this.master);
         if (this.reverbOn) this._buildReverb();
       }
-      if (this.ctx.state === 'suspended') this.ctx.resume();
+      this._resume();
     } catch { this.disabled = true; }
+  }
+  /* Fora de gesto do usuário o `resume()` rejeita em silêncio e o ctx fica `suspended` até o
+     próximo som — num deep-link (`?sala=`) o primeiro som chega sem clique e o jogo abre mudo. */
+  _resume() {
+    if (!this.ctx || this.ctx.state !== 'suspended') return null;
+    try { const p = this.ctx.resume(); p?.catch?.(() => {}); return p || null; } catch { return null; }
+  }
+  // Destrava no primeiro gesto que chegar (pointerdown/keydown em captura), e some sozinho.
+  unlockOnGesture(target = document) {
+    if (this._unlockBound || !target?.addEventListener) return;
+    const solta = () => {
+      for (const ev of ['pointerdown', 'keydown']) target.removeEventListener(ev, tenta, true);
+      this._unlockBound = false;
+    };
+    const tenta = () => {
+      this.ensure();
+      if (!this.ctx || this.disabled || this.ctx.state === 'running') { solta(); return; }
+      const p = this._resume();
+      if (p?.then) p.then(() => { if (this.ctx.state === 'running') solta(); }, () => {});
+    };
+    this._unlockBound = true;
+    for (const ev of ['pointerdown', 'keydown']) target.addEventListener(ev, tenta, true);
   }
   // Reverb leve opcional (opt-in): IR sintético curto (~0.45s, decay exponencial, estéreo
   // descorrelacionado) num send bus. Mix baixo por voz — "espaço" sem eco de banheiro.

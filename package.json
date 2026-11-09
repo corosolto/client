@@ -257,6 +257,7 @@
     "eval:audiocapacidade": "node tools/eval/audio-capacidade-check.mjs",
     "eval:audiofablocal": "node tools/eval/audio-fab-local-check.mjs",
     "eval:audioeventos": "node tools/eval/audio-eventos-check.mjs",
+    "eval:audiounlock": "node tools/eval/audio-unlock-check.mjs && for m in sem-destrave gesto-vazio; do node tools/eval/audio-unlock-check.mjs --mutante=$m >/dev/null 2>&1; [ $? -eq 1 ] || exit 1; done",
     "eval:audioannouncer": "node tools/eval/audio-announcer-check.mjs",
     "eval:audiovoicemix": "node tools/eval/audio-voice-mix-check.mjs",
     "eval:audioprivate": "node tools/eval/audio-private-pack-check.mjs && node tools/eval/javaporcos-audio-private-check.mjs",
