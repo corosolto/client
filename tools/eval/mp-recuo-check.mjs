@@ -24,8 +24,10 @@
    Mutantes: `semrecuo` força back=false (reprova MPR1-3); `yawinstante` projeta no yaw do
    instante (reprova MPR14-15; com o strafe autoral o erro só inverte uma frente ≈0 e não troca
    o clipe dominante); `semlateral` zera a lateral do remoto (reprova MPR7-9); `sempack` tira o
-   pack das cláusulas autorais (reprova MPR1-3 e MPR7-9).
-   Uso: node tools/eval/mp-recuo-check.mjs [--mutante=semrecuo|yawinstante|semlateral|sempack] */
+   pack das cláusulas autorais (reprova MPR1-3 e MPR7-9); `latcru` entrega a lateral como
+   deslocamento do segmento de 50 ms, sem /s (reprova MPR7-9). Toda cláusula também exige a
+   lateral média recebida em m/s a ±15% da lateral real.
+   Uso: node tools/eval/mp-recuo-check.mjs [--mutante=semrecuo|yawinstante|semlateral|sempack|latcru] */
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -54,7 +56,7 @@ const G = await import('../../public/js/glbchars.js');
 const { makeNetcode } = await import('../../public/js/netgame.js');
 
 const MUTANTES = { semrecuo: ['MPR1', 'MPR2', 'MPR3'], yawinstante: ['MPR14', 'MPR15'], semlateral: ['MPR7', 'MPR8', 'MPR9'],
-  sempack: ['MPR1', 'MPR2', 'MPR3', 'MPR7', 'MPR8', 'MPR9'] };
+  sempack: ['MPR1', 'MPR2', 'MPR3', 'MPR7', 'MPR8', 'MPR9'], latcru: ['MPR7', 'MPR8', 'MPR9'] };
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (MUT && !MUTANTES[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 const EXTRAS_LOCO = ['run_back', 'walk_back', 'walk_back_pistol', 'strafe_left', 'strafe_right', 'strafe_left_pistol', 'strafe_right_pistol'];
@@ -76,6 +78,10 @@ async function roda({ yaw = 0, humano = false, vf = 0, vl = 0, giro = 0 }, semPa
   if (!m?.ctrl?.actions?.walk || !m.ctrl.actions.run) throw new Error('mst sem walk/run — a régua não sabe medir');
   if (MUT === 'semrecuo') { const up = m.ctrl.update.bind(m.ctrl); m.ctrl.update = (dt, mv, alvo, spd) => up(dt, mv, alvo, spd, false); }
   if (MUT === 'semlateral') { const up = m.ctrl.update.bind(m.ctrl); m.ctrl.update = (dt, mv, alvo, spd, back) => up(dt, mv, alvo, spd, back, 0); }
+  // latcru: lateral como deslocamento cru do segmento de 50 ms (sem dividir pelo tempo).
+  if (MUT === 'latcru') { const up = m.ctrl.update.bind(m.ctrl); m.ctrl.update = (dt, mv, alvo, spd, back, lat) => up(dt, mv, alvo, spd, back, lat * SNAP_MS / 1000); }
+  const recebido = { lat: 0, spd: 0 };
+  { const up = m.ctrl.update.bind(m.ctrl); m.ctrl.update = (...a) => { recebido.spd = a[3] || 0; recebido.lat = a[5] || 0; return up(...a); }; }
   let clock = 100000;
   const nc = makeNetcode({}, { meta: { snapshotHz: 20 }, startPing() {}, stopPing() {}, onSlot: null, onPersonagem: null });
   clearInterval(nc._nsTimer);
@@ -99,7 +105,7 @@ async function roda({ yaw = 0, humano = false, vf = 0, vl = 0, giro = 0 }, semPa
     nc.updateRemoteBot(ent, DT);
     if (f >= ASSENTA) {
       const c = m.ctrl, clip = c.curName;
-      out.push({ clip, ts: c.actions[clip] ? c.actions[clip].timeScale : 0 });
+      out.push({ clip, ts: c.actions[clip] ? c.actions[clip].timeScale : 0, lat: recebido.lat, spd: recebido.spd });
     }
   }
   nc.dispose();
@@ -113,8 +119,11 @@ async function cobra(cod, txt, cenario, esperado, semPack = MUT === 'sempack') {
   const trocas = serie.filter((s, i) => i && (s.clip !== serie[i - 1].clip || Math.sign(s.ts) !== Math.sign(serie[i - 1].ts))).length;
   const conta = {};
   for (const s of serie) { const k = `${s.clip}${s.ts < 0 ? '↺' : ''}`; conta[k] = (conta[k] || 0) + 1; }
-  const ok = ruins.length === 0;
-  console.log(`${cod} · ${txt}\n   esperado ${esperado.clip}${esperado.sinal < 0 ? ' reverso' : ''} · ${serie.length} quadros: ${Object.entries(conta).map(([k, v]) => `${k}×${v}`).join(' ')} (↺ = timeScale < 0) · ${trocas} troca(s) de clipe\n   ${ok ? 'PASSA' : 'FALHA'}`);
+  const media = (k) => serie.reduce((t, s) => t + s[k], 0) / serie.length;
+  // Lateral em m/s, na mesma unidade do speed com que _setLocoDirecional compara.
+  const vl = cenario.vl || 0, lat = media('lat'), latOk = Math.abs(lat - vl) <= Math.max(0.15, Math.abs(vl) * 0.15);
+  const ok = ruins.length === 0 && latOk;
+  console.log(`${cod} · ${txt}\n   esperado ${esperado.clip}${esperado.sinal < 0 ? ' reverso' : ''} · ${serie.length} quadros: ${Object.entries(conta).map(([k, v]) => `${k}×${v}`).join(' ')} (↺ = timeScale < 0) · ${trocas} troca(s) de clipe · lateral média ${lat.toFixed(2)} m/s (esperado ${vl.toFixed(2)}), speed ${media('spd').toFixed(2)} m/s\n   ${ok ? 'PASSA' : 'FALHA'}`);
   if (!ok) falhas.push(cod);
 }
 
