@@ -61,7 +61,7 @@ def find_duplicate(current: dict, others: list[dict]) -> dict | None:
 
     # Canônica da classe: a issue ABERTA mais antiga (menor número), INCLUINDO a
     # atual. Se a atual É a canônica, não há para onde apontar - marcar a canônica
-    # de duplicata de uma mais nova é o resultado errado (CodeRabbit, PR #209).
+    # de duplicata de uma mais nova é o resultado errado (PR #209).
     if current_classe:
         mesma_classe = sorted(
             (i for i in others

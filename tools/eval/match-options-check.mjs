@@ -26,6 +26,7 @@
 import { readFileSync } from 'node:fs';
 import { bootGame, initTextures } from './harness.mjs';
 import { sanitizeRounds } from '../../public/js/game.js';
+import { ehMapaJavaporcos } from '../../public/js/maps.js';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const textures = initTextures();
@@ -145,10 +146,10 @@ for (const [ctf, expected] of [[false, 5], [true, 3]]) {
     const noop = () => {};
     let liberado = null;
     try {
-      liberado = new Function('settings', 'msRounds', 'MAPS', 'currentMap', 'sanitizeRounds',
+      liberado = new Function('settings', 'msRounds', 'MAPS', 'currentMap', 'sanitizeRounds', 'ehMapaJavaporcos',
         'saveSettings', 'setMapMeta', 'setMapMode', 'renderMapScreen', 'sfx',
         `${init}\n${fn}\n${cb}\nreturn { modoEfetivoAtual, matchRounds, onchange: () => msRounds.onchange() };`
-      )(settings, msRounds, { mapa }, 'mapa', sanitizeRounds, noop, noop, noop, noop, { uiClick: noop });
+      )(settings, msRounds, { mapa }, 'mapa', sanitizeRounds, ehMapaJavaporcos, noop, noop, noop, noop, { uiClick: noop });
     } catch (e) { expect(false, `${nome}: VM não executou o código real (${e.message})`); continue; }
     liberado.onchange();
     const intactos = settings[campo] === 9 && settings[outro] === (outro === 'rounds' ? 5 : 3);

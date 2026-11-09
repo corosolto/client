@@ -40,9 +40,9 @@ jobs:
           TOTAL=$(gh api "repos/$REPO/pulls/$PR" --jq '.additions + .deletions')
           PERIGO=$(grep -cE '^\.github/|^scripts/|^package(-lock)?\.json|^vercel\.json|^src/pages/api/|^supabase/|^\.env' /tmp/arquivos.txt || true)
           if [ "$PERIGO" -gt 0 ] || [ "$TOTAL" -gt 3000 ]; then
-            TEXTO="área sensível ou diff grande; revisão manual obrigatória"
+            TEXTO="sensitive area or large diff; manual review is required before applying"
           else
-            TEXTO="candidato a preview; um mantenedor deve revisar o SHA e aplicar o label"
+            TEXTO="preview candidate; a maintainer must review the commit SHA before applying"
           fi
           gh pr comment "$PR" --repo "$REPO" --body "🤖 **cs-brasil-ai-bot**: $TEXTO \`preview-autorizado\`."
 
